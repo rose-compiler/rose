@@ -3517,7 +3517,8 @@ SgAsmExecutableFileFormat::hexdump(FILE *f, addr_t base_addr, const std::string 
         hexdump(f, base_addr, prefix.c_str(), &(data[0]), data.size());
 }
 
-/* Writes a new file from the IR node for a parse executable file. */
+/** Writes a new file from the IR node for a parse executable file. Warning: This function might modify the AST by calling
+ *  reallocate(), which makes sure all parts of the AST are consistent with respect to each other. */
 void
 SgAsmExecutableFileFormat::unparseBinaryFormat(const std::string &name, SgAsmFile *asmFile)
 {
@@ -3528,12 +3529,14 @@ SgAsmExecutableFileFormat::unparseBinaryFormat(const std::string &name, SgAsmFil
     f.close();
 }
 
-/* Unparses an executable file into the supplied output stream. */
+/** Unparses an executable file into the supplied output stream. Warning: This function might modify the AST by calling
+ *  reallocate(), which makes sure all parts of the AST are consistent with respect to each other. */
 void
 SgAsmExecutableFileFormat::unparseBinaryFormat(std::ostream &f, SgAsmFile *asmFile)
 {
     ROSE_ASSERT(asmFile!=NULL);
     ROSE_ASSERT(asmFile->get_genericFile() != NULL);
+    asmFile->get_genericFile()->reallocate();
     asmFile->get_genericFile()->unparse(f);
 }
 
