@@ -602,7 +602,7 @@ SgAsmElfSection::get_elf_header() const
 rose_addr_t
 SgAsmElfSection::calculate_sizes(size_t r32size, size_t r64size,       /*size of required parts*/
                                  const std::vector<size_t> &optsizes,  /*size of optional parts and number of parts parsed*/
-                                 size_t *entsize, size_t *required, size_t *optional, size_t *entcount)
+                                 size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
     size_t struct_size = 0;
     size_t extra_size = 0;
@@ -667,7 +667,7 @@ SgAsmElfSection::calculate_sizes(size_t r32size, size_t r64size,       /*size of
  * The return size is entsize*entcount, which, if this section is a table (nonzero sh_entsize), could be smaller than the
  * total size of the section. */
 rose_addr_t
-SgAsmElfSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount)
+SgAsmElfSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
     return calculate_sizes(0, 0, std::vector<size_t>(), entsize, required, optional, entcount);
 }
@@ -1123,7 +1123,7 @@ SgAsmElfSectionTable::ctor()
 /* Returns info about the size of the entries based on information already available. Any or all arguments may be null
  * pointers if the caller is not interested in the value. */
 rose_addr_t
-SgAsmElfSectionTable::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount)
+SgAsmElfSectionTable::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
@@ -1597,7 +1597,7 @@ SgAsmElfSegmentTable::ctor()
 /* Returns info about the size of the entries based on information already available. Any or all arguments may be null
  * pointers if the caller is not interested in the value. */
 rose_addr_t
-SgAsmElfSegmentTable::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount)
+SgAsmElfSegmentTable::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
@@ -1858,7 +1858,7 @@ SgAsmElfRelaSection::ctor(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *s
 
 /* Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. */
 rose_addr_t
-SgAsmElfRelaSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount)
+SgAsmElfRelaSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
     std::vector<size_t> extra_sizes;
     for (size_t i=0; i<p_entries->get_entries().size(); i++)
@@ -2106,7 +2106,7 @@ SgAsmElfDynamicSection::ctor(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry
 
 /* Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. */
 rose_addr_t
-SgAsmElfDynamicSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount)
+SgAsmElfDynamicSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
     std::vector<size_t> extra_sizes;
     for (size_t i=0; i<p_entries->get_entries().size(); i++)
@@ -2470,7 +2470,7 @@ SgAsmElfSymbolSection::ctor(SgAsmElfSectionTableEntry *shdr)
 
 /* Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. */
 rose_addr_t
-SgAsmElfSymbolSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount)
+SgAsmElfSymbolSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
     std::vector<size_t> extra_sizes;
     for (size_t i=0; i<p_symbols->get_symbols().size(); i++)
