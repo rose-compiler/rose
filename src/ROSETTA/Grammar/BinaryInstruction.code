@@ -385,13 +385,13 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
        /* Thrown when an attempt is made to read past the end of a file, section, header, segment, etc. */
           class ShortRead {
                public:
-                    ShortRead(class SgAsmGenericSection *section, size_t offset, size_t size)
+                    ShortRead(const class SgAsmGenericSection *section, size_t offset, size_t size)
                        : section(section), offset(offset), size(size) {}
-                    ShortRead(class SgAsmGenericSection *section, size_t offset, size_t size, const std::string &mesg)
+                    ShortRead(const class SgAsmGenericSection *section, size_t offset, size_t size, const std::string &mesg)
                        : section(section), offset(offset), size(size), mesg(mesg) {}
-                    ShortRead(class SgAsmGenericSection *section, size_t offset, size_t size, const char *mesg)
+                    ShortRead(const class SgAsmGenericSection *section, size_t offset, size_t size, const char *mesg)
                        : section(section), offset(offset), size(size), mesg(mesg) {}
-                    SgAsmGenericSection *section;   /* Section from which read occurred; null implies file-level write */
+                    const SgAsmGenericSection *section;   /* Section from which read occurred; null implies file-level write */
                     addr_t         offset;    /* Byte offset into section (or file) */
                     addr_t         size;      /* Number of bytes of attempted read */
                     std::string          mesg;      /* Optional message */
@@ -400,13 +400,13 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
        /* Thrown when an attempt is made to write past the end of a file, section, header, segment, etc. */
           class ShortWrite {
                public:
-                    ShortWrite(class SgAsmGenericSection *section, size_t offset, size_t size)
+                    ShortWrite(const class SgAsmGenericSection *section, size_t offset, size_t size)
                        : section(section), offset(offset), size(size) {}
-                    ShortWrite(class SgAsmGenericSection *section, size_t offset, size_t size, const std::string &mesg)
+                    ShortWrite(const class SgAsmGenericSection *section, size_t offset, size_t size, const std::string &mesg)
                        : section(section), offset(offset), size(size), mesg(mesg) {}
-                    ShortWrite(class SgAsmGenericSection *section, size_t offset, size_t size, const char *mesg)
+                    ShortWrite(const class SgAsmGenericSection *section, size_t offset, size_t size, const char *mesg)
                        : section(section), offset(offset), size(size), mesg(mesg) {}
-                    SgAsmGenericSection *section;  /* Section to which write occurred; null implies file-level write */
+                    const SgAsmGenericSection *section;  /* Section to which write occurred; null implies file-level write */
                     addr_t         offset;   /* Byte offset into section (or file) */
                     addr_t         size;     /* Number of bytes of attempted write */
                     std::string          mesg;     /* Optional message */
