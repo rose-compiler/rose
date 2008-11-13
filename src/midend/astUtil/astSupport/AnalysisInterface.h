@@ -66,7 +66,7 @@ class NoFunctionAliasAnalysis : public FunctionAliasInterface
    { return false; }
   virtual ~NoFunctionAliasAnalysis() {}
 };
-
+//! Abstract interface to alias analysis
 class AliasAnalysisInterface
 {
  public:

@@ -434,6 +434,11 @@ GetMemberFunc( AstInterfaceImpl* scope, SgClassSymbol* c,
         assert(mf != 0);
         return mf;
      }
+     else
+     {
+       cerr <<"AstInterface.C GetMemberFunc() cannot find a symbol for "<<funcname<<" within a class "<<classname<< endl;
+       isSgScopeStatement(def)->print_symboltable("Dump the symbol table of the class definition:");
+     }
   }
   else {
      SgDeclarationStatementPtrList & decls = def->get_members ();

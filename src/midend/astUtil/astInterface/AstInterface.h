@@ -185,7 +185,11 @@ class AstInterface
   bool IsConstInt( const AstNodePtr& exp, int* value = 0) ;
   AstNodePtr CreateConstInt( int val)  ;
 
+  //!Check if a node is storing values for int, string, char, float, double, enum, etc
   bool IsConstant( const AstNodePtr& exp, std::string* valtype=0, std::string* value = 0) ;
+  //! Create an AST for valtype of the following types: more than just constant values
+  // int, bool, string, char, float, double, function, memberfunction, field
+  // e.g: CreateConstant("memberfunction","floatArray::length")
   AstNodePtr CreateConstant( const std::string& valtype, const std::string& val);
 
   bool IsVarRef( const AstNodePtr& exp, AstNodeType* vartype = 0,
@@ -238,7 +242,7 @@ class ProcessAstNode
    virtual ~ProcessAstNode() {}
 };
 
-// Interface to invoke any analyzer on AST
+// Interface to invoke any analyzer 'op' on AST sub tree from 'root'
 bool ReadAstTraverse(AstInterface& fa, const AstNodePtr& root, 
                         ProcessAstNode& op, 
                         AstInterface::TraversalOrderType t = AstInterface::PreOrder); 

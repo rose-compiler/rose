@@ -6,7 +6,7 @@
 #include "FunctionObject.h"
 #include <stdlib.h>
 #include <vector>
-
+//! SymbolicVal with I/O interface
 class SymbolicValDescriptor
 {
   SymbolicVal val;
@@ -91,10 +91,11 @@ class SymbolicExtendVar : public SymbolicFunction
    static std::string get_varname( std::string var, int index);
 };
 
-
+//!  a parameter with a named range of values. parameter:range_name:lower_bound:upper_bound
+// e.g:  _size:dim:1:dimension
 class ExtendibleParamDescriptor 
-  : private SelectPair < SymbolicValDescriptor,
-                         CollectPair<NameDescriptor, 
+  : private SelectPair < SymbolicValDescriptor, // parameter itself 
+                         CollectPair<NameDescriptor, // a range's name followed by its lower and upper bound
                                      CollectPair<SymbolicValDescriptor,
                                                  SymbolicValDescriptor, ':'>,
                                      ':'>,
@@ -125,13 +126,16 @@ class ExtendibleParamDescriptor
   SymbolicValDescriptor& get_param() { return first; }
   std::string get_param_name() const 
         { assert(first.get_val().GetValType() == VAL_VAR); return first.get_val().toString(); }
+  //! Get the name for the range 	
   std::string get_extend_var() const { return second.first; }
+  //! Get the lower bound and upper bound of the parameter
   bool get_extension( int& lb, int& ub) const; 
 
   void replace_var( const std::string& varname, const SymbolicVal& val);
   void replace_val(MapObject<SymbolicVal, SymbolicVal>& repl);
 };
-
+//! A list of parameter descriptors, separated by ',', enclosed in '(..)'
+// Each parameter has a range of values
 class SymbolicParamListDescriptor 
   : public ContainerDescriptor< std::vector <ExtendibleParamDescriptor>, 
                              ExtendibleParamDescriptor,',','(', ')'>
@@ -140,7 +144,10 @@ class SymbolicParamListDescriptor
   void replace_var( const std::string& varname, const SymbolicVal& val);
   void Dump() const;
 };
-
+//! A symbolic function declaration with 
+// a parameter list 'SymbolicParamListDescriptor' and a name (??) 'SymbolicValDescriptor',
+// separated by ':' in their string format
+// Note the reversed order for function name and parameter list
 class SymbolicFunctionDeclaration
  : private CollectPair<SymbolicParamListDescriptor,SymbolicValDescriptor,':'>
 {
@@ -162,7 +169,7 @@ class SymbolicFunctionDeclaration
   void replace_var( const std::string& varname, const SymbolicVal& val);
   void replace_val(MapObject<SymbolicVal, SymbolicVal>& repl);
 };
-
+//! A list of symbolic function declarations, separated by ',', enclosed in '(..)'
 class SymbolicFunctionDeclarationGroup
   : public ContainerDescriptor< std::list<SymbolicFunctionDeclaration>, 
                                 SymbolicFunctionDeclaration, ',', '(', ')'>

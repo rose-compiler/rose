@@ -68,7 +68,7 @@ bool ProcessAstTreeBase:: operator()( AstInterface &fa, const AstNodePtr& s)
       cur = tmp;
       return r;
     }
-
+//-----------------ProcessAstTree -------------------
 bool ProcessAstTree:: ProcessLoop(AstInterface &fa, const AstNodePtr& s, const AstNodePtr& body,
 	                       AstInterface::TraversalVisitType t) 
      { 

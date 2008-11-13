@@ -3,7 +3,7 @@
 
 #include "SymbolicVal.h"
 #include <map>
-
+//! A single variable's bound
 class SingleValBound : public MapObject<SymbolicVal, SymbolicBound>
 {
   SymbolicVal val;

@@ -9,7 +9,7 @@
 #include "union_find.h"
 #include <map>
 #include <sstream>
-
+//! An abstract class to collect read/mod/call information
 class StmtInfoCollect : public ProcessAstTreeBase
 { 
  protected:
@@ -139,6 +139,8 @@ class StmtVarAliasCollect
                delete (*p).second;
          }
        }
+       //! Find the alias group of a variable named 'varname' within 'scope'
+      // Create a new alias group if it does not exist for this variable
        UF_elem* get_alias_map( const std::string& varname, const AstNodePtr& scope);
    };
  private:
@@ -147,6 +149,7 @@ class StmtVarAliasCollect
   bool hasunknown, hasresult;
 
   UF_elem* get_alias_map( const std::string& varname, const AstNodePtr& scope);
+  // Inherited from StmtInfoCollect
   virtual void AppendModLoc( AstInterface& fa, const AstNodePtr& mod,
                               const AstNodePtr& rhs = AstNodePtr());
   virtual void AppendFuncCall( AstInterface& fa, const AstNodePtr& fc);
@@ -155,6 +158,7 @@ class StmtVarAliasCollect
   StmtVarAliasCollect( FunctionAliasInterface* a = 0) 
     : funcanal(a), hasunknown(false), hasresult(false) {}
   void operator()( AstInterface& fa, const AstNodePtr& funcdefinition);
+  // Inherited from AliasAnalysisInterface: if r1 and r2 may be alias to each other
   bool may_alias(AstInterface& fa, const AstNodePtr& r1, 
 		 const AstNodePtr& r2);
 };
