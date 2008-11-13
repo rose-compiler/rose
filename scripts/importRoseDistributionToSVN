@@ -70,8 +70,7 @@ find . -name autom4te.cache | xargs rm -rf
 rm -rf ${ROSE_DIST_DIR}/configure
 rm -rf ${ROSE_DIST_DIR}/aclocal.m4
 rm -rf ${ROSE_DIST_DIR}/rose_config.h.in
-rm -rf ${ROSE_DIST_DIR}/libltdl/configure
-rm -rf ${ROSE_DIST_DIR}/libltdl/aclocal.m4
+rm -rf ${ROSE_DIST_DIR}/libltdl
 find . -name Makefile.in | xargs rm -rf
 # remove generated scanners and parsers available from the source distribution
 # But should not be put into the external repository
@@ -128,13 +127,13 @@ else
   exit 3
 fi
 
-#EDG_BINARIES3=($(ls ${ROSE_DIST_DIR}/src/frontend/CxxFrontend/roseBinaryEDG-i686-apple-darwin*.tar.gz))
-#if [ ${EDG_BINARIES3[0]} ]; then
-#   echo Found the EDG binaries for i686-apple-darwin as expected. It is ${EDG_BINARIES3[@]}. 
-#else 
-#  echo Fatal Error: No EDG binaries for i686-apple-darwin are available. 
-#  exit 3
-#fi
+EDG_BINARIES3=($(ls ${ROSE_DIST_DIR}/src/frontend/CxxFrontend/roseBinaryEDG-i686-apple-darwin*.tar.gz))
+if [ ${EDG_BINARIES3[0]} ]; then
+   echo Found the EDG binaries for i686-apple-darwin as expected. It is ${EDG_BINARIES3[@]}. 
+else 
+  echo Fatal Error: No EDG binaries for i686-apple-darwin are available. 
+  exit 3
+fi
 
 # Now we can upload the package
 #--------------------------------------------------------
