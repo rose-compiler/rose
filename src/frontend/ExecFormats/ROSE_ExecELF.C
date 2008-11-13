@@ -461,6 +461,14 @@ SgAsmElfFileHeader::unparse(std::ostream &f)
         ROSE_ASSERT(!"unsupported word size");
     }
     write(f, p_offset, struct_size, disk);
+
+    /* Extend the file to the full size */
+    f.seekp(0, std::_S_end);
+    if (f.tellp()<(off_t)get_file()->get_current_size()) {
+        f.seekp(get_file()->get_current_size()-1);
+        const char zero = '\0';
+        f.write(&zero, 1);
+    }
 }
 
 /* Print some debugging info */
@@ -1018,7 +1026,7 @@ SgAsmElfSectionTable::ctor()
 
     /* Change the section size to include all the entries */
     ROSE_ASSERT(0==get_size());
-    extend(nentries * ent_size);
+    extend_up_to(nentries * ent_size);
 
     /* Read all the section headers. */
     std::vector<SgAsmElfSectionTableEntry*> entries;
@@ -1026,13 +1034,13 @@ SgAsmElfSectionTable::ctor()
     for (size_t i=0; i<nentries; i++, offset+=ent_size) {
         SgAsmElfSectionTableEntry *shdr = NULL;
         if (4 == fhdr->get_word_size()) {
-            const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk =
-                (const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk*)content(offset, ent_size);
-            shdr = new SgAsmElfSectionTableEntry(sex, disk);
+            SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk disk;
+            content(offset, ent_size, &disk);
+            shdr = new SgAsmElfSectionTableEntry(sex, &disk);
         } else {
-            const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk =
-                (const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk*)content(offset, ent_size);
-            shdr = new SgAsmElfSectionTableEntry(sex, disk);
+            SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk disk;
+            content(offset, ent_size, &disk);
+            shdr = new SgAsmElfSectionTableEntry(sex, &disk);
         }
         if (opt_size>0)
             shdr->get_extra() = content_ucl(offset+struct_size, opt_size);
