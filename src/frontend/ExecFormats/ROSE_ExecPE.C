@@ -35,7 +35,7 @@ SgAsmPEExtendedDOSHeader::ctor(SgAsmGenericFile *f, addr_t offset)
 
 /* Encode the extended header back into disk format */
 void *
-SgAsmPEExtendedDOSHeader::encode(ExtendedDOSHeader_disk *disk)
+SgAsmPEExtendedDOSHeader::encode(ExtendedDOSHeader_disk *disk) const
 {
     for (size_t i=0; i < NELMTS(disk->e_res1); i++)
         host_to_le(p_e_res1[i], &(disk->e_res1[i]));
@@ -309,7 +309,7 @@ SgAsmPEFileHeader::~SgAsmPEFileHeader()
 
 /* Encode the PE header into disk format */
 void *
-SgAsmPEFileHeader::encode(PEFileHeader_disk *disk)
+SgAsmPEFileHeader::encode(PEFileHeader_disk *disk) const
 {
     for (size_t i=0; i<NELMTS(disk->e_magic); i++)
         disk->e_magic[i] = get_magic()[i];
@@ -326,7 +326,7 @@ SgAsmPEFileHeader::encode(PEFileHeader_disk *disk)
     return disk;
 }
 void *
-SgAsmPEFileHeader::encode(PE32OptHeader_disk *disk)
+SgAsmPEFileHeader::encode(PE32OptHeader_disk *disk) const
 {
     host_to_le(p_e_opt_magic,          &(disk->e_opt_magic));
     host_to_le(p_e_lmajor,             &(disk->e_lmajor));
@@ -362,7 +362,7 @@ SgAsmPEFileHeader::encode(PE32OptHeader_disk *disk)
     return disk;
 }
 void *
-SgAsmPEFileHeader::encode(PE64OptHeader_disk *disk)
+SgAsmPEFileHeader::encode(PE64OptHeader_disk *disk) const
 {
     host_to_le(p_e_opt_magic,          &(disk->e_opt_magic));
     host_to_le(p_e_lmajor,             &(disk->e_lmajor));
@@ -796,7 +796,7 @@ SgAsmPESectionTableEntry::ctor(const PESectionTableEntry_disk *disk)
 
 /* Encodes a section table entry back into disk format. */
 void *
-SgAsmPESectionTableEntry::encode(PESectionTableEntry_disk *disk)
+SgAsmPESectionTableEntry::encode(PESectionTableEntry_disk *disk) const
 {
     memset(disk->name, 0, sizeof(disk->name));
 
@@ -999,7 +999,7 @@ SgAsmPEImportDirectory::ctor(SgAsmPEImportSection *section, size_t idx)
 
 /* Encode a directory entry back into disk format */
 void *
-SgAsmPEImportDirectory::encode(PEImportDirectory_disk *disk)
+SgAsmPEImportDirectory::encode(PEImportDirectory_disk *disk) const
 {
     host_to_le(p_ilt_rva.get_rva(),      &(disk->ilt_rva));
     host_to_le(p_time,                   &(disk->time));
@@ -1105,7 +1105,7 @@ SgAsmPEImportILTEntry::ctor(SgAsmPEImportSection *isec, uint64_t ilt_word)
 
 /* Encode the PE Import Lookup Table or PE Import Address Table object into a word. */
 uint64_t
-SgAsmPEImportILTEntry::encode(SgAsmPEFileHeader *fhdr)
+SgAsmPEImportILTEntry::encode(SgAsmPEFileHeader *fhdr) const
 {
     uint64_t w = 0;
 
@@ -2013,7 +2013,7 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
 
 /* Encode a symbol back into disk format */
 void *
-SgAsmCoffSymbol::encode(COFFSymbol_disk *disk)
+SgAsmCoffSymbol::encode(COFFSymbol_disk *disk) const
 {
     if (0 == p_st_name_offset) {
         /* Name is stored in entry */

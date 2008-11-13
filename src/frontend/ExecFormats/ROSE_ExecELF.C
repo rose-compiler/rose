@@ -285,7 +285,7 @@ SgAsmElfFileHeader::get_segtab_sections()
 
 /* Encode Elf header disk structure */
 void *
-SgAsmElfFileHeader::encode(ByteOrder sex, Elf32FileHeader_disk *disk)
+SgAsmElfFileHeader::encode(ByteOrder sex, Elf32FileHeader_disk *disk) const
 {
     ROSE_ASSERT(p_magic.size() == NELMTS(disk->e_ident_magic));
     for (size_t i=0; i<NELMTS(disk->e_ident_magic); i++)
@@ -348,7 +348,7 @@ SgAsmElfFileHeader::encode(ByteOrder sex, Elf32FileHeader_disk *disk)
     return disk;
 }
 void *
-SgAsmElfFileHeader::encode(ByteOrder sex, Elf64FileHeader_disk *disk)
+SgAsmElfFileHeader::encode(ByteOrder sex, Elf64FileHeader_disk *disk) const
 {
     ROSE_ASSERT(p_magic.size() == NELMTS(disk->e_ident_magic));
     for (size_t i=0; i < NELMTS(disk->e_ident_magic); i++)
@@ -983,7 +983,7 @@ SgAsmElfSectionTableEntry::ctor(ByteOrder sex, const Elf64SectionTableEntry_disk
 
 /* Encode a section table entry into the disk structure */
 void *
-SgAsmElfSectionTableEntry::encode(ByteOrder sex, Elf32SectionTableEntry_disk *disk)
+SgAsmElfSectionTableEntry::encode(ByteOrder sex, Elf32SectionTableEntry_disk *disk) const
 {
     host_to_disk(sex, p_sh_name,      &(disk->sh_name));
     host_to_disk(sex, p_sh_type,      &(disk->sh_type));
@@ -999,7 +999,7 @@ SgAsmElfSectionTableEntry::encode(ByteOrder sex, Elf32SectionTableEntry_disk *di
     return disk;
 }
 void *
-SgAsmElfSectionTableEntry::encode(ByteOrder sex, Elf64SectionTableEntry_disk *disk)
+SgAsmElfSectionTableEntry::encode(ByteOrder sex, Elf64SectionTableEntry_disk *disk) const
 {
     host_to_disk(sex, p_sh_name,      &(disk->sh_name));
     host_to_disk(sex, p_sh_type,      &(disk->sh_type));
@@ -1380,7 +1380,7 @@ SgAsmElfSegmentTableEntry::ctor(ByteOrder sex, const Elf64SegmentTableEntry_disk
 
 /* Converts segment table entry back into disk structure */
 void *
-SgAsmElfSegmentTableEntry::encode(ByteOrder sex, Elf32SegmentTableEntry_disk *disk)
+SgAsmElfSegmentTableEntry::encode(ByteOrder sex, Elf32SegmentTableEntry_disk *disk) const
 {
     host_to_disk(sex, p_type, &(disk->p_type));
     host_to_disk(sex, p_offset, &(disk->p_offset));
@@ -1393,7 +1393,7 @@ SgAsmElfSegmentTableEntry::encode(ByteOrder sex, Elf32SegmentTableEntry_disk *di
     return disk;
 }
 void *
-SgAsmElfSegmentTableEntry::encode(ByteOrder sex, Elf64SegmentTableEntry_disk *disk)
+SgAsmElfSegmentTableEntry::encode(ByteOrder sex, Elf64SegmentTableEntry_disk *disk) const
 {
     host_to_disk(sex, p_type, &(disk->p_type));
     host_to_disk(sex, p_offset, &(disk->p_offset));
@@ -1775,7 +1775,7 @@ SgAsmElfRelaEntry::ctor(ByteOrder sex, const Elf64RelaEntry_disk *disk)
 
 /* Encode a native entry back into disk format */
 void *
-SgAsmElfRelaEntry::encode(ByteOrder sex, Elf32RelaEntry_disk *disk)
+SgAsmElfRelaEntry::encode(ByteOrder sex, Elf32RelaEntry_disk *disk) const
 {
     host_to_disk(sex, p_r_offset, &(disk->r_offset));
     host_to_disk(sex, p_r_addend, &(disk->r_addend));
@@ -1784,7 +1784,7 @@ SgAsmElfRelaEntry::encode(ByteOrder sex, Elf32RelaEntry_disk *disk)
     return disk;
 }
 void *
-SgAsmElfRelaEntry::encode(ByteOrder sex, Elf64RelaEntry_disk *disk)
+SgAsmElfRelaEntry::encode(ByteOrder sex, Elf64RelaEntry_disk *disk) const
 {
     host_to_disk(sex, p_r_offset, &(disk->r_offset));
     host_to_disk(sex, p_r_addend, &(disk->r_addend));
@@ -1956,14 +1956,14 @@ SgAsmElfDynamicEntry::ctor(ByteOrder sex, const Elf64DynamicEntry_disk *disk)
 
 /* Encode a native entry back into disk format */
 void *
-SgAsmElfDynamicEntry::encode(ByteOrder sex, Elf32DynamicEntry_disk *disk)
+SgAsmElfDynamicEntry::encode(ByteOrder sex, Elf32DynamicEntry_disk *disk) const
 {
     host_to_disk(sex, p_d_tag, &(disk->d_tag));
     host_to_disk(sex, p_d_val.get_rva(), &(disk->d_val));
     return disk;
 }
 void *
-SgAsmElfDynamicEntry::encode(ByteOrder sex, Elf64DynamicEntry_disk *disk)
+SgAsmElfDynamicEntry::encode(ByteOrder sex, Elf64DynamicEntry_disk *disk) const
 {
     host_to_disk(sex, p_d_tag, &(disk->d_tag));
     host_to_disk(sex, p_d_val.get_rva(), &(disk->d_val));
@@ -2351,7 +2351,7 @@ SgAsmElfSymbol::reallocate(SgAsmGenericStrtab *strtab)
 
 /* Encode a symbol into disk format */
 void *
-SgAsmElfSymbol::encode(ByteOrder sex, Elf32SymbolEntry_disk *disk, SgAsmGenericStrtab *strtab)
+SgAsmElfSymbol::encode(ByteOrder sex, Elf32SymbolEntry_disk *disk, SgAsmGenericStrtab *strtab) const
 {
     host_to_disk(sex, p_st_name,     &(disk->st_name));
     host_to_disk(sex, p_st_info,     &(disk->st_info));
@@ -2362,7 +2362,7 @@ SgAsmElfSymbol::encode(ByteOrder sex, Elf32SymbolEntry_disk *disk, SgAsmGenericS
     return disk;
 }
 void *
-SgAsmElfSymbol::encode(ByteOrder sex, Elf64SymbolEntry_disk *disk, SgAsmGenericStrtab *strtab)
+SgAsmElfSymbol::encode(ByteOrder sex, Elf64SymbolEntry_disk *disk, SgAsmGenericStrtab *strtab) const
 {
     host_to_disk(sex, p_st_name,     &(disk->st_name));
     host_to_disk(sex, p_st_info,     &(disk->st_info));

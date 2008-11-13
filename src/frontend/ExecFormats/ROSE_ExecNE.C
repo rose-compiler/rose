@@ -86,7 +86,7 @@ SgAsmNEExtendedDOSHeader::ctor(SgAsmGenericFile *f, addr_t offset)
 
 /* Encode the extended header back into disk format */
 void *
-SgAsmNEExtendedDOSHeader::encode(SgAsmNEExtendedDOSHeader::ExtendedDOSHeader_disk *disk)
+SgAsmNEExtendedDOSHeader::encode(SgAsmNEExtendedDOSHeader::ExtendedDOSHeader_disk *disk) const
 {
     for (size_t i = 0; i < NELMTS(disk->e_res1); i++)
         host_to_le(p_e_res1[i], &(disk->e_res1[i]));
@@ -213,7 +213,7 @@ SgAsmNEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
 
 /* Encode the NE header into disk format */
 void *
-SgAsmNEFileHeader::encode(SgAsmNEFileHeader::NEFileHeader_disk *disk)
+SgAsmNEFileHeader::encode(SgAsmNEFileHeader::NEFileHeader_disk *disk) const
 {
     for (size_t i = 0; i < NELMTS(disk->e_magic); i++)
         disk->e_magic[i] = get_magic()[i];
@@ -382,7 +382,7 @@ SgAsmNESectionTableEntry::ctor(const NESectionTableEntry_disk *disk)
 
 /* Encodes a section table entry back into disk format. */
 void *
-SgAsmNESectionTableEntry::encode(NESectionTableEntry_disk *disk)
+SgAsmNESectionTableEntry::encode(NESectionTableEntry_disk *disk) const
 {
     host_to_le(p_sector,          &(disk->sector));
     unsigned x_physical_size = p_physical_size==64*1024 ? 0 : p_physical_size;

@@ -69,7 +69,7 @@ SgAsmDOSFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
 
 /* Encode the DOS file header into disk format */
 void *
-SgAsmDOSFileHeader::encode(DOSFileHeader_disk *disk)
+SgAsmDOSFileHeader::encode(DOSFileHeader_disk *disk) const
 {
     for (size_t i=0; i<NELMTS(disk->e_magic); i++)
         disk->e_magic[i] = get_magic()[i];

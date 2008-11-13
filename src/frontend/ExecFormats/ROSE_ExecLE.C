@@ -131,7 +131,7 @@ SgAsmLEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
 
 /* Encode the LE header into disk format */
 void *
-SgAsmLEFileHeader::encode(ByteOrder sex, LEFileHeader_disk *disk)
+SgAsmLEFileHeader::encode(ByteOrder sex, LEFileHeader_disk *disk) const
 {
     for (size_t i=0; i<NELMTS(disk->e_magic); i++)
         disk->e_magic[i] = get_magic()[i];
@@ -366,7 +366,7 @@ SgAsmLEPageTableEntry::ctor(ByteOrder sex, const SgAsmLEPageTableEntry::LEPageTa
 
 /* Encode page table entry to disk format */
 void *
-SgAsmLEPageTableEntry::encode(ByteOrder sex, SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk)
+SgAsmLEPageTableEntry::encode(ByteOrder sex, SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk) const
 {
     host_to_disk(sex, (p_pageno & 0xff),    &(disk->pageno_lo));
     host_to_disk(sex, (p_pageno>>8)&0xffff, &(disk->pageno_hi));
@@ -468,7 +468,7 @@ SgAsmLESectionTableEntry::ctor(ByteOrder sex, const LESectionTableEntry_disk *di
 
 /* Encodes a section table entry back into disk format. */
 void *
-SgAsmLESectionTableEntry::encode(ByteOrder sex, LESectionTableEntry_disk *disk)
+SgAsmLESectionTableEntry::encode(ByteOrder sex, LESectionTableEntry_disk *disk) const
 {
     host_to_disk(sex, p_mapped_size,      &(disk->mapped_size));
     host_to_disk(sex, p_base_addr,        &(disk->base_addr));

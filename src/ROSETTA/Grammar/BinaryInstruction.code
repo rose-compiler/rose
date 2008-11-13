@@ -1227,8 +1227,8 @@ HEADER_ELF_HEADER_START
 		virtual bool reallocate();
 		virtual void unparse(std::ostream&);
 
-		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfFileHeader::Elf32FileHeader_disk*);
-		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfFileHeader::Elf64FileHeader_disk*);
+		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfFileHeader::Elf32FileHeader_disk*) const;
+		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfFileHeader::Elf64FileHeader_disk*) const;
 
 		virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
@@ -1317,8 +1317,10 @@ HEADER_ELF_SECTION_TABLE_ENTRY_START
 
        // virtual ~SgAsmElfSectionTableEntry() {};
 
-          void *encode(SgAsmExecutableFileFormat::ByteOrder sex, SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk);
-          void *encode(SgAsmExecutableFileFormat::ByteOrder sex, SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk);
+          void *encode(SgAsmExecutableFileFormat::ByteOrder sex,
+		       SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk) const;
+          void *encode(SgAsmExecutableFileFormat::ByteOrder sex,
+		       SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk) const;
 
 	  void update_from_section(SgAsmElfSection*);
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
@@ -1449,8 +1451,8 @@ HEADER_ELF_RELA_ENTRY_START
 			{ctor(sex, disk);}
 		//virtual ~SgAsmElfDynamicEntry() {}
 
-		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfRelaEntry::Elf32RelaEntry_disk*);
-		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfRelaEntry::Elf64RelaEntry_disk*);
+		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfRelaEntry::Elf32RelaEntry_disk*) const;
+		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfRelaEntry::Elf64RelaEntry_disk*) const;
 
 		void dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbolSection *symtab);
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx)
@@ -1569,8 +1571,8 @@ HEADER_ELF_DYNAMIC_ENTRY_START
        // virtual ~SgAsmElfDynamicEntry() {}
 
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
-          void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*);
-          void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*);
+          void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*) const;
+          void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*) const;
 	  const char *stringify_tag(EntryType);
 
      private:
@@ -1666,8 +1668,8 @@ HEADER_ELF_SEGMENT_TABLE_ENTRY_START
           SgAsmElfSegmentTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk *disk);
        // virtual ~ElfSegmentTableEntry() {};
 
-          void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk*);
-          void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk*);
+          void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk*) const;
+          void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk*) const;
 	  void update_from_section(SgAsmElfSection*);
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
@@ -1742,8 +1744,10 @@ HEADER_ELF_SYMBOL_START
 		//virtual ~SgAsmElfSymbol() {};
 
 		void reallocate(SgAsmGenericStrtab*);
-		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymbol::Elf32SymbolEntry_disk*, SgAsmGenericStrtab*);
-		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymbol::Elf64SymbolEntry_disk*, SgAsmGenericStrtab*);
+		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymbol::Elf32SymbolEntry_disk*,
+			     SgAsmGenericStrtab*) const;
+		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymbol::Elf64SymbolEntry_disk*,
+			     SgAsmGenericStrtab*) const;
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx);
 		void dump(FILE*, const char *prefix, ssize_t idx, SgAsmGenericSection*);
 		SgAsmElfSymbol::ElfSymBinding get_elf_binding();
@@ -1773,7 +1777,7 @@ HEADER_PE_RVA_SIZE_PAIR_START
              } __attribute__((packed));
 
           SgAsmPERVASizePair(const SgAsmPERVASizePair::RVASizePair_disk *disk);
-          void *encode(SgAsmPERVASizePair::RVASizePair_disk *disk);
+          void *encode(SgAsmPERVASizePair::RVASizePair_disk *disk) const;
 
        // addr_t e_rva;
        // addr_t e_size;
@@ -1925,9 +1929,9 @@ HEADER_PE_FILE_HEADER_START
 
 	private:
 		void ctor(SgAsmGenericFile *f, addr_t offset);
-		void *encode(SgAsmPEFileHeader::PEFileHeader_disk*);
-		void *encode(SgAsmPEFileHeader::PE32OptHeader_disk*);
-		void *encode(SgAsmPEFileHeader::PE64OptHeader_disk*);
+		void *encode(SgAsmPEFileHeader::PEFileHeader_disk*) const;
+		void *encode(SgAsmPEFileHeader::PE32OptHeader_disk*) const;
+		void *encode(SgAsmPEFileHeader::PE64OptHeader_disk*) const;
 HEADER_PE_FILE_HEADER_END
 
 HEADER_PE_SECTION_START
@@ -1960,7 +1964,7 @@ HEADER_PE_IMPORT_DIRECTORY_START
 
 		SgAsmPEImportDirectory(SgAsmPEImportSection *isec, size_t idx)
 			{ctor(isec,idx);}
-		void *encode(SgAsmPEImportDirectory::PEImportDirectory_disk*);
+		void *encode(SgAsmPEImportDirectory::PEImportDirectory_disk*) const;
 		virtual void unparse(std::ostream&, SgAsmPEImportSection*);
 		virtual void dump(FILE*, const char *prefix, ssize_t idx);
 	private:
@@ -1980,7 +1984,7 @@ HEADER_PE_IMPORT_ILT_ENTRY_START
 
 		SgAsmPEImportILTEntry(SgAsmPEImportSection *isec, uint64_t entry_word)
 			{ctor(isec,entry_word);}
-		uint64_t encode(SgAsmPEFileHeader*);
+		uint64_t encode(SgAsmPEFileHeader*) const;
 		void unparse(std::ostream&, SgAsmPEFileHeader *fhdr, rva_t rva, size_t idx);
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx);
 	private:
@@ -2153,7 +2157,7 @@ HEADER_PE_EXTENDED_DOS_HEADER_START
           SgAsmPEExtendedDOSHeader(SgAsmGenericFile *f, addr_t offset);
        // virtual ~SgAsmPEExtendedDOSHeader() {}
 
-          void *encode(SgAsmPEExtendedDOSHeader::ExtendedDOSHeader_disk*);
+          void *encode(SgAsmPEExtendedDOSHeader::ExtendedDOSHeader_disk*) const;
           virtual void unparse(std::ostream&);
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
@@ -2216,7 +2220,7 @@ HEADER_PE_SECTION_TABLE_ENTRY_START
           SgAsmPESectionTableEntry(const SgAsmPESectionTableEntry::PESectionTableEntry_disk *disk);
        // virtual ~SgAsmPESectionTableEntry() {};
 
-          void *encode(SgAsmPESectionTableEntry::PESectionTableEntry_disk*);
+          void *encode(SgAsmPESectionTableEntry::PESectionTableEntry_disk*) const;
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
     
        /* These are the native-format versions of the same members described in the PESectionTableEntry_disk struct. */
@@ -2257,7 +2261,7 @@ HEADER_PE_COFF_SYMBOL_START
 
           SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAsmGenericSection *strtab, size_t idx);
        // virtual ~COFFSymbol() {}
-          void *encode(SgAsmCoffSymbol::COFFSymbol_disk*);
+          void *encode(SgAsmCoffSymbol::COFFSymbol_disk*) const;
           virtual void dump(FILE *f, const char *prefix, ssize_t idx);
 
        /* Auxilliary data for the symbol */
@@ -2408,7 +2412,7 @@ HEADER_NE_FILE_HEADER_START
 
      private:
           void ctor(SgAsmGenericFile *f, addr_t offset);
-          void *encode(SgAsmNEFileHeader::NEFileHeader_disk*);
+          void *encode(SgAsmNEFileHeader::NEFileHeader_disk*) const;
 
        // ExtendedDOSHeader *dos2_header;
        // NESectionTable *section_table;
@@ -2539,7 +2543,7 @@ HEADER_NE_EXTENDED_DOS_HEADER_START
           SgAsmNEExtendedDOSHeader(SgAsmGenericFile *f, addr_t offset);
        // virtual ~ExtendedDOSHeader() {};
 
-          void *encode(SgAsmNEExtendedDOSHeader::ExtendedDOSHeader_disk*);
+          void *encode(SgAsmNEExtendedDOSHeader::ExtendedDOSHeader_disk*) const;
           virtual void unparse(std::ostream&);
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
@@ -2709,7 +2713,7 @@ HEADER_NE_SECTION_TABLE_ENTRY_START
           SgAsmNESectionTableEntry(const SgAsmNESectionTableEntry::NESectionTableEntry_disk *disk);
        // virtual ~NESectionTableEntry() {};
 
-          void *encode(SgAsmNESectionTableEntry::NESectionTableEntry_disk*);
+          void *encode(SgAsmNESectionTableEntry::NESectionTableEntry_disk*) const;
           virtual void dump(FILE *f, const char *prefix, ssize_t idx) {dump(f, prefix, idx, NULL);}
           void dump(FILE*, const char *prefix, ssize_t idx, SgAsmNEFileHeader *fhdr);
 
@@ -2843,7 +2847,7 @@ HEADER_LE_FILE_HEADER_START
 
      private:
           void ctor(SgAsmGenericFile *f, addr_t offset);
-          void *encode(SgAsmExecutableFileFormat::ByteOrder sex, SgAsmLEFileHeader::LEFileHeader_disk*);
+          void *encode(SgAsmExecutableFileFormat::ByteOrder sex, SgAsmLEFileHeader::LEFileHeader_disk*) const;
 
        // ExtendedDOSHeader *dos2_header;
        // LESectionTable *section_table;
@@ -2973,7 +2977,7 @@ HEADER_LE_PAGE_TABLE_ENTRY_START
           SgAsmLEPageTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk);
 
           void dump(FILE*, const char *prefix, ssize_t idx);
-          void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmLEPageTableEntry::LEPageTableEntry_disk*);
+          void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmLEPageTableEntry::LEPageTableEntry_disk*) const;
 
        // unsigned get_pageno() {return pageno;}
 
@@ -3060,7 +3064,7 @@ HEADER_LE_SECTION_TABLE_ENTRY_START
           SgAsmLESectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLESectionTableEntry::LESectionTableEntry_disk *disk);
        // virtual ~LESectionTableEntry() {};
 
-          void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmLESectionTableEntry::LESectionTableEntry_disk*);
+          void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmLESectionTableEntry::LESectionTableEntry_disk*) const;
           virtual void dump(FILE *f, const char *prefix, ssize_t idx);
     
        /* These are the native-format versions of the same members described in the NESectionTableEntry_disk struct. */
@@ -3128,7 +3132,7 @@ HEADER_DOS_HEADER_START
 
      private:
           void ctor(SgAsmGenericFile *f, addr_t offset);
-          void *encode(SgAsmDOSFileHeader::DOSFileHeader_disk*);
+          void *encode(SgAsmDOSFileHeader::DOSFileHeader_disk*) const;
 
 HEADER_DOS_HEADER_END
 
@@ -4382,7 +4386,7 @@ SgAsmPERVASizePair::SgAsmPERVASizePair(const SgAsmPERVASizePair::RVASizePair_dis
    }
 
 void*
-SgAsmPERVASizePair::encode(SgAsmPERVASizePair::RVASizePair_disk *disk)
+SgAsmPERVASizePair::encode(SgAsmPERVASizePair::RVASizePair_disk *disk) const
    {
      host_to_le(p_e_rva,  &(disk->e_rva));
      host_to_le(p_e_size, &(disk->e_size));
