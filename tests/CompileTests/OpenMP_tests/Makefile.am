@@ -75,20 +75,20 @@ ROSE_FLAGS = -rose:openmp --edg:no_warnings -w -rose:verbose 0 --edg:restrict
 # used to find omp.h, added it as one of  rose headers
 TESTCODE_INCLUDES = ${ROSE_INCLUDES}
 
-PASSING_C_TEST_Objects = ${C_TESTCODES_REQUIRED_TO_PASS:.c=.o}
+PASSING_C_TEST_Objects = $(C_TESTCODES_REQUIRED_TO_PASS:.c=.o)
 
-PASSING_CXX_TEST_Objects = ${CXX_TESTCODES_REQUIRED_TO_PASS:.cpp=.o}
+PASSING_CXX_TEST_Objects = $(CXX_TESTCODES_REQUIRED_TO_PASS:.cpp=.o)
 
-$(PASSING_C_TEST_Objects): parseOmp $(srcdir)/$(@:.o=.c)
-	./parseOmp ${ROSE_FLAGS} ${TESTCODE_INCLUDES} -c $(srcdir)/$(@:.o=.c)
+$(PASSING_C_TEST_Objects): %.o: $(srcdir)/%.c parseOmp
+	./parseOmp $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $<
 
-$(PASSING_CXX_TEST_Objects): parseOmp $(srcdir)/$(@:.o=.cpp)
-	./parseOmp ${ROSE_FLAGS} ${TESTCODE_INCLUDES} -c $(srcdir)/$(@:.o=.cpp)
+$(PASSING_CXX_TEST_Objects): %.o: $(srcdir)/%.cpp parseOmp
+	./parseOmp ${ROSE_FLAGS} ${TESTCODE_INCLUDES} -c $<
 
 ALL_TESTCODES = \
-${C_TESTCODES_REQUIRED_TO_PASS} \
-${CXX_TESTCODES_REQUIRED_TO_PASS} \
-${TESTCODE_CURRENTLY_FAILING}
+$(C_TESTCODES_REQUIRED_TO_PASS) \
+$(CXX_TESTCODES_REQUIRED_TO_PASS) \
+$(TESTCODE_CURRENTLY_FAILING)
 
 
 check-local:
