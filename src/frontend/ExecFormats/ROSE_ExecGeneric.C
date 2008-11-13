@@ -2130,7 +2130,7 @@ SgAsmGenericSection::unparse(std::ostream &f, const ExtentMap &map)
 {
     for (ExtentMap::const_iterator i=map.begin(); i!=map.end(); ++i) {
         ROSE_ASSERT((*i).first+(*i).second <= get_size());
-        const unsigned char *extent_data = content((*i).first, (*i).second);
+        const unsigned char *extent_data = &p_data[(*i).first];
         write(f, (*i).first, (*i).second, extent_data);
     }
 }
