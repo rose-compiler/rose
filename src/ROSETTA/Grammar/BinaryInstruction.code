@@ -2144,8 +2144,8 @@ HEADER_PE_EXTENDED_DOS_HEADER_START
                uint16_t    e_oemid;        /* 0x04 OEM Identifier */
                uint16_t    e_oeminfo;      /* 0x06 other OEM information; oemid specific */
                uint16_t    e_res2[10];     /* 0x08 reserved */
-               uint32_t    e_lfanew;       /* 0x1c file offset of new exe (PE) header */
-             } __attribute__((packed));    /* 0x20 */
+               uint32_t    e_lfanew;       /* 0x12 file offset of new exe (PE) header */
+             } __attribute__((packed));    /* 0x16 */
 
      public:
           SgAsmPEExtendedDOSHeader(SgAsmGenericFile *f, addr_t offset);

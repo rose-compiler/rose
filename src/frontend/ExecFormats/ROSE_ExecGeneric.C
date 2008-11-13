@@ -1952,9 +1952,12 @@ SgAsmGenericSection::write(std::ostream &f, addr_t offset, size_t bufsize, const
            get_offset()+offset+nwrite>file->get_orig_size())
         --nwrite;
 
-    /* Write bytes to file */
+    /* Write bytes to file. This is a good place to set a break point if you're trying to figure out what section is writing
+     * to a particular file address. For instance, if byte 0x7c is incorrect in the unparsed file you would set a conditional
+     * breakpoint for o<=0x7c && o+nwrite>0x7c */
     ROSE_ASSERT(f);
-    f.seekp(get_offset()+offset);
+    off_t o = get_offset() + offset;
+    f.seekp(o);
     ROSE_ASSERT(f);
     f.write((const char*)buf, nwrite);
     ROSE_ASSERT(f);

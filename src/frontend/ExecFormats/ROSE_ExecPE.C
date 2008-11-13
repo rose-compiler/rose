@@ -590,12 +590,13 @@ SgAsmPEFileHeader::unparse(std::ostream &f)
             if (pesec && pesec->get_st_entry()!=NULL)
                 p_e_nsections++;
         }
+
         addr_t header_size = ALIGN(p_section_table->get_offset() + p_section_table->get_size(),
                                    p_e_file_align>0 ? p_e_file_align : 1);
 #if 1
         /* The PE Specification regarding e_header_size (known as "SizeOfHeader" on page 14 of "Microsoft Portable Executable
          * and Common Object File Format Specification: Revision 8.1 February 15, 2008" is not always followed. We recompute
-         * it here as being the minimum file offset from all the sections defined in the PE Section Table, but not smaller
+         * it here as being the minimum RVA from all the sections defined in the PE Section Table, but not smaller
          * than the value according to the specification. This alternate value is kept if it's already in the parse tree,
          * otherwise we use the correct value. (RPM 2008-10-21) */
         addr_t min_offset;
@@ -612,6 +613,12 @@ SgAsmPEFileHeader::unparse(std::ostream &f)
         addr_t header_size2 = std::max(header_size, min_offset);
         if (p_e_header_size==header_size2)
             header_size = header_size2;
+
+        /* If the original header size was zero then don't change that--leave it at zero. Some tiny executables have a zero
+         * value here and as a result, since this is near the end of the NT Optional Header, they can truncate the file and
+         * the loader will fill the optional header with zeros when reading. (RPM 2008-11-11) */
+        if (p_e_header_size==0)
+            header_size = 0;
 #endif
         p_e_header_size = header_size;
     }
