@@ -19,6 +19,7 @@ public:
     virtual std::string description() const;
 
     virtual void run(Program *program);
+    virtual void run(CFG *icfg);
 
     virtual void processResults(Program *program);
 
@@ -81,8 +82,11 @@ public:
     const std::vector<Location *> &get_locations() const;
     Location *symbol_location(SgSymbol *sym);
     bool mayBeAliased(Location *loc) const;
-    const std::list<SgSymbol *> &location_symbols(Location *) const;
+    const std::list<SgSymbol *> &location_symbols(Location *loc) const;
     unsigned long location_id(Location *loc) const;
+    Location *location_representative(Location *loc);
+    Location *base_location(Location *loc);
+    bool valid_location(Location *loc) const;
 
     PointsToAnalysis();
     ~PointsToAnalysis();

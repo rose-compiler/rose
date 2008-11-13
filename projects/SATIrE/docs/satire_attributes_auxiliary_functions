@@ -1,4 +1,4 @@
-$Id: satire_attributes_auxiliary_functions,v 1.14 2008-10-23 08:14:53 gergo Exp $
+$Id: satire_attributes_auxiliary_functions,v 1.15 2008-11-13 20:11:30 gergo Exp $
 
 This file lists all CFG attributes, types, and auxiliary functions
 accessible from PAG analysis specifications when using the SATIrE system.
@@ -73,6 +73,21 @@ TypeId
     definition, structural equivalence does not suffice) or are derived from
     the same basic/class type using exactly the same specifiers and
     modifiers (pointer, const, etc.).
+
+Location
+    An abstract "memory region" computed by points-to analysis for every
+    program variable and other expression that refers to an object in
+    memory, such as a pointer dereference, structure field access, etc. Two
+    expressions may be aliases iff they correspond to the same Location;
+    conversely, expressions that have different Locations are definitely not
+    aliases.
+    Points-to analysis must be activated using the --run-pointsto-analysis
+    command line flag; otherwise, analyzers trying to access Locations will
+    segfault. The analysis is a variant of Steensgaard's flow-insensitive,
+    context-insensitive analysis. It works on C programs that are complete,
+    i.e., do not call any external functions. Casting and structures are
+    supported. Pointer arithmetic is supported as long as each pointer stays
+    within one memory region (array).
 
 Comparisons for equality and total ordering relations for these types are
 provided by SATIrE.
@@ -175,6 +190,33 @@ stmt_asttext :: Statement -> str;
 expr_asttext :: Expression -> str;
     returns a string representing the structure of the given expression in a
     format very similar to PAG's pattern syntax
+
+varid_has_location :: VariableId -> bool;
+varid_location :: VariableId -> Location;
+    determine the abstract memory location corresponding to a variable;
+    program variables have locations, SATIrE's temporary variables do not
+
+exprid_has_location :: ExpressionId -> bool;
+exprid_location :: ExpressionId -> Location;
+    determine the abstract memory location corresponding to an expression,
+    this can be a simple variable reference, but also a pointer dereference
+    or other more complex expression; expressions that denote one of
+    SATIrE's temporary variables, or expressions that do not denote an
+    object in memory (an "lvalue") do not have locations
+
+location_varsyms :: Location -> *VariableSymbolNT;
+    returns the list of program variables stored in the given location
+
+may_be_aliased :: Location -> bool;
+    determines whether the given location may be "aliased", i.e., whether
+    some other location may hold a pointer to it
+
+is_ptr_location :: Location -> bool;
+    determines whether the given location contains a pointer to some other
+    location
+
+dereference :: Location -> Location;
+    returns the pointed-to location of a given location that holds a pointer
 
 Deprecated Auxiliary Functions
 ------------------------------

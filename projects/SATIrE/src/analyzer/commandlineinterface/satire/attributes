@@ -72,3 +72,5 @@ BOOL_ATTR(inputBinaryAst, Off)
 BOOL_ATTR(outputBinaryAst, Off)
 STRING_ATTR(InputBinaryAstFileName, "")
 STRING_ATTR(OutputBinaryAstFileName, "")
+
+BOOL_ATTR(runPointsToAnalysis, Off)

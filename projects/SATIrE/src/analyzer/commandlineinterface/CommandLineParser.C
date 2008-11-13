@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany, Adrian Prantl
-// $Id: CommandLineParser.C,v 1.26 2008-09-29 12:32:04 gergo Exp $
+// $Id: CommandLineParser.C,v 1.27 2008-11-13 20:12:55 gergo Exp $
 
 #include <config.h>
 
@@ -249,6 +249,10 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     cl->setLanguage(AnalyzerOptions::Language_C89);
   } else if (optionMatch(argv[i], "--language=c99")) {
     cl->setLanguage(AnalyzerOptions::Language_C99);
+  } else if (optionMatch(argv[i], "--run-pointsto-analysis")) {
+    cl->runPointsToAnalysisOn();
+  } else if (optionMatch(argv[i], "--no-run-pointsto-analysis")) {
+    cl->runPointsToAnalysisOff();
   } else if ((!optionMatchPrefix(argv[i], "-") && !optionMatchPrefix(argv[i],"--")) ) {
     /* handle as filename, pass filenames through */
     cout << "Found input file '" << argv[i] << "'." << endl;

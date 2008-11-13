@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.C,v 1.29 2008-11-04 10:04:24 gergo Exp $
+// $Id: ExprTransformer.C,v 1.30 2008-11-13 20:13:03 gergo Exp $
 
 #include <satire_rose.h>
 #include <patternRewrite.h>
@@ -1396,7 +1396,14 @@ void ExprTransformer::assign_retval(
     var->addNewAttribute("SATIrE: call target",
                          new CallAttribute(call_target_expr));
 
-    block->statements.push_front(Ir::createReturnAssignment(var, retvar));
+    ReturnAssignment *ra = Ir::createReturnAssignment(var, retvar);
+ // GB (2008-11-12): Annotate the global retvar expression of the return
+ // assignment as well.
+    SgVarRefExp *retvar_expr = ra->get_rhsVarRefExp();
+    retvar_expr->addNewAttribute("SATIrE: call target",
+                                 new CallAttribute(call_target_expr));
+    block->statements.push_front(ra);
+
     if (isSgExpression(call->get_parent()))
     {
         SgVarRefExp *replacementExpression = Ir::createVarRefExp(var);

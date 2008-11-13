@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.51 2008-11-11 13:25:17 gergo Exp $
+// $Id: CFGTraversal.C,v 1.52 2008-11-13 20:13:03 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -169,6 +169,8 @@ void
 CFGTraversal::atTraversalStart() {
     traversalTimer = new TimingPerformance("Traversal to construct ICFG:");
 }
+
+#include "pointsto.h"
           
 void
 CFGTraversal::atTraversalEnd() {
@@ -199,6 +201,13 @@ CFGTraversal::atTraversalEnd() {
         cfg->exits.push_back(NULL);
         cfg->calls.push_back(NULL);
         cfg->returns.push_back(NULL);
+
+     // GB (2008-11-11): Added points-to analysis to the ICFG.
+        if (cfg->analyzerOptions->runPointsToAnalysis())
+        {
+            cfg->pointsToAnalysis = new SATIrE::Analyses::PointsToAnalysis();
+            cfg->pointsToAnalysis->run(cfg);
+        }
 
      // GB (2008-04-08): Made numbering of expressions optional, but
      // default.
@@ -1922,6 +1931,13 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
    // procedure-specific ones.
    // = Ir::createVarRefExp(proc->returnvar);
       = Ir::createVarRefExp(cfg->global_return_variable_symbol);
+ // GB (2008-11-12): In addition to adding a call target to the block
+ // containing this return variable expression, we also annotate it directly
+ // so that we can arrive at the corresponding location directly from the
+ // var ref exp without having to go through the enclosing block.
+    varref1->addNewAttribute("SATIrE: call target",
+                             new CallAttribute(new_block->call_target));
+
 	SgExprStatement* exprstat
 	  = Ir::createExprStatement(Ir::createAssignOp(varref1, new_expr));
 	new_block->statements.push_front(exprstat);

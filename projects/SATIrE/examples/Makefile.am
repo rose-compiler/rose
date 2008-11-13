@@ -63,14 +63,20 @@ EXTRA_DIST= \
 	srw98_shape/tests/srw98_data.h \
 	srw98_shape/tests/nnh_xnil.C \
 	srw98_shape/tests/nnh_xysel3shared.C \
-	srw98_shape/tests/srw98_listinsert.C 
+	srw98_shape/tests/srw98_listinsert.C \
+	\
+	pointsto_live_variables/pointsto_live_variables.optla \
+	pointsto_live_variables/runtests.custom \
+	pointsto_live_variables/tests/lv_noalias.c \
+	pointsto_live_variables/tests/lv_singletonalias.c \
+	pointsto_live_variables/tests/lv_nosingletonalias.c
 
 testdir=installcheck-executable-examples
 
 # The tests are now split into separate targets to facilitate a
 # paralellized run of the testsuite (make -j #N installcheck)
 
-.PHONY: tests sl1rd sl2rd nnh99_shape srw98_shape testsuite termite
+.PHONY: tests sl1rd sl2rd nnh99_shape srw98_shape pointsto_live_variables testsuite termite
 
 installcheck-local: 
 	rm -f init.token
@@ -81,7 +87,7 @@ installcheck-local:
 	rm -f init.token
 
 
-tests: sl1rd sl2rd nnh99_shape srw98_shape testsuite termite
+tests: sl1rd sl2rd nnh99_shape srw98_shape pointsto_live_variables testsuite termite
 
 init.token:
 	@echo "Init..."
@@ -135,6 +141,15 @@ srw98_shape: init.token
 	chmod u+rwx -R $(testdir)/srw98_shape
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u srw98_shape
 	$(MAKE) check -C $(testdir)/srw98_shape
+
+pointsto_live_variables: init.token
+	@echo
+	@echo "Testing pointsto_live_variables"
+	@echo "====================="
+	cp -ur $(top_srcdir)/examples/pointsto_live_variables $(testdir)
+	chmod u+rwx -R $(testdir)/pointsto_live_variables
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u pointsto_live_variables
+	$(MAKE) check -C $(testdir)/pointsto_live_variables
 
 testsuite: init.token
 	@echo

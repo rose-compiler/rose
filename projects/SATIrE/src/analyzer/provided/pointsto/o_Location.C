@@ -1,3 +1,6 @@
+// GB (2008-11-07): This is the initial implementation of PAG analyzer
+// access to points-to information.
+
 // Support for the following functions:
 // varid_has_location :: VariableId -> bool;
 // varid_location :: VariableId -> Location;
@@ -5,21 +8,21 @@
 // exprid_location :: ExpressionId -> Location;
 // location_varsyms :: Location -> *VariableSymbolNT;
 // may_be_aliased :: Location -> bool;
+// is_ptr_location :: Location -> bool;
+// dereference :: Location -> Location;
 
 // void **Ir::createNodeList(std::vector<T> &) should come in handy
 
-// TODO: Add points-to analysis to ICFG.
-//       *** Avoid confusion between PointsToAnalysis::Location and the
-//       wrapper class for PAG.
-//       Design and implement a nice interface to query the points-to
-//       analyzer.
-//       Ideally, the abstract locations seen by PAG analyses are only the
-//       equivalence class representatives; not every location is
-//       meaningful. This is relevant if some user tries to construct the
-//       set of all locations, for instance.
-
-// GB (2008-11-07): This is the initial implementation of PAG analyzer
-// access to points-to information.
+// TODO: Ideally, the abstract locations seen by PAG analyses are only the
+// equivalence class representatives; not every "location" node created by
+// the analysis is meaningful in the sense that it is the canonical
+// representative for a memory region. This is relevant if some user tries
+// to construct the set of all locations, for instance. For now, our
+// functions try to ensure to only look at non-dummy locations, and always
+// fetch the equivalence class representative. Let's assume that users will
+// not try to consult the set of all locations right away. (Although it
+// might not really hurt, as every variable should still belong to exactly
+// one unique location.)
 
 #include "gc_mem.h"
 #include "unum.h"
@@ -69,7 +72,19 @@ LocationWrapper *createLocationWrapper(PointsToAnalysis::Location *loc)
 {
     void *n = GC_alloc(LocationWrapper::type_id);
     LocationWrapper *l = (LocationWrapper *) n;
+#if 0
     l->id = get_global_cfg()->pointsToAnalysis->location_id(loc);
+    std::cout
+        << "createLocationWrapper: starting from location " << l->id
+        << " at " << (void *) loc << std::endl;
+#endif
+    loc = get_global_cfg()->pointsToAnalysis->location_representative(loc);
+    l->id = get_global_cfg()->pointsToAnalysis->location_id(loc);
+#if 0
+    std::cout
+        << "representative: location " << l->id << " at " << (void *) loc
+        << std::endl;
+#endif
     l->loc = loc;
     return l;
 }
@@ -79,7 +94,19 @@ extern "C" FLO_BOOL o_Location_eq(void *p, void *q)
     LocationWrapper *a = (LocationWrapper *) p;
     LocationWrapper *b = (LocationWrapper *) q;
 
-    return (a->id == b->id ? FLO_TRUE : FLO_FALSE);
+    bool ids_eq = (a->id == b->id);
+    bool locs_eq = (a->loc == b->loc);
+
+    if (ids_eq != locs_eq)
+    {
+        std::cerr
+            << "SATIrE internal error: inconsistent data structures "
+            << "in o_Location_eq!"
+            << std::endl;
+        std::abort();
+    }
+
+    return (ids_eq && locs_eq ? FLO_TRUE : FLO_FALSE);
 }
 
 extern "C" FLO_BOOL o_Location_neq(void *p, void *q)
@@ -110,14 +137,22 @@ extern "C" void o_Location_init(void)
                                                    o_Location_hash,
                                                    /* noshare = */ 0);
 
-     // This must be called after the ICFG has been built, and points-to
-     // analysis has been performed.
-        const std::vector<PointsToAnalysis::Location *> &locations
-            = get_global_cfg()->pointsToAnalysis->get_locations();
-        o_Location_power = locations.size();
-     // numberOfLocations is needed to test for termination of the
-     // abstract cursor functions below.
-        numberOfLocations = locations.size();
+        if (get_global_cfg()->pointsToAnalysis != NULL)
+        {
+         // This must be called after the ICFG has been built, and points-to
+         // analysis has been performed.
+            const std::vector<PointsToAnalysis::Location *> &locations
+                = get_global_cfg()->pointsToAnalysis->get_locations();
+            o_Location_power = locations.size();
+         // numberOfLocations is needed to test for termination of the
+         // abstract cursor functions below.
+            numberOfLocations = locations.size();
+        }
+        else
+        {
+            o_Location_power = 0;
+            numberOfLocations = 0;
+        }
     }
 }
 
@@ -199,10 +234,23 @@ extern "C" void *o_varid_location(void *vp)
 
 extern "C" FLO_BOOL o_exprid_has_location(void *ep)
 {
-    std::cerr
-        << "o_exprid_has_location not implemented yet"
-        << std::endl;
-    std::abort();
+    SgExpression *exp = (SgExpression *) o_exprid_expr(ep);
+ // Similarly to the varid case, simple VarRefExps to tmpvars do not have
+ // valid locations.
+    if (SgVarRefExp *vr = isSgVarRefExp(exp))
+    {
+        if (o_is_tmpvarid(o_varref_varid(vr)))
+            return FLO_FALSE;
+    }
+
+    PointsToAnalysis::Location *loc
+        = get_global_cfg()->pointsToAnalysis->expressionLocation(exp);
+ // We move further responsibility to decide what a "valid location" is to
+ // the points-to analysis.
+    if (get_global_cfg()->pointsToAnalysis->valid_location(loc))
+        return FLO_TRUE;
+    else
+        return FLO_FALSE;
 }
 
 extern "C" void *o_exprid_location(void *ep)
@@ -226,7 +274,14 @@ extern "C" void *o_location_varsyms(void *lp)
         if (SgVariableSymbol *varsym = isSgVariableSymbol(*s))
             varsyms.push_back(varsym);
     }
-    return Ir::createNodeList(varsyms);
+    void **result = Ir::createNodeList(varsyms);
+#if 0
+    std::cout
+        << "o_location_varsyms: " << varsyms.size()
+        << " symbols, result = " << (void *) result
+        << std::endl;
+#endif
+    return result;
 }
 
 extern "C" FLO_BOOL o_may_be_aliased(void *lp)
@@ -235,6 +290,27 @@ extern "C" FLO_BOOL o_may_be_aliased(void *lp)
     PointsToAnalysis::Location *loc = wrapper->loc;
     bool mayBeAliased = get_global_cfg()->pointsToAnalysis->mayBeAliased(loc);
     return (mayBeAliased ? FLO_TRUE : FLO_FALSE);
+}
+
+extern "C" FLO_BOOL o_is_ptr_location(void *lp)
+{
+    LocationWrapper *wrapper = (LocationWrapper *) lp;
+    PointsToAnalysis::Location *loc = wrapper->loc;
+    loc = get_global_cfg()->pointsToAnalysis->location_representative(loc);
+    loc = get_global_cfg()->pointsToAnalysis->base_location(loc);
+    if (get_global_cfg()->pointsToAnalysis->valid_location(loc))
+        return FLO_TRUE;
+    else
+        return FLO_FALSE;
+}
+
+extern "C" void *o_dereference(void *lp)
+{
+    LocationWrapper *wrapper = (LocationWrapper *) lp;
+    PointsToAnalysis::Location *loc = wrapper->loc;
+    loc = get_global_cfg()->pointsToAnalysis->location_representative(loc);
+    loc = get_global_cfg()->pointsToAnalysis->base_location(loc);
+    return createLocationWrapper(loc);
 }
 
 #if 0
