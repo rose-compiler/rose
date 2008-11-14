@@ -328,9 +328,11 @@ OUTPUT_COLUMNS="\$6,\$5,\$7,\$11,\$12,\$13,\$14"
 OUTPUT_HEADERS="t_wall\tt_user\tt_pag\talloc'd\tcommandline"
 
 echo "[$succs_ok/$expected_succs] expected successes"
-printf "$OUTPUT_HEADERS\n"
-awk "BEGIN{FS=\"\\t\"; OFS=\"\\t\"}(\$1==0){print $OUTPUT_COLUMNS}" $STATSFILE
-awk '($1==0){print $0}' $STATSFILE | awk -v prefix="" -f $AWKFILE
+# GB (2008-11-14): This used to output an empty and thus meaningless table,
+# so I removed it. It can be resurrected at some point if anyone wants it.
+#printf "$OUTPUT_HEADERS\n"
+#awk "BEGIN{FS=\"\\t\"; OFS=\"\\t\"}(\$1==0){print $OUTPUT_COLUMNS}" $STATSFILE
+#awk '($1==0){print $0}' $STATSFILE | awk -v prefix="" -f $AWKFILE
 echo 
 echo "[$fails_ok/$expected_fails] expected failures"
 
