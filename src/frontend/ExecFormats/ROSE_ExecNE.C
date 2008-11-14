@@ -97,9 +97,8 @@ SgAsmNEExtendedDOSHeader::encode(SgAsmNEExtendedDOSHeader::ExtendedDOSHeader_dis
 
 /* Write an extended header back to disk */
 void
-SgAsmNEExtendedDOSHeader::unparse(std::ostream &f)
+SgAsmNEExtendedDOSHeader::unparse(std::ostream &f) const
 {
-    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     ExtendedDOSHeader_disk disk;
     encode(&disk);
     write(f, 0, sizeof disk, &disk);
@@ -252,9 +251,8 @@ SgAsmNEFileHeader::encode(SgAsmNEFileHeader::NEFileHeader_disk *disk) const
 
 /* Write the NE file header back to disk and all that it references */
 void
-SgAsmNEFileHeader::unparse(std::ostream &f)
+SgAsmNEFileHeader::unparse(std::ostream &f) const
 {
-    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     NEFileHeader_disk fh;
     encode(&fh);
     write(f, 0, sizeof fh, &fh);
@@ -432,9 +430,8 @@ SgAsmNESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmNE
 
 /* Write section back to disk */
 void
-SgAsmNESection::unparse(std::ostream &f)
+SgAsmNESection::unparse(std::ostream &f) const
 {
-    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     SgAsmGenericSection::unparse(f);
     if (p_reloc_table)
         p_reloc_table->unparse(f);
@@ -523,9 +520,8 @@ SgAsmNESectionTable::ctor()
 
 /* Writes the section table back to disk along with each of the sections. */
 void
-SgAsmNESectionTable::unparse(std::ostream &f)
+SgAsmNESectionTable::unparse(std::ostream &f) const
 {
-    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     SgAsmNEFileHeader *fhdr = dynamic_cast<SgAsmNEFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
     SgAsmGenericSectionPtrList sections = fhdr->get_sections()->get_sections();
@@ -598,9 +594,8 @@ SgAsmNENameTable::ctor()
 
 /* Writes the section back to disk. */
 void
-SgAsmNENameTable::unparse(std::ostream &f)
+SgAsmNENameTable::unparse(std::ostream &f) const
 {
-    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     addr_t spos=0; /*section offset*/
     ROSE_ASSERT(p_names.size() == p_ordinals.size());
 
@@ -688,9 +683,8 @@ SgAsmNEModuleTable::ctor()
 
 /* Writes the section back to disk. */
 void
-SgAsmNEModuleTable::unparse(std::ostream &f)
+SgAsmNEModuleTable::unparse(std::ostream &f) const
 {
-    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     addr_t spos = 0; /*section offset*/
     p_strtab->unparse(f);
 
@@ -889,9 +883,8 @@ SgAsmNEEntryTable::populate_entries()
 
 /* Write section back to disk */
 void
-SgAsmNEEntryTable::unparse(std::ostream &f)
+SgAsmNEEntryTable::unparse(std::ostream &f) const
 {
-    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     addr_t spos=0; /*section offset*/
 
     for (size_t bi=0, ei=0; bi < p_bundle_sizes.size(); ei += p_bundle_sizes[bi++]) {
@@ -1057,7 +1050,7 @@ SgAsmNERelocEntry::ctor(SgAsmGenericSection *relocs, addr_t at, addr_t *rec_size
 
 /* Write entry back to disk at the specified section and section offset, returning new offset */
 rose_addr_t
-SgAsmNERelocEntry::unparse(std::ostream &f, SgAsmGenericSection *section, rose_addr_t spos)
+SgAsmNERelocEntry::unparse(std::ostream &f, const SgAsmGenericSection *section, rose_addr_t spos) const
 {
     unsigned char byte;
     byte = (p_modifier << 8) | (p_src_type & 0x0f);
@@ -1230,9 +1223,8 @@ SgAsmNERelocTable::ctor()
 
 /* Write relocation table back to disk */
 void
-SgAsmNERelocTable::unparse(std::ostream &f)
+SgAsmNERelocTable::unparse(std::ostream &f) const
 {
-    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     addr_t spos=0; /*section offset*/
     uint16_t size_le;
     host_to_le(p_entries.size(), &size_le);

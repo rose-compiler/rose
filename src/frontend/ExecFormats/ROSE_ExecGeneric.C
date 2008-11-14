@@ -1634,7 +1634,7 @@ SgAsmGenericFile::reallocate()
 /* Mirror image of parsing an executable file. The result (unless the AST has been modified) should be identical to the
  * original file. */
 void
-SgAsmGenericFile::unparse(std::ostream &f)
+SgAsmGenericFile::unparse(std::ostream &f) const
 {
 #if 0
     /* This is only for debugging -- fill the file with something other than zero so we have a better chance of making sure
@@ -2111,10 +2111,8 @@ SgAsmGenericSection::is_file_header()
 /* Write a section back to the file. This is the generic version that simply writes the content. Subclasses should override
  * this. */
 void
-SgAsmGenericSection::unparse(std::ostream &f)
+SgAsmGenericSection::unparse(std::ostream &f) const
 {
-    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
-
 #if 0
     /* FIXME: for now we print the names of all sections we dump using this method. Eventually most of these sections will
      *        have subclasses that override this method. */
@@ -2126,7 +2124,7 @@ SgAsmGenericSection::unparse(std::ostream &f)
 
 /* Write just the specified regions back to the file */
 void
-SgAsmGenericSection::unparse(std::ostream &f, const ExtentMap &map)
+SgAsmGenericSection::unparse(std::ostream &f, const ExtentMap &map) const
 {
     for (ExtentMap::const_iterator i=map.begin(); i!=map.end(); ++i) {
         ROSE_ASSERT((*i).first+(*i).second <= get_size());
@@ -2137,7 +2135,7 @@ SgAsmGenericSection::unparse(std::ostream &f, const ExtentMap &map)
 
 /* Write holes (unreferenced areas) back to the file */
 void
-SgAsmGenericSection::unparse_holes(std::ostream &f)
+SgAsmGenericSection::unparse_holes(std::ostream &f) const
 {
     ROSE_ASSERT(get_congealed()); /*done parsing*/
     unparse(f, p_extents);
@@ -2561,7 +2559,7 @@ SgAsmGenericHeader::reallocate()
     
 /* Unparse headers and all they point to */
 void
-SgAsmGenericHeader::unparse(std::ostream &f)
+SgAsmGenericHeader::unparse(std::ostream &f) const
 {
     SgAsmGenericSection::unparse(f);
 

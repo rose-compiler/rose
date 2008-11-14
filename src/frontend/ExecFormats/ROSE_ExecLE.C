@@ -190,9 +190,8 @@ SgAsmLEFileHeader::encode(ByteOrder sex, LEFileHeader_disk *disk) const
 
 /* Write the LE file header back to disk and all that it references */
 void
-SgAsmLEFileHeader::unparse(std::ostream &f)
+SgAsmLEFileHeader::unparse(std::ostream &f) const
 {
-    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     LEFileHeader_disk fh;
     encode(get_sex(), &fh);
     write(f, 0, sizeof fh, &fh);
@@ -422,9 +421,8 @@ SgAsmLEPageTable::get_page(size_t idx)
 
 /* Write page table back to disk */
 void
-SgAsmLEPageTable::unparse(std::ostream &f)
+SgAsmLEPageTable::unparse(std::ostream &f) const
 {
-    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     addr_t spos=0; /*section offset*/
     for (size_t i=0; i < p_entries.size(); i++) {
         SgAsmLEPageTableEntry::LEPageTableEntry_disk disk;
@@ -612,9 +610,8 @@ SgAsmLESectionTable::ctor()
 
 /* Writes the section table back to disk along with each of the sections. */
 void
-SgAsmLESectionTable::unparse(std::ostream &f)
+SgAsmLESectionTable::unparse(std::ostream &f) const
 {
-    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     SgAsmLEFileHeader *fhdr = dynamic_cast<SgAsmLEFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
     SgAsmGenericSectionPtrList sections = fhdr->get_sections()->get_sections();
@@ -687,9 +684,8 @@ SgAsmLENameTable::ctor()
 
 /* Writes the section back to disk. */
 void
-SgAsmLENameTable::unparse(std::ostream &f)
+SgAsmLENameTable::unparse(std::ostream &f) const
 {
-    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     addr_t spos=0; /*section offset*/
     ROSE_ASSERT(p_names.size() == p_ordinals.size());
     for (size_t i = 0; i < p_names.size(); i++) {
@@ -749,7 +745,7 @@ SgAsmLEEntryPoint::ctor(ByteOrder sex, const SgAsmLEEntryPoint::LEEntryPoint_dis
 
 /* Write the entry information back to the disk at the specified section and section offset, returning the new section offset. */
 rose_addr_t
-SgAsmLEEntryPoint::unparse(std::ostream &f, ByteOrder sex, SgAsmGenericSection *section, rose_addr_t spos)
+SgAsmLEEntryPoint::unparse(std::ostream &f, ByteOrder sex, const SgAsmGenericSection *section, rose_addr_t spos) const
 {
     if (0==(p_flags & 0x01)) {
         /* Empty entry; write only the flag byte */
@@ -841,9 +837,8 @@ SgAsmLEEntryTable::ctor()
 
 /* Write entry table back to file */
 void
-SgAsmLEEntryTable::unparse(std::ostream &f)
+SgAsmLEEntryTable::unparse(std::ostream &f) const
 {
-    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     addr_t spos=0; /*section offset*/
     ROSE_ASSERT(p_entries.size()<=0xff);
     uint8_t byte = p_entries.size();

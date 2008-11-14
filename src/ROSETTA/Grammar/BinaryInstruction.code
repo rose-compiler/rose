@@ -780,9 +780,9 @@ HEADER_GENERIC_SECTION_START
           static void dump_containing_sections(FILE *f, const std::string &prefix, rose_rva_t rva, const SgAsmGenericSectionPtrList&);
           virtual void        dump(FILE*, const char *prefix, ssize_t idx);
 	  virtual bool	      reallocate() {return false;}
-          virtual void        unparse(std::ostream&);
-          void                unparse(std::ostream&, const ExtentMap&);
-          void 	     	      unparse_holes(std::ostream&);
+          virtual void        unparse(std::ostream&) const;
+          void                unparse(std::ostream&, const ExtentMap&) const;
+          void 	     	      unparse_holes(std::ostream&) const;
           SgAsmGenericHeader *is_file_header();              /* true if section represents a top level file header */
 
        /* Functions for section extent within the file */
@@ -838,7 +838,7 @@ HEADER_GENERIC_HEADER_START
           SgAsmGenericHeader(SgAsmGenericFile *ef, addr_t offset, addr_t size);
           virtual ~SgAsmGenericHeader();
 	  virtual bool reallocate();
-	  virtual void unparse(std::ostream&);
+	  virtual void unparse(std::ostream&) const;
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
        // DQ (8/8/2008): We can't make this pure virtual since then we can't allocate this class.
@@ -908,7 +908,7 @@ HEADER_GENERIC_FILE_START
 		SgAsmGenericFile(std::string file_name);
 		virtual ~SgAsmGenericFile();				/* Destructor deletes children and unmaps/closes file */
 		void reallocate();					/* Make consistent before calling unparse */
-		void unparse(std::ostream&);				/* Unparse the file -- mirror image of parsing */
+		void unparse(std::ostream&) const;			/* Unparse the file -- mirror image of parsing */
 		void dump(FILE*);                                   	/* Print some debugging info */
 
 		/* File contents */
@@ -1227,7 +1227,7 @@ HEADER_ELF_HEADER_START
 
 		uint64_t max_page_size();
 		virtual bool reallocate();
-		virtual void unparse(std::ostream&);
+		virtual void unparse(std::ostream&) const;
 
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfFileHeader::Elf32FileHeader_disk*) const;
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfFileHeader::Elf64FileHeader_disk*) const;
@@ -1253,7 +1253,7 @@ HEADER_ELF_SECTION_TABLE_START
 
 	  rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 	  virtual bool reallocate();
-          virtual void unparse(std::ostream&);
+          virtual void unparse(std::ostream&) const;
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
      private:
@@ -1396,7 +1396,7 @@ HEADER_ELF_STRING_TABLE_START
 			: SgAsmGenericStrtab(containing_section)
 			{ctor();}
 		virtual ~SgAsmElfStrtab();
-		virtual void unparse(std::ostream&);
+		virtual void unparse(std::ostream&) const;
 		virtual SgAsmStringStorage *create_storage(addr_t offset, bool shared);
 		virtual addr_t get_storage_size(const SgAsmStringStorage*);
 		virtual void allocate_overlap(SgAsmStringStorage*);
@@ -1413,7 +1413,7 @@ HEADER_ELF_STRING_SECTION_START
 		virtual void dump(FILE*, const char *prefix, ssize_t idx);
 		virtual void set_size(addr_t newsize);
 		virtual bool reallocate();
-		virtual void unparse(std::ostream&);
+		virtual void unparse(std::ostream&) const;
 	private:
 		void ctor();
 HEADER_ELF_STRING_SECTION_END
@@ -1426,7 +1426,7 @@ HEADER_ELF_RELA_SECTION_START
 		//virtual ~SgAsmElfRelaSection() {}
 		using SgAsmElfSection::calculate_sizes;
 		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const;
-		virtual void unparse(std::ostream&);
+		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx);
 	private:
 		void ctor(SgAsmElfFileHeader*, SgAsmElfSectionTableEntry*);
@@ -1473,7 +1473,7 @@ HEADER_ELF_DYNAMIC_SECTION_START
 		using SgAsmElfSection::calculate_sizes;
 		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const;
 		virtual void set_linked_section(SgAsmElfSection*);   /* Parsing happens here rather than in constructor */
-		virtual void unparse(std::ostream&);
+		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx);
 	private:
 		void ctor(SgAsmElfFileHeader*, SgAsmElfSectionTableEntry*);
@@ -1590,7 +1590,7 @@ HEADER_ELF_SEGMENT_TABLE_START
 
 		rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 		virtual bool reallocate();
-		virtual void unparse(std::ostream&);
+		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx);
 	private:
 		void ctor();
@@ -1696,7 +1696,7 @@ HEADER_ELF_SYMBOL_SECTION_START
 		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const;
 		virtual void set_linked_section(SgAsmElfSection*);
 		virtual bool reallocate();
-		virtual void unparse(std::ostream&);
+		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx);
 	private:
 		void ctor(SgAsmElfSectionTableEntry*);
@@ -1909,7 +1909,7 @@ HEADER_PE_FILE_HEADER_START
 		void add_rvasize_pairs();
 
 		virtual bool reallocate();
-		virtual void unparse(std::ostream&);
+		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx);
 		void create_table_sections();
 
@@ -1967,7 +1967,7 @@ HEADER_PE_IMPORT_DIRECTORY_START
 		SgAsmPEImportDirectory(SgAsmPEImportSection *isec, size_t idx)
 			{ctor(isec,idx);}
 		void *encode(SgAsmPEImportDirectory::PEImportDirectory_disk*) const;
-		virtual void unparse(std::ostream&, SgAsmPEImportSection*);
+		virtual void unparse(std::ostream&, const SgAsmPEImportSection*) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx);
 	private:
 		void ctor(SgAsmPEImportSection*, size_t idx);
@@ -1986,8 +1986,8 @@ HEADER_PE_IMPORT_ILT_ENTRY_START
 
 		SgAsmPEImportILTEntry(SgAsmPEImportSection *isec, uint64_t entry_word)
 			{ctor(isec,entry_word);}
-		uint64_t encode(SgAsmPEFileHeader*) const;
-		void unparse(std::ostream&, SgAsmPEFileHeader *fhdr, rva_t rva, size_t idx);
+		uint64_t encode(const SgAsmPEFileHeader*) const;
+		void unparse(std::ostream&, const SgAsmPEFileHeader *fhdr, rva_t rva, size_t idx) const;
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx);
 	private:
 		void ctor(SgAsmPEImportSection*, uint64_t);
@@ -2003,7 +2003,7 @@ HEADER_PE_IMPORT_LOOKUP_TABLE_START
 			: p_entries(NULL)
 			{ctor(isec, table_rva, idir_idx, is_iat);}
 		void add_ilt_entry(SgAsmPEImportILTEntry*);
-		virtual void unparse(std::ostream&, SgAsmPEFileHeader*, rose_rva_t);
+		virtual void unparse(std::ostream&, const SgAsmPEFileHeader*, rose_rva_t) const;
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx);
 	private:
 		void ctor(SgAsmPEImportSection*, rose_rva_t table_rva, size_t idir_idx, bool is_iat);
@@ -2016,7 +2016,7 @@ HEADER_PE_IMPORT_HNT_ENTRY_START
 	public:
 		SgAsmPEImportHNTEntry(rose_rva_t offset)
 			{ctor(offset);}
-		void unparse(std::ostream&, rva_t rva);
+		void unparse(std::ostream&, rva_t rva) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx);
 	private:
 		void ctor(rose_rva_t offset);
@@ -2029,7 +2029,7 @@ HEADER_PE_IMPORT_SECTION_START
 		SgAsmPEImportSection(SgAsmPEFileHeader *fhdr, addr_t offset, addr_t size, addr_t mapped_rva)
 			: SgAsmPESection(fhdr, offset, size)
 			{ctor(offset, size, mapped_rva);}
-		virtual void unparse(std::ostream&);
+		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx);
 		void add_import_directory(SgAsmPEImportDirectory*);
 	private:
@@ -2116,7 +2116,7 @@ HEADER_PE_SECTION_TABLE_START
           SgAsmPESectionTable(SgAsmPEFileHeader *fhdr, addr_t offset, addr_t size);
        // virtual ~SgAsmPESectionTable() {}
 
-          virtual void unparse(std::ostream&);
+          virtual void unparse(std::ostream&) const;
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
   private:
@@ -2129,7 +2129,7 @@ HEADER_PE_COFF_SYMBOL_TABLE_START
           SgAsmCoffSymbolTable(SgAsmPEFileHeader *fhdr);
        // virtual ~COFFSymtab() {}
 
-          virtual void unparse(std::ostream&);
+          virtual void unparse(std::ostream&) const;
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
        /* Accessors for protected/private data members */
@@ -2160,7 +2160,7 @@ HEADER_PE_EXTENDED_DOS_HEADER_START
        // virtual ~SgAsmPEExtendedDOSHeader() {}
 
           void *encode(SgAsmPEExtendedDOSHeader::ExtendedDOSHeader_disk*) const;
-          virtual void unparse(std::ostream&);
+         virtual void unparse(std::ostream&) const;
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
      private:
@@ -2289,7 +2289,7 @@ HEADER_COFF_STRING_TABLE_START
 			: SgAsmGenericStrtab(containing_section)
 			{}
 		virtual ~SgAsmCoffStrtab();
-		virtual void unparse(std::ostream&);
+		virtual void unparse(std::ostream&) const;
 		virtual SgAsmStringStorage *create_storage(addr_t offset, bool shared);
 		virtual addr_t get_storage_size(const SgAsmStringStorage*);
 HEADER_COFF_STRING_TABLE_END
@@ -2303,7 +2303,7 @@ HEADER_PE_STRING_SECTION_START
 		virtual bool reallocate();
 		virtual void dump(FILE*, const char *prefix, ssize_t idx);
 		virtual void set_size(addr_t newsize);
-	        virtual void unparse(std::ostream&);
+	        virtual void unparse(std::ostream&) const;
 	private:
 		void ctor();
 HEADER_PE_STRING_SECTION_END
@@ -2387,7 +2387,7 @@ HEADER_NE_FILE_HEADER_START
           SgAsmNEFileHeader(SgAsmGenericFile *f, addr_t offset);
        // virtual ~NEFileHeader() {}
 
-          virtual void unparse(std::ostream&);
+          virtual void unparse(std::ostream&) const;
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
        // virtual const char *format_name() {return "NE";}
 
@@ -2430,7 +2430,7 @@ HEADER_NE_SECTION_START
           SgAsmNESection(SgAsmNEFileHeader*, addr_t offset, addr_t size);
        // virtual ~NESection() {}
 
-          virtual void unparse(std::ostream&);
+          virtual void unparse(std::ostream&) const;
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
        /* Accessors for protected/private data */
@@ -2449,7 +2449,7 @@ HEADER_NE_SECTION_TABLE_START
           SgAsmNESectionTable(SgAsmNEFileHeader *fhdr);
        // virtual ~NESectionTable() {}
 
-          virtual void unparse(std::ostream&);
+          virtual void unparse(std::ostream&) const;
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
      private:
@@ -2462,7 +2462,7 @@ HEADER_NE_NAME_TABLE_START
           SgAsmNENameTable(SgAsmNEFileHeader *fhdr, addr_t offset);
        // virtual ~NENameTable() {}
 
-          virtual void unparse(std::ostream&);
+          virtual void unparse(std::ostream&) const;
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
           std::vector<std::string> get_names_by_ordinal(unsigned ordinal);
 
@@ -2478,7 +2478,7 @@ HEADER_NE_MODULE_TABLE_START
           SgAsmNEModuleTable(SgAsmNEFileHeader *fhdr, addr_t offset, addr_t size, SgAsmNEStringTable *strtab);
        // virtual ~NEModuleTable() {}
 
-          virtual void unparse(std::ostream&);
+          virtual void unparse(std::ostream&) const;
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
      private:
@@ -2509,7 +2509,7 @@ HEADER_NE_ENTRY_TABLE_START
        // virtual ~NEEntryTable() {}
 
           void populate_entries();
-          virtual void unparse(std::ostream&);
+          virtual void unparse(std::ostream&) const;
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
      private:
@@ -2525,7 +2525,7 @@ HEADER_NE_RELOC_TABLE_START
           SgAsmNERelocTable(SgAsmNEFileHeader *fhdr, addr_t offset);
        // virtual ~NERelocTable() {}
 
-          virtual void unparse(std::ostream&);
+          virtual void unparse(std::ostream&) const;
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
      private:
@@ -2546,7 +2546,7 @@ HEADER_NE_EXTENDED_DOS_HEADER_START
        // virtual ~ExtendedDOSHeader() {};
 
           void *encode(SgAsmNEExtendedDOSHeader::ExtendedDOSHeader_disk*) const;
-          virtual void unparse(std::ostream&);
+          virtual void unparse(std::ostream&) const;
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
        /* These are the native-format versions of the same members described in the ExtendedDOSHeader_disk struct. */
@@ -2668,7 +2668,7 @@ HEADER_NE_RELOC_ENTRY_START
           SgAsmNERelocEntry(SgAsmGenericSection *relocs, addr_t at, addr_t *rec_size);
 
           void ctor(SgAsmGenericSection*, addr_t at, addr_t *rec_size);
-          addr_t unparse(std::ostream&, SgAsmGenericSection*, addr_t spos);
+          addr_t unparse(std::ostream&, const SgAsmGenericSection*, addr_t spos) const;
           void dump(FILE*, const char *prefix, ssize_t idx);
 
        // NERelocSrcType      src_type;       /* low nibble of first byte of relocation record */
@@ -2815,7 +2815,7 @@ HEADER_LE_FILE_HEADER_START
           SgAsmLEFileHeader(SgAsmGenericFile *f, addr_t offset);
        // virtual ~LEFileHeader() {}
 
-          virtual void unparse(std::ostream&);
+          virtual void unparse(std::ostream&) const;
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
        // virtual const char *format_name();
 
@@ -2866,7 +2866,7 @@ HEADER_LE_SECTION_START
           SgAsmLESection(SgAsmLEFileHeader*, addr_t offset, addr_t size);
        // virtual ~LESection() {}
 
-       // virtual void unparse(std::ostream&); /*nothing special to do*/
+       // virtual void unparse(std::ostream&) const; /*nothing special to do*/
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
        /* Accessors for protected/private data */
@@ -2883,7 +2883,7 @@ HEADER_LE_SECTION_TABLE_START
           SgAsmLESectionTable(SgAsmLEFileHeader *fhdr, addr_t offset, addr_t size);
        // virtual ~LESectionTable() {}
 
-          virtual void unparse(std::ostream&);
+          virtual void unparse(std::ostream&) const;
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
      private:
@@ -2903,7 +2903,7 @@ HEADER_LE_NAME_TABLE_START
           SgAsmLENameTable(SgAsmLEFileHeader *fhdr, addr_t offset);
        // virtual ~LENameTable() {}
 
-          virtual void unparse(std::ostream&);
+          virtual void unparse(std::ostream&) const;
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
      private:
@@ -2919,7 +2919,7 @@ HEADER_LE_PAGE_TABLE_START
           SgAsmLEPageTable(SgAsmLEFileHeader *fhdr, addr_t offset, addr_t size);
        // virtual ~LEPageTable() {}
 
-          virtual void unparse(std::ostream&);
+          virtual void unparse(std::ostream&) const;
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
           SgAsmLEPageTableEntry *get_page(size_t idx);
 
@@ -2935,7 +2935,7 @@ HEADER_LE_ENTRY_TABLE_START
           SgAsmLEEntryTable(SgAsmLEFileHeader *fhdr, addr_t offset);
        // virtual ~LEEntryTable() {}
 
-          virtual void unparse(std::ostream&);
+          virtual void unparse(std::ostream&) const;
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
      private:
@@ -2951,7 +2951,7 @@ HEADER_LE_RELOC_TABLE_START
           SgAsmLERelocTable(SgAsmLEFileHeader *fhdr, addr_t offset);
        // virtual ~LERelocTable() {}
 
-       // virtual void unparse(std::ostream&);
+       // virtual void unparse(std::ostream&) const;
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
      private:
@@ -3007,7 +3007,7 @@ HEADER_LE_ENTRY_POINT_START
           SgAsmLEEntryPoint(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLEEntryPoint::LEEntryPoint_disk *disk);
           SgAsmLEEntryPoint(SgAsmExecutableFileFormat::ByteOrder sex, unsigned flags);
 
-          addr_t unparse(std::ostream&, SgAsmExecutableFileFormat::ByteOrder, SgAsmGenericSection*, addr_t spos);
+          addr_t unparse(std::ostream&, SgAsmExecutableFileFormat::ByteOrder, const SgAsmGenericSection*, addr_t spos) const;
           void dump(FILE*, const char *prefix, ssize_t idx);
 
      private:
@@ -3113,7 +3113,7 @@ HEADER_DOS_HEADER_START
           SgAsmDOSFileHeader(SgAsmGenericFile *f, addr_t offset);
        // virtual ~DOSFileHeader() {}
 
-          virtual void unparse(std::ostream&);
+          virtual void unparse(std::ostream&) const;
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
        // Required function to overload base class (ROSETTA does not permit the base class function to be pure virtual, as I recall)
