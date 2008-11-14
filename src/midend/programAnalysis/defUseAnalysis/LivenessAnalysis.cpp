@@ -55,30 +55,37 @@ LivenessAnalysis::getFunction(SgNode* node) {
 
 void 
 LivenessAnalysis::printInAndOut(SgNode* sgNode) {
-  cout << ">>> in and out for : " << sgNode << "  " << sgNode->class_name() << endl;
+  if (DEBUG_MODE)
+    cout << ">>> in and out for : " << sgNode << "  " << sgNode->class_name() << endl;
   std::vector<SgInitializedName*> currIn = in[sgNode];
   std::vector<SgInitializedName*>::const_iterator it2 = currIn.begin();
-  cout << "   in : " ;
+  if (DEBUG_MODE)
+    cout << "   in : " ;
   for (;it2!=currIn.end();++it2) {
     SgInitializedName* init = isSgInitializedName(*it2);
     ROSE_ASSERT(init);
     std::string name =".";
     name= init->get_name().str();
-    cout << name << ", " ;
+    if (DEBUG_MODE)
+      cout << name << ", " ;
   }
-  cout << endl;
+  if (DEBUG_MODE)
+    cout << endl;
 
   std::vector<SgInitializedName*> currOut = out[sgNode];
   std::vector<SgInitializedName*>::const_iterator it3 = currOut.begin();
-  cout << "   out : " ;
+  if (DEBUG_MODE)
+    cout << "   out : " ;
   for (;it3!=currOut.end();++it3) {
     SgInitializedName* init = isSgInitializedName(*it3);
     ROSE_ASSERT(init);
     std::string name =".";
     name= init->get_name().str();
-    cout << name << ", " ;
+    if (DEBUG_MODE)
+      cout << name << ", " ;
   }
-  cout << endl;
+  if (DEBUG_MODE)
+    cout << endl;
 }
 
 static bool sort_using_greater_than(SgNode* u, SgNode* v){
@@ -138,11 +145,11 @@ bool LivenessAnalysis::defuse(T cfgNode, bool *unhandled) {
 
 
   bool has_changed=false;
-  if (DEBUG_MODE)
+  if (DEBUG_MODE) {
     cout << "\n\n------------------------------------------------------------------\ncurrent Node: " << 
       sgNode << "  previous Node : " << sgNodeBefore << endl;
-
-  printInAndOut(sgNode);
+    printInAndOut(sgNode);
+  }
 
   // get def and use for this node 
   SgInitializedName* initName = isSgInitializedName(sgNode);
@@ -173,12 +180,12 @@ bool LivenessAnalysis::defuse(T cfgNode, bool *unhandled) {
     }
   }
 
-  if (DEBUG_MODE)
+  if (DEBUG_MODE) {
     cout << "     At this point def : " << defNode << "  use : " << useNode << endl;
-  if (initName)
-    cout << "  initName : " << initName->get_name().str() << endl;
-
-  cout << " Doing out = " << endl;
+    if (initName)
+      cout << "  initName : " << initName->get_name().str() << endl;
+    cout << " Doing out = " << endl;
+  }
   // do the algo for variable liveness
   out[sgNode].clear();
   vector<FilteredCFGEdge < IsDFAFilter > > out_edges = cfgNode.outEdges();
@@ -188,16 +195,19 @@ bool LivenessAnalysis::defuse(T cfgNode, bool *unhandled) {
     SgNode* sgNodeNext = filterNode.getNode();
     ROSE_ASSERT(sgNodeNext);
     std::vector<SgInitializedName*> tmpIn = in[sgNodeNext];
-    cout << "   out : previous node : " << sgNodeNext << " " << sgNodeNext->class_name() << "   in Size : " << 
-      tmpIn.size() << "   out[sgNode].size = " << out[sgNode].size() << endl;
+    if (DEBUG_MODE)
+      cout << "   out : previous node : " << sgNodeNext << " " << sgNodeNext->class_name() << "   in Size : " << 
+	tmpIn.size() << "   out[sgNode].size = " << out[sgNode].size() << endl;
     //    out[sgNode].swap(tmpIn);
     std::vector<SgInitializedName*> tmpOut = out[sgNode];
     out[sgNode]=merge_no_dups(tmpOut,tmpIn);
     std::sort(out[sgNode].begin(), out[sgNode].end(),sort_using_greater_than);
   }
 
-  printInAndOut(sgNode);
-  cout << " Doing in = " << endl;
+  if (DEBUG_MODE)
+    printInAndOut(sgNode);
+  if (DEBUG_MODE)
+    cout << " Doing in = " << endl;
 
   // what if it is an assignment
   switch(sgNode->variant()) {
@@ -309,29 +319,35 @@ bool LivenessAnalysis::defuse(T cfgNode, bool *unhandled) {
     }
     if (!found) {
       std::string name = initName->get_name().str();
-      cout << " did not find initName : " << name << " in in[sgNode]    size: " << in[sgNode].size() <<endl;
+      if (DEBUG_MODE)
+	cout << " did not find initName : " << name << " in in[sgNode]    size: " << in[sgNode].size() <<endl;
       in[sgNode].push_back(initName); // = varRef
       std::sort(in[sgNode].begin(), in[sgNode].end(),sort_using_greater_than);
-      cout << " added sgNode :   new size [sgNode] = " <<in[sgNode].size() <<endl;
+      if (DEBUG_MODE)
+	cout << " added sgNode :   new size [sgNode] = " <<in[sgNode].size() <<endl;
     }
   }
 
   if (defNode || useNode) {
-    cout << " This was a def or use node " << endl;
+    if (DEBUG_MODE)
+      cout << " This was a def or use node " << endl;
     // has_changed only applies here
     bool equal = std::equal(in[sgNode].begin(),in[sgNode].end(),out[sgNode].begin());
     if (!equal)
       has_changed=true;
-    cout << " CHECKME : IN AND OUT ARE equal : " << equal << endl;
-    printInAndOut(sgNode);
+    if (DEBUG_MODE) {
+      cout << " CHECKME : IN AND OUT ARE equal : " << equal << endl;
+      printInAndOut(sgNode);
+    }
   } else {
     // if it is a arbitraty node, we assume it has changed, so we can traverse further
     has_changed=true;
   }
-  cout << " value has changed ... : " << has_changed << endl;
 
-  printInAndOut(sgNode);
-
+  if (DEBUG_MODE) {
+    cout << " value has changed ... : " << has_changed << endl;
+    printInAndOut(sgNode);
+  }
 
 
   return has_changed;
