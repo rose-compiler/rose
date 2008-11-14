@@ -72,7 +72,9 @@ namespace VirtualCFG {
     std::vector<SgInitializedName*> scopesBeingEntered() const;
     bool operator==(const CFGEdge& o) const {return src == o.src && tgt == o.tgt;}
     bool operator!=(const CFGEdge& o) const {return src != o.src || tgt != o.tgt;}
+#if 0
     bool operator<(const CFGEdge& o) const {return src < o.src || (src == o.src && tgt < o.tgt);}
+#endif
   };
 
   void makeEdge(CFGNode from, CFGNode to, std::vector<CFGEdge>& result); // Used in inEdges() and outEdges() methods
@@ -136,6 +138,7 @@ namespace VirtualCFG {
     }
     bool operator==(const CFGPath& o) const {return edges == o.edges;}
     bool operator!=(const CFGPath& o) const {return edges != o.edges;}
+#if 0
     bool operator<(const CFGPath& o) const {
       // An arbitrary order
       if (edges.size() != o.edges.size()) {
@@ -148,6 +151,7 @@ namespace VirtualCFG {
       }
       return false;
     }
+#endif
   };
 
   inline CFGPath mergePaths(const CFGPath& hd, const CFGPath& tl) {
@@ -210,7 +214,9 @@ namespace VirtualCFG {
     std::vector<SgInitializedName*> scopesBeingEntered() const {return p.scopesBeingEntered();}
     bool operator==(const InterestingEdge& o) const {return p == o.p;}
     bool operator!=(const InterestingEdge& o) const {return p != o.p;}
+#if 0
     bool operator<(const InterestingEdge& o) const {return p < o.p;}
+#endif
   };
 
   inline InterestingNode makeInterestingCfg(SgNode* start) {
