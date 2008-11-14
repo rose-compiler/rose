@@ -68,18 +68,45 @@ ull o_Location_power;
 
 int o_Location_is_power_unendl = 0;
 
+#include <cstdlib>
+
+PointsToAnalysis::PointsToAnalysis *
+get_icfgPointsToAnalysis(void)
+{
+    CFG *global_cfg = get_global_cfg();
+    if (global_cfg == NULL)
+    {
+     // This cannot really happen unless a user does something very bad.
+        std::cerr
+            << "*** internal error: no ICFG present"
+            << std::endl;
+        std::abort();
+    }
+    PointsToAnalysis::PointsToAnalysis *pointsToAnalysis
+        = global_cfg->pointsToAnalysis;
+    if (pointsToAnalysis == NULL)
+    {
+        std::cerr
+            << "*** error: no points-to analysis instance found; did you "
+            << "specify --run-pointsto-analysis?"
+            << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    return pointsToAnalysis;
+}
+
 LocationWrapper *createLocationWrapper(PointsToAnalysis::Location *loc)
 {
     void *n = GC_alloc(LocationWrapper::type_id);
     LocationWrapper *l = (LocationWrapper *) n;
 #if 0
-    l->id = get_global_cfg()->pointsToAnalysis->location_id(loc);
+    l->id = get_icfgPointsToAnalysis()->location_id(loc);
     std::cout
         << "createLocationWrapper: starting from location " << l->id
         << " at " << (void *) loc << std::endl;
 #endif
-    loc = get_global_cfg()->pointsToAnalysis->location_representative(loc);
-    l->id = get_global_cfg()->pointsToAnalysis->location_id(loc);
+    loc = get_icfgPointsToAnalysis()->location_representative(loc);
+    l->id = get_icfgPointsToAnalysis()->location_id(loc);
 #if 0
     std::cout
         << "representative: location " << l->id << " at " << (void *) loc
@@ -140,9 +167,12 @@ extern "C" void o_Location_init(void)
         if (get_global_cfg()->pointsToAnalysis != NULL)
         {
          // This must be called after the ICFG has been built, and points-to
-         // analysis has been performed.
+         // analysis has been performed. The call above gets the pointer to
+         // the points-to analysis instance directly from the ICFG, all
+         // further calls use the get_icfgPointsToAnalysis function which
+         // dies if the pointer is NULL.
             const std::vector<PointsToAnalysis::Location *> &locations
-                = get_global_cfg()->pointsToAnalysis->get_locations();
+                = get_icfgPointsToAnalysis()->get_locations();
             o_Location_power = locations.size();
          // numberOfLocations is needed to test for termination of the
          // abstract cursor functions below.
@@ -219,7 +249,7 @@ extern "C" FLO_BOOL o_varid_has_location(void *vp)
     VariableId *v = (VariableId *) vp;
     SgVariableSymbol *sym = get_global_cfg()->ids_varsyms[v->id];
     PointsToAnalysis::Location *loc
-        = get_global_cfg()->pointsToAnalysis->symbol_location(sym);
+        = get_icfgPointsToAnalysis()->symbol_location(sym);
     return (loc != NULL ? FLO_TRUE : FLO_FALSE);
 }
 
@@ -228,7 +258,7 @@ extern "C" void *o_varid_location(void *vp)
     VariableId *v = (VariableId *) vp;
     SgVariableSymbol *sym = get_global_cfg()->ids_varsyms[v->id];
     PointsToAnalysis::Location *loc
-        = get_global_cfg()->pointsToAnalysis->symbol_location(sym);
+        = get_icfgPointsToAnalysis()->symbol_location(sym);
     return createLocationWrapper(loc);
 }
 
@@ -244,10 +274,10 @@ extern "C" FLO_BOOL o_exprid_has_location(void *ep)
     }
 
     PointsToAnalysis::Location *loc
-        = get_global_cfg()->pointsToAnalysis->expressionLocation(exp);
+        = get_icfgPointsToAnalysis()->expressionLocation(exp);
  // We move further responsibility to decide what a "valid location" is to
  // the points-to analysis.
-    if (get_global_cfg()->pointsToAnalysis->valid_location(loc))
+    if (get_icfgPointsToAnalysis()->valid_location(loc))
         return FLO_TRUE;
     else
         return FLO_FALSE;
@@ -257,7 +287,7 @@ extern "C" void *o_exprid_location(void *ep)
 {
     SgExpression *exp = (SgExpression *) o_exprid_expr(ep);
     PointsToAnalysis::Location *loc
-        = get_global_cfg()->pointsToAnalysis->expressionLocation(exp);
+        = get_icfgPointsToAnalysis()->expressionLocation(exp);
     return createLocationWrapper(loc);
 }
 
@@ -266,7 +296,7 @@ extern "C" void *o_location_varsyms(void *lp)
     LocationWrapper *wrapper = (LocationWrapper *) lp;
     PointsToAnalysis::Location *loc = wrapper->loc;
     const std::list<SgSymbol *> &syms
-        = get_global_cfg()->pointsToAnalysis->location_symbols(loc);
+        = get_icfgPointsToAnalysis()->location_symbols(loc);
     std::list<SgSymbol *>::const_iterator s;
     std::vector<SgVariableSymbol *> varsyms;
     for (s = syms.begin(); s != syms.end(); ++s)
@@ -288,7 +318,7 @@ extern "C" FLO_BOOL o_may_be_aliased(void *lp)
 {
     LocationWrapper *wrapper = (LocationWrapper *) lp;
     PointsToAnalysis::Location *loc = wrapper->loc;
-    bool mayBeAliased = get_global_cfg()->pointsToAnalysis->mayBeAliased(loc);
+    bool mayBeAliased = get_icfgPointsToAnalysis()->mayBeAliased(loc);
     return (mayBeAliased ? FLO_TRUE : FLO_FALSE);
 }
 
@@ -296,9 +326,9 @@ extern "C" FLO_BOOL o_is_ptr_location(void *lp)
 {
     LocationWrapper *wrapper = (LocationWrapper *) lp;
     PointsToAnalysis::Location *loc = wrapper->loc;
-    loc = get_global_cfg()->pointsToAnalysis->location_representative(loc);
-    loc = get_global_cfg()->pointsToAnalysis->base_location(loc);
-    if (get_global_cfg()->pointsToAnalysis->valid_location(loc))
+    loc = get_icfgPointsToAnalysis()->location_representative(loc);
+    loc = get_icfgPointsToAnalysis()->base_location(loc);
+    if (get_icfgPointsToAnalysis()->valid_location(loc))
         return FLO_TRUE;
     else
         return FLO_FALSE;
@@ -308,8 +338,8 @@ extern "C" void *o_dereference(void *lp)
 {
     LocationWrapper *wrapper = (LocationWrapper *) lp;
     PointsToAnalysis::Location *loc = wrapper->loc;
-    loc = get_global_cfg()->pointsToAnalysis->location_representative(loc);
-    loc = get_global_cfg()->pointsToAnalysis->base_location(loc);
+    loc = get_icfgPointsToAnalysis()->location_representative(loc);
+    loc = get_icfgPointsToAnalysis()->base_location(loc);
     return createLocationWrapper(loc);
 }
 
@@ -385,7 +415,7 @@ extern "C" void o_Location_acur_next(unsigned long *p)
 extern "C" void *o_Location_acur_get(unsigned long *p)
 {
     PointsToAnalysis::Location *loc
-        = get_global_cfg()->pointsToAnalysis->get_locations().at(*p);
+        = get_icfgPointsToAnalysis()->get_locations().at(*p);
     return createLocationWrapper(loc);
 #if 0
     void *n = GC_alloc(ExpressionId::type_id);
