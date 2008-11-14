@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.52 2008-11-13 20:13:03 gergo Exp $
+// $Id: CFGTraversal.C,v 1.53 2008-11-14 17:11:14 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -202,11 +202,24 @@ CFGTraversal::atTraversalEnd() {
         cfg->calls.push_back(NULL);
         cfg->returns.push_back(NULL);
 
+     // If the user asked for resolution of function pointers, we must force
+     // points-to analysis.
+        if (cfg->analyzerOptions->resolveFuncPtrCalls())
+            cfg->analyzerOptions->runPointsToAnalysisOn();
+
      // GB (2008-11-11): Added points-to analysis to the ICFG.
         if (cfg->analyzerOptions->runPointsToAnalysis())
         {
             cfg->pointsToAnalysis = new SATIrE::Analyses::PointsToAnalysis();
             cfg->pointsToAnalysis->run(cfg);
+        }
+
+     // GB (2008-11-14): Added the option of resolving external calls due to
+     // function pointers in the ICFG.
+        if (cfg->analyzerOptions->resolveFuncPtrCalls())
+        {
+            IcfgExternalCallResolver iecr;
+            iecr.run(cfg);
         }
 
      // GB (2008-04-08): Made numbering of expressions optional, but
@@ -2638,4 +2651,73 @@ IcfgTraversal::get_statement_index() const
 
 IcfgTraversal::~IcfgTraversal()
 {
+}
+
+
+void
+IcfgExternalCallResolver::run(CFG *icfg)
+{
+    traverse(icfg);
+}
+
+void
+IcfgExternalCallResolver::atTraversalStart()
+{
+    timer = new TimingPerformance("Resolve function pointer calls in ICFG:");
+}
+
+void
+IcfgExternalCallResolver::icfgVisit(SgNode *node)
+{
+    using namespace SATIrE::Analyses;
+    PointsToAnalysis::PointsToAnalysis *pointsToAnalysis
+        = get_icfg()->pointsToAnalysis;
+    const PointsToAnalysis::CallGraph &callGraph
+        = pointsToAnalysis->getCallGraph();
+
+    if (ExternalCall *ec = isExternalCall(node))
+    {
+        CallBlock *icfgNode
+            = dynamic_cast<CallBlock *>(get_icfg()->nodes[get_node_id()]);
+        SgExpression *callTarget = icfgNode->call_target;
+
+        PointsToAnalysis::CallGraph::CallCandidateMap::const_iterator ccmi;
+        ccmi = callGraph.callCandidateMap.find(callTarget);
+        if (ccmi != callGraph.callCandidateMap.end())
+        {
+            const std::set<SgFunctionSymbol *> &cands = ccmi->second;
+            std::set<SgFunctionSymbol *>::const_iterator cand;
+            for (cand = cands.begin(); cand != cands.end(); ++cand)
+            {
+                std::string candname = (*cand)->get_name().str();
+                std::multimap<std::string, Procedure *>::iterator mmi, mmi_e;
+                mmi = get_icfg()->proc_map.lower_bound(candname);
+                mmi_e = get_icfg()->proc_map.upper_bound(candname);
+                while (mmi != mmi_e)
+                {
+                 // set links from call to entry, and from exit to return
+                 // nodes
+                    Procedure *target = mmi->second;
+                    add_link(icfgNode, target->entry, CALL_EDGE);
+                    CallBlock *returnNode = icfgNode->partner;
+                    add_link(target->exit, returnNode, RETURN_EDGE);
+                    ++mmi;
+                }
+            }
+        }
+        else
+        {
+            std::cerr
+                << "*** warning: tried to resolve function expression "
+                << Ir::fragmentToString(callTarget)
+                << ", found no candidates!"
+                << std::endl;
+        }
+    }
+}
+
+void
+IcfgExternalCallResolver::atTraversalEnd()
+{
+    delete timer;
 }

@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl, Viktor Pavlu
-// $Id: AnalyzerOptions.C,v 1.29 2008-11-13 20:12:54 gergo Exp $
+// $Id: AnalyzerOptions.C,v 1.30 2008-11-14 17:11:10 gergo Exp $
 
 // todo: inheritance mechanism for help text (w/ automagic "[default]" labelling)
 
@@ -69,7 +69,7 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo(""),_n
     "   --pag-memsize-perc=<num> allocate <num>% of system memory (autodetected)\n"
     "   --pag-memsize-grow=<num> grow memory if less than <num>% are free after GC\n"
     "   --run-pointsto-analysis  run a points-to analysis on the ICFG\n"
- // "   --resolve-funcptr-calls  resolve external calls using pointer analysis (not implemented yet!)\n"
+    "   --resolve-funcptr-calls  resolve indirect calls using pointer analysis\n"
     "\n"
     " Output options:\n"
     "   --statistics             output analyzer statistics on stdout\n"

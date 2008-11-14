@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany, Adrian Prantl
-// $Id: CommandLineParser.C,v 1.27 2008-11-13 20:12:55 gergo Exp $
+// $Id: CommandLineParser.C,v 1.28 2008-11-14 17:11:10 gergo Exp $
 
 #include <config.h>
 
@@ -253,6 +253,10 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     cl->runPointsToAnalysisOn();
   } else if (optionMatch(argv[i], "--no-run-pointsto-analysis")) {
     cl->runPointsToAnalysisOff();
+  } else if (optionMatch(argv[i], "--resolve-funcptr-calls")) {
+    cl->resolveFuncPtrCallsOn();
+  } else if (optionMatch(argv[i], "--no-resolve-funcptr-calls")) {
+    cl->resolveFuncPtrCallsOff();
   } else if ((!optionMatchPrefix(argv[i], "-") && !optionMatchPrefix(argv[i],"--")) ) {
     /* handle as filename, pass filenames through */
     cout << "Found input file '" << argv[i] << "'." << endl;

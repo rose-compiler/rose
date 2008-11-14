@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.h,v 1.13 2008-11-11 13:25:24 gergo Exp $
+// $Id: CFGTraversal.h,v 1.14 2008-11-14 17:11:15 gergo Exp $
 
 #ifndef H_CFGTRAVERSAL
 #define H_CFGTRAVERSAL
@@ -134,6 +134,21 @@ private:
     KFG_NODE_TYPE node_type;
     int node_procnum;
     int statement_index;
+};
+
+// GB (2008-11-14): This class is responsible for resolving call targets for
+// external calls according to the results of points-to analysis.
+class IcfgExternalCallResolver: private IcfgTraversal
+{
+public:
+    void run(CFG *icfg);
+
+private:
+    void atTraversalStart();
+    void icfgVisit(SgNode *node);
+    void atTraversalEnd();
+
+    TimingPerformance *timer;
 };
 
 #endif

@@ -1317,6 +1317,8 @@ PointsToAnalysis::Implementation::handleIcfgStatement(
     Location *a, *b;
     SynthesizedAttributesList::iterator syn;
     std::vector<Location *>::iterator s, t;
+    SgFunctionSymbol *funcSym;
+    SgExpression *funcExpr;
  // Access to the current ICFG node. Note that we also traverse some stuff
  // that is not within ICFG nodes, such as global initializers. So this
  // requires some care.
@@ -1349,7 +1351,22 @@ PointsToAnalysis::Implementation::handleIcfgStatement(
      // for ArgumentAssignment etc.
     case V_FunctionCall:
     case V_ExternalCall:
-     // TODO: implement this
+     // Determine the enclosing function's symbol, the call target
+     // expression, and the corresponding location.
+        funcSym = (*icfgTraversal->get_icfg()->procedures)[icfgNode->procnum]
+                                                          ->funcsym;
+        funcExpr = icfgNode->call_target;
+        a = expressionLocation(funcExpr);
+     // Store the information in the maps, and we're done!
+        info->callGraph.callSiteExpressionMap[funcSym].push_back(funcExpr);
+        info->callLocationMap[funcExpr] = a->baseLocation();
+#if VERBOSE_DEBUG
+        std::cout
+            << "in function " << Utils::name(funcSym) << ": "
+            << "recorded call to " << Ir::fragmentToString(funcExpr)
+            << " with location " << a->baseLocation()->id
+            << std::endl;
+#endif
         result = NULL;
         break;
 
@@ -3209,23 +3226,22 @@ PointsToAnalysis::Implementation::run(CFG *icfg)
         = new TimingPerformance("Points-to analysis traversal:");
     IcfgTraversal::traverse(icfg);
     delete timer;
- // First, we would like the ICFG traversal to work. Then we can move on to
- // the call graph stuff. Ideally, it should work without modification, but
- // who knows what sorts of problems might creep up.
-#if 0
+
  // After the traversal, we need to finalize the call graph by resolving
  // function symbols from function expression location nodes. To do this,
  // iterate over each entry in callLocationMap, which maps expressions to
  // points-to locations; simply extract the set of all function symbols in
  // each location, and insert it into the callGraph's callCandidateMap.
     timer = new TimingPerformance("Call graph finalization:");
-    CallLocationMap::iterator t;
-    for (t = callLocationMap.begin(); t != callLocationMap.end(); ++t)
+    PointsToInformation::CallLocationMap::iterator t;
+    for (t = info->callLocationMap.begin();
+         t != info->callLocationMap.end();
+         ++t)
     {
         SgExpression *expr = t->first;
      // The default constructor will create an empty set in the map for us.
         std::set<SgFunctionSymbol *> &functionSyms
-            = callGraph.callCandidateMap[expr];
+            = info->callGraph.callCandidateMap[expr];
      // There is a special case here: If the expression is a function ref
      // expression, then it is statically bound to its function, even if the
      // points-to location node for that function may be shared for several
@@ -3233,19 +3249,33 @@ PointsToAnalysis::Implementation::run(CFG *icfg)
         if (SgFunctionRefExp *fref = isSgFunctionRefExp(expr))
         {
             functionSyms.insert(canonicalSymbol(fref->get_symbol()));
+#if VERBOSE_DEBUG
+            std::cout
+                << "| recorded: " << Ir::fragmentToString(expr)
+                << " (static call)"
+                << std::endl;
+#endif
         }
         else
         {
          // Normal case: Take the symbols from the function node.
-            Location *func_location = disjointSets.find_set(t->second);
+            Location *func_location = info->disjointSets.find_set(t->second);
             std::list<SgFunctionSymbol *>::iterator sym;
             std::list<SgFunctionSymbol *> &syms = func_location->func_symbols;
             for (sym = syms.begin(); sym != syms.end(); ++sym)
+            {
                 functionSyms.insert(canonicalSymbol(*sym));
+#if VERBOSE_DEBUG
+                std::cout
+                    << "| recorded: " << Ir::fragmentToString(expr)
+                    << " (location " << func_location->id << ")"
+                    << "  -->  " << Utils::name(*sym)
+                    << std::endl;
+#endif
+            }
         }
     }
     delete timer;
-#endif
 
 #if VERBOSE_DEBUG
  // This should be somewhere else, I think. Maybe. Actually, debug code
