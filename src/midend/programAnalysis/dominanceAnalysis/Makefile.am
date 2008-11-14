@@ -6,5 +6,5 @@ clean-local:
 distclean-local:
 	rm -rf Templates.DB
 
-include_HEADERS =  DominatorTree.h filteredCFG.h DominanceFrontier.h DominatorTreeImpl.h ../defUseAnalysis/filteredCFGImpl.h
+include_HEADERS =  DominatorTree.h filteredCFG.h DominanceFrontier.h DominatorTreeImpl.h
 

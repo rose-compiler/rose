@@ -150,7 +150,7 @@ LivenessAnalysis::run(SgFunctionDefinition* funcDecl) {
   DEBUG_MODE_EXTRA=false;
 
   if (funcName=="") {
-    FilteredCFGNode < IsDFAFilter > empty;
+    FilteredCFGNode < IsDFAFilter > empty(CFGNode(NULL, 0));
     return empty;
   }
   ROSE_ASSERT(funcDecl);
