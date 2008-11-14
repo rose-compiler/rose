@@ -49,7 +49,14 @@ SgTreeTraversal_inFileToTraverse(SgNode* node, bool traversalConstraint, SgFile*
         }
        else
         {
-          isCompilerGeneratedOrPartOfTransformation = node->get_file_info()->isCompilerGenerated() || node->get_file_info()->isTransformation();
+       // DQ (11/14/2008): Implicitly defined functions in Fortran are not marked as compiler generated 
+       // (the function body is at least explicit in the source file), but the function declaration IR 
+       // nodes is marked as coming from file == NULL_FILE and it is also marked as "outputInCodeGeneration"
+       // So it should be traversed so that we can see the function body and so that it can be a proper 
+       // part of the definition of the AST.
+       // isCompilerGeneratedOrPartOfTransformation = node->get_file_info()->isCompilerGenerated() || node->get_file_info()->isTransformation();
+          bool isOutputInCodeGeneration = node->get_file_info()->isOutputInCodeGeneration();
+          isCompilerGeneratedOrPartOfTransformation = node->get_file_info()->isCompilerGenerated() || node->get_file_info()->isTransformation() || isOutputInCodeGeneration;
         }
 
   // Traverse this node if it is in the file we want to visit.

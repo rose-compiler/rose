@@ -53,14 +53,22 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
 
      bool statementInFile = false;
 
-  //FMZ
-    if (StringUtility::fileNameSuffix(sourceFilename)=="rmod") 
+  // FMZ (comment by DQ (11/14/2008)):
+  // This is part of the support for module files in Fortran.  Modules seen in the compilation 
+  // of a Fortran program cause a "<module name>.rmod" file to be generated. When we unparse 
+  // the "*.rmod" we want to output all statements, but since they came from the original 
+  // fortran file (a better translation would avoid this problem), the function would conclude
+  // that they should not be unparsed (this fix forces the statements in a "*.rmod" file to 
+  // always be unparsed.  If the SgSourceFile vuilt to represent the "*.rmod" file had been 
+  // constructed as a transformation then the file info objects would have been marked as
+  // part of a transforamtion and this fix would not have been required.  At some point this
+  // can be improved.  So this is a fine temporary fix for now.
+     if (StringUtility::fileNameSuffix(sourceFilename)=="rmod") 
         {
-        // If we are to unparse a module  into the .rmod file this this is ALWAYS true
-           return true;
+       // If we are to unparse a module  into the .rmod file this this is ALWAYS true
+          return true;
         }
 
-  
      if (unp->opt.get_unparse_includes_opt() == true)
         {
         // If we are to unparse all included files into the source file this this is ALWAYS true
