@@ -112,7 +112,8 @@ class DefUseAnalysisAbstract : public Support {
     doNotVisitMap.clear();
     nodeChangedMap.clear();
   };
-  virtual FilteredCFGNode < IsDFAFilter > run(SgFunctionDefinition* function)=0;
+  virtual ~DefUseAnalysisAbstract(){};
+  virtual FilteredCFGNode < IsDFAFilter > run(SgFunctionDefinition* function, bool& abortme)=0;
 
 };
 

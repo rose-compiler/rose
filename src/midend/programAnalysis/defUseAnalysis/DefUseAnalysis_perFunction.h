@@ -46,7 +46,8 @@ class DefUseAnalysisPF : public DefUseAnalysisAbstract {
     breakPointForWhile=0;
     breakPointForWhileNode=NULL;
   };
-  FilteredCFGNode < IsDFAFilter > run(SgFunctionDefinition* function);
+  virtual ~DefUseAnalysisPF(){};
+  FilteredCFGNode < IsDFAFilter > run(SgFunctionDefinition* function, bool& abortme);
   int getNumberOfNodesVisited();
 
 };

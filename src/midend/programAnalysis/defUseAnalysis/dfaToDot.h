@@ -14,6 +14,8 @@
 #include "filteredCFG.h"
 #include "DefUseAnalysis.h"
 
+class LivenessAnalysis;
+
 namespace VirtualCFG {
 
   template < typename FilterFunction > 
@@ -21,5 +23,11 @@ namespace VirtualCFG {
 			     std::string graphName,
 			     std::vector < FilteredCFGNode < FilterFunction > > start,
 			     DefUseAnalysis* dfa);
+  template < typename FilterFunction > 
+     std::ostream & dfaToDot(std::ostream & o,
+			     std::string graphName,
+			     std::vector < FilteredCFGNode < FilterFunction > > start,
+			     DefUseAnalysis* dfa,
+			     LivenessAnalysis* live);
 }
 #endif

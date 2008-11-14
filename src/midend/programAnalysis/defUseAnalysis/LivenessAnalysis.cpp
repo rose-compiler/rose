@@ -13,6 +13,24 @@
 
 using namespace std;
 
+template <class T>
+T LivenessAnalysis::merge_no_dups( T& v1,  T& v2) {
+  T ret(v1);
+  for (typename T::const_iterator i = v2.begin(); i != v2.end(); ++i) {
+    bool notfound = true;
+    for (typename T::const_iterator z = ret.begin(); z != ret.end(); ++z) {
+      if (*z == *i) {
+	notfound = false;
+	break;
+      }
+    }
+    if (notfound) {
+      ret.push_back(*i);
+    }
+  }
+  return ret;
+}
+
 SgFunctionDefinition* 
 LivenessAnalysis::getFunction(SgNode* node) {
   ROSE_ASSERT(node);
@@ -35,23 +53,100 @@ LivenessAnalysis::getFunction(SgNode* node) {
 }
 
 
+void 
+LivenessAnalysis::printInAndOut(SgNode* sgNode) {
+  cout << ">>> in and out for : " << sgNode << "  " << sgNode->class_name() << endl;
+  std::vector<SgInitializedName*> currIn = in[sgNode];
+  std::vector<SgInitializedName*>::const_iterator it2 = currIn.begin();
+  cout << "   in : " ;
+  for (;it2!=currIn.end();++it2) {
+    SgInitializedName* init = isSgInitializedName(*it2);
+    ROSE_ASSERT(init);
+    std::string name =".";
+    name= init->get_name().str();
+    cout << name << ", " ;
+  }
+  cout << endl;
+
+  std::vector<SgInitializedName*> currOut = out[sgNode];
+  std::vector<SgInitializedName*>::const_iterator it3 = currOut.begin();
+  cout << "   out : " ;
+  for (;it3!=currOut.end();++it3) {
+    SgInitializedName* init = isSgInitializedName(*it3);
+    ROSE_ASSERT(init);
+    std::string name =".";
+    name= init->get_name().str();
+    cout << name << ", " ;
+  }
+  cout << endl;
+}
+
 static bool sort_using_greater_than(SgNode* u, SgNode* v){
   return u > v;
 }
 
+/**********************************************************
+ * Traverse the CFG backwards from a given node to 
+ * determine whether a change has occured at that path
+ * until the first split (2 inedges) or root.
+ *********************************************************/
 template <typename T>
-bool LivenessAnalysis::defuse(T cfgNode) {
+bool LivenessAnalysis::hasANodeAboveCurrentChanged(T source) {
+  bool changed = false;
+  // go cfg back until split or root
+  // check nodeChangeMap if a all nodes have changed.
+  // if any has changed return true.
+  vector<FilteredCFGEdge < IsDFAFilter > > in_edges = source.outEdges();
+  if (in_edges.size()==1) {
+    FilteredCFGEdge<IsDFAFilter> filterEdge = in_edges[0];
+    FilteredCFGNode<IsDFAFilter> filterNode = filterEdge.target();
+    SgNode* sgNode = filterNode.getNode();
+    ROSE_ASSERT(sgNode);
+    bool changedInTable = nodeChangedMap[sgNode];
+    if (DEBUG_MODE)
+      cout << " >>> backward CFG : visiting node : " << sgNode << " " << sgNode->class_name() <<
+	"  changed : " << changedInTable << endl;
+    if (changedInTable) {
+      return true;
+    } else {
+      changed = hasANodeAboveCurrentChanged(filterNode);
+    }
+  }
+  return changed;
+
+}
+
+
+template <typename T>
+bool LivenessAnalysis::defuse(T cfgNode, bool *unhandled) {
   SgNode* sgNode = cfgNode.getNode();
+  if (visited.find(sgNode)==visited.end())
+    visited[sgNode]=1;
+  else
+    visited[sgNode]++;
   SgNode* sgNodeBefore = getCFGPredNode(cfgNode);  
   ROSE_ASSERT(sgNode);
+
+  vector<FilteredCFGEdge < IsDFAFilter > > out_edges2 = cfgNode.inEdges();
+  for (vector<FilteredCFGEdge <IsDFAFilter> >::const_iterator i = out_edges2.begin(); i != out_edges2.end(); ++i) {
+    FilteredCFGEdge<IsDFAFilter> filterEdge = *i;
+    FilteredCFGNode<IsDFAFilter> filterNode = filterEdge.source();
+    SgNode* sgNode2 = filterNode.getNode();
+    if (visited.find(sgNode2)==visited.end())
+      *unhandled=true;
+  }
+
 
   bool has_changed=false;
   if (DEBUG_MODE)
     cout << "\n\n------------------------------------------------------------------\ncurrent Node: " << 
       sgNode << "  previous Node : " << sgNodeBefore << endl;
 
+  printInAndOut(sgNode);
+
   // get def and use for this node 
   SgInitializedName* initName = isSgInitializedName(sgNode);
+  SgVarRefExp* varRef = isSgVarRefExp(sgNode);
   bool defNode = false;
   bool useNode = false;
   if (initName) {
@@ -63,8 +158,14 @@ bool LivenessAnalysis::defuse(T cfgNode) {
       if (itNode==sgNode)
 	defNode=true;
     }
+  }
+
+
+  if (varRef) {
+    initName = varRef->get_symbol()->get_declaration();
+    ROSE_ASSERT(initName);
     std::vector <SgNode*> uses = dfa->getUseFor(sgNode, initName);
-    it = uses.begin();
+    std::vector<SgNode*>::const_iterator it = uses.begin();
     for (;it!=uses.end();++it) {
       SgNode* itNode = *it;
       if (itNode==sgNode)
@@ -74,7 +175,10 @@ bool LivenessAnalysis::defuse(T cfgNode) {
 
   if (DEBUG_MODE)
     cout << "     At this point def : " << defNode << "  use : " << useNode << endl;
+  if (initName)
+    cout << "  initName : " << initName->get_name().str() << endl;
 
+  cout << " Doing out = " << endl;
   // do the algo for variable liveness
   out[sgNode].clear();
   vector<FilteredCFGEdge < IsDFAFilter > > out_edges = cfgNode.outEdges();
@@ -84,63 +188,164 @@ bool LivenessAnalysis::defuse(T cfgNode) {
     SgNode* sgNodeNext = filterNode.getNode();
     ROSE_ASSERT(sgNodeNext);
     std::vector<SgInitializedName*> tmpIn = in[sgNodeNext];
-    out[sgNode].swap(tmpIn);
+    cout << "   out : previous node : " << sgNodeNext << " " << sgNodeNext->class_name() << "   in Size : " << 
+      tmpIn.size() << "   out[sgNode].size = " << out[sgNode].size() << endl;
+    //    out[sgNode].swap(tmpIn);
+    std::vector<SgInitializedName*> tmpOut = out[sgNode];
+    out[sgNode]=merge_no_dups(tmpOut,tmpIn);
+    std::sort(out[sgNode].begin(), out[sgNode].end(),sort_using_greater_than);
+  }
+
+  printInAndOut(sgNode);
+  cout << " Doing in = " << endl;
+
+  // what if it is an assignment
+  switch(sgNode->variant()) {
+  case V_SgPlusPlusOp:
+  case V_SgMinusMinusOp: 
+  case V_SgAssignOp: 
+  case V_SgModAssignOp:
+  case V_SgDivAssignOp:
+  case V_SgMultAssignOp:
+  case V_SgLshiftAssignOp:
+  case V_SgRshiftAssignOp:
+  case V_SgXorAssignOp:
+  case V_SgAndAssignOp:
+  case V_SgMinusAssignOp:
+  case V_SgPlusAssignOp: {
+    // go through all initialized names for out
+    // and cancel the InitializedName for in if it is 
+    // defined for this node
+    std::vector<SgInitializedName*> vec  = out[sgNode];
+    std::vector<SgInitializedName*>::iterator inIt = vec.begin();
+    for (;inIt!=vec.end();++inIt) {
+      SgInitializedName* initN = isSgInitializedName(*inIt);
+      std::vector <SgNode*> defs = dfa->getDefFor(sgNode, initN);      
+      std::vector<SgNode*>::const_iterator it = defs.begin();
+      for (;it!=defs.end();++it) {
+	SgNode* itNode = *it;
+	if (itNode==sgNode) {
+	  defNode=true;
+	  initName=initN;
+	  break;
+	}
+      }
+    }    
+    if (initName)
+      cout << " This is an assignment :  initName = " <<
+	initName->get_name().str() << "  def : " << defNode << endl;
+    else {
+      cout << " !!! This is an assignment but no initName matched. defnode = "
+	   << defNode << endl;
+    }
+    break;
+  }
+  default: {
+    // its none of the above
+    // none of the above breakPointForWhiles is hit 
+    *unhandled=true;
+    // take care of the case where we have none of the above within a loop (breakPointForWhile)
+    // i.e. no : VarRefExp, InitializedName, FunctionDefinition ...
+    // If this unhandled node has been added to the map before (visited)
+    // then we do want to mark it as handled.
+      if (isSgWhileStmt(sgNode) || isSgForStatement(sgNode)
+	  || isSgDoWhileStmt(sgNode)) {
+	if (breakPointForWhileNode==NULL) {
+	  breakPointForWhileNode=sgNode;
+	  breakPointForWhile++;
+	  if (DEBUG_MODE)
+	    cout << ">>> Setting Breakpoint : " << sgNode->class_name() << " " <<sgNode << " " << breakPointForWhile <<endl;
+	} else if (sgNode==breakPointForWhileNode) {
+	  // reaching the breakPoint for a second time
+	  // check if any node above this node up to the branch or root has changed
+	  breakPointForWhile++;
+	  bool hasAnyNodeAboveChanged = hasANodeAboveCurrentChanged(cfgNode);
+	  if (hasAnyNodeAboveChanged==false) {
+	    // need to break this loop
+	    // add current node to doNotVisitMap
+	    doNotVisitMap.insert(sgNode);
+	  }
+
+	  if (DEBUG_MODE)
+	    cout << ">>> Inc Breakpoint : " << sgNode->class_name() << " " <<sgNode << " " << breakPointForWhile <<endl;
+	  *unhandled = false;
+	  breakPointForWhileNode=NULL;
+	  breakPointForWhile=0;
+	  if (DEBUG_MODE)
+	    cout << ">>> Resetting Breakpoint : " << sgNode->class_name() << " " <<sgNode << " " << breakPointForWhile <<endl;
+	} else {
+	  if (DEBUG_MODE)
+	    cout << ">>> Skipping unhandled node ... " << endl;
+	}
+      }
+  
+    break;
+  }
   }
 
 
+  
   in[sgNode] = out[sgNode];
   if (defNode) {
     std::vector<SgInitializedName*> vec  = in[sgNode];
     std::vector<SgInitializedName*>::iterator inIt = vec.begin();
     for (;inIt!=vec.end();++inIt) {
-      if (*inIt==sgNode)
+      if (*inIt==initName) {
 	vec.erase(inIt); // = initName
+	break;
+      }
     }
     in[sgNode]=vec;
   }
   if (useNode) {
-    in[sgNode].push_back(initName); // = initName
-    std::sort(in[sgNode].begin(), in[sgNode].end(),sort_using_greater_than);
+    std::vector<SgInitializedName*> vec  = in[sgNode];
+    std::vector<SgInitializedName*>::iterator inIt = vec.begin();
+    bool found=false;
+    for (;inIt!=vec.end();++inIt) {
+      if (*inIt==initName) {
+	found=true;
+	break;
+      }
+    }
+    if (!found) {
+      std::string name = initName->get_name().str();
+      cout << " did not find initName : " << name << " in in[sgNode]    size: " << in[sgNode].size() <<endl;
+      in[sgNode].push_back(initName); // = varRef
+      std::sort(in[sgNode].begin(), in[sgNode].end(),sort_using_greater_than);
+      cout << " added sgNode :   new size [sgNode] = " <<in[sgNode].size() <<endl;
+    }
   }
 
   if (defNode || useNode) {
+    cout << " This was a def or use node " << endl;
     // has_changed only applies here
-    if (!std::equal(in.begin(),in.end(),out.begin()))
+    bool equal = std::equal(in[sgNode].begin(),in[sgNode].end(),out[sgNode].begin());
+    if (!equal)
       has_changed=true;
+    cout << " CHECKME : IN AND OUT ARE equal : " << equal << endl;
+    printInAndOut(sgNode);
   } else {
     // if it is a arbitraty node, we assume it has changed, so we can traverse further
     has_changed=true;
   }
-  cerr << " value has changed ... : " << has_changed << endl;
+  cout << " value has changed ... : " << has_changed << endl;
 
-  cerr << ">>> in and out for : " << sgNode << endl;
-  std::vector<SgInitializedName*> currIn = in[sgNode];
-  std::vector<SgInitializedName*>::const_iterator it2 = currIn.begin();
-  for (;it2!=currIn.end();++it2) {
-    SgInitializedName* init = isSgInitializedName(*it2);
-    std::string name = init->get_name().str();
-    cerr << "   in : " << name;
-  }
-  cerr << endl;
+  printInAndOut(sgNode);
 
-  std::vector<SgInitializedName*> currOut = out[sgNode];
-  std::vector<SgInitializedName*>::const_iterator it3 = currOut.begin();
-  for (;it3!=currOut.end();++it3) {
-    SgInitializedName* init = isSgInitializedName(*it3);
-    std::string name = init->get_name().str();
-    cerr << "   out : " << name;
-  }
-  cerr << endl;
+
+
   return has_changed;
 }
 
 
 FilteredCFGNode < IsDFAFilter > 
-LivenessAnalysis::run(SgFunctionDefinition* funcDecl) {
+LivenessAnalysis::run(SgFunctionDefinition* funcDecl, bool& abortme) {
   // filter functions -- to only functions in analyzed file  
+  abort=false;
+  counter=0;
   nrOfNodesVisitedPF= 0;
   breakPointForWhileNode=NULL;
-  breakPointForWhile=0;
+  breakPointForWhile=0;;
   // clear those maps for each function run
   doNotVisitMap.clear();
   nodeChangedMap.clear();
@@ -180,25 +385,27 @@ LivenessAnalysis::run(SgFunctionDefinition* funcDecl) {
   vector<FilteredCFGNode<IsDFAFilter> > debug_path;
   debug_path.push_back(source);
 
-
   bool valueHasChanged = false;
+  bool unhandledNode=false;
   while (!worklist.empty()) {
     source = worklist.front();
     worklist.erase(worklist.begin());
     // do current node
+    unhandledNode = false;
     SgNode* next = source.getNode();
     if (doNotVisitMap.find(next)!=doNotVisitMap.end())
       continue;
-    valueHasChanged = defuse(source);  
+    valueHasChanged = defuse(source, &unhandledNode);  
     nodeChangedMap[source.getNode()] = valueHasChanged;
     // do follow-up nodes
     // get nodes of outgoing edges and pushback (if not already contained)
     if (DEBUG_MODE) {
-      cout << " Current Node: " << source.getNode() << " changed: " 
+      cout << " Current Node: " << source.getNode() << " " << source.getNode()->class_name() << " changed: " 
 	   << resBool(valueHasChanged) << endl;
-      cout << " Current Node: " << source.getNode() << endl;
+      cout << " Current Node: " << source.getNode() << " unhandled: " 
+	   << resBool(unhandledNode) << endl;
     }
-    if (valueHasChanged ) {
+    if (valueHasChanged || unhandledNode) {
       vector<FilteredCFGEdge < IsDFAFilter > > out_edges = source.inEdges();
       for (vector<FilteredCFGEdge <IsDFAFilter> >::const_iterator i = out_edges.begin(); i != out_edges.end(); ++i) {
 	FilteredCFGEdge<IsDFAFilter> filterEdge = *i;
@@ -211,6 +418,16 @@ LivenessAnalysis::run(SgFunctionDefinition* funcDecl) {
       if (DEBUG_MODE) 
 	printCFGVector(worklist);
     }
+
+    counter++;
+    if (counter==4000)
+      abort=true;
+
+    if (abort) {
+      cerr << " \n\n\n>>>>>>>>>>>>>>>>>>>>>>>>>>> ABORTING !! INFINITE EXECUTION ... \n\n" << endl;
+      worklist.clear();
+      abortme=true;
+    }
   }
   nrOfNodesVisitedPF= debug_path.size();
 
@@ -219,6 +436,9 @@ LivenessAnalysis::run(SgFunctionDefinition* funcDecl) {
     cout << "\nNr of nodes visited " << debug_path.size() << "  of nodes : "  << endl;
     printCFGVector(debug_path);
   }
+
+
+
   return rem_source;
 
 }

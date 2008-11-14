@@ -755,7 +755,8 @@ int DefUseAnalysisPF::getNumberOfNodesVisited() {
 /**********************************************************
  *  Build CFG for each function and do DefUse analysis
  *********************************************************/
-FilteredCFGNode < IsDFAFilter > DefUseAnalysisPF::run(SgFunctionDefinition* funcDecl) {
+FilteredCFGNode < IsDFAFilter > 
+DefUseAnalysisPF::run(SgFunctionDefinition* funcDecl, bool& abortme) {
   // filter functions -- to only functions in analyzed file  
   nrOfNodesVisitedPF= 0;
   breakPointForWhileNode=NULL;
