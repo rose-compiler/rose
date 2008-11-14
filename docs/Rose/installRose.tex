@@ -363,6 +363,24 @@ steps are the same as those of building a distribution version.
     Save yourself some trouble and build a separate compile tree.  This will also allow
     you to build a number of different versions of ROSE with different options.
 
+    \item Message: {\bf configure: error: Unable to find path to JVM library} \\
+   This message from running the {\tt configure} command in ROSE (an initial step in building
+   ROSE) indicates either that your {\tt LD\_LIBRARY\_PATH} (environment variable) is not set to 
+   to the location of the {\em libjvm.so} or that your machines java is not one that we
+   support (e.g. non-Sun Java).  If you don't require Java (e.g. don't need Fortran
+   support) then consider skipping the java support by using {\em --without-java} on the
+   configure command line.
+   Alternatively, your {\tt LD\_LIBRARY\_PATH} should contain the path to the file 
+   {\em libjvm.so}.  The likely path is specified in the lines just before the message.  
+   The full message will appear as:
+\begin{verbatim}
+checking for Java... /usr/lib/jvm/java-1.5.0-ibm.x86_64/bin/../bin/java
+checking for Java JVM include and link options... JavaJREDir  = /usr/lib/jvm/java-1.5.0-ibm-1.5.0.8.x86_64/jre/bin
+JavaHomeDir = /usr/lib/jvm/java-1.5.0-ibm-1.5.0.8.x86_64
+JavaJVMDir  = /usr/lib/jvm/java-1.5.0-ibm-1.5.0.8.x86_64/jre/bin/classic
+configure: error: Unable to find path to JVM library
+\end{verbatim}
+
 \end{enumerate}
 
 
