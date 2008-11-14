@@ -2,6 +2,7 @@
 // and whether the forward and backward edge sets are consistent
 
 #include "rose.h"
+#include <algorithm>
 using namespace std;
 using namespace VirtualCFG;
 
@@ -34,21 +35,21 @@ void testCFG(SgFunctionDefinition* stmt) {
      }
 
   // Get the forward edges from each node
-  map<CFGNode, set<CFGEdge> > forwardEdges; // Source to set of edges
+  map<CFGNode, vector<CFGEdge> > forwardEdges; // Source to set of edges
   for (set<CFGNode>::const_iterator i = nodes.begin(); i != nodes.end(); ++i) {
     vector<CFGEdge> oe = i->outEdges();
-    forwardEdges[*i] = set<CFGEdge>(oe.begin(), oe.end());
+    forwardEdges[*i] = oe;
   }
 
   // Get the backward edges to each node from other nodes in the set
   // There may be spurious edges from unreachable nodes to nodes that are
   // reachable, but those don't matter for checking the CFG correctness
-  map<CFGNode, set<CFGEdge> > backwardEdges; // Source to set of edges
+  map<CFGNode, vector<CFGEdge> > backwardEdges; // Source to set of edges
   for (set<CFGNode>::const_iterator i = nodes.begin(); i != nodes.end(); ++i) {
     vector<CFGEdge> ie = i->inEdges();
     for (vector<CFGEdge>::const_iterator j = ie.begin(); j != ie.end(); ++j) {
       if (nodes.find(j->source()) != nodes.end()) {
-        backwardEdges[j->source()].insert(*j);
+        backwardEdges[j->source()].push_back(*j);
       }
     }
   }
@@ -61,18 +62,18 @@ void testCFG(SgFunctionDefinition* stmt) {
   bool anyMismatches = false;
   for (set<CFGNode>::const_iterator i = nodes.begin(); i != nodes.end(); ++i) {
     CFGNode n = *i;
-    const set<CFGEdge>& forwardEdgesFromN = forwardEdges[n];
-    const set<CFGEdge>& backwardEdgesFromN = backwardEdges[n];
-    for (set<CFGEdge>::const_iterator j = forwardEdgesFromN.begin();
+    const vector<CFGEdge>& forwardEdgesFromN = forwardEdges[n];
+    const vector<CFGEdge>& backwardEdgesFromN = backwardEdges[n];
+    for (vector<CFGEdge>::const_iterator j = forwardEdgesFromN.begin();
          j != forwardEdgesFromN.end(); ++j) {
-      if (backwardEdgesFromN.find(*j) == backwardEdgesFromN.end()) {
+      if (std::find(backwardEdgesFromN.begin(), backwardEdgesFromN.end(), *j) == backwardEdgesFromN.end()) {
         cerr << "Found edge in forward set which is not in backward set: " << j->source().toStringForDebugging() << " -> " << j->target().toStringForDebugging() << " " << j->toStringForDebugging() << endl;
         anyMismatches = true;
       }
     }
-    for (set<CFGEdge>::const_iterator j = backwardEdgesFromN.begin();
+    for (vector<CFGEdge>::const_iterator j = backwardEdgesFromN.begin();
          j != backwardEdgesFromN.end(); ++j) {
-      if (forwardEdgesFromN.find(*j) == forwardEdgesFromN.end()) {
+      if (std::find(forwardEdgesFromN.begin(), forwardEdgesFromN.end(), *j) == forwardEdgesFromN.end()) {
         cerr << "Found edge in backward set which is not in forward set: " << j->source().toStringForDebugging() << " -> " << j->target().toStringForDebugging() << " " << j->toStringForDebugging() << endl;
         anyMismatches = true;
       }
