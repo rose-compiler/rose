@@ -2,11 +2,12 @@ int fac()
 {
     int n;
     int result;
-    int *np = &n;
+    int *np;
+    
+    np = &n;
 
- // Ideally, this should kill n (which it does) and not generate n, so n
- // should be dead before this assignment. However, the current definition
- // of gen is not quite smart enough, so we get a little imprecision.
+ // this assignment kills n; i.e., n is dead before the assignment, but it
+ // is live after the assignment because the new value is used in the loop
     *np = 42;
 
     result = 1;
