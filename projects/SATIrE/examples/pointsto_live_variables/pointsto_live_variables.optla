@@ -7,6 +7,9 @@
 
 // Analyzers created from this specification must be run with the
 // --run-pointsto-analysis command line flag; they will segfault otherwise.
+// For this analysis, when running the runtests script, the runtests.custom
+// file ensures that the flag is set. When running it manually, the user
+// must take care to set it.
 
 // Author: Gergo Barany, Nov 2008
 
@@ -191,8 +194,20 @@ gens(expr) =
      // no gen set for that side (the variable is not read); otherwise, if
      // it is a more complex expression such as a pointer dereference, we
      // need to look at the lhs as well.
+     // In the simple language of this analysis, we allow three forms for
+     // an assignment's lhs: var; *<expr>; <expr>[<expr>]. Each of these
+     // must be treated specially. For instance, we need to generate uses
+     // for variables read in the nested <expr> of the dereference
+     // expression, but at the same time we do *not* want to generate a use
+     // for the location of the dereference expression itself. This means
+     // that we may not simply call gens on the entire lhs expression of the
+     // assignment, but we must decompose it first.
         AssignOp(VarRefExp(_), rhs) => gens(rhs);
-        AssignOp(lhs, rhs)          => union(gens(lhs), gens(rhs));
+        AssignOp(PointerDerefExp(e), rhs)
+                                    => union(gens(e), gens(rhs));
+        AssignOp(PntrArrRefExp(a, e), rhs)
+                                    => union(union(gens(a), gens(e)),
+                                             gens(rhs));
 
      // ++ and -- read their operands as well as modifying it, so we recurse
      // into the operand expression.
