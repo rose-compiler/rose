@@ -215,16 +215,20 @@ ArrayAnnotation* ArrayAnnotation::get_inst()
     inst = new ArrayAnnotation();
   return inst;
 }
-
+//Hook up ReadAnnotation: register various type and operator collectors, including
+// independent collectors: Operator side effect, inline, alias, value
+// own collectors: arrays, array optimizations, construct_array, modify_array
 void ArrayAnnotation:: register_annot()
 {
    OperatorSideEffectAnnotation::get_inst()->register_annot();
    OperatorInlineAnnotation::get_inst()->register_annot();
    OperatorAliasAnnotation::get_inst()->register_annot();
    ValueAnnotation::get_inst()->register_annot();
+   
    ReadAnnotation* op = ReadAnnotation::get_inst();
    op->add_TypeCollection(&arrays);
    op->add_TypeCollection(&arrayopt);
+   
    op->add_OperatorCollection(&arrayConstruct);
    op->add_OperatorCollection(&arrayModify);
 }

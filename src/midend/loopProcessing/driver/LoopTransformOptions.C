@@ -32,7 +32,7 @@ static void ReadDefaultBlockSize(LoopTransformOptions& opt, vector<string>& argv
  assert (index < argv.size());
  int defaultblocksize = atoi(argv[index].c_str());
  if (defaultblocksize <= 1) {
-       std::cerr << "invalid blocking size: " << argv[index] << "; Use default (16)\n";
+       std::cerr << "Missing or invalid blocking size: " << argv[index] << "; Use default (16)\n";
        defaultblocksize = 16;
  } else {
        argv.erase(argv.begin() + index);

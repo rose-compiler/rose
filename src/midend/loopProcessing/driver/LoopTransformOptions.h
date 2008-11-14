@@ -59,7 +59,15 @@ class LoopTransformOptions
   bool DoDynamicTuning() const;
   unsigned GetDynamicTuningIndex() const;
 
-  typedef enum {NO_OPT = 0, LOOP_NEST_OPT = 1, INNER_MOST_OPT = 2, MULTI_LEVEL_OPT = 3, LOOP_OPT = 3, DATA_OPT = 4, LOOP_DATA_OPT = 7} OptType;
+  typedef enum {
+    NO_OPT = 0, 
+    LOOP_NEST_OPT = 1, 
+    INNER_MOST_OPT = 2, 
+    MULTI_LEVEL_OPT = 3, 
+    LOOP_OPT = 3, 
+    DATA_OPT = 4, 
+    LOOP_DATA_OPT = 7
+  } OptType;
 
   OptType GetOptimizationType();
  

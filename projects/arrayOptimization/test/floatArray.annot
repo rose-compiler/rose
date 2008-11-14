@@ -28,12 +28,6 @@ operator floatArray::operator() (int index)
                    inline { this.elem(index) };
               }
 
-operator floatArray::getLength( int dim) 
-              {
-                   modify none; read {dim}; alias none;
-                   inline { this.length(dim) };
-              }
-
 operator floatArray::operator() ( const InternalIndex& index) 
               {
                    modify none; read {this, index};
@@ -106,6 +100,13 @@ operator floatArray::operator= (float val)
                        elem(i:dim:1:dimension) = val;
                    };
                }
+
+operator floatArray::getLength( int dim) 
+              {
+                   modify none; read {dim}; alias none;
+                   inline { this.length(dim) };
+              }
+
 operator floatArray::fill( float val) 
               {
                    modify {this}; read {val}; alias none;
@@ -120,6 +121,13 @@ operator floatArray::replace( const intArray& cond, float val)
 operator floatArray::replace( const intArray& cond, const floatArray& val) 
               {
                    modify {this}; read {cond, val}; alias none;
+               }
+
+operator floatArray::floatArray (int len) 
+              { 
+                   modify none; read {len}; alias none;
+                   restrict_value {this = { dimension = 1; length_0 = len; } };
+                 construct_array (none) { dimension = 1; length(0) = len }; 
                }
 
                                           
@@ -361,10 +369,4 @@ operator operator>= ( const floatArray& lhs, const floatArray& rhs)
                }
 
 
-operator floatArray::floatArray (int len) 
-              { 
-                   modify none; read {len}; alias none;
-                   restrict_value {this = { dimension = 1; length_0 = len; } };
-                 construct_array (none) { dimension = 1; length(0) = len }; 
-               }
 

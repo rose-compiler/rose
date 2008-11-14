@@ -7,12 +7,16 @@
 
 namespace CommandlineProcessing
    {
-          /// Separate a string into individual parameters and store them into a string vector
+          //! Separate a string into individual parameters and store them into a string vector
           Rose_STL_Container<std::string> generateArgListFromString ( std::string commandline );
-          /// Convert an arc-argv pair into a string vector
+
+	  //! Convert an argc-argv pair into a string vector
           Rose_STL_Container<std::string> generateArgListFromArgcArgv ( int argc, const char* argv[] );
-          inline Rose_STL_Container<std::string> generateArgListFromArgcArgv ( int argc, char* argv[] ) {return generateArgListFromArgcArgv(argc, (const char**)argv);}
-          /// Convert a string vector back to an arc-argv pair
+	  
+          inline Rose_STL_Container<std::string> generateArgListFromArgcArgv ( int argc, char* argv[] ) 
+	  {return generateArgListFromArgcArgv(argc, (const char**)argv);}
+	  
+          //! Convert a string vector back to an argc-argv pair
           void generateArgcArgvFromList ( Rose_STL_Container<std::string> argList, int & argc, char** & argv );
 
           Rose_STL_Container<std::string> generateOptionList ( Rose_STL_Container<std::string> & argList, std::string inputPrefix );
@@ -40,8 +44,9 @@ namespace CommandlineProcessing
 
       //! Add the strings in argList to the command line represented by argc and argv, prepend 'prefix' to each of the arguments
           void addListToCommandLine ( std::vector<std::string> & argv , std::string prefix, Rose_STL_Container<std::string> argList );
-
+      //! Remove all options matching a specified prefix 'prefix' from the argument list 'argv'  
           void removeArgs ( std::vector<std::string> & argv, std::string prefix );
+      //! Remove all options matching a specified prefix 'prefix' from the argument list 'argv', as well as the option values following them
           void removeArgsWithParameters ( std::vector<std::string> & argv, std::string prefix );
 
           void removeAllFileNamesExcept ( std::vector<std::string> & argv, Rose_STL_Container<std::string> filenameList, std::string exceptFilename );

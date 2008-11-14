@@ -43,7 +43,9 @@ class ArrayInterface
   bool is_array_exp( CPPAstInterface& fa, const AstNodePtr& array, 
                      int *dimp = 0, SymbolicFunctionDeclarationGroup *len = 0, 
 		     bool *changeshape = 0);
+  //! Set the dimension of an array		     
   void set_array_dimension( const AstNodePtr& arrayexp, int dim);
+  
   bool is_array_mod_op( CPPAstInterface& fa, const AstNodePtr& arrayExp, 
                         AstNodePtr* modArray = 0, int *dimp = 0, 
 			SymbolicFunctionDeclarationGroup *len = 0, SymbolicFunctionDeclarationGroup* elem = 0, 

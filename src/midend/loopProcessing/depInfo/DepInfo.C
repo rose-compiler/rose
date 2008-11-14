@@ -97,21 +97,45 @@ GetDepInfo( int nr, int nc, DepType t, const AstNodePtr& srcRef, const AstNodePt
 
 std::string DepType2String(DepType t) 
 {
+#if 1
+// Liao, the type could be some combination of several types, 11/13/2008
+  std::string result;
+  
+  if (t&DEPTYPE_CTRL) result += "CTRL_DEP";
+  if (t&DEPTYPE_TRUE) result += " TRUE_DEP";
+  if (t&DEPTYPE_OUTPUT) result+= " OUTPUT_DEP";
+  if (t&DEPTYPE_ANTI) result += " ANTI_DEP";
+  if (t&DEPTYPE_INPUT) result += " INPUT_DEP";
+  
+  if (t&DEPTYPE_SCALAR) result += " SCALAR_DEP";
+  if (t&DEPTYPE_BACKSCALAR) result += " SCALAR_BACK_DEP";
+  if (t&DEPTYPE_IO) result += " IO_DEP";
+  if (t&DEPTYPE_DATA) result += " DATA_DEP";	
+  if (t&DEPTYPE_BACKCTRL) result += " BACKCTRL_DEP";
+  
+  if (t&DEPTYPE_TRANS) result += " TRANS_DEP";
+  if (t&DEPTYPE_NONE) result += " TYPE_NONE";
+  
+  return result +=";";
+#else
   switch (t) {
   case DEPTYPE_CTRL: return "CTRL_DEP;"; 
   case DEPTYPE_TRUE: return  "TRUE_DEP;"; 
   case DEPTYPE_OUTPUT: return  "OUTPUT_DEP;"; 
   case DEPTYPE_ANTI: return  "ANTI_DEP;"; 
   case DEPTYPE_INPUT: return  "INPUT_DEP;"; 
+  
   case DEPTYPE_SCALAR: return  "SCALAR_DEP;"; 
   case DEPTYPE_BACKSCALAR: return  "SCALAR_BACK_DEP;"; 
   case DEPTYPE_IO: return  "IO_DEP;"; 
   case DEPTYPE_DATA: return  "DATA_DEP;"; 
   case DEPTYPE_BACKCTRL: return  "BACKCTRL_DEP;";  
+  
   case DEPTYPE_TRANS: return  "TRANS_DEP;"; 
   case DEPTYPE_NONE : return  "TYPE_NONE"; 
   default: assert(false);
   }
+#endif  
 }
   
 std::string DepInfo :: toString() const

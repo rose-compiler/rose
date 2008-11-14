@@ -6095,10 +6095,7 @@ SgSymbolTable::find_function(const SgName &nm)
 
      while(p_iterator != p_table->end())
         {
-          if ((p_iterator->second->variantT() == V_SgFunctionSymbol)||
-              (p_iterator->second->variantT() == V_SgMemberFunctionSymbol)||
-              (p_iterator->second->variantT() == V_SgRenameSymbol))
-
+          if (isSgFunctionSymbol(p_iterator->second))
              {
                p_name    = nm;
                p_no_name = false;

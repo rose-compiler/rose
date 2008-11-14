@@ -251,7 +251,7 @@ class floatArray
           int getLocalBase(int dim);
           int getLength( int dim);
           //Liao, 11/12/2008. Add alias functions used in the annotation
-          int length();
+          int length(int i);
           float & elem(int i);
 
           floatArray & redim ( floatArray & X );

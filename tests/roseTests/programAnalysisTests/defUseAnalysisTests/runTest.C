@@ -196,6 +196,7 @@ int strToInt(string str) {
   int b;
   std::stringstream ss(str);
   ss >> b;
+  if (!ss) return 0;
   return b;
 }
 

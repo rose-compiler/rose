@@ -8,7 +8,9 @@
 #include <ValuePropagate.h>
 #include <list>
 
-
+//! Descriptor (string format) of array shape: 
+//    maximum number of dimensions: integer constant or symbol 
+//    size(length) of each dimension: a symbolic function of the dimension number
 class ArrayShapeDescriptor {
   SymbolicValDescriptor dimension;
   SymbolicFunctionDeclarationGroup length;
@@ -214,7 +216,7 @@ class ArrayModifyOpCollection : public OperatorAnnotCollection<ArrayModifyDescri
 // * types/classes:    array attributes: dimension, length, 
 // * operators/functions: side effects such as mod/read; and alias information
 // Please refer to the following paper for details
-// Yi, Qing, and Dan Quinlan, \u201cApplying Loop Optimizations to Object-oriented Abstractions
+// Yi, Qing, and Dan Quinlan, Applying Loop Optimizations to Object-oriented Abstractions
 // Through General Classification of Array Semantics\u201d, the 17th International Workshop on
 // Languages and Compilers for Parallel Computing, West Lafayette, Indiana, USA. Sep. 2004.
 class ArrayAnnotation 
@@ -227,7 +229,7 @@ class ArrayAnnotation
   ArrayModifyOpCollection arrayModify;
   ArrayConstructOpCollection arrayConstruct;
   
-  static ArrayAnnotation* inst;
+  static ArrayAnnotation* inst;// singleton instance
 
   virtual bool may_alias(AstInterface& fa, const AstNodePtr& fc, 
                          const AstNodePtr& result,
