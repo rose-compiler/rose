@@ -91,7 +91,7 @@ std::string Ir::fragmentToString(const SgNode* node) {
 
   // the method unparseToString is not virtual therefore we need to determine the
   // concrete type before invoking unparseToString (should be changed in ROSE)
-  // there are two versions of unpareToString, in the nodes that inherite in SATIrE
+  // there are two versions of unparseToString, in the nodes that inherite in SATIrE
   // we only implement unparseToString(), but not unparseToString(unparseInfo), therefore
   // the methods are called here as they are available on the respective node
   if(const SgExprStatement* n=isSgExprStatement(node)) {
@@ -106,6 +106,14 @@ std::string Ir::fragmentToString(const SgNode* node) {
     s=n->unparseToString();
   } else {
     s=node->unparseToString(unparseInfo);
+ // GB (2008-11-14): Sometimes this unparsed string is empty, which might be
+ // due to some bug in ROSE, or some assumption that ROSE makes that we do
+ // not ensure. Anyway, it looks like usually this works again if we
+ // restore the original parent, so let's try that.
+    if (s == "") {
+      (const_cast<SgNode*>(node))->set_parent(origParent);
+      s = node->unparseToString(unparseInfo);
+    }
   }
 
   // restore original parent pointer
