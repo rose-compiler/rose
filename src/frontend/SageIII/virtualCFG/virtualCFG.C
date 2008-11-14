@@ -659,20 +659,20 @@ namespace VirtualCFG {
 				      vector<CFGEdge> (CFGNode::*closure)() const,
 				      CFGNode (CFGPath::*otherSide)() const,
 				      CFGPath (*merge)(const CFGPath&, const CFGPath&)) {
-    set<CFGPath> rawEdges(orig.begin(), orig.end());
+    vector<CFGPath> rawEdges(orig.begin(), orig.end());
     // cerr << "makeClosure starting with " << orig.size() << endl;
     while (true) {
       top:
       // cerr << "makeClosure loop: " << rawEdges.size() << endl;
-      for (set<CFGPath>::iterator i = rawEdges.begin(); i != rawEdges.end(); ++i) {
+      for (vector<CFGPath>::iterator i = rawEdges.begin(); i != rawEdges.end(); ++i) {
 	if (!((*i).*otherSide)().isInteresting()) {
 	  unsigned int oldSize = rawEdges.size();
 	  vector<CFGEdge> rawEdges2 = (((*i).*otherSide)().*closure)();
 	  for (unsigned int j = 0; j < rawEdges2.size(); ++j) {
 	    CFGPath merged = (*merge)(*i, rawEdges2[j]);
-	    pair<set<CFGPath>::iterator, bool> x = rawEdges.insert(merged);
-	    // if (x.second)
-	      // cerr << "Added " << merged.source().toString() << " -> " << merged.target().toString() << ": " << merged.toString() << endl;
+            if (std::find(rawEdges.begin(), rawEdges.end(), merged) == rawEdges.end()) {
+              rawEdges.push_back(merged);
+            }
 	  }
 	  if (rawEdges.size() != oldSize) goto top; // To restart iteration
 	}
@@ -681,7 +681,7 @@ namespace VirtualCFG {
     }
     // cerr << "makeClosure loop done: " << rawEdges.size() << endl;
     vector<InterestingEdge> edges;
-    for (set<CFGPath>::const_iterator i = rawEdges.begin(); i != rawEdges.end(); ++i) {
+    for (vector<CFGPath>::const_iterator i = rawEdges.begin(); i != rawEdges.end(); ++i) {
       if (((*i).*otherSide)().isInteresting())
 	edges.push_back(InterestingEdge(*i));
     }
