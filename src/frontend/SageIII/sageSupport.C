@@ -2988,75 +2988,29 @@ SgProject::parse()
           string currentFileName = *nameIterator;
           CommandlineProcessing::removeAllFileNamesExcept(argv,p_sourceFileNameList,currentFileName);
 
-       // printf ("In SgProject::parse(): command line for file = %s \n",CommandlineProcessing::generateStringFromArgList(argv,false,false).c_str());
-       // printf ("currentFileName = %s \n",currentFileName.c_str());
+          printf ("In SgProject::parse(): command line for file = %s \n",CommandlineProcessing::generateStringFromArgList(argv,false,false).c_str());
+          printf ("currentFileName = %s \n",currentFileName.c_str());
 
-          SgFile* newFile = NULL;
-
-#if 0
-          if (isBinaryExecutableFile(currentFileName) == true)
-             {
-            // If this file matches a source file name then include it in it's binary file pointer.
-            // If there are more than one source files, then we can't so easily associate the binary 
-            // file with a specific source file and the binary file will be built as a separate SgFile
-            // in the same SgProject as the other source files.
-
-               for (Rose_STL_Container<SgFile*>::iterator i = p_fileList.begin(); i != p_fileList.end(); i++)
-                  {
-                    string filenameWithoutSuffix = StringUtility::stripFileSuffixFromFileName((*i)->get_sourceFileNameWithoutPath());
-                    printf ("Comparing currentFileName for binary = %s to previously built source file = %s filenameWithoutSuffix = %s \n",
-                         currentFileName.c_str(),(*i)->get_sourceFileNameWithoutPath().c_str(),filenameWithoutSuffix.c_str());
-                    if ( filenameWithoutSuffix == currentFileName )
-                       {
-                      // This is a binary file that matches the name of a source file so
-                      // put the binary AST into the same SgFile IR node with the source.
-                      // So reuse the SgFile from the generation of the source file.
-
-                      // Hopefuly this does not change the data fields in the SgFile IR nodes to be inconsistant with it being a source file.
-
-                      // newFile = *i;
-                       }
-                  }
-
-               newFile = new SgBinaryFile ( argv, nextErrorCode, 0, this );
-             }
-#endif
-
-       // DQ (2/24/2004): Added support for SgProject to be passed so that the parent 
-       // pointer could be set earily in the construction process.
-       // SgFile* newFile = new SgFile ( argc, argv, nextErrorCode, i, this );
-       // SgFile* newFile = new SgFile ( argv, nextErrorCode, 0, this );
-          if (newFile == NULL)
-             {
-            // newFile = new SgFile ( argv, nextErrorCode, 0, this );
-
-            // printf ("currentFileName = %s \n",currentFileName.c_str());
-
-
-               newFile = determineFileType(argv, nextErrorCode, this);
-               
-               ROSE_ASSERT (newFile != NULL);
-
-            // printf ("In SgProject::parse(): newFile = %p = %s \n",newFile,newFile->class_name().c_str());
-
-               ROSE_ASSERT (newFile->get_startOfConstruct() != NULL);
-
-               ROSE_ASSERT (newFile->get_parent() != NULL);
-
-            // DQ (9/2/2008): This should have already been set!
-            // Set the parent explicitly (so that we can easily find the SgProject from the SgFile).
-            // newFile->set_parent(this);
-
-            // This just adds the new file to the list of files stored internally
-               set_file ( *newFile );
-
-            // newFile->display("Called from SgProject::parse()");
-             }
-
+       // DQ (11/13/2008): Removed overly complex logic here!
+          SgFile* newFile = determineFileType(argv, nextErrorCode, this);
           ROSE_ASSERT (newFile != NULL);
-#if 0
-          printf ("In Project::parse(): get_file(%d).get_skipfinalCompileStep() = %s \n",
-               i,(get_file(i).get_skipfinalCompileStep()) ? "true" : "false");
+
+       // printf ("In SgProject::parse(): newFile = %p = %s \n",newFile,newFile->class_name().c_str());
+
+          ROSE_ASSERT (newFile->get_startOfConstruct() != NULL);
+          ROSE_ASSERT (newFile->get_parent() != NULL);
+
+       // DQ (9/2/2008): This should have already been set!
+       // Set the parent explicitly (so that we can easily find the SgProject from the SgFile).
+       // newFile->set_parent(this);
+
+       // This just adds the new file to the list of files stored internally
+           set_file ( *newFile );
+
+       // newFile->display("Called from SgProject::parse()");
+
+#if 1
+          printf ("In Project::parse(): get_file(%d).get_skipfinalCompileStep() = %s \n",i,(get_file(i).get_skipfinalCompileStep()) ? "true" : "false");
 #endif
 
        // errorCode = (errorCode >= nextErrorCode) ? errorCode : nextErrorCode; // use STL max

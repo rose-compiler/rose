@@ -2,7 +2,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 if ROSE_USE_OPENGL
 
-INCLUDES = $(ROSE_INCLUDES) -I$(builddir) $(GL_CFLAGS)
+# DQ (11/13/2008): Can't use builddir on some machines and "-I." is already included by default.
+# INCLUDES = $(ROSE_INCLUDES) -I$(builddir) $(GL_CFLAGS)
+INCLUDES = $(ROSE_INCLUDES) $(GL_CFLAGS)
 
 bin_PROGRAMS = vizzBinary 
 
