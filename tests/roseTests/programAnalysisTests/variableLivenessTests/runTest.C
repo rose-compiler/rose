@@ -55,7 +55,7 @@ void testOneFunction( std::string funcParamName,
 
   if (abortme) {
     cerr<<"ABORTING ." << endl;
-    exit(0);
+    exit(1);
   }
   std::cout << "Analysis test is success." << std::endl;
 }
@@ -103,7 +103,7 @@ void runCurrentFile(vector<string> &argvList, bool debug, bool debug_map) {
   f2.close();
   if (abortme) {
     cerr<<"ABORTING ." << endl;
-    exit(0);
+    exit(1);
   }
 
 
