@@ -83,10 +83,10 @@ do
 done
 echo "}" >> $ANALYSIS_DIR/main-support.C
 
-# update or create main and implementation files
+# create (or overwrite!) main and implementation files
 function create_implementation_h
 {
-    cat >> $ANALYSIS_DIR/${ANALYSIS_NAME}_implementation.h <<analysisimplementation_h_end
+    cat > $ANALYSIS_DIR/${ANALYSIS_NAME}_implementation.h <<analysisimplementation_h_end
 #ifndef H_SATIRE_DATAFLOW_ANALYSIS_IMPLEMENTATION_${ANALYSIS_NAME}
 #define H_SATIRE_DATAFLOW_ANALYSIS_IMPLEMENTATION_${ANALYSIS_NAME}
 #define ANALYSIS ${ANALYSIS_NAME}
@@ -96,7 +96,7 @@ analysisimplementation_h_end
 
 function create_implementation_C
 {
-    cat >> $ANALYSIS_DIR/${ANALYSIS_NAME}_implementation.C <<analysisimplementation_C_end
+    cat > $ANALYSIS_DIR/${ANALYSIS_NAME}_implementation.C <<analysisimplementation_C_end
 #include "${ANALYSIS_NAME}_implementation.h"
 #define ANALYSIS ${ANALYSIS_NAME}
 
@@ -106,13 +106,13 @@ analysisimplementation_C_end
 
 function create_main_C
 {
-    echo "#define MAIN_ANALYSIS ${ANALYSIS_NAME}" >> $ANALYSIS_DIR/main.C
+    echo "#define MAIN_ANALYSIS ${ANALYSIS_NAME}" > $ANALYSIS_DIR/main.C
     cat $SATIRE_DATA/main.C-template >> $ANALYSIS_DIR/main.C
 }
 
 function create_main_h
 {
-    echo "#include \"${ANALYSIS_NAME}_implementation.h\"" >> $ANALYSIS_DIR/main.h
+    echo "#include \"${ANALYSIS_NAME}_implementation.h\"" > $ANALYSIS_DIR/main.h
     cat $SATIRE_DATA/main.h-template >> $ANALYSIS_DIR/main.h
 }
 
