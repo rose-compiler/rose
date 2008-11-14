@@ -11,6 +11,7 @@ BinQ_SOURCES = \
 	BinQSupport.C \
 	BinQGui.C \
 	slide.C \
+        LCS.C   \
 	Clone.C \
 	AlignFunctions.C \
 	BinCallGraph.C \
@@ -54,6 +55,7 @@ EXTRA_DIST = BinQGui.h \
              icons.h \
              Item.h \
              Clone.h \
+             LCS.h \
              BinCallGraph.h \
              BinControlFlowAnalysis.h \
              BinDataFlowAnalysis.h \

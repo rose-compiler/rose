@@ -16,6 +16,7 @@
 #include <qtabwidget.h>
 
 
+#include "LCS.h"
 #include "Clone.h"
 #include "AlignFunctions.h"
 #include "BinCallGraph.h"
