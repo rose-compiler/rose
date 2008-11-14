@@ -2988,8 +2988,8 @@ SgProject::parse()
           string currentFileName = *nameIterator;
           CommandlineProcessing::removeAllFileNamesExcept(argv,p_sourceFileNameList,currentFileName);
 
-          printf ("In SgProject::parse(): command line for file = %s \n",CommandlineProcessing::generateStringFromArgList(argv,false,false).c_str());
-          printf ("currentFileName = %s \n",currentFileName.c_str());
+       // printf ("In SgProject::parse(): command line for file = %s \n",CommandlineProcessing::generateStringFromArgList(argv,false,false).c_str());
+       // printf ("currentFileName = %s \n",currentFileName.c_str());
 
        // DQ (11/13/2008): Removed overly complex logic here!
           SgFile* newFile = determineFileType(argv, nextErrorCode, this);
@@ -3009,7 +3009,7 @@ SgProject::parse()
 
        // newFile->display("Called from SgProject::parse()");
 
-#if 1
+#if 0
           printf ("In Project::parse(): get_file(%d).get_skipfinalCompileStep() = %s \n",i,(get_file(i).get_skipfinalCompileStep()) ? "true" : "false");
 #endif
 
