@@ -19,10 +19,10 @@ TESTCODES =  test1.C
 # Build the list of object files
 TEST_Objects = ${TESTCODES:.C=.o}
 
-ROSE_FLAGS = -rose:verbose 2
+#ROSE_FLAGS = -rose:verbose 2
 # ROSE_FLAGS = 
 
-TEST_TRANSLATOR = ./runTest all $(ROSE_FLAGS)
+TEST_TRANSLATOR = ./runTest all $(ROSE_FLAGS) > output
 TESTCODE_INCLUDES =
 
 # DQ (7/12/2004): Modified to run with make -j4 options
@@ -41,7 +41,7 @@ check-local:
 
 
 clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) *.o rose_*.C *.dot Templates.DB ii_files ti_files DATABASE DATABASE.dot
+	rm -rf $(CXX_TEMPLATE_OBJECTS) *.o rose_*.C *.dot Templates.DB ii_files ti_files DATABASE DATABASE.dot output *.pdf
 
 distclean-local:
 	rm -rf Templates.DB 

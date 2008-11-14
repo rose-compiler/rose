@@ -21,7 +21,7 @@ void testOneFunction( std::string funcParamName,
   // Call the Def-Use Analysis
   DFAnalysis* defuse = new DefUseAnalysis(project);
   int val = defuse->run(debug);
-  std::cout << "Analysis run is : " << (val ?  "failure" : "success" ) << " " << val << std::endl;
+  std::cerr << ">Analysis run is : " << (val ?  "failure" : "success" ) << " " << val << std::endl;
   if (val==1) exit(1);
 
   if (debug==false)
@@ -30,19 +30,32 @@ void testOneFunction( std::string funcParamName,
 
   LivenessAnalysis* liv = new LivenessAnalysis(debug,(DefUseAnalysis*)defuse);
 
-
+  std::vector <FilteredCFGNode < IsDFAFilter > > dfaFunctions;
 //std::list<SgNode*> vars = NodeQuery::querySubTree(project, V_SgFunctionDefinition); 
 //std::list<SgNode*>::const_iterator i = vars.begin();
   NodeQuerySynthesizedAttributeType vars = NodeQuery::querySubTree(project, V_SgFunctionDefinition); 
   NodeQuerySynthesizedAttributeType::const_iterator i = vars.begin();
+  bool abortme=false;
   for (; i!=vars.end();++i) {
     SgFunctionDefinition* func = isSgFunctionDefinition(*i);
     std::string name = func->class_name();
     string funcName = func->get_declaration()->get_qualified_name().str();
+    cerr << " .. running live analysis for func : " << funcName << endl;
+    FilteredCFGNode <IsDFAFilter> rem_source = liv->run(func,abortme);
+    if (rem_source.getNode()!=NULL)
+      dfaFunctions.push_back(rem_source);    
+    if (abortme)
+      break;
+  }
+  cerr << "Writing out to var.dot... " << endl;
+  std::ofstream f2("var.dot");
+  dfaToDot(f2, string("var"), dfaFunctions, 
+	   (DefUseAnalysis*)defuse, liv);     
+  f2.close();
 
-    cerr << " running live analysis for func : " << funcName << endl;
-    liv->run(func);
-
+  if (abortme) {
+    cerr<<"ABORTING ." << endl;
+    exit(0);
   }
   std::cout << "Analysis test is success." << std::endl;
 }
@@ -68,15 +81,31 @@ void runCurrentFile(vector<string> &argvList, bool debug, bool debug_map) {
   
   //example usage
   // testing
+  std::vector <FilteredCFGNode < IsDFAFilter > > dfaFunctions;
+  bool abortme=false;
   NodeQuerySynthesizedAttributeType vars = NodeQuery::querySubTree(project, V_SgFunctionDefinition); 
   NodeQuerySynthesizedAttributeType::const_iterator i = vars.begin();
   for (; i!=vars.end();++i) {
     SgFunctionDefinition* func = isSgFunctionDefinition(*i);
     string funcName = func->get_declaration()->get_qualified_name().str();
     cerr << " running live analysis for func : " << funcName << endl;
-    liv->run(func);
-    
+    FilteredCFGNode <IsDFAFilter> rem_source = liv->run(func,abortme);
+    if (rem_source.getNode()!=NULL)
+      dfaFunctions.push_back(rem_source);
+    if (abortme)
+      break;
+  }   
+
+
+  std::ofstream f2("var.dot");
+  dfaToDot(f2, string("var"), dfaFunctions, 
+	   (DefUseAnalysis*)defuse, liv);     
+  f2.close();
+  if (abortme) {
+    cerr<<"ABORTING ." << endl;
+    exit(0);
   }
+
 
   delete project;
   delete defuse;
@@ -143,7 +172,10 @@ int main( int argc, char * argv[] )
     std::string srcdir = srcdirVar;
     srcdir += "/";
 
-#if 0
+#if 1
+    cerr << " RUNNING VARIABLE ANALYSIS (DEFUSE) TESTS" <<endl;
+
+
     if (startNrInt<=1 || testAll) {
       // ------------------------------ TESTCASE 1 -----------------------------------------
       argvList[1]=srcdir+"tests/test1.C";

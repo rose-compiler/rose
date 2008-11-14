@@ -462,9 +462,10 @@ void  DefUseAnalysis::start_traversal_of_functions() {
   // Traverse through each FunctionDefinition and check for DefUse
   Rose_STL_Container<SgNode*> functions = NodeQuery::querySubTree(project, V_SgFunctionDefinition); 
   DefUseAnalysisPF* defuse_perfunc = new DefUseAnalysisPF(DEBUG_MODE, this);
+  bool abortme=false;
   for (Rose_STL_Container<SgNode*>::const_iterator i = functions.begin(); i != functions.end(); ++i) {
     SgFunctionDefinition* proc = isSgFunctionDefinition(*i);
-    FilteredCFGNode <IsDFAFilter> rem_source = defuse_perfunc->run(proc);
+    FilteredCFGNode <IsDFAFilter> rem_source = defuse_perfunc->run(proc,abortme);
     nrOfNodesVisited += defuse_perfunc->getNumberOfNodesVisited();
     //cout << nrOfNodesVisited << " ......... function " << proc->get_declaration()->get_name().str() << endl; 
     if (rem_source.getNode()!=NULL)
@@ -487,9 +488,9 @@ int
 DefUseAnalysis::start_traversal_of_one_function(SgFunctionDefinition* proc) {
 
   nrOfNodesVisited = 0;
-
+  bool abortme=false;
   DefUseAnalysisPF*  defuse_perfunc = new DefUseAnalysisPF(false, this);
-  FilteredCFGNode <IsDFAFilter> rem_source = defuse_perfunc->run(proc);
+  FilteredCFGNode <IsDFAFilter> rem_source = defuse_perfunc->run(proc,abortme);
   nrOfNodesVisited = defuse_perfunc->getNumberOfNodesVisited();
   //cout << " nodes visited: " << nrOfNodesVisited << " ......... function " << proc->get_declaration()->get_name().str() << endl; 
   

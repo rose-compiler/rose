@@ -20,6 +20,22 @@ class LivenessAnalysis : public DefUseAnalysisAbstract {
   bool DEBUG_MODE;
 
   SgNode* searchNode;
+  void printInAndOut(SgNode* sgNode);
+  template <class T> T merge_no_dups( T& v1,  T& v2);
+  bool abort;
+  int counter;
+  std::map<SgNode*, std::vector<SgInitializedName*> > in;
+  std::map<SgNode*, std::vector<SgInitializedName*> > out;
+
+  int nrOfNodesVisitedPF;
+  //  std::map<SgNode*,int> breakPointForWhile;
+  //std::set<SgNode*> breakPointForWhileNode;
+  int breakPointForWhile;
+  SgNode* breakPointForWhileNode;
+
+  template <typename T> bool defuse(T cfgNode, bool *unhandled);
+  std::map<SgNode*,int> visited;
+  template <typename T> bool hasANodeAboveCurrentChanged(T source);
 
  public:
  LivenessAnalysis(bool debug, DefUseAnalysis* dfa_p){
@@ -32,23 +48,13 @@ class LivenessAnalysis : public DefUseAnalysisAbstract {
   };
   virtual ~LivenessAnalysis() {}
 
-
-  std::map<SgNode*, std::vector<SgInitializedName*> > in;
-  std::map<SgNode*, std::vector<SgInitializedName*> > out;
-
-
   SgFunctionDefinition* getFunction(SgNode* node);
-
-
-  int nrOfNodesVisitedPF;
-  int breakPointForWhile;
-  SgNode* breakPointForWhileNode;
-
-  template <typename T> bool defuse(T cfgNode);
-  FilteredCFGNode < IsDFAFilter > run(SgFunctionDefinition* function);
   int getNumberOfNodesVisited();
-
-
+  FilteredCFGNode < IsDFAFilter > run(SgFunctionDefinition* function, bool& abortme);
+  
+  std::vector<SgInitializedName*> getIn(SgNode* sgNode) { return in[sgNode];}
+  std::vector<SgInitializedName*> getOut(SgNode* sgNode) { return out[sgNode];}
+  int getVisited(SgNode* n) {return visited[n];}
 };
 
 #endif
