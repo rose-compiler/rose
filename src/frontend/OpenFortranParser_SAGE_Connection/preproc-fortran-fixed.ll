@@ -496,7 +496,7 @@ getFortranFixedFormatPreprocessorDirectives( std::string fileName )
              {
             // DQ (1/22/2008): I output a comment here to detect where extra LF are output to either cout or cerr as part of the lex phase.
             // I have not been able to figure out why or where these are output yet (see test2007_189.f for the worst case of this).
-               printf ("In getFortranFixedFormatPreprocessorDirectives(): opened file %s for token stream processing \n",fileName.c_str()); 
+            // printf ("In getFortranFixedFormatPreprocessorDirectives(): opened file %s for token stream processing \n",fileName.c_str()); 
 
             // exit(0);
                yyin = fp; 
@@ -520,8 +520,8 @@ getFortranFixedFormatPreprocessorDirectives( std::string fileName )
                   }
             */
                fclose(fp);
-               printf ("In getFortranFixedFormatPreprocessorDirectives(): closed file %s for token stream processing \n",fileName.c_str()); 
-             } 
+            // printf ("In getFortranFixedFormatPreprocessorDirectives(): closed file %s for token stream processing \n",fileName.c_str()); 
+             }
             else 
              {
                printf ("Error: can't find the requested file (%s) \n",fileName.c_str()); 
