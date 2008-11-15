@@ -457,14 +457,15 @@ BinQGUI::insertFileInformation() {
 }
 
 
-BinQGUI::BinQGUI(std::string fA, std::string fB ) :  window(0), 
-						     fileNameA(fA), fileNameB(fB) {
+BinQGUI::BinQGUI(std::string fA, std::string fB,bool test ) :  
+  window(0), fileNameA(fA), fileNameB(fB) {
   window = new QRWindow( "mainWindow", QROSE::TopDown );
   binqsupport= new BinQSupport();
   maxrows=5;
   sourceFile=false;
   init();
-  createGUI();
+  if (test==false)
+    createGUI();
 }
 
 void BinQGUI::init(){
@@ -1014,6 +1015,7 @@ void BinQGUI::showFileA(int row) {
       addRow=true;
     }
     if (addRow) {
+      cout << " adding row ... " << rowC << " / " << itemsFileA.size() << endl;
       codeTableWidget->setHAlignment(true, false, 0); // left horizontal alignment
       codeTableWidget->setHAlignment(true, false, 1); // left horizontal alignment
       codeTableWidget->setHAlignment(true, false, 2); // left horizontal alignment

@@ -29,7 +29,7 @@ class BinQSupport;
 class BinQGUI //: public QWidget
 {
   public:
-  BinQGUI(std::string, std::string );
+  BinQGUI(std::string, std::string, bool test );
     ~BinQGUI();
     void run( ) ;
     void open();
