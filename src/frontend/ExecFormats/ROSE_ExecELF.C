@@ -1116,6 +1116,37 @@ SgAsmElfSectionTable::ctor()
     }
 }
 
+SgAsmElfSection *
+SgAsmElfSectionTable::create_section(const std::string &name, addr_t size)
+{
+    SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
+    ROSE_ASSERT(fhdr!=NULL);
+    SgAsmElfSection *section = new SgAsmElfSection;
+    section->set_file(fhdr->get_file());
+
+    /* Stuff related to the section table */
+    SgAsmElfSectionTableEntry *shdr = new SgAsmElfSectionTableEntry;
+    section->set_section_entry(shdr);
+    int id = fhdr->get_e_shnum();
+    fhdr->set_e_shnum(id+1);
+    section->set_id(id);
+
+    /* Section name stored in the section string table */
+    SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(fhdr->get_section_by_id(fhdr->get_e_shstrndx()));
+    ROSE_ASSERT(strsec!=NULL);
+    SgAsmStoredString *stored_name = new SgAsmStoredString(strsec->get_strtab(), 0);
+    stored_name->set_string(name);
+    section->set_name(stored_name);
+    
+    /* File offset/size */
+    section->set_offset(fhdr->get_file()->get_current_size());
+    section->set_size(size);
+
+    /* Add new section to AST */
+    fhdr->add_section(section);
+    return section;
+}
+
 /* Returns info about the size of the entries based on information already available. Any or all arguments may be null
  * pointers if the caller is not interested in the value. */
 rose_addr_t

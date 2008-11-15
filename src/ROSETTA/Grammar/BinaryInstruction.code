@@ -1246,20 +1246,21 @@ HEADER_ELF_HEADER_START
 		static SgAsmElfFileHeader *parse(SgAsmGenericFile*);
 HEADER_ELF_HEADER_END
 
+
+
 HEADER_ELF_SECTION_TABLE_START
-     public:
-          SgAsmElfSectionTable(SgAsmElfFileHeader *fhdr);
-       // virtual ~SgAsmElfSectionTable() {}
-
-	  rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
-	  virtual bool reallocate();
-          virtual void unparse(std::ostream&) const;
-          virtual void dump(FILE*, const char *prefix, ssize_t idx);
-
-     private:
-          void ctor();    
-
+	public:
+		SgAsmElfSectionTable(SgAsmElfFileHeader *fhdr);
+		SgAsmElfSection *create_section(const std::string &name, addr_t size);
+		rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
+		virtual bool reallocate();
+		virtual void unparse(std::ostream&) const;
+		virtual void dump(FILE*, const char *prefix, ssize_t idx);
+	private:
+		void ctor();    
 HEADER_ELF_SECTION_TABLE_END
+
+
 
 HEADER_ELF_SECTION_TABLE_ENTRY_START
 
