@@ -537,7 +537,7 @@ Grammar::setUpBinaryInstructions ()
   // std::string p_string;
      AsmBasicString.setFunctionPrototype ( "HEADER_BASIC_STRING", "../Grammar/BinaryInstruction.code");
      AsmBasicString.setDataPrototype("std::string","string","= \"\"",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AsmStoredString.setFunctionPrototype ( "HEADER_STORED_STRING", "../Grammar/BinaryInstruction.code");
      AsmStoredString.setDataPrototype("SgAsmStringStorage*","storage","= NULL",
