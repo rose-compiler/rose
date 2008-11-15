@@ -74,11 +74,10 @@ int main( int argc, char **argv )
   }
 
 
-
-  BinQGUI binGui(fileA,fileB, test);
-  if (test==false) 
+  if (test==false) {
+    BinQGUI binGui(fileA,fileB, test);
     binGui.run();
-  else
+  } else
     exit(0);
   return QROSE::exec();
 }
