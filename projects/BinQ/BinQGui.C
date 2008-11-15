@@ -18,6 +18,7 @@
 
 #include "LCS.h"
 #include "Clone.h"
+#include "FunctionDiff.h"
 #include "AlignFunctions.h"
 #include "BinCallGraph.h"
 #include "BinControlFlowAnalysis.h"
@@ -472,6 +473,7 @@ void BinQGUI::init(){
   cerr << "Checking for analyses ... " << endl;
   analyses.clear();
   analyses.push_back(new DiffAlgo());
+  analyses.push_back(new FunctionDiffAlgo());
   analyses.push_back(new AlignFunction());
   analyses.push_back(new BinCallGraph());
   analyses.push_back(new BinControlFlowAnalysis());

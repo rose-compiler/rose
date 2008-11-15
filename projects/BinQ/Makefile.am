@@ -13,6 +13,7 @@ BinQ_SOURCES = \
 	slide.C \
         LCS.C   \
 	Clone.C \
+        FunctionDiff.C \
 	AlignFunctions.C \
 	BinCallGraph.C \
 	BinControlFlowAnalysis.C \
