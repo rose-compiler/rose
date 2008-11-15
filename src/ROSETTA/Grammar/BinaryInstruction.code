@@ -1275,76 +1275,71 @@ HEADER_ELF_SECTION_TABLE_END
 
 
 HEADER_ELF_SECTION_TABLE_ENTRY_START
+	public:
+		/* Section types (host order). All other values are reserved. */
+		enum SectionType {
+			SHT_NULL        = 0,            /* Section header is inactive */
+			SHT_PROGBITS	= 1,            /* Info defined by the program; format and meaning determined by prog */
+			SHT_SYMTAB      = 2,            /* Complete symbol table */
+			SHT_STRTAB      = 3,            /* String table */
+			SHT_RELA        = 4,            /* Relocation entries with explicit addends (e.g., Elf32_Rela types) */
+			SHT_HASH        = 5,            /* Symbol hash table (used by dynamic linking) */
+			SHT_DYNAMIC     = 6,            /* Information for dynamic linking */
+			SHT_NOTE        = 7,            /* Information that marks the file in some way */
+			SHT_NOBITS      = 8,            /* Like SHT_PROGBITS but occupies no file space */
+			SHT_REL         = 9,            /* Relocation entries without explicit addends (e.g., Elf32_Rel types) */
+			SHT_SHLIB       = 10,           /* Reserved, unspecified semantics; Present only in non-conforming files */
+			SHT_DYNSYM      = 11,           /* Minimal set of dynamic linking symbols */
+			SHT_LOPROC      = 0x70000000,	/* Processor specific semantics */
+			SHT_HIPROC      = 0x7fffffff,
+			SHT_LOUSER      = 0x80000000,   /* Application specific semantics */
+			SHT_HIUSER      = 0xffffffff
+		};
 
-     public:
-       /* Section types (host order). All other values are reserved. */
-          enum SectionType {
-              SHT_NULL            = 0,                    /* Section header is inactive */
-              SHT_PROGBITS        = 1,                    /* Information defined by the program; format and meaning determined by prog */
-              SHT_SYMTAB          = 2,                    /* Complete symbol table */
-              SHT_STRTAB          = 3,                    /* String table */
-              SHT_RELA            = 4,                    /* Relocation entries with explicit addends (e.g., Elf32_Rela types) */
-              SHT_HASH            = 5,                    /* Symbol hash table (used by dynamic linking) */
-              SHT_DYNAMIC         = 6,                    /* Information for dynamic linking */
-              SHT_NOTE            = 7,                    /* Information that marks the file in some way */
-              SHT_NOBITS          = 8,                    /* Like SHT_PROGBITS but occupies no file space */
-              SHT_REL             = 9,                    /* Relocation entries without explicit addends (e.g., Elf32_Rel types) */
-              SHT_SHLIB           = 10,                   /* Reserved, unspecified semantics; Present only in non-conforming files */
-              SHT_DYNSYM          = 11,                   /* Minimal set of dynamic linking symbols */
-              SHT_LOPROC          = 0x70000000,           /* Processor specific semantics */
-              SHT_HIPROC          = 0x7fffffff,
-              SHT_LOUSER          = 0x80000000,           /* Application specific semantics */
-              SHT_HIUSER          = 0xffffffff
-          };
+		/* File format of an ELF Section header. Byte order of members depends on e_ident value in file header. This code
+		 * comes directly from "Executable and Linkable Format (ELF)", Portable Formats Specification, Version 1.1, Tool
+                 * Interface Standards (TIS) and not from any header file. The 64-bit structure is gleaned from the Linux
+                 * elf(5) man page. */
+		struct Elf32SectionTableEntry_disk {
+			uint32_t	sh_name;	/* 0x00 Section name; index into section header string table */
+			uint32_t        sh_type;        /* 0x04 Section contents and semantics (see SectionType enum) */
+			uint32_t        sh_flags;       /* 0x08 Bit flags */
+			uint32_t        sh_addr;        /* 0x0c Desired mapped address */
+			uint32_t        sh_offset;      /* 0x10 Section location in file unless sh_type==SHT_NOBITS */
+			uint32_t        sh_size;        /* 0x14 Section size in bytes */
+			uint32_t        sh_link;        /* 0x18 Section ID of another section; meaning depends on section type */
+			uint32_t        sh_info;        /* 0x1c Extra info depending on section type */
+			uint32_t        sh_addralign;   /* 0x20 Mapped alignment (0 and 1=>byte aligned); sh_addr must be aligned*/
+			uint32_t        sh_entsize;     /* 0x24 If non-zero, size in bytes of each array member in the section */
+		} __attribute__((packed));              /* 0x28 */
 
-       /* File format of an ELF Section header. Byte order of members depends on e_ident value in file header. This code comes
-        * directly from "Executable and Linkable Format (ELF)", Portable Formats Specification, Version 1.1, Tool Interface
-        * Standards (TIS) and not from any header file. The 64-bit structure is gleaned from the Linux elf(5) man page. */
-          struct Elf32SectionTableEntry_disk {
-              uint32_t            sh_name;                /* 0x00 Section name; index into section header string table */
-              uint32_t            sh_type;                /* 0x04 Section contents and semantics (see SectionType enum) */
-              uint32_t            sh_flags;               /* 0x08 Bit flags */
-              uint32_t            sh_addr;                /* 0x0c Desired mapped address */
-              uint32_t            sh_offset;              /* 0x10 Section location in file unless sh_type==SHT_NOBITS */
-              uint32_t            sh_size;                /* 0x14 Section size in bytes */
-              uint32_t            sh_link;                /* 0x18 Section ID of another section; meaning depends on section type */
-              uint32_t            sh_info;                /* 0x1c Extra info depending on section type */
-              uint32_t            sh_addralign;           /* 0x20 Mapped alignment (0 and 1=>byte aligned); sh_addr must be aligned */
-              uint32_t            sh_entsize;             /* 0x24 If non-zero, size in bytes of each array member in the section */
-          } __attribute__((packed));                      /* 0x28 */
+		struct Elf64SectionTableEntry_disk {
+			uint32_t	sh_name;	/* 0x00 see Elf32SectionTableEntry_disk */
+			uint32_t        sh_type;	/* 0x04 */
+			uint64_t        sh_flags;	/* 0x08 */
+			uint64_t        sh_addr;	/* 0x10 */
+			uint64_t        sh_offset;	/* 0x18 */
+			uint64_t        sh_size;	/* 0x20 */
+			uint32_t        sh_link;	/* 0x28 */
+			uint32_t        sh_info;	/* 0x2c */
+			uint64_t        sh_addralign;	/* 0x30 */
+			uint64_t        sh_entsize;	/* 0x38 */
+		} __attribute__((packed));		/* 0x40 */
 
-          struct Elf64SectionTableEntry_disk {
-              uint32_t            sh_name;		  /* 0x00 see Elf32SectionTableEntry_disk */
-              uint32_t            sh_type;		  /* 0x04 */
-              uint64_t            sh_flags;		  /* 0x08 */
-              uint64_t            sh_addr;		  /* 0x10 */
-              uint64_t            sh_offset;		  /* 0x18 */
-              uint64_t            sh_size;		  /* 0x20 */
-              uint32_t            sh_link;		  /* 0x28 */
-              uint32_t            sh_info;		  /* 0x2c */
-              uint64_t            sh_addralign;		  /* 0x30 */
-              uint64_t            sh_entsize;		  /* 0x38 */
-          } __attribute__((packed));			  /* 0x40 */
-
-
-          SgAsmElfSectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk);
-          SgAsmElfSectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk);
-
-       // virtual ~SgAsmElfSectionTableEntry() {};
-
-          void *encode(SgAsmExecutableFileFormat::ByteOrder sex,
-		       SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk) const;
-          void *encode(SgAsmExecutableFileFormat::ByteOrder sex,
-		       SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk) const;
-
-	  void update_from_section(SgAsmElfSection*);
-          virtual void dump(FILE*, const char *prefix, ssize_t idx);
-
-     private:
-          void ctor(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk);
-          void ctor(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk);
-
-
+		SgAsmElfSectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex,
+			const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk);
+		SgAsmElfSectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex,
+			const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk);
+		void *encode(SgAsmExecutableFileFormat::ByteOrder sex,
+		SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk) const;
+		void *encode(SgAsmExecutableFileFormat::ByteOrder sex,
+		SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk) const;
+		void update_from_section(SgAsmElfSection*);
+		virtual void dump(FILE*, const char *prefix, ssize_t idx);
+	private:
+		void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk*);
+		void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk*);
+		static const char *to_string(SectionType);
 HEADER_ELF_SECTION_TABLE_ENTRY_END
 
 HEADER_ELF_SECTION_START

@@ -958,7 +958,7 @@ void
 SgAsmElfSectionTableEntry::ctor(ByteOrder sex, const Elf32SectionTableEntry_disk *disk) 
 {
     p_sh_name      = disk_to_host(sex, disk->sh_name);
-    p_sh_type      = disk_to_host(sex, disk->sh_type);
+    p_sh_type      = (SectionType)disk_to_host(sex, disk->sh_type);
     p_sh_flags     = disk_to_host(sex, disk->sh_flags);
     p_sh_addr      = disk_to_host(sex, disk->sh_addr);
     p_sh_offset    = disk_to_host(sex, disk->sh_offset);
@@ -974,7 +974,7 @@ void
 SgAsmElfSectionTableEntry::ctor(ByteOrder sex, const Elf64SectionTableEntry_disk *disk) 
 {
     p_sh_name      = disk_to_host(sex, disk->sh_name);
-    p_sh_type      = disk_to_host(sex, disk->sh_type);
+    p_sh_type      = (SectionType)disk_to_host(sex, disk->sh_type);
     p_sh_flags     = disk_to_host(sex, disk->sh_flags);
     p_sh_addr      = disk_to_host(sex, disk->sh_addr);
     p_sh_offset    = disk_to_host(sex, disk->sh_offset);
@@ -1253,6 +1253,34 @@ SgAsmElfSectionTableEntry::update_from_section(SgAsmElfSection *section)
     }
 }
 
+/* Change symbol to string */
+const char *
+SgAsmElfSectionTableEntry::to_string(SectionType t)
+{
+    switch (t) {
+      case SHT_NULL:     return "SHT_NULL";
+      case SHT_PROGBITS: return "SHT_PROGBITS";
+      case SHT_SYMTAB:   return "SHT_SYMTAB";
+      case SHT_STRTAB:   return "SHT_STRTAB";
+      case SHT_RELA:     return "SHT_RELA";
+      case SHT_HASH:     return "SHT_HASH";
+      case SHT_DYNAMIC:  return "SHT_DYNAMIC";
+      case SHT_NOTE:     return "SHT_NOTE";
+      case SHT_NOBITS:   return "SHT_NOBITS";
+      case SHT_REL:      return "SHT_REL";
+      case SHT_SHLIB:    return "SHT_SHLIB";
+      case SHT_DYNSYM:   return "SHT_DYNSYM";
+      default:
+        if (t>=SHT_LOPROC && t<=SHT_HIPROC) {
+            return "processor-specific";
+        } else if (t>=SHT_LOUSER && t<=SHT_HIUSER) {
+            return "application-specific";
+        } else {
+            return "unknown";
+        }
+    }
+}
+
 /* Print some debugging info */
 void
 SgAsmElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
@@ -1266,7 +1294,8 @@ SgAsmElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
     fprintf(f, "%s%-*s = %u bytes into strtab\n",                      p, w, "sh_name",        p_sh_name);
-    fprintf(f, "%s%-*s = %lu\n",                                       p, w, "sh_type",        p_sh_type);
+    fprintf(f, "%s%-*s = 0x%x (%d) %s\n",                              p, w, "sh_type", 
+            p_sh_type, p_sh_type, to_string(p_sh_type));
     fprintf(f, "%s%-*s = %lu\n",                                       p, w, "sh_link",        p_sh_link);
     fprintf(f, "%s%-*s = %lu\n",                                       p, w, "sh_info",        p_sh_info);
     fprintf(f, "%s%-*s = 0x%08"PRIx64"\n",                             p, w, "sh_flags",       p_sh_flags);

@@ -676,7 +676,7 @@ Grammar::setUpBinaryInstructions ()
   // DQ (8/28/2008): Check against the specification
      AsmElfSectionTableEntry.setDataPrototype("unsigned","sh_name","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfSectionTableEntry.setDataPrototype("unsigned long","sh_type","= 0",
+     AsmElfSectionTableEntry.setDataPrototype("SgAsmElfSectionTableEntry::SectionType","sh_type","= SHT_PROGBITS",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSectionTableEntry.setDataPrototype("unsigned long","sh_link","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
