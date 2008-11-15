@@ -1074,6 +1074,7 @@ HEADER_GENERIC_SYMBOL_LIST_START
 HEADER_GENERIC_SYMBOL_LIST_END
 
 
+
 HEADER_BASIC_STRING_START
 	public:
 		//SgAsmBasicString() {ctor();}
@@ -1083,9 +1084,13 @@ HEADER_BASIC_STRING_START
 			: p_string(s) {ctor();}
 		// virtual ~SgAsmBasicString() {}
 		virtual void dump(FILE*, const char *prefix, ssize_t idx);
+		virtual std::string get_string() const;
+		virtual void set_string(const std::string&);
 	private:
 		void ctor();
 HEADER_BASIC_STRING_END
+
+
 
 HEADER_GENERIC_STRING_START
 	public:
@@ -1100,6 +1105,8 @@ HEADER_GENERIC_STRING_START
 
 		virtual void dump(FILE*, const char *prefix, ssize_t idx);
 HEADER_GENERIC_STRING_END
+
+
 
 HEADER_STRING_STORAGE_START
      public:
@@ -4178,28 +4185,6 @@ SOURCE_BASIC_STRING_START
 SOURCE_BASIC_STRING_END
 
 SOURCE_GENERIC_STRING_START
-
-std::string
-SgAsmGenericString::get_string() const
-   {
-     printf ("Based class SgAsmGenericString::get_string() should not be called! \n");
-     ROSE_ASSERT(false);
-   }
-
-void
-SgAsmGenericString::set_string(const std::string &s)
-   {
-     printf ("Based class SgAsmGenericString::set_string() should not be called! \n");
-     ROSE_ASSERT(false);
-   }
-
-void
-SgAsmGenericString::dump(FILE*, const char *prefix, ssize_t idx)
-   {
-     printf ("Based class SgAsmGenericString::dump() should not be called! \n");
-     ROSE_ASSERT(false);
-   }
-
 SOURCE_GENERIC_STRING_END
 
 SOURCE_STRING_STORAGE_START

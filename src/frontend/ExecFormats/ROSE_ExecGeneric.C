@@ -140,6 +140,27 @@ SgAsmGenericString::c_str() const
     return get_string().c_str();
 }
 
+std::string
+SgAsmGenericString::get_string() const
+{
+    ROSE_ASSERT(!"should have been pure virtual if ROSETTA supported that.");
+    abort();
+}
+
+void
+SgAsmGenericString::set_string(const std::string &s)
+{
+    ROSE_ASSERT(!"should have been pure virtual if ROSETTA supported that.");
+    abort();
+}
+
+void
+SgAsmGenericString::dump(FILE*, const char *prefix, ssize_t idx)
+{
+    ROSE_ASSERT(!"should have been pure virtual if ROSETTA supported that.");
+    abort();
+}
+
 /* Constructor */
 void
 SgAsmBasicString::ctor()
@@ -149,6 +170,18 @@ SgAsmBasicString::ctor()
     if (this==(void*)0x685998)
         abort(); /*DEBUGGING (rpm 2008-10-10)*/
 #endif
+}
+
+/* Override ROSETTA because generated code doesn't match virtual signature in base class */
+std::string
+SgAsmBasicString::get_string() const
+{
+    return p_string;
+}
+void
+SgAsmBasicString::set_string(const std::string &s)
+{
+    p_string = s;
 }
 
 /* Print some debugging info */
