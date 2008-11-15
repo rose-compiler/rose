@@ -2,7 +2,7 @@
 #include <vector>
 #include <rose.h>
 #include <string>
-
+#include <map>
 namespace LCS{
   template <typename T>
     class vector_start_at_one {
@@ -36,5 +36,7 @@ namespace LCS{
       );
   
   std::string unparseInstrFast(SgAsmInstruction* iA);
+  
 
 };
+

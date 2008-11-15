@@ -5,11 +5,13 @@
 
 using namespace std;
 using namespace boost;
-  
+
+#if 0
   std::string
 LCS::unparseInstrFast(SgAsmInstruction* iA)
 {
-  static std::map<SgAsmInstruction*,std::string> strMap = std::map<SgAsmInstruction*,std::string>();
+   std::map<SgAsmInstruction*,std::string> strMap;
+
   std::map<SgAsmInstruction*,std::string>::iterator iItr =
     strMap.find(iA);
   std::string value = "";
@@ -34,6 +36,27 @@ LCS::unparseInstrFast(SgAsmInstruction* iA)
     strMap[iA] = value;
   }else
     value = iItr->second;
+  return value;
+};
+#endif
+  
+std::string
+LCS::unparseInstrFast(SgAsmInstruction* iA)
+{
+
+  std::string value;
+  // Unparse the normalized forms of the instructions
+  value += iA->get_mnemonic();
+  const SgAsmExpressionPtrList& operands = getOperands(iA);
+  // Add to total for this variant
+  // Add to total for each kind of operand
+  size_t operandCount = operands.size();
+
+  for (size_t i = 0; i < operandCount; ++i) {
+    SgAsmExpression* operand = operands[i];
+    value += (  isSgAsmRegisterReferenceExpression(operand) ? " R" : isSgAsmMemoryReferenceExpression(operand) ? " M" : " V");
+  }
+
   return value;
 };
 
