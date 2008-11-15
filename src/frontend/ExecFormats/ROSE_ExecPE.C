@@ -2284,7 +2284,6 @@ SgAsmPEFileHeader::parse(SgAsmGenericFile *ef)
     fhdr->add_rvasize_pairs();
 
     /* The extended part of the DOS header is owned by the PE header */
-    dos2_header->set_header(fhdr);
     fhdr->add_section(dos2_header);
     fhdr->set_dos2_header(dos2_header);
 

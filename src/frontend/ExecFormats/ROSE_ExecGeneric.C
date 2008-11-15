@@ -1750,7 +1750,6 @@ SgAsmGenericSection::ctor(SgAsmGenericFile *ef, SgAsmGenericHeader *hdr, addr_t 
     p_name = new SgAsmBasicString("");
 
     /* Add this section to the header's section list */
-    set_header(hdr);
     if (hdr) hdr->add_section(this);
 }
 
@@ -2623,6 +2622,7 @@ SgAsmGenericHeader::add_section(SgAsmGenericSection *section)
         ROSE_ASSERT(p_sections->get_sections()[i] != section);
     }
 #endif
+    section->set_header(this);
     section->set_parent(p_sections);
     p_sections->get_sections().push_back(section);
 }

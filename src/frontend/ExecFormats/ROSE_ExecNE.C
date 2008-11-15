@@ -1297,7 +1297,6 @@ SgAsmNEFileHeader::parse(SgAsmGenericFile *ef)
     SgAsmNEFileHeader *ne_header = new SgAsmNEFileHeader(ef, dos2_header->get_e_lfanew());
 
     /* The extended part of the DOS header is owned by the NE header */
-    dos2_header->set_header(ne_header);
     ne_header->add_section(dos2_header);
     ne_header->set_dos2_header(dos2_header);
 

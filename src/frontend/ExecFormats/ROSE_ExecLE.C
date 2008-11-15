@@ -970,7 +970,6 @@ SgAsmLEFileHeader::parse(SgAsmGenericFile *ef)
     SgAsmLEFileHeader *le_header = new SgAsmLEFileHeader(ef, dos2_header->get_e_lfanew());
 
     /* The extended part of the DOS header is owned by the LE header */
-    dos2_header->set_header(le_header);
     le_header->add_section(dos2_header);
     le_header->set_dos2_header(dos2_header);
 
