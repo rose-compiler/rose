@@ -1736,6 +1736,23 @@ SgAsmGenericFile::congeal()
  * list that points to this new section.  The section-to-header part of the link is deleted by the default destructor by
  * virtue of being a simple pointer, but we also need to delete the other half of the link in the destructors. */
 void
+SgAsmGenericSection::ctor(SgAsmGenericFile *ef, SgAsmGenericHeader *hdr)
+{
+    ROSE_ASSERT(ef != NULL);
+
+    /* Initialize data members */
+    p_offset = 0;
+    p_data = ef->content(0, 0);
+    p_file = ef;
+    p_size = p_data.size();
+    p_name = new SgAsmBasicString("");
+
+    /* Add this section to the header's section list */
+    if (hdr) hdr->add_section(this);
+}
+
+/* Same as above except also sets offset and size */
+void
 SgAsmGenericSection::ctor(SgAsmGenericFile *ef, SgAsmGenericHeader *hdr, addr_t offset, addr_t size)
 {
     ROSE_ASSERT(ef != NULL);

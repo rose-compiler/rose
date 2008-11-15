@@ -748,89 +748,94 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
 HEADER_EXECUTABLE_FILE_FORMAT_END
 
 
+
 HEADER_GENERIC_SECTION_START
-       // RPM (8/27/2008): Is this right? get_offset() returns file offset; get_mapped_rva() returns memory addr*/
-       // This can be mapped to the offset data member
-          unsigned long get_starting_memory_address() { return get_offset(); }
+	public:
+		// RPM (8/27/2008): Is this right? get_offset() returns file offset; get_mapped_rva() returns memory addr*/
+		// This can be mapped to the offset data member
+		unsigned long get_starting_memory_address() { return get_offset(); }
 
-       // DQ (8/7/2008): These are a few data member access functions that were required 
-       // to compile when first adding the new IR nodes (these should be removed).
-          unsigned long get_starting_file_offset() { return 0; }
-          unsigned long get_flags() { return 0; }
-          unsigned long get_type() { return 0; }
+		// DQ (8/7/2008): These are a few data member access functions that were required 
+		// to compile when first adding the new IR nodes (these should be removed).
+		unsigned long get_starting_file_offset() { return 0; }
+		unsigned long get_flags() { return 0; }
+		unsigned long get_type() { return 0; }
 
-     public:
 
-       /* Reason for section's existence. This is a union of all the section purposes from the various supported file formats.
-        * However, at this time we're only interested in a few kinds of sections and therefore most will fall into the SP_OTHER
-        * category. */
-          enum SectionPurpose {
-              SP_UNSPECIFIED,                                     /* File format did not specify a reason and none could be determined */
-              SP_PROGRAM,                                         /* Program-supplied data, code, etc. */
-              SP_HEADER,                                          /* Section contains a header for the executable file format */
-              SP_SYMTAB,                                          /* Symbol table */
-              SP_OTHER                                            /* File-specified purpose other than any given in this enum */
-             };
+		/* Reason for section's existence. This is a union of all the section purposes from the various supported file
+		 * formats.  However, at this time we're only interested in a few kinds of sections and therefore most will fall
+		 * into the SP_OTHER category. */
+		enum SectionPurpose {
+			SP_UNSPECIFIED,			/* File format did not specify a reason and none could be determined */
+			SP_PROGRAM,             	/* Program-supplied data, code, etc. */
+			SP_HEADER,              	/* Section contains a header for the executable file format */
+			SP_SYMTAB,              	/* Symbol table */
+			SP_OTHER                	/* File-specified purpose other than any given in this enum */
+		};
 
-          SgAsmGenericSection(SgAsmGenericFile*, SgAsmGenericHeader*, addr_t offset, addr_t size);
+		SgAsmGenericSection(SgAsmGenericFile*, SgAsmGenericHeader*);
+		SgAsmGenericSection(SgAsmGenericFile*, SgAsmGenericHeader*, addr_t offset, addr_t size);
 
-       // This destructor modifies the SgAsmGenericFile data to remove its section from the section list!
-          virtual ~SgAsmGenericSection();
+		// This destructor modifies the SgAsmGenericFile data to remove its section from the section list!
+		virtual ~SgAsmGenericSection();
 
-          static void dump_containing_sections(FILE *f, const std::string &prefix, rose_rva_t rva, const SgAsmGenericSectionPtrList&);
-          virtual void        dump(FILE*, const char *prefix, ssize_t idx);
-	  virtual bool	      reallocate() {return false;}
-          virtual void        unparse(std::ostream&) const;
-          void                unparse(std::ostream&, const ExtentMap&) const;
-          void 	     	      unparse_holes(std::ostream&) const;
-          SgAsmGenericHeader *is_file_header();              /* true if section represents a top level file header */
+		static void dump_containing_sections(FILE *f, const std::string &prefix, rose_rva_t rva,
+			const SgAsmGenericSectionPtrList&);
+		virtual void dump(FILE*, const char *prefix, ssize_t idx);
+		virtual bool reallocate() {return false;}
+		virtual void unparse(std::ostream&) const;
+		void unparse(std::ostream&, const ExtentMap&) const;
+		void unparse_holes(std::ostream&) const;
+		SgAsmGenericHeader *is_file_header();	/* true if section represents a top level file header */
 
-       /* Functions for section extent within the file */
-          addr_t        get_size() const;
-	  virtual void  set_size(addr_t);		/* Resize a section w/o regard to other sections or mapping */
-	  addr_t        get_offset() const;
-	  virtual void  set_offset(addr_t);             /* Move a section w/o regard to other sections or mapping */
-          addr_t        get_end_offset(); /* file offset for end of section */
-          void          extend(addr_t nbytes);         /* make section larger by extending the end */
-          void          extend_up_to(addr_t nbytes);      /* like extend() but more relaxed at EOF */
-          addr_t        write(std::ostream&, addr_t offset, size_t bufsize, const void *buf) const;
-          addr_t        write(std::ostream&, addr_t offset, const std::string &str) const;
-          addr_t        write(std::ostream&, addr_t offset, char c) const;
-	  addr_t        write(std::ostream&, addr_t offset, const SgFileContentList &buf) const;
-	  addr_t	write(std::ostream&, addr_t offset, const SgUnsignedCharList &buf) const;
+		/* Functions for section extent within the file */
+		addr_t        get_size() const;
+		virtual void  set_size(addr_t);		/* Resize a section w/o regard to other sections or mapping */
+		addr_t        get_offset() const;
+		virtual void  set_offset(addr_t);		/* Move a section w/o regard to other sections or mapping */
+		addr_t        get_end_offset(); /* file offset for end of section */
+		void          extend(addr_t nbytes);         	/* make section larger by extending the end */
+		void          extend_up_to(addr_t nbytes);      /* like extend() but more relaxed at EOF */
+		addr_t        write(std::ostream&, addr_t offset, size_t bufsize, const void *buf) const;
+		addr_t        write(std::ostream&, addr_t offset, const std::string &str) const;
+		addr_t        write(std::ostream&, addr_t offset, char c) const;
+		addr_t        write(std::ostream&, addr_t offset, const SgFileContentList &buf) const;
+		addr_t	write(std::ostream&, addr_t offset, const SgUnsignedCharList &buf) const;
 
-       /* Functions for accessing content */
-          const unsigned char *content(addr_t offset, addr_t size);/*returns ptr to SIZE bytes starting at OFFSET */
-          const SgUnsignedCharList content_ucl(addr_t offset, addr_t size);/*returns ptr to SIZE bytes starting at OFFSET */
-          void                 content(addr_t offset, addr_t size, void *buf); /* copies content into BUF */
-          const char          *content_str(addr_t offset);    /* returns ptr to NUL-terminated string starting at OFFSET */
-          const ExtentMap&    congeal();                      /* congeal referenced areas into holes */
-          const ExtentMap&    uncongeal();                    /* uncongeal holes back into references */
+		/* Functions for accessing content */
+		const unsigned char *content(addr_t offset, addr_t size);/*returns ptr to SIZE bytes starting at OFFSET */
+		const SgUnsignedCharList content_ucl(addr_t offset, addr_t size);/*returns ptr to SIZE bytes starting at OFFSET */
+		void content(addr_t offset, addr_t size, void *buf); /* copies content into BUF */
+		const char *content_str(addr_t offset);    	/* returns ptr to NUL-terminated string starting at OFFSET */
+		const ExtentMap& congeal();                     /* congeal referenced areas into holes */
+		const ExtentMap& uncongeal();                   /* uncongeal holes back into references */
 
-       /* Functions related to mapping of sections into executable memory */
-          bool   	      is_mapped();                    /* True iff non-zero mapped address and size */
-          void   	      clear_mapped();                 /* Set mapped address and size to zero (unmapped)*/
-	  addr_t              get_mapped_size() const;
-          virtual void        set_mapped_size(addr_t);	      /* Set mapped size w/o regard to other section mappings */
-	  addr_t	      get_mapped_rva() const;
-	  virtual void        set_mapped_rva(addr_t);         /* Move a section w/o regard to other section mappings */
-	  addr_t 	      get_base_va() const;            /* Convenience to get header's base VA */
-	  addr_t 	      get_mapped_va();		      /* Like get_mapped_rva() except returns VA */
-          addr_t              get_va_offset(addr_t va);       /* Return file offset for specified virtual address */
-	  addr_t	      get_rva_offset(addr_t rva);     /* Return file offset for specified relative virtual address */
+		/* Functions related to mapping of sections into executable memory */
+		bool   	      is_mapped();                    	/* True iff non-zero mapped address and size */
+		void   	      clear_mapped();                 	/* Set mapped address and size to zero (unmapped)*/
+		addr_t        get_mapped_size() const;
+		virtual void  set_mapped_size(addr_t);	      	/* Set mapped size w/o regard to other section mappings */
+		addr_t	      get_mapped_rva() const;
+		virtual void  set_mapped_rva(addr_t);         	/* Move a section w/o regard to other section mappings */
+		addr_t 	      get_base_va() const;            	/* Convenience to get header's base VA */
+		addr_t 	      get_mapped_va();		      	/* Like get_mapped_rva() except returns VA */
+		addr_t        get_va_offset(addr_t va);       	/* Return file offset for specified virtual address */
+		addr_t	      get_rva_offset(addr_t rva);     	/* Return file offset for specified relative virtual address */
 
-       /* Accessors for private members */
-          SgAsmGenericString *get_name() const;		      /* Same as standard ROSETTA accessor */
-	  void set_name(SgAsmGenericString *s);		      /* Like std accessor but sets parent of 's' */
+		/* Accessors for private members */
+		SgAsmGenericString *get_name() const;		/* Same as standard ROSETTA accessor */
+		void set_name(SgAsmGenericString *s);		/* Like std accessor but sets parent of 's' */
 
-       /* Convenience functions */
-	  ExtentPair get_file_extent() const;		      /* Returns get_offset() and get_size() */
-	  ExtentPair get_mapped_extent() const;	              /* Returns get_mapped_rva() and get_mapped_size() */
+		/* Convenience functions */
+		ExtentPair get_file_extent() const;		/* Returns get_offset() and get_size() */
+		ExtentPair get_mapped_extent() const;	        /* Returns get_mapped_rva() and get_mapped_size() */
 
-     protected:
-          void ctor(SgAsmGenericFile*, SgAsmGenericHeader*, addr_t offset, addr_t size);
-
+	protected:
+		void ctor(SgAsmGenericFile*, SgAsmGenericHeader*);
+		void ctor(SgAsmGenericFile*, SgAsmGenericHeader*, addr_t offset, addr_t size);
 HEADER_GENERIC_SECTION_END
+
+
 
 HEADER_GENERIC_HEADER_START
 
@@ -1258,7 +1263,7 @@ HEADER_ELF_HEADER_END
 HEADER_ELF_SECTION_TABLE_START
 	public:
 		SgAsmElfSectionTable(SgAsmElfFileHeader *fhdr);
-		SgAsmElfSection *create_section(const std::string &name, addr_t size);
+		void add_section(SgAsmElfSection*);
 		rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 		virtual bool reallocate();
 		virtual void unparse(std::ostream&) const;
@@ -1344,6 +1349,9 @@ HEADER_ELF_SECTION_TABLE_ENTRY_END
 
 HEADER_ELF_SECTION_START
 	public:
+		/* Constructor for a non-attached, not-parsed Elf section */
+		SgAsmElfSection(SgAsmGenericHeader *fhdr);
+
 		/* Constructor for size based on section table entry (normal sections) */
 		SgAsmElfSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr);
 		SgAsmElfSection(SgAsmElfFileHeader *fhdr, SgAsmElfSegmentTableEntry *shdr);
@@ -1367,6 +1375,7 @@ HEADER_ELF_SECTION_START
 		virtual void set_linked_section(SgAsmElfSection*);
 
 	private:
+		void ctor();
 		void ctor(SgAsmElfSectionTableEntry*);
 		void ctor(SgAsmElfSegmentTableEntry*);
 HEADER_ELF_SECTION_END
@@ -4098,6 +4107,14 @@ SOURCE_EXECUTABLE_FILE_FORMAT_END
 
 SOURCE_GENERIC_SECTION_START
 
+SgAsmGenericSection::SgAsmGenericSection(SgAsmGenericFile *f, SgAsmGenericHeader *fhdr)
+   : p_header(NULL), p_offset(0), p_purpose(SP_UNSPECIFIED), p_synthesized(false), p_id(-1), p_name(0),
+     p_mapped_rva(0), p_mapped_size(0), p_mapped_rperm(false), p_mapped_wperm(false), p_mapped_xperm(false),
+     p_congealed(false)
+   {
+     ctor(f, fhdr);
+   }
+
 SgAsmGenericSection::SgAsmGenericSection(SgAsmGenericFile *f, SgAsmGenericHeader *fhdr, addr_t offset, addr_t size)
    : p_header(NULL), p_offset(0), p_purpose(SP_UNSPECIFIED), p_synthesized(false), p_id(-1), p_name(0),
      p_mapped_rva(0), p_mapped_size(0), p_mapped_rperm(false), p_mapped_wperm(false), p_mapped_xperm(false),
@@ -4230,6 +4247,13 @@ SOURCE_ELF_SEGMENT_TABLE_ENTRY_LIST_START
 SOURCE_ELF_SEGMENT_TABLE_ENTRY_LIST_END
 
 SOURCE_ELF_SECTION_START
+/* Constructor for a non-attached, not-parsed Elf section */
+SgAsmElfSection::SgAsmElfSection(SgAsmGenericHeader *fhdr)
+   : SgAsmGenericSection(fhdr->get_file(), fhdr),
+     p_linked_section(NULL), p_section_entry(NULL), p_segment_entry(NULL)
+   {
+     ctor();
+   }
 
 /* Constructor for sections defined in the ELF Section Table */
 SgAsmElfSection::SgAsmElfSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr)
