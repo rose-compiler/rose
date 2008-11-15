@@ -460,7 +460,6 @@ SgAsmElfFileHeader::unparse(std::ostream &f) const
     write(f, p_offset, struct_size, disk);
 
     /* Extend the file to the full size */
- // f.seekp(0, std::_S_end);
     f.seekp(0, std::ios::end);
     if (f.tellp()<(off_t)get_file()->get_current_size()) {
         f.seekp(get_file()->get_current_size()-1);
