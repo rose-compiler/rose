@@ -3816,11 +3816,29 @@ void c_action_array_spec_element(int type)
                 
                case ArraySpecElement_expr_colon_expr:
                   {
+                 // See test2008_62.f90 for an example of this.
+                 // expression = new SgColonShapeExp();
+                 // setSourcePosition(expression);
+
+                 // DQ (11/14/2008): A colon expression at this point can only have a base and bound (no stride).
+                    bool hasLowerBound = true;
+                    bool hasUpperBound = true;
+                    bool hasStride     = false;
+                    bool isAmbiguous   = false;
+
+                    expression = buildSubscriptExpression(hasLowerBound,hasUpperBound,hasStride,isAmbiguous);
+
+#if 0
+                 // Output debugging information about saved state (stack) information.
+                    outputState("In case ArraySpecElement_expr_colon_expr of R510 #3 c_action_array_spec_element()");
+#endif
+#if 0
                     printf ("Error: Need an example of this before I can support it. \n");
                     ROSE_ASSERT(false);
+#endif
                     break;
                   }
-                
+
                case ArraySpecElement_expr_colon_asterisk:
                   {
                     printf ("Error: Need an example of this before I can support it. \n");
