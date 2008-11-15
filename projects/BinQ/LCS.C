@@ -5,7 +5,7 @@
 
 using namespace std;
 using namespace boost;
-
+using namespace LCS;
 #if 0
   std::string
 LCS::unparseInstrFast(SgAsmInstruction* iA)
@@ -109,7 +109,7 @@ LCS::LCSLength( scoped_array<scoped_array<size_t> >& C  ,vector_start_at_one<SgN
 
 
 void 
-LCS::printDiff( scoped_array<scoped_array<size_t> >& C,
+printDiff( scoped_array<scoped_array<size_t> >& C,
     vector_start_at_one<SgNode*>& A, vector_start_at_one<SgNode*>& B, int i, int j,
     std::vector<pair<int,int> >& addInstr, std::vector<pair<int,int> >& minusInstr
     )
@@ -133,4 +133,14 @@ LCS::printDiff( scoped_array<scoped_array<size_t> >& C,
   }
 }
 
+
+void 
+LCS::printDiff( vector_start_at_one<SgNode*>& A, vector_start_at_one<SgNode*>& B, 
+       std::vector<std::pair<int,int> >& addInstr, std::vector<std::pair<int,int> >& minusInst
+      )
+{
+  scoped_array<scoped_array<size_t> > C;
+  LCSLength(C,A,B);
+  printDiff(C,A, B,A.size(),B.size(),addInstr,minusInst);
+};
 

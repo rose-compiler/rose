@@ -15,6 +15,10 @@ class DiffAlgo : public BinAnalyses {
   std::string name();
   std::string getDescription();
 
+  void colorTable( const std::vector<std::pair<int,int> >& addInstr,  const std::vector<std::pair<int,int> >&  minusInst,
+       LCS::vector_start_at_one<SgNode*>& insnA, LCS::vector_start_at_one<SgNode*>& insnB 
+ );
+
 };
 
 

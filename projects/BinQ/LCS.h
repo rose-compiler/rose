@@ -30,11 +30,11 @@ namespace LCS{
 
   void LCSLength( boost::scoped_array<boost::scoped_array<size_t> >& C  ,vector_start_at_one<SgNode*>& A, vector_start_at_one<SgNode*>& B );
 
-  void printDiff( boost::scoped_array<boost::scoped_array<size_t> >& C,
-      vector_start_at_one<SgNode*>& A, vector_start_at_one<SgNode*>& B, int i, int j,
-      std::vector<std::pair<int,int> >& addInstr, std::vector<std::pair<int,int> >& minusInstr
+
+   void printDiff( vector_start_at_one<SgNode*>& A, vector_start_at_one<SgNode*>& B, 
+       std::vector<std::pair<int,int> >& addInstr, std::vector<std::pair<int,int> >& minusInst
       );
-  
+
   std::string unparseInstrFast(SgAsmInstruction* iA);
   
 

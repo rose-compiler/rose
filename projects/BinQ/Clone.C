@@ -26,25 +26,35 @@ DiffAlgo::run() {
   BinQGUI *instance = QROSE::cbData<BinQGUI *>();
     // this part is to find the added and removed code (from Andreas)
     FindInstructionsVisitor vis;
-    scoped_array<scoped_array<size_t> > C;
-    vector_start_at_one<SgNode*> insnsA;
+   
+    LCS::vector_start_at_one<SgNode*> insnsA;
     AstQueryNamespace::querySubTree(instance->fileA, std::bind2nd( vis, &insnsA ));
-    vector_start_at_one<SgNode*> insnsB;
+    LCS::vector_start_at_one<SgNode*> insnsB;
     AstQueryNamespace::querySubTree(instance->fileB, std::bind2nd( vis, &insnsB ));
 
-    LCSLength(C,insnsA,insnsB);
     std::vector<pair<int,int> > addInstr,minusInst;
-    printDiff(C,insnsA, insnsB,insnsA.size(),insnsB.size(),addInstr,minusInst);
+
+    printDiff(insnsA, insnsB,addInstr,minusInst);
+
     //    cerr << " found adds on left side : " << addInstr.size() << endl;
     //cerr << " found subbs on left side : " << minusInst.size() << endl;
-    
+
+
     QString res = QString("Found adds:  %1.  Found subbs: %2. ")
       .arg(addInstr.size())
       .arg(minusInst.size());
     instance->analysisTab->setCurrentIndex(1);
     instance->analysisResult->append(res);  
 
+    colorTable(addInstr, minusInst, insnsA, insnsB);
+};
 
+void 
+DiffAlgo::colorTable( const std::vector<pair<int,int> >& addInstr,  const std::vector<pair<int,int> >&  minusInst,
+           vector_start_at_one<SgNode*>& insnsA, vector_start_at_one<SgNode*>& insnsB 
+    )
+{
+  BinQGUI *instance = QROSE::cbData<BinQGUI *>();
 
     const char* results [] = {"PLUS", "MINUS"};
     std::vector<QColor> colors;
@@ -55,7 +65,7 @@ DiffAlgo::run() {
     {
 
       std::string currentName(results[choice]);
-      std::vector< pair<int,int> >& currentResults = ( choice == 0 ? addInstr : minusInst ); 
+      const std::vector< pair<int,int> >& currentResults = ( choice == 0 ? addInstr : minusInst ); 
       QColor& color = colors[choice];
       
       
