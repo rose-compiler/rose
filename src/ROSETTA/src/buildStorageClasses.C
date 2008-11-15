@@ -765,6 +765,7 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgAsmNERelocEntry::NERelocFlags" ) ||
                  ( varTypeString == "SgInterfaceStatement::generic_spec_enum" ) ||
                  ( varTypeString == "SgAsmPEImportILTEntry::ILTEntryType" ) ||
+                 ( varTypeString == "SgAsmElfSectionTableEntry::SectionType") ||
                  false 
               )
        {
@@ -1406,6 +1407,8 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
                     default:
                        std::cout << " There is a class not handled in buildStorageClasses.C, Line " << __LINE__ << endl ;
                        std::cout << "In class " + classNameString + " caused by variable " + varTypeString + " p_" + varNameString << endl ;
+                       /* Does the type need to be added to one of the lists above?
+                        * See Terminal::evaluateType(std::string& varTypeString) */
                        assert (!"Stop immediately, since variable to build is not found ... " ) ;
                       break;
                   }
