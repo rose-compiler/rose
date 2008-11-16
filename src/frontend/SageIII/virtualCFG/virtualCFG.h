@@ -42,7 +42,6 @@ namespace VirtualCFG {
     // ID to use for Dot, etc.
     std::string id() const;
     SgNode* getNode() const {return node;}
-    void setNode(SgNode* n)  {node=n;}
     unsigned int getIndex() const {return index;}
     std::vector<CFGEdge> outEdges() const;
     std::vector<CFGEdge> inEdges() const;
@@ -189,7 +188,6 @@ namespace VirtualCFG {
     std::string toStringForDebugging() const {return n.toStringForDebugging();}
     std::string id() const {return n.id();}
     SgNode* getNode() const {return n.getNode();}
-    void setNode(SgNode* node)  {n.setNode(node);}
     unsigned int getIndex() const {return n.getIndex();}
     std::vector<InterestingEdge> outEdges() const;
     std::vector<InterestingEdge> inEdges() const;
