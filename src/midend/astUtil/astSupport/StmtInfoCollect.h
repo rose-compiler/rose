@@ -163,27 +163,31 @@ class StmtVarAliasCollect
 		 const AstNodePtr& r2);
 };
 
-//! An interface to collect modified variables, and to query if a variable is modifed
-//within a subtree
+//! An interface to collect modified variables for a set of AST nodes chosen by 'Select', such as loop nodes 
+// and to query if a variable is modifed within the node (e.g: loop)
 template <class Select>
 class ModifyVariableMap 
    : public CollectObject<std::pair<AstNodePtr,AstNodePtr> >,
      public StmtSideEffectCollect
 {
   AstInterface& ai;
+  // A set of AST node pointers
   class VarModSet : public std::set<AstNodePtr> {};
+  // A map between a named variable and the AST nodes(selected by 'Select') modifying it.
   typedef std::map <std::string, VarModSet, std::less<std::string> > VarModInfo;
   VarModInfo varmodInfo;
   Select sel;
+  // Collect the loops containing nodes modifying a variable
   bool operator()(const std::pair<AstNodePtr,AstNodePtr>& cur)
    {
      std::string varname;
      if (ai.IsVarRef(cur.first,0, &varname)) {
          AstNodePtr l = ai.GetParent(cur.first);
-         VarModSet& cur = varmodInfo[varname];
+         VarModSet& modset = varmodInfo[varname];
+	 // Collect all the parent loops containing the variable reference node into the var mod set
          for ( ; l != AST_NULL; l = ai.GetParent(l)) {
-           if (sel(ai,l))
-              cur.insert(l);
+           if (sel(ai,l)) 
+              modset.insert(l);
          }
      }
      return true;
@@ -196,13 +200,17 @@ class ModifyVariableMap
      {
       StmtSideEffectCollect::get_side_effect(ai, root, this);
      }
+   // Check if a node ( e.g: loop node) modifies a variable named 'varname'  
    bool Modify( const AstNodePtr& l, const std::string& varname) const
       { 
+         // Find mode set for the variable 
          typename VarModInfo::const_iterator p = varmodInfo.find(varname);
          if (p != varmodInfo.end()) {
+	    // Return true if the node is NULL. It means this variable is actually modified somewhere.
             if (l == AST_NULL)
                  return true;
             const VarModSet& cur = (*p).second;
+	    // Find node in the mod set
             return cur.find(l) != cur.end();
          }
          else

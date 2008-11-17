@@ -275,6 +275,12 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
 #include "abstract_handle.h"
 #include "roseAdapter.h"
 
+// Liao, 11/14/2008, support for annotation-based array optimization
+// The headers bring some garbage which cannot be compiled
+//#include "ArrayAnnot.h"
+//#include "ArrayInterface.h"
+//include "ArrayRewrite.h"
+
 // DQ (5/27/2007): Removed all entries in this file (only had AST Merge API and 
 // these were moved to merge.h).  One less header file make everything a little simpler!
 // DQ (7/7/2005): This is now a file where temporary functions may be

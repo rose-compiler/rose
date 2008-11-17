@@ -257,7 +257,8 @@ class SymbolicFunction : public SymbolicValImpl
   virtual SymbolicFunction* cloneFunction(const Arguments& args) const
      { return  new SymbolicFunction(t, op,args); }
 };
-
+//! Check if a symbolic variable is a function call expression
+// If yes, return function name and parameter list
 inline bool 
 SymbolicVal:: isFunction(std:: string& name, std:: vector<SymbolicVal>* argp) const
 {

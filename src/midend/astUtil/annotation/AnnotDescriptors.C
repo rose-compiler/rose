@@ -127,7 +127,7 @@ void CloseDescriptor<Descriptor, left, right> ::write(ostream& out) const
 
 #ifndef TEMPLATE_ONLY
 //! Read in a class name, could be a derived class with a qualified name
-// "class" is already processed before calling this function
+// "class" is already processed by ReadAnnotation::read() before this function is called.
 bool TypeDescriptor:: read(istream& in)
 {
   if (!StringDescriptor::read(in))

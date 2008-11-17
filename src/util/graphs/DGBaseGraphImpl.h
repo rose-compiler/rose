@@ -41,7 +41,7 @@ class DGBaseGraphImpl
 { };
 
 
-// definition of DAGBaseGraphImpl
+// definition of DAGBaseGraphImpl: Directed Acyclic Graph
 class DAGBaseEdgeImpl;
 class DAGBaseNodeImpl
    : public DAGNode<DAGBaseNodeImpl,DAGBaseEdgeImpl>,

@@ -9,7 +9,8 @@
 #include "AnnotExpr.h"
 #include <sstream>
 #include <list>
-
+// No CPPAnnotation.C since only template classes are defined here.
+// Descriptor could be ArrayDefineDescriptor: is_array annotation
 template <class Descriptor>
 class CPPTypeCollection 
 {
@@ -17,10 +18,12 @@ class CPPTypeCollection
  public:
   CPPTypeCollection(TypeCollection<Descriptor>* p) : cp(p) {}
   typedef typename TypeCollection<Descriptor>::const_iterator const_iterator;
+  //! Check if an expression is a member function call expression
+  // If yes, store the object of the member function, argument list , and the collected descriptor for this class
   std::string is_known_member_function( CPPAstInterface& fa, const AstNodePtr& exp, 
                                    AstNodePtr* obj = 0, 
                                    AstInterface::AstNodeList* args = 0,
-                                   Descriptor* desc = 0);
+                                   Descriptor* desc = 0);			   
   std::string is_known_member_function( CPPAstInterface& fa, const SymbolicVal& exp,
                                    AstNodePtr* obj = 0,
                                    SymbolicFunction::Arguments* args = 0,

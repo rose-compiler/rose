@@ -191,7 +191,7 @@ class AstInterface
   // int, bool, string, char, float, double, function, memberfunction, field
   // e.g: CreateConstant("memberfunction","floatArray::length")
   AstNodePtr CreateConstant( const std::string& valtype, const std::string& val);
-
+  //! Check if a node is a variable reference. If yes, get its  type, name, scope, and global/local information
   bool IsVarRef( const AstNodePtr& exp, AstNodeType* vartype = 0,
                    std::string* varname = 0, AstNodePtr* scope = 0, 
                     bool *isglobal = 0) ;

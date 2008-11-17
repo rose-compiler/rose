@@ -149,6 +149,7 @@ class StringDescriptor
 {
   std::string name;
  protected:
+  //Return the identifier
   std::string& get_name() { return name; }
  public:
   StringDescriptor() : name("") {}

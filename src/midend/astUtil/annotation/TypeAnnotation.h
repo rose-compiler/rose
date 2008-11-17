@@ -52,7 +52,8 @@ class ReadAnnotCollection {
 typedef AnnotCollectionBase<TypeDescriptor> TypeCollectionBase;
 typedef ReadAnnotCollection<TypeDescriptor, '{', ';','}'> ReadTypeCollection;
 
-//! A map storing types and their descriptors
+//! A map storing types and their descriptors, the descriptor could be any instantiated types as a template class
+// Descriptor could be either of has_value, array, array_opt annoation types
 template <class Descriptor>
 class TypeCollection 
 {
