@@ -215,6 +215,9 @@ class ArrayModifyOpCollection : public OperatorAnnotCollection<ArrayModifyDescri
 //! Array annotations contains semantics for 
 // * types/classes:    array attributes: dimension, length, 
 // * operators/functions: side effects such as mod/read; and alias information
+// It has its own annotation collectors and associated independent annotation collectors
+// * own: array, array optimization , modify_array, construct_array
+// * independent: operator side effect (OperatorSideEffectAnnotation), inline, alias, value 
 // Please refer to the following paper for details
 // Yi, Qing, and Dan Quinlan, Applying Loop Optimizations to Object-oriented Abstractions
 // Through General Classification of Array Semantics\u201d, the 17th International Workshop on
@@ -230,14 +233,17 @@ class ArrayAnnotation
   ArrayConstructOpCollection arrayConstruct;
   
   static ArrayAnnotation* inst;// singleton instance
-
+  //Implementing FunctionAliasInterface::may_alias()
   virtual bool may_alias(AstInterface& fa, const AstNodePtr& fc, 
                          const AstNodePtr& result,
                          CollectObject< std::pair<AstNodePtr, int> >& collectalias);
+  //Implementing FunctionAliasInterface::allow_alias()
   virtual bool allow_alias(AstInterface& fa, const AstNodePtr& fc, 
                          CollectObject< std::pair<AstNodePtr, int> >& collectalias);
+  //Implementing  FunctionSideEffectInterface::get_modify()			 
   virtual bool get_modify(AstInterface& fa, const AstNodePtr& fc,
                                CollectObject<AstNodePtr>* collect = 0);
+  //Implementing  FunctionSideEffectInterface::get_read()			       
   virtual bool get_read(AstInterface& fa, const AstNodePtr& fc,
                                CollectObject<AstNodePtr>* collect = 0);
   ArrayAnnotation() {}

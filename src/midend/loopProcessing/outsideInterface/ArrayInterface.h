@@ -34,6 +34,7 @@ class ArrayInterface
   bool get_array_opt(CPPAstInterface& fa, const AstNodePtr& array, ArrayOptDescriptor& d);
  public:
   ArrayInterface( ArrayAnnotation& a) : aliasCollect(&a) {}
+  //! Collect alias variables and propagate values
   void initialize( AstInterface& fa, const AstNodePtr& h);
   void observe( AstInterface& fa) ;
   void stop_observe( AstInterface& fa) ;

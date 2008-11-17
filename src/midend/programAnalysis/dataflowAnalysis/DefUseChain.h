@@ -3,7 +3,7 @@
 
 #include "ReachingDefinition.h"
 #include "StmtInfoCollect.h"
-
+// A node in def-use chain: indicating if a reference in a statement is a definition or use.
 class DefUseChainNode : public MultiGraphElem
 {
   bool isdef;
@@ -51,6 +51,7 @@ class DefUseChain
 	      ReachingDefinitionAnalysis& r, 
               AliasAnalysisInterface& alias,
 	      FunctionSideEffectInterface* f = 0);
+  //Build ReachingDefinition internally	      
   void build(AstInterface& fa, AstNodePtr root,  
              AliasAnalysisInterface* alias = 0, 
              FunctionSideEffectInterface* f = 0);

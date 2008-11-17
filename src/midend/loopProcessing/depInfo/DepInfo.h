@@ -11,7 +11,6 @@
 #include <Matrix.h>
 #include <iostream>
 
-
 typedef enum { 
   DEPTYPE_NONE = 0,       // B00000000
   DEPTYPE_TRUE = 1,       // B00000001
@@ -76,7 +75,9 @@ class DepInfoImpl
 };
 
 inline DepInfoImpl* Clone(const DepInfoImpl& that) { return that.Clone(); }
-
+//!Extended Dependence Model information
+// DepRel (distance direction)-> EdpEDD (matrix of distance direction)-> DepInfoImpl (extra info)
+// -->DepEDDTypeInfo (dependence type)--> DepInfo (with reference count) 
 class DepInfo : protected CountRefHandle <DepInfoImpl>
 {
   DepInfo( DepInfoImpl *impl) : CountRefHandle<DepInfoImpl>(impl) {}

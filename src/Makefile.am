@@ -76,6 +76,7 @@ libroseLibraries = \
    $(top_builddir)/src/midend/loopProcessing/depGraph/libdepGraph.la \
    $(top_builddir)/src/midend/loopProcessing/computation/libcomputation.la \
    $(top_builddir)/src/midend/loopProcessing/slicing/libslicing.la \
+   $(top_builddir)/src/midend/loopProcessing/outsideInterface/libarrayOptimization.la \
    $(top_builddir)/src/midend/loopProcessing/driver/libdriver.la \
    $(top_builddir)/src/roseSupport/libroseSupport.la \
    $(top_builddir)/src/util/support/libsupport.la \

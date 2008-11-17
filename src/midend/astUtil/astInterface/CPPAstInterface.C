@@ -3,7 +3,9 @@
 #include "CPPAstInterface.h"
 #include "AstInterface_ROSE.h"
 using namespace std;
-
+//! Check if a node is a data member access function for an object, 
+// such as dot (object.a) or arrow (objectptr->a)expression
+// If yest, return the object, and the data field name
 bool CPPAstInterface ::
 IsMemberAccess( const AstNodePtr& _s,  AstNodePtr* obj, std::string* field)
 {
@@ -40,7 +42,9 @@ CreateFunctionCall( const AstNodePtr& func, const AstNodeList& args)
   return AstNodePtrImpl(impl->CreateFunctionCall(AstNodePtrImpl(func).get_ptr(), args));
 }
 
-
+//Check if a node '_s' is a member function call of an object
+// If yes, store the object into 'obj', member function name into 'func', function arguments into '_args'
+// and the dot or arrow expressions nodes into 'access'
 bool CPPAstInterface :: 
 IsMemberFunctionCall( const AstNodePtr& _s,  AstNodePtr* obj, 
                       std::string* func,
@@ -52,32 +56,37 @@ IsMemberFunctionCall( const AstNodePtr& _s,  AstNodePtr* obj,
   if (!impl->IsFunctionCall(s, &f, &args)) {
     return false;
   }
+  //Excluding member function reference expressions.
   switch (f->variantT()) {
-  case V_SgMemberFunctionRefExp:
+    case V_SgMemberFunctionRefExp:
         break;
-  default:
+    default:
        return false;
   }
+  //Store member function access nodes: dot, or arrow expressions in ROSE AST
   if (access != 0) {
      AstNodePtrImpl dot = f->get_parent();
      assert( dot->variantT() == V_SgDotExp ||
              dot->variantT() == V_SgArrowExp);
      *access = dot;
   }
+  //Store the member function's name
   if (func != 0)
     *func = isSgMemberFunctionRefExp(f)->get_symbol()->get_name().str();
 
+  //Store object from the first argument
   if (obj != 0) {
      assert(args.size() > 0);
      *obj = args.front();
   }
+  //Store function call arguments, excluding the firt one
   if (_args != 0) {
      args.erase( args.begin());
      *_args = args;
    }
   return true;
 }
-
+//! Check if a node is a variable reference to pointer or C++ reference type variables
 bool CPPAstInterface :: IsPointerVariable( const AstNodePtr& _n)
 {
   SgNode* n = AstNodePtrImpl(_n).get_ptr();

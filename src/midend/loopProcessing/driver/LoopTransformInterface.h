@@ -62,6 +62,7 @@ class LoopTransformInterface
   ArrayAbstractionInterface* arrayInfo;
   AstInterface& fa;
  public:
+ //LoopTransformInterface la (fa,array_interface,array_annot, &array_interface);
   LoopTransformInterface( AstInterface& _fa, AliasAnalysisInterface& alias,
                           FunctionSideEffectInterface* func = 0,
                           ArrayAbstractionInterface* array = 0) 
@@ -72,27 +73,30 @@ class LoopTransformInterface
   AstInterface& getAstInterface() { return fa;}
   AliasAnalysisInterface& getAliasInterface() { return aliasInfo; }
   FunctionSideEffectInterface* getSideEffectInterface() { return funcInfo; }
-
+  //! Check if two references are aliased, relying on aliasInfo
   bool IsAliasedRef( const AstNodePtr& r1, const AstNodePtr& r2)
     { return aliasInfo.may_alias(fa, r1, r2); }
+  //! Get modified and read variables by function call 'fc', relying on funcInfo  
   bool GetFunctionCallSideEffect( const AstNodePtr& fc,
                      CollectObject<AstNodePtr>& collectmod,
                      CollectObject<AstNodePtr>& collectread);
-
+  //! Check if a node is representing a memory access, relying on either arrayInfo or astInterface
   bool IsMemoryAccess( const AstNodePtr& s)
    { return (arrayInfo != 0 && arrayInfo->IsArrayAccess(fa, s)) ||
             fa.IsMemoryAccess(s); }
+	    
   bool IsLoop( const AstNodePtr& s, 
                        SymbolicVal* init = 0, SymbolicVal* cond=0,
                        SymbolicVal* incr =0, AstNodePtr* body=0);
   bool IsFortranLoop( const AstNodePtr& s, SymbolicVar* ivar = 0,
                        SymbolicVal* lb = 0, SymbolicVal* ub=0,
                        SymbolicVal* step =0, AstNodePtr* body=0);
-
+  //! Check if a node is representing an array access, relying on either arrayInfo or astInterface
   bool IsArrayAccess( const AstNodePtr& s, AstNodePtr* array = 0,
                                    AstInterface::AstNodeList* index = 0)  
    { return (arrayInfo != 0 && arrayInfo->IsArrayAccess(fa, s, array, index)) ||
             fa.IsArrayAccess(s, array, index); }
+  //! Create an array access, using arrayInfo by default, astInterface otherwise 	    
   virtual AstNodePtr CreateArrayAccess( const AstNodePtr& arr,
                                 AstInterface::AstNodeList& index) 
   { 
@@ -104,6 +108,7 @@ class LoopTransformInterface
   //bool IsArrayType( AstInterface& fa, const AstNodeType& t)
   //  { return (arrayInfo != 0 && arrayInfo->IsArrayType(fa, t)) ||
   //          AstInterface::IsArrayType(t); }
+  //! Get array bounds, using arrayInfo by default. astInterface is used otherwise
   bool GetArrayBound( const AstNodePtr& array, int dim, int &lb, int &ub) 
    {   
        if (arrayInfo != 0)

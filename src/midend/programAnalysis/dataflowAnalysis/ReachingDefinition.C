@@ -15,9 +15,7 @@ bool DebugReachingDef()
   }  
   return r == 1;
 }
-
-
-
+// An object collecing class: appending definition information into 'base'
 class ConstructReachingDefinitionBase
   : public  CollectObject< std::pair<AstNodePtr, AstNodePtr> >
 {
@@ -60,7 +58,8 @@ collect_refs ( AstInterface& fa, const AstNodePtr& h, FunctionSideEffectInterfac
 { 
 
   for (AstInterface::AstNodeList::iterator p = in->begin();
-       p != in->end(); ++p) {
+       p != in->end(); ++p) 
+  {
      AstNodePtr cur = *p;
      std::string varname;
      AstNodePtr scope;
@@ -69,6 +68,7 @@ collect_refs ( AstInterface& fa, const AstNodePtr& h, FunctionSideEffectInterfac
   }
   ConstructReachingDefinitionBase collect(fa, *this);
   StmtSideEffectCollect op(a);
+  // Collect modifying information only, saving them into 'collect'
   op(fa, h, &collect);
 }
 

@@ -5,7 +5,9 @@
 #include <OperatorAnnotation.h>
 #include <CPPAstInterface.h>
 #include <list>
-
+//! The semantic information (values) for data members of a type. 
+// Store the information into a map between the name of the data members and the expressions of their values
+// e.g. class Index {has_value { stride = this.stride; base = this.base; length = this.length; } }
 class HasValueDescriptor 
    : public MapDescriptor<StringDescriptor, SymbolicValDescriptor, ';', '{', '}'>
 {
@@ -23,10 +25,12 @@ class HasValueDescriptor
   std::string toString() const;
   void replace_var( const std::string& name, const SymbolicVal& repl);
   void replace_val( MapObject<SymbolicVal, SymbolicVal>& repl); 
-
+  // Check if there is a value expression for a data member named as 'name'.
+  // If yes, store the symbolic value expression into 'r' when r!=0
   bool has_value( const std::string& name, SymbolicValDescriptor* r = 0) const;
 };
 
+//! Collecting annotations for "has_value", part of type/class annotations
 class HasValueCollection : public TypeAnnotCollection< HasValueDescriptor>
 {
    typedef TypeAnnotCollection< HasValueDescriptor > BaseClass;
@@ -69,7 +73,7 @@ class RestrictValueOpCollection
       OperatorAnnotCollection<RestrictValueOpDescriptor>::Dump();
     }
 };
-
+//! Collector for both has_value and restrict_value annotations
 class ValueAnnotation 
 {
   HasValueCollection values;

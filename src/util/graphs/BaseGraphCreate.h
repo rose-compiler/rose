@@ -6,17 +6,20 @@
 #include <GraphAccess.h>
 #include <assert.h>
 
+//Both nodes and edges are multigraph elements (could be shared by mulitiple graphs) 
 typedef MultiGraphElemTemplate<void*> BaseGraphNode;
 typedef MultiGraphElemTemplate<void*> BaseGraphEdge;
 
+//Base interface of graph creation: create/delete nodes and edges
+// with additional interfaces to multigraph and graph access
 class BaseGraphCreate 
   : public MultiGraphCreate,
            GraphAccessTemplate<BaseGraphNode,BaseGraphEdge>
 {
  protected:
-  typedef GraphAccessTemplate<BaseGraphNode,BaseGraphEdge>
-      GraphAccessBase;
+  typedef GraphAccessTemplate<BaseGraphNode,BaseGraphEdge> GraphAccessBase;
  public:
+  //Arbitrary node and edge information
   typedef void* NodeContent;
   typedef void* EdgeContent;
   typedef GraphAccessBase::Node Node;
@@ -28,10 +31,8 @@ class BaseGraphCreate
   virtual ~BaseGraphCreate() {}
 
   virtual BaseGraphNode* CreateNode(NodeContent _id) =0;
-  virtual BaseGraphEdge* 
-  CreateEdge(BaseGraphNode* src, BaseGraphNode *snk, EdgeContent _id)=0;
-  virtual void 
-  MoveEdgeEndPoint( BaseGraphEdge *e, BaseGraphNode *n, EdgeDirection dir)=0;
+  virtual BaseGraphEdge* CreateEdge(BaseGraphNode* src, BaseGraphNode *snk, EdgeContent _id)=0;
+  virtual void MoveEdgeEndPoint( BaseGraphEdge *e, BaseGraphNode *n, EdgeDirection dir)=0;
   virtual void DeleteNode( BaseGraphNode *n)=0;
   virtual void DeleteEdge( BaseGraphEdge *n)=0;
 
@@ -42,6 +43,7 @@ class BaseGraphCreate
   GraphAccessBase::ContainEdge;
 };
 
+// A wrapper on top of a graph implementation to implement base graph create interface
 template <class GraphImpl>
 class BaseGraphCreateWrap : public BaseGraphCreate
 {
@@ -94,10 +96,12 @@ class BaseGraphCreateWrap : public BaseGraphCreate
   typename GraphImpl::EdgeDirection
   TranslateDirection( GraphAccess::EdgeDirection dir) const
   { switch (dir) {
-   case GraphAccess::EdgeOut: return GraphImpl::EdgeOut;
-   case GraphAccess::EdgeIn: return GraphImpl::EdgeIn;
-   default:
-     assert(false);
+     case GraphAccess::EdgeOut: 
+       return GraphImpl::EdgeOut;
+     case GraphAccess::EdgeIn: 
+       return GraphImpl::EdgeIn;
+     default:
+       assert(false);
    }
   }
 

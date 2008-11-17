@@ -3,7 +3,8 @@
 #define DEP_EDD_INFO
 
 #include <DepRel.h>
-
+//!Extended dependence matrix: 
+// each element of the matrix is a dependence direction relationship: 
 class DepEDD 
 {
   unsigned nr, nc, num;

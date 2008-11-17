@@ -2,14 +2,14 @@
 #include <CPPAstInterface.h>
 
 extern bool DebugAliasAnal();
-
+//! Collect alias information with the help from annotations and propagate some values
 void ArrayInterface::
 initialize( AstInterface& fa, const AstNodePtr& h)
 {
    aliasCollect(fa, h);
    valueCollect.build( fa, h, *this, ArrayAnnotation::get_inst());
 }
-
+//! call valueCollect
 void ArrayInterface::observe( AstInterface& fa) 
 {
   fa.AttachObserver( &valueCollect.get_value_map());
@@ -33,7 +33,7 @@ stop_observe( AstInterface& fa)
   fa.DetachObserver( &valueCollect.get_value_map());
   fa.DetachObserver(this);
 }
-
+//! Using ArrayAnnotation to tell if two references may be aliased.
 bool ArrayInterface ::
 may_alias(AstInterface& _fa, const AstNodePtr& r1, const AstNodePtr& r2)
 {
@@ -436,6 +436,7 @@ IsArrayRef( CPPAstInterface& fa, const AstNodePtr& t)
      return true;
   return false;
 }
+//! Using ArrayAnnotation to tell if a node is an array element access
 bool ArrayInterface :: 
 IsArrayAccess( AstInterface& _fa, const AstNodePtr& s, AstNodePtr* arrayp,
                                  AstInterface::AstNodeList* index)

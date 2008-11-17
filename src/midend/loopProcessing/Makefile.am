@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = depInfo depGraph computation slicing driver prepostTransformation
+SUBDIRS = depInfo depGraph computation outsideInterface slicing driver prepostTransformation
 
 INCLUDES = \
    $(ROSE_INCLUDES) -I${srcdir}/driver -I${srcdir}/prepostTransformation -I$(top_srcdir)/src/util/support -I$(top_srcdir)/src/util/graphs  -I$(top_srcdir)/src/midend/astUtil/astSupport -I$(top_srcdir)/src/midend/astUtil/symbolicVal -I$(top_srcdir)/src/midend/astUtil/astInterface

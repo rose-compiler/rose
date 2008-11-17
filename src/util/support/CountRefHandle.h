@@ -3,7 +3,7 @@
 #define COUNT_REF_HANDLE
 
 #include <stdlib.h>
-
+// Self-memory management using a reference counter
 template  <class T>
 class CountRefHandle 
 {
@@ -15,22 +15,26 @@ class CountRefHandle
    void DecreaseUse() 
        { 
          if (count == 0);
-         else if ((*count) > 1) (*count)--; 
-         else {
-           delete count;
-           delete obj;
-           count = 0;
-           obj = 0; 
-         }
+         else 
+	   if ((*count) > 1)
+	     (*count)--; 
+           else //Free the object when the reference count decreases to 0
+	   {
+             delete count;
+             delete obj;
+             count = 0;
+             obj = 0; 
+           }
        }
    int RefCount() { return (count == 0)? 0 : *count; }
   
  protected:
    const T* ConstPtr() const { return obj;}
-   //We do want to modify obj in rare case
+   //We do want to modify obj in rare cases
    T* NonConstPtr() const { return obj;}
    T* UpdatePtr()
-    { if (RefCount() > 1) {
+    { 
+      if (RefCount() > 1) {
         DecreaseUse();
         obj = obj->Clone();
         Init();
@@ -51,8 +55,10 @@ class CountRefHandle
    CountRefHandle<T> & operator = ( const CountRefHandle <T> &that)
       { 
         DecreaseUse(); 
-        obj = that.obj; count = that.count;
-        IncreaseUse(); return *this; 
+        obj = that.obj; 
+	count = that.count;
+        IncreaseUse(); 
+	return *this; 
       }
    ~CountRefHandle <T> () 
         {  DecreaseUse(); }

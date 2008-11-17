@@ -6,27 +6,33 @@
 #include <ProcessAstTree.h>
 #include <CommandOptions.h>
 
+// A path in the class hierarchy: 
+// CFGConfig->BuildCFGConfig->CFGImplTemplate->DataFlowAnalysis->ReachingDefinitionAnalysis
 class CFGConfig {
  public:
+  // Edge types for control flow graphs: executed when condition is true, false, or always executed
   typedef enum {COND_TRUE, COND_FALSE, ALWAYS} EdgeType;
   static std::string EdgeType2String( EdgeType e);
 };
 
+//Abstract interface of building a CFG using Node type
 template <class Node>
 class BuildCFGConfig  : public CFGConfig
 {
  public:
   virtual Node* CreateNode() = 0;
   virtual void CreateEdge( Node *n1, Node *n2, EdgeType condval) = 0;
+  //Associating a CFG node to its corresponding AST node
   virtual void AddNodeStmt(Node* n, const AstNodePtr& s) = 0;
   virtual ~BuildCFGConfig() {}
 };
 
 namespace ROSE_Analysis {
-template <class Node>
-void BuildCFG ( AstInterface& fa, const AstNodePtr& head, BuildCFGConfig<Node>& g);
-template <class Node>
-void BuildCFG ( AstInterface& fa, const AstInterface::AstNodeList& head, BuildCFGConfig<Node>& g);
+  template <class Node>
+  void BuildCFG ( AstInterface& fa, const AstNodePtr& head, BuildCFGConfig<Node>& g);
+
+  template <class Node>
+  void BuildCFG ( AstInterface& fa, const AstInterface::AstNodeList& head, BuildCFGConfig<Node>& g);
 };
 
 

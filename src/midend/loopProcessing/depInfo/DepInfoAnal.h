@@ -18,6 +18,8 @@ class DependenceTesting;
 class DepInfoAnal 
 {
  public:
+   //! Store information for a loop (could be nested): 
+   //   domain, loop invariant variables, bound information for each loop nest
   struct LoopDepInfo { 
       DomainCond domain; 
       std::vector<SymbolicVar> ivars;
@@ -39,6 +41,7 @@ class DepInfoAnal
                  const AstNodePtr& l, int level) 
         : r1(_r1), r2(_r2), commLoop(l), commLevel(level) {} 
    };
+  // Provide an operator to check if a node is a loop node 
   class SelectLoop {
     public:
       bool operator()(AstInterface& ai, const AstNodePtr& s)
@@ -46,7 +49,7 @@ class DepInfoAnal
   };
   typedef ModifyVariableMap<SelectLoop> ModifyVariableInfo;
   typedef CollectObject<DepInfo> DepInfoCollect;
-
+  // Constructor
   DepInfoAnal(LoopTransformInterface& la, DependenceTesting& h);
   DepInfoAnal(LoopTransformInterface& la);
 
@@ -78,11 +81,12 @@ class DepInfoAnal
                       const AstNodePtr& n1,  const AstNodePtr& n2,
                       DepInfoCollect &outDeps, DepInfoCollect &inDeps, 
                       int deptype = DEPTYPE_DATA);
-
  private:
 	DependenceTesting& handle;
+	// A map store AST nodes and loop nest information
   	std::map <AstNodePtr, LoopDepInfo, std::less <AstNodePtr> > stmtInfo;
-  	ModifyVariableInfo varmodInfo;
+	// A map store modified variables and the set of loops modifying them.
+  	ModifyVariableInfo varmodInfo;		      
 };
 
 class DependenceTesting{

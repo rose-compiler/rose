@@ -50,6 +50,11 @@ $(C_TEST_Objects): ../autoPar $(@:.o=.c)
 	$(VALGRIND) ../autoPar $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.c)
 $(CXX_TEST_Objects): ../autoPar $(@:.o=.C)
 	$(VALGRIND) ../autoPar $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.C)
+rose_interp1_elem.C: ../autoPar interp1_elem.C
+	$(VALGRIND) ../autoPar -c -annot $(srcdir)/floatArray.annot -annot $(srcdir)/funcs.annot -annot $(srcdir)/Index.annot $(srcdir)/interp1_elem.C	
+
+rose_doall_vector.C: ../autoPar doall_vector.C
+	$(VALGRIND) ../autoPar -c -annot $(srcdir)/std_vector.annot $(srcdir)/doall_vector.C
 
 check-local:
 	@echo "Test for ROSE automatic parallelization."
@@ -59,7 +64,7 @@ check-local:
 	@echo "****** ROSE/projects/autoParallelization/tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
 
-EXTRA_DIST = $(ALL_TESTCODES)
+EXTRA_DIST = $(ALL_TESTCODES) funcs.annot floatArray.annot Index.annot simpleA++.h interp1_elem.C
 
 clean-local:
 	rm -f *.o rose_*.[cC] 

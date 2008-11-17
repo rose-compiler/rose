@@ -23,7 +23,12 @@
 #include <string>
 #include <iostream>
 
-//-- dependence graph headers-----
+//Array Annotation headers
+#include <CPPAstInterface.h>
+#include <ArrayAnnot.h>
+#include <ArrayRewrite.h>
+
+//dependence graph headers
 #include <AstInterface_ROSE.h>
 #include <LoopTransformInterface.h>
 #include <AnnotCollect.h>
@@ -32,6 +37,7 @@
 #include <LoopTreeDepComp.h>
 
 using namespace std;
+using namespace CommandlineProcessing;
 // new attribute support for 3.0 specification
 using namespace OmpSupport;
 using namespace SageInterface;
@@ -39,26 +45,33 @@ using namespace SageInterface;
 int
 main (int argc, char *argv[])
 {
-  SgProject *project = frontend (argc, argv);
-  ROSE_ASSERT (project != NULL);
+  vector<string> argvList(argv, argv+argc);
 
-#if 0  // We call the internal interface directly right now
-  // Transparently make up options necessary to control loop transformations
-  //  Only invoke dependence analysis, nothing further.
-  vector<string> argvList (argv, argv + argc);
-  argvList.push_back("-depAnalOnly");
-  argvList.push_back("-debugdep");
-  argvList.push_back("-debugloop");
+  //Save -debugdep, -annot file .. etc, 
+  // used internally in ReadAnnotation and Loop transformation
   CmdOptions::GetInstance()->SetOptions(argvList);
-#endif
+  bool dumpAnnot = isOption(argvList,"","-dumpannot",true);
 
-  // TODO refactoring to a function for dependence analysis
-  // Preparation for loop transformation interface
+  //Read in annotations---------------------------- 
+  ArrayAnnotation* annot = ArrayAnnotation::get_inst();
+  annot->register_annot();
+  ReadAnnotation::get_inst()->read();
+  if (dumpAnnot)  
+    annot->Dump();
+
+  // Strip off custom options and their values to enable backend compiler 
+  removeArgsWithParameters(argvList,"-annot");
+
+  /* We use ArrayAnnotation now
   OperatorSideEffectAnnotation *funcInfo =  OperatorSideEffectAnnotation::get_inst();
   funcInfo->register_annot();
   ReadAnnotation::get_inst()->read();
   AssumeNoAlias aliasInfo;
+  */
 
+  SgProject *project = frontend (argvList);
+  ROSE_ASSERT (project != NULL);
+  
   // For each source file in the project
     SgFilePtrList & ptr_list = project->get_fileList();
     for (SgFilePtrList::iterator iter = ptr_list.begin(); iter!=ptr_list.end();
@@ -79,6 +92,17 @@ main (int argc, char *argv[])
         SgFunctionDefinition *defn = func->get_definition();
         if (defn == 0)  continue;
         SgBasicBlock *body = defn->get_body();  
+
+        // Replace operators with their equivalent counterparts defined 
+        // in "inline" annotations
+        AstInterfaceImpl scope(body);
+        CPPAstInterface fa_body(&scope);
+        OperatorInlineRewrite()( fa_body, AstNodePtrImpl(body));
+         
+	 // Pass annotations to arrayInterface and use them to collect alias info. function info etc.  
+         ArrayInterface array_interface(*annot);
+         array_interface.initialize(fa_body, AstNodePtrImpl(defn));
+         array_interface.observe(fa_body);
 
         // For each loop (For-loop for now)
         Rose_STL_Container<SgNode*> loops = NodeQuery::querySubTree(defn,V_SgForStatement); 
@@ -103,12 +127,10 @@ main (int argc, char *argv[])
         AstNodePtr head = AstNodePtrImpl(loops[0]);
         //AstNodePtr head = AstNodePtrImpl(body);
         fa.SetRoot(head);
-#if 0
-       // Call BuildAstTreeDepGraph::ProcessLoop directly?
-         
-#endif        
+
         //2.  Call dependence analysis directly on a loop node
-        LoopTransformInterface la (fa,aliasInfo,funcInfo); 
+        //LoopTransformInterface la (fa,aliasInfo,funcInfo); 
+        LoopTransformInterface la (fa,array_interface,annot, &array_interface); 
         LoopTreeDepCompCreate comp(la,head);
 
         // Retrieve dependence graph here!

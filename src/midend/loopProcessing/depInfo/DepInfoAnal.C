@@ -169,8 +169,10 @@ GetLoopInfo( LoopTransformInterface &la, const AstNodePtr& s)
     AstInterface& ai = la;
     SymbolicVar ivar;
     SymbolicVal lb, ub;
+    
     if (s == AST_NULL || !la.IsFortranLoop(s, &ivar, &lb, &ub))
        return stmtInfo[AST_NULL];
+    // The entry to be filled for the statement   
     LoopDepInfo& info= stmtInfo[s];
     if (info.IsTop()) {
        AstNodePtr l = GetEnclosingLoop(s,ai);
@@ -195,14 +197,13 @@ GetLoopInfo( LoopTransformInterface &la, const AstNodePtr& s)
        SetDep op(info.domain, DomainCond(), 0);
        if (!AnalyzeEquation(lbvec, info.ivarbounds, boundop, op, DepRel(DEPDIR_LE, 0)))
          if (DebugDep())
-            std::cerr << "unable to analyze equation: " << toString(lbvec) << std::endl;
-       SymbolicVal ubleft = 
-         DecomposeAffineExpression(la,ub,info1.ivars,ubvec,dim1);
+            std::cerr << "unable to analyze equation for lower bound: " << toString(lbvec) << std::endl;
+       SymbolicVal ubleft = DecomposeAffineExpression(la,ub,info1.ivars,ubvec,dim1);
        ubvec.push_back(-1);
        ubvec.push_back(-ubleft);
        if (!AnalyzeEquation(ubvec, info.ivarbounds, boundop, op, DepRel(DEPDIR_GE, 0))) 
           if (DebugDep())
-             std::cerr << "unable to analyze equation: " << toString(ubvec) << std::endl;
+             std::cerr << "unable to analyze equation for upper bound: " << toString(ubvec) << std::endl;
        info.domain = op.get_domain1();
        info.domain.ClosureCond();
        if (DebugDep())

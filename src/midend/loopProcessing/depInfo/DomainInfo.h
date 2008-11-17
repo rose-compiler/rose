@@ -4,7 +4,8 @@
 
 #include <DepInfo.h>
 #include <LatticeElemList.h>
-
+//! A code region (scope) with one or more loops to be analyzed or tranformed.
+// It contains extended matrix dependence information for the loops
 class DomainCond :  protected DepInfo 
 {
  public:

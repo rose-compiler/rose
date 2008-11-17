@@ -185,7 +185,7 @@ void PrintLoopTransformUsage( std::ostream& out)
   std::cerr << BreakupStatement::cmdline_help() << std::endl;
   LoopTransformOptions::GetInstance()->PrintUsage(out);
 }
-
+// funcInfo could be an instance of ArrayAnnotation, which derives from FunctionSideEffectInterface
 bool LoopTransformInterface::
 GetFunctionCallSideEffect( const AstNodePtr& fc,
                      CollectObject<AstNodePtr>& collectmod,

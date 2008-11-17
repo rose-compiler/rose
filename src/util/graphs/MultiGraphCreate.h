@@ -4,21 +4,25 @@
 
 #include <stdlib.h>
 #include <assert.h>
-
+/*
+An element (could be a node or an edge) which can belong to more than one graphs.
+*/
 class MultiGraphCreate;
 class MultiGraphElem 
 {
-  MultiGraphCreate *gc;
-  int count;
+  MultiGraphCreate *gc; // The owner graph of this element
+  int count;// Reference count of this element, >0 means shared by more than one graphs
  public:
   MultiGraphElem( MultiGraphCreate *c) : gc(c) { count = 0; }
   virtual ~MultiGraphElem() { assert( count == 0); }
 
   bool UnlinkGraphCreate( const MultiGraphCreate *c)
-       { if (gc != c) 
+       { // Decrement the reference count if not the original graph
+         if (gc != c) 
             count--;
-         else
+         else // (gc==c) Unlink the original 'owner' graph
             gc = 0;
+	 // Delete this elment if it is not used in any graph   
          if (gc == 0 && count == 0) {
              delete this;
             return true;
@@ -35,6 +39,44 @@ class MultiGraphElem
  friend class MultiGraphCreate;
 };
 
+/* Class Hierarchy for MultiGraphCreate. 
+
+MultiGraphCreate
+* BaseGraphCreate
+** DAGBaseGraphImpl
+** DGBaseGraphImpl
+
+* VirtualGraphCreateTemplate
+** CallGraphCreate
+
+** CFGImplTEmplate
+*** DataFlowAnalysis
+**** ReachingDefinitionAnalysis
+*** DefaultCFGImpl
+
+** CompSliceRegistry
+
+** DAGCreate
+
+** DefUseChain
+*** DefaultDUChain
+*** ValuePropagate
+
+** DepInfoGraphCreate
+*** CompSliceDepGraphCreate
+*** DepCompAstRefGraphCreate
+**** DepCompAstRefDAG
+*** LoopTreeDepGraphCreate
+
+** DepInfoSetGraphCreate
+
+** GroupGraphCreate
+*** SCCGraphCreate
+**** TransAnalSCCCreate
+
+** TransDepGraphCreate
+
+*/
 class MultiGraphCreate 
 {
  protected:
@@ -44,10 +86,12 @@ class MultiGraphCreate
   bool UnlinkElem( void* n) {  return false; }
   bool LinkElem(void* n) { return false; }
  public:
+  // Check if this MultiGraphCreate owns the element
   bool ContainElem( const MultiGraphElem* e) const
           { return e->GetGraphCreate() == this; }
 };
 
+//A template class implementing mulitiGraphElem and storing arbitrary information.
 template <class Info>
 class MultiGraphElemTemplate : public MultiGraphElem
 {

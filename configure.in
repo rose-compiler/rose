@@ -938,6 +938,7 @@ src/midend/loopProcessing/depInfo/Makefile
 src/midend/loopProcessing/depGraph/Makefile
 src/midend/loopProcessing/computation/Makefile
 src/midend/loopProcessing/slicing/Makefile
+src/midend/loopProcessing/outsideInterface/Makefile
 src/midend/loopProcessing/driver/Makefile
 src/backend/Makefile
 src/backend/unparser/Makefile

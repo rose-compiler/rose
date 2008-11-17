@@ -389,7 +389,7 @@ is_access_array_length( CPPAstInterface& fa, const AstNodePtr& orig, AstNodePtr*
       if (dimAst != 0)
             *dimAst = cur;
       if (dim != 0) {
-          if (!fa.IsConstInt(cur, dim))
+          if (!fa.IsConstInt(cur, dim)) // Must be constant? How about variables as parameter!!??
               assert(false);
       }
       return true;
@@ -400,6 +400,7 @@ is_access_array_length( CPPAstInterface& fa, const AstNodePtr& orig, AstNodePtr*
 bool ArrayAnnotation ::
 is_access_array_elem( CPPAstInterface& fa, const SymbolicVal& orig, AstNodePtr* array, SymbolicFunction::Arguments* args)
 {
+   // It calls is_known_member_function() of CPPAstInterface<ArrayDefineDescriptor> ???
   if (arrays.is_known_member_function( fa, orig, array, args) == "elem") {
     return true;
   }
@@ -448,14 +449,17 @@ get_modify(AstInterface& _fa, const AstNodePtr& fc,
                                CollectObject<AstNodePtr>* collect)
 {
   CPPAstInterface& fa = static_cast<CPPAstInterface&>(_fa);
+    // No modified variables for array length retrieval and element read calls.  
    if ( is_access_array_elem(fa, fc) || is_access_array_length(fa, fc)) 
       return true;
+   // array reshape calls modify the entire array   
    AstNodePtr array;
    if (is_reshape_array( fa,fc, &array)) {
       if (collect != 0)
          (*collect)(array);
       return true;
    } 
+   // Relying on annotations for all other function calls 
    return OperatorSideEffectAnnotation::get_inst()->get_modify(fa, fc, collect);
 }
 
@@ -464,11 +468,13 @@ get_read(AstInterface& _fa, const AstNodePtr& fc, CollectObject<AstNodePtr>* col
 {
   CPPAstInterface& fa = static_cast<CPPAstInterface&>(_fa);
    AstNodePtr dim;
+   //the 'dim' parameter used to retrieve array length of a dimension is a read accesss
    if (is_access_array_length( fa, fc, 0, &dim)) {
        if (collect != 0)
            (*collect)(dim);
        return true;
    }
+   // The variables used as subscripts in array element access function call are read.
    CPPAstInterface::AstNodeList args;
    if (is_access_array_elem( fa, fc, 0, &args)) {
       if (collect != 0) {
@@ -478,13 +484,13 @@ get_read(AstInterface& _fa, const AstNodePtr& fc, CollectObject<AstNodePtr>* col
       }
       return true;
    }
+   //Use side effect annotation for all other function calls
    return OperatorSideEffectAnnotation::get_inst()->get_read(fa, fc, collect);
 }
 
-
 #define TEMPLATE_ONLY
 #include <TypeAnnotation.C>
-#include <OperatorDescriptors.C>
+//#include <OperatorDescriptors.C>
 template class TypeCollection<ArrayModifyDescriptor>;
 template class TypeCollection<ArrayConstructDescriptor>;
 template class OperatorAnnotCollection<ArrayModifyDescriptor>;
