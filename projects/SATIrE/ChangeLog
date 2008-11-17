@@ -1,4 +1,12 @@
-V0.8.5 ??? GB,AP,VP
+V0.8.5 2008-11-17 GB,AP,VP
+
+* Tested with:
+  - ROSE 0.9.3a-1593
+  - PAG 9.2.2.48
+  - flex 2.5.33
+  - bison 2.3
+  - g++ 4.2.0 (>= 4.2.0 required by ROSE with EDG binaries)
+  - Boost 1_36 (>= 1_35 required by ROSE)
 
 * Experimental points-to/alias analysis for C programs [GB]
   - specify --run-pointsto-analysis command line flag, PAG analyses then
