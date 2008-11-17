@@ -63,6 +63,29 @@ struct X86InstructionSemantics {
     return extract<Len - 1, Len>(carries);
   }
 
+  Word(32) readEflags() {
+    return policy.concat(readFlags(), number<16>(0x0000));
+  }
+
+  Word(16) readFlags() {
+    return policy.concat(policy.readFlag((X86Flag)0 ),
+           policy.concat(policy.readFlag((X86Flag)1 ),
+           policy.concat(policy.readFlag((X86Flag)2 ),
+           policy.concat(policy.readFlag((X86Flag)3 ),
+           policy.concat(policy.readFlag((X86Flag)4 ),
+           policy.concat(policy.readFlag((X86Flag)5 ),
+           policy.concat(policy.readFlag((X86Flag)6 ),
+           policy.concat(policy.readFlag((X86Flag)7 ),
+           policy.concat(policy.readFlag((X86Flag)8 ),
+           policy.concat(policy.readFlag((X86Flag)9 ),
+           policy.concat(policy.readFlag((X86Flag)10),
+           policy.concat(policy.readFlag((X86Flag)11),
+           policy.concat(policy.readFlag((X86Flag)12),
+           policy.concat(policy.readFlag((X86Flag)13),
+           policy.concat(policy.readFlag((X86Flag)14),
+           policy.readFlag((X86Flag)15))))))))))))))));
+  }
+
   template <size_t Len> // In bits
   Word(Len) readMemory(X86SegmentRegister segreg, const Word(32)& addr, Word(1) cond) {
     return policy.template readMemory<Len>(segreg, addr, cond);
@@ -1475,6 +1498,15 @@ struct X86InstructionSemantics {
         policy.writeMemory(x86_segreg_ss, policy.add(newSp, number<32>(20)), policy.readGPR(x86_gpr_dx), policy.true_());
         policy.writeMemory(x86_segreg_ss, policy.add(newSp, number<32>(24)), policy.readGPR(x86_gpr_cx), policy.true_());
         policy.writeMemory(x86_segreg_ss, policy.add(newSp, number<32>(28)), policy.readGPR(x86_gpr_ax), policy.true_());
+        policy.writeGPR(x86_gpr_sp, newSp);
+        break;
+      }
+      case x86_pushfd: {
+        ROSE_ASSERT (operands.size() == 0);
+        ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
+        Word(32) oldSp = policy.readGPR(x86_gpr_sp);
+        Word(32) newSp = policy.add(oldSp, number<32>(-4));
+        policy.writeMemory(x86_segreg_ss, newSp, readEflags(), policy.true_());
         policy.writeGPR(x86_gpr_sp, newSp);
         break;
       }
