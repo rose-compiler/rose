@@ -1115,7 +1115,7 @@ IsGoto( const AstNodePtr& _s, AstNodePtr* dest)
   } 
   return true;
 }
-
+// goto the point before destination
 bool AstInterface::IsGotoBefore( const AstNodePtr& _s)
 { 
   AstNodePtrImpl s(_s);
