@@ -147,7 +147,8 @@ class AstInterface
   bool IsIf( const AstNodePtr& s, AstNodePtr* cond = 0, 
                        AstNodePtr* truebody = 0, AstNodePtr* falsebody = 0);
   AstNodePtr CreateIf( const AstNodePtr& cond, const AstNodePtr& stmts) ;
-
+  // Check if node 's' means a jump (goto, return, continue, break , etc) in execution path, 
+  // If yes, grab the jump destination in 'dest'
   bool IsGoto( const AstNodePtr& s, AstNodePtr* dest = 0);
   bool IsGotoBefore( const AstNodePtr& s); // goto the point before destination
   bool IsGotoAfter( const AstNodePtr& s); // goto the point after destination

@@ -8,7 +8,8 @@ scalar_privatization.c \
 true_dep.c \
 output_dep.c
 
-CXX_TESTCODES_REQUIRED_TO_PASS = 
+CXX_TESTCODES_REQUIRED_TO_PASS = \
+ifstmt.C
 
 # the code which can not yet be parallelized now
 TESTCODE_CURRENTLY_FAILING = \
@@ -37,7 +38,7 @@ $(CXX_TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODE_CURRENTLY_FAILING)
 
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict
-ROSE_FLAGS = --edg:no_warnings -w -rose:C -rose:verbose 0 --edg:restrict
+ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict
 
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 # VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
@@ -60,6 +61,7 @@ check-local:
 	@echo "Test for ROSE automatic parallelization."
 	@$(MAKE) $(C_TEST_Objects)
 	@$(MAKE) $(CXX_TEST_Objects)
+	@$(MAKE) rose_interp1_elem.C
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/projects/autoParallelization/tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
