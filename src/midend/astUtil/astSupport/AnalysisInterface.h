@@ -14,7 +14,8 @@ class FunctionSideEffectInterface
   // returns false if unknown function encountered
   virtual bool get_modify(AstInterface& fa, const AstNodePtr& fc,
                                CollectObject<AstNodePtr>* collect = 0) = 0 ;
-  
+   //! Store read reference nodes (collect) within a function (fc)
+  // returns false if unknown function encountered
   virtual bool get_read(AstInterface& fa, const AstNodePtr& fc,
                                CollectObject<AstNodePtr>* collect = 0) = 0;
   virtual ~FunctionSideEffectInterface() {}
