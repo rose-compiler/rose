@@ -26,7 +26,7 @@ class DepInfoAnal
       std::vector<SymbolicBound> ivarbounds;
       bool IsTop() const { return domain.IsTop(); }
    };
-   //!Store a single reference within a statement
+   //!Store a single varaible reference within a statement
    struct StmtRefInfo { 
      AstNodePtr stmt, ref;
      StmtRefInfo( const AstNodePtr& s, const AstNodePtr& r) 

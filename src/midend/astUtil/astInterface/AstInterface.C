@@ -98,6 +98,7 @@ AstNodePtr AstInterface::GetFunctionDefinition( const AstNodePtr &n, std::string
 std::string get_type_name( SgType* t);
 using namespace std;
 
+// Removing the leading "::" from a qualified name
 string StripGlobalQualifier(string name)
 {
    if (name.size() > 2 && name[0] == ':' && name[1] == ':') {
@@ -1180,6 +1181,7 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
 	*body = AstNodePtrImpl(def->get_body());
       d = def->get_declaration();
   }
+  
   switch (d->variantT()) {
   case V_SgFunctionDeclaration: 
     { 
@@ -1206,6 +1208,36 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
 	l = decl->get_parameterList();
       break;
     }
+  // Liao, 11/18/2008: add support for instantiated template (member) function declarations  
+  case V_SgTemplateInstantiationMemberFunctionDecl: 
+  {
+     SgTemplateInstantiationMemberFunctionDecl* decl = isSgTemplateInstantiationMemberFunctionDecl(d);
+     if (returntype != 0)
+	*returntype = AstNodeTypeImpl(decl->get_type()->get_return_type());
+      if (name != 0) {
+	SgName cn = decl->get_scope()->get_qualified_name(); 
+	SgName fn = decl->get_name();
+	*name =  StripGlobalQualifier(string(cn.str())) + "::" + StripGlobalQualifier(string(fn.str()));
+      }
+      if (paramtype != 0 || params != 0) 
+	l = decl->get_parameterList();
+      break;
+  }  
+  case V_SgTemplateInstantiationFunctionDecl: 
+  {
+     SgTemplateInstantiationFunctionDecl* decl = isSgTemplateInstantiationFunctionDecl(d);
+     if (returntype != 0)
+	*returntype = AstNodeTypeImpl(decl->get_type()->get_return_type());
+      if (name != 0) {
+	SgName cn = decl->get_scope()->get_qualified_name(); 
+	SgName fn = decl->get_name();
+	*name =  StripGlobalQualifier(string(cn.str())) + "::" + StripGlobalQualifier(string(fn.str()));
+      }
+      if (paramtype != 0 || params != 0) 
+	l = decl->get_parameterList();
+      break;
+  }  
+  
   default: 
     return false;
   }
@@ -1471,7 +1503,9 @@ bool AstInterface:: IsMax( const AstNodePtr& _exp)
       return true;
    return false;
 }
-
+// Check if '_exp' is a kind of variable reference, including :
+// V_SgMemberFunctionRefExp, V_SgFunctionRefExp, V_SgVarRefExp, V_SgThisExp,
+// V_SgConstructorInitializer, V_SgInitializedName, V_SgDotExp
 bool AstInterface::
 IsVarRef( const AstNodePtr& _exp, AstNodeType* vartype, string* varname,
           AstNodePtr* _scope, bool *isglobal ) 
@@ -1940,13 +1974,14 @@ bool AstInterface::IsBlock( const AstNodePtr& _exp)
   };
   return false;
 }
-//! Check if there is a function call: store its declaration and argument list
+//! Check if there is a function call: store its functionRefExp and argument(expression) list
 bool AstInterfaceImpl::
 IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args)
 {
   SgNode *exp = s;
   SgNode *f = 0;
   SgExprListExp *argexp = 0;
+  
   switch (exp->variantT()) {
   case V_SgExprStatement:
      exp = isSgExprStatement(exp)->get_expression();
@@ -1958,7 +1993,7 @@ IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args)
     {
       SgFunctionCallExp *fs = isSgFunctionCallExp(exp);
       f = fs->get_function(); //Should be SgFunctionRefExp
-      argexp = fs->get_args();
+      argexp = fs->get_args(); // SgExprListExp
     }
     break;
   case V_SgConstructorInitializer: {
@@ -1973,6 +2008,7 @@ IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args)
   default:
     return false;
   }
+  
   switch (f->variantT()) {
   case V_SgDotExp: 
       { 
@@ -2012,7 +2048,7 @@ IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args)
     *func = f;
   return true;
 }
-//! Check if a node is a function all, store function declaration, argument list, 
+//! Check if a node is a function call, store its function reference expression, argument list, 
 //outargs: arguments using pass-by-reference, only consider C++ reference type now
 // parameter type list, return type
 bool AstInterface::
@@ -2024,8 +2060,10 @@ IsFunctionCall( const AstNodePtr& _s, AstNodePtr* fname, AstNodeList* args,
   if (outargs != 0 && args == 0)
       args = &Args;
   SgNode* f;
+  // Grab functionRefExp and argument expression list
   if (!impl->IsFunctionCall(s.get_ptr(), &f, args))
      return false;
+     
   if (f->variantT() == V_SgPointerDerefExp)
      f = isSgPointerDerefExp(f)->get_operand();
   if (fname != 0) {
@@ -2050,7 +2088,7 @@ IsFunctionCall( const AstNodePtr& _s, AstNodePtr* fname, AstNodeList* args,
         if (returntype != 0)
            *returntype = AstNodeTypeImpl(ftype->get_return_type());
      }
-     else {
+     else { // not a function type
         AstNodePtr fdecl = GetFunctionDecl(AstNodePtrImpl(f));
         if (fdecl == 0) {
             std::cerr << "func has no decl: " << AstToString(s) << "\n";
@@ -2059,7 +2097,7 @@ IsFunctionCall( const AstNodePtr& _s, AstNodePtr* fname, AstNodeList* args,
         if (!IsFunctionDefinition(fdecl, 0,0,0,0,paramtypes,returntype))
          assert(false);
      }
-     
+     // Store arguments of reference types into outargs
      if (outargs != 0) {
         AstNodeList::const_iterator p1 = args->begin();
         for (AstTypeList::const_iterator p = paramtypes->begin(); 

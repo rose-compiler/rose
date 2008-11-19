@@ -52,7 +52,7 @@ class ReadAnnotCollection {
 typedef AnnotCollectionBase<TypeDescriptor> TypeCollectionBase;
 typedef ReadAnnotCollection<TypeDescriptor, '{', ';','}'> ReadTypeCollection;
 
-//! A map storing types and their descriptors, the descriptor could be any instantiated types as a template class
+//! A map storing types and their descriptors, the descriptor could be any instantiated types as a template class.
 // Descriptor could be either of has_value, array, array_opt annoation types
 template <class Descriptor>
 class TypeCollection 
@@ -75,7 +75,7 @@ class TypeCollection
 
   const_iterator begin() const { return typemap.begin(); }
   const_iterator end() const { return typemap.end(); }
-  //Check if a named type 'name' is a type with annotation records
+  //Check if a named type 'name' is a type with annotation descriptor records
   bool known_type( const TypeDescriptor &name, Descriptor* desc = 0)  const;
   bool known_type( AstInterface& fa, const AstNodePtr& exp, 
 		   Descriptor* desc = 0) const;

@@ -182,7 +182,7 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s,
  }
  return true;
 }
-
+// Collecting Read references from function calls, array accesses, and memory accesses etc.
 class CollectReadRefWrap : public CollectObject<AstNodePtr>
 {
   CollectObject< std::pair< AstNodePtr, AstNodePtr> >* collect;
@@ -266,7 +266,7 @@ AppendReadLoc( AstInterface& fa, const AstNodePtr& read)
        if (readcollect != 0)
                (*readcollect)(std::pair<AstNodePtr,AstNodePtr>(read, curstmt)); 
     }
-
+// Using function 
 void StmtSideEffectCollect::
 AppendFuncCall( AstInterface& fa, const AstNodePtr& fc)
 {

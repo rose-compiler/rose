@@ -9,6 +9,7 @@ true_dep.c \
 output_dep.c
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
+doall_vector.C \
 ifstmt.C
 
 # the code which can not yet be parallelized now
@@ -28,7 +29,6 @@ shared.c \
 true_dep_2.c \
 true_l2.c \
 vectorize_1.c \
-doall_vector.C \
 vector_1.C \
 vector_2.C
 

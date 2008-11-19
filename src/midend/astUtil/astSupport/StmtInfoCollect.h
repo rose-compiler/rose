@@ -50,7 +50,7 @@ class StmtInfoCollect : public ProcessAstTreeBase
 };
 
 class FunctionSideEffectInterface;
-//! Collect statement side effects with the help of side effect analysis
+//! Collect statement side effects with the help of side effect analysis Interface
 class StmtSideEffectCollect 
 : public StmtInfoCollect, public SideEffectAnalysisInterface
 {

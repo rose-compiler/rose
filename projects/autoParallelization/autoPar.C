@@ -5,6 +5,7 @@
  * Output: parallelized C/C++ code using OpenMP
  *
  * Algorithm:
+ *   Read in array abstraction files 
  *   for all loops
  *     x. Conduct loop normalization
  *     x. Call dependence analysis from Qing's loop transformations
@@ -84,7 +85,8 @@ main (int argc, char *argv[])
      SgDeclarationStatementPtrList& declList = root->get_declarations ();
      bool hasOpenMP= false; // flag to indicate if omp.h is needed
 
-    //For each function body in the file
+    //For each function body in the scope
+    //TODO ignore functions in system headers, keep them now for testing robustness
      for (SgDeclarationStatementPtrList::iterator p = declList.begin(); p != declList.end(); ++p) 
      {
         SgFunctionDeclaration *func = isSgFunctionDeclaration(*p);
@@ -161,7 +163,10 @@ main (int argc, char *argv[])
        }
        else
        {
-         ROSE_ASSERT(false);  
+         continue;
+         // Not all loop can be collected by LoopTreeTraverseSelectLoop right now
+         // e.g: loops in template function bodies
+         //ROSE_ASSERT(false);  
        }
 
        ROSE_ASSERT(ast_ptr!=NULL);
