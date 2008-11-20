@@ -494,6 +494,9 @@ PreprocessingInfo* attachComment(SgLocatedNode* target, const std::string & cont
 //! Set current node's source position as transformation generated
   void setOneSourcePositionForTransformation(SgNode *node);
 
+//! Set current node's source position as NULL
+  void setOneSourcePositionNull(SgNode *node);
+
 //! Recursively set source position info(Sg_File_Info) as transformation generated
   void setSourcePositionForTransformation (SgNode * root);
 
