@@ -99,6 +99,16 @@ SageBuilder::buildInitializedName ( const char* name, SgType* type)
   return buildInitializedName(var_name,type);
 }
 
+SgInitializedName *
+SageBuilder::buildInitializedName_nfi ( const SgName & name, SgType* type, SgInitializer* init)
+{
+  ROSE_ASSERT(type != NULL);
+  SgInitializedName* initializedName = new SgInitializedName(name,type,init);
+  ROSE_ASSERT(initializedName);
+  setOneSourcePositionNull(initializedName);
+  return initializedName;
+}
+
 //-----------------------------------------------
 // could have two declarations for a same variable
 // extern int i;
@@ -565,16 +575,6 @@ SageBuilder::buildDefiningFunctionDeclaration \
 
 //------------------build value expressions -------------------
 //-------------------------------------------------------------
-SgBoolValExp* SageBuilder::buildBoolValExpFi(int value, Sg_File_Info* start, Sg_File_Info* end)
-{
-  //TODO does valueString matter here?
-  SgBoolValExp* boolValue= new SgBoolValExp(value);
-  ROSE_ASSERT(boolValue);
-  boolValue->set_startOfConstruct(start);
-  boolValue->set_startOfConstruct(end);
-  boolValue->set_operatorPosition(deepCopy(start));
-  return boolValue;
-}
 SgBoolValExp* SageBuilder::buildBoolValExp(int value /*=0*/)
 {
   //TODO does valueString matter here?
@@ -587,22 +587,27 @@ SgBoolValExp* SageBuilder::buildBoolValExp(bool value /*=0*/)
 {
   return buildBoolValExp(int(value));
 }
-
-SgCharVal* SageBuilder::buildCharValFi(char value, const string& str, Sg_File_Info* start, Sg_File_Info* end)
+SgBoolValExp* SageBuilder::buildBoolValExp_nfi(int value)
 {
-  SgCharVal* result = new SgCharVal(value, "");
-  ROSE_ASSERT(result);
-  result->set_valueString(str);
-  result->set_startOfConstruct(start);
-  result->set_startOfConstruct(end);
-  result->set_operatorPosition(deepCopy(start));
-  return result;
+  SgBoolValExp* boolValue= new SgBoolValExp(value);
+  ROSE_ASSERT(boolValue);
+  setOneSourcePositionNull(boolValue);
+  return boolValue;
 }
+
 SgCharVal* SageBuilder::buildCharVal(char value /*= 0*/)
 {
   SgCharVal* result = new SgCharVal(value, "");
   ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgCharVal* SageBuilder::buildCharVal_nfi(char value, const string& str)
+{
+  SgCharVal* result = new SgCharVal(value, str);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
   return result;
 }
 
@@ -615,6 +620,17 @@ SgComplexVal* SageBuilder::buildComplexVal(long double real_value /*= 0.0*/,
   return result;
 }
 
+SgComplexVal* SageBuilder::buildComplexVal_nfi(long double real_value,
+                                               long double imaginary_value,
+                                               SgType* eltType,
+                                               const string& str)
+{
+  SgComplexVal* result = new SgComplexVal(real_value,imaginary_value,eltType,str);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
 SgDoubleVal* SageBuilder::buildDoubleVal(double t)
 {
   SgDoubleVal* value = new SgDoubleVal(t,"");
@@ -623,11 +639,27 @@ SgDoubleVal* SageBuilder::buildDoubleVal(double t)
   return value;
 }
 
+SgDoubleVal* SageBuilder::buildDoubleVal_nfi(double t, const string& str)
+{
+  SgDoubleVal* value = new SgDoubleVal(t,str);
+  ROSE_ASSERT(value);
+  setOneSourcePositionNull(value);
+  return value;
+}
+
 SgFloatVal* SageBuilder::buildFloatVal(float value /*= 0.0*/)
 {
   SgFloatVal* result = new SgFloatVal(value,"");
   ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgFloatVal* SageBuilder::buildFloatVal_nfi(float value, const string& str)
+{
+  SgFloatVal* result = new SgFloatVal(value,str);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
   return result;
 }
 
@@ -647,6 +679,54 @@ SgIntVal* SageBuilder::buildIntValHex(int value)
   return intValue;
 }
 
+SgIntVal* SageBuilder::buildIntVal_nfi(int value, const string& str)
+{
+  SgIntVal* intValue= new SgIntVal(value,str);
+  ROSE_ASSERT(intValue);
+  setOneSourcePositionNull(intValue);
+  return intValue;
+}
+
+SgLongIntVal* SageBuilder::buildLongIntVal(long value)
+{
+  SgLongIntVal* intValue= new SgLongIntVal(value,"");
+  ROSE_ASSERT(intValue);
+  setOneSourcePositionForTransformation(intValue);
+  return intValue;
+}
+
+SgLongIntVal* SageBuilder::buildLongIntVal_nfi(long value, const string& str)
+{
+  SgLongIntVal* intValue= new SgLongIntVal(value,str);
+  ROSE_ASSERT(intValue);
+  setOneSourcePositionNull(intValue);
+  return intValue;
+}
+
+SgLongLongIntVal* SageBuilder::buildLongLongIntVal(long long value)
+{
+  SgLongLongIntVal* intValue= new SgLongLongIntVal(value,"");
+  ROSE_ASSERT(intValue);
+  setOneSourcePositionForTransformation(intValue);
+  return intValue;
+}
+
+SgLongLongIntVal* SageBuilder::buildLongLongIntVal_nfi(long long value, const string& str)
+{
+  SgLongLongIntVal* intValue= new SgLongLongIntVal(value,str);
+  ROSE_ASSERT(intValue);
+  setOneSourcePositionNull(intValue);
+  return intValue;
+}
+
+SgEnumVal* SageBuilder::buildEnumVal_nfi(int value, SgEnumDeclaration* decl, SgName name)
+{
+  SgEnumVal* enumVal= new SgEnumVal(value,decl,name);
+  ROSE_ASSERT(enumVal);
+  setOneSourcePositionNull(enumVal);
+  return enumVal;
+}
+
 SgLongDoubleVal* SageBuilder::buildLongDoubleVal(long double value /*= 0.0*/)
 {
   SgLongDoubleVal* result = new SgLongDoubleVal(value,"");
@@ -655,11 +735,27 @@ SgLongDoubleVal* SageBuilder::buildLongDoubleVal(long double value /*= 0.0*/)
   return result;
 }
 
+SgLongDoubleVal* SageBuilder::buildLongDoubleVal_nfi(long double value, const string& str)
+{
+  SgLongDoubleVal* result = new SgLongDoubleVal(value,str);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
 SgStringVal* SageBuilder::buildStringVal(std::string value /*=""*/)
 {
   SgStringVal* result = new SgStringVal(value);
   ROSE_ASSERT(result);   
   setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgStringVal* SageBuilder::buildStringVal_nfi(std::string value)
+{
+  SgStringVal* result = new SgStringVal(value);
+  ROSE_ASSERT(result);   
+  setOneSourcePositionNull(result);
   return result;
 }
 
@@ -679,6 +775,14 @@ SgUnsignedCharVal* SageBuilder::buildUnsignedCharValHex(unsigned char v)
   return result;
 }
 
+SgUnsignedCharVal* SageBuilder::buildUnsignedCharVal_nfi(unsigned char v, const string& str)
+{
+  SgUnsignedCharVal* result = new SgUnsignedCharVal(v,str);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
 SgShortVal* SageBuilder::buildShortVal(short v)
 {
   SgShortVal* result = new SgShortVal(v,"");
@@ -692,6 +796,14 @@ SgShortVal* SageBuilder::buildShortValHex(short v)
   SgShortVal* result = new SgShortVal(v, (v >= 0 ? StringUtility::intToHex((unsigned int)v) : "-" + StringUtility::intToHex((unsigned int)(-v))));
   ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgShortVal* SageBuilder::buildShortVal_nfi(short v, const string& str)
+{
+  SgShortVal* result = new SgShortVal(v,str);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
   return result;
 }
 
@@ -711,6 +823,14 @@ SgUnsignedShortVal* SageBuilder::buildUnsignedShortValHex(unsigned short v)
   return result;
 }
 
+SgUnsignedShortVal* SageBuilder::buildUnsignedShortVal_nfi(unsigned short v, const string& str)
+{
+  SgUnsignedShortVal* result = new SgUnsignedShortVal(v,str);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
 SgUnsignedIntVal* SageBuilder::buildUnsignedIntVal(unsigned int v)
 {
   SgUnsignedIntVal* result = new SgUnsignedIntVal(v,"");
@@ -724,6 +844,14 @@ SgUnsignedIntVal* SageBuilder::buildUnsignedIntValHex(unsigned int v)
   SgUnsignedIntVal* result = new SgUnsignedIntVal(v,StringUtility::intToHex(v) + "U");
   ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgUnsignedIntVal* SageBuilder::buildUnsignedIntVal_nfi(unsigned int v, const string& str)
+{
+  SgUnsignedIntVal* result = new SgUnsignedIntVal(v,str);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
   return result;
 }
 
@@ -743,6 +871,14 @@ SgUnsignedLongVal* SageBuilder::buildUnsignedLongValHex(unsigned long v)
   return result;
 }
 
+SgUnsignedLongVal* SageBuilder::buildUnsignedLongVal_nfi(unsigned long v, const string& str)
+{
+  SgUnsignedLongVal* result = new SgUnsignedLongVal(v,str);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
 SgUnsignedLongLongIntVal* SageBuilder::buildUnsignedLongLongIntVal(unsigned long long v)
 {
   SgUnsignedLongLongIntVal* result = new SgUnsignedLongLongIntVal(v,"");
@@ -759,6 +895,14 @@ SgUnsignedLongLongIntVal* SageBuilder::buildUnsignedLongLongIntValHex(unsigned l
   return result;
 }
 
+SgUnsignedLongLongIntVal* SageBuilder::buildUnsignedLongLongIntVal_nfi(unsigned long long v, const string& str)
+{
+  SgUnsignedLongLongIntVal* result = new SgUnsignedLongLongIntVal(v,str);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
 //! Build UPC THREADS (integer expression)
 SgUpcThreads* SageBuilder::buildUpcThreads()
 {
@@ -768,12 +912,46 @@ SgUpcThreads* SageBuilder::buildUpcThreads()
   return result;
 }
 
+//! Build UPC THREADS (integer expression)
+SgUpcThreads* SageBuilder::buildUpcThreads_nfi()
+{
+  SgUpcThreads* result = new SgUpcThreads(0,"");
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
 //! Build UPC  MYTHREAD (integer expression)
 SgUpcMythread* SageBuilder::buildUpcMythread()
 {
   SgUpcMythread* result = new SgUpcMythread(0,"");
   ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+//! Build UPC  MYTHREAD (integer expression)
+SgUpcMythread* SageBuilder::buildUpcMythread_nfi()
+{
+  SgUpcMythread* result = new SgUpcMythread(0,"");
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
+SgThisExp* SageBuilder::buildThisExp(SgClassSymbol* sym)
+{
+  SgThisExp* result = new SgThisExp(sym, 0);
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgThisExp* SageBuilder::buildThisExp_nfi(SgClassSymbol* sym)
+{
+  SgThisExp* result = new SgThisExp(sym, 0);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
   return result;
 }
 
@@ -809,7 +987,7 @@ T* SageBuilder::buildUnaryExpression(SgExpression* operand)
 }
 
 template <class T>
-T* SageBuilder::buildUnaryExpressionFi(SgExpression* operand, bool needParen, Sg_File_Info* start, Sg_File_Info* end, Sg_File_Info* opPos) {
+T* SageBuilder::buildUnaryExpression_nfi(SgExpression* operand) {
   SgExpression* myoperand=operand;
   T* result = new T(myoperand, NULL);
   ROSE_ASSERT(result);   
@@ -819,21 +997,21 @@ T* SageBuilder::buildUnaryExpressionFi(SgExpression* operand, bool needParen, Sg
   // set lvalue, it asserts operand!=NULL 
     markLhsValues(result);
   }
-  result->set_startOfConstruct(start);
-  result->set_endOfConstruct(end);
-  result->set_operatorPosition(opPos);
-  result->set_need_paren(needParen);
+  result->set_startOfConstruct(NULL);
+  result->set_endOfConstruct(NULL);
+  result->set_operatorPosition(NULL);
+  result->set_need_paren(false);
   return result; 
 }
 
 #define BUILD_UNARY_DEF(suffix) \
-  Sg##suffix* SageBuilder::build##suffix##Fi(SgExpression* op, bool needParen, Sg_File_Info* start, Sg_File_Info* end, Sg_File_Info* opPos) \
+  Sg##suffix* SageBuilder::build##suffix##_nfi(SgExpression* op) \
   { \
-     return buildUnaryExpressionFi<Sg##suffix>(op, needParen, start, end, opPos); \
+     return SageBuilder::buildUnaryExpression_nfi<Sg##suffix>(op); \
   } \
   Sg##suffix* SageBuilder::build##suffix(SgExpression* op) \
   { \
-     return buildUnaryExpression<Sg##suffix>(op); \
+     return SageBuilder::buildUnaryExpression<Sg##suffix>(op); \
   }
 
 BUILD_UNARY_DEF(AddressOfOp)
@@ -852,38 +1030,53 @@ SgCastExp * SageBuilder::buildCastExp(SgExpression *  operand_i,
                 SgCastExp::cast_type_enum cast_type)
 {
   SgCastExp* result = new SgCastExp(operand_i, expression_type, cast_type);
-
   ROSE_ASSERT(result);
+  if (operand_i) {operand_i->set_parent(result); markLhsValues(result);}
   setOneSourcePositionForTransformation(result);
   return result;
-   
+}
+
+SgCastExp * SageBuilder::buildCastExp_nfi(SgExpression *  operand_i,
+                SgType * expression_type,
+                SgCastExp::cast_type_enum cast_type)
+{
+  SgCastExp* result = new SgCastExp(operand_i, expression_type, cast_type);
+  ROSE_ASSERT(result);
+  if (operand_i) {operand_i->set_parent(result); markLhsValues(result);}
+  setOneSourcePositionNull(result);
+  return result;
 }
 
 SgMinusMinusOp *SageBuilder::buildMinusMinusOp(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode)
 {
-  SgMinusMinusOp* result = new SgMinusMinusOp(operand_i,a_mode);
+  SgMinusMinusOp* result = buildUnaryExpression<SgMinusMinusOp>(operand_i);
   ROSE_ASSERT(result);
-  if (operand_i!=NULL)
-  {
-    operand_i->set_parent(result);
-   // set lvalue, it asserts operand!=NULL
-   markLhsValues(result);
- }
-  setOneSourcePositionForTransformation(result);
+  result->set_mode(a_mode);
   return result;
 }
 
-SgPlusPlusOp* SageBuilder::buildPlusPlusOp(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode)
+SgMinusMinusOp *SageBuilder::buildMinusMinusOp_nfi(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode)
 {
-  SgPlusPlusOp* result = new SgPlusPlusOp(operand_i,a_mode);
+  SgMinusMinusOp* result = buildUnaryExpression_nfi<SgMinusMinusOp>(operand_i);
   ROSE_ASSERT(result);
-  if (operand_i!=NULL)
-  {
-    operand_i->set_parent(result);
-   // set lvalue, it asserts operand!=NULL
-   markLhsValues(result);
- }
-  setOneSourcePositionForTransformation(result);   return result;
+  result->set_mode(a_mode);
+  return result;
+}
+
+SgPlusPlusOp *SageBuilder::buildPlusPlusOp(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode)
+{
+  SgPlusPlusOp* result = buildUnaryExpression<SgPlusPlusOp>(operand_i);
+  ROSE_ASSERT(result);
+  result->set_mode(a_mode);
+  return result;
+}
+
+SgPlusPlusOp *SageBuilder::buildPlusPlusOp_nfi(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode)
+{
+  SgPlusPlusOp* result = buildUnaryExpression_nfi<SgPlusPlusOp>(operand_i);
+  ROSE_ASSERT(result);
+  result->set_mode(a_mode);
+  return result;
 }
 
 //---------------------binary expressions-----------------------
@@ -932,7 +1125,7 @@ T* SageBuilder::buildBinaryExpression(SgExpression* lhs, SgExpression* rhs)
 
 }
 template <class T>
-T* SageBuilder::buildBinaryExpressionFi(SgExpression* lhs, SgExpression* rhs, bool needParen, Sg_File_Info* start, Sg_File_Info* end, Sg_File_Info* opPos)
+T* SageBuilder::buildBinaryExpression_nfi(SgExpression* lhs, SgExpression* rhs)
 {
   SgExpression* mylhs, *myrhs;
   mylhs = lhs;
@@ -946,23 +1139,17 @@ T* SageBuilder::buildBinaryExpressionFi(SgExpression* lhs, SgExpression* rhs, bo
     markLhsValues(result);
   }
   if (myrhs!=NULL) myrhs->set_parent(result);
-  result->set_startOfConstruct(start);
-  result->set_endOfConstruct(end);
-  result->set_operatorPosition(opPos);
-  result->set_need_paren(needParen);
+  result->set_startOfConstruct(NULL);
+  result->set_endOfConstruct(NULL);
+  result->set_operatorPosition(NULL);
+  result->set_need_paren(false);
   return result;
 
 }
-#if 0
-SgAddOp * SageBuilder::buildAddOp(SgExpression* lhs, SgExpression* rhs)
-{
-   return buildBinaryExpression<SgAddOp>(lhs,rhs);
-}
-#endif
 #define BUILD_BINARY_DEF(suffix) \
-  Sg##suffix* SageBuilder::build##suffix##Fi(SgExpression* lhs, SgExpression* rhs, bool needParen, Sg_File_Info* start, Sg_File_Info* end, Sg_File_Info* opPos) \
+  Sg##suffix* SageBuilder::build##suffix##_nfi(SgExpression* lhs, SgExpression* rhs) \
   { \
-     return buildBinaryExpressionFi<Sg##suffix>(lhs, rhs, needParen, start, end, opPos); \
+     return buildBinaryExpression_nfi<Sg##suffix>(lhs, rhs); \
   } \
   Sg##suffix* SageBuilder::build##suffix(SgExpression* lhs, SgExpression* rhs) \
   { \
@@ -984,6 +1171,7 @@ BUILD_BINARY_DEF(ConcatenationOp)
 BUILD_BINARY_DEF(DivAssignOp)
 BUILD_BINARY_DEF(DivideOp)
 BUILD_BINARY_DEF(DotExp)
+BUILD_BINARY_DEF(DotStarOp)
 BUILD_BINARY_DEF(EqualityOp)
 
 BUILD_BINARY_DEF(ExponentiationOp)
@@ -1029,32 +1217,47 @@ SgArrayType* SageBuilder::buildArrayType(SgType* base_type/*=NULL*/, SgExpressio
 SgConditionalExp* SageBuilder::buildConditionalExp(SgExpression* test, SgExpression* a, SgExpression* b)
 {
   SgConditionalExp* result = new SgConditionalExp(test, a, b, NULL);
-  test->set_parent(result);
-  a->set_parent(result);
-  b->set_parent(result);
+  if (test) test->set_parent(result);
+  if (a) a->set_parent(result);
+  if (b) b->set_parent(result);
   setOneSourcePositionForTransformation(result);
   return result;
 }
 
-SgNullExpression* SageBuilder::buildNullExpressionFi(Sg_File_Info* start, Sg_File_Info* end)
+SgConditionalExp* SageBuilder::buildConditionalExp_nfi(SgExpression* test, SgExpression* a, SgExpression* b, SgType* t)
+{
+  SgConditionalExp* result = new SgConditionalExp(test, a, b, t);
+  if (test) test->set_parent(result);
+  if (a) {a->set_parent(result); markLhsValues(a);}
+  if (b) {b->set_parent(result); markLhsValues(b);}
+  setOneSourcePositionNull(result);
+  return result;
+}
+
+SgNullExpression* SageBuilder::buildNullExpression_nfi()
 {
   SgNullExpression* ne= new SgNullExpression();
   ROSE_ASSERT(ne);
-  setOneSourcePositionForTransformation(ne);
-  ne->set_startOfConstruct(start);
-  ne->set_endOfConstruct(end);
-  ne->set_operatorPosition(deepCopy(start));
+  setOneSourcePositionNull(ne);
   return ne;
 }
 
 SgNullExpression* SageBuilder::buildNullExpression() {
-  return buildNullExpressionFi(Sg_File_Info::generateDefaultFileInfoForTransformationNode(), Sg_File_Info::generateDefaultFileInfoForTransformationNode());
+  SgNullExpression* e = buildNullExpression_nfi();
+  setOneSourcePositionForTransformation(e);
+  return e;
 }
 
 SgAssignInitializer * SageBuilder::buildAssignInitializer(SgExpression * operand_i /*= NULL*/)
 {
   // seems to work even SgAssignInitializer is not a unary expression in SAGE III AST, should double check it later on
   return buildUnaryExpression<SgAssignInitializer>(operand_i);
+}
+
+SgAssignInitializer * SageBuilder::buildAssignInitializer_nfi(SgExpression * operand_i /*= NULL*/)
+{
+  // seems to work even SgAssignInitializer is not a unary expression in SAGE III AST, should double check it later on
+  return buildUnaryExpression_nfi<SgAssignInitializer>(operand_i);
 }
 
 //! Build an aggregate initializer
@@ -1069,6 +1272,20 @@ SgAggregateInitializer * SageBuilder::buildAggregateInitializer(SgExprListExp * 
   setOneSourcePositionForTransformation(result);
   return result;
 }
+
+//! Build an aggregate initializer
+SgAggregateInitializer * SageBuilder::buildAggregateInitializer_nfi(SgExprListExp * initializers/* = NULL*/)
+{
+  SgAggregateInitializer* result = new SgAggregateInitializer(initializers);
+  ROSE_ASSERT(result);
+  if (initializers!=NULL)
+  {
+    initializers->set_parent(result);
+  }
+  setOneSourcePositionNull(result);
+  return result;
+}
+
 //! Build sizeof() expression with an expression parameter
 SgSizeOfOp* SageBuilder::buildSizeOfOp(SgExpression* exp/*= NULL*/)
 {
@@ -1112,6 +1329,14 @@ SgExprListExp * SageBuilder::buildExprListExp(SgExpression * expr1, SgExpression
   if (expr8) appendExpression(expList, expr8);
   if (expr9) appendExpression(expList, expr9);
   if (expr10) appendExpression(expList, expr10);
+  return expList;
+}
+
+SgExprListExp * SageBuilder::buildExprListExp_nfi()
+{
+  SgExprListExp* expList = new SgExprListExp();
+  ROSE_ASSERT(expList);
+  setOneSourcePositionNull(expList);
   return expList;
 }
 
@@ -1199,6 +1424,16 @@ SageBuilder::buildVarRefExp(SgVariableSymbol* sym)
   ROSE_ASSERT(varRef);
   return varRef; 
 }
+
+SgVarRefExp *
+SageBuilder::buildVarRefExp_nfi(SgVariableSymbol* sym)
+{
+  SgVarRefExp *varRef = new SgVarRefExp(sym);
+  setOneSourcePositionNull(varRef);
+  ROSE_ASSERT(varRef);
+  return varRef; 
+}
+
 //!Build a variable reference expression at scope to an opaque variable which has unknown information except for its name.  Used when referring to an internal variable defined in some headers of runtime libraries.(The headers are not yet inserted into the file during translation). Similar to buildOpaqueType(); 
 /*! It will declare a hidden int varName  at the specified scope to cheat the AST consistence tests.
  */
@@ -1318,6 +1553,36 @@ SageBuilder::buildFunctionRefExp(SgFunctionSymbol* sym)
   return func_ref;
 }
 
+// lookup function symbol to create a reference to it
+SgFunctionRefExp *
+SageBuilder::buildFunctionRefExp_nfi(SgFunctionSymbol* sym)
+{
+  SgFunctionRefExp* func_ref = new SgFunctionRefExp(sym, NULL);
+  setOneSourcePositionNull(func_ref);
+  ROSE_ASSERT(func_ref);
+  return func_ref;
+}
+
+// lookup member function symbol to create a reference to it
+SgMemberFunctionRefExp *
+SageBuilder::buildMemberFunctionRefExp_nfi(SgMemberFunctionSymbol* sym, bool virtual_call, bool need_qualifier)
+{
+  SgMemberFunctionRefExp* func_ref = new SgMemberFunctionRefExp(sym, virtual_call, NULL, need_qualifier);
+  setOneSourcePositionNull(func_ref);
+  ROSE_ASSERT(func_ref);
+  return func_ref;
+}
+
+// lookup class symbol to create a reference to it
+SgClassNameRefExp *
+SageBuilder::buildClassNameRefExp_nfi(SgClassSymbol* sym)
+{
+  SgClassNameRefExp* class_ref = new SgClassNameRefExp(sym);
+  setOneSourcePositionNull(class_ref);
+  ROSE_ASSERT(class_ref);
+  return class_ref;
+}
+
 //! Lookup a C style function symbol to create a function reference expression to it
 SgFunctionRefExp *
 SageBuilder::buildFunctionRefExp(const SgName& name, SgScopeStatement* scope /*=NULL*/)
@@ -1359,14 +1624,23 @@ SageBuilder::buildFunctionRefExp(const char* name, SgScopeStatement* scope /*=NU
 }
 
 
-// no actual usage of scope argument, but put it here for consistence
 SgExprStatement*
 SageBuilder::buildExprStatement(SgExpression*  exp)
-//SageBuilder::buildExprStatement(SgExpression*  exp = NULL)
 {
   SgExprStatement* expStmt = new SgExprStatement(exp);
   ROSE_ASSERT(expStmt);
+  if (exp) exp->set_parent(expStmt);
   setOneSourcePositionForTransformation(expStmt);
+  return expStmt;
+}
+
+SgExprStatement*
+SageBuilder::buildExprStatement_nfi(SgExpression*  exp)
+{
+  SgExprStatement* expStmt = new SgExprStatement(exp);
+  ROSE_ASSERT(expStmt);
+  if (exp) exp->set_parent(expStmt);
+  setOneSourcePositionNull(expStmt);
   return expStmt;
 }
 
@@ -1394,10 +1668,24 @@ SgFunctionCallExp*
 SageBuilder::buildFunctionCallExp(SgFunctionSymbol* sym, 
                                   SgExprListExp* parameters)
 {
+  ROSE_ASSERT (sym);
+  ROSE_ASSERT (parameters);
   SgFunctionRefExp* func_ref = buildFunctionRefExp(sym);
   SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(func_ref,parameters,func_ref->get_type());
+  func_ref->set_parent(func_call_expr);
   parameters->set_parent(func_call_expr);
   setOneSourcePositionForTransformation(func_call_expr);
+  ROSE_ASSERT(func_call_expr);
+  return func_call_expr;  
+}
+
+SgFunctionCallExp* 
+SageBuilder::buildFunctionCallExp_nfi(SgExpression* f, SgExprListExp* parameters)
+{
+  SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(f,parameters,f->get_type());
+  if (f) f->set_parent(func_call_expr);
+  if (parameters) parameters->set_parent(func_call_expr);
+  setOneSourcePositionNull(func_call_expr);
   ROSE_ASSERT(func_call_expr);
   return func_call_expr;  
 }
@@ -1475,12 +1763,26 @@ SgLabelStatement * SageBuilder::buildLabelStatement(const SgName& name,  SgState
   return labelstmt;
 }
 
+SgLabelStatement * SageBuilder::buildLabelStatement_nfi(const SgName& name,  SgStatement * stmt/*=NULL*/, SgScopeStatement* scope /*=NULL*/)
+{
+  SgLabelStatement * labelstmt = new SgLabelStatement(name,stmt);
+  ROSE_ASSERT(labelstmt);
+  setOneSourcePositionForTransformation(labelstmt);
+  
+ if(stmt!=NULL) 
+   stmt->set_parent(labelstmt);
+  if (scope)
+    fixLabelStatement(labelstmt,scope);
+  // we don't want to set parent here yet
+  // delay it until append_statement() or alike
+  return labelstmt;
+}
+
 SgIfStmt * SageBuilder::buildIfStmt(SgStatement* conditional, SgStatement * true_body, SgStatement * false_body)
 {
   ROSE_ASSERT(conditional);
   ROSE_ASSERT(true_body);
   // ROSE_ASSERT(false_body); -- this is not required anymore
-
   SgIfStmt *ifstmt = new SgIfStmt(conditional, true_body, false_body);
   ROSE_ASSERT(ifstmt);
   setOneSourcePositionForTransformation(ifstmt);
@@ -1490,22 +1792,27 @@ SgIfStmt * SageBuilder::buildIfStmt(SgStatement* conditional, SgStatement * true
   return ifstmt;
 }
 
+SgIfStmt * SageBuilder::buildIfStmt_nfi(SgStatement* conditional, SgStatement * true_body, SgStatement * false_body)
+{
+  SgIfStmt *ifstmt = new SgIfStmt(conditional, true_body, false_body);
+  ROSE_ASSERT(ifstmt);
+  setOneSourcePositionNull(ifstmt);
+  if (conditional) conditional->set_parent(ifstmt);
+  if (true_body) true_body->set_parent(ifstmt);
+  if (false_body) false_body->set_parent(ifstmt);
+  return ifstmt;
+}
+
 //! Based on the contribution from Pradeep Srinivasa@ LANL
 //Liao, 8/27/2008
 SgForStatement * SageBuilder::buildForStatement(SgStatement* initialize_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body)
 {
-  ROSE_ASSERT(initialize_stmt);
-  ROSE_ASSERT(test);
-  ROSE_ASSERT(increment);
-  ROSE_ASSERT(loop_body);
-
   SgForStatement * result = new SgForStatement(test,increment, loop_body);
   ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
-  if (test)
-    test->set_parent(result);
-  if (loop_body)  
-    loop_body->set_parent(result);
+  if (test) test->set_parent(result);
+  if (loop_body) loop_body->set_parent(result);
+  if (increment) increment->set_parent(result);
 
   SgForInitStatement* init_stmt = new SgForInitStatement();
   ROSE_ASSERT(init_stmt);
@@ -1513,9 +1820,21 @@ SgForStatement * SageBuilder::buildForStatement(SgStatement* initialize_stmt, Sg
   result->set_for_init_stmt(init_stmt);   
   init_stmt->set_parent(result);
 
-  if (initialize_stmt)
-    init_stmt->append_init_stmt(initialize_stmt);
+  if (initialize_stmt) init_stmt->append_init_stmt(initialize_stmt);
 
+  return result;
+}
+
+//! Based on the contribution from Pradeep Srinivasa@ LANL
+//Liao, 8/27/2008
+SgForStatement * SageBuilder::buildForStatement_nfi(SgStatement * test, SgExpression * increment, SgStatement * loop_body)
+{
+  SgForStatement * result = new SgForStatement(test,increment, loop_body);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  if (test) test->set_parent(result);
+  if (loop_body) loop_body->set_parent(result);
+  if (increment) increment->set_parent(result);
   return result;
 }
 
@@ -1531,6 +1850,38 @@ SgWhileStmt * SageBuilder::buildWhileStmt(SgStatement *  condition, SgStatement 
   return result;
 }
 
+SgWhileStmt * SageBuilder::buildWhileStmt_nfi(SgStatement *  condition, SgStatement *body)
+{
+  SgWhileStmt * result = new SgWhileStmt(condition,body);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  if (condition) condition->set_parent(result);
+  if (body) body->set_parent(result);
+  return result;
+}
+
+SgDoWhileStmt * SageBuilder::buildDoWhileStmt(SgStatement *  body, SgStatement *condition)
+{
+  ROSE_ASSERT(condition);
+  ROSE_ASSERT(body);
+  SgDoWhileStmt * result = new SgDoWhileStmt(body, condition);
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  condition->set_parent(result);
+  body->set_parent(result);
+  return result;
+}
+
+SgDoWhileStmt * SageBuilder::buildDoWhileStmt_nfi(SgStatement *  body, SgStatement *condition)
+{
+  SgDoWhileStmt * result = new SgDoWhileStmt(body, condition);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  if (condition) condition->set_parent(result);
+  if (body) body->set_parent(result);
+  return result;
+}
+
 SgBreakStmt * SageBuilder::buildBreakStmt()
 {
   SgBreakStmt* result = new SgBreakStmt();
@@ -1539,11 +1890,27 @@ SgBreakStmt * SageBuilder::buildBreakStmt()
   return result;
 }
 
+SgBreakStmt * SageBuilder::buildBreakStmt_nfi()
+{
+  SgBreakStmt* result = new SgBreakStmt();
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
 SgContinueStmt * SageBuilder::buildContinueStmt()
 {
   SgContinueStmt* result = new SgContinueStmt();
   ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgContinueStmt * SageBuilder::buildContinueStmt_nfi()
+{
+  SgContinueStmt* result = new SgContinueStmt();
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
   return result;
 }
 
@@ -1583,14 +1950,29 @@ SgBasicBlock * SageBuilder::buildBasicBlock(SgStatement * stmt1, SgStatement* st
   return result;
 }
 
+SgBasicBlock * SageBuilder::buildBasicBlock_nfi()
+{
+  SgBasicBlock* result = new SgBasicBlock();
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
 SgGotoStatement * 
-SageBuilder::buildGotoStatement(SgLabelStatement *  label,SgScopeStatement* scope)
-//SgGotoStatement * buildGotoStatement(SgLabelStatement *  label=NULL,SgScopeStatement* scope=NULL);
+SageBuilder::buildGotoStatement(SgLabelStatement *  label)
 {
   SgGotoStatement* result = new SgGotoStatement(label);
   ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
+  return result;
+}
 
+SgGotoStatement * 
+SageBuilder::buildGotoStatement_nfi(SgLabelStatement *  label)
+{
+  SgGotoStatement* result = new SgGotoStatement(label);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
   return result;
 }
 
@@ -1603,14 +1985,32 @@ SgReturnStmt* SageBuilder::buildReturnStmt(SgExpression* expression /* = NULL */
   return result;
 }
 
+//! Build a return statement
+SgReturnStmt* SageBuilder::buildReturnStmt_nfi(SgExpression* expression /* = NULL */)
+{
+  SgReturnStmt * result = new SgReturnStmt(expression);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
 SgCaseOptionStmt * SageBuilder::buildCaseOptionStmt( SgExpression * key,SgStatement *body)
 {
   SgCaseOptionStmt* result = new SgCaseOptionStmt(key,body);
   ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
-  key->set_parent(result);
-  body->set_parent(result);
+  if (key) key->set_parent(result);
+  if (body) body->set_parent(result);
+  return result;
+}
 
+SgCaseOptionStmt * SageBuilder::buildCaseOptionStmt_nfi( SgExpression * key,SgStatement *body)
+{
+  SgCaseOptionStmt* result = new SgCaseOptionStmt(key,body);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  if (key) key->set_parent(result);
+  if (body) body->set_parent(result);
   return result;
 }
 
@@ -1619,8 +2019,16 @@ SgDefaultOptionStmt * SageBuilder::buildDefaultOptionStmt( SgStatement *body)
   SgDefaultOptionStmt* result = new SgDefaultOptionStmt(body);
   ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
-  body->set_parent(result);
+  if (body) body->set_parent(result);
+  return result;
+}
 
+SgDefaultOptionStmt * SageBuilder::buildDefaultOptionStmt_nfi( SgStatement *body)
+{
+  SgDefaultOptionStmt* result = new SgDefaultOptionStmt(body);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  if (body) body->set_parent(result);
   return result;
 }
 
@@ -1629,9 +2037,18 @@ SgSwitchStatement* SageBuilder::buildSwitchStatement(SgStatement *item_selector,
   SgSwitchStatement* result = new SgSwitchStatement(item_selector,body);
   ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
-  item_selector->set_parent(result);
-  body->set_parent(result);
+  if (item_selector) item_selector->set_parent(result);
+  if (body) body->set_parent(result);
+  return result;
+}
 
+SgSwitchStatement* SageBuilder::buildSwitchStatement_nfi(SgStatement *item_selector,SgBasicBlock *body)
+{
+  SgSwitchStatement* result = new SgSwitchStatement(item_selector,body);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  if (item_selector) item_selector->set_parent(result);
+  if (body) body->set_parent(result);
   return result;
 }
 
@@ -1667,6 +2084,13 @@ SgPointerType* SageBuilder::buildPointerType(SgType * base_type /*= NULL*/)
 SgReferenceType* SageBuilder::buildReferenceType(SgType * base_type /*= NULL*/)
 {
   SgReferenceType* result= new SgReferenceType(base_type);
+  ROSE_ASSERT(result);
+  return result;
+}
+
+SgModifierType* SageBuilder::buildModifierType(SgType * base_type /*= NULL*/)
+{
+  SgModifierType* result= new SgModifierType(base_type);
   ROSE_ASSERT(result);
   return result;
 }

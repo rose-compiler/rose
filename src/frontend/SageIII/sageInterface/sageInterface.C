@@ -4082,6 +4082,37 @@ void SageInterface::setOneSourcePositionForTransformation(SgNode *node)
     
 }
 
+void SageInterface::setOneSourcePositionNull(SgNode *node)
+{
+    ROSE_ASSERT(node);
+    SgLocatedNode * locatedNode = isSgLocatedNode(node);
+    SgExpression*    expression    = isSgExpression(node);
+    SgInitializedName *initName = isSgInitializedName(node);
+    SgPragma * pragma = isSgPragma(node); // missed this one!! Liao, 1/30/2008
+    SgGlobal *global = isSgGlobal(node); //SgGlobal should have NULL endOfConstruct()
+
+    if ((locatedNode) &&(locatedNode->get_startOfConstruct()   == NULL))
+    //if ((locatedNode) &&(locatedNode->get_endOfConstruct()   == NULL))
+    {
+      locatedNode->set_startOfConstruct(NULL);
+
+      if (global==NULL)
+      {  
+        locatedNode->set_endOfConstruct(NULL);
+      }
+      if (expression!=NULL)
+      {
+        expression->set_operatorPosition(NULL);
+      } 
+    }  else if ((initName)&&(initName->get_startOfConstruct() == NULL))
+    { //  no endOfConstruct for SgInitializedName
+        initName->set_startOfConstruct(NULL);   
+    } else if ((pragma)&&(pragma->get_startOfConstruct() == NULL))
+    { 
+        pragma->set_startOfConstruct(NULL);
+    }
+}
+
 void SageInterface::setSourcePositionForTransformation(SgNode *root)
 {
   Rose_STL_Container <SgNode*> nodeList= NodeQuery::querySubTree(root,V_SgNode);
@@ -4351,7 +4382,7 @@ void SageInterface::changeContinuesToGotos(SgStatement* stmt, SgLabelStatement* 
      std::vector<SgContinueStmt*> continues = SageInterface::findContinueStmts(stmt);
      for (std::vector<SgContinueStmt*>::iterator i = continues.begin(); i != continues.end(); ++i)
         {
-          SgGotoStatement* gotoStatement = SageBuilder::buildGotoStatement(label, (*i)->get_scope());
+          SgGotoStatement* gotoStatement = SageBuilder::buildGotoStatement(label);
        // printf ("Building gotoStatement #1 = %p \n",gotoStatement);
           LowLevelRewrite::replace(*i, make_unit_list( gotoStatement ) );
         }
