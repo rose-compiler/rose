@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.53 2008-11-14 17:11:14 gergo Exp $
+// $Id: CFGTraversal.C,v 1.54 2008-11-20 19:41:18 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -213,6 +213,8 @@ CFGTraversal::atTraversalEnd() {
             cfg->pointsToAnalysis = new SATIrE::Analyses::PointsToAnalysis();
             cfg->pointsToAnalysis->run(cfg);
         }
+        else
+            cfg->pointsToAnalysis = NULL;
 
      // GB (2008-11-14): Added the option of resolving external calls due to
      // function pointers in the ICFG.
