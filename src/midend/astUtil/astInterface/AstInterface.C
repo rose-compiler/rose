@@ -1589,7 +1589,7 @@ bool AstInterface::IsVarRef( const AstNodePtr& _exp, AstNodeType* vartype, strin
       decl = var;
     }
     break;
-#if 1    
+#if 0    
   //Liao, 11/20/2008: handle type casting expressions 
   // ROSE often introduces excessive type casting within expressions
   case V_SgCastExp:
