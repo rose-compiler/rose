@@ -1589,18 +1589,6 @@ bool AstInterface::IsVarRef( const AstNodePtr& _exp, AstNodeType* vartype, strin
       decl = var;
     }
     break;
-#if 0    
-  //Liao, 11/20/2008: handle type casting expressions 
-  // ROSE often introduces excessive type casting within expressions
-  case V_SgCastExp:
-  {
-    SgCastExp* cast_exp = isSgCastExp(exp);
-    SgExpression* operand = cast_exp->get_operand();
-    assert(operand != 0);
-    return IsVarRef(AstNodePtrImpl(operand),vartype,varname,_scope, isglobal);
-  }
-  break;
-#endif  
   case V_SgDotExp:
    {
      SgDotExp *exp1 = isSgDotExp(exp);
@@ -1628,6 +1616,24 @@ bool AstInterface::IsVarRef( const AstNodePtr& _exp, AstNodeType* vartype, strin
        *isglobal = scope == 0 || (scope->variantT() == V_SgGlobal);
   }
   return true;
+}
+
+//! Find the end operand from one or more casting operations
+//  if the input expression is a type casting expression
+//  Used before calling IsVarRef() sometimes
+AstNodePtr 
+AstInterface::SkipCasting(const AstNodePtr & _exp)
+{
+  SgNode* exp=AstNodePtrImpl(_exp).get_ptr();
+  SgCastExp* cast_exp = isSgCastExp(exp);
+   if (cast_exp != NULL)
+   {
+      SgExpression* operand = cast_exp->get_operand();
+      assert(operand != 0);
+      return SkipCasting(AstNodePtrImpl(operand));
+   }
+  else      
+    return _exp;
 }
 
 string AstInterface::GetVarName( const AstNodePtr& _exp)
@@ -2336,7 +2342,12 @@ IsLoop( const AstNodePtr& _s, AstNodePtr* init, AstNodePtr* cond,
   }
   return true;
 }
-
+//The input loop should have 
+//  * initialization statements; 
+//  * a test expression  using either <= or >= operations
+//  * an increment expression using i=i+1, or i=i-1.
+// void NormalizeForLoop (AstInterface& fa, const AstNodePtr& head) can 
+// be used to convert a loop to a form satisfying the requirements.
 bool AstInterface::IsFortranLoop( const AstNodePtr& _s, AstNodePtr* ivar ,
                                 AstNodePtr* lb , AstNodePtr* ub,
                                 AstNodePtr* step, AstNodePtr* body)
@@ -2372,7 +2383,7 @@ bool AstInterface::IsFortranLoop( const AstNodePtr& _s, AstNodePtr* ivar ,
       }
       AstNodePtrImpl testlhs = isSgBinaryOp(test)->get_lhs_operand();
       string testvarname;
-      if (!AstInterface::IsVarRef(testlhs, 0, &testvarname) ||
+      if (!AstInterface::IsVarRef(AstInterface::SkipCasting(testlhs), 0, &testvarname) ||
               varname != testvarname) return false;
       ubast = isSgBinaryOp(test)->get_rhs_operand();
       SgExpression* incr = fs->get_increment();
@@ -2384,7 +2395,7 @@ bool AstInterface::IsFortranLoop( const AstNodePtr& _s, AstNodePtr* ivar ,
       }
       AstNodePtrImpl incrlhs = isSgBinaryOp(incr)->get_lhs_operand();
       string incrvarname;
-      if ( !AstInterface::IsVarRef(incrlhs, 0, &incrvarname) ||
+      if ( !AstInterface::IsVarRef(AstInterface::SkipCasting(incrlhs), 0, &incrvarname) ||
               varname != incrvarname) 
          return false;
      stepast = isSgBinaryOp(incr)->get_rhs_operand();
