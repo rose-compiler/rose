@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES)  #-I$(srcdir)/graph #-I$(srcdir)/analyses -I$(srcdir)/mysql_include
+INCLUDES = $(ROSE_INCLUDES)  #-I$(srcdir)/graph #-I$(srcdir)/analyses #-I$(srcdir)/mysql_include
 
 # binarylibdir = $(libdir)
 
@@ -85,7 +85,7 @@ endif
 
 include_HEADERS = $(BINARY_DISASSEMBLY_HEADER_FILES)
 
-EXTRA_DIST = make-decision-tree.tcl RoseBin_instruction_table_arm RoseBin_instruction_table_x86 mysql_include
+EXTRA_DIST = make-decision-tree.tcl RoseBin_instruction_table_arm RoseBin_instruction_table_x86 #mysql_include
 
 # Rule for maintainers (requires Tcl interpreter)
 $(srcdir)/instructionDispatch.cpp: make-decision-tree.tcl RoseBin_instruction_table_arm RoseBin_instruction_table_x86

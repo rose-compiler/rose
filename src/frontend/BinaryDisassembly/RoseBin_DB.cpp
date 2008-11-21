@@ -6,8 +6,8 @@
  ****************************************************/
 #include "rose.h"
 #include "RoseBin_DB.h"
-//#include <mysql/mysql.h>
-#include "mysql_include/mysql.h"
+#include <mysql/mysql.h>
+//#include "mysql_include/mysql.h"
 
 using namespace std;
 

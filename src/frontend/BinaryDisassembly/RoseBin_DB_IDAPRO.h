@@ -7,8 +7,8 @@
 
 #ifndef __RoseBin_DB_IDAPRO__
 #define __RoseBin_DB_IDAPRO__
-
-#include "mysql_include/mysql.h"
+#include <mysql/mysql.h>
+//#include "mysql_include/mysql.h"
 #include <stdio.h>
 #include <iostream>
 // #include "rose.h"
