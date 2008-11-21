@@ -3,10 +3,10 @@
 #include <sstream>
 #include <stdio.h>
 #include "CommandOptions.h"
-
+// Add with another term
 bool SymbolicTerm::CombineWith( const SymbolicTerm &that)
-         { if (v == that.v) {
-               if (time2 == that.time2)
+         { if (v == that.v) { 
+               if (time2 == that.time2) // Add numerators for terms with the same denominator
                    time1 += that.time1;
                else 
                    assert(false); // QY: a case not yet handled

@@ -18,7 +18,8 @@ class CPPTypeCollection
  public:
   CPPTypeCollection(TypeCollection<Descriptor>* p) : cp(p) {}
   typedef typename TypeCollection<Descriptor>::const_iterator const_iterator;
-  //! Check if an expression is a member function call expression
+  //! Check if an expression is a member access or member function call expression of a known array type 
+  // (Only check the array type, not the further data/function member name!!)
   // If yes, store the object of the member function, argument list , and the collected descriptor for this class
   std::string is_known_member_function( CPPAstInterface& fa, const AstNodePtr& exp, 
                                    AstNodePtr* obj = 0, 
@@ -63,7 +64,7 @@ is_known_member_function( CPPAstInterface& fa, const SymbolicVal& exp, AstNodePt
  }
  return arg2.back().toString();
 }
-
+// Check if an expression is an member access/member function call of a known array type.
 template <class Descriptor>
 std::string CPPTypeCollection<Descriptor>::
 is_known_member_function( CPPAstInterface& fa, const AstNodePtr& exp,

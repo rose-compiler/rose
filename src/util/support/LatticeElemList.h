@@ -5,6 +5,7 @@
 #include <DoublyLinkedList.h>
 #include <stdlib.h>
 
+// Used by MergeDepInfo and SymbolicTermMerge
 template <class T>
 class LatticeElemMerge
 {
@@ -27,7 +28,9 @@ class LatticeElemList : public DoublyLinkedListWrap<T>
   DoublyLinkedListWrap<T>::First;
 
    bool AddElem( const T& _item, LatticeElemMerge<T> *Merge = 0)
-   { if (Merge != 0 && Merge->IsTop(_item))
+   { 
+     //Return if merge is requested and _item is the top item
+     if (Merge != 0 && Merge->IsTop(_item))
        return false;
      bool mod = false, add = true;
      T item = _item;
@@ -59,7 +62,8 @@ class LatticeElemList : public DoublyLinkedListWrap<T>
     }
     return mod;
   }
-
+  // Update the element using a specified function object (Update())
+  // Remove the element if update() fails
   void UpdateElem( bool (*Update)(T & info) )
   {
     for (DoublyLinkedEntryWrap<T> *e = First(); e != 0; e = Next(e)) {
@@ -71,6 +75,7 @@ class LatticeElemList : public DoublyLinkedListWrap<T>
        }
     }
   }
+  
   bool operator |= (const LatticeElemList <T> &that)
   {
    bool result = false;

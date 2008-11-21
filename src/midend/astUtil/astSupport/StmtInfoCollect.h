@@ -23,7 +23,7 @@ class StmtInfoCollect : public ProcessAstTreeBase
      ModRecord( const AstNodePtr& _rhs, bool _readlhs)
       : rhs(_rhs), readlhs(_readlhs) {}
   };
-  // A map between a lhs operand (write) and its corresponding rhs operand
+  // A map between a lhs operand (write) and its corresponding rhs operand (read)
   typedef std::map<AstNodePtr, ModRecord, std::less<AstNodePtr> > ModMap;
 
   struct ModStackEntry {

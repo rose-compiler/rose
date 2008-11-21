@@ -285,7 +285,7 @@ SgExpression* ToExpression( AstInterface& fa, const AstNodePtr& _s)
       exp = isSgExpression(s);
   return exp;
 }
-
+// Strip leading "const" and tailing '&'
 string StripParameterType( const string& name)
 {
   char *const_start = strstr( name.c_str(), "const");
@@ -1590,6 +1590,28 @@ IsVarRef( const AstNodePtr& _exp, AstNodeType* vartype, string* varname,
       decl = var;
     }
     break;
+#if 0    
+  //Liao, 11/20/2008: vector variable's [] operator is a function call, also a variable reference
+  case V_SgFunctionCallExp:
+  {
+    SgFunctionCallExp * call_exp = isSgFunctionCallExp(exp);
+    dot_exp = isSgDotExp(call_exp->get_function());
+    if (dot_exp) //TODO consider arrow_exp?
+    {
+      SgVarRefExp* var_exp = dot_exp->get_lhs_operand();
+      assert (var_exp!=0);
+      SgVariableSymbol* sb1 = var_exp->get_symbol();
+      if (vartype != 0) // Should return the function call expression's return type (SgReferenceType) 
+        *vartype = AstNodeTypeImpl(exp->get_type());
+      if (varname != 0)
+        *varname = string(sb1->get_name().str());
+       decl = sb1->get_declaration();
+    }
+    else 
+      return false;
+  }
+  break;
+#endif  
   case V_SgDotExp:
    {
      SgDotExp *exp1 = isSgDotExp(exp);
@@ -1788,6 +1810,7 @@ IsMemoryAccess( const AstNodePtr& _s)
   case V_SgPntrArrRefExp:
   case V_SgPointerDerefExp:
      break;
+  // . and -> expression have memory accesses 
   case V_SgDotExp:
   case V_SgArrowExp:
    {
@@ -1796,11 +1819,20 @@ IsMemoryAccess( const AstNodePtr& _s)
      }
    }
   default:
-    {
+    { // Function call returning C++ reference type is a memory access
      AstNodeTypeImpl t;
-     if (s->variantT() == V_SgFunctionCallExp && IsExpression(_s,&t) != AST_NULL
-         && t->variantT() == V_SgReferenceType) {
-        break;
+     if (s->variantT() == V_SgFunctionCallExp && IsExpression(_s,&t) != AST_NULL)
+     //    && t->variantT() == V_SgReferenceType)
+     {
+      //Liao, 11/20/2008, for instantiated templates, 
+      //member function's return type may have several levels of typedefine 
+      //So we have to strip SgTypedefType off to get the real base type
+       SgType* base_type= t.get_ptr();
+       assert(base_type!=0);
+       while (isSgTypedefType(base_type))
+           base_type = isSgTypedefType(base_type)->get_base_type();
+       if (base_type->variantT() == V_SgReferenceType)
+          break;
      }
      return false;
     }
@@ -2127,12 +2159,21 @@ SgNode* AstInterfaceImpl::GetVarDecl( const string& varname)
   }
   return decl;
 }
-
+//Return type name
 void AstInterfaceImpl::
 GetTypeInfo(const AstNodeType& _t, string *tname, string* stripname, int* size)
 {
   SgType* t = AstNodeTypeImpl(_t).get_ptr();
   std::string typeName = get_type_name(t);
+  // for instantiated template types, return the original template type name
+  // TODO: need a better way to handle this
+  if (isSgClassType(t))
+  {
+    SgDeclarationStatement * decl = isSgClassType(t)->get_declaration();
+    SgTemplateInstantiationDecl* insDecl= isSgTemplateInstantiationDecl(decl);
+    if (insDecl)
+      typeName=insDecl->get_templateDeclaration()->get_qualified_name();
+  }
 
   string r1 = StripGlobalQualifier(typeName);
   string result = "";
@@ -2241,8 +2282,10 @@ IsExpression( const AstNodePtr& _s, AstNodeType* exptype)
       default: break;
       }
     //std::cerr << "IsExpresssion: " << exp->sage_class_name() << "\n";
-          if (exptype != 0)
-           *exptype = AstNodeTypeImpl(exp->get_type());
+   if (exptype != 0)
+    { 
+       *exptype = AstNodeTypeImpl(exp->get_type());
+    }
     return AstNodePtrImpl(exp);
   }
   return AST_NULL;

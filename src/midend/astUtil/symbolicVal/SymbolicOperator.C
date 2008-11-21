@@ -23,7 +23,7 @@ bool DebugOp()
   return r == 1;
 }
 
-
+// Calculating (v1 Op v2)
 SymbolicVal ApplyBinOP( SymOpType t, const SymbolicVal &v1,
                                const SymbolicVal &v2)
 {
