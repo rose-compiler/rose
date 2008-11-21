@@ -53,6 +53,27 @@ std::string ToString(T t) {
     retStr = " ( " + ToString(dfa->getIntForSgNode(n)) + " )  - [";
     retStr += RoseBin_support::ToString(n);
     retStr +="] ";
+    SgInitializedName* init = isSgInitializedName(n);
+    if (init) {
+      retStr += " initVar : ";
+      retStr += init->get_qualified_name().str();
+    }
+    SgVarRefExp* var = isSgVarRefExp(n);
+    if (var) {
+      retStr += " varRef : ";
+      retStr += var->get_symbol()->get_name().str();
+    }
+    SgVariableDeclaration* varD = isSgVariableDeclaration(n);
+    if (varD) {
+      retStr += " varDecl : ";
+      SgInitializedNamePtrList & list = varD->get_variables();
+      SgInitializedNamePtrList::iterator it = list.begin();
+      for (;it!=list.end();++it) {
+	SgInitializedName* init = isSgInitializedName(*it);
+	retStr += init->get_qualified_name().str();
+	retStr += ",";
+      }
+    }
     return retStr;
   }
 
