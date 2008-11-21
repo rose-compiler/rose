@@ -201,7 +201,8 @@ class DefineVariableDescriptor
   void replace_val( MapObject<SymbolicVal, SymbolicVal>& repl);
   void Dump() const;
 };
-
+// string_name(parameterList)=symbolicVal
+// e.g: elem(i:dim:1:dimension) = this(i$dim)
 class ReadSymbolicFunctionDeclaration 
  : public CollectPair< SelectPair <StringDescriptor, 
                                  SymbolicParamListDescriptor,0,'('>,

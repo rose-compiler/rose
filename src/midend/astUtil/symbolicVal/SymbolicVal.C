@@ -21,7 +21,7 @@ std::string SymbolicVal::toString() const
 SymbolicVal ::SymbolicVal (int val)
   : CountRefHandle <SymbolicValImpl>( new SymbolicConst(val) ) {}
 
-
+// arguments are numerator and denominator
 SymbolicConst::  SymbolicConst( int _val, int _d)
         : val (""), type(_d == 1? "int" : "fraction"), intval( _val), dval(_d)
      { 
@@ -313,9 +313,13 @@ GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp)
     case AstInterface::UOP_NOT:
         return new SymbolicFunction( opr, "!", v);
     case AstInterface::UOP_CAST:
-        return new SymbolicFunction( opr, "cast", v);
+      //  return new SymbolicFunction( opr, "cast", v);
+       // Simplifying the symbolic expression by skipping SgCastExp nodes, 
+       // Many operations on symbolic expressions do not consider type casting operations
+       // Liao, 11/20/2008
+         return v; //GetSymbolicVal(fa,s1);
     default:
-       std::cerr << "Cannot handle " << AstToString(exp) << ":" << opr << "\n";
+       std::cerr << "SymbolicValGenerator::GetSymbolicVal() Cannot handle " << AstToString(exp) << ":" << opr << "\n";
        assert(false);
      }
   }

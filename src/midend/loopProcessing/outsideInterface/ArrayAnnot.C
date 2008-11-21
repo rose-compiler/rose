@@ -400,8 +400,10 @@ is_access_array_length( CPPAstInterface& fa, const AstNodePtr& orig, AstNodePtr*
 bool ArrayAnnotation ::
 is_access_array_elem( CPPAstInterface& fa, const SymbolicVal& orig, AstNodePtr* array, SymbolicFunction::Arguments* args)
 {
-   // It calls is_known_member_function() of CPPAstInterface<ArrayDefineDescriptor> ???
-  if (arrays.is_known_member_function( fa, orig, array, args) == "elem") {
+   // It calls CPPTypeCollection<ArrayDefineDescriptor>::is_known_member_function() 
+   // Add random access operator as a default element access function
+  if ((arrays.is_known_member_function( fa, orig, array, args) == "elem") ||
+      (arrays.is_known_member_function( fa, orig, array, args) == "operator[]") ){
     return true;
   }
   return false;
@@ -412,7 +414,8 @@ is_access_array_elem( CPPAstInterface& fa, const AstNodePtr& orig,
                       AstNodePtr* arrayp,
                       CPPAstInterface::AstNodeList* args)
 {
-  if (arrays.is_known_member_function( fa, orig, arrayp, args) == "elem") {
+  if ((arrays.is_known_member_function( fa, orig, arrayp, args) == "elem") ||
+      (arrays.is_known_member_function( fa, orig, arrayp, args) == "operator[]") ){
     return true;
   }
   return false;

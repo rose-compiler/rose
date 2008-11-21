@@ -8,6 +8,7 @@ struct VarRestr
    : coeff(co), result(res), rel(r) {}
   bool IsNIL() const { return rel == REL_UNKNOWN; }
 };
+
 class UnwrapCond : public SymbolicVisitor
 {
   SymbolicVar pivot;
@@ -25,7 +26,7 @@ class UnwrapCond : public SymbolicVisitor
    { 
      //SymbolicVal cur = left; // so that when left is overwritten v is still valid
      SymbolicVal cur;
-     SymbolicExpr::OpdIterator iter = v.GetOpdIterator();
+     SymbolicExpr::OpdIterator iter = v.GetOpdIterator(); // Operand iterator
      while ( !iter.ReachEnd()) {
          cur = v.Term2Val(iter.Current());
          if (FindVal( cur, pivot))
@@ -33,7 +34,7 @@ class UnwrapCond : public SymbolicVisitor
          ++iter;
      }
      if (iter.ReachEnd()) return;
-     SymbolicTerm p = iter.Current(); 
+     SymbolicTerm p = iter.Current(); // Store the matched operand containing pivot into p
      switch (v.GetOpType()) {
      case SYMOP_MULTIPLY:
           for (iter.Advance(); !iter.ReachEnd(); iter++) {
@@ -41,7 +42,10 @@ class UnwrapCond : public SymbolicVisitor
                 break;
           }
           if (!iter.ReachEnd()) return;
-          assert(p == pivot);
+	  // this assertion is wrong since p might be a unary expression with its internal operand ==pivot
+	  // I have handled SgCastExp cases in SymbolicValGenerator::GetSymbolicVal() 
+	  // I keep this assertion here to expose other unhandled cases, Liao, 11/20/2008
+          assert(p == pivot); 	   
           left = 1;
           for (iter=v.GetOpdIterator(); !iter.ReachEnd(); iter.Advance()) {
               if (iter.Current() != p )

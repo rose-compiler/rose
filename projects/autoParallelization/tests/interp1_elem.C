@@ -17,7 +17,7 @@ void interpolate1D(class floatArray &fineGrid,class floatArray &coarseGrid)
   }
 #else  
   for (i = 1; i < 100; i += 1) {
-   fineGrid.elem(i+1) =fineGrid.elem(i)+1;
+   fineGrid.elem(i) =fineGrid.elem(i)+1;
   }
 #endif  
 }

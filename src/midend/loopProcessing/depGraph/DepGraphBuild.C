@@ -32,13 +32,13 @@ ComputeDataDep(LoopTransformInterface &fa,const StmtNodeInfo& n1,
    DepGraphEdgeCreate deps1(graph,n1.node,n2.node),deps2(graph,n2.node,n1.node);
    impl.ComputeDataDep( fa,n1.start, n2.start, deps1,deps2,t);
 }
-
+//! Compute the dependence (one of type set t) between two statements: n1 and n2
 void AstTreeDepGraphAnal ::
 ComputeStmtDep(LoopTransformInterface &la,const StmtNodeInfo& n1,
                const StmtNodeInfo& n2, int t)
 {
    AstInterface& fa = la;
-   DepGraphEdgeCreate deps1(graph,n1.node,n2.node),deps2(graph,n2.node,n1.node);
+   DepGraphEdgeCreate deps1(graph,n1.node,n2.node),deps2(graph,n2.node,n1.node); // two dependence directions for a pair
    AstNodePtr s1 = n1.start, s2 = n2.start;
    if (s1 != s2 && ( (fa.IsIOInputStmt(s1) && fa.IsIOInputStmt(s2)) ||
                     (fa.IsIOOutputStmt(s1) && fa.IsIOOutputStmt(s2))) ) {

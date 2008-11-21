@@ -6,7 +6,7 @@
  *
  * Algorithm:
  *   Read in array abstraction files 
- *   for all loops
+ *   Collect all loops with canonical forms
  *     x. Conduct loop normalization
  *     x. Call dependence analysis from Qing's loop transformations
  *     x. Conduct liveness analysis and variable classification
@@ -86,19 +86,24 @@ main (int argc, char *argv[])
      bool hasOpenMP= false; // flag to indicate if omp.h is needed
 
     //For each function body in the scope
-    //TODO ignore functions in system headers, keep them now for testing robustness
      for (SgDeclarationStatementPtrList::iterator p = declList.begin(); p != declList.end(); ++p) 
      {
         SgFunctionDeclaration *func = isSgFunctionDeclaration(*p);
         if (func == 0)  continue;
         SgFunctionDefinition *defn = func->get_definition();
         if (defn == 0)  continue;
+         //ignore functions in system headers, Can keep them to test robustness
+        if (defn->get_file_info()->get_filename()!=sageFile->get_file_info()->get_filename())
+          continue;
         SgBasicBlock *body = defn->get_body();  
 
         // Replace operators with their equivalent counterparts defined 
         // in "inline" annotations
-        AstInterfaceImpl scope(body);
-        CPPAstInterface fa_body(&scope);
+        // Bridge pattern? interface -- implementation grow independently
+        // Implementation side: attach to AST function body
+        AstInterfaceImpl faImpl_1(body);
+        // Build AST abstraction side, a reference to the implementation 
+        CPPAstInterface fa_body(&faImpl_1);
         OperatorInlineRewrite()( fa_body, AstNodePtrImpl(body));
          
 	 // Pass annotations to arrayInterface and use them to collect alias info. function info etc.  
@@ -115,17 +120,13 @@ main (int argc, char *argv[])
         // 1. Loop normalization changes the original code, 
         // may not be desired for s2s translation
         // Loop normalization, starting from the parent BB  is fine
-        // Bridge pattern:  interface -- implementation grow independently
-        // Implementation side: attach to AST function body
-        AstInterfaceImpl faImpl_0 = AstInterfaceImpl(body);
-        // Build AST abstraction side, a reference to the implementation 
-        AstInterface fa_0(&faImpl_0);
-        NormalizeForLoop(fa_0, AstNodePtrImpl(body));
+        NormalizeForLoop(fa_body, AstNodePtrImpl(body));
         
         //TODO working on first loop, how to get all first level loops?
         // Prepare AstInterface: implementation and head pointer
-        AstInterfaceImpl faImpl = AstInterfaceImpl(loops[0]);
-        AstInterface fa(&faImpl);
+        AstInterfaceImpl faImpl_2 = AstInterfaceImpl(loops[0]);
+        //AstInterface fa(&faImpl); // Using CPP interface to handle templates etc.
+        CPPAstInterface fa(&faImpl_2);
         AstNodePtr head = AstNodePtrImpl(loops[0]);
         //AstNodePtr head = AstNodePtrImpl(body);
         fa.SetRoot(head);

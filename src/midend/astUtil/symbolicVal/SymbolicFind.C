@@ -8,7 +8,7 @@ class ValFindBase : public SymbolicVisitor
 
   virtual void Default() { result = (target == cur); }
 
-
+  // Search function arguments for a match
   void VisitFunction( const SymbolicFunction &v) 
        { 
           if (target.GetValType() == VAL_FUNCTION && cur == target)
@@ -24,6 +24,7 @@ class ValFindBase : public SymbolicVisitor
             }
           }
        }
+  // Recursively visit oprands of expressions to find a match     
   void VisitExpr( const SymbolicExpr &v) 
        { 
          if (target.GetValType() == VAL_EXPR && cur == target)

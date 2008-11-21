@@ -9,7 +9,6 @@ true_dep.c \
 output_dep.c
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
-doall_vector.C \
 ifstmt.C
 
 # the code which can not yet be parallelized now
@@ -62,11 +61,12 @@ check-local:
 	@$(MAKE) $(C_TEST_Objects)
 	@$(MAKE) $(CXX_TEST_Objects)
 	@$(MAKE) rose_interp1_elem.C
+	@$(MAKE) rose_doall_vector.C
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/projects/autoParallelization/tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
 
-EXTRA_DIST = $(ALL_TESTCODES) funcs.annot floatArray.annot Index.annot simpleA++.h interp1_elem.C
+EXTRA_DIST = $(ALL_TESTCODES) funcs.annot floatArray.annot Index.annot simpleA++.h interp1_elem.C doall_vector.C
 
 clean-local:
 	rm -f *.o rose_*.[cC] 

@@ -32,7 +32,7 @@ class DepInfoAnal
      StmtRefInfo( const AstNodePtr& s, const AstNodePtr& r) 
         : stmt(s), ref(r) {}
    };
-   //!Store common loops and levels for two references from two statements
+   //!Store common loops and levels for two references from two statements (may be the same statement)
    struct StmtRefDep { 
      StmtRefInfo r1, r2;
      AstNodePtr commLoop;
@@ -180,7 +180,7 @@ class SetDep
    const DomainCond& get_domain1() const { return domain1; }
    const DomainCond& get_domain2() const { return domain2; }
 };
-
+//Make variable unique by  adding scope information
 class MakeUniqueVar : public MapObject<SymbolicVal, SymbolicVal>, 
                      public SymbolicVisitor
 {

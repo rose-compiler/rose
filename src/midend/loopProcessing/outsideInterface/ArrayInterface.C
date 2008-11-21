@@ -420,7 +420,7 @@ impl_access_array_length( CPPAstInterface& fa, const AstNodePtr& array,
      rval = rval + plus;
   return rval.CodeGen(fa);
 }
-
+// Not really used?
 bool ArrayInterface ::
 IsArray( CPPAstInterface& fa, const AstNodePtr& s)
 { 
@@ -428,7 +428,7 @@ IsArray( CPPAstInterface& fa, const AstNodePtr& s)
      return true;
   return false;
 }
-
+// Not used?
 bool ArrayInterface ::
 IsArrayRef( CPPAstInterface& fa, const AstNodePtr& t)
 {

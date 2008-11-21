@@ -9,7 +9,7 @@
 #include <list>
 
 //! Descriptor (string format) of array shape: 
-//    maximum number of dimensions: integer constant or symbol 
+//    maximum number of dimensions: integer constant or symbol:
 //    size(length) of each dimension: a symbolic function of the dimension number
 class ArrayShapeDescriptor {
   SymbolicValDescriptor dimension;
@@ -44,7 +44,7 @@ class ArrayShapeDescriptor {
      length.replace_val(repl);
    }
 };
-
+// Array element access descriptor: e.g:  elem(i:dim:1:dimension) = this(i$dim);
 class ArrayElemDescriptor 
 {
   SymbolicFunctionDeclarationGroup elem;
@@ -64,7 +64,7 @@ class ArrayElemDescriptor
 
   const SymbolicFunctionDeclarationGroup& get_elem()  const { return elem; }
 };
-
+// Shape + element access
 class ArrayDescriptor 
 : public ArrayShapeDescriptor, public ArrayElemDescriptor
 {
@@ -84,7 +84,7 @@ class ArrayDescriptor
      ArrayElemDescriptor :: replace_val(repl);
    }
 };
-
+// is_array annotation: dimension, length of each dimension, element access function, reshape function
 class ArrayDefineDescriptor : public ArrayDescriptor
 {
   SymbolicFunctionDeclarationGroup reshape;

@@ -25,6 +25,7 @@ class PlusApplicator : public OPApplicator
 {
  public:
   SymOpType GetOpType() { return SYMOP_PLUS; }
+  // Add two fractions: vu1/vd1 and vu2/vd2 , save numerator and demoninator into r1 and r2 respectively
   bool MergeConstInt( int vu1, int vd1, int vu2, int vd2, int& r1, int& r2) 
        { assert(vd1 == vd2);  //QY: not yet handle other case
          r1= vu1 + vu2; 

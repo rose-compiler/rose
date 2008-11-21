@@ -31,7 +31,7 @@ class SymbolicVisitor
 typedef enum {VAL_BASE = 0, VAL_CONST = 1, VAL_VAR = 2, VAL_AST = 4, 
               VAL_FUNCTION = 8, VAL_EXPR = 16}
       SymbolicValType;
-//! Supported operators: *, +, -, max(), power(^)      
+//! Supported operators for symbollic expressions: *, +, -, max(), power(^)      
 typedef enum { SYMOP_NIL = 0, SYMOP_MULTIPLY=1, SYMOP_PLUS = 2,
                SYMOP_MIN=3, SYMOP_MAX=4, SYMOP_POW = 5} SymOpType;
 
@@ -93,7 +93,7 @@ class SymbolicConst : public SymbolicValImpl
   std:: string GetVal() const { return val; }
 };
 
-//! Symbolic variable: name and scope
+//! Symbolic variable: names and scopes
 class SymbolicVar : public SymbolicValImpl
 {
   std:: string varname;
@@ -158,7 +158,7 @@ class SymbolicVal : public CountRefHandle <SymbolicValImpl>
   SymbolicVal& operator = (const SymbolicVal& that)
    { CountRefHandle <SymbolicValImpl>:: operator = (that); return *this; }
   virtual ~SymbolicVal() {}
-
+  // If this is a null item 
   bool IsNIL() const { return ConstPtr() == 0; }
   bool IsSame( const SymbolicVal& that) const
      { return ConstPtr() == that.ConstPtr(); }
@@ -289,7 +289,7 @@ class SymbolicPow : public SymbolicFunction
   virtual SymbolicFunction* cloneFunction(const Arguments& args) 
      { SymbolicFunction* r =  new SymbolicPow(args); return r; }
 };
-
+// Converting an AST expression to a symbolic expression
 class SymbolicValGenerator
 {
  public:
@@ -306,8 +306,17 @@ inline SymbolicVal operator - (const SymbolicVal &v1, const SymbolicVal &v2)
          { return v1 + (-1 * v2); }
 inline SymbolicVal operator - (const SymbolicVal &v) { return -1 * v; }
                                                                                           
-typedef enum {REL_NONE = 0, REL_EQ = 1, REL_LT = 2, REL_LE = 3,
-              REL_GT = 4, REL_GE = 5, REL_NE = 6, REL_UNKNOWN = 8} CompareRel;
+typedef enum 
+{
+  REL_NONE = 0, 
+  REL_EQ = 1,  // ==
+  REL_LT = 2,  // <
+  REL_LE = 3,  // <=
+  REL_GT = 4,  // > 
+  REL_GE = 5,  // >=
+  REL_NE = 6,  // != 
+  REL_UNKNOWN = 8
+ } CompareRel;  // Relational operation types
  
 //! Symbolic conditions: x>y  
 class SymbolicCond
