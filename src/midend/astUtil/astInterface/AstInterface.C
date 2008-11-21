@@ -1506,8 +1506,7 @@ bool AstInterface:: IsMax( const AstNodePtr& _exp)
 // Check if '_exp' is a kind of variable reference, including :
 // V_SgMemberFunctionRefExp, V_SgFunctionRefExp, V_SgVarRefExp, V_SgThisExp,
 // V_SgConstructorInitializer, V_SgInitializedName, V_SgDotExp
-bool AstInterface::
-IsVarRef( const AstNodePtr& _exp, AstNodeType* vartype, string* varname,
+bool AstInterface::IsVarRef( const AstNodePtr& _exp, AstNodeType* vartype, string* varname,
           AstNodePtr* _scope, bool *isglobal ) 
 { 
   SgNode* exp=AstNodePtrImpl(_exp).get_ptr();
@@ -1590,25 +1589,15 @@ IsVarRef( const AstNodePtr& _exp, AstNodeType* vartype, string* varname,
       decl = var;
     }
     break;
-#if 0    
-  //Liao, 11/20/2008: vector variable's [] operator is a function call, also a variable reference
-  case V_SgFunctionCallExp:
+#if 1    
+  //Liao, 11/20/2008: handle type casting expressions 
+  // ROSE often introduces excessive type casting within expressions
+  case V_SgCastExp:
   {
-    SgFunctionCallExp * call_exp = isSgFunctionCallExp(exp);
-    dot_exp = isSgDotExp(call_exp->get_function());
-    if (dot_exp) //TODO consider arrow_exp?
-    {
-      SgVarRefExp* var_exp = dot_exp->get_lhs_operand();
-      assert (var_exp!=0);
-      SgVariableSymbol* sb1 = var_exp->get_symbol();
-      if (vartype != 0) // Should return the function call expression's return type (SgReferenceType) 
-        *vartype = AstNodeTypeImpl(exp->get_type());
-      if (varname != 0)
-        *varname = string(sb1->get_name().str());
-       decl = sb1->get_declaration();
-    }
-    else 
-      return false;
+    SgCastExp* cast_exp = isSgCastExp(exp);
+    SgExpression* operand = cast_exp->get_operand();
+    assert(operand != 0);
+    return IsVarRef(AstNodePtrImpl(operand),vartype,varname,_scope, isglobal);
   }
   break;
 #endif  
@@ -2348,8 +2337,7 @@ IsLoop( const AstNodePtr& _s, AstNodePtr* init, AstNodePtr* cond,
   return true;
 }
 
-bool AstInterface::
-IsFortranLoop( const AstNodePtr& _s, AstNodePtr* ivar ,
+bool AstInterface::IsFortranLoop( const AstNodePtr& _s, AstNodePtr* ivar ,
                                 AstNodePtr* lb , AstNodePtr* ub,
                                 AstNodePtr* step, AstNodePtr* body)
 { 
@@ -2358,9 +2346,10 @@ IsFortranLoop( const AstNodePtr& _s, AstNodePtr* ivar ,
    if (fs == 0) {
       return false;
     }
-
+    // Must have initialization statements
     SgStatementPtrList &init = fs->get_init_stmt();
     if (init.size() != 1) return false;
+    
     AstNodePtrImpl ivarast, lbast, ubast, stepast;
     if (!AstInterface::IsAssignment( AstNodePtrImpl(init.front()), &ivarast, &lbast)) {
          return false;
