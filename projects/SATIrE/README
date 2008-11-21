@@ -10,7 +10,7 @@ term syntax.
 
 * Tested with:
   - ROSE 0.9.3a-1593
-  - PAG 8.7.6.17
+  - PAG 9.0.0.92248
   - flex 2.5.33
   - bison 2.3
   - g++ 4.2.0 (>= 4.2.0 required by ROSE with EDG binaries)
