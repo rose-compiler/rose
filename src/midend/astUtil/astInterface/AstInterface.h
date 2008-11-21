@@ -136,6 +136,7 @@ class AstInterface
                           AstNodePtr* init=0, AstNodePtr* cond=0,
                          AstNodePtr* incr = 0, AstNodePtr* body = 0) ;
   bool IsPostTestLoop( const AstNodePtr& s);
+  //! Check if a node is a loop with the canonical form
   bool IsFortranLoop( const AstNodePtr& s, AstNodePtr* ivar = 0,
                        AstNodePtr* lb = 0, AstNodePtr* ub=0,
                        AstNodePtr* step =0, AstNodePtr* body=0);
@@ -229,6 +230,8 @@ class AstInterface
                     AstNodePtr* opd1 = 0, AstNodePtr* opd2 = 0);
   bool IsUnaryOp( const AstNodePtr& exp, OperatorEnum* op = 0, 
                    AstNodePtr* opd = 0); 
+  //! Grab the operand from a chain of casting operations
+  AstNodePtr SkipCasting(const AstNodePtr& exp);
   AstNodePtr CreateBinaryOP( OperatorEnum op, const AstNodePtr& a0, 
                                    const AstNodePtr& a2);
   AstNodePtr CreateUnaryOP( OperatorEnum op, const AstNodePtr& arg);

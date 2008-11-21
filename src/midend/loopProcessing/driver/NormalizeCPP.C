@@ -40,10 +40,18 @@ void FixFileInfo(SgNode* n)
   }
 }
 
+/* Goal: 
+    * test expression:
+           i<x is normalized to i<= (x-1)
+           i>x is normalized to i>= (x+1) 
+    * increment expression:
+           i++ is normalized to i=i+1
+           i-- is normalized to i=i-1 
+ */
 class NormalizeLoopTraverse : public ProcessAstTree
 {
   bool succ;
-  //Always return true, 
+  //Always return true ??? 
   //set succ to true if the loop has been normalized, otherwise set it to false
   virtual bool ProcessLoop(AstInterface &fa, const AstNodePtr& _s,
                                const AstNodePtr& body,
@@ -51,12 +59,17 @@ class NormalizeLoopTraverse : public ProcessAstTree
    {
     SgNode* s = AstNodePtrImpl(_s).get_ptr();
     if (t == AstInterface::PreVisit) {
+      // Skip normalization if it is not a for loop
       SgForStatement *fs = isSgForStatement(s);
-      if (fs == 0) { succ = false; return true; }
+      if (fs == 0) 
+        { succ = false; return true; }
 
+      // Must have init statements
       SgStatementPtrList &init = fs->get_init_stmt();
-      if (init.size() != 1)  { succ = false; return true; }
-
+      if (init.size() != 1)  
+        {succ = false; return true; }
+      
+      // Normalized the test expressions
       AstNodePtrImpl test = fs->get_test_expr();
       AstNodePtr testlhs, testrhs;
       if (!fa.IsBinaryOp(test, 0, &testlhs, &testrhs)) {
@@ -82,11 +95,12 @@ class NormalizeLoopTraverse : public ProcessAstTree
         default:
            succ = false; return true;
       }
-
+      // Normalize the increment expression
       AstNodePtrImpl incr = fs->get_increment();
       switch (incr->variantT()) {
         case V_SgPlusPlusOp: //i++ is normalized to i=i+1
-           if (! fa.IsSameVarRef(AstNodePtrImpl(isSgPlusPlusOp(incr.get_ptr())->get_operand()), testlhs))
+           if (! fa.IsSameVarRef(AstNodePtrImpl(isSgPlusPlusOp(incr.get_ptr())->get_operand()), 
+                                fa.SkipCasting(testlhs))) // tolerate type casting within expressions
                { succ = false; return true; }
            fa.ReplaceAst( incr, 
              AstNodePtrImpl(new SgPlusAssignOp( GetFileInfo(), 
@@ -94,7 +108,8 @@ class NormalizeLoopTraverse : public ProcessAstTree
               isSgExpression(AstNodePtrImpl(fa.CreateConstInt(1)).get_ptr()))));
            break;
         case V_SgMinusMinusOp: //i-- is normalized to i=i-1
-           if (! fa.IsSameVarRef(AstNodePtrImpl(isSgMinusMinusOp(incr.get_ptr())->get_operand()), testlhs))
+           if (! fa.IsSameVarRef(AstNodePtrImpl(isSgMinusMinusOp(incr.get_ptr())->get_operand()), 
+                                 fa.SkipCasting(testlhs)))
                { succ = false; return true; }
            fa.ReplaceAst( incr, 
              AstNodePtrImpl(new SgPlusAssignOp( GetFileInfo(),
@@ -105,7 +120,7 @@ class NormalizeLoopTraverse : public ProcessAstTree
            succ =  false; return true;
       }
       succ = true;
-     }
+     } // end if (PreVisit)
      return true;
    }
  public:

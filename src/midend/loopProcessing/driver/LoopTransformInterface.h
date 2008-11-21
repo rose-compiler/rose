@@ -139,7 +139,7 @@ AstNodePtr LoopTransformTraverse( AstInterface& fa, const AstNodePtr& head,
                                  ArrayAbstractionInterface* arrayInfo = 0);
 /*
 Loop normalization, documented by Liao, May 15,2008 
-
+Try to normalize all loops under 'head' node
 test expression:
   i<x is normalized to i<= (x-1)
   i>x is normalized to i>= (x+1)
