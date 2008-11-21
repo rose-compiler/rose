@@ -26,7 +26,7 @@ int main( int argc, char **argv )
 #endif
 
 
-  QROSE::init(argc,argv);
+
 
   std::string fileA,fileB;
     bool test=false;
@@ -75,6 +75,7 @@ int main( int argc, char **argv )
 
 
   if (test==false) {
+    QROSE::init(argc,argv);
     BinQGUI binGui(fileA,fileB, test);
     binGui.run();
   } else
