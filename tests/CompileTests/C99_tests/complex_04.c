@@ -14,6 +14,8 @@
    "_Bool", "_Complex", "_Imaginary", "__I__", "__NAN__", "__INFINITY__",
 */
 
+#include <complex.h>
+
 int main (void)
    {
 #if 1

@@ -1,6 +1,7 @@
 // #include "defines.h"
 // #include "args.h"
 #include <sse_debug.h>
+#include <complex.h>
 
 struct IntegerRegisters iregs;
 struct FloatRegisters fregs;

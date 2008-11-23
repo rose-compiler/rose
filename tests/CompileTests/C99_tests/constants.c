@@ -1,3 +1,5 @@
+#include <complex.h>
+
 // Test use of C99 and common C constants
 void foo()
    {

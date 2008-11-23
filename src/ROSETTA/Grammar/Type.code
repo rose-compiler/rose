@@ -870,22 +870,8 @@ HEADER_TYPE_INT_TYPE_START
 HEADER_TYPE_INT_TYPE_END
 
 HEADER_TYPE_COMPLEX_TYPE_START
-      /*! \brief Complex values come in float (32 bit), double (64 bit), and long double (128 bit).
-
-          \internal Note that the zero value is an error.
-       */
-          enum floating_point_precision_enum
-             {
-               e_errorPrecision      = 0, //!< error value (always zero within ROSE)
-               e_defaultPrecision    = 1, //!< default value (not sure if complex has a default value)
-               e_floatPrecision      = 2, //!< value for float _Complex
-               e_doublePrecision     = 3, //!< value for double _Complex
-               e_longDoublePrecision = 4, //!< value for long double _Complex
-               e_last                     //!< last value used to computing bounds
-             };
-
       //! function returns example of type
-          static $CLASSNAME* createType($CLASSNAME::floating_point_precision_enum);
+          static $CLASSNAME* createType(SgType* base_type);
 HEADER_TYPE_COMPLEX_TYPE_END
 
 
@@ -3861,67 +3847,14 @@ SOURCE_CREATE_TYPE_FOR_COMPLEX_TYPE_START
 
 // DQ (8/27/2006): This code is used for both SgTypeComplex and SgTypeImaginary.
 
-// DQ (8/10/2006): Three kinds of SgComplex IR nodes (for float, double, and long double) 
-// which we want to be able to share within the AST.
-$CLASSNAME* $CLASSNAME::p_builtin_float_complex       = NULL;
-$CLASSNAME* $CLASSNAME::p_builtin_double_complex      = NULL;
-$CLASSNAME* $CLASSNAME::p_builtin_long_double_complex = NULL;
-
 $CLASSNAME*
-$CLASSNAME::createType($CLASSNAME::floating_point_precision_enum precision)
+$CLASSNAME::createType(SgType* t)
    {
-  // This function build any of three versions of Complex type IR nodes, but enforces sharing between the different versions.
-     static bool firstCallToFunctionForFloatPrecision      = true;
-     static bool firstCallToFunctionForDoublePrecision     = true;
-     static bool firstCallToFunctionForLongDoublePrecision = true;
-
-     $CLASSNAME* returnType = NULL;
-     switch (precision)
-        {
-          case e_floatPrecision:
-             {
-            // This is protection that is required to support file I/O and the unknown order of static initialization.
-               if (firstCallToFunctionForFloatPrecision == true)
-                  {
-                    p_builtin_float_complex = new $CLASSNAME(precision);
-                  }
-               firstCallToFunctionForFloatPrecision = false;
-               returnType = p_builtin_float_complex;
-               ROSE_ASSERT(returnType != NULL);
-               break;
-             }
-
-          case e_doublePrecision:
-             {
-            // This is protection that is required to support file I/O and the unknown order of static initialization.
-               if (firstCallToFunctionForDoublePrecision == true)
-                  {
-                    p_builtin_double_complex = new $CLASSNAME(precision);
-                  }
-               firstCallToFunctionForDoublePrecision = false;
-               returnType = p_builtin_double_complex;
-               ROSE_ASSERT(returnType != NULL);
-               break;
-             }
-
-          case e_longDoublePrecision:
-             {
-            // This is protection that is required to support file I/O and the unknown order of static initialization.
-               if (firstCallToFunctionForLongDoublePrecision == true)
-                  {
-                    p_builtin_long_double_complex = new $CLASSNAME(precision);
-                  }
-               firstCallToFunctionForLongDoublePrecision = false;
-               returnType = p_builtin_long_double_complex;
-               ROSE_ASSERT(returnType != NULL);
-               break;
-             }
-
-          default:
-               printf ("Error: precision out of range (%d) \n",precision);
-               ROSE_ASSERT(false);
-        }
-
+     static std::map<SgType*, $CLASSNAME*> cache;
+     $CLASSNAME*& returnType = cache[t];
+     if (returnType == NULL) {
+       returnType = new $CLASSNAME(t);
+     }
      ROSE_ASSERT(returnType != NULL);
      return returnType;
    }

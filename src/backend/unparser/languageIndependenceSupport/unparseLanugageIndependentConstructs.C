@@ -21,7 +21,7 @@ std::string
 UnparseLanguageIndependentConstructs::tostring(T t) const
    {
      std::ostringstream myStream; //creates an ostringstream object
-     myStream << t << std::flush;
+     myStream << std::showpoint << t << std::flush; // Distinguish integer and floating-point numbers
      return myStream.str(); //returns the string form of the stringstream object
    }
 
@@ -2504,68 +2504,19 @@ UnparseLanguageIndependentConstructs::unparseComplexVal(SgExpression* expr, SgUn
      SgComplexVal* complex_val = isSgComplexVal(expr);
      ROSE_ASSERT(complex_val != NULL);
 
-#if 0
-     printf ("Inside of unparseComplexVal = %p \n",complex_val);
-     complex_val->get_file_info()->display("unparseComplexVal");
-#endif
-
-  // os->setf(ios::showpoint);
-  // curprint ( complex_val->get_value();
-  // curprint ( setiosflags(ios::showpoint) + setprecision(4) + complex_val->get_value();
-
-     setiosflags(ios::showpoint);
-
-  // DQ (10/16/2004): Not sure what 4 implies, but we get 16 digits after the decimal 
-  // point so it should be fine (see test2004_114.C)!
-     setprecision(4);
-
-  // curprint ( dbl_val->get_value();
-  // os->unsetf(ios::showpoint);
-
-     if (complex_val->get_real_value() != complex_val->get_real_value())
-        {
-          printf ("Fails test for real part equal to real part \n");
-        }
-     ROSE_ASSERT(complex_val->get_real_value() == complex_val->get_real_value());
-
-  // DQ (10/18/2005): Need to handle C code which cannot use C++ mechanism to specify 
-  // infinity, quiet NaN, and signaling NaN values.
-     if (complex_val->get_real_value() == std::numeric_limits<long double>::infinity())
-        {
-       // printf ("Infinite value found as value in unparseFloatVal() \n");
-       // curprint ( "std::numeric_limits<double>::infinity()";
-          curprint ( "__builtin_huge_val()");
-        }
-       else
-        {
-          if (complex_val->get_real_value() == std::numeric_limits<long double>::quiet_NaN())
-             {
-            // curprint ( "std::numeric_limits<double>::quiet_NaN()";
-               curprint ( "__builtin_nan (\"\")");
-             }
-            else
-             {
-               if (complex_val->get_real_value() == std::numeric_limits<long double>::signaling_NaN())
-                  {
-                 // curprint ( "std::numeric_limits<double>::signaling_NaN()";
-                    curprint ( "__builtin_nans (\"\")");
-                  }
-                 else
-                  {
-                 // typical case!
-                 // curprint ( dbl_val->get_value();
-                 // AS (11/08/2005) add support for values as string
-                    if (complex_val->get_valueString() == "")
-                       {
-                      // DQ (8/27/2006): I am not sure if this is the correct way to output a complex literal.
-                      // curprint ( complex_val->get_real_value();
-                         curprint ( tostring(complex_val->get_real_value()) + "," + tostring(complex_val->get_imaginary_value()));
-                       }
-                      else
-                         curprint ( complex_val->get_valueString());
-                  }
-             }
-        }
+     if (complex_val->get_valueString() != "") { // Has string
+       curprint (complex_val->get_valueString());
+     } else if (complex_val->get_real_value() == NULL) { // Pure imaginary
+       curprint ("(0.0, ");
+       unparseValue(complex_val->get_imaginary_value(), info);
+       curprint (")");
+     } else { // Complex number
+       curprint ("(");
+       unparseValue(complex_val->get_real_value(), info);
+       curprint (", ");
+       unparseValue(complex_val->get_imaginary_value(), info);
+       curprint (")");
+     }
    }
 
 

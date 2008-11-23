@@ -94,16 +94,8 @@ string get_type_name(SgType* t)
                 string returnString;
                 SgTypeComplex* complexType = isSgTypeComplex(t);
                 ROSE_ASSERT(complexType != NULL);
-                switch (complexType->get_precision())
-                   {
-                     case SgTypeComplex::e_floatPrecision:      returnString = "float _Complex";       break;
-                     case SgTypeComplex::e_doublePrecision:     returnString = "double _Complex";      break;
-                     case SgTypeComplex::e_longDoublePrecision: returnString = "long double _Complex"; break;
-                     default:
-                        printf ("Error: precision out of range %d \n",complexType->get_precision());
-                        ROSE_ASSERT(false);
-                   }
-               return returnString;
+                returnString = get_type_name(complexType->get_base_type()) + " _Complex";
+		return returnString;
              }
 
        // DQ (8/27/2006): Added require imaginary support to complete the complex support.
@@ -114,53 +106,12 @@ string get_type_name(SgType* t)
 
                 SgTypeImaginary* imaginaryType = isSgTypeImaginary(t);
                 ROSE_ASSERT(imaginaryType != NULL);
-                switch (imaginaryType->get_precision())
-                   {
-                     case SgTypeImaginary::e_floatPrecision:
-                        {
-                          if (backEndCompiler == "g++" || backEndCompiler == "gcc" || backEndCompiler == "mpicc" || backEndCompiler == "mpicxx")
-                             {
-                            // Handle special case of GNU compilers
-                               returnString = "float";
-                             }
-                            else
-                             {
-                               returnString = "float _Imaginary";
-                             }
-                          break;
-                        }
-                     case SgTypeImaginary::e_doublePrecision:
-                        {
-                          if (backEndCompiler == "g++" || backEndCompiler == "gcc" || backEndCompiler == "mpicc" || backEndCompiler == "mpicxx")
-                             {
-                            // Handle special case of GNU compilers
-                               returnString = "double";
-                             }
-                            else
-                             {
-                               returnString = "double _Imaginary";
-                             }
-                          break;
-                        }
-                     case SgTypeImaginary::e_longDoublePrecision:
-                        {
-                          if (backEndCompiler == "g++" || backEndCompiler == "gcc" || backEndCompiler == "mpicc" || backEndCompiler == "mpicxx")
-                             {
-                            // Handle special case of GNU compilers (use "__imag__" on the rhs 
-                            // to extract the real or imaginary part of a complex number).  As
-                            // in: "double x = __imag__ complex_y;"
-                               returnString = "long double";
-                             }
-                            else
-                             {
-                               returnString = "long double _Imaginary";
-                             }
-                          break;
-                        }
-                     default:
-                        printf ("Error: precision out of range %d \n",imaginaryType->get_precision());
-                        ROSE_ASSERT(false);
-                   }
+                returnString = get_type_name(imaginaryType->get_base_type());
+                if (backEndCompiler == "g++" || backEndCompiler == "gcc" || backEndCompiler == "mpicc" || backEndCompiler == "mpicxx") {
+                  // Handle special case of GNU compilers
+                } else {
+                  returnString + " _Imaginary";
+                }
                return returnString;
              }
           case T_DEFAULT:            return "int";

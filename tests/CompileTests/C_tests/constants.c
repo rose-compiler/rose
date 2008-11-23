@@ -1,14 +1,16 @@
+#include <complex.h>
+
 // Test use of C99 and common C constants
 void foo()
    {
-     __complex__ float an_i = __I__;
+     float _Complex an_i = _Complex_I;
 
-     __I__;
+     _Complex_I;
 
      _Complex float a_complex_value = 1.0;
 
      a_complex_value = 1.0 * an_i;
-     a_complex_value = 0.0 + 1.0 * __I__;
+     a_complex_value = 0.0 + 1.0 * _Complex_I;
 
   // EDG does not recognize the "i" suffix.
   // const double _Complex a_complex_value = 3.0f + 4.0fi;

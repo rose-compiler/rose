@@ -8,6 +8,8 @@
    "_Bool", "_Complex", "_Imaginary", "__I__", "__NAN__", "__INFINITY__",
 */
 
+#include <complex.h>
+
 int main (void)
    {
   // Older GNU systax for declaration of complex variables (specification of complex types)
