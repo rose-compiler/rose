@@ -461,7 +461,7 @@ getFortranFreeFormatPreprocessorDirectives( std::string fileName )
 
      globalFileName = fileName;
 
-     printf ("In getFortranFreeFormatPreprocessorDirectives(): Lexical pass to retrieve the token stream (Opening Free Format Fortran file: %s) \n",fileName.c_str());
+  // printf ("In getFortranFreeFormatPreprocessorDirectives(): Lexical pass to retrieve the token stream (Opening Free Format Fortran file: %s) \n",fileName.c_str());
 
      if(fileName.empty() == false) 
         {

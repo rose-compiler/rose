@@ -397,9 +397,9 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute (
                       // Attach the token stream to the AST
                          currentListOfAttributes->set_rawTokenStream(lex_token_stream);
 #if 1
-                         printf ("Calling collectPreprocessorDirectivesAndCommentsForAST() to collect CPP directives for fileNameForDirectivesAndComments = %s \n",fileNameForDirectivesAndComments.c_str());
+                      // printf ("Calling collectPreprocessorDirectivesAndCommentsForAST() to collect CPP directives for fileNameForDirectivesAndComments = %s \n",fileNameForDirectivesAndComments.c_str());
                          currentListOfAttributes->collectPreprocessorDirectivesAndCommentsForAST(fileNameForDirectivesAndComments,ROSEAttributesList::e_Fortran77_language);
-                         printf ("DONE: Calling collectPreprocessorDirectivesAndCommentsForAST() to collect CPP directives for fileNameForDirectivesAndComments = %s \n",fileNameForDirectivesAndComments.c_str());
+                      // printf ("DONE: Calling collectPreprocessorDirectivesAndCommentsForAST() to collect CPP directives for fileNameForDirectivesAndComments = %s \n",fileNameForDirectivesAndComments.c_str());
 #endif
 #if 0
                       // DQ (11/19/2008): This code has been replaced by collectPreprocessorDirectivesAndCommentsForAST().
@@ -441,7 +441,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute (
                       // currentListOfAttributes->generatePreprocessorDirectivesAndCommentsForAST(currentFilePtr);
                          string fileNameForDirectivesAndComments = currentFilePtr->get_sourceFileNameWithPath();
 
-                         printf ("Calling collectPreprocessorDirectivesAndCommentsForAST() to collect CPP directives for fileNameForDirectivesAndComments = %s \n",fileNameForDirectivesAndComments.c_str());
+                      // printf ("Calling collectPreprocessorDirectivesAndCommentsForAST() to collect CPP directives for fileNameForDirectivesAndComments = %s \n",fileNameForDirectivesAndComments.c_str());
                          currentListOfAttributes->collectPreprocessorDirectivesAndCommentsForAST(fileNameForDirectivesAndComments,ROSEAttributesList::e_Fortran9x_language);
 
 #if 0
@@ -453,7 +453,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute (
                          printf ("Calling generatePreprocessorDirectivesAndCommentsForAST() for fileNameForDirectivesAndComments = %s \n",fileNameForDirectivesAndComments.c_str());
                          currentListOfAttributes->generatePreprocessorDirectivesAndCommentsForAST(fileNameForDirectivesAndComments);
 #else
-                         printf ("Skipping the comments in the fortran file! \n");
+                      // printf ("Skipping the comments in the fortran file! \n");
 #endif
                        }
 
