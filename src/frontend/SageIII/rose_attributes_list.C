@@ -2010,7 +2010,7 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
                   }
 #endif
 
-#if 1
+#if 0
             // printf ("Before lineCounter = %d \n",lineCounter);
                printf ("cppDeclarationKind = %s \n",PreprocessingInfo::directiveTypeName(cppDeclarationKind).c_str());
 #endif
