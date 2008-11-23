@@ -57,11 +57,14 @@ if test "x$USE_JAVA" = x1; then
     JAVA_JVM_LINK="-framework JavaVM"
     JAVA_JVM_INCLUDE="-I`/usr/bin/javaconfig Headers`"
   else
-    JAVA_JVM_FULL_PATH="`env _JAVA_LAUNCHER_DEBUG=x ${JAVA} | grep '^JVM path is' | cut -c 13-`"
-    if test "x$JAVA_JVM_FULL_PATH" = x; then
-      AC_MSG_ERROR([Unable to find path to JVM library])
-    fi
+    JAVA_JVM_FULL_PATH="`env _JAVA_LAUNCHER_DEBUG=x ${JAVA} 2>/dev/null | grep '^JVM path is' | cut -c 13-`" ; # Sun JVM
     JAVA_JVM_PATH=`dirname "${JAVA_JVM_FULL_PATH}"`
+    if test "x$JAVA_JVM_FULL_PATH" = x; then
+      JAVA_JVM_PATH="`env _JAVA_LAUNCHER_DEBUG=x ${JAVA} 2>&1 | grep '^JavaJVMDir  = ' | cut -c 15-`" # IBM J9 JVM
+      if test "x$JAVA_JVM_PATH" = x; then
+        AC_MSG_ERROR([Unable to find path to JVM library])
+      fi
+    fi
     JAVA_JVM_LINK="-L${JAVA_JVM_PATH} -ljvm"
     JAVA_JVM_INCLUDE="-I${JAVA_PATH}/include -I${JAVA_PATH}/include/linux"
   fi
