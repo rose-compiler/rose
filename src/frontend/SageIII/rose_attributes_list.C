@@ -1157,7 +1157,9 @@ ROSEAttributesList::isFortran90Comment( const string & line )
   // This refactored code test if a line is a fortran comment.
   // Fortran 90 comments are more complex to recognise than
   // F77.  This function only recognizes F90 comments that have
-  // a leading "!".
+  // a leading "!".  Other uses of "!" at the end of a valid
+  // Fortran statement are not yet captured, but that would be
+  // handled by this function (later).
 
      bool isComment = false;
 
@@ -1175,7 +1177,7 @@ ROSEAttributesList::isFortran90Comment( const string & line )
   // The character "!" starts a comment if only blanks are in the leading white space.
      if (firstNonBlankCharacter == '!')
         {
-          printf ("This is a F90 style comment: line = %s length = %zu \n",line.c_str(),line.length());
+       // printf ("This is a F90 style comment: line = %s length = %zu \n",line.c_str(),line.length());
           isComment = true;
         }
 
@@ -1186,41 +1188,49 @@ ROSEAttributesList::isFortran90Comment( const string & line )
 bool
 ROSEAttributesList::isFortran77Comment( const string & line )
    {
-  // This refactored code tests if a line is a fortran comment.
-  // It is a very simple test on the character in column zero.
+  // This refactored code tests if a line is a fortran fixed format comment (it maybe that it is less specific to F77).
+  // It is a very simple test on the character in column zero, but there are a few details...
 
 #if 0
   // Debugging output
      cout << "collect comments: " << line << endl;
 #endif
 
-  // Handle comments first, Fortran fixed format comments should be easy.
+  // We handle CPP directives first and then comments, Fortran fixed format comments should be easy.
   // if there is a character in the first column, then the whole line is a comment.
   // Also, more subtle, if it is a blank line then it is a comment, so save the blank lines too.
 
      bool isComment = false;
 
      char firstCharacter = line[0];
-  // if (firstCharacter != ' ' && firstCharacter != '\n' && firstCharacter != '\0' )
      if (firstCharacter != ' '  /* SPACE */ && firstCharacter != '\n' /* CR  */ && 
          firstCharacter != '\0' /* NUL   */ && firstCharacter != '\t' /* TAB */)
         {
-       // This has something in the first colum, it might be a comment!
+       // This has something in the first column, so it might be a comment (check further)...
 
-       // Error checking on first character
 #if 1
+       // Error checking on first character, I believe we can't enforce this, but I would like to have it be a warning.
           if (!(firstCharacter >= ' ') || !(firstCharacter < 126))
              {
-               printf ("firstCharacter = %d line.length() = %zu \n",(int)firstCharacter,line.length());
+               printf ("Warning: firstCharacter = %d (not an acceptable character value for Fortran) line.length() = %zu \n",(int)firstCharacter,line.length());
              }
 #endif
+
+       // Error checking on first character
        // DQ (5/15/2008): The filter is in the conditional above and is not required to be repeated.
        // ROSE_ASSERT(firstCharacter >= ' ' && firstCharacter < 126);
-#if 1
-       // Make sure it is not part a number (which could be part of a label)
+
+#define RELAXED_FORTRAN_COMMENT_SPECIFICATION 1
+#if RELAXED_FORTRAN_COMMENT_SPECIFICATION
+       // Most fortran compilers do not enforce the strinct langauge definition of what a comment is 
+       // so we have to handle the more relaxed comment specification (which does not appear to be 
+       // written down anywhere).
+       // Make sure it is not part a number (which could be part of a Fortran label)
           if (firstCharacter >= '0' && firstCharacter <= '9')
              {
             // This is NOT a comment it is part of a label in the first column (see test2008_03.f)
+            // Some compilers (gfortran) can interprete a lable even if it starts in the first 
+            // column (column 1 (fortran perspective) column 0 (C perspective)).
             // printf ("This is not a comment, it is part of a label in the first column: line = %s \n",line.c_str());
              }
             else
@@ -1229,10 +1239,13 @@ ROSEAttributesList::isFortran77Comment( const string & line )
             // why it was here and it appears to mark everything as a comment!
 
             // This is position (column) 0 in the line, for F77 this means it is a comment.
+            // Note that we check for CPP directives first and only then if the line is not 
+            // a CPP directive do we test for a F77 style comment, so if the first character 
+            // of the line is a '#' then it will only be considered a comment if it is not a CPP directive.
                isComment = true;
              }
 #else
-       // DQ (1/22/2008): Separate from the F77 standard, no compiler is this restrictive!
+       // DQ (1/22/2008): Separate from the F77 standard, no compiler is this restrictive (unfortunately)!
        // The Fortran 77 standard says: comments must have a C or * in the first column (check for case)
           if (firstCharacter == 'C' || firstCharacter == 'c' || firstCharacter == '*')
              {
@@ -1243,6 +1256,9 @@ ROSEAttributesList::isFortran77Comment( const string & line )
         }
 
 #if 0
+  // DQ (11/23/2008): This is part of the collection of blank lines in Fortran code, as comments.
+  // I have turned this off for now.  We can include blank lines later or perhaps explicitly marked 
+  // as blank lines (and stored in the AST just like comments).
      char firstNonBlankCharacter = line[0];
      size_t i = 0;
      size_t lineLength = line.length();
@@ -1252,15 +1268,6 @@ ROSEAttributesList::isFortran77Comment( const string & line )
           i++;
         }
 
-  // The character "!" starts a comment if only blanks are in the leading white space.
-     if (firstNonBlankCharacter == '!')
-        {
-          printf ("This is a F90 style comment: line = %s length = %zu \n",line.c_str(),line.length());
-          isComment = true;
-        }
-#endif
-
-#if 0
   // We want this function to be side-effect free.
      if (firstNonBlankCharacter == '\n' || firstNonBlankCharacter == '\0')
         {
@@ -1276,9 +1283,10 @@ ROSEAttributesList::isFortran77Comment( const string & line )
 #endif
 
 #if 0
+  // Debugging output!
      if (isComment == true)
         {
-          printf ("isComment == true: line = %s \n",line.c_str());
+          printf ("This is an F77 (fixed format) Fortran comment: line = %s \n",line.c_str());
         }
 #endif
 
@@ -1318,94 +1326,8 @@ ROSEAttributesList::collectFixedFormatPreprocessorDirectivesAndCommentsForAST( c
              {
                getline (fixedFormatFile,line);
 
-#if 1
             // DQ (11/17/2008): Refactored the code.
                bool isComment = isFortran77Comment(line);
-#else
-
-#error "DEAD CODE!"
-
-#if 0
-            // Debugging output
-               cout << "collect comments: " << line << endl;
-#endif
-            // Handle comments first, Fortran fixed format comments should be easy.
-            // if there is a character in the first column, then the whole line is a comment.
-            // Also, more subtle, if it is a blank line then it is a comment, so save the blank lines too.
-
-               bool isComment = false;
-
-               char firstCharacter = line[0];
-            // if (firstCharacter != ' ' && firstCharacter != '\n' && firstCharacter != '\0' )
-               if (firstCharacter != ' '  /* SPACE */ && firstCharacter != '\n' /* CR  */ && 
-                   firstCharacter != '\0' /* NUL   */ && firstCharacter != '\t' /* TAB */)
-                  {
-                 // This has something in the first colum, it might be a comment!
-
-                 // Error checking on first character
-#if 0
-                    if (!(firstCharacter >= ' ') || !(firstCharacter < 126))
-                       {
-                         printf ("firstCharacter = %d line.length() = %zu \n",(int)firstCharacter,line.length());
-                       }
-#endif
-                 // DQ (5/15/2008): The filter is in the conditional above and is not required to be repeated.
-                 // ROSE_ASSERT(firstCharacter >= ' ' && firstCharacter < 126);
-
-#error "DEAD CODE!"
-
-#if 1
-                 // Make sure it is not part a number (which could be part of a label)
-                    if (firstCharacter >= '0' && firstCharacter <= '9')
-                       {
-                      // This is NOT a comment it is part of a label in the first column (see test2008_03.f)
-                      // printf ("This is not a comment, it is part of a label in the first column: line = %s \n",line.c_str());
-                       }
-                      else
-                       {
-                         isComment = true;
-                       }
-#else
-                 // DQ (1/22/2008): Separate from the F77 standard, no compiler is this restrictive!
-                 // The Fortran 77 standard says: comments must have a C or * in the first column (check for case)
-                    if (firstCharacter == 'C' || firstCharacter == 'c' || firstCharacter == '*')
-                       {
-                         isComment = true;
-                       }
-#endif
-                 // printf ("This is a comment! lineCounter = %d \n",lineCounter);
-                  }
-
-#error "DEAD CODE!"
-
-               char firstNonBlankCharacter = line[0];
-               size_t i = 0;
-               size_t lineLength = line.length();
-               while (i < lineLength && firstNonBlankCharacter == ' ')
-                  {
-                    firstNonBlankCharacter = line[i];
-                    i++;
-                  }
-
-             // The character "!" starts a comment if only blanks are in the leading white space.
-               if (firstNonBlankCharacter == '!')
-                  {
-                 // printf ("This is a F90 style comment: lineCounter = %d line = %s length = %zu \n",lineCounter,line.c_str(),line.length());
-                    isComment = true;
-                  }
-
-               if (firstNonBlankCharacter == '\n' || firstNonBlankCharacter == '\0')
-                  {
-                 // This is a blank line, save it as a comment too!
-                 // printf ("This is a blank line, save it as a comment too! lineCounter = %d line = %s length = %zu \n",lineCounter,line.c_str(),line.length());
-
-                 // Need to reset this to "\n" to save it as a comment in ROSE.
-                    line = "\n ";
-                 // printf ("   after being reset: lineCounter = %d line = %s length = %zu \n",lineCounter,line.c_str(),line.length());
-
-                    isComment = true;
-                  }
-#endif
 
                if (isComment == true)
                   {
@@ -1422,20 +1344,6 @@ ROSEAttributesList::collectFixedFormatPreprocessorDirectivesAndCommentsForAST( c
                     ROSE_ASSERT(comment != NULL);
                     attributeList.push_back(comment);
                   }
-
-#if 0
-            // Try to handle CPP directives, finish this later...
-               size_t positonOfLineContinuation = rfind('&');
-               bool hasLineContinuation = (positonOfLineContinuation != string::npos);
-               size_t positonOfQuote = rfind('\'');
-               bool hasQuote = (positonOfQuote != string::npos);
-               if (hasQuote == false)
-               {
-                  if (hasLineContinuation == true)
-                  {
-                  }
-               }
-#endif
 
                lineCounter++;
              }
@@ -1459,26 +1367,6 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
 
      bool cppDirective = false;
      bool isLikelyCppDirective = false;
-
-#if 0
-     char firstCharacter = line[0];
-     if (firstCharacter != ' '  /* SPACE */ && firstCharacter != '\n' /* CR  */ && 
-         firstCharacter != '\0' /* NUL   */ && firstCharacter != '\t' /* TAB */)
-        {
-       // This has something in the first colum, it might be a CPP directive!
-
-       // Error checking on first character
-#if 0
-          if (!(firstCharacter >= ' ') || !(firstCharacter < 126))
-             {
-               printf ("firstCharacter = %d line.length() = %zu \n",(int)firstCharacter,line.length());
-             }
-#endif
-#if DEBUG_CPP_DIRECTIVE_COLLECTION
-       // printf ("This might be a CPP directive (look for #)! lineCounter = %d \n",lineCounter);
-#endif
-        }
-#endif
 
      char firstNonBlankCharacter = line[0];
      size_t i = 0;
@@ -1515,8 +1403,6 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
 #if DEBUG_CPP_DIRECTIVE_COLLECTION
      printf ("hasLineContinuation = %s \n",hasLineContinuation ? "true" : "false");
 #endif
-
-  // PreprocessingInfo::DirectiveType cppDeclarationKind = PreprocessingInfo::CpreprocessorUnknownDeclaration;
 
   // int numberOfLines = 1;
 
@@ -1583,11 +1469,15 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
             // The atoi() function is not supposed to be used any more.
                integerValue = atoi(cppIndentifier.c_str());
 #else
+            // The modern way to handle conversion of string to integer value is to 
+            // use strtol(), and not atoi().  But atoi() is simpler.
                const char* str = cppIndentifier.c_str();
+
             // strtol will put the string into buffer if str is not a number and 2nd parameter is not NULL.
                integerValue = strtol(str,NULL,10);
 
             // This value will be a constant value used to identify a numerical value.
+            // This value should be a macro defined in some centralized location.
                cppIndentifier = "numeric value";
 #endif
              }
@@ -1601,6 +1491,7 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
              {
                cppDeclarationKind = PreprocessingInfo::CpreprocessorIncludeDeclaration;
              }
+         // Is it "includenext" or "include_next", we need more agressive tests!
             else if (cppIndentifier == "includenext")
              {
                cppDeclarationKind = PreprocessingInfo::CpreprocessorIncludeNextDeclaration;
@@ -1627,7 +1518,6 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
              }
             else if (cppIndentifier == "else")
              {
-            // printf ("Setting cppIndentifier to CpreprocessorElseDeclaration \n");
                cppDeclarationKind = PreprocessingInfo::CpreprocessorElseDeclaration;
              }
             else if (cppIndentifier == "elif")
@@ -1652,14 +1542,15 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
              }
             else if (cppIndentifier == "pragma")
              {
-            // Ignore case of #pragma
+            // Ignore case of #pragma, since it is not a CPP directive and is handled by the C language definition only.
                cppDeclarationKind = PreprocessingInfo::CpreprocessorUnknownDeclaration;
              }
             else if (cppIndentifier == "ident")
              {
-            // Ignore case of #pragma
+            // Ignore case of #ident
                cppDeclarationKind = PreprocessingInfo::CpreprocessorIdentDeclaration;
              }
+         // Recognize the case of a numeric value...set if there was white space following the '#' and then a numeric (integer) value.
             else if (cppIndentifier == "numeric value")
              {
             // DQ (11/17/2008): This handles the case CPP declarations
@@ -1669,6 +1560,7 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
              }
             else
              {
+            // This case should be an error...
                printf ("Error: Unknown cppIndentifier = %s \n",cppIndentifier.c_str());
                ROSE_ASSERT(false);
 
@@ -1676,6 +1568,7 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
              }
 
 #if 0
+       // Debug output...
        // Collect the rest of the line: (line length - next character position) + 1.
           int restOfTheLineLength = (lineLength - (positionOfLastCharacterOfCppIdentifier+1)) + 1;
           string restOfTheLine = line.substr(positionOfLastCharacterOfCppIdentifier+1,restOfTheLineLength);

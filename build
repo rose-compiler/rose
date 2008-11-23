@@ -35,6 +35,14 @@ elif which glibtoolize > /dev/null; then
   glibtoolize --force --copy --ltdl --automake
 fi
 
+# DQ (11/23/2008): Added message to make users less afraid of warnings...
+echo "*******************************************************************************************"
+echo "Note that due to ROSE compatability with libtool 1.5 and 2.0, some warnings will be output."
+echo "These warnings come from configure.in and aclocal.m4, and can be safely ignored."
+echo ""
+echo "Rose Project Management."
+echo "*******************************************************************************************"
+
 aclocal -I ./config -I ./acmacros -I /usr/share/aclocal || : exit 1
 
 # autoheader --warnings=obsolete,all || : exit 1
