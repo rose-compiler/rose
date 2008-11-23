@@ -103,7 +103,7 @@ all-local: testSharedRoseLib$(EXEEXT)
 # Test if programs using ROSE can be run
 	@echo "Testing whether a simple program linked against ROSE can be run:" >&2
 	@echo "The translator will be run without any input files, and will print a warning about that; the warning is normal." >&2
-	@./testSharedRoseLib$(EXEEXT) || (echo "You cannot run a program linked against ROSE.  Please be sure that your LD_LIBRARY_PATH (Linux) or DYLD_LIBRARY_PATH (Mac OSX) contains the correct libraries (JVM, Boost, etc.)." >&2; exit 1)
+	@./testSharedRoseLib$(EXEEXT) || (echo "You cannot run a program linked against ROSE.  Please be sure that your LD_LIBRARY_PATH (Linux) or DYLD_LIBRARY_PATH (Mac OSX) contains the correct libraries (JVM, Boost, ROSE, etc.)." >&2; exit 1)
 
 # PC (9/15/2006): force the use of the C++ linker
 LINK = $(CXXLINK)
