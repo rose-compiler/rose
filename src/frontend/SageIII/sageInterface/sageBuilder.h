@@ -171,7 +171,11 @@ SgCharVal* buildCharVal(char value = 0);
 SgCharVal* buildCharVal_nfi(char value, const std::string& str);
 
 SgComplexVal* buildComplexVal(long double real_value = 0.0, long double imaginary_value = 0.0 );
-SgComplexVal* buildComplexVal_nfi(long double real_value, long double imaginary_value, SgType* eltType, const std::string& str);
+SgComplexVal* buildComplexVal(SgValueExp* real_value, SgValueExp* imaginary_value);
+SgComplexVal* buildComplexVal_nfi(SgValueExp* real_value, SgValueExp* imaginary_value, const std::string& str);
+SgComplexVal* buildImaginaryVal(long double imaginary_value);
+SgComplexVal* buildImaginaryVal(SgValueExp* imaginary_value);
+SgComplexVal* buildImaginaryVal_nfi(SgValueExp* imaginary_value, const std::string& str);
 
 //! Build a double value expression
 SgDoubleVal* buildDoubleVal(double value = 0.0);

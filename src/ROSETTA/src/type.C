@@ -329,13 +329,7 @@ Grammar::setUpTypes ()
   // DQ (8/25/2006): We can't specify an initializer if this is a static pointer type 
   // (since this triggers the output of the initialization code in the constructor).
   // DQ (8/10/2006): Added support for different kinds of complex types (float,double, and long double)
-     TypeComplex.setDataPrototype ("static $CLASSNAME*","builtin_float_complex","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-     TypeComplex.setDataPrototype ("static $CLASSNAME*","builtin_double_complex","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-     TypeComplex.setDataPrototype ("static $CLASSNAME*","builtin_long_double_complex","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-     TypeImaginary.setDataPrototype ("static $CLASSNAME*","builtin_float_complex","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-     TypeImaginary.setDataPrototype ("static $CLASSNAME*","builtin_double_complex","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-     TypeImaginary.setDataPrototype ("static $CLASSNAME*","builtin_long_double_complex","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-  // TypeImaginary.setDataPrototype ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+  // JJW (11/22/2008): Changed to a static variable in a function for the builtin complex and imaginary type caches
 
      CUSTOM_CREATE_TYPE_MACRO(TypeInt,
             "SOURCE_CREATE_TYPE_FOR_TYPE_INT_TYPE",
@@ -572,12 +566,12 @@ Grammar::setUpTypes ()
 				 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      TypeComplex.setFunctionPrototype ("HEADER_TYPE_COMPLEX_TYPE", "../Grammar/Type.code" );
-     TypeComplex.setDataPrototype ("SgTypeComplex::floating_point_precision_enum", "precision", "= SgTypeComplex::e_errorPrecision",
+     TypeComplex.setDataPrototype ("SgType*", "base_type", "= NULL",
 				 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (8/27/2006): Use the code from the complex class to define the imaginary class!
      TypeImaginary.setFunctionPrototype ("HEADER_TYPE_COMPLEX_TYPE", "../Grammar/Type.code" );
-     TypeImaginary.setDataPrototype ("SgTypeImaginary::floating_point_precision_enum", "precision", "= SgTypeImaginary::e_errorPrecision",
+     TypeImaginary.setDataPrototype ("SgType*", "base_type", "= NULL",
 				 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // ***********************************************************************

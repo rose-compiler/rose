@@ -575,8 +575,8 @@ createType(int typeCode)
           case IntrinsicTypeSpec_INTEGER:         result = SgTypeInt::createType();     break;
           case IntrinsicTypeSpec_REAL:            result = SgTypeFloat::createType();   break;
           case IntrinsicTypeSpec_DOUBLEPRECISION: result = SgTypeDouble::createType();  break;
-          case IntrinsicTypeSpec_DOUBLECOMPLEX:   result = SgTypeComplex::createType(SgTypeComplex::e_doublePrecision); break;
-          case IntrinsicTypeSpec_COMPLEX:         result = SgTypeComplex::createType(SgTypeComplex::e_floatPrecision);  break;
+          case IntrinsicTypeSpec_DOUBLECOMPLEX:   result = SgTypeComplex::createType(SgTypeDouble::createType()); break;
+          case IntrinsicTypeSpec_COMPLEX:         result = SgTypeComplex::createType(SgTypeFloat::createType());  break;
           case IntrinsicTypeSpec_CHARACTER:       result = SgTypeChar::createType();    break;
           case IntrinsicTypeSpec_LOGICAL:         result = SgTypeBool::createType();    break;
           default:

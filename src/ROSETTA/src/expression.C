@@ -887,13 +887,12 @@ Grammar::setUpExpressions ()
 				 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (8/27/2006): Added support for Complex values (save the values as long doubles internally within the AST)
+  // JJW (11/22/2008): Changed members to SgValueExp*; real_value can be NULL for imaginary numbers
      ComplexVal.setFunctionPrototype ( "HEADER_COMPLEX_VALUE_EXPRESSION", "../Grammar/Expression.code" );
-     ComplexVal.setDataPrototype ( "long double", "real_value", "= 0.0",
-				 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     ComplexVal.setDataPrototype ( "long double", "imaginary_value", "= 0.0",
-				 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // ComplexVal.setDataPrototype ( "SgTypeComplex::floating_point_precision_enum", "precision", "= SgTypeComplex::e_errorPrecision",
-  //         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     ComplexVal.setDataPrototype ( "SgValueExp*", "real_value", "",
+				 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     ComplexVal.setDataPrototype ( "SgValueExp*", "imaginary_value", "",
+				 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      ComplexVal.setDataPrototype ( "SgType*", "precisionType", "= NULL",
              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (11/9/2005): Added string to hold source code constant precisely (part of work with Andreas)

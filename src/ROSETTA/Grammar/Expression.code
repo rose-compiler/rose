@@ -4229,32 +4229,10 @@ SOURCE_GET_TYPE_COMPLEX_START
 SgType*
 $CLASSNAME::get_type(void) const
    {
-     SgTypeComplex::floating_point_precision_enum precision = SgTypeComplex::e_errorPrecision;
-
   // Use the stored SgType to return the correct SgTypeComplex using the correct precision.
      ROSE_ASSERT(p_precisionType != NULL);
-     switch(p_precisionType->variantT())
-        {
-          case V_SgTypeFloat:
-               precision = SgTypeComplex::e_floatPrecision;
-               break;
-          case V_SgTypeDouble:
-               precision = SgTypeComplex::e_doublePrecision;
-               break;
-          case V_SgTypeLongDouble:
-               precision = SgTypeComplex::e_longDoublePrecision;
-               break;
-
-          default:
-             {
-               printf ("Error, default reached precisionType = %s \n",p_precisionType->class_name().c_str());
-               ROSE_ASSERT(false);
-               break;
-             }
-        }
-
   // returns a shared SgTypeComplex type
-     return SgTypeComplex::createType(precision);
+     return SgTypeComplex::createType(p_precisionType);
    }
 
 SOURCE_GET_TYPE_COMPLEX_END
