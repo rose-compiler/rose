@@ -1255,6 +1255,15 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                       // be considered as part of a general mechanism to replace lines in the process of unparsing.
                          break;
 
+                    case PreprocessingInfo::CpreprocessorIdentDeclaration:
+                         curprint ( (*i)->getString());
+                         break;
+
+                    case PreprocessingInfo::CpreprocessorCompilerGenerateLineDeclaration:
+                         curprint ( (*i)->getString());
+                         break;
+
+
                     default:
                          printf ("Error: default reached in switch in Unparse_ExprStmt::unparseAttachedPreprocessingInfo()\n");
                          ROSE_ABORT();

@@ -142,6 +142,7 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
 
           default:
              {
+            // printf ("Default reached in switch statement for unparsing expressions! expr = %p = %s \n",expr,expr->class_name().c_str());
                printf ("Default reached in switch statement for unparsing expressions! expr = %p = %s \n",expr,expr->class_name().c_str());
                ROSE_ASSERT(false);
                break;
@@ -588,7 +589,8 @@ void Unparse_ExprStmt::unparseExpression(SgExpression* expr, SgUnparse_Info& inf
 
                default:
                   {
-                    printf ("Default reached in switch statement for unparsing expressions! \n");
+                 // printf ("Default reached in switch statement for unparsing expressions! \n");
+                    printf ("Default reached in switch statement for unparsing expressions! expr = %p = %s \n",expr,expr->class_name().c_str());
                     ROSE_ASSERT(false);
                     break;
                   }

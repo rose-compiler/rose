@@ -637,10 +637,21 @@ PreprocessingInfo::directiveTypeName ( const DirectiveType & directive )
              returnString = "LineReplacement";
              break;
 
+       // DQ (11/17/2008): Added support for #ident
+          case CpreprocessorIdentDeclaration:
+             returnString = "CpreprocessorIdentDeclaration";
+             break;
+
+       // DQ (11/17/2008): Added support for things like:  # 1 "<command line>"
+          case CpreprocessorCompilerGenerateLineDeclaration:
+             returnString = "CpreprocessorCompilerGenerateLineDeclaration";
+             break;
+
+
           default:
              returnString = "ERROR DEFAULT REACHED";
              printf ("Default reached in PreprocessingInfo::directiveTypeName() exiting ... (directive = %d) \n",directive);
-             ROSE_ABORT();
+             ROSE_ASSERT(false);
              break;
         }
 
@@ -1068,7 +1079,29 @@ ROSEAttributesList::generatePreprocessorDirectivesAndCommentsForAST( const strin
      ROSE_ASSERT (this != NULL);
      ROSE_ASSERT (filename.empty() == false);
 
+     printf ("This is an old version of the function to collect CPP directives and comments \n");
+     ROSE_ASSERT(false);
+
      ROSE_ASSERT(rawTokenStream != NULL);
+
+#if 1
+  // DQ (11/16/2008): Added test.
+     if (attributeList.empty() == false)
+        {
+       // Detect where these these have been previously built using a mechanism we are testing.
+       // Delete the entries built by the expermiental mechanism and use the previous approach.
+       // This allows for the new mechanism to be widely tested in C, C++, and Fortran.
+
+          printf ("attributeList has already been build, remove the existing entries attributeList.size() = %zu \n",attributeList.size());
+          std::vector<PreprocessingInfo*>::iterator i = attributeList.begin();
+          while (i != attributeList.end())
+             {
+               delete *i;
+               i++;
+             }
+          attributeList.clear();
+        }
+#endif
      ROSE_ASSERT(attributeList.empty() == true);
 
   // printf ("In ROSEAttributesList::generatePreprocessorDirectivesAndCommentsForAST(): rawTokenStream->size() = %zu \n",rawTokenStream->size());
@@ -1079,6 +1112,7 @@ ROSEAttributesList::generatePreprocessorDirectivesAndCommentsForAST( const strin
         {
        // print out the tokens
        // printf ("token stream element #%d \n",count);
+
           token_element* token = (*i)->p_tok_elem;
           ROSE_ASSERT(token != NULL);
           file_pos_info & start = (*i)->beginning_fpi;
@@ -1105,6 +1139,8 @@ ROSEAttributesList::generatePreprocessorDirectivesAndCommentsForAST( const strin
                                                                   start.line_num,start.column_num,numberOfLines,PreprocessingInfo::before);
                ROSE_ASSERT(comment != NULL);
                attributeList.push_back(comment);
+
+            // comment->display("In ROSEAttributesList::generatePreprocessorDirectivesAndCommentsForAST() \n");
              }
 
           i++;
@@ -1115,12 +1151,154 @@ ROSEAttributesList::generatePreprocessorDirectivesAndCommentsForAST( const strin
    }
 
 
+bool
+ROSEAttributesList::isFortran90Comment( const string & line )
+   {
+  // This refactored code test if a line is a fortran comment.
+  // Fortran 90 comments are more complex to recognise than
+  // F77.  This function only recognizes F90 comments that have
+  // a leading "!".
+
+     bool isComment = false;
+
+     char firstNonBlankCharacter = line[0];
+     size_t i = 0;
+     size_t lineLength = line.length();
+
+  // Loop over any leading blank spaces.
+     while (i < lineLength && firstNonBlankCharacter == ' ')
+        {
+          firstNonBlankCharacter = line[i];
+          i++;
+        }
+
+  // The character "!" starts a comment if only blanks are in the leading white space.
+     if (firstNonBlankCharacter == '!')
+        {
+          printf ("This is a F90 style comment: line = %s length = %zu \n",line.c_str(),line.length());
+          isComment = true;
+        }
+
+  // return isFortran77Comment(line);
+     return isComment;
+   }
+
+bool
+ROSEAttributesList::isFortran77Comment( const string & line )
+   {
+  // This refactored code tests if a line is a fortran comment.
+  // It is a very simple test on the character in column zero.
+
+#if 0
+  // Debugging output
+     cout << "collect comments: " << line << endl;
+#endif
+
+  // Handle comments first, Fortran fixed format comments should be easy.
+  // if there is a character in the first column, then the whole line is a comment.
+  // Also, more subtle, if it is a blank line then it is a comment, so save the blank lines too.
+
+     bool isComment = false;
+
+     char firstCharacter = line[0];
+  // if (firstCharacter != ' ' && firstCharacter != '\n' && firstCharacter != '\0' )
+     if (firstCharacter != ' '  /* SPACE */ && firstCharacter != '\n' /* CR  */ && 
+         firstCharacter != '\0' /* NUL   */ && firstCharacter != '\t' /* TAB */)
+        {
+       // This has something in the first colum, it might be a comment!
+
+       // Error checking on first character
+#if 1
+          if (!(firstCharacter >= ' ') || !(firstCharacter < 126))
+             {
+               printf ("firstCharacter = %d line.length() = %zu \n",(int)firstCharacter,line.length());
+             }
+#endif
+       // DQ (5/15/2008): The filter is in the conditional above and is not required to be repeated.
+       // ROSE_ASSERT(firstCharacter >= ' ' && firstCharacter < 126);
+#if 1
+       // Make sure it is not part a number (which could be part of a label)
+          if (firstCharacter >= '0' && firstCharacter <= '9')
+             {
+            // This is NOT a comment it is part of a label in the first column (see test2008_03.f)
+            // printf ("This is not a comment, it is part of a label in the first column: line = %s \n",line.c_str());
+             }
+            else
+             {
+            // DQ (11/19/2008): Commented this out since I can't understand 
+            // why it was here and it appears to mark everything as a comment!
+
+            // This is position (column) 0 in the line, for F77 this means it is a comment.
+               isComment = true;
+             }
+#else
+       // DQ (1/22/2008): Separate from the F77 standard, no compiler is this restrictive!
+       // The Fortran 77 standard says: comments must have a C or * in the first column (check for case)
+          if (firstCharacter == 'C' || firstCharacter == 'c' || firstCharacter == '*')
+             {
+               isComment = true;
+             }
+#endif
+       // printf ("This is a comment! lineCounter = %d \n",lineCounter);
+        }
+
+#if 0
+     char firstNonBlankCharacter = line[0];
+     size_t i = 0;
+     size_t lineLength = line.length();
+     while (i < lineLength && firstNonBlankCharacter == ' ')
+        {
+          firstNonBlankCharacter = line[i];
+          i++;
+        }
+
+  // The character "!" starts a comment if only blanks are in the leading white space.
+     if (firstNonBlankCharacter == '!')
+        {
+          printf ("This is a F90 style comment: line = %s length = %zu \n",line.c_str(),line.length());
+          isComment = true;
+        }
+#endif
+
+#if 0
+  // We want this function to be side-effect free.
+     if (firstNonBlankCharacter == '\n' || firstNonBlankCharacter == '\0')
+        {
+       // This is a blank line, save it as a comment too!
+       // printf ("This is a blank line, save it as a comment too! lineCounter = %d line = %s length = %zu \n",lineCounter,line.c_str(),line.length());
+
+       // Need to reset this to "\n" to save it as a comment in ROSE.
+          line = "\n ";
+       // printf ("   after being reset: lineCounter = %d line = %s length = %zu \n",lineCounter,line.c_str(),line.length());
+
+          isComment = true;
+        }
+#endif
+
+#if 0
+     if (isComment == true)
+        {
+          printf ("isComment == true: line = %s \n",line.c_str());
+        }
+#endif
+
+     return isComment;
+   }
+
 void
 ROSEAttributesList::collectFixedFormatPreprocessorDirectivesAndCommentsForAST( const string & filename )
    {
+  // This function only collects comments, not CPP directives, it is being replaced by:
+  // collectPreprocessorDirectivesAndCommentsForAST() (below).
+
   // The lex pass for fixed-format Fortran ignores comments and does not get CPP directives correct.
   // So maybe we should just extract them separately in an other pass over the file.  Fixed format
   // comments in Fortran are supposed to be easy to extract.
+
+     ROSE_ASSERT(this != NULL);
+
+     printf ("This is an old version of the function to collect CPP directives and comments \n");
+     ROSE_ASSERT(false);
 
      ROSE_ASSERT (filename.empty() == false);
 
@@ -1139,6 +1317,14 @@ ROSEAttributesList::collectFixedFormatPreprocessorDirectivesAndCommentsForAST( c
           while ( fixedFormatFile.eof() == false )
              {
                getline (fixedFormatFile,line);
+
+#if 1
+            // DQ (11/17/2008): Refactored the code.
+               bool isComment = isFortran77Comment(line);
+#else
+
+#error "DEAD CODE!"
+
 #if 0
             // Debugging output
                cout << "collect comments: " << line << endl;
@@ -1165,6 +1351,9 @@ ROSEAttributesList::collectFixedFormatPreprocessorDirectivesAndCommentsForAST( c
 #endif
                  // DQ (5/15/2008): The filter is in the conditional above and is not required to be repeated.
                  // ROSE_ASSERT(firstCharacter >= ' ' && firstCharacter < 126);
+
+#error "DEAD CODE!"
+
 #if 1
                  // Make sure it is not part a number (which could be part of a label)
                     if (firstCharacter >= '0' && firstCharacter <= '9')
@@ -1186,6 +1375,8 @@ ROSEAttributesList::collectFixedFormatPreprocessorDirectivesAndCommentsForAST( c
 #endif
                  // printf ("This is a comment! lineCounter = %d \n",lineCounter);
                   }
+
+#error "DEAD CODE!"
 
                char firstNonBlankCharacter = line[0];
                size_t i = 0;
@@ -1214,6 +1405,7 @@ ROSEAttributesList::collectFixedFormatPreprocessorDirectivesAndCommentsForAST( c
 
                     isComment = true;
                   }
+#endif
 
                if (isComment == true)
                   {
@@ -1255,6 +1447,598 @@ ROSEAttributesList::collectFixedFormatPreprocessorDirectivesAndCommentsForAST( c
           cerr << "Unable to open fixed format Fortran file";
           ROSE_ASSERT(false);
         }
+   }
+
+
+#define DEBUG_CPP_DIRECTIVE_COLLECTION 0
+
+bool
+ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::DirectiveType & cppDeclarationKind )
+   {
+  // This function tests if a string is a CPP directive (the first line of a CPP directive).
+
+     bool cppDirective = false;
+     bool isLikelyCppDirective = false;
+
+#if 0
+     char firstCharacter = line[0];
+     if (firstCharacter != ' '  /* SPACE */ && firstCharacter != '\n' /* CR  */ && 
+         firstCharacter != '\0' /* NUL   */ && firstCharacter != '\t' /* TAB */)
+        {
+       // This has something in the first colum, it might be a CPP directive!
+
+       // Error checking on first character
+#if 0
+          if (!(firstCharacter >= ' ') || !(firstCharacter < 126))
+             {
+               printf ("firstCharacter = %d line.length() = %zu \n",(int)firstCharacter,line.length());
+             }
+#endif
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
+       // printf ("This might be a CPP directive (look for #)! lineCounter = %d \n",lineCounter);
+#endif
+        }
+#endif
+
+     char firstNonBlankCharacter = line[0];
+     size_t i = 0;
+     size_t lineLength = line.length();
+
+  // Loop through any initial white space.
+     while (i < lineLength && firstNonBlankCharacter == ' ')
+        {
+          firstNonBlankCharacter = line[i];
+          i++;
+        }
+
+  // The character "!" starts a comment if only blanks are in the leading white space.
+     int positionofHashCharacter = -1;
+     if (firstNonBlankCharacter == '#')
+        {
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
+       // printf ("This is a CPP directive: i = %d lineCounter = %d line = %s length = %zu \n",i,lineCounter,line.c_str(),line.length());
+#endif
+          isLikelyCppDirective = true;
+          positionofHashCharacter = i;
+        }
+
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
+     printf ("i = %d positionofHashCharacter = %d \n",i,positionofHashCharacter);
+#endif
+     bool hasLineContinuation = false;
+     char lastCharacter = line[lineLength-1];
+     if (lastCharacter == '\\')
+        {
+          hasLineContinuation = true;
+        }
+
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
+     printf ("hasLineContinuation = %s \n",hasLineContinuation ? "true" : "false");
+#endif
+
+  // PreprocessingInfo::DirectiveType cppDeclarationKind = PreprocessingInfo::CpreprocessorUnknownDeclaration;
+
+  // int numberOfLines = 1;
+
+     if (isLikelyCppDirective == true)
+        {
+       // PreprocessingInfo(DirectiveType, const std::string & inputString, const std::string & filenameString, 
+       //      int line_no , int col_no, int nol, RelativePositionType relPos, bool copiedFlag, bool unparsedFlag);
+
+       // firstNonBlankCharacter = ' ';
+       // printf ("firstNonBlankCharacter = %c \n",firstNonBlankCharacter);
+          bool spaceAfterHash = false;
+          while (i < lineLength && firstNonBlankCharacter == ' ' || firstNonBlankCharacter == '#')
+             {
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
+               printf ("Looping over # or white space between # and CPP directive i = %d \n",i);
+#endif
+               firstNonBlankCharacter = line[i];
+               if (spaceAfterHash == false)
+                    spaceAfterHash = (firstNonBlankCharacter == ' ');
+
+               i++;
+             }
+
+          int positionOfFirstCharacterOfCppIdentifier = i-1;
+
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
+          printf ("positionOfFirstCharacterOfCppIdentifier = %d spaceAfterHash = %s \n",positionOfFirstCharacterOfCppIdentifier,spaceAfterHash ? "true" : "false");
+#endif
+       // Need to back up one!
+          i = positionOfFirstCharacterOfCppIdentifier;
+
+          char nonBlankCharacter = line[positionOfFirstCharacterOfCppIdentifier];
+          int positionOfLastCharacterOfCppIdentifier = positionOfFirstCharacterOfCppIdentifier;
+       // while (i < lineLength && isLegalCharacterForCppIndentifier(nonBlankCharacter) == true))
+          while (i <= lineLength && ( ((nonBlankCharacter >= 'a' && nonBlankCharacter <= 'z') == true) || (nonBlankCharacter >= '0' && nonBlankCharacter <= '9') == true))
+             {
+               nonBlankCharacter = line[i];
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
+               printf ("In loop: i = %d lineLength = %d nonBlankCharacter = %c \n",i,lineLength,isprint(nonBlankCharacter) ? nonBlankCharacter : '.');
+#endif
+               i++;
+             }
+
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
+          printf ("i = %d \n",i);
+#endif
+
+       // Need to backup two (for example if this is the end of the line, as in "#endif")
+          positionOfLastCharacterOfCppIdentifier = i-2;
+
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
+          printf ("positionOfLastCharacterOfCppIdentifier = %d \n",positionOfLastCharacterOfCppIdentifier);
+#endif
+          int cppIdentifierLength = (positionOfLastCharacterOfCppIdentifier - positionOfFirstCharacterOfCppIdentifier) + 1;
+          string cppIndentifier = line.substr(positionOfFirstCharacterOfCppIdentifier,cppIdentifierLength);
+
+       // Some names will convert to integer values
+          long integerValue = -1;
+          if (spaceAfterHash == true)
+             {
+            // printf ("firstNonBlankCharacter = %c \n",firstNonBlankCharacter);
+            // ROSE_ASSERT(firstNonBlankCharacter == '\"');
+#if 0
+            // The atoi() function is not supposed to be used any more.
+               integerValue = atoi(cppIndentifier.c_str());
+#else
+               const char* str = cppIndentifier.c_str();
+            // strtol will put the string into buffer if str is not a number and 2nd parameter is not NULL.
+               integerValue = strtol(str,NULL,10);
+
+            // This value will be a constant value used to identify a numerical value.
+               cppIndentifier = "numeric value";
+#endif
+             }
+
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
+          printf ("cppIdentifierLength = %d cppIndentifier = %s integerValue = %ld \n",cppIdentifierLength,cppIndentifier.c_str(),integerValue);
+#endif
+
+       // classify the CCP directive
+          if (cppIndentifier == "include")
+             {
+               cppDeclarationKind = PreprocessingInfo::CpreprocessorIncludeDeclaration;
+             }
+            else if (cppIndentifier == "includenext")
+             {
+               cppDeclarationKind = PreprocessingInfo::CpreprocessorIncludeNextDeclaration;
+             }
+            else if (cppIndentifier == "define")
+             {
+               cppDeclarationKind = PreprocessingInfo::CpreprocessorDefineDeclaration;
+             }
+            else if (cppIndentifier == "undef")
+             {
+               cppDeclarationKind = PreprocessingInfo::CpreprocessorUndefDeclaration;
+             }
+            else if (cppIndentifier == "ifdef")
+             {
+               cppDeclarationKind = PreprocessingInfo::CpreprocessorIfdefDeclaration;
+             }
+            else if (cppIndentifier == "ifndef")
+             {
+               cppDeclarationKind = PreprocessingInfo::CpreprocessorIfndefDeclaration;
+             }
+            else if (cppIndentifier == "if")
+             {
+               cppDeclarationKind = PreprocessingInfo::CpreprocessorIfDeclaration;
+             }
+            else if (cppIndentifier == "else")
+             {
+            // printf ("Setting cppIndentifier to CpreprocessorElseDeclaration \n");
+               cppDeclarationKind = PreprocessingInfo::CpreprocessorElseDeclaration;
+             }
+            else if (cppIndentifier == "elif")
+             {
+               cppDeclarationKind = PreprocessingInfo::CpreprocessorElifDeclaration;
+             }
+            else if (cppIndentifier == "endif")
+             {
+               cppDeclarationKind = PreprocessingInfo::CpreprocessorEndifDeclaration;
+             }
+            else if (cppIndentifier == "line")
+             {
+               cppDeclarationKind = PreprocessingInfo::CpreprocessorLineDeclaration;
+             }
+            else if (cppIndentifier == "error")
+             {
+               cppDeclarationKind = PreprocessingInfo::CpreprocessorErrorDeclaration;
+             }
+            else if (cppIndentifier == "warning")
+             {
+               cppDeclarationKind = PreprocessingInfo::CpreprocessorWarningDeclaration;
+             }
+            else if (cppIndentifier == "pragma")
+             {
+            // Ignore case of #pragma
+               cppDeclarationKind = PreprocessingInfo::CpreprocessorUnknownDeclaration;
+             }
+            else if (cppIndentifier == "ident")
+             {
+            // Ignore case of #pragma
+               cppDeclarationKind = PreprocessingInfo::CpreprocessorIdentDeclaration;
+             }
+            else if (cppIndentifier == "numeric value")
+             {
+            // DQ (11/17/2008): This handles the case CPP declarations
+            // such as: "# 1 "test2008_05.F90"", "# 1 "<built-in>"", 
+            // "# 1 "<command line>"" "# 1 "test2008_05.F90""
+               cppDeclarationKind = PreprocessingInfo::CpreprocessorCompilerGenerateLineDeclaration;
+             }
+            else
+             {
+               printf ("Error: Unknown cppIndentifier = %s \n",cppIndentifier.c_str());
+               ROSE_ASSERT(false);
+
+               cppDeclarationKind = PreprocessingInfo::CpreprocessorUnknownDeclaration;
+             }
+
+#if 0
+       // Collect the rest of the line: (line length - next character position) + 1.
+          int restOfTheLineLength = (lineLength - (positionOfLastCharacterOfCppIdentifier+1)) + 1;
+          string restOfTheLine = line.substr(positionOfLastCharacterOfCppIdentifier+1,restOfTheLineLength);
+          printf ("cppDeclarationKind = %s restOfTheLine = %s \n",PreprocessingInfo::directiveTypeName(cppDeclarationKind).c_str(),restOfTheLine.c_str());
+#endif
+
+       // Set the return value
+          if (cppDeclarationKind != PreprocessingInfo::CpreprocessorUnknownDeclaration)
+             {
+               cppDirective = true;
+             }
+        }
+
+     return cppDirective;
+   }
+
+void
+ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string & filename, ROSEAttributesList::languageTypeEnum languageType )
+   {
+  // This is required for Fortran, but is redundant for C and C++.
+  // This is a more direct approach to collecting the CPP directives, where as for C and C++
+  // we have had a solution (using lex) and a second (superior) solution using wave, the
+  // Fortran support for CPP is not addressed properly by the existing lex approach (and Wave
+  // does not work on Fortran).  Thus we have implemented a more direct collection of CPP
+  // directives to support the requirements of Fortran CPP handling (such files have a suffix
+  // such as: "F", "F90", "F95", "F03", "F08".
+
+  // The lex pass for free-format Fortran collects comments properly, but does not classify CPP directives properly.
+  // So maybe we should just extract them separately in an other pass over the file.  Also if we separate out 
+  // the recognition of CPP directives from comments this function may be useful for the fix format CPP case.
+  // CPP directives should also be easier than a lot of other token recognition. 
+
+  // printf ("This function ROSEAttributesList::collectFreeFormatPreprocessorDirectivesAndCommentsForAS(): is not implemented yet! \n");
+  // ROSE_ASSERT(false);
+
+     ROSE_ASSERT (this != NULL);
+
+     ROSE_ASSERT (filename.empty() == false);
+
+  // Open file for reading line by line!
+     string line;
+
+  // printf ("In ROSEAttributesList::collectFreeFormatPreprocessorDirectivesAndCommentsForAST: Opening file %s for reading comments and CPP directives \n",filename.c_str());
+
+     ifstream targetFile (filename.c_str());
+     if (targetFile.is_open())
+        {
+       // The first line is defined to be line 1, line zero does not exist  and is an error value.
+       // This synch's the line numbering convention of the OFP with the line numbering convention 
+       // for CPP directives and comments.
+          int lineCounter = 1;
+          while ( targetFile.eof() == false )
+             {
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
+               printf ("At top of loop over lines in the file ... lineCounter = %d \n",lineCounter);
+#endif
+               getline (targetFile,line);
+
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
+            // Debugging output
+               cout << "collect CPP directives: " << line << endl;
+#endif
+
+#if 1
+               int numberOfLines = 1;
+
+               PreprocessingInfo::DirectiveType cppDeclarationKind = PreprocessingInfo::CpreprocessorUnknownDeclaration;
+               bool cppDirective = isCppDirective(line,cppDeclarationKind);
+
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
+            // printf ("cppDirective = %s \n",cppDirective ? "true" : "false");
+               printf ("cppDirective = %s cppDeclarationKind = %s \n",cppDirective ? "true" : "false",PreprocessingInfo::directiveTypeName(cppDeclarationKind).c_str());
+#endif
+#else
+               bool isCppDirective = false;
+
+               char firstCharacter = line[0];
+               if (firstCharacter != ' '  /* SPACE */ && firstCharacter != '\n' /* CR  */ && 
+                   firstCharacter != '\0' /* NUL   */ && firstCharacter != '\t' /* TAB */)
+                  {
+                 // This has something in the first colum, it might be a CPP directive!
+
+                 // Error checking on first character
+#if 0
+                    if (!(firstCharacter >= ' ') || !(firstCharacter < 126))
+                       {
+                         printf ("firstCharacter = %d line.length() = %zu \n",(int)firstCharacter,line.length());
+                       }
+#endif
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
+                    printf ("This might be a CPP directive (look for #)! lineCounter = %d \n",lineCounter);
+#endif
+                  }
+
+               char firstNonBlankCharacter = line[0];
+               size_t i = 0;
+               size_t lineLength = line.length();
+               while (i < lineLength && firstNonBlankCharacter == ' ')
+                  {
+                    firstNonBlankCharacter = line[i];
+                    i++;
+                  }
+
+             // The character "!" starts a comment if only blanks are in the leading white space.
+               int positionofHashCharacter = -1;
+               if (firstNonBlankCharacter == '#')
+                  {
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
+                    printf ("This is a CPP directive: i = %d lineCounter = %d line = %s length = %zu \n",i,lineCounter,line.c_str(),line.length());
+#endif
+                    isCppDirective = true;
+                    positionofHashCharacter = i;
+                  }
+
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
+               printf ("i = %d positionofHashCharacter = %d \n",i,positionofHashCharacter);
+#endif
+               bool hasLineContinuation = false;
+               char lastCharacter = line[lineLength-1];
+               if (lastCharacter == '\\')
+                  {
+                    hasLineContinuation = true;
+                  }
+
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
+               printf ("hasLineContinuation = %s \n",hasLineContinuation ? "true" : "false");
+#endif
+
+               PreprocessingInfo::DirectiveType cppDeclarationKind = PreprocessingInfo::CpreprocessorUnknownDeclaration;
+
+               int numberOfLines = 1;
+
+               if (isCppDirective == true)
+                  {
+                 // PreprocessingInfo(DirectiveType, const std::string & inputString, const std::string & filenameString, 
+                 //      int line_no , int col_no, int nol, RelativePositionType relPos, bool copiedFlag, bool unparsedFlag);
+
+                 // firstNonBlankCharacter = ' ';
+                 // printf ("firstNonBlankCharacter = %c \n",firstNonBlankCharacter);
+                    bool spaceAfterHash = false;
+                    while (i < lineLength && firstNonBlankCharacter == ' ' || firstNonBlankCharacter == '#')
+                       {
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
+                         printf ("Looping over # or white space between # and CPP directive i = %d \n",i);
+#endif
+                         firstNonBlankCharacter = line[i];
+                         if (spaceAfterHash == false)
+                              spaceAfterHash = (firstNonBlankCharacter == ' ');
+
+                         i++;
+                       }
+
+                    int positionOfFirstCharacterOfCppIdentifier = i-1;
+
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
+                    printf ("positionOfFirstCharacterOfCppIdentifier = %d spaceAfterHash = %s \n",positionOfFirstCharacterOfCppIdentifier,spaceAfterHash ? "true" : "false");
+#endif
+                 // Need to back up one!
+                    i = positionOfFirstCharacterOfCppIdentifier;
+
+                    char nonBlankCharacter = line[positionOfFirstCharacterOfCppIdentifier];
+                    int positionOfLastCharacterOfCppIdentifier = positionOfFirstCharacterOfCppIdentifier;
+                 // while (i < lineLength && isLegalCharacterForCppIndentifier(nonBlankCharacter) == true))
+                    while (i <= lineLength && ( ((nonBlankCharacter >= 'a' && nonBlankCharacter <= 'z') == true) || (nonBlankCharacter >= '0' && nonBlankCharacter <= '9') == true))
+                       {
+                         nonBlankCharacter = line[i];
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
+                         printf ("In loop: i = %d lineLength = %d nonBlankCharacter = %c \n",i,lineLength,isprint(nonBlankCharacter) ? nonBlankCharacter : '.');
+#endif
+                         i++;
+                       }
+
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
+                    printf ("i = %d \n",i);
+#endif
+
+                 // Need to backup two (unless this is the end of the line (as in "#endif")
+                    positionOfLastCharacterOfCppIdentifier = i-2;
+
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
+                    printf ("positionOfLastCharacterOfCppIdentifier = %d \n",positionOfLastCharacterOfCppIdentifier);
+#endif
+                    int cppIdentifierLength = (positionOfLastCharacterOfCppIdentifier - positionOfFirstCharacterOfCppIdentifier) + 1;
+                    string cppIndentifier = line.substr(positionOfFirstCharacterOfCppIdentifier,cppIdentifierLength);
+
+                 // Some names will convert to integer values
+                    long integerValue = -1;
+                    if (spaceAfterHash == true)
+                       {
+                      // printf ("firstNonBlankCharacter = %c \n",firstNonBlankCharacter);
+                      // ROSE_ASSERT(firstNonBlankCharacter == '\"');
+#if 0
+                      // The atoi() function is not supposed to be used any more.
+                         integerValue = atoi(cppIndentifier.c_str());
+#else
+                         const char* str = cppIndentifier.c_str();
+                      // strtol will put the string into buffer if str is not a number and 2nd parameter is not NULL.
+                         integerValue = strtol(str,NULL,10);
+                         cppIndentifier = "numeric value";
+#endif
+                       }
+
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
+                    printf ("cppIdentifierLength = %d cppIndentifier = %s integerValue = %ld \n",cppIdentifierLength,cppIndentifier.c_str(),integerValue);
+#endif
+
+                 // classify the CCP directive
+                    if (cppIndentifier == "include")
+                       {
+                         cppDeclarationKind = PreprocessingInfo::CpreprocessorIncludeDeclaration;
+                       }
+                      else if (cppIndentifier == "includenext")
+                       {
+                         cppDeclarationKind = PreprocessingInfo::CpreprocessorIncludeNextDeclaration;
+                       }
+                      else if (cppIndentifier == "define")
+                       {
+                         cppDeclarationKind = PreprocessingInfo::CpreprocessorDefineDeclaration;
+                       }
+                      else if (cppIndentifier == "undef")
+                       {
+                         cppDeclarationKind = PreprocessingInfo::CpreprocessorUndefDeclaration;
+                       }
+                      else if (cppIndentifier == "ifdef")
+                       {
+                         cppDeclarationKind = PreprocessingInfo::CpreprocessorIfdefDeclaration;
+                       }
+                      else if (cppIndentifier == "ifndef")
+                       {
+                         cppDeclarationKind = PreprocessingInfo::CpreprocessorIfndefDeclaration;
+                       }
+                      else if (cppIndentifier == "if")
+                       {
+                         cppDeclarationKind = PreprocessingInfo::CpreprocessorIfDeclaration;
+                       }
+                      else if (cppIndentifier == "else")
+                       {
+                      // printf ("Setting cppIndentifier to CpreprocessorElseDeclaration \n");
+                         cppDeclarationKind = PreprocessingInfo::CpreprocessorElseDeclaration;
+                       }
+                      else if (cppIndentifier == "elif")
+                       {
+                         cppDeclarationKind = PreprocessingInfo::CpreprocessorElifDeclaration;
+                       }
+                      else if (cppIndentifier == "endif")
+                       {
+                         cppDeclarationKind = PreprocessingInfo::CpreprocessorEndifDeclaration;
+                       }
+                      else if (cppIndentifier == "line")
+                       {
+                         cppDeclarationKind = PreprocessingInfo::CpreprocessorLineDeclaration;
+                       }
+                      else if (cppIndentifier == "error")
+                       {
+                         cppDeclarationKind = PreprocessingInfo::CpreprocessorErrorDeclaration;
+                       }
+                      else if (cppIndentifier == "warning")
+                       {
+                         cppDeclarationKind = PreprocessingInfo::CpreprocessorWarningDeclaration;
+                       }
+                      else if (cppIndentifier == "pragma")
+                       {
+                      // Ignore case of #pragma
+                         cppDeclarationKind = PreprocessingInfo::CpreprocessorUnknownDeclaration;
+                       }
+                      else if (cppIndentifier == "ident")
+                       {
+                      // Ignore case of #pragma
+                         cppDeclarationKind = PreprocessingInfo::CpreprocessorIdentDeclaration;
+                       }
+                      else if (cppIndentifier == "numeric value")
+                       {
+                      // DQ (11/17/2008): This handles the case CPP declarations
+                      // such as: "# 1 "test2008_05.F90"", "# 1 "<built-in>"", 
+                      // "# 1 "<command line>"" "# 1 "test2008_05.F90""
+                         cppDeclarationKind = PreprocessingInfo::CpreprocessorCompilerGenerateLineDeclaration;
+                       }
+                      else
+                       {
+                         printf ("Error: Unknown cppIndentifier = %s \n",cppIndentifier.c_str());
+                         ROSE_ASSERT(false);
+
+                         cppDeclarationKind = PreprocessingInfo::CpreprocessorUnknownDeclaration;
+                       }
+
+#if 1
+                 // Collect the rest of the line: (line length - next character position) + 1.
+                    int restOfTheLineLength = (lineLength - (positionOfLastCharacterOfCppIdentifier+1)) + 1;
+                    string restOfTheLine = line.substr(positionOfLastCharacterOfCppIdentifier+1,restOfTheLineLength);
+                    printf ("cppDeclarationKind = %s restOfTheLine = %s \n",PreprocessingInfo::directiveTypeName(cppDeclarationKind).c_str(),restOfTheLine.c_str());
+#endif
+
+                  }
+#endif
+
+#if 1
+            // DQ (11/17/2008): Refactored the code to make it simpler to add here!
+            // used switch to provide room for PHP, and pernaps C, C++ if we wanted
+            // to handle then this way.  Note that C permits multiple comments on a 
+            // single line, this is not addressed here.
+            // if (cppDeclarationKind == PreprocessingInfo::CpreprocessorUnknownDeclaration)
+               if (cppDirective == false)
+                  {
+                    bool isComment = false;
+                    switch (languageType)
+                       {
+                      // case e_Cxx_language: /* C and C++ cases are already handled via the lex based pass. */
+
+                      // For C and C++ ignore the collection of comments for now (this function is defined 
+                      // for Fortran but since C and C++ code is great for testing the CPP we allow it to 
+                      // be used for testing CPP on C and C++ code, but we ignore comments for this case.
+                         case e_C_language:   isComment = false; break;
+                         case e_Cxx_language: isComment = false; break;
+
+                         case e_Fortran77_language: isComment = isFortran77Comment(line); break;
+
+                         case e_Fortran9x_language: isComment = isFortran90Comment(line); break;
+
+                         default:
+                            {
+                              printf ("Error: default in switch over languageType = %d \n",languageType);
+                              ROSE_ASSERT(false);
+                            }
+                       }
+
+                 // bool isComment = isFortran90Comment(line);
+                    if (isComment == true)
+                       {
+                      // printf ("This is a comment, set to PreprocessingInfo::FortranStyleComment \n");
+                         cppDeclarationKind = PreprocessingInfo::FortranStyleComment;
+                       }
+                  }
+#endif
+
+#if 1
+            // printf ("Before lineCounter = %d \n",lineCounter);
+               printf ("cppDeclarationKind = %s \n",PreprocessingInfo::directiveTypeName(cppDeclarationKind).c_str());
+#endif
+
+            // Note that #pragma maps to CpreprocessorUnknownDeclaration so ignore that case!
+               if (cppDeclarationKind != PreprocessingInfo::CpreprocessorUnknownDeclaration)
+                  {
+                    PreprocessingInfo* cppDirective = new PreprocessingInfo(cppDeclarationKind,line,filename,
+                                                                            lineCounter,0,numberOfLines,PreprocessingInfo::before);
+                    ROSE_ASSERT(cppDirective != NULL);
+                    attributeList.push_back(cppDirective);
+                  }
+
+               lineCounter++;
+
+            // printf ("increment lineCounter = %d \n",lineCounter);
+             }
+
+       // printf ("Closing file \n");
+          targetFile.close();
+        }
+       else
+        {
+          cerr << "Unable to open free format Fortran file";
+          ROSE_ASSERT(false);
+        }
+
+  // printf ("Leaving collectPreprocessorDirectivesAndCommentsForAST() \n");
    }
 
 

@@ -170,7 +170,7 @@ class  PreprocessingInfo
             // replace       = 5, // Support for replacing the IR node in the unparsing of any associated subtree
                before_syntax = 6, // We still have to specify the syntax
                after_syntax  = 7  // We still have to specify the syntax
-	     };
+             };
 
        // Enum type to help classify the type for string that has been saved.
        // This helps in the unparsing to make sure that line feeds are introduced properly.
@@ -203,10 +203,12 @@ class  PreprocessingInfo
 	    // AS (11/18/05): Added macro support
 	       CSkippedToken,
 	       CMacroCall,
-            // AS & LIAO (8/12/2008): A PreprocessingInfo that is a 
-            // hand made MacroCall that will expand into a valid
-            // statement.
-               CMacroCallStatement,
+
+       // AS & LIAO (8/12/2008): A PreprocessingInfo that is a 
+       // hand made MacroCall that will expand into a valid
+       // statement.
+          CMacroCallStatement,
+
 	    // A line replacement will replace a sub-tree in the AST
 	    // after a node with position (filename,line)
 	       LineReplacement,
@@ -215,6 +217,18 @@ class  PreprocessingInfo
 
        // Added support for Fortran comments
 	       FortranStyleComment,
+
+       // DQ (11/17/2008): Added support for #ident
+	       CpreprocessorIdentDeclaration,
+
+       // DQ (11/17/2008): This handles the case CPP declarations 
+       // such as: "# 1 "test2008_05.F90"", "# 1 "<built-in>"", 
+       // "# 1 "<command line>"" "# 1 "test2008_05.F90""
+	       CpreprocessorCompilerGenerateLineDeclaration,
+
+       // DQ (11/20/2008): Added classification for blank line.
+	       CpreprocessorBlankLine,
+
 	       LastDirectiveType
 	     };
 
@@ -340,6 +354,17 @@ class ROSEAttributesList
           int index;
 
      public:
+       // DQ (11/19/2008): Added language selection support for handling comments
+          enum languageTypeEnum
+             {
+               e_unknown_language   = 0,
+               e_C_language         = 1,
+               e_Cxx_language       = 2,
+               e_Fortran77_language = 3,
+               e_Fortran9x_language = 4,
+               e_lastLanguage
+             };
+
           ROSEAttributesList();
          ~ROSEAttributesList();
        // DQ (4/19/2006): Adding SgFileInfo objects so we need to pass in a filename string
@@ -388,6 +413,14 @@ class ROSEAttributesList
 
        // Collection comments and CPP directives for fixed format (easier case)
           void collectFixedFormatPreprocessorDirectivesAndCommentsForAST( const std::string & filename );
+
+       // DQ (11/16/2008): Adding support for recognition of CPP directives outside of the lex tokenization.
+          void collectPreprocessorDirectivesAndCommentsForAST( const std::string & filename, languageTypeEnum languageType );
+
+       // DQ (11/17/2008): Refactored the code.
+          bool isFortran77Comment( const std::string & line );
+          bool isFortran90Comment( const std::string & line );
+          bool isCppDirective( const std::string & line, PreprocessingInfo::DirectiveType & cppDeclarationKind );
    };
 
 //

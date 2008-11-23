@@ -161,6 +161,9 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
           if ( currentPreprocessingInfoPtr != NULL )
                printf ("currentPreprocessingInfoPtr->getLineNumber() = %d lineNumber = %d \n",currentPreprocessingInfoPtr->getLineNumber(),lineNumber);
 #endif
+#if 0
+          printf ("currentPreprocessingInfoPtr->getLineNumber() = %d lineNumber = %d internalString = %s \n",currentPreprocessingInfoPtr->getLineNumber(),lineNumber,currentPreprocessingInfoPtr->getString().c_str());
+#endif
        // if ( currentPreprocessingInfoPtr->getLineNumber() <= lineNumber &&
        //     !currentPreprocessingInfoPtr->getHasBeenCopied())
 
@@ -378,10 +381,14 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute (
                               printf ("Fortran code assumed to be in fixed format form (skipping translation of tokens) \n");
                             }
 
+                         ROSE_ASSERT(currentFilePtr != NULL);
+                         string fileNameForDirectivesAndComments = currentFilePtr->get_sourceFileNameWithPath();
+
                       // For now we call the lexical pass on the fortran file, but we don't yet translate the tokens.
                       // currentListOfAttributes       = getPreprocessorDirectives( Sg_File_Info::getFilenameFromID(currentFileNameId) );
                       // getFortranFixedFormatPreprocessorDirectives( Sg_File_Info::getFilenameFromID(currentFileNameId) );
-                         LexTokenStreamTypePointer lex_token_stream = getFortranFixedFormatPreprocessorDirectives( Sg_File_Info::getFilenameFromID(currentFileNameId) );
+                      // LexTokenStreamTypePointer lex_token_stream = getFortranFixedFormatPreprocessorDirectives( Sg_File_Info::getFilenameFromID(currentFileNameId) );
+                         LexTokenStreamTypePointer lex_token_stream = getFortranFixedFormatPreprocessorDirectives( fileNameForDirectivesAndComments );
                          ROSE_ASSERT(lex_token_stream != NULL);
 
                       // Build an empty list while we skip the translation of tokens
@@ -389,9 +396,17 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute (
 
                       // Attach the token stream to the AST
                          currentListOfAttributes->set_rawTokenStream(lex_token_stream);
-
+#if 1
+                         printf ("Calling collectPreprocessorDirectivesAndCommentsForAST() to collect CPP directives for fileNameForDirectivesAndComments = %s \n",fileNameForDirectivesAndComments.c_str());
+                         currentListOfAttributes->collectPreprocessorDirectivesAndCommentsForAST(fileNameForDirectivesAndComments,ROSEAttributesList::e_Fortran77_language);
+                         printf ("DONE: Calling collectPreprocessorDirectivesAndCommentsForAST() to collect CPP directives for fileNameForDirectivesAndComments = %s \n",fileNameForDirectivesAndComments.c_str());
+#endif
+#if 0
+                      // DQ (11/19/2008): This code has been replaced by collectPreprocessorDirectivesAndCommentsForAST().
                       // Process the raw token stream into the PreprocessorDirectives and Comment list required to be inserted into the AST.
-                         currentListOfAttributes->collectFixedFormatPreprocessorDirectivesAndCommentsForAST(currentFilePtr->get_sourceFileNameWithPath());
+                      // currentListOfAttributes->collectFixedFormatPreprocessorDirectivesAndCommentsForAST(currentFilePtr->get_sourceFileNameWithPath());
+                         currentListOfAttributes->collectFixedFormatPreprocessorDirectivesAndCommentsForAST(fileNameForDirectivesAndComments);
+#endif
                        }
                       else
                        {
@@ -408,7 +423,9 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute (
                       // For now we call the lexical pass on the fortran file, but we don't yet translate the tokens.
                       // currentListOfAttributes       = getPreprocessorDirectives( Sg_File_Info::getFilenameFromID(currentFileNameId) );
                       // getFortranFreeFormatPreprocessorDirectives( Sg_File_Info::getFilenameFromID(currentFileNameId) );
-                         LexTokenStreamTypePointer lex_token_stream = getFortranFreeFormatPreprocessorDirectives( Sg_File_Info::getFilenameFromID(currentFileNameId) );
+                         string fileNameForTokenStream = Sg_File_Info::getFilenameFromID(currentFileNameId);
+                      // printf ("Calling getFortranFreeFormatPreprocessorDirectives() for fileNameForTokenStream = %s \n",fileNameForTokenStream.c_str());
+                         LexTokenStreamTypePointer lex_token_stream = getFortranFreeFormatPreprocessorDirectives( fileNameForTokenStream );
                          ROSE_ASSERT(lex_token_stream != NULL);
 
                       // Build an empty list while we skip the translation of tokens
@@ -422,7 +439,22 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute (
 
                       // Process the raw token stream into the PreprocessorDirectives and Comment list required to be inserted into the AST.
                       // currentListOfAttributes->generatePreprocessorDirectivesAndCommentsForAST(currentFilePtr);
-                         currentListOfAttributes->generatePreprocessorDirectivesAndCommentsForAST(currentFilePtr->get_sourceFileNameWithPath());
+                         string fileNameForDirectivesAndComments = currentFilePtr->get_sourceFileNameWithPath();
+
+                         printf ("Calling collectPreprocessorDirectivesAndCommentsForAST() to collect CPP directives for fileNameForDirectivesAndComments = %s \n",fileNameForDirectivesAndComments.c_str());
+                         currentListOfAttributes->collectPreprocessorDirectivesAndCommentsForAST(fileNameForDirectivesAndComments,ROSEAttributesList::e_Fortran9x_language);
+
+#if 0
+                         printf ("Done with processing of separate lexical pass to gather CPP directives \n");
+                         ROSE_ASSERT(false);
+#endif
+#if 0
+                      // DQ (11/19/2008): This code has been replaced by collectPreprocessorDirectivesAndCommentsForAST().
+                         printf ("Calling generatePreprocessorDirectivesAndCommentsForAST() for fileNameForDirectivesAndComments = %s \n",fileNameForDirectivesAndComments.c_str());
+                         currentListOfAttributes->generatePreprocessorDirectivesAndCommentsForAST(fileNameForDirectivesAndComments);
+#else
+                         printf ("Skipping the comments in the fortran file! \n");
+#endif
                        }
 
                     if ( SgProject::get_verbose() > 1 )
@@ -434,6 +466,11 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute (
                        {
                          printf ("Done with processing of separate lexical pass to gather Fortran specific CPP directives and comments from the token stream \n");
                        }
+#if 0
+                    printf ("Done with processing of separate lexical pass to gather Fortran specific CPP directives and comments from the token stream \n");
+                    ROSE_ASSERT(false);
+#endif
+
 #else // for !USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
                     fprintf(stderr, "Fortran parser not enabled\n");
                     abort();
@@ -444,7 +481,22 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute (
                  // Else we assume this is a C or C++ program (for which the lexical analysis is identical)
                  // The lex token stream is now returned in the ROSEAttributesList object.
 
-                    currentListOfAttributes = getPreprocessorDirectives( Sg_File_Info::getFilenameFromID(currentFileNameId) );
+                    string fileNameForDirectivesAndComments = currentFilePtr->get_sourceFileNameWithPath();
+
+#if 1
+                 // This is a way of testing the extraction of CPP directives (on C and C++ codes).
+                    currentListOfAttributes = new ROSEAttributesList();
+
+                 // This call is just a test, this function is defined for use on Fortran.  For C and C++ we have alternative methods to extract the CPP directives and comments.
+                    printf ("Call collectPreprocessorDirectivesAndCommentsForAST to test C and C++ preprocessor directive collaction \n");
+                    currentListOfAttributes->collectPreprocessorDirectivesAndCommentsForAST(fileNameForDirectivesAndComments,ROSEAttributesList::e_C_language);
+                    printf ("DONE: Call collectPreprocessorDirectivesAndCommentsForAST to test C and C++ preprocessor directive collaction \n");
+#endif
+
+                 // This function has been modified to clear any existing list of PreprocessingInfo*
+                 // objects (so that we can test the function: collectPreprocessorDirectivesAndCommentsForAST()).
+                 // currentListOfAttributes = getPreprocessorDirectives( Sg_File_Info::getFilenameFromID(currentFileNameId) );
+                    currentListOfAttributes = getPreprocessorDirectives(fileNameForDirectivesAndComments);
                   }
 
             // printf ("AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): currentListOfAttributes = %p size() = %d \n",currentListOfAttributes,(int)currentListOfAttributes->size());
@@ -523,6 +575,9 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute (
                     printf ("Insert any comment before %p = %s = %s (compilerGenerate=%s) at line = %d col = %d \n",
                          currentLocNodePtr,currentLocNodePtr->class_name().c_str(),SageInterface::get_name(currentLocNodePtr).c_str(),
                          isCompilerGenerated ? "true" : "false", line, col);
+#endif
+#if 0
+                    printf ("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute() calling iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(): n->class_name() = %s \n",n->class_name().c_str());
 #endif
                  // Iterate over the list of comments and directives and add them to the AST
                     bool reset_start_index = false;
@@ -652,7 +707,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                     lineOfClosingBrace = locatedNode->get_endOfConstruct()->get_line();
                   }
              }
-          else
+            else
              {
             // handle the trivial case of a SgFile node being from it's own file
                originOfCurrentLocatedNode = fileNameString;
