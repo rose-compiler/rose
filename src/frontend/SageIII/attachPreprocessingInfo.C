@@ -484,13 +484,15 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute (
                     string fileNameForDirectivesAndComments = currentFilePtr->get_sourceFileNameWithPath();
 
 #if 1
-                 // This is a way of testing the extraction of CPP directives (on C and C++ codes).
+                 // DQ (11/23/2008): This is part of CPP handling for Fortran, but tested on C and C++ codes aditionally, (it is redundant for C and C++).
+                 // This is a way of testing the extraction of CPP directives (on C and C++ codes, so that it is more agressively tested).
+                 // Since this is a redundant test, it can be removed in later development (its use is only a performance issue).
                     currentListOfAttributes = new ROSEAttributesList();
 
                  // This call is just a test, this function is defined for use on Fortran.  For C and C++ we have alternative methods to extract the CPP directives and comments.
-                    printf ("Call collectPreprocessorDirectivesAndCommentsForAST to test C and C++ preprocessor directive collaction \n");
+                 // printf ("Call collectPreprocessorDirectivesAndCommentsForAST to test C and C++ preprocessor directive collaction \n");
                     currentListOfAttributes->collectPreprocessorDirectivesAndCommentsForAST(fileNameForDirectivesAndComments,ROSEAttributesList::e_C_language);
-                    printf ("DONE: Call collectPreprocessorDirectivesAndCommentsForAST to test C and C++ preprocessor directive collaction \n");
+                 // printf ("DONE: Call collectPreprocessorDirectivesAndCommentsForAST to test C and C++ preprocessor directive collaction \n");
 #endif
 
                  // This function has been modified to clear any existing list of PreprocessingInfo*
