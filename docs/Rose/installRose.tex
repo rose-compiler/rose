@@ -359,6 +359,11 @@ steps are the same as those of building a distribution version.
    that it tests and so it will fail when many other tests on boost succeed because your
    {\tt LD\_LIBRARY\_PATH} is finally required and is not properly set.
 
+   \item Message: {\tt Making all in libltdl \\
+      make[2]: *** No rule to make target `all'.  Stop.} \\
+   Run {\tt glibtoolize --force} to rebuild the libtool support in ROSE for your machine 
+   at the top level of the source tree.
+
    \item {\bf Don't build ROSE in the source tree, it is not tested often, but it should work.} \\
     Save yourself some trouble and build a separate compile tree.  This will also allow
     you to build a number of different versions of ROSE with different options.
