@@ -69,7 +69,7 @@ check-local:
 EXTRA_DIST = $(ALL_TESTCODES) funcs.annot floatArray.annot Index.annot simpleA++.h interp1_elem.C doall_vector.C
 
 clean-local:
-	rm -f *.o rose_*.[cC] 
+	rm -f *.o rose_*.[cC] *.dot 
 
 	
 

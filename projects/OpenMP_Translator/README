@@ -101,7 +101,8 @@ First install the Java support:
 
 Below is the instructions of building Omni's RTL by yourself.
 
-Download Omni 1.6 from http://phase.hpcc.jp/Omni/
+Download Omni 1.6 from http://phase.hpcc.jp/Omni/, 
+Or directly http://www.hpcc.jp/Omni/ftp/Omni/Omni-1.6.tar.gz
 
 Omni RTL supports tracing by using a tracing library. We can disable it to avoid linking the extra tracing library. So undefine USE_LOG at line 28 of Omni-1.6/lib/libompc/ompclib.h
 
