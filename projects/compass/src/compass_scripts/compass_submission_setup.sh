@@ -167,11 +167,12 @@ done
 
 for checker in ${USUBDIRS[@]}
 do
-  updateRuleSelection $checker ${COMPASS_PROJECT}/_SELECTION 
+  updateRuleSelection $checker ${COMPASS_PROJECT}/RULE_SELECTION.in
 done
 
-echo "Sorting ${COMPASS_PROJECT}/_SELECTION"
-env LC_ALL=C sort ${COMPASS_PROJECT}/_SELECTION -o ${COMPASS_PROJECT}/RULE_SELECTION.in 
+echo "Sorting ${COMPASS_PROJECT}/RULE_SELECTION.in"
+# Using GNU sort's in-place sorting capability
+env LC_ALL=C sort -o ${COMPASS_PROJECT}/RULE_SELECTION.in ${COMPASS_PROJECT}/RULE_SELECTION.in
 
 extraDist
 
