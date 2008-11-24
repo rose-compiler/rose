@@ -145,13 +145,13 @@ bool DefUseAnalysisPF::defuse(T cfgNode, bool *unhandled) {
     SgBinaryOp* binary = isSgBinaryOp(sgNode);
     SgExpression* l_expr = binary->get_lhs_operand();
     SgVarRefExp* varRefExp = isSgVarRefExp(l_expr);
-#if 0
+#if 1
     SgPntrArrRefExp* varPntrRefExp = isSgPntrArrRefExp(l_expr);
 #endif
     if (DEBUG_MODE)
       cout << " **********  BINARY OP. " << binary << endl;
     if (varRefExp 
-#if 0
+#if 1
 	|| varPntrRefExp
 #endif
 ) {
@@ -159,20 +159,42 @@ bool DefUseAnalysisPF::defuse(T cfgNode, bool *unhandled) {
       if (DEBUG_MODE)
 	cout << " **********  BINARY OP IS_VAR_REF_EXP. " << endl;
       if (varRefExp) {
+	ROSE_ASSERT(varRefExp->get_symbol());
 	initName = varRefExp->get_symbol()->get_declaration();  
 	if (DEBUG_MODE)
 	  cout << " BINARY OP: " << initName->get_qualified_name().str() 
 	       << "  name: " << initName << "  varRefExp: " << varRefExp << endl;
       } 
-#if 0
+#if 1
       else if (varPntrRefExp) {
+	while (isSgPntrArrRefExp(varPntrRefExp->get_lhs_operand())) {
+	  varPntrRefExp=isSgPntrArrRefExp(varPntrRefExp->get_lhs_operand());
+	} 
 	SgVarRefExp* varRefExpL = isSgVarRefExp(varPntrRefExp->get_lhs_operand());
+	SgArrowExp* arrow = isSgArrowExp(varPntrRefExp->get_lhs_operand());
+	if (arrow) {
+	  cerr << " TYPE of LHS OF ARROW: left: " << arrow->get_lhs_operand()->class_name() << endl;
+	  cerr << " TYPE of LHS OF ARROW: right: " << arrow->get_rhs_operand()->class_name() << endl;
+	  varRefExpL = isSgVarRefExp( arrow->get_rhs_operand());
+	  if (varRefExpL==NULL)
+	    cerr << " TYPE of LHS IN ARROW: " << arrow->get_rhs_operand()->class_name() << endl;
+	  ROSE_ASSERT(varRefExpL);
+	}
+	if (varRefExpL) {
+	  ROSE_ASSERT(varRefExpL);
+	  ROSE_ASSERT(varRefExpL->get_symbol());
+	} else if (arrow) {
+	} else {
+	  cerr << " TYPE of LHS : " << varPntrRefExp->get_lhs_operand()->class_name() << endl;
+	  ROSE_ASSERT(varRefExpL);
+	}
 	initName = varRefExpL->get_symbol()->get_declaration();  
 	if (DEBUG_MODE)
 	  cout << " BINARY OP: " << initName->get_qualified_name().str() 
 	       << "  name: " << initName << "  varRefExp: " << varRefExp << endl;
       }
 #endif
+      ROSE_ASSERT(initName);
       ROSE_ASSERT(binary);
       switch(binary->variantT()) {
       case V_SgAssignOp: 
@@ -257,9 +279,11 @@ bool DefUseAnalysisPF::defuse(T cfgNode, bool *unhandled) {
     // go up to the parent and check if there is an assignment happening.
     // If yes, check if VarRefExp on right side,
     // if yes, we have a usage -- otherwise its a definition
-    if (isSgAssignOp(parent) && isSgAssignOp(parent)->get_lhs_operand()==varRefExp 
-#if 0
-	|| isSgPntrArrRefExp(parent) && isSgPntrArrRefExp(parent)->get_lhs_operand()==varRefExp 
+    if (isSgPntrArrRefExp(parent))
+      ROSE_ASSERT(isSgPntrArrRefExp(parent)->get_lhs_operand());
+    if ((isSgAssignOp(parent) && isSgAssignOp(parent)->get_lhs_operand()==varRefExp) 
+#if 1
+	|| (isSgPntrArrRefExp(parent) && isSgPntrArrRefExp(parent)->get_lhs_operand()==varRefExp) 
 #endif
       ) {
       // definition .. dont handle

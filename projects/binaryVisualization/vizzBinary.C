@@ -4,7 +4,7 @@
 #include <string>
 
 
-using namespace std;
+
 #define debug 1
 
 #include <GL/glut.h>
@@ -14,6 +14,12 @@ using namespace std;
 #include "helper.h"
 
 #include "boost/multi_array.hpp"
+#include "boost/filesystem/operations.hpp" // includes boost/filesystem/path.hpp
+
+
+using namespace std;
+using namespace boost::filesystem;
+using namespace boost;
 
 static bool debug_me = false;
 
@@ -828,6 +834,70 @@ void displayAll( int nrknots, int max,
 }
 
 
+
+std::string ToUpper(std::string myString)
+{
+  const int length = myString.length();
+  for(int i=0; i!=length ; ++i)
+    {
+      myString[i] = std::toupper(myString[i]);
+    }
+  return myString;
+}
+
+
+SgNode* disassembleFile(std::string tsv_directory, std::string& sourceFile){
+  SgNode* globalBlock=NULL;
+  int found = tsv_directory.rfind(".");
+  string ending="";
+
+  if (found!=string::npos) {
+    ending =tsv_directory.substr(found+1,tsv_directory.length());
+  }
+  std::cout << "\nDisassembling: " << tsv_directory << " Ending : " << ending << std::endl;
+  
+  if(is_directory( tsv_directory  ) == true ){
+    std::cout << "\nsql: " << tsv_directory << std::endl;
+    RoseBin_Def::RoseAssemblyLanguage=RoseBin_Def::x86;
+    RoseBin_Arch::arch=RoseBin_Arch::bit32;
+    RoseBin_OS::os_sys=RoseBin_OS::linux_op;
+    RoseBin_OS_VER::os_ver=RoseBin_OS_VER::linux_26;
+    RoseFile* roseBin = new RoseFile( (char*)tsv_directory.c_str() );
+    cerr << " ASSEMBLY LANGUAGE :: " << RoseBin_Def::RoseAssemblyLanguage << endl;
+    // query the DB to retrieve all data
+    globalBlock = roseBin->retrieve_DB();
+    // traverse the AST and test it
+    roseBin->test();
+    sourceFile="false";
+  } else if (ToUpper(ending)=="C" || ToUpper(ending)=="CPP" || ToUpper(ending)=="CXX") {
+    cerr << "Found C code ... " << endl;
+    vector<char*> args;
+    args.push_back(strdup(""));
+    args.push_back(strdup(tsv_directory.c_str()));
+    args.push_back(0);
+    globalBlock =  frontend(args.size()-1,&args[0]);
+    sourceFile="true";
+  }  else{
+    vector<char*> args;
+    args.push_back(strdup(""));
+    args.push_back(strdup(tsv_directory.c_str()));
+    args.push_back(0);
+    
+    ostringstream outStr; 
+    for(vector<char*>::iterator iItr = args.begin(); iItr != args.end();
+	++iItr )    {
+      outStr << *iItr << " ";
+    }     
+    ;
+    std::cout << "Calling " << outStr.str() << "  args: " << (args.size()-1) << std::endl;
+    globalBlock =  frontend(args.size()-1,&args[0]);
+    sourceFile="false";
+  }
+  return globalBlock;
+};
+
+
+
 SgProject* 
 parseBinaryFile(std::string name) {
   // binary code analysis *******************************************************
@@ -836,16 +906,31 @@ parseBinaryFile(std::string name) {
   //fprintf(stderr, "Starting binCompass frontend...\n");
   char* nameChar = &name[0];
   char* argv[] = {"vizzBinary",nameChar};
-  SgProject* project = frontend(2,argv);
-  ROSE_ASSERT (project != NULL);
-  //SgAsmFile* file = project->get_file(0).get_binaryFile();
+  //  SgProject* project = frontend(2,argv);
+  string sourceFile="";
+  SgNode* node = disassembleFile(name,sourceFile);
+  if (node==NULL)
+    return NULL;
+  if (sourceFile=="true")
+    return NULL;
+
+  SgAsmBlock* globalBlock = isSgAsmBlock(node);
+  SgProject* project = isSgProject(node);
+  SgAsmInterpretation* interp=NULL;
+  if (project==NULL) {
+    cerr << " project == NULL :  " << node->class_name() << endl;
+    return NULL;
+  }
+  
+#if 0
   SgBinaryFile* binFile = isSgBinaryFile(project->get_fileList()[0]);
-  ROSE_ASSERT(binFile);
+  if (binFile==NULL)
+    return NULL;
   //  SgAsmFile* file = binFile->get_binaryFile();
   SgAsmFile* file = binFile != NULL ? binFile->get_binaryFile() : NULL;
 
 
-  SgAsmInterpretation* interp = SageInterface::getMainInterpretation(file);
+  interp = SageInterface::getMainInterpretation(file);
   //  ROSE_ASSERT (interps.size() == 1);
   //  SgAsmInterpretation* interp = interps[0];
 
@@ -870,6 +955,7 @@ parseBinaryFile(std::string name) {
   cfganalysis->setInitializedFalse();
   cfganalysis=NULL;
   delete cfganalysis;
+#endif
   return project;
 }
 
@@ -967,6 +1053,8 @@ int main(int argc, char** argv) {
       initGL(name,0,0);
       cout << "\nAnalysing Binary (save): " << name << endl;
       project= parseBinaryFile(name);
+      if (project==NULL)
+	continue;
       Traversal trav;
       trav.run(project,max);
       unsigned int maxX = trav.maxX;

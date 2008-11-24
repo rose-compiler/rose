@@ -338,7 +338,7 @@ int main( int argc, char * argv[] )
       results.insert(pair<string,int>("i", 12));
       results.insert(pair<string,int>("i", 31));
       useresults.insert(pair<string,int>("i", 15));    
-      useresults.insert(pair<string,int>("array", 20));    
+      // useresults.insert(pair<string,int>("array", 20)); // tps: fixed this    
       testOneFunction("::main", argvList, debug, 30, results,useresults);
     }
 

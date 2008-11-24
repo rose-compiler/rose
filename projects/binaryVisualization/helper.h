@@ -43,7 +43,7 @@ namespace __gnu_cxx {
   };
 }
 
-bool containsArgument(int argc, char** argv, string pattern) {
+bool containsArgument(int argc, char** argv, std::string pattern) {
   for (int i = 2; i < argc ; i++) {
     if (argv[i]== pattern) {
       return true;
@@ -52,23 +52,21 @@ bool containsArgument(int argc, char** argv, string pattern) {
   return false;
 }
 
-int getdir (string dir, vector<string> &files)
+int getdir (std::string dir, std::vector<std::string> &files)
 {
   DIR *dp;
   struct dirent *dirp;
   if((dp  = opendir(dir.c_str())) == NULL) {
-    cout << "Error(" << errno << ") opening " << dir << endl;
+    std::cout << "Error(" << errno << ") opening " << dir << std::endl;
     return errno;
   }
 
   while ((dirp = readdir(dp)) != NULL) {
-    string name = string(dirp->d_name);
-    //int find = name.find(".lo");
-    //if (find>=0) {
-    //  name = name.substr(0,find);
-    if (name!="." && name!="..")
+    std::string name = std::string(dirp->d_name);
+    if (name!="." && name!="..") {
       files.push_back(name);
-      //}
+    }
+
   }
   closedir(dp);
   return 0;
@@ -95,7 +93,7 @@ public:
 };
 
 
-typedef rose_hash::hash_map< pair<int,int>,
+typedef rose_hash::hash_map< std::pair<int,int>,
 			     FunctionInfo* > FunctionType;
 
 class Traversal : public AstSimpleProcessing {
@@ -118,8 +116,8 @@ public:
     SgAsmFunctionDeclaration* funcDecl =
       isSgAsmFunctionDeclaration(node);
     if (funcDecl) {
-      cerr << " preprocessing function: " << funcDecl->get_name() <<endl;
-      vector<SgAsmStatement*> instructions;
+      std::cerr << " preprocessing function: " << funcDecl->get_name() << std::endl;
+      std::vector<SgAsmStatement*> instructions;
       FindInstructionsVisitor vis;
       AstQueryNamespace::querySubTree(funcDecl, std::bind2nd( vis, &instructions ));
       //      vector<SgAsmStatement*> instructions= 
@@ -127,7 +125,7 @@ public:
       int nrInst=0;
       unsigned int control=0;
       unsigned int call=0;
-      vector<SgAsmStatement*>::iterator it= instructions.begin();
+      std::vector<SgAsmStatement*>::iterator it= instructions.begin();
       for (;it!=instructions.end();it++) {
 	SgAsmx86Instruction* inst = isSgAsmx86Instruction(*it);
 	if (inst) {
@@ -168,13 +166,13 @@ public:
       while (maxY%8!=0) maxY++;
 
       FunctionType::iterator fit= 
-	functions.find(make_pair(control,call));
+	functions.find(std::make_pair(control,call));
       if (fit==functions.end()) {
 	// not found
 	FunctionInfo* info = new FunctionInfo(control, call,
 					      nrInst, 0, 
 					      funcDecl->get_name());
-	functions[make_pair(control,call)] = info;
+	functions[std::make_pair(control,call)] = info;
 	//cerr << "  .. creating : x="<<control<<" y="<<call
 	//     << "  height="<<nrInst<<" weight=0"<<endl;
       } else {
@@ -183,7 +181,7 @@ public:
 	//	info->height=5;
 	info->weight=info->weight+1;
 	info->addName(funcDecl->get_name());
-	functions[make_pair(control,call)] = info;
+	functions[std::make_pair(control,call)] = info;
 	//cerr << "  .. adding : x="<<control<<" y="<<call
 	//     << "  height="<<info->height<<" weight="<<info->weight<<endl;
       }

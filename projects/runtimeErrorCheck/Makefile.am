@@ -16,7 +16,9 @@ runtimeCheck_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 TESTCODES =  $(srcdir)/example.C 
 TESTCODES2 = $(srcdir)/example2.C
-TESTCODES3 = $(srcdir)/example3.C
+if !ROSE_USE_BINARY_SQL
+  TESTCODES3 = $(srcdir)/example3.C
+endif
 TESTCODES4 = $(srcdir)/example4.C
 TESTCODES5 = $(srcdir)/example5.C
 
@@ -55,9 +57,11 @@ if ROSE_USE_OPEN_FORTRAN_PARSER
 	./runtimeCheck -DCAN_NOT_COMPILE_WITH_ROSE=true $(TESTCODES5) -run -o test_bin5
 	./runtimeCheck -DCAN_NOT_COMPILE_WITH_ROSE=true $(TESTCODES5) -pdf -o test_bin5
 	./test_bin5 
+if !ROSE_USE_BINARY_SQL
 	./runtimeCheck -DCAN_NOT_COMPILE_WITH_ROSE=true $(TESTCODES3) -run -c -o test_bin3.o $(INCLUDES2)
 	$(LIBTOOL) --mode=link $(CXX) -o test_bin3 test_bin3.o $(LDADD)
 	./test_bin3 $(srcdir)/example.C -run
+endif
 endif
 #	@echo "*********************************************************************************************************************"
 #	@echo "*** ROSE/tests/roseTests/programAnalysisTests/defUseAnalysisTests: make check rule complete (terminated normally) ***"
