@@ -26,6 +26,7 @@ namespace VirtualCFG {
     eckArithmeticIfGreater // Three options from a Fortran arithmetic if statement
   };
 
+  // CFG node is based on a subset of SgNode with indices
   class CFGNode {
     SgNode* node; // Must be either a statement, expression, or SgInitializedName
     unsigned int index;
@@ -50,8 +51,9 @@ namespace VirtualCFG {
     bool operator!=(const CFGNode& o) const {return !(*this == o);}
     bool operator<(const CFGNode& o) const {return node < o.node || (node == o.node && index < o.index);}
     static unsigned int childCount(SgNode* n);
-  };
+  }; // end class CFGNode
 
+  // A CFG edge connecting two CFG nodes, with an edge condition to indicate edge types
   class CFGEdge {
     CFGNode src, tgt;
     public:
@@ -75,19 +77,20 @@ namespace VirtualCFG {
 #if 0
     bool operator<(const CFGEdge& o) const {return src < o.src || (src == o.src && tgt < o.tgt);}
 #endif
-  };
+  }; // end CFGEdge
 
   void makeEdge(CFGNode from, CFGNode to, std::vector<CFGEdge>& result); // Used in inEdges() and outEdges() methods
   CFGNode getNodeJustAfterInContainer(SgNode* n);
   CFGNode getNodeJustBeforeInContainer(SgNode* n);
 
+  // ! A CFG path is a set of connected CFG edges
   class CFGPath {
     std::vector<CFGEdge> edges;
     public:
  // DQ (8/28/2006): This constructor causes a bug to be brought out in ROSE 
  // (in compiling this file using ROSE) see test2006_124.C for a smaller example.
     CFGPath(CFGEdge e): edges(1, e) {}
-
+    // Merge two CFG paths
     CFGPath(const CFGPath& a, const CFGPath& b): edges(a.edges) {
       assert (!a.edges.empty());
       assert (!b.edges.empty());
@@ -97,8 +100,11 @@ namespace VirtualCFG {
     std::string toString() const;
     std::string toStringForDebugging() const;
     std::string id() const;
+    // Get the head CFG node of the path
     CFGNode source() const {assert (!edges.empty()); return edges.front().source();}
+    // Get the tail CFG node of the path
     CFGNode target() const {assert (!edges.empty()); return edges.back().target();}
+    //Return the first non-unconditional edge's condition
     EdgeConditionKind condition() const {
       for (unsigned int i = 0; i < edges.size(); ++i) {
 	EdgeConditionKind kind = edges[i].condition();
@@ -106,6 +112,7 @@ namespace VirtualCFG {
       }
       return eckUnconditional;
     }
+    // Return the case label of its first edge representing a case
     SgExpression* caseLabel() const {
       for (unsigned int i = 0; i < edges.size(); ++i) {
           SgExpression* label = edges[i].caseLabel();
@@ -152,7 +159,7 @@ namespace VirtualCFG {
       return false;
     }
 #endif
-  };
+  }; // end CFGPath
 
   inline CFGPath mergePaths(const CFGPath& hd, const CFGPath& tl) {
     // Assumes the edges don't do anything too complicated with scopes
