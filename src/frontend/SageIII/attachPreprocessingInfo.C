@@ -215,6 +215,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                PreprocessingInfo::DirectiveType directive = currentPreprocessingInfoPtr->getTypeOfDirective();
                switch (directive)
                   {
+                 // Trap this case out as an error...
                     case PreprocessingInfo::CpreprocessorUnknownDeclaration:
                        {
                       // I think this is an error...
@@ -223,7 +224,8 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                          ROSE_ASSERT(false);
                          break;
                        }
-                          
+
+                 // These are things that we don't have to worry about in Fortran CPP handling.                          
                     case PreprocessingInfo::C_StyleComment:
                     case PreprocessingInfo::CplusplusStyleComment:
                     case PreprocessingInfo::FortranStyleComment:
@@ -235,6 +237,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                               break;
                             }
 
+                 // These are the CPP directives that I want to focus on support for in Fortran (and C/C++).
                     case PreprocessingInfo::CpreprocessorIncludeDeclaration:
                     case PreprocessingInfo::CpreprocessorIncludeNextDeclaration:
                     case PreprocessingInfo::CpreprocessorDefineDeclaration:
@@ -293,6 +296,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                          break;
                        }
 
+                 // I think these are Wave specific so handle them as though this was C/C++ code.
                     case PreprocessingInfo::CSkippedToken:
                     case PreprocessingInfo::CMacroCall:
                     case PreprocessingInfo::CMacroCallStatement:
@@ -302,6 +306,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                          break;
                        }
 
+                 // The default should be an error...
                     default:
                        {
                          printf ("Error: directive not handled directiveTypeName = %s \n",PreprocessingInfo::directiveTypeName(directive).c_str());
