@@ -1029,6 +1029,7 @@ projects/DocumentationGenerator/Makefile
 projects/runtimeErrorCheck/Makefile
 projects/C_to_Promela/Makefile
 projects/OpenMP_Translator/Makefile
+projects/OpenMP_Translator/includes/Makefile
 projects/OpenMP_Translator/tests/Makefile
 projects/OpenMP_Translator/tests/cvalidationsuite/Makefile
 projects/OpenMP_Translator/tests/developmentTests/Makefile

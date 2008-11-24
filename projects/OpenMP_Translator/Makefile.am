@@ -3,7 +3,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # Need to build the ompTranslator in the current directory first, or
 # make the subdirectories trigger the build in this directory (better).
 
-SUBDIRS = . tests
+SUBDIRS = . tests includes
 
 # DQ (1/6/2007): Try to turn this on so that we at least 
 # compile the OpenMP translator even if we don't run it!
@@ -40,7 +40,7 @@ check-local:
 	@echo "**********************************************************************************"
 endif
 
-EXTRA_DIST = README includes
+EXTRA_DIST = README 
 
 clean-local:
 	rm -f *.o a.out rose_*.C
