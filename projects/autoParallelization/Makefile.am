@@ -7,11 +7,11 @@ INCLUDES = $(ROSE_INCLUDES)
 
 bin_PROGRAMS = autoPar
 
-autoPar_SOURCES = autoPar.C
+autoPar_SOURCES = autoPar.C autoParSupport.C
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
 
-EXTRA_DIST = README makefile.external
+EXTRA_DIST = README makefile.external autoParSupport.h
 
 clean-local:
 	rm -rf autoPar

@@ -6,3 +6,4 @@ class std::vector {
   has_value { dimension=1; length=this.size();
   };
 } 
+

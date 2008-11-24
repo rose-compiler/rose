@@ -16,8 +16,8 @@ void interpolate1D(class floatArray &fineGrid,class floatArray &coarseGrid)
     fineGrid.elem(2 - 1 + _var_0 * 2) = (coarseGrid.elem(1 - 1 + _var_0 * 1) + coarseGrid.elem(_var_0 * 1 + 1)) / (2.0);
   }
 #else  
-  for (i = 1; i < 100; i += 1) {
-   fineGrid.elem(i) =fineGrid.elem(i)+1;
+  for (i = 1; i < _var_0; i += 1) {
+   fineGrid.elem(i+1) =fineGrid.elem(i)+1;
   }
 #endif  
 }

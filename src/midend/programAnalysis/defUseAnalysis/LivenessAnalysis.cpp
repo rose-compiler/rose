@@ -1,6 +1,6 @@
 /******************************************
  * Category: DFA
- * DefUse Analysis Definition
+ * Variable Liveness Analysis Definition
  * created by tps in Feb 2007
  *****************************************/
 
@@ -9,8 +9,6 @@
 #include "GlobalVarAnalysis.h"
 #include <boost/config.hpp>
 #include <boost/bind.hpp>
-
-
 using namespace std;
 
 template <class T>
@@ -30,7 +28,7 @@ T LivenessAnalysis::merge_no_dups( T& v1,  T& v2) {
   }
   return ret;
 }
-
+// Get the enclosing function definition of a node
 SgFunctionDefinition* 
 LivenessAnalysis::getFunction(SgNode* node) {
   ROSE_ASSERT(node);
@@ -52,7 +50,7 @@ LivenessAnalysis::getFunction(SgNode* node) {
   return funcDef;
 }
 
-
+//!Print out live-in and live-out variables for a node
 void 
 LivenessAnalysis::printInAndOut(SgNode* sgNode) {
   if (DEBUG_MODE)
@@ -94,8 +92,8 @@ static bool sort_using_greater_than(SgNode* u, SgNode* v){
 
 /**********************************************************
  * Traverse the CFG backwards from a given node to 
- * determine whether a change has occured at that path
- * until the first split (2 inedges) or root.
+ * determine whether a change has occurred at that path
+ * until the first split (2 in-edges) or root.
  *********************************************************/
 template <typename T>
 bool LivenessAnalysis::hasANodeAboveCurrentChanged(T source) {
@@ -142,8 +140,6 @@ bool LivenessAnalysis::defuse(T cfgNode, bool *unhandled) {
     if (visited.find(sgNode2)==visited.end())
       *unhandled=true;
   }
-
-
   bool has_changed=false;
   if (DEBUG_MODE) {
     cout << "\n\n------------------------------------------------------------------\ncurrent Node: " << 
