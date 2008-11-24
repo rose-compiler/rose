@@ -283,6 +283,7 @@ Grammar::setUpStatements ()
 #endif
 
 #if 0
+  // DQ (11/23/2008): Note that we could have F77 and F90 stype comments here, but we are not separating out comments as IR nodes.
      NEW_TERMINAL_MACRO (C_StyleCommentStatement, "C_StyleCommentStatement", "C_STYLE_COMMENT_STMT" );
      NEW_TERMINAL_MACRO (CxxStyleCommentStatement, "CxxStyleCommentStatement", "CXX_STYLE_COMMENT_STMT" );
 
@@ -2490,8 +2491,19 @@ Grammar::setUpStatements ()
                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL);
 #endif
 
+  // DQ (11/23/2008): Added support for CPP directives as IR nodes.
+     C_PreprocessorDirectiveStatement.setFunctionPrototype ( "HEADER_PREPROCESSOR_DIRECTIVE_STATEMENT", "../Grammar/Statement.code" );
+
+  // DQ (11/23/2008): After we have these into the AST, then we can decide if we want more information to be stored.
+  // Examples of more information could include:
+  //    1) the substring after the #<directive specification>,
+  //    2) the integer values used for compiler generate line numbers, etc.
+  // For now the "directiveString" stores the full line represented by the CPP directive.
      C_PreprocessorDirectiveStatement.setDataPrototype     ( "std::string"   , "directiveString", "= \"\"",
                                              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+#if 0
+  // DQ (11/23/2008): I am unclear why this is here, these are not used anywhere.
      IncludeDirectiveStatement.setDataPrototype     ( "std::string"   , "dummyString3", "= \"\"",
                                              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      DefineDirectiveStatement.setDataPrototype     ( "std::string"   , "dummyString4", "= \"\"",
@@ -2520,14 +2532,18 @@ Grammar::setUpStatements ()
                                              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      EmptyDirectiveStatement.setDataPrototype     ( "std::string"   , "dummyString15", "= \"\"",
                                              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
   // Support for extern "C" and extern "C++"
      ClinkageDeclarationStatement.setDataPrototype ( "std::string"   , "languageSpecifier", "= \"\"",
                                              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if 0
+  // DQ (11/23/2008): I am unclear why this is here, these are not used anywhere.
      ClinkageStartStatement.setDataPrototype ( "std::string"   , "dummyString16", "= \"\"",
                                              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ClinkageEndStatement.setDataPrototype   ( "std::string"   , "dummyString17", "= \"\"",
                                              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
   // Support for C preprocessor declarations within the AST (does not solve the problem of not
   // knowing where they might be expanded within source code (something we can't see).
@@ -2808,7 +2824,12 @@ Grammar::setUpStatements ()
      C_StyleCommentStatement.setFunctionSource  ( "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
 #endif
 
-     C_PreprocessorDirectiveStatement.setFunctionSource ( "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
+  // DQ (11/23/2008): Added support for CPP directives as IR nodes.
+     C_PreprocessorDirectiveStatement.setFunctionSource ( "SOURCE_PREPROCESSOR_DIRECTIVE_STATEMENT", "../Grammar/Statement.code" );
+
+#if 1
+  // DQ (11/23/2008): Removed this by putting the post_construction_initialization into the base class.
+  // C_PreprocessorDirectiveStatement.setFunctionSource ( "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
      IncludeDirectiveStatement.setFunctionSource        ( "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
      DefineDirectiveStatement.setFunctionSource         ( "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
      UndefDirectiveStatement.setFunctionSource          ( "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
@@ -2829,6 +2850,8 @@ Grammar::setUpStatements ()
      ClinkageEndStatement.setFunctionSource             ( "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
 
      FortranIncludeLine.setFunctionSource               ( "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
+#endif
+
      FortranIncludeLine.setFunctionSource               ( "SOURCE_FORTRAN_INCLUDE_LINE", "../Grammar/Statement.code" );
    }
 

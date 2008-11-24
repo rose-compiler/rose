@@ -359,10 +359,14 @@ steps are the same as those of building a distribution version.
    that it tests and so it will fail when many other tests on boost succeed because your
    {\tt LD\_LIBRARY\_PATH} is finally required and is not properly set.
 
+ % Note from Matt (11/23/2008): Fixed it -- I just gave up one the libtool that came with
+ % the apple dev tools and just built my own libtool in my home directory.  All is
+ % compiling fine now.
    \item Message: {\tt Making all in libltdl \\
       make[2]: *** No rule to make target `all'.  Stop.} \\
    Run {\tt glibtoolize --force} to rebuild the libtool support in ROSE for your machine 
-   at the top level of the source tree.
+   at the top level of the source tree. If that does not work then give up on the libtool 
+   that came with the apple dev tools and just build your own libtool in your home directory.
 
    \item {\bf Don't build ROSE in the source tree, it is not tested often, but it should work.} \\
     Save yourself some trouble and build a separate compile tree.  This will also allow

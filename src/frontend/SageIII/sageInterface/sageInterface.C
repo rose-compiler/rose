@@ -451,11 +451,78 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
    }
 
 string
+SageInterface::get_name ( const SgC_PreprocessorDirectiveStatement* directive )
+   {
+     string name = "undefined_name";
+
+     ROSE_ASSERT(directive != NULL);
+
+     name = directive->class_name();
+
+#if 0
+  // I don't think we need this code now!
+     switch (directive->variantT())
+        {
+       // Separate out these cases...
+          case V_SgIncludeDirectiveStatement:
+          case V_SgDefineDirectiveStatement:
+          case V_SgUndefDirectiveStatement:
+          case V_SgIfdefDirectiveStatement:
+          case V_SgIfndefDirectiveStatement:
+          case V_SgDeadIfDirectiveStatement:
+          case V_SgIfDirectiveStatement:
+          case V_SgElseDirectiveStatement:
+          case V_SgElseifDirectiveStatement:
+          case V_SgLineDirectiveStatement:
+          case V_SgWarningDirectiveStatement:
+          case V_SgErrorDirectiveStatement:
+          case V_SgEmptyDirectiveStatement:
+             {
+               name = directive->class_name();
+               break;
+             }
+
+       // case ClinkageDeclarationStatement:
+          case V_SgClinkageStartStatement:
+          case V_SgClinkageEndStatement:
+             {
+               name = directive->class_name();
+               break;
+             }
+
+          case V_SgFortranIncludeLine:
+             {
+               name = directive->class_name();
+               break;
+             }
+
+          default:
+            // name = "default name (default case reached: not handled)";
+               printf ("Warning: default case reached in SageInterface::get_name ( const SgC_PreprocessorDirectiveStatement* directive ), directive = %p = %s \n",
+                    directive,directive->class_name().c_str());
+               ROSE_ASSERT(false);
+
+               name = "directive_default_name_case_reached_not_handled";
+               break;
+        }
+#endif
+
+     return name;
+   }
+
+string
 SageInterface::get_name ( const SgDeclarationStatement* declaration )
    {
      string name = "undefined_name";
 
      ROSE_ASSERT(declaration != NULL);
+
+  // DQ (11/23/2008): Handle the case of a Cpp directive...
+     const SgC_PreprocessorDirectiveStatement* directive = isSgC_PreprocessorDirectiveStatement(declaration);
+     if (directive != NULL)
+        {
+          return SageInterface::get_name (directive);
+        }
 
      switch (declaration->variantT())
         {
