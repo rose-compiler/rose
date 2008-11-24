@@ -1,11 +1,15 @@
 int a[100], sum;
 void foo()
 {
-  int i;
+  int i,sum2;
+  sum = 0;
   for (i=0;i<100;i++)
   {
+    a[i]=i;
     sum = a[i]+ sum;    
   }
+  sum2=sum;
+  a[1]=1;
 }
 /*
 loop carried output dependence 

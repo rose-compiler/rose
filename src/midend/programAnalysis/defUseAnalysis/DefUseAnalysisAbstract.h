@@ -27,7 +27,6 @@ class DefUseAnalysisAbstract : public Support {
   // reference to DFA ------------------
   DefUseAnalysis* dfa;
 
-
   //  typedef std::multimap < SgInitializedName* , SgNode* > multitype;
   typedef std::vector < std::pair < SgInitializedName* , SgNode* > > multitype;
   typedef std::map< SgNode* , multitype > tabletype;
@@ -36,8 +35,6 @@ class DefUseAnalysisAbstract : public Support {
 
   std::set <SgNode*> doNotVisitMap;
   std::map <SgNode*, bool> nodeChangedMap;
-
-
 
   // searching -------------------------
   bool searchMulti(const multitype* multi, SgInitializedName* initName);
@@ -51,7 +48,6 @@ class DefUseAnalysisAbstract : public Support {
 			  SgInitializedName* name, SgNode* sgNode);
 
   bool checkElementsForEquality(const multitype* t1, const multitype* t2);
-
 
   /**********************************************************
    *  For a CFG Node, follow the two incoming edges and get 

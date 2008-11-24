@@ -9,7 +9,7 @@
 
 #include <string>
 #include "rose.h"
-
+// A set of utility functions
 class Support {
  public:
 

@@ -4,29 +4,30 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 C_TESTCODES_REQUIRED_TO_PASS = \
 anti_dep.c \
 doall.c \
+doall_2.c \
+firstprivate.c \
+lastprivate.c \
+matrixmultiply.c \
+output_dep.c \
+output_dep2.c \
+output_dep3.c \
+private.c \
 scalar_privatization.c \
+shared.c \
 true_dep.c \
-output_dep.c
+true_dep_2.c \
+true_l2.c 
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
 ifstmt.C
 
 # the code which can not yet be parallelized now
+# Or the needed analyses(def-use, liveness, or dependence analysis) cannot handle them yet
 TESTCODE_CURRENTLY_FAILING = \
-doall_2.c \
-firstprivate.c \
 inner_only.c \
 jacobi_seq.c \
-lastprivate.c \
-matrixmultiply.c \
-output_dep2.c \
-output_dep3.c \
 pointer.c \
-private.c \
 reduction.c \
-shared.c \
-true_dep_2.c \
-true_l2.c \
 vectorize_1.c \
 vector_1.C \
 vector_2.C

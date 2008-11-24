@@ -1,5 +1,8 @@
 #include "autoParSupport.h"
 
+#include <iterator> // ostream_iterator
+#include <algorithm> // for set union, intersection etc.
+
 using namespace std;
 // Everything should go into the name space here!!
 namespace AutoParallelization{
@@ -24,12 +27,14 @@ void autopar_command_processing(vector<string>&argvList)
   CommandlineProcessing::removeArgsWithParameters(argvList,"-annot");
 }
 
-bool initialize_analysis(SgProject* project,bool debug/*=false*/)
+bool initialize_analysis(SgProject* project/*=NULL*/,bool debug/*=false*/)
 {
-  ROSE_ASSERT(project != NULL);
-
   // Prepare def-use analysis
-  defuse = new DefUseAnalysis(project);
+  if (defuse==NULL) 
+  { 
+    ROSE_ASSERT(project != NULL);
+    defuse = new DefUseAnalysis(project);
+  }
   ROSE_ASSERT(defuse != NULL);
   int result = defuse->run(debug);
   if (result==0)
@@ -38,7 +43,8 @@ bool initialize_analysis(SgProject* project,bool debug/*=false*/)
     defuse->dfaToDOT();
 
   //Prepare variable liveness analysis
-  liv = new LivenessAnalysis(debug,(DefUseAnalysis*)defuse);
+  if (liv == NULL)
+    liv = new LivenessAnalysis(debug,(DefUseAnalysis*)defuse);
   ROSE_ASSERT(liv != NULL);
 
   std::vector <FilteredCFGNode < IsDFAFilter > > dfaFunctions;
@@ -144,45 +150,329 @@ LoopTreeDepGraph*  ComputeDependenceGraph(SgNode* loop, ArrayInterface* array_in
   return comp->GetDepGraph();   
 }
 
-// Algorithm, for each depInfo, 
-//   commonlevel >=0, depInfo is within a loop
-// simplest one first: 1 level loop only, 
-// iterate dependence edges, 
-// check if there is loop carried dependence at all 
-// (Carry level ==0 for top level common loops)
-//TODO liveness analysis to classify variables and further eliminate dependences
-void DependenceElimination(SgNode* sg_node, LoopTreeDepGraph* depgraph, std::vector<DepInfo>& remainings)
+// Get the live-in and live-out variable sets for a for loop, 
+// recomputing liveness analysis if requested (useful after program transformation)
+// Only consider scalars for now, ignore non-scalar variables
+// Also ignore loop invariant variables.
+void GetLiveVariables(SgNode* loop, std::vector<SgInitializedName*> &liveIns,
+         std::vector<SgInitializedName*> &liveOuts,bool reCompute/*=false*/)
 {
-#if 1 // experiments with liveness analysis and cfg
+  // TODO reCompute : call another liveness analysis function on a target function
+  if (reCompute)
+    initialize_analysis();
+
+  std::vector<SgInitializedName*> liveIns0, liveOuts0; // store the original one
+  SgInitializedName* invarname = getLoopInvariant(loop);
   // Grab the filtered CFG node for SgForStatement
-  SgForStatement *forstmt = isSgForStatement(sg_node);
+  SgForStatement *forstmt = isSgForStatement(loop);
   ROSE_ASSERT(forstmt);
-  CFGNode cfgnode(forstmt,2);// Jeremiah's hidden constructor
+  // Jeremiah's hidden constructor to grab the right one
+  // Several CFG nodes are used for the same SgForStatement
+  CFGNode cfgnode(forstmt,2);
   FilteredCFGNode<IsDFAFilter> filternode= FilteredCFGNode<IsDFAFilter> (cfgnode);
+  // This one does not return the one we want even its getNode returns the
+  // right for statement
   //FilteredCFGNode<IsDFAFilter> filternode= FilteredCFGNode<IsDFAFilter> (forstmt->cfgForBeginning());
-  
   ROSE_ASSERT(filternode.getNode()==forstmt);
 
-  std::vector<SgInitializedName*> invars = liv->getIn(forstmt);
-  for (std::vector<SgInitializedName*>::iterator iter = invars.begin();
-      iter!=invars.end(); iter++)
-  {
-    SgInitializedName* name = *iter;
-    cout<<"Live-in variables for loop:"<< name->get_qualified_name().getString()<<endl;
-  }  
-
   // Check out edges
-  vector<FilteredCFGEdge < IsDFAFilter > > out_edges = filternode.outEdges(); 
-  cout<<"Found edge count:"<<out_edges.size()<<endl;
+  vector<FilteredCFGEdge < IsDFAFilter > > out_edges = filternode.outEdges();
+  //cout<<"Found edge count:"<<out_edges.size()<<endl;
+  //SgForStatement should have two outgoing edges, one true(going into the loop body) and one false (going out the loop)
+  ROSE_ASSERT(out_edges.size()==2); 
   vector<FilteredCFGEdge < IsDFAFilter > >::iterator iter= out_edges.begin();
-  for (; iter!=out_edges.end();iter++) 
+//  std::vector<SgInitializedName*> remove1, remove2;
+  for (; iter!=out_edges.end();iter++)
   {
     FilteredCFGEdge < IsDFAFilter > edge= *iter;
-    cout<<"Out CFG edges for a loop:"<<edge.source().getNode()<<endl;
-    cout<<"Out CFG edges for a loop:"<<edge.target().getNode()<<endl;
-  }
-#endif  
+   // cout<<"Out CFG edges for a loop:"<<edge.source().getNode()<<endl;
+   // cout<<"Out CFG edges for a loop:"<<edge.target().getNode()<<endl;
+    //x. Live-in (loop) = live-in (first-stmt-in-loop)
+    if (edge.condition()==eckTrue)
+    {
+      SgNode* firstnode= edge.target().getNode();
+      liveIns0 = liv->getIn(firstnode);
+     // cout<<"Live-in variables for loop:"<<endl;
+      for (std::vector<SgInitializedName*>::iterator iter = liveIns0.begin();
+          iter!=liveIns0.end(); iter++)
+      {
+        SgInitializedName* name = *iter;
+        if ((SageInterface::isScalarType(name->get_type()))&&(name!=invarname))
+        {
+            liveIns.push_back(*iter);
+//          remove1.push_back(*iter);
+//           cout<< name->get_qualified_name().getString()<<endl;
+         }
+      }
+    }
+    //x. live-out(loop) = live-in (first-stmt-after-loop)
+    else if (edge.condition()==eckFalse)
+    {
+      SgNode* firstnode= edge.target().getNode();
+      liveOuts0 = liv->getIn(firstnode);
+//      cout<<"Live-out variables for loop:"<<endl;
+      for (std::vector<SgInitializedName*>::iterator iter = liveOuts0.begin();
+          iter!=liveOuts0.end(); iter++)
+      {
+        SgInitializedName* name = *iter;
+        if ((SageInterface::isScalarType(name->get_type()))&&(name!=invarname))
+        {
+//          cout<< name->get_qualified_name().getString()<<endl;
+          liveOuts.push_back(*iter);
+//          remove2.push_back(*iter);
+        }
+      }
+    }
+    else
+    {
+      cerr<<"Unexpected CFG out edge type for SgForStmt!"<<endl;
+      ROSE_ASSERT(false);
+    }
+  } // end for (edges)
+#if 0 // remove is not stable for unkown reasons
+  // sort them for better search/remove 
+  sort(liveIns.begin(),liveIns.end());
+  sort(liveOuts.begin(),liveOuts.end());
 
+  // Remove non-scalar variables 
+  std::vector<SgInitializedName*>::iterator iter2;
+  for (iter2=remove1.begin();iter2!=remove1.end();iter2++)
+    remove(liveIns.begin(),liveIns.end(),*iter2);
+ 
+  std::vector<SgInitializedName*>::iterator iter3;
+  for (iter3=remove2.begin();iter3!=remove2.end();iter3++)
+    remove(liveOuts.begin(),liveOuts.end(),*iter3);
+
+  // Remove loop invariant variables
+  remove(liveIns.begin(),liveIns.end(),invarname);
+  remove(liveOuts.begin(),liveOuts.end(),invarname);
+#endif  
+ // debug the final results
+   cout<<"Final Live-in variables for loop:"<<endl;
+  for (std::vector<SgInitializedName*>::iterator iter = liveIns.begin();
+      iter!=liveIns.end(); iter++)
+  {
+    SgInitializedName* name = *iter;
+    cout<< name->get_qualified_name().getString()<<endl;
+  }
+  cout<<"Final Live-out variables for loop:"<<endl;
+  for (std::vector<SgInitializedName*>::iterator iter = liveOuts.begin();
+      iter!=liveOuts.end(); iter++)
+  {
+    SgInitializedName* name = *iter;
+    cout<< name->get_qualified_name().getString()<<endl;
+  }
+
+} // end GetLiveVariables()
+
+// Check if a loop has a canonical form, which has
+//  * initialization statements; 
+//  * a test expression  using either <= or >= operations
+//  * an increment expression using i=i+1, or i=i-1.
+// If yes, grab its invariant, lower bound, upper bound, step, and body if requested
+#if 0
+bool IsCanonicalLoop(SgNode* loop,SgInitializedName* invar/*=0*/, SgExpression* lb/*=0*/,
+                    SgExpression* ub/*=0*/, SgExpression* step/*=0*/, SgStatement* body/*=0*/)
+{
+  bool result;
+  ROSE_ASSERT(loop != NULL);
+  AstInterfaceImpl faImpl(loop);
+  AstInterface fa(&faImpl);
+  AstNodePtr ivar2, lb2, ub2,step2, body2;
+  AstNodePtrImpl loop2(loop);
+  result=fa.IsFortranLoop(loop2, &ivar2, &lb2, &ub2,&step2, &body2); 
+  if (invar)
+  {
+     invar = isSgInitializedName(AstNodePtrImpl(ivar2).get_ptr());
+     cout<<"debug IsCanonicalLoop() ivar = "<<invar->get_name().getString()<<" type "<<invar->class_name()<<endl;
+  }  
+  return result;
+}
+#endif
+// Return the loop invariant of a canonical loop
+SgInitializedName* getLoopInvariant(SgNode* loop)
+{
+  AstInterfaceImpl faImpl(loop);
+  AstInterface fa(&faImpl);
+  AstNodePtr ivar2 ;
+  AstNodePtrImpl loop2(loop);
+  bool result=fa.IsFortranLoop(loop2, &ivar2);
+  ROSE_ASSERT(result); // Must be a canonical loop
+  SgVarRefExp* invar = isSgVarRefExp(AstNodePtrImpl(ivar2).get_ptr());
+  ROSE_ASSERT(invar);
+  SgInitializedName* invarname = invar->get_symbol()->get_declaration();
+  // cout<<"debug ivar:"<<invarname<< " name "
+  // <<invarname->get_name().getString()<<endl;
+  return invarname;
+}
+
+// Collect sorted and unique visible referenced variables within a scope. 
+// ignoring loop invariant and local variables declared within the scope. 
+// They are less interesting for auto parallelization
+void CollectVisibleVaribles(SgNode* loop, std::vector<SgInitializedName*>&
+      resultVars, bool scalarOnly/*=false*/)
+{
+  ROSE_ASSERT(loop !=NULL);
+  //Get the scope of the loop
+  SgScopeStatement* currentscope = isSgFunctionDeclaration(\
+	                SageInterface::getEnclosingFunctionDeclaration(loop))\
+	                  ->get_definition()->get_body();
+  ROSE_ASSERT(currentscope != NULL);
+ 
+  SgInitializedName* invarname = getLoopInvariant(loop);
+  Rose_STL_Container<SgNode*> reflist = NodeQuery::querySubTree(loop, V_SgVarRefExp);
+  for (Rose_STL_Container<SgNode*>::iterator i=reflist.begin();i!=reflist.end();i++)
+   {
+      SgInitializedName* initname= isSgVarRefExp(*i)->get_symbol()->get_declaration();
+      SgScopeStatement* varscope=initname->get_scope();
+      // only collect variables which are visible at the loop's scope
+      // varscope is equal or higher than currentscope 
+      if ((currentscope==varscope)||(SageInterface::isAncestor(varscope,currentscope)))
+      { 
+         // Skip non-scalar if scalarOnly is requested
+         if ((scalarOnly)&& !SageInterface::isScalarType(initname->get_type()))
+           continue;
+         if (invarname!=initname)  
+           resultVars.push_back(initname);
+      }
+   } // end for()
+
+#if 0  // remove is not stable ??
+ //skip loop invariant variable:
+ SgInitializedName* invarname = getLoopInvariant(loop);
+ remove(resultVars.begin(),resultVars.end(),invarname);
+#endif
+ //Remove duplicated items 
+  sort(resultVars.begin(),resultVars.end()); 
+  std::vector<SgInitializedName*>::iterator new_end= unique(resultVars.begin(),resultVars.end());
+  resultVars.erase(new_end, resultVars.end());
+}
+
+// Variable classification for a loop node based on liveness analysis
+// Collect private, firstprivate, lastprivate, reduction and save into attribute
+// We only consider scalars for now 
+void AutoScoping(SgNode *sg_node, OmpSupport::OmpAttribute* attribute)
+{
+  ROSE_ASSERT(sg_node&&attribute);
+  // Variable liveness analysis
+   std::vector<SgInitializedName*> liveIns;
+   std::vector<SgInitializedName*> liveOuts;
+   // Turn on recomputing since transformations have been done
+   //GetLiveVariables(sg_node,liveIns,liveOuts,true);
+   // TODO Loop normalization messes up AST or 
+   // the existing analysis can not be called multiple times
+   GetLiveVariables(sg_node,liveIns,liveOuts,false);
+   // Remove loop invariant variable, which is always private 
+  SgInitializedName* invarname = getLoopInvariant(sg_node);
+  remove(liveIns.begin(),liveIns.end(),invarname);
+  remove(liveOuts.begin(),liveOuts.end(),invarname);
+
+  std::vector<SgInitializedName*> allVars,privateVars,lastprivateVars, firstprivateVars,reductionVars;
+   CollectVisibleVaribles(sg_node,allVars,true);
+#if 1
+   cout<<"Debug after CollectVisibleVaribles():"<<endl;
+   for (std::vector<SgInitializedName*>::iterator iter = allVars.begin(); iter!= allVars.end();iter++)
+   {
+     cout<<(*iter)<<" "<<(*iter)->get_qualified_name().getString()<<endl;
+   }
+#endif  
+   // We should only concern about variables with some kind of dependences
+  // But we use the variable to eleminate dependences later on, so we can tolerate a bigger set.
+  /*               live-in      live-out
+     private           N           N      allVars - liveIns - liveOuts  
+     lastprivate       N           Y      liveOuts - liveIns
+     firstprivate      Y           N      liveIns - liveOuts
+     reduction         Y           Y      liveIns Intersection liveOuts
+  */ 
+  sort(liveIns.begin(), liveIns.end());
+  sort(liveOuts.begin(), liveOuts.end());
+  //private:TODO double check possible conflicts with shared, or reduction
+  std::vector<SgInitializedName*> temp;
+  set_difference(allVars.begin(),allVars.end(), liveIns.begin(), liveIns.end(),
+               inserter(temp, temp.begin()));
+  set_difference(temp.begin(),temp.end(), liveOuts.begin(), liveOuts.end(),
+               inserter(privateVars, privateVars.end()));	
+  privateVars.push_back(invarname);  //TODO check Does the scope matter? for (int i..)     
+  cout<<"Debug dump private:"<<endl;
+  for (std::vector<SgInitializedName*>::iterator iter = privateVars.begin(); iter!= privateVars.end();iter++) 
+  {
+    attribute->addVariable(OmpSupport::e_private ,(*iter)->get_name().getString(), *iter);
+     cout<<(*iter)<<" "<<(*iter)->get_qualified_name().getString()<<endl;
+  }
+  //lastprivate: 
+  set_difference(liveOuts.begin(), liveOuts.end(), liveIns.begin(), liveIns.end(),
+            inserter(lastprivateVars, lastprivateVars.begin()));
+   cout<<"Debug dump lastprivate:"<<endl;
+  for (std::vector<SgInitializedName*>::iterator iter = lastprivateVars.begin(); iter!= lastprivateVars.end();iter++) 
+  {
+    attribute->addVariable(OmpSupport::e_lastprivate ,(*iter)->get_name().getString(), *iter);
+     cout<<(*iter)<<" "<<(*iter)->get_qualified_name().getString()<<endl;
+  }
+  // firstprivate:
+  set_difference(liveIns.begin(), liveIns.end(), liveOuts.begin(),liveOuts.end(),
+                 inserter(firstprivateVars, firstprivateVars.begin()));
+  cout<<"Debug dump firstprivate:"<<endl;
+  for (std::vector<SgInitializedName*>::iterator iter = firstprivateVars.begin(); iter!= firstprivateVars.end();iter++) 
+  {
+    attribute->addVariable(OmpSupport::e_firstprivate ,(*iter)->get_name().getString(), *iter);
+     cout<<(*iter)<<" "<<(*iter)->get_qualified_name().getString()<<endl;
+  }
+ 
+}
+
+// Collect all classified variables from an OmpAttribute attached to a loop node
+void CollectScopedVariables(OmpSupport::OmpAttribute* attribute, std::vector<SgInitializedName*>& result)
+{
+  ROSE_ASSERT(attribute!=NULL);
+  // private, firstprivate, lastprivate, reduction
+  std::vector < std::pair <std::string,SgNode*> > privateVars, firstprivateVars,
+    lastprivateVars,reductionVars;
+  privateVars     = attribute->getVariableList(OmpSupport::e_private);
+  firstprivateVars= attribute->getVariableList(OmpSupport::e_firstprivate);
+  lastprivateVars = attribute->getVariableList(OmpSupport::e_lastprivate);
+  reductionVars   = attribute->getVariableList(OmpSupport::e_reduction);
+
+  std::vector < std::pair <std::string,SgNode*> >::iterator iter;
+  for (iter=privateVars.begin();iter!=privateVars.end();iter++)
+  {
+    SgInitializedName* initname= isSgInitializedName((*iter).second);
+    ROSE_ASSERT(initname!=NULL);
+    result.push_back(initname);
+  }
+  for (iter=firstprivateVars.begin();iter!=firstprivateVars.end();iter++)
+  {
+    SgInitializedName* initname= isSgInitializedName((*iter).second);
+    ROSE_ASSERT(initname!=NULL);
+    result.push_back(initname);
+  }
+  for (iter=lastprivateVars.begin();iter!=lastprivateVars.end();iter++)
+  {
+    SgInitializedName* initname= isSgInitializedName((*iter).second);
+    ROSE_ASSERT(initname!=NULL);
+    result.push_back(initname);
+  }
+  for (iter=reductionVars.begin();iter!=reductionVars.end();iter++)
+  {
+    SgInitializedName* initname= isSgInitializedName((*iter).second);
+    ROSE_ASSERT(initname!=NULL);
+    result.push_back(initname);
+  }
+  // avoid duplicated items
+  sort(result.begin(), result.end());
+  std::vector<SgInitializedName*>::iterator new_end=unique(result.begin(),result.end());
+  result.erase(new_end,result.end());
+}
+
+// Algorithm, eliminate the following dependencies
+// *  commonlevel >=0, depInfo is within a loop
+// *  carry level !=0, loop independent,
+// *  either source or sink variable is thread local variable 
+// *  dependencies caused by autoscoped variables (private, firstprivate, lastprivate, reduction)
+// * two array references, but SCALAR_DEP or SCALAR_BACK_DEP dependencies
+// OmpAttribute provides scoped variables
+// ArrayInterface and ArrayAnnotation support optional annotation based high level array abstractions
+void DependenceElimination(SgNode* sg_node, LoopTreeDepGraph* depgraph, std::vector<DepInfo>& remainings, OmpSupport::OmpAttribute* att, ArrayInterface* array_interface/*=0*/, ArrayAnnotation* annot/*=0*/)
+{
   //LoopTreeDepGraph * depgraph =  comp.GetDepGraph(); 
   LoopTreeDepGraph::NodeIterator nodes = depgraph->GetNodeIterator();
   // For each node
@@ -197,30 +487,88 @@ void DependenceElimination(SgNode* sg_node, LoopTreeDepGraph* depgraph, std::vec
        for (; !edges.ReachEnd(); ++edges) 
        { 
          LoopTreeDepGraph::Edge *e= *edges;
-        // cout<<"dependence edge: "<<e->toString()<<endl;
+         //cout<<"dependence edge: "<<e->toString()<<endl;
          DepInfo info =e->GetInfo();
        
-         // eliminate dependence relationship if
-         // the variables are thread-local: (within the scope of the loop's scope)
+         // x. Eliminate dependence relationship if
+         // either of the source or sink variables are thread-local: 
+         // (within the scope of the loop's scope)
          SgScopeStatement * currentscope= SageInterface::getScope(sg_node);  
          SgScopeStatement* varscope =NULL;
          SgNode* src_node = AstNodePtr2Sage(info.SrcRef());
+         SgInitializedName* src_name=NULL;
          if (src_node)
          {
            SgVarRefExp* var_ref = isSgVarRefExp(src_node);
            if (var_ref)
            {  
              varscope= var_ref->get_symbol()->get_scope();
+             src_name = var_ref->get_symbol()->get_declaration();
              if (SageInterface::isAncestor(currentscope,varscope))
                continue;
            } //end if(var_ref)
          } // end if (src_node)
+         SgNode* snk_node = AstNodePtr2Sage(info.SnkRef());
+         SgInitializedName* snk_name=NULL;
+         if (snk_node)
+         {
+           SgVarRefExp* var_ref = isSgVarRefExp(snk_node);
+           if (var_ref)
+           {  
+             varscope= var_ref->get_symbol()->get_scope();
+             snk_name = var_ref->get_symbol()->get_declaration();
+             if (SageInterface::isAncestor(currentscope,varscope))
+               continue;
+           } //end if(var_ref)
+         } // end if (snk_node)
 
-          // skip non loop carried dependencies: 
-          // TODO scalar issue, wrong CarryLevel
-          // loop independent dependencies: need privatization can eliminate most of them
+         //x. Eliminate a dependence if 
+         // both the source and sink variables are array references (not scalar) 
+         // But the dependence type is scalar type
+         bool isArray1=false, isArray2=false; 
+         AstInterfaceImpl faImpl=AstInterfaceImpl(sg_node);
+         AstInterface fa(&faImpl);
+         // If we have array annotation, use loop transformation interface's IsArrayAccess()
+         if (array_interface&& annot)
+         {
+           LoopTransformInterface la (fa,*array_interface, annot, array_interface);
+           isArray1= la.IsArrayAccess(info.SrcRef());
+           isArray2= la.IsArrayAccess(info.SnkRef());
+         }
+         else // use AstInterface's IsArrayAccess() otherwise
+         {
+           isArray1= fa.IsArrayAccess(info.SrcRef());
+           isArray2= fa.IsArrayAccess(info.SnkRef());
+         }
+         if (isArray1 && isArray2)
+         {
+           if ((info.GetDepType() & DEPTYPE_SCALAR)||(info.GetDepType() & DEPTYPE_BACKSCALAR))
+             continue;
+         }
+
+
+         //x. Eliminate dependencies caused by autoscoped variables
+         // such as private, firstprivate, lastprivate, and reduction
+	 if(att&& (src_name || snk_name)) // either src or snk might be an array reference 
+	 {
+	   std::vector<SgInitializedName*> scoped_vars;
+	   CollectScopedVariables(att, scoped_vars);
+	   std::vector<SgInitializedName*>::iterator hit1,hit2;
+	   //for (hit1=scoped_vars.begin();hit1!=scoped_vars.end();hit1++)
+	   //  cout<<"scoped var:"<<*hit1 <<" name:"<<(*hit1)->get_name().getString()<<endl;
+	   if (src_name)
+  	     hit1=find(scoped_vars.begin(),scoped_vars.end(),src_name);
+	   if (snk_name)
+	     hit2=find(scoped_vars.begin(),scoped_vars.end(),snk_name);
+	   if (hit1!=scoped_vars.end() || (hit2!=scoped_vars.end()))
+	     continue;
+	 }
+ 
+          // x. Eliminate loop-independent dependencies: 
+          // loop independent dependencies: privatization can eliminate most of them
          if (info.CarryLevel()!=0) 
            continue;
+
          // Save the rest dependences which can not be ruled out 
          remainings.push_back(info); 
        } //end iterator edges for a node

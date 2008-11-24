@@ -12,9 +12,7 @@ void foo()
     x=i;
   printf("x=%d",x);    
 }  
-/*  carryLevel should be 0?
- 
+/*  
  * output dependence, loop carried
- * dep SgExprStatement:x = i; SgExprStatement:x = i; 1*1 SCALAR_DEP; commonlevel = 1 CarryLevel = 1 SgVarRefExp:x@7:6->SgVarRefExp:x@7:6 == 0;||::
-
+ * 1*1  SCALAR_DEP DATA_DEP; commonlevel = 1 CarryLevel = 0 Scalar dep type  OUTPUT_DEP DATA_DEP;SgVarRefExp:x@12:6->SgVarRefExp:x@12:6 == 0;||::
  */

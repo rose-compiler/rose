@@ -31,7 +31,7 @@ main (int argc, char *argv[])
   SgProject *project = frontend (argvList);
   ROSE_ASSERT (project != NULL);
   //Prepare liveness analysis etc.
-  initialize_analysis (project,true);   
+  initialize_analysis (project,false);   
   // For each source file in the project
     SgFilePtrList & ptr_list = project->get_fileList();
     for (SgFilePtrList::iterator iter = ptr_list.begin(); iter!=ptr_list.end();
@@ -63,7 +63,7 @@ main (int argc, char *argv[])
         // in "inline" annotations
         AstInterfaceImpl faImpl_1(body);
         CPPAstInterface fa_body(&faImpl_1);
-//        OperatorInlineRewrite()( fa_body, AstNodePtrImpl(body));
+        OperatorInlineRewrite()( fa_body, AstNodePtrImpl(body));
          
 	 // Pass annotations to arrayInterface and use them to collect 
          // alias info. function info etc.  
@@ -73,7 +73,7 @@ main (int argc, char *argv[])
          array_interface.observe(fa_body);
        
         // 1. Loop normalization for all loops within body
-//        NormalizeForLoop(fa_body, AstNodePtrImpl(body));
+        NormalizeForLoop(fa_body, AstNodePtrImpl(body));
 
         // 2. Compute dependence graph for the target loop
         // TODO working on more loops
@@ -81,14 +81,24 @@ main (int argc, char *argv[])
         LoopTreeDepGraph* depgraph= ComputeDependenceGraph(sg_node, &array_interface, annot);
         if (depgraph==NULL)
         {
-          cout<<"Failed to compute depgraph for loop:"<<sg_node->unparseToString()<<endl;
+          cout<<"Skipping a loop since failed to compute depgraph for it:"<<sg_node->unparseToString()<<endl;
           continue;
         }
-       //3. Judge if loops are parallelizable
+	// 3. variable classification (autoscoping): 
+	// This step is done before DependenceElimination(), so the irrelevant
+	// dependencies associated with the autoscoped variabled can be
+	// eliminated.
+        OmpSupport::OmpAttribute* omp_attribute = new
+	  OmpSupport::OmpAttribute();
+	ROSE_ASSERT(omp_attribute != NULL);
+	AutoScoping(sg_node, omp_attribute);
+
+       //4. Judge if loops are parallelizable
        bool isParallelizable = true;
        vector<DepInfo>  remainingDependences;
-       DependenceElimination(sg_node, depgraph, remainingDependences);
-         // Set to unparallelizable if it has dependences which can not eliminated
+       DependenceElimination(sg_node, depgraph, remainingDependences,omp_attribute,&array_interface, annot);
+       // Set to unparallelizable if it has dependences 
+       //which can not be eliminated
        if (remainingDependences.size()>0) 
        {
         isParallelizable = false;
@@ -101,16 +111,20 @@ main (int argc, char *argv[])
         }
        }
       //comp.DetachDepGraph();// TODO release resources here
-      //4.  Attach OmpAttribute to the loop node if it is parallelizable 
+      //5.  Attach OmpAttribute to the loop node if it is parallelizable 
        if (isParallelizable)
        {  
-          // TODO add variable classification to set private,shared variables 
-          OmpSupport::OmpAttribute* omp_attribute = OmpSupport::buildOmpAttribute(OmpSupport::e_parallel_for,sg_node);
+         //= OmpSupport::buildOmpAttribute(OmpSupport::e_parallel_for,sg_node);
+	  omp_attribute->setOmpDirectiveType(OmpSupport::e_parallel_for);
           OmpSupport::addOmpAttribute(omp_attribute,sg_node);
           hasOpenMP = true;
+          // 6. Generate and insert #pragma omp parallel for 
+          generatedOpenMPPragmas(sg_node); 
         } 
-        // 5. Generate and insert #pragma omp parallel for 
-        generatedOpenMPPragmas(sg_node); 
+       else
+       {
+	 delete omp_attribute;
+       }
      } // end for-loop for declarations
      // insert omp.h if OpenMP directives have been inserted into the current file 
      if (hasOpenMP)

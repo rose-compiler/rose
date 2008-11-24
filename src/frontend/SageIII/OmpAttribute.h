@@ -10,6 +10,7 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include <cassert>
 
 namespace OmpSupport{
 
@@ -155,18 +156,23 @@ class OmpAttribute : public AstAttribute
       init();
     }
    //! Constructor for known directive type and originating pragma/scope node
-   OmpAttribute(omp_construct_enum omptye, SgNode* mynode):
-   mNode(mynode),omp_type(omptye){ 
+   OmpAttribute(omp_construct_enum omptype, SgNode* mynode):
+   mNode(mynode),omp_type(omptype){ 
      /*The initialization order has to match the declaration order, 
       * otherwise get a compilation warning*/
         init();
+	assert(isDirective(omptype));
    }
-
+  //!--------------AST connection------------------
   //! Get the associated SgPragmaDeclaration if any
   SgPragmaDeclaration* getPragmaDeclaration();
 
   //! Get the associated SgNode, can be SgPragmaDeclaration or others( during parallelization)
-  SgNode* getNode();
+  SgNode* getNode(){return mNode;};
+  void setNode(SgNode* n) { mNode= n;};
+   //!------------directive type-------
+   void setOmpDirectiveType(omp_construct_enum omptype){ assert (isDirective(omptype)); omp_type = omptype;}
+   omp_construct_enum getOmpDirectiveType() {return omp_type;}
 
    //!-----------clauses----------------
    //!Add a clause into an OpenMP directive, the content of the clause is set by other interface, such as addVariable(), addExpression() , setReductionOperator() etc.
@@ -179,11 +185,11 @@ class OmpAttribute : public AstAttribute
 
    //!--------var list --------------
    //! Add a variable into a variable list of a construct
-   void addVariable(omp_construct_enum targetConstruct, const std::string& varString);
+   void addVariable(omp_construct_enum targetConstruct, const std::string& varString,SgInitializedName* sgvar=NULL);
    //! Check if a variable list is associated with a construct
    bool hasVariableList(omp_construct_enum);
    //! Get the variable list associated with a construct
-   std::vector<std::pair<std::string,SgNode* > >
+   std::vector<std::pair<std::string,SgNode* > > 
      getVariableList(omp_construct_enum);
 
    //! Find the relevant clauses for a variable 
