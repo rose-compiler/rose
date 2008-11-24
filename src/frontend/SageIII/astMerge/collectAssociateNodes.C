@@ -1849,6 +1849,27 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                break;
              }
 
+       // DQ (11/23/2008): Added cases for CPP directives...
+          case V_SgIncludeDirectiveStatement:
+          case V_SgDefineDirectiveStatement:
+          case V_SgUndefDirectiveStatement:
+          case V_SgIfdefDirectiveStatement:
+          case V_SgIfndefDirectiveStatement:
+          case V_SgDeadIfDirectiveStatement:
+          case V_SgIfDirectiveStatement:
+          case V_SgElseDirectiveStatement:
+          case V_SgElseifDirectiveStatement:
+          case V_SgLineDirectiveStatement:
+          case V_SgWarningDirectiveStatement:
+          case V_SgErrorDirectiveStatement:
+          case V_SgEmptyDirectiveStatement:
+             {
+               printf ("Handling a CPP directive in AST merge... node = %s \n",node->class_name().c_str());
+               break;
+             }
+
+  
+
           default:
              {
                printf ("addAssociatedNodes(): default case node = %p = %s = %s \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str());

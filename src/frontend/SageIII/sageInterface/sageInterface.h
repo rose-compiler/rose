@@ -206,6 +206,10 @@ extern int gensym_counter;
    */
     std::string get_name (const SgLocatedNodeSupport * node);
 
+  /*! \brief Generate a useful name to describe the SgC_PreprocessorDirectiveStatement IR node
+   */
+    std::string get_name ( const SgC_PreprocessorDirectiveStatement* directive );
+
 //@}
 
 //------------------------------------------------------------------------

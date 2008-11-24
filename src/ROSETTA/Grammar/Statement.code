@@ -2682,7 +2682,13 @@ HEADER_LIST_DECLARATIONS
 
 HEADER_UPC_FORALL_STATEMENT_END
 
+HEADER_PREPROCESSOR_DIRECTIVE_STATEMENT_START
 
+       // DQ (11/23/2008): I think this is defined in the base class so we can't redefine it here.
+       // void post_construction_initialization();
+
+          static SgC_PreprocessorDirectiveStatement* createDirective ( PreprocessingInfo* currentPreprocessingInfo );
+HEADER_PREPROCESSOR_DIRECTIVE_STATEMENT_END
 
 // #########################################################
 // #########################################################
@@ -13419,5 +13425,14 @@ SgFortranIncludeLine::get_mangled_name(void) const
      return SgName ("__fortran_include_line__");
    }
 SOURCE_FORTRAN_INCLUDE_LINE_END
+
+
+SOURCE_PREPROCESSOR_DIRECTIVE_STATEMENT_START
+void
+SgC_PreprocessorDirectiveStatement::post_construction_initialization()
+   {
+   }
+
+SOURCE_PREPROCESSOR_DIRECTIVE_STATEMENT_END
 
 

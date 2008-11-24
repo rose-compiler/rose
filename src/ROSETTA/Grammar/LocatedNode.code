@@ -36,10 +36,7 @@ HEADER_START
      public:
        // [MK] Member function to attach PreprocessingInfo object to the node
        // void addToAttachedPreprocessingInfo(PreprocessingInfo *prepInfoPtr);
-          void addToAttachedPreprocessingInfo(
-               PreprocessingInfo *prepInfoPtr,
-            // PositionOfPreprocessingInfoInListType locationInList = appendPreprocessingInfoToList );
-               PreprocessingInfo::RelativePositionType locationInList = PreprocessingInfo::after );
+          void addToAttachedPreprocessingInfo( PreprocessingInfo *prepInfoPtr, PreprocessingInfo::RelativePositionType locationInList = PreprocessingInfo::after );
 
        // DQ (2/6/2003):
        /*! \brief Interface function to implement original SAGE interface to
@@ -824,9 +821,11 @@ SgLocatedNode::addToAttachedPreprocessingInfo(
   // PositionOfPreprocessingInfoInListType locationInList )
      PreprocessingInfo::RelativePositionType locationInList )
    {
-     ROSE_ASSERT(prepInfoPtr != NULL);
+  // DQ (11/23/2008): Is this comment still true?  Is there something to fix here?
+  // There are places in ROSE where the comments is added before the statement
+  // though most commonly the comment is added after the statement.  So I think that
+  // this interface is required adn that it need not be fixed.
 
-#if 0
   // DQ (9/19/2003)
   // This function takes a PreprocessingInfo::RelativePositionType type parameter which
   // makes no since because it is used only to determine if the new comment/directive is
@@ -835,27 +834,12 @@ SgLocatedNode::addToAttachedPreprocessingInfo(
   // PreprocessingInfo object that it takes for the other parameter (nor should it).
   // This function was poorly desinged in the first place and needs to be fixed!!!
   // printf ("In LocatedNode::addToAttachedPreprocessingInfo(PreprocessingInfo,PreprocessingInfo::RelativePositionType): FIX INTERFACE!!!! \n");
-#endif
+
+     ROSE_ASSERT(prepInfoPtr != NULL);
 
 #if 0
-     printf ("Current node is a %s: prepInfoPtr->stringPointer = %s \n",
-          sage_class_name(),prepInfoPtr->stringPointer);
+     printf ("Current node is a %s: prepInfoPtr->stringPointer = %s \n",class_name().c_str(),prepInfoPtr->stringPointer);
 #endif
-
-  // Nodes that should not have comments attached (since they are not unparsed)
-     if (isSgForInitStatement(this) != NULL)
-        {
-          printf ("Error: should not have comments attached, location: \n");
-          this->get_startOfConstruct()->display("Error: should not have comments attached: debug (start)");
-          this->get_endOfConstruct()->display("Error: should not have comments attached: debug (end)");
-          printf ("Internal string = \n*****\n%s\n*****\n",prepInfoPtr->getString().c_str());
-          prepInfoPtr->get_file_info()->display("prepInfoPtr: debug");
-          ROSE_ASSERT(this->get_parent() != NULL);
-          SgForStatement* forStatement = isSgForStatement(this->get_parent());
-          ROSE_ASSERT(forStatement != NULL);
-          forStatement->get_startOfConstruct()->display("forStatement: debug (start)");
-          forStatement->get_endOfConstruct()->display("forStatement: debug (end)");
-        }
 
   // Nodes that should not have comments attached (since they are not unparsed)
      ROSE_ASSERT (dynamic_cast<SgForInitStatement*>(this) == NULL);
@@ -872,46 +856,36 @@ SgLocatedNode::addToAttachedPreprocessingInfo(
           printf ("SgFunctionParameterList are not typically associated with comments or CPP directives \n");
           ROSE_ASSERT(get_startOfConstruct() != NULL);
           ROSE_ASSERT(get_endOfConstruct() != NULL);
-       // get_startOfConstruct()->display("startOfConstruct");
-       // get_endOfConstruct()->display("endOfConstruct");
         }
 
   // Create data structure for storing the attached PreprocessingInfo objects, if necessary
-     if(!p_attachedPreprocessingInfoPtr)
+     if (p_attachedPreprocessingInfoPtr == NULL)
         {
           p_attachedPreprocessingInfoPtr = new AttachedPreprocessingInfoType;
           ROSE_ASSERT(p_attachedPreprocessingInfoPtr != NULL);
         }
 
   // Add the current PreprocessingInfo object
-  // p_attachedPreprocessingInfoPtr->push_back(prepInfoPtr);
      switch (locationInList)
         {
-//        case defaultValue:
           case PreprocessingInfo::defaultValue:
           case PreprocessingInfo::undef:
-               printf ("Error: defaultValue found in switch statement \n");
-               ROSE_ABORT();
+               printf ("Error: defaultValue or undef value found in switch statement \n");
+               ROSE_ASSERT(false);
                break;
-//        case prependPreprocessingInfoToList:
-          case PreprocessingInfo::before:
 
-            // DQ (9/25/2007): Moved form std::list to std::vector.
-            // (9/10/2003) DQ: Force new comments to be attached closest to the target statement
-            // p_attachedPreprocessingInfoPtr->push_front(prepInfoPtr);
-            // p_attachedPreprocessingInfoPtr->push_back(prepInfoPtr);
+          case PreprocessingInfo::before:
                p_attachedPreprocessingInfoPtr->insert(p_attachedPreprocessingInfoPtr->begin(),prepInfoPtr);
                break;
 
-//        case appendPreprocessingInfoToList:
           case PreprocessingInfo::after:
             // (9/10/2003) DQ: Force new comments to be attached closest to the target statement
                p_attachedPreprocessingInfoPtr->push_back(prepInfoPtr);
-            // p_attachedPreprocessingInfoPtr->push_front(prepInfoPtr);
                break;
+
           default:
                printf ("Error: default found in switch statement \n");
-               ROSE_ABORT();
+               ROSE_ASSERT(false);
         }
    }
 
