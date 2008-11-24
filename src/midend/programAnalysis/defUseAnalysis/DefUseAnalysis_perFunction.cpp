@@ -171,6 +171,20 @@ bool DefUseAnalysisPF::defuse(T cfgNode, bool *unhandled) {
 	  varPntrRefExp=isSgPntrArrRefExp(varPntrRefExp->get_lhs_operand());
 	} 
 	SgVarRefExp* varRefExpL = isSgVarRefExp(varPntrRefExp->get_lhs_operand());
+	if (varRefExpL==NULL) {
+	  Rose_STL_Container<SgNode*> vars = NodeQuery::querySubTree(varPntrRefExp, V_SgVarRefExp); 
+	  if (vars.size()>1) {
+	    cerr << " There is more than one VarRefExp in this PntrArrRefExp. " << endl;
+	    //	    ROSE_ASSERT(varRefExpL);
+	    varRefExpL = isSgVarRefExp(*vars.begin());
+	  } else if (vars.size()==1)
+	    varRefExpL = isSgVarRefExp(*vars.begin());
+	  if (varRefExpL==NULL) {
+	    cerr << " TYPE of LHS : " << varPntrRefExp->get_lhs_operand()->class_name() << endl;
+	    ROSE_ASSERT(varRefExpL);
+	  }
+	}
+#if 0
 	SgArrowExp* arrow = isSgArrowExp(varPntrRefExp->get_lhs_operand());
 	if (arrow) {
 	  cerr << " TYPE of LHS OF ARROW: left: " << arrow->get_lhs_operand()->class_name() << endl;
@@ -188,6 +202,8 @@ bool DefUseAnalysisPF::defuse(T cfgNode, bool *unhandled) {
 	  cerr << " TYPE of LHS : " << varPntrRefExp->get_lhs_operand()->class_name() << endl;
 	  ROSE_ASSERT(varRefExpL);
 	}
+#endif
+
 	initName = varRefExpL->get_symbol()->get_declaration();  
 	if (DEBUG_MODE)
 	  cout << " BINARY OP: " << initName->get_qualified_name().str() 
