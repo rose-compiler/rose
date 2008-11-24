@@ -611,12 +611,19 @@ SgCharVal* SageBuilder::buildCharVal_nfi(char value, const string& str)
   return result;
 }
 
-SgComplexVal* SageBuilder::buildComplexVal(long double real_value /*= 0.0*/, 
-                              long double imaginary_value /*= 0.0*/ )
+SgWcharVal* SageBuilder::buildWcharVal(wchar_t value /*= 0*/)
 {
-  SgComplexVal* result = new SgComplexVal(buildLongDoubleVal(real_value),buildLongDoubleVal(imaginary_value),SgTypeLongDouble::createType(),"");
+  SgWcharVal* result = new SgWcharVal(value, "");
   ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgWcharVal* SageBuilder::buildWcharVal_nfi(wchar_t value, const string& str)
+{
+  SgWcharVal* result = new SgWcharVal(value, str);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
   return result;
 }
 
@@ -2245,6 +2252,13 @@ SgTypeVoid * SageBuilder::buildVoidType()
   return result;
 }
 
+SgTypeUnknown * SageBuilder::buildUnknownType() 
+{ 
+  SgTypeUnknown * result =SgTypeUnknown::createType(); 
+  ROSE_ASSERT(result); 
+  return result;
+}
+
 SgTypeShort * SageBuilder::buildShortType() 
 { 
   SgTypeShort * result =SgTypeShort::createType(); 
@@ -2312,10 +2326,9 @@ SgTypeFloat * SageBuilder::buildFloatType()
   SgType* SageBuilder::buildRestrictType(SgType* base_type)
  {
    ROSE_ASSERT(base_type!=NULL);
-   bool isPointer = isSgPointerType(base_type);
-   if (!isPointer)
+   if (!isSgPointerType(base_type) && !isSgReferenceType(base_type))
    {  
-     printf("Base type of restrict type must be a pointer type.\n");
+     printf("Base type of restrict type must be a pointer or reference type.\n");
      ROSE_ASSERT(false);
    }
    SgModifierType *result = new SgModifierType(base_type);
@@ -2324,6 +2337,68 @@ SgTypeFloat * SageBuilder::buildFloatType()
    result->get_typeModifier().setRestrict();
    return result;
 
+ }
+
+  //! Build a UPC strict type.
+  SgType* SageBuilder::buildUpcStrictType(SgType* base_type /*=NULL*/)
+ {
+   SgModifierType *result = new SgModifierType(base_type);
+   ROSE_ASSERT(result!=NULL);
+   result->get_typeModifier().get_upcModifier().set_modifier(SgUPC_AccessModifier::e_upc_strict);
+   return result;
+ }
+
+  //! Build a UPC relaxed type.
+  SgType* SageBuilder::buildUpcRelaxedType(SgType* base_type /*=NULL*/)
+ {
+   SgModifierType *result = new SgModifierType(base_type);
+   ROSE_ASSERT(result!=NULL);
+   result->get_typeModifier().get_upcModifier().set_modifier(SgUPC_AccessModifier::e_upc_relaxed);
+   return result;
+ }
+
+  //! Build a UPC shared type.
+  SgType* SageBuilder::buildUpcSharedType(SgType* base_type /*=NULL*/)
+ {
+   SgModifierType *result = new SgModifierType(base_type);
+   ROSE_ASSERT(result!=NULL);
+   result->get_typeModifier().get_upcModifier().set_isShared(true);
+   result->get_typeModifier().get_upcModifier().set_layout(-1); // Unknown layout
+   return result;
+ }
+
+  //! Build a UPC shared[*] type.
+  SgType* SageBuilder::buildUpcBlockStarType(SgType* base_type /*=NULL*/)
+ {
+   SgModifierType *result = isSgModifierType(buildUpcSharedType(base_type));
+   ROSE_ASSERT(result!=NULL);
+   result->get_typeModifier().get_upcModifier().set_layout(-2); // [*] layout
+   return result;
+ }
+
+  //! Build a UPC shared[n] type.
+  SgType* SageBuilder::buildUpcBlockNumberType(SgType* base_type, long block_factor)
+ {
+   SgModifierType *result = isSgModifierType(buildUpcSharedType(base_type));
+   ROSE_ASSERT(result!=NULL);
+   result->get_typeModifier().get_upcModifier().set_layout(block_factor); // [block_factor] layout
+   return result;
+ }
+
+  //! Build a complex type.
+  SgTypeComplex* SageBuilder::buildComplexType(SgType* base_type /*=NULL*/)
+ {
+   SgTypeComplex *result = new SgTypeComplex(base_type);
+   ROSE_ASSERT(result!=NULL);
+   return result;
+ }
+
+  //! Build an imaginary type.
+  SgTypeImaginary* SageBuilder::buildImaginaryType(SgType* base_type /*=NULL*/)
+ {
+   SgTypeImaginary *result = new SgTypeImaginary(base_type);
+   ROSE_ASSERT(result!=NULL);
+   return result;
  }
 
   SgClassDefinition* SageBuilder::buildClassDefinition(SgClassDeclaration *d/*= NULL*/)

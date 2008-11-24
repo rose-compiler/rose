@@ -103,6 +103,7 @@ SgTypeUnsignedInt* buildUnsignedIntType();
 SgTypeUnsignedLong*    buildUnsignedLongType();
 SgTypeUnsignedLongLong*    buildUnsignedLongLongType();
 SgTypeUnsignedShort*    buildUnsignedShortType();
+SgTypeUnknown * buildUnknownType();
 
 //! Build a pointer type
 SgPointerType* buildPointerType(SgType *base_type = NULL);
@@ -140,6 +141,28 @@ buildFunctionType(SgType* return_type, SgFunctionParameterList * argList=NULL);
   * have the real type declarations. 
   */
 SgType* buildOpaqueType(std::string const type_name, SgScopeStatement * scope);
+
+//! Build a UPC strict type
+SgType* buildUpcStrictType(SgType *base_type = NULL);
+
+//! Build a UPC relaxed type
+SgType* buildUpcRelaxedType(SgType *base_type = NULL);
+
+//! Build a UPC shared type
+SgType* buildUpcSharedType(SgType *base_type = NULL);
+
+//! Build a UPC shared[*] type
+SgType* buildUpcBlockStarType(SgType *base_type = NULL);
+
+//! Build a UPC shared[n] type
+SgType* buildUpcBlockNumberType(SgType *base_type, long block_factor);
+
+//! Build a complex type
+SgTypeComplex* buildComplexType(SgType *base_type = NULL);
+
+//! Build an imaginary type
+SgTypeImaginary* buildImaginaryType(SgType *base_type = NULL);
+
 //@}
 
 //--------------------------------------------------------------
@@ -170,12 +193,20 @@ SgBoolValExp* buildBoolValExp_nfi(int value);
 SgCharVal* buildCharVal(char value = 0);
 SgCharVal* buildCharVal_nfi(char value, const std::string& str);
 
+SgWcharVal* buildWcharVal(wchar_t value = 0);
+SgWcharVal* buildWcharVal_nfi(wchar_t value, const std::string& str);
+
 SgComplexVal* buildComplexVal(long double real_value = 0.0, long double imaginary_value = 0.0 );
 SgComplexVal* buildComplexVal(SgValueExp* real_value, SgValueExp* imaginary_value);
 SgComplexVal* buildComplexVal_nfi(SgValueExp* real_value, SgValueExp* imaginary_value, const std::string& str);
 SgComplexVal* buildImaginaryVal(long double imaginary_value);
 SgComplexVal* buildImaginaryVal(SgValueExp* imaginary_value);
 SgComplexVal* buildImaginaryVal_nfi(SgValueExp* imaginary_value, const std::string& str);
+
+SgComplexVal* buildImaginaryVal(SgValueExp* imaginary_value);
+SgComplexVal* buildImaginaryVal_nfi(SgValueExp* imaginary_value, const std::string& str);
+SgComplexVal* buildComplexVal(SgValueExp* real_value, SgValueExp* imaginary_value);
+SgComplexVal* buildComplexVal_nfi(SgValueExp* real_value, SgValueExp* imaginary_value, SgType* eltType, const std::string& str);
 
 //! Build a double value expression
 SgDoubleVal* buildDoubleVal(double value = 0.0);

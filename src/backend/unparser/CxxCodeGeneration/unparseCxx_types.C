@@ -91,22 +91,19 @@ string get_type_name(SgType* t)
        // case T_COMPLEX:            return "complex";
           case T_COMPLEX:
              {
-                string returnString;
                 SgTypeComplex* complexType = isSgTypeComplex(t);
                 ROSE_ASSERT(complexType != NULL);
-                returnString = get_type_name(complexType->get_base_type()) + " _Complex";
+                string returnString = get_type_name(complexType->get_base_type()) + " _Complex";
 		return returnString;
              }
 
        // DQ (8/27/2006): Added require imaginary support to complete the complex support.
           case T_IMAGINARY:
              {
-                string returnString;
                 string backEndCompiler = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
-
                 SgTypeImaginary* imaginaryType = isSgTypeImaginary(t);
                 ROSE_ASSERT(imaginaryType != NULL);
-                returnString = get_type_name(imaginaryType->get_base_type());
+                string returnString = get_type_name(imaginaryType->get_base_type());
                 if (backEndCompiler == "g++" || backEndCompiler == "gcc" || backEndCompiler == "mpicc" || backEndCompiler == "mpicxx") {
                   // Handle special case of GNU compilers
                 } else {
