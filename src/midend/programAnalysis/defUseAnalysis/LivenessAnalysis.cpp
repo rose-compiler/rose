@@ -391,8 +391,7 @@ LivenessAnalysis::run(SgFunctionDefinition* funcDecl, bool& abortme) {
     cfgToDot(f, string("cfg"), source);
     f.close();
   }
-
-  
+ 
   worklist.push_back(source);
   vector<FilteredCFGNode<IsDFAFilter> > debug_path;
   debug_path.push_back(source);
@@ -448,9 +447,6 @@ LivenessAnalysis::run(SgFunctionDefinition* funcDecl, bool& abortme) {
     cout << "\nNr of nodes visited " << debug_path.size() << "  of nodes : "  << endl;
     printCFGVector(debug_path);
   }
-
-
-
   return rem_source;
 
 }

@@ -91,10 +91,10 @@ SgPragmaDeclaration* OmpAttribute::getPragmaDeclaration()
 
 
 //! Insert a variable into a variable list for clause "targetConstruct", maintain the reversed variable-clause mapping also.
-void OmpAttribute::addVariable(omp_construct_enum targetConstruct, const std::string& varString)
+void OmpAttribute::addVariable(omp_construct_enum targetConstruct, const std::string& varString, SgInitializedName* sgvar/*=NULL*/)
  {
-   SgInitializedName* sgvar = NULL; 
-   if (mNode)
+   // Try to resolve the variable if SgInitializedName is not provided
+   if ((sgvar == NULL)&&(mNode!=NULL))
    {
      SgScopeStatement* scope = SageInterface::getScope(mNode);
      ROSE_ASSERT(scope!=NULL);
@@ -109,6 +109,9 @@ void OmpAttribute::addVariable(omp_construct_enum targetConstruct, const std::st
    variable_lists[targetConstruct].push_back(make_pair(varString, sgvar));
    // maintain the var-clause map also
    var_clauses[varString].push_back(targetConstruct);
+   // Don't forget this! But directive like threadprivate could have variable list also
+   if (isClause(targetConstruct)) 
+     addClause(targetConstruct);
  }
 
 //! Set name for named critical section
@@ -478,7 +481,7 @@ std::string OmpAttribute::toOpenMPString(std::vector<std::pair<std::string,SgNod
 
 
 //! Get the variable list associated with a construct
-std::vector<std::pair<std::string,SgNode* > >
+std::vector<std::pair<std::string,SgNode* > > 
         OmpAttribute::getVariableList(omp_construct_enum targetConstruct)
 {
   return variable_lists[targetConstruct];

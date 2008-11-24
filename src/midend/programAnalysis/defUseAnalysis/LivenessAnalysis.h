@@ -50,8 +50,10 @@ class LivenessAnalysis : public DefUseAnalysisAbstract {
 
   SgFunctionDefinition* getFunction(SgNode* node);
   int getNumberOfNodesVisited();
+  // Run liveness analysis on the entire project
+  //bool run(bool debug=false);
+  // Run liveness analysis for a single function
   FilteredCFGNode < IsDFAFilter > run(SgFunctionDefinition* function, bool& abortme);
-  
   std::vector<SgInitializedName*> getIn(SgNode* sgNode) { return in[sgNode];}
   std::vector<SgInitializedName*> getOut(SgNode* sgNode) { return out[sgNode];}
   int getVisited(SgNode* n) {return visited[n];}
