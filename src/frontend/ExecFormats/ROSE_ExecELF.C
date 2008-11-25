@@ -270,8 +270,10 @@ SgAsmElfFileHeader::parse()
     /*FIXME*/
 
     /* Read the optional section and segment tables and the sections to which they point. */
-    if (get_e_shnum())
-        set_section_table(new SgAsmElfSectionTable(this));
+    if (get_e_shnum()) {
+        SgAsmElfSectionTable *sectab = (new SgAsmElfSectionTable(this, p_e_shoff))->parse();
+        set_section_table(sectab);
+    }
     if (get_e_phnum())
         set_segment_table(new SgAsmElfSegmentTable(this));
 
@@ -1070,14 +1072,20 @@ SgAsmElfSectionTableEntry::encode(ByteOrder sex, Elf64SectionTableEntry_disk *di
     return disk;
 }
 
-/* Constructor reads the Elf Section Table (i.e., array of section headers) */
+/** Non-parsing constructor for an ELF Section Table */
 void
 SgAsmElfSectionTable::ctor()
 {
     set_synthesized(true);                              /* the section table isn't really a section itself */
     set_name(new SgAsmBasicString("ELF section table"));
     set_purpose(SP_HEADER);
-
+}
+    
+/* Parses an ELF Section Table and constructs and parses all sections reachable from the table. The section is extended as
+ * necessary based on the number of entries and the size of each entry. */
+SgAsmElfSectionTable *
+SgAsmElfSectionTable::parse()
+{
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
     ByteOrder sex = fhdr->get_sex();
@@ -1173,6 +1181,7 @@ SgAsmElfSectionTable::ctor()
             source->set_linked_section(target);
         }
     }
+    return this;
 }
 
 /* Attaches a previously unattached ELF Section to the section table. */

@@ -1265,7 +1265,10 @@ HEADER_ELF_HEADER_END
 
 HEADER_ELF_SECTION_TABLE_START
 	public:
-		SgAsmElfSectionTable(SgAsmElfFileHeader *fhdr);
+		SgAsmElfSectionTable(SgAsmElfFileHeader *fhdr, rose_addr_t offset) /* Non-parsing constructor */
+			: SgAsmGenericSection(fhdr->get_file(), fhdr, offset, 0)
+			{ctor();}
+		SgAsmElfSectionTable *parse();
 		void add_section(SgAsmElfSection*);
 		rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 		virtual bool reallocate();
@@ -4197,12 +4200,6 @@ SgAsmElfFileHeader::format_name() const
 SOURCE_ELF_HEADER_END
 
 SOURCE_ELF_SECTION_TABLE_START
-SgAsmElfSectionTable::SgAsmElfSectionTable(SgAsmElfFileHeader *fhdr)
-   : SgAsmGenericSection(fhdr->get_file(), fhdr, fhdr->get_e_shoff(), 0)
-   {
-     ctor();
-   }
-
 SOURCE_ELF_SECTION_TABLE_END
 
 SOURCE_ELF_SECTION_TABLE_ENTRY_START
