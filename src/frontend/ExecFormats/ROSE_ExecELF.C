@@ -1305,10 +1305,6 @@ SgAsmElfSectionTable::add_section(SgAsmElfSection *section)
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
 
-    /* Create a new section table entry. It is constructed as all zero but will be filled in during reallocate() */
-    SgAsmElfSectionTableEntry *shdr = new SgAsmElfSectionTableEntry;
-    section->set_section_entry(shdr);
-
     /* Assign an ID if there isn't one yet */
     if (section->get_id()<0) {
         int id = fhdr->get_e_shnum();
@@ -1340,6 +1336,11 @@ SgAsmElfSectionTable::add_section(SgAsmElfSection *section)
     SgAsmStoredString *stored_name = new SgAsmStoredString(strsec->get_strtab(), 0);
     stored_name->set_string(name);
     section->set_name(stored_name);
+
+    /* Create a new section table entry. */
+    SgAsmElfSectionTableEntry *shdr = new SgAsmElfSectionTableEntry;
+    shdr->update_from_section(section);
+    section->set_section_entry(shdr);
 }
 
 /* Returns info about the size of the entries based on information already available. Any or all arguments may be null

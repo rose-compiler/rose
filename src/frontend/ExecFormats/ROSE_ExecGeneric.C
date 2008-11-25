@@ -345,6 +345,9 @@ SgAsmGenericStrtab::free(SgAsmStringStorage *storage)
 void
 SgAsmGenericStrtab::free(addr_t offset, addr_t size)
 {
+    if (offset==SgAsmGenericString::unallocated || 0==size)
+        return;
+
     ROSE_ASSERT(offset+size <= get_container()->get_size());
     set_isModified(true);
     
@@ -356,7 +359,9 @@ SgAsmGenericStrtab::free(addr_t offset, addr_t size)
      * member of the string storage to indicate that it's memory in the string table is no longer in use. */
     ExtentMap s_extents;
     for (size_t i=0; i<p_storage_list.size(); i++) {
-      s_extents.insert(p_storage_list[i]->get_offset(), get_storage_size(p_storage_list[i]));
+        SgAsmStringStorage *storage = p_storage_list[i];
+        if (storage->get_offset()!=SgAsmGenericString::unallocated)
+            s_extents.insert(storage->get_offset(), get_storage_size(storage));
     }
     ExtentMap to_free = s_extents.subtract_from(offset, size);
 
