@@ -1601,11 +1601,14 @@ HEADER_ELF_DYNAMIC_ENTRY_START
 
 HEADER_ELF_DYNAMIC_ENTRY_END
 
+
+
 HEADER_ELF_SEGMENT_TABLE_START
 	public:
-		SgAsmElfSegmentTable(SgAsmElfFileHeader *fhdr);
-		//virtual ~ElfSegmentTable() {}
-
+		SgAsmElfSegmentTable(SgAsmElfFileHeader *fhdr, rose_addr_t offset) /* Non-parsing constructor */
+			: SgAsmGenericSection(fhdr->get_file(), fhdr, offset, 0)
+			{ctor();}
+		SgAsmElfSegmentTable *parse();
 		rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 		virtual bool reallocate();
 		virtual void unparse(std::ostream&) const;
@@ -1613,6 +1616,8 @@ HEADER_ELF_SEGMENT_TABLE_START
 	private:
 		void ctor();
 HEADER_ELF_SEGMENT_TABLE_END
+
+
 
 HEADER_ELF_SEGMENT_TABLE_ENTRY_START
      public:
@@ -4291,12 +4296,6 @@ SOURCE_ELF_DYNAMIC_ENTRY_START
 SOURCE_ELF_DYNAMIC_ENTRY_END
 
 SOURCE_ELF_SEGMENT_TABLE_START
-SgAsmElfSegmentTable::SgAsmElfSegmentTable(SgAsmElfFileHeader *fhdr)
-   : SgAsmGenericSection(fhdr->get_file(), fhdr, fhdr->get_e_phoff(), 0)
-   {
-     ctor();
-   }
-
 SOURCE_ELF_SEGMENT_TABLE_END
 
 SOURCE_ELF_SEGMENT_TABLE_ENTRY_START

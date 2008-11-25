@@ -271,11 +271,13 @@ SgAsmElfFileHeader::parse()
 
     /* Read the optional section and segment tables and the sections to which they point. */
     if (get_e_shnum()) {
-        SgAsmElfSectionTable *sectab = (new SgAsmElfSectionTable(this, p_e_shoff))->parse();
-        set_section_table(sectab);
+        SgAsmElfSectionTable *tab = (new SgAsmElfSectionTable(this, p_e_shoff))->parse();
+        set_section_table(tab);
     }
-    if (get_e_phnum())
-        set_segment_table(new SgAsmElfSegmentTable(this));
+    if (get_e_phnum()) {
+        SgAsmElfSegmentTable *tab = (new SgAsmElfSegmentTable(this, p_e_phoff))->parse();
+        set_segment_table(tab);
+    }
 
     /* Associate the entry point with a particular section. */
     entry_rva.bind(this);
@@ -1081,8 +1083,8 @@ SgAsmElfSectionTable::ctor()
     set_purpose(SP_HEADER);
 }
     
-/* Parses an ELF Section Table and constructs and parses all sections reachable from the table. The section is extended as
- * necessary based on the number of entries and the size of each entry. */
+/** Parses an ELF Section Table and constructs and parses all sections reachable from the table. The section is extended as
+ *  necessary based on the number of entries and the size of each entry. */
 SgAsmElfSectionTable *
 SgAsmElfSectionTable::parse()
 {
@@ -1637,13 +1639,20 @@ SgAsmElfSegmentTableEntry::stringifyType(SegmentType kind) const
     return s;
 }
 
-/* Constructor reads the Elf Segment (Program Header) Table */
+/** Non-parsing constructor for an ELF Segment (Program Header) Table */
 void
 SgAsmElfSegmentTable::ctor()
 {
     set_synthesized(true);                              /* the segment table isn't part of any explicit section */
     set_name(new SgAsmBasicString("ELF Segment Table"));
     set_purpose(SP_HEADER);
+}
+
+/** Parses an ELF Segment (Program Header) Table and constructs and parses all segments reachable from the table. The section
+ *  is extended as necessary based on the number of entries and teh size of each entry. */
+SgAsmElfSegmentTable *
+SgAsmElfSegmentTable::parse()
+{
 
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
@@ -1651,6 +1660,7 @@ SgAsmElfSegmentTable::ctor()
 
     size_t ent_size, struct_size, opt_size, nentries;
     calculate_sizes(&ent_size, &struct_size, &opt_size, &nentries);
+    ROSE_ASSERT(opt_size==fhdr->get_phextrasz() && nentries==fhdr->get_e_phnum());
 
     /* Change the section size to include all the entries */
     ROSE_ASSERT(0==get_size());
@@ -1719,6 +1729,7 @@ SgAsmElfSegmentTable::ctor()
         if (!s)
             s = new SgAsmElfSection(fhdr, shdr);
     }
+    return this;
 }
 
 /* Returns info about the size of the entries based on information already available. Any or all arguments may be null
