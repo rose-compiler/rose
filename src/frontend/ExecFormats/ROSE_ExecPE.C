@@ -108,7 +108,6 @@ SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     f->set_parent(this);
 
     p_rvasize_pairs = new SgAsmPERVASizePairList;
-
     p_rvasize_pairs->set_parent(this);
 
     PEFileHeader_disk fh;
@@ -470,11 +469,9 @@ SgAsmPEFileHeader::create_table_sections()
           case 0:
             tabsec = new SgAsmPEExportSection(this, file_offset, pair->get_e_size(), pair->get_e_rva().get_rva());
             break;
-#if 1 /*not ready for prime-time yet (RPM 2008-10-29)*/
           case 1:
             tabsec = new SgAsmPEImportSection(this, file_offset, pair->get_e_size(), pair->get_e_rva().get_rva());
             break;
-#endif
           default:
             tabsec = new SgAsmGenericSection(ef, this, file_offset, pair->get_e_size());
             break;
@@ -2159,6 +2156,7 @@ SgAsmCoffSymbolTable::ctor()
      * string table in little endian. */
     addr_t strtab_offset = get_offset() + fhdr->get_e_coff_nsyms() * SgAsmCoffSymbol::COFFSymbol_disk_size;
     p_strtab = new SgAsmGenericSection(fhdr->get_file(), fhdr, strtab_offset, sizeof(uint32_t));
+    p_strtab->grab_content();
     p_strtab->set_synthesized(true);
     p_strtab->set_name(new SgAsmBasicString("COFF Symbol Strtab"));
     p_strtab->set_purpose(SP_HEADER);
