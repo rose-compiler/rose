@@ -1335,12 +1335,18 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
                             p, ap.first, ap.second, ap.first+ap.second, a->get_id(), a->get_name()->c_str());
                 break;
               case 'R':
-                /* If holes are elastic then treat things right of the hole as being part of the right village; otherwise
-                 * add those sections to the neighborhood of S even though they fall outside 'nhs' (it's OK because this
-                 * partitioning of sections is the only thing we use 'nhs' for anyway. */
-                if (elasticity!=ELASTIC_NONE) {
+                if (ap.first==nhs.first+nhs.second && 0==ap.second) {
+                    /* Empty sections immediately right of the neighborhood of S should actually be considered part of the
+                     * neighborhood rather than right of it. */
+                    neighbors.push_back(a);
+                } else if (elasticity!=ELASTIC_NONE) {
+                    /* If holes are elastic then treat things right of the hole as being part of the right village; otherwise
+                     * add those sections to the neighborhood of S even though they fall outside 'nhs' (it's OK because this
+                     * partitioning of sections is the only thing we use 'nhs' for anyway. */
                     villagers.push_back(a);
-                } else if ('L'!=ExtentMap::category(ap, sp)) { /*ignore sections left of S*/
+                } else if ('L'==ExtentMap::category(ap, sp)) {
+                    /*ignore sections left of S*/
+                } else {
                     neighbors.push_back(a);
                 }
                 break;
