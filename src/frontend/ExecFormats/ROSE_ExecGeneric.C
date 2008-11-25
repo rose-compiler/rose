@@ -1756,11 +1756,10 @@ SgAsmGenericFile::congeal()
 // GenericSection
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* Constructor.
- * Section constructors (here and in derived classes) set the optional section header relationship--a bidirectional link
- * between this new section and its optional, single header.  This new section points to its header and the header contains a
- * list that points to this new section.  The section-to-header part of the link is deleted by the default destructor by
- * virtue of being a simple pointer, but we also need to delete the other half of the link in the destructors. */
+/** Section constructors set the optional section header relationship--a bidirectional link between this new section and its
+ *  optional, single header.  This new section points to its header and the header contains a list that points to this new
+ *  section.  The section-to-header part of the link is deleted by the default destructor by virtue of being a simple pointer,
+ *  but we also need to delete the other half of the link in the destructors. */
 void
 SgAsmGenericSection::ctor(SgAsmGenericFile *ef, SgAsmGenericHeader *hdr)
 {
@@ -1770,26 +1769,33 @@ SgAsmGenericSection::ctor(SgAsmGenericFile *ef, SgAsmGenericHeader *hdr)
     p_offset = 0;
     p_data = ef->content(0, 0);
     p_file = ef;
-    p_size = p_data.size();
+    p_size = 0;
     p_name = new SgAsmBasicString("");
 
     /* Add this section to the header's section list */
     if (hdr) hdr->add_section(this);
 }
 
-/* Same as above except also sets offset and size */
+/* Same as above except also sets offset and size. The section is allowed to extend beyond the end of the file. */
 void
 SgAsmGenericSection::ctor(SgAsmGenericFile *ef, SgAsmGenericHeader *hdr, addr_t offset, addr_t size)
 {
     ROSE_ASSERT(ef != NULL);
-    if (offset > ef->get_orig_size() || offset+size > ef->get_orig_size())
-        throw SgAsmGenericFile::ShortRead(NULL, offset, size);
 
     /* Initialize data members */
     p_offset = offset;
-    p_data = ef->content(offset, size);
+
+    /* Section is allowed to extend beyond the end of the file */
+    if (offset<=ef->get_orig_size()) {
+        if (offset+size<=ef->get_orig_size()) {
+            p_data = ef->content(offset, size);
+        } else {
+            p_data = ef->content(offset, ef->get_orig_size()-offset);
+        }
+    }
+
     p_file = ef;
-    p_size = p_data.size();
+    p_size = size;
     p_name = new SgAsmBasicString("");
 
     /* Add this section to the header's section list */

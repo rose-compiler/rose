@@ -13,12 +13,15 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Construct a new ELF File Header with default values. The new section is placed at file offset zero and the size is
- *  initially zero bytes. After initializing other members of the header one should call reallocate() to give the header a
- *  non-zero size. */
+ *  initially one byte (calling parse() will extend it as necessary). Setting the initial size of non-parsed sections to a
+ *  positive value works better when adding sections to the end-of-file since the sections will all have different starting
+ *  offsets and therefore SgAsmGenericFile::shift_extend will know what order the sections should be in when they are
+ *  eventually resized. */
 void
 SgAsmElfFileHeader::ctor()
 {
     ROSE_ASSERT(get_file()!=NULL);
+    ROSE_ASSERT(get_size()>0);
 
     set_name(new SgAsmBasicString("ELF File Header"));
     set_synthesized(true);
@@ -105,7 +108,7 @@ SgAsmElfFileHeader::parse()
     if (1 == disk32.e_ident_file_class) {
         p_exec_format->set_word_size(4);
 
-	ROSE_ASSERT(0==p_e_ident_padding.size());
+	p_e_ident_padding.clear();
         for (size_t i=0; i<sizeof(disk32.e_ident_padding); i++)
              p_e_ident_padding.push_back(disk32.e_ident_padding[i]);
 
@@ -147,7 +150,7 @@ SgAsmElfFileHeader::parse()
             extend(sizeof(disk64)-get_size());
         content(0, sizeof disk64, &disk64);
 
-	ROSE_ASSERT(0==p_e_ident_padding.size());
+	p_e_ident_padding.clear();
         for (size_t i=0; i<sizeof(disk64.e_ident_padding); i++)
              p_e_ident_padding.push_back(disk64.e_ident_padding[i]);
 
