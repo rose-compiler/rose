@@ -794,23 +794,23 @@ Grammar::setUpBinaryInstructions ()
      AsmPEFileHeader.setDataPrototype("unsigned","e_cpu_type","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("unsigned","e_nsections","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("unsigned","e_time","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("rose_addr_t","e_coff_symtab","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("rose_addr_t","e_nt_hdr_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("unsigned","e_coff_nsyms","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("unsigned","e_flags","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("unsigned","e_opt_magic","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("unsigned","e_lmajor","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("unsigned","e_lminor","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("unsigned","e_code_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("unsigned","e_data_size","= 0",
@@ -842,7 +842,7 @@ Grammar::setUpBinaryInstructions ()
      AsmPEFileHeader.setDataPrototype("unsigned","e_image_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("unsigned","e_header_size","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("unsigned","e_file_checksum","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("unsigned","e_subsystem","= 0",
@@ -860,9 +860,7 @@ Grammar::setUpBinaryInstructions ()
      AsmPEFileHeader.setDataPrototype("unsigned","e_loader_flags","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("unsigned","e_num_rvasize_pairs","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // AsmPEFileHeader.setDataPrototype("std::vector<RVASizePair>","rvasize_pairs","",
-  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("SgAsmPERVASizePairList*","rvasize_pairs","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 

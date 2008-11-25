@@ -606,50 +606,6 @@ SgAsmPEFileHeader::reallocate()
     return reallocated;
 }
 
-/* Override ROSETTA accessors because we don't want users changing these values when traversing the AST */
-void
-SgAsmPEFileHeader::set_e_coff_symtab(addr_t a)
-{
-    ROSE_ASSERT(!get_congealed()); /*must be still parsing*/
-    p_e_coff_symtab = a;
-}
-void
-SgAsmPEFileHeader::set_e_coff_nsyms(unsigned n)
-{
-    ROSE_ASSERT(!get_congealed()); /*must still be parsing*/
-    p_e_coff_nsyms = n;
-}
-void
-SgAsmPEFileHeader::set_e_nsections(unsigned n)
-{
-    ROSE_ASSERT(!get_congealed()); /*must still be parsing*/
-    p_e_nsections = n;
-}
-void
-SgAsmPEFileHeader::set_e_header_size(unsigned n)
-{
-    ROSE_ASSERT(!get_congealed()); /*must still be parsing*/
-    p_e_header_size = n;
-}
-void
-SgAsmPEFileHeader::set_e_num_rvasize_pairs(unsigned n)
-{
-    ROSE_ASSERT(!get_congealed()); /*must still be parsing*/
-    p_e_num_rvasize_pairs = n;
-}
-void
-SgAsmPEFileHeader::set_e_lmajor(unsigned n)
-{
-    ROSE_ASSERT(!get_congealed()); /*must still be parsing*/
-    p_e_lmajor = n;
-}
-void
-SgAsmPEFileHeader::set_e_lminor(unsigned n)
-{
-    ROSE_ASSERT(!get_congealed()); /*must still be parsing*/
-    p_e_lminor = n;
-}
-
 /* Write the PE file header back to disk and all that it references */
 void
 SgAsmPEFileHeader::unparse(std::ostream &f) const
