@@ -2664,11 +2664,13 @@ SgAsmGenericHeader::unparse(std::ostream &f) const
         (*i)->unparse(f);
 }
 
-/* Returns the RVA (relative to the header's base virtual address) of the first entry point. */
+/** Returns the RVA (relative to the header's base virtual address) of the first entry point. If there are no entry points
+ *  defined then return a zero RVA. */
 rose_addr_t
 SgAsmGenericHeader::get_entry_rva() const
 {
-    ROSE_ASSERT(p_entry_rvas.size()>0);
+    if (p_entry_rvas.size()==0)
+        return rose_addr_t();
     return p_entry_rvas[0].get_rva();
 }
 
