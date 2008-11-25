@@ -131,7 +131,7 @@ SgAsmDOSFileHeader::add_rm_section(addr_t max_offset)
     }
 
     try {
-        p_rm_section = new SgAsmGenericSection(get_file(), this, rm_offset, rm_size);
+        p_rm_section = (new SgAsmGenericSection(get_file(), this, rm_offset, rm_size))->parse();
     } catch (ShortRead &p_ex) {
         /* If the offset or size is out of bounds for the file then assume that the real-mode section does not exist. This
          * can indicate that the DOS header is being used for something other than a DOS header. See
@@ -225,6 +225,7 @@ SgAsmDOSFileHeader::parse(SgAsmGenericFile *ef, bool define_rm_section)
     if (fhdr->p_e_nrelocs > 0) {
         SgAsmGenericSection *relocs = new SgAsmGenericSection(ef, fhdr, fhdr->p_e_relocs_offset,
                                                               fhdr->p_e_nrelocs * sizeof(DOSRelocEntry_disk));
+        relocs->parse();
         relocs->set_name(new SgAsmBasicString("DOS relocation table"));
         relocs->set_synthesized(true);
         relocs->set_purpose(SP_HEADER);
