@@ -1,4 +1,4 @@
-#!/bin/sh -x
+#!/bin/sh
 #
 # This script tries to upload a distribution package to the Scidac Outreach center web site
 # The assumption is that the machine running this script has a firefox browser with 
@@ -11,7 +11,7 @@
 #  ./makeRelease.sh 0.9.4a 2927 /home/liao6/daily-test-rose/release/upload/rose-0.9.4a-source-with-EDG-binary-2927.tar.gz
 #
 # by Jeremiah, 10/14/2008
-# Modified by Liao, 10.29.2008
+# Modified by Liao, 11.25.2008
 if [ $# -lt 3 ]
 then
   echo This script needs three arguments
@@ -26,11 +26,28 @@ FULL_PACKAGE_NAME=$3
 
 # ls ~/.mozilla/firefox/ to find out your firefox id
 FIREFOXID=58zvv6td.default
+
+# try to grab existing session id
 SESSION=`sed -n '/^outreach\.scidac\.gov\t.*\tsession_ser\t/p' < $HOME/.mozilla/firefox/$FIREFOXID/cookies.txt | cut -f 7`
+
+# if failed, try to login automatically
+# and add the session into cookies
 if [ "x$SESSION" = "x" ]; then 
-  echo "Fatal error: No session for outreach.scidac is found! Not logged in!!"
-  exit 1
+   echo "No session for outreach.scidac is found. Trying to log in..."
+   # a script trying to log in and redirect output to $HOME/curl.log 
+   $HOME/release/scidac-login.sh
+   SESSION=`grep 'Set-Cookie' $HOME/curl.log | cut -d' ' -f 3 | cut -d'=' -f 2 | cut -d';' -f 1`
+   echo "outreach.scidac.gov	FALSE	/	FALSE	1228246200	session_ser	$SESSION">>$HOME/.mozilla/firefox/$FIREFOXID/cookies.txt
 fi
+
+# debug here
+# exit
+
+if [ "x$SESSION" = "x" ]; then 
+   echo "Fatal Cannot get session for outreach.scidac is found. Aborting..."
+   exit 1
+fi
+
 # This needs to match the browser you used to log in to Outreach; find it from http://browserspy.dk/useragent.php
 USERAGENT='Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.8.1.18) Gecko/20081029 Firefox/2.0.0.18'
 # The actual content to be filled into the web form
