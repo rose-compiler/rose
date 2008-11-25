@@ -1764,8 +1764,8 @@ HEADER_ELF_SYMBOL_START
 			     SgAsmGenericStrtab*) const;
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx);
 		void dump(FILE*, const char *prefix, ssize_t idx, SgAsmGenericSection*);
-		SgAsmElfSymbol::ElfSymBinding get_elf_binding();
-		SgAsmElfSymbol::ElfSymType get_elf_type();
+		SgAsmElfSymbol::ElfSymBinding get_elf_binding() const;
+		SgAsmElfSymbol::ElfSymType get_elf_type() const;
 
 	private:
 		void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymbol::Elf32SymbolEntry_disk*);
@@ -4355,13 +4355,13 @@ SgAsmElfSymbol::dump(FILE *f, const char *prefix, ssize_t idx)
    }
 
 SgAsmElfSymbol::ElfSymBinding
-SgAsmElfSymbol::get_elf_binding()
+SgAsmElfSymbol::get_elf_binding() const
    {
      return (ElfSymBinding)(p_st_info >> 4);
    }
 
 SgAsmElfSymbol::ElfSymType
-SgAsmElfSymbol::get_elf_type()
+SgAsmElfSymbol::get_elf_type() const
    {
      return (ElfSymType)(p_st_info & 0xf);
    }
