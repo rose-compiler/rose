@@ -885,6 +885,7 @@ SgAsmElfStrtab::create_storage(addr_t offset, bool shared)
     }
     
     p_storage_list.push_back(storage);
+    set_isModified(true);
     return storage;
 }
 
@@ -1219,15 +1220,15 @@ SgAsmElfSectionTableEntry::update_from_section(SgAsmElfSection *section)
 {
     p_sh_name = dynamic_cast<SgAsmStoredString*>(section->get_name())->get_offset();
 
-    p_sh_offset = section->get_offset();
-    if (p_sh_type==SHT_NOBITS && section->is_mapped()) {
-        p_sh_size = section->get_mapped_size();
+    set_sh_offset(section->get_offset());
+    if (get_sh_type()==SHT_NOBITS && section->is_mapped()) {
+        set_sh_size(section->get_mapped_size());
     } else {
-        p_sh_size = section->get_size();
+        set_sh_size(section->get_size());
     }
 
     if (section->is_mapped()) {
-        p_sh_addr = section->get_mapped_rva();
+        set_sh_addr(section->get_mapped_rva());
         if (section->get_mapped_wperm()) {
             p_sh_flags |= 0x01;
         } else {
@@ -1239,16 +1240,16 @@ SgAsmElfSectionTableEntry::update_from_section(SgAsmElfSection *section)
             p_sh_flags &= ~0x04;
         }
     } else {
-        p_sh_addr = 0;
+        set_sh_addr(0);
         p_sh_flags &= ~0x05; /*clear write & execute bits*/
     }
     
     SgAsmElfSection *linked_to = section->get_linked_section();
     if (linked_to) {
         ROSE_ASSERT(linked_to->get_id()>0);
-        p_sh_link = linked_to->get_id();
+        set_sh_link(linked_to->get_id());
     } else {
-        p_sh_link = 0;
+        set_sh_link(0);
     }
 }
 
@@ -1482,19 +1483,19 @@ SgAsmElfSegmentTableEntry::update_from_section(SgAsmElfSection *section)
     set_vaddr(section->get_mapped_va());
     set_memsz(section->get_mapped_size());
     if (section->get_mapped_rperm()) {
-        p_flags = (SegmentFlags)(p_flags | PF_RPERM);
+        set_flags((SegmentFlags)(p_flags | PF_RPERM));
     } else {
-        p_flags = (SegmentFlags)(p_flags & ~PF_RPERM);
+        set_flags((SegmentFlags)(p_flags & ~PF_RPERM));
     }
     if (section->get_mapped_wperm()) {
-        p_flags = (SegmentFlags)(p_flags | PF_WPERM);
+        set_flags((SegmentFlags)(p_flags | PF_WPERM));
     } else {
-        p_flags = (SegmentFlags)(p_flags & ~PF_WPERM);
+        set_flags((SegmentFlags)(p_flags & ~PF_WPERM));
     }
     if (section->get_mapped_xperm()) {
-        p_flags = (SegmentFlags)(p_flags | PF_XPERM);
+        set_flags((SegmentFlags)(p_flags | PF_XPERM));
     } else {
-        p_flags = (SegmentFlags)(p_flags & ~PF_XPERM);
+        set_flags((SegmentFlags)(p_flags & ~PF_XPERM));
     }
 }
 

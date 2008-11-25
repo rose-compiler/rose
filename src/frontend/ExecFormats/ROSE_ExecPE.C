@@ -406,6 +406,7 @@ SgAsmPEFileHeader::add_rvasize_pairs()
 
     ROSE_ASSERT(p_rvasize_pairs != NULL);
     ROSE_ASSERT(p_rvasize_pairs->get_pairs().size()==0);
+    p_rvasize_pairs->set_isModified(true);
 
     extend_up_to(pairs_size);
     for (size_t i = 0; i < p_e_num_rvasize_pairs; i++, pairs_offset += sizeof pairs_disk) {
@@ -564,17 +565,17 @@ SgAsmPEFileHeader::reallocate()
     }
             
     /* Update COFF symbol table related data members in the file header */
-    if (p_coff_symtab) {
-        ROSE_ASSERT(p_coff_symtab->get_header()==this);
-        p_e_coff_symtab = p_coff_symtab->get_offset();
-        p_e_coff_nsyms = p_coff_symtab->get_symbols()->get_symbols().size();
+    if (get_coff_symtab()) {
+        ROSE_ASSERT(get_coff_symtab()->get_header()==this);
+        set_e_coff_symtab(get_coff_symtab()->get_offset());
+        set_e_coff_nsyms(get_coff_symtab()->get_symbols()->get_symbols().size());
     }
 
     /* Update some additional header fields */
-    p_e_num_rvasize_pairs = p_rvasize_pairs->get_pairs().size();
-    p_e_opt_magic = 4==get_word_size() ? 0x010b : 0x020b;
-    p_e_lmajor = (p_exec_format->get_version() >> 16) & 0xffff;
-    p_e_lminor = p_exec_format->get_version() & 0xffff;
+    set_e_num_rvasize_pairs(get_rvasize_pairs()->get_pairs().size());
+    set_e_opt_magic(4==get_word_size() ? 0x010b : 0x020b);
+    set_e_lmajor((get_exec_format()->get_version() >> 16) & 0xffff);
+    set_e_lminor(get_exec_format()->get_version() & 0xffff);
 
     /* Adjust the COFF Header's e_nt_hdr_size to accommodate the NT Optional Header in such a way that EXEs from tinype.com
      * don't change (i.e., don't increase e_nt_hdr_size if the bytes beyond it are zero anyway, and if they aren't then adjust
@@ -602,7 +603,7 @@ SgAsmPEFileHeader::reallocate()
         if (0!=oh[oh_size-1]) break;
         --oh_size;
     }
-    p_e_nt_hdr_size = oh_size;
+    set_e_nt_hdr_size(oh_size);
     return reallocated;
 }
 
@@ -1236,6 +1237,7 @@ SgAsmPEImportLookupTable::add_ilt_entry(SgAsmPEImportILTEntry *ilt_entry)
 {
     ROSE_ASSERT(p_entries!=NULL);
     ROSE_ASSERT(ilt_entry);
+    p_entries->set_isModified(true);
     p_entries->get_vector().push_back(ilt_entry);
     ROSE_ASSERT(p_entries->get_vector().size()>0);
     ilt_entry->set_parent(this);
@@ -1245,7 +1247,7 @@ void
 SgAsmPEImportLookupTable::unparse(std::ostream &f, const SgAsmPEFileHeader *fhdr, rva_t rva) const
 {
     if (rva!=0) {
-        const char *tname = p_is_iat ? "Import Address Table" : "Import Lookup Table";
+        //const char *tname = p_is_iat ? "Import Address Table" : "Import Lookup Table";
         for (size_t i=0; i<p_entries->get_vector().size(); i++) {
             SgAsmPEImportILTEntry *ilt_entry = p_entries->get_vector()[i];
             ilt_entry->unparse(f, fhdr, rva, i);
@@ -1418,6 +1420,7 @@ void
 SgAsmPEImportSection::add_import_directory(SgAsmPEImportDirectory *d)
 {
     ROSE_ASSERT(p_import_directories!=NULL);
+    p_import_directories->set_isModified(true);
     p_import_directories->get_vector().push_back(d);
     d->set_parent(this);
 }
@@ -1547,12 +1550,16 @@ SgAsmPEExportEntry::dump(FILE *f, const char *prefix, ssize_t idx)
 void
 SgAsmPEExportEntry::set_name(SgAsmGenericString *fname)
 {
+    if (p_name!=fname)
+        set_isModified(true);
     p_name = fname;
     if (p_name) p_name->set_parent(this);
 }
 void
 SgAsmPEExportEntry::set_forwarder(SgAsmGenericString *forwarder)
 {
+    if (p_forwarder!=forwarder)
+        set_isModified(true);
     p_forwarder = forwarder;
     if (p_forwarder) p_forwarder->set_parent(this);
 }
@@ -1620,6 +1627,7 @@ void
 SgAsmPEExportSection::add_entry(SgAsmPEExportEntry *entry)
 {
     ROSE_ASSERT(p_exports!=NULL);
+    p_exports->set_isModified(true);
     p_exports->get_exports().push_back(entry);
 }
 
@@ -1787,6 +1795,7 @@ SgAsmCoffStrtab::create_storage(addr_t offset, bool shared)
         ROSE_ASSERT(0==p_num_freed);
     }
 
+    set_isModified(true);
     p_storage_list.push_back(storage);
     return storage;
 }

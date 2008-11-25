@@ -112,7 +112,7 @@ SgAsmDOSFileHeader::unparse(std::ostream &f) const
 SgAsmGenericSection *
 SgAsmDOSFileHeader::add_rm_section(addr_t max_offset)
 {
-    ROSE_ASSERT( NULL == p_rm_section );
+    ROSE_ASSERT(NULL == p_rm_section);
     
     addr_t rm_offset = p_e_header_paragraphs * 16;
     addr_t rm_end = p_e_total_pages * 512 - (p_e_total_pages>0 ? 512 - p_e_last_page_size % 512 : 0);

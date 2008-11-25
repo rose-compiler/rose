@@ -181,6 +181,8 @@ SgAsmBasicString::get_string() const
 void
 SgAsmBasicString::set_string(const std::string &s)
 {
+    if (p_string!=s)
+        set_isModified(true);
     p_string = s;
 }
 
@@ -263,6 +265,7 @@ void
 SgAsmStoredString::set_string(const std::string &s)
 {
     if (get_string()==s) return; /* no change in value */
+    set_isModified(true);
     SgAsmStringStorage *storage = get_storage();
     ROSE_ASSERT(storage!=NULL); /* we don't even know which string table! */
     storage->get_strtab()->free(storage);
@@ -330,6 +333,7 @@ SgAsmGenericStrtab::free(SgAsmStringStorage *storage)
     ROSE_ASSERT(storage!=p_dont_free);
     addr_t old_offset = storage->get_offset();
     if (old_offset!=SgAsmGenericString::unallocated) {
+        set_isModified(true);
         storage->set_offset(SgAsmGenericString::unallocated);
         free(old_offset, storage->get_string().size()+1);
     }
@@ -342,6 +346,7 @@ void
 SgAsmGenericStrtab::free(addr_t offset, addr_t size)
 {
     ROSE_ASSERT(offset+size <= get_container()->get_size());
+    set_isModified(true);
     
     /* Make sure area is not already in free list.  The freelist.insert() handles this gracefully, but if we're freeing
      * something that's already in the list then we have a logic error somewhere. */
@@ -367,6 +372,7 @@ SgAsmGenericStrtab::free_all_strings(bool blow_away_holes)
 {
     SgAsmGenericSection *container = get_container();
     bool was_congealed = container->get_congealed();
+    set_isModified(true);
 
     /* Mark all storage objects as being unallocated. Never free the dont_free storage (if any). */
     for (size_t i=0; i<p_storage_list.size(); i++) {
@@ -497,7 +503,9 @@ SgAsmGenericStrtab::reallocate(bool shrink)
         if (hi.first + hi.second == container->get_size())
             container->set_size(hi.first);
     }
-    
+
+    if (reallocated)
+        set_isModified(true);
     return reallocated;
 }
 
@@ -732,6 +740,7 @@ void
 SgAsmGenericFile::add_header(SgAsmGenericHeader *header) 
 {
     ROSE_ASSERT(p_headers!=NULL);
+    p_headers->set_isModified(true);
 
 #ifndef NDEBUG
     /* New header must not already be present. */
@@ -752,6 +761,7 @@ SgAsmGenericFile::remove_header(SgAsmGenericHeader *hdr)
         SgAsmGenericHeaderPtrList::iterator i = find(p_headers->get_headers().begin(), p_headers->get_headers().end(), hdr);
         if (i != p_headers->get_headers().end()) {
             p_headers->get_headers().erase(i);
+            p_headers->set_isModified(true);
         }
     }
 }
@@ -761,6 +771,7 @@ void
 SgAsmGenericFile::add_hole(SgAsmGenericSection *hole)
 {
     ROSE_ASSERT(p_holes!=NULL);
+    p_holes->set_isModified(true);
 
 #ifndef NDEBUG
     /* New hole must not already be present. */
@@ -781,6 +792,7 @@ SgAsmGenericFile::remove_hole(SgAsmGenericSection *hole)
         SgAsmGenericSectionPtrList::iterator i = find(p_holes->get_sections().begin(), p_holes->get_sections().end(), hole);
         if (i != p_holes->get_sections().end()) {
             p_holes->get_sections().erase(i);
+            p_holes->set_isModified(true);
         }
     }
 }
@@ -1632,6 +1644,8 @@ SgAsmGenericFile::fill_holes()
 void
 SgAsmGenericFile::unfill_holes()
 {
+    set_isModified(true);
+
     SgAsmGenericSectionPtrList to_delete = get_holes()->get_sections();
     for (size_t i=0; i<to_delete.size(); i++) {
         SgAsmGenericSection *hole = to_delete[i];
@@ -1802,6 +1816,8 @@ SgAsmGenericSection::set_name(SgAsmGenericString *s)
 {
     if (s)
         s->set_parent(this);
+    if (p_name!=s)
+        set_isModified(true);
     p_name = s;
 }
 
@@ -1820,6 +1836,8 @@ SgAsmGenericSection::get_size() const
 void
 SgAsmGenericSection::set_size(addr_t size)
 {
+    if (p_size!=size)
+        set_isModified(true);
     p_size = size;
 }
 
@@ -1835,6 +1853,8 @@ SgAsmGenericSection::get_offset() const
 void
 SgAsmGenericSection::set_offset(addr_t offset)
 {
+    if (p_offset!=offset)
+        set_isModified(true);
     p_offset = offset;
 }
 
@@ -1883,6 +1903,8 @@ SgAsmGenericSection::get_mapped_size() const
 void
 SgAsmGenericSection::set_mapped_size(addr_t size)
 {
+    if (p_mapped_size!=size)
+        set_isModified(true);
     p_mapped_size = size;
 }
 
@@ -1897,6 +1919,8 @@ SgAsmGenericSection::get_mapped_rva() const
 void
 SgAsmGenericSection::set_mapped_rva(addr_t a)
 {
+    if (p_mapped_rva!=a)
+        set_isModified(true);
     p_mapped_rva = a;
 }
 
@@ -2126,6 +2150,8 @@ SgAsmGenericSection::extend(addr_t size)
     if (p_offset + new_size > get_file()->get_orig_size())
         throw SgAsmGenericFile::ShortRead(this, p_offset+get_size(), size);
     p_data.resize(new_size);
+    if (p_size!=new_size)
+        set_isModified(true);
     p_size = new_size;
 }
 
@@ -2142,6 +2168,8 @@ SgAsmGenericSection::extend_up_to(addr_t size)
         new_size = get_file()->get_orig_size() - p_offset;
     }
     p_data.resize(new_size);
+    if (p_size!=new_size)
+        set_isModified(true);
     p_size = new_size;
 }
 
@@ -2630,8 +2658,8 @@ void
 SgAsmGenericHeader::add_section(SgAsmGenericSection *section)
 {
     ROSE_ASSERT(section != NULL);
-
     ROSE_ASSERT(p_sections != NULL);
+    p_sections->set_isModified(true);
 
 #ifndef NDEBUG
     /* New section must not already be present. */
@@ -2655,6 +2683,7 @@ SgAsmGenericHeader::remove_section(SgAsmGenericSection *section)
                                                         section);
         if (i != p_sections->get_sections().end()) {
             p_sections->get_sections().erase(i);
+            p_sections->set_isModified(true);
         }
     }
 }
@@ -2664,6 +2693,7 @@ void
 SgAsmGenericHeader::add_dll(SgAsmGenericDLL *dll)
 {
     ROSE_ASSERT(p_dlls != NULL);
+    p_dlls->set_isModified(true);
 
 #ifndef NDEBUG
  // for (size_t i = 0; i < p_dlls.size(); i++) {
@@ -2685,6 +2715,9 @@ SgAsmGenericHeader::add_dll(SgAsmGenericDLL *dll)
 void
 SgAsmGenericHeader::add_symbol(SgAsmGenericSymbol *symbol)
 {
+    ROSE_ASSERT(p_symbols);
+    p_symbols->set_isModified(true);
+
 #if 0 /*turned off because too slow!!! (RPM 2008-08-19)*/
 #ifndef NDEBUG
     for (size_t i = 0; i < p_symbols->get_symbols().size(); i++) {
@@ -2927,6 +2960,8 @@ SgAsmGenericDLL::set_name(SgAsmGenericString *s)
 {
     if (s)
         s->set_parent(this);
+    if (p_name!=s)
+        set_isModified(true);
     p_name = s;
 }
 
@@ -2962,6 +2997,8 @@ SgAsmGenericSymbol::set_name(SgAsmGenericString *s)
 {
     if (s)
         s->set_parent(this);
+    if (p_name!=s)
+        set_isModified(true);
     p_name = s;
 }
 
