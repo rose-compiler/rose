@@ -9,7 +9,8 @@
 #include <LoopTransformInterface.h>
 
 extern bool DebugDep();
-
+//Collecting coefficient variables 'vec' from 'exp', 
+//given loop invariant variables 'vars' and loop nest levels 'size'
 template <class VarVec, class CoeffVec>
 SymbolicVal DecomposeAffineExpression(LoopTransformInterface& la, 
             const SymbolicVal& exp, const VarVec& vars, CoeffVec& vec, int size)

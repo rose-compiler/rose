@@ -81,7 +81,7 @@ std::string toString( std::vector< std::vector<SymbolicVal> > & analMatrix)
 {
    std::string result;
       for (size_t i = 0; i < analMatrix.size(); ++i) {
-         result = result + toString(analMatrix[i]) + "\n";
+         result = result +" , "+ toString(analMatrix[i]) + "\n";
       }
   return result;
 }
@@ -464,10 +464,12 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep(LoopTransformInterface &fa, DepI
   varpostfix2 << "___depanal_" << postfix;
 
   bool precise = true;
+  // s1, s2 are the AST nodes for subscript expressions, like i, i-5
   AstNodePtr s1, s2;
   std::vector <std::vector<SymbolicVal> > analMatrix;
   for ( ; iter1 != sub1.end() && iter2 != sub2.end(); ++iter1, ++iter2) {
-    s1 = *iter1; s2 = *iter2;
+    s1 = *iter1; s2 = *iter2; 
+    // Convert AST expressions into symbolic expressions
     SymbolicVal val1 = SymbolicValGenerator::GetSymbolicVal(fa, s1);
     SymbolicVal val2 = SymbolicValGenerator::GetSymbolicVal(fa, s2);
 
@@ -490,10 +492,10 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep(LoopTransformInterface &fa, DepI
     cur.push_back(leftVal);  
     if (DebugDep()) {
        assert(dim+1 == cur.size());
-       std::cerr << "coefficients for induction variables (" << dim1 << " + " << dim2 << "+ 1)\n";
+       std::cerr << "coefficients and bounds for induction variables (" << dim1 << " + " << dim2 << "+ 1)\n";
        for (size_t i = 0; i < dim; ++i) 
          std::cerr << cur[i].toString() << bounds[i].toString() << " " ;
-       std::cerr << cur[dim].toString() << std::endl;
+       std::cerr << "\n leftval (-left2-left1) is :"<<cur[dim].toString() << std::endl;
     }
 
     for ( size_t i = 0; i < dim; ++i) {
@@ -505,7 +507,8 @@ DepInfo AdhocDependenceTesting::ComputeArrayDep(LoopTransformInterface &fa, DepI
              analMatrix.push_back(split);
     }
     analMatrix.push_back(cur);
-  }
+  } // end for()
+
   if (DebugDep()) 
       std::cerr << "analyzing relation matrix : \n" <<  toString(analMatrix) << std::endl;
 

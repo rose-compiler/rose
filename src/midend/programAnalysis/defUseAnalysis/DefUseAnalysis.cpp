@@ -452,7 +452,7 @@ void DefUseAnalysis::dfaToDOT() {
  * this needs to be improved... for correctness, the traversal must 
  * be according to controlflow (otherwise global variables are incorrect)
  *****************************************/
-void  DefUseAnalysis::start_traversal_of_functions() {
+bool  DefUseAnalysis::start_traversal_of_functions() {
   if (DEBUG_MODE) 
     cout << "START: Traversal over Functions" << endl;
 
@@ -479,6 +479,7 @@ void  DefUseAnalysis::start_traversal_of_functions() {
 
   if (DEBUG_MODE) 
     cout << "FINISH: Traversal over Functions" << endl;
+  return abortme;  
 }
 
 /******************************************
@@ -512,8 +513,10 @@ int DefUseAnalysis::run(bool debug) {
  * This algo consists of two parts: 
  * a) locate all global variables and add them to the def-use table  
  * b) Traverse all functions of the program and create def-use relations
+ * return 0 if successful, 1 if fails
  *****************************************/
 int DefUseAnalysis::run() {
+  bool aborted;
   sgNodeCounter = 1;
   nrOfNodesVisited = 0;
   if (DEBUG_MODE) 
@@ -527,7 +530,7 @@ int DefUseAnalysis::run() {
   clock_t start = clock();
   find_all_global_variables();
   // traverse through all functions and for each function doWorklist
-  start_traversal_of_functions();
+  aborted=start_traversal_of_functions();
   clock_t ends = clock();
 
   cout << "\n\n>>>>> Time for dfa-test: " << (double) (ends - start) / CLOCKS_PER_SEC << " sec"<< endl;
@@ -536,5 +539,7 @@ int DefUseAnalysis::run() {
 
   //if (DEBUG_MODE) 
   //cout << "FINISH: DefUse Analysis " <<  (DEBUG_MODE ? "True" : "False") << endl;
-  return 0;
+  if (aborted) 
+    return 1;
+   return 0;
 }

@@ -36,9 +36,10 @@ bool initialize_analysis(SgProject* project/*=NULL*/,bool debug/*=false*/)
     defuse = new DefUseAnalysis(project);
   }
   ROSE_ASSERT(defuse != NULL);
-  int result = defuse->run(debug);
-  if (result==0)
-    std::cerr<<"Error in Def-use analysis!"<<std::endl;
+ // int result = ;
+  defuse->run(debug);
+//  if (result==1)
+//    std::cerr<<"Error in Def-use analysis!"<<std::endl;
   if (debug)  
     defuse->dfaToDOT();
 

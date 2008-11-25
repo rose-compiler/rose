@@ -53,7 +53,7 @@ class DefUseAnalysis : public DFAnalysis, Support {
 
   // local functions ---------------------
   void find_all_global_variables();
-  void start_traversal_of_functions();
+  bool start_traversal_of_functions();
   bool searchMap(const tabletype* ltable, SgNode* node);
   bool searchVizzMap(SgNode* node);
   std::string getInitName(SgNode* sgNode);
