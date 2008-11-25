@@ -15,6 +15,7 @@ using namespace boost;
 using namespace std;
 
 
+
 int main( int argc, char **argv )
 {
 #if 0
@@ -24,61 +25,55 @@ int main( int argc, char **argv )
   ROSE_ASSERT (project != NULL);
   fprintf(stderr, "End binCompass frontend...\n\n\n");
 #endif
-
-
-
-
-  std::string fileA,fileB;
-    bool test=false;
-  try {
-    options_description desc("Allowed options");
-    desc.add_options()
-      ("help", "produce a help message")
-      ("fileA,a", value< string >()->composing(), 
-       "file A to be diffed")
-      ("fileB,b", value< string >()->composing(), 
-       "file B to be diffed")
-      ("test", "for testing")
-      ;
-//, value< bool >()->composing(), 
-    variables_map vm;
-    store(command_line_parser(argc, argv).options(desc)
-        .run(), vm);
-
-
-    if (vm.count("help")) {
-      cout << desc;            
-      exit(0);
+  vector<std::string> dllA;
+  vector<std::string> dllB;
+  cerr << "USAGE : BinQ -a binaryFileA [.so|.dll]* [-b binaryFileB|IdaFile|SourceFile [.so|.dll]* ]" << endl;
+  std::string fileA="";
+  std::string fileB="";
+  bool aActive=false;
+  bool bActive=false;
+  for (int i=1; i<argc; ++i) {
+    string token = argv[i];
+    //    cerr << "Recognized argument " << i << " : >" << token <<"<"<< endl;
+    if (aActive) {
+      if (fileA=="") 
+	fileA=argv[i];
+      else
+      dllA.push_back(argv[i]);
     }
-    if (vm.count("test")) {
-      test=true;
+    if (bActive) {
+      if (fileB=="") 
+	fileB=argv[i];
+      else
+      dllB.push_back(argv[i]);
     }
-
-    if (vm.count("fileA")!=1 ||vm.count("fileB")!=1 ) {
-      std::cerr << "Missing options. Call as: BinQ --fileA <file A> --fileB <file B>" 
-        << std::endl;
-      exit(1);
-
+    if (token=="-a") {
+      aActive=true;
+      bActive=false;
     }
-
-
-    fileA = vm["fileA"].as<string >();
-    fileB = vm["fileB"].as<string >();
-    //    test = vm["test"].as<bool >();
-    cout << "File A: " << fileA << " File B: " << fileB << "  test? " << test << std::endl;
-
+    if (token=="-b") {
+      aActive=false;
+      bActive=true;
+    }
 
   }
-  catch(std::exception& e) {
-    cout << e.what() << "\n";
+  
+  cerr << "FileA: " << fileA << "  FileB: " << fileB << endl;
+  if (fileA=="") exit(1);
+  vector<std::string>::const_iterator it= dllA.begin();
+  for (;it!=dllA.end();++it) {
+    cerr << "  File A dll : " << *it<<endl; 
+  }
+  if (fileB!="") {
+    it= dllB.begin();
+    for (;it!=dllB.end();++it) {
+      cerr << "  File B dll : " << *it<<endl; 
+    }
   }
 
 
-  if (test==false) {
-    QROSE::init(argc,argv);
-    BinQGUI binGui(fileA,fileB, test);
-    binGui.run();
-  } else
-    exit(0);
+  QROSE::init(argc,argv);
+  BinQGUI binGui(fileA,fileB);
+  binGui.run();
   return QROSE::exec();
 }

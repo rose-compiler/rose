@@ -13,9 +13,10 @@ class AlignFunction : public BinAnalyses {
   void run();
   std::string name();
   std::string getDescription();
+  bool twoFiles() {return true;}
  private:
   bool findPosWhenFunctionsAreNotSync(int& position, int& offset, int& currentPos);
-
+  
 };
 
 

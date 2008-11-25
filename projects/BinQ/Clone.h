@@ -16,7 +16,7 @@ class DiffAlgo : public BinAnalyses {
   void run();
   std::string name();
   std::string getDescription();
-
+  bool twoFiles() {return true;}
 
 };
 

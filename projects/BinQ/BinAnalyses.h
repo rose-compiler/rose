@@ -13,7 +13,7 @@ class  BinAnalyses {
   virtual void run()=0;
   virtual std::string name()=0;
   virtual std::string getDescription()=0;
-
+  virtual bool twoFiles()=0;
 };
 
 

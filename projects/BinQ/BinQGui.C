@@ -50,7 +50,9 @@ void clicked1() {
     BinAnalyses* analysis = instance->analyses[i];
     if (t==analysis->name()) {
       instance->analysisInfo->setText(instance->analyses[i]->getDescription().c_str());
-      instance->analyses[i]->run();
+      bool twoFiles = instance->analyses[i]->twoFiles();
+      if (twoFiles && instance->fileB!=NULL || twoFiles==false)
+	instance->analyses[i]->run();
     } 
   }
 } 
@@ -140,9 +142,9 @@ static void codeTableWidgetCellActivatedB(int col, int row, int oldCol, int oldR
 // ----------------------------------------------------------------------------------------------
 
 
-void BinQGUI::highlightFunctionRow(int row, bool fileA) {
+void BinQGUI::highlightFunctionRow(int row, bool fileAYes) {
   if(row >= 0)    {         
-    if (fileA) {
+    if (fileAYes) {
       QFont f = tableWidget->getFont(0, row);
       f.setBold(true);
       tableWidget->setFont(f, 0, row);
@@ -166,7 +168,7 @@ void BinQGUI::highlightFunctionRow(int row, bool fileA) {
 	//cerr << " highlight func row : " << row << "  inst row : " << offset << endl;
 	codeTableWidget->setCurrentCell(offset,0);
       }
-    } else {
+    } else if (fileB) {
       QFont f = tableWidget2->getFont(0, row);
       f.setBold(true);
       tableWidget2->setFont(f, 0, row);
@@ -204,14 +206,14 @@ void BinQGUI::highlightFunctionRow(int row, bool fileA) {
   } //if(row >= 0)
 } //CompassGui::highlighFunctionRow(int row)
 
-void BinQGUI::unhighlightFunctionRow(int row, bool fileA) {
+void BinQGUI::unhighlightFunctionRow(int row, bool fileAYes) {
   if (row >= 0)     {
-    if (fileA) {
+    if (fileAYes) {
       QFont f = tableWidget->getFont(0, row);
       f.setBold(false);
       tableWidget->setFont(f, 0, row);
       tableWidget->setBgColor(QColor(255,255,255),0,row);
-    } else {
+    } else if (fileB) {
       QFont f = tableWidget2->getFont(0, row);
       f.setBold(false);
       tableWidget2->setFont(f, 0, row);
@@ -223,9 +225,9 @@ void BinQGUI::unhighlightFunctionRow(int row, bool fileA) {
 
 
 
-void BinQGUI::highlightInstructionRow(int row, bool fileA) {
+void BinQGUI::highlightInstructionRow(int row, bool fileAYes) {
   if(row >= 0)    {         
-    if (fileA) {
+    if (fileAYes) {
       QFont f = codeTableWidget->getFont(0, row);
       f.setBold(true);
       codeTableWidget->setCurrentCell(row,0);
@@ -238,7 +240,7 @@ void BinQGUI::highlightInstructionRow(int row, bool fileA) {
 	else 
 	  codeTableWidget->setBgColor(QColor(255,255,0),j,row);
       }
-    } else {
+    } else if (fileB) {
       QFont f = codeTableWidget2->getFont(0, row);
       f.setBold(true);
       codeTableWidget2->setCurrentCell(row,0);
@@ -257,9 +259,9 @@ void BinQGUI::highlightInstructionRow(int row, bool fileA) {
   } //if(row >= 0)
 } //CompassGui::highlighFunctionRow(int row)
 
-void BinQGUI::unhighlightInstructionRow(int row,bool fileA) {
+void BinQGUI::unhighlightInstructionRow(int row,bool fileAYes) {
   if (row >= 0)     {
-    if (fileA) {
+    if (fileAYes) {
       QFont f = codeTableWidget->getFont(0, row);
       f.setBold(false);
       Item* item = itemsFileA[row];
@@ -267,7 +269,7 @@ void BinQGUI::unhighlightInstructionRow(int row,bool fileA) {
 	codeTableWidget->setFont(f, j, row);
 	codeTableWidget->setBgColor(item->bg,j,row);
       }
-    } else {
+    } else if (fileB){
       QFont f = codeTableWidget2->getFont(0, row);
       f.setBold(false);
       Item* item = itemsFileB[row];
@@ -300,21 +302,24 @@ void BinQGUI::updateByteItemList() {
       rowItemFileA[i]=a;
     }
   }
-  cerr << "updating itemsFileA : " << itemsFileB.size() << endl; 
-  for (unsigned int i=0;i<itemsFileB.size();++i) {
-    Item* b = itemsFileB[i];
-    if (b) {
-      int pos = b->pos;
-      int length = b->length;
-      for (int k=0; k<length;++k)
-	byteItemFileB[pos+k]=b;
-      rowItemFileB[i]=b;
+  if (fileB) {
+    cerr << "updating itemsFileB : " << itemsFileB.size() << endl; 
+    for (unsigned int i=0;i<itemsFileB.size();++i) {
+      Item* b = itemsFileB[i];
+      if (b) {
+	int pos = b->pos;
+	int length = b->length;
+	for (int k=0; k<length;++k)
+	  byteItemFileB[pos+k]=b;
+	rowItemFileB[i]=b;
+      }
     }
   }
   cerr << "displaying A and B ... " << endl; 
   slide->colorize();
   showFileA(0);
-  showFileB(0);
+  if (fileB)
+    showFileB(0);
   //  codeTableWidget->viewport()->update();
   //codeTableWidget2->viewport()->update();
 
@@ -458,15 +463,14 @@ BinQGUI::insertFileInformation() {
 }
 
 
-BinQGUI::BinQGUI(std::string fA, std::string fB,bool test ) :  
+BinQGUI::BinQGUI(std::string fA, std::string fB) :  
   window(0), fileNameA(fA), fileNameB(fB) {
   window = new QRWindow( "mainWindow", QROSE::TopDown );
   binqsupport= new BinQSupport();
   maxrows=5;
   sourceFile=false;
   init();
-  if (test==false)
-    createGUI();
+  createGUI();
 }
 
 void BinQGUI::init(){
@@ -485,12 +489,15 @@ void BinQGUI::init(){
   cerr << "Disassemble File A ... " << fileNameA << endl;
   std::string sourceFileS;
   fileA = binqsupport->disassembleFile(fileNameA, sourceFileS);
-  cerr << "\nDisassemble File B ... " << fileNameB << endl;
-  fileB = binqsupport->disassembleFile(fileNameB, sourceFileS);
   ROSE_ASSERT(fileA);
-  ROSE_ASSERT(fileB);
-  if (sourceFileS=="true")
-    sourceFile=true;
+  fileB=NULL;
+  if (fileNameB!="") {
+    cerr << "\nDisassemble File B ... " << fileNameB << endl;
+    fileB = binqsupport->disassembleFile(fileNameB, sourceFileS);
+    ROSE_ASSERT(fileB);
+    if (sourceFileS=="true")
+      sourceFile=true;
+  }
 
   ROSE_ASSERT(isSgProject(fileA));
   backend(isSgProject(fileA));
@@ -507,6 +514,7 @@ void BinQGUI::init(){
 
   unparseAsmStatementToFile("unparsedA.s", interpA->get_global_block());
 
+  if (fileNameB!="") 
   if(is_directory( fileNameB  ) == false && sourceFile==false) {
     SgBinaryFile* binaryFileB = isSgBinaryFile(isSgProject(fileB)->get_fileList()[0]);
     SgAsmFile* file2 = binaryFileB != NULL ? binaryFileB->get_binaryFile() : NULL;
@@ -516,19 +524,23 @@ void BinQGUI::init(){
   // -------------------------------------------------------------------------------------
 
   itemsFileA.clear();
-  itemsFileB.clear();
+  if (fileB)
+    itemsFileB.clear();
   
   // ---------------------- Create itemsFileA and itemsFileB , containing all statements
   FindAsmFunctionsVisitor funcVis;
   AstQueryNamespace::querySubTree(fileA, std::bind2nd( funcVis, &funcsFileA ));
-  if (sourceFile) {
-    FindSgFunctionsVisitor funcVisSource;
-    AstQueryNamespace::querySubTree(fileB, std::bind2nd( funcVisSource, &funcsFileB ));
-  } else
-    AstQueryNamespace::querySubTree(fileB, std::bind2nd( funcVis, &funcsFileB ));
+  if (fileB) {
+    if (sourceFile) {
+      FindSgFunctionsVisitor funcVisSource;
+      AstQueryNamespace::querySubTree(fileB, std::bind2nd( funcVisSource, &funcsFileB ));
+    } else
+      AstQueryNamespace::querySubTree(fileB, std::bind2nd( funcVis, &funcsFileB ));
+  }
 
   cerr << " File A has " << funcsFileA.size() << " funcs." << endl;
-  cerr << " File B has " << funcsFileB.size() << " funcs." << endl;
+  if (fileB)
+    cerr << " File B has " << funcsFileB.size() << " funcs." << endl;
 
   FindAsmStatementsHeaderVisitor visStat;
   std::vector<SgNode*> stmts;
@@ -595,6 +607,7 @@ void BinQGUI::init(){
     }
   }
 
+  if (fileB) {
   stmts.clear();
   if (!sourceFile) {
     FindAsmStatementsHeaderVisitor visStat2;
@@ -679,6 +692,7 @@ void BinQGUI::init(){
       itemsFileB.push_back(item);
       pos+=length;
     }
+  }
   }
 
 }
@@ -780,9 +794,10 @@ void BinQGUI::createGUI() {
       {
 	tableWidget = bottomPanelLeft << new QRTable( 1, "function" );
 	QROSE::link(tableWidget, SIGNAL(activated(int, int, int, int)), &tableWidgetCellActivatedA, this);
-	tableWidget2 = bottomPanelLeft << new QRTable( 1, "function" );
-	QROSE::link(tableWidget2, SIGNAL(activated(int, int, int, int)), &tableWidgetCellActivatedB, this);
-
+	if (fileB) {
+	  tableWidget2 = bottomPanelLeft << new QRTable( 1, "function" );
+	  QROSE::link(tableWidget2, SIGNAL(activated(int, int, int, int)), &tableWidgetCellActivatedB, this);
+	}
 	//	bottomPanelLeft.setTileSize(20,20);
       }
 
@@ -790,14 +805,15 @@ void BinQGUI::createGUI() {
       {
 	codeTableWidget = bottomPanelRight << new QRTable( 7, "row","address","instr","operands","comment","pos","byte" );
 	QROSE::link(codeTableWidget, SIGNAL(activated(int, int, int, int)), &codeTableWidgetCellActivatedA, this);
-	if (sourceFile) {
-	  codeTableWidget2 = bottomPanelRight << new QRTable( 5, "row","line","text","type","pos" );
-	  maxrows=3;
-	} else {
-	  codeTableWidget2 = bottomPanelRight << new QRTable( 7, "row","address","instr","operands","comment","pos","byte" );
+	if (fileB) {
+	  if (sourceFile) {
+	    codeTableWidget2 = bottomPanelRight << new QRTable( 5, "row","line","text","type","pos" );
+	    maxrows=3;
+	  } else {
+	    codeTableWidget2 = bottomPanelRight << new QRTable( 7, "row","address","instr","operands","comment","pos","byte" );
+	  }
+	  QROSE::link(codeTableWidget2, SIGNAL(activated(int, int, int, int)), &codeTableWidgetCellActivatedB, this);
 	}
-	QROSE::link(codeTableWidget2, SIGNAL(activated(int, int, int, int)), &codeTableWidgetCellActivatedB, this);
-
       }
       bottomPanelLeft.setFixedWidth(screenWidth/5 );
     } //mainPanel
@@ -813,11 +829,12 @@ void BinQGUI::createGUI() {
     .arg(funcsFileA.size())
     .arg(itemsFileA.size());
   console->append(res);  
-  QString res2 = QString("B: Total functions  %1.  Total statements: %2. ")
-    .arg(funcsFileB.size())
-    .arg(itemsFileB.size());
-  console->append(res2);  
-
+  if (fileB) {
+    QString res2 = QString("B: Total functions  %1.  Total statements: %2. ")
+      .arg(funcsFileB.size())
+      .arg(itemsFileB.size());
+    console->append(res2);  
+  }
 
   updateByteItemList();
   // ------------------------------------
@@ -848,14 +865,17 @@ void BinQGUI::reset() {
 void
 BinQGUI::run( ) {
   QROSE::unlink(tableWidget, SIGNAL(activated(int, int, int, int)));
-  QROSE::unlink(tableWidget2, SIGNAL(activated(int, int, int, int)));
   while(tableWidget->rowCount()) 
     tableWidget->removeRow(0);
-  while(tableWidget2->rowCount()) 
-    tableWidget2->removeRow(0);
-
   tableWidget->setTextColor(QColor(0,0,255),0);
-  tableWidget2->setTextColor(QColor(0,0,255),0);
+  if (fileB) {
+    QROSE::unlink(tableWidget2, SIGNAL(activated(int, int, int, int)));
+    while(tableWidget2->rowCount()) 
+      tableWidget2->removeRow(0);
+    tableWidget2->setTextColor(QColor(0,0,255),0);
+  }
+
+
   for (size_t row = 0; row < funcsFileA.size(); ++row) {
     tableWidget->addRows(1);
     ROSE_ASSERT(isSgAsmFunctionDeclaration(funcsFileA[row]));
@@ -863,37 +883,42 @@ BinQGUI::run( ) {
     //tableWidget->setText(boost::lexical_cast<std::string>(cur_elem.size), 1, row);
     tableWidget->setVDim(row,18);
   }
-  for (size_t row = 0; row < funcsFileB.size(); ++row) {
-    tableWidget2->addRows(1);
-    if (isSgAsmFunctionDeclaration(funcsFileB[row]))
-      tableWidget2->setText(boost::lexical_cast<std::string>(isSgAsmFunctionDeclaration(funcsFileB[row])->get_name()), 0, row);
-    if (isSgFunctionDeclaration(funcsFileB[row])) {
-      SgFunctionDeclaration* func = isSgFunctionDeclaration(funcsFileB[row]);
-      if (func->get_file_info()->isCompilerGenerated())
-	tableWidget2->setTextColor(QColor(255,0,0),0,row);	
-      else if (isSgFunctionDefinition(func->get_definition()))
-	tableWidget2->setTextColor(QColor(0,0,0),0,row);
-      else
-	tableWidget2->setTextColor(QColor(128,128,128),0,row);
-      //      cerr << row << " comp : " << func->get_file_info()->isCompilerGenerated() <<
-      //	"   def : " << isSgFunctionDefinition(func->get_definition()) << endl;
-      tableWidget2->setText(boost::lexical_cast<std::string>(isSgFunctionDeclaration(funcsFileB[row])->get_name().str()), 0, row);
+  if (fileB) {
+    for (size_t row = 0; row < funcsFileB.size(); ++row) {
+      tableWidget2->addRows(1);
+      if (isSgAsmFunctionDeclaration(funcsFileB[row]))
+	tableWidget2->setText(boost::lexical_cast<std::string>(isSgAsmFunctionDeclaration(funcsFileB[row])->get_name()), 0, row);
+      if (isSgFunctionDeclaration(funcsFileB[row])) {
+	SgFunctionDeclaration* func = isSgFunctionDeclaration(funcsFileB[row]);
+	if (func->get_file_info()->isCompilerGenerated())
+	  tableWidget2->setTextColor(QColor(255,0,0),0,row);	
+	else if (isSgFunctionDefinition(func->get_definition()))
+	  tableWidget2->setTextColor(QColor(0,0,0),0,row);
+	else
+	  tableWidget2->setTextColor(QColor(128,128,128),0,row);
+	//      cerr << row << " comp : " << func->get_file_info()->isCompilerGenerated() <<
+	//	"   def : " << isSgFunctionDefinition(func->get_definition()) << endl;
+	tableWidget2->setText(boost::lexical_cast<std::string>(isSgFunctionDeclaration(funcsFileB[row])->get_name().str()), 0, row);
+      }
+      tableWidget2->setVDim(row,18);
     }
-    tableWidget2->setVDim(row,18);
   }
   tableWidget->setHAlignment(true, false, 0); // left horizontal alignment
 
   tableWidget->setHDim(0,140);
   tableWidget->setShowGrid(false);
-  tableWidget2->setHAlignment(true, false, 0); // left horizontal alignment
-  tableWidget2->setHDim(0,140);
-  tableWidget2->setShowGrid(false);
-
+  if (fileB) {
+    tableWidget2->setHAlignment(true, false, 0); // left horizontal alignment
+    tableWidget2->setHDim(0,140);
+    tableWidget2->setShowGrid(false);
+  }
   
   QROSE::link(tableWidget, SIGNAL(activated(int, int, int, int)),  &tableWidgetCellActivatedA, this);
-  QROSE::link(tableWidget2, SIGNAL(activated(int, int, int, int)),  &tableWidgetCellActivatedB, this);
+  if (fileB)
+    QROSE::link(tableWidget2, SIGNAL(activated(int, int, int, int)),  &tableWidgetCellActivatedB, this);
   showFileA(0);
-  showFileB(0);
+  if (fileB)
+    showFileB(0);
 }
 
 
@@ -904,7 +929,7 @@ void BinQGUI::showFileA(int row) {
     codeTableWidget->removeRow(0);
 
   ROSE_ASSERT(fileA != NULL);
-  ROSE_ASSERT(fileB != NULL);
+
 
   ROSE_ASSERT(isSgAsmFunctionDeclaration(funcsFileA[row]));
   QString res = QString("FILE A : Looking at function  %1  row: %2  size ")

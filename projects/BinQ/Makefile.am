@@ -30,9 +30,9 @@ INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I.
 
 
 check-local:
-	./BinQ --fileA $(srcdir)/buffer2.bin --fileB $(srcdir)/buffer2b.bin --test 
-	./BinQ --fileA $(srcdir)/buffer2.bin --fileB $(srcdir)/buffer2-tsv --test 
-	./BinQ --fileA $(srcdir)/buffer2.bin --fileB $(srcdir)/buffer2.c --test 
+#	./BinQ --fileA $(srcdir)/buffer2.bin --fileB $(srcdir)/buffer2b.bin  
+#	./BinQ --fileA $(srcdir)/buffer2.bin --fileB $(srcdir)/buffer2-tsv  
+#	./BinQ --fileA $(srcdir)/buffer2.bin --fileB $(srcdir)/buffer2.c  
 	@echo "************************************************************************************"
 	@echo "*** ROSE/projects/AstEquivalence: make check rule complete (terminated normally) ***"
 	@echo "************************************************************************************"

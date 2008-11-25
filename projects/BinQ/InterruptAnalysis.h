@@ -20,7 +20,7 @@ class InterruptAnalysis : public BinAnalyses,  RoseBin_DataFlowAbstract {
   bool run(std::string& name, SgDirectedGraphNode* node,
 	   SgDirectedGraphNode* previous);
 
-
+  bool twoFiles() {return false;}
  private:
   
   void init(RoseBin_Graph* vg) {
