@@ -567,6 +567,18 @@ SgAsmElfFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = 0x%08lx (%lu) bytes\n",            p, w, "shextrasz",              p_shextrasz, p_shextrasz);
     fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_shnum",                p_e_shnum);
     fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_shstrndx",             p_e_shstrndx);
+    if (p_section_table) {
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n",                p, w, "section_table",
+                p_section_table->get_id(), p_section_table->get_name()->c_str());
+    } else {
+        fprintf(f, "%s%-*s = none\n",                       p, w, "section_table");
+    }
+    if (p_segment_table) {
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n",                p, w, "segment_table",
+                p_segment_table->get_id(), p_segment_table->get_name()->c_str());
+    } else {
+        fprintf(f, "%s%-*s = none\n",                       p, w, "segment_table");
+    }
 
     if (variantT() == V_SgAsmElfFileHeader) //unless a base class
         hexdump(f, 0, std::string(p)+"data at ", p_data);
