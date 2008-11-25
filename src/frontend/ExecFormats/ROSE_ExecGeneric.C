@@ -3656,141 +3656,19 @@ SgAsmExecutableFileFormat::unparseBinaryFormat(std::ostream &f, SgAsmFile *asmFi
 /* Top-level binary executable file parser. Given the name of a file, open the file, detect the format, parse the file,
  * and return information about the file. */
 void
-SgAsmExecutableFileFormat::parseBinaryFormat(const std::string & name, SgAsmFile* asmFile)
+SgAsmExecutableFileFormat::parseBinaryFormat(const std::string &name, SgAsmFile *asmFile)
 {
-    SgAsmGenericFile *ef = (new SgAsmGenericFile)->parse(name.c_str());
-     ROSE_ASSERT(ef != NULL);
-
-     asmFile->set_name(name);
-
-     SgAsmGenericHeader* executableHeader = NULL;
-
-  // printf ("Evaluate what kind of binary format this file is! \n");
-
-     if (SgAsmElfFileHeader::is_ELF(ef))
-       {
-           executableHeader = (new SgAsmElfFileHeader(ef))->parse();
-       }
-      else
-       {
-         if (SgAsmPEFileHeader::is_PE(ef))
-            {
-           // PE::parse(ef);
-              executableHeader = SgAsmPEFileHeader::parse(ef);
-            }
-           else
-            {
-              if (SgAsmNEFileHeader::is_NE(ef))
-                 {
-                // NE::parse(ef);
-                   executableHeader = SgAsmNEFileHeader::parse(ef);
-                 }
-                else
-                 {
-                   if (SgAsmLEFileHeader::is_LE(ef))
-                      {
-                     /* or LX */
-                     // LE::parse(ef);
-                        executableHeader = SgAsmLEFileHeader::parse(ef);
-                      }
-                     else
-                      {
-                        if (SgAsmDOSFileHeader::is_DOS(ef))
-                           {
-                          /* Must be after PE and NE all PE and NE files are also DOS files */
-                          // DOS::parse(ef);
-                             executableHeader = SgAsmDOSFileHeader::parse(ef);
-                           }
-                          else
-                           {
-                             delete ef;
-                             ef = NULL;
-
-                          // DQ (8/20/2008): The code (from Robb) identifies what kind of file this is or 
-                          // more specifically what kind of file most tools would think this 
-                          // file is (using the system file(1) command as a standard way to identify
-                          // file types using their first few bytes.
-
-                          // DQ (8/21/2008): It should be an error to get this far.  Robb's code (below) was copied to sageSupport.C where it is used to detect incorrect file types.
-                             printf ("Error: In SgAsmExecutableFileFormat::parseBinaryFormat(%s) evaluation of file type should have been done previously \n",name.c_str());
-                             ROSE_ASSERT(false);
-
-#if 0
-                          // Use file(1) to try to figure out the file type to report in the exception
-                             int child_stdout[2];
-                             pipe(child_stdout);
-                             pid_t pid = fork();
-                             if (0 == pid)
-                                {
-                                  close(0);
-                                  dup2(child_stdout[1], 1);
-                                  close(child_stdout[0]);
-                                  close(child_stdout[1]);
-                                  execlp("file", "file", "-b", name.c_str(), NULL);
-                                  exit(1);
-                                }
-                               else
-                                {
-                                  if (pid > 0)
-                                     {
-                                       char buf[4096];
-                                       memset(buf, 0, sizeof buf);
-                                       read(child_stdout[0], buf, sizeof buf);
-                                       buf[sizeof(buf)-1] = '\0';
-                                       if (char *nl = strchr(buf, '\n')) *nl = '\0'; /*keep only first line w/o LF*/
-                                       waitpid(pid, NULL, 0);                        
-                                       char mesg[64+sizeof buf];
-                                       sprintf(mesg, "unrecognized file format: %s", buf);
-                                       throw SgAsmGenericFile::FormatError(mesg);
-                                     }
-                                    else
-                                     {
-                                       throw SgAsmGenericFile::FormatError("unrecognized file format");
-                                     }
-                                }
-#endif
-                           }
-                      }
-                 }
-            }
-       }
-
-     ef->congeal();
-     ROSE_ASSERT(executableHeader != NULL);
-
-     // SgAsmGenericFile is the parent of SgAsmGenericHeader, not vice versa.
-     // Commented out by RPM 2008-11-19. Code was from DQ 2008-08-16
-     //ROSE_ASSERT(ef->get_parent() == executableHeader);
-
-
-#if 0
-  // asmFile->set_header(executableHeader);
-     ROSE_ASSERT(asmFile->get_headers() != NULL);
-     asmFile->get_headers()->get_headers().push_back(executableHeader);
-
-     executableHeader->set_parent(asmFile->get_headers());
-
-  // ROSE_ASSERT(asmFile->get_header() != NULL);
-     ROSE_ASSERT(asmFile->get_headers()->get_headers().empty() == false);
-#else
-  // asmFile->get_genericFile()->get_headers()->get_headers().push_back(executableHeader);
-  // executableHeader->set_parent(asmFile->get_genericFile()->get_headers());
-
-     asmFile->set_genericFile(executableHeader->get_file());
-     executableHeader->get_file()->set_parent(asmFile);
-#endif
+    asmFile->set_name(name);
+    SgAsmGenericFile *ef = parse(name.c_str());
+    ROSE_ASSERT(ef != NULL);
+    ef->set_parent(asmFile);
+    asmFile->set_genericFile(ef);
 }
-
-#if 1
-// DQ (8/21/2008): Turn this back on since the disassembler uses it!
-
-// DQ (6/15/2008): Old function name (confirmed to not be called in ROSE)
-/* Top-level binary executable file parser. Given the name of a file, open the file, detect the format, parse the file,
- * and return information about the file. */
 SgAsmGenericFile *
 SgAsmExecutableFileFormat::parse(const char *name)
 {
     SgAsmGenericFile *ef = (new SgAsmGenericFile)->parse(name);
+    ROSE_ASSERT(ef!=NULL);
     
     if (SgAsmElfFileHeader::is_ELF(ef)) {
         (new SgAsmElfFileHeader(ef))->parse();
@@ -3804,7 +3682,7 @@ SgAsmExecutableFileFormat::parse(const char *name)
         /* Must be after PE and NE all PE and NE files are also DOS files */
         SgAsmDOSFileHeader::parse(ef);
     } else {
-        delete ef;
+        delete ef; ef=NULL;
         /* Use file(1) to try to figure out the file type to report in the exception */
         int child_stdout[2];
         pipe(child_stdout);
@@ -3833,4 +3711,3 @@ SgAsmExecutableFileFormat::parse(const char *name)
     ef->congeal();
     return ef;
 }
-#endif
