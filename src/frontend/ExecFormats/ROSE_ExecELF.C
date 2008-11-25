@@ -104,7 +104,7 @@ SgAsmElfFileHeader::parse()
     p_e_ident_data_encoding = disk32.e_ident_data_encoding; /*save original value*/
 
     /* Decode header to native format */
-    rva_t entry_rva;
+    rva_t entry_rva, sectab_rva, segtab_rva;
     if (1 == disk32.e_ident_file_class) {
         p_exec_format->set_word_size(4);
 
@@ -118,8 +118,8 @@ SgAsmElfFileHeader::parse()
         p_e_machine             = disk_to_host(sex, disk32.e_machine);
 	p_exec_format->set_version(disk_to_host(sex, disk32.e_version));
         entry_rva               = disk_to_host(sex, disk32.e_entry);
-        p_e_phoff               = disk_to_host(sex, disk32.e_phoff);
-        p_e_shoff               = disk_to_host(sex, disk32.e_shoff);
+        segtab_rva              = disk_to_host(sex, disk32.e_phoff);
+        sectab_rva              = disk_to_host(sex, disk32.e_shoff);
         p_e_flags               = disk_to_host(sex, disk32.e_flags);
         p_e_ehsize              = disk_to_host(sex, disk32.e_ehsize);
 
@@ -160,8 +160,8 @@ SgAsmElfFileHeader::parse()
         p_e_machine             = disk_to_host(sex, disk64.e_machine);
 	p_exec_format->set_version(disk_to_host(sex, disk64.e_version));
         entry_rva               = disk_to_host(sex, disk64.e_entry);
-        p_e_phoff               = disk_to_host(sex, disk64.e_phoff);
-        p_e_shoff               = disk_to_host(sex, disk64.e_shoff);
+        segtab_rva              = disk_to_host(sex, disk64.e_phoff);
+        sectab_rva              = disk_to_host(sex, disk64.e_shoff);
         p_e_flags               = disk_to_host(sex, disk64.e_flags);
         p_e_ehsize              = disk_to_host(sex, disk64.e_ehsize);
 
@@ -271,11 +271,11 @@ SgAsmElfFileHeader::parse()
 
     /* Read the optional section and segment tables and the sections to which they point. */
     if (get_e_shnum()) {
-        SgAsmElfSectionTable *tab = (new SgAsmElfSectionTable(this, p_e_shoff))->parse();
+        SgAsmElfSectionTable *tab = (new SgAsmElfSectionTable(this, sectab_rva.get_rva()))->parse();
         set_section_table(tab);
     }
     if (get_e_phnum()) {
-        SgAsmElfSegmentTable *tab = (new SgAsmElfSegmentTable(this, p_e_phoff))->parse();
+        SgAsmElfSegmentTable *tab = (new SgAsmElfSegmentTable(this, segtab_rva.get_rva()))->parse();
         set_segment_table(tab);
     }
 
@@ -381,8 +381,16 @@ SgAsmElfFileHeader::encode(ByteOrder sex, Elf32FileHeader_disk *disk) const
     host_to_disk(sex, p_e_machine,             &(disk->e_machine));
     host_to_disk(sex, p_exec_format->get_version(), &(disk->e_version));
     host_to_disk(sex, get_entry_rva(),         &(disk->e_entry));
-    host_to_disk(sex, p_e_phoff,               &(disk->e_phoff));
-    host_to_disk(sex, p_e_shoff,               &(disk->e_shoff));
+    if (get_segment_table()) {
+        host_to_disk(sex, get_segment_table()->get_offset(), &(disk->e_phoff));
+    } else {
+        host_to_disk(sex, 0, &(disk->e_phoff));
+    }
+    if (get_section_table()) {
+        host_to_disk(sex, get_section_table()->get_offset(), &(disk->e_shoff));
+    } else {
+        host_to_disk(sex, 0, &(disk->e_shoff));
+    }
     host_to_disk(sex, p_e_flags,               &(disk->e_flags));
     host_to_disk(sex, p_e_ehsize,              &(disk->e_ehsize));
 
@@ -433,8 +441,16 @@ SgAsmElfFileHeader::encode(ByteOrder sex, Elf64FileHeader_disk *disk) const
     host_to_disk(sex, p_e_machine,             &(disk->e_machine));
     host_to_disk(sex, p_exec_format->get_version(), &(disk->e_version));
     host_to_disk(sex, get_entry_rva(),         &(disk->e_entry));
-    host_to_disk(sex, p_e_phoff,               &(disk->e_phoff));
-    host_to_disk(sex, p_e_shoff,               &(disk->e_shoff));
+    if (get_segment_table()) {
+        host_to_disk(sex, get_segment_table()->get_offset(), &(disk->e_phoff));
+    } else {
+        host_to_disk(sex, 0, &(disk->e_phoff));
+    }
+    if (get_section_table()) {
+        host_to_disk(sex, get_section_table()->get_offset(), &(disk->e_shoff));
+    } else {
+        host_to_disk(sex, 0, &(disk->e_shoff));
+    }
     host_to_disk(sex, p_e_flags,               &(disk->e_flags));
     host_to_disk(sex, p_e_ehsize,              &(disk->e_ehsize));
     host_to_disk(sex, p_phextrasz+sizeof(SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk), &(disk->e_phentsize));
@@ -544,8 +560,6 @@ SgAsmElfFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
         fprintf(f, "%s%-*s = [%zu] %u\n",                   p, w, "e_ident_padding",     i, p_e_ident_padding[i]);
     fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_type",                 p_e_type);
     fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_machine",              p_e_machine);
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes into file\n", p, w, "e_phoff",     p_e_phoff, p_e_phoff);
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes into file\n", p, w, "e_shoff",     p_e_shoff, p_e_shoff);
     fprintf(f, "%s%-*s = 0x%08lx\n",                        p, w, "e_flags",                p_e_flags);
     fprintf(f, "%s%-*s = 0x%08lx (%lu) bytes\n",            p, w, "e_ehsize",               p_e_ehsize, p_e_ehsize);
     fprintf(f, "%s%-*s = 0x%08lx (%lu) bytes\n",            p, w, "phextrasz",              p_phextrasz, p_phextrasz);
@@ -1396,7 +1410,6 @@ SgAsmElfSectionTable::reallocate()
 
     /* Update data members in the ELF File Header. No need to return true for these changes. */
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
-    fhdr->set_e_shoff(get_offset());
     fhdr->set_shextrasz(opt_size);
     fhdr->set_e_shnum(nentries);
 
@@ -1419,7 +1432,6 @@ SgAsmElfSectionTable::unparse(std::ostream &f) const
     /* Calculate sizes. The ELF File Header should have been updated in reallocate() prior to unparsing. */
     size_t ent_size, struct_size, opt_size, nentries;
     calculate_sizes(&ent_size, &struct_size, &opt_size, &nentries);
-    ROSE_ASSERT(fhdr->get_e_shoff()==get_offset());
     ROSE_ASSERT(fhdr->get_shextrasz()==opt_size);
     ROSE_ASSERT(fhdr->get_e_shnum()==nentries);
     
@@ -1809,7 +1821,6 @@ SgAsmElfSegmentTable::reallocate()
 
     /* Update data members in the ELF File Header. No need to return true for these changes. */
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
-    fhdr->set_e_phoff(get_offset());
     fhdr->set_phextrasz(opt_size);
     fhdr->set_e_phnum(nentries);
 
@@ -1832,7 +1843,6 @@ SgAsmElfSegmentTable::unparse(std::ostream &f) const
     /* Calculate sizes and update the ELF File Header */
     size_t ent_size, struct_size, opt_size, nentries;
     calculate_sizes(&ent_size, &struct_size, &opt_size, &nentries);
-    ROSE_ASSERT(fhdr->get_e_phoff()==get_offset());
     ROSE_ASSERT(fhdr->get_phextrasz()==opt_size);
     ROSE_ASSERT(fhdr->get_e_phnum()==nentries);
     

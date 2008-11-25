@@ -773,8 +773,17 @@ HEADER_GENERIC_SECTION_START
 			SP_OTHER                	/* File-specified purpose other than any given in this enum */
 		};
 
-		SgAsmGenericSection(SgAsmGenericFile*, SgAsmGenericHeader*);
-		SgAsmGenericSection(SgAsmGenericFile*, SgAsmGenericHeader*, addr_t offset, addr_t size);
+		SgAsmGenericSection(SgAsmGenericFile *f, SgAsmGenericHeader *fhdr)
+			: p_header(NULL), p_size(0), p_offset(0), p_file_alignment(0), p_purpose(SP_UNSPECIFIED),
+			p_synthesized(false), p_id(-1), p_name(0), p_mapped_rva(0), p_mapped_size(0), p_mapped_alignment(0),
+			p_mapped_rperm(false), p_mapped_wperm(false), p_mapped_xperm(false), p_congealed(false)
+			{ctor(f, fhdr);}
+
+		SgAsmGenericSection(SgAsmGenericFile *f, SgAsmGenericHeader *fhdr, addr_t offset, addr_t size)
+			: p_header(NULL), p_size(0), p_offset(0), p_file_alignment(0), p_purpose(SP_UNSPECIFIED),
+			p_synthesized(false), p_id(-1), p_name(0), p_mapped_rva(0), p_mapped_size(0), p_mapped_alignment(0),
+			p_mapped_rperm(false), p_mapped_wperm(false), p_mapped_xperm(false), p_congealed(false)
+			{ctor(f, fhdr, offset, size);}
 
 		// This destructor modifies the SgAsmGenericFile data to remove its section from the section list!
 		virtual ~SgAsmGenericSection();
@@ -4095,25 +4104,11 @@ SOURCE_EXECUTABLE_FILE_FORMAT_START
 SOURCE_EXECUTABLE_FILE_FORMAT_END
 
 
+
 SOURCE_GENERIC_SECTION_START
-
-SgAsmGenericSection::SgAsmGenericSection(SgAsmGenericFile *f, SgAsmGenericHeader *fhdr)
-   : p_header(NULL), p_offset(0), p_purpose(SP_UNSPECIFIED), p_synthesized(false), p_id(-1), p_name(0),
-     p_mapped_rva(0), p_mapped_size(0), p_mapped_rperm(false), p_mapped_wperm(false), p_mapped_xperm(false),
-     p_congealed(false)
-   {
-     ctor(f, fhdr);
-   }
-
-SgAsmGenericSection::SgAsmGenericSection(SgAsmGenericFile *f, SgAsmGenericHeader *fhdr, addr_t offset, addr_t size)
-   : p_header(NULL), p_offset(0), p_purpose(SP_UNSPECIFIED), p_synthesized(false), p_id(-1), p_name(0),
-     p_mapped_rva(0), p_mapped_size(0), p_mapped_rperm(false), p_mapped_wperm(false), p_mapped_xperm(false),
-     p_congealed(false)
-   {
-     ctor(f, fhdr, offset, size);
-   }
-
 SOURCE_GENERIC_SECTION_END
+
+
 
 SOURCE_GENERIC_HEADER_START
 
