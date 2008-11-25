@@ -929,6 +929,7 @@ HEADER_GENERIC_FILE_START
 		SgAsmGenericFile* parse(std::string file_name);		/* Attach an existing file for parsing */
 		void reallocate();					/* Make consistent before calling unparse */
 		void unparse(std::ostream&) const;			/* Unparse the file -- mirror image of parsing */
+		void extend_to_eof(std::ostream&);			/* Write zeros to logical EOF */
 		void dump(FILE*) const;                                 /* Print some debugging info */
 
 		/* File contents */

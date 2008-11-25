@@ -1730,6 +1730,19 @@ SgAsmGenericFile::unparse(std::ostream &f) const
         (*i)->unparse(f);
 }
 
+/* Extend the output file by writing the last byte if it hasn't been written yet. */
+void
+SgAsmGenericFile::extend_to_eof(std::ostream &f)
+{
+    f.seekp(0, std::ios::end);
+    if (f.tellp()<(off_t)get_current_size()) {
+        f.seekp(get_current_size()-1);
+        const char zero = '\0';
+        f.write(&zero, 1);
+    }
+}
+
+
 /* Return a string describing the file format. We use the last header so that files like PE, NE, LE, LX, etc. which also have
  * a DOS header report the format of the second (PE, etc.) header rather than the DOS header. */
 const char *
@@ -3659,8 +3672,16 @@ SgAsmExecutableFileFormat::unparseBinaryFormat(std::ostream &f, SgAsmFile *asmFi
 {
     ROSE_ASSERT(asmFile!=NULL);
     ROSE_ASSERT(asmFile->get_genericFile() != NULL);
-    asmFile->get_genericFile()->reallocate();
-    asmFile->get_genericFile()->unparse(f);
+    SgAsmGenericFile *ef = asmFile->get_genericFile();
+    ROSE_ASSERT(ef);
+
+    ef->reallocate();
+    ef->unparse(f);
+
+    /* Extend the file to the full size. The unparser will not write zero bytes at the end of a file because some files
+     * actually use the fact that sections that extend past the EOF will be zero padded.  For the time being we'll extend the
+     * file to its full size. */
+    ef->extend_to_eof(f);
 }
 
 // FIXME: This cut-n-pasted version of Exec::ELF::parse() is out-of-date (rpm 2008-07-10)
