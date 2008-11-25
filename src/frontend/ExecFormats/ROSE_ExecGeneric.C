@@ -1195,7 +1195,6 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
 {
     ROSE_ASSERT(s!=NULL);
     ROSE_ASSERT(s->get_file()==this);
-    ROSE_ASSERT(s->get_congealed()==true); /* must be done parsing */
     ROSE_ASSERT(space & (ADDRSP_FILE|ADDRSP_MEMORY) != 0);
 
     const bool debug = false;
@@ -1290,14 +1289,18 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
                     p, sp.first, sp.second, sp.first+sp.second);
         }
         
-        /* Neighborhood (nhs) of S is a single extent */
+        /* Neighborhood (nhs) of S is a single extent. However, if S is zero size then nhs will be empty. */
         ExtentMap nhs_map = amap.overlap_with(sp);
         if (debug) {
             fprintf(stderr, "%s    Neighborhood of S:\n", p);
             nhs_map.dump_extents(stderr, (std::string(p)+"        ").c_str(), "nhs_map");
         }
-        ROSE_ASSERT(nhs_map.size()==1);
-        ExtentPair nhs = *(nhs_map.begin());
+        ExtentPair nhs;
+        if (nhs_map.size()>0) {
+            nhs = *(nhs_map.begin());
+        } else {
+            nhs = sp;
+        }
 
         /* What sections are in the neighborhood (including S), and right of the neighborhood? */
         neighbors.clear(); /*sections in neighborhood*/
