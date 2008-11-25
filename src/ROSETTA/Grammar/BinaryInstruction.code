@@ -811,7 +811,7 @@ HEADER_GENERIC_SECTION_START
 		const ExtentMap& uncongeal();                   /* uncongeal holes back into references */
 
 		/* Functions related to mapping of sections into executable memory */
-		bool   	      is_mapped();                    	/* True iff non-zero mapped address and size */
+		bool   	      is_mapped() const;                /* True iff non-zero mapped address and size */
 		void   	      clear_mapped();                 	/* Set mapped address and size to zero (unmapped)*/
 		addr_t        get_mapped_size() const;
 		virtual void  set_mapped_size(addr_t);	      	/* Set mapped size w/o regard to other section mappings */

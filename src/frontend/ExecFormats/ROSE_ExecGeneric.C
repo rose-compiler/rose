@@ -1874,7 +1874,7 @@ SgAsmGenericSection::get_file_extent() const
 
 /* Returns whether section desires to be mapped to memory */
 bool
-SgAsmGenericSection::is_mapped()
+SgAsmGenericSection::is_mapped() const
 {
     return (get_mapped_rva()!=0 || get_mapped_size()!=0 ||
             get_mapped_rperm() || get_mapped_wperm() || get_mapped_xperm());
