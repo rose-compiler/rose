@@ -1637,9 +1637,9 @@ SgAsmGenericFile::dump(FILE *f) const
     fprintf(f, "  --- ---------- ---------- ----------  ---------- ---------- ---------- ---------- ---- --- -----------------\n");
 }
 
-/* Synthesizes "hole" sections to describe the parts of the file that are not yet referenced by other sections. Note that holes
- * are used to represent parts of the original file data, before sections were modified by walking the AST (at this time it is
- * not possible to create a hole outside the original file content). */
+/** Synthesizes "hole" sections to describe the parts of the file that are not yet referenced by other sections. Note that holes
+ *  are used to represent parts of the original file data, before sections were modified by walking the AST (at this time it is
+ *  not possible to create a hole outside the original file content). */
 void
 SgAsmGenericFile::fill_holes()
 {
@@ -1656,6 +1656,7 @@ SgAsmGenericFile::fill_holes()
     /* Create the sections representing the holes */
     for (ExtentMap::iterator i=holes.begin(); i!=holes.end(); ++i) {
       	SgAsmGenericSection *hole = new SgAsmGenericSection(this, NULL, (*i).first, (*i).second);
+        hole->parse();
       	hole->set_synthesized(true);
       	hole->set_name(new SgAsmBasicString("hole"));
       	hole->set_purpose(SgAsmGenericSection::SP_UNSPECIFIED);
