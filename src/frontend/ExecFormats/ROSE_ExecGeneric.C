@@ -1710,7 +1710,7 @@ SgAsmGenericFile::unparse(std::ostream &f) const
 /* Return a string describing the file format. We use the last header so that files like PE, NE, LE, LX, etc. which also have
  * a DOS header report the format of the second (PE, etc.) header rather than the DOS header. */
 const char *
-SgAsmGenericFile::format_name()
+SgAsmGenericFile::format_name() const
 {
     return p_headers->get_headers().back()->format_name();
 }

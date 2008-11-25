@@ -848,7 +848,7 @@ HEADER_GENERIC_HEADER_START
 
        // DQ (8/8/2008): We can't make this pure virtual since then we can't allocate this class.
        // virtual const char *format_name() = 0;
-          virtual const char *format_name();
+          virtual const char *format_name() const;
     
        /* Functions for dynamically linked libraries (DLLs) */
           void add_dll(SgAsmGenericDLL *dll);                         /* Add new DLL to list of DLLs for this file */
@@ -969,7 +969,7 @@ HEADER_GENERIC_FILE_START
 		void add_header(SgAsmGenericHeader*);               	/* Add a new file header to the list of headers */
 		void remove_header(SgAsmGenericHeader*);            	/* Remove file header from the file */
 		SgAsmGenericHeader *get_header(SgAsmGenericFormat::ExecFamily);/* Returns the specified header or exception */
-		const char *format_name();                          	/* Return a string describing the file format */
+		const char *format_name() const;                        /* Return a string describing the file format */
 
 		const SgAsmGenericFormat::fileDetails &get_sb() {
 			return p_sb;
@@ -1253,7 +1253,7 @@ HEADER_ELF_HEADER_START
 		void ctor(SgAsmGenericFile *f, addr_t offset);
 
 	public:
-		virtual const char *format_name();
+		virtual const char *format_name() const;
 		static bool is_ELF(SgAsmGenericFile*);
 		static SgAsmElfFileHeader *parse(SgAsmGenericFile*);
 HEADER_ELF_HEADER_END
@@ -1915,7 +1915,7 @@ HEADER_PE_FILE_HEADER_START
 		SgAsmPEFileHeader(SgAsmGenericFile *f, addr_t offset);
 		virtual ~SgAsmPEFileHeader();
 
-		virtual const char *format_name();
+		virtual const char *format_name() const;
 		static bool is_PE (SgAsmGenericFile*);
 		static SgAsmPEFileHeader *parse(SgAsmGenericFile*);
 		void add_rvasize_pairs();
@@ -2312,7 +2312,7 @@ HEADER_NE_FILE_HEADER_START
 
      public:
        // Overloaded base class virtual function
-          const char *format_name();
+          const char *format_name() const;
 
           static bool is_NE (SgAsmGenericFile*);
           static SgAsmNEFileHeader *parse(SgAsmGenericFile*);
@@ -2385,7 +2385,7 @@ HEADER_NE_FILE_HEADER_START
 
           virtual void unparse(std::ostream&) const;
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
-       // virtual const char *format_name() {return "NE";}
+       // virtual const char *format_name() const {return "NE";}
 
        /* Accessors for protected/private data members */
        // ExtendedDOSHeader *get_dos2_header() {return dos2_header;}
@@ -2734,7 +2734,7 @@ HEADER_LE_FILE_HEADER_START
 
      public:
        // Overloaded base class virtual function
-          const char *format_name();
+          const char *format_name() const;
 
           static bool is_LE (SgAsmGenericFile*);
           static SgAsmLEFileHeader *parse(SgAsmGenericFile*);
@@ -2813,7 +2813,7 @@ HEADER_LE_FILE_HEADER_START
 
           virtual void unparse(std::ostream&) const;
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
-       // virtual const char *format_name();
+       // virtual const char *format_name() const;
 
        /* Accessors for protected/private data members */
        // ExtendedDOSHeader *get_dos2_header() {return dos2_header;}
@@ -3113,7 +3113,7 @@ HEADER_DOS_HEADER_START
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
        // Required function to overload base class (ROSETTA does not permit the base class function to be pure virtual, as I recall)
-          virtual const char *format_name();
+          virtual const char *format_name() const;
 
           SgAsmGenericSection *add_rm_section(addr_t max_offset=0);
 
@@ -4114,7 +4114,7 @@ SgAsmGenericHeader::SgAsmGenericHeader(SgAsmGenericFile *ef, addr_t offset, addr
    }
 
 const char *
-SgAsmGenericHeader::format_name()
+SgAsmGenericHeader::format_name() const
    {
      return "ASM_GENERIC_HEADER";
    }
@@ -4192,7 +4192,7 @@ SOURCE_STORED_STRING_END
 SOURCE_ELF_HEADER_START
 
 const char *
-SgAsmElfFileHeader::format_name()
+SgAsmElfFileHeader::format_name() const
    {
      return "ELF";
    }
@@ -4401,7 +4401,7 @@ SgAsmPEFileHeader::SgAsmPEFileHeader(SgAsmGenericFile *f, addr_t offset)
    }
 
 const char *
-SgAsmPEFileHeader::format_name()
+SgAsmPEFileHeader::format_name() const
    {
      return "PE";
    }
@@ -4506,7 +4506,7 @@ SgAsmNEFileHeader::SgAsmNEFileHeader(SgAsmGenericFile *f, addr_t offset)
    }
 
 const char *
-SgAsmNEFileHeader::format_name()
+SgAsmNEFileHeader::format_name() const
    {
      return "NE";
    }
@@ -4652,7 +4652,7 @@ SgAsmLEFileHeader::SgAsmLEFileHeader(SgAsmGenericFile *f, addr_t offset)
 #if 0
 // The correct implementation is more complex than this code below and is implemented in ROSE_ExecLE.C.
 const char *
-SgAsmLEFileHeader::format_name()
+SgAsmLEFileHeader::format_name() const
    {
      return "LE";
    }
@@ -4781,7 +4781,7 @@ SgAsmDOSFileHeader::SgAsmDOSFileHeader(SgAsmGenericFile *f, addr_t offset)
    }
 
 const char *
-SgAsmDOSFileHeader::format_name()
+SgAsmDOSFileHeader::format_name() const
    {
      return "DOS";
    }

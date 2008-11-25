@@ -219,7 +219,7 @@ SgAsmLEFileHeader::unparse(std::ostream &f) const
 
 /* Format name */
 const char *
-SgAsmLEFileHeader::format_name()
+SgAsmLEFileHeader::format_name() const
 {
     if (FAMILY_LE == p_exec_format->get_family()) {
         return "LE";
