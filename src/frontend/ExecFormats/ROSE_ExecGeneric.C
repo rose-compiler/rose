@@ -3669,8 +3669,7 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const std::string & name, SgAsmFile
 
      if (SgAsmElfFileHeader::is_ELF(ef))
        {
-      // ELF::parse(ef);
-         executableHeader = SgAsmElfFileHeader::parse(ef);
+           executableHeader = (new SgAsmElfFileHeader(ef))->parse();
        }
       else
        {
@@ -3794,7 +3793,7 @@ SgAsmExecutableFileFormat::parse(const char *name)
     SgAsmGenericFile *ef = (new SgAsmGenericFile)->parse(name);
     
     if (SgAsmElfFileHeader::is_ELF(ef)) {
-        SgAsmElfFileHeader::parse(ef);
+        (new SgAsmElfFileHeader(ef))->parse();
     } else if (SgAsmPEFileHeader::is_PE(ef)) {
         SgAsmPEFileHeader::parse(ef);
     } else if (SgAsmNEFileHeader::is_NE(ef)) {

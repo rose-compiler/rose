@@ -50,14 +50,14 @@ SgAsmElfFileHeader::ctor()
     p_e_ident_padding = SgUnsignedCharList(9, '\0');
 }
     
-/** Initialize this header with information parsed from the file. Since the size of the ELF File Header is determined by the
- *  contents of the ELF File Header as stored in the file, the size of the ELF File Header will be adjusted upward if
- *  necessary. The ELF File Header should have been constructed such that SgAsmElfFileHeader::ctor() was called. */
+/** Initialize this header with information parsed from the file and construct and parse everything that's reachable from the
+ *  header. Since the size of the ELF File Header is determined by the contents of the ELF File Header as stored in the file,
+ *  the size of the ELF File Header will be adjusted upward if necessary. The ELF File Header should have been constructed
+ *  such that SgAsmElfFileHeader::ctor() was called. */
 SgAsmElfFileHeader*
 SgAsmElfFileHeader::parse()
 {
     /* Read 32-bit header for now. Might need to re-read as 64-bit later. */
-    
     Elf32FileHeader_disk disk32;
     if (sizeof(disk32)>get_size())
         extend(sizeof(disk32)-get_size());
@@ -104,7 +104,7 @@ SgAsmElfFileHeader::parse()
     p_e_ident_data_encoding = disk32.e_ident_data_encoding; /*save original value*/
 
     /* Decode header to native format */
-    addr_t entry_rva;
+    rva_t entry_rva;
     if (1 == disk32.e_ident_file_class) {
         p_exec_format->set_word_size(4);
 
@@ -269,10 +269,26 @@ SgAsmElfFileHeader::parse()
     /* Target architecture */
     /*FIXME*/
 
-    /* Entry point. We will eventually bind the entry point to a particular section (in SgAsmElfFileHeader::parse) so that if
-     * sections are rearranged, extended, etc. the entry point will be updated automatically. */
-    p_base_va = 0;
+    /* Read the optional section and segment tables and the sections to which they point. */
+    if (get_e_shnum())
+        set_section_table(new SgAsmElfSectionTable(this));
+    if (get_e_phnum())
+        set_segment_table(new SgAsmElfSegmentTable(this));
+
+    /* Associate the entry point with a particular section. */
+    entry_rva.bind(this);
     add_entry_rva(entry_rva);
+
+    /* Use symbols from either ".symtab" or ".dynsym" */
+    SgAsmElfSymbolSection *symtab = dynamic_cast<SgAsmElfSymbolSection*>(get_section_by_name(".symtab"));
+    if (!symtab)
+        symtab = dynamic_cast<SgAsmElfSymbolSection*>(get_section_by_name(".dynsym"));
+    if (symtab) {
+        std::vector<SgAsmElfSymbol*> & symbols = symtab->get_symbols()->get_symbols();
+        for (size_t i=0; i<symbols.size(); i++)
+            add_symbol(symbols[i]);
+    }
+    
     return this;
 }
 
@@ -2738,36 +2754,4 @@ SgAsmElfFileHeader::is_ELF(SgAsmGenericFile *f)
 
     delete hdr;
     return retval;
-}
-
-/* Parses the structure of an ELF file and adds the info to the ExecFile */
-SgAsmElfFileHeader *
-SgAsmElfFileHeader::parse(SgAsmGenericFile *ef)
-{
-    ROSE_ASSERT(ef);
-    
-    SgAsmElfFileHeader *fhdr = (new SgAsmElfFileHeader(ef))->parse();
-    ROSE_ASSERT(fhdr != NULL);
-
-    /* Read the optional section and segment tables and the sections to which they point. */
-    if (fhdr->get_e_shnum())
-        fhdr->set_section_table( new SgAsmElfSectionTable(fhdr) );
-    if (fhdr->get_e_phnum())
-        fhdr->set_segment_table( new SgAsmElfSegmentTable(fhdr) );
-
-    /* Associate the entry point with a particular section. */
-    ROSE_ASSERT(fhdr->get_entry_rvas().size()==1);
-    fhdr->get_entry_rvas()[0].bind(fhdr);
-
-    /* Use symbols from either ".symtab" or ".dynsym" */
-    SgAsmElfSymbolSection *symtab = dynamic_cast<SgAsmElfSymbolSection*>(ef->get_section_by_name(".symtab"));
-    if (!symtab)
-        symtab = dynamic_cast<SgAsmElfSymbolSection*>(ef->get_section_by_name(".dynsym"));
-    if (symtab) {
-        std::vector<SgAsmElfSymbol*> & symbols = symtab->get_symbols()->get_symbols();
-        for (size_t i=0; i<symbols.size(); i++)
-            fhdr->add_symbol(symbols[i]);
-    }
-
-    return fhdr;
 }

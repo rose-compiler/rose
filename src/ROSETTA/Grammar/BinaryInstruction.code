@@ -1252,7 +1252,6 @@ HEADER_ELF_HEADER_START
 
 		virtual const char *format_name() const;
 		static bool is_ELF(SgAsmGenericFile*);
-		static SgAsmElfFileHeader *parse(SgAsmGenericFile*);
 		SgAsmGenericSectionPtrList get_sectab_sections();
 		SgAsmGenericSectionPtrList get_segtab_sections();
 
