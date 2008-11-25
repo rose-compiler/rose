@@ -551,6 +551,8 @@ Grammar::setUpBinaryInstructions ()
      AsmStringStorage.setDataPrototype("rose_addr_t","offset","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+
+
      AsmElfFileHeader.setFunctionPrototype ( "HEADER_ELF_HEADER", "../Grammar/BinaryInstruction.code");
      AsmElfFileHeader.setDataPrototype("unsigned char","e_ident_file_class","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -563,10 +565,6 @@ Grammar::setUpBinaryInstructions ()
      AsmElfFileHeader.setDataPrototype("unsigned long","e_type","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfFileHeader.setDataPrototype("unsigned long","e_machine","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfFileHeader.setDataPrototype("rose_addr_t","e_phoff","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfFileHeader.setDataPrototype("rose_addr_t","e_shoff","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfFileHeader.setDataPrototype("unsigned long","e_flags","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -582,17 +580,16 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfFileHeader.setDataPrototype("unsigned long","e_shstrndx","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
   // DQ (8/17/2008): Note that SgAsmElfSectionTable is a SgAsmGenericSection, so it is traversed from 
   // the SgAsmGenericSectionList, so set to: NO_TRAVERSAL.
      AsmElfFileHeader.setDataPrototype("SgAsmElfSectionTable*","section_table","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
   // DQ (8/17/2008): This points to an IR node that is in the SgAsmGenericFile::section list so we can't 
   // traverse it here or we will be traversing this subtree twice in a single traversal (the dot graphs 
   // show this nicely).  So set as: NO_TRAVERSAL
      AsmElfFileHeader.setDataPrototype("SgAsmElfSegmentTable*","segment_table","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
 
   /* An AsmElfSectionTable is a synthesized section representing the ELF Section Table. The section table entry info parsed
