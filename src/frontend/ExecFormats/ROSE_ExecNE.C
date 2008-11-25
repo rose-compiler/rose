@@ -71,6 +71,8 @@ SgAsmNERelocEntry::osfixup_type::osfixup_type()
 void
 SgAsmNEExtendedDOSHeader::ctor(SgAsmGenericFile *f, addr_t offset)
 {
+    grab_content();
+
     set_name(new SgAsmBasicString("Extended DOS Header"));
     set_synthesized(true);
     set_purpose(SP_HEADER);
@@ -129,6 +131,8 @@ SgAsmNEExtendedDOSHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 void
 SgAsmNEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
 {
+    grab_content();
+
     set_name(new SgAsmBasicString("NE File Header"));
     set_synthesized(true);
     set_purpose(SP_HEADER);
@@ -464,6 +468,8 @@ SgAsmNESection::dump(FILE *f, const char *prefix, ssize_t idx) const
 void
 SgAsmNESectionTable::ctor()
 {
+    grab_content();
+
     set_synthesized(true);
     set_name(new SgAsmBasicString("NE Section Table"));
     set_purpose(SP_HEADER);
@@ -567,6 +573,8 @@ SgAsmNESectionTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 void
 SgAsmNENameTable::ctor()
 {
+    grab_content();
+
     set_synthesized(true);
     set_name(new SgAsmBasicString("NE Name Table"));
     set_purpose(SP_HEADER);
@@ -660,6 +668,8 @@ SgAsmNENameTable::get_names_by_ordinal(unsigned ordinal)
 void
 SgAsmNEModuleTable::ctor()
 {
+    grab_content();
+
     set_synthesized(true);
     set_name(new SgAsmBasicString("NE Module Reference Table"));
     set_purpose(SP_HEADER);
@@ -730,6 +740,8 @@ SgAsmNEModuleTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 void
 SgAsmNEStringTable::ctor()
 {
+    grab_content();
+
     set_synthesized(true);
     set_name(new SgAsmBasicString("NE String Table"));
     set_purpose(SP_HEADER);
@@ -814,6 +826,8 @@ SgAsmNEEntryPoint::dump(FILE *f, const char *prefix, ssize_t idx) const
 void
 SgAsmNEEntryTable::ctor()
 {
+    grab_content();
+
     set_synthesized(true);
     set_name(new SgAsmBasicString("NE Entry Table"));
     set_purpose(SP_HEADER);
@@ -1204,6 +1218,8 @@ SgAsmNERelocEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 void
 SgAsmNERelocTable::ctor()
 {
+    grab_content();
+
     char name[64];
     sprintf(name, "NE Relocation Table %"PRIu64, p_offset);
     set_synthesized(true);
