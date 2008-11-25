@@ -151,7 +151,7 @@ SgAsmDOSFileHeader::add_rm_section(addr_t max_offset)
     
 /* Print some debugging info */
 void
-SgAsmDOSFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmDOSFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {

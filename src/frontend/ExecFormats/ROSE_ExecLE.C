@@ -231,7 +231,7 @@ SgAsmLEFileHeader::format_name() const
     
 /* Print some debugging information */
 void
-SgAsmLEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmLEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -375,7 +375,7 @@ SgAsmLEPageTableEntry::encode(ByteOrder sex, SgAsmLEPageTableEntry::LEPageTableE
 
 /* Print some debugging information */
 void
-SgAsmLEPageTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmLEPageTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -433,7 +433,7 @@ SgAsmLEPageTable::unparse(std::ostream &f) const
 
 /* Print some debugging information */
 void
-SgAsmLEPageTable::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmLEPageTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -479,7 +479,7 @@ SgAsmLESectionTableEntry::encode(ByteOrder sex, LESectionTableEntry_disk *disk) 
 
 /* Prints some debugging info */
 void
-SgAsmLESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmLESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -523,7 +523,7 @@ SgAsmLESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
     
 /* Print some debugging info. */
 void
-SgAsmLESection::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmLESection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     SgAsmLEFileHeader *fhdr = dynamic_cast<SgAsmLEFileHeader*>(get_header());
 
@@ -636,7 +636,7 @@ SgAsmLESectionTable::unparse(std::ostream &f) const
 
 /* Prints some debugging info */
 void
-SgAsmLESectionTable::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmLESectionTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -710,7 +710,7 @@ SgAsmLENameTable::unparse(std::ostream &f) const
 
 /* Prints some debugging info */
 void
-SgAsmLENameTable::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmLENameTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -767,7 +767,7 @@ SgAsmLEEntryPoint::unparse(std::ostream &f, ByteOrder sex, const SgAsmGenericSec
 
 /* Print some debugging info */
 void
-SgAsmLEEntryPoint::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmLEEntryPoint::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -852,7 +852,7 @@ SgAsmLEEntryTable::unparse(std::ostream &f) const
 
 /* Print some debugging info */
 void
-SgAsmLEEntryTable::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmLEEntryTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -910,7 +910,7 @@ SgAsmLERelocTable::unparse(std::ostream &f)
     
 /* Print some debugging info */
 void
-SgAsmLERelocTable::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmLERelocTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {

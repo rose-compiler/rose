@@ -470,7 +470,7 @@ SgAsmElfFileHeader::unparse(std::ostream &f) const
 
 /* Print some debugging info */
 void
-SgAsmElfFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmElfFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -712,7 +712,7 @@ SgAsmElfSection::reallocate()
 
 /* Print some debugging info */
 void
-SgAsmElfSection::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmElfSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -795,7 +795,7 @@ SgAsmElfStringSection::set_size(addr_t newsize)
 
 /* Print some debugging info */
 void
-SgAsmElfStringSection::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmElfStringSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -1283,7 +1283,7 @@ SgAsmElfSectionTableEntry::to_string(SectionType t)
 
 /* Print some debugging info */
 void
-SgAsmElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -1397,7 +1397,7 @@ SgAsmElfSectionTable::unparse(std::ostream &f) const
 
 /* Print some debugging info */
 void
-SgAsmElfSectionTable::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmElfSectionTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -1501,7 +1501,7 @@ SgAsmElfSegmentTableEntry::update_from_section(SgAsmElfSection *section)
 
 /* Print some debugging info */
 void
-SgAsmElfSegmentTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmElfSegmentTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -1799,7 +1799,7 @@ SgAsmElfSegmentTable::unparse(std::ostream &f) const
 
 /* Print some debugging info */
 void
-SgAsmElfSegmentTable::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmElfSegmentTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -1860,7 +1860,7 @@ SgAsmElfRelaEntry::encode(ByteOrder sex, Elf64RelaEntry_disk *disk) const
 
 /* Print some debugging info */
 void
-SgAsmElfRelaEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbolSection *symtab)
+SgAsmElfRelaEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbolSection *symtab) const
 {
     char p[4096];
     if (idx>=0) {
@@ -1977,7 +1977,7 @@ SgAsmElfRelaSection::unparse(std::ostream &f) const
 
 /* Print some debugging info */
 void
-SgAsmElfRelaSection::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmElfRelaSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -2114,7 +2114,7 @@ SgAsmElfDynamicEntry::stringify_tag(EntryType t) const
 
 /* Print some debugging info */
 void
-SgAsmElfDynamicEntry::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmElfDynamicEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -2303,7 +2303,7 @@ SgAsmElfDynamicSection::unparse(std::ostream &f) const
 
 /* Print some debugging info */
 void
-SgAsmElfDynamicSection::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmElfDynamicSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -2398,6 +2398,24 @@ SgAsmElfSymbol::ctor_common()
     }
 }
 
+void
+SgAsmElfSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
+{
+    dump(f, prefix, idx, NULL);
+}
+
+SgAsmElfSymbol::ElfSymBinding
+SgAsmElfSymbol::get_elf_binding() const
+{
+    return (ElfSymBinding)(p_st_info >> 4);
+}
+
+SgAsmElfSymbol::ElfSymType
+SgAsmElfSymbol::get_elf_type() const
+{
+    return (ElfSymType)(p_st_info & 0xf);
+}
+
 /* Called before unparsing. Updates the symbol table entry to a consistent state. */
 void
 SgAsmElfSymbol::reallocate(SgAsmGenericStrtab *strtab)
@@ -2436,7 +2454,7 @@ SgAsmElfSymbol::encode(ByteOrder sex, Elf64SymbolEntry_disk *disk, SgAsmGenericS
 
 /* Print some debugging info. The 'section' is an optional section pointer for the st_shndx member. */
 void
-SgAsmElfSymbol::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmGenericSection *section)
+SgAsmElfSymbol::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmGenericSection *section) const
 {
     char p[4096];
     if (idx>=0) {
@@ -2642,7 +2660,7 @@ SgAsmElfSymbolSection::unparse(std::ostream &f) const
 
 /* Print some debugging info */
 void
-SgAsmElfSymbolSection::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmElfSymbolSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {

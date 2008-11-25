@@ -105,7 +105,7 @@ SgAsmNEExtendedDOSHeader::unparse(std::ostream &f) const
 }
     
 void
-SgAsmNEExtendedDOSHeader::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmNEExtendedDOSHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -278,7 +278,7 @@ SgAsmNEFileHeader::unparse(std::ostream &f) const
     
 /* Print some debugging information */
 void
-SgAsmNEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmNEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -393,7 +393,7 @@ SgAsmNESectionTableEntry::encode(NESectionTableEntry_disk *disk) const
 
 /* Prints some debugging info */
 void
-SgAsmNESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmNEFileHeader *fhdr)
+SgAsmNESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmNEFileHeader *fhdr) const
 {
     char p[4096];
     if (idx>=0) {
@@ -439,7 +439,7 @@ SgAsmNESection::unparse(std::ostream &f) const
     
 /* Print some debugging info. */
 void
-SgAsmNESection::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmNESection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -548,7 +548,7 @@ SgAsmNESectionTable::unparse(std::ostream &f) const
 
 /* Prints some debugging info */
 void
-SgAsmNESectionTable::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmNESectionTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -621,7 +621,7 @@ SgAsmNENameTable::unparse(std::ostream &f) const
 
 /* Prints some debugging info */
 void
-SgAsmNENameTable::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmNENameTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -697,7 +697,7 @@ SgAsmNEModuleTable::unparse(std::ostream &f) const
     
 /* Prints some debugging info */
 void
-SgAsmNEModuleTable::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmNEModuleTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -747,7 +747,7 @@ SgAsmNEStringTable::get_string(addr_t offset)
 
 /* Prints some debugging info */
 void
-SgAsmNEStringTable::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmNEStringTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -759,6 +759,7 @@ SgAsmNEStringTable::dump(FILE *f, const char *prefix, ssize_t idx)
 
     SgAsmGenericSection::dump(f, p, -1);
 
+#if 0 /*Can't parse strings because it would affect the list of referenced bytes*/
     bool was_congealed = get_congealed();
     congeal();
     addr_t at=0;
@@ -771,6 +772,7 @@ SgAsmNEStringTable::dump(FILE *f, const char *prefix, ssize_t idx)
     }
     if (!was_congealed)
       uncongeal();
+#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -936,7 +938,7 @@ SgAsmNEEntryTable::unparse(std::ostream &f) const
 
 /* Print some debugging info */
 void
-SgAsmNEEntryTable::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmNEEntryTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -1120,7 +1122,7 @@ SgAsmNERelocEntry::unparse(std::ostream &f, const SgAsmGenericSection *section, 
     
 /* Print some debugging info */
 void
-SgAsmNERelocEntry::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmNERelocEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -1237,7 +1239,7 @@ SgAsmNERelocTable::unparse(std::ostream &f) const
     
 /* Print some debugging info */
 void
-SgAsmNERelocTable::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmNERelocTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {

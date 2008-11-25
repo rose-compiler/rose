@@ -155,7 +155,7 @@ SgAsmGenericString::set_string(const std::string &s)
 }
 
 void
-SgAsmGenericString::dump(FILE*, const char *prefix, ssize_t idx)
+SgAsmGenericString::dump(FILE*, const char *prefix, ssize_t idx) const
 {
     ROSE_ASSERT(!"should have been pure virtual if ROSETTA supported that.");
     abort();
@@ -188,7 +188,7 @@ SgAsmBasicString::set_string(const std::string &s)
 
 /* Print some debugging info */
 void
-SgAsmBasicString::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmBasicString::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -274,7 +274,7 @@ SgAsmStoredString::set_string(const std::string &s)
 
 /* Print some debugging info */
 void
-SgAsmStoredString::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmStoredString::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -291,7 +291,7 @@ SgAsmStoredString::dump(FILE *f, const char *prefix, ssize_t idx)
 
 /* Print some debugging info */
 void
-SgAsmStringStorage::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmStringStorage::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -524,7 +524,7 @@ SgAsmGenericStrtab::get_freelist()
 
 /* Print some debugging info */
 void
-SgAsmGenericStrtab::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmGenericStrtab::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     SgAsmGenericSection *container = get_container();
 
@@ -564,7 +564,7 @@ SgAsmGenericStrtab::dump(FILE *f, const char *prefix, ssize_t idx)
 
 /* Print some debugging info */
 void
-SgAsmGenericFormat::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmGenericFormat::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096], sbuf[256];
     const char *s;
@@ -1508,7 +1508,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
 
 /* Print basic info about the sections of a file */
 void
-SgAsmGenericFile::dump(FILE *f)
+SgAsmGenericFile::dump(FILE *f) const
 {
     SgAsmGenericSectionPtrList sections = get_sections();
     if (sections.size()==0) {
@@ -2111,6 +2111,16 @@ SgAsmGenericSection::write(std::ostream &f, addr_t offset, char c) const
     return write(f, offset, 1, &c);
 }
 
+/** Get a list of internal holes, which are parts of a section that have not been referenced during parsing. */
+ExtentMap
+SgAsmGenericSection::get_internal_holes() const
+{
+    if (get_congealed()) {
+        return p_extents;
+    } else {
+      	return p_extents.subtract_from(0, get_size()); /*complement*/
+    }
+}
 
 /* Congeal the references to find the unreferenced areas. Once the references are congealed calling content(), content_ucl(),
  * content_str(), etc. will not affect references. This allows us to read the unreferenced areas without turning them into
@@ -2253,7 +2263,7 @@ SgAsmGenericSection::dump_containing_sections(FILE *f, const std::string &prefix
 
 /* Print some debugging info */
 void
-SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096], sbuf[256];
     const char *s;
@@ -2314,10 +2324,7 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx)
     /* Show holes based on what's been referenced so far */
     {
       fprintf(f, "%s%-*s = %s\n", p, w, "congealed", get_congealed()?"true":"false");
-      bool was_congealed = get_congealed();
-      ExtentMap holes = congeal();
-      if (!was_congealed)
-	uncongeal();
+      ExtentMap holes = get_internal_holes();
       fprintf(f, "%s%-*s = %zu hole%s\n", p, w, "num_holes", holes.size(), 1==holes.size()?"":"s");
       if (1==holes.size() && holes.begin()->first==0 && holes.begin()->second==get_size()) {
 	fprintf(f, "%s%-*s = entire section\n", p, w, "hole[0]");
@@ -2881,7 +2888,7 @@ SgAsmGenericHeader::get_best_section_by_va(addr_t va, size_t *nfound) const
 
 /* Print some debugging info */
 void
-SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -2967,7 +2974,7 @@ SgAsmGenericDLL::set_name(SgAsmGenericString *s)
 
 /* Print some debugging info */
 void
-SgAsmGenericDLL::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmGenericDLL::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -3088,7 +3095,7 @@ SgAsmGenericSymbol::stringifyBinding() const
 
 /* Print some debugging info */
 void
-SgAsmGenericSymbol::dump(FILE *f, const char *prefix, ssize_t idx) 
+SgAsmGenericSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {

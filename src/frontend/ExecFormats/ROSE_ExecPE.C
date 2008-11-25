@@ -57,7 +57,7 @@ SgAsmPEExtendedDOSHeader::unparse(std::ostream &f) const
 }
     
 void
-SgAsmPEExtendedDOSHeader::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmPEExtendedDOSHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -682,7 +682,7 @@ SgAsmPEFileHeader::unparse(std::ostream &f) const
     
 /* Print some debugging information */
 void
-SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -810,7 +810,7 @@ SgAsmPESectionTableEntry::encode(PESectionTableEntry_disk *disk) const
 
 /* Prints some debugging info */
 void
-SgAsmPESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmPESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -832,7 +832,7 @@ SgAsmPESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
 
 /* Print some debugging info. */
 void
-SgAsmPESection::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmPESection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -926,7 +926,7 @@ SgAsmPESectionTable::unparse(std::ostream &f) const
 
 /* Prints some debugging info */
 void
-SgAsmPESectionTable::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmPESectionTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -1020,7 +1020,7 @@ SgAsmPEImportDirectory::unparse(std::ostream &f, const SgAsmPEImportSection *sec
 
 /* Print debugging info */
 void
-SgAsmPEImportDirectory::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmPEImportDirectory::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -1142,7 +1142,7 @@ SgAsmPEImportILTEntry::unparse(std::ostream &f, const SgAsmPEFileHeader *fhdr, r
 
 /* Print debugging info for an Import Lookup Table Entry or an Import Address Table Entry */
 void
-SgAsmPEImportILTEntry::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmPEImportILTEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -1263,7 +1263,7 @@ SgAsmPEImportLookupTable::unparse(std::ostream &f, const SgAsmPEFileHeader *fhdr
 
 /* Print some debugging info for an Import Lookup Table or Import Address Table */
 void
-SgAsmPEImportLookupTable::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmPEImportLookupTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     prefix = "    ...";
     const char *tabbr = p_is_iat ? "IAT" : "ILT";
@@ -1317,7 +1317,7 @@ SgAsmPEImportHNTEntry::unparse(std::ostream &f, rva_t rva) const
 
 /* Print debugging info */
 void
-SgAsmPEImportHNTEntry::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmPEImportHNTEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -1444,7 +1444,7 @@ SgAsmPEImportSection::unparse(std::ostream &f) const
 
 /* Print debugging info */
 void
-SgAsmPEImportSection::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmPEImportSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -1494,7 +1494,7 @@ SgAsmPEExportDirectory::ctor(SgAsmPEExportSection *section)
 
 /* Print debugging info */
 void
-SgAsmPEExportDirectory::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmPEExportDirectory::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -1530,7 +1530,7 @@ SgAsmPEExportEntry::ctor(SgAsmGenericString *fname, unsigned ordinal, rva_t expa
 
 /* Print debugging info */
 void
-SgAsmPEExportEntry::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmPEExportEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -1633,7 +1633,7 @@ SgAsmPEExportSection::add_entry(SgAsmPEExportEntry *entry)
 
 /* Print debugging info */
 void
-SgAsmPEExportSection::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmPEExportSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -1706,7 +1706,7 @@ SgAsmPEStringSection::set_size(addr_t newsize)
 
 /* Print some debugging info */
 void
-SgAsmPEStringSection::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmPEStringSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
@@ -2028,7 +2028,7 @@ SgAsmCoffSymbol::encode(COFFSymbol_disk *disk) const
 
 /* Print some debugging info */
 void
-SgAsmCoffSymbol::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmCoffSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096], ss[128], tt[128];
     const char *s=NULL, *t=NULL;
@@ -2183,7 +2183,7 @@ SgAsmCoffSymbolTable::unparse(std::ostream &f) const
 
 /* Print some debugging info */
 void
-SgAsmCoffSymbolTable::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmCoffSymbolTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
