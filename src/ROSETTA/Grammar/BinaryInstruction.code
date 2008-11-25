@@ -917,7 +917,7 @@ HEADER_GENERIC_FILE_START
 		void dump(FILE*);                                   	/* Print some debugging info */
 
 		/* File contents */
-		rose_addr_t get_current_size();				/* Current size based on defined sections */
+		rose_addr_t get_current_size() const;			/* Current size based on defined sections */
 		rose_addr_t get_orig_size() const;              	/* Original size based on actual file size */
 		const SgFileContentList& content() {			/* Entire file contents */
 			return p_data;

@@ -715,7 +715,7 @@ SgAsmGenericFile::get_orig_size() const
 
 /* Returns current size of file based on section with highest ending address. */
 rose_addr_t
-SgAsmGenericFile::get_current_size()
+SgAsmGenericFile::get_current_size() const
 {
     addr_t retval=0;
     SgAsmGenericSectionPtrList sections = get_sections();
