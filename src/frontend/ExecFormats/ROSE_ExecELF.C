@@ -2035,7 +2035,7 @@ SgAsmElfDynamicEntry::encode(ByteOrder sex, Elf64DynamicEntry_disk *disk) const
 
 /* Convert Dynamic Entry Tag to a string */
 const char *
-SgAsmElfDynamicEntry::stringify_tag(EntryType t)
+SgAsmElfDynamicEntry::stringify_tag(EntryType t) const
 {
     switch (t) {
       case DT_NULL:             return "DT_NULL";

@@ -1587,7 +1587,7 @@ HEADER_ELF_DYNAMIC_ENTRY_START
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
           void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*) const;
           void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*) const;
-	  const char *stringify_tag(EntryType);
+	  const char *stringify_tag(EntryType) const;
 
      private:
           void ctor(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk *disk);
