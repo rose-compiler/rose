@@ -659,38 +659,55 @@ SgAsmElfSection::init_from_section_table(SgAsmElfSectionTableEntry *shdr, SgAsmE
 
     return this;
 }
-    
-/* Constructor for sections defined in the ELF Segment Table */
-void
-SgAsmElfSection::ctor(SgAsmElfSegmentTableEntry *shdr)
-{
-    set_synthesized(false);
-    
-    char name[128];
-    switch (shdr->get_type()) {
-      case SgAsmElfSegmentTableEntry::PT_LOAD:         strcpy(name, "ELF Load");          break;
-      case SgAsmElfSegmentTableEntry::PT_DYNAMIC:      strcpy(name, "ELF Dynamic");       break;
-      case SgAsmElfSegmentTableEntry::PT_INTERP:       strcpy(name, "ELF Interpreter");   break;
-      case SgAsmElfSegmentTableEntry::PT_NOTE:         strcpy(name, "ELF Note");          break;
-      case SgAsmElfSegmentTableEntry::PT_SHLIB:        strcpy(name, "ELF Shlib");         break;
-      case SgAsmElfSegmentTableEntry::PT_PHDR:         strcpy(name, "ELF Segment Table"); break;
-      case SgAsmElfSegmentTableEntry::PT_GNU_EH_FRAME: strcpy(name, "GNU EH Frame");      break;
-      case SgAsmElfSegmentTableEntry::PT_GNU_STACK:    strcpy(name, "GNU Stack");         break;
-      case SgAsmElfSegmentTableEntry::PT_GNU_RELRO:    strcpy(name, "GNU Reloc RO");      break;
-      case SgAsmElfSegmentTableEntry::PT_PAX_FLAGS:    strcpy(name, "PAX Flags");         break;
-      case SgAsmElfSegmentTableEntry::PT_SUNWBSS:      strcpy(name, "Sun WBSS");          break;
-      case SgAsmElfSegmentTableEntry::PT_SUNWSTACK:    strcpy(name, "Sun WStack");        break;
-      default:                                         sprintf(name, "ELF type 0x%08x", shdr->get_type()); break;
-    }
-    sprintf(name+strlen(name), " (segment %zu)", shdr->get_index());
-    set_name(new SgAsmBasicString(name));
-    set_purpose(SP_HEADER);
 
+/** Initializes the section from data parse from the ELF Segment Table similar to init_from_section_table() */
+SgAsmElfSection *
+SgAsmElfSection::init_from_segment_table(SgAsmElfSegmentTableEntry *shdr, bool mmap_only)
+{
+    if (!mmap_only) {
+        /* Purpose */
+        set_purpose(SP_HEADER);
+
+        /* File mapping */
+        set_offset(shdr->get_offset());
+        set_size(shdr->get_filesz());
+        set_file_alignment(shdr->get_align());
+        p_data = get_file()->content(get_offset(), get_size());
+    
+        /* Name */
+        char name[128];
+        switch (shdr->get_type()) {
+          case SgAsmElfSegmentTableEntry::PT_LOAD:         strcpy(name, "ELF Load");          break;
+          case SgAsmElfSegmentTableEntry::PT_DYNAMIC:      strcpy(name, "ELF Dynamic");       break;
+          case SgAsmElfSegmentTableEntry::PT_INTERP:       strcpy(name, "ELF Interpreter");   break;
+          case SgAsmElfSegmentTableEntry::PT_NOTE:         strcpy(name, "ELF Note");          break;
+          case SgAsmElfSegmentTableEntry::PT_SHLIB:        strcpy(name, "ELF Shlib");         break;
+          case SgAsmElfSegmentTableEntry::PT_PHDR:         strcpy(name, "ELF Segment Table"); break;
+          case SgAsmElfSegmentTableEntry::PT_GNU_EH_FRAME: strcpy(name, "GNU EH Frame");      break;
+          case SgAsmElfSegmentTableEntry::PT_GNU_STACK:    strcpy(name, "GNU Stack");         break;
+          case SgAsmElfSegmentTableEntry::PT_GNU_RELRO:    strcpy(name, "GNU Reloc RO");      break;
+          case SgAsmElfSegmentTableEntry::PT_PAX_FLAGS:    strcpy(name, "PAX Flags");         break;
+          case SgAsmElfSegmentTableEntry::PT_SUNWBSS:      strcpy(name, "Sun WBSS");          break;
+          case SgAsmElfSegmentTableEntry::PT_SUNWSTACK:    strcpy(name, "Sun WStack");        break;
+          default:                                         sprintf(name, "ELF type 0x%08x", shdr->get_type()); break;
+        }
+        sprintf(name+strlen(name), " (segment %zu)", shdr->get_index());
+        set_name(new SgAsmBasicString(name));
+    }
+    
+    /* Memory mapping */
     set_mapped_rva(shdr->get_vaddr());
     set_mapped_size(shdr->get_memsz());
+    set_mapped_alignment(shdr->get_align());
     set_mapped_rperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_RPERM ? true : false);
     set_mapped_wperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_WPERM ? true : false);
     set_mapped_xperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_XPERM ? true : false);
+
+    /* Add segment table entry to section */
+    set_segment_entry(shdr);
+    shdr->set_parent(this);
+
+    return this;
 }
 
 /* Just a convenience function so we don't need to constantly cast the return value from get_header() */
@@ -1398,7 +1415,7 @@ SgAsmElfSectionTable::calculate_sizes(size_t *entsize, size_t *required, size_t 
     return entry_size * nentries;
 }
 
-/* Update this section table entry with newer information from the section */
+/** Update this section table entry with newer information from the section */
 void
 SgAsmElfSectionTableEntry::update_from_section(SgAsmElfSection *section)
 {
@@ -1536,6 +1553,7 @@ SgAsmElfSectionTable::unparse(std::ostream &f) const
     /* Write the sections first */
     for (size_t i=0; i<sections.size(); i++)
         sections[i]->unparse(f);
+    unparse_holes(f);
 
     /* Calculate sizes. The ELF File Header should have been updated in reallocate() prior to unparsing. */
     size_t ent_size, struct_size, opt_size, nentries;
@@ -1573,8 +1591,6 @@ SgAsmElfSectionTable::unparse(std::ostream &f) const
             write(f, spos, shdr->get_extra());
         }
     }
-
-    unparse_holes(f);
 }
 
 /* Print some debugging info */
@@ -1655,7 +1671,7 @@ SgAsmElfSegmentTableEntry::encode(ByteOrder sex, Elf64SegmentTableEntry_disk *di
     return disk;
 }
 
-/* Update this segment table entry with newer information from the section */
+/** Update this segment table entry with newer information from the section */
 void
 SgAsmElfSegmentTableEntry::update_from_section(SgAsmElfSection *section)
 {
@@ -1763,13 +1779,16 @@ SgAsmElfSegmentTableEntry::stringifyType(SegmentType kind) const
 void
 SgAsmElfSegmentTable::ctor()
 {
+    /* There can be only one ELF Segment Table */
+    SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
+    ROSE_ASSERT(fhdr);
+    ROSE_ASSERT(fhdr->get_segment_table()==NULL);
+    fhdr->set_segment_table(this);
+    
     set_synthesized(true);                              /* the segment table isn't part of any explicit section */
     set_name(new SgAsmBasicString("ELF Segment Table"));
     set_purpose(SP_HEADER);
 
-    SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
-    ROSE_ASSERT(fhdr);
-    ROSE_ASSERT(fhdr->get_segment_table()==NULL);
     fhdr->set_segment_table(this);
 }
 
@@ -1778,7 +1797,6 @@ SgAsmElfSegmentTable::ctor()
 SgAsmElfSegmentTable *
 SgAsmElfSegmentTable::parse()
 {
-
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
     ByteOrder sex = fhdr->get_sex();
@@ -1833,28 +1851,48 @@ SgAsmElfSegmentTable::parse()
                     continue; /*different mapped permissions*/
             }
 
-            /* Found a match. Set memory mapping params. */
+            /* Found a match. Set memory mapping params only. */
             s = dynamic_cast<SgAsmElfSection*>(possible[j]);
             if (!s) continue; /*potential match was not from the ELF Section or Segment table*/
             if (s->get_segment_entry()) continue; /*potential match is assigned to some other segment table entry*/
-
-            s->set_segment_entry(shdr);
-            if (!s->is_mapped()) {
-                s->set_mapped_rva(shdr->get_vaddr());
-                s->set_mapped_size(shdr->get_memsz());
-                s->set_file_alignment(shdr->get_align());
-                s->set_mapped_alignment(shdr->get_align());
-                s->set_mapped_rperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_RPERM ? true : false);
-                s->set_mapped_wperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_WPERM ? true : false);
-                s->set_mapped_xperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_XPERM ? true : false);
-            }
+            s->init_from_segment_table(shdr, true); /*true=>set memory mapping params only*/
         }
 
         /* Create a new segment if no matching section was found. */
-        if (!s)
-            s = new SgAsmElfSection(fhdr, shdr);
+        if (!s) {
+            s = new SgAsmElfSection(fhdr);
+            s->init_from_segment_table(shdr);
+        }
     }
     return this;
+}
+
+/** Attaches a previously unattached ELF Segment (SgAsmElfSection) to the ELF Segment Table (SgAsmElfSegmentTable). This
+ *  method complements SgAsmElfSection::init_from_segment_table. This method initializes the segment table from the segment
+ *  while init_from_segment_table() initializes the segment from the segment table.
+ *  
+ *  ELF Segments are represented by SgAsmElfSection objects since ELF Segments and ELF Sections overlap very much in their
+ *  features and thus should share an interface. An SgAsmElfSection can appear in the ELF Section Table and/or the ELF Segment
+ *  Table and you can determine where it was located by calling get_section_entry() and get_segment_entry(). */
+void
+SgAsmElfSegmentTable::add_section(SgAsmElfSection *section)
+{
+    ROSE_ASSERT(section!=NULL);
+    ROSE_ASSERT(section->get_file()==get_file());
+    ROSE_ASSERT(section->get_header()==get_header());
+    ROSE_ASSERT(section->get_segment_entry()==NULL);            /* must not be in the segment table yet */
+
+    SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
+    ROSE_ASSERT(fhdr);
+    
+    /* Assign a slot in the segment table */
+    int idx = fhdr->get_e_phnum();
+    fhdr->set_e_phnum(idx+1);
+
+    /* Create a new segment table entry */
+    SgAsmElfSegmentTableEntry *shdr = new SgAsmElfSegmentTableEntry;
+    shdr->update_from_section(section);
+    section->set_segment_entry(shdr);
 }
 
 /* Returns info about the size of the entries based on information already available. Any or all arguments may be null
@@ -1952,6 +1990,7 @@ SgAsmElfSegmentTable::unparse(std::ostream &f) const
     /* Write the segments first */
     for (size_t i=0; i<sections.size(); i++)
         sections[i]->unparse(f);
+    unparse_holes(f);
 
     /* Calculate sizes and update the ELF File Header */
     size_t ent_size, struct_size, opt_size, nentries;
@@ -1987,8 +2026,6 @@ SgAsmElfSegmentTable::unparse(std::ostream &f) const
         if (shdr->get_extra().size() > 0)
             write(f, spos, shdr->get_extra());
     }
-
-    unparse_holes(f);
 }
 
 /* Print some debugging info */

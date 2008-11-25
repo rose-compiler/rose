@@ -1347,9 +1347,9 @@ HEADER_ELF_SECTION_TABLE_ENTRY_START
 		SgAsmElfSectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex,
 			const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk);
 		void *encode(SgAsmExecutableFileFormat::ByteOrder sex,
-		SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk) const;
+			SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk) const;
 		void *encode(SgAsmExecutableFileFormat::ByteOrder sex,
-		SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk) const;
+			SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk) const;
 		void update_from_section(SgAsmElfSection*);
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 	private:
@@ -1358,17 +1358,13 @@ HEADER_ELF_SECTION_TABLE_ENTRY_START
 		static const char *to_string(SectionType);
 HEADER_ELF_SECTION_TABLE_ENTRY_END
 
+
+
 HEADER_ELF_SECTION_START
 	public:
-		/* Constructor for a non-attached, not-parsed Elf section */
-		SgAsmElfSection(SgAsmGenericHeader *fhdr);
-
-		/* Constructor for size based on section table entry (normal sections) */
-		SgAsmElfSection(SgAsmElfFileHeader *fhdr, SgAsmElfSegmentTableEntry *shdr);
-
-		//virtual ~ElfSection() {}
+		SgAsmElfSection(SgAsmGenericHeader *fhdr); /*non-attached, not-parsed Elf section*/
 		SgAsmElfSection *init_from_section_table(SgAsmElfSectionTableEntry*, SgAsmElfStringSection*, int id);
-
+		SgAsmElfSection *init_from_segment_table(SgAsmElfSegmentTableEntry*, bool mmap_only=false);
 		rose_addr_t calculate_sizes(size_t r32size, size_t r64size, const std::vector<size_t> &optsizes,
 					    size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 		virtual rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
@@ -1381,11 +1377,11 @@ HEADER_ELF_SECTION_START
 		// DQ (8/22/2008): These are not automatically generated since one of them must be virtual.
 		SgAsmElfSection* get_linked_section () const;
 		virtual void set_linked_section(SgAsmElfSection*);
-
 	private:
 		void ctor();
-		void ctor(SgAsmElfSegmentTableEntry*);
 HEADER_ELF_SECTION_END
+
+
 
 HEADER_STORED_STRING_START
 	public:
@@ -1626,6 +1622,7 @@ HEADER_ELF_SEGMENT_TABLE_START
 			: SgAsmGenericSection(fhdr->get_file(), fhdr, offset, 0)
 			{ctor();}
 		virtual SgAsmElfSegmentTable *parse();
+		void add_section(SgAsmElfSection*);
 		rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 		virtual bool reallocate();
 		virtual void unparse(std::ostream&) const;
@@ -4249,14 +4246,6 @@ SgAsmElfSection::SgAsmElfSection(SgAsmGenericHeader *fhdr)
      p_linked_section(NULL), p_section_entry(NULL), p_segment_entry(NULL)
    {
      ctor();
-   }
-
-/* Constructor for sections defined in the ELF Segment Table */
-SgAsmElfSection::SgAsmElfSection(SgAsmElfFileHeader *fhdr, SgAsmElfSegmentTableEntry *shdr)
-   : SgAsmGenericSection(fhdr->get_file(), fhdr, shdr->get_offset(), shdr->get_filesz()),
-     p_linked_section(NULL), p_section_entry(NULL), p_segment_entry(shdr)
-   {
-     ctor(shdr);
    }
 
 // DQ (8/22/2008): These are not automatically generated since one of them must be virtual.
