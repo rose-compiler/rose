@@ -28,6 +28,8 @@ inner_only.c \
 jacobi_seq.c \
 pointer.c \
 reduction.c \
+tricky_1.c \
+tricky_2.c \
 vectorize_1.c \
 vector_1.C \
 vector_2.C
@@ -36,6 +38,9 @@ ALL_TESTCODES = \
 $(C_TESTCODES_REQUIRED_TO_PASS) \
 $(CXX_TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODE_CURRENTLY_FAILING)
+
+# used to find omp.h, added it as one of  rose headers
+TESTCODE_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII
 
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict
 ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict
@@ -48,14 +53,13 @@ C_TEST_Objects = ${C_TESTCODES_REQUIRED_TO_PASS:.c=.o}
 CXX_TEST_Objects = ${CXX_TESTCODES_REQUIRED_TO_PASS:.C=.o}
 
 $(C_TEST_Objects): ../autoPar $(@:.o=.c)
-	$(VALGRIND) ../autoPar $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.c)
+	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.c)
 $(CXX_TEST_Objects): ../autoPar $(@:.o=.C)
-	$(VALGRIND) ../autoPar $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.C)
+	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C)
 rose_interp1_elem.C: ../autoPar interp1_elem.C
-	$(VALGRIND) ../autoPar -c -annot $(srcdir)/floatArray.annot -annot $(srcdir)/funcs.annot -annot $(srcdir)/Index.annot $(srcdir)/interp1_elem.C	
-
+	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c -annot $(srcdir)/floatArray.annot -annot $(srcdir)/funcs.annot -annot $(srcdir)/Index.annot $(srcdir)/interp1_elem.C	
 rose_doall_vector.C: ../autoPar doall_vector.C
-	$(VALGRIND) ../autoPar -c -annot $(srcdir)/std_vector.annot $(srcdir)/doall_vector.C
+	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c -annot $(srcdir)/std_vector.annot $(srcdir)/doall_vector.C
 
 check-local:
 	@echo "Test for ROSE automatic parallelization."
