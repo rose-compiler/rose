@@ -1787,17 +1787,7 @@ SgAsmGenericFile::congeal()
 void
 SgAsmGenericSection::ctor(SgAsmGenericFile *ef, SgAsmGenericHeader *hdr)
 {
-    ROSE_ASSERT(ef != NULL);
-
-    /* Initialize data members */
-    p_offset = 0;
-    p_data = ef->content(0, 0);
-    p_file = ef;
-    p_size = 0;
-    p_name = new SgAsmBasicString("");
-
-    /* Add this section to the header's section list */
-    if (hdr) hdr->add_section(this);
+    ctor(ef, hdr, 0, 0);
 }
 
 /* Same as above except also sets offset and size. The section is allowed to extend beyond the end of the file. */
@@ -1808,16 +1798,6 @@ SgAsmGenericSection::ctor(SgAsmGenericFile *ef, SgAsmGenericHeader *hdr, addr_t 
 
     /* Initialize data members */
     p_offset = offset;
-
-    /* Section is allowed to extend beyond the end of the file */
-    if (offset<=ef->get_orig_size()) {
-        if (offset+size<=ef->get_orig_size()) {
-            p_data = ef->content(offset, size);
-        } else {
-            p_data = ef->content(offset, ef->get_orig_size()-offset);
-        }
-    }
-
     p_file = ef;
     p_size = size;
     p_name = new SgAsmBasicString("");
@@ -1847,6 +1827,24 @@ SgAsmGenericSection::~SgAsmGenericSection()
     delete p_name;       p_name   = NULL;
 }
 
+/** Saves a reference to the original file data for a section based on the sections current offset and size. Once we do this,
+ *  changing the offset or size of the file will not affect the original data. The original data can be extended, however, by
+ *  calling SgAsmGenericSection::extend(), which is typically done during parsing. */
+void
+SgAsmGenericSection::grab_content()
+{
+    SgAsmGenericFile *ef = get_file();
+    ROSE_ASSERT(ef);
+
+    if (get_offset()<=ef->get_orig_size()) {
+        if (get_offset()+get_size()<=ef->get_orig_size()) {
+            p_data = ef->content(get_offset(), get_size());
+        } else {
+            p_data = ef->content(get_offset(), ef->get_orig_size()-get_offset());
+        }
+    }
+}
+
 /* Accessors for section name. Setting the section name makes the SgAsmGenericString node a child of the section. */
 SgAsmGenericString *
 SgAsmGenericSection::get_name() const 
@@ -1863,8 +1861,8 @@ SgAsmGenericSection::set_name(SgAsmGenericString *s)
     p_name = s;
 }
 
-/* Returns the current file size of the section in bytes. The original size of the section is available through the size of
- * the original data: p_data.size() */
+/* Returns the current file size of the section in bytes. The original size of the section (available when parse() is called
+ * for the function, but possibly updated while parsing) is available through the size of the original data: p_data.size() */
 rose_addr_t
 SgAsmGenericSection::get_size() const
 {
@@ -3701,7 +3699,7 @@ SgAsmExecutableFileFormat::parse(const char *name)
 {
     SgAsmGenericFile *ef = (new SgAsmGenericFile)->parse(name);
     ROSE_ASSERT(ef!=NULL);
-    
+
     if (SgAsmElfFileHeader::is_ELF(ef)) {
         (new SgAsmElfFileHeader(ef))->parse();
     } else if (SgAsmPEFileHeader::is_PE(ef)) {

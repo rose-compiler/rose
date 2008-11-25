@@ -790,7 +790,8 @@ HEADER_GENERIC_SECTION_START
 
 		static void dump_containing_sections(FILE *f, const std::string &prefix, rose_rva_t rva,
 			const SgAsmGenericSectionPtrList&);
-		virtual SgAsmGenericSection* parse() {return this;}
+		void grab_content();
+		virtual SgAsmGenericSection* parse() {grab_content(); return this;}
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 		virtual bool reallocate() {return false;}
 		virtual void unparse(std::ostream&) const;
