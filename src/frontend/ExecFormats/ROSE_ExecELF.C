@@ -270,14 +270,10 @@ SgAsmElfFileHeader::parse()
     /*FIXME*/
 
     /* Read the optional section and segment tables and the sections to which they point. */
-    if (get_e_shnum()) {
-        SgAsmElfSectionTable *tab = (new SgAsmElfSectionTable(this, sectab_rva.get_rva()))->parse();
-        set_section_table(tab);
-    }
-    if (get_e_phnum()) {
-        SgAsmElfSegmentTable *tab = (new SgAsmElfSegmentTable(this, segtab_rva.get_rva()))->parse();
-        set_segment_table(tab);
-    }
+    if (sectab_rva>0)
+        (new SgAsmElfSectionTable(this, sectab_rva.get_rva()))->parse();
+    if (segtab_rva>0)
+        (new SgAsmElfSegmentTable(this, segtab_rva.get_rva()))->parse();
 
     /* Associate the entry point with a particular section. */
     entry_rva.bind(this);
@@ -1107,6 +1103,11 @@ SgAsmElfSectionTable::ctor()
     set_synthesized(true);                              /* the section table isn't really a section itself */
     set_name(new SgAsmBasicString("ELF section table"));
     set_purpose(SP_HEADER);
+
+    SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
+    ROSE_ASSERT(fhdr);
+    ROSE_ASSERT(fhdr->get_section_table()==NULL);
+    fhdr->set_section_table(this);
 }
     
 /** Parses an ELF Section Table and constructs and parses all sections reachable from the table. The section is extended as
@@ -1670,6 +1671,11 @@ SgAsmElfSegmentTable::ctor()
     set_synthesized(true);                              /* the segment table isn't part of any explicit section */
     set_name(new SgAsmBasicString("ELF Segment Table"));
     set_purpose(SP_HEADER);
+
+    SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
+    ROSE_ASSERT(fhdr);
+    ROSE_ASSERT(fhdr->get_segment_table()==NULL);
+    fhdr->set_segment_table(this);
 }
 
 /** Parses an ELF Segment (Program Header) Table and constructs and parses all segments reachable from the table. The section
