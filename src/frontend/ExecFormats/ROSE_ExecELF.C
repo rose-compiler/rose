@@ -54,9 +54,10 @@ SgAsmElfFileHeader*
 SgAsmElfFileHeader::parse()
 {
     /* Read 32-bit header for now. Might need to re-read as 64-bit later. */
-    ROSE_ASSERT(0 == get_size());
+    
     Elf32FileHeader_disk disk32;
-    extend_up_to(sizeof(disk32));
+    if (sizeof(disk32)>get_size())
+        extend(sizeof(disk32)-get_size());
     content(0, sizeof(disk32), &disk32);
 
     ROSE_ASSERT(get_file()!=NULL);
@@ -142,7 +143,8 @@ SgAsmElfFileHeader::parse()
         /* We guessed wrong. This is a 64-bit header, not 32-bit. */
         p_exec_format->set_word_size(8);
         Elf64FileHeader_disk disk64;
-        extend_up_to(sizeof(Elf64FileHeader_disk)-sizeof(Elf32FileHeader_disk));
+        if (sizeof(disk64)>get_size())
+            extend(sizeof(disk64)-get_size());
         content(0, sizeof disk64, &disk64);
 
 	ROSE_ASSERT(0==p_e_ident_padding.size());
@@ -1067,7 +1069,7 @@ SgAsmElfSectionTable::ctor()
 
     /* Change the section size to include all the entries */
     ROSE_ASSERT(0==get_size());
-    extend_up_to(nentries * ent_size);
+    extend(nentries * ent_size);
 
     /* Read all the section headers. */
     std::vector<SgAsmElfSectionTableEntry*> entries;

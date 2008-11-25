@@ -1968,7 +1968,7 @@ SgAsmGenericSection::get_mapped_extent() const
 const unsigned char *
 SgAsmGenericSection::content(addr_t offset, addr_t size)
 {
-    if (offset > get_size() || offset+size > get_size())
+    if (offset > p_data.size() || offset+size > p_data.size())
         throw SgAsmGenericFile::ShortRead(this, offset, size);
     if (!get_congealed() && size > 0)
         p_extents.insert(offset, size);
@@ -1982,19 +1982,17 @@ SgAsmGenericSection::content(addr_t offset, addr_t size)
 void
 SgAsmGenericSection::content(addr_t offset, addr_t size, void *buf)
 {
-    if (offset >= get_size()) {
+    if (offset >= p_data.size()) {
         memset(buf, 0, size);
-    } else if (offset+size > get_size()) {
-        addr_t nbytes = get_size() - offset;
+    } else if (offset+size > p_data.size()) {
+        addr_t nbytes = p_data.size() - offset;
         memcpy(buf, &(p_data[offset]), nbytes);
         memset((char*)buf+nbytes, 0, size-nbytes);
-        if (!get_congealed())
-	    p_extents.insert(offset, nbytes);
     } else {
         memcpy(buf, &(p_data[offset]), size);
-        if (!get_congealed())
-	    p_extents.insert(offset, size);
     }
+    if (!get_congealed())
+        p_extents.insert(offset, size);
 }
 
 /* Returns ptr to a NUL-terminated string */
@@ -2004,10 +2002,10 @@ SgAsmGenericSection::content_str(addr_t offset)
     const char *ret = (const char*)&(p_data[offset]);
     size_t nchars=0;
 
-    while (offset+nchars < get_size() && ret[nchars]) nchars++;
+    while (offset+nchars < p_data.size() && ret[nchars]) nchars++;
     nchars++; /*NUL*/
 
-    if (offset+nchars > get_size())
+    if (offset+nchars > p_data.size())
         throw SgAsmGenericFile::ShortRead(this, offset, nchars);
     if (!get_congealed())
         p_extents.insert(offset, nchars);
@@ -2017,14 +2015,27 @@ SgAsmGenericSection::content_str(addr_t offset)
 
 /* Like the low-level content(addr_t,addr_t) but returns an object rather than a ptr directly into the file content. This is
  * the recommended way to obtain file content for IR nodes that need to point to that content. The other function is more of a
- * low-level, efficient file read operation. */
+ * low-level, efficient file read operation. This function is capable of reading past the end of the original data. */
 const SgUnsignedCharList
 SgAsmGenericSection::content_ucl(addr_t offset, addr_t size)
 {
-    const unsigned char *data = content(offset, size);
     SgUnsignedCharList returnValue;
-    for (addr_t i=0; i<size; i++)
-        returnValue.push_back(data[i]);
+
+    addr_t have = size;
+    if (offset>=p_data.size()) {
+        have = 0;
+    } else if (offset+size<=p_data.size()) {
+        have = size;
+    } else {
+        have = p_data.size()-offset;
+    }
+    
+    if (have>0) {
+        const unsigned char *data = content(offset, have);
+        for (addr_t i=0; i<have; i++)
+            returnValue.push_back(data[i]);
+    }
+    returnValue.resize(size, '\0');
     return returnValue;
 }
 
@@ -2160,36 +2171,26 @@ SgAsmGenericSection::uncongeal()
     return p_extents;
 }
 
-/* Extend a section by some number of bytes during the parsing phase. This is function is considered to be part of the parsing
- * and construction of a section--it changes the part of the file that's considered the "original size" of the section. To
- * adjust the size of a section after the executable file is parsed, see SgAsmGenericFile::resize(). */
+/** Extend a section by some number of bytes during the construction and/or parsing phase. This is function is considered to
+ *  be part of the parsing and construction of a section--it changes the part of the file that's considered the "original
+ *  size" of the section. To adjust the size of a section after the executable file is parsed, see SgAsmGenericFile::resize().
+ *  Sections are allowed to extend beyond the end of the file and the original data (p_data) is extended only up to the end
+ *  of the file. */
 void
 SgAsmGenericSection::extend(addr_t size)
 {
     ROSE_ASSERT(get_file() != NULL);
     ROSE_ASSERT(!get_congealed());              /*can only be called during the parsing phase*/
     addr_t new_size = get_size() + size;
-    if (p_offset + new_size > get_file()->get_orig_size())
-        throw SgAsmGenericFile::ShortRead(this, p_offset+get_size(), size);
-    p_data.resize(new_size);
-    if (p_size!=new_size)
-        set_isModified(true);
-    p_size = new_size;
-}
 
-/* Like extend() but is more relaxed at the end of the file: if extending the section would cause it to go past the end of the
- * file then its data is extended to the end of the file and no exception is thrown. */
-void
-SgAsmGenericSection::extend_up_to(addr_t size)
-{
-    ROSE_ASSERT(get_file() != NULL);
-    ROSE_ASSERT(!get_congealed());              /*can only be called during the parsing phase*/
-    addr_t new_size = get_size() + size;
-    if (p_offset + new_size > get_file()->get_orig_size()) {
-        ROSE_ASSERT(p_offset <= get_file()->get_orig_size());
-        new_size = get_file()->get_orig_size() - p_offset;
+    /* Ending file address for section using new size, limited by total file size */
+    addr_t new_end = std::min(get_file()->get_orig_size(), get_offset()+new_size);
+    if (get_offset()<=new_end) {
+        p_data.resize(new_end-get_offset());
+    } else {
+        ROSE_ASSERT(0==p_data.size());
     }
-    p_data.resize(new_size);
+
     if (p_size!=new_size)
         set_isModified(true);
     p_size = new_size;

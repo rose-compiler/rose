@@ -795,7 +795,6 @@ HEADER_GENERIC_SECTION_START
 		virtual void  set_offset(addr_t);		/* Move a section w/o regard to other sections or mapping */
 		addr_t        get_end_offset(); /* file offset for end of section */
 		void          extend(addr_t nbytes);         	/* make section larger by extending the end */
-		void          extend_up_to(addr_t nbytes);      /* like extend() but more relaxed at EOF */
 		addr_t        write(std::ostream&, addr_t offset, size_t bufsize, const void *buf) const;
 		addr_t        write(std::ostream&, addr_t offset, const std::string &str) const;
 		addr_t        write(std::ostream&, addr_t offset, char c) const;

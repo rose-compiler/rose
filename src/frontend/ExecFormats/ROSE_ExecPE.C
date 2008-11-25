@@ -133,7 +133,7 @@ SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     PE32OptHeader_disk oh32;
     memset(&oh32, 0, sizeof oh32);
     addr_t need32 = std::min(p_e_nt_hdr_size, (addr_t)(sizeof oh32));
-    extend_up_to(need32);
+    extend(need32);
     content(sizeof fh, sizeof oh32, &oh32);
     p_e_opt_magic = le_to_host(oh32.e_opt_magic);
     
@@ -182,7 +182,7 @@ SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
         PE64OptHeader_disk oh64;
         memset(&oh64, 0, sizeof oh64);
         addr_t need64 = std::min(p_e_nt_hdr_size, (addr_t)(sizeof oh64));
-        extend_up_to(need64 - need32);
+        extend(need64 - need32);
         content(sizeof fh, sizeof oh64, &oh64);
         p_e_lmajor             = le_to_host(oh64.e_lmajor);
         p_e_lminor             = le_to_host(oh64.e_lminor);
@@ -408,7 +408,7 @@ SgAsmPEFileHeader::add_rvasize_pairs()
     ROSE_ASSERT(p_rvasize_pairs->get_pairs().size()==0);
     p_rvasize_pairs->set_isModified(true);
 
-    extend_up_to(pairs_size);
+    extend(pairs_size);
     for (size_t i = 0; i < p_e_num_rvasize_pairs; i++, pairs_offset += sizeof pairs_disk) {
         content(pairs_offset, sizeof pairs_disk, &pairs_disk);
         p_rvasize_pairs->get_pairs().push_back(new SgAsmPERVASizePair(&pairs_disk));
