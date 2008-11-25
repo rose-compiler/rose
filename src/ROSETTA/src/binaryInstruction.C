@@ -598,6 +598,33 @@ Grammar::setUpBinaryInstructions ()
      AsmElfSectionTable.setFunctionPrototype ( "HEADER_ELF_SECTION_TABLE", "../Grammar/BinaryInstruction.code");
 
 
+
+     AsmElfSectionTableEntry.setFunctionPrototype ( "HEADER_ELF_SECTION_TABLE_ENTRY", "../Grammar/BinaryInstruction.code");
+     AsmElfSectionTableEntry.setDataPrototype("unsigned","sh_name","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfSectionTableEntry.setDataPrototype("SgAsmElfSectionTableEntry::SectionType","sh_type","= SHT_PROGBITS",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfSectionTableEntry.setDataPrototype("unsigned long","sh_link","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfSectionTableEntry.setDataPrototype("unsigned long","sh_info","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfSectionTableEntry.setDataPrototype("uint64_t","sh_flags","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfSectionTableEntry.setDataPrototype("rose_addr_t","sh_addr","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfSectionTableEntry.setDataPrototype("rose_addr_t","sh_offset","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfSectionTableEntry.setDataPrototype("rose_addr_t","sh_size","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfSectionTableEntry.setDataPrototype("rose_addr_t","sh_addralign","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfSectionTableEntry.setDataPrototype("rose_addr_t","sh_entsize","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfSectionTableEntry.setDataPrototype("SgUnsignedCharList","extra","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+
   // Note that these should likely be implemented as a container, instead of reproducing the link list structure.
   // ElfSection *linked_section;
   // ElfSectionTableEntry *st_entry;
@@ -611,10 +638,14 @@ Grammar::setUpBinaryInstructions ()
      AsmElfSection.setDataPrototype("SgAsmElfSegmentTableEntry*","segment_entry","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+
+
      AsmElfStringSection.setFunctionPrototype("HEADER_ELF_STRING_SECTION", "../Grammar/BinaryInstruction.code");
      AsmElfStringSection.setAutomaticGenerationOfDestructor(false);
      AsmElfStringSection.setDataPrototype("SgAsmElfStrtab*", "strtab", "= NULL", 
                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
 
      AsmElfStrtab.setFunctionPrototype      ( "HEADER_ELF_STRING_TABLE", "../Grammar/BinaryInstruction.code");
      AsmElfStrtab.setAutomaticGenerationOfDestructor(false);
@@ -662,37 +693,6 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
-
-  // unsigned             sh_name, sh_type, sh_link, sh_info;
-  // uint64_t             sh_flags;
-  // addr_t               sh_addr, sh_offset, sh_size, sh_addralign, sh_entsize;
-  // const unsigned char* extra;
-  // addr_t               nextra;
-     AsmElfSectionTableEntry.setFunctionPrototype ( "HEADER_ELF_SECTION_TABLE_ENTRY", "../Grammar/BinaryInstruction.code");
-
-  // DQ (8/28/2008): Check against the specification
-     AsmElfSectionTableEntry.setDataPrototype("unsigned","sh_name","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfSectionTableEntry.setDataPrototype("SgAsmElfSectionTableEntry::SectionType","sh_type","= SHT_PROGBITS",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfSectionTableEntry.setDataPrototype("unsigned long","sh_link","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfSectionTableEntry.setDataPrototype("unsigned long","sh_info","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfSectionTableEntry.setDataPrototype("uint64_t","sh_flags","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfSectionTableEntry.setDataPrototype("rose_addr_t","sh_addr","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfSectionTableEntry.setDataPrototype("rose_addr_t","sh_offset","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfSectionTableEntry.setDataPrototype("rose_addr_t","sh_size","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfSectionTableEntry.setDataPrototype("rose_addr_t","sh_addralign","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfSectionTableEntry.setDataPrototype("rose_addr_t","sh_entsize","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfSectionTableEntry.setDataPrototype("SgUnsignedCharList","extra","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   /* An AsmElfSegmentTable is a synthesized section representing the ELF Segment Table. The segment table entry info parsed
    * from the file is stored with its corresponding AsmElfSection rather than in the AsmElfSegmentTable. We can reconstruct the
@@ -2168,6 +2168,7 @@ Grammar::setUpBinaryInstructions ()
      AsmElfFileHeader.setFunctionSource ( "SOURCE_ELF_HEADER", "../Grammar/BinaryInstruction.code");
      AsmElfSectionTable.setFunctionSource ( "SOURCE_ELF_SECTION_TABLE", "../Grammar/BinaryInstruction.code");
      AsmElfSectionTableEntry.setFunctionSource ( "SOURCE_ELF_SECTION_TABLE_ENTRY", "../Grammar/BinaryInstruction.code");
+     AsmElfStringSection.setFunctionSource("SOURCE_ELF_STRING_SECTION", "../Grammar/BinaryInstruction.code");
      AsmElfSection.setFunctionSource ( "SOURCE_ELF_SECTION", "../Grammar/BinaryInstruction.code");
      AsmElfStrtab.setFunctionSource ( "SOURCE_ELF_STRING_TABLE", "../Grammar/BinaryInstruction.code");
      AsmElfDynamicSection.setFunctionSource ( "SOURCE_ELF_DYNAMIC_SECTION", "../Grammar/BinaryInstruction.code");

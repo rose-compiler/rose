@@ -790,6 +790,7 @@ HEADER_GENERIC_SECTION_START
 
 		static void dump_containing_sections(FILE *f, const std::string &prefix, rose_rva_t rva,
 			const SgAsmGenericSectionPtrList&);
+		virtual SgAsmGenericSection* parse() {return this;}
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 		virtual bool reallocate() {return false;}
 		virtual void unparse(std::ostream&) const;
@@ -1254,7 +1255,7 @@ HEADER_ELF_HEADER_START
 			{ctor();}
 
 		uint64_t max_page_size();
-		SgAsmElfFileHeader *parse();
+		virtual SgAsmElfFileHeader *parse();
 		virtual bool reallocate();
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
@@ -1277,7 +1278,7 @@ HEADER_ELF_SECTION_TABLE_START
 		SgAsmElfSectionTable(SgAsmElfFileHeader *fhdr, rose_addr_t offset) /* Non-parsing constructor */
 			: SgAsmGenericSection(fhdr->get_file(), fhdr, offset, 0)
 			{ctor();}
-		SgAsmElfSectionTable *parse();
+		virtual SgAsmElfSectionTable *parse();
 		void add_section(SgAsmElfSection*);
 		rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 		virtual bool reallocate();
@@ -1363,13 +1364,10 @@ HEADER_ELF_SECTION_START
 		SgAsmElfSection(SgAsmGenericHeader *fhdr);
 
 		/* Constructor for size based on section table entry (normal sections) */
-		SgAsmElfSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr);
 		SgAsmElfSection(SgAsmElfFileHeader *fhdr, SgAsmElfSegmentTableEntry *shdr);
 
-		/* Constructor for explicit size (e.g., BSS sections where file size is always zero) */
-		SgAsmElfSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr, addr_t file_size);
-
 		//virtual ~ElfSection() {}
+		SgAsmElfSection *init_from_section_table(SgAsmElfSectionTableEntry*, SgAsmElfStringSection*, int id);
 
 		rose_addr_t calculate_sizes(size_t r32size, size_t r64size, const std::vector<size_t> &optsizes,
 					    size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
@@ -1386,7 +1384,6 @@ HEADER_ELF_SECTION_START
 
 	private:
 		void ctor();
-		void ctor(SgAsmElfSectionTableEntry*);
 		void ctor(SgAsmElfSegmentTableEntry*);
 HEADER_ELF_SECTION_END
 
@@ -1417,12 +1414,14 @@ HEADER_STORED_STRING_START
 HEADER_STORED_STRING_END
 
 
+
 HEADER_ELF_STRING_TABLE_START
 	public:
 		SgAsmElfStrtab(class SgAsmElfSection *containing_section)
 			: SgAsmGenericStrtab(containing_section)
 			{ctor();}
 		virtual ~SgAsmElfStrtab();
+		virtual SgAsmElfStrtab *parse();
 		virtual void unparse(std::ostream&) const;
 		virtual SgAsmStringStorage *create_storage(addr_t offset, bool shared);
 		virtual addr_t get_storage_size(const SgAsmStringStorage*);
@@ -1431,33 +1430,38 @@ HEADER_ELF_STRING_TABLE_START
 		void ctor();
 HEADER_ELF_STRING_TABLE_END
 
+
+
 HEADER_ELF_STRING_SECTION_START
 	public:
-		SgAsmElfStringSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr)
-			: SgAsmElfSection(fhdr, shdr), p_strtab(NULL)
-			{ctor();}
-		virtual ~SgAsmElfStringSection() {}
+		SgAsmElfStringSection(SgAsmElfFileHeader *fhdr);
+		virtual SgAsmElfStringSection *parse();
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 		virtual void set_size(addr_t newsize);
 		virtual bool reallocate();
 		virtual void unparse(std::ostream&) const;
 	private:
 		void ctor();
+		void ctor(SgAsmElfSectionTable*);
 HEADER_ELF_STRING_SECTION_END
+
+
 
 HEADER_ELF_RELA_SECTION_START
 	public:
-		SgAsmElfRelaSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr)
-			: SgAsmElfSection(fhdr, shdr)
-			{ctor(fhdr, shdr);}
-		//virtual ~SgAsmElfRelaSection() {}
+		SgAsmElfRelaSection(SgAsmElfFileHeader *fhdr)
+			: SgAsmElfSection(fhdr)
+			{ctor();}
 		using SgAsmElfSection::calculate_sizes;
+		virtual SgAsmElfRelaSection *parse();
 		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const;
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 	private:
-		void ctor(SgAsmElfFileHeader*, SgAsmElfSectionTableEntry*);
+		void ctor();
 HEADER_ELF_RELA_SECTION_END
+
+
 
 HEADER_ELF_RELA_ENTRY_START
 	public:
@@ -1491,20 +1495,24 @@ HEADER_ELF_RELA_ENTRY_START
 		void ctor(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfRelaEntry::Elf64RelaEntry_disk *disk);
 HEADER_ELF_RELA_ENTRY_END
 
+
+
 HEADER_ELF_DYNAMIC_SECTION_START
 	public:
-		SgAsmElfDynamicSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr)
-			: SgAsmElfSection(fhdr, shdr)
-			{ctor(fhdr, shdr);}
-		//virtual ~SgAsmElfDynamicSection() {}
+		SgAsmElfDynamicSection(SgAsmElfFileHeader *fhdr)
+			: SgAsmElfSection(fhdr)
+			{ctor();}
+		virtual SgAsmElfDynamicSection* parse();
 		using SgAsmElfSection::calculate_sizes;
 		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const;
 		virtual void set_linked_section(SgAsmElfSection*);   /* Parsing happens here rather than in constructor */
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 	private:
-		void ctor(SgAsmElfFileHeader*, SgAsmElfSectionTableEntry*);
+		void ctor();
 HEADER_ELF_DYNAMIC_SECTION_END
+
+
 
 HEADER_ELF_DYNAMIC_ENTRY_START
      public:
@@ -1617,7 +1625,7 @@ HEADER_ELF_SEGMENT_TABLE_START
 		SgAsmElfSegmentTable(SgAsmElfFileHeader *fhdr, rose_addr_t offset) /* Non-parsing constructor */
 			: SgAsmGenericSection(fhdr->get_file(), fhdr, offset, 0)
 			{ctor();}
-		SgAsmElfSegmentTable *parse();
+		virtual SgAsmElfSegmentTable *parse();
 		rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 		virtual bool reallocate();
 		virtual void unparse(std::ostream&) const;
@@ -1720,10 +1728,14 @@ HEADER_ELF_SEGMENT_TABLE_ENTRY_END
 HEADER_ELF_SEGMENT_TABLE_ENTRY_LIST_START
 HEADER_ELF_SEGMENT_TABLE_ENTRY_LIST_END
 
+
+
 HEADER_ELF_SYMBOL_SECTION_START
 	public:
-		SgAsmElfSymbolSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr);
-		//virtual ~SgAsmElfSymbolSection() {}
+		SgAsmElfSymbolSection(SgAsmElfFileHeader *fhdr)
+			: SgAsmElfSection(fhdr)
+			{ctor();}
+		virtual SgAsmElfSymbolSection* parse();
 		using SgAsmElfSection::calculate_sizes;
 		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const;
 		virtual void set_linked_section(SgAsmElfSection*);
@@ -1731,8 +1743,10 @@ HEADER_ELF_SYMBOL_SECTION_START
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 	private:
-		void ctor(SgAsmElfSectionTableEntry*);
+		void ctor();
 HEADER_ELF_SYMBOL_SECTION_END
+
+
 
 HEADER_ELF_SYMBOL_LIST_START
 HEADER_ELF_SYMBOL_LIST_END
@@ -4202,6 +4216,16 @@ SOURCE_ELF_HEADER_END
 SOURCE_ELF_SECTION_TABLE_START
 SOURCE_ELF_SECTION_TABLE_END
 
+
+
+SOURCE_ELF_STRING_SECTION_START
+	SgAsmElfStringSection::SgAsmElfStringSection(SgAsmElfFileHeader *fhdr)
+		: SgAsmElfSection(fhdr), p_strtab(NULL)
+		{ctor();}
+SOURCE_ELF_STRING_SECTION_END
+
+
+
 SOURCE_ELF_SECTION_TABLE_ENTRY_START
 SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk)
    {
@@ -4227,26 +4251,10 @@ SgAsmElfSection::SgAsmElfSection(SgAsmGenericHeader *fhdr)
      ctor();
    }
 
-/* Constructor for sections defined in the ELF Section Table */
-SgAsmElfSection::SgAsmElfSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr)
-   : SgAsmGenericSection(fhdr->get_file(), fhdr, shdr->get_sh_offset(), shdr->get_sh_size()),
-     p_linked_section(NULL), p_section_entry(shdr), p_segment_entry(NULL)
-   {
-     ctor(shdr);
-   }
-
 /* Constructor for sections defined in the ELF Segment Table */
 SgAsmElfSection::SgAsmElfSection(SgAsmElfFileHeader *fhdr, SgAsmElfSegmentTableEntry *shdr)
    : SgAsmGenericSection(fhdr->get_file(), fhdr, shdr->get_offset(), shdr->get_filesz()),
      p_linked_section(NULL), p_section_entry(NULL), p_segment_entry(shdr)
-   {
-     ctor(shdr);
-   }
-
-/* Constructor for explicit size (e.g., BSS sections where file size is always zero) */
-SgAsmElfSection::SgAsmElfSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr, addr_t file_size)
-   : SgAsmGenericSection(fhdr->get_file(), fhdr, shdr->get_sh_offset(), file_size),
-     p_linked_section(NULL), p_section_entry(shdr), p_segment_entry(NULL)
    {
      ctor(shdr);
    }
@@ -4313,12 +4321,6 @@ SOURCE_ELF_SEGMENT_ENTRY_LIST_START
 SOURCE_ELF_SEGMENT_ENTRY_LIST_END
 
 SOURCE_ELF_SYMBOL_SECTION_START
-SgAsmElfSymbolSection::SgAsmElfSymbolSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr)
-   : SgAsmElfSection(fhdr, shdr)
-   { 
-     ctor(shdr);
-   }
-
 SOURCE_ELF_SYMBOL_SECTION_END
 
 SOURCE_ELF_SYMBOL_LIST_START
