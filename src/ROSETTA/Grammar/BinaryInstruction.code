@@ -878,20 +878,20 @@ HEADER_GENERIC_HEADER_START
           void remove_section(SgAsmGenericSection*); 	      /* Remove section from the file */
 
        /* Section lookup functions (plural) */
-	  SgAsmGenericSectionPtrList get_mapped_sections();
-	  SgAsmGenericSectionPtrList get_sections_by_id(int id);
-	  SgAsmGenericSectionPtrList get_sections_by_name(std::string, char sep=0);
-	  SgAsmGenericSectionPtrList get_sections_by_offset(addr_t offset, addr_t size);
-	  SgAsmGenericSectionPtrList get_sections_by_rva(addr_t rva);
-	  SgAsmGenericSectionPtrList get_sections_by_va(addr_t va);
+	  SgAsmGenericSectionPtrList get_mapped_sections() const;
+	  SgAsmGenericSectionPtrList get_sections_by_id(int id) const;
+	  SgAsmGenericSectionPtrList get_sections_by_name(std::string, char sep=0) const;
+	  SgAsmGenericSectionPtrList get_sections_by_offset(addr_t offset, addr_t size) const;
+	  SgAsmGenericSectionPtrList get_sections_by_rva(addr_t rva) const;
+	  SgAsmGenericSectionPtrList get_sections_by_va(addr_t va) const;
 
        /* Section lookup functions (singular) */
-	  SgAsmGenericSection *get_section_by_id(int id, size_t *nfound=0);
-	  SgAsmGenericSection *get_section_by_name(const std::string&, char sep=0, size_t *nfound=0);
-	  SgAsmGenericSection *get_section_by_offset(addr_t offset, addr_t size, size_t *nfound=0);
-          SgAsmGenericSection *get_section_by_rva(addr_t rva, size_t *nfound=0);
-	  SgAsmGenericSection *get_section_by_va(addr_t va, size_t *nfound=0);
-	  SgAsmGenericSection *get_best_section_by_va(addr_t va, size_t *nfound=0);
+	  SgAsmGenericSection *get_section_by_id(int id, size_t *nfound=0) const;
+	  SgAsmGenericSection *get_section_by_name(const std::string&, char sep=0, size_t *nfound=0) const;
+	  SgAsmGenericSection *get_section_by_offset(addr_t offset, addr_t size, size_t *nfound=0) const;
+          SgAsmGenericSection *get_section_by_rva(addr_t rva, size_t *nfound=0) const;
+	  SgAsmGenericSection *get_section_by_va(addr_t va, size_t *nfound=0) const;
+	  SgAsmGenericSection *get_best_section_by_va(addr_t va, size_t *nfound=0) const;
 
 
   // protected:
@@ -925,21 +925,21 @@ HEADER_GENERIC_FILE_START
 		SgFileContentList content(addr_t offset, addr_t size);	/* Partial file contents */
 
 		/* Section lookup functions (plural) */
-		SgAsmGenericSectionPtrList get_mapped_sections();
-		SgAsmGenericSectionPtrList get_sections(bool include_holes=true);
-		SgAsmGenericSectionPtrList get_sections_by_id(int id);
-		SgAsmGenericSectionPtrList get_sections_by_name(std::string, char sep='\0');
-		SgAsmGenericSectionPtrList get_sections_by_offset(addr_t offset, addr_t size);
-		SgAsmGenericSectionPtrList get_sections_by_rva(addr_t rva);
-		SgAsmGenericSectionPtrList get_sections_by_va(addr_t va);
+		SgAsmGenericSectionPtrList get_mapped_sections() const;
+		SgAsmGenericSectionPtrList get_sections(bool include_holes=true) const;
+		SgAsmGenericSectionPtrList get_sections_by_id(int id) const;
+		SgAsmGenericSectionPtrList get_sections_by_name(std::string, char sep='\0') const;
+		SgAsmGenericSectionPtrList get_sections_by_offset(addr_t offset, addr_t size) const;
+		SgAsmGenericSectionPtrList get_sections_by_rva(addr_t rva) const;
+		SgAsmGenericSectionPtrList get_sections_by_va(addr_t va) const;
 
 		/* Section lookup functions (singular) */
-		SgAsmGenericSection *get_section_by_id(int id, size_t *nfound=0);
-		SgAsmGenericSection *get_section_by_name(const std::string&, char sep=0, size_t *nfound=0);
-		SgAsmGenericSection *get_section_by_offset(addr_t offset, addr_t size, size_t *nfound=0);
-		SgAsmGenericSection *get_section_by_rva(addr_t rva, size_t *nfound=0);
-		SgAsmGenericSection *get_section_by_va(addr_t va, size_t *nfound=0);
-		SgAsmGenericSection *get_best_section_by_va(addr_t va, size_t *nfound=0);
+		SgAsmGenericSection *get_section_by_id(int id, size_t *nfound=0) const;
+		SgAsmGenericSection *get_section_by_name(const std::string&, char sep=0, size_t *nfound=0) const;
+		SgAsmGenericSection *get_section_by_offset(addr_t offset, addr_t size, size_t *nfound=0) const;
+		SgAsmGenericSection *get_section_by_rva(addr_t rva, size_t *nfound=0) const;
+		SgAsmGenericSection *get_section_by_va(addr_t va, size_t *nfound=0) const;
+		SgAsmGenericSection *get_best_section_by_va(addr_t va, size_t *nfound=0) const;
 		static SgAsmGenericSection *best_section_by_va(const SgAsmGenericSectionPtrList &sections, addr_t va);
 
 		/* Section modification functions */
