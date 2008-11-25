@@ -3719,7 +3719,7 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const std::string & name, SgAsmFile
                                        read(child_stdout[0], buf, sizeof buf);
                                        buf[sizeof(buf)-1] = '\0';
                                        if (char *nl = strchr(buf, '\n')) *nl = '\0'; /*keep only first line w/o LF*/
-                                       waitpid(pid, NULL, 0);
+                                       waitpid(pid, NULL, 0);                        
                                        char mesg[64+sizeof buf];
                                        sprintf(mesg, "unrecognized file format: %s", buf);
                                        throw SgAsmGenericFile::FormatError(mesg);
@@ -3739,8 +3739,10 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const std::string & name, SgAsmFile
      ef->congeal();
      ROSE_ASSERT(executableHeader != NULL);
 
-     ROSE_ASSERT(ef->get_parent() == executableHeader);
-  // ef->set_parent(executableHeader);
+     // SgAsmGenericFile is the parent of SgAsmGenericHeader, not vice versa.
+     // Commented out by RPM 2008-11-19. Code was from DQ 2008-08-16
+     //ROSE_ASSERT(ef->get_parent() == executableHeader);
+
 
 #if 0
   // asmFile->set_header(executableHeader);

@@ -1233,30 +1233,27 @@ HEADER_ELF_HEADER_START
 			uint16_t            e_shstrndx;
 		} __attribute__((packed));
 
-		SgAsmElfFileHeader(SgAsmGenericFile *f, addr_t offset)
-			: SgAsmGenericHeader(f, offset, 0)
-			{ctor(f, offset);}
-		//virtual ~SgAsmElfFileHeader() {}
+		/* Non-parsing constructor */
+		SgAsmElfFileHeader(SgAsmGenericFile *f)
+			: SgAsmGenericHeader(f, 0, 0)
+			{ctor();}
 
 		uint64_t max_page_size();
+		SgAsmElfFileHeader *parse();
 		virtual bool reallocate();
 		virtual void unparse(std::ostream&) const;
-
-		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfFileHeader::Elf32FileHeader_disk*) const;
-		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfFileHeader::Elf64FileHeader_disk*) const;
-
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 
+		virtual const char *format_name() const;
+		static bool is_ELF(SgAsmGenericFile*);
+		static SgAsmElfFileHeader *parse(SgAsmGenericFile*);
 		SgAsmGenericSectionPtrList get_sectab_sections();
 		SgAsmGenericSectionPtrList get_segtab_sections();
 
 	private:
-		void ctor(SgAsmGenericFile *f, addr_t offset);
-
-	public:
-		virtual const char *format_name() const;
-		static bool is_ELF(SgAsmGenericFile*);
-		static SgAsmElfFileHeader *parse(SgAsmGenericFile*);
+		void ctor();
+		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfFileHeader::Elf32FileHeader_disk*) const;
+		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfFileHeader::Elf64FileHeader_disk*) const;
 HEADER_ELF_HEADER_END
 
 

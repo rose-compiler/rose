@@ -12,27 +12,54 @@
 // File headers
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* Constructor reads and decodes the ELF header, whether it's 32- or 64-bit.  The 'offset' argument is normally zero since
- * ELF headers are at the beginning of the file. As mentioned in the header file, the section size is initialized as if we had
- * 32-bit words and if necessary we extend the section for 64-bit words herein. */
+/** Construct a new ELF File Header with default values. The new section is placed at file offset zero and the size is
+ *  initially zero bytes. After initializing other members of the header one should call reallocate() to give the header a
+ *  non-zero size. */
 void
-SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
+SgAsmElfFileHeader::ctor()
 {
+    ROSE_ASSERT(get_file()!=NULL);
+
     set_name(new SgAsmBasicString("ELF File Header"));
     set_synthesized(true);
     set_purpose(SP_HEADER);
 
-    ROSE_ASSERT(f != NULL);
-    // DQ (8/16/2008): Added code to set SgAsmPEFileHeader as parent of input SgAsmGenericFile
-    f->set_parent(this);
+    /* Magic number */
+    p_magic.clear();
+    p_magic.push_back(0x7f);
+    p_magic.push_back('E');
+    p_magic.push_back('L');
+    p_magic.push_back('F');
 
+    /* Executable Format */
+    ROSE_ASSERT(p_exec_format!=NULL);
+    p_exec_format->set_family(FAMILY_ELF);
+    p_exec_format->set_purpose(PURPOSE_EXECUTABLE);
+    p_exec_format->set_sex(ORDER_LSB);
+    p_exec_format->set_word_size(4);
+    p_exec_format->set_version(1);
+    p_exec_format->set_is_current_version(true);
+    p_exec_format->set_abi(ABI_UNSPECIFIED);
+    p_exec_format->set_abi_version(0);
+
+    p_isa = ISA_IA32_386;
+    p_e_ident_data_encoding = 1;  /*LSB*/
+}
+    
+/** Initialize this header with information parsed from the file. Since the size of the ELF File Header is determined by the
+ *  contents of the ELF File Header as stored in the file, the size of the ELF File Header will be adjusted upward if
+ *  necessary. The ELF File Header should have been constructed such that SgAsmElfFileHeader::ctor() was called. */
+SgAsmElfFileHeader*
+SgAsmElfFileHeader::parse()
+{
     /* Read 32-bit header for now. Might need to re-read as 64-bit later. */
     ROSE_ASSERT(0 == get_size());
     Elf32FileHeader_disk disk32;
     extend_up_to(sizeof(disk32));
     content(0, sizeof(disk32), &disk32);
 
-    ROSE_ASSERT(p_exec_format != NULL);
+    ROSE_ASSERT(get_file()!=NULL);
+    ROSE_ASSERT(get_exec_format()!=NULL);
 
     /* Check magic number early */
     if (disk32.e_ident_magic[0]!=0x7f || disk32.e_ident_magic[1]!='E' ||
@@ -156,6 +183,7 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     }
     
     /* Magic number. disk32 and disk64 have header bytes at same offset */
+    p_magic.clear();
     for (size_t i=0; i<sizeof(disk32.e_ident_magic); i++)
         p_magic.push_back(disk32.e_ident_magic[i]);
     
@@ -214,8 +242,8 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
         set_isa(ISA_MIPS_Family);
         break;
       case 20:
-     // Note that PowerPC has: p_e_machine = 20 = 0x14, using both gcc on BGL and xlc on BGL.
-     // However, these don't seem like correct values for PowerPC.
+        // Note that PowerPC has: p_e_machine = 20 = 0x14, using both gcc on BGL and xlc on BGL.
+        // However, these don't seem like correct values for PowerPC.
         set_isa(ISA_PowerPC);
         break;
       case 40:
@@ -227,7 +255,7 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
       default:
         /*FIXME: There's a whole lot more. See Dan's Elf reader. */
         // DQ (10/12/2008): Need more information to address PowerPC support.
-        fprintf(stderr, "Warning: SgAsmElfFileHeader::ctor::p_e_machine = 0x%lx (%lu)\n", p_e_machine, p_e_machine);
+        fprintf(stderr, "Warning: SgAsmElfFileHeader::parse::p_e_machine = 0x%lx (%lu)\n", p_e_machine, p_e_machine);
         set_isa(ISA_OTHER);
         break;
     }
@@ -239,6 +267,7 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
      * sections are rearranged, extended, etc. the entry point will be updated automatically. */
     p_base_va = 0;
     add_entry_rva(entry_rva);
+    return this;
 }
 
 /* Maximum page size according to the ABI. This is used by the loader when calculating the program base address. Since parts
@@ -2694,7 +2723,8 @@ SgAsmElfFileHeader::is_ELF(SgAsmGenericFile *f)
     ROSE_ASSERT(f != NULL);
     
     try {
-        hdr = new SgAsmElfFileHeader(f, 0);
+        hdr = new SgAsmElfFileHeader(f);
+        hdr->parse();
         retval = true;
     } catch (...) {
         /* cleanup is below */
@@ -2710,7 +2740,7 @@ SgAsmElfFileHeader::parse(SgAsmGenericFile *ef)
 {
     ROSE_ASSERT(ef);
     
-    SgAsmElfFileHeader *fhdr = new SgAsmElfFileHeader(ef, 0);
+    SgAsmElfFileHeader *fhdr = (new SgAsmElfFileHeader(ef))->parse();
     ROSE_ASSERT(fhdr != NULL);
 
     /* Read the optional section and segment tables and the sections to which they point. */

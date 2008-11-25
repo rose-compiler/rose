@@ -755,11 +755,11 @@ SgAsmNEStringTable::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         sprintf(p, "%sNEStringTable.", prefix);
     }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     SgAsmGenericSection::dump(f, p, -1);
 
 #if 0 /*Can't parse strings because it would affect the list of referenced bytes*/
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     bool was_congealed = get_congealed();
     congeal();
     addr_t at=0;
