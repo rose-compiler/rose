@@ -57,6 +57,8 @@ SgAsmElfFileHeader::ctor()
 SgAsmElfFileHeader*
 SgAsmElfFileHeader::parse()
 {
+    SgAsmGenericSection::parse();
+
     /* Read 32-bit header for now. Might need to re-read as 64-bit later. */
     Elf32FileHeader_disk disk32;
     if (sizeof(disk32)>get_size())
@@ -885,6 +887,7 @@ SgAsmElfStringSection::ctor()
 SgAsmElfStringSection *
 SgAsmElfStringSection::parse()
 {
+    SgAsmElfSection::parse();
     ROSE_ASSERT(p_strtab);
     p_strtab->get_freelist().clear(); /*because set_size() during construction added to the free list*/
     p_strtab->parse();
@@ -976,6 +979,7 @@ SgAsmElfStrtab::ctor()
 SgAsmElfStrtab *
 SgAsmElfStrtab::parse()
 {
+    SgAsmGenericStrtab::parse();
     ROSE_ASSERT(get_container());
     if (get_container()->get_size()>0) {
         if (get_container()->content(0, 1)[0]=='\0') {
@@ -1212,6 +1216,8 @@ SgAsmElfSectionTable::ctor()
 SgAsmElfSectionTable *
 SgAsmElfSectionTable::parse()
 {
+    SgAsmGenericSection::parse();
+
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
     ByteOrder sex = fhdr->get_sex();
@@ -1791,6 +1797,8 @@ SgAsmElfSegmentTable::ctor()
 SgAsmElfSegmentTable *
 SgAsmElfSegmentTable::parse()
 {
+    SgAsmGenericSection::parse();
+
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
     ByteOrder sex = fhdr->get_sex();
@@ -2126,6 +2134,8 @@ SgAsmElfRelaSection::ctor()
 SgAsmElfRelaSection *
 SgAsmElfRelaSection::parse()
 {
+    SgAsmElfSection::parse();
+
     SgAsmElfFileHeader *fhdr = get_elf_header();
     ROSE_ASSERT(fhdr);
 
@@ -2381,6 +2391,8 @@ SgAsmElfDynamicSection::ctor()
 SgAsmElfDynamicSection *
 SgAsmElfDynamicSection::parse()
 {
+    SgAsmElfSection::parse();
+
     SgAsmElfFileHeader *fhdr = get_elf_header();
     ROSE_ASSERT(fhdr);
     SgAsmElfSectionTableEntry *shdr = get_section_entry();
@@ -2767,6 +2779,8 @@ SgAsmElfSymbolSection::ctor()
 SgAsmElfSymbolSection *
 SgAsmElfSymbolSection::parse()
 {
+    SgAsmElfSection::parse();
+
     SgAsmElfFileHeader *fhdr = get_elf_header();
     ROSE_ASSERT(fhdr!=NULL);
     SgAsmElfSectionTableEntry *shdr = get_section_entry();
