@@ -909,10 +909,15 @@ HEADER_GENERIC_HEADER_START
 
 HEADER_GENERIC_HEADER_END
 
+
+
 HEADER_GENERIC_FILE_START
 	public:
-		SgAsmGenericFile(std::string file_name);
+		SgAsmGenericFile()					/* Non-parsing constructor */
+			: p_fd(-1), p_headers(NULL), p_holes(NULL)
+			{ctor();}
 		virtual ~SgAsmGenericFile();				/* Destructor deletes children and unmaps/closes file */
+		SgAsmGenericFile* parse(std::string file_name);		/* Attach an existing file for parsing */
 		void reallocate();					/* Make consistent before calling unparse */
 		void unparse(std::ostream&) const;			/* Unparse the file -- mirror image of parsing */
 		void dump(FILE*) const;                                 /* Print some debugging info */
@@ -984,8 +989,10 @@ HEADER_GENERIC_FILE_START
 		SgAsmGenericSection* get_best_possible_section_by_va(addr_t va);
 
 	private:
-		void ctor(std::string file_name);
+		void ctor();
 HEADER_GENERIC_FILE_END
+
+
 
 HEADER_GENERIC_FORMAT_START
      public:
@@ -4141,13 +4148,6 @@ SgAsmGenericHeader::get_word_size() const
 SOURCE_GENERIC_HEADER_END
 
 SOURCE_GENERIC_FILE_START
-
-SgAsmGenericFile::SgAsmGenericFile(std::string file_name)
-   : p_fd(-1), p_headers(NULL), p_holes(NULL)
-   {
-     ctor(file_name);
-   }
-
 SOURCE_GENERIC_FILE_END
 
 SOURCE_GENERIC_FORMAT_START

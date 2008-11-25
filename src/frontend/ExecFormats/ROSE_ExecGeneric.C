@@ -650,10 +650,26 @@ SgAsmGenericFormat::dump(FILE *f, const char *prefix, ssize_t idx) const
 // SgAsmGenericFile
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* Constructs by mapping file contents into memory */
+/** Non-parsing constructor. If you're creating an executable from scratch then call this function and you're done. But if
+ *  you're parsing an existing file then call parse() in order to map the file's contents into memory for parsing. */
 void
-SgAsmGenericFile::ctor(std::string fileName)
+SgAsmGenericFile::ctor() 
 {
+    ROSE_ASSERT(p_headers  == NULL);
+    p_headers  = new SgAsmGenericHeaderList();
+    p_headers->set_parent(this);
+
+    ROSE_ASSERT(p_holes  == NULL);
+    p_holes  = new SgAsmGenericSectionList();
+    p_holes->set_parent(this);
+}
+
+/* Loads file contents into memory (actually, just mmaps the file) */
+SgAsmGenericFile *
+SgAsmGenericFile::parse(std::string fileName)
+{
+    ROSE_ASSERT(p_fd<0); /*can call parse() only once per object*/
+
     p_fd = open(fileName.c_str(), O_RDONLY);
     if (p_fd<0 || fstat(p_fd, &p_sb)<0) {
         std::string mesg = "Could not open binary file";
@@ -669,14 +685,7 @@ SgAsmGenericFile::ctor(std::string fileName)
 
     /* Make file contents available through an STL vector without actually reading the file */
     p_data = SgFileContentList(mapped, p_sb.st_size);
-
-    ROSE_ASSERT(p_headers  == NULL);
-    p_headers  = new SgAsmGenericHeaderList();
-    p_headers->set_parent(this);
-
-    ROSE_ASSERT(p_holes  == NULL);
-    p_holes  = new SgAsmGenericSectionList();
-    p_holes->set_parent(this);
+    return this;
 }
 
 /* Destructs by closing and unmapping the file and destroying all sections, headers, etc. */
@@ -3641,7 +3650,7 @@ SgAsmExecutableFileFormat::unparseBinaryFormat(std::ostream &f, SgAsmFile *asmFi
 void
 SgAsmExecutableFileFormat::parseBinaryFormat(const std::string & name, SgAsmFile* asmFile)
 {
-     SgAsmGenericFile *ef = new SgAsmGenericFile(name.c_str());
+    SgAsmGenericFile *ef = (new SgAsmGenericFile)->parse(name.c_str());
      ROSE_ASSERT(ef != NULL);
 
      asmFile->set_name(name);
@@ -3774,7 +3783,7 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const std::string & name, SgAsmFile
 SgAsmGenericFile *
 SgAsmExecutableFileFormat::parse(const char *name)
 {
-    SgAsmGenericFile *ef = new SgAsmGenericFile(name);
+    SgAsmGenericFile *ef = (new SgAsmGenericFile)->parse(name);
     
     if (SgAsmElfFileHeader::is_ELF(ef)) {
         SgAsmElfFileHeader::parse(ef);

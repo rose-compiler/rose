@@ -1727,11 +1727,11 @@ Grammar::setUpBinaryInstructions ()
      AsmGenericFile.setFunctionPrototype ( "HEADER_GENERIC_FILE", "../Grammar/BinaryInstruction.code");
 
   // Later we will want to turn this back on so that this IR node is consistant with the others (if appropriate).
-  // AsmGenericFile.setAutomaticGenerationOfConstructor(false);
+     AsmGenericFile.setAutomaticGenerationOfConstructor(false);
      AsmGenericFile.setAutomaticGenerationOfDestructor(false);
 
   /* File descriptor opened for read-only (or negative) */
-     AsmGenericFile.setDataPrototype("int","fd","= 0",
+     AsmGenericFile.setDataPrototype("int","fd","= -1",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (6/14/2008): This data member's type is not yet correctly implemented needs to reference stat or stat64.
   // RPM (2008-08-22): We don't need this any more; we only used it for get_size(), which now uses STL vector.
