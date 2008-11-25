@@ -17,6 +17,7 @@
 void
 SgAsmLEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
 {
+    grab_content();
 
  // DQ (8/16/2008): Added code to set SgAsmPEFileHeader as parent of input SgAsmGenericFile
     f->set_parent(this);
@@ -393,6 +394,8 @@ SgAsmLEPageTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 void
 SgAsmLEPageTable::ctor()
 {
+    grab_content();
+
     SgAsmLEFileHeader *fhdr = dynamic_cast<SgAsmLEFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
 
@@ -542,6 +545,8 @@ SgAsmLESection::dump(FILE *f, const char *prefix, ssize_t idx) const
 void
 SgAsmLESectionTable::ctor()
 {
+    grab_content();
+
     SgAsmLEFileHeader *fhdr = dynamic_cast<SgAsmLEFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
 
@@ -584,6 +589,7 @@ SgAsmLESectionTable::ctor()
         }
 
         SgAsmLESection *section = new SgAsmLESection(fhdr, section_offset, section_size);
+        section->parse();
         section->set_synthesized(false);
         section->set_id(i+1); /*numbered starting at 1, not zero*/
         section->set_purpose(SP_PROGRAM);
@@ -655,6 +661,8 @@ SgAsmLESectionTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 void
 SgAsmLENameTable::ctor()
 {
+    grab_content();
+
     SgAsmLEFileHeader *fhdr = dynamic_cast<SgAsmLEFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
 
@@ -799,6 +807,8 @@ SgAsmLEEntryPoint::dump(FILE *f, const char *prefix, ssize_t idx) const
 void
 SgAsmLEEntryTable::ctor()
 {
+    grab_content();
+
     SgAsmLEFileHeader *fhdr = dynamic_cast<SgAsmLEFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
 
@@ -877,6 +887,8 @@ SgAsmLEEntryTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 void
 SgAsmLERelocTable::ctor()
 {
+    grab_content();
+
     SgAsmLEFileHeader *fhdr = dynamic_cast<SgAsmLEFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
 
