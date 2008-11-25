@@ -7,7 +7,7 @@ using namespace std;
 #include <string>
 #include <deque>
 #include <iostream> 
-#include "PrologTerm.h"
+#include "termite.h"
 #include "dfiparser.tab.h++"
 
 // This global variable is our "yyin"

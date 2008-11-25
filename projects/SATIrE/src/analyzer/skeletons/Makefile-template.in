@@ -5,6 +5,7 @@ ROSE_INCLUDE=@roseinclude@
 ROSE_LIB=@roselib@
 BOOST_INCLUDE=@boostinclude@
 BOOST_LIB=@boostlib@
+PL_INCLUDE=@plinclude@
 SATIRE_LIB=@satirelib@
 SATIRE_INCLUDE=@satireinclude@
 SATIRE_DATA=@pkgdatadir@
@@ -21,8 +22,8 @@ endif
 OTHERANALYSISLIBS = ${OTHERANALYSES:%=otheranalyses/%.a}
 
 PAG = $(PAGDIR)/bin/pag
-CXXFLAGS = -O2 -Wall -ggdb -I$(ROSE_INCLUDE) -I$(PAGDIR)/include/pag -I$(PAGDIR)/include/pag/analyzer -I$(BOOST_INCLUDE) -I$(SATIRE_INCLUDE) -I$(ANALYSIS)-out/src/
-LPATH = -L$(ROSE_LIB) -Wl,-rpath $(ROSE_LIB) -L$(BOOST_LIB) -Wl,-rpath $(BOOST_LIB) -L $(PAGDIR)/lib/pag -L$(SATIRE_LIB) 
+CXXFLAGS = -O2 -Wall -ggdb -I$(ROSE_INCLUDE) -I$(PAGDIR)/include/pag -I$(PAGDIR)/include/pag/analyzer -I$(BOOST_INCLUDE) -I$(PL_INCLUDE) -I$(SATIRE_INCLUDE) -I$(ANALYSIS)-out/src/
+LPATH = -L$(ROSE_LIB) -Wl,-rpath $(ROSE_LIB) -L$(BOOST_LIB) @plldadd@ -Wl,-rpath $(BOOST_LIB) -L$(PAGDIR)/lib/pag -L$(SATIRE_LIB)
 LIBS = $(ANALYSIS).a $(OTHERANALYSISLIBS) -lsatire -lsyntree -ltermite -lpagdatatypes -lrose -lpag
 
 # common macro definitions passed on the command line

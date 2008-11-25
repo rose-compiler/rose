@@ -1,10 +1,10 @@
-/*
-  Copyright 2006 Christoph Bonitz (christoph.bonitz@gmail.com)
-  2007 Adrian Prantl
-  see LICENSE in the root folder of this project
+/* -*- C++ -*-
+Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
+          2007-2008 Adrian Prantl <adrian@complang.tuwien.ac.at>
 */
+
 #include <satire_rose.h>
-#include "TermRep.h"
+#include "termite.h"
 #include "PrologToRose.h"
 #include <vector>
 #include <iostream>
@@ -12,8 +12,91 @@
 #include <string>
 #include <assert.h>
 
+#if !HAVE_SWI_PROLOG
+#  include "termparser.tab.h++"
+extern int yyparse();
+extern FILE* yyin;
+extern PrologTerm* prote;
+#endif
+
 using namespace std;
 
+/**
+ * Unparse to a file
+ */
+
+void PrologToRose::unparse(const char* filename, SgNode* node) {
+  SgUnparse_Info* unparseInfo = new SgUnparse_Info();
+  unparseInfo->unset_SkipComments();    // generate comments
+  unparseInfo->unset_SkipWhitespaces(); // generate all whitespaces to format the code
+  unparseInfo->set_SkipQualifiedNames(); // Adrian:  skip qualified names -> this would cause a call to the EDG otherwise
+
+  //resetParentPointers(glob, file);
+  //AstPostProcessing(glob);
+
+  /* we stop unparsing at SgGlobal level! output results and be happy.*/
+  //cout << "/*unparsing from PROLOG representation*/\n";
+  //cout << glob->unparseToString();
+
+  ofstream ofile(filename);
+  if (SgProject* project = dynamic_cast<SgProject*>(node))
+    for (int i = 0; i < project->numberOfFiles(); ++i) {
+      SgFile &sageFile = project->get_file(i);
+      ofile << globalUnparseToString(sageFile.get_globalScope(), unparseInfo);
+    }
+  else if (SgFile* file = dynamic_cast<SgFile*>(node))
+    ofile << globalUnparseToString(file->get_globalScope(), unparseInfo);
+  else ofile << node->unparseToString();
+  ofile.close();
+}
+
+SgNode*
+PrologToRose::toRose(const char* filename) {
+#if !HAVE_SWI_PROLOG
+  yyin = fopen( filename, "r" );
+  yyparse();
+#else
+  /*open('input.pl',read,_,[alias(rstrm)]),
+    read_term(rstrm,X,[double_quotes(string)]),
+    close(rstrm),*/
+
+  term_t a0 = PL_new_term_refs(10);
+  term_t fn	   = a0 + 0;
+  term_t read	   = a0 + 1;
+  term_t var	   = a0 + 2;
+  term_t alias	   = a0 + 3;
+  term_t open      = a0 + 4;
+  term_t r	   = a0 + 5;
+  term_t term	   = a0 + 6;
+  term_t flags     = a0 + 7;
+  term_t read_term = a0 + 8;
+  term_t close     = a0 + 9;
+
+
+  PL_put_atom_chars(fn, filename);
+  PL_put_atom_chars(read, "read");
+  PL_put_variable(var);
+  PL_chars_to_term("[alias(r)]", alias);
+  PL_cons_functor(open, PL_new_functor(PL_new_atom("open"), 4), 
+		  fn, read, var, alias);
+
+  PL_put_atom_chars(r, "r");
+  PL_put_variable(term);
+  PL_chars_to_term("[double_quotes(string)]", flags);
+  PL_cons_functor(read_term, PL_new_functor(PL_new_atom("read_term"), 3), 
+		  r, term, flags);
+
+  PL_chars_to_term("close(r)", close);
+
+  assert(PL_call(open, NULL) &&
+	 PL_call(read_term, NULL) &&
+	 PL_call(close, NULL));
+
+  PrologTerm* prote = PrologTerm::wrap_PL_Term(term);
+  
+#endif
+  return toRose(prote);
+}
 
 /**
  * create ROSE-IR for valid term representation*/
@@ -25,6 +108,7 @@ PrologToRose::toRose(PrologTerm* t) {
 
 #ifdef COMPACT_TERM_NOTATION
     string tname = c->getName();
+    debug("converting " + tname + "\n");
     // Insert a dummy first argument to be backwards compatible 
     // with the old term representation
     c->addFirstSubTerm(new PrologAtom(tname));
@@ -32,11 +116,11 @@ PrologToRose::toRose(PrologTerm* t) {
       node = listToRose(c,tname);
     } else {
       switch (c->getSubTerms().size()) {
-      case (3): node = leafToRose(c,tname); break;
-      case (4): node = unaryToRose(c,tname); break;
-      case (5): node = binaryToRose(c,tname); break;
-      case (6): node = ternaryToRose(c,tname); break;
-      case (7): node = quaternaryToRose(c,tname); break;
+      case (4): node = leafToRose(c,tname); break;
+      case (5): node = unaryToRose(c,tname); break;
+      case (6): node = binaryToRose(c,tname); break;
+      case (7): node = ternaryToRose(c,tname); break;
+      case (8): node = quaternaryToRose(c,tname); break;
       default: node = (SgNode*) 0;
       }
     }
@@ -52,7 +136,7 @@ PrologToRose::toRose(PrologTerm* t) {
     }
 		
     string tname = nterm->getName();
-    debug("unparsing " + tname + "\n");
+    debug("converting " + tname + "\n");
     /* depending on the type, call other static member functions*/
     if(termType=="unary_node") {
       node = unaryToRose(c,tname);
@@ -76,7 +160,7 @@ PrologToRose::toRose(PrologTerm* t) {
       && (t->getName() != "file")) {
     cerr << "**WARNING: could not translate the term '" 
 	 << t->getRepresentation() << "'" 
-         << "of arity " << t->getArity() << "." << endl;
+         << " of arity " << t->getArity() << "." << endl;
   }
 
   // Set the CompilerGenerated Flag
@@ -108,11 +192,11 @@ SgNode*
 PrologToRose::unaryToRose(PrologCompTerm* t,string tname) {
   debug("unparsing unary"); debug(t->getRepresentation());
   /* assert correct arity of term*/
-  assert_arity(t, 4);
+  assert_arity(t, 5);
   /*get child node (prefix traversal step)*/
   SgNode* child1 = toRose(t->at(1));
   /*create file info and check it*/
-  Sg_File_Info* fi = createFileInfo(t->at(3));
+  Sg_File_Info* fi = createFileInfo(t->at(4));
   testFileInfo(fi);
 
   /*node to be created*/
@@ -159,7 +243,8 @@ PrologToRose::unaryToRose(PrologCompTerm* t,string tname) {
     s = createPragmaDeclaration(fi,child1,t);
   } else if (tname == SG_PREFIX "typedef_declaration") {
     s = createTypedefDeclaration(fi,t);
-  }
+  } else cerr<<"**WARNING: unhandled Unary Node: "<<tname<<endl;
+    
 
   /* to be:*/
   //ROSE_ASSERT(s != NULL);
@@ -179,12 +264,12 @@ SgNode*
 PrologToRose::binaryToRose(PrologCompTerm* t,string tname) {
   debug("unparsing binary"); debug(t->getRepresentation());
   /* assert correct arity of term*/
-  assert_arity(t, 5);
+  assert_arity(t, 6);
   /*get child nodes (prefix traversal step)*/
   SgNode* child1 = toRose(t->at(1));
   SgNode* child2 = toRose(t->at(2));
   /*create file info and check it*/
-  Sg_File_Info* fi = createFileInfo(t->at(4));
+  Sg_File_Info* fi = createFileInfo(t->at(5));
   testFileInfo(fi);
   /* node to be created*/
   SgNode* s = NULL;
@@ -212,7 +297,9 @@ PrologToRose::binaryToRose(PrologCompTerm* t,string tname) {
     s = createTryStmt(fi,child1,child2,t);	
   } else if(tname == SG_PREFIX "catch_option_stmt") {
     s = createCatchOptionStmt(fi,child1,child2,t);	
-  }
+  } else if (tname == SG_PREFIX "file") {
+    s = createFile(fi,child1,t);
+  } else cerr<<"**WARNING: unhandled Binary Node: "<<tname<<endl;
 
   /*set s to be the parent of its child nodes*/
   if (s != NULL) {
@@ -231,13 +318,13 @@ SgNode*
 PrologToRose::ternaryToRose(PrologCompTerm* t,string tname) {
   debug("unparsing ternary");
   /* assert correct arity of term*/
-  assert_arity(t, 6);
+  assert_arity(t, 7);
   /*get child nodes (prefix traversal step)*/
   SgNode* child1 = toRose(t->at(1));
   SgNode* child2 = toRose(t->at(2));
   SgNode* child3 = toRose(t->at(3));
   /*create file info and check it*/
-  Sg_File_Info* fi = createFileInfo(t->at(5));
+  Sg_File_Info* fi = createFileInfo(t->at(6));
   testFileInfo(fi);
   /* create nodes depending on type*/
   SgNode* s = NULL;
@@ -251,7 +338,7 @@ PrologToRose::ternaryToRose(PrologCompTerm* t,string tname) {
     s = createNewExp(fi,child1,child2,child3,t);
   } else if (tname == SG_PREFIX "conditional_exp") {
     s = createConditionalExp(fi,child1,child2,child3,t);
-  }
+  } else cerr<<"**WARNING: unhandled Ternary Node: "<<tname<<endl;
 
   /*set s to be the parent of its child nodes*/
   if (s != NULL) {
@@ -280,13 +367,13 @@ PrologToRose::quaternaryToRose(PrologCompTerm* t,string tname) {
   SgNode* child3 = toRose(t->at(3));
   SgNode* child4 = toRose(t->at(4));
   /*create file info and check it*/
-  Sg_File_Info* fi = createFileInfo(t->at(6));
+  Sg_File_Info* fi = createFileInfo(t->at(7));
   testFileInfo(fi);
   /* node to be created*/
   SgNode* s = NULL;
   if(tname == SG_PREFIX "for_statement") {
     s = createForStatement(fi,child1,child2,child3,child4,t);
-  }
+  } else cerr<<"**WARNING: unhandled Quarternary Node: "<<tname<<endl;
   /*set s to be the parent of its child nodes*/
   if (s != NULL) {
     if(child1 != NULL) {
@@ -314,7 +401,7 @@ PrologToRose::listToRose(PrologCompTerm* t,string tname) {
   /* assert correct arity of term*/
   assert(l != (PrologList*) 0);
   /*create file info and check it*/
-  Sg_File_Info* fi = createFileInfo(t->at(3));
+  Sg_File_Info* fi = createFileInfo(t->at(4));
   testFileInfo(fi);
   /*get child nodes (prefix traversal step)*/
   SgNode* cur = NULL;
@@ -371,9 +458,9 @@ SgNode*
 PrologToRose::leafToRose(PrologCompTerm* t,string tname) {
   debug("unparsing leaf");
   /* assert correct arity of term*/
-  assert_arity(t, 3);
+  assert_arity(t, 4);
   /* create file info and check it*/
-  Sg_File_Info* fi = createFileInfo(t->at(2));
+  Sg_File_Info* fi = createFileInfo(t->at(3));
   testFileInfo(fi);
   /* node to be created*/
   SgNode* s = NULL;
@@ -864,7 +951,7 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
     PrologCompTerm* annot = retrieveAnnotation(t);
     ROSE_ASSERT(annot != NULL);
     /* get value and name, create a dummy declaration*/
-    assert_arity(annot, 4);
+    assert_arity(annot, 3);
     int value = toInt(annot->at(0));
     SgName v_name = *toStringP(annot->at(1));
     SgEnumDeclaration* decdummy = dynamic_cast<SgEnumDeclaration*>(toRose(annot->at(2)));
@@ -1119,12 +1206,11 @@ PrologToRose::createUnaryOp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
 SgProject*
 PrologToRose::createProject(Sg_File_Info* fi,vector<SgNode*>* succs) {
   SgProject* project = new SgProject();
-  //SgFile* file = dynamic_cast<SgFile*>child1;
-  //vector<SgNode*>::iterator it = succs->begin();
-  //while (it != succs->end()) {
-  //project->set_file(*it);
-  //  it++;
-  // }
+  for (vector<SgNode*>::iterator it = succs->begin();
+       it != succs->end(); ++it) {
+    SgFile* file = dynamic_cast<SgFile*>(*it);
+    project->get_fileList()->push_back(file);
+  }
   return project;
 }
 
@@ -1134,12 +1220,21 @@ PrologToRose::createProject(Sg_File_Info* fi,vector<SgNode*>* succs) {
  */
 SgFile*
 PrologToRose::createFile(Sg_File_Info* fi,SgNode* child1,PrologCompTerm*) {
+  // GB (2008-10-20): It looks like there is a new SgSourceFile class in
+  // ROSE 0.9.3a-2261, and that it is an instance of that class that we
+  // need.
   SgFile* file = new SgFile();
+  // SgFile* file = new SgSourceFile();
   file->set_file_info(fi);
-  /*
-    SgGlobal* glob = isSgGlobal(child1);
-    ROSE_ASSERT(glob);
-    file->set_root(glob);*/
+  // GB (2008-10-20): The set_root call seems to be necessary for ROSE
+  // 0.9.3a-1593, but not needed, and not even possible (at least on SgFile,
+  // maybe it's possible on SgSourceFile) with ROSE 0.9.3a-2261.
+
+  SgGlobal* glob = isSgGlobal(child1);
+  ROSE_ASSERT(glob);
+
+  file->set_root(glob);
+  glob->set_parent(file);
   return file;
 }
 
@@ -1476,23 +1571,13 @@ PrologToRose::retrieveAnnotation(PrologCompTerm* t) {
   PrologCompTerm* a = NULL;
   /* the position of the annotation depends on the
    * arity of the term*/
-  switch(t->getArity()) {
-  case 3: a = dynamic_cast<PrologCompTerm*>(t->at(1)); break;
-  case 4: a = dynamic_cast<PrologCompTerm*>(t->at(2)); break;
-  case 5: a = dynamic_cast<PrologCompTerm*>(t->at(3)); break;
-  case 6: a = dynamic_cast<PrologCompTerm*>(t->at(4)); break;
-  case 7: a = dynamic_cast<PrologCompTerm*>(t->at(5)); break;
-  default:
-    /*could not retrieve annotation*/
-    ROSE_ASSERT(false);
-  }
-  ROSE_ASSERT(a != NULL);
+  ROSE_ASSERT(a = dynamic_cast<PrologCompTerm*>(t->at(t->getArity()-3)));
   return a;
 }
 
 /**
  * create a SgGlobal node
- * and unparse content
+ * and convert content
  */
 SgGlobal*
 PrologToRose::createGlobal(Sg_File_Info* fi,vector<SgNode*>* succs) {
@@ -1519,31 +1604,6 @@ PrologToRose::createGlobal(Sg_File_Info* fi,vector<SgNode*>* succs) {
     }
     it++;
   }
-  SgUnparse_Info* unparseInfo = new SgUnparse_Info();
-  unparseInfo->unset_SkipComments();    // generate comments
-  unparseInfo->unset_SkipWhitespaces(); // generate all whitespaces to format the code
-  unparseInfo->set_SkipQualifiedNames(); // Adrian:  skip qualified names -> this would cause a call to the EDG otherwise
-
-  /* We also need to construct an SgFile beforehand*/
-  // GB (2008-10-20): It looks like there is a new SgSourceFile class in
-  // ROSE 0.9.3a-2261, and that it is an instance of that class that we
-  // need.
-  SgFile* file = new SgFile();
-  // SgFile* file = new SgSourceFile();
-  file->set_file_info(fi);
-  // GB (2008-10-20): The set_root call seems to be necessary for ROSE
-  // 0.9.3a-1593, but not needed, and not even possible (at least on SgFile,
-  // maybe it's possible on SgSourceFile) with ROSE 0.9.3a-2261.
-  file->set_root(glob);
-  glob->set_parent(file);
-
-  //resetParentPointers(glob, file);
-  //AstPostProcessing(glob);
-
-  /* we stop unparsing at SgGlobal level! output results and be happy.*/
-  //cout << "/*unparsing from PROLOG representation*/\n";
-  //cout << glob->unparseToString();
-  ofile << globalUnparseToString(glob, unparseInfo);
   return glob;
 }
 
@@ -2435,13 +2495,13 @@ PrologCompTerm*
 PrologToRose::isPrologCompTerm(PrologTerm* t) {
   return dynamic_cast<PrologCompTerm*>(t);
 }
-/**
+/** DEPRECATED
  * cast to PrologString (analogous to the is... functions of ROSE)
- */
+ *
 PrologString*
 PrologToRose::isPrologString(PrologTerm* t) {
   return dynamic_cast<PrologString*>(t);
-}
+}*/
 
 /**
  * create std::string* from PrologAtom* or PrologAtom*
@@ -2883,7 +2943,7 @@ PrologToRose::createFunctionRefExp(Sg_File_Info* fi, PrologCompTerm* ct) {
   ROSE_ASSERT(ct != NULL);
   PrologCompTerm* annot = retrieveAnnotation(ct);
   ROSE_ASSERT(annot != NULL);
-  ROSE_ASSERT(annot->getArity() == 3);
+  ROSE_ASSERT(annot->getArity() == 2);
   string* s = toStringP(annot->at(0));
   ROSE_ASSERT(s != NULL);
   /* create function symbol*/
@@ -2909,7 +2969,7 @@ PrologToRose::createMemberFunctionRefExp(Sg_File_Info* fi, PrologCompTerm* ct) {
   ROSE_ASSERT(ct != NULL);
   PrologCompTerm* annot = retrieveAnnotation(ct);
   ROSE_ASSERT(annot != NULL);
-  ROSE_ASSERT(annot->getArity() == 5);
+  ROSE_ASSERT(annot->getArity() == 3);
   /* create member function symbol*/
   SgMemberFunctionSymbol* sym = createDummyMemberFunctionSymbol(annot->at(0));
   ROSE_ASSERT(sym!= NULL);
@@ -3148,14 +3208,12 @@ PrologToRose::createConditionalExp(Sg_File_Info* fi,SgNode* child1,SgNode* child
 void
 PrologToRose::warn_msg(string msg) {
   /* since this is only a warning, i think stdout is okay*/
-  ofile << "/*" << msg << "*/\n";
+  cerr << "/*" << msg << "*/\n";
 }
 
 /** output a debug message, unless
  * compiled with NDEBUG*/
 void
 PrologToRose::debug(string message) {
-#ifndef NDEBUG
-  // cerr << message << "\n";
-#endif
+  //cerr << message << "\n";
 }

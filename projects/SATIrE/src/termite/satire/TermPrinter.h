@@ -1,7 +1,6 @@
-/*  -*- C++ -*-
-    Copyright 2006 Christoph Bonitz (christoph.bonitz@gmail.com)
-              2007 Adrian Prantl
-    see LICENSE in the root folder of this project
+/* -*- C++ -*-
+Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
+          2007-2008 Adrian Prantl <adrian@complang.tuwien.ac.at>
 */
 #ifndef PROLOGTRAVERSAL_H_
 #define  PROLOGTRAVERSAL_H_
@@ -11,11 +10,8 @@
 #include <ctype.h>
 #include <cstdio>
 #include <satire_rose.h>
-#include "PrologTerm.h"
-#include "PrologCompTerm.h"
-#include "PrologAtom.h"
-#include "PrologInt.h"
-#include "PrologList.h"
+#include "termite.h"
+
 #ifdef PAG_VERSION
 #  include <config.h>
 // GB (2008-10-03): The declaration (and definition) of PagDfiTextPrinter is
@@ -37,11 +33,19 @@ template<typename DFI_STORE_TYPE>
 class TermPrinter: public AstBottomUpProcessing<PrologTerm*> 
 {
 public:
-  TermPrinter(DFI_STORE_TYPE analysis_result = 0) 
+  TermPrinter(DFI_STORE_TYPE analysis_info = 0) 
 # ifdef PAG_VERSION
-      :pagDfiTextPrinter(analysis_result)
+      :pagDfiTextPrinter(analysis_info)
 # endif
-  { withPagAnalysisResults = (analysis_result != 0); }
+  { 
+#if HAVE_SWI_PROLOG
+    int argc;
+    char **argv;
+    assert(PL_is_initialised(&argc, &argv) 
+	   && "please run TermiteInit(argc, argv) first.");
+#endif  
+    withPagAnalysisResults = (analysis_info != 0); 
+  }
 
   /** return the term*/
   PrologTerm* getTerm() {return mTerm;};
@@ -92,15 +96,7 @@ private:
 
 typedef TermPrinter<void*> BasicTermPrinter;
 
-
-////////////////////////////////////////////////////////////////////////
-
-/*
- * Copyright 2006 Christoph Bonitz (christoph.bonitz@gmail.com)
- *           2007 Adrian Prantl
- * see LICENSE in the root folder of this project
- *
- *
+/***********************************************************************
  * TermPrinter (Implementation)
  * Author: Christoph Bonitz
  * Purpose: Traverse AST to create a PROLOG term representing it.
@@ -110,11 +106,10 @@ typedef TermPrinter<void*> BasicTermPrinter;
  * - PrologSupport for character manipulation (PrologSupport::prologize()),
  *   adding file info and term specific information
  * - PrologTerm* and subclasses for term representation
- */
-
+ *
+ ***********************************************************************/
 
 /*includes*/
-//#include "TermPrinter.h"
 #include "PrologSupport.h"
 #include <sstream>
 #include <iostream>
@@ -196,19 +191,17 @@ TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, Synth
     }
     /* add node specific information to the term*/
     PrologSupport::addSpecific(astNode, (PrologCompTerm*)t);
-    PrologCompTerm* annot = (PrologCompTerm*)((PrologCompTerm*)t)->getSubTerms().back();
-    assert(annot);
 
     /* add analysis information to the term*/
     if (SgStatement* n = isSgStatement(astNode)) {
       /* analysis result */
-      annot->addSubterm(getAnalysisResult(n));
+      ((PrologCompTerm*)t)->addSubterm(getAnalysisResult(n));
     } else {
       /* empty analysis result */
-      PrologCompTerm* ar = new PrologCompTerm("analysis_result");
+      PrologCompTerm* ar = new PrologCompTerm("analysis_info");
       ar->addSubterm(new PrologAtom("null"));
       ar->addSubterm(new PrologAtom("null"));
-      annot->addSubterm(ar);
+      ((PrologCompTerm*)t)->addSubterm(ar);
     }
 
     /* add file info term */
@@ -230,7 +223,7 @@ TermPrinter<DFI_STORE_TYPE>::getAnalysisResult(SgStatement* stmt)
 {
   PrologCompTerm *ar;
   PrologTerm *preInfo, *postInfo;
-  ar   = new PrologCompTerm("analysis_result");
+  ar   = new PrologCompTerm("analysis_info");
 
 # ifdef PAG_VERSION
   if (withPagAnalysisResults && stmt->get_attributeMechanism()) {

@@ -1,4 +1,5 @@
 #include "satire.h"
+#include "termite.h"
 
 namespace SATIrE
 {
@@ -6,6 +7,7 @@ namespace SATIrE
 AnalysisDriver::AnalysisDriver(int argc, char **argv)
   : options(extractOptions(argc, argv))
 {
+  init_termite(argc, argv);
 }
 
 AnalysisDriver::~AnalysisDriver()

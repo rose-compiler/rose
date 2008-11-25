@@ -1,11 +1,8 @@
-/*
-Copyright 2006 Christoph Bonitz (christoph.bonitz@gmail.com)
-see LICENSE in the root folder of this project
-*/
-/*
- * generatePrologTerm.C
+/* -*- C++ -*-
+Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
+          2007-2008 Adrian Prantl <adrian@complang.tuwien.ac.at>
+
  * Purpose: create a PROLOG representation of a given AST
- * Author: Christoph Bonitz (after looking at the documentedExamples) 
  */
 
 
@@ -13,7 +10,8 @@ see LICENSE in the root folder of this project
 #include <fstream>
 #include <satire_rose.h>
 #include "TermPrinter.h"
-#include "PrologTerm.h"
+
+using namespace std;
 
 int main ( int argc, char ** argv ) {
   //frontend processing
@@ -43,6 +41,8 @@ int main ( int argc, char ** argv ) {
   //PDF generation
   //AstPDFGeneration pdfgen;
   //pdfgen.generateInputFiles(root);
+
+  init_termite(argc, argv);
   
   //create prolog term
   BasicTermPrinter tp;

@@ -79,6 +79,7 @@
     #define persistent prefixed_persistent(ANALYSIS)
 #endif
 
+using namespace std;
 
 // Variables defined by PAG.
 extern int debug_stat;

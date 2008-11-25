@@ -1,17 +1,14 @@
-/*
-Copyright 2006 Christoph Bonitz (christoph.bonitz@gmail.com)
-see LICENSE in the root folder of this project
+/* -*- C++ -*-
+Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
+          2007-2008 Adrian Prantl <adrian@complang.tuwien.ac.at>
 */
-#include "TermRep.h"
+#include "termite.h"
 #include <iostream>
 #include <stdio.h>
 #include <satire_rose.h>
 #include "PrologToRose.h"
-#include "termparser.tab.h++"
 
-extern int yyparse();
-extern FILE* yyin;
-extern PrologTerm* prote;
+using namespace std;
 
 int main(int argc, char** argv) {
   //  cout << prote->getRepresentation();
@@ -19,10 +16,10 @@ int main(int argc, char** argv) {
     cerr << "Usage: " << argv[0] << " termfile.pl sourcefile" << endl;
     return 1;
   }
-  yyin = fopen( argv[1], "r" );
-  yyparse();
+  init_termite(argc, argv);
 
-  PrologToRose unparser(argv[2]);
-  unparser.toRose(prote);
+  PrologToRose conv;
+  SgNode* p = conv.toRose(argv[1]);
+  conv.unparse(argv[2], p);
   return 0;
 }

@@ -1,14 +1,13 @@
-%{ /* -*- c++ -*- */
-/*
- * Copyright 2006 Christoph Bonitz (christoph.bonitz@gmail.com)
- *           2007 Adrian Prantl
- * see LICENSE in the root folder of this project
+%{ // -*- C++ -*-
+/* 
+Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
+     2007-2008 Adrian Prantl <adrian@complang.tuwien.ac.at>
 */
 using namespace std;
 #include <string>
 #include <vector>
 #include <iostream> 
-#include "PrologTerm.h"
+#include "termite.h"
 #include "termparser.tab.h++"
 
 int colno = 0;

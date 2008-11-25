@@ -1,20 +1,14 @@
-%{ /* -*- C++ -*-
-   Copyright 2006 Christoph Bonitz (christoph.bonitz@gmail.com)
-             2007 Adrian Prantl
-   see LICENSE in the root folder of this project
+%{ // -*- C++ -*-
+/*
+Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
+     2007-2008 Adrian Prantl <adrian@complang.tuwien.ac.at>
 */
 using namespace std;
 #include <iostream>  
 #include <vector>
 #include <string>
 #include <assert.h>
-#include "PrologTerm.h"
-#include "PrologCompTerm.h"
-#include "PrologList.h"
-#include "PrologAtom.h"
-#include "PrologString.h"
-#include "PrologInt.h"
-#include "PrologVariable.h"
+#include "termite.h"
 
 extern int   yylex();
 extern char* yytext;
@@ -63,8 +57,8 @@ pterm:
 | comp_term OPERATOR { assert(((string)(*$2)) == "."); prote = $1; $$ = $1;}
 ;
 term:
- STRING       { $$ = new PrologString(*$1);  }
- | ATOM       { $$ = new PrologAtom(*$1);    }
+/*  STRING       { $$ = new PrologString(*$1);  } | */
+   ATOM       { $$ = new PrologAtom(*$1);    }
  | OPERATOR   { $$ = new PrologAtom(*$1);    
    // The problem is, we can't really decide the difference between the 
    // string-atom '->' and the operator '->'

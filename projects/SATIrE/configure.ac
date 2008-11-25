@@ -78,21 +78,64 @@ AC_ARG_WITH(boost_compiler_string,
            [  --with-boost-compiler-string=STR    Boost compiler string (default: gcc42)],
            [BOOST_COMPILER_STRING="$withval"])
 
+
+# Check for SWI-Prolog (optional)
+#-----------------------------------
+if pl --version |grep -q SWI-Prolog; then 
+   PL=pl    # Linux
+else 
+   PL=swipl # OS X
+fi
+PLBASE=`$PL --dump-runtime-variables |grep PLBASE |sed 's/"/ /g' |awk '{print $2}'`
+PLARCH=`$PL --dump-runtime-variables |grep PLARCH |sed 's/"/ /g' |awk '{print $2}'`
+PLLIB="$PLBASE/lib/$PLARCH"
+AC_ARG_WITH([swi-prolog],
+            [AS_HELP_STRING([--with-swi-prolog],
+              [enable SWI-Prolog in Termite (recommended)  @<:@default=check@:>@])],
+            [],
+            [with_swi_prolog=check])
+          
+AS_IF([test "x$with_swi_prolog" != xno],
+      [AC_CHECK_LIB([pl], [PL_toplevel],
+                    [with_swi_prolog=yes],
+                    [if test "x$with_swi_prolog" != xcheck; then
+                       AC_MSG_FAILURE([--with-swi_prolog was given, but test for SWI Prolog failed])
+                     else
+		       with_swi_prolog=no
+                     fi],
+                    [-L$PLLIB])],
+      [with_swi_prolog=false])
+
+AS_IF([test "x$with_swi_prolog" = xyes],
+      [AC_SUBST([SWI_PROLOG_LDADD], ["-Wl,-rpath $PLLIB -L$PLLIB -lpl"])
+       AC_SUBST([SWI_PROLOG_INCLUDE_DIR], ["$PLBASE/include"])
+       AC_DEFINE([HAVE_SWI_PROLOG], [1], [Define if you have SWI Prolog])
+       AC_MSG_RESULT([** Termite will be built with SWI-Prolog support.])
+       have_swi_prolog=1],
+      [AC_SUBST([SWI_PROLOG_LDADD], [""])  # set a safe dummy default path
+       AC_SUBST([SWI_PROLOG_INCLUDE_DIR], ["/usr/include"])
+       AC_DEFINE([HAVE_SWI_PROLOG], [0], [Define if you have SWI Prolog])
+       AC_MSG_RESULT([** Termite will be built WITHOUT SWI-Prolog support.])
+       have_swi_prolog=0])
+
+AM_CONDITIONAL(WITH_SWI_PROLOG, [test "x$with_swi_prolog" = xyes])
+AC_SUBST(have_swi_prolog)
+#-----------------------------------
+
 # Checks for libraries.
-# GB (2008-09-09): The following libs are not needed anymore: edg, rt, fl.
 AC_SEARCH_LIBS([fcosf], [m])
-AC_CHECK_LIB([pag], [pag_version], [echo "Found PAG!"], 
+AC_CHECK_LIB([pag], [pag_version], AC_MSG_RESULT([** Found PAG.]), 
              [echo "Could not find '-lpag' in '-L${PAG_LIB_DIR}'."
               echo "Please consider using one of the --with-pag* options."
               exit -1 ],
              [-L${PAG_LIB_DIR}])
-AC_CHECK_LIB([rose], [ROSE_DEBUG], [echo "Found ROSE!"], 
+AC_CHECK_LIB([rose], [ROSE_DEBUG], AC_MSG_RESULT([** Found ROSE.]), 
              [echo "Could not find '-lrose' in '-L${ROSE_LIB_DIR}'."
               echo "Please consider using one of the --with-rose* options."
               exit -1 ], 
              [-L${ROSE_LIB_DIR}])
 AC_CHECK_FILE(${BOOST_LIB_DIR}/libboost_filesystem-${BOOST_COMPILER_STRING}-mt.so,
-             [echo "Found Boost (hopefully)!"],
+             AC_MSG_RESULT([** Found Boost (hopefully).]),
              [echo "Could not find 'libboost_filesystem-${BOOST_COMPILER_STRING}-mt.so' in '${BOOST_LIB_DIR}'."
               echo "Please consider using one of the --with-boost* options."
               exit -1 ])
@@ -122,6 +165,7 @@ AC_CHECK_FUNCS([memset])
 AC_CONFIG_FILES([
 Makefile
 src/termite/Makefile
+src/termite/satire/termite.h
 src/analyzer/annotation/Makefile
 src/analyzer/astaccess/Makefile
 src/analyzer/astnumbering/Makefile

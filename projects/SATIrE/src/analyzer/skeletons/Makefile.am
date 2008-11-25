@@ -14,12 +14,14 @@ CLEANFILES = newanalysis Makefile-template newcombinedanalysis
 # TODO: replace this with AC_SUBST()
 
 do_subst= sed -e 's,[@]pkgdatadir[@],$(pkgdatadir),g' \
-		      -e 's,[@]bindir[@],$(bindir),g' \
+              -e 's,[@]bindir[@],$(bindir),g' \
               -e 's,[@]pagdir[@],$(PAGDIR),g' \
               -e 's,[@]roseinclude[@],$(ROSE_INCLUDE_DIR),g' \
               -e 's,[@]roselib[@],$(ROSE_LIB_DIR),g' \
               -e 's,[@]boostinclude[@],$(BOOST_INCLUDE_DIR),g' \
               -e 's,[@]boostlib[@],$(BOOST_LIB_DIR),g' \
+	      -e 's,[@]plinclude[@],$(SWI_PROLOG_INCLUDE_DIR),g' \
+              -e 's|[@]plldadd[@]|$(SWI_PROLOG_LDADD)|g' \
               -e 's,[@]satireinclude[@],$(pkgincludedir),g' \
               -e 's,[@]satirelib[@],$(libdir),g' \
               -e 's,[@]cxx[@],$(CXX),g'

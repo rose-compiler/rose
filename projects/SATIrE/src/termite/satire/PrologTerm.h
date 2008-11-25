@@ -1,16 +1,24 @@
 /* -*- C++ -*-
-Copyright 2006 Christoph Bonitz (christoph.bonitz@gmail.com)
-          2008 Adrian Prantl (adrian@complang.tuwien.ac.at)
-see LICENSE in the root folder of this project
+Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
+          2008 Adrian Prantl <adrian@complang.tuwien.ac.at>
 */
 #ifndef PROLOGTERM_H_
 #define PROLOGTERM_H_
 #include <vector>
 #include <string>
+#include <memory>
 #include <iostream>
 #include <ctype.h>
+#include <assert.h>
 
-using namespace std;
+#ifndef __TERMITE_H__
+#  error "Please do not include this file directly. Use termite.h instead."
+#endif
+
+bool init_termite(int argc, char **argv, bool interactive=false);
+
+#if !HAVE_SWI_PROLOG
+
 /// Representation of a prolog term
 class PrologTerm {
  public:
@@ -60,22 +68,178 @@ protected:
     }
     return false;
   }
-
-//   static std::string escape(const std::string s) {
-//     std::string r;
-//     for (std::string::const_iterator c = s.begin();
-// 	 c != s.end(); ++c) {
-
-//       if (*c == '\'') 
-// 	r += "\\'";
-//       else r.push_back(*c);
-
-//     }
-//     return r;
-//   }
-
-
 };
 
+#else
+
+# include <SWI-Prolog.h>
+# ifdef NORETURN
+#   undef NORETURN // incompatability with the PAG headers
+# endif
+# ifdef TRUE
+#   undef TRUE // incompatability with the ROSE headers
+# endif
+# ifdef FALSE
+#   undef FALSE // incompatability with the ROSE headers
+# endif
+
+# include <deque>
+# include <sstream>
+
+
+/// Representation of a prolog term
+class PrologTerm {
+ public:
+  PrologTerm() :term(PL_new_term_ref()) {
+#   if DEBUG_TERMITE
+      std::cerr<<"UNINIT"<<std::endl;
+#   endif
+  }
+  PrologTerm(term_t t) : term(PL_copy_term_ref(t)) { 
+#   if DEBUG_TERMITE
+      std::cerr<<"new PrologTerm("<<display(t)<<")"<<std::endl;
+#   endif
+  }
+
+  virtual ~PrologTerm() {
+    // Free all children that were generated on-the-fly
+    // TODO: replace this with some sorrt of smart pointer
+    for (std::deque<PrologTerm*>::iterator p = garbage_bin.begin(); 
+	 p != garbage_bin.end(); ++p)
+      delete *p;
+  }
+  /// returns the arity of the term
+  virtual int getArity() { 
+    int arity = 0;
+    if (PL_term_type(term) == PL_TERM) {
+      term_t name;
+      PL_get_name_arity(term, &name, &arity);
+    }
+    return arity;
+  }
+  /// returns wether or not the term is a ground term, i.e. contains no variables.
+  /** Note that this is the case iff all the subterms are ground. */
+  virtual bool isGround() { return PL_is_ground(term); }
+  /// Gets the name (functor/variable/constant) of the term. 
+  /* numbers are represented as strings and therefore returned as such */
+  virtual std::string getName() {
+    char *s;
+    if (PL_get_atom_chars(term, &s))
+      return std::string(s);
+
+    int arity;
+    atom_t name;
+    PL_get_name_arity(term, &name, &arity);
+    return std::string(PL_atom_chars(name));
+  }
+  /// the actual prolog term that is represented by this object
+  virtual std::string getRepresentation() { return display(term); }
+
+  /// Properly quote an atom if necessary
+  static std::string quote(const char* s) {
+    return std::string(PL_quote('\'', s));
+  }
+
+  /// return the SWI-Prolog term
+  term_t getTerm() { return term; }
+
+  // Create a new PrologTerm from a real Prolog Atom
+  static PrologTerm *wrap_PL_Term(term_t t);
+
+protected:
+
+  term_t term; // The "real" prolog term
+
+  static std::string display(term_t t)
+  { 
+    // this should be more efficient than 
+    // chars_to_term("with_output_to(string(S),write_term(T,[quoted(true)]))",X)
+    fid_t fid = PL_open_foreign_frame();
+    term_t T		  = PL_copy_term_ref(t);
+    term_t a0 = PL_new_term_refs(7);
+    term_t S		  = a0 + 0;
+    term_t True		  = a0 + 1;
+    term_t quoted	  = a0 + 2;
+    term_t list           = a0 + 3;
+    term_t write_term	  = a0 + 4;
+    term_t string	  = a0 + 5;
+    term_t with_output_to = a0 + 6;
+
+    PL_put_variable(S);
+    PL_cons_functor(string, PL_new_functor(PL_new_atom("string"), 1), S);
+
+    PL_put_atom_chars(True, "true");
+    PL_cons_functor(quoted, PL_new_functor(PL_new_atom("quoted"), 1), True);
+
+    PL_put_nil(list);
+    PL_cons_list(list, quoted, list);
+    
+    PL_cons_functor(write_term, 
+		    PL_new_functor(PL_new_atom("write_term"), 2), 
+		    T, list);
+    PL_cons_functor(with_output_to, 
+		    PL_new_functor(PL_new_atom("with_output_to"), 2), 
+		    string, write_term);
+    assert(PL_call(with_output_to, NULL));
+    
+    char *s;
+    size_t len;
+    assert(PL_get_string_chars(S, &s, &len));
+
+    std::string r = std::string(s);
+    PL_discard_foreign_frame(fid);
+    return r;
+
+    // functor_t functor;
+    // int arity, n;
+    // size_t len;
+    // char *cs;
+
+    // switch( PL_term_type(t) ) {
+    // case PL_VARIABLE:
+    // case PL_ATOM:
+    // case PL_INTEGER:
+    // case PL_FLOAT:
+    //   PL_get_chars(t, &cs, CVT_ALL);
+    //   return cs;
+    // case PL_STRING:
+    //   PL_get_string_chars(t, &cs, &len);
+    //   return std::string(PL_quote('\"', cs));
+    // case PL_TERM: { 
+    //   fid_t fid = PL_open_foreign_frame();
+    //   term_t name, a = PL_new_term_ref();
+    //   std::stringstream ss;
+
+    //   PL_get_name_arity(t, &name, &arity);
+    //   ss << PL_atom_chars(name) << '(';
+    //   for(n=1; n<=arity; n++)
+    //   { PL_get_arg(n, t, a);
+    //     if ( n > 1 )
+    //       ss << ", ";
+    //     ss << display(a);
+    //   }
+    //   ss << ")";
+    //   PL_discard_foreign_frame(fid);
+    //   return ss.str();
+    // }
+    // default:
+    //   assert(false && "unknown term type");
+    // }
+    // return "ERROR";
+  }
+
+  std::deque<PrologTerm*> garbage_bin;
+
+  // Create a new PrologTerm from a real Prolog Atom
+  // it will automatically be freed at the end of this object's lifetime
+  // calls wrap_PL_Term internally
+  PrologTerm *newPrologTerm(term_t t);
+
+  // Create a real Prolog term from a PrologTerm
+  // it will be garbage-collected by SWI-Prolog
+  term_t newTerm_t(PrologTerm* pt);
+};
+
+#endif // SWI
 
 #endif

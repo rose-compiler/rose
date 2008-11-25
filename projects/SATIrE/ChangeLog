@@ -1,3 +1,13 @@
+V0.?.? ? AP,...
+
+* Termite [AP]
+  - New (optional) dependency: SWI-Prolog >= 5.6
+    (auto-detected by ./configure, or use --with-swi-prolog=[yes,no])
+	* When enabled, all Term I/O will be handled by libpl, bringing
+	speed and stability improvements.
+	* This also paves the road for PROLOG-based analyses and
+	transformations to be run directly within an analyzer.
+
 V0.8.5 2008-11-22 GB,AP,VP,MS
 
 * Tested with: [MS]

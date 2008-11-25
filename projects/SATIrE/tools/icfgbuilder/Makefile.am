@@ -5,12 +5,12 @@ INCLUDES = -I$(ROSE_INCLUDE_DIR) -I$(PAG_INCLUDE_DIR)/pag -I$(PAG_INCLUDE_DIR)/p
 # FIXME
 EXTRA_DIST=main.C
 #bin_PROGRAMS = icfgbuilder
-icfgbuilder_SOURCES = main.C
-icfgbuilder_LDADD = -lsatire -lpag -ltermite -lrose
-icfgbuilder_LDFLAGS = -L$(top_builddir)/src -L$(ROSE_LIB_DIR) \
-		      -L$(top_builddir)/src/termite \
-		      -L$(PAG_LIB_DIR) \
-                      -Wl,-rpath
+#icfgbuilder_SOURCES = main.C
+#icfgbuilder_LDADD = -lsatire -lpag -ltermite -lrose
+#icfgbuilder_LDFLAGS = -L$(top_builddir)/src -L$(ROSE_LIB_DIR) \
+# 		      -L$(top_builddir)/src/termite \
+# 		      -L$(PAG_LIB_DIR) \
+#                     -Wl,-rpath
 
 
 installcheck-local:

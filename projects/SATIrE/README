@@ -15,6 +15,21 @@ term syntax.
   - bison 2.3
   - g++ 4.2.0 (>= 4.2.0 required by ROSE with EDG binaries)
   - Boost 1_36 (>= 1_35 required by ROSE)
+  - SWI-Prolog version 5.6.59 for x86_64-linux (optional)
+
+------------------------------------------------------------
+(0) UPGRADING AN EXISTING SATIrE INSTALLATION
+------------------------------------------------------------
+
+  If you are upgrading from an earlier version of SATIrE
+
+  a) Go to the OLD SATIrE drectory
+     cd SATIrE-0.8.3
+
+  b) Uninstall the old version
+     make uninstall
+
+  you can now continue with 1b)
 
 ------------------------------------------------------------
 (1) INSTALLATION
@@ -40,8 +55,6 @@ term syntax.
     run 'make' for compiling all SATIrE modules and analyzers
     run 'make install' to install SATIrE to the location specified by --prefix=<INSTALL_PREFIX>
     run 'make installcheck' to run SATIrE tests on the installation
-
-    Now you are ready to specify, compile, and run an anlysis.
 
 ------------------------------------------------------------
 (2) GETTING STARTED WITH AN ANALYSIS THAT COMES WITH SATIrE

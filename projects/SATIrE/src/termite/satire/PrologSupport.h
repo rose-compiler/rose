@@ -1,11 +1,12 @@
 /* -*- C++ -*-
-Copyright 2006 Christoph Bonitz (christoph.bonitz@gmail.com)
-see LICENSE in the root folder of this project
+Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
+          2008 Adrian Prantl <adrian@complang.tuwien.ac.at>
 */
+
 #ifndef PROLOGSUPPORT_H_
 #define PROLOGSUPPORT_H_ 
 #include <satire_rose.h>
-#include "TermRep.h"
+#include "termite.h"
 #include <string>
 #include <vector>
 

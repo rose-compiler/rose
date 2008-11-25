@@ -1,9 +1,9 @@
-%{
+%{ /* -*- C -*- */
 using namespace std;
 #include <string>
 #include <vector>
 #include <iostream> 
-#include "PrologTerm.h"
+#include "termite.h"
 #include "termparser.tab.h++"
 int indent = 0;
 void indent_line();
