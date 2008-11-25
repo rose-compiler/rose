@@ -655,6 +655,7 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
 
        // DQ (12/8/2008): Hook into the construction of the binary file format support.
           static void parseBinaryFormat(const std::string & name, SgAsmFile* asmFile);
+          static SgAsmGenericFile *parseBinaryFormat(const char *name);
           static void unparseBinaryFormat(const std::string &name, SgAsmFile *asmFile);
 	  static void unparseBinaryFormat(std::ostream&, SgAsmFile*);
 
@@ -667,9 +668,6 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
 
        /* Return byte order of caller */
           static SgAsmExecutableFileFormat::ByteOrder host_order();
-
-       // DQ (8/21/2008): Interface used by the disassembler
-          static SgAsmGenericFile * parse(const char *name);
 
        /* Swap (reverse) bytes taking care of sign extension */
           static uint8_t swap_bytes(uint8_t n);

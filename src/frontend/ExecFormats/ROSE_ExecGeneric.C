@@ -3690,13 +3690,13 @@ void
 SgAsmExecutableFileFormat::parseBinaryFormat(const std::string &name, SgAsmFile *asmFile)
 {
     asmFile->set_name(name);
-    SgAsmGenericFile *ef = parse(name.c_str());
+    SgAsmGenericFile *ef = parseBinaryFormat(name.c_str());
     ROSE_ASSERT(ef != NULL);
     ef->set_parent(asmFile);
     asmFile->set_genericFile(ef);
 }
 SgAsmGenericFile *
-SgAsmExecutableFileFormat::parse(const char *name)
+SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
 {
     SgAsmGenericFile *ef = (new SgAsmGenericFile)->parse(name);
     ROSE_ASSERT(ef!=NULL);
