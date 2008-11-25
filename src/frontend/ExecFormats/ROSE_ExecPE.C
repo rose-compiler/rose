@@ -13,6 +13,7 @@
 void
 SgAsmPEExtendedDOSHeader::ctor(SgAsmGenericFile *f, addr_t offset)
 {
+    grab_content();
     set_name(new SgAsmBasicString("Extended DOS Header"));
     set_synthesized(true);
     set_purpose(SP_HEADER);
@@ -97,6 +98,7 @@ SgAsmPEExtendedDOSHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 void
 SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
 {
+    grab_content();
 
     set_name(new SgAsmBasicString("PE File Header"));
     set_synthesized(true);
@@ -487,6 +489,7 @@ SgAsmPEFileHeader::create_table_sections()
         tabsec->set_mapped_rperm(true);
         tabsec->set_mapped_wperm(false);
         tabsec->set_mapped_xperm(false);
+        tabsec->grab_content();
         pair->set_section(tabsec);
         pair->set_e_rva(pair->get_e_rva().set_section(tabsec));
     }
@@ -853,6 +856,8 @@ SgAsmPESection::dump(FILE *f, const char *prefix, ssize_t idx) const
 void
 SgAsmPESectionTable::ctor()
 {
+    grab_content();
+
     set_synthesized(true);
     set_name(new SgAsmBasicString("PE Section Table"));
     set_purpose(SP_HEADER);
@@ -874,6 +879,7 @@ SgAsmPESectionTable::ctor()
         } else {
             section = new SgAsmPESection(fhdr, entry->get_physical_offset(), entry->get_physical_size());
         }
+        section->grab_content();
         section->set_synthesized(false);
         section->set_name(new SgAsmBasicString(entry->get_name()));
         section->set_id(i+1); /*numbered starting at 1, not zero*/
@@ -1362,6 +1368,8 @@ SgAsmPEImportHNTEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 void
 SgAsmPEImportSection::ctor(addr_t offset, addr_t size, addr_t mapped_rva)
 {
+    grab_content();
+
     set_mapped_rva(mapped_rva);
     set_mapped_size(size);
     p_import_directories = new SgAsmPEImportDirectoryList();
@@ -1568,6 +1576,8 @@ SgAsmPEExportEntry::set_forwarder(SgAsmGenericString *forwarder)
 void
 SgAsmPEExportSection::ctor(addr_t offset, addr_t size, addr_t mapped_rva)
 {
+    grab_content();
+
     ROSE_ASSERT(p_exports  == NULL);
     p_exports = new SgAsmPEExportEntryList();
     p_exports->set_parent(this);
@@ -1664,6 +1674,7 @@ SgAsmPEExportSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 void
 SgAsmPEStringSection::ctor()
 {
+    grab_content();
     p_strtab = new SgAsmCoffStrtab(this);
 }
 
@@ -2132,6 +2143,8 @@ SgAsmCoffSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
 void
 SgAsmCoffSymbolTable::ctor()
 {
+    grab_content();
+
     set_synthesized(true);
     set_name(new SgAsmBasicString("COFF Symbols"));
     set_purpose(SP_SYMTAB);
