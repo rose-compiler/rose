@@ -44,6 +44,7 @@ SgAsmElfFileHeader::ctor()
 
     p_isa = ISA_IA32_386;
     p_e_ident_data_encoding = 1;  /*LSB*/
+    p_e_ident_padding = SgUnsignedCharList(9, '\0');
 }
     
 /** Initialize this header with information parsed from the file. Since the size of the ELF File Header is determined by the

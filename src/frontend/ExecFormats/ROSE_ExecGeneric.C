@@ -2236,7 +2236,6 @@ SgAsmGenericSection::unparse(std::ostream &f, const ExtentMap &map) const
 void
 SgAsmGenericSection::unparse_holes(std::ostream &f) const
 {
-    ROSE_ASSERT(get_congealed()); /*done parsing*/
     unparse(f, p_extents);
 }
 
