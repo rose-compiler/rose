@@ -269,10 +269,12 @@ SgAsmElfFileHeader::parse()
     /* Target architecture */
     /*FIXME*/
 
-    /* Read the optional section and segment tables and the sections to which they point. */
-    if (sectab_rva>0)
+    /* Read the optional section and segment tables and the sections to which they point. An empty section or segment table is
+     * treated as if it doesn't exist. This seems to be compatible with the loader since the 45-bit "tiny" ELF executable
+     * stores a zero in the e_shnum member and a completely invalid value in the e_shoff member. */
+    if (sectab_rva>0 && get_e_shnum()>0)
         (new SgAsmElfSectionTable(this, sectab_rva.get_rva()))->parse();
-    if (segtab_rva>0)
+    if (segtab_rva>0 && get_e_phnum()>0)
         (new SgAsmElfSegmentTable(this, segtab_rva.get_rva()))->parse();
 
     /* Associate the entry point with a particular section. */
