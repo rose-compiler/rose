@@ -2087,9 +2087,9 @@ SgAsmGenericSection::write(std::ostream &f, addr_t offset, size_t bufsize, const
     }
 
     /* Don't write past end of current EOF if we can help it. */
-    SgAsmGenericFile *file = get_file();
-    while (nwrite>0 && 0==((const char*)buf)[nwrite-1] &&
-           get_offset()+offset+nwrite>file->get_orig_size())
+    f.seekp(0, std::ios::end);
+    addr_t filesize = f.tellp();
+    while (nwrite>0 && 0==((const char*)buf)[nwrite-1] && get_offset()+offset+nwrite>filesize)
         --nwrite;
 
     /* Write bytes to file. This is a good place to set a break point if you're trying to figure out what section is writing
