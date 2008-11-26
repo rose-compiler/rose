@@ -25,7 +25,8 @@ class PrologTerm {
   virtual ~PrologTerm() {};
   /// returns the arity of the term
   virtual int getArity() = 0;
-  /// returns wether or not the term is a ground term, i.e. contains no variables.
+  /// returns whether or not the term is a ground term, i.e. contains
+  /// no variables.
   /** Note that this is the case iff all the subterms are ground. */
   virtual bool isGround() = 0;
   /// Gets the name (functor/variable/constant) of the term. 
@@ -117,9 +118,10 @@ class PrologTerm {
     }
     return arity;
   }
-  /// returns wether or not the term is a ground term, i.e. contains no variables.
-  /** Note that this is the case iff all the subterms are ground. */
+  /// returns whether or not the term is a ground term, i.e. contains
+  /// no variables.
   virtual bool isGround() { return PL_is_ground(term); }
+
   /// Gets the name (functor/variable/constant) of the term. 
   /* numbers are represented as strings and therefore returned as such */
   virtual std::string getName() {
@@ -189,43 +191,6 @@ protected:
     std::string r = std::string(s);
     PL_discard_foreign_frame(fid);
     return r;
-
-    // functor_t functor;
-    // int arity, n;
-    // size_t len;
-    // char *cs;
-
-    // switch( PL_term_type(t) ) {
-    // case PL_VARIABLE:
-    // case PL_ATOM:
-    // case PL_INTEGER:
-    // case PL_FLOAT:
-    //   PL_get_chars(t, &cs, CVT_ALL);
-    //   return cs;
-    // case PL_STRING:
-    //   PL_get_string_chars(t, &cs, &len);
-    //   return std::string(PL_quote('\"', cs));
-    // case PL_TERM: { 
-    //   fid_t fid = PL_open_foreign_frame();
-    //   term_t name, a = PL_new_term_ref();
-    //   std::stringstream ss;
-
-    //   PL_get_name_arity(t, &name, &arity);
-    //   ss << PL_atom_chars(name) << '(';
-    //   for(n=1; n<=arity; n++)
-    //   { PL_get_arg(n, t, a);
-    //     if ( n > 1 )
-    //       ss << ", ";
-    //     ss << display(a);
-    //   }
-    //   ss << ")";
-    //   PL_discard_foreign_frame(fid);
-    //   return ss.str();
-    // }
-    // default:
-    //   assert(false && "unknown term type");
-    // }
-    // return "ERROR";
   }
 
   std::deque<PrologTerm*> garbage_bin;

@@ -31,10 +31,6 @@ libtermite_a_SOURCES = \
 	dfiparser.tab.c++ dfiparser.tab.h++ dfiscanner.c++ \
 	PrologToRose.C PrologTerm.C
 
-#satire/termite.h: satire/termite.h.in Makefile
-#	sed -e 's,[@]HAVE_SWI_PROLOG[@],$(HAVE_SWI_PROLOG),g' \
-#		 <$(srcdir)/satire/termite.h.in >satire/termite.h
-
 termparser.tab.c++: $(srcdir)/termparser.y++ Makefile
 	$(YACC) -d $(srcdir)/termparser.y++ && \
 	mv y.tab.c termparser.tab.c++ && \
