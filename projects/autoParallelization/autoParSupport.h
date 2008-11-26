@@ -33,7 +33,7 @@ namespace AutoParallelization
   // Required analysis and their initialization
   extern DFAnalysis * defuse;
   extern LivenessAnalysis* liv;
-  // Conduct necessary analyses on the project, can be called multiple times during program transformatioins. 
+  // Conduct necessary analyses on the project, can be called multiple times during program transformations. 
   bool initialize_analysis(SgProject* project=NULL,bool debug=false);
   //Release the resources for analyses
   void release_analysis();
@@ -54,6 +54,9 @@ namespace AutoParallelization
   // Variable classification for a loop node 
   // Collect private, firstprivate, lastprivate, reduction and save into attribute
   void AutoScoping(SgNode *sg_node, OmpSupport::OmpAttribute* attribute);
+
+  // Recognize reduction variables for a loop
+  void RecognizeReduction(SgNode *sg_node, OmpSupport::OmpAttribute* attribute, std::vector<SgInitializedName*>& candidateVars); 
 
   // Collect all classified variables from an OmpAttribute attached to a loop node,regardless their omp type
   void CollectScopedVariables(OmpSupport::OmpAttribute* attribute, std::vector<SgInitializedName*>& result);

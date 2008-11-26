@@ -93,6 +93,17 @@ SgPragmaDeclaration* OmpAttribute::getPragmaDeclaration()
 //! Insert a variable into a variable list for clause "targetConstruct", maintain the reversed variable-clause mapping also.
 void OmpAttribute::addVariable(omp_construct_enum targetConstruct, const std::string& varString, SgInitializedName* sgvar/*=NULL*/)
  {
+   //Special handling for reduction clauses
+   if (targetConstruct == e_reduction)
+   {
+     cerr<<"Fatal: cannot add variables into e_reduction, You have to specify e_reduction_operatorX instead!"<<endl;
+     assert(false);
+   } 
+   if (isReductionOperator(targetConstruct))
+   {
+     addClause(e_reduction);
+     setReductionOperator(targetConstruct);
+   }  
    // Try to resolve the variable if SgInitializedName is not provided
    if ((sgvar == NULL)&&(mNode!=NULL))
    {
@@ -157,14 +168,20 @@ enum omp_construct_enum OmpAttribute::getDefaultValue()
   return default_scope;
 }
 
-// Reduction clause's operator
+// Reduction clause's operator, 
+// we store reduction clauses of the same operators into a single entity
 void OmpAttribute::setReductionOperator(omp_construct_enum operatorx)
  {
-   reduction_operator = operatorx;
+   assert(isReductionOperator(operatorx));
+   std::vector<omp_construct_enum>::iterator hit = 
+      find(reduction_operators.begin(),reduction_operators.end(), operatorx); 
+   if (hit == reduction_operators.end())   
+     reduction_operators.push_back(operatorx);
  }
-omp_construct_enum OmpAttribute::getReductionOperator()
+// 
+std::vector<omp_construct_enum> OmpAttribute::getReductionOperators()
 {
-  return reduction_operator;
+  return reduction_operators;
 }
 
 //! Find the relevant clauses for a variable 
@@ -349,6 +366,32 @@ bool isClause(omp_construct_enum clause_type)
 }
 
 
+bool isReductionOperator(omp_construct_enum omp_type)
+{
+  bool result = false;
+  switch (omp_type)
+  {
+    case e_reduction_plus:
+    case e_reduction_minus:
+    case e_reduction_mul:
+    case e_reduction_bitand:
+    case e_reduction_bitor:
+
+    case e_reduction_bitxor:
+    case e_reduction_logand:
+    case e_reduction_logor: 
+      // TODO more reduction intrinsic procedure name for Fortran  
+    case e_reduction_min: //?
+    case e_reduction_max:
+      result = true;
+      break;
+    default:
+      result = false;
+      break;
+  }
+  return result;
+}
+
 bool OmpAttribute::hasClause(omp_construct_enum omp_type)
 {
   bool result = false;
@@ -406,14 +449,13 @@ std::string OmpAttribute::toOpenMPString(omp_construct_enum omp_type)
   //Clauses ------------------
   else if (isClause(omp_type))
   {
-    // Common string for all clauses
-    result += OmpSupport::toString(omp_type);
     // optional expressions
     if((omp_type == e_if)||
        (omp_type ==e_num_threads)||
        (omp_type == e_collapse)
       )
     {
+       result += OmpSupport::toString(omp_type);
        string expString;
       // We store real SgExpression* in .second now, 
       // No need to save the original string format in .first 
@@ -432,22 +474,36 @@ std::string OmpAttribute::toOpenMPString(omp_construct_enum omp_type)
 	   (omp_type == e_lastprivate)
 	   )
     {
+       result += OmpSupport::toString(omp_type);
        string varListString = toOpenMPString(getVariableList(omp_type));
        result+=" (" + varListString + ")"; 
     }
     // default scoping values
     else if (omp_type == e_default)
     {
+       result += OmpSupport::toString(omp_type);
        result+=" ("+ OmpSupport::toString(getDefaultValue())+")";
     } // reduction (op:var-list)
+     // could have multiple reduction clauses 
     else if (omp_type == e_reduction)
     {
-      result +=" ("+ OmpSupport::toString(getReductionOperator())+":";
-      string varListString = toOpenMPString(getVariableList(omp_type));
-      result += varListString + ")";
+      std::vector<omp_construct_enum> operators = getReductionOperators();
+      std::vector<omp_construct_enum>::iterator iter = operators.begin();
+      for (; iter!=operators.end();iter++)
+      {
+        if (iter!=operators.begin())
+          result+=","; // a ',' between each clause
+        omp_construct_enum optype = *iter;
+        result += OmpSupport::toString(omp_type);
+        result +=" ("+ OmpSupport::toString(optype)+":";
+        // variable list is associated to each reduction operator
+        string varListString = toOpenMPString(getVariableList(optype));
+        result += varListString + ")";
+      }  
     } // schedule(kind, exp)
     else if (omp_type == e_schedule)
-    {
+    { 
+      result += OmpSupport::toString(omp_type);
       result +=" ("+ OmpSupport::toString(getScheduleKind());
       string expString;
       // We store real SgExpression* in .second now, 
@@ -484,7 +540,27 @@ std::string OmpAttribute::toOpenMPString(std::vector<std::pair<std::string,SgNod
 std::vector<std::pair<std::string,SgNode* > > 
         OmpAttribute::getVariableList(omp_construct_enum targetConstruct)
 {
-  return variable_lists[targetConstruct];
+  std::vector<std::pair<std::string,SgNode* > > * result = new std::vector<std::pair<std::string,SgNode* > >; 
+  // e_reduction is a collective concept, 
+  // There may have multiple reduction clauses for different operations.
+  // return all of them. Return special one if e_reduction_operatorX is used
+  if (targetConstruct==e_reduction)
+   {
+     std::vector<omp_construct_enum> ops = getReductionOperators();
+     std::vector<omp_construct_enum>::iterator iter = ops.begin();
+     for (;iter!=ops.end(); iter++) // for each reduction operator
+     { 
+       omp_construct_enum operation = *iter;
+       assert(isReductionOperator(operation));
+       std::vector<std::pair<std::string,SgNode* > > temp = variable_lists[operation];
+       std::vector<std::pair<std::string,SgNode* > > ::iterator iter2 = temp.begin();
+       for (;iter2!=temp.end(); iter2++)
+         result->push_back(*iter2);
+     }  
+     return *result;
+   } 
+  else
+    return variable_lists[targetConstruct];
 }
 //! Check if a variable list is associated with a construct
 bool OmpAttribute::hasVariableList(omp_construct_enum omp_type)

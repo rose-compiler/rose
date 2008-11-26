@@ -418,8 +418,225 @@ void AutoScoping(SgNode *sg_node, OmpSupport::OmpAttribute* attribute)
     attribute->addVariable(OmpSupport::e_firstprivate ,(*iter)->get_name().getString(), *iter);
      cout<<(*iter)<<" "<<(*iter)->get_qualified_name().getString()<<endl;
   }
- 
+
+  // reduction recognition
+   set_intersection(liveIns.begin(),liveIns.end(), liveOuts.begin(), liveOuts.end(),
+                  inserter(reductionVars, reductionVars.begin()));
+   RecognizeReduction(sg_node,attribute, reductionVars);
 }
+
+// Recognize reduction variables for a loop
+/* 
+* Algorithms:
+*   for each scalar candidate which are both live-in and live-out for the loop body
+*    and which is not the loop invariant variable.
+*   Consider those with only 1 or 2 references
+*   1 reference
+*     the operation is one of x++, ++x, x--, --x, x binop= expr
+*   2 references belonging to the same operation
+*     operations: one of  x= x op expr,  x = expr op x (except for subtraction)
+* Also according to the specification.
+*  x is not referenced in exp
+*  expr has scalar type (no array, objects etc)
+*  x: scalar only, aggregate types (including arrays), pointer types and reference types may not appear in a reduction clause.
+*  op is not an overloaded operator, but +, *, -, &, ^ ,|, &&, ||
+*  binop is not an overloaded operator but: +, *, -, &, ^ ,| 
+*
+ */ 
+void RecognizeReduction(SgNode *loop, OmpSupport::OmpAttribute* attribute, std::vector<SgInitializedName*>& candidateVars)
+{
+  std::vector<SgInitializedName*> resultVars;
+  ROSE_ASSERT(loop && isSgForStatement(loop)&& attribute);
+  if (candidateVars.size()==0) return;
+  //Store the times of references for each variable
+  std::map <SgInitializedName*, vector<SgVarRefExp* > > var_references;
+
+  Rose_STL_Container<SgNode*> reflist = NodeQuery::querySubTree(loop, V_SgVarRefExp);
+  Rose_STL_Container<SgNode*>::iterator iter = reflist.begin();
+  for (; iter!=reflist.end(); iter++)
+  {
+    SgVarRefExp* ref_exp = isSgVarRefExp(*iter);
+    SgInitializedName* initname= ref_exp->get_symbol()->get_declaration();
+    std::vector<SgInitializedName*>::iterator hit= 
+        find(candidateVars.begin(), candidateVars.end(), initname);
+    if (hit!=candidateVars.end())
+     { 
+      var_references[initname].push_back(ref_exp);
+     }
+  }
+  //Consider variables referenced at most twice
+  std::vector<SgInitializedName*>::iterator niter=candidateVars.begin();
+  for (; niter!=candidateVars.end(); niter++)
+  {
+    SgInitializedName* initname = *niter;
+    // referenced once only
+    if (var_references[initname].size()==1) 
+     {
+       cout<<"Debug: A candidate used once:"<<initname->get_name().getString()<<endl;
+       SgVarRefExp* ref_exp = *(var_references[initname].begin());
+       SgStatement* stmt = SageInterface::getEnclosingStatement(ref_exp); 
+       if (isSgExprStatement(stmt))
+        {
+          SgExpression* exp = isSgExprStatement(stmt)->get_expression();
+          if (isSgPlusPlusOp(exp)) // x++ or ++x
+          { // Could have multiple reduction clause with different operators!! 
+            // So the variable list is associated with each kind of operator
+            attribute->addVariable(OmpSupport::e_reduction_plus, initname->get_name().getString(),initname);
+          }  
+          else if (isSgMinusMinusOp(exp)) // x-- or --x
+          { 
+            attribute->addVariable(OmpSupport::e_reduction_minus, initname->get_name().getString(),initname);
+          } 
+          // x binop= expr where binop is one of + * - & ^ |
+          // x must be on the left hand side
+           
+          SgExpression* binop = isSgBinaryOp(exp);
+          if (binop==NULL) continue;
+          SgExpression* lhs= isSgBinaryOp(exp)->get_lhs_operand ();
+          if (lhs==ref_exp)
+          {
+            OmpSupport::omp_construct_enum optype;
+            switch (exp->variantT())
+            {
+              case V_SgPlusAssignOp:
+              {
+                optype = OmpSupport::e_reduction_plus;
+                attribute->addVariable(optype,initname->get_name().getString(),initname);
+                break;
+              }  
+              case V_SgMultAssignOp:
+              {
+                optype = OmpSupport::e_reduction_mul;
+                attribute->addVariable(optype,initname->get_name().getString(),initname);
+                break;
+              }  
+              case V_SgMinusAssignOp:
+              {
+                optype = OmpSupport::e_reduction_minus;
+                attribute->addVariable(optype,initname->get_name().getString(),initname);
+                break;
+              }
+              case V_SgAndAssignOp:
+              {
+                optype = OmpSupport::e_reduction_bitand;
+                attribute->addVariable(optype,initname->get_name().getString(),initname);
+                break;
+              }
+              case V_SgXorAssignOp:
+              {
+                optype = OmpSupport::e_reduction_bitxor;
+                attribute->addVariable(optype,initname->get_name().getString(),initname);
+                break;
+              }
+              case V_SgIorAssignOp:
+              {
+                optype = OmpSupport::e_reduction_bitor;
+                attribute->addVariable(optype,initname->get_name().getString(),initname);
+                break;
+              }
+              default:
+                break;
+            } // end 
+          }// end if on left side  
+        } 
+     } 
+     // referenced twice within a same statement
+    else if (var_references[initname].size()==2)
+    {
+       cout<<"Debug: A candidate used twice:"<<initname->get_name().getString()<<endl;
+       SgVarRefExp* ref_exp1 = *(var_references[initname].begin());
+       SgVarRefExp* ref_exp2 = *(++var_references[initname].begin());
+       SgStatement* stmt = SageInterface::getEnclosingStatement(ref_exp1);
+       SgStatement* stmt2 = SageInterface::getEnclosingStatement(ref_exp2);
+       if (stmt != stmt2) 
+         continue;
+       // must be assignment statement using 
+       //  x= x op expr,  x = expr op x (except for subtraction)
+       // one reference on left hand, the other on the right hand of assignment expression
+       // the right hand uses associative operators +, *, -, &, ^ ,|, &&, ||
+       SgExprStatement* exp_stmt =  isSgExprStatement(stmt);
+       if (exp_stmt && isSgAssignOp(exp_stmt->get_expression())) 
+       {
+         SgExpression* assign_lhs=NULL, * assign_rhs =NULL;
+         assign_lhs = isSgAssignOp(exp_stmt->get_expression())->get_lhs_operand();
+         assign_rhs = isSgAssignOp(exp_stmt->get_expression())->get_rhs_operand();
+         ROSE_ASSERT(assign_lhs && assign_rhs);
+         // x must show up in both lhs and rhs in any order:
+         //  e.g.: ref1 = re2 op exp or ref2 = ref1 op exp
+         if (((assign_lhs==ref_exp1)&&SageInterface::isAncestor(assign_rhs,ref_exp2))
+             ||((assign_lhs==ref_exp2)&&SageInterface::isAncestor(assign_rhs,ref_exp1)))
+         {
+           // assignment's rhs must match the associative binary operations
+           // +, *, -, &, ^ ,|, &&, ||
+           SgBinaryOp * binop = isSgBinaryOp(assign_rhs);
+           if (binop!=NULL){
+             SgExpression* op_lhs = binop->get_lhs_operand();
+             bool isOnLeft = false; // true if it has form (refx op exp), instead (exp or refx)
+             if ((op_lhs==ref_exp1)||   // TODO might have in between !!
+                 (op_lhs==ref_exp2))
+               isOnLeft = true;
+             OmpSupport::omp_construct_enum optype;
+             switch (binop->variantT())
+             {
+               case V_SgAddOp:
+               {
+                 optype = OmpSupport::e_reduction_plus;  
+                 attribute->addVariable(optype,initname->get_name().getString(),initname);
+                 break;
+               }  
+               case V_SgMultiplyOp:
+               {
+                 optype = OmpSupport::e_reduction_mul;
+                 attribute->addVariable(optype,initname->get_name().getString(),initname);
+                 break;
+               }  
+               case V_SgSubtractOp: // special handle here!!
+               {
+                 optype = OmpSupport::e_reduction_minus;
+                 if (isOnLeft) // cannot allow (exp - x)
+                   attribute->addVariable(optype,initname->get_name().getString(),initname);
+                 break;
+               }  
+               case V_SgBitAndOp:
+               {
+                 optype = OmpSupport::e_reduction_bitand;
+                 attribute->addVariable(optype,initname->get_name().getString(),initname);
+                 break;
+               }  
+               case V_SgBitXorOp:
+               {
+                 optype = OmpSupport::e_reduction_bitxor;
+                 attribute->addVariable(optype,initname->get_name().getString(),initname);
+                 break;
+               }  
+               case V_SgBitOrOp:
+               {
+                 optype = OmpSupport::e_reduction_bitor;
+                 attribute->addVariable(optype,initname->get_name().getString(),initname);
+                 break;
+               } 
+               case V_SgAndOp:
+               { 
+                 optype = OmpSupport::e_reduction_logand;
+                 attribute->addVariable(optype,initname->get_name().getString(),initname);
+                 break;
+               }  
+               case V_SgOrOp:
+               {
+                 optype = OmpSupport::e_reduction_logor;
+                 attribute->addVariable(optype,initname->get_name().getString(),initname);
+                 break;
+               }  
+               default:
+                 break;
+             }  
+           } // end matching associative operations
+         }  
+       } // end if assignop  
+    }// end referenced twice
+  }// end for ()  
+
+} // end RecognizeReduction()
 
 // Collect all classified variables from an OmpAttribute attached to a loop node
 void CollectScopedVariables(OmpSupport::OmpAttribute* attribute, std::vector<SgInitializedName*>& result)
@@ -431,6 +648,8 @@ void CollectScopedVariables(OmpSupport::OmpAttribute* attribute, std::vector<SgI
   privateVars     = attribute->getVariableList(OmpSupport::e_private);
   firstprivateVars= attribute->getVariableList(OmpSupport::e_firstprivate);
   lastprivateVars = attribute->getVariableList(OmpSupport::e_lastprivate);
+  //reduction is a little different: may have multiple reduction clauses for 
+  // different reduction operators
   reductionVars   = attribute->getVariableList(OmpSupport::e_reduction);
 
   std::vector < std::pair <std::string,SgNode*> >::iterator iter;
@@ -453,7 +672,7 @@ void CollectScopedVariables(OmpSupport::OmpAttribute* attribute, std::vector<SgI
     result.push_back(initname);
   }
   for (iter=reductionVars.begin();iter!=reductionVars.end();iter++)
-  {
+  { 
     SgInitializedName* initname= isSgInitializedName((*iter).second);
     ROSE_ASSERT(initname!=NULL);
     result.push_back(initname);

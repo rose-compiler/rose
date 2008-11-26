@@ -407,11 +407,11 @@ void DepInfoAnal :: ComputeArrayDep( LoopTransformInterface &fa, const StmtRefDe
 
 		if ( !d.IsTop())
 		{
-			if (ref.commLevel > 0) {
+			if (ref.commLevel > 0) {  // Set reverse relation s2->s1
 				DepInfo d1 = Reverse(d);
 				SetDepDirection( d1, ref.commLevel, inDeps);
 			}
-			if (ref.commLevel > 0 || ref.r1.ref != ref.r2.ref) {
+			if (ref.commLevel > 0 || ref.r1.ref != ref.r2.ref) { // set depinfo for s1->s2
 				int carryLevel = SetDepDirection( d, ref.commLevel, outDeps);
 				if ( ! d.IsTop() &&
 					!(carryLevel > ref.commLevel && ref.r1.ref == ref.r2.ref) )

@@ -1,14 +1,19 @@
+/*
+ * liveness for sum: both live-in and live-out
+ * */
 int a[100], sum;
 void foo()
 {
-  int i,sum2;
+  int i,sum2,yy,zz;
   sum = 0;
   for (i=0;i<100;i++)
   {
     a[i]=i;
     sum = a[i]+ sum;    
+    yy--;
+    zz*=a[i];
   }
-  sum2=sum;
+  sum2=sum+yy+zz;
   a[1]=1;
 }
 /*

@@ -42,7 +42,7 @@ DepInfo DepInfoGenerator:: GetTopDepInfo()
   return DepInfo();
 }
 		    
-DepInfo DepInfoGenerator:: GetBottomDepInfo(int nr, int nc, int commLevel  )
+DepInfo DepInfoGenerator::GetBottomDepInfo(int nr, int nc, int commLevel  )
 {
   assert(commLevel <= nr && commLevel <= nc);
   DepInfoImpl *impl = new DepInfoImpl( nr, nc, false, commLevel); 
@@ -453,7 +453,7 @@ int DepInfo:: CarryLevel() const
   return minlevel;
 }
 
-void DepInfo :: CarryLevels( int &minLevel, int &maxLevel) const
+void DepInfo::CarryLevels( int &minLevel, int &maxLevel) const
 {
   minLevel = -1;
   maxLevel = -1;
@@ -467,17 +467,17 @@ void DepInfo :: CarryLevels( int &minLevel, int &maxLevel) const
     bool carry = true, notcarry = true;
 
     switch (t) {
-    case DEPDIR_EQ:
+    case DEPDIR_EQ: // same iteration and 0 alignment: must be loop independent
          if (align1 == 0 && align2 == 0)
              carry = false;
          else if (align1 > 0 || align2 < 0)
-             notcarry = false;
+             notcarry = false; // with non-zero alignment: must have loop carried dependence at the current level
          break;
-    case DEPDIR_LE:
+    case DEPDIR_LE:  // s1 <= s2 +n. n<0, must be loop carried dependence
          if ( align2 < 0)
              notcarry = false;
          break;
-    case DEPDIR_GE:
+    case DEPDIR_GE: // s1 >= s2 + n and min alignment factor (n) >0: 
          if (align1 > 0)
             notcarry = carry = false;
     default: break;

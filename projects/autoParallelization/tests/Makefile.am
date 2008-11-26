@@ -12,6 +12,7 @@ output_dep.c \
 output_dep2.c \
 output_dep3.c \
 private.c \
+reduction.c \
 scalar_privatization.c \
 shared.c \
 true_dep.c \
@@ -27,7 +28,6 @@ TESTCODE_CURRENTLY_FAILING = \
 inner_only.c \
 jacobi_seq.c \
 pointer.c \
-reduction.c \
 tricky_1.c \
 tricky_2.c \
 vectorize_1.c \
