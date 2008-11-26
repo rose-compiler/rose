@@ -79,12 +79,12 @@ namespace OmpSupport{
      e_reduction_plus,
      e_reduction_minus,
      e_reduction_mul,
-     e_reduction_bitand,
-     e_reduction_bitor,
+     e_reduction_bitand, // &
+     e_reduction_bitor,  // | 
 
-     e_reduction_bitxor,
-     e_reduction_logand,
-     e_reduction_logor, 
+     e_reduction_bitxor,  // ^
+     e_reduction_logand,  // &&
+     e_reduction_logor,   // ||
 
      // TODO more reduction intrinsic procedure name for Fortran  
      e_reduction_min, //?
@@ -111,6 +111,9 @@ namespace OmpSupport{
 
   //! Check if an OpenMP construct is a clause
   bool isClause(omp_construct_enum omp_type);
+
+  //! Check if an OpenMP construct is a reduction operator
+  bool isReductionOperator(omp_construct_enum omp_type);
 
   class OmpAttribute;
   //! Some utility functions to manipulate OmpAttribute
@@ -204,9 +207,13 @@ class OmpAttribute : public AstAttribute
    getExpression(omp_construct_enum targetConstruct);
 
    //!--------values for some clauses ----------
-   //! Get reduction operator from reduction(op:kind)
+   // Reduction needs special handling 
+   // since multiple ones with different operator types can co-exist within one pragma
+   // We categories reduction clauses by their operator type and store variable lists for each of the reduction operator type, not with the reduction clause
+   // Add a new reduction clauses with the specified operator
    void setReductionOperator(omp_construct_enum operatorx);
-   omp_construct_enum getReductionOperator();
+   //! Get reduction clauses for each operations,  reduction(op:kind)
+   std::vector<omp_construct_enum> getReductionOperators();
    
    // default () value
    void setDefaultValue(omp_construct_enum valuex);
@@ -244,6 +251,11 @@ private:
    std::vector<omp_construct_enum> clauses;
    std::map<omp_construct_enum,bool> clause_map;
 
+   // Multiple reduction clauses, each has a different operator
+   //value for reduction operation: + -, * & | etc
+   std::vector<omp_construct_enum> reduction_operators;
+   //omp_construct_enum reduction_operator;
+
    //variable lists------------------- 
    //appeared within some directives and clauses
    //The clauses/directive are: flush, threadprivate, private, firstprivate, 
@@ -263,9 +275,6 @@ private:
   // values for default() clause: data scoping information
    // choices are: none,shared, private, firstprivate
    omp_construct_enum default_scope; 
-   
-   //value for reduction operation: + -, * & | etc
-   omp_construct_enum reduction_operator;
 
    // value for omp for's schedule policies
    omp_construct_enum schedule_kind;
