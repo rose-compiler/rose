@@ -11,6 +11,7 @@ BinQ_SOURCES = \
 	BinQSupport.C \
 	BinQGui.C \
 	slide.C \
+	slide_moc.cpp \
         LCS.C   \
 	Clone.C \
         FunctionDiff.C \

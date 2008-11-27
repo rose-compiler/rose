@@ -8,7 +8,7 @@ using namespace std;
 
 Slide::Slide(BinQGUI* g,
 	     QWidget *parent)
-  //: QWidget(parent) // cant get this to work
+  : QWidget(parent) // cant get this to work
 {
   lastStringA=QString("  ");
   lastRowA=-1;

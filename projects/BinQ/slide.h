@@ -32,7 +32,7 @@ class Slide : public QWidget
   void mouseMoveEvent( QMouseEvent *mevt );
 
  private:
-  //  Q_OBJECT // cant get this to work
+    Q_OBJECT // cant get this to work
   
  private:
 
