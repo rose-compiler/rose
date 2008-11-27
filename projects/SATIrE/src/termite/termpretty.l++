@@ -4,7 +4,6 @@ using namespace std;
 #include <vector>
 #include <iostream> 
 #include "termite.h"
-#include "termparser.tab.h++"
 int indent = 0;
 void indent_line();
 %}
