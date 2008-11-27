@@ -58,6 +58,7 @@ class BinQGUI //: public QWidget
     SgNode* fileB;
     Slide *slide;
     int maxrows;
+    QScrollBar* bar;
 
     qrs::QRWindow *window;
     qrs::QRTable *tableWidget;
@@ -74,7 +75,7 @@ class BinQGUI //: public QWidget
     void insertFileInformation();
     std::vector<BinAnalyses*> analyses;
 
-
+    int screenWidth;
   protected:
     QComboBox *comboBox;
     qrs::QRProgress *wholeFunction;
@@ -92,7 +93,7 @@ class BinQGUI //: public QWidget
     BinQSupport* binqsupport;
     
 
-    int screenWidth;
+
     int screenHeight;
     void init();
     void createGUI();

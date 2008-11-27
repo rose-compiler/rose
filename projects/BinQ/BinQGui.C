@@ -735,8 +735,6 @@ void BinQGUI::init(){
 
 void BinQGUI::createGUI() {
   QDesktopWidget *desktop = QApplication::desktop();
-
-
   screenWidth = desktop->width()-10;
   screenHeight = desktop->height()-100;
   if (screenWidth>1450) screenWidth=1450;
@@ -762,11 +760,13 @@ void BinQGUI::createGUI() {
       QGroupBox *topPanelLeft =  topPanels <<  new QGroupBox(("Binary File Analysis Information"));
       {
         QGridLayout *echoLayout =  new QGridLayout;
-	QScrollBar* bar = new QScrollBar(Qt::Horizontal);
-	bar->setFocusPolicy(Qt::StrongFocus);
-	bar->setRange(0,slide->maxX);
-	bar->setSingleStep(1);
+	bar = new QScrollBar(Qt::Horizontal);
+	cerr << " setting range to max : " << slide->maxX << endl;
 	slide = new Slide(this, bar);
+	bar->setFocusPolicy(Qt::StrongFocus);
+	bar->setRange(0,1);
+	bar->setSingleStep(10);
+
 	//	QScrollArea* area = new QScrollArea;
 	//area->setBackgroundRole(QPalette::Dark);
 	//area->setWidget(slide);
@@ -777,7 +777,7 @@ void BinQGUI::createGUI() {
 
 	// cant get this to work
 	//QObject::connect(slide, SIGNAL(valueChanged(int)), bar, SLOT(setValue(int)));
-        //Slide::connect(bar, SIGNAL(valueChanged(int)), slide, SLOT(setValue(int)));
+        Slide::connect(bar, SIGNAL(valueChanged(int)), slide, SLOT(setValue(int)));
 
 
       }

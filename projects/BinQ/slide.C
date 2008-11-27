@@ -2,6 +2,7 @@
 #include <QPainter>
 #include <QMouseEvent>
 #include "slide.h"
+#include <QScrollBar>
 
 using namespace Qt;
 using namespace std;
@@ -20,6 +21,7 @@ Slide::Slide(BinQGUI* g,
   posX=0;
   posY=0;
   maxX=0;
+  offset=0;
 }
 
 void
@@ -51,7 +53,7 @@ void Slide::paintEvent(QPaintEvent * /* event */)
     if (color==4)   painter.setBrush(Qt::gray);
     if (color==5)   painter.setBrush(Qt::white);
     if (color==6)   painter.setBrush(Qt::darkRed);
-    painter.drawRect(QRect(pos, 0, length, 15));
+    painter.drawRect(QRect(pos-offset, 0, length, 15));
     }
   }
   maxX=pos;
@@ -72,23 +74,35 @@ void Slide::paintEvent(QPaintEvent * /* event */)
     if (color==4)   painter.setBrush(Qt::gray);
     if (color==5)   painter.setBrush(Qt::white);
     if (color==6)   painter.setBrush(Qt::darkRed);
-    painter.drawRect(QRect(pos, 15, length, 15));
+    painter.drawRect(QRect(pos-offset, 15, length, 15));
     }
   }
   if (pos>maxX) maxX=pos;
-
+  cerr << " new maxX : " << maxX << " screenwidth: " << gui->screenWidth << endl;
+  gui->bar->setRange(0,maxX-(gui->screenWidth)/1.2);
+  
   painter.setPen(Qt::white);
   painter.setBrush(Qt::NoBrush);
   painter.drawRect(QRect(posX, 0, (1), 30));
 
 }
 
+void Slide::setValue(int value) {
+  //cerr << "posX: " << posX<< " maxX:" << maxX<<"  -  value slider :  " << value << endl;
+  offset=value;
+  update();
+  updateMouse();
+}
 
 void Slide::mouseMoveEvent( QMouseEvent *mevt )
 {
   posX=mevt->pos().x();
   posY=mevt->pos().y();
-  int selected = posX;
+  updateMouse();
+}
+
+void Slide::updateMouse() {
+  int selected = posX+offset;
   Item* item = gui->byteItemFileA[selected];
   Item* item2 = gui->byteItemFileB[selected];
   ROSE_ASSERT(gui);

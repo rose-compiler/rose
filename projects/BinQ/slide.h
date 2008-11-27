@@ -17,15 +17,14 @@ class Slide : public QWidget
   ~Slide(){};
   void colorize();
   int maxX;
-
+  int offset;
+  void updateMouse();
  
  signals:
   void valueChanged(int value);
 
   public slots:
-    void setValue(int value) {
-    this->setValue(value);
-  }
+    void setValue(int value) ;
   
  protected:
   void paintEvent(QPaintEvent *event);
