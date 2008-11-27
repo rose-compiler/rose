@@ -74,6 +74,7 @@ class BinQGUI //: public QWidget
     void insertFileInformation();
     std::vector<BinAnalyses*> analyses;
 
+
   protected:
     QComboBox *comboBox;
     qrs::QRProgress *wholeFunction;

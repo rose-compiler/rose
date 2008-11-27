@@ -14,7 +14,8 @@
 #include "slide.h"
 
 #include <qtabwidget.h>
-
+#include <QtGui>
+#include <QScrollBar>
 
 #include "LCS.h"
 #include "Clone.h"
@@ -567,6 +568,23 @@ void BinQGUI::init(){
       std::string nam = "size: " + RoseBin_support::ToString(sec->get_size());
       //      item = new Item(sec->get_offset(),sec,2,row,length,pos,nam,0);
       item = new Item(sec->get_mapped_rva(),sec,2,row,length,pos,nam,0);
+    } else if (isSgAsmElfSymbol(*it)) {
+      SgAsmElfSymbol* sym = isSgAsmElfSymbol(*it);
+      std::string nam = "size: " + RoseBin_support::ToString(sym->get_name());
+      int color=6;
+      item = new Item(sym->get_st_name(),sym,color,row,length,pos,nam,0);
+    }  else if (isSgAsmElfSectionTableEntry(*it)) {
+      SgAsmElfSectionTableEntry* sec = isSgAsmElfSectionTableEntry(*it);
+      std::string nam = "size: " + RoseBin_support::ToString(sec->get_sh_size());
+      //      item = new Item(sec->get_offset(),sec,2,row,length,pos,nam,0);
+      int color=0;
+      item = new Item(sec->get_sh_addr(),sec,color,row,length,pos,nam,0);
+    }  else if (isSgAsmElfSegmentTableEntry(*it)) {
+      SgAsmElfSegmentTableEntry* sec = isSgAsmElfSegmentTableEntry(*it);
+      std::string nam = "size: " + RoseBin_support::ToString(sec->get_offset());
+      //      item = new Item(sec->get_offset(),sec,2,row,length,pos,nam,0);
+      int color=0;
+      item = new Item(sec->get_vaddr(),sec,color,row,length,pos,nam,0);
     } else {
       cerr << " >>> found pos : " << pos << "  item " << 
 	isSgAsmNode(*it)->class_name() << " length : " << length << endl;
@@ -641,12 +659,30 @@ void BinQGUI::init(){
       if (isSgFunctionDeclaration(*it)->get_file_info()->isCompilerGenerated())
 	color=3;
       item = new Item(0,func,color,row,length,pos,"",0);
+    } else if (isSgAsmElfSymbol(*it)) {
+      SgAsmElfSymbol* sym = isSgAsmElfSymbol(*it);
+      std::string nam = "size: " + RoseBin_support::ToString(sym->get_name());
+      //      item = new Item(sec->get_offset(),sec,2,row,length,pos,nam,0);
+      int color=6;
+      item = new Item(sym->get_st_name(),sym,color,row,length,pos,nam,0);
     }  else if (isSgAsmElfSection(*it)) {
       SgAsmElfSection* sec = isSgAsmElfSection(*it);
       std::string nam = "size: " + RoseBin_support::ToString(sec->get_size());
       //      item = new Item(sec->get_offset(),sec,2,row,length,pos,nam,0);
       item = new Item(sec->get_mapped_rva(),sec,2,row,length,pos,nam,0);
-    }else if (isSgLocatedNode(*it)) {
+    } else if (isSgAsmElfSectionTableEntry(*it)) {
+      SgAsmElfSectionTableEntry* sec = isSgAsmElfSectionTableEntry(*it);
+      std::string nam = "size: " + RoseBin_support::ToString(sec->get_sh_size());
+      //      item = new Item(sec->get_offset(),sec,2,row,length,pos,nam,0);
+      int color=0;
+      item = new Item(sec->get_sh_addr(),sec,color,row,length,pos,nam,0);
+    } else if (isSgAsmElfSegmentTableEntry(*it)) {
+      SgAsmElfSegmentTableEntry* sec = isSgAsmElfSegmentTableEntry(*it);
+      std::string nam = "size: " + RoseBin_support::ToString(sec->get_offset());
+      //      item = new Item(sec->get_offset(),sec,2,row,length,pos,nam,0);
+      int color=0;
+      item = new Item(sec->get_vaddr(),sec,color,row,length,pos,nam,0);
+    } else if (isSgLocatedNode(*it)) {
       Sg_File_Info* fi = isSgLocatedNode(*it)->get_file_info();
       int line = -1;
       if (fi) {
@@ -726,12 +762,26 @@ void BinQGUI::createGUI() {
       QGroupBox *topPanelLeft =  topPanels <<  new QGroupBox(("Binary File Analysis Information"));
       {
         QGridLayout *echoLayout =  new QGridLayout;
-	slide = new Slide(this);
+	QScrollBar* bar = new QScrollBar(Qt::Horizontal);
+	bar->setFocusPolicy(Qt::StrongFocus);
+	bar->setRange(0,slide->maxX);
+	bar->setSingleStep(1);
+	slide = new Slide(this, bar);
+	//	QScrollArea* area = new QScrollArea;
+	//area->setBackgroundRole(QPalette::Dark);
+	//area->setWidget(slide);
 	echoLayout->addWidget(slide, 0, 0 );
+	echoLayout->addWidget(bar);
+
         topPanelLeft->setLayout(echoLayout);
 
+	// cant get this to work
+	//QObject::connect(slide, SIGNAL(valueChanged(int)), bar, SLOT(setValue(int)));
+        //Slide::connect(bar, SIGNAL(valueChanged(int)), slide, SLOT(setValue(int)));
+
+
       }
-      topPanelLeft->setFixedHeight(70);
+      topPanelLeft->setFixedHeight(90);
       QRPanel &analysisPanel = topPanels << *new QRPanel(QROSE::LeftRight, QROSE::UseSplitter);
       {
 	QRPanel &analysisPanelLeft = analysisPanel << *new QRPanel(QROSE::TopDown, QROSE::UseSplitter);
@@ -1027,6 +1077,66 @@ void BinQGUI::showFileA(int row) {
       addRow=true;
 
 
+    } else if (isSgAsmElfSectionTableEntry(stmts)) {
+      codeTableWidget->addRows(1);
+      itemsFileA[i]->bg=QColor(0,0,0);
+      QColor back = itemsFileA[i]->bg;
+      itemsFileA[i]->fg=QColor(255,255,255);
+      QColor front = itemsFileA[i]->fg;
+      for (int j=1;j<maxrows;++j) {
+	codeTableWidget->setBgColor(back,j,i);
+	codeTableWidget->setTextColor(front,j,i);
+      }
+      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->row), 0, i);	
+      codeTableWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString(itemsFileA[i]->addr) ), 1, i);
+      codeTableWidget->setText(boost::lexical_cast<std::string>(isSgAsmElfSectionTableEntry(itemsFileA[i]->statement)->class_name()), 2, i);
+      codeTableWidget->setText(boost::lexical_cast<std::string>((isSgAsmNode(stmts))->class_name() ), 3, i);
+      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->comment ), 4, i);
+      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->pos), 5, i);	
+      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->length), 6, i);	
+      addRow=true;
+
+
+    } else if (isSgAsmElfSegmentTableEntry(stmts)) {
+      codeTableWidget->addRows(1);
+      itemsFileA[i]->bg=QColor(0,0,0);
+      QColor back = itemsFileA[i]->bg;
+      itemsFileA[i]->fg=QColor(255,255,255);
+      QColor front = itemsFileA[i]->fg;
+      for (int j=1;j<maxrows;++j) {
+	codeTableWidget->setBgColor(back,j,i);
+	codeTableWidget->setTextColor(front,j,i);
+      }
+      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->row), 0, i);	
+      codeTableWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString(itemsFileA[i]->addr) ), 1, i);
+      codeTableWidget->setText(boost::lexical_cast<std::string>(isSgAsmElfSegmentTableEntry(itemsFileA[i]->statement)->class_name()), 2, i);
+      codeTableWidget->setText(boost::lexical_cast<std::string>((isSgAsmNode(stmts))->class_name() ), 3, i);
+      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->comment ), 4, i);
+      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->pos), 5, i);	
+      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->length), 6, i);	
+      addRow=true;
+
+
+    } else if (isSgAsmElfSymbol(stmts)) {
+      codeTableWidget->addRows(1);
+      itemsFileA[i]->bg=QColor(50,50,0);
+      QColor back = itemsFileA[i]->bg;
+      itemsFileA[i]->fg=QColor(255,255,255);
+      QColor front = itemsFileA[i]->fg;
+      for (int j=1;j<maxrows;++j) {
+	codeTableWidget->setBgColor(back,j,i);
+	codeTableWidget->setTextColor(front,j,i);
+      }
+      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->row), 0, i);	
+      codeTableWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString(itemsFileA[i]->addr) ), 1, i);
+      codeTableWidget->setText(boost::lexical_cast<std::string>(isSgAsmElfSymbol(itemsFileA[i]->statement)->get_name()->get_string()), 2, i);
+      codeTableWidget->setText(boost::lexical_cast<std::string>((isSgAsmNode(stmts))->class_name() ), 3, i);
+      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->comment ), 4, i);
+      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->pos), 5, i);	
+      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->length), 6, i);	
+      addRow=true;
+
+
     } else {
       codeTableWidget->addRows(1);
       itemsFileA[i]->bg=QColor(128,128,128);
@@ -1042,7 +1152,7 @@ void BinQGUI::showFileA(int row) {
       addRow=true;
     }
     if (addRow) {
-      cout << " adding row ... " << rowC << " / " << itemsFileA.size() << endl;
+      //      cout << " adding row ... " << rowC << " / " << itemsFileA.size() << endl;
       codeTableWidget->setHAlignment(true, false, 0); // left horizontal alignment
       codeTableWidget->setHAlignment(true, false, 1); // left horizontal alignment
       codeTableWidget->setHAlignment(true, false, 2); // left horizontal alignment
@@ -1171,6 +1281,69 @@ void BinQGUI::showFileB(int row) {
       codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->row), 0, i);	
       codeTableWidget2->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString(itemsFileB[i]->addr) ), 1, i);
       codeTableWidget2->setText(boost::lexical_cast<std::string>(isSgAsmElfSection(itemsFileB[i]->statement)->get_name()->get_string()), 2, i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>((isSgAsmNode(stmts))->class_name() ), 3, i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->comment ), 4, i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->pos), 5, i);	
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->length), 6, i);	
+      addRow=true;
+
+
+    }
+    else if (isSgAsmElfSectionTableEntry(stmts)) {
+      codeTableWidget2->addRows(1);
+      itemsFileB[i]->bg=QColor(0,0,0);
+      QColor back = itemsFileB[i]->bg;
+      itemsFileB[i]->fg=QColor(255,255,255);
+      QColor front = itemsFileB[i]->fg;
+      for (int j=1;j<maxrows;++j) {
+	codeTableWidget2->setBgColor(back,j,i);
+	codeTableWidget2->setTextColor(front,j,i);
+      }
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->row), 0, i);	
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString(itemsFileB[i]->addr) ), 1, i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(isSgAsmElfSectionTableEntry(itemsFileB[i]->statement)->class_name()), 2, i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>((isSgAsmNode(stmts))->class_name() ), 3, i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->comment ), 4, i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->pos), 5, i);	
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->length), 6, i);	
+      addRow=true;
+
+
+    }
+    else if (isSgAsmElfSegmentTableEntry(stmts)) {
+      codeTableWidget2->addRows(1);
+      itemsFileB[i]->bg=QColor(0,0,0);
+      QColor back = itemsFileB[i]->bg;
+      itemsFileB[i]->fg=QColor(255,255,255);
+      QColor front = itemsFileB[i]->fg;
+      for (int j=1;j<maxrows;++j) {
+	codeTableWidget2->setBgColor(back,j,i);
+	codeTableWidget2->setTextColor(front,j,i);
+      }
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->row), 0, i);	
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString(itemsFileB[i]->addr) ), 1, i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(isSgAsmElfSegmentTableEntry(itemsFileB[i]->statement)->class_name()), 2, i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>((isSgAsmNode(stmts))->class_name() ), 3, i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->comment ), 4, i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->pos), 5, i);	
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->length), 6, i);	
+      addRow=true;
+
+
+    }
+    else if (isSgAsmElfSymbol(stmts)) {
+      codeTableWidget2->addRows(1);
+      itemsFileB[i]->bg=QColor(50,50,0);
+      QColor back = itemsFileB[i]->bg;
+      itemsFileB[i]->fg=QColor(255,255,255);
+      QColor front = itemsFileB[i]->fg;
+      for (int j=1;j<maxrows;++j) {
+	codeTableWidget2->setBgColor(back,j,i);
+	codeTableWidget2->setTextColor(front,j,i);
+      }
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->row), 0, i);	
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString(itemsFileB[i]->addr) ), 1, i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(isSgAsmElfSymbol(itemsFileB[i]->statement)->get_name()->get_string()), 2, i);
       codeTableWidget2->setText(boost::lexical_cast<std::string>((isSgAsmNode(stmts))->class_name() ), 3, i);
       codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->comment ), 4, i);
       codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->pos), 5, i);	

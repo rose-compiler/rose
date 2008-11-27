@@ -8,7 +8,7 @@ using namespace std;
 
 Slide::Slide(BinQGUI* g,
 	     QWidget *parent)
-  //  : QWidget(parent)
+  //: QWidget(parent) // cant get this to work
 {
   lastStringA=QString("  ");
   lastRowA=-1;
@@ -19,6 +19,7 @@ Slide::Slide(BinQGUI* g,
   setAutoFillBackground(true);
   posX=0;
   posY=0;
+  maxX=0;
 }
 
 void
@@ -26,6 +27,8 @@ Slide::colorize() {
   ROSE_ASSERT(gui);
   update();
 }
+
+
 
 void Slide::paintEvent(QPaintEvent * /* event */)
 {
@@ -38,7 +41,7 @@ void Slide::paintEvent(QPaintEvent * /* event */)
   for (;it!=gui->itemsFileA.end();++it) {
     Item* item = *it;
     if (item) {
-    int pos = item->pos;
+    pos = item->pos;
     int length=item->length;
     int color = item->resolvedColor;
     if (color==0)   painter.setBrush(Qt::black);
@@ -47,9 +50,11 @@ void Slide::paintEvent(QPaintEvent * /* event */)
     if (color==3)   painter.setBrush(Qt::red);
     if (color==4)   painter.setBrush(Qt::gray);
     if (color==5)   painter.setBrush(Qt::white);
+    if (color==6)   painter.setBrush(Qt::darkRed);
     painter.drawRect(QRect(pos, 0, length, 15));
     }
   }
+  maxX=pos;
 
   ite = gui->itemsFileB;
   it=gui->itemsFileB.begin();
@@ -57,7 +62,7 @@ void Slide::paintEvent(QPaintEvent * /* event */)
   for (;it!=gui->itemsFileB.end();++it) {
     Item* item = *it;
     if (item) {
-    int pos = item->pos;
+     pos = item->pos;
     int length=item->length;
     int color = item->resolvedColor;
     if (color==0)   painter.setBrush(Qt::black);
@@ -66,9 +71,11 @@ void Slide::paintEvent(QPaintEvent * /* event */)
     if (color==3)   painter.setBrush(Qt::red);
     if (color==4)   painter.setBrush(Qt::gray);
     if (color==5)   painter.setBrush(Qt::white);
+    if (color==6)   painter.setBrush(Qt::darkRed);
     painter.drawRect(QRect(pos, 15, length, 15));
     }
   }
+  if (pos>maxX) maxX=pos;
 
   painter.setPen(Qt::white);
   painter.setBrush(Qt::NoBrush);
@@ -103,9 +110,29 @@ void Slide::mouseMoveEvent( QMouseEvent *mevt )
 	  lastStringA = res;
 	  gui->console->append(res);
 	}
-      } else if (isSgAsmElfSection(stmt)) {
-	QString res = QString("FILE_A: selected Section %1")
-	.arg(isSgAsmElfSection(stmt)->get_name()->get_string().c_str());
+      } else if (isSgAsmElfSection(stmt) ||
+		 isSgAsmElfSectionTableEntry(stmt) ||
+		 isSgAsmElfSegmentTableEntry(stmt)) {
+	QString res = QString("");
+	if (isSgAsmElfSection(stmt))
+	  res = QString("FILE_A: selected Section %1")
+	    .arg(isSgAsmElfSection(stmt)->get_name()->get_string().c_str());
+	if (lastStringA!=res) {
+	  lastStringA = res;
+	  gui->console->append(res);
+	  int row = item->row;
+	  //cerr << "Selected row: " << row << "   lastRowA:" << lastRowA << endl;
+	  if (row>=0) {
+	    if (lastRowA!=row) {
+	      gui->unhighlightInstructionRow(lastRowA, true);
+	      gui->highlightInstructionRow(row, true);
+	      lastRowA=row;
+	    }
+	  }
+	}
+      } else if (isSgAsmElfSymbol(stmt)) {
+	QString res = QString("FILE_A: selected Symbol %1")
+	.arg(isSgAsmElfSymbol(stmt)->get_name()->get_string().c_str());
 	if (lastStringA!=res) {
 	  lastStringA = res;
 	  gui->console->append(res);
@@ -186,9 +213,29 @@ void Slide::mouseMoveEvent( QMouseEvent *mevt )
 	    }
 	  }
 	}
-      }else if (isSgAsmElfSection(stmt)) {
-	QString res = QString("FILE_B: selected Section %1")
+      }else if (isSgAsmElfSection(stmt) ||
+		 isSgAsmElfSectionTableEntry(stmt) ||
+		 isSgAsmElfSegmentTableEntry(stmt)) {
+	QString res = QString("");
+	if (isSgAsmElfSection(stmt))
+	  res = QString("FILE_B: selected Section %1")
 	.arg(isSgAsmElfSection(stmt)->get_name()->get_string().c_str());
+	if (lastStringB!=res) {
+	  lastStringB = res;
+	  gui->console->append(res);
+	  int row = item2->row;
+	  //cerr << "Selected row: " << row << "   lastRowA:" << lastRowA << endl;
+	  if (row>=0) {
+	    if (lastRowB!=row) {
+	      gui->unhighlightInstructionRow(lastRowB, false);
+	      gui->highlightInstructionRow(row, false);
+	      lastRowB=row;
+	    }
+	  }
+	}
+      }else if (isSgAsmElfSymbol(stmt)) {
+	QString res = QString("FILE_B: selected Symbol %1")
+	.arg(isSgAsmElfSymbol(stmt)->get_name()->get_string().c_str());
 	if (lastStringB!=res) {
 	  lastStringB = res;
 	  gui->console->append(res);
