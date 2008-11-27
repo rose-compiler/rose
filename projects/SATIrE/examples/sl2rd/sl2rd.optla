@@ -207,13 +207,13 @@ case exp of
   OrOp(a,b)               => is_sl1_expression(a) && is_sl1_expression(b);
   NotOp(a)                => is_sl1_expression(a);
 
-  /* int value; use val-int(value) for converting value to snum */
+  /* int value; use val-astint(value) for converting value to snum */
   IntVal(value)           => true;     
 
   /* match a variable ref node */
   VarRefExp(varname)      => true;  
 
-  /* boolean value (represented as int 0,1); use val-int(value) for converting to snum */
+  /* boolean value (represented as int 0,1); use val-astint(value) for converting to snum */
   BoolValExp(value)       => true; 
 
   /* initializer; this is a "wrapper" AST node around the initializer expression */
@@ -253,7 +253,7 @@ case exp of
   OrOp(a,b)               => kill_tmpvars_in_expression(a,info) glb kill_tmpvars_in_expression(b,info);
   NotOp(a)                => kill_tmpvars_in_expression(a,info);
 
-  /* int value; use val-int(value) for converting value to snum */
+  /* int value; use val-astint(value) for converting value to snum */
   IntVal(value)           => info;     
 
   /* match a variable ref node */
