@@ -160,7 +160,7 @@ clean_binary_distribution: distdir
 if BINARY_EDG_TARBALL_ENABLED
 
 rose_binary_compatibility_signature:
-	find $(srcdir)/src/ROSETTA $(srcdir)/src/frontend/CxxFrontend \( -name \*.C -o -name \*.c -o -name \*.h -o -name \*.code -o -name \*.macro -o -name astNodeList \) -a -print | env LC_ALL=C sort | xargs cat -ve | \
+	find $(srcdir)/src/ROSETTA $(srcdir)/src/frontend/CxxFrontend \( -name \*.C -o -name \*.c -o -name \*.h -o -name \*.code -o -name \*.macro -o -name astNodeList -o -name \*.yy \) -a -print | env LC_ALL=C sort | xargs cat -ve | \
 	@MD5@ | cut -f 1 -d \  > rose_binary_compatibility_signature
 
 .PHONY : rose_binary_compatibility_signature # Always rebuild the file when needed
