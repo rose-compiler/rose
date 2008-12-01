@@ -132,9 +132,7 @@ jacobi ()
   error = 10.0 * tol;
   k = 1;
 
-//  while ((k <= mits) && (error > tol))
-//  Qing's dependence analysis cannot handle while loops
-  for (k=1;k <= mits;k++)
+  while ((k <= mits) && (error > tol))
     {
       error = 0.0;
 
@@ -145,7 +143,6 @@ jacobi ()
 	for (i = 0; i < n; i++)
 	  for (j = 0; j < m; j++)
 	    uold[i][j] = u[i][j];
-
 //#pragma omp for private(i,j,resid) reduction(+:error) nowait
 	for (i = 1; i < (n - 1); i++)
 	  for (j = 1; j < (m - 1); j++)
@@ -172,7 +169,6 @@ jacobi ()
   printf ("Residual:%E\n", error);
 
 }
-
 
 void
 error_check ()

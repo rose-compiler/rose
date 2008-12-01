@@ -6,13 +6,17 @@ anti_dep.c \
 doall.c \
 doall_2.c \
 firstprivate.c \
+inner_only.c \
+jacobi_seq.c \
 lastprivate.c \
 matrixmultiply.c \
+outer_only.c \
 output_dep.c \
 output_dep2.c \
 output_dep3.c \
 private.c \
 reduction.c \
+reduction_2.c \
 scalar_privatization.c \
 shared.c \
 true_dep.c \
@@ -25,8 +29,6 @@ ifstmt.C
 # the code which can not yet be parallelized now
 # Or the needed analyses(def-use, liveness, or dependence analysis) cannot handle them yet
 TESTCODE_CURRENTLY_FAILING = \
-inner_only.c \
-jacobi_seq.c \
 pointer.c \
 tricky_1.c \
 tricky_2.c \
@@ -44,6 +46,7 @@ TESTCODE_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII
 
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict
 ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict
+ROSE_CFLAGS = -rose:C99 --edg:no_warnings -w -rose:verbose 0 --edg:restrict
 
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 # VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
@@ -53,7 +56,7 @@ C_TEST_Objects = ${C_TESTCODES_REQUIRED_TO_PASS:.c=.o}
 CXX_TEST_Objects = ${CXX_TESTCODES_REQUIRED_TO_PASS:.C=.o}
 
 $(C_TEST_Objects): ../autoPar $(@:.o=.c)
-	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.c)
+	$(VALGRIND) ../autoPar $(ROSE_CFLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.c)
 $(CXX_TEST_Objects): ../autoPar $(@:.o=.C)
 	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C)
 rose_interp1_elem.C: ../autoPar interp1_elem.C

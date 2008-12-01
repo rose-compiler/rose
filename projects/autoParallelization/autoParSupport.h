@@ -1,9 +1,11 @@
 #ifndef auto_par_support_INCLUDED
 #define auto_par_support_INCLUDED
-#include <rose.h>
 
+//Common headers for a ROSE translator
+#include <rose.h>
 #include "CommandOptions.h"
-// OpenMP attribute for OpenMP 3.0
+
+//OpenMP attribute for OpenMP 3.0
 #include "OmpAttribute.h"
 
 //Array Annotation headers
@@ -11,7 +13,7 @@
 #include <ArrayAnnot.h>
 #include <ArrayRewrite.h>
 
-//dependence graph headers
+//Dependence graph headers
 #include <AstInterface_ROSE.h>
 #include <LoopTransformInterface.h>
 #include <AnnotCollect.h>
@@ -22,22 +24,25 @@
 #include "DefUseAnalysis.h"
 #include "LivenessAnalysis.h"
 
-// Other standard C++ headers
+//Other standard C++ headers
 #include <vector>
 #include <string>
-#include <iostream>
 namespace AutoParallelization
 {
   //Handle annotation, debugging flags
   void autopar_command_processing(std::vector<std::string>&argvList);
+
   // Required analysis and their initialization
   extern DFAnalysis * defuse;
   extern LivenessAnalysis* liv;
+
   // Conduct necessary analyses on the project, can be called multiple times during program transformations. 
   bool initialize_analysis(SgProject* project=NULL,bool debug=false);
+
   //Release the resources for analyses
   void release_analysis();
-  // Return the loop invariant of a canonical loop
+
+  // Return the loop invariant of a canonical loop, return NULL otherwise
   SgInitializedName* getLoopInvariant(SgNode* loop);
   
   //Compute dependence graph for a loop, using ArrayInterface and ArrayAnnoation
@@ -45,18 +50,22 @@ namespace AutoParallelization
   
   // Get the live-in and live-out variable sets for a for loop, recomputing liveness analysis if requested (useful after program transformation)
   void GetLiveVariables(SgNode* loop, std::vector<SgInitializedName*> &liveIns,
-                       std::vector<SgInitializedName*> &liveOuts,bool reCompute=false);
+                      std::vector<SgInitializedName*> &liveOuts,bool reCompute=false);
 
-  // Collect visible referenced variables within a scope. 
-  // ignoring local variables declared within the scope. They are less interesting in many analyses
-  void CollectVisibleVaribles(SgNode* loop, std::vector<SgInitializedName*>& resultVars, bool scalarOnly=false);
+  // Collect visible referenced variables within a scope (mostly a loop). 
+  // Ignoring local variables declared within the scope. 
+  // Specially recognize nested loops' invariant variables, which are candidates for private variables
+  void CollectVisibleVaribles(SgNode* loop, std::vector<SgInitializedName*>& resultVars,std::vector<SgInitializedName*>& loopInvariants, bool scalarOnly=false);
+
+  //! Collect a loop's variables which cause any kind of dependencies. Consider scalars only if requested.
+  void CollectVariablesWithDependence(SgNode* loop, LoopTreeDepGraph* depgraph,std::vector<SgInitializedName*>& resultVars,bool scalarOnly=false);
 
   // Variable classification for a loop node 
   // Collect private, firstprivate, lastprivate, reduction and save into attribute
-  void AutoScoping(SgNode *sg_node, OmpSupport::OmpAttribute* attribute);
+  void AutoScoping(SgNode *sg_node, OmpSupport::OmpAttribute* attribute, LoopTreeDepGraph* depgraph);
 
   // Recognize reduction variables for a loop
-  void RecognizeReduction(SgNode *sg_node, OmpSupport::OmpAttribute* attribute, std::vector<SgInitializedName*>& candidateVars); 
+  std::vector<SgInitializedName*> RecognizeReduction(SgNode *sg_node, OmpSupport::OmpAttribute* attribute, std::vector<SgInitializedName*>& candidateVars); 
 
   // Collect all classified variables from an OmpAttribute attached to a loop node,regardless their omp type
   void CollectScopedVariables(OmpSupport::OmpAttribute* attribute, std::vector<SgInitializedName*>& result);
@@ -67,6 +76,9 @@ namespace AutoParallelization
 
   //Generate and insert OpenMP pragmas according to OmpAttribute
   void generatedOpenMPPragmas(SgNode* node);
+
+  //Parallelize an input loop at its outmost loop level, return true if successful
+  bool ParallelizeOutermostLoop(SgNode* loop, ArrayInterface* array_interface, ArrayAnnotation* annot);
 
 } //end namespace
 

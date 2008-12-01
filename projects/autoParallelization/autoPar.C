@@ -42,7 +42,7 @@ main (int argc, char *argv[])
      ROSE_ASSERT(sfile);
      SgGlobal *root = sfile->get_globalScope();
      SgDeclarationStatementPtrList& declList = root->get_declarations ();
-     bool hasOpenMP= false; // flag to indicate if omp.h is needed
+     bool hasOpenMP= false; // flag to indicate if omp.h is needed in this file
 
     //For each function body in the scope
      for (SgDeclarationStatementPtrList::iterator p = declList.begin(); p != declList.end(); ++p) 
@@ -55,11 +55,11 @@ main (int argc, char *argv[])
         if (defn->get_file_info()->get_filename()!=sageFile->get_file_info()->get_filename())
           continue;
         SgBasicBlock *body = defn->get_body();  
-        // For each loop (For-loop for now)
+        // For each loop 
         Rose_STL_Container<SgNode*> loops = NodeQuery::querySubTree(defn,V_SgForStatement); 
         if (loops.size()==0) continue;
- 
-        // Replace operators with their equivalent counterparts defined 
+
+        // X. Replace operators with their equivalent counterparts defined 
         // in "inline" annotations
         AstInterfaceImpl faImpl_1(body);
         CPPAstInterface fa_body(&faImpl_1);
@@ -72,61 +72,18 @@ main (int argc, char *argv[])
          array_interface.initialize(fa_body, AstNodePtrImpl(defn));
          array_interface.observe(fa_body);
        
-        // 1. Loop normalization for all loops within body
+        // X. Loop normalization for all loops within body
         NormalizeForLoop(fa_body, AstNodePtrImpl(body));
 
-        // 2. Compute dependence graph for the target loop
-        // TODO working on more loops
-        SgNode* sg_node = loops[0];
-        LoopTreeDepGraph* depgraph= ComputeDependenceGraph(sg_node, &array_interface, annot);
-        if (depgraph==NULL)
-        {
-          cout<<"Skipping a loop since failed to compute depgraph for it:"<<sg_node->unparseToString()<<endl;
-          continue;
-        }
-	// 3. variable classification (autoscoping): 
-	// This step is done before DependenceElimination(), so the irrelevant
-	// dependencies associated with the autoscoped variabled can be
-	// eliminated.
-        OmpSupport::OmpAttribute* omp_attribute = new
-	  OmpSupport::OmpAttribute();
-	ROSE_ASSERT(omp_attribute != NULL);
-	AutoScoping(sg_node, omp_attribute);
-
-       //4. Judge if loops are parallelizable
-       bool isParallelizable = true;
-       vector<DepInfo>  remainingDependences;
-       DependenceElimination(sg_node, depgraph, remainingDependences,omp_attribute,&array_interface, annot);
-       // Set to unparallelizable if it has dependences 
-       //which can not be eliminated
-       if (remainingDependences.size()>0) 
-       {
-        isParallelizable = false;
-        cout<<"\n Unparallelizable loop at line:"<<sg_node->get_file_info()->get_line()<<
-             " due to the following dependencies:"<<endl;
-        for (vector<DepInfo>::iterator iter= remainingDependences.begin();     
-             iter != remainingDependences.end(); iter ++ )
-        {
-          cout<<(*iter).toString()<<endl;
-        }
-       }
-      //comp.DetachDepGraph();// TODO release resources here
-      //5.  Attach OmpAttribute to the loop node if it is parallelizable 
-       if (isParallelizable)
-       {  
-         //= OmpSupport::buildOmpAttribute(OmpSupport::e_parallel_for,sg_node);
-	  omp_attribute->setOmpDirectiveType(OmpSupport::e_parallel_for);
-          OmpSupport::addOmpAttribute(omp_attribute,sg_node);
-          hasOpenMP = true;
-          // 6. Generate and insert #pragma omp parallel for 
-          generatedOpenMPPragmas(sg_node); 
-        } 
-       else
-       {
-	 delete omp_attribute;
-       }
-     } // end for-loop for declarations
-     // insert omp.h if OpenMP directives have been inserted into the current file 
+	for (Rose_STL_Container<SgNode*>::iterator iter = loops.begin(); 
+	    iter!= loops.end(); iter++ ) 
+	{
+	  SgNode* current_loop = *iter;
+	  //X. Parallelize loop one by one
+	  hasOpenMP = ParallelizeOutermostLoop(current_loop, &array_interface, annot);
+	}// end for loops
+      } // end for-loop for declarations
+     // insert omp.h if needed
      if (hasOpenMP)
        SageInterface::insertHeader("omp.h",false,root);
    } //end for-loop of files
