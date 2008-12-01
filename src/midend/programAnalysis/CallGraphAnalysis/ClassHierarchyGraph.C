@@ -26,7 +26,10 @@ ClassHierarchyWrapper::setAST( SgNode *proj )
   root = proj;
  }
 
-#ifdef HAVE_MYSQL
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
+//#ifdef HAVE_MYSQL
 
 ClassHierarchyWrapper::ClassHierarchyWrapper( std::string db ) 
  { 
@@ -99,7 +102,10 @@ ClassHierarchyWrapper::ClassHierarchyWrapper( SgNode *node )
   ROSE_ASSERT ( isSgProject( node ) );
   root = node;
 
-#ifdef HAVE_MYSQL
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
+  //#ifdef HAVE_MYSQL
   dbName = "__defaultClassHierarchy";
 #endif
 
@@ -228,7 +234,11 @@ ClassHierarchyWrapper::getDirectSubclasses ( SgClassDefinition * cls )
   return classList;
 }
 
-#ifdef HAVE_MYSQL
+
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
+//#ifdef HAVE_MYSQL
 // generates the class hierarchy shema ( not the classes themselves )
 void
 ClassHierarchyWrapper::createHierarchySchema ()
@@ -248,7 +258,10 @@ ClassHierarchyWrapper::createHierarchySchema ()
 }
 #endif
 
-#ifdef HAVE_MYSQL
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
+//#ifdef HAVE_MYSQL
 Rose_STL_Container<string>
 ClassHierarchyWrapper::getDirectSubclasses( string className )
 {
@@ -278,7 +291,10 @@ ClassHierarchyWrapper::getDirectSubclasses( string className )
 }
 #endif
 
-#ifdef HAVE_MYSQL
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
+//#ifdef HAVE_MYSQL
 Rose_STL_Container<string>
 ClassHierarchyWrapper::getSubclasses( string className )
 {
@@ -311,7 +327,10 @@ ClassHierarchyWrapper::getSubclasses( string className )
 }
 #endif
 
-#ifdef HAVE_MYSQL
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
+//#ifdef HAVE_MYSQL
 // writes the class hierarchy to the specified database
 void
 ClassHierarchyWrapper::writeHierarchyToDB ()

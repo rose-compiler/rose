@@ -1856,7 +1856,10 @@ GenerateDotGraph ( CallGraphCreate *graph, string fileName )
 
 #ifdef SOLVE_FUNCTION_CALLS_IN_DB
 // DQ (7/28/2005): Don't include the data base
-#ifdef HAVE_MYSQL
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
+//#ifdef HAVE_MYSQL
 // creates a db and tables for storage of graphs
 void
 CallGraphDotOutput::createCallGraphSchema ( GlobalDatabaseConnection **gDB, string dbName )
@@ -1878,8 +1881,11 @@ CallGraphDotOutput::createCallGraphSchema ( GlobalDatabaseConnection **gDB, stri
 // DQ (7/28/2005): Don't include the data base
 #endif
 
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
 // DQ (7/28/2005): Don't include the data base
-#ifdef HAVE_MYSQL
+//#ifdef HAVE_MYSQL
 // reads from DB the current maximal index of a subgraph
 int
 CallGraphDotOutput::GetCurrentMaxSubgraph ( GlobalDatabaseConnection *gDB )
@@ -1897,8 +1903,11 @@ CallGraphDotOutput::GetCurrentMaxSubgraph ( GlobalDatabaseConnection *gDB )
 // DQ (7/28/2005): Don't include the data base
 #endif
 
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
 // DQ (7/28/2005): Don't include the data base
-#ifdef HAVE_MYSQL
+//#ifdef HAVE_MYSQL
 // writes the subgraph, edge, and node info to DB
 void
 CallGraphDotOutput::writeSubgraphToDB( GlobalDatabaseConnection *gDB )
@@ -2037,8 +2046,11 @@ CallGraphDotOutput::writeSubgraphToDB( GlobalDatabaseConnection *gDB )
 // DQ (7/28/2005): Don't include the data base
 #endif
 
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
 // DQ (7/28/2005): Don't include the data base
-#ifdef HAVE_MYSQL
+//#ifdef HAVE_MYSQL
 // remove nodes and edges of functions defined in the files stored in a specified database
 // the default value for the database name is "__filter.db"
 void
@@ -2075,8 +2087,11 @@ CallGraphDotOutput::filterNodesByDB ( string dbName, string filterDB )
 // DQ (7/28/2005): Don't include the data base
 #endif
 
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
 // DQ (7/28/2005): Don't include the data base
-#ifdef HAVE_MYSQL
+//#ifdef HAVE_MYSQL
 // remove nodes and edges of functions defined in the specified file
 void
 CallGraphDotOutput::filterNodesByFilename ( string dbName, string filterFile )
@@ -2109,8 +2124,11 @@ CallGraphDotOutput::filterNodesByFilename ( string dbName, string filterFile )
 // DQ (7/28/2005): Don't include the data base
 #endif
 
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
 // DQ (7/28/2005): Don't include the data base
-#ifdef HAVE_MYSQL
+//#ifdef HAVE_MYSQL
 // remove nodes and edges of functions with a specific name
 void
 CallGraphDotOutput::filterNodesByFunction ( string dbName, SgFunctionDeclaration *function )
@@ -2135,8 +2153,11 @@ CallGraphDotOutput::filterNodesByFunction ( string dbName, SgFunctionDeclaration
 // DQ (7/28/2005): Don't include the data base
 #endif
 
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
 // DQ (7/28/2005): Don't include the data base
-#ifdef HAVE_MYSQL
+//#ifdef HAVE_MYSQL
 // solve function pointers based on type
 // TODO: virtual function pointers are not properly solved ( they are treated as regular member function pointers )
 void
@@ -2168,8 +2189,11 @@ CallGraphDotOutput::solveFunctionPointers( string dbName )
 }
 #endif
 
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
 // DQ (7/28/2005): Don't include the data base
-#ifdef HAVE_MYSQL
+//#ifdef HAVE_MYSQL
 // solve virtual function calls ( but not via pointers )
 void
 CallGraphDotOutput::solveVirtualFunctions( string dbName, string dbHierarchy )
@@ -2255,8 +2279,11 @@ CallGraphDotOutput::solveVirtualFunctions( string dbName, string dbHierarchy )
 }
 #endif
 
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
 // DQ (7/28/2005): Don't include the data base
-#ifdef HAVE_MYSQL
+//#ifdef HAVE_MYSQL
 // remove nodes and edges of functions defined in the files of a specified directory
 void
 CallGraphDotOutput::filterNodesByDirectory ( string dbName, string directory )
@@ -2287,8 +2314,11 @@ CallGraphDotOutput::filterNodesByDirectory ( string dbName, string directory )
 // DQ (7/28/2005): Don't include the data base
 #endif
 
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
 // DQ (7/28/2005): Don't include the data base
-#ifdef HAVE_MYSQL
+//#ifdef HAVE_MYSQL
 // generate a graph from the DB
 // TODO: as is now, clustering info is lost
 CallGraphCreate *
@@ -2365,7 +2395,11 @@ CallGraphDotOutput::loadGraphFromDB ( string dbName )
 #else // !SOLVE_FUNCTION_CALLS_IN_DB
 
 // DQ (7/28/2005): Don't include the data base
-#ifdef HAVE_MYSQL
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
+//#ifdef HAVE_MYSQL
+
 // creates a db and tables for storage of graphs
 void
 CallGraphDotOutput::createCallGraphSchema ( GlobalDatabaseConnection **gDB, string dbName )
@@ -2388,7 +2422,10 @@ CallGraphDotOutput::createCallGraphSchema ( GlobalDatabaseConnection **gDB, stri
 #endif
 
 // DQ (7/28/2005): Don't include the data base
-#ifdef HAVE_MYSQL
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
+//#ifdef HAVE_MYSQL
 // reads from DB the current maximal index of a subgraph
 int
 CallGraphDotOutput::GetCurrentMaxSubgraph ( GlobalDatabaseConnection *gDB )
@@ -2407,7 +2444,10 @@ CallGraphDotOutput::GetCurrentMaxSubgraph ( GlobalDatabaseConnection *gDB )
 #endif
 
 // DQ (7/28/2005): Don't include the data base
-#ifdef HAVE_MYSQL
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
+//#ifdef HAVE_MYSQL
 // writes the subgraph, edge, and node info to DB
 void
 CallGraphDotOutput::writeSubgraphToDB( GlobalDatabaseConnection *gDB )
@@ -2512,7 +2552,10 @@ CallGraphDotOutput::writeSubgraphToDB( GlobalDatabaseConnection *gDB )
 #endif
 
 // DQ (7/28/2005): Don't include the data base
-#ifdef HAVE_MYSQL
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
+//#ifdef HAVE_MYSQL
 // remove nodes and edges of functions defined in the files stored in a specified database
 // the default value for the database name is "__filter.db"
 void
@@ -2549,8 +2592,11 @@ CallGraphDotOutput::filterNodesByDB ( string dbName, string filterDB )
 // DQ (7/28/2005): Don't include the data base
 #endif
 
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
 // DQ (7/28/2005): Don't include the data base
-#ifdef HAVE_MYSQL
+//#ifdef HAVE_MYSQL
 // remove nodes and edges of functions defined in the specified file
 void
 CallGraphDotOutput::filterNodesByFilename ( string dbName, string filterFile )
@@ -2583,8 +2629,11 @@ CallGraphDotOutput::filterNodesByFilename ( string dbName, string filterFile )
 // DQ (7/28/2005): Don't include the data base
 #endif
 
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
 // DQ (7/28/2005): Don't include the data base
-#ifdef HAVE_MYSQL
+//#ifdef HAVE_MYSQL
 // remove nodes and edges of functions with a specific name
 void
 CallGraphDotOutput::filterNodesByFunction ( string dbName, SgFunctionDeclaration *function )
@@ -2609,8 +2658,11 @@ CallGraphDotOutput::filterNodesByFunction ( string dbName, SgFunctionDeclaration
 // DQ (7/28/2005): Don't include the data base
 #endif
 
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
 // DQ (7/28/2005): Don't include the data base
-#ifdef HAVE_MYSQL
+//#ifdef HAVE_MYSQL
 // remove nodes and edges of functions defined in the files of a specified directory
 void
 CallGraphDotOutput::filterNodesByDirectory ( string dbName, string directory )
@@ -2641,8 +2693,11 @@ CallGraphDotOutput::filterNodesByDirectory ( string dbName, string directory )
 // DQ (7/28/2005): Don't include the data base
 #endif
 
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
 // DQ (7/28/2005): Don't include the data base
-#ifdef HAVE_MYSQL
+//#ifdef HAVE_MYSQL
 // generate a graph from the DB
 // TODO: as is now, clustering info is lost
 CallGraphCreate *
@@ -2714,8 +2769,11 @@ CallGraphDotOutput::loadGraphFromDB ( string dbName )
 
 #endif // SOLVE_FCT_CALLS_IN_DB
 
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
 // DQ (7/28/2005): Don't include the data base
-#ifdef HAVE_MYSQL
+//#ifdef HAVE_MYSQL
 // save graph to DB,  i == 0 - don't generate new dbase
 int
 CallGraphDotOutput::writeToDB ( int i, string dbName )
