@@ -8,7 +8,11 @@
 
 // DQ (7/28/2005): Don't include the data base
 #ifdef HAVE_MYSQL
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
    #include <GlobalDatabaseConnection.h>
+#endif
 #endif
 
 #include <sstream>
@@ -360,6 +364,9 @@ class CallGraphDotOutput : public GraphDotOutput <CallGraphCreate>
 
 // DQ (7/28/2005): Don't include the data base
 #ifdef HAVE_MYSQL
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
        void createCallGraphSchema ( GlobalDatabaseConnection **gDB, std::string dbName );
        int writeToDB ( int i = 0, std::string dbName = "" );
        void writeSubgraphToDB ( GlobalDatabaseConnection *gDB );
@@ -372,6 +379,7 @@ class CallGraphDotOutput : public GraphDotOutput <CallGraphCreate>
 #ifdef SOLVE_FUNCTION_CALLS_IN_DB
        void solveFunctionPointers ( std::string dbName );
        void solveVirtualFunctions ( std::string dbName, std::string dbHierarchy );
+#endif
 #endif
 #endif
    };

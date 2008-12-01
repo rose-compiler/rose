@@ -8,9 +8,9 @@
 #ifndef GLOBALDATBASECONNECTION_H
 #define GLOBALDATBASECONNECTION_H
 
+
 // mysql interface
-// #include <sqlplus.hh>
-#include "sqlplus.hh"
+#include <sqlplus.hh>
 
 #include "TableAccess.h"
 #include "TableAccessMacros.h"
