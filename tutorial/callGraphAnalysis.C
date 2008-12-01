@@ -42,7 +42,10 @@ main( int argc, char * argv[] )
 
 // DQ (7/28/2005): Added use of macro set in config.h so that call 
 // graphs can be generated even if SQLite is not installed with ROSE.
-#ifdef HAVE_MYSQL
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
+     //#ifdef HAVE_MYSQL
      CallGraphDotOutput output( *(CGBuilder.getGraph()) );
 
      output.writeToDB( 1, "DATABASE" );
