@@ -3,6 +3,11 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # The testing of the side effect analysis depends upon the side effect analysis, 
 # which depends upon the database support within ROSE, which depends upon the use 
 # of MySQL, which is an external (and optional) piece of the ROSE puzzle.
+
+# tps (1Dec2008) : I enabled the mysql path detection and this code fails because no such include files can be found. 
+# so I disable this if --with-binarysql is used!
+if ROSE_USE_BINARY_SQL
+else
 if ROSE_USE_MYSQL_DATABASE
 
 INCLUDES = $(ROSE_INCLUDES)
@@ -66,7 +71,7 @@ check-local:	testSideEffect
 
 # endif for section of Makefile.am which is dependent upon the optional database support
 endif
-
+endif
 clean-local:
 	rm -rf Templates.DB ii_files ti_files cxx_templates
 	rm -rf rose_mm.C
