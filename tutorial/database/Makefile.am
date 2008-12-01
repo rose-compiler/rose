@@ -1,5 +1,9 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+# tps (1Dec2008) : I enabled the mysql path detection and this code fails because no such include files can be found. 
+# so I disable this if --with-binarysql is used!
+if ROSE_USE_BINARY_SQL
+else
 if ROSE_USE_MYSQL_DATABASE
 # DQ (11/13/2003): Modified to use GNU specific -idirafter option to 
 #                  correct set.h (the g++ set.h instead of the C++ mySQL set.h)
@@ -60,7 +64,7 @@ else
 TESTCODES = 
 
 endif
-
+endif
 # Could not initialize the data base and need to work with Nils to check this out
 #     simplecallgraph_testprogram.C
 
