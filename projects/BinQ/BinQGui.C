@@ -321,8 +321,6 @@ void BinQGUI::updateByteItemList() {
   showFileA(0);
   if (fileB)
     showFileB(0);
-  //  codeTableWidget->viewport()->update();
-  //codeTableWidget2->viewport()->update();
 
 }
 
@@ -761,10 +759,11 @@ void BinQGUI::createGUI() {
       {
         QGridLayout *echoLayout =  new QGridLayout;
 	bar = new QScrollBar(Qt::Horizontal);
-	cerr << " setting range to max : " << slide->maxX << endl;
 	slide = new Slide(this, bar);
+	ROSE_ASSERT(bar);
+	//	cerr << " setting range to max : " << slide->maxX << endl;
 	bar->setFocusPolicy(Qt::StrongFocus);
-	bar->setRange(0,1);
+	//	bar->setRange(0,1);
 	bar->setSingleStep(10);
 
 	//	QScrollArea* area = new QScrollArea;
@@ -987,7 +986,7 @@ void BinQGUI::showFileA(int row) {
     .arg(row);
   //    .arg(elem.size);
   console->append(res);  
-  //  std::cout << "Looking at function " << elem.function_name_B << "   row : " << row << "   size : " << elem.size << std::endl;
+  
   int rowC=0;
   int posC=0;
   for(size_t i=0; i < itemsFileA.size(); i++ )    {
@@ -1152,7 +1151,7 @@ void BinQGUI::showFileA(int row) {
       addRow=true;
     }
     if (addRow) {
-      //      cout << " adding row ... " << rowC << " / " << itemsFileA.size() << endl;
+            cout << " adding row ... " << rowC << " / " << itemsFileA.size() << endl;
       codeTableWidget->setHAlignment(true, false, 0); // left horizontal alignment
       codeTableWidget->setHAlignment(true, false, 1); // left horizontal alignment
       codeTableWidget->setHAlignment(true, false, 2); // left horizontal alignment
