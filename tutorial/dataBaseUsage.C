@@ -5,13 +5,19 @@
 using namespace std;
 
 // DQ (9/9/2005): Don't include the database by default
-#ifdef HAVE_MYSQL
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
+//#ifdef HAVE_MYSQL
    #include "GlobalDatabaseConnection.h"
 #endif
 
 int main( int argc, char * argv[] ) 
    {
-#ifdef HAVE_MYSQL
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
+     //#ifdef HAVE_MYSQL
   // Build the Data base
      GlobalDatabaseConnection *gDB;
      gDB = new GlobalDatabaseConnection( "functionNameDataBase" );
@@ -60,7 +66,10 @@ int main( int argc, char * argv[] )
 
           string functionName = functionDeclaration->get_qualified_name().str();
 
-#ifdef HAVE_MYSQL
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
+	  //#ifdef HAVE_MYSQL
           command = "INSERT INTO Functions values(\"" + functionName + "\"," + 
                   StringUtility::numberToString(counter) + ");";
        // Alternative interface
@@ -71,7 +80,10 @@ int main( int argc, char * argv[] )
 #endif
         }
 
-#ifdef HAVE_MYSQL
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
+     //#ifdef HAVE_MYSQL
      command = "SELECT * from Functions;";
 
   // Alternative Interface (using query objects)
