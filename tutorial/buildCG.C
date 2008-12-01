@@ -36,7 +36,10 @@ main( int argc, char * argv[] ) {
   //  GenerateDotGraph(CGBuilder.getGraph(),"callgraph.dot");
 
    ClassHierarchyWrapper hier( project );
-#ifdef HAVE_MYSQL
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
+   //#ifdef HAVE_MYSQL
    hier.setDBName( "ClassHierarchy" );
    hier.createHierarchySchema();
    hier.writeHierarchyToDB();
@@ -44,7 +47,10 @@ main( int argc, char * argv[] ) {
    // Use the information in the graph to output a dot file for the call graph
    CallGraphDotOutput output( *(CGBuilder.getGraph()) );
 
-#ifdef HAVE_MYSQL
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
+   //#ifdef HAVE_MYSQL
    output.writeToDB( 1, "DATABASE" );
    output.filterNodesByDirectory( "DATABASE", "/export" );
    output.filterNodesByDB( "DATABASE", "__filter.db" );
