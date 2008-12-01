@@ -45,7 +45,7 @@ if ROSE_USE_MYSQL_DATABASE
    ROSE_SIDEEFFECTS_LIBS                = -l$(ROSE_SIDEEFFECTS_LIB_NAME)
 
  # Location of boost should be set in configuration (not done yet)
-   BOOST_INCLUDE                     = -idirafter /home/thuerey1/local/include
+#   BOOST_INCLUDE                     = -idirafter /home/thuerey1/local/include
 
    ROSE_DATABASE_INCLUDE             = -I$(top_srcdir)/src/roseExtensions/databaseConnection $(BOOST_INCLUDE)
    ROSE_DATABASE_OBJS                = $(top_builddir)/src/roseExtensions/databaseConnection/*.o
