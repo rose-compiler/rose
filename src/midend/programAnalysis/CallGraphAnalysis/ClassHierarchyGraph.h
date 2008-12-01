@@ -2,7 +2,11 @@
 #define CLASS_HIERARCHY_GRAPH_H
 
 #ifdef HAVE_MYSQL
+// TPS (01Dec2008): Enabled mysql and this fails.
+// seems like it is not supposed to be included
+#if 0
    #include <GlobalDatabaseConnection.h>
+#endif
 #endif
 
 class ClassHierarchyNode : public MultiGraphElem
