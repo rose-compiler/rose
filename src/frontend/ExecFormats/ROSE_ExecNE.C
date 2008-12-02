@@ -488,6 +488,7 @@ SgAsmNESectionTable::ctor()
         /* The section */
         addr_t section_offset = entry->get_sector() << fhdr->get_e_sector_align();
         SgAsmNESection *section = new SgAsmNESection(fhdr, section_offset, 0==section_offset ? 0 : entry->get_physical_size());
+        section->grab_content();
         section->set_synthesized(false);
         section->set_id(i+1); /*numbered starting at 1, not zero*/
         section->set_purpose(SP_PROGRAM);
