@@ -1295,11 +1295,11 @@ SgAsmPEImportHNTEntry::ctor(rva_t rva)
     const uint16_t *hint_disk = (const uint16_t*)rva.get_section()->content(rva.get_rel(), 2);
     p_hint = le_to_host(*hint_disk);
     
-    const char *s = (const char*)rva.get_section()->content_str(rva.get_rel()+2);
+    std::string s = rva.get_section()->content_str(rva.get_rel()+2);
     p_name = new SgAsmBasicString(s);
     
-    if ((strlen(s)+1) % 2) {
-        p_padding = *(rva.get_section()->content(rva.get_rel()+2+strlen(s)+1, 1));
+    if (s.size()+1 % 2) {
+        p_padding = *(rva.get_section()->content(rva.get_rel()+2+s.size()+1, 1));
     } else {
         p_padding = 0;
     }
@@ -1493,7 +1493,7 @@ SgAsmPEExportDirectory::ctor(SgAsmPEExportSection *section)
     p_nameptr_rva  = le_to_host(disk->nameptr_rva);    p_nameptr_rva.set_section(section);
     p_ordinals_rva = le_to_host(disk->ordinals_rva);   p_ordinals_rva.set_section(section);
 
-    const char *name = p_name_rva.get_section()->content_str(p_name_rva.get_rel());
+    std::string name = p_name_rva.get_section()->content_str(p_name_rva.get_rel());
     p_name = new SgAsmBasicString(name);
 }
 

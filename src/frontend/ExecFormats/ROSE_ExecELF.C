@@ -1034,7 +1034,7 @@ SgAsmElfStrtab::create_storage(addr_t offset, bool shared)
         ROSE_ASSERT(get_container()->get_size()>=1);
         storage = new SgAsmStringStorage(this, "", 0);
     } else {
-        const char *s = get_container()->content_str(offset);
+        std::string s = get_container()->content_str(offset);
         storage = new SgAsmStringStorage(this, s, offset);
     }
 

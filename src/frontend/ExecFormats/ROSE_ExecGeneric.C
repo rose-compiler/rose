@@ -2024,22 +2024,25 @@ SgAsmGenericSection::content(addr_t offset, addr_t size, void *buf)
         p_extents.insert(offset, size);
 }
 
-/* Returns ptr to a NUL-terminated string */
-const char *
-SgAsmGenericSection::content_str(addr_t offset)
+/** Returns ptr to a NUL-terminated string. The string is allowed to extend past the end of the section if @p relax is true. */
+std::string
+SgAsmGenericSection::content_str(addr_t offset, bool relax)
 {
+    if (offset>=p_data.size())
+        return "";
+
     const char *ret = (const char*)&(p_data[offset]);
     size_t nchars=0;
 
     while (offset+nchars < p_data.size() && ret[nchars]) nchars++;
     nchars++; /*NUL*/
 
-    if (offset+nchars > p_data.size())
+    if (!relax && offset+nchars>p_data.size())
         throw SgAsmGenericFile::ShortRead(this, offset, nchars);
     if (!get_congealed())
         p_extents.insert(offset, nchars);
 
-    return ret;
+    return std::string(ret, nchars-1);
 }
 
 /* Like the low-level content(addr_t,addr_t) but returns an object rather than a ptr directly into the file content. This is
