@@ -739,14 +739,23 @@ SgAsmGenericFile::get_current_size() const
     return retval;
 }
 
-/* Returns a vector that points to part of the file content without actually ever referencing the file content until the
- * vector elements are referenced. */
+/** Returns a vector that points to part of the file content without actually ever referencing the file content until the
+ *  vector elements are referenced. If @p relax is true and the desired extent falls entirely or partially outside the range
+ *  of data known to the file then return an SgFileContentList with as much data as possible rather than throwing an
+ *  exception. */
 SgFileContentList
-SgAsmGenericFile::content(addr_t offset, addr_t size)
+SgAsmGenericFile::content(addr_t offset, addr_t size, bool relax)
 {
-    if (offset+size > p_data.size())
+    if (offset+size <= p_data.size()) {
+        return SgFileContentList(p_data, offset, size);
+    } else if (!relax) {
         throw SgAsmGenericFile::ShortRead(NULL, offset, size);
-    return SgFileContentList(p_data, offset, size);
+    } else if (offset > p_data.size()) {
+        return SgFileContentList(p_data, 0, 0);
+    } else {
+        size = p_data.size() - offset;
+        return SgFileContentList(p_data, offset, size);
+    }
 }
 
 /* Adds a new header to the file. This is called implicitly by the header constructor */

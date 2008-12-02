@@ -937,7 +937,7 @@ HEADER_GENERIC_FILE_START
 		const SgFileContentList& content() {			/* Entire file contents */
 			return p_data;
 		}
-		SgFileContentList content(addr_t offset, addr_t size);	/* Partial file contents */
+		SgFileContentList content(addr_t offset, addr_t size, bool relax=true);	/* Partial file contents */
 
 		/* Section lookup functions (plural) */
 		SgAsmGenericSectionPtrList get_mapped_sections() const;
