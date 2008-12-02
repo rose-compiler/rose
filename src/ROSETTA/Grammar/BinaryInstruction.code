@@ -1634,93 +1634,90 @@ HEADER_ELF_SEGMENT_TABLE_END
 
 
 HEADER_ELF_SEGMENT_TABLE_ENTRY_START
-     public:
+	public:
 
-       /* Segment types (host order). All other values are reserved. */
-          enum SegmentType {
-              PT_NULL             = 0,                    /* entry is ignored; other values of entry are undefined */
-              PT_LOAD             = 1,                    /* loadable by mapping file contents into memory (see "mapping" note below) */
-              PT_DYNAMIC          = 2,                    /* dynamic linking information */
-              PT_INTERP           = 3,                    /* segment contains NUL-terminated path name of interpreter */
-              PT_NOTE             = 4,                    /* auxiliary information */
-              PT_SHLIB            = 5,                    /* Reserved w/unspecified semantics; presence causes file to be nonconforming */
-              PT_PHDR             = 6,                    /* Segment contains the segment table itself (program header array) */
+		/* Segment types (host order). All other values are reserved. */
+		enum SegmentType {
+			PT_NULL         = 0,            /* entry is ignored; other values of entry are undefined */
+			PT_LOAD         = 1,            /* loadable by mapping file contents into memory */
+			PT_DYNAMIC      = 2,            /* dynamic linking information */
+			PT_INTERP       = 3,            /* segment contains NUL-terminated path name of interpreter */
+			PT_NOTE         = 4,            /* auxiliary information */
+			PT_SHLIB        = 5,            /* Reserved w/unspecified semantics; such a file is nonconforming */
+			PT_PHDR         = 6,            /* Segment contains the segment table itself (program header array) */
 
-	      /* OS- and Processor-specific ranges */
-              PT_LOOS             = 0x60000000,           /* Values reserved for OS-specific semantics */
-              PT_HIOS             = 0x6fffffff,
-              PT_LOPROC           = 0x70000000,           /* Values reserved for processor-specific semantics */
-              PT_HIPROC           = 0x7fffffff,
+			/* OS- and Processor-specific ranges */
+			PT_LOOS         = 0x60000000,   /* Values reserved for OS-specific semantics */
+			PT_HIOS         = 0x6fffffff,
+			PT_LOPROC       = 0x70000000,   /* Values reserved for processor-specific semantics */
+			PT_HIPROC       = 0x7fffffff,
 
-	      /* OS-specific values for GNU/Linux */
-              PT_GNU_EH_FRAME     = 0x6474e550,           /* GCC .eh_frame_hdr segment */
-              PT_GNU_STACK        = 0x6474e551,           /* Indicates stack executability */
-              PT_GNU_RELRO        = 0x6474e552,           /* Read-only after relocation */
-              PT_PAX_FLAGS        = 0x65041580,           /* Indicates PaX flag markings */
+			/* OS-specific values for GNU/Linux */
+			PT_GNU_EH_FRAME	= 0x6474e550,	/* GCC .eh_frame_hdr segment */
+			PT_GNU_STACK    = 0x6474e551,   /* Indicates stack executability */
+			PT_GNU_RELRO    = 0x6474e552,   /* Read-only after relocation */
+			PT_PAX_FLAGS    = 0x65041580,   /* Indicates PaX flag markings */
 
-	      /* OS-specific values for Sun */
-              PT_SUNWBSS          = 0x6ffffffa,           /* Sun Specific segment */
-              PT_SUNWSTACK        = 0x6ffffffb            /* Stack segment */
-          };
+			/* OS-specific values for Sun */
+			PT_SUNWBSS      = 0x6ffffffa,   /* Sun Specific segment */
+			PT_SUNWSTACK    = 0x6ffffffb    /* Stack segment */
+		};
 
-       /* Segment bit flags */
-          enum SegmentFlags {
-              PF_RESERVED         = 0x0ffffff8,           /* Reserved bits */
-              PF_XPERM            = 0x00000001,           /* Execute permission */
-              PF_WPERM            = 0x00000002,           /* Write permission */
-              PF_RPERM            = 0x00000004,           /* Read permission */
-              PF_PROC_MASK        = 0xf0000000            /* Processor-specific bits */
-          };
+		/* Segment bit flags */
+		enum SegmentFlags {
+			PF_NONE		= 0,		/* Initial value in c'tor */
+			PF_RESERVED     = 0x0ffffff8,   /* Reserved bits */
+			PF_XPERM        = 0x00000001,   /* Execute permission */
+			PF_WPERM        = 0x00000002,   /* Write permission */
+			PF_RPERM        = 0x00000004,   /* Read permission */
+			PF_PROC_MASK    = 0xf0000000    /* Processor-specific bits */
+		};
 
-       /* File format of an ELF Segment header. Byte order of members depends on e_ident value in file header. This code
-        * comes directly from "Executable and Linkable Format (ELF)", Portable Formats Specification, Version 1.1, Tool Interface
-        * Standards (TIS) and not from any header file. The 64-bit structure is gleaned from the Linux elf(5) man page. Segment
-        * table entries (a.k.a., ELF program headers) either describe process segments or give supplementary info which does not
-        * contribute to the process image.
-        *
-        * Mapping segments:
-        * */
-          struct Elf32SegmentTableEntry_disk {
-               uint32_t            p_type;                 /* kind of segment */
-               uint32_t            p_offset;               /* file offset */
-               uint32_t            p_vaddr;                /* desired mapped address of segment */
-               uint32_t            p_paddr;                /* physical address where supported (unused by System V) */
-               uint32_t            p_filesz;               /* number of bytes in the file (may be zero or other value smaller than p_memsz) */
-               uint32_t            p_memsz;                /* number of bytes when mapped (may be zero) */
-               uint32_t            p_flags;
-               uint32_t            p_align;                /* alignment for file and memory (0,1=>none); must be a power of two */
-             } __attribute__((packed));
+		/* File format of an ELF Segment header. Byte order of members depends on e_ident value in file header. This code
+		 * comes directly from "Executable and Linkable Format (ELF)", Portable Formats Specification, Version 1.1, Tool
+		 * Interface Standards (TIS) and not from any header file. The 64-bit structure is gleaned from the Linux elf(5)
+		 * man page. Segment table entries (a.k.a., ELF program headers) either describe process segments or give
+		 * supplementary info which does not contribute to the process image. */
+		struct Elf32SegmentTableEntry_disk {
+			uint32_t	p_type;		/* 0x00 kind of segment */
+			uint32_t        p_offset;       /* 0x04 file offset */
+			uint32_t        p_vaddr;        /* 0x08 desired mapped address of segment */
+			uint32_t        p_paddr;        /* 0x0c physical address where supported (unused by System V) */
+			uint32_t        p_filesz;       /* 0x20 bytes in file (may be zero or other value smaller than p_memsz) */
+			uint32_t        p_memsz;        /* 0x24 number of bytes when mapped (may be zero) */
+			uint32_t        p_flags;	/* 0x28 */
+			uint32_t        p_align;        /* 0x2c alignment for file and memory (0,1=>none); power of two */
+		} __attribute__((packed));              /* 0x30 */
 
-          struct Elf64SegmentTableEntry_disk {
-               uint32_t            p_type;
-               uint32_t            p_flags;
-               uint64_t            p_offset;
-               uint64_t            p_vaddr;
-               uint64_t            p_paddr;
-               uint64_t            p_filesz;
-               uint64_t            p_memsz;
-               uint64_t            p_align;
-             } __attribute__((packed));
+		struct Elf64SegmentTableEntry_disk {
+			uint32_t        p_type;		/* 0x00 */
+			uint32_t        p_flags;	/* 0x04 */
+			uint64_t        p_offset;	/* 0x08 */
+			uint64_t        p_vaddr;	/* 0x10 */
+			uint64_t        p_paddr;	/* 0x18 */
+			uint64_t        p_filesz;	/* 0x20 */
+			uint64_t        p_memsz;	/* 0x28 */
+			uint64_t        p_align;	/* 0x30 */
+		} __attribute__((packed));		/* 0x38 */
 
 
-          SgAsmElfSegmentTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk *disk);
-          SgAsmElfSegmentTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk *disk);
-       // virtual ~ElfSegmentTableEntry() {};
+		SgAsmElfSegmentTableEntry(SgAsmExecutableFileFormat::ByteOrder sex,
+			const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk *disk);
+		SgAsmElfSegmentTableEntry(SgAsmExecutableFileFormat::ByteOrder sex,
+			const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk *disk);
 
-          void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk*) const;
-          void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk*) const;
-	  void update_from_section(SgAsmElfSection*);
-          virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk*) const;
+		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk*) const;
+		void update_from_section(SgAsmElfSection*);
+		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+		std::string stringifyType(SgAsmElfSegmentTableEntry::SegmentType  kind) const;
 
-       // DQ (8/26/2008): Added support for clearer output in dump function
-          std::string stringifyType  ( SgAsmElfSegmentTableEntry::SegmentType  kind ) const;
-       // std::string stringifyFlags ( SgAsmElfSegmentTableEntry::SegmentFlags kind ) const;
-
-     private:
-          void ctor(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk *disk);
-          void ctor(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk *disk);
-
+	private:
+		void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk*);
+		void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk*);
 HEADER_ELF_SEGMENT_TABLE_ENTRY_END
+
+
 
 HEADER_ELF_SEGMENT_TABLE_ENTRY_LIST_START
 HEADER_ELF_SEGMENT_TABLE_ENTRY_LIST_END

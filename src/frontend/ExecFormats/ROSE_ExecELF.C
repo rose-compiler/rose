@@ -1237,11 +1237,11 @@ SgAsmElfSectionTable::parse()
         SgAsmElfSectionTableEntry *shdr = NULL;
         if (4 == fhdr->get_word_size()) {
             SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk disk;
-            content(offset, ent_size, &disk);
+            content(offset, struct_size, &disk);
             shdr = new SgAsmElfSectionTableEntry(sex, &disk);
         } else {
             SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk disk;
-            content(offset, ent_size, &disk);
+            content(offset, struct_size, &disk);
             shdr = new SgAsmElfSectionTableEntry(sex, &disk);
         }
         if (opt_size>0)
@@ -1809,20 +1809,20 @@ SgAsmElfSegmentTable::parse()
 
     /* Change the section size to include all the entries */
     ROSE_ASSERT(0==get_size());
-    extend(fhdr->get_e_phnum() * ent_size);
+    extend(nentries * ent_size);
     
     addr_t offset=0;                                /* w.r.t. the beginning of this section */
     for (size_t i=0; i<nentries; i++, offset+=ent_size) {
         /* Read/decode the segment header */
         SgAsmElfSegmentTableEntry *shdr = NULL;
         if (4==fhdr->get_word_size()) {
-            const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk *disk =
-                (const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk*)content(offset, struct_size);
-            shdr = new SgAsmElfSegmentTableEntry(sex, disk);
+            SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk disk;
+            content(offset, struct_size, &disk);
+            shdr = new SgAsmElfSegmentTableEntry(sex, &disk);
         } else {
-            const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk *disk =
-                (const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk*)content(offset, struct_size);
-            shdr = new SgAsmElfSegmentTableEntry(sex, disk);
+            SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk disk;
+            content(offset, struct_size, &disk);
+            shdr = new SgAsmElfSegmentTableEntry(sex, &disk);
         }
         shdr->set_index(i);
         if (opt_size>0)
@@ -1994,7 +1994,7 @@ SgAsmElfSegmentTable::unparse(std::ostream &f) const
         sections[i]->unparse(f);
     unparse_holes(f);
 
-    /* Calculate sizes and update the ELF File Header */
+    /* Calculate sizes. The ELF File Header should have been updated in reallocate() prior to unparsing. */
     size_t ent_size, struct_size, opt_size, nentries;
     calculate_sizes(&ent_size, &struct_size, &opt_size, &nentries);
     ROSE_ASSERT(fhdr->get_phextrasz()==opt_size);

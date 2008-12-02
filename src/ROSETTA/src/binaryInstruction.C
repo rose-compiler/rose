@@ -708,10 +708,10 @@ Grammar::setUpBinaryInstructions ()
      AsmElfSegmentTableEntry.setDataPrototype("size_t", "index", "= 0", 
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSegmentTableEntry.setDataPrototype("SgAsmElfSegmentTableEntry::SegmentType","type",
-                                              "= SgAsmElfSegmentTableEntry::PT_NULL",
+                                              "= SgAsmElfSegmentTableEntry::PT_LOAD",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSegmentTableEntry.setDataPrototype("SgAsmElfSegmentTableEntry::SegmentFlags","flags",
-                                              "= SgAsmElfSegmentTableEntry::PF_RESERVED",
+                                              "= SgAsmElfSegmentTableEntry::PF_NONE",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSegmentTableEntry.setDataPrototype("rose_addr_t","offset","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
