@@ -99,9 +99,9 @@ AlignFunction::run() {
       for (int i=0; i<offset;++i) {
 	Item* item =NULL;
 	if (i==0)
-	  item = new Item(0,NULL,4,(position+i+1),length,(oldPos),"",0);
+	  item = new Item(0,NULL,4,(position+i+1),length,length,(oldPos),"",0);
 	else
-	  item = new Item(0,NULL,4,(position+i+1),0,(oldPos)+length,"",0);
+	  item = new Item(0,NULL,4,(position+i+1),0,0,(oldPos)+length,"",0);
 	it = instance->itemsFileA.insert(it,item);
 	++it;
 	//	cerr << "    A: adding NULL item at : " << (position+i+1) << "  pos : " << (oldPos+i) <<endl;
@@ -126,9 +126,9 @@ AlignFunction::run() {
       for (int i=0; i<offset;++i) {
 	Item* item =NULL;
 	if (i==0)
-	  item = new Item(0,NULL,4,(position+i+1),length,(oldPos),"",0);
+	  item = new Item(0,NULL,4,(position+i+1),length,length,(oldPos),"",0);
 	else
-	  item = new Item(0,NULL,4,(position+i+1),0,(oldPos)+length,"",0);
+	  item = new Item(0,NULL,4,(position+i+1),0,0,(oldPos)+length,"",0);
 	it = instance->itemsFileB.insert(it,item);
 	++it;
 	//cerr << "    B: adding NULL item at : " << (position+i+1) << "  pos : " << oldPos+i<<endl;

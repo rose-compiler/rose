@@ -59,6 +59,8 @@ class BinQGUI //: public QWidget
     Slide *slide;
     int maxrows;
     QScrollBar* bar;
+    QScrollBar* bar2;
+    QScrollBar* bar3;
 
     qrs::QRWindow *window;
     qrs::QRTable *tableWidget;

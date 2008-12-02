@@ -5,11 +5,11 @@
 class Item {
  public:
   Item(rose_addr_t addr, SgNode* statement,
-       int resolvedColor, int row, int length, int pos,
+       int resolvedColor, int row, int length, int realByteSize, int pos,
        std::string comment, int lineNr):
-    addr(addr),statement(statement),
+  addr(addr),statement(statement),
     resolvedColor(resolvedColor),
-    row(row),length(length),pos(pos),
+    row(row),length(length),realByteSize(realByteSize),pos(pos),
     comment(comment),lineNr(lineNr){
     fg = QColor(128,128,128);
     bg = QColor(128,128,128);
@@ -20,6 +20,7 @@ class Item {
   int resolvedColor;
   int row;
   int length;
+  int realByteSize;
   int pos;
   std::string comment;
   int lineNr;

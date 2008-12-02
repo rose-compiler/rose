@@ -21,7 +21,9 @@ BinQ_SOURCES = \
 	BinDataFlowAnalysis.C \
 	BufferOverflow.C \
 	InterruptAnalysis.C \
-	BinDynamicInfo.C
+	BinDynamicInfo.C \
+	MyBars.C \
+	MyBars_moc.cpp
 
 
 
@@ -64,5 +66,6 @@ EXTRA_DIST = BinQGui.h \
              BinDataFlowAnalysis.h \
              BufferOverflow.h \
              InterruptAnalysis.h \
-             BinDynamicInfo.h
+             BinDynamicInfo.h \
+             MyBars.h
 
