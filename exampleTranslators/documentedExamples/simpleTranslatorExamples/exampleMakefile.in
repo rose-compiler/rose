@@ -15,7 +15,7 @@ BOOST_CPPFLAGS = @BOOST_CPPFLAGS@
 CC                    = @CC@
 CXX                   = @CXX@
 CPPFLAGS              = @CPPFLAGS@
-CXXCPPFLAGS           = @CXXCPPFLAGS@
+#CXXCPPFLAGS           = @CXXCPPFLAGS@
 CXXFLAGS              = @CXXFLAGS@
 LDFLAGS               = @LDFLAGS@
 
@@ -36,7 +36,7 @@ all: exampleTranslator
 
 # Compile the exampleTranslator using the file identityTranslator.C
 exampleTranslator.lo:
-	/bin/sh @top_builddir@/libtool --mode=compile $(CXX) $(CXXFLAGS) $(CXXCPPFLAGS) $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -c -o exampleTranslator.lo $(ROSE_SOURCE_DIR)/identityTranslator.C
+	/bin/sh @top_builddir@/libtool --mode=compile $(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -c -o exampleTranslator.lo $(ROSE_SOURCE_DIR)/identityTranslator.C
 
 exampleTranslator: exampleTranslator.lo
 	/bin/sh @top_builddir@/libtool --mode=link $(CXX) $(CXXFLAGS) $(LDFLAGS) -o exampleTranslator exampleTranslator.lo $(ROSE_LIBS)
