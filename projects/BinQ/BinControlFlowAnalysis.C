@@ -36,6 +36,8 @@ BinControlFlowAnalysis::run() {
 
 
   // control flow analysis  *******************************************************
+  ROSE_ASSERT(instance);
+  ROSE_ASSERT(instance->analysisTab);
   instance->analysisTab->setCurrentIndex(1);
   QString res = QString("Creating control flow graph ");
   instance->analysisResult->append(res);  

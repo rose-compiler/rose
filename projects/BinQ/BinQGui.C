@@ -1,6 +1,3 @@
-// tps: the following line causes the frontend to misbehave!!!
-// that is totally weird!
-//#include <boost/algorithm/string.hpp>
 #include "BinQGui.h"
 
 #include "boost/filesystem/operations.hpp" 
@@ -26,6 +23,7 @@
 #include "BinDataFlowAnalysis.h"
 #include "BufferOverflow.h"
 #include "InterruptAnalysis.h"
+#include "BinDynamicInfo.h"
 
 using namespace qrs;
 using namespace boost::filesystem;
@@ -53,7 +51,7 @@ void clicked1() {
       instance->analysisInfo->setText(instance->analyses[i]->getDescription().c_str());
       bool twoFiles = instance->analyses[i]->twoFiles();
       if (twoFiles && instance->fileB!=NULL || twoFiles==false)
-	instance->analyses[i]->run();
+	instance->currentAnalysis=instance->analyses[i];
     } 
   }
 } 
@@ -89,7 +87,7 @@ static void tableWidgetCellActivatedA(int col, int row, int oldCol, int oldRow) 
   BinQGUI *instance = QROSE::cbData<BinQGUI *>();
   instance->unhighlightFunctionRow(oldRow, true);
   instance->highlightFunctionRow(row,true);
-  return;
+    return;
 } //tableCellActivated(int col, int row, int oldCol, int oldRow)
 
 static void codeTableWidgetCellActivatedA(int col, int row, int oldCol, int oldRow) {
@@ -321,7 +319,7 @@ void BinQGUI::updateByteItemList() {
   showFileA(0);
   if (fileB)
     showFileB(0);
-
+  showFileTab();
 }
 
 
@@ -335,31 +333,31 @@ BinQGUI::insertSectionInformation(SgAsmElfSection* sec, std::string filename) {
     sectionInfo->append(elf->format_name());
     string num = RoseBin_support::ToString(elf->get_e_machine());
     sectionInfo->append( QString("Machine: %1")
-		      .arg(num.c_str()) );
+			 .arg(num.c_str()) );
     SgAsmElfSegmentTable *segments = elf->get_segment_table();
     string seg = RoseBin_support::ToString(segments);
     sectionInfo->append( QString("ElfSegmentTable: %1")
-		      .arg(seg.c_str()) );
+			 .arg(seg.c_str()) );
     SgAsmElfSectionTable *sections = elf->get_section_table();
     string sec = RoseBin_support::ToString(sections);
     sectionInfo->append( QString("ElfSectionTable: %1")
-		      .arg(sec.c_str()) );
+			 .arg(sec.c_str()) );
   } else {
-      SgAsmElfSectionTableEntry* entry= sec->get_section_entry();
-      if (entry) {
-	rose_addr_t addr = entry->get_sh_addr();
-	rose_addr_t size = entry->get_sh_size();
-	rose_addr_t offset = entry->get_sh_offset();
-	string addrS = RoseBin_support::HexToString(addr);
-	string sizeS = RoseBin_support::HexToString(size);
-	string offsetS = RoseBin_support::HexToString(offset);
-	sectionInfo->append( QString("%1           type:     %2 Addr: %3  Size: %4   Offset: %5")
-			  .arg(QString(sec->get_name()->get_string().c_str()))
-			  .arg(sec->class_name().c_str())
-			  .arg(addrS.c_str())
-			  .arg(sizeS.c_str())
-			  .arg(offsetS.c_str()));	 
-      }
+    SgAsmElfSectionTableEntry* entry= sec->get_section_entry();
+    if (entry) {
+      rose_addr_t addr = entry->get_sh_addr();
+      rose_addr_t size = entry->get_sh_size();
+      rose_addr_t offset = entry->get_sh_offset();
+      string addrS = RoseBin_support::HexToString(addr);
+      string sizeS = RoseBin_support::HexToString(size);
+      string offsetS = RoseBin_support::HexToString(offset);
+      sectionInfo->append( QString("%1           type:     %2 Addr: %3  Size: %4   Offset: %5")
+			   .arg(QString(sec->get_name()->get_string().c_str()))
+			   .arg(sec->class_name().c_str())
+			   .arg(addrS.c_str())
+			   .arg(sizeS.c_str())
+			   .arg(offsetS.c_str()));	 
+    }
   }
   sectionInfo->append(QString("Append dump information here..."));
 }
@@ -467,6 +465,7 @@ BinQGUI::BinQGUI(std::string fA, std::string fB) :
   window = new QRWindow( "mainWindow", QROSE::TopDown );
   binqsupport= new BinQSupport();
   maxrows=5;
+  currentAnalysis=NULL;
   sourceFile=false;
   init();
   createGUI();
@@ -483,6 +482,7 @@ void BinQGUI::init(){
   analyses.push_back(new BinDataFlowAnalysis());
   analyses.push_back(new BufferOverflow());
   analyses.push_back(new InterruptAnalysis());
+  analyses.push_back(new DynamicInfo());
 
 
   cerr << "Disassemble File A ... " << fileNameA << endl;
@@ -514,12 +514,12 @@ void BinQGUI::init(){
   unparseAsmStatementToFile("unparsedA.s", interpA->get_global_block());
 
   if (fileNameB!="") 
-  if(is_directory( fileNameB  ) == false && sourceFile==false) {
-    SgBinaryFile* binaryFileB = isSgBinaryFile(isSgProject(fileB)->get_fileList()[0]);
-    SgAsmFile* file2 = binaryFileB != NULL ? binaryFileB->get_binaryFile() : NULL;
-    SgAsmInterpretation* interpB = SageInterface::getMainInterpretation(file2);
-    unparseAsmStatementToFile("unparsedB.s", interpB->get_global_block());
-  }
+    if(is_directory( fileNameB  ) == false && sourceFile==false) {
+      SgBinaryFile* binaryFileB = isSgBinaryFile(isSgProject(fileB)->get_fileList()[0]);
+      SgAsmFile* file2 = binaryFileB != NULL ? binaryFileB->get_binaryFile() : NULL;
+      SgAsmInterpretation* interpB = SageInterface::getMainInterpretation(file2);
+      unparseAsmStatementToFile("unparsedB.s", interpB->get_global_block());
+    }
   // -------------------------------------------------------------------------------------
 
   itemsFileA.clear();
@@ -624,109 +624,109 @@ void BinQGUI::init(){
   }
 
   if (fileB) {
-  stmts.clear();
-  if (!sourceFile) {
-    FindAsmStatementsHeaderVisitor visStat2;
-    AstQueryNamespace::querySubTree(fileB, std::bind2nd( visStat2, &stmts ));
-  } else {
-    FindNodeVisitor visStat2;
-    AstQueryNamespace::querySubTree(fileB, std::bind2nd( visStat2, &stmts ));
-  }
-  it= stmts.begin();
-  pos=0;
-  row=0;
-  for (;it!=stmts.end();++it) {
-    Item* item = NULL;
-    int length=1;
-    if (isSgAsmFunctionDeclaration(*it)){
-      SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(*it);
-      item = new Item(func->get_address(),func,2,row,length,pos,"",0);
-    }    else if (isSgAsmBlock(*it)) {
-      continue;
-      //item = new Item(false,*it,0,1,row,0);
-    } else if (isSgAsmInstruction(*it)) {
-      SgAsmInstruction* inst = isSgAsmInstruction(*it);
-      length = isSgAsmInstruction(*it)->get_raw_bytes().size();
-      item = new Item(inst->get_address(),inst,0,row,length,pos,"",0);
-    } else if (isSgFunctionDeclaration(*it)) {
-      int color=4;
-      SgFunctionDeclaration* func = isSgFunctionDeclaration(*it);
-      SgFunctionDefinition* def = isSgFunctionDefinition(isSgFunctionDeclaration(*it)->get_definition());
-      if (def)
-	color=2;
-      if (isSgFunctionDeclaration(*it)->get_file_info()->isCompilerGenerated())
-	color=3;
-      item = new Item(0,func,color,row,length,pos,"",0);
-    } else if (isSgAsmElfSymbol(*it)) {
-      SgAsmElfSymbol* sym = isSgAsmElfSymbol(*it);
-      std::string nam = "size: " + RoseBin_support::ToString(sym->get_name());
-      //      item = new Item(sec->get_offset(),sec,2,row,length,pos,nam,0);
-      int color=6;
-      item = new Item(sym->get_st_name(),sym,color,row,length,pos,nam,0);
-    }  else if (isSgAsmElfSection(*it)) {
-      SgAsmElfSection* sec = isSgAsmElfSection(*it);
-      std::string nam = "size: " + RoseBin_support::ToString(sec->get_size());
-      //      item = new Item(sec->get_offset(),sec,2,row,length,pos,nam,0);
-      item = new Item(sec->get_mapped_rva(),sec,2,row,length,pos,nam,0);
-    } else if (isSgAsmElfSectionTableEntry(*it)) {
-      SgAsmElfSectionTableEntry* sec = isSgAsmElfSectionTableEntry(*it);
-      std::string nam = "size: " + RoseBin_support::ToString(sec->get_sh_size());
-      //      item = new Item(sec->get_offset(),sec,2,row,length,pos,nam,0);
-      int color=0;
-      item = new Item(sec->get_sh_addr(),sec,color,row,length,pos,nam,0);
-    } else if (isSgAsmElfSegmentTableEntry(*it)) {
-      SgAsmElfSegmentTableEntry* sec = isSgAsmElfSegmentTableEntry(*it);
-      std::string nam = "size: " + RoseBin_support::ToString(sec->get_offset());
-      //      item = new Item(sec->get_offset(),sec,2,row,length,pos,nam,0);
-      int color=0;
-      item = new Item(sec->get_vaddr(),sec,color,row,length,pos,nam,0);
-    } else if (isSgLocatedNode(*it)) {
-      Sg_File_Info* fi = isSgLocatedNode(*it)->get_file_info();
-      int line = -1;
-      if (fi) {
-	line = fi->get_line();
-	length = 1;
-      }
-      //      cerr << fi << " creating statement : " << isSgLocatedNode(*it)->class_name() << " ... comment " << line << endl;
-      item = new Item(line,isSgLocatedNode(*it),0,row,length,pos,
-		      isSgLocatedNode(*it)->class_name(),line);
+    stmts.clear();
+    if (!sourceFile) {
+      FindAsmStatementsHeaderVisitor visStat2;
+      AstQueryNamespace::querySubTree(fileB, std::bind2nd( visStat2, &stmts ));
     } else {
-      //      cerr << "unknown node " << endl;//*it->class_name() << endl;
-      //      item = new Item(false,NULL,0,0,row,0,pos, " ",0);
+      FindNodeVisitor visStat2;
+      AstQueryNamespace::querySubTree(fileB, std::bind2nd( visStat2, &stmts ));
     }
-    //example -- color calls red
-    if (isSgAsmx86Instruction(*it)) {
-      length = isSgAsmInstruction(*it)->get_raw_bytes().size();
-      if (isSgAsmx86Instruction(*it)->get_kind() == x86_call) {
-	SgAsmx86Instruction* inst = isSgAsmx86Instruction(*it);
-	SgAsmOperandList * ops = inst->get_operandList();
-	SgAsmExpressionPtrList& opsList = ops->get_operands();
-	std::string addrDest="";
-	SgAsmExpressionPtrList::iterator itOP = opsList.begin();
-	for (;itOP!=opsList.end();++itOP) {
-	  addrDest += unparseX86Expression(*itOP, false) ;
+    it= stmts.begin();
+    pos=0;
+    row=0;
+    for (;it!=stmts.end();++it) {
+      Item* item = NULL;
+      int length=1;
+      if (isSgAsmFunctionDeclaration(*it)){
+	SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(*it);
+	item = new Item(func->get_address(),func,2,row,length,pos,"",0);
+      }    else if (isSgAsmBlock(*it)) {
+	continue;
+	//item = new Item(false,*it,0,1,row,0);
+      } else if (isSgAsmInstruction(*it)) {
+	SgAsmInstruction* inst = isSgAsmInstruction(*it);
+	length = isSgAsmInstruction(*it)->get_raw_bytes().size();
+	item = new Item(inst->get_address(),inst,0,row,length,pos,"",0);
+      } else if (isSgFunctionDeclaration(*it)) {
+	int color=4;
+	SgFunctionDeclaration* func = isSgFunctionDeclaration(*it);
+	SgFunctionDefinition* def = isSgFunctionDefinition(isSgFunctionDeclaration(*it)->get_definition());
+	if (def)
+	  color=2;
+	if (isSgFunctionDeclaration(*it)->get_file_info()->isCompilerGenerated())
+	  color=3;
+	item = new Item(0,func,color,row,length,pos,"",0);
+      } else if (isSgAsmElfSymbol(*it)) {
+	SgAsmElfSymbol* sym = isSgAsmElfSymbol(*it);
+	std::string nam = "size: " + RoseBin_support::ToString(sym->get_name());
+	//      item = new Item(sec->get_offset(),sec,2,row,length,pos,nam,0);
+	int color=6;
+	item = new Item(sym->get_st_name(),sym,color,row,length,pos,nam,0);
+      }  else if (isSgAsmElfSection(*it)) {
+	SgAsmElfSection* sec = isSgAsmElfSection(*it);
+	std::string nam = "size: " + RoseBin_support::ToString(sec->get_size());
+	//      item = new Item(sec->get_offset(),sec,2,row,length,pos,nam,0);
+	item = new Item(sec->get_mapped_rva(),sec,2,row,length,pos,nam,0);
+      } else if (isSgAsmElfSectionTableEntry(*it)) {
+	SgAsmElfSectionTableEntry* sec = isSgAsmElfSectionTableEntry(*it);
+	std::string nam = "size: " + RoseBin_support::ToString(sec->get_sh_size());
+	//      item = new Item(sec->get_offset(),sec,2,row,length,pos,nam,0);
+	int color=0;
+	item = new Item(sec->get_sh_addr(),sec,color,row,length,pos,nam,0);
+      } else if (isSgAsmElfSegmentTableEntry(*it)) {
+	SgAsmElfSegmentTableEntry* sec = isSgAsmElfSegmentTableEntry(*it);
+	std::string nam = "size: " + RoseBin_support::ToString(sec->get_offset());
+	//      item = new Item(sec->get_offset(),sec,2,row,length,pos,nam,0);
+	int color=0;
+	item = new Item(sec->get_vaddr(),sec,color,row,length,pos,nam,0);
+      } else if (isSgLocatedNode(*it)) {
+	Sg_File_Info* fi = isSgLocatedNode(*it)->get_file_info();
+	int line = -1;
+	if (fi) {
+	  line = fi->get_line();
+	  length = 1;
 	}
-	string s="<...>";
-	for (unsigned int j=0; j<funcsFileB.size();++j) {
-	  SgAsmFunctionDeclaration* f = isSgAsmFunctionDeclaration(funcsFileB[j]);
-	  string addrF= RoseBin_support::HexToString(f->get_address());
-	  addrF="0x"+addrF.substr(1,addrF.size());
-	  if (addrF==addrDest) {
-	    s="<"+f->get_name()+">";
-	    break;
+	//      cerr << fi << " creating statement : " << isSgLocatedNode(*it)->class_name() << " ... comment " << line << endl;
+	item = new Item(line,isSgLocatedNode(*it),0,row,length,pos,
+			isSgLocatedNode(*it)->class_name(),line);
+      } else {
+	//      cerr << "unknown node " << endl;//*it->class_name() << endl;
+	//      item = new Item(false,NULL,0,0,row,0,pos, " ",0);
+      }
+      //example -- color calls red
+      if (isSgAsmx86Instruction(*it)) {
+	length = isSgAsmInstruction(*it)->get_raw_bytes().size();
+	if (isSgAsmx86Instruction(*it)->get_kind() == x86_call) {
+	  SgAsmx86Instruction* inst = isSgAsmx86Instruction(*it);
+	  SgAsmOperandList * ops = inst->get_operandList();
+	  SgAsmExpressionPtrList& opsList = ops->get_operands();
+	  std::string addrDest="";
+	  SgAsmExpressionPtrList::iterator itOP = opsList.begin();
+	  for (;itOP!=opsList.end();++itOP) {
+	    addrDest += unparseX86Expression(*itOP, false) ;
 	  }
-	}
-	delete item;
-	item = new Item(inst->get_address(),inst,3,row,length,pos,s,0);
+	  string s="<...>";
+	  for (unsigned int j=0; j<funcsFileB.size();++j) {
+	    SgAsmFunctionDeclaration* f = isSgAsmFunctionDeclaration(funcsFileB[j]);
+	    string addrF= RoseBin_support::HexToString(f->get_address());
+	    addrF="0x"+addrF.substr(1,addrF.size());
+	    if (addrF==addrDest) {
+	      s="<"+f->get_name()+">";
+	      break;
+	    }
+	  }
+	  delete item;
+	  item = new Item(inst->get_address(),inst,3,row,length,pos,s,0);
 
+	}
+      }
+      if (item) {
+	row++;
+	itemsFileB.push_back(item);
+	pos+=length;
       }
     }
-    if (item) {
-      row++;
-      itemsFileB.push_back(item);
-      pos+=length;
-    }
-  }
   }
 
 }
@@ -791,20 +791,19 @@ void BinQGUI::createGUI() {
 	  for (unsigned int i=0; i < analyses.size(); ++i){
 	    new QListWidgetItem((analyses[i]->name().c_str()), listWidget);
 	  }
-	  //	  new QListWidgetItem(("Align Functions Smart"), listWidget);
-	  //new QListWidgetItem(("Binary Diff"), listWidget);
 
-	  QROSE::link(listWidget, 
-		      SIGNAL(itemSelectionChanged()), 
-		      &clicked1, this);
-
+	   QROSE::link(listWidget, 
+	        SIGNAL(itemSelectionChanged()), 
+	        &clicked1, this);
+	  
 	  qtabwidgetL->insertTab(0,listWidget,"Analyses");
 
 	  analysisInfo = analysisPanelLeft << new QTextEdit;//new QREdit(QREdit::Box);
 	  analysisInfo->setReadOnly(true);
 	  
 	}
-	analysisPanelLeft.setFixedWidth(screenWidth/4 );
+	analysisPanelLeft.setFixedWidth(screenWidth/5 );
+	analysisPanelLeft.setTileSize(80);
 	//	analysisPanelLeft.setFixedHeight(170);
 
 	QRPanel &analysisPanelRight = analysisPanel << *new QRPanel(QROSE::LeftRight, QROSE::UseSplitter);
@@ -913,6 +912,13 @@ void BinQGUI::reset() {
 
 void
 BinQGUI::run( ) {
+  //  cerr << " calling run!! " << endl;
+  if (currentAnalysis)
+    currentAnalysis->run();
+}
+
+void 
+BinQGUI::showFileTab() {
   QROSE::unlink(tableWidget, SIGNAL(activated(int, int, int, int)));
   while(tableWidget->rowCount()) 
     tableWidget->removeRow(0);
@@ -965,9 +971,7 @@ BinQGUI::run( ) {
   QROSE::link(tableWidget, SIGNAL(activated(int, int, int, int)),  &tableWidgetCellActivatedA, this);
   if (fileB)
     QROSE::link(tableWidget2, SIGNAL(activated(int, int, int, int)),  &tableWidgetCellActivatedB, this);
-  showFileA(0);
-  if (fileB)
-    showFileB(0);
+  
 }
 
 
@@ -1151,7 +1155,8 @@ void BinQGUI::showFileA(int row) {
       addRow=true;
     }
     if (addRow) {
-            cout << " adding row ... " << rowC << " / " << itemsFileA.size() << endl;
+      if ((rowC%100)==0)
+	cout << " adding row ... " << rowC << " / " << itemsFileA.size() << endl;
       codeTableWidget->setHAlignment(true, false, 0); // left horizontal alignment
       codeTableWidget->setHAlignment(true, false, 1); // left horizontal alignment
       codeTableWidget->setHAlignment(true, false, 2); // left horizontal alignment

@@ -74,6 +74,8 @@ class BinQGUI //: public QWidget
     void insertSectionInformation(SgAsmElfSection* sec,std::string filename);
     void insertFileInformation();
     std::vector<BinAnalyses*> analyses;
+    BinAnalyses* currentAnalysis;
+
 
     int screenWidth;
   protected:
@@ -91,8 +93,8 @@ class BinQGUI //: public QWidget
     std::vector<SgNode*> funcsFileA;
     std::vector<SgNode*> funcsFileB;
     BinQSupport* binqsupport;
+    void showFileTab();
     
-
 
     int screenHeight;
     void init();

@@ -539,6 +539,8 @@ InterruptAnalysis::run() {
 
   // call graph analysis  *******************************************************
   instance->analysisTab->setCurrentIndex(1);
+  ROSE_ASSERT(instance->analysisTab);
+  instance->analysisTab->setCurrentIndex(1);
   QString res = QString("Creating dataflow graph ");
   instance->analysisResult->append(res);  
   

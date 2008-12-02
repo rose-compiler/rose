@@ -78,7 +78,7 @@ void Slide::paintEvent(QPaintEvent * /* event */)
     }
   }
   if (pos>maxX) maxX=pos;
-  cerr << " new maxX : " << maxX << " screenwidth: " << gui->screenWidth << endl;
+  //  cerr << " new maxX : " << maxX << " screenwidth: " << gui->screenWidth << endl;
   gui->bar->setRange(0,maxX-(gui->screenWidth)/1.2);
   
   painter.setPen(Qt::white);

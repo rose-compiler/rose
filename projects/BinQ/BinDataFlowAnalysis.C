@@ -35,6 +35,8 @@ BinDataFlowAnalysis::run() {
   VirtualBinCFG::AuxiliaryInformation* info = new VirtualBinCFG::AuxiliaryInformation(file);
 
   // call graph analysis  *******************************************************
+  ROSE_ASSERT(instance);
+  ROSE_ASSERT(instance->analysisTab);
   instance->analysisTab->setCurrentIndex(1);
   QString res = QString("Creating dataflow graph ");
   instance->analysisResult->append(res);  

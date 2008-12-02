@@ -36,6 +36,8 @@ BinCallGraph::run() {
 
   // call graph analysis  *******************************************************
   cerr << " creating call graph ... " << endl;
+  ROSE_ASSERT(instance);
+  ROSE_ASSERT(instance->analysisTab);
   instance->analysisTab->setCurrentIndex(1);
   QString res = QString("Creating call graph ");
   instance->analysisResult->append(res);  
