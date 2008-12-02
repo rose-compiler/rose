@@ -48,6 +48,7 @@ int main(int argc, char **argv)
   opt = new ShapeAnalyzerOptions();
   ShapeCommandLineParser clp;
   clp.parse(opt,argc,argv);
+  init_termite(argc, argv);
   bool outputAll = opt->analysisWholeProgram();
 
   /* set the PAG options as specified on the command line */
