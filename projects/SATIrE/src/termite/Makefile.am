@@ -56,8 +56,7 @@ term2rose_SOURCES = toC.C
 term2rose_LDADD = libtermite.a -lrose
 rose2term_LDADD = libtermite.a -lrose
 
-CLEANFILES = termparser.c++ termparser.h termlexer.c++ termpretty.c++ \
-	     termparser.tab.c++ termparser.tab.h++ \
+CLEANFILES = termpretty.c++ \
 	     dfiparser.c++ dfiparser.h dfiscanner.c++ \
              dfiparser.tab.c++ dfiparser.tab.h++
 
@@ -66,7 +65,6 @@ nobase_include_HEADERS = \
 	satire/TermPrinter.h \
 	\
 	satire/PrologToRose.h \
-	satire/termparser.h \
 	satire/PrologTerm.h \
 	satire/PrologCompTerm.h	\
 	satire/PrologList.h \
@@ -80,15 +78,26 @@ if WITH_SWI_PROLOG
   AM_LDFLAGS += $(SWI_PROLOG_LDADD)
 
 else
+  CLEANFILES += termparser.c++ termparser.h termlexer.c++ termparser.tab.c++ \
+	        termparser.tab.h++
   BUILT_SOURCES = termparser.tab.c++ termparser.tab.h++ \
                   dfiparser.tab.c++ dfiparser.tab.h++
   libtermite_a_SOURCES += termparser.y++ termparser.tab.h++ termlexer.l++
-  nobase_include_HEADERS += satire/termparser.h 
+  nobase_include_HEADERS += satire/termparser.h
 endif
 
 EXTRA_DIST = \
   README doc tests \
+  doc/bonitz_manual.pdf doc/thesis_bonitz.ps \
+  \
+  tests/test1.C tests/test4.C tests/test6.C tests/test9.C tests/test_control.C \
+  tests/test_struct.C tests/test2.C tests/test5b.C tests/test7.C \
+  tests/test_class1.C tests/test_enum.C tests/test_transformme.C tests/test3.C \
+  tests/test5.C tests/test8.C tests/test_class2.C tests/test_minimal.C \
+  tests/test_typedef.C \
+  \
   c2term term2c \
-  dfiparser.y++ dfiparser.tab.h++ dfiscanner.l++ \
+  dfiparser.y++ dfiscanner.l++ \
   clang/README clang/INSTALL clang/BUILD-clang.sh clang/clang-termite.patch
+
 
