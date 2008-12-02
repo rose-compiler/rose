@@ -4,6 +4,7 @@
 %{
 #include "parse_header.h"
 #include "parseDotGrammar.h"
+#include <cstring>
 int yyerror(const char *s);
 %}
 

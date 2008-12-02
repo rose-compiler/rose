@@ -6,7 +6,7 @@
 #include "parse_header.h"
 #include <sstream>
 #include <queue>
-
+#include <cstring>
 using namespace std;
 
 extern ofstream GML;
