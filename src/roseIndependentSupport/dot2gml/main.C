@@ -2,7 +2,7 @@
 
 #include "parse_header.h"
 #include <libgen.h>
-
+#include <cstdlib>
 using namespace std;
 
 ofstream GML;
