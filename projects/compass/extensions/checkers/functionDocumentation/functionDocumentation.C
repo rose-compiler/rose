@@ -82,55 +82,52 @@ Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
 
 }
 
+
+bool isDocumented(SgFunctionDeclaration* funcDecl)
+{
+  bool isComment = false;
+
+  if(funcDecl == NULL )
+    return isComment;
+
+  AttachedPreprocessingInfoType* comments =
+    funcDecl->getAttachedPreprocessingInfo();
+
+  if (comments!=NULL) {
+    AttachedPreprocessingInfoType::iterator i;
+    for (i=comments->begin(); i!= comments->end(); i++) {
+      PreprocessingInfo::DirectiveType dirType = (*i)->getTypeOfDirective();
+
+      if( dirType == PreprocessingInfo::C_StyleComment || 
+          dirType == PreprocessingInfo::CplusplusStyleComment )
+      {
+        isComment =true;
+        break;
+      }
+    }
+  }
+
+  return isComment;
+};
+
 void
 CompassAnalyses::FunctionDocumentation::Traversal::
 visit(SgNode* sgNode)
 { 
   // Implement your traversal here.  
-  AttachedPreprocessingInfoType* comments=NULL;
   if (isSgFunctionDeclaration(sgNode)) 
     {
       SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(sgNode);
-      bool skip = funcDecl->get_file_info()->isCompilerGenerated();
-      if (skip)
+      if (funcDecl->get_file_info()->isCompilerGenerated() 
+          || funcDecl->get_definingDeclaration() != sgNode
+          )
         return;
-      comments = funcDecl->getAttachedPreprocessingInfo();
-      bool isComment = false;
-      if (comments!=NULL) {
-        AttachedPreprocessingInfoType::iterator i;
-        for (i=comments->begin(); i!= comments->end(); i++) {
-          std::string commentStr = (*i)->getString().c_str() ;
-          if (commentStr.find("//")!=std::string::npos ||
-              commentStr.find("/*")!=std::string::npos ) {
-            isComment=true;
-          }
-        }
-      }
-      if (!isComment) {
-        std::string funcName = funcDecl->get_qualified_name();
-        output->addOutput(new CheckerOutput(funcDecl, funcName));
-      }
 
-    }
-  if (isSgMemberFunctionDeclaration(sgNode)) 
-    {
-      SgFunctionDeclaration* funcDecl = isSgMemberFunctionDeclaration(sgNode);
-      bool skip = funcDecl->get_file_info()->isCompilerGenerated();
-      if (skip)
-        return;
-      comments = funcDecl->getAttachedPreprocessingInfo();
-      bool isComment = false;
-      if (comments!=NULL) {
-        AttachedPreprocessingInfoType::iterator i;
-        for (i=comments->begin(); i!= comments->end(); i++) {
-          std::string commentStr = (*i)->getString().c_str() ;
-          if (commentStr.find("//")!=std::string::npos ||
-              commentStr.find("/*")!=std::string::npos ) {
-            isComment=true;
-          }
-        }
-      }
-      if (!isComment) {
+
+      if (!( isDocumented( funcDecl) || 
+          isDocumented(isSgFunctionDeclaration(funcDecl->get_firstNondefiningDeclaration()))
+           ) 
+         ) {
         std::string funcName = funcDecl->get_qualified_name();
         output->addOutput(new CheckerOutput(funcDecl, funcName));
       }
