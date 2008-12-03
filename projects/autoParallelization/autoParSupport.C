@@ -717,15 +717,20 @@ RecognizeReduction(SgNode *loop, OmpSupport::OmpAttribute* attribute, std::vecto
          assign_rhs = isSgAssignOp(exp_stmt->get_expression())->get_rhs_operand();
          ROSE_ASSERT(assign_lhs && assign_rhs);
          // x must show up in both lhs and rhs in any order:
-         //  e.g.: ref1 = re2 op exp or ref2 = ref1 op exp
+         //  e.g.: ref1 = ref2 op exp or ref2 = ref1 op exp
          if (((assign_lhs==ref_exp1)&&SageInterface::isAncestor(assign_rhs,ref_exp2))
              ||((assign_lhs==ref_exp2)&&SageInterface::isAncestor(assign_rhs,ref_exp1)))
          {
            // assignment's rhs must match the associative binary operations
            // +, *, -, &, ^ ,|, &&, ||
            SgBinaryOp * binop = isSgBinaryOp(assign_rhs);
-           if (binop!=NULL){
+          if (binop!=NULL){
              SgExpression* op_lhs = binop->get_lhs_operand();
+             SgExpression* op_rhs = binop->get_rhs_operand();
+             // double check that the binary expression has either ref1 or ref2 as one operand 
+             if( !((op_lhs==ref_exp1)||(op_lhs==ref_exp2)) 
+                && !((op_rhs==ref_exp1)||(op_rhs==ref_exp2)))
+               continue;
              bool isOnLeft = false; // true if it has form (refx op exp), instead (exp or refx)
              if ((op_lhs==ref_exp1)||   // TODO might have in between !!
                  (op_lhs==ref_exp2))

@@ -1496,8 +1496,8 @@ double my_time()
 	return( (double)(ruse.ru_utime.tv_sec+ruse.ru_utime.tv_usec*1.0e-6) );
 }
 
-DepInfo PlatoOmegaDepTesting::
-ComputeArrayDep(LoopTransformInterface &fa, DepInfoAnal& anal,
+DepInfo 
+PlatoOmegaDepTesting::ComputeArrayDep(LoopTransformInterface &fa, DepInfoAnal& anal,
                        const DepInfoAnal::StmtRefDep& ref, DepType deptype)
 {	
    if ((DebugDep() || debug_ComputeArrayDep) && UseOmega())

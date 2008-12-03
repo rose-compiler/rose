@@ -397,25 +397,28 @@ is_access_array_length( CPPAstInterface& fa, const AstNodePtr& orig, AstNodePtr*
    return false;
 }
 
-bool ArrayAnnotation ::
-is_access_array_elem( CPPAstInterface& fa, const SymbolicVal& orig, AstNodePtr* array, SymbolicFunction::Arguments* args)
+bool 
+ArrayAnnotation::is_access_array_elem( CPPAstInterface& fa, const SymbolicVal& orig, AstNodePtr* array, SymbolicFunction::Arguments* args)
 {
    // It calls CPPTypeCollection<ArrayDefineDescriptor>::is_known_member_function() 
    // Add random access operator as a default element access function
+   // There is another similar version below for AST input
   if ((arrays.is_known_member_function( fa, orig, array, args) == "elem") ||
-      (arrays.is_known_member_function( fa, orig, array, args) == "operator[]") ){
+      (arrays.is_known_member_function( fa, orig, array, args) == "operator[]")||
+      (arrays.is_known_member_function( fa, orig, array, args) == "at") ){
     return true;
   }
   return false;
 }
 
-bool ArrayAnnotation ::
-is_access_array_elem( CPPAstInterface& fa, const AstNodePtr& orig, 
+bool 
+ArrayAnnotation::is_access_array_elem( CPPAstInterface& fa, const AstNodePtr& orig, 
                       AstNodePtr* arrayp,
                       CPPAstInterface::AstNodeList* args)
 {
   if ((arrays.is_known_member_function( fa, orig, arrayp, args) == "elem") ||
-      (arrays.is_known_member_function( fa, orig, arrayp, args) == "operator[]") ){
+      (arrays.is_known_member_function( fa, orig, arrayp, args) == "operator[]")||
+      (arrays.is_known_member_function( fa, orig, arrayp, args) == "at") ){
     return true;
   }
   return false;

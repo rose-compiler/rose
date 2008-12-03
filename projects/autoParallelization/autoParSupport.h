@@ -77,7 +77,7 @@ namespace AutoParallelization
   //Generate and insert OpenMP pragmas according to OmpAttribute
   void generatedOpenMPPragmas(SgNode* node);
 
-  //Parallelize an input loop at its outmost loop level, return true if successful
+  //Parallelize an input loop at its outermost loop level, return true if successful
   bool ParallelizeOutermostLoop(SgNode* loop, ArrayInterface* array_interface, ArrayAnnotation* annot);
 
 } //end namespace

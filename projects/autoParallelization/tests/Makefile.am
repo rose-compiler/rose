@@ -17,6 +17,7 @@ output_dep3.c \
 private.c \
 reduction.c \
 reduction_2.c \
+reduction_fake.c \
 scalar_privatization.c \
 shared.c \
 true_dep.c \
@@ -29,6 +30,9 @@ ifstmt.C
 # the code which can not yet be parallelized now
 # Or the needed analyses(def-use, liveness, or dependence analysis) cannot handle them yet
 TESTCODE_CURRENTLY_FAILING = \
+iterator1.C \
+iterator_const1.C \
+list1.C \
 pointer.c \
 tricky_1.c \
 tricky_2.c \
@@ -64,17 +68,22 @@ rose_interp1_elem.C: ../autoPar interp1_elem.C
 rose_doall_vector.C: ../autoPar doall_vector.C
 	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c -annot $(srcdir)/std_vector.annot $(srcdir)/doall_vector.C
 
+rose_doall_vector2.C: ../autoPar doall_vector2.C
+	$(VALGRIND) ../autoPar $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c -annot $(srcdir)/std_vector.annot $(srcdir)/doall_vector2.C
+
+
 check-local:
 	@echo "Test for ROSE automatic parallelization."
 	@$(MAKE) $(C_TEST_Objects)
 	@$(MAKE) $(CXX_TEST_Objects)
 	@$(MAKE) rose_interp1_elem.C
 	@$(MAKE) rose_doall_vector.C
+	@$(MAKE) rose_doall_vector2.C
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/projects/autoParallelization/tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
 
-EXTRA_DIST = $(ALL_TESTCODES) funcs.annot floatArray.annot Index.annot simpleA++.h interp1_elem.C doall_vector.C
+EXTRA_DIST = $(ALL_TESTCODES) funcs.annot floatArray.annot Index.annot simpleA++.h interp1_elem.C doall_vector.C doall_vector2.C
 
 clean-local:
 	rm -f *.o rose_*.[cC] *.dot 

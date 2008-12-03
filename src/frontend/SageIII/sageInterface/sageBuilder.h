@@ -181,8 +181,9 @@ Expressions are usually built using bottomup approach, i.e. buiding operands fir
 
 // JJW (11/19/2008): _nfi versions of functions set file info objects to NULL (used in frontend)
 
-//! Build a null expression
+//! Build a null expression, set file info as the default one
 SgNullExpression* buildNullExpression();
+//! No file info version of buildNullExpression(). File info is to be set later on. 
 SgNullExpression* buildNullExpression_nfi();
 
 //! Build a bool value expression, the name convention of SgBoolValExp is little different from others for some unknown reason
