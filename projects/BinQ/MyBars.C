@@ -50,13 +50,14 @@ void MyBars::paintEvent(QPaintEvent * /* event */)
 	QString name = QString("%1")
 	  .arg(sec->get_name()->get_string().c_str());
 	int size =  item->realByteSize;
+	//	int REALPOS = sec->get_offset();
 	size=size/10;
 	if (even)
 	  painter.setBrush(Qt::yellow);
 	else
 	  painter.setBrush(Qt::gray);
 	even=!even;
-	painter.drawRect(QRect(-offset, yoffset-offsetY, size, 15));
+	painter.drawRect(QRect(offset, yoffset-offsetY, size, 15));
 	painter.setPen(QColor(0, 0, 0));
 	painter.drawText(0, 12+yoffset-offsetY, name);
 	yoffset+=16;

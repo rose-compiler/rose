@@ -44,28 +44,54 @@ DynamicInfo::run() {
   SgAsmGenericSectionPtrList sectionsList = genericF->get_sections();
   for (unsigned int i=0;i<sectionsList.size();++i) {
     SgAsmGenericSection* h = sectionsList[i];
-    if (h->get_name()->get_string()!=".dynamic")
-      continue;
-    SgAsmElfSection* elfSec = isSgAsmElfSection(h);
-    if (elfSec) {
-      SgAsmElfSectionTableEntry* entry= elfSec->get_section_entry();
-      if (entry) {
-	rose_addr_t addr = entry->get_sh_addr();
-	rose_addr_t size = entry->get_sh_size();
-	rose_addr_t offset = entry->get_sh_offset();
-	string addrS = RoseBin_support::HexToString(addr);
-	string sizeS = RoseBin_support::HexToString(size);
-	string offsetS = RoseBin_support::HexToString(offset);
-	instance->analysisResult->append( QString("%1           type:     %2 Addr: %3  Size: %4   Offset: %5")
-			  .arg(QString(h->get_name()->get_string().c_str()))
-			  .arg(h->class_name().c_str())
-			  .arg(addrS.c_str())
-			  .arg(sizeS.c_str())
-			  .arg(offsetS.c_str()));	 
+    SgAsmElfSymbolSection* symSec = isSgAsmElfSymbolSection(h);
+    if (symSec) {
+      instance->analysisResult->append( QString("\nFound Symbol Section. ---------------------------"));
+      Rose_STL_Container<SgAsmElfSymbol*> list = symSec->get_symbols()->get_symbols();
+      Rose_STL_Container<SgAsmElfSymbol*>::const_iterator it = list.begin();
+      for (;it!=list.end();++it) {
+	SgAsmElfSymbol* entry = *it;
+	string name = entry->get_name()->get_string();
+	instance->analysisResult->append(QString("  Found Symbol : %1").arg(name.c_str()));
       }
+    }
+
+    SgAsmElfDynamicSection* elfSec = isSgAsmElfDynamicSection(h);
+    if (elfSec) {
+      instance->analysisResult->append( QString("\nFound Dynamic section. ---------------------------"));
+      Rose_STL_Container<SgAsmElfDynamicEntry*> list = elfSec->get_entries()->get_entries();
+      Rose_STL_Container<SgAsmElfDynamicEntry*>::const_iterator it = list.begin();
+      for (;it!=list.end();++it) {
+	SgAsmElfDynamicEntry* entry = *it;
+	int nr = entry->get_d_tag();	
+	rose_rva_t address = entry->get_d_val();
+	SgAsmElfDynamicEntry::EntryType en = entry->get_d_tag();
+	/*
+	instance->analysisResult->append(QString("Found an entry %1: %2     loc: %3")
+					 .arg(nr)
+					 .arg(entry->stringify_tag(en))
+					 .arg(RoseBin_support::ToString(address).c_str()));
+	*/
+	if (nr==1) {
+	  Rose_STL_Container<unsigned char> chars = entry->get_extra();
+	  instance->analysisResult->append(QString("  Found DL_NEEDED.  Contains %1 chars.   loc: %2").
+					   arg(chars.size())
+					   .arg(RoseBin_support::ToString(address).c_str()));
+
+#if 0
+
+	  Rose_STL_Container<unsigned char>::const_iterator itC = chars.begin();
+	  for (;itC!=chars.end();++itC) {
+	    unsigned char c = *itC;
+	    cerr << "Found chars : " << c << endl;
+	  }	  
+#endif
+
+	}
+      }
+
     } else {
-      instance->analysisResult->append( QString("%1")
-			.arg(h->class_name().c_str()));
+      //instance->analysisResult->append( QString("%1").arg(h->class_name().c_str()));
     }
   }
 

@@ -507,6 +507,10 @@ void BinQGUI::init(){
   AST_BIN_Traversal* trav = new AST_BIN_Traversal();
   trav->run(fileA, filename);
 
+  // ------------------------------------------------------------
+  // can be used with  -rose:read_executable_file_format_only
+  //  generateDOTforMultipleFile ( *isSgProject(fileA) );
+  // ------------------------------------------------------------
   
   // this part writes the file out to an assembly file -----------------------------------
   SgBinaryFile* binaryFileA = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
@@ -566,7 +570,6 @@ void BinQGUI::init(){
     } else if (isSgAsmElfSection(*it)) {
       SgAsmElfSection* sec = isSgAsmElfSection(*it);
       std::string nam = "size: " + RoseBin_support::ToString(sec->get_size());
-      //      item = new Item(sec->get_offset(),sec,2,row,length,pos,nam,0);
       item = new Item(sec->get_mapped_rva(),sec,2,row,length,sec->get_size(),pos,nam,0);
     } else if (isSgAsmElfSymbol(*it)) {
       SgAsmElfSymbol* sym = isSgAsmElfSymbol(*it);
