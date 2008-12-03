@@ -31,16 +31,10 @@ libtermite_a_SOURCES = \
 	dfiparser.tab.c++ dfiparser.tab.h++ dfiscanner.c++ \
 	PrologToRose.C PrologTerm.C
 
-termparser.tab.c++: $(srcdir)/termparser.y++ Makefile
-	$(YACC) -d $(srcdir)/termparser.y++ && \
-	mv y.tab.c termparser.tab.c++ && \
-	mv y.tab.h termparser.tab.h++
 
 dfiparser.tab.c++: $(srcdir)/dfiparser.y++ Makefile
 	bison -p dfi -d $(srcdir)/dfiparser.y++
 
-# dummy dependendcy for make -j
-termparser.tab.h++: termparser.tab.c++
 dfiparser.tab.h++: dfiparser.tab.c++
 
 dfiscanner.c++: $(srcdir)/dfiscanner.l++ Makefile
@@ -84,6 +78,15 @@ else
                   dfiparser.tab.c++ dfiparser.tab.h++
   libtermite_a_SOURCES += termparser.y++ termparser.tab.h++ termlexer.l++
   nobase_include_HEADERS += satire/termparser.h
+
+termparser.tab.c++: $(srcdir)/termparser.y++ Makefile
+	$(YACC) -d $(srcdir)/termparser.y++ && \
+	mv y.tab.c termparser.tab.c++ && \
+	mv y.tab.h termparser.tab.h++
+
+# dummy dependendcy for make -j
+termparser.tab.h++: termparser.tab.c++
+
 endif
 
 EXTRA_DIST = \
