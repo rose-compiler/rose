@@ -1716,11 +1716,9 @@ Grammar::setUpBinaryInstructions ()
      AsmGenericHeader.setDataPrototype("SgAsmGenericSectionList*","sections","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+
+
   // This data structure represents the ExecFile from file: ExecGeneric.h
-  // int                 fd;             // File descriptor opened for read-only (or negative)
-  // struct stat64       sb;             // File attributes at time of file open (valid if fd>=0)
-  // unsigned char       *data;          // Content of file mapped into memory   (or null on file error)
-  // std::vector<ExecHeader*> headers;   // All format headers belonging to this file
      AsmGenericFile.setFunctionPrototype ( "HEADER_GENERIC_FILE", "../Grammar/BinaryInstruction.code");
 
   // Later we will want to turn this back on so that this IR node is consistant with the others (if appropriate).
@@ -1745,6 +1743,9 @@ Grammar::setUpBinaryInstructions ()
   /* All known holes (areas otherwise unreferenced by parsing) */
      AsmGenericFile.setDataPrototype("SgAsmGenericSectionList*", "holes", "= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AsmGenericFile.setDataPrototype("bool", "truncate_zeros", "= false",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
   // This data structure represents the ExecFile from file: ExecGeneric.h
   // ExecFamily          family;                         // General format: ELF, PE, etc.
