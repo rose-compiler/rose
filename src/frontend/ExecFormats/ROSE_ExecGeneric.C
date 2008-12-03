@@ -1642,6 +1642,8 @@ SgAsmGenericFile::dump(FILE *f) const
     fprintf(f, "  %3s 0x%08"PRIx64"%*s EOF", overlap, get_current_size(), 76, "");
     if (get_current_size()!=p_data.size())
         fprintf(f, " (original EOF was 0x%08zx)", p_data.size());
+    if (get_truncate_zeros())
+        fputs(" [ztrunc]", f);
     fputc('\n', f);
     fprintf(f, "  --- ---------- ---------- ----------  ---------- ---------- ---------- ---------- ---- --- -----------------\n");
 }
@@ -3692,7 +3694,8 @@ SgAsmExecutableFileFormat::unparseBinaryFormat(std::ostream &f, SgAsmFile *asmFi
     /* Extend the file to the full size. The unparser will not write zero bytes at the end of a file because some files
      * actually use the fact that sections that extend past the EOF will be zero padded.  For the time being we'll extend the
      * file to its full size. */
-    ef->extend_to_eof(f);
+    if (!ef->get_truncate_zeros())
+        ef->extend_to_eof(f);
 }
 
 // FIXME: This cut-n-pasted version of Exec::ELF::parse() is out-of-date (rpm 2008-07-10)
@@ -3752,5 +3755,10 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
         }
     }
     ef->congeal();
+
+    /* Is the file large enough to hold all sections?  If any section extends past the EOF then set truncate_zeros, which will
+     * cause the unparser to not write zero bytes to the end of the file. */
+    ef->set_truncate_zeros(ef->get_current_size()>ef->get_orig_size());
+
     return ef;
 }
