@@ -3688,12 +3688,8 @@ SgAsmExecutableFileFormat::unparseBinaryFormat(std::ostream &f, SgAsmFile *asmFi
     SgAsmGenericFile *ef = asmFile->get_genericFile();
     ROSE_ASSERT(ef);
 
-    if (checkIsModifiedFlag(ef)) {
-        std::cerr <<"calling reallocate()\n";
+    if (checkIsModifiedFlag(ef))
         ef->reallocate();
-    } else {
-        std::cerr <<"not reallocating\n";
-    }
 
     ef->unparse(f);
 
