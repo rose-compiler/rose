@@ -585,7 +585,8 @@ GrammarString::buildCopyMemberFunctionSource ( bool buildConstructorArgument )
           string sourceVariableName;
 
        // Not all data members have access functions (though this might be fixed at some point)
-          if ( automaticGenerationOfDataAccessFunctions == BUILD_ACCESS_FUNCTIONS || 
+          if ( automaticGenerationOfDataAccessFunctions == BUILD_ACCESS_FUNCTIONS ||
+               automaticGenerationOfDataAccessFunctions == BUILD_FLAG_ACCESS_FUNCTIONS ||
                automaticGenerationOfDataAccessFunctions == BUILD_LIST_ACCESS_FUNCTIONS )
              {
                copyOfVariableName = variableName + "_copy";
@@ -693,6 +694,7 @@ GrammarString::getDataAccessFunctionPrototypeString () const
      case TAG_NO_ACCESS_FUNCTIONS:
            break;
      case TAG_BUILD_ACCESS_FUNCTIONS:
+     case TAG_BUILD_FLAG_ACCESS_FUNCTIONS:
 	  returnString = "     public: \n         " + typeNameStringTmp + " get_" +
 	                 variableNameStringTmp + "() const;\n         void set_"  
                          + variableNameStringTmp + "(" + typeNameStringTmp + " " + 

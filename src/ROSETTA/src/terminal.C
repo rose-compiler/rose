@@ -351,6 +351,7 @@ StringUtility::FileWithLineNumbers Terminal::buildCopyMemberFunctionSource ()
                                  }
 
                               case TAG_BUILD_ACCESS_FUNCTIONS:
+                              case TAG_BUILD_FLAG_ACCESS_FUNCTIONS:
                                  {
 
                                 // DQ (9/24/2005): Added comments to generated code!
@@ -752,6 +753,9 @@ Terminal::buildDataAccessFunctions ( const GrammarString & inputMemberData)
         {
           case TAG_BUILD_ACCESS_FUNCTIONS:
                filename = "../Grammar/dataMemberAccessFunctions.macro";
+               break;
+          case TAG_BUILD_FLAG_ACCESS_FUNCTIONS:
+               filename = "../Grammar/flagMemberAccessFunctions.macro";
                break;
           case TAG_BUILD_LIST_ACCESS_FUNCTIONS:
                filename = "../Grammar/listMemberAccessFunctions.macro";

@@ -1,0 +1,20 @@
+DATA_ACCESS_FUNCTION_START
+// *** DATA ACCESS FUNCTION SECTION BEGINS HERE ***
+
+$DATA_TYPE 
+$CLASSNAME::get_$DATA () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_$DATA;
+   }
+
+void
+$CLASSNAME::set_$DATA ( $DATA_TYPE $DATA )
+   {
+     ROSE_ASSERT (this != NULL);
+     $TEST_DATA_POINTER
+     p_$DATA = $DATA;
+   }
+
+// *** DATA ACCESS FUNCTION SECTION ENDS HERE ***
+DATA_ACCESS_FUNCTION_END

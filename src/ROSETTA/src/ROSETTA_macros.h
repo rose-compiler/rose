@@ -28,6 +28,7 @@ class ConstructParamEnum { // Wrapper for extra argument type checking
 
 typedef enum { TAG_NO_ACCESS_FUNCTIONS,
                TAG_BUILD_ACCESS_FUNCTIONS,
+               TAG_BUILD_FLAG_ACCESS_FUNCTIONS, // Just like TAG_BUILD_ACCESS_FUNCTIONS except doesn't set p_isModified
                TAG_BUILD_LIST_ACCESS_FUNCTIONS}
  BuildAccessEnumX;
 
@@ -145,6 +146,7 @@ extern const ConstructParamEnum CONSTRUCTOR_PARAMETER;
 
 extern const BuildAccessEnum NO_ACCESS_FUNCTIONS;
 extern const BuildAccessEnum BUILD_ACCESS_FUNCTIONS;
+extern const BuildAccessEnum BUILD_FLAG_ACCESS_FUNCTIONS;
 extern const BuildAccessEnum BUILD_LIST_ACCESS_FUNCTIONS;
 
 extern const CopyConfigEnum NO_COPY_DATA;
