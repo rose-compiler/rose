@@ -73,7 +73,7 @@ int main( int argc, char **argv )
 
 
   QROSE::init(argc,argv);
-  BinQGUI binGui(fileA,fileB);
+  BinQGUI binGui(fileA,fileB,dllA,dllB);
   binGui.run();
   return QROSE::exec();
 }

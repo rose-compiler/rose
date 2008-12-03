@@ -462,11 +462,13 @@ BinQGUI::insertFileInformation() {
 }
 
 
-BinQGUI::BinQGUI(std::string fA, std::string fB) :  
+BinQGUI::BinQGUI(std::string fA, std::string fB, std::vector<std::string> dllAA, std::vector<std::string> dllBB) :  
   window(0), fileNameA(fA), fileNameB(fB) {
   window = new QRWindow( "mainWindow", QROSE::TopDown );
   binqsupport= new BinQSupport();
   maxrows=5;
+  dllA=dllAA;
+  dllB=dllBB;
   currentAnalysis=NULL;
   sourceFile=false;
   init();
@@ -498,6 +500,24 @@ void BinQGUI::init(){
     ROSE_ASSERT(fileB);
     if (sourceFileS=="true")
       sourceFile=true;
+  }
+
+  if (dllA.size()>0) {
+    std::vector<std::string>::const_iterator nameIt = dllA.begin();
+    for (;nameIt!=dllA.end();++nameIt) {
+      string name = *nameIt;
+      SgNode* node = binqsupport->disassembleFile(name, sourceFileS);
+      dllFilesA.push_back(node);
+    }
+  }
+
+  if (dllB.size()>0) {
+    std::vector<std::string>::const_iterator nameIt = dllB.begin();
+    for (;nameIt!=dllB.end();++nameIt) {
+      string name = *nameIt;
+      SgNode* node = binqsupport->disassembleFile(name, sourceFileS);
+      dllFilesB.push_back(node);
+    }
   }
 
   ROSE_ASSERT(isSgProject(fileA));

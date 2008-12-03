@@ -29,7 +29,7 @@ class BinQSupport;
 class BinQGUI //: public QWidget
 {
   public:
-  BinQGUI(std::string, std::string);
+  BinQGUI(std::string, std::string,     std::vector<std::string> dllA,     std::vector<std::string> dllB);
     ~BinQGUI();
     void run( ) ;
     void open();
@@ -56,6 +56,11 @@ class BinQGUI //: public QWidget
     QTextEdit *analysisInfo;
     SgNode* fileA;
     SgNode* fileB;
+
+    
+    std::vector<SgNode*> dllFilesA;
+    std::vector<SgNode*> dllFilesB;
+
     Slide *slide;
     int maxrows;
     QScrollBar* bar;
@@ -102,6 +107,9 @@ class BinQGUI //: public QWidget
     void init();
     void createGUI();
     bool sourceFile;
+
+    std::vector<std::string> dllA;
+    std::vector<std::string> dllB;
    
 }; //class BinQGUI
 
