@@ -1502,6 +1502,7 @@ HEADER_ELF_DYNAMIC_SECTION_START
 		using SgAsmElfSection::calculate_sizes;
 		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const;
 		virtual void set_linked_section(SgAsmElfSection*);   /* Parsing happens here rather than in constructor */
+		virtual bool reallocate();
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 	private:

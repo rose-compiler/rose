@@ -2372,7 +2372,11 @@ SgAsmElfDynamicEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     strcpy(label, stringify_tag(p_d_tag));
     for (char *s=label; *s; s++) *s = tolower(*s);
 
-    fprintf(f, "%s%-*s = %s\n", p, w, label, p_d_val.to_string().c_str());
+    fprintf(f, "%s%-*s = %s", p, w, label, p_d_val.to_string().c_str());
+    if (p_name)
+        fprintf(f, " \"%s\"", p_name->c_str());
+    fputc('\n', f);
+
     if (p_extra.size()>0) {
         fprintf(f, "%s%-*s = %zu bytes\n", p, w, "extra", p_extra.size());
         hexdump(f, 0, std::string(p)+"extra at ", p_extra);
@@ -2457,6 +2461,7 @@ SgAsmElfDynamicSection::set_linked_section(SgAsmElfSection *_strsec)
               /* Offset to NUL-terminated library name in the linked-to (".dynstr") section. */
               ROSE_ASSERT(entry->get_d_val().get_section()==NULL);
               SgAsmStoredString *name = new SgAsmStoredString(strsec->get_strtab(), entry->get_d_val().get_rva());
+              entry->set_name(name);
               fhdr->add_dll(new SgAsmGenericDLL(name));
               break;
           }
@@ -2515,6 +2520,22 @@ SgAsmElfDynamicSection::set_linked_section(SgAsmElfSection *_strsec)
             break;
         }
     }
+}
+
+/* Called prior to unparse to make things consistent. */
+bool
+SgAsmElfDynamicSection::reallocate()
+{
+    bool reallocated = SgAsmElfSection::reallocate();
+
+    for (size_t i=0; i<p_entries->get_entries().size(); i++) {
+        SgAsmElfDynamicEntry *entry = p_entries->get_entries()[i];
+        SgAsmGenericString *name = entry->get_name();
+        if (name)
+            entry->set_d_val(name->get_offset());
+    }
+    
+    return reallocated;
 }
 
 /* Write the dynamic section back to disk */
