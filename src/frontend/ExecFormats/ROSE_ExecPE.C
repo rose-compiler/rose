@@ -568,7 +568,7 @@ SgAsmPEFileHeader::reallocate()
     if (get_coff_symtab()) {
         ROSE_ASSERT(get_coff_symtab()->get_header()==this);
         set_e_coff_symtab(get_coff_symtab()->get_offset());
-        set_e_coff_nsyms(get_coff_symtab()->get_symbols()->get_symbols().size());
+        set_e_coff_nsyms(get_coff_symtab()->get_nslots());
     }
 
     /* Update some additional header fields */
@@ -621,7 +621,7 @@ SgAsmPEFileHeader::unparse(std::ostream &f) const
     /* Write sections that are pointed to by the file header */
     if (p_coff_symtab) {
         ROSE_ASSERT(p_e_coff_symtab == p_coff_symtab->get_offset());
-        ROSE_ASSERT(p_e_coff_nsyms == p_coff_symtab->get_symbols()->get_symbols().size());
+        ROSE_ASSERT(p_e_coff_nsyms == p_coff_symtab->get_nslots());
         p_coff_symtab->unparse(f);
     }
     
@@ -2173,6 +2173,20 @@ SgAsmCoffSymbolTable::ctor()
         i += symbol->get_st_num_aux_entries();
         p_symbols->get_symbols().push_back(symbol);
     }
+}
+
+/** Returns the number of COFF Symbol Table slots occupied by the symbol table. The number of slots can be larger than the
+ *  number of symbols since some symbols might have auxiliary entries. */
+size_t
+SgAsmCoffSymbolTable::get_nslots() const
+{
+    size_t nsyms = p_symbols->get_symbols().size();
+    size_t nslots = nsyms;
+    for (size_t i=0; i<nsyms; i++) {
+        SgAsmCoffSymbol *symbol = p_symbols->get_symbols()[i];
+        nslots += symbol->get_st_num_aux_entries();
+    }
+    return nslots;
 }
 
 /* Write symbol table back to disk */

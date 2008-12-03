@@ -2148,24 +2148,18 @@ HEADER_PE_SECTION_TABLE_START
 
 HEADER_PE_SECTION_TABLE_END
 
+
+
 HEADER_PE_COFF_SYMBOL_TABLE_START
-     public:
-          SgAsmCoffSymbolTable(SgAsmPEFileHeader *fhdr);
-       // virtual ~COFFSymtab() {}
-
-          virtual void unparse(std::ostream&) const;
-          virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-
-       /* Accessors for protected/private data members */
-       // std::vector<SgAsmCoffSymbol*>& get_symbols() {return symbols;}
-       // ExecSection *get_strtab() {return strtab;}
-
-     private:
-          void ctor();
-       // std::vector<COFFSymbol*> symbols;
-       // ExecSection *strtab;                /* Section containing symbol names */
-
+	public:
+		SgAsmCoffSymbolTable(SgAsmPEFileHeader *fhdr);
+		size_t get_nslots() const;
+		virtual void unparse(std::ostream&) const;
+		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+	private:
+		void ctor();
 HEADER_PE_COFF_SYMBOL_TABLE_END
+
 
 
 HEADER_PE_EXTENDED_DOS_HEADER_START
