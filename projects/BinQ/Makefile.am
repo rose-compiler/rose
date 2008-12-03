@@ -32,6 +32,15 @@ BinQ_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
 
 INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I.
 
+test_1:
+	./BinQ -a $(srcdir)/buffer2.bin $(srcdir)/buffer2b.bin  
+
+test_2:
+	./BinQ -a $(srcdir)/buffer2.bin $(srcdir)/buffer2-tsv  
+
+test_3:
+	./BinQ -a $(srcdir)/buffer2.bin $(srcdir)/buffer2.c  
+
 
 check-local:
 #	./BinQ --fileA $(srcdir)/buffer2.bin --fileB $(srcdir)/buffer2b.bin  
