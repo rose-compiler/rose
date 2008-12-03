@@ -3688,7 +3688,13 @@ SgAsmExecutableFileFormat::unparseBinaryFormat(std::ostream &f, SgAsmFile *asmFi
     SgAsmGenericFile *ef = asmFile->get_genericFile();
     ROSE_ASSERT(ef);
 
-    ef->reallocate();
+    if (checkIsModifiedFlag(ef)) {
+        std::cerr <<"calling reallocate()\n";
+        ef->reallocate();
+    } else {
+        std::cerr <<"not reallocating\n";
+    }
+
     ef->unparse(f);
 
     /* Extend the file to the full size. The unparser will not write zero bytes at the end of a file because some files
@@ -3698,7 +3704,6 @@ SgAsmExecutableFileFormat::unparseBinaryFormat(std::ostream &f, SgAsmFile *asmFi
         ef->extend_to_eof(f);
 }
 
-// FIXME: This cut-n-pasted version of Exec::ELF::parse() is out-of-date (rpm 2008-07-10)
 /* Top-level binary executable file parser. Given the name of a file, open the file, detect the format, parse the file,
  * and return information about the file. */
 void
@@ -3725,7 +3730,7 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
     } else if (SgAsmLEFileHeader::is_LE(ef)) { /*or LX*/
         SgAsmLEFileHeader::parse(ef);
     } else if (SgAsmDOSFileHeader::is_DOS(ef)) {
-        /* Must be after PE and NE all PE and NE files are also DOS files */
+        /* Must be after PE and NE since all PE and NE files are also DOS files */
         SgAsmDOSFileHeader::parse(ef);
     } else {
         delete ef; ef=NULL;

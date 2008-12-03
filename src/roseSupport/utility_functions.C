@@ -81,12 +81,15 @@ frontend (const std::vector<std::string>& argv)
 
   // DQ (9/6/2005): I have abandoned this form or prelinking (AT&T C Front style).
   // To be honest I find this level of technology within ROSE to be embarassing...
-  // We not handle prelinking by generating all required template instantiatios 
-  // as static functions.  A more global based prelinker will be built at some 
+  // We not handle prelinking by generating all required template instantiations
+  // as static functions.  A more global based prelinker will be built at some
   // point and will likely utilize the SGLite database or some other auxiliary file
   // mechansism.
   // DQ (3/31/2004): If there are templates used then we need to modify the *.ti file build by EDG.
   // buildTemplateInstantiationSupportFile ( project );
+
+     /* Make sure the isModified boolean is clear for all newly-parsed nodes. */
+     checkIsModifiedFlag(project);
 
      return project;
    }
