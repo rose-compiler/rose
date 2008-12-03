@@ -684,7 +684,9 @@ Grammar::setUpBinaryInstructions ()
      AsmElfDynamicEntry.setFunctionPrototype ( "HEADER_ELF_DYNAMIC_ENTRY", "../Grammar/BinaryInstruction.code");
      AsmElfDynamicEntry.setDataPrototype("SgAsmElfDynamicEntry::EntryType","d_tag","= SgAsmElfDynamicEntry::DT_NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfDynamicEntry.setDataPrototype("rose_rva_t", "d_val", "", 
+     AsmElfDynamicEntry.setDataPrototype("rose_rva_t", "d_val", "",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfDynamicEntry.setDataPrototype("SgAsmGenericString*", "name", "= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfDynamicEntry.setDataPrototype("SgUnsignedCharList","extra","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
