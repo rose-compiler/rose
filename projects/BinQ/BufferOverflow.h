@@ -14,6 +14,7 @@ class BufferOverflow : public BinAnalyses,  RoseBin_DataFlowAbstract {
   BufferOverflow(){};
   virtual ~BufferOverflow(){};
   void run();
+  void test(SgNode* f1, SgNode* f2);
   std::string name();
   std::string getDescription();
 

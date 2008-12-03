@@ -65,3 +65,37 @@ BinControlFlowAnalysis::run() {
   instance->analysisResult->append(res);  
   
 }
+
+void
+BinControlFlowAnalysis::test(SgNode* fileA, SgNode* fileB) {
+
+
+  RoseBin_Graph* graph=NULL;
+  ROSE_ASSERT(isSgProject(fileA));
+  SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
+  SgAsmFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
+  ROSE_ASSERT(file);
+
+  VirtualBinCFG::AuxiliaryInformation* info = new VirtualBinCFG::AuxiliaryInformation(file);
+
+
+  // control flow analysis  *******************************************************
+  string cfgFileName = "cfg.dot";
+  graph= new RoseBin_DotGraph(info);
+  bool dot=true;
+  bool forward=true;
+  bool edges=true;
+  bool mergedEdges=true;
+  if (dot==false) {
+    cfgFileName = "cfg.gml";
+    graph= new RoseBin_GMLGraph(info);
+  }
+
+
+  SgAsmInterpretation* interp = SageInterface::getMainInterpretation(file);
+  RoseBin_ControlFlowAnalysis* cfganalysis = 
+    new RoseBin_ControlFlowAnalysis(interp->get_global_block(), forward, new RoseObj(), edges, info);
+  ROSE_ASSERT(cfganalysis);
+  cfganalysis->run(graph, cfgFileName, mergedEdges);
+  
+}

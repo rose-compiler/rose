@@ -11,6 +11,7 @@ class BinDataFlowAnalysis : public BinAnalyses {
   BinDataFlowAnalysis(){};
   virtual ~BinDataFlowAnalysis(){};
   void run();
+  void test(SgNode* f1, SgNode* f2);
   std::string name();
   std::string getDescription();
   bool twoFiles() {return false;}

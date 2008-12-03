@@ -158,3 +158,84 @@ AlignFunction::run() {
 
 }
 
+void
+AlignFunction::test(SgNode* fileA, SgNode* fileB) {
+
+#if 0
+  // ------------------------------ Sync statments between itemsFileA amd itemsFileB
+  // add padding 
+  int position=-1, offset=0, currentPos=0;
+  bool fileAPadd = findPosWhenFunctionsAreNotSync(position, offset,currentPos);
+  cerr << " 1 Found PosWhenFunctionsAre not sync : " << position << "   offset : " << offset << 
+    " A? " << fileAPadd << "  currentPos : " << currentPos << endl;
+  //int count=0;
+  while (position!=-1) {
+    // lets add padding
+    if (fileAPadd) {
+      Item* oldItem = *(itemsFileA.begin()+position);
+      int oldPos = oldItem->pos+oldItem->length;
+      //cerr << "    A: old item at : " << (position) << "  oldPos : " << oldPos << endl;
+      vector<Item*>::iterator it = itemsFileA.begin()+position+1;
+      int length=currentPos-oldPos;
+      for (int i=0; i<offset;++i) {
+	Item* item =NULL;
+	if (i==0)
+	  item = new Item(0,NULL,4,(position+i+1),length,length,(oldPos),"",0);
+	else
+	  item = new Item(0,NULL,4,(position+i+1),0,0,(oldPos)+length,"",0);
+	it = itemsFileA.insert(it,item);
+	++it;
+	//	cerr << "    A: adding NULL item at : " << (position+i+1) << "  pos : " << (oldPos+i) <<endl;
+      }
+      // need to adjust the remainder
+      int c=1;
+      for (; it!=itemsFileA.end();++it) {
+	Item* item = (*it);
+	//cerr << "    changing row at : " << (item->row) << "  to : " << (position+offset+c) <<endl;
+	item->row = position+offset+c;
+	item->pos = item->pos+length;
+	c++;
+      }
+    }
+
+    if (!fileAPadd) {
+      Item* oldItem = *(itemsFileB.begin()+position);
+      int oldPos = oldItem->pos+oldItem->length;
+      //cerr << "    B: old item at : " << (position) << "  oldPos : " << oldPos << endl;
+      vector<Item*>::iterator it = itemsFileB.begin()+position+1;
+      int length=currentPos-oldPos;
+      for (int i=0; i<offset;++i) {
+	Item* item =NULL;
+	if (i==0)
+	  item = new Item(0,NULL,4,(position+i+1),length,length,(oldPos),"",0);
+	else
+	  item = new Item(0,NULL,4,(position+i+1),0,0,(oldPos)+length,"",0);
+	it = itemsFileB.insert(it,item);
+	++it;
+	//cerr << "    B: adding NULL item at : " << (position+i+1) << "  pos : " << oldPos+i<<endl;
+      }
+      // need to adjust the remainder
+      int c=1;
+      for (; it!=itemsFileB.end();++it) {
+	Item* item = (*it);
+	//cerr << "    changing row at : " << (item->row) << "  to : " << (position+offset+c) <<endl;
+	item->row = position+offset+c;
+	item->pos = item->pos+length;
+	c++;
+      }
+    }
+    position=-1;
+    offset=0;
+    currentPos=0;
+    fileAPadd = findPosWhenFunctionsAreNotSync(position, offset,currentPos);
+    cerr << " 2 Found PosWhenFunctionsAre not sync : " << position << "   offset : " << offset << 
+      " A? " << fileAPadd << "  currentPos : " << currentPos << endl;
+    //    count++;
+    //if (count==5) break;
+  }
+
+
+#endif
+
+}
+

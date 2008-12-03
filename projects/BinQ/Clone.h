@@ -14,6 +14,7 @@ class DiffAlgo : public BinAnalyses {
   DiffAlgo(){};
   virtual ~DiffAlgo(){};
   void run();
+  void test(SgNode* f1, SgNode* f2);
   std::string name();
   std::string getDescription();
   bool twoFiles() {return true;}

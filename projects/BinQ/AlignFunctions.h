@@ -11,6 +11,7 @@ class AlignFunction : public BinAnalyses {
   AlignFunction(){};
   virtual ~AlignFunction(){};
   void run();
+  void test(SgNode* f1, SgNode* f2);
   std::string name();
   std::string getDescription();
   bool twoFiles() {return true;}

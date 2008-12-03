@@ -27,38 +27,56 @@ int main( int argc, char **argv )
 #endif
   vector<std::string> dllA;
   vector<std::string> dllB;
-  cerr << "USAGE : BinQ -a binaryFileA [.so|.dll]* [-b binaryFileB|IdaFile|SourceFile [.so|.dll]* ]" << endl;
+  cerr << "\nUSAGE : BinQ -a binaryFileA [.so|.dll]* [-b binaryFileB|IdaFile|SourceFile [.so|.dll]* ]\n\n" << endl;
   std::string fileA="";
   std::string fileB="";
   bool aActive=false;
   bool bActive=false;
+  bool test=false;
+  bool debug=false;
   for (int i=1; i<argc; ++i) {
     string token = argv[i];
-    //    cerr << "Recognized argument " << i << " : >" << token <<"<"<< endl;
-    if (aActive) {
+    if (debug)
+      cerr << "Recognized argument " << i << " : >" << token <<"<"<< endl;
+#if 1
+    if (token=="--test") {
+      if (debug)
+	cerr << " found test" << endl;
+      test=true;
+    }
+#endif
+    if (aActive && token!="-b" && token!="--test") {
+      if (debug)
+	cerr << " a active" << endl;
       if (fileA=="") 
 	fileA=argv[i];
       else
-      dllA.push_back(argv[i]);
+	dllA.push_back(argv[i]);
     }
-    if (bActive) {
+    if (bActive && token!="--test") {
+      if (debug)
+	cerr << " b active" << endl;
       if (fileB=="") 
 	fileB=argv[i];
       else
-      dllB.push_back(argv[i]);
+	dllB.push_back(argv[i]);
     }
     if (token=="-a") {
+      if (debug)
+	cerr << " found a" << endl;
       aActive=true;
       bActive=false;
     }
     if (token=="-b") {
+      if (debug)
+	cerr << " found b" << endl;
       aActive=false;
       bActive=true;
     }
 
   }
   
-  cerr << "FileA: " << fileA << "  FileB: " << fileB << endl;
+  cerr << "FileA: " << fileA << "  FileB: " << fileB << "    test: " << test << endl;
   if (fileA=="") exit(1);
   vector<std::string>::const_iterator it= dllA.begin();
   for (;it!=dllA.end();++it) {
@@ -71,9 +89,13 @@ int main( int argc, char **argv )
     }
   }
 
-
-  QROSE::init(argc,argv);
-  BinQGUI binGui(fileA,fileB,dllA,dllB);
-  binGui.run();
-  return QROSE::exec();
+  if (test) {
+    BinQGUI binGui(fileA,fileB,dllA,dllB,test);
+  } else {
+    QROSE::init(argc,argv);
+    BinQGUI binGui(fileA,fileB,dllA,dllB,test);
+    binGui.run();
+    return QROSE::exec();
+  }
+  return 0;
 }

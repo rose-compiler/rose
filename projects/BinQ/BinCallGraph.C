@@ -70,3 +70,39 @@ BinCallGraph::run() {
   cerr << " nr of edges visited in callanalysis : " << callanalysis->edgesVisited() << endl;
   
 }
+
+void
+BinCallGraph::test(SgNode* fileA, SgNode* fileB) {
+  RoseBin_Graph* graph=NULL;
+  ROSE_ASSERT(isSgProject(fileA));
+  SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
+  SgAsmFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
+  ROSE_ASSERT(file);
+
+  VirtualBinCFG::AuxiliaryInformation* info = new VirtualBinCFG::AuxiliaryInformation(file);
+
+  // call graph analysis  *******************************************************
+  cerr << " creating call graph ... " << endl;
+  
+  graph= new RoseBin_DotGraph(info);
+  ROSE_ASSERT(graph);
+  string callFileName = "callgraph.dot";
+  bool dot=true;
+  bool mergedEdges=true;
+  if (dot==false) {
+    callFileName = "callgraph.gml";
+    graph= new RoseBin_GMLGraph(info);
+  }
+
+  SgAsmInterpretation* interp = SageInterface::getMainInterpretation(file);
+  RoseBin_CallGraphAnalysis* callanalysis = 
+   new RoseBin_CallGraphAnalysis(interp->get_global_block(), new RoseObj(), info);
+
+  ROSE_ASSERT(callanalysis);
+  callanalysis->run(graph, callFileName, !mergedEdges);
+
+    
+  cerr << " nr of nodes visited in callanalysis : " << callanalysis->nodesVisited() << endl;
+  cerr << " nr of edges visited in callanalysis : " << callanalysis->edgesVisited() << endl;
+  
+}

@@ -593,3 +593,48 @@ InterruptAnalysis::run() {
 
   
 }
+
+
+
+void
+InterruptAnalysis::test(SgNode* fileA, SgNode* fileB) {
+
+  RoseBin_Graph* graph=NULL;
+  ROSE_ASSERT(isSgProject(fileA));
+  SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
+  SgAsmFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
+  ROSE_ASSERT(file);
+
+  VirtualBinCFG::AuxiliaryInformation* info = new VirtualBinCFG::AuxiliaryInformation(file);
+
+  // call graph analysis  *******************************************************
+  
+  bool dot=true;
+  bool forward=true;
+  bool edges=true;
+  bool mergedEdges=true;
+  bool interprocedural=false;
+  string dfgFileName = "dfg.dot";
+  graph= new RoseBin_DotGraph(info);
+  if (dot==false) {
+    dfgFileName = "dfg.gml";
+    graph= new RoseBin_GMLGraph(info);
+  }
+
+  SgAsmInterpretation* interp = SageInterface::getMainInterpretation(file);
+  RoseBin_DataFlowAnalysis* dfanalysis = 
+    new RoseBin_DataFlowAnalysis(interp->get_global_block(), forward, new RoseObj(), info);
+  ROSE_ASSERT(dfanalysis);
+  dfanalysis->init(interprocedural, edges);
+  dfanalysis->run(graph, dfgFileName, mergedEdges);
+
+  vector<SgDirectedGraphNode*> rootNodes;
+  dfanalysis->getRootNodes(rootNodes);
+
+  dfanalysis->init();
+  init(graph);
+  dfanalysis->traverseGraph(rootNodes, this, interprocedural);
+  
+
+  
+}

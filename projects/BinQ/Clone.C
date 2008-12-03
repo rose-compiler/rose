@@ -49,6 +49,22 @@ DiffAlgo::run() {
     colorTable(instance, addInstr, minusInst, insnsA, insnsB);
 };
 
+void
+DiffAlgo::test(SgNode* fileA, SgNode* fileB) {
+    // this part is to find the added and removed code (from Andreas)
+    FindInstructionsVisitor vis;
+   
+    LCS::vector_start_at_one<SgNode*> insnsA;
+    AstQueryNamespace::querySubTree(fileA, std::bind2nd( vis, &insnsA ));
+    LCS::vector_start_at_one<SgNode*> insnsB;
+    AstQueryNamespace::querySubTree(fileB, std::bind2nd( vis, &insnsB ));
+
+    std::vector<pair<int,int> > addInstr,minusInst;
+
+    printDiff(insnsA, insnsB,addInstr,minusInst);
+
+};
+
 void 
 colorTable(BinQGUI* instance,  const std::vector<pair<int,int> >& addInstr,  const std::vector<pair<int,int> >&  minusInst,
            vector_start_at_one<SgNode*>& insnsA, vector_start_at_one<SgNode*>& insnsB 

@@ -33,19 +33,25 @@ BinQ_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
 INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I.
 
 test_1:
-	./BinQ -a $(srcdir)/buffer2.bin $(srcdir)/buffer2b.bin  
+	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2b.bin  
 
 test_2:
-	./BinQ -a $(srcdir)/buffer2.bin $(srcdir)/buffer2-tsv  
+	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2-tsv  
 
 test_3:
-	./BinQ -a $(srcdir)/buffer2.bin $(srcdir)/buffer2.c  
+	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2.c  
+
+test_4:
+	./BinQ -a $(srcdir)/linux-ls
 
 
 check-local:
-#	./BinQ --fileA $(srcdir)/buffer2.bin --fileB $(srcdir)/buffer2b.bin  
-#	./BinQ --fileA $(srcdir)/buffer2.bin --fileB $(srcdir)/buffer2-tsv  
-#	./BinQ --fileA $(srcdir)/buffer2.bin --fileB $(srcdir)/buffer2.c  
+	./BinQ -a $(srcdir)/buffer2.bin --test
+	./BinQ -a $(srcdir)/buffer2.bin $(srcdir)/buffer2b.bin --test
+	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2b.bin --test
+	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2-tsv --test 
+	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2.c --test 
+	./BinQ -a $(srcdir)/linux-ls --test
 	@echo "************************************************************************************"
 	@echo "*** ROSE/projects/AstEquivalence: make check rule complete (terminated normally) ***"
 	@echo "************************************************************************************"

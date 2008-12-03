@@ -11,6 +11,7 @@ class  BinAnalyses {
   BinAnalyses(){};
   virtual ~BinAnalyses(){};
   virtual void run()=0;
+  virtual void test(SgNode* fileA, SgNode* fileB)=0;
   virtual std::string name()=0;
   virtual std::string getDescription()=0;
   virtual bool twoFiles()=0;

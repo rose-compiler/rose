@@ -14,6 +14,7 @@ class InterruptAnalysis : public BinAnalyses,  RoseBin_DataFlowAbstract {
   InterruptAnalysis(){};
   virtual ~InterruptAnalysis(){};
   void run();
+  void test(SgNode* f1, SgNode* f2);
   std::string name();
   std::string getDescription();
 

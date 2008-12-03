@@ -29,7 +29,10 @@ class BinQSupport;
 class BinQGUI //: public QWidget
 {
   public:
-  BinQGUI(std::string, std::string,     std::vector<std::string> dllA,     std::vector<std::string> dllB);
+  BinQGUI(std::string, std::string,     
+	  std::vector<std::string> dllA,     
+	  std::vector<std::string> dllB, 
+	  bool test);
     ~BinQGUI();
     void run( ) ;
     void open();
@@ -95,8 +98,8 @@ class BinQGUI //: public QWidget
     QLineEdit *largerThanRestriction;
 
   private:
-
-
+    bool test;
+    void testAnalyses();
     std::vector<SgNode*> funcsFileA;
     std::vector<SgNode*> funcsFileB;
     BinQSupport* binqsupport;

@@ -149,7 +149,7 @@ void BinQGUI::highlightFunctionRow(int row, bool fileAYes) {
       f.setBold(true);
       tableWidget->setFont(f, 0, row);
       tableWidget->setBgColor(QColor(255,255,0),0,row);
-      //showFileA(row);
+      
       if (isSgAsmFunctionDeclaration(funcsFileA[row])) {
 	SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(funcsFileA[row]);
 	std::vector<Item*>::iterator it = itemsFileA.begin();
@@ -173,7 +173,7 @@ void BinQGUI::highlightFunctionRow(int row, bool fileAYes) {
       f.setBold(true);
       tableWidget2->setFont(f, 0, row);
       tableWidget2->setBgColor(QColor(255,255,0),0,row);
-      //      showFileB(row);
+      
       if (isSgAsmFunctionDeclaration(funcsFileB[row])) {
 	SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(funcsFileB[row]);
 	std::vector<Item*>::iterator it = itemsFileB.begin();
@@ -315,7 +315,6 @@ void BinQGUI::updateByteItemList() {
       }
     }
   }
-  cerr << "displaying A and B ... " << endl; 
   slide->colorize();
   showFileA(0);
   if (fileB)
@@ -462,17 +461,29 @@ BinQGUI::insertFileInformation() {
 }
 
 
-BinQGUI::BinQGUI(std::string fA, std::string fB, std::vector<std::string> dllAA, std::vector<std::string> dllBB) :  
+BinQGUI::BinQGUI(std::string fA, std::string fB, std::vector<std::string> dllAA, 
+		 std::vector<std::string> dllBB, bool t) :  
   window(0), fileNameA(fA), fileNameB(fB) {
-  window = new QRWindow( "mainWindow", QROSE::TopDown );
-  binqsupport= new BinQSupport();
+  test=t;
+  if (test==false) {
+    cerr << "Running in normal mode." << endl;
+    window = new QRWindow( "mainWindow", QROSE::TopDown );
+    binqsupport= new BinQSupport();
+  } else {
+    cerr << "Running in test mode." << endl;
+  }
   maxrows=5;
   dllA=dllAA;
   dllB=dllBB;
   currentAnalysis=NULL;
   sourceFile=false;
+
   init();
-  createGUI();
+  if (test==false)
+    createGUI();
+  cerr << "Initialization done." <<endl;
+  if (test)
+    testAnalyses();
 }
 
 void BinQGUI::init(){
@@ -952,7 +963,19 @@ void BinQGUI::reset() {
   updateByteItemList();
 } //CompassGui::open()
 
-
+void
+BinQGUI::testAnalyses() {
+  for (unsigned int i=0;i<analyses.size();++i) {
+    cerr << " testing analysis : " << analyses[i]->getDescription() << endl;
+    bool twoFiles = analyses[i]->twoFiles();
+    if (twoFiles && fileB!=NULL || twoFiles==false) {
+      currentAnalysis=analyses[i];
+      if (currentAnalysis) 
+	currentAnalysis->test(fileA,fileB);
+    }
+  } 
+ 
+}
 
 
 void
@@ -968,6 +991,8 @@ BinQGUI::run( ) {
 
 void 
 BinQGUI::showFileTab() {
+  cerr << "creating FileTab " << endl; 
+
   QROSE::unlink(tableWidget, SIGNAL(activated(int, int, int, int)));
   while(tableWidget->rowCount()) 
     tableWidget->removeRow(0);
@@ -1025,6 +1050,8 @@ BinQGUI::showFileTab() {
 
 
 void BinQGUI::showFileA(int row) {
+  cerr << "displaying A " << endl; 
+
   QROSE::unlink(codeTableWidget, SIGNAL(activated(int, int, int, int)));
 
   while(codeTableWidget->rowCount()) 
@@ -1213,7 +1240,9 @@ void BinQGUI::showFileA(int row) {
 
 
     // for testing
-    //        if (rowC<1000)
+    if (rowC>2000)
+      cerr << "Stopping here... currently table formatting allows only max 2000 entries..." <<endl;
+      else
     if (addRow) {
       if ((rowC%500)==0)
 	cout << " adding row ... " << rowC << " / " << itemsFileA.size() << endl;
@@ -1243,6 +1272,7 @@ void BinQGUI::showFileA(int row) {
       
       rowC++;
       posC+=length;
+      //cerr << "row added" << endl;
     }
 
   }
@@ -1255,6 +1285,8 @@ void BinQGUI::showFileA(int row) {
 }
 
 void BinQGUI::showFileB(int row) {
+  cerr << "displaying B ... " << endl; 
+
   QROSE::unlink(codeTableWidget2, SIGNAL(activated(int, int, int, int)));
 
   while(codeTableWidget2->rowCount()) 

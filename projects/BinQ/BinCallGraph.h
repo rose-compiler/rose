@@ -11,6 +11,7 @@ class BinCallGraph : public BinAnalyses {
   BinCallGraph(){};
   virtual ~BinCallGraph(){};
   void run();
+  void test(SgNode* fileA, SgNode* fileB);
   std::string name();
   std::string getDescription();
   bool twoFiles() {return false;}
