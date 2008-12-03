@@ -2155,8 +2155,8 @@ SgNode* AstInterfaceImpl::GetVarDecl( const string& varname)
   return decl;
 }
 //Return type name
-void AstInterfaceImpl::
-GetTypeInfo(const AstNodeType& _t, string *tname, string* stripname, int* size)
+void 
+AstInterfaceImpl::GetTypeInfo(const AstNodeType& _t, string *tname, string* stripname, int* size)
 {
   SgType* t = AstNodeTypeImpl(_t).get_ptr();
   std::string typeName = get_type_name(t);
