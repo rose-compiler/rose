@@ -1197,11 +1197,13 @@ void BinQGUI::showFileA(int row) {
     if (addRow) {
       if ((rowC%500)==0)
 	cout << " adding row ... " << rowC << " / " << itemsFileA.size() << endl;
+      //this is slow!!
+      //      codeTableWidget->setHAlignment(true, false, 3); // left horizontal alignment
 #if 0      
       codeTableWidget->setHAlignment(true, false, 0); // left horizontal alignment
       codeTableWidget->setHAlignment(true, false, 1); // left horizontal alignment
       codeTableWidget->setHAlignment(true, false, 2); // left horizontal alignment
-      codeTableWidget->setHAlignment(true, false, 3); // left horizontal alignment
+
       codeTableWidget->setHAlignment(true, false, 4); // left horizontal alignment
       codeTableWidget->setHAlignment(true, false, 5); // left horizontal alignment
       codeTableWidget->setHAlignment(true, false, 6); // left horizontal alignment
@@ -1478,11 +1480,14 @@ void BinQGUI::showFileB(int row) {
     }
 
     if (addRow) {
+      //codeTableWidget2->setHAlignment(true, false, 3); // left horizontal alignment
+
+#if 0
       codeTableWidget2->setHAlignment(true, false, 0); // left horizontal alignment
       codeTableWidget2->setHAlignment(true, false, 1); // left horizontal alignment
       codeTableWidget2->setHAlignment(true, false, 2); // left horizontal alignment
-      codeTableWidget2->setHAlignment(true, false, 3); // left horizontal alignment
       codeTableWidget2->setHAlignment(true, false, 4); // left horizontal alignment
+#endif
       
       codeTableWidget2->setVDim(i,18);
       if (sourceFile) {
@@ -1492,9 +1497,11 @@ void BinQGUI::showFileB(int row) {
 	codeTableWidget2->setHDim(3,110);
 	codeTableWidget2->setHDim(4,40);
       } else {
+#if 0
 	codeTableWidget2->setHAlignment(true, false, 5); // left horizontal alignment
 	codeTableWidget2->setHAlignment(true, false, 6); // left horizontal alignment
 	codeTableWidget2->setHAlignment(true, false, 7); // left horizontal alignment
+#endif
 	codeTableWidget2->setHDim(0,40);
 	codeTableWidget2->setHDim(1,65);
 	codeTableWidget2->setHDim(2,55);
