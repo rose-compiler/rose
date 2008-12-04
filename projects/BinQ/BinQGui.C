@@ -282,7 +282,7 @@ void BinQGUI::unhighlightInstructionRow(int row,bool fileAYes) {
 // this function manages the code to keep the slide bar update with the instruction table
 void BinQGUI::updateByteItemList() {
   // update byteItemList
-  cerr << "updating itemsFileA : " << itemsFileA.size() << endl; 
+  cerr << "updating itemsFileA : " << RoseBin_support::ToString(itemsFileA.size()) << endl; 
   for (unsigned int i=0;i<itemsFileA.size();++i) {
     Item* a = itemsFileA[i];
     if (a) {
@@ -295,7 +295,7 @@ void BinQGUI::updateByteItemList() {
     }
   }
   if (fileB) {
-    cerr << "updating itemsFileB : " << itemsFileB.size() << endl; 
+    cerr << "updating itemsFileB : " << RoseBin_support::ToString(itemsFileB.size()) << endl; 
     for (unsigned int i=0;i<itemsFileB.size();++i) {
       Item* b = itemsFileB[i];
       if (b) {
@@ -319,7 +319,7 @@ void BinQGUI::updateByteItemList() {
   showFileTab();
 
 
-
+  cerr << ">> Handling DLLs ... " << endl; 
   //handle DLLs
 #if 1
   std::vector<SgNode*>::const_iterator dllIt = dllFilesA.begin();
@@ -334,9 +334,25 @@ void BinQGUI::updateByteItemList() {
     std::vector<Item*> itemsFile;
     createFunction(file, funcsFile, true);
     createItem(file,itemsFile, funcsFile, true);
-    cerr << " funcsFileSize: " << funcsFile.size() << "  itemsFileSize: " << itemsFile.size() << endl;
+    cerr << " Adding DLL of FileA---  funcsFileSize: " << RoseBin_support::ToString(funcsFile.size()) << "  itemsFileSize: " << RoseBin_support::ToString(itemsFile.size()) << endl;
     showFile(0, codeTableWidgetDLL, funcsFile, itemsFile);
   }
+  dllIt = dllFilesB.begin();
+  widgetIt = codeTableWidgetBDLLlist.begin();
+  ROSE_ASSERT(dllFilesB.size()==codeTableWidgetBDLLlist.size());
+  for (;dllIt!=dllFilesB.end();++dllIt,++widgetIt) {
+    SgNode* file = *dllIt;
+    qrs::QRTable* codeTableWidgetDLL = *widgetIt ;
+    ROSE_ASSERT(file);
+    ROSE_ASSERT(codeTableWidgetDLL);
+    std::vector<SgNode*> funcsFile;
+    std::vector<Item*> itemsFile;
+    createFunction(file, funcsFile, true);
+    createItem(file,itemsFile, funcsFile, true);
+    cerr << " Adding DLL of FileB---  funcsFileSize: " << RoseBin_support::ToString(funcsFile.size()) << "  itemsFileSize: " << RoseBin_support::ToString(itemsFile.size()) << endl;
+    showFile(0, codeTableWidgetDLL, funcsFile, itemsFile);
+  }
+
 #endif
 }
 
@@ -1149,9 +1165,9 @@ void BinQGUI::showFile(int row, qrs::QRTable* currentWidget,
       }
       currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->row), 0, i);	
       currentWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString(itemsFile[i]->addr) ), 1, i);
-      currentWidget->setText(boost::lexical_cast<std::string>(isSgAsmElfSection(itemsFile[i]->statement)->get_name()->get_string()), 2, i);
-      currentWidget->setText(boost::lexical_cast<std::string>((isSgAsmNode(stmts))->class_name() ), 3, i);
-      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->comment ), 4, i);
+      currentWidget->setText(boost::lexical_cast<std::string>(isSgAsmElfSection(itemsFile[i]->statement)->get_name()->get_string()), 3, i);
+      currentWidget->setText(boost::lexical_cast<std::string>((isSgAsmNode(stmts))->class_name() ), 4, i);
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->comment ), 2, i);
       currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->pos), 5, i);	
       currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->length), 6, i);	
       currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->realByteSize), 7, i);	
@@ -1170,9 +1186,9 @@ void BinQGUI::showFile(int row, qrs::QRTable* currentWidget,
       }
       currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->row), 0, i);	
       currentWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString(itemsFile[i]->addr) ), 1, i);
-      currentWidget->setText(boost::lexical_cast<std::string>(isSgAsmElfSectionTableEntry(itemsFile[i]->statement)->class_name()), 2, i);
-      currentWidget->setText(boost::lexical_cast<std::string>((isSgAsmNode(stmts))->class_name() ), 3, i);
-      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->comment ), 4, i);
+      currentWidget->setText(boost::lexical_cast<std::string>(isSgAsmElfSectionTableEntry(itemsFile[i]->statement)->class_name()), 3, i);
+      currentWidget->setText(boost::lexical_cast<std::string>((isSgAsmNode(stmts))->class_name() ), 4, i);
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->comment ), 2, i);
       currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->pos), 5, i);	
       currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->length), 6, i);	
       currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->realByteSize), 7, i);	
@@ -1191,9 +1207,9 @@ void BinQGUI::showFile(int row, qrs::QRTable* currentWidget,
       }
       currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->row), 0, i);	
       currentWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString(itemsFile[i]->addr) ), 1, i);
-      currentWidget->setText(boost::lexical_cast<std::string>(isSgAsmElfSegmentTableEntry(itemsFile[i]->statement)->class_name()), 2, i);
-      currentWidget->setText(boost::lexical_cast<std::string>((isSgAsmNode(stmts))->class_name() ), 3, i);
-      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->comment ), 4, i);
+      currentWidget->setText(boost::lexical_cast<std::string>(isSgAsmElfSegmentTableEntry(itemsFile[i]->statement)->class_name()), 3, i);
+      currentWidget->setText(boost::lexical_cast<std::string>((isSgAsmNode(stmts))->class_name() ), 4, i);
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->comment ), 2, i);
       currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->pos), 5, i);	
       currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->length), 6, i);	
       currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->realByteSize), 7, i);	
@@ -1212,9 +1228,9 @@ void BinQGUI::showFile(int row, qrs::QRTable* currentWidget,
       }
       currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->row), 0, i);	
       currentWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString(itemsFile[i]->addr) ), 1, i);
-      currentWidget->setText(boost::lexical_cast<std::string>(isSgAsmElfSymbol(itemsFile[i]->statement)->get_name()->get_string()), 2, i);
-      currentWidget->setText(boost::lexical_cast<std::string>((isSgAsmNode(stmts))->class_name() ), 3, i);
-      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->comment ), 4, i);
+      currentWidget->setText(boost::lexical_cast<std::string>(isSgAsmElfSymbol(itemsFile[i]->statement)->get_name()->get_string()), 3, i);
+      currentWidget->setText(boost::lexical_cast<std::string>((isSgAsmNode(stmts))->class_name() ), 4, i);
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->comment ), 2, i);
       currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->pos), 5, i);	
       currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->length), 6, i);	
       currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->realByteSize), 7, i);	
@@ -1287,7 +1303,9 @@ void BinQGUI::showFile(int row, qrs::QRTable* currentWidget,
       addRow=true;
     }
 
-    if (rowC>2000) {
+    if (rowC>5000) {
+      cerr << " Allowing only 5000 table entries for now ..." << endl;
+      break;
     }
     else
     if (addRow) {
