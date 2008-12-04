@@ -471,7 +471,11 @@ PrologSupport::getTypeSpecific(SgType* stype) {
 PrologTerm*
 PrologSupport::getUnaryOpSpecific(SgUnaryOp* op) {
   PrologCompTerm* annot = new PrologCompTerm("unary_op_annotation");
-  annot->addSubterm(new PrologInt((int) op->get_mode()));
+  // GB (2008-12-04): Generating a self-documenting atom instead of an
+  // opaque numerical constant.
+  // annot->addSubterm(new PrologInt((int) op->get_mode()));
+  annot->addSubterm(new PrologAtom(
+              op->get_mode() == SgUnaryOp::prefix ? "prefix" : "postfix"));
   annot->addSubterm(getTypeSpecific(op->get_type()));
   if(SgThrowOp* thrw = dynamic_cast<SgThrowOp*>(op)) {
     /*Throw Ops also have a 'throw kind'*/

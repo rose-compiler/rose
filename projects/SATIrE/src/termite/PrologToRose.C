@@ -1138,7 +1138,10 @@ PrologToRose::createUnaryOp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
   ROSE_ASSERT(annot != NULL);
   /* the annotation should have arity of 5*/
   ROSE_ASSERT(annot->getArity() == 5);
-  PrologInt* mode = dynamic_cast<PrologInt*>(annot->at(0));
+  // GB (2008-12-04): A unary op's mode is now represented by an atom
+  // 'prefix' or 'postfix', not by a numerical constant.
+  // PrologInt* mode = dynamic_cast<PrologInt*>(annot->at(0));
+  PrologAtom* mode = dynamic_cast<PrologAtom*>(annot->at(0));
   ROSE_ASSERT(mode != NULL);
   SgType* sgtype = createType(annot->at(1));
   ROSE_ASSERT(sgtype != NULL);
@@ -1157,12 +1160,14 @@ PrologToRose::createUnaryOp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
   /* chose wether to use ++ and -- as prefix or postfix via set_mode*/
   else if (opname == SG_PREFIX "minus_minus_op") {
     SgMinusMinusOp* m = new SgMinusMinusOp(fi,sgexp,sgtype);
-    m->set_mode((SgUnaryOp::Sgop_mode) mode->getValue());
+    m->set_mode(mode->getName() == "prefix" ? SgUnaryOp::prefix
+                                            : SgUnaryOp::postfix);
     return m;
   }
   else if (opname == SG_PREFIX "plus_plus_op") {
     SgPlusPlusOp* p = new SgPlusPlusOp(fi,sgexp,sgtype);
-    p->set_mode((SgUnaryOp::Sgop_mode) mode->getValue());
+    p->set_mode(mode->getName() == "prefix" ? SgUnaryOp::prefix
+                                            : SgUnaryOp::postfix);
     return p;
   }
   /* For a cast we need to retrieve cast type (enum)*/
