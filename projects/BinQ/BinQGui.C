@@ -875,45 +875,43 @@ void BinQGUI::createGUI() {
 	  QROSE::link(codeTableWidget2, SIGNAL(activated(int, int, int, int)), &codeTableWidgetCellActivatedB, this);
 	} 
 
-	int count=0;
-	if (fileB)
-	  count=1;
+	int count=1;
+	//if (fileB)
+	//  count=1;
 	std::vector<SgNode*>::const_iterator dllIt = dllFilesA.begin();
 	std::vector<std::string>::const_iterator nameIt = dllA.begin();
 	codeTableWidgetADLLlist.clear();
 	codeTableWidgetBDLLlist.clear();
 	for (;nameIt!=dllA.end();++nameIt,++dllIt) {
 	  string name = *nameIt;
-	  //SgNode* file = *dllIt;
-	  QTextEdit* dll = new QTextEdit;
-	  dll->setReadOnly(true);
-	  codeTabB->insertTab(count++,dll,QString("LIB-A:%1").arg(name.c_str()));
 	  codeTableWidgetDLL =  new QRTable( 8, "row","address","instr","operands","comment","pos","size","byte" );
 	  codeTableWidgetADLLlist.push_back(codeTableWidgetDLL);
+	  codeTabB->insertTab(count++,codeTableWidgetDLL,QString("LIB-A:%1").arg(name.c_str()));
 	}
 	QTextEdit* graphA = new QTextEdit;
 	graphA->setReadOnly(true);
 	graphA->append("The call or control flow graph should be shown here...");
 	codeTabB->insertTab(count,graphA,"Graph FileA");
 
-	count=1;
-	dllIt = dllFilesB.begin();
-	nameIt = dllB.begin();
-	for (;nameIt!=dllB.end();++nameIt,++dllIt) {
-	  string name = *nameIt;
-	  //SgNode* file = *dllIt;
-	  QTextEdit* dll = new QTextEdit;
-	  dll->setReadOnly(true);
-	  codeTabA->insertTab(count++,dll,QString("LIB-B:%1").arg(name.c_str()));
-	  codeTableWidgetDLL =  new QRTable( 8, "row","address","instr","operands","comment","pos","size","byte" );
-	  codeTableWidgetBDLLlist.push_back(codeTableWidgetDLL);
+	if (fileB) {
+	  count=1;
+	  dllIt = dllFilesB.begin();
+	  nameIt = dllB.begin();
+	  for (;nameIt!=dllB.end();++nameIt,++dllIt) {
+	    string name = *nameIt;
+	    codeTableWidgetDLL =  new QRTable( 8, "row","address","instr","operands","comment","pos","size","byte" );
+	    codeTableWidgetBDLLlist.push_back(codeTableWidgetDLL);
+	    codeTabA->insertTab(count++,codeTableWidgetDLL,QString("LIB-B:%1").arg(name.c_str()));
+	  }
+	  
+	  QTextEdit* graphB = new QTextEdit;
+	  graphB->setReadOnly(true);
+	  graphB->append("The call or control flow graph should be shown here...");
+	  codeTabA->insertTab(count,graphB,"Graph FileB");
 	}
-	QTextEdit* graphB = new QTextEdit;
-	graphB->setReadOnly(true);
-	graphB->append("The call or control flow graph should be shown here...");
-	codeTabA->insertTab(count,graphB,"Graph FileB");
-
+	
       }
+      
       bottomPanelLeft.setFixedWidth(screenWidth/5 );
     } //mainPanel
     mainPanel.setTileSize(30);
@@ -1107,6 +1105,8 @@ void BinQGUI::showFile(int row, qrs::QRTable* currentWidget,
       currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->pos), 5, i);	
       currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->length), 6, i);	
       currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->realByteSize), 7, i);	
+      //cerr << i<< ": Found instruction : " << RoseBin_support::HexToString((isSgAsmx86Instruction(stmts))->get_address()) << "  mnemonic : " << (isSgAsmx86Instruction(stmts))->get_mnemonic()  <<
+      //	" row : " << itemsFile[i]->row <<  endl;
       addRow=true;
     } else if (isSgAsmBlock(stmts)  && !(isSgAsmInterpretation(isSgAsmBlock(stmts)->get_parent()))) {
       //cerr << " isSgAsmBlock(stmts[i])->get_parent() " << isSgAsmBlock(stmts[i])->get_parent()->class_name() << endl;
@@ -1287,12 +1287,16 @@ void BinQGUI::showFile(int row, qrs::QRTable* currentWidget,
       addRow=true;
     }
 
+    if (rowC>2000) {
+    }
+    else
     if (addRow) {
-      //currentWidget->setHAlignment(true, false, 3); // left horizontal alignment
-
+      if ((rowC%500)==0)
+	cerr << "Adding Row : " << RoseBin_support::ToString(rowC) << "/"<< RoseBin_support::ToString(itemsFile.size()) << endl;
 #if 0
       currentWidget->setHAlignment(true, false, 0); // left horizontal alignment
       currentWidget->setHAlignment(true, false, 1); // left horizontal alignment
+      currentWidget->setHAlignment(true, false, 3); // left horizontal alignment
       currentWidget->setHAlignment(true, false, 2); // left horizontal alignment
       currentWidget->setHAlignment(true, false, 4); // left horizontal alignment
 #endif
@@ -1323,6 +1327,7 @@ void BinQGUI::showFile(int row, qrs::QRTable* currentWidget,
       posC+=length;
     }
   }
+  cerr << "Widget done." <<endl;
   currentWidget->setShowGrid(false);
   currentWidget->setCurrentCell(row,0);
 
