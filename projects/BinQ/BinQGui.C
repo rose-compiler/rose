@@ -317,6 +317,27 @@ void BinQGUI::updateByteItemList() {
     QROSE::link(codeTableWidget2, SIGNAL(activated(int, int, int, int)), &codeTableWidgetCellActivatedB, this);
   }
   showFileTab();
+
+
+
+  //handle DLLs
+#if 1
+  std::vector<SgNode*>::const_iterator dllIt = dllFilesA.begin();
+  std::vector<qrs::QRTable*>::const_iterator widgetIt = codeTableWidgetADLLlist.begin();
+  ROSE_ASSERT(dllFilesA.size()==codeTableWidgetADLLlist.size());
+  for (;dllIt!=dllFilesA.end();++dllIt,++widgetIt) {
+    SgNode* file = *dllIt;
+    qrs::QRTable* codeTableWidgetDLL = *widgetIt ;
+    ROSE_ASSERT(file);
+    ROSE_ASSERT(codeTableWidgetDLL);
+    std::vector<SgNode*> funcsFile;
+    std::vector<Item*> itemsFile;
+    createFunction(file, funcsFile, true);
+    createItem(file,itemsFile, funcsFile, true);
+    cerr << " funcsFileSize: " << funcsFile.size() << "  itemsFileSize: " << itemsFile.size() << endl;
+    showFile(0, codeTableWidgetDLL, funcsFile, itemsFile);
+  }
+#endif
 }
 
 
@@ -557,117 +578,38 @@ void BinQGUI::init(){
       unparseAsmStatementToFile("unparsedB.s", interpB->get_global_block());
     }
   // -------------------------------------------------------------------------------------
-
-  itemsFileA.clear();
+  if (fileA)
+    itemsFileA.clear();
   if (fileB)
     itemsFileB.clear();
   
-  // ---------------------- Create itemsFileA and itemsFileB , containing all statements
-  FindAsmFunctionsVisitor funcVis;
-  AstQueryNamespace::querySubTree(fileA, std::bind2nd( funcVis, &funcsFileA ));
-  if (fileB) {
-    if (sourceFile) {
-      FindSgFunctionsVisitor funcVisSource;
-      AstQueryNamespace::querySubTree(fileB, std::bind2nd( funcVisSource, &funcsFileB ));
-    } else
-      AstQueryNamespace::querySubTree(fileB, std::bind2nd( funcVis, &funcsFileB ));
-  }
 
-  cerr << " File A has " << funcsFileA.size() << " funcs." << endl;
+  createFunction(fileA, funcsFileA, false);
+  createFunction(fileB, funcsFileB, false);
+
+  if (fileA)
+    cerr << " File A has " << funcsFileA.size() << " funcs." << endl;
   if (fileB)
     cerr << " File B has " << funcsFileB.size() << " funcs." << endl;
 
-  FindAsmStatementsHeaderVisitor visStat;
+  createItem(fileA,itemsFileA, funcsFileA, false);
+  createItem(fileB,itemsFileB, funcsFileB, false);
+}
+
+void BinQGUI::createItem(SgNode* file, std::vector<Item*>& itemsFile,std::vector<SgNode*>& funcsFile, bool dll) {
   std::vector<SgNode*> stmts;
-  AstQueryNamespace::querySubTree(fileA, std::bind2nd( visStat, &stmts ));
   vector<SgNode*>::iterator it= stmts.begin();
   int pos=0;
   int row=0;
-  for (;it!=stmts.end();++it) {
-    Item* item=NULL;
-    int length=1;
-    // make sure file 1 is a binary file -- source file only for file 2 allowed
-    ROSE_ASSERT(isSgAsmNode(*it));
-    if (isSgAsmFunctionDeclaration(*it)) {
-      SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(*it);
-      item = new Item(func->get_address(),func,2, row,length, 0, pos,"",0);
-    } else if (isSgAsmBlock(*it)) {
-      
-    } else if (isSgAsmInstruction(*it)) {
-      SgAsmInstruction* inst = isSgAsmInstruction(*it);
-      length = isSgAsmInstruction(*it)->get_raw_bytes().size();
-      item = new Item(inst->get_address(),inst,0,row,length,length, pos,"",0);
-    } else if (isSgAsmElfSection(*it)) {
-      SgAsmElfSection* sec = isSgAsmElfSection(*it);
-      std::string nam = "size: " + RoseBin_support::ToString(sec->get_size());
-      item = new Item(sec->get_mapped_rva(),sec,2,row,length,sec->get_size(),pos,nam,0);
-    } else if (isSgAsmElfSymbol(*it)) {
-      SgAsmElfSymbol* sym = isSgAsmElfSymbol(*it);
-      std::string nam = "size: " + RoseBin_support::ToString(sym->get_st_size());
-      int color=6;
-      item = new Item(sym->get_st_name(),sym,color,row,length,sym->get_st_size(),pos,nam,0);
-    }  else if (isSgAsmElfSectionTableEntry(*it)) {
-      SgAsmElfSectionTableEntry* sec = isSgAsmElfSectionTableEntry(*it);
-      std::string nam = "size: " + RoseBin_support::ToString(sec->get_sh_size());
-      int color=0;
-      item = new Item(sec->get_sh_addr(),sec,color,row,length,sec->get_sh_size(),pos,nam,0);
-    }  else if (isSgAsmElfSegmentTableEntry(*it)) {
-      SgAsmElfSegmentTableEntry* sec = isSgAsmElfSegmentTableEntry(*it);
-      std::string nam = "size: " + RoseBin_support::ToString(sec->get_offset());
-      int color=0;
-      item = new Item(sec->get_vaddr(),sec,color,row,length,length,pos,nam,0);
-    } else {
-      cerr << " >>> found pos : " << pos << "  item " << 
-	isSgAsmNode(*it)->class_name() << " length : " << length << endl;
-
-    }
-    // color code call as an example
-    if (isSgAsmx86Instruction(*it)) {
-      length = isSgAsmInstruction(*it)->get_raw_bytes().size();
-      if (isSgAsmx86Instruction(*it)->get_kind() == x86_call) { 
-	SgAsmx86Instruction* inst = isSgAsmx86Instruction(*it);
-	SgAsmOperandList * ops = inst->get_operandList();
-	SgAsmExpressionPtrList& opsList = ops->get_operands();
-	std::string addrDest="";
-	SgAsmExpressionPtrList::iterator itOP = opsList.begin();
-	for (;itOP!=opsList.end();++itOP) {
-	  addrDest += unparseX86Expression(*itOP, false) ;
-	}
-	string s="<...>";
-	for (unsigned int j=0; j<funcsFileA.size();++j) {
-	  SgAsmFunctionDeclaration* f = isSgAsmFunctionDeclaration(funcsFileA[j]);
-	  string addrF= RoseBin_support::HexToString(f->get_address());
-	  addrF="0x"+addrF.substr(1,addrF.size());
-	  if (addrF==addrDest) {
-	    s="<"+f->get_name()+">";
-	    break;
-	  }
-	}
-	delete item;
-	item = new Item(inst->get_address(),inst,3,row,length,length,pos,s,0);
-      }
-    }
-    if (item) {
-      row++;
-      //      cerr << " creating pos : " << pos << "  item " << 
-      //	isSgAsmNode(*it)->class_name() << " length : " << length << endl;
-      itemsFileA.push_back(item);
-      pos+=length;
-    }
-  }
-
-  if (fileB) {
-    stmts.clear();
-    if (!sourceFile) {
-      FindAsmStatementsHeaderVisitor visStat2;
-      AstQueryNamespace::querySubTree(fileB, std::bind2nd( visStat2, &stmts ));
-    } else {
+  if (file) {
+    if (sourceFile==true && file==fileB && dll==false) {
       FindNodeVisitor visStat2;
-      AstQueryNamespace::querySubTree(fileB, std::bind2nd( visStat2, &stmts ));
+      AstQueryNamespace::querySubTree(file, std::bind2nd( visStat2, &stmts ));
+    } else {
+      FindAsmStatementsHeaderVisitor visStat2;
+      AstQueryNamespace::querySubTree(file, std::bind2nd( visStat2, &stmts ));
     }
     it= stmts.begin();
-    pos=0;
-    row=0;
     for (;it!=stmts.end();++it) {
       Item* item = NULL;
       int length=1;
@@ -676,7 +618,6 @@ void BinQGUI::init(){
 	item = new Item(func->get_address(),func,2,row,length,0,pos,"",0);
       }    else if (isSgAsmBlock(*it)) {
 	continue;
-	//item = new Item(false,*it,0,1,row,0);
       } else if (isSgAsmInstruction(*it)) {
 	SgAsmInstruction* inst = isSgAsmInstruction(*it);
 	length = isSgAsmInstruction(*it)->get_raw_bytes().size();
@@ -736,8 +677,8 @@ void BinQGUI::init(){
 	    addrDest += unparseX86Expression(*itOP, false) ;
 	  }
 	  string s="<...>";
-	  for (unsigned int j=0; j<funcsFileB.size();++j) {
-	    SgAsmFunctionDeclaration* f = isSgAsmFunctionDeclaration(funcsFileB[j]);
+	  for (unsigned int j=0; j<funcsFile.size();++j) {
+	    SgAsmFunctionDeclaration* f = isSgAsmFunctionDeclaration(funcsFile[j]);
 	    string addrF= RoseBin_support::HexToString(f->get_address());
 	    addrF="0x"+addrF.substr(1,addrF.size());
 	    if (addrF==addrDest) {
@@ -752,13 +693,27 @@ void BinQGUI::init(){
       }
       if (item) {
 	row++;
-	itemsFileB.push_back(item);
+	itemsFile.push_back(item);
 	pos+=length;
       }
     }
   }
-
 }
+
+void 
+BinQGUI::createFunction(SgNode* file,std::vector<SgNode*>& funcsFile, bool dll) {
+  // ---------------------- Create itemsFileA and itemsFileB , containing all statements
+  FindAsmFunctionsVisitor funcVis;
+  if (file) {
+    if (sourceFile==true && file==fileB && dll==false) {
+      FindSgFunctionsVisitor funcVisSource;
+      AstQueryNamespace::querySubTree(file, std::bind2nd( funcVisSource, &funcsFile ));
+    } else {
+      AstQueryNamespace::querySubTree(file, std::bind2nd( funcVis, &funcsFile ));
+    }
+  }
+}
+
 
 // The GUI is created here
 void BinQGUI::createGUI() {
@@ -841,7 +796,6 @@ void BinQGUI::createGUI() {
 
 	  // --------
 	  analysisTab =  analysisPanelRight << new QTabWidget();
-	  //	analysisPanelRight.setTileSize(50,50);
 
 	  console = new QTextEdit;//new QREdit(QREdit::Box);
 	  console->setReadOnly(true);
@@ -903,21 +857,62 @@ void BinQGUI::createGUI() {
 
       QRPanel &bottomPanelRight = bottomPanel << *new QRPanel(QROSE::LeftRight, QROSE::UseSplitter);
       {
-	codeTableWidget = bottomPanelRight << new QRTable( 8, "row","address","instr","operands","comment","pos","size","byte" );
+	codeTabA =  bottomPanelRight << new QTabWidget();
+	codeTabB =  bottomPanelRight << new QTabWidget();
+	codeTableWidget = new QRTable( 8, "row","address","instr","operands","comment","pos","size","byte" );
 	QROSE::link(codeTableWidget, SIGNAL(activated(int, int, int, int)), &codeTableWidgetCellActivatedA, this);
+	
+	codeTabA->insertTab(0,codeTableWidget,QString(fileNameA.c_str()));
+
 	if (fileB) {
 	  if (sourceFile) {
-	    codeTableWidget2 = bottomPanelRight << new QRTable( 5, "row","line","text","type","pos" );
+	    codeTableWidget2 = new QRTable( 5, "row","line","text","type","pos" );
 	    maxrows=3;
 	  } else {
-	    codeTableWidget2 = bottomPanelRight << new QRTable( 8, "row","address","instr","operands","comment","pos","size","byte" );
+	    codeTableWidget2 =  new QRTable( 8, "row","address","instr","operands","comment","pos","size","byte" );
 	  }
+	  codeTabB->insertTab(0,codeTableWidget2,QString(fileNameB.c_str()));
 	  QROSE::link(codeTableWidget2, SIGNAL(activated(int, int, int, int)), &codeTableWidgetCellActivatedB, this);
-	} else {
-	  QTextEdit* graph =  bottomPanel << new QTextEdit;
-	  graph->setReadOnly(true);
-	  graph->append("The call or control flow graph should be shown here...");
+	} 
+
+	int count=0;
+	if (fileB)
+	  count=1;
+	std::vector<SgNode*>::const_iterator dllIt = dllFilesA.begin();
+	std::vector<std::string>::const_iterator nameIt = dllA.begin();
+	codeTableWidgetADLLlist.clear();
+	codeTableWidgetBDLLlist.clear();
+	for (;nameIt!=dllA.end();++nameIt,++dllIt) {
+	  string name = *nameIt;
+	  //SgNode* file = *dllIt;
+	  QTextEdit* dll = new QTextEdit;
+	  dll->setReadOnly(true);
+	  codeTabB->insertTab(count++,dll,QString("LIB-A:%1").arg(name.c_str()));
+	  codeTableWidgetDLL =  new QRTable( 8, "row","address","instr","operands","comment","pos","size","byte" );
+	  codeTableWidgetADLLlist.push_back(codeTableWidgetDLL);
 	}
+	QTextEdit* graphA = new QTextEdit;
+	graphA->setReadOnly(true);
+	graphA->append("The call or control flow graph should be shown here...");
+	codeTabB->insertTab(count,graphA,"Graph FileA");
+
+	count=1;
+	dllIt = dllFilesB.begin();
+	nameIt = dllB.begin();
+	for (;nameIt!=dllB.end();++nameIt,++dllIt) {
+	  string name = *nameIt;
+	  //SgNode* file = *dllIt;
+	  QTextEdit* dll = new QTextEdit;
+	  dll->setReadOnly(true);
+	  codeTabA->insertTab(count++,dll,QString("LIB-B:%1").arg(name.c_str()));
+	  codeTableWidgetDLL =  new QRTable( 8, "row","address","instr","operands","comment","pos","size","byte" );
+	  codeTableWidgetBDLLlist.push_back(codeTableWidgetDLL);
+	}
+	QTextEdit* graphB = new QTextEdit;
+	graphB->setReadOnly(true);
+	graphB->append("The call or control flow graph should be shown here...");
+	codeTabA->insertTab(count,graphB,"Graph FileB");
+
       }
       bottomPanelLeft.setFixedWidth(screenWidth/5 );
     } //mainPanel
@@ -1062,6 +1057,11 @@ void BinQGUI::showFile(int row, qrs::QRTable* currentWidget,
     currentWidget->removeRow(0);
 
   std::string funcname ="";
+  // make sure that only valid files are passed on
+  if (funcsFile.size()==0) {
+    cerr << "INVALID BINARY"<<endl;
+    exit(0);
+  }
   if (isSgAsmFunctionDeclaration(funcsFile[row])) {
     funcname=isSgAsmFunctionDeclaration(funcsFile[row])->get_name();
   }

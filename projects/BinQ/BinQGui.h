@@ -82,7 +82,12 @@ class BinQGUI //: public QWidget
     qrs::QRWindow *window;
     qrs::QRTable *tableWidget;
     qrs::QRTable *codeTableWidget;
+    qrs::QRTable *codeTableWidgetDLL;
+    std::vector<qrs::QRTable*> codeTableWidgetADLLlist;
+    std::vector<qrs::QRTable*> codeTableWidgetBDLLlist;
     QTabWidget *analysisTab;
+    QTabWidget *codeTabA;
+    QTabWidget *codeTabB;
     qrs::QRTable *tableWidget2;
     qrs::QRTable *codeTableWidget2;
     //qrs::QRTable *currentWidget;
@@ -117,7 +122,9 @@ class BinQGUI //: public QWidget
     int screenHeight;
     std::vector<std::string> dllA;
     std::vector<std::string> dllB;
-   
+    void createItem(SgNode* file, std::vector<Item*>& itemsFile,std::vector<SgNode*>& funcsFile, bool dll);
+    void createFunction(SgNode* file,std::vector<SgNode*>& funcsFile, bool dll);
+
 }; //class BinQGUI
 
 #endif
