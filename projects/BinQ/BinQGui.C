@@ -34,17 +34,12 @@ using namespace __gnu_cxx;
 
 
 // ----------------------------------------------------------------------------------------------
-// specify analyses here!
-//void alignFunctions();
-//void andreasDiff();
-//void alignFunctionsSmart();
-
+// This function is called when an analysis is selected and run
 void clicked1() {
   BinQGUI *instance = QROSE::cbData<BinQGUI *>();
   QListWidgetItem *item= instance->listWidget->currentItem(); 
   QString te = item->text();
   string t = te.toStdString();
-  //const char *t = (const char *)text;
   cerr << " Selected : " << t << endl;
   for (unsigned int i=0;i<instance->analyses.size();++i) {
     BinAnalyses* analysis = instance->analyses[i];
@@ -57,11 +52,8 @@ void clicked1() {
   }
 } 
 
-void clicked2(QListWidgetItem* item) {}
-
-
-
 // ----------------------------------------------------------------------------------------------
+// this function handles the toolbar
 void toolbarClick(int action) {
   BinQGUI *instance = QROSE::cbData<BinQGUI *>();
   switch(action){
@@ -83,14 +75,15 @@ void toolbarClick(int action) {
 }
 
 
-
+// this function handles the function-table for fileA
 static void tableWidgetCellActivatedA(int col, int row, int oldCol, int oldRow) {
   BinQGUI *instance = QROSE::cbData<BinQGUI *>();
   instance->unhighlightFunctionRow(oldRow, true);
   instance->highlightFunctionRow(row,true);
     return;
-} //tableCellActivated(int col, int row, int oldCol, int oldRow)
+} 
 
+// this function handles the instruction-table for fileA
 static void codeTableWidgetCellActivatedA(int col, int row, int oldCol, int oldRow) {
   BinQGUI *instance = QROSE::cbData<BinQGUI *>();
   instance->unhighlightInstructionRow(oldRow, true);
@@ -108,15 +101,17 @@ static void codeTableWidgetCellActivatedA(int col, int row, int oldCol, int oldR
     }
   }
   return;
-} //tableCellActivated(int col, int row, int oldCol, int oldRow)
+} 
 
+// this function handles the function-table for fileB
 static void tableWidgetCellActivatedB(int col, int row, int oldCol, int oldRow) {
   BinQGUI *instance = QROSE::cbData<BinQGUI *>();
   instance->unhighlightFunctionRow(oldRow, false);
   instance->highlightFunctionRow(row,false);
   return;
-} //tableCellActivated(int col, int row, int oldCol, int oldRow)
+} 
 
+// this function handles the instruction-table for fileB
 static void codeTableWidgetCellActivatedB(int col, int row, int oldCol, int oldRow) {
   BinQGUI *instance = QROSE::cbData<BinQGUI *>();
   instance->unhighlightInstructionRow(oldRow, false);
@@ -140,8 +135,7 @@ static void codeTableWidgetCellActivatedB(int col, int row, int oldCol, int oldR
 
 
 // ----------------------------------------------------------------------------------------------
-
-
+// this function controls what happens when an item in the function table is selected (A or B)
 void BinQGUI::highlightFunctionRow(int row, bool fileAYes) {
   if(row >= 0)    {         
     if (fileAYes) {
@@ -164,7 +158,6 @@ void BinQGUI::highlightFunctionRow(int row, bool fileAYes) {
 	    }
 	  } 
 	}
-      
 	//cerr << " highlight func row : " << row << "  inst row : " << offset << endl;
 	codeTableWidget->setCurrentCell(offset,0);
       }
@@ -206,6 +199,7 @@ void BinQGUI::highlightFunctionRow(int row, bool fileAYes) {
   } //if(row >= 0)
 } //CompassGui::highlighFunctionRow(int row)
 
+// this function controls what happens when an item in the function table is de-selected (A or B)
 void BinQGUI::unhighlightFunctionRow(int row, bool fileAYes) {
   if (row >= 0)     {
     if (fileAYes) {
@@ -220,11 +214,10 @@ void BinQGUI::unhighlightFunctionRow(int row, bool fileAYes) {
       tableWidget2->setBgColor(QColor(255,255,255),0,row);
     }
   } //if (row >= 0)
-} //CompassGui::unhighlighFunctionRow(int row)
+} 
 
 
-
-
+// this function controls what happens when an item in the instruction table is selected (A or B)
 void BinQGUI::highlightInstructionRow(int row, bool fileAYes) {
   if(row >= 0)    {         
     if (fileAYes) {
@@ -257,8 +250,9 @@ void BinQGUI::highlightInstructionRow(int row, bool fileAYes) {
       }
     }
   } //if(row >= 0)
-} //CompassGui::highlighFunctionRow(int row)
+} 
 
+// this function controls what happens when an item in the instruction table is de-selected (A or B)
 void BinQGUI::unhighlightInstructionRow(int row,bool fileAYes) {
   if (row >= 0)     {
     if (fileAYes) {
@@ -281,13 +275,11 @@ void BinQGUI::unhighlightInstructionRow(int row,bool fileAYes) {
       }
     }
   } //if (row >= 0)
-} //CompassGui::unhighlighFunctionRow(int row)
-
-
+} 
 
 
 // ----------------------------------------------------------------------------------------------
-
+// this function manages the code to keep the slide bar update with the instruction table
 void BinQGUI::updateByteItemList() {
   // update byteItemList
   cerr << "updating itemsFileA : " << itemsFileA.size() << endl; 
@@ -316,15 +308,19 @@ void BinQGUI::updateByteItemList() {
     }
   }
   slide->colorize();
-  showFileA(0);
-  if (fileB)
-    showFileB(0);
-  
+  cerr << "displaying A  ... " << endl; 
+  showFile(0, codeTableWidget, funcsFileA, itemsFileA);
+  QROSE::link(codeTableWidget, SIGNAL(activated(int, int, int, int)), &codeTableWidgetCellActivatedA, this);
+  if (fileB) {
+    cerr << "displaying B ... " << endl; 
+    showFile(0, codeTableWidget2, funcsFileB, itemsFileB);
+    QROSE::link(codeTableWidget2, SIGNAL(activated(int, int, int, int)), &codeTableWidgetCellActivatedB, this);
+  }
   showFileTab();
 }
 
 
-
+// this function inserts a tab and reports information about a selected section
 void
 BinQGUI::insertSectionInformation(SgAsmElfSection* sec, std::string filename) {
   ROSE_ASSERT(sec);
@@ -363,6 +359,8 @@ BinQGUI::insertSectionInformation(SgAsmElfSection* sec, std::string filename) {
   sectionInfo->append(QString("Append dump information here..."));
 }
 
+// this function inserts a tab with information about the file(A).
+// this should be replaced in the future against the file.dump function
 void
 BinQGUI::insertFileInformation() {
 
@@ -460,7 +458,7 @@ BinQGUI::insertFileInformation() {
     fileInfo->moveCursor(QTextCursor::Start);
 }
 
-
+// Constructor
 BinQGUI::BinQGUI(std::string fA, std::string fB, std::vector<std::string> dllAA, 
 		 std::vector<std::string> dllBB, bool t) :  
   window(0), fileNameA(fA), fileNameB(fB) {
@@ -486,6 +484,7 @@ BinQGUI::BinQGUI(std::string fA, std::string fB, std::vector<std::string> dllAA,
     testAnalyses();
 }
 
+// Initialization of all analyzes and parsing of all files
 void BinQGUI::init(){
   cerr << "Checking for analyses ... " << endl;
   analyses.clear();
@@ -761,6 +760,7 @@ void BinQGUI::init(){
 
 }
 
+// The GUI is created here
 void BinQGUI::createGUI() {
   QDesktopWidget *desktop = QApplication::desktop();
   screenWidth = desktop->width()-10;
@@ -945,7 +945,7 @@ void BinQGUI::createGUI() {
 
 } //BinQGUI::BinQGUI()
 
-
+// if the user hits open in the GUI
 void BinQGUI::open() {
 #if 0
   char buf[4096] = "\0";
@@ -958,11 +958,13 @@ void BinQGUI::open() {
 #endif
 } //CompassGui::open()
 
+// if the user hits reset in the GUI
 void BinQGUI::reset() {
   init();
   updateByteItemList();
 } //CompassGui::open()
 
+// This is for testing purposes only
 void
 BinQGUI::testAnalyses() {
   for (unsigned int i=0;i<analyses.size();++i) {
@@ -977,7 +979,7 @@ BinQGUI::testAnalyses() {
  
 }
 
-
+// this is the implementation of the run function in the GUI
 void
 BinQGUI::run( ) {
   //  cerr << " calling run!! " << endl;
@@ -989,6 +991,7 @@ BinQGUI::run( ) {
   }
 }
 
+// Creates the Function table (left hand side) for file A and B
 void 
 BinQGUI::showFileTab() {
   cerr << "creating FileTab " << endl; 
@@ -1049,256 +1052,20 @@ BinQGUI::showFileTab() {
 }
 
 
-void BinQGUI::showFileA(int row) {
-  cerr << "displaying A " << endl; 
+// Creates the table for Instructions for FileB
+void BinQGUI::showFile(int row, qrs::QRTable* currentWidget,
+		       std::vector<SgNode*>& funcsFile,
+		       std::vector<Item*>& itemsFile) {
+  QROSE::unlink(currentWidget, SIGNAL(activated(int, int, int, int)));
 
-  QROSE::unlink(codeTableWidget, SIGNAL(activated(int, int, int, int)));
+  while(currentWidget->rowCount()) 
+    currentWidget->removeRow(0);
 
-  while(codeTableWidget->rowCount()) 
-    codeTableWidget->removeRow(0);
-
-  ROSE_ASSERT(fileA != NULL);
-
-
-  ROSE_ASSERT(isSgAsmFunctionDeclaration(funcsFileA[row]));
-  QString res = QString("FILE A : Looking at function  %1  row: %2  size ")
-    .arg(isSgAsmFunctionDeclaration(funcsFileA[row])->get_name().c_str())
-    .arg(row);
-  //    .arg(elem.size);
-  console->append(res);  
-  
-  int rowC=0;
-  int posC=0;
-  for(size_t i=0; i < itemsFileA.size(); i++ )    {
-    SgAsmNode* stmts = isSgAsmNode(itemsFileA[i]->statement);
-    //    ROSE_ASSERT(stmts);
-    int length=1;    
-    bool addRow=false;
-    //posRowA[posC]=-1;
-    if (isSgAsmx86Instruction(stmts)) {
-      codeTableWidget->addRows(1);
-      length = isSgAsmInstruction(stmts)->get_raw_bytes().size();
-      //      if (itemsFileA[i]->plus)
-      //	itemsFileA[i]->bg=QColor(135,206,255);
-
-      itemsFileA[i]->bg=QColor(255,255,255);
-      QColor back = itemsFileA[i]->bg;
-      itemsFileA[i]->fg=QColor(0,0,0);
-      QColor front = itemsFileA[i]->fg;
-
-      for (int j=1;j<maxrows;++j) {
-	codeTableWidget->setBgColor(back,j,i);
-      }
-      codeTableWidget->setTextColor(front,0,i);
-      codeTableWidget->setTextColor(QColor(255,0,0),1,i);
-      codeTableWidget->setTextColor(QColor(0,0,255),2,i);
-      codeTableWidget->setTextColor(QColor(0,155,0),3,i);
-      codeTableWidget->setTextColor(QColor(0,155,0),4,i);
-      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->row), 0, i);	
-      codeTableWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString((isSgAsmx86Instruction(stmts))->get_address()) ), 1, i);
-      codeTableWidget->setText(boost::lexical_cast<std::string>((isSgAsmx86Instruction(stmts))->get_mnemonic() ), 2, i);
-      SgAsmOperandList * ops = isSgAsmx86Instruction(stmts)->get_operandList();
-      SgAsmExpressionPtrList& opsList = ops->get_operands();
-      SgAsmExpressionPtrList::iterator it = opsList.begin();
-      string opsName="";
-      for (;it!=opsList.end();++it) {
-	opsName += boost::lexical_cast<std::string>(unparseX86Expression(*it, false) )+", ";
-      }
-      codeTableWidget->setText(boost::lexical_cast<std::string>(opsName), 3, i);	
-      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->comment ), 4, i);
-      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->pos), 5, i);	
-      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->length), 6, i);	
-      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->realByteSize), 7, i);	
-      addRow=true;
-    } else if (isSgAsmBlock(stmts)  && !(isSgAsmInterpretation(isSgAsmBlock(stmts)->get_parent()))) {
-      //cerr << " isSgAsmBlock(stmts[i])->get_parent() " << isSgAsmBlock(stmts[i])->get_parent()->class_name() << endl;
-      codeTableWidget->addRows(1);
-      codeTableWidget->setTextColor(QColor(128,128,128),0,i);
-      codeTableWidget->setTextColor(QColor(128,128,128),1,i);
-      codeTableWidget->setTextColor(QColor(255,255,0),2,i);
-      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->row), 0, i);	
-      codeTableWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString((isSgAsmBlock(stmts))->get_address()) ), 1, i);
-      codeTableWidget->setText(boost::lexical_cast<std::string>("***"), 2, i);
-      addRow=true;
-    }  else if (isSgAsmFunctionDeclaration(stmts)) {
-      codeTableWidget->addRows(1);
-      itemsFileA[i]->bg=QColor(0,0,0);
-      QColor back = itemsFileA[i]->bg;
-      itemsFileA[i]->fg=QColor(255,255,255);
-      QColor front = itemsFileA[i]->fg;
-      for (int j=1;j<maxrows;++j) {
-	codeTableWidget->setBgColor(back,j,i);
-	codeTableWidget->setTextColor(front,j,i);
-      }
-      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->row), 0, i);	
-      codeTableWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString((isSgAsmFunctionDeclaration(stmts))->get_address()) ), 1, i);
-      codeTableWidget->setText(boost::lexical_cast<std::string>("FUNC"), 2, i);
-      codeTableWidget->setText(boost::lexical_cast<std::string>((isSgAsmFunctionDeclaration(stmts))->get_name() ), 3, i);
-      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->pos), 5, i);	
-      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->length), 6, i);	
-      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->realByteSize), 7, i);	
-      addRow=true;
-    } else if (isSgAsmElfSection(stmts)) {
-      codeTableWidget->addRows(1);
-      itemsFileA[i]->bg=QColor(0,100,0);
-      QColor back = itemsFileA[i]->bg;
-      itemsFileA[i]->fg=QColor(255,255,255);
-      QColor front = itemsFileA[i]->fg;
-      for (int j=1;j<maxrows;++j) {
-	codeTableWidget->setBgColor(back,j,i);
-	codeTableWidget->setTextColor(front,j,i);
-      }
-      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->row), 0, i);	
-      codeTableWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString(itemsFileA[i]->addr) ), 1, i);
-      codeTableWidget->setText(boost::lexical_cast<std::string>(isSgAsmElfSection(itemsFileA[i]->statement)->get_name()->get_string()), 2, i);
-      codeTableWidget->setText(boost::lexical_cast<std::string>((isSgAsmNode(stmts))->class_name() ), 3, i);
-      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->comment ), 4, i);
-      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->pos), 5, i);	
-      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->length), 6, i);	
-      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->realByteSize), 7, i);	
-      addRow=true;
-
-
-    } else if (isSgAsmElfSectionTableEntry(stmts)) {
-      codeTableWidget->addRows(1);
-      itemsFileA[i]->bg=QColor(0,0,0);
-      QColor back = itemsFileA[i]->bg;
-      itemsFileA[i]->fg=QColor(255,255,255);
-      QColor front = itemsFileA[i]->fg;
-      for (int j=1;j<maxrows;++j) {
-	codeTableWidget->setBgColor(back,j,i);
-	codeTableWidget->setTextColor(front,j,i);
-      }
-      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->row), 0, i);	
-      codeTableWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString(itemsFileA[i]->addr) ), 1, i);
-      codeTableWidget->setText(boost::lexical_cast<std::string>(isSgAsmElfSectionTableEntry(itemsFileA[i]->statement)->class_name()), 2, i);
-      codeTableWidget->setText(boost::lexical_cast<std::string>((isSgAsmNode(stmts))->class_name() ), 3, i);
-      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->comment ), 4, i);
-      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->pos), 5, i);	
-      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->length), 6, i);	
-      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->realByteSize), 7, i);	
-      addRow=true;
-
-
-    } else if (isSgAsmElfSegmentTableEntry(stmts)) {
-      codeTableWidget->addRows(1);
-      itemsFileA[i]->bg=QColor(0,0,0);
-      QColor back = itemsFileA[i]->bg;
-      itemsFileA[i]->fg=QColor(255,255,255);
-      QColor front = itemsFileA[i]->fg;
-      for (int j=1;j<maxrows;++j) {
-	codeTableWidget->setBgColor(back,j,i);
-	codeTableWidget->setTextColor(front,j,i);
-      }
-      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->row), 0, i);	
-      codeTableWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString(itemsFileA[i]->addr) ), 1, i);
-      codeTableWidget->setText(boost::lexical_cast<std::string>(isSgAsmElfSegmentTableEntry(itemsFileA[i]->statement)->class_name()), 2, i);
-      codeTableWidget->setText(boost::lexical_cast<std::string>((isSgAsmNode(stmts))->class_name() ), 3, i);
-      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->comment ), 4, i);
-      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->pos), 5, i);	
-      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->length), 6, i);	
-      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->realByteSize), 7, i);	
-      addRow=true;
-
-
-    } else if (isSgAsmElfSymbol(stmts)) {
-      codeTableWidget->addRows(1);
-      itemsFileA[i]->bg=QColor(50,50,0);
-      QColor back = itemsFileA[i]->bg;
-      itemsFileA[i]->fg=QColor(255,255,255);
-      QColor front = itemsFileA[i]->fg;
-      for (int j=1;j<maxrows;++j) {
-	codeTableWidget->setBgColor(back,j,i);
-	codeTableWidget->setTextColor(front,j,i);
-      }
-      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->row), 0, i);	
-      codeTableWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString(itemsFileA[i]->addr) ), 1, i);
-      codeTableWidget->setText(boost::lexical_cast<std::string>(isSgAsmElfSymbol(itemsFileA[i]->statement)->get_name()->get_string()), 2, i);
-      codeTableWidget->setText(boost::lexical_cast<std::string>((isSgAsmNode(stmts))->class_name() ), 3, i);
-      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->comment ), 4, i);
-      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->pos), 5, i);	
-      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->length), 6, i);	
-      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->realByteSize), 7, i);	
-      addRow=true;
-
-
-    } else {
-      codeTableWidget->addRows(1);
-      itemsFileA[i]->bg=QColor(128,128,128);
-      QColor back = itemsFileA[i]->bg;
-      for (int j=1;j<maxrows;++j) {
-	codeTableWidget->setBgColor(back,j,i);
-      }
-      if (itemsFileA[i]->row) {
-	codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->row), 0, i);	
-	codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->pos), 5, i);	
-	codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->length), 6, i);	
-      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->realByteSize), 7, i);	
-      }
-      addRow=true;
-    }
-
-
-    // for testing
-    if (rowC>2000)
-      cerr << "Stopping here... currently table formatting allows only max 2000 entries..." <<endl;
-      else
-    if (addRow) {
-      if ((rowC%500)==0)
-	cout << " adding row ... " << rowC << " / " << itemsFileA.size() << endl;
-      //this is slow!!
-      //      codeTableWidget->setHAlignment(true, false, 3); // left horizontal alignment
-#if 0      
-      codeTableWidget->setHAlignment(true, false, 0); // left horizontal alignment
-      codeTableWidget->setHAlignment(true, false, 1); // left horizontal alignment
-      codeTableWidget->setHAlignment(true, false, 2); // left horizontal alignment
-
-      codeTableWidget->setHAlignment(true, false, 4); // left horizontal alignment
-      codeTableWidget->setHAlignment(true, false, 5); // left horizontal alignment
-      codeTableWidget->setHAlignment(true, false, 6); // left horizontal alignment
-      codeTableWidget->setHAlignment(true, false, 7); // left horizontal alignment
-
-#endif
-      codeTableWidget->setVDim(i,18);
-      codeTableWidget->setHDim(0,40);
-      codeTableWidget->setHDim(1,65);
-      codeTableWidget->setHDim(2,55);
-      codeTableWidget->setHDim(3,180);
-      codeTableWidget->setHDim(4,90);
-      codeTableWidget->setHDim(5,40);
-      codeTableWidget->setHDim(6,40);
-      codeTableWidget->setHDim(7,40);
-
-      
-      rowC++;
-      posC+=length;
-      //cerr << "row added" << endl;
-    }
-
-  }
-
-  codeTableWidget->setShowGrid(false);
-  codeTableWidget->setCurrentCell(row,0);
-
-  QROSE::link(codeTableWidget, SIGNAL(activated(int, int, int, int)), &codeTableWidgetCellActivatedA, this);
-
-}
-
-void BinQGUI::showFileB(int row) {
-  cerr << "displaying B ... " << endl; 
-
-  QROSE::unlink(codeTableWidget2, SIGNAL(activated(int, int, int, int)));
-
-  while(codeTableWidget2->rowCount()) 
-    codeTableWidget2->removeRow(0);
-
-  ROSE_ASSERT(fileA != NULL);
-  ROSE_ASSERT(fileB != NULL);
   std::string funcname ="";
-  if (isSgAsmFunctionDeclaration(funcsFileB[row])) {
-    funcname=isSgAsmFunctionDeclaration(funcsFileB[row])->get_name();
+  if (isSgAsmFunctionDeclaration(funcsFile[row])) {
+    funcname=isSgAsmFunctionDeclaration(funcsFile[row])->get_name();
   }
-  QString res = QString("FILE B : Looking at function  %1  row: %2  size ")
+  QString res = QString(" Looking at function  %1  row: %2  size ")
     .arg(funcname.c_str())
     .arg(row);
   //    .arg(elem.size);
@@ -1306,30 +1073,28 @@ void BinQGUI::showFileB(int row) {
   //  std::cout << "Looking at function " << elem.function_name_B << "   row : " << row << "   size : " << elem.size << std::endl;
   int rowC=0;
   int posC=0;
-  for(size_t i=0; i < itemsFileB.size(); i++ )    {
-    SgNode* stmts = itemsFileB[i]->statement;
+  for(size_t i=0; i < itemsFile.size(); i++ )    {
+    SgNode* stmts = itemsFile[i]->statement;
     int length=1;    
     bool addRow=false;
-    //posRowB[posC]=-1;
     if (isSgAsmx86Instruction(stmts)) {
-      codeTableWidget2->addRows(1);
+      currentWidget->addRows(1);
       length = isSgAsmInstruction(stmts)->get_raw_bytes().size();
-
-      itemsFileB[i]->bg=QColor(255,255,255);
-      QColor back = itemsFileB[i]->bg;
-      itemsFileB[i]->fg=QColor(0,0,0);
-      QColor front = itemsFileB[i]->fg;
+      itemsFile[i]->bg=QColor(255,255,255);
+      QColor back = itemsFile[i]->bg;
+      itemsFile[i]->fg=QColor(0,0,0);
+      QColor front = itemsFile[i]->fg;
       for (int j=1;j<maxrows;++j) {
-	codeTableWidget2->setBgColor(back,j,i);
+	currentWidget->setBgColor(back,j,i);
       }
-      codeTableWidget2->setTextColor(front,0,i);
-      codeTableWidget2->setTextColor(QColor(255,0,0),1,i);
-      codeTableWidget2->setTextColor(QColor(0,0,255),2,i);
-      codeTableWidget2->setTextColor(QColor(0,155,0),3,i);
-      codeTableWidget2->setTextColor(QColor(0,155,0),4,i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->row), 0, i);	
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString((isSgAsmx86Instruction(stmts))->get_address()) ), 1, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>((isSgAsmx86Instruction(stmts))->get_mnemonic() ), 2, i);
+      currentWidget->setTextColor(front,0,i);
+      currentWidget->setTextColor(QColor(255,0,0),1,i);
+      currentWidget->setTextColor(QColor(0,0,255),2,i);
+      currentWidget->setTextColor(QColor(0,155,0),3,i);
+      currentWidget->setTextColor(QColor(0,155,0),4,i);
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->row), 0, i);	
+      currentWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString((isSgAsmx86Instruction(stmts))->get_address()) ), 1, i);
+      currentWidget->setText(boost::lexical_cast<std::string>((isSgAsmx86Instruction(stmts))->get_mnemonic() ), 2, i);
       SgAsmOperandList * ops = isSgAsmx86Instruction(stmts)->get_operandList();
       SgAsmExpressionPtrList& opsList = ops->get_operands();
       SgAsmExpressionPtrList::iterator it = opsList.begin();
@@ -1337,240 +1102,231 @@ void BinQGUI::showFileB(int row) {
       for (;it!=opsList.end();++it) {
 	opsName += boost::lexical_cast<std::string>(unparseX86Expression(*it, false) )+", ";
       }
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(opsName), 3, i);	
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->comment ), 4, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->pos), 5, i);	
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->length), 6, i);	
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->realByteSize), 7, i);	
+      currentWidget->setText(boost::lexical_cast<std::string>(opsName), 3, i);	
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->comment ), 4, i);
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->pos), 5, i);	
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->length), 6, i);	
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->realByteSize), 7, i);	
       addRow=true;
     } else if (isSgAsmBlock(stmts)  && !(isSgAsmInterpretation(isSgAsmBlock(stmts)->get_parent()))) {
       //cerr << " isSgAsmBlock(stmts[i])->get_parent() " << isSgAsmBlock(stmts[i])->get_parent()->class_name() << endl;
-      codeTableWidget2->addRows(1);
-      codeTableWidget2->setTextColor(QColor(128,128,128),0,i);
-      codeTableWidget2->setTextColor(QColor(128,128,128),1,i);
-      codeTableWidget2->setTextColor(QColor(255,255,0),2,i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->row), 0, i);	
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString((isSgAsmBlock(stmts))->get_address()) ), 1, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>("***"), 2, i);
+      currentWidget->addRows(1);
+      currentWidget->setTextColor(QColor(128,128,128),0,i);
+      currentWidget->setTextColor(QColor(128,128,128),1,i);
+      currentWidget->setTextColor(QColor(255,255,0),2,i);
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->row), 0, i);	
+      currentWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString((isSgAsmBlock(stmts))->get_address()) ), 1, i);
+      currentWidget->setText(boost::lexical_cast<std::string>("***"), 2, i);
       addRow=true;
     } else if (isSgAsmFunctionDeclaration(stmts)) {
-      codeTableWidget2->addRows(1);
-      itemsFileB[i]->bg=QColor(0,0,0);
-      QColor back = itemsFileB[i]->bg;
-      itemsFileB[i]->fg=QColor(255,255,255);
-      QColor front = itemsFileB[i]->fg;
+      currentWidget->addRows(1);
+      itemsFile[i]->bg=QColor(0,0,0);
+      QColor back = itemsFile[i]->bg;
+      itemsFile[i]->fg=QColor(255,255,255);
+      QColor front = itemsFile[i]->fg;
       for (int j=1;j<maxrows;++j) {
-	codeTableWidget2->setBgColor(back,j,i);
-	codeTableWidget2->setTextColor(front,j,i);
+	currentWidget->setBgColor(back,j,i);
+	currentWidget->setTextColor(front,j,i);
       }
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->row), 0, i);	
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString((isSgAsmFunctionDeclaration(stmts))->get_address()) ), 1, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>("FUNC"), 2, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>((isSgAsmFunctionDeclaration(stmts))->get_name() ), 3, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->pos), 5, i);	
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->length), 6, i);	
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->realByteSize), 7, i);	
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->row), 0, i);	
+      currentWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString((isSgAsmFunctionDeclaration(stmts))->get_address()) ), 1, i);
+      currentWidget->setText(boost::lexical_cast<std::string>("FUNC"), 2, i);
+      currentWidget->setText(boost::lexical_cast<std::string>((isSgAsmFunctionDeclaration(stmts))->get_name() ), 3, i);
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->pos), 5, i);	
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->length), 6, i);	
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->realByteSize), 7, i);	
       addRow=true;
     } 
     else if (isSgAsmElfSection(stmts)) {
-      codeTableWidget2->addRows(1);
-      itemsFileB[i]->bg=QColor(0,100,0);
-      QColor back = itemsFileB[i]->bg;
-      itemsFileB[i]->fg=QColor(255,255,255);
-      QColor front = itemsFileB[i]->fg;
+      currentWidget->addRows(1);
+      itemsFile[i]->bg=QColor(0,100,0);
+      QColor back = itemsFile[i]->bg;
+      itemsFile[i]->fg=QColor(255,255,255);
+      QColor front = itemsFile[i]->fg;
       for (int j=1;j<maxrows;++j) {
-	codeTableWidget2->setBgColor(back,j,i);
-	codeTableWidget2->setTextColor(front,j,i);
+	currentWidget->setBgColor(back,j,i);
+	currentWidget->setTextColor(front,j,i);
       }
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->row), 0, i);	
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString(itemsFileB[i]->addr) ), 1, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(isSgAsmElfSection(itemsFileB[i]->statement)->get_name()->get_string()), 2, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>((isSgAsmNode(stmts))->class_name() ), 3, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->comment ), 4, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->pos), 5, i);	
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->length), 6, i);	
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->realByteSize), 7, i);	
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->row), 0, i);	
+      currentWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString(itemsFile[i]->addr) ), 1, i);
+      currentWidget->setText(boost::lexical_cast<std::string>(isSgAsmElfSection(itemsFile[i]->statement)->get_name()->get_string()), 2, i);
+      currentWidget->setText(boost::lexical_cast<std::string>((isSgAsmNode(stmts))->class_name() ), 3, i);
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->comment ), 4, i);
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->pos), 5, i);	
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->length), 6, i);	
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->realByteSize), 7, i);	
       addRow=true;
-
-
     }
+
     else if (isSgAsmElfSectionTableEntry(stmts)) {
-      codeTableWidget2->addRows(1);
-      itemsFileB[i]->bg=QColor(0,0,0);
-      QColor back = itemsFileB[i]->bg;
-      itemsFileB[i]->fg=QColor(255,255,255);
-      QColor front = itemsFileB[i]->fg;
+      currentWidget->addRows(1);
+      itemsFile[i]->bg=QColor(0,0,0);
+      QColor back = itemsFile[i]->bg;
+      itemsFile[i]->fg=QColor(255,255,255);
+      QColor front = itemsFile[i]->fg;
       for (int j=1;j<maxrows;++j) {
-	codeTableWidget2->setBgColor(back,j,i);
-	codeTableWidget2->setTextColor(front,j,i);
+	currentWidget->setBgColor(back,j,i);
+	currentWidget->setTextColor(front,j,i);
       }
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->row), 0, i);	
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString(itemsFileB[i]->addr) ), 1, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(isSgAsmElfSectionTableEntry(itemsFileB[i]->statement)->class_name()), 2, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>((isSgAsmNode(stmts))->class_name() ), 3, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->comment ), 4, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->pos), 5, i);	
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->length), 6, i);	
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->realByteSize), 7, i);	
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->row), 0, i);	
+      currentWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString(itemsFile[i]->addr) ), 1, i);
+      currentWidget->setText(boost::lexical_cast<std::string>(isSgAsmElfSectionTableEntry(itemsFile[i]->statement)->class_name()), 2, i);
+      currentWidget->setText(boost::lexical_cast<std::string>((isSgAsmNode(stmts))->class_name() ), 3, i);
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->comment ), 4, i);
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->pos), 5, i);	
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->length), 6, i);	
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->realByteSize), 7, i);	
       addRow=true;
-
-
     }
+
     else if (isSgAsmElfSegmentTableEntry(stmts)) {
-      codeTableWidget2->addRows(1);
-      itemsFileB[i]->bg=QColor(0,0,0);
-      QColor back = itemsFileB[i]->bg;
-      itemsFileB[i]->fg=QColor(255,255,255);
-      QColor front = itemsFileB[i]->fg;
+      currentWidget->addRows(1);
+      itemsFile[i]->bg=QColor(0,0,0);
+      QColor back = itemsFile[i]->bg;
+      itemsFile[i]->fg=QColor(255,255,255);
+      QColor front = itemsFile[i]->fg;
       for (int j=1;j<maxrows;++j) {
-	codeTableWidget2->setBgColor(back,j,i);
-	codeTableWidget2->setTextColor(front,j,i);
+	currentWidget->setBgColor(back,j,i);
+	currentWidget->setTextColor(front,j,i);
       }
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->row), 0, i);	
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString(itemsFileB[i]->addr) ), 1, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(isSgAsmElfSegmentTableEntry(itemsFileB[i]->statement)->class_name()), 2, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>((isSgAsmNode(stmts))->class_name() ), 3, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->comment ), 4, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->pos), 5, i);	
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->length), 6, i);	
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->realByteSize), 7, i);	
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->row), 0, i);	
+      currentWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString(itemsFile[i]->addr) ), 1, i);
+      currentWidget->setText(boost::lexical_cast<std::string>(isSgAsmElfSegmentTableEntry(itemsFile[i]->statement)->class_name()), 2, i);
+      currentWidget->setText(boost::lexical_cast<std::string>((isSgAsmNode(stmts))->class_name() ), 3, i);
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->comment ), 4, i);
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->pos), 5, i);	
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->length), 6, i);	
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->realByteSize), 7, i);	
       addRow=true;
-
-
     }
+
     else if (isSgAsmElfSymbol(stmts)) {
-      codeTableWidget2->addRows(1);
-      itemsFileB[i]->bg=QColor(50,50,0);
-      QColor back = itemsFileB[i]->bg;
-      itemsFileB[i]->fg=QColor(255,255,255);
-      QColor front = itemsFileB[i]->fg;
+      currentWidget->addRows(1);
+      itemsFile[i]->bg=QColor(50,50,0);
+      QColor back = itemsFile[i]->bg;
+      itemsFile[i]->fg=QColor(255,255,255);
+      QColor front = itemsFile[i]->fg;
       for (int j=1;j<maxrows;++j) {
-	codeTableWidget2->setBgColor(back,j,i);
-	codeTableWidget2->setTextColor(front,j,i);
+	currentWidget->setBgColor(back,j,i);
+	currentWidget->setTextColor(front,j,i);
       }
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->row), 0, i);	
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString(itemsFileB[i]->addr) ), 1, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(isSgAsmElfSymbol(itemsFileB[i]->statement)->get_name()->get_string()), 2, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>((isSgAsmNode(stmts))->class_name() ), 3, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->comment ), 4, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->pos), 5, i);	
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->length), 6, i);	
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->realByteSize), 7, i);	
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->row), 0, i);	
+      currentWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString(itemsFile[i]->addr) ), 1, i);
+      currentWidget->setText(boost::lexical_cast<std::string>(isSgAsmElfSymbol(itemsFile[i]->statement)->get_name()->get_string()), 2, i);
+      currentWidget->setText(boost::lexical_cast<std::string>((isSgAsmNode(stmts))->class_name() ), 3, i);
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->comment ), 4, i);
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->pos), 5, i);	
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->length), 6, i);	
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->realByteSize), 7, i);	
       addRow=true;
-
-
     }
 
     else if (isSgFunctionDeclaration(stmts)) {
       SgFunctionDeclaration* func = isSgFunctionDeclaration(stmts);
       //cerr << func->class_name() << "  maxrows: " << maxrows << endl;
-      codeTableWidget2->addRows(1);
-      itemsFileB[i]->bg=QColor(0,0,0);
-      QColor back = itemsFileB[i]->bg;
-      itemsFileB[i]->fg=QColor(255,255,255);
-      QColor front = itemsFileB[i]->fg;
+      currentWidget->addRows(1);
+      itemsFile[i]->bg=QColor(0,0,0);
+      QColor back = itemsFile[i]->bg;
+      itemsFile[i]->fg=QColor(255,255,255);
+      QColor front = itemsFile[i]->fg;
       for (int j=1;j<maxrows;++j) {
-	codeTableWidget2->setBgColor(back,j,i);
-	codeTableWidget2->setTextColor(front,j,i);
+	currentWidget->setBgColor(back,j,i);
+	currentWidget->setTextColor(front,j,i);
       }
-      //      if (isSgFunctionDefinition(func->get_definition()))
-      //	cerr << row << " " << func->unparseToString() << endl;
-
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->row), 0, i);	
-      codeTableWidget2->setText(boost::lexical_cast<std::string>("FUNC"), 1, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(func->get_name().str() ), 2, i);
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->row), 0, i);	
+      currentWidget->setText(boost::lexical_cast<std::string>("FUNC"), 1, i);
+      currentWidget->setText(boost::lexical_cast<std::string>(func->get_name().str() ), 2, i);
       std::string comment = func->get_file_info()->isCompilerGenerated() ? "compiler gen": " ";
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(comment ), 3, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->pos), 4, i);	
-      addRow=true;
-
-    } else if (isSgLocatedNode(stmts)) {
-      SgLocatedNode* st = isSgLocatedNode(stmts);
-      //cerr << st->class_name() << "  maxrows: " << maxrows << endl;
-      codeTableWidget2->addRows(1);
-
-      itemsFileB[i]->bg=QColor(255,255,255);
-      QColor back = itemsFileB[i]->bg;
-      itemsFileB[i]->fg=QColor(0,0,0);
-      QColor front = itemsFileB[i]->fg;
-      for (int j=1;j<maxrows;++j) {
-	codeTableWidget2->setBgColor(back,j,i);
-      }
-      codeTableWidget2->setTextColor(front,0,i);
-      codeTableWidget2->setTextColor(QColor(255,0,0),1,i);
-      codeTableWidget2->setTextColor(QColor(0,0,255),2,i);
-      codeTableWidget2->setTextColor(QColor(0,155,0),3,i);
-      codeTableWidget2->setTextColor(QColor(0,155,0),4,i);
-
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->row), 0, i);	
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->lineNr ), 1, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(st->unparseToString()), 2, i);
-      //int size = st->get_traversalSuccessorContainer().size();
-      //cerr << size << " : " << st->unparseToString() << endl;
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->comment ), 3, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->pos), 4, i);	
-
+      currentWidget->setText(boost::lexical_cast<std::string>(comment ), 3, i);
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->pos), 4, i);	
       addRow=true;
     } 
-    else {
-      codeTableWidget2->addRows(1);
-      itemsFileB[i]->bg=QColor(128,128,128);
-      QColor back = itemsFileB[i]->bg;
+
+    else if (isSgLocatedNode(stmts)) {
+      SgLocatedNode* st = isSgLocatedNode(stmts);
+      //cerr << st->class_name() << "  maxrows: " << maxrows << endl;
+      currentWidget->addRows(1);
+
+      itemsFile[i]->bg=QColor(255,255,255);
+      QColor back = itemsFile[i]->bg;
+      itemsFile[i]->fg=QColor(0,0,0);
+      QColor front = itemsFile[i]->fg;
       for (int j=1;j<maxrows;++j) {
-	codeTableWidget2->setBgColor(back,j,i);
+	currentWidget->setBgColor(back,j,i);
+      }
+      currentWidget->setTextColor(front,0,i);
+      currentWidget->setTextColor(QColor(255,0,0),1,i);
+      currentWidget->setTextColor(QColor(0,0,255),2,i);
+      currentWidget->setTextColor(QColor(0,155,0),3,i);
+      currentWidget->setTextColor(QColor(0,155,0),4,i);
+
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->row), 0, i);	
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->lineNr ), 1, i);
+      currentWidget->setText(boost::lexical_cast<std::string>(st->unparseToString()), 2, i);
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->comment ), 3, i);
+      currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->pos), 4, i);	
+      addRow=true;
+    } 
+
+    else {
+      currentWidget->addRows(1);
+      itemsFile[i]->bg=QColor(128,128,128);
+      QColor back = itemsFile[i]->bg;
+      for (int j=1;j<maxrows;++j) {
+	currentWidget->setBgColor(back,j,i);
       }
 
-      if (itemsFileB[i]->row) {
-	codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->row), 0, i);	
+      if (itemsFile[i]->row) {
+	currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->row), 0, i);	
 	if (!sourceFile) {
-	  codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->pos), 5, i);	
-	  codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->length), 6, i);	
-	  codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->realByteSize), 7, i);	
+	  currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->pos), 5, i);	
+	  currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->length), 6, i);	
+	  currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->realByteSize), 7, i);	
 	}
       }
       addRow=true;
     }
 
     if (addRow) {
-      //codeTableWidget2->setHAlignment(true, false, 3); // left horizontal alignment
+      //currentWidget->setHAlignment(true, false, 3); // left horizontal alignment
 
 #if 0
-      codeTableWidget2->setHAlignment(true, false, 0); // left horizontal alignment
-      codeTableWidget2->setHAlignment(true, false, 1); // left horizontal alignment
-      codeTableWidget2->setHAlignment(true, false, 2); // left horizontal alignment
-      codeTableWidget2->setHAlignment(true, false, 4); // left horizontal alignment
+      currentWidget->setHAlignment(true, false, 0); // left horizontal alignment
+      currentWidget->setHAlignment(true, false, 1); // left horizontal alignment
+      currentWidget->setHAlignment(true, false, 2); // left horizontal alignment
+      currentWidget->setHAlignment(true, false, 4); // left horizontal alignment
 #endif
       
-      codeTableWidget2->setVDim(i,18);
+      currentWidget->setVDim(i,18);
       if (sourceFile) {
-	codeTableWidget2->setHDim(0,30);
-	codeTableWidget2->setHDim(1,50);
-	codeTableWidget2->setHDim(2,300);
-	codeTableWidget2->setHDim(3,110);
-	codeTableWidget2->setHDim(4,40);
+	currentWidget->setHDim(0,30);
+	currentWidget->setHDim(1,50);
+	currentWidget->setHDim(2,300);
+	currentWidget->setHDim(3,110);
+	currentWidget->setHDim(4,40);
       } else {
 #if 0
-	codeTableWidget2->setHAlignment(true, false, 5); // left horizontal alignment
-	codeTableWidget2->setHAlignment(true, false, 6); // left horizontal alignment
-	codeTableWidget2->setHAlignment(true, false, 7); // left horizontal alignment
+	currentWidget->setHAlignment(true, false, 5); // left horizontal alignment
+	currentWidget->setHAlignment(true, false, 6); // left horizontal alignment
+	currentWidget->setHAlignment(true, false, 7); // left horizontal alignment
 #endif
-	codeTableWidget2->setHDim(0,40);
-	codeTableWidget2->setHDim(1,65);
-	codeTableWidget2->setHDim(2,55);
-	codeTableWidget2->setHDim(3,180);
-	codeTableWidget2->setHDim(4,90);
-	codeTableWidget2->setHDim(5,40);
-	codeTableWidget2->setHDim(6,40);
-	codeTableWidget2->setHDim(7,40);
+	currentWidget->setHDim(0,40);
+	currentWidget->setHDim(1,65);
+	currentWidget->setHDim(2,55);
+	currentWidget->setHDim(3,180);
+	currentWidget->setHDim(4,90);
+	currentWidget->setHDim(5,40);
+	currentWidget->setHDim(6,40);
+	currentWidget->setHDim(7,40);
       }
       rowC++;
       posC+=length;
     }
   }
-  codeTableWidget2->setShowGrid(false);
-  codeTableWidget2->setCurrentCell(row,0);
+  currentWidget->setShowGrid(false);
+  currentWidget->setCurrentCell(row,0);
 
-  QROSE::link(codeTableWidget2, SIGNAL(activated(int, int, int, int)), &codeTableWidgetCellActivatedB, this);
+
 }
 
 
