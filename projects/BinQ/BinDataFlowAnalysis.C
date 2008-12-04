@@ -23,12 +23,18 @@ std::string BinDataFlowAnalysis::getDescription() {
 
 
 void
-BinDataFlowAnalysis::run() {
+BinDataFlowAnalysis::run(SgNode* fileA, SgNode* fileB) {
   BinQGUI *instance = QROSE::cbData<BinQGUI *>();
+  if (isSgProject(fileA)==NULL) {
+    cerr << "This is not a valid file for this analysis!" << endl;
+    QString res = QString("This is not a valid file for this analysis");
+    instance->analysisResult->append(res);  
+    return;
+  }
 
   RoseBin_Graph* graph=NULL;
-  ROSE_ASSERT(isSgProject(instance->fileA));
-  SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(instance->fileA)->get_fileList()[0]);
+  ROSE_ASSERT(isSgProject(fileA));
+  SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
   SgAsmFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
   ROSE_ASSERT(file);
 
@@ -103,5 +109,5 @@ BinDataFlowAnalysis::test(SgNode* fileA, SgNode* fileB) {
   dfanalysis->run(graph, dfgFileName, mergedEdges);
 
 
-  
+
 }

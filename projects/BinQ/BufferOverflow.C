@@ -222,12 +222,18 @@ BufferOverflow::run(string& name, SgDirectedGraphNode* node,
 
 
 void
-BufferOverflow::run() {
+BufferOverflow::run(SgNode* fileA, SgNode* fileB) {
   BinQGUI *instance = QROSE::cbData<BinQGUI *>();
+  if (isSgProject(fileA)==NULL) {
+    cerr << "This is not a valid file for this analysis!" << endl;
+    QString res = QString("This is not a valid file for this analysis");
+    instance->analysisResult->append(res);  
+    return;
+  }
 
   RoseBin_Graph* graph=NULL;
-  ROSE_ASSERT(isSgProject(instance->fileA));
-  SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(instance->fileA)->get_fileList()[0]);
+  ROSE_ASSERT(isSgProject(fileA));
+  SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
   SgAsmFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
   ROSE_ASSERT(file);
 
@@ -332,5 +338,5 @@ BufferOverflow::test(SgNode* fileA, SgNode* fileB) {
   dfanalysis->init();
   init(graph);
   dfanalysis->traverseGraph(rootNodes, this, interprocedural);
-  
+
 }

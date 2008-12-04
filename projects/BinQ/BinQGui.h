@@ -66,6 +66,7 @@ class BinQGUI //: public QWidget
     // the two main files
     SgNode* fileA;
     SgNode* fileB;
+    SgNode* currentSelectedFile;
     // the dll files
     std::vector<SgNode*> dllFilesA;
     std::vector<SgNode*> dllFilesB;

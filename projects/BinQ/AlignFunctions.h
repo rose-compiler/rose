@@ -8,9 +8,10 @@
 
 class AlignFunction : public BinAnalyses {
  public:
-  AlignFunction(){};
+  AlignFunction(){testFlag=false;};
   virtual ~AlignFunction(){};
-  void run();
+  bool testFlag;
+  void run(SgNode* f1, SgNode* f2);
   void test(SgNode* f1, SgNode* f2);
   std::string name();
   std::string getDescription();

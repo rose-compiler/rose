@@ -221,6 +221,7 @@ void BinQGUI::unhighlightFunctionRow(int row, bool fileAYes) {
 void BinQGUI::highlightInstructionRow(int row, bool fileAYes) {
   if(row >= 0)    {         
     if (fileAYes) {
+      currentSelectedFile=fileA;
       QFont f = codeTableWidget->getFont(0, row);
       f.setBold(true);
       codeTableWidget->setCurrentCell(row,0);
@@ -234,6 +235,7 @@ void BinQGUI::highlightInstructionRow(int row, bool fileAYes) {
 	  codeTableWidget->setBgColor(QColor(255,255,0),j,row);
       }
     } else if (fileB) {
+      currentSelectedFile=fileB;
       QFont f = codeTableWidget2->getFont(0, row);
       f.setBold(true);
       codeTableWidget2->setCurrentCell(row,0);
@@ -514,6 +516,7 @@ BinQGUI::BinQGUI(std::string fA, std::string fB, std::vector<std::string> dllAA,
   sourceFile=false;
 
   init();
+  currentSelectedFile=fileA;
   if (test==false)
     createGUI();
   cerr << "Initialization done." <<endl;
@@ -995,7 +998,11 @@ BinQGUI::run( ) {
   if (analysisResult)
     analysisResult->clear();
   if (currentAnalysis) {
-    currentAnalysis->run();
+    bool twoFiles = currentAnalysis->twoFiles();
+    if (twoFiles)
+      currentAnalysis->run(fileA,fileB);
+    else if (currentSelectedFile!=NULL)
+      currentAnalysis->run(currentSelectedFile,NULL);
     analysisResult->moveCursor(QTextCursor::Start);
   }
 }

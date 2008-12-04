@@ -8,9 +8,10 @@
 
 class BinDataFlowAnalysis : public BinAnalyses {
  public:
-  BinDataFlowAnalysis(){};
+  BinDataFlowAnalysis(){testFlag=false;};
   virtual ~BinDataFlowAnalysis(){};
-  void run();
+  bool testFlag;
+  void run(SgNode* f1, SgNode* f2);
   void test(SgNode* f1, SgNode* f2);
   std::string name();
   std::string getDescription();

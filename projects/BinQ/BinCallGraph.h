@@ -8,9 +8,10 @@
 
 class BinCallGraph : public BinAnalyses {
  public:
-  BinCallGraph(){};
+  BinCallGraph(){testFlag=false;};
   virtual ~BinCallGraph(){};
-  void run();
+  bool testFlag;
+  void run(SgNode* f1, SgNode* f2);
   void test(SgNode* fileA, SgNode* fileB);
   std::string name();
   std::string getDescription();

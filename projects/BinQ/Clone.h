@@ -11,9 +11,10 @@ class BinQGUI;
 
 class DiffAlgo : public BinAnalyses {
  public:
-  DiffAlgo(){};
+  DiffAlgo(){testFlag=false;};
   virtual ~DiffAlgo(){};
-  void run();
+  bool testFlag;
+  void run(SgNode* f1, SgNode* f2);
   void test(SgNode* f1, SgNode* f2);
   std::string name();
   std::string getDescription();

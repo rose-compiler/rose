@@ -24,15 +24,15 @@ FunctionDiffAlgo::getDescription() {
 
 
 void
-FunctionDiffAlgo::run() {
+FunctionDiffAlgo::run(SgNode* fileA, SgNode* fileB) {
   BinQGUI *instance = QROSE::cbData<BinQGUI *>();
   // this part is to find the added and removed code (from Andreas)
   FindInstructionsVisitor vis;
 
   vector<SgAsmFunctionDeclaration*> funcsA, funcsB;
   FindAsmFunctionsVisitor funcVis;
-  AstQueryNamespace::querySubTree(instance->fileA, std::bind2nd( funcVis, &funcsA ));
-  AstQueryNamespace::querySubTree(instance->fileB, std::bind2nd( funcVis, &funcsB ));
+  AstQueryNamespace::querySubTree(fileA, std::bind2nd( funcVis, &funcsA ));
+  AstQueryNamespace::querySubTree(fileB, std::bind2nd( funcVis, &funcsB ));
 
 
   int adds=0, minus=0;

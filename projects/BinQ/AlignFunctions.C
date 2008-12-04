@@ -77,7 +77,7 @@ AlignFunction::getDescription() {
 
 
 void
-AlignFunction::run() {
+AlignFunction::run(SgNode* fileA, SgNode* fileB) {
   BinQGUI *instance = QROSE::cbData<BinQGUI *>();
 
 #if 1

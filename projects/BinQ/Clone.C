@@ -22,46 +22,41 @@ DiffAlgo::getDescription() {
 
 
 void
-DiffAlgo::run() {
-  BinQGUI *instance = QROSE::cbData<BinQGUI *>();
-    // this part is to find the added and removed code (from Andreas)
-    FindInstructionsVisitor vis;
+DiffAlgo::run(SgNode* fileA, SgNode* fileB) {
+    BinQGUI *instance = NULL;
+  if (!testFlag)
+    instance = QROSE::cbData<BinQGUI *>();
+  // this part is to find the added and removed code (from Andreas)
+  FindInstructionsVisitor vis;
    
-    LCS::vector_start_at_one<SgNode*> insnsA;
-    AstQueryNamespace::querySubTree(instance->fileA, std::bind2nd( vis, &insnsA ));
-    LCS::vector_start_at_one<SgNode*> insnsB;
-    AstQueryNamespace::querySubTree(instance->fileB, std::bind2nd( vis, &insnsB ));
-
-    std::vector<pair<int,int> > addInstr,minusInst;
-
-    printDiff(insnsA, insnsB,addInstr,minusInst);
-
-    //    cerr << " found adds on left side : " << addInstr.size() << endl;
-    //cerr << " found subbs on left side : " << minusInst.size() << endl;
-
-
+  LCS::vector_start_at_one<SgNode*> insnsA;
+  AstQueryNamespace::querySubTree(fileA, std::bind2nd( vis, &insnsA ));
+  LCS::vector_start_at_one<SgNode*> insnsB;
+  AstQueryNamespace::querySubTree(fileB, std::bind2nd( vis, &insnsB ));
+  
+  std::vector<pair<int,int> > addInstr,minusInst;
+  
+  printDiff(insnsA, insnsB,addInstr,minusInst);
+  
+  //    cerr << " found adds on left side : " << addInstr.size() << endl;
+  //cerr << " found subbs on left side : " << minusInst.size() << endl;
+  
+  if (!testFlag) {
     QString res = QString("Found adds:  %1.  Found subbs: %2. ")
       .arg(addInstr.size())
       .arg(minusInst.size());
     instance->analysisTab->setCurrentIndex(1);
     instance->analysisResult->append(res);  
-
+    
     colorTable(instance, addInstr, minusInst, insnsA, insnsB);
+  }
 };
 
 void
 DiffAlgo::test(SgNode* fileA, SgNode* fileB) {
-    // this part is to find the added and removed code (from Andreas)
-    FindInstructionsVisitor vis;
-   
-    LCS::vector_start_at_one<SgNode*> insnsA;
-    AstQueryNamespace::querySubTree(fileA, std::bind2nd( vis, &insnsA ));
-    LCS::vector_start_at_one<SgNode*> insnsB;
-    AstQueryNamespace::querySubTree(fileB, std::bind2nd( vis, &insnsB ));
-
-    std::vector<pair<int,int> > addInstr,minusInst;
-
-    printDiff(insnsA, insnsB,addInstr,minusInst);
+  testFlag=true;
+  run(fileA,fileB);
+  testFlag=false;
 
 };
 
