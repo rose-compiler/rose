@@ -2589,11 +2589,13 @@ SgTypeFloat * SageBuilder::buildFloatType()
     nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
     nondefdecl->set_definingDeclaration(NULL);
     nondefdecl->setForward();    
-    SgClassSymbol* mysymbol = new SgClassSymbol(nondefdecl);
-    ROSE_ASSERT(mysymbol);
-    scope->insert_symbol(name, mysymbol);
-    nondefdecl->set_scope(scope);
-    nondefdecl->set_parent(scope);
+    if (scope != NULL) {
+      SgClassSymbol* mysymbol = new SgClassSymbol(nondefdecl);
+      ROSE_ASSERT(mysymbol);
+      scope->insert_symbol(name, mysymbol);
+      nondefdecl->set_scope(scope);
+      nondefdecl->set_parent(scope);
+    }
     return nondefdecl;
   }
 
@@ -2604,11 +2606,13 @@ SgTypeFloat * SageBuilder::buildFloatType()
     nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
     nondefdecl->set_definingDeclaration(NULL);
     nondefdecl->setForward();    
-    SgEnumSymbol* mysymbol = new SgEnumSymbol(nondefdecl);
-    ROSE_ASSERT(mysymbol);
-    scope->insert_symbol(name, mysymbol);
-    nondefdecl->set_scope(scope);
-    nondefdecl->set_parent(scope);
+    if (scope != NULL) {
+      SgEnumSymbol* mysymbol = new SgEnumSymbol(nondefdecl);
+      ROSE_ASSERT(mysymbol);
+      scope->insert_symbol(name, mysymbol);
+      nondefdecl->set_scope(scope);
+      nondefdecl->set_parent(scope);
+    }
     SgEnumType* t = new SgEnumType(nondefdecl);
     nondefdecl->set_type(t);
     return nondefdecl;
@@ -2631,14 +2635,19 @@ SgTypeFloat * SageBuilder::buildFloatType()
     defdecl->set_definingDeclaration(defdecl);
 
     // build the nondefining declaration
-    SgClassDeclaration* nondefdecl = buildNondefiningClassDeclaration_nfi(name, SgClassDeclaration::e_struct, scope);
+    SgClassDeclaration* nondefdecl = new SgClassDeclaration
+           (name,SgClassDeclaration::e_struct,NULL,NULL);
+    ROSE_ASSERT(nondefdecl);
     setOneSourcePositionForTransformation(nondefdecl);
+    nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
     nondefdecl->set_definingDeclaration(defdecl);
     defdecl->set_firstNondefiningDeclaration(nondefdecl);
+    nondefdecl->setForward();
 
     if (scope !=NULL )  // put into fixStructDeclaration() or alike later on
     {
       fixStructDeclaration(nondefdecl,scope);
+      fixStructDeclaration(defdecl,scope);
 #if 0
       SgClassSymbol* mysymbol = new SgClassSymbol(nondefdecl);
       ROSE_ASSERT(mysymbol);
