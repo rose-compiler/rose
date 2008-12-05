@@ -515,7 +515,8 @@ EXCLUDE                = @top_srcdir@/AST_RewriteMechanism/testRewrite.h \
                          @top_srcdir@/util/testStrings.C \
                          @top_srcdir@/util/roseString.h \
                          @top_srcdir@/util/roseString.C \
-                         @top_srcdir@/docs/Rose
+                         @top_srcdir@/docs/Rose \
+                         @top_pwd@/src/frontend/SageIII/StorageClasses.h
 
 # The EXCLUDE_SYMLINKS tag can be used select whether or not files or directories 
 # that are symbolic links (a Unix filesystem feature) are excluded from the input.
