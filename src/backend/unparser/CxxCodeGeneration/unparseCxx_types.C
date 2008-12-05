@@ -66,6 +66,7 @@ string get_type_name(SgType* t)
           case T_FLOAT:              return "float";
           case T_DOUBLE:             return "double";
           case T_LONG_LONG:          return "long long";
+          case T_SIGNED_LONG_LONG:   return "signed long long";
           case T_UNSIGNED_LONG_LONG: return "unsigned long long";
           case T_LONG_DOUBLE:        return "long double";
           case T_STRING:             return "char*";
