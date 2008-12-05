@@ -96,6 +96,7 @@ SgTypeWchar* buildWcharType();
 SgTypeSignedChar*  buildSignedCharType();
 SgTypeSignedInt*   buildSignedIntType();
 SgTypeSignedLong*  buildSignedLongType();
+SgTypeSignedLongLong* buildSignedLongLongType();
 SgTypeSignedShort* buildSignedShortType();
 
 SgTypeUnsignedChar* buildUnsignedCharType();
@@ -203,11 +204,6 @@ SgComplexVal* buildComplexVal_nfi(SgValueExp* real_value, SgValueExp* imaginary_
 SgComplexVal* buildImaginaryVal(long double imaginary_value);
 SgComplexVal* buildImaginaryVal(SgValueExp* imaginary_value);
 SgComplexVal* buildImaginaryVal_nfi(SgValueExp* imaginary_value, const std::string& str);
-
-SgComplexVal* buildImaginaryVal(SgValueExp* imaginary_value);
-SgComplexVal* buildImaginaryVal_nfi(SgValueExp* imaginary_value, const std::string& str);
-SgComplexVal* buildComplexVal(SgValueExp* real_value, SgValueExp* imaginary_value);
-SgComplexVal* buildComplexVal_nfi(SgValueExp* real_value, SgValueExp* imaginary_value, SgType* eltType, const std::string& str);
 
 //! Build a double value expression
 SgDoubleVal* buildDoubleVal(double value = 0.0);
@@ -391,6 +387,7 @@ SgConditionalExp * buildConditionalExp_nfi(SgExpression* test, SgExpression* a, 
 //! Build a SgExprListExp, used for function call parameter list etc.
 SgExprListExp * buildExprListExp(SgExpression * expr1 = NULL, SgExpression* expr2 = NULL, SgExpression* expr3 = NULL, SgExpression* expr4 = NULL, SgExpression* expr5 = NULL, SgExpression* expr6 = NULL, SgExpression* expr7 = NULL, SgExpression* expr8 = NULL, SgExpression* expr9 = NULL, SgExpression* expr10 = NULL);
 SgExprListExp * buildExprListExp_nfi();
+SgExprListExp * buildExprListExp_nfi(const std::vector<SgExpression*>& exprs);
 
 
 //! Build SgVarRefExp based on a variable's Sage name. It will lookup symbol table internally starting from scope. A variable name is unique so type can be inferred (double check this).
@@ -477,7 +474,7 @@ SgSizeOfOp* buildSizeOfOp_nfi(SgType* type);
 
 /*!e.g the scope of arguments of functions are different for defining and nondefining functions.
 */ 
-SgInitializedName* buildInitializedName(const SgName & name, SgType* type);
+SgInitializedName* buildInitializedName(const SgName & name, SgType* type, SgInitializer* init = NULL);
 SgInitializedName* buildInitializedName(const std::string &name, SgType* type);
 SgInitializedName* buildInitializedName(const char* name, SgType* type);
 SgInitializedName* buildInitializedName_nfi(const SgName & name, SgType* type, SgInitializer* init);
@@ -525,6 +522,9 @@ SgFunctionParameterList * buildFunctionParameterList_nfi();
 //! Build an SgFunctionParameterList from SgFunctionParameterTypeList, like (int, float,...), used for parameter list of prototype functions when function type( including parameter type list) is known.
 SgFunctionParameterList*
 buildFunctionParameterList(SgFunctionParameterTypeList * paraTypeList);
+
+SgFunctionParameterList*
+buildFunctionParameterList_nfi(SgFunctionParameterTypeList * paraTypeList);
 
 //! A template function for function prototype declaration builders
 template <class actualFunction>
@@ -606,7 +606,7 @@ SgIfStmt * buildIfStmt_nfi(SgStatement* conditional, SgStatement * true_body, Sg
 
 //!Build a for statement, assume none of the arguments is NULL
 SgForStatement * buildForStatement(SgStatement* initialize_stmt,  SgStatement * test, SgExpression * increment, SgStatement * loop_body);
-SgForStatement * buildForStatement_nfi(SgStatement * test, SgExpression * increment, SgStatement * loop_body);
+SgForStatement * buildForStatement_nfi(SgStatement* initialize_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body);
 
 //! Build while statement
 SgWhileStmt * buildWhileStmt(SgStatement *  condition, SgStatement *body);
@@ -645,10 +645,25 @@ SgContinueStmt* buildContinueStmt_nfi();
 //! Build a class definition scope statement
 SgClassDefinition* buildClassDefinition(SgClassDeclaration *d = NULL);
 
+//! Build a class definition scope statement
+SgClassDefinition* buildClassDefinition_nfi(SgClassDeclaration *d = NULL);
+
+//! Build a structure first nondefining declaration, without file info
+SgClassDeclaration* buildNondefiningClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope);
+
+//! Build an enum first nondefining declaration, without file info
+SgEnumDeclaration* buildNondefiningEnumDeclaration_nfi(const SgName& name, SgScopeStatement* scope);
+
 //! Build a structure, It is also a declaration statement in SAGE III
 SgClassDeclaration * buildStructDeclaration(const SgName& name, SgScopeStatement* scope=NULL);
 SgClassDeclaration * buildStructDeclaration(const std::string& name, SgScopeStatement* scope=NULL);
 SgClassDeclaration * buildStructDeclaration(const char* name, SgScopeStatement* scope=NULL);
+
+//! Build an enum, It is also a declaration statement in SAGE III
+SgEnumDeclaration * buildEnumDeclaration(const SgName& name, SgScopeStatement* scope=NULL);
+
+//! Build an enum, It is also a declaration statement in SAGE III
+SgEnumDeclaration * buildEnumDeclaration_nfi(const SgName& name, SgScopeStatement* scope=NULL);
 
 //! Build a return statement
 SgReturnStmt* buildReturnStmt(SgExpression* expression = NULL);
