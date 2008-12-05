@@ -5661,6 +5661,7 @@ class ConditionalExpGenerator: public StatementGenerator
     decl->set_pragma(pragma);
     pragma->set_parent(decl);
   }
+
 //! SageInterface::appendStatement()
 //TODO should we ensureBasicBlockAsScope(scope) ? like ensureBasicBlockAsParent(targetStmt);
 //It might be well legal to append the first and only statement in a scope!
