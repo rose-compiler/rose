@@ -480,8 +480,10 @@ was just float or double for complex<float> or complex<double>.
 /* gcc uses the C99 name _Complex_I in <complex.h>, but our EDG doesn't handle
    the GCC extension that they define it to. */
 #define _Complex_I __I__
-#define _COMPLEX_H /* Disable inclusion of complex.h on Linux */
-#define __COMPLEX__ /* Disable inclusion of complex.h on Mac OS X */
+/* Disable inclusion of complex.h on Linux */
+#define _COMPLEX_H
+/* Disable inclusion of complex.h on Mac OS X */
+#define __COMPLEX__
 
 /* Defined this to avoid warnings (e.g. test2001_11.C) from 3.4.6 systems header files. */
 #define __weakref__(NAME)
