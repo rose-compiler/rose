@@ -138,8 +138,8 @@ void Slide::updateMouse() {
 	  //cerr << "Selected row: " << row << "   lastRowA:" << lastRowA << endl;
 	  if (row>=0) {
 	    if (lastRowA!=row) {
-	      gui->unhighlightInstructionRow(lastRowA, true);
-	      gui->highlightInstructionRow(row, true);
+	      gui->unhighlightInstructionRow(lastRowA, gui->codeTableWidget);
+	      gui->highlightInstructionRow(row,  gui->codeTableWidget);
 	      lastRowA=row;
 	    }
 	  }
@@ -154,8 +154,8 @@ void Slide::updateMouse() {
 	  //cerr << "Selected row: " << row << "   lastRowA:" << lastRowA << endl;
 	  if (row>=0) {
 	    if (lastRowA!=row) {
-	      gui->unhighlightInstructionRow(lastRowA, true);
-	      gui->highlightInstructionRow(row, true);
+	      gui->unhighlightInstructionRow(lastRowA, gui->codeTableWidget);
+	      gui->highlightInstructionRow(row,  gui->codeTableWidget);
 	      lastRowA=row;
 	    }
 	  }
@@ -174,8 +174,8 @@ void Slide::updateMouse() {
 	  //cerr << "Selected row: " << row << "   lastRowA:" << lastRowA << endl;
 	  if (row>=0) {
 	    if (lastRowA!=row) {
-	      gui->unhighlightInstructionRow(lastRowA, true);
-	      gui->highlightInstructionRow(row, true);
+	      gui->unhighlightInstructionRow(lastRowA, gui->codeTableWidget);
+	      gui->highlightInstructionRow(row,  gui->codeTableWidget);
 	      lastRowA=row;
 	    }
 	  }
@@ -221,8 +221,8 @@ void Slide::updateMouse() {
 	  //cerr << "Selected row: " << row << "   lastRowB:" << lastRowB << endl;
 	  if (row>=0) {
 	    if (lastRowB!=row) {
-	      gui->unhighlightInstructionRow(lastRowB, false);
-	      gui->highlightInstructionRow(row, false);
+	      gui->unhighlightInstructionRow(lastRowB, gui->codeTableWidget2);
+	      gui->highlightInstructionRow(row,  gui->codeTableWidget2);
 	      lastRowB=row;
 	    }
 	  }
@@ -241,8 +241,8 @@ void Slide::updateMouse() {
 	  //cerr << "Selected row: " << row << "   lastRowA:" << lastRowA << endl;
 	  if (row>=0) {
 	    if (lastRowB!=row) {
-	      gui->unhighlightInstructionRow(lastRowB, false);
-	      gui->highlightInstructionRow(row, false);
+	      gui->unhighlightInstructionRow(lastRowB, gui->codeTableWidget2);
+	      gui->highlightInstructionRow(row,  gui->codeTableWidget2);
 	      lastRowB=row;
 	    }
 	  }
@@ -257,8 +257,8 @@ void Slide::updateMouse() {
 	  //cerr << "Selected row: " << row << "   lastRowA:" << lastRowA << endl;
 	  if (row>=0) {
 	    if (lastRowB!=row) {
-	      gui->unhighlightInstructionRow(lastRowB, false);
-	      gui->highlightInstructionRow(row, false);
+	      gui->unhighlightInstructionRow(lastRowB, gui->codeTableWidget2);
+	      gui->highlightInstructionRow(row,  gui->codeTableWidget2);
 	      lastRowB=row;
 	    }
 	  }
@@ -277,8 +277,8 @@ void Slide::updateMouse() {
 	  //cerr << "Selected row: " << row << "   lastRowB:" << lastRowB << endl;
 	  if (row>=0) {
 	    if (lastRowB!=row) {
-	      gui->unhighlightInstructionRow(lastRowB, false);
-	      gui->highlightInstructionRow(row, false);
+	      gui->unhighlightInstructionRow(lastRowB, gui->codeTableWidget2);
+	      gui->highlightInstructionRow(row,  gui->codeTableWidget2);
 	      lastRowB=row;
 	    }
 	  }

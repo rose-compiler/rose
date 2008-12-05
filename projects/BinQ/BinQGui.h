@@ -40,10 +40,10 @@ class BinQGUI //: public QWidget
     void open();
     void reset();
     // handling of interaction
-    void highlightFunctionRow(int,bool fileA);
-    void unhighlightFunctionRow(int,bool fileA);
-    void highlightInstructionRow(int,bool fileA);
-    void unhighlightInstructionRow(int,bool fileA);
+    void highlightFunctionRow(int, qrs::QRTable* widget);
+    void unhighlightFunctionRow(int, qrs::QRTable* widget);
+    void highlightInstructionRow(int, qrs::QRTable* widget);
+    void unhighlightInstructionRow(int, qrs::QRTable* widget);
     // GUI
     void showFile(int row,qrs::QRTable *currentWidget, 
 		  std::vector<SgNode*>& funcsFile, std::vector<Item*>& itemsFile);
@@ -67,6 +67,7 @@ class BinQGUI //: public QWidget
     SgNode* fileA;
     SgNode* fileB;
     SgNode* currentSelectedFile;
+
     // the dll files
     std::vector<SgNode*> dllFilesA;
     std::vector<SgNode*> dllFilesB;
@@ -84,6 +85,7 @@ class BinQGUI //: public QWidget
     qrs::QRTable *tableWidget;
     qrs::QRTable *codeTableWidget;
     qrs::QRTable *codeTableWidgetDLL;
+    qrs::QRTable *currentTableWidget;
     std::vector<qrs::QRTable*> codeTableWidgetADLLlist;
     std::vector<qrs::QRTable*> codeTableWidgetBDLLlist;
     QTabWidget *analysisTab;
@@ -94,6 +96,7 @@ class BinQGUI //: public QWidget
     //qrs::QRTable *currentWidget;
     std::vector<BinAnalyses*> analyses;
     BinAnalyses* currentAnalysis;
+    std::map< qrs::QRTable*, SgNode*> getFileForWidget;
 
     // filenames for both files
     std::string fileNameA,fileNameB;
