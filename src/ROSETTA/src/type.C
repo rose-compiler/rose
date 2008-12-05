@@ -31,6 +31,7 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( TypeFloat           , "TypeFloat",            "T_FLOAT" );
      NEW_TERMINAL_MACRO ( TypeDouble          , "TypeDouble",           "T_DOUBLE" );
      NEW_TERMINAL_MACRO ( TypeLongLong        , "TypeLongLong",         "T_LONG_LONG" );
+     NEW_TERMINAL_MACRO ( TypeSignedLongLong  , "TypeSignedLongLong",   "T_SIGNED_LONG_LONG" );
      NEW_TERMINAL_MACRO ( TypeUnsignedLongLong, "TypeUnsignedLongLong", "T_UNSIGNED_LONG_LONG" );
      NEW_TERMINAL_MACRO ( TypeLongDouble      , "TypeLongDouble",       "T_LONG_DOUBLE" );
      NEW_TERMINAL_MACRO ( TypeString          , "TypeString",           "T_STRING" );
@@ -123,7 +124,8 @@ Grammar::setUpTypes ()
           TypeShort        | TypeSignedShort   | TypeUnsignedShort | TypeInt              | 
           TypeSignedInt    | TypeUnsignedInt   | TypeLong          | TypeSignedLong       | 
           TypeUnsignedLong | TypeVoid          | TypeGlobalVoid    | TypeWchar            |
-          TypeFloat        | TypeDouble        | TypeLongLong      | TypeUnsignedLongLong | 
+          TypeFloat        | TypeDouble        | TypeLongLong      | TypeSignedLongLong   |
+          TypeUnsignedLongLong | 
           TypeLongDouble   | TypeString        | TypeBool          | PointerType          |
           ReferenceType    | NamedType         | ModifierType      | FunctionType         |
           ArrayType        | TypeEllipse       | TemplateType      | QualifiedNameType    |
@@ -308,6 +310,7 @@ Grammar::setUpTypes ()
      TypeFloat.setDataPrototype            ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      TypeDouble.setDataPrototype           ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      TypeLongLong.setDataPrototype         ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     TypeSignedLongLong.setDataPrototype   ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      TypeUnsignedLongLong.setDataPrototype ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      TypeLongDouble.setDataPrototype       ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      TypeString.setDataPrototype           ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
@@ -641,6 +644,7 @@ Grammar::setUpTypes ()
      TypeFloat.editSubstitute( "MANGLED_ID_STRING", "f" );
      TypeDouble.editSubstitute( "MANGLED_ID_STRING", "d" );
      TypeLongLong.editSubstitute( "MANGLED_ID_STRING", "L" );
+     TypeSignedLongLong.editSubstitute( "MANGLED_ID_STRING", "SL" );
      TypeUnsignedLongLong.editSubstitute( "MANGLED_ID_STRING", "UL" );
      TypeLongDouble.editSubstitute( "MANGLED_ID_STRING", "ld" );
      TypeString.editSubstitute( "MANGLED_ID_STRING", "str" );

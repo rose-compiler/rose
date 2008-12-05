@@ -585,4 +585,4 @@ SgAsmDwarfUpcRelaxedType
 SgAsmDwarfUnknownConstruct
 SgAsmDwarfConstructList
 SgAsmDwarfCompilationUnitList
-
+SgTypeSignedLongLong
