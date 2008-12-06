@@ -26,17 +26,30 @@ void CompassInterface::init( int argc_, char **argv_ )
 {
   argc = argc_;
   argv = argv_;
-  params = new Compass::Parameters(Compass::findParameterFile());
-  project = frontend(argc_,argv_);
 
-//  std::vector<const Compass::Checker*> theCheckers;
+  Rose_STL_Container<std::string> commandLineArray = CommandlineProcessing::generateArgListFromArgcArgv (argc,argv);
+
+  Compass::commandLineProcessing(commandLineArray);
+
+
+  params = new Compass::Parameters(Compass::findParameterFile());
+
+  //The buildcheckers interface seems not to require the project node
+  //so did this change to support the visualization of the DB
+  if ( Compass::UseDbOutput == false )
+      project = frontend(argc_,argv_);
+
+
+  //  std::vector<const Compass::Checker*> theCheckers;
 
   buildCheckers( theCheckers, *params, *result, project );
 
   for( std::vector< const Compass::Checker* >::const_iterator itr = theCheckers.begin(); itr != theCheckers.end(); itr++ )
   {
     ROSE_ASSERT( *itr );
-    Compass::runPrereqs(*itr, project);
+
+    if ( Compass::UseDbOutput == false )
+      Compass::runPrereqs(*itr, project);
     const Compass::Checker *ch = *itr;
     compassCheckers.push_back(new CompassChecker(ch));
   } //for, itr 

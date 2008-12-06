@@ -16,6 +16,12 @@
 #endif
 
 
+#ifdef HAVE_SQLITE3
+
+#include "sqlite3x.h"
+#include <boost/lexical_cast.hpp>
+#endif
+
 namespace Compass {
   extern unsigned int global_arrsize;
   extern unsigned int global_arrsizeUse;
@@ -77,6 +83,13 @@ namespace Compass {
   //! Support for ToolGear XML viewer for output data when run as batch
   extern bool UseToolGear;
   extern std::string tguiXML;
+
+  //! Support for using SQLite as output data when run as batch
+  extern bool UseDbOutput;
+  extern std::string outputDbName;
+#ifdef HAVE_SQLITE3
+  extern sqlite3x::sqlite3_connection con;
+#endif
 
      
   void commandLineProcessing(Rose_STL_Container<std::string> & commandLineArray);
@@ -361,6 +374,8 @@ namespace Compass {
 
   // ToolGear Support
   void outputTgui( std::string & tguiXML, std::vector<const Compass::Checker*> & checkers, Compass::OutputObject *output );
+  // Output to SQLITE database
+  void outputDb( std::string  dbName, std::vector<const Compass::Checker*> & checkers, Compass::OutputObject *output );
 
   #include "prerequisites.h"
 

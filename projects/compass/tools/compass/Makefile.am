@@ -1,6 +1,6 @@
 include $(top_srcdir)/projects/compass/src/compassSupport/compass.inc
 
-SUBDIRS = doc tests gui
+SUBDIRS = doc tests gui 
 
 BUILT_SOURCES = buildCheckers.C checkers.h
 

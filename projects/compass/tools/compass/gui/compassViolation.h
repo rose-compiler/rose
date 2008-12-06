@@ -8,6 +8,9 @@ class CompassViolation
 {
 public:
    CompassViolation(Compass::OutputViolationBase *outputViolation);
+   CompassViolation(std::string d, std::string f, int lStart, int lEnd,
+       int cStart, int cEnd);
+
    ~CompassViolation();
 
    std::string getDesc() const;

@@ -111,7 +111,7 @@ visit(SgNode* node)
    
 
 static void run(Compass::Parameters params, Compass::OutputObject* output) {
-  CompassAnalyses::DefaultCase::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+     CompassAnalyses::DefaultCase::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
 }
 
 static Compass::AstSimpleProcessingWithRunFunction* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {

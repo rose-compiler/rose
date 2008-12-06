@@ -24,6 +24,12 @@ bool Compass::UseFlymake       = false;
 bool Compass::UseToolGear      = false; 
 std::string Compass::tguiXML;
 
+//! Support for outputting to SQLite database when run as batch
+bool Compass::UseDbOutput        = false; 
+std::string Compass::outputDbName;
+sqlite3x::sqlite3_connection Compass::con;
+
+
 // TPS, needed for DEFUSE
 unsigned int Compass::global_arrsize=-1;
 unsigned int Compass::global_arrsizeUse=-1;
@@ -714,6 +720,19 @@ Compass::commandLineProcessing(Rose_STL_Container<std::string> & commandLineArra
       Compass::UseToolGear = true; 
     }
 
+  if ( CommandlineProcessing::isOptionWithParameter( commandLineArray, std::string("--outputDb"), std::string("*"), outputDbName, remove ) )
+    {
+      Compass::UseDbOutput = true;
+
+#ifdef HAVE_SQLITE3
+
+      con.open(outputDbName.c_str());
+
+#else
+      std::cerr << "Compile ROSE with --with-sqlite3 to enable the --outputDb option " << std::endl;
+      abort();
+#endif
+    }
 
   // Adding a new command line parameter (for mechanisms in ROSE that take command lines)
 
@@ -785,6 +804,59 @@ Compass::outputTgui( std::string & tguiXML,
 
   return;
 } //outputTgui()
+
+#ifdef HAVE_SQLITE3
+
+#include "sqlite3x.h"
+#include <boost/lexical_cast.hpp>
+
+void
+Compass::outputDb( std::string  dbName,
+		     std::vector<const Compass::Checker*> & checkers,
+		     Compass::OutputObject *output )
+{
+  using namespace std;
+  sqlite3x::sqlite3_connection con(dbName.c_str());
+
+  //con.executenonquery("create table IF NOT EXISTS clusters(row_number INTEGER PRIMARY KEY, cluster INTEGER, function_id INTEGER, index_within_function INTEGER, vectors_row INTEGER, dist INTEGER)")
+  try {
+    con.executenonquery("create table IF NOT EXISTS violations( row_number PRIMARY KEY, checker_name TEXT,  error_body TEXT, filename TEXT, line INTEGER, short_description TEXT )");
+
+  }
+  catch(std::exception &ex) {
+    cerr << "Exception Occurred: " << ex.what() << endl;
+  }
+
+
+  const std::vector<Compass::OutputViolationBase*>& outputList = 
+    output->getOutputList();
+
+
+  string db_select_n = "INSERT INTO violations( checker_name,  error_body, filename, line, short_description ) VALUES(?,?,?,?,?)";
+
+  for( std::vector<Compass::OutputViolationBase*>::const_iterator itr =
+      outputList.begin(); itr != outputList.end(); itr++ )
+  {
+    const Sg_File_Info *info = (*itr)->getNode()->get_file_info();
+
+    sqlite3x::sqlite3_command cmd(con, db_select_n.c_str());
+    cmd.bind(1, (*itr)->getCheckerName() );
+    cmd.bind(2, (*itr)->getString() );
+    cmd.bind(3, info->get_filenameString() );
+    cmd.bind(4, boost::lexical_cast<string>(info->get_line()));
+    cmd.bind(5, (*itr)->getShortDescription());
+
+    cmd.executenonquery();
+  } //for, itr
+
+
+  con.close();
+
+  return;
+} //outputTgui()
+
+#endif
+
 
 using namespace Compass;
 

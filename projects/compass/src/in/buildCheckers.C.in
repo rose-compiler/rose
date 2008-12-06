@@ -48,11 +48,10 @@ readFile( std::string filename){
 void
 buildCheckers( std::vector<const Compass::Checker*> &retVal, 
 	       Compass::Parameters &params, 
-	       Compass::OutputObject &output,
-	       SgProject* pr)
+	       Compass::OutputObject &output, SgProject* proj)
 {
 
-ROSE_ASSERT(pr);
+//ROSE_ASSERT(pr);
 
 #define BUILD_ONE_CHECKER(NameLowercase) \
     try { \

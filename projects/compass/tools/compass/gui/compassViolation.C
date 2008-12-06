@@ -1,5 +1,13 @@
 #include "compassViolation.h"
 
+CompassViolation::CompassViolation(std::string d, std::string f, int lStart, int lEnd,
+       int cStart, int cEnd)
+: desc(d), filename(f), lineStart(lStart), lineEnd(lEnd), colStart(cStart), colEnd(cEnd)
+{
+  
+};
+
+
 CompassViolation::CompassViolation(
   Compass::OutputViolationBase *outputCompassViolation ) 
 {

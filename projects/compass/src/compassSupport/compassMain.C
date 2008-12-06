@@ -136,6 +136,13 @@ int main(int argc, char** argv)
           Compass::outputTgui( Compass::tguiXML, traversals, &output );
         }
 
+#ifdef HAVE_SQLITE3
+     if (Compass::UseDbOutput == true)
+        {
+          Compass::outputDb( Compass::outputDbName, traversals, &output );
+        }
+#endif
+
   // Output errors specific to any checkers that didn't initialize properly
      if (!errors.empty())
         {
