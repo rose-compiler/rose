@@ -18,11 +18,14 @@ int main (int argc, char *argv[])
   // grab the scope in which AST will be added
   SgProject *project = frontend (argc, argv);
   SgGlobal *globalScope = getFirstGlobalScope (project);
+  ROSE_ASSERT (globalScope);
 
   // build a struct without any scope information
   SgClassDeclaration * decl2 = buildStructDeclaration("bar");
+  ROSE_ASSERT (decl2);
 
   pushScopeStack (isSgScopeStatement (globalScope));
+  ROSE_ASSERT (topScopeStack());
 
   // build a struct declaration with implicit scope information from the scope stack
   SgClassDeclaration * decl = buildStructDeclaration("foo");
@@ -30,6 +33,7 @@ int main (int argc, char *argv[])
   // build member variables inside the structure
   SgClassDefinition *def = decl->get_definition();
   pushScopeStack (isSgScopeStatement (def));
+  ROSE_ASSERT (topScopeStack());
 
   SgVariableDeclaration *varDecl = buildVariableDeclaration(SgName ("i"), buildIntType());
 
