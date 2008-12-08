@@ -6,7 +6,17 @@
 #include <list>
 #include "BinAnalyses.h"
 
-class DynamicInfo : public BinAnalyses {
+#if 0
+class DI_traversal   : public AstSimpleProcessing {
+ public:
+  DI_traversal() {
+  }
+  virtual ~DI_traversal() {}
+  virtual void visit(SgNode* node) =0;
+};
+#endif
+
+class DynamicInfo : public BinAnalyses,AstSimpleProcessing {
  public:
   DynamicInfo(){testFlag=false;};
   virtual ~DynamicInfo(){};
@@ -17,8 +27,9 @@ class DynamicInfo : public BinAnalyses {
   std::string getDescription();
   bool twoFiles() {return false;}
  private:
-
-
+  SgAsmGenericFile *genericF;
+  void visit(SgNode* node);
+  void printOutRelaEntries(SgNode* project);
 };
 
 
