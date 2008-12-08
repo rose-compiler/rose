@@ -24,10 +24,12 @@ bool Compass::UseFlymake       = false;
 bool Compass::UseToolGear      = false; 
 std::string Compass::tguiXML;
 
+#ifdef HAVE_SQLITE3
 //! Support for outputting to SQLite database when run as batch
 bool Compass::UseDbOutput        = false; 
 std::string Compass::outputDbName;
 sqlite3x::sqlite3_connection Compass::con;
+#endif
 
 
 // TPS, needed for DEFUSE
