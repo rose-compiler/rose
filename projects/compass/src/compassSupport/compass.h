@@ -84,10 +84,10 @@ namespace Compass {
   extern bool UseToolGear;
   extern std::string tguiXML;
 
-#ifdef HAVE_SQLITE3
   //! Support for using SQLite as output data when run as batch
   extern bool UseDbOutput;
   extern std::string outputDbName;
+#ifdef HAVE_SQLITE3
   extern sqlite3x::sqlite3_connection con;
 #endif
 

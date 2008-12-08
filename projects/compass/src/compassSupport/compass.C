@@ -24,10 +24,10 @@ bool Compass::UseFlymake       = false;
 bool Compass::UseToolGear      = false; 
 std::string Compass::tguiXML;
 
-#ifdef HAVE_SQLITE3
 //! Support for outputting to SQLite database when run as batch
 bool Compass::UseDbOutput        = false; 
 std::string Compass::outputDbName;
+#ifdef HAVE_SQLITE3
 sqlite3x::sqlite3_connection Compass::con;
 #endif
 
@@ -724,12 +724,9 @@ Compass::commandLineProcessing(Rose_STL_Container<std::string> & commandLineArra
 
   if ( CommandlineProcessing::isOptionWithParameter( commandLineArray, std::string("--outputDb"), std::string("*"), outputDbName, remove ) )
     {
-      Compass::UseDbOutput = true;
-
 #ifdef HAVE_SQLITE3
-
+      Compass::UseDbOutput = true;
       con.open(outputDbName.c_str());
-
 #else
       std::cerr << "Compile ROSE with --with-sqlite3 to enable the --outputDb option " << std::endl;
       abort();
