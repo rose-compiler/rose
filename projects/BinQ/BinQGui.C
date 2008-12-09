@@ -1,5 +1,6 @@
 #include "BinQGui.h"
 
+
 #include "boost/filesystem/operations.hpp" 
 #include <boost/lexical_cast.hpp>
 #include <iostream>
@@ -15,16 +16,16 @@
 #include <QtGui>
 #include <QScrollBar>
 
-#include "LCS.h"
-#include "Clone.h"
-#include "FunctionDiff.h"
-#include "AlignFunctions.h"
-#include "BinCallGraph.h"
-#include "BinControlFlowAnalysis.h"
-#include "BinDataFlowAnalysis.h"
-#include "BufferOverflow.h"
-#include "InterruptAnalysis.h"
-#include "BinDynamicInfo.h"
+//#include "LCS.h"
+//#include "Clone.h"
+//#include "FunctionDiff.h"
+//#include "AlignFunctions.h"
+//#include "BinCallGraph.h"
+//#include "BinControlFlowAnalysis.h"
+//#include "BinDataFlowAnalysis.h"
+//#include "BufferOverflow.h"
+//#include "InterruptAnalysis.h"
+//#include "BinDynamicInfo.h"
 
 using namespace qrs;
 using namespace boost::filesystem;
@@ -498,7 +499,9 @@ BinQGUI::insertFileInformation() {
 // Constructor
 BinQGUI::BinQGUI(std::string fA, std::string fB, std::vector<std::string> dllAA, 
 		 std::vector<std::string> dllBB, bool t) :  
-  window(0), fileNameA(fA), fileNameB(fB) {
+  window(0) {
+  fileNameA=fA;
+  fileNameB=fB;
   test=t;
   if (test==false) {
     cerr << "Running in normal mode." << endl;
@@ -522,6 +525,7 @@ BinQGUI::BinQGUI(std::string fA, std::string fB, std::vector<std::string> dllAA,
     testAnalyses();
 }
 
+#if 0
 // Initialization of all analyzes and parsing of all files
 void BinQGUI::init(){
   cerr << "Checking for analyses ... " << endl;
@@ -612,7 +616,9 @@ void BinQGUI::init(){
   createItem(fileA,itemsFileA, funcsFileA, false);
   createItem(fileB,itemsFileB, funcsFileB, false);
 }
+#endif
 
+#if 0
 void BinQGUI::createItem(SgNode* file, std::vector<Item*>& itemsFile,std::vector<SgNode*>& funcsFile, bool dll) {
   std::vector<SgNode*> stmts;
   vector<SgNode*>::iterator it= stmts.begin();
@@ -709,9 +715,11 @@ void BinQGUI::createItem(SgNode* file, std::vector<Item*>& itemsFile,std::vector
 	}
       }
       if (item) {
-	row++;
 	itemsFile.push_back(item);
+	if (*it!=NULL)
+	  itemsNodeA[*it]=row;
 	pos+=length;
+	row++;
       }
     }
   }
@@ -730,7 +738,7 @@ BinQGUI::createFunction(SgNode* file,std::vector<SgNode*>& funcsFile, bool dll) 
     }
   }
 }
-
+#endif
 
 // The GUI is created here
 void BinQGUI::createGUI() {
@@ -1304,7 +1312,7 @@ void BinQGUI::showFile(int row, qrs::QRTable* currentWidget,
       for (int j=1;j<maxrows;++j) {
 	currentWidget->setBgColor(back,j,i);
       }
-
+      cerr << "Unknown Type : " << stmts->class_name() << endl;
       if (itemsFile[i]->row) {
 	currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->row), 0, i);	
 	if (!sourceFile) {

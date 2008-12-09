@@ -6,6 +6,7 @@
 #include <vector>
 #include <qrose.h>
 #include "BinQGui.h"
+#include "BinQbatch.h"
 #include <boost/program_options.hpp>
 #include <iostream>
 
@@ -27,13 +28,14 @@ int main( int argc, char **argv )
 #endif
   vector<std::string> dllA;
   vector<std::string> dllB;
-  cerr << "\nUSAGE : BinQ -a binaryFileA [.so|.dll]* [-b binaryFileB|IdaFile|SourceFile [.so|.dll]* ]\n\n" << endl;
+  cerr << "\nUSAGE : BinQ -a binaryFileA [.so|.dll]* [-b binaryFileB|IdaFile|SourceFile [.so|.dll]*] [--test] [--batch]\n\n " << endl;
   std::string fileA="";
   std::string fileB="";
   bool aActive=false;
   bool bActive=false;
   bool test=false;
   bool debug=false;
+  bool batch=false;
   for (int i=1; i<argc; ++i) {
     string token = argv[i];
     if (debug)
@@ -44,8 +46,13 @@ int main( int argc, char **argv )
 	cerr << " found test" << endl;
       test=true;
     }
+    if (token=="--batch") {
+      if (debug)
+	cerr << " found batch" << endl;
+      batch=true;
+    }
 #endif
-    if (aActive && token!="-b" && token!="--test") {
+    if (aActive && token!="-b" && token!="--test" && token!="--batch") {
       if (debug)
 	cerr << " a active" << endl;
       if (fileA=="") 
@@ -53,7 +60,7 @@ int main( int argc, char **argv )
       else
 	dllA.push_back(argv[i]);
     }
-    if (bActive && token!="--test") {
+    if (bActive && token!="--test" && token!="--batch") {
       if (debug)
 	cerr << " b active" << endl;
       if (fileB=="") 
@@ -76,7 +83,7 @@ int main( int argc, char **argv )
 
   }
   
-  cerr << "FileA: " << fileA << "  FileB: " << fileB << "    test: " << test << endl;
+  cerr << "FileA: " << fileA << "  FileB: " << fileB << "    test: " << test << "   batch : " << batch << endl;
   if (fileA=="") exit(1);
   vector<std::string>::const_iterator it= dllA.begin();
   for (;it!=dllA.end();++it) {
@@ -89,13 +96,15 @@ int main( int argc, char **argv )
     }
   }
 
-  if (test) {
+  if (test && !batch) {
     BinQGUI binGui(fileA,fileB,dllA,dllB,test);
-  } else {
+  } else if (!test && !batch) {
     QROSE::init(argc,argv);
     BinQGUI binGui(fileA,fileB,dllA,dllB,test);
     binGui.run();
     return QROSE::exec();
+  } else if (batch) {
+    BinQbatch binBatch(fileA,fileB,dllA,dllB);
   }
   return 0;
 }

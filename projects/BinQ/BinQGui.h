@@ -1,8 +1,10 @@
 #ifndef COMPASS_GUI_H
 #define COMPASS_GUI_H
-#include "rose.h"
+//#include "rose.h"
 
-#include <qrose.h>
+#include "BinQAbstract.h"
+
+
 #include <QTextBrowser>
 #include <QComboBox>
 #include <QGridLayout>
@@ -19,14 +21,14 @@
 #include <QDesktopWidget>
 #include <QApplication>
 
-#include "Item.h"
-#include "BinAnalyses.h"
+//#include "Item.h"
+//#include "BinAnalyses.h"
 
 class Slide;
 class BinQSupport;
 
 
-class BinQGUI //: public QWidget
+class BinQGUI : public BinQAbstract
 {
   public:
   BinQGUI(std::string, std::string,     
@@ -48,13 +50,28 @@ class BinQGUI //: public QWidget
     void showFile(int row,qrs::QRTable *currentWidget, 
 		  std::vector<SgNode*>& funcsFile, std::vector<Item*>& itemsFile);
 
+#if 0
     // internal data that stores information of each table entry
     std::vector<Item*> itemsFileA;
     std::vector<Item*> itemsFileB;
+    std::map<SgNode*,int> itemsNodeA;
     std::map<int,Item*> byteItemFileA;
     std::map<int,Item*> byteItemFileB;
     std::map<int,Item*> rowItemFileA;
     std::map<int,Item*> rowItemFileB;
+    // the two main files
+    SgNode* fileA;
+    SgNode* fileB;
+    SgNode* currentSelectedFile;
+    // the dll files
+    std::vector<SgNode*> dllFilesA;
+    std::vector<SgNode*> dllFilesB;
+    int screenWidth;
+    std::vector<BinAnalyses*> analyses;
+    BinAnalyses* currentAnalysis;
+    // filenames for both files
+    std::string fileNameA,fileNameB;
+#endif
     // GUI elements that need to be accesses within this object but also from 
     // analyses implemented for BinQ
     QTextEdit *console;
@@ -63,14 +80,7 @@ class BinQGUI //: public QWidget
     QTextEdit *sectionInfo;
     QListWidget *listWidget;
     QTextEdit *analysisInfo;
-    // the two main files
-    SgNode* fileA;
-    SgNode* fileB;
-    SgNode* currentSelectedFile;
 
-    // the dll files
-    std::vector<SgNode*> dllFilesA;
-    std::vector<SgNode*> dllFilesB;
 
     // elements in the GUI used for scrolling and painting
     Slide *slide;
@@ -78,7 +88,7 @@ class BinQGUI //: public QWidget
     QScrollBar* bar;
     QScrollBar* bar2;
     QScrollBar* bar3;
-    int screenWidth;
+
 
     // main GUI elements
     qrs::QRWindow *window;
@@ -94,12 +104,8 @@ class BinQGUI //: public QWidget
     qrs::QRTable *tableWidget2;
     qrs::QRTable *codeTableWidget2;
     //qrs::QRTable *currentWidget;
-    std::vector<BinAnalyses*> analyses;
-    BinAnalyses* currentAnalysis;
     std::map< qrs::QRTable*, SgNode*> getFileForWidget;
 
-    // filenames for both files
-    std::string fileNameA,fileNameB;
     
     // functions that implement GUI element functionality
     void updateByteItemList();
@@ -109,25 +115,28 @@ class BinQGUI //: public QWidget
 
   private:
     // used for testing
-    bool test;
+
     void testAnalyses();
+#if 0
+    bool test;
     // holds function information that is displayed in function tables
     std::vector<SgNode*> funcsFileA;
     std::vector<SgNode*> funcsFileB;
-
     // support class
     BinQSupport* binqsupport;
-
-    // support functions
-    void showFileTab();
     void init();
-    void createGUI();
     bool sourceFile;
     int screenHeight;
     std::vector<std::string> dllA;
     std::vector<std::string> dllB;
     void createItem(SgNode* file, std::vector<Item*>& itemsFile,std::vector<SgNode*>& funcsFile, bool dll);
     void createFunction(SgNode* file,std::vector<SgNode*>& funcsFile, bool dll);
+#endif
+
+    // support functions
+    void showFileTab();
+    void createGUI();
+
 
 }; //class BinQGUI
 

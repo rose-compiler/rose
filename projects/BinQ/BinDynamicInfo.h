@@ -18,7 +18,7 @@ class DI_traversal   : public AstSimpleProcessing {
 
 class DynamicInfo : public BinAnalyses,AstSimpleProcessing {
  public:
-  DynamicInfo(){testFlag=false;};
+  DynamicInfo(){testFlag=false; debug=true;};
   virtual ~DynamicInfo(){};
   bool testFlag;
   void run(SgNode* f1, SgNode* f2);
@@ -26,10 +26,17 @@ class DynamicInfo : public BinAnalyses,AstSimpleProcessing {
   std::string name();
   std::string getDescription();
   bool twoFiles() {return false;}
+  
  private:
   SgAsmGenericFile *genericF;
   void visit(SgNode* node);
   void printOutRelaEntries(SgNode* project);
+  bool firstIteration;
+  std::map<rose_addr_t, SgAsmElfSymbol*> symbolMap;
+  VirtualBinCFG::AuxiliaryInformation* info;
+  std::string resolveValue(SgAsmValueExpression* leftVal);
+  bool debug;
+  BinQGUI *instance;
 };
 
 
