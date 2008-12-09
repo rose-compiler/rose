@@ -2130,11 +2130,16 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // Removed reference to __restrict__ so it could be placed into the preinclude vendor specific header file for ROSE.
   // DQ (9/10/2004): Attept to add support for restrict (but I think this just sets it to true, using "-Dxxx=" works)
   // const string roseSpecificDefs    = "-DUSE_RESTRICT_POINTERS_IN_ROSE_TRANSFORMATIONS -DUSE_ROSE -D__restrict__=";
-     const string roseSpecificDefs    = "-DUSE_RESTRICT_POINTERS_IN_ROSE_TRANSFORMATIONS -DUSE_ROSE";
-
+     string roseSpecificDefs    = "-DUSE_RESTRICT_POINTERS_IN_ROSE_TRANSFORMATIONS -DUSE_ROSE "
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
+                                  "-DROSE_USE_NEW_EDG_INTERFACE "
+#endif
+                                  ;
      ROSE_ASSERT(configDefsString.empty() == false);
      ROSE_ASSERT(Cxx_ConfigIncludeDirs.empty() == false);
      ROSE_ASSERT(C_ConfigIncludeDirs.empty() == false);
+     ROSE_ASSERT (roseSpecificDefs[roseSpecificDefs.size() - 1] == ' ');
+     roseSpecificDefs = roseSpecificDefs.substr(0, roseSpecificDefs.size() - 1);
 
   // printf ("configDefsString = %s \n",configDefsString);
 #if 0
