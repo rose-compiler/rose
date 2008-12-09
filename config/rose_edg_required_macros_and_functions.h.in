@@ -1,3 +1,6 @@
+/* JJW (12/8/2008): Do not include these definitions for EDG 3.10 */
+#ifndef ROSE_USE_NEW_EDG_INTERFACE
+
 /* Must use C style comments so that "--edg:old_c" options will work! */
 /* DQ (7/13/2006): Undefine these before defining them to avoid warnings. */
 /* DQ (12/23/2006): Let EDG define this if possible, but we reset it for 64 bit systems
@@ -491,3 +494,5 @@ was just float or double for complex<float> or complex<double>.
 /* DQ (6/19/2007): I think we can comment this out now, since it is better defined above!
    DQ (1/31/2007): GNU modifier required to handle code using the offsetof macro in C++ g++ 3.4 and greater */
 /* #define __offsetof__ */
+
+#endif // !ROSE_USE_NEW_EDG_INTERFACE
