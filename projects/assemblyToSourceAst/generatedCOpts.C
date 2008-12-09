@@ -1643,7 +1643,8 @@ void unparseAsSExpressions(ostream& o, SgStatement* s) {
     }
     case V_SgSwitchStatement: {
       // Special case
-      SgBasicBlock* body = isSgSwitchStatement(s)->get_body();
+      SgBasicBlock* body = isSgBasicBlock(isSgSwitchStatement(s)->get_body());
+      ROSE_ASSERT (body);
       const SgStatementPtrList& stmts = body->get_statements();
       o << "(case ";
       unparseAsSExpressions(o, isSgSwitchStatement(s)->get_item_selector());

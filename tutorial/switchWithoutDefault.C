@@ -14,7 +14,7 @@ void visitorTraversal::visit(SgNode* n)
      SgSwitchStatement* switchStatement = isSgSwitchStatement(n);
      if (switchStatement != NULL)
         {
-          SgStatementPtrList & cases = switchStatement->get_body()->get_statements();
+          SgStatementPtrList & cases = SageInterface::ensureBasicBlockAsBodyOfSwitch(switchStatement)->get_statements();
           bool switchHasDefault = false;
 
        // The default statement could be at any position in the list of cases.

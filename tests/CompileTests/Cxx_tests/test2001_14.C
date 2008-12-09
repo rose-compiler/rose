@@ -15,6 +15,8 @@ main()
      myAssert;
      myAssert;
 
+     switch (x) default: break;
+
      switch (x)
         {
           case 0: 

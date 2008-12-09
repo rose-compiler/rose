@@ -6380,6 +6380,17 @@ StringUtility::numberToString(++breakLabelCounter),
     return isSgBasicBlock(b);
   }
 
+  SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfSwitch(SgSwitchStatement* fs) {
+    SgStatement* b = fs->get_body();
+    if (!isSgBasicBlock(b)) {
+      b = SageBuilder::buildBasicBlock(b);
+      fs->set_body(b);
+      b->set_parent(fs);
+    }
+    ROSE_ASSERT (isSgBasicBlock(b));
+    return isSgBasicBlock(b);
+  }
+
   SgBasicBlock* SageInterface::ensureBasicBlockAsTrueBodyOfIf(SgIfStmt* fs) {
     SgStatement* b = fs->get_true_body();
     if (!isSgBasicBlock(b)) {
@@ -6432,6 +6443,11 @@ StringUtility::numberToString(++breakLabelCounter),
       case V_SgDoWhileStmt: {
         if (isSgDoWhileStmt(p)->get_body() == s)
           return ensureBasicBlockAsBodyOfDoWhile(isSgDoWhileStmt(p));
+        else ROSE_ASSERT (false);
+      }
+      case V_SgSwitchStatement: {
+        if (isSgSwitchStatement(p)->get_body() == s)
+          return ensureBasicBlockAsBodyOfSwitch(isSgSwitchStatement(p));
         else ROSE_ASSERT (false);
       }
       case V_SgCatchOptionStmt: {

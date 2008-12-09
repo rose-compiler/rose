@@ -1039,15 +1039,17 @@ void removeLabeledGotos(SgNode* top);
 //! If the given statement contains any break statements in its body, add a new label below the statement and change the breaks into gotos to that new label.
 void changeBreakStatementsToGotos(SgStatement* loopOrSwitch);
 
-//! Check if the body of a 'for' statement is a SgBasicBlcok, create one if not. 
+//! Check if the body of a 'for' statement is a SgBasicBlock, create one if not. 
 SgBasicBlock* ensureBasicBlockAsBodyOfFor(SgForStatement* fs);
-//! Check if the body of a 'while' statement is a SgBasicBlcok, create one if not. 
+//! Check if the body of a 'while' statement is a SgBasicBlock, create one if not. 
 SgBasicBlock* ensureBasicBlockAsBodyOfWhile(SgWhileStmt* ws);
-//! Check if the body of a 'do .. while' statement is a SgBasicBlcok, create one if not. 
+//! Check if the body of a 'do .. while' statement is a SgBasicBlock, create one if not. 
 SgBasicBlock* ensureBasicBlockAsBodyOfDoWhile(SgDoWhileStmt* ws);
-//! Check if the true body of a 'if' statement is a SgBasicBlcok, create one if not. 
+//! Check if the body of a 'switch' statement is a SgBasicBlock, create one if not. 
+SgBasicBlock* ensureBasicBlockAsBodyOfSwitch(SgSwitchStatement* ws);
+//! Check if the true body of a 'if' statement is a SgBasicBlock, create one if not. 
 SgBasicBlock* ensureBasicBlockAsTrueBodyOfIf(SgIfStmt* ifs);
-//! Check if the false body of a 'if' statement is a SgBasicBlcok, create one if not. 
+//! Check if the false body of a 'if' statement is a SgBasicBlock, create one if not. 
 SgBasicBlock* ensureBasicBlockAsFalseBodyOfIf(SgIfStmt* ifs);
 SgBasicBlock* ensureBasicBlockAsBodyOfCatch(SgCatchOptionStmt* cos);
 //! A wrapper of all ensureBasicBlockAs*() above to ensure the parent of s is a scopestatement with list of statements as children, otherwise generate a SgBasicBlock in between. 

@@ -91,17 +91,23 @@ visit(SgNode* node)
      
         SgSwitchStatement* theSwitch = isSgSwitchStatement(node);
         if (!theSwitch) return;
-        SgBasicBlock* BBlock = theSwitch->get_body();
-        //I should maybe do more sanity checking for nulls here
-        SgStatementPtrList BBlockStmts = BBlock->get_statements();
         bool has_default = false;
-        for (Rose_STL_Container<SgStatement*>::iterator j = BBlockStmts.begin(); j != BBlockStmts.end(); j++)
-          {
-            if (isSgDefaultOptionStmt(*j)){
-              has_default = true;
-              break;
+        if (isSgBasicBlock(theSwitch->get_body())) {
+          SgBasicBlock* BBlock = isSgBasicBlock(theSwitch->get_body());
+          //I should maybe do more sanity checking for nulls here
+          SgStatementPtrList BBlockStmts = BBlock->get_statements();
+          for (Rose_STL_Container<SgStatement*>::iterator j = BBlockStmts.begin(); j != BBlockStmts.end(); j++)
+            {
+              if (isSgDefaultOptionStmt(*j)){
+                has_default = true;
+                break;
+              }
             }
+        } else {
+          if (isSgDefaultOptionStmt(theSwitch->get_body())) {
+            has_default = true;
           }
+        }
         if (!has_default){
           output->addOutput(new CheckerOutput(node));
         }
