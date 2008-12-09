@@ -1128,6 +1128,9 @@ BUILD_UNARY_DEF(PointerDerefExp)
 BUILD_UNARY_DEF(UnaryAddOp)
 BUILD_UNARY_DEF(MinusMinusOp)
 BUILD_UNARY_DEF(PlusPlusOp)
+BUILD_UNARY_DEF(VarArgStartOneOperandOp)
+BUILD_UNARY_DEF(VarArgOp)
+BUILD_UNARY_DEF(VarArgEndOp)
 
 #undef BUILD_UNARY_DEF
 
@@ -1307,6 +1310,9 @@ BUILD_BINARY_DEF(RshiftOp)
 BUILD_BINARY_DEF(ScopeOp)
 BUILD_BINARY_DEF(SubtractOp)
 BUILD_BINARY_DEF(XorAssignOp)
+
+BUILD_BINARY_DEF(VarArgCopyOp)
+BUILD_BINARY_DEF(VarArgStartOp)
 
 #undef BUILD_BINARY_DEF
 
@@ -1997,11 +2003,9 @@ SgForStatement * SageBuilder::buildForStatement_nfi(SgStatement* initialize_stmt
   if (increment) increment->set_parent(result);
 
   if (initialize_stmt != NULL) {
-    SgForInitStatement* init_stmt = new SgForInitStatement();
+    SgForInitStatement* init_stmt = result->get_for_init_stmt();
     ROSE_ASSERT(init_stmt);
     setOneSourcePositionNull(init_stmt);
-    result->set_for_init_stmt(init_stmt);   
-    init_stmt->set_parent(result);
     init_stmt->append_init_stmt(initialize_stmt);
     initialize_stmt->set_parent(init_stmt);
   }
@@ -2230,6 +2234,16 @@ SgNullStatement* SageBuilder::buildNullStatement()
   result = new SgNullStatement();
   ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+//! Build a NULL statement
+SgNullStatement* SageBuilder::buildNullStatement_nfi()
+{
+  SgNullStatement* result = NULL;
+  result = new SgNullStatement();
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
   return result;
 }
 
