@@ -276,7 +276,7 @@ SgUpcMythread* buildUpcMythread_nfi();
 SgThisExp* buildThisExp(SgClassSymbol* sym);
 SgThisExp* buildThisExp_nfi(SgClassSymbol* sym);
 
-//!  Template function to build a unary expression of type T. Instantiated functions include:buildAddressOfOp(),buildBitComplementOp(),buildBitComplementOp(),buildMinusOp(),buildNotOp(),buildPointerDerefExp(),buildUnaryAddOp(),buildMinusMinusOp(),buildPlusPlusOp(). 
+//!  Template function to build a unary expression of type T. Instantiated functions include:buildAddressOfOp(),buildBitComplementOp(),buildBitComplementOp(),buildMinusOp(),buildNotOp(),buildPointerDerefExp(),buildUnaryAddOp(),buildMinusMinusOp(),buildPlusPlusOp().  They are also used for the unary vararg operators (which are not technically unary operators).
 /*! The instantiated functions' prototypes are not shown since they are expanded using macros.
  * Doxygen is not smart enough to handle macro expansion. 
  */
@@ -299,6 +299,9 @@ BUILD_UNARY_PROTO(PointerDerefExp)
 BUILD_UNARY_PROTO(UnaryAddOp)
 BUILD_UNARY_PROTO(MinusMinusOp)
 BUILD_UNARY_PROTO(PlusPlusOp)
+BUILD_UNARY_PROTO(VarArgStartOneOperandOp)
+BUILD_UNARY_PROTO(VarArgOp)
+BUILD_UNARY_PROTO(VarArgEndOp)
 
 //! Build a type casting expression
 SgCastExp * buildCastExp(SgExpression *  operand_i = NULL,
@@ -377,6 +380,9 @@ BUILD_BINARY_PROTO(RshiftOp)
 BUILD_BINARY_PROTO(ScopeOp)
 BUILD_BINARY_PROTO(SubtractOp)
 BUILD_BINARY_PROTO(XorAssignOp)
+
+BUILD_BINARY_PROTO(VarArgCopyOp)
+BUILD_BINARY_PROTO(VarArgStartOp)
 
 #undef BUILD_BINARY_PROTO
 
