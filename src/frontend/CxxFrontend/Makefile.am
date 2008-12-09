@@ -1,6 +1,8 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = EDG_3.3 EDG_SAGE_Connection EDG_3.10
+# The new EDG-Sage connection requires some built header files from EDG 3.10,
+# so that directory must be before EDG_SAGE_Connection
+SUBDIRS = EDG_3.3 EDG_3.10 EDG_SAGE_Connection
 
 EXTRA_DIST = Makefile.am.forBinaryEDG
 
