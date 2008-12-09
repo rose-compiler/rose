@@ -4510,7 +4510,7 @@ SgScopeStatement::getStatementList ()
                SgSwitchStatement* switchStatement = isSgSwitchStatement(currentScope);
                ROSE_ASSERT (switchStatement != NULL);
                ROSE_ASSERT (switchStatement->get_body() != NULL);
-               currentStatementList = &(switchStatement->get_body()->getStatementList());
+               currentStatementList = &(SageInterface::ensureBasicBlockAsBodyOfSwitch(switchStatement)->getStatementList());
                break;
              }
 
@@ -4686,7 +4686,7 @@ SgScopeStatement::getStatementList () const
                ROSE_ASSERT (switchStatement != NULL);
                ROSE_ASSERT (switchStatement->get_body() != NULL);
             // currentStatementList = &(switchStatement->get_body()->getStatementList());
-               return switchStatement->get_body()->getStatementList();
+               return isSgBasicBlock(switchStatement->get_body()) ? isSgBasicBlock(switchStatement->get_body())->getStatementList() : emptyStatementList;
                break;
              }
 
@@ -11058,8 +11058,12 @@ SgSwitchStatement::append_case(SgCaseOptionStmt *& what)
           assert(newBlock != NULL);
           set_body(newBlock);
         }
-
-     get_body()->append_statement(what);
+     if (!isSgBasicBlock(get_body())) {
+       set_body(SageBuilder::buildBasicBlock(get_body()));
+       get_body()->set_parent(this);
+     }
+     ROSE_ASSERT (isSgBasicBlock(get_body()));
+     SageInterface::appendStatement(what, isSgBasicBlock(get_body()));
 
   // DQ (6/24/2006): This should be set by the lower level insert_statement member function, verify this!
      ROSE_ASSERT(what->get_parent() != NULL);
@@ -11076,7 +11080,12 @@ SgSwitchStatement::prepend_case(SgCaseOptionStmt *& what)
           assert(newBlock != NULL);
           set_body(newBlock);
         }
-     get_body()->prepend_statement(what);
+     if (!isSgBasicBlock(get_body())) {
+       set_body(SageBuilder::buildBasicBlock(get_body()));
+       get_body()->set_parent(this);
+     }
+     ROSE_ASSERT (isSgBasicBlock(get_body()));
+     SageInterface::prependStatement(what, isSgBasicBlock(get_body()));
 
   // DQ (6/24/2006): This should be set by the lower level insert_statement member function, verify this!
      ROSE_ASSERT(what->get_parent() != NULL);
@@ -11094,7 +11103,12 @@ SgSwitchStatement::append_default(SgDefaultOptionStmt *& what)
           assert(newBlock != NULL);
           set_body(newBlock);
         }
-     get_body()->append_statement(what);
+     if (!isSgBasicBlock(get_body())) {
+       set_body(SageBuilder::buildBasicBlock(get_body()));
+       get_body()->set_parent(this);
+     }
+     ROSE_ASSERT (isSgBasicBlock(get_body()));
+     SageInterface::appendStatement(what, isSgBasicBlock(get_body()));
 
   // DQ (6/24/2006): This should be set by the lower level insert_statement member function, verify this!
      ROSE_ASSERT(what->get_parent() != NULL);

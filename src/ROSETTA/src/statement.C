@@ -1511,7 +1511,8 @@ Grammar::setUpStatements ()
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
 
-     SwitchStatement.setDataPrototype ( "SgBasicBlock*", "body", "= NULL",
+  // JJW (12/9/2008): The body does not need to be a block
+     SwitchStatement.setDataPrototype ( "SgStatement*", "body", "= NULL",
 					CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (8/24/2007): Added to support Fortran specific use of WhileStmt
