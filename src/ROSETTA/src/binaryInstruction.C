@@ -841,10 +841,6 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("SgAsmPERVASizePairList*","rvasize_pairs","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-  // DQ (8/17/2008): Note that dos2_header is a SgAsmGenericSection, so it is traversed from 
-  // the SgAsmGenericSectionList, so set to: NO_TRAVERSAL.
-     AsmPEFileHeader.setDataPrototype("SgAsmDOSExtendedHeader*","dos2_header","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (8/17/2008): Note that SgAsmPESectionTable is a SgAsmGenericSection, so it is traversed from 
   // the SgAsmGenericSectionList, so set to: NO_TRAVERSAL.
      AsmPEFileHeader.setDataPrototype("SgAsmPESectionTable*","section_table","= NULL",
