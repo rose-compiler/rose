@@ -38,20 +38,21 @@ DynamicInfo::resolveValue(SgAsmValueExpression* leftVal) {
 void
 DynamicInfo::visit(SgNode* node) {
   if (firstIteration) 
-    if (isSgAsmElfRelaEntryList(node)) {
+    //    if (isSgAsmElfRelaEntryList(node)) {
+    if (isSgAsmElfRelocEntryList(node)) {
       // try to find symbols
-      SgAsmElfRelaEntryList* entry = isSgAsmElfRelaEntryList(node);
-      Rose_STL_Container<SgAsmElfRelaEntry*> entries = entry->get_entries();
+      SgAsmElfRelocEntryList* entry = isSgAsmElfRelocEntryList(node);
+      Rose_STL_Container<SgAsmElfRelocEntry*> entries = entry->get_entries();
       if (debug)
-	cerr << ">>>>>>>>>>>>>>>> Found SgAsmElfRelaEntryList: " << entries.size() << endl;
+	cerr << ">>>>>>>>>>>>>>>> Found SgAsmElfRelocEntryList: " << entries.size() << endl;
       if (instance) {
-	QString res = QString(">>>>>>>>>>>>>>>> Found SgAsmElfRelaEntryList: %1")
+	QString res = QString(">>>>>>>>>>>>>>>> Found SgAsmElfRelocEntryList: %1")
 	  .arg(entries.size());
 	instance->analysisResult->append(res);  
       }
-      Rose_STL_Container<SgAsmElfRelaEntry*>::const_iterator it = entries.begin();
+      Rose_STL_Container<SgAsmElfRelocEntry*>::const_iterator it = entries.begin();
       for (;it!=entries.end();++it) {
-	SgAsmElfRelaEntry* en = *it;
+	SgAsmElfRelocEntry* en = *it;
 	rose_addr_t offset = en->get_r_offset();
 	unsigned long symbol = en->get_sym();
 
