@@ -459,7 +459,7 @@ SgAsmElfSegmentTableEntry
 SgAsmElfSymbol
 SgAsmElfSymbolList
 SgAsmElfSegmentTableEntryList
-SgAsmPEExtendedDOSHeader
+SgAsmDOSExtendedHeader
 SgAsmPEImportILTEntry
 SgAsmPEImportILTEntryList
 SgAsmPEImportDirectory

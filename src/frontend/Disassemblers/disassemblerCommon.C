@@ -367,26 +367,26 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
                     rose_addr_t DOS_section_mapped_size = 0x0;
                     rose_addr_t DOS_header_mapped_size  = 0x0;
 
-                 // Search for the SgAsmPEExtendedDOSHeader section in the section list (the generic file section 
+                 // Search for the SgAsmDOSExtendedHeader section in the section list (the generic file section 
                  // list may disappear soon, if so we have to find it in the section list in the headers in the 
                  // different interpretations. Note that this is likely the same for the NE and LE formats, only 
                  // we want the SgAsmNEExtendedDOSHeader and SgAsmLEExtendedDOSHeader, respectively. Not yet tested 
                  // with NE or LE executable format files.
                     for (size_t j = 0; j < sections.size(); ++j)
                        {
-                         SgAsmPEExtendedDOSHeader* asmPEExtendedDOSHeader = isSgAsmPEExtendedDOSHeader(sections[j]);
-                         if (asmPEExtendedDOSHeader != NULL)
+                         SgAsmDOSExtendedHeader* asmDOSExtendedHeader = isSgAsmDOSExtendedHeader(sections[j]);
+                         if (asmDOSExtendedHeader != NULL)
                             {
                            // Size of the DOS header and the DOS Extended Header (should be 0x40 is size)
-                              DOS_header_mapped_size = DOS_header->get_size() + asmPEExtendedDOSHeader->get_size();
+                              DOS_header_mapped_size = DOS_header->get_size() + asmDOSExtendedHeader->get_size();
 
                            // DQ: I think this is always true.
                               ROSE_ASSERT(DOS_header_mapped_size == 0x40);
 
-                           // Get the location of the PE header (pointed to by the Extended DOS header)
+                           // Get the location of the PE/NE/LE/LX header (pointed to by the Extended DOS header)
                            // This is actually the file address of the new header but since it is mapped 
                            // with the DOS text segment it is the position in the mapped address space (I think).
-                              DOS_section_mapped_size = asmPEExtendedDOSHeader->get_e_lfanew();
+                              DOS_section_mapped_size = asmDOSExtendedHeader->get_e_lfanew();
 
                               printf ("Resetting the size of the DOS section to be %p - %p (minus %p for the size of the DOS and Extended DOS headers) \n",
                                    (void*)DOS_section_mapped_size,(void*)DOS_header_mapped_size,(void*)DOS_header_mapped_size);

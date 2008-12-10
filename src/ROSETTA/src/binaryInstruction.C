@@ -186,7 +186,7 @@ Grammar::setUpBinaryInstructions ()
 
      NEW_TERMINAL_MACRO    ( AsmPESectionTable,  "AsmPESectionTable",  "AsmPESectionTableTag"  );
      NEW_TERMINAL_MACRO    ( AsmCoffSymbolTable, "AsmCoffSymbolTable", "AsmCoffSymbolTableTag" );
-     NEW_TERMINAL_MACRO    ( AsmPEExtendedDOSHeader, "AsmPEExtendedDOSHeader", "AsmPEExtendedDOSHeaderTag" );
+     NEW_TERMINAL_MACRO    ( AsmDOSExtendedHeader, "AsmDOSExtendedHeader", "AsmDOSExtendedHeaderTag" );
 
      NEW_TERMINAL_MACRO    ( AsmNESection,           "AsmNESection",           "AsmNESectionTag"      );
      NEW_TERMINAL_MACRO    ( AsmNESectionTable,      "AsmNESectionTable",      "AsmNESectionTableTag" );
@@ -207,7 +207,7 @@ Grammar::setUpBinaryInstructions ()
      NEW_NONTERMINAL_MACRO ( AsmGenericSection, 
             AsmGenericHeader | 
             AsmElfSection    | AsmElfSectionTable | AsmElfSegmentTable     |
-            AsmPESection     | AsmPESectionTable  | AsmPEExtendedDOSHeader | AsmCoffSymbolTable  |
+            AsmPESection     | AsmPESectionTable  | AsmDOSExtendedHeader   | AsmCoffSymbolTable  |
             AsmNESection     | AsmNESectionTable  | AsmNEExtendedDOSHeader | AsmNENameTable      | AsmNEModuleTable | AsmNEStringTable | AsmNEEntryTable | AsmNERelocTable |
             AsmLESection     | AsmLESectionTable  | AsmLENameTable         | AsmLEPageTable      | AsmLEEntryTable  | AsmLERelocTable,
            "AsmGenericSection",    "AsmGenericSectionTag", true /* canHaveInstances = true */ );
@@ -863,9 +863,9 @@ Grammar::setUpBinaryInstructions ()
      AsmPEFileHeader.setDataPrototype("SgAsmPERVASizePairList*","rvasize_pairs","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-  // DQ (8/17/2008): Note that SgAsmPEExtendedDOSHeader is a SgAsmGenericSection, so it is traversed from 
+  // DQ (8/17/2008): Note that dos2_header is a SgAsmGenericSection, so it is traversed from 
   // the SgAsmGenericSectionList, so set to: NO_TRAVERSAL.
-     AsmPEFileHeader.setDataPrototype("SgAsmPEExtendedDOSHeader*","dos2_header","= NULL",
+     AsmPEFileHeader.setDataPrototype("SgAsmDOSExtendedHeader*","dos2_header","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (8/17/2008): Note that SgAsmPESectionTable is a SgAsmGenericSection, so it is traversed from 
@@ -997,18 +997,17 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
-  // unsigned e_res1[4], e_oemid, e_oeminfo, e_res2[10];
-  // addr_t e_lfanew;
-     AsmPEExtendedDOSHeader.setFunctionPrototype ( "HEADER_PE_EXTENDED_DOS_HEADER", "../Grammar/BinaryInstruction.code");
-     AsmPEExtendedDOSHeader.setDataPrototype("SgUnsignedList","e_res1","",
+
+     AsmDOSExtendedHeader.setFunctionPrototype ( "HEADER_DOS_EXTENDED_HEADER", "../Grammar/BinaryInstruction.code");
+     AsmDOSExtendedHeader.setDataPrototype("SgUnsignedList","e_res1","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEExtendedDOSHeader.setDataPrototype("unsigned","e_oemid","= 0",
+     AsmDOSExtendedHeader.setDataPrototype("unsigned","e_oemid","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEExtendedDOSHeader.setDataPrototype("unsigned","e_oeminfo","= 0",
+     AsmDOSExtendedHeader.setDataPrototype("unsigned","e_oeminfo","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEExtendedDOSHeader.setDataPrototype("SgUnsignedList","e_res2","",
+     AsmDOSExtendedHeader.setDataPrototype("SgUnsignedList","e_res2","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEExtendedDOSHeader.setDataPrototype("rose_addr_t","e_lfanew","= 0",
+     AsmDOSExtendedHeader.setDataPrototype("rose_addr_t","e_lfanew","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
@@ -2192,7 +2191,6 @@ Grammar::setUpBinaryInstructions ()
      AsmPESectionTable.setFunctionSource ( "SOURCE_PE_SECTION_TABLE", "../Grammar/BinaryInstruction.code");
      AsmCoffSymbolTable.setFunctionSource ( "SOURCE_PE_COFF_SYMBOL_TABLE", "../Grammar/BinaryInstruction.code");
      AsmPEImportDirectory.setFunctionSource ( "SOURCE_PE_IMPORT_DIRECTORY", "../Grammar/BinaryInstruction.code");
-     AsmPEExtendedDOSHeader.setFunctionSource ( "SOURCE_PE_EXTENDED_DOS_HEADER", "../Grammar/BinaryInstruction.code");
      AsmPESectionTableEntry.setFunctionSource ( "SOURCE_PE_SECTION_TABLE_ENTRY", "../Grammar/BinaryInstruction.code");
      AsmCoffSymbol.setFunctionSource ( "SOURCE_PE_COFF_SYMBOL", "../Grammar/BinaryInstruction.code");
      AsmCoffStrtab.setFunctionSource("SOURCE_COFF_STRING_TABLE", "../Grammar/BinaryInstruction.code");

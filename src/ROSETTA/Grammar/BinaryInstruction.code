@@ -2171,29 +2171,6 @@ HEADER_PE_COFF_SYMBOL_TABLE_END
 
 
 
-HEADER_PE_EXTENDED_DOS_HEADER_START
-	public:
-		struct ExtendedDOSHeader_disk {
-			unsigned char e_res1[4];  /* 0x00 reserved */
-			uint16_t      e_oemid;    /* 0x04 OEM Identifier */
-			uint16_t      e_oeminfo;  /* 0x06 other OEM information; oemid specific */
-			uint16_t      e_res2[10]; /* 0x08 reserved */
-			uint32_t      e_lfanew;   /* 0x1c file offset of new exe (PE) header */
-		} __attribute__((packed));        /* 0x20 */
-
-		explicit SgAsmPEExtendedDOSHeader(SgAsmDOSFileHeader *fhdr)
-			: SgAsmGenericSection(fhdr->get_file(), fhdr, 0, sizeof(ExtendedDOSHeader_disk))
-			{ctor();}
-		virtual SgAsmPEExtendedDOSHeader *parse();
-		void *encode(SgAsmPEExtendedDOSHeader::ExtendedDOSHeader_disk*) const;
-		virtual void unparse(std::ostream&) const;
-		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-	private:
-		void ctor();
-HEADER_PE_EXTENDED_DOS_HEADER_END
-
-
-
 HEADER_PE_SECTION_TABLE_ENTRY_START
 
      public:
@@ -3153,6 +3130,31 @@ HEADER_DOS_HEADER_START
 		void ctor();
 		void *encode(SgAsmDOSFileHeader::DOSFileHeader_disk*) const;
 HEADER_DOS_HEADER_END
+
+
+
+HEADER_DOS_EXTENDED_HEADER_START
+	public:
+		struct DOSExtendedHeader_disk {
+			unsigned char e_res1[4];  /* 0x00 reserved */
+			uint16_t      e_oemid;    /* 0x04 OEM Identifier */
+			uint16_t      e_oeminfo;  /* 0x06 other OEM information; oemid specific */
+			uint16_t      e_res2[10]; /* 0x08 reserved */
+			uint32_t      e_lfanew;   /* 0x1c file offset of new exe (PE) header */
+		} __attribute__((packed));        /* 0x20 */
+
+		explicit SgAsmDOSExtendedHeader(SgAsmDOSFileHeader *fhdr)
+			: SgAsmGenericSection(fhdr->get_file(), fhdr, 0, sizeof(DOSExtendedHeader_disk))
+			{ctor();}
+		virtual SgAsmDOSExtendedHeader *parse();
+		void *encode(SgAsmDOSExtendedHeader::DOSExtendedHeader_disk*) const;
+		virtual void unparse(std::ostream&) const;
+		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+	private:
+		void ctor();
+HEADER_DOS_EXTENDED_HEADER_END
+
+
 
 
 
@@ -4370,9 +4372,6 @@ SOURCE_PE_IMPORT_HINT_NAME_END
 
 SOURCE_PE_IMPORT_DIRECTORY_START
 SOURCE_PE_IMPORT_DIRECTORY_END
-
-SOURCE_PE_EXTENDED_DOS_HEADER_START
-SOURCE_PE_EXTENDED_DOS_HEADER_END
 
 SOURCE_PE_SECTION_TABLE_ENTRY_START
 SgAsmPESectionTableEntry::SgAsmPESectionTableEntry(const SgAsmPESectionTableEntry::PESectionTableEntry_disk *disk)

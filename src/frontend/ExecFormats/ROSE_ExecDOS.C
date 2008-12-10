@@ -257,3 +257,101 @@ SgAsmDOSFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Extended DOS File Header
+// This is normally tacked onto the end of a DOS File Header when the executable is PE, NE, LE, or LX. We treat it as a
+// section belonging to the DOS File Header. The PE, NE, LE and LX File Header IR nodes usually also point to this section.
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Construct a new DOS Extended Header with default values. The new section is placed at file offset zero. */
+void
+SgAsmDOSExtendedHeader::ctor()
+{
+    ROSE_ASSERT(get_file()!=NULL);
+    ROSE_ASSERT(get_size()>0);
+
+    set_name(new SgAsmBasicString("DOS Extended Header"));
+    set_synthesized(true);
+    set_purpose(SP_HEADER);
+}
+
+/** Initialize this header with information parsed from the file. */
+SgAsmDOSExtendedHeader*
+SgAsmDOSExtendedHeader::parse()
+{
+    SgAsmGenericSection::parse();
+    
+    /* Read header from file */
+    DOSExtendedHeader_disk disk;
+    content(0, sizeof disk, &disk);
+
+    /* Decode file format */
+    ROSE_ASSERT(get_header()!=NULL); /*should be the DOS File Header*/
+    ROSE_ASSERT(ORDER_LSB==get_header()->get_sex());
+    for (size_t i=0; i<NELMTS(disk.e_res1); i++)
+        p_e_res1.push_back(le_to_host(disk.e_res1[i]));
+    p_e_oemid             = le_to_host(disk.e_oemid);
+    p_e_oeminfo           = le_to_host(disk.e_oeminfo);
+    for (size_t i=0; i< NELMTS(disk.e_res2); i++)
+        p_e_res2.push_back(le_to_host(disk.e_res2[i]));
+    p_e_lfanew            = le_to_host(disk.e_lfanew);
+
+    return this;
+}
+
+/* Encode the extended header back into disk format */
+void *
+SgAsmDOSExtendedHeader::encode(DOSExtendedHeader_disk *disk) const
+{
+    for (size_t i=0; i < NELMTS(disk->e_res1); i++)
+        host_to_le(p_e_res1[i], &(disk->e_res1[i]));
+    host_to_le(p_e_oemid,    &(disk->e_oemid));
+    host_to_le(p_e_oeminfo,  &(disk->e_oeminfo));
+    for (size_t i=0; i<NELMTS(disk->e_res2); i++)
+        host_to_le(p_e_res2[i], &(disk->e_res2[i]));
+    host_to_le(p_e_lfanew,   &(disk->e_lfanew));
+    return disk;
+}
+
+/* Write an extended header back to disk */
+void
+SgAsmDOSExtendedHeader::unparse(std::ostream &f) const
+{
+    DOSExtendedHeader_disk disk;
+    encode(&disk);
+    write(f, 0, sizeof disk, &disk);
+}
+    
+void
+SgAsmDOSExtendedHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sDOSExtendedHeader[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sDOSExtendedHeader.", prefix);
+    }
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+
+    SgAsmGenericSection::dump(f, p, -1);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res1[0]",   p_e_res1[0]);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res1[1]",   p_e_res1[1]);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res1[2]",   p_e_res1[2]);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res1[3]",   p_e_res1[3]);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_oemid",    p_e_oemid);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_oeminfo",  p_e_oeminfo);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[0]",  p_e_res2[0]);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[1]",  p_e_res2[1]);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[2]",  p_e_res2[2]);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[3]",  p_e_res2[3]);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[4]",  p_e_res2[4]);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[5]",  p_e_res2[5]);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[6]",  p_e_res2[6]);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[7]",  p_e_res2[7]);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[8]",  p_e_res2[8]);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[9]",  p_e_res2[9]);
+    fprintf(f, "%s%-*s = %"PRIu64" byte offset (0x%"PRIx64")\n",  p, w, "e_lfanew",   p_e_lfanew,p_e_lfanew);
+
+    if (variantT() == V_SgAsmDOSExtendedHeader) //unless a base class
+        hexdump(f, 0, std::string(p)+"data at ", p_data);
+}
