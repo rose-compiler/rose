@@ -696,9 +696,6 @@ typedef SgAsmElfSegmentTableEntryPtrList SgAsmElfSegmentTableEntryPtrListPtr;
 typedef Rose_STL_Container<SgAsmPERVASizePair*> SgAsmPERVASizePairPtrList;
 typedef SgAsmPERVASizePairPtrList* SgAsmPERVASizePairPtrListPtr;
 
-// DQ (8/7/2008): Note that the SgAsmLEExtendedDOSHeader is just using the SgAsmNEExtendedDOSHeader type
-typedef SgAsmNEExtendedDOSHeader SgAsmLEExtendedDOSHeader;
-
 #if !OLD_GRAPH_NODES
 // DQ (8/18/2008): Added support for new Graph IR nodes.
 typedef Rose_STL_Container<SgGraphNode*> SgGraphNodePtrList;

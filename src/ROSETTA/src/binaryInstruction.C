@@ -195,7 +195,6 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO    ( AsmNEStringTable,       "AsmNEStringTable",       "AsmNEStringTableTag"  );
      NEW_TERMINAL_MACRO    ( AsmNEEntryTable,        "AsmNEEntryTable",        "AsmNEEntryTableTag"   );
      NEW_TERMINAL_MACRO    ( AsmNERelocTable,        "AsmNERelocTable",        "AsmNERelocTableTag"   );
-     NEW_TERMINAL_MACRO    ( AsmNEExtendedDOSHeader, "AsmNEExtendedDOSHeader", "AsmNEExtendedDOSHeaderTag" );
 
      NEW_TERMINAL_MACRO    ( AsmLESection,      "AsmLESection",      "AsmLESectionTag"      );
      NEW_TERMINAL_MACRO    ( AsmLESectionTable, "AsmLESectionTable", "AsmLESectionTableTag" );
@@ -208,7 +207,8 @@ Grammar::setUpBinaryInstructions ()
             AsmGenericHeader | 
             AsmElfSection    | AsmElfSectionTable | AsmElfSegmentTable     |
             AsmPESection     | AsmPESectionTable  | AsmDOSExtendedHeader   | AsmCoffSymbolTable  |
-            AsmNESection     | AsmNESectionTable  | AsmNEExtendedDOSHeader | AsmNENameTable      | AsmNEModuleTable | AsmNEStringTable | AsmNEEntryTable | AsmNERelocTable |
+            AsmNESection     | AsmNESectionTable  | AsmNENameTable         | AsmNEModuleTable    |
+            AsmNEStringTable | AsmNEEntryTable    | AsmNERelocTable        |
             AsmLESection     | AsmLESectionTable  | AsmLENameTable         | AsmLEPageTable      | AsmLEEntryTable  | AsmLERelocTable,
            "AsmGenericSection",    "AsmGenericSectionTag", true /* canHaveInstances = true */ );
 
@@ -767,29 +767,8 @@ Grammar::setUpBinaryInstructions ()
 
 
 
-
-
-
-
-  // These are the native-format versions of the same members described in the PEFileHeader_disk format struct.
-  // unsigned    e_cpu_type, e_nsections, e_time;
-  // addr_t      e_coff_symtab, e_nt_hdr_size;
-  // unsigned    e_coff_nsyms, e_flags, e_opt_magic;
-  // unsigned    e_lmajor, e_lminor, e_code_size, e_data_size, e_bss_size, e_entrypoint_rva, e_code_rva, e_data_rva;
-  // addr_t      e_image_base;
-  // unsigned    e_section_align, e_file_align, e_os_major, e_os_minor, e_user_major, e_user_minor;
-  // unsigned    e_subsys_major, e_subsys_minor, e_reserved9, e_image_size, e_header_size, e_file_checksum, e_subsystem;
-  // unsigned    e_dll_flags, e_stack_reserve_size, e_stack_commit_size, e_heap_reserve_size, e_heap_commit_size;
-  // unsigned    e_loader_flags, e_num_rvasize_pairs;
-  // std::vector<RVASizePair> rvasize_pairs;
-  // ExtendedDOSHeader *dos2_header;
-  // PESectionTable *section_table;
-  // COFFSymtab *coff_symtab;
-
      AsmPEFileHeader.setFunctionPrototype ( "HEADER_PE_FILE_HEADER", "../Grammar/BinaryInstruction.code");
      AsmPEFileHeader.setAutomaticGenerationOfDestructor(false);
-
-  // DQ (8/28/2008): Check against the specification
      AsmPEFileHeader.setDataPrototype("unsigned","e_cpu_type","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("unsigned","e_nsections","= 0",
@@ -862,12 +841,10 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("SgAsmPERVASizePairList*","rvasize_pairs","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
   // DQ (8/17/2008): Note that dos2_header is a SgAsmGenericSection, so it is traversed from 
   // the SgAsmGenericSectionList, so set to: NO_TRAVERSAL.
      AsmPEFileHeader.setDataPrototype("SgAsmDOSExtendedHeader*","dos2_header","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
   // DQ (8/17/2008): Note that SgAsmPESectionTable is a SgAsmGenericSection, so it is traversed from 
   // the SgAsmGenericSectionList, so set to: NO_TRAVERSAL.
      AsmPEFileHeader.setDataPrototype("SgAsmPESectionTable*","section_table","= NULL",
@@ -876,6 +853,7 @@ Grammar::setUpBinaryInstructions ()
   // the SgAsmGenericSectionList, so set to: NO_TRAVERSAL.
      AsmPEFileHeader.setDataPrototype("SgAsmCoffSymbolTable*","coff_symtab","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
 
   // addr_t e_rva, e_size;
@@ -1109,17 +1087,7 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
-  // unsigned    e_linker_major, e_linker_minor, e_checksum, e_flags1, e_autodata_sn, e_bss_size, e_stack_size;
-  // unsigned    e_csip, e_sssp, e_nsections, e_nmodrefs, e_nnonresnames, e_nmovable_entries, e_sector_align;
-  // unsigned    e_nresources, e_exetype, e_flags2, e_res1, e_winvers;
-  // addr_t      e_entrytab_rfo, e_entrytab_size, e_sectab_rfo, e_rsrctab_rfo, e_resnametab_rfo, e_modreftab_rfo;
-  // addr_t      e_importnametab_rfo, e_nonresnametab_offset, e_fastload_sector, e_fastload_nsectors;
-  // ExtendedDOSHeader *dos2_header;
-  // NESectionTable *section_table;
-  // NENameTable *resname_table;
-  // NENameTable *nonresname_table;
-  // NEModuleTable *module_table;
-  // NEEntryTable *entry_table;
+
      AsmNEFileHeader.setFunctionPrototype ( "HEADER_NE_FILE_HEADER", "../Grammar/BinaryInstruction.code");
      AsmNEFileHeader.setDataPrototype("unsigned","e_linker_major","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1179,14 +1147,12 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmNEFileHeader.setDataPrototype("rose_addr_t","e_fastload_nsectors","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmNEFileHeader.setDataPrototype("SgAsmNEExtendedDOSHeader*","dos2_header","= NULL",
+     AsmNEFileHeader.setDataPrototype("SgAsmDOSExtendedHeader*","dos2_header","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
   // DQ (8/17/2008): Note that SgAsmNESectionTable is a SgAsmGenericSection, so it is traversed from 
   // the SgAsmGenericSectionList, so set to: NO_TRAVERSAL.
      AsmNEFileHeader.setDataPrototype("SgAsmNESectionTable*","section_table","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
      AsmNEFileHeader.setDataPrototype("SgAsmNENameTable*","resname_table","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmNEFileHeader.setDataPrototype("SgAsmNENameTable*","nonresname_table","= NULL",
@@ -1256,13 +1222,7 @@ Grammar::setUpBinaryInstructions ()
      AsmNERelocTable.setDataPrototype("SgAsmNERelocEntryPtrList","entries","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-  // unsigned e_res1[14];
-  // addr_t e_lfanew;
-     AsmNEExtendedDOSHeader.setFunctionPrototype ( "HEADER_NE_EXTENDED_DOS_HEADER", "../Grammar/BinaryInstruction.code");
-     AsmNEExtendedDOSHeader.setDataPrototype("SgUnsignedList","e_res1","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmNEExtendedDOSHeader.setDataPrototype("rose_addr_t","e_lfanew","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
   // NEEntryFlags flags;         /* bit flags */
   // unsigned int3f;             /* always 0x3fxx */
@@ -1322,11 +1282,7 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
-  // unsigned e_byte_order, e_word_order, e_format_level, e_cpu_type, e_os_type, e_module_version, e_flags;
-  // unsigned e_eip_section, e_esp_section, e_last_page_size, e_page_offset_shift, e_fixup_sect_cksum, e_loader_sect_cksum;
-  // unsigned e_secttab_nentries, e_rsrctab_nentries, e_fmtdirtab_nentries, e_import_modtab_nentries, e_preload_npages;
-  // unsigned e_nonresnametab_size, e_nonresnametab_cksum, e_auto_ds_section, e_debug_info_size, e_num_instance_preload;
-  // unsigned e_num_instance_demand, e_heap_size;
+
      AsmLEFileHeader.setFunctionPrototype ( "HEADER_LE_FILE_HEADER", "../Grammar/BinaryInstruction.code");
      AsmLEFileHeader.setDataPrototype("unsigned","e_byte_order","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1378,11 +1334,6 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmLEFileHeader.setDataPrototype("unsigned","e_heap_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // addr_t e_npages, e_eip, e_esp, e_page_size, e_fixup_sect_size, e_loader_sect_size, e_secttab_rfo, e_pagetab_rfo;
-  // addr_t e_iterpages_offset, e_rsrctab_rfo, e_resnametab_rfo, e_entrytab_rfo, e_fmtdirtab_rfo, e_fixup_pagetab_rfo;
-  // addr_t e_fixup_rectab_rfo, e_import_modtab_rfo, e_import_proctab_rfo, e_ppcksumtab_rfo, e_data_pages_offset;
-  // addr_t e_nonresnametab_offset, e_debug_info_rfo;
      AsmLEFileHeader.setDataPrototype("rose_addr_t","e_npages","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmLEFileHeader.setDataPrototype("rose_addr_t","e_eip","= 0",
@@ -1425,22 +1376,12 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmLEFileHeader.setDataPrototype("rose_addr_t","e_debug_info_rfo","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // ExtendedDOSHeader *dos2_header;
-  // LESectionTable *section_table;
-  // LEPageTable *page_table;
-  // LENameTable *resname_table;
-  // LENameTable *nonresname_table;
-  // LEEntryTable *entry_table;
-  // LERelocTable *reloc_table;
-     AsmLEFileHeader.setDataPrototype("SgAsmLEExtendedDOSHeader*","dos2_header","= NULL",
+     AsmLEFileHeader.setDataPrototype("SgAsmDOSExtendedHeader*","dos2_header","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
   // DQ (8/17/2008): Note that SgAsmLESectionTable is a SgAsmGenericSection, so it is traversed from 
   // the SgAsmGenericSectionList, so set to: NO_TRAVERSAL.
      AsmLEFileHeader.setDataPrototype("SgAsmLESectionTable*","section_table","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
      AsmLEFileHeader.setDataPrototype("SgAsmLEPageTable*","page_table","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmLEFileHeader.setDataPrototype("SgAsmLENameTable*","resname_table","= NULL",
@@ -1451,6 +1392,7 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmLEFileHeader.setDataPrototype("SgAsmLERelocTable*","reloc_table","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
 
 
   // LESectionTableEntry *st_entry;
@@ -2203,7 +2145,6 @@ Grammar::setUpBinaryInstructions ()
      AsmNEStringTable.setFunctionSource ( "SOURCE_NE_STRING_TABLE", "../Grammar/BinaryInstruction.code");
      AsmNEEntryTable.setFunctionSource ( "SOURCE_NE_ENTRY_TABLE", "../Grammar/BinaryInstruction.code");
      AsmNERelocTable.setFunctionSource ( "SOURCE_NE_RELOC_TABLE", "../Grammar/BinaryInstruction.code");
-     AsmNEExtendedDOSHeader.setFunctionSource ( "SOURCE_NE_EXTENDED_DOS_HEADER", "../Grammar/BinaryInstruction.code");
      AsmNEEntryPoint.setFunctionSource ( "SOURCE_NE_ENTRY_POINT", "../Grammar/BinaryInstruction.code");
      AsmNERelocEntry.setFunctionSource ( "SOURCE_NE_RELOC_ENTRY", "../Grammar/BinaryInstruction.code");
      AsmNESectionTableEntry.setFunctionSource ( "SOURCE_NE_SECTION_TABLE_ENTRY", "../Grammar/BinaryInstruction.code");

@@ -475,7 +475,6 @@ SgAsmPERVASizePair
 SgAsmPERVASizePairList
 SgAsmCoffSymbol
 SgAsmCoffSymbolList
-SgAsmNEExtendedDOSHeader
 SgAsmNEEntryPoint
 SgAsmNERealocEntry
 SgAsmNESectionTableEntry
