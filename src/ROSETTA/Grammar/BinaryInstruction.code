@@ -3064,7 +3064,8 @@ HEADER_DOS_EXTENDED_HEADER_START
 		} __attribute__((packed));        /* 0x20 */
 
 		explicit SgAsmDOSExtendedHeader(SgAsmDOSFileHeader *fhdr)
-			: SgAsmGenericSection(fhdr->get_file(), fhdr, 0, sizeof(DOSExtendedHeader_disk))
+			: SgAsmGenericSection(fhdr->get_file(), fhdr,
+					      fhdr->get_size(), sizeof(DOSExtendedHeader_disk))
 			{ctor();}
 		virtual SgAsmDOSExtendedHeader *parse();
 		void *encode(SgAsmDOSExtendedHeader::DOSExtendedHeader_disk*) const;

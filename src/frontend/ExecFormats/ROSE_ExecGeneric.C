@@ -3730,7 +3730,6 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
         SgAsmGenericHeader *big_hdr = NULL;
         if (SgAsmPEFileHeader::is_PE(ef)) {
             SgAsmDOSExtendedHeader *dos2_hdr = new SgAsmDOSExtendedHeader(dos_hdr);
-            dos2_hdr->set_offset(dos_hdr->get_size());
             dos2_hdr->parse();
             SgAsmPEFileHeader *pe_hdr = new SgAsmPEFileHeader(ef);
             pe_hdr->set_offset(dos2_hdr->get_e_lfanew());

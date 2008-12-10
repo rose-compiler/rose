@@ -259,13 +259,11 @@ SgAsmDOSFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 // section belonging to the DOS File Header. The PE, NE, LE and LX File Header IR nodes usually also point to this section.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Construct a new DOS Extended Header with default values. The new section is placed at file offset zero. */
+/** Construct a new DOS Extended Header with default values. The real constructor will have already initialized this object's
+ *  offset and size. */
 void
 SgAsmDOSExtendedHeader::ctor()
 {
-    ROSE_ASSERT(get_file()!=NULL);
-    ROSE_ASSERT(get_size()>0);
-
     set_name(new SgAsmBasicString("DOS Extended Header"));
     set_synthesized(true);
     set_purpose(SP_HEADER);
