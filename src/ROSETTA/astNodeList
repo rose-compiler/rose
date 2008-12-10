@@ -586,3 +586,6 @@ SgAsmDwarfUnknownConstruct
 SgAsmDwarfConstructList
 SgAsmDwarfCompilationUnitList
 SgTypeSignedLongLong
+SgRealPartOp
+SgImagPartOp
+SgConjugateOp

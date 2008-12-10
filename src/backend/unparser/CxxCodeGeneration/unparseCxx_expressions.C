@@ -106,6 +106,9 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
           case MINUSMINUS_OP: { unparseMinusMinusOp(expr, info); break; }
           case PLUSPLUS_OP: { unparsePlusPlusOp(expr, info); break; }
           case BIT_COMPLEMENT_OP: { unparseBitCompOp(expr, info); break; }
+          case REAL_PART_OP: { unparseRealPartOp(expr, info); break; }
+          case IMAG_PART_OP: { unparseImagPartOp(expr, info); break; }
+          case CONJUGATE_OP: { unparseConjugateOp(expr, info); break; }
           case EXPR_CONDITIONAL: { unparseExprCond(expr, info); break; }
           case CAST_OP:                 { unparseCastOp(expr, info); break; }
           case ARRAY_OP:                { unparseArrayOp(expr, info); break; }
@@ -3031,6 +3034,9 @@ void Unparse_ExprStmt::unparseMinusMinusOp(SgExpression* expr, SgUnparse_Info& i
 void Unparse_ExprStmt::unparsePlusPlusOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "++", info); }
 void Unparse_ExprStmt::unparseAbstractOp(SgExpression* expr, SgUnparse_Info& info) {}
 void Unparse_ExprStmt::unparseBitCompOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "~", info); }
+void Unparse_ExprStmt::unparseRealPartOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "__real__ ", info); }
+void Unparse_ExprStmt::unparseImagPartOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "__imag__ ", info); }
+void Unparse_ExprStmt::unparseConjugateOp(SgExpression* expr, SgUnparse_Info& info) { unparseUnaryOperator(expr, "~", info); }
 
 void Unparse_ExprStmt::unparseExprCond(SgExpression* expr, SgUnparse_Info& info)
    {

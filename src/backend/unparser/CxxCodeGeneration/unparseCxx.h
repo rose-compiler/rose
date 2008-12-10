@@ -204,6 +204,9 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
           virtual void unparsePlusPlusOp              (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseAbstractOp              (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseBitCompOp               (SgExpression* expr, SgUnparse_Info& info);  
+          virtual void unparseRealPartOp              (SgExpression* expr, SgUnparse_Info& info);  
+          virtual void unparseImagPartOp              (SgExpression* expr, SgUnparse_Info& info);  
+          virtual void unparseConjugateOp             (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseExprCond                (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseClassInitOp             (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseDyCastOp                (SgExpression* expr, SgUnparse_Info& info);  

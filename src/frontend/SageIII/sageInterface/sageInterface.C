@@ -5596,6 +5596,12 @@ class ConditionalExpGenerator: public StatementGenerator
     exp->set_parent(expList);
   }
 
+  void SageInterface::appendExpressionList(SgExprListExp *expList, const std::vector<SgExpression*>& exp)
+  {
+    for (size_t i = 0; i < exp.size(); ++i)
+      appendExpression(expList, exp[i]);
+  }
+
   //TODO consider the difference between C++ and Fortran
   // fixup the scope of arguments,no symbols for nondefining function declaration's arguments
   void SageInterface::setParameterList(SgFunctionDeclaration * func,SgFunctionParameterList * paralist)

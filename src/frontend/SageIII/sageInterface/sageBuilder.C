@@ -1128,6 +1128,9 @@ BUILD_UNARY_DEF(PointerDerefExp)
 BUILD_UNARY_DEF(UnaryAddOp)
 BUILD_UNARY_DEF(MinusMinusOp)
 BUILD_UNARY_DEF(PlusPlusOp)
+BUILD_UNARY_DEF(RealPartOp)
+BUILD_UNARY_DEF(ImagPartOp)
+BUILD_UNARY_DEF(ConjugateOp)
 BUILD_UNARY_DEF(VarArgStartOneOperandOp)
 BUILD_UNARY_DEF(VarArgOp)
 BUILD_UNARY_DEF(VarArgEndOp)
@@ -2001,6 +2004,29 @@ SgForStatement * SageBuilder::buildForStatement_nfi(SgStatement* initialize_stmt
   if (test) test->set_parent(result);
   if (loop_body) loop_body->set_parent(result);
   if (increment) increment->set_parent(result);
+
+  if (initialize_stmt != NULL) {
+    SgForInitStatement* init_stmt = result->get_for_init_stmt();
+    ROSE_ASSERT(init_stmt);
+    setOneSourcePositionNull(init_stmt);
+    init_stmt->append_init_stmt(initialize_stmt);
+    initialize_stmt->set_parent(init_stmt);
+  }
+
+  return result;
+}
+
+//! Based on the contribution from Pradeep Srinivasa@ LANL
+//Liao, 8/27/2008
+SgUpcForAllStatement * SageBuilder::buildUpcForAllStatement_nfi(SgStatement* initialize_stmt, SgStatement * test, SgExpression * increment, SgExpression* affinity, SgStatement * loop_body)
+{
+  SgUpcForAllStatement * result = new SgUpcForAllStatement(test,increment, affinity, loop_body);
+  ROSE_ASSERT(result);
+  setOneSourcePositionNull(result);
+  if (test) test->set_parent(result);
+  if (loop_body) loop_body->set_parent(result);
+  if (increment) increment->set_parent(result);
+  if (affinity) affinity->set_parent(result);
 
   if (initialize_stmt != NULL) {
     SgForInitStatement* init_stmt = result->get_for_init_stmt();

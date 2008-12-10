@@ -299,6 +299,9 @@ BUILD_UNARY_PROTO(PointerDerefExp)
 BUILD_UNARY_PROTO(UnaryAddOp)
 BUILD_UNARY_PROTO(MinusMinusOp)
 BUILD_UNARY_PROTO(PlusPlusOp)
+BUILD_UNARY_PROTO(RealPartOp)
+BUILD_UNARY_PROTO(ImagPartOp)
+BUILD_UNARY_PROTO(ConjugateOp)
 BUILD_UNARY_PROTO(VarArgStartOneOperandOp)
 BUILD_UNARY_PROTO(VarArgOp)
 BUILD_UNARY_PROTO(VarArgEndOp)
@@ -613,6 +616,9 @@ SgIfStmt * buildIfStmt_nfi(SgStatement* conditional, SgStatement * true_body, Sg
 //!Build a for statement, assume none of the arguments is NULL
 SgForStatement * buildForStatement(SgStatement* initialize_stmt,  SgStatement * test, SgExpression * increment, SgStatement * loop_body);
 SgForStatement * buildForStatement_nfi(SgStatement* initialize_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body);
+
+//! Build a UPC forall statement
+SgUpcForAllStatement * buildUpcForAllStatement_nfi(SgStatement* initialize_stmt, SgStatement * test, SgExpression * increment, SgExpression* affinity, SgStatement * loop_body);
 
 //! Build while statement
 SgWhileStmt * buildWhileStmt(SgStatement *  condition, SgStatement *body);

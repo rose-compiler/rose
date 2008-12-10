@@ -8,6 +8,10 @@
    "_Bool", "_Complex", "_Imaginary", "__I__", "__NAN__", "__INFINITY__",
 */
 
+/* JJW: The new frontend handles all of this just fine, without any redefinition */
+
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
+
 #include <complex.h>
 
 int main (void)
@@ -25,12 +29,12 @@ int main (void)
   // ROSE does not yet support the imaginary add operator
      _Complex float a_complex_value = 0.0;
 
-  // a_complex_value = 4.0;
+     a_complex_value = 4.0;
 
-  // a_complex_value = 3.0f + (4.0f * __I__);
-  // a_complex_value = 3.0f - 4.0f * __I__;
-  // a_complex_value = 3.0f * (4.0f * __I__);
-  // a_complex_value = 3.0f / (4.0f * __I__);
+     a_complex_value = 3.0f + (4.0f * __I__);
+     a_complex_value = 3.0f - 4.0f * __I__;
+     a_complex_value = 3.0f * (4.0f * __I__);
+     a_complex_value = 3.0f / (4.0f * __I__);
 
   // Newer syntax for specification of complex types
      _Complex float       x = 1.0;
@@ -40,7 +44,7 @@ int main (void)
   // Specification of complex literals is a bit more complicated 
   // (not clear if this is might just be the use of the commar operator).
   // note that the parenthesis are required.
-     _Complex float x_with_real_and_imaginary_parts = (1.0,-1.0);
+  // _Complex float x_with_real_and_imaginary_parts = (1.0,-1.0);
 
 #if 0
   // I think this is less a way to declare real and imaginary types than 
@@ -64,19 +68,21 @@ int main (void)
      double y_imag_extract_part = __imag__ y;
      double y_real_extract_part = __real__ y;
 
+     (__imag__ x)++;
+
   // This does not exist as a type in C99
   // _Real float  x_edg_real = 0.0;
   // _Real double y_edg_real = 0.0;
 
-#if 0
+#if 1
   // This causes a problem in ROSE when combined with the "__I__" statement.
   // I can't seem to figure out why!
 
   // This is now to specify imaginary numbers in EDG, not supported in GNU, so
   // the code generation using GNU aas a backend drops the "_Imaginary" prefix.
-     _Imaginary float       x_edg_imaginary = 0.0;
-     _Imaginary double      y_edg_imaginary = 0.0;
-     _Imaginary long double z_edg_imaginary = 0.0;
+     _Complex float       x_edg_imaginary = 0.0if;
+     _Complex double      y_edg_imaginary = 0.0i;
+     _Complex long double z_edg_imaginary = 0.0il;
 
      a_complex_value = 4.0 + x_edg_imaginary;
 #endif
@@ -88,7 +94,7 @@ int main (void)
      b = -b; // this is the integer negate operator
 
   // This does not appear to work with EDG, but works with gcc!
-  // x = ~x; // this is the complex conjugation operator
+     x = ~x; // this is the complex conjugation operator
 
      x = -y; // this is the complex negate operator
      x = +y; // this is the complex unary plus operator
@@ -115,4 +121,4 @@ int main (void)
 
 
 
-
+#endif /* ROSE_USE_NEW_EDG_INTERFACE */
