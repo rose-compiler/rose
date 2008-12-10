@@ -2207,7 +2207,7 @@ SgDefaultOptionStmt * SageBuilder::buildDefaultOptionStmt_nfi( SgStatement *body
   return result;
 }
 
-SgSwitchStatement* SageBuilder::buildSwitchStatement(SgStatement *item_selector,SgBasicBlock *body)
+SgSwitchStatement* SageBuilder::buildSwitchStatement(SgStatement *item_selector,SgStatement *body)
 {
   SgSwitchStatement* result = new SgSwitchStatement(item_selector,body);
   ROSE_ASSERT(result);
@@ -2217,7 +2217,7 @@ SgSwitchStatement* SageBuilder::buildSwitchStatement(SgStatement *item_selector,
   return result;
 }
 
-SgSwitchStatement* SageBuilder::buildSwitchStatement_nfi(SgStatement *item_selector,SgBasicBlock *body)
+SgSwitchStatement* SageBuilder::buildSwitchStatement_nfi(SgStatement *item_selector,SgStatement *body)
 {
   SgSwitchStatement* result = new SgSwitchStatement(item_selector,body);
   ROSE_ASSERT(result);

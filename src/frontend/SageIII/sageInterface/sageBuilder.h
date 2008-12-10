@@ -597,11 +597,11 @@ SgExprStatement* buildExprStatement(SgExpression*  exp = NULL);
 SgExprStatement* buildExprStatement_nfi(SgExpression*  exp);
 
 //! Build a switch statement
-SgSwitchStatement* buildSwitchStatement(SgStatement *item_selector = NULL,SgBasicBlock *body = NULL);
-inline SgSwitchStatement* buildSwitchStatement(SgExpression *item_selector, SgBasicBlock *body = NULL) {
+SgSwitchStatement* buildSwitchStatement(SgStatement *item_selector = NULL,SgStatement *body = NULL);
+inline SgSwitchStatement* buildSwitchStatement(SgExpression *item_selector, SgStatement *body = NULL) {
   return buildSwitchStatement(buildExprStatement(item_selector), body);
 }
-SgSwitchStatement* buildSwitchStatement_nfi(SgStatement *item_selector,SgBasicBlock *body);
+SgSwitchStatement* buildSwitchStatement_nfi(SgStatement *item_selector,SgStatement *body);
 
 //! Build if statement
 SgIfStmt * buildIfStmt(SgStatement* conditional, SgStatement * true_body, SgStatement * false_body);
