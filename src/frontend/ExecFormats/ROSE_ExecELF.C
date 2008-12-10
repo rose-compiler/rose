@@ -1308,9 +1308,18 @@ SgAsmElfSectionTable::parse()
           case SgAsmElfSectionTableEntry::SHT_STRTAB:
             section = (new SgAsmElfStringSection(fhdr));
             break;
-          case SgAsmElfSectionTableEntry::SHT_RELA:
-            section = new SgAsmElfRelocSection(fhdr);
-            break;
+          case SgAsmElfSectionTableEntry::SHT_REL: {
+              SgAsmElfRelocSection *relocsec;
+              section = relocsec = new SgAsmElfRelocSection(fhdr);
+              relocsec->set_uses_addend(false);
+              break;
+          }
+          case SgAsmElfSectionTableEntry::SHT_RELA: {
+              SgAsmElfRelocSection *relocsec;
+              section = relocsec = new SgAsmElfRelocSection(fhdr);
+              relocsec->set_uses_addend(true);
+              break;
+          }
           default:
             section = new SgAsmElfSection(fhdr);
             break;
@@ -2076,7 +2085,7 @@ SgAsmElfSegmentTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Relocation
+// Relocation (Rel and Rela)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Constructors */
@@ -2094,6 +2103,24 @@ SgAsmElfRelocEntry::ctor(ByteOrder sex, const Elf64RelaEntry_disk *disk)
 {
     p_r_offset    = disk_to_host(sex, disk->r_offset);
     p_r_addend    = disk_to_host(sex, disk->r_addend);
+    uint64_t info = disk_to_host(sex, disk->r_info);
+    p_sym = info >> 32;
+    p_type = info & 0xffffffff;
+}
+void
+SgAsmElfRelocEntry::ctor(ByteOrder sex, const Elf32RelEntry_disk *disk)
+{
+    p_r_offset    = disk_to_host(sex, disk->r_offset);
+    p_r_addend    = 0;
+    uint64_t info = disk_to_host(sex, disk->r_info);
+    p_sym = info >> 8;
+    p_type = info & 0xff;
+}
+void
+SgAsmElfRelocEntry::ctor(ByteOrder sex, const Elf64RelEntry_disk *disk)
+{
+    p_r_offset    = disk_to_host(sex, disk->r_offset);
+    p_r_addend    = 0;
     uint64_t info = disk_to_host(sex, disk->r_info);
     p_sym = info >> 32;
     p_type = info & 0xffffffff;
@@ -2118,6 +2145,24 @@ SgAsmElfRelocEntry::encode(ByteOrder sex, Elf64RelaEntry_disk *disk) const
     host_to_disk(sex, info, &(disk->r_info));
     return disk;
 }
+void *
+SgAsmElfRelocEntry::encode(ByteOrder sex, Elf32RelEntry_disk *disk) const
+{
+    host_to_disk(sex, p_r_offset, &(disk->r_offset));
+    ROSE_ASSERT(0==p_r_addend);
+    uint64_t info = (p_sym<<8) | (p_type & 0xff);
+    host_to_disk(sex, info, &(disk->r_info));
+    return disk;
+}
+void *
+SgAsmElfRelocEntry::encode(ByteOrder sex, Elf64RelEntry_disk *disk) const
+{
+    host_to_disk(sex, p_r_offset, &(disk->r_offset));
+    ROSE_ASSERT(0==p_r_addend);
+    uint64_t info = ((uint64_t)p_sym<<32) | (p_type & 0xffffffff);
+    host_to_disk(sex, info, &(disk->r_info));
+    return disk;
+}
 
 /* Print some debugging info */
 void
@@ -2125,9 +2170,9 @@ SgAsmElfRelocEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbo
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sElfRelaEntry[%zd]", prefix, idx);
+        sprintf(p, "%sElfRelocEntry[%zd]", prefix, idx);
     } else {
-        sprintf(p, "%sElfRelaEntry", prefix);
+        sprintf(p, "%sElfRelocEntry", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
@@ -2175,13 +2220,25 @@ SgAsmElfRelocSection::parse()
     for (size_t i=0; i<nentries; i++) {
         SgAsmElfRelocEntry *entry = 0;
         if (4==fhdr->get_word_size()) {
-            const SgAsmElfRelocEntry::Elf32RelaEntry_disk *disk =
-                (const SgAsmElfRelocEntry::Elf32RelaEntry_disk*)content(i*entry_size, struct_size);
-            entry = new SgAsmElfRelocEntry(fhdr->get_sex(), disk);
+            if (p_uses_addend) {
+                SgAsmElfRelocEntry::Elf32RelaEntry_disk disk;
+                content(i*entry_size, struct_size, &disk);
+                entry = new SgAsmElfRelocEntry(fhdr->get_sex(), &disk);
+            } else {
+                SgAsmElfRelocEntry::Elf32RelEntry_disk disk;
+                content(i*entry_size, struct_size, &disk);
+                entry = new SgAsmElfRelocEntry(fhdr->get_sex(), &disk);
+            }
         } else if (8==fhdr->get_word_size()) {
-            const SgAsmElfRelocEntry::Elf64RelaEntry_disk *disk =
-                (const SgAsmElfRelocEntry::Elf64RelaEntry_disk*)content(i*entry_size, struct_size);
-            entry = new SgAsmElfRelocEntry(fhdr->get_sex(), disk);
+            if (p_uses_addend) {
+                SgAsmElfRelocEntry::Elf64RelaEntry_disk disk;
+                content(i*entry_size, struct_size, &disk);
+                entry = new SgAsmElfRelocEntry(fhdr->get_sex(), &disk);
+            } else {
+                SgAsmElfRelocEntry::Elf64RelEntry_disk disk;
+                content(i*entry_size, struct_size, &disk);
+                entry = new SgAsmElfRelocEntry(fhdr->get_sex(), &disk);
+            }
         } else {
             throw FormatError("unsupported ELF word size");
         }
@@ -2197,11 +2254,18 @@ SgAsmElfRelocSection::parse()
 rose_addr_t
 SgAsmElfRelocSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
+    rose_addr_t retval=0;
     std::vector<size_t> extra_sizes;
     for (size_t i=0; i<p_entries->get_entries().size(); i++)
         extra_sizes.push_back(p_entries->get_entries()[i]->get_extra().size());
-    return calculate_sizes(sizeof(SgAsmElfRelocEntry::Elf32RelaEntry_disk), sizeof(SgAsmElfRelocEntry::Elf64RelaEntry_disk),
-                           extra_sizes, entsize, required, optional, entcount);
+    if (p_uses_addend) {
+        retval =  calculate_sizes(sizeof(SgAsmElfRelocEntry::Elf32RelaEntry_disk), sizeof(SgAsmElfRelocEntry::Elf64RelaEntry_disk),
+                                  extra_sizes, entsize, required, optional, entcount);
+    } else {
+        retval =  calculate_sizes(sizeof(SgAsmElfRelocEntry::Elf32RelEntry_disk),  sizeof(SgAsmElfRelocEntry::Elf64RelEntry_disk),
+                                  extra_sizes, entsize, required, optional, entcount);
+    }
+    return retval;
 }
 
 /* Write section back to disk */
@@ -2220,16 +2284,26 @@ SgAsmElfRelocSection::unparse(std::ostream &f) const
 
     /* Write each entry's required part followed by the optional part */
     for (size_t i=0; i<nentries; i++) {
-        SgAsmElfRelocEntry::Elf32RelaEntry_disk disk32;
-        SgAsmElfRelocEntry::Elf64RelaEntry_disk disk64;
+        SgAsmElfRelocEntry::Elf32RelaEntry_disk diska32;
+        SgAsmElfRelocEntry::Elf64RelaEntry_disk diska64;
+        SgAsmElfRelocEntry::Elf32RelEntry_disk  disk32;
+        SgAsmElfRelocEntry::Elf64RelEntry_disk  disk64;
         void *disk  = NULL;
 
         SgAsmElfRelocEntry *entry = p_entries->get_entries()[i];
 
         if (4==fhdr->get_word_size()) {
-            disk = entry->encode(sex, &disk32);
+            if (p_uses_addend) {
+                disk = entry->encode(sex, &diska32);
+            } else {
+                disk = entry->encode(sex, &disk32);
+            }
         } else if (8==fhdr->get_word_size()) {
-            disk = entry->encode(sex, &disk64);
+            if (p_uses_addend) {
+                disk = entry->encode(sex, &diska64);
+            } else {
+                disk = entry->encode(sex, &disk64);
+            }
         } else {
             ROSE_ASSERT(!"unsupported word size");
         }
@@ -2253,13 +2327,15 @@ SgAsmElfRelocSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sRelaSection[%zd].", prefix, idx);
+        sprintf(p, "%sRelocSection[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sRelaSection.", prefix);
+        sprintf(p, "%sRelocSection.", prefix);
     }
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     SgAsmElfSection::dump(f, p, -1);
     SgAsmElfSymbolSection *symtab = dynamic_cast<SgAsmElfSymbolSection*>(get_linked_section());
+    fprintf(f, "%s%-*s = %s\n", p, w, "uses_addend", p_uses_addend ? "yes" : "no");
 
     for (size_t i=0; i<p_entries->get_entries().size(); i++) {
         SgAsmElfRelocEntry *ent = p_entries->get_entries()[i];

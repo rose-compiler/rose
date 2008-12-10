@@ -661,6 +661,8 @@ Grammar::setUpBinaryInstructions ()
 
 
      AsmElfRelocSection.setFunctionPrototype("HEADER_ELF_RELOC_SECTION", "../Grammar/BinaryInstruction.code");
+     AsmElfRelocSection.setDataPrototype("bool", "uses_addend", "= true", 
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfRelocSection.setDataPrototype("SgAsmElfRelocEntryList*", "entries", "= NULL", 
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 

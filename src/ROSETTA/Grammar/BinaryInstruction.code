@@ -1472,16 +1472,32 @@ HEADER_ELF_RELOC_ENTRY_START
 			uint64_t	r_addend;
 		} __attribute__((packed));
 
+		struct Elf32RelEntry_disk {
+			uint32_t	r_offset;
+			uint32_t	r_info;
+		} __attribute__((packed));
+		struct Elf64RelEntry_disk {
+			uint64_t	r_offset;
+			uint64_t	r_info;
+		} __attribute__((packed));
+
 		SgAsmElfRelocEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfRelocEntry::Elf32RelaEntry_disk *disk)
 			: p_r_offset(0), p_r_addend(0), p_sym(0), p_type(0)
 			{ctor(sex, disk);}
 		SgAsmElfRelocEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfRelocEntry::Elf64RelaEntry_disk *disk)
 			: p_r_offset(0), p_r_addend(0), p_sym(0), p_type(0)
 			{ctor(sex, disk);}
-		//virtual ~SgAsmElfDynamicEntry() {}
+		SgAsmElfRelocEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfRelocEntry::Elf32RelEntry_disk *disk)
+			: p_r_offset(0), p_r_addend(0), p_sym(0), p_type(0)
+			{ctor(sex, disk);}
+		SgAsmElfRelocEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfRelocEntry::Elf64RelEntry_disk *disk)
+			: p_r_offset(0), p_r_addend(0), p_sym(0), p_type(0)
+			{ctor(sex, disk);}
 
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfRelocEntry::Elf32RelaEntry_disk*) const;
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfRelocEntry::Elf64RelaEntry_disk*) const;
+		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfRelocEntry::Elf32RelEntry_disk*) const;
+		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfRelocEntry::Elf64RelEntry_disk*) const;
 
 		void dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbolSection *symtab) const;
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const
@@ -1489,6 +1505,8 @@ HEADER_ELF_RELOC_ENTRY_START
 	private:
 		void ctor(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfRelocEntry::Elf32RelaEntry_disk *disk);
 		void ctor(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfRelocEntry::Elf64RelaEntry_disk *disk);
+		void ctor(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfRelocEntry::Elf32RelEntry_disk *disk);
+		void ctor(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfRelocEntry::Elf64RelEntry_disk *disk);
 HEADER_ELF_RELOC_ENTRY_END
 
 
