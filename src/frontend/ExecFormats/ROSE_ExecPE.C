@@ -476,10 +476,10 @@ SgAsmPEFileHeader::create_table_sections()
         SgAsmGenericSection *tabsec = NULL;
         switch (i) {
           case 0:
-            tabsec = new SgAsmPEExportSection(this, file_offset, pair->get_e_size(), pair->get_e_rva().get_rva());
+            tabsec = new SgAsmPEExportSection(this);
             break;
           case 1:
-            tabsec = new SgAsmPEImportSection(this, file_offset, pair->get_e_size(), pair->get_e_rva().get_rva());
+            tabsec = new SgAsmPEImportSection(this);
             break;
           default:
             tabsec = new SgAsmGenericSection(ef, this, file_offset, pair->get_e_size());
@@ -488,14 +488,18 @@ SgAsmPEFileHeader::create_table_sections()
         if (tabname) tabsec->set_name(new SgAsmBasicString(tabname));
         tabsec->set_synthesized(true);
         tabsec->set_purpose(SP_HEADER);
+
+        tabsec->set_offset(file_offset);
+        tabsec->set_size(pair->get_e_size());
         tabsec->set_file_alignment(get_e_file_align());
+
         tabsec->set_mapped_alignment(get_e_section_align());
         tabsec->set_mapped_rva(pair->get_e_rva().get_rva());
         tabsec->set_mapped_size(pair->get_e_size());
         tabsec->set_mapped_rperm(true);
         tabsec->set_mapped_wperm(false);
         tabsec->set_mapped_xperm(false);
-        tabsec->grab_content();
+        tabsec->parse();
         pair->set_section(tabsec);
         pair->set_e_rva(pair->get_e_rva().set_section(tabsec));
     }
@@ -888,15 +892,17 @@ SgAsmPESectionTable::parse()
         /* The section */
         SgAsmPESection *section = NULL;
         if (entry->get_name() == ".idata") {
-            section = new SgAsmPEImportSection(fhdr, entry->get_physical_offset(), entry->get_physical_size(), entry->get_rva());
+            section = new SgAsmPEImportSection(fhdr);
         } else {
-            section = new SgAsmPESection(fhdr, entry->get_physical_offset(), entry->get_physical_size());
+            section = new SgAsmPESection(fhdr);
         }
-        section->grab_content();
         section->set_synthesized(false);
         section->set_name(new SgAsmBasicString(entry->get_name()));
         section->set_id(i+1); /*numbered starting at 1, not zero*/
         section->set_purpose(SP_PROGRAM);
+
+        section->set_offset(entry->get_physical_offset());
+        section->set_size(entry->get_physical_size());
         section->set_file_alignment(fhdr->get_e_file_align());
 
         section->set_mapped_rva(entry->get_rva());
@@ -912,8 +918,10 @@ SgAsmPESectionTable::parse()
         
         if (entry->get_flags() & (SgAsmPESectionTableEntry::OF_CODE|
                                   SgAsmPESectionTableEntry::OF_IDATA|
-                                  SgAsmPESectionTableEntry::OF_UDATA))
+                                  SgAsmPESectionTableEntry::OF_UDATA)) {
             section->set_purpose(SP_PROGRAM);
+        }
+        section->parse();
     }
     return this;
 }
@@ -1380,14 +1388,20 @@ SgAsmPEImportHNTEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
  * @endcode
  */
 void
-SgAsmPEImportSection::ctor(addr_t offset, addr_t size, addr_t mapped_rva)
+SgAsmPEImportSection::ctor()
 {
-    grab_content();
+    set_synthesized(true);
+    set_name(new SgAsmBasicString("PE Section Table"));
+    set_purpose(SP_HEADER);
 
-    set_mapped_rva(mapped_rva);
-    set_mapped_size(size);
     p_import_directories = new SgAsmPEImportDirectoryList();
     p_import_directories->set_parent(this);
+}
+
+SgAsmPEImportSection*
+SgAsmPEImportSection::parse()
+{
+    SgAsmPESection::parse();
 
     SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
@@ -1436,6 +1450,7 @@ SgAsmPEImportSection::ctor(addr_t offset, addr_t size, addr_t mapped_rva)
         }
         fhdr->add_dll(dll);
     }
+    return this;
 }
 
 void
@@ -1588,22 +1603,22 @@ SgAsmPEExportEntry::set_forwarder(SgAsmGenericString *forwarder)
     
 /* Constructor */
 void
-SgAsmPEExportSection::ctor(addr_t offset, addr_t size, addr_t mapped_rva)
+SgAsmPEExportSection::ctor()
 {
-    grab_content();
-
     ROSE_ASSERT(p_exports  == NULL);
     p_exports = new SgAsmPEExportEntryList();
     p_exports->set_parent(this);
+}
 
-    set_mapped_rva(mapped_rva);
-    set_mapped_size(size);
+SgAsmPEExportSection*
+SgAsmPEExportSection::parse()
+{
+    SgAsmPESection::parse();
 
     SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
 
     p_export_dir = new SgAsmPEExportDirectory(this);
-
 
     for (size_t i=0; i<p_export_dir->get_nameptr_n(); i++) {
         /* Function name */
@@ -1645,6 +1660,7 @@ SgAsmPEExportSection::ctor(addr_t offset, addr_t size, addr_t mapped_rva)
         SgAsmPEExportEntry *entry = new SgAsmPEExportEntry(fname, ordinal, expaddr, forwarder);
         add_entry(entry);
     }
+    return this;
 }
 
 void
