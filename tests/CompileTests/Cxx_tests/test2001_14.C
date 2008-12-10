@@ -15,7 +15,7 @@ main()
      myAssert;
      myAssert;
 
-     switch (x) default: break;
+     {switch (x) default: break;}
 
      switch (x)
         {
