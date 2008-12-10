@@ -232,11 +232,11 @@ SgAsmDOSFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %u 16-byte paragraphs\n", p, w, "e_header_paragraphs",  p_e_header_paragraphs);
     fprintf(f, "%s%-*s = %u 16-byte paragraphs\n", p, w, "e_minalloc",           p_e_minalloc);
     fprintf(f, "%s%-*s = %u 16-byte paragraphs\n", p, w, "e_maxalloc",           p_e_maxalloc);
-    fprintf(f, "%s%-*s = 0x%08u\n",                p, w, "e_ss",                 p_e_ss);
-    fprintf(f, "%s%-*s = 0x%08u\n",                p, w, "e_sp",                 p_e_sp);
+    fprintf(f, "%s%-*s = 0x%08u (%u)\n",           p, w, "e_ss",                 p_e_ss, p_e_ss);
+    fprintf(f, "%s%-*s = 0x%08u (%u)\n",           p, w, "e_sp",                 p_e_sp, p_e_sp);
     fprintf(f, "%s%-*s = %u (zero implies not used)\n",p, w, "e_cksum",          p_e_cksum);
-    fprintf(f, "%s%-*s = 0x%08u\n",                p, w, "e_ip",                 p_e_ip);
-    fprintf(f, "%s%-*s = 0x%08u\n",                p, w, "e_cs",                 p_e_cs);
+    fprintf(f, "%s%-*s = 0x%08u (%u)\n",           p, w, "e_ip",                 p_e_ip, p_e_ip);
+    fprintf(f, "%s%-*s = 0x%08u (%u)\n",           p, w, "e_cs",                 p_e_cs, p_e_cs);
     fprintf(f, "%s%-*s = byte %"PRIu64"\n",        p, w, "e_relocs_offset",      p_e_relocs_offset);
     fprintf(f, "%s%-*s = %u\n",                    p, w, "e_overlay",            p_e_overlay);
     fprintf(f, "%s%-*s = 0x%08u (%u)\n",           p, w, "e_res1",               p_e_res1, p_e_res1);
