@@ -130,6 +130,40 @@ SgAsmLEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
 //    entry_rva = ???; /*FIXME: see e_eip and e_eip_section; we must parse section table first */
 }
 
+/** Return true if the file looks like it might be an LE or LX file according to the magic number.  The file must contain what
+ *  appears to be a DOS File Header at address zero, and what appears to be an LE or LX File Header at a file offset specified in
+ *  part of the DOS File Header (actually, in the bytes that follow the DOS File Header). */
+bool
+SgAsmLEFileHeader::is_LE(SgAsmGenericFile *ef)
+{
+    /* Check DOS File Header magic number */
+    SgAsmGenericSection *section = new SgAsmGenericSection(ef, NULL, 0, 0x40);
+    section->grab_content();
+    unsigned char dos_magic[2];
+    section->content(0, 2, dos_magic);
+    if ('M'!=dos_magic[0] || 'Z'!=dos_magic[1]) {
+        delete section;
+        return false;
+    }
+
+    /* Read offset of potential LE/LX File Header */
+    uint32_t lfanew_disk;
+    section->content(0x3c, sizeof lfanew_disk, &lfanew_disk);
+    addr_t le_offset = le_to_host(lfanew_disk);
+    delete section;
+
+    /* Read the LE/LX File Header magic number */
+    section = new SgAsmGenericSection(ef, NULL, le_offset, 2);
+    section->grab_content();
+    unsigned char magic[2];
+    section->content(0, 2, magic);
+    delete section;
+    section = NULL;
+
+    /* Check the LE/LX magic number */
+    return 'L'==magic[0] && ('E'==magic[1] || 'X'==magic[1]);
+}
+
 /* Encode the LE header into disk format */
 void *
 SgAsmLEFileHeader::encode(ByteOrder sex, LEFileHeader_disk *disk) const
@@ -941,33 +975,6 @@ SgAsmLERelocTable::dump(FILE *f, const char *prefix, ssize_t idx) const
     
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* Returns true if a cursory look at the file indicates that it could be an LE or LX file. */
-bool
-SgAsmLEFileHeader::is_LE(SgAsmGenericFile *f)
-{
-    SgAsmDOSFileHeader       *dos_hdr  = NULL;
-    SgAsmLEExtendedDOSHeader *dos2_hdr = NULL;
-    SgAsmLEFileHeader        *le_hdr   = NULL;
-
-    bool retval  = false;
-
-    try {
-        dos_hdr  = new SgAsmDOSFileHeader(f);
-        dos_hdr->parse();
-
-        dos2_hdr = new SgAsmLEExtendedDOSHeader(f, dos_hdr->get_size());
-        le_hdr   = new SgAsmLEFileHeader(f, dos2_hdr->get_e_lfanew());
-        retval   = true;
-    } catch (...) {
-        /* cleanup is below */
-    }
-
-    delete dos_hdr;
-    delete dos2_hdr;
-    delete le_hdr;
-    return retval;
-}
-
 /* Parses the structure of an LE/LX file and adds the information to the SgAsmGenericFile. */
 SgAsmLEFileHeader *
 SgAsmLEFileHeader::parse(SgAsmGenericFile *ef)
@@ -979,13 +986,12 @@ SgAsmLEFileHeader::parse(SgAsmGenericFile *ef)
     dos_header->parse(false);
 
     /* LE files extend the DOS header with some additional info */
-    SgAsmLEExtendedDOSHeader *dos2_header = new SgAsmLEExtendedDOSHeader(ef, dos_header->get_size());
+    SgAsmDOSExtendedHeader *dos2_header = new SgAsmDOSExtendedHeader(dos_header);
+    dos2_header->set_offset(dos_header->get_size());
+    dos2_header->parse();
     
     /* The LE header */
     SgAsmLEFileHeader *le_header = new SgAsmLEFileHeader(ef, dos2_header->get_e_lfanew());
-
-    /* The extended part of the DOS header is owned by the LE header */
-    le_header->add_section(dos2_header);
     le_header->set_dos2_header(dos2_header);
 
     /* Now go back and add the DOS Real-Mode section but rather than using the size specified in the DOS header, constrain it

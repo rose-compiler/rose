@@ -361,16 +361,15 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
                  // If this is a DOS section that is part of a PE then the extended DOS section in the PE SgAsmInterpretation 
                  // will have the position of the PE section, this limits the size of the mapped DOS section and prevents 
                  // disassembly of the PE headers as part of the DOS SgAsmInterpretation.  This value is usually 80h, but it 
-                 // does not have to be, so we look it up explicitly by finding the SgAsmPEExtendedDOSHeader.  If the 
-                 // SgAsmPEExtendedDOSHeader does not exist then this is likely a DOS executable and we compute the mapped 
+                 // does not have to be, so we look it up explicitly by finding the SgAsmDOSExtendedHeader.  If the 
+                 // SgAsmDOSExtendedHeader does not exist then this is likely a DOS executable and we compute the mapped 
                  // size using the usual DOS formula (using the total_pages and the last_page_size entries in the DOS header).
                     rose_addr_t DOS_section_mapped_size = 0x0;
                     rose_addr_t DOS_header_mapped_size  = 0x0;
 
                  // Search for the SgAsmDOSExtendedHeader section in the section list (the generic file section 
                  // list may disappear soon, if so we have to find it in the section list in the headers in the 
-                 // different interpretations. Note that this is likely the same for the NE and LE formats, only 
-                 // we want the SgAsmNEExtendedDOSHeader and SgAsmLEExtendedDOSHeader, respectively. Not yet tested 
+                 // different interpretations. Note that this is likely the same for the NE and LE formats. Not yet tested 
                  // with NE or LE executable format files.
                     for (size_t j = 0; j < sections.size(); ++j)
                        {

@@ -2394,38 +2394,9 @@ HEADER_NE_FILE_HEADER_START
        // virtual const char *format_name() const {return "NE";}
           virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 
-       /* Accessors for protected/private data members */
-       // ExtendedDOSHeader *get_dos2_header() {return dos2_header;}
-       // void set_dos2_header(ExtendedDOSHeader *h) {dos2_header=h;}
-       // NESectionTable *get_section_table() {return section_table;}
-       // void set_section_table(NESectionTable *ot) {section_table=ot;}
-       // NENameTable *get_resname_table() {return resname_table;}
-       // void set_resname_table(NENameTable *ot) {resname_table=ot;}
-       // NENameTable *get_nonresname_table() {return nonresname_table;}
-       // void set_nonresname_table(NENameTable *ot) {nonresname_table=ot;}
-       // NEModuleTable *get_module_table() {return module_table;}
-       // void set_module_table(NEModuleTable *ot) {module_table=ot;}
-       // NEEntryTable *get_entry_table() {return entry_table;}
-       // void set_entry_table(NEEntryTable *ot) {entry_table=ot;}
-    
-       /* These are the native-format versions of the same members described in the NEFileHeader_disk format struct. */
-       // unsigned    e_linker_major, e_linker_minor, e_checksum, e_flags1, e_autodata_sn, e_bss_size, e_stack_size;
-       // unsigned    e_csip, e_sssp, e_nsections, e_nmodrefs, e_nnonresnames, e_nmovable_entries, e_sector_align;
-       // unsigned    e_nresources, e_exetype, e_flags2, e_res1, e_winvers;
-       // addr_t      e_entrytab_rfo, e_entrytab_size, e_sectab_rfo, e_rsrctab_rfo, e_resnametab_rfo, e_modreftab_rfo;
-       // addr_t      e_importnametab_rfo, e_nonresnametab_offset, e_fastload_sector, e_fastload_nsectors;
-
      private:
           void ctor(SgAsmGenericFile *f, addr_t offset);
           void *encode(SgAsmNEFileHeader::NEFileHeader_disk*) const;
-
-       // ExtendedDOSHeader *dos2_header;
-       // NESectionTable *section_table;
-       // NENameTable *resname_table;
-       // NENameTable *nonresname_table;
-       // NEModuleTable *module_table;
-       // NEEntryTable *entry_table;
-
 HEADER_NE_FILE_HEADER_END
 
 HEADER_NE_SECTION_START
@@ -2538,28 +2509,7 @@ HEADER_NE_RELOC_TABLE_START
 
 HEADER_NE_RELOC_TABLE_END
 
-HEADER_NE_EXTENDED_DOS_HEADER_START
-     public:
-          struct ExtendedDOSHeader_disk {
-               uint16_t    e_res1[14];   /* reserved */
-               uint32_t    e_lfanew;     /* file offset for NE header */
-             } __attribute__((packed));
 
-          SgAsmNEExtendedDOSHeader(SgAsmGenericFile *f, addr_t offset);
-       // virtual ~ExtendedDOSHeader() {};
-
-          void *encode(SgAsmNEExtendedDOSHeader::ExtendedDOSHeader_disk*) const;
-          virtual void unparse(std::ostream&) const;
-          virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-
-       /* These are the native-format versions of the same members described in the ExtendedDOSHeader_disk struct. */
-       // unsigned e_res1[14];
-       // addr_t e_lfanew;
-
-     private:
-          void ctor(SgAsmGenericFile *f, addr_t offset);
-
-HEADER_NE_EXTENDED_DOS_HEADER_END
 
 HEADER_NE_ENTRY_POINT_START
           enum NEEntryFlags {
@@ -2821,47 +2771,9 @@ HEADER_LE_FILE_HEADER_START
           virtual void unparse(std::ostream&) const;
        // virtual const char *format_name() const;
           virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-
-       /* Accessors for protected/private data members */
-       // ExtendedDOSHeader *get_dos2_header() {return dos2_header;}
-       // void set_dos2_header(ExtendedDOSHeader *h) {dos2_header=h;}
-       // LESectionTable *get_section_table() {return section_table;}
-       // void set_section_table(LESectionTable *t) {section_table=t;}
-       // LEPageTable *get_page_table() {return page_table;}
-       // void set_page_table(LEPageTable *t) {page_table=t;}
-       // LENameTable *get_resname_table() {return resname_table;}
-       // void set_resname_table(LENameTable *t) {resname_table=t;}
-       // LENameTable *get_nonresname_table() {return nonresname_table;}
-       // void set_nonresname_table(LENameTable *t) {nonresname_table=t;}
-       // LEEntryTable *get_entry_table() {return entry_table;}
-       // void set_entry_table(LEEntryTable *t) {entry_table=t;}
-       // LERelocTable *get_reloc_table() {return reloc_table;}
-       // void set_reloc_table(LERelocTable *t) {reloc_table=t;}
-    
-       /* These are the native-format versions of the same members described in the NEFileHeader_disk format struct. */
-       // unsigned e_byte_order, e_word_order, e_format_level, e_cpu_type, e_os_type, e_module_version, e_flags;
-       // unsigned e_eip_section, e_esp_section, e_last_page_size, e_page_offset_shift, e_fixup_sect_cksum, e_loader_sect_cksum;
-       // unsigned e_secttab_nentries, e_rsrctab_nentries, e_fmtdirtab_nentries, e_import_modtab_nentries, e_preload_npages;
-       // unsigned e_nonresnametab_size, e_nonresnametab_cksum, e_auto_ds_section, e_debug_info_size, e_num_instance_preload;
-       // unsigned e_num_instance_demand, e_heap_size;
-    
-       // addr_t e_npages, e_eip, e_esp, e_page_size, e_fixup_sect_size, e_loader_sect_size, e_secttab_rfo, e_pagetab_rfo;
-       // addr_t e_iterpages_offset, e_rsrctab_rfo, e_resnametab_rfo, e_entrytab_rfo, e_fmtdirtab_rfo, e_fixup_pagetab_rfo;
-       // addr_t e_fixup_rectab_rfo, e_import_modtab_rfo, e_import_proctab_rfo, e_ppcksumtab_rfo, e_data_pages_offset;
-       // addr_t e_nonresnametab_offset, e_debug_info_rfo;
-
      private:
           void ctor(SgAsmGenericFile *f, addr_t offset);
           void *encode(SgAsmExecutableFileFormat::ByteOrder sex, SgAsmLEFileHeader::LEFileHeader_disk*) const;
-
-       // ExtendedDOSHeader *dos2_header;
-       // LESectionTable *section_table;
-       // LEPageTable *page_table;
-       // LENameTable *resname_table;
-       // LENameTable *nonresname_table;
-       // LEEntryTable *entry_table;
-       // LERelocTable *reloc_table;
-
 HEADER_LE_FILE_HEADER_END
 
 HEADER_LE_SECTION_START
@@ -4497,14 +4409,7 @@ SgAsmNERelocTable::SgAsmNERelocTable(SgAsmNEFileHeader *fhdr, addr_t offset)
 
 SOURCE_NE_RELOC_TABLE_END
 
-SOURCE_NE_EXTENDED_DOS_HEADER_START
-SgAsmNEExtendedDOSHeader::SgAsmNEExtendedDOSHeader(SgAsmGenericFile *f, addr_t offset)
-   : SgAsmGenericSection(f, NULL, offset, sizeof(SgAsmNEExtendedDOSHeader::ExtendedDOSHeader_disk))
-   {
-     ctor(f, offset);
-   }
 
-SOURCE_NE_EXTENDED_DOS_HEADER_END
 
 SOURCE_NE_ENTRY_POINT_START
 

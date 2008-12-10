@@ -4,13 +4,6 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-// DQ (8/21/2008): Now we want to move away from using the older header files (from before we used the IR nodes).
-// #include "ExecNE.h"
-
-// namespace Exec {
-// namespace NE {
-
-
 // Added to support RTI support in ROSE (not implemented)
 std::ostream & operator<< ( std::ostream & os, const SgAsmNERelocEntry::iref_type & x )
    {
@@ -62,66 +55,6 @@ SgAsmNERelocEntry::osfixup_type::osfixup_type()
      type = 0;
      res3 = 0;
    }
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Extended DOS header for NE files
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void
-SgAsmNEExtendedDOSHeader::ctor(SgAsmGenericFile *f, addr_t offset)
-{
-    grab_content();
-
-    set_name(new SgAsmBasicString("Extended DOS Header"));
-    set_synthesized(true);
-    set_purpose(SP_HEADER);
-
-    /* Decode */
-    const ExtendedDOSHeader_disk *disk =
-        (const ExtendedDOSHeader_disk*)content(0, sizeof(SgAsmNEExtendedDOSHeader::ExtendedDOSHeader_disk));
-
-    for (size_t i=0; i<NELMTS(disk->e_res1); i++)
-        p_e_res1.push_back(le_to_host(disk->e_res1[i]));
-    p_e_lfanew = le_to_host(disk->e_lfanew);
-}
-
-/* Encode the extended header back into disk format */
-void *
-SgAsmNEExtendedDOSHeader::encode(SgAsmNEExtendedDOSHeader::ExtendedDOSHeader_disk *disk) const
-{
-    for (size_t i = 0; i < NELMTS(disk->e_res1); i++)
-        host_to_le(p_e_res1[i], &(disk->e_res1[i]));
-    host_to_le(p_e_lfanew, &(disk->e_lfanew));
-
-    return disk;
-}
-
-/* Write an extended header back to disk */
-void
-SgAsmNEExtendedDOSHeader::unparse(std::ostream &f) const
-{
-    ExtendedDOSHeader_disk disk;
-    encode(&disk);
-    write(f, 0, sizeof disk, &disk);
-}
-    
-void
-SgAsmNEExtendedDOSHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
-{
-    char p[4096];
-    if (idx>=0) {
-        sprintf(p, "%sExtendedDOSHeader[%zd].", prefix, idx);
-    } else {
-        sprintf(p, "%sExtendedDOSHeader.", prefix);
-    }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-
-    SgAsmGenericSection::dump(f, p, -1);
-    for (size_t i = 0; i < 14; i++)
-        fprintf(f, "%s%-*s = [%zd] %u\n", p, w, "e_res1", i, p_e_res1[i]);
-    fprintf(f, "%s%-*s = %"PRIu64" byte offset\n",  p, w, "e_lfanew",   p_e_lfanew);
-}
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -212,6 +145,40 @@ SgAsmNEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
 
     /* Entry point */
 //    entry_rva = e_entrypoint_rva; /*FIXME*/
+}
+
+/** Return true if the file looks like it might be an NE file according to the magic number.  The file must contain what
+ *  appears to be a DOS File Header at address zero, and what appears to be an NE File Header at a file offset specified in
+ *  part of the DOS File Header (actually, in the bytes that follow the DOS File Header). */
+bool
+SgAsmNEFileHeader::is_NE(SgAsmGenericFile *ef)
+{
+    /* Check DOS File Header magic number */
+    SgAsmGenericSection *section = new SgAsmGenericSection(ef, NULL, 0, 0x40);
+    section->grab_content();
+    unsigned char dos_magic[2];
+    section->content(0, 2, dos_magic);
+    if ('M'!=dos_magic[0] || 'Z'!=dos_magic[1]) {
+        delete section;
+        return false;
+    }
+    
+    /* Read offset of potential NE File Header */
+    uint32_t lfanew_disk;
+    section->content(0x3c, sizeof lfanew_disk, &lfanew_disk);
+    addr_t ne_offset = le_to_host(lfanew_disk);
+    delete section;
+    
+    /* Read the NE File Header magic number */
+    section = new SgAsmGenericSection(ef, NULL, ne_offset, 2);
+    section->grab_content();
+    unsigned char magic[2];
+    section->content(0, 2, magic);
+    delete section;
+    section = NULL;
+
+    /* Check the NE magic number */
+    return 'N'==magic[0] && 'E'==magic[1];
 }
 
 /* Encode the NE header into disk format */
@@ -1275,33 +1242,6 @@ SgAsmNERelocTable::dump(FILE *f, const char *prefix, ssize_t idx) const
     
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* Returns true if a cursory look at the file indicates that it could be a NE file. */
-bool
-SgAsmNEFileHeader::is_NE(SgAsmGenericFile *f)
-{
-    SgAsmDOSFileHeader       *dos_hdr  = NULL;
-    SgAsmNEExtendedDOSHeader *dos2_hdr = NULL;
-    SgAsmNEFileHeader        *ne_hdr   = NULL;
-
-    bool retval  = false;
-
-    try {
-        dos_hdr  = new SgAsmDOSFileHeader(f);
-        dos_hdr->parse();
-
-        dos2_hdr = new SgAsmNEExtendedDOSHeader(f, dos_hdr->get_size());
-        ne_hdr   = new SgAsmNEFileHeader(f, dos2_hdr->get_e_lfanew());
-        retval = true;
-    } catch (...) {
-        /* cleanup is below */
-    }
-
-    delete dos_hdr;
-    delete dos2_hdr;
-    delete ne_hdr;
-    return retval;
-}
-
 /* Parses the structure of an NE file and adds the information to the SgAsmGenericFile. */
 SgAsmNEFileHeader *
 SgAsmNEFileHeader::parse(SgAsmGenericFile *ef)
@@ -1313,13 +1253,12 @@ SgAsmNEFileHeader::parse(SgAsmGenericFile *ef)
     dos_header->parse(false);
 
     /* NE files extend the DOS header with some additional info */
-    SgAsmNEExtendedDOSHeader *dos2_header = new SgAsmNEExtendedDOSHeader(ef, dos_header->get_size());
+    SgAsmDOSExtendedHeader *dos2_header = new SgAsmDOSExtendedHeader(dos_header);
+    dos2_header->set_offset(dos_header->get_size());
+    dos2_header->parse();
     
     /* The NE header */
     SgAsmNEFileHeader *ne_header = new SgAsmNEFileHeader(ef, dos2_header->get_e_lfanew());
-
-    /* The extended part of the DOS header is owned by the NE header */
-    ne_header->add_section(dos2_header);
     ne_header->set_dos2_header(dos2_header);
 
     /* Now go back and add the DOS Real-Mode section but rather than using the size specified in the DOS header, constrain it
@@ -1370,6 +1309,3 @@ SgAsmNEFileHeader::parse(SgAsmGenericFile *ef)
     
     return ne_header;
 }
-
-// }; //namespace NE
-// }; //namespace Exec
