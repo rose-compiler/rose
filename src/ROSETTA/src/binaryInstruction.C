@@ -161,7 +161,7 @@ Grammar::setUpBinaryInstructions ()
      NEW_NONTERMINAL_MACRO ( AsmGenericHeader, AsmPEFileHeader  | AsmLEFileHeader |  AsmNEFileHeader | AsmDOSFileHeader |  AsmElfFileHeader, "AsmGenericHeader",    "AsmGenericHeaderTag", true /* canHaveInstances = true */ );
 
   // A lot of IR nodes are derived from the AsmGenericSection (segments were eliminated and became sections under Robb's recent changes).
-     NEW_TERMINAL_MACRO    ( AsmElfRelaSection,   "AsmElfRelaSection",   "AsmElfRelaSectionTag"   );
+     NEW_TERMINAL_MACRO    ( AsmElfRelocSection,  "AsmElfRelocSection",  "AsmElfRelocSectionTag"   );
      NEW_TERMINAL_MACRO    ( AsmElfDynamicSection,"AsmElfDynamicSection","AsmElfDynamicSectionTag");
      NEW_TERMINAL_MACRO    ( AsmElfSymbolSection, "AsmElfSymbolSection", "AsmElfSymbolSectionTag" );
      NEW_TERMINAL_MACRO    ( AsmElfStringSection, "AsmElfStringSection", "AsmElfStringSectionTag" );
@@ -172,7 +172,7 @@ Grammar::setUpBinaryInstructions ()
      NEW_NONTERMINAL_MACRO( AsmGenericStrtab, AsmElfStrtab | AsmCoffStrtab, "AsmGenericStrtab", "AsmGenericStrtabTag", false);
 
      NEW_NONTERMINAL_MACRO ( AsmElfSection,
-                             AsmElfSymbolSection | AsmElfRelaSection | AsmElfDynamicSection | AsmElfStringSection,
+                             AsmElfSymbolSection | AsmElfRelocSection | AsmElfDynamicSection | AsmElfStringSection,
                              "AsmElfSection", "AsmElfSectionTag", true /* canHaveInstances = true */ );
 
      NEW_TERMINAL_MACRO    ( AsmElfSectionTable,  "AsmElfSectionTable",  "AsmElfSectionTableTag"  );
@@ -221,8 +221,8 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO    ( AsmElfSectionTableEntry,     "AsmElfSectionTableEntry",     "AsmElfSectionTableEntryTag"     );
      NEW_TERMINAL_MACRO    ( AsmElfSegmentTableEntry,     "AsmElfSegmentTableEntry",     "AsmElfSegmentTableEntryTag"     );
      NEW_TERMINAL_MACRO    ( AsmElfSegmentTableEntryList, "AsmElfSegmentTableEntryList", "AsmElfSegmentTableEntryListTag" );
-     NEW_TERMINAL_MACRO    ( AsmElfRelaEntry,             "AsmElfRelaEntry",             "AsmElfRelaEntryTag"             );
-     NEW_TERMINAL_MACRO    ( AsmElfRelaEntryList,         "AsmElfRelaEntryList",         "AsmElfRelaEntryListTag"         );
+     NEW_TERMINAL_MACRO    ( AsmElfRelocEntry,            "AsmElfRelocEntry",            "AsmElfRelocEntryTag"            );
+     NEW_TERMINAL_MACRO    ( AsmElfRelocEntryList,        "AsmElfRelocEntryList",        "AsmElfRelocEntryListTag"        );
      NEW_TERMINAL_MACRO    ( AsmElfDynamicEntry,          "AsmElfDynamicEntry",          "AsmElfDynamicEntryTag"          );
      NEW_TERMINAL_MACRO    ( AsmElfDynamicEntryList,      "AsmElfDynamicEntryList",      "AsmElfDynamicEntryListTag"      );
 
@@ -386,7 +386,7 @@ Grammar::setUpBinaryInstructions ()
                AsmGenericFile          | AsmGenericSection       | AsmGenericSymbol            | AsmGenericStrtab         |
                AsmGenericSymbolList    | AsmGenericSectionList   | AsmGenericHeaderList        | AsmGenericString         |
                AsmElfSectionTableEntry | AsmElfSegmentTableEntry | AsmElfSymbolList            | AsmPEImportILTEntry      |
-               AsmElfRelaEntry         | AsmElfRelaEntryList     | AsmPEExportEntry            | AsmPEExportEntryList     |
+               AsmElfRelocEntry        | AsmElfRelocEntryList    | AsmPEExportEntry            | AsmPEExportEntryList     |
                AsmElfDynamicEntry      | AsmElfDynamicEntryList  | AsmElfSegmentTableEntryList | AsmStringStorage         |
                AsmPEImportDirectory    | AsmPEImportHNTEntry     | AsmPESectionTableEntry      | AsmPEExportDirectory     |
                AsmPERVASizePair        | AsmCoffSymbolList       | AsmPERVASizePairList        |
@@ -658,24 +658,32 @@ Grammar::setUpBinaryInstructions ()
      AsmCoffStrtab.setFunctionPrototype      ( "HEADER_COFF_STRING_TABLE", "../Grammar/BinaryInstruction.code");
      AsmCoffStrtab.setAutomaticGenerationOfDestructor(false);
 
-     AsmElfRelaSection.setFunctionPrototype("HEADER_ELF_RELA_SECTION", "../Grammar/BinaryInstruction.code");
-     AsmElfRelaSection.setDataPrototype("SgAsmElfRelaEntryList*", "entries", "= NULL", 
+
+
+     AsmElfRelocSection.setFunctionPrototype("HEADER_ELF_RELOC_SECTION", "../Grammar/BinaryInstruction.code");
+     AsmElfRelocSection.setDataPrototype("SgAsmElfRelocEntryList*", "entries", "= NULL", 
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-     AsmElfRelaEntry.setFunctionPrototype("HEADER_ELF_RELA_ENTRY", "../Grammar/BinaryInstruction.code");
-     AsmElfRelaEntry.setDataPrototype("rose_addr_t", "r_offset", "= 0",
+
+
+     AsmElfRelocEntry.setFunctionPrototype("HEADER_ELF_RELOC_ENTRY", "../Grammar/BinaryInstruction.code");
+     AsmElfRelocEntry.setDataPrototype("rose_addr_t", "r_offset", "= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfRelaEntry.setDataPrototype("rose_addr_t", "r_addend", "= 0",
+     AsmElfRelocEntry.setDataPrototype("rose_addr_t", "r_addend", "= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfRelaEntry.setDataPrototype("unsigned long", "sym", "= 0",
+     AsmElfRelocEntry.setDataPrototype("unsigned long", "sym", "= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfRelaEntry.setDataPrototype("unsigned long", "type", "= 0",
+     AsmElfRelocEntry.setDataPrototype("unsigned long", "type", "= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfRelaEntry.setDataPrototype("SgUnsignedCharList","extra","",
+     AsmElfRelocEntry.setDataPrototype("SgUnsignedCharList","extra","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     AsmElfRelaEntryList.setDataPrototype("SgAsmElfRelaEntryPtrList","entries","",
+
+
+     AsmElfRelocEntryList.setDataPrototype("SgAsmElfRelocEntryPtrList","entries","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
 
      AsmElfDynamicSection.setFunctionPrototype ( "HEADER_ELF_DYNAMIC_SECTION", "../Grammar/BinaryInstruction.code");
      AsmElfDynamicSection.setDataPrototype("SgAsmElfDynamicEntryList*","entries","= NULL",
