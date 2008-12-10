@@ -49,7 +49,30 @@ SgAsmElfFileHeader::ctor()
     p_e_ident_data_encoding = 1;  /*LSB*/
     p_e_ident_padding = SgUnsignedCharList(9, '\0');
 }
+
+/** Return true if the file looks like it might be an ELF file according to the magic number. */
+bool
+SgAsmElfFileHeader::is_ELF(SgAsmGenericFile *ef)
+{
+    SgAsmElfFileHeader *hdr = NULL;
+    bool retval = false;
+
+    ROSE_ASSERT(ef != NULL);
     
+    try {
+        hdr = new SgAsmElfFileHeader(ef);
+        hdr->extend(4);
+        unsigned char magic[4];
+        hdr->content(0, 4, magic);
+        retval = 0x7f==magic[0] && 'E'==magic[1] && 'L'==magic[2] && 'F'==magic[3];
+    } catch (...) {
+        /* cleanup is below */
+    }
+
+    delete hdr;
+    return retval;
+}
+
 /** Initialize this header with information parsed from the file and construct and parse everything that's reachable from the
  *  header. Since the size of the ELF File Header is determined by the contents of the ELF File Header as stored in the file,
  *  the size of the ELF File Header will be adjusted upward if necessary. The ELF File Header should have been constructed
@@ -2978,28 +3001,4 @@ SgAsmElfSymbolSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     if (variantT() == V_SgAsmElfSymbolSection) //unless a base class
         hexdump(f, 0, std::string(p)+"data at ", p_data);
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/* Returns true if a cursory look at the file indicates that it could be an ELF file. */
-bool
-SgAsmElfFileHeader::is_ELF(SgAsmGenericFile *f)
-{
-    SgAsmElfFileHeader *hdr = NULL;
-
-    bool retval = false;
-
-    ROSE_ASSERT(f != NULL);
-    
-    try {
-        hdr = new SgAsmElfFileHeader(f);
-        hdr->parse();
-        retval = true;
-    } catch (...) {
-        /* cleanup is below */
-    }
-
-    delete hdr;
-    return retval;
 }
