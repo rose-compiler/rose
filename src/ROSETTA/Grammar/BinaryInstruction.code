@@ -3052,10 +3052,14 @@ HEADER_DOS_HEADER_END
 HEADER_DOS_EXTENDED_HEADER_START
 	public:
 		struct DOSExtendedHeader_disk {
-			unsigned char e_res1[4];  /* 0x00 reserved */
+			uint32_t      e_res1;     /* 0x00 reserved */
 			uint16_t      e_oemid;    /* 0x04 OEM Identifier */
 			uint16_t      e_oeminfo;  /* 0x06 other OEM information; oemid specific */
-			uint16_t      e_res2[10]; /* 0x08 reserved */
+			uint32_t      e_res2;     /* 0x08 reserved */
+			uint32_t      e_res3;     /* 0x0c reserved */
+			uint32_t      e_res4;	  /* 0x10 reserved */
+			uint32_t      e_res5;	  /* 0x14 reserved */
+			uint32_t      e_res6;	  /* 0x18 reserved */
 			uint32_t      e_lfanew;   /* 0x1c file offset of new exe (PE) header */
 		} __attribute__((packed));        /* 0x20 */
 

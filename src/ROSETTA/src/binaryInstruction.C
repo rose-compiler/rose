@@ -976,20 +976,6 @@ Grammar::setUpBinaryInstructions ()
 
 
 
-     AsmDOSExtendedHeader.setFunctionPrototype ( "HEADER_DOS_EXTENDED_HEADER", "../Grammar/BinaryInstruction.code");
-     AsmDOSExtendedHeader.setDataPrototype("SgUnsignedList","e_res1","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmDOSExtendedHeader.setDataPrototype("unsigned","e_oemid","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmDOSExtendedHeader.setDataPrototype("unsigned","e_oeminfo","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmDOSExtendedHeader.setDataPrototype("SgUnsignedList","e_res2","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmDOSExtendedHeader.setDataPrototype("rose_addr_t","e_lfanew","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-
-
      AsmPEImportDirectory.setFunctionPrototype ( "HEADER_PE_IMPORT_DIRECTORY", "../Grammar/BinaryInstruction.code");
      AsmPEImportDirectory.setDataPrototype("int","idx","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1472,14 +1458,8 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
-  // unsigned            e_last_page_size, e_total_pages, e_nrelocs, e_header_paragraphs, e_minalloc, e_maxalloc;
-  // unsigned            e_ss, e_sp, e_cksum, e_ip, e_cs, e_overlay;
-  // addr_t              e_relocs_offset;
-  // unsigned char       e_res1[4];
-  // ExecSection         *relocs;        /* Relocation info */
-  // ExecSection         *rm_section;    /* Real mode code segment */
+
      AsmDOSFileHeader.setFunctionPrototype ( "HEADER_DOS_HEADER", "../Grammar/BinaryInstruction.code");
-  /* Section in which this segment lives */
      AsmDOSFileHeader.setDataPrototype("uint16_t","e_last_page_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmDOSFileHeader.setDataPrototype("uint16_t","e_total_pages","= 0",
@@ -1508,10 +1488,34 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmDOSFileHeader.setDataPrototype("unsigned","e_res1", "= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmDOSFileHeader.setDataPrototype("SgAsmGenericSection*","relocs","= NULL",
+     AsmDOSFileHeader.setDataPrototype("SgAsmGenericSection*","relocs","= NULL", //relocation info
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     AsmDOSFileHeader.setDataPrototype("SgAsmGenericSection*","rm_section","= NULL",
+     AsmDOSFileHeader.setDataPrototype("SgAsmGenericSection*","rm_section","= NULL", //real-mode section
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+
+     AsmDOSExtendedHeader.setFunctionPrototype ( "HEADER_DOS_EXTENDED_HEADER", "../Grammar/BinaryInstruction.code");
+     AsmDOSExtendedHeader.setDataPrototype("unsigned","e_res1","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmDOSExtendedHeader.setDataPrototype("unsigned","e_oemid","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmDOSExtendedHeader.setDataPrototype("unsigned","e_oeminfo","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmDOSExtendedHeader.setDataPrototype("unsigned","e_res2","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmDOSExtendedHeader.setDataPrototype("unsigned","e_res3","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmDOSExtendedHeader.setDataPrototype("unsigned","e_res4","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmDOSExtendedHeader.setDataPrototype("unsigned","e_res5","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmDOSExtendedHeader.setDataPrototype("unsigned","e_res6","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmDOSExtendedHeader.setDataPrototype("rose_addr_t","e_lfanew","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
 
   // Need a separate IR node to hold the list of SgAsmGenericSection pointers.
      AsmGenericSectionList.setDataPrototype("SgAsmGenericSectionPtrList","sections","",

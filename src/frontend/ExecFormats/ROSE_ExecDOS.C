@@ -284,12 +284,14 @@ SgAsmDOSExtendedHeader::parse()
     /* Decode file format */
     ROSE_ASSERT(get_header()!=NULL); /*should be the DOS File Header*/
     ROSE_ASSERT(ORDER_LSB==get_header()->get_sex());
-    for (size_t i=0; i<NELMTS(disk.e_res1); i++)
-        p_e_res1.push_back(le_to_host(disk.e_res1[i]));
+    p_e_res1              = le_to_host(disk.e_res1);
     p_e_oemid             = le_to_host(disk.e_oemid);
     p_e_oeminfo           = le_to_host(disk.e_oeminfo);
-    for (size_t i=0; i< NELMTS(disk.e_res2); i++)
-        p_e_res2.push_back(le_to_host(disk.e_res2[i]));
+    p_e_res2              = le_to_host(disk.e_res2);
+    p_e_res3              = le_to_host(disk.e_res3);
+    p_e_res4              = le_to_host(disk.e_res4);
+    p_e_res5              = le_to_host(disk.e_res5);
+    p_e_res6              = le_to_host(disk.e_res6);
     p_e_lfanew            = le_to_host(disk.e_lfanew);
 
     return this;
@@ -299,12 +301,14 @@ SgAsmDOSExtendedHeader::parse()
 void *
 SgAsmDOSExtendedHeader::encode(DOSExtendedHeader_disk *disk) const
 {
-    for (size_t i=0; i < NELMTS(disk->e_res1); i++)
-        host_to_le(p_e_res1[i], &(disk->e_res1[i]));
+    host_to_le(p_e_res1,     &(disk->e_res1));
     host_to_le(p_e_oemid,    &(disk->e_oemid));
     host_to_le(p_e_oeminfo,  &(disk->e_oeminfo));
-    for (size_t i=0; i<NELMTS(disk->e_res2); i++)
-        host_to_le(p_e_res2[i], &(disk->e_res2[i]));
+    host_to_le(p_e_res2,     &(disk->e_res2));
+    host_to_le(p_e_res3,     &(disk->e_res3));
+    host_to_le(p_e_res4,     &(disk->e_res4));
+    host_to_le(p_e_res5,     &(disk->e_res5));
+    host_to_le(p_e_res6,     &(disk->e_res6));
     host_to_le(p_e_lfanew,   &(disk->e_lfanew));
     return disk;
 }
@@ -330,22 +334,14 @@ SgAsmDOSExtendedHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     SgAsmGenericSection::dump(f, p, -1);
-    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res1[0]",   p_e_res1[0]);
-    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res1[1]",   p_e_res1[1]);
-    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res1[2]",   p_e_res1[2]);
-    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res1[3]",   p_e_res1[3]);
+    fprintf(f, "%s%-*s = 0x%08x (%u)\n",            p, w, "e_res1",     p_e_res1, p_e_res1);
     fprintf(f, "%s%-*s = %u\n",                     p, w, "e_oemid",    p_e_oemid);
     fprintf(f, "%s%-*s = %u\n",                     p, w, "e_oeminfo",  p_e_oeminfo);
-    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[0]",  p_e_res2[0]);
-    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[1]",  p_e_res2[1]);
-    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[2]",  p_e_res2[2]);
-    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[3]",  p_e_res2[3]);
-    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[4]",  p_e_res2[4]);
-    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[5]",  p_e_res2[5]);
-    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[6]",  p_e_res2[6]);
-    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[7]",  p_e_res2[7]);
-    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[8]",  p_e_res2[8]);
-    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[9]",  p_e_res2[9]);
+    fprintf(f, "%s%-*s = 0x%08x (%u)\n",            p, w, "e_res2",     p_e_res2, p_e_res2);
+    fprintf(f, "%s%-*s = 0x%08x (%u)\n",            p, w, "e_res3",     p_e_res3, p_e_res3);
+    fprintf(f, "%s%-*s = 0x%08x (%u)\n",            p, w, "e_res4",     p_e_res4, p_e_res4);
+    fprintf(f, "%s%-*s = 0x%08x (%u)\n",            p, w, "e_res5",     p_e_res5, p_e_res5);
+    fprintf(f, "%s%-*s = 0x%08x (%u)\n",            p, w, "e_res6",     p_e_res6, p_e_res6);
     fprintf(f, "%s%-*s = %"PRIu64" byte offset (0x%"PRIx64")\n",  p, w, "e_lfanew",   p_e_lfanew,p_e_lfanew);
 
     if (variantT() == V_SgAsmDOSExtendedHeader) //unless a base class
