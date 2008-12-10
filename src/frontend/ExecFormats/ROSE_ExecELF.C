@@ -292,11 +292,17 @@ SgAsmElfFileHeader::parse()
     /* Read the optional section and segment tables and the sections to which they point. An empty section or segment table is
      * treated as if it doesn't exist. This seems to be compatible with the loader since the 45-bit "tiny" ELF executable
      * stores a zero in the e_shnum member and a completely invalid value in the e_shoff member. */
-    if (sectab_rva>0 && get_e_shnum()>0)
-        (new SgAsmElfSectionTable(this, sectab_rva.get_rva()))->parse();
-    if (segtab_rva>0 && get_e_phnum()>0)
-        (new SgAsmElfSegmentTable(this, segtab_rva.get_rva()))->parse();
-
+    if (sectab_rva>0 && get_e_shnum()>0) {
+        SgAsmElfSectionTable *tab = new SgAsmElfSectionTable(this);
+        tab->set_offset(sectab_rva.get_rva());
+        tab->parse();
+    }
+    if (segtab_rva>0 && get_e_phnum()>0) {
+        SgAsmElfSegmentTable *tab = new SgAsmElfSegmentTable(this);
+        tab->set_offset(segtab_rva.get_rva());
+        tab->parse();
+    }
+    
     /* Associate the entry point with a particular section. */
     entry_rva.bind(this);
     add_entry_rva(entry_rva);
@@ -1244,9 +1250,11 @@ SgAsmElfSectionTable::parse()
     calculate_sizes(&ent_size, &struct_size, &opt_size, &nentries);
     ROSE_ASSERT(opt_size==fhdr->get_shextrasz() && nentries==fhdr->get_e_shnum());
 
-    /* Change the section size to include all the entries */
-    ROSE_ASSERT(0==get_size());
-    extend(nentries * ent_size);
+    /* If the current size is very small (0 or 1 byte) then we're coming straight from the constructor and the parsing should
+     * also extend this section to hold all the entries. Otherwise the caller must have assigned a specific size for a good
+     * reason and we should leave that alone, reading zeros if the entries extend beyond the defined size. */
+    if (get_size()<=1 && get_size()<nentries*ent_size)
+        extend(nentries*ent_size - get_size());
 
     /* Read all the section headers. */
     std::vector<SgAsmElfSectionTableEntry*> entries;
@@ -1825,9 +1833,11 @@ SgAsmElfSegmentTable::parse()
     calculate_sizes(&ent_size, &struct_size, &opt_size, &nentries);
     ROSE_ASSERT(opt_size==fhdr->get_phextrasz() && nentries==fhdr->get_e_phnum());
 
-    /* Change the section size to include all the entries */
-    ROSE_ASSERT(0==get_size());
-    extend(nentries * ent_size);
+    /* If the current size is very small (0 or 1 byte) then we're coming straight from the constructor and the parsing should
+     * also extend this section to hold all the entries. Otherwise the caller must have assigned a specific size for a good
+     * reason and we should leave that alone, reading zeros if the entries extend beyond the defined size. */
+    if (get_size()<=1 && get_size()<nentries*ent_size)
+        extend(nentries*ent_size - get_size());
     
     addr_t offset=0;                                /* w.r.t. the beginning of this section */
     for (size_t i=0; i<nentries; i++, offset+=ent_size) {

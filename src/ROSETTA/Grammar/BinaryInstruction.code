@@ -1275,8 +1275,8 @@ HEADER_ELF_HEADER_END
 
 HEADER_ELF_SECTION_TABLE_START
 	public:
-		SgAsmElfSectionTable(SgAsmElfFileHeader *fhdr, rose_addr_t offset) /* Non-parsing constructor */
-			: SgAsmGenericSection(fhdr->get_file(), fhdr, offset, 0)
+		explicit SgAsmElfSectionTable(SgAsmElfFileHeader *fhdr)
+			: SgAsmGenericSection(fhdr->get_file(), fhdr, 0, 1)
 			{ctor();}
 		virtual SgAsmElfSectionTable *parse();
 		void add_section(SgAsmElfSection*);
@@ -1623,8 +1623,8 @@ HEADER_ELF_DYNAMIC_ENTRY_END
 
 HEADER_ELF_SEGMENT_TABLE_START
 	public:
-		SgAsmElfSegmentTable(SgAsmElfFileHeader *fhdr, rose_addr_t offset) /* Non-parsing constructor */
-			: SgAsmGenericSection(fhdr->get_file(), fhdr, offset, 0)
+		explicit SgAsmElfSegmentTable(SgAsmElfFileHeader *fhdr)
+			: SgAsmGenericSection(fhdr->get_file(), fhdr, 0, 1)
 			{ctor();}
 		virtual SgAsmElfSegmentTable *parse();
 		void add_section(SgAsmElfSection*);
