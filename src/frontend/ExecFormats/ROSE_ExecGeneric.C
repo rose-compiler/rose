@@ -3720,7 +3720,7 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
     if (SgAsmElfFileHeader::is_ELF(ef)) {
         (new SgAsmElfFileHeader(ef))->parse();
     } else if (SgAsmPEFileHeader::is_PE(ef)) {
-        SgAsmPEFileHeader::parse(ef);
+        SgAsmPEFileHeader::parsePEFile(ef);
     } else if (SgAsmNEFileHeader::is_NE(ef)) {
         SgAsmNEFileHeader::parse(ef);
     } else if (SgAsmLEFileHeader::is_LE(ef)) { /*or LX*/

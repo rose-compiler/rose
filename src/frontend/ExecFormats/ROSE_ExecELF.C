@@ -78,16 +78,13 @@ SgAsmElfFileHeader::is_ELF(SgAsmGenericFile *ef)
 SgAsmElfFileHeader*
 SgAsmElfFileHeader::parse()
 {
-    SgAsmGenericSection::parse();
+    SgAsmGenericHeader::parse();
 
     /* Read 32-bit header for now. Might need to re-read as 64-bit later. */
     Elf32FileHeader_disk disk32;
     if (sizeof(disk32)>get_size())
         extend(sizeof(disk32)-get_size());
     content(0, sizeof(disk32), &disk32);
-
-    ROSE_ASSERT(get_file()!=NULL);
-    ROSE_ASSERT(get_exec_format()!=NULL);
 
     /* Check magic number early */
     if (disk32.e_ident_magic[0]!=0x7f || disk32.e_ident_magic[1]!='E' ||

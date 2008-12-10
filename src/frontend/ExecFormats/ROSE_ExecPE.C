@@ -105,23 +105,86 @@ SgAsmPEExtendedDOSHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // PE File Header
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
+/** Construct a new PE File Header with default values. */
 void
-SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
+SgAsmPEFileHeader::ctor()
 {
-    grab_content();
+    ROSE_ASSERT(get_file()!=NULL);
+    ROSE_ASSERT(get_size()>0);
 
     set_name(new SgAsmBasicString("PE File Header"));
     set_synthesized(true);
     set_purpose(SP_HEADER);
 
-    // DQ (8/16/2008): Added code to set SgAsmPEFileHeader as parent of input SgAsmGenericFile
-    f->set_parent(this);
-
     p_rvasize_pairs = new SgAsmPERVASizePairList;
     p_rvasize_pairs->set_parent(this);
 
+    /* Magic number */
+    p_magic.clear();
+    p_magic.push_back('P');
+    p_magic.push_back('E');
+    p_magic.push_back('\0');
+    p_magic.push_back('\0');
+
+    /* Executable Format */
+    ROSE_ASSERT(p_exec_format!=NULL);
+    p_exec_format->set_family(FAMILY_PE);
+    p_exec_format->set_purpose(PURPOSE_EXECUTABLE);
+    p_exec_format->set_sex(ORDER_LSB);
+    p_exec_format->set_word_size(4);
+    p_exec_format->set_version(0);
+    p_exec_format->set_is_current_version(true);
+    p_exec_format->set_abi(ABI_NT);
+    p_exec_format->set_abi_version(0);
+
+    p_isa = ISA_IA32_386;
+}
+
+/** Return true if the file looks like it might be a PE file according to the magic number */
+bool
+SgAsmPEFileHeader::is_PE(SgAsmGenericFile *ef)
+{
+    SgAsmDOSFileHeader       *dos_hdr  = NULL;
+    SgAsmPEExtendedDOSHeader *dos2_hdr = NULL;
+    SgAsmPEFileHeader        *pe_hdr   = NULL;
+
+    bool retval  = false;
+
+    try {
+        dos_hdr  = new SgAsmDOSFileHeader(ef);
+        dos_hdr->parse(false);
+
+        dos2_hdr = new SgAsmPEExtendedDOSHeader(dos_hdr, dos_hdr->get_size());
+        dos2_hdr->parse();
+
+        pe_hdr   = new SgAsmPEFileHeader(ef, dos2_hdr->get_e_lfanew());
+        pe_hdr->grab_content();
+        pe_hdr->extend(4);
+        unsigned char magic[4];
+        pe_hdr->content(0, 4, magic);
+        retval = 'P'==magic[0] && 'E'==magic[1] && '\0'==magic[2] && '\0'==magic[3];
+    } catch (...) {
+        /* cleanup is below */
+    }
+
+    delete dos_hdr;
+    delete dos2_hdr;
+    delete pe_hdr;
+    return retval;
+}
+
+/** Initialize the header with information parsed from the file and construct and parse everything that's reachable from the
+ *  header. The PE File Header should have been constructed such that SgAsmPEFileHeader::ctor() was called. */
+SgAsmPEFileHeader*
+SgAsmPEFileHeader::parse()
+{
+    SgAsmGenericHeader::parse();
+    
+    /* Read header */
     PEFileHeader_disk fh;
+    if (sizeof(fh)>get_size())
+        extend(sizeof(fh)-get_size());
     content(0, sizeof fh, &fh);
 
     /* Check magic number before getting too far */
@@ -149,12 +212,8 @@ SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     content(sizeof fh, sizeof oh32, &oh32);
     p_e_opt_magic = le_to_host(oh32.e_opt_magic);
     
-    /* File format */
-    p_exec_format->set_family(FAMILY_PE);
+    /* File format changes from ctor() */
     p_exec_format->set_purpose(p_e_flags & HF_PROGRAM ? PURPOSE_EXECUTABLE : PURPOSE_LIBRARY);
-    p_exec_format->set_sex(ORDER_LSB);
-    p_exec_format->set_abi(ABI_NT);
-    p_exec_format->set_abi_version(0);
     p_exec_format->set_word_size(0x010b==p_e_opt_magic? 4 : 8);
 
     /* Decode the optional header. */
@@ -230,6 +289,7 @@ SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     }
 
     /* Magic number */
+    p_magic.clear();
     for (size_t i = 0; i < sizeof(fh.e_magic); ++i)
         p_magic.push_back(fh.e_magic[i]);
 
@@ -323,8 +383,6 @@ SgAsmPEFileHeader::encode(PEFileHeader_disk *disk) const
 {
     for (size_t i=0; i<NELMTS(disk->e_magic); i++)
         disk->e_magic[i] = get_magic()[i];
-
-
     host_to_le(p_e_cpu_type,           &(disk->e_cpu_type));
     host_to_le(p_e_nsections,          &(disk->e_nsections));
     host_to_le(p_e_time,               &(disk->e_time));
@@ -2239,41 +2297,9 @@ SgAsmCoffSymbolTable::dump(FILE *f, const char *prefix, ssize_t idx) const
         hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/* Returns true if a cursory look at the file indicates that it could be a PE file. */
-bool
-SgAsmPEFileHeader::is_PE(SgAsmGenericFile *f)
-{
-    SgAsmDOSFileHeader       *dos_hdr  = NULL;
-    SgAsmPEExtendedDOSHeader *dos2_hdr = NULL;
-    SgAsmPEFileHeader        *pe_hdr   = NULL;
-
-    bool retval  = false;
-
-    try {
-        dos_hdr  = new SgAsmDOSFileHeader(f);
-        dos_hdr->parse();
-
-        dos2_hdr = new SgAsmPEExtendedDOSHeader(dos_hdr, dos_hdr->get_size());
-        dos2_hdr->parse();
-
-        pe_hdr   = new SgAsmPEFileHeader(f, dos2_hdr->get_e_lfanew());
-        retval   = true;
-    } catch (...) {
-        /* cleanup is below */
-    }
-
-    delete dos_hdr;
-    delete dos2_hdr;
-    delete pe_hdr;
-    return retval;
-}
-
-
 /* Parses the structure of a PE file and adds the information to the ExecFile. */
 SgAsmPEFileHeader *
-SgAsmPEFileHeader::parse(SgAsmGenericFile *ef)
+SgAsmPEFileHeader::parsePEFile(SgAsmGenericFile *ef)
 {
     ROSE_ASSERT(ef);
 
@@ -2287,6 +2313,7 @@ SgAsmPEFileHeader::parse(SgAsmGenericFile *ef)
     
     /* The PE header has a fixed-size component followed by some number of RVA/Size pairs */
     SgAsmPEFileHeader *fhdr = new SgAsmPEFileHeader(ef, dos2_header->get_e_lfanew());
+    fhdr->parse();
     ROSE_ASSERT(fhdr->get_e_num_rvasize_pairs() < 1000); /* just a sanity check before we allocate memory */
     fhdr->add_rvasize_pairs();
 

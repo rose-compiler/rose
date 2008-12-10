@@ -1945,21 +1945,25 @@ HEADER_PE_FILE_HEADER_START
 		};
 
 	public:
-		SgAsmPEFileHeader(SgAsmGenericFile *f, addr_t offset);
+		SgAsmPEFileHeader(SgAsmGenericFile *f, addr_t offset)
+			: SgAsmGenericHeader(f, offset, sizeof(SgAsmPEFileHeader::PEFileHeader_disk)),
+			  p_dos2_header(NULL), p_section_table(NULL), p_coff_symtab(NULL)
+			{ctor();}
 		virtual ~SgAsmPEFileHeader();
 
-		virtual const char *format_name() const;
+		virtual const char *format_name() const {return "PE";}
 		static bool is_PE (SgAsmGenericFile*);
-		static SgAsmPEFileHeader *parse(SgAsmGenericFile*);
+		static SgAsmPEFileHeader *parsePEFile(SgAsmGenericFile*);
 		void add_rvasize_pairs();
 
+		virtual SgAsmPEFileHeader *parse();
 		virtual bool reallocate();
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 		void create_table_sections();
 
 	private:
-		void ctor(SgAsmGenericFile *f, addr_t offset);
+		void ctor();
 		void *encode(SgAsmPEFileHeader::PEFileHeader_disk*) const;
 		void *encode(SgAsmPEFileHeader::PE32OptHeader_disk*) const;
 		void *encode(SgAsmPEFileHeader::PE64OptHeader_disk*) const;
@@ -4332,46 +4336,6 @@ SOURCE_PE_RVA_SIZE_PAIR_LIST_END
 
 
 SOURCE_PE_FILE_HEADER_START
-
-SgAsmPEFileHeader::SgAsmPEFileHeader(SgAsmGenericFile *f, addr_t offset)
-   : SgAsmGenericHeader(f, offset, sizeof(SgAsmPEFileHeader::PEFileHeader_disk)), /*extended in ctor()*/ p_dos2_header(NULL), p_section_table(NULL), p_coff_symtab(NULL)
-   {
-     ctor(f, offset);
-   }
-
-const char *
-SgAsmPEFileHeader::format_name() const
-   {
-     return "PE";
-   }
-
-#if 0
-// This function is in ROSE_ExecPE.C
-bool
-SgAsmPEFileHeader::is_PE(SgAsmGenericFile *f)
-{
-    printf ("SgAsmPEFileHeader::is_PE() member function incomplete! \n");
-    ROSE_ASSERT(false);
-
-    return true;
-}
-#endif
-
-#if 0
-// This function is in ROSE_ExecPE.C
-// Parses the structure of an ELF file and adds the info to the SgAsmGenericFile
-SgAsmPEFileHeader *
-SgAsmPEFileHeader::parse(SgAsmGenericFile *ef)
-{
-    ROSE_ASSERT(ef);
-    
-    printf ("SgAsmPEFileHeader::parse() member function incomplete! \n");
-    ROSE_ASSERT(false);
-
-    return NULL;
-}
-#endif
-
 SOURCE_PE_FILE_HEADER_END
 
 SOURCE_PE_SECTION_START
