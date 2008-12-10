@@ -9,16 +9,6 @@
 #include "folder.xpm"
 
 
-#include "LCS.h"
-#include "Clone.h"
-#include "FunctionDiff.h"
-#include "AlignFunctions.h"
-#include "BinCallGraph.h"
-#include "BinControlFlowAnalysis.h"
-#include "BinDataFlowAnalysis.h"
-#include "BufferOverflow.h"
-#include "InterruptAnalysis.h"
-#include "BinDynamicInfo.h"
 
 using namespace qrs;
 using namespace boost::filesystem;
@@ -28,17 +18,6 @@ using namespace __gnu_cxx;
 
 // Initialization of all analyzes and parsing of all files
 void BinQAbstract::init(){
-  cerr << "Checking for analyses ... " << endl;
-  analyses.clear();
-  analyses.push_back(new DiffAlgo());
-  analyses.push_back(new FunctionDiffAlgo());
-  analyses.push_back(new AlignFunction());
-  analyses.push_back(new BinCallGraph());
-  analyses.push_back(new BinControlFlowAnalysis());
-  analyses.push_back(new BinDataFlowAnalysis());
-  analyses.push_back(new BufferOverflow());
-  analyses.push_back(new InterruptAnalysis());
-  analyses.push_back(new DynamicInfo());
 
 
   cerr << "Disassemble File A ... " << fileNameA << endl;
@@ -144,7 +123,7 @@ void BinQAbstract::createItem(SgNode* file, std::vector<Item*>& itemsFile,std::v
       } else if (isSgAsmInstruction(*it)) {
 	SgAsmInstruction* inst = isSgAsmInstruction(*it);
 	length = isSgAsmInstruction(*it)->get_raw_bytes().size();
-	item = new Item(inst->get_address(),inst,0,row,length,length,pos,"",0);
+	item = new Item(inst->get_address(),inst,0,row,length,length,pos,inst->get_comment(),0);
       } else if (isSgFunctionDeclaration(*it)) {
 	int color=4;
 	SgFunctionDeclaration* func = isSgFunctionDeclaration(*it);
@@ -200,6 +179,7 @@ void BinQAbstract::createItem(SgNode* file, std::vector<Item*>& itemsFile,std::v
 	    addrDest += unparseX86Expression(*itOP, false) ;
 	  }
 	  string s="<...>";
+	  s+=inst->get_comment();
 	  for (unsigned int j=0; j<funcsFile.size();++j) {
 	    SgAsmFunctionDeclaration* f = isSgAsmFunctionDeclaration(funcsFile[j]);
 	    string addrF= RoseBin_support::HexToString(f->get_address());

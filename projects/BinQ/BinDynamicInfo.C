@@ -141,8 +141,11 @@ DynamicInfo::visit(SgNode* node) {
 	      if (leftReg) 
 		regClass = leftReg->get_register_class();
 	      if (rightReg) 
-		regClass = leftReg->get_register_class();
-	      string val = regclassToString(regClass);
+		regClass = rightReg->get_register_class();
+	      //cerr << " print : " << regClass << endl;
+	      string val = "NULL";
+	      if (regClass>=0 && regClass <=10)
+		val = regclassToString(regClass);
 	      uint64_t next_addr = destInst->get_address() + destInst->get_raw_bytes().size();
 	      if (val=="ip") 
 		resolveAddr+=next_addr;
@@ -188,7 +191,8 @@ DynamicInfo::visit(SgNode* node) {
 	      row=rowIt->second;
 	    instance->codeTableWidget->setText(sym_name, 4, row);
 	  }
-
+	  //cerr << ">>> set comment : " << sym_name << endl;
+	  inst->set_comment(sym_name);
 	}
       }
 
@@ -202,6 +206,8 @@ DynamicInfo::printOutRelaEntries(SgNode* project) {
 
 void
 DynamicInfo::run(SgNode* fileA, SgNode* fileB) {
+  if (true)
+  return ;
   instance=NULL;
   if (!testFlag)
     instance = QROSE::cbData<BinQGUI *>();

@@ -7,6 +7,7 @@
 #include <qrose.h>
 #include "BinQGui.h"
 #include "BinQbatch.h"
+#include "BinQinteractive.h"
 #include <boost/program_options.hpp>
 #include <iostream>
 
@@ -97,14 +98,20 @@ int main( int argc, char **argv )
   }
 
   if (test && !batch) {
-    BinQGUI binGui(fileA,fileB,dllA,dllB,test);
+    BinQinteractive binGui(fileA,fileB,dllA,dllB,test);
   } else if (!test && !batch) {
     QROSE::init(argc,argv);
-    BinQGUI binGui(fileA,fileB,dllA,dllB,test);
+    BinQinteractive binGui(fileA,fileB,dllA,dllB,test);
     binGui.run();
     return QROSE::exec();
-  } else if (batch) {
-    BinQbatch binBatch(fileA,fileB,dllA,dllB);
+  } else if (batch && !test) {
+    QROSE::init(argc,argv);
+    BinQbatch binGui(fileA,fileB,dllA,dllB,test);
+    binGui.run();
+    binGui.runAnalyses();
+    return QROSE::exec();
+  } else {
+    BinQbatch binGui(fileA,fileB,dllA,dllB,test);
   }
   return 0;
 }

@@ -25,7 +25,9 @@ BinQ_SOURCES = \
 	MyBars.C \
 	MyBars_moc.cpp \
 	BinQAbstract.C \
-	BinQbatch.C
+	BinQbatch.C \
+	ForbiddenFunctionCall.C \
+	BinQinteractive.C
 
 
 
@@ -53,7 +55,13 @@ check-local:
 	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2b.bin --test
 	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2-tsv --test 
 	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2.c --test 
+	./BinQ -a $(srcdir)/buffer2.bin --test --batch
+	./BinQ -a $(srcdir)/buffer2.bin $(srcdir)/buffer2b.bin --test --batch
+	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2b.bin --test --batch
+	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2-tsv --test --batch
+	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2.c --test --batch
 	./BinQ -a $(srcdir)/linux-ls --test
+	./BinQ -a $(srcdir)/linux-ls --test --batch
 	@echo "************************************************************************************"
 	@echo "*** ROSE/projects/AstEquivalence: make check rule complete (terminated normally) ***"
 	@echo "************************************************************************************"
@@ -63,7 +71,7 @@ CLEANFILES =
 
 
 clean:
-	rm -f *.o BinQ *.s *.dump
+	rm -f *.o BinQ *.s *.dump *.txt
 
 endif
 
@@ -86,5 +94,7 @@ EXTRA_DIST = BinQGui.h \
              BinDynamicInfo.h \
              MyBars.h \
              BinQAbstract.h \
-             BinQbatch.h
+             BinQbatch.h \
+             ForbiddenFunctionCall.h \
+             BinQinteractive.h
 

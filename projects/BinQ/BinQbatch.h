@@ -1,19 +1,19 @@
 #ifndef batch_GUI_H
 #define batch_GUI_H
 
-#include "BinQAbstract.h"
+#include "BinQGui.h"
 
-class BinQbatch : public BinQAbstract
+class BinQbatch : public BinQGUI
 {
   public:
   BinQbatch(std::string, std::string,     
 	  std::vector<std::string> dllA,     
-	  std::vector<std::string> dllB);
+	  std::vector<std::string> dllB, bool test);
     ~BinQbatch();
 
-    void testAnalyses();
-
-
+    void runAnalyses();
+    void initAnalyses();
+    int addRemainingAnalyses();
 }; //class BinQGUI
 
 #endif

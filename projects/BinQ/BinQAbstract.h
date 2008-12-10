@@ -6,6 +6,19 @@
 #include "Item.h"
 #include "BinAnalyses.h"
 
+
+#include "LCS.h"
+#include "Clone.h"
+#include "FunctionDiff.h"
+#include "AlignFunctions.h"
+#include "BinCallGraph.h"
+#include "BinControlFlowAnalysis.h"
+#include "BinDataFlowAnalysis.h"
+#include "BufferOverflow.h"
+#include "InterruptAnalysis.h"
+#include "BinDynamicInfo.h"
+#include "ForbiddenFunctionCall.h"
+
 //class Slide;
 class BinQSupport;
 

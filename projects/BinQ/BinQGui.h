@@ -1,5 +1,5 @@
-#ifndef COMPASS_GUI_H
-#define COMPASS_GUI_H
+#ifndef BinQT_GUI_H
+#define BinQT_GUI_H
 //#include "rose.h"
 
 #include "BinQAbstract.h"
@@ -31,10 +31,11 @@ class BinQSupport;
 class BinQGUI : public BinQAbstract
 {
   public:
-  BinQGUI(std::string, std::string,     
-	  std::vector<std::string> dllA,     
-	  std::vector<std::string> dllB, 
-	  bool test);
+  //  BinQGUI(std::string, std::string,     
+  //	  std::vector<std::string> dllA,     
+  //	  std::vector<std::string> dllB, 
+  //	  bool test);
+  BinQGUI();
     ~BinQGUI();
 
     // public functions ---- GUI
@@ -49,29 +50,7 @@ class BinQGUI : public BinQAbstract
     // GUI
     void showFile(int row,qrs::QRTable *currentWidget, 
 		  std::vector<SgNode*>& funcsFile, std::vector<Item*>& itemsFile);
-
-#if 0
-    // internal data that stores information of each table entry
-    std::vector<Item*> itemsFileA;
-    std::vector<Item*> itemsFileB;
-    std::map<SgNode*,int> itemsNodeA;
-    std::map<int,Item*> byteItemFileA;
-    std::map<int,Item*> byteItemFileB;
-    std::map<int,Item*> rowItemFileA;
-    std::map<int,Item*> rowItemFileB;
-    // the two main files
-    SgNode* fileA;
-    SgNode* fileB;
-    SgNode* currentSelectedFile;
-    // the dll files
-    std::vector<SgNode*> dllFilesA;
-    std::vector<SgNode*> dllFilesB;
-    int screenWidth;
-    std::vector<BinAnalyses*> analyses;
-    BinAnalyses* currentAnalysis;
-    // filenames for both files
-    std::string fileNameA,fileNameB;
-#endif
+    //void initAnalyses();
     // GUI elements that need to be accesses within this object but also from 
     // analyses implemented for BinQ
     QTextEdit *console;
@@ -112,31 +91,11 @@ class BinQGUI : public BinQAbstract
     void insertSectionInformation(SgAsmElfSection* sec,std::string filename);
     void insertFileInformation();
   protected:
-
-  private:
     // used for testing
-
     void testAnalyses();
-#if 0
-    bool test;
-    // holds function information that is displayed in function tables
-    std::vector<SgNode*> funcsFileA;
-    std::vector<SgNode*> funcsFileB;
-    // support class
-    BinQSupport* binqsupport;
-    void init();
-    bool sourceFile;
-    int screenHeight;
-    std::vector<std::string> dllA;
-    std::vector<std::string> dllB;
-    void createItem(SgNode* file, std::vector<Item*>& itemsFile,std::vector<SgNode*>& funcsFile, bool dll);
-    void createFunction(SgNode* file,std::vector<SgNode*>& funcsFile, bool dll);
-#endif
-
     // support functions
     void showFileTab();
     void createGUI();
-
 
 }; //class BinQGUI
 
