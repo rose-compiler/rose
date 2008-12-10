@@ -2056,7 +2056,7 @@ HEADER_PE_IMPORT_SECTION_START
 		explicit SgAsmPEImportSection(SgAsmPEFileHeader *fhdr)
 			: SgAsmPESection(fhdr)
 			{ctor();}
-		SgAsmPEImportSection *parse();
+		virtual SgAsmPEImportSection *parse();
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 		void add_import_directory(SgAsmPEImportDirectory*);
@@ -2132,7 +2132,7 @@ HEADER_PE_EXPORT_SECTION_START
 		SgAsmPEExportSection(SgAsmPEFileHeader *fhdr)
 			: SgAsmPESection(fhdr)
 			{ctor();}
-		SgAsmPEExportSection *parse();
+		virtual SgAsmPEExportSection *parse();
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 		void add_entry(SgAsmPEExportEntry*);
 	private:
@@ -2146,7 +2146,7 @@ HEADER_PE_SECTION_TABLE_START
 		explicit SgAsmPESectionTable(SgAsmPEFileHeader *fhdr)
 			: SgAsmGenericSection(fhdr->get_file(), fhdr, 0, 1)
 			{ctor();}
-		SgAsmPESectionTable* parse();
+		virtual SgAsmPESectionTable* parse();
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 	private:
@@ -2293,12 +2293,15 @@ HEADER_COFF_STRING_TABLE_START
 		virtual addr_t get_storage_size(const SgAsmStringStorage*);
 HEADER_COFF_STRING_TABLE_END
 
+
+
 HEADER_PE_STRING_SECTION_START
 	public:
-		SgAsmPEStringSection(SgAsmPEFileHeader *fhdr, addr_t offset, addr_t size)
+		SgAsmPEStringSection(SgAsmPEFileHeader *fhdr)
 			: SgAsmPESection(fhdr), p_strtab(NULL)
-			{set_offset(offset), set_size(size), ctor();}
+			{ctor();}
 		virtual ~SgAsmPEStringSection() {}
+		virtual SgAsmPEStringSection* parse();
 		virtual bool reallocate();
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 		virtual void set_size(addr_t newsize);
@@ -2306,6 +2309,8 @@ HEADER_PE_STRING_SECTION_START
 	private:
 		void ctor();
 HEADER_PE_STRING_SECTION_END
+
+
 
 // ***********************************************
 //          NE Binary File Format Support

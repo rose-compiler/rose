@@ -1704,8 +1704,17 @@ SgAsmPEExportSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 void
 SgAsmPEStringSection::ctor()
 {
-    grab_content();
+    get_name()->set_string("PE String Table");
     p_strtab = new SgAsmCoffStrtab(this);
+}
+
+SgAsmPEStringSection*
+SgAsmPEStringSection::parse()
+{
+    SgAsmPESection::parse();
+    ROSE_ASSERT(p_strtab);
+    p_strtab->parse();
+    return this;
 }
 
 /* Reallocate space for the string table if necessary. Note that reallocation is lazy here -- we don't shrink the section,
