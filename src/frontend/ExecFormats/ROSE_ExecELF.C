@@ -54,22 +54,20 @@ SgAsmElfFileHeader::ctor()
 bool
 SgAsmElfFileHeader::is_ELF(SgAsmGenericFile *ef)
 {
-    SgAsmElfFileHeader *hdr = NULL;
+    SgAsmElfFileHeader *fhdr = NULL;
     bool retval = false;
-
-    ROSE_ASSERT(ef != NULL);
-    
     try {
-        hdr = new SgAsmElfFileHeader(ef);
-        hdr->extend(4);
+        fhdr = new SgAsmElfFileHeader(ef);
+        fhdr->grab_content();
+        fhdr->extend(4);
         unsigned char magic[4];
-        hdr->content(0, 4, magic);
+        fhdr->content(0, 4, magic);
         retval = 0x7f==magic[0] && 'E'==magic[1] && 'L'==magic[2] && 'F'==magic[3];
     } catch (...) {
         /* cleanup is below */
     }
 
-    delete hdr;
+    delete fhdr;
     return retval;
 }
 

@@ -48,6 +48,7 @@ SgAsmDOSFileHeader::is_DOS(SgAsmGenericFile *ef)
 
     try {
         fhdr = new SgAsmDOSFileHeader(ef);
+        fhdr->grab_content();
         fhdr->extend(2);
         unsigned char magic[2];
         fhdr->content(0, 2, magic);
