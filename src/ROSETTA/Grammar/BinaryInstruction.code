@@ -2144,17 +2144,18 @@ HEADER_PE_EXPORT_SECTION_START
 		void ctor(addr_t offset, addr_t size, addr_t mapped_rva);
 HEADER_PE_EXPORT_SECTION_END
 
+
+
 HEADER_PE_SECTION_TABLE_START
-     public:
-          SgAsmPESectionTable(SgAsmPEFileHeader *fhdr, addr_t offset, addr_t size);
-       // virtual ~SgAsmPESectionTable() {}
-
-          virtual void unparse(std::ostream&) const;
-          virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-
-  private:
-          void ctor();
-
+	public:
+		SgAsmPESectionTable(SgAsmPEFileHeader *fhdr)
+			: SgAsmGenericSection(fhdr->get_file(), fhdr, 0, 1)
+			{ctor();}
+		SgAsmPESectionTable* parse();
+		virtual void unparse(std::ostream&) const;
+		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+	private:
+		void ctor();
 HEADER_PE_SECTION_TABLE_END
 
 
@@ -4261,12 +4262,6 @@ SgAsmPESection::SgAsmPESection(SgAsmPEFileHeader *fhdr, addr_t offset, addr_t si
 SOURCE_PE_SECTION_END
 
 SOURCE_PE_SECTION_TABLE_START
-SgAsmPESectionTable::SgAsmPESectionTable(SgAsmPEFileHeader *fhdr, addr_t offset, addr_t size)
-   : SgAsmGenericSection(fhdr->get_file(), fhdr, offset, size)
-   {
-     ctor();
-   }
-
 SOURCE_PE_SECTION_TABLE_END
 
 SOURCE_PE_COFF_SYMBOL_TABLE_START

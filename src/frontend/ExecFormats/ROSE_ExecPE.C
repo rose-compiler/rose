@@ -283,7 +283,10 @@ SgAsmPEFileHeader::parse()
      * optional header is indicated in the fixed header. */
     addr_t secttab_offset = get_offset() + sizeof(PEFileHeader_disk) + get_e_nt_hdr_size();
     addr_t secttab_size = get_e_nsections() * sizeof(SgAsmPESectionTableEntry::PESectionTableEntry_disk);
-    SgAsmPESectionTable *secttab = new SgAsmPESectionTable(this, secttab_offset, secttab_size);
+    SgAsmPESectionTable *secttab = new SgAsmPESectionTable(this);
+    secttab->set_offset(secttab_offset);
+    secttab->set_size(secttab_size);
+    secttab->parse();
     set_section_table(secttab);
 
     /* Parse the COFF symbol table and add symbols to the PE header */
@@ -861,11 +864,16 @@ SgAsmPESection::dump(FILE *f, const char *prefix, ssize_t idx) const
 void
 SgAsmPESectionTable::ctor()
 {
-    grab_content();
-
     set_synthesized(true);
     set_name(new SgAsmBasicString("PE Section Table"));
     set_purpose(SP_HEADER);
+}
+
+/* Parser */
+SgAsmPESectionTable*
+SgAsmPESectionTable::parse()
+{
+    SgAsmGenericSection::parse();
 
     SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
@@ -907,6 +915,7 @@ SgAsmPESectionTable::ctor()
                                   SgAsmPESectionTableEntry::OF_UDATA))
             section->set_purpose(SP_PROGRAM);
     }
+    return this;
 }
 
 /* Writes the section table back to disk along with each of the sections. */
@@ -2235,62 +2244,3 @@ SgAsmCoffSymbolTable::dump(FILE *f, const char *prefix, ssize_t idx) const
     if (variantT() == V_SgAsmCoffSymbolTable) //unless a base class
         hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
-
-#if 0
-/* Parses the structure of a PE file and adds the information to the ExecFile. */
-SgAsmPEFileHeader *
-SgAsmPEFileHeader::parsePEFile(SgAsmGenericFile *ef)
-{
-    ROSE_ASSERT(ef);
-
-    /* All PE files are also DOS files, so parse the DOS part first */
-    SgAsmDOSFileHeader *dos_header = new SgAsmDOSFileHeader(ef);
-    dos_header->parse(false);
-
-    /* PE files extend the DOS header with some additional info */
-    SgAsmPEExtendedDOSHeader *dos2_header = new SgAsmPEExtendedDOSHeader(dos_header, dos_header->get_size());
-    dos2_header->parse();
-    
-    /* The PE header has a fixed-size component followed by some number of RVA/Size pairs */
-    SgAsmPEFileHeader *fhdr = new SgAsmPEFileHeader(ef, dos2_header->get_e_lfanew());
-    fhdr->parse();
-    ROSE_ASSERT(fhdr->get_e_num_rvasize_pairs() < 1000); /* just a sanity check before we allocate memory */
-    fhdr->add_rvasize_pairs();
-
-    /* The extended part of the DOS header is owned by the PE header */
-    fhdr->add_section(dos2_header);
-    fhdr->set_dos2_header(dos2_header);
-
-    /* Now go back and add the DOS Real-Mode section but rather than using the size specified in the DOS header, constrain it
-     * to not extend beyond the beginning of the PE file header. This makes detecting holes in the PE format much easier. */
-    dos_header->add_rm_section(fhdr->get_offset());
-
-    /* Construct the section table and its sections (non-synthesized sections). The specification says that the section table
-     * comes after the optional (NT) header, which in turn comes after the fixed part of the PE header. The size of the
-     * optional header is indicated in the fixed header. */
-    addr_t secttab_offset = fhdr->get_offset() + sizeof(PEFileHeader_disk) + fhdr->get_e_nt_hdr_size();
-    addr_t secttab_size = fhdr->get_e_nsections() * sizeof(SgAsmPESectionTableEntry::PESectionTableEntry_disk);
-    SgAsmPESectionTable *secttab = new SgAsmPESectionTable(fhdr, secttab_offset, secttab_size);
-    fhdr->set_section_table(secttab);
-
-    /* Parse the COFF symbol table and add symbols to the PE header */
-    if (fhdr->get_e_coff_symtab() && fhdr->get_e_coff_nsyms()) {
-        SgAsmCoffSymbolTable *symtab = new SgAsmCoffSymbolTable(fhdr);
-        std::vector<SgAsmCoffSymbol*> & symbols = symtab->get_symbols()->get_symbols();
-        for (size_t i = 0; i < symbols.size(); i++)
-            fhdr->add_symbol(symbols[i]);
-        fhdr->set_coff_symtab(symtab);
-    }
-
-    /* Associate RVAs with particular sections. */
-    ROSE_ASSERT(fhdr->get_entry_rvas().size()==1);
-    fhdr->get_entry_rvas()[0].bind(fhdr);
-    fhdr->set_e_code_rva(fhdr->get_e_code_rva().bind(fhdr));
-    fhdr->set_e_data_rva(fhdr->get_e_data_rva().bind(fhdr));
-
-    /* Turn header-specified tables (RVA/Size pairs) into generic sections */
-    fhdr->create_table_sections();
-    
-    return fhdr;
-}
-#endif
