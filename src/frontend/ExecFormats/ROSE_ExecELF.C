@@ -2356,6 +2356,17 @@ SgAsmElfDynamicEntry::stringify_tag(EntryType t) const
     }
 }
 
+/* Set name and adjust parent */
+void
+SgAsmElfDynamicEntry::set_name(SgAsmGenericString *name)
+{
+    if (p_name)
+        p_name->set_parent(NULL);
+    p_name = name;
+    if (p_name)
+        p_name->set_parent(this);
+}
+
 /* Print some debugging info */
 void
 SgAsmElfDynamicEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
@@ -2460,8 +2471,8 @@ SgAsmElfDynamicSection::set_linked_section(SgAsmElfSection *_strsec)
           case SgAsmElfDynamicEntry::DT_NEEDED: {
               /* Offset to NUL-terminated library name in the linked-to (".dynstr") section. */
               ROSE_ASSERT(entry->get_d_val().get_section()==NULL);
+              entry->set_name(new SgAsmStoredString(strsec->get_strtab(), entry->get_d_val().get_rva()));
               SgAsmStoredString *name = new SgAsmStoredString(strsec->get_strtab(), entry->get_d_val().get_rva());
-              entry->set_name(name);
               fhdr->add_dll(new SgAsmGenericDLL(name));
               break;
           }
