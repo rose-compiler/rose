@@ -42,7 +42,11 @@ SgAsmPEFileHeader::ctor()
     p_exec_format->set_abi(ABI_NT);
     p_exec_format->set_abi_version(0);
 
+    /* Default instruction architecture */
+    p_e_cpu_type = 0x014c; /*i386*/
     p_isa = ISA_IA32_386;
+
+    p_e_time = time(NULL);
 }
 
 /** Return true if the file looks like it might be a PE file according to the magic number.  The file must contain what
@@ -645,14 +649,6 @@ SgAsmPEFileHeader::unparse(std::ostream &f) const
             sizepair_section->unparse(f);
     }
 
-#if 0 /*This is part of the DOS File Header now [RPM 2008-12-05]*/
-    /* Write the extended DOS header */
-    if (p_dos2_header) {
-        ROSE_ASSERT(p_dos2_header->get_header()==this);
-        p_dos2_header->unparse(f);
-    }
-#endif
-
     /* Encode the "NT Optional Header" before the COFF Header since the latter depends on the former. Adjust the COFF Header's
      * e_nt_hdr_size to accommodate the NT Optional Header in such a way that EXEs from tinype.com don't change (i.e., don't
      * increase e_nt_hdr_size if the bytes beyond it are zero anyway, and if they aren't then adjust it as little as possible.
@@ -757,11 +753,6 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
         fprintf(f, "%s%-*s = rva %s,\tsize 0x%08"PRIx64" (%"PRIu64")\n", p, w, "..",
                 p_rvasize_pairs->get_pairs()[i]->get_e_rva().to_string().c_str(),
                 p_rvasize_pairs->get_pairs()[i]->get_e_size(), p_rvasize_pairs->get_pairs()[i]->get_e_size());
-    }
-    if (p_dos2_header) {
-        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "dos2_header", p_dos2_header->get_id(), p_dos2_header->get_name()->c_str());
-    } else {
-        fprintf(f, "%s%-*s = none\n", p, w, "dos2_header");
     }
     if (p_section_table) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "section_table",

@@ -3734,7 +3734,6 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
             SgAsmPEFileHeader *pe_hdr = new SgAsmPEFileHeader(ef);
             pe_hdr->set_offset(dos2_hdr->get_e_lfanew());
             pe_hdr->parse();
-            pe_hdr->set_dos2_header(dos2_hdr);
             big_hdr = pe_hdr;
         } else if (SgAsmNEFileHeader::is_NE(ef)) {
             SgAsmNEFileHeader::parse(ef);

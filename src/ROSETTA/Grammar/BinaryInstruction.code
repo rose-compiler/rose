@@ -1947,7 +1947,7 @@ HEADER_PE_FILE_HEADER_START
 	public:
 		explicit SgAsmPEFileHeader(SgAsmGenericFile *f)
 			: SgAsmGenericHeader(f, 0, sizeof(SgAsmPEFileHeader::PEFileHeader_disk)),
-			  p_dos2_header(NULL), p_section_table(NULL), p_coff_symtab(NULL)
+			  p_section_table(NULL), p_coff_symtab(NULL)
 			{ctor();}
 		virtual ~SgAsmPEFileHeader();
 
