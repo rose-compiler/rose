@@ -545,7 +545,7 @@ SgAsmPEFileHeader::reallocate()
         p_e_nsections = 0;
         for (size_t i=0; i<all->get_sections().size(); i++) {
             SgAsmPESection *pesec = dynamic_cast<SgAsmPESection*>(all->get_sections()[i]);
-            if (pesec && pesec->get_st_entry()!=NULL)
+            if (pesec && pesec->get_section_entry()!=NULL)
                 p_e_nsections++;
         }
 
@@ -560,7 +560,7 @@ SgAsmPEFileHeader::reallocate()
         addr_t min_offset;
         for (size_t i=0, nfound=0; i<all->get_sections().size(); i++) {
             SgAsmPESection *pesec = dynamic_cast<SgAsmPESection*>(all->get_sections()[i]);
-            if (pesec && pesec->get_st_entry()!=NULL) {
+            if (pesec && pesec->get_section_entry()!=NULL) {
                 if (0==nfound++) {
                     min_offset = pesec->get_offset();
                 } else {
@@ -788,6 +788,22 @@ SgAsmPESectionTableEntry::ctor(const PESectionTableEntry_disk *disk)
     p_flags            = le_to_host(disk->flags);
 }
 
+/** Update this section table entry with newer information from the section */
+void
+SgAsmPESectionTableEntry::update_from_section(SgAsmPESection *section)
+{
+    p_virtual_size = section->get_mapped_size();
+    p_rva = section->get_mapped_rva();
+    p_physical_size = section->get_size();
+    p_physical_offset = section->get_offset();
+
+    //FIXME
+    p_coff_line_nums = 0;
+    p_n_relocs = 0;
+    p_n_coff_line_nums = 0;
+    p_flags = 0;
+}
+
 /* Encodes a section table entry back into disk format. */
 void *
 SgAsmPESectionTableEntry::encode(PESectionTableEntry_disk *disk) const
@@ -848,8 +864,8 @@ SgAsmPESection::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
 
     SgAsmGenericSection::dump(f, p, -1);
-    if (p_st_entry)
-        p_st_entry->dump(f, p, -1);
+    if (p_section_entry)
+        p_section_entry->dump(f, p, -1);
 
     if (variantT() == V_SgAsmPESection) //unless a base class
         hexdump(f, 0, std::string(p)+"data at ", p_data);
@@ -859,6 +875,10 @@ SgAsmPESection::dump(FILE *f, const char *prefix, ssize_t idx) const
 void
 SgAsmPESectionTable::ctor()
 {
+    SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(get_header());
+    ROSE_ASSERT(fhdr!=NULL);
+    fhdr->set_section_table(this);
+
     set_synthesized(true);
     set_name(new SgAsmBasicString("PE Section Table"));
     set_purpose(SP_HEADER);
@@ -887,34 +907,41 @@ SgAsmPESectionTable::parse()
         } else {
             section = new SgAsmPESection(fhdr);
         }
-        section->set_synthesized(false);
-        section->set_name(new SgAsmBasicString(entry->get_name()));
-        section->set_id(i+1); /*numbered starting at 1, not zero*/
-        section->set_purpose(SP_PROGRAM);
-
-        section->set_offset(entry->get_physical_offset());
-        section->set_size(entry->get_physical_size());
-        section->set_file_alignment(fhdr->get_e_file_align());
-
-        section->set_mapped_rva(entry->get_rva());
-        section->set_mapped_size(entry->get_virtual_size());
-        section->set_mapped_alignment(fhdr->get_e_section_align());
-        section->set_st_entry(entry);
-        section->set_mapped_rperm((entry->get_flags() & SgAsmPESectionTableEntry::OF_READABLE)
-                                  == SgAsmPESectionTableEntry::OF_READABLE);
-        section->set_mapped_wperm((entry->get_flags() & SgAsmPESectionTableEntry::OF_WRITABLE)
-                                  == SgAsmPESectionTableEntry::OF_WRITABLE);
-        section->set_mapped_xperm((entry->get_flags() & SgAsmPESectionTableEntry::OF_EXECUTABLE)
-                                  == SgAsmPESectionTableEntry::OF_EXECUTABLE);
-        
-        if (entry->get_flags() & (SgAsmPESectionTableEntry::OF_CODE|
-                                  SgAsmPESectionTableEntry::OF_IDATA|
-                                  SgAsmPESectionTableEntry::OF_UDATA)) {
-            section->set_purpose(SP_PROGRAM);
-        }
+        section->init_from_section_table(entry, i+1);
         section->parse();
     }
     return this;
+}
+
+/** Attaches a previously unattached PE Section to the PE Section Table. This method complements
+ *  SgAsmPESection::init_from_section_table. This method initializes the section table from the section while
+ *  ini_from_section_table() initializes the section from the section table. */
+void
+SgAsmPESectionTable::add_section(SgAsmPESection *section)
+{
+    ROSE_ASSERT(section!=NULL);
+    ROSE_ASSERT(section->get_file()==get_file());
+    ROSE_ASSERT(section->get_header()==get_header());
+    ROSE_ASSERT(section->get_section_entry()==NULL);            /* must not be in the section table yet */
+    
+    SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(get_header());
+    ROSE_ASSERT(fhdr!=NULL);
+    
+    /* Assign an ID if there isn't one yet. */
+    if (section->get_id()<0) {
+        SgAsmGenericSectionList *seclist = fhdr->get_sections();;
+        int max_id=0; /*assume zero is used so we start at one*/
+        for (size_t i=0; i<seclist->get_sections().size(); i++) {
+            SgAsmGenericSection *s = seclist->get_sections()[i];
+            max_id = std::max(max_id, s->get_id());
+        }
+        section->set_id(max_id+1);
+    }
+    
+    /* Create a new section table entry. */
+    SgAsmPESectionTableEntry *entry = new SgAsmPESectionTableEntry;
+    entry->update_from_section(section);
+    section->set_section_entry(entry);
 }
 
 /* Writes the section table back to disk along with each of the sections. */
@@ -932,7 +959,7 @@ SgAsmPESectionTable::unparse(std::ostream &f) const
             /* Write the table entry */
             ROSE_ASSERT(section->get_id() > 0); /*ID's are 1-origin in PE*/
             size_t slot = section->get_id() - 1;
-            SgAsmPESectionTableEntry *shdr = section->get_st_entry();
+            SgAsmPESectionTableEntry *shdr = section->get_section_entry();
             SgAsmPESectionTableEntry::PESectionTableEntry_disk disk;
             shdr->encode(&disk);
             write(f, slot*sizeof(disk), sizeof disk, &disk);
@@ -1705,6 +1732,55 @@ SgAsmPEStringSection::parse()
     SgAsmPESection::parse();
     ROSE_ASSERT(p_strtab);
     p_strtab->parse();
+    return this;
+}
+
+/** Initializes the section from data parsed from the PE Section Table. This includes the section offset, size, memory mapping,
+ *  alignments, permissions, etc. This function complements SgAsmPESectionTable::add_section(): this function initializes this
+ *  section from the section table while add_section() initializes the section table from the section. */
+SgAsmPESection *
+SgAsmPESection::init_from_section_table(SgAsmPESectionTableEntry *entry, int id)
+{
+    ROSE_ASSERT(entry);
+    ROSE_ASSERT(id>=0);
+    
+    SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(get_header());
+    ROSE_ASSERT(fhdr!=NULL);
+
+    set_synthesized(false);
+    set_name(new SgAsmBasicString(entry->get_name()));
+    set_id(id);
+    set_purpose(SP_PROGRAM);
+
+    /* File mapping */
+    set_offset(entry->get_physical_offset());
+    set_size(entry->get_physical_size());
+    set_file_alignment(fhdr->get_e_file_align());
+
+    /* Memory mapping */
+    if (entry->get_rva() > 0) {
+        set_mapped_rva(entry->get_rva());
+        set_mapped_size(entry->get_virtual_size());
+        set_mapped_alignment(fhdr->get_e_section_align());
+        set_mapped_rperm((entry->get_flags() & SgAsmPESectionTableEntry::OF_READABLE)
+                         == SgAsmPESectionTableEntry::OF_READABLE);
+        set_mapped_wperm((entry->get_flags() & SgAsmPESectionTableEntry::OF_WRITABLE)
+                         == SgAsmPESectionTableEntry::OF_WRITABLE);
+        set_mapped_xperm((entry->get_flags() & SgAsmPESectionTableEntry::OF_EXECUTABLE)
+                         == SgAsmPESectionTableEntry::OF_EXECUTABLE);
+    } else {
+        set_mapped_rva(0);
+        set_mapped_size(0);
+        set_mapped_rperm(false);
+        set_mapped_wperm(false);
+        set_mapped_xperm(false);
+        set_mapped_alignment(fhdr->get_e_section_align());
+    }
+    
+    /* Add section table entry to section */
+    set_section_entry(entry);
+    entry->set_parent(this);
+
     return this;
 }
 

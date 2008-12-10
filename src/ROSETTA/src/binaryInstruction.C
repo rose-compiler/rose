@@ -867,7 +867,7 @@ Grammar::setUpBinaryInstructions ()
 
   // PESectionTableEntry *st_entry;
      AsmPESection.setFunctionPrototype ( "HEADER_PE_SECTION", "../Grammar/BinaryInstruction.code");
-     AsmPESection.setDataPrototype("SgAsmPESectionTableEntry*","st_entry","= NULL",
+     AsmPESection.setDataPrototype("SgAsmPESectionTableEntry*","section_entry","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // No data members
