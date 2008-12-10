@@ -928,6 +928,9 @@ SgVariableSymbol* appendArg(SgFunctionParameterList *, SgInitializedName*);
 //! Append an expression to a SgExprListExp, set the parent pointer also
 void appendExpression(SgExprListExp *, SgExpression*);
 
+//! Append an expression list to a SgExprListExp, set the parent pointers also
+void appendExpressionList(SgExprListExp *, const std::vector<SgExpression*>&);
+
 //! Set parameter list for a function declaration, considering existing parameter list etc.
 void setParameterList(SgFunctionDeclaration *func,SgFunctionParameterList *paralist);
 

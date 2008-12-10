@@ -62,6 +62,9 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (MinusMinusOp,           "MinusMinusOp",           "MINUSMINUS_OP" );
      NEW_TERMINAL_MACRO (PlusPlusOp,             "PlusPlusOp",             "PLUSPLUS_OP" );
      NEW_TERMINAL_MACRO (BitComplementOp,        "BitComplementOp",        "BIT_COMPLEMENT_OP" );
+     NEW_TERMINAL_MACRO (RealPartOp,             "RealPartOp",             "REAL_PART_OP" );
+     NEW_TERMINAL_MACRO (ImagPartOp,             "ImagPartOp",             "IMAG_PART_OP" );
+     NEW_TERMINAL_MACRO (ConjugateOp,            "ConjugateOp",            "CONJUGATE_OP" );
      NEW_TERMINAL_MACRO (CastExp,                "CastExp",                "CAST_OP" );
      NEW_TERMINAL_MACRO (ThrowOp,                "ThrowOp",                "THROW_OP" );
      NEW_TERMINAL_MACRO (ArrowExp,               "ArrowExp",               "POINTST_OP" );
@@ -192,7 +195,7 @@ Grammar::setUpExpressions ()
      NEW_NONTERMINAL_MACRO (UnaryOp,
                             ExpressionRoot | MinusOp            | UnaryAddOp | NotOp           | PointerDerefExp | 
                             AddressOfOp    | MinusMinusOp       | PlusPlusOp | BitComplementOp | CastExp         |
-                            ThrowOp        | UserDefinedUnaryOp,
+                            ThrowOp        | RealPartOp         | ImagPartOp | ConjugateOp     | UserDefinedUnaryOp,
                             "UnaryOp","UNARY_EXPRESSION", false);
 
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice) (adding ExponentiationOp binary operator)
@@ -438,6 +441,15 @@ Grammar::setUpExpressions ()
      BitComplementOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
 
+     RealPartOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
+                                  "../Grammar/Expression.code" );
+
+     ImagPartOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
+                                  "../Grammar/Expression.code" );
+
+     ConjugateOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
+                                  "../Grammar/Expression.code" );
+
      PntrArrRefExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
 
@@ -570,6 +582,9 @@ Grammar::setUpExpressions ()
      MinusMinusOp.editSubstitute    ( "PRECEDENCE_VALUE", "15" );
      PlusPlusOp.editSubstitute      ( "PRECEDENCE_VALUE", "15" );
      BitComplementOp.editSubstitute ( "PRECEDENCE_VALUE", "15" );
+     RealPartOp.editSubstitute      ( "PRECEDENCE_VALUE", "15" );
+     ImagPartOp.editSubstitute      ( "PRECEDENCE_VALUE", "15" );
+     ConjugateOp.editSubstitute      ( "PRECEDENCE_VALUE", "15" );
      CastExp.editSubstitute         ( "PRECEDENCE_VALUE", "15" );
      PntrArrRefExp.editSubstitute   ( "PRECEDENCE_VALUE", "16" );
      ScopeOp.editSubstitute         ( "PRECEDENCE_VALUE", "17" ); // highest precedence
@@ -1037,6 +1052,10 @@ Grammar::setUpExpressions ()
 
      BitComplementOp.setFunctionPrototype ( "HEADER_BIT_COMPLEMENT_OPERATOR", "../Grammar/Expression.code" );
 
+     RealPartOp.setFunctionPrototype ( "HEADER_REAL_PART_OPERATOR", "../Grammar/Expression.code" );
+     ImagPartOp.setFunctionPrototype ( "HEADER_IMAG_PART_OPERATOR", "../Grammar/Expression.code" );
+     ConjugateOp.setFunctionPrototype ( "HEADER_CONJUGATE_OPERATOR", "../Grammar/Expression.code" );
+
      ConditionalExp.setFunctionPrototype ( "HEADER_CONDITIONAL_EXPRESSION", "../Grammar/Expression.code" );
      ConditionalExp.setDataPrototype ( "SgExpression*", "conditional_exp", "= NULL",
 				       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -1467,6 +1486,9 @@ Grammar::setUpExpressions ()
      MinusMinusOp.setFunctionSource ( "SOURCE_MINUS_MINUS_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      PlusPlusOp.setFunctionSource ( "SOURCE_PLUS_PLUS_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      BitComplementOp.setFunctionSource ( "SOURCE_BIT_COMPLEMENT_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
+     RealPartOp.setFunctionSource ( "SOURCE_REAL_PART_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
+     ImagPartOp.setFunctionSource ( "SOURCE_IMAG_PART_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
+     ConjugateOp.setFunctionSource ( "SOURCE_CONJUGATE_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      ConditionalExp.setFunctionSource ( "SOURCE_CONDITIONAL_EXPRESSION","../Grammar/Expression.code" );
      CastExp.setFunctionSource ( "SOURCE_CAST_EXPRESSION","../Grammar/Expression.code" );
      PntrArrRefExp.setFunctionSource ( "SOURCE_POINTER_ARRAY_REFERENCE_EXPRESSION","../Grammar/Expression.code" );
