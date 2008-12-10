@@ -3719,15 +3719,35 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
 
     if (SgAsmElfFileHeader::is_ELF(ef)) {
         (new SgAsmElfFileHeader(ef))->parse();
-    } else if (SgAsmPEFileHeader::is_PE(ef)) {
-        SgAsmPEFileHeader::parsePEFile(ef);
-    } else if (SgAsmNEFileHeader::is_NE(ef)) {
-        SgAsmNEFileHeader::parse(ef);
-    } else if (SgAsmLEFileHeader::is_LE(ef)) { /*or LX*/
-        SgAsmLEFileHeader::parse(ef);
     } else if (SgAsmDOSFileHeader::is_DOS(ef)) {
-        /* Must be after PE and NE since all PE and NE files are also DOS files */
-        (new SgAsmDOSFileHeader(ef))->parse();
+        SgAsmDOSFileHeader *dos_hdr = new SgAsmDOSFileHeader(ef);
+        dos_hdr->parse(false); /*delay parsing the DOS Real Mode Section*/
+        
+        /* DOS Files can be overloaded to also be PE, NE, LE, or LX. Such files have an Extended DOS Header immediately after
+         * the DOS File Header (various forms of Extended DOS Header exist). The Extended DOS Header contains a file offset to
+         * a PE, NE, LE, or LX File Header, the first bytes of which are a magic number. The is_* methods check for this magic
+         * number. */
+        SgAsmGenericHeader *big_hdr = NULL;
+        if (SgAsmPEFileHeader::is_PE(ef)) {
+            SgAsmPEExtendedDOSHeader *dos2_hdr = new SgAsmPEExtendedDOSHeader(dos_hdr);
+            dos2_hdr->set_offset(dos_hdr->get_size());
+            dos2_hdr->parse();
+            SgAsmPEFileHeader *pe_hdr = new SgAsmPEFileHeader(ef);
+            pe_hdr->set_offset(dos2_hdr->get_e_lfanew());
+            pe_hdr->parse();
+            pe_hdr->set_dos2_header(dos2_hdr);
+            big_hdr = pe_hdr;
+        } else if (SgAsmNEFileHeader::is_NE(ef)) {
+            SgAsmNEFileHeader::parse(ef);
+        } else if (SgAsmLEFileHeader::is_LE(ef)) { /*or LX*/
+            SgAsmLEFileHeader::parse(ef);
+        }
+
+        /* Now go back and add the DOS Real-Mode section but rather than using the size specified in the DOS header, constrain
+         * it to not extend beyond the beginning of the PE, NE, LE, or LX file header. This makes detecting holes in the PE
+         * format much easier. */
+        dos_hdr->add_rm_section(big_hdr ? big_hdr->get_offset() : 0);
+
     } else {
         delete ef; ef=NULL;
         /* Use file(1) to try to figure out the file type to report in the exception */

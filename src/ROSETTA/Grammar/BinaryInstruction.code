@@ -1945,8 +1945,8 @@ HEADER_PE_FILE_HEADER_START
 		};
 
 	public:
-		SgAsmPEFileHeader(SgAsmGenericFile *f, addr_t offset)
-			: SgAsmGenericHeader(f, offset, sizeof(SgAsmPEFileHeader::PEFileHeader_disk)),
+		explicit SgAsmPEFileHeader(SgAsmGenericFile *f)
+			: SgAsmGenericHeader(f, 0, sizeof(SgAsmPEFileHeader::PEFileHeader_disk)),
 			  p_dos2_header(NULL), p_section_table(NULL), p_coff_symtab(NULL)
 			{ctor();}
 		virtual ~SgAsmPEFileHeader();
@@ -2174,15 +2174,15 @@ HEADER_PE_COFF_SYMBOL_TABLE_END
 HEADER_PE_EXTENDED_DOS_HEADER_START
 	public:
 		struct ExtendedDOSHeader_disk {
-			unsigned char e_res1[4];    /* 0x00 reserved */
-			uint16_t    e_oemid;        /* 0x04 OEM Identifier */
-			uint16_t    e_oeminfo;      /* 0x06 other OEM information; oemid specific */
-			uint16_t    e_res2[10];     /* 0x08 reserved */
-			uint32_t    e_lfanew;       /* 0x12 file offset of new exe (PE) header */
-		} __attribute__((packed));    /* 0x16 */
+			unsigned char e_res1[4];  /* 0x00 reserved */
+			uint16_t      e_oemid;    /* 0x04 OEM Identifier */
+			uint16_t      e_oeminfo;  /* 0x06 other OEM information; oemid specific */
+			uint16_t      e_res2[10]; /* 0x08 reserved */
+			uint32_t      e_lfanew;   /* 0x1c file offset of new exe (PE) header */
+		} __attribute__((packed));        /* 0x20 */
 
-		SgAsmPEExtendedDOSHeader(SgAsmDOSFileHeader *fhdr, addr_t offset)
-			: SgAsmGenericSection(fhdr->get_file(), fhdr, offset, sizeof(ExtendedDOSHeader_disk))
+		explicit SgAsmPEExtendedDOSHeader(SgAsmDOSFileHeader *fhdr)
+			: SgAsmGenericSection(fhdr->get_file(), fhdr, 0, sizeof(ExtendedDOSHeader_disk))
 			{ctor();}
 		virtual SgAsmPEExtendedDOSHeader *parse();
 		void *encode(SgAsmPEExtendedDOSHeader::ExtendedDOSHeader_disk*) const;

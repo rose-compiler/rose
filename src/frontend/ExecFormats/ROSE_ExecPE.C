@@ -106,7 +106,7 @@ SgAsmPEExtendedDOSHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 // PE File Header
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Construct a new PE File Header with default values. */
+/* Construct a new PE File Header with default values. */
 void
 SgAsmPEFileHeader::ctor()
 {
@@ -141,37 +141,38 @@ SgAsmPEFileHeader::ctor()
     p_isa = ISA_IA32_386;
 }
 
-/** Return true if the file looks like it might be a PE file according to the magic number */
+/** Return true if the file looks like it might be a PE file according to the magic number.  The file must contain what
+ *  appears to be a DOS File Header at address zero, and what appears to be a PE File Header at a file offset specified in
+ *  part of the DOS File Header (actually, in the bytes that follow the DOS File Header). */
 bool
 SgAsmPEFileHeader::is_PE(SgAsmGenericFile *ef)
 {
-    SgAsmDOSFileHeader       *dos_hdr  = NULL;
-    SgAsmPEExtendedDOSHeader *dos2_hdr = NULL;
-    SgAsmPEFileHeader        *pe_hdr   = NULL;
-
-    bool retval  = false;
-
-    try {
-        dos_hdr  = new SgAsmDOSFileHeader(ef);
-        dos_hdr->parse(false);
-
-        dos2_hdr = new SgAsmPEExtendedDOSHeader(dos_hdr, dos_hdr->get_size());
-        dos2_hdr->parse();
-
-        pe_hdr   = new SgAsmPEFileHeader(ef, dos2_hdr->get_e_lfanew());
-        pe_hdr->grab_content();
-        pe_hdr->extend(4);
-        unsigned char magic[4];
-        pe_hdr->content(0, 4, magic);
-        retval = 'P'==magic[0] && 'E'==magic[1] && '\0'==magic[2] && '\0'==magic[3];
-    } catch (...) {
-        /* cleanup is below */
+    /* Check DOS File Header magic number */
+    SgAsmGenericSection *section = new SgAsmGenericSection(ef, NULL, 0, 0x40);
+    section->grab_content();
+    unsigned char dos_magic[2];
+    section->content(0, 2, dos_magic);
+    if ('M'!=dos_magic[0] || 'Z'!=dos_magic[1]) {
+        delete section;
+        return false;
     }
+    
+    /* Read offset of potential PE File Header */
+    uint32_t lfanew_disk;
+    section->content(0x3c, sizeof lfanew_disk, &lfanew_disk);
+    addr_t pe_offset = le_to_host(lfanew_disk);
+    delete section;
+    
+    /* Read the PE File Header magic number */
+    section = new SgAsmGenericSection(ef, NULL, pe_offset, 4);
+    section->grab_content();
+    unsigned char pe_magic[4];
+    section->content(0, 4, pe_magic);
+    delete section;
+    section = NULL;
 
-    delete dos_hdr;
-    delete dos2_hdr;
-    delete pe_hdr;
-    return retval;
+    /* Check the PE magic number */
+    return 'P'==pe_magic[0] && 'E'==pe_magic[1] && '\0'==pe_magic[2] && '\0'==pe_magic[3];
 }
 
 /** Initialize the header with information parsed from the file and construct and parse everything that's reachable from the
@@ -367,6 +368,38 @@ SgAsmPEFileHeader::parse()
     /* Entry point. We will eventually bind the entry point to a particular section (in SgAsmPEFileHeader::parse) so that if
      * sections are rearranged, extended, etc. the entry point will be updated automatically. */
     add_entry_rva(entry_rva);
+
+    /* The PE File Header has a fixed-size component followed by some number of RVA/Size pairs. The add_rvasize_pairs() will
+     * extend  the header and parse the RVA/Size pairs. */
+    ROSE_ASSERT(get_e_num_rvasize_pairs() < 1000); /* just a sanity check before we allocate memory */
+    add_rvasize_pairs();
+
+    /* Construct the section table and its sections (non-synthesized sections). The specification says that the section table
+     * comes after the optional (NT) header, which in turn comes after the fixed part of the PE header. The size of the
+     * optional header is indicated in the fixed header. */
+    addr_t secttab_offset = get_offset() + sizeof(PEFileHeader_disk) + get_e_nt_hdr_size();
+    addr_t secttab_size = get_e_nsections() * sizeof(SgAsmPESectionTableEntry::PESectionTableEntry_disk);
+    SgAsmPESectionTable *secttab = new SgAsmPESectionTable(this, secttab_offset, secttab_size);
+    set_section_table(secttab);
+
+    /* Parse the COFF symbol table and add symbols to the PE header */
+    if (get_e_coff_symtab() && get_e_coff_nsyms()) {
+        SgAsmCoffSymbolTable *symtab = new SgAsmCoffSymbolTable(this);
+        std::vector<SgAsmCoffSymbol*> & symbols = symtab->get_symbols()->get_symbols();
+        for (size_t i = 0; i < symbols.size(); i++)
+            add_symbol(symbols[i]);
+        set_coff_symtab(symtab);
+    }
+
+    /* Associate RVAs with particular sections. */
+    ROSE_ASSERT(get_entry_rvas().size()==1);
+    get_entry_rvas()[0].bind(this);
+    set_e_code_rva(get_e_code_rva().bind(this));
+    set_e_data_rva(get_e_data_rva().bind(this));
+
+    /* Turn header-specified tables (RVA/Size pairs) into generic sections */
+    create_table_sections();
+    return this;
 }
 
 SgAsmPEFileHeader::~SgAsmPEFileHeader() 
@@ -701,11 +734,13 @@ SgAsmPEFileHeader::unparse(std::ostream &f) const
             sizepair_section->unparse(f);
     }
 
+#if 0 /*This is part of the DOS File Header now [RPM 2008-12-05]*/
     /* Write the extended DOS header */
     if (p_dos2_header) {
         ROSE_ASSERT(p_dos2_header->get_header()==this);
         p_dos2_header->unparse(f);
     }
+#endif
 
     /* Encode the "NT Optional Header" before the COFF Header since the latter depends on the former. Adjust the COFF Header's
      * e_nt_hdr_size to accommodate the NT Optional Header in such a way that EXEs from tinype.com don't change (i.e., don't
@@ -2297,6 +2332,7 @@ SgAsmCoffSymbolTable::dump(FILE *f, const char *prefix, ssize_t idx) const
         hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
+#if 0
 /* Parses the structure of a PE file and adds the information to the ExecFile. */
 SgAsmPEFileHeader *
 SgAsmPEFileHeader::parsePEFile(SgAsmGenericFile *ef)
@@ -2353,3 +2389,4 @@ SgAsmPEFileHeader::parsePEFile(SgAsmGenericFile *ef)
     
     return fhdr;
 }
+#endif
