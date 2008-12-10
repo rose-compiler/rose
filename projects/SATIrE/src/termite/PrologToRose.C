@@ -360,7 +360,7 @@ SgNode*
 PrologToRose::quaternaryToRose(PrologCompTerm* t,string tname) {
   debug("unparsing quaternary");
   /* assert correct arity of term*/
-  assert_arity(t, 7);
+  assert_arity(t, 8);
   /*get child nodes (prefix traversal step)*/
   SgNode* child1 = toRose(t->at(1));
   SgNode* child2 = toRose(t->at(2));
@@ -1136,8 +1136,8 @@ PrologToRose::createUnaryOp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
   ROSE_ASSERT(sgexp != NULL);
   PrologCompTerm* annot = retrieveAnnotation(t);
   ROSE_ASSERT(annot != NULL);
-  /* the annotation should have arity of 5*/
-  ROSE_ASSERT(annot->getArity() == 5);
+  /* the annotation should have arity of 4*/
+  ROSE_ASSERT(annot->getArity() == 4);
   // GB (2008-12-04): A unary op's mode is now represented by an atom
   // 'prefix' or 'postfix', not by a numerical constant.
   // PrologInt* mode = dynamic_cast<PrologInt*>(annot->at(0));
@@ -1214,7 +1214,10 @@ PrologToRose::createProject(Sg_File_Info* fi,vector<SgNode*>* succs) {
   for (vector<SgNode*>::iterator it = succs->begin();
        it != succs->end(); ++it) {
     SgFile* file = dynamic_cast<SgFile*>(*it);
-    project->get_fileList()->push_back(file);
+    ROSE_ASSERT(file);
+    SgFilePtrList *fl = new SgFilePtrList;
+    fl->push_back(file);
+    project->set_fileList(fl);
   }
   return project;
 }
