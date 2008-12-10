@@ -10,28 +10,39 @@
 // Extended DOS File Header
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/** Construct a new Extended DOS Header with default values. The new section is placed at file offset zero. */
 void
-SgAsmPEExtendedDOSHeader::ctor(SgAsmGenericFile *f, addr_t offset)
+SgAsmPEExtendedDOSHeader::ctor()
 {
-    grab_content();
+    ROSE_ASSERT(get_file()!=NULL);
+    ROSE_ASSERT(get_size()>0);
+
     set_name(new SgAsmBasicString("Extended DOS Header"));
     set_synthesized(true);
     set_purpose(SP_HEADER);
+}
 
-    /* Decode */
+/** Initialize this header with information parsed from the file. */
+SgAsmPEExtendedDOSHeader*
+SgAsmPEExtendedDOSHeader::parse()
+{
+    SgAsmGenericSection::parse();
+    
+    /* Read header from file */
     ExtendedDOSHeader_disk disk;
     content(0, sizeof disk, &disk);
 
+    /* Decode file format */
+    ROSE_ASSERT(ORDER_LSB==get_header()->get_sex());
     for (size_t i=0; i<NELMTS(disk.e_res1); i++)
         p_e_res1.push_back(le_to_host(disk.e_res1[i]));
-
     p_e_oemid             = le_to_host(disk.e_oemid);
     p_e_oeminfo           = le_to_host(disk.e_oeminfo);
-
     for (size_t i=0; i< NELMTS(disk.e_res2); i++)
         p_e_res2.push_back(le_to_host(disk.e_res2[i]));
-
     p_e_lfanew            = le_to_host(disk.e_lfanew);
+
+    return this;
 }
 
 /* Encode the extended header back into disk format */
@@ -2244,7 +2255,9 @@ SgAsmPEFileHeader::is_PE(SgAsmGenericFile *f)
         dos_hdr  = new SgAsmDOSFileHeader(f);
         dos_hdr->parse();
 
-        dos2_hdr = new SgAsmPEExtendedDOSHeader(f, dos_hdr->get_size());
+        dos2_hdr = new SgAsmPEExtendedDOSHeader(dos_hdr, dos_hdr->get_size());
+        dos2_hdr->parse();
+
         pe_hdr   = new SgAsmPEFileHeader(f, dos2_hdr->get_e_lfanew());
         retval   = true;
     } catch (...) {
@@ -2269,7 +2282,8 @@ SgAsmPEFileHeader::parse(SgAsmGenericFile *ef)
     dos_header->parse(false);
 
     /* PE files extend the DOS header with some additional info */
-    SgAsmPEExtendedDOSHeader *dos2_header = new SgAsmPEExtendedDOSHeader(ef, dos_header->get_size());
+    SgAsmPEExtendedDOSHeader *dos2_header = new SgAsmPEExtendedDOSHeader(dos_header, dos_header->get_size());
+    dos2_header->parse();
     
     /* The PE header has a fixed-size component followed by some number of RVA/Size pairs */
     SgAsmPEFileHeader *fhdr = new SgAsmPEFileHeader(ef, dos2_header->get_e_lfanew());

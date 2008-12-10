@@ -2177,12 +2177,15 @@ HEADER_PE_EXTENDED_DOS_HEADER_START
 			uint32_t    e_lfanew;       /* 0x12 file offset of new exe (PE) header */
 		} __attribute__((packed));    /* 0x16 */
 
-		SgAsmPEExtendedDOSHeader(SgAsmGenericFile *f, addr_t offset);
+		SgAsmPEExtendedDOSHeader(SgAsmDOSFileHeader *fhdr, addr_t offset)
+			: SgAsmGenericSection(fhdr->get_file(), fhdr, offset, sizeof(ExtendedDOSHeader_disk))
+			{ctor();}
+		virtual SgAsmPEExtendedDOSHeader *parse();
 		void *encode(SgAsmPEExtendedDOSHeader::ExtendedDOSHeader_disk*) const;
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 	private:
-		void ctor(SgAsmGenericFile *f, addr_t offset);
+		void ctor();
 HEADER_PE_EXTENDED_DOS_HEADER_END
 
 
@@ -4405,12 +4408,6 @@ SOURCE_PE_IMPORT_DIRECTORY_START
 SOURCE_PE_IMPORT_DIRECTORY_END
 
 SOURCE_PE_EXTENDED_DOS_HEADER_START
-SgAsmPEExtendedDOSHeader::SgAsmPEExtendedDOSHeader(SgAsmGenericFile *f, addr_t offset)
-   : SgAsmGenericSection(f, NULL, offset, sizeof(SgAsmPEExtendedDOSHeader::ExtendedDOSHeader_disk))
-   {
-     ctor(f, offset);
-   }
-
 SOURCE_PE_EXTENDED_DOS_HEADER_END
 
 SOURCE_PE_SECTION_TABLE_ENTRY_START
