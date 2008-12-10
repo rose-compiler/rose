@@ -2157,8 +2157,11 @@ HEADER_PE_SECTION_TABLE_END
 
 HEADER_PE_COFF_SYMBOL_TABLE_START
 	public:
-		explicit SgAsmCoffSymbolTable(SgAsmPEFileHeader *fhdr);
+		explicit SgAsmCoffSymbolTable(SgAsmPEFileHeader *fhdr)
+			: SgAsmGenericSection(fhdr->get_file(), fhdr, fhdr->get_e_coff_symtab(), 1)
+			{ctor();}
 		size_t get_nslots() const;
+		virtual SgAsmCoffSymbolTable *parse();
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 	private:
@@ -4260,13 +4263,6 @@ SOURCE_PE_SECTION_TABLE_START
 SOURCE_PE_SECTION_TABLE_END
 
 SOURCE_PE_COFF_SYMBOL_TABLE_START
-SgAsmCoffSymbolTable::SgAsmCoffSymbolTable(SgAsmPEFileHeader *fhdr)
-   : SgAsmGenericSection(fhdr->get_file(), fhdr, fhdr->get_e_coff_symtab(),
-	                 fhdr->get_e_coff_nsyms() * SgAsmCoffSymbol::COFFSymbol_disk_size)
-   {
-     ctor();
-   }
-
 SOURCE_PE_COFF_SYMBOL_TABLE_END
 
 SOURCE_PE_IMPORT_HINT_NAME_START

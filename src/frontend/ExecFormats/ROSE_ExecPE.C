@@ -291,7 +291,7 @@ SgAsmPEFileHeader::parse()
 
     /* Parse the COFF symbol table and add symbols to the PE header */
     if (get_e_coff_symtab() && get_e_coff_nsyms()) {
-        SgAsmCoffSymbolTable *symtab = new SgAsmCoffSymbolTable(this);
+        SgAsmCoffSymbolTable *symtab = (new SgAsmCoffSymbolTable(this))->parse();
         std::vector<SgAsmCoffSymbol*> & symbols = symtab->get_symbols()->get_symbols();
         for (size_t i = 0; i < symbols.size(); i++)
             add_symbol(symbols[i]);
@@ -2182,26 +2182,33 @@ SgAsmCoffSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
 void
 SgAsmCoffSymbolTable::ctor()
 {
-    grab_content();
-
     set_synthesized(true);
     set_name(new SgAsmBasicString("COFF Symbols"));
     set_purpose(SP_SYMTAB);
 
-    SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(get_header());
-    ROSE_ASSERT(fhdr!=NULL);
-
     p_symbols = new SgAsmCoffSymbolList;
     p_symbols->set_parent(this);
+}
+
+SgAsmCoffSymbolTable*
+SgAsmCoffSymbolTable::parse()
+{
+    /* Set the section size according to the number of entries indicated in the header. */
+    SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(get_header());
+    ROSE_ASSERT(fhdr!=NULL);
+    set_offset(fhdr->get_e_coff_symtab());
+    set_size(fhdr->get_e_coff_nsyms()*SgAsmCoffSymbol::COFFSymbol_disk_size);
+
+    SgAsmGenericSection::parse();
 
     /* The string table immediately follows the symbols. The first four bytes of the string table are the size of the
      * string table in little endian. */
     addr_t strtab_offset = get_offset() + fhdr->get_e_coff_nsyms() * SgAsmCoffSymbol::COFFSymbol_disk_size;
     p_strtab = new SgAsmGenericSection(fhdr->get_file(), fhdr, strtab_offset, sizeof(uint32_t));
-    p_strtab->grab_content();
     p_strtab->set_synthesized(true);
     p_strtab->set_name(new SgAsmBasicString("COFF Symbol Strtab"));
     p_strtab->set_purpose(SP_HEADER);
+    p_strtab->parse();
 
     uint32_t word;
     p_strtab->content(0, sizeof word, &word);
@@ -2215,6 +2222,7 @@ SgAsmCoffSymbolTable::ctor()
         i += symbol->get_st_num_aux_entries();
         p_symbols->get_symbols().push_back(symbol);
     }
+    return this;
 }
 
 /** Returns the number of COFF Symbol Table slots occupied by the symbol table. The number of slots can be larger than the
