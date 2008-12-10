@@ -1443,23 +1443,23 @@ HEADER_ELF_STRING_SECTION_END
 
 
 
-HEADER_ELF_RELA_SECTION_START
+HEADER_ELF_RELOC_SECTION_START
 	public:
-		explicit SgAsmElfRelaSection(SgAsmElfFileHeader *fhdr)
+		explicit SgAsmElfRelocSection(SgAsmElfFileHeader *fhdr)
 			: SgAsmElfSection(fhdr)
 			{ctor();}
 		using SgAsmElfSection::calculate_sizes;
-		virtual SgAsmElfRelaSection *parse();
+		virtual SgAsmElfRelocSection *parse();
 		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const;
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 	private:
 		void ctor();
-HEADER_ELF_RELA_SECTION_END
+HEADER_ELF_RELOC_SECTION_END
 
 
 
-HEADER_ELF_RELA_ENTRY_START
+HEADER_ELF_RELOC_ENTRY_START
 	public:
 		struct Elf32RelaEntry_disk {
 			uint32_t	r_offset;
@@ -1472,24 +1472,24 @@ HEADER_ELF_RELA_ENTRY_START
 			uint64_t	r_addend;
 		} __attribute__((packed));
 
-		SgAsmElfRelaEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfRelaEntry::Elf32RelaEntry_disk *disk)
+		SgAsmElfRelocEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfRelocEntry::Elf32RelaEntry_disk *disk)
 			: p_r_offset(0), p_r_addend(0), p_sym(0), p_type(0)
 			{ctor(sex, disk);}
-		SgAsmElfRelaEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfRelaEntry::Elf64RelaEntry_disk *disk)
+		SgAsmElfRelocEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfRelocEntry::Elf64RelaEntry_disk *disk)
 			: p_r_offset(0), p_r_addend(0), p_sym(0), p_type(0)
 			{ctor(sex, disk);}
 		//virtual ~SgAsmElfDynamicEntry() {}
 
-		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfRelaEntry::Elf32RelaEntry_disk*) const;
-		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfRelaEntry::Elf64RelaEntry_disk*) const;
+		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfRelocEntry::Elf32RelaEntry_disk*) const;
+		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfRelocEntry::Elf64RelaEntry_disk*) const;
 
 		void dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbolSection *symtab) const;
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const
 			{dump(f, prefix, idx, NULL);}
 	private:
-		void ctor(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfRelaEntry::Elf32RelaEntry_disk *disk);
-		void ctor(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfRelaEntry::Elf64RelaEntry_disk *disk);
-HEADER_ELF_RELA_ENTRY_END
+		void ctor(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfRelocEntry::Elf32RelaEntry_disk *disk);
+		void ctor(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfRelocEntry::Elf64RelaEntry_disk *disk);
+HEADER_ELF_RELOC_ENTRY_END
 
 
 

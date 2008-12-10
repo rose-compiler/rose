@@ -423,9 +423,9 @@ SgAsmElfSymbolSection
 SgAsmElfDynamicSection
 SgAsmElfDynamicEntry
 SgAsmElfDynamicEntryList
-SgAsmElfRelaSection
-SgAsmElfRelaEntry
-SgAsmElfRelaEntryList
+SgAsmElfRelocSection
+SgAsmElfRelocEntry
+SgAsmElfRelocEntryList
 SgAsmPESection
 SgAsmPESectionTable
 SgAsmPEImportSection
