@@ -1506,7 +1506,7 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmDOSFileHeader.setDataPrototype("rose_addr_t","e_relocs_offset","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmDOSFileHeader.setDataPrototype("SgUnsignedCharList","e_res1","",
+     AsmDOSFileHeader.setDataPrototype("unsigned","e_res1", "= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmDOSFileHeader.setDataPrototype("SgAsmGenericSection*","relocs","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);

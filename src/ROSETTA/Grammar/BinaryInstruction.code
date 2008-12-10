@@ -3023,7 +3023,7 @@ HEADER_DOS_HEADER_START
 			uint16_t      e_cs;                /* 0x16 initial value for CS register relative to program load segment*/
 			uint16_t      e_relocs_offset;     /* 0x18 file address of relocation table */
 			uint16_t      e_overlay;           /* 0x1a overlay number (zero indicates main program) */
-			unsigned char e_res1[4];           /* 0x1c unknown purpose */
+			uint32_t      e_res1;              /* 0x1c unknown purpose */
 		} __attribute__((packed));                 /* 0x20 */
 
 		struct DOSRelocEntry_disk {
