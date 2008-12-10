@@ -4,53 +4,29 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-// namespace Exec {
-// namespace DOS {
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // MS-DOS Real Mode File Header
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/** Construct a new DOS File Header with default values. The new section is placed at file offset zero and the size is
+ *  initially one byte (calling parse() will extend it as necessary). */
 void
-SgAsmDOSFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
+SgAsmDOSFileHeader::ctor()
 {
-    grab_content();
-    const DOSFileHeader_disk *disk = (const DOSFileHeader_disk*)content(0, sizeof(DOSFileHeader_disk));
-
+    ROSE_ASSERT(get_file()!=NULL);
+    ROSE_ASSERT(get_size()>0);
+    
     set_name(new SgAsmBasicString("DOS File Header"));
     set_synthesized(true);
     set_purpose(SP_HEADER);
 
- // DQ (8/16/2008): Added code to set SgAsmPEFileHeader as parent of input SgAsmGenericFile
-    f->set_parent(this);
-
- // DQ: Some old compilers were little-endian ignorant and stored "ZM", but we will ignore this.
- /* Check magic number early */
-    if (disk->e_magic[0]!='M' || disk->e_magic[1]!='Z')
-        throw FormatError("Bad DOS magic number");
-
-    /* Decode file format */
-    p_e_last_page_size    = le_to_host(disk->e_last_page_size);
-    p_e_total_pages       = le_to_host(disk->e_total_pages);
-    p_e_nrelocs           = le_to_host(disk->e_nrelocs);
-    p_e_header_paragraphs = le_to_host(disk->e_header_paragraphs);
-    p_e_minalloc          = le_to_host(disk->e_minalloc);
-    p_e_maxalloc          = le_to_host(disk->e_maxalloc);
-    p_e_ss                = le_to_host(disk->e_ss);
-    p_e_sp                = le_to_host(disk->e_sp);
-    p_e_cksum             = le_to_host(disk->e_cksum);
-    p_e_ip                = le_to_host(disk->e_ip);
-    p_e_cs                = le_to_host(disk->e_cs);
-    p_e_relocs_offset     = le_to_host(disk->e_relocs_offset);
-    p_e_overlay           = le_to_host(disk->e_overlay);
-    for (size_t i=0; i<NELMTS(disk->e_res1); i++)
-        p_e_res1.push_back(le_to_host(disk->e_res1[i]));
-
     /* Magic number */
-    p_magic.push_back(disk->e_magic[0]);
-    p_magic.push_back(disk->e_magic[1]);
+    p_magic.clear();
+    p_magic.push_back('M');
+    p_magic.push_back('Z');
 
-    /* File format */
+    /* Executable Format */
+    ROSE_ASSERT(p_exec_format!=NULL);
     p_exec_format->set_family(FAMILY_DOS);
     p_exec_format->set_purpose(PURPOSE_EXECUTABLE);
     p_exec_format->set_sex(ORDER_LSB);
@@ -60,12 +36,70 @@ SgAsmDOSFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     p_exec_format->set_version(0);
     p_exec_format->set_is_current_version(true);
 
-    /* Target architecture */
-    set_isa(ISA_IA32_Family);
+    p_isa = ISA_IA32_Family;
+}
+
+/** Initialize this header with information parsed from the file and construct and parse everything that's reachable from the
+ *  header. The DOS File Header should have been constructed such that SgAsmDOSFileHeader::ctor() was called. */
+SgAsmDOSFileHeader*
+SgAsmDOSFileHeader::parse(bool define_rm_section)
+{
+    SgAsmGenericSection::parse();
+
+    /* Read header from file */
+    DOSFileHeader_disk disk;
+    if (sizeof(disk)>get_size())
+        extend(sizeof(disk)-get_size());
+    content(0, sizeof(disk), &disk);
+
+    /* Check magic number early. 
+     * Some old compilers were little-endian ignorant and stored "ZM", but we will ignore this [DQ]. */
+    if (disk.e_magic[0]!='M' || disk.e_magic[1]!='Z')
+        throw FormatError("Bad DOS magic number");
+    
+    /* Decode file format */
+    ROSE_ASSERT(ORDER_LSB==p_exec_format->get_sex());
+    p_e_last_page_size    = le_to_host(disk.e_last_page_size);
+    p_e_total_pages       = le_to_host(disk.e_total_pages);
+    p_e_nrelocs           = le_to_host(disk.e_nrelocs);
+    p_e_header_paragraphs = le_to_host(disk.e_header_paragraphs);
+    p_e_minalloc          = le_to_host(disk.e_minalloc);
+    p_e_maxalloc          = le_to_host(disk.e_maxalloc);
+    p_e_ss                = le_to_host(disk.e_ss);
+    p_e_sp                = le_to_host(disk.e_sp);
+    p_e_cksum             = le_to_host(disk.e_cksum);
+    p_e_ip                = le_to_host(disk.e_ip);
+    p_e_cs                = le_to_host(disk.e_cs);
+    p_e_relocs_offset     = le_to_host(disk.e_relocs_offset);
+    p_e_overlay           = le_to_host(disk.e_overlay);
+    for (size_t i=0; i<NELMTS(disk.e_res1); i++)
+        p_e_res1.push_back(le_to_host(disk.e_res1[i]));
+
+    /* Magic number */
+    p_magic.clear();
+    p_magic.push_back(disk.e_magic[0]);
+    p_magic.push_back(disk.e_magic[1]);
+
+    /* The DOS File Header is followed by optional relocation entries */
+    if (p_e_nrelocs>0) {
+        SgAsmGenericSection *relocs = new SgAsmGenericSection(get_file(), this, p_e_relocs_offset,
+                                                              p_e_nrelocs * sizeof(DOSRelocEntry_disk));
+        relocs->parse();
+        relocs->set_name(new SgAsmBasicString("DOS relocation table"));
+        relocs->set_synthesized(true);
+        relocs->set_purpose(SP_HEADER);
+        set_relocs(relocs);
+    }
+    
+    /* DOS real-mode text/data/etc. */
+    if (define_rm_section)
+        add_rm_section();
 
     /* Entry point */
     p_base_va = 0;
-    add_entry_rva(le_to_host(disk->e_ip));
+    add_entry_rva(le_to_host(disk.e_ip));
+
+    return this;
 }
 
 /* Encode the DOS file header into disk format */
@@ -203,7 +237,8 @@ SgAsmDOSFileHeader::is_DOS(SgAsmGenericFile *f)
     bool           retval  = false;
 
     try {
-        fhdr = new SgAsmDOSFileHeader(f, 0);
+        fhdr = new SgAsmDOSFileHeader(f);
+        fhdr->parse();
         retval = true;
     } catch (...) {
         /* cleanup is below */
@@ -213,31 +248,3 @@ SgAsmDOSFileHeader::is_DOS(SgAsmGenericFile *f)
     return retval;
 }
 
-/* Parses the structure of a DOS file and adds the information to the ExecFile. */
-SgAsmDOSFileHeader *
-SgAsmDOSFileHeader::parse(SgAsmGenericFile *ef, bool define_rm_section)
-{
-    ROSE_ASSERT(ef);
-    
-    SgAsmDOSFileHeader *fhdr = new SgAsmDOSFileHeader(ef, 0);
-
-    /* The DOS file header is followed by optional relocation entries */
-    if (fhdr->p_e_nrelocs > 0) {
-        SgAsmGenericSection *relocs = new SgAsmGenericSection(ef, fhdr, fhdr->p_e_relocs_offset,
-                                                              fhdr->p_e_nrelocs * sizeof(DOSRelocEntry_disk));
-        relocs->parse();
-        relocs->set_name(new SgAsmBasicString("DOS relocation table"));
-        relocs->set_synthesized(true);
-        relocs->set_purpose(SP_HEADER);
-        fhdr->set_relocs(relocs);
-    }
-
-    /* DOS real-mode text/data/etc. */
-    if (define_rm_section == true)
-        fhdr->add_rm_section();
-    
-    return fhdr;
-}
-
-// }; //namespace DOS
-// }; //namespace Exec

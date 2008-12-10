@@ -2241,7 +2241,9 @@ SgAsmPEFileHeader::is_PE(SgAsmGenericFile *f)
     bool retval  = false;
 
     try {
-        dos_hdr  = new SgAsmDOSFileHeader(f, 0);
+        dos_hdr  = new SgAsmDOSFileHeader(f);
+        dos_hdr->parse();
+
         dos2_hdr = new SgAsmPEExtendedDOSHeader(f, dos_hdr->get_size());
         pe_hdr   = new SgAsmPEFileHeader(f, dos2_hdr->get_e_lfanew());
         retval   = true;
@@ -2263,7 +2265,8 @@ SgAsmPEFileHeader::parse(SgAsmGenericFile *ef)
     ROSE_ASSERT(ef);
 
     /* All PE files are also DOS files, so parse the DOS part first */
-    SgAsmDOSFileHeader *dos_header = SgAsmDOSFileHeader::parse(ef, false);
+    SgAsmDOSFileHeader *dos_header = new SgAsmDOSFileHeader(ef);
+    dos_header->parse(false);
 
     /* PE files extend the DOS header with some additional info */
     SgAsmPEExtendedDOSHeader *dos2_header = new SgAsmPEExtendedDOSHeader(ef, dos_header->get_size());

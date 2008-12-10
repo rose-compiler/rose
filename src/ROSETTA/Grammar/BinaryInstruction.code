@@ -1250,7 +1250,7 @@ HEADER_ELF_HEADER_START
 		} __attribute__((packed));
 
 		/* Non-parsing constructor */
-		SgAsmElfFileHeader(SgAsmGenericFile *f)
+		explicit SgAsmElfFileHeader(SgAsmGenericFile *f)
 			: SgAsmGenericHeader(f, 0, 1)
 			{ctor();}
 
@@ -2164,28 +2164,24 @@ HEADER_PE_COFF_SYMBOL_TABLE_END
 
 
 HEADER_PE_EXTENDED_DOS_HEADER_START
+	public:
+		struct ExtendedDOSHeader_disk {
+			unsigned char e_res1[4];    /* 0x00 reserved */
+			uint16_t    e_oemid;        /* 0x04 OEM Identifier */
+			uint16_t    e_oeminfo;      /* 0x06 other OEM information; oemid specific */
+			uint16_t    e_res2[10];     /* 0x08 reserved */
+			uint32_t    e_lfanew;       /* 0x12 file offset of new exe (PE) header */
+		} __attribute__((packed));    /* 0x16 */
 
-     public:
-          struct ExtendedDOSHeader_disk {
-               unsigned char e_res1[4];    /* 0x00 reserved */
-               uint16_t    e_oemid;        /* 0x04 OEM Identifier */
-               uint16_t    e_oeminfo;      /* 0x06 other OEM information; oemid specific */
-               uint16_t    e_res2[10];     /* 0x08 reserved */
-               uint32_t    e_lfanew;       /* 0x12 file offset of new exe (PE) header */
-             } __attribute__((packed));    /* 0x16 */
-
-     public:
-          SgAsmPEExtendedDOSHeader(SgAsmGenericFile *f, addr_t offset);
-       // virtual ~SgAsmPEExtendedDOSHeader() {}
-
-          void *encode(SgAsmPEExtendedDOSHeader::ExtendedDOSHeader_disk*) const;
-         virtual void unparse(std::ostream&) const;
-          virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-
-     private:
-          void ctor(SgAsmGenericFile *f, addr_t offset);
-
+		SgAsmPEExtendedDOSHeader(SgAsmGenericFile *f, addr_t offset);
+		void *encode(SgAsmPEExtendedDOSHeader::ExtendedDOSHeader_disk*) const;
+		virtual void unparse(std::ostream&) const;
+		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+	private:
+		void ctor(SgAsmGenericFile *f, addr_t offset);
 HEADER_PE_EXTENDED_DOS_HEADER_END
+
+
 
 HEADER_PE_SECTION_TABLE_ENTRY_START
 
@@ -3105,62 +3101,47 @@ HEADER_LE_SECTION_TABLE_ENTRY_END
 // ***********************************************
 
 HEADER_DOS_HEADER_START
-     public:
-          struct DOSFileHeader_disk {
-               unsigned char e_magic[2];           /* 0x00 "MZ" */
-               uint16_t    e_last_page_size;       /* 0x02 bytes used on last page of file (1 page == 512 bytes); zero if last page is full */
-               uint16_t    e_total_pages;          /* 0x04 number of pages (including last possibly partial page) in file */
-               uint16_t    e_nrelocs;              /* 0x06 number of relocation entries stored after this header */
-               uint16_t    e_header_paragraphs;    /* 0x08 header size in paragraphs (16-byte blocks) including relocations */
-               uint16_t    e_minalloc;             /* 0x0a number of extra paragraphs needed, similar to BSS in Unix */
-               uint16_t    e_maxalloc;             /* 0x0c max paragraphs to allocate for BSS */
-               uint16_t    e_ss;                   /* 0x0e initial value of SS register relative to program load segment */
-               uint16_t    e_sp;                   /* 0x10 initial value for SP register */
-               uint16_t    e_cksum;                /* 0x12 checksum; 16-bit sum of all words in file should be zero (usually not filled in) */
-               uint16_t    e_ip;                   /* 0x14 initial value for IP register */
-               uint16_t    e_cs;                   /* 0x16 initial value for CS register relative to program load segment */
-               uint16_t    e_relocs_offset;        /* 0x18 file address of relocation table */
-               uint16_t    e_overlay;              /* 0x1a overlay number (zero indicates main program) */
-               unsigned char e_res1[4];            /* 0x1c unknown purpose */
-            } __attribute__((packed));              /* 0x20 */
+	public:
+		struct DOSFileHeader_disk {
+			unsigned char e_magic[2];          /* 0x00 "MZ" */
+			uint16_t      e_last_page_size;    /* 0x02 bytes used on last page of file (1 page == 512 bytes);
+							    *      zero implies if last page is full */
+			uint16_t      e_total_pages;       /* 0x04 number of pages (inc. last possibly partial page) in file */
+			uint16_t      e_nrelocs;           /* 0x06 number of relocation entries stored after this header */
+			uint16_t      e_header_paragraphs; /* 0x08 header size in paragraphs (16-byte blocks) inc. relocations */
+			uint16_t      e_minalloc;          /* 0x0a number of extra paragraphs needed, similar to BSS in Unix */
+			uint16_t      e_maxalloc;          /* 0x0c max paragraphs to allocate for BSS */
+			uint16_t      e_ss;                /* 0x0e initial value of SS register relative to program load segment */
+			uint16_t      e_sp;                /* 0x10 initial value for SP register */
+			uint16_t      e_cksum;             /* 0x12 checksum; 16-bit sum of all words in file should be zero
+							    *      (usually not filled in) */
+			uint16_t      e_ip;                /* 0x14 initial value for IP register */
+			uint16_t      e_cs;                /* 0x16 initial value for CS register relative to program load segment*/
+			uint16_t      e_relocs_offset;     /* 0x18 file address of relocation table */
+			uint16_t      e_overlay;           /* 0x1a overlay number (zero indicates main program) */
+			unsigned char e_res1[4];           /* 0x1c unknown purpose */
+		} __attribute__((packed));                 /* 0x20 */
 
-          struct DOSRelocEntry_disk {
-               uint16_t    offset;
-               uint16_t    segment;
-             } __attribute__((packed));
+		struct DOSRelocEntry_disk {
+			uint16_t      offset;		   /* 0x00 */
+			uint16_t      segment;		   /* 0x02 */
+		} __attribute__((packed));		   /* 0x04 */
 
-          SgAsmDOSFileHeader(SgAsmGenericFile *f, addr_t offset);
-       // virtual ~DOSFileHeader() {}
-
-          virtual void unparse(std::ostream&) const;
-          virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-
-       // Required function to overload base class (ROSETTA does not permit the base class function to be pure virtual, as I recall)
-          virtual const char *format_name() const;
-
-          SgAsmGenericSection *add_rm_section(addr_t max_offset=0);
-
-       // Use the automatically generated access functions 
-       // SgAsmGenericSection *get_relocs() {return relocs;}
-       // void set_relocs(SgAsmGenericSection *s) {relocs=s;}
-       // SgAsmGenericSection *get_rm_section() {return rm_section;}
-       // void set_rm_section(ExecSection *s) {rm_section=s;}
-
-       // DQ (8/9/2008): Added these member functions from the Exec namespace, since we don't have that namespace available in ROSE (long term).
-          static SgAsmDOSFileHeader *parse( SgAsmGenericFile*, bool define_rm_section = true );
-
-          static bool is_DOS(SgAsmGenericFile*);
-
-     private:
-          void ctor(SgAsmGenericFile *f, addr_t offset);
-          void *encode(SgAsmDOSFileHeader::DOSFileHeader_disk*) const;
-
+		explicit SgAsmDOSFileHeader(SgAsmGenericFile *f)
+			: SgAsmGenericHeader(f, 0, sizeof(DOSFileHeader_disk)),
+			  p_relocs(NULL), p_rm_section(NULL)
+			{ctor();}
+		virtual SgAsmDOSFileHeader *parse() {return parse(true);}
+		SgAsmDOSFileHeader *parse(bool define_rm_section);
+		virtual void unparse(std::ostream&) const;
+		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+		virtual const char *format_name() const {return "DOS";}
+		SgAsmGenericSection *add_rm_section(addr_t max_offset=0);
+		static bool is_DOS(SgAsmGenericFile*);
+	private:
+		void ctor();
+		void *encode(SgAsmDOSFileHeader::DOSFileHeader_disk*) const;
 HEADER_DOS_HEADER_END
-
-
-
-
-
 
 
 
@@ -4724,18 +4705,6 @@ SOURCE_LE_SECTION_TABLE_ENTRY_END
 
 
 SOURCE_DOS_HEADER_START
-
-SgAsmDOSFileHeader::SgAsmDOSFileHeader(SgAsmGenericFile *f, addr_t offset)
-   : SgAsmGenericHeader(f, offset, sizeof(SgAsmDOSFileHeader::DOSFileHeader_disk)), p_relocs(NULL), p_rm_section(NULL)
-   {
-     ctor(f, offset);
-   }
-
-const char *
-SgAsmDOSFileHeader::format_name() const
-   {
-     return "DOS";
-   }
 SOURCE_DOS_HEADER_END
 
 

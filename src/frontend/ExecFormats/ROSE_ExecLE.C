@@ -952,7 +952,9 @@ SgAsmLEFileHeader::is_LE(SgAsmGenericFile *f)
     bool retval  = false;
 
     try {
-        dos_hdr  = new SgAsmDOSFileHeader(f, 0);
+        dos_hdr  = new SgAsmDOSFileHeader(f);
+        dos_hdr->parse();
+
         dos2_hdr = new SgAsmLEExtendedDOSHeader(f, dos_hdr->get_size());
         le_hdr   = new SgAsmLEFileHeader(f, dos2_hdr->get_e_lfanew());
         retval   = true;
@@ -973,7 +975,8 @@ SgAsmLEFileHeader::parse(SgAsmGenericFile *ef)
     ROSE_ASSERT(ef);
 
     /* All LE files are also DOS files, so parse the DOS part first */
-    SgAsmDOSFileHeader *dos_header = SgAsmDOSFileHeader::parse(ef, false);
+    SgAsmDOSFileHeader *dos_header = new SgAsmDOSFileHeader(ef);
+    dos_header->parse(false);
 
     /* LE files extend the DOS header with some additional info */
     SgAsmLEExtendedDOSHeader *dos2_header = new SgAsmLEExtendedDOSHeader(ef, dos_header->get_size());

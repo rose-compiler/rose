@@ -1286,7 +1286,9 @@ SgAsmNEFileHeader::is_NE(SgAsmGenericFile *f)
     bool retval  = false;
 
     try {
-        dos_hdr  = new SgAsmDOSFileHeader(f, 0);
+        dos_hdr  = new SgAsmDOSFileHeader(f);
+        dos_hdr->parse();
+
         dos2_hdr = new SgAsmNEExtendedDOSHeader(f, dos_hdr->get_size());
         ne_hdr   = new SgAsmNEFileHeader(f, dos2_hdr->get_e_lfanew());
         retval = true;
@@ -1307,7 +1309,8 @@ SgAsmNEFileHeader::parse(SgAsmGenericFile *ef)
     ROSE_ASSERT(ef);
 
     /* All NE files are also DOS files, so parse the DOS part first */
-    SgAsmDOSFileHeader *dos_header = SgAsmDOSFileHeader::parse(ef, false);
+    SgAsmDOSFileHeader *dos_header = new SgAsmDOSFileHeader(ef);
+    dos_header->parse(false);
 
     /* NE files extend the DOS header with some additional info */
     SgAsmNEExtendedDOSHeader *dos2_header = new SgAsmNEExtendedDOSHeader(ef, dos_header->get_size());

@@ -3727,7 +3727,7 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
         SgAsmLEFileHeader::parse(ef);
     } else if (SgAsmDOSFileHeader::is_DOS(ef)) {
         /* Must be after PE and NE since all PE and NE files are also DOS files */
-        SgAsmDOSFileHeader::parse(ef);
+        (new SgAsmDOSFileHeader(ef))->parse();
     } else {
         delete ef; ef=NULL;
         /* Use file(1) to try to figure out the file type to report in the exception */
