@@ -39,6 +39,28 @@ SgAsmDOSFileHeader::ctor()
     p_isa = ISA_IA32_Family;
 }
 
+/** Returns true if a cursory look at the file indicates that it could be a DOS executable file. */
+bool
+SgAsmDOSFileHeader::is_DOS(SgAsmGenericFile *ef)
+{
+    SgAsmDOSFileHeader *fhdr = NULL;
+    bool retval  = false;
+
+    try {
+        fhdr = new SgAsmDOSFileHeader(ef);
+        fhdr->extend(2);
+        unsigned char magic[2];
+        fhdr->content(0, 2, magic);
+        retval = 'M'==magic[0] && 'Z'==magic[1];
+    } catch (...) {
+        /* cleanup is below */
+    }
+
+    delete fhdr;
+    return retval;
+}
+
+
 /** Initialize this header with information parsed from the file and construct and parse everything that's reachable from the
  *  header. The DOS File Header should have been constructed such that SgAsmDOSFileHeader::ctor() was called. */
 SgAsmDOSFileHeader*
@@ -226,25 +248,3 @@ SgAsmDOSFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
-/* Returns true if a cursory look at the file indicates that it could be a DOS executable file. */
-bool
-SgAsmDOSFileHeader::is_DOS(SgAsmGenericFile *f)
-{
-    SgAsmDOSFileHeader *fhdr    = NULL;
-    bool           retval  = false;
-
-    try {
-        fhdr = new SgAsmDOSFileHeader(f);
-        fhdr->parse();
-        retval = true;
-    } catch (...) {
-        /* cleanup is below */
-    }
-
-    delete fhdr;
-    return retval;
-}
-
