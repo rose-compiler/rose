@@ -3037,6 +3037,7 @@ HEADER_DOS_HEADER_START
 			{ctor();}
 		virtual SgAsmDOSFileHeader *parse() {return parse(true);}
 		SgAsmDOSFileHeader *parse(bool define_rm_section);
+		virtual bool reallocate();
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 		virtual const char *format_name() const {return "DOS";}

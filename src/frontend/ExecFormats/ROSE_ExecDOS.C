@@ -147,6 +147,14 @@ SgAsmDOSFileHeader::encode(DOSFileHeader_disk *disk) const
     return disk;
 }
 
+bool
+SgAsmDOSFileHeader::reallocate()
+{
+    if (p_relocs)
+        p_e_relocs_offset = p_relocs->get_offset();
+    return false;
+}
+
 /* Write the DOS file header back to disk */
 void
 SgAsmDOSFileHeader::unparse(std::ostream &f) const
@@ -154,14 +162,6 @@ SgAsmDOSFileHeader::unparse(std::ostream &f) const
     /* Unparse each section reachable from the DOS File Header (e.g., the Extended DOS Header) */
     for (SgAsmGenericSectionPtrList::iterator i=p_sections->get_sections().begin(); i!=p_sections->get_sections().end(); ++i)
         (*i)->unparse(f);
-
-#if 0 /*These are children of the header and therefore unparsed in the loop above. [RPM 2008-12-05]*/
-    if (p_relocs)
-        p_relocs->unparse(f);
-
-    if (p_rm_section)
-        p_rm_section->unparse(f);
-#endif
 
     /* Unparse the header itself */
     DOSFileHeader_disk disk;
@@ -237,7 +237,7 @@ SgAsmDOSFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %u (zero implies not used)\n",p, w, "e_cksum",          p_e_cksum);
     fprintf(f, "%s%-*s = 0x%08u (%u)\n",           p, w, "e_ip",                 p_e_ip, p_e_ip);
     fprintf(f, "%s%-*s = 0x%08u (%u)\n",           p, w, "e_cs",                 p_e_cs, p_e_cs);
-    fprintf(f, "%s%-*s = byte %"PRIu64"\n",        p, w, "e_relocs_offset",      p_e_relocs_offset);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "e_relocs_offset",  p_e_relocs_offset, p_e_relocs_offset);
     fprintf(f, "%s%-*s = %u\n",                    p, w, "e_overlay",            p_e_overlay);
     fprintf(f, "%s%-*s = 0x%08u (%u)\n",           p, w, "e_res1",               p_e_res1, p_e_res1);
     if (p_relocs) {
