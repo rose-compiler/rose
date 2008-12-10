@@ -153,15 +153,23 @@ SgAsmDOSFileHeader::encode(DOSFileHeader_disk *disk) const
 void
 SgAsmDOSFileHeader::unparse(std::ostream &f) const
 {
-    DOSFileHeader_disk disk;
-    encode(&disk);
-    write(f, 0, sizeof(disk), &disk);
+    /* Unparse each section reachable from the DOS File Header (e.g., the Extended DOS Header) */
+    for (SgAsmGenericSectionPtrList::iterator i=p_sections->get_sections().begin(); i!=p_sections->get_sections().end(); ++i)
+        (*i)->unparse(f);
 
+#if 0 /*These are children of the header and therefore unparsed in the loop above. [RPM 2008-12-05]*/
     if (p_relocs)
         p_relocs->unparse(f);
 
     if (p_rm_section)
         p_rm_section->unparse(f);
+#endif
+
+    /* Unparse the header itself */
+    DOSFileHeader_disk disk;
+    encode(&disk);
+    write(f, 0, sizeof(disk), &disk);
+
 }
 
 /* Adds the real-mode section to the DOS file header. If max_offset is non-zero then use that as the maximum offset of the
