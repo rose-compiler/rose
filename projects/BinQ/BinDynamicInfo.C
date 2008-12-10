@@ -207,7 +207,7 @@ DynamicInfo::printOutRelaEntries(SgNode* project) {
 void
 DynamicInfo::run(SgNode* fileA, SgNode* fileB) {
   if (true)
-  return ;
+    return;
   instance=NULL;
   if (!testFlag)
     instance = QROSE::cbData<BinQGUI *>();

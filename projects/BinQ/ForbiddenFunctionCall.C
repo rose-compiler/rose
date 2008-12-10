@@ -22,11 +22,29 @@ std::string ForbiddenFunctionCall::getDescription() {
 
 void
 ForbiddenFunctionCall::visit(SgNode* node) {
-
+  if (isSgAsmx86Instruction(node) && isSgAsmx86Instruction(node)->get_kind() == x86_call) {
+    SgAsmx86Instruction* inst = isSgAsmx86Instruction(node);
+    string calleeName = inst->get_comment();
+    std::vector<std::string>::const_iterator it = blackList.begin();
+    for (;it!=blackList.end();++it) {
+      string name = *it;
+      if (name==calleeName) {
+	//cerr << " match : " << name << endl;
+	string res = "This is a function that should not be called : ";
+	 res+=name+"  "+inst->unparseToString();
+	result[inst]= res;
+      }
+    }
+  }
 }
 
 void
 ForbiddenFunctionCall::runTraversal(SgNode* project) {
+  blackList.clear();
+  blackList.push_back("malloc");
+  blackList.push_back("_malloc");
+  blackList.push_back("free");
+
   this->traverse(project,preorder);
 }
 
@@ -48,11 +66,8 @@ ForbiddenFunctionCall::run(SgNode* fileA, SgNode* fileB) {
   ROSE_ASSERT(file);
   info = new VirtualBinCFG::AuxiliaryInformation(file);
 
-  
-
-  // call graph analysis  *******************************************************
   if (debug)
-    cerr << " Running dynamic info ... " << endl;
+    cerr << " Running forbidden function call ... " << endl;
   if (!testFlag) {
     ROSE_ASSERT(instance);
     ROSE_ASSERT(instance->analysisTab);

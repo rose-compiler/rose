@@ -16,6 +16,7 @@ class ForbiddenFunctionCall : public BinAnalyses,AstSimpleProcessing {
   std::string name();
   std::string getDescription();
   bool twoFiles() {return false;}
+  std::map<SgNode*,std::string> getResult(){return result;}
   
  private:
   SgAsmGenericFile *genericF;
@@ -24,6 +25,8 @@ class ForbiddenFunctionCall : public BinAnalyses,AstSimpleProcessing {
   VirtualBinCFG::AuxiliaryInformation* info;
   bool debug;
   BinQGUI *instance;
+  std::vector<std::string> blackList;
+  std::map<SgNode*,std::string> result;
 };
 
 

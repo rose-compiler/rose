@@ -73,6 +73,7 @@ BinQbatch::runAnalyses() {
   double startTotal = RoseBin_support::getTime();
   std::ofstream myfile;
   myfile.open(fileName.c_str());
+  int problems=0;
 
   for (unsigned int i=0;i<analyses.size();++i) {
     bool twoFiles = analyses[i]->twoFiles();
@@ -83,11 +84,21 @@ BinQbatch::runAnalyses() {
 	currentAnalysis->test(fileA,fileB);
 	double end = RoseBin_support::getTime();
 	double time = (double) (end - start);
+	map<SgNode*,string> resu = currentAnalysis->getResult();
+	problems+=resu.size();
 	myfile << "Running analysis : " << analyses[i]->name().c_str() <<
-	  "   time : " << time << endl;
-	QString res = QString("Running ... %1")
-	  .arg(currentAnalysis->name().c_str());
+	  "   time : " << time << "   Problems : " << resu.size() << endl;
+	QString res = QString("Running ... %1  time : %2   Problems: %3")
+	  .arg(currentAnalysis->name().c_str())
+	  .arg(time)
+	  .arg(resu.size());
 	analysisResult->append(res);  
+	map<SgNode*,string>::const_iterator it = resu.begin();
+	for (;it!=resu.end();++it) {
+	  string str = "   "+it->second;
+	  analysisResult->append(QString(str.c_str()));
+	  myfile << "   " << str << endl;
+	}
 	analysisTab->setCurrentIndex(1);
 	analysisResult->moveCursor(QTextCursor::Start);
       }
@@ -96,9 +107,14 @@ BinQbatch::runAnalyses() {
  
   double endTotal = RoseBin_support::getTime();
   double timeTotal = (double) (endTotal - startTotal);
-  myfile << "\nTotal time : " << timeTotal << endl;
+  myfile << "\nTotal time : " << timeTotal << "  total problems: " << problems << endl;
   myfile.close();  
 
+  QString res = QString("Total time ... %1   Total problems %2")
+    .arg(timeTotal)
+    .arg(problems);
+  analysisResult->append(res);  
+  
   int start = addRemainingAnalyses();
 
   for (unsigned int i=start; i < analyses.size(); ++i){

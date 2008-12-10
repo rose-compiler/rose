@@ -15,6 +15,7 @@ class  BinAnalyses {
   virtual std::string name()=0;
   virtual std::string getDescription()=0;
   virtual bool twoFiles()=0;
+  virtual std::map<SgNode*,std::string> getResult()=0;
 };
 
 

@@ -17,7 +17,8 @@ class DynamicInfo : public BinAnalyses,AstSimpleProcessing {
   std::string name();
   std::string getDescription();
   bool twoFiles() {return false;}
-  
+  std::map<SgNode*,std::string> getResult(){return result;}
+
  private:
   SgAsmGenericFile *genericF;
   void visit(SgNode* node);
@@ -28,6 +29,7 @@ class DynamicInfo : public BinAnalyses,AstSimpleProcessing {
   std::string resolveValue(SgAsmValueExpression* leftVal);
   bool debug;
   BinQGUI *instance;
+  std::map<SgNode*,std::string> result;
 };
 
 

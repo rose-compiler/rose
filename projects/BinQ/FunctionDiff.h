@@ -17,6 +17,9 @@ class FunctionDiffAlgo : public BinAnalyses {
   std::string name();
   std::string getDescription();
   bool twoFiles() {return true;}
+  std::map<SgNode*,std::string> getResult(){return result;}
+ private:
+  std::map<SgNode*,std::string> result;
 
 };
 
