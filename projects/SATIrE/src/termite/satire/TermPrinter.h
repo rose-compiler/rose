@@ -120,7 +120,18 @@ bool
 TermPrinter<DFI_STORE_TYPE>::isContainer(SgNode* astNode) 
 {
   // AP 2.2.2008 new rose (hotel) compatibility
+  // GB (2008-12-11): AstTests::numSuccContainers does not report container
+  // nodes that happen to be empty at the moment. This is a clear design
+  // problem in the way it is implemented (in theory, a correct
+  // implementation could be generated for each node by using ROSETTA). This
+  // is really problematic for empty SgFunctionParameterLists! However,
+  // other than patching ROSE, which is not really an option, I can't see
+  // how to implement this correctly. In any case, I added the parameter
+  // lists as a special case here, and this should be done for any other
+  // maybe-empty list nodes we stumble upon.
+  // TODO: Revisit this issue, and think of a real fix!
   return AstTests::numSuccContainers(astNode) ||
+    isSgFunctionParameterList(astNode) ||
     isSgVariableDeclaration(astNode);
 }
 
