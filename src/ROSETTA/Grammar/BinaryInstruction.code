@@ -1971,7 +1971,6 @@ HEADER_PE_FILE_HEADER_START
 
 		virtual const char *format_name() const {return "PE";}
 		static bool is_PE (SgAsmGenericFile*);
-		static SgAsmPEFileHeader *parsePEFile(SgAsmGenericFile*);
 		void add_rvasize_pairs();
 
 		virtual SgAsmPEFileHeader *parse();
