@@ -22,7 +22,7 @@ main(int argc, char *argv[])
 // Skip testing on 64 bit systems for now!
 #ifndef __LP64__
        // ":" in string does not work in ROSE, this is the bug
-          asm("bsrl %1, %0" : "=r" (position) : "r" (number));
+          asm("bsr %1, %0" : "=r" (position) : "r" (number));
 #else
   #warning "Not tested on 64 bit systems"
 #endif

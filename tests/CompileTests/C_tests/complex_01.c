@@ -26,7 +26,6 @@ int main (void)
 
      __I__;
 
-  // ROSE does not yet support the imaginary add operator
      _Complex float a_complex_value = 0.0;
 
      a_complex_value = 4.0;
@@ -40,11 +39,6 @@ int main (void)
      _Complex float       x = 1.0;
      _Complex double      y = 2.0;
      _Complex long double z = 3.0;
-
-  // Specification of complex literals is a bit more complicated 
-  // (not clear if this is might just be the use of the commar operator).
-  // note that the parenthesis are required.
-  // _Complex float x_with_real_and_imaginary_parts = (1.0,-1.0);
 
 #if 0
   // I think this is less a way to declare real and imaginary types than 
@@ -60,9 +54,6 @@ int main (void)
 #endif
 
   // Extract the real and imaginary parts of complex type values into float and double types.
-  // This is not currently passed through the code generation within ROSE.  This is now
-  // "__imag__" and "__real" are intended to be used in GNU.  But this is not supported 
-  // in the ROSE code generation yet.
      float  x_imag_extract_part = __imag__ x;
      float  x_real_extract_part = __real__ x;
      double y_imag_extract_part = __imag__ y;
@@ -75,11 +66,6 @@ int main (void)
   // _Real double y_edg_real = 0.0;
 
 #if 1
-  // This causes a problem in ROSE when combined with the "__I__" statement.
-  // I can't seem to figure out why!
-
-  // This is now to specify imaginary numbers in EDG, not supported in GNU, so
-  // the code generation using GNU aas a backend drops the "_Imaginary" prefix.
      _Complex float       x_edg_imaginary = 0.0if;
      _Complex double      y_edg_imaginary = 0.0i;
      _Complex long double z_edg_imaginary = 0.0il;

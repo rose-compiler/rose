@@ -54,7 +54,7 @@ $(TESTCODE_CURRENTLY_FAILING)
 # File option to accumulate performance information about the compilation
 # PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/C_ROSE_PERFORMANCE_DATA.csv
 
-ROSE_FLAGS = -rose:C --edg:no_warnings -w 
+ROSE_FLAGS = -rose:C --edg:no_warnings --edg:restrict -w 
 
 PASSING_TEST_Objects = ${TESTCODES:.c=.o}
 TEST_Objects = ${ALL_TESTCODES:.c=.o}

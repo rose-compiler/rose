@@ -1550,7 +1550,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string>& argv )
   // printf ("ROSE_DEBUG = %d \n",ROSE_DEBUG);
   // printf ("get_verbose() = %s value = %d \n",(get_verbose() > 1) ? "true" : "false",get_verbose());
 
-     if ( (ROSE_DEBUG >= 1) || (get_verbose() > 2 )
+     if ( (ROSE_DEBUG >= 1) || (get_verbose() > 2 ))
         {
           printf ("In stripRoseCommandLineOptions: List ALL arguments: argc = %zu \n",argv.size());
           for (size_t i=0; i < argv.size(); i++)
@@ -2070,16 +2070,15 @@ SgFile::generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFi
 
 
 
-static string makeSysIncludeList(const Rose_STL_Container<string>& dirs) {
+static void makeSysIncludeList(const Rose_STL_Container<string>& dirs, Rose_STL_Container<string>& result) {
   string includeBase = findRoseSupportPathFromBuild("include-staging", "include");
-  string result;
   for (Rose_STL_Container<string>::const_iterator i = dirs.begin();
        i != dirs.end(); ++i) {
     ROSE_ASSERT (!i->empty());
     string fullPath = (*i)[0] == '/' ? *i : (includeBase + "/" + *i);
-    result += "--sys_include " + fullPath + " ";
+    result.push_back("--sys_include");
+    result.push_back(fullPath);
   }
-  return result;
 }
 
 void
@@ -2119,9 +2118,10 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      ROSE_ABORT();
 #endif
 
-     string configDefsString                = CXX_SPEC_DEF;
+     const char* configDefsArray[]          = CXX_SPEC_DEF;
      const char* Cxx_ConfigIncludeDirsRaw[] = CXX_INCLUDE_STRING;
      const char* C_ConfigIncludeDirsRaw[]   = C_INCLUDE_STRING;
+     Rose_STL_Container<string> configDefs(configDefsArray, configDefsArray + sizeof(configDefsArray) / sizeof(*configDefsArray));
      Rose_STL_Container<string> Cxx_ConfigIncludeDirs(Cxx_ConfigIncludeDirsRaw, Cxx_ConfigIncludeDirsRaw + sizeof(Cxx_ConfigIncludeDirsRaw) / sizeof(const char*));
      Rose_STL_Container<string> C_ConfigIncludeDirs(C_ConfigIncludeDirsRaw, C_ConfigIncludeDirsRaw + sizeof(C_ConfigIncludeDirsRaw) / sizeof(const char*));
      SgProject* myProject = isSgProject(this->get_parent());
@@ -2130,16 +2130,15 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // Removed reference to __restrict__ so it could be placed into the preinclude vendor specific header file for ROSE.
   // DQ (9/10/2004): Attept to add support for restrict (but I think this just sets it to true, using "-Dxxx=" works)
   // const string roseSpecificDefs    = "-DUSE_RESTRICT_POINTERS_IN_ROSE_TRANSFORMATIONS -DUSE_ROSE -D__restrict__=";
-     string roseSpecificDefs    = "-DUSE_RESTRICT_POINTERS_IN_ROSE_TRANSFORMATIONS -DUSE_ROSE "
+     vector<string> roseSpecificDefs;
+     roseSpecificDefs.push_back("-DUSE_RESTRICT_POINTERS_IN_ROSE_TRANSFORMATIONS");
+     roseSpecificDefs.push_back("-DUSE_ROSE");
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
-                                  "-DROSE_USE_NEW_EDG_INTERFACE "
+     roseSpecificDefs.push_back("-DROSE_USE_NEW_EDG_INTERFACE");
 #endif
-                                  ;
-     ROSE_ASSERT(configDefsString.empty() == false);
+     ROSE_ASSERT(configDefs.empty() == false);
      ROSE_ASSERT(Cxx_ConfigIncludeDirs.empty() == false);
      ROSE_ASSERT(C_ConfigIncludeDirs.empty() == false);
-     ROSE_ASSERT (roseSpecificDefs[roseSpecificDefs.size() - 1] == ' ');
-     roseSpecificDefs = roseSpecificDefs.substr(0, roseSpecificDefs.size() - 1);
 
   // printf ("configDefsString = %s \n",configDefsString);
 #if 0
@@ -2147,13 +2146,21 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      printf ("C_ConfigIncludeString   = %s \n",C_ConfigIncludeString.c_str());
 #endif
 
+  // JJW (12/11/2008): Change all of this to use vectors of strings, and add
+  // --edg_base_dir as a new ROSE-set flag
+     vector<string> commandLine;
+
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
+     commandLine.push_back("--edg_base_dir");
+     commandLine.push_back(findRoseSupportPathFromBuild("src/frontend/CxxFrontend/EDG_3.10/lib", "share"));
+#endif
+
   // AS (03/08/2006) Added support for g++ preincludes
   // Rose_STL_Container<std::string> listOfPreincludes;
 
   // DQ (12/1/2006): Code added by Andreas (07/03/06) and moved to a new position 
-  // so that we could modify the string input from CXX_SPEC_DEF (configDefsString).
+  // so that we could modify the string input from CXX_SPEC_DEF (configDefs).
      string preinclude_string_target = "-include";
-     string preinclude_string;
      for (unsigned int i=1; i < argv.size(); i++)
         {
        // AS (070306) Handle g++ --include directives
@@ -2180,19 +2187,12 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
             // std::cout << "Found preinclude : " << currentArgument << std::endl;
 
-               preinclude_string += " --preinclude " + currentArgument + " ";
+               commandLine.push_back("--preinclude");
+               commandLine.push_back(currentArgument);
              }
         }
 
-     configDefsString += preinclude_string;
-
-     string initString;
-
-  // This is OK since these use the existing memory and not the C language 
-  // malloc/free (which would interfere with C++'s new/delete)
-     initString = configDefsString;
-     initString += " ";
-  // initString += Cxx_ConfigIncludeString;
+     commandLine.insert(commandLine.end(), configDefs.begin(), configDefs.end());
 
   // DQ (12/2/2006): Both GNU and EDG determin the language mode from the source file name extension. 
   // In ROSE we also require that C files be explicitly specified to use the C language mode. Thus 
@@ -2202,7 +2202,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // if (treatAsCSourceFile == true)
 
   // Find the C++ sys include path for the rose_edg_required_macros_and_functions.h
-     string roseHeaderDirCPP = " --sys_include ";
+     vector<string> roseHeaderDirCPP(1, "--sys_include");
 
      for (Rose_STL_Container<string>::iterator i = Cxx_ConfigIncludeDirs.begin(); i != Cxx_ConfigIncludeDirs.end(); i++)
         {
@@ -2210,14 +2210,14 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           FILE* testIfFileExist = fopen(file.c_str(),"r");
           if (testIfFileExist)
           {
-            roseHeaderDirCPP+=(*i);
+            roseHeaderDirCPP.push_back(*i);
             fclose(testIfFileExist);
             break;
           }
         }
 
   // Find the C sys include path for the rose_edg_required_macros_and_functions.h
-     string roseHeaderDirC = " --sys_include ";
+     vector<string> roseHeaderDirC(1, "--sys_include");
 
      for (Rose_STL_Container<string>::iterator i = C_ConfigIncludeDirs.begin(); i != C_ConfigIncludeDirs.end(); i++)
         {
@@ -2226,7 +2226,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           // std::cout << file << std::endl;
           if (testIfFileExist)
           {
-            roseHeaderDirC+=(*i);
+            roseHeaderDirC.push_back(*i);
             fclose(testIfFileExist);
             break;
           }
@@ -2236,80 +2236,77 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      if (get_C_only() == true || get_C99_only() == true)
         {
        // AS(02/21/07) Add support for the gcc 'nostdinc' and 'nostdinc++' options
-          string roseHeaderDir = " --sys_include ";
-
        // DQ (11/29/2006): if required turn on the use of the __cplusplus macro
        // if (get_requires_cplusplus_macro() == true)
           if (get_sourceFileUsesCppFileExtension() == true)
              {
             // The value here should be 1 to match that of GNU gcc (the C++ standard requires this to be "199711L")
             // initString += " -D__cplusplus=0 ";
-               initString += " -D__cplusplus=1 ";
+               commandLine.push_back("-D__cplusplus=1");
                if ( CommandlineProcessing::isOption(argv,"-","nostdinc",false) == true )
                   {
-                    initString+=roseHeaderDirC; 
+                    commandLine.insert(commandLine.end(), roseHeaderDirC.begin(), roseHeaderDirC.end());
                  // no standard includes when -nostdinc is specified
                   }
                  else
                   {
                     if ( CommandlineProcessing::isOption(argv,"-","nostdinc++",false) == true )
                        {
-                         initString += roseHeaderDirCPP;
-                         initString += makeSysIncludeList(C_ConfigIncludeDirs);
+                         commandLine.insert(commandLine.end(), roseHeaderDirCPP.begin(), roseHeaderDirCPP.end());
+                         makeSysIncludeList(C_ConfigIncludeDirs, commandLine);
                        }
                       else
                        {
-                         initString += makeSysIncludeList(Cxx_ConfigIncludeDirs);
+                         makeSysIncludeList(Cxx_ConfigIncludeDirs, commandLine);
                        }
                   }
 
             // DQ (11/29/2006): Specify C++ mode for handling in rose_edg_required_macros_and_functions.h
-               initString += " -DROSE_CPP_MODE=1 ";
+               commandLine.push_back("-DROSE_CPP_MODE=1");
              }
             else
              {
                if ( CommandlineProcessing::isOption(argv,"-","nostdinc",false) == true )
                   {
-                    initString += roseHeaderDirC; 
+                    commandLine.insert(commandLine.end(), roseHeaderDirC.begin(), roseHeaderDirC.end());
                  // no standard includes when -nostdinc is specified
                   }
                  else
                   {
-                    initString += makeSysIncludeList(C_ConfigIncludeDirs);
+                    makeSysIncludeList(C_ConfigIncludeDirs, commandLine);
                   }
        
             // DQ (11/29/2006): Specify C mode for handling in rose_edg_required_macros_and_functions.h
-               initString += " -DROSE_CPP_MODE=0 ";
+               commandLine.push_back("-DROSE_CPP_MODE=0");
              }
         }
        else
         {
           if ( CommandlineProcessing::isOption(argv,"-","nostdinc",false) == true )
              {
-               initString += roseHeaderDirCPP;
+               commandLine.insert(commandLine.end(), roseHeaderDirCPP.begin(), roseHeaderDirCPP.end());
             // no standard includes when -nostdinc is specified
              }
             else
              {
                if ( CommandlineProcessing::isOption(argv,"-","nostdinc\\+\\+",false) == true ) // Option name is a RE
                   {
-                    initString += roseHeaderDirCPP;
-                    initString += makeSysIncludeList(C_ConfigIncludeDirs);
+                    commandLine.insert(commandLine.end(), roseHeaderDirCPP.begin(), roseHeaderDirCPP.end());
+                    makeSysIncludeList(C_ConfigIncludeDirs, commandLine);
                   }
                  else
                   {
-                    initString += makeSysIncludeList(Cxx_ConfigIncludeDirs);
+                    makeSysIncludeList(Cxx_ConfigIncludeDirs, commandLine);
                   }
              }
 
        // DQ (11/29/2006): Specify C++ mode for handling in rose_edg_required_macros_and_functions.h
-          initString += " -DROSE_CPP_MODE=1 ";
+          commandLine.push_back("-DROSE_CPP_MODE=1");
         }
 
   // AS(02/24/06) Add support for the gcc "-isystem" option (this added a specified directory 
   // to the start of the system include path).  This maps to the "--sys_include" in EDG.
      string isystem_string_target = "-isystem";
-     string isystem_string;
      for (unsigned int i=1; i < argv.size(); i++)
         {
        // AS (070306) Handle g++ --include directives
@@ -2322,21 +2319,17 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
               // std::cout << "Current argument " << currentArgument << std::endl; 
             
               currentArgument = StringUtility::getAbsolutePathFromRelativePath(currentArgument);
-              isystem_string += " --sys_include " + currentArgument + " ";
+              commandLine.push_back("--sys_include");
+              commandLine.push_back(currentArgument);
           }
      }
 
-     initString += isystem_string;
-
-
-     initString += " ";
-     initString += roseSpecificDefs;
+     commandLine.insert(commandLine.end(), roseSpecificDefs.begin(), roseSpecificDefs.end());
 
   // DQ (9/17/2006): We should be able to build a version of this code which hands a std::string to StringUtility::splitStringIntoStrings()
   // Separate the string into substrings consistent with the structure of argv command line input
-     inputCommandLine.clear();
-     StringUtility::splitStringIntoStrings(initString, ' ', inputCommandLine);
-
+     inputCommandLine = commandLine;
+     inputCommandLine.insert(inputCommandLine.begin(), "dummy_argv0_for_edg");
 
   // We only provide options to change the default values!
 

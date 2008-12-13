@@ -1,0 +1,33 @@
+#!/bin/sh
+
+if test $# -ne 1; then
+  echo "Usage: $0 <compilerName>" >&2
+  exit 1
+fi
+
+compilerName="`basename $1`"
+
+ case "$compilerName" in
+  # Support for compiling ROSE with GNU g++ compiler
+    g++|gcc|icpc|icc|mpicc|mpic++|mpiCC|mpicxx)
+         if [ "$compilerName" = "gcc" -o "$compilerName" = "icc" -o "$compilerName" = "mpicc" ]
+         then
+            language="c"
+         else
+            language="c++"
+         fi
+
+         $1 -v -E -x $language /dev/null 2>&1 | sed -n '/^#include </,/^End/p' | sed '/^#include </d; /^End/d; /\/usr\/include$/d; /\/Library\/Frameworks$/d; /[(]framework directory[)]$/d'
+         ;;
+
+  # Support for compiling ROSE with ROSE (must use translator named: "roseTranslator"
+    roseTranslator) 
+         tmpFile="/tmp/tmp`uname -n`$$.C"
+         echo "int main(int argc, char **argv){return 0;}" > "$tmpFile"
+         $1 -v -E $tmpFile 2>&1 # | sed -n '/^#include </,/^End/p' | sed '/^#include </d; /^End/d; /\/usr\/include$/d'"
+         ;;
+    *) echo "ERROR: Not able to recognize compiler $1"
+       exit 1
+       ;;
+ esac
+

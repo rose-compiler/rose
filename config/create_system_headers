@@ -184,8 +184,6 @@ fi
             language="c++"
          fi
 
-         compilerHeadersDirCmd="$1 -v -E -x $language /dev/null 2>&1 | sed -n '/^#include </,/^End/p' | sed '/^#include </d; /^End/d; /\/usr\/include$/d; /\/Library\/Frameworks$/d; /[(]framework directory[)]$/d'"
-
        # DQ (1/14/2007): To work with Wave we supress the __STDC_HOSTED__ macro
          tmpFile="`mktemp -t roseconfigtempXXXXXXXXXX`"
          "$1" -E -dM -x $language /dev/null | grep -F -v -w -f "$roseHome/config/macro_names_to_remove" > "$tmpFile"
@@ -198,11 +196,6 @@ fi
 
   # Support for compiling ROSE with ROSE (must use translator named: "roseTranslator"
     roseTranslator) 
-         tmpFile="/tmp/tmp`uname -n`$$.C"
-         echo "int main(int argc, char **argv){return 0;}" > "$tmpFile"
-         compilerHeadersDirCmd="$1 -v -E $tmpFile 2>&1 | \
-         # sed -n '/^#include </,/^End/p' | sed '/^#include </d; /^End/d; /\/usr\/include$/d'"
-         echo "Compile headers dir ${compilerHeadersDirCmd}"
          ;;
     *) echo "ERROR: Not able to recognize compiler $1"
        echo "ERROR: Usage is create_system_headers compiler target_dir src_dir"
@@ -214,7 +207,7 @@ fi
 # echo "Building separate header directories"
 
 iDir=0
-sh -c "$compilerHeadersDirCmd" | while read dirName
+sh -c "$roseHome/config/get_compiler_header_dirs" "$compilerName" | while read dirName
    do
          iDir=`expr "$iDir" + 1 `
         echo "processing header file directory $dirName to be mapped to $mainTargetDir/hdrs${iDir}"

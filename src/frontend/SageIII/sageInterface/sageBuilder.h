@@ -303,7 +303,6 @@ BUILD_UNARY_PROTO(RealPartOp)
 BUILD_UNARY_PROTO(ImagPartOp)
 BUILD_UNARY_PROTO(ConjugateOp)
 BUILD_UNARY_PROTO(VarArgStartOneOperandOp)
-BUILD_UNARY_PROTO(VarArgOp)
 BUILD_UNARY_PROTO(VarArgEndOp)
 
 //! Build a type casting expression
@@ -313,6 +312,10 @@ SgCastExp * buildCastExp(SgExpression *  operand_i = NULL,
 SgCastExp * buildCastExp_nfi(SgExpression *  operand_i,
 		SgType * expression_type,
 		SgCastExp::cast_type_enum cast_type);
+
+//! Build vararg op expression
+SgVarArgOp * buildVarArgOp_nfi(SgExpression *  operand_i, SgType * expression_type);
+
 //! Build -- expression, Sgop_mode is a value of either SgUnaryOp::prefix or SgUnaryOp::postfix
 SgMinusMinusOp *buildMinusMinusOp(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode);
 SgMinusMinusOp *buildMinusMinusOp_nfi(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode);
@@ -641,6 +644,7 @@ SgPragmaDeclaration * buildPragmaDeclaration_nfi(const std::string & name, SgSco
 //! Build a SgBasicBlock, setting file info internally
 SgBasicBlock * buildBasicBlock(SgStatement * stmt1 = NULL, SgStatement* stmt2 = NULL, SgStatement* stmt3 = NULL, SgStatement* stmt4 = NULL, SgStatement* stmt5 = NULL, SgStatement* stmt6 = NULL, SgStatement* stmt7 = NULL, SgStatement* stmt8 = NULL, SgStatement* stmt9 = NULL, SgStatement* stmt10 = NULL);
 SgBasicBlock * buildBasicBlock_nfi();
+SgBasicBlock * buildBasicBlock_nfi(const std::vector<SgStatement*>&);
 
 //! Build an assignment statement from lefthand operand and right hand operand 
 SgExprStatement* 

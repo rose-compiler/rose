@@ -71,6 +71,13 @@ fi
 #echo "Exiting as a test!"
 #exit 1
 
+# JJW: This needs to be early as things like C++ header editing are not done for the new interface
+AC_ARG_ENABLE(new-edg-interface, AS_HELP_STRING([--enable-new-edg-interface], [Enable new (experimental) translator from EDG ASTs to Sage ASTs]))
+AM_CONDITIONAL(ROSE_USE_NEW_EDG_INTERFACE, [test "x$enable_new_edg_interface" = xyes])
+if test "x$enable_new_edg_interface" = "xyes"; then
+  AC_DEFINE([ROSE_USE_NEW_EDG_INTERFACE], [], [Whether to use the new interface to EDG])
+fi
+
 #AM_CONDITIONAL(ROSE_USE_QROSE,test "$with_qrose" = true)
 
 # Set up for use of bison to build dot2gml tool in directory
@@ -143,9 +150,15 @@ CHOOSE_BACKEND_COMPILER
 # for GNU).
 # GENERATE_BACKEND COMPILER_SPECIFIC_HEADERS
 # GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS
+
+# JJW (12/10/2008): We don't preprocess the header files for the new interface
 rm -rf ./include-staging
-GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS
-GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS
+if test x$enable_new_edg_interface = xyes; then
+  :
+else
+  GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS
+  GENERATE_BACKEND_CXX_COMPILER_SPECIFIC_HEADERS
+fi
 
 # echo "DONE: configure.in ...(after calling: generate backend C compiler specific headers)"
 # echo "Exiting in configure.in ...(after calling: generate backend C compiler specific headers)"
@@ -170,6 +183,8 @@ GET_COMPILER_SPECIFIC_DEFINES
 # This must go after the setup of the headers options
 # Setup the CXX_INCLUDE_STRING to be used by EDG to find the correct headers
 # SETUP_BACKEND_COMPILER_SPECIFIC_REFERENCES
+# JJW (12/10/2008): We don't preprocess the header files for the new interface,
+# but we still need to use the original C++ header directories
 SETUP_BACKEND_C_COMPILER_SPECIFIC_REFERENCES
 SETUP_BACKEND_CXX_COMPILER_SPECIFIC_REFERENCES
 
@@ -844,12 +859,6 @@ AM_CONDITIONAL(ROSE_USE_QT,test "$with_qt" != no)
 
 AC_ARG_ENABLE(assembly-semantics, AS_HELP_STRING([--enable-assembly-semantics], [Enable semantics-based analysis of assembly code]))
 AM_CONDITIONAL(ROSE_USE_ASSEMBLY_SEMANTICS, [test "x$enable_assembly_semantics" = xyes])
-
-AC_ARG_ENABLE(new-edg-interface, AS_HELP_STRING([--enable-new-edg-interface], [Enable new (experimental) translator from EDG ASTs to Sage ASTs]))
-AM_CONDITIONAL(ROSE_USE_NEW_EDG_INTERFACE, [test "x$enable_new_edg_interface" = xyes])
-if test "x$enable_new_edg_interface" = "xyes"; then
-  AC_DEFINE([ROSE_USE_NEW_EDG_INTERFACE], [], [Whether to use the new interface to EDG])
-fi
 
 echo "subdirs $subdirs"
 AC_CONFIG_SUBDIRS([libltdl src/3rdPartyLibraries/libharu-2.1.0])
