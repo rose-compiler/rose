@@ -166,7 +166,6 @@ SageBuilder::buildVariableDeclaration_nfi \
  //(const SgName & name, SgType* type, SgInitializer * varInit= NULL, SgScopeStatement* scope = NULL)
 {
   ROSE_ASSERT (scope != NULL);
-   ROSE_ASSERT(name.is_null() == false);
    ROSE_ASSERT(type != NULL);
 
   SgVariableDeclaration * varDecl = new SgVariableDeclaration(name, type, varInit);
@@ -174,7 +173,9 @@ SageBuilder::buildVariableDeclaration_nfi \
 
   varDecl->set_firstNondefiningDeclaration(varDecl);
 
-  fixVariableDeclaration(varDecl,scope);
+  if (name != "") { // Anonymous bit fields should not have symbols
+    fixVariableDeclaration(varDecl,scope);
+  }
   SgInitializedName *initName = varDecl->get_decl_item (name);   
   ROSE_ASSERT(initName); 
   ROSE_ASSERT((initName->get_declptr())!=NULL);
@@ -1132,7 +1133,6 @@ BUILD_UNARY_DEF(RealPartOp)
 BUILD_UNARY_DEF(ImagPartOp)
 BUILD_UNARY_DEF(ConjugateOp)
 BUILD_UNARY_DEF(VarArgStartOneOperandOp)
-BUILD_UNARY_DEF(VarArgOp)
 BUILD_UNARY_DEF(VarArgEndOp)
 
 #undef BUILD_UNARY_DEF
@@ -1153,6 +1153,14 @@ SgCastExp * SageBuilder::buildCastExp_nfi(SgExpression *  operand_i,
                 SgCastExp::cast_type_enum cast_type)
 {
   SgCastExp* result = new SgCastExp(operand_i, expression_type, cast_type);
+  ROSE_ASSERT(result);
+  if (operand_i) {operand_i->set_parent(result); markLhsValues(result);}
+  setOneSourcePositionNull(result);
+  return result;
+}
+
+SgVarArgOp * SageBuilder::buildVarArgOp_nfi(SgExpression *  operand_i, SgType * expression_type) {
+  SgVarArgOp* result = new SgVarArgOp(operand_i, expression_type);
   ROSE_ASSERT(result);
   if (operand_i) {operand_i->set_parent(result); markLhsValues(result);}
   setOneSourcePositionNull(result);
@@ -2159,6 +2167,12 @@ SgBasicBlock * SageBuilder::buildBasicBlock_nfi()
   return result;
 }
 
+SgBasicBlock* SageBuilder::buildBasicBlock_nfi(const vector<SgStatement*>& stmts) {
+  SgBasicBlock* result = buildBasicBlock_nfi();
+  appendStatementList(stmts, result);
+  return result;
+}
+
 SgGotoStatement * 
 SageBuilder::buildGotoStatement(SgLabelStatement *  label)
 {
@@ -2182,6 +2196,7 @@ SgReturnStmt* SageBuilder::buildReturnStmt(SgExpression* expression /* = NULL */
 {
   SgReturnStmt * result = new SgReturnStmt(expression);
   ROSE_ASSERT(result);
+  if (expression != NULL) expression->set_parent(result);
   setOneSourcePositionForTransformation(result);
   return result;
 }
@@ -2191,6 +2206,7 @@ SgReturnStmt* SageBuilder::buildReturnStmt_nfi(SgExpression* expression /* = NUL
 {
   SgReturnStmt * result = new SgReturnStmt(expression);
   ROSE_ASSERT(result);
+  if (expression != NULL) expression->set_parent(result);
   setOneSourcePositionNull(result);
   return result;
 }
