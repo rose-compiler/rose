@@ -1216,12 +1216,8 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
      std::vector<std::string> macroList;
      std::vector<std::string> preincludeList;
 
-     string predefinedMacros          = CXX_SPEC_DEF;
-    
-     if(SgProject::get_verbose() >= 1)
-         std::cout << "XXXXXXXXXXXX: " << CXX_SPEC_DEF << std::endl;
-
-     vector<string> predefinedMacroList = CommandlineProcessing::generateArgListFromString(predefinedMacros);
+     const char* predefinedMacroListRaw[] = CXX_SPEC_DEF;
+     vector<string> predefinedMacroList(predefinedMacroListRaw, predefinedMacroListRaw + sizeof(predefinedMacroListRaw) / sizeof(*predefinedMacroListRaw));
   // for (vector<string>::iterator i = predefinedMacroList.begin(); i != predefinedMacroList.end(); i++)
      vector<string>::iterator i = predefinedMacroList.begin();
      while (i != predefinedMacroList.end())
