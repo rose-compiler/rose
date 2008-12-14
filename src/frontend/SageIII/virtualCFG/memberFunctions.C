@@ -40,7 +40,6 @@ SgNode::cfgInEdges(unsigned int) {
 }
 
 static void makeEdge(CFGNode from, CFGNode to, vector<CFGEdge>& result) {
-  using namespace VirtualCFG;
   // Makes a CFG edge, adding appropriate labels
   SgNode* fromNode = from.getNode();
   unsigned int fromIndex = from.getIndex();
@@ -67,7 +66,6 @@ static void makeEdge(CFGNode from, CFGNode to, vector<CFGEdge>& result) {
 }
 
 static void addIncomingFortranGotos(SgStatement* stmt, unsigned int index, vector<CFGEdge>& result) {
-  using namespace VirtualCFG;
   bool hasLabel = false;
   if (index == 0 && stmt->get_numeric_label()) hasLabel = true;
   if (index == stmt->cfgIndexForEnd() && stmt->has_end_numeric_label()) hasLabel = true;
@@ -119,7 +117,6 @@ static void addIncomingFortranGotos(SgStatement* stmt, unsigned int index, vecto
 
 static CFGNode getNodeJustAfterInContainer(SgNode* n) {
   // Only handles next-statement control flow
-  using namespace VirtualCFG;
   SgNode* parent = n->get_parent();
   if (isSgFunctionParameterList(n)) {
     SgFunctionDeclaration* decl = isSgFunctionDeclaration(isSgFunctionParameterList(n)->get_parent());
@@ -129,9 +126,23 @@ static CFGNode getNodeJustAfterInContainer(SgNode* n) {
   return CFGNode(parent, parent->cfgFindNextChildIndex(n));
 }
 
+//! Find the CFG node of which n is a child (subtree descended into)
+//! This is mostly just doing lookups in the children of n's parent to find
+//! out which index n is at
+static CFGNode findParentNode(SgNode* n) {
+  SgNode* parent = n->get_parent();
+  ROSE_ASSERT (parent);
+  if (isSgFunctionDefinition(n)) return CFGNode(0, 0); // Should not be used
+  if (isSgFunctionParameterList(n)) {
+    SgFunctionDeclaration* decl = isSgFunctionDeclaration(isSgFunctionParameterList(n)->get_parent());
+    ROSE_ASSERT (decl);
+    return CFGNode(decl->get_definition(), 0);
+  }
+  return CFGNode(parent, parent->cfgFindChildIndex(n));
+}
+
 static CFGNode getNodeJustBeforeInContainer(SgNode* n) {
   // Only handles previous-statement control flow
-  using namespace VirtualCFG;
   return findParentNode(n);
 }
 
@@ -463,7 +474,7 @@ bool SgForAllStatement::cfgIsIndexInteresting(unsigned int idx) const {
 unsigned int SgForAllStatement::cfgFindChildIndex(SgNode* tgt) {
   if (tgt == this->get_forall_header()) {
     return 0;
-  } else if (tgt && tgt == forallMaskExpression(this)) {
+  } else if (tgt && tgt == SageInterface::forallMaskExpression(this)) {
     return 2;
   } else if (tgt == this->get_body()) {
     return 4;
@@ -483,7 +494,7 @@ std::vector<CFGEdge> SgForAllStatement::cfgOutEdges(unsigned int idx) {
       makeEdge(CFGNode(this, 1), CFGNode(this, 7), result);
       break;
     }
-    case 2: addOutEdgeOrBypassForExpressionChild(this, idx, forallMaskExpression(this), result); break;
+    case 2: addOutEdgeOrBypassForExpressionChild(this, idx, SageInterface::forallMaskExpression(this), result); break;
     case 3: {
       makeEdge(CFGNode(this, 3), CFGNode(this, 4), result);
       makeEdge(CFGNode(this, 3), CFGNode(this, 6), result);
@@ -509,7 +520,7 @@ std::vector<CFGEdge> SgForAllStatement::cfgInEdges(unsigned int idx) {
       break;
     }
     case 2: makeEdge(CFGNode(this, 1), CFGNode(this, 2), result); break;
-    case 3: addInEdgeOrBypassForExpressionChild(this, idx, forallMaskExpression(this), result); break;
+    case 3: addInEdgeOrBypassForExpressionChild(this, idx, SageInterface::forallMaskExpression(this), result); break;
     case 4: makeEdge(CFGNode(this, 3), CFGNode(this, 4), result); break;
     case 5: makeEdge(this->get_body()->cfgForEnd(), CFGNode(this, 5), result); break;
     case 6: {
@@ -2889,7 +2900,7 @@ SgMemberFunctionRefExp::cfgInEdges(unsigned int idx)
       case 2: {
 	SgFunctionDeclaration* decl =
 	  interproceduralControlFlowGraph ?
-	  getDeclaration(this->get_function()) : NULL;
+	  SageInterface::getDeclarationOfNamedFunction(this->get_function()) : NULL;
 	if (decl)
 	  makeEdge(CFGNode(this, idx), decl->cfgForBeginning(),
 		   result);
@@ -2913,7 +2924,7 @@ SgMemberFunctionRefExp::cfgInEdges(unsigned int idx)
       case 3: {
 	SgFunctionDeclaration* decl =
 	  interproceduralControlFlowGraph ?
-	  getDeclaration(this->get_function()) : NULL;
+	  SageInterface::getDeclarationOfNamedFunction(this->get_function()) : NULL;
 	if (decl)
 	  makeEdge(decl->cfgForEnd(), CFGNode(this, idx),
 		   result);

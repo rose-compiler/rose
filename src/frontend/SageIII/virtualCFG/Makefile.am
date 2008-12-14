@@ -12,7 +12,8 @@ noinst_LTLIBRARIES = libvirtualCFG.la
 libvirtualCFG_la_SOURCES      = \
      virtualCFG.C \
      virtualBinCFG.C \
-     cfgToDot.C
+     cfgToDot.C \
+     memberFunctions.C
 
 libvirtualCFG_la_LIBADD       = 
 libvirtualCFG_la_DEPENDENCIES = $(GENERATED_SOURCE)

@@ -3087,6 +3087,24 @@ SageInterface::generateFileList()
    }
 
 
+SgFunctionDeclaration* SageInterface::getDeclarationOfNamedFunction(SgExpression* func) {
+  if (isSgFunctionRefExp(func)) {
+    return isSgFunctionRefExp(func)->get_symbol()->get_declaration();
+  } else if (isSgDotExp(func) || isSgArrowExp(func)) {
+    SgExpression* func2 = isSgBinaryOp(func)->get_rhs_operand();
+    ROSE_ASSERT (isSgMemberFunctionRefExp(func2));
+    return isSgMemberFunctionRefExp(func2)->get_symbol()->get_declaration();
+  } else return 0;
+}
+
+SgExpression* SageInterface::forallMaskExpression(SgForAllStatement* stmt) {
+  SgExprListExp* el = stmt->get_forall_header();
+  const SgExpressionPtrList& ls = el->get_expressions();
+  if (ls.empty()) return 0;
+  if (isSgAssignOp(ls.back())) return 0;
+  return ls.back();
+}
+
 bool
 SageInterface::is_C_language()
    {
