@@ -1127,7 +1127,7 @@ Unparse_Type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
         {
        /* do nothing */;
        // printf ("Inside of Unparse_Type::unparseTypedefType (do nothing) \n");
-       // curprint ( "\n /* Inside of Unparse_Type::unparseTypedefType (do nothing) */ \n";
+       // curprint ( "\n /* Inside of Unparse_Type::unparseTypedefType (do nothing) */ \n");
         }
        else
         {
@@ -1616,7 +1616,10 @@ void Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
                curprint ( "[");
                if (array_type->get_index())
                   {
-                    unp->u_exprStmt->unparseExpression(array_type->get_index(), info); // get_index() returns an expr
+                    // JJW (12/14/2008): There may be types inside the size of an array, and they are not the second part of the type
+                    SgUnparse_Info ninfo2(ninfo);
+                    ninfo2.unset_isTypeSecondPart();
+                    unp->u_exprStmt->unparseExpression(array_type->get_index(), ninfo2); // get_index() returns an expr
                   }
                curprint ( "]");
                unparseType(array_type->get_base_type(), info); // second part

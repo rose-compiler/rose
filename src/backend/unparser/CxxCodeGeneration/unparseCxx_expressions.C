@@ -3000,6 +3000,8 @@ Unparse_ExprStmt::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
           SgUnparse_Info info2(info);
           info2.unset_SkipBaseType();
           info2.set_SkipClassDefinition();
+          info2.unset_isTypeFirstPart();
+          info2.unset_isTypeSecondPart();
           unp->u_type->unparseType(sizeof_op->get_operand_type(), info2);
         }
      curprint ( ")");
