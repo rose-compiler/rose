@@ -277,16 +277,10 @@ namespace VirtualCFG {
     return InterestingNode(cfgBeginningOfConstruct(start));
   }
 
-  //! \internal Find the CFG index of n within its parent
-  CFGNode findParentNode(SgNode* n);
-  //! \internal Get the mask expression of a SgForAllStatement
-  SgExpression* forallMaskExpression(SgForAllStatement* stmt);
   //! \internal Get the CFG node for a Fortran label from its symbol
   CFGNode getCFGTargetOfFortranLabelSymbol(SgLabelSymbol* sym);
   //! \internal Get the CFG node for a Fortran label from a reference to it
   CFGNode getCFGTargetOfFortranLabelRef(SgLabelRefExp* lRef);
-  //! \internal Get the declaration of a directly named function
-  SgFunctionDeclaration* getDeclaration(SgExpression* func);
 }
 
 #endif // VIRTUAL_CFG_H

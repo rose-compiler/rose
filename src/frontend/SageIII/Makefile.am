@@ -76,7 +76,6 @@ libsage3Sources = \
    fixupCopy_symbols.C \
    fixupCopy_references.C \
    rtiHelpers.C \
-   virtualCfgMemberFunctions.C \
    OmpAttribute.C \
    dwarfSupport.C
 

@@ -302,6 +302,13 @@ extern int gensym_counter;
    */
     std::vector < SgFile * >generateFileList ();
 
+  //! Given a SgExpression that represents a named function (or bound member
+  //! function), return the mentioned function
+  SgFunctionDeclaration* getDeclarationOfNamedFunction(SgExpression* func);
+
+  //! Get the mask expression from the header of a SgForAllStatement
+  SgExpression* forallMaskExpression(SgForAllStatement* stmt);
+
   // DQ (10/6/2006): Added support for faster mangled name generation (caching avoids recomputation).
   /*! \brief Support for faster mangled name generation (caching avoids recomputation).
 

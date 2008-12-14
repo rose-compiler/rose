@@ -15,16 +15,6 @@ namespace VirtualCFG {
     return n->cfgIndexForEnd();
   }
 
-  SgFunctionDeclaration* getDeclaration(SgExpression* func) {
-    if (isSgFunctionRefExp(func)) {
-      return isSgFunctionRefExp(func)->get_symbol()->get_declaration();
-    } else if (isSgDotExp(func) || isSgArrowExp(func)) {
-      SgExpression* func2 = isSgBinaryOp(func)->get_rhs_operand();
-      ROSE_ASSERT (isSgMemberFunctionRefExp(func2));
-      return isSgMemberFunctionRefExp(func2)->get_symbol()->get_declaration();
-    } else return 0;
-  }
-
   static inline string variableName(SgInitializedName* in) {
     string s = in->get_name().str();
     if (s.empty()) s = "<anon>";
@@ -224,21 +214,6 @@ namespace VirtualCFG {
     return node->cfgIsIndexInteresting(index);
   }
 
-  inline CFGNode findParentNode(SgNode* n) {
-    // Find the CFG node of which n is a child (subtree descended into)
-    // This is mostly just doing lookups in the children of n's parent to find
-    // out which index n is at
-    SgNode* parent = n->get_parent();
-    ROSE_ASSERT (parent);
-    if (isSgFunctionDefinition(n)) return CFGNode(0, 0); // Should not be used
-    if (isSgFunctionParameterList(n)) {
-      SgFunctionDeclaration* decl = isSgFunctionDeclaration(isSgFunctionParameterList(n)->get_parent());
-      ROSE_ASSERT (decl);
-      return CFGNode(decl->get_definition(), 0);
-    }
-    return CFGNode(parent, parent->cfgFindChildIndex(n));
-  }
-
   static SgNode* leastCommonAncestor(SgNode* a, SgNode* b) {
     // Find the closest node which is an ancestor of both a and b
     vector<SgNode*> ancestorsOfA;
@@ -308,7 +283,7 @@ namespace VirtualCFG {
         return eckForallIndicesNotInRange;
       } else ROSE_ASSERT (!"Bad successor in forall loop");
     } else if (isSgForAllStatement(srcNode) && srcIndex == 3) {
-      if (forallMaskExpression(isSgForAllStatement(srcNode))) {
+      if (SageInterface::forallMaskExpression(isSgForAllStatement(srcNode))) {
         if (tgtIndex == 4) {
           return eckTrue;
         } else if (tgtIndex == 6) {
@@ -413,7 +388,7 @@ namespace VirtualCFG {
     } else if (isSgForAllStatement(srcNode) && srcIndex == 1) {
       return isSgForAllStatement(srcNode)->get_forall_header();
     } else if (isSgForAllStatement(srcNode) && srcIndex == 3) {
-      return forallMaskExpression(isSgForAllStatement(srcNode));
+      return SageInterface::forallMaskExpression(isSgForAllStatement(srcNode));
     } else if (isSgFortranDo(srcNode) && srcIndex == 3) {
       return isSgFortranDo(srcNode)->get_bound();
     } else if (isSgSwitchStatement(srcNode)) {
@@ -682,14 +657,6 @@ namespace VirtualCFG {
     SgLabelSymbol* sym = lRef->get_symbol();
     ROSE_ASSERT (sym);
     return getCFGTargetOfFortranLabelSymbol(sym);
-  }
-
-  SgExpression* forallMaskExpression(SgForAllStatement* stmt) {
-    SgExprListExp* el = stmt->get_forall_header();
-    const SgExpressionPtrList& ls = el->get_expressions();
-    if (ls.empty()) return 0;
-    if (isSgAssignOp(ls.back())) return 0;
-    return ls.back();
   }
 
 }
