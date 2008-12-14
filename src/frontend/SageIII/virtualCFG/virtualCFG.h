@@ -1,10 +1,10 @@
 #ifndef VIRTUAL_CFG_H
 #define VIRTUAL_CFG_H
 
-// #include "rose.h"
-// #include <string>
-// #include <vector>
-// #include <cassert>
+//! FIXME: The CFG support for Fortran is still buggy -- if Fortran is
+//! re-enabled in the test suite, there are edge mismatches indicating that the
+//! CFG's in and out edge sets are not consistent.  The CFG is not recommended
+//! for use on Fortran code.
 
 namespace VirtualCFG {
 
