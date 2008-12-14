@@ -2,12 +2,16 @@
 
 # Parse command-line
 do_quiet=yes
+do_timing=no
 while [ "$#" -gt 0 ]; do
     arg="$1"; shift
     case "$arg" in
 	--verbose)
 	    do_quiet=no
 	    ;;
+        --timing)
+            do_timing=yes
+            ;;
         --quiet)
             echo "$0: warning: --quiet is now the default mode and is ignored"
             ;;
@@ -66,6 +70,13 @@ touch stamp-h1.in || : exit 1
 # We can't reconfigure their code yet (autoconf too old)
 # (cd src/3rdPartyLibraries/libharu-2.1.0 && autoreconf)
 
+# When timing is selected, add a "time" command to the front of the
+# compiles.  This must be done before the --quiet handler below is
+# run to get the right output command.
+if [ "$do_timing" = "yes" ]; then
+    find . -name Makefile.in | grep -v libharu | grep -v libltdl | xargs sed -i~ \
+	-e "s:^\(LT\)\{0,1\}\(CXX\)\{0,1\}COMPILE =:& echo \"\`pwd\`/\$@\" >> `pwd`/compile_times; /usr/bin/time -o `pwd`/compile_times -a :"
+fi
 # Rewrite a couple of makefile rules to be less verbose so (1) we can actually see the warning messages
 # and (2) XEmacs doesn't get regexp stack overflows when parsing compiler output.
 if [ "$do_quiet" = "yes" ]; then
