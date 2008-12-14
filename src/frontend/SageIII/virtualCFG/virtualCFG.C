@@ -9,9 +9,11 @@
 
 using namespace std;
 
-#define SgNULL_FILE Sg_File_Info::generateDefaultFileInfoForTransformationNode()
-
 namespace VirtualCFG {
+
+  unsigned int cfgIndexForEndWrapper(SgNode* n) {
+    return n->cfgIndexForEnd();
+  }
 
   SgFunctionDeclaration* getDeclaration(SgExpression* func) {
     if (isSgFunctionRefExp(func)) {
@@ -23,7 +25,7 @@ namespace VirtualCFG {
     } else return 0;
   }
 
-  inline string variableName(SgInitializedName* in) {
+  static inline string variableName(SgInitializedName* in) {
     string s = in->get_name().str();
     if (s.empty()) s = "<anon>";
     return s;
@@ -215,11 +217,6 @@ namespace VirtualCFG {
     return variablesInScope;
   }
 
-  inline unsigned int CFGNode::childCount(SgNode* node) {
-    ROSE_ASSERT (node);
-    return node->cfgIndexForEnd();
-  }
-
 // DQ (10/8/2006): This is a link error when optimized using g++ -O2
 // inline bool CFGNode::isInteresting() const {
   bool CFGNode::isInteresting() const {
@@ -242,23 +239,7 @@ namespace VirtualCFG {
     return CFGNode(parent, parent->cfgFindChildIndex(n));
   }
 
-  CFGNode getNodeJustAfterInContainer(SgNode* n) {
-    // Only handles next-statement control flow
-    SgNode* parent = n->get_parent();
-    if (isSgFunctionParameterList(n)) {
-      SgFunctionDeclaration* decl = isSgFunctionDeclaration(isSgFunctionParameterList(n)->get_parent());
-      ROSE_ASSERT (decl);
-      return CFGNode(decl->get_definition(), 1);
-    }
-    return CFGNode(parent, parent->cfgFindNextChildIndex(n));
-  }
-
-  CFGNode getNodeJustBeforeInContainer(SgNode* n) {
-    // Only handles previous-statement control flow
-    return findParentNode(n);
-  }
-
-  SgNode* leastCommonAncestor(SgNode* a, SgNode* b) {
+  static SgNode* leastCommonAncestor(SgNode* a, SgNode* b) {
     // Find the closest node which is an ancestor of both a and b
     vector<SgNode*> ancestorsOfA;
     for (SgNode* p = a; p; p = p->get_parent()) ancestorsOfA.push_back(p);
@@ -618,32 +599,6 @@ namespace VirtualCFG {
     return scopesEntering;
   }
 
-  void makeEdge(CFGNode from, CFGNode to, vector<CFGEdge>& result) {
-    // Makes a CFG edge, adding appropriate labels
-    SgNode* fromNode = from.getNode();
-    unsigned int fromIndex = from.getIndex();
-    SgNode* toNode = to.getNode();
- // unsigned int toIndex = to.getIndex();
-
-    // Exit early if the edge should not exist because of a control flow discontinuity
-    if (fromIndex == 1 && (isSgGotoStatement(fromNode) || isSgBreakStmt(fromNode) || isSgContinueStmt(fromNode))) {
-      return;
-    }
-    if (isSgReturnStmt(fromNode) && toNode == fromNode->get_parent()) {
-      SgReturnStmt* rs = isSgReturnStmt(fromNode);
-      if (fromIndex == 1 || (fromIndex == 0 && !rs->get_expression())) return;
-    }
-    if (isSgStopOrPauseStatement(fromNode) && toNode == fromNode->get_parent()) {
-      SgStopOrPauseStatement* sps = isSgStopOrPauseStatement(fromNode);
-      if (fromIndex == 0 && sps->get_stop_or_pause() == SgStopOrPauseStatement::e_stop) return;
-    }
-    if (fromIndex == 1 && isSgSwitchStatement(fromNode) &&
-	isSgSwitchStatement(fromNode)->get_body() == toNode) return;
-
-    // Create the edge
-    result.push_back(CFGEdge(from, to));
-  }
-
   vector<CFGEdge> CFGNode::outEdges() const {
     ROSE_ASSERT (node);
     return node->cfgOutEdges(index);
@@ -729,180 +684,12 @@ namespace VirtualCFG {
     return getCFGTargetOfFortranLabelSymbol(sym);
   }
 
-  void addIncomingFortranGotos(SgStatement* stmt, unsigned int index, vector<CFGEdge>& result) {
-    bool hasLabel = false;
-    if (index == 0 && stmt->get_numeric_label()) hasLabel = true;
-    if (index == stmt->cfgIndexForEnd() && stmt->has_end_numeric_label()) hasLabel = true;
-    if (index == 0 &&
-        isSgIfStmt(stmt->get_parent()) &&
-        stmt != NULL &&
-        stmt == isSgIfStmt(stmt->get_parent())->get_false_body()) hasLabel = true;
-    if (isSgProcedureHeaderStatement(stmt) ||
-        isSgProgramHeaderStatement(stmt) ||
-        isSgFunctionDefinition(stmt))
-      hasLabel = true;
-    if (!hasLabel) return;
-    VirtualCFG::CFGNode cfgNode(stmt, index);
-    // Find all gotos to this CFG node, functionwide
-    SgFunctionDefinition* thisFunction = SageInterface::getEnclosingProcedure(stmt, true);
-    Rose_STL_Container<SgNode*> allGotos = NodeQuery::querySubTree(thisFunction, V_SgGotoStatement);
-    for (Rose_STL_Container<SgNode*>::const_iterator i = allGotos.begin(); i != allGotos.end(); ++i) {
-      SgLabelRefExp* lRef = isSgGotoStatement(*i)->get_label_expression();
-      if (!lRef) continue;
-      SgLabelSymbol* sym = lRef->get_symbol();
-      ROSE_ASSERT(sym);
-      if (getCFGTargetOfFortranLabelSymbol(sym) == cfgNode) {
-        makeEdge(VirtualCFG::CFGNode(isSgGotoStatement(*i), 0), cfgNode, result);
-      }
-    }
-    Rose_STL_Container<SgNode*> allComputedGotos = NodeQuery::querySubTree(thisFunction, V_SgComputedGotoStatement);
-    for (Rose_STL_Container<SgNode*>::const_iterator i = allComputedGotos.begin(); i != allComputedGotos.end(); ++i) {
-      const Rose_STL_Container<SgExpression*>& labels = isSgComputedGotoStatement(*i)->get_labelList()->get_expressions();
-      for (Rose_STL_Container<SgExpression*>::const_iterator j = labels.begin(); j != labels.end(); ++j) {
-        SgLabelRefExp* lRef = isSgLabelRefExp(*j);
-        ROSE_ASSERT (lRef);
-        SgLabelSymbol* sym = lRef->get_symbol();
-        ROSE_ASSERT(sym);
-        if (getCFGTargetOfFortranLabelSymbol(sym) == cfgNode) {
-          makeEdge(VirtualCFG::CFGNode(isSgComputedGotoStatement(*i), 1), cfgNode, result);
-        }
-      }
-    }
-    Rose_STL_Container<SgNode*> allArithmeticIfs = NodeQuery::querySubTree(thisFunction, V_SgArithmeticIfStatement);
-    for (Rose_STL_Container<SgNode*>::const_iterator i = allArithmeticIfs.begin(); i != allArithmeticIfs.end(); ++i) {
-      SgArithmeticIfStatement* aif = isSgArithmeticIfStatement(*i);
-      if (getCFGTargetOfFortranLabelRef(aif->get_less_label()) == cfgNode ||
-          getCFGTargetOfFortranLabelRef(aif->get_equal_label()) == cfgNode ||
-          getCFGTargetOfFortranLabelRef(aif->get_greater_label()) == cfgNode) {
-        makeEdge(VirtualCFG::CFGNode(aif, 1), cfgNode, result);
-      }
-    }
-  }
-
-  void addOutEdgeOrBypassForExpressionChild(SgNode* me, unsigned int idx, SgExpression* e, vector<CFGEdge>& result) {
-    if (e) {
-      makeEdge(VirtualCFG::CFGNode(me, idx), e->cfgForBeginning(), result);
-    } else {
-      makeEdge(VirtualCFG::CFGNode(me, idx), VirtualCFG::CFGNode(me, idx + 1), result);
-    }
-  }
-
-  void addInEdgeOrBypassForExpressionChild(SgNode* me, unsigned int idx, SgExpression* e, vector<CFGEdge>& result) {
-    if (e) {
-      makeEdge(e->cfgForEnd(), VirtualCFG::CFGNode(me, idx), result);
-    } else {
-      makeEdge(VirtualCFG::CFGNode(me, idx - 1), VirtualCFG::CFGNode(me, idx), result);
-    }
-  }
-
-  bool handleFortranIOCommonOutEdges(SgIOStatement* me, unsigned int idx, unsigned int numChildren, vector<CFGEdge>& result) {
-    switch (idx - numChildren) {
-      case 0: addOutEdgeOrBypassForExpressionChild(me, idx, me->get_io_stmt_list(), result); return true;
-      case 1: addOutEdgeOrBypassForExpressionChild(me, idx, me->get_unit(), result); return true;
-      case 2: addOutEdgeOrBypassForExpressionChild(me, idx, me->get_iostat(), result); return true;
-      case 3: addOutEdgeOrBypassForExpressionChild(me, idx, me->get_err(), result); return true;
-      case 4: addOutEdgeOrBypassForExpressionChild(me, idx, me->get_iomsg(), result); return true;
-      default: return false;
-    }
-  }
-
-  bool handleFortranIOCommonInEdges(SgIOStatement* me, unsigned int idx, unsigned int numChildren, vector<CFGEdge>& result) {
-    switch (idx - numChildren) {
-      case 1: addInEdgeOrBypassForExpressionChild(me, idx, me->get_io_stmt_list(), result); return true;
-      case 2: addInEdgeOrBypassForExpressionChild(me, idx, me->get_unit(), result); return true;
-      case 3: addInEdgeOrBypassForExpressionChild(me, idx, me->get_iostat(), result); return true;
-      case 4: addInEdgeOrBypassForExpressionChild(me, idx, me->get_err(), result); return true;
-      case 5: addInEdgeOrBypassForExpressionChild(me, idx, me->get_iomsg(), result); return true;
-      default: return false;
-    }
-  }
-
   SgExpression* forallMaskExpression(SgForAllStatement* stmt) {
     SgExprListExp* el = stmt->get_forall_header();
     const SgExpressionPtrList& ls = el->get_expressions();
     if (ls.empty()) return 0;
     if (isSgAssignOp(ls.back())) return 0;
     return ls.back();
-  }
-
-  // Forall CFG layout:
-  // forall:0 -> header -> forall:1 (representing initial assignments)
-  // forall:1 -> forall:2 (conditioned on loop tests) and forall:7
-  // forall:2 -> mask (if any) -> forall:3
-  // forall:3 -> forall:4 (on mask)
-  // forall:3 -> forall:6 (on !mask)
-  // forall:4 -> body -> forall:5 -> forall:6 (for increment(s)) -> forall:1
-  // forall:7 -> successor
-
-  unsigned int doForallCfgIndexForEnd(const SgForAllStatement* me) {
-    return 7;
-  }
-
-  bool doForallCfgIsIndexInteresting(const SgForAllStatement* me, unsigned int idx) {
-    return idx == 1 || idx == 3 || idx == 6;
-  }
-
-  unsigned int doForallCfgFindChildIndex(SgForAllStatement* me, SgNode* tgt) {
-    if (tgt == me->get_forall_header()) {
-      return 0;
-    } else if (tgt && tgt == forallMaskExpression(me)) {
-      return 2;
-    } else if (tgt == me->get_body()) {
-      return 4;
-    } else ROSE_ASSERT (!"Bad child in doForallCfgFindChildIndex");
-  }
-
-  unsigned int doForallCfgFindNextChildIndex(SgForAllStatement* me, SgNode* tgt) {
-    return doForallCfgFindChildIndex(me, tgt) + 1;
-  }
-
-  std::vector<VirtualCFG::CFGEdge> doForallCfgOutEdges(SgForAllStatement* me, unsigned int idx) {
-    vector<VirtualCFG::CFGEdge> result;
-    switch (idx) {
-      case 0: addOutEdgeOrBypassForExpressionChild(me, idx, me->get_forall_header(), result); break;
-      case 1: {
-        makeEdge(CFGNode(me, 1), CFGNode(me, 2), result);
-        makeEdge(CFGNode(me, 1), CFGNode(me, 7), result);
-        break;
-      }
-      case 2: addOutEdgeOrBypassForExpressionChild(me, idx, forallMaskExpression(me), result); break;
-      case 3: {
-        makeEdge(CFGNode(me, 3), CFGNode(me, 4), result);
-        makeEdge(CFGNode(me, 3), CFGNode(me, 6), result);
-        break;
-      }
-      case 4: makeEdge(CFGNode(me, 4), me->get_body()->cfgForBeginning(), result); break;
-      case 5: makeEdge(CFGNode(me, 5), CFGNode(me, 6), result); break;
-      case 6: makeEdge(CFGNode(me, 6), CFGNode(me, 1), result); break;
-      case 7: makeEdge(CFGNode(me, 7), getNodeJustAfterInContainer(me), result); break;
-      default: ROSE_ASSERT (!"Bad index in doForallCfgOutEdges");
-    }
-    return result;
-  }
-
-  std::vector<VirtualCFG::CFGEdge> doForallCfgInEdges(SgForAllStatement* me, unsigned int idx) {
-    vector<VirtualCFG::CFGEdge> result;
-    addIncomingFortranGotos(me, idx, result);
-    switch (idx) {
-      case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(me), VirtualCFG::CFGNode(me, idx), result); break;
-      case 1: {
-        addInEdgeOrBypassForExpressionChild(me, idx, me->get_forall_header(), result);
-        makeEdge(CFGNode(me, 6), CFGNode(me, 1), result);
-        break;
-      }
-      case 2: makeEdge(CFGNode(me, 1), CFGNode(me, 2), result); break;
-      case 3: addInEdgeOrBypassForExpressionChild(me, idx, forallMaskExpression(me), result); break;
-      case 4: makeEdge(CFGNode(me, 3), CFGNode(me, 4), result); break;
-      case 5: makeEdge(me->get_body()->cfgForEnd(), CFGNode(me, 5), result); break;
-      case 6: {
-        makeEdge(CFGNode(me, 3), CFGNode(me, 6), result);
-        makeEdge(CFGNode(me, 5), CFGNode(me, 6), result);
-        break;
-      }
-      case 7: makeEdge(CFGNode(me, 1), CFGNode(me, 7), result); break;
-      default: ROSE_ASSERT (!"Bad index in doForallCfgInEdges");
-    }
-    return result;
   }
 
 }

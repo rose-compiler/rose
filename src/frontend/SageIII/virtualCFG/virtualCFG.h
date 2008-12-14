@@ -10,25 +10,37 @@ namespace VirtualCFG {
 
   class CFGEdge;
 
+  //! The conditions attached to edges are marked to determine which conditions
+  //! trigger control to flow along that edge (as opposed to other edges out of
+  //! the same source node).  For conditional branches (except eckCaseLabel and
+  //! eckDefault), the conditions are implicit and depend on knowledge of the
+  //! particular control structure.  Fortran support for this is underdeveloped;
+  //! single AST nodes representing variable-length loops was not part of the
+  //! original design of the CFG code.
   enum EdgeConditionKind {
-    eckUnconditional, // Normal, unconditional edge
-    eckTrue,	      // True case of a two-way branch
-    eckFalse,	      // False case of a two-way branch
-    eckCaseLabel,     // Case label (constant is given by caseLabel())
-    eckDefault,	      // Default label
-    eckDoConditionPassed, // Enter Fortran do loop body
-    eckDoConditionFailed, // Fortran do loop finished
-    eckForallIndicesInRange, // Start testing forall mask
-    eckForallIndicesNotInRange, // End of forall loop
-    eckComputedGotoCaseLabel, // Case in computed goto -- number needs to be computed separately
-    eckArithmeticIfLess,
-    eckArithmeticIfEqual,
-    eckArithmeticIfGreater // Three options from a Fortran arithmetic if statement
+    eckUnconditional, //! Normal, unconditional edge
+    eckTrue,	      //! True case of a two-way branch
+    eckFalse,	      //! False case of a two-way branch
+    eckCaseLabel,     //! Case label (constant is given by caseLabel())
+    eckDefault,	      //! Default label
+    eckDoConditionPassed, //! Enter Fortran do loop body
+    eckDoConditionFailed, //! Fortran do loop finished
+    eckForallIndicesInRange, //! Start testing forall mask
+    eckForallIndicesNotInRange, //! End of forall loop
+    eckComputedGotoCaseLabel, //! Case in computed goto -- number needs to be computed separately
+    eckArithmeticIfLess, //! Edge for the arithmetic if expression being less than zero
+    eckArithmeticIfEqual, //! Edge for the arithmetic if expression being equal to zero
+    eckArithmeticIfGreater //! Edge for the arithmetic if expression being greater than zero
   };
 
-  // CFG node is based on a subset of SgNode with indices
+  //! A node in the control flow graph.  Each CFG node corresponds to an AST
+  //! node, but there can be several CFG nodes for a given AST node.  
   class CFGNode {
-    SgNode* node; // Must be either a statement, expression, or SgInitializedName
+    //! The AST node from this CFG node
+    SgNode* node; // Must be either a SgStatement, SgExpression, or SgInitializedName (FIXME: change this to just SgLocatedNode if SgInitializedName becomes a subclass of that)
+
+    //! An index to differentiate control flow points within a single AST node
+    //! (for example, before and after the test of an if statement)
     unsigned int index;
 
     public:
@@ -36,54 +48,77 @@ namespace VirtualCFG {
     explicit CFGNode(SgNode* node, unsigned int index = 0): node(node), index(index) {
       assert (!node || isSgStatement(node) || isSgExpression(node) || isSgInitializedName(node));
     }
-    // Pretty string for Dot node labels, etc.
+    //! Pretty string for Dot node labels, etc.
     std::string toString() const;
-    // String for debugging graphs
+    //! String for debugging graphs
     std::string toStringForDebugging() const;
-    // ID to use for Dot, etc.
+    //! ID to use for Dot, etc.
     std::string id() const;
+    //! The underlying AST node
     SgNode* getNode() const {return node;}
+    //! An identifying index within the AST node given by getNode()
     unsigned int getIndex() const {return index;}
+    //! Outgoing control flow edges from this node
     std::vector<CFGEdge> outEdges() const;
+    //! Incoming control flow edges to this node
     std::vector<CFGEdge> inEdges() const;
+    //! Test whether this node satisfies a (fairly arbitrary) standard for
+    //! "interestingness".  There are many administrative nodes in the raw CFG
+    //! (nodes that do not correspond to operations in the program), and this
+    //! function filters them out.
     bool isInteresting() const;
+    //! Equality operator
     bool operator==(const CFGNode& o) const {return node == o.node && index == o.index;}
+    //! Disequality operator
     bool operator!=(const CFGNode& o) const {return !(*this == o);}
+    //! Less-than operator
     bool operator<(const CFGNode& o) const {return node < o.node || (node == o.node && index < o.index);}
-    static unsigned int childCount(SgNode* n);
   }; // end class CFGNode
 
-  // A CFG edge connecting two CFG nodes, with an edge condition to indicate edge types
+  //! A control flow edge connecting two CFG nodes, with an edge condition to
+  //! indicate edge types
   class CFGEdge {
     CFGNode src, tgt;
     public:
+    //! Constructor
     CFGEdge(CFGNode src, CFGNode tgt): src(src), tgt(tgt) {}
-    // Pretty string for Dot node labels, etc.
+    //! Pretty string for Dot node labels, etc.
     std::string toString() const;
-    // String for debugging graphs
+    //! String for debugging graphs
     std::string toStringForDebugging() const;
-    // ID to use for Dot, etc.
+    //! ID to use for Dot, etc.
     std::string id() const;
+    //! The source (beginning) CFG node
     CFGNode source() const {return src;}
+    //! The target (ending) CFG node
     CFGNode target() const {return tgt;}
+    //! The control flow condition that enables this edge
     EdgeConditionKind condition() const;
+    //! The label of the case represented by an eckCaseLabel edge
     SgExpression* caseLabel() const;
+    //! The expression of the computed goto represented by the eckArithmeticIf* conditions
     unsigned int computedGotoCaseIndex() const;
+    //! The test or case key that is tested as a condition of this control flow edge
     SgExpression* conditionBasedOn() const;
+    //! Variables going out of scope across this edge (not extensively tested)
     std::vector<SgInitializedName*> scopesBeingExited() const;
+    //! Variables coming into scope across this edge (not extensively tested)
     std::vector<SgInitializedName*> scopesBeingEntered() const;
+    //! Compare equality of edges
     bool operator==(const CFGEdge& o) const {return src == o.src && tgt == o.tgt;}
+    //! Compare disequality of edges
     bool operator!=(const CFGEdge& o) const {return src != o.src || tgt != o.tgt;}
 #if 0
+    //! We ban operator<() because it relies on system-specific comparisons among AST node pointers
     bool operator<(const CFGEdge& o) const {return src < o.src || (src == o.src && tgt < o.tgt);}
 #endif
   }; // end CFGEdge
 
-  void makeEdge(CFGNode from, CFGNode to, std::vector<CFGEdge>& result); // Used in inEdges() and outEdges() methods
-  CFGNode getNodeJustAfterInContainer(SgNode* n);
-  CFGNode getNodeJustBeforeInContainer(SgNode* n);
-
-  // ! A CFG path is a set of connected CFG edges
+  //! \internal A CFG path is a set of connected CFG edges; condition and
+  //! variable information is combined across the edges in the path.  Paths are
+  //! used as parts of edges in filtered views of the CFG.  They implement almost
+  //! the same functions as CFG edges, and their functions are just forwarded to
+  //! by filtered edge methods.  This is an internal class.
   class CFGPath {
     std::vector<CFGEdge> edges;
     public:
@@ -161,29 +196,40 @@ namespace VirtualCFG {
 #endif
   }; // end CFGPath
 
+  //! \internal Merge two CFG paths
   inline CFGPath mergePaths(const CFGPath& hd, const CFGPath& tl) {
     // Assumes the edges don't do anything too complicated with scopes
     return CFGPath(hd, tl);
   }
 
+  //! \internal mergePaths() with the arguments reversed
   inline CFGPath mergePathsReversed(const CFGPath& tl, const CFGPath& hd) {
     return mergePaths(hd, tl);
   }
 
+  //! The first CFG node for a construct (before the construct starts to
+  //! execute)
   inline CFGNode cfgBeginningOfConstruct(SgNode* c) {
     return CFGNode(c, 0);
   }
 
+  //! \internal Non-member wrapper for SgNode::cfgIndexForEnd since that has
+  //! not yet been defined
+  unsigned int cfgIndexForEndWrapper(SgNode* n);
+
+  //! The last CFG node for a construct (after the entire construct has finished
+  //! executing).  This node may not actually be reached if, for example, a goto
+  //! causes a loop to be exited in the middle
   inline CFGNode cfgEndOfConstruct(SgNode* c) {
-    return CFGNode(c, CFGNode::childCount(c));
+    return CFGNode(c, cfgIndexForEndWrapper(c));
   }
 
+  //! Returns CFG node for just before start
   inline CFGNode makeCfg(SgNode* start) {
-    // Returns CFG node for just before start
     return cfgBeginningOfConstruct(start);
   }
 
-  // "Interesting" node and edge filters
+  //! "Interesting" node and edge filters
   class InterestingEdge;
 
   class InterestingNode {
@@ -231,24 +277,16 @@ namespace VirtualCFG {
     return InterestingNode(cfgBeginningOfConstruct(start));
   }
 
-  SgFunctionDeclaration* getDeclaration(SgExpression* func);
+  //! \internal Find the CFG index of n within its parent
+  CFGNode findParentNode(SgNode* n);
+  //! \internal Get the mask expression of a SgForAllStatement
   SgExpression* forallMaskExpression(SgForAllStatement* stmt);
-
+  //! \internal Get the CFG node for a Fortran label from its symbol
   CFGNode getCFGTargetOfFortranLabelSymbol(SgLabelSymbol* sym);
+  //! \internal Get the CFG node for a Fortran label from a reference to it
   CFGNode getCFGTargetOfFortranLabelRef(SgLabelRefExp* lRef);
-  void addIncomingFortranGotos(SgStatement* stmt, unsigned int index, std::vector<CFGEdge>& result);
-  void addOutEdgeOrBypassForExpressionChild(SgNode* me, unsigned int idx, SgExpression* e, std::vector<CFGEdge>& result);
-  void addInEdgeOrBypassForExpressionChild(SgNode* me, unsigned int idx, SgExpression* e, std::vector<CFGEdge>& result);
-  bool handleFortranIOCommonOutEdges(SgIOStatement* me, unsigned int idx, unsigned int numChildren, std::vector<CFGEdge>& result);
-  bool handleFortranIOCommonInEdges(SgIOStatement* me, unsigned int idx, unsigned int numChildren, std::vector<CFGEdge>& result);
-  static const unsigned int numberOfFortranIOCommonEdges = 5;
-  // These are too complicated to do within Statement.code
-  unsigned int doForallCfgIndexForEnd(const SgForAllStatement* me);
-  bool doForallCfgIsIndexInteresting(const SgForAllStatement* me, unsigned int idx);
-  unsigned int doForallCfgFindChildIndex(SgForAllStatement* me, SgNode* tgt);
-  unsigned int doForallCfgFindNextChildIndex(SgForAllStatement* me, SgNode* tgt);
-  std::vector<VirtualCFG::CFGEdge> doForallCfgOutEdges(SgForAllStatement* me, unsigned int idx);
-  std::vector<VirtualCFG::CFGEdge> doForallCfgInEdges(SgForAllStatement* me, unsigned int idx);
+  //! \internal Get the declaration of a directly named function
+  SgFunctionDeclaration* getDeclaration(SgExpression* func);
 }
 
 #endif // VIRTUAL_CFG_H
