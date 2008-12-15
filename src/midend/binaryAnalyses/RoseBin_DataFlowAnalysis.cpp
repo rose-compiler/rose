@@ -147,12 +147,15 @@ RoseBin_DataFlowAnalysis::exceptionCall(SgAsmx86Instruction* call) {
   ROSE_ASSERT(opList);
   SgAsmExpressionPtrList ptrList = opList->get_operands();
   // get the first (and only) element 
+  string comment = call->get_comment();
   if (ptrList.size()!=0) {
     SgAsmExpression* expr = *(ptrList.begin());
     string replace = expr->get_replacement();
-    if (replace=="_malloc" || replace=="malloc@plt")
+    if (replace=="_malloc" || replace=="malloc@plt"
+	|| comment=="malloc")
       exception=true;
   }
+  //  cerr << "Found call --- comment = " << comment << "  exception = " << exception << endl;
   return exception;
 }
 
@@ -288,8 +291,10 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgDirectedGraphNode*>& rootNodes
 	std::cout << " exceptionCallNode : " << exceptionCallNode << " exceptionCallNext : " << exceptionCallNext << endl;
 	// if function call is call to malloc we have an exception and follow the call path
 	// fixme -- revisit this once the malloc analysis works again
-	//	if ((exceptionCallNode && !exceptionCallNext) || 
-	if (nodeN && nodeN->get_kind() == x86_call || 
+	if ((exceptionCallNode && !exceptionCallNext)) {
+	} else if (
+	    //if (
+	    nodeN && nodeN->get_kind() == x86_call || 
 	    nextN && nextN->get_kind() == x86_ret )
 	  call = true;
 	//bool sameParent = analysis->sameParents(node, next);
