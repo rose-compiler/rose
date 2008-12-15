@@ -274,8 +274,8 @@ RoseBin_FlowAnalysis::process_jumps_get_target(SgAsmx86Instruction* inst) {
 	//if (RoseBin_support::DEBUG_MODE())
 	//cout << "   found value ....... :: " << valStr << endl;
 	funcName = valExpr->get_replacement();
-	if (funcName=="")
-	  funcName="noName";
+	//if (funcName=="")
+	//  funcName="noName";
       }
       if (memExpr) {
 	continue;
@@ -314,6 +314,7 @@ RoseBin_FlowAnalysis::process_jumps_get_target(SgAsmx86Instruction* inst) {
 	      if(from_string<uint64_t>(val_f, fname, std::hex)) {
 		// func name is a hex number
 		func->set_name(funcName);
+		//		inst->set_comment(funcName);
 	      } else {
 		// its a name
 	      }
@@ -405,6 +406,8 @@ RoseBin_FlowAnalysis::process_jumps() {
 	  
 	    if (inst->get_parent()) {
               //cerr << "Inst has a parent" << endl;
+	      if (inst->get_comment()=="")
+		inst->set_comment(b_func->get_name());
               SgAsmInstruction* inst_after = info->getInstructionAtAddress(inst->get_address() + inst->get_raw_bytes().size()); // inst->cfgBinFlowOutEdge(info);
               if (inst_after) {
                 //cerr << "Added dest " << std::hex << isSgAsmStatement(inst_after)->get_address() << " for function" << endl;

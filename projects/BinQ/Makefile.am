@@ -27,7 +27,11 @@ BinQ_SOURCES = \
 	BinQAbstract.C \
 	BinQbatch.C \
 	ForbiddenFunctionCall.C \
-	BinQinteractive.C
+	BinQinteractive.C \
+	NullAfterFree.C \
+	MallocAndFree.C \
+	InitPointerToNull.C \
+	ComplexityMetric.C
 
 
 
@@ -96,5 +100,9 @@ EXTRA_DIST = BinQGui.h \
              BinQAbstract.h \
              BinQbatch.h \
              ForbiddenFunctionCall.h \
-             BinQinteractive.h
+             BinQinteractive.h \
+             NullAfterFree.h \
+             MallocAndFree.h \
+             InitPointerToNull.h \
+             ComplexityMetric.h
 

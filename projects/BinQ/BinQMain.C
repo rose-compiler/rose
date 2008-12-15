@@ -102,12 +102,12 @@ int main( int argc, char **argv )
   } else if (!test && !batch) {
     QROSE::init(argc,argv);
     BinQinteractive binGui(fileA,fileB,dllA,dllB,test);
-    binGui.run();
+    //binGui.run();
     return QROSE::exec();
   } else if (batch && !test) {
     QROSE::init(argc,argv);
     BinQbatch binGui(fileA,fileB,dllA,dllB,test);
-    binGui.run();
+    //binGui.run();
     binGui.runAnalyses();
     return QROSE::exec();
   } else {

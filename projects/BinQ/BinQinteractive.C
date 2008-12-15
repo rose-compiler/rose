@@ -50,6 +50,10 @@ void BinQinteractive::initAnalyses() {
   analyses.clear();
   analyses.push_back(new DynamicInfo());
   analyses.push_back(new ForbiddenFunctionCall());
+  analyses.push_back(new NullAfterFree());
+  analyses.push_back(new MallocAndFree());
+  analyses.push_back(new InitPointerToNull());
+  analyses.push_back(new ComplexityMetric());
   analyses.push_back(new DiffAlgo());
   analyses.push_back(new FunctionDiffAlgo());
   analyses.push_back(new AlignFunction());

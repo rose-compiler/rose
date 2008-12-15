@@ -159,65 +159,115 @@ SgNode* BinQSupport::disassembleFile(std::string tsv_directory, std::string& sou
 
 
 
-std::string 
-BinQSupport::normalizeInstructionsToHTML(std::vector<SgAsmx86Instruction*>::iterator beg, 
-					 std::vector<SgAsmx86Instruction*>::iterator end) {
-  string normalizedUnparsedInstructions;
-  map<SgAsmExpression*, size_t> valueNumbers[3];
-  numberOperands( beg,end, valueNumbers);
 
-  // Unparse the normalized forms of the instructions
-  for (; beg != end; ++beg ) {
-    SgAsmx86Instruction* insn = *beg;
-    string mne = insn->get_mnemonic();
-    boost::to_lower(mne);
-    mne = "<font color=\"red\">" + StringUtility::htmlEscape(mne)+"</font>";
+std::string
+BinQSupport::resolveValue(SgAsmValueExpression* leftVal) {
+  string valStr="";
+  uint8_t byte_val=0xF;
+  uint16_t word_val=0xFF;
+  uint32_t double_word_val=0xFFFF;
+  uint64_t quad_word_val=0xFFFFFFFFU;
+  valStr = 
+    RoseBin_support::resolveValue(leftVal, true,
+				  byte_val,
+				  word_val,
+				  double_word_val,
+				  quad_word_val);
+  return valStr;
+}
 
-    normalizedUnparsedInstructions += mne;
-    const SgAsmExpressionPtrList& operands = getOperands(insn);
-    // Add to total for this variant
-    // Add to total for each kind of operand
-    size_t operandCount = operands.size();
 
-    normalizedUnparsedInstructions += "<font color=\"blue\">";
-    for (size_t i = 0; i < operandCount; ++i) {
-      SgAsmExpression* operand = operands[i];
-      ExpressionCategory cat = getCategory(operand);
-      map<SgAsmExpression*, size_t>::const_iterator numIter = valueNumbers[(int)cat].find(operand);
-      assert (numIter != valueNumbers[(int)cat].end());
-      size_t num = numIter->second;
-
-      normalizedUnparsedInstructions += (cat == ec_reg ? " R" : cat == ec_mem ? " M" : " V") + boost::lexical_cast<string>(num);
+rose_addr_t 
+BinQSupport::evaluateMemoryExpression(SgAsmx86Instruction* destInst,
+				      SgAsmMemoryReferenceExpression* mem) {
+  rose_addr_t resolveAddr=0;
+  SgAsmExpression* exprOffset = mem->get_address();
+  SgAsmExpression* left =NULL;
+  SgAsmExpression* right =NULL;
+  SgAsmBinaryAdd* add = isSgAsmBinaryAdd(exprOffset);
+  SgAsmValueExpression* Val = isSgAsmValueExpression(exprOffset);
+  if (add) {
+    left = add->get_lhs();
+    right = add->get_rhs();
+  } else if (Val) {
+    left=Val;
+  }
+  if (left || right) {
+    SgAsmx86RegisterReferenceExpression* leftReg = isSgAsmx86RegisterReferenceExpression(left);
+    SgAsmx86RegisterReferenceExpression* rightReg = isSgAsmx86RegisterReferenceExpression(right);
+    SgAsmValueExpression* leftVal = isSgAsmValueExpression(left);
+    SgAsmValueExpression* rightVal = isSgAsmValueExpression(right);
+    X86RegisterClass regClass ;
+    if (leftReg) 
+      regClass = leftReg->get_register_class();
+    if (rightReg) 
+      regClass = rightReg->get_register_class();
+    //cerr << " print : " << regClass << endl;
+    string val = "NULL";
+    if (regClass>=0 && regClass <=10)
+      val = regclassToString(regClass);
+    rose_addr_t next_addr = destInst->get_address() + destInst->get_raw_bytes().size();
+    if (val=="ip") {
+      resolveAddr+=next_addr;
+      //cerr << "Found IP: " << RoseBin_support::HexToString(next_addr) << 
+      //	"  resolvAddr: "<<RoseBin_support::HexToString(resolveAddr) << endl;
     }
-    normalizedUnparsedInstructions += "; </font> <br> ";
+    if (leftVal) {
+      string valStr = resolveValue(leftVal);
+      uint64_t val=0;
+      if(RoseBin_support::from_string<uint64_t>(val, valStr, std::hex))
+	resolveAddr += val;
+      //cerr << "Found leftVal: " <<   " ("<<valStr<<")"<<
+      //	"  resolvAddr: "<<RoseBin_support::HexToString(resolveAddr) << endl;
+    }
+    if (rightVal) {
+      string valStr = resolveValue(rightVal);
+      uint64_t val=0;
+      if(RoseBin_support::from_string<uint64_t>(val, valStr, std::hex))
+	resolveAddr += val;
+      //      cerr << "Found rightVal: " << " ("<<valStr<<")"<<
+      //	"  resolvAddr: "<<RoseBin_support::HexToString(resolveAddr) << endl;
+    }
+	      
   }
-  return normalizedUnparsedInstructions;
-};
-
-
-std::string BinQSupport::unparseX86InstructionToHTMLWithAddress(SgAsmx86Instruction* insn) {
-  if (insn == NULL) return "BOGUS:NULL";
-  string result = "<font color=\"green\">" + StringUtility::htmlEscape(StringUtility::intToHex(insn->get_address())) + "</font>:";
-  result += "<font color=\"red\">" + StringUtility::htmlEscape(insn->get_mnemonic());
-  switch (insn->get_branchPrediction()) {
-  case x86_branch_prediction_none: break;
-  case x86_branch_prediction_taken: result += ",pt"; break;
-  case x86_branch_prediction_not_taken: result += ",pn"; break;
-  default: ROSE_ASSERT (!"Bad branch prediction");
-  }
-  result += "</font>";
-  result += std::string((result.size() >= 7 ? 1 : 7 - result.size()), ' ');
-  SgAsmOperandList* opList = insn->get_operandList();
-  const SgAsmExpressionPtrList& operands = opList->get_operands();
-  for (size_t i = 0; i < operands.size(); ++i) {
-    if (i != 0) result += ", ";
-    result += "<font color=\"blue\">" + StringUtility::htmlEscape(unparseX86Expression(operands[i], (insn->get_kind() == x86_lea))) + "</font>";
-  }
-  return result;
+  //SgAsmType* type = mem->get_type();
+  //adr+="resolved: " +RoseBin_support::HexToString(resolveAddr)+" - orig:";
+  //adr += unparseX86Expression(exprOffset,false);
+  return resolveAddr;
 }
 
 
 
-
+bool 
+BinQSupport::memoryExpressionContainsRegister(X86RegisterClass cl, int registerNumber,
+					      SgAsmMemoryReferenceExpression* mem) {
+  bool containsRegister=false;
+  SgAsmExpression* exprOffset = mem->get_address();
+  SgAsmExpression* left =NULL;
+  SgAsmExpression* right =NULL;
+  SgAsmBinaryAdd* add = isSgAsmBinaryAdd(exprOffset);
+  if (add) {
+    left = add->get_lhs();
+    right = add->get_rhs();
+  }
+  if (left || right) {
+    SgAsmx86RegisterReferenceExpression* leftReg = isSgAsmx86RegisterReferenceExpression(left);
+    SgAsmx86RegisterReferenceExpression* rightReg = isSgAsmx86RegisterReferenceExpression(right);
+    X86RegisterClass regClass ;
+    int regNr =0;
+    if (leftReg) {
+      regClass = leftReg->get_register_class();
+      regNr = leftReg->get_register_number();
+    }
+    if (rightReg) {
+      regClass = rightReg->get_register_class();
+      regNr = rightReg->get_register_number();
+    }
+    if (cl == regClass && regNr==registerNumber) {
+      containsRegister=true;
+    }
+  }
+  return containsRegister;
+}
 
 

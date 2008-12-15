@@ -1,5 +1,5 @@
 #include "BinQGui.h"
-#include "BinDynamicInfo.h"
+#include "ForbiddenFunctionCall.h"
 
 #include <iostream>
 #include "BinQSupport.h"
@@ -31,7 +31,7 @@ ForbiddenFunctionCall::visit(SgNode* node) {
       if (name==calleeName) {
 	//cerr << " match : " << name << endl;
 	string res = "This is a function that should not be called : ";
-	 res+=name+"  "+inst->unparseToString();
+	res+=name+"  addr:"+RoseBin_support::HexToString(inst->get_address())+" : "+unparseInstruction(inst)+" <"+inst->get_comment()+">";
 	result[inst]= res;
       }
     }
@@ -41,9 +41,25 @@ ForbiddenFunctionCall::visit(SgNode* node) {
 void
 ForbiddenFunctionCall::runTraversal(SgNode* project) {
   blackList.clear();
-  blackList.push_back("malloc");
-  blackList.push_back("_malloc");
-  blackList.push_back("free");
+  blackList.push_back("vfork");
+  blackList.push_back("sprintf");
+  blackList.push_back("scanf");
+  blackList.push_back("sscanf");
+  blackList.push_back("gets");
+  blackList.push_back("strcpy");
+  blackList.push_back("_mbscpy");
+  blackList.push_back("lstrcat");
+  blackList.push_back("memcpy");
+
+  blackList.push_back("strcat");
+  blackList.push_back("rand");
+  blackList.push_back("rewind");
+  blackList.push_back("atoi");
+  blackList.push_back("atol");
+  blackList.push_back("atoll");
+  blackList.push_back("atof");
+  blackList.push_back("unparse");
+  blackList.push_back("unparseToString");
 
   this->traverse(project,preorder);
 }

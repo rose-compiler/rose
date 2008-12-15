@@ -18,6 +18,10 @@
 #include "InterruptAnalysis.h"
 #include "BinDynamicInfo.h"
 #include "ForbiddenFunctionCall.h"
+#include "NullAfterFree.h"
+#include "MallocAndFree.h"
+#include "InitPointerToNull.h"
+#include "ComplexityMetric.h"
 
 //class Slide;
 class BinQSupport;

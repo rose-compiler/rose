@@ -9,10 +9,12 @@ using namespace std;
 
 bool SystemDependenceGraph::isKnownLibraryFunction(SgFunctionDeclaration *fDec)
 {
-  cout << libraryExtenders.size()<<" stored"<<endl;
+  if (debug)
+    cout << libraryExtenders.size()<<" stored"<<endl;
   for (unsigned int i=0;i<libraryExtenders.size();i++)
   {
-    cout <<"calling library entender #"<<i<<endl;
+    if (debug)
+      cout <<"calling library entender #"<<i<<endl;
     if (libraryExtenders[i]->isKnownLibraryFunction(fDec)) return true;
   }
   SgName fName=fDec->get_mangled_name();// fDec->get_qualified_name();
@@ -42,7 +44,8 @@ void SystemDependenceGraph::createConnectionsForLibaryFunction(SgFunctionDeclara
     ||fName.getString()==string("fflush___Fb_i_Gb___Pb__FILE_IO_FILE__Pe___Fe_")
      )
   {
-    cout <<"creating library-function-sdg-sub-graph"<<endl;
+    if (debug)
+      cout <<"creating library-function-sdg-sub-graph"<<endl;
     // returnvalue is dependant of input but input is not changed!
     for (int i=0;i<ii->getFormalCount();i++)
     {
@@ -214,7 +217,7 @@ void SystemDependenceGraph::cleanUp(std::set<SgNode*> preserve)
       if (currentFormal->numPredecessors()<2) // only control edge....
       {
 #ifdef VERBOSE_DEBUG
-        cout <<"pruning FORMALOUT "; currentFormal->writeOut(cout);cout <<endl;
+	  cout <<"pruning FORMALOUT "; currentFormal->writeOut(cout);cout <<endl;
 #endif
         std::set<SimpleDirectedGraphNode *> succs=currentFormal->getSuccessors();
         deleteNode(currentFormal);

@@ -73,7 +73,7 @@ static void tableWidgetCellActivated(int col, int row, int oldCol, int oldRow) {
   qrs::QRTable* widget = dynamic_cast<qrs::QRTable*>(wid);
   if (widget==NULL)
     return;
-  cerr << " FUNCTION WIDGET CLICKED " << widget << endl;
+  //  cerr << " FUNCTION WIDGET CLICKED " << widget << endl;
   instance->currentTableWidget=widget;
   instance->unhighlightFunctionRow(oldRow, widget);
   instance->highlightFunctionRow(row, widget);
@@ -89,9 +89,9 @@ static void codeTableWidgetCellActivated(int col, int row, int oldCol, int oldRo
   qrs::QRTable* widget = dynamic_cast<qrs::QRTable*>(wid);
   if (widget==NULL)
     return;
-  cerr << " INSTRUCTION WIDGET CLICKED " << widget << endl;
+  //cerr << " INSTRUCTION WIDGET CLICKED " << widget << endl;
   if (instance->currentTableWidget==widget) {
-    cerr << "Referred from Table widget ... ignore " <<endl;
+    //    cerr << "Referred from Table widget ... ignore " <<endl;
     return;
   }
   instance->unhighlightInstructionRow(oldRow, widget);
@@ -136,7 +136,7 @@ void BinQGUI::highlightFunctionRow(int row, qrs::QRTable* widget) {
     if (widget==tableWidget2)
       fileA=false;
     if (fileA) {
-      cerr << "Function Table A selected : " <<  endl;
+      //cerr << "Function Table A selected : " <<  endl;
       if (isSgAsmFunctionDeclaration(funcsFileA[row])) {
 	SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(funcsFileA[row]);
 	std::vector<Item*>::iterator it = itemsFileA.begin();
@@ -149,13 +149,13 @@ void BinQGUI::highlightFunctionRow(int row, qrs::QRTable* widget) {
 	    break;
 	  }
 	}
-	cerr << " highlight func row : " << row << "  inst row : " << offset << endl;
+	//cerr << " highlight func row : " << row << "  inst row : " << offset << endl;
 	ROSE_ASSERT(codeTableWidget);
 	codeTableWidget->setCurrentCell(offset,0);
       } 
     }
     else {
-      cerr << "Function Table B selected" << endl;
+      //cerr << "Function Table B selected" << endl;
       if (fileB) {
 	if (isSgAsmFunctionDeclaration(funcsFileB[row])) {
 	  SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(funcsFileB[row]);
@@ -783,6 +783,7 @@ BinQGUI::run( ) {
     }
     analysisResult->moveCursor(QTextCursor::Start);
   }
+  updateByteItemList();
 }
 
 // Creates the Function table (left hand side) for file A and B
@@ -1090,8 +1091,8 @@ void BinQGUI::showFile(int row, qrs::QRTable* currentWidget,
       addRow=true;
     }
 
-    if (rowC>5000) {
-      cerr << " Allowing only 5000 table entries for now ..." << endl;
+    if (rowC>7000) {
+      cerr << " Allowing only 7000 table entries for now ..." << endl;
       break;
     }
     else
@@ -1122,7 +1123,7 @@ void BinQGUI::showFile(int row, qrs::QRTable* currentWidget,
 	  currentWidget->setHDim(0,40);
 	  currentWidget->setHDim(1,65);
 	  currentWidget->setHDim(2,55);
-	  currentWidget->setHDim(3,180);
+	  currentWidget->setHDim(3,240);
 	  currentWidget->setHDim(4,90);
 	  currentWidget->setHDim(5,40);
 	  currentWidget->setHDim(6,40);

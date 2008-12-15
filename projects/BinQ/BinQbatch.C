@@ -49,8 +49,14 @@ BinQbatch::BinQbatch(std::string fA, std::string fB, std::vector<std::string> dl
 void BinQbatch::initAnalyses() {
   cerr << "Checking for analyses ... " << endl;
   analyses.clear();
+  analyses.push_back(new BinCallGraph());
   analyses.push_back(new DynamicInfo());
   analyses.push_back(new ForbiddenFunctionCall());
+  analyses.push_back(new NullAfterFree());
+  analyses.push_back(new MallocAndFree());
+  analyses.push_back(new InitPointerToNull());
+  analyses.push_back(new ComplexityMetric());
+  analyses.push_back(new BufferOverflow());
 }
 
 int BinQbatch::addRemainingAnalyses() {
@@ -58,10 +64,8 @@ int BinQbatch::addRemainingAnalyses() {
   analyses.push_back(new DiffAlgo());
   analyses.push_back(new FunctionDiffAlgo());
   analyses.push_back(new AlignFunction());
-  analyses.push_back(new BinCallGraph());
   analyses.push_back(new BinControlFlowAnalysis());
   analyses.push_back(new BinDataFlowAnalysis());
-  analyses.push_back(new BufferOverflow());
   analyses.push_back(new InterruptAnalysis());
   return before;
 }
@@ -80,6 +84,7 @@ BinQbatch::runAnalyses() {
     if (twoFiles && fileB!=NULL || twoFiles==false) {
       currentAnalysis=analyses[i];
       if (currentAnalysis) {
+	cerr << "Running analysis : " << analyses[i]->name().c_str() << endl;
 	double start = RoseBin_support::getTime();
 	currentAnalysis->test(fileA,fileB);
 	double end = RoseBin_support::getTime();
@@ -87,7 +92,9 @@ BinQbatch::runAnalyses() {
 	map<SgNode*,string> resu = currentAnalysis->getResult();
 	problems+=resu.size();
 	myfile << "Running analysis : " << analyses[i]->name().c_str() <<
-	  "   time : " << time << "   Problems : " << resu.size() << endl;
+	  "   time : " << time << "   Problems : " << RoseBin_support::ToString(resu.size()) << endl;
+	cerr << "Running analysis : " << analyses[i]->name().c_str() <<
+	  "   time : " << time << "   Problems : " << RoseBin_support::ToString(resu.size()) << endl;
 	QString res = QString("Running ... %1  time : %2   Problems: %3")
 	  .arg(currentAnalysis->name().c_str())
 	  .arg(time)

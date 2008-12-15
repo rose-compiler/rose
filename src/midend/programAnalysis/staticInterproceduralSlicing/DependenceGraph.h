@@ -1229,7 +1229,7 @@ class SystemDependenceGraph:public MergedDependenceGraph
     if (le!=NULL)
     libraryExtenders.push_back(le);
   }
-    SystemDependenceGraph(){}
+    SystemDependenceGraph(){debug=false;}
     SgNode *getMainFunction();
     void createSafeConfiguration(SgFunctionDeclaration *fDef);
     bool isKnownLibraryFunction(SgFunctionDeclaration *fDec);
@@ -1315,7 +1315,7 @@ class SystemDependenceGraph:public MergedDependenceGraph
        Side effects: The interprocedural nodes for the call sites are linked
        to the interprocedural nodes for the appropriate entry sites */
     void _processFunction(FunctionDependenceGraph * pdg);
-
+    bool debug;
 
     /* ! \brief get a list of functions that funcCall could be referring to
 

@@ -11,7 +11,7 @@
 
 class BufferOverflow : public BinAnalyses,  RoseBin_DataFlowAbstract {
  public:
-  BufferOverflow(){testFlag=false;};
+  BufferOverflow(){testFlag=false;debug=false;};
   virtual ~BufferOverflow(){};
   bool testFlag;
   void run(SgNode* f1, SgNode* f2);
@@ -26,8 +26,8 @@ class BufferOverflow : public BinAnalyses,  RoseBin_DataFlowAbstract {
   std::map<SgNode*,std::string> getResult(){return result;}
  private:
   std::map<SgNode*,std::string> result;
- 
-  
+  bool debug;
+  VirtualBinCFG::AuxiliaryInformation* info;  
   void init(RoseBin_Graph* vg) {
     vizzGraph = vg;
   }
@@ -35,7 +35,7 @@ class BufferOverflow : public BinAnalyses,  RoseBin_DataFlowAbstract {
     return false;
   }
 
-
+  BinQGUI *instance;
 };
 
 

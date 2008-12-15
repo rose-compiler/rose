@@ -65,6 +65,14 @@ regenerate:
 testNewChecker: $(compass_scripts_dir)/gen_checker.sh
 	 chmod -R u+w $(compass_checker_dir)
 	 chmod -R u+w $(srcdir)
+# beginning of cleanup of previous execution
+	 cd $(compass_checker_dir)
+	 rm -f compass_makefile.inc; $(MAKE) compass_makefile.inc
+	 $(MAKE); $(MAKE) test
+	 (test -f $(srcdir)/CHECKER_LIST.testNewChecker.bk &&  mv $(srcdir)/CHECKER_LIST.testNewChecker.bk $(srcdir)/CHECKER_LIST) || echo File does not exist 
+	 (test -f $(srcdir)/RULE_SELECTION.in.testNewChecker.bk &&  mv $(srcdir)/RULE_SELECTION.in.testNewChecker.bk $(srcdir)/RULE_SELECTION.in) || echo File does not exist
+	 rm -rf $(compass_checker_dir)/blankTestChecker blankTestChecker.lo
+# end of cleanup
 	 cd $(compass_checker_dir) && ../../src/compass_scripts/gen_checker.sh blank test checker 
 	 cp $(srcdir)/CHECKER_LIST $(srcdir)/CHECKER_LIST.testNewChecker.bk
 	 cp $(srcdir)/RULE_SELECTION.in $(srcdir)/RULE_SELECTION.in.testNewChecker.bk

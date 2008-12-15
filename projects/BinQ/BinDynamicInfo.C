@@ -11,6 +11,7 @@ using namespace qrs;
 using namespace std;
 using namespace __gnu_cxx;
 
+
 std::string DynamicInfo::name() {
   return "Binary Dynamic Info";
 }
@@ -19,21 +20,6 @@ std::string DynamicInfo::getDescription() {
   return "Test to determine more information about dynamic libraries.";
 }
 
-std::string
-DynamicInfo::resolveValue(SgAsmValueExpression* leftVal) {
-  string valStr="";
-  uint8_t byte_val=0xF;
-  uint16_t word_val=0xFF;
-  uint32_t double_word_val=0xFFFF;
-  uint64_t quad_word_val=0xFFFFFFFFU;
-  valStr = 
-    RoseBin_support::resolveValue(leftVal, true,
-				  byte_val,
-				  word_val,
-				  double_word_val,
-				  quad_word_val);
-  return valStr;
-}
 
 void
 DynamicInfo::visit(SgNode* node) {
@@ -119,53 +105,12 @@ DynamicInfo::visit(SgNode* node) {
 	  SgAsmExpressionPtrList& opsList2 = ops2->get_operands();
 	  SgAsmExpressionPtrList::iterator it = opsList2.begin();
 	  SgAsmMemoryReferenceExpression* mem = isSgAsmMemoryReferenceExpression(*it);
-	  string adr="";
 	  rose_addr_t resolveAddr=0;
 	  if (mem) {
-	    SgAsmExpression* exprOffset = mem->get_address();
-	    SgAsmExpression* left =NULL;
-	    SgAsmExpression* right =NULL;
-	    SgAsmBinaryAdd* add = isSgAsmBinaryAdd(exprOffset);
-	    SgAsmValueExpression* Val = isSgAsmValueExpression(exprOffset);
-	    if (add) {
-	      left = add->get_lhs();
-	      right = add->get_rhs();
-	    } else if (Val) {
-	      left=Val;
-	    }
-	    if (left || right) {
-	      SgAsmx86RegisterReferenceExpression* leftReg = isSgAsmx86RegisterReferenceExpression(left);
-	      SgAsmx86RegisterReferenceExpression* rightReg = isSgAsmx86RegisterReferenceExpression(right);
-	      SgAsmValueExpression* leftVal = isSgAsmValueExpression(left);
-	      SgAsmValueExpression* rightVal = isSgAsmValueExpression(right);
-	      X86RegisterClass regClass ;
-	      if (leftReg) 
-		regClass = leftReg->get_register_class();
-	      if (rightReg) 
-		regClass = rightReg->get_register_class();
-	      //cerr << " print : " << regClass << endl;
-	      string val = "NULL";
-	      if (regClass>=0 && regClass <=10)
-		val = regclassToString(regClass);
-	      uint64_t next_addr = destInst->get_address() + destInst->get_raw_bytes().size();
-	      if (val=="ip") 
-		resolveAddr+=next_addr;
-	      if (leftVal) {
-		string valStr = resolveValue(leftVal);
-		resolveAddr += RoseBin_support::HexToDec(valStr);
-	      }
-	      if (rightVal) {
-		string valStr = resolveValue(rightVal);
-		resolveAddr += RoseBin_support::HexToDec(valStr);
-	      }
-	      
-	    }
-	    //SgAsmType* type = mem->get_type();
-	    adr+="resolved: " +RoseBin_support::HexToString(resolveAddr)+" - orig:";
-	    adr += unparseX86Expression(exprOffset,false);
+	    resolveAddr=BinQSupport::evaluateMemoryExpression(destInst,mem);
 	  }
 	  if (debug)
-	    cerr << "  Destination : " << unparseInstruction(destInst) << "  ops: " <<adr <<endl;
+	    cerr << "  Destination : " << unparseInstruction(destInst) <<endl;
 	  // determine if we found a symbol
 	  std::map<rose_addr_t, SgAsmElfSymbol*>::const_iterator si = symbolMap.find(resolveAddr);
 	  SgAsmElfSymbol* symbol = NULL;
@@ -207,8 +152,6 @@ DynamicInfo::printOutRelaEntries(SgNode* project) {
 
 void
 DynamicInfo::run(SgNode* fileA, SgNode* fileB) {
-  if (true)
-    return;
   instance=NULL;
   if (!testFlag)
     instance = QROSE::cbData<BinQGUI *>();

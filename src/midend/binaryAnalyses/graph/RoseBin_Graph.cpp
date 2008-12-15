@@ -136,7 +136,7 @@ RoseBin_Graph::isDirectCFGEdge(SgDirectedGraphNode* sgNode,
       f1 = isSgAsmFunctionDeclaration(instSgNode->get_parent()->get_parent());
     if (f2==NULL)
       f2 = isSgAsmFunctionDeclaration(instSgNodeBefore->get_parent()->get_parent());
-    if (f1 && f2) {
+    if (f1 && f2 && f1==f2) {
       vector<VirtualBinCFG::CFGEdge> outEdges = instSgNodeBefore->cfgBinOutEdges(info);
       for (size_t i = 0; i < outEdges.size(); ++i) {
         if (outEdges[i].target().getNode() == instSgNode) {
