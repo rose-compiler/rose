@@ -18,6 +18,8 @@ int main (void)
   // ROSE does not yet support the imaginary add operator
      _Complex float a_complex_value = 0.0;
 
+  // JJW (12/15/2008): The complex.h header on Linux doesn't define _Imaginary
+#if 0
 #ifndef __INTEL_COMPILER
   // This is now to specify imaginary numbers in EDG, not supported in GNU, so
   // the code generation using GNU aas a backend drops the "_Imaginary" prefix.
@@ -26,5 +28,6 @@ int main (void)
      _Imaginary long double z_edg_imaginary = 0.0;
 
      a_complex_value = 4.0 + x_edg_imaginary;
+#endif
 #endif
    }

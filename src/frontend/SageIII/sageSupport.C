@@ -4762,8 +4762,16 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
      if ( get_verbose() > 1 )
           printf ("DONE: frontend called (frontendErrorLevel = %d) \n",frontendErrorLevel);
 
+     bool edg_failed =
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
+       frontendErrorLevel != 0
+#else
+       frontendErrorLevel > 3
+#endif
+       ;
+
   // If we had any errors reported by the frontend then quite now
-     if (frontendErrorLevel > 3)
+     if (edg_failed)
         {
        // cout << "Errors in Processing: (frontendErrorLevel > 3)" << endl;
           if ( get_verbose() > 1 )
@@ -4783,7 +4791,7 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
             else
              {
             // Exit because there are errors in the input program
-               cout << "Errors in Processing: (frontendErrorLevel > 3)" << endl;
+               cout << "Errors in Processing: (edg_failed)" << endl;
                ROSE_ABORT();
              }
         }
