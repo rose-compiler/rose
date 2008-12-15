@@ -224,8 +224,9 @@ DynamicInfo::run(SgNode* fileA, SgNode* fileB) {
 	instance->analysisResult->append( QString("\nFound Dynamic section. ---------------------------"));
       Rose_STL_Container<SgAsmElfDynamicEntry*> list = elfSec->get_entries()->get_entries();
       Rose_STL_Container<SgAsmElfDynamicEntry*>::const_iterator it = list.begin();
+      SgAsmElfDynamicEntry* entry=NULL;
       for (;it!=list.end();++it) {
-	SgAsmElfDynamicEntry* entry = *it;
+	entry = *it;
 	ROSE_ASSERT(entry);
 	string name="unknown";
 	if (entry->get_name()!=NULL)

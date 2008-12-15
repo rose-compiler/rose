@@ -8,7 +8,7 @@
 
 class ForbiddenFunctionCall : public BinAnalyses,AstSimpleProcessing {
  public:
-  ForbiddenFunctionCall(){testFlag=false; debug=true;};
+  ForbiddenFunctionCall(){testFlag=false; debug=false;};
   virtual ~ForbiddenFunctionCall(){};
   bool testFlag;
   void run(SgNode* f1, SgNode* f2);

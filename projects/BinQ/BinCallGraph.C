@@ -64,7 +64,7 @@ BinCallGraph::run(SgNode* fileA, SgNode* fileB) {
    new RoseBin_CallGraphAnalysis(interp->get_global_block(), new RoseObj(), info);
 
   ROSE_ASSERT(callanalysis);
-  callanalysis->run(graph, callFileName, !mergedEdges);
+  callanalysis->run(graph, callFileName, mergedEdges);
 
   res = QString("nr of nodes visited %1. nr of edges visited %2. ")
     .arg(callanalysis->nodesVisited())
@@ -105,7 +105,7 @@ BinCallGraph::test(SgNode* fileA, SgNode* fileB) {
    new RoseBin_CallGraphAnalysis(interp->get_global_block(), new RoseObj(), info);
 
   ROSE_ASSERT(callanalysis);
-  callanalysis->run(graph, callFileName, !mergedEdges);
+  callanalysis->run(graph, callFileName, mergedEdges);
 
     
   cerr << " nr of nodes visited in callanalysis : " << callanalysis->nodesVisited() << endl;

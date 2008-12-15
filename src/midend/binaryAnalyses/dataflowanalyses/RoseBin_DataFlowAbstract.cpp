@@ -716,6 +716,12 @@ RoseBin_DataFlowAbstract::getValueInMemoryRefExp(SgAsmExpression* expr) {
     SgAsmExpression* left = binadd->get_lhs();
     SgAsmExpression* right = binadd->get_rhs();
     res = getValueInMemoryRefExp(left) + getValueInMemoryRefExp(right);
+  } else if (isSgAsmBinaryMultiply(expr)) {
+    // add up the left and right side
+    SgAsmBinaryMultiply* binadd = isSgAsmBinaryMultiply(expr);
+    SgAsmExpression* left = binadd->get_lhs();
+    SgAsmExpression* right = binadd->get_rhs();
+    res = getValueInMemoryRefExp(left) * getValueInMemoryRefExp(right);
   } else {
     cerr << " ERROR :: getValueInMemoryRefExp - no such condition specified" 
 	 << expr->class_name() << endl;

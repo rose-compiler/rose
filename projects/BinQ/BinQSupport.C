@@ -197,7 +197,7 @@ BinQSupport::evaluateMemoryExpression(SgAsmx86Instruction* destInst,
     SgAsmx86RegisterReferenceExpression* rightReg = isSgAsmx86RegisterReferenceExpression(right);
     SgAsmValueExpression* leftVal = isSgAsmValueExpression(left);
     SgAsmValueExpression* rightVal = isSgAsmValueExpression(right);
-    X86RegisterClass regClass ;
+    X86RegisterClass regClass;
     if (leftReg) 
       regClass = leftReg->get_register_class();
     if (rightReg) 

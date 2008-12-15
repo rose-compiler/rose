@@ -59,7 +59,7 @@ BufferOverflow::run(string& name, SgDirectedGraphNode* node,
 	  if (codeStr=="rsp")
 	    value = getValueOfInstr(asmPre, true);
 	  else 
-	    cerr << " Error :: foud a mov before a call that does not point to rsp but ::: " << codeStr << endl;
+	    cerr << " Error :: found a mov before a call that does not point to rsp but ::: " << codeStr << endl;
 	  if (debug && asmPre->get_kind() == x86_mov) 
 	    cerr << "   malloc: found mov size of " << codeStr << " in " << value 
 		 << " for malloc call : " << unparseInstruction(asmPre) <<endl;
@@ -71,7 +71,9 @@ BufferOverflow::run(string& name, SgDirectedGraphNode* node,
       }
     } // while
     
-  
+    if (value==0)
+      return false;
+
     // result of malloc (variable) is in eax, we need to see what the variable is and store it
     // forward search in the same function
     SgDirectedGraphNode* aft = node;
