@@ -57,6 +57,7 @@ void BinQbatch::initAnalyses() {
   analyses.push_back(new InitPointerToNull());
   analyses.push_back(new ComplexityMetric());
   analyses.push_back(new BufferOverflow());
+
 }
 
 int BinQbatch::addRemainingAnalyses() {

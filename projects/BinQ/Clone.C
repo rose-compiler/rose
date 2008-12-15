@@ -71,7 +71,7 @@ colorTable(BinQGUI* instance,  const std::vector<pair<int,int> >& addInstr,  con
   colors.push_back( QColor(233,150,122)  );
   colors.push_back( QColor(135,206,255)  );
 
-  for( int choice = 0; choice < sizeof(results)/sizeof(char*) ; choice++ )
+  for( unsigned int choice = 0; choice < sizeof(results)/sizeof(char*) ; choice++ )
   {
 
     std::string currentName(results[choice]);

@@ -110,5 +110,11 @@ BinCallGraph::test(SgNode* fileA, SgNode* fileB) {
     
   cerr << " nr of nodes visited in callanalysis : " << callanalysis->nodesVisited() << endl;
   cerr << " nr of edges visited in callanalysis : " << callanalysis->edgesVisited() << endl;
+
+  // print out as gml as well!
+  callFileName = "callgraph.gml";
+  graph= new RoseBin_GMLGraph(info);
+  callanalysis->run(graph, callFileName, mergedEdges);
+
   
 }

@@ -167,7 +167,7 @@ MallocAndFree::visit(SgNode* node) {
 		      // this mov matches, now store the address of the mem
 		      // so we can find out if this address is freed later.
 		      rose_addr_t addr=BinQSupport::evaluateMemoryExpression(predInst,mem);
-		      if (addr=resolveAddr) {
+		      if (addr==resolveAddr) {
 			//cerr << ">>> MallocAndFree - Matching Free. Found address : " << RoseBin_support::HexToString(resolveAddr) << endl;
 			foundMatchingFree=true;
 			movRegMemFound=true;

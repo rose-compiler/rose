@@ -108,7 +108,7 @@ std::string BinQSupport::ToUpper(std::string myString)
 
 SgNode* BinQSupport::disassembleFile(std::string tsv_directory, std::string& sourceFile){
   SgNode* globalBlock=NULL;
-  int found = tsv_directory.rfind(".");
+  size_t found = tsv_directory.rfind(".");
   string ending="";
 
   if (found!=string::npos) {

@@ -31,7 +31,7 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
   
   funcMap.clear();
   nodesMap.clear();
-  cerr << " Preparing graph - Nr of Nodes : " << nodes.size() << "  edges : " << edges.size() << endl;
+  //cerr << " Preparing graph - Nr of Nodes : " << nodes.size() << "  edges : " << edges.size() << endl;
   int counter=nodes.size();
   int count=0;
   nodeType::iterator itn2 = nodes.begin();
@@ -58,17 +58,17 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
       text+= " isGroup 1\n isGroup_ 1\n ]\n";
 
       if (name=="frame_dummy") {
-	cerr << text << endl;
+	//cerr << text << endl;
 	vector<SgNode*> succs = func->get_traversalSuccessorContainer();
 	vector<SgNode*>::iterator j = succs.begin();
-	cerr << " ------------- free_dummy"<<endl;
+	//cerr << " ------------- free_dummy"<<endl;
 	int ii=0;
 	for (;j!=succs.end();j++) {
-	  SgNode* n = *j;
-	  cerr << " Node contained at pos:"<<ii<<"  - " << n->class_name() << endl;
+	  //SgNode* n = *j;
+	  //cerr << " Node contained at pos:"<<ii<<"  - " << n->class_name() << endl;
 	  ii++;
 	}
-      cerr << " number of validInstructions: " << validInstructions << endl;
+	//cerr << " number of validInstructions: " << validInstructions << endl;
       }
 
 
@@ -82,7 +82,7 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
       
   }
 
-  cerr << " Writing graph to GML - Nr of Nodes : " << nodes.size() << endl;
+  //cerr << " Writing graph to GML - Nr of Nodes : " << nodes.size() << endl;
   int pos=0;
   nodeType::iterator itn = nodes.begin();
   for (; itn!=nodes.end();++itn) {
@@ -153,7 +153,7 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
       //	text ="";
     } /*not a func*/ else {
       SgAsmx86Instruction* bin_inst = isSgAsmx86Instruction(internal);
-      cerr << " else part " << endl;
+      //cerr << " else part " << endl;
       SgAsmFunctionDeclaration* funcDecl_parent = NULL;
       if (bin_inst) {
 	funcDecl_parent = isSgAsmFunctionDeclaration(bin_inst->get_parent());
@@ -377,18 +377,6 @@ void RoseBin_GMLGraph::printEdges_multiple( bool forward_analysis, std::ofstream
 
 void RoseBin_GMLGraph::printEdges( bool forward_analysis, std::ofstream& myfile, SgDirectedGraphEdge* edge) {
   // traverse edges and visualize results of graph
-  /*
-  cerr << " Writing graph to GML - Nr of Edges : " << edges.size() << endl;
-  int edgeNr=0;
-  edgeType::iterator it = edges.begin();
-  //  edgeTypeUnique::iterator it = unique_edges.begin();
-  for (; it!=edges.end();++it) {
-    edgeNr++;
-    if ((edgeNr % 5000) == 0)
-      cout << " Writing graph to GML - Nr of Edges : " << edges.size() << "/" << edgeNr << endl;
-    //    string name = it->first;
-    SgDirectedGraphEdge* edge = it->second;
-  */
     SgDirectedGraphNode* source = isSgDirectedGraphNode(edge->get_from());
     SgDirectedGraphNode* target = isSgDirectedGraphNode(edge->get_to());
     ROSE_ASSERT(source);
@@ -495,9 +483,6 @@ void RoseBin_GMLGraph::printEdges( bool forward_analysis, std::ofstream& myfile,
 	output += "   graphics [ type \"line\" arrow \"last\" fill \"#000000\" ]  ]\n";
       else output +=add;
 
-      //if (blankOutput)
-      //	output="";
-      //cerr <<"  writing to file : " << output << endl;
       myfile << output;
     }
 

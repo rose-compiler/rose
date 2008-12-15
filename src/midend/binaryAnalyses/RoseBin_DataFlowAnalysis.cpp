@@ -171,6 +171,7 @@ void
 RoseBin_DataFlowAnalysis::traverseGraph(vector <SgDirectedGraphNode*>& rootNodes,
 					RoseBin_DataFlowAbstract* analysis,
 					bool interprocedural){
+  if (RoseBin_support::DEBUG_MODE_MIN()) 
   cerr << " traverseGraph : debug: " << RoseBin_support::resBool(RoseBin_support::DEBUG_MODE()) << 
     "  debug_min : " <<  RoseBin_support::resBool(RoseBin_support::DEBUG_MODE_MIN()) << endl;
   // Number of functions traversed
@@ -447,10 +448,12 @@ void RoseBin_DataFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multied
   
   // do the edges -- if edges should be labeled for debugging
   if (printEdges) {
+  if (RoseBin_support::DEBUG_MODE_MIN()) 
     cerr << " Writing Edge Labels to Edges " << endl;
     start = RoseBin_support::getTime();
     traverseEdges(defuse);
     ends = RoseBin_support::getTime();
+  if (RoseBin_support::DEBUG_MODE_MIN()) 
     cerr << " DFG Edge annotation runtime : " << (double) (ends - start)   << " sec" << endl;
   }
   
@@ -467,10 +470,12 @@ void RoseBin_DataFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multied
   init();
   traverseGraph(rootNodes, variableAnalysis, interprocedural);
 
+  if (RoseBin_support::DEBUG_MODE_MIN()) 
   cerr << " Writing Variable names to nodes " << endl;
   start = RoseBin_support::getTime();
   traverseNodes(variableAnalysis);
   ends = RoseBin_support::getTime();
+  if (RoseBin_support::DEBUG_MODE_MIN()) 
   cerr << " DFG Variable annotation runtime : " << (double) (ends - start)   << " sec" << endl;
 
   // emulation --------------------------------------------------

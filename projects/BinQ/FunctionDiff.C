@@ -90,10 +90,10 @@ FunctionDiffAlgo::test(SgNode* fileA, SgNode* fileB) {
 
   int adds=0, minus=0;
   
-  for(int i = 0; i < funcsA.size() ; i++)
+  for(unsigned int i = 0; i < funcsA.size() ; i++)
   {
     SgAsmFunctionDeclaration* functionA = funcsA[i];
-    for(int j = 0; j < funcsB.size() ; j++)
+    for(unsigned int j = 0; j < funcsB.size() ; j++)
     {
 
       SgAsmFunctionDeclaration* functionB = funcsB[j];
