@@ -172,8 +172,8 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgDirectedGraphNode*>& rootNodes
 					RoseBin_DataFlowAbstract* analysis,
 					bool interprocedural){
   if (RoseBin_support::DEBUG_MODE_MIN()) 
-  cerr << " traverseGraph : debug: " << RoseBin_support::resBool(RoseBin_support::DEBUG_MODE()) << 
-    "  debug_min : " <<  RoseBin_support::resBool(RoseBin_support::DEBUG_MODE_MIN()) << endl;
+    cerr << " traverseGraph : debug: " << RoseBin_support::resBool(RoseBin_support::DEBUG_MODE()) << 
+      "  debug_min : " <<  RoseBin_support::resBool(RoseBin_support::DEBUG_MODE_MIN()) << endl;
   // Number of functions traversed
   int funcNr =0;
   // ---------------------------------------------------------------------
@@ -289,14 +289,14 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgDirectedGraphNode*>& rootNodes
 	if (nodeN)
 	  exceptionCallNode = exceptionCall(nodeN->get_kind() == x86_call ? nodeN : 0);
 	if (RoseBin_support::DEBUG_MODE()) 
-	std::cout << " exceptionCallNode : " << exceptionCallNode << " exceptionCallNext : " << exceptionCallNext << endl;
+	  std::cout << " exceptionCallNode : " << exceptionCallNode << " exceptionCallNext : " << exceptionCallNext << endl;
 	// if function call is call to malloc we have an exception and follow the call path
 	// fixme -- revisit this once the malloc analysis works again
 	if ((exceptionCallNode && !exceptionCallNext)) {
 	} else if (
-	    //if (
-	    nodeN && nodeN->get_kind() == x86_call || 
-	    nextN && nextN->get_kind() == x86_ret )
+		   //if (
+		   nodeN && nodeN->get_kind() == x86_call || 
+		   nextN && nextN->get_kind() == x86_ret )
 	  call = true;
 	//bool sameParent = analysis->sameParents(node, next);
 
@@ -326,17 +326,17 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgDirectedGraphNode*>& rootNodes
 	    if (RoseBin_support::DEBUG_MODE())
 	      cout << "adding to visited : " << name_n << endl;
 
-	      visited.insert(next);
-	      nodeBeforeMap[next]=node;
-	      visitedCounter[next]=1;
-	      vizzGraph->setProperty(RoseBin_Def::visitedCounter, next, RoseBin_support::ToString(1));
-	      if (!containsHash(worklist_hash,next)) {
-		// add next node only if the next node 
-		if (RoseBin_support::DEBUG_MODE())
-		  cout << "adding to worklist: " << name_n << endl;
-		worklist.push_back(next);
-		worklist_hash.insert(next);
-                }
+	    visited.insert(next);
+	    nodeBeforeMap[next]=node;
+	    visitedCounter[next]=1;
+	    vizzGraph->setProperty(RoseBin_Def::visitedCounter, next, RoseBin_support::ToString(1));
+	    if (!containsHash(worklist_hash,next)) {
+	      // add next node only if the next node 
+	      if (RoseBin_support::DEBUG_MODE())
+		cout << "adding to worklist: " << name_n << endl;
+	      worklist.push_back(next);
+	      worklist_hash.insert(next);
+	    }
 	  } else {
 	    // if the successor has been visited, we need to check if it has changed
 	    // if it has not, we continue, else we need to push it back to the worklist
@@ -383,6 +383,7 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgDirectedGraphNode*>& rootNodes
  * run the compare analysis
  ****************************************************/
 void RoseBin_DataFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multiedge) {
+  bool writeFile=false;
   vizzGraph=vg;
   fileName=fileN;
   double start=0;
@@ -448,13 +449,13 @@ void RoseBin_DataFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multied
   
   // do the edges -- if edges should be labeled for debugging
   if (printEdges) {
-  if (RoseBin_support::DEBUG_MODE_MIN()) 
-    cerr << " Writing Edge Labels to Edges " << endl;
+    if (RoseBin_support::DEBUG_MODE_MIN()) 
+      cerr << " Writing Edge Labels to Edges " << endl;
     start = RoseBin_support::getTime();
     traverseEdges(defuse);
     ends = RoseBin_support::getTime();
-  if (RoseBin_support::DEBUG_MODE_MIN()) 
-    cerr << " DFG Edge annotation runtime : " << (double) (ends - start)   << " sec" << endl;
+    if (RoseBin_support::DEBUG_MODE_MIN()) 
+      cerr << " DFG Edge annotation runtime : " << (double) (ends - start)   << " sec" << endl;
   }
   
 
@@ -471,12 +472,12 @@ void RoseBin_DataFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multied
   traverseGraph(rootNodes, variableAnalysis, interprocedural);
 
   if (RoseBin_support::DEBUG_MODE_MIN()) 
-  cerr << " Writing Variable names to nodes " << endl;
+    cerr << " Writing Variable names to nodes " << endl;
   start = RoseBin_support::getTime();
   traverseNodes(variableAnalysis);
   ends = RoseBin_support::getTime();
   if (RoseBin_support::DEBUG_MODE_MIN()) 
-  cerr << " DFG Variable annotation runtime : " << (double) (ends - start)   << " sec" << endl;
+    cerr << " DFG Variable annotation runtime : " << (double) (ends - start)   << " sec" << endl;
 
   // emulation --------------------------------------------------
   if (RoseBin_support::DEBUG_MODE_MIN())
@@ -486,23 +487,6 @@ void RoseBin_DataFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multied
   emulate->init(vizzGraph);
   init();
   //traverseGraph(rootNodes, emulate, interprocedural);
-
-  //graphs[analysisName] =vizzGraph->graph;
-  //}
-
-  // vizzGraph->graph->set_nodes(&nodes);
-  //vizzGraph->graph->set_edges(&edges);
-
-
-  // interrupt --------------------------------------------------
-  //if (RoseBin_support::DEBUG_MODE_MIN())
-  //  cerr << " ... Staring Interrupt Analysis " << endl;
-  //RoseBin_DataFlowAbstract* interrupt = new InterruptAnalysis();
-  //cerr << " interrupt defsize " << interrupt->getDefinitionSize() << endl;
-  //interrupt->init(vizzGraph);
-  //init();
-  //traverseGraph(rootNodes, interrupt, interprocedural);
-
   
 
   int nrOfFunc = rootNodes.size();
@@ -527,30 +511,31 @@ void RoseBin_DataFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multied
   }
 
   // create file
-  std::ofstream myfile;
-  myfile.open(fileName.c_str());
+  if (writeFile) {
+    std::ofstream myfile;
+    myfile.open(fileName.c_str());
   
-  string name = "ROSE Graph";
-  vizzGraph->printProlog(myfile, name);
-
-  string functionName="";
-  start = RoseBin_support::getTime();
-  vizzGraph->setGrouping(true);
-  vizzGraph->printNodes(true, this, forward_analysis, myfile,functionName);
-  nrNodes=vizzGraph->nodes.size();
-  //  vizzGraph->nodes.clear();
-
-  vizzGraph->printEdges(this,myfile, multiedge);
-  nrEdges=vizzGraph->edges.size();
-  //vizzGraph->edges.clear();
-
-  ends = RoseBin_support::getTime();
-  if (RoseBin_support::DEBUG_MODE_MIN())
-    cerr << " DFG runtime : " << (double) (ends - start)   << " sec" << endl;
-
-  vizzGraph->printEpilog(myfile);
-  myfile.close();  
-
+    string name = "ROSE Graph";
+    vizzGraph->printProlog(myfile, name);
+    
+    string functionName="";
+    start = RoseBin_support::getTime();
+    vizzGraph->setGrouping(true);
+    vizzGraph->printNodes(true, this, forward_analysis, myfile,functionName);
+    nrNodes=vizzGraph->nodes.size();
+    //  vizzGraph->nodes.clear();
+    
+    vizzGraph->printEdges(this,myfile, multiedge);
+    nrEdges=vizzGraph->edges.size();
+    //vizzGraph->edges.clear();
+    
+    ends = RoseBin_support::getTime();
+    if (RoseBin_support::DEBUG_MODE_MIN())
+      cerr << " DFG runtime : " << (double) (ends - start)   << " sec" << endl;
+    
+    vizzGraph->printEpilog(myfile);
+    myfile.close();  
+  }
 
 }
 

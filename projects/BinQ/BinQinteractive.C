@@ -38,8 +38,10 @@ BinQinteractive::BinQinteractive(std::string fA, std::string fB, std::vector<std
   initAnalyses();
   init();
   currentSelectedFile=fileA;
-  if (test==false)
+  if (test==false) {
     createGUI();
+    updateByteItemList();
+  }
   cerr << "Initialization done." <<endl;
   if (test)
     testAnalyses();

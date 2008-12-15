@@ -26,7 +26,7 @@ RoseBin_DotGraph::printEpilog(  std::ofstream& myfile) {
 
 void 
 RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) {
-  cerr << " Preparing graph - Nr of Nodes : " << nodes.size() << endl;
+  //cerr << " Preparing graph - Nr of Nodes : " << nodes.size() << endl;
 
   int counter=nodes.size();
   rose_hash::hash_set <std::string> funcNames;
@@ -66,10 +66,10 @@ RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) {
       callMap.insert(make_pair ( funcName, nt )) ;
   }
 
-  cerr << " Number of nodes in inverseMap : " << callMap.size() << endl;
+  //cerr << " Number of nodes in inverseMap : " << callMap.size() << endl;
 
 
-  cerr << " Writing graph to DOT - Nr of Nodes : " << nodes.size() << endl;
+  //cerr << " Writing graph to DOT - Nr of Nodes : " << nodes.size() << endl;
   int funcNr=0;
   nodeType::iterator itn = resultSet.begin();
   for (; itn!=resultSet.end();++itn) {
@@ -182,14 +182,14 @@ RoseBin_DotGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow, bool forw
 				 std::ofstream& myfile, string& recursiveFunctionName) {
   //ROSE_ASSERT(unparser);
   //bool firstFunc = true;
-  cerr << " grouping : " << grouping << endl;
+  //  cerr << " grouping : " << grouping << endl;
   // traverse nodes and visualize results of graph
   if ((dynamic_cast<RoseBin_CallGraphAnalysis*>(flow))!=NULL) {
-    cerr << " >>>> its a callgraph " << endl;
+    //cerr << " >>>> its a callgraph " << endl;
     printNodesCallGraph(myfile);
     return;
   }
-  cerr << " Preparing graph - Nr of Nodes : " << nodes.size() << "  forward analysis : " << forward_analysis << endl;
+  //cerr << " Preparing graph - Nr of Nodes : " << nodes.size() << "  forward analysis : " << forward_analysis << endl;
   int counter=nodes.size();
   inverse_nodesMap.clear();
   nodeType::iterator itn2 = nodes.begin();
@@ -219,9 +219,9 @@ RoseBin_DotGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow, bool forw
   }
 
 
-  cerr << " Number of nodes in inverseMap : " << inverse_nodesMap.size() << endl;
+  //cerr << " Number of nodes in inverseMap : " << inverse_nodesMap.size() << endl;
 
-  cerr << " Writing graph to DOT - Nr of Nodes : " << nodes.size() << endl;
+  //cerr << " Writing graph to DOT - Nr of Nodes : " << nodes.size() << endl;
   int funcNr=0;
   nodeType::iterator itn = nodes.begin();
   for (; itn!=nodes.end();++itn) {
@@ -491,7 +491,7 @@ void RoseBin_DotGraph::printEdges_single( bool forward_analysis, std::ofstream& 
   edgeTypeUnique::iterator it = unique_edges.begin();
   for (; it!=unique_edges.end();++it) {
     edgeNr++;
-    if ((edgeNr % 5000) == 0)
+    if ((edgeNr % 20000) == 0)
       cout << " Writing graph to DOT - Nr of Edges : " << edges.size() << "/" << edgeNr << endl;
     SgDirectedGraphEdge* edge = it->second;
     printEdges(forward_analysis, myfile, edge);
@@ -507,7 +507,7 @@ void RoseBin_DotGraph::printEdges_multiple( bool forward_analysis, std::ofstream
   edgeType::iterator it = edges.begin();
   for (; it!=edges.end();++it) {
     edgeNr++;
-    if ((edgeNr % 5000) == 0)
+    if ((edgeNr % 20000) == 0)
       cout << " Writing graph to DOT - Nr of Edges : " << edges.size() << "/" << edgeNr << endl;
     SgDirectedGraphEdge* edge = it->second;
     printEdges(forward_analysis, myfile, edge);

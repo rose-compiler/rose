@@ -712,7 +712,7 @@ void BinQGUI::createGUI() {
     console->append(res2);  
   }
 
-  updateByteItemList();
+
   // ------------------------------------
 
 } //BinQGUI::BinQGUI()
