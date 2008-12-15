@@ -49,7 +49,7 @@ ROSE_TOP=/home/panas2/ROSE/svn-test-rose/${TIMESTAMP}
 CONFIGURE_FLAGS=(--with-boost=${BOOST_ROOT}  --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-CXXFLAGS=-fPIC -with-CFLAGS=-fPIC --with-CXX_DEBUG=-g --with-boost=/home/panas2/development/boost-install-gcc4-64bit/ --with-javaport=yes --with-java SWIG=swig --prefix=${ROSE_TOP}/install "$@")
 
 ROSE_SVNROOT=file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
-MAILADDRS="panas2@llnl.gov"
+MAILADDRS="panas2@llnl.gov liaoch@llnl.gov willcock2@llnl.gov quinlan1@llnl.gov"
 
 # the right version of subversion is essential!!
 SVN=/nfs/apps/subversion/1.4.5/bin/svn
