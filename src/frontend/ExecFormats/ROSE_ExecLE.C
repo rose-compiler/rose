@@ -1010,10 +1010,6 @@ SgAsmLEFileHeader::parse(SgAsmDOSFileHeader *dos_header)
     SgAsmLEFileHeader *le_header = new SgAsmLEFileHeader(ef, dos2_header->get_e_lfanew());
     le_header->set_dos2_header(dos2_header);
 
-    /* Now go back and add the DOS Real-Mode section but rather than using the size specified in the DOS header, constrain it
-     * to not extend beyond the beginning of the LE file header. This makes detecting holes in the LE format much easier. */
-    dos_header->add_rm_section(le_header->get_offset());
-
     /* Page Table */
     if (le_header->get_e_pagetab_rfo() > 0 && le_header->get_e_npages() > 0) {
         addr_t table_offset = le_header->get_offset() + le_header->get_e_pagetab_rfo();
