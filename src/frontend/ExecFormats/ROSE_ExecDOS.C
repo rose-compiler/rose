@@ -9,7 +9,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Construct a new DOS File Header with default values. The new section is placed at file offset zero and the size is
- *  initially one byte (calling parse() will extend it as necessary). */
+ *  initially one byte (calling reallocate() or parse() will extend it as necessary). */
 void
 SgAsmDOSFileHeader::ctor()
 {
@@ -151,9 +151,25 @@ SgAsmDOSFileHeader::encode(DOSFileHeader_disk *disk) const
 bool
 SgAsmDOSFileHeader::reallocate()
 {
+    bool reallocated = SgAsmGenericHeader::reallocate();
+    
+    addr_t need = sizeof(DOSFileHeader_disk);
+    if (need < get_size()) {
+        if (is_mapped()) {
+            ROSE_ASSERT(get_mapped_size()==get_size());
+            set_mapped_size(need);
+        }
+        set_size(need);
+        reallocated = true;
+    } else if (need > get_size()) {
+        get_file()->shift_extend(this, 0, need-get_size(), SgAsmGenericFile::ADDRSP_ALL, SgAsmGenericFile::ELASTIC_HOLE);
+        reallocated = true;
+    }
+
     if (p_relocs)
         p_e_relocs_offset = p_relocs->get_offset();
-    return false;
+
+    return reallocated;
 }
 
 /* Write the DOS file header back to disk */
