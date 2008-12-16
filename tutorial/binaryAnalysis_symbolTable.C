@@ -32,7 +32,8 @@ Visitor::visit(SgNode* n)
 
           if (elfSymbol != NULL)
              {
-               printf ("   elfSymbol->get_st_name()  = %"PRIu64" \n",elfSymbol->get_st_name());
+	       // interface changed ... fixme
+	       // printf ("   elfSymbol->get_st_name()  = %"PRIu64" \n",elfSymbol->get_st_name());
                printf ("   elfSymbol->get_st_info()  = %u  \n",elfSymbol->get_st_info());
                printf ("   elfSymbol->get_st_res1()  = %u  \n",elfSymbol->get_st_res1());
                printf ("   elfSymbol->get_st_shndx() = %u  \n",elfSymbol->get_st_shndx());
