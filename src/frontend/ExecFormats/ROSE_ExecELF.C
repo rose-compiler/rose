@@ -2445,9 +2445,7 @@ SgAsmElfDynamicEntry::ctor(SgAsmElfDynamicSection *dynsec)
 {
     ROSE_ASSERT(dynsec!=NULL);
 
-    SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(dynsec->get_linked_section());
-    ROSE_ASSERT(strsec!=NULL);
-    set_name(new SgAsmStoredString(strsec->get_strtab(), 0));
+    set_name(NULL); /*only defined for DT_NEEDED entries; see SgAsmDynamicSection::parse*/
 
     ROSE_ASSERT(dynsec->get_entries()!=NULL);
     dynsec->get_entries()->get_entries().push_back(this);
@@ -2650,7 +2648,9 @@ SgAsmElfDynamicSection::parse()
 
         /* Set name */
         if (entry->get_d_tag()==SgAsmElfDynamicEntry::DT_NEEDED) {
-            entry->get_name()->set_string(entry->get_d_val().get_rva());
+            ROSE_ASSERT(entry->get_name()==NULL);
+            SgAsmStoredString *name = new SgAsmStoredString(strsec->get_strtab(), entry->get_d_val().get_rva());
+            entry->set_name(name);
 #if 1       /* FIXME: Do we really want this stuff duplicated in the AST? [RPM 2008-12-12] */
             SgAsmStoredString *name2 = new SgAsmStoredString(strsec->get_strtab(), entry->get_d_val().get_rva());
             fhdr->add_dll(new SgAsmGenericDLL(name2));
