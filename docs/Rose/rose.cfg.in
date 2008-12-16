@@ -427,6 +427,7 @@ INPUT                  = \
                          @top_srcdir@/src/frontend/Open64/documentation.docs \
                          @top_srcdir@/src/frontend/SageIII/docs \
                          @top_srcdir@/src/frontend/SageIII/sageInterface \
+                         @top_srcdir@/src/frontend/SageIII/virtualCFG \
                          @top_srcdir@/src/midend/midend.docs \
                          @top_srcdir@/src/midend/astDiagnostics/AstDiagnostics.docs \
                          @top_srcdir@/src/midend/astInlining/documentation.docs \

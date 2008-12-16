@@ -38,11 +38,79 @@ two nodes do not dominate the other CFG nodes in the construct due to
 
 \subsection{Node methods}
 
+\begin{itemize}
+\item \lstinline{CFGNode(SgNode* node, unsigned int index)}: Build a CFG
+node from the given AST node and index.  Valid index values are in
+Section~\ref{cfg_index_values}.
+\item \lstinline{toString()}: Produce a string representing the information
+in the node.
+\item \lstinline{toStringForDebugging()}: Similar, but with more internal
+debugging information.
+\item \lstinline{id()}: A C identifier representing the node.
+\item \lstinline{getNode()}: Get the underlying AST node.
+\item \lstinline{getIndex()}: Get the index (as explained in
+Section~\ref{cfg_index_values}) for this CFG node within its underlying AST
+node.
+\item \lstinline{outEdges()}: Return a vector of outgoing CFG edges from
+this node.
+\item \lstinline{inEdges()}: Return a vector of CFG edges coming into this
+node (note that the sources and targets of the edges are not reversed, and
+so each in edge has its target as the current node).
+\item \lstinline{isInteresting()}: See
+Section~\ref{interesting_node_filter}.
+\item Nodes are also comparable using the operators \lstinline{==},
+\lstinline{!=}, and \lstinline{<}.
+\end{itemize}
+
 \subsection{Edge methods}
+
+\begin{itemize}
+\item \lstinline{toString()}: Produce a string representing the information
+      in the node.
+\item \lstinline{toStringForDebugging()}: Similar, but with more internal
+      debugging information.
+\item \lstinline{id()}: A C identifier representing the node.
+\item \lstinline{source()}: The starting CFG node for this edge.
+\item \lstinline{target()}: The ending CFG node for this edge.
+\item \lstinline{condition()}: When there are multiple CFG edges from the
+      same starting node, each of them is taken under certain conditions.  The
+\lstinline{condition()} method returns the condition, of type
+\lstinline{EdgeConditionKind}.  The possible return values are:
+  \begin{itemize}
+  \item \lstinline{eckUnconditional}: An edge that is always taken.
+  \item \lstinline{eckTrue}: True case of a two-way branch (either an
+                             \lstinline{if} statement or a loop
+  \item \lstinline{eckFalse}: False case of a two-way branch
+  \item \lstinline{eckCaseLabel}: Case label in a \lstinline{switch} statement (key is given by \lstinline{caseLabel()})
+  \item \lstinline{eckDefault}: Default label of a \lstinline{switch} statement
+  \item \lstinline{eckDoConditionPassed}: Enter Fortran \lstinline{do} loop body
+  \item \lstinline{eckDoConditionFailed}: Fortran \lstinline{do} loop finished
+  \item \lstinline{eckForallIndicesInRange}: Start testing \lstinline{forall} mask
+  \item \lstinline{eckForallIndicesNotInRange}: End of \lstinline{forall} loop
+  \item \lstinline{eckComputedGotoCaseLabel}: Case in computed \lstinline{goto} -- number needs to be computed separately
+  \item \lstinline{eckArithmeticIfLess}: Edge for the arithmetic \lstinline{if} expression being less than zero
+  \item \lstinline{eckArithmeticIfEqual}: Edge for the arithmetic \lstinline{if} expression being equal to zero
+  \item \lstinline{eckArithmeticIfGreater}: Edge for the arithmetic \lstinline{if} expression being greater than zero
+  \end{itemize}
+\item \lstinline{caseLabel()}: For an edge with condition
+      \lstinline{eckCaseLabel}, an expression representing the key for the case
+      label.
+\item \lstinline{computedGotoCaseIndex()}: The index of this edge's case
+      within a Fortran computed \lstinline{goto} (an edge of kind
+      \lstinline{eckComputedGotoCaseLabel}).
+\item \lstinline{conditionBasedOn()}: The test expression or
+      \lstinline{switch} expression that is tested by this edge.
+\item \lstinline{scopesBeingExited()}, \lstinline{scopesBeingEntered()}:
+      Variables leaving and entering scope during this edge.  This information
+      has not been extensively verified, and should not be relied upon.
+\item Edges can also be compared using the operators \lstinline{==} and
+      \lstinline{!=}.  They are not ordered to avoid dependencies on pointer
+      comparison on different computers.
+\end{itemize}
 
 \section{Drawing a graph of the CFG}
 
-FIXME, add example
+FIXME, add example from tutorial/virtualCFG.C
 
 \includegraphics{\TutorialExampleBuildDirectory/vcfg.pdf}
 
@@ -50,6 +118,13 @@ FIXME, add example
 \label{cfg_index_values}
 
 \section{Robustness to AST changes}
+
+Control flow graph nodes and edges can be kept (i.e., are not invalidated)
+in many cases when the underlying AST changes.  However, there are some
+limitations to this capability.  Changing the AST node that is pointed to
+by a given CFG node is not safe.  CFG nodes for deleted AST nodes are of
+course invalid, as are those pointing to AST nodes whose parent pointers
+become invalid.
 
 \section{Limitations}
 
@@ -85,6 +160,7 @@ traverse the control flow graph.
 \section{Node filtering}
 
 \subsection{``Interesting'' node filter}
+\label{interesting_node_filter}
 
 \subsection{Arbitrary filtering}
 
