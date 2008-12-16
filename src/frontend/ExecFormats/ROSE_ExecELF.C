@@ -2952,6 +2952,14 @@ SgAsmElfSymbolSection::ctor(SgAsmElfStringSection *strings)
     p_linked_section = strings;
 }
 
+/** Adds a symbol to a symbol table. */
+void
+SgAsmElfSymbolSection::add_symbol(SgAsmElfSymbol *symbol)
+{
+    ROSE_ASSERT(p_symbols!=NULL);
+    p_symbols->get_symbols().push_back(symbol);
+}
+
 /** Initializes this ELF Symbol Section by parsing a file. */
 SgAsmElfSymbolSection *
 SgAsmElfSymbolSection::parse()
@@ -2983,8 +2991,7 @@ SgAsmElfSymbolSection::parse()
         }
         if (extra_size>0)
             entry->get_extra() = content_ucl(i*entry_size+struct_size, extra_size);
-        p_symbols->get_symbols().push_back(entry);
-        ROSE_ASSERT(p_symbols->get_symbols().size()>0);
+        add_symbol(entry);
     }
     return this;
 }

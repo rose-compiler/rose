@@ -1753,6 +1753,7 @@ HEADER_ELF_SYMBOL_SECTION_START
 		 SgAsmElfSymbolSection(SgAsmElfFileHeader *fhdr, SgAsmElfStringSection *strtab)
 			: SgAsmElfSection(fhdr), p_is_dynamic(false)
 			{ctor(strtab);}
+		void add_symbol(SgAsmElfSymbol*);
 		virtual SgAsmElfSymbolSection* parse();
 		using SgAsmElfSection::calculate_sizes;
 		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const;
