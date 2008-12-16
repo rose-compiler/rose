@@ -2756,12 +2756,21 @@ SgAsmElfDynamicSection::reallocate()
     if (segent)
         segent->set_type(SgAsmElfSegmentTableEntry::PT_DYNAMIC);
 
-    /* Update entries with name offsets */
+    /* Update entries with name offsets. The name should point to the string table to which the dynamic section links. */
     for (size_t i=0; i<p_entries->get_entries().size(); i++) {
         SgAsmElfDynamicEntry *entry = p_entries->get_entries()[i];
-        SgAsmGenericString *name = entry->get_name();
-        if (name)
-            entry->set_d_val(name->get_offset());
+        if (entry->get_name()) {
+            SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(get_linked_section());
+            ROSE_ASSERT(strsec);
+            SgAsmStoredString *stored_string = dynamic_cast<SgAsmStoredString*>(entry->get_name());
+            if (!stored_string || stored_string->get_strtab()!=strsec->get_strtab()) {
+                /* Not a stored string, or stored in the wrong string table. */
+                stored_string = new SgAsmStoredString(strsec->get_strtab(), entry->get_name()->get_string());
+                entry->get_name()->set_string(""); /*free old storage*/
+                entry->set_name(stored_string);
+            }
+            entry->set_d_val(entry->get_name()->get_offset());
+        }
     }
     
     return reallocated;
