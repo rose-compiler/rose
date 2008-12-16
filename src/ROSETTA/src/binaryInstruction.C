@@ -883,9 +883,8 @@ Grammar::setUpBinaryInstructions ()
   // No data members
      AsmPESectionTable.setFunctionPrototype ( "HEADER_PE_SECTION_TABLE", "../Grammar/BinaryInstruction.code");
 
-  // std::string name;
-  // addr_t      virtual_size, rva, physical_size, physical_offset;
-  // unsigned    coff_line_nums, n_relocs, n_coff_line_nums, flags;
+
+
      AsmPESectionTableEntry.setFunctionPrototype ( "HEADER_PE_SECTION_TABLE_ENTRY", "../Grammar/BinaryInstruction.code");
      AsmPESectionTableEntry.setDataPrototype("std::string","name","= \"\"",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -897,7 +896,6 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPESectionTableEntry.setDataPrototype("rose_addr_t","physical_offset","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (8/28/2008): Check against the specification
      AsmPESectionTableEntry.setDataPrototype("unsigned","coff_line_nums","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPESectionTableEntry.setDataPrototype("unsigned","n_relocs","= 0",
