@@ -1762,9 +1762,9 @@ HEADER_ELF_SYMBOL_SECTION_START
 			: SgAsmElfSection(fhdr), p_is_dynamic(false)
 			{ctor(strtab);}
 		virtual SgAsmElfSymbolSection* parse();
+		void bind_symbols_to_sections();
 		using SgAsmElfSection::calculate_sizes;
 		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const;
-		virtual void set_linked_section(SgAsmElfSection*);
 		virtual bool reallocate();
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;

@@ -1391,6 +1391,13 @@ SgAsmElfSectionTable::parse()
         }
     }
 #endif
+#if 1 /*Above code will be replaced with something along these lines, but more generic. [RPM 2008-12-12]*/
+    for (size_t i=0; i<is_parsed.size(); i++) {
+        SgAsmElfSymbolSection *symbols = dynamic_cast<SgAsmElfSymbolSection*>(is_parsed[i]);
+        if (symbols)
+            symbols->bind_symbols_to_sections();
+    }
+#endif
 
     return this;
 }
@@ -3068,11 +3075,8 @@ SgAsmElfSymbolSection::calculate_sizes(size_t *entsize, size_t *required, size_t
  *   0xfff1        symbol has absolute value not affected by relocation
  *   0xfff2        symbol is fortran common or unallocated C extern */
 void
-SgAsmElfSymbolSection::set_linked_section(SgAsmElfSection *_strsec)
+SgAsmElfSymbolSection::bind_symbols_to_sections()
 {
-    ROSE_ASSERT(_strsec==get_linked_section()); /*We're not using this feature anymore [RPM 2008-12-12]*/
-
-    SgAsmElfSection::set_linked_section(_strsec);
     for (size_t i=0; i < p_symbols->get_symbols().size(); i++) {
         SgAsmElfSymbol *symbol = p_symbols->get_symbols()[i];
 
