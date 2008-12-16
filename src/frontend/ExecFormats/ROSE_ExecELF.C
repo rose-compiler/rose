@@ -2160,9 +2160,19 @@ SgAsmElfSegmentTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 // Relocation (Rel and Rela)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* Constructors */
+/** Constructor adds the new entry to the relocation table. */
 void
-SgAsmElfRelocEntry::ctor(ByteOrder sex, const Elf32RelaEntry_disk *disk)
+SgAsmElfRelocEntry::ctor(SgAsmElfRelocSection *section)
+{
+    ROSE_ASSERT(section->get_entries()!=NULL);
+    section->get_entries()->get_entries().push_back(this);
+    ROSE_ASSERT(section->get_entries()->get_entries().size()>0);
+    set_parent(section->get_entries());
+}
+
+/* Parsers */
+void
+SgAsmElfRelocEntry::parse(ByteOrder sex, const Elf32RelaEntry_disk *disk)
 {
     p_r_offset    = disk_to_host(sex, disk->r_offset);
     p_r_addend    = disk_to_host(sex, disk->r_addend);
@@ -2171,7 +2181,7 @@ SgAsmElfRelocEntry::ctor(ByteOrder sex, const Elf32RelaEntry_disk *disk)
     p_type = info & 0xff;
 }
 void
-SgAsmElfRelocEntry::ctor(ByteOrder sex, const Elf64RelaEntry_disk *disk)
+SgAsmElfRelocEntry::parse(ByteOrder sex, const Elf64RelaEntry_disk *disk)
 {
     p_r_offset    = disk_to_host(sex, disk->r_offset);
     p_r_addend    = disk_to_host(sex, disk->r_addend);
@@ -2180,7 +2190,7 @@ SgAsmElfRelocEntry::ctor(ByteOrder sex, const Elf64RelaEntry_disk *disk)
     p_type = info & 0xffffffff;
 }
 void
-SgAsmElfRelocEntry::ctor(ByteOrder sex, const Elf32RelEntry_disk *disk)
+SgAsmElfRelocEntry::parse(ByteOrder sex, const Elf32RelEntry_disk *disk)
 {
     p_r_offset    = disk_to_host(sex, disk->r_offset);
     p_r_addend    = 0;
@@ -2189,7 +2199,7 @@ SgAsmElfRelocEntry::ctor(ByteOrder sex, const Elf32RelEntry_disk *disk)
     p_type = info & 0xff;
 }
 void
-SgAsmElfRelocEntry::ctor(ByteOrder sex, const Elf64RelEntry_disk *disk)
+SgAsmElfRelocEntry::parse(ByteOrder sex, const Elf64RelEntry_disk *disk)
 {
     p_r_offset    = disk_to_host(sex, disk->r_offset);
     p_r_addend    = 0;
@@ -2297,29 +2307,31 @@ SgAsmElfRelocSection::parse()
             if (p_uses_addend) {
                 SgAsmElfRelocEntry::Elf32RelaEntry_disk disk;
                 content(i*entry_size, struct_size, &disk);
-                entry = new SgAsmElfRelocEntry(fhdr->get_sex(), &disk);
+                entry = new SgAsmElfRelocEntry(this);
+                entry->parse(fhdr->get_sex(), &disk);
             } else {
                 SgAsmElfRelocEntry::Elf32RelEntry_disk disk;
                 content(i*entry_size, struct_size, &disk);
-                entry = new SgAsmElfRelocEntry(fhdr->get_sex(), &disk);
+                entry = new SgAsmElfRelocEntry(this);
+                entry->parse(fhdr->get_sex(), &disk);
             }
         } else if (8==fhdr->get_word_size()) {
             if (p_uses_addend) {
                 SgAsmElfRelocEntry::Elf64RelaEntry_disk disk;
                 content(i*entry_size, struct_size, &disk);
-                entry = new SgAsmElfRelocEntry(fhdr->get_sex(), &disk);
+                entry = new SgAsmElfRelocEntry(this);
+                entry->parse(fhdr->get_sex(), &disk);
             } else {
                 SgAsmElfRelocEntry::Elf64RelEntry_disk disk;
                 content(i*entry_size, struct_size, &disk);
-                entry = new SgAsmElfRelocEntry(fhdr->get_sex(), &disk);
+                entry = new SgAsmElfRelocEntry(this);
+                entry->parse(fhdr->get_sex(), &disk);
             }
         } else {
             throw FormatError("unsupported ELF word size");
         }
         if (extra_size>0)
             entry->get_extra() = content_ucl(i*entry_size+struct_size, extra_size);
-        p_entries->get_entries().push_back(entry);
-        ROSE_ASSERT(p_entries->get_entries().size()>0);
     }
     return this;
 }
@@ -3121,6 +3133,17 @@ SgAsmElfSymbolSection::finish_parsing()
             symbol->set_bound(bound);
         }
     }
+}
+
+/* Given a symbol, return its index in this symbol table. */
+size_t
+SgAsmElfSymbolSection::index_of(SgAsmElfSymbol *symbol)
+{
+    for (size_t i=0; i<p_symbols->get_symbols().size(); i++) {
+        if (p_symbols->get_symbols()[i]==symbol)
+            return i;
+    }
+    throw FormatError("symbol is not in symbol table");
 }
 
 /* Called prior to unparsing. Updates symbol entries with name offsets */
