@@ -2001,6 +2001,7 @@ SgAsmElfSegmentTable::add_section(SgAsmElfSection *section)
 
     /* Create a new segment table entry */
     SgAsmElfSegmentTableEntry *shdr = new SgAsmElfSegmentTableEntry;
+    shdr->set_index(idx);
     shdr->update_from_section(section);
     section->set_segment_entry(shdr);
 }
