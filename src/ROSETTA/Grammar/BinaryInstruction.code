@@ -771,12 +771,6 @@ HEADER_GENERIC_SECTION_START
 			SP_OTHER                	/* File-specified purpose other than any given in this enum */
 		};
 
-		SgAsmGenericSection(SgAsmGenericFile *f, SgAsmGenericHeader *fhdr)
-			: p_header(NULL), p_size(0), p_offset(0), p_file_alignment(0), p_purpose(SP_UNSPECIFIED),
-			p_synthesized(false), p_id(-1), p_name(0), p_mapped_rva(0), p_mapped_size(0), p_mapped_alignment(0),
-			p_mapped_rperm(false), p_mapped_wperm(false), p_mapped_xperm(false), p_congealed(false)
-			{ctor(f, fhdr);}
-
 		SgAsmGenericSection(SgAsmGenericFile *f, SgAsmGenericHeader *fhdr, addr_t offset, addr_t size)
 			: p_header(NULL), p_size(0), p_offset(0), p_file_alignment(0), p_purpose(SP_UNSPECIFIED),
 			p_synthesized(false), p_id(-1), p_name(0), p_mapped_rva(0), p_mapped_size(0), p_mapped_alignment(0),
@@ -840,7 +834,6 @@ HEADER_GENERIC_SECTION_START
 		ExtentPair get_mapped_extent() const;	        /* Returns get_mapped_rva() and get_mapped_size() */
 
 	protected:
-		void ctor(SgAsmGenericFile*, SgAsmGenericHeader*);
 		void ctor(SgAsmGenericFile*, SgAsmGenericHeader*, addr_t offset, addr_t size);
 HEADER_GENERIC_SECTION_END
 
@@ -4162,7 +4155,7 @@ SOURCE_ELF_SEGMENT_TABLE_ENTRY_LIST_END
 SOURCE_ELF_SECTION_START
 /* Constructor for a non-attached, not-parsed Elf section */
 SgAsmElfSection::SgAsmElfSection(SgAsmGenericHeader *fhdr)
-   : SgAsmGenericSection(fhdr->get_file(), fhdr),
+   : SgAsmGenericSection(fhdr->get_file(), fhdr, 0, 1),
      p_linked_section(NULL), p_section_entry(NULL), p_segment_entry(NULL)
    {
      ctor();

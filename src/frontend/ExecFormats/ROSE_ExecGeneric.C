@@ -1820,13 +1820,6 @@ SgAsmGenericFile::congeal()
  *  section.  The section-to-header part of the link is deleted by the default destructor by virtue of being a simple pointer,
  *  but we also need to delete the other half of the link in the destructors. */
 void
-SgAsmGenericSection::ctor(SgAsmGenericFile *ef, SgAsmGenericHeader *hdr)
-{
-    ctor(ef, hdr, 0, 0);
-}
-
-/* Same as above except also sets offset and size. The section is allowed to extend beyond the end of the file. */
-void
 SgAsmGenericSection::ctor(SgAsmGenericFile *ef, SgAsmGenericHeader *hdr, addr_t offset, addr_t size)
 {
     ROSE_ASSERT(ef != NULL);
