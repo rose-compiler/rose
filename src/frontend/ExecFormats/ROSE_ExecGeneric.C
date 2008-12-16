@@ -1689,7 +1689,9 @@ SgAsmGenericFile::fill_holes()
 
     /* Create the sections representing the holes */
     for (ExtentMap::iterator i=holes.begin(); i!=holes.end(); ++i) {
-      	SgAsmGenericSection *hole = new SgAsmGenericSection(this, NULL, (*i).first, (*i).second);
+      	SgAsmGenericSection *hole = new SgAsmGenericSection(this, NULL);
+        hole->set_offset((*i).first);
+        hole->set_size((*i).second);
         hole->parse();
       	hole->set_synthesized(true);
       	hole->set_name(new SgAsmBasicString("hole"));
@@ -1820,18 +1822,16 @@ SgAsmGenericFile::congeal()
  *  section.  The section-to-header part of the link is deleted by the default destructor by virtue of being a simple pointer,
  *  but we also need to delete the other half of the link in the destructors. */
 void
-SgAsmGenericSection::ctor(SgAsmGenericFile *ef, SgAsmGenericHeader *hdr, addr_t offset, addr_t size)
+SgAsmGenericSection::ctor(SgAsmGenericFile *ef, SgAsmGenericHeader *hdr)
 {
     ROSE_ASSERT(ef != NULL);
 
-    /* Initialize data members */
-    p_offset = offset;
-    p_file = ef;
-    p_size = size;
+    ROSE_ASSERT(p_name==NULL);
     p_name = new SgAsmBasicString("");
 
     /* Add this section to the header's section list */
-    if (hdr) hdr->add_section(this);
+    if (hdr)
+        hdr->add_section(this);
 }
 
 /* Destructor must remove section/header link */
@@ -2648,14 +2648,13 @@ ExtentMap::dump_extents(FILE *f, const char *prefix, const char *label) const
  * that points to this new header. The header-to-file half of the link is deleted by the default destructor by virtue of being
  * a simple pointer, but we also need to delete the other half of the link in the destructors. */
 void
-SgAsmGenericHeader::ctor(SgAsmGenericFile *ef, addr_t offset, addr_t size)
+SgAsmGenericHeader::ctor()
 {
     set_synthesized(true);
     set_purpose(SP_HEADER);
 
     /* The bidirectional link between file and header */
-    set_file(ef);
-    ef->add_header(this);
+    get_file()->add_header(this);
 
     /* Create child IR nodes and set their parent (initialized to null in real constructor) */
     ROSE_ASSERT(p_symbols == NULL);

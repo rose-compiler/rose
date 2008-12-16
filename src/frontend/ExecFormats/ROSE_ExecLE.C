@@ -17,6 +17,8 @@
 void
 SgAsmLEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
 {
+    set_offset(offset);
+    set_size(sizeof(LEFileHeader_disk));
     grab_content();
 
  // DQ (8/16/2008): Added code to set SgAsmPEFileHeader as parent of input SgAsmGenericFile
@@ -137,7 +139,9 @@ bool
 SgAsmLEFileHeader::is_LE(SgAsmGenericFile *ef)
 {
     /* Check DOS File Header magic number */
-    SgAsmGenericSection *section = new SgAsmGenericSection(ef, NULL, 0, 0x40);
+    SgAsmGenericSection *section = new SgAsmGenericSection(ef, NULL);
+    section->set_offset(0);
+    section->set_size(0x40);
     section->grab_content();
     unsigned char dos_magic[2];
     section->content(0, 2, dos_magic);
@@ -153,7 +157,9 @@ SgAsmLEFileHeader::is_LE(SgAsmGenericFile *ef)
     delete section;
 
     /* Read the LE/LX File Header magic number */
-    section = new SgAsmGenericSection(ef, NULL, le_offset, 2);
+    section = new SgAsmGenericSection(ef, NULL);
+    section->set_offset(le_offset);
+    section->set_size(2);
     section->grab_content();
     unsigned char magic[2];
     section->content(0, 2, magic);
@@ -426,8 +432,10 @@ SgAsmLEPageTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 
 /* Constructor */
 void
-SgAsmLEPageTable::ctor()
+SgAsmLEPageTable::ctor(addr_t offset, addr_t size)
 {
+    set_offset(offset);
+    set_size(size);
     grab_content();
 
     SgAsmLEFileHeader *fhdr = dynamic_cast<SgAsmLEFileHeader*>(get_header());
@@ -577,8 +585,10 @@ SgAsmLESection::dump(FILE *f, const char *prefix, ssize_t idx) const
 
 /* Constructor */
 void
-SgAsmLESectionTable::ctor()
+SgAsmLESectionTable::ctor(addr_t offset, addr_t size)
 {
+    set_offset(offset);
+    set_size(size);
     grab_content();
 
     SgAsmLEFileHeader *fhdr = dynamic_cast<SgAsmLEFileHeader*>(get_header());
@@ -622,7 +632,9 @@ SgAsmLESectionTable::ctor()
                                     (addr_t)(entry->get_pagemap_nentries() * (1<<fhdr->get_e_page_offset_shift())));
         }
 
-        SgAsmLESection *section = new SgAsmLESection(fhdr, section_offset, section_size);
+        SgAsmLESection *section = new SgAsmLESection(fhdr);
+        section->set_offset(section_offset);
+        section->set_size(section_size);
         section->parse();
         section->set_synthesized(false);
         section->set_id(i+1); /*numbered starting at 1, not zero*/
@@ -693,8 +705,10 @@ SgAsmLESectionTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 
 /* Constructor assumes SgAsmGenericSection is zero bytes long so far */
 void
-SgAsmLENameTable::ctor()
+SgAsmLENameTable::ctor(addr_t offset)
 {
+    set_offset(offset);
+    set_size(0);
     grab_content();
 
     SgAsmLEFileHeader *fhdr = dynamic_cast<SgAsmLEFileHeader*>(get_header());
@@ -839,8 +853,10 @@ SgAsmLEEntryPoint::dump(FILE *f, const char *prefix, ssize_t idx) const
 /* Constructor. We don't know the size of the LE Entry table until after reading the first byte. Therefore the SgAsmGenericSection is
  * created with an initial size of zero. */
 void
-SgAsmLEEntryTable::ctor()
+SgAsmLEEntryTable::ctor(addr_t offset)
 {
+    set_offset(offset);
+    set_size(0);
     grab_content();
 
     SgAsmLEFileHeader *fhdr = dynamic_cast<SgAsmLEFileHeader*>(get_header());
@@ -919,8 +935,10 @@ SgAsmLEEntryTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 
 /* Constructor. */
 void
-SgAsmLERelocTable::ctor()
+SgAsmLERelocTable::ctor(addr_t offset)
 {
+    set_offset(offset);
+    set_size(0);
     grab_content();
 
     SgAsmLEFileHeader *fhdr = dynamic_cast<SgAsmLEFileHeader*>(get_header());

@@ -771,11 +771,12 @@ HEADER_GENERIC_SECTION_START
 			SP_OTHER                	/* File-specified purpose other than any given in this enum */
 		};
 
-		SgAsmGenericSection(SgAsmGenericFile *f, SgAsmGenericHeader *fhdr, addr_t offset, addr_t size)
-			: p_header(NULL), p_size(0), p_offset(0), p_file_alignment(0), p_purpose(SP_UNSPECIFIED),
-			p_synthesized(false), p_id(-1), p_name(0), p_mapped_rva(0), p_mapped_size(0), p_mapped_alignment(0),
-			p_mapped_rperm(false), p_mapped_wperm(false), p_mapped_xperm(false), p_congealed(false)
-			{ctor(f, fhdr, offset, size);}
+		SgAsmGenericSection(SgAsmGenericFile *f, SgAsmGenericHeader *fhdr)
+			: p_file(f), p_header(NULL), p_size(1), p_offset(f->get_current_size()), p_file_alignment(0),
+			p_purpose(SP_UNSPECIFIED), p_synthesized(false), p_id(-1), p_name(0), p_mapped_rva(0), p_mapped_size(0),
+			p_mapped_alignment(0), p_mapped_rperm(false), p_mapped_wperm(false), p_mapped_xperm(false),
+			p_congealed(false)
+			{ctor(f, fhdr);}
 
 		// This destructor modifies the SgAsmGenericFile data to remove its section from the section list!
 		virtual ~SgAsmGenericSection();
@@ -834,15 +835,18 @@ HEADER_GENERIC_SECTION_START
 		ExtentPair get_mapped_extent() const;	        /* Returns get_mapped_rva() and get_mapped_size() */
 
 	protected:
-		void ctor(SgAsmGenericFile*, SgAsmGenericHeader*, addr_t offset, addr_t size);
+		void ctor(SgAsmGenericFile*, SgAsmGenericHeader*);
 HEADER_GENERIC_SECTION_END
 
 
 
 HEADER_GENERIC_HEADER_START
+	public:
+          	explicit SgAsmGenericHeader(SgAsmGenericFile *ef)
+			: SgAsmGenericSection(ef, NULL),
+			p_exec_format(NULL), p_isa(ISA_OTHER), p_base_va(0), p_dlls(NULL), p_symbols(NULL), p_sections(NULL)
+			{ctor();}
 
-     public:
-          SgAsmGenericHeader(SgAsmGenericFile *ef, addr_t offset, addr_t size);
           virtual ~SgAsmGenericHeader();
 	  virtual bool reallocate();
 	  virtual void unparse(std::ostream&) const;
@@ -905,8 +909,8 @@ HEADER_GENERIC_HEADER_START
        // std::vector<ExecDLL*> dlls;                         /* List of dynamic libraries needed by this executable */
        // std::vector<ExecSymbol*> symbols;                   /* All symbols defined for this header */
 
-     private:
-          void ctor(SgAsmGenericFile *f, addr_t offset, addr_t size);
+	private:
+		void ctor();
 
 HEADER_GENERIC_HEADER_END
 
@@ -1250,7 +1254,7 @@ HEADER_ELF_HEADER_START
 
 		/* Non-parsing constructor */
 		explicit SgAsmElfFileHeader(SgAsmGenericFile *f)
-			: SgAsmGenericHeader(f, 0, 1)
+			: SgAsmGenericHeader(f)
 			{ctor();}
 
 		uint64_t max_page_size();
@@ -1275,7 +1279,7 @@ HEADER_ELF_HEADER_END
 HEADER_ELF_SECTION_TABLE_START
 	public:
 		explicit SgAsmElfSectionTable(SgAsmElfFileHeader *fhdr)
-			: SgAsmGenericSection(fhdr->get_file(), fhdr, 0, 1)
+			: SgAsmGenericSection(fhdr->get_file(), fhdr)
 			{ctor();}
 		virtual SgAsmElfSectionTable *parse();
 		void add_section(SgAsmElfSection*);
@@ -1361,7 +1365,11 @@ HEADER_ELF_SECTION_TABLE_ENTRY_END
 
 HEADER_ELF_SECTION_START
 	public:
-		explicit SgAsmElfSection(SgAsmGenericHeader *fhdr); /*non-attached, not-parsed Elf section*/
+		explicit SgAsmElfSection(SgAsmGenericHeader *fhdr)
+			: SgAsmGenericSection(fhdr->get_file(), fhdr),
+			p_linked_section(NULL), p_section_entry(NULL), p_segment_entry(NULL)
+			{ctor();}
+
 		SgAsmElfSection *init_from_section_table(SgAsmElfSectionTableEntry*, SgAsmElfStringSection*, int id);
 		SgAsmElfSection *init_from_segment_table(SgAsmElfSegmentTableEntry*, bool mmap_only=false);
 		rose_addr_t calculate_sizes(size_t r32size, size_t r64size, const std::vector<size_t> &optsizes,
@@ -1638,7 +1646,7 @@ HEADER_ELF_DYNAMIC_ENTRY_END
 HEADER_ELF_SEGMENT_TABLE_START
 	public:
 		explicit SgAsmElfSegmentTable(SgAsmElfFileHeader *fhdr)
-			: SgAsmGenericSection(fhdr->get_file(), fhdr, 0, 1)
+			: SgAsmGenericSection(fhdr->get_file(), fhdr)
 			{ctor();}
 		virtual SgAsmElfSegmentTable *parse();
 		void add_section(SgAsmElfSection*);
@@ -1956,7 +1964,7 @@ HEADER_PE_FILE_HEADER_START
 
 	public:
 		explicit SgAsmPEFileHeader(SgAsmGenericFile *f)
-			: SgAsmGenericHeader(f, 0, 1), p_section_table(NULL), p_coff_symtab(NULL)
+			: SgAsmGenericHeader(f), p_section_table(NULL), p_coff_symtab(NULL)
 			{ctor();}
 		virtual ~SgAsmPEFileHeader();
 
@@ -1982,7 +1990,7 @@ HEADER_PE_FILE_HEADER_END
 HEADER_PE_SECTION_START
 	public:
 		explicit SgAsmPESection(SgAsmPEFileHeader *fhdr)
-			: SgAsmGenericSection(fhdr->get_file(), fhdr, 0, 1), p_section_entry(NULL)
+			: SgAsmGenericSection(fhdr->get_file(), fhdr), p_section_entry(NULL)
 			{}
 		SgAsmPESection *init_from_section_table(SgAsmPESectionTableEntry *entry, int id);
 		virtual bool reallocate();
@@ -2154,7 +2162,7 @@ HEADER_PE_EXPORT_SECTION_END
 HEADER_PE_SECTION_TABLE_START
 	public:
 		explicit SgAsmPESectionTable(SgAsmPEFileHeader *fhdr)
-			: SgAsmGenericSection(fhdr->get_file(), fhdr, 0, 1)
+			: SgAsmGenericSection(fhdr->get_file(), fhdr)
 			{ctor();}
 		virtual SgAsmPESectionTable* parse();
 		void add_section(SgAsmPESection *section);
@@ -2170,7 +2178,7 @@ HEADER_PE_SECTION_TABLE_END
 HEADER_PE_COFF_SYMBOL_TABLE_START
 	public:
 		explicit SgAsmCoffSymbolTable(SgAsmPEFileHeader *fhdr)
-			: SgAsmGenericSection(fhdr->get_file(), fhdr, fhdr->get_e_coff_symtab(), 1)
+			: SgAsmGenericSection(fhdr->get_file(), fhdr)
 			{ctor();}
 		size_t get_nslots() const;
 		virtual SgAsmCoffSymbolTable *parse();
@@ -2327,12 +2335,6 @@ HEADER_PE_STRING_SECTION_END
 HEADER_NE_FILE_HEADER_START
 
      public:
-       // Overloaded base class virtual function
-          const char *format_name() const;
-
-          static bool is_NE (SgAsmGenericFile*);
-          static SgAsmNEFileHeader *parse(SgAsmGenericFile*);
-
           /* File format of an NE File Header. All fields are little endian.
            *
            * NOTES
@@ -2396,11 +2398,16 @@ HEADER_NE_FILE_HEADER_START
                HF2_FASTLOAD         = 0x08         /* Executable contains a fast-load area */
              };
 
-          SgAsmNEFileHeader(SgAsmGenericFile *f, addr_t offset);
-       // virtual ~NEFileHeader() {}
+          SgAsmNEFileHeader(SgAsmGenericFile *f, addr_t offset)
+		: SgAsmGenericHeader(f), p_dos2_header(NULL), p_section_table(NULL), p_resname_table(NULL),
+		p_nonresname_table(NULL), p_module_table(NULL), p_entry_table(NULL)
+		{ctor(f, offset);}
 
+       // virtual ~NEFileHeader() {}
+          static bool is_NE (SgAsmGenericFile*);
+          static SgAsmNEFileHeader *parse(SgAsmGenericFile*);
           virtual void unparse(std::ostream&) const;
-       // virtual const char *format_name() const {return "NE";}
+          virtual const char *format_name() const {return "NE";}
           virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 
      private:
@@ -2410,7 +2417,10 @@ HEADER_NE_FILE_HEADER_END
 
 HEADER_NE_SECTION_START
      public:
-          SgAsmNESection(SgAsmNEFileHeader*, addr_t offset, addr_t size);
+          explicit SgAsmNESection(SgAsmNEFileHeader *fhdr)
+		: SgAsmGenericSection(fhdr->get_file(), fhdr), p_st_entry(NULL), p_reloc_table(NULL)
+		{}
+
        // virtual ~NESection() {}
 
           virtual void unparse(std::ostream&) const;
@@ -2427,95 +2437,84 @@ HEADER_NE_SECTION_START
 
 HEADER_NE_SECTION_END
 
+
+
 HEADER_NE_SECTION_TABLE_START
-     public:
-          explicit SgAsmNESectionTable(SgAsmNEFileHeader *fhdr);
-       // virtual ~NESectionTable() {}
-
-          virtual void unparse(std::ostream&) const;
-          virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-
-     private:
-          void ctor();
-
+	public:
+		explicit SgAsmNESectionTable(SgAsmNEFileHeader *fhdr)
+			: SgAsmGenericSection(fhdr->get_file(), fhdr)
+			{ctor();}
+        	virtual void unparse(std::ostream&) const;
+		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+	private:
+		void ctor();
 HEADER_NE_SECTION_TABLE_END
 
+
+
 HEADER_NE_NAME_TABLE_START
-     public:
-          SgAsmNENameTable(SgAsmNEFileHeader *fhdr, addr_t offset);
-       // virtual ~NENameTable() {}
-
-          virtual void unparse(std::ostream&) const;
-          virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-          std::vector<std::string> get_names_by_ordinal(unsigned ordinal);
-
-     private:
-          void ctor();
-       // std::vector<std::string> names; /*first name is module name; remainder are symbols within the module*/
-       // std::vector<unsigned> ordinals; /*first entry is ignored but present in file*/
-
+	public:
+		SgAsmNENameTable(SgAsmNEFileHeader *fhdr, addr_t offset)
+			: SgAsmGenericSection(fhdr->get_file(), fhdr)
+			{ctor(offset);}
+		virtual void unparse(std::ostream&) const;
+		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+		std::vector<std::string> get_names_by_ordinal(unsigned ordinal);
+	private:
+		void ctor(addr_t offset);
 HEADER_NE_NAME_TABLE_END
 
+
+
 HEADER_NE_MODULE_TABLE_START
-     public:
-          SgAsmNEModuleTable(SgAsmNEFileHeader *fhdr, addr_t offset, addr_t size, SgAsmNEStringTable *strtab);
-       // virtual ~NEModuleTable() {}
-
-          virtual void unparse(std::ostream&) const;
-          virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-
-     private:
-          void ctor();
-
-       // NEStringTable *strtab;
-
+	public:
+		SgAsmNEModuleTable(SgAsmNEFileHeader *fhdr, SgAsmNEStringTable *strtab, addr_t offset, addr_t size)
+			: SgAsmGenericSection(fhdr->get_file(), fhdr)
+			{ctor(offset, size);}
+		virtual void unparse(std::ostream&) const;
+		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+	private:
+		void ctor(addr_t offset, addr_t size);
 HEADER_NE_MODULE_TABLE_END
 
+
+
 HEADER_NE_STRING_TABLE_START
-     public:
-          SgAsmNEStringTable(SgAsmNEFileHeader *fhdr, addr_t offset, addr_t length);
-       // virtual ~NEStringTable() {}
-
-       // virtual void unparse(std::ostream&); /*not needed; use parent's implementation*/
-
-          virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-          std::string get_string(addr_t offset);
-
-     private:
-          void ctor();
-
+	public:
+		SgAsmNEStringTable(SgAsmNEFileHeader *fhdr, addr_t offset, addr_t size)
+			: SgAsmGenericSection(fhdr->get_file(), fhdr)
+			{ctor(offset, size);}
+		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+		std::string get_string(addr_t offset);
+	private:
+		void ctor(addr_t offset, addr_t size);
 HEADER_NE_STRING_TABLE_END
 
+
+
 HEADER_NE_ENTRY_TABLE_START
-     public:
-          SgAsmNEEntryTable(SgAsmNEFileHeader *fhdr, addr_t offset, addr_t size);
-       // virtual ~NEEntryTable() {}
-
-          void populate_entries();
-          virtual void unparse(std::ostream&) const;
-          virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-
-     private:
-          void ctor();
-
-       // std::vector<size_t> bundle_sizes;
-       // std::vector<NEEntryPoint> entries;
-
+	public:
+		SgAsmNEEntryTable(SgAsmNEFileHeader *fhdr, addr_t offset, addr_t size)
+			: SgAsmGenericSection(fhdr->get_file(), fhdr)
+			{ctor(offset, size);}
+		void populate_entries();
+		virtual void unparse(std::ostream&) const;
+		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+	private:
+		void ctor(addr_t offset, addr_t size);
 HEADER_NE_ENTRY_TABLE_END
 
+
+
 HEADER_NE_RELOC_TABLE_START
-     public:
-          SgAsmNERelocTable(SgAsmNEFileHeader *fhdr, addr_t offset);
-       // virtual ~NERelocTable() {}
-
-          virtual void unparse(std::ostream&) const;
-          virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-
-     private:
-          void ctor();
-
-       // std::vector<NERelocEntry> entries;
-
+	public:
+		explicit SgAsmNERelocTable(SgAsmNEFileHeader *fhdr, SgAsmNESection *section)
+			: SgAsmGenericSection(fhdr->get_file(), fhdr)
+			{ctor(section);}
+		virtual void unparse(std::ostream&) const;
+		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+	private:
+		void ctor(SgAsmNESection*);
 HEADER_NE_RELOC_TABLE_END
 
 
@@ -2774,7 +2773,11 @@ HEADER_LE_FILE_HEADER_START
               HF_MODTYPE_VDEV     = 0x00028000,   /* Virtual device driver module */
           };
 
-          SgAsmLEFileHeader(SgAsmGenericFile *f, addr_t offset);
+          SgAsmLEFileHeader(SgAsmGenericFile *f, addr_t offset)
+		: SgAsmGenericHeader(f), p_dos2_header(NULL), p_section_table(NULL), p_page_table(NULL),
+		p_resname_table(NULL), p_nonresname_table(NULL), p_entry_table(NULL), p_reloc_table(NULL)
+		{ctor(f, offset);}
+
        // virtual ~LEFileHeader() {}
 
           virtual void unparse(std::ostream&) const;
@@ -2785,105 +2788,86 @@ HEADER_LE_FILE_HEADER_START
           void *encode(SgAsmExecutableFileFormat::ByteOrder sex, SgAsmLEFileHeader::LEFileHeader_disk*) const;
 HEADER_LE_FILE_HEADER_END
 
+
+
 HEADER_LE_SECTION_START
-     public:
-          SgAsmLESection(SgAsmLEFileHeader*, addr_t offset, addr_t size);
-       // virtual ~LESection() {}
-
-       // virtual void unparse(std::ostream&) const; /*nothing special to do*/
-          virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-
-       /* Accessors for protected/private data */
-       // LESectionTableEntry *get_st_entry() {return st_entry;}
-       // void set_st_entry(LESectionTableEntry *e) {st_entry=e;}
-
-  // private:
-       // LESectionTableEntry *st_entry;
-
+	public:
+		explicit SgAsmLESection(SgAsmLEFileHeader *fhdr)
+			: SgAsmGenericSection(fhdr->get_file(), fhdr), p_st_entry(NULL)
+			{}
+		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 HEADER_LE_SECTION_END
 
+
+
 HEADER_LE_SECTION_TABLE_START
-     public:
-          SgAsmLESectionTable(SgAsmLEFileHeader *fhdr, addr_t offset, addr_t size);
-       // virtual ~LESectionTable() {}
-
-          virtual void unparse(std::ostream&) const;
-          virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-
-     private:
-          void ctor();
-
+	public:
+		SgAsmLESectionTable(SgAsmLEFileHeader *fhdr, addr_t offset, addr_t size)
+			: SgAsmGenericSection(fhdr->get_file(), fhdr)
+			{ctor(offset, size);}
+		virtual void unparse(std::ostream&) const;
+		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+	private:
+		void ctor(addr_t offset, addr_t size);
 HEADER_LE_SECTION_TABLE_END
 
+
+
 HEADER_LE_NAME_TABLE_START
-
-     public:
-
-       /* This table contains a module name followed by the list of exported function names. Each name is associated with an "ordinal"
-        * which serves as an index into the Entry Table. The ordinal for the first string (module name) is meaningless and should be
-        * zero. In the non-resident name table the first entry is a module description and the functions are not always resident in
-        * system memory (they are discardable). */
-
-          SgAsmLENameTable(SgAsmLEFileHeader *fhdr, addr_t offset);
-       // virtual ~LENameTable() {}
-
-          virtual void unparse(std::ostream&) const;
-          virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-
-     private:
-          void ctor();
-
-       // std::vector<std::string> names; /*first name is module name; remainder are symbols within the module*/
-       // std::vector<unsigned> ordinals; /*first entry is ignored but present in file*/
-
+	public:
+		/* This table contains a module name followed by the list of exported function names. Each name is associated with
+		 * an "ordinal" which serves as an index into the Entry Table. The ordinal for the first string (module name) is
+		 * meaningless and should be zero. In the non-resident name table the first entry is a module description and the
+		 * functions are not always resident in system memory (they are discardable). */
+		SgAsmLENameTable(SgAsmLEFileHeader *fhdr, addr_t offset)
+			: SgAsmGenericSection(fhdr->get_file(), fhdr)
+			{ctor(offset);}
+		virtual void unparse(std::ostream&) const;
+		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+	private:
+		void ctor(addr_t offset);
 HEADER_LE_NAME_TABLE_END
 
+
+
 HEADER_LE_PAGE_TABLE_START
-     public:
-          SgAsmLEPageTable(SgAsmLEFileHeader *fhdr, addr_t offset, addr_t size);
-       // virtual ~LEPageTable() {}
-
-          virtual void unparse(std::ostream&) const;
-          virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-          SgAsmLEPageTableEntry *get_page(size_t idx);
-
-     private:
-          void ctor();
-
-       // std::vector<LEPageTableEntry*> entries;
-
+	public:
+		SgAsmLEPageTable(SgAsmLEFileHeader *fhdr, addr_t offset, addr_t size)
+			: SgAsmGenericSection(fhdr->get_file(), fhdr)
+			{ctor(offset, size);}
+		virtual void unparse(std::ostream&) const;
+		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+		SgAsmLEPageTableEntry *get_page(size_t idx);
+	private:
+		void ctor(addr_t offset, addr_t size);
 HEADER_LE_PAGE_TABLE_END
 
+
+
 HEADER_LE_ENTRY_TABLE_START
-     public:
-          SgAsmLEEntryTable(SgAsmLEFileHeader *fhdr, addr_t offset);
-       // virtual ~LEEntryTable() {}
-
-          virtual void unparse(std::ostream&) const;
-          virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-
-     private:
-          void ctor();
-
-       // std::vector<size_t> bundle_sizes;
-       // std::vector<LEEntryPoint> entries;
-
+	public:
+		SgAsmLEEntryTable(SgAsmLEFileHeader *fhdr, addr_t offset)
+			: SgAsmGenericSection(fhdr->get_file(), fhdr)
+			{ctor(offset);}
+		virtual void unparse(std::ostream&) const;
+		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+	private:
+		void ctor(addr_t offset);
 HEADER_LE_ENTRY_TABLE_END
 
+
+
 HEADER_LE_RELOC_TABLE_START
-     public:
-          SgAsmLERelocTable(SgAsmLEFileHeader *fhdr, addr_t offset);
-       // virtual ~LERelocTable() {}
-
-       // virtual void unparse(std::ostream&) const;
-          virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-
-     private:
-          void ctor();
-
-       // std::vector<LERelocEntry> entries;
-
+	public:
+		SgAsmLERelocTable(SgAsmLEFileHeader *fhdr, addr_t offset)
+			: SgAsmGenericSection(fhdr->get_file(), fhdr)
+			{ctor(offset);}
+		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+	private:
+		void ctor(addr_t offset);
 HEADER_LE_RELOC_TABLE_END
+
+
 
 HEADER_LE_PAGE_TABLE_ENTRY_START
      public:
@@ -3037,8 +3021,7 @@ HEADER_DOS_HEADER_START
 		} __attribute__((packed));		   /* 0x04 */
 
 		explicit SgAsmDOSFileHeader(SgAsmGenericFile *f)
-			: SgAsmGenericHeader(f, 0, sizeof(DOSFileHeader_disk)),
-			  p_relocs(NULL), p_rm_section(NULL)
+			: SgAsmGenericHeader(f), p_relocs(NULL), p_rm_section(NULL)
 			{ctor();}
 		virtual SgAsmDOSFileHeader *parse() {return parse(true);}
 		SgAsmDOSFileHeader *parse(bool define_rm_section);
@@ -3070,8 +3053,7 @@ HEADER_DOS_EXTENDED_HEADER_START
 		} __attribute__((packed));        /* 0x20 */
 
 		explicit SgAsmDOSExtendedHeader(SgAsmDOSFileHeader *fhdr)
-			: SgAsmGenericSection(fhdr->get_file(), fhdr,
-					      fhdr->get_size(), sizeof(DOSExtendedHeader_disk))
+			: SgAsmGenericSection(fhdr->get_file(), fhdr)
 			{ctor();}
 		virtual SgAsmDOSExtendedHeader *parse();
 		void *encode(SgAsmDOSExtendedHeader::DOSExtendedHeader_disk*) const;
@@ -4035,14 +4017,6 @@ SOURCE_GENERIC_SECTION_END
 
 
 SOURCE_GENERIC_HEADER_START
-
-SgAsmGenericHeader::SgAsmGenericHeader(SgAsmGenericFile *ef, addr_t offset, addr_t size)
-   : SgAsmGenericSection(ef, NULL, offset, size),
-     p_exec_format(NULL), p_isa(ISA_OTHER), p_base_va(0), p_dlls(NULL), p_symbols(NULL), p_sections(NULL)
-   {
-     ctor(ef, offset, size);
-   }
-
 const char *
 SgAsmGenericHeader::format_name() const
    {
@@ -4153,14 +4127,6 @@ SOURCE_ELF_SEGMENT_TABLE_ENTRY_LIST_START
 SOURCE_ELF_SEGMENT_TABLE_ENTRY_LIST_END
 
 SOURCE_ELF_SECTION_START
-/* Constructor for a non-attached, not-parsed Elf section */
-SgAsmElfSection::SgAsmElfSection(SgAsmGenericHeader *fhdr)
-   : SgAsmGenericSection(fhdr->get_file(), fhdr, 0, 1),
-     p_linked_section(NULL), p_section_entry(NULL), p_segment_entry(NULL)
-   {
-     ctor();
-   }
-
 // DQ (8/22/2008): These are not automatically generated since one of them must be virtual.
 SgAsmElfSection* 
 SgAsmElfSection::get_linked_section () const
@@ -4294,107 +4260,27 @@ SOURCE_COFF_STRING_TABLE_START
 SOURCE_COFF_STRING_TABLE_END
 
 SOURCE_NE_FILE_HEADER_START
-
-SgAsmNEFileHeader::SgAsmNEFileHeader(SgAsmGenericFile *f, addr_t offset)
-   : SgAsmGenericHeader(f, offset, sizeof(SgAsmNEFileHeader::NEFileHeader_disk)), p_dos2_header(NULL), p_section_table(NULL), p_resname_table(NULL), p_nonresname_table(NULL), p_module_table(NULL), p_entry_table(NULL)
-   {
-     ctor(f, offset);
-   }
-
-const char *
-SgAsmNEFileHeader::format_name() const
-   {
-     return "NE";
-   }
-
-#if 0
-bool
-SgAsmNEFileHeader::is_NE(SgAsmGenericFile *f)
-{
-    printf ("SgAsmNEFileHeader::is_PE() member function incomplete! \n");
-    ROSE_ASSERT(false);
-
-    return true;
-}
-#endif
-
-#if 0
-// Parses the structure of an ELF file and adds the info to the SgAsmGenericFile
-SgAsmNEFileHeader *
-SgAsmNEFileHeader::parse(SgAsmGenericFile *ef)
-{
-    ROSE_ASSERT(ef);
-    
-    printf ("SgAsmNEFileHeader::parse() member function incomplete! \n");
-    ROSE_ASSERT(false);
-
-    return NULL;
-}
-#endif
-
 SOURCE_NE_FILE_HEADER_END
 
 SOURCE_NE_SECTION_START
-SgAsmNESection::SgAsmNESection(SgAsmNEFileHeader *fhdr, addr_t offset, addr_t size)
-   : SgAsmGenericSection(fhdr->get_file(), fhdr, offset, size), p_st_entry(NULL), p_reloc_table(NULL)
-   {
-   }
-
 SOURCE_NE_SECTION_END
 
 SOURCE_NE_SECTION_TABLE_START
-SgAsmNESectionTable::SgAsmNESectionTable(SgAsmNEFileHeader *fhdr)
-   : SgAsmGenericSection(fhdr->get_file(), fhdr, fhdr->get_end_offset(),
-                         fhdr->get_e_nsections() * sizeof(SgAsmNESectionTableEntry::NESectionTableEntry_disk))
-   {
-     ctor();
-   }
-
 SOURCE_NE_SECTION_TABLE_END
 
 SOURCE_NE_NAME_TABLE_START
-SgAsmNENameTable::SgAsmNENameTable(SgAsmNEFileHeader *fhdr, addr_t offset)
-   : SgAsmGenericSection(fhdr->get_file(), fhdr, offset, 0)
-   {
-     ctor();
-   }
-
 SOURCE_NE_NAME_TABLE_END
 
 SOURCE_NE_MODULE_TABLE_START
-SgAsmNEModuleTable::SgAsmNEModuleTable(SgAsmNEFileHeader *fhdr, addr_t offset, addr_t size, SgAsmNEStringTable *strtab)
-   : SgAsmGenericSection(fhdr->get_file(), fhdr, offset, size), p_strtab(strtab)
-   {
-     ctor();
-   }
-
 SOURCE_NE_MODULE_TABLE_END
 
 SOURCE_NE_STRING_TABLE_START
-SgAsmNEStringTable::SgAsmNEStringTable(SgAsmNEFileHeader *fhdr, addr_t offset, addr_t length)
-   : SgAsmGenericSection(fhdr->get_file(), fhdr, offset, length)
-   {
-     ctor();
-   }
-
 SOURCE_NE_STRING_TABLE_END
 
 SOURCE_NE_ENTRY_TABLE_START
-SgAsmNEEntryTable::SgAsmNEEntryTable(SgAsmNEFileHeader *fhdr, addr_t offset, addr_t size)
-   : SgAsmGenericSection(fhdr->get_file(), fhdr, offset, size)
-   {
-     ctor();
-   }
-
 SOURCE_NE_ENTRY_TABLE_END
 
 SOURCE_NE_RELOC_TABLE_START
-SgAsmNERelocTable::SgAsmNERelocTable(SgAsmNEFileHeader *fhdr, addr_t offset)
-   : SgAsmGenericSection(fhdr->get_file(), fhdr, offset, 0)
-   {
-     ctor();
-   }
-
 SOURCE_NE_RELOC_TABLE_END
 
 
@@ -4431,101 +4317,24 @@ SOURCE_NE_SECTION_TABLE_ENTRY_END
 
 
 SOURCE_LE_FILE_HEADER_START
-
-SgAsmLEFileHeader::SgAsmLEFileHeader(SgAsmGenericFile *f, addr_t offset)
-   : SgAsmGenericHeader(f, offset, sizeof(SgAsmLEFileHeader::LEFileHeader_disk)), p_dos2_header(NULL), p_section_table(NULL), p_page_table(NULL), p_resname_table(NULL), p_nonresname_table(NULL), p_entry_table(NULL), p_reloc_table(NULL)
-   {
-     ctor(f, offset);
-   }
-
-#if 0
-// The correct implementation is more complex than this code below and is implemented in ROSE_ExecLE.C.
-const char *
-SgAsmLEFileHeader::format_name() const
-   {
-     return "LE";
-   }
-#endif
-
-
-#if 0
-bool
-SgAsmLEFileHeader::is_LE(SgAsmGenericFile *f)
-{
-    printf ("SgAsmLEFileHeader::is_PE() member function incomplete! \n");
-    ROSE_ASSERT(false);
-
-    return true;
-}
-#endif
-
-#if 0
-// Parses the structure of an ELF file and adds the info to the SgAsmGenericFile
-SgAsmLEFileHeader *
-SgAsmLEFileHeader::parse(SgAsmGenericFile *ef)
-{
-    ROSE_ASSERT(ef);
-    
-    printf ("SgAsmLEFileHeader::parse() member function incomplete! \n");
-    ROSE_ASSERT(false);
-
-    return NULL;
-}
-#endif
-
 SOURCE_LE_FILE_HEADER_END
 
 SOURCE_LE_SECTION_START
-SgAsmLESection::SgAsmLESection(SgAsmLEFileHeader *fhdr, addr_t offset, addr_t size)
-   : SgAsmGenericSection(fhdr->get_file(), fhdr, offset, size), p_st_entry(NULL)
-   {
-   }
-
 SOURCE_LE_SECTION_END
 
 SOURCE_LE_SECTION_TABLE_START
-SgAsmLESectionTable::SgAsmLESectionTable(SgAsmLEFileHeader *fhdr, addr_t offset, addr_t size)
-   : SgAsmGenericSection(fhdr->get_file(), fhdr, offset, size)
-   {
-     ctor();
-   }
-
 SOURCE_LE_SECTION_TABLE_END
 
 SOURCE_LE_NAME_TABLE_START
-SgAsmLENameTable::SgAsmLENameTable(SgAsmLEFileHeader *fhdr, addr_t offset)
-   : SgAsmGenericSection(fhdr->get_file(), fhdr, offset, 0)
-   {
-     ctor();
-   }
-
 SOURCE_LE_NAME_TABLE_END
 
 SOURCE_LE_PAGE_TABLE_START
-SgAsmLEPageTable::SgAsmLEPageTable(SgAsmLEFileHeader *fhdr, addr_t offset, addr_t size)
-   : SgAsmGenericSection(fhdr->get_file(), fhdr, offset, size)
-   {
-     ctor();
-   }
-
 SOURCE_LE_PAGE_TABLE_END
 
 SOURCE_LE_ENTRY_TABLE_START
-SgAsmLEEntryTable::SgAsmLEEntryTable(SgAsmLEFileHeader *fhdr, addr_t offset)
-   : SgAsmGenericSection(fhdr->get_file(), fhdr, offset, 0)
-   {
-     ctor();
-   }
-
 SOURCE_LE_ENTRY_TABLE_END
 
 SOURCE_LE_RELOC_TABLE_START
-SgAsmLERelocTable::SgAsmLERelocTable(SgAsmLEFileHeader *fhdr, addr_t offset)
-   : SgAsmGenericSection(fhdr->get_file(), fhdr, offset, 0)
-   {
-     ctor();
-   }
-
 SOURCE_LE_RELOC_TABLE_END
 
 SOURCE_LE_PAGE_TABLE_ENTRY_START

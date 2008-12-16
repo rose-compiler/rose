@@ -64,6 +64,8 @@ SgAsmNERelocEntry::osfixup_type::osfixup_type()
 void
 SgAsmNEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
 {
+    set_offset(offset);
+    set_size(sizeof(NEFileHeader_disk));
     grab_content();
 
     set_name(new SgAsmBasicString("NE File Header"));
@@ -154,7 +156,9 @@ bool
 SgAsmNEFileHeader::is_NE(SgAsmGenericFile *ef)
 {
     /* Check DOS File Header magic number */
-    SgAsmGenericSection *section = new SgAsmGenericSection(ef, NULL, 0, 0x40);
+    SgAsmGenericSection *section = new SgAsmGenericSection(ef, NULL);
+    section->set_offset(0);
+    section->set_size(0x40);
     section->grab_content();
     unsigned char dos_magic[2];
     section->content(0, 2, dos_magic);
@@ -170,7 +174,9 @@ SgAsmNEFileHeader::is_NE(SgAsmGenericFile *ef)
     delete section;
     
     /* Read the NE File Header magic number */
-    section = new SgAsmGenericSection(ef, NULL, ne_offset, 2);
+    section = new SgAsmGenericSection(ef, NULL);
+    section->set_offset(ne_offset);
+    section->set_size(2);
     section->grab_content();
     unsigned char magic[2];
     section->content(0, 2, magic);
@@ -435,14 +441,15 @@ SgAsmNESection::dump(FILE *f, const char *prefix, ssize_t idx) const
 void
 SgAsmNESectionTable::ctor()
 {
+    SgAsmNEFileHeader *fhdr = dynamic_cast<SgAsmNEFileHeader*>(get_header());
+    ROSE_ASSERT(fhdr!=NULL);
+    set_size(fhdr->get_e_nsections() * sizeof(SgAsmNESectionTableEntry::NESectionTableEntry_disk));
+
     grab_content();
 
     set_synthesized(true);
     set_name(new SgAsmBasicString("NE Section Table"));
     set_purpose(SP_HEADER);
-
-    SgAsmNEFileHeader *fhdr = dynamic_cast<SgAsmNEFileHeader*>(get_header());
-    ROSE_ASSERT(fhdr!=NULL);
 
     const size_t entsize = sizeof(SgAsmNESectionTableEntry::NESectionTableEntry_disk);
 
@@ -454,7 +461,9 @@ SgAsmNESectionTable::ctor()
 
         /* The section */
         addr_t section_offset = entry->get_sector() << fhdr->get_e_sector_align();
-        SgAsmNESection *section = new SgAsmNESection(fhdr, section_offset, 0==section_offset ? 0 : entry->get_physical_size());
+        SgAsmNESection *section = new SgAsmNESection(fhdr);
+        section->set_offset(section_offset);
+        section->set_size(0==section_offset ? 0 : entry->get_physical_size());
         section->grab_content();
         section->set_synthesized(false);
         section->set_id(i+1); /*numbered starting at 1, not zero*/
@@ -486,7 +495,7 @@ SgAsmNESectionTable::ctor()
         }
 
         if (entry->get_flags() & SgAsmNESectionTableEntry::SF_RELOCINFO) {
-            SgAsmNERelocTable *relocs = new SgAsmNERelocTable(fhdr, section->get_offset() + section->get_size());
+            SgAsmNERelocTable *relocs = new SgAsmNERelocTable(fhdr, section);
             section->set_reloc_table(relocs);
         }
     }
@@ -539,8 +548,10 @@ SgAsmNESectionTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 
 /* Constructor assumes SgAsmGenericSection is zero bytes long so far */
 void
-SgAsmNENameTable::ctor()
+SgAsmNENameTable::ctor(addr_t offset)
 {
+    set_offset(offset);
+    set_size(0);
     grab_content();
 
     set_synthesized(true);
@@ -634,8 +645,10 @@ SgAsmNENameTable::get_names_by_ordinal(unsigned ordinal)
 
 /* Constructor */
 void
-SgAsmNEModuleTable::ctor()
+SgAsmNEModuleTable::ctor(addr_t offset, addr_t size)
 {
+    set_offset(offset);
+    set_size(size);
     grab_content();
 
     set_synthesized(true);
@@ -706,8 +719,10 @@ SgAsmNEModuleTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 /* Constructor. We don't parse out the strings here because we want to keep track of what strings are actually referenced by
  * other parts of the file. We can get that information with the congeal() method. */
 void
-SgAsmNEStringTable::ctor()
+SgAsmNEStringTable::ctor(addr_t offset, addr_t size)
 {
+    set_offset(offset);
+    set_size(size);
     grab_content();
 
     set_synthesized(true);
@@ -792,8 +807,10 @@ SgAsmNEEntryPoint::dump(FILE *f, const char *prefix, ssize_t idx) const
 
 /* Constructor */
 void
-SgAsmNEEntryTable::ctor()
+SgAsmNEEntryTable::ctor(addr_t offset, addr_t size)
 {
+    set_offset(offset);
+    set_size(size);
     grab_content();
 
     set_synthesized(true);
@@ -1184,8 +1201,10 @@ SgAsmNERelocEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
  * number of entries stored in the first two bytes), therefore the section should have an initial size of zero and we extend
  * it as we parse it. */
 void
-SgAsmNERelocTable::ctor()
+SgAsmNERelocTable::ctor(SgAsmNESection *section)
 {
+    ROSE_ASSERT(section!=NULL);
+    set_offset(section->get_offset() + section->get_size()); /*reloc section begins immediately after section payload*/
     grab_content();
 
     char name[64];
@@ -1284,7 +1303,7 @@ SgAsmNEFileHeader::parse(SgAsmGenericFile *ef)
         /* Module reference table */
         addr_t modref_offset = ne_header->get_offset() + ne_header->get_e_modreftab_rfo();
         addr_t modref_size   = ne_header->get_e_importnametab_rfo() - ne_header->get_e_modreftab_rfo();
-        SgAsmNEModuleTable *modtab = new SgAsmNEModuleTable(ne_header, modref_offset, modref_size, strtab);
+        SgAsmNEModuleTable *modtab = new SgAsmNEModuleTable(ne_header, strtab, modref_offset, modref_size);
         ne_header->set_module_table(modtab);
     }
     if (ne_header->get_e_entrytab_rfo() > 0 && ne_header->get_e_entrytab_size() > 0) {

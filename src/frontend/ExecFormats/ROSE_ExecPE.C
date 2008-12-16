@@ -57,7 +57,9 @@ bool
 SgAsmPEFileHeader::is_PE(SgAsmGenericFile *ef)
 {
     /* Check DOS File Header magic number */
-    SgAsmGenericSection *section = new SgAsmGenericSection(ef, NULL, 0, 0x40);
+    SgAsmGenericSection *section = new SgAsmGenericSection(ef, NULL);
+    section->set_offset(0);
+    section->set_size(0x40);
     section->grab_content();
     unsigned char dos_magic[2];
     section->content(0, 2, dos_magic);
@@ -73,7 +75,9 @@ SgAsmPEFileHeader::is_PE(SgAsmGenericFile *ef)
     delete section;
     
     /* Read the PE File Header magic number */
-    section = new SgAsmGenericSection(ef, NULL, pe_offset, 4);
+    section = new SgAsmGenericSection(ef, NULL);
+    section->set_offset(pe_offset);
+    section->set_size(4);
     section->grab_content();
     unsigned char pe_magic[4];
     section->content(0, 4, pe_magic);
@@ -298,7 +302,9 @@ SgAsmPEFileHeader::parse()
 
     /* Parse the COFF symbol table and add symbols to the PE header */
     if (get_e_coff_symtab() && get_e_coff_nsyms()) {
-        SgAsmCoffSymbolTable *symtab = (new SgAsmCoffSymbolTable(this))->parse();
+        SgAsmCoffSymbolTable *symtab = new SgAsmCoffSymbolTable(this);
+        symtab->set_offset(get_e_coff_symtab());
+        symtab->parse();
         std::vector<SgAsmCoffSymbol*> & symbols = symtab->get_symbols()->get_symbols();
         for (size_t i = 0; i < symbols.size(); i++)
             add_symbol(symbols[i]);
@@ -489,7 +495,7 @@ SgAsmPEFileHeader::create_table_sections()
             tabsec = new SgAsmPEImportSection(this);
             break;
           default:
-            tabsec = new SgAsmGenericSection(ef, this, file_offset, pair->get_e_size());
+            tabsec = new SgAsmGenericSection(ef, this);
             break;
         }
         if (tabname) tabsec->set_name(new SgAsmBasicString(tabname));
@@ -2330,7 +2336,9 @@ SgAsmCoffSymbolTable::parse()
     /* The string table immediately follows the symbols. The first four bytes of the string table are the size of the
      * string table in little endian. */
     addr_t strtab_offset = get_offset() + fhdr->get_e_coff_nsyms() * SgAsmCoffSymbol::COFFSymbol_disk_size;
-    p_strtab = new SgAsmGenericSection(fhdr->get_file(), fhdr, strtab_offset, sizeof(uint32_t));
+    p_strtab = new SgAsmGenericSection(fhdr->get_file(), fhdr);
+    p_strtab->set_offset(strtab_offset);
+    p_strtab->set_size(sizeof(uint32_t));
     p_strtab->set_synthesized(true);
     p_strtab->set_name(new SgAsmBasicString("COFF Symbol Strtab"));
     p_strtab->set_purpose(SP_HEADER);
