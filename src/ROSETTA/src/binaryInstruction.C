@@ -755,8 +755,6 @@ Grammar::setUpBinaryInstructions ()
 
 
      AsmElfSymbol.setFunctionPrototype("HEADER_ELF_SYMBOL", "../Grammar/BinaryInstruction.code");
-     AsmElfSymbol.setDataPrototype("rose_addr_t","st_name","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSymbol.setDataPrototype("unsigned char","st_info","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSymbol.setDataPrototype("unsigned char","st_res1","= 0",

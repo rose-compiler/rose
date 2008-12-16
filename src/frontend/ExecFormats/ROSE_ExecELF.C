@@ -1370,8 +1370,7 @@ SgAsmElfSectionTable::parse()
             break;
     }
     
-
-
+#if 1 /*This will be going away shortly [RPM 2008-12-12]*/
     /* Initialize links between sections */
     for (size_t i = 0; i < entries.size(); i++) {
         SgAsmElfSectionTableEntry *shdr = entries[i];
@@ -1381,6 +1380,8 @@ SgAsmElfSectionTable::parse()
             source->set_linked_section(target);
         }
     }
+#endif
+
     return this;
 }
 
@@ -2792,11 +2793,10 @@ SgAsmElfDynamicSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 // Symbol Tables
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Initialize symbol by parsing a symbol table entry. */
+/** Initialize symbol by parsing a symbol table entry. An ELF String Section must be supplied in order to get the symbol name. */
 void
-SgAsmElfSymbol::parse(ByteOrder sex, const Elf32SymbolEntry_disk *disk)
+SgAsmElfSymbol::parse(ByteOrder sex, const Elf32SymbolEntry_disk *disk, SgAsmElfStringSection *strsec)
 {
-    p_st_name  = disk_to_host(sex, disk->st_name);
     p_st_info  = disk_to_host(sex, disk->st_info);
     p_st_res1  = disk_to_host(sex, disk->st_res1);
     p_st_shndx = disk_to_host(sex, disk->st_shndx);
@@ -2804,14 +2804,17 @@ SgAsmElfSymbol::parse(ByteOrder sex, const Elf32SymbolEntry_disk *disk)
 
     p_value    = disk_to_host(sex, disk->st_value);
     p_size     = p_st_size;
+
+    addr_t name_offset  = disk_to_host(sex, disk->st_name);
+    set_name(new SgAsmStoredString(strsec->get_strtab(), name_offset));
+
     parse_common();
 }
 
-/** Initialize symbol by parsing a symbol table entry. */
+/** Initialize symbol by parsing a symbol table entry. An ELF String Section must be supplied in order to get the symbol name. */
 void
-SgAsmElfSymbol::parse(ByteOrder sex, const Elf64SymbolEntry_disk *disk)
+SgAsmElfSymbol::parse(ByteOrder sex, const Elf64SymbolEntry_disk *disk, SgAsmElfStringSection *strsec)
 {
-    p_st_name  = disk_to_host(sex, disk->st_name);
     p_st_info  = disk_to_host(sex, disk->st_info);
     p_st_res1  = disk_to_host(sex, disk->st_res1);
     p_st_shndx = disk_to_host(sex, disk->st_shndx);
@@ -2819,6 +2822,10 @@ SgAsmElfSymbol::parse(ByteOrder sex, const Elf64SymbolEntry_disk *disk)
 
     p_value    = disk_to_host(sex, disk->st_value);
     p_size     = p_st_size;
+
+    addr_t name_offset  = disk_to_host(sex, disk->st_name);
+    set_name(new SgAsmStoredString(strsec->get_strtab(), name_offset));
+
     parse_common();
 }
 
@@ -2854,7 +2861,7 @@ SgAsmElfSymbol::parse_common()
     /* Definition state */
     if (p_value || p_size) {
         p_def_state = SYM_DEFINED;
-    } else if (p_st_name > 0 || get_elf_type()) {
+    } else if (p_name->get_string().size() > 0 || get_elf_type()) {
         p_def_state = SYM_TENTATIVE;
     } else {
         p_def_state = SYM_UNDEFINED;
@@ -2879,42 +2886,30 @@ SgAsmElfSymbol::get_elf_type() const
     return (ElfSymType)(p_st_info & 0xf);
 }
 
-/* Called before unparsing. Updates the symbol table entry to a consistent state. Returns true if any name offset changed,
- * since this would mean that we may need to call reallocate() on the string table again. */
-bool
-SgAsmElfSymbol::reallocate(SgAsmGenericStrtab *strtab)
-{
-    SgAsmStoredString *s = dynamic_cast<SgAsmStoredString*>(get_name());
-    if (s && s->get_strtab()==strtab) {
-        addr_t old_offset = p_st_name;
-        p_st_name = get_name()->get_offset();
-        return p_st_name!=old_offset;
-    } else {
-        p_st_name = 0;
-        return false;
-    }
-}
-
 /* Encode a symbol into disk format */
 void *
-SgAsmElfSymbol::encode(ByteOrder sex, Elf32SymbolEntry_disk *disk, SgAsmGenericStrtab *strtab) const
+SgAsmElfSymbol::encode(ByteOrder sex, Elf32SymbolEntry_disk *disk) const
 {
-    host_to_disk(sex, p_st_name,     &(disk->st_name));
-    host_to_disk(sex, p_st_info,     &(disk->st_info));
-    host_to_disk(sex, p_st_res1,     &(disk->st_res1));
-    host_to_disk(sex, p_st_shndx,    &(disk->st_shndx));
-    host_to_disk(sex, p_st_size,     &(disk->st_size));
+    addr_t st_name = p_name->get_offset();
+    ROSE_ASSERT(st_name!=SgAsmGenericString::unallocated);
+    host_to_disk(sex, st_name,     &(disk->st_name));
+    host_to_disk(sex, p_st_info,   &(disk->st_info));
+    host_to_disk(sex, p_st_res1,   &(disk->st_res1));
+    host_to_disk(sex, p_st_shndx,  &(disk->st_shndx));
+    host_to_disk(sex, p_st_size,   &(disk->st_size));
     host_to_disk(sex, get_value(), &(disk->st_value));
     return disk;
 }
 void *
-SgAsmElfSymbol::encode(ByteOrder sex, Elf64SymbolEntry_disk *disk, SgAsmGenericStrtab *strtab) const
+SgAsmElfSymbol::encode(ByteOrder sex, Elf64SymbolEntry_disk *disk) const
 {
-    host_to_disk(sex, p_st_name,     &(disk->st_name));
-    host_to_disk(sex, p_st_info,     &(disk->st_info));
-    host_to_disk(sex, p_st_res1,     &(disk->st_res1));
-    host_to_disk(sex, p_st_shndx,    &(disk->st_shndx));
-    host_to_disk(sex, p_st_size,     &(disk->st_size));
+    addr_t st_name = p_name->get_offset();
+    ROSE_ASSERT(st_name!=SgAsmGenericString::unallocated);
+    host_to_disk(sex, st_name,     &(disk->st_name));
+    host_to_disk(sex, p_st_info,   &(disk->st_info));
+    host_to_disk(sex, p_st_res1,   &(disk->st_res1));
+    host_to_disk(sex, p_st_shndx,  &(disk->st_shndx));
+    host_to_disk(sex, p_st_size,   &(disk->st_size));
     host_to_disk(sex, get_value(), &(disk->st_value));
     return disk;
 }
@@ -2934,8 +2929,6 @@ SgAsmElfSymbol::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmGenericSecti
     char sbuf[256];
 
     SgAsmGenericSymbol::dump(f, p, -1);
-
-    fprintf(f, "%s%-*s = %"PRIu64" (in linked string table)\n", p, w, "st_name",  p_st_name);
 
     fprintf(f, "%s%-*s = %u (",          p, w, "st_info",  p_st_info);
     switch (get_elf_binding()) {
@@ -2983,6 +2976,7 @@ SgAsmElfSymbolSection::ctor(SgAsmElfStringSection *strings)
 {
     p_symbols = new SgAsmElfSymbolList;
     p_symbols->set_parent(this);
+    ROSE_ASSERT(strings!=NULL);
     p_linked_section = strings;
 }
 
@@ -3022,24 +3016,26 @@ SgAsmElfSymbolSection::parse()
     ROSE_ASSERT(fhdr!=NULL);
     SgAsmElfSectionTableEntry *shdr = get_section_entry();
     ROSE_ASSERT(shdr!=NULL);
+    SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(get_linked_section());
+    ROSE_ASSERT(strsec!=NULL);
 
     size_t entry_size, struct_size, extra_size, nentries;
     calculate_sizes(&entry_size, &struct_size, &extra_size, &nentries);
     ROSE_ASSERT(entry_size==shdr->get_sh_entsize());
 
-    /* Parse each entry; some fields can't be initialized until set_linked_section() is called. */
+    /* Parse each entry */
     for (size_t i=0; i<nentries; i++) {
         SgAsmElfSymbol *entry=0;
         if (4==fhdr->get_word_size()) {
             entry = new SgAsmElfSymbol;
             SgAsmElfSymbol::Elf32SymbolEntry_disk disk;
             content(i*entry_size, struct_size, &disk);
-            entry->parse(fhdr->get_sex(), &disk);
+            entry->parse(fhdr->get_sex(), &disk, strsec);
         } else if (8==fhdr->get_word_size()) {
             entry = new SgAsmElfSymbol;
             SgAsmElfSymbol::Elf64SymbolEntry_disk disk;
             content(i*entry_size, struct_size, &disk);
-            entry->parse(fhdr->get_sex(), &disk);
+            entry->parse(fhdr->get_sex(), &disk, strsec);
         } else {
             throw FormatError("unsupported ELF word size");
         }
@@ -3063,8 +3059,7 @@ SgAsmElfSymbolSection::calculate_sizes(size_t *entsize, size_t *required, size_t
                            entsize, required, optional, entcount);
 }
 
-/* Symbol table sections link to their string tables. Updating the string table should cause the symbol names to be updated.
- * Also update section pointers for locally-bound symbols since we know that the section table has been read and all
+/* Update section pointers for locally-bound symbols since we know that the section table has been read and all
  * non-synthesized sections have been created.
  * 
  * The st_shndx is the index (ID) of the section to which the symbol is bound. Special values are:
@@ -3076,16 +3071,11 @@ SgAsmElfSymbolSection::calculate_sizes(size_t *entsize, size_t *required, size_t
 void
 SgAsmElfSymbolSection::set_linked_section(SgAsmElfSection *_strsec)
 {
-    SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(_strsec);
-    ROSE_ASSERT(strsec!=NULL);
+    ROSE_ASSERT(_strsec==get_linked_section()); /*We're not using this feature anymore [RPM 2008-12-12]*/
 
-    SgAsmElfSection::set_linked_section(strsec);
+    SgAsmElfSection::set_linked_section(_strsec);
     for (size_t i=0; i < p_symbols->get_symbols().size(); i++) {
         SgAsmElfSymbol *symbol = p_symbols->get_symbols()[i];
-
-        /* Get symbol name */
-        SgAsmStoredString *name = new SgAsmStoredString(strsec->get_strtab(), symbol->get_st_name());
-        symbol->set_name(name);
 
         /* Get bound section ptr */
         if (symbol->get_st_shndx() > 0 && symbol->get_st_shndx() < 0xff00) {
@@ -3116,15 +3106,6 @@ SgAsmElfSymbolSection::reallocate()
         secent->set_sh_type(p_is_dynamic ?
                             SgAsmElfSectionTableEntry::SHT_DYNSYM :
                             SgAsmElfSectionTableEntry::SHT_SYMTAB);
-
-    /* Update symbols */
-    SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(get_linked_section());
-    SgAsmGenericStrtab *strtab = strsec ? strsec->get_strtab() : NULL;
-    for (size_t i=0; i<p_symbols->get_symbols().size(); i++) {
-        SgAsmElfSymbol *entry = p_symbols->get_symbols()[i];
-        if (entry->reallocate(strtab))
-            reallocated = true;
-    }
     return reallocated;
 }
 
@@ -3135,10 +3116,6 @@ SgAsmElfSymbolSection::unparse(std::ostream &f) const
     SgAsmElfFileHeader *fhdr = get_elf_header();
     ROSE_ASSERT(fhdr);
     ByteOrder sex = fhdr->get_sex();
-
-    /* We need to know what string table is associated with this symbol table. */
-    SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(get_linked_section());
-    SgAsmGenericStrtab *strtab = strsec ? strsec->get_strtab() : NULL;
 
     size_t entry_size, struct_size, extra_size, nentries;
     calculate_sizes(&entry_size, &struct_size, &extra_size, &nentries);
@@ -3155,9 +3132,9 @@ SgAsmElfSymbolSection::unparse(std::ostream &f) const
         SgAsmElfSymbol *entry = p_symbols->get_symbols()[i];
         
         if (4==fhdr->get_word_size()) {
-            disk = entry->encode(sex, &disk32, strtab);
+            disk = entry->encode(sex, &disk32);
         } else if (8==fhdr->get_word_size()) {
-            disk = entry->encode(sex, &disk64, strtab);
+            disk = entry->encode(sex, &disk64);
         } else {
             ROSE_ASSERT(!"unsupported word size");
         }

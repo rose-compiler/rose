@@ -1809,14 +1809,12 @@ HEADER_ELF_SYMBOL_START
 			uint64_t      st_size;
 		} __attribute__((packed));
 
-		void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymbol::Elf32SymbolEntry_disk*);
-		void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymbol::Elf64SymbolEntry_disk*);
-
-		bool reallocate(SgAsmGenericStrtab*);
-		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymbol::Elf32SymbolEntry_disk*,
-			     SgAsmGenericStrtab*) const;
-		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymbol::Elf64SymbolEntry_disk*,
-			     SgAsmGenericStrtab*) const;
+		void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymbol::Elf32SymbolEntry_disk*,
+			   SgAsmElfStringSection*);
+		void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymbol::Elf64SymbolEntry_disk*,
+			   SgAsmElfStringSection*);
+		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymbol::Elf32SymbolEntry_disk*) const;
+		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymbol::Elf64SymbolEntry_disk*) const;
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
 		void dump(FILE*, const char *prefix, ssize_t idx, SgAsmGenericSection*) const;
 		SgAsmElfSymbol::ElfSymBinding get_elf_binding() const;
