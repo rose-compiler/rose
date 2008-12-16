@@ -706,12 +706,9 @@ Grammar::setUpBinaryInstructions ()
    * segment table since the segment table entries store their table index. */
      AsmElfSegmentTable.setFunctionPrototype ( "HEADER_ELF_SEGMENT_TABLE", "../Grammar/BinaryInstruction.code");
 
-  // SegmentType         p_type;
-  // SegmentFlags        p_flags;
-  // addr_t              p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_align;
-  // const unsigned char *extra;
-  // addr_t              nextra;
-     AsmElfSegmentTableEntry.setFunctionPrototype ( "HEADER_ELF_SEGMENT_TABLE_ENTRY", "../Grammar/BinaryInstruction.code");
+
+
+     AsmElfSegmentTableEntry.setFunctionPrototype("HEADER_ELF_SEGMENT_TABLE_ENTRY", "../Grammar/BinaryInstruction.code");
      AsmElfSegmentTableEntry.setDataPrototype("size_t", "index", "= 0", 
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSegmentTableEntry.setDataPrototype("SgAsmElfSegmentTableEntry::SegmentType","type",
@@ -735,20 +732,27 @@ Grammar::setUpBinaryInstructions ()
      AsmElfSegmentTableEntry.setDataPrototype("SgUnsignedCharList","extra","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     AsmElfSegmentTableEntryList.setFunctionPrototype ( "HEADER_ELF_SEGMENT_TABLE_ENTRY_LIST", "../Grammar/BinaryInstruction.code");
+
+
+     AsmElfSegmentTableEntryList.setFunctionPrototype("HEADER_ELF_SEGMENT_TABLE_ENTRY_LIST", "../Grammar/BinaryInstruction.code");
      AsmElfSegmentTableEntryList.setDataPrototype("SgAsmElfSegmentTableEntryPtrList","entries","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-  // DQ (8/17/2008): If this eventually only has a single data member then we could have it 
-  // contain the SgAsmElfSymbolPtrList directly and eliminate the SgAsmElfSymbolList IR node.
-  // std::vector<ElfSymbol> symbols;
-     AsmElfSymbolSection.setFunctionPrototype      ( "HEADER_ELF_SYMBOL_SECTION", "../Grammar/BinaryInstruction.code");
+
+
+     AsmElfSymbolSection.setFunctionPrototype("HEADER_ELF_SYMBOL_SECTION", "../Grammar/BinaryInstruction.code");
      AsmElfSymbolSection.setDataPrototype("SgAsmElfSymbolList*","symbols","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AsmElfSymbolSection.setDataPrototype("bool", "is_dynamic", "= false",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
 
      AsmElfSymbolList.setFunctionPrototype ( "HEADER_ELF_SYMBOL_LIST", "../Grammar/BinaryInstruction.code");
      AsmElfSymbolList.setDataPrototype("SgAsmElfSymbolPtrList","symbols","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+
 
   // Members defined by the ELF standard
   // addr_t              st_name;

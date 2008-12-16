@@ -1451,6 +1451,7 @@ HEADER_ELF_RELOC_SECTION_START
 		using SgAsmElfSection::calculate_sizes;
 		virtual SgAsmElfRelocSection *parse();
 		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const;
+		virtual bool reallocate();
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 	private:
@@ -1750,7 +1751,7 @@ HEADER_ELF_SEGMENT_TABLE_ENTRY_LIST_END
 HEADER_ELF_SYMBOL_SECTION_START
 	public:
 		explicit SgAsmElfSymbolSection(SgAsmElfFileHeader *fhdr)
-			: SgAsmElfSection(fhdr)
+			: SgAsmElfSection(fhdr), p_is_dynamic(false)
 			{ctor();}
 		virtual SgAsmElfSymbolSection* parse();
 		using SgAsmElfSection::calculate_sizes;

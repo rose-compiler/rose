@@ -928,6 +928,12 @@ SgAsmElfStringSection::reallocate()
     bool reallocated = SgAsmElfSection::reallocate();
     if (get_strtab()->reallocate(false))
         reallocated = true;
+
+    /* Update parts of the section and segment tables not updated by superclass */
+    SgAsmElfSectionTableEntry *secent = get_section_entry();
+    if (secent)
+        secent->set_sh_type(SgAsmElfSectionTableEntry::SHT_STRTAB);
+
     return reallocated;
 }
 
@@ -1301,10 +1307,18 @@ SgAsmElfSectionTable::parse()
           case SgAsmElfSectionTableEntry::SHT_DYNAMIC:
             section = new SgAsmElfDynamicSection(fhdr);
             break;
-          case SgAsmElfSectionTableEntry::SHT_DYNSYM:
-          case SgAsmElfSectionTableEntry::SHT_SYMTAB:
-            section = new SgAsmElfSymbolSection(fhdr);
-            break;
+          case SgAsmElfSectionTableEntry::SHT_DYNSYM: {
+              SgAsmElfSymbolSection *symsec;
+              section = symsec = new SgAsmElfSymbolSection(fhdr);
+              symsec->set_is_dynamic(true);
+              break;
+          }
+          case SgAsmElfSectionTableEntry::SHT_SYMTAB: {
+              SgAsmElfSymbolSection *symsec;
+              section = symsec = new SgAsmElfSymbolSection(fhdr);
+              symsec->set_is_dynamic(false);
+              break;
+          }
           case SgAsmElfSectionTableEntry::SHT_STRTAB:
             section = (new SgAsmElfStringSection(fhdr));
             break;
@@ -2269,6 +2283,22 @@ SgAsmElfRelocSection::calculate_sizes(size_t *entsize, size_t *required, size_t 
     return retval;
 }
 
+/* Pre-unparsing adjustments */
+bool
+SgAsmElfRelocSection::reallocate()
+{
+    bool reallocated = SgAsmElfSection::reallocate();
+    
+    /* Update parts of the section and segment tables not updated by superclass */
+    SgAsmElfSectionTableEntry *secent = get_section_entry();
+    if (secent)
+        secent->set_sh_type(p_uses_addend ?
+                            SgAsmElfSectionTableEntry::SHT_RELA :
+                            SgAsmElfSectionTableEntry::SHT_REL);
+
+    return reallocated;
+}
+
 /* Write section back to disk */
 void
 SgAsmElfRelocSection::unparse(std::ostream &f) const
@@ -2644,6 +2674,15 @@ SgAsmElfDynamicSection::reallocate()
 {
     bool reallocated = SgAsmElfSection::reallocate();
 
+    /* Update parts of the section and segment tables not updated by superclass */
+    SgAsmElfSectionTableEntry *secent = get_section_entry();
+    if (secent)
+        secent->set_sh_type(SgAsmElfSectionTableEntry::SHT_DYNAMIC);
+    SgAsmElfSegmentTableEntry *segent = get_segment_entry();
+    if (segent)
+        segent->set_type(SgAsmElfSegmentTableEntry::PT_DYNAMIC);
+
+    /* Update entries with name offsets */
     for (size_t i=0; i<p_entries->get_entries().size(); i++) {
         SgAsmElfDynamicEntry *entry = p_entries->get_entries()[i];
         SgAsmGenericString *name = entry->get_name();
@@ -3008,6 +3047,15 @@ bool
 SgAsmElfSymbolSection::reallocate()
 {
     bool reallocated = SgAsmElfSection::reallocate();
+
+    /* Update parts of the section and segment tables not updated by superclass */
+    SgAsmElfSectionTableEntry *secent = get_section_entry();
+    if (secent)
+        secent->set_sh_type(p_is_dynamic ?
+                            SgAsmElfSectionTableEntry::SHT_DYNSYM :
+                            SgAsmElfSectionTableEntry::SHT_SYMTAB);
+
+    /* Update symbols */
     SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(get_linked_section());
     SgAsmGenericStrtab *strtab = strsec ? strsec->get_strtab() : NULL;
     for (size_t i=0; i<p_symbols->get_symbols().size(); i++) {
