@@ -152,6 +152,9 @@ SgType* buildUpcRelaxedType(SgType *base_type = NULL);
 //! Build a UPC shared type
 SgType* buildUpcSharedType(SgType *base_type = NULL);
 
+//! Build a UPC shared[] type
+SgType* buildUpcBlockIndefiniteType(SgType *base_type = NULL);
+
 //! Build a UPC shared[*] type
 SgType* buildUpcBlockStarType(SgType *base_type = NULL);
 

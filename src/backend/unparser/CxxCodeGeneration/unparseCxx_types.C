@@ -1361,9 +1361,13 @@ void Unparse_Type::unparseModifierType(SgType* type, SgUnparse_Info& info)
              { 
                long block_size = mod_type->get_typeModifier().get_upcModifier().get_layout();
                stringstream ss;
-               if (block_size == -1) // block size not specified, default to 1
+               if (block_size == 0) // block size empty
                {
-                 curprint ("shared[1] ") ; 
+                 curprint ("shared[] ") ; 
+               }
+               if (block_size == -1) // block size omitted
+               {
+                 curprint ("shared ") ; 
                }
                else if (block_size == -2) // block size is *
                {

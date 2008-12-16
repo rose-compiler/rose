@@ -2568,7 +2568,16 @@ SgTypeFloat * SageBuilder::buildFloatType()
    SgModifierType *result = new SgModifierType(base_type);
    ROSE_ASSERT(result!=NULL);
    result->get_typeModifier().get_upcModifier().set_isShared(true);
-   result->get_typeModifier().get_upcModifier().set_layout(-1); // Unknown layout
+   result->get_typeModifier().get_upcModifier().set_layout(-1); // No layout ("shared" without a block size)
+   return result;
+ }
+
+  //! Build a UPC shared[] type.
+  SgType* SageBuilder::buildUpcBlockIndefiniteType(SgType* base_type /*=NULL*/)
+ {
+   SgModifierType *result = isSgModifierType(buildUpcSharedType(base_type));
+   ROSE_ASSERT(result!=NULL);
+   result->get_typeModifier().get_upcModifier().set_layout(0); // [] layout
    return result;
  }
 
