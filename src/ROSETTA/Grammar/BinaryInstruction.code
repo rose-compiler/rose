@@ -1448,9 +1448,9 @@ HEADER_ELF_STRING_SECTION_END
 
 HEADER_ELF_RELOC_SECTION_START
 	public:
-		SgAsmElfRelocSection(SgAsmElfFileHeader *fhdr, SgAsmElfStringSection *strsec)
+		SgAsmElfRelocSection(SgAsmElfFileHeader *fhdr, SgAsmElfSymbolSection *symsec)
 			: SgAsmElfSection(fhdr)
-			{ctor(strsec);}
+			{ctor(symsec);}
 		using SgAsmElfSection::calculate_sizes;
 		virtual SgAsmElfRelocSection *parse();
 		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const;
@@ -1458,7 +1458,7 @@ HEADER_ELF_RELOC_SECTION_START
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 	private:
-		void ctor(SgAsmElfStringSection*);
+		void ctor(SgAsmElfSymbolSection*);
 HEADER_ELF_RELOC_SECTION_END
 
 

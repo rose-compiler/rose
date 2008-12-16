@@ -1281,66 +1281,96 @@ SgAsmElfSectionTable::parse()
         entries.push_back(shdr);
     }
 
-    /* Read the string table section first because we'll need this to initialize section names.  */
-    SgAsmElfStringSection *strsec = NULL;
+    /* This vector keeps track of which sections have already been parsed. We could get the same information by calling
+     * fhdr->get_section_by_id() and passing the entry number since entry numbers and IDs are one and the same in ELF. However,
+     * this is a bit easier. */
+    std::vector<SgAsmElfSection*> is_parsed;
+    is_parsed.resize(entries.size(), NULL);
+
+    /* All sections implicitly depend on the section string table for their names. */
+    SgAsmElfStringSection *section_name_strings=NULL;
     if (fhdr->get_e_shstrndx() > 0) {
-        SgAsmElfSectionTableEntry *shdr = entries[fhdr->get_e_shstrndx()];
-        strsec = new SgAsmElfStringSection(fhdr);
-        strsec->init_from_section_table(shdr, strsec, fhdr->get_e_shstrndx());
-        strsec->parse();
+        SgAsmElfSectionTableEntry *entry = entries[fhdr->get_e_shstrndx()];
+        section_name_strings = new SgAsmElfStringSection(fhdr);
+        section_name_strings->init_from_section_table(entry, section_name_strings, fhdr->get_e_shstrndx());
+        section_name_strings->parse();
+        is_parsed[fhdr->get_e_shstrndx()] = section_name_strings;
     }
 
-    /* Read all other sections */
-    for (size_t i = 0; i<entries.size(); i++) {
-        SgAsmElfSectionTableEntry *shdr = entries[i];
-        SgAsmElfSection *section = NULL;
-        if (i == fhdr->get_e_shstrndx()) continue; /*we already read string table*/
-        switch (shdr->get_sh_type()) {
-          case SgAsmElfSectionTableEntry::SHT_NULL:
-            /* Null entry. We still create the section just to hold the section header. */
-            section = new SgAsmElfSection(fhdr);
-            break;
-          case SgAsmElfSectionTableEntry::SHT_NOBITS:
-            /* These types of sections don't occupy any file space (e.g., BSS) */
-            section = new SgAsmElfSection(fhdr);
-            break;
-          case SgAsmElfSectionTableEntry::SHT_DYNAMIC:
-            section = new SgAsmElfDynamicSection(fhdr);
-            break;
-          case SgAsmElfSectionTableEntry::SHT_DYNSYM: {
-              SgAsmElfSymbolSection *symsec;
-              section = symsec = new SgAsmElfSymbolSection(fhdr, NULL); /*string table will be linked in below*/
-              symsec->set_is_dynamic(true);
-              break;
-          }
-          case SgAsmElfSectionTableEntry::SHT_SYMTAB: {
-              SgAsmElfSymbolSection *symsec;
-              section = symsec = new SgAsmElfSymbolSection(fhdr, NULL); /*string table will be linked in below*/
-              symsec->set_is_dynamic(false);
-              break;
-          }
-          case SgAsmElfSectionTableEntry::SHT_STRTAB:
-            section = (new SgAsmElfStringSection(fhdr));
-            break;
-          case SgAsmElfSectionTableEntry::SHT_REL: {
-              SgAsmElfRelocSection *relocsec;
-              section = relocsec = new SgAsmElfRelocSection(fhdr, NULL); /*string table will be linked in below*/
-              relocsec->set_uses_addend(false);
-              break;
-          }
-          case SgAsmElfSectionTableEntry::SHT_RELA: {
-              SgAsmElfRelocSection *relocsec;
-              section = relocsec = new SgAsmElfRelocSection(fhdr, NULL); /*string table will be linked in below*/
-              relocsec->set_uses_addend(true);
-              break;
-          }
-          default:
-            section = new SgAsmElfSection(fhdr);
-            break;
+    /* Read all the sections. Some sections depend on other sections, so we read them in such an order that all dependencies
+     * are satisfied first. */
+    while (1) {
+        bool try_again=false;
+        for (size_t i=0; i<entries.size(); i++) {
+            SgAsmElfSectionTableEntry *entry = entries[i];
+            ROSE_ASSERT(entry->get_sh_link()<entries.size());
+            SgAsmElfSection *linked = entry->get_sh_link()>0 ? is_parsed[entry->get_sh_link()] : NULL;
+            if (is_parsed[i]) {
+                /* This section has already been parsed. */
+            } else if (entry->get_sh_link()>0 && !linked) {
+                /* Don't parse this section yet because it depends on something that's not parsed yet. */
+                try_again = true;
+            } else {
+                switch (entry->get_sh_type()) {
+                  case SgAsmElfSectionTableEntry::SHT_NULL:
+                    /* Null entry. We still create the section just to hold the section header. */
+                    is_parsed[i] = new SgAsmElfSection(fhdr);
+                    break;
+                  case SgAsmElfSectionTableEntry::SHT_NOBITS:
+                    /* These types of sections don't occupy any file space (e.g., BSS) */
+                    is_parsed[i] = new SgAsmElfSection(fhdr);
+                    break;
+                  case SgAsmElfSectionTableEntry::SHT_DYNAMIC:
+                    is_parsed[i] = new SgAsmElfDynamicSection(fhdr);
+                    break;
+                  case SgAsmElfSectionTableEntry::SHT_DYNSYM: {
+                      SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(linked);
+                      ROSE_ASSERT(strsec);
+                      SgAsmElfSymbolSection *symsec = new SgAsmElfSymbolSection(fhdr, strsec);
+                      symsec->set_is_dynamic(true);
+                      is_parsed[i] = symsec;
+                      break;
+                  }
+                  case SgAsmElfSectionTableEntry::SHT_SYMTAB: {
+                      SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(linked);
+                      ROSE_ASSERT(strsec);
+                      SgAsmElfSymbolSection *symsec = new SgAsmElfSymbolSection(fhdr, strsec);
+                      symsec->set_is_dynamic(false);
+                      is_parsed[i] = symsec;
+                      break;
+                  }
+                  case SgAsmElfSectionTableEntry::SHT_STRTAB:
+                    is_parsed[i] = new SgAsmElfStringSection(fhdr);
+                    break;
+                  case SgAsmElfSectionTableEntry::SHT_REL: {
+                      SgAsmElfSymbolSection *symbols = dynamic_cast<SgAsmElfSymbolSection*>(linked);
+                      ROSE_ASSERT(symbols);
+                      SgAsmElfRelocSection *relocsec = new SgAsmElfRelocSection(fhdr, symbols);
+                      relocsec->set_uses_addend(false);
+                      is_parsed[i] = relocsec;
+                      break;
+                  }
+                  case SgAsmElfSectionTableEntry::SHT_RELA: {
+                      SgAsmElfSymbolSection *symbols = dynamic_cast<SgAsmElfSymbolSection*>(linked);
+                      ROSE_ASSERT(symbols);
+                      SgAsmElfRelocSection *relocsec = new SgAsmElfRelocSection(fhdr, symbols);
+                      relocsec->set_uses_addend(true);
+                      is_parsed[i] = relocsec;
+                      break;
+                  }
+                  default:
+                    is_parsed[i] = new SgAsmElfSection(fhdr);
+                    break;
+                }
+                is_parsed[i]->init_from_section_table(entry, section_name_strings, i);
+                is_parsed[i]->parse();
+            }
         }
-        section->init_from_section_table(shdr, strsec, i);
-        section->parse();
+        if (!try_again)
+            break;
     }
+    
+
 
     /* Initialize links between sections */
     for (size_t i = 0; i < entries.size(); i++) {
@@ -2211,11 +2241,12 @@ SgAsmElfRelocEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbo
 
 /* Non-parsing constructor */
 void
-SgAsmElfRelocSection::ctor(SgAsmElfStringSection *strings)
+SgAsmElfRelocSection::ctor(SgAsmElfSymbolSection *symbols)
 {
     p_entries = new SgAsmElfRelocEntryList;
     p_entries->set_parent(this);
-    p_linked_section = strings;
+    ROSE_ASSERT(symbols!=NULL);
+    p_linked_section = symbols;
 }
 
 /* Parse an existing ELF Rela Section */
