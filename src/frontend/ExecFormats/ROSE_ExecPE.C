@@ -47,6 +47,7 @@ SgAsmPEFileHeader::ctor()
     p_isa = ISA_IA32_386;
 
     p_e_time = time(NULL);
+    p_e_nt_hdr_size = sizeof(PE32OptHeader_disk);
 }
 
 /** Return true if the file looks like it might be a PE file according to the magic number.  The file must contain what
@@ -116,8 +117,9 @@ SgAsmPEFileHeader::parse()
      * the end of the file, in which case that part should be read as zero. */
     PE32OptHeader_disk oh32;
     memset(&oh32, 0, sizeof oh32);
-    addr_t need32 = std::min(p_e_nt_hdr_size, (addr_t)(sizeof oh32));
-    extend(need32);
+    addr_t need32 = sizeof(PEFileHeader_disk) + std::min(p_e_nt_hdr_size, (addr_t)(sizeof oh32));
+    if (need32>get_size())
+        extend(need32);
     content(sizeof fh, sizeof oh32, &oh32);
     p_e_opt_magic = le_to_host(oh32.e_opt_magic);
     
@@ -161,8 +163,9 @@ SgAsmPEFileHeader::parse()
         /* We guessed wrong. This is a 64-bit header, not 32-bit. */
         PE64OptHeader_disk oh64;
         memset(&oh64, 0, sizeof oh64);
-        addr_t need64 = std::min(p_e_nt_hdr_size, (addr_t)(sizeof oh64));
-        extend(need64 - need32);
+        addr_t need64 = sizeof(PEFileHeader_disk) + std::min(p_e_nt_hdr_size, (addr_t)(sizeof oh64));
+        if (need64>get_size())
+            extend(need64-get_size());
         content(sizeof fh, sizeof oh64, &oh64);
         p_e_lmajor             = le_to_host(oh64.e_lmajor);
         p_e_lminor             = le_to_host(oh64.e_lminor);
@@ -580,6 +583,19 @@ SgAsmPEFileHeader::reallocate()
 #endif
         p_e_header_size = header_size;
     }
+
+    /* The size of the optional header. If there's a section table then we use its offset to calculate the optional header
+     * size in order to be compatible with the PE loader. Otherwise use the actual optional header size. */
+    if (p_section_table) {
+        ROSE_ASSERT(p_section_table->get_offset() >= get_offset() + sizeof(PEFileHeader_disk));
+        p_e_nt_hdr_size = p_section_table->get_offset() - (get_offset() + sizeof(PEFileHeader_disk));
+    } else if (4==get_word_size()) {
+        p_e_nt_hdr_size = sizeof(PE32OptHeader_disk);
+    } else if (8==get_word_size()) {
+        p_e_nt_hdr_size = sizeof(PE64OptHeader_disk);
+    } else {
+        throw FormatError("invalid PE word size");
+    }
             
     /* Update COFF symbol table related data members in the file header */
     if (get_coff_symtab()) {
@@ -797,11 +813,12 @@ SgAsmPESectionTableEntry::update_from_section(SgAsmPESection *section)
     p_physical_size = section->get_size();
     p_physical_offset = section->get_offset();
 
-    //FIXME
+#if 0 /*FIXME*/
     p_coff_line_nums = 0;
     p_n_relocs = 0;
     p_n_coff_line_nums = 0;
     p_flags = 0;
+#endif
 }
 
 /* Encodes a section table entry back into disk format. */
@@ -850,6 +867,19 @@ SgAsmPESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %u\n",                           p, w, "n_relocs",         p_n_relocs);
     fprintf(f, "%s%-*s = %u\n",                           p, w, "n_coff_line_nums", p_n_coff_line_nums);
     fprintf(f, "%s%-*s = 0x%08x\n",                       p, w, "flags",            p_flags);
+}
+
+/* Pre-unparsing updates */
+bool
+SgAsmPESection::reallocate()
+{
+    bool reallocated = false;
+
+    SgAsmPESectionTableEntry *shdr = get_section_entry();
+    if (shdr)
+        shdr->update_from_section(this);
+    
+    return reallocated;
 }
 
 /* Print some debugging info. */
@@ -942,6 +972,38 @@ SgAsmPESectionTable::add_section(SgAsmPESection *section)
     SgAsmPESectionTableEntry *entry = new SgAsmPESectionTableEntry;
     entry->update_from_section(section);
     section->set_section_entry(entry);
+}
+
+/* Pre-unparsing updates */
+bool
+SgAsmPESectionTable::reallocate()
+{
+    bool reallocated = false;
+    
+    /* Resize based on section having largest ID */
+    SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(get_header());
+    ROSE_ASSERT(fhdr != NULL);
+    SgAsmGenericSectionPtrList sections = fhdr->get_sections()->get_sections();
+    int max_id = 0;
+    for (size_t i=0; i<sections.size(); i++) {
+        max_id = std::max(max_id, sections[i]->get_id());
+    }
+    
+    size_t nsections = max_id; /*PE section IDs are 1-origin*/
+    size_t need = nsections * sizeof(SgAsmPESectionTableEntry::PESectionTableEntry_disk);
+    if (need < get_size()) {
+        if (is_mapped()) {
+            ROSE_ASSERT(get_mapped_size()==get_size());
+            set_mapped_size(need);
+        }
+        set_size(need);
+        reallocated = true;
+    } else if (need > get_size()) {
+        get_file()->shift_extend(this, 0, need-get_size(), SgAsmGenericFile::ADDRSP_ALL, SgAsmGenericFile::ELASTIC_HOLE);
+        reallocated = true;
+    }
+
+    return reallocated;
 }
 
 /* Writes the section table back to disk along with each of the sections. */

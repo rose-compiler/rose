@@ -1858,81 +1858,81 @@ HEADER_PE_FILE_HEADER_START
 	public:
 		/* File format of a PE File Header. All fields are little endian. */
 		struct PEFileHeader_disk {
-			unsigned char e_magic[4];	/* magic number "PE\0\0" */
-			uint16_t    e_cpu_type;         /* e.g., 0x014c = Intel 386 */
-			uint16_t    e_nsections;        /* number of sections defined in the Section Table */
-			uint32_t    e_time;             /* time and date file was created or modified by the linker */
-			uint32_t    e_coff_symtab;      /* offset to COFF symbol table */
-			uint32_t    e_coff_nsyms;       /* number of symbols in COFF symbol table */
-			uint16_t    e_nt_hdr_size;      /* num remaining bytes in the header following the 'flags' field */
-			uint16_t    e_flags;            /* Bit flags: exe file, program/library image, fixed address, etc. */
-		} __attribute__((packed));
+			unsigned char e_magic[4];	/* 0x00 magic number "PE\0\0" */
+			uint16_t    e_cpu_type;         /* 0x04 e.g., 0x014c = Intel 386 */
+			uint16_t    e_nsections;        /* 0x06 number of sections defined in the Section Table */
+			uint32_t    e_time;             /* 0x08 time and date file was created or modified by the linker */
+			uint32_t    e_coff_symtab;      /* 0x0c offset to COFF symbol table */
+			uint32_t    e_coff_nsyms;       /* 0x10 number of symbols in COFF symbol table */
+			uint16_t    e_nt_hdr_size;      /* 0x14 num remaining bytes in the header following the 'flags' field */
+			uint16_t    e_flags;            /* 0x16 Bit flags: exe file, program/library image, fixed address, etc. */
+		} __attribute__((packed));              /* 0x18 */
 
 		struct PE32OptHeader_disk {
-			uint16_t    e_opt_magic;        /* magic number */
-			uint16_t    e_lmajor;           /* linker version */
-			uint16_t    e_lminor;
-			uint16_t    e_code_size;        /* Size of .text or sum of all code sections */
-			uint32_t    e_data_size;        /* Sum size of initialized data */
-			uint32_t    e_bss_size;         /* Sum size of uninitialized data */
-			uint32_t    e_entrypoint_rva;   /* RVA="relative virtual address"; relative to 'image_base', below */
-			uint32_t    e_code_rva;         /* Address relative to image base for code section when memory mapped */
-			uint32_t    e_data_rva;         /* Address relative to image base for data section */
-			uint32_t    e_image_base;       /* Virtual base of image (first byte of file, DOS header). 64k aligned */
-			uint32_t    e_section_align;    /* Alignment of sections in memory. Power of two 512<=x<=256M */
-			uint32_t    e_file_align;       /* Alignment factor (in bytes) for image pages */
-			uint16_t    e_os_major;         /* OS version number required to run this image */
-			uint16_t    e_os_minor;
-			uint16_t    e_user_major;       /* User-specified at link time for differentiating between image revs */
-			uint16_t    e_user_minor;
-			uint16_t    e_subsys_major;     /* Subsystem version number */
-			uint16_t    e_subsys_minor;
-			uint32_t    e_reserved9;
-			uint32_t    e_image_size;       /* Virtual size (bytes) of the image inc. all headers; section_align */
-			uint32_t    e_header_size;      /* Total header size (DOS Header + PE Header + Section table */
-			uint32_t    e_file_checksum;    /* Checksum for entire file; Set to zero by the linker */
-			uint16_t    e_subsystem;        /* Unknown, Native, WindowsGUI, WindowsCharacter, OS/2 Character, etc. */
-			uint16_t    e_dll_flags;        /* Bit flags for library init/terminate per process or thread */
-			uint32_t    e_stack_reserve_size;/* Virtual memory reserved for stack; non-committed pages are guards */
-			uint32_t    e_stack_commit_size;/* Size of valid stack; other pages are guards; <= 'stack_reserve_size' */
-			uint32_t    e_heap_reserve_size;/* Size (bytes) of local heap to reserve */
-			uint32_t    e_heap_commit_size; /* Size (bytes) of valid local heap */
-			uint32_t    e_loader_flags;     /* Reserved, must be zero */
-			uint32_t    e_num_rvasize_pairs;/* Number of RVASizePair entries that follow this member; part of header */
-		} __attribute__((packed));
+			uint16_t    e_opt_magic;        /* 0x18 magic number */
+			uint16_t    e_lmajor;           /* 0x1a linker version */
+			uint16_t    e_lminor;           /* 0x1c */
+			uint16_t    e_code_size;        /* 0x1e Size of .text or sum of all code sections */
+			uint32_t    e_data_size;        /* 0x20 Sum size of initialized data */
+			uint32_t    e_bss_size;         /* 0x24 Sum size of uninitialized data */
+			uint32_t    e_entrypoint_rva;   /* 0x28 RVA="relative virtual address"; relative to 'image_base', below */
+			uint32_t    e_code_rva;         /* 0x2c Addr relative to image base for code section when memory mapped */
+			uint32_t    e_data_rva;         /* 0x30 Address relative to image base for data section */
+			uint32_t    e_image_base;       /* 0x34 Virt base of image (first byte of file, DOS header). 64k aligned */
+			uint32_t    e_section_align;    /* 0x38 Alignment of sections in memory. Power of two 512<=x<=256M */
+			uint32_t    e_file_align;       /* 0x3c Alignment factor (in bytes) for image pages */
+			uint16_t    e_os_major;         /* 0x40 OS version number required to run this image */
+			uint16_t    e_os_minor;		/* 0x42 */
+			uint16_t    e_user_major;       /* 0x44 User-specified for differentiating between image revs */
+			uint16_t    e_user_minor;	/* 0x46 */
+			uint16_t    e_subsys_major;     /* 0x48 Subsystem version number */
+			uint16_t    e_subsys_minor;     /* 0x4a */
+			uint32_t    e_reserved9;	/* 0x4c */
+			uint32_t    e_image_size;       /* 0x50 Virtual size of the image inc. all headers; section_align */
+			uint32_t    e_header_size;      /* 0x54 Total header size (DOS Header + PE Header + Section table */
+			uint32_t    e_file_checksum;    /* 0x58 Checksum for entire file; Set to zero by the linker */
+			uint16_t    e_subsystem;        /* 0x5c Native, WindowsGUI, WindowsCharacter, OS/2 Character, etc. */
+			uint16_t    e_dll_flags;        /* 0x5e Bit flags for library init/terminate per process or thread */
+			uint32_t    e_stack_reserve_size;/*0x60 Virtual mem reserved for stack; non-committed pages are guards */
+			uint32_t    e_stack_commit_size;/* 0x64 Size of valid stack; other pages are guards; <=stack_reserve_size*/
+			uint32_t    e_heap_reserve_size;/* 0x68 Size (bytes) of local heap to reserve */
+			uint32_t    e_heap_commit_size; /* 0x6c Size (bytes) of valid local heap */
+			uint32_t    e_loader_flags;     /* 0x70 Reserved, must be zero */
+			uint32_t    e_num_rvasize_pairs;/* 0x74 Num RVASizePair entries that follow this member; part of header */
+		} __attribute__((packed));		/* 0x78 */
 
 		struct PE64OptHeader_disk {
-			uint16_t    e_opt_magic;
-			uint16_t    e_lmajor;
-			uint16_t    e_lminor;
-			uint16_t    e_code_size;
-			uint32_t    e_data_size;
-			uint32_t    e_bss_size;
-			uint32_t    e_entrypoint_rva;
-			uint32_t    e_code_rva;
+			uint16_t    e_opt_magic;	/* 0x18 */
+			uint16_t    e_lmajor;		/* 0x1a */
+			uint16_t    e_lminor;		/* 0x1c */
+			uint16_t    e_code_size;	/* 0x1e */
+			uint32_t    e_data_size;	/* 0x20 */
+			uint32_t    e_bss_size;		/* 0x24 */
+			uint32_t    e_entrypoint_rva;	/* 0x28 */
+			uint32_t    e_code_rva;		/* 0x2c */
 			// uint32_t  e_data_rva;             /* Not present in PE32+ */
-			uint64_t    e_image_base;
-			uint32_t    e_section_align;
-			uint32_t    e_file_align;
-			uint16_t    e_os_major;
-			uint16_t    e_os_minor;
-			uint16_t    e_user_major;
-			uint16_t    e_user_minor;
-			uint16_t    e_subsys_major;
-			uint16_t    e_subsys_minor;
-			uint32_t    e_reserved9;
-			uint32_t    e_image_size;
-			uint32_t    e_header_size;
-			uint32_t    e_file_checksum;
-			uint16_t    e_subsystem;
-			uint16_t    e_dll_flags;
-			uint64_t    e_stack_reserve_size;
-			uint64_t    e_stack_commit_size;
-			uint64_t    e_heap_reserve_size;
-			uint64_t    e_heap_commit_size;
-			uint32_t    e_loader_flags;
-			uint32_t    e_num_rvasize_pairs;
-		} __attribute__((packed));
+			uint64_t    e_image_base;	/* 0x30 */
+			uint32_t    e_section_align;	/* 0x38 */
+			uint32_t    e_file_align;	/* 0x3c */
+			uint16_t    e_os_major;		/* 0x40 */
+			uint16_t    e_os_minor;		/* 0x42 */
+			uint16_t    e_user_major;	/* 0x44 */
+			uint16_t    e_user_minor;	/* 0x46 */
+			uint16_t    e_subsys_major;	/* 0x48 */
+			uint16_t    e_subsys_minor;	/* 0x4a */
+			uint32_t    e_reserved9;	/* 0x4c */
+			uint32_t    e_image_size;	/* 0x50 */
+			uint32_t    e_header_size;	/* 0x54 */
+			uint32_t    e_file_checksum;	/* 0x58 */
+			uint16_t    e_subsystem;	/* 0x5c */
+			uint16_t    e_dll_flags;	/* 0x5e */
+			uint64_t    e_stack_reserve_size;/*0x60 */
+			uint64_t    e_stack_commit_size;/* 0x68 */
+			uint64_t    e_heap_reserve_size;/* 0x70 */
+			uint64_t    e_heap_commit_size;	/* 0x78 */
+			uint32_t    e_loader_flags;	/* 0x80 */
+			uint32_t    e_num_rvasize_pairs;/* 0x84 */
+		} __attribute__((packed));		/* 0x88 */
 
 		/* Bit flags for the PE header 'flags' member */
 		enum HeaderFlags {
@@ -1964,7 +1964,8 @@ HEADER_PE_FILE_HEADER_START
 
 	public:
 		explicit SgAsmPEFileHeader(SgAsmGenericFile *f)
-			: SgAsmGenericHeader(f, 0, sizeof(SgAsmPEFileHeader::PEFileHeader_disk)),
+			: SgAsmGenericHeader(f, 0,
+				sizeof(SgAsmPEFileHeader::PEFileHeader_disk)+sizeof(SgAsmPEFileHeader::PE32OptHeader_disk)),
 			  p_section_table(NULL), p_coff_symtab(NULL)
 			{ctor();}
 		virtual ~SgAsmPEFileHeader();
@@ -1994,6 +1995,7 @@ HEADER_PE_SECTION_START
 			: SgAsmGenericSection(fhdr->get_file(), fhdr, 0, 1), p_section_entry(NULL)
 			{}
 		SgAsmPESection *init_from_section_table(SgAsmPESectionTableEntry *entry, int id);
+		virtual bool reallocate();
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 HEADER_PE_SECTION_END
 
@@ -2166,6 +2168,7 @@ HEADER_PE_SECTION_TABLE_START
 			{ctor();}
 		virtual SgAsmPESectionTable* parse();
 		void add_section(SgAsmPESection *section);
+		virtual bool reallocate();
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 	private:
