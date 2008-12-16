@@ -1815,10 +1815,8 @@ HEADER_ELF_SYMBOL_START
 
 		explicit SgAsmElfSymbol(SgAsmElfSymbolSection *symtab)
 			{ctor(symtab);}
-		void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymbol::Elf32SymbolEntry_disk*,
-			   SgAsmElfStringSection*);
-		void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymbol::Elf64SymbolEntry_disk*,
-			   SgAsmElfStringSection*);
+		void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymbol::Elf32SymbolEntry_disk*);
+		void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymbol::Elf64SymbolEntry_disk*);
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymbol::Elf32SymbolEntry_disk*) const;
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymbol::Elf64SymbolEntry_disk*) const;
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;

@@ -2821,7 +2821,7 @@ SgAsmElfSymbol::ctor(SgAsmElfSymbolSection *symtab)
 
 /** Initialize symbol by parsing a symbol table entry. An ELF String Section must be supplied in order to get the symbol name. */
 void
-SgAsmElfSymbol::parse(ByteOrder sex, const Elf32SymbolEntry_disk *disk, SgAsmElfStringSection *strsec)
+SgAsmElfSymbol::parse(ByteOrder sex, const Elf32SymbolEntry_disk *disk)
 {
     p_st_info  = disk_to_host(sex, disk->st_info);
     p_st_res1  = disk_to_host(sex, disk->st_res1);
@@ -2832,14 +2832,14 @@ SgAsmElfSymbol::parse(ByteOrder sex, const Elf32SymbolEntry_disk *disk, SgAsmElf
     p_size     = p_st_size;
 
     addr_t name_offset  = disk_to_host(sex, disk->st_name);
-    set_name(new SgAsmStoredString(strsec->get_strtab(), name_offset));
+    get_name()->set_string(name_offset);
 
     parse_common();
 }
 
 /** Initialize symbol by parsing a symbol table entry. An ELF String Section must be supplied in order to get the symbol name. */
 void
-SgAsmElfSymbol::parse(ByteOrder sex, const Elf64SymbolEntry_disk *disk, SgAsmElfStringSection *strsec)
+SgAsmElfSymbol::parse(ByteOrder sex, const Elf64SymbolEntry_disk *disk)
 {
     p_st_info  = disk_to_host(sex, disk->st_info);
     p_st_res1  = disk_to_host(sex, disk->st_res1);
@@ -2850,7 +2850,7 @@ SgAsmElfSymbol::parse(ByteOrder sex, const Elf64SymbolEntry_disk *disk, SgAsmElf
     p_size     = p_st_size;
 
     addr_t name_offset  = disk_to_host(sex, disk->st_name);
-    set_name(new SgAsmStoredString(strsec->get_strtab(), name_offset));
+    get_name()->set_string(name_offset);
 
     parse_common();
 }
@@ -3030,12 +3030,12 @@ SgAsmElfSymbolSection::parse()
             entry = new SgAsmElfSymbol(this); /*adds symbol to this symbol table*/
             SgAsmElfSymbol::Elf32SymbolEntry_disk disk;
             content(i*entry_size, struct_size, &disk);
-            entry->parse(fhdr->get_sex(), &disk, strsec);
+            entry->parse(fhdr->get_sex(), &disk);
         } else if (8==fhdr->get_word_size()) {
             entry = new SgAsmElfSymbol(this); /*adds symbol to this symbol table*/
             SgAsmElfSymbol::Elf64SymbolEntry_disk disk;
             content(i*entry_size, struct_size, &disk);
-            entry->parse(fhdr->get_sex(), &disk, strsec);
+            entry->parse(fhdr->get_sex(), &disk);
         } else {
             throw FormatError("unsupported ELF word size");
         }
@@ -3083,6 +3083,7 @@ SgAsmElfSymbolSection::set_linked_section(SgAsmElfSection *_strsec)
             symbol->set_bound(bound);
         }
 
+#if 0 /*Commented out because setting the name like this will cause the name to change when unparsing! [RPM 2008-12-12]*/
         /* Section symbols may need names and sizes */
         if (symbol->get_type() == SgAsmElfSymbol::SYM_SECTION && symbol->get_bound()) {
             if (symbol->get_name()->get_string().size() == 0)
@@ -3090,6 +3091,7 @@ SgAsmElfSymbolSection::set_linked_section(SgAsmElfSection *_strsec)
             if (symbol->get_size() == 0)
                 symbol->set_size(symbol->get_bound()->get_size());
         }
+#endif
     }
 }
 
