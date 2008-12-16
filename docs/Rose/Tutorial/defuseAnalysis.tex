@@ -31,11 +31,41 @@ For instance, the CFG for the following program
 }
 % End of scope in indentation
 }
-\caption{Example source code.}
+\caption{Example input code.}
 \label{Tutorial:exampledefuseCode}
 \end{figure}
 
 is illustrated in Figure ~\ref{Tutorial:exampledefuse}.
+
+\subsection{Def-use Example implementation}
+
+The following code shows an example of how the def-use analysis is called:
+
+%\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/defuseAnalysis.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/defuseAnalysis.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+%\caption{Example source code.}
+%\label{Tutorial:defuseCode}
+%\end{figure}
+
+
+\subsection{Accessing the Def-Use Results}
 For each CFN in the CFG, the definition and usage for 
 variable references can be determined with the public function calls:
 

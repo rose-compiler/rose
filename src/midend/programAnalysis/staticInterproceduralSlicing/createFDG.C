@@ -27,10 +27,11 @@ int main(int argc, char *argv[])
 
     SgProject *project = frontend(argc, argv);
     EDefUse *edu=new EDefUse(project);
-    if (edu->run(false)==0)
+    if (edu->run(false)==1)
         {
-              std::cerr<<"DFAnalysis failed!"<<endl;
-                  }
+              std::cerr<<"createFDG:: DFAnalysis failed!   -- edu->run(false)==0"<<endl;
+	      exit(0);
+	}
 		std::vector<InterproceduralInfo*> ip;
 
     list < SgNode * >functionDeclarations = NodeQuery::querySubTree(project, V_SgFunctionDeclaration);

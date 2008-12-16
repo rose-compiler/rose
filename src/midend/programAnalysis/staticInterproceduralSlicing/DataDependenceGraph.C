@@ -448,8 +448,3 @@ SgFunctionCallExp *DataDependenceGraph::_findArgExprFromRef(SgNode * &funcArg, S
     return funcCall;
 
 }
-/* CI (03/26/2007): The following code is not used anymore
-#define TEMPLATE_ONLY
-#include <DefUseChain.C>
-template class DefUseChain < DefUseChainNode >;
-*/

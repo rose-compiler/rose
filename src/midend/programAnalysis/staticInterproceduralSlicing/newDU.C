@@ -211,9 +211,10 @@ int main(int argc, char *argv[])
     SgProject *project = frontend(argc, argv);
 		// Create the global def-use analysis
 		DFAnalysis *defUseAnalysis=new DefUseAnalysis(project);
-		if (defUseAnalysis->run(false)==0)
+		if (defUseAnalysis->run(false)==1)
 		{
-			std::cerr<<"DFAnalysis failed!"<<endl;
+			std::cerr<<"newDU:: DFAnalysis failed!  defUseAnalysis->run()==0"<<endl;
+			exit(0);
 		}
 		std::vector<InterproceduralInfo*> ip;
 
