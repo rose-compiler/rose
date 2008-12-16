@@ -754,13 +754,7 @@ Grammar::setUpBinaryInstructions ()
 
 
 
-  // Members defined by the ELF standard
-  // addr_t              st_name;
-  // unsigned char       st_info, st_res1;
-  // unsigned            st_shndx;
-  // addr_t              st_size; // original size for unparsing; superclass holds adjusted size
-     AsmElfSymbol.setFunctionPrototype      ( "HEADER_ELF_SYMBOL",       "../Grammar/BinaryInstruction.code");
-  // DQ (8/28/2008): Check against the specification
+     AsmElfSymbol.setFunctionPrototype("HEADER_ELF_SYMBOL", "../Grammar/BinaryInstruction.code");
      AsmElfSymbol.setDataPrototype("rose_addr_t","st_name","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSymbol.setDataPrototype("unsigned char","st_info","= 0",
