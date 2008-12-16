@@ -155,6 +155,13 @@ SgAsmGenericString::set_string(const std::string &s)
 }
 
 void
+SgAsmGenericString::set_string(addr_t offset)
+{
+    ROSE_ASSERT(!"should have been pure virtual if ROSETTA supported that.");
+    abort();
+}
+
+void
 SgAsmGenericString::dump(FILE*, const char *prefix, ssize_t idx) const
 {
     ROSE_ASSERT(!"should have been pure virtual if ROSETTA supported that.");
@@ -184,6 +191,12 @@ SgAsmBasicString::set_string(const std::string &s)
     if (p_string!=s)
         set_isModified(true);
     p_string = s;
+}
+void
+SgAsmBasicString::set_string(addr_t offset)
+{
+    fprintf(stderr, "SgAsmBasicString::set_string(addr_t offset=%"PRIu64"): not supported\n", offset);
+    abort();
 }
 
 /* Print some debugging info */
@@ -270,6 +283,16 @@ SgAsmStoredString::set_string(const std::string &s)
     ROSE_ASSERT(storage!=NULL); /* we don't even know which string table! */
     storage->get_strtab()->free(storage);
     storage->set_string(s);
+}
+
+/* Give the string a new value by specifying the offset of a string already existing in the string table. */
+void
+SgAsmStoredString::set_string(addr_t offset)
+{
+    set_isModified(true);
+    SgAsmStringStorage *storage = get_storage();
+    ROSE_ASSERT(storage!=NULL); /* we don't even know which string table! */
+    storage->get_strtab()->rebind(storage, offset);
 }
 
 /* Print some debugging info */

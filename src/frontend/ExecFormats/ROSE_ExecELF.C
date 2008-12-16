@@ -1090,6 +1090,16 @@ SgAsmElfStrtab::create_storage(addr_t offset, bool shared)
     return storage;
 }
 
+/* Similar to create_storage() but uses a storage object that's already been allocated. */
+void
+SgAsmElfStrtab::rebind(SgAsmStringStorage *storage, addr_t offset)
+{
+    ROSE_ASSERT(p_dont_free && storage!=p_dont_free && storage->get_offset()==p_dont_free->get_offset());
+    std::string s = get_container()->content_str(offset);
+    storage->set_offset(offset);
+    storage->set_string(s);
+}
+
 /* Returns the number of bytes required to store the string in the string table. This is the length of the string plus
  * one for the NUL terminator. */
 rose_addr_t

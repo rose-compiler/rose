@@ -1111,6 +1111,7 @@ HEADER_BASIC_STRING_START
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 		virtual std::string get_string() const;
 		virtual void set_string(const std::string&);
+		virtual void set_string(addr_t);
 	private:
 		void ctor();
 HEADER_BASIC_STRING_END
@@ -1125,6 +1126,7 @@ HEADER_GENERIC_STRING_START
 		// These aren't the ROSETTA-generated versions because they hook into string table allocation functions
 		virtual std::string get_string() const;
 		virtual void set_string(const std::string &s);
+		virtual void set_string(addr_t);
 		virtual rose_addr_t get_offset() const {return unallocated;}
 		const char *c_str() const;
 
@@ -1196,6 +1198,7 @@ HEADER_GENERIC_STRTAB_START
 		//These should be pure virtual but ROSETTA apparently doesn't support that (RPM 2008-10-03)
 		virtual SgAsmStringStorage *create_storage(addr_t offset, bool shared) {abort();}
 		virtual addr_t get_storage_size(const SgAsmStringStorage*) {abort();}
+		virtual void rebind(SgAsmStringStorage*, addr_t) {abort();}
 		typedef std::vector<class SgAsmStringStorage*> referenced_t;
 	private:
 		void ctor();
@@ -1401,6 +1404,7 @@ HEADER_STORED_STRING_START
 		// These are not access functions -- they do more than just getting or setting the value!
 		virtual std::string get_string() const;
 		virtual void set_string(const std::string&);				/*also deallocates previous value*/
+		virtual void set_string(addr_t);					/*rebinds to a new value*/
 		virtual rose_addr_t get_offset() const;					/*also triggers realloc*/
 	private:
 		// Maybe we need to supressed ROSETTA generated constructor!
@@ -1425,6 +1429,7 @@ HEADER_ELF_STRING_TABLE_START
 		virtual SgAsmStringStorage *create_storage(addr_t offset, bool shared);
 		virtual addr_t get_storage_size(const SgAsmStringStorage*);
 		virtual void allocate_overlap(SgAsmStringStorage*);
+		virtual void rebind(SgAsmStringStorage*, addr_t);
 	private:
 		void ctor();
 HEADER_ELF_STRING_TABLE_END
