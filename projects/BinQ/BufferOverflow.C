@@ -47,8 +47,10 @@ BufferOverflow::run(string& name, SgDirectedGraphNode* node,
     uint64_t value=0;
     while (foundMov!=true && sameParents(node, pre)) {
       pre = getPredecessor(pre);
+      if (pre==NULL)
+	break;
       SgAsmx86Instruction* asmPre = isSgAsmx86Instruction(pre->get_SgNode());
-      if (asmPre->get_kind() == x86_mov || asmPre->get_kind() == x86_push) {
+      if (asmPre && (asmPre->get_kind() == x86_mov || asmPre->get_kind() == x86_push)) {
 	foundMov = true;
 	if (asmPre->get_kind() == x86_mov) {
 	  // make sure we are moving to the top of the stack, i.e. esp

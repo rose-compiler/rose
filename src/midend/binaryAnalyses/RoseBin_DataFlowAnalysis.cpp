@@ -383,7 +383,7 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgDirectedGraphNode*>& rootNodes
  * run the compare analysis
  ****************************************************/
 void RoseBin_DataFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multiedge) {
-  bool writeFile=false;
+  bool writeFile=true;
   vizzGraph=vg;
   fileName=fileN;
   double start=0;

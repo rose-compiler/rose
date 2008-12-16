@@ -44,6 +44,7 @@ MallocAndFree::visit(SgNode* node) {
       std::list<uint64_t> succList;
       succList.push_back(next_addr);
       bool movMemRegFound=false;
+      std::set<uint64_t> visited;
       while (!succList.empty()) {
 	uint64_t front = succList.front();
 	succList.pop_front();
@@ -94,8 +95,15 @@ MallocAndFree::visit(SgNode* node) {
 	  if (movMemRegFound==false) {
 	    succs = info->getPossibleSuccessors(succInst);
 	    std::set<uint64_t>::const_iterator it = succs.begin();
-	    for (;it!=succs.end();++it) 
-	      succList.push_back(*it);
+	    for (;it!=succs.end();++it) {
+	      std::set<uint64_t>::const_iterator vis = visited.find(*it);
+	      if (vis!=visited.end()) {
+		// dont do anything 
+	      } else {
+		succList.push_back(*it);
+		visited.insert(*it);
+	      }
+	    }
 	  }
 	}
       } //while
@@ -104,6 +112,7 @@ MallocAndFree::visit(SgNode* node) {
       if (resolveAddr!=0) {
 	SgAsmFunctionDeclaration* succFunc2=instFunc;
 	SgAsmx86Instruction* succInst2=inst;
+	std::set<uint64_t> visited;
 	while (instFunc==succFunc2) {
 	  next_addr = succInst2->get_address() + succInst2->get_raw_bytes().size();
 	  succInst2 = isSgAsmx86Instruction(info->getInstructionAtAddress(next_addr));
@@ -179,8 +188,15 @@ MallocAndFree::visit(SgNode* node) {
 		  if (movRegMemFound==false) {
 		    preds = info->getPossiblePredecessors(predInst);
 		    std::set<uint64_t>::const_iterator it = preds.begin();
-		    for (;it!=preds.end();++it) 
-		      predList.push_back(*it);
+		    for (;it!=preds.end();++it) {
+		      std::set<uint64_t>::const_iterator vis = visited.find(*it);
+		      if (vis!=visited.end()) {
+			// dont do anything 
+		      } else {
+			predList.push_back(*it);
+			visited.insert(*it);
+		      }
+		    }
 		  }
 		}
 	      } // while

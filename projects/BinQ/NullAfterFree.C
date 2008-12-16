@@ -43,6 +43,7 @@ NullAfterFree::visit(SgNode* node) {
       for (;it!=preds.end();++it) 
 	predList.push_back(*it);
       bool movRegMemFound=false;
+      std::set<uint64_t> visited;
       while (!predList.empty()) {
 	uint64_t front = predList.front();
 	predList.pop_front();
@@ -61,7 +62,7 @@ NullAfterFree::visit(SgNode* node) {
 	    SgAsmOperandList * ops = predInst->get_operandList();
 	    SgAsmExpressionPtrList& opsList = ops->get_operands();
 	    //	    rose_addr_t addrDest=0;
-	    SgAsmExpressionPtrList::iterator itOP = opsList.begin();
+	    SgAsmExpressionPtrList::const_iterator itOP = opsList.begin();
 	    SgAsmMemoryReferenceExpression* mem=NULL;
 	    SgAsmx86RegisterReferenceExpression* reg=NULL;
 	    int iteration=0;
@@ -91,10 +92,18 @@ NullAfterFree::visit(SgNode* node) {
 	  if (movRegMemFound==false) {
 	    preds = info->getPossiblePredecessors(predInst);
 	    std::set<uint64_t>::const_iterator it = preds.begin();
-	    for (;it!=preds.end();++it) 
-	      predList.push_back(*it);
+	    for (;it!=preds.end();++it) {
+	      std::set<uint64_t>::const_iterator vis = visited.find(*it);
+	      if (vis!=visited.end()) {
+		// dont do anything 
+	      } else {
+		predList.push_back(*it);
+		visited.insert(*it);
+	      }
+	    }
 	  }
 	}
+	//	cerr << "predList.size == " << predList.size() << endl;
       } //while
     } // if
 
@@ -107,6 +116,7 @@ NullAfterFree::visit(SgNode* node) {
       std::list<uint64_t> succList;
       succList.push_back(next_addr);
       bool movMemValFound=false;
+      std::set<uint64_t> visited;
       while (!succList.empty()) {
 	uint64_t front = succList.front();
 	succList.pop_front();
@@ -123,7 +133,7 @@ NullAfterFree::visit(SgNode* node) {
 	  if (isSgAsmx86Instruction(succInst)->get_kind() == x86_mov) {
 	    SgAsmOperandList * ops = succInst->get_operandList();
 	    SgAsmExpressionPtrList& opsList = ops->get_operands();
-	    SgAsmExpressionPtrList::iterator itOP = opsList.begin();
+	    SgAsmExpressionPtrList::const_iterator itOP = opsList.begin();
 	    SgAsmMemoryReferenceExpression* mem=NULL;
 	    SgAsmValueExpression* Val = NULL;
 	    int iteration=0;
@@ -158,10 +168,18 @@ NullAfterFree::visit(SgNode* node) {
 	  if (movMemValFound==false) {
 	    succs = info->getPossibleSuccessors(succInst);
 	    std::set<uint64_t>::const_iterator it = succs.begin();
-	    for (;it!=succs.end();++it) 
-	      succList.push_back(*it);
+	    for (;it!=succs.end();++it) {
+	      std::set<uint64_t>::const_iterator vis = visited.find(*it);
+	      if (vis!=visited.end()) {
+		// dont do anything 
+	      } else {
+		succList.push_back(*it);
+		visited.insert(*it);
+	      }
+	    }
 	  }
 	}
+	//	cerr << "succList.size == " << succList.size() << endl;
       } //while
       // if we didnt find the free, issue warning
       if (movMemValFound) {
