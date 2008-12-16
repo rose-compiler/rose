@@ -1624,7 +1624,7 @@ HEADER_ELF_DYNAMIC_ENTRY_START
 		} __attribute__((packed));
 
 		explicit SgAsmElfDynamicEntry(SgAsmElfDynamicSection *dynsec)
-			: p_d_tag(DT_NULL)
+			: p_d_tag(DT_NULL), p_name(NULL)
 			{ctor(dynsec);}
 		void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*);
 		void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*);
