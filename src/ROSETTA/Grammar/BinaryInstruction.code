@@ -1750,9 +1750,9 @@ HEADER_ELF_SEGMENT_TABLE_ENTRY_LIST_END
 
 HEADER_ELF_SYMBOL_SECTION_START
 	public:
-		explicit SgAsmElfSymbolSection(SgAsmElfFileHeader *fhdr)
+		 SgAsmElfSymbolSection(SgAsmElfFileHeader *fhdr, SgAsmElfStringSection *strtab)
 			: SgAsmElfSection(fhdr), p_is_dynamic(false)
-			{ctor();}
+			{ctor(strtab);}
 		virtual SgAsmElfSymbolSection* parse();
 		using SgAsmElfSection::calculate_sizes;
 		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const;
@@ -1761,7 +1761,7 @@ HEADER_ELF_SYMBOL_SECTION_START
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 	private:
-		void ctor();
+		void ctor(SgAsmElfStringSection*);
 HEADER_ELF_SYMBOL_SECTION_END
 
 

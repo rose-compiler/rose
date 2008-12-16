@@ -1309,13 +1309,13 @@ SgAsmElfSectionTable::parse()
             break;
           case SgAsmElfSectionTableEntry::SHT_DYNSYM: {
               SgAsmElfSymbolSection *symsec;
-              section = symsec = new SgAsmElfSymbolSection(fhdr);
+              section = symsec = new SgAsmElfSymbolSection(fhdr, NULL); /*string table will be linked in below*/
               symsec->set_is_dynamic(true);
               break;
           }
           case SgAsmElfSectionTableEntry::SHT_SYMTAB: {
               SgAsmElfSymbolSection *symsec;
-              section = symsec = new SgAsmElfSymbolSection(fhdr);
+              section = symsec = new SgAsmElfSymbolSection(fhdr, NULL); /*string table will be linked in below*/
               symsec->set_is_dynamic(false);
               break;
           }
@@ -1324,13 +1324,13 @@ SgAsmElfSectionTable::parse()
             break;
           case SgAsmElfSectionTableEntry::SHT_REL: {
               SgAsmElfRelocSection *relocsec;
-              section = relocsec = new SgAsmElfRelocSection(fhdr, NULL);
+              section = relocsec = new SgAsmElfRelocSection(fhdr, NULL); /*string table will be linked in below*/
               relocsec->set_uses_addend(false);
               break;
           }
           case SgAsmElfSectionTableEntry::SHT_RELA: {
               SgAsmElfRelocSection *relocsec;
-              section = relocsec = new SgAsmElfRelocSection(fhdr, NULL);
+              section = relocsec = new SgAsmElfRelocSection(fhdr, NULL); /*string table will be linked in below*/
               relocsec->set_uses_addend(true);
               break;
           }
@@ -2945,10 +2945,11 @@ SgAsmElfSymbol::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmGenericSecti
 
 /* Non-parsing constructor */
 void
-SgAsmElfSymbolSection::ctor()
+SgAsmElfSymbolSection::ctor(SgAsmElfStringSection *strings)
 {
     p_symbols = new SgAsmElfSymbolList;
     p_symbols->set_parent(this);
+    p_linked_section = strings;
 }
 
 /** Initializes this ELF Symbol Section by parsing a file. */
@@ -3123,6 +3124,7 @@ SgAsmElfSymbolSection::dump(FILE *f, const char *prefix, ssize_t idx) const
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     SgAsmElfSection::dump(f, p, -1);
+    fprintf(f, "%s%-*s = %s\n", p, w, "is_dynamic", p_is_dynamic ? "yes" : "no");
     fprintf(f, "%s%-*s = %zu symbols\n", p, w, "ElfSymbol.size", p_symbols->get_symbols().size());
     for (size_t i = 0; i < p_symbols->get_symbols().size(); i++) {
         SgAsmGenericSection *section = get_file()->get_section_by_id(p_symbols->get_symbols()[i]->get_st_shndx());
