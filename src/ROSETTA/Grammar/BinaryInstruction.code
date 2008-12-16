@@ -1526,9 +1526,9 @@ HEADER_ELF_DYNAMIC_SECTION_START
 			: SgAsmElfSection(fhdr)
 			{ctor(strsec);}
 		virtual SgAsmElfDynamicSection* parse();
+		void finish_parsing();
 		using SgAsmElfSection::calculate_sizes;
 		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const;
-		virtual void set_linked_section(SgAsmElfSection*);   /* Parsing happens here rather than in constructor */
 		virtual bool reallocate();
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
@@ -1756,7 +1756,7 @@ HEADER_ELF_SYMBOL_SECTION_START
 			: SgAsmElfSection(fhdr), p_is_dynamic(false)
 			{ctor(strsec);}
 		virtual SgAsmElfSymbolSection* parse();
-		void bind_symbols_to_sections();
+		void finish_parsing();
 		using SgAsmElfSection::calculate_sizes;
 		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const;
 		virtual bool reallocate();

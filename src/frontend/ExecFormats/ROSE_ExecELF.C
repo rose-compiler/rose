@@ -1396,9 +1396,15 @@ SgAsmElfSectionTable::parse()
 #endif
 #if 1 /*Above code will be replaced with something along these lines, but more generic. [RPM 2008-12-12]*/
     for (size_t i=0; i<is_parsed.size(); i++) {
+
         SgAsmElfSymbolSection *symbols = dynamic_cast<SgAsmElfSymbolSection*>(is_parsed[i]);
         if (symbols)
-            symbols->bind_symbols_to_sections();
+            symbols->finish_parsing();
+
+        SgAsmElfDynamicSection *dynamic = dynamic_cast<SgAsmElfDynamicSection*>(is_parsed[i]);
+        if (dynamic)
+            dynamic->finish_parsing();
+
     }
 #endif
 
@@ -2667,26 +2673,18 @@ SgAsmElfDynamicSection::calculate_sizes(size_t *entsize, size_t *required, size_
                            entsize, required, optional, entcount);
 }
     
-/* Set linked section (the string table) and finish initializing the section entries. */
+/* Finish initializing the section entries. */
 void
-SgAsmElfDynamicSection::set_linked_section(SgAsmElfSection *_strsec) 
+SgAsmElfDynamicSection::finish_parsing() 
 {
-    ROSE_ASSERT(_strsec==get_linked_section()); /*Not used for this purpose anymore [RPM 2008-12-12]*/
-
     SgAsmElfFileHeader *fhdr = get_elf_header();
-    ROSE_ASSERT(fhdr!=NULL && fhdr == _strsec->get_header());
+    ROSE_ASSERT(fhdr!=NULL);
 
-    /* This method augments the super class */
-    SgAsmElfSection::set_linked_section(_strsec);
-
-    /* Finalize each entry */
     for (size_t i=0; i<p_entries->get_entries().size(); i++) {
         SgAsmElfDynamicEntry *entry = p_entries->get_entries()[i];
         switch (entry->get_d_tag()) {
-          case SgAsmElfDynamicEntry::DT_NEEDED: {
-              /*Name already obtained. */
-              break;
-          }
+          case SgAsmElfDynamicEntry::DT_NEEDED:
+            break;
           case SgAsmElfDynamicEntry::DT_PLTGOT:
           case SgAsmElfDynamicEntry::DT_HASH:
           case SgAsmElfDynamicEntry::DT_STRTAB:
@@ -2716,9 +2714,8 @@ SgAsmElfDynamicSection::set_linked_section(SgAsmElfSection *_strsec)
           case SgAsmElfDynamicEntry::DT_VERNEED:
           case SgAsmElfDynamicEntry::DT_AUXILIARY:
           case SgAsmElfDynamicEntry::DT_FILTER: {
-              /* d_val is relative to a section. Even though this doesn't depend on _strsec we perform this action in this
-               * function because we know that all ELF Sections (but perhaps not the ELF Segments) have been created by this
-               * time. */
+              /* d_val is relative to a section. We know that all ELF Sections (but perhaps not the ELF Segments) have been
+               * created by this time. */
               ROSE_ASSERT(entry->get_d_val().get_section()==NULL);
               SgAsmGenericSectionPtrList containers = fhdr->get_sections_by_rva(entry->get_d_val().get_rva());
               SgAsmGenericSection *best = NULL;
@@ -3102,7 +3099,7 @@ SgAsmElfSymbolSection::calculate_sizes(size_t *entsize, size_t *required, size_t
  *   0xfff1        symbol has absolute value not affected by relocation
  *   0xfff2        symbol is fortran common or unallocated C extern */
 void
-SgAsmElfSymbolSection::bind_symbols_to_sections()
+SgAsmElfSymbolSection::finish_parsing()
 {
     for (size_t i=0; i < p_symbols->get_symbols().size(); i++) {
         SgAsmElfSymbol *symbol = p_symbols->get_symbols()[i];
