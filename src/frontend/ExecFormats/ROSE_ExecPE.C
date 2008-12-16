@@ -812,6 +812,7 @@ SgAsmPESectionTableEntry::update_from_section(SgAsmPESection *section)
     p_rva = section->get_mapped_rva();
     p_physical_size = section->get_size();
     p_physical_offset = section->get_offset();
+    p_name = section->get_name()->get_string();
 
 #if 0 /*FIXME*/
     p_coff_line_nums = 0;
@@ -825,15 +826,11 @@ SgAsmPESectionTableEntry::update_from_section(SgAsmPESection *section)
 void *
 SgAsmPESectionTableEntry::encode(PESectionTableEntry_disk *disk) const
 {
+    /* The file can hold up to eight characters of the name. The name is NUL-padded, not necessarily NUL-terminated. */
+    if (p_name.size()>8)
+        fprintf(stderr, "warning: section name too long to store in PE file: \"%s\" (truncated)\n", p_name.c_str());
     memset(disk->name, 0, sizeof(disk->name));
-
- // DQ: Not clear if this is the correct translation of the call to use std::string
- // memcpy(disk->name, p_name.c_str(), std::min(sizeof(name), name.size()));
- // memcpy(disk->name, p_name.c_str(), p_name.size(), p_name.size());
-    memcpy(disk->name, p_name.c_str(), p_name.size());
-
- // printf ("Figure out the correct translation later! \n");
- // ROSE_ASSERT(false);
+    memcpy(disk->name, p_name.c_str(), std::min(sizeof(disk->name), p_name.size()));
 
     host_to_le(p_virtual_size,     &(disk->virtual_size));
     host_to_le(p_rva,              &(disk->rva));
