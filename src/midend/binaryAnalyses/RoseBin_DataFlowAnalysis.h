@@ -22,6 +22,7 @@
 
 class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
  private:
+  bool writeFile;
   int nrOfNodesVisited;
   bool interprocedural;
   RoseBin_DataFlowAbstract* variableAnalysis;
@@ -59,6 +60,7 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
     typeNode="DFG";
     typeEdge="DFG-E";  
     interprocedural = false;
+    writeFile=true;
     printEdges = false;
     analysisName = "dfa";
     forward_analysis=forward;
@@ -75,6 +77,8 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
       delete it->second;
     }
   }
+
+  void writeToFile(bool w);
 
   void traverseNodes(RoseBin_DataFlowAbstract* analysis);
 

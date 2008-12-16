@@ -282,7 +282,7 @@ RoseBin_Graph::createNode(string& name, string& type, int address, int graph_id,
 void
 RoseBin_Graph::createUniqueEdges() {
   if (unique_edges.size()==0) {
-    cerr << " Creating unique edge map. Edges : " << edges.size() << endl;
+    cerr << " Creating unique edge map. Edges : " << RoseBin_support::ToString(edges.size()) << endl;
     edgeType::const_iterator it2 = edges.begin();
     for (;it2!=edges.end();it2++) {
       SgDirectedGraphEdge* edgeIt = it2->second;
@@ -301,6 +301,8 @@ RoseBin_Graph::createUniqueEdges() {
 	  if (target==to && source==from)
 	    found=true;
 	  it++;
+	  if (source!=from)
+	    break;
 	}
 	if (!found) 
 	  unique_edges.insert(pair<SgDirectedGraphNode*,SgDirectedGraphEdge*>( from, edgeIt)) ;

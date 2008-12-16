@@ -137,7 +137,9 @@ void BinQAbstract::createItem(SgNode* file, std::vector<Item*>& itemsFile,std::v
 	SgAsmElfSymbol* sym = isSgAsmElfSymbol(*it);
 	std::string nam = "size: " + RoseBin_support::ToString(sym->get_st_size());
 	int color=6;
-	item = new Item(sym->get_st_name(),sym,color,row,length,sym->get_st_size(),pos,nam,0);
+	//fixme
+	//	item = new Item(sym->get_st_name(),sym,color,row,length,sym->get_st_size(),pos,nam,0);
+	item = new Item(0,sym,color,row,length,sym->get_st_size(),pos,nam,0);
       }  else if (isSgAsmElfSection(*it)) {
 	SgAsmElfSection* sec = isSgAsmElfSection(*it);
 	std::string nam = "size: " + RoseBin_support::ToString(sec->get_size());

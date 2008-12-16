@@ -378,12 +378,15 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgDirectedGraphNode*>& rootNodes
   } // for rootNodes
 }
 
+void RoseBin_DataFlowAnalysis::writeToFile(bool w) {
+  writeFile=w;
+}
 
 /****************************************************
  * run the compare analysis
  ****************************************************/
 void RoseBin_DataFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multiedge) {
-  bool writeFile=true;
+
   vizzGraph=vg;
   fileName=fileN;
   double start=0;
@@ -510,6 +513,12 @@ void RoseBin_DataFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multied
     cerr << " ********************** saving to file ... " << endl;
   }
 
+    nrNodes=vizzGraph->nodes.size();
+    nrEdges=vizzGraph->edges.size();
+    ends = RoseBin_support::getTime();
+    if (RoseBin_support::DEBUG_MODE_MIN())
+      cerr << " DFG runtime : " << (double) (ends - start)   << " sec" << endl;
+
   // create file
   if (writeFile) {
     std::ofstream myfile;
@@ -522,16 +531,13 @@ void RoseBin_DataFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multied
     start = RoseBin_support::getTime();
     vizzGraph->setGrouping(true);
     vizzGraph->printNodes(true, this, forward_analysis, myfile,functionName);
-    nrNodes=vizzGraph->nodes.size();
+
     //  vizzGraph->nodes.clear();
     
     vizzGraph->printEdges(this,myfile, multiedge);
-    nrEdges=vizzGraph->edges.size();
+
     //vizzGraph->edges.clear();
     
-    ends = RoseBin_support::getTime();
-    if (RoseBin_support::DEBUG_MODE_MIN())
-      cerr << " DFG runtime : " << (double) (ends - start)   << " sec" << endl;
     
     vizzGraph->printEpilog(myfile);
     myfile.close();  

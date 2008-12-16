@@ -256,6 +256,7 @@ BufferOverflow::run(SgNode* fileA, SgNode* fileB) {
   RoseBin_DataFlowAnalysis* dfanalysis = 
     new RoseBin_DataFlowAnalysis(interp->get_global_block(), forward, new RoseObj(), info);
   ROSE_ASSERT(dfanalysis);
+  dfanalysis->writeToFile(false);
   dfanalysis->init(interprocedural, edges);
   dfanalysis->run(graph, dfgFileName, mergedEdges);
 

@@ -61,7 +61,8 @@ public:
     sprintf(buf, "%p", this);
     os << buf;
   }
-  
+
+
  private:
   
   //! the set of neighbors connected by outgoing edges
@@ -83,6 +84,7 @@ class SimpleDirectedGraph {
 
 public:
 
+  SimpleDirectedGraph() {}
 	// Han: changed to virtual
 	virtual ~SimpleDirectedGraph() {}
 

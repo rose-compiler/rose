@@ -6,6 +6,7 @@ INCLUDES =  $(ROSE_INCLUDES) -I$(srcdir)/.. -I$(srcdir)/../CFG -I$(top_srcdir)/s
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
 libdataflowAnalysisSources = DataFlowAnalysis.C  DefUseChain.C  ReachingDefinition.C
+#libdataflowAnalysisSources = DataFlowAnalysis.C  ReachingDefinition.C
 
 # lib_LTLIBRARIES = libdataflowAnalysis.a
 # libdataflowAnalysis_a_SOURCES  = $(libdataflowAnalysisSources)
