@@ -443,6 +443,7 @@ SgAsmNESectionTable::ctor()
 {
     SgAsmNEFileHeader *fhdr = dynamic_cast<SgAsmNEFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
+    set_offset(fhdr->get_end_offset());
     set_size(fhdr->get_e_nsections() * sizeof(SgAsmNESectionTableEntry::NESectionTableEntry_disk));
 
     grab_content();
@@ -1205,6 +1206,7 @@ SgAsmNERelocTable::ctor(SgAsmNESection *section)
 {
     ROSE_ASSERT(section!=NULL);
     set_offset(section->get_offset() + section->get_size()); /*reloc section begins immediately after section payload*/
+    set_size(0);
     grab_content();
 
     char name[64];
