@@ -119,7 +119,7 @@ SgAsmPEFileHeader::parse()
     memset(&oh32, 0, sizeof oh32);
     addr_t need32 = sizeof(PEFileHeader_disk) + std::min(p_e_nt_hdr_size, (addr_t)(sizeof oh32));
     if (need32>get_size())
-        extend(need32);
+        extend(need32-get_size());
     content(sizeof fh, sizeof oh32, &oh32);
     p_e_opt_magic = le_to_host(oh32.e_opt_magic);
     
