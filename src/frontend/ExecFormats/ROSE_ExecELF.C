@@ -1330,9 +1330,12 @@ SgAsmElfSectionTable::parse()
                     /* These types of sections don't occupy any file space (e.g., BSS) */
                     is_parsed[i] = new SgAsmElfSection(fhdr);
                     break;
-                  case SgAsmElfSectionTableEntry::SHT_DYNAMIC:
-                    is_parsed[i] = new SgAsmElfDynamicSection(fhdr);
-                    break;
+                  case SgAsmElfSectionTableEntry::SHT_DYNAMIC: {
+                      SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(linked);
+                      ROSE_ASSERT(strsec);
+                      is_parsed[i] = new SgAsmElfDynamicSection(fhdr, strsec);
+                      break;
+                  }
                   case SgAsmElfSectionTableEntry::SHT_DYNSYM: {
                       SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(linked);
                       ROSE_ASSERT(strsec);
@@ -2430,16 +2433,31 @@ SgAsmElfRelocSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 // Dynamic Linking
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* Constructors */
+/** Adds the newly constructed entry to the dynamic section. */
 void
-SgAsmElfDynamicEntry::ctor(ByteOrder sex, const Elf32DynamicEntry_disk *disk)
+SgAsmElfDynamicEntry::ctor(SgAsmElfDynamicSection *dynsec)
+{
+    ROSE_ASSERT(dynsec!=NULL);
+
+    SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(dynsec->get_linked_section());
+    ROSE_ASSERT(strsec!=NULL);
+    set_name(new SgAsmStoredString(strsec->get_strtab(), 0));
+
+    ROSE_ASSERT(dynsec->get_entries()!=NULL);
+    dynsec->get_entries()->get_entries().push_back(this);
+    ROSE_ASSERT(dynsec->get_entries()->get_entries().size()>0);
+    set_parent(dynsec->get_entries());
+}
+
+/** Initialize a dynamic section entry by parsing something stored in the file. */
+void
+SgAsmElfDynamicEntry::parse(ByteOrder sex, const Elf32DynamicEntry_disk *disk)
 {
     p_d_tag = (EntryType)disk_to_host(sex, disk->d_tag);
     p_d_val = disk_to_host(sex, disk->d_val);
 }
-
 void
-SgAsmElfDynamicEntry::ctor(ByteOrder sex, const Elf64DynamicEntry_disk *disk)
+SgAsmElfDynamicEntry::parse(ByteOrder sex, const Elf64DynamicEntry_disk *disk)
 {
     p_d_tag = (EntryType)disk_to_host(sex, disk->d_tag);
     p_d_val = disk_to_host(sex, disk->d_val);
@@ -2580,10 +2598,12 @@ SgAsmElfDynamicEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 
 /* Non-parsing constructor */
 void
-SgAsmElfDynamicSection::ctor()
+SgAsmElfDynamicSection::ctor(SgAsmElfStringSection *strings)
 {
     p_entries = new SgAsmElfDynamicEntryList;
     p_entries->set_parent(this);
+    ROSE_ASSERT(strings!=NULL);
+    p_linked_section = strings;
 }
 
 /** Parse an existing section of a file in order to initialize this ELF Dynamic Section. */
@@ -2596,29 +2616,40 @@ SgAsmElfDynamicSection::parse()
     ROSE_ASSERT(fhdr);
     SgAsmElfSectionTableEntry *shdr = get_section_entry();
     ROSE_ASSERT(shdr);
+    SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(get_linked_section());
+    ROSE_ASSERT(strsec!=NULL);
 
     size_t entry_size, struct_size, extra_size, nentries;
     calculate_sizes(&entry_size, &struct_size, &extra_size, &nentries);
     ROSE_ASSERT(entry_size==shdr->get_sh_entsize());
 
-    /* Parse each entry; some fields can't be initialized until set_linked_section() is called. */
+    /* Parse each entry */
     for (size_t i=0; i<nentries; i++) {
         SgAsmElfDynamicEntry *entry=0;
         if (4==fhdr->get_word_size()) {
-            const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk *disk =
-                (const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*)content(i*entry_size, struct_size);
-            entry = new SgAsmElfDynamicEntry(fhdr->get_sex(), disk);
+            entry = new SgAsmElfDynamicEntry(this);
+            SgAsmElfDynamicEntry::Elf32DynamicEntry_disk disk;
+            content(i*entry_size, struct_size, &disk);
+            entry->parse(fhdr->get_sex(), &disk);
         } else if (8==fhdr->get_word_size()) {
-            const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk *disk =
-                (const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*)content(i*entry_size, struct_size);
-            entry = new SgAsmElfDynamicEntry(fhdr->get_sex(), disk);
+            entry = new SgAsmElfDynamicEntry(this);
+            SgAsmElfDynamicEntry::Elf64DynamicEntry_disk disk;
+            content(i*entry_size, struct_size, &disk);
+            entry->parse(fhdr->get_sex(), &disk);
         } else {
             throw FormatError("unsupported ELF word size");
         }
         if (extra_size>0)
             entry->get_extra() = content_ucl(i*entry_size+struct_size, extra_size);
-        p_entries->get_entries().push_back(entry);
-        ROSE_ASSERT(p_entries->get_entries().size()>0);
+
+        /* Set name */
+        if (entry->get_d_tag()==SgAsmElfDynamicEntry::DT_NEEDED) {
+            entry->get_name()->set_string(entry->get_d_val().get_rva());
+#if 1       /* FIXME: Do we really want this stuff duplicated in the AST? [RPM 2008-12-12] */
+            SgAsmStoredString *name2 = new SgAsmStoredString(strsec->get_strtab(), entry->get_d_val().get_rva());
+            fhdr->add_dll(new SgAsmGenericDLL(name2));
+#endif
+        }
     }
     return this;
 }
@@ -2640,24 +2671,20 @@ SgAsmElfDynamicSection::calculate_sizes(size_t *entsize, size_t *required, size_
 void
 SgAsmElfDynamicSection::set_linked_section(SgAsmElfSection *_strsec) 
 {
-    SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(_strsec);
-    ROSE_ASSERT(strsec!=NULL);
+    ROSE_ASSERT(_strsec==get_linked_section()); /*Not used for this purpose anymore [RPM 2008-12-12]*/
+
     SgAsmElfFileHeader *fhdr = get_elf_header();
-    ROSE_ASSERT(fhdr!=NULL && fhdr == strsec->get_elf_header());
+    ROSE_ASSERT(fhdr!=NULL && fhdr == _strsec->get_header());
 
     /* This method augments the super class */
-    SgAsmElfSection::set_linked_section(strsec);
+    SgAsmElfSection::set_linked_section(_strsec);
 
     /* Finalize each entry */
     for (size_t i=0; i<p_entries->get_entries().size(); i++) {
         SgAsmElfDynamicEntry *entry = p_entries->get_entries()[i];
         switch (entry->get_d_tag()) {
           case SgAsmElfDynamicEntry::DT_NEEDED: {
-              /* Offset to NUL-terminated library name in the linked-to (".dynstr") section. */
-              ROSE_ASSERT(entry->get_d_val().get_section()==NULL);
-              entry->set_name(new SgAsmStoredString(strsec->get_strtab(), entry->get_d_val().get_rva()));
-              SgAsmStoredString *name = new SgAsmStoredString(strsec->get_strtab(), entry->get_d_val().get_rva());
-              fhdr->add_dll(new SgAsmGenericDLL(name));
+              /*Name already obtained. */
               break;
           }
           case SgAsmElfDynamicEntry::DT_PLTGOT:

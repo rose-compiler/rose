@@ -1522,9 +1522,9 @@ HEADER_ELF_RELOC_ENTRY_END
 
 HEADER_ELF_DYNAMIC_SECTION_START
 	public:
-		explicit SgAsmElfDynamicSection(SgAsmElfFileHeader *fhdr)
+		SgAsmElfDynamicSection(SgAsmElfFileHeader *fhdr, SgAsmElfStringSection *strsec)
 			: SgAsmElfSection(fhdr)
-			{ctor();}
+			{ctor(strsec);}
 		virtual SgAsmElfDynamicSection* parse();
 		using SgAsmElfSection::calculate_sizes;
 		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const;
@@ -1533,7 +1533,7 @@ HEADER_ELF_DYNAMIC_SECTION_START
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 	private:
-		void ctor();
+		void ctor(SgAsmElfStringSection*);
 HEADER_ELF_DYNAMIC_SECTION_END
 
 
@@ -1623,27 +1623,21 @@ HEADER_ELF_DYNAMIC_ENTRY_START
 			uint64_t            d_val;  /* Tag's value */
 		} __attribute__((packed));
 
-		SgAsmElfDynamicEntry(SgAsmExecutableFileFormat::ByteOrder sex,
-				     const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk *disk)
+		explicit SgAsmElfDynamicEntry(SgAsmElfDynamicSection *dynsec)
 			: p_d_tag(DT_NULL)
-			{ctor(sex, disk);}
-		SgAsmElfDynamicEntry(SgAsmExecutableFileFormat::ByteOrder sex,
-			             const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk *disk)
-			: p_d_tag(DT_NULL)
-			{ctor(sex, disk);}
-
-		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+			{ctor(dynsec);}
+		void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*);
+		void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*);
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*) const;
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*) const;
+		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 		const char *stringify_tag(EntryType) const;
 
 		/*Override ROSETTA because set_name() needs to adjust parent pointer*/
 		SgAsmGenericString *get_name() const {return p_name;}
 		void set_name(SgAsmGenericString *name);
-
 	private:
-		void ctor(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk *disk);
-		void ctor(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk *disk);
+		void ctor(SgAsmElfDynamicSection*);
 HEADER_ELF_DYNAMIC_ENTRY_END
 
 
@@ -1758,9 +1752,9 @@ HEADER_ELF_SEGMENT_TABLE_ENTRY_LIST_END
 
 HEADER_ELF_SYMBOL_SECTION_START
 	public:
-		 SgAsmElfSymbolSection(SgAsmElfFileHeader *fhdr, SgAsmElfStringSection *strtab)
+		 SgAsmElfSymbolSection(SgAsmElfFileHeader *fhdr, SgAsmElfStringSection *strsec)
 			: SgAsmElfSection(fhdr), p_is_dynamic(false)
-			{ctor(strtab);}
+			{ctor(strsec);}
 		virtual SgAsmElfSymbolSection* parse();
 		void bind_symbols_to_sections();
 		using SgAsmElfSection::calculate_sizes;
