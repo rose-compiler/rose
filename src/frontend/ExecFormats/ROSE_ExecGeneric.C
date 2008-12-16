@@ -3050,6 +3050,12 @@ SgAsmGenericDLL::dump(FILE *f, const char *prefix, ssize_t idx) const
 // Symbols and symbol tables
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void
+SgAsmGenericSymbol::ctor()
+{
+    p_name = new SgAsmBasicString("");
+}
+
 /* Like ROSETTA-generated accessors, but also sets parent */
 SgAsmGenericString *
 SgAsmGenericSymbol::get_name() const

@@ -1075,10 +1075,11 @@ HEADER_GENERIC_SYMBOL_START
 			SYM_WEAK
 		};
 
-		explicit SgAsmGenericSymbol(SgAsmGenericString *name)
+
+		SgAsmGenericSymbol()
 			: p_def_state(SYM_UNDEFINED), p_binding(SYM_NO_BINDING), p_type(SYM_NO_TYPE), p_value(0), p_size(0),
 			p_bound(NULL), p_name(NULL)
-			{set_name(name);}
+			{ctor();}
 
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 		std::string stringifyDefState() const;
@@ -1088,6 +1089,8 @@ HEADER_GENERIC_SYMBOL_START
 		// Accessors
 		SgAsmGenericString *get_name() const; // same as ROSETTA-generated version
 		void set_name(SgAsmGenericString *s); // also sets s.parent
+	private:
+		void ctor();
 HEADER_GENERIC_SYMBOL_END
 
 
@@ -1806,11 +1809,10 @@ HEADER_ELF_SYMBOL_START
 			uint64_t      st_size;
 		} __attribute__((packed));
 
-		SgAsmElfSymbol(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSymbol::Elf32SymbolEntry_disk *disk);
-		SgAsmElfSymbol(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSymbol::Elf64SymbolEntry_disk *disk);
-		//virtual ~SgAsmElfSymbol() {};
+		void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymbol::Elf32SymbolEntry_disk*);
+		void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymbol::Elf64SymbolEntry_disk*);
 
-		void reallocate(SgAsmGenericStrtab*);
+		bool reallocate(SgAsmGenericStrtab*);
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymbol::Elf32SymbolEntry_disk*,
 			     SgAsmGenericStrtab*) const;
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymbol::Elf64SymbolEntry_disk*,
@@ -1821,9 +1823,7 @@ HEADER_ELF_SYMBOL_START
 		SgAsmElfSymbol::ElfSymType get_elf_type() const;
 
 	private:
-		void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymbol::Elf32SymbolEntry_disk*);
-		void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymbol::Elf64SymbolEntry_disk*);
-		void ctor_common(); /* Initialization common to all constructors */
+		void parse_common(); /* Initialization common to all parse() methods */
 HEADER_ELF_SYMBOL_END
 
 
@@ -4241,15 +4241,6 @@ SOURCE_ELF_SYMBOL_LIST_START
 SOURCE_ELF_SYMBOL_LIST_END
 
 SOURCE_ELF_SYMBOL_START
-SgAsmElfSymbol::SgAsmElfSymbol(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSymbol::Elf32SymbolEntry_disk *disk)
-   {
-     ctor(sex, disk);
-   }
-
-SgAsmElfSymbol::SgAsmElfSymbol(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSymbol::Elf64SymbolEntry_disk *disk)
-   {
-     ctor(sex, disk);
-   }
 SOURCE_ELF_SYMBOL_END
 
 

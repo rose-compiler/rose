@@ -2761,12 +2761,10 @@ SgAsmElfDynamicSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 // Symbol Tables
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* Constructors */
+/** Initialize symbol by parsing a symbol table entry. */
 void
-SgAsmElfSymbol::ctor(ByteOrder sex, const Elf32SymbolEntry_disk *disk)
+SgAsmElfSymbol::parse(ByteOrder sex, const Elf32SymbolEntry_disk *disk)
 {
-    set_name(new SgAsmBasicString("")); /*ROSETTA-generated constructor doesn't do this! (RPM 2008-09-12)*/
-
     p_st_name  = disk_to_host(sex, disk->st_name);
     p_st_info  = disk_to_host(sex, disk->st_info);
     p_st_res1  = disk_to_host(sex, disk->st_res1);
@@ -2775,13 +2773,13 @@ SgAsmElfSymbol::ctor(ByteOrder sex, const Elf32SymbolEntry_disk *disk)
 
     p_value    = disk_to_host(sex, disk->st_value);
     p_size     = p_st_size;
-    ctor_common();
+    parse_common();
 }
-void
-SgAsmElfSymbol::ctor(ByteOrder sex, const Elf64SymbolEntry_disk *disk)
-{
-    set_name(new SgAsmBasicString("")); /*ROSETTA-generated constructor doesn't do this! (RPM 2008-09-12)*/
 
+/** Initialize symbol by parsing a symbol table entry. */
+void
+SgAsmElfSymbol::parse(ByteOrder sex, const Elf64SymbolEntry_disk *disk)
+{
     p_st_name  = disk_to_host(sex, disk->st_name);
     p_st_info  = disk_to_host(sex, disk->st_info);
     p_st_res1  = disk_to_host(sex, disk->st_res1);
@@ -2790,10 +2788,11 @@ SgAsmElfSymbol::ctor(ByteOrder sex, const Elf64SymbolEntry_disk *disk)
 
     p_value    = disk_to_host(sex, disk->st_value);
     p_size     = p_st_size;
-    ctor_common();
+    parse_common();
 }
+
 void
-SgAsmElfSymbol::ctor_common()
+SgAsmElfSymbol::parse_common()
 {
     /* Binding */
     switch (get_elf_binding()) {
@@ -2801,7 +2800,7 @@ SgAsmElfSymbol::ctor_common()
       case STB_GLOBAL:  p_binding = SYM_GLOBAL; break;
       case STB_WEAK:    p_binding = SYM_WEAK;   break;
       default:
-        fprintf(stderr, "ROBB: unknown elf symbol binding: %u\n", get_elf_binding());
+        fprintf(stderr, "unknown elf symbol binding: %u\n", get_elf_binding());
         ROSE_ASSERT(0);
         break;
     }
@@ -2816,7 +2815,7 @@ SgAsmElfSymbol::ctor_common()
       case STT_COMMON:  p_type = SYM_COMMON;  break;
       case STT_TLS:     p_type = SYM_TLS;     break;
       default:
-        fprintf(stderr, "ROBB: unknown elf symbol type: %u\n", get_elf_type());
+        fprintf(stderr, "unknown elf symbol type: %u\n", get_elf_type());
         ROSE_ASSERT(0);
         break;
     }
@@ -2849,15 +2848,19 @@ SgAsmElfSymbol::get_elf_type() const
     return (ElfSymType)(p_st_info & 0xf);
 }
 
-/* Called before unparsing. Updates the symbol table entry to a consistent state. */
-void
+/* Called before unparsing. Updates the symbol table entry to a consistent state. Returns true if any name offset changed,
+ * since this would mean that we may need to call reallocate() on the string table again. */
+bool
 SgAsmElfSymbol::reallocate(SgAsmGenericStrtab *strtab)
 {
     SgAsmStoredString *s = dynamic_cast<SgAsmStoredString*>(get_name());
     if (s && s->get_strtab()==strtab) {
+        addr_t old_offset = p_st_name;
         p_st_name = get_name()->get_offset();
+        return p_st_name!=old_offset;
     } else {
         p_st_name = 0;
+        return false;
     }
 }
 
@@ -2957,7 +2960,25 @@ void
 SgAsmElfSymbolSection::add_symbol(SgAsmElfSymbol *symbol)
 {
     ROSE_ASSERT(p_symbols!=NULL);
+
+    /* Make sure the symbol name is in the correct string table */
+    std::string name;
+    if (symbol->get_name()) {
+        name = symbol->get_name()->get_string();
+        symbol->get_name()->set_string(""); /*frees old string if stored*/
+    }
+    SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(get_linked_section());
+    if (strsec) {
+        SgAsmStoredString *stored_string = new SgAsmStoredString(strsec->get_strtab(), 0);
+        stored_string->set_string(name);
+        symbol->set_name(stored_string);
+    } else {
+        symbol->set_name(new SgAsmBasicString(name));
+    }
+    
+    /* Add the symbol to the symbol table */
     p_symbols->get_symbols().push_back(symbol);
+    symbol->set_parent(p_symbols);
 }
 
 /** Initializes this ELF Symbol Section by parsing a file. */
@@ -2979,13 +3000,15 @@ SgAsmElfSymbolSection::parse()
     for (size_t i=0; i<nentries; i++) {
         SgAsmElfSymbol *entry=0;
         if (4==fhdr->get_word_size()) {
-            const SgAsmElfSymbol::Elf32SymbolEntry_disk *disk =
-                (const SgAsmElfSymbol::Elf32SymbolEntry_disk*)content(i*entry_size, struct_size);
-            entry = new SgAsmElfSymbol(fhdr->get_sex(), disk);
+            entry = new SgAsmElfSymbol;
+            SgAsmElfSymbol::Elf32SymbolEntry_disk disk;
+            content(i*entry_size, struct_size, &disk);
+            entry->parse(fhdr->get_sex(), &disk);
         } else if (8==fhdr->get_word_size()) {
-            const SgAsmElfSymbol::Elf64SymbolEntry_disk *disk =
-                (const SgAsmElfSymbol::Elf64SymbolEntry_disk*)content(i*entry_size, struct_size);
-            entry = new SgAsmElfSymbol(fhdr->get_sex(), disk);
+            entry = new SgAsmElfSymbol;
+            SgAsmElfSymbol::Elf64SymbolEntry_disk disk;
+            content(i*entry_size, struct_size, &disk);
+            entry->parse(fhdr->get_sex(), &disk);
         } else {
             throw FormatError("unsupported ELF word size");
         }
@@ -3068,7 +3091,8 @@ SgAsmElfSymbolSection::reallocate()
     SgAsmGenericStrtab *strtab = strsec ? strsec->get_strtab() : NULL;
     for (size_t i=0; i<p_symbols->get_symbols().size(); i++) {
         SgAsmElfSymbol *entry = p_symbols->get_symbols()[i];
-        entry->reallocate(strtab);
+        if (entry->reallocate(strtab))
+            reallocated = true;
     }
     return reallocated;
 }

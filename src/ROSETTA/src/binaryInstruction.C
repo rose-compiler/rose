@@ -1735,6 +1735,7 @@ Grammar::setUpBinaryInstructions ()
   // ExecSection         *bound;       // section when defined locally
   // std::string         name;         // Symbol name may be the empty string
      AsmGenericSymbol.setFunctionPrototype ( "HEADER_GENERIC_SYMBOL", "../Grammar/BinaryInstruction.code");
+     AsmGenericSymbol.setAutomaticGenerationOfConstructor(false);
      AsmGenericSymbol.setDataPrototype("SgAsmGenericSymbol::SymbolDefState","def_state","= SgAsmGenericSymbol::SYM_UNDEFINED",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericSymbol.setDataPrototype("SgAsmGenericSymbol::SymbolBinding","binding","= SgAsmGenericSymbol::SYM_NO_BINDING",
