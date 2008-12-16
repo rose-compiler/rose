@@ -2405,7 +2405,7 @@ HEADER_NE_FILE_HEADER_START
 
        // virtual ~NEFileHeader() {}
           static bool is_NE (SgAsmGenericFile*);
-          static SgAsmNEFileHeader *parse(SgAsmGenericFile*);
+          static SgAsmNEFileHeader *parse(SgAsmDOSFileHeader*);
           virtual void unparse(std::ostream&) const;
           virtual const char *format_name() const {return "NE";}
           virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
@@ -2702,7 +2702,7 @@ HEADER_LE_FILE_HEADER_START
           const char *format_name() const;
 
           static bool is_LE (SgAsmGenericFile*);
-          static SgAsmLEFileHeader *parse(SgAsmGenericFile*);
+          static SgAsmLEFileHeader *parse(SgAsmDOSFileHeader*);
 
        /* File format of an LE/LX File Header (they are identical except bytes 0x2c-0x2f) */
           struct LEFileHeader_disk {

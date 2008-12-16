@@ -1263,13 +1263,11 @@ SgAsmNERelocTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 
 /* Parses the structure of an NE file and adds the information to the SgAsmGenericFile. */
 SgAsmNEFileHeader *
-SgAsmNEFileHeader::parse(SgAsmGenericFile *ef)
+SgAsmNEFileHeader::parse(SgAsmDOSFileHeader *dos_header)
 {
+    ROSE_ASSERT(dos_header);
+    SgAsmGenericFile *ef = dos_header->get_file();
     ROSE_ASSERT(ef);
-
-    /* All NE files are also DOS files, so parse the DOS part first */
-    SgAsmDOSFileHeader *dos_header = new SgAsmDOSFileHeader(ef);
-    dos_header->parse(false);
 
     /* NE files extend the DOS header with some additional info */
     SgAsmDOSExtendedHeader *dos2_header = new SgAsmDOSExtendedHeader(dos_header);

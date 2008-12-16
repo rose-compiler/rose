@@ -3757,9 +3757,9 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
             pe_hdr->parse();
             big_hdr = pe_hdr;
         } else if (SgAsmNEFileHeader::is_NE(ef)) {
-            SgAsmNEFileHeader::parse(ef);
+            SgAsmNEFileHeader::parse(dos_hdr);
         } else if (SgAsmLEFileHeader::is_LE(ef)) { /*or LX*/
-            SgAsmLEFileHeader::parse(ef);
+            SgAsmLEFileHeader::parse(dos_hdr);
         }
 
         /* Now go back and add the DOS Real-Mode section but rather than using the size specified in the DOS header, constrain
