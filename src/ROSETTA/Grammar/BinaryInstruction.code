@@ -1756,7 +1756,6 @@ HEADER_ELF_SYMBOL_SECTION_START
 		 SgAsmElfSymbolSection(SgAsmElfFileHeader *fhdr, SgAsmElfStringSection *strtab)
 			: SgAsmElfSection(fhdr), p_is_dynamic(false)
 			{ctor(strtab);}
-		void add_symbol(SgAsmElfSymbol*);
 		virtual SgAsmElfSymbolSection* parse();
 		using SgAsmElfSection::calculate_sizes;
 		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const;
@@ -1809,6 +1808,8 @@ HEADER_ELF_SYMBOL_START
 			uint64_t      st_size;
 		} __attribute__((packed));
 
+		explicit SgAsmElfSymbol(SgAsmElfSymbolSection *symtab)
+			{ctor(symtab);}
 		void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymbol::Elf32SymbolEntry_disk*,
 			   SgAsmElfStringSection*);
 		void parse(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymbol::Elf64SymbolEntry_disk*,
@@ -1821,6 +1822,7 @@ HEADER_ELF_SYMBOL_START
 		SgAsmElfSymbol::ElfSymType get_elf_type() const;
 
 	private:
+		void ctor(SgAsmElfSymbolSection*);
 		void parse_common(); /* Initialization common to all parse() methods */
 HEADER_ELF_SYMBOL_END
 

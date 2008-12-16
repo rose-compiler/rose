@@ -2793,6 +2793,22 @@ SgAsmElfDynamicSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 // Symbol Tables
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/** Adds the newly constructed symbol to the specified ELF Symbol Table. */
+void
+SgAsmElfSymbol::ctor(SgAsmElfSymbolSection *symtab)
+{
+    ROSE_ASSERT(symtab!=NULL);
+    SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(symtab->get_linked_section());
+    ROSE_ASSERT(strsec!=NULL);
+    
+    set_name(new SgAsmStoredString(strsec->get_strtab(), 0));
+
+    ROSE_ASSERT(symtab->get_symbols()!=NULL);
+    symtab->get_symbols()->get_symbols().push_back(this);
+    ROSE_ASSERT(symtab->get_symbols()->get_symbols().size()>0);
+    set_parent(symtab->get_symbols());
+}
+
 /** Initialize symbol by parsing a symbol table entry. An ELF String Section must be supplied in order to get the symbol name. */
 void
 SgAsmElfSymbol::parse(ByteOrder sex, const Elf32SymbolEntry_disk *disk, SgAsmElfStringSection *strsec)
@@ -2980,32 +2996,6 @@ SgAsmElfSymbolSection::ctor(SgAsmElfStringSection *strings)
     p_linked_section = strings;
 }
 
-/** Adds a symbol to a symbol table. */
-void
-SgAsmElfSymbolSection::add_symbol(SgAsmElfSymbol *symbol)
-{
-    ROSE_ASSERT(p_symbols!=NULL);
-
-    /* Make sure the symbol name is in the correct string table */
-    std::string name;
-    if (symbol->get_name()) {
-        name = symbol->get_name()->get_string();
-        symbol->get_name()->set_string(""); /*frees old string if stored*/
-    }
-    SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(get_linked_section());
-    if (strsec) {
-        SgAsmStoredString *stored_string = new SgAsmStoredString(strsec->get_strtab(), 0);
-        stored_string->set_string(name);
-        symbol->set_name(stored_string);
-    } else {
-        symbol->set_name(new SgAsmBasicString(name));
-    }
-    
-    /* Add the symbol to the symbol table */
-    p_symbols->get_symbols().push_back(symbol);
-    symbol->set_parent(p_symbols);
-}
-
 /** Initializes this ELF Symbol Section by parsing a file. */
 SgAsmElfSymbolSection *
 SgAsmElfSymbolSection::parse()
@@ -3027,12 +3017,12 @@ SgAsmElfSymbolSection::parse()
     for (size_t i=0; i<nentries; i++) {
         SgAsmElfSymbol *entry=0;
         if (4==fhdr->get_word_size()) {
-            entry = new SgAsmElfSymbol;
+            entry = new SgAsmElfSymbol(this); /*adds symbol to this symbol table*/
             SgAsmElfSymbol::Elf32SymbolEntry_disk disk;
             content(i*entry_size, struct_size, &disk);
             entry->parse(fhdr->get_sex(), &disk, strsec);
         } else if (8==fhdr->get_word_size()) {
-            entry = new SgAsmElfSymbol;
+            entry = new SgAsmElfSymbol(this); /*adds symbol to this symbol table*/
             SgAsmElfSymbol::Elf64SymbolEntry_disk disk;
             content(i*entry_size, struct_size, &disk);
             entry->parse(fhdr->get_sex(), &disk, strsec);
@@ -3041,7 +3031,6 @@ SgAsmElfSymbolSection::parse()
         }
         if (extra_size>0)
             entry->get_extra() = content_ucl(i*entry_size+struct_size, extra_size);
-        add_symbol(entry);
     }
     return this;
 }
