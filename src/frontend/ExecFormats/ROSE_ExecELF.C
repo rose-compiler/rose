@@ -3082,16 +3082,6 @@ SgAsmElfSymbolSection::set_linked_section(SgAsmElfSection *_strsec)
             ROSE_ASSERT(bound != NULL);
             symbol->set_bound(bound);
         }
-
-#if 0 /*Commented out because setting the name like this will cause the name to change when unparsing! [RPM 2008-12-12]*/
-        /* Section symbols may need names and sizes */
-        if (symbol->get_type() == SgAsmElfSymbol::SYM_SECTION && symbol->get_bound()) {
-            if (symbol->get_name()->get_string().size() == 0)
-                symbol->set_name(symbol->get_bound()->get_name());
-            if (symbol->get_size() == 0)
-                symbol->set_size(symbol->get_bound()->get_size());
-        }
-#endif
     }
 }
 
