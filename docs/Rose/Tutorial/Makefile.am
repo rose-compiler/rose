@@ -18,7 +18,7 @@ latexFiles = \
    appendix.tex astFileIO.tex uniqueNames.tex wholeGraphAST.tex addingComments.tex \
    partialRedundancyElimination.tex codeGenerationFormatControl.tex copyHelp.tex \
    roseHPCT.tex sharedMemoryTraversals.tex distributedMemoryTraversals.tex bugSeeding.tex \
-   modifiers.tex howToContribute.tex
+   modifiers.tex howToContribute.tex virtualCFG.tex
 
 # This is an evolving list, but these are a few of the required files
 generatedCodeExamples = \
@@ -32,6 +32,7 @@ generatedCodeExamples = \
    $(top_builddir)/tutorial/rose_transformation_inputCode_InstrumentationTranslator1.C \
    $(top_builddir)/tutorial/rose_inputCode_ExampleDebugging.C \
    $(top_builddir)/tutorial/codeCoverage.out \
+   $(top_builddir)/tutorial/vcfg.pdf \
    $(top_builddir)/tutorial/rose_inputCode_inlineTransformations.C \
    $(top_builddir)/tutorial/roseHPCT/profiled.out
 

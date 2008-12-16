@@ -405,7 +405,9 @@ testBuildCFG_testfile1: buildCFG
 	@echo "Building postscript file from foo.dot ..."
 	$(top_srcdir)/scripts/dotgenLetterPDF testCFG.dot controlFlowGraph_testfile1.pdf
 
-
+testVirtualCFG: virtualCFG
+	./virtualCFG $(srcdir)/inputCode_ControlFlowGraphAnalysis.C > vcfg.dot || (rm -f vcfg.dot; exit 1)
+	$(top_srcdir)/scripts/dotgenLetterPDF vcfg.dot vcfg.pdf
 
 # Both this and the testCallGraphAnalysis rule generate a file called callGraph.ps
 testBuildCG: buildCG
@@ -679,6 +681,7 @@ generatedCodeExamples = \
    rose_inputCode_LoopOptimization_lufac.C \
    rose_inputCode_LoopOptimization_tridvpk.C \
    controlFlowGraph.pdf \
+   vcfg.pdf \
    debuggingIRnodeToString.out \
    debuggingSourceCodePositionInformation.out \
    commandlineProcessing.out \
@@ -955,6 +958,11 @@ controlFlowGraph.pdf: buildCFG
 	./buildCFG $(ROSE_FLAGS) $(srcdir)/inputCode_ControlFlowGraphAnalysis.C
 	@echo "Building postscript file from main.dot ..."
 	$(top_srcdir)/scripts/dotgenLetterPDF main.dot controlFlowGraph.pdf
+
+vcfg.pdf: virtualCFG
+	@echo "Building an example virtual Control Flow Graph (virtualCFG) ..."
+	./virtualCFG $(ROSE_FLAGS) $(srcdir)/inputCode_ControlFlowGraphAnalysis.C > vcfg.dot || (rm -f vcfg.dot; exit 1)
+	$(top_srcdir)/scripts/dotgenLetterPDF vcfg.dot vcfg.pdf
 
 defuseAnalysis_pic1.pdf: defuseAnalysis
 	@echo "Building an example DefUse ..."

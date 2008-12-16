@@ -275,6 +275,8 @@ our own use on large scale applications.}
 
 \input{templateSupport}
 
+\input{virtualCFG}
+
 % chapter for AST construction
 % DQ (6/24/2008): Need to combine these into a
 % single file if it is to be a single chapter.
