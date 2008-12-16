@@ -1445,16 +1445,16 @@ HEADER_ELF_STRING_SECTION_END
 
 HEADER_ELF_RELOC_SECTION_START
 	public:
-		explicit SgAsmElfRelocSection(SgAsmElfFileHeader *fhdr)
+		SgAsmElfRelocSection(SgAsmElfFileHeader *fhdr, SgAsmElfStringSection *strsec)
 			: SgAsmElfSection(fhdr)
-			{ctor();}
+			{ctor(strsec);}
 		using SgAsmElfSection::calculate_sizes;
 		virtual SgAsmElfRelocSection *parse();
 		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const;
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 	private:
-		void ctor();
+		void ctor(SgAsmElfStringSection*);
 HEADER_ELF_RELOC_SECTION_END
 
 

@@ -599,7 +599,7 @@ Grammar::setUpBinaryInstructions ()
 
 
 
-     AsmElfSectionTableEntry.setFunctionPrototype ( "HEADER_ELF_SECTION_TABLE_ENTRY", "../Grammar/BinaryInstruction.code");
+     AsmElfSectionTableEntry.setFunctionPrototype("HEADER_ELF_SECTION_TABLE_ENTRY", "../Grammar/BinaryInstruction.code");
      AsmElfSectionTableEntry.setDataPrototype("unsigned","sh_name","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSectionTableEntry.setDataPrototype("SgAsmElfSectionTableEntry::SectionType","sh_type","= SHT_PROGBITS",
@@ -625,13 +625,8 @@ Grammar::setUpBinaryInstructions ()
 
 
 
-  // Note that these should likely be implemented as a container, instead of reproducing the link list structure.
-  // ElfSection *linked_section;
-  // ElfSectionTableEntry *st_entry;
-     AsmElfSection.setFunctionPrototype      ( "HEADER_ELF_SECTION", "../Grammar/BinaryInstruction.code");
-
-  // This is over written by AsmElfSymbolSection AsmElfDynamicSection (so we need the access functions to be virtual)
-     AsmElfSection.setDataPrototype("SgAsmElfSection*","linked_section","= NULL",
+     AsmElfSection.setFunctionPrototype("HEADER_ELF_SECTION", "../Grammar/BinaryInstruction.code");
+     AsmElfSection.setDataPrototype("SgAsmElfSection*","linked_section","= NULL", //accessors must be virtual
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSection.setDataPrototype("SgAsmElfSectionTableEntry*","section_entry","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);

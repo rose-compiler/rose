@@ -1310,13 +1310,13 @@ SgAsmElfSectionTable::parse()
             break;
           case SgAsmElfSectionTableEntry::SHT_REL: {
               SgAsmElfRelocSection *relocsec;
-              section = relocsec = new SgAsmElfRelocSection(fhdr);
+              section = relocsec = new SgAsmElfRelocSection(fhdr, NULL);
               relocsec->set_uses_addend(false);
               break;
           }
           case SgAsmElfSectionTableEntry::SHT_RELA: {
               SgAsmElfRelocSection *relocsec;
-              section = relocsec = new SgAsmElfRelocSection(fhdr);
+              section = relocsec = new SgAsmElfRelocSection(fhdr, NULL);
               relocsec->set_uses_addend(true);
               break;
           }
@@ -2197,10 +2197,11 @@ SgAsmElfRelocEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbo
 
 /* Non-parsing constructor */
 void
-SgAsmElfRelocSection::ctor()
+SgAsmElfRelocSection::ctor(SgAsmElfStringSection *strings)
 {
     p_entries = new SgAsmElfRelocEntryList;
     p_entries->set_parent(this);
+    p_linked_section = strings;
 }
 
 /* Parse an existing ELF Rela Section */
