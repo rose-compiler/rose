@@ -2469,7 +2469,7 @@ HEADER_NE_NAME_TABLE_END
 HEADER_NE_MODULE_TABLE_START
 	public:
 		SgAsmNEModuleTable(SgAsmNEFileHeader *fhdr, SgAsmNEStringTable *strtab, addr_t offset, addr_t size)
-			: SgAsmGenericSection(fhdr->get_file(), fhdr)
+			: SgAsmGenericSection(fhdr->get_file(), fhdr), p_strtab(strtab)
 			{ctor(offset, size);}
 		virtual void unparse(std::ostream&) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
