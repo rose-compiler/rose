@@ -27,19 +27,24 @@ Visitor::visit(SgNode* n)
           printf ("symbol->get_binding()   = %u = %s \n",symbol->get_binding(),symbol->stringifyBinding().c_str());
           printf ("symbol->get_def_state() = %u = %s \n",symbol->get_def_state(),symbol->stringifyDefState().c_str());
 
-          SgAsmElfSymbol*  elfSymbol  = isSgAsmElfSymbol(symbol);
+          /* All the ELF-specific stuff and most of the COFF-specific stuff is also represented in the base class, displayed
+           * above.  The general rule is that notions that are present in at least two file formats are represented in a
+           * common base class and there's no need to access the copies that might be stored in the derived classes. However,
+           * they are duplicated in the derived classes because those classes tend to represent data structures described
+           * directly in the format specifications. The only reason they're publicly visible in the derived classes is because
+           * ROSETTA doesn't support marking certain things as being for internal use only. I'm working on documenting these
+           * things better.
+           * 
+           * For instance, the p_st_name member of an SgAsmElfSymbol is a byte offset into an ELF String Table. The actual
+           * string is stored in the p_name member of SgAsmGenericSymbol. Modifying the string will cause all the correct
+           * memory management actions to occur (ultimately adjusting p_st_name), while modifying p_st_name bypasses string
+           * table management (and your new value would be overwritten if/when memory management does occur).
+           * 
+           * [RPM 2008-12-15] */
+
+          /* The Coff-specific stuff may eventually disappear as the base class evolves to handle more of this. In fact, some
+           * of these are already duplicates of the same info above. */
           SgAsmCoffSymbol* coffSymbol = isSgAsmCoffSymbol(symbol);
-
-          if (elfSymbol != NULL)
-             {
-	       // interface changed ... fixme
-	       // printf ("   elfSymbol->get_st_name()  = %"PRIu64" \n",elfSymbol->get_st_name());
-               printf ("   elfSymbol->get_st_info()  = %u  \n",elfSymbol->get_st_info());
-               printf ("   elfSymbol->get_st_res1()  = %u  \n",elfSymbol->get_st_res1());
-               printf ("   elfSymbol->get_st_shndx() = %u  \n",elfSymbol->get_st_shndx());
-               printf ("   elfSymbol->get_st_size()  = %"PRIu64" \n",elfSymbol->get_st_size());
-             }
-
           if (coffSymbol != NULL)
              {
                printf ("   coffSymbol->get_st_name()            = %s \n",coffSymbol->get_st_name().c_str());
