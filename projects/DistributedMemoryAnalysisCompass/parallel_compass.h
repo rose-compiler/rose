@@ -163,12 +163,12 @@ void initPCompass(int argc, char **argv, int processes) {
       exit(0);
     }
   } else {
-    std::cerr << "ROSE frontend .... " << std::endl;
+    std::cerr << "No Load or Save .... " << std::endl;
   }
 
   if (!saveAST && !loadAST) {
     Compass::gettime(begin_time);
-    std::cout << "ROSE frontend .... " << std::endl;
+    std::cout <<"  ROSE frontend .... " << std::endl;
     root = frontend(argc, argv);
     Compass::gettime(end_time);
   }

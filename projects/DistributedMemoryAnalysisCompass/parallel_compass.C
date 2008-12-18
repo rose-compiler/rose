@@ -2,8 +2,8 @@
 
 
 using namespace std;
-#define DEBUG_OUTPUT true
-#define DEBUG_OUTPUT_MORE false
+#define DEBUG_OUTPUT_PC true
+#define DEBUG_OUTPUT_PC_MORE false
 
 using namespace Compass;
 
@@ -48,7 +48,7 @@ protected:
       fileptr++;
       *fileptr = fileptr[-1];
       nodes[interestingNodes]=node;
-      //if (DEBUG_OUTPUT_MORE ) 
+      //if (DEBUG_OUTPUT_PC_MORE ) 
       //cerr << " [ " << interestingNodes << " ] adding node " << node->class_name() << endl;
     }
     interestingNodes++;
@@ -181,7 +181,7 @@ void computeIndicesPerNode(SgProject *project, std::vector<int>& nodeToProcessor
 	name = fast->get_qualified_name().str();
 	name2 = fast->get_declaration()->get_name().str();
       }
-      if (DEBUG_OUTPUT_MORE) 
+      if (DEBUG_OUTPUT_PC_MORE) 
 	if (i<100)
 	  std::cout << "    node : " << nodeDecls[i]->class_name() << 
 	    "  weight : " << nodeWeights[i] << "   " << name << "  " << name2 <<  std::endl;
@@ -242,7 +242,7 @@ void printPCResults(CountingOutputObject  &outputs,
   /* print everything */
   if (my_rank == 0) {
 
-    std::cout << "\n>>>>> results:" << std::endl;
+    std::cout << "\n " << my_rank << " >>>>> results:" << std::endl;
     std::map<std::string, unsigned int> ::iterator o_itr;
     int j=0;
     for (o_itr = outputs.counts.begin(); o_itr != outputs.counts.end(); ++o_itr, ++j) 
@@ -320,7 +320,8 @@ int main(int argc, char **argv)
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &processes);
-
+  
+  std::cout << "Processor : " << my_rank << "  ROSE frontend .... " << std::endl;
   initPCompass(argc, argv, processes);
   ROSE_ASSERT(root);
 
@@ -405,7 +406,7 @@ int main(int argc, char **argv)
   double* totalCheckerTime = new double[bases.size()];
 
   //ROSE_ASSERT(traversals.size() == bases.size() && bases.size() == outputs.size());
-  //  if (DEBUG_OUTPUT_MORE) 
+  //  if (DEBUG_OUTPUT_PC_MORE) 
   if (my_rank == 0)
     {
       std::cout << std::endl << "got " << bases.size() << " checkers:";
@@ -482,7 +483,8 @@ int main(int argc, char **argv)
 
   // --------------------------------------------------------
   MPI_Barrier(MPI_COMM_WORLD);
-  for (int count=0; count<4 ; count++) {
+  // this loop is used to get more than 1 result for a run ... to be able to average it out!!
+  for (int count=0; count<1 ; count++) {
 
     double memusage_b = ROSE_MemoryUsage().getMemoryUsageMegabytes();
 
@@ -504,7 +506,7 @@ int main(int argc, char **argv)
 
     if (processes==1) {
       /* figure out which files to process on this process */
-      if (DEBUG_OUTPUT_MORE) 
+      if (DEBUG_OUTPUT_PC_MORE) 
 	cout << "bounds size = " << bounds.size() << endl;
       int i=-1;
       gettime(begin_time_defuse);
@@ -512,7 +514,7 @@ int main(int argc, char **argv)
 #pragma omp parallel for private(i,b_itr)  shared(bounds,my_rank,bases,nullderefCounter)
 #endif
       for (i = 0; i<(int)bounds.size();i++) {
-	if (DEBUG_OUTPUT_MORE) 
+	if (DEBUG_OUTPUT_PC_MORE) 
 	  cout << "bounds [" << i << "] = " << bounds[i] << "   my_rank: " << my_rank << endl;
 	int t=0;
 	if (bounds[i]== my_rank) 
@@ -569,7 +571,7 @@ int main(int argc, char **argv)
 	  MPI_Isend(res, 2, MPI_INT, 0, 1, MPI_COMM_WORLD, &request[0]);
 	  MPI_Irecv(res2, 2, MPI_INT, 0, 1, MPI_COMM_WORLD, &request[1]);
 
-	  if (DEBUG_OUTPUT_MORE) 	
+	  if (DEBUG_OUTPUT_PC_MORE) 	
 	    std::cout << " process : " << my_rank << " receiving nr: [" << min << ":" << max << "[  of " << 
 	      totalnr << "      range : " << (max-min);// << std::endl;
 
@@ -609,7 +611,7 @@ int main(int argc, char **argv)
 	  // OPENMP END -------------------------------------------------------
 
 	  calc_time_processor+=total_node;
-	  if (DEBUG_OUTPUT_MORE) 
+	  if (DEBUG_OUTPUT_PC_MORE) 
 	    std::cout << "     >>> Process " << my_rank << " done. Time: " << total_node << "   max_time : " << max_time << "  " << max_time_nr << 
 	      "   in node : " << nodeDecls[max_time_nr]->class_name() << "  total_node: " << total_node << std::endl;
 

@@ -5,7 +5,7 @@
 #include "DistributedMemoryAnalysis.h"
 #include <rose.h>
 
-#define DEBUG_OUTPUT false
+#define DEBUG_OUTPUT_FUNCNAMES false
 
 // ----------------------------------------------------
 // preTraversal
@@ -18,7 +18,7 @@ class FunctionNamesPreTraversal: public AstTopDownProcessing<int>
 protected:
     int evaluateInheritedAttribute(SgNode *node, int depth)
     {
-#if DEBUG_OUTPUT
+#if DEBUG_OUTPUT_FUNCNAMES
       std::cout << " eval inherited: node: " << node->class_name() << "  depth:" << depth << std::endl;
 #endif
         return depth + 1;
@@ -47,7 +47,7 @@ protected:
             if (str.size() > 0 && str[str.size()-1] != '\n')
                 result += "\n";
         }
-#if DEBUG_OUTPUT
+#if DEBUG_OUTPUT_FUNCNAMES
 	std::cout << " eval synthesized: node: " << node->class_name() << "  result:" << result << " ..............\n" <<std::endl;
 #endif
         return result;
@@ -78,7 +78,7 @@ protected:
         std::string funcName = funcDecl->get_name().str();
         std::stringstream s;
         s << "process " << myID() << ": at depth " << depth << ": function " << funcName;
-#if DEBUG_OUTPUT
+#if DEBUG_OUTPUT_FUNCNAMES
 	std::cout << " analyzeSubtree of funcDecl: " << funcName << "  id:" << myID()  <<  
 	  "       result:  " << s.str() << std::endl;
 #endif
