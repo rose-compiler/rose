@@ -197,7 +197,10 @@ void Compass::saveDFA(std::string name, SgProject* project) {
     writeFile.close();
     std::cerr <<" Done Saving DFA to File " << std::endl;
 
-    std::cerr << " Def[0] : " << def_values_global[0] << "  Use[0] : " << use_values_global[0] << std::endl;
+    if (global_arrsize>0 && use_values_global>0)
+      std::cerr << " Def[0] : " << def_values_global[0] << "  Use[0] : " << use_values_global[0] << std::endl;
+    else
+      std::cerr << "Something might have gone wrong ... no defs or uses found!" << std::endl;
     // test the load after saving
     /*
       for (unsigned int j=0;j<global_arrsize;j++) 
