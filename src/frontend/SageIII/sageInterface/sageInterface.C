@@ -5644,47 +5644,62 @@ class ConditionalExpGenerator: public StatementGenerator
 
   }
 
-
-  SgVariableSymbol* SageInterface::appendArg(SgFunctionParameterList *paraList, SgInitializedName* initName)
-  {
-    ROSE_ASSERT(paraList);
-    ROSE_ASSERT(initName);
+static SgVariableSymbol * addArg(SgFunctionParameterList *paraList, SgInitializedName* initName,bool isPrepend)
+{
+  ROSE_ASSERT(paraList);
+  ROSE_ASSERT(initName);
+  if (isPrepend)
+    paraList->prepend_arg(initName);
+  else
     paraList->append_arg(initName);
-    initName->set_parent(paraList);
+  initName->set_parent(paraList);
 
-    SgFunctionDeclaration* func_decl= isSgFunctionDeclaration(paraList->get_parent());
-    SgScopeStatement* scope = NULL;
-    if (func_decl)
-    {
-      if ((func_decl->get_definingDeclaration()) == func_decl )
-      { //defining function declaration, set scope and symbol table
-	SgFunctionDefinition* func_def = func_decl->get_definition();
-	ROSE_ASSERT(func_def);
-        scope = func_def;
-      } // nondefining declaration, set scope only, currently set to decl's scope, TODO
-       else  scope = func_decl->get_scope();
-    } //end if func_decl is available
-    // ROSE_ASSERT (scope); -- scope may not be set because the function declaration may not have been inserted anywhere
-    initName->set_scope(scope);
-    if (scope) {
-      SgVariableSymbol* sym = new SgVariableSymbol(initName);
-      scope->insert_symbol(initName->get_name(), sym);
-      sym->set_parent(scope->get_symbol_table());
-      return sym;
-    } else {
-      return NULL;
-    }
-  }
-
-
-  void SageInterface::setPragma(SgPragmaDeclaration* decl, SgPragma *pragma)
+  SgFunctionDeclaration* func_decl= isSgFunctionDeclaration(paraList->get_parent());
+  SgScopeStatement* scope = NULL;
+  if (func_decl)
   {
-    ROSE_ASSERT(decl);
-    ROSE_ASSERT(pragma);
-    if (decl->get_pragma()!=NULL) delete (decl->get_pragma());
-    decl->set_pragma(pragma);
-    pragma->set_parent(decl);
-  }
+    if ((func_decl->get_definingDeclaration()) == func_decl )
+    { //defining function declaration, set scope and symbol table
+      SgFunctionDefinition* func_def = func_decl->get_definition();
+      ROSE_ASSERT(func_def);
+      scope = func_def;
+    } // nondefining declaration, set scope only, currently set to decl's scope, TODO
+    else  
+      scope = func_decl->get_scope();
+    //fix up declptr of the init name  
+    initName->set_declptr(func_decl);  
+  } //end if func_decl is available
+  // ROSE_ASSERT (scope); -- scope may not be set because the function declaration may not have been inserted anywhere
+  initName->set_scope(scope);
+  if (scope) 
+  {
+    SgVariableSymbol* sym = new SgVariableSymbol(initName);
+    scope->insert_symbol(initName->get_name(), sym);
+    sym->set_parent(scope->get_symbol_table());
+    return sym;
+  } 
+  else 
+    return NULL;
+}
+
+SgVariableSymbol* SageInterface::appendArg(SgFunctionParameterList *paraList, SgInitializedName* initName)
+{
+  return addArg(paraList,initName,false);
+}
+
+SgVariableSymbol* SageInterface::prependArg(SgFunctionParameterList *paraList, SgInitializedName* initName)
+{
+  return addArg(paraList,initName,true);
+}
+
+void SageInterface::setPragma(SgPragmaDeclaration* decl, SgPragma *pragma)
+{
+  ROSE_ASSERT(decl);
+  ROSE_ASSERT(pragma);
+  if (decl->get_pragma()!=NULL) delete (decl->get_pragma());
+  decl->set_pragma(pragma);
+  pragma->set_parent(decl);
+}
 
 //! SageInterface::appendStatement()
 //TODO should we ensureBasicBlockAsScope(scope) ? like ensureBasicBlockAsParent(targetStmt);
@@ -6013,42 +6028,42 @@ class ConditionalExpGenerator: public StatementGenerator
     } //end for
   }
 
-  int SageInterface::fixVariableReferences(SgNode* root)
+int SageInterface::fixVariableReferences(SgNode* root)
+{
+  ROSE_ASSERT(root);
+  int counter=0;
+
+  SgVarRefExp* varRef=NULL;
+  Rose_STL_Container<SgNode*> reflist = NodeQuery::querySubTree(root, V_SgVarRefExp);
+  for (Rose_STL_Container<SgNode*>::iterator i=reflist.begin();i!=reflist.end();i++)
   {
-    ROSE_ASSERT(root);
-    int counter=0;
+    varRef= isSgVarRefExp(*i);
+    ROSE_ASSERT(varRef->get_symbol());
+    SgInitializedName* initname= varRef->get_symbol()->get_declaration();
+    if (initname->get_type()==SgTypeUnknown::createType())
+      //    if ((initname->get_scope()==NULL) && (initname->get_type()==SgTypeUnknown::createType()))
 
-    SgVarRefExp* varRef=NULL;
-    Rose_STL_Container<SgNode*> reflist = NodeQuery::querySubTree(root, V_SgVarRefExp);
-    for (Rose_STL_Container<SgNode*>::iterator i=reflist.begin();i!=reflist.end();i++)
     {
-      varRef= isSgVarRefExp(*i);
-      ROSE_ASSERT(varRef->get_symbol());
-      SgInitializedName* initname= varRef->get_symbol()->get_declaration();
-      if (initname->get_type()==SgTypeUnknown::createType())
-  //    if ((initname->get_scope()==NULL) && (initname->get_type()==SgTypeUnknown::createType()))
-
+      SgName varName=initname->get_name();
+      SgSymbol* realSymbol = lookupSymbolInParentScopes(varName,getScope(varRef));
+      // should find a real symbol at this final fixing stage!
+      if (realSymbol==NULL) 
       {
-	SgName varName=initname->get_name();
-	SgSymbol* realSymbol = lookupSymbolInParentScopes(varName,getScope(varRef));
-	// should find a real symbol at this final fixing stage!
-        if (realSymbol==NULL) 
-        {
-          cerr<<"Error: cannot find a symbol for "<<varName.getString()<<endl;
-          ROSE_ASSERT(realSymbol);
-        }
-	// release placeholder initname and symbol
-	ROSE_ASSERT(realSymbol!=(varRef->get_symbol()));
-
-        delete initname; // TODO deleteTree(), release File_Info nodes etc.
-        delete (varRef->get_symbol());
-
-        varRef->set_symbol(isSgVariableSymbol(realSymbol));
-        counter ++;
+        cerr<<"Error: cannot find a symbol for "<<varName.getString()<<endl;
+        ROSE_ASSERT(realSymbol);
       }
-    } // end for
-    return counter;
-  }
+      // release placeholder initname and symbol
+      ROSE_ASSERT(realSymbol!=(varRef->get_symbol()));
+
+      delete initname; // TODO deleteTree(), release File_Info nodes etc.
+      delete (varRef->get_symbol());
+
+      varRef->set_symbol(isSgVariableSymbol(realSymbol));
+      counter ++;
+    }
+  } // end for
+  return counter;
+}
 
 
 //! fixup symbol table for SgLableStatement. Used Internally when the label is built without knowing its target scope. Both parameters cannot be NULL. 
