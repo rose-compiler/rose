@@ -64,7 +64,7 @@ bool containsArgument(int argc, char** argv, std::string pattern) {
 }
 
 
-void initPCompass(int argc, char **argv) {
+void initPCompass(int argc, char **argv, int processes) {
   if (Compass::my_rank == 0) {
     if (argc < 2)
       {
@@ -109,6 +109,9 @@ void initPCompass(int argc, char **argv) {
   /* read the AST, either from a binary file or from sources */
   if (saveAST) {
     std::cerr << "ROSE saving FILE.... " << argv[2] << std::endl;
+    if (processes>1) {
+      std::cerr << "Cant save AST with more than one processor" << std::endl;
+    }
     if (Compass::my_rank == 0) {
       Compass::gettime(begin_time);
       if (argc>3) {
@@ -117,8 +120,9 @@ void initPCompass(int argc, char **argv) {
 	std::cout << " i: 0 argv[0] " << argv[0] << std::endl;
 	for (int i=3; i<argc; i++) {
 	  argv2[i-2] = argv[i];
-	  std::cout << " i: " << (i-2) << " argv[i] " << argv2[i-2] << std::endl;
+	  std::cout << " i: " << (i-2) << " argv["<<i<<"] " << argv2[i-2] << std::endl;
 	}
+      
 	root = frontend(argc-2, argv2);
 	std::string out_filename = argv[2];//"ast.ast";
 	// this can only run in sequence!
@@ -132,6 +136,7 @@ void initPCompass(int argc, char **argv) {
 	LoadSaveAST::saveAST(out_filename, root); 
       }
       Compass::gettime(end_time);
+      MPI_Finalize();
       exit(0);
     }
   } else if (loadAST) {

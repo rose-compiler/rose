@@ -13,12 +13,12 @@ class SourceDefUsePrerequisite: public Prerequisite
     {
       done=true;
       defuse = new DefUseAnalysis(root);
+
     } //load(SgProject* root)
 
     void run(SgProject* root) {
-      if (done) return;
-
-
+      //      if (done) return;
+      done =true;
   if (defuse==NULL) {
     //#define DEFUSE
     std::cerr << " DEFUSE ==NULL ... running defuse analysis " << std::endl;

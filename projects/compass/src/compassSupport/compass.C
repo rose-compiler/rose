@@ -55,12 +55,15 @@ void Compass::loadDFA(std::string name, SgProject* project) {
   res[0]=0;
   res[1]=1;
   bool done=false;
-
+  global_arrsize=0; global_arrsizeUse=0;
   std::cerr << " Starting the load with " << processes << " processes. " << std::endl;
   while (!done) {
 
     Compass::sourceDefUsePrerequisite.load(project);
     ROSE_ASSERT(Compass::sourceDefUsePrerequisite.done==true);
+    // The dataflow analysis must return at least one definition;
+    // This test was added because the dataflow analysis was disabled.
+    ROSE_ASSERT(global_arrsize!=0);
     //    if (defuse==NULL) {
     //  defuse = new DefUseAnalysis(project);
     //  std::cerr << " creating defuse ... " <<std::endl;
@@ -171,11 +174,14 @@ void Compass::saveDFA(std::string name, SgProject* project) {
   //unsigned int arrsize, unsigned int *values) {
   std::ofstream writeFile(name.c_str(), std::ios::out | std::ios::binary);
   quickSave=true;
+  global_arrsize=0; global_arrsizeUse=0;
   //runDefUseAnalysis(project);
-  Compass::sourceDefUsePrerequisite.load(project);
+  Compass::sourceDefUsePrerequisite.run(project);
   ROSE_ASSERT(Compass::sourceDefUsePrerequisite.done==true);
   quickSave=false;
-
+  // The dataflow analysis must return at least one definition;
+  // This test was added because the dataflow analysis was disabled.
+  ROSE_ASSERT(global_arrsize!=0);
   MPI_Barrier(MPI_COMM_WORLD);
 
   if (my_rank==0) {

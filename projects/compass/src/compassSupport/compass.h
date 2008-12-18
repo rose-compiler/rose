@@ -374,8 +374,11 @@ namespace Compass {
 
   // ToolGear Support
   void outputTgui( std::string & tguiXML, std::vector<const Compass::Checker*> & checkers, Compass::OutputObject *output );
+  // tps (18Dec2008) : Added a guard because javaport testcase brakes on this
+#ifdef HAVE_SQLITE3
   // Output to SQLITE database
   void outputDb( std::string  dbName, std::vector<const Compass::Checker*> & checkers, Compass::OutputObject *output );
+#endif
 
   #include "prerequisites.h"
 

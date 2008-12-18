@@ -74,16 +74,23 @@ CLEANFILES = gmon.out *.parse *.run *.ast *.ti compass_parameters
 
 include_HEADERS = LoadSaveAST.h parallel_compass.h
 
-check-local: parallel_functionBased_dynamicBalance parallel_file_compass parallel_compass parallel_functionBased_ASTBalance $(compass_checker_dir)/nullDeref/nullDerefTest1.C compass_parameters
-	mpirun -l -np 1 ./parallel_functionBased_dynamicBalance$(EXEEXT) $(compass_checker_dir)/nullDeref/nullDerefTest1.C
-	mpirun -l -np 2 ./parallel_functionBased_dynamicBalance$(EXEEXT) $(compass_checker_dir)/nullDeref/nullDerefTest1.C
-#	mpirun -l -np 1 ./parallel_functionBased_dynamicBalance$(EXEEXT) $(compass_checker_dir)/nullDeref/nullDerefTest1.C -shared
-	mpirun -l -np 1 ./parallel_file_compass$(EXEEXT) $(compass_checker_dir)/nullDeref/nullDerefTest1.C
-	mpirun -l -np 1 ./parallel_compass$(EXEEXT) $(compass_checker_dir)/nullDeref/nullDerefTest1.C
-	mpirun -l -np 1 ./parallel_functionBased_ASTBalance$(EXEEXT) $(compass_checker_dir)/nullDeref/nullDerefTest1.C
-	mpirun -l -np 2 ./parallel_functionBased_ASTBalance$(EXEEXT) $(compass_checker_dir)/nullDeref/nullDerefTest1.C $(compass_checker_dir)/nullDeref/nullDerefTest2.C
-	mpirun -l -np 1 ./parallel_functionBased_ASTBalance$(EXEEXT) $(compass_checker_dir)/nullDeref/nullDerefTest1.C -shared
-	mpirun -l -np 1 ./parallel_functionBased_ASTBalance$(EXEEXT) $(compass_checker_dir)/nullDeref/nullDerefTest1.C -combined
+check-local: parallel_functionBased_dynamicBalance parallel_file_compass parallel_compass $(srcdir)/buffer2.c compass_parameters
+	mpirun -l -np 1 ./parallel_functionBased_dynamicBalance$(EXEEXT) $(srcdir)/buffer2.c
+	mpirun -l -np 2 ./parallel_functionBased_dynamicBalance$(EXEEXT) $(srcdir)/buffer2.c
+#	mpirun -l -np 1 ./parallel_functionBased_dynamicBalance$(EXEEXT) $(srcdir)/buffer2.c -shared
+	mpirun -l -np 1 ./parallel_file_compass$(EXEEXT) $(srcdir)/buffer2.c
+	mpirun -l -np 1 ./parallel_compass$(EXEEXT) $(srcdir)/buffer2.c
+	mpirun -l -np 1 ./parallel_functionBased_ASTBalance$(EXEEXT) $(srcdir)/buffer2.c
+	mpirun -l -np 2 ./parallel_functionBased_ASTBalance$(EXEEXT) $(srcdir)/buffer2.c 
+	mpirun -l -np 1 ./parallel_functionBased_ASTBalance$(EXEEXT) $(srcdir)/buffer2.c -shared
+	mpirun -l -np 1 ./parallel_functionBased_ASTBalance$(EXEEXT) $(srcdir)/buffer2.c -combined
+	mpirun -l -np 1 ./parallel_compass$(EXEEXT) -save test.ast $(srcdir)/buffer2.c 
+	mpirun -l -np 1 ./parallel_compass$(EXEEXT) -load test.ast $(srcdir)/buffer2.c 
+	mpirun -l -np 2 ./parallel_compass$(EXEEXT) -load test.ast $(srcdir)/buffer2.c
+	mpirun -l -np 1 ./parallel_compass$(EXEEXT) -load test.ast $(srcdir)/buffer2.c
+	mpirun -l -np 2 ./parallel_compass$(EXEEXT) -load test.ast $(srcdir)/buffer2.c
+	mpirun -l -np 1 ./parallel_compass$(EXEEXT) -load test.ast $(srcdir)/buffer2.c
+	mpirun -l -np 2 ./parallel_compass$(EXEEXT) -load test.ast $(srcdir)/buffer2.c
 
 compass_parameters:
 	cd $(compass_build_tooldir)/compass && $(MAKE) compass_parameters
