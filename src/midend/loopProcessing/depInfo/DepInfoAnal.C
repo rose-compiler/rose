@@ -647,16 +647,16 @@ void ComputeRefSetDep( DepInfoAnal& anal, LoopTransformInterface &la,
        if ( fa.IsSameVarRef( array1, array2) ) {
            if (b1 && b2) 
                anal.ComputeArrayDep( la, ref, t, outDeps, inDeps);
-           else if (b1 || b2) 
+           else if (b1 || b2) // One of them is array reference
                anal.ComputeGlobalScalarDep( la, ref, outDeps, inDeps);
-           else 
+           else // both of them are scalar
            {   
                scalar_dep_type = t;
                anal.ComputePrivateScalarDep( la, ref, outDeps, inDeps);
                scalar_dep_type = DEPTYPE_NONE; 
            }
        }
-       else if ( la.IsAliasedRef( r1, r2)) {
+       else if ( la.IsAliasedRef( r1, r2)) { // Within the same alias class
           anal.ComputeGlobalScalarDep( la, ref, outDeps, inDeps); 
        }
     }// end for (rs1)

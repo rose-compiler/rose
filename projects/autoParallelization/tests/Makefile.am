@@ -3,6 +3,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # the code which can be parallelized or confirmed as not parallelizable now
 C_TESTCODES_REQUIRED_TO_PASS = \
 anti_dep.c \
+array_scalar.c \
 doall.c \
 doall_2.c \
 firstprivate.c \

@@ -26,9 +26,8 @@ TEST_INCLUDES = \
 
 # INCLUDES += -I.
 
-# We install a standalone outliner to be installed with ROSE
-bin_PROGRAMS = outline
 noinst_PROGRAMS = \
+	outline \
         injectOutlinePragmas \
         outlineRandom \
         outlineSelection
@@ -60,19 +59,43 @@ endif # ROSE_USE_LONG_MAKE_CHECK_RULE
 
 # Outliner utility and flags to run with the tests.
 OUTLINER_BIN = ./outlineSelection$(EXEEXT)
-TEST_CXXFLAGS = $(TEST_INCLUDES) -rose:verbose 2 -rose:outline:seq 7
+TEST_CXXFLAGS = $(TEST_INCLUDES) -rose:verbose 0 -rose:outline:seq 7 -rose:outline:parameter_wrapper
 
-# Additional test, Liao, 9/11/2008
-rose_moreTest1.c:outline
-	./outline$(EXEEXT) -c $(srcdir)/moreTest1.c
+# Additional tests using #pragma rose_outline, Liao, 12/17/2008
+C_TESTCODES_REQUIRED_TO_PASS = \
+	 moreTest1.c \
+	 array1.c
+CXX_TESTCODES_REQUIRED_TO_PASS = \
+	array2.cpp	 
 
-EXTRA_DIST = build_tests-1pass.sh RandomStmtSelector.hh moreTest1.c
+TESTCODE_CURRENTLY_FAILING =  	
+
+ALL_EXTRA_TESTCODE = \
+$(C_TESTCODES_REQUIRED_TO_PASS) \
+$(CXX_TESTCODES_REQUIRED_TO_PASS) \
+$(TESTCODE_CURRENTLY_FAILING)
+
+OUTLINE_FLAG= --edg:no_warnings -rose:verbose 0 -rose:outline:parameter_wrapper
+
+PASSING_C_TEST_Objects = $(C_TESTCODES_REQUIRED_TO_PASS:.c=.o)
+PASSING_CXX_TEST_Objects = $(CXX_TESTCODES_REQUIRED_TO_PASS:.cpp=.o)
+
+$(PASSING_C_TEST_Objects): %.o: $(srcdir)/%.c outline 
+	./outline$(EXEEXT) $(OUTLINE_FLAG) -c $<
+
+$(PASSING_CXX_TEST_Objects): %.o: $(srcdir)/%.cpp outline
+	./outline$(EXEEXT) ${OUTLINE_FLAG} -c $<
+
+
+EXTRA_DIST = build_tests-1pass.sh RandomStmtSelector.hh $(ALL_EXTRA_TESTCODE)
+
 CLEANFILES = Makefile-1pass LIST.dat
 
 # DQ (8/29/2008): Added dependences
 check-local: outline injectOutlinePragmas outlineRandom outlineSelection
 	@echo "Test for ROSE outliner."
-	$(MAKE) rose_moreTest1.c
+	$(MAKE) $(PASSING_C_TEST_Objects)
+	$(MAKE) $(PASSING_CXX_TEST_Objects)
 	$(MAKE) one-pass
 	test -f Makefile-1pass
 	$(MAKE) -f Makefile-1pass \
@@ -84,7 +107,7 @@ check-local: outline injectOutlinePragmas outlineRandom outlineSelection
 	@echo "***********************************************************************************************************"
 
 clean-local:
-	rm -f *.o test*.C rose_*.c rose_*.C *.C.pdf *.c.pdf
+	rm -f *.o test*.C rose_*.c rose_*.cpp rose_*.C *.C.pdf *.c.pdf
 
 one-pass: Makefile-1pass $(OUTLINER_BIN)
 

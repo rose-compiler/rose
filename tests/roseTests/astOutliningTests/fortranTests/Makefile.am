@@ -92,7 +92,8 @@ $(F03_TESTCODES_CURRENTLY_FAILING)
 #$(ALL_F90_TESTCODES) \
 #$(ALL_F03_TESTCODES)
 
-ROSE_FLAGS = -rose:verbose 2 -rose:outline:seq 7 -ffixed-line-length-none
+ROSE_FLAGS = -rose:verbose 0 -rose:outline:seq 7 -ffixed-line-length-none 
+#-rose:outline:parameter_wrapper
 #ROSE_F77_FLAGS = -rose:outline:seq 7 -rose:f77 -ffixed-line-length-none
 #ROSE_F90_FLAGS = -rose:outline:seq 7 -rose:f90
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes

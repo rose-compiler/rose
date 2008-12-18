@@ -1,25 +1,26 @@
-// outline.cc: Demonstrates the pragma-interface of the Outliner.
+//! outline.cc: Demonstrates the pragma-interface of the Outliner.
 
 #include <iostream>
 #include <rose.h>
 #include <Outliner.hh>
+#include <vector>
+#include <string>
 
 using namespace std;
 
 int
 main (int argc, char* argv[])
 {
-  SgProject* proj = frontend (argc, argv);
+  //! Accepting command line options to the outliner
+  vector<string> argvList(argv,argv+argc);
+  Outliner::commandLineProcessing(argvList);
+
+  SgProject* proj = frontend (argvList);
   ROSE_ASSERT (proj);
 
-#if 1
   cerr << "[Outlining...]" << endl;
   size_t count = Outliner::outlineAll (proj);
-  cerr << "  [Processed " << count << " outline directives.]" << endl;
-#else
-  printf ("Skipping outlining due to recent move from std::list to std::vector in ROSE \n");
-#endif
 
-  cerr << "[Unparsing...]" << endl;
+  cerr << "  [Processed " << count << " outline directives.]" << endl;
   return backend (proj);
 }

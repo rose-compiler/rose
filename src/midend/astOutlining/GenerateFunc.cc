@@ -19,6 +19,7 @@
 #include "VarSym.hh"
 #include "Copy.hh"
 #include "StmtRewrite.hh"
+#include "Outliner.hh"
 
 //! Stores a variable symbol remapping.
 typedef std::map<const SgVariableSymbol *, SgVariableSymbol *> VarSymRemap_t;
@@ -159,23 +160,23 @@ createParam (const string& init_name, const SgType* init_type)
 
   SgType* param_base_type = 0;
   if (isBaseTypePrimitive (init_type))
-    {
-      // Duplicate the initial type.
-      param_base_type = const_cast<SgType *> (init_type); //!< \todo Is shallow copy here OK?
-      ROSE_ASSERT (param_base_type);
-    }
+  {
+    // Duplicate the initial type.
+    param_base_type = const_cast<SgType *> (init_type); //!< \todo Is shallow copy here OK?
+    ROSE_ASSERT (param_base_type);
+  }
   else
+  {
+    param_base_type = SgTypeVoid::createType ();
+    ROSE_ASSERT (param_base_type);
+    if (ASTtools::isConstObj (init_type))
     {
-      param_base_type = SgTypeVoid::createType ();
-      ROSE_ASSERT (param_base_type);
-      if (ASTtools::isConstObj (init_type))
-        {
-          SgModifierType* mod = new SgModifierType (param_base_type);
-          ROSE_ASSERT (mod);
-          mod->get_typeModifier ().get_constVolatileModifier ().setConst ();
-          param_base_type = mod;
-        }
+      SgModifierType* mod = new SgModifierType (param_base_type);
+      ROSE_ASSERT (mod);
+      mod->get_typeModifier ().get_constVolatileModifier ().setConst ();
+      param_base_type = mod;
     }
+  }
 
   // Stores the new parameter.
   string new_param_name = init_name + "p__";
@@ -185,33 +186,45 @@ createParam (const string& init_name, const SgType* init_type)
   if (SageInterface::is_Fortran_language())
     return OutlinedFuncParam_t (new_param_name,param_base_type);
   else 
-  return OutlinedFuncParam_t (new_param_name, new_param_type);
+    return OutlinedFuncParam_t (new_param_name, new_param_type);
 }
 
 /*!
  *  \brief Creates a local variable declaration to "unpack" an
- *  outlined-function parameter that has been passed as a pointer
+ *  outlined-function's parameter that has been passed as a pointer
  *  value.
+ *  int index is optionally used as an offset inside a wrapper parameter for multiple variables
  *
  *  OUT_XXX(int *ip__)
  *  {
  *    // This is call unpacking declaration, Liao, 9/11/2008
  *   int i = * (int *) ip__;
  *  }
+ *
+ *  Or
+ *
+ *  OUT_XXX (void * __out_argv[n])
+ *  {
+ *    int * _p_i = * (int*)__out_argv[0];
+ *    int * _p_j = * (int*)__out_argv[1];
+ *    ....
+ *  }
+ * The key is to set local_name, local_type, and local_val for all cases
  */
 static
 SgVariableDeclaration *
-createUnpackDecl (SgInitializedName* param,
+createUnpackDecl (SgInitializedName* param, int index,
                   const string& local_var_name,
-                  SgType* local_var_type)
+                  SgType* local_var_type, SgScopeStatement* scope)
 {
+  ROSE_ASSERT(param&&scope);
   // Create an expression that "unpacks" (dereferences) the parameter.
-  SgVariableSymbol* param_sym = new SgVariableSymbol (param);
-  ROSE_ASSERT (param_sym);
-
-  SgVarRefExp* param_ref = new SgVarRefExp (ASTtools::newFileInfo (),
-                                            param_sym);
-  ROSE_ASSERT (param_ref);
+  // SgVarRefExp* 
+  SgExpression* param_ref = buildVarRefExp(param,scope);
+  if (Outliner::useParameterWrapper) // using index for a wrapper parameter
+  {
+     param_ref= buildPntrArrRefExp(param_ref,buildIntVal(index));
+  } 
 
   // the original data type of the variable
   SgType* param_deref_type = const_cast<SgType *> (local_var_type);
@@ -222,60 +235,49 @@ createUnpackDecl (SgInitializedName* param,
   SgType* local_var_type_ptr =
     SgPointerType::createType (ref ? ref->get_base_type (): param_deref_type);
   ROSE_ASSERT (local_var_type_ptr);
-  SgCastExp* cast_expr = new SgCastExp (ASTtools::newFileInfo (),
-                                        param_ref,
-                                        local_var_type_ptr);
-  ROSE_ASSERT (cast_expr);
+  SgCastExp* cast_expr = buildCastExp(param_ref,local_var_type_ptr,SgCastExp::e_C_style_cast);
 
-#if SET_TYPE_EXPLICITLY
-  SgPointerDerefExp* param_deref_expr =
-    new SgPointerDerefExp (ASTtools::newFileInfo (),
-                           cast_expr,
-                           param_deref_type);
-#else
-  SgPointerDerefExp* param_deref_expr =
-    new SgPointerDerefExp (ASTtools::newFileInfo (),
-                           cast_expr);
-#endif
-
-  ROSE_ASSERT (param_deref_expr);
+  SgPointerDerefExp* param_deref_expr = buildPointerDerefExp(cast_expr);
 
   // Declare a local variable to store the dereferenced argument.
   SgName local_name (local_var_name.c_str ());
-  SgAssignInitializer* local_val =
-    new SgAssignInitializer (ASTtools::newFileInfo (),
-                             param_deref_expr, param_deref_type);
-  ROSE_ASSERT (local_val);
+
+  if (SageInterface::is_Fortran_language())
+    local_name = SgName(param->get_name());
+
+  // The value of the assignment statement
+  SgAssignInitializer* local_val = buildAssignInitializer(param_deref_expr);
+  if (SageInterface::is_Fortran_language())
+    local_val = NULL;
+  else  if  (is_C_language()) // using pointer dereferences
+  {
+    local_val = buildAssignInitializer(cast_expr);
+  }
+ 
 
   SgType* local_type = NULL;
-// Rich's idea was to leverage C++'s reference type: two cases:
-//  a) for variables of reference type: no additional work
-//  b) for others: make a reference type to them
-//   all variable accesses in the outlined function will have
-//   access the address of the by default, not variable substitution is needed 
-// but this method won't work for non-C++ code, where & on left side of assignment 
-//  is not recognized at all.
-  if (is_C_language())
- {   
-    //TODO more C cases
-    local_type = param_deref_type;
- }
-  else
+  // Rich's idea was to leverage C++'s reference type: two cases:
+  //  a) for variables of reference type: no additional work
+  //  b) for others: make a reference type to them
+  //   all variable accesses in the outlined function will have
+  //   access the address of the by default, not variable substitution is needed 
+  // but this method won't work for non-C++ code, where & on left side of assignment 
+  //  is not recognized at all.
+  if (SageInterface::is_Fortran_language())
+    local_type= local_var_type;
+  else if (is_C_language())
+  {   
+    //have to use pointer dereference
+    local_type = buildPointerType(param_deref_type);
+  }
+  else // C++ language
   { 
     local_type= isSgReferenceType(param_deref_type)
-    ?param_deref_type:SgReferenceType::createType(param_deref_type);
+      ?param_deref_type:SgReferenceType::createType(param_deref_type);
   }
   ROSE_ASSERT (local_type);
 
-  SgVariableDeclaration* decl =
-    new SgVariableDeclaration (ASTtools::newFileInfo (),
-                               local_name, local_type, local_val);
-  ROSE_ASSERT (decl);
-  decl->set_firstNondefiningDeclaration (decl); //!< \todo Do in constructor?
-
-  //! \todo Needed to overcome a bug in Cxx_tests/test2005_155.C---why?
-  decl->set_variableDeclarationContainsBaseTypeDefiningDeclaration (false);
-
+  SgVariableDeclaration* decl = buildVariableDeclaration(local_name,local_type,local_val,scope);
   return decl;
 }
 
@@ -323,6 +325,8 @@ static
 SgAssignOp *
 createPackExpr (SgInitializedName* local_unpack_def)
 {
+  if (is_C_language())
+    return NULL;
   if (local_unpack_def
       && !isReadOnlyType (local_unpack_def->get_type ())
       && !isSgReferenceType (local_unpack_def->get_type ()))
@@ -382,6 +386,9 @@ static
 SgExprStatement *
 createPackStmt (SgInitializedName* local_unpack_def)
 {
+  // No repacking for Fortran for now
+  if (local_unpack_def==NULL || SageInterface::is_Fortran_language())
+    return NULL;
   SgAssignOp* pack_expr = createPackExpr (local_unpack_def);
   if (pack_expr)
     return new SgExprStatement (ASTtools::newFileInfo (), pack_expr);
@@ -449,12 +456,14 @@ recordSymRemap (const SgVariableSymbol* orig_sym,
  *
  *  In addition to creating the function parameters, this routine
  *  records the mapping between the given variable symbols and the new
- *  symbols corresponding to the new parameters.
+ *  symbols corresponding to the new parameters. 
+ *  This is used later on for variable replacement
  *
  *  To support C programs, this routine assumes parameters passed
- *  using pointers (rather than references).  Moreover, it inserts
- *  "packing" and "unpacking" statements at the beginning and end of
- *  the function declaration, respectively.
+ *  using pointers (rather than references).  
+ *
+ *  Moreover, it inserts "packing" and "unpacking" statements at the 
+ *  beginning and end of the function declaration, respectively, when necessary
  */
 static
 void
@@ -463,13 +472,10 @@ appendParams (const ASTtools::VarSymSet_t& syms,
               VarSymRemap_t& sym_remap)
 {
   ROSE_ASSERT (func);
-
   SgFunctionParameterList* params = func->get_parameterList ();
   ROSE_ASSERT (params);
-
   SgFunctionDefinition* def = func->get_definition ();
   ROSE_ASSERT (def);
-
   SgBasicBlock* body = def->get_body ();
   ROSE_ASSERT (body);
 
@@ -477,104 +483,105 @@ appendParams (const ASTtools::VarSymSet_t& syms,
   SgScopeStatement* args_scope = isSgScopeStatement (body);
   ROSE_ASSERT (args_scope);
 
-  // For each variable symbol, create an equivalent function
-  // parameter. Also create unpacking and repacking statements.
+  // For each variable symbol, create an equivalent function parameter. 
+  // Also create unpacking and repacking statements.
+  int counter=0;
+  SgInitializedName* parameter1=NULL; // the wrapper parameter
   for (ASTtools::VarSymSet_t::const_reverse_iterator i = syms.rbegin ();
-       i != syms.rend (); ++i)
+      i != syms.rend (); ++i)
+  {
+    // Basic information about the variable to be passed into the outlined function
+    // Variable symbol name
+    const SgInitializedName* i_name = (*i)->get_declaration ();
+    ROSE_ASSERT (i_name);
+    string name_str = i_name->get_name ().str ();
+    SgName p_sg_name (name_str);
+    SgType* i_type = i_name->get_type ();
+
+    // Create parameters and insert it into the parameter list.
+    SgInitializedName* p_init_name = NULL;
+         // Case 1: using a wrapper for all variables 
+    if (Outliner::useParameterWrapper)
     {
-      // Variable symbol name
-      const SgInitializedName* i_name = (*i)->get_declaration ();
-      ROSE_ASSERT (i_name);
-
-      // Function parameter (initialized) name
-      string name_str = i_name->get_name ().str ();
-      SgType* i_type = i_name->get_type ();
-
-      // Create parameter and insert it into the parameter list.
+      if (i==syms.rbegin())
+      {
+        SgName var1_name = "__out_argv";
+        SgType* ptype= buildPointerType(buildPointerType(buildVoidType()));
+        parameter1 = buildInitializedName(var1_name,ptype);
+        appendArg(params,parameter1);
+      }
+      p_init_name = parameter1; // set the source parameter to the wrapper
+    }
+    else // case 2: use a parameter for each variable
+    {
+      // It handles language-specific details internally, like pass-by-value, pass-by-reference
       OutlinedFuncParam_t param = createParam (name_str, i_type);
       SgName p_sg_name (param.first.c_str ());
-      SgInitializedName* p_init_name = createInitName (param.first,
-                                                       param.second,
-						      def->get_declaration(),
-                                                       def);
+      p_init_name = createInitName (param.first,
+          param.second,def->get_declaration(), def);
       ROSE_ASSERT (p_init_name);
-      params->prepend_arg (p_init_name);
-      p_init_name->set_parent (params); //!< \todo Set in 'createInitName()'?
-      p_init_name->set_scope (def); //!< \todo Set in 'createInitName()'?
-
-	// pack/unpack is not necessary for Fortran, Liao 12/14/2007
-     if (!SageInterface::is_Fortran_language())
-      {
-      // Create and insert unpack statement.
-      SgVariableDeclaration* local_var_decl =
-        createUnpackDecl (p_init_name, name_str, i_type);
-      ROSE_ASSERT (local_var_decl);
-      body->prepend_statement (local_var_decl);
-      recordSymRemap (*i, local_var_decl, args_scope, sym_remap);
-          
-      // Create and insert companion re-pack statement.
-      SgInitializedName* local_var_init =
-        local_var_decl->get_decl_item (SgName (name_str.c_str ()));
-      ROSE_ASSERT (local_var_init);
-      SgExprStatement* pack_stmt = createPackStmt (local_var_init);
-      if (pack_stmt)
-        body->append_statement (pack_stmt);
+      prependArg(params,p_init_name);
     }
-      else
-      {
-     //TODO Not sure the right scope for Fortran parameter, assuming function definition now
-   // recordSymRemap() has two instances: the 2nd parameter could be initialized name in one case
-     // p_init_name should already have a symbol associated with it after call createInitName()
-     // pass NULL scope to avoid duplicated insertion
-     //recordSymRemap (*i, i_name, def, sym_remap);
-        recordSymRemap (*i, p_init_name, NULL, sym_remap);
 
-	// Liao, 12/26/2007, additional work for Fortran
-	// for translator-generated arguments, prepend explicit type specifications to the body
-	SgVariableDeclaration * varDecl= new SgVariableDeclaration(ASTtools::newFileInfo (),\
-		p_sg_name,i_type,NULL);
-        ROSE_ASSERT(varDecl);
-        varDecl->set_firstNondefiningDeclaration(varDecl);
-        SgInitializedName *initName = varDecl->get_decl_item (p_sg_name);
-        ROSE_ASSERT(initName);
-        initName->set_prev_decl_item(p_init_name);
+    //Create unpacking statements
+    SgVariableDeclaration*  local_var_decl  = createUnpackDecl (p_init_name, counter, name_str, i_type,body);
+    ROSE_ASSERT (local_var_decl);
+    prependStatement (local_var_decl,body);
+    if (SageInterface::is_Fortran_language())
+      args_scope = NULL; // not sure about Fortran scope
+    recordSymRemap (*i, local_var_decl, args_scope, sym_remap);
 
-        body->prepend_statement(varDecl);
-      } // end if     
-    } //end for
+    // Create and insert companion re-pack statement in the end of the function body
+    // If necessary
+    SgInitializedName* local_var_init =
+      local_var_decl->get_decl_item (SgName (name_str.c_str ()));
+    SgExprStatement* pack_stmt = createPackStmt (local_var_init);
+    if (pack_stmt)
+      appendStatement (pack_stmt,body);
+
+    counter ++;
+  } //end for
 }
 
 // ===========================================================
 
 //! Fixes up references in a block to point to alternative symbols.
+// based on an existing symbol-to-symbol map
 static
 void
 remapVarSyms (const VarSymRemap_t& vsym_remap, SgBasicBlock* b)
 {
   if (!vsym_remap.empty ()) // Check if any remapping is even needed.
+  {
+    typedef Rose_STL_Container<SgNode *> NodeList_t;
+    NodeList_t refs = NodeQuery::querySubTree (b, V_SgVarRefExp);
+    for (NodeList_t::iterator i = refs.begin (); i != refs.end (); ++i)
     {
-      typedef Rose_STL_Container<SgNode *> NodeList_t;
-      NodeList_t refs = NodeQuery::querySubTree (b, V_SgVarRefExp);
-      for (NodeList_t::iterator i = refs.begin (); i != refs.end (); ++i)
-        {
-          // Reference possibly in need of fix-up.
-          SgVarRefExp* ref_orig = isSgVarRefExp (*i);
-          ROSE_ASSERT (ref_orig);
+      // Reference possibly in need of fix-up.
+      SgVarRefExp* ref_orig = isSgVarRefExp (*i);
+      ROSE_ASSERT (ref_orig);
 
-          // Search for a replacement symbol.
-          VarSymRemap_t::const_iterator ref_new =
-            vsym_remap.find (ref_orig->get_symbol ());
-          if (ref_new != vsym_remap.end ()) // Needs replacement
-            {
-              SgVariableSymbol* sym_new = ref_new->second;
-              ref_orig->set_symbol (sym_new);
-            }
+      // Search for a replacement symbol.
+      VarSymRemap_t::const_iterator ref_new =
+        vsym_remap.find (ref_orig->get_symbol ());
+      if (ref_new != vsym_remap.end ()) // Needs replacement
+      {
+        SgVariableSymbol* sym_new = ref_new->second;
+        if (is_C_language())
+        {
+          SgPointerDerefExp * deref_exp = SageBuilder::buildPointerDerefExp(buildVarRefExp(sym_new));
+          deref_exp->set_need_paren(true);
+          SageInterface::replaceExpression(isSgExpression(ref_orig),isSgExpression(deref_exp));
         }
-    }
+        else
+          ref_orig->set_symbol (sym_new);
+      } //find an entry
+    } // for every refs
+  }
 }
 
 // =====================================================================
-
+//! Create a function named 'func_name_str', with a parameter list from 'syms'
 SgFunctionDeclaration *
 Outliner::Transform::generateFunction (const SgBasicBlock* s,
                                           const string& func_name_str,
@@ -597,7 +604,7 @@ Outliner::Transform::generateFunction (const SgBasicBlock* s,
                                                     SgTypeVoid::createType (),
                                                     parameterList);
   ROSE_ASSERT (func);
-// liao 10/30/207 maintain the symbol table
+// Liao 10/30/2007 maintain the symbol table
    SgFunctionSymbol * func_symbol = new SgFunctionSymbol(func);
    const_cast<SgBasicBlock *>(s)->insert_symbol(func->get_name(), func_symbol);
 

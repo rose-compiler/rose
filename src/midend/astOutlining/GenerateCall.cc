@@ -14,6 +14,7 @@
 #include "ASTtools.hh"
 #include "VarSym.hh"
 #include "StmtRewrite.hh"
+#include "Outliner.hh"
 
 // =====================================================================
 
@@ -24,38 +25,47 @@ using namespace std;
 //! Convert the given set of variable symbols into function call arguments.
 static
 void
-appendArgs (const ASTtools::VarSymSet_t& syms, SgExprListExp* e_list)
+appendArgs (const ASTtools::VarSymSet_t& syms, std::string arg_name, SgExprListExp* e_list, SgScopeStatement* scope)
 {
   if (!e_list)
     return;
-  for (ASTtools::VarSymSet_t::const_iterator i = syms.begin ();
-       i != syms.end (); ++i)
+  if (Outliner::useParameterWrapper && (syms.size()>0))  // using void * __out_argv[n] as a wrapper
+  { 
+    ROSE_ASSERT(scope!=NULL);
+    SageInterface::appendExpression(e_list,SageBuilder::buildVarRefExp(arg_name ,scope));
+   return; 
+  }
+  else 
+  {
+    for (ASTtools::VarSymSet_t::const_iterator i = syms.begin ();
+        i != syms.end (); ++i)
     {
       // Create variable reference to pass to the function.
       SgVarRefExp* v_ref = new SgVarRefExp (ASTtools::newFileInfo (),
-                                            const_cast<SgVariableSymbol *> (*i));
+          const_cast<SgVariableSymbol *> (*i));
       ROSE_ASSERT (v_ref);
-     // Liao, 12/14/2007  Pass by reference is default behavior for Fortran
+      // Liao, 12/14/2007  Pass by reference is default behavior for Fortran
       if (SageInterface::is_Fortran_language())
         e_list->append_expression(v_ref);
       else {
-      // Construct actual function argument.
-      SgType* i_arg_type = SgPointerType::createType (v_ref->get_type ());
-      ROSE_ASSERT (i_arg_type);
-      SgExpression* i_arg = new SgAddressOfOp (ASTtools::newFileInfo (),
-                                               v_ref, i_arg_type);
-      ROSE_ASSERT (i_arg);
-      e_list->append_expression (i_arg);
+        // Construct actual function argument.
+        SgType* i_arg_type = SgPointerType::createType (v_ref->get_type ());
+        ROSE_ASSERT (i_arg_type);
+        SgExpression* i_arg = new SgAddressOfOp (ASTtools::newFileInfo (),
+            v_ref, i_arg_type);
+        ROSE_ASSERT (i_arg);
+        e_list->append_expression (i_arg);
       } //end if
 
     }
+  }
 }
 
 // =====================================================================
 
 SgStatement *
 Outliner::Transform::generateCall (SgFunctionDeclaration* out_func,
-                                      const ASTtools::VarSymSet_t& syms)
+                                      const ASTtools::VarSymSet_t& syms, std::string wrapper_name, SgScopeStatement* scope)
 {
   // Create a reference to the function.
   SgFunctionSymbol* func_symbol = new SgFunctionSymbol (out_func);
@@ -68,7 +78,7 @@ Outliner::Transform::generateCall (SgFunctionDeclaration* out_func,
   // Create an argument list.
   SgExprListExp* exp_list_exp = new SgExprListExp (ASTtools::newFileInfo ());
   ROSE_ASSERT (exp_list_exp);
-  appendArgs (syms, exp_list_exp);
+  appendArgs (syms, wrapper_name, exp_list_exp,scope);
 
   // Generate the actual call.
   SgFunctionCallExp* func_call_expr =
@@ -78,17 +88,7 @@ Outliner::Transform::generateCall (SgFunctionDeclaration* out_func,
                            out_func->get_type ());
   ROSE_ASSERT (func_call_expr);
 
-#if 0
-// DQ (9/7/2007): SgExpressionRoot is no longer used in the AST
-  SgExpressionRoot* func_call_root =
-    new SgExpressionRoot (ASTtools::newFileInfo (),
-                          func_call_expr,
-                          out_func->get_type ());
-  ROSE_ASSERT (func_call_root);
-#endif
-
-// SgExprStatement *func_call_stmt = new SgExprStatement (ASTtools::newFileInfo (), func_call_root);
-   SgExprStatement *func_call_stmt = new SgExprStatement (ASTtools::newFileInfo (), func_call_expr);
+  SgExprStatement *func_call_stmt = new SgExprStatement (ASTtools::newFileInfo (), func_call_expr);
 
   ROSE_ASSERT (func_call_stmt);
 

@@ -57,6 +57,10 @@ namespace Outliner
                       const std::string& func_name_str,
                       const ASTtools::VarSymSet_t& syms);
 
+     //! Generate packing statements for the variables to be passed 
+     //return the unique wrapper parameter for the outlined function
+    std::string generatePackingStatements(SgStatement* target, ASTtools::VarSymSet_t & syms);
+
     /*!
      *  \brief Inserts an outlined-function declaration into global scope.
      *
@@ -75,8 +79,7 @@ namespace Outliner
     /*!
      *  \brief Generates a call to an outlined function.
      */
-    SgStatement* generateCall (SgFunctionDeclaration* out_func,
-                               const ASTtools::VarSymSet_t& syms);
+    SgStatement* generateCall (SgFunctionDeclaration* out_func, const ASTtools::VarSymSet_t& syms, std::string wrapper_arg_name,SgScopeStatement* scope);
   } /* namespace Transform */
 } /* namespace Outliner */
 

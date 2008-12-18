@@ -133,7 +133,7 @@ getVarSym (SgNode* n)
 
 /*!
  *  Collect all SgVariableSymbols associated with an SgVarRefExp node
- *  or a SgVariableDeclaration node.
+ *  a SgVariableDeclaration node,  or a SgInitializedName (function parameters)
  */
 static
 void
@@ -237,7 +237,8 @@ ASTtools::collectLocalVisibleVarSyms (const SgStatement* root,
     }
 
     virtual void visit (SgNode* n)
-    {
+    { 
+      //Stop the traversal once target node is met.
       if (isSgStatement (n) == target_)
         throw string ("done");
       getVarSyms (n, &syms_);

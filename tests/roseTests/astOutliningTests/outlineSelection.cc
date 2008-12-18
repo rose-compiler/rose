@@ -126,6 +126,7 @@ int
 main (int argc, char* argv[])
 {
   vector<string> argvList(argv, argv + argc);
+  Outliner::commandLineProcessing(argvList);
 
   ProgramOptions_t opts;
   if (!getOptions (argvList, opts))

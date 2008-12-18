@@ -3,7 +3,7 @@
  *
  *  \brief An outlining implementation.
  *
- *  \author Chunhua Liao <liaoch@cs.uh.edu>, Richard Vuduc
+ *  \author Chunhua Liao <liaoch@llnl.gov>, Richard Vuduc
  *  <richie@llnl.gov>
  *
  *  This implementation is based largely on the code by Liao for the
@@ -19,6 +19,8 @@
 #define INC_LIAOUTLINER_HH
 
 #include <cstdlib>
+#include <vector>
+#include <string>
 
 //! \name Forward declarations to relevant Sage classes.
 //@{
@@ -30,6 +32,16 @@ class SgPragmaDeclaration;
 
 namespace Outliner
 {
+  //! A set of flags to control the internal behavior of the outliner
+  // use a wrapper for all variables or one parameter for a variable or a wrapper for all variables
+  extern bool useParameterWrapper;  // use a wrapper for parameters of the outlined function
+  extern bool preproc_only_;  // preprocessing only
+  extern bool usePointerDereferencing;  // Using pointer dereferencing for C
+
+  //! Accept a set of command line options to adjust internal behaviors
+  // Please use this function before calling the frontend() to set the internal flags
+  void commandLineProcessing(std::vector<std::string> &argvList);
+  //
   //! Returns true iff the statement is "outlineable."
   bool isOutlineable (const SgStatement* s, bool verbose = false);
 
@@ -58,6 +70,16 @@ namespace Outliner
    *  unique across a project.
    */
   std::string generateFuncName (const SgStatement* stmt);
+
+  /*!
+   *  \brief Create a unique outlined-function's wrapper argument name for the specified
+   *  statement.
+   *
+   *  The generated name will be "unique" within the current
+   *  translation unit, and is likely (but not guaranteed) to be
+   *  unique across a project.
+   */
+  std::string generateFuncArgName (const SgStatement* stmt);
 
   //! Outlines the given statement.
   /*!

@@ -14,10 +14,8 @@
 #include <string>
 #include <cstdlib>
 #include <algorithm>
-
 #include <rose.h>
 #include <commandline_processing.h>
-
 #include "Outliner.hh"
 
 //! Generates a PDF into the specified file.
@@ -33,46 +31,26 @@ using namespace std;
 int
 main (int argc, char* argv[])
 {
+  //! Accepting command line options to the outliner
   vector<string> argvList(argv, argv + argc);
-  bool preproc_only = CommandlineProcessing::isOption (argvList,
-                                                       "-rose:outline:",
-                                                       "preproc-only",
-                                                       true);
+  Outliner::commandLineProcessing(argvList);
 
-  cerr << "[Processing source...]" << endl;
   SgProject* proj = frontend (argvList);
   ROSE_ASSERT (proj);
 
   bool make_pdfs = proj->get_verbose () >= 2;
   if (make_pdfs)
-    {
-      cerr << "[Generating a PDF...]" << endl;
-      makePDF (proj);
-    }
+    makePDF (proj);
 
   if (!proj->get_skip_transformation ())
-    {
-      size_t count = 0;
-      if (preproc_only)
-        {
-          cerr << "[Running outliner's preprocessing phase only...]" << endl;
-          count = Outliner::preprocessAll (proj);
-        }
-      else
-        {
-          cerr << "[Outlining...]" << endl;
-          count = Outliner::outlineAll (proj);
-        }
-      cerr << "  [Processed " << count << " outline directives.]" << endl;
+  {
+    size_t count = 0;
+    count = Outliner::outlineAll (proj);
 
-      if (make_pdfs)
-        {
-          cerr << "  [Making PDF of transformed AST...]" << endl;
-          makePDF (proj, "outlined-");
-        }
-    }
+    if (make_pdfs)
+      makePDF (proj, "outlined-");
+  }
 
-  cerr << "[Unparsing...]" << endl;
   return backend (proj);
 }
 
@@ -96,7 +74,7 @@ makePDF (const SgProject* proj, const string& fn_prefix)
   ROSE_ASSERT (proj);
   const SgFilePtrList& files = const_cast<SgProject *> (proj)->get_fileList();
   for_each (files.begin (), files.end (),
-            bind2nd (ptr_fun (makePDF_SgFile), fn_prefix));
+      bind2nd (ptr_fun (makePDF_SgFile), fn_prefix));
 }
 
 // eof

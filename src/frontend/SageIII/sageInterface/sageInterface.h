@@ -926,11 +926,13 @@ void deepDelete(SgNode* root);
 void replaceStatement(SgStatement* oldStmt, SgStatement* newStmt);
 
 //! Append an argument to SgFunctionParameterList, transparently set parent,scope, and symbols for arguments when possible
-/*! we recommend to build SgFunctionParameterList before building a function declaration
+/*! We recommend to build SgFunctionParameterList before building a function declaration
  However, it is still allowed to append new arguments for existing function declarations.
  \todo function type , function symbol also need attention.
 */
 SgVariableSymbol* appendArg(SgFunctionParameterList *, SgInitializedName*);
+//!Prepend an argument to SgFunctionParameterList
+SgVariableSymbol* prependArg(SgFunctionParameterList *, SgInitializedName*);
 
 //! Append an expression to a SgExprListExp, set the parent pointer also
 void appendExpression(SgExprListExp *, SgExpression*);

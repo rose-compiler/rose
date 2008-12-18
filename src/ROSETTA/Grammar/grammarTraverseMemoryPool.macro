@@ -8,7 +8,7 @@ $CLASSNAME::traverseMemoryPoolNodes(ROSE_VisitTraversal & traversal)
   // attribute based traversals visit only the embedded tree within the AST.
 
   // Initialize array to the address of the first element of the STL vector
-  // (which is guarenteed to be contiguous storage).
+  // (which is guaranteed to be contiguous storage).
   // $CLASSNAME objectArray [] = *(Memory_Block_List.begin());
      if ($CLASSNAME_Memory_Block_List.empty() == false)
         {

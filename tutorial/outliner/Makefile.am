@@ -44,7 +44,9 @@ INDENT_ARGS = -npsl
 # Build demo translators
 
 INCLUDES = $(ROSE_INCLUDES) $(OUTLINER_INCS)
-noinst_PROGRAMS = outline outlineIfs outlinePreproc
+# We install a copy
+bin_PROGRAMS = outline
+noinst_PROGRAMS = outlineIfs outlinePreproc
 
 outline_SOURCES = outline.cc
 outline_LDFLAGS = $(OUTLINER_LIBS)
