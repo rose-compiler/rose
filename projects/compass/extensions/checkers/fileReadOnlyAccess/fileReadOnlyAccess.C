@@ -114,6 +114,8 @@ visit(SgNode* node)
 
            SgStringVal *mode = isSgStringVal(*itr);
 
+	   // tps (18Dec2008) : added the (mode==NULL) condition because checker fails.
+	   if (mode==NULL) return;
            ROSE_ASSERT( mode != NULL );
 
            if( mode->get_value() != "r" && mode->get_value() != "rb" )
