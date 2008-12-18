@@ -55,7 +55,7 @@ void Compass::loadDFA(std::string name, SgProject* project) {
   res[0]=0;
   res[1]=1;
   bool done=false;
-  global_arrsize=0; global_arrsizeUse=0;
+  global_arrsize=-2; global_arrsizeUse=-2;
   std::cerr << " Starting the load with " << processes << " processes. " << std::endl;
   while (!done) {
 
@@ -63,7 +63,7 @@ void Compass::loadDFA(std::string name, SgProject* project) {
     ROSE_ASSERT(Compass::sourceDefUsePrerequisite.done==true);
     // The dataflow analysis must return at least one definition;
     // This test was added because the dataflow analysis was disabled.
-    ROSE_ASSERT(global_arrsize!=0);
+
     //    if (defuse==NULL) {
     //  defuse = new DefUseAnalysis(project);
     //  std::cerr << " creating defuse ... " <<std::endl;
@@ -161,6 +161,7 @@ void Compass::loadDFA(std::string name, SgProject* project) {
     }
   }
 
+  
   if ((my_rank==0 && processes==1) || (my_rank==1 && processes>1)) {
     my_map defmap = Compass::sourceDefUsePrerequisite.getSourceDefUse()->getDefMap();
     my_map usemap = Compass::sourceDefUsePrerequisite.getSourceDefUse()->getUseMap();

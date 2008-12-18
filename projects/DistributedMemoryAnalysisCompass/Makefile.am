@@ -85,12 +85,12 @@ check-local: parallel_functionBased_dynamicBalance parallel_file_compass paralle
 	mpirun -l -np 1 ./parallel_functionBased_ASTBalance$(EXEEXT) $(srcdir)/buffer2.c -shared
 	mpirun -l -np 1 ./parallel_functionBased_ASTBalance$(EXEEXT) $(srcdir)/buffer2.c -combined
 	mpirun -l -np 1 ./parallel_compass$(EXEEXT) -save test.ast $(srcdir)/buffer2.c 
-	mpirun -l -np 1 ./parallel_compass$(EXEEXT) -load test.ast $(srcdir)/buffer2.c 
-	mpirun -l -np 2 ./parallel_compass$(EXEEXT) -load test.ast $(srcdir)/buffer2.c
-	mpirun -l -np 1 ./parallel_compass$(EXEEXT) -load test.ast $(srcdir)/buffer2.c
-	mpirun -l -np 2 ./parallel_compass$(EXEEXT) -load test.ast $(srcdir)/buffer2.c
-	mpirun -l -np 1 ./parallel_compass$(EXEEXT) -load test.ast $(srcdir)/buffer2.c
-	mpirun -l -np 2 ./parallel_compass$(EXEEXT) -load test.ast $(srcdir)/buffer2.c
+	mpirun -l -np 1 ./parallel_compass$(EXEEXT) -load test.ast -sdfa
+	mpirun -l -np 2 ./parallel_compass$(EXEEXT) -load test.ast -sdfa
+	mpirun -l -np 1 ./parallel_compass$(EXEEXT) -load test.ast -ldfa
+	mpirun -l -np 2 ./parallel_compass$(EXEEXT) -load test.ast -ldfa
+	mpirun -l -np 1 ./parallel_compass$(EXEEXT) -load test.ast 
+	mpirun -l -np 2 ./parallel_compass$(EXEEXT) -load test.ast 
 
 compass_parameters:
 	cd $(compass_build_tooldir)/compass && $(MAKE) compass_parameters
