@@ -211,7 +211,9 @@ import fortran.ofp.parser.java.FortranToken;
             /* File did not exist.  */
             return null;
         } else {
-            return null;
+             // Liao, 12/19/2008, It caused all include 'header.h' fail
+            //return null;
+            return tmpFile;
         }
     }// end findFile()
 
