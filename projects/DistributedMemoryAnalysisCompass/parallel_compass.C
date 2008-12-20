@@ -367,13 +367,15 @@ int main(int argc, char **argv)
 	language >>= 1;
 	lan = language &0x1u ;  // ARM
 	if (lan==1) isbinary=true;
+	if (my_rank==0)
 	std::cerr << " found graph checker " << graphChecker->checkerName <<  " isBinaryChecker: " << isbinary ;
 
 	if ((isbinary && isBinaryInput) || (!isbinary && !isBinaryInput)) {
 	  basesGraph.push_back(graphChecker);
 	  traversalsGraph.push_back(graphChecker->createGraphTraversal(params, &outputs));
+	  if (my_rank==0)
 	  cerr << " adding checker. " << endl;
-	} else
+	} else 	if (my_rank==0)
 	  cerr <<  endl;
 	
       }
@@ -390,13 +392,15 @@ int main(int argc, char **argv)
 	language >>= 1;
 	lan = language &0x1u ;  // ARM
 	if (lan==1) isbinary=true;
+	if (my_rank==0)
 	std::cerr << " found AST checker " << astChecker->checkerName << "  isBinaryChecker : " << isbinary ;
 
 	if ((isbinary && isBinaryInput) || (!isbinary && !isBinaryInput)) {
 	  bases.push_back(astChecker);
 	  traversals.push_back(astChecker->createSimpleTraversal(params, &outputs));
+	  if (my_rank==0)
 	  cerr << " adding checker. " << endl;
-	} else
+	} else 	if (my_rank==0)
 	  cerr  << endl;
       }
   }
@@ -517,13 +521,15 @@ int main(int argc, char **argv)
 	if (DEBUG_OUTPUT_PC_MORE) 
 	  cout << "bounds [" << i << "] = " << bounds[i] << "   my_rank: " << my_rank << endl;
 	int t=0;
+	b_itr=bases.begin();
 	if (bounds[i]== my_rank) 
-	  for (t_itr = traversals.begin(); t_itr != traversals.end(); ++t_itr) {
+	  for (t_itr = traversals.begin(); t_itr != traversals.end(); ++t_itr, ++b_itr) {
 	    SgNode* mynode = isSgNode(nullderefCounter.nodes[i]);
 	    ROSE_ASSERT(mynode);
 	    gettime(begin_time_checker);
 	    (*t_itr)->visit(mynode);
 	    gettime(end_time_checker);
+	    
 	    double time_checker = Compass::timeDifference(end_time_checker, begin_time_checker);
 	    totalCheckerTime[t]+=time_checker;
 	    t++;
@@ -584,12 +590,15 @@ int main(int argc, char **argv)
 	  for (i=min; i<max;i++) { 
 	    gettime(begin_time_node);
 	    int t=0;
-	    for (t_itr = traversals.begin(); t_itr != traversals.end(); ++t_itr) {
+	    b_itr=bases.begin();
+	    for (t_itr = traversals.begin(); t_itr != traversals.end(); ++t_itr,++b_itr) {
 	      SgNode* mynode = isSgNode(nodeDecls[i]);
 	      ROSE_ASSERT(mynode);
 	      gettime(begin_time_checker);
 	      (*t_itr)->visit(mynode);
 	      gettime(end_time_checker);
+
+
 	      double time_checker = Compass::timeDifference(end_time_checker, begin_time_checker);
 	      totalCheckerTime[t]+=time_checker;
 	      t++;

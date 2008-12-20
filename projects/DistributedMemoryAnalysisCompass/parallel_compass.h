@@ -199,6 +199,8 @@ public:
   }
   virtual void addOutput(Compass::OutputViolationBase *obj) {
     ++counts[obj->getCheckerName()];
+    // tps : this line prints the violations for the parallel checkers.
+    std::cout << obj->getString() << std::endl;
    }
   void fillOutputList(  std::vector<const Compass::Checker *> bases) {
     std::vector<const Compass::Checker *>::iterator it = bases.begin();
