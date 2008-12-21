@@ -6,9 +6,9 @@ lib_LTLIBRARIES = libqrose.la
 libqrose_la_LIBADD = ../Framework/libqrframework.la ../Widgets/libqrwidgets.la
 libqrose_la_SOURCES = qroselib.cpp
 if QROSE_USE_MINGW32
-   libqrose_la_LDFLAGS = -no-undefined @LIB_ROSE@ @ROSE_LDFLAGS@  @LIB_QT@ @QT_LDFLAGS@
+   libqrose_la_LDFLAGS = -no-undefined @QT_LDFLAGS@
 else
-   libqrose_la_LDFLAGS = @LIB_ROSE@ @ROSE_LDFLAGS@  @LIB_QT@ @QT_LDFLAGS@
+   libqrose_la_LDFLAGS = @QT_LDFLAGS@
 endif
 
 endif
