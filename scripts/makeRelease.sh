@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -x
 #
 # This script tries to upload a distribution package to the Scidac Outreach center web site
 # The assumption is that the machine running this script has a firefox browser with 
@@ -32,13 +32,14 @@ SESSION=`sed -n '/^outreach\.scidac\.gov\t.*\tsession_ser\t/p' < $HOME/.mozilla/
 
 # if failed, try to login automatically
 # and add the session into cookies
-if [ "x$SESSION" = "x" ]; then 
+# Changed to use auto-login no matter what. 
+#if [ "x$SESSION" = "x" ]; then 
    echo "No session for outreach.scidac is found. Trying to log in..."
    # a script trying to log in and redirect output to $HOME/curl.log 
    $HOME/release/scidac-login.sh
    SESSION=`grep 'Set-Cookie' $HOME/curl.log | cut -d' ' -f 3 | cut -d'=' -f 2 | cut -d';' -f 1`
    echo "outreach.scidac.gov	FALSE	/	FALSE	1228246200	session_ser	$SESSION">>$HOME/.mozilla/firefox/$FIREFOXID/cookies.txt
-fi
+#fi
 
 # debug here
 # exit
