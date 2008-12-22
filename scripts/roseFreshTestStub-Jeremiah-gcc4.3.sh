@@ -21,7 +21,7 @@ ROSE_TOP="/export/0/tmp.willcock2/svn-test-rose/$$/"
 CONFIGURE_FLAGS=( --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS='-Wall -Werror=format' --with-C_WARNINGS='-Wall -Werror=format' --with-CXXFLAGS=-fPIC --with-CFLAGS=-fPIC --prefix=${ROSE_TOP}/install --with-boost=${BOOST_ROOTX} "$@")
 
 ROSE_SVNROOT=file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
-MAILADDRS="willcock2@llnl.gov dquinlan@llnl.gov"
+MAILADDRS="dquinlan@llnl.gov"
 
 # the right version of subversion is essential!!
 SVN=/home/willcock2/svn-install/bin/svn

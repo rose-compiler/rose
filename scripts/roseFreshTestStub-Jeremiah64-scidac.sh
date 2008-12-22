@@ -24,7 +24,7 @@ ROSE_TOP="/export/0/tmp.willcock2/svn-test-rose/$$/"
 CONFIGURE_FLAGS=( --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS='-Wall -Werror=format' --with-C_WARNINGS='-Wall -Werror=format' --with-CXXFLAGS=-fPIC --with-CFLAGS=-fPIC --prefix=${ROSE_TOP}/install --with-boost=${BOOST_ROOTX} "$@")
 
 ROSE_SVNROOT=https://outreach.scidac.gov/svn/rose/trunk
-MAILADDRS="willcock2@llnl.gov liaoch@llnl.gov dquinlan@llnl.gov"
+MAILADDRS="liaoch@llnl.gov dquinlan@llnl.gov"
 SKIP_DIST_TEST=1
 # SKIP_BUILD_SOURCE=0
 
