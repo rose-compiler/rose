@@ -36,7 +36,6 @@ namespace Outliner
   // use a wrapper for all variables or one parameter for a variable or a wrapper for all variables
   extern bool useParameterWrapper;  // use a wrapper for parameters of the outlined function
   extern bool preproc_only_;  // preprocessing only
-  extern bool usePointerDereferencing;  // Using pointer dereferencing for C
 
   //! Accept a set of command line options to adjust internal behaviors
   // Please use this function before calling the frontend() to set the internal flags

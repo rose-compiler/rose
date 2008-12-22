@@ -536,45 +536,6 @@ CommandlineProcessing::isObjectFilename ( string name )
      return false;
    }
 
-#if 0
-bool
-CommandlineProcessing::isExecutableFilename ( string name )
-   {
-     initExecutableFileSuffixList();
-
-     int length = name.size();
-     for ( Rose_STL_Container<string>::iterator j = validExecutableFileSuffixes.begin(); j != validExecutableFileSuffixes.end(); j++ )
-        {
-          int jlength = (*j).size();
-          if ( (length > jlength) && (name.compare(length - jlength, jlength, *j) == 0) )
-             {
-               bool returnValue = false;
-
-            // Open file for reading
-               FILE* f = fopen(name.c_str(), "r");
-               if (!f)
-                  {
-                    printf ("Could not open file");
-                    ROSE_ASSERT(false);
-                  }
-
-            // Check for if this is a binary executable file!
-               int character0 = fgetc(f);
-               if (character0 == 127)
-                  {
-                    returnValue = true;
-                  }
-
-               fclose(f);
-
-               return returnValue;
-             }
-        }
-
-     return false;
-   }
-#endif
-
 void
 CommandlineProcessing::addSourceFileSuffix ( const string &suffix )
    {

@@ -137,35 +137,35 @@ main (int argc, char* argv[])
   ROSE_ASSERT (proj);
 
   if (opts.make_pdfs_)
-    {
-      cerr << "[Generating a PDF...]" << endl;
-      makePDF (proj);
-    }
+  {
+    cerr << "[Generating a PDF...]" << endl;
+    makePDF (proj);
+  }
 
   if (!proj->get_skip_transformation ())
+  {
+    size_t count = 0;
+    string outfinal_prefix;
+    if (opts.preproc_only_)
     {
-      size_t count = 0;
-      string outfinal_prefix;
-      if (opts.preproc_only_)
-        {
-          cerr << "[Running outliner's preprocessing phase only...]" << endl;
-          count = preprocessSelection (proj, opts);
-	  outfinal_prefix = "outlined_preproc-";
-        }
-      else
-        {
-          cerr << "[Outlining...]" << endl;
-          count = outlineSelection (proj, opts);
-	  outfinal_prefix = "outlined_final-";
-        }
-      cerr << "  [Processed " << count << " outline directives.]" << endl;
-
-      if (opts.make_pdfs_)
-	{
-	  cerr << "  [Making PDF of transformed AST...]" << endl;
-	  makePDF (proj, outfinal_prefix);
-	}
+      cerr << "[Running outliner's preprocessing phase only...]" << endl;
+      count = preprocessSelection (proj, opts);
+      outfinal_prefix = "outlined_preproc-";
     }
+    else
+    {
+      cerr << "[Outlining...]" << endl;
+      count = outlineSelection (proj, opts);
+      outfinal_prefix = "outlined_final-";
+    }
+    cerr << "  [Processed " << count << " outline directives.]" << endl;
+
+    if (opts.make_pdfs_)
+    {
+      cerr << "  [Making PDF of transformed AST...]" << endl;
+      makePDF (proj, outfinal_prefix);
+    }
+  }
 
   cerr << "[Unparsing...]" << endl;
   return backend (proj);
@@ -195,52 +195,52 @@ static void collectRandom (SgProject* root,
  */
 class OutlineableStmtCollector : public AstSimpleProcessing
 {
-public:
-  OutlineableStmtCollector (StmtSet_t& init_set)
-    : out_stmts_ (init_set), init_size_ (init_set.size ())
-  {
-  }
+  public:
+    OutlineableStmtCollector (StmtSet_t& init_set)
+      : out_stmts_ (init_set), init_size_ (init_set.size ())
+    {
+    }
 
-  virtual void visit (SgNode* n)
-  {
-    SgStatement* s = isSgStatement (n);
-    if (s && Outliner::isOutlineable (s) && !collected (s) && matches (s))
-      collect (s);
-  }
-  
-protected:
-  //! Returns the number of statements collected during the current traversal.
-  size_t numCollected (void) const
-  {
-    return out_stmts_.size () - init_size_;
-  }
+    virtual void visit (SgNode* n)
+    {
+      SgStatement* s = isSgStatement (n);
+      if (s && Outliner::isOutlineable (s) && !collected (s) && matches (s))
+        collect (s);
+    }
 
-  //! Returns 'true' if the given outlineable statement should be collected.
-  /*!
-   *  \pre The given statement, 's', is non-NULL and outlineable,
-   *  according to Outliner::isOutlineable ().
-   */
-  virtual bool matches (const SgStatement* s) const = 0;
+  protected:
+    //! Returns the number of statements collected during the current traversal.
+    size_t numCollected (void) const
+    {
+      return out_stmts_.size () - init_size_;
+    }
 
-  //! Update any internal state, as necessary.
-  virtual void updateAfterCollection (const SgStatement* s) {}
+    //! Returns 'true' if the given outlineable statement should be collected.
+    /*!
+     *  \pre The given statement, 's', is non-NULL and outlineable,
+     *  according to Outliner::isOutlineable ().
+     */
+    virtual bool matches (const SgStatement* s) const = 0;
 
-  //! Returns 'true' if 's' has been collected already.
-  bool collected (const SgStatement* s) const
-  {
-    return out_stmts_.find (const_cast<SgStatement *> (s))
-      != out_stmts_.end ();
-  }
+    //! Update any internal state, as necessary.
+    virtual void updateAfterCollection (const SgStatement* s) {}
 
-  //! Insert a given statement into the output set.
-  void collect (SgStatement* s)
-  {
-    out_stmts_.insert (s);
-  }
+    //! Returns 'true' if 's' has been collected already.
+    bool collected (const SgStatement* s) const
+    {
+      return out_stmts_.find (const_cast<SgStatement *> (s))
+        != out_stmts_.end ();
+    }
 
-private:
-  StmtSet_t& out_stmts_; //!< Holds all collected statements.
-  size_t init_size_; //!< Size of out_stmts_ when this object was constructed.
+    //! Insert a given statement into the output set.
+    void collect (SgStatement* s)
+    {
+      out_stmts_.insert (s);
+    }
+
+  private:
+    StmtSet_t& out_stmts_; //!< Holds all collected statements.
+    size_t init_size_; //!< Size of out_stmts_ when this object was constructed.
 };
 
 static
@@ -251,27 +251,27 @@ collectStmtsSeq (SgProject* root, size_t max_num_outline, size_t step,
   //! Traversal to collect a sequence of statements.
   class StmtCollectorSeq : public OutlineableStmtCollector
   {
-  public:
-    StmtCollectorSeq (StmtSet_t& s, size_t n, size_t k)
-      : OutlineableStmtCollector (s), max_ (n), step_ (k), num_checked_ (0)
-    {
-    }
+    public:
+      StmtCollectorSeq (StmtSet_t& s, size_t n, size_t k)
+        : OutlineableStmtCollector (s), max_ (n), step_ (k), num_checked_ (0)
+      {
+      }
 
-  protected:
-    /*!
-     *  \brief Returns 'true' if the number of statements collected so
-     *  far is less than max_ and the number of statements checked by
-     *  this routine is a non-negative multiple of step_.
-     */
-    virtual bool matches (const SgStatement* s) const
-    {
-      return (numCollected () < max_) && ((num_checked_++ % step_) == 0);
-    }
-    
-  private:
-    size_t max_; //!< Maximum number to collect.
-    size_t step_; //!< How many to skip between collections.
-    mutable size_t num_checked_; //!< No. of times matches() was called.
+    protected:
+      /*!
+       *  \brief Returns 'true' if the number of statements collected so
+       *  far is less than max_ and the number of statements checked by
+       *  this routine is a non-negative multiple of step_.
+       */
+      virtual bool matches (const SgStatement* s) const
+      {
+        return (numCollected () < max_) && ((num_checked_++ % step_) == 0);
+      }
+
+    private:
+      size_t max_; //!< Maximum number to collect.
+      size_t step_; //!< How many to skip between collections.
+      mutable size_t num_checked_; //!< No. of times matches() was called.
   };
 
   // === Do collection. ===
@@ -325,7 +325,7 @@ collectRandom (SgProject* root, size_t max_num_outline, StmtSet_t& out_stmts)
   {
     typedef vector<const SgStatement *> StmtVec_t;
 
-  public:
+    public:
     RandCollector (StmtSet_t& s, size_t n)
       : OutlineableStmtCollector (s), max_ (n)
     {
@@ -334,32 +334,32 @@ collectRandom (SgProject* root, size_t max_num_outline, StmtSet_t& out_stmts)
     void commit (void)
     {
       for (StmtVec_t::const_iterator i = keep_.begin ();
-           i != keep_.end (); ++i)
+          i != keep_.end (); ++i)
         collect (const_cast<SgStatement *> (*i));
     }
 
-  protected:
+    protected:
     //! Always returns false, but maintains separate candidate list.
     virtual bool matches (const SgStatement* s) const
     {
       if (max_) {
-	if (keep_.empty ())
-	  keep_.push_back (s);
-	else {
-	  size_t n_kept = keep_.size ();
-	  if (drand48 () < (1.0 / n_kept))
-	    {
-	      if (n_kept == max_) // evict
-		keep_[lrand48 () % max_] = s;
-	      else // append
-		keep_.push_back (s);
-	    }
-	}
+        if (keep_.empty ())
+          keep_.push_back (s);
+        else {
+          size_t n_kept = keep_.size ();
+          if (drand48 () < (1.0 / n_kept))
+          {
+            if (n_kept == max_) // evict
+              keep_[lrand48 () % max_] = s;
+            else // append
+              keep_.push_back (s);
+          }
+        }
       }
       return false;
     }
 
-  private:
+    private:
     size_t max_; //!< Maximum no. of statements to collect.
     mutable StmtVec_t keep_; //!< Set of candidate statements.
   };

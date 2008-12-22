@@ -24,37 +24,36 @@ checkType (const SgStatement* s)
   if (s)
     switch (s->variantT ())
       {
-      case V_SgExprStatement:
-      case V_SgBreakStmt:
-      case V_SgContinueStmt:
-      case V_SgClassDeclaration:
-      case V_SgTemplateInstantiationDecl:
-      case V_SgVariableDeclaration:
-      case V_SgGotoStatement:
-      case V_SgReturnStmt:
-      case V_SgTryStmt:
+      case V_SgArithmeticIfStatement:
+      case V_SgAssociateStatement:
       case V_SgBasicBlock:
+      case V_SgBreakStmt:
+      case V_SgClassDeclaration:
+      case V_SgCloseStatement:
+      case V_SgContinueStmt:
       case V_SgDoWhileStmt:
+      case V_SgExprStatement:
+      case V_SgFlushStatement:
       case V_SgForStatement:
-      case V_SgIfStmt:
-      case V_SgSwitchStatement:
-      case V_SgWhileStmt:
-// add new nodes for Fortran
-// Liao 12/13/2007
-      case V_SgWriteStatement:
       case V_SgFortranDo:
       case V_SgFortranNonblockedDo:
-      case V_SgReadStatement:
-      case V_SgArithmeticIfStatement:
-      case V_SgPrintStatement:
-      case V_SgWhereStatement:
+      case V_SgGotoStatement:
+      case V_SgIfStmt:
       case V_SgOpenStatement:
-      case V_SgCloseStatement:
-      case V_SgFlushStatement:
+      case V_SgPrintStatement:
+      case V_SgReadStatement:
+      case V_SgReturnStmt:
       case V_SgRewindStatement:
+      case V_SgStopOrPauseStatement:
+      case V_SgSwitchStatement:
+      case V_SgTemplateInstantiationDecl:
+      case V_SgTryStmt:
+      case V_SgVariableDeclaration:
       case V_SgWaitStatement:
-      case V_SgAssociateStatement:
-        return true;
+      case V_SgWhereStatement:
+      case V_SgWhileStmt:
+      case V_SgWriteStatement: 
+       return true;
       default:
         break;
       }
@@ -68,24 +67,24 @@ isHiddenType (const SgType* type)
   if (!type) return false;
   const SgType* base_type = type->findBaseType ();
   if (base_type)
+  {
+    const SgNamedType* n = isSgNamedType (base_type);
+    if (n)
     {
-      const SgNamedType* n = isSgNamedType (base_type);
-      if (n)
+      const SgDeclarationStatement* decl = n->get_declaration ();
+      if (decl)
+      {
+        const SgScopeStatement* scope = decl->get_scope ();
+        while (!isSgGlobal (scope))
         {
-          const SgDeclarationStatement* decl = n->get_declaration ();
-          if (decl)
-            {
-              const SgScopeStatement* scope = decl->get_scope ();
-              while (!isSgGlobal (scope))
-                {
-                  if (!isSgClassDefinition (scope)
-                      && !isSgNamespaceDefinitionStatement (scope))
-                    return true; // Is a hidden type!
-                  scope = scope->get_scope ();
-                }
-            }
+          if (!isSgClassDefinition (scope)
+              && !isSgNamespaceDefinitionStatement (scope))
+            return true; // Is a hidden type!
+          scope = scope->get_scope ();
         }
+      }
     }
+  }
   return false;
 }
 
@@ -101,26 +100,26 @@ doesRefHiddenTypes (const SgStatement* s)
   typedef Rose_STL_Container<SgNode *> NodeList_t;
   NodeList_t refs = NodeQuery::querySubTree (const_cast<SgStatement *> (s), V_SgVarRefExp);
   for (NodeList_t::const_iterator i = refs.begin (); i != refs.end (); ++i)
-    {
-      const SgVarRefExp* ref = isSgVarRefExp (*i);
-      ROSE_ASSERT (ref);
-      const SgType* type = ref->get_type ();
-      if (isHiddenType (type))
-        return true;
-    }
+  {
+    const SgVarRefExp* ref = isSgVarRefExp (*i);
+    ROSE_ASSERT (ref);
+    const SgType* type = ref->get_type ();
+    if (isHiddenType (type))
+      return true;
+  }
 
   refs = NodeQuery::querySubTree (const_cast<SgStatement *> (s),
-                                  V_SgVariableDeclaration);
+      V_SgVariableDeclaration);
   for (NodeList_t::const_iterator i = refs.begin (); i != refs.end (); ++i)
-    {
-      const SgVariableDeclaration* decl = isSgVariableDeclaration (*i);
-      ROSE_ASSERT (decl);
-      const SgInitializedNamePtrList& names = decl->get_variables ();
-      for (SgInitializedNamePtrList::const_iterator v = names.begin ();
-           v != names.end (); ++v)
-        if (isHiddenType ((*v)->get_type ()))
-          return true;
-    }
+  {
+    const SgVariableDeclaration* decl = isSgVariableDeclaration (*i);
+    ROSE_ASSERT (decl);
+    const SgInitializedNamePtrList& names = decl->get_variables ();
+    for (SgInitializedNamePtrList::const_iterator v = names.begin ();
+        v != names.end (); ++v)
+      if (isHiddenType ((*v)->get_type ()))
+        return true;
+  }
 
   return false; // No hidden references found
 }
@@ -136,14 +135,14 @@ doesCall__builtin_va_start (const SgStatement* s)
   typedef Rose_STL_Container<SgNode *> NodeList_t;
   NodeList_t refs = NodeQuery::querySubTree (const_cast<SgStatement *> (s), V_SgFunctionRefExp);
   for (NodeList_t::const_iterator i = refs.begin (); i != refs.end (); ++i)
-    {
-      const SgFunctionRefExp* ref = isSgFunctionRefExp (*i);
-      ROSE_ASSERT (ref);
-      const SgFunctionSymbol* sym = ref->get_symbol_i ();
-      ROSE_ASSERT (sym);
-      if (sym->get_name () == "__builtin_va_start")
-        return true;
-    }
+  {
+    const SgFunctionRefExp* ref = isSgFunctionRefExp (*i);
+    ROSE_ASSERT (ref);
+    const SgFunctionSymbol* sym = ref->get_symbol_i ();
+    ROSE_ASSERT (sym);
+    if (sym->get_name () == "__builtin_va_start")
+      return true;
+  }
   return false;
 }
 
@@ -186,11 +185,11 @@ isForInit (const SgStatement* s)
 
   const SgForStatement* loop = isSgForStatement (s_par);
   if (loop)
-    {
-      const SgStatementPtrList& stmts = loop->get_init_stmt ();
-      if (find (stmts.begin (), stmts.end (), s) != stmts.end ())
-        return true;
-    }
+  {
+    const SgStatementPtrList& stmts = loop->get_init_stmt ();
+    if (find (stmts.begin (), stmts.end (), s) != stmts.end ())
+      return true;
+  }
   return false;
 }
 
@@ -204,112 +203,112 @@ bool
 Outliner::isOutlineable (const SgStatement* s, bool verbose)
 {
   if (verbose)
+  {
+    cerr << "=== Checking Outliner preconditions for "
+      << (const void *)s;
+    if (s)
     {
-      cerr << "=== Checking Outliner preconditions for "
-           << (const void *)s;
-      if (s)
-        {
-          cerr << ':' << s->class_name ()
-               << ' ' << ASTtools::toStringFileLoc (s);
-        }
-      cerr << "... ===" << endl;
+      cerr << ':' << s->class_name ()
+        << ' ' << ASTtools::toStringFileLoc (s);
     }
+    cerr << "... ===" << endl;
+  }
 
   if (!s)
-    {
-      if (verbose)
-        cerr << "*** Statement must not be NULL. ***" << endl;
-      return false;
-    }
+  {
+    if (verbose)
+      cerr << "*** Statement must not be NULL. ***" << endl;
+    return false;
+  }
 
   if (isSgVariableDeclaration (s))
-    {
-      if (verbose)
-        cerr << "*** Can't outline a variable declaration by itself. ***" << endl;
-      return false;
-    }
+  {
+    if (verbose)
+      cerr << "*** Can't outline a variable declaration by itself. ***" << endl;
+    return false;
+  }
 
   const SgFunctionDeclaration* decl = 
-       SageInterface::getEnclosingFunctionDeclaration (const_cast<SgStatement* >(s));
+    SageInterface::getEnclosingFunctionDeclaration (const_cast<SgStatement* >(s));
   if (!decl)
-    {
-      if (verbose)
-        cerr << "*** Statement must appear in an enclosing function declaration. ***" << endl;
-      return false;
-    }
+  {
+    if (verbose)
+      cerr << "*** Statement must appear in an enclosing function declaration. ***" << endl;
+    return false;
+  }
 
   if (isSgTemplateInstantiationFunctionDecl (decl)
       || isSgTemplateInstantiationMemberFunctionDecl (decl))
-    {
-      // \todo Fix the template instantation case (see Cxx_tests/test2004_75.C)
-      if (verbose)
-        cerr << "*** Can't outline template instantations yet. ***" << endl;
-      return false;
-    }
+  {
+    // \todo Fix the template instantation case (see Cxx_tests/test2004_75.C)
+    if (verbose)
+      cerr << "*** Can't outline template instantations yet. ***" << endl;
+    return false;
+  }
 
   if (isSgDeclarationStatement (s) && !isSgVariableDeclaration (s))
+  {
+    if (verbose)
     {
-      if (verbose)
-        {
-          cerr << "*** Statement must not be a declaration statement, unless it is a variable declaration. ***"  << endl
-               << "    (Statement: " << (const void *)s << ":<" << s->class_name () << ">)" << " " << ASTtools::toStringFileLoc (s) << endl;
-        }
-      return false;
+      cerr << "*** Statement must not be a declaration statement, unless it is a variable declaration. ***"  << endl
+        << "    (Statement: " << (const void *)s << ":<" << s->class_name () << ">)" << " " << ASTtools::toStringFileLoc (s) << endl;
     }
+    return false;
+  }
 
   if (!checkType (s))
-    {
-      if (verbose)
-        cerr << "*** Statement must have the correct type. ***" << endl;
-      return false;
-    }
+  {
+    if (verbose)
+      cerr << "*** Statement must have the correct type. ***" << endl;
+    return false;
+  }
 
   if (doesRefHiddenTypes (s))
-    {
-      if (verbose)
-        cerr << "*** Statement must not reference hidden types. ***" << endl;
-      return false;
-    }
+  {
+    if (verbose)
+      cerr << "*** Statement must not reference hidden types. ***" << endl;
+    return false;
+  }
 
   if (doesCall__builtin_va_start (s))
-    {
-      if (verbose)
-        cerr << "*** __builtin_va_start() calls not supported. ***" << endl;
-      return false;
-    }
+  {
+    if (verbose)
+      cerr << "*** __builtin_va_start() calls not supported. ***" << endl;
+    return false;
+  }
 
   if (isSgBasicBlock (s) && !isSgBasicBlock (s->get_parent ()))
-    {
-      if (verbose)
-        cerr << "*** Basic blocks must be secondary (nested). ***" << endl;
-      return false;
-    }
+  {
+    if (verbose)
+      cerr << "*** Basic blocks must be secondary (nested). ***" << endl;
+    return false;
+  }
 
   if (isForInit (s))
-    {
-      if (verbose)
-        cerr << "*** Can't outline for-init statements. ***" << endl;
-      return false;
-    }
+  {
+    if (verbose)
+      cerr << "*** Can't outline for-init statements. ***" << endl;
+    return false;
+  }
 
   if (hasVAStart (s))
-    {
-      if (verbose)
-	cerr << "*** Can't outline va_start(). ***" << endl;
-      return false;
-    }
+  {
+    if (verbose)
+      cerr << "*** Can't outline va_start(). ***" << endl;
+    return false;
+  }
 
   if (ASTtools::isIfCond (s)
       || ASTtools::isWhileCond (s)
       || ASTtools::isSwitchCond (s))
-    {
-      if (verbose)
-        cerr << "*** Can't outline the condition of an 'if', 'while', or 'switch' statement. ***" << endl;
-      return false;
-    }
-// Liao, 12/26/2007, Masked array assignment in Fortran 90 and later is not outlineable
-// SgWhereStatement-> SgBasicBlock->SgExprStatement ->SgAssignOp
-// SgElseWhereStatement-> SgBasicBlock->SgExprStatement ->SgAssignOp
+  {
+    if (verbose)
+      cerr << "*** Can't outline the condition of an 'if', 'while', or 'switch' statement. ***" << endl;
+    return false;
+  }
+  // Liao, 12/26/2007, Masked array assignment in Fortran 90 and later is not outlineable
+  // SgWhereStatement-> SgBasicBlock->SgExprStatement ->SgAssignOp
+  // SgElseWhereStatement-> SgBasicBlock->SgExprStatement ->SgAssignOp
   if (isSgExprStatement(s))
   {
     const SgExprStatement *exp1 = isSgExprStatement(s);
@@ -319,14 +318,14 @@ Outliner::isOutlineable (const SgStatement* s, bool verbose)
       if((isSgWhereStatement(grandpa))||(isSgElseWhereStatement(grandpa)))
       {
         if (verbose)
-	  cerr << "*** Can't outline array assignment statement within a WHERE block***" << endl;
+          cerr << "*** Can't outline array assignment statement within a WHERE block***" << endl;
         return false;
       }
     }
   }
-//SgWhereStatement could be nested within another SgWhereStatement
-// SgWhereStatement-> SgBasicBlock->SgWhereStatement
-// It is not outlineable in this case
+  //SgWhereStatement could be nested within another SgWhereStatement
+  // SgWhereStatement-> SgBasicBlock->SgWhereStatement
+  // It is not outlineable in this case
   if (isSgWhereStatement(s))
   {
     const SgWhereStatement *where1 = isSgWhereStatement(s);

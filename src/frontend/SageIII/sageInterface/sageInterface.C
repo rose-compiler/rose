@@ -2147,907 +2147,695 @@ supportForLabelStatements ( SgScopeStatement* scope, SgSymbolTable* symbolTable 
 
 void
 SageInterface::rebuildSymbolTable ( SgScopeStatement* scope )
-   {
+{
   // This function is called from the implementation of the copy member functions.
 
-     ROSE_ASSERT(scope != NULL);
+  ROSE_ASSERT(scope != NULL);
   // printf ("In SageInterface::rebuildSymbolTable(): Symbol Table from %p = %s \n",scope,scope->sage_class_name());
 
-     SgSymbolTable* symbolTable = scope->get_symbol_table();
+  SgSymbolTable* symbolTable = scope->get_symbol_table();
 
-     if (symbolTable != NULL)
-        {
-       // This must be an empty symbol table!
-          if (symbolTable->size() != 0)
-             {
-               printf ("symbolTable->size() = %d \n",symbolTable->size());
-             }
-          ROSE_ASSERT(symbolTable->size() == 0);
+  if (symbolTable != NULL)
+  {
+    // This must be an empty symbol table!
+    if (symbolTable->size() != 0)
+    {
+      printf ("symbolTable->size() = %d \n",symbolTable->size());
+    }
+    ROSE_ASSERT(symbolTable->size() == 0);
 #if 0
-          printf ("Symbol Table from %p = %s of size = %zu \n",scope,scope->sage_class_name(),symbolTable->size());
-          symbolTable->print("Called from SageInterface::rebuildSymbolTable()");
+    printf ("Symbol Table from %p = %s of size = %zu \n",scope,scope->sage_class_name(),symbolTable->size());
+    symbolTable->print("Called from SageInterface::rebuildSymbolTable()");
 #endif
-        }
-       else
-        {
+  }
+  else
+  {
 #if 0
-          printf ("In SageInterface::rebuildSymbolTable(): No symbol table found \n");
+    printf ("In SageInterface::rebuildSymbolTable(): No symbol table found \n");
 #endif
-          ROSE_ASSERT(symbolTable == NULL);
+    ROSE_ASSERT(symbolTable == NULL);
 
-       // DQ (10/8/2007): Build a new symbol table if there was not already one built.
-          symbolTable = new SgSymbolTable();
+    // DQ (10/8/2007): Build a new symbol table if there was not already one built.
+    symbolTable = new SgSymbolTable();
 
-          ROSE_ASSERT(symbolTable != NULL);
-          ROSE_ASSERT(symbolTable->get_table() != NULL);
+    ROSE_ASSERT(symbolTable != NULL);
+    ROSE_ASSERT(symbolTable->get_table() != NULL);
 
-       // DQ (2/16/2006): Set this parent directly (now tested)
-          symbolTable->set_parent(scope);
-          ROSE_ASSERT(symbolTable->get_parent() != NULL);
+    // DQ (2/16/2006): Set this parent directly (now tested)
+    symbolTable->set_parent(scope);
+    ROSE_ASSERT(symbolTable->get_parent() != NULL);
 
-          scope->set_symbol_table(symbolTable);
-        }
+    scope->set_symbol_table(symbolTable);
+  }
 
   // DQ (10/8/2007): If there is already a symbol table then don't over write it. This fixes copies generated with more than one symbol table.
-     ROSE_ASSERT(scope->get_symbol_table() != NULL);
-     ROSE_ASSERT(scope->get_symbol_table()->get_table() != NULL);
+  ROSE_ASSERT(scope->get_symbol_table() != NULL);
+  ROSE_ASSERT(scope->get_symbol_table()->get_table() != NULL);
 
-#if 0
-  // DQ (10/23/2007): Uncomment here, since it is no longer handled in the fixupCopy member functions.
+  // This implements SgScopeStatement specific details (e.g function declarations have parameters and their declaration causes variable 
+  // symbols to be placed into the SgFunctionDefinition scope (but only for defining declarations).
+  switch(scope->variantT())
+  {
+    case V_SgForStatement:
+      {
+        // These scopes have their symbols split between the attached symbol table and the symbol tables in the SgBasicBlock data member(s).
+        // printf ("Symbol tables could contain symbols outside of the inclosed body scope = %p = %s \n",scope,scope->class_name().c_str());
 
-  // DQ (10/20/2007): Not sure why this is commented out! Except that it is handle in the fixupCopy member functions.
+        SgForStatement* forStatement = isSgForStatement(scope);
 
-  // DQ (10/8/2007): If this is a SgFunctionDefinition, then include the parameters in the SgFunctionDeclaration.
-     SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(scope);
-     if (functionDefinition != NULL)
+        SgStatementPtrList::iterator i = forStatement->get_init_stmt().begin();
+
+        // printf ("i != forStatement->get_init_stmt().end() = %s \n",i != forStatement->get_init_stmt().end() ? "true" : "false");
+
+        while (i != forStatement->get_init_stmt().end())
+        {
+          // printf ("For statement initialization list: *i = %p = %s \n",*i,(*i)->class_name().c_str());
+          SgVariableDeclaration* variableDeclarationInitializer = isSgVariableDeclaration(*i);
+          if (variableDeclarationInitializer != NULL)
+          {
+            // There is a variable declaration in the conditional, it needs to be added to the symbol table.
+            // printf ("There is a variable declaration in the for statement initializer, it needs to be added to the symbol table scope = %p = %s \n",scope,scope->class_name().c_str());
+            // ROSE_ASSERT(false);
+            supportForVariableDeclarations ( scope, symbolTable, variableDeclarationInitializer );
+          }
+
+          i++;
+        }
+
+        SgVariableDeclaration* variableDeclarationCondition = isSgVariableDeclaration(forStatement->get_test());
+        if (variableDeclarationCondition != NULL)
+        {
+          // There is a variable declaration in the conditional, it needs to be added to the symbol table.
+          // printf ("There is a variable declaration in the for statement test, it needs to be added to the symbol table scope = %p = %s \n",scope,scope->class_name().c_str());
+          // ROSE_ASSERT(false);
+          supportForVariableDeclarations ( scope, symbolTable, variableDeclarationCondition );
+        }
+        return;
+        break;
+      }
+
+    case V_SgFunctionDefinition:
+      {
+        // These scopes have their sysmbols split between the attached symbol table and the symbol tables in the SgBasicBlock data member(s).
+        // printf ("Symbol tables could contain symbols outside of the enclosed body scope = %p = %s \n",scope,scope->class_name().c_str());
+
+        // DQ (10/8/2007): If this is a SgFunctionDefinition, then include the parameters in the SgFunctionDeclaration.
+        SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(scope);
+        if (functionDefinition != NULL)
         {
           SgFunctionDeclaration* functionDeclaration = functionDefinition->get_declaration();
-       // printf ("In SageInterface::rebuildSymbolTable(): functionDefinition = %p functionDeclaration = %p \n",functionDefinition,functionDeclaration);
+          // printf ("In SageInterface::rebuildSymbolTable(): functionDefinition = %p functionDeclaration = %p \n",functionDefinition,functionDeclaration);
 
-       // DQ (10/8/2007): It turns out that this is always NULL, because the parent of the functionDeclaration has not yet been set in the copy mechanism!
+          // DQ (10/8/2007): It turns out that this is always NULL, because the parent of the functionDeclaration has not yet been set in the copy mechanism!
           if (functionDeclaration != NULL)
-             {
-               ROSE_ASSERT(functionDeclaration->isForward() == false);
-               SgInitializedNamePtrList & argumentList = functionDeclaration->get_args();
-               SgInitializedNamePtrList::iterator i = argumentList.begin();
-               while (i != argumentList.end())
-                  {
-                    SgInitializedName* variable = *i;
-                    ROSE_ASSERT(variable != NULL);
-                    SgSymbol* symbol = new SgVariableSymbol(variable);
-                    ROSE_ASSERT(symbol != NULL);
-                    SgName name = variable->get_name();
-                    symbolTable->insert(name,symbol);
-
-                    i++;
-                  }
-             }
-            else
-             {
+          {
+            ROSE_ASSERT(functionDeclaration->isForward() == false);
+            SgInitializedNamePtrList & argumentList = functionDeclaration->get_args();
+            supportForVariableLists(scope,symbolTable,argumentList);
+          }
+          else
+          {
             // This happend in the copy function because the function definition is copied from the SgFunctionDeclaration 
             // and only after the copy is made is the parent of the definition set to be the function declaration.  Thus 
             // the get_declaration() member function returns NULL.
             // printf ("There is no function declaration associated with this function definition! \n");
-               ROSE_ASSERT(functionDeclaration->isForward() == true);
-             }
+            // ROSE_ASSERT(functionDeclaration->isForward() == true);
+          }
         }
-#endif
 
-#if 0
-     SgIfStmt* ifStatement = isSgIfStmt(scope);
-     if (ifStatement != NULL)
+        // DQ (10/25/2007): Label symbols are now places into the SgFunctionDefinition (they have to be collected from the function).
+        supportForLabelStatements(scope,symbolTable);
+
+        return;
+        break;
+      }
+
+    case V_SgIfStmt:
+      {
+        // These scopes have their sysmbols split between the attached symbol table and the symbol tables in the SgBasicBlock data member(s).
+        // printf ("Symbol tables could contain symbols outside of the enclosed body scope = %p = %s \n",scope,scope->class_name().c_str());
+
+        SgIfStmt* ifStatement = isSgIfStmt(scope);
+        SgVariableDeclaration* variableDeclarationCondition = isSgVariableDeclaration(ifStatement->get_conditional());
+        if (variableDeclarationCondition != NULL)
         {
-       // For the case of a SgIfStmt the symbol table should be setup differently than iterating over the statements in the true and false blocks.
-
-          const SgVariableDeclaration* variableDeclarationCondition = isSgVariableDeclaration(ifStatement->get_conditional());
-          if (variableDeclarationCondition != NULL)
-             {
-            // There is a variable declaration in the conditional, it needs to be added to the symbol table.
-               printf ("There is a variable declaration in the conditional, it needs to be added to the symbol table \n");
-               ROSE_ASSERT(false);
-             }
+          // There is a variable declaration in the conditional, it needs to be added to the symbol table.
+          // printf ("There is a variable declaration in the conditional, it needs to be added to the symbol table \n");
+          // ROSE_ASSERT(false);
+          supportForVariableDeclarations ( scope, symbolTable, variableDeclarationCondition );
         }
-#endif
+        return;
+        break;
+      }
 
-  // This implements SgScopeStatement specific details (e.g function declarations have parameters and their declaration causes variable 
-  // symbols to be placed into the SgFunctionDefinition scope (but only for defining declarations).
-     switch(scope->variantT())
+    case V_SgSwitchStatement:
+      {
+        // These scopes have their sysmbols split between the attached symbol table and the symbol tables in the SgBasicBlock data member(s).
+        // printf ("Symbol tables could contain symbols outside of the enclosed body scope = %p = %s \n",scope,scope->class_name().c_str());
+
+        SgSwitchStatement* switchStatement = isSgSwitchStatement(scope);
+        SgVariableDeclaration* variableDeclarationSelector = isSgVariableDeclaration(switchStatement->get_item_selector());
+        if (variableDeclarationSelector != NULL)
         {
-          case V_SgForStatement:
-             {
-            // These scopes have their sysmbols split between the attached symbol table and the symbol tables in the SgBasicBlock data member(s).
-            // printf ("Symbol tables could contain symbols outside of the inclosed body scope = %p = %s \n",scope,scope->class_name().c_str());
+          // There is a variable declaration in the conditional, it needs to be added to the symbol table.
+          // printf ("There is a variable declaration in the item selector of the switch statement, it needs to be added to the symbol table \n");
 
-               SgForStatement* forStatement = isSgForStatement(scope);
-               
-               SgStatementPtrList::iterator i = forStatement->get_init_stmt().begin();
-
-            // printf ("i != forStatement->get_init_stmt().end() = %s \n",i != forStatement->get_init_stmt().end() ? "true" : "false");
-
-               while (i != forStatement->get_init_stmt().end())
-                  {
-                 // printf ("For statement initialization list: *i = %p = %s \n",*i,(*i)->class_name().c_str());
-                    SgVariableDeclaration* variableDeclarationInitializer = isSgVariableDeclaration(*i);
-                    if (variableDeclarationInitializer != NULL)
-                       {
-                      // There is a variable declaration in the conditional, it needs to be added to the symbol table.
-                      // printf ("There is a variable declaration in the for statement initializer, it needs to be added to the symbol table scope = %p = %s \n",scope,scope->class_name().c_str());
-                      // ROSE_ASSERT(false);
-#if 1
-                         supportForVariableDeclarations ( scope, symbolTable, variableDeclarationInitializer );
-#else
-                         SgInitializedNamePtrList & variableList = variableDeclarationInitializer->get_variables();
-                         SgInitializedNamePtrList::iterator j = variableList.begin();
-                         while ( j != variableList.end() )
-                            {
-                              SgInitializedName* variable = *j;
-                              ROSE_ASSERT(variable != NULL);
-
-                              printf ("variable in for statement initialization = %p = %s scope = %p \n",variable,variable->get_name().str(),variable->get_scope());
-
-                           // DQ (10/20/2007): static data members declared outside the class scope don't generate symbols.
-                           // if (variable->get_prev_decl_item() != NULL)
-                              if (variable->get_scope() == scope)
-                                 {
-                                   SgSymbol* symbol = new SgVariableSymbol(variable);
-                                   ROSE_ASSERT(symbol != NULL);
-
-                                   printf ("In SageInterface::rebuildSymbolTable() variable = %p building a new SgVariableSymbol = %p \n",variable,symbol);
-
-                                   SgName name = variable->get_name();
-                                   symbolTable->insert(name,symbol);
-                                 }
-                                else
-                                 {
-                                // I think there is nothing to do in this case
-                                // printf ("In SageInterface::rebuildSymbolTable() For loop initializer -- This variable has a scope inconsistant with the symbol table: variable->get_scope() = %p scope = %p \n",variable->get_scope(),scope);
-                                // printf ("variable->get_scope() = %p = %s scope = %p = %s \n",variable->get_scope(),variable->get_scope()->class_name().c_str(),scope,scope->class_name().c_str());
-                                 }
-
-                              j++;
-                            }
-
-                      // DQ (10/13/2007): Need to look into variable declarations to see if there are defining declaration 
-                      // that also force symbols to be built in the current scope!
-                      // ROSE_ASSERT(derivedDeclaration->get_variableDeclarationContainsBaseTypeDefiningDeclaration() == false);
-                         if (variableDeclarationInitializer->get_variableDeclarationContainsBaseTypeDefiningDeclaration() == true)
-                            {
-                           // Build a SgClassDeclaration, SgEnumDeclaration associated symbol and add it to the symbol table.
-                              ROSE_ASSERT(symbolTable != NULL);
-                              ROSE_ASSERT(variableDeclarationInitializer->get_baseTypeDefiningDeclaration() != NULL);
-                              supportForBaseTypeDefiningDeclaration ( symbolTable, variableDeclarationInitializer->get_baseTypeDefiningDeclaration() );
-                            }
-#endif
-                       }
-
-                    i++;
-                  }
-
-               SgVariableDeclaration* variableDeclarationCondition = isSgVariableDeclaration(forStatement->get_test());
-               if (variableDeclarationCondition != NULL)
-                  {
-                 // There is a variable declaration in the conditional, it needs to be added to the symbol table.
-                 // printf ("There is a variable declaration in the for statement test, it needs to be added to the symbol table scope = %p = %s \n",scope,scope->class_name().c_str());
-                 // ROSE_ASSERT(false);
-#if 1
-                    supportForVariableDeclarations ( scope, symbolTable, variableDeclarationCondition );
-#else
-                    SgInitializedNamePtrList & variableList = variableDeclarationCondition->get_variables();
-                    SgInitializedNamePtrList::iterator j = variableList.begin();
-                    while ( j != variableList.end() )
-                       {
-                         SgInitializedName* variable = *j;
-                         ROSE_ASSERT(variable != NULL);
-
-                      // DQ (10/20/2007): static data members declared outside the class scope don't generate symbols.
-                      // if (variable->get_prev_decl_item() != NULL)
-                         if (variable->get_scope() == scope)
-                            {
-                              SgSymbol* symbol = new SgVariableSymbol(variable);
-                              ROSE_ASSERT(symbol != NULL);
-
-                           // printf ("In SageInterface::rebuildSymbolTable() variable = %p building a new SgVariableSymbol = %p \n",variable,symbol);
-
-                              SgName name = variable->get_name();
-                              symbolTable->insert(name,symbol);
-                            }
-                           else
-                            {
-                           // I think there is nothing to do in this case
-                           // printf ("In SageInterface::rebuildSymbolTable() For loop initializer -- This variable has a scope inconsistant with the symbol table: variable->get_scope() = %p scope = %p \n",variable->get_scope(),scope);
-                           // printf ("variable->get_scope() = %p = %s scope = %p = %s \n",variable->get_scope(),variable->get_scope()->class_name().c_str(),scope,scope->class_name().c_str());
-                            }
-
-                         j++;
-                       }
-
-                 // DQ (10/13/2007): Need to look into variable declarations to see if there are defining declaration 
-                 // that also force symbols to be built in the current scope!
-                 // ROSE_ASSERT(derivedDeclaration->get_variableDeclarationContainsBaseTypeDefiningDeclaration() == false);
-                    if (variableDeclarationCondition->get_variableDeclarationContainsBaseTypeDefiningDeclaration() == true)
-                       {
-                      // Build a SgClassDeclaration, SgEnumDeclaration associated symbol and add it to the symbol table.
-                         ROSE_ASSERT(symbolTable != NULL);
-                         ROSE_ASSERT(variableDeclarationCondition->get_baseTypeDefiningDeclaration() != NULL);
-                         supportForBaseTypeDefiningDeclaration ( symbolTable, variableDeclarationCondition->get_baseTypeDefiningDeclaration() );
-                       }
-#endif
-                  }
-               return;
-               break;
-             }
-
-          case V_SgFunctionDefinition:
-             {
-            // These scopes have their sysmbols split between the attached symbol table and the symbol tables in the SgBasicBlock data member(s).
-            // printf ("Symbol tables could contain symbols outside of the enclosed body scope = %p = %s \n",scope,scope->class_name().c_str());
-
-            // DQ (10/8/2007): If this is a SgFunctionDefinition, then include the parameters in the SgFunctionDeclaration.
-               SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(scope);
-               if (functionDefinition != NULL)
-                  {
-                    SgFunctionDeclaration* functionDeclaration = functionDefinition->get_declaration();
-                 // printf ("In SageInterface::rebuildSymbolTable(): functionDefinition = %p functionDeclaration = %p \n",functionDefinition,functionDeclaration);
-
-                 // DQ (10/8/2007): It turns out that this is always NULL, because the parent of the functionDeclaration has not yet been set in the copy mechanism!
-                    if (functionDeclaration != NULL)
-                       {
-                         ROSE_ASSERT(functionDeclaration->isForward() == false);
-                         SgInitializedNamePtrList & argumentList = functionDeclaration->get_args();
-#if 1
-                         supportForVariableLists(scope,symbolTable,argumentList);
-#else
-                         SgInitializedNamePtrList::iterator i = argumentList.begin();
-                         while (i != argumentList.end())
-                            {
-                              SgInitializedName* variable = *i;
-                              ROSE_ASSERT(variable != NULL);
-                              SgSymbol* symbol = new SgVariableSymbol(variable);
-                              ROSE_ASSERT(symbol != NULL);
-                              SgName name = variable->get_name();
-                              symbolTable->insert(name,symbol);
-
-                              i++;
-                            }
-#endif
-                       }
-                      else
-                       {
-                      // This happend in the copy function because the function definition is copied from the SgFunctionDeclaration 
-                      // and only after the copy is made is the parent of the definition set to be the function declaration.  Thus 
-                      // the get_declaration() member function returns NULL.
-                      // printf ("There is no function declaration associated with this function definition! \n");
-                      // ROSE_ASSERT(functionDeclaration->isForward() == true);
-                       }
-                  }
-
-            // DQ (10/25/2007): Label symbols are now places into the SgFunctionDefinition (they have to be collected from the function).
-               supportForLabelStatements(scope,symbolTable);
-
-               return;
-               break;
-             }
-
-          case V_SgIfStmt:
-             {
-            // These scopes have their sysmbols split between the attached symbol table and the symbol tables in the SgBasicBlock data member(s).
-            // printf ("Symbol tables could contain symbols outside of the enclosed body scope = %p = %s \n",scope,scope->class_name().c_str());
-
-               SgIfStmt* ifStatement = isSgIfStmt(scope);
-               SgVariableDeclaration* variableDeclarationCondition = isSgVariableDeclaration(ifStatement->get_conditional());
-               if (variableDeclarationCondition != NULL)
-                  {
-                 // There is a variable declaration in the conditional, it needs to be added to the symbol table.
-                 // printf ("There is a variable declaration in the conditional, it needs to be added to the symbol table \n");
-                 // ROSE_ASSERT(false);
-#if 1
-                    supportForVariableDeclarations ( scope, symbolTable, variableDeclarationCondition );
-#else
-                    SgInitializedNamePtrList & variableList = variableDeclarationCondition->get_variables();
-                    SgInitializedNamePtrList::iterator i = variableList.begin();
-                    while ( i != variableList.end() )
-                       {
-                         SgInitializedName* variable = *i;
-                         ROSE_ASSERT(variable != NULL);
-
-                      // DQ (10/20/2007): static data members declared outside the class scope don't generate symbols.
-                      // if (variable->get_prev_decl_item() != NULL)
-                         if (variable->get_scope() == scope)
-                            {
-                              SgSymbol* symbol = new SgVariableSymbol(variable);
-                              ROSE_ASSERT(symbol != NULL);
-
-                           // printf ("In SageInterface::rebuildSymbolTable() variable = %p building a new SgVariableSymbol = %p \n",variable,symbol);
-
-                              SgName name = variable->get_name();
-                              symbolTable->insert(name,symbol);
-                            }
-                           else
-                            {
-                           // I think there is nothing to do in this case
-                           // printf ("In SageInterface::rebuildSymbolTable() This variable has a scope inconsistant with the symbol table: variable->get_scope() = %p scope = %p \n",variable->get_scope(),scope);
-                            }
-
-                         i++;
-                       }
-#endif
-                  }
-               return;
-               break;
-             }
-
-          case V_SgSwitchStatement:
-             {
-            // These scopes have their sysmbols split between the attached symbol table and the symbol tables in the SgBasicBlock data member(s).
-            // printf ("Symbol tables could contain symbols outside of the enclosed body scope = %p = %s \n",scope,scope->class_name().c_str());
-
-               SgSwitchStatement* switchStatement = isSgSwitchStatement(scope);
-               SgVariableDeclaration* variableDeclarationSelector = isSgVariableDeclaration(switchStatement->get_item_selector());
-               if (variableDeclarationSelector != NULL)
-                  {
-                 // There is a variable declaration in the conditional, it needs to be added to the symbol table.
-                 // printf ("There is a variable declaration in the item selector of the switch statement, it needs to be added to the symbol table \n");
-
-                    supportForVariableDeclarations ( scope, symbolTable, variableDeclarationSelector );
-                  }
-               return;
-               break;
-             }
-
-          case V_SgWhileStmt:
-             {
-            // These scopes have their sysmbols split between the attached symbol table and the symbol tables in the SgBasicBlock data member(s).
-            // commented out like for others, otherwise show up each time a While is being copied. Liao, 1/31/2008
-            //   printf ("Symbol tables could contain symbols outside of the enclosed body scope = %p = %s \n",scope,scope->class_name().c_str());
-
-               SgWhileStmt* whileStatement = isSgWhileStmt(scope);
-               SgVariableDeclaration* variableDeclarationCondition = isSgVariableDeclaration(whileStatement->get_condition());
-               if (variableDeclarationCondition != NULL)
-                  {
-                 // There is a variable declaration in the conditional, it needs to be added to the symbol table.
-                 // printf ("There is a variable declaration in the while statement condition, it needs to be added to the symbol table \n");
-                 // ROSE_ASSERT(false);
-
-                    supportForVariableDeclarations ( scope, symbolTable, variableDeclarationCondition );
-                  }
-               return;
-               break;
-             }
-
-          case V_SgCatchOptionStmt:
-          case V_SgDoWhileStmt:
-             {
-            // These scopes contain a SgBasicBlock as a data member and the scope is held there.
-            // printf ("Symbol tables can must be computed by the enclosed body scope = %p = %s \n",scope,scope->class_name().c_str());
-               return;
-               break;
-             }
-
-          case V_SgBasicBlock:
-          case V_SgClassDefinition:
-          case V_SgTemplateInstantiationDefn:
-          case V_SgGlobal:
-          case V_SgNamespaceDefinitionStatement:
-             {
-            // printf ("Used the list of statements/declarations that are held deirectly by this scope \n");
-               break;
-             }
-
-          default:
-             {
-               printf ("Default reached in SageInterface::rebuildSymbolTable() scope = %p = %s \n",scope,scope->class_name().c_str());
-               ROSE_ASSERT(false);
-               break;
-             }
+          supportForVariableDeclarations ( scope, symbolTable, variableDeclarationSelector );
         }
+        return;
+        break;
+      }
+
+    case V_SgWhileStmt:
+      {
+        // These scopes have their sysmbols split between the attached symbol table and the symbol tables in the SgBasicBlock data member(s).
+        // commented out like for others, otherwise show up each time a While is being copied. Liao, 1/31/2008
+        //   printf ("Symbol tables could contain symbols outside of the enclosed body scope = %p = %s \n",scope,scope->class_name().c_str());
+
+        SgWhileStmt* whileStatement = isSgWhileStmt(scope);
+        SgVariableDeclaration* variableDeclarationCondition = isSgVariableDeclaration(whileStatement->get_condition());
+        if (variableDeclarationCondition != NULL)
+        {
+          // There is a variable declaration in the conditional, it needs to be added to the symbol table.
+          // printf ("There is a variable declaration in the while statement condition, it needs to be added to the symbol table \n");
+          // ROSE_ASSERT(false);
+
+          supportForVariableDeclarations ( scope, symbolTable, variableDeclarationCondition );
+        }
+        return;
+        break;
+      }
+
+    case V_SgCatchOptionStmt:
+    case V_SgDoWhileStmt:
+      {
+        // These scopes contain a SgBasicBlock as a data member and the scope is held there.
+        // printf ("Symbol tables can must be computed by the enclosed body scope = %p = %s \n",scope,scope->class_name().c_str());
+        return;
+        break;
+      }
+
+    case V_SgBasicBlock:
+    case V_SgClassDefinition:
+    case V_SgTemplateInstantiationDefn:
+    case V_SgGlobal:
+    case V_SgNamespaceDefinitionStatement:
+    case V_SgFortranDo: //Liao 12/19/2008, My understanding is that Fortran do loop header does not introduce new symbols like  a C/C++ for loop does
+      {
+        // printf ("Used the list of statements/declarations that are held deirectly by this scope \n");
+        break;
+      }
+
+    default:
+      {
+        printf ("Default reached in SageInterface::rebuildSymbolTable() scope = %p = %s \n",scope,scope->class_name().c_str());
+        ROSE_ASSERT(false);
+        break;
+      }
+  }
 
   // Generate a copy of the statement list (this is simpler than handling the cases of a 
   // declaration list and a statement list separately for the scopes that contain one or the other.
-     SgStatementPtrList statementList = scope->generateStatementList();
+  SgStatementPtrList statementList = scope->generateStatementList();
 
   // Loop through the statements and for each declaration build a symbol and add it to the symbol table
-     for (SgStatementPtrList::iterator i = statementList.begin(); i != statementList.end(); i++)
-        {
-       // At some point we should move this mechanism in to a factory patterns for SgSymbol
+  for (SgStatementPtrList::iterator i = statementList.begin(); i != statementList.end(); i++)
+  {
+    // At some point we should move this mechanism in to a factory patterns for SgSymbol
 
-       // printf ("Iterating through the declaration in this scope ... %p = %s = %s \n",*i,(*i)->class_name().c_str(),get_name(*i).c_str());
+    // printf ("Iterating through the declaration in this scope ... %p = %s = %s \n",*i,(*i)->class_name().c_str(),get_name(*i).c_str());
 
-          SgDeclarationStatement* declaration = isSgDeclarationStatement(*i);
-          if (declaration != NULL)
-             {
-            // DQ (11/7/2007): Where there can be multiple declaration (e.g. function declarations with prototypes) only use one of them.
-               bool useThisDeclaration = (declaration->get_firstNondefiningDeclaration() == declaration) || 
-                                         ( (declaration->get_firstNondefiningDeclaration() == NULL) && (declaration->get_definingDeclaration() == declaration) );
+    SgDeclarationStatement* declaration = isSgDeclarationStatement(*i);
+    if (declaration != NULL)
+    {
+      // DQ (11/7/2007): Where there can be multiple declaration (e.g. function declarations with prototypes) only use one of them.
+      bool useThisDeclaration = (declaration->get_firstNondefiningDeclaration() == declaration) || 
+        ( (declaration->get_firstNondefiningDeclaration() == NULL) && (declaration->get_definingDeclaration() == declaration) );
 
-               list<SgSymbol*> symbolList;
-               switch(declaration->variantT())
-                  {
-                    case V_SgTemplateInstantiationMemberFunctionDecl:
-                       {
-                         SgTemplateInstantiationMemberFunctionDecl* derivedDeclaration = isSgTemplateInstantiationMemberFunctionDecl(declaration);
+      list<SgSymbol*> symbolList;
+      switch(declaration->variantT())
+      {
+        case V_SgTemplateInstantiationMemberFunctionDecl:
+          {
+            SgTemplateInstantiationMemberFunctionDecl* derivedDeclaration = isSgTemplateInstantiationMemberFunctionDecl(declaration);
 #if 1
-                      // DQ (11/6/2007): Don't build a symbol for the defining declaration defined in another scope and put the resulting symbol into the wrong scope
-                         if (scope == derivedDeclaration->get_scope())
-                            {
-                              SgSymbol* symbol = new SgMemberFunctionSymbol(derivedDeclaration);
-                              ROSE_ASSERT(symbol != NULL);
+            // DQ (11/6/2007): Don't build a symbol for the defining declaration defined in another scope and put the resulting symbol into the wrong scope
+            if (scope == derivedDeclaration->get_scope())
+            {
+              SgSymbol* symbol = new SgMemberFunctionSymbol(derivedDeclaration);
+              ROSE_ASSERT(symbol != NULL);
 
-                           // printf ("SgTemplateInstantiationMemberFunctionDecl: scope = %p derivedDeclaration = %p = %s inserting a symbol = %p \n",scope,derivedDeclaration,get_name(derivedDeclaration).c_str(),symbol);
+              // printf ("SgTemplateInstantiationMemberFunctionDecl: scope = %p derivedDeclaration = %p = %s inserting a symbol = %p \n",scope,derivedDeclaration,get_name(derivedDeclaration).c_str(),symbol);
 
-                              SgName name = derivedDeclaration->get_name();
-                              symbolTable->insert(name,symbol);
-                            }
-                           else
-                            {
-                           // printf ("SgTemplateInstantiationMemberFunctionDecl: scope = %p derivedDeclaration = %p = %s didn't match the scope \n",scope,derivedDeclaration,get_name(derivedDeclaration).c_str());
-
-                           // These IR nodes might only exist as a template declaration and thus not be structureally present in their scope.
-                           // So we would never traverse them in the correct scope and so never build sysmbols for them and add the symbols 
-                           // to the correct symbol table.  This is a fundamental problem.  So we have to try to add these sorts of symbols
-                           // to the scope were they belong.
-                              SgScopeStatement* derivedDeclarationScope = derivedDeclaration->get_scope();
-                              ROSE_ASSERT(derivedDeclarationScope != NULL);
-
-                           // If this is a copy then it would be nice to make sure that the scope has been properly set.
-                           // Check this by looking for the associated template declaration in the scope.
-                              SgTemplateDeclaration* templateDeclaration = derivedDeclaration->get_templateDeclaration();
-                              ROSE_ASSERT(templateDeclaration != NULL);
-                              SgTemplateSymbol* templateSymbol = derivedDeclarationScope->lookup_template_symbol(templateDeclaration->get_name());
-                              if (templateSymbol != NULL)
-                                 {
-                                // The symbol is not present, so we have to build one and add it.
-#if 0
-                                   printf ("Building a symbol for derivedDeclaration = %p = %s to an alternative symbol table in derivedDeclarationScope = %p \n",
-                                        derivedDeclaration,get_name(derivedDeclaration).c_str(),derivedDeclarationScope);
-#endif
-                                   SgSymbol* symbol = new SgMemberFunctionSymbol(derivedDeclaration);
-                                   ROSE_ASSERT(symbol != NULL);
-                                   SgName name = derivedDeclaration->get_name();
-                                   derivedDeclarationScope->insert_symbol(name,symbol);
-                                 }
-                                else
-                                 {
-                                // printf ("The symbol was already present in the derivedDeclarationScope = %p \n",derivedDeclarationScope);
-                                 }
-                            }
-#else
-                         SgSymbol* symbol = new SgMemberFunctionSymbol(derivedDeclaration);
-                         ROSE_ASSERT(symbol != NULL);
-                         SgName name = derivedDeclaration->get_name();
-                         symbolTable->insert(name,symbol);
-#endif
-                         break;
-                       }
-
-                    case V_SgMemberFunctionDeclaration:
-                       {
-#if 1
-                         SgMemberFunctionDeclaration* derivedDeclaration = isSgMemberFunctionDeclaration(declaration);
-
-                      // DQ (11/6/2007): Don't build a symbol for the defining declaration defined in another scope and put the resulting symbol into the wrong scope
-                         if (scope == derivedDeclaration->get_scope())
-                            {
-                              SgSymbol* symbol = new SgMemberFunctionSymbol(derivedDeclaration);
-                              ROSE_ASSERT(symbol != NULL);
-                              SgName name = derivedDeclaration->get_name();
-                              symbolTable->insert(name,symbol);
-                            }
-                           else
-                            {
-                           // This happens when a defining declaration is located outside of the class where it is associated.
-                           // printf ("SgMemberFunctionDeclaration: scope = %p derivedDeclaration = %p = %s didn't match the scope \n",scope,derivedDeclaration,get_name(derivedDeclaration).c_str());
-                            }
-#else
-                         SgMemberFunctionDeclaration* derivedDeclaration = isSgMemberFunctionDeclaration(declaration);
-                         SgSymbol* symbol = new SgMemberFunctionSymbol(derivedDeclaration);
-                         ROSE_ASSERT(symbol != NULL);
-                         SgName name = derivedDeclaration->get_name();
-                         symbolTable->insert(name,symbol);
-#endif
-                      // symbolList.push_back(symbol);
-                      // ROSE_ASSERT(symbolList.empty() == false);
-                         break;
-                       }
-
-                    case V_SgTemplateInstantiationFunctionDecl:
-                       {
-                         SgTemplateInstantiationFunctionDecl* derivedDeclaration = isSgTemplateInstantiationFunctionDecl(declaration);
-#if 1
-                      // DQ (10/21/2007): If this is a friend function in a class then we have to skip insertion of the symbol into this scope (this symbol table)
-                      // if (derivedDeclaration->get_declarationModifier().isFriend() == false)
-                         if (scope == derivedDeclaration->get_scope())
-                            {
-                              SgSymbol* symbol = new SgFunctionSymbol(derivedDeclaration);
-                              ROSE_ASSERT(symbol != NULL);
-                              SgName name = derivedDeclaration->get_name();
-                              symbolTable->insert(name,symbol);
-                            }
-                           else
-                            {
-                              if (derivedDeclaration->get_declarationModifier().isFriend() == false)
-                                 {
-#if PRINT_DEVELOPER_WARNINGS
-                                   printf ("Shouldn't this be a friend declaration = %p = %s \n",derivedDeclaration,derivedDeclaration->class_name().c_str());
-#endif
-                                 }
-                            }
-#else
-                         SgSymbol* symbol = new SgFunctionSymbol(derivedDeclaration);
-                         ROSE_ASSERT(symbol != NULL);
-                         SgName name = derivedDeclaration->get_name();
-                         symbolTable->insert(name,symbol);
-#endif
-                         break;
-                       }
-
-                    case V_SgFunctionDeclaration:
-                       {
-                         SgFunctionDeclaration* derivedDeclaration = isSgFunctionDeclaration(declaration);
-
-                      // DQ (10/20/2007): If this is a friend function in a class then we have to skip insertion of the symbol into this scope (this symbol table)
-                      // if (derivedDeclaration->get_declarationModifier().isFriend() == false)
-                       
-                         if (useThisDeclaration == true)
-                            {
-                              if (scope == derivedDeclaration->get_scope())
-                                 {
-                                   SgSymbol* symbol = new SgFunctionSymbol(derivedDeclaration);
-                                   ROSE_ASSERT(symbol != NULL);
-                                   SgName name = derivedDeclaration->get_name();
-                                   symbolTable->insert(name,symbol);
-                                 }
-                                else
-                                 {
-                                   if (derivedDeclaration->get_declarationModifier().isFriend() == false)
-                                      {
-#if PRINT_DEVELOPER_WARNINGS
-                                        printf ("Shouldn't this be a friend declaration = %p = %s \n",derivedDeclaration,derivedDeclaration->class_name().c_str());
-#endif
-                                      }
-                                 }
-                            }
-                         break;
-                       }
-
-                    case V_SgVariableDeclaration:
-                       {
-                         SgVariableDeclaration* derivedDeclaration = isSgVariableDeclaration(declaration);
-                         SgInitializedNamePtrList & variableList = derivedDeclaration->get_variables();
-                         SgInitializedNamePtrList::iterator i = variableList.begin();
-                         while ( i != variableList.end() )
-                            {
-                              SgInitializedName* variable = *i;
-                              ROSE_ASSERT(variable != NULL);
-
-                           // DQ (10/20/2007): static data members declared outside the class scope don't generate symbols.
-                           // if (variable->get_prev_decl_item() != NULL)
-                              if (variable->get_scope() == scope)
-                                 {
-                                   SgSymbol* symbol = new SgVariableSymbol(variable);
-                                   ROSE_ASSERT(symbol != NULL);
-
-                                // printf ("In SageInterface::rebuildSymbolTable() variable = %p building a new SgVariableSymbol = %p \n",variable,symbol);
-
-                                   SgName name = variable->get_name();
-                                   symbolTable->insert(name,symbol);
-                                 }
-                                else
-                                 {
-                                // I think there is nothing to do in this case
-                                // printf ("In SageInterface::rebuildSymbolTable() This variable has a scope inconsistant with the symbol table: variable->get_scope() = %p scope = %p \n",variable->get_scope(),scope);
-                                 }
-
-                              i++;
-                            }
-
-                      // DQ (10/13/2007): Need to look into variable declarations to see if there are defining declaration 
-                      // that also force symbols to be built in the current scope!
-                      // ROSE_ASSERT(derivedDeclaration->get_variableDeclarationContainsBaseTypeDefiningDeclaration() == false);
-                         if (derivedDeclaration->get_variableDeclarationContainsBaseTypeDefiningDeclaration() == true)
-                            {
-                           // Build a SgClassDeclaration, SgEnumDeclaration associated symbol and add it to the symbol table.
-                              ROSE_ASSERT(symbolTable != NULL);
-                              ROSE_ASSERT(derivedDeclaration->get_baseTypeDefiningDeclaration() != NULL);
-                              supportForBaseTypeDefiningDeclaration ( symbolTable, derivedDeclaration->get_baseTypeDefiningDeclaration() );
-                            }
-
-                      // ROSE_ASSERT(symbolList.empty() == false);
-                         break;
-                       }
-
-                    case V_SgTemplateInstantiationDecl:
-                       {
-                         SgTemplateInstantiationDecl* derivedDeclaration = isSgTemplateInstantiationDecl(declaration);
-#if 1
-                      // printf ("case SgTemplateInstantiationDecl: derivedDeclaration name = %s derivedDeclaration->get_declarationModifier().isFriend() = %s \n",
-                      //      derivedDeclaration->get_name().str(),derivedDeclaration->get_declarationModifier().isFriend() ? "true" : "false");
-
-                      // if (derivedDeclaration->get_declarationModifier().isFriend() == false)
-                         if (scope == derivedDeclaration->get_scope())
-                            {
-                              SgSymbol* symbol = new SgClassSymbol(derivedDeclaration);
-                           // printf ("Inserting SgClassSymbol = %p into scope = %p = %s \n",symbol,scope,scope->class_name().c_str());
-                              ROSE_ASSERT(symbol != NULL);
-                              SgName name = derivedDeclaration->get_name();
-#if 0
-                           // DQ (10/21/2007): The scopes should match
-                              if (scope != derivedDeclaration->get_scope())
-                                 {
-                                   printf ("Error: scopes don't match for derivedDeclaration = %p = %s \n",derivedDeclaration,derivedDeclaration->class_name().c_str());
-                                 }
-                              ROSE_ASSERT(scope == derivedDeclaration->get_scope());
-#endif
-                              symbolTable->insert(name,symbol);
-                            }
-                           else
-                            {
-                           // printf ("SgTemplateInstantiationDecl: scope = %p derivedDeclaration = %p = %s didn't match the scope \n",scope,derivedDeclaration,get_name(derivedDeclaration).c_str());
-
-                              if (derivedDeclaration->get_declarationModifier().isFriend() == false)
-                                 {
-#if PRINT_DEVELOPER_WARNINGS
-                                   printf ("Shouldn't this be a friend declaration = %p = %s \n",derivedDeclaration,derivedDeclaration->class_name().c_str());
-#endif
-                                 }
-                            }
-#else
-                         SgSymbol* symbol = new SgClassSymbol(derivedDeclaration);
-                         ROSE_ASSERT(symbol != NULL);
-                         SgName name = derivedDeclaration->get_name();
-                         symbolTable->insert(name,symbol);
-#endif
-                         break;
-                       }
-
-                    case V_SgClassDeclaration:
-                       {
-                         SgClassDeclaration* derivedDeclaration = isSgClassDeclaration(declaration);
-#if 1
-                      // printf ("case SgClassDeclaration: derivedDeclaration name = %s derivedDeclaration->get_declarationModifier().isFriend() = %s \n",
-                      //      derivedDeclaration->get_name().str(),derivedDeclaration->get_declarationModifier().isFriend() ? "true" : "false");
-                      // if (derivedDeclaration->get_declarationModifier().isFriend() == false)
-                         if (scope == derivedDeclaration->get_scope())
-                            {
-                              SgSymbol* symbol = new SgClassSymbol(derivedDeclaration);
-                              ROSE_ASSERT(symbol != NULL);
-                              SgName name = derivedDeclaration->get_name();
-                              symbolTable->insert(name,symbol);
-                            }
-                           else
-                            {
-                              if (derivedDeclaration->get_declarationModifier().isFriend() == false)
-                                 {
-#if PRINT_DEVELOPER_WARNINGS
-                                   printf ("Shouldn't this be a friend declaration = %p = %s \n",derivedDeclaration,derivedDeclaration->class_name().c_str());
-#endif
-                                 }
-                            }
-#else
-                         SgSymbol* symbol = new SgClassSymbol(derivedDeclaration);
-                         ROSE_ASSERT(symbol != NULL);
-                         SgName name = derivedDeclaration->get_name();
-                         symbolTable->insert(name,symbol);
-#endif
-                         break;
-                       }
-
-                    case V_SgEnumDeclaration:
-                       {
-                         SgEnumDeclaration* derivedDeclaration = isSgEnumDeclaration(declaration);
-                         ROSE_ASSERT(derivedDeclaration != NULL);
-                         SgSymbol* symbol = new SgEnumSymbol(derivedDeclaration);
-                         ROSE_ASSERT(symbol != NULL);
-                         SgName name = derivedDeclaration->get_name();
-                         symbolTable->insert(name,symbol);
-
-                      // DQ (10/18/2007): Fixed construction of symbol tabel to include enum fields.
-                         SgInitializedNamePtrList & enumFieldList = derivedDeclaration->get_enumerators();
-                         SgInitializedNamePtrList::iterator i     = enumFieldList.begin();
-
-                      // Iterate over enum fields and add each one to the symbol table.
-                         while (i != enumFieldList.end())
-                            {
-                              SgSymbol* enum_field_symbol = new SgEnumFieldSymbol(*i);
-                              ROSE_ASSERT(enum_field_symbol != NULL);
-                              SgName enum_field_name = (*i)->get_name();
-                              symbolTable->insert(enum_field_name,enum_field_symbol);
-
-                              i++;
-                            }
-
-                         break;
-                       }
-
-                    case V_SgTypedefDeclaration:
-                       {
-                         SgTypedefDeclaration* derivedDeclaration = isSgTypedefDeclaration(declaration);
-                         SgSymbol* symbol = new SgTypedefSymbol(derivedDeclaration);
-                         ROSE_ASSERT(symbol != NULL);
-                         SgName name = derivedDeclaration->get_name();
-                         symbolTable->insert(name,symbol);
-
-                      // DQ (10/13/2007): Need to look into typedefs to see if there are defining declaration 
-                      // that also force symbols to be built in the current scope!
-                      // ROSE_ASSERT(derivedDeclaration->get_typedefBaseTypeContainsDefiningDeclaration() == false);
-                         if (derivedDeclaration->get_typedefBaseTypeContainsDefiningDeclaration() == true)
-                            {
-                           // Build a SgClassDeclaration, SgEnumDeclaration associated symbol and add it to the symbol table.
-                              ROSE_ASSERT(symbolTable != NULL);
-                              ROSE_ASSERT(derivedDeclaration->get_baseTypeDefiningDeclaration() != NULL);
-                              supportForBaseTypeDefiningDeclaration ( symbolTable, derivedDeclaration->get_baseTypeDefiningDeclaration() );
-                            }
-                           else
-                            {
-                           // DQ (11/7/2007): If the typedef has a definition (e.g. function pointer) then build a symbol.
-                               SgDeclarationStatement* declaration = derivedDeclaration->get_declaration();
-                               if (declaration != NULL)
-                                 {
-                                   supportForBaseTypeDefiningDeclaration ( symbolTable, derivedDeclaration->get_declaration() );
-                                 }
-                            }                         
-
-                         break;
-                       }
-
-                    case V_SgTemplateDeclaration:
-                       {
-                         SgTemplateDeclaration* derivedDeclaration = isSgTemplateDeclaration(declaration);
-#if 1
-                      // DQ (10/21/2007): If this is a friend function in a class then we have to skip insertion of the symbol into this scope (this symbol table)
-#if 0
-                         printf ("case V_SgTemplateDeclaration: derivedDeclaration               = %p \n",derivedDeclaration);
-                         printf ("case V_SgTemplateDeclaration: derivedDeclaration->get_declarationModifier().isFriend() = %s \n",derivedDeclaration->get_declarationModifier().isFriend() ? "true" : "false");
-                         printf ("case V_SgTemplateDeclaration: derivedDeclaration->get_name()   = %s \n",derivedDeclaration->get_name().str());
-                         printf ("case V_SgTemplateDeclaration: derivedDeclaration->get_string() = %s \n",derivedDeclaration->get_string().str());
-#endif
-                      // if (derivedDeclaration->get_declarationModifier().isFriend() == false)
-                         if (scope == derivedDeclaration->get_scope())
-                            {
-                           // printf ("Building symbol for SgTemplateDeclaration: derivedDeclaration = %p for symbol table in scope = %p \n",derivedDeclaration,scope);
-                              SgSymbol* symbol = new SgTemplateSymbol(derivedDeclaration);
-                              ROSE_ASSERT(symbol != NULL);
-                              SgName name = derivedDeclaration->get_name();
-                              symbolTable->insert(name,symbol);
-                            }
-                           else
-                            {
-                              if (derivedDeclaration->get_declarationModifier().isFriend() == false)
-                                 {
-#if PRINT_DEVELOPER_WARNINGS
-                                   printf ("Shouldn't this be a friend declaration = %p = %s \n",derivedDeclaration,derivedDeclaration->class_name().c_str());
-#endif
-                                 }
-                            }
-#else
-                         SgTemplateDeclaration* derivedDeclaration = isSgTemplateDeclaration(declaration);
-                         SgSymbol* symbol = new SgTemplateSymbol(derivedDeclaration);
-                         ROSE_ASSERT(symbol != NULL);
-                         SgName name = derivedDeclaration->get_name();
-                         symbolTable->insert(name,symbol);
-#endif
-                         break;
-                       }
-
-                 // Does this cause a symbol to be built?  Seems that it should, 
-                 // unless we always reference the non-aliased symbol (reuse it)!
-                    case V_SgNamespaceAliasDeclarationStatement:
-                       {
-                         SgNamespaceAliasDeclarationStatement* aliasDeclaration = isSgNamespaceAliasDeclarationStatement(declaration);
-                         ROSE_ASSERT(aliasDeclaration != NULL);
-                         ROSE_ASSERT(aliasDeclaration->get_namespaceDeclaration() != NULL);
-
-                         SgNamespaceDeclarationStatement* derivedDeclaration = isSgNamespaceDeclarationStatement(aliasDeclaration->get_namespaceDeclaration());
-                         ROSE_ASSERT(derivedDeclaration != NULL);
-
-                      // The constructor for the SgNamespaceSymbol is disturbingly different from the rest of the constructors.
-                         SgSymbol* symbol = new SgNamespaceSymbol(derivedDeclaration->get_name(),derivedDeclaration);
-                         ROSE_ASSERT(symbol != NULL);
-                         SgName name = derivedDeclaration->get_name();
-                         symbolTable->insert(name,symbol);
-                      // symbolList.push_back(symbol);
-                      // ROSE_ASSERT(symbolList.empty() == false);
-                         break;
-                       }
-
-                 // Does this cause a symbol to be built?  Seems that it should, 
-                 // unless we always reference the non-aliased symbol (reuse it)!
-                    case V_SgNamespaceDeclarationStatement:
-                       {
-                         SgNamespaceDeclarationStatement* derivedDeclaration = isSgNamespaceDeclarationStatement(declaration);
-                         ROSE_ASSERT(derivedDeclaration != NULL);
-
-                      // The constructor for the SgNamespaceSymbol is disturbingly different from the rest of the constructors.
-                         SgSymbol* symbol = new SgNamespaceSymbol(derivedDeclaration->get_name(),derivedDeclaration);
-                         ROSE_ASSERT(symbol != NULL);
-                         SgName name = derivedDeclaration->get_name();
-                         symbolTable->insert(name,symbol);
-                      // symbolList.push_back(symbol);
-                      // ROSE_ASSERT(symbolList.empty() == false);
-                         break;
-                       }
-
-                    case V_SgUsingDirectiveStatement:
-                    case V_SgPragmaDeclaration:
-                    case V_SgTemplateInstantiationDirectiveStatement:
-                    case V_SgUsingDeclarationStatement:
-                       {
-                      // DQ (10/22/2005): Not sure if we have to worry about this declaration's appearance in the symbol table!
-#if 0
-                         printf ("This declaration is ignored in rebuilding symbol table %p = %s = %s \n",*i,(*i)->class_name().c_str(),get_name(*i).c_str());
-#endif
-                         break;
-                       }
-
-                    case V_SgAsmStmt:
-                       {
-                      // DQ (8/13/2006): This is not really a declaration (I think).  This will be fixed later.
-#if 0
-                         printf ("An ASM statement (SgAsmStmt) declaration is not really a declaration %p = %s = %s \n",*i,(*i)->class_name().c_str(),get_name(*i).c_str());
-#endif
-                         break;
-                       }
-
-                 // Cases where declations are not used or referenced and so symbols are not required!
-                    case V_SgVariableDefinition:
-
-                    case V_SgFunctionParameterList:
-                    case V_SgCtorInitializerList:
-
-                 // These are not referenced so they don't need a symbol!
-                       {
-                         printf ("Special cases not handled %p = %s = %s \n",*i,(*i)->class_name().c_str(),get_name(*i).c_str());
-                         ROSE_ASSERT(false);
-                         break;
-                       }
-
-                    default:
-                       {
-                         printf ("Default reached in rebuildSymbolTable \n");
-                         ROSE_ASSERT(false);
-                       }
-                  }
-
-               ROSE_ASSERT(symbolTable != NULL);
-               ROSE_ASSERT(symbolTable->get_table() != NULL);
-             }
-#if 0
-        // DQ (10/25/2007): This case is now handled in the SgFunctionDefinition and need not be handled here (else it would be redundant).
-
+              SgName name = derivedDeclaration->get_name();
+              symbolTable->insert(name,symbol);
+            }
             else
-             {
-            // DQ (10/13/2007): Added case to handle label symbols
-               SgLabelStatement* labelStatement = isSgLabelStatement(*i);
-               if (labelStatement != NULL)
-                  {
-                 // Handle the case of a label statement separately since it is not a declaration 
-                 // (and it is not a declaration in the C++ grammar, so this has to be a special case).
+            {
+              // printf ("SgTemplateInstantiationMemberFunctionDecl: scope = %p derivedDeclaration = %p = %s didn't match the scope \n",scope,derivedDeclaration,get_name(derivedDeclaration).c_str());
 
-                 // printf ("Found a label statement = %p = %s (building a SgLabelSymbol and inserting it into scope = %p = %s \n",labelStatement,SageInterface::get_name(labelStatement).c_str(),scope,scope->class_name().c_str());
+              // These IR nodes might only exist as a template declaration and thus not be structureally present in their scope.
+              // So we would never traverse them in the correct scope and so never build sysmbols for them and add the symbols 
+              // to the correct symbol table.  This is a fundamental problem.  So we have to try to add these sorts of symbols
+              // to the scope were they belong.
+              SgScopeStatement* derivedDeclarationScope = derivedDeclaration->get_scope();
+              ROSE_ASSERT(derivedDeclarationScope != NULL);
 
-                    if (labelStatement->get_scope() == scope)
-                       {
-                         SgSymbol* symbol = new SgLabelSymbol(labelStatement);
-                         ROSE_ASSERT(symbol != NULL);
-                         SgName name = labelStatement->get_name();
-                         symbolTable->insert(name,symbol);
-                       }
-                  }
-             }
+              // If this is a copy then it would be nice to make sure that the scope has been properly set.
+              // Check this by looking for the associated template declaration in the scope.
+              SgTemplateDeclaration* templateDeclaration = derivedDeclaration->get_templateDeclaration();
+              ROSE_ASSERT(templateDeclaration != NULL);
+              SgTemplateSymbol* templateSymbol = derivedDeclarationScope->lookup_template_symbol(templateDeclaration->get_name());
+              if (templateSymbol != NULL)
+              {
+                // The symbol is not present, so we have to build one and add it.
+#if 0
+                printf ("Building a symbol for derivedDeclaration = %p = %s to an alternative symbol table in derivedDeclarationScope = %p \n",
+                    derivedDeclaration,get_name(derivedDeclaration).c_str(),derivedDeclarationScope);
 #endif
+                SgSymbol* symbol = new SgMemberFunctionSymbol(derivedDeclaration);
+                ROSE_ASSERT(symbol != NULL);
+                SgName name = derivedDeclaration->get_name();
+                derivedDeclarationScope->insert_symbol(name,symbol);
+              }
+              else
+              {
+                // printf ("The symbol was already present in the derivedDeclarationScope = %p \n",derivedDeclarationScope);
+              }
+            }
+#else
+            SgSymbol* symbol = new SgMemberFunctionSymbol(derivedDeclaration);
+            ROSE_ASSERT(symbol != NULL);
+            SgName name = derivedDeclaration->get_name();
+            symbolTable->insert(name,symbol);
+#endif
+            break;
+          }
 
-       // printf ("DONE: Iterating through the declaration in this scope ... %p = %s = %s \n",*i,(*i)->class_name().c_str(),get_name(*i).c_str());
+        case V_SgMemberFunctionDeclaration:
+          {
+#if 1
+            SgMemberFunctionDeclaration* derivedDeclaration = isSgMemberFunctionDeclaration(declaration);
 
-        }
+            // DQ (11/6/2007): Don't build a symbol for the defining declaration defined in another scope and put the resulting symbol into the wrong scope
+            if (scope == derivedDeclaration->get_scope())
+            {
+              SgSymbol* symbol = new SgMemberFunctionSymbol(derivedDeclaration);
+              ROSE_ASSERT(symbol != NULL);
+              SgName name = derivedDeclaration->get_name();
+              symbolTable->insert(name,symbol);
+            }
+            else
+            {
+              // This happens when a defining declaration is located outside of the class where it is associated.
+              // printf ("SgMemberFunctionDeclaration: scope = %p derivedDeclaration = %p = %s didn't match the scope \n",scope,derivedDeclaration,get_name(derivedDeclaration).c_str());
+            }
+#else
+            SgMemberFunctionDeclaration* derivedDeclaration = isSgMemberFunctionDeclaration(declaration);
+            SgSymbol* symbol = new SgMemberFunctionSymbol(derivedDeclaration);
+            ROSE_ASSERT(symbol != NULL);
+            SgName name = derivedDeclaration->get_name();
+            symbolTable->insert(name,symbol);
+#endif
+            // symbolList.push_back(symbol);
+            // ROSE_ASSERT(symbolList.empty() == false);
+            break;
+          }
 
-     ROSE_ASSERT(symbolTable != NULL);
-     ROSE_ASSERT(symbolTable->get_table() != NULL);
+        case V_SgTemplateInstantiationFunctionDecl:
+          {
+            SgTemplateInstantiationFunctionDecl* derivedDeclaration = isSgTemplateInstantiationFunctionDecl(declaration);
+#if 1
+            // DQ (10/21/2007): If this is a friend function in a class then we have to skip insertion of the symbol into this scope (this symbol table)
+            // if (derivedDeclaration->get_declarationModifier().isFriend() == false)
+            if (scope == derivedDeclaration->get_scope())
+            {
+              SgSymbol* symbol = new SgFunctionSymbol(derivedDeclaration);
+              ROSE_ASSERT(symbol != NULL);
+              SgName name = derivedDeclaration->get_name();
+              symbolTable->insert(name,symbol);
+            }
+            else
+            {
+              if (derivedDeclaration->get_declarationModifier().isFriend() == false)
+              {
+#if PRINT_DEVELOPER_WARNINGS
+                printf ("Shouldn't this be a friend declaration = %p = %s \n",derivedDeclaration,derivedDeclaration->class_name().c_str());
+#endif
+              }
+            }
+#else
+            SgSymbol* symbol = new SgFunctionSymbol(derivedDeclaration);
+            ROSE_ASSERT(symbol != NULL);
+            SgName name = derivedDeclaration->get_name();
+            symbolTable->insert(name,symbol);
+#endif
+            break;
+          }
+
+        case V_SgFunctionDeclaration:
+          {
+            SgFunctionDeclaration* derivedDeclaration = isSgFunctionDeclaration(declaration);
+
+            // DQ (10/20/2007): If this is a friend function in a class then we have to skip insertion of the symbol into this scope (this symbol table)
+            // if (derivedDeclaration->get_declarationModifier().isFriend() == false)
+
+            if (useThisDeclaration == true)
+            {
+              if (scope == derivedDeclaration->get_scope())
+              {
+                SgSymbol* symbol = new SgFunctionSymbol(derivedDeclaration);
+                ROSE_ASSERT(symbol != NULL);
+                SgName name = derivedDeclaration->get_name();
+                symbolTable->insert(name,symbol);
+              }
+              else
+              {
+                if (derivedDeclaration->get_declarationModifier().isFriend() == false)
+                {
+#if PRINT_DEVELOPER_WARNINGS
+                  printf ("Shouldn't this be a friend declaration = %p = %s \n",derivedDeclaration,derivedDeclaration->class_name().c_str());
+#endif
+                }
+              }
+            }
+            break;
+          }
+
+        case V_SgVariableDeclaration:
+          {
+            SgVariableDeclaration* derivedDeclaration = isSgVariableDeclaration(declaration);
+            SgInitializedNamePtrList & variableList = derivedDeclaration->get_variables();
+            SgInitializedNamePtrList::iterator i = variableList.begin();
+            while ( i != variableList.end() )
+            {
+              SgInitializedName* variable = *i;
+              ROSE_ASSERT(variable != NULL);
+
+              // DQ (10/20/2007): static data members declared outside the class scope don't generate symbols.
+              // if (variable->get_prev_decl_item() != NULL)
+              if (variable->get_scope() == scope)
+              {
+                SgSymbol* symbol = new SgVariableSymbol(variable);
+                ROSE_ASSERT(symbol != NULL);
+
+                // printf ("In SageInterface::rebuildSymbolTable() variable = %p building a new SgVariableSymbol = %p \n",variable,symbol);
+
+                SgName name = variable->get_name();
+                symbolTable->insert(name,symbol);
+              }
+              else
+              {
+                // I think there is nothing to do in this case
+                // printf ("In SageInterface::rebuildSymbolTable() This variable has a scope inconsistant with the symbol table: variable->get_scope() = %p scope = %p \n",variable->get_scope(),scope);
+              }
+
+              i++;
+            }
+
+            // DQ (10/13/2007): Need to look into variable declarations to see if there are defining declaration 
+            // that also force symbols to be built in the current scope!
+            // ROSE_ASSERT(derivedDeclaration->get_variableDeclarationContainsBaseTypeDefiningDeclaration() == false);
+            if (derivedDeclaration->get_variableDeclarationContainsBaseTypeDefiningDeclaration() == true)
+            {
+              // Build a SgClassDeclaration, SgEnumDeclaration associated symbol and add it to the symbol table.
+              ROSE_ASSERT(symbolTable != NULL);
+              ROSE_ASSERT(derivedDeclaration->get_baseTypeDefiningDeclaration() != NULL);
+              supportForBaseTypeDefiningDeclaration ( symbolTable, derivedDeclaration->get_baseTypeDefiningDeclaration() );
+            }
+
+            // ROSE_ASSERT(symbolList.empty() == false);
+            break;
+          }
+
+        case V_SgTemplateInstantiationDecl:
+          {
+            SgTemplateInstantiationDecl* derivedDeclaration = isSgTemplateInstantiationDecl(declaration);
+#if 1
+            // printf ("case SgTemplateInstantiationDecl: derivedDeclaration name = %s derivedDeclaration->get_declarationModifier().isFriend() = %s \n",
+            //      derivedDeclaration->get_name().str(),derivedDeclaration->get_declarationModifier().isFriend() ? "true" : "false");
+
+            // if (derivedDeclaration->get_declarationModifier().isFriend() == false)
+            if (scope == derivedDeclaration->get_scope())
+            {
+              SgSymbol* symbol = new SgClassSymbol(derivedDeclaration);
+              // printf ("Inserting SgClassSymbol = %p into scope = %p = %s \n",symbol,scope,scope->class_name().c_str());
+              ROSE_ASSERT(symbol != NULL);
+              SgName name = derivedDeclaration->get_name();
+#if 0
+              // DQ (10/21/2007): The scopes should match
+              if (scope != derivedDeclaration->get_scope())
+              {
+                printf ("Error: scopes don't match for derivedDeclaration = %p = %s \n",derivedDeclaration,derivedDeclaration->class_name().c_str());
+              }
+              ROSE_ASSERT(scope == derivedDeclaration->get_scope());
+#endif
+              symbolTable->insert(name,symbol);
+            }
+            else
+            {
+              // printf ("SgTemplateInstantiationDecl: scope = %p derivedDeclaration = %p = %s didn't match the scope \n",scope,derivedDeclaration,get_name(derivedDeclaration).c_str());
+
+              if (derivedDeclaration->get_declarationModifier().isFriend() == false)
+              {
+#if PRINT_DEVELOPER_WARNINGS
+                printf ("Shouldn't this be a friend declaration = %p = %s \n",derivedDeclaration,derivedDeclaration->class_name().c_str());
+#endif
+              }
+            }
+#else
+            SgSymbol* symbol = new SgClassSymbol(derivedDeclaration);
+            ROSE_ASSERT(symbol != NULL);
+            SgName name = derivedDeclaration->get_name();
+            symbolTable->insert(name,symbol);
+#endif
+            break;
+          }
+
+        case V_SgClassDeclaration:
+          {
+            SgClassDeclaration* derivedDeclaration = isSgClassDeclaration(declaration);
+#if 1
+            // printf ("case SgClassDeclaration: derivedDeclaration name = %s derivedDeclaration->get_declarationModifier().isFriend() = %s \n",
+            //      derivedDeclaration->get_name().str(),derivedDeclaration->get_declarationModifier().isFriend() ? "true" : "false");
+            // if (derivedDeclaration->get_declarationModifier().isFriend() == false)
+            if (scope == derivedDeclaration->get_scope())
+            {
+              SgSymbol* symbol = new SgClassSymbol(derivedDeclaration);
+              ROSE_ASSERT(symbol != NULL);
+              SgName name = derivedDeclaration->get_name();
+              symbolTable->insert(name,symbol);
+            }
+            else
+            {
+              if (derivedDeclaration->get_declarationModifier().isFriend() == false)
+              {
+#if PRINT_DEVELOPER_WARNINGS
+                printf ("Shouldn't this be a friend declaration = %p = %s \n",derivedDeclaration,derivedDeclaration->class_name().c_str());
+#endif
+              }
+            }
+#else
+            SgSymbol* symbol = new SgClassSymbol(derivedDeclaration);
+            ROSE_ASSERT(symbol != NULL);
+            SgName name = derivedDeclaration->get_name();
+            symbolTable->insert(name,symbol);
+#endif
+            break;
+          }
+
+        case V_SgEnumDeclaration:
+          {
+            SgEnumDeclaration* derivedDeclaration = isSgEnumDeclaration(declaration);
+            ROSE_ASSERT(derivedDeclaration != NULL);
+            SgSymbol* symbol = new SgEnumSymbol(derivedDeclaration);
+            ROSE_ASSERT(symbol != NULL);
+            SgName name = derivedDeclaration->get_name();
+            symbolTable->insert(name,symbol);
+
+            // DQ (10/18/2007): Fixed construction of symbol tabel to include enum fields.
+            SgInitializedNamePtrList & enumFieldList = derivedDeclaration->get_enumerators();
+            SgInitializedNamePtrList::iterator i     = enumFieldList.begin();
+
+            // Iterate over enum fields and add each one to the symbol table.
+            while (i != enumFieldList.end())
+            {
+              SgSymbol* enum_field_symbol = new SgEnumFieldSymbol(*i);
+              ROSE_ASSERT(enum_field_symbol != NULL);
+              SgName enum_field_name = (*i)->get_name();
+              symbolTable->insert(enum_field_name,enum_field_symbol);
+
+              i++;
+            }
+
+            break;
+          }
+
+        case V_SgTypedefDeclaration:
+          {
+            SgTypedefDeclaration* derivedDeclaration = isSgTypedefDeclaration(declaration);
+            SgSymbol* symbol = new SgTypedefSymbol(derivedDeclaration);
+            ROSE_ASSERT(symbol != NULL);
+            SgName name = derivedDeclaration->get_name();
+            symbolTable->insert(name,symbol);
+
+            // DQ (10/13/2007): Need to look into typedefs to see if there are defining declaration 
+            // that also force symbols to be built in the current scope!
+            // ROSE_ASSERT(derivedDeclaration->get_typedefBaseTypeContainsDefiningDeclaration() == false);
+            if (derivedDeclaration->get_typedefBaseTypeContainsDefiningDeclaration() == true)
+            {
+              // Build a SgClassDeclaration, SgEnumDeclaration associated symbol and add it to the symbol table.
+              ROSE_ASSERT(symbolTable != NULL);
+              ROSE_ASSERT(derivedDeclaration->get_baseTypeDefiningDeclaration() != NULL);
+              supportForBaseTypeDefiningDeclaration ( symbolTable, derivedDeclaration->get_baseTypeDefiningDeclaration() );
+            }
+            else
+            {
+              // DQ (11/7/2007): If the typedef has a definition (e.g. function pointer) then build a symbol.
+              SgDeclarationStatement* declaration = derivedDeclaration->get_declaration();
+              if (declaration != NULL)
+              {
+                supportForBaseTypeDefiningDeclaration ( symbolTable, derivedDeclaration->get_declaration() );
+              }
+            }                         
+
+            break;
+          }
+
+        case V_SgTemplateDeclaration:
+          {
+            SgTemplateDeclaration* derivedDeclaration = isSgTemplateDeclaration(declaration);
+#if 1
+            // DQ (10/21/2007): If this is a friend function in a class then we have to skip insertion of the symbol into this scope (this symbol table)
+#if 0
+            printf ("case V_SgTemplateDeclaration: derivedDeclaration               = %p \n",derivedDeclaration);
+            printf ("case V_SgTemplateDeclaration: derivedDeclaration->get_declarationModifier().isFriend() = %s \n",derivedDeclaration->get_declarationModifier().isFriend() ? "true" : "false");
+            printf ("case V_SgTemplateDeclaration: derivedDeclaration->get_name()   = %s \n",derivedDeclaration->get_name().str());
+            printf ("case V_SgTemplateDeclaration: derivedDeclaration->get_string() = %s \n",derivedDeclaration->get_string().str());
+#endif
+            // if (derivedDeclaration->get_declarationModifier().isFriend() == false)
+            if (scope == derivedDeclaration->get_scope())
+            {
+              // printf ("Building symbol for SgTemplateDeclaration: derivedDeclaration = %p for symbol table in scope = %p \n",derivedDeclaration,scope);
+              SgSymbol* symbol = new SgTemplateSymbol(derivedDeclaration);
+              ROSE_ASSERT(symbol != NULL);
+              SgName name = derivedDeclaration->get_name();
+              symbolTable->insert(name,symbol);
+            }
+            else
+            {
+              if (derivedDeclaration->get_declarationModifier().isFriend() == false)
+              {
+#if PRINT_DEVELOPER_WARNINGS
+                printf ("Shouldn't this be a friend declaration = %p = %s \n",derivedDeclaration,derivedDeclaration->class_name().c_str());
+#endif
+              }
+            }
+#else
+            SgTemplateDeclaration* derivedDeclaration = isSgTemplateDeclaration(declaration);
+            SgSymbol* symbol = new SgTemplateSymbol(derivedDeclaration);
+            ROSE_ASSERT(symbol != NULL);
+            SgName name = derivedDeclaration->get_name();
+            symbolTable->insert(name,symbol);
+#endif
+            break;
+          }
+
+          // Does this cause a symbol to be built?  Seems that it should, 
+          // unless we always reference the non-aliased symbol (reuse it)!
+        case V_SgNamespaceAliasDeclarationStatement:
+          {
+            SgNamespaceAliasDeclarationStatement* aliasDeclaration = isSgNamespaceAliasDeclarationStatement(declaration);
+            ROSE_ASSERT(aliasDeclaration != NULL);
+            ROSE_ASSERT(aliasDeclaration->get_namespaceDeclaration() != NULL);
+
+            SgNamespaceDeclarationStatement* derivedDeclaration = isSgNamespaceDeclarationStatement(aliasDeclaration->get_namespaceDeclaration());
+            ROSE_ASSERT(derivedDeclaration != NULL);
+
+            // The constructor for the SgNamespaceSymbol is disturbingly different from the rest of the constructors.
+            SgSymbol* symbol = new SgNamespaceSymbol(derivedDeclaration->get_name(),derivedDeclaration);
+            ROSE_ASSERT(symbol != NULL);
+            SgName name = derivedDeclaration->get_name();
+            symbolTable->insert(name,symbol);
+            // symbolList.push_back(symbol);
+            // ROSE_ASSERT(symbolList.empty() == false);
+            break;
+          }
+
+          // Does this cause a symbol to be built?  Seems that it should, 
+          // unless we always reference the non-aliased symbol (reuse it)!
+        case V_SgNamespaceDeclarationStatement:
+          {
+            SgNamespaceDeclarationStatement* derivedDeclaration = isSgNamespaceDeclarationStatement(declaration);
+            ROSE_ASSERT(derivedDeclaration != NULL);
+
+            // The constructor for the SgNamespaceSymbol is disturbingly different from the rest of the constructors.
+            SgSymbol* symbol = new SgNamespaceSymbol(derivedDeclaration->get_name(),derivedDeclaration);
+            ROSE_ASSERT(symbol != NULL);
+            SgName name = derivedDeclaration->get_name();
+            symbolTable->insert(name,symbol);
+            // symbolList.push_back(symbol);
+            // ROSE_ASSERT(symbolList.empty() == false);
+            break;
+          }
+
+        case V_SgUsingDirectiveStatement:
+        case V_SgPragmaDeclaration:
+        case V_SgTemplateInstantiationDirectiveStatement:
+        case V_SgUsingDeclarationStatement:
+          {
+            // DQ (10/22/2005): Not sure if we have to worry about this declaration's appearance in the symbol table!
+#if 0
+            printf ("This declaration is ignored in rebuilding symbol table %p = %s = %s \n",*i,(*i)->class_name().c_str(),get_name(*i).c_str());
+#endif
+            break;
+          }
+
+        case V_SgAsmStmt:
+          {
+            // DQ (8/13/2006): This is not really a declaration (I think).  This will be fixed later.
+#if 0
+            printf ("An ASM statement (SgAsmStmt) declaration is not really a declaration %p = %s = %s \n",*i,(*i)->class_name().c_str(),get_name(*i).c_str());
+#endif
+            break;
+          }
+
+          // Cases where declations are not used or referenced and so symbols are not required!
+        case V_SgVariableDefinition:
+
+        case V_SgFunctionParameterList:
+        case V_SgCtorInitializerList:
+
+          // These are not referenced so they don't need a symbol!
+          {
+            printf ("Special cases not handled %p = %s = %s \n",*i,(*i)->class_name().c_str(),get_name(*i).c_str());
+            ROSE_ASSERT(false);
+            break;
+          }
+
+        default:
+          {
+            printf ("Default reached in rebuildSymbolTable \n");
+            ROSE_ASSERT(false);
+          }
+      }
+
+      ROSE_ASSERT(symbolTable != NULL);
+      ROSE_ASSERT(symbolTable->get_table() != NULL);
+    }
+    // printf ("DONE: Iterating through the declaration in this scope ... %p = %s = %s \n",*i,(*i)->class_name().c_str(),get_name(*i).c_str());
+
+  }
+
+  ROSE_ASSERT(symbolTable != NULL);
+  ROSE_ASSERT(symbolTable->get_table() != NULL);
 
 #if 0
-     printf ("Symbol Table from %p = %s at: \n",scope,scope->sage_class_name());
-     scope->get_file_info()->display("Symbol Table Location");
-     symbolTable->print("Called from SageInterface::rebuildSymbolTable()");
+  printf ("Symbol Table from %p = %s at: \n",scope,scope->sage_class_name());
+  scope->get_file_info()->display("Symbol Table Location");
+  symbolTable->print("Called from SageInterface::rebuildSymbolTable()");
 #endif
-   }
+}
 
 
 
@@ -6341,61 +6129,62 @@ StringUtility::numberToString(++breakLabelCounter),
 //     delete them from stmt_dst   
 // More general usage: move preprocessingInfo of stmt_src to stmt_dst, should used before any
 //           LoweLevel::remove(stmt_src)
-  void SageInterface::moveUpPreprocessingInfo(SgStatement * stmt_dst, SgStatement * stmt_src,
+void SageInterface::moveUpPreprocessingInfo(SgStatement * stmt_dst, SgStatement * stmt_src,
       PreprocessingInfo::RelativePositionType position/*=PreprocessingInfo::undef*/)
+{
+  ROSE_ASSERT(stmt_src != NULL);
+  ROSE_ASSERT(stmt_dst != NULL);
+  AttachedPreprocessingInfoType* infoList=stmt_src->getAttachedPreprocessingInfo();
+  AttachedPreprocessingInfoType* infoToRemoveList = new AttachedPreprocessingInfoType();
+
+  if (infoList == NULL) return;
+  for (Rose_STL_Container<PreprocessingInfo*>::iterator i= (*infoList).begin(); 
+      i!=(*infoList).end();i++)
   {
-    ROSE_ASSERT(stmt_src != NULL);
-    ROSE_ASSERT(stmt_dst != NULL);
-    AttachedPreprocessingInfoType* infoList=stmt_src->getAttachedPreprocessingInfo();
-    AttachedPreprocessingInfoType* infoToRemoveList = new AttachedPreprocessingInfoType();
-    
-    if (infoList == NULL) return;
-    for (Rose_STL_Container<PreprocessingInfo*>::iterator i= (*infoList).begin(); 
-             i!=(*infoList).end();i++)
-    {
-      PreprocessingInfo * info=dynamic_cast<PreprocessingInfo *> (*i);
-      ROSE_ASSERT(info != NULL);
-      
-     if ( (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIncludeDeclaration )||
-          (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorDefineDeclaration )||
-          (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorUndefDeclaration)||
-          (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIfdefDeclaration )||
-          (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIfndefDeclaration )||
-          (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIfDeclaration )||
-          (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorElseDeclaration )||
-          (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorElifDeclaration )||
-          (info->getTypeOfDirective()==PreprocessingInfo::C_StyleComment)||
-          (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorEndifDeclaration )
-        )
-      { 
-        if (position == PreprocessingInfo::undef) 
-        {
-          stmt_dst->addToAttachedPreprocessingInfo(info,PreprocessingInfo::after);
-          (*infoToRemoveList).push_back(*i);
-        } else if (info->getRelativePosition()==position)
-        {
-          stmt_dst->addToAttachedPreprocessingInfo(info,PreprocessingInfo::after);
-          (*infoToRemoveList).push_back(*i);
-        } // if position
-      } // end if 
-     }// end for
+    PreprocessingInfo * info=dynamic_cast<PreprocessingInfo *> (*i);
+    ROSE_ASSERT(info != NULL);
+
+    if ( (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIncludeDeclaration )||
+        (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorDefineDeclaration )||
+        (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorUndefDeclaration)||
+        (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIfdefDeclaration )||
+        (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIfndefDeclaration )||
+        (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIfDeclaration )||
+        (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorElseDeclaration )||
+        (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorElifDeclaration )||
+        (info->getTypeOfDirective()==PreprocessingInfo::C_StyleComment)||
+        (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorEndifDeclaration )
+       )
+    { 
+      if (position == PreprocessingInfo::undef) 
+      {
+        stmt_dst->addToAttachedPreprocessingInfo(info,PreprocessingInfo::after);
+        (*infoToRemoveList).push_back(*i);
+      } else if (info->getRelativePosition()==position)
+      {
+        stmt_dst->addToAttachedPreprocessingInfo(info,PreprocessingInfo::after);
+        (*infoToRemoveList).push_back(*i);
+      } // if position
+    } // end if 
+  }// end for
 
   // Remove the element from the list of comments at the current astNode
-    AttachedPreprocessingInfoType::iterator j;
-    for (j = (*infoToRemoveList).begin(); j != (*infoToRemoveList).end(); j++)
-      infoList->erase( find(infoList->begin(),infoList->end(),*j) );
-  } // moveUpPreprocessingInfo()
+  AttachedPreprocessingInfoType::iterator j;
+  for (j = (*infoToRemoveList).begin(); j != (*infoToRemoveList).end(); j++)
+    infoList->erase( find(infoList->begin(),infoList->end(),*j) );
+} // moveUpPreprocessingInfo()
 
-  SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfFor(SgForStatement* fs) {
-    SgStatement* b = fs->get_loop_body();
-    if (!isSgBasicBlock(b)) {
-      b = SageBuilder::buildBasicBlock(b);
-      fs->set_loop_body(b);
-      b->set_parent(fs);
-    }
-    ROSE_ASSERT (isSgBasicBlock(b));
-    return isSgBasicBlock(b);
+SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfFor(SgForStatement* fs) 
+{
+  SgStatement* b = fs->get_loop_body();
+  if (!isSgBasicBlock(b)) {
+    b = SageBuilder::buildBasicBlock(b);
+    fs->set_loop_body(b);
+    b->set_parent(fs);
   }
+  ROSE_ASSERT (isSgBasicBlock(b));
+  return isSgBasicBlock(b);
+}
 
   SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfWhile(SgWhileStmt* fs) {
     SgStatement* b = fs->get_body();

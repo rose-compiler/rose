@@ -11,6 +11,7 @@ assignment.f \
 assignmentmain2.f \
 assignmentmain.f \
 dimension.f \
+doloop.f \
 format.f \
 function2.f \
 function.f \
@@ -32,30 +33,29 @@ F77_TESTCODES_CURRENTLY_FAILING =
 # real8.f bug 168, won't fix
 # format2.f, bug 180, not my problem, test it again when Dan's ready
 # power.f, END SUBROUTINE problem
-# doloop.f , deep copy error
 
 F90_TESTCODES_REQUIRED_TO_PASS = \
+blockdo.f90 \
 contains.f90 \
+doloop_nested.f90 \
+doloop3.f90 \
+doloop4.f90 \
 intent.f90 \
 moduleParameter.f90 \
+stop.f90 \
+stop1.f90 \
 subroutine.f90 
 
 F90_TESTCODES_CURRENTLY_FAILING = 
-# doloop4.f90, bug 181, label gets lost
 # contains1.f90, subprogram in module not supported
 # contains.f90, bug 182, contains is missing
-# doloop4.f90 bug 171
-# doloop5.f90 bug 183
+# doloop5.f90 bug 183, lack of end for do loops
 # module3.f90, contains in module not supported
 # module.f90, similar to the above
 # moduleSubprogram.f90 , similar to above
-# stop1.f90, stop code not supported
-# stop.f90, stop not supported
+# stop2.f90, comments are attached before a hidden function definition node??
 # useModule1.f90 , USE not supported
 # module1.f90, supluous END
-#-----------
-#blockdo.f90 , deepcopy of Do fails
-#doloop3.f90 
 
 F03_TESTCODES_REQUIRED_TO_PASS = 
 
@@ -93,6 +93,8 @@ $(F03_TESTCODES_CURRENTLY_FAILING)
 #$(ALL_F03_TESTCODES)
 
 ROSE_FLAGS = -rose:verbose 0 -rose:outline:seq 7 -ffixed-line-length-none 
+# for default pragma-controlled targets
+ROSE_FLAGS2 = -rose:verbose 0 -ffixed-line-length-none 
 #-rose:outline:parameter_wrapper
 #ROSE_F77_FLAGS = -rose:outline:seq 7 -rose:f77 -ffixed-line-length-none
 #ROSE_F90_FLAGS = -rose:outline:seq 7 -rose:f90
@@ -106,16 +108,19 @@ TEST_F90_Objects = ${F90_TESTCODES:.f90=.o}
 TEST_F03_Objects = ${F03_TESTCODES:.f03=.o}
 
 if ROSE_USE_OPEN_FORTRAN_PARSER
-
-$(TEST_F77_Objects): ../outlineSelection 
+#test for both selection-based and pragma-based targets
+$(TEST_F77_Objects): ../outlineSelection  ../outline
 	$(VALGRIND) ../outlineSelection $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.f)
+	$(VALGRIND) ../outline $(ROSE_FLAGS2) -c $(srcdir)/$(@:.o=.f)
 
 #$(TEST_F90_Objects): ../outlineSelection $(F90_TESTCODES_REQUIRED_TO_PASS) 
-$(TEST_F90_Objects): ../outlineSelection $(ALL_TESTCODES)
+$(TEST_F90_Objects): ../outlineSelection $(ALL_TESTCODES) ../outline
 	$(VALGRIND) ../outlineSelection $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.f90)
+	$(VALGRIND) ../outline $(ROSE_FLAGS2) -c $(srcdir)/$(@:.o=.f90)
 
-$(TEST_F03_Objects): ../outlineSelection $(ALL_TESTCODES)
+$(TEST_F03_Objects): ../outlineSelection $(ALL_TESTCODES) ../outline
 	$(VALGRIND) ../outlineSelection $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.f03)
+	$(VALGRIND) ../outline $(ROSE_FLAGS2) -c $(srcdir)/$(@:.o=.f03)
 
 ../outlineSelection:
 	cd ..; $(MAKE) outlineSelection

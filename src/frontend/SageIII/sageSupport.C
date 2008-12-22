@@ -3539,7 +3539,6 @@ CommandlineProcessing::isValidFileWithExecutableFileSuffixes ( string name )
                   }
                  else
                   {
-                 // printf ("CommandlineProcessing::isValidFileWithExecutableFileSuffixes(): Could not open file, so it is assumed to NOT be an executable");
                     printf ("Could not open specified input file: %s \n\n",name.c_str());
 
                  // DQ (8/20/2008): We need to allow this to pass, since Qing's command line processing 

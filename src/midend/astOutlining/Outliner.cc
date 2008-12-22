@@ -24,7 +24,6 @@ namespace Outliner {
   // use a wrapper for all variables or one parameter for a variable or a wrapper for all variables
   bool useParameterWrapper;  // use a wrapper for parameters of the outlined function
   bool preproc_only_;  // preprocessing only
-  bool usePointerDereferencing;  // Using pointer dereferencing for C
 };
 
 // =====================================================================
@@ -131,14 +130,6 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
   else
     useParameterWrapper= false;
 
-  if (CommandlineProcessing::isOption (argvList,"-rose:outline:","pointer_dereferencing",true))
-  {
-    cout<<"Choosing pointer dereferencing for C..."<<endl;
-    usePointerDereferencing= true;
-  }
-  else
-    usePointerDereferencing= false;
-
   if (CommandlineProcessing::isOption (argvList,"--help","",false))
   {
     cout<<"Outliner-specific options"<<endl;
@@ -146,7 +137,6 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
     cout<<"Main operation mode:"<<endl;
     cout<<"\t-rose:outline:preprc-only           preprocessing only, no actual outlining"<<endl;
     cout<<"\t-rose:outline:parameter_wrapper     use an array of pointers for the variables to be passed"<<endl;
-    cout<<"\t-rose:outline:pointer_dereferencing use pointer dereferencings to replace variable references in C"<<endl;
     cout <<"---------------------------------------------------------------"<<endl;
   }
 }
