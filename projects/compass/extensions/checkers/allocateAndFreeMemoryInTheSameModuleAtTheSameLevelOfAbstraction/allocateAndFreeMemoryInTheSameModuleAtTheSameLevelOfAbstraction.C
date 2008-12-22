@@ -1,56 +1,59 @@
 // Allocate And Free Memory In The Same Module At The Same Level Of Abstraction
 // Author: Mark Lewandowski, -422-3849
 // Date: 16-November-2007
+// tps, rewrote Dec22-2008
 
 #include "compass.h"
 
 #ifndef COMPASS_ALLOCATE_AND_FREE_MEMORY_IN_THE_SAME_MODULE_AT_THE_SAME_LEVEL_OF_ABSTRACTION_H
 #define COMPASS_ALLOCATE_AND_FREE_MEMORY_IN_THE_SAME_MODULE_AT_THE_SAME_LEVEL_OF_ABSTRACTION_H
 
+using namespace std;
+
 namespace CompassAnalyses
-   { 
-     namespace AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction
-        { 
-        /*! \brief Allocate And Free Memory In The Same Module At The Same Level Of Abstraction: Add your description here 
-         */
+{ 
+  namespace AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction
+  { 
+    /*! \brief Allocate And Free Memory In The Same Module At The Same Level Of Abstraction: Add your description here 
+     */
 
-          extern const std::string checkerName;
-          extern const std::string shortDescription;
-          extern const std::string longDescription;
+    extern const std::string checkerName;
+    extern const std::string shortDescription;
+    extern const std::string longDescription;
 
-       // Specification of Checker Output Implementation
-          class CheckerOutput: public Compass::OutputViolationBase
-             { 
-               public:
-                    CheckerOutput(SgNode* node);
-             };
+    // Specification of Checker Output Implementation
+    class CheckerOutput: public Compass::OutputViolationBase
+    { 
+    public:
+      CheckerOutput(SgNode* node);
+    };
 
-       // Specification of Checker Traversal Implementation
+    // Specification of Checker Traversal Implementation
 
-          class Traversal
-             : public Compass::AstSimpleProcessingWithRunFunction
-             {
-            // Checker specific parameters should be allocated here.
-               Compass::OutputObject* output;
+    class Traversal
+      : public Compass::AstSimpleProcessingWithRunFunction
+    {
+      // Checker specific parameters should be allocated here.
+      Compass::OutputObject* output;
 
-               public:
-                    Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
+    public:
+      Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
 
-                 // Change the implementation of this function if you are using inherited attributes.
-                    void *initialInheritedAttribute() const { return NULL; }
+      // Change the implementation of this function if you are using inherited attributes.
+      void *initialInheritedAttribute() const { return NULL; }
 
-                 // The implementation of the run function has to match the traversal being called.
-                 // If you use inherited attributes, use the following definition:
-                 // void run(SgNode* n){ this->traverse(n, initialInheritedAttribute()); }
-                    void run(SgNode* n){ this->traverse(n, postorder); }
+      // The implementation of the run function has to match the traversal being called.
+      // If you use inherited attributes, use the following definition:
+      // void run(SgNode* n){ this->traverse(n, initialInheritedAttribute()); }
+      void run(SgNode* n){ this->traverse(n, postorder); }
 
-                 // Change this function if you are using a different type of traversal, e.g.
-                 // void *evaluateInheritedAttribute(SgNode *, void *);
-                 // for AstTopDownProcessing.
-                    void visit(SgNode* n);
-             };
-        }
-   }
+      // Change this function if you are using a different type of traversal, e.g.
+      // void *evaluateInheritedAttribute(SgNode *, void *);
+      // for AstTopDownProcessing.
+      void visit(SgNode* n);
+    };
+  }
+}
 
 // COMPASS_ALLOCATE_AND_FREE_MEMORY_IN_THE_SAME_MODULE_AT_THE_SAME_LEVEL_OF_ABSTRACTION_H
 #endif 
@@ -66,170 +69,278 @@ namespace CompassAnalyses
 // #include "allocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction.h"
 
 namespace CompassAnalyses
-   { 
-     namespace AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction
-        { 
-          const std::string checkerName      = "AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction";
+{ 
+  namespace AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction
+  { 
+    const std::string checkerName      = "AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction";
 
-       // Descriptions should not include the newline character "\n".
-          const std::string shortDescription = "Allocating and freeing memory in different modules and levels of abstraction burdens the programmer with tracking the lifetime of that block of memory. This may cause confusion regarding when and if a block of memory has been allocated or freed, leading to programming defects such as double-free vulnerabilities, accessing freed memory, or writing to unallocated memory.";
-          const std::string longDescription  = "Allocating and freeing memory in different modules and levels of abstraction burdens the programmer with tracking the lifetime of that block of memory. This may cause confusion regarding when and if a block of memory has been allocated or freed, leading to programming defects such as double-free vulnerabilities, accessing freed memory, or writing to unallocated memory.To avoid these situations, it is recommended that memory be allocated and freed at the same level of abstraction, and ideally in the same code module.The affects of not following this recommendation are best demonstrated by an actual vulnerability. Freeing memory in different modules resulted in a vulnerability in MIT Kerberos 5 MITKRB5-SA-2004-002 . The problem was that the MIT Kerberos 5 code contained error-handling logic, which freed memory allocated by the ASN.1 decoders if pointers to the allocated memory were non-NULL. However, if a detectable error occured, the ASN.1 decoders freed the memory that they had allocated. When some library functions received errors from the ASN.1 decoders, they also attempted to free, causing a double-free vulnerability.";
-        } //End of namespace AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction.
-   } //End of namespace CompassAnalyses.
+    // Descriptions should not include the newline character "\n".
+    const std::string shortDescription = "Every malloc must be followed by a free.";
+    const std::string longDescription  = "Allocating and freeing memory in different modules and levels of abstraction burdens the programmer with tracking the lifetime of that block of memory. This may cause confusion regarding when and if a block of memory has been allocated or freed, leading to programming defects such as double-free vulnerabilities, accessing freed memory, or writing to unallocated memory.To avoid these situations, it is recommended that memory be allocated and freed at the same level of abstraction, and ideally in the same code module.The affects of not following this recommendation are best demonstrated by an actual vulnerability. Freeing memory in different modules resulted in a vulnerability in MIT Kerberos 5 MITKRB5-SA-2004-002 . The problem was that the MIT Kerberos 5 code contained error-handling logic, which freed memory allocated by the ASN.1 decoders if pointers to the allocated memory were non-NULL. However, if a detectable error occured, the ASN.1 decoders freed the memory that they had allocated. When some library functions received errors from the ASN.1 decoders, they also attempted to free, causing a double-free vulnerability.";
+  } //End of namespace AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction.
+} //End of namespace CompassAnalyses.
 
 CompassAnalyses::AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction::
 CheckerOutput::CheckerOutput ( SgNode* node )
-   : OutputViolationBase(node,checkerName,shortDescription)
-   {}
+  : OutputViolationBase(node,checkerName,shortDescription)
+{}
 
 CompassAnalyses::AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction::Traversal::
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
-   : output(output)
-   {
+  : output(output)
+{
   // Initialize checker specific parameters here, for example: 
   // YourParameter = Compass::parseInteger(inputParameters["AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction.YourParameter"]);
-   }
+}
 
 void
 CompassAnalyses::AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction::Traversal::
 visit(SgNode* node)
-   { 
-     SgFunctionCallExp* func  = isSgFunctionCallExp(node);
-     SgAssignOp* aop          = isSgAssignOp(node);
-     SgAssignInitializer* ain = isSgAssignInitializer(node);
-     SgBasicBlock* bb         = isSgBasicBlock(node);
-
-     /* If node is not one of the above types, return right away. */
-     if (!func && !aop && !ain && !bb) return;
-
-     static std::list< std::pair<SgInitializedName*, SgNode*> > var_node_pairs;
-     std::list< std::pair<SgInitializedName*, SgNode*> >::iterator it;
-
-     /* Find all calls to free, and record the variable that it is called on and
-      * the node that this occurs at. */
-     if (func) {
-       //std::cout << "gets here 0\n";
-       /*std::string func_name_str =
-          isSgFunctionRefExp(func->get_function())->get_symbol()->get_name().getString();*/
-
-       SgFunctionRefExp *fref = isSgFunctionRefExp(func->get_function());
-       SgMemberFunctionRefExp *fmem = isSgMemberFunctionRefExp(func->get_function());
-
-       //std::cout << "gets here 0a\n";
-       std::string func_name_str("");
-       if( fref ) func_name_str = fref->get_symbol()->get_name().getString();
-       //std::cout << "gets here 0b\n";
-       if( fmem ) func_name_str = fmem->get_symbol()->get_name().getString();
-       //std::cout << "gets here 0c\n";
-      
-       if(func_name_str == "" || func_name_str.compare("free") != 0) return;
-       
-       //std::cout << "gets here 1\n";
-       SgCastExp* cast = isSgCastExp(func->get_args()->get_expressions().front());
-       if (!cast) return;
-
-       //std::cout << "gets here 2\n";
-       SgVarRefExp* var = isSgVarRefExp(cast->get_operand());
-       if (!var) return;
-
-       //var_node_pairs.push_back(std::pair<SgExpression*, SgNode*> (var, node));
-       for (it = var_node_pairs.begin(); it != var_node_pairs.end(); it++) {
-         /*if (var->unparseToString().compare((*it).first->unparseToString()) == 0) {*/
-         if (var->get_symbol()->get_declaration() == (*it).first) {
-           it = var_node_pairs.erase(it);
-           return;
-         }
-       }
-
-       /* If we reach this section of the code we know that we did not find a
-        * corresponding call to malloc, and add a CheckerOutput object. */
-       output->addOutput(new CheckerOutput(node));
-
-       return;
-
-     }
-
-
-     /* Find all calls to malloc, and check to see if it has been freed in the
-      * same scope.  If it has not, we add a CheckerOutput object.  If it has
-      * we remove the reference to it from var_node_pairs. */
-     if (aop) {
-       /* Check to see if the right hand operand is a call to malloc.  If not we
-        * can return immediatly. */
-       SgCastExp* rhop_cast = isSgCastExp(aop->get_rhs_operand());
-       if( !rhop_cast ) return;
-       SgFunctionCallExp* rhop_func_call = isSgFunctionCallExp(rhop_cast->get_operand());
-       if( !rhop_func_call ) return;
-       SgFunctionRefExp* rhop_func = isSgFunctionRefExp(rhop_func_call->get_function());
-
-       if( !rhop_func ) return;
-       if (rhop_func->get_symbol()->get_name().getString().compare("malloc") == 0) {
-         SgVarRefExp* lhop = isSgVarRefExp(aop->get_lhs_operand());
-
-         if (lhop) {
-           var_node_pairs.push_back(std::pair<SgInitializedName*, SgNode*> (lhop->get_symbol()->get_declaration(), node));
-         }
-       }
-       
-
-       return;
-     }
-
-     /* TODO: Come back to this */
-     if (ain) {
-       SgCastExp* cexp = isSgCastExp(ain->get_operand());
-       SgFunctionCallExp* fcall = isSgFunctionCallExp(ain->get_operand());
-
-       if (cexp) {
-         fcall = isSgFunctionCallExp(cexp->get_operand());
-         if (!fcall) {
-        // std::cout << __FILE__ << "(" << __LINE__ << ")" << std::endl;
-           return;
-         }
-       }
-
-       if (fcall) {
-         SgFunctionRefExp* func = isSgFunctionRefExp(fcall->get_function());
-         if (!func) {
-        // std::cout << __FILE__ << "(" << __LINE__ << ")" << std::endl;
-           return;
-         }
-         
-         if (func->get_symbol()->get_name().getString().find("malloc", 0) == std::string::npos) {
-           return;
-         }
-       }
-
-       SgInitializedName* in = isSgInitializedName(ain->get_parent());
-       if (in) {
-         var_node_pairs.push_back(std::pair<SgInitializedName*, SgNode*> (in, node));
-       }
-       return;
-     }
-
-     /* If the scope changes we should check to see if any variables have been
-      * freed and not allocated in the same basic block.  If this has happened
-      * we add a CheckerOutput object. */
-     static SgScopeStatement* scope;
-     if (bb) {
-       if (isSgStatement(node->get_parent()) ||
-           isSgBasicBlock(node->get_parent())) {
-         return;
-       }
-
-       if ((bb->get_scope() != scope) && (var_node_pairs.size())) {
-         for (it = var_node_pairs.begin(); it != var_node_pairs.end(); it++) {
-           output->addOutput(new CheckerOutput((*it).second));
-         }
-         var_node_pairs.clear();
-       }
-
-       scope = bb->get_scope();
-
-       return;
-     }
+{ 
      
-   } //End of the visit function.
+  SgAssignOp* aop          = isSgAssignOp(node);
+  SgAssignInitializer* ain = isSgAssignInitializer(node);
+  SgInitializedName* init=NULL;
+  if (aop) {
+    SgExpression*  expr = aop->get_rhs_operand();
+    while (isSgUnaryOp(expr)!=NULL)
+      expr=isSgUnaryOp(expr)->get_operand();
+    SgFunctionCallExp* rhop_func_call = isSgFunctionCallExp(expr);
+    if( !rhop_func_call ) return;
+    SgFunctionRefExp* rhop_func = isSgFunctionRefExp(rhop_func_call->get_function());
+    if( !rhop_func ) return;
+    if (rhop_func->get_symbol()->get_name().getString().compare("malloc") == 0) {
+      SgVarRefExp* lhop = isSgVarRefExp(aop->get_lhs_operand());
+      if (lhop) {
+	SgVariableSymbol* var = lhop->get_symbol();
+	if (var)
+	  init = var->get_declaration();
+      }
+    }
+  }
+
+  if (ain) {
+    SgExpression*  expr = ain->get_operand();
+    while (isSgUnaryOp(expr)!=NULL)
+      expr=isSgUnaryOp(expr)->get_operand();
+    SgFunctionCallExp* rhop_func_call = isSgFunctionCallExp(expr);
+    if( !rhop_func_call ) return;
+    SgFunctionRefExp* rhop_func = isSgFunctionRefExp(rhop_func_call->get_function());
+    if( !rhop_func ) return;
+    if (rhop_func->get_symbol()->get_name().getString().compare("malloc") == 0) {
+      init = isSgInitializedName(ain->get_parent());
+    }
+  }
+
+  if (!init) return;
+
+  //std::cerr << "Found malloc ... " << std::endl;
+  // traverse cfg within this function and find malloc with same init
+  // if not found trigger error
+  vector<FilteredCFGNode<IsDFAFilter> > worklist;
+  vector<FilteredCFGNode<IsDFAFilter> > visited;
+  // add this node to worklist and work through the outgoing edges
+  FilteredCFGNode < IsDFAFilter > source =
+    FilteredCFGNode < IsDFAFilter > (node->cfgForEnd());
+
+  worklist.push_back(source);
+  while (!worklist.empty()) {
+    source = worklist.front();
+    worklist.erase(worklist.begin());
+    SgNode* next = source.getNode();
+    SgFunctionCallExp* func  = isSgFunctionCallExp(next);
+    if (func) {
+      SgFunctionRefExp *fref = isSgFunctionRefExp(func->get_function());
+      SgMemberFunctionRefExp *fmem = isSgMemberFunctionRefExp(func->get_function());
+      std::string func_name_str("");
+      if( fref ) func_name_str = fref->get_symbol()->get_name().getString();
+      if( fmem ) func_name_str = fmem->get_symbol()->get_name().getString();
+      if(func_name_str.compare("free") == 0) {
+	std::cerr << "found free" << endl;
+	SgExprListExp* list = func->get_args();
+	// check if args == init
+	Rose_STL_Container<SgExpression*> plist = list->get_expressions();
+	if (plist.size()>1) return;
+	SgExpression* argument = *plist.begin();
+	while (isSgUnaryOp(argument)!=NULL)
+	  argument=isSgUnaryOp(argument)->get_operand();
+	SgVarRefExp* lhop = isSgVarRefExp(argument);
+	SgInitializedName* initFree=NULL;
+	if (lhop) {
+	  SgVariableSymbol* var = lhop->get_symbol();
+	  if (var)
+	    initFree = var->get_declaration();
+	}
+	if (init==initFree) {
+	  // found free for matching malloc
+	  //std::cerr << "init match - return " << endl;
+	  return;
+	} else {
+	  std::cerr << "init doesnt match - init: " << init << "  initFree: " << initFree << " " << argument->class_name() << endl;
+	}
+      }
+    }
+
+    vector<FilteredCFGEdge < IsDFAFilter > > out_edges = source.outEdges();
+    for (vector<FilteredCFGEdge <IsDFAFilter> >::const_iterator i = out_edges.begin(); i != out_edges.end(); ++i) {
+      FilteredCFGEdge<IsDFAFilter> filterEdge = *i;
+      FilteredCFGNode<IsDFAFilter> filterNode = filterEdge.target();
+      if (find(visited.begin(), visited.end(), filterNode)==visited.end()) {
+	worklist.push_back(filterNode);
+	visited.push_back(filterNode);
+      }
+    }
+  }
+
+  // if we reach this point, then we have not detected a free for a malloc   
+  output->addOutput(new CheckerOutput(node));
+
+
+
+
+  // tps 22Dec 2008 - commented out and replaced with above
+#if 0
+  SgFunctionCallExp* func  = isSgFunctionCallExp(node);
+  SgAssignOp* aop          = isSgAssignOp(node);
+  SgAssignInitializer* ain = isSgAssignInitializer(node);
+  SgBasicBlock* bb         = isSgBasicBlock(node);
+
+  /* If node is not one of the above types, return right away. */
+  if (!func && !aop && !ain && !bb) return;
+
+  static std::list< std::pair<SgInitializedName*, SgNode*> > var_node_pairs;
+  std::list< std::pair<SgInitializedName*, SgNode*> >::iterator it;
+
+  /* Find all calls to free, and record the variable that it is called on and
+   * the node that this occurs at. */
+  if (func) {
+    //std::cout << "gets here 0\n";
+    /*std::string func_name_str =
+      isSgFunctionRefExp(func->get_function())->get_symbol()->get_name().getString();*/
+
+    SgFunctionRefExp *fref = isSgFunctionRefExp(func->get_function());
+    SgMemberFunctionRefExp *fmem = isSgMemberFunctionRefExp(func->get_function());
+
+    //std::cout << "gets here 0a\n";
+    std::string func_name_str("");
+    if( fref ) func_name_str = fref->get_symbol()->get_name().getString();
+    //std::cout << "gets here 0b\n";
+    if( fmem ) func_name_str = fmem->get_symbol()->get_name().getString();
+    //std::cout << "gets here 0c\n";
+      
+    if(func_name_str == "" || func_name_str.compare("free") != 0) return;
+       
+    //std::cout << "gets here 1\n";
+    SgCastExp* cast = isSgCastExp(func->get_args()->get_expressions().front());
+    if (!cast) return;
+
+    //std::cout << "gets here 2\n";
+    SgVarRefExp* var = isSgVarRefExp(cast->get_operand());
+    if (!var) return;
+
+    //var_node_pairs.push_back(std::pair<SgExpression*, SgNode*> (var, node));
+    for (it = var_node_pairs.begin(); it != var_node_pairs.end(); it++) {
+      /*if (var->unparseToString().compare((*it).first->unparseToString()) == 0) {*/
+      if (var->get_symbol()->get_declaration() == (*it).first) {
+	it = var_node_pairs.erase(it);
+	return;
+      }
+    }
+
+    /* If we reach this section of the code we know that we did not find a
+     * corresponding call to malloc, and add a CheckerOutput object. */
+    output->addOutput(new CheckerOutput(node));
+
+    return;
+
+  }
+
+
+  /* Find all calls to malloc, and check to see if it has been freed in the
+   * same scope.  If it has not, we add a CheckerOutput object.  If it has
+   * we remove the reference to it from var_node_pairs. */
+  if (aop) {
+    /* Check to see if the right hand operand is a call to malloc.  If not we
+     * can return immediatly. */
+    // tps (22Dec2008) : fixed this to be more generic.
+    SgExpression* expr = aop->get_rhs_operand();
+    while (isSgUnaryOp(expr)!=NULL)
+      expr=isSgUnaryOp(expr)->get_operand();
+    std::cerr << "trying to find malloc ... " << expr->class_name() << std::endl;
+    //       SgCastExp* rhop_cast = isSgCastExp(aop->get_rhs_operand());
+    //  if( !rhop_cast ) return;
+    SgFunctionCallExp* rhop_func_call = isSgFunctionCallExp(expr);
+    if( !rhop_func_call ) return;
+    SgFunctionRefExp* rhop_func = isSgFunctionRefExp(rhop_func_call->get_function());
+
+    if( !rhop_func ) return;
+    if (rhop_func->get_symbol()->get_name().getString().compare("malloc") == 0) {
+      SgVarRefExp* lhop = isSgVarRefExp(aop->get_lhs_operand());
+      std::cerr << "malloc found" << std::endl;
+      if (lhop) {
+	var_node_pairs.push_back(std::pair<SgInitializedName*, SgNode*> (lhop->get_symbol()->get_declaration(), node));
+      }
+    }
+       
+
+    return;
+  }
+
+  /* TODO: Come back to this */
+  if (ain) {
+    SgCastExp* cexp = isSgCastExp(ain->get_operand());
+    SgFunctionCallExp* fcall = isSgFunctionCallExp(ain->get_operand());
+
+    if (cexp) {
+      fcall = isSgFunctionCallExp(cexp->get_operand());
+      if (!fcall) {
+        // std::cout << __FILE__ << "(" << __LINE__ << ")" << std::endl;
+	return;
+      }
+    }
+
+    if (fcall) {
+      SgFunctionRefExp* func = isSgFunctionRefExp(fcall->get_function());
+      if (!func) {
+        // std::cout << __FILE__ << "(" << __LINE__ << ")" << std::endl;
+	return;
+      }
+         
+      if (func->get_symbol()->get_name().getString().find("malloc", 0) == std::string::npos) {
+	return;
+      }
+    }
+
+    SgInitializedName* in = isSgInitializedName(ain->get_parent());
+    if (in) {
+      var_node_pairs.push_back(std::pair<SgInitializedName*, SgNode*> (in, node));
+    }
+    return;
+  }
+
+  /* If the scope changes we should check to see if any variables have been
+   * freed and not allocated in the same basic block.  If this has happened
+   * we add a CheckerOutput object. */
+  static SgScopeStatement* scope;
+  if (bb) {
+    if (isSgStatement(node->get_parent()) ||
+	isSgBasicBlock(node->get_parent())) {
+      return;
+    }
+
+    if ((bb->get_scope() != scope) && (var_node_pairs.size())) {
+      for (it = var_node_pairs.begin(); it != var_node_pairs.end(); it++) {
+	output->addOutput(new CheckerOutput((*it).second));
+      }
+      var_node_pairs.clear();
+    }
+
+    scope = bb->get_scope();
+
+    return;
+  }
+#endif     
+} //End of the visit function.
    
 
 static void run(Compass::Parameters params, Compass::OutputObject* output) {
@@ -242,10 +353,10 @@ static Compass::AstSimpleProcessingWithRunFunction* createTraversal(Compass::Par
 
 extern const Compass::Checker* const allocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstractionChecker =
   new Compass::CheckerUsingAstSimpleProcessing(
-        CompassAnalyses::AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction::checkerName,
-        CompassAnalyses::AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction::shortDescription,
-        CompassAnalyses::AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction::longDescription,
-        Compass::C | Compass::Cpp,
-        Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
-        run,
-        createTraversal);
+					       CompassAnalyses::AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction::checkerName,
+					       CompassAnalyses::AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction::shortDescription,
+					       CompassAnalyses::AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction::longDescription,
+					       Compass::C | Compass::Cpp,
+					       Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+					       run,
+					       createTraversal);

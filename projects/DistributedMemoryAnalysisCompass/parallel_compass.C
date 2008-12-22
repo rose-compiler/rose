@@ -475,8 +475,8 @@ int main(int argc, char **argv)
 #endif 
 
 
-  if (!isBinaryInput)
-    ROSE_ASSERT(Compass::sourceDefUsePrerequisite.done==true);
+  //  if (!isBinaryInput)
+  // ROSE_ASSERT(Compass::sourceDefUsePrerequisite.done==true);
   double mem_e = ROSE_MemoryUsage().getMemoryUsageMegabytes();
   double memuse = mem_e-mem_b;
   gettime(end_init_time);
