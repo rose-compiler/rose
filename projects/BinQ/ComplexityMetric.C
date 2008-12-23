@@ -57,7 +57,7 @@ ComplexityMetric::visit(SgNode* node) {
 
 void
 ComplexityMetric::runTraversal(SgNode* project) {
-  max=50;
+  max=45;
   lastFunction=NULL;
   complexity=0;
   this->traverse(project,preorder);

@@ -37,6 +37,7 @@ namespace CompassAnalyses
              : public Compass::AstSimpleProcessingWithRunFunction
              {
                private:
+	         int foundFunction;
                  Compass::OutputObject* output;
                  std::map<std::string,std::string> forbiddenFunctionMap;
                  void parseParameter( const std::string & param );
@@ -49,7 +50,9 @@ namespace CompassAnalyses
                  // The implementation of the run function has to match the traversal being called.
                  // If you use inherited attributes, use the following definition:
                  // void run(SgNode* n){ this->traverse(n, initialInheritedAttribute()); }
-                    void run(SgNode* n){ this->traverse(n, preorder); }
+	       void run(SgNode* n){ foundFunction=0;this->traverse(n, preorder); 
+		 std::cerr << "  forbiddenFunctions : functions traversed = " << 
+		   RoseBin_support::ToString(foundFunction) << std::endl;}
 
                  // Change this function if you are using a different type of traversal, e.g.
                  // void *evaluateInheritedAttribute(SgNode *, void *);
@@ -91,7 +94,7 @@ CompassAnalyses::ForbiddenFunctions::CheckerOutput::CheckerOutput(
   SgNode* node, 
   const std::string & name,
   const std::string & reason ) : OutputViolationBase(node,checkerName,
-    "Forbidden function '" + name + "' used. " + reason + ".")
+    "Forbidden function '" + name + "' used. "+reason + ".")
    {
    } //CompassAnalyses::ForbiddenFunctions::CheckerOutput::CheckerOutput
 
@@ -152,6 +155,9 @@ visit(SgNode* node)
    {
      std::string *sgName = NULL;
 
+     if (isSgFunctionDefinition(node))
+       foundFunction++;
+
      switch(node->variantT())
      {
        case V_SgFunctionRefExp:
@@ -172,8 +178,16 @@ visit(SgNode* node)
 
        if( fItr != forbiddenFunctionMap.end() )
        {
+	 SgNode* parent = node->get_parent();
+	 while (!isSgFunctionDeclaration(parent) && !isSgGlobal(parent)) 
+	   parent=parent->get_parent();
+	 std::string funcname="";
+	 if (isSgFunctionDeclaration(parent))
+	   funcname=isSgFunctionDeclaration(parent)->get_name();
+	 std::string reason="\tin function: "+funcname+" \treason: "+fItr->second;
+	 
          output->addOutput(
-           new CheckerOutput( node, fItr->first, fItr->second )
+           new CheckerOutput( node, fItr->first, reason )
          ); //output->addOutput
        } //if
      } //if( sgName != NULL )

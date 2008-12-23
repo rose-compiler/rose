@@ -25,7 +25,8 @@ namespace CompassAnalyses
     class CheckerOutput: public Compass::OutputViolationBase
     { 
     public:
-      CheckerOutput(SgNode* node);
+      CheckerOutput(SgNode* node, 
+                      const std::string &);
     };
 
     // Specification of Checker Traversal Implementation
@@ -81,8 +82,8 @@ namespace CompassAnalyses
 } //End of namespace CompassAnalyses.
 
 CompassAnalyses::AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction::
-CheckerOutput::CheckerOutput ( SgNode* node )
-  : OutputViolationBase(node,checkerName,shortDescription)
+CheckerOutput::CheckerOutput ( SgNode* node, const std::string & reason  )
+  : OutputViolationBase(node,checkerName,reason+shortDescription)
 {}
 
 CompassAnalyses::AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction::Traversal::
@@ -109,13 +110,46 @@ visit(SgNode* node)
     if( !rhop_func_call ) return;
     SgFunctionRefExp* rhop_func = isSgFunctionRefExp(rhop_func_call->get_function());
     if( !rhop_func ) return;
-    if (rhop_func->get_symbol()->get_name().getString().compare("malloc") == 0) {
-      SgVarRefExp* lhop = isSgVarRefExp(aop->get_lhs_operand());
-      if (lhop) {
-	SgVariableSymbol* var = lhop->get_symbol();
-	if (var)
-	  init = var->get_declaration();
+    if (rhop_func->get_symbol()->get_name().getString().compare("malloc") == 0 ||
+	//      	rhop_func->get_symbol()->get_name().getString().compare("realloc") == 0 ||
+	rhop_func->get_symbol()->get_name().getString().compare("calloc") == 0 ) {
+      SgVariableSymbol* var = NULL;
+      switch (aop->get_lhs_operand()->variantT()) {
+      case V_SgVarRefExp : {
+	var = isSgVarRefExp(aop->get_lhs_operand())->get_symbol(); break;
       }
+      case V_SgArrowExp : {
+	SgExpression* ex = isSgArrowExp(aop->get_lhs_operand())->get_lhs_operand();
+	if (isSgVarRefExp(ex))
+	  var = isSgVarRefExp(ex)->get_symbol(); 
+	  else 
+	    cerr <<"allocateAndFreeMemory : isSgVarRefExp not found in isSgArrowExp "<< endl;
+	break;
+      }
+      case V_SgDotExp : {
+	SgExpression* ex = isSgDotExp(aop->get_lhs_operand())->get_lhs_operand();
+	if (isSgVarRefExp(ex))
+	  var = isSgVarRefExp(ex)->get_symbol(); 
+	  else 
+	    cerr <<"allocateAndFreeMemory : isSgVarRefExp not found in isSgDotExp "<< endl;
+	break;
+      }
+	case V_SgPointerDerefExp : {
+	  SgExpression* ex = isSgPointerDerefExp(aop->get_lhs_operand())->get_operand();
+	  if (isSgVarRefExp(ex))
+	    var = isSgVarRefExp(ex)->get_symbol(); 
+	  else 
+	    cerr <<"allocateAndFreeMemory : isSgVarRefExp not found in isSgPointerDerefExp "<< endl;
+	  break;
+	}
+      default: {
+	cerr << "Left hand side of malloc is unknown: " << aop->get_lhs_operand()->class_name()<<endl;
+      }
+      }
+      if (var)
+	  init = var->get_declaration();
+      else 
+	cerr << " No var -- Left hand side of malloc is unknown: " << aop->get_lhs_operand()->class_name()<<endl;
     }
   }
 
@@ -156,7 +190,7 @@ visit(SgNode* node)
       if( fref ) func_name_str = fref->get_symbol()->get_name().getString();
       if( fmem ) func_name_str = fmem->get_symbol()->get_name().getString();
       if(func_name_str.compare("free") == 0) {
-	std::cerr << "found free" << endl;
+	//std::cerr << "found free" << endl;
 	SgExprListExp* list = func->get_args();
 	// check if args == init
 	Rose_STL_Container<SgExpression*> plist = list->get_expressions();
@@ -192,154 +226,19 @@ visit(SgNode* node)
     }
   }
 
+  SgNode* parent = node->get_parent();
+  while (!isSgFunctionDeclaration(parent) && !isSgGlobal(parent)) 
+    parent=parent->get_parent();
+  std::string funcname="";
+  if (isSgFunctionDeclaration(parent))
+    funcname=isSgFunctionDeclaration(parent)->get_name();
+  std::string reason="\tin function: "+funcname+"\t";
+	 
+
   // if we reach this point, then we have not detected a free for a malloc   
-  output->addOutput(new CheckerOutput(node));
+  output->addOutput(new CheckerOutput(node,reason));
 
 
-
-
-  // tps 22Dec 2008 - commented out and replaced with above
-#if 0
-  SgFunctionCallExp* func  = isSgFunctionCallExp(node);
-  SgAssignOp* aop          = isSgAssignOp(node);
-  SgAssignInitializer* ain = isSgAssignInitializer(node);
-  SgBasicBlock* bb         = isSgBasicBlock(node);
-
-  /* If node is not one of the above types, return right away. */
-  if (!func && !aop && !ain && !bb) return;
-
-  static std::list< std::pair<SgInitializedName*, SgNode*> > var_node_pairs;
-  std::list< std::pair<SgInitializedName*, SgNode*> >::iterator it;
-
-  /* Find all calls to free, and record the variable that it is called on and
-   * the node that this occurs at. */
-  if (func) {
-    //std::cout << "gets here 0\n";
-    /*std::string func_name_str =
-      isSgFunctionRefExp(func->get_function())->get_symbol()->get_name().getString();*/
-
-    SgFunctionRefExp *fref = isSgFunctionRefExp(func->get_function());
-    SgMemberFunctionRefExp *fmem = isSgMemberFunctionRefExp(func->get_function());
-
-    //std::cout << "gets here 0a\n";
-    std::string func_name_str("");
-    if( fref ) func_name_str = fref->get_symbol()->get_name().getString();
-    //std::cout << "gets here 0b\n";
-    if( fmem ) func_name_str = fmem->get_symbol()->get_name().getString();
-    //std::cout << "gets here 0c\n";
-      
-    if(func_name_str == "" || func_name_str.compare("free") != 0) return;
-       
-    //std::cout << "gets here 1\n";
-    SgCastExp* cast = isSgCastExp(func->get_args()->get_expressions().front());
-    if (!cast) return;
-
-    //std::cout << "gets here 2\n";
-    SgVarRefExp* var = isSgVarRefExp(cast->get_operand());
-    if (!var) return;
-
-    //var_node_pairs.push_back(std::pair<SgExpression*, SgNode*> (var, node));
-    for (it = var_node_pairs.begin(); it != var_node_pairs.end(); it++) {
-      /*if (var->unparseToString().compare((*it).first->unparseToString()) == 0) {*/
-      if (var->get_symbol()->get_declaration() == (*it).first) {
-	it = var_node_pairs.erase(it);
-	return;
-      }
-    }
-
-    /* If we reach this section of the code we know that we did not find a
-     * corresponding call to malloc, and add a CheckerOutput object. */
-    output->addOutput(new CheckerOutput(node));
-
-    return;
-
-  }
-
-
-  /* Find all calls to malloc, and check to see if it has been freed in the
-   * same scope.  If it has not, we add a CheckerOutput object.  If it has
-   * we remove the reference to it from var_node_pairs. */
-  if (aop) {
-    /* Check to see if the right hand operand is a call to malloc.  If not we
-     * can return immediatly. */
-    // tps (22Dec2008) : fixed this to be more generic.
-    SgExpression* expr = aop->get_rhs_operand();
-    while (isSgUnaryOp(expr)!=NULL)
-      expr=isSgUnaryOp(expr)->get_operand();
-    std::cerr << "trying to find malloc ... " << expr->class_name() << std::endl;
-    //       SgCastExp* rhop_cast = isSgCastExp(aop->get_rhs_operand());
-    //  if( !rhop_cast ) return;
-    SgFunctionCallExp* rhop_func_call = isSgFunctionCallExp(expr);
-    if( !rhop_func_call ) return;
-    SgFunctionRefExp* rhop_func = isSgFunctionRefExp(rhop_func_call->get_function());
-
-    if( !rhop_func ) return;
-    if (rhop_func->get_symbol()->get_name().getString().compare("malloc") == 0) {
-      SgVarRefExp* lhop = isSgVarRefExp(aop->get_lhs_operand());
-      std::cerr << "malloc found" << std::endl;
-      if (lhop) {
-	var_node_pairs.push_back(std::pair<SgInitializedName*, SgNode*> (lhop->get_symbol()->get_declaration(), node));
-      }
-    }
-       
-
-    return;
-  }
-
-  /* TODO: Come back to this */
-  if (ain) {
-    SgCastExp* cexp = isSgCastExp(ain->get_operand());
-    SgFunctionCallExp* fcall = isSgFunctionCallExp(ain->get_operand());
-
-    if (cexp) {
-      fcall = isSgFunctionCallExp(cexp->get_operand());
-      if (!fcall) {
-        // std::cout << __FILE__ << "(" << __LINE__ << ")" << std::endl;
-	return;
-      }
-    }
-
-    if (fcall) {
-      SgFunctionRefExp* func = isSgFunctionRefExp(fcall->get_function());
-      if (!func) {
-        // std::cout << __FILE__ << "(" << __LINE__ << ")" << std::endl;
-	return;
-      }
-         
-      if (func->get_symbol()->get_name().getString().find("malloc", 0) == std::string::npos) {
-	return;
-      }
-    }
-
-    SgInitializedName* in = isSgInitializedName(ain->get_parent());
-    if (in) {
-      var_node_pairs.push_back(std::pair<SgInitializedName*, SgNode*> (in, node));
-    }
-    return;
-  }
-
-  /* If the scope changes we should check to see if any variables have been
-   * freed and not allocated in the same basic block.  If this has happened
-   * we add a CheckerOutput object. */
-  static SgScopeStatement* scope;
-  if (bb) {
-    if (isSgStatement(node->get_parent()) ||
-	isSgBasicBlock(node->get_parent())) {
-      return;
-    }
-
-    if ((bb->get_scope() != scope) && (var_node_pairs.size())) {
-      for (it = var_node_pairs.begin(); it != var_node_pairs.end(); it++) {
-	output->addOutput(new CheckerOutput((*it).second));
-      }
-      var_node_pairs.clear();
-    }
-
-    scope = bb->get_scope();
-
-    return;
-  }
-#endif     
 } //End of the visit function.
    
 

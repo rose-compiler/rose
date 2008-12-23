@@ -1,11 +1,14 @@
 // Set Pointers To Null
 // Author: Mark Lewandowski, -422-3849
 // Date: 19-September-2007
+// reimplemented tps 23Dec 2008
 
 #include "compass.h"
 
 #ifndef COMPASS_SET_POINTERS_TO_NULL_H
 #define COMPASS_SET_POINTERS_TO_NULL_H
+
+using namespace std;
 
 namespace CompassAnalyses
    { 
@@ -22,7 +25,7 @@ namespace CompassAnalyses
           class CheckerOutput: public Compass::OutputViolationBase
              { 
                public:
-                    CheckerOutput(SgNode* node);
+	       CheckerOutput(SgNode* node,const std::string & reason );
              };
 
        // Specification of Checker Traversal Implementation
@@ -78,8 +81,8 @@ namespace CompassAnalyses
    } //End of namespace CompassAnalyses.
 
 CompassAnalyses::SetPointersToNull::
-CheckerOutput::CheckerOutput ( SgNode* node )
-   : OutputViolationBase(node,checkerName,shortDescription)
+CheckerOutput::CheckerOutput ( SgNode* node,const std::string & reason  )
+   : OutputViolationBase(node,checkerName,reason+shortDescription)
    {}
 
 CompassAnalyses::SetPointersToNull::Traversal::
@@ -96,81 +99,130 @@ void
 CompassAnalyses::SetPointersToNull::Traversal::
 visit(SgNode* node)
    { 
-     SgFunctionCallExp* func = isSgFunctionCallExp(node);
-     SgAssignOp* aop = isSgAssignOp(node);
-     SgBasicBlock* bb = isSgBasicBlock(node);
+     SgInitializedName* init=NULL;
+    SgFunctionCallExp* func  = isSgFunctionCallExp(node);
+    if (func) {
+      SgFunctionRefExp *fref = isSgFunctionRefExp(func->get_function());
+      SgMemberFunctionRefExp *fmem = isSgMemberFunctionRefExp(func->get_function());
+      std::string func_name_str("");
+      if( fref ) func_name_str = fref->get_symbol()->get_name().getString();
+      if( fmem ) func_name_str = fmem->get_symbol()->get_name().getString();
+      if(func_name_str.compare("free") == 0) {
+	//std::cerr << "found free" << endl;
+	SgExprListExp* list = func->get_args();
+	// check if args == init
+	Rose_STL_Container<SgExpression*> plist = list->get_expressions();
+	if (plist.size()>1) return;
+	SgExpression* argument = *plist.begin();
+	while (isSgUnaryOp(argument)!=NULL)
+	  argument=isSgUnaryOp(argument)->get_operand();
+	SgVarRefExp* lhop = isSgVarRefExp(argument);
+	if (lhop) {
+	  SgVariableSymbol* var = lhop->get_symbol();
+	  if (var)
+	    init = var->get_declaration();
+	}
+      }
+    }
 
-     /* If node is not one of the above types, return right away. */
-     if (!func && !aop && !bb) return;
-     
-     static std::list<std::pair<SgInitializedName*, SgNode*> > var_node_pairs;
-     std::list<std::pair<SgInitializedName*, SgNode*> >::iterator it;
+  if (!init) return;
 
-     /* Find all calls to free, and record the variable that it is called on and
-      * the node that this occurs at. */
-     if (func) {
-       if( !isSgFunctionRefExp(func->get_function()) ) return;
-       std::string func_name_str =
-         isSgFunctionRefExp(func->get_function())->get_symbol()->get_name().getString();
 
-       if(func_name_str.compare("free") != 0) return;
+  //std::cerr << "Found malloc ... " << std::endl;
+  // traverse cfg within this function and find malloc with same init
+  // if not found trigger error
+  vector<FilteredCFGNode<IsDFAFilter> > worklist;
+  vector<FilteredCFGNode<IsDFAFilter> > visited;
+  // add this node to worklist and work through the outgoing edges
+  FilteredCFGNode < IsDFAFilter > source =
+    FilteredCFGNode < IsDFAFilter > (node->cfgForEnd());
 
-       SgCastExp* cast = isSgCastExp(func->get_args()->get_expressions().front());
-       if(!cast) return;
+  worklist.push_back(source);
+  while (!worklist.empty()) {
+    source = worklist.front();
+    worklist.erase(worklist.begin());
+    SgNode* next = source.getNode();
 
-       SgVarRefExp* var = isSgVarRefExp(cast->get_operand());
-       if (!var) return;
+    SgAssignOp* assign = isSgAssignOp(next);
+    SgInitializedName* initAssign=NULL;
+    if (assign) {
+      SgExpression*  expr = assign->get_rhs_operand();
+      while (isSgUnaryOp(expr)!=NULL)
+	expr=isSgUnaryOp(expr)->get_operand();
+      SgIntVal* intval = isSgIntVal(expr);
+      int value=-1;
+      // value should == 0 (NULL)
+      if (intval)
+	value=intval->get_value();
+      //      cerr <<"assign found : intval = " << intval << "   value = " << value << endl;
+      if (value==0) {
+	SgVariableSymbol* var = NULL;
+	switch (assign->get_lhs_operand()->variantT()) {
+	case V_SgVarRefExp : {
+	  var = isSgVarRefExp(assign->get_lhs_operand())->get_symbol(); break;
+	}
+	case V_SgArrowExp : {
+	  SgExpression* ex = isSgArrowExp(assign->get_lhs_operand())->get_lhs_operand();
+	  if (isSgVarRefExp(ex))
+	    var = isSgVarRefExp(ex)->get_symbol(); 
+	  else 
+	    cerr <<"setPointersToNULL : isSgVarRefExp not found in isSgArrowExp "<< endl;
+	  break;
+	}
+	case V_SgDotExp : {
+	  SgExpression* ex = isSgDotExp(assign->get_lhs_operand())->get_lhs_operand();
+	  if (isSgVarRefExp(ex))
+	    var = isSgVarRefExp(ex)->get_symbol(); 
+	  else 
+	    cerr <<"setPointersToNULL : isSgVarRefExp not found in isSgDotExp "<< endl;
+	  break;
+	}
+	case V_SgPointerDerefExp : {
+	  SgExpression* ex = isSgPointerDerefExp(assign->get_lhs_operand())->get_operand();
+	  if (isSgVarRefExp(ex))
+	    var = isSgVarRefExp(ex)->get_symbol(); 
+	  else 
+	    cerr <<"setPointersToNULL : isSgVarRefExp not found in isSgPointerDerefExp "<< endl;
+	  break;
+	}
+	default: {
+	  cerr << "Left hand side of (assign) free is unknown: " << assign->get_lhs_operand()->class_name()<<endl;
+	}
+	} // switch
+      if (var)
+	  initAssign = var->get_declaration();
+      else 
+	cerr << " No var -- Left hand side of (assign) free is unknown: " << assign->get_lhs_operand()->class_name()<<endl;
+	
+      } // value == 0
+      if (initAssign==init) {
+	// we have found the variable and its assigned to NULL
+	return;
+      }
+    }
 
-       //Sg_File_Info* fi = var->get_file_info();
-       //std::cout << "filename: " << ROSE::stripPathFromFileName(fi->get_filename()) << std::endl;
+    vector<FilteredCFGEdge < IsDFAFilter > > out_edges = source.outEdges();
+    for (vector<FilteredCFGEdge <IsDFAFilter> >::const_iterator i = out_edges.begin(); i != out_edges.end(); ++i) {
+      FilteredCFGEdge<IsDFAFilter> filterEdge = *i;
+      FilteredCFGNode<IsDFAFilter> filterNode = filterEdge.target();
+      if (find(visited.begin(), visited.end(), filterNode)==visited.end()) {
+	worklist.push_back(filterNode);
+	visited.push_back(filterNode);
+      }
+    }
+  }
 
-       var_node_pairs.push_back(std::pair<SgInitializedName*, SgNode*> (var->get_symbol()->get_declaration(), node));
+  SgNode* parent = node->get_parent();
+  while (!isSgFunctionDeclaration(parent) && !isSgGlobal(parent)) 
+    parent=parent->get_parent();
+  std::string funcname="";
+  if (isSgFunctionDeclaration(parent))
+    funcname=isSgFunctionDeclaration(parent)->get_name();
+  std::string reason="\tin function: "+funcname+"\t";
+	 
 
-       return;
-     }
-
-     /* Check assignment operations to see if a variable that has been freed has
-      * been set to NULL. */
-     if (aop) {
-       /* Check to see if the right hand operand points to NULL.  If not we can
-        * return imeadiatly. */
-       SgExpression* rhop = aop->get_rhs_operand();
-       if (isSgNullExpression(rhop)) {
-         return;
-       }
-       
-       SgVarRefExp* vr = isSgVarRefExp(aop->get_lhs_operand());
-       if (!vr) return;
-       
-       SgInitializedName* lhop = vr->get_symbol()->get_declaration();
-       
-       for (it = var_node_pairs.begin(); it != var_node_pairs.end(); it++) {
-         if (lhop == (*it).first) {
-           it = var_node_pairs.erase(it);
-           return;
-         }
-       }
-
-       return;       
-     }
-
-     /* If the scope changes we should check to see if any variables have been
-      * freed and not set to NULL.  If this has happened we add a CheckerOutput
-      * object. */
-     static SgScopeStatement* scope;
-     if (bb) {
-       if ((bb->get_scope() != scope) && (var_node_pairs.size())) {
-         for (it = var_node_pairs.begin(); it != var_node_pairs.end(); it++) {
-           output->addOutput(new CheckerOutput((*it).second));
-         }
-         var_node_pairs.clear();
-       }
-       
-       scope = bb->get_scope();
-
-       return;
-     }
-
+  // if we reach this point, then we have not detected a var=NULL after free!
+  output->addOutput(new CheckerOutput(node,reason));
    } //End of the visit function.
    
 

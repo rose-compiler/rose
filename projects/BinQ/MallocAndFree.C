@@ -36,7 +36,9 @@ MallocAndFree::visit(SgNode* node) {
     string calleeName = inst->get_comment();
 
     // do this if we have found a matching free call
-    if (calleeName=="malloc") {
+    if (calleeName=="malloc" || 
+	//	calleeName=="realloc" || 
+	calleeName=="calloc" ) {
       // go forward in this function and check for the next mov mem,reg [rax]
       // malloc returns in rax
       rose_addr_t next_addr = inst->get_address() + inst->get_raw_bytes().size();

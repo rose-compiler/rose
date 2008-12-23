@@ -27,6 +27,7 @@ class ForbiddenFunctionCall : public BinAnalyses,AstSimpleProcessing {
   BinQGUI *instance;
   std::vector<std::string> blackList;
   std::map<SgNode*,std::string> result;
+  int foundFunction;
 };
 
 

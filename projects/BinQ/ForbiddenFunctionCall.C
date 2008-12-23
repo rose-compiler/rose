@@ -30,11 +30,23 @@ ForbiddenFunctionCall::visit(SgNode* node) {
       string name = *it;
       if (name==calleeName) {
 	//cerr << " match : " << name << endl;
-	string res = "This is a function that should not be called : ";
-	res+=name+"  addr:"+RoseBin_support::HexToString(inst->get_address())+" : "+unparseInstruction(inst)+" <"+inst->get_comment()+">";
+	string res = "Dont call: ";
+	string funcname="";
+	SgAsmBlock* b = isSgAsmBlock(inst->get_parent());
+	SgAsmFunctionDeclaration* func = NULL;
+	if (inst)
+	  func=isSgAsmFunctionDeclaration(b->get_parent()); 
+	if (func)
+	  funcname = func->get_name();
+	res+=name+" ("+RoseBin_support::HexToString(inst->get_address())+") : "+unparseInstruction(inst)+" <"+inst->get_comment()+">";
+	res+="  in function:  " +funcname;
 	result[inst]= res;
       }
     }
+  }
+  if (isSgAsmFunctionDeclaration(node)) {
+    foundFunction++;
+    std::cout << " name ==== " << isSgAsmFunctionDeclaration(node)->get_name() << std::endl;
   }
 }
 
@@ -92,15 +104,18 @@ ForbiddenFunctionCall::run(SgNode* fileA, SgNode* fileB) {
     instance->analysisResult->append(res);  
   }
 
-
+  foundFunction=0;
   genericF = file->get_genericFile() ;
   runTraversal(isSgProject(fileA));
 
 
   if (instance) {
-    QString res = QString("\n>>>>>>>>>>>>>>>> Resolving call addresses to names ...");
+    QString res = QString("\n>>>>>>>>>>>>>>>> Resolving call addresses to names ... total # functions: %1")
+      .arg(foundFunction);
     instance->analysisResult->append(res);  
   }
+  std::cerr << "    ForbiddenFunctionCall : Total # functions: " << 
+    RoseBin_support::ToString(foundFunction) << std::endl;
 }
 
 

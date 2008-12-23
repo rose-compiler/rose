@@ -22,7 +22,7 @@ namespace CompassAnalyses
           class CheckerOutput: public Compass::OutputViolationBase
              { 
                public:
-                    CheckerOutput(SgNode* node);
+	       CheckerOutput(SgNode* node, const std::string & reason );
              };
 
        // Specification of Checker Traversal Implementation
@@ -96,8 +96,8 @@ namespace CompassAnalyses
 } //End of namespace CompassAnalyses.
 
 CompassAnalyses::CyclomaticComplexity::
-CheckerOutput::CheckerOutput ( SgNode* node )
-  : OutputViolationBase(node,checkerName,shortDescription+
+CheckerOutput::CheckerOutput ( SgNode* node,const std::string & reason  )
+  : OutputViolationBase(node,checkerName,reason+shortDescription+
                         Traversal::getComplexity()+" > "+Traversal::getCC())
 {}
 
@@ -153,7 +153,7 @@ visit(SgNode* node)
     std::vector<SgNode*> children = funcDecl->get_traversalSuccessorContainer();
     checkDepth(children);
     if (complexity>cc)
-        output->addOutput(new CheckerOutput(funcDecl));
+      output->addOutput(new CheckerOutput(funcDecl, "\t"+funcDecl->get_name()+"\t"));
   }
 } //End of the visit function.
    

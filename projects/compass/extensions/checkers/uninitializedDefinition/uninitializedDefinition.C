@@ -22,7 +22,7 @@ namespace CompassAnalyses
           class CheckerOutput: public Compass::OutputViolationBase
              { 
                public:
-                    CheckerOutput(SgNode* node);
+	       CheckerOutput(SgNode* node, const std::string &);
              };
 
        // Specification of Checker Traversal Implementation
@@ -75,8 +75,8 @@ namespace CompassAnalyses
    } //End of namespace CompassAnalyses.
 
 CompassAnalyses::UninitializedDefinition::
-CheckerOutput::CheckerOutput ( SgNode* node )
-   : OutputViolationBase(node,checkerName,shortDescription)
+CheckerOutput::CheckerOutput ( SgNode* node, const std::string &reason )
+  : OutputViolationBase(node,checkerName,reason+shortDescription)
    {}
 
 CompassAnalyses::UninitializedDefinition::Traversal::
@@ -113,7 +113,16 @@ visit(SgNode* n)
              && !isSgClassType(initName->get_type()->stripTypedefsAndModifiers())
              && !isSgGlobal(vardecl->get_parent()))
             {
-              output->addOutput(new CheckerOutput(n));
+
+	      SgNode* parent = n->get_parent();
+	      while (!isSgFunctionDeclaration(parent) && !isSgGlobal(parent)) 
+		parent=parent->get_parent();
+	      std::string funcname="";
+	      if (isSgFunctionDeclaration(parent))
+		funcname=isSgFunctionDeclaration(parent)->get_name();
+	      std::string reason="\tin function: "+funcname+" \t";
+	      
+              output->addOutput(new CheckerOutput(n,reason));
             }
           }
         }
