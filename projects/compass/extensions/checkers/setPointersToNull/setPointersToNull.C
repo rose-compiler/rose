@@ -112,16 +112,50 @@ visit(SgNode* node)
 	SgExprListExp* list = func->get_args();
 	// check if args == init
 	Rose_STL_Container<SgExpression*> plist = list->get_expressions();
-	if (plist.size()>1) return;
+
 	SgExpression* argument = *plist.begin();
 	while (isSgUnaryOp(argument)!=NULL)
 	  argument=isSgUnaryOp(argument)->get_operand();
-	SgVarRefExp* lhop = isSgVarRefExp(argument);
-	if (lhop) {
-	  SgVariableSymbol* var = lhop->get_symbol();
-	  if (var)
-	    init = var->get_declaration();
+
+	SgVariableSymbol* var =NULL;
+	switch (argument->variantT()) {
+	case V_SgVarRefExp : {
+	  var = isSgVarRefExp(argument)->get_symbol(); break;
 	}
+	case V_SgArrowExp : {
+	  SgExpression* ex = isSgArrowExp(argument)->get_rhs_operand();
+	  if (isSgVarRefExp(ex))
+	    var = isSgVarRefExp(ex)->get_symbol(); 
+	  else 
+	    cerr <<"1: setPointersToNULL : isSgVarRefExp not found in isSgArrowExp "<< endl;
+	  break;
+	}
+	case V_SgDotExp : {
+	  SgExpression* ex = isSgDotExp(argument)->get_rhs_operand();
+	  if (isSgVarRefExp(ex))
+	    var = isSgVarRefExp(ex)->get_symbol(); 
+	  else 
+	    cerr <<"1: setPointersToNULL : isSgVarRefExp not found in isSgDotExp "<< endl;
+	  break;
+	}
+	case V_SgPointerDerefExp : {
+	  SgExpression* ex = isSgPointerDerefExp(argument)->get_operand();
+	  if (isSgVarRefExp(ex))
+	    var = isSgVarRefExp(ex)->get_symbol(); 
+	  else 
+	    cerr <<"1: setPointersToNULL : isSgVarRefExp not found in isSgPointerDerefExp "<< endl;
+	  break;
+	}
+	default: {
+	  cerr << "1: Left hand side of (assign) free is unknown: " << argument->class_name()<<endl;
+	}
+	} // switch
+
+      if (var)
+	  init = var->get_declaration();
+      else 
+	cerr << " 1: No var -- Left hand side of (assign) free is unknown: " << argument->class_name()<<endl;
+
       }
     }
 
@@ -154,7 +188,7 @@ visit(SgNode* node)
       // value should == 0 (NULL)
       if (intval)
 	value=intval->get_value();
-      //      cerr <<"assign found : intval = " << intval << "   value = " << value << endl;
+      //cerr <<"assign found : intval = " << intval << "   value = " << value << endl;
       if (value==0) {
 	SgVariableSymbol* var = NULL;
 	switch (assign->get_lhs_operand()->variantT()) {
@@ -162,7 +196,7 @@ visit(SgNode* node)
 	  var = isSgVarRefExp(assign->get_lhs_operand())->get_symbol(); break;
 	}
 	case V_SgArrowExp : {
-	  SgExpression* ex = isSgArrowExp(assign->get_lhs_operand())->get_lhs_operand();
+	  SgExpression* ex = isSgArrowExp(assign->get_lhs_operand())->get_rhs_operand();
 	  if (isSgVarRefExp(ex))
 	    var = isSgVarRefExp(ex)->get_symbol(); 
 	  else 
@@ -170,7 +204,7 @@ visit(SgNode* node)
 	  break;
 	}
 	case V_SgDotExp : {
-	  SgExpression* ex = isSgDotExp(assign->get_lhs_operand())->get_lhs_operand();
+	  SgExpression* ex = isSgDotExp(assign->get_lhs_operand())->get_rhs_operand();
 	  if (isSgVarRefExp(ex))
 	    var = isSgVarRefExp(ex)->get_symbol(); 
 	  else 
@@ -195,8 +229,10 @@ visit(SgNode* node)
 	cerr << " No var -- Left hand side of (assign) free is unknown: " << assign->get_lhs_operand()->class_name()<<endl;
 	
       } // value == 0
+      //cerr << "init == " << init << "  initAssign = " << initAssign << endl;
       if (initAssign==init) {
 	// we have found the variable and its assigned to NULL
+	//cerr << " match!!!!! " << endl;
 	return;
       }
     }

@@ -98,8 +98,16 @@ InitPointerToNull::visit(SgNode* node) {
 	  } else {
 	if (debug)
 	    cerr << " This variable might not be initialized : " << RoseBin_support::HexToString(inst->get_address())<<" "<< unparseInstruction(inst) << endl;
-	    string res = "This variable might not be initialized : ";
-	    res+="  addr:"+RoseBin_support::HexToString(inst->get_address())+" : "+unparseInstruction(inst)+" <"+inst->get_comment()+">";
+	    string res = "Possibly uninitialized variable: ";
+	    string funcname="";
+	    SgAsmBlock* b = isSgAsmBlock(inst->get_parent());
+	    SgAsmFunctionDeclaration* func = NULL;
+	    if (b)
+	      func=isSgAsmFunctionDeclaration(b->get_parent()); 
+	    if (func)
+	      funcname = func->get_name();
+	    res+=" ("+RoseBin_support::HexToString(inst->get_address())+") : "+unparseInstruction(inst)+
+	      " <"+inst->get_comment()+">  in function: "+funcname;
 	    result[inst]= res;
 	    memoryRead.insert(addr);
 	  }

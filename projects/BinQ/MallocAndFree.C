@@ -96,6 +96,10 @@ MallocAndFree::visit(SgNode* node) {
 	  // else we look further backward
 	  if (movMemRegFound==false) {
 	    succs = info->getPossibleSuccessors(succInst);
+	    // tps : this function above does not seem to take the next instruction into account, 
+	    // just jumps, so we add it
+	    rose_addr_t next_addr2 = succInst->get_address() + succInst->get_raw_bytes().size();
+	    succs.insert(next_addr2);
 	    std::set<uint64_t>::const_iterator it = succs.begin();
 	    for (;it!=succs.end();++it) {
 	      std::set<uint64_t>::const_iterator vis = visited.find(*it);
@@ -207,8 +211,16 @@ MallocAndFree::visit(SgNode* node) {
 	} // while
 	if (foundMatchingFree==false) {
 	  //cerr << " Problem ... malloc without free!"<<endl;
-	  string res = "malloc() called but no call to free() found : ";
-	  res+="  addr:"+RoseBin_support::HexToString(inst->get_address())+" : "+unparseInstruction(inst)+" <"+inst->get_comment()+">";
+	  string res = "malloc() called but no free() found: ";
+	  string funcname="";
+	  SgAsmBlock* b = isSgAsmBlock(inst->get_parent());
+	  SgAsmFunctionDeclaration* func = NULL;
+	  if (b)
+	    func=isSgAsmFunctionDeclaration(b->get_parent()); 
+	  if (func)
+	    funcname = func->get_name();
+	  res+=" ("+RoseBin_support::HexToString(inst->get_address())+") : "+unparseInstruction(inst)+
+	    " <"+inst->get_comment()+">  in function: "+funcname;
 	  result[inst]= res;
 	}
 	

@@ -10,7 +10,7 @@
 using namespace qrs;
 using namespace std;
 using namespace __gnu_cxx;
-
+using namespace VirtualBinCFG;
 
 std::string NullAfterFree::name() {
   return "Null After Free";
@@ -83,7 +83,7 @@ NullAfterFree::visit(SgNode* node) {
 	      // this mov matches, now store the address of the mem
 	      // so we can find out if this address is freed later.
 	      resolveAddr=BinQSupport::evaluateMemoryExpression(predInst,mem);
-	      //cerr << ">>> NullAfterFree - Match. Found address : " << RoseBin_support::HexToString(resolveAddr) << endl;
+	      //cerr << ">>> NullAfterFree - predecessor found. Found address : " << RoseBin_support::HexToString(resolveAddr) << endl;
 	      movRegMemFound=true;
 	      predList.clear();
 	    }
@@ -150,12 +150,15 @@ NullAfterFree::visit(SgNode* node) {
 		iteration++;
 	      }
 	    } //for
+	    //cerr << "   Checking node : " << unparseInstruction(isSgAsmx86Instruction(succInst)) << 
+	    //  " val : " << Val << " mem : " << mem<< endl;
 	    if (mem && Val) {
 	      // this mov matches, now store the address of the mem
 	      // so we can find out if this address is freed later.
 	      rose_addr_t addr=BinQSupport::evaluateMemoryExpression(succInst,mem);
 	      string valStr = BinQSupport::resolveValue(Val);
 	      rose_addr_t off = RoseBin_support::HexToDec(valStr);
+	      //cerr << ">>> NullAfterFree - mem && val found : " << RoseBin_support::HexToString(addr) << endl;
 	      if ((addr==resolveAddr) && off==0) {
 		// found the pointer=NULL inst!
 		//cerr << ">>> NullAfterFree - Pointer cleared for address : " << RoseBin_support::HexToString(resolveAddr) << endl;
@@ -167,6 +170,12 @@ NullAfterFree::visit(SgNode* node) {
 	  // else we look further backward
 	  if (movMemValFound==false) {
 	    succs = info->getPossibleSuccessors(succInst);
+	    // tps : this function above does not seem to take the next instruction into account, 
+	    // just jumps, so we add it
+	    rose_addr_t next_addr2 = succInst->get_address() + succInst->get_raw_bytes().size();
+	    succs.insert(next_addr2);
+	    //	    cerr <<"  No successor found - next node " << succs.size() << "  " <<  
+	    //  unparseInstruction(succInst2) << endl;
 	    std::set<uint64_t>::const_iterator it = succs.begin();
 	    for (;it!=succs.end();++it) {
 	      std::set<uint64_t>::const_iterator vis = visited.find(*it);
@@ -186,8 +195,16 @@ NullAfterFree::visit(SgNode* node) {
 	//cerr << "Found pointer=NULL"<<endl;
       } else {
 	//cerr << "Didnt find pointer=NULL"<<endl;
-	string res = "free() called but pointer not set to NULL : ";
-	res+="  addr:"+RoseBin_support::HexToString(inst->get_address())+" : "+unparseInstruction(inst)+" <"+inst->get_comment()+">";
+	string res = "free() called && pointer!=NULL: ";
+	string funcname="";
+	SgAsmBlock* b = isSgAsmBlock(inst->get_parent());
+	SgAsmFunctionDeclaration* func = NULL;
+	if (b)
+	  func=isSgAsmFunctionDeclaration(b->get_parent()); 
+	if (func)
+	  funcname = func->get_name();
+	res+=" ("+RoseBin_support::HexToString(inst->get_address())+") : "+unparseInstruction(inst)+
+	  " <"+inst->get_comment()+">  in function: "+funcname;
 	result[inst]= res;
       }
     }

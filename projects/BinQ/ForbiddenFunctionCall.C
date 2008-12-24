@@ -34,7 +34,7 @@ ForbiddenFunctionCall::visit(SgNode* node) {
 	string funcname="";
 	SgAsmBlock* b = isSgAsmBlock(inst->get_parent());
 	SgAsmFunctionDeclaration* func = NULL;
-	if (inst)
+	if (b)
 	  func=isSgAsmFunctionDeclaration(b->get_parent()); 
 	if (func)
 	  funcname = func->get_name();
