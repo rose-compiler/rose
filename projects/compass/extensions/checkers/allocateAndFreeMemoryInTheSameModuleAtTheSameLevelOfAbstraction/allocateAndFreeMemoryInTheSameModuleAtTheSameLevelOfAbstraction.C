@@ -161,7 +161,8 @@ visit(SgNode* node)
     if( !rhop_func_call ) return;
     SgFunctionRefExp* rhop_func = isSgFunctionRefExp(rhop_func_call->get_function());
     if( !rhop_func ) return;
-    if (rhop_func->get_symbol()->get_name().getString().compare("malloc") == 0) {
+    if (rhop_func->get_symbol()->get_name().getString().compare("malloc") == 0 ||
+	rhop_func->get_symbol()->get_name().getString().compare("calloc") == 0	) {
       init = isSgInitializedName(ain->get_parent());
     }
   }
