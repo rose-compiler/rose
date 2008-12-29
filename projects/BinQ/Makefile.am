@@ -89,6 +89,7 @@ EXTRA_DIST = BinQGui.h \
              icons.h \
              Item.h \
              Clone.h \
+             FunctionDiff.h \
              LCS.h \
              BinCallGraph.h \
              BinControlFlowAnalysis.h \
