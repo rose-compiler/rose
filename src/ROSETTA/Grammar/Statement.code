@@ -2688,7 +2688,16 @@ HEADER_PREPROCESSOR_DIRECTIVE_STATEMENT_START
        // void post_construction_initialization();
 
           static SgC_PreprocessorDirectiveStatement* createDirective ( PreprocessingInfo* currentPreprocessingInfo );
+
+       // DQ (11/29/2008): Added for uniform support of mangled names
+          virtual SgName get_mangled_name() const;
+
 HEADER_PREPROCESSOR_DIRECTIVE_STATEMENT_END
+
+HEADER_LINEMARKER_PREPROCESSOR_DIRECTIVE_STATEMENT_START
+
+HEADER_LINEMARKER_PREPROCESSOR_DIRECTIVE_STATEMENT_END
+
 
 // #########################################################
 // #########################################################
@@ -13447,6 +13456,15 @@ SgC_PreprocessorDirectiveStatement::post_construction_initialization()
    {
    }
 
+// DQ (11/29/2008): Added for uniform support of mangled names
+SgName SgC_PreprocessorDirectiveStatement::get_mangled_name() const
+   {
+     return "__c_language_preprocessor_directive__";
+   }
+
 SOURCE_PREPROCESSOR_DIRECTIVE_STATEMENT_END
 
+
+SOURCE_LINEMARKER_PREPROCESSOR_DIRECTIVE_STATEMENT_START
+SOURCE_LINEMARKER_PREPROCESSOR_DIRECTIVE_STATEMENT_END
 

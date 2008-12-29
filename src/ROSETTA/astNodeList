@@ -584,7 +584,13 @@ SgAsmDwarfUpcRelaxedType
 SgAsmDwarfUnknownConstruct
 SgAsmDwarfConstructList
 SgAsmDwarfCompilationUnitList
+<<<<<<< .mine
+SgIncludeNextDirectiveStatement
+SgIdentDirectiveStatement
+SgLinemarkerDirectiveStatement
+=======
 SgTypeSignedLongLong
 SgRealPartOp
 SgImagPartOp
 SgConjugateOp
+>>>>>>> .r3782

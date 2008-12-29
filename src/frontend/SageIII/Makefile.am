@@ -67,8 +67,8 @@ $(GENERATED_SOURCE): haveRosettaGeneratedSource
 
 libsage3Sources = \
    rose_attributes_list.C \
-   attach_all_info.C \
    attachPreprocessingInfo.C \
+   attachPreprocessingInfoTraversal.C \
    attributeListMap.C \
    manglingSupport.C \
    sageSupport.C \
@@ -88,6 +88,9 @@ libsage3Sources = \
 #   insert.C
 #   stripWrapper.C
 #   grammarBaseClass.C
+
+# DQ (12/16/2008): Removed as part of rewrite of CPP and comment handling.
+#   attach_all_info.C 
 
 noinst_LTLIBRARIES = libsage3.la
 
@@ -128,6 +131,7 @@ rose_attributes_list.lo : rose_attributes_list.h
 include_HEADERS = \
    sage3.h rose_attributes_list.h \
    attachPreprocessingInfo.h \
+   attachPreprocessingInfoTraversal.h \
    attach_all_info.h manglingSupport.h C++_include_files.h \
    fixupCopy.h \
    general_token_defs.h rose_paths.h rtiHelpers.h \

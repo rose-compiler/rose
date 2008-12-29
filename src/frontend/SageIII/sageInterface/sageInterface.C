@@ -817,6 +817,26 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
                break;
              }
 
+           case V_SgInterfaceStatement:
+             {
+               name = "_fortran_interface_stmt_";
+               const SgInterfaceStatement* statement = isSgInterfaceStatement(declaration);
+               ROSE_ASSERT(statement != NULL);
+               ROSE_ASSERT(statement->get_parent() != NULL);
+               name += StringUtility::numberToString(const_cast<SgInterfaceStatement*>(statement));
+               break;
+             }
+
+           case V_SgFortranIncludeLine:
+             {
+               name = "_fortran_include_line_stmt_";
+               const SgFortranIncludeLine* statement = isSgFortranIncludeLine(declaration);
+               ROSE_ASSERT(statement != NULL);
+               ROSE_ASSERT(statement->get_parent() != NULL);
+               name += StringUtility::numberToString(const_cast<SgFortranIncludeLine*>(statement));
+               break;
+             }
+
        // Note that the case for SgVariableDeclaration is not implemented
           default:
             // name = "default name (default case reached: not handled)";

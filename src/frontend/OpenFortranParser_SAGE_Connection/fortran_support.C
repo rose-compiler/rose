@@ -3,102 +3,13 @@
 #include "fortran_support.h"
 
 //FMZ 
+// Location of global variables
 #include "FortranParserState.h"
 
 SgSourceFile* OpenFortranParser_globalFilePointer = NULL;
 
 using namespace std;
 
-#if 0 //FMZ: using decls/defs from "FortranParserState" 
-
-// Global stack of scopes
-std::list<SgScopeStatement*> astScopeStack;
-
-// Global stack of expressions (not used in this program yet,
-// will be required for handling of expressions).
-std::list<SgExpression*> astExpressionStack;
-
-// Global stack of IR nodes
-// std::vector<SgNode*> astNodeStack;
-std::list<SgNode*> astNodeStack;
-
-// Global stack of lists of SgInitializedName containers nodes
-// std::list<SgInitializedNamePtrListPtr> astInitializedNameListStack;
-// std::list< std::list< std::string > > astNameListStack;
-// AstNameListStackType astNameListStack;
-
-// Global name stack (for tokens)
-AstNameListType astNameStack;
-
-// Global stack of SgDeclarationStatement IR nodes
-// std::vector<SgDeclarationStatement*> astDeclarationStatementStack;
-// std::list<SgDeclarationStatement*> astDeclarationStatementStack;
-
-// Global stack of SgType IR nodes
-std::list<SgType*> astTypeStack;
-
-// DQ (12/8/2007): Global stack of SgType IR nodes used to hold the base type seperately from the
-// the constructed types build from the base type.  This is designed to handle the case of 
-// "integer i(5),j" and "character*100 k,l" (see test2007_148.f)
-std::list<SgType*> astBaseTypeStack;
-
-// Intend stack used to holding intend specifiers
-std::list<int> astIntentSpecStack;
-
-// Array spec stack for holding the array specific specifiers
-std::list<int> astArraySpecStack;
-
-// Attribute spec for holding attributes
-std::list<int> astAttributeSpecStack;
-
-// DQ (4/4/2008): I think that type initialization shows that we can't have a separate astInitializerStack
-// since scalar initializers are placed onto the astExpressionStack and there is no rule to move them. So 
-// we need a single stack for expressions and initializers to avoid loosing the order of their use.
-// See test2008_24.f90, which makes this point clear.
-// Global stack of expressions used for initialization of variables in declarations.
-// std::list<SgExpression*> astInitializerStack;
-
-// DQ (11/30/2007): Function attributes are held as tokens and not not defined as integer value codes (like other attributes)
-AstNameListType astFunctionAttributeStack;
-
-// Global stack for type kind expressions (should generally only be depth == 1)
-std::list<SgExpression*> astTypeKindStack;
-
-// Global stack for type parameters (should generally only be depth == 1)
-std::list<SgExpression*> astTypeParameterStack;
-
-// Global stack for label symbols
-std::list<SgLabelSymbol*> astLabelSymbolStack;
-
-// Global stack for SgIfStmt objects (allows scopes pushed onto stack to be clean off back to the initial SgIfStmt)
-std::list<SgIfStmt*> astIfStatementStack;
-
-// DQ (11/30/2007): Actual arguments have associated names which have to be recorded on to a separate stack.
-// test2007_162.h demonstrates this problems (and test2007_184.f)
-AstNameListType astActualArgumentNameStack;
-
-// DQ (10/1/2008): To simplify the handling of interfaces and the many functions 
-// and function prototypes of function not defined in the interface we need attach 
-// declarations and names to the SgInterfaceStatement as they are seen.  Since this 
-// is nt always just the last statement, it is easier to support this using a stack.
-
-// DQ (2/18/2008): This is the support for the Fortran include stack.
-// This is specific to the Fortran include mechanism, not the CPP include 
-// mechanism. Though at some point a unified approach might be required.
-std::vector<std::string> astIncludeStack;
-
-#if 0
-// Global state used to accumulate the IO control spec for R913 list
-IO_Control_Spec* current_IO_Control_Spec = NULL;
-#endif
-
-// I am unclear if I need to keep the token stack...
-// This is the token list stack (for when we don't know how to build 
-// any IR node and we are forced to defer the evaluation).
-// TokenListType globalTokenList;
-
-// SgFile* OpenFortranParser_globalFilePointer = NULL;
-#endif
 
 std::list<SgInterfaceStatement*> astInterfaceStack;
 
@@ -112,11 +23,11 @@ Token_t *create_token(int line, int col, int type, const char *text)
 	 tmp_token->line = line;
 	 tmp_token->col = col;
 	 tmp_token->type = type;
-	 /* Make a copy of our own to make sure it isn't freed on us.  */
-	 if(text != NULL)
-		tmp_token->text = strdup(text);
-	 else
-		tmp_token->text = NULL;
+ /* Make a copy of our own to make sure it isn't freed on us.  */
+    if (text != NULL)
+         tmp_token->text = strdup(text);
+      else
+         tmp_token->text = NULL;
 
 	 return tmp_token;
   }
@@ -125,6 +36,9 @@ Token_t *create_token(int line, int col, int type, const char *text)
 string
 getCurrentFilename()
    {
+  // DQ (12/18/2008): Added comment:  This function supports the Fortran "include" 
+  // mechanism and is independent of the CPP specific "#include" mechanism.
+
 #if 0
   // Old code before implementation of Fortran include mechanism.
      string filename = OpenFortranParser_globalFilePointer->get_sourceFileNameWithPath();
@@ -136,6 +50,14 @@ getCurrentFilename()
         {
        // Note that the original source file in OFP does not have to use an absolute file name so use the one from ROSE.
           filename = OpenFortranParser_globalFilePointer->get_sourceFileNameWithPath();
+
+          if (OpenFortranParser_globalFilePointer->get_requires_C_preprocessor() == true)
+             {
+            // This source file requires CPP processing, so this would be the generated file with the "_preprocessed.f*" suffix.
+               filename = OpenFortranParser_globalFilePointer->generate_C_preprocessor_intermediate_filename(filename);
+
+               printf ("##### Using filename = %s for the name in the file_info for a CPP generated file \n",filename.c_str());
+             }
         }
        else
         {
@@ -245,6 +167,7 @@ setSourcePosition( SgLocatedNode* locatedNode, const TokenListType & tokenList )
      ROSE_ASSERT(lastToken->line  > 0);
 
 #if 1
+  // This is required to handle both the Fortran specific "include" files and the CPP specific "#include" files.
      string filename = getCurrentFilename();
 #else
      ROSE_ASSERT(OpenFortranParser_globalFilePointer != NULL);
@@ -298,6 +221,7 @@ setSourcePosition  ( SgInitializedName* initializedName, Token_t* token )
      ROSE_ASSERT(token->line > 0);
 
 #if 1
+  // This is required to handle both the Fortran specific "include" files and the CPP specific "#include" files.
      string filename = getCurrentFilename();
 #else
      ROSE_ASSERT(OpenFortranParser_globalFilePointer != NULL);
@@ -346,6 +270,7 @@ setSourcePosition  ( SgLocatedNode* locatedNode, Token_t* token )
      ROSE_ASSERT(locatedNode->get_endOfConstruct() == NULL);
 
 #if 1
+  // This is required to handle both the Fortran specific "include" files and the CPP specific "#include" files.
      string filename = getCurrentFilename();
 #else
      ROSE_ASSERT(OpenFortranParser_globalFilePointer != NULL);
@@ -417,6 +342,7 @@ setSourcePosition  ( SgInitializedName* initializedName, const TokenListType & t
      ROSE_ASSERT(lastToken->line  > 0);
 
 #if 1
+  // This is required to handle both the Fortran specific "include" files and the CPP specific "#include" files.
      string filename = getCurrentFilename();
 #else
      ROSE_ASSERT(OpenFortranParser_globalFilePointer != NULL);
@@ -450,6 +376,7 @@ setOperatorSourcePosition  ( SgExpression* expr, Token_t* token )
      ROSE_ASSERT(token->line > 0);
 
 #if 1
+  // This is required to handle both the Fortran specific "include" files and the CPP specific "#include" files.
      string filename = getCurrentFilename();
 #else
      ROSE_ASSERT(OpenFortranParser_globalFilePointer != NULL);
@@ -496,6 +423,7 @@ resetSourcePosition( SgLocatedNode* locatedNode, const TokenListType & tokenList
      ROSE_ASSERT(lastToken->line > 0);
 
 #if 1
+  // This is required to handle both the Fortran specific "include" files and the CPP specific "#include" files.
      string filename = getCurrentFilename();
 #else
      ROSE_ASSERT(OpenFortranParser_globalFilePointer != NULL);
@@ -546,6 +474,7 @@ resetSourcePosition( SgLocatedNode* targetLocatedNode, const SgLocatedNode* sour
      delete targetLocatedNode->get_endOfConstruct();
 
 #if 1
+  // This is required to handle both the Fortran specific "include" files and the CPP specific "#include" files.
      string filename = getCurrentFilename();
 #else
      ROSE_ASSERT(OpenFortranParser_globalFilePointer != NULL);
@@ -585,7 +514,6 @@ createType(int typeCode)
                ROSE_ASSERT(false);
              }
        }
-
 
      ROSE_ASSERT(result != NULL);
      return result;

@@ -5,14 +5,28 @@ using namespace std;
 
 // extern ROSEAttributesList *getPreprocessorDirectives(const char *fileName);
 
+#if 0
+// wrap_data_used_by_AttachPreprocessingInfoTreeTrav_t::wrap_data_used_by_AttachPreprocessingInfoTreeTrav_t(SgLocatedNode* node, ROSEAttributesList * preprocInfo,int len)
 wrap_data_used_by_AttachPreprocessingInfoTreeTrav_t::
-wrap_data_used_by_AttachPreprocessingInfoTreeTrav_t(SgLocatedNode* node, ROSEAttributesList * preprocInfo,
-						    int len)
-  : previousLocNodePtr(node), currentListOfAttributes(preprocInfo), 
+wrap_data_used_by_AttachPreprocessingInfoTreeTrav_t(SgLocatedNode* node)
+  : previousLocNodePtr(node)
+#if 0
+ // DQ (11/30/2008): Moved currentListOfAttributes to inherited attribute
+  , currentListOfAttributes(preprocInfo), 
     sizeOfCurrentListOfAttributes(len)
+#endif
 {
 }
 
+#else
+// DQ (12/3/2008): This is the data that we have to save (even though the currentListOfAttributes has been moved to the inherited attribute)
+wrap_data_used_by_AttachPreprocessingInfoTreeTrav_t::wrap_data_used_by_AttachPreprocessingInfoTreeTrav_t(SgLocatedNode* node, ROSEAttributesList * preprocInfo,int len)
+   : previousLocNodePtr(node),
+     currentListOfAttributes(preprocInfo), 
+     sizeOfCurrentListOfAttributes(len)
+   {
+   }
+#endif
 
 static const char* OPTION_PREFIX_ROSE = "-rose:";
 static const char* OPTION_VALUE_SEPARATOR = "$^";
@@ -181,6 +195,8 @@ AttachAllPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, Atta
   // all the comments and store the list into map. Then set save_data
   // to prepare for the parent function.
 
+  // DQ (12/1/2008): I think this code can be simplified now, but I am not clear how it should be done!
+
   // 1. find the file name for the current node:
      if ( currentFilePtr!=NULL )
         {
@@ -262,20 +278,35 @@ AttachAllPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, Atta
                   }
              }
 
+          ROSE_ASSERT(inh.currentListOfAttributes != NULL);
+
           if ( (excludePath == false) && (includePath == true) )
              {
             // This scans the file and collects the token stream...
                printf ("AttachAllPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): Calling getPreprocessorDirectives for file = %s \n",file_name_str.c_str());
+
+            // DQ (11/30/2008): Moved currentListOfAttributes to inherited attribute
+            // save_data.currentListOfAttributes = getPreprocessorDirectives(file_name_str);
+            // save_data.currentListOfAttributes = inh.currentListOfAttributes;
+
+            // This will work for C/C++ but not for Fortran.
+            // For Fortran use: returnListOfAttributes->collectPreprocessorDirectivesAndCommentsForAST(fileNameForDirectivesAndComments,ROSEAttributesList::e_Fortran9x_language);
+            // or: returnListOfAttributes->collectPreprocessorDirectivesAndCommentsForAST(fileNameForDirectivesAndComments,ROSEAttributesList::e_Fortran77_language);
                save_data.currentListOfAttributes = getPreprocessorDirectives(file_name_str);
              }
             else
              {
             // This builds an empty list; does not traverse the file
                printf ("AttachAllPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): Building an empty list to represent the data from file = %s \n",file_name_str.c_str());
+
+            // DQ (11/30/2008): Moved currentListOfAttributes to inherited attribute
+            // save_data.currentListOfAttributes = new ROSEAttributesList();
+            // save_data.currentListOfAttributes = inh.currentListOfAttributes;
                save_data.currentListOfAttributes = new ROSEAttributesList();
              }
 
-          save_data.sizeOfCurrentListOfAttributes = save_data.currentListOfAttributes->getLength();
+       // DQ (11/30/2008): Moved currentListOfAttributes to inherited attribute
+       // save_data.sizeOfCurrentListOfAttributes = save_data.currentListOfAttributes->getLength();
           map_of_all_attributes[file_name_id] = save_data;
 
         }
@@ -287,14 +318,18 @@ AttachAllPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, Atta
   // 3. set data used by the parent before calling it:
      currentFileNameId             = file_name_id;
      previousLocNodePtr            = save_data.previousLocNodePtr;
-     currentListOfAttributes       = save_data.currentListOfAttributes;
-     sizeOfCurrentListOfAttributes = save_data.sizeOfCurrentListOfAttributes;
+
+  // DQ (11/30/2008): Moved currentListOfAttributes to inherited attribute
+  // currentListOfAttributes       = save_data.currentListOfAttributes;
+  // sizeOfCurrentListOfAttributes = save_data.sizeOfCurrentListOfAttributes;
 
   // 4. call the parent and record changes to the data used:
      AttachPreprocessingInfoTreeTraversalInheritedAttrribute inh_rsl = AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(n, inh);
      save_data.previousLocNodePtr = previousLocNodePtr;
-     save_data.currentListOfAttributes = currentListOfAttributes;
-     save_data.sizeOfCurrentListOfAttributes = sizeOfCurrentListOfAttributes;
+
+  // DQ (11/30/2008): Moved currentListOfAttributes to inherited attribute
+  // save_data.currentListOfAttributes = currentListOfAttributes;
+  // save_data.sizeOfCurrentListOfAttributes = sizeOfCurrentListOfAttributes;
      map_of_all_attributes[currentFileNameId] = save_data;
 
   // 5. set the first attachable node for each file to make it simple
@@ -336,291 +371,192 @@ AttachAllPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, Atta
    }
 
 AttachPreprocessingInfoTreeTraversalSynthesizedAttribute
-AttachAllPreprocessingInfoTreeTrav::
-evaluateSynthesizedAttribute ( SgNode *n,
-			       AttachPreprocessingInfoTreeTraversalInheritedAttrribute inh,
-			       SubTreeSynthesizedAttributes st)
-{
-  wrap_data_used_by_AttachPreprocessingInfoTreeTrav_t save_data;
+AttachAllPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute ( SgNode *n, AttachPreprocessingInfoTreeTraversalInheritedAttrribute inh, SubTreeSynthesizedAttributes st)
+   {
+     wrap_data_used_by_AttachPreprocessingInfoTreeTrav_t save_data;
 
-  SgFile *currentFilePtr =  dynamic_cast<SgFile*>(n);
-  SgLocatedNode *currentLocNodePtr = dynamic_cast<SgLocatedNode*>(n);
-  int file_name_id = -1;
-  Sg_File_Info * file_info_ptr = NULL;
-  bool isCompilerGenerated = false;
-  bool isTransformation = false;
+     SgFile *currentFilePtr =  dynamic_cast<SgFile*>(n);
+     SgLocatedNode *currentLocNodePtr = dynamic_cast<SgLocatedNode*>(n);
+     int file_name_id = -1;
+     Sg_File_Info * file_info_ptr = NULL;
+     bool isCompilerGenerated = false;
+     bool isTransformation = false;
 
-  if( ( currentFilePtr != NULL ) || ( currentLocNodePtr != NULL ) )
-  {
+     if( ( currentFilePtr != NULL ) || ( currentLocNodePtr != NULL ) )
+        {
+       // get a valid file name, and check if it is a new file; if yes, get
+       // all the comments and store the list into map. Then set save_data
+       // to prepare for the parent function.
 
+       // 1. find the file name for the current node:
+          if ( currentFilePtr!=NULL )
+             {
+               file_name_id = currentFilePtr->get_file_info()->get_file_id();
+             }
+            else
+             {
+               if ( currentLocNodePtr!=NULL )
+                  {
+                    file_info_ptr = currentLocNodePtr->get_file_info();
+                    assert ( file_info_ptr!=NULL );
 
-  // get a valid file name, and check if it is a new file; if yes, get
-  // all the comments and store the list into map. Then set save_data
-  // to prepare for the parent function.
+                 // Pi: compiler generated nodes have no real file names with them,
+                 // so use the currentFileName as their names:
+                    isCompilerGenerated = file_info_ptr->isCompilerGenerated();
+                 // isCompilerGenerated = file_info_ptr->isCompilerGeneratedNodeToBeUnparsed();
+                    isTransformation = file_info_ptr->isTransformation();
+                    if ( isCompilerGenerated==true || isTransformation==true )
+                       {
+                         file_name_id = currentFileNameId;
+                       }
+                      else
+                       {
+                         file_name_id = file_info_ptr->get_file_id();
+                       }
+                  }
+             }
 
-  // 1. find the file name for the current node:
-  if ( currentFilePtr!=NULL ) {
-    file_name_id = currentFilePtr->get_file_info()->get_file_id();
-  } else if ( currentLocNodePtr!=NULL ) {
-    file_info_ptr = currentLocNodePtr->get_file_info();
-    assert ( file_info_ptr!=NULL );
+       // 2. check whether the file name is new:
+       // AS(09/21/07) Reset start_index since we are dealing with a new file
+          start_index = 0;
 
-    // Pi: compiler generated nodes have no real file names with them,
-    // so use the currentFileName as their names:
-    isCompilerGenerated = file_info_ptr->isCompilerGenerated();
-//     isCompilerGenerated = file_info_ptr->isCompilerGeneratedNodeToBeUnparsed();
-    isTransformation = file_info_ptr->isTransformation();
-    if ( isCompilerGenerated==true || isTransformation==true ) {
-      file_name_id = currentFileNameId;
-    } else {
-      file_name_id = file_info_ptr->get_file_id();
-    }
-  }
-
-  // 2. check whether the file name is new:
-  //AS(09/21/07) Reset start_index since we are dealing with a new file
-  start_index = 0;
-
-  map<int, wrap_data_used_by_AttachPreprocessingInfoTreeTrav_t>::iterator attr_list_itr
-    = map_of_all_attributes.find(file_name_id);
-  if ( attr_list_itr==map_of_all_attributes.end() ) {
+          map<int, wrap_data_used_by_AttachPreprocessingInfoTreeTrav_t>::iterator attr_list_itr = map_of_all_attributes.find(file_name_id);
+          if ( attr_list_itr==map_of_all_attributes.end() )
+             {
 #ifdef outputallfilenamefound
-    cerr << "-->>> NEW file : " << file_name_str << endl;
+               cerr << "-->>> NEW file : " << file_name_str << endl;
 #endif
-    save_data.previousLocNodePtr = previousLocNodePtr;
+               save_data.previousLocNodePtr = previousLocNodePtr;
 
-	//AS(093007) Logic to include or exclude finding comments in paths
-	bool includePath = true;
-	std::string file_name_str = Sg_File_Info::getFilenameFromID(file_name_id);
+            // AS(093007) Logic to include or exclude finding comments in paths
+               bool includePath = true;
+               std::string file_name_str = Sg_File_Info::getFilenameFromID(file_name_id);
 
-	//If the command line directive to look for include paths has been
-	//specified. See if the current filename is in the list of
-	//included paths.
-	if( lookForIncludePaths == true )
-	{
-	  includePath = false;
-      for(std::vector<std::string>::iterator iItr = pathsToInclude.begin();
-		iItr != pathsToInclude.end(); ++iItr)
-	  {
-         if( file_name_str.find(*iItr) != string::npos ){
-		  includePath  = true; 
-          break;			
-		 }
-	  }
-	}
+            // If the command line directive to look for include paths has been
+            // specified. See if the current filename is in the list of
+            // included paths.
+               if( lookForIncludePaths == true )
+                  {
+                    includePath = false;
+                    for(std::vector<std::string>::iterator iItr = pathsToInclude.begin(); iItr != pathsToInclude.end(); ++iItr)
+                       {
+                         if( file_name_str.find(*iItr) != string::npos )
+                            {
+                              includePath  = true; 
+                              break;
+                            }
+                       }
+                  }
 
-	bool excludePath = false;
+               bool excludePath = false;
 
-	//If the command line directive to look for exclude paths has been
-	//specified. See if the current filename is in the list of
-	//excluded paths.
-	if( lookForExcludePaths == true )
-	{
-      for(std::vector<std::string>::iterator iItr = pathsToExclude.begin();
-		iItr != pathsToExclude.end(); ++iItr)
-	  {
-         if( file_name_str.find(*iItr) != string::npos ){
-           excludePath  = true; 
-           break;
-		 }
-	  }
-	}
+            // If the command line directive to look for exclude paths has been
+            // specified. See if the current filename is in the list of
+            // excluded paths.
+               if( lookForExcludePaths == true )
+                  {
+                    for(std::vector<std::string>::iterator iItr = pathsToExclude.begin(); iItr != pathsToExclude.end(); ++iItr)
+                       {
+                         if( file_name_str.find(*iItr) != string::npos )
+                            {
+                              excludePath  = true; 
+                              break;
+                            }
+                       }
+                  }
 
+#if 0
+            // DQ (11/30/2008): Moved currentListOfAttributes to inherited attribute
+               if( (excludePath == false) && (includePath == true) )
+                    save_data.currentListOfAttributes = getPreprocessorDirectives(file_name_str);
+                 else
+                    save_data.currentListOfAttributes = new ROSEAttributesList;
 
-	if( (excludePath == false) && (includePath == true) )
-       save_data.currentListOfAttributes = getPreprocessorDirectives(file_name_str);
-	else
-	   save_data.currentListOfAttributes = new ROSEAttributesList;
+               save_data.sizeOfCurrentListOfAttributes = save_data.currentListOfAttributes->getLength();
+#endif
+               map_of_all_attributes[file_name_id] = save_data;
+             }
+            else
+             {
+               save_data = (*attr_list_itr).second;
+             }
 
-    save_data.sizeOfCurrentListOfAttributes = save_data.currentListOfAttributes->getLength();
-    map_of_all_attributes[file_name_id] = save_data;
-  } else {
-    save_data = (*attr_list_itr).second;
-  }
+       // 3. set data used by the parent before calling it:
+          currentFileNameId = file_name_id;
+          previousLocNodePtr = save_data.previousLocNodePtr;
+#if 0
+       // DQ (11/30/2008): Moved currentListOfAttributes to inherited attribute
+          currentListOfAttributes = save_data.currentListOfAttributes;
+          sizeOfCurrentListOfAttributes = save_data.sizeOfCurrentListOfAttributes;
+#endif
+        }
 
-  // 3. set data used by the parent before calling it:
-  currentFileNameId = file_name_id;
-  previousLocNodePtr = save_data.previousLocNodePtr;
-  currentListOfAttributes = save_data.currentListOfAttributes;
-  sizeOfCurrentListOfAttributes = save_data.sizeOfCurrentListOfAttributes;
+     AttachPreprocessingInfoTreeTraversalSynthesizedAttribute syn;
 
-  }
+     if( ( currentFilePtr != NULL ) || ( currentLocNodePtr != NULL ) )
+        {
+          syn = AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(n, inh, st);
+          save_data.previousLocNodePtr = previousLocNodePtr;
 
-  AttachPreprocessingInfoTreeTraversalSynthesizedAttribute syn;
+#if 0
+       // DQ (11/30/2008): Moved currentListOfAttributes to inherited attribute
+          save_data.currentListOfAttributes = currentListOfAttributes;
+          save_data.sizeOfCurrentListOfAttributes = sizeOfCurrentListOfAttributes;
+#endif
 
-  if( ( currentFilePtr != NULL ) || ( currentLocNodePtr != NULL ) )
-  {
-
-   syn
-     = AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(n, inh, st);
-   save_data.previousLocNodePtr = previousLocNodePtr;
-   save_data.currentListOfAttributes = currentListOfAttributes;
-   save_data.sizeOfCurrentListOfAttributes = sizeOfCurrentListOfAttributes;
-   map_of_all_attributes[currentFileNameId] = save_data;
-  }
+          map_of_all_attributes[currentFileNameId] = save_data;
+        }
  
   // The inh/st/syn is no use for now.
- // return_syn:
-  return syn;
-}
+  // return_syn:
+     return syn;
+   }
 
-bool AttachAllPreprocessingInfoTreeTrav::
-add_first_node_for_file(const int fn, SgNode* n, int pos)
-{
-  bool flag = false;
+bool
+AttachAllPreprocessingInfoTreeTrav::add_first_node_for_file(const int fn, SgNode* n, int pos)
+   {
+     bool flag = false;
 
-  int totalfiles = array_of_first_nodes.size();
-  if ( pos >= totalfiles ) {
-    array_of_first_nodes.resize(2*totalfiles, NULL);
-  }
+     int totalfiles = array_of_first_nodes.size();
+     if ( pos >= totalfiles )
+        {
+          array_of_first_nodes.resize(2*totalfiles, NULL);
+        }
 
-  if ( array_of_first_nodes[pos]==NULL ) {
-    flag = true;
-    array_of_first_nodes[pos] = n;
-  }
+     if ( array_of_first_nodes[pos]==NULL )
+        {
+          flag = true;
+          array_of_first_nodes[pos] = n;
+        }
 
-  return flag;
-}
+     return flag;
+   }
 
-pair<SgNode*, PreprocessingInfo::RelativePositionType> AttachAllPreprocessingInfoTreeTrav::
-get_first_node_for_file(const int fn, int hintfororder)
-{
-  map<int, int>::iterator first_node_itr = map_of_file_order.find(fn);
-  int pos_itr = hintfororder;
-  PreprocessingInfo::RelativePositionType loc = PreprocessingInfo::before;
-  if ( first_node_itr!=map_of_file_order.end() )
-    pos_itr = (*first_node_itr).second;
+pair<SgNode*, PreprocessingInfo::RelativePositionType> 
+AttachAllPreprocessingInfoTreeTrav::get_first_node_for_file(const int fn, int hintfororder)
+   {
+     map<int, int>::iterator first_node_itr = map_of_file_order.find(fn);
+     int pos_itr = hintfororder;
+     PreprocessingInfo::RelativePositionType loc = PreprocessingInfo::before;
+     if ( first_node_itr!=map_of_file_order.end() )
+          pos_itr = (*first_node_itr).second;
 
-  for (int i=pos_itr; i<nFiles; i++ ) {
-    if ( array_of_first_nodes[i]!=NULL )
-      return pair<SgNode*, PreprocessingInfo::RelativePositionType>(array_of_first_nodes[i], loc);
-  }
+     for (int i=pos_itr; i<nFiles; i++ )
+        {
+          if ( array_of_first_nodes[i]!=NULL )
+               return pair<SgNode*, PreprocessingInfo::RelativePositionType>(array_of_first_nodes[i], loc);
+        }
 
-  loc = PreprocessingInfo::after;
-  for (int i=pos_itr-1; i>=0; i-- ) {
-    if ( array_of_first_nodes[i]!=NULL )
-      return pair<SgNode*, PreprocessingInfo::RelativePositionType>(array_of_first_nodes[i], loc);
-  }
+     loc = PreprocessingInfo::after;
+     for (int i=pos_itr-1; i>=0; i-- )
+        {
+          if ( array_of_first_nodes[i]!=NULL )
+               return pair<SgNode*, PreprocessingInfo::RelativePositionType>(array_of_first_nodes[i], loc);
+        }
 
-  loc = PreprocessingInfo::defaultValue;
-  return pair<SgNode*, PreprocessingInfo::RelativePositionType>(NULL, loc);
-}
-
-#if 0
-bool AttachAllPreprocessingInfoTreeTrav::
-attach_left_info()
-{
-  int lenoffilelist = 0;
-  int nleftfiles = 0;
-
-  while ( !dependancies.eof() ) {
-    string fn;
-    dependancies >> fn;
-    if ( fn!="" ) {
-      map<string, wrap_data_used_by_AttachPreprocessingInfoTreeTrav_t>::iterator attr_list_itr = map_of_all_attributes.find(fn);
-      lenoffilelist++;
-
-      if ( attr_list_itr==map_of_all_attributes.end() ) {
-	// handle files containing no IR nodes
-	nleftfiles++;
-
-	//AS(093007) Logic to include or exclude finding comments in paths
-	bool includePath = true;
-
-	//If the command line directive to look for include paths has been
-	//specified. See if the current filename is in the list of
-	//included paths.
-	if( lookForIncludePaths == true )
-	{
-	  includePath = false;
-      for(std::vector<std::string>::iterator iItr = pathsToInclude.begin();
-		iItr != pathsToInclude.end(); ++iItr)
-	  {
-         if( fn.find(*iItr) != string::npos ){
-		  includePath  = true; 
-          break;			
-		 }
-	  }
-	}
-
-	bool excludePath = false;
-
-	//If the command line directive to look for exclude paths has been
-	//specified. See if the current filename is in the list of
-	//excluded paths.
-	if( lookForExcludePaths == true )
-	{
-      for(std::vector<std::string>::iterator iItr = pathsToExclude.begin();
-		iItr != pathsToExclude.end(); ++iItr)
-	  {
-         if( fn.find(*iItr) != string::npos ){
-           excludePath  = true; 
-           break;
-		 }
-	  }
-	}
-
-
-	ROSEAttributesList* cur_attr_list;
-	if( (excludePath == false) && (includePath == true) )
-        cur_attr_list = getPreprocessorDirectives(fn);
-	else
-	    cur_attr_list = new ROSEAttributesList;
-
-	pair<SgNode*, PreprocessingInfo::RelativePositionType> first_node = get_first_node_for_file(fn, lenoffilelist-nleftfiles);
-	cerr << "Hint for attaching : " << lenoffilelist-nleftfiles << endl;
-	for ( int i=0; i<cur_attr_list->getLength(); i++ ) {
-	  PreprocessingInfo * curPreInfo = (*cur_attr_list)[i];
-
-	  if ( curPreInfo!=NULL ) {
-	    if ( first_node.first==NULL )
-	      cerr << "Warning: No node is found for attaching preproc info `" << curPreInfo->getString() << "'" << endl;
-	    else {
-	      cur_attr_list->getList()[i] = NULL;
-	      curPreInfo->setRelativePosition(first_node.second);
-	      dynamic_cast<SgLocatedNode*>(first_node.first)->addToAttachedPreprocessingInfo(curPreInfo);
-	    }
-	  } // end if curPreInfo is not already attached.
-	} // end for all attr in current attr_list_itr
-      } // end for all lists of attr
-    } // end if a file name
-  } // end while all files
-
-  return true;
-}
-#endif
-
-#if 0
-// DQ (4/19/2006): This is now called from the attachPreprocessingInfo function directly!
-void
-attachAllPreprocessingInfo(SgFile* sagep)
-{
-  TimingPerformance timer ("Attaching AST Processing Info:");
-
-  // Dummy attribute
-  AttachPreprocessingInfoTreeTraversalInheritedAttrribute inh;
-
-  // Make sure that the argument is not a NULL pointer
-  ROSE_ASSERT(sagep);
-
-  // Create tree traversal object for attaching the preprocessing information
-  AttachAllPreprocessingInfoTreeTrav tt(sagep);
-
-  // Run tree traversal on specified source file
-  tt.traverse(sagep, inh);
-
-// DQ (3/30/2006): Commented this out with help from Lingxiao.
-// This gets the list of header files using EDG's -M (--dependencies) option.
-// This list is provided in order so that header files without IR nodes
-// have have their comments and CPP directive processed for inclusion into
-// the AST (important if such a header file included "#if 0" only, for example).
-// tt.attach_left_info();
-#if PRINT_DEVELOPER_WARNINGS
-   printf ("Skipping possible header files that contain no IR nodes (the comments and CPP directives in them will not be extracted) \n");
-#endif
-}
-#endif
-
+     loc = PreprocessingInfo::defaultValue;
+     return pair<SgNode*, PreprocessingInfo::RelativePositionType>(NULL, loc);
+   }
 
 
 // DQ (10/27/2007): Added display function to output information gather durring the collection of 
@@ -633,24 +569,24 @@ AttachAllPreprocessingInfoTreeTrav::display(const std::string & label) const
      printf ("Inside of AttachAllPreprocessingInfoTreeTrav::display(%s) \n",label.c_str());
 
 #if 0
-          std::string src_file_name;
-          SgFile * sage_file;
-       /* map: key = filename, value = a wrapper for the data used in AttachPreprocessingInfoTreeTrav. */
-          std::map<int, wrap_data_used_by_AttachPreprocessingInfoTreeTrav_t> map_of_all_attributes;
-       /* map: key = filename, value = the first node in AST from the file (could be NULL) */
-       /* std::map<std::string, SgNode*> map_of_first_node; */
-       /* I need to keep the order for each file when it is discovered from AST */
-          int nFiles;			/* total number of files involved */
-          std::map<int, int> map_of_file_order;
-          std::vector<SgNode*> array_of_first_nodes;
+     std::string src_file_name;
+     SgFile * sage_file;
+  /* map: key = filename, value = a wrapper for the data used in AttachPreprocessingInfoTreeTrav. */
+     std::map<int, wrap_data_used_by_AttachPreprocessingInfoTreeTrav_t> map_of_all_attributes;
+  /* map: key = filename, value = the first node in AST from the file (could be NULL) */
+  /* std::map<std::string, SgNode*> map_of_first_node; */
+  /* I need to keep the order for each file when it is discovered from AST */
+     int nFiles;			/* total number of files involved */
+     std::map<int, int> map_of_file_order;
+     std::vector<SgNode*> array_of_first_nodes;
 
-       // Holds paths to exclude when getting all commments and directives
-          std::vector<std::string> pathsToExclude;
-          bool lookForExcludePaths;
+  // Holds paths to exclude when getting all commments and directives
+     std::vector<std::string> pathsToExclude;
+     bool lookForExcludePaths;
 
-       // Holds paths to include when getting all comments and directives
-          std::vector<std::string> pathsToInclude;
-          bool lookForIncludePaths;
+  // Holds paths to include when getting all comments and directives
+     std::vector<std::string> pathsToInclude;
+     bool lookForIncludePaths;
 #endif
 
      printf ("src_file_name            = %s \n",src_file_name.c_str());
@@ -664,13 +600,15 @@ AttachAllPreprocessingInfoTreeTrav::display(const std::string & label) const
         {
           int file_id = i->first;
           SgLocatedNode *previousLocNodePtr           = i->second.previousLocNodePtr;
-          ROSEAttributesList *currentListOfAttributes = i->second.currentListOfAttributes;
-          int sizeOfCurrentListOfAttributes           = i->second.sizeOfCurrentListOfAttributes;
+
+       // DQ (11/30/2008): Moved currentListOfAttributes to inherited attribute
+       // ROSEAttributesList *currentListOfAttributes = i->second.currentListOfAttributes;
+       // int sizeOfCurrentListOfAttributes           = i->second.sizeOfCurrentListOfAttributes;
 
           printf (" file_id                       = %d \n",file_id);
           printf (" previousLocNodePtr            = %p \n",previousLocNodePtr);
-          printf (" currentListOfAttributes       = %p \n",currentListOfAttributes);
-          printf (" sizeOfCurrentListOfAttributes = %d \n",sizeOfCurrentListOfAttributes);
+       // printf (" currentListOfAttributes       = %p \n",currentListOfAttributes);
+       // printf (" sizeOfCurrentListOfAttributes = %d \n",sizeOfCurrentListOfAttributes);
 
           i++;
         }

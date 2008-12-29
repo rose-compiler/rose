@@ -243,7 +243,7 @@ typedef SgAttributePtrList*                 SgAttributePtrListPtr;
 // typedef Rose_STL_Container<char*>           SgCharPtrList;
 // typedef SgCharPtrList*                      SgCharPtrListPtr;
 typedef Rose_STL_Container<unsigned char>   SgCharList;
-typedef SgCharList*                      SgCharListPtr;
+typedef SgCharList*                         SgCharListPtr;
 
 typedef SgExpression*                       SgExpressionPtr;
 typedef SgStatement*                        SgStatementPtr;
@@ -450,6 +450,9 @@ typedef SgAsmDwarfConstructPtrList*              SgAsmDwarfConstructPtrListPtr;
 
 typedef Rose_STL_Container<SgAsmDwarfCompilationUnit*> SgAsmDwarfCompilationUnitPtrList;
 typedef SgAsmDwarfCompilationUnitPtrList*              SgAsmDwarfCompilationUnitPtrListPtr;
+
+// DQ (11/28/2008): Added support for list of integers (used for flag list in SgLinemarkerDirectiveStatement).
+// typedef std::vector<int>                     SgIntegerList;
 
 
 // FIXME: This might not the the right place for this class. (RPM 2008-08-26)

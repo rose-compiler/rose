@@ -125,8 +125,6 @@ if test "x$want_boost" = "xyes"; then
        	])
 	AC_LANG_POP([C++])
 
-
-
 	dnl if we found no boost with system layout we search for boost libraries
 	dnl built and installed without the --layout=system option or for a staged(not installed) version
 	if test "x$succeeded" != "xyes"; then
@@ -141,6 +139,8 @@ if test "x$want_boost" = "xyes"; then
 					fi
 					VERSION_UNDERSCORE=`echo $_version | sed 's/\./_/'`
 					BOOST_CPPFLAGS="-I$ac_boost_path/include/boost-$VERSION_UNDERSCORE"
+             # DQ (12/22/2008): Modified macro to save the boost path so that it could be used with "-isystem" option (gcc).
+					ROSE_BOOST_INCLUDE_PATH="$ac_boost_path/include/boost-$VERSION_UNDERSCORE"
 				done
 			fi
 		else
@@ -178,6 +178,9 @@ if test "x$want_boost" = "xyes"; then
 				fi
 	    		fi
 		fi
+
+    # DQ (12/22/2008): Fixup Boost to not use the system (OS) installation of Boost
+    # BOOST_CPPFLAGS="$BOOST_CPPFLAGS/boost"
 
 		CPPFLAGS="$CPPFLAGS $BOOST_CPPFLAGS"
 		export CPPFLAGS
@@ -217,5 +220,12 @@ if test "x$want_boost" = "xyes"; then
         CPPFLAGS="$CPPFLAGS_SAVED"
        	LDFLAGS="$LDFLAGS_SAVED"
 fi
+
+# DQ (12/22/2008): Modified macro to save the boost path so that it could be used with "-isystem" 
+# option to include the boost path specified on the configure command ahead of "/usr/local/include" 
+# so that we can get the required version of Boost on systems that have it installed by default.
+# echo "Final Test: ROSE_BOOST_INCLUDE_PATH = $ROSE_BOOST_INCLUDE_PATH"
+AC_SUBST(ROSE_BOOST_INCLUDE_PATH)
+
 
 ])

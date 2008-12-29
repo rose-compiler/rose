@@ -2598,18 +2598,18 @@ void commentOutEvertythingButDwarf (SgNode* node)
                           elfSegmentTableEntry->addNewAttribute("SymbolPruningAttribute",att);
                         }
 
-                     SgAsmElfRelaEntry* elfRelaEntry = isSgAsmElfRelaEntry(node);
-                     if (elfRelaEntry != NULL)
+                     SgAsmElfRelocEntry* elfRelocEntry = isSgAsmElfRelocEntry(node);
+                     if (elfRelocEntry != NULL)
                         {
                           SymbolPruningAttribute* att = new SymbolPruningAttribute();
-                          elfRelaEntry->addNewAttribute("SymbolPruningAttribute",att);
+                          elfRelocEntry->addNewAttribute("SymbolPruningAttribute",att);
                         }
 
-                     SgAsmElfRelaEntryList* elfRelaEntryList = isSgAsmElfRelaEntryList(node);
-                     if (elfRelaEntryList != NULL)
+                     SgAsmElfRelocEntryList* elfRelocEntryList = isSgAsmElfRelocEntryList(node);
+                     if (elfRelocEntryList != NULL)
                         {
                           SymbolPruningAttribute* att = new SymbolPruningAttribute();
-                          elfRelaEntryList->addNewAttribute("SymbolPruningAttribute",att);
+                          elfRelocEntryList->addNewAttribute("SymbolPruningAttribute",att);
                         }
 
                      SgAsmElfDynamicEntryList* elfDynamicEntryList = isSgAsmElfDynamicEntryList(node);

@@ -495,6 +495,21 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
 #endif
 
 #if 0
+     curprint ( string("\n/* Top of unparseLanguageSpecificStatement (Unparse_ExprStmt) " ) + stmt->class_name() + " */\n ");
+     ROSE_ASSERT(stmt->get_startOfConstruct() != NULL);
+  // ROSE_ASSERT(stmt->getAttachedPreprocessingInfo() != NULL);
+     int numberOfComments = -1;
+     if (stmt->getAttachedPreprocessingInfo() != NULL)
+        numberOfComments = stmt->getAttachedPreprocessingInfo()->size();
+     curprint ( string("/* startOfConstruct: file = " ) + stmt->get_startOfConstruct()->get_filenameString()
+         + " raw filename = " + stmt->get_startOfConstruct()->get_raw_filename()
+         + " raw line = "     + StringUtility::numberToString(stmt->get_startOfConstruct()->get_raw_line())
+         + " raw column = "   + StringUtility::numberToString(stmt->get_startOfConstruct()->get_raw_col())
+         + " #comments = "    + StringUtility::numberToString(numberOfComments)
+         + " */\n ");
+#endif
+
+#if 0
   // Debugging support
      SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(stmt);
      if (declarationStatement != NULL)
@@ -509,8 +524,11 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
      SgScopeStatement* savedScope = info.get_current_scope();
 #endif
 
+  // DQ (12/16/2008): Added support for unparsing statements around C++ specific statements
+  // unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::before);
+
   // DQ (12/26/2007): Moved from language independent handling to C/C++ specific handling 
-  // becasue we don't want it to appear in the Fortran code generation.
+  // because we don't want it to appear in the Fortran code generation.
   // DQ (added comments) this is where the new lines are introduced before statements.
      unp->cur.format(stmt, info, FORMAT_BEFORE_STMT);
 
@@ -655,6 +673,9 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
                break;
              }
         }
+
+  // DQ (12/16/2008): Added support for unparsing statements around C++ specific statements
+  // unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::after);
 
 #if 0
   // This is done in: UnparseLanguageIndependentConstructs::unparseStatement()
@@ -1880,7 +1901,8 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
   // DQ (12/13/2005): I don't like this implementation with the while loop...
 
-  // printf ("Unparse if statement \n");
+  // printf ("Unparse if statement stmt = %p \n",stmt);
+
      SgIfStmt* if_stmt = isSgIfStmt(stmt);
      assert (if_stmt != NULL);
 
@@ -1893,18 +1915,26 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
           testInfo.set_inConditional();
        // info.set_inConditional();
           if ( (tmp_stmt = if_stmt->get_conditional()) )
-               unparseStatement(tmp_stmt, testInfo);
+             {
+            // Unparse using base class function so we get any required comments and CPP directives.
+            // unparseStatement(tmp_stmt, testInfo);
+               UnparseLanguageIndependentConstructs::unparseStatement(tmp_stmt, testInfo);
+             }
           testInfo.unset_inConditional();
           curprint ( string(") "));
 
           if ( (tmp_stmt = if_stmt->get_true_body()) ) 
              {
             // printf ("Unparse the if true body \n");
-            // curprint ( string("\n/* Unparse the if true body */ \n";
+            // curprint ( string("\n/* Unparse the if true body */ \n") );
                unp->cur.format(tmp_stmt, info, FORMAT_BEFORE_NESTED_STATEMENT);
-               unparseStatement(tmp_stmt, info);
+
+            // Unparse using base class function so we get any required comments and CPP directives.
+            // unparseStatement(tmp_stmt, info);
+               UnparseLanguageIndependentConstructs::unparseStatement(tmp_stmt, info);
+
                unp->cur.format(tmp_stmt, info, FORMAT_AFTER_NESTED_STATEMENT);
-            // curprint ( string("\n/* DONE: Unparse the if true body */ \n";
+            // curprint ( string("\n/* DONE: Unparse the if true body */ \n") );
              }
 
           if ( (tmp_stmt = if_stmt->get_false_body()) )
@@ -1918,7 +1948,13 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
                if_stmt = isSgIfStmt(tmp_stmt);
                if (if_stmt == NULL) {
                  unp->cur.format(tmp_stmt, info, FORMAT_BEFORE_NESTED_STATEMENT);
-                 unparseStatement(tmp_stmt, info);
+
+              // curprint ( string("\n/* Unparse the if false body */ \n") );
+              // Unparse using base class function so we get any required comments and CPP directives.
+              // unparseStatement(tmp_stmt, info);
+                 UnparseLanguageIndependentConstructs::unparseStatement(tmp_stmt, info);
+              // curprint ( string("\n/* DONE: Unparse the if false body */ \n") );
+
                  unp->cur.format(tmp_stmt, info, FORMAT_AFTER_NESTED_STATEMENT);
                }
              }
@@ -1926,6 +1962,10 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
              {
                if_stmt = NULL;
              }
+
+       // DQ (12/16/2008): Need to process any associated CPP directives and comments
+          if (if_stmt != NULL)
+               unparseAttachedPreprocessingInfo(if_stmt, info, PreprocessingInfo::before);
         }
    }
 

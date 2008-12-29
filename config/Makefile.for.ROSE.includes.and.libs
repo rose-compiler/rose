@@ -45,9 +45,14 @@ if ROSE_USE_MYSQL_DATABASE
    ROSE_SIDEEFFECTS_LIBS                = -l$(ROSE_SIDEEFFECTS_LIB_NAME)
 
  # Location of boost should be set in configuration (not done yet)
-#   BOOST_INCLUDE                     = -idirafter /home/thuerey1/local/include
+ # Note: -idirafter puts the path last on the compiler command line, this is not what we want.
+ # BOOST_INCLUDE                     = -idirafter /home/thuerey1/local/include
+ # BOOST_INCLUDE                     = -idirafter $(BOOST_CPPFLAGS)
+ # BOOST_INCLUDE                     = -isystem $(ROSE_BOOST_INCLUDE_PATH)
 
-   ROSE_DATABASE_INCLUDE             = -I$(top_srcdir)/src/roseExtensions/databaseConnection $(BOOST_INCLUDE)
+ # DQ (12/22/2008): Since I am setting BOOST_INCLUDE above, I don't what this to interfer
+ # ROSE_DATABASE_INCLUDE             = -I$(top_srcdir)/src/roseExtensions/databaseConnection $(BOOST_INCLUDE)
+   ROSE_DATABASE_INCLUDE             = -I$(top_srcdir)/src/roseExtensions/databaseConnection
    ROSE_DATABASE_OBJS                = $(top_builddir)/src/roseExtensions/databaseConnection/*.o
    ROSE_DATABASE_LIB_NAME            = rosedatabase
 #  ROSE_DATABASE_LIB_FILE            = lib$(ROSE_DATABASE_LIB_NAME).so
@@ -58,6 +63,9 @@ if ROSE_USE_MYSQL_DATABASE
    MYSQL_DATABASE_LIBS    = $(MYSQL_LDFLAGS)
    MYSQL_DATABASE_INCLUDE = $(MYSQL_CFLAGS)
 endif
+
+# DQ (12/22/2008): Specification of Boost path for use with "-isystem" option (may be GNU specific).
+ROSE_BOOST_PREINCLUDE_PATH = $(ROSE_BOOST_INCLUDE_PATH)
 
 # SQLite is a simpler database to use than MySQL
 if ROSE_USE_SQLITE_DATABASE
@@ -133,7 +141,11 @@ if ROSE_USE_PHP
   ROSE_PHP_LIBS_WITH_PATH = $(php_path)/lib/libphc.so $(php_path)/lib/libphp5.so $(LIBLTDL)
 endif
 
+# Note use of "-isystem" option to have the boost specified on the configure
+# command-line be used instead of the OS version of boost that is sometimes
+# installed with Linux (it is always a version too old to be used with ROSE).
 ROSE_INCLUDES = \
+     -isystem $(ROSE_BOOST_PREINCLUDE_PATH) \
      -I$(top_srcdir)/src \
      -I$(top_builddir)/src/frontend/SageIII \
      -I$(top_srcdir)/src/frontend/SageIII \
@@ -223,7 +235,11 @@ ROSE_INCLUDES = \
      $(ROSE_DWARF_INCLUDES) \
      $(ROSE_WINE_INCLUDES) \
      $(VALGRIND_CFLAGS) \
-     $(BOOST_CPPFLAGS) $(SQLITE3_CFLAGS) -DBOOST_REGEX_MATCH_EXTRA
+     $(SQLITE3_CFLAGS) -DBOOST_REGEX_MATCH_EXTRA
+
+# DQ (12/22/2008): Move Boost directory to front and used "-isystem" option so
+# that and system why installation of boost does not interfer with the use of ROSE.
+# $(BOOST_CPPFLAGS)
 
 # DQ (10/28/2008): I think these should be included, I don't know why they 
 # were removed (used with Microsoft Windows tests, and Yices tests).
