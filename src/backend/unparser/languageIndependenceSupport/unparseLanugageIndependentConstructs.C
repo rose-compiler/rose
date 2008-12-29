@@ -132,8 +132,10 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
 #endif
         }
 
-  // printf ("statementInFile = %p = %s = %s = %s \n",stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str(),(statementInFile == true) ? "true" : "false");
-  // stmt->get_file_info()->display("debug why false");
+#if 0
+     printf ("statementInFile = %p = %s = %s = %s \n",stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str(),(statementInFile == true) ? "true" : "false");
+     stmt->get_file_info()->display("debug why false");
+#endif
 
 #if 0
   // Debugging support
@@ -345,21 +347,32 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
         }
   // ROSE_ASSERT(stmt->get_endOfConstruct() != NULL);
 
-     curprint ( string("\n/* Top of unparseStatement " ) + string(stmt->sage_class_name()) + " */\n ");
+     curprint ( string("\n/* Top of unparseStatement (UnparseLanguageIndependentConstructs)" ) + string(stmt->sage_class_name()) + " */\n ");
      ROSE_ASSERT(stmt->get_startOfConstruct() != NULL);
-     curprint ( string("/* startOfConstruct: file = " ) + stmt->get_startOfConstruct()->get_filenameString() 
-         + " raw filename = " + stmt->get_startOfConstruct()->get_raw_filename() 
-         + " raw line = " + stmt->get_startOfConstruct()->get_raw_line() 
-         + " raw column = " + stmt->get_startOfConstruct()->get_raw_col() 
+  // ROSE_ASSERT(stmt->getAttachedPreprocessingInfo() != NULL);
+     int numberOfComments = -1;
+     if (stmt->getAttachedPreprocessingInfo() != NULL)
+        numberOfComments = stmt->getAttachedPreprocessingInfo()->size();
+     curprint ( string("/* startOfConstruct: file = " ) + stmt->get_startOfConstruct()->get_filenameString()
+         + " raw filename = " + stmt->get_startOfConstruct()->get_raw_filename()
+         + " raw line = "     + StringUtility::numberToString(stmt->get_startOfConstruct()->get_raw_line())
+         + " raw column = "   + StringUtility::numberToString(stmt->get_startOfConstruct()->get_raw_col())
+         + " #comments = "    + StringUtility::numberToString(numberOfComments)
          + " */\n ");
+
      if (stmt->get_endOfConstruct() != NULL)
         {
           curprint ( string("/* endOfConstruct: file = " ) + stmt->get_endOfConstruct()->get_filenameString()
               + " raw filename = " + stmt->get_endOfConstruct()->get_raw_filename() 
-              + " raw line = " + stmt->get_endOfConstruct()->get_raw_line() 
-              + " raw column = " + stmt->get_endOfConstruct()->get_raw_col() 
+              + " raw line = "     + StringUtility::numberToString(stmt->get_endOfConstruct()->get_raw_line())
+              + " raw column = "   + StringUtility::numberToString(stmt->get_endOfConstruct()->get_raw_col())
               + " */\n ");
         }
+       else
+        {
+          curprint ( string("/* endOfConstruct == NULL */\n " ) );
+        }
+     
   // ROSE_ASSERT(stmt->get_endOfConstruct() != NULL);
 
      SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(stmt);
@@ -371,8 +384,8 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
              {
                curprint ( string("\n/* SgInitializedName = " ) + (*i)->get_name()  + " in file: " 
                    + (*i)->get_file_info()->get_raw_filename() + " at line: "
-                   + (*i)->get_file_info()->get_raw_line()     + " at column: "
-                   + (*i)->get_file_info()->get_raw_col()      + " */\n ");
+                   + StringUtility::numberToString((*i)->get_file_info()->get_raw_line()) + " at column: "
+                   + StringUtility::numberToString((*i)->get_file_info()->get_raw_col())  + " */\n ");
                i++;
              }
         }
@@ -533,6 +546,25 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                case V_SgGlobal:            unparseGlobalStmt   (stmt, info); break;
                case V_SgFunctionTypeTable: unparseFuncTblStmt  (stmt, info); break;
                case V_SgNullStatement:     unparseNullStatement(stmt, info); break;
+
+            // DQ (11/29/2008): Added support for unparsing CPP directives now supported as IR nodes.
+               case V_SgIncludeDirectiveStatement: unparseIncludeDirectiveStatement (stmt, info); break;
+               case V_SgDefineDirectiveStatement:  unparseDefineDirectiveStatement  (stmt, info); break;
+               case V_SgUndefDirectiveStatement:   unparseUndefDirectiveStatement  (stmt, info); break;
+               case V_SgIfdefDirectiveStatement:   unparseIfdefDirectiveStatement  (stmt, info); break;
+               case V_SgIfndefDirectiveStatement:  unparseIfndefDirectiveStatement  (stmt, info); break;
+               case V_SgDeadIfDirectiveStatement:  unparseDeadIfDirectiveStatement  (stmt, info); break;
+               case V_SgIfDirectiveStatement:      unparseIfDirectiveStatement  (stmt, info); break;
+               case V_SgElseDirectiveStatement:    unparseElseDirectiveStatement  (stmt, info); break;
+               case V_SgElseifDirectiveStatement:  unparseElseifDirectiveStatement  (stmt, info); break;
+               case V_SgEndifDirectiveStatement:   unparseEndifDirectiveStatement  (stmt, info); break;
+               case V_SgLineDirectiveStatement:    unparseLineDirectiveStatement  (stmt, info); break;
+               case V_SgWarningDirectiveStatement: unparseWarningDirectiveStatement  (stmt, info); break;
+               case V_SgErrorDirectiveStatement:   unparseErrorDirectiveStatement  (stmt, info); break;
+               case V_SgEmptyDirectiveStatement:   unparseEmptyDirectiveStatement  (stmt, info); break;
+               case V_SgIdentDirectiveStatement:   unparseIdentDirectiveStatement  (stmt, info); break;
+               case V_SgIncludeNextDirectiveStatement: unparseIncludeNextDirectiveStatement  (stmt, info); break;
+               case V_SgLinemarkerDirectiveStatement:  unparseLinemarkerDirectiveStatement  (stmt, info); break;
 
                default:
                  // DQ (11/4/2008): This is a bug for the case of a SgFortranDo statement, unclear what to do about this.
@@ -1259,7 +1291,7 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                          curprint ( (*i)->getString());
                          break;
 
-                    case PreprocessingInfo::CpreprocessorCompilerGenerateLineDeclaration:
+                    case PreprocessingInfo::CpreprocessorCompilerGeneratedLinemarker:
                          curprint ( (*i)->getString());
                          break;
 
@@ -2557,4 +2589,162 @@ UnparseLanguageIndependentConstructs::unparseExprList(SgExpression* expr, SgUnpa
              }
         }
    }
+
+
+void 
+UnparseLanguageIndependentConstructs::unparseIncludeDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgIncludeDirectiveStatement* directive = isSgIncludeDirectiveStatement(stmt);
+     ROSE_ASSERT(directive != NULL);
+     curprint(directive->get_directiveString());
+  // unp->u_sage->curprint_newline();
+     unp->cur.insert_newline(1);
+   }
+
+void 
+UnparseLanguageIndependentConstructs::unparseDefineDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgDefineDirectiveStatement* directive = isSgDefineDirectiveStatement(stmt);
+     ROSE_ASSERT(directive != NULL);
+     curprint(directive->get_directiveString());
+  // unp->u_sage->curprint_newline();
+     unp->cur.insert_newline(1);
+   }
+
+void 
+UnparseLanguageIndependentConstructs::unparseUndefDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgUndefDirectiveStatement* directive = isSgUndefDirectiveStatement(stmt);
+     ROSE_ASSERT(directive != NULL);
+     curprint(directive->get_directiveString());
+     unp->u_sage->curprint_newline();
+   }
+
+void 
+UnparseLanguageIndependentConstructs::unparseIfdefDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgIfdefDirectiveStatement* directive = isSgIfdefDirectiveStatement(stmt);
+     ROSE_ASSERT(directive != NULL);
+     curprint(directive->get_directiveString());
+     unp->u_sage->curprint_newline();
+   }
+
+void 
+UnparseLanguageIndependentConstructs::unparseIfndefDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgIfndefDirectiveStatement* directive = isSgIfndefDirectiveStatement(stmt);
+     ROSE_ASSERT(directive != NULL);
+     curprint(directive->get_directiveString());
+     unp->u_sage->curprint_newline();
+   }
+
+void 
+UnparseLanguageIndependentConstructs::unparseDeadIfDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgDeadIfDirectiveStatement* directive = isSgDeadIfDirectiveStatement(stmt);
+     ROSE_ASSERT(directive != NULL);
+     curprint(directive->get_directiveString());
+     unp->u_sage->curprint_newline();
+   }
+
+void 
+UnparseLanguageIndependentConstructs::unparseIfDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgIfDirectiveStatement* directive = isSgIfDirectiveStatement(stmt);
+     ROSE_ASSERT(directive != NULL);
+     curprint(directive->get_directiveString());
+     unp->u_sage->curprint_newline();
+   }
+
+void 
+UnparseLanguageIndependentConstructs::unparseElseDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgElseDirectiveStatement* directive = isSgElseDirectiveStatement(stmt);
+     ROSE_ASSERT(directive != NULL);
+     curprint(directive->get_directiveString());
+     unp->u_sage->curprint_newline();
+   }
+
+void 
+UnparseLanguageIndependentConstructs::unparseElseifDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgElseifDirectiveStatement* directive = isSgElseifDirectiveStatement(stmt);
+     ROSE_ASSERT(directive != NULL);
+     curprint(directive->get_directiveString());
+     unp->u_sage->curprint_newline();
+   }
+
+void 
+UnparseLanguageIndependentConstructs::unparseEndifDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgEndifDirectiveStatement* directive = isSgEndifDirectiveStatement(stmt);
+     ROSE_ASSERT(directive != NULL);
+     curprint(directive->get_directiveString());
+     unp->u_sage->curprint_newline();
+   }
+
+void 
+UnparseLanguageIndependentConstructs::unparseLineDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgLineDirectiveStatement* directive = isSgLineDirectiveStatement(stmt);
+     ROSE_ASSERT(directive != NULL);
+     curprint(directive->get_directiveString());
+     unp->u_sage->curprint_newline();
+   }
+
+void 
+UnparseLanguageIndependentConstructs::unparseWarningDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgWarningDirectiveStatement* directive = isSgWarningDirectiveStatement(stmt);
+     ROSE_ASSERT(directive != NULL);
+     curprint(directive->get_directiveString());
+     unp->u_sage->curprint_newline();
+   }
+
+void 
+UnparseLanguageIndependentConstructs::unparseErrorDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgErrorDirectiveStatement* directive = isSgErrorDirectiveStatement(stmt);
+     ROSE_ASSERT(directive != NULL);
+     curprint(directive->get_directiveString());
+     unp->u_sage->curprint_newline();
+   }
+
+void 
+UnparseLanguageIndependentConstructs::unparseEmptyDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgEmptyDirectiveStatement* directive = isSgEmptyDirectiveStatement(stmt);
+     ROSE_ASSERT(directive != NULL);
+     curprint(directive->get_directiveString());
+     unp->u_sage->curprint_newline();
+   }
+
+void 
+UnparseLanguageIndependentConstructs::unparseIdentDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgIdentDirectiveStatement* directive = isSgIdentDirectiveStatement(stmt);
+     ROSE_ASSERT(directive != NULL);
+     curprint(directive->get_directiveString());
+     unp->u_sage->curprint_newline();
+   }
+
+void 
+UnparseLanguageIndependentConstructs::unparseIncludeNextDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgIncludeNextDirectiveStatement* directive = isSgIncludeNextDirectiveStatement(stmt);
+     ROSE_ASSERT(directive != NULL);
+     curprint(directive->get_directiveString());
+     unp->u_sage->curprint_newline();
+   }
+
+void 
+UnparseLanguageIndependentConstructs::unparseLinemarkerDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgLinemarkerDirectiveStatement* directive = isSgLinemarkerDirectiveStatement(stmt);
+     ROSE_ASSERT(directive != NULL);
+     curprint(directive->get_directiveString());
+     unp->u_sage->curprint_newline();
+   }
+
+
 

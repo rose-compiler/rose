@@ -133,7 +133,6 @@ class ChainableTypeLayoutGenerator {
 //! Layout generator for i386 ABI-like struct layout
 // Handles structs and unions only
 // Does not handle C++ stuff (inheritance, virtual functions) for now
-// No handling of arrays either
 class NonpackedTypeLayoutGenerator: public ChainableTypeLayoutGenerator {
   public:
   NonpackedTypeLayoutGenerator(ChainableTypeLayoutGenerator* next)

@@ -282,6 +282,25 @@ class UnparseLanguageIndependentConstructs
 //        virtual void unparseTemplateDeclStmt (SgStatement* stmt, SgUnparse_Info& info);
 
           virtual void unparseNullStatement    (SgStatement* stmt, SgUnparse_Info& info);
+
+          virtual void unparseIncludeDirectiveStatement     (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseDefineDirectiveStatement      (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseUndefDirectiveStatement       (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseIfdefDirectiveStatement       (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseIfndefDirectiveStatement      (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseDeadIfDirectiveStatement      (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseIfDirectiveStatement          (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseElseDirectiveStatement        (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseElseifDirectiveStatement      (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseEndifDirectiveStatement       (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseLineDirectiveStatement        (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseWarningDirectiveStatement     (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseErrorDirectiveStatement       (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseEmptyDirectiveStatement       (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseIdentDirectiveStatement       (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseIncludeNextDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseLinemarkerDirectiveStatement  (SgStatement* stmt, SgUnparse_Info& info);
+
 #if 0
        // DQ (7/21/2006): Added support for GNU statement expression extension.
           virtual void unparseStatementExpression (SgExpression* expr, SgUnparse_Info& info);

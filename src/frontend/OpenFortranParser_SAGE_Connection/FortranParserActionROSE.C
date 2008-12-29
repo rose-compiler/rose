@@ -7297,7 +7297,7 @@ void c_action_level_1_expr(Token_t * definedUnaryOp)
 
      if (definedUnaryOp != NULL)
         {
-#if 1
+#if 0
        // Output debugging information about saved state (stack) information.
           outputState("At TOP of R702 c_action_level_1_expr()");
 #endif
@@ -7315,7 +7315,7 @@ void c_action_level_1_expr(Token_t * definedUnaryOp)
        // ROSE_ASSERT(false);
         }
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R702 c_action_level_1_expr()");
 #endif
@@ -7341,7 +7341,7 @@ void c_action_defined_unary_op(Token_t * definedOp)
 
      if (definedOp != NULL)
         {
-#if 1
+#if 0
        // Output debugging information about saved state (stack) information.
           outputState("At TOP of R703 c_action_defined_unary_op()");
 #endif
@@ -7360,7 +7360,7 @@ void c_action_defined_unary_op(Token_t * definedOp)
         }
 #endif
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R703 c_action_defined_unary_op()");
 #endif
@@ -8044,7 +8044,7 @@ void c_action_level_5_expr(int numDefinedBinaryOps)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_level_5_expr(): numDefinedBinaryOps = %d \n",numDefinedBinaryOps);
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R717 c_action_level_5_expr()");
 #endif
@@ -8187,7 +8187,7 @@ void c_action_expr()
   // DQ (12/14/2007): This should have been set by now! See test2007_114.f03
   // build_implicit_program_statement_if_required();
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R722 c_action_expr()");
 #endif
@@ -13604,8 +13604,13 @@ void c_action_program_stmt(Token_t *label, Token_t *programKeyword, Token_t *id,
        else
         {
        // These will be marked as isSourcePositionUnavailableInFrontend = true and isOutputInCodeGeneration = true
-          setSourcePosition(programDeclaration->get_parameterList());
-          setSourcePosition(programDeclaration);
+       // setSourcePosition(programDeclaration->get_parameterList());
+       // setSourcePosition(programDeclaration);
+
+       // DQ (12/18/2008): These need to make marked with a valid file id (not NULL_FILE, internally),
+       // so that any attached comments and CPP directives will be properly attached.
+          setSourcePosition(programDeclaration->get_parameterList(),tokenList);
+          setSourcePosition(programDeclaration,tokenList);
 
        // programDeclaration->get_startOfConstruct()->display("In c_action_program_stmt()");
 

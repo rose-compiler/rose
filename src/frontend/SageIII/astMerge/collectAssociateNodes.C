@@ -1796,6 +1796,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
        // case V_SgFile:
           case V_SgSourceFile:
           case V_SgBinaryFile:
+          case V_SgUnknownFile:
           case V_SgSymbolTable:
           case V_SgFunctionTypeTable:
              {
@@ -1859,10 +1860,14 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           case V_SgIfDirectiveStatement:
           case V_SgElseDirectiveStatement:
           case V_SgElseifDirectiveStatement:
+          case V_SgEndifDirectiveStatement:
           case V_SgLineDirectiveStatement:
           case V_SgWarningDirectiveStatement:
           case V_SgErrorDirectiveStatement:
           case V_SgEmptyDirectiveStatement:
+          case V_SgIdentDirectiveStatement:
+          case V_SgIncludeNextDirectiveStatement:
+          case V_SgLinemarkerDirectiveStatement:
              {
                printf ("Handling a CPP directive in AST merge... node = %s \n",node->class_name().c_str());
                break;

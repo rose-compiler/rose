@@ -3890,6 +3890,10 @@ HEADER_APPLICATION_FILE_START
       //! Access function calling set_startOfConstruct(), provided to support older interface.
           void set_file_info( Sg_File_Info* fileinfo );
 
+       // DQ (12/23/2008): This sets up the Sg_File_Info in the SgFile and initializes it with the correct name etc.
+       // This function is called at several locations to build SgSourceFiles of different types (languages).
+          void initializeSourcePosition( const std::string & sourceFilename );
+
 #if 0
 // DQ (9/5/2008): Moved to SgSourceFile
 #if ALT_FIXUP_COPY
@@ -3926,8 +3930,15 @@ HEADER_APPLICATION_SOURCE_FILE_START
           int build_PHP_AST();
           virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project);
 
+       // DQ (12/19/2008): Added support for translation source position information using CPP linemarkers.
+          void processCppLinemarkers();
+
        // DQ (9/5/2008): Support for older name of the SgGlobal in SgSourceFile
        // SgGlobal* get_root() const;
+
+       // DQ (12/23/2008): This sets up the Sg_File_Info in the SgFile and initializes it with the correct name etc.
+       // This should be the only place where the SgGlobal (global scope object) is built.
+          void initializeGlobalScope();
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
@@ -9571,6 +9582,9 @@ SgFile::initialization()
   // enforce that the filename is always an absolute path (starting with "/").
   // Sg_File_Info* fileInfo = new Sg_File_Info("SgFile::SgFile",0,0);
   // Sg_File_Info* fileInfo = new Sg_File_Info("",0,0);
+
+#if 0
+  // DQ (12/23/2008): Build this later when we have a valid filename.
      Sg_File_Info* fileInfo = new Sg_File_Info("",1,1);
      ROSE_ASSERT(fileInfo != NULL);
 
@@ -9579,6 +9593,7 @@ SgFile::initialization()
      fileInfo->set_parent(this);
      ROSE_ASSERT(get_startOfConstruct() != NULL);
      ROSE_ASSERT(get_file_info() != NULL);
+#endif
 
   // DQ (9/4/2008): This is now part of the SgSourceFile
   // ROSE_ASSERT (p_root == NULL);
@@ -9586,7 +9601,9 @@ SgFile::initialization()
   // DQ (9/2/2008): This is moved to the new SgBinaryFile (derived from SgFile)
   // ROSE_ASSERT (p_binaryFile == NULL);
 
-#if 1
+#if 0
+  // DQ (12/23/2008): Build this later when we have a valid filename.
+
   // DQ (9/5/2008): This part needs to be rewritten, this is temporary code!
      SgSourceFile* sourceFile = const_cast<SgSourceFile*>(isSgSourceFile(this));
      if (sourceFile != NULL)
@@ -9596,6 +9613,8 @@ SgFile::initialization()
        // Sg_File_Info* globalScopeFileInfo = new Sg_File_Info("SgGlobal::SgGlobal",0,0);
           Sg_File_Info* globalScopeFileInfo = new Sg_File_Info("",0,0);
           ROSE_ASSERT (globalScopeFileInfo != NULL);
+
+          printf ("@@@@@@@@ In SgFile::initialization(): Building SgGlobal (with empty filename) @@@@@@@@@ \n");
 
           sourceFile->set_globalScope( new SgGlobal( globalScopeFileInfo ) );
           ROSE_ASSERT (sourceFile->get_globalScope() != NULL);

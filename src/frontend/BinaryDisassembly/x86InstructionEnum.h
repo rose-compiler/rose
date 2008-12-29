@@ -417,6 +417,10 @@ enum X86InstructionKind {
   x86_prefetcht2,
   x86_prefetchw,
   x86_psadbw,
+
+// DQ (12/4/2008): Added entry, is this an automatically generated file?
+  x86_pshufb,
+
   x86_pshufd,
   x86_pshufhw,
   x86_pshuflw,

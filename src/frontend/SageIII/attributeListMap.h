@@ -4,8 +4,8 @@
 #define DEBUG_WAVE_ROSE_CONNECTION 1
 #define DEBUG_USE_ROSE_BOOST_WAVE_SUPPORT 1
 
-
-#include <map>
+// DQ (11/30/2008): This will be defined within the header file system for ROSE.
+// #include <map>
 // Header files needed for ROSE
 
 #include "rose.h"
@@ -19,9 +19,8 @@
 #include <boost/wave/cpplexer/cpp_lex_token.hpp>    // token class
 #include <boost/wave/cpplexer/cpp_lex_iterator.hpp> // lexer class
 
-class AttributeListMap;
-
-
+// DQ: I don't think this forward declaration is required...
+// class AttributeListMap;
 
 ////////////////////////////////////////////////////////////////////////
 // Function queryFloatDoubleValExp()  finds all nodes with type 
@@ -33,8 +32,6 @@ queryFloatDoubleValExp (SgNode * astNode);
 
 //class advanced_preprocessing_hooks;
 //#include "advanced_preprocessing_hooks.hpp"
-
-// using namespace std;
 
 class AttributeListMap {
 

@@ -4,6 +4,8 @@
 #include <fstream>
 #include "generatedCOpts.h"
 
+// This file implements general optimizations for the generate C code.
+
 using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
@@ -374,6 +376,7 @@ bool simplifyExpression(SgExpression*& expr, bool& changed) {
   return false;
 }
 
+// This is a fixed point iteration.
 void simplifyAllExpressions(SgNode* top) {
   while (true) {
     int changeCount = 0;
@@ -491,6 +494,8 @@ bool isSimple(SgExpression* e) {
 #endif
 }
 
+// Progate variable definitions to their uses (propates expressions that are in 
+// variable definitions to their uses). This serves to eliminate variables.
 void plugInAllConstVarDefsForBlock(SgBasicBlock* bb, map<SgInitializedName*, SgExpression*>& defs, const CTranslationPolicy& conv) {
   for (size_t j = 0; j < bb->get_statements().size(); ++j) {
     SgStatement* s = bb->get_statements()[j];

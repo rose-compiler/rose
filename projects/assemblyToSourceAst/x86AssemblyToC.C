@@ -17,6 +17,8 @@ static SgBasicBlock* bb; // Global location to append new statements
 
 static size_t WordWithExpression_nameCounter = 0;
 
+// This builds variable declarations and variable references for each symbolic value
+// These are returnd and taken as arguments by the primative functions.
 template <size_t Len>
 struct WordWithExpression {
   private:
@@ -33,6 +35,7 @@ struct WordWithExpression {
   private: BOOST_STATIC_ASSERT (Len <= 64); // FIXME handle longer operations
 };
 
+// Operations build IR nodes to represent the expressions.
 struct X86CTranslationPolicy: public CTranslationPolicy {
   X86CTranslationPolicy(SgSourceFile* sourceFile, SgAsmFile* asmFile);
 
@@ -308,6 +311,7 @@ struct X86CTranslationPolicy: public CTranslationPolicy {
     appendStatement(buildIfStmt(buildNotEqualOp(cond.expr(), buildIntVal(0)), buildExprStatement(buildFunctionCallExp(mwSym, buildExprListExp(address.expr(), data.expr()))), NULL), bb);
   }
 
+// Thee might exist so that static analysis can be used to generate more about the indirect jump.
   WordWithExpression<32> filterIndirectJumpTarget(const WordWithExpression<32>& addr) {
     return addr;
   }

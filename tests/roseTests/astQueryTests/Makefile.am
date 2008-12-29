@@ -42,11 +42,14 @@ TEST_TRANSLATOR_3 = ./testQuery3 $(ROSE_FLAGS)
 TESTCODE_INCLUDES =
 
 # DQ (7/12/2004): Modified to run with make -j4 options
+# DQ (12/24/2008): Removed use of $(INCLUDES) since this now causes
+# the -isystem option to be passed to ROSE which does not understand 
+# it (processed include directory as a file).
 $(TEST_Objects): $(TESTCODES) testQuery
 	@echo "Compiling test code using $(TEST_TRANSLATOR) ..."
-	$(TEST_TRANSLATOR_1) $(INCLUDES) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
-	$(TEST_TRANSLATOR_2) $(INCLUDES) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
-	$(TEST_TRANSLATOR_3) $(INCLUDES) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
+	$(TEST_TRANSLATOR_1) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
+	$(TEST_TRANSLATOR_2) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
+	$(TEST_TRANSLATOR_3) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
 	@echo "Running resulting executable ..."
 #	./$(@:.o=)
 

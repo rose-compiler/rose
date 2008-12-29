@@ -1,13 +1,28 @@
 #ifndef _ATTACH_ALL_INFO_H_
 #define _ATTACH_ALL_INFO_H_
 
-struct wrap_data_used_by_AttachPreprocessingInfoTreeTrav_t {
-  SgLocatedNode *previousLocNodePtr;
-  ROSEAttributesList *currentListOfAttributes;
-  int sizeOfCurrentListOfAttributes;
-
-  wrap_data_used_by_AttachPreprocessingInfoTreeTrav_t(SgLocatedNode* node=NULL, ROSEAttributesList * preprocInfo=NULL, int len=0);
-};
+#if 0
+struct wrap_data_used_by_AttachPreprocessingInfoTreeTrav_t
+   {
+     SgLocatedNode *previousLocNodePtr;
+#if 0
+  // DQ (11/30/2008): Moved currentListOfAttributes to inherited attribute
+     ROSEAttributesList *currentListOfAttributes;
+     int sizeOfCurrentListOfAttributes;
+#endif
+  // wrap_data_used_by_AttachPreprocessingInfoTreeTrav_t(SgLocatedNode* node=NULL, ROSEAttributesList* preprocInfo=NULL, int len=0);
+     wrap_data_used_by_AttachPreprocessingInfoTreeTrav_t(SgLocatedNode* node=NULL);
+   };
+#else
+// DQ (12/3/2008): This is the data that we have to save (even though the currentListOfAttributes has been moved to the inherited attribute)
+struct wrap_data_used_by_AttachPreprocessingInfoTreeTrav_t
+   {
+     SgLocatedNode *previousLocNodePtr;
+     ROSEAttributesList *currentListOfAttributes;
+     int sizeOfCurrentListOfAttributes;
+     wrap_data_used_by_AttachPreprocessingInfoTreeTrav_t(SgLocatedNode* node=NULL, ROSEAttributesList* preprocInfo=NULL, int len=0);
+   };
+#endif
 
 class AttachAllPreprocessingInfoTreeTrav : public AttachPreprocessingInfoTreeTrav
    {

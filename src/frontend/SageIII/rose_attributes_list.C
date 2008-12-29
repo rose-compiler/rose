@@ -10,9 +10,12 @@ token_container wave_tokenStream;
 ///////////////////////////////////////////////////////////////////////////////
 //  Include the token class from Wave
 ///////////////////////////////////////////////////////////////////////////////
+
+
 //  Include Wave itself
 #include <boost/wave.hpp>
-//#include <boost/wave/grammars/cpp_xpression_grammar.hpp> //as_string
+
+// #include <boost/wave/grammars/cpp_xpression_grammar.hpp> //as_string
 
 #endif 
 
@@ -643,10 +646,9 @@ PreprocessingInfo::directiveTypeName ( const DirectiveType & directive )
              break;
 
        // DQ (11/17/2008): Added support for things like:  # 1 "<command line>"
-          case CpreprocessorCompilerGenerateLineDeclaration:
-             returnString = "CpreprocessorCompilerGenerateLineDeclaration";
+          case CpreprocessorCompilerGeneratedLinemarker:
+             returnString = "CpreprocessorCompilerGeneratedLinemarker";
              break;
-
 
           default:
              returnString = "ERROR DEFAULT REACHED";
@@ -799,7 +801,7 @@ PreprocessingInfo::get_file_info() const
      return file_info;
    }
 
-  void
+void
 PreprocessingInfo::set_file_info( Sg_File_Info* info )
    {
      ROSE_ASSERT(this != NULL);
@@ -808,7 +810,43 @@ PreprocessingInfo::set_file_info( Sg_File_Info* info )
      ROSE_ASSERT(file_info != NULL);
    }
 
+// DQ (11/28/2008): Support for CPP generated linemarkers
+int
+PreprocessingInfo::get_lineNumberForCompilerGeneratedLinemarker()
+   {
+     return lineNumberForCompilerGeneratedLinemarker;
+   }
 
+std::string
+PreprocessingInfo::get_filenameForCompilerGeneratedLinemarker()
+   {
+     return filenameForCompilerGeneratedLinemarker;
+   }
+
+std::string
+PreprocessingInfo::get_optionalflagsForCompilerGeneratedLinemarker()
+   {
+     return optionalflagsForCompilerGeneratedLinemarker;
+   }
+
+// DQ (11/28/2008): Support for CPP generated linemarkers
+void
+PreprocessingInfo::set_lineNumberForCompilerGeneratedLinemarker( int x ) 
+   {
+     lineNumberForCompilerGeneratedLinemarker = x;
+   }
+
+void
+PreprocessingInfo::set_filenameForCompilerGeneratedLinemarker( std::string x )
+   {
+     filenameForCompilerGeneratedLinemarker = x;
+   }
+
+void
+PreprocessingInfo::set_optionalflagsForCompilerGeneratedLinemarker( std::string x )
+   {
+     optionalflagsForCompilerGeneratedLinemarker = x;
+   }
 
 
 // *********************************************
@@ -1049,8 +1087,14 @@ ROSEAttributesList::display ( const string & label )
      for (j = attributeList.begin(); j != attributeList.end(); j++)
         {
        // printf("  %s\n",( (*j)->stringPointer );
-          ROSE_ASSERT ( (*j) != NULL );
-          printf("LineNumber: %5d: %s\n",(*j)->getLineNumber(),(*j)->getString().c_str());
+
+       // DQ (12/19/2008): Modified to report NULL pointers
+       // ROSE_ASSERT ( (*j) != NULL );
+       // printf("LineNumber: %5d: %s\n",(*j)->getLineNumber(),(*j)->getString().c_str());
+          if ( *j != NULL )
+               printf("LineNumber: %5d: %s\n",(*j)->getLineNumber(),(*j)->getString().c_str());
+            else
+               printf ("Warning: PreprocessingInfo *j == NULL \n");
         }
    }
 
@@ -1293,6 +1337,7 @@ ROSEAttributesList::isFortran77Comment( const string & line )
      return isComment;
    }
 
+#if 0
 void
 ROSEAttributesList::collectFixedFormatPreprocessorDirectivesAndCommentsForAST( const string & filename )
    {
@@ -1305,6 +1350,8 @@ ROSEAttributesList::collectFixedFormatPreprocessorDirectivesAndCommentsForAST( c
 
      ROSE_ASSERT(this != NULL);
 
+#error "DEAD CODE"
+
      printf ("This is an old version of the function to collect CPP directives and comments \n");
      ROSE_ASSERT(false);
 
@@ -1314,6 +1361,8 @@ ROSEAttributesList::collectFixedFormatPreprocessorDirectivesAndCommentsForAST( c
      string line;
 
   // printf ("In ROSEAttributesList::collectFixedFormatPreprocessorDirectivesAndCommentsForAST: Opening file %s for reading comments and CPP directives \n",filename.c_str());
+
+#error "DEAD CODE"
 
      ifstream fixedFormatFile (filename.c_str());
      if (fixedFormatFile.is_open())
@@ -1334,6 +1383,8 @@ ROSEAttributesList::collectFixedFormatPreprocessorDirectivesAndCommentsForAST( c
                  // PreprocessingInfo(DirectiveType, const std::string & inputString, const std::string & filenameString, 
                  //      int line_no , int col_no, int nol, RelativePositionType relPos, bool copiedFlag, bool unparsedFlag);
 
+#error "DEAD CODE"
+
                     int numberOfLines = 1;
                  // bool copiedFlag   = false;
                  // bool unparsedFlag = false;
@@ -1348,6 +1399,8 @@ ROSEAttributesList::collectFixedFormatPreprocessorDirectivesAndCommentsForAST( c
                lineCounter++;
              }
 
+#error "DEAD CODE"
+
           fixedFormatFile.close();
         }
        else
@@ -1356,12 +1409,12 @@ ROSEAttributesList::collectFixedFormatPreprocessorDirectivesAndCommentsForAST( c
           ROSE_ASSERT(false);
         }
    }
-
+#endif
 
 #define DEBUG_CPP_DIRECTIVE_COLLECTION 0
 
 bool
-ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::DirectiveType & cppDeclarationKind )
+ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::DirectiveType & cppDeclarationKind, std::string & restOfTheLine )
    {
   // This function tests if a string is a CPP directive (the first line of a CPP directive).
 
@@ -1414,7 +1467,10 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
        // firstNonBlankCharacter = ' ';
        // printf ("firstNonBlankCharacter = %c \n",firstNonBlankCharacter);
           bool spaceAfterHash = false;
-          while (i < lineLength && firstNonBlankCharacter == ' ' || firstNonBlankCharacter == '#')
+
+       // DQ (12/16/2008): Added support fo tabs between "#" and the directive identifier.
+       // Note that Fortran modes of CPP should not allow any whitespace here (at least for gfortran).
+          while (i < lineLength && (firstNonBlankCharacter == ' ' || firstNonBlankCharacter == '\t') || firstNonBlankCharacter == '#')
              {
 #if DEBUG_CPP_DIRECTIVE_COLLECTION
                printf ("Looping over # or white space between # and CPP directive i = %d \n",i);
@@ -1463,6 +1519,8 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
           long integerValue = -1;
           if (spaceAfterHash == true)
              {
+            // This is likely going to be a number but test2005_92.C demonstrates a case where this is not true.
+
             // printf ("firstNonBlankCharacter = %c \n",firstNonBlankCharacter);
             // ROSE_ASSERT(firstNonBlankCharacter == '\"');
 #if 0
@@ -1472,13 +1530,56 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
             // The modern way to handle conversion of string to integer value is to 
             // use strtol(), and not atoi().  But atoi() is simpler.
                const char* str = cppIndentifier.c_str();
+               int size = strlen(str)+1;
+               char* buffer = new char[size];
+
+            // Make a copy of the pointer so that we can always delete the memory that was allocated.
+               char* original_buffer = buffer;
+
+            // We should initialize "buffer" to all Nul chars (this includes a null terminator and the end of the string).
+               for (int j=0; j < size; j++)
+                    buffer[j] = '\0';
 
             // strtol will put the string into buffer if str is not a number and 2nd parameter is not NULL.
-               integerValue = strtol(str,NULL,10);
+               errno = 0;
+            // integerValue = strtol(str,NULL,10);
+               integerValue = strtol(str,&buffer,10);
 
+            // Setting and checking errno does not appear to work for the detection of errors in the use of strtol
+               if (errno != 0)
+                  {
+                    printf ("Using errno: This was not a valid string (errno = %d returned) \n",errno);
+                  }
+
+               bool isANumber = true;
+               if (strcmp(str,buffer) == 0)
+                  {
+                    printf ("Using strcmp(): This was not a valid string (buffer = %s returned) \n",buffer);
+                    isANumber = false;
+                  }
+            // printf ("cppIndentifier = %s integerValue = %ld \n",cppIndentifier.c_str(),integerValue);
+#if 1
+            // Avoid memory leak!
+               delete original_buffer;
+               original_buffer = NULL;
+               buffer = NULL;
+#endif
             // This value will be a constant value used to identify a numerical value.
             // This value should be a macro defined in some centralized location.
-               cppIndentifier = "numeric value";
+               if (isANumber == true)
+                  {
+                    cppIndentifier = "numeric value";
+
+                 // Allow the line number to be a part of the restOfTheLine so it can be processed separately.
+                 // printf ("cppIdentifierLength = %d \n",cppIdentifierLength);
+                 // printf ("Before being reset: positionOfLastCharacterOfCppIdentifier = %d \n",positionOfLastCharacterOfCppIdentifier);
+                    positionOfLastCharacterOfCppIdentifier -= cppIdentifierLength;
+                 // printf ("After being reset: positionOfLastCharacterOfCppIdentifier = %d \n",positionOfLastCharacterOfCppIdentifier);
+                  }
+                 else
+                  {
+                 // printf ("This is not a number: cppIndentifier = %s \n",cppIndentifier.c_str());
+                  }
 #endif
              }
 
@@ -1556,7 +1657,7 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
             // DQ (11/17/2008): This handles the case CPP declarations
             // such as: "# 1 "test2008_05.F90"", "# 1 "<built-in>"", 
             // "# 1 "<command line>"" "# 1 "test2008_05.F90""
-               cppDeclarationKind = PreprocessingInfo::CpreprocessorCompilerGenerateLineDeclaration;
+               cppDeclarationKind = PreprocessingInfo::CpreprocessorCompilerGeneratedLinemarker;
              }
             else
              {
@@ -1567,11 +1668,12 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
                cppDeclarationKind = PreprocessingInfo::CpreprocessorUnknownDeclaration;
              }
 
-#if 0
-       // Debug output...
        // Collect the rest of the line: (line length - next character position) + 1.
           int restOfTheLineLength = (lineLength - (positionOfLastCharacterOfCppIdentifier+1)) + 1;
-          string restOfTheLine = line.substr(positionOfLastCharacterOfCppIdentifier+1,restOfTheLineLength);
+          restOfTheLine = line.substr(positionOfLastCharacterOfCppIdentifier+1,restOfTheLineLength);
+
+#if 0
+       // Debug output...
           printf ("cppDeclarationKind = %s restOfTheLine = %s \n",PreprocessingInfo::directiveTypeName(cppDeclarationKind).c_str(),restOfTheLine.c_str());
 #endif
 
@@ -1611,7 +1713,9 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
   // Open file for reading line by line!
      string line;
 
-  // printf ("In ROSEAttributesList::collectFreeFormatPreprocessorDirectivesAndCommentsForAST: Opening file %s for reading comments and CPP directives \n",filename.c_str());
+#if DEBUG_CPP_DIRECTIVE_COLLECTION
+     printf ("In ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST: Opening file %s for reading comments and CPP directives \n",filename.c_str());
+#endif
 
      ifstream targetFile (filename.c_str());
      if (targetFile.is_open())
@@ -1631,248 +1735,53 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
             // Debugging output
                cout << "collect CPP directives: " << line << endl;
 #endif
-
-#if 1
                int numberOfLines = 1;
 
+               string restOfTheLine;
                PreprocessingInfo::DirectiveType cppDeclarationKind = PreprocessingInfo::CpreprocessorUnknownDeclaration;
-               bool cppDirective = isCppDirective(line,cppDeclarationKind);
+               bool cppDirective = isCppDirective(line,cppDeclarationKind,restOfTheLine);
 
 #if DEBUG_CPP_DIRECTIVE_COLLECTION
             // printf ("cppDirective = %s \n",cppDirective ? "true" : "false");
                printf ("cppDirective = %s cppDeclarationKind = %s \n",cppDirective ? "true" : "false",PreprocessingInfo::directiveTypeName(cppDeclarationKind).c_str());
 #endif
-#else
-               bool isCppDirective = false;
 
-               char firstCharacter = line[0];
-               if (firstCharacter != ' '  /* SPACE */ && firstCharacter != '\n' /* CR  */ && 
-                   firstCharacter != '\0' /* NUL   */ && firstCharacter != '\t' /* TAB */)
+               if (cppDirective == true)
                   {
-                 // This has something in the first colum, it might be a CPP directive!
-
-                 // Error checking on first character
 #if 0
-                    if (!(firstCharacter >= ' ') || !(firstCharacter < 126))
+                    printf ("line.length() = %zu line = %s \n",line.length(),line.c_str());
+                    printf ("line[line.length()-1] = %c \n",line[line.length()-1]);
+#endif
+                    if (line[line.length()-1] == '\\')
                        {
-                         printf ("firstCharacter = %d line.length() = %zu \n",(int)firstCharacter,line.length());
-                       }
-#endif
-#if DEBUG_CPP_DIRECTIVE_COLLECTION
-                    printf ("This might be a CPP directive (look for #)! lineCounter = %d \n",lineCounter);
-#endif
-                  }
-
-               char firstNonBlankCharacter = line[0];
-               size_t i = 0;
-               size_t lineLength = line.length();
-               while (i < lineLength && firstNonBlankCharacter == ' ')
-                  {
-                    firstNonBlankCharacter = line[i];
-                    i++;
-                  }
-
-             // The character "!" starts a comment if only blanks are in the leading white space.
-               int positionofHashCharacter = -1;
-               if (firstNonBlankCharacter == '#')
-                  {
-#if DEBUG_CPP_DIRECTIVE_COLLECTION
-                    printf ("This is a CPP directive: i = %d lineCounter = %d line = %s length = %zu \n",i,lineCounter,line.c_str(),line.length());
-#endif
-                    isCppDirective = true;
-                    positionofHashCharacter = i;
-                  }
-
-#if DEBUG_CPP_DIRECTIVE_COLLECTION
-               printf ("i = %d positionofHashCharacter = %d \n",i,positionofHashCharacter);
-#endif
-               bool hasLineContinuation = false;
-               char lastCharacter = line[lineLength-1];
-               if (lastCharacter == '\\')
-                  {
-                    hasLineContinuation = true;
-                  }
-
-#if DEBUG_CPP_DIRECTIVE_COLLECTION
-               printf ("hasLineContinuation = %s \n",hasLineContinuation ? "true" : "false");
-#endif
-
-               PreprocessingInfo::DirectiveType cppDeclarationKind = PreprocessingInfo::CpreprocessorUnknownDeclaration;
-
-               int numberOfLines = 1;
-
-               if (isCppDirective == true)
-                  {
-                 // PreprocessingInfo(DirectiveType, const std::string & inputString, const std::string & filenameString, 
-                 //      int line_no , int col_no, int nol, RelativePositionType relPos, bool copiedFlag, bool unparsedFlag);
-
-                 // firstNonBlankCharacter = ' ';
-                 // printf ("firstNonBlankCharacter = %c \n",firstNonBlankCharacter);
-                    bool spaceAfterHash = false;
-                    while (i < lineLength && firstNonBlankCharacter == ' ' || firstNonBlankCharacter == '#')
-                       {
-#if DEBUG_CPP_DIRECTIVE_COLLECTION
-                         printf ("Looping over # or white space between # and CPP directive i = %d \n",i);
-#endif
-                         firstNonBlankCharacter = line[i];
-                         if (spaceAfterHash == false)
-                              spaceAfterHash = (firstNonBlankCharacter == ' ');
-
-                         i++;
-                       }
-
-                    int positionOfFirstCharacterOfCppIdentifier = i-1;
-
-#if DEBUG_CPP_DIRECTIVE_COLLECTION
-                    printf ("positionOfFirstCharacterOfCppIdentifier = %d spaceAfterHash = %s \n",positionOfFirstCharacterOfCppIdentifier,spaceAfterHash ? "true" : "false");
-#endif
-                 // Need to back up one!
-                    i = positionOfFirstCharacterOfCppIdentifier;
-
-                    char nonBlankCharacter = line[positionOfFirstCharacterOfCppIdentifier];
-                    int positionOfLastCharacterOfCppIdentifier = positionOfFirstCharacterOfCppIdentifier;
-                 // while (i < lineLength && isLegalCharacterForCppIndentifier(nonBlankCharacter) == true))
-                    while (i <= lineLength && ( ((nonBlankCharacter >= 'a' && nonBlankCharacter <= 'z') == true) || (nonBlankCharacter >= '0' && nonBlankCharacter <= '9') == true))
-                       {
-                         nonBlankCharacter = line[i];
-#if DEBUG_CPP_DIRECTIVE_COLLECTION
-                         printf ("In loop: i = %d lineLength = %d nonBlankCharacter = %c \n",i,lineLength,isprint(nonBlankCharacter) ? nonBlankCharacter : '.');
-#endif
-                         i++;
-                       }
-
-#if DEBUG_CPP_DIRECTIVE_COLLECTION
-                    printf ("i = %d \n",i);
-#endif
-
-                 // Need to backup two (unless this is the end of the line (as in "#endif")
-                    positionOfLastCharacterOfCppIdentifier = i-2;
-
-#if DEBUG_CPP_DIRECTIVE_COLLECTION
-                    printf ("positionOfLastCharacterOfCppIdentifier = %d \n",positionOfLastCharacterOfCppIdentifier);
-#endif
-                    int cppIdentifierLength = (positionOfLastCharacterOfCppIdentifier - positionOfFirstCharacterOfCppIdentifier) + 1;
-                    string cppIndentifier = line.substr(positionOfFirstCharacterOfCppIdentifier,cppIdentifierLength);
-
-                 // Some names will convert to integer values
-                    long integerValue = -1;
-                    if (spaceAfterHash == true)
-                       {
-                      // printf ("firstNonBlankCharacter = %c \n",firstNonBlankCharacter);
-                      // ROSE_ASSERT(firstNonBlankCharacter == '\"');
 #if 0
-                      // The atoi() function is not supposed to be used any more.
-                         integerValue = atoi(cppIndentifier.c_str());
-#else
-                         const char* str = cppIndentifier.c_str();
-                      // strtol will put the string into buffer if str is not a number and 2nd parameter is not NULL.
-                         integerValue = strtol(str,NULL,10);
-                         cppIndentifier = "numeric value";
+                         printf ("Found line continuation: line = %s \n",line.c_str());
 #endif
+                         string nextLine;
+                         while (line[line.length()-1] == '\\')
+                            {
+                              getline(targetFile,nextLine);
+
+                           // Add linefeed to force nextLine onto the next line when output.
+                              line += "\n" + nextLine;
+                            }
                        }
 
-#if DEBUG_CPP_DIRECTIVE_COLLECTION
-                    printf ("cppIdentifierLength = %d cppIndentifier = %s integerValue = %ld \n",cppIdentifierLength,cppIndentifier.c_str(),integerValue);
-#endif
-
-                 // classify the CCP directive
-                    if (cppIndentifier == "include")
-                       {
-                         cppDeclarationKind = PreprocessingInfo::CpreprocessorIncludeDeclaration;
-                       }
-                      else if (cppIndentifier == "includenext")
-                       {
-                         cppDeclarationKind = PreprocessingInfo::CpreprocessorIncludeNextDeclaration;
-                       }
-                      else if (cppIndentifier == "define")
-                       {
-                         cppDeclarationKind = PreprocessingInfo::CpreprocessorDefineDeclaration;
-                       }
-                      else if (cppIndentifier == "undef")
-                       {
-                         cppDeclarationKind = PreprocessingInfo::CpreprocessorUndefDeclaration;
-                       }
-                      else if (cppIndentifier == "ifdef")
-                       {
-                         cppDeclarationKind = PreprocessingInfo::CpreprocessorIfdefDeclaration;
-                       }
-                      else if (cppIndentifier == "ifndef")
-                       {
-                         cppDeclarationKind = PreprocessingInfo::CpreprocessorIfndefDeclaration;
-                       }
-                      else if (cppIndentifier == "if")
-                       {
-                         cppDeclarationKind = PreprocessingInfo::CpreprocessorIfDeclaration;
-                       }
-                      else if (cppIndentifier == "else")
-                       {
-                      // printf ("Setting cppIndentifier to CpreprocessorElseDeclaration \n");
-                         cppDeclarationKind = PreprocessingInfo::CpreprocessorElseDeclaration;
-                       }
-                      else if (cppIndentifier == "elif")
-                       {
-                         cppDeclarationKind = PreprocessingInfo::CpreprocessorElifDeclaration;
-                       }
-                      else if (cppIndentifier == "endif")
-                       {
-                         cppDeclarationKind = PreprocessingInfo::CpreprocessorEndifDeclaration;
-                       }
-                      else if (cppIndentifier == "line")
-                       {
-                         cppDeclarationKind = PreprocessingInfo::CpreprocessorLineDeclaration;
-                       }
-                      else if (cppIndentifier == "error")
-                       {
-                         cppDeclarationKind = PreprocessingInfo::CpreprocessorErrorDeclaration;
-                       }
-                      else if (cppIndentifier == "warning")
-                       {
-                         cppDeclarationKind = PreprocessingInfo::CpreprocessorWarningDeclaration;
-                       }
-                      else if (cppIndentifier == "pragma")
-                       {
-                      // Ignore case of #pragma
-                         cppDeclarationKind = PreprocessingInfo::CpreprocessorUnknownDeclaration;
-                       }
-                      else if (cppIndentifier == "ident")
-                       {
-                      // Ignore case of #pragma
-                         cppDeclarationKind = PreprocessingInfo::CpreprocessorIdentDeclaration;
-                       }
-                      else if (cppIndentifier == "numeric value")
-                       {
-                      // DQ (11/17/2008): This handles the case CPP declarations
-                      // such as: "# 1 "test2008_05.F90"", "# 1 "<built-in>"", 
-                      // "# 1 "<command line>"" "# 1 "test2008_05.F90""
-                         cppDeclarationKind = PreprocessingInfo::CpreprocessorCompilerGenerateLineDeclaration;
-                       }
-                      else
-                       {
-                         printf ("Error: Unknown cppIndentifier = %s \n",cppIndentifier.c_str());
-                         ROSE_ASSERT(false);
-
-                         cppDeclarationKind = PreprocessingInfo::CpreprocessorUnknownDeclaration;
-                       }
-
-#if 1
-                 // Collect the rest of the line: (line length - next character position) + 1.
-                    int restOfTheLineLength = (lineLength - (positionOfLastCharacterOfCppIdentifier+1)) + 1;
-                    string restOfTheLine = line.substr(positionOfLastCharacterOfCppIdentifier+1,restOfTheLineLength);
-                    printf ("cppDeclarationKind = %s restOfTheLine = %s \n",PreprocessingInfo::directiveTypeName(cppDeclarationKind).c_str(),restOfTheLine.c_str());
-#endif
-
+                 // printf ("After processing continuation lines: line.length() = %zu line = %s \n",line.length(),line.c_str());
                   }
-#endif
 
 #if 1
             // DQ (11/17/2008): Refactored the code to make it simpler to add here!
-            // used switch to provide room for PHP, and pernaps C, C++ if we wanted
-            // to handle then this way.  Note that C permits multiple comments on a 
-            // single line, this is not addressed here.
-            // if (cppDeclarationKind == PreprocessingInfo::CpreprocessorUnknownDeclaration)
+            // If this is not a CPP directive, then check if it is a comment (note 
+            // that for Fortran (for fixed format), a CPP directive could be identified 
+            // as a comment so we have to check for CPP directives first.
                if (cppDirective == false)
                   {
                     bool isComment = false;
+
+                 // Used switch to provide room for PHP, and pernaps C, C++ if we wanted
+                 // to handle then this way.  Note that C permits multiple comments on a 
+                 // single line, this is not addressed here.
                     switch (languageType)
                        {
                       // case e_Cxx_language: /* C and C++ cases are already handled via the lex based pass. */
@@ -1915,6 +1824,111 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
                                                                             lineCounter,0,numberOfLines,PreprocessingInfo::before);
                     ROSE_ASSERT(cppDirective != NULL);
                     attributeList.push_back(cppDirective);
+
+                 // DQ (11/28/2008): Gather additional data for specific directives (CPP generated linemarkers (e.g. "# <line number> <filename> <flags>").
+                    if (cppDeclarationKind == PreprocessingInfo::CpreprocessorCompilerGeneratedLinemarker)
+                       {
+                      // Gather the line number, filename, and any optional flags.
+                      // printf ("\nProcessing a CpreprocessorCompilerGeneratedLinemarker: restOfTheLine = %s \n",restOfTheLine.c_str());
+
+                      // The IR node has not been build yet, we have to save the required information into the PreprocessingInfo object.
+                      // SgLinemarkerDirectiveStatement* linemarkerDirective = isSgLinemarkerDirectiveStatement(cppDirective);
+                      // ROSE_ASSERT(linemarkerDirective != NULL);
+
+                         size_t i = 0;
+                         size_t positionOfFirstCharacterOfIntegerValue = 0;
+                         size_t lineLength = restOfTheLine.length();
+                         char nonBlankCharacter = restOfTheLine[0];
+                         while (i <= lineLength && (nonBlankCharacter >= '0' && nonBlankCharacter <= '9') == true)
+                                 {
+                                   nonBlankCharacter = restOfTheLine[i];
+#if 0
+                                   printf ("In loop: i = %d lineLength = %d nonBlankCharacter = %c \n",i,lineLength,isprint(nonBlankCharacter) ? nonBlankCharacter : '.');
+#endif
+                                   i++;
+                                 }
+
+#if 0
+                         printf ("i = %d \n",i);
+#endif
+
+                      // Need to backup two (for example if this is the end of the line, as in "#endif")
+                         size_t positionOfLastCharacterOfIntegerValue = i-2;
+
+#if 0
+                         printf ("positionOfLastCharacterOfIntegerValue = %d \n",positionOfLastCharacterOfIntegerValue);
+#endif
+                         int lineNumberLength = (positionOfLastCharacterOfIntegerValue - positionOfFirstCharacterOfIntegerValue) + 1;
+                         string cppIndentifier = restOfTheLine.substr(positionOfFirstCharacterOfIntegerValue,lineNumberLength);
+
+                      // Some names will convert to integer values
+                         long integerValue = -1;
+
+                      // printf ("firstNonBlankCharacter = %c \n",firstNonBlankCharacter);
+                      // ROSE_ASSERT(firstNonBlankCharacter == '\"');
+#if 0
+                      // The atoi() function is not supposed to be used any more.
+                         integerValue = atoi(cppIndentifier.c_str());
+#else
+                      // The modern way to handle conversion of string to integer value is to 
+                      // use strtol(), and not atoi().  But atoi() is simpler.
+                         const char* str = cppIndentifier.c_str();
+
+                      // strtol will put the string into buffer if str is not a number and 2nd parameter is not NULL.
+                         integerValue = strtol(str,NULL,10);
+#endif
+#if 0
+                         printf ("integerValue = %ld \n",integerValue);
+#endif
+                         cppDirective->set_lineNumberForCompilerGeneratedLinemarker(integerValue);
+
+                         size_t remainingLineLength   = (lineLength - positionOfLastCharacterOfIntegerValue) - 1;
+                         string remainingLine = restOfTheLine.substr(positionOfLastCharacterOfIntegerValue+1,remainingLineLength);
+#if 0
+                         printf ("lineLength    = %d positionOfLastCharacterOfIntegerValue = %d \n",lineLength,positionOfLastCharacterOfIntegerValue);
+                         printf ("remainingLineLength = %d remainingLine = %s \n",remainingLineLength,remainingLine.c_str());
+#endif
+                         size_t positionOfFirstQuote = remainingLine.find('"');
+                         ROSE_ASSERT(positionOfFirstQuote != string::npos);
+
+                         size_t positionOfLastQuote = remainingLine.rfind('"');
+                         ROSE_ASSERT(positionOfLastQuote != string::npos);
+#if 0
+                         printf ("positionOfFirstQuote = %zu positionOfLastQuote = %zu \n",positionOfFirstQuote,positionOfLastQuote);
+#endif
+                         int filenameLength = (positionOfLastQuote - positionOfFirstQuote) + 1;
+#if 0
+                         printf ("filenameLength = %zu \n",filenameLength);
+#endif
+                         string filename = remainingLine.substr(positionOfFirstQuote,filenameLength);
+
+                         cppDirective->set_filenameForCompilerGeneratedLinemarker(filename);
+
+                      // Add 1 to move past the last quote and 1 more to move beyond any white space.
+                         string optionalFlags;
+                         if (positionOfLastQuote+2 < remainingLineLength)
+                            {
+#if 0
+                              printf ("Computing optional flags \n");
+#endif
+                              optionalFlags = remainingLine.substr(positionOfLastQuote+2);
+#if 0
+                              printf ("Computing optional flags: optionalFlags = %s \n",optionalFlags.c_str());
+#endif
+                            }
+
+                      // printf ("optionalFlags = %s \n",optionalFlags.c_str());
+                         cppDirective->set_optionalflagsForCompilerGeneratedLinemarker(optionalFlags);
+#if 0
+                         printf ("cppDirective.lineNumberForCompilerGeneratedLinemarker    = %d \n",cppDirective->get_lineNumberForCompilerGeneratedLinemarker());
+                         printf ("cppDirective.filenameForCompilerGeneratedLinemarker      = %s \n",cppDirective->get_filenameForCompilerGeneratedLinemarker().c_str());
+                         printf ("cppDirective.optionalflagsForCompilerGeneratedLinemarker = %s \n",cppDirective->get_optionalflagsForCompilerGeneratedLinemarker().c_str());
+#endif
+#if 0
+                         printf ("Exiting as part of debugging ... \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
                   }
 
                lineCounter++;
@@ -1927,7 +1941,7 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
         }
        else
         {
-          cerr << "Unable to open free format Fortran file";
+          cerr << "Unable to open target source file";
           ROSE_ASSERT(false);
         }
 

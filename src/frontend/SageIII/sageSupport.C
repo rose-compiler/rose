@@ -508,6 +508,11 @@ SgProject::processCommandLine(const vector<string>& input_argv)
      vector<string> argv = get_originalCommandLineArgumentList();
      ROSE_ASSERT(argv.size() > 0);
 
+  // DQ (12/22/2008): This should only be called once (outside of the loop over all command line arguments!
+  // DQ (12/8/2007): This leverages existing support in commandline processing
+  // printf ("In SgProject::processCommandLine(): Calling CommandlineProcessing::generateSourceFilenames(argv) \n");
+     p_sourceFileNameList = CommandlineProcessing::generateSourceFilenames(argv);
+
   // Build a list of source, object, and library files on the command line
   // int sourceFileNameCounter = 0;
      for (unsigned int i = 1; i < argv.size(); i++)
@@ -521,7 +526,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
        // ROSE_ASSERT (ROSE::sourceFileNamesWithoutPath[sourceFileNameCounter] != NULL);
 
        // DQ (12/8/2007): This leverages existing support in commandline processing
-          p_sourceFileNameList = CommandlineProcessing::generateSourceFilenames(argv);
+       // p_sourceFileNameList = CommandlineProcessing::generateSourceFilenames(argv);
 
        // printf ("In SgProject::processCommandLine(): p_sourceFileNameList.size() = %zu \n",p_sourceFileNameList.size());
 
@@ -570,10 +575,10 @@ SgProject::processCommandLine(const vector<string>& input_argv)
        // look only for -I include directories (directories where #include<filename> will be found)
           if ( (length > 2) && (argv[i][0] == '-') && (argv[i][1] == 'I') )
              {
-	      //AS Changed source code to support absolute paths
-	      std::string includeDirectorySpecifier =  argv[i].substr(2);
-	      includeDirectorySpecifier = StringUtility::getAbsolutePathFromRelativePath(includeDirectorySpecifier );
-              p_includeDirectorySpecifierList.push_back("-I"+includeDirectorySpecifier);
+            // AS Changed source code to support absolute paths
+               std::string includeDirectorySpecifier =  argv[i].substr(2);
+               includeDirectorySpecifier = StringUtility::getAbsolutePathFromRelativePath(includeDirectorySpecifier );
+               p_includeDirectorySpecifierList.push_back("-I"+includeDirectorySpecifier);
              }
         }
 
@@ -1777,17 +1782,119 @@ isBinaryExecutableFile ( string sourceFilename )
       return returnValue;
     }
 
+void
+SgFile::initializeSourcePosition( const std::string & sourceFilename )
+   {
+     ROSE_ASSERT(this != NULL);
+
+  // printf ("Inside of SgFile::initializeSourcePosition() \n");
+
+     Sg_File_Info* fileInfo = new Sg_File_Info(sourceFilename,1,1);
+     ROSE_ASSERT(fileInfo != NULL);
+
+  // set_file_info(fileInfo);
+     set_startOfConstruct(fileInfo);
+     fileInfo->set_parent(this);
+     ROSE_ASSERT(get_startOfConstruct() != NULL);
+     ROSE_ASSERT(get_file_info() != NULL);
+   }
+
+void
+SgSourceFile::initializeGlobalScope()
+   {
+     ROSE_ASSERT(this != NULL);
+
+  // printf ("Inside of SgSourceFile::initializeGlobalScope() \n");
+
+  // Note that SgFile::initializeSourcePosition() should have already been called.
+     ROSE_ASSERT(get_startOfConstruct() != NULL);
+
+     string sourceFilename = get_startOfConstruct()->get_filename();
+
+  // DQ (8/31/2006): Generate a NULL_FILE (instead of SgFile::SgFile) so that we can 
+  // enforce that the filename is always an absolute path (starting with "/").
+  // Sg_File_Info* globalScopeFileInfo = new Sg_File_Info("SgGlobal::SgGlobal",0,0);
+     Sg_File_Info* globalScopeFileInfo = new Sg_File_Info(sourceFilename,0,0);
+     ROSE_ASSERT (globalScopeFileInfo != NULL);
+
+  // printf ("&&&&&&&&&& In SgSourceFile::initializeGlobalScope(): Building SgGlobal (with empty filename) &&&&&&&&&& \n");
+
+     set_globalScope( new SgGlobal( globalScopeFileInfo ) );
+     ROSE_ASSERT (get_globalScope() != NULL);
+
+  // DQ (2/15/2006): Set the parent of the SgGlobal IR node
+     get_globalScope()->set_parent(this);
+
+  // DQ (8/21/2008): Set the end of the global scope (even if it is updated later)
+  // printf ("In SgFile::initialization(): p_root->get_endOfConstruct() = %p \n",p_root->get_endOfConstruct());
+     ROSE_ASSERT(get_globalScope()->get_endOfConstruct() == NULL);
+     get_globalScope()->set_endOfConstruct(new Sg_File_Info(sourceFilename,0,0));
+     ROSE_ASSERT(get_globalScope()->get_endOfConstruct() != NULL);
+
+  // DQ (1/21/2008): Set the filename in the SgGlobal IR node so that the traversal to add CPP directives and comments will succeed.
+     ROSE_ASSERT (get_globalScope() != NULL);
+     ROSE_ASSERT(get_globalScope()->get_startOfConstruct() != NULL);
+
+  // DQ (8/21/2008): Modified to make endOfConstruct consistant (avoids warning in AST consistancy check).
+  // ROSE_ASSERT(p_root->get_endOfConstruct()   == NULL);
+     ROSE_ASSERT(get_globalScope()->get_endOfConstruct()   != NULL);
+
+  // p_root->get_file_info()->set_filenameString(p_sourceFileNameWithPath);
+  // ROSE_ASSERT(p_root->get_file_info()->get_filenameString().empty() == false);
+
+#if 0
+     Sg_File_Info::display_static_data("Resetting the SgGlobal startOfConstruct and endOfConstruct");
+     printf ("Resetting the SgGlobal startOfConstruct and endOfConstruct filename (p_sourceFileNameWithPath = %s) \n",p_sourceFileNameWithPath.c_str());
+#endif
+
+  // DQ (12/22/2008): Added to support CPP preprocessing of Fortran files.
+     string filename = p_sourceFileNameWithPath;
+     if (get_requires_C_preprocessor() == true)
+        {
+       // This must be a Fortran source file (requiring the use of CPP to process its directives.
+          filename = generate_C_preprocessor_intermediate_filename(filename);
+        }
+
+  // printf ("get_requires_C_preprocessor() = %s filename = %s \n",get_requires_C_preprocessor() ? "true" : "false",filename.c_str());
+
+  // get_globalScope()->get_startOfConstruct()->set_filenameString(p_sourceFileNameWithPath);
+     get_globalScope()->get_startOfConstruct()->set_filenameString(filename);
+     ROSE_ASSERT(get_globalScope()->get_startOfConstruct()->get_filenameString().empty() == false);
+
+  // DQ (8/21/2008): Uncommented to make the endOfConstruct consistant (avoids warning in AST consistancy check).
+  // get_globalScope()->get_endOfConstruct()->set_filenameString(p_sourceFileNameWithPath);
+     get_globalScope()->get_endOfConstruct()->set_filenameString(filename);
+     ROSE_ASSERT(get_globalScope()->get_endOfConstruct()->get_filenameString().empty() == false);     
+
+#if 0
+     printf ("DONE: Resetting the SgGlobal startOfConstruct and endOfConstruct filename (filename = %s) \n",filename.c_str());
+     Sg_File_Info::display_static_data("DONE: Resetting the SgGlobal startOfConstruct and endOfConstruct");
+#endif
+
+  // DQ (12/23/2008): These should be in the Sg_File_Info map already.
+     ROSE_ASSERT(Sg_File_Info::getIDFromFilename(get_file_info()->get_filename()) >= 0);
+     if (get_requires_C_preprocessor() == true)
+        {
+          ROSE_ASSERT(Sg_File_Info::getIDFromFilename(generate_C_preprocessor_intermediate_filename(get_file_info()->get_filename())) >= 0);
+        }
+   }
+
 
 SgFile* 
 determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
    {
      SgFile* file = NULL;
+
   // DQ (4/21/2006): New version of source file name handling (set the source file name early)
+  // printf ("In determineFileType(): Calling CommandlineProcessing::generateSourceFilenames(argv) \n");
      Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argv);
 
   // this->display("In SgFile::setupSourceFilename()");
-     // printf ("listToString(argv) = %s \n",StringUtility::listToString(argv).c_str());
-     // printf ("listToString(fileList) = %s \n",StringUtility::listToString(fileList).c_str());
+  // printf ("listToString(argv) = %s \n",StringUtility::listToString(argv).c_str());
+  // printf ("listToString(fileList) = %s \n",StringUtility::listToString(fileList).c_str());
+
+  // DQ (12/23/2008): I think that we may be able to assert this is true, if so then we can simplify the code below.
+     ROSE_ASSERT(fileList.empty() == false);
 
      if (fileList.empty() == false)
         {
@@ -1825,12 +1932,18 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
        // ROSE_ASSERT(false);
 
        // DQ (5/18/2008): Set this to true (redundant, since the default already specified as true)
-          //file->set_requires_C_preprocessor(true);
+       // file->set_requires_C_preprocessor(true);
 
        // DQ (11/17/2007): Mark this as a file using a Fortran file extension (else this turns off options down stream).
           if (CommandlineProcessing::isFortranFileNameSuffix(filenameExtension) == true)
              {
-               file = new SgSourceFile ( argv,  project );
+               SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
+               file = sourceFile;
+
+            // printf ("----------- Great location to set the sourceFilename = %s \n",sourceFilename.c_str());
+
+            // DQ (12/23/2008): Moved initialization of source position (call to initializeSourcePosition()) 
+            // to earliest position in setup of SgFile.
 
             // printf ("Calling file->set_sourceFileUsesFortranFileExtension(true) \n");
                file->set_sourceFileUsesFortranFileExtension(true);
@@ -1840,8 +1953,17 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
 
                file->set_Fortran_only(true);
 
-            // DQ (5/18/2008): Set this to true (redundant, since the default already specified as true)
+            // DQ (5/18/2008): Set this to true (redundant, since the default already specified as true).
+            // DQ (12/23/2008): Actually this is not redundant since the SgFile::initialization sets it to "false".
+            // Note: This is a little bit inconsistnat with the default set in ROSETTA.
                file->set_requires_C_preprocessor(CommandlineProcessing::isFortranFileNameSuffixRequiringCPP(filenameExtension));
+
+            // printf ("Called set_requires_C_preprocessor(%s) \n",file->get_requires_C_preprocessor() ? "true" : "false");
+
+            // DQ (12/23/2008): This needs to be called after the set_requires_C_preprocessor() function is called.
+            // If CPP processing is required then the global scope should have a source position using the intermediate
+            // file name (generated by generate_C_preprocessor_intermediate_filename()).
+               sourceFile->initializeGlobalScope();
 
             // Now set the specific types of Fortran file extensions
                if (CommandlineProcessing::isFortran77FileNameSuffix(filenameExtension) == true)
@@ -1905,103 +2027,136 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
                     file->set_backendCompileFormat(SgFile::e_free_form_output_format);
                   }
              }
-            else if (CommandlineProcessing::isPHPFileNameSuffix(filenameExtension) == true)
+            else
              {
-
-                    file = new SgSourceFile ( argv,  project );
+               if (CommandlineProcessing::isPHPFileNameSuffix(filenameExtension) == true)
+                  {
+                 // file = new SgSourceFile ( argv,  project );
+                    SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
+                    file = sourceFile;
 
                     file->set_sourceFileUsesPHPFileExtension(true);
 
                     file->set_outputLanguage(SgFile::e_PHP_output_language);
 
                     file->set_PHP_only(true);
-              }
-            else
-             {
-            // printf ("Calling file->set_sourceFileUsesFortranFileExtension(false) \n");
-               
-            // if (StringUtility::isCppFileNameSuffix(filenameExtension) == true)
-               if (CommandlineProcessing::isCppFileNameSuffix(filenameExtension) == true)
-                  {
-                    file = new SgSourceFile ( argv,  project );
 
-                 // This is a C++ file (so define __cplusplus, just like GNU gcc would)
-                 // file->set_requires_cplusplus_macro(true);
-                    file->set_sourceFileUsesCppFileExtension(true);
+                 // DQ (12/23/2008): We don't handle CPP directives and comments for PHP yet.
+                 // file->get_skip_commentsAndDirectives(true);
 
-                 // Use the filename suffix as a default means to set this value
-                    file->set_outputLanguage(SgFile::e_Cxx_output_language);
-
-                    file->set_Cxx_only(true);
-                  
+                 // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
+                 // Note that file->get_requires_C_preprocessor() should be false.
+                    ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
+                    sourceFile->initializeGlobalScope();
                   }
                  else
                   {
-             
-                  // Liao, 6/6/2008, Assume AST with UPC will be unparsed using the C unparser
-                    if ( ( CommandlineProcessing::isCFileNameSuffix(filenameExtension)   == true ) ||
-                         ( CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) == true ) )
+                 // printf ("Calling file->set_sourceFileUsesFortranFileExtension(false) \n");
+               
+                 // if (StringUtility::isCppFileNameSuffix(filenameExtension) == true)
+                    if (CommandlineProcessing::isCppFileNameSuffix(filenameExtension) == true)
                        {
+                      // file = new SgSourceFile ( argv,  project );
+                         SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
+                         file = sourceFile;
 
-                         file = new SgSourceFile ( argv,  project );
-
-                      // This a not a C++ file (assume it is a C file and don't define the __cplusplus macro, just like GNU gcc would)
-                         file->set_sourceFileUsesCppFileExtension(false);
+                      // This is a C++ file (so define __cplusplus, just like GNU gcc would)
+                      // file->set_requires_cplusplus_macro(true);
+                         file->set_sourceFileUsesCppFileExtension(true);
 
                       // Use the filename suffix as a default means to set this value
-                         file->set_outputLanguage(SgFile::e_C_output_language);
+                         file->set_outputLanguage(SgFile::e_Cxx_output_language);
 
-                         file->set_C_only(true);
-                         // Liao 6/6/2008  Set the newly introduced p_UPC_only flag.
-                         //
-                         if (CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) == true) 
-                           file->set_UPC_only(true);
+                         file->set_Cxx_only(true);
+
+                      // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
+                      // Note that file->get_requires_C_preprocessor() should be false.
+                         ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
+                         sourceFile->initializeGlobalScope();
                        }
                       else
                        {
-                      // printf ("This still might be a binary file (can not be an object file, since these are not accepted into the fileList by CommandlineProcessing::generateSourceFilenames()) \n");
-
-                      // Detect if this is a binary (executable) file!
-                         bool isBinaryExecutable = isBinaryExecutableFile(sourceFilename);
-
-                         if (isBinaryExecutable == true)
+                      // Liao, 6/6/2008, Assume AST with UPC will be unparsed using the C unparser
+                         if ( ( CommandlineProcessing::isCFileNameSuffix(filenameExtension)   == true ) ||
+                              ( CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) == true ) )
                             {
+                           // file = new SgSourceFile ( argv,  project );
+                              SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
+                              file = sourceFile;
 
-                              file = new SgBinaryFile ( argv,  project );
+                           // This a not a C++ file (assume it is a C file and don't define the __cplusplus macro, just like GNU gcc would)
+                              file->set_sourceFileUsesCppFileExtension(false);
 
-                              file->set_sourceFileUsesBinaryFileExtension(true);
-                              file->set_binary_only(true);
+                           // Use the filename suffix as a default means to set this value
+                              file->set_outputLanguage(SgFile::e_C_output_language);
 
-                           // DQ (5/18/2008): Set this to false (since binaries are never preprocessed using the C preprocessor).
-                              file->set_requires_C_preprocessor(false);
+                              file->set_C_only(true);
+
+                           // Liao 6/6/2008  Set the newly introduced p_UPC_only flag.
+                              if (CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) == true)
+                                   file->set_UPC_only(true);
+
+                           // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
+                           // Note that file->get_requires_C_preprocessor() should be false.
+                              ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
+                              sourceFile->initializeGlobalScope();
                             }
                            else
                             {
+                           // This is not a source file recognized by ROSE, so it is either a binary executable or something that we can't process.
 
-                              file = new SgUnknownFile ( argv,  project );
+                           // printf ("This still might be a binary file (can not be an object file, since these are not accepted into the fileList by CommandlineProcessing::generateSourceFilenames()) \n");
 
-                              ROSE_ASSERT(file->get_parent() != NULL);
-                              ROSE_ASSERT(file->get_parent() == project);
+                           // Detect if this is a binary (executable) file!
+                              bool isBinaryExecutable = isBinaryExecutableFile(sourceFilename);
+                              if (isBinaryExecutable == true)
+                                 {
+                                   file = new SgBinaryFile ( argv,  project );
 
-                           // If all else fails, then output the type of file and exit.
-                              file->set_sourceFileTypeIsUnknown(true);
-                              file->set_requires_C_preprocessor(false);
+                                // This should have already been setup!
+                                // file->initializeSourcePosition();
 
-                           // file->set_parent(project);
-                           // outputTypeOfFileAndExit(sourceFilename);
+                                   file->set_sourceFileUsesBinaryFileExtension(true);
+                                   file->set_binary_only(true);
+
+                                // DQ (5/18/2008): Set this to false (since binaries are never preprocessed using the C preprocessor).
+                                   file->set_requires_C_preprocessor(false);
+
+                                   ROSE_ASSERT(file->get_file_info() != NULL);
+                                 }
+                                else
+                                 {
+                                   file = new SgUnknownFile ( argv,  project );
+
+                                // This should have already been setup!
+                                // file->initializeSourcePosition();
+
+                                   ROSE_ASSERT(file->get_parent() != NULL);
+                                   ROSE_ASSERT(file->get_parent() == project);
+
+                                // If all else fails, then output the type of file and exit.
+                                   file->set_sourceFileTypeIsUnknown(true);
+                                   file->set_requires_C_preprocessor(false);
+
+                                   ROSE_ASSERT(file->get_file_info() != NULL);
+                                // file->set_parent(project);
+                                // outputTypeOfFileAndExit(sourceFilename);
+                                 }
                             }
                        }
                   }
+
                  file->set_sourceFileUsesFortranFileExtension(false);
-
              }
-
         }
        else
         {
+       // DQ (12/22/2008): Make any error message from this branch more clear for debugging!
+       // AS Is this option possible?
+          printf ("Is this branch reachable? \n");
+          ROSE_ASSERT(false);
+       // abort();
 
-          //AS Is this option possible?
-          abort();
        // ROSE_ASSERT (p_numberOfSourceFileNames == 0);
           ROSE_ASSERT (file->get_sourceFileNameWithPath().empty() == true);
        // If no source code file name was found then likely this is a link command
@@ -2010,22 +2165,21 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
        // printf ("No source file found on command line, assuming to be linker command line \n");
         }
 
-    //The frontend is called exlicitly outside the constructor since that allows for a cleaner
-    //control flow. The callFrontEnd() relies on all the "set_" flags to be already called therefore
-    //it was placed here.
-    if( isSgUnknownFile(file) == NULL && file != NULL  )
-    {
+  // The frontend is called exlicitly outside the constructor since that allows for a cleaner
+  // control flow. The callFrontEnd() relies on all the "set_" flags to be already called therefore
+  // it was placed here.
+     if ( isSgUnknownFile(file) == NULL && file != NULL  )
+        {
+          nextErrorCode = file->callFrontEnd() ;
+          ROSE_ASSERT ( nextErrorCode <= 3);
+        }
 
-      nextErrorCode =   file->callFrontEnd() ;
-      ROSE_ASSERT ( nextErrorCode <= 3);
-
-    }
-       
   // Keep the filename stored in the Sg_File_Info consistant.  Later we will want to remove this redundency
   // The reason we have the Sg_File_Info object is so that we can easily support filename matching based on
-  // the integer values instead of string comparisions.
-     
+  // the integer values instead of string comparisions.  Required for the handling co CPP directives and comments.
+
   // display("SgFile::setupSourceFilename()");
+
      return file;
    }
 
@@ -2035,51 +2189,24 @@ SgFile::generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFi
    {
   // Need a mechanism to select what kind of binary we will process.
 
-#if 1
   // printf ("Calling SgAsmExecutableFileFormat::parseBinaryFormat() \n");
 
      SgAsmExecutableFileFormat::parseBinaryFormat(sourceFilename,asmFile);
-
-#else
-  // JJW (7/23/2008): We are using Robb's code for this, and it crashes on PE files
-  // printf ("Calling generateBinaryExecutableFileInformation_ELF() \n");
-     bool handled = false;
-
-  // DQ (13/8/2008): Skip the use of the older binary file format support (from before Robb's work).
-  // if (!handled) handled = generateBinaryExecutableFileInformation_ELF( sourceFilename, asmFile );
-  // if (!handled) {} // generateBinaryExecutableFileInformation_Windows ( sourceFilename, asmFile );
-
-     if (!handled) {
-
-    // DQ (13/8/2008): This is one of the few remaining data member in a SgAsmFile IR node.
-       asmFile->set_name(sourceFilename);
-
-    // Hard wire this for the moment while I work on getting Robb's work into place...
-    // DQ (13/8/2008): Removed this data member (such information is now in the SgAsmGenericHeader).
-    // asmFile->set_machine_architecture(SgAsmFile::e_machine_architecture_Intel_80386);
-
-       handled = true;
-     }
-     ROSE_ASSERT (handled);
-#endif
    }
 
 
+static void makeSysIncludeList(const Rose_STL_Container<string>& dirs, Rose_STL_Container<string>& result)
+   {
+     string includeBase = findRoseSupportPathFromBuild("include-staging", "include");
+     for (Rose_STL_Container<string>::const_iterator i = dirs.begin(); i != dirs.end(); ++i)
+        {
+          ROSE_ASSERT (!i->empty());
+          string fullPath = (*i)[0] == '/' ? *i : (includeBase + "/" + *i);
+          result.push_back("--sys_include");
+          result.push_back(fullPath);
+        }
+   }
 
-
-
-
-
-static void makeSysIncludeList(const Rose_STL_Container<string>& dirs, Rose_STL_Container<string>& result) {
-  string includeBase = findRoseSupportPathFromBuild("include-staging", "include");
-  for (Rose_STL_Container<string>::const_iterator i = dirs.begin();
-       i != dirs.end(); ++i) {
-    ROSE_ASSERT (!i->empty());
-    string fullPath = (*i)[0] == '/' ? *i : (includeBase + "/" + *i);
-    result.push_back("--sys_include");
-    result.push_back(fullPath);
-  }
-}
 
 void
 SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string> & argv, int fileNameIndex )
@@ -2110,7 +2237,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // DQ (4/21/2006): I think we can now assert this!
      ROSE_ASSERT(fileNameIndex == 0);
 
-     // printf ("Inside of SgFile::build_EDG_CommandLine(): fileNameIndex = %d \n",fileNameIndex);
+  // printf ("Inside of SgFile::build_EDG_CommandLine(): fileNameIndex = %d \n",fileNameIndex);
 
 #if !defined(CXX_SPEC_DEF)
   // Output an error and exit
@@ -2882,9 +3009,9 @@ SgSourceFile::SgSourceFile ( vector<string> & argv , SgProject* project )
 
      set_globalScope(NULL);
 
-  // This constructor actually makes the call to EDG to build the AST (via callFrontEnd()).
+  // This constructor actually makes the call to EDG/OFP to build the AST (via callFrontEnd()).
+  // printf ("In SgSourceFile::SgSourceFile(): Calling doSetupForConstructor() \n");
      doSetupForConstructor(argv,  project);
-
     }
 
 #if 0
@@ -2945,11 +3072,15 @@ SgBinaryFile::SgBinaryFile ( vector<string> & argv ,  SgProject* project )
 // : SgFile (argv,errorCode,fileNameIndex,project)
    {
      p_binaryFile = NULL;
+
+  // Assume a binary generated from a compiler for now since this 
+  // is easier, the more aggressive modes are still in development.
      p_aggressive = false;
 
   // printf ("In the SgBinaryFile constructor \n");
 
   // This constructor actually makes the call to EDG to build the AST (via callFrontEnd()).
+  // printf ("In SgBinaryFile::SgBinaryFile(): Calling doSetupForConstructor() \n");
      doSetupForConstructor(argv,  project);
    }
 
@@ -2990,9 +3121,11 @@ SgProject::parse()
        // printf ("currentFileName = %s \n",currentFileName.c_str());
 
        // DQ (11/13/2008): Removed overly complex logic here!
+       // printf ("+++++++++++++++ Calling determineFileType() currentFileName = %s \n",currentFileName.c_str());
           SgFile* newFile = determineFileType(argv, nextErrorCode, this);
           ROSE_ASSERT (newFile != NULL);
 
+       // printf ("+++++++++++++++ DONE: Calling determineFileType() currentFileName = %s \n",currentFileName.c_str());
        // printf ("In SgProject::parse(): newFile = %p = %s \n",newFile,newFile->class_name().c_str());
 
           ROSE_ASSERT (newFile->get_startOfConstruct() != NULL);
@@ -3003,7 +3136,7 @@ SgProject::parse()
        // newFile->set_parent(this);
 
        // This just adds the new file to the list of files stored internally
-           set_file ( *newFile );
+          set_file ( *newFile );
 
        // newFile->display("Called from SgProject::parse()");
 
@@ -3282,60 +3415,81 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
      delete  currStks ;
 #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
    }
-
-
 #endif
 
 
 void
 SgSourceFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
    {
-
+  // Call the base class implementation!
      SgFile::doSetupForConstructor(argv, project);
-     
-     // DQ (1/21/2008): Set the filename in the SgGlobal IR node so that the traversal to add CPP directives and comments will succeed.
+
+#if 0
+  // DQ (12/23/2008): This code has been moved to the function initializeGlobalScope()
+
+  // DQ (1/21/2008): Set the filename in the SgGlobal IR node so that the traversal to add CPP directives and comments will succeed.
      ROSE_ASSERT (get_globalScope() != NULL);
      ROSE_ASSERT(get_globalScope()->get_startOfConstruct() != NULL);
 
-     // DQ (8/21/2008): Modified to make endOfConstruct consistant (avoids warning in AST consistancy check).
-     // ROSE_ASSERT(p_root->get_endOfConstruct()   == NULL);
+  // DQ (8/21/2008): Modified to make endOfConstruct consistant (avoids warning in AST consistancy check).
+  // ROSE_ASSERT(p_root->get_endOfConstruct()   == NULL);
      ROSE_ASSERT(get_globalScope()->get_endOfConstruct()   != NULL);
 
-     // p_root->get_file_info()->set_filenameString(p_sourceFileNameWithPath);
-     // ROSE_ASSERT(p_root->get_file_info()->get_filenameString().empty() == false);
+  // p_root->get_file_info()->set_filenameString(p_sourceFileNameWithPath);
+  // ROSE_ASSERT(p_root->get_file_info()->get_filenameString().empty() == false);
 
+     Sg_File_Info::display_static_data("Resetting the SgGlobal startOfConstruct and endOfConstruct");
+     printf ("Resetting the SgGlobal startOfConstruct and endOfConstruct filename (p_sourceFileNameWithPath = %s) \n",p_sourceFileNameWithPath.c_str());
 
-     get_globalScope()->get_startOfConstruct()->set_filenameString(p_sourceFileNameWithPath);
+  // DQ (12/22/2008): Added to support CPP preprocessing of Fortran files.
+     string filename = p_sourceFileNameWithPath;
+     if (get_requires_C_preprocessor() == true)
+        {
+          filename = generate_C_preprocessor_intermediate_filename(filename);
+        }
+
+     printf ("get_requires_C_preprocessor() = %s filename = %s \n",get_requires_C_preprocessor() ? "true" : "false",filename.c_str());
+
+  // get_globalScope()->get_startOfConstruct()->set_filenameString(p_sourceFileNameWithPath);
+     get_globalScope()->get_startOfConstruct()->set_filenameString(filename);
      ROSE_ASSERT(get_globalScope()->get_startOfConstruct()->get_filenameString().empty() == false);
 
-     // DQ (8/21/2008): Uncommented to make the endOfConstruct consistant (avoids warning in AST consistancy check).
-     get_globalScope()->get_endOfConstruct()->set_filenameString(p_sourceFileNameWithPath);
-     ROSE_ASSERT(get_globalScope()->get_endOfConstruct()->get_filenameString().empty() == false);
+  // DQ (8/21/2008): Uncommented to make the endOfConstruct consistant (avoids warning in AST consistancy check).
+  // get_globalScope()->get_endOfConstruct()->set_filenameString(p_sourceFileNameWithPath);
+     get_globalScope()->get_endOfConstruct()->set_filenameString(filename);
+     ROSE_ASSERT(get_globalScope()->get_endOfConstruct()->get_filenameString().empty() == false);     
 
-     
+     printf ("DONE: Resetting the SgGlobal startOfConstruct and endOfConstruct filename (filename = %s) \n",filename.c_str());
+     Sg_File_Info::display_static_data("DONE: Resetting the SgGlobal startOfConstruct and endOfConstruct");
+
+  // DQ (12/23/2008): These should be in the Sg_File_Info map already.
+     ROSE_ASSERT(Sg_File_Info::getIDFromFilename(get_file_info()->get_filename()) >= 0);
+     if (get_requires_C_preprocessor() == true)
+        {
+          ROSE_ASSERT(Sg_File_Info::getIDFromFilename(generate_C_preprocessor_intermediate_filename(get_file_info()->get_filename())) >= 0);
+        }
+#endif
    }
 
 void
 SgBinaryFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
    {
-       SgFile::doSetupForConstructor(argv, project);
-
+     SgFile::doSetupForConstructor(argv, project);
    }
 
 void
 SgUnknownFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
    {
-       SgFile::doSetupForConstructor(argv, project);
-
+     SgFile::doSetupForConstructor(argv, project);
    }
 
 void
 SgFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
    {
-
   // JJW 10-26-2007 ensure that this object is not on the stack
      preventConstructionOnStack(this);
 
+  // printf ("!!!!!!!!!!!!!!!!!! Inside of SgFile::doSetupForConstructor() !!!!!!!!!!!!!!! \n");
 
   // Set the project early in the construction phase so that we can access data in 
   // the parent if needed (useful for template handling but also makes sure the parent is
@@ -3344,10 +3498,8 @@ SgFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
      if (project != NULL)
           set_parent(project);
 
-     ROSE_ASSERT (project != NULL);
-
+     ROSE_ASSERT(project != NULL);
      ROSE_ASSERT(get_parent() != NULL);
-
 
   // initalize all local variables to default values
      initialization();
@@ -3355,34 +3507,33 @@ SgFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
      ROSE_ASSERT(get_parent() != NULL);
 
   // DQ (4/21/2006): Setup the source filename as early as possible
-     //setupSourceFilename(argv);
-
+  // setupSourceFilename(argv);
      Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argv);
 
+  // DQ (12/23/2008): Use of this assertion will simplify the code below!
+     ROSE_ASSERT (fileList.empty() == false);
+     string sourceFilename = *(fileList.begin());
 
-     if (fileList.empty() == false)
-     {
+  // printf ("Before conversion to absolute path: sourceFilename = %s \n",sourceFilename.c_str());
+  // sourceFilename = StringUtility::getAbsolutePathFromRelativePath(sourceFilename);
+     sourceFilename = StringUtility::getAbsolutePathFromRelativePath(sourceFilename, true);
 
-       string sourceFilename = *(fileList.begin());
+     set_sourceFileNameWithPath(sourceFilename);
 
-       // printf ("Before conversion to absolute path: sourceFilename = %s \n",sourceFilename.c_str());
+  // printf ("In SgFile::setupSourceFilename(const vector<string>& argv): p_sourceFileNameWithPath = %s \n",get_sourceFileNameWithPath().c_str());
 
-       // sourceFilename = StringUtility::getAbsolutePathFromRelativePath(sourceFilename);
-       sourceFilename = StringUtility::getAbsolutePathFromRelativePath(sourceFilename, true);
+     set_sourceFileNameWithoutPath( ROSE::stripPathFromFileName(get_sourceFileNameWithPath().c_str()) );
 
-       set_sourceFileNameWithPath(sourceFilename);
+#if 1
+     initializeSourcePosition(sourceFilename);
+     ROSE_ASSERT(get_file_info() != NULL);
 
-       //printf ("In SgFile::setupSourceFilename(const vector<string>& argv): p_sourceFileNameWithPath = %s \n",get_sourceFileNameWithPath().c_str());
+  // printf ("In SgFile::doSetupForConstructor(): source position set for sourceFilename = %s \n",sourceFilename.c_str());
+#else
+     ROSE_ASSERT(get_file_info() != NULL);
+     get_file_info()->set_filenameString( get_sourceFileNameWithPath() );
+#endif
 
-
-       set_sourceFileNameWithoutPath( ROSE::stripPathFromFileName(get_sourceFileNameWithPath().c_str()) );
-       get_file_info()->set_filenameString( get_sourceFileNameWithPath() );
-     }else{
-       //A file should never be created without a filename so this branch should be impossible
-       abort();
-     }
-
-     
   // DQ (5/9/2007): Moved this call from above to where the file name is available so that we could include 
   // the filename in the label.  This helps to identify the performance data with individual files where
   // multiple source files are specificed on the command line.
@@ -3402,16 +3553,17 @@ SgFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
   // error checking
      ROSE_ASSERT (argv.size() > 1);
 
+#if 0
   // DQ (1/18/2006): Set the filename in the SgFile::p_file_info
      ROSE_ASSERT(get_file_info() != NULL);
      get_file_info()->set_filenameString(p_sourceFileNameWithPath);
+#endif
 
-
+  // DQ (12/23/2008): Added assertion.
+     ROSE_ASSERT(get_file_info() != NULL);
 
   // DQ (5/3/2007): Added assertion.
      ROSE_ASSERT (get_startOfConstruct() != NULL);
-
-
    }
 
 
@@ -3640,6 +3792,8 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
 
      Rose_STL_Container<string>::iterator i = argList.begin();
 
+  // printf ("######################### Inside of CommandlineProcessing::generateSourceFilenames() ############################ \n");
+
   // skip the 0th entry since this is just the name of the program (e.g. rose)
      ROSE_ASSERT(argList.size() > 0);
      i++;
@@ -3721,6 +3875,8 @@ incrementPosition:
           counter++;
           i++;
         }
+
+  // printf ("######################### Leaving of CommandlineProcessing::generateSourceFilenames() ############################ \n");
 
      return sourceFileList;
    }
@@ -4098,11 +4254,9 @@ SgFile::callFrontEnd()
        // file I/O we make this optional (selected from the command line).
        // bool collectAllCommentsAndDirectives = get_collectAllCommentsAndDirectives();
 
-       // DQ (4/19/2006): attachAllPreprocessingInfo() is now merged into the attachPreprocessingInfo() function.
-       // DQ (4/6/2006): This is also the correct function to call to use Wave.
-       // Markus Kowarschik: attach preprocessor directives to AST nodes
-       // This uses the AST traversal and so needs to be done after the 
-       // call to temporaryAstFixes(), above.
+       // DQ (12/17/2008): The merging of CPP directives and comments from either the 
+       // source file or including all the include files is not implemented as a single 
+       // traversal and has been rewritten.
           if (get_skip_commentsAndDirectives() == false)
              {
                if (get_verbose() > 1)
@@ -4110,25 +4264,48 @@ SgFile::callFrontEnd()
                     printf ("In SgFile::callFrontEnd(): calling attachAllPreprocessingInfo() \n");
                   }
 
-               attachPreprocessingInfo(this);
+            // printf ("Secondary pass over source file = %s to comment comments and CPP directives \n",this->get_file_info()->get_filenameString().c_str());
+            // SgSourceFile* sourceFile = const_cast<SgSourceFile*>(this);
+               SgSourceFile* sourceFile = isSgSourceFile(this);
+               ROSE_ASSERT(sourceFile != NULL);
 
+            // Save the state of the requirement fo CPP processing (fortran only)
+               bool requiresCPP = false;
+               if (get_Fortran_only() == true)
+                  {
+                    requiresCPP = get_requires_C_preprocessor();
+                    if (requiresCPP == true)
+                         set_requires_C_preprocessor(false);
+                  }
+#if 1
+            // Debugging code (eliminate use of CPP directives from source file so that we
+            // can debug the insertion of linemarkers from first phase of CPP processing.
+               if (requiresCPP == false)
+                  {
+                    attachPreprocessingInfo(sourceFile);
+
+                 // printf ("Exiting as a test (should not be called for Fortran CPP source files) \n");
+                 // ROSE_ASSERT(false);
+                  }
+#else
+            // Normal path calling attachPreprocessingInfo()
+               attachPreprocessingInfo(sourceFile);
+#endif
+
+            // Reset the saved state (might not really be required at this point).
+               if (requiresCPP == true)
+                    set_requires_C_preprocessor(false);
+
+#if 0
+               printf ("In SgFile::callFrontEnd(): exiting after attachPreprocessingInfo() \n");
+               ROSE_ASSERT(false);
+#endif
                if (get_verbose() > 1)
                   {
                     printf ("In SgFile::callFrontEnd(): Done with attachAllPreprocessingInfo() \n");
                   }
              }
         }
-
-  // DQ (4/11/2006): This is Lingxiao's work (new patch, since the first and second attempts didn't work) 
-  // to support attaching comments from all header files to the AST.  It seems that both 
-  // attachPreprocessingInfo() and attachAllPreprocessingInfo() can be run as a mechanism to test 
-  // Lingxiao's work on at least the source file.  Note that performance associated with collecting
-  // all comments and CPP directives from header files might be a problem.
-  // DQ (4/1/2006): This will have to be fixed a little later (next release)
-  // DQ (3/29/2006): This is Lingxiao's work to support attaching comments from all header files to the 
-  // AST (the previous mechanism only extracted comments from the source file and atted them to the AST, 
-  // the part of the AST representing the input source file).
-  // attachAllPreprocessingInfo(this,collectAllCommentsAndDirectives);
 
   // display("At bottom of SgFile::callFrontEnd()");
 
@@ -4170,6 +4347,11 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
      bool requires_C_preprocessor = get_requires_C_preprocessor();
      if (requires_C_preprocessor == true)
         {
+       // If we detect that the input file requires processing via CPP (e.g. filename of form *.F??) then 
+       // we generate the command to run CPP on the input file and collect the results in a file with 
+       // the suffix "_postprocessed.f??".  Note: instead of using CPP we use the target backend fortran 
+       // compiler with the "-E" option.
+
           vector<string> fortran_C_preprocessor_commandLine;
 
        // Note: The `-traditional' and `-undef' flags are supplied to cpp by default [when used with cpp is used by gfortran], 
@@ -4209,7 +4391,6 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                printf ("Error in running cpp on Fortran code: errorCode = %d \n",errorCode);
                ROSE_ASSERT(false);
              }
-          
 
 #if 0
           printf ("Exiting as a test ... (after calling C preprocessor)\n");
@@ -4353,12 +4534,17 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           if (requires_C_preprocessor == true)
              {
             // If C preprocessing was required then we have to provide the generated filename of the preprocessed file!
+
+            // Note that since we are using gfortran to do the syntax checking, we could just
+            // hand the original file to gfortran instead of the one that we generate using CPP.
                string sourceFilename    = get_sourceFileNameWithPath();
                string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
                fortranCommandLine.push_back(sourceFileNameOutputFromCpp);
              }
             else
              {
+            // This will cause the original file to be used for syntax checking (instead of 
+            // the CPP generated one, if one was generated).
                fortranCommandLine.push_back(get_sourceFileNameWithPath());
              }
 #endif
@@ -4396,6 +4582,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
   // Build the classpath list for Java support.
      const string classpath = build_classpath();
 
+  // This is part of debugging output to call OFP and output ehe list of parser actions that WOULD be called.
   // printf ("get_output_parser_actions() = %s \n",get_output_parser_actions() ? "true" : "false");
      if (get_output_parser_actions() == true)
         {
@@ -4418,12 +4605,14 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           if (requires_C_preprocessor == true)
              {
             // If C preprocessing was required then we have to provide the generated filename of the preprocessed file!
+            // Note that OFP has no support for CPP directives and will ignore them all.
                string sourceFilename              = get_sourceFileNameWithPath();
                string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
                OFPCommandLine.push_back(sourceFileNameOutputFromCpp);
              }
             else
              {
+            // Build the command line using the original file (to be used by OFP).
                OFPCommandLine.push_back(get_sourceFileNameWithPath());
              }
 
@@ -4449,7 +4638,8 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 #endif
              }
 #else
-       // This fails, I think because we can't call the openFortranParser_main twice.
+       // This fails, I think because we can't call the openFortranParser_main twice. 
+       // DQ (11/30/2008):  Does the work by Rice fix this now?
           int openFortranParser_dump_argc    = 0;
           char** openFortranParser_dump_argv = NULL;
           CommandlineProcessing::generateArgcArgvFromList(OFPCommandLine,openFortranParser_dump_argc,openFortranParser_dump_argv);
@@ -4462,6 +4652,8 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                printf ("Exiting after parsing... \n");
                exit(0);
              }
+
+       // End of option handling to generate list of OPF parser actions.
         }
 
   // Option to just run the parser (not constructing the AST) and quit.
@@ -4551,12 +4743,19 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
      if (requires_C_preprocessor == true)
         {
        // If C preprocessing was required then we have to provide the generated filename of the preprocessed file!
-          string sourceFilename    = get_sourceFileNameWithPath();
+
+       // Note that the filename referenced in the Sg_File_Info objects will use the original file name and not 
+       // the generated file name of the CPP generated file.  This is because it gets the filename from the 
+       // SgSourceFile IR node and not from the filename provided on the internal command line generated for call OFP.
+
+          string sourceFilename              = get_sourceFileNameWithPath();
           string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
+
           frontEndCommandLine.push_back(sourceFileNameOutputFromCpp);
         }
        else
         {
+       // If not being preprocessed, the fortran filename is just the original input source file name.
           frontEndCommandLine.push_back(get_sourceFileNameWithPath());
         }
 
@@ -4589,21 +4788,215 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
   // Reset this global pointer after we are done (just to be safe and avoid it being used later and causing strange bugs).
      OpenFortranParser_globalFilePointer = NULL;
 
+  // Now read the CPP directives such as "# <number> <filename> <optional numeric code>", in the generated file from CPP.
+     if (requires_C_preprocessor == true)
+        {
+       // If this was part of the processing of a CPP generated file then read the preprocessed file 
+       // to get the CPP directives (different from those of the original *.F?? file) which will 
+       // indicate line numbers and files where text was inserted as part of CPP processing.  We 
+       // mostly want to read CPP declarations of the form "# <number> <filename> <optional numeric code>".
+       // these are the only directives that will be in the CPP generated file (as I recall).
+
+          string sourceFilename              = get_sourceFileNameWithPath();
+          string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
+#if 0
+          printf ("Need to preprocess the CPP generated fortran file so that we can attribute source code statements to files: sourceFileNameOutputFromCpp = %s \n",sourceFileNameOutputFromCpp.c_str());
+#endif
+#if 1
+       // Note that the collection of CPP linemarker directives from the CPP generated file 
+       // (and their insertion into the AST), should be done before the collection and 
+       // insertion of the Comments and more general CPP directives from the original source 
+       // file and their insertion. This will allow the correct representation of source 
+       // position information to be used in the final insertion of comments and CPP directives
+       // from the original file.
+
+#if 0
+       // DQ (12/19/2008): This is now done by the AttachPreprocessingInfoTreeTrav
+
+       // List of all comments and CPP directives (collected from the generated CPP file so that we can collect the 
+       // CPP directives that indicate source file boundaries of included regions of source code.
+       // E.g. # 42 "foobar.f" 2
+          ROSEAttributesList* currentListOfAttributes = new ROSEAttributesList();
+          ROSE_ASSERT(currentListOfAttributes != NULL);
+
+       // DQ (11/28/2008): This will collect the CPP directives from the generated CPP file so that 
+       // we can associate parts of the AST included from different files with the correct file.  
+       // Without this processing all the parts of the AST will be associated with the same generated file.
+          currentListOfAttributes->collectPreprocessorDirectivesAndCommentsForAST(sourceFileNameOutputFromCpp,ROSEAttributesList::e_C_language);
+#endif
+
+#if 0
+          printf ("Secondary pass over Fortran source file = %s to comment comments and CPP directives (might still be referencing the original source file) \n",sourceFileNameOutputFromCpp.c_str());
+          printf ("Calling attachPreprocessingInfo() \n");
+#endif
+
+          attachPreprocessingInfo(this);
+
+       // printf ("DONE: calling attachPreprocessingInfo() \n");
+
+       // DQ (12/19/2008): Now we have to do an analysis of the AST to interpret the linemarkers.
+          processCppLinemarkers();
+
+#endif
+#if 0
+          printf ("Exiting as a test ... (collect the CPP directives from the CPP generated file after building the AST)\n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+  // printf ("######################### Leaving SgSourceFile::build_Fortran_AST() ############################ \n");
+
      return frontendErrorLevel;
    }
 #else // for !USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-string SgSourceFile::build_classpath() {
-  fprintf(stderr, "Fortran parser not supported\n");
-  abort();
-}
+
+// DQ (11/26/2008): I am unclear why this is required (I think it was added by Rice).
+string
+SgSourceFile::build_classpath()
+   {
+     fprintf(stderr, "Fortran parser not supported \n");
+     ROSE_ASSERT(false);
+  // abort();
+   }
 
 int
-SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputCommandLine ) {
-  fprintf(stderr, "Fortran parser not supported\n");
-  abort();
-}
+SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputCommandLine )
+   {
+     fprintf(stderr, "Fortran parser not supported \n");
+     ROSE_ASSERT(false);
+  // abort();
+   }
 #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 
+
+namespace SgSourceFile_processCppLinemarkers
+   {
+  // This class (AST traversal) supports the traversal of the AST required 
+  // to translate the source position using the CPP linemarkers.
+
+     class LinemarkerTraversal : public AstSimpleProcessing
+        {
+          public:
+           // list<PreprocessingInfo*> preprocessingInfoStack;
+              list< pair<int,int> > sourcePositionStack;
+
+              LinemarkerTraversal( const string & sourceFilename );
+
+              void visit ( SgNode* astNode );
+        };
+   }
+
+
+SgSourceFile_processCppLinemarkers::LinemarkerTraversal::LinemarkerTraversal( const string & sourceFilename )
+   {
+  // Build an initial element on the stack so that the original source file name will be used to 
+  // set the global scope (which will be traversed before we visit any statements that might have 
+  // CPP directives attached (or which are CPP direcitve IR nodes).
+
+  // Get the fileId of the assocated filename
+     int fileId = Sg_File_Info::getIDFromFilename(sourceFilename);
+
+  // Assume this is line 1 (I forget why zero is not a great idea here, 
+  // I expect that it causes a consstancy test to fail somewhere).
+     int line = 1;
+
+     printf ("In LinemarkerTraversal::LinemarkerTraversal(): Push initial stack entry for line = %d fileId = %d sourceFilename = %s \n",line,fileId,sourceFilename.c_str());
+
+  // Push an entry onto the stack before doing the traversal over the whole AST.
+     sourcePositionStack.push_front( pair<int,int>(line,fileId) );
+   }
+
+void
+SgSourceFile_processCppLinemarkers::LinemarkerTraversal::visit ( SgNode* astNode )
+   {
+     SgStatement* statement = isSgStatement(astNode);
+
+  // printf ("LinemarkerTraversal::visit(): statement = %p = %s \n",statement,(statement != NULL) ? statement->class_name().c_str() : "NULL");
+
+     if (statement != NULL)
+        {
+          printf ("LinemarkerTraversal::visit(): statement = %p = %s \n",statement,statement->class_name().c_str());
+
+          AttachedPreprocessingInfoType *commentOrDirectiveList = statement->getAttachedPreprocessingInfo();
+
+          printf ("LinemarkerTraversal::visit(): commentOrDirectiveList = %p (size = %zu) \n",commentOrDirectiveList,(commentOrDirectiveList != NULL) ? commentOrDirectiveList->size() : 0);
+
+          if (commentOrDirectiveList != NULL)
+             {
+               AttachedPreprocessingInfoType::iterator i = commentOrDirectiveList->begin();
+               while(i != commentOrDirectiveList->end())
+                  {
+                    if ( (*i)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorCompilerGeneratedLinemarker )
+                       {
+                      // This is a CPP linemarker
+                         int line = (*i)->get_lineNumberForCompilerGeneratedLinemarker();
+
+                      // DQ (12/23/2008): Note this is a quoted name, we need the unquoted version!
+                         std::string quotedFilename = (*i)->get_filenameForCompilerGeneratedLinemarker();
+                         ROSE_ASSERT(quotedFilename[0] == '\"');
+                         ROSE_ASSERT(quotedFilename[quotedFilename.length()-1] == '\"');
+                         std::string filename = quotedFilename.substr(1,quotedFilename.length()-2);
+
+                         std::string options  = (*i)->get_optionalflagsForCompilerGeneratedLinemarker();
+
+                      // Add the new filename to the static map stored in the Sg_File_Info (no action if filename is already in the map).
+                         Sg_File_Info::addFilenameToMap(filename);
+
+                         int fileId = Sg_File_Info::getIDFromFilename(filename);
+
+                         printf ("line = %d fileId = %d quotedFilename = %s filename = %s options = %s \n",line,fileId,quotedFilename.c_str(),filename.c_str(),options.c_str());
+
+                      // Just record the first linemarker so that we can test getting the filename correct.
+                         if (line == 1 && sourcePositionStack.empty() == true)
+                            {
+                              sourcePositionStack.push_front( pair<int,int>(line,fileId) );
+                            }
+                       }
+
+                    i++;
+                  }
+             }
+
+       // ROSE_ASSERT(sourcePositionStack.empty() == false);
+          if (sourcePositionStack.empty() == false)
+             {
+               int line   = sourcePositionStack.front().first;
+               int fileId = sourcePositionStack.front().second;
+
+               printf ("Setting the source position of statement = %p = %s to line = %d fileId = %d \n",statement,statement->class_name().c_str(),line,fileId);
+
+               statement->get_file_info()->set_file_id(fileId);
+            // statement->get_file_info()->set_line(line);
+
+               Sg_File_Info::display_static_data("Setting the source position of statement");
+
+               string filename = Sg_File_Info::getFilenameFromID(fileId);
+               printf ("filename = %s \n",filename.c_str());
+
+               printf ("filename = %s \n",statement->get_file_info()->get_filenameString().c_str());
+
+               ROSE_ASSERT(statement->get_file_info()->get_filename() != NULL);
+               ROSE_ASSERT(statement->get_file_info()->get_filenameString().empty() == false);
+             }
+        }
+   }
+
+
+void
+SgSourceFile::processCppLinemarkers()
+   {
+     SgSourceFile* sourceFile = const_cast<SgSourceFile*>(this);
+
+     SgSourceFile_processCppLinemarkers::LinemarkerTraversal linemarkerTraversal(sourceFile->get_sourceFileNameWithPath());
+
+     linemarkerTraversal.traverse(sourceFile,preorder);
+
+#if 0
+     printf ("Exiting as a test ... (processing linemarkers)\n");
+     ROSE_ASSERT(false);
+#endif
+   }
+ 
  
 int
 SgSourceFile::build_C_and_Cxx_AST( vector<string> argv, vector<string> inputCommandLine )
@@ -5912,7 +6305,7 @@ SgNode::numberOfNodesInSubtree()
      return value;
    }
 
- namespace SgNode_depthOfSubtree
+namespace SgNode_depthOfSubtree
    {
   // This class (AST traversal) could not be defined in the function SgNode::depthOfSubtree()
   // So I have constructed a namespace for this class to be implemented outside of the function.
@@ -6010,5 +6403,77 @@ SgModuleStatement::get_interfaces() const
         }
 
      return  returnList;
+   }
+
+// DQ (11/23/2008): This is a static function
+SgC_PreprocessorDirectiveStatement*
+SgC_PreprocessorDirectiveStatement::createDirective ( PreprocessingInfo* currentPreprocessingInfo )
+   {
+  // This is the new factory interface to build CPP directives as IR nodes.
+     PreprocessingInfo::DirectiveType directive = currentPreprocessingInfo->getTypeOfDirective();
+
+  // SgC_PreprocessorDirectiveStatement* cppDirective = new SgEmptyDirectiveStatement();
+     SgC_PreprocessorDirectiveStatement* cppDirective = NULL;
+
+     switch(directive)
+        {
+          case PreprocessingInfo::CpreprocessorUnknownDeclaration:
+             {
+            // I think this is an error...
+            // locatedNode->addToAttachedPreprocessingInfo(currentPreprocessingInfoPtr);
+               printf ("Error: directive == PreprocessingInfo::CpreprocessorUnknownDeclaration \n");
+               ROSE_ASSERT(false);
+               break;
+             }
+
+          case PreprocessingInfo::C_StyleComment:
+          case PreprocessingInfo::CplusplusStyleComment:
+          case PreprocessingInfo::FortranStyleComment:
+          case PreprocessingInfo::CpreprocessorBlankLine:
+          case PreprocessingInfo::ClinkageSpecificationStart:
+          case PreprocessingInfo::ClinkageSpecificationEnd:
+             {
+               printf ("Error: these cases chould not generate a new IR node (directiveTypeName = %s) \n",PreprocessingInfo::directiveTypeName(directive).c_str());
+               ROSE_ASSERT(false);
+               break;
+             }
+
+          case PreprocessingInfo::CpreprocessorIncludeDeclaration:          { cppDirective = new SgIncludeDirectiveStatement(); break; }
+          case PreprocessingInfo::CpreprocessorIncludeNextDeclaration:      { cppDirective = new SgIncludeNextDirectiveStatement(); break; }
+          case PreprocessingInfo::CpreprocessorDefineDeclaration:           { cppDirective = new SgDefineDirectiveStatement(); break; }
+          case PreprocessingInfo::CpreprocessorUndefDeclaration:            { cppDirective = new SgUndefDirectiveStatement(); break; }
+          case PreprocessingInfo::CpreprocessorIfdefDeclaration:            { cppDirective = new SgIfdefDirectiveStatement(); break; }
+          case PreprocessingInfo::CpreprocessorIfndefDeclaration:           { cppDirective = new SgIfndefDirectiveStatement(); break; }
+          case PreprocessingInfo::CpreprocessorIfDeclaration:               { cppDirective = new SgIfDirectiveStatement(); break; }
+          case PreprocessingInfo::CpreprocessorDeadIfDeclaration:           { cppDirective = new SgDeadIfDirectiveStatement(); break; }
+          case PreprocessingInfo::CpreprocessorElseDeclaration:             { cppDirective = new SgElseDirectiveStatement(); break; }
+          case PreprocessingInfo::CpreprocessorElifDeclaration:             { cppDirective = new SgElseifDirectiveStatement(); break; }
+          case PreprocessingInfo::CpreprocessorEndifDeclaration:            { cppDirective = new SgEndifDirectiveStatement(); break; }
+          case PreprocessingInfo::CpreprocessorLineDeclaration:             { cppDirective = new SgLineDirectiveStatement(); break; }
+          case PreprocessingInfo::CpreprocessorErrorDeclaration:            { cppDirective = new SgErrorDirectiveStatement(); break; }
+          case PreprocessingInfo::CpreprocessorWarningDeclaration:          { cppDirective = new SgWarningDirectiveStatement(); break; }
+          case PreprocessingInfo::CpreprocessorEmptyDeclaration:            { cppDirective = new SgEmptyDirectiveStatement(); break; }
+          case PreprocessingInfo::CpreprocessorIdentDeclaration:            { cppDirective = new SgIdentDirectiveStatement(); break; }
+          case PreprocessingInfo::CpreprocessorCompilerGeneratedLinemarker: { cppDirective = new SgLinemarkerDirectiveStatement(); break; }
+
+          default:
+             {
+               printf ("Error: directive not handled directiveTypeName = %s \n",PreprocessingInfo::directiveTypeName(directive).c_str());
+               ROSE_ASSERT(false);
+             }
+        }
+
+     ROSE_ASSERT(cppDirective != NULL);
+
+     cppDirective->set_directiveString(currentPreprocessingInfo->getString());
+
+  // Set the defining declaration to be a self reference...
+     cppDirective->set_definingDeclaration(cppDirective);
+
+  // Build source position information...
+     cppDirective->set_startOfConstruct(new Sg_File_Info(*(currentPreprocessingInfo->get_file_info())));
+     cppDirective->set_endOfConstruct(new Sg_File_Info(*(currentPreprocessingInfo->get_file_info())));
+
+     return cppDirective;
    }
 

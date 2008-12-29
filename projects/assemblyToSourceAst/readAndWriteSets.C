@@ -58,6 +58,7 @@ ostream& operator<<(ostream& o, const ReadAndWriteSet& rws) {
 
 template <size_t Len> struct W {};
 
+// This is used as a Policy
 struct ReadAndWriteSetPolicy {
   map<rose_addr_t, ReadAndWriteSet> readAndWriteSets;
   SgAsmInstruction* currentInstruction;

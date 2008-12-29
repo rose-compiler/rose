@@ -293,26 +293,34 @@ Grammar::setUpStatements ()
 #endif
 
   // DQ (8/17/2007): Added CPP directives back into the IR to better support analysis and transformations.
-     NEW_TERMINAL_MACRO (IncludeDirectiveStatement,  "IncludeDirectiveStatement", "INCLUDE_DIRECTIVE_STMT" );
-     NEW_TERMINAL_MACRO (DefineDirectiveStatement,   "DefineDirectiveStatement",  "DEFINE_DIRECTIVE_STMT"  );
-     NEW_TERMINAL_MACRO (UndefDirectiveStatement,    "UndefDirectiveStatement",   "UNDEF_DIRECTIVE_STMT"   );
-     NEW_TERMINAL_MACRO (IfdefDirectiveStatement,    "IfdefDirectiveStatement",   "IFDEF_DIRECTIVE_STMT"   );
-     NEW_TERMINAL_MACRO (IfndefDirectiveStatement,   "IfndefDirectiveStatement",  "IFNDEF_DIRECTIVE_STMT"  );
-     NEW_TERMINAL_MACRO (IfDirectiveStatement,       "IfDirectiveStatement",      "IF_DIRECTIVE_STMT"      );
-     NEW_TERMINAL_MACRO (DeadIfDirectiveStatement,   "DeadIfDirectiveStatement",  "DEAD_IF_DIRECTIVE_STMT" );
-     NEW_TERMINAL_MACRO (ElseDirectiveStatement,     "ElseDirectiveStatement",    "ELSE_DIRECTIVE_STMT"    );
-     NEW_TERMINAL_MACRO (ElseifDirectiveStatement,   "ElseifDirectiveStatement",  "ELSEIF_DIRECTIVE_STMT"  );
-     NEW_TERMINAL_MACRO (EndifDirectiveStatement,    "EndifDirectiveStatement",   "ENDIF_DIRECTIVE_STMT"   );
-     NEW_TERMINAL_MACRO (LineDirectiveStatement,     "LineDirectiveStatement",    "LINE_DIRECTIVE_STMT"    );
-     NEW_TERMINAL_MACRO (WarningDirectiveStatement,  "WarningDirectiveStatement", "WARNING_DIRECTIVE_STMT" );
-     NEW_TERMINAL_MACRO (ErrorDirectiveStatement,    "ErrorDirectiveStatement",   "ERROR_DIRECTIVE_STMT"   );
-     NEW_TERMINAL_MACRO (EmptyDirectiveStatement,    "EmptyDirectiveStatement",   "EMPTY_DIRECTIVE_STMT"   );
+     NEW_TERMINAL_MACRO (IncludeDirectiveStatement,     "IncludeDirectiveStatement", "INCLUDE_DIRECTIVE_STMT" );
+     NEW_TERMINAL_MACRO (DefineDirectiveStatement,      "DefineDirectiveStatement",      "DEFINE_DIRECTIVE_STMT"  );
+     NEW_TERMINAL_MACRO (UndefDirectiveStatement,       "UndefDirectiveStatement",       "UNDEF_DIRECTIVE_STMT"   );
+     NEW_TERMINAL_MACRO (IfdefDirectiveStatement,       "IfdefDirectiveStatement",       "IFDEF_DIRECTIVE_STMT"   );
+     NEW_TERMINAL_MACRO (IfndefDirectiveStatement,      "IfndefDirectiveStatement",      "IFNDEF_DIRECTIVE_STMT"  );
+     NEW_TERMINAL_MACRO (IfDirectiveStatement,          "IfDirectiveStatement",          "IF_DIRECTIVE_STMT"      );
+     NEW_TERMINAL_MACRO (DeadIfDirectiveStatement,      "DeadIfDirectiveStatement",      "DEAD_IF_DIRECTIVE_STMT" );
+     NEW_TERMINAL_MACRO (ElseDirectiveStatement,        "ElseDirectiveStatement",        "ELSE_DIRECTIVE_STMT"    );
+     NEW_TERMINAL_MACRO (ElseifDirectiveStatement,      "ElseifDirectiveStatement",      "ELSEIF_DIRECTIVE_STMT"  );
+     NEW_TERMINAL_MACRO (EndifDirectiveStatement,       "EndifDirectiveStatement",       "ENDIF_DIRECTIVE_STMT"   );
+     NEW_TERMINAL_MACRO (LineDirectiveStatement,        "LineDirectiveStatement",        "LINE_DIRECTIVE_STMT"    );
+     NEW_TERMINAL_MACRO (WarningDirectiveStatement,     "WarningDirectiveStatement",     "WARNING_DIRECTIVE_STMT" );
+     NEW_TERMINAL_MACRO (ErrorDirectiveStatement,       "ErrorDirectiveStatement",       "ERROR_DIRECTIVE_STMT"   );
+     NEW_TERMINAL_MACRO (EmptyDirectiveStatement,       "EmptyDirectiveStatement",       "EMPTY_DIRECTIVE_STMT"   );
+
+  // DQ (11/28/2008): Added new IR nodes.
+     NEW_TERMINAL_MACRO (IncludeNextDirectiveStatement, "IncludeNextDirectiveStatement", "INCLUDE_NEXT_DIRECTIVE_STMT" );
+     NEW_TERMINAL_MACRO (IdentDirectiveStatement,       "IdentDirectiveStatement",       "IDENT_DIRECTIVE_STMT"   );
+
+  // Note that this IR nodes is critical to Fortran support for CPP processed generated code.
+     NEW_TERMINAL_MACRO (LinemarkerDirectiveStatement,  "LinemarkerDirectiveStatement",  "LINEMARKER_DIRECTIVE_STMT"   );
 
      NEW_NONTERMINAL_MACRO (C_PreprocessorDirectiveStatement,
-          IncludeDirectiveStatement | DefineDirectiveStatement      | UndefDirectiveStatement  | 
-          IfdefDirectiveStatement   | IfndefDirectiveStatement      | IfDirectiveStatement     | DeadIfDirectiveStatement   | 
-          ElseDirectiveStatement    | ElseifDirectiveStatement      | EndifDirectiveStatement  |
-          LineDirectiveStatement    | WarningDirectiveStatement     | ErrorDirectiveStatement  | EmptyDirectiveStatement,
+          IncludeDirectiveStatement     | DefineDirectiveStatement  | UndefDirectiveStatement  | 
+          IfdefDirectiveStatement       | IfndefDirectiveStatement  | IfDirectiveStatement     | DeadIfDirectiveStatement   | 
+          ElseDirectiveStatement        | ElseifDirectiveStatement  | EndifDirectiveStatement  |
+          LineDirectiveStatement        | WarningDirectiveStatement | ErrorDirectiveStatement  | EmptyDirectiveStatement |
+          IncludeNextDirectiveStatement | IdentDirectiveStatement   | LinemarkerDirectiveStatement,
           "C_PreprocessorDirectiveStatement", "CPP_DIRECTIVE_STMT", false );
 
      NEW_TERMINAL_MACRO (ClinkageStartStatement,"ClinkageStartStatement","C_LINKAGE_START_STMT" );
@@ -2501,7 +2509,7 @@ Grammar::setUpStatements ()
   //    2) the integer values used for compiler generate line numbers, etc.
   // For now the "directiveString" stores the full line represented by the CPP directive.
      C_PreprocessorDirectiveStatement.setDataPrototype     ( "std::string"   , "directiveString", "= \"\"",
-                                             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 #if 0
   // DQ (11/23/2008): I am unclear why this is here, these are not used anywhere.
@@ -2534,6 +2542,16 @@ Grammar::setUpStatements ()
      EmptyDirectiveStatement.setDataPrototype     ( "std::string"   , "dummyString15", "= \"\"",
                                              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
+
+  // DQ (11/28/2008): Thes are used to mark line numbers in generated CPP output.
+     LinemarkerDirectiveStatement.setFunctionPrototype ( "HEADER_LINEMARKER_PREPROCESSOR_DIRECTIVE_STATEMENT", "../Grammar/Statement.code" );
+     LinemarkerDirectiveStatement.setDataPrototype ( "int", "linenumber", "= -1",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     LinemarkerDirectiveStatement.setDataPrototype ( "std::string", "filename", "= \"\"",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // The integer values are stored as char (values are '1', '2', '3', '4'), flag values are seperated by spaces.
+     LinemarkerDirectiveStatement.setDataPrototype ( "SgUnsignedCharList", "flaglist", "",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // Support for extern "C" and extern "C++"
      ClinkageDeclarationStatement.setDataPrototype ( "std::string"   , "languageSpecifier", "= \"\"",
@@ -2827,6 +2845,7 @@ Grammar::setUpStatements ()
 
   // DQ (11/23/2008): Added support for CPP directives as IR nodes.
      C_PreprocessorDirectiveStatement.setFunctionSource ( "SOURCE_PREPROCESSOR_DIRECTIVE_STATEMENT", "../Grammar/Statement.code" );
+     LinemarkerDirectiveStatement.setFunctionSource     ( "SOURCE_LINEMARKER_PREPROCESSOR_DIRECTIVE_STATEMENT", "../Grammar/Statement.code" );
 
 #if 1
   // DQ (11/23/2008): Removed this by putting the post_construction_initialization into the base class.
@@ -2851,6 +2870,10 @@ Grammar::setUpStatements ()
      ClinkageEndStatement.setFunctionSource             ( "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
 
      FortranIncludeLine.setFunctionSource               ( "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
+
+     LinemarkerDirectiveStatement.setFunctionSource     ( "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
+     IncludeNextDirectiveStatement.setFunctionSource    ( "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
+     IdentDirectiveStatement.setFunctionSource          ( "SOURCE_POST_CONSTRUCTION_INITIALIZATION_STATEMENT", "../Grammar/Statement.code" );
 #endif
 
      FortranIncludeLine.setFunctionSource               ( "SOURCE_FORTRAN_INCLUDE_LINE", "../Grammar/Statement.code" );

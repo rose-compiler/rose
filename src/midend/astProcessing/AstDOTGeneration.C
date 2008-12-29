@@ -240,6 +240,22 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                nodelabel += string("\\n") + name;
         }
 
+  // DQ (11/29/2008): Output the directives in the label of the IR node.
+     SgC_PreprocessorDirectiveStatement* preprocessorDirective = isSgC_PreprocessorDirectiveStatement(node);
+     if (preprocessorDirective != NULL)
+        {
+          string s = preprocessorDirective->get_directiveString();
+
+       // Change any double quotes to single quotes so that DOT will not misunderstand the generated lables.
+          while (s.find("\"") != string::npos)
+             {
+               s.replace(s.find("\""),1,"\'");
+             }
+
+          if (s.empty() == false)
+               nodelabel += string("\\n") + s;
+        }
+
      nodelabel += additionalNodeInfo(node);
 
   // DQ (11/1/2003) added mechanism to add additional options (to add color, etc.)

@@ -29,6 +29,20 @@ using namespace IntegerOps;
 #define V2QWORDT (SgAsmTypeVector::createType(2, QWORDT))
 #define V2DOUBLET (SgAsmTypeVector::createType(2, DOUBLET))
 
+
+// Work left to do:
+//   1) Fix existing FIXMEs and ASSERT's within the current implementation.
+//   2) We need SgAsmTypes in the IR for more data types: Far Pointers, 
+//      FPU environment (m14/28 byte, 14 bytes for 16 bit mode and 28 bytes for 32 bit mode),
+//      FPU State (m94/108 byte see section about "fsave" page 3-372)
+//      ..., also m16&16 (16bit pair of operands for bounds checking: "bound"),
+//      also versions for 32bit and 64bit. (See section 3.1.1.2).
+//   
+
+
+// See section 9.11 in Volume 3A of Intel for details of how to store new microcode into the processor.
+
+
 namespace X86Disassembler {
 
   enum RepeatPrefix {rpNone, rpRepne, rpRepe};
@@ -310,12 +324,18 @@ namespace X86Disassembler {
     }
 
     void getModRegRM(RegisterMode regMode, RegisterMode rmMode, SgAsmType* t, SgAsmType* tForReg = NULL) {
+
+   // "RM" stands for Register or Memory and "Mod" is mode).
+   // First parameter is the register kind for the reg field of the modregrm byte.
+   // Second parameter is the register kind for the RM field when the mod refers to a register.
+
       if (!tForReg) {tForReg = t;}
       getByte(modregrmByte);
       modregrmByteSet = true;
       modeField = modregrmByte >> 6;
       regField = (modregrmByte & 070) >> 3;
       rmField = modregrmByte & 7;
+
       reg = makeModrmRegister(regMode, tForReg);
       modrm = makeModrmNormal(rmMode, t);
     }
@@ -541,6 +561,10 @@ namespace X86Disassembler {
     }
 
     SgAsmx86Instruction* decodeOpcode0F();
+
+ // DQ (12/3/2008): Added initial support for SSSE3
+    SgAsmx86Instruction* decodeOpcode0F38();
+
     SgAsmx86Instruction* decodeX87InstructionD8();
     SgAsmx86Instruction* decodeX87InstructionD9();
     SgAsmx86Instruction* decodeX87InstructionDA();
@@ -693,6 +717,20 @@ namespace X86Disassembler {
   }
 
   SgAsmx86Instruction* SingleInstructionDisassembler::disassemble() {
+
+ // Subsets of the x86 instruction set left to be implements (not implemented).
+ //    1) SSE 4 (4a, 4b, 4.1) To generate binary that uses these instructions use a modern version of the Intel compiler.
+ //    2) AVX (Intel instructions, these are new and not available in any software yet (Dec,2008))
+ //    3) SSE 5 (AMD instructions, these instructions are not available in any software yet (Dec,2008))
+ //    4) SSSE 3 (Supplemental SSE 3) To generate binary that uses these instructions use a modern version of the Intel compiler.
+
+ // Note that prefix handling is supported by state that is set and used in the parsing of the instrcution op codes.
+ // This state is fully contained in the SingleInstructionDisassembler class.
+
+ // Note that this function is called recursively to handle REX and Legacy prefixs 
+ // (see appendix B of volume 2B of Intel 64 and IA-32 Architecute Software Developers Manual).
+ // Also, the order of the prefix is not inforced by this design. See section 2.1.1 of volume 2A.
+
     uint8_t opcode;
     getByte(opcode);
     SgAsmx86Instruction* insn = 0;
@@ -701,6 +739,9 @@ namespace X86Disassembler {
       case 0x01: {getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); insn = MAKE_INSN2(add, add, modrm, reg); goto done;}
       case 0x02: {getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); insn = MAKE_INSN2(add, add, reg, modrm); goto done;}
       case 0x03: {getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); insn = MAKE_INSN2(add, add, reg, modrm); goto done;}
+
+   // Immediate values are read as required and acts as a recursive decent parser.
+   // Function names are taken from the manual (Intel x86 Instruction Set Reference: Appendix A: Opcode Map)
       case 0x04: {SgAsmExpression* imm = getImmByteAsIv(); insn = MAKE_INSN2(add, add, makeRegister(0, rmLegacyByte), imm); goto done;}
       case 0x05: {SgAsmExpression* imm = getImmIzAsIv(); insn = MAKE_INSN2(add, add, makeRegisterEffective(0), imm); goto done;}
       case 0x06: {not64(); insn = MAKE_INSN1(push, push, makeRegister(0, rmSegment)); goto done;}
@@ -743,6 +784,8 @@ namespace X86Disassembler {
       case 0x2B: {getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); insn = MAKE_INSN2(sub, sub, reg, modrm); goto done;}
       case 0x2C: {SgAsmExpression* imm = getImmByteAsIv(); insn = MAKE_INSN2(sub, sub, makeRegister(0, rmLegacyByte), imm); goto done;}
       case 0x2D: {SgAsmExpression* imm = getImmIzAsIv(); insn = MAKE_INSN2(sub, sub, makeRegisterEffective(0), imm); goto done;}
+
+   // Example of recursive use of disassemble()
       case 0x2E: {segOverride = x86_segreg_cs; branchPrediction = x86_branch_prediction_not_taken; insn = disassemble(); goto done;}
       case 0x2F: {not64(); insn = MAKE_INSN0(das, das); goto done;}
       case 0x30: {getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); insn = MAKE_INSN2(xor, xor, modrm, reg); goto done;}
@@ -871,7 +914,12 @@ namespace X86Disassembler {
       case 0x7D: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jge, jge, imm); goto done;}
       case 0x7E: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jle, jle, imm); goto done;}
       case 0x7F: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jg , jg , imm); goto done;}
+
+   // The names for groups will make more sense relative to the AMD manual.
       case 0x80: {getModRegRM(rmReturnNull, rmLegacyByte, BYTET); SgAsmExpression* imm = getImmByte(); insn = decodeGroup1(imm); goto done;}
+
+   // effectiveOperandMode() returns register mode for the effective operand size (16bit, 32, bit, 64bit)
+   // effectiveOperandType() does the same thing but returne a SgAsmType.
       case 0x81: {getModRegRM(rmReturnNull, effectiveOperandMode(), effectiveOperandType()); SgAsmExpression* imm = getImmIzAsIv(); insn = decodeGroup1(imm); goto done;}
       case 0x82: {not64(); getModRegRM(rmReturnNull, rmLegacyByte, BYTET); SgAsmExpression* imm = getImmByte(); insn = decodeGroup1(imm); goto done;}
       case 0x83: {getModRegRM(rmReturnNull, effectiveOperandMode(), effectiveOperandType()); SgAsmExpression* imm = getImmByteAsIv(); insn = decodeGroup1(imm); goto done;}
@@ -1523,7 +1571,7 @@ done:
       case 0x0C: throw BadInstruction();
       case 0x0D: return decodeGroupP();
       case 0x0E: return MAKE_INSN0(femms, femms);
-      case 0x0F: { // 3DNow!
+      case 0x0F: { // 3DNow! (AMD Specific)
         getModRegRM(rmReturnNull, rmReturnNull, NULL);
         uint8_t thirdOpcodeByte;
         getByte(thirdOpcodeByte);
@@ -1655,6 +1703,11 @@ done:
       case 0x1D: getModRegRM(rmReturnNull, rmReturnNull, NULL); return MAKE_INSN0(nop, nop);
       case 0x1E: getModRegRM(rmReturnNull, rmReturnNull, NULL); return MAKE_INSN0(nop, nop);
       case 0x1F: getModRegRM(rmReturnNull, rmReturnNull, NULL); return MAKE_INSN0(nop, nop);
+
+   // BUG: The mode and type fields should forced to the current processor number of bits 
+   // instead of the size determied by the operand size flag. See documentation for move 
+   // to control register ("lock mov cr0, *").  This may be an AMD specific issue, but the 
+   // operand size issues is a bug everywhere.
       case 0x20: getModRegRM(rmControl, effectiveOperandMode(), effectiveOperandType()); if (modeField == 3) return MAKE_INSN2(mov, mov, modrm, reg); else throw BadInstruction();
       case 0x21: getModRegRM(rmDebug, effectiveOperandMode(), effectiveOperandType()); if (modeField == 3) return MAKE_INSN2(mov, mov, modrm, reg); else throw BadInstruction();
       case 0x22: getModRegRM(rmControl, effectiveOperandMode(), effectiveOperandType()); if (modeField == 3) return MAKE_INSN2(mov, mov, reg, modrm); else throw BadInstruction();
@@ -1736,7 +1789,11 @@ done:
       case 0x35: not64(); return MAKE_INSN0(sysexit, sysexit);
       case 0x36: throw BadInstruction();
       case 0x37: return MAKE_INSN0(getsec, getsec);
-      case 0x38: ROSE_ASSERT (!"0F38");
+
+   // DQ (12/3/2008): Adding instruction support for SSSE3.
+   // case 0x38: ROSE_ASSERT (!"0F38");
+      case 0x38: decodeOpcode0F38();
+
       case 0x39: throw BadInstruction();
       case 0x3A: ROSE_ASSERT (!"0F3A");
       case 0x3B: throw BadInstruction();
@@ -2298,6 +2355,8 @@ done:
       case 0xB7: getModRegRM(effectiveOperandMode(), rmWord, WORDT); return MAKE_INSN2(movzx, movzx, reg, modrm);
       case 0xB8: {
         getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
+
+     // Here is an example of the existence of a prefix leading to two very different instructions.
         switch (mmPrefix()) {
           case mmNone: isUnconditionalJump = true; return MAKE_INSN1(jmpe, jmpe, modrm);
           case mmF3: return MAKE_INSN2(popcnt, popcnt, reg, modrm);
@@ -2794,6 +2853,32 @@ done:
       default: ROSE_ASSERT (false);
     }
   }
+
+// DQ (12/3/2008): Added initial support for SSSE3
+SgAsmx86Instruction* SingleInstructionDisassembler::decodeOpcode0F38()
+   {
+ // Support for SSSE 3 (opcode 0F38)
+    uint8_t opcode;
+
+ // Get the third byte of the opcode (the first two were read by the caller (decodeOpcode0F())
+    getByte(opcode);
+    switch (opcode) {
+      case 0x00: {
+        switch (mmPrefix()) {
+       // The pshufb name is used twice because one is for the generated enum name and other is for the instruction name.
+       // Note that getModRegRM sets the states reg and modrm.
+       // Also, standard prefixed used in the manual, "mm" refers to "mmx" registers and "xmm" refers to "sse" registers.
+          case mmNone: getModRegRM(rmMM, rmMM, V2DWORDT); return MAKE_INSN2(pshufb, pshufb, reg, modrm);
+          case mmF3: throw BadInstruction();
+          case mm66: getModRegRM(rmXMM, rmXMM, V4DWORDT); return MAKE_INSN2(pshufb, pshufb, reg, modrm);
+          case mmF2: throw BadInstruction();
+        }
+      }
+
+      default: throw BadInstruction();
+    }
+  }
+
 
   SgAsmx86Instruction* SingleInstructionDisassembler::decodeGroup1(SgAsmExpression* imm) {
     switch (regField) {

@@ -11,3 +11,19 @@ We use EDG mostly as is, and make only minor changes:
 
 We need a more complete list, some of what has been modified in 3.3 is no longer required
 in versions after 3.7. 
+
+
+Notes:
+
+1) To run the EDG unparser:
+      $(ROSE_BUILD_TREE)/src/frontend/CxxFrontend/EDG_3.10/src/cp_gen_be --edg_base=$(ROSE_BUILD_TREE)/src/frontend/CxxFrontend/EDG_3.10/lib $(SOURCE_FILES)
+
+   The --edg_base directory can also be set through the EDG_BASE environment variable.
+   The output goes into <source-file-base-name>.int.c (even for C++).
+
+2) New work in ROSE introduces a new connection between EDG and SageIII, the 
+   new connection required a configure option "" 
+   and also switches ROSe to use the EDG version 3.10 frontend.  This
+   work is currently experimental and will evolve with time.
+
+

@@ -114,6 +114,14 @@ FortranCodeGeneration_locatedNode::unparseStatementNumbers ( SgStatement* stmt, 
   // This is a Fortran specific case (different from use of SgLabelStatement in C/C++).
   // unparseStatementNumbersSupport(stmt->get_numeric_label(),info);
 
+  // DQ (11/29/2008): If this is a CPP directive then don't output statement 
+  // number or the white space for then in fixed format mode.
+     if (isSgC_PreprocessorDirectiveStatement(stmt) != NULL)
+        {
+          printf ("This is a CPP directive, skip leading white space in unparsing. \n");
+          return;
+        }
+
   // This fixes a formatting problem, an aspect fo which was reported by Liao 12/28/2007).
      if ( isSgGlobal(stmt) != NULL || isSgBasicBlock(stmt) != NULL )
         {
