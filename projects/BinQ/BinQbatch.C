@@ -68,7 +68,7 @@ int BinQbatch::addRemainingAnalyses() {
   int before = analyses.size();
   std::vector<BinAnalyses*>::const_iterator it =preanalyses.begin();
   for (;it!=preanalyses.end();++it) {
-    preanalyses.push_back(*it);    
+    analyses.push_back(*it);    
   }
 
   analyses.push_back(new DwarfFileInfo());
