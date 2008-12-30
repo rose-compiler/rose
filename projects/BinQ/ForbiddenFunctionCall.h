@@ -28,6 +28,7 @@ class ForbiddenFunctionCall : public BinAnalyses,AstSimpleProcessing {
   std::vector<std::string> blackList;
   std::map<SgNode*,std::string> result;
   std::set<std::string> foundFunction;
+  std::set<SgNode*> foundInstruction;
 };
 
 

@@ -51,6 +51,7 @@ ForbiddenFunctionCall::visit(SgNode* node) {
     if (it==foundFunction.end())
       foundFunction.insert(fname);
   }
+  foundInstruction.insert(node);
 }
 
 void
@@ -77,6 +78,7 @@ ForbiddenFunctionCall::runTraversal(SgNode* project) {
   blackList.push_back("unparseToString");
 
   foundFunction.clear();
+  foundInstruction.clear();
   this->traverse(project,preorder);
 }
 
@@ -124,7 +126,9 @@ ForbiddenFunctionCall::run(SgNode* fileA, SgNode* fileB) {
     instance->analysisResult->append(res);  
   }
   std::cerr << "    ForbiddenFunctionCall : Total # functions: " << 
-      RoseBin_support::ToString(foundFunction.size()) << std::endl;
+    RoseBin_support::ToString(foundFunction.size()) 
+	    << "    # instructions: " << 
+    RoseBin_support::ToString(foundInstruction.size()) << std::endl;
 }
 
 
