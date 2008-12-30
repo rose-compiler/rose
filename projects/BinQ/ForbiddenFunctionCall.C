@@ -46,7 +46,7 @@ ForbiddenFunctionCall::visit(SgNode* node) {
   }
   if (isSgAsmFunctionDeclaration(node)) {
     string fname = isSgAsmFunctionDeclaration(node)->get_name();
-    cerr << " name === " << fname << endl;
+    //cerr << " name === " << fname << endl;
     std::set<std::string>::const_iterator it = foundFunction.find(fname);
     if (it==foundFunction.end())
       foundFunction.insert(fname);
@@ -114,19 +114,21 @@ ForbiddenFunctionCall::run(SgNode* fileA, SgNode* fileB) {
   genericF = file->get_genericFile() ;
   runTraversal(isSgProject(fileA));
 
-  std::set<std::string>::const_iterator it = foundFunction.begin();
-  for (;it!=foundFunction.end();++it) {
-    string fname = *it;
-    std::cout << " function name ==== " << fname << std::endl;
+  if (debug) {
+    std::set<std::string>::const_iterator it = foundFunction.begin();
+    for (;it!=foundFunction.end();++it) {
+      string fname = *it;
+      std::cout << " function name ==== " << fname << std::endl;
+    }
   }
-
 
   if (instance) {
     QString res = QString("\n>>>>>>>>>>>>>>>> Resolving call addresses to names ... total # functions: %1")
       .arg(RoseBin_support::ToString(foundFunction.size()).c_str());
     instance->analysisResult->append(res);  
   }
-  std::cerr << "    ForbiddenFunctionCall : Total # functions: " << 
+  std::cerr << "    ForbiddenFunctionCall : Fobidden Functions : " <<
+    RoseBin_support::ToString(result.size()) << "   Total # functions: " << 
     RoseBin_support::ToString(foundFunction.size()) 
 	    << "    # instructions: " << 
     RoseBin_support::ToString(foundInstruction.size()) << std::endl;
