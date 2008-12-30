@@ -51,7 +51,8 @@ ForbiddenFunctionCall::visit(SgNode* node) {
     if (it==foundFunction.end())
       foundFunction.insert(fname);
   }
-  foundInstruction.insert(node);
+  if (isSgAsmInstruction(node)) 
+      foundInstruction.insert(node);
 }
 
 void
