@@ -15,6 +15,7 @@ using namespace std;
 using namespace __gnu_cxx;
 using namespace  RoseBin_DataTypes;
 
+
 std::string BufferOverflow::name() {
   return "Buffer Overflow Analysis";
 }
@@ -230,7 +231,7 @@ BufferOverflow::run(SgNode* fileA, SgNode* fileB) {
     return;
   }
 
-  RoseBin_Graph* graph=NULL;
+
   ROSE_ASSERT(isSgProject(fileA));
   SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
   SgAsmFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
@@ -253,19 +254,27 @@ BufferOverflow::run(SgNode* fileA, SgNode* fileB) {
   bool mergedEdges=true;
   bool interprocedural=false;
   string dfgFileName = "dfg.dot";
-  graph= new RoseBin_DotGraph(info);
-  if (dot==false) {
-    dfgFileName = "dfg.gml";
-    graph= new RoseBin_GMLGraph(info);
-  }
+  if (graph==NULL) {
+    cerr << "No graph found yet .. creating graph " << endl;
+    graph= new RoseBin_DotGraph(info);
+    if (dot==false) {
+      dfgFileName = "dfg.gml";
+      graph= new RoseBin_GMLGraph(info);
+    }
+  } 
 
   SgAsmInterpretation* interp = SageInterface::getMainInterpretation(file);
-  RoseBin_DataFlowAnalysis* dfanalysis = 
-    new RoseBin_DataFlowAnalysis(interp->get_global_block(), forward, new RoseObj(), info);
-  ROSE_ASSERT(dfanalysis);
-  dfanalysis->writeToFile(false);
-  dfanalysis->init(interprocedural, edges);
-  dfanalysis->run(graph, dfgFileName, mergedEdges);
+  if (dfanalysis==NULL) {
+    cerr << "No dataflow analysis run yet ... running ... " << endl;
+    dfanalysis = 
+      new RoseBin_DataFlowAnalysis(interp->get_global_block(), forward, new RoseObj(), info);
+    ROSE_ASSERT(dfanalysis);
+    dfanalysis->writeToFile(false);
+    dfanalysis->init(interprocedural, edges);
+    dfanalysis->run(graph, dfgFileName, mergedEdges);
+  } else {
+    cerr << "Dataflow analysis run before ... " << endl;
+  }
 
   if (instance) {
     res = QString("nr of nodes visited %1. nr of edges visited %2. ")

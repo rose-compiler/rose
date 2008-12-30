@@ -13,6 +13,9 @@ using namespace qrs;
 using namespace std;
 using namespace __gnu_cxx;
 
+RoseBin_DataFlowAnalysis* BinAnalyses::dfanalysis=NULL;
+RoseBin_Graph* BinAnalyses::graph=NULL;
+
 std::string BinDataFlowAnalysis::name() {
   return "Data Flow Graph";
 }
@@ -32,7 +35,7 @@ BinDataFlowAnalysis::run(SgNode* fileA, SgNode* fileB) {
     return;
   }
 
-  RoseBin_Graph* graph=NULL;
+  graph=NULL;
   ROSE_ASSERT(isSgProject(fileA));
   SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
   SgAsmFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
@@ -60,7 +63,7 @@ BinDataFlowAnalysis::run(SgNode* fileA, SgNode* fileB) {
   }
 
   SgAsmInterpretation* interp = SageInterface::getMainInterpretation(file);
-  RoseBin_DataFlowAnalysis* dfanalysis = 
+  dfanalysis = 
     new RoseBin_DataFlowAnalysis(interp->get_global_block(), forward, new RoseObj(), info);
   ROSE_ASSERT(dfanalysis);
   dfanalysis->init(interprocedural, edges);
@@ -79,7 +82,7 @@ void
 BinDataFlowAnalysis::test(SgNode* fileA, SgNode* fileB) {
 
 
-  RoseBin_Graph* graph=NULL;
+  graph=NULL;
   ROSE_ASSERT(isSgProject(fileA));
   SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
   SgAsmFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
@@ -102,7 +105,7 @@ BinDataFlowAnalysis::test(SgNode* fileA, SgNode* fileB) {
   }
 
   SgAsmInterpretation* interp = SageInterface::getMainInterpretation(file);
-  RoseBin_DataFlowAnalysis* dfanalysis = 
+  dfanalysis = 
     new RoseBin_DataFlowAnalysis(interp->get_global_block(), forward, new RoseObj(), info);
   ROSE_ASSERT(dfanalysis);
   dfanalysis->init(interprocedural, edges);

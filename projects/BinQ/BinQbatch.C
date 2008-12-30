@@ -42,15 +42,19 @@ BinQbatch::BinQbatch(std::string fA, std::string fB, std::vector<std::string> dl
   if (test==false)
     createGUI();
   cerr << "Initialization done." <<endl;
-  if (test)
-    testAnalyses();
+  if (test) {
+    testAnalyses(preanalyses);
+    testAnalyses(analyses);
+  }
 }
 
 void BinQbatch::initAnalyses() {
   cerr << "Checking for analyses ... " << endl;
   analyses.clear();
-  analyses.push_back(new BinCallGraph());
-  analyses.push_back(new DynamicInfo());
+  preanalyses.clear();
+  preanalyses.push_back(new DynamicInfo());
+  preanalyses.push_back(new BinDataFlowAnalysis());
+
   analyses.push_back(new ForbiddenFunctionCall());
   analyses.push_back(new MallocAndFree());
   analyses.push_back(new NullAfterFree());
@@ -62,39 +66,45 @@ void BinQbatch::initAnalyses() {
 
 int BinQbatch::addRemainingAnalyses() {
   int before = analyses.size();
+  std::vector<BinAnalyses*>::const_iterator it =preanalyses.begin();
+  for (;it!=preanalyses.end();++it) {
+    preanalyses.push_back(*it);    
+  }
+
+  analyses.push_back(new DwarfFileInfo());
+  analyses.push_back(new BinCallGraph());
   analyses.push_back(new DiffAlgo());
   analyses.push_back(new FunctionDiffAlgo());
   analyses.push_back(new AlignFunction());
   analyses.push_back(new BinControlFlowAnalysis());
-  analyses.push_back(new BinDataFlowAnalysis());
   analyses.push_back(new InterruptAnalysis());
   return before;
 }
 
 // This is for testing purposes only
 void
-BinQbatch::runAnalyses() {
+BinQbatch::runAnalyses( std::vector<BinAnalyses*>& analysesVec, bool init) {
   string fileName = "analysisResult.txt";
   double startTotal = RoseBin_support::getTime();
   std::ofstream myfile;
   myfile.open(fileName.c_str());
   int problems=0;
 
-  for (unsigned int i=0;i<analyses.size();++i) {
-    bool twoFiles = analyses[i]->twoFiles();
+  for (unsigned int i=0;i<analysesVec.size();++i) {
+    bool twoFiles = analysesVec[i]->twoFiles();
     if (twoFiles && fileB!=NULL || twoFiles==false) {
-      currentAnalysis=analyses[i];
+      currentAnalysis=analysesVec[i];
       if (currentAnalysis) {
-	cerr << "Running analysis : " << analyses[i]->name().c_str() << endl;
+	cerr << "Running analysis : " << analysesVec[i]->name().c_str() << endl;
 	double start = RoseBin_support::getTime();
 	currentAnalysis->test(fileA,fileB);
 	double end = RoseBin_support::getTime();
 	double time = (double) (end - start);
 	map<SgNode*,string> resu = currentAnalysis->getResult();
 	problems+=resu.size();
-	myfile << "Running analysis : " << analyses[i]->name().c_str() <<
+	myfile << "Running analysis : " << analysesVec[i]->name().c_str() <<
 	  "   time : " << time << "   Problems : " << RoseBin_support::ToString(resu.size()) << endl;
-	cerr << "Running analysis : " << analyses[i]->name().c_str() <<
+	cerr << "Running analysis : " << analysesVec[i]->name().c_str() <<
 	  "   time : " << time << "   Problems : " << RoseBin_support::ToString(resu.size()) << endl;
 	QString res = QString("Running ... %1  time : %2   Problems: %3")
 	  .arg(currentAnalysis->name().c_str())
@@ -115,21 +125,24 @@ BinQbatch::runAnalyses() {
  
   double endTotal = RoseBin_support::getTime();
   double timeTotal = (double) (endTotal - startTotal);
-  myfile << "\nTotal time : " << timeTotal << "  total problems: " << problems << endl;
+  myfile << "\nTotal time : " << timeTotal << "  total problems: " <<  RoseBin_support::ToString(problems) << endl;
   myfile.close();  
 
   QString res = QString("Total time ... %1   Total problems %2")
     .arg(timeTotal)
-    .arg(problems);
+    .arg( RoseBin_support::ToString(problems).c_str());
   analysisResult->append(res);  
-  
-  int start = addRemainingAnalyses();
 
-  for (unsigned int i=start; i < analyses.size(); ++i){
-    new QListWidgetItem((analyses[i]->name().c_str()), listWidget);
+  if (init) {} 
+  else {
+    int start = addRemainingAnalyses();
+    
+    for (unsigned int i=start; i < analysesVec.size(); ++i){
+      new QListWidgetItem((analysesVec[i]->name().c_str()), listWidget);
+    }
+    
+    updateByteItemList();
   }
-
-  updateByteItemList();
 }
 
 

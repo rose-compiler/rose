@@ -92,7 +92,7 @@ class BinQGUI : public BinQAbstract
     void insertFileInformation();
   protected:
     // used for testing
-    void testAnalyses();
+    void testAnalyses(std::vector<BinAnalyses*>& analysesVec);
     // support functions
     void showFileTab();
     void createGUI();

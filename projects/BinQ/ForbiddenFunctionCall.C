@@ -45,8 +45,11 @@ ForbiddenFunctionCall::visit(SgNode* node) {
     }
   }
   if (isSgAsmFunctionDeclaration(node)) {
-    foundFunction++;
-    std::cout << " name ==== " << isSgAsmFunctionDeclaration(node)->get_name() << std::endl;
+    string fname = isSgAsmFunctionDeclaration(node)->get_name();
+    cerr << " name === " << fname << endl;
+    std::set<std::string>::const_iterator it = foundFunction.find(fname);
+    if (it==foundFunction.end())
+      foundFunction.insert(fname);
   }
 }
 
@@ -73,6 +76,7 @@ ForbiddenFunctionCall::runTraversal(SgNode* project) {
   blackList.push_back("unparse");
   blackList.push_back("unparseToString");
 
+  foundFunction.clear();
   this->traverse(project,preorder);
 }
 
@@ -104,18 +108,23 @@ ForbiddenFunctionCall::run(SgNode* fileA, SgNode* fileB) {
     instance->analysisResult->append(res);  
   }
 
-  foundFunction=0;
   genericF = file->get_genericFile() ;
   runTraversal(isSgProject(fileA));
+
+  std::set<std::string>::const_iterator it = foundFunction.begin();
+  for (;it!=foundFunction.end();++it) {
+    string fname = *it;
+    std::cout << " function name ==== " << fname << std::endl;
+  }
 
 
   if (instance) {
     QString res = QString("\n>>>>>>>>>>>>>>>> Resolving call addresses to names ... total # functions: %1")
-      .arg(foundFunction);
+      .arg(RoseBin_support::ToString(foundFunction.size()).c_str());
     instance->analysisResult->append(res);  
   }
   std::cerr << "    ForbiddenFunctionCall : Total # functions: " << 
-    RoseBin_support::ToString(foundFunction) << std::endl;
+      RoseBin_support::ToString(foundFunction.size()) << std::endl;
 }
 
 

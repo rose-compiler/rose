@@ -31,7 +31,8 @@ BinQ_SOURCES = \
 	NullAfterFree.C \
 	MallocAndFree.C \
 	InitPointerToNull.C \
-	ComplexityMetric.C
+	ComplexityMetric.C \
+	DwarfFileInfo.C
 
 
 
@@ -105,5 +106,6 @@ EXTRA_DIST = BinQGui.h \
              NullAfterFree.h \
              MallocAndFree.h \
              InitPointerToNull.h \
-             ComplexityMetric.h
+             ComplexityMetric.h \
+             DwarfFileInfo.h
 

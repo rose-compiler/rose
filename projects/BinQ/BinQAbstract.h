@@ -22,6 +22,7 @@
 #include "MallocAndFree.h"
 #include "InitPointerToNull.h"
 #include "ComplexityMetric.h"
+#include "DwarfFileInfo.h"
 
 //class Slide;
 class BinQSupport;
@@ -30,6 +31,7 @@ class BinQSupport;
 class BinQAbstract //: public QWidget
 {
   public:
+
   BinQAbstract() {};
   virtual ~BinQAbstract(){};
 
@@ -54,7 +56,9 @@ class BinQAbstract //: public QWidget
 
     int screenWidth;
 
+
     std::vector<BinAnalyses*> analyses;
+    std::vector<BinAnalyses*> preanalyses;
     BinAnalyses* currentAnalysis;
 
     // filenames for both files

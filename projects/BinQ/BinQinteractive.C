@@ -44,12 +44,13 @@ BinQinteractive::BinQinteractive(std::string fA, std::string fB, std::vector<std
   }
   cerr << "Initialization done." <<endl;
   if (test)
-    testAnalyses();
+    testAnalyses(analyses);
 }
 
 void BinQinteractive::initAnalyses() {
   cerr << "Checking for analyses ... " << endl;
   analyses.clear();
+  analyses.push_back(new DwarfFileInfo());
   analyses.push_back(new DynamicInfo());
   analyses.push_back(new ForbiddenFunctionCall());
   analyses.push_back(new NullAfterFree());

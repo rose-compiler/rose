@@ -11,7 +11,7 @@ class BinQbatch : public BinQGUI
 	  std::vector<std::string> dllB, bool test);
     ~BinQbatch();
 
-    void runAnalyses();
+    void runAnalyses(std::vector<BinAnalyses*>& analysesVec, bool init);
     void initAnalyses();
     int addRemainingAnalyses();
 }; //class BinQGUI

@@ -107,8 +107,8 @@ int main( int argc, char **argv )
   } else if (batch && !test) {
     QROSE::init(argc,argv);
     BinQbatch binGui(fileA,fileB,dllA,dllB,test);
-    //binGui.run();
-    binGui.runAnalyses();
+    binGui.runAnalyses(binGui.preanalyses,true);
+    binGui.runAnalyses(binGui.analyses,false);
     return QROSE::exec();
   } else {
     BinQbatch binGui(fileA,fileB,dllA,dllB,test);

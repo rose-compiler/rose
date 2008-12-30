@@ -739,27 +739,31 @@ void BinQGUI::reset() {
 
 // This is for testing purposes only
 void
-BinQGUI::testAnalyses() {
+BinQGUI::testAnalyses(std::vector<BinAnalyses*>& analysesVec) {
+  int problems=0;
   double startTotal = RoseBin_support::getTime();
-  for (unsigned int i=0;i<analyses.size();++i) {
-    cerr << " testing analysis : " << analyses[i]->getDescription() << endl;
-    bool twoFiles = analyses[i]->twoFiles();
+  for (unsigned int i=0;i<analysesVec.size();++i) {
+    cerr << " testing analysis : " << analysesVec[i]->getDescription() << endl;
+    bool twoFiles = analysesVec[i]->twoFiles();
     if (twoFiles && fileB!=NULL || twoFiles==false) {
-      currentAnalysis=analyses[i];
+      currentAnalysis=analysesVec[i];
       if (currentAnalysis) {
 	double start = RoseBin_support::getTime();
 	currentAnalysis->test(fileA,fileB);
 	double end = RoseBin_support::getTime();
 	double time = (double) (end - start);
+	map<SgNode*,string> resu = currentAnalysis->getResult();
+	problems+=resu.size();
 	cerr << "Running analysis : " << currentAnalysis->name() <<
-	  "   time : " << time << endl;
+	  "   time : " << time << "   Problems : " << RoseBin_support::ToString(resu.size()) << endl;
+
       }
     }
   } 
  
   double endTotal = RoseBin_support::getTime();
   double timeTotal = (double) (endTotal - startTotal);
-  cerr << "\nTotal time : " << timeTotal << endl;
+  cerr << "\nTotal time : " << timeTotal << "  problems : " << problems << endl;
 }
 
 // this is the implementation of the run function in the GUI
