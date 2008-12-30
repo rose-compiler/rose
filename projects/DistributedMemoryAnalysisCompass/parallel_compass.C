@@ -513,10 +513,11 @@ int main(int argc, char **argv)
       if (DEBUG_OUTPUT_PC_MORE) 
 	cout << "bounds size = " << bounds.size() << endl;
       int i=-1;
-      int foundFunction=0;
+      std::set<std::string> foundFunction;
+      std::set<std::string> foundFiles;
       gettime(begin_time_defuse);
 #if ROSE_GCC_OMP
-#pragma omp parallel for private(i,b_itr)  shared(bounds,my_rank,bases,nullderefCounter, foundFunction)
+#pragma omp parallel for private(i,b_itr)  shared(bounds,my_rank,bases,nullderefCounter, foundFunction, foundFiles)
 #endif
       for (i = 0; i<(int)bounds.size();i++) {
 	if (DEBUG_OUTPUT_PC_MORE) 
@@ -526,7 +527,7 @@ int main(int argc, char **argv)
 	if (bounds[i]== my_rank) 
 	  for (t_itr = traversals.begin(); t_itr != traversals.end(); ++t_itr, ++b_itr) {
 	    SgNode* mynode = isSgNode(nullderefCounter.nodes[i]);
-	    if (t_itr==traversals.begin()) 
+	    if (t_itr==traversals.begin()) {
 	      if (isSgFunctionDeclaration(mynode)) { 
 		SgFunctionDeclaration* def = isSgFunctionDeclaration(mynode);
 		if (def->get_definition())
@@ -535,14 +536,26 @@ int main(int argc, char **argv)
 		    Sg_File_Info* fileI = def->get_startOfConstruct();
 		    std::string fileName = fileI->get_filenameString();
 		    if (fileName.find("/usr/include")==string::npos) {		      
-		      //std::cerr << "  name === " << name << "  " << fileName << std::endl;
-		      std::cout << "  name === " << name << std::endl;
-		      foundFunction++;
+		      std::cerr << "  fname === " << name << "  " << fileName << std::endl;
+		      //std::cout << "  name === " << name << std::endl;
+		      foundFunction.insert(name);
 		    } else {
 		      //std::cerr << "  >> non local function: name === " << name << "  " << fileName << std::endl;
 		    }
 		  }
 	      }
+	      if (isSgFile(mynode)){
+		SgFile* file = isSgFile(mynode);
+		Sg_File_Info*  fileI = file->get_file_info();
+		std::string fileName = fileI->get_filenameString();
+		if (fileName.find("/usr/include")==string::npos) {
+		  //		  std::cout << "  filename === "  << fileName << std::endl;
+		  foundFiles.insert(fileName);
+		} else {
+		  //std::cerr << "  >> non local function: name === " << name << "  " << fileName << std::endl;
+		}
+	      }
+	    }
 	    ROSE_ASSERT(mynode);
 	    gettime(begin_time_checker);
 	    (*t_itr)->visit(mynode);
@@ -554,8 +567,22 @@ int main(int argc, char **argv)
 	  }
       }
       gettime(end_time_defuse);
+
+      set<string>::const_iterator itF = foundFunction.begin();
+      for (;itF!=foundFunction.end();++itF) {
+	string function = *itF;
+	std::cout << "  functionname === " << function << std::endl;
+      }
+      itF = foundFiles.begin();
+      for (;itF!=foundFiles.end();++itF) {
+	string function = *itF;
+	std::cout << "  filename === " << function << std::endl;
+      }
+
+
       std::cerr << "  parallel_compass : functions traversed = " << 
-	RoseBin_support::ToString(foundFunction) << std::endl;
+	RoseBin_support::ToString(foundFunction.size()) << "   " <<
+	"  files traversed : " << RoseBin_support::ToString(foundFiles.size()) << std::endl;
 
       calc_time_processor = timeDifference(end_time_defuse, begin_time_defuse);
     } else {
