@@ -150,6 +150,9 @@ string unparseX86Instruction(SgAsmx86Instruction* insn) {
     if (i != 0) result += ", ";
     result += unparseX86Expression(operands[i], (insn->get_kind() == x86_lea));
   }
+  if (insn->get_comment()!="")
+    result+="  <"+insn->get_comment()+">";
+  
   return result;
 }
 
