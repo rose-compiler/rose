@@ -116,6 +116,7 @@ BinQbatch::runAnalyses( std::vector<BinAnalyses*>& analysesVec, bool init) {
 	  string str = "   "+it->second;
 	  analysisResult->append(QString(str.c_str()));
 	  myfile << "   " << str << endl;
+	  std::cout << str << endl;
 	}
 	analysisTab->setCurrentIndex(1);
 	analysisResult->moveCursor(QTextCursor::Start);

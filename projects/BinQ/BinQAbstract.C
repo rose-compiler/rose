@@ -63,20 +63,6 @@ void BinQAbstract::init(){
   //  generateDOTforMultipleFile ( *isSgProject(fileA) );
   // ------------------------------------------------------------
   
-  // this part writes the file out to an assembly file -----------------------------------
-  SgBinaryFile* binaryFileA = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
-  SgAsmFile* file1 = binaryFileA != NULL ? binaryFileA->get_binaryFile() : NULL;
-  SgAsmInterpretation* interpA = SageInterface::getMainInterpretation(file1);
-
-  unparseAsmStatementToFile("unparsedA.s", interpA->get_global_block());
-
-  if (fileNameB!="") 
-    if(is_directory( fileNameB  ) == false && sourceFile==false) {
-      SgBinaryFile* binaryFileB = isSgBinaryFile(isSgProject(fileB)->get_fileList()[0]);
-      SgAsmFile* file2 = binaryFileB != NULL ? binaryFileB->get_binaryFile() : NULL;
-      SgAsmInterpretation* interpB = SageInterface::getMainInterpretation(file2);
-      unparseAsmStatementToFile("unparsedB.s", interpB->get_global_block());
-    }
   // -------------------------------------------------------------------------------------
   if (fileA)
     itemsFileA.clear();

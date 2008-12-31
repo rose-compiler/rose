@@ -63,7 +63,7 @@ class BinQAbstract //: public QWidget
 
     // filenames for both files
     std::string fileNameA,fileNameB;
-    
+    bool sourceFile;    
   protected:
     // used for testing
     bool test;
@@ -75,7 +75,7 @@ class BinQAbstract //: public QWidget
     BinQSupport* binqsupport;
 
     void init();
-    bool sourceFile;
+
     int screenHeight;
     std::vector<std::string> dllA;
     std::vector<std::string> dllB;
