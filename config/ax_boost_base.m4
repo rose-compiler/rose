@@ -94,6 +94,27 @@ if test "x$want_boost" = "xyes"; then
 		done
 	fi
 
+# echo "WANT_BOOST_VERSION = $WANT_BOOST_VERSION"
+# echo "boost_lib_version_req = $boost_lib_version_req"
+# echo "BOOST_LDFLAGS  = $BOOST_LDFLAGS"
+# echo "BOOST_CPPFLAGS = $BOOST_CPPFLAGS"
+
+ # DQ (1/1/2009): Set the default value based on BOOST_CPPFLAGS
+   ROSE_BOOST_INCLUDE_PATH="$ac_boost_path_tmp/include"
+
+ # DQ (1/1/2009): Added testing for previously installed Boost (always older version)
+ # so that we can trigger the use of "-isystem" option (to g++) only when required
+ # (it appears to be a problem for SWIG).
+ # Use this set of paths, and the set including "/home/dquinlan" for testing this macro.
+ # for ac_boost_path_tmp in /usr /usr/local /opt /opt/local /home/dquinlan; do
+   for ac_boost_path_tmp in /usr /usr/local /opt /opt/local ; do
+		if test -d "$ac_boost_path_tmp/include/boost" && test -r "$ac_boost_path_tmp/include/boost"; then
+			PREVIOUSLY_INSTALLED_BOOST="$ac_boost_path_tmp/include/boost"
+       # echo "Detected a previously installed version of boost library: PREVIOUSLY_INSTALLED_BOOST = $PREVIOUSLY_INSTALLED_BOOST"
+			break;
+		fi
+	done
+
     dnl overwrite ld flags if we have required special directory with
     dnl --with-boost-libdir parameter
     if test "$ac_boost_lib_path" != ""; then
@@ -225,7 +246,25 @@ fi
 # option to include the boost path specified on the configure command ahead of "/usr/local/include" 
 # so that we can get the required version of Boost on systems that have it installed by default.
 # echo "Final Test: ROSE_BOOST_INCLUDE_PATH = $ROSE_BOOST_INCLUDE_PATH"
-AC_SUBST(ROSE_BOOST_INCLUDE_PATH)
+# AC_SUBST(ROSE_BOOST_INCLUDE_PATH)
+
+# DQ (1/1/2009): This use of "-isystem" is not triggered only when there is
+# a previously installed version of ROSE detected (e.g. in /usr/liclude/boost).
+# Note that use of "-isystem" option with g++ will cause SWIG to fail.
+if test "$PREVIOUSLY_INSTALLED_BOOST" != ""; then
+ # echo "Using the -isystem option of g++ to force the use of the specified version of Boost ahead of a previously installed version of boost on your system at: $PREVIOUSLY_INSTALLED_BOOST"
+   AC_MSG_NOTICE(Using the -isystem option of g++ to force the use of the specified version of Boost ahead of a previously installed version of boost on your system at: $PREVIOUSLY_INSTALLED_BOOST)
+   AC_MSG_WARN([Note that the --with-javaport can NOT be used with the -isystem option])
+   ROSE_BOOST_PREINCLUDE_PATH="-isystem $ROSE_BOOST_INCLUDE_PATH"
+   ROSE_BOOST_NORMAL_INCLUDE_PATH=""
+else
+   AC_MSG_NOTICE(No previously installed version of boost detected: using boost include directories with normal -I option)
+   ROSE_BOOST_PREINCLUDE_PATH=""
+   ROSE_BOOST_NORMAL_INCLUDE_PATH="-I$ROSE_BOOST_INCLUDE_PATH"
+fi
+
+AC_SUBST(ROSE_BOOST_PREINCLUDE_PATH)
+AC_SUBST(ROSE_BOOST_NORMAL_INCLUDE_PATH)
 
 
 ])
