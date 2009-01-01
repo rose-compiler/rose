@@ -5240,13 +5240,17 @@ SgSymbolTable::find( const SgStatement* statement)
      ROSE_ASSERT(p_table != NULL);
      ROSE_ASSERT(statement != NULL);
 
-  // printf ("Inside of SgSymbolTable::find( const SgStatement* ): statement = %p = %s = %s \n",statement,statement->class_name().c_str(),SageInterface::get_name(statement).c_str());
+#if 0
+     printf ("Inside of SgSymbolTable::find( const SgStatement* ): statement = %p = %s = %s \n",statement,statement->class_name().c_str(),SageInterface::get_name(statement).c_str());
+#endif
 
      SgSymbol* returnSymbol = NULL;
 
      SgName name = get_name(statement);
 
-  // printf ("Inside of SgSymbolTable::find( const SgStatement* ): name = %s \n",name.str());
+#if 0
+     printf ("Inside of SgSymbolTable::find( const SgStatement* ): name = %s \n",name.str());
+#endif
 
   // Get a quick pointer into the symbol table using the name (log n complexity)
      p_iterator = p_table->find(name);
@@ -5271,25 +5275,33 @@ SgSymbolTable::find( const SgStatement* statement)
 
           if (symbolBasis->variantT() == statement->variantT())
              {
-            // printf ("matching variants \n");
+#if 0
+               printf ("matching variants \n");
+#endif
                returnSymbol = p_iterator->second;
 
-            // This is a very presice test which might be a problem because of defining and non-defining versions 
+            // This is a very precise test which might be a problem because of defining and non-defining versions 
             // of declarations (we might be able to always use the non-defining declaration in these cases.  The 
             // switch which computes the names could normalize this aspect.
                if (returnSymbol->get_symbol_basis() == statement)
                   {
-                 // printf ("returnSymbol->get_symbol_basis() == statement returnSymbol = %p = %s \n",returnSymbol,returnSymbol->class_name().c_str());
+#if 0
+                    printf ("returnSymbol->get_symbol_basis() == statement returnSymbol = %p = %s \n",returnSymbol,returnSymbol->class_name().c_str());
+#endif
                     return returnSymbol;
                   }
                  else
                   {
-                 // printf ("returnSymbol->get_symbol_basis() != statement \n");
+#if 0
+                    printf ("returnSymbol->get_symbol_basis() != statement \n");
+#endif
                   }
              }
             else
              {
-            // printf ("Some other symbol was found (no matching variants) \n");
+#if 0
+               printf ("Some other symbol was found (no matching variants) \n");
+#endif
              }
 
           p_iterator++;
@@ -7008,7 +7020,7 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                        }
                   }
 
-            // Increment the symbol table's symble iterator
+            // Increment the symbol table's symbol iterator
                i++;
 
             // Increment the symbol counter (used for output)

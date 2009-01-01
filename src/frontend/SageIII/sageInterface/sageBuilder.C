@@ -702,6 +702,17 @@ SgComplexVal* SageBuilder::buildComplexVal(SgValueExp* real_value, SgValueExp* i
 {
   SgComplexVal* result = new SgComplexVal(real_value,imaginary_value,imaginary_value->get_type(),"");
   ROSE_ASSERT(result);
+
+// DQ (12/31/2008): set and test the parents
+  if (real_value != NULL)
+       real_value->set_parent(result);
+
+  if (imaginary_value != NULL)
+       imaginary_value->set_parent(result);
+
+  ROSE_ASSERT(real_value == NULL || real_value->get_parent() != NULL);
+  ROSE_ASSERT(imaginary_value == NULL || imaginary_value->get_parent() != NULL);
+
   setOneSourcePositionForTransformation(result);
   return result;
 }
@@ -710,6 +721,17 @@ SgComplexVal* SageBuilder::buildComplexVal_nfi(SgValueExp* real_value, SgValueEx
 {
   SgComplexVal* result = new SgComplexVal(real_value,imaginary_value,imaginary_value->get_type(),str);
   ROSE_ASSERT(result);
+
+// DQ (12/31/2008): set and test the parents
+  if (real_value != NULL)
+       real_value->set_parent(result);
+
+  if (imaginary_value != NULL)
+       imaginary_value->set_parent(result);
+
+  ROSE_ASSERT(real_value == NULL || real_value->get_parent() != NULL);
+  ROSE_ASSERT(imaginary_value == NULL || imaginary_value->get_parent() != NULL);
+
   setOneSourcePositionNull(result);
   return result;
 }
@@ -718,22 +740,41 @@ SgComplexVal* SageBuilder::buildImaginaryVal(long double imaginary_value /*= 0.0
 {
   SgComplexVal* result = new SgComplexVal(NULL,buildLongDoubleVal(imaginary_value),SgTypeLongDouble::createType(),"");
   ROSE_ASSERT(result);
+
+// DQ (12/31/2008): set and test the parents
+  result->get_imaginary_value()->set_parent(result);
+  ROSE_ASSERT(result->get_imaginary_value()->get_parent() != NULL);
+
   setOneSourcePositionForTransformation(result);
   return result;
 }
 
 SgComplexVal* SageBuilder::buildImaginaryVal(SgValueExp* imaginary_value)
 {
+  ROSE_ASSERT(imaginary_value != NULL);
+
   SgComplexVal* result = new SgComplexVal(NULL,imaginary_value,imaginary_value->get_type(),"");
   ROSE_ASSERT(result);
+
+// DQ (12/31/2008): set and test the parents
+  imaginary_value->set_parent(result);
+  ROSE_ASSERT(imaginary_value->get_parent() != NULL);
+
   setOneSourcePositionForTransformation(result);
   return result;
 }
 
 SgComplexVal* SageBuilder::buildImaginaryVal_nfi(SgValueExp* imaginary_value, const std::string& str)
 {
+  ROSE_ASSERT(imaginary_value != NULL);
+
   SgComplexVal* result = new SgComplexVal(NULL,imaginary_value,imaginary_value->get_type(),str);
+  imaginary_value->set_parent(result);
   ROSE_ASSERT(result);
+
+// DQ (12/31/2008): set and test the parents
+  ROSE_ASSERT(imaginary_value->get_parent() != NULL);
+
   setOneSourcePositionNull(result);
   return result;
 }

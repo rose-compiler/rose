@@ -3610,6 +3610,18 @@ SgScopeStatement::insert_symbol ( const SgName& n, SgSymbol* s )
    {
      assert (p_symbol_table != NULL);
 
+#if 0
+     ROSE_ASSERT(s != NULL);
+     SgNode* symbolBasis = s->get_symbol_basis();
+  // printf ("In SgScopeStatement::insert_symbol(%s,%p) into scope = %p = %s parent = %p = %s symbol = %p = %s s->get_symbol_basis() = %p = %s \n",
+     printf ("In SgScopeStatement::insert_symbol(%s,%p) into scope = %p = %s symbol = %p = %s s->get_symbol_basis() = %p = %s \n",
+          n.str(),s,
+          this,this->class_name().c_str(),
+       // this->get_parent(),this->get_parent()->class_name().c_str(),
+          s,s->class_name().c_str(),
+          symbolBasis,symbolBasis != NULL ? symbolBasis->class_name().c_str() : "NULL");
+#endif
+
   // Make sure that this specific symbol and name combination don't already exist in the AST.
      bool symbolAlreadyPresentLookupName = p_symbol_table->exists(n,s);
      if (symbolAlreadyPresentLookupName == true)
