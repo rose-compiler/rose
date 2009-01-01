@@ -1179,7 +1179,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
              {
                if (valueExp->get_parent() == NULL)
                   {
-                    printf ("Error: valueExp = %p valueExp->get_parent() == NULL \n",valueExp);
+                    printf ("Error: valueExp = %p = %s valueExp->get_parent() == NULL \n",valueExp,valueExp->class_name().c_str());
                     valueExp->get_file_info()->display("Error: valueExp->get_parent() == NULL");
 
                  // In the case of a SgIntVal, we can try to output a little more information
@@ -1187,6 +1187,11 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                     if (intVal != NULL)
                        {
                          printf ("Error: intVal = %d \n",intVal->get_value());
+                       }
+                    SgUnsignedLongVal* unsignedLongVal = isSgUnsignedLongVal(valueExp);
+                    if (unsignedLongVal != NULL)
+                       {
+                         printf ("Error: unsignedLongVal = %lu \n",unsignedLongVal->get_value());
                        }
                   }
                ROSE_ASSERT(valueExp->get_parent() != NULL);

@@ -8,7 +8,11 @@ SUBDIRS = EDG_3.3 EDG_3.10 EDG_4.0 EDG_SAGE_Connection
 EXTRA_DIST = Makefile.am.forBinaryEDG
 
 if ROSE_USE_NEW_EDG_INTERFACE
+if ROSE_USE_EDG_VERSION_4
+libroseEDGlibraries = EDG_4.0/src/libedg40.la EDG_SAGE_Connection/libnewsage.la
+else
 libroseEDGlibraries = EDG_3.10/src/libedg310.la EDG_SAGE_Connection/libnewsage.la
+endif
 else
 libroseEDGlibraries = EDG_3.3/src/libedg33.la EDG_SAGE_Connection/libsage.la
 endif

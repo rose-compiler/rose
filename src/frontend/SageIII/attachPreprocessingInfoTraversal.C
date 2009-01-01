@@ -840,7 +840,11 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #if 0
      printf ("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(): n->class_name() = %s \n",n->class_name().c_str());
      if (isSgStatement(n) && (isSgStatement(n)->get_parent() != NULL) )
+        {
           printf ("     parent = %s \n",isSgStatement(n)->get_parent()->class_name().c_str());
+          ROSE_ASSERT(isSgStatement(n)->get_file_info() != NULL);
+          isSgStatement(n)->get_file_info()->display("In AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute()");
+        }
 #endif
 
   // These used to be a problem, so we can continue to test tese specific cases.

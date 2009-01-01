@@ -2261,6 +2261,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      roseSpecificDefs.push_back("-DUSE_RESTRICT_POINTERS_IN_ROSE_TRANSFORMATIONS");
      roseSpecificDefs.push_back("-DUSE_ROSE");
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
+  // Allow in internal indicator that EDG version 3.10 or 4.0 (or greater) is in use.
      roseSpecificDefs.push_back("-DROSE_USE_NEW_EDG_INTERFACE");
 #endif
      ROSE_ASSERT(configDefs.empty() == false);
@@ -2279,7 +2280,13 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
      commandLine.push_back("--edg_base_dir");
+
+  // DQ (12/29/2008): Added support for EDG version 4.0 (constains design changes that break a number of things in the pre-version 4.0 work)
+#ifdef ROSE_USE_EDG_VERSION_4
+     commandLine.push_back(findRoseSupportPathFromBuild("src/frontend/CxxFrontend/EDG_4.0/lib", "share"));
+#else
      commandLine.push_back(findRoseSupportPathFromBuild("src/frontend/CxxFrontend/EDG_3.10/lib", "share"));
+#endif
 #endif
 
   // AS (03/08/2006) Added support for g++ preincludes
@@ -5133,7 +5140,7 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
           frontendErrorLevel = build_Fortran_AST(argv,inputCommandLine);
 #else
-          fprintf(stderr, "Trying to parse a Fortran file when Fortran is not supported\n");
+          fprintf(stderr, "Trying to parse a Fortran file when Fortran is not supported (ROSE must be configured using with Java (default)) \n");
           abort();
 #endif
         }
@@ -5149,21 +5156,23 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
              }
         }
 
-  // Uniform processing fothe error code!
+  // Uniform processing of the error code!
 
      if ( get_verbose() > 1 )
           printf ("DONE: frontend called (frontendErrorLevel = %d) \n",frontendErrorLevel);
 
-     bool edg_failed =
+  // DQ (12/29/2008): The newer version of EDG (version 3.10 and 4.0) use different return codes for indicating an error.
+     bool frontend_failed = false;
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
-       frontendErrorLevel != 0
+  // Any non-zero value indicates an error.
+     frontend_failed = (frontendErrorLevel != 0);
 #else
-       frontendErrorLevel > 3
+  // non-zero error code can mean warnings were produced, values greater than 3 indicate errors.
+     frontend_failed = (frontendErrorLevel > 3);
 #endif
-       ;
 
   // If we had any errors reported by the frontend then quite now
-     if (edg_failed)
+     if (frontend_failed)
         {
        // cout << "Errors in Processing: (frontendErrorLevel > 3)" << endl;
           if ( get_verbose() > 1 )
@@ -5183,7 +5192,7 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
             else
              {
             // Exit because there are errors in the input program
-               cout << "Errors in Processing: (edg_failed)" << endl;
+               cout << "Errors in Processing: (frontend_failed)" << endl;
                ROSE_ABORT();
              }
         }

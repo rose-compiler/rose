@@ -873,6 +873,21 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                          break;
                        }
 
+#ifdef ROSE_USE_EDG_VERSION_4
+                 // DQ (12/31/2008): In EDG 4.0, the translation of a function call such as "(*callback_lookup)();" 
+                 // can cause the functionExpression to be a wider number of IR nodes (e.g. SgVarRefExp).
+                 // See test2007_94.C for an example.
+                    case V_SgVarRefExp:
+                       {
+                         SgVarRefExp* varRefExp = isSgVarRefExp(functionExpression);
+                         ROSE_ASSERT(varRefExp != NULL);
+
+                      // Unclear what should be checked here, for now allow this as an acceptable case.
+                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgVarRefExp returned from SgFunctionCallExp::get_function() member function \n");
+
+                         break;
+                       }
+#endif
                     default:
                        {
                          printf ("Error case default in switch (functionExpression = %s) \n",functionExpression->sage_class_name());

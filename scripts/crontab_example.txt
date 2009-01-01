@@ -12,3 +12,21 @@ MAILTO=dquinlan@llnl.gov
 # Test the binary distribution
 # 22 18 * * * cd /home/dquinlan/ROSE/svn-rose/scripts && ./roseFreshTestBinaryDistribution ./roseFreshTestStub-Dan.sh --with-java --enable-rosehpct
 
+
+Later example (12/29/2008):
+MAILTO=dquinlan@llnl.gov
+
+# Document the different directories/files specified on this line...
+# 00 00 * * * cd /home/dquinlan/ROSE/svn-rose/scripts && ./roseFreshTest ./roseFreshTestStub-Dan.sh
+00 23 * * * cd /home/dquinlan/ROSE/svn-rose/scripts && ./roseFreshTestBinaryDistribution ./roseFreshTestStub-Dan.sh --with-mpi
+00 01 * * * cd /home/dquinlan/ROSE/svn-rose/scripts && ./roseFreshTestBinaryDistribution ./roseFreshTestStub-Dan.sh --enable-rosehpct
+00 03 * * * cd /home/dquinlan/ROSE/svn-rose/scripts && ./roseFreshTest ./roseFreshTestStub-Dan.sh --enable-edg_union_struct_debugging --with-C_DEBUG="-g -Wall" --with-CXX_DEBUG="-g -Wall" --enable-rosehpct
+
+# Test the binary distribution with MPI
+# 33 18 * * * cd /home/dquinlan/ROSE/svn-rose/scripts && ./roseFreshTestBinaryDistribution ./roseFreshTestStub-Dan.sh --with-mpi
+
+# Test the binary distribution
+# 22 18 * * * cd /home/dquinlan/ROSE/svn-rose/scripts && ./roseFreshTestBinaryDistribution ./roseFreshTestStub-Dan.sh --with-java --enable-rosehpct
+
+
+00 08 * * * cd /home/dquinlan/ROSE/svn-rose/scripts && ./roseFreshTest ./roseFreshTestStub-Dan.sh

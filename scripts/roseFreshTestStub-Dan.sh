@@ -21,7 +21,7 @@ source /usr/apps/gcc/4.2.2/setup.sh
 export PATH="/usr/apps/automake/1.9.6/bin:$PATH"
 #export PATH="/home/dquinlan/swig-install/bin:$PATH"
 #export BOOST_ROOT="/home/dquinlan/local/boost_1_35_0_install"
-export BOOST_ROOT="/home/dquinlan/local/boost_1_35_0_installTree-gxx-4.2.2"
+export BOOST_ROOT="/home/dquinlan/local/boost_1_37_0_installTree-gxx-4.2.2"
 export LD_LIBRARY_PATH="${BOOST_ROOT}/lib:${LD_LIBRARY_PATH}"
 
 # Use this directory for the location of all tests of ROSE.

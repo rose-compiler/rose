@@ -424,7 +424,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                if (functionTypeSymbol == NULL)
                   {
                     printf ("Note: no function type was found for functionDeclaration = %p = %s = %s \n",functionDeclaration,functionDeclaration->class_name().c_str(),SageInterface::get_name(functionDeclaration).c_str());
-#if 0
+#if 1
                     printf ("Error: functionType->get_mangled() = %s not found in symbol table \n",functionType->get_mangled().str());
                     printf ("functionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->get_name().str());
                     printf ("Location of problem function declaration: \n");
