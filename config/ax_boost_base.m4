@@ -228,7 +228,9 @@ if test "x$want_boost" = "xyes"; then
 
 	if test "$succeeded" != "yes" ; then
 		if test "$_version" = "0" ; then
-			AC_MSG_ERROR([[We could not detect the boost libraries (version $boost_lib_version_req_shorten or higher). If you have a staged boost library (still not installed) please specify \$BOOST_ROOT in your environment and do not give a PATH to --with-boost option.  If you are sure you have boost installed, then check your version number looking in <boost/version.hpp>. See http://randspringer.de/boost for more documentation.]])
+       # This was always a confusing error message so make it more explicit for users.
+       # AC_MSG_ERROR([[We could not detect the boost libraries (version $boost_lib_version_req_shorten or higher). If you have a staged boost library (still not installed) please specify \$BOOST_ROOT in your environment and do not give a PATH to --with-boost option.  If you are sure you have boost installed, then check your version number looking in <boost/version.hpp>. See http://randspringer.de/boost for more documentation.]])
+			AC_MSG_ERROR([[Boost libraries (version $boost_lib_version_req_shorten or higher) must be specified on the configure line (using the --with-boost=<path> option) and the boost libraries must be in your LD_LIBRARY_PATH.]])
 		else
 			AC_MSG_NOTICE([Your boost libraries seems to old (version $_version).])
 		fi
