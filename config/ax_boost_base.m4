@@ -259,7 +259,8 @@ if test "$PREVIOUSLY_INSTALLED_BOOST" != ""; then
    AC_MSG_WARN([Note that the --with-javaport can NOT be used with the -isystem option])
    ROSE_BOOST_PREINCLUDE_PATH="-isystem $ROSE_BOOST_INCLUDE_PATH"
    ROSE_BOOST_NORMAL_INCLUDE_PATH=""
-   AC_MSG_ERROR([[Detected previously installed version of boost (please remove older version of Boost before installing ROSE) (continuing but expect Boost to be a problem...)]])
+   AC_MSG_WARN([[Detected previously installed version of boost (please remove older version of Boost before installing ROSE) (continuing but expect Boost to be a problem...)]])
+ # AC_MSG_ERROR([[Detected previously installed version of boost (please remove older version of Boost before installing ROSE) (continuing but expect Boost to be a problem...)]])
  # Remove this exit (as a test) after detecting what I expect is a problem...
  # exit 1
 else
