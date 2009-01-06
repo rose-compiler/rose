@@ -520,7 +520,7 @@ HEADER_FUNCTION_MODIFIER_START
 
           Function modifiers (inline, virtual, pure-virtual, explicit).
 
-          \internal Only one value can be specified (at least in C and C++)
+          \internal Many values can be specified (when the gnu attributes are included), so the implementation uses an STL bit vector.
        */
           enum function_modifier_enum
              {
@@ -538,7 +538,7 @@ HEADER_FUNCTION_MODIFIER_START
                e_recursive          = 9, /*!< Fortran recursive attribute for functions (see also type modifier) */
 
             // DQ (12/4/2007): Added support for GNU specific attributes
-               e_gnu_attribute__constructor__            = 10,/*!< GNU specific attribute for (GNU extension) */
+               e_gnu_attribute__constructor__            = 10,/*!< GNU specific attribute for (GNU extension) (a separately stored value permits the priority to be specified). */
                e_gnu_attribute__destructor__             = 11,/*!< GNU specific attribute for (GNU extension) */
                e_gnu_attribute__pure__                   = 12,/*!< GNU specific attribute for (GNU extension) */
                e_gnu_attribute__weak__                   = 13,/*!< GNU specific attribute for (GNU extension) */
@@ -549,6 +549,11 @@ HEADER_FUNCTION_MODIFIER_START
                e_gnu_attribute__naked__                  = 18,/*!< GNU specific attribute for (GNU extension) */
                e_gnu_attribute__no_instrument_function__ = 19,/*!< GNU specific attribute for (GNU extension) */
                e_gnu_attribute__no_check_memory_usage__  = 20,/*!< GNU specific attribute for (GNU extension) */
+               e_gnu_attribute__noinline__               = 21,/*!< GNU specific attribute for (GNU extension) */
+               e_gnu_attribute__always_inline__          = 22,/*!< GNU specific attribute for (GNU extension) */
+               e_gnu_attribute__nothrow__                = 23,/*!< GNU specific attribute for (GNU extension) */
+               e_gnu_attribute__weakref__                = 24,/*!< GNU specific attribute for (GNU extension) */
+
                e_last_modifier     /*!< last value (upper bound on range of values, used in error checking) */
              };
 
@@ -589,20 +594,81 @@ HEADER_FUNCTION_MODIFIER_START
           void setBind();
           void unsetBind();
 #endif
-       // DQ (11/21/2007): support for Fortran bind attribute on functions
+       // DQ (11/21/2007): support for Fortran pure attribute on functions
           bool isPure() const;
           void setPure();
           void unsetPure();
 
-       // DQ (11/30/2007): support for Fortran bind attribute on functions
+       // DQ (11/30/2007): support for Fortran elemental attribute on functions
           bool isElemental() const;
           void setElemental();
           void unsetElemental();
 
-       // DQ (11/30/2007): support for Fortran bind attribute on functions
+       // DQ (11/30/2007): support for Fortran recursive attribute on functions
           bool isRecursive() const;
           void setRecursive();
           void unsetRecursive();
+
+       // DQ (1/3/2009): Added GNU specific attributes
+          bool isGnuAttributeConstructor() const;
+          void setGnuAttributeConstructor();
+          void unsetGnuAttributeConstructor();
+
+          bool isGnuAttributeDestructor() const;
+          void setGnuAttributeDestructor();
+          void unsetGnuAttributeDestructor();
+
+          bool isGnuAttributePure() const;
+          void setGnuAttributePure();
+          void unsetGnuAttributePure();
+
+          bool isGnuAttributeWeak() const;
+          void setGnuAttributeWeak();
+          void unsetGnuAttributeWeak();
+
+          bool isGnuAttributeUnused() const;
+          void setGnuAttributeUnused();
+          void unsetGnuAttributeUnused();
+
+          bool isGnuAttributeUsed() const;
+          void setGnuAttributeUsed();
+          void unsetGnuAttributeUsed();
+
+          bool isGnuAttributeDeprecated() const;
+          void setGnuAttributeDeprecated();
+          void unsetGnuAttributeDeprecated();
+
+          bool isGnuAttributeMalloc() const;
+          void setGnuAttributeMalloc();
+          void unsetGnuAttributeMalloc();
+
+          bool isGnuAttributeNaked() const;
+          void setGnuAttributeNaked();
+          void unsetGnuAttributeNaked();
+
+          bool isGnuAttributeNoInstrumentFunction() const;
+          void setGnuAttributeNoInstrumentFunction();
+          void unsetGnuAttributeNoInstrumentFunction();
+
+          bool isGnuAttributeNoCheckMemoryUsage() const;
+          void setGnuAttributeNoCheckMemoryUsage();
+          void unsetGnuAttributeNoCheckMemoryUsage();
+
+          bool isGnuAttributeNoInline() const;
+          void setGnuAttributeNoInline();
+          void unsetGnuAttributeNoInline();
+
+          bool isGnuAttributeAlwaysInline() const;
+          void setGnuAttributeAlwaysInline();
+          void unsetGnuAttributeAlwaysInline();
+
+          bool isGnuAttributeNoThrow() const;
+          void setGnuAttributeNoThrow();
+          void unsetGnuAttributeNoThrow();
+
+          bool isGnuAttributeWeakReference() const;
+          void setGnuAttributeWeakReference();
+          void unsetGnuAttributeWeakReference();
 
           std::string displayString() const;
           void display ( std::string label ) const;
@@ -760,6 +826,24 @@ HEADER_DECLARATION_MODIFIER_START
                e_last_modifier /*!< last modifier value (upper bound on range of values, used in error checking) */
              };
 
+      /*! \brief GNU attribute for visability (only one value can be specified)
+
+          visability values are: default, hidden, protected or internal visibility.
+
+          \internal Only one value can be specified (at least in C and C++)
+       */
+          enum gnu_declaration_visability_enum
+             {
+               e_unknown_visibility     = 0,  /*!< Unknown value (error) */
+               e_error_visibility       = 1,  /*!< Error value (error) */
+               e_unspecified_visibility = 2,  /*!< Unspecified visibility (not the default value) */
+               e_hidden_visibility      = 3,  /*!< hidden visibility */
+               e_protected_visibility   = 4,  /*!< protected visibility */
+               e_internal_visibility    = 5,  /*!< internal visibility (not clear if this is used, I don't think typedef is a modifier) */
+               e_default_visibility     = 6,  /*!< default visibility */
+               e_last_visibility_attribute /*!< last visibility attribute (upper bound on range of values, used in error checking) */
+             };
+
        // Copy constructor
           SgDeclarationModifier ( const SgDeclarationModifier & X );
 
@@ -878,6 +962,12 @@ HEADER_TYPE_MODIFIER_START
                e_gnu_attribute__cdecl__             = 22,/*!< GNU specific attribute for function type (GNU extension) */
                e_gnu_attribute__stdcall__           = 23,/*!< GNU specific attribute for function type (GNU extension) */
 
+            // DQ (1/3/2009): New GNU attributes not previously supported in ROSE
+               e_gnu_attribute__warn_unused_result__ = 24,/*!< GNU specific attribute for function type (GNU extension) */
+               e_gnu_attribute__nonnull__            = 25,/*!< GNU specific attribute for function type (GNU extension) */
+               e_gnu_attribute__sentinel__           = 26,/*!< GNU specific attribute for function type (GNU extension) */
+
+            // Last attribute enum (used for internal bounds checking)
                e_last_modifier /*!< last value (upper bound on range of values, used in error checking) */
              };
 
@@ -1044,6 +1134,51 @@ HEADER_TYPE_MODIFIER_START
           bool isValue() const;
           void setValue();
           void unsetValue();
+
+       // DQ (1/3/2009): Added GNU specific attributes
+          bool isGnuAttributeUnused() const;
+          void setGnuAttributeUnused();
+          void unsetGnuAttributeUnused();
+
+          bool isGnuAttributePacked() const;
+          void setGnuAttributePacked();
+          void unsetGnuAttributePacked();
+
+          bool isGnuAttributeDeprecated() const;
+          void setGnuAttributeDeprecated();
+          void unsetGnuAttributeDeprecated();
+
+          bool isGnuAttributeTransparentUnion() const;
+          void setGnuAttributeTransparentUnion();
+          void unsetGnuAttributeTransparentUnion();
+
+          bool isGnuAttributeNoReturn() const;
+          void setGnuAttributeNoReturn();
+          void unsetGnuAttributeNoReturn();
+
+          bool isGnuAttributeConst() const;
+          void setGnuAttributeConst();
+          void unsetGnuAttributeConst();
+
+          bool isGnuAttributeCdecl() const;
+          void setGnuAttributeCdecl();
+          void unsetGnuAttributeCdecl();
+
+          bool isGnuAttributeStdcall() const;
+          void setGnuAttributeStdcall();
+          void unsetGnuAttributeStdcall();
+
+          bool isGnuAttributeWarnUnusedResult() const;
+          void setGnuAttributeWarnUnusedResult();
+          void unsetGnuAttributeWarnUnusedResult();
+
+          bool isGnuAttributeNonnull() const;
+          void setGnuAttributeNonnull();
+          void unsetGnuAttributeNonnull();
+
+          bool isGnuAttributeSentinel() const;
+          void setGnuAttributeSentinel();
+          void unsetGnuAttributeSentinel();
 
           std::string displayString() const;
           void display ( std::string label ) const;
@@ -1447,21 +1582,21 @@ SgModifier::operator= ( const SgModifier & X )
    }
 
 bool
-$CLASSNAME::checkBit ( unsigned int bit, const SgBitVector & bitVector ) const 
+SgModifier::checkBit ( unsigned int bit, const SgBitVector & bitVector ) const 
    {
      ROSE_ASSERT (bit < bitVector.size());
      return bitVector[bit];
    }
 
 void
-$CLASSNAME::setBit ( unsigned int bit, SgBitVector & bitVector ) const
+SgModifier::setBit ( unsigned int bit, SgBitVector & bitVector ) const
    {
      ROSE_ASSERT (bit < bitVector.size());
      bitVector[bit] = true;
    }
 
 void
-$CLASSNAME::unsetBit ( unsigned int bit, SgBitVector & bitVector ) const
+SgModifier::unsetBit ( unsigned int bit, SgBitVector & bitVector ) const
    {
      ROSE_ASSERT (bit < bitVector.size());
      bitVector[bit] = false;
@@ -1868,6 +2003,83 @@ void SgFunctionModifier::unsetElemental()    { unsetBit(e_elemental,p_modifierVe
 bool SgFunctionModifier::isRecursive() const { return checkBit(e_recursive,p_modifierVector); }
 void SgFunctionModifier::setRecursive()      { setBit(e_recursive,p_modifierVector); }
 void SgFunctionModifier::unsetRecursive()    { unsetBit(e_recursive,p_modifierVector); }
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgFunctionModifier::isGnuAttributeConstructor() const { return checkBit(e_gnu_attribute__constructor__,p_modifierVector); }
+void SgFunctionModifier::setGnuAttributeConstructor()      { setBit(e_gnu_attribute__constructor__,p_modifierVector); }
+void SgFunctionModifier::unsetGnuAttributeConstructor()    { unsetBit(e_gnu_attribute__constructor__,p_modifierVector); }
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgFunctionModifier::isGnuAttributeDestructor() const { return checkBit(e_gnu_attribute__destructor__,p_modifierVector); }
+void SgFunctionModifier::setGnuAttributeDestructor()      { setBit(e_gnu_attribute__destructor__,p_modifierVector); }
+void SgFunctionModifier::unsetGnuAttributeDestructor()    { unsetBit(e_gnu_attribute__destructor__,p_modifierVector); }
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgFunctionModifier::isGnuAttributePure() const { return checkBit(e_gnu_attribute__pure__,p_modifierVector); }
+void SgFunctionModifier::setGnuAttributePure()      { setBit(e_gnu_attribute__pure__,p_modifierVector); }
+void SgFunctionModifier::unsetGnuAttributePure()    { unsetBit(e_gnu_attribute__pure__,p_modifierVector); }
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgFunctionModifier::isGnuAttributeWeak() const { return checkBit(e_gnu_attribute__weak__,p_modifierVector); }
+void SgFunctionModifier::setGnuAttributeWeak()      { setBit(e_gnu_attribute__weak__,p_modifierVector); }
+void SgFunctionModifier::unsetGnuAttributeWeak()    { unsetBit(e_gnu_attribute__weak__,p_modifierVector); }
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgFunctionModifier::isGnuAttributeUnused() const { return checkBit(e_gnu_attribute__unused__,p_modifierVector); }
+void SgFunctionModifier::setGnuAttributeUnused()      { setBit(e_gnu_attribute__unused__,p_modifierVector); }
+void SgFunctionModifier::unsetGnuAttributeUnused()    { unsetBit(e_gnu_attribute__unused__,p_modifierVector); }
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgFunctionModifier::isGnuAttributeUsed() const { return checkBit(e_gnu_attribute__used__,p_modifierVector); }
+void SgFunctionModifier::setGnuAttributeUsed()      { setBit(e_gnu_attribute__used__,p_modifierVector); }
+void SgFunctionModifier::unsetGnuAttributeUsed()    { unsetBit(e_gnu_attribute__used__,p_modifierVector); }
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgFunctionModifier::isGnuAttributeDeprecated() const { return checkBit(e_gnu_attribute__deprecated__,p_modifierVector); }
+void SgFunctionModifier::setGnuAttributeDeprecated()      { setBit(e_gnu_attribute__deprecated__,p_modifierVector); }
+void SgFunctionModifier::unsetGnuAttributeDeprecated()    { unsetBit(e_gnu_attribute__deprecated__,p_modifierVector); }
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgFunctionModifier::isGnuAttributeMalloc() const { return checkBit(e_gnu_attribute__malloc__,p_modifierVector); }
+void SgFunctionModifier::setGnuAttributeMalloc()      { setBit(e_gnu_attribute__malloc__,p_modifierVector); }
+void SgFunctionModifier::unsetGnuAttributeMalloc()    { unsetBit(e_gnu_attribute__malloc__,p_modifierVector); }
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgFunctionModifier::isGnuAttributeNaked() const { return checkBit(e_gnu_attribute__naked__,p_modifierVector); }
+void SgFunctionModifier::setGnuAttributeNaked()      { setBit(e_gnu_attribute__naked__,p_modifierVector); }
+void SgFunctionModifier::unsetGnuAttributeNaked()    { unsetBit(e_gnu_attribute__naked__,p_modifierVector); }
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgFunctionModifier::isGnuAttributeNoInstrumentFunction() const { return checkBit(e_gnu_attribute__no_instrument_function__,p_modifierVector); }
+void SgFunctionModifier::setGnuAttributeNoInstrumentFunction()      { setBit(e_gnu_attribute__no_instrument_function__,p_modifierVector); }
+void SgFunctionModifier::unsetGnuAttributeNoInstrumentFunction()    { unsetBit(e_gnu_attribute__no_instrument_function__,p_modifierVector); }
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgFunctionModifier::isGnuAttributeNoCheckMemoryUsage() const { return checkBit(e_gnu_attribute__no_check_memory_usage__,p_modifierVector); }
+void SgFunctionModifier::setGnuAttributeNoCheckMemoryUsage()      { setBit(e_gnu_attribute__no_check_memory_usage__,p_modifierVector); }
+void SgFunctionModifier::unsetGnuAttributeNoCheckMemoryUsage()    { unsetBit(e_gnu_attribute__no_check_memory_usage__,p_modifierVector); }
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgFunctionModifier::isGnuAttributeNoInline() const { return checkBit(e_gnu_attribute__noinline__,p_modifierVector); }
+void SgFunctionModifier::setGnuAttributeNoInline()      { setBit(e_gnu_attribute__noinline__,p_modifierVector); }
+void SgFunctionModifier::unsetGnuAttributeNoInline()    { unsetBit(e_gnu_attribute__noinline__,p_modifierVector); }
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgFunctionModifier::isGnuAttributeAlwaysInline() const { return checkBit(e_gnu_attribute__always_inline__,p_modifierVector); }
+void SgFunctionModifier::setGnuAttributeAlwaysInline()      { setBit(e_gnu_attribute__always_inline__,p_modifierVector); }
+void SgFunctionModifier::unsetGnuAttributeAlwaysInline()    { unsetBit(e_gnu_attribute__always_inline__,p_modifierVector); }
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgFunctionModifier::isGnuAttributeNoThrow() const { return checkBit(e_gnu_attribute__nothrow__,p_modifierVector); }
+void SgFunctionModifier::setGnuAttributeNoThrow()      { setBit(e_gnu_attribute__nothrow__,p_modifierVector); }
+void SgFunctionModifier::unsetGnuAttributeNoThrow()    { unsetBit(e_gnu_attribute__nothrow__,p_modifierVector); }
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgFunctionModifier::isGnuAttributeWeakReference() const { return checkBit(e_gnu_attribute__weakref__,p_modifierVector); }
+void SgFunctionModifier::setGnuAttributeWeakReference()      { setBit(e_gnu_attribute__weakref__,p_modifierVector); }
+void SgFunctionModifier::unsetGnuAttributeWeakReference()    { unsetBit(e_gnu_attribute__weakref__,p_modifierVector); }
+
+
 
 
 std::ostream & operator<< ( std::ostream & os, SgFunctionModifier & m) 
@@ -2381,6 +2593,61 @@ void SgTypeModifier::unsetTarget()     { unsetBit(e_target,p_modifierVector); }
 bool SgTypeModifier::isValue() const  { return checkBit(e_value,p_modifierVector); }
 void SgTypeModifier::setValue()       { setBit(e_value,p_modifierVector); }
 void SgTypeModifier::unsetValue()     { unsetBit(e_value,p_modifierVector); }
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgTypeModifier::isGnuAttributeUnused() const  { return checkBit(e_gnu_attribute__unused__,p_modifierVector); }
+void SgTypeModifier::setGnuAttributeUnused()       { setBit(e_gnu_attribute__unused__,p_modifierVector); }
+void SgTypeModifier::unsetGnuAttributeUnused()     { unsetBit(e_gnu_attribute__unused__,p_modifierVector); }
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgTypeModifier::isGnuAttributePacked() const  { return checkBit(e_gnu_attribute__packed__,p_modifierVector); }
+void SgTypeModifier::setGnuAttributePacked()       { setBit(e_gnu_attribute__packed__,p_modifierVector); }
+void SgTypeModifier::unsetGnuAttributePacked()     { unsetBit(e_gnu_attribute__packed__,p_modifierVector); }
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgTypeModifier::isGnuAttributeDeprecated() const  { return checkBit(e_gnu_attribute__deprecated__,p_modifierVector); }
+void SgTypeModifier::setGnuAttributeDeprecated()       { setBit(e_gnu_attribute__deprecated__,p_modifierVector); }
+void SgTypeModifier::unsetGnuAttributeDeprecated()     { unsetBit(e_gnu_attribute__deprecated__,p_modifierVector); }
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgTypeModifier::isGnuAttributeTransparentUnion() const  { return checkBit(e_gnu_attribute__transparent_union__,p_modifierVector); }
+void SgTypeModifier::setGnuAttributeTransparentUnion()       { setBit(e_gnu_attribute__transparent_union__,p_modifierVector); }
+void SgTypeModifier::unsetGnuAttributeTransparentUnion()     { unsetBit(e_gnu_attribute__transparent_union__,p_modifierVector); }
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgTypeModifier::isGnuAttributeNoReturn() const  { return checkBit(e_gnu_attribute__noreturn__,p_modifierVector); }
+void SgTypeModifier::setGnuAttributeNoReturn()       { setBit(e_gnu_attribute__noreturn__,p_modifierVector); }
+void SgTypeModifier::unsetGnuAttributeNoReturn()     { unsetBit(e_gnu_attribute__noreturn__,p_modifierVector); }
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgTypeModifier::isGnuAttributeConst() const  { return checkBit(e_gnu_attribute__const__,p_modifierVector); }
+void SgTypeModifier::setGnuAttributeConst()       { setBit(e_gnu_attribute__const__,p_modifierVector); }
+void SgTypeModifier::unsetGnuAttributeConst()     { unsetBit(e_gnu_attribute__const__,p_modifierVector); }
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgTypeModifier::isGnuAttributeCdecl() const  { return checkBit(e_gnu_attribute__cdecl__,p_modifierVector); }
+void SgTypeModifier::setGnuAttributeCdecl()       { setBit(e_gnu_attribute__cdecl__,p_modifierVector); }
+void SgTypeModifier::unsetGnuAttributeCdecl()     { unsetBit(e_gnu_attribute__cdecl__,p_modifierVector); }
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgTypeModifier::isGnuAttributeStdcall() const  { return checkBit(e_gnu_attribute__stdcall__,p_modifierVector); }
+void SgTypeModifier::setGnuAttributeStdcall()       { setBit(e_gnu_attribute__stdcall__,p_modifierVector); }
+void SgTypeModifier::unsetGnuAttributeStdcall()     { unsetBit(e_gnu_attribute__stdcall__,p_modifierVector); }
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgTypeModifier::isGnuAttributeWarnUnusedResult() const  { return checkBit(e_gnu_attribute__warn_unused_result__,p_modifierVector); }
+void SgTypeModifier::setGnuAttributeWarnUnusedResult()       { setBit(e_gnu_attribute__warn_unused_result__,p_modifierVector); }
+void SgTypeModifier::unsetGnuAttributeWarnUnusedResult()     { unsetBit(e_gnu_attribute__warn_unused_result__,p_modifierVector); }
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgTypeModifier::isGnuAttributeNonnull() const  { return checkBit(e_gnu_attribute__nonnull__,p_modifierVector); }
+void SgTypeModifier::setGnuAttributeNonnull()       { setBit(e_gnu_attribute__nonnull__,p_modifierVector); }
+void SgTypeModifier::unsetGnuAttributeNonnull()     { unsetBit(e_gnu_attribute__nonnull__,p_modifierVector); }
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgTypeModifier::isGnuAttributeSentinel() const  { return checkBit(e_gnu_attribute__sentinel__,p_modifierVector); }
+void SgTypeModifier::setGnuAttributeSentinel()       { setBit(e_gnu_attribute__sentinel__,p_modifierVector); }
+void SgTypeModifier::unsetGnuAttributeSentinel()     { unsetBit(e_gnu_attribute__sentinel__,p_modifierVector); }
 
 
 std::ostream& operator<< (std::ostream& os, SgTypeModifier& tm) 
@@ -3120,16 +3387,63 @@ HEADER_INITIALIZED_NAME_START
                e_last_register
              };
 
+       // DQ (1/3/2009): This might imply that we need a variable modifier (SgVariableModifier 
+       // (as a new IR node, but for now implement these directly since they are GNU specific 
+       // attributes (extensions)).
+          enum gnu_variable_attribute_enum
+             {
+            // DQ (12/4/2007): Added support for GNU specific attributes
+               e_gnu_attribute__weak__                   = 0, /*!< GNU specific attribute for (GNU extension) */
+               e_gnu_attribute__unused__                 = 1, /*!< GNU specific attribute for (GNU extension) */
+               e_gnu_attribute__used__                   = 2, /*!< GNU specific attribute for (GNU extension) */
+               e_gnu_attribute__deprecated__             = 3, /*!< GNU specific attribute for (GNU extension) */
+               e_gnu_attribute__nocommon__               = 4, /*!< GNU specific attribute for (GNU extension) */
+               e_gnu_attribute__transparent_union__      = 5, /*!< GNU specific attribute for (GNU extension) */
+               e_gnu_attribute__weakref__                = 6,/*!< GNU specific attribute for (GNU extension) */
+               e_gnu_attribute__packed__                 = 6,/*!< GNU specific attribute for (GNU extension) */
+               e_last_gnu_variable_attribute /*!< last value (upper bound on range of values, used in error checking) */
+             };
+
+          bool checkBit ( unsigned int bit ) const;
+          void setBit ( unsigned int bit );
+          void unsetBit ( unsigned int bit );
+
+          bool isGnuAttributeWeak() const;
+          void setGnuAttributeWeak();
+          void unsetGnuAttributeWeak();
+
+          bool isGnuAttributeUnused() const;
+          void setGnuAttributeUnused();
+          void unsetGnuAttributeUnused();
+
+          bool isGnuAttributeUsed() const;
+          void setGnuAttributeUsed();
+          void unsetGnuAttributeUsed();
+
+          bool isGnuAttributeDeprecated() const;
+          void setGnuAttributeDeprecated();
+          void unsetGnuAttributeDeprecated();
+
+          bool isGnuAttributeNoCommon() const;
+          void setGnuAttributeNoCommon();
+          void unsetGnuAttributeNoCommon();
+
+          bool isGnuAttributeTransparentUnion() const;
+          void setGnuAttributeTransparentUnion();
+          void unsetGnuAttributeTransparentUnion();
+
+          bool isGnuAttributeWeakReference() const;
+          void setGnuAttributeWeakReference();
+          void unsetGnuAttributeWeakReference();
 
           void post_construction_initialization();
-	  // Overriding SgNode versions of these
+       // Overriding SgNode versions of these
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int index) const;
           virtual unsigned int cfgFindChildIndex(SgNode* n);
           virtual unsigned int cfgFindNextChildIndex(SgNode* n);
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
-
 
           SgStorageModifier & get_storageModifier();
 
@@ -4370,6 +4684,7 @@ HEADER_UNPARSE_INFO_START
 
      private:
 
+       // DQ (1/3/2009): This is similar code to what is in SgModifier::checkBit, setBit, unsetBit; so it could be refactored.
           int checkBit(unparse_type_num bit) const;
           void setBit(unparse_type_num bit);
           void unsetBit(unparse_type_num bit);
@@ -7287,6 +7602,14 @@ SgInitializedName::post_construction_initialization()
        // printf ("In SgInitializedName::post_construction_initialization(): resetting parent of valid initializer (p_initptr = %p) \n",p_initptr);
           p_initptr->set_parent(this);
         }
+
+  // DQ (1/3/2009): Added support for GNU variable attributes (std::strings will default to null, so they are not setup).
+     p_gnu_attribute_modifierVector          = SgBitVector(e_last_gnu_variable_attribute,false);
+     p_gnu_attribute_initialization_priority = 0;
+     p_gnu_attribute_alignment               = 0;
+
+  // Borrow the enum definition (and default value from SgDeclarationModifier).
+     p_gnu_attribute_visability              = SgDeclarationModifier::e_unknown_visibility;
    }
 
 // This constructor is specific to the creation of SgInitializedName objects used as initializers
@@ -7413,6 +7736,12 @@ SgInitializedName::SgInitializedName (const SgInitializedName& ptr)
 
   // DQ (10/10/2007): Added support for initialization of this data member (reported as uninitialized by valgrind).
      p_requiresGlobalNameQualificationOnType = ptr.p_requiresGlobalNameQualificationOnType;
+
+  // DQ (1/3/2009): Added support for GNU variable attribues
+     p_gnu_attribute_modifierVector          = ptr.p_gnu_attribute_modifierVector;
+     p_gnu_attribute_initialization_priority = ptr.p_gnu_attribute_initialization_priority;
+     p_gnu_attribute_alignment               = ptr.p_gnu_attribute_alignment;
+     p_gnu_attribute_visability              = ptr.p_gnu_attribute_visability;
    }
 
 SgInitializedName&
@@ -7491,6 +7820,12 @@ SgInitializedName::operator= (const SgInitializedName& ptr)
 
        // DQ (10/10/2007): Added support for initialization of this data member (reported as uninitialized by valgrind).
           p_requiresGlobalNameQualificationOnType = ptr.p_requiresGlobalNameQualificationOnType;
+
+       // DQ (1/3/2009): Added support for GNU variable attribues
+          p_gnu_attribute_modifierVector          = ptr.p_gnu_attribute_modifierVector;
+          p_gnu_attribute_initialization_priority = ptr.p_gnu_attribute_initialization_priority;
+          p_gnu_attribute_alignment               = ptr.p_gnu_attribute_alignment;
+          p_gnu_attribute_visability              = ptr.p_gnu_attribute_visability;
         }
        else
         {
@@ -7831,7 +8166,62 @@ SgInitializedName::set_definition(SgDeclarationStatement * def)
      set_declptr(def);
    }
 
+bool
+SgInitializedName::checkBit ( unsigned int bit ) const
+   {
+     ROSE_ASSERT (bit < e_last_gnu_variable_attribute);
+     return p_gnu_attribute_modifierVector[bit];
+   }
 
+void
+SgInitializedName::setBit ( unsigned int bit )
+   {
+     ROSE_ASSERT (bit < e_last_gnu_variable_attribute);
+     p_gnu_attribute_modifierVector[bit] = true;
+   }
+
+void
+SgInitializedName::unsetBit ( unsigned int bit )
+   {
+     ROSE_ASSERT (bit < e_last_gnu_variable_attribute);
+     p_gnu_attribute_modifierVector[bit] = false;
+   }
+
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgInitializedName::isGnuAttributeWeak() const { return checkBit(e_gnu_attribute__weak__); }
+void SgInitializedName::setGnuAttributeWeak()      { setBit(e_gnu_attribute__weak__); }
+void SgInitializedName::unsetGnuAttributeWeak()    { unsetBit(e_gnu_attribute__weak__); }
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgInitializedName::isGnuAttributeUnused() const { return checkBit(e_gnu_attribute__unused__); }
+void SgInitializedName::setGnuAttributeUnused()      { setBit(e_gnu_attribute__unused__); }
+void SgInitializedName::unsetGnuAttributeUnused()    { unsetBit(e_gnu_attribute__unused__); }
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgInitializedName::isGnuAttributeUsed() const { return checkBit(e_gnu_attribute__used__); }
+void SgInitializedName::setGnuAttributeUsed()      { setBit(e_gnu_attribute__used__); }
+void SgInitializedName::unsetGnuAttributeUsed()    { unsetBit(e_gnu_attribute__used__); }
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgInitializedName::isGnuAttributeDeprecated() const { return checkBit(e_gnu_attribute__deprecated__); }
+void SgInitializedName::setGnuAttributeDeprecated()      { setBit(e_gnu_attribute__deprecated__); }
+void SgInitializedName::unsetGnuAttributeDeprecated()    { unsetBit(e_gnu_attribute__deprecated__); }
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgInitializedName::isGnuAttributeNoCommon() const { return checkBit(e_gnu_attribute__nocommon__); }
+void SgInitializedName::setGnuAttributeNoCommon()      { setBit(e_gnu_attribute__nocommon__); }
+void SgInitializedName::unsetGnuAttributeNoCommon()    { unsetBit(e_gnu_attribute__nocommon__); }
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgInitializedName::isGnuAttributeTransparentUnion() const { return checkBit(e_gnu_attribute__transparent_union__); }
+void SgInitializedName::setGnuAttributeTransparentUnion()      { setBit(e_gnu_attribute__transparent_union__); }
+void SgInitializedName::unsetGnuAttributeTransparentUnion()    { unsetBit(e_gnu_attribute__transparent_union__); }
+
+// DQ (1/3/2009): Added GNU specific attributes
+bool SgInitializedName::isGnuAttributeWeakReference() const { return checkBit(e_gnu_attribute__weakref__); }
+void SgInitializedName::setGnuAttributeWeakReference()      { setBit(e_gnu_attribute__weakref__); }
+void SgInitializedName::unsetGnuAttributeWeakReference()    { unsetBit(e_gnu_attribute__weakref__); }
 
 SOURCE_INITIALIZED_NAME_END
 

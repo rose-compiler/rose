@@ -390,6 +390,21 @@ JavaJVMDir  = /usr/lib/jvm/java-1.5.0-ibm-1.5.0.8.x86_64/jre/bin/classic
 configure: error: Unable to find path to JVM library
 \end{verbatim}
 
+   \item Previously installed version of Boost library. \\
+    Some machines have a default version of Boost already installed (for example in 
+{\tt /usr/include/boost}).  This always the wrong version since the OS installation
+of Boost lags by several years.  ROSE now attempts to detect this and use the 
+\quote{-isystem} g++ option to have the explicitly specified version of boost from
+the configure command-line be search before the system include directories.  This works
+well where a machine has a previously installed version of Boost, but it will fail when
+used with SWIG (so don't use {\tt --with-javaport} where a previous system installation
+of Boost is detected).  The ROSE configure scripts will detect the presence of a
+previously installed version of Boost and issue a warning message to not use 
+{\tt --with-javaport}.  Also if no previously installed version of Boost is detected
+the configuration will report this as well and make clear that it will use the Boost
+include directory with a {\tt -I} option.
+
+
 \end{enumerate}
 
 

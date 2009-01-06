@@ -467,6 +467,10 @@ SgAssignInitializer * buildAssignInitializer_nfi(SgExpression * operand_i);
 SgAggregateInitializer * buildAggregateInitializer(SgExprListExp * initializers = NULL);
 SgAggregateInitializer * buildAggregateInitializer_nfi(SgExprListExp * initializers);
 
+// DQ (!/4/2009): Added support for building SgConstructorInitializer
+SgConstructorInitializer * buildConstructorInitializer( SgMemberFunctionDeclaration *declaration,SgExprListExp *args,SgType *expression_type,bool need_name,bool need_qualifier,bool need_parenthesis_after_name,bool associated_class_unknown);
+SgConstructorInitializer * buildConstructorInitializer_nfi( SgMemberFunctionDeclaration *declaration,SgExprListExp *args,SgType *expression_type,bool need_name,bool need_qualifier,bool need_parenthesis_after_name,bool associated_class_unknown);
+
 //! Build sizeof() expression with an expression parameter
 SgSizeOfOp* buildSizeOfOp(SgExpression* exp= NULL);
 SgSizeOfOp* buildSizeOfOp_nfi(SgExpression* exp);

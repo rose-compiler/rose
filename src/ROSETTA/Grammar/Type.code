@@ -2813,7 +2813,7 @@ SOURCE_FUNCTION_TYPE_END
 
 SOURCE_MEMBER_FUNCTION_TYPE_START
 
-$CLASSNAME::$CLASSNAME ( SgPartialFunctionType* ft )
+SgMemberFunctionType::SgMemberFunctionType ( SgPartialFunctionType* ft )
    : SgFunctionType(ft)
    {
      p_struct_name     = ft->p_struct_name;
@@ -2821,7 +2821,7 @@ $CLASSNAME::$CLASSNAME ( SgPartialFunctionType* ft )
    }
 
 void
-$CLASSNAME::post_construction_initialization()
+SgMemberFunctionType::post_construction_initialization()
    { 
      p_struct_name=0; 
      p_mfunc_specifier = 0;
@@ -2831,39 +2831,39 @@ $CLASSNAME::post_construction_initialization()
 
 // RV (2/1/2006): Made a 'const' member function.
 int
-$CLASSNAME::isConstFunc() const
+SgMemberFunctionType::isConstFunc() const
    { return (p_mfunc_specifier & e_const); }
 
 void
-$CLASSNAME::setConstFunc()
+SgMemberFunctionType::setConstFunc()
    { p_mfunc_specifier |= e_const; }
 
 void
-$CLASSNAME::unsetConstFunc()
+SgMemberFunctionType::unsetConstFunc()
    { p_mfunc_specifier &= ~e_const; }
 
-// RV (2/1/2006): Made a 'const' member function.
+// RV (2/1/2006): Made a 'volatile' member function.
 int
-$CLASSNAME::isVolatileFunc() const
+SgMemberFunctionType::isVolatileFunc() const
    { return (p_mfunc_specifier & e_volatile); }
 
 void
-$CLASSNAME::setVolatileFunc()
+SgMemberFunctionType::setVolatileFunc()
    { p_mfunc_specifier |= e_volatile; }
 
 void
-$CLASSNAME::unsetVolatileFunc()
+SgMemberFunctionType::unsetVolatileFunc()
    { p_mfunc_specifier &= ~e_volatile; }
 
 SgName
-$CLASSNAME::get_mangled_name (void) const
+SgMemberFunctionType::get_mangled_name (void) const
    {
      return get_mangled ();
    }
  
 // RV (1/31/2006): Changed form of mangling to include begin/end tags.
 SgName
-$CLASSNAME::get_mangled (void) const
+SgMemberFunctionType::get_mangled (void) const
    {
   // Member-function specific information (class name, const/volatile qualifiers)
      SgName mangled_cls_tag;
@@ -2898,7 +2898,7 @@ $CLASSNAME::get_mangled (void) const
 
 #if 0
 SgName
-$CLASSNAME::get_mangled_type()
+SgMemberFunctionType::get_mangled_type()
    { 
      SgUnparse_Info info;
 
@@ -2917,7 +2917,7 @@ $CLASSNAME::get_mangled_type()
 
 //! This function repreents the name mangleing support for unparsing
 SgName
-$CLASSNAME::get_mangled_name(SgUnparse_Info& info) 
+SgMemberFunctionType::get_mangled_name(SgUnparse_Info& info) 
    {
      SgName rtmp;
   // SgDeclarationStatement *dstmt = info.get_decl_stmt();
@@ -3114,7 +3114,7 @@ $CLASSNAME::get_mangled_name(SgUnparse_Info& info)
     mangle a complete function declaration with name and class name
  */
 SgName
-$CLASSNAME::get_mangled(SgUnparse_Info & info)
+SgMemberFunctionType::get_mangled(SgUnparse_Info & info)
    {
      SgName tmp;
 
@@ -3198,7 +3198,7 @@ $CLASSNAME::get_mangled(SgUnparse_Info & info)
 
 // SgMemberFunctionType * mkAnotherType(SgType *);
 SgMemberFunctionType *
-$CLASSNAME::mkAnotherType(SgType *rtype)
+SgMemberFunctionType::mkAnotherType(SgType *rtype)
    {
      if (rtype == get_return_type())
           return NULL;
@@ -3229,7 +3229,7 @@ SOURCE_MEMBER_FUNCTION_TYPE_END
 SOURCE_PARTIAL_FUNCTION_TYPE_START
 //! This is an empty function (no data to initialize)
 void
-$CLASSNAME::post_construction_initialization () 
+SgPartialFunctionType::post_construction_initialization () 
    {
    }
 
@@ -3468,7 +3468,7 @@ SgFunctionType::createType(SgPartialFunctionType* ft)
   // shared. During function creation.  As a result we don't have to call the functions to mangle 
   // the names of things (which traverse parents to compute scopes and can be a problem if called
   // before the parents are set, done in post processing of AST).  However, this design requires
-  // that the funtion type symbol table be constructed after the AST is build (and parent pointers 
+  // that the funtion type symbol table be constructed after the AST is built (and parent pointers 
   // are set).  If functions are created then the function type table must also be updated.
      SgFunctionType* theType = new SgFunctionType(ft);
 

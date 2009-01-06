@@ -362,6 +362,40 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList 
 
   return funcType;
 }
+
+#if 0
+// DQ (1/4/2009): Need to finish this!!!
+//-----------------------------------------------
+// build member function type, 
+// 
+// insert into symbol table when not duplicated
+SgMemberFunctionType * 
+SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList * typeList, SgClassDefinition *struct_name, unsigned int mfunc_specifier)
+   {
+     ROSE_ASSERT(return_type);
+
+  // SgMemberFunctionType (SgType *return_type=NULL, bool has_ellipses=true, SgClassDefinition *struct_name=NULL, unsigned int mfunc_specifier=0)
+     SgMemberFunctionType * funcType = new SgMemberFunctionType(return_type, false);
+     ROSE_ASSERT(funcType);
+
+     if (typeList!=NULL)
+        {
+          funcType->set_argument_list(typeList);
+          typeList->set_parent(funcType);
+        }
+     SgName typeName = funcType->get_mangled_type();
+  // maintain the type table 
+     SgFunctionTypeTable * fTable = SgNode::get_globalFunctionTypeTable();
+     ROSE_ASSERT(fTable);
+
+     SgType* typeInTable = fTable->lookup_function_type(typeName);
+     if (typeInTable==NULL)
+          fTable->insert_function_type(typeName,funcType);
+
+     return funcType;
+   }
+#endif
+
  //----------------------------------------------------
  //! Build an opaque type with a name, useful when a type's details are unknown during transformation, especially for a runtime library's internal type.
  SgType * SageBuilder::buildOpaqueType(std::string const name, SgScopeStatement * scope)
@@ -479,6 +513,11 @@ SageBuilder::buildNondefiningFunctionDeclaration_T \
   }
   // TODO double check if there are exceptions
    func->set_scope(scope);
+
+// DQ (1/5/2009): This is not always true (should likely use SageBuilder::topScopeStack() instead)
+   if (scope != SageBuilder::topScopeStack())
+        printf ("Warning: function parent may not be the same as the function scope (e.g. for member functions) \n");
+
    func->set_parent(scope);
 
   // mark as a forward declartion
@@ -516,6 +555,25 @@ SgMemberFunctionDeclaration* SageBuilder::buildNondefiningMemberFunctionDeclarat
   //required ty AstConsistencyTests.C:TestAstForProperlySetDefiningAndNondefiningDeclarations()
   ctor->set_definingDeclaration(ctor);
   ctor->set_firstNondefiningDeclaration(ctor);
+
+// DQ (1/4/2009): Error checking
+  ROSE_ASSERT(result->get_associatedClassDeclaration() != NULL);
+
+  if (result->get_associatedClassDeclaration() == NULL)
+     {
+       printf ("Warning, must set the SgMemberFunctionDeclaration::associatedClassDeclaration \n");
+
+       ROSE_ASSERT(scope != NULL);
+       SgClassDefinition* classDefinition = isSgClassDefinition(scope);
+       ROSE_ASSERT(classDefinition != NULL);
+       SgDeclarationStatement* associatedDeclaration = classDefinition->get_declaration();
+       ROSE_ASSERT(associatedDeclaration != NULL);
+       SgClassDeclaration* associatedClassDeclaration = isSgClassDeclaration(associatedDeclaration);
+
+    // DQ (1/4/2009): This needs to be set, checked in AstConsistencyTests.C!
+       result->set_associatedClassDeclaration(associatedClassDeclaration);
+     }
+
   return result;
 }
 
@@ -528,6 +586,10 @@ SgMemberFunctionDeclaration* SageBuilder::buildDefiningMemberFunctionDeclaration
   //required ty AstConsistencyTests.C:TestAstForProperlySetDefiningAndNondefiningDeclarations()
   ctor->set_definingDeclaration(ctor);
   ctor->set_firstNondefiningDeclaration(ctor);
+
+// DQ (1/4/2009): Error checking
+  ROSE_ASSERT(result->get_associatedClassDeclaration() != NULL);
+
   return result;
 }
 
@@ -1449,6 +1511,67 @@ SgAggregateInitializer * SageBuilder::buildAggregateInitializer_nfi(SgExprListEx
   setOneSourcePositionNull(result);
   return result;
 }
+
+// DQ (1/4/2009): Added support for SgConstructorInitializer
+SgConstructorInitializer *
+SageBuilder::buildConstructorInitializer(
+   SgMemberFunctionDeclaration *declaration/* = NULL*/,
+   SgExprListExp *args/* = NULL*/,
+   SgType *expression_type/* = NULL*/,
+   bool need_name /*= false*/,
+   bool need_qualifier /*= false*/,
+   bool need_parenthesis_after_name /*= false*/,
+   bool associated_class_unknown /*= false*/)
+   {
+  // Prototype:
+  // SgConstructorInitializer (SgMemberFunctionDeclaration *declaration, SgExprListExp *args, SgType *expression_type, bool need_name, bool need_qualifier, bool need_parenthesis_after_name, bool associated_class_unknown);
+
+  // DQ (1/4/2009): Error checking
+     ROSE_ASSERT(declaration->get_associatedClassDeclaration() != NULL);
+
+     SgConstructorInitializer* result = new SgConstructorInitializer( declaration, args, expression_type, need_name, need_qualifier, need_parenthesis_after_name, associated_class_unknown );
+     ROSE_ASSERT(result != NULL);
+     if (args != NULL)
+        {
+          args->set_parent(result);
+          setOneSourcePositionForTransformation(args);
+        }
+
+     setOneSourcePositionForTransformation(result);
+
+     return result;
+   }
+
+// DQ (1/4/2009): Added support for SgConstructorInitializer
+SgConstructorInitializer *
+SageBuilder::buildConstructorInitializer_nfi(
+   SgMemberFunctionDeclaration *declaration/* = NULL*/,
+   SgExprListExp *args/* = NULL*/,
+   SgType *expression_type/* = NULL*/,
+   bool need_name /*= false*/,
+   bool need_qualifier /*= false*/,
+   bool need_parenthesis_after_name /*= false*/,
+   bool associated_class_unknown /*= false*/)
+   {
+  // Prototype:
+  // SgConstructorInitializer (SgMemberFunctionDeclaration *declaration, SgExprListExp *args, SgType *expression_type, bool need_name, bool need_qualifier, bool need_parenthesis_after_name, bool associated_class_unknown);
+
+  // DQ (1/4/2009): Error checking
+     ROSE_ASSERT(declaration->get_associatedClassDeclaration() != NULL);
+
+     SgConstructorInitializer* result = new SgConstructorInitializer( declaration, args, expression_type, need_name, need_qualifier, need_parenthesis_after_name, associated_class_unknown );
+     ROSE_ASSERT(result != NULL);
+     if (args != NULL)
+        {
+          args->set_parent(result);
+        }
+
+     setOneSourcePositionNull(result);
+
+     return result;
+   }
+
+
 
 //! Build sizeof() expression with an expression parameter
 SgSizeOfOp* SageBuilder::buildSizeOfOp(SgExpression* exp/*= NULL*/)
