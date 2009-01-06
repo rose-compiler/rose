@@ -88,6 +88,27 @@ if test "x$enable_edg_version4" = "xyes"; then
   AC_DEFINE([ROSE_USE_EDG_VERSION_4], [], [Whether to use the new EDG version 4.x])
 fi
 
+# DQ (1/4/2009) Added support for optional GNU language extensions in new EDG/ROSE interface.
+# This value will be substituted into EDG/4.0/src/rose_lang_feat.h in the future (not used at present!)
+AC_ARG_ENABLE(gnu-extensions, AS_HELP_STRING([--enable-gnu-extensions], [Enable internal support in ROSE for GNU language extensions]))
+if test "x$enable_gnu_extensions" = "xyes"; then
+  ROSE_SUPPORT_GNU_EXTENSIONS="TRUE"
+else
+  ROSE_SUPPORT_GNU_EXTENSIONS="FALSE"
+fi
+AC_SUBST(ROSE_SUPPORT_GNU_EXTENSIONS)
+
+# DQ (1/4/2009) Added support for optional Microsoft language extensions in new EDG/ROSE interface.
+# This value will be substituted into EDG/4.0/src/rose_lang_feat.h in the future (not used at present!)
+AC_ARG_ENABLE(microsoft-extensions, AS_HELP_STRING([--enable-microsoft-extensions], [Enable internal support in ROSE for Microsoft language extensions]))
+if test "x$enable_microsoft_extensions" = "xyes"; then
+  ROSE_SUPPORT_MICROSOFT_EXTENSIONS="TRUE"
+else
+  ROSE_SUPPORT_MICROSOFT_EXTENSIONS="FALSE"
+fi
+AC_SUBST(ROSE_SUPPORT_MICROSOFT_EXTENSIONS)
+
+
 #AM_CONDITIONAL(ROSE_USE_QROSE,test "$with_qrose" = true)
 
 # Set up for use of bison to build dot2gml tool in directory
@@ -270,8 +291,6 @@ AM_PROG_LEX
 AC_SUBST(LEX)
 AC_PROG_YACC
 AC_SUBST(YACC)
-
-
 
 # echo "After test for LEX: CC (CC = $CC)"
 

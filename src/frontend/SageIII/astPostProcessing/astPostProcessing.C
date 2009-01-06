@@ -82,10 +82,40 @@ void postProcessingSupport (SgNode* node)
   // interface is being used (it should produce correct, complete ASTs on its
   // own and do its own fixups)
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
-     bool doPostprocessing =
-       (SageInterface::is_Fortran_language() == true) ||
-       (SageInterface::is_PHP_language() == true);
-     if (!doPostprocessing) {return;}
+
+  // Only do AST post-processing for C/C++
+     bool doPostprocessing = (SageInterface::is_Fortran_language() == true) || (SageInterface::is_PHP_language() == true);
+
+  // If this is C or C++ then we are using the new EDG translation and althrough fewer 
+  // fixups should be required, some are still required.
+     if (doPostprocessing == false)
+        {
+          printf ("Postprocessing AST build using new EDG/Sage Translation Interface. \n");
+
+       // Reset and test and parent pointers so that it matches our definition 
+       // of the AST (as defined by the AST traversal mechanism).
+          topLevelResetParentPointer (node);
+
+       // Another 2nd step to make sure that parents of even IR nodes not traversed 
+       // can be set properly.
+          resetParentPointersInMemoryPool();
+
+       // Fixup the symbol tables (in each scope) and the global function type 
+       // symbol table. This is less important for C, but required for C++.
+       // But since the new EDG interface has to handle C and C++ we don't
+       // setup the global function type table there to be uniform.
+          fixupAstSymbolTables(node);
+
+       // This resets the isModified flag on each IR node so that we can record 
+       // where transformations are done in the AST.  If any transformations on
+       // the AST are done, even just building it, this step should be the final
+       // step.
+          checkIsModifiedFlag(node);
+
+          printf ("DONE: Postprocessing AST build using new EDG/Sage Translation Interface. \n");
+
+          return;
+        }
 #endif // ROSE_USE_NEW_EDG_INTERFACE -- do postprocessing unconditionally when the old EDG interface is used
 
   // DQ (7/7/2005): Introduce tracking of performance of ROSE.
@@ -106,7 +136,7 @@ void postProcessingSupport (SgNode* node)
      fixupNullPointersInAST(node);
 
   // DQ (8/9/2005): Some function definitions in Boost are build without 
-  // a body (example in test2005_102.C, but it apears to work fine).
+  // a body (example in test2005_102.C, but it appears to work fine).
      fixupFunctionDefinitions(node);
 
   // DQ (8/10/2005): correct any template declarations mistakenly marked as compiler-generated

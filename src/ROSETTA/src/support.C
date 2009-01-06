@@ -419,6 +419,37 @@ Grammar::setUpSupport ()
      InitializedName.setDataPrototype("bool", "initializationDeferred", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (1/3/2009): Added support for gnu variable attributes.  Note that these can be specified on a per variable 
+  // basis and because a variable declaration can contain many variables, the attributs must live with the 
+  // SgInitializedName (in the future we might define aSgVariableModifier and refactor this code there).
+  // Note that more than one value can be set, so this implements a bit vector of flags to be used.
+     InitializedName.setDataPrototype("SgBitVector", "gnu_attribute_modifierVector", "",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (1/3/2009): Added support for GNU constructor priority (added paramter "N" as in "void f __attribute__((constructor (N)));")
+     InitializedName.setDataPrototype("unsigned long int", "gnu_attribute_initialization_priority", "= 0",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (1/3/2009): Added support for GNU attributes
+     InitializedName.setDataPrototype("std::string", "gnu_attribute_named_weak_reference", "=\"\"",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (1/3/2009): Added support for GNU attributes
+     InitializedName.setDataPrototype("std::string", "gnu_attribute_named_alias", "=\"\"",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (1/3/2009): Added support for GNU attributes
+     InitializedName.setDataPrototype("std::string", "gnu_attribute_cleanup_function", "=\"\"",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (1/3/2009): Added support for GNU attributes
+     InitializedName.setDataPrototype("std::string", "gnu_attribute_section_name", "=\"\"",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (1/3/2009): Added support for alignment specfication using gnu attributes (zero is used as the default to imply no alignment specification).
+     InitializedName.setDataPrototype("unsigned long int", "gnu_attribute_alignment", "= 0",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (1/3/2009): Added support for GNU attributes (reuse the enum declaration at the SgDeclarationModifier IR node).
+     InitializedName.setDataPrototype("SgDeclarationModifier::gnu_declaration_visability_enum", "gnu_attribute_visability","= SgDeclarationModifier::e_unknown_visibility",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+
+
      Name.setFunctionPrototype                ( "HEADER_NAME", "../Grammar/Support.code");
 
 #if 0
@@ -1437,8 +1468,17 @@ Specifiers that can have only one value (implemented with a protected enum varia
      AccessModifier.setDataPrototype("SgAccessModifier::access_modifier_enum", "modifier", "= SgAccessModifier::e_unknown",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // Note that more than one value can be set, so this implements a bit vector of flags to be used.
      FunctionModifier.setDataPrototype("SgBitVector", "modifierVector", "",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (1/3/2009): Added support for GNU constructor priority (added paramter "N" as in "void f __attribute__((constructor (N)));")
+     FunctionModifier.setDataPrototype("unsigned long int", "gnu_attribute_constructor_destructor_priority", "= 0",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     FunctionModifier.setDataPrototype("std::string", "gnu_attribute_named_weak_reference", "=\"\"",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     FunctionModifier.setDataPrototype("std::string", "gnu_attribute_named_alias", "=\"\"",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      SpecialFunctionModifier.setDataPrototype("SgBitVector","modifierVector", "",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -1462,6 +1502,11 @@ Specifiers that can have only one value (implemented with a protected enum varia
                                     NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      DeclarationModifier.setDataPrototype("SgStorageModifier", "storageModifier", ".reset()",
                                     NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     DeclarationModifier.setDataPrototype("std::string", "gnu_attribute_section_name", "=\"\"",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     DeclarationModifier.setDataPrototype("SgDeclarationModifier::gnu_declaration_visability_enum", "gnu_attribute_visability","= SgDeclarationModifier::e_unknown_visibility",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      TypeModifier.setDataPrototype("SgBitVector", "modifierVector", "",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TypeModifier.setDataPrototype("SgUPC_AccessModifier", "upcModifier", ".reset()",
@@ -1474,6 +1519,16 @@ Specifiers that can have only one value (implemented with a protected enum varia
   // There are a lot of these and type codes can be used to specify them.
      TypeModifier.setDataPrototype("SgTypeModifier::gnu_extension_machine_mode_enum", "gnu_extension_machine_mode", "= SgTypeModifier::e_gnu_extension_machine_mode_unspecified",
                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (1/3/2009): Added support for alignment specfication using gnu attributes (zero is used as the default to imply no alignment specification).
+     TypeModifier.setDataPrototype("unsigned long int", "gnu_attribute_alignment", "= 0",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (1/3/2009): This is used for funtion types only. I reserve values less than zero (-1 implies that 
+  // this was not set, default value). Note that the standard might require this to be unsigned, but I 
+  // would like to avoid the EDG tick of shifting the value by one to reserve zero to be the default.
+     TypeModifier.setDataPrototype("long", "gnu_attribute_sentinel", "= -1",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      ElaboratedTypeModifier.setDataPrototype("SgElaboratedTypeModifier::elaborated_type_modifier_enum", "modifier",
                 "= SgElaboratedTypeModifier::e_unknown",

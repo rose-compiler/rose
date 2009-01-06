@@ -702,6 +702,7 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgUPC_AccessModifier::upc_access_modifier_enum" ) ||
                  ( varTypeString == "SgElaboratedTypeModifier::elaborated_type_modifier_enum" ) ||
                  ( varTypeString == "SgDeclarationStatement::template_specialization_enum" ) ||
+                 ( varTypeString == "SgDeclarationModifier::gnu_declaration_visability_enum" ) ||
                  ( varTypeString == "SgTemplateDeclaration::template_type_enum" ) ||
                  ( varTypeString == "SgBaseClassModifier::baseclass_modifier_enum" ) ||
                  ( varTypeString == "SgLinkageModifier::linkage_modifier_enum" ) ||

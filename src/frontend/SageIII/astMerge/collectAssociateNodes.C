@@ -205,7 +205,9 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
 
           case V_SgQualifiedNameType:
           case V_SgTemplateType:
+#ifndef ROSE_USE_NEW_EDG_INTERFACE 
           case V_SgPartialFunctionType:
+#endif
           case V_SgPartialFunctionModifierType:
           // case V_SgUnknownMemberFunctionType:
              {
@@ -247,6 +249,10 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
           case V_SgTypeUnsignedShort:
           case V_SgTypeVoid:
           case V_SgTypeWchar:
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
+       // Allow this as an IR node into the AST.
+          case V_SgPartialFunctionType:
+#endif
              {
             // Ignore these cases (they contain no base types)...
                nodeList.insert(type);
@@ -428,7 +434,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                     printf ("Error: functionType->get_mangled() = %s not found in symbol table \n",functionType->get_mangled().str());
                     printf ("functionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->get_name().str());
                     printf ("Location of problem function declaration: \n");
-                 // functionDeclaration->get_startOfConstruct()->display("Location of problem function declaration: debug");
+                    functionDeclaration->get_startOfConstruct()->display("Location of problem function declaration: debug");
 #endif
                     ROSE_ASSERT(functionDeclaration->get_startOfConstruct()->isCompilerGenerated() == true);
                   }
