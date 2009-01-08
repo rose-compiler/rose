@@ -1690,7 +1690,7 @@ Grammar::setUpBinaryInstructions ()
      AsmGenericFile.setDataPrototype("SgAsmGenericSectionList*", "holes", "= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmGenericFile.setDataPrototype("bool", "truncate_zeros", "= false",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
   // This data structure represents the ExecFile from file: ExecGeneric.h

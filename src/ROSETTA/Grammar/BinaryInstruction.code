@@ -919,7 +919,7 @@ HEADER_GENERIC_HEADER_END
 HEADER_GENERIC_FILE_START
 	public:
 		SgAsmGenericFile()					/* Non-parsing constructor */
-			: p_fd(-1), p_headers(NULL), p_holes(NULL)
+			: p_fd(-1), p_headers(NULL), p_holes(NULL), p_truncate_zeros(false)
 			{ctor();}
 		virtual ~SgAsmGenericFile();				/* Destructor deletes children and unmaps/closes file */
 		SgAsmGenericFile* parse(std::string file_name);		/* Attach an existing file for parsing */
