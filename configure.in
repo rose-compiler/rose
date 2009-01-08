@@ -1260,6 +1260,7 @@ developersScratchSpace/Dan/Compass_tests/Makefile
 developersScratchSpace/Dan/astEquivalence_tests/Makefile
 developersScratchSpace/Dan/MicrosoftWindows_tests/Makefile
 developersScratchSpace/Dan/QRose_tests/Makefile
+developersScratchSpace/Robb/DynamicLinking/Makefile
 ])
 
 # DQ (12/31/2008): Skip these, since we don't have SPEC and NAS benchmarks setup yet.

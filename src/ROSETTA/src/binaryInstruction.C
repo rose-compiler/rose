@@ -469,16 +469,15 @@ Grammar::setUpBinaryInstructions ()
   // DQ (8/28/2008): Ask Thomas if we should change "unsigned int" to "addr_t"
      AsmBlock.setDataPrototype("rose_addr_t","id","= 0",
                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     AsmBlock.setDataPrototype("SgAsmStatementPtrList","statementList","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AsmBlock.setDataPrototype("bool","externallyVisible","= true", // Can this block be called into from random code?
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
      AsmOperandList.setFunctionPrototype        ( "HEADER_BINARY_OPERAND_LIST", "../Grammar/BinaryInstruction.code");
      AsmOperandList.setDataPrototype("SgAsmExpressionPtrList","operands","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
-     AsmBlock.setDataPrototype("SgAsmStatementPtrList","statementList","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
-     AsmBlock.setDataPrototype("bool","externallyVisible","= true", // Can this block be called into from random code?
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
 
