@@ -370,64 +370,6 @@ SgAsmElfFileHeader::get_segtab_sections()
 }
 
 /* Encode Elf header disk structure */
-void
-SgAsmElfFileHeader::encode_common(unsigned *ident_file_class, unsigned *data_encoding, unsigned *purpose, unsigned *machine) const
-{
-    if (ident_file_class) {
-        *ident_file_class=1;
-        switch(get_word_size()) {
-          case 4:
-            *ident_file_class = 1;
-            break;
-          case 8:
-            *ident_file_class = 2;
-            break;
-          default:
-            ROSE_ASSERT(!"invalid word size");
-            break;
-        }
-    }
-    
-    if (data_encoding) {
-        /* Byte order. According to the spec, valid values are 1 (little-endian) and 2 (big-endian). However, we've seen cases
-         * where a value of zero is used to indicate "native" order (loader assumes words are in the order of the machine on
-         * which the loader is running, and the ROSE ELF parser determines the order by looking at other fields in the
-         * header). Any original value other than 1 or 2 will be written to the new output; otherwise we choose 1 or 2 based
-         * on the currently defined byte order. */
-        if (p_e_ident_data_encoding==1 || p_e_ident_data_encoding==2) {
-            *data_encoding = ORDER_LSB==get_sex() ? 1 : 2;
-        } else {
-            *data_encoding = p_e_ident_data_encoding;
-        }
-    }
-
-    if (purpose) {
-        switch (p_exec_format->get_purpose()) {
-          case PURPOSE_UNSPECIFIED:
-          case PURPOSE_PROC_SPECIFIC:
-          case PURPOSE_OS_SPECIFIC:
-          case PURPOSE_OTHER:
-            *purpose = p_e_type;
-            break;
-          case PURPOSE_LIBRARY:
-            if (p_e_type==1 || p_e_type==3) {
-                *purpose = p_e_type;
-            } else {
-                *purpose = 1;
-            }
-            break;
-          case PURPOSE_EXECUTABLE:
-            *purpose = 2;
-            break;
-          case PURPOSE_CORE_DUMP:
-            *purpose = 4;
-        }
-    }
-
-    if (machine) {
-        *machine = isa_to_machine(get_isa());
-    }
-}
 void *
 SgAsmElfFileHeader::encode(ByteOrder sex, Elf32FileHeader_disk *disk) const
 {
@@ -538,13 +480,54 @@ SgAsmElfFileHeader::reallocate()
         reallocated = true;
     }
 
-    /* Update ELF-specific data members with generic data. */
-    unsigned file_class, encoding, purpose, machine;
-    encode_common(&file_class, &encoding, &purpose, &machine);
-    p_e_ident_file_class = file_class;
-    p_e_ident_data_encoding = encoding;
-    p_e_type = purpose;
-    p_e_machine = machine;
+    /* Update ELF-specific file class data member from generic data. */
+    switch(get_word_size()) {
+      case 4:
+        p_e_ident_file_class = 1;
+        break;
+      case 8:
+        p_e_ident_file_class = 2;
+        break;
+      default:
+        ROSE_ASSERT(!"invalid word size");
+        break;
+    }
+
+    /* Byte order. According to the spec, valid values are 1 (little-endian) and 2 (big-endian). However, we've seen cases
+     * where a value of zero is used to indicate "native" order (loader assumes words are in the order of the machine on which
+     * the loader is running, and the ROSE ELF parser determines the order by looking at other fields in the header). Any
+     * original value other than 1 or 2 will be written to the new output; otherwise we choose 1 or 2 based on the currently
+     * defined byte order. */
+    if (p_e_ident_data_encoding==1 || p_e_ident_data_encoding==2) {
+        p_e_ident_data_encoding = ORDER_LSB==get_sex() ? 1 : 2;
+    }
+
+    /* Update ELF-specific file type from generic data. */
+    switch (p_exec_format->get_purpose()) {
+      case PURPOSE_UNSPECIFIED:
+      case PURPOSE_PROC_SPECIFIC:
+      case PURPOSE_OS_SPECIFIC:
+      case PURPOSE_OTHER:
+        /* keep as is */
+        break;
+      case PURPOSE_LIBRARY:
+        if (p_e_type==1 || p_e_type==3) {
+            /* keep as is */
+        } else {
+            p_e_type = 1;
+        }
+        break;
+      case PURPOSE_EXECUTABLE:
+        p_e_type = 2;
+        break;
+      case PURPOSE_CORE_DUMP:
+        p_e_type = 4;
+    }
+
+    /* Update ELF machine type. */
+    p_e_machine = isa_to_machine(get_isa());
+
+    /* The ELF header stores its own size */
     p_e_ehsize = get_size();
 
     return reallocated;

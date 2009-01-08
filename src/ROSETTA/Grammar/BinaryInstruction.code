@@ -1256,8 +1256,6 @@ HEADER_ELF_HEADER_START
 
 	private:
 		void ctor();
-		void encode_common(unsigned *ident_file_class, unsigned *data_encoding, unsigned *purpose,
-				   unsigned *machine) const;
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfFileHeader::Elf32FileHeader_disk*) const;
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfFileHeader::Elf64FileHeader_disk*) const;
 HEADER_ELF_HEADER_END
