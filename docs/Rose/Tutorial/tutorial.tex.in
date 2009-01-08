@@ -370,6 +370,8 @@ our own use on large scale applications.}
 
 \input{abstractHandle}
 
+\input{binaryConstruction}
+
 \input{howToContribute}
 
 \backmatter

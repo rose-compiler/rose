@@ -1,0 +1,416 @@
+\chapter{Binary Construction}
+
+ROSE is normally used in such a way that a file (source code or
+binary) is parsed to construct an AST, then operations are performed
+on the AST, and the modified AST is unparsed to create a new source or
+binary file.  However, it is also possible to construct an AST
+explicitly without parsing and then use that AST to generate the
+output.  The AST construction interface for binary files was designed
+so that working files could be created simply, while still providing
+methods to control the finer details of the resulting file.
+
+The example in this chapter shows how to construct a statically linked
+ELF executable containing a small ``.text'' section that simply causes
+the process to exit with a specific non-zero value.
+
+\section{Constructors}
+
+The AST node constructors are designed to construct the tree from the
+root down, and thus generally take the parent node as an
+argument. Nodes that refer to other nodes as prerequisites also take
+those prerequisites as arguments. For instance, an ELF Relocation
+Section is a child of the ELF File Header but also needs an ELF Symbol
+Table and therefore takes both objects as constructor arguments.
+
+\section{Read-Only Data Members}
+
+When two or more file formats have a similar notion then that notion
+is represented in a base class. However, part of the information may
+continue to survive in the specialized class. In these situations
+modifications to the specilized data will probably be overridden by
+the generic values from the base class.  For instance, all formats
+have a notion of byte order which is represented in the base class
+SgAsmGenericHeader as little- or big-endian (an enumeration
+constant). The ELF specification provides an 8-bit unsigned field to
+store the byte order and therefore has potentially more than two
+possibilities. Any value assigned to the ELF-specific byte order will
+likely be overwritten by the generic byte order before the AST is
+unparsed.
+
+A similar situation arises with section offsets, sizes, memory
+mappings, permissions, etc. The SgAsmGenericSection class represents
+ELF Sections, ELF Segments, PE Objects, and other contiguous regions
+of a file and has methods for obtaining/setting these values. In
+addition, many of the formats have some sort of table that describes
+these sections and which also contains similar information (e.g., the
+ELF Segment Table, a.k.a., the ELF Program Header Table). As above,
+the generic representation of these notions (stored in
+SgAsmGenericSection) override the format-specific values (stored in
+SgAsmElfSegmentEntry).
+
+ROSETTA doesn't make a distinction between data members that can be
+user-modified and data members that should be modified only by the
+parser. Therefore it is up to the user to be aware that certain data
+members will have their values computed or copied from other locations
+in the AST during the unparsing phase.
+
+\section{Constructing the Executable File Container}
+
+All executable files are stored as children of an SgAsmGenericFile
+node. The children are file format headers (SgAsmGenericHeader) such
+as an ELF File Header (SgAsmElfFileHeader). This design allows a
+single executable file to potentially contain more than one executable
+and is used by formats like Windows-PE where the file contains a DOS
+File Header as well as a PE File Header.
+
+For the purposes of this example the SgAsmGenericFile node will serve
+as the root of the AST and therefore we do not need to specify a
+parent in the constructor argument list.
+
+\begin{verbatim}
+SgAsmGenericFile *ef = new SgAsmGenericFile;
+\end{verbatim}
+
+\section{Constructing the ELF File Header}
+
+The ELF File Header is the first thing in the file, always at offset
+zero. File headers are always children of an SgAsmGenericFile which is
+specified as the constructor argument.
+
+The section constructors (a file header is a kind of section) always
+create the new section so it begins at the current end-of-file and
+contains at least one byte. This ensures that each section has a
+unique starting address, which will be important when file memory is
+actually allocated and sections need to be moved around--the allocator
+needs to know the relative positions of the sections in order to
+correctly relocate them.
+
+If we were parsing an ELF file we would usually use ROSE's frontend()
+method. However, one can also parse the file by first constructing the
+SgAsmElfFileHeader and then invoking its parse() method, which parses
+the ELF File Header and everything that can be reached from that
+header.
+
+We use the typical 0x400000 as the virtual address of the main LOAD
+segment, which occupies the first part of the file up through the end
+of the ``.text'' section (see below). ELF File Headers don't actually
+store a base address, so instead of assigning one to the
+SgAsmElfFileHeader we'll leave the header's base address at the
+default zero and add base_va explicitly whenever we need to.
+
+\begin{verbatim}
+SgAsmElfFileHeader *fhdr = new SgAsmElfFileHeader(ef);
+fhdr->get_exec_format()->set_word_size(8);                  /* default is 32-bit; we want 64-bit */
+fhdr->set_isa(SgAsmExecutableFileFormat::ISA_X8664_Family); /* instruction set architecture; default is ISA_IA32_386 */
+rose_addr_t base_va = 0x400000;                             /* base virtual address */
+\end{verbatim}
+
+\section{Constructing the ELF Segment Table}
+
+ELF executable files always have an ELF Segment Table (also called the
+ELF Program Header Table), which usually appears immediately after the
+ELF File Header. The ELF Segment Table describes contiguous regions of
+the file that should be memory mapped by the loader. ELF Segments
+don't have names--names are imparted to the segment by virtue of the
+segment also being described by the ELF Section Table, which we'll
+create later.
+
+Being a contiguous region of the file, an ELF Segment Table
+(SgAsmElfSegmentTable) is derived from SgAsmGenericSection. All
+non-header sections have a header as a parent, which we supply as an
+argument to the constructor. Since all ELF Segments will be children of
+the ELF File Header rather than children of the ELF Segment Table, we
+could define the ELF Segment Table at the end rather than here. But
+defining it now is an easy way to get it located in its usuall
+location immediately after the ELF File Header.
+
+\begin{verbatim}
+SgAsmElfSegmentTable *segtab = new SgAsmElfSegmentTable(fhdr);
+\end{verbatim}
+
+\section{Constructing the .text Section}
+
+ROSE doesn't treat a ``.text'' section as being anything particularly
+special--it's just a regular SgAsmElfSection, which derives from
+SgAsmGenericSection. However, in this example, we want to make sure
+that our ``.text'' section gets initialized with some
+instructions. The easiest way to do that is to specialize
+SgAsmElfSection and override or augment a few of the virtual
+functions.
+
+We need to override two functions. First, the calculate_sizes()
+function should return the size we need to store the
+instructions. We'll treat the instructions as an array of entries each
+entry being one byte of the instruction stream. In other words, each
+``entry'' is one byte in length consisting of one required byte and no
+optional bytes.
+
+We need to also override the unparse() method since the base class
+will just fill the ``.text'' section with zeros. The
+SgAsmGenericSection::write method we use will write the instructions
+starting at the first byte of the section.
+
+Finally, we need to augment the reallocate() method. This method is
+reponsible for allocating space in the file for the section and
+performing any other necessary pre-unparsing actions. We don't need to
+allocate space since the base class's method will take care of that in
+conjuction with our version of calculate_sizes(), but we do need to
+set a special ELF flag (SHF_ALLOC) in the ELF Segment Table entry for
+this section. There's a few ways to accomplish this. We do it this way
+because the ELF Section Table Entry is not created until later and we
+want to demonstrate how to keep all .text-related code in close
+proximity.
+
+\begin{verbatim}
+class TextSection : public SgAsmElfSection {
+public:
+    TextSection(SgAsmElfFileHeader *fhdr, size_t ins_size, const unsigned char *ins_bytes)
+	: SgAsmElfSection(fhdr), ins_size(ins_size), ins_bytes(ins_bytes)
+	{}
+    virtual rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const {
+	if (entsize)  *entsize  = 1;                        /* an "entry" is one byte of instruction */
+	if (required) *required = 1;                        /* each "entry" is also stored in one byte of the file */
+	if (optional) *optional = 0;                        /* there is no extra data per instruction byte */
+	if (entcount) *entcount = ins_size;                 /* number of "entries" is the total instruction bytes */
+	return ins_size;                                    /* return value is section size required */
+    }
+    virtual bool reallocate() {
+	bool retval = SgAsmElfSection::reallocate();        /* returns true if size or position of any section changed */
+	SgAsmElfSectionTableEntry *ste = get_section_entry();
+	ste->set_sh_flags(ste->get_sh_flags() | 0x02); /* set the SHF_ALLOC bit */
+	return retval;
+    }
+    virtual void unparse(std::ostream &f) const {
+	write(f, 0, ins_size, ins_bytes);                   /* Write the instructions at offset zero in section */
+    }
+    size_t ins_size;
+    const unsigned char *ins_bytes;
+};
+\end{verbatim}
+
+The section constructors and reallocators don't worry about alignment
+issues--they always allocate from the next available byte. However,
+instructions typically need to satisfy some alignment constraints. We
+can easily adjust the file offset chosen by the constructor, but we
+also need to tell the reallocator about the alignment constraint. Even
+if we didn't ever resize the ``.text'' section the reallocator could
+be called for some other section in such a way that it needs to move
+the ``.text'' section to a new file offset.
+
+For the purpose of this tutorial we want to be very picky about the
+location of the ELF Segment Table. We want it to immediately follow
+the ELF File Header without any intervening bytes of padding. At the
+current time, the ELF File Header has a size of one byte and will
+eventually be reallocated. When we reallocate the header the
+subsequent sections will need to be shifted to higher file
+offsets. When this happens, the allocator shifts them all by the same
+amount taking care to satisfy all alignment constraints, which means
+that an alignment constraint of byte bytes on the ``.text'' section
+will induce a similar alignment on the ELF Segment Table. Since we
+don't want that, the best practice is to call reallocate() now, before
+we create the ``.text'' section.
+
+\begin{verbatim}
+ef->reallocate();                                           /* Give existing sections a chance to allocate file space */
+static const unsigned char instructions[] = {0xb8, 0x01, 0x00, 0x00, 0x00, 0xbb, 0x56, 0x00, 0x00, 0x00, 0xcd, 0x80};
+SgAsmElfSection *text = new TextSection(fhdr, NELMTS(instructions), instructions);
+text->set_purpose(SgAsmGenericSection::SP_PROGRAM);         /* Program-supplied text/data/etc. */
+text->set_offset(ALIGN_UP(text->get_offset(), 4));          /* Align on an 8-byte boundary */
+text->set_file_alignment(4);                                /* Tell reallocator about alignment constraint */
+text->set_mapped_alignment(4);                              /* Alignment constraint for memory mapping */
+text->set_mapped_rva(base_va+text->get_offset());           /* Mapped address is based on file offset */
+text->set_mapped_size(text->get_size());                    /* Mapped size is same as file size */
+text->set_mapped_rperm(true);                               /* Readable */
+text->set_mapped_wperm(false);                              /* Not writable */
+text->set_mapped_xperm(true);                               /* Executable */
+\end{verbatim}
+
+At this point the text section doesn't have a name. We want to name it
+``.text'' and we want those characters to eventually be stored in the
+ELF file in a string table which we'll provide later. In ELF, section
+names are represented by the section's entry in the ELF Section Table
+as an offset into an ELF String Table for a NUL-terminated ASCII
+string. ROSE manages strings using the SgAsmGenericString class, which
+has two subclasses: one for strings that aren't stored in the
+executable file (SgAsmBasicString) and one for strings that are stored
+in the file (SgAsmStoredString). Both are capable of string an
+std::string value and querying its byte offset (although
+SgAsmBasicString::get_offset() will always return
+SgAsmGenericString::unallocated).  Since we haven't added the
+``.text'' section to the ELF Section Table yet the new section has an
+SgAsmBasicString name. We can assign a string to the name now and the
+string will be allocated in the ELF file when we've provided further
+information.
+
+\begin{verbatim}
+text->get_name()->set_string(".text");
+\end{verbatim}
+
+The ELF File Header needs to know the virtual address at which to
+start running the program. In ROSE, virtual addresses can be attached
+to a specific section so that if the section is ever moved the address
+is automatically updated. Some formats allow more than one entry
+address which is why the method is called add_entry_rva() rather than
+set_entry_rva(). ELF, however, only allows one entry address.
+
+\begin{verbatim}
+rose_rva_t entry_rva(text->get_mapped_rva(), text);
+fhdr->add_entry_rva(entry_rva);
+\end{verbatim}
+
+\section{Constructing a LOAD Segment}
+
+ELF Segments define parts of an executable file that should be mapped
+into memory by the loader.  A program will typically have a LOAD
+segment that begins at the first byte of the file and continues
+through the last instruction (in our case, the end of the ``.text''
+section) and which is mapped to virtual address 0x400000.
+
+We've already created the ELF Segment Table, so all we need to do now
+is create an ELF Segment and add it to the ELF Segment Table. ELF
+Segments, like ELF Sections, are represented by SgAsmElfSection. An
+SgAsmElfSection is an ELF Section if it has an entry in the ELF
+Section Table, and/or it's an ELF Segment if it has an entry in the
+ELF Segment Table. The methods get_section_entry() and
+get_segment_entry() retrieve the actual entries in those tables.
+
+Recall that the constructor creates new sections located at the
+current end-of-file and containing one byte. Our LOAD segment needs to
+have a different offset and size.
+
+\begin{verbatim}
+SgAsmElfSection *seg1 = new SgAsmElfSection(fhdr);          /* ELF Segments are represented by SgAsmElfSection */
+seg1->get_name()->set_string("LOAD");                       /* Segment names aren't saved (but useful for debugging) */
+seg1->set_offset(0);                                        /* Starts at beginning of file */
+seg1->set_size(text->get_offset() + text->get_size());      /* Extends to end of .text section */
+seg1->set_mapped_rva(base_va);                              /* Typically mapped by loader to this memory address */
+seg1->set_mapped_size(seg1->get_size());                    /* Make mapped size match size in the file */
+seg1->set_mapped_rperm(true);                               /* Readable */
+seg1->set_mapped_wperm(false);                              /* Not writable */
+seg1->set_mapped_xperm(true);                               /* Executable */
+segtab->add_section(seg1);                                  /* Add definition to ELF Segment Table */
+\end{verbatim}
+
+\section{Constructing a PAX Segment}
+
+This documentation shows how to construct a generic ELF Segment,
+giving it a particular file offset and size. ELF Segments don't have
+names stored in the file, but we can assign a name to the AST node to
+aid in debugging--it just won't be written out. When parsing an ELF
+file, segment names are generated based on the type stored in the
+entry of the ELF Segment Table. For a PAX segment we want this type to
+be PT_PAX_FLAGS (the default is PT_LOAD).
+
+\begin{verbatim}
+SgAsmElfSection *pax = new SgAsmElfSection(fhdr);
+pax->get_name()->set_string("PAX Flags");                   /* Name just for debugging */
+pax->set_offset(0);                                         /* Override address to be at zero rather than EOF */
+pax->set_size(0);                                           /* Override size to be zero rather than one byte */
+segtab->add_section(pax);                                   /* Add definition to ELF Segment Table */
+pax->get_segment_entry()->set_type(SgAsmElfSegmentTableEntry::PT_PAX_FLAGS);
+\end{verbatim}
+
+\section{Constructing a String Table}
+
+An ELF String Table always corresponds to a single ELF Section of
+class SgAsmElfStringSection and thus you'll often see the term ``ELF
+String Section'' used interchangeably with ``ELF String Table'' even
+though they're two unique but closely tied classes internally.
+
+When the ELF String Section is created a corresponding ELF String
+Table is also created under the covers. Since string tables manage
+their own memory in reponse to the strings they contain, one should
+never adjust the size of the ELF String Section (it's actually fine to
+enlarge the section and the new space will become free space in the
+string table).
+
+ELF files typically have multiple string tables so that section names
+are in a different section than symbol names, etc. In this tutorial
+we'll create the section names string table, typically called
+``.shstrtab'', but use it for all string storage.
+
+\begin{verbatim}
+SgAsmElfStringSection *shstrtab = new SgAsmElfStringSection(fhdr);
+shstrtab->get_name()->set_string(".shstrtab");
+\end{verbatim}
+
+\section{Constructing an ELF Section Table}
+
+We do this last because we want the ELF Section Table to appear at the
+end of the file and this is the easiest way to achieve that. There's
+really not much one needs to do to create the ELF Section Table other
+than provide the ELF File Header as a parent and supply a string
+table.
+
+The string table we created above isn't activated until we assign it
+to the ELF Section Table. The first SgAsmElfStringSection added to the
+SgAsmElfSectionTable becomes the string table for storing section
+names. It is permissible to add other sections to the table before
+adding the string table.
+
+\begin{verbatim}
+SgAsmElfSectionTable *sectab = new SgAsmElfSectionTable(fhdr);
+sectab->add_section(text);                                  /* Add the .text section */
+sectab->add_section(shstrtab);                              /* Add the string table to store section names. */
+\end{verbatim}
+
+\section{Allocating Space}
+
+Prior to calling unparse(), we need to make sure that all sections
+have a chance to allocate space for themselves, and perform any other
+operations necessary. It's not always possible to determine sizes at
+an earlier time, and most constructors would have declared sizes of
+only one byte.
+
+The reallocate() method is defined in the SgAsmGenericFile class since
+it operates over the entire collection of sections simultaneously. In
+other words, if a section needs to grow then all the sections located
+after it in the file need to be shifted to higher file offsets.
+
+\begin{verbatim}
+ef->reallocate();
+\end{verbatim}
+
+The reallocate() method has a shortcoming (as of 2008-12-19) in that
+it might not correctly update memory mappings in the case when the
+mapping for a section is inferred from the mapping of a containing
+segment. This can happen in our example since the ``.text'' section's
+memory mapping is a function of the LOAD Segment mapping. The
+work-around is to adjust mappings for these situations and then call
+reallocate() one final time. This final reallocate() call won't move
+any sections, but should always be the last thing to call before
+unparsing() (it gives sections a chance to update data dependencies
+which is not possible during unparse() due to its const nature).
+
+\begin{verbatim}
+text->set_mapped_rva(seg1->get_mapped_rva()+(text->get_offset()-seg1->get_offset()));
+ef->reallocate(); /*won't resize or move things this time since we didn't modify much since the last call to reallocate()*/
+\end{verbatim}
+
+\section{Produce a Debugging Dump}
+
+A debugging dump can be made with the following code. This dump will
+not be identical to the one produced by parsing and dumping the
+resulting file since we never parsed a file (a dump contains some
+information that's parser-specific).
+
+\begin{verbatim}
+ef->dump(stdout);
+SgAsmGenericSectionPtrList all = ef->get_sections(true);
+for (size_t i=0; i<all.size(); i++) {
+    fprintf(stdout, "Section %zu:\n", i);
+    all[i]->dump(stdout, "    ", -1);
+}
+\end{verbatim}
+
+\section{Produce the Executable File}
+
+The executable file is produced by unparsing the AST.
+
+\begin{verbatim}
+std::ofstream f("a.out");
+ef->unparse(f);
+\end{verbatim}
+
+Note that the resulting file will not be created with execute
+permission--that must be added manually.
