@@ -1360,6 +1360,7 @@ HEADER_ELF_SECTION_START
 		SgAsmElfSection *init_from_segment_table(SgAsmElfSegmentTableEntry*, bool mmap_only=false);
 		rose_addr_t calculate_sizes(size_t r32size, size_t r64size, const std::vector<size_t> &optsizes,
 					    size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
+		virtual void finish_parsing() {}
 		virtual rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 		virtual bool reallocate();
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
@@ -1506,7 +1507,7 @@ HEADER_ELF_DYNAMIC_SECTION_START
 			: SgAsmElfSection(fhdr)
 			{ctor(strsec);}
 		virtual SgAsmElfDynamicSection* parse();
-		void finish_parsing();
+		virtual void finish_parsing();
 		using SgAsmElfSection::calculate_sizes;
 		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const;
 		virtual bool reallocate();
@@ -1736,7 +1737,7 @@ HEADER_ELF_SYMBOL_SECTION_START
 			: SgAsmElfSection(fhdr), p_is_dynamic(false)
 			{ctor(strsec);}
 		virtual SgAsmElfSymbolSection* parse();
-		void finish_parsing();
+		virtual void finish_parsing();
 		size_t index_of(SgAsmElfSymbol*);
 		using SgAsmElfSection::calculate_sizes;
 		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const;

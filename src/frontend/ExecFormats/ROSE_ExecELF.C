@@ -1397,7 +1397,7 @@ SgAsmElfSectionTable::parse()
         if (!try_again)
             break;
     }
-    
+
 #if 1 /*This will be going away shortly [RPM 2008-12-12]*/
     /* Initialize links between sections */
     for (size_t i = 0; i < entries.size(); i++) {
@@ -1409,19 +1409,10 @@ SgAsmElfSectionTable::parse()
         }
     }
 #endif
-#if 1 /*Above code will be replaced with something along these lines, but more generic. [RPM 2008-12-12]*/
-    for (size_t i=0; i<is_parsed.size(); i++) {
 
-        SgAsmElfSymbolSection *symbols = dynamic_cast<SgAsmElfSymbolSection*>(is_parsed[i]);
-        if (symbols)
-            symbols->finish_parsing();
-
-        SgAsmElfDynamicSection *dynamic = dynamic_cast<SgAsmElfDynamicSection*>(is_parsed[i]);
-        if (dynamic)
-            dynamic->finish_parsing();
-
-    }
-#endif
+    /* Finish parsing sections now that we have basic info for all the sections. */
+    for (size_t i=0; i<is_parsed.size(); i++)
+        is_parsed[i]->finish_parsing();
 
     return this;
 }
