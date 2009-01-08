@@ -1556,9 +1556,11 @@ SgAsmElfSectionTable::calculate_sizes(size_t *entsize, size_t *required, size_t 
 void
 SgAsmElfSectionTableEntry::update_from_section(SgAsmElfSection *section)
 {
-    p_sh_name = section->get_name()->get_offset();
-    if (p_sh_name==SgAsmGenericString::unallocated)
-        p_sh_name = 0; /*must not be a stored string after all*/
+    if (section->get_name()->get_offset()==SgAsmGenericString::unallocated) {
+        p_sh_name = 0; /*not a stored string after all*/
+    } else {
+        p_sh_name = section->get_name()->get_offset();
+    }
 
     set_sh_offset(section->get_offset());
     if (get_sh_type()==SHT_NOBITS && section->is_mapped()) {
