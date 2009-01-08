@@ -1363,6 +1363,7 @@ HEADER_ELF_SECTION_START
 		virtual rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 		virtual bool reallocate();
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+		void allocate_name_to_storage(SgAsmElfStringSection*);
 
 		/* Convenience functions */
 		SgAsmElfFileHeader *get_elf_header() const;

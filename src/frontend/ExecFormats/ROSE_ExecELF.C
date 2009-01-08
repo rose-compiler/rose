@@ -1451,14 +1451,20 @@ SgAsmElfSectionTable::add_section(SgAsmElfSection *section)
     }
 
     /* If the supplied section is a string table and the ELF Section Table doesn't have a string table associated with it yet,
-     * then use the supplied section as the string table to hold the names of the sections. */
+     * then use the supplied section as the string table to hold the names of the sections. When this happens, all sections
+     * that are already defined in the ELF Section Table should have their names moved into the new string table. */
     SgAsmElfStringSection *strsec = NULL;
     if (fhdr->get_e_shstrndx()==0) {
         strsec = dynamic_cast<SgAsmElfStringSection*>(section);
         if (strsec) {
             fhdr->set_e_shstrndx(section->get_id());
-        } else {
-            throw FormatError("ELF Section Table must have an ELF String Section to store section names");
+            SgAsmGenericSectionList *all = fhdr->get_sections();
+            for (size_t i=0; i<all->get_sections().size(); i++) {
+                SgAsmElfSection *s = dynamic_cast<SgAsmElfSection*>(all->get_sections()[i]);
+                if (s && s->get_id()>=0 && s->get_section_entry()!=NULL) {
+                    s->allocate_name_to_storage(strsec);
+                }
+            }
         }
     } else {
         strsec = dynamic_cast<SgAsmElfStringSection*>(fhdr->get_section_by_id(fhdr->get_e_shstrndx()));
@@ -1466,19 +1472,29 @@ SgAsmElfSectionTable::add_section(SgAsmElfSection *section)
     }
 
     /* Make sure the name is in the correct string table */
-    std::string name;
-    if (section->get_name()) {
-        name = section->get_name()->get_string();
-        section->get_name()->set_string(""); /*frees old string if stored*/
-    }
-    SgAsmStoredString *stored_name = new SgAsmStoredString(strsec->get_strtab(), 0);
-    stored_name->set_string(name);
-    section->set_name(stored_name);
+    if (strsec)
+        section->allocate_name_to_storage(strsec);
 
     /* Create a new section table entry. */
     SgAsmElfSectionTableEntry *shdr = new SgAsmElfSectionTableEntry;
     shdr->update_from_section(section);
     section->set_section_entry(shdr);
+}
+
+/** Make this section's name to be stored in the specified string table. */
+void
+SgAsmElfSection::allocate_name_to_storage(SgAsmElfStringSection *strsec)
+{
+    if (get_name()) {
+        SgAsmStoredString *old_stored = dynamic_cast<SgAsmStoredString*>(get_name());
+        if (!old_stored || old_stored->get_strtab()!=strsec->get_strtab()) {
+            /* Reallocate string to new string table */
+            SgAsmStoredString *new_stored = new SgAsmStoredString(strsec->get_strtab(), 0);
+            new_stored->set_string(get_name()->get_string());
+            get_name()->set_string(""); /*free old string*/
+            set_name(new_stored);
+        }
+    }
 }
 
 /* Returns info about the size of the entries based on information already available. Any or all arguments may be null
