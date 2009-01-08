@@ -434,20 +434,16 @@ SgAsmElfFileHeader::encode(ByteOrder sex, Elf32FileHeader_disk *disk) const
     ROSE_ASSERT(p_magic.size() == NELMTS(disk->e_ident_magic));
     for (size_t i=0; i<NELMTS(disk->e_ident_magic); i++)
         disk->e_ident_magic[i] = p_magic[i];
-
-    unsigned ident_file_class, data_encoding, purpose, machine;
-    encode_common(&ident_file_class, &data_encoding, &purpose, &machine);
-
-    host_to_disk(sex, ident_file_class, &(disk->e_ident_file_class));
-    host_to_disk(sex, data_encoding, &(disk->e_ident_data_encoding));
-    host_to_disk(sex, p_e_ident_file_version,  &(disk->e_ident_file_version));
+    host_to_disk(sex, p_e_ident_file_class, &(disk->e_ident_file_class));
+    host_to_disk(sex, p_e_ident_data_encoding, &(disk->e_ident_data_encoding));
+    host_to_disk(sex, p_e_ident_file_version, &(disk->e_ident_file_version));
     ROSE_ASSERT(p_e_ident_padding.size() == NELMTS(disk->e_ident_padding));
     for (size_t i=0; i<NELMTS(disk->e_ident_padding); i++)
         disk->e_ident_padding[i] = p_e_ident_padding[i];
-    host_to_disk(sex, purpose,                 &(disk->e_type));
-    host_to_disk(sex, machine,                 &(disk->e_machine));
+    host_to_disk(sex, p_e_type, &(disk->e_type));
+    host_to_disk(sex, p_e_machine, &(disk->e_machine));
     host_to_disk(sex, p_exec_format->get_version(), &(disk->e_version));
-    host_to_disk(sex, get_entry_rva(),         &(disk->e_entry));
+    host_to_disk(sex, get_entry_rva(), &(disk->e_entry));
     if (get_segment_table()) {
         host_to_disk(sex, get_segment_table()->get_offset(), &(disk->e_phoff));
     } else {
@@ -483,18 +479,14 @@ SgAsmElfFileHeader::encode(ByteOrder sex, Elf64FileHeader_disk *disk) const
     ROSE_ASSERT(p_magic.size() == NELMTS(disk->e_ident_magic));
     for (size_t i=0; i < NELMTS(disk->e_ident_magic); i++)
         disk->e_ident_magic[i] = p_magic[i];
-
-    unsigned ident_file_class, data_encoding, purpose, machine;
-    encode_common(&ident_file_class, &data_encoding, &purpose, &machine);
-
-    host_to_disk(sex, ident_file_class, &(disk->e_ident_file_class));
-    host_to_disk(sex, data_encoding, &(disk->e_ident_data_encoding));
-    host_to_disk(sex, p_e_ident_file_version,  &(disk->e_ident_file_version));
+    host_to_disk(sex, p_e_ident_file_class, &(disk->e_ident_file_class));
+    host_to_disk(sex, p_e_ident_data_encoding, &(disk->e_ident_data_encoding));
+    host_to_disk(sex, p_e_ident_file_version,&(disk->e_ident_file_version));
     ROSE_ASSERT(p_e_ident_padding.size() == NELMTS(disk->e_ident_padding));
     for (size_t i=0; i<NELMTS(disk->e_ident_padding); i++)
         disk->e_ident_padding[i] = p_e_ident_padding[i];
-    host_to_disk(sex, purpose,                 &(disk->e_type));
-    host_to_disk(sex, machine,                 &(disk->e_machine));
+    host_to_disk(sex, p_e_type, &(disk->e_type));
+    host_to_disk(sex, p_e_machine, &(disk->e_machine));
     host_to_disk(sex, p_exec_format->get_version(), &(disk->e_version));
     host_to_disk(sex, get_entry_rva(),         &(disk->e_entry));
     if (get_segment_table()) {
