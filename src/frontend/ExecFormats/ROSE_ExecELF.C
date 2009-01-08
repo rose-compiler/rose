@@ -1569,6 +1569,7 @@ SgAsmElfSectionTableEntry::update_from_section(SgAsmElfSection *section)
 
     if (section->is_mapped()) {
         set_sh_addr(section->get_mapped_rva());
+        set_sh_addralign(section->get_mapped_alignment());
         if (section->get_mapped_wperm()) {
             p_sh_flags |= 0x01;
         } else {
