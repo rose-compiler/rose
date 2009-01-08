@@ -1853,6 +1853,13 @@ SgAsmGenericSection::~SgAsmGenericSection()
     /* Delete children */
     /*not a child*/;     p_file   = NULL;
     delete p_name;       p_name   = NULL;
+
+    /* If the section has allocated its own local pool for the p_data member (rather than pointing into the SgAsmGenericFile)
+     * then free that now. */
+    if (local_data_pool!=NULL) {
+        free(local_data_pool);
+        local_data_pool = NULL;
+    }
 }
 
 /** Saves a reference to the original file data for a section based on the sections current offset and size. Once we do this,
@@ -1871,6 +1878,21 @@ SgAsmGenericSection::grab_content()
             p_data = ef->content(get_offset(), ef->get_orig_size()-get_offset());
         }
     }
+}
+
+/** Sections typically point into the memory mapped, read-only file stored in the SgAsmGenericFile parent initialized by
+ *  calling grab_content() (or indirectly by calling parse()).  This is also the same data which is, by default, written back
+ *  out to the new file during unparse().  Programs modify section content by either overriding the unparse() method or by
+ *  modifying the p_data values. But in order to modify p_data we have to make sure that it's pointing to a read/write memory
+ *  pool. This function replaces the read-only memory pool with a new one containing @p nbytes bytes of zeros. */
+unsigned char *
+SgAsmGenericSection::local_content(size_t nbytes)
+{
+    if (local_data_pool!=NULL)
+        free(local_data_pool);
+    local_data_pool = (unsigned char*)calloc(nbytes, 1);
+    p_data = SgSharedVector<unsigned char>(local_data_pool, nbytes);
+    return &(p_data[0]);
 }
 
 /* Accessors for section name. Setting the section name makes the SgAsmGenericString node a child of the section. */

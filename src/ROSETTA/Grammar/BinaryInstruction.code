@@ -772,10 +772,10 @@ HEADER_GENERIC_SECTION_START
 		};
 
 		SgAsmGenericSection(SgAsmGenericFile *f, SgAsmGenericHeader *fhdr)
-			: p_file(f), p_header(NULL), p_size(1), p_offset(f->get_current_size()), p_file_alignment(0),
-			p_purpose(SP_UNSPECIFIED), p_synthesized(false), p_id(-1), p_name(0), p_mapped_rva(0), p_mapped_size(0),
-			p_mapped_alignment(0), p_mapped_rperm(false), p_mapped_wperm(false), p_mapped_xperm(false),
-			p_congealed(false)
+			: local_data_pool(0), p_file(f), p_header(NULL), p_size(1), p_offset(f->get_current_size()),
+			p_file_alignment(0), p_purpose(SP_UNSPECIFIED), p_synthesized(false), p_id(-1), p_name(0),
+			p_mapped_rva(0), p_mapped_size(0), p_mapped_alignment(0), p_mapped_rperm(false), p_mapped_wperm(false),
+			p_mapped_xperm(false), p_congealed(false)
 			{ctor(f, fhdr);}
 
 		// This destructor modifies the SgAsmGenericFile data to remove its section from the section list!
@@ -813,6 +813,7 @@ HEADER_GENERIC_SECTION_START
 		ExtentMap get_internal_holes() const;		/* weak form of congeal() */
 		const ExtentMap& congeal();                     /* congeal referenced areas into holes */
 		const ExtentMap& uncongeal();                   /* uncongeal holes back into references */
+		unsigned char *local_content(size_t nbytes);	/* obtain a local, writable pool to hold content */
 
 		/* Functions related to mapping of sections into executable memory */
 		bool   	      is_mapped() const;                /* True iff non-zero mapped address and size */
@@ -836,6 +837,14 @@ HEADER_GENERIC_SECTION_START
 
 	protected:
 		void ctor(SgAsmGenericFile*, SgAsmGenericHeader*);
+
+	private:
+		/* This is an optional local, writable pool for the p_data member. Normally a section will point into the pool
+		 * for its SgAsmGenericFile which is memory-mapped (read-only) from the actual file being parsed. The default
+		 * unparsing action is to write the original data back to the file. By allowing a section to allocate its own
+		 * pool for p_data we create a very easy way to get data into the unparsed file (the alternative is to derive
+		 * a new class and override the unparse() method). */
+		unsigned char *local_data_pool;
 HEADER_GENERIC_SECTION_END
 
 
