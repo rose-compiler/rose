@@ -71,6 +71,58 @@ SgAsmElfFileHeader::is_ELF(SgAsmGenericFile *ef)
     return retval;
 }
 
+/** Convert ELF "machine" identifier to generic instruction set architecture value. */
+SgAsmExecutableFileFormat::InsSetArchitecture
+SgAsmElfFileHeader::machine_to_isa(unsigned machine) const
+{
+    switch (p_e_machine) {                                /* These come from the Portable Formats Specification v1.1 */
+      case 0:        return ISA_UNSPECIFIED;
+      case 1:        return ISA_ATT_WE_32100;
+      case 2:        return ISA_SPARC_Family;
+      case 3:        return ISA_IA32_386;
+      case 4:        return ISA_M68K_Family;
+      case 5:        return ISA_M88K_Family;
+      case 7:        return ISA_I860_Family;
+      case 8:        return ISA_MIPS_Family;
+      case 20:
+        // Note that PowerPC has: p_e_machine = 20 = 0x14, using both gcc on BGL and xlc on BGL.
+        // However, these don't seem like correct values for PowerPC.
+        return ISA_PowerPC;
+      case 40:       return ISA_ARM_Family;
+      case 62:       return ISA_X8664_Family;
+      default:
+        /*FIXME: There's a whole lot more. See Dan's Elf reader. */
+        // DQ (10/12/2008): Need more information to address PowerPC support.
+        fprintf(stderr, "Warning: SgAsmElfFileHeader::parse::p_e_machine = 0x%lx (%lu)\n", p_e_machine, p_e_machine);
+        return ISA_OTHER;
+    }
+}
+
+/** Convert architecture value to an ELF "machine" value. */
+unsigned
+SgAsmElfFileHeader::isa_to_machine(SgAsmExecutableFileFormat::InsSetArchitecture isa) const
+{
+    switch (isa) {
+      case ISA_UNSPECIFIED:
+      case ISA_OTHER:        return p_e_machine;
+      case ISA_ATT_WE_32100: return 1;
+      case ISA_IA32_386:     return 3;
+      case ISA_PowerPC:      return 20;  /*see note in machine_to_isa()*/
+      default:
+        switch (isa & ISA_FAMILY_MASK) {
+          case ISA_SPARC_Family: return 2;
+          case ISA_M68K_Family:  return 4;
+          case ISA_M88K_Family:  return 5;
+          case ISA_I860_Family:  return 7;
+          case ISA_MIPS_Family:  return 8;
+          case ISA_ARM_Family:   return 40;
+          case ISA_X8664_Family: return 62;
+          default:
+            return p_e_machine;
+        }
+    }
+}
+
 /** Initialize this header with information parsed from the file and construct and parse everything that's reachable from the
  *  header. Since the size of the ELF File Header is determined by the contents of the ELF File Header as stored in the file,
  *  the size of the ELF File Header will be adjusted upward if necessary. The ELF File Header should have been constructed
@@ -242,52 +294,7 @@ SgAsmElfFileHeader::parse()
     p_exec_format->set_abi_version(0);
 
     /* Target architecture */
-    switch (p_e_machine) {                                /* These come from the Portable Formats Specification v1.1 */
-      case 0:
-        set_isa(ISA_UNSPECIFIED);
-        break;
-      case 1:
-        set_isa(ISA_ATT_WE_32100);
-        break;
-      case 2:
-        set_isa(ISA_SPARC_Family);
-        break;
-      case 3:
-        set_isa(ISA_IA32_386);
-        break;
-      case 4:
-        set_isa(ISA_M68K_Family);
-        break;
-      case 5:
-        set_isa(ISA_M88K_Family);
-        break;
-      case 7:
-        set_isa(ISA_I860_Family);
-        break;
-      case 8:
-        set_isa(ISA_MIPS_Family);
-        break;
-      case 20:
-        // Note that PowerPC has: p_e_machine = 20 = 0x14, using both gcc on BGL and xlc on BGL.
-        // However, these don't seem like correct values for PowerPC.
-        set_isa(ISA_PowerPC);
-        break;
-      case 40:
-        set_isa(ISA_ARM_Family);
-        break;
-      case 62:
-        set_isa(ISA_X8664_Family);
-        break;
-      default:
-        /*FIXME: There's a whole lot more. See Dan's Elf reader. */
-        // DQ (10/12/2008): Need more information to address PowerPC support.
-        fprintf(stderr, "Warning: SgAsmElfFileHeader::parse::p_e_machine = 0x%lx (%lu)\n", p_e_machine, p_e_machine);
-        set_isa(ISA_OTHER);
-        break;
-    }
-
-    /* Target architecture */
-    /*FIXME*/
+    set_isa(machine_to_isa(p_e_machine));
 
     /* Read the optional section and segment tables and the sections to which they point. An empty section or segment table is
      * treated as if it doesn't exist. This seems to be compatible with the loader since the 45-bit "tiny" ELF executable
@@ -363,6 +370,64 @@ SgAsmElfFileHeader::get_segtab_sections()
 }
 
 /* Encode Elf header disk structure */
+void
+SgAsmElfFileHeader::encode_common(unsigned *ident_file_class, unsigned *data_encoding, unsigned *purpose, unsigned *machine) const
+{
+    if (ident_file_class) {
+        *ident_file_class=1;
+        switch(get_word_size()) {
+          case 4:
+            *ident_file_class = 1;
+            break;
+          case 8:
+            *ident_file_class = 2;
+            break;
+          default:
+            ROSE_ASSERT(!"invalid word size");
+            break;
+        }
+    }
+    
+    if (data_encoding) {
+        /* Byte order. According to the spec, valid values are 1 (little-endian) and 2 (big-endian). However, we've seen cases
+         * where a value of zero is used to indicate "native" order (loader assumes words are in the order of the machine on
+         * which the loader is running, and the ROSE ELF parser determines the order by looking at other fields in the
+         * header). Any original value other than 1 or 2 will be written to the new output; otherwise we choose 1 or 2 based
+         * on the currently defined byte order. */
+        if (p_e_ident_data_encoding==1 || p_e_ident_data_encoding==2) {
+            *data_encoding = ORDER_LSB==get_sex() ? 1 : 2;
+        } else {
+            *data_encoding = p_e_ident_data_encoding;
+        }
+    }
+
+    if (purpose) {
+        switch (p_exec_format->get_purpose()) {
+          case PURPOSE_UNSPECIFIED:
+          case PURPOSE_PROC_SPECIFIC:
+          case PURPOSE_OS_SPECIFIC:
+          case PURPOSE_OTHER:
+            *purpose = p_e_type;
+            break;
+          case PURPOSE_LIBRARY:
+            if (p_e_type==1 || p_e_type==3) {
+                *purpose = p_e_type;
+            } else {
+                *purpose = 1;
+            }
+            break;
+          case PURPOSE_EXECUTABLE:
+            *purpose = 2;
+            break;
+          case PURPOSE_CORE_DUMP:
+            *purpose = 4;
+        }
+    }
+
+    if (machine) {
+        *machine = isa_to_machine(get_isa());
+    }
+}
 void *
 SgAsmElfFileHeader::encode(ByteOrder sex, Elf32FileHeader_disk *disk) const
 {
@@ -370,39 +435,17 @@ SgAsmElfFileHeader::encode(ByteOrder sex, Elf32FileHeader_disk *disk) const
     for (size_t i=0; i<NELMTS(disk->e_ident_magic); i++)
         disk->e_ident_magic[i] = p_magic[i];
 
-    unsigned ident_file_class=1;
-    switch(get_word_size()) {
-    case 4:
-      ident_file_class = 1;
-      break;
-    case 8:
-      ident_file_class = 2;
-      break;
-    default:
-      ROSE_ASSERT(!"invalid word size");
-      break;
-    }
+    unsigned ident_file_class, data_encoding, purpose, machine;
+    encode_common(&ident_file_class, &data_encoding, &purpose, &machine);
+
     host_to_disk(sex, ident_file_class, &(disk->e_ident_file_class));
-
-    /* Byte order. According to the spec, valid values are 1 (little-endian) and 2 (big-endian). However, we've seen cases
-     * where a value of zero is used to indicate "native" order (loader assumes words are in the order of the machine on which
-     * the loader is running, and the ROSE ELF parser determines the order by looking at other fields in the header). Any
-     * original value other than 1 or 2 will be written to the new output; otherwise we choose 1 or 2 based on the currently
-     * defined byte order. */
-    unsigned data_encoding;
-    if (p_e_ident_data_encoding==1 || p_e_ident_data_encoding==2) {
-        data_encoding = ORDER_LSB==get_sex() ? 1 : 2;
-    } else {
-        data_encoding = p_e_ident_data_encoding;
-    }
     host_to_disk(sex, data_encoding, &(disk->e_ident_data_encoding));
-
     host_to_disk(sex, p_e_ident_file_version,  &(disk->e_ident_file_version));
     ROSE_ASSERT(p_e_ident_padding.size() == NELMTS(disk->e_ident_padding));
     for (size_t i=0; i<NELMTS(disk->e_ident_padding); i++)
         disk->e_ident_padding[i] = p_e_ident_padding[i];
-    host_to_disk(sex, p_e_type,                &(disk->e_type));
-    host_to_disk(sex, p_e_machine,             &(disk->e_machine));
+    host_to_disk(sex, purpose,                 &(disk->e_type));
+    host_to_disk(sex, machine,                 &(disk->e_machine));
     host_to_disk(sex, p_exec_format->get_version(), &(disk->e_version));
     host_to_disk(sex, get_entry_rva(),         &(disk->e_entry));
     if (get_segment_table()) {
@@ -441,28 +484,17 @@ SgAsmElfFileHeader::encode(ByteOrder sex, Elf64FileHeader_disk *disk) const
     for (size_t i=0; i < NELMTS(disk->e_ident_magic); i++)
         disk->e_ident_magic[i] = p_magic[i];
 
-    unsigned ident_file_class=1;
-    switch(get_word_size()) {
-    case 4:
-      ident_file_class = 1;
-      break;
-    case 8:
-      ident_file_class = 2;
-      break;
-    default:
-      ROSE_ASSERT(!"invalid word size");
-      break;
-    }
-    host_to_disk(sex, ident_file_class, &(disk->e_ident_file_class));
+    unsigned ident_file_class, data_encoding, purpose, machine;
+    encode_common(&ident_file_class, &data_encoding, &purpose, &machine);
 
-    unsigned data_encoding = ORDER_LSB==get_sex() ? 1 : 2;
+    host_to_disk(sex, ident_file_class, &(disk->e_ident_file_class));
     host_to_disk(sex, data_encoding, &(disk->e_ident_data_encoding));
     host_to_disk(sex, p_e_ident_file_version,  &(disk->e_ident_file_version));
     ROSE_ASSERT(p_e_ident_padding.size() == NELMTS(disk->e_ident_padding));
     for (size_t i=0; i<NELMTS(disk->e_ident_padding); i++)
         disk->e_ident_padding[i] = p_e_ident_padding[i];
-    host_to_disk(sex, p_e_type,                &(disk->e_type));
-    host_to_disk(sex, p_e_machine,             &(disk->e_machine));
+    host_to_disk(sex, purpose,                 &(disk->e_type));
+    host_to_disk(sex, machine,                 &(disk->e_machine));
     host_to_disk(sex, p_exec_format->get_version(), &(disk->e_version));
     host_to_disk(sex, get_entry_rva(),         &(disk->e_entry));
     if (get_segment_table()) {
@@ -486,11 +518,10 @@ SgAsmElfFileHeader::encode(ByteOrder sex, Elf64FileHeader_disk *disk) const
     return disk;
 }
 
-/* Update prior to parsing */
+/* Update prior to unparsing */
 bool
 SgAsmElfFileHeader::reallocate()
 {
-
     /* Reallocate superclass. This also calls reallocate() for all the sections associated with this ELF File Header. */
     bool reallocated = SgAsmGenericHeader::reallocate();
 
@@ -514,6 +545,15 @@ SgAsmElfFileHeader::reallocate()
         get_file()->shift_extend(this, 0, need-get_size(), SgAsmGenericFile::ADDRSP_ALL, SgAsmGenericFile::ELASTIC_HOLE);
         reallocated = true;
     }
+
+    /* Update ELF-specific data members with generic data. */
+    unsigned file_class, encoding, purpose, machine;
+    encode_common(&file_class, &encoding, &purpose, &machine);
+    p_e_ident_file_class = file_class;
+    p_e_ident_data_encoding = encoding;
+    p_e_type = purpose;
+    p_e_machine = machine;
+    p_e_ehsize = get_size();
 
     return reallocated;
 }

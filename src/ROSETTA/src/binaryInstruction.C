@@ -1707,7 +1707,7 @@ Grammar::setUpBinaryInstructions ()
      AsmGenericFormat.setDataPrototype("SgAsmGenericFormat::ExecFamily","family","= SgAsmGenericFormat::FAMILY_UNSPECIFIED",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   /* executable, library, etc. */
-     AsmGenericFormat.setDataPrototype("SgAsmGenericFormat::ExecPurpose","purpose","= SgAsmGenericFormat::PURPOSE_UNSPECIFIED",
+     AsmGenericFormat.setDataPrototype("SgAsmGenericFormat::ExecPurpose","purpose","= SgAsmGenericFormat::PURPOSE_EXECUTABLE",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   /* No comment available */
      AsmGenericFormat.setDataPrototype("SgAsmGenericFormat::ByteOrder","sex","= SgAsmGenericFormat::ORDER_UNSPECIFIED",

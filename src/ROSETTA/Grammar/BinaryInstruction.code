@@ -1001,27 +1001,8 @@ HEADER_GENERIC_FILE_END
 
 
 HEADER_GENERIC_FORMAT_START
-     public:
-
-// typedef uint64_t addr_t;                                /* address and size (file and memory) */
-
-
-#if 0
-       // This is automatically generated.
-          SgAsmGenericFormat() :
-               family(FAMILY_UNSPECIFIED),
-               purpose(PURPOSE_UNSPECIFIED),
-               sex(ORDER_UNSPECIFIED),
-               version(0),
-               is_current_version(false),
-               abi(ABI_UNSPECIFIED),
-               abi_version(0),
-               word_size(4)
-             {}
-#endif
-
-    void dump(FILE*, const char *prefix, ssize_t idx) const;
-
+	public:
+		void dump(FILE*, const char *prefix, ssize_t idx) const;
 HEADER_GENERIC_FORMAT_END
 
 
@@ -1254,10 +1235,15 @@ HEADER_ELF_HEADER_START
 
 		/* Non-parsing constructor */
 		explicit SgAsmElfFileHeader(SgAsmGenericFile *f)
-			: SgAsmGenericHeader(f)
+			: SgAsmGenericHeader(f) , p_e_ident_file_class(0), p_e_ident_file_version(1), p_e_type(0),
+			p_e_machine(0), p_e_flags(0), p_e_ehsize(0), p_phextrasz(0), p_e_phnum(0), p_shextrasz(0),
+			p_e_shnum(0), p_e_shstrndx(0), p_section_table(NULL), p_segment_table(NULL)
 			{ctor();}
 
 		uint64_t max_page_size();
+		SgAsmExecutableFileFormat::InsSetArchitecture machine_to_isa(unsigned machine) const;
+		unsigned isa_to_machine(SgAsmExecutableFileFormat::InsSetArchitecture isa) const;
+
 		virtual SgAsmElfFileHeader *parse();
 		virtual bool reallocate();
 		virtual void unparse(std::ostream&) const;
@@ -1270,6 +1256,8 @@ HEADER_ELF_HEADER_START
 
 	private:
 		void ctor();
+		void encode_common(unsigned *ident_file_class, unsigned *data_encoding, unsigned *purpose,
+				   unsigned *machine) const;
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfFileHeader::Elf32FileHeader_disk*) const;
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfFileHeader::Elf64FileHeader_disk*) const;
 HEADER_ELF_HEADER_END
