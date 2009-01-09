@@ -130,9 +130,11 @@ TermPrinter<DFI_STORE_TYPE>::isContainer(SgNode* astNode)
   // lists as a special case here, and this should be done for any other
   // maybe-empty list nodes we stumble upon.
   // FIXME: Revisit this issue, and think of a real fix!
-  // GB (2009-01-09): Added SgBasicBlock as a maybe-emtpy container.
+  // GB (2009-01-09): Added SgBasicBlock and SgExprListExp as maybe-emtpy
+  // containers.
   return AstTests::numSuccContainers(astNode) ||
     isSgFunctionParameterList(astNode) ||
+    isSgExprListExp(astNode) ||
     isSgBasicBlock(astNode) ||
     isSgVariableDeclaration(astNode);
 }
