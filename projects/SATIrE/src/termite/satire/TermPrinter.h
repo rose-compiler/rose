@@ -129,9 +129,11 @@ TermPrinter<DFI_STORE_TYPE>::isContainer(SgNode* astNode)
   // how to implement this correctly. In any case, I added the parameter
   // lists as a special case here, and this should be done for any other
   // maybe-empty list nodes we stumble upon.
-  // TODO: Revisit this issue, and think of a real fix!
+  // FIXME: Revisit this issue, and think of a real fix!
+  // GB (2009-01-09): Added SgBasicBlock as a maybe-emtpy container.
   return AstTests::numSuccContainers(astNode) ||
     isSgFunctionParameterList(astNode) ||
+    isSgBasicBlock(astNode) ||
     isSgVariableDeclaration(astNode);
 }
 
