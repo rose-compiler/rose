@@ -51,8 +51,10 @@ class PrologSupport {
 		static PrologTerm* getFunctionModifierSpecific(SgFunctionModifier*);
 		static PrologTerm* getSpecialFunctionModifierSpecific(SgSpecialFunctionModifier*);
 		static PrologTerm* getLinkageModifierSpecific(SgLinkageModifier*);
+        static PrologAtom* createStorageModifierAtom(SgStorageModifier&);
 		static PrologTerm* getStorageModifierSpecific(SgStorageModifier*);
 		static PrologTerm* getElaboratedTypeModifierSpecific(SgElaboratedTypeModifier*);
+        static PrologAtom* createConstVolatileModifierAtom(SgConstVolatileModifier&);
 		static PrologTerm* getConstVolatileModifierSpecific(SgConstVolatileModifier*);
 		static PrologTerm* getUPC_AccessModifierSpecific(SgUPC_AccessModifier*);
 		static PrologTerm* getTypeModifierSpecific(SgTypeModifier*);

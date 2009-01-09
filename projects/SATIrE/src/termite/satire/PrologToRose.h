@@ -67,9 +67,11 @@ private:
   SgBaseClassModifier* createBaseClassModifier(PrologTerm*);
   SgFunctionModifier* createFunctionModifier(PrologTerm*);
   SgSpecialFunctionModifier* createSpecialFunctionModifier(PrologTerm*);
+  SgStorageModifier::storage_modifier_enum parseStorageModifier(PrologAtom*);
   SgStorageModifier* createStorageModifier(PrologTerm*);
   SgLinkageModifier* createLinkageModifier(PrologTerm*);
   SgElaboratedTypeModifier* createElaboratedTypeModifier(PrologTerm*);
+  SgConstVolatileModifier::cv_modifier_enum parseConstVolatileModifier(PrologAtom*);
   SgConstVolatileModifier* createConstVolatileModifier(PrologTerm*);
   SgUPC_AccessModifier* createUPC_AccessModifier(PrologTerm*);
   SgTypeModifier* createTypeModifier(PrologTerm*);

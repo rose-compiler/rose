@@ -1005,10 +1005,34 @@ PrologSupport::getLinkageModifierSpecific(SgLinkageModifier* a) {
  * term: storage_modifier(a)
  * arg a: enum value of SgStorageModifier (see ROSE docs!)
  */
+PrologAtom*
+PrologSupport::createStorageModifierAtom(SgStorageModifier& a) {
+  std::string modifierString;
+  switch (a.get_modifier()) {
+  case SgStorageModifier::e_extern:
+    modifierString = "s_extern";
+    break;
+  case SgStorageModifier::e_static:
+    modifierString = "s_static";
+    break;
+  case SgStorageModifier::e_auto:
+    modifierString = "s_auto";
+    break;
+  case SgStorageModifier::e_register:
+    modifierString = "s_register";
+    break;
+  case SgStorageModifier::e_mutable:
+    modifierString = "s_mutable";
+    break;
+  default:
+    modifierString = "s_default";
+  }
+  return new PrologAtom(modifierString);
+}
 PrologTerm*
 PrologSupport::getStorageModifierSpecific(SgStorageModifier* a) {
   PrologCompTerm* t = new PrologCompTerm("storage_modifier");
-  t->addSubterm(new PrologInt((int) a->get_modifier()));
+  t->addSubterm(createStorageModifierAtom(*a));
   return t;
 }
 /**
@@ -1027,10 +1051,27 @@ PrologSupport::getElaboratedTypeModifierSpecific(SgElaboratedTypeModifier* a) {
  * term: const_volatile_modifier(a)
  * arg a: enum value of SgConstVolatileModifier (see ROSE docs!)
  */
+PrologAtom*
+PrologSupport::createConstVolatileModifierAtom(SgConstVolatileModifier& a) {
+  // GB (2008-12-11): Using descriptive atoms rather than numeric constants
+  // for these enumeration values.
+  std::string modifierString;
+  switch (a.get_modifier()) {
+  case SgConstVolatileModifier::e_const:
+    modifierString = "cv_const";
+    break;
+  case SgConstVolatileModifier::e_volatile:
+    modifierString = "cv_volatile";
+    break;
+  default:
+    modifierString = "cv_default";
+  }
+  return new PrologAtom(modifierString);
+}
 PrologTerm*
 PrologSupport::getConstVolatileModifierSpecific(SgConstVolatileModifier* a) {
   PrologCompTerm* t = new PrologCompTerm("const_volatile_modifier");
-  t->addSubterm(new PrologInt((int) a->get_modifier()));
+  t->addSubterm(createConstVolatileModifierAtom(*a));
   return t;
 }
 /**
@@ -1063,7 +1104,7 @@ PrologSupport::getTypeModifierSpecific(SgTypeModifier* a) {
   t->addSubterm(getBitVector(a->get_modifierVector()));
   /* add enums*/
   t->addSubterm(new PrologInt((int) a->get_upcModifier().get_modifier()));
-  t->addSubterm(new PrologInt((int) a->get_constVolatileModifier().get_modifier()));
+  t->addSubterm(createConstVolatileModifierAtom(a->get_constVolatileModifier()));
   t->addSubterm(new PrologInt((int) a->get_elaboratedTypeModifier().get_modifier()));
   return t;
 }
@@ -1083,7 +1124,7 @@ PrologSupport::getDeclarationModifierSpecific(SgDeclarationModifier* dm) {
   t->addSubterm(getBitVector(dm->get_modifierVector()));
   t->addSubterm(getTypeModifierSpecific(&(dm->get_typeModifier())));
   t->addSubterm(new PrologInt((int) dm->get_accessModifier().get_modifier()));
-  t->addSubterm(new PrologInt((int) dm->get_storageModifier().get_modifier()));
+  t->addSubterm(createStorageModifierAtom(dm->get_storageModifier()));
   return t;
 	
 }
