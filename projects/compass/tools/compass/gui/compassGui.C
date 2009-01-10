@@ -358,7 +358,7 @@ void CompassGui::run()
   }
 
 
-  if(buildLines.size() != 0)
+  if(buildLines.size() != 0) // If there are something to build, build it.
   {
     
 
@@ -393,54 +393,39 @@ void CompassGui::run()
 
         std::cout << "Executing " << commandLine.compile_line << std::endl;
 
-        pid_t p = fork();
 
-        if (p == -1) { // Error
-          perror("fork: ");
-          exit (1);
-        } if (p == 0) { // Child
+	//Execute compass to find violations
 
-          std::cout << std::endl << "normal compile: ";
-          for(int i=0; i<argv.size(); i++)
-          {
-            std::cout << argv[i] << " ";
+	std::cout << std::endl << "normal compile: ";
+	std::string runningROSE;
+	for(int i=0; i<argv.size(); i++)
+	{
+		runningROSE+= std::string(argv[i]) + " ";
 
-
-          };
-           std::cout << std::endl;
-
-          int errorCodeROSE     = execv( argv[0], &argv[0]   );
-        }else{ //Parent
-          int status;
-          if (waitpid(p, &status, 0) == -1) {
-            perror("waitpid");
-            abort();
-          }
-          std::cerr << "Status: " << status << std::endl;
-          std::cerr << "Done execution " << commandLine.compile_line  << std::endl;
-        }
+		//std::cout << argv[i] << " ";
 
 
-        p = fork();
+	};
+	std::cout << std::endl;
 
-        if (p == -1) { // Error
-          perror("fork: ");
-          exit (1);
-        } if (p == 0) { // Child
-          argv.push_back("-rose:skip_rose");
 
-          int errorCodeCompiler = execv( argv[0], &argv[0]   );
-        }else{ //Parent
-          int status;
-          if (waitpid(p, &status, 0) == -1) {
-            perror("waitpid");
-            abort();
-          }
-          std::cerr << "Status: " << status << std::endl;
-          std::cerr << "Done executing " << commandLine.compile_line << std::endl;
-        }
+        //AS(1/9/09) execv(..) does not work on Dan's machine so we have to use system(..)
+	int errorCodeROSE = system(runningROSE.c_str());
 
-        
+	if(errorCodeROSE)
+	{
+		runningROSE+=" -rose:skip_rose ";
+
+		errorCodeROSE = system(runningROSE.c_str()) ;
+		if(errorCodeROSE) abort();
+
+
+	}
+
+
+	std::cerr << "Status: " << errorCodeROSE << std::endl;
+	std::cerr << "Done execution " << commandLine.compile_line  << std::endl;
+
 
     }
 
