@@ -829,7 +829,7 @@ Compass::outputDb( std::string  dbName,
 
   //con.executenonquery("create table IF NOT EXISTS clusters(row_number INTEGER PRIMARY KEY, cluster INTEGER, function_id INTEGER, index_within_function INTEGER, vectors_row INTEGER, dist INTEGER)")
   try {
-    con.executenonquery("create table IF NOT EXISTS violations( row_number PRIMARY KEY, checker_name TEXT,  error_body TEXT, filename TEXT, line INTEGER, short_description TEXT )");
+    con.executenonquery("create table IF NOT EXISTS violations( row_number INTEGER PRIMARY KEY, checker_name TEXT,  error_body TEXT, filename TEXT, line INTEGER, short_description TEXT )");
 
   }
   catch(std::exception &ex) {

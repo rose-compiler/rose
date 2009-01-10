@@ -385,7 +385,7 @@ void write_rose_db()
 
   //con.executenonquery("create table IF NOT EXISTS clusters(row_number INTEGER PRIMARY KEY, cluster INTEGER, function_id INTEGER, index_within_function INTEGER, vectors_row INTEGER, dist INTEGER)")
   try {
-    con.executenonquery("create table IF NOT EXISTS build_interpreted( row_number PRIMARY KEY, compile_line TEXT)");
+    con.executenonquery("create table IF NOT EXISTS build_interpreted( row_number INTEGER PRIMARY KEY, compile_line TEXT)");
 
   }
   catch(std::exception &ex) {
@@ -393,7 +393,7 @@ void write_rose_db()
   }
 
   try {
-    con.executenonquery("create table IF NOT EXISTS build_interpreted_split( row_number PRIMARY KEY, build_index INTEGER, first TEXT, second TEXT)");
+    con.executenonquery("create table IF NOT EXISTS build_interpreted_split( row_number INTEGER PRIMARY KEY, build_index INTEGER, first TEXT, second TEXT)");
   }
   catch(std::exception &ex) {
     std::cerr << "Exception Occurred: " << ex.what() << std::endl;

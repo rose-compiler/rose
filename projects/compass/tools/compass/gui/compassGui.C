@@ -300,13 +300,12 @@ void CompassGui::run()
 #ifdef HAVE_SQLITE3
  std::vector<BuildLine> buildLines;
 
+ //Make sure that the violations table exists and is empty
  try {
-   /* Read in from database here */
    sqlite3x::sqlite3_command cmd(Compass::con, "drop table if exists violations" );
    cmd.executenonquery();
  } catch (std::exception& e) {std::cerr << "Exception: " << e.what() << std::endl;}
  try {
-   /* Read in from database here */
    Compass::con.executenonquery("create table IF NOT EXISTS violations( row_number PRIMARY KEY, checker_name TEXT,  error_body TEXT, filename TEXT, line INTEGER, short_description TEXT )");
  } catch (std::exception& e) {std::cerr << "Exception: " << e.what() << std::endl;}
 
@@ -400,6 +399,16 @@ void CompassGui::run()
           perror("fork: ");
           exit (1);
         } if (p == 0) { // Child
+
+          std::cout << std::endl << "normal compile: ";
+          for(int i=0; i<argv.size(); i++)
+          {
+            std::cout << argv[i] << " ";
+
+
+          };
+           std::cout << std::endl;
+
           int errorCodeROSE     = execv( argv[0], &argv[0]   );
         }else{ //Parent
           int status;
