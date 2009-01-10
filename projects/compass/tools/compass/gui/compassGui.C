@@ -306,7 +306,7 @@ void CompassGui::run()
    cmd.executenonquery();
  } catch (std::exception& e) {std::cerr << "Exception: " << e.what() << std::endl;}
  try {
-   Compass::con.executenonquery("create table IF NOT EXISTS violations( row_number PRIMARY KEY, checker_name TEXT,  error_body TEXT, filename TEXT, line INTEGER, short_description TEXT )");
+   Compass::con.executenonquery("create table IF NOT EXISTS violations( row_number INTEGER PRIMARY KEY, checker_name TEXT,  error_body TEXT, filename TEXT, line INTEGER, short_description TEXT )");
  } catch (std::exception& e) {std::cerr << "Exception: " << e.what() << std::endl;}
 
 
