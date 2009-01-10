@@ -56,7 +56,7 @@
 #include "commandLineProcessing.h"
 #include "stringManipulations.h"
 #include "qmgen.h"
-
+#include "rose_config.h"
 using namespace boost;
 using namespace boost::program_options;
 
@@ -163,7 +163,10 @@ boost::program_options::variables_map confMap;
 void initialize_configuration_file_options()
 {
 //  std::ifstream conf((std::string(PREFIX)+"/rqmgc").c_str());
-  std::ifstream conf(RCFILE);
+  std::cout << ROSE_COMPILE_TREE_PATH"/projects/compass/tools/compass/buildInterpreter/rqmgc" << std::endl;
+  //std::ifstream conf(RCFILE);
+  std::ifstream conf(ROSE_COMPILE_TREE_PATH"/projects/compass/tools/compass/buildInterpreter/rqmgc");
+
   assert( conf.good() == true );
 
   try

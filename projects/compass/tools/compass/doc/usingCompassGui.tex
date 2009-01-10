@@ -44,6 +44,8 @@ systems, but the shorthands used here for discerning the build system are specif
 
 \subsection{Capturing a Build System State}
 
+\fixme{Document: that this requires --with-sqlite3}
+
 The first step of running the Compass GUI on an autotools project is to figure out how the build system
 works. Capturing the build system state is done with the 'buildInterpreter' tool provided in the Compass
 distribution in the 'projects/compass/tools/compass/buildInterpreter' directory. 
@@ -54,6 +56,8 @@ different directory define it to be
 \begin{verbatim}
 export ROSE_TEST_REGRESSION_ROOT=/home/user/project
 \end{verbatim}
+
+\fixme{Document: Need to be in the buildInterpreter directory.}
 
 The buildInterpreter tool works as a replacement for the C/C++ compiler during compilation like e.g:
 \begin{verbatim}

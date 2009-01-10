@@ -421,7 +421,7 @@ void write_rose_db()
   }
 
   { // Insert the argv version of the command line
-    int build_index = con.executeint("SELECT max(row_number) from build_interpreted");
+    int build_index = con.executeint("SELECT row_number from build_interpreted where compile_line=\""+argumentString+"\"");
 
     std::string insert_split = "INSERT INTO build_interpreted_split(build_index, first,second ) VALUES(?,?,?)";
     for( std::map<int,std::pair<std::string, std::string*> >::iterator
