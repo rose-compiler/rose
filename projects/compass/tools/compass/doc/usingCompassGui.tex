@@ -1,0 +1,67 @@
+\chapter{Using Compass GUI}
+
+Compass has a GUI available for exploring the checker warnings for either the compilation
+of a single source file or the compilation of a whole project. This GUI allow the user to
+interactively select checkers, run those checkers on the source file(s) of 
+interest and display the source location of each violation. As a user convenience the
+interface will either display the violating source region in a text editor or a 
+non-editable display window.
+
+The Compass GUI is located in the 'projects/compass/tools/compass/gui' directory of the
+ROSE distribution. The Compass GUI is build as part of the standard Compass build when
+ROSE is configured with qt4. In order to enable simple compilation of whole projects using
+one-button clicks in the Compass GUI ROSE must be configured with sqlite3 as well.
+
+\section{Running Compass GUI on a Single File}
+
+Before running the Compass GUI on a single file  the files listed 
+in \ref{usingCompassInstallation} must be available and the environment variable 
+'\$COMPASS\_PARAMETERS' must specify which compass\_paramaters file to use. CompassGUI can
+then be invoked as a normal compiler like e.g:
+\begin{verbatim}
+compassMainGui -o ex1 ex1.C
+\end{verbatim}
+If it is not desirable to export the '\$COMPASS\_PARAMETERS' variable a shorthand is:
+\begin{verbatim}
+env COMPASS_PARAMETERS=/location/of/compass_pramateres   compassMainGui -o ex1 ex1.C
+\end{verbatim}
+
+\section{Running Compass GUI on an Autotools Project}
+
+A goal of this section is to show how to run the compass checkers on a whole project (like e.g ROSE) 
+using a one button click in the Compass GUI and present an easy interface for exploring the violations
+as found during the build. This interface is currently limited to sequentially building the
+project and it requires ROSE to be configured with sqlite3. The Compass GUI does not try to replace the 
+build system; it simply captures how the build system compiles the source files for a specific version of the 
+project. Although there is no guarantee that this will work when the source code changes it is reasonable to 
+expect the capturing of the build system should be the same as the code evolves as long as no changes are done 
+to the build system.
+
+These instructions can apply to Autotool projects as well as projects build in other build 
+systems, but the shorthands used here for discerning the build system are specific for Autotools.
+
+
+\subsection{Capturing a Build System State}
+
+The first step of running the Compass GUI on an autotools project is to figure out how the build system
+works. Capturing the build system state is done with the 'buildInterpreter' tool provided in the Compass
+distribution in the 'projects/compass/tools/compass/buildInterpreter' directory. 
+
+In order to facilitate capturing the build system once and moving the source files around the '\$ROSE\_TEST\_REGRESSION_ROOT' environment variable must be defined to the string that should be replaced. For instance if a
+projects is build within /home/user/project and it is desired to move the files inside that directoy to a
+different directory define it to be
+\begin{verbatim}
+export ROSE_TEST_REGRESSION_ROOT=/home/user/project
+\end{verbatim}
+
+The buildInterpreter tool works as a replacement for the C/C++ compiler during compilation like e.g:
+\begin{verbatim}
+buildInterpreter -o ex1 ex1.C
+\end{verbatim}
+The output of the run is a database representing how to compile ex1.C. The name of the output database is specified
+in the rqmc file found in the ROSE build directory under 'projects/compass/tools/compass/buildInterpreter/rqmc'.
+
+
+
+
+
