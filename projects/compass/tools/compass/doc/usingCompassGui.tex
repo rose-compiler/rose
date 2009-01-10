@@ -13,6 +13,7 @@ ROSE is configured with qt4. In order to enable simple compilation of whole proj
 one-button clicks in the Compass GUI ROSE must be configured with sqlite3 as well.
 
 \section{Running Compass GUI on a Single File}
+\label{runningCompassGUISingleFile}
 
 Before running the Compass GUI on a single file  the files listed 
 in \ref{usingCompassInstallation} must be available and the environment variable 
@@ -47,7 +48,7 @@ The first step of running the Compass GUI on an autotools project is to figure o
 works. Capturing the build system state is done with the 'buildInterpreter' tool provided in the Compass
 distribution in the 'projects/compass/tools/compass/buildInterpreter' directory. 
 
-In order to facilitate capturing the build system once and moving the source files around the '\$ROSE\_TEST\_REGRESSION_ROOT' environment variable must be defined to the string that should be replaced. For instance if a
+In order to facilitate capturing the build system once and moving the source files around the '\$ROSE\_TEST\_REGRESSION\_ROOT' environment variable must be defined to the string that should be replaced. For instance if a
 projects is build within /home/user/project and it is desired to move the files inside that directoy to a
 different directory define it to be
 \begin{verbatim}
@@ -59,8 +60,24 @@ The buildInterpreter tool works as a replacement for the C/C++ compiler during c
 buildInterpreter -o ex1 ex1.C
 \end{verbatim}
 The output of the run is a database representing how to compile ex1.C. The name of the output database is specified
-in the rqmc file found in the ROSE build directory under 'projects/compass/tools/compass/buildInterpreter/rqmc'.
+by the 'dbname' field in the rqmc file found in the ROSE build directory under 'projects/compass/tools/compass/buildInterpreter/rqmc' and defaults to 'test.db'.
 
+To capture the state of a whole build system use 'buildInterpreter' as a replacement for the C/C++ compiler during
+the build. E.g for gnu make:
+\begin{verbatim}
+make CC=buildInterpreter CXX=buildInterpreter
+\end{verbatim}
+
+\subsection{Build A Project Using the Discerned Build }
+
+To build a project using Compass specify the output database from the capturing of the build state with the
+'--outputDb' paramater to the Compass GUI. The environment variable must be defined like in \ref{runningCompassGUISingleFile}, e.g:
+\begin{verbatim}
+cd /directory/with/build/project/sources
+env COMPASS_PARAMETERS=/location/of/compass_pramateres   /compass/gui/build/compassMainGui --outputDb test.db
+\end{verbatim}
+In the GUI click on regenerate to build the project. The violations found during the build is put into the database
+for subsequent lookup. After regenerating select the checkers that you are interested and and click 'refresh' to display the corresponding violations.
 
 
 

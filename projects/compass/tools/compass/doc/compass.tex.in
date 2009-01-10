@@ -180,6 +180,10 @@
 
 \newpage
 
+\input{usingCompassGui}
+
+\newpage
+
 \input{usingCompassVerifier}
 
 \newpage
