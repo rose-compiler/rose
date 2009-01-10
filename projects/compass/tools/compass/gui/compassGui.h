@@ -17,6 +17,7 @@ class CompassGui
     ~CompassGui();
     void updateTableWidget();
     void run();
+    void refresh();
     void reset();
     void select(int);
     void sort(int);

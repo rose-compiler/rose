@@ -1,0 +1,6 @@
+uplevel=./
+hostcc=gcc
+hostcxx=g++
+testcc=rose_regression_cc
+testcxx=rose_regression_cxx
+dbname=test.db

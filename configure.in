@@ -1057,6 +1057,7 @@ projects/compass/tools/Makefile
 projects/compass/tools/compass/Makefile
 projects/compass/tools/compass/doc/compass.tex
 projects/compass/tools/compass/gui/Makefile
+projects/compass/tools/compass/buildInterpreter/Makefile
 projects/compass/tools/compass/doc/Makefile
 projects/compass/tools/compass/tests/Makefile
 projects/compass/tools/compass/tests/C_tests/Makefile

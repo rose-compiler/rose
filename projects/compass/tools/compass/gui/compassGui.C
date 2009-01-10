@@ -10,13 +10,20 @@
 
 #include "disks.xpm"
 
+
+//For fork()
+#include <sys/wait.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+
+
 #define EMACS
 
 using namespace qrs;
 
 typedef enum 
 { 
-  TB_RUN, TB_RESET, TB_SEL_ALL, TB_SEL_EN, TB_SEL_REV, TB_UNSEL_ALL, 
+  TB_RUN, TB_REFRESH, TB_RESET, TB_SEL_ALL, TB_SEL_EN, TB_SEL_REV, TB_UNSEL_ALL, 
   TB_SORT_NAME, TB_SORT_TIMING, TB_SORT_VIOLATIONS, TB_SAVE, TB_QUIT
 } ButtonID;
 
@@ -33,8 +40,9 @@ static void toolbarClick(int id)
 {
   CompassGui *instance = QROSE::cbData<CompassGui *>();
   switch (id) 
-  {          
-    case TB_RUN:		instance->run();      break;
+  {      
+    case TB_RUN:                instance->run();       break;
+    case TB_REFRESH:		instance->refresh();      break;
     case TB_RESET:		instance->reset();    break;
     case TB_SEL_ALL:          
     case TB_SEL_EN:
@@ -87,19 +95,22 @@ CompassGui::CompassGui( CompassInterface & ci ) :
     QRToolBar *toolbar = (*window)["toolbar"] << new QRToolBar(QROSE::LeftRight, true, true, true);
 
     // icons are defined in <icons.h>
-    toolbar->addButton("run");   toolbar->setPicture(0, iconRun); 
-    toolbar->addButton("reset"); toolbar->setPicture(1, iconReset);
+    toolbar->addButton("regenerate");   toolbar->setPicture(0, iconRun); 
+    toolbar->addButton("refresh");   toolbar->setPicture(1, iconRun); 
+    toolbar->addButton("reset"); toolbar->setPicture(2, iconReset);
     toolbar->addSeparator();
-    toolbar->addButton("select all"); toolbar->setPicture(2, iconSelectAll);
-    toolbar->addButton("select enabled"); toolbar->setPicture(3, iconSelectEnabled);
-    toolbar->addButton("select reverse"); toolbar->setPicture(4, iconSelectReversed);         toolbar->addButton("unselect all");  toolbar->setPicture(5, iconUnselectAll);
+    toolbar->addButton("select all"); toolbar->setPicture(3, iconSelectAll);
+    toolbar->addButton("select enabled"); toolbar->setPicture(4, iconSelectEnabled);
+    toolbar->addButton("select reverse"); toolbar->setPicture(5, iconSelectReversed);         
+    toolbar->addButton("unselect all");  toolbar->setPicture(6, iconUnselectAll);
     toolbar->addSeparator();
-    toolbar->addButton("sort by name"); toolbar->setPicture(6, iconSortByName);
-    toolbar->addButton("sort by time");  toolbar->setPicture(7, iconSortByTime);
-    toolbar->addButton("sort by violations"); toolbar->setPicture(8, iconSortByViolations);
+    toolbar->addButton("sort by name"); toolbar->setPicture(7, iconSortByName);
+    toolbar->addButton("sort by time");  toolbar->setPicture(8, iconSortByTime);
+    toolbar->addButton("sort by violations"); toolbar->setPicture(9, iconSortByViolations);
     toolbar->addSeparator();
-    toolbar->addButton("save"); toolbar->setPicture(9, disks_xpm);
-    toolbar->addButton("quit"); toolbar->setPicture(10, iconQuit);
+    toolbar->addButton("save"); toolbar->setPicture(10, disks_xpm);
+    toolbar->addButton("quit"); toolbar->setPicture(11, iconQuit);
+//    toolbar->addButton("regenerate"); toolbar->setPicture(12, iconRun);
 
     QROSE::link(toolbar, SIGNAL(clicked(int)), &toolbarClick, this);
 
@@ -246,7 +257,7 @@ void CompassGui::updateTableWidget()
   return;
 } //CompassGui::updateTableWidget()
 
-void CompassGui::run()
+void CompassGui::refresh()
 {
   CompassCheckers_v checkers = compassInterface.getCompassCheckers();
   QRProgress *progress = (*window)["progress"];
@@ -267,7 +278,172 @@ void CompassGui::run()
   updateTableWidget();
 
   return;
-} //CompassGui::run()
+} //CompassGui::refresh()
+
+
+#ifdef HAVE_SQLITE3
+
+#include "sqlite3x.h"
+#include <boost/lexical_cast.hpp>
+
+#endif
+
+
+struct BuildLine{
+  int build_index;
+  std::string compile_line;
+  std::vector<std::pair<std::string, std::string> > argv;
+};
+
+void CompassGui::run()
+{
+#ifdef HAVE_SQLITE3
+ std::vector<BuildLine> buildLines;
+
+ try {
+   /* Read in from database here */
+   sqlite3x::sqlite3_command cmd(Compass::con, "drop table if exists violations" );
+   cmd.executenonquery();
+ } catch (std::exception& e) {std::cerr << "Exception: " << e.what() << std::endl;}
+
+
+  if ( Compass::UseDbOutput == true )
+  {
+
+    try { // Read each build_index from the database
+      /* Read in from database here */
+      sqlite3x::sqlite3_command cmd(Compass::con, "SELECT row_number,compile_line from build_interpreted" );
+      sqlite3x::sqlite3_reader r = cmd.executereader();
+      while (r.read()) {
+           int build_index = r.getint(0);
+           std::string compile_line = r.getstring(1);
+
+           BuildLine commandLine;
+           commandLine.build_index = build_index;
+           commandLine.compile_line= compile_line;
+
+           buildLines.push_back(commandLine);
+           std::cout << compile_line << std::endl;
+      }
+
+    } catch (std::exception& e) {std::cerr << "Exception: " << e.what() << std::endl;}
+
+
+    //For each build index find the argv in the database
+    for(unsigned int i = 0; i < buildLines.size(); i++)
+    {
+      BuildLine& commandLine = buildLines[i];
+      try {
+        /* Read in from database here */
+        sqlite3x::sqlite3_command cmd(Compass::con, "SELECT first,second from build_interpreted_split where build_index=? ORDER BY row_number" );
+        cmd.bind(1,commandLine.build_index);
+        sqlite3x::sqlite3_reader r = cmd.executereader();
+        while (r.read()) {
+          std::string first = r.getstring(0);
+          std::string second = r.getstring(1);
+
+          commandLine.argv.push_back(std::pair<std::string,std::string>(first,second) );
+
+        }
+
+      } catch (std::exception& e) {std::cerr << "Exception: " << e.what() << std::endl;}
+
+
+    }
+
+  }
+
+
+  if(buildLines.size() != 0)
+  {
+    
+
+
+
+    QRProgress *progress = (*window)["progress"];
+
+
+    compassInterface.getResult()->reset();
+    progress->set(buildLines.size());
+
+
+    progress->set(0,buildLines.size());
+
+    for(unsigned int i=0; i < buildLines.size() ; i++)
+    {
+        progress->tick();
+        std::string runCompassPath = std::string(ROSE_COMPILE_TREE_PATH) + "/projects/compass/tools/compass/compassMain";
+
+        BuildLine& commandLine = buildLines[i];
+        std::vector<char*> argv;
+        argv.push_back(strdup(runCompassPath.c_str()));
+        for(int j =0; j < commandLine.argv.size(); j++ )
+        {
+          std::string cur_arg = commandLine.argv[j].first + commandLine.argv[j].second;
+          argv.push_back( strdup( (char*) cur_arg.c_str() ));
+
+        }
+       
+        argv.push_back("--outputDb");
+        argv.push_back(strdup(Compass::outputDbName.c_str()));
+
+        std::cout << "Executing " << commandLine.compile_line << std::endl;
+
+        pid_t p = fork();
+
+        if (p == -1) { // Error
+          perror("fork: ");
+          exit (1);
+        } if (p == 0) { // Child
+          int errorCodeROSE     = execv( argv[0], &argv[0]   );
+        }else{ //Parent
+          int status;
+          if (waitpid(p, &status, 0) == -1) {
+            perror("waitpid");
+            abort();
+          }
+          std::cerr << "Status: " << status << std::endl;
+          std::cerr << "Done execution " << commandLine.compile_line  << std::endl;
+        }
+
+
+        p = fork();
+
+        if (p == -1) { // Error
+          perror("fork: ");
+          exit (1);
+        } if (p == 0) { // Child
+          argv.push_back("-rose:skip_rose");
+
+          int errorCodeCompiler = execv( argv[0], &argv[0]   );
+        }else{ //Parent
+          int status;
+          if (waitpid(p, &status, 0) == -1) {
+            perror("waitpid");
+            abort();
+          }
+          std::cerr << "Status: " << status << std::endl;
+          std::cerr << "Done executing " << commandLine.compile_line << std::endl;
+        }
+
+        
+
+    }
+
+    updateTableWidget();
+  }
+
+#else
+// refresh();
+#endif
+
+ return;
+} //CompassGui::refresh()
+
+
+
+
+
 
 void CompassGui::reset()
 {
