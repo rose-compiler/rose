@@ -108,7 +108,7 @@ and limitations on how their software may be used.
    \item {\bf Libtool}: version $>=$1.5.6.  Needed \emph{ONLY} for development versions. 
 \end{itemize}
 
-Note that on Max OSX (version 10.5.6), all of our testing of ROSE uses the following packages:
+Note that on Mac OSX (version 10.5.6), all of our testing of ROSE uses the following packages:
 \begin{itemize}
    \item {\bf boost\_1\_35\_0.tar.gz}:
      All installations of ROSE (any platform) require boost.
@@ -135,6 +135,17 @@ Note that on Max OSX (version 10.5.6), all of our testing of ROSE uses the follo
    \item {\bf libtool-2.2.4.tar.bz2}:
      Required to build ROSE (used in ROSE configuration).
 \end{itemize}
+
+The .bashrc file for Mac OSX is:
+\begin{verbatim}
+export DYLD_LIBRARY_PATH="/Users/dquinlan/local/boost_1_35_0_installTree-gxx-4.0.1/lib"
+export PATH="/Users/dquinlan/local/doxygen-install/bin:$PATH"
+export PATH="/Users/dquinlan/local/graphviz-install/bin:$PATH"
+export PATH="/Users/dquinlan/local/texlive-install/2007/bin/i386-darwin/:$PATH"
+export PATH="/Users/dquinlan/local/latex2html-install/bin/:$PATH"
+export PATH="/Users/dquinlan/local/ghostscript-install/bin/:$PATH"
+export PATH="/Users/dquinlan/local/fontconfig-install/bin/:$PATH"
+\end{verbatim}
 
 
 To simplify the descriptions of the build process, we define:
