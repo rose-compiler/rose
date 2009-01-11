@@ -15,9 +15,13 @@ addressed significant portability issues for ROSE. But EDG has addressed
 portability issues for their C++ frontend and it is available on nearly all
 platforms (see {\tt www.EDG.com} for details).  ROSE is currently developed on
 Linux/Intel platforms and works with all modern versions of the GNU compilers 
-(3.4.x, and later). ROSE also works on both 32-bit and 64-bit architectures, as well as
-with the Intel C and C++ compiler.
+(3.4.x, and later). ROSE also works on both 32-bit and 64-bit architectures, 
+as well as with the Intel C and C++ compilers.  Recent work has ported ROSE
+to both Mac OSX and Cygwin (under Microsoft Windows).
+
 Future work will focus on portability to other platforms important to users.
+If you have a specific requirement for ROSE to be ported to a target platform
+please let us know.
 % At a later point we will address portability of ROSE onto other platforms:
 % mostly likely IBM AIX will be next (at some point).
 
@@ -47,66 +51,91 @@ to specific platforms and versions of compilers. See EDG (www.edg.com) for detai
 and limitations on how their software may be used.
 }
 
-{\bf Use of Required Software:} \\
+{\bf Required Software:} \\
   The following software is required in order to build and use ROSE:
 \begin{itemize}
-   \item {\bf ROSE} : \\ 
-     There are three versions of ROSE supported: the 
-     {\it Distribution Version} for users (typical), the {\it External
-     Development Version} for advanced users and collaborators, 
-     and the {\it Internal Development Version}
-     (intended only for ROSE development team). The development versions
-     are what are found in the ROSE software
-     repositories and have additional software requirements (subversion,
-     JDK, autoconf, automake, Doxygen, LaTeX, etc.).  
-%     The exact requirements are listed in the {\tt ROSE/ChangeLog} (including version numbers for each release of ROSE).
+   \item {\bf ROSE}: \\
+     There are three versions of ROSE supported: the {\it Distribution Version} for users
+    (typical), the {\it External Development Version} for advanced users and collaborators, 
+     and the {\it Internal Development Version} (intended only for ROSE development team
+     and external developers with access to our internal SVN repository which includes the
+     EDG source code). The development versions are what are found in the ROSE software
+     repositories and have additional software requirements (subversion, JDK, autoconf,
+     automake, Doxygen, LaTeX, etc.).
+   % The exact requirements are listed in the {\tt ROSE/ChangeLog} (including version numbers for each release of ROSE).
      \begin{itemize}
-     \item {\bf Distribution Version} \\
-       Provided as a tared and compressed file in the form,
-       ROSE-\VersionNumber.tar.gz.  It can be obtained from
-       \htmladdnormallink{outreach.scidac.gov/projects/rose}{https://outreach.scidac.gov/projects/rose/}. 
-       This is the most typical way that users will
-       see and work with ROSE. But it is less up-to-date compared to
-       development versions. 
+       \item {\bf Distribution Version} \\
+       Provided as a tared and compressed file in the form, ROSE-\VersionNumber.tar.gz.
+       It can be obtained from \htmladdnormallink{outreach.scidac.gov/projects/rose}{https://outreach.scidac.gov/projects/rose/}. 
+       This is the most typical way that users will see and work with ROSE. But it is less
+       up-to-date compared to development versions.
 
        \item {\bf External Development Version } \\
-       It is available from the SciDAC Outreach Center's subversion
-       repository:
+       It is available from the SciDAC Outreach Center's subversion repository:
        \htmladdnormallink{outreach.scidac.gov/projects/rose}{https://outreach.scidac.gov/projects/rose/}.
        We put a subset (excluding the EDG part essentially) of the internal developer version of
-       ROSE into the external repository to enable people to
-       have quick access to the most recent new features in ROSE. 
-       The external repository is synchronized with the internal repository
-       once a day in ideal conditions. Several branches also exist to accept
-       contributions from external collaborators. 
+       ROSE into the external repository to enable people to have quick access to the most
+       recent new features in ROSE.  The external repository is synchronized with the
+       internal repository once a day in ideal conditions. Several branches also exist to
+       accept contributions from external collaborators.
 
-     \item {\bf Internal Development Version} \\
+       \item {\bf Internal Development Version} \\
        Only available directly from the LLNL's internal Subversion (SVN) repository. 
-       The details of building this
-       version are located in the Appendix of the Manual. %\ref{gettingStarted:DeveloperInstructions}.
-     \end{itemize}  
-%     ROSE is delivered as either a development version (svn) or
-%     as a distribution for users. The (typical) user version comes either with EDG source or binary distribution.
+       The details of building this version are located in the Appendix of the Manual. %\ref{gettingStarted:DeveloperInstructions}.
+     \end{itemize}
+    % ROSE is delivered as either a development version (svn) or as a distribution for
+    % users. The (typical) user version comes either with EDG source or binary distribution.
+
    \item {\bf g++} : version $>=$ 3.4.x  \\
      In order to use OpenMP or gFortran g++ $>=$ 4.2.x is required.
+
    \item {\bf BOOST} : version $>=$ 1.35.0  \\
      Visit \htmladdnormallink{www.boost.org}{http://www.boost.org/}
      for more details about BOOST and \htmladdnormallink{www.boost.org/users/download}{http://www.boost.org/users/download/}
      for download and installation instructions.
+
    \item {\bf JAVA} : version $>$1.5.0\_11 \\
-          A SUN Java virtual machine (JVM) is needed. A Java compiler
-          (JDK)
-          is also required for development versions.  
-   \item {\bf Autoconf} : version $>=$ 2.59. Needed \emph{ONLY} for
-   development versions.  \\
+     A SUN Java virtual machine (JVM) is needed. A Java compiler (JDK) is also
+     required for development versions.  
+
+   \item {\bf Autoconf} : version $>=$ 2.59. Needed \emph{ONLY} for development versions. \\
      Autoconf is an extensible package of M4 macros that produce shell scripts to automatically configure software source code packages. 
-   \item {\bf Automake} : version $>=$ 1.96. Needed \emph{ONLY} for
-   development versions.  \\
-     Automake is a tool for automatically generating `Makefile.in' files
-     compliant with the GNU Coding Standards.
-     \item {\bf Libtool}: version $>=$1.5.6.  Needed \emph{ONLY} for
-     development versions. 
+
+   \item {\bf Automake} : version $>=$ 1.96. Needed \emph{ONLY} for development versions. \\
+     Automake is a tool for automatically generating `Makefile.in' files compliant with
+     the GNU Coding Standards.
+
+   \item {\bf Libtool}: version $>=$1.5.6.  Needed \emph{ONLY} for development versions. 
 \end{itemize}
+
+Note that on Max OSX (version 10.5.6), all of our testing of ROSE uses the following packages:
+\begin{itemize}
+   \item {\bf boost\_1\_35\_0.tar.gz}:
+     All installations of ROSE (any platform) require boost.
+
+   \item {\bf doxygen-1.5.6.src.tar.gz}:
+     Doxegen is required to build the documentation which is both distributed with ROSE
+     and make available via the ROSE web site.
+
+   \item {\bf ghostscript-8.62.tar.gz}:
+     Not clear that this is really required by ROSE.
+
+   \item {\bf latex2html-2002-2-1.tar.gz}:
+     Likely required by LaTeX (not required by ROSE as far as I know).
+
+   \item {\bf texlive2007-live-20070212.iso.zip (LaTeX)}:
+     Reqired to build the latex documentation (ROSE Manual and ROSE Tutorial).
+
+   \item {\bf fontconfig-2.6.0.tar.gz}:
+     Not clear that this is really required by ROSE.
+
+   \item {\bf graphviz-2.20.1.tar.gz}:
+     Required to generate graphs for the LaTex documentation in ROSE.
+
+   \item {\bf libtool-2.2.4.tar.bz2}:
+     Required to build ROSE (used in ROSE configuration).
+\end{itemize}
+
 
 To simplify the descriptions of the build process, we define:
 \begin{itemize} 
