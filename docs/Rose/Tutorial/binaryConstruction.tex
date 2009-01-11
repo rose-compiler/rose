@@ -96,7 +96,7 @@ segment, which occupies the first part of the file up through the end
 of the ``.text'' section (see below). ELF File Headers don't actually
 store a base address, so instead of assigning one to the
 SgAsmElfFileHeader we'll leave the header's base address at the
-default zero and add base_va explicitly whenever we need to.
+default zero and add base\_va explicitly whenever we need to.
 
 \begin{verbatim}
 SgAsmElfFileHeader *fhdr = new SgAsmElfFileHeader(ef);
@@ -138,7 +138,7 @@ instructions. The easiest way to do that is to specialize
 SgAsmElfSection and override or augment a few of the virtual
 functions.
 
-We need to override two functions. First, the calculate_sizes()
+We need to override two functions. First, the calculate\_sizes()
 function should return the size we need to store the
 instructions. We'll treat the instructions as an array of entries each
 entry being one byte of the instruction stream. In other words, each
@@ -154,8 +154,8 @@ Finally, we need to augment the reallocate() method. This method is
 reponsible for allocating space in the file for the section and
 performing any other necessary pre-unparsing actions. We don't need to
 allocate space since the base class's method will take care of that in
-conjuction with our version of calculate_sizes(), but we do need to
-set a special ELF flag (SHF_ALLOC) in the ELF Segment Table entry for
+conjuction with our version of calculate\_sizes(), but we do need to
+set a special ELF flag (SHF\_ALLOC) in the ELF Segment Table entry for
 this section. There's a few ways to accomplish this. We do it this way
 because the ELF Section Table Entry is not created until later and we
 want to demonstrate how to keep all .text-related code in close
@@ -235,7 +235,7 @@ has two subclasses: one for strings that aren't stored in the
 executable file (SgAsmBasicString) and one for strings that are stored
 in the file (SgAsmStoredString). Both are capable of string an
 std::string value and querying its byte offset (although
-SgAsmBasicString::get_offset() will always return
+SgAsmBasicString::get\_offset() will always return
 SgAsmGenericString::unallocated).  Since we haven't added the
 ``.text'' section to the ELF Section Table yet the new section has an
 SgAsmBasicString name. We can assign a string to the name now and the
@@ -250,8 +250,8 @@ The ELF File Header needs to know the virtual address at which to
 start running the program. In ROSE, virtual addresses can be attached
 to a specific section so that if the section is ever moved the address
 is automatically updated. Some formats allow more than one entry
-address which is why the method is called add_entry_rva() rather than
-set_entry_rva(). ELF, however, only allows one entry address.
+address which is why the method is called add\_entry\_rva() rather than
+set\_entry\_rva(). ELF, however, only allows one entry address.
 
 \begin{verbatim}
 rose_rva_t entry_rva(text->get_mapped_rva(), text);
@@ -271,8 +271,8 @@ is create an ELF Segment and add it to the ELF Segment Table. ELF
 Segments, like ELF Sections, are represented by SgAsmElfSection. An
 SgAsmElfSection is an ELF Section if it has an entry in the ELF
 Section Table, and/or it's an ELF Segment if it has an entry in the
-ELF Segment Table. The methods get_section_entry() and
-get_segment_entry() retrieve the actual entries in those tables.
+ELF Segment Table. The methods get\_section\_entry() and
+get\_segment\_entry() retrieve the actual entries in those tables.
 
 Recall that the constructor creates new sections located at the
 current end-of-file and containing one byte. Our LOAD segment needs to
@@ -299,7 +299,7 @@ names stored in the file, but we can assign a name to the AST node to
 aid in debugging--it just won't be written out. When parsing an ELF
 file, segment names are generated based on the type stored in the
 entry of the ELF Segment Table. For a PAX segment we want this type to
-be PT_PAX_FLAGS (the default is PT_LOAD).
+be PT\_PAX\_FLAGS (the default is PT\_LOAD).
 
 \begin{verbatim}
 SgAsmElfSection *pax = new SgAsmElfSection(fhdr);
