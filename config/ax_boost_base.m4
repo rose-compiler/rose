@@ -84,11 +84,13 @@ if test "x$want_boost" = "xyes"; then
 	if test "$ac_boost_path" != ""; then
 		BOOST_LDFLAGS=" -L$ac_boost_path/lib"
 		BOOST_CPPFLAGS="-I$ac_boost_path/include"
+                ROSE_BOOST_INCLUDE_PATH="$ac_boost_path/include"
 	else
 		for ac_boost_path_tmp in /usr /usr/local /opt /opt/local ; do
 			if test -d "$ac_boost_path_tmp/include/boost" && test -r "$ac_boost_path_tmp/include/boost"; then
 				BOOST_LDFLAGS="-L$ac_boost_path_tmp/lib"
 				BOOST_CPPFLAGS="-I$ac_boost_path_tmp/include"
+                                ROSE_BOOST_INCLUDE_PATH="$ac_boost_path_tmp/include"
 				break;
 			fi
 		done
@@ -99,8 +101,10 @@ if test "x$want_boost" = "xyes"; then
 # echo "BOOST_LDFLAGS  = $BOOST_LDFLAGS"
 # echo "BOOST_CPPFLAGS = $BOOST_CPPFLAGS"
 
- # DQ (1/1/2009): Set the default value based on BOOST_CPPFLAGS
-   ROSE_BOOST_INCLUDE_PATH="$ac_boost_path_tmp/include"
+# DQ (1/1/2009): Set the default value based on BOOST_CPPFLAGS
+# Liao (1/12/2009): ac_boost_path_tmp is one of the if's branches. 
+# Moved the assignment into the two branches above
+#   ROSE_BOOST_INCLUDE_PATH="$ac_boost_path_tmp/include"
 
  # DQ (1/1/2009): Added testing for previously installed Boost (always older version)
  # so that we can trigger the use of "-isystem" option (to g++) only when required
