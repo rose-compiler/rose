@@ -43,14 +43,7 @@ CLEANFILES = compass_parameters rqmgc
 endif
 
 
-EXTRA_DIST = \
-        compassChecker.h \
-        compassGui.h \
-        compassInterface.h \
-        compassResult.h \
-        compassViolation.h \
-        icons.h \
-        timer.h \
-	disks.xpm 
-
+# DQ (1/11/2009): Modified this, since it was not checked into SVN and does not appear to be required.
+# EXTRA_DIST = compassChecker.h compassGui.h compassInterface.h compassResult.h compassViolation.h icons.h timer.h disks.xpm 
+EXTRA_DIST = commandLinePreProcessing.h  commandLineProcessing.h  defs.h  extern.h  qmgen.h  stringManipulations.h
 
