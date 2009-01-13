@@ -1044,7 +1044,7 @@ Grammar::setUpSupport ()
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "bool", "sourceFileTypeIsUnknown", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     
+
   // DQ (10/13/2007): Add the binary file to the SgFile IR node so that we can hold both the source
   // code AST and the binary AST together.  This also permits the binary AST to be handled similarly
   // the the source code AST (for traversals, file I/O, etc.).
@@ -1349,6 +1349,13 @@ Grammar::setUpSupport ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Project.setDataPrototype("SgStringList","includeDirectorySpecifierList", "",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (1/13/2009): Added support for GNU -include (for pre inclusion of files) and -isystem 
+  // (for preinclusion of directories to be searched) options.
+     Project.setDataPrototype("SgStringList","preincludeFileList", "",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     Project.setDataPrototype("SgStringList","preincludeDirectoryList", "",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
   // DQ (2/12/2004): Added to support -c on compiler command line
