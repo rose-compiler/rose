@@ -1261,6 +1261,7 @@ developersScratchSpace/Dan/Compass_tests/Makefile
 developersScratchSpace/Dan/astEquivalence_tests/Makefile
 developersScratchSpace/Dan/MicrosoftWindows_tests/Makefile
 developersScratchSpace/Dan/QRose_tests/Makefile
+developersScratchSpace/Robb/Makefile
 developersScratchSpace/Robb/DynamicLinking/Makefile
 ])
 
