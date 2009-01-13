@@ -551,9 +551,15 @@ Unparser_Nameq::generateNameQualifier( SgInitializedName* initializedName, const
      printf ("***** This branch should output a %s name? \n",outputQualifiedName ? "QUALIFIED" : "NON-QUALIFIED");
 #endif
 
+  // DQ (1/11/2009): Added support for __FUNCTION__ (see test2004_153.C) and __BASE_FILE__. 
   // DQ (6/9/2007): Make an exception for compiler generated variables (e.g."__PRETTY_FUNCTION__")
   // if (initializedName->get_startOfConstruct()->isCompilerGenerated() == true)
-     if ( (initializedName->get_startOfConstruct()->isCompilerGenerated() == true) && (initializedName->get_name() == "__PRETTY_FUNCTION__" || initializedName->get_name() == "__func__") )
+  // if ( (initializedName->get_startOfConstruct()->isCompilerGenerated() == true) && (initializedName->get_name() == "__PRETTY_FUNCTION__" || initializedName->get_name() == "__func__") )
+     if ( (initializedName->get_startOfConstruct()->isCompilerGenerated() == true) && 
+          ( (initializedName->get_name() == "__PRETTY_FUNCTION__") || 
+            (initializedName->get_name() == "__func__")            || 
+            (initializedName->get_name() == "__FUNCTION__")        || 
+            (initializedName->get_name() == "__BASE_FILE__") ) )
         {
 #if 0
           printf ("initializedName = %p = %s is compiler generated so it should not be qualified \n",initializedName,initializedName->get_name().str());

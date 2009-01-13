@@ -4596,12 +4596,57 @@ Unparse_ExprStmt::unparseGotoStmt(SgStatement* stmt, SgUnparse_Info& info) {
   if (!info.SkipSemiColon()) { curprint ( string(";")); }
 }
 
-//never seen this function called yet
+static bool
+isOutputAsmOperand(SgAsmOp* asmOp)
+   {
+  // There are two way of evaluating if an SgAsmOp is an output operand, 
+  // depending of if we are using the specific mechanism that knows 
+  // records register details or the more general mechanism that records 
+  // the registers as strings.  The string based mechanism lack precision 
+  // and would require parsing to retrive the instruction details, but it 
+  // is instruction set independent.  The more precise mechanism records 
+  // the specific register codes and could in the future be interpreted
+  // to be a part of the binary analysis support in ROSE.
+
+     return (asmOp->get_recordRawAsmOperandDescriptions() == true) ? (asmOp->get_isOutputOperand() == true) : (asmOp->get_modifiers() & SgAsmOp::e_output);
+   }
+                
+
+
 void
 Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
+  // This function is called as part of the handling of the C "asm" 
+  // statement.  The "asm" statement supports inline assembly in C.
+  // These sorts of statements are not common in most user code 
+  // (except embedded code), but are common in many system header files.
+
      SgAsmStmt* asm_stmt = isSgAsmStmt(stmt);
      ROSE_ASSERT(asm_stmt != NULL);
+
+#define ASM_DEBUGGING 0
+
+     SgSourceFile* sourceFile = TransformationSupport::getSourceFile(stmt);
+     ROSE_ASSERT(sourceFile != NULL);
+
+  // DQ (1/10/2009): The C language ASM statements are providing significant trouble, they are
+  // frequently machine specific and we are compiling then on architectures for which they were 
+  // not designed.  This option allows then to be read, constructed in the AST to support analysis
+  // but not unparsed in the code given to the backend compiler, since this can fail. (See 
+  // test2007_20.C from Linux Kernel for an example).
+     if (sourceFile->get_skip_unparse_asm_commands() == true)
+        {
+       // This is a case were we skip the unparsing of the C language ASM statements, because while 
+       // we can read then into the AST to support analysis, we can not always output them correctly.  
+       // This subject requires additional work.
+
+          printf ("Warning: Sorry, C language ASM statement skipped (parsed and built in AST, but not output by the code generation phase (unparser)) \n");
+
+          curprint ( "/* C language ASM statement skipped (in code generation phase) */ ");
+          return;
+        }
+
+  // Output the "asm" keyword.
      curprint ( string("asm "));
 
   // DQ (7/23/2006): Added support for volatile as modifier.
@@ -4620,62 +4665,123 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
      string asmTemplate = asm_stmt->get_assemblyCode();
      curprint("\"" + escapeString(asmTemplate) + "\"");
 
-     if (asm_stmt->get_useGnuExtendedFormat()) {
-       size_t numOutputOperands = 0, numInputOperands = 0;
-       for (SgExpressionPtrList::const_iterator i = asm_stmt->get_operands().begin(); i != asm_stmt->get_operands().end(); ++i) {
-         SgAsmOp* asmOp = isSgAsmOp(*i);
-         ROSE_ASSERT (asmOp);
-         if (asmOp->get_modifiers() & SgAsmOp::e_output) {
-           ++numOutputOperands;
-         } else {
-           ++numInputOperands;
-         }
-       }
-       size_t numClobbers = asm_stmt->get_clobberRegisterList().size();
-       bool first;
-       if (numInputOperands == 0 && numOutputOperands == 0 && numClobbers == 0) {
-         goto donePrintingConstraints;
-       }
-       curprint(" : "); // Start of output operands
-       first = true;
-       for (SgExpressionPtrList::const_iterator i = asm_stmt->get_operands().begin(); i != asm_stmt->get_operands().end(); ++i) {
-         SgAsmOp* asmOp = isSgAsmOp(*i);
-         ROSE_ASSERT (asmOp);
-         if (asmOp->get_modifiers() & SgAsmOp::e_output) {
-           if (!first) curprint(", ");
-           first = false;
-           unparseExpression(asmOp, info);
-         }
-       }
-       if (numInputOperands == 0 && numClobbers == 0) {
-         goto donePrintingConstraints;
-       }
-       curprint(" : "); // Start of input operands
-       first = true;
-       for (SgExpressionPtrList::const_iterator i = asm_stmt->get_operands().begin(); i != asm_stmt->get_operands().end(); ++i) {
-         SgAsmOp* asmOp = isSgAsmOp(*i);
-         ROSE_ASSERT (asmOp);
-         if (!(asmOp->get_modifiers() & SgAsmOp::e_output)) {
-           if (!first) curprint(", ");
-           first = false;
-           unparseExpression(asmOp, info);
-         }
-       }
-       if (numClobbers == 0) goto donePrintingConstraints;
-       curprint(" : "); // Start of clobbers
-       first = true;
-       for (SgAsmStmt::AsmRegisterNameList::const_iterator i = asm_stmt->get_clobberRegisterList().begin(); i != asm_stmt->get_clobberRegisterList().end(); ++i) {
-         if (!first) curprint(", ");
-         first = false;
-         curprint("\"" + unparse_register_name(*i) + "\"");
-       }
+     if (asm_stmt->get_useGnuExtendedFormat())
+        {
+          size_t numOutputOperands = 0;
+          size_t numInputOperands  = 0;
+
+       // Count the number of input vs. output operands
+          for (SgExpressionPtrList::const_iterator i = asm_stmt->get_operands().begin(); i != asm_stmt->get_operands().end(); ++i)
+             {
+               SgAsmOp* asmOp = isSgAsmOp(*i);
+               ROSE_ASSERT (asmOp);
+#if ASM_DEBUGGING
+               printf ("asmOp->get_modifiers() = %d SgAsmOp::e_output = %d asmOp->get_isOutputOperand() = %s \n",(int)asmOp->get_modifiers(),(int)SgAsmOp::e_output,asmOp->get_isOutputOperand() ? "true" : "false");
+               printf ("asmOp->get_recordRawAsmOperandDescriptions() = %s \n",asmOp->get_recordRawAsmOperandDescriptions() ? "true" : "false");
+#endif
+            // if (asmOp->get_modifiers() & SgAsmOp::e_output)
+            // if ( (asmOp->get_modifiers() & SgAsmOp::e_output) || (asmOp->get_isOutputOperand() == true) )
+               if ( isOutputAsmOperand(asmOp) == true )
+                  {
+                    ++numOutputOperands;
+#if ASM_DEBUGGING
+                    printf ("Marking as an output operand! \n");
+#endif
+                  }
+                 else
+                  {
+                    ++numInputOperands;
+#if ASM_DEBUGGING
+                    printf ("Marking as an input operand! \n");
+#endif
+                  }
+             }
+
+          size_t numClobbers = asm_stmt->get_clobberRegisterList().size();
+
+#if ASM_DEBUGGING
+          printf ("numOutputOperands = %zu numInputOperands = %zu numClobbers = %zu \n",numOutputOperands,numInputOperands,numClobbers);
+#endif
+
+          bool first;
+          if (numInputOperands == 0 && numOutputOperands == 0 && numClobbers == 0)
+             {
+               goto donePrintingConstraints;
+             }
+          curprint(" : "); // Start of output operands
+
+#if ASM_DEBUGGING
+          curprint(" /* asm output operands */ "); // Debugging output
+#endif
+
+       // Record if this is the first operand so that we can surpress the "," 
+          first = true;
+          for (SgExpressionPtrList::const_iterator i = asm_stmt->get_operands().begin(); i != asm_stmt->get_operands().end(); ++i)
+             {
+               SgAsmOp* asmOp = isSgAsmOp(*i);
+               ROSE_ASSERT (asmOp != NULL);
+            // if (asmOp->get_modifiers() & SgAsmOp::e_output)
+            // if ( (asmOp->get_modifiers() & SgAsmOp::e_output) || (asmOp->get_isOutputOperand() == true) )
+               if ( isOutputAsmOperand(asmOp) == true )
+                  {
+                    if (!first)
+                         curprint(", ");
+                    first = false;
+                    unparseExpression(asmOp, info);
+                  }
+             }
+
+          if (numInputOperands == 0 && numClobbers == 0)
+             {
+               goto donePrintingConstraints;
+             }
+          curprint(" : "); // Start of input operands
+#if ASM_DEBUGGING
+          curprint(" /* asm input operands */ "); // Debugging output
+#endif
+          first = true;
+          for (SgExpressionPtrList::const_iterator i = asm_stmt->get_operands().begin(); i != asm_stmt->get_operands().end(); ++i)
+             {
+               SgAsmOp* asmOp = isSgAsmOp(*i);
+               ROSE_ASSERT (asmOp != NULL);
+            // if (!(asmOp->get_modifiers() & SgAsmOp::e_output))
+               if ( isOutputAsmOperand(asmOp) == false )
+                  {
+                    if (!first)
+                         curprint(", ");
+                    first = false;
+                    unparseExpression(asmOp, info);
+                  }
+             }
+
+          if (numClobbers == 0)
+               goto donePrintingConstraints;
+
+          curprint(" : "); // Start of clobbers
+
+#if ASM_DEBUGGING
+          curprint(" /* asm clobbers */ "); // Debugging output
+#endif
+          first = true;
+          for (SgAsmStmt::AsmRegisterNameList::const_iterator i = asm_stmt->get_clobberRegisterList().begin(); i != asm_stmt->get_clobberRegisterList().end(); ++i)
+             {
+               if (!first) curprint(", ");
+               first = false;
+               curprint("\"" + unparse_register_name(*i) + "\"");
+             }
+
 donePrintingConstraints: {}
-     }
+
+        }
 
      curprint ( string(")"));
 
-     if (!info.SkipSemiColon()) { curprint ( string(";")); }
+     if (!info.SkipSemiColon())
+        {
+          curprint ( string(";"));
+        }
    }
+
 
 #if 0
 // DQ (8/13/2007): this function is not used!

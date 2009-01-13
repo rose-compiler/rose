@@ -10303,9 +10303,10 @@ X aggressive
   // in the generation of DOT files.  This is helpful for debugging and in 
   // tutorial examples/presentations.
      p_visualize_executable_file_format_skip_symbols = false;
-     p_visualize_dwarf_only = false;
 
-     p_read_instructions_only = false;
+     p_visualize_dwarf_only      = false;
+     p_skip_unparse_asm_commands = false;
+     p_read_instructions_only    = false;
 
   // DQ (9/2/2008): This is moved to the new SgBinaryFile (derived from SgFile)
   // p_aggressive = false;

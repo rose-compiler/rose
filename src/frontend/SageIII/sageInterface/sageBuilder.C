@@ -2904,6 +2904,8 @@ SgTypeFloat * SageBuilder::buildFloatType()
 
   SgEnumDeclaration * SageBuilder::buildEnumDeclaration(const SgName& name, SgScopeStatement* scope /*=NULL*/)
   {
+ // DQ (1/11/2009): This function has semantics very different from the buildEnumDeclaration_nfi() function!
+
     if (scope == NULL)
       scope = SageBuilder::topScopeStack();
     SgEnumDeclaration* decl = buildEnumDeclaration_nfi(name, scope);
@@ -2915,8 +2917,7 @@ SgTypeFloat * SageBuilder::buildFloatType()
 
   SgEnumDeclaration * SageBuilder::buildEnumDeclaration_nfi(const SgName& name, SgScopeStatement* scope)
   {
-    SgEnumDeclaration* defdecl = new SgEnumDeclaration 
-           (name,NULL);
+    SgEnumDeclaration* defdecl = new SgEnumDeclaration (name,NULL);
     ROSE_ASSERT(defdecl);
     setOneSourcePositionNull(defdecl);
     // constructor is side-effect free
@@ -2926,9 +2927,15 @@ SgTypeFloat * SageBuilder::buildFloatType()
     SgEnumDeclaration* nondefdecl = buildNondefiningEnumDeclaration_nfi(name, scope);
     nondefdecl->set_definingDeclaration(defdecl);
     defdecl->set_firstNondefiningDeclaration(nondefdecl);
+
+ // DQ (1/11/2009): The buildNondefiningEnumDeclaration function builds an entry in the symbol table, and so we don't want a second one!
+#if 0
     SgEnumSymbol* mysymbol = new SgEnumSymbol(nondefdecl);
     ROSE_ASSERT(mysymbol);
+ // scope->print_symboltable("buildEnumDeclaration_nfi(): before inserting new SgEnumSymbol");
     scope->insert_symbol(name, mysymbol);
+#endif
+
     defdecl->set_scope(scope);
     nondefdecl->set_scope(scope);
     defdecl->set_parent(scope);

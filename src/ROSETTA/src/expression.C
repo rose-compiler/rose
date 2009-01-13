@@ -1264,6 +1264,17 @@ Grammar::setUpExpressions ()
      AsmOp.setDataPrototype     ( "SgExpression*", "expression", "= NULL",
 				      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
 
+  // DQ (1/8/2009): Added support for asm operand handling with EDG RECORD_RAW_ASM_OPERAND_DESCRIPTIONS == TRUE
+  // This allows us to handle "asm" statements that reference non-x86 specific details (registers and instructions).
+     AsmOp.setDataPrototype     ( "bool", "recordRawAsmOperandDescriptions", "= false",
+				      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmOp.setDataPrototype     ( "bool", "isOutputOperand", "= false",
+				      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmOp.setDataPrototype     ( "std::string", "constraintString", "= \"\"",
+				      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmOp.setDataPrototype     ( "std::string", "name", "= \"\"",
+				      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
 #if USE_FORTRAN_IR_NODES
   // DQ (11/24/2007): Removed this IR node

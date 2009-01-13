@@ -79,7 +79,7 @@ AC_ARG_ENABLE(purify,
 
 consistency_checking_define_value=0
 AC_ARG_ENABLE(checking,
-[  --disable-checking don't do consistency checking in parser],
+[  --disable-checking don't do EDG specific consistency checking in parser],
 [if test $enable_checking = yes; then
     # AC_DEFINE([CHECKING],[1],[Internal consistency tests.])
       consistency_checking_define_value=0
@@ -88,7 +88,8 @@ AC_ARG_ENABLE(checking,
    consistency_checking_define_value=1
 ])
 
-AC_DEFINE_UNQUOTED([CHECKING],[$consistency_checking_define_value],[Internal consistency tests.])
+# DQ (1/6/2009): Made the comment more clear that this is an EDG feature.
+AC_DEFINE_UNQUOTED([CHECKING],[$consistency_checking_define_value],[Internal EDG specific consistency tests.])
 
 AC_ARG_ENABLE(stand-alone,
 	[  --enable-stand-alone compile standalone edgcpfe],
