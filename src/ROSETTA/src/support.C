@@ -1080,6 +1080,14 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "read_instructions_only", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (1/10/2009): The C language ASM statements are providing significant trouble, they are
+  // frequently machine specific and we are compiling then on architectures for which they were 
+  // not designed.  This option allows then to be read, constructed in the AST to support analysis
+  // but not unparsed in the code given to the backend compiler, since this can fail. (See 
+  // test2007_20.C from Linux Kernel for an example).
+     File.setDataPrototype         ( "bool", "skip_unparse_asm_commands", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (8/26/2008): Adds support for more agressive disassembly of sections that are in 
   // executable segments but may be in non-executable segments.  Segments are sets of sections
   // and the OS marks pages based on segment settings, not sections settings, so sections 

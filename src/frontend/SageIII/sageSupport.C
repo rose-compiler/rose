@@ -1367,6 +1367,17 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_visualize_dwarf_only(true);
         }
 
+  // DQ (1/10/2009): The C language ASM statements are providing significant trouble, they are
+  // frequently machine specific and we are compiling then on architectures for which they were 
+  // not designed.  This option allows then to be read, constructed in the AST to support analysis
+  // but not unparsed in the code given to the backend compiler, since this can fail. (See 
+  // test2007_20.C from Linux Kernel for an example).
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(skip_unparse_asm_commands)",true) == true )
+        {
+       // printf ("option -rose:skip_unparse_asm_commands found \n");
+          set_skip_unparse_asm_commands(true);
+        }
+
   // DQ (9/2/2008): This is now set in the new SgBinaryFile IR node.
   // DQ (8/26/2008): support for optional more agressive mode of disassembly of binary from all 
   // executable segments instead of just section based.
@@ -1662,6 +1673,8 @@ SgFile::stripRoseCommandLineOptions ( vector<string>& argv )
      optionCount = sla(argv, "-rose:", "($)", "(read_executable_file_format_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(visualize_executable_file_format_skip_symbols)",1);
      optionCount = sla(argv, "-rose:", "($)", "(visualize_dwarf_only)",1);
+
+     optionCount = sla(argv, "-rose:", "($)", "(skip_unparse_asm_commands)",1);
 
   // DQ (8/26/2007): Disassembly support from segments (true) instead of sections (false, default).
      optionCount = sla(argv, "-rose:", "($)", "(aggressive)",1);
@@ -5333,6 +5346,12 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
         }
 
   // printf ("Selected compiler = %s \n",compilerNameString.c_str());
+
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
+  // DQ (1/12/2009): Allow in internal indicator that EDG version 3.10 or 4.0 (or greater) 
+  // is in use to be properly passed on the compilation of the generated code.
+     compilerNameString.push_back("-DROSE_USE_NEW_EDG_INTERFACE");
+#endif
 
   // Since we need to do this often, support is provided in the utility_functions.C
   // and we can simplify this code.

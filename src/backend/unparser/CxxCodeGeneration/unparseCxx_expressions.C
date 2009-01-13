@@ -655,7 +655,9 @@ unparse_operand_constraint (SgAsmOp::asm_operand_constraint_enum constraint)
   /* aoc_mem_autoinc */         '>',
   /* aoc_mem_autodec */         '<',
   /* aoc_imm_int */             'i',
-  /* aoc_imm_number */          'n',
+  // DQ (1/10/2009): The code 'n' is not understood by gnu, so use 'r'
+  // aoc_imm_number             'n',
+  /* aoc_imm_number */          'r',
   /* aoc_imm_symbol */          's',
   /* aoc_imm_float */           'F',
   /* aoc_reg_a */               'a',
@@ -835,21 +837,48 @@ Unparse_ExprStmt::unparseAsmOp (SgExpression* expr, SgUnparse_Info& info)
   // Just call unparse on the statement.
      SgAsmOp* asmOp = isSgAsmOp(expr);
      ROSE_ASSERT(asmOp != NULL);
+
+  // printf ("In unparseAsmOp(): asmOp->get_recordRawAsmOperandDescriptions() = %s \n",asmOp->get_recordRawAsmOperandDescriptions() ? "true" : "false");
+
      SgExpression* expression = asmOp->get_expression();
      ROSE_ASSERT(expression != NULL);
 
-  // curprint ( "asmOp: data = ";
-  // curprint ( "( modifier= ";
-  // curprint ( asmOp->get_modifiers();
+     if (asmOp->get_name().empty() == false)
+        {
+       // This is symbolic name indicated for this operand (using the "[ <identifier> ]" syntax, if present).
+          curprint ("[" + asmOp->get_name() + "] ");
+        }
+
      curprint ( "\"");
-     unparse_asm_operand_modifier(asmOp->get_modifiers());
-  // curprint ( ")";
-  // curprint ( "( constraint= ";
-  // curprint ( asmOp->get_constraint();
-     curprint ( unparse_operand_constraint(asmOp->get_constraint()));
-  // curprint ( ")";
+     if (asmOp->get_recordRawAsmOperandDescriptions() == false)
+        {
+       // This is only set to non-invalid state when RECORD_RAW_ASM_OPERAND_DESCRIPTIONS == FALSE in EDG.
+          unparse_asm_operand_modifier(asmOp->get_modifiers());
+          curprint ( unparse_operand_constraint(asmOp->get_constraint()));
+        }
+       else
+        {
+       // The modifier is part of the constraint, and it is output in the constraintString when recordRawAsmOperandDescriptions() == true.
+          printf ("asmOp->get_constraintString() = %s \n",asmOp->get_constraintString().c_str());
+          curprint ( asmOp->get_constraintString() );
+        }
+
+#if 0
+  // DQ (1/8/2009): Added support for case of asm operand handling with EDG RECORD_RAW_ASM_OPERAND_DESCRIPTIONS == TRUE
+  // (this case uses the constraintString instead of a constrant code)
+  // curprint ( unparse_operand_constraint(asmOp->get_constraint()));
+     if (asmOp->get_recordRawAsmOperandDescriptions() == false)
+        {
+          curprint ( unparse_operand_constraint(asmOp->get_constraint()));
+        }
+       else
+        {
+          curprint ( asmOp->get_constraintString() );
+        }
+#endif
+
+  // This is usually a SgVarRefExp
      curprint ( "\"");
-  // curprint ( " expression= ";
      curprint ( " (");
      unparseExpression(expression,info);
      curprint ( ")");

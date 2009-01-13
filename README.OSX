@@ -1,6 +1,55 @@
-As of the more recent Subversion versions of ROSE and Mac OS X 10.4 for Intel,
-ROSE runs out of the box on Mac.  ROSE is not supported on any non-x86 platform.
+As of the more recent Subversion based versions of ROSE and Mac OS X 10.4 for Intel,
+ROSE runs out of the box on Mac.  ROSE is however not supported on any non-x86 
+platform (this will change in the future).
 
+Required (or helpful) external software (as per our own OSX test configuration):
+
+boost_1_35_0.tar.gz:
+     All installations of ROSE (any platform) require boost.
+
+doxygen-1.5.6.src.tar.gz:
+     Doxegen is required to build the documentation which is both distributed with ROSE
+     and make available via the ROSE web site.
+
+ghostscript-8.62.tar.gz:
+     Not clear that this is really required by ROSE.
+
+latex2html-2002-2-1.tar.gz:
+     Likely required by LaTeX (not required by ROSE as far as I know).
+
+texlive2007-live-20070212.iso.zip (LaTeX):
+     Reqired to build the latex documentation (ROSE Manual and ROSE Tutorial).
+
+fontconfig-2.6.0.tar.gz:
+     Not clear that this is really required by ROSE.
+
+graphviz-2.20.1.tar.gz:
+     Required to generate graphs for the LaTex documentation in ROSE.
+
+libtool-2.2.4.tar.bz2:
+     Required to build ROSE (used in ROSE configuration).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+********************************************************************************
 The following notes are old, and might give hints about running ROSE on PowerPC:
 
 ROSE is developed on Linux I86 architectures.  We have not worked much on portablity

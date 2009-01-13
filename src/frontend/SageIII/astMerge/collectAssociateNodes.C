@@ -217,6 +217,9 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
                break;
              }
 
+       // DQ (1/6/2009): Added support for SgTypeSignedLongLong (only an error on 32 bit systems, not 64 bit systems).
+          case V_SgTypeSignedLongLong:
+
        // These don't have types hidden internally (but they do have declarations)
        // case V_SgClassType:
        // case V_SgEnumType:

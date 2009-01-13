@@ -936,6 +936,13 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                          break;
                        }
 
+#ifdef ROSE_USE_NEW_EDG_INTERFACE
+                    case V_SgPartialFunctionType:
+                       {
+                      // This case is only present in the new EDG/Sage interface (demonstrated by gzip.c)
+                         break;
+                       }
+#endif
                     default:
                        {
                          printf ("Error case default in switch (callType = %s) \n",callType->sage_class_name());

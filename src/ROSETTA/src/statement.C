@@ -1689,6 +1689,8 @@ Grammar::setUpStatements ()
   // DQ (7/26/2006): The clobber list is a list of register codes (architecture specific, but gnu standard register names).
      AsmStmt.setDataPrototype ( "SgAsmStmt::AsmRegisterNameList", "clobberRegisterList", "",
                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmStmt.setDataPrototype ( "bool", "isVolatile", "= false",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
      SpawnStmt.setFunctionPrototype  ( "HEADER_SPAWN_STATEMENT", "../Grammar/Statement.code" );
