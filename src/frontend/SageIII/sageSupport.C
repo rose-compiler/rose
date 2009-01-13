@@ -500,6 +500,40 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           p_template_instantiation_mode = e_default;
         }
 
+  // DQ (1/13/2009): Added support for GNU -include <header_file> option (include this file before all others).
+     string tempHeaderFile;
+     iter = local_commandLineArgumentList.begin();
+     while ( iter != local_commandLineArgumentList.end() )
+        {
+          if ( *iter == "-include")
+             {
+               iter++;
+               tempHeaderFile = *iter;
+
+            // printf ("Adding tempHeaderFile = %s to p_preincludeFileList \n",tempHeaderFile.c_str());
+               p_preincludeFileList.push_back(tempHeaderFile);
+             }
+
+          iter++;
+        }
+
+  // DQ (1/13/2009): Added support for GNU -include <header_file> option (include this file before all others).
+     string tempDirectory;
+     iter = local_commandLineArgumentList.begin();
+     while ( iter != local_commandLineArgumentList.end() )
+        {
+          if ( *iter == "-isystem")
+             {
+               iter++;
+               tempDirectory = *iter;
+
+            // printf ("Adding tempHeaderFile = %s to p_preincludeDirectoryList \n",tempDirectory.c_str());
+               p_preincludeDirectoryList.push_back(tempDirectory);
+             }
+
+          iter++;
+        }
+
   // DQ (10/16/2005):
   // Build versions of argc and argv that are separate from the input_argc and input_argv 
   // (so that we can be clear that there are no side-effects to the original argc and argv 
@@ -582,7 +616,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
              }
         }
 
-#if 0
+#if 1
      if ( get_verbose() > 1 )
         {
        // Find out what file we are doing transformations upon
@@ -2264,19 +2298,23 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      Rose_STL_Container<string> configDefs(configDefsArray, configDefsArray + sizeof(configDefsArray) / sizeof(*configDefsArray));
      Rose_STL_Container<string> Cxx_ConfigIncludeDirs(Cxx_ConfigIncludeDirsRaw, Cxx_ConfigIncludeDirsRaw + sizeof(Cxx_ConfigIncludeDirsRaw) / sizeof(const char*));
      Rose_STL_Container<string> C_ConfigIncludeDirs(C_ConfigIncludeDirsRaw, C_ConfigIncludeDirsRaw + sizeof(C_ConfigIncludeDirsRaw) / sizeof(const char*));
-     SgProject* myProject = isSgProject(this->get_parent());
-     ROSE_ASSERT (myProject);
 
   // Removed reference to __restrict__ so it could be placed into the preinclude vendor specific header file for ROSE.
   // DQ (9/10/2004): Attept to add support for restrict (but I think this just sets it to true, using "-Dxxx=" works)
   // const string roseSpecificDefs    = "-DUSE_RESTRICT_POINTERS_IN_ROSE_TRANSFORMATIONS -DUSE_ROSE -D__restrict__=";
      vector<string> roseSpecificDefs;
+
+  // Communicate that ROSE transformation can use the restrict keyword.
      roseSpecificDefs.push_back("-DUSE_RESTRICT_POINTERS_IN_ROSE_TRANSFORMATIONS");
+
+  // Communicate to the generated program that we are using ROSE (in case there are specific options that the user wants to to invoke.
      roseSpecificDefs.push_back("-DUSE_ROSE");
+
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
   // Allow in internal indicator that EDG version 3.10 or 4.0 (or greater) is in use.
      roseSpecificDefs.push_back("-DROSE_USE_NEW_EDG_INTERFACE");
 #endif
+
      ROSE_ASSERT(configDefs.empty() == false);
      ROSE_ASSERT(Cxx_ConfigIncludeDirs.empty() == false);
      ROSE_ASSERT(C_ConfigIncludeDirs.empty() == false);
@@ -2292,6 +2330,8 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      vector<string> commandLine;
 
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
+
+  // Note that the new EDG/Sage interface does not require a generated set of header files specific to ROSE.
      commandLine.push_back("--edg_base_dir");
 
   // DQ (12/29/2008): Added support for EDG version 4.0 (constains design changes that break a number of things in the pre-version 4.0 work)
@@ -2302,8 +2342,15 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #endif
 #endif
 
+  // display("Called from SgFile::build_EDG_CommandLine");
+
   // AS (03/08/2006) Added support for g++ preincludes
   // Rose_STL_Container<std::string> listOfPreincludes;
+
+#if 0
+  // This functionality has been moved to before source name extraction since the 
+  // -include file will be extracted as a file and treated as a source file name 
+  // and the -include will not have an option.
 
   // DQ (12/1/2006): Code added by Andreas (07/03/06) and moved to a new position 
   // so that we could modify the string input from CXX_SPEC_DEF (configDefs).
@@ -2318,8 +2365,10 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
                i++;
                ROSE_ASSERT(i<argv.size());
                string currentArgument(argv[i]);
-             
+
+            // Note that many new style C++ header files don't have a ".h" suffix
                string headerSuffix = ".h";
+
                int jlength = headerSuffix.size();
                int length = currentArgument.size();
                ROSE_ASSERT( length > jlength);
@@ -2338,10 +2387,60 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
                commandLine.push_back(currentArgument);
              }
         }
+#else
+     SgProject* project = isSgProject(this->get_parent());
+     ROSE_ASSERT (project != NULL);
+
+  // DQ (1/13/2009): The preincludeFileList was built if the -include <file> option was used
+     for (SgStringList::iterator i = project->get_preincludeFileList().begin(); i != project->get_preincludeFileList().end(); i++)
+        {
+       // Build the preinclude file list
+          ROSE_ASSERT(project->get_preincludeFileList().empty() == false);
+
+       // printf ("Building commandline: --preinclude %s \n",(*i).c_str());
+          commandLine.push_back("--preinclude");
+          commandLine.push_back(*i);
+        }
+#endif
+
+#if 0
+  // This functionality has been moved to before source name extraction since the 
+  // -isystem dir will be extracted as a file name and treated as a source file name 
+  // and the -isystem will not have an option.
+
+  // AS(02/24/06) Add support for the gcc "-isystem" option (this added a specified directory 
+  // to the start of the system include path).  This maps to the "--sys_include" in EDG.
+     string isystem_string_target = "-isystem";
+     for (unsigned int i=1; i < argv.size(); i++)
+        {
+       // AS (070306) Handle g++ --include directives
+          std::string stack_arg(argv[i]);
+       // std::cout << "stack arg is: " << stack_arg << std::endl;
+          if( stack_arg.find(isystem_string_target) <= 2){
+              i++;
+              ROSE_ASSERT(i<argv.size());
+              std::string currentArgument(argv[i]);
+              // std::cout << "Current argument " << currentArgument << std::endl; 
+            
+              currentArgument = StringUtility::getAbsolutePathFromRelativePath(currentArgument);
+              commandLine.push_back("--sys_include");
+              commandLine.push_back(currentArgument);
+          }
+     }
+#else
+  // DQ (1/13/2009): The preincludeDirectoryList was built if the -isystem <dir> option was used
+     for (SgStringList::iterator i = project->get_preincludeDirectoryList().begin(); i != project->get_preincludeDirectoryList().end(); i++)
+        {
+       // Build the preinclude directory list
+       // printf ("Building commandline: --sys_include %s \n",(*i).c_str());
+          commandLine.push_back("--sys_include");
+          commandLine.push_back(*i);
+        }
+#endif
 
      commandLine.insert(commandLine.end(), configDefs.begin(), configDefs.end());
 
-  // DQ (12/2/2006): Both GNU and EDG determin the language mode from the source file name extension. 
+  // DQ (12/2/2006): Both GNU and EDG determine the language mode from the source file name extension. 
   // In ROSE we also require that C files be explicitly specified to use the C language mode. Thus 
   // C++ source files will be treated as C++ even if the C language rules are specified, however they 
   // are restricted to the C subset of C++.
@@ -2351,6 +2450,11 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // Find the C++ sys include path for the rose_edg_required_macros_and_functions.h
      vector<string> roseHeaderDirCPP(1, "--sys_include");
 
+  // This includes a generated header file that defines the __builtin functions and a number 
+  // of predefined macros obtained from the backend compiler.  The new EDG/Sage interface
+  // does not require this function and I think that the file is not generated in this case 
+  // which is why there is a test for it's existance to see if it should be include.  I would
+  // rather see a more direct test.
      for (Rose_STL_Container<string>::iterator i = Cxx_ConfigIncludeDirs.begin(); i != Cxx_ConfigIncludeDirs.end(); i++)
         {
           string file = (*i) + "/rose_edg_required_macros_and_functions.h";
@@ -2363,7 +2467,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           }
         }
 
-  // Find the C sys include path for the rose_edg_required_macros_and_functions.h
+  // Find the C sys include path for the rose_edg_required_macros_and_functions.h (see comment above for --sys_include use in CPP).
      vector<string> roseHeaderDirC(1, "--sys_include");
 
      for (Rose_STL_Container<string>::iterator i = C_ConfigIncludeDirs.begin(); i != C_ConfigIncludeDirs.end(); i++)
@@ -2450,26 +2554,6 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
        // DQ (11/29/2006): Specify C++ mode for handling in rose_edg_required_macros_and_functions.h
           commandLine.push_back("-DROSE_CPP_MODE=1");
         }
-
-  // AS(02/24/06) Add support for the gcc "-isystem" option (this added a specified directory 
-  // to the start of the system include path).  This maps to the "--sys_include" in EDG.
-     string isystem_string_target = "-isystem";
-     for (unsigned int i=1; i < argv.size(); i++)
-        {
-       // AS (070306) Handle g++ --include directives
-          std::string stack_arg(argv[i]);
-       // std::cout << "stack arg is: " << stack_arg << std::endl;
-          if( stack_arg.find(isystem_string_target) <= 2){
-              i++;
-              ROSE_ASSERT(i<argv.size());
-              std::string currentArgument(argv[i]);
-              // std::cout << "Current argument " << currentArgument << std::endl; 
-            
-              currentArgument = StringUtility::getAbsolutePathFromRelativePath(currentArgument);
-              commandLine.push_back("--sys_include");
-              commandLine.push_back(currentArgument);
-          }
-     }
 
      commandLine.insert(commandLine.end(), roseSpecificDefs.begin(), roseSpecificDefs.end());
 
@@ -2915,6 +2999,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
   // display("at base of build_EDG_CommandLine()");
    }
+
 
 //FMZ(5/19/2008):
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
@@ -3740,7 +3825,10 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
   // DQ (1/6/2008): Added another test for a rose option that takes a filename
      if ( argument == "-o" ||                               // Used to specify output file to compiler
           argument == "-opt" ||                             // Used in loopProcessor
-          argument == "--include" ||                        // Used for preinclude list (to include some header files before all others, common requirement for compiler)
+       // DQ (1/13/2009): This option should only have a single leading "-", not two.
+       // argument == "--include" ||                        // Used for preinclude list (to include some header files before all others, common requirement for compiler)
+          argument == "-include" ||                         // Used for preinclude file list (to include some header files before all others, common requirement for compiler)
+          argument == "-isystem" ||                         // Used for preinclude directory list (to specify include paths to be search before all others, common requirement for compiler)
           argument == "-rose:output" ||                     // Used to specify output file to ROSE
           argument == "-rose:o" ||                          // Used to specify output file to ROSE (alternative to -rose:output)
           argument == "-rose:compilationPerformanceFile" || // Use to output performance information about ROSE compilation phases

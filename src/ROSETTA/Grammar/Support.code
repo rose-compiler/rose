@@ -11398,6 +11398,12 @@ SgProject::display ( const std::string & label ) const
      printf ("   p_excludeFileList.size()               = %zu \n", p_excludeFileList.size());
      printf ("   p_excludeFileList                      = \n      %s \n",StringUtility::listToString(p_excludeFileList).c_str());
 
+     printf ("   p_preincludeFileList.size()            = %zu \n", p_preincludeFileList.size());
+     printf ("   p_preincludeFileList                   = \n      %s \n",StringUtility::listToString(p_preincludeFileList).c_str());
+
+     printf ("   p_preincludeDirectoryList.size()       = %zu \n", p_preincludeDirectoryList.size());
+     printf ("   p_preincludeDirectoryList              = \n      %s \n",StringUtility::listToString(p_preincludeDirectoryList).c_str());
+
      printf ("In this project: numberOfFiles() = %d \n",numberOfFiles());
      for (int i = 0; i < numberOfFiles(); i++)
         {

@@ -4,7 +4,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # SUBDIRS = A++Code 
 SUBDIRS = \
    testOutputFileOption testForSpuriousOutput testCpreprocessorOption \
-   testHeaderFileOutput testFileNamesAndExtensions
+   testHeaderFileOutput testFileNamesAndExtensions testGnuOptions
 
 # This rule is run after automake's internal check rule (which we don't want to use)
 check-local:
