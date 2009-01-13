@@ -15,7 +15,9 @@ buildInterpreter_SOURCES = \
         commandLineProcessing.C \
         qmgen.C
 
-buildInterpreter_LDADD = $(ROSE_LIBS) -lrt
+# DQ (1/12/2009): Removed -lrt since it fails on Mac OSX
+# buildInterpreter_LDADD = $(ROSE_LIBS) -lrt
+buildInterpreter_LDADD = $(ROSE_LIBS)
 
 AM_CXXFLAGS = $(ROSE_CPPFLAGS) $(BOOST_CPPFLAGS) -DBOOST_REGEX_MATCH_EXTRA -DRCFILE=\""$(top_builddir)/projects/compass/tools/compass/buildInterpreter/rqmgc"\"
 
