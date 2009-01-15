@@ -125,12 +125,12 @@ bool LivenessAnalysis::hasANodeAboveCurrentChanged(T source) {
 template <typename T>
 bool LivenessAnalysis::defuse(T cfgNode, bool *unhandled) {
   SgNode* sgNode = cfgNode.getNode();
+  ROSE_ASSERT(sgNode);
   if (visited.find(sgNode)==visited.end())
     visited[sgNode]=1;
   else
     visited[sgNode]++;
   SgNode* sgNodeBefore = getCFGPredNode(cfgNode);  
-  ROSE_ASSERT(sgNode);
 
   vector<FilteredCFGEdge < IsDFAFilter > > out_edges2 = cfgNode.inEdges();
   for (vector<FilteredCFGEdge <IsDFAFilter> >::const_iterator i = out_edges2.begin(); i != out_edges2.end(); ++i) {
@@ -328,7 +328,11 @@ bool LivenessAnalysis::defuse(T cfgNode, bool *unhandled) {
     if (DEBUG_MODE)
       cout << " This was a def or use node " << endl;
     // has_changed only applies here
-    bool equal = std::equal(in[sgNode].begin(),in[sgNode].end(),out[sgNode].begin());
+    bool equal = false;
+    std::vector<SgInitializedName*> vecIn  = in[sgNode];
+    std::vector<SgInitializedName*> vecOut  = out[sgNode];
+    if (vecOut.size()>0 && vecIn.size()>0)
+      equal = std::equal(in[sgNode].begin(),in[sgNode].end(),out[sgNode].begin());
     if (!equal)
       has_changed=true;
     if (DEBUG_MODE) {
