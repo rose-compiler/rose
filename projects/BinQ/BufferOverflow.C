@@ -38,7 +38,8 @@ BufferOverflow::run(string& name, SgDirectedGraphNode* node,
 
   // ANALYSIS 2 : BUFFER OVERFLOW DETECTION -------------------------------------------
   string callName = asmNode->get_comment();
-  if (asmNode->get_kind() == x86_call && callName=="malloc") {
+  if (asmNode->get_kind() == x86_call && (
+					  callName=="malloc" || callName=="calloc")) {
     // DEFINITION OF BUFFER OVERFLOW
     if (debug) 
       cerr << "    " << name << " : found malloc function call " << endl;
@@ -59,10 +60,10 @@ BufferOverflow::run(string& name, SgDirectedGraphNode* node,
 	  std::pair<X86RegisterClass, int> code;
 	  code = check_isRegister(pre, asmPre, false, memRef);
 	  string codeStr = unparseX86Register(code.first, code.second, x86_regpos_qword);
-	  if (codeStr=="rsp")
+	  if (codeStr=="rdi")
 	    value = getValueOfInstr(asmPre, true);
 	  else 
-	    cerr << " Error :: found a mov before a call that does not point to rsp but ::: " << codeStr << endl;
+	    cerr << " Error :: found a mov before a call that does not point to rdi but ::: " << codeStr << endl;
 	  if (debug && asmPre->get_kind() == x86_mov) 
 	    cerr << "   malloc: found mov size of " << codeStr << " in " << value 
 		 << " for malloc call : " << unparseInstruction(asmPre) <<endl;
@@ -129,8 +130,8 @@ BufferOverflow::run(string& name, SgDirectedGraphNode* node,
     bool memRef = false;
     uint64_t address_of_var=0;
     std::pair<X86RegisterClass, int> code;
-    if (debug)
-      cerr << "  DataTransfer instr : " << RoseBin_support::HexToString(asmNode->get_address()) << " "<<unparseInstruction(asmNode) <<endl;
+    //    if (debug)
+    // cerr << "  DataTransfer instr : " << RoseBin_support::HexToString(asmNode->get_address()) << " "<<unparseInstruction(asmNode) <<endl;
     // check if eax register on the left hand side
     code = check_isRegister(node, asmNode, false, memRef);
     if (code.first == x86_regclass_gpr && code.second == x86_gpr_ax) {
@@ -140,7 +141,7 @@ BufferOverflow::run(string& name, SgDirectedGraphNode* node,
       if (memExpr) {
 	address_of_var = getValueInMemoryRefExp( memExpr->get_address());
 	if (debug && isDataTransfer) {
-	  cout << "  >>> malloc:  found mov to eax  " << RoseBin_support::HexToString(asmNode->get_address()) 
+	  cout << "  >>> malloc after:  found mov to eax  " << RoseBin_support::HexToString(asmNode->get_address()) 
 	       << " "<<unparseInstruction(asmNode) ;
 	  cout << "  LOOKING FOR malloc address :: " << RoseBin_support::HexToString(address_of_var) << endl;
 	}
@@ -152,7 +153,7 @@ BufferOverflow::run(string& name, SgDirectedGraphNode* node,
 	  if (type==d_array)
 	    array = true;
 	  if (debug ) 
-	    cerr << "  malloc:  variable found :  " << varName << " array? " << RoseBin_support::resBool(array) 
+	    cerr << "  >>>>>> malloc after:  variable found :  " << varName << " array? " << RoseBin_support::resBool(array) 
 		 << "    instr : " << unparseInstruction(asmNode) <<endl;
 	  // now that we have found the usage of an array, we check 
 	  // in a forward analysis, whether we access a value that is greater than
@@ -200,6 +201,7 @@ BufferOverflow::run(string& name, SgDirectedGraphNode* node,
 			funcname = func->get_name();
 		      res+=" ("+RoseBin_support::HexToString(asmAft->get_address())+") : "+unparseInstruction(asmAft)+
 			" <"+asmAft->get_comment()+">  in function: "+funcname;
+		      result[asmAft]= res;
 		    }
 		  }
 		}
