@@ -53,6 +53,10 @@ demo2:
 demo3:
 	./BinQ -a $(srcdir)/linux-ls --batch
 
+demo4:
+	cat  $(srcdir)/bufftest.c
+	./BinQ -a $(srcdir)/bufftest.bin --batch
+
 test_1:
 	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2b.bin  
 
@@ -64,6 +68,7 @@ test_3:
 
 test_4:
 	./BinQ -a $(srcdir)/linux-ls
+
 
 
 check-local:

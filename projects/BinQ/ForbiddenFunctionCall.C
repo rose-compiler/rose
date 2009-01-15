@@ -114,13 +114,13 @@ ForbiddenFunctionCall::run(SgNode* fileA, SgNode* fileB) {
   genericF = file->get_genericFile() ;
   runTraversal(isSgProject(fileA));
 
-  if (debug) {
+  //  if (debug) {
     std::set<std::string>::const_iterator it = foundFunction.begin();
     for (;it!=foundFunction.end();++it) {
       string fname = *it;
-      std::cout << " function name ==== " << fname << std::endl;
+      std::cout << " functions traversed: name ==== " << fname << std::endl;
     }
-  }
+    //  }
 
   if (instance) {
     QString res = QString("\n>>>>>>>>>>>>>>>> Resolving call addresses to names ... total # functions: %1")

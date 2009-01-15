@@ -41,6 +41,8 @@ MallocAndFree::visit(SgNode* node) {
 	calleeName=="calloc" ) {
       // go forward in this function and check for the next mov mem,reg [rax]
       // malloc returns in rax
+      string funcName = instFunc->get_name();
+      cerr << " Found malloc in function " << funcName << endl;
       rose_addr_t next_addr = inst->get_address() + inst->get_raw_bytes().size();
       std::set<uint64_t> succs;
       std::list<uint64_t> succList;
