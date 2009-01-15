@@ -41,6 +41,18 @@ BinQ_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
 
 INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I.
 
+# DQ (1/15/2009): Added demo rule to support ROSE reviews.
+demo:
+#	$(MAKE) test_1 
+	./BinQ -a $(srcdir)/buffer2.bin -b --batch
+
+demo2:
+	cat $(srcdir)/buffer2.c
+	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2.c --batch
+
+demo3:
+	./BinQ -a $(srcdir)/linux-ls --batch
+
 test_1:
 	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2b.bin  
 
