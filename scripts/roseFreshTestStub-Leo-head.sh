@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # Stub file to include settings for roseFreshTest-common
-
 #required by make docs!
 source /usr/apps/graphviz/2.6/setup.sh
 #export PATH="/usr/apps/java/jdk1.5.0_11/bin:$PATH"
