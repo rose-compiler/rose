@@ -117,7 +117,7 @@ colorTable(BinQGUI* instance,  const std::vector<int >& addInstr,  const std::ve
           SgAsmInstruction* inst = isSgAsmInstruction(stmts);
           if (inst && inst->get_address()==instB->get_address()) {
             myPosB=instance->itemsFileB[i]->row;
-            instance->itemsFileA[i]->bg=color;
+            instance->itemsFileB[i]->bg=color;
             for (int j=1;j<instance->maxrows;j++)
               instance->codeTableWidget2->setBgColor(instance->itemsFileB[i]->bg,j,i);
           }
