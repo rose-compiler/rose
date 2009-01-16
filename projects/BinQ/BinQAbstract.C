@@ -51,8 +51,7 @@ void BinQAbstract::init(){
     }
   }
 
-  ROSE_ASSERT(isSgProject(fileA));
-  backend(isSgProject(fileA));
+  if(isSgProject(fileA))  backend(isSgProject(fileA));
 
   string filename="binary_tree.dot";
   AST_BIN_Traversal* trav = new AST_BIN_Traversal();

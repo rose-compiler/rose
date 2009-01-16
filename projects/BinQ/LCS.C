@@ -111,7 +111,7 @@ LCS::LCSLength( scoped_array<scoped_array<size_t> >& C  ,vector_start_at_one<SgN
 void 
 printDiff( scoped_array<scoped_array<size_t> >& C,
     vector_start_at_one<SgNode*>& A, vector_start_at_one<SgNode*>& B, int i, int j,
-    std::vector<pair<int,int> >& addInstr, std::vector<pair<int,int> >& minusInstr
+    std::vector<int >& addInstr, std::vector<int >& minusInstr
     )
 {
   if(i> 0 && j > 0 && isEqual(A[i],B[j]))
@@ -123,20 +123,22 @@ printDiff( scoped_array<scoped_array<size_t> >& C,
     printDiff(C,A,B,i,j-1,addInstr, minusInstr);
     //print "+ " + B[j]
     std::cout << "+ " << j << " " << unparseInstrFast( (SgAsmInstruction*) B[j]) <<std::endl;
-    addInstr.push_back(pair<int,int>(i,j));
+    ROSE_ASSERT(j!=0);
+    addInstr.push_back(j);
   }else  if(i > 0 && (j == 0 || C[i][j-1] < C[i-1][j]))
   {
     printDiff(C, A, B, i-1, j,addInstr, minusInstr);
     //   print "- " + X[i]
     std::cout << "- " << i << " " << unparseInstrFast((SgAsmInstruction*)A[i]) << std::endl;
-    minusInstr.push_back(pair<int,int>(i,j));
+    ROSE_ASSERT(i != 0);
+    minusInstr.push_back(i);
   }
 }
 
 
 void 
 LCS::printDiff( vector_start_at_one<SgNode*>& A, vector_start_at_one<SgNode*>& B, 
-       std::vector<std::pair<int,int> >& addInstr, std::vector<std::pair<int,int> >& minusInst
+       std::vector<int>& addInstr, std::vector<int >& minusInst
       )
 {
   scoped_array<scoped_array<size_t> > C;

@@ -21,20 +21,25 @@ using namespace boost::filesystem;
 
 void printAssembly(string fileNameA, string fileNameB, SgNode* fileA, SgNode* fileB,
 		   bool sourceFile) {
-    // this part writes the file out to an assembly file -----------------------------------
-    SgBinaryFile* binaryFileA = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
-    SgAsmFile* file1 = binaryFileA != NULL ? binaryFileA->get_binaryFile() : NULL;
-    SgAsmInterpretation* interpA = SageInterface::getMainInterpretation(file1);
+      // this part writes the file out to an assembly file -----------------------------------
+
     
-    unparseAsmStatementToFile(fileNameA+".dump2", interpA->get_global_block());
-    
-    if (fileNameB!="") 
-      if(is_directory( fileNameB  ) == false && sourceFile==false) {
-      SgBinaryFile* binaryFileB = isSgBinaryFile(isSgProject(fileB)->get_fileList()[0]);
-      SgAsmFile* file2 = binaryFileB != NULL ? binaryFileB->get_binaryFile() : NULL;
-      SgAsmInterpretation* interpB = SageInterface::getMainInterpretation(file2);
-      unparseAsmStatementToFile(fileNameB+".dump2", interpB->get_global_block());
-    }
+       if(is_directory( fileNameA ) == false ) {
+
+        SgBinaryFile* binaryFileA = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
+        SgAsmFile* file1 = binaryFileA != NULL ? binaryFileA->get_binaryFile() : NULL;
+        SgAsmInterpretation* interpA = SageInterface::getMainInterpretation(file1);
+
+        unparseAsmStatementToFile(fileNameA+".dump2", interpA->get_global_block());
+      }
+
+      if (fileNameB!="") 
+        if(is_directory( fileNameB  ) == false && sourceFile==false) {
+        SgBinaryFile* binaryFileB = isSgBinaryFile(isSgProject(fileB)->get_fileList()[0]);
+        SgAsmFile* file2 = binaryFileB != NULL ? binaryFileB->get_binaryFile() : NULL;
+        SgAsmInterpretation* interpB = SageInterface::getMainInterpretation(file2);
+        unparseAsmStatementToFile(fileNameB+".dump2", interpB->get_global_block());
+      }
 }
 
 

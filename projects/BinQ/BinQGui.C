@@ -588,7 +588,9 @@ void BinQGUI::createGUI() {
 
 	  fileInfo = new QTextEdit;//new QREdit(QREdit::Box);
 	  fileInfo->setReadOnly(true);
-	  insertFileInformation();
+	  
+          
+          if(isSgProject(fileA) )  insertFileInformation();
 
 	  analysisTab->insertTab(0,console,"Console");
 	  analysisTab->insertTab(1,analysisResult,"Analysis Results");

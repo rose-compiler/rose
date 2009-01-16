@@ -34,7 +34,7 @@ namespace LCS{
 
 
    void printDiff( vector_start_at_one<SgNode*>& A, vector_start_at_one<SgNode*>& B, 
-       std::vector<std::pair<int,int> >& addInstr, std::vector<std::pair<int,int> >& minusInst
+       std::vector<int>& addInstr, std::vector<int>& minusInst
       );
 
   std::string unparseInstrFast(SgAsmInstruction* iA);

@@ -52,7 +52,7 @@ FunctionDiffAlgo::run(SgNode* fileA, SgNode* fileB) {
       LCS::vector_start_at_one<SgNode*> insnsB;
       AstQueryNamespace::querySubTree(functionB, std::bind2nd( vis, &insnsB ));
 
-      std::vector<pair<int,int> > addInstr,minusInst;
+      std::vector<int > addInstr,minusInst;
 
       printDiff(insnsA, insnsB,addInstr,minusInst);
 
@@ -105,7 +105,7 @@ FunctionDiffAlgo::test(SgNode* fileA, SgNode* fileB) {
       LCS::vector_start_at_one<SgNode*> insnsB;
       AstQueryNamespace::querySubTree(functionB, std::bind2nd( vis, &insnsB ));
 
-      std::vector<pair<int,int> > addInstr,minusInst;
+      std::vector<int > addInstr,minusInst;
 
       printDiff(insnsA, insnsB,addInstr,minusInst);
 
