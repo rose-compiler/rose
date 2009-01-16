@@ -126,15 +126,14 @@ Please save it to your own .subversion/config before committing files.
           or LC) with LLNL VPN access by changing \textit{file:///} to
           \textit{svn+ssh://username@hostname/}. 
     \end{itemize}      
-\item Merge the contributions of a branch from the SciDAC repository to the
-internal repository: assume the branch is named \textit{testonly} and the
-contribution is from r4 to r5, 
+\item Merge the contributions from a branch of the external SVN repository (on SciDAC
+web site) to our internal repository at LLNL. Assume the branch is named \textit{testonly} and the
+contribution is from r4 to r5,
 \textit{sourcetree} is the working copy of the internal repository (Subversion 1.5 works better than 1.4.x):
   \begin{itemize}
           \item run make check, make dist, make distcheck on the external branch before the merge
-          \item \textit{svn status} to check modified and new files. 
-          \item \textit{svn add file-name} to add new files if there are
-          any.
+        % \item \textit{svn status} to check modified and new files. 
+        % \item \textit{svn add file-name} to add new files if there are any.
           \item \textit{svn merge --dry-run -r4:5
           https://outreach.scidac.gov/svn/rose/branches/testonly
           sourcetree} 
