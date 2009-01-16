@@ -83,9 +83,9 @@ colorTable(BinQGUI* instance,  const std::vector<int >& addInstr,  const std::ve
       int insnNr = currentResults[k];
       SgAsmInstruction* instA = choice == 1 ? isSgAsmInstruction(insnsA[insnNr]) : NULL;
       SgAsmInstruction* instB = choice == 0 ? isSgAsmInstruction(insnsB[insnNr]) :NULL;
-
+      
 #if 0
-      cerr << i << " Found " << currentName << " in A  (a:" << a <<",b:"<<b<<") : " << endl << 
+      cerr << choice << " Found " << currentName << " in A  (a:" << a <<",b:"<<b<<") : " << endl << 
                                                                                        "     " << RoseBin_support::HexToString(instA->get_address()) << "  " <<
                                                                                          instA->get_mnemonic() <<endl <<
                                                                                          "     " << RoseBin_support::HexToString(instB->get_address()) << "  " <<
