@@ -65,7 +65,8 @@ colorTable(BinQGUI* instance,  const std::vector<int >& addInstr,  const std::ve
            vector_start_at_one<SgNode*>& insnsA, vector_start_at_one<SgNode*>& insnsB 
     )
 {
-
+  if (instance==NULL)
+    return;
   const char* results [] = {"PLUS", "MINUS"};
   std::vector<QColor> colors;
   colors.push_back( QColor(233,150,122)  );
