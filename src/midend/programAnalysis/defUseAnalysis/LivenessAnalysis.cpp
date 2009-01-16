@@ -329,15 +329,15 @@ bool LivenessAnalysis::defuse(T cfgNode, bool *unhandled) {
       cout << " This was a def or use node " << endl;
     // has_changed only applies here
     bool equal = false;
-    std::vector<SgInitializedName*> vecIn  = in[sgNode];
-    std::vector<SgInitializedName*> vecOut  = out[sgNode];
-    if (vecOut.size()>0 && vecIn.size()>0)
+    std::map<SgNode*, std::vector<SgInitializedName*> >::const_iterator it = in.find(sgNode);
+    if (it!=in.end()) {
       equal = std::equal(in[sgNode].begin(),in[sgNode].end(),out[sgNode].begin());
-    if (!equal)
-      has_changed=true;
-    if (DEBUG_MODE) {
-      cout << " CHECKME : IN AND OUT ARE equal : " << equal << endl;
-      printInAndOut(sgNode);
+      if (!equal)
+	has_changed=true;
+      if (DEBUG_MODE) {
+	cout << " CHECKME : IN AND OUT ARE equal : " << equal << endl;
+	printInAndOut(sgNode);
+      }
     }
   } else {
     // if it is a arbitraty node, we assume it has changed, so we can traverse further
