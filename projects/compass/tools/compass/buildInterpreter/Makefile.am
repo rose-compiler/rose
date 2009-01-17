@@ -32,12 +32,16 @@ compass_parameters:
 	cd .. && $(MAKE) compass_parameters
 	cp -f ../compass_parameters .
 
-ROSE_REGRESSION_ROOT=../../../../../tests/CompileTests/C_tests/
+testenv:
+	env ROSE_REGRESSION_ROOT ../../../../../tests/CompileTests/C_tests/ echo "$ROSE_REGRESSION_ROOT"
+
+#ROSE_REGRESSION_ROOT=../../../../../tests/CompileTests/C_tests/
 test: buildInterpreter compass_parameters  
+	rm -f $(top_builddir)/tests/CompileTests/C_tests/test.db
 	echo "Cleaning ../../../../../tests/CompileTests/C_tests/ "
-	$(MAKE)  -C ../../../../../tests/CompileTests/C_tests/ testTranslator=`pwd`/buildInterpreter clean
+	env ROSE_TEST_REGRESSION_ROOT=../../../../../tests/CompileTests/C_tests/  $(MAKE) -C ../../../../../tests/CompileTests/C_tests/ testTranslator=`pwd`/buildInterpreter clean
 	echo "Making ../../../../../tests/CompileTests/C_tests/ "
-	$(MAKE)  -C ../../../../../tests/CompileTests/C_tests/ testTranslator=`pwd`/buildInterpreter check
+	env ROSE_TEST_REGRESSION_ROOT=../../../../../tests/CompileTests/C_tests/  $(MAKE) -C ../../../../../tests/CompileTests/C_tests/ testTranslator=`pwd`/buildInterpreter check
 
 
 #test: compass_parameters compassMainGui $(compass_test_dir)/exampleTest_1.C
@@ -52,6 +56,8 @@ CLEANFILES = compass_parameters rqmgc
 
 endif
 
+clean-local:
+	rm -f *.c *.h
 
 # DQ (1/11/2009): Modified this, since it was not checked into SVN and does not appear to be required.
 # EXTRA_DIST = compassChecker.h compassGui.h compassInterface.h compassResult.h compassViolation.h icons.h timer.h disks.xpm 

@@ -93,14 +93,41 @@ echo ""
 ###################################################################
 #Generate Makefile
 cat >./${SOURCE_DIRECTORY_NAME}/Makefile <<END
-#Set variable ROSE_INSTALL to your ROSE_INSTALL installation like this.
-#ROSE_INSTALL = /home/`whoami`/rose-install
+# ************************************************************************************
+# *******  Users SHOULD modify the makefile variables at the top of this file ********
+# ************************************************************************************
 
-CHECKER_NAME = ${FILE_NAME_PREFIX}
+# Set variable ROSE_INSTALL to your ROSE_INSTALL installation like this.
+# ROSE_INSTALL = /home/`whoami`/ROSE/ROSE_CompileTree/svn_LINUX-64bit-4.2.2_install
 
-LINKER_FLAGS = -L\$(ROSE_INSTALL)/lib -Wl,-rpath \$(ROSE_INSTALL)/lib -lrose \$(RT_LIBS) -L\`pwd\` -Wl,-rpath \`pwd\` -lcompass
+# If ROSE is configured with Dwarf support then we need libdwarf.a
+# ROSE_OPTIONAL_LIBS = /home/`whoami`/ROSE/DWARF/dwarf-20081013/libdwarf/libdwarf.a -lelf
 
-CXX_FLAGS = -I\$(ROSE_INSTALL)/include -I${PREREQ_DIRECTORY}
+# A version of libcompass.so will be built locally to allow the checker to run
+LOCAL_COMPASS_LIB = -L\`pwd\` -Wl,-rpath \`pwd\` -lcompass 
+
+# Link syntax required for ROSE (using instaled version of ROSE)
+ROSE_LIB = -L\$(ROSE_INSTALL)/lib -Wl,-rpath \$(ROSE_INSTALL)/lib -lrose 
+
+# Specify specific path to find libstdc++.so (required when not using the default system compiler)
+# This is required at least on the LLNL computers using non-default versions of GNU compilers.
+# PATH_TO_SPECIFIC_LIBSTDCXX = -Wl,--rpath -Wl,/usr/apps/gcc/4.2.2-64bit/lib64
+
+# Boost is required in ROSE, so we need the path.
+BOOST_INCLUDE_PATH = /home/`whoami`/local/boost_1_37_0_installTree-gxx-4.2.2/include/boost-1_37
+
+# If ROSE is configured with optional libs then we need the associated include paths.
+# ROSE_OPTIONAL_LIBS_INCLUDE = -I/home/`whoami`/ROSE/DWARF/dwarf-20081013/libdwarf
+
+# ************************************************************************************
+# **********  Users should NOT have to modify the makefile below this point **********
+# ************************************************************************************
+
+CHECKER_NAME = testChecker
+
+CXX_FLAGS = -I\$(ROSE_INSTALL)/include \$(ROSE_OPTIONAL_LIBS_INCLUDE) -I\$(BOOST_INCLUDE_PATH)
+
+LINKER_FLAGS = \$(ROSE_LIB) \$(ROSE_OPTIONAL_LIBS) \$(LOCAL_COMPASS_LIB) \$(PATH_TO_SPECIFIC_LIBSTDCXX)
 
 all: ${FILE_NAME_PREFIX}Test
 
@@ -183,6 +210,12 @@ cat >./"${SOURCE_DIRECTORY_NAME}/${FILE_NAME_PREFIX}.C" <<END
 #include "compass.h"
 
 extern const Compass::Checker* const ${FILE_NAME_PREFIX}Checker;
+
+// DQ (1/17/2009): Added declaration to match external defined in file:
+// rose/projects/compass/extensions/prerequisites/ProjectPrerequisite.h
+// I can't tell that it is defined anywhere in compass except the extern 
+// declaration in ProjectPrerequisite.h
+Compass::ProjectPrerequisite Compass::projectPrerequisite;
 
 namespace CompassAnalyses
    { 

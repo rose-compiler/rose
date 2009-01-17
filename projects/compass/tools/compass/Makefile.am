@@ -76,5 +76,24 @@ check-syntax: compassMain compass_parameters
 #	g++ -E -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir)/compassSupport -I$(srcdir)/util $(COMPASS_INCLUDES) $(srcdir)/testEmacs.C > wc.out
 #	wc -l wc.out
 
+# DQ (1/15/2009): This fails in a Boost problem of some sort!
 testCompass:
 	$(MAKE) "CHK_SOURCES=$(compass_support_dir)/compassMain.C" check-syntax
+
+# This runs compass on the compass binary, small because this is dynamically linked
+demo_small:
+	./compassMain .libs/compassMain
+
+# Linux binary selected from Linux
+demo_linux:
+	./compassMain $(top_srcdir)/projects/BinQ/linux-ls
+
+#demo_bufferOverflow:
+#	./compassMain $(top_srcdir)/projects/BinQ/buffer2.bin
+
+demo_compassGUI:
+	./gui/compassMainGui $(top_srcdir)/projects/BinQ/buffer2.bin
+
+demo_compassGUI_compass_binary:
+	./gui/compassMainGui .libs/compassMain
+

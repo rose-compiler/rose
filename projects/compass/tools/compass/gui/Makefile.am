@@ -34,10 +34,11 @@ test: compass_parameters compassMainGui $(compass_test_dir)/exampleTest_1.C
 test2: compass_parameters compassMainGui $(compass_test_dir)/exampleTest_1.C $(compass_test_dir)/exampleTest_2.C
 	env COMPASS_PARAMETERS=./compass_parameters ./compassMainGui $(compass_test_dir)/exampleTest_1.C $(compass_checker_dir)/allowedFunctions/allowedFunctionsTest1.C
 
-testDb: compass_parameters compassMainGui $(compass_test_dir)/exampleTest_1.C ../buildInterpreter/test
+demo: compass_parameters compassMainGui $(compass_test_dir)/exampleTest_1.C 
 	$(MAKE) -C ../buildInterpreter test  
 	cp $(top_srcdir)/tests/CompileTests/C_tests/*.c $(top_srcdir)/tests/CompileTests/C_tests/*.h .
-	env COMPASS_PARAMETERS=./compass_parameters ./compassMainGui --outputDb=../buildInterpreter/test.db 
+	env COMPASS_PARAMETERS=./compass_parameters ./compassMainGui --outputDb $(top_builddir)/tests/CompileTests/C_tests/test.db
+	rm -f *.c *.h
 
 check-local:
 	@echo "************************************************************************************"
@@ -48,6 +49,8 @@ CLEANFILES = compass_parameters
 
 endif
 
+clean-local:
+	rm -f *.c *.h
 
 EXTRA_DIST = \
         compassChecker.h \
@@ -57,6 +60,6 @@ EXTRA_DIST = \
         compassViolation.h \
         icons.h \
         timer.h \
-	disks.xpm 
+        disks.xpm 
 
 
