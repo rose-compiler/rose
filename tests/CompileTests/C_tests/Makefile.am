@@ -59,17 +59,21 @@ ROSE_FLAGS = -rose:C --edg:no_warnings --edg:restrict -w
 PASSING_TEST_Objects = ${TESTCODES:.c=.o}
 TEST_Objects = ${ALL_TESTCODES:.c=.o}
 
+
+testTranslator=../../testTranslator
+
+
 # Add the dependence upon the source file to trigger recompilation each time the makefile is run!
 # $(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.c)
 $(TEST_Objects): ../../testTranslator
-	../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.c)
+	$(testTranslator) $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.c)
 
 test2005_168.o: $(srcdir)/test2005_168.c
-	../../testTranslator $(ROSE_FLAGS) -I$(top_srcdir)/src/util/commandlineProcessing -c $(srcdir)/test2005_168.c
+	testTranslator $(ROSE_FLAGS) -I$(top_srcdir)/src/util/commandlineProcessing -c $(srcdir)/test2005_168.c
 
 # Customized test that modifies testTranslator to remove empty elses to test dangling else unparsing
 test2008_02.o: $(srcdir)/test2008_02.c
-	env ROSE_TEST_ELSE_DISAMBIGUATION=x ../../testTranslator $(ROSE_FLAGS) -c $(srcdir)/test2008_02.c
+	env ROSE_TEST_ELSE_DISAMBIGUATION=x testTranslator $(ROSE_FLAGS) -c $(srcdir)/test2008_02.c
 
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
