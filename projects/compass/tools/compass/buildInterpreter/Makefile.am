@@ -32,6 +32,14 @@ compass_parameters:
 	cd .. && $(MAKE) compass_parameters
 	cp -f ../compass_parameters .
 
+test: buildInterpreter compass_parameters  
+	export ROSE_REGRESSION_ROOT=`readlink -f ../../../../../tests/CompileTests/C_tests/`
+	echo "Cleaning ../../../../../tests/CompileTests/C_tests/ "
+	$(MAKE)  -C ../../../../../tests/CompileTests/C_tests/ testTranslator=`pwd`/buildInterpreter clean
+	echo "Making ../../../../../tests/CompileTests/C_tests/ "
+	$(MAKE)  -C ../../../../../tests/CompileTests/C_tests/ testTranslator=`pwd`/buildInterpreter check
+
+
 #test: compass_parameters compassMainGui $(compass_test_dir)/exampleTest_1.C
 #	env COMPASS_PARAMETERS=./compass_parameters ./compassMainGui $(compass_test_dir)/exampleTest_1.C
 
