@@ -34,6 +34,11 @@ test: compass_parameters compassMainGui $(compass_test_dir)/exampleTest_1.C
 test2: compass_parameters compassMainGui $(compass_test_dir)/exampleTest_1.C $(compass_test_dir)/exampleTest_2.C
 	env COMPASS_PARAMETERS=./compass_parameters ./compassMainGui $(compass_test_dir)/exampleTest_1.C $(compass_checker_dir)/allowedFunctions/allowedFunctionsTest1.C
 
+testDb: compass_parameters compassMainGui $(compass_test_dir)/exampleTest_1.C ../buildInterpreter/test
+	$(MAKE) -C ../buildInterpreter test  
+	cp $(top_srcdir)/tests/CompileTests/C_tests/*.c $(top_srcdir)/tests/CompileTests/C_tests/*.h .
+	env COMPASS_PARAMETERS=./compass_parameters ./compassMainGui --outputDb=../buildInterpreter/test.db 
+
 check-local:
 	@echo "************************************************************************************"
 	@echo "*** ROSE/projects/compass/tools/compass/gui: make check rule complete (terminated normally) ***"
