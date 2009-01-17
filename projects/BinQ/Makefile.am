@@ -42,9 +42,33 @@ BinQ_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
 INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I.
 
 # DQ (1/15/2009): Added demo rule to support ROSE reviews.
-demo:
-#	$(MAKE) test_1 
-	./BinQ -a $(srcdir)/buffer2.bin -b --batch
+
+# Show the source code used to build the binary used for some of the demos (below).
+demo_show_source_code:
+	cat $(srcdir)/buffer2.c
+
+# This demo runs a predefined (hard coded) collection of analysis algorithms as part of the startup
+demo_withAnalysisRunInBatchMode:
+	cat $(srcdir)/buffer2.c
+	./BinQ -a $(srcdir)/buffer2.bin --batch
+
+# This demo will show the represntation of the binary before any analysis has been done.
+demo_withoutAnalysisRunInBatchMode:
+	cat $(srcdir)/buffer2.c
+	./BinQ -a $(srcdir)/buffer2.bin
+
+# Show the source code used to build the binary used for the more complex buffer overflow (below).
+demo_show_rted_example_source_code:
+	cat  $(srcdir)/bufftest.c
+
+# This demo is of the buffer overflow that we can not detect (partial word length overlow).
+demo_rted_example:
+	cat  $(srcdir)/bufftest.c
+	./BinQ -a $(srcdir)/bufftest.bin --batch
+
+demo_rose_vs_IDAPro:
+	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2-tsv  
+
 
 demo2:
 	cat $(srcdir)/buffer2.c
@@ -52,10 +76,6 @@ demo2:
 
 demo3:
 	./BinQ -a $(srcdir)/linux-ls --batch
-
-demo4:
-	cat  $(srcdir)/bufftest.c
-	./BinQ -a $(srcdir)/bufftest.bin --batch
 
 test_1:
 	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2b.bin  
