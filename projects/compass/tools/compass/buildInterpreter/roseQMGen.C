@@ -30,6 +30,8 @@
 #include <iterator>
 #include <map>
 
+#include "rose.h"
+
 ///////////////////////////////////////////////////////////////////////////////
 //  include boost config
 #include <boost/config.hpp>     //  global configuration information
@@ -187,8 +189,10 @@ void initialize_configuration_file_options()
        "output database name")
       ;
 
+
     store(parse_config_file(conf,config),confMap);
     notify(confMap);
+
   } //try
   catch( std::exception &e )
   {
@@ -366,13 +370,31 @@ int main( int argc, char **argv )
   init();
   initialize_options( argc, argv );
 
-  qmtest_name = constructMangledTestName();
+  //qmtest_name = constructMangledTestName();
 
   commandLineProcessing();
 
   write_rose_db();
 
-  std::cout << qmtest_name << std::endl; 
 
-  return 0;
+
+
+  //Execute the backend using the ROSE frontend magic
+
+  std::vector<char*> argvVec(&argv[0],&argv[0]+argc);
+
+  argvVec.push_back("-rose:skip_rose");
+  std::cout << std::endl;
+
+  for(int i =0 ; i < argvVec.size(); i++ )
+  {
+    std::cout << argvVec[i] << " ";
+
+  }
+  std::cout << std::endl;
+
+  SgProject* project = frontend(argvVec.size(), &argvVec[0]);
+
+
+  return backend(project);
 } //main()
