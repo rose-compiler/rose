@@ -273,7 +273,7 @@ void BinQGUI::updateByteItemList() {
     if (a) {
       int pos = a->pos;
       int length = a->length;
-      //      cerr << i << ": updating pos : " << pos << " length : " << length << endl;       
+      //  cerr << i << ": updating pos : " << pos << " length : " << length << endl;       
       for (int k=0; k<length;++k)
 	byteItemFileA[pos+k]=a;
       rowItemFileA[i]=a;
@@ -886,7 +886,7 @@ void BinQGUI::showFile(int row, qrs::QRTable* currentWidget,
     if (isSgAsmx86Instruction(stmts)) {
       currentWidget->addRows(1);
       length = isSgAsmInstruction(stmts)->get_raw_bytes().size();
-      itemsFile[i]->bg=QColor(255,255,255);
+      //itemsFile[i]->bg=QColor(255,255,255);
       QColor back = itemsFile[i]->bg;
       itemsFile[i]->fg=QColor(0,0,0);
       QColor front = itemsFile[i]->fg;

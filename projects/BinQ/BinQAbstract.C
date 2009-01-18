@@ -109,6 +109,7 @@ void BinQAbstract::createItem(SgNode* file, std::vector<Item*>& itemsFile,std::v
 	SgAsmInstruction* inst = isSgAsmInstruction(*it);
 	length = isSgAsmInstruction(*it)->get_raw_bytes().size();
 	item = new Item(inst->get_address(),inst,0,row,length,length,pos,inst->get_comment(),0);
+	item->bg=QColor(255,255,255);
       } else if (isSgFunctionDeclaration(*it)) {
 	int color=4;
 	SgFunctionDeclaration* func = isSgFunctionDeclaration(*it);
@@ -178,7 +179,7 @@ void BinQAbstract::createItem(SgNode* file, std::vector<Item*>& itemsFile,std::v
 	  }
 	  delete item;
 	  item = new Item(inst->get_address(),inst,3,row,length,length,pos,s,0);
-
+	  item->bg=QColor(255,255,255);
 	}
       }
       if (item) {
