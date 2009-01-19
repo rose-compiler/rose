@@ -187,16 +187,19 @@ SgAsmDOSFileHeader::unparse(std::ostream &f) const
 
 }
 
-/* Adds the real-mode section to the DOS file header. If max_offset is non-zero then use that as the maximum offset of the
- * real-mode section. If the DOS header indicates a zero sized section then return NULL. If the section exists or is zero size due
- * to the max_offset then return the section. */
+/** Adds the real-mode section to the DOS file header. If max_offset is non-zero then use that as the maximum offset of the
+ *  real-mode section. If the DOS header indicates a zero sized section then return NULL. If the section exists or is zero
+ *  size due to the max_offset then return the section. */
 SgAsmGenericSection *
 SgAsmDOSFileHeader::add_rm_section(addr_t max_offset)
 {
     ROSE_ASSERT(NULL == p_rm_section);
     
     addr_t rm_offset = p_e_header_paragraphs * 16;
-    addr_t rm_end = p_e_total_pages * 512 - (p_e_total_pages>0 ? 512 - p_e_last_page_size % 512 : 0);
+    addr_t rm_end = p_e_total_pages * 512;
+    if (p_e_total_pages>0)
+        rm_end -= 512 - (p_e_last_page_size%512);
+
     ROSE_ASSERT(rm_end >= rm_offset);
     addr_t rm_size = rm_end - rm_offset;
     if (rm_size == 0)

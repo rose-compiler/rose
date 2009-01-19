@@ -3787,10 +3787,14 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
             SgAsmLEFileHeader::parse(dos_hdr);
         }
 
+#if 0 /*This iterferes with disassembling the DOS interpretation*/
         /* Now go back and add the DOS Real-Mode section but rather than using the size specified in the DOS header, constrain
          * it to not extend beyond the beginning of the PE, NE, LE, or LX file header. This makes detecting holes in the PE
          * format much easier. */
         dos_hdr->add_rm_section(big_hdr ? big_hdr->get_offset() : 0);
+#else
+        dos_hdr->add_rm_section(0);
+#endif
 
     } else {
         delete ef; ef=NULL;
