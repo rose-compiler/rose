@@ -14,6 +14,7 @@
             <p class="style3"><a href="https://outreach.scidac.gov/projects/rose/" target="_blank">Download Software</p>
             <p class="style3"><a href="regressionTest.html" target="_blank">External Regression Test Results</p>
             <p class="style3"><a href="https://outreach.scidac.gov/tracker/?group_id=24" target="_blank">Report Bugs</p>
+            <p class="style3"><a href="https://mailman.nersc.gov/mailman/listinfo/" target="_blank">Mailing Lists</p>
             <!-- <p class="style3"><a href="ROSE_HTML_Reference/ProjectRelatedWorkPage.html">Related Work</p> -->
           </td>
         </tr>
