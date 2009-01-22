@@ -23,6 +23,7 @@ class SourceDefUsePrerequisite: public Prerequisite
     //#define DEFUSE
     std::cerr << " DEFUSE ==NULL ... running defuse analysis " << std::endl;
 #if ROSE_MPI
+    std::cerr << " MPI is enabled! Running in parallel ... " << std::endl;
     /* ----------------------------------------------------------
      * MPI code for DEFUSE
      * ----------------------------------------------------------*/

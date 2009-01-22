@@ -22,7 +22,7 @@ namespace CompassAnalyses
           class CheckerOutput: public Compass::OutputViolationBase
              { 
                public:
-                    CheckerOutput(SgNode* node);
+	       CheckerOutput(SgNode* node, std::string value);
              };
 
        // Specification of Checker Traversal Implementation
@@ -33,6 +33,8 @@ namespace CompassAnalyses
             // Checker specific parameters should be allocated here.
                Compass::OutputObject* output;
 	       std::string stringOutput;
+	       //SgAsmFunctionDeclaration* project;
+	       SgProject* project;
                public:
                     Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
 
@@ -85,8 +87,8 @@ namespace CompassAnalyses
    } //End of namespace CompassAnalyses.
 
 CompassAnalyses::BinPrintAsmFunctions::
-CheckerOutput::CheckerOutput ( SgNode* node )
-   : OutputViolationBase(node,checkerName,shortDescription)
+CheckerOutput::CheckerOutput ( SgNode* node, std::string value )
+   : OutputViolationBase(node,checkerName,value)
    {}
 
 CompassAnalyses::BinPrintAsmFunctions::Traversal::
@@ -96,19 +98,25 @@ Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
   // Initalize checker specific parameters here, for example: 
   // YourParameter = Compass::parseInteger(inputParameters["BinPrintAsmFunctions.YourParameter"]);
      stringOutput="";
-
+     project=NULL;
    }
 
 void
 CompassAnalyses::BinPrintAsmFunctions::Traversal::
 finalize() {
   std::cerr << stringOutput << std::endl;
+  output->addOutput(new CheckerOutput(project, stringOutput));
 }
 
 void
 CompassAnalyses::BinPrintAsmFunctions::Traversal::
 visit(SgNode* n)
    { 
+     // mark the first Function as the output object
+     //     if (isSgAsmFunctionDeclaration(n) && project==NULL)
+     //project = isSgAsmFunctionDeclaration(n);
+     if (isSgProject(n) && project==NULL)
+       project = isSgProject(n);
   SgAsmInstruction* binInst = isSgAsmInstruction(n);
   SgAsmFunctionDeclaration* funcDecl = isSgAsmFunctionDeclaration(n);
   SgAsmBlock* block = isSgAsmBlock(n);

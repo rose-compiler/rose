@@ -22,7 +22,7 @@ namespace CompassAnalyses
           class CheckerOutput: public Compass::OutputViolationBase
              { 
                public:
-                    CheckerOutput(SgNode* node);
+	       CheckerOutput(SgNode* node,std::string s);
              };
 
        // Specification of Checker Traversal Implementation
@@ -33,6 +33,7 @@ namespace CompassAnalyses
             // Checker specific parameters should be allocated here.
                Compass::OutputObject* output;
 	       std::string stringOutput;
+	       SgProject* project;
                public:
                     Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
 		    rose_hash::hash_map<std::string, int> instMap;
@@ -87,8 +88,8 @@ namespace CompassAnalyses
    } //End of namespace CompassAnalyses.
 
 CompassAnalyses::BinPrintAsmInstruction::
-CheckerOutput::CheckerOutput ( SgNode* node )
-   : OutputViolationBase(node,checkerName,shortDescription)
+CheckerOutput::CheckerOutput ( SgNode* node, std::string output )
+   : OutputViolationBase(node,checkerName,output)
    {}
 
 
@@ -108,6 +109,8 @@ finish(SgNode* n) {
     int nr = it2->first;
     stringOutput += instType + ":" + RoseBin_support::ToString(nr) + " \n";
   }
+
+  output->addOutput(new CheckerOutput(project, stringOutput));
 }
 
 
@@ -119,12 +122,16 @@ Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
   // YourParameter = Compass::parseInteger(inputParameters["BinPrintAsmInstruction.YourParameter"]);
      stringOutput = "";
      instMap.clear();
+     project=NULL;
    }
 
 void
 CompassAnalyses::BinPrintAsmInstruction::Traversal::
 visit(SgNode* n)
    { 
+     if (isSgProject(n) && project==NULL)
+       project = isSgProject(n);
+
   SgAsmx86Instruction* binInst = isSgAsmx86Instruction(n);
   if (binInst==NULL) return;
   ROSE_ASSERT(binInst);

@@ -527,8 +527,10 @@ Compass::OutputViolationBase::getString() const
     {
       // Else this could be a SgInitializedName or SgTemplateArgument (not yet moved to be a SgLocatedNode)
       Sg_File_Info* start = getNode()->get_file_info();
-      ROSE_ASSERT(start != NULL);
-      sourceCodeLocation = Compass::formatStandardSourcePosition(start);
+      // tps : 22Jan 2009 - commented the following out because it does not work with binaries
+      //ROSE_ASSERT(start != NULL);
+      if (start)
+	sourceCodeLocation = Compass::formatStandardSourcePosition(start);
     }
 
   std::string nodeName = getNode()->class_name();

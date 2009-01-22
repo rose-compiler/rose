@@ -17,12 +17,17 @@ namespace CompassAnalyses
   { 
     /*! \brief Cycle Detection: Add your description here 
      */
+    const std::string checkerName      = "CycleDetection";
+
+    // Descriptions should not include the newline character "\n".
+    const std::string shortDescription = "This checker looks for cycles in a function!";
+    const std::string longDescription  = "This checker looks for cycles in a function!";
 
     // Specification of Checker Output Implementation
     class CheckerOutput: public Compass::OutputViolationBase
     { 
     public:
-      CheckerOutput(SgNode* node);
+      CheckerOutput(SgNode* node,std::string s);
     };
 
     // Specification of Checker Traversal Implementation
@@ -62,8 +67,8 @@ namespace CompassAnalyses
 }
 
 CompassAnalyses::CycleDetection::
-CheckerOutput::CheckerOutput ( SgNode* node )
-  : OutputViolationBase(node,::cycleDetectionChecker->checkerName,::cycleDetectionChecker->shortDescription)
+CheckerOutput::CheckerOutput ( SgNode* node,std::string violation)
+  : OutputViolationBase(node,::cycleDetectionChecker->checkerName,violation)
 {}
 
 CompassAnalyses::CycleDetection::Traversal::
@@ -233,20 +238,24 @@ CompassAnalyses::CycleDetection::Traversal::run(string& name, SgDirectedGraphNod
       // found this node in visited list
       SgAsmx86Instruction* nodeSg = isSgAsmx86Instruction(node->get_SgNode());
       SgAsmx86Instruction* nextSg = isSgAsmx86Instruction(next->get_SgNode());
-      if (debug)
-      std::cerr << "Found possible cycle between  " << 
-	toString(nodeSg->get_kind()) << " (" << 
-	RoseBin_support::HexToString(nodeSg->get_address()) << ") and " <<
-	toString(nextSg->get_kind()) << " (" << 
-	RoseBin_support::HexToString(nextSg->get_address()) << ")" << std::endl;
-
+      if (debug) {
+        std::string outputText = "Found possible cycle between  ";
+        outputText+=toString(nodeSg->get_kind()) + " (";
+        outputText+=RoseBin_support::HexToString(nodeSg->get_address()) + ") and ";
+        outputText+=toString(nextSg->get_kind()) + " (";
+        outputText+=RoseBin_support::HexToString(nextSg->get_address()) + ")";
+        std::cerr << outputText << std::endl;
+        output->addOutput(new CheckerOutput(nodeSg, outputText));
+      }
       bool validCycle = checkIfValidCycle(node,next);
       if (validCycle) {
-        std::cerr << "Found a cycle between  " << 
-          toString(nodeSg->get_kind()) << " (" << 
-          RoseBin_support::HexToString(nodeSg->get_address()) << ") and " <<
-          toString(nextSg->get_kind()) << " (" << 
-          RoseBin_support::HexToString(nextSg->get_address()) << ")" << std::endl;
+        std::string outputText = "Found cycle between  ";
+        outputText+=toString(nodeSg->get_kind()) + " (";
+        outputText+=RoseBin_support::HexToString(nodeSg->get_address()) + ") and ";
+        outputText+=toString(nextSg->get_kind()) + " (";
+        outputText+=RoseBin_support::HexToString(nextSg->get_address()) + ")";
+        std::cerr << outputText << std::endl;
+        output->addOutput(new CheckerOutput(nodeSg, outputText));
 	cycleFound[node]=next;
       } else {
 	if (debug)
