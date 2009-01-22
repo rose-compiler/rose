@@ -1,6 +1,7 @@
+#include "compassChecker.h"
 #include <iostream>
 
-#include "compassChecker.h"
+
 #include "compassInterface.h"
 
 CompassInterface::CompassInterface() :

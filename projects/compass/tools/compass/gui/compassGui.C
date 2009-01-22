@@ -1,10 +1,15 @@
+#if ROSE_MPI
+#include <mpi.h>
+#endif
+#include "compassChecker.h"
+
 #include <boost/algorithm/string.hpp>
 #include <sstream>
 #include <QFileDialog>
 
 #include <unistd.h>
 
-#include "compassChecker.h"
+
 #include "compassGui.h"
 #include "icons.h"
 
