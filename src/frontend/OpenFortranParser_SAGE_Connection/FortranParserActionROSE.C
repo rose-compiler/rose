@@ -3809,8 +3809,12 @@ void c_action_array_spec_element(int type)
                 
                case ArraySpecElement_expr_colon:
                   {
-                    printf ("Error: Need an example of this before I can support it. \n");
-                    ROSE_ASSERT(false);
+                 // DQ (1/23/2009): Fix suggested by one of Craig's students (need name of student).
+                 // I think that example test code: test2009_03.f90 demonstrates this case.
+                    expression = buildSubscriptExpression(true, false, false, false);
+
+                 // printf ("Error: Need an example of this before I can support it. \n");
+                 // ROSE_ASSERT(false);
                     break;
                   }
                 
@@ -3875,9 +3879,13 @@ void c_action_array_spec_element(int type)
                  // expression = new SgSubscriptExpression(lowerBound,upperBound,stride);
                  // expression = new SgSubscriptColon(lowerBound,upperBound,stride);
                  // expression = new SgColon();
-                    expression = new SgColonShapeExp();
+                 // expression = new SgColonShapeExp();
+                 // setSourcePosition(expression);
 
-                    setSourcePosition(expression);
+                 // DQ (1/23/2009): Fix suggested by one of Craig's students (need name of student).
+                 // I think that example test code: test2009_03.f90 demonstrates this case.
+                 // CER (9/24/2008): I think SgSubscriptExpression is the correct thing to do here
+                    expression = buildSubscriptExpression(false, false, false, false);
 
                  // lowerBound->set_parent(expression);
                  // upperBound->set_parent(expression);

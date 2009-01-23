@@ -52,7 +52,8 @@ and limitations on how their software may be used.
 }
 
 {\bf Required Software:} \\
-  The following software is required in order to build and use ROSE:
+  The following software is required in order to build and use ROSE 
+(see note about Mac OSX as well):
 \begin{itemize}
    \item {\bf ROSE}: \\
      There are three versions of ROSE supported: the {\it Distribution Version} for users
@@ -92,7 +93,8 @@ and limitations on how their software may be used.
    \item {\bf BOOST} : version $>=$ 1.35.0  \\
      Visit \htmladdnormallink{www.boost.org}{http://www.boost.org/}
      for more details about BOOST and \htmladdnormallink{www.boost.org/users/download}{http://www.boost.org/users/download/}
-     for download and installation instructions.
+     for download and installation instructions. 
+     {\em Installation of Boost is such a common issue that we include simple directions for how to install Boost in section~\ref{gettingStarted:BOOST}}
 
    \item {\bf JAVA} : version $>$1.5.0\_11 \\
      A SUN Java virtual machine (JVM) is needed. A Java compiler (JDK) is also
@@ -108,7 +110,16 @@ and limitations on how their software may be used.
    \item {\bf Libtool}: version $>=$1.5.6.  Needed \emph{ONLY} for development versions. 
 \end{itemize}
 
-Note that on Mac OSX (version 10.5.6), all of our testing of ROSE uses the following packages:
+\paragraph{Mac OSX Support:}
+   It has been reported that our binary version of EDG requires Mac OS 10.5
+(which might make sense because we build it using Mac OSX version 10.5.6).  More
+specifically there are unresolved references during linking ROSE applications with
+Mac OS from 10.4.11; the solution is to upgrade your Mac OS.  Note that Mac OSX 
+version 10.4 is fairly old and so this should not be a problem on more modern Apple
+systems.  Our report about this fix also says that upgrading Xcode from version 2.4 
+to version 3.3, might be related.
+
+Note that on our Mac OSX (version 10.5.6), all of our testing of ROSE uses the following packages:
 \begin{itemize}
    \item {\bf boost\_1\_35\_0.tar.gz}:
      All installations of ROSE (any platform) require boost.
@@ -133,10 +144,10 @@ Note that on Mac OSX (version 10.5.6), all of our testing of ROSE uses the follo
      Required to generate graphs for the LaTex documentation in ROSE.
 
    \item {\bf libtool-2.2.4.tar.bz2}:
-     Required to build ROSE (used in ROSE configuration).
+     Required to build ROSE (used in ROSE configuration management).
 \end{itemize}
 
-The .bashrc file for Mac OSX is:
+As an extra detail, our .bashrc file for Mac OSX is:
 \begin{verbatim}
 export DYLD_LIBRARY_PATH="/Users/dquinlan/local/boost_1_35_0_installTree-gxx-4.0.1/lib"
 export PATH="/Users/dquinlan/local/doxygen-install/bin:$PATH"
@@ -146,6 +157,12 @@ export PATH="/Users/dquinlan/local/latex2html-install/bin/:$PATH"
 export PATH="/Users/dquinlan/local/ghostscript-install/bin/:$PATH"
 export PATH="/Users/dquinlan/local/fontconfig-install/bin/:$PATH"
 \end{verbatim}
+
+   We are not significant Mac users, ROSE is primarily developed under Linux, 
+however we are particularly interested in supporting collaborators who are, 
+so Mac OSX support is important to us.  We would appriciate any help in making 
+sure that ROSE installs smoothly on both Mac OSX and Linux.
+
 
 
 To simplify the descriptions of the build process, we define:
@@ -656,6 +673,13 @@ distributions.
 % external devlopers, and external users. More information is in the ROSE User Manual
 % in the Developer's Appendix (see \ref{rose_email_list_info}).
 
+% DQ (1/21/2009): Note this information is maintained in several locations and in LaTeX
+% and doxygen formats:
+%    1) ROSE User Manual: Developer's: Appendix,
+%    2) ROSE Installation Manual
+%    3) ROSE Tutorial
+%    4) doxygen generated web pages for ROSE (rose.docs.in and AvailableDocumentation.docs.in)
+%
 % DQ (10/28/2008): This information is copied from:
 %                  ROSE User Manual: Developer's: Appendix: ROSE Email Lists.
 

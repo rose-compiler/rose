@@ -9,12 +9,14 @@ include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 # This next line will be removed for binary distributions, leaving the variable empty
 DEVELOPER_DISTRIBUTION_DIRECTORY = developersScratchSpace proposals
 
+# DQ (1/18/2009): Added demo directory to support showoffs :-).
 # DQ "config" and "src" must preceed any other directories, and 
 # "tutorial" and "exampleTranslators" must preceed "docs" since 
 # they generate data that is subsequently used in the generated 
 # ROSE documentation (examples, input codes, and generated output).
 # SUBDIRS = config src projects tests tutorial exampleTranslators docs developersScratchSpace tools proposals scripts
-SUBDIRS = libltdl config src projects tests tutorial exampleTranslators docs tools scripts $(DEVELOPER_DISTRIBUTION_DIRECTORY)
+SUBDIRS = libltdl config src projects tests tutorial exampleTranslators docs tools scripts demo $(DEVELOPER_DISTRIBUTION_DIRECTORY)
+
 
 ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I /usr/share/aclocal
 

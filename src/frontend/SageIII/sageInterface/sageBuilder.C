@@ -363,14 +363,14 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList 
   return funcType;
 }
 
-#if 0
+#if 1
 // DQ (1/4/2009): Need to finish this!!!
 //-----------------------------------------------
 // build member function type, 
 // 
 // insert into symbol table when not duplicated
 SgMemberFunctionType * 
-SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList * typeList, SgClassDefinition *struct_name, unsigned int mfunc_specifier)
+SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList* typeList, SgClassDefinition *struct_name, /* const, volatile, restrict support */ unsigned int mfunc_specifier)
    {
      ROSE_ASSERT(return_type);
 
@@ -391,6 +391,10 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
      SgType* typeInTable = fTable->lookup_function_type(typeName);
      if (typeInTable==NULL)
           fTable->insert_function_type(typeName,funcType);
+
+  // DQ (1/21/2009): TODO: Need to mark the function type as const, volatile, 
+  // or restrict (assert that none are set for now).
+     ROSE_ASSERT(mfunc_specifier == 0);
 
      return funcType;
    }
@@ -435,98 +439,117 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterList * ar
 // 4. fortran ?
 template <class actualFunction>
 actualFunction*
-SageBuilder::buildNondefiningFunctionDeclaration_T \
-(const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope)
-{
+SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope)
+   {
   // argument verification
-  if (scope == NULL)
-    scope = SageBuilder::topScopeStack();
-  ROSE_ASSERT(scope != NULL);
+     if (scope == NULL)
+          scope = SageBuilder::topScopeStack();
+     ROSE_ASSERT(scope != NULL);
+
   // ROSE_ASSERT(scope->containsOnlyDeclarations()); 
   // this function is also called when building a function reference before the function declaration exists.  So, skip the check
-  ROSE_ASSERT(name.is_null() == false);
-  ROSE_ASSERT(return_type != NULL);
-  ROSE_ASSERT(paralist!= NULL);
+     ROSE_ASSERT(name.is_null() == false);
+     ROSE_ASSERT(return_type != NULL);
+     ROSE_ASSERT(paralist != NULL);
 
   // tentatively build a function type, since it is shared
   // by all prototypes and defining declarations of a same function!
-  SgFunctionType * func_type = buildFunctionType(return_type,paralist);
+  // SgFunctionType * func_type = buildFunctionType(return_type,paralist);
 
-  // function declaration
-  actualFunction * func;
+     SgFunctionType * func_type = NULL;
+     if (isMemberFunction == true)
+        {
+       // func_type = buildMemberFunctionType(return_type,paralist,NULL,0);
+       // func_type = buildFunctionType(return_type,paralist);
+          SgClassDefinition *struct_name = isSgClassDefinition(scope);
+          ROSE_ASSERT(struct_name != NULL);
+          SgFunctionParameterTypeList * typeList = buildFunctionParameterTypeList(paralist);
+          func_type = buildMemberFunctionType(return_type,typeList,struct_name,/* const, volatile, restrict support */ 0);
+
+       // printf ("Error: SgFunctionType built instead of SgMemberFunctionType \n");
+       // ROSE_ASSERT(false);
+        }
+       else
+        {
+          func_type = buildFunctionType(return_type,paralist);
+        }
 
   // search before using the function type to create the function declaration 
   // TODO only search current scope or all ancestor scope??
-   //We don't have lookup_member_function_symbol  yet
-  SgFunctionSymbol *func_symbol = scope->lookup_function_symbol(name,func_type);
+  // We don't have lookup_member_function_symbol  yet
+     SgFunctionSymbol *func_symbol = scope->lookup_function_symbol(name,func_type);
 
-  if (func_symbol ==NULL)
-  {
-   //first prototype declaration
-    func = new actualFunction (name,func_type,NULL);
-    ROSE_ASSERT(func);
+  // function declaration
+     actualFunction* func = NULL;
 
-    // function symbol table
-   if (isSgMemberFunctionDeclaration(func))
-     func_symbol= new SgMemberFunctionSymbol(func);
-   else
-     func_symbol= new SgFunctionSymbol(func);
+     if (func_symbol == NULL)
+        {
+       // first prototype declaration
+          func = new actualFunction (name,func_type,NULL);
+          ROSE_ASSERT(func);
 
-    ROSE_ASSERT(func_symbol);
-    scope->insert_symbol(name, func_symbol);
-   //  ROSE_ASSERT(scope->lookup_function_symbol(name,func_type) != NULL);
-    //ROSE_ASSERT(scope->lookup_function_symbol(name) != NULL);// Did not pass for member function?
+       // function symbol table
+          if (isSgMemberFunctionDeclaration(func))
+               func_symbol= new SgMemberFunctionSymbol(func);
+            else
+               func_symbol= new SgFunctionSymbol(func);
 
-   func->set_firstNondefiningDeclaration(func);
-   func->set_definingDeclaration(NULL);
-  }
-   else 
-  { 
-   //2nd, or 3rd... prototype declaration
-   //reuse function type, function symbol of previous declaration
+          ROSE_ASSERT(func_symbol);
+          scope->insert_symbol(name, func_symbol);
+       // ROSE_ASSERT(scope->lookup_function_symbol(name,func_type) != NULL);
+       // ROSE_ASSERT(scope->lookup_function_symbol(name) != NULL);// Did not pass for member function?
 
-   //std::cout<<"debug:SageBuilder.C: 267: "<<"found func_symbol!"<<std::endl;
-//   delete (func_type-> get_argument_list ());
-//   delete func_type; // bug 189
+          func->set_firstNondefiningDeclaration(func);
+          func->set_definingDeclaration(NULL);
+        }
+       else 
+        { 
+       // 2nd, or 3rd... prototype declaration
+       // reuse function type, function symbol of previous declaration
+
+       // std::cout<<"debug:SageBuilder.C: 267: "<<"found func_symbol!"<<std::endl;
+       // delete (func_type-> get_argument_list ());
+       // delete func_type; // bug 189
    
-   func_type = func_symbol->get_declaration()->get_type();
-   func = new actualFunction(name,func_type,NULL);
-   ROSE_ASSERT(func);
+          func_type = func_symbol->get_declaration()->get_type();
+          func = new actualFunction(name,func_type,NULL);
+          ROSE_ASSERT(func);
    
-   //we don't care if it is member function or function here for a pointer
-   SgFunctionDeclaration* prevDecl = NULL;
-   prevDecl=func_symbol->get_declaration();
+       // we don't care if it is member function or function here for a pointer
+          SgFunctionDeclaration* prevDecl = NULL;
+          prevDecl = func_symbol->get_declaration();
    
-   func->set_firstNondefiningDeclaration(prevDecl->get_firstNondefiningDeclaration());
-   func->set_definingDeclaration(prevDecl->get_definingDeclaration());
-   }
+          func->set_firstNondefiningDeclaration(prevDecl->get_firstNondefiningDeclaration());
+          func->set_definingDeclaration(prevDecl->get_definingDeclaration());
+        }
 
   // parameter list
-  setParameterList(func, paralist);
+     setParameterList(func, paralist);
 
-  SgInitializedNamePtrList argList = paralist->get_args();
-  Rose_STL_Container<SgInitializedName*>::iterator argi;
-  for(argi=argList.begin(); argi!=argList.end(); argi++)
-  {
-   // std::cout<<"patching argument's scope.... "<<std::endl;
-    (*argi)->set_scope(scope);
-  }
+     SgInitializedNamePtrList argList = paralist->get_args();
+     Rose_STL_Container<SgInitializedName*>::iterator argi;
+     for(argi=argList.begin(); argi!=argList.end(); argi++)
+        {
+       // std::cout<<"patching argument's scope.... "<<std::endl;
+          (*argi)->set_scope(scope);
+        }
   // TODO double check if there are exceptions
-   func->set_scope(scope);
+     func->set_scope(scope);
 
-// DQ (1/5/2009): This is not always true (should likely use SageBuilder::topScopeStack() instead)
-   if (scope != SageBuilder::topScopeStack())
-        printf ("Warning: function parent may not be the same as the function scope (e.g. for member functions) \n");
+  // DQ (1/5/2009): This is not always true (should likely use SageBuilder::topScopeStack() instead)
+     if (scope != SageBuilder::topScopeStack())
+          printf ("Warning: function parent may not be the same as the function scope (e.g. for member functions) \n");
 
-   func->set_parent(scope);
+     func->set_parent(scope);
 
   // mark as a forward declartion
-  func->setForward();
+     func->setForward();
 
   // set File_Info as transformation generated
-  setSourcePositionForTransformation(func);
-  return func;  
-}
+     setSourcePositionForTransformation(func);
+     return func;  
+   }
+
 
 //! Build a prototype for an existing function declaration (defining or nondefining ) 
 SgFunctionDeclaration *
@@ -542,16 +565,16 @@ SageBuilder::buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* f
 
 SgFunctionDeclaration* SageBuilder::buildNondefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope)
 {
-  SgFunctionDeclaration * result = buildNondefiningFunctionDeclaration_T <SgFunctionDeclaration> (name,return_type,paralist,scope);
+  SgFunctionDeclaration * result = buildNondefiningFunctionDeclaration_T <SgFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ false, scope);
   return result;
 }
 
 SgMemberFunctionDeclaration* SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope)
 {
-  SgMemberFunctionDeclaration * result = buildNondefiningFunctionDeclaration_T <SgMemberFunctionDeclaration> (name,return_type,paralist,scope);
+  SgMemberFunctionDeclaration * result = buildNondefiningFunctionDeclaration_T <SgMemberFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ true,scope);
   // set definingdecl for SgCtorInitializerList
   SgCtorInitializerList * ctor= result-> get_CtorInitializerList ();
-  ROSE_ASSERT(ctor);
+  ROSE_ASSERT(ctor != NULL);
   //required ty AstConsistencyTests.C:TestAstForProperlySetDefiningAndNondefiningDeclarations()
   ctor->set_definingDeclaration(ctor);
   ctor->set_firstNondefiningDeclaration(ctor);
