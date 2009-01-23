@@ -940,6 +940,20 @@ have an active account with https://outreach.scidac.gov to do this!\\
 
 It conducts a set of sanity checks and postprocessing before the actual importing. e.g. No EDG copyrighted files in the package, remove .svn and other undesired directories or files, make sure all EDG binaries for supported platforms are available.
 
+\section{Generating ChangeLog2}
+You can generate a GNU-style ChangeLog from ROSE's subversion commit logs using a program named \textit{svn2cl}. 
+Download it from \url{http://ch.tudelft.nl/~arthur/svn2cl/}
+and install it as directed in its documentation. 
+
+The command line we use to generate ChangeLog2 is:
+\begin{verbatim}
+svn log --xml --verbose \
+| xsltproc --stringparam include-rev yes \
+--stringparam ignore-message-starting "Automatic updates" \
+/home/liao6/opt/svn2cl-0.11/svn2cl.xsl - > ChangeLog2
+\end{verbatim}
+The command above will include revision numbers into the change log and
+filter out the automatically generated commits updating EDG binary files.
 \section{Enabling PHP Support}
 
 \begin{enumerate}
