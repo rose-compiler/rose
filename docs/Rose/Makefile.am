@@ -2,8 +2,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 
 # When debugging latex documentation skip using the --interaction=batchmode option
-PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex --interaction=batchmode
-# PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex 
+# PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex --interaction=batchmode
+PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex 
 
 # Later we will add ROSETTA documentation here ...
 SUBDIRS = Tutorial 
@@ -83,7 +83,8 @@ latexFiles = preface.tex acknowledgments.tex introduction.tex requirements.tex \
              tridvpk.tex appendix.tex glossary.tex bibliography.tex \
              rose-processing-phases.pdf testing.tex \
              writingYourFirstTranslator.tex overviewOfRose.tex \
-             developersAppendix.tex astMerge.tex installRose.tex binaryAnalysis.tex 
+             developersAppendix.tex astMerge.tex installRose.tex \
+             binaryAnalysis.tex demo.tex
 
 roseDirectoryMap.pdf: Makefile
 	$(top_srcdir)/scripts/lsdot $(top_srcdir) --format=ps --exclude='CVS\|\.svn\|autom4te.cache\|developersScratchSpace\|testDoxygen\|ckpt\|compass' --basename -o=roseDirectoryMap.ps;
@@ -146,7 +147,7 @@ COMPASS_MANUAL = $(compass_build_tooldir)/compass/compass.pdf
 $(COMPASS_MANUAL):
 	cd $(compass_build_tooldir)/compass && $(MAKE) docs
 
-make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf ROSE_DeveloperInstructions.pdf footer.html leftmenu.html $(COMPASS_MANUAL)
+make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf ROSE_DeveloperInstructions.pdf ROSE_DemoGuide.pdf footer.html leftmenu.html $(COMPASS_MANUAL)
 	cd Tutorial; $(MAKE) make-web-pages
 	mkdir -p ROSE_WebPages
 	mkdir -p ROSE_WebPages/ROSE_HTML_Reference;
@@ -163,6 +164,7 @@ make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-U
 	cp -fr $(top_srcdir)/ROSE_ResearchPapers ROSE_WebPages/
 	cp -f ROSE_InstallationInstructions.pdf ROSE_WebPages/ROSE_InstallationInstructions.pdf
 	cp -f ROSE_DeveloperInstructions.pdf ROSE_WebPages/ROSE_DeveloperInstructions.pdf
+	cp -f ROSE_DemoGuide.pdf ROSE_WebPages/ROSE_DemoGuide.pdf
 	mkdir -p ROSE_WebPages/ROSE_UserManual
 	cp -f $(srcdir)/WEB_DOCS_README ROSE_WebPages
 	cp -f $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_WebPages/ROSE_UserManual/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf
@@ -185,7 +187,7 @@ $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz: make-web-pages
 # Simpler rule
 latex-docs: pdf
 
-pdf-local: $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf ROSE_DeveloperInstructions.pdf
+pdf-local: $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf ROSE_DeveloperInstructions.pdf ROSE_DemoGuide.pdf 
 
 ROSE_InstallationInstructions.pdf: $(latexFiles) $(latexDependences) ROSE_InstallationInstructions.tex
 	$(PDFLATEX) ROSE_InstallationInstructions.tex && \
@@ -197,6 +199,12 @@ ROSE_DeveloperInstructions.pdf: $(latexFiles) $(latexDependences) ROSE_Developer
 	$(PDFLATEX) ROSE_DeveloperInstructions.tex && \
 	$(PDFLATEX) ROSE_DeveloperInstructions.tex
 
+# DQ (1/18/2009): Added support for demo guide to support running and 
+# presenting information from demos of different parts of ROSE.
+ROSE_DemoGuide.pdf: $(latexFiles) $(latexDependences) ROSE_DemoGuide.tex
+	$(PDFLATEX) ROSE_DemoGuide.tex && \
+	$(PDFLATEX) ROSE_DemoGuide.tex && \
+	$(PDFLATEX) ROSE_DemoGuide.tex
 
 # DQ (7/25/2004): Need to include manual.tex and reference.tex since they are build from 
 # manual.tex.in and reference.tex.in

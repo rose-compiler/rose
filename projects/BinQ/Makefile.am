@@ -67,7 +67,11 @@ demo_rted_example:
 	./BinQ -a $(srcdir)/bufftest.bin --batch
 
 demo_rose_vs_IDAPro:
-	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2-tsv  
+#	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2-tsv  
+	./BinQ -a $(srcdir)/buffer2.bin.32bit -b $(srcdir)/buffer2-tsv  
+
+demo_diff:
+	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2b.bin  
 
 
 demo2:

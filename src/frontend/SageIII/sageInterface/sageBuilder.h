@@ -134,6 +134,11 @@ buildFunctionType(SgType* return_type, SgFunctionParameterTypeList * typeList=NU
 //! Build function type from return type and parameter list
 SgFunctionType * 
 buildFunctionType(SgType* return_type, SgFunctionParameterList * argList=NULL);
+
+// DQ (1/16/2009): Added to support member function in C++ (for new interface)
+SgMemberFunctionType * 
+buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList * typeList, SgClassDefinition *struct_name, unsigned int mfunc_specifier);
+
  //! Build an opaque type with a name, useful when a type's details are unknown during transformation, especially for a runtime library's internal type. Must provide scope here. 
  /*! Some types are not known during translation but nevertheless are needed. For example, some 
   * internal types from a runtime library.  To work around this problem: this function prepends a hidden typedef declaration into scope
@@ -545,11 +550,14 @@ buildFunctionParameterList(SgFunctionParameterTypeList * paraTypeList);
 SgFunctionParameterList*
 buildFunctionParameterList_nfi(SgFunctionParameterTypeList * paraTypeList);
 
+// DQ (1/21/2009): This is a support function called by the buildNondefiningFunctionDeclaration() and 
+// buildNondefiningMemberFunctionDeclaration() functions.  Since we constructe the function type in 
+// the support function and require either a SgFunctionType or SgMemberFunctionType, we need to to pass in 
+// a flag to specify which function type to build (bool isMemberFunction).
 //! A template function for function prototype declaration builders
 template <class actualFunction>
 actualFunction*
-buildNondefiningFunctionDeclaration_T \
-(const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope=NULL);
+buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope=NULL);
 
 //! Build a prototype for a function, handle function type, symbol etc transparently
 SgFunctionDeclaration *

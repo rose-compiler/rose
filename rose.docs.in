@@ -3,16 +3,6 @@
 //          generate <BUILD_TREE>/rose.docs in the build directory
 // ****************************************************************************
 
-// This is no longer required (so we might not need to even process 
-// this file with configure!).
-// sa file://@top_pwd@/docs/Rose/SageIntermediateForm/html/main.html
-
-// See the ROSE User Manual (file://@top_pwd@/docs/Rose/html/manual.html) for an indroduction
-//   absolute path defined by configure: file://@top_pwd@/docs/Rose/ROSE_WebPages/ROSE_UserManual/manual.html
-//   alternative relative path: <a href="../ROSE_UserManual/manual.html"> ROSE User Manual </a>.
-//   absolute path defined by configure: file://@top_pwd@/docs/Rose/ROSE_WebPages/ROSE_Tutorial/tutorial.html
-//   alternative relative path: <a href="../ROSE_Tutorial/tutorial.html"> ROSE Tutorial </a>.
-
 /*! 
 
 \mainpage ROSE Web Reference
@@ -111,12 +101,21 @@ one million lines of code in size).
      <a href="../ROSE_HTML_Reference/index.html"> ROSE Web Reference (this document) </a> \n
 
 \subsection dummyD ROSE Email List
+    We have three mailing lists for core developers (those who have write access to
+    the internal repository), all developers (anyone who has write access to the
+    internal or external repository) and all users of ROSE (respectively). They are: \n
+    (rose-core *at* nersc *dot* gov), web interface: 
+    <a href="https://mailman.nersc.gov/mailman/listinfo/rose-core"> https://mailman.nersc.gov/mailman/listinfo/rose-core </a> \n
+    (rose-developer *at* nersc *dot* gov), web interface:  
+    <a href="https://mailman.nersc.gov/mailman/listinfo/rose-developer"> https://mailman.nersc.gov/mailman/listinfo/rose-developer </a> \n
+    (rose-public *at* nersc *dot* gov), web interface: 
+    <a href="https://mailman.nersc.gov/mailman/listinfo/rose-public"> https://mailman.nersc.gov/mailman/listinfo/rose-public </a> \n
 
-    The ROSE project supports three email lists, information about this is loacted in 
-    the ROSE Installation Guide and the ROSE User Manual (developers appendix).
+    Note that this information is available in the following files:
+    rose.docs.in (this file, doxygen format), AvailableDocumentation.docs.in (doxygen format), 
+    installRose.tex (LaTeX format), and developersAppendix.tex (LaTeX format).
 
 \subsection RosePublications ROSE Publications
-
     ROSE is a research project which emphasises publication about the new technologies
     that we are developing, every often as part of external collaborations.  Publications
     specific to the ROSE project can be found at the main ROSE web page.

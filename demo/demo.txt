@@ -1,0 +1,483 @@
+This is a Demo of ROSE that can be run by any user, the 
+details and the explainations are represnetative of pieces
+of work specific to our general software analysis owrk in ROSE.
+
+Introduction to ROSE:
+   ROSE is a framework for building tools that can regenerate the
+software (source code and binary), and which permits modifications 
+along the way
+
+
+How to run a demo of ROSE:
+
+BinQ is a testing ground for forms of binary analysis which are later is moved to Compass.
+
+0) Run Robb's example.
+
+0.5) ROSE works on ARM (Elf), PowerPC (Elf), and x86 (Elf and PE)
+    Show disassembly of ARM (Elf) and x86 (PE)
+    We will see x86 (Elf) and PowerPC else later in the demo.
+
+
+1) Binary Analysis Demo (running separate forms of analysis)
+
+   In directory:
+  /home/dquinlan/ROSE/ROSE_CompileTree/svn-LINUX-64bit-4.2.2-QRose/projects/BinQ:
+
+   show the source code so the problem is more clear.
+   Run "make demo_show_source_code"
+
+   Run "make demo_withoutAnalysisRunInBatchMode"
+   (running the "Binary Call Graph" analysis will generate "callgraph.dot")
+   (running the "Control Flow Graph" analysis will generate "cfg.dot")
+   (running the "Data Flow Graph" analysis will generate "dfg.dot")
+
+   Run zgrviewer on "callgraph.dot" to see the call graph.
+     Colors: (???)
+     Note that main is not called directly since "__lib_start_main()" calls "main" and we
+     don't see the dynamically linked library functions in the dynamic library.
+
+   Run zgrviewer on "cfg.dot" to see the control flow graph.
+     Colors: Yellow (normal instructions)
+             Green nodes and edges (conditional branches) 
+             Dark Purple (Functions starts)
+             Light Purple nodes (function calls and returns)
+             Blue edges (returns)
+             Red edges (calls)
+             Yellow edges (next instruction in sequence without control flow)
+
+   Run zgrviewer on "dfg.dot" to see the data flow graph.
+     Colors of edges are the same as in the CFG.
+     Yellow nodes (unreachable instructions; as computed using intra-procedural 
+            analysis; inter-procedural analysis is more complex and not demo'd)
+     Red nodes (Moves into memory; e.g. non-register moves)
+     Green (all other nodes)
+
+
+
+2) Binary analysis Demo (buffer overflow):
+
+   In directory:
+  /home/dquinlan/ROSE/ROSE_CompileTree/svn-LINUX-64bit-4.2.2-QRose/projects/BinQ:
+   Run "make demo_withAnalysisRunInBatchMode"
+
+   This demo runs a predefined (hard coded) collection of analysis algorithms as part of
+   the startup: 
+      Running analysis : Binary Dynamic Info
+      Running analysis : Data Flow Graph
+      Running analysis : Forbidden Function Call
+      Running analysis : Forbidden Function Call   time : 0.001724   Problems : 0
+      Running analysis : Malloc needs Free
+ Found malloc in function main
+Running analysis : Malloc needs Free   time : 0.001513   Problems : 1
+   malloc() called but no free() found:  (  4004bc) : call   0x4003e0  <malloc> <malloc>  in function: main
+Running analysis : Null After Free
+Running analysis : Null After Free   time : 0.00143099   Problems : 0
+Running analysis : Init Pointer to Null
+Running analysis : Init Pointer to Null   time : 0.0015769   Problems : 0
+Running analysis : Complexity Metric
+Running analysis : Complexity Metric   time : 0.00144196   Problems : 0
+Running analysis : Buffer Overflow Analysis
+Dataflow analysis run before ... 
+Running analysis : Buffer Overflow Analysis   time : 0.0040741   Problems : 1
+
+
+   This demo shows to properties of the binary:
+     1) A "malloc" in "main" has no associated "free"
+     2) A buffer overflow of the array allocted by the malloc
+        The access of the 12th array element exceeds the size of the length 10 array.
+        The checker reports that the byte 48 exceeds the bound of the array at byte 40.
+     3) This demo also shows that we can associate function name with function calls
+        See that function call at address 4004bc is a call to "malloc"
+        This analysis is done by the "BinaryDynamicInfo"
+
+     4) Note that forbidden function analysis searches for the existance of the following
+        functions:
+           "vfork"
+           "sprintf"
+           "scanf"
+           "sscanf"
+           "gets"
+           "strcpy"
+           "_mbscpy"
+           "lstrcat"
+           "memcpy"
+           "strcat"
+           "rand"
+           "rewind"
+           "atoi"
+           "atol"
+           "atoll"
+           "atof"
+
+2.5) Build a binary and test the forbidden function analysis 
+
+
+3) More complex buffer overflow:
+    
+   In directory:
+  /home/dquinlan/ROSE/ROSE_CompileTree/svn-LINUX-64bit-4.2.2-QRose/projects/BinQ:
+   Run "make demo_rted_example"
+
+   This demo demonstrates a buffer overflow that we can not presently detect.
+   The malloc of size "sizeof(int)+1" is permitting the last 3 bytes of the
+   4 byte access of the 2nd element of the array of 4 byte integers to overflow.
+   A more sophisticated analysis is required to interpret the type and detect that
+   the last 3 byts of the 4 byte array access is a buffer overflow.
+
+   Requires type analysis.
+
+
+4) Comparing ROSE vs. IDAPro (on same 32-bit example)
+
+   In directory:
+  /home/dquinlan/ROSE/ROSE_CompileTree/svn-LINUX-64bit-4.2.2-QRose/projects/BinQ:
+   Run "make demo_rose_vs_IDAPro"
+
+   Notice that the disassembly using ROSE is slightly different. This work uses
+   a database of the results from IDA Pro built as part of collaborations with 
+   other researchers. This demo does not run IDA Pro, that data based was previously 
+   constructed.  In this demo the "Binary Dynamic Info" analysis can be run to 
+   fill in names of functions (e.g. the call to "malloc" in main).
+
+
+5) Compass on binary file (test mode):
+    There are three binary specific checkers in compass:
+     1) Statics on instruction frequency
+     2) Unparser (for instructions)
+     3) Loop detectors (on binary)
+
+   In directory:
+  /home/dquinlan/ROSE/ROSE_CompileTree/svn-LINUX-64bit-4.2.2-QRose/projects/compass/tools/compass:
+   a) Run "make demo_small"
+
+   This runs compass on the compass binary (about 100K in size, not stripped).
+   the output is in text form to support general handling of detected violations or
+   detected software features.
+
+   b) Run "make demo_linux"
+      This demo is running the linux "ls" command (about 80K in size, stripped)
+
+     
+   Output from running Compass (without the GIU interface)
+      Fragments of some of the output presents is:
+      Instruction frequency (make demo_linux):
+         Running checker BinPrintAsmInstruction 
+         running binPrintAsmInstuction checker... 
+         x86_mov:6160 
+         x86_call:917 
+         x86_jmp:798 
+         x86_add:775 
+         x86_cmp:687 
+         x86_pop:685 
+         x86_sysenter:649 
+         x86_punpckldq:629 
+         x86_lea:591 
+         x86_je:589 
+         x86_stosq:358 
+         x86_jne:303 
+         x86_xchg:247 
+         x86_rep_stosd:212 
+         x86_nop:176 
+         x86_movzx:119 
+         x86_jae:101 
+         x86_ja:82 
+         x86_and:77 
+         x86_jbe:58 
+         x86_or:52 
+
+      Unparsing of instructions (make demo_linux):
+         Running checker BinPrintAsmFunctions 
+         running binary checker: binPrintAsmFunctions 
+         ******** function : _fini ********** 
+         ******** block  ********** 
+         8057044  1    55                       push   ebp
+         8057045  2    89 e5                    mov    ebp, esp
+         8057047  1    53                       push   ebx
+         8057048  1    e8                       call   0x805704d  <_fini>
+         ******** block  ********** 
+         805704d  1    5b                       pop    ebx
+         805704e  4    81 c3 23 45              add    ebx, 0x4523
+         8057054  1    50                       push   eax
+         8057055  5    e8 de 2c ff ff           call   0x8049d38  <_init>
+         ******** block  ********** 
+         805705a  1    59                       pop    ecx
+         805705b  1    5b                       pop    ebx
+         805705c  1    c9                       leave  
+         805705d  1    c3                       ret    
+         ******** block  ********** 
+         805705e  0                             add    BYTE PTR ds:[eax], al
+
+
+      Loop Detection (make demo_small):
+         Running checker CycleDetection 
+         Found a cycle between  x86_jne (  40ac1a) and x86_mov (  40ac04)
+         Found a cycle between  x86_call (  40b4a9) and x86_leave (  40b4ae)
+         Found a cycle between  x86_mov (  40956a) and x86_mov (  40956e)
+         Found a cycle between  x86_jne (  409579) and x86_mov (  409562)
+         Found a cycle between  x86_mov (  409594) and x86_mov (  409598)
+         Found a cycle between  x86_jne (  4095a3) and x86_mov (  40958c)
+         Found a cycle between  x86_jne (  40cd7c) and x86_call (  40cd71)
+         Found a cycle between  x86_call (  40b6a6) and x86_leave (  40b6ab)
+         Found a cycle between  x86_call (  409772) and x86_leave (  409774)
+         Found a cycle between  x86_call (  40b02e) and x86_leave (  40b033)
+         Found a cycle between  x86_jne (  40a538) and x86_mov (  40a522)
+         Found a cycle between  x86_jne (  40af66) and x86_mov (  40af2a)
+         Found a cycle between  x86_call (  40ad61) and x86_leave (  40ad66)
+         Found a cycle between  x86_jne (  40852a) and x86_add (  408510)
+         Found a cycle between  x86_call (  40851b) and x86_mov (  40851d)
+         Found a cycle between  x86_call (  40b15e) and x86_leave (  40b163)
+         Found a cycle between  x86_jne (  40bb28) and x86_mov (  40bb09)
+         Found a cycle between  x86_call (  409cd0) and x86_leave (  409cd2)
+         Found a cycle between  x86_jne (  40b384) and x86_mov (  40b348)
+         Found a cycle between  x86_jg (  40a8b4) and x86_stosq (  40a893)
+         Found a cycle between  x86_call (  40b4fa) and x86_leave (  40b4ff)
+
+6) Compass on source code using GUI interface:
+
+   In directory:
+  /home/dquinlan/ROSE/ROSE_CompileTree/svn-LINUX-64bit-4.2.2-QRose/projects/compass/tools/compass:
+   a) Run "make demo_compassGUI"
+
+6.5) Compass on binary using GUI interface:
+
+   In directory:
+  /home/dquinlan/ROSE/ROSE_CompileTree/svn-LINUX-64bit-4.2.2-QRose/projects/compass/tools/compass:
+   a) Run "make demo_compassGUI"
+
+      Within the GUI click on the "regenerate" button at the top and then the "refresh" botton.
+
+      At present this fails with an error:
+         Exception: out of memory
+         Exception: database is not open
+
+6.8) Show construction of checker (using gen_checker.sh).
+    This checker has default behavior, but is a valid check that can be filled in with
+    vulnerability specific analysis, use existing analysis, etc.
+
+7) Demo to translate assemble to C code.
+
+   In directory:
+   /home/dquinlan/ROSE/ROSE_CompileTree/svn-LINUX-64bit-4.2.2/projects/assemblyToSourceAst
+   Run "make ppc-check"
+   then "head -300 /home/dquinlan/ROSE/ROSE_CompileTree/svn-LINUX-64bit-4.2.2/projects/assemblyToSourceAst/rose_powerpcOutputFileTemplate.C
+
+   this example shows the translation of the binary: /home/dquinlan/ROSE/svn-rose/developersScratchSpace/Dan/Disassembler_tests/fnord.ppc
+
+   tux270.llnl.gov{dquinlan}142: ls -l /home/dquinlan/ROSE/svn-rose/developersScratchSpace/Dan/Disassembler_tests/fnord.ppc
+   -rwxrwxr-x  1 dquinlan overture 29540 Oct 20 17:36 /home/dquinlan/ROSE/svn-rose/developersScratchSpace/Dan/Disassembler_tests/fnord.ppc
+   tux270.llnl.gov{dquinlan}143:
+
+   A PowerPC executable (small 29K in size): fnord.ppc is used for this demo.  
+   1) The file is read as a binary and disassembled by it's binary file format, 
+   2) The starting address of the execution is computed and instructions are disassembled 
+      and constructed into the binary AST. All the the details of executable
+      file format and the instructions (including expression subtrees) are recorded
+      including many details, such as the holes between sections, etc. 
+   3) Using the semantics of each instruction (x86 or PowerPC), each instruction
+      is translated to a lowever level formulation.
+   4) The lower level formulation is translated to C code and a new source based
+      AST is constructed (ROSE handled both source code and binaries and so is 
+      unique in permitting this step).
+   5) The generate source based AST (translated from the semantics of the instructions 
+      and the details from the binary executable analyized and transformed. A number
+      of analysis and optimization passes are done to propogate information and 
+      removed inefficient automatically generated code.
+   6) The AST representing the source code is unparsed to form the rose_XXX.C file.
+   7) Separate work can be done to compile this file and run it as an executable using
+      work not presently contained in ROSE.
+
+*** This step needs to be discussed in a different section.
+   x) The information in the AST is used to reassemble an new binary, and a 
+      byte-wise file comparision is done to verify that it is identical to the 
+      original input binary.
+
+An example of the generated code is:
+int main(int ,char **)
+{
+  run();
+  return 0;
+}
+
+
+void run()
+{
+  while(true)
+    switch(ip){
+      case 0x10000094U:
+{
+        
+#pragma 0x10000094:or     r9, r1, r1
+        addr_0x10000094:
+        ip = 0x10000098U;
+        gpr9 = gpr1;
+        continue; 
+      }
+      case 0x10000098U:
+{
+        
+#pragma 0x10000098:rlwinm r1, r1, 0, 0, 27
+        addr_0x10000098:
+        ip = 0x1000009cU;
+        gpr1 = gpr1 << 0x0U & 0xfffffff0U | gpr1 >> 0x0 & 0xfffffff0U;
+        continue; 
+      }
+      case 0x1000009cU:
+{
+        
+#pragma 0x1000009c:addi   r0, 0, 0
+        addr_0x1000009c:
+        ip = 0x100000a0U;
+        gpr0 = 0x0U;
+        continue; 
+      }
+      case 0x100000a0U:
+{
+        
+#pragma 0x100000a0:stwu   r1, -16(r1)
+        addr_0x100000a0:
+        ip = 0x100000a4U;
+        memoryWriteDWord(gpr1 + 0xfffffff0U,gpr1);
+        gpr1 = gpr1 + 0xfffffff0U;
+        continue; 
+      }
+      case 0x100000a4U:
+{
+        
+#pragma 0x100000a4:mtspr  r0, lr
+        addr_0x100000a4:
+        ip = 0x100000a8U;
+        gpr0 = lr;
+        continue; 
+      }
+
+
+8) Demo of binary file compare:
+    In directory:
+    /home/dquinlan/ROSE/ROSE_CompileTree/svn-LINUX-64bit-4.2.2/developersScratchSpace/Dan/astEquivalence_tests
+
+    Run "make testBinaryEquivalence"
+
+    This demo evaluates the differences between to binaries generated from the same source
+    file, one with debugging information and the other without any debugging information.
+
+    tux270.llnl.gov{dquinlan}157: ls -l testProgram_?
+    -rwxrwxr-x  1 dquinlan overture 7967 Jan 16 18:44 testProgram_1
+    -rwxrwxr-x  1 dquinlan overture 6551 Jan 16 18:44 testProgram_2
+
+    This test looks only at the binary file structure and not the instructions
+    (a later demo will look only at the instructions, using BinQ).
+
+    This test will use a classic tree edit distance algorithm (written and optimized by
+    the ROSE team) to determine the minimum additions and deletion to make any to files
+    (typically different files) the same. The demo generates a file called "output.dot"
+    which can be visualized using zgrviewer.  the generated file is a large graph which
+    take 20 minutes to layout using dot, but shows the details edits required to translate
+    one file into the other. 
+
+
+9) Compass on large projects:
+
+   In directory:
+   /home/dquinlan/ROSE/ROSE_CompileTree/svn-LINUX-64bit-4.2.2/projects/compass/tools/compass/gui
+
+   Run "make demo"
+
+   This demo shows how a data base is built (before running Compass) and then Compass.
+   The database stores the commandline require to compile source code.  The compass is
+   run using the database as input.  Click "regenerate" and "refresh" to display the 
+   results.  The "regenerate" button will run compass on all the items in the 
+   database, this can take a little while (a few seconds in the demo on a fast machine).
+   Then the "refresh" button will sort and display the results.  Clicking on a specific
+   rule (from the list in the upper left window), will cause the locations of violations 
+   of that rule to be displayed in the upper center window.  Clicking on an entry in the 
+   upper center window causes the lower windows to load that specific file and highlight
+   the line in the file where the violation occured.  Currently both binaries and source
+   code work in Compass, but the GUI handles the source code better, this will become 
+   more uniform in time.
+
+***** What is different between this demo and #8 ??? (they are the same, #8 is a subset of #10)
+10) AST Equivalence:
+
+   In directory:
+   /home/dquinlan/ROSE/ROSE_CompileTree/svn-LINUX-64bit-4.2.2/developersScratchSpace/Dan/astEquivalence_tests
+
+   Run "make demoSourceEquivalence"
+
+   This builds the edit distance graph for two source codes (independent of variable
+   names, source code formatting, etc.).  A visualization of the edit graph on the 
+   structure of the file is shown using zgrviewer.
+
+   Run "make demoBinaryEquivalence"
+
+   This demo generates the edit graph for two similar binary files (one
+   compiled with debug and the other without), and displays a pre-generated
+   image of a visualization of the a quadrant of the whole graph (takes 
+   20+ minutes to layout in dot so the image has been pre-computed).
+
+11) Static rewritting demo
+
+   In directory:
+   /home/dquinlan/ROSE/ROSE_CompileTree/svn-LINUX-64bit-4.2.2/developersScratchSpace/Dan/translator_tests
+
+   Run "make demo"
+
+   This demo shows the additon of a named section to an existing binary file.  The to
+   support this the section table of names is edited and an additional name added, this
+   causes the entire binary to be offset by the length of the name (and it's null
+   terminator).  A new secton is added to the binary with some random data. All the 
+   stored offets in the binary must be recomputed and reset as part of the final
+   regeneration of the binary as and excutable with extra data.
+
+   The binary equivalence test is used to test the original and the modified binary.
+   The edit distance it isolated to a single point in the AST (excerpt of output).
+     editOperation = substitution from_label = 10562 to_label = 10727 
+     editOperation = substitution from_label = 10397 to_label = 10562 
+     editOperation = substitution from_label = 10232 to_label = 10397 
+     editOperation = substitution from_label = 10067 to_label = 10232 
+     editOperation = insertion from_label = 10066 to_label = 10067 
+     editOperation = insertion from_label = 10065 to_label = 10066 
+     editOperation = substitution from_label = 9900 to_label = 10065 
+     editOperation = substitution from_label = 9735 to_label = 9900 
+     editOperation = substitution from_label = 9570 to_label = 9735 
+     editOperation = substitution from_label = 9405 to_label = 9570
+
+   The dot file visualization representing the edit graph is 6Meg and too large to 
+   layout using dot.
+
+
+12) Binary File Format (ELF, PE, and DOS)
+
+    In directory:
+    /home/dquinlan/ROSE/ROSE_CompileTree/svn-LINUX-64bit-4.2.2/developersScratchSpace/Dan/Disassembler_tests
+
+    Run "make demo"
+   
+    This demo will generate the AST associated with a Windows executable,
+    from the AST we can generate a listing of all the information (logoff.exe.dump),
+    the graph of the AST (logoff.exe.dot), the graph of the AST plus additional
+    connections (logoff_WholeAST.dot) and the reassembled binary which is verified
+    (via bytewise comparision) to be identical.
+
+    Then zgrviewer logoff_WholeAST.dot &
+
+    and zgrviewer logoff.exe.dot &
+
+    In the AST it is interesting to note that there are two SgAsmInterpretation subtrees.
+    This is because Windows binaires have a DOS part (header, section, etc.) which is 
+    interpreted in 16-bit mode during disassemble and analysis and a 32-bit Windows part
+    (with a header and many sections, etc.).  It is critical to get the interpretation
+    of these different parts of the binary correct since 16-bit interpreation is
+    fundamentally different from a 32-bit interpretation.  Other binary file formats 
+    can contain many more than 2 interpretations (e.g. Mac OSX binaries, which we do 
+    not presently support).
+
+    Looking at logoff.exe.dump (text file), shows the details of the section data 
+    and instructions available internally in the AST.
+
+
+
+
+   
+
+

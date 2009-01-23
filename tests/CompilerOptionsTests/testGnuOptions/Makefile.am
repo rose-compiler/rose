@@ -30,6 +30,11 @@ testUseOfGnuOptions: $(srcdir)/test-includeOption.C $(srcdir)/test-isystemOption
 	cp $(srcdir)/test-isystemOption.C local_test-isystemOption.C
 	$(TEST_TRANSLATOR) -rose:verbose 0 -isystem $(srcdir) -c local_test-isystemOption.C
 
+test_skip_rose_option:
+	$(TEST_TRANSLATOR) -rose:verbose 0 -isystem $(srcdir) -c $(srcdir)/test-isystemOption.C -rose:skip_rose
+	$(TEST_TRANSLATOR) -rose:C --edg:no_warnings --edg:restrict -w  -c $(top_srcdir)/tests/CompileTests/C_tests/test2006_135.c -rose:skip_rose
+
+
 EXTRA_DIST = $(TESTCODES) testOptions.h
 
 clean-local:

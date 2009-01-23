@@ -1978,8 +1978,16 @@ FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnpar
                                  {
                                 // Make sure this is not a SgColonShapeExp or SgAsteriskShapeExp expression
                                 // if (isSgColonShapeExp(arrayTypeDimensionList->get_expressions()[i]) == NULL)
+#if 0
                                    if ( (isSgColonShapeExp(arrayTypeDimensionList->get_expressions()[i]) == NULL) &&
                                         (isSgAsteriskShapeExp(arrayTypeDimensionList->get_expressions()[i]) == NULL) )
+#else
+                                 // DQ (1/23/2009): Fix suggested by one of Craig's students (need name of student).
+                                 // I think that example test code: test2009_03.f90 demonstrates this case.
+                                    if ( (isSgColonShapeExp(arrayTypeDimensionList->get_expressions()[i])       == NULL) &&
+                                         (isSgAsteriskShapeExp(arrayTypeDimensionList->get_expressions()[i])    == NULL) &&
+                                         (isSgSubscriptExpression(arrayTypeDimensionList->get_expressions()[i]) == NULL) )
+#endif
                                       { // SgAsteriskShapeExp
                                      // We have to turn off an internal error checking mechanism just to call the unparseToString() function.
                                      // Turn OFF the error checking which triggers an if the default SgUnparse_Info constructor is called

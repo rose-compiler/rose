@@ -1218,6 +1218,7 @@ docs/Rose/Makefile
 docs/Rose/manual.tex
 docs/Rose/ROSE_InstallationInstructions.tex
 docs/Rose/ROSE_DeveloperInstructions.tex
+docs/Rose/ROSE_DemoGuide.tex
 docs/Rose/gettingStarted.tex
 docs/Rose/rose.cfg
 docs/Rose/sage.cfg
@@ -1229,6 +1230,7 @@ docs/testDoxygen/Makefile
 tools/Makefile
 proposals/Makefile
 scripts/Makefile
+demo/Makefile
 developersScratchSpace/Makefile
 developersScratchSpace/Dan/Makefile
 developersScratchSpace/Dan/C_tests/Makefile

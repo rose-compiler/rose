@@ -1936,9 +1936,11 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
   // printf ("In determineFileType(): Calling CommandlineProcessing::generateSourceFilenames(argv) \n");
      Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argv);
 
+#if 0
   // this->display("In SgFile::setupSourceFilename()");
-  // printf ("listToString(argv) = %s \n",StringUtility::listToString(argv).c_str());
-  // printf ("listToString(fileList) = %s \n",StringUtility::listToString(fileList).c_str());
+     printf ("listToString(argv) = %s \n",StringUtility::listToString(argv).c_str());
+     printf ("listToString(fileList) = %s \n",StringUtility::listToString(fileList).c_str());
+#endif
 
   // DQ (12/23/2008): I think that we may be able to assert this is true, if so then we can simplify the code below.
      ROSE_ASSERT(fileList.empty() == false);
@@ -3207,24 +3209,32 @@ SgProject::parse()
 
   // Simplify multi-file handling so that a single file is just the trivial 
   // case and not a special separate case.
-
-  // printf ("Loop through the source files on the command line! p_sourceFileNameList = %zu \n",p_sourceFileNameList.size());
+#if 0
+     printf ("Loop through the source files on the command line! p_sourceFileNameList = %zu \n",p_sourceFileNameList.size());
+#endif
 
      Rose_STL_Container<string>::iterator nameIterator = p_sourceFileNameList.begin();
      unsigned int i = 0;
      while (nameIterator != p_sourceFileNameList.end())
         {
-       // printf ("Build a SgFile object for file #%d \n",i);
+#if 0
+          printf ("Build a SgFile object for file #%d \n",i);
+#endif
           int nextErrorCode = 0;
 
        // DQ (4/20/2006): Exclude other files from list in argc and argv
           vector<string> argv = get_originalCommandLineArgumentList();
           string currentFileName = *nameIterator;
+#if 0
+          printf ("In SgProject::parse(): before removeAllFileNamesExcept() file = %s argv = %s \n",
+               currentFileName.c_str(),CommandlineProcessing::generateStringFromArgList(argv,false,false).c_str());
+#endif
           CommandlineProcessing::removeAllFileNamesExcept(argv,p_sourceFileNameList,currentFileName);
-
-       // printf ("In SgProject::parse(): command line for file = %s \n",CommandlineProcessing::generateStringFromArgList(argv,false,false).c_str());
-       // printf ("currentFileName = %s \n",currentFileName.c_str());
-
+#if 0
+          printf ("In SgProject::parse(): after removeAllFileNamesExcept() from command line for file = %s argv = %s \n",
+               currentFileName.c_str(),CommandlineProcessing::generateStringFromArgList(argv,false,false).c_str());
+          printf ("currentFileName = %s \n",currentFileName.c_str());
+#endif
        // DQ (11/13/2008): Removed overly complex logic here!
        // printf ("+++++++++++++++ Calling determineFileType() currentFileName = %s \n",currentFileName.c_str());
           SgFile* newFile = determineFileType(argv, nextErrorCode, this);
@@ -3801,6 +3811,10 @@ CommandlineProcessing::isValidFileWithExecutableFileSuffixes ( string name )
                  // DQ (8/20/2008): We need to allow this to pass, since Qing's command line processing 
                  // mistakenly treats all the arguments as filenames (and most do not exist as valid files).
                  // If we can't open the file then I think we should end in an error!
+                 // ROSE_ASSERT(false);
+
+
+                 // DQ (1/21/2009): This fails for ./binaryReader /home/dquinlan/ROSE/svn-rose/developersScratchSpace/Dan/Disassembler_tests//home/dquinlan/ROSE/svn-rose/developersScratchSpace/Dan/Disassembler_tests/arm-ctrlaltdel
                     ROSE_ASSERT(false);
                   }
 
@@ -5758,6 +5772,9 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& c
                     printf ("Compiler arg %zu: %s\n", i, compilerNameString[i].c_str());
                   }
                printf("End of command line for backend compiler\n");
+
+            // I need the exact command line used to compile the generate code with the backendcompiler (so that I can reuse it to test the generated code).
+               printf ("SgFile::compileOutput(): compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
              }
 
        // Call the backend compiler. For Fortran inputs, if ROSE is configured with Java this can cause the backend fortran compiler to be called.

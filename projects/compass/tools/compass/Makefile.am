@@ -91,7 +91,12 @@ demo_linux:
 #demo_bufferOverflow:
 #	./compassMain $(top_srcdir)/projects/BinQ/buffer2.bin
 
-demo_compassGUI:
+# Note that gzip.c appears to take over ten minutes in the Defuse Analysis (something is wrong here).
+demo_compassGUI_source:
+#	./gui/compassMainGui $(top_srcdir)/developersScratchSpace/Dan/C_tests/gzip.c
+	./gui/compassMainGui $(compass_test_dir)/exampleTest_1.C
+
+demo_compassGUI_binary:
 	./gui/compassMainGui $(top_srcdir)/projects/BinQ/buffer2.bin
 
 demo_compassGUI_compass_binary:

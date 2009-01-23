@@ -46,7 +46,22 @@
            large and unwieldy). The ROSE HTML Reference can also be found at (link to main
            web page): \n
             <a href="./main.html"> ROSE HTML Reference (html version only) </a>. \n
-     - \b ROSE \b Email \b List \n
+     - \b ROSE \b Email \b Lists \n
+           We have three mailing lists for core developers (those who have write access to
+           the internal repository), all developers (anyone who has write access to the
+           internal or external repository) and all users of ROSE (respectively). They are: \n
+           (rose-core *at* nersc *dot* gov), web interface: 
+           <a href="https://mailman.nersc.gov/mailman/listinfo/rose-core"> https://mailman.nersc.gov/mailman/listinfo/rose-core </a> \n
+           (rose-developer *at* nersc *dot* gov), web interface:
+           <a href="https://mailman.nersc.gov/mailman/listinfo/rose-developer"> https://mailman.nersc.gov/mailman/listinfo/rose-developer </a> \n
+           (rose-public *at* nersc *dot* gov), web interface: 
+           <a href="https://mailman.nersc.gov/mailman/listinfo/rose-public"> https://mailman.nersc.gov/mailman/listinfo/rose-public </a> \n
+*/
+
+/*
+     ********** This is the OLd information about ROSE email lists **********
+
+     - \b ROSE \b Email \b Lists \n
            The ROSE project maintains a mailing list (casc-rose *at* llnl *dot* gov).
            The email list is only used to get help and announce internal and external releases.
            Anyone who would like to be on the email list (or removed from it) can send me
@@ -56,4 +71,3 @@
            http://cmg-r.llnl.gov/casc/computing/mailing_lists/casc-rose.html
 
 */
-

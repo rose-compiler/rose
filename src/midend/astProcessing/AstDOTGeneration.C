@@ -150,6 +150,18 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
         }
      string nodelabel=string("\\n")+node->sage_class_name();
 
+  // DQ (1/19/2009): Added support for output of what specific instrcution this is in the dot graph.
+     SgAsmInstruction* genericInstruction = isSgAsmInstruction(node);
+     if (genericInstruction != NULL)
+        {
+       // At the moment the mnemonic name is stored, but it could be computed in the 
+       // future from the kind and the tostring() function.
+          string name = genericInstruction->get_mnemonic();
+          ROSE_ASSERT(name.empty() == false);
+
+          nodelabel += string("\\n") + name;
+        }
+
   // DQ (10/29/2008): Added some support for additional output of internal names for specific IR nodes.
   // In generall there are long list of these IR nodes in the binary and this helps make some sense of 
   // the lists (sections, symbols, etc.).
@@ -159,6 +171,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
        // The case of binary file format IR nodes can be especially confusing so we want the 
        // default to output some more specific information for some IR nodes (e.g. sections).
           string name;
+
           SgAsmGenericSection* genericSection = isSgAsmGenericSection(node);
           if (genericSection != NULL)
              {

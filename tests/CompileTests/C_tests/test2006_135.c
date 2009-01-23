@@ -2,5 +2,11 @@
 struct test_struct
    {
      char c;
+#ifdef __GNUC__
+  // GNU gcc uses "__restrict__"
+     char* __restrict__ p;
+#else
+  // EDG uses "restrict"
      char* restrict p;
+#endif
    } test_struct_var;

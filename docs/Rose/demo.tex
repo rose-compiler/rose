@@ -1,0 +1,1157 @@
+\chapter{ ROSE Demo Introduction }
+\label{demo:chapter_start}
+
+\section{Brief Introduction to ROSE}
+   ROSE is a framework for building compiler-based tools that can 
+automate the analysis and transformation of software (source code or binaries).
+For Source code we support: C, C++, and Fortran.  Initial support for PHP
+is also in place.  Numerous language versions are supported: C89, C99, C++98,
+initial support for C++0x, and for Fortran (F66,F77,F90,F95,F2003).  Also
+OpenMP and UPC are supported.  Unlike most compilers, ROSE preserves a faithful 
+representation of the original source code to support source-to-source (in the 
+same language); so the internal compiler's internal representation (IR) is at a 
+high level, but parts of it are shared between different languages (to avoid 
+unnecessary redundancy).
+
+   ROSE is part of research funded by DOE to support the optimization of High Performance
+Computing (HPC) applications.  As a result ROSE support a number of forms of analysis
+and optimization well suited for general program optimizations (loop optimizations and
+more general optimizations).
+
+   ROSE also handles binaries, specifically the disassembly, representation, analysis 
+and limited transformations.  Binary formats handled in ROSE are: ELF (typically 
+Linux) and PE (MS Windows), and also the required alternative MS Windows formats
+included for compatibility: NE (older Windows format), LE (OS/2), and MS-DOS (DOS).
+Instruction sets supported by the binary research in ROSE are: x86 (Common PC's),
+ARM (commercial embedded software; cell phones, printers, etc.),
+Power-PC (other embedded software; automobiles, network hardware).
+% See Wikipedia for more examples of whare the different processors are used.
+% \fixme{Should we list where the PowerPC chips are used?}
+
+   ROSE supports a number of forms of program analysis and attempts to unify how 
+analysis can be done on both source code and binaries.
+
+\subsection{Brief Introduction to Compass}
+   Compass is an infrastructure built using ROSE but which is specific to static
+analysis of source code and binaries via the specification of rules and the detection
+of violations of those rules.  It is not meant for optimization of software but as a 
+result is simpler to use for the narrower requirements of general static analysis.
+
+\section{Outline of ROSE Demo Guide}
+
+% This is a guide to running the ROSE demo and a description of what it presents.
+
+% \section{Description of Demo}
+
+This demo is assembled from a collection of separate demos of specific parts of
+ROSE (and is tailored to the requirements binary analysis).  Later will will include
+more demos as part of a more uniform representation of source code analysis research in
+ROSE.
+
+{\em Note: We present many representations of data in the demo, they are present to explain
+what is available to users to support automated analysis of software (source code 
+and binaries). The point is not that users would pour over these visualizations of data 
+as a way to discover details about software.  In many cases the visual representations
+presented in this demo are only useful for internal debugging of specific parts of ROSE.
+The Compass tool (and maybe also BinQ when it is further developed) is the only tool 
+that we encourage users to try to use directly.}
+
+The ROSE Demo Guide is separated into two significant parts:
+\begin{enumerate}
+   \item {Chapter 2} \\
+      This is a description of a hunt for a specific vulnerability, using ROSE, in binary.
+      It is part of an ongoing project specific to this vulnerability and the development
+      of a Compass checker to detect it in arbitrary binaries.
+
+   \item {Chapters 3 through 14} \\
+      This is a collection of different demonstrations of parts of the ROSE infrastructure
+    implemented to support
+    general analysis of binaries of different file formats (e.g. Linux and MS Windows) and
+    on different processor instruction sets (e.g. x86, Power-PC, and ARM). The
+    demonstrations cover a wide range of topics specific to binary analysis using ROSE.
+    These demos represent research work over the last two years.
+
+%   \item {Chapter N} \\
+%      Presentation of specific tools built using ROSE to support analysis of binaries.
+%      This chapter will present both Compass and BinQ (an internal tool used to explore
+%      different specific forms of analysis).
+\end{enumerate}
+
+\section{Outline of ROSE Demonstration}
+
+The individual demonstrations are presented in an order to suite the initial review of ROSE:
+\begin{enumerate}
+
+ % This is Robb's most wonderful example using of ROSE.
+   \item {\bf demo\_1: Detecting Unsafe Signal Handlers in Binaries} \\
+      This flaw is a subset of race conditions occurring in signal handler calls which is concerned
+   primarily with memory corruption caused by calls to non-reentrant functions in signal handlers.
+   Non-reentrant functions are functions that cannot safely be called, interrupted, and then recalled
+   before the first call has finished without resulting in memory corruption. The function call syslog()
+   is an example of this. In order to perform its functionality, it allocates a small amount of memory as
+   "scratch space." If syslog() is suspended by a signal call and the signal handler calls syslog(), the
+   memory used by both of these functions enters an undefined, and possibly, exploitable state.
+   This test on the binary is similar to a test on the source code present in Compass
+   (Asynchronous Signal Handler).
+
+   The details of this demo are represented in chapter~\ref{chapter:asynSafeSignalHandleInBinary}.
+
+
+   \item {\bf demo\_2: Support for Linux (ELF) and Windows (PE, also NE, LE, MS-DOS)} \\
+      ROSE works on both Elf and PE formatted binaries and on multiple instruction sets:
+   ARM (typically Elf), Power-PC (typically Elf), and x86 (either Elf or PE).
+   Show disassembly of:
+      \begin{itemize}
+         \item an Linux (x86 Elf) executable (with and without the instructions), 
+         \item an ARM (Elf) executable (with and without the instructions), 
+         \item and an MS Windows executable (x86 PE) (with and without the instructions).
+      \end{itemize}
+   The demo builds a number of dot files representing the graphs held in memory and made
+   available for program analysis. ROSE support the specification of program analysis
+   on the graphs via predefined traversals (described in detail in the ROSE Tutorial).
+   These files will be visualized using zgrviewer. We will see more x86 (Elf) examples 
+   and also a Power-PC example later in the demo (See chapter \ref{chapter:binaryTranslationToSource}).
+
+   An ASCII formated file is also output from the reading of each binary, {\em *.dump}
+   files.  These files contain all the information help in the AST and are mostly useful
+   for internal debugging.  The IR nodes shown in the visualizations of the AST contain 
+   this data (much more than is shown in the visualization).
+
+   {\em After the disassembly and construction of the binary AST, the information in the AST 
+   is used to reassemble an new binary, and a byte-wise file comparison is done to verify
+   that it is identical to the original input binary.}
+
+
+   \item {\bf demo\_3: Binary Analysis Demo running separate forms of analysis} \\
+      ROSE contains program analysis to describe the behavior of binaries.  Specifically
+   this demo shows the use of BinQ and program used to support the development of
+   different forms of program analysis on binaries, here we show the generation of:
+      \begin{itemize}
+         \item the {\em "Binary Call Graph"} which generates the file {\em "callgraph.dot"},
+         \item the {\em "Control Flow Graph"} which generates the file {\em "cfg.dot"},
+         \item and the {\em "Data Flow Graph"} which generates the file {\em "dfg.dot"}
+      \end{itemize}
+   These files will be visualized using {\bf zgrviewer}.
+
+
+   \item {\bf demo\_4: Binary analysis Demo (buffer overflow)} \\
+      Buffer overflows are a common sort of vulnerability introduced in application
+   programs and not checked by compilers of runtime systems for most languages 
+   (e.g. C and C++).  This demo show the detection of one specific flavor of buffer 
+   overflow in a binary.
+
+
+   \item {\bf demo\_5: Binary analysis Demo (more complex buffer overflow)} \\
+      This buffer overflow example is not caught by the checker in demo\_4, and would require 
+   additional analysis (specifically type analysis) to support its detection. 
+
+
+   \item {\bf demo\_6: Comparing ROSE vs. IDAPro (on same 32-bit example)} \\
+      This work uses a database of the results from IDA Pro built as part of
+   collaborations with other researchers. This work allows us to compare our results with
+   IDA Pro.
+
+
+   \item {\bf demo\_7: Compass on binary file (text mode)} \\
+      Compass can be run on both source code and binaries to detect the violation of
+   rules that can be on implemented by users. This demo show the results of running 
+   Compass on a binary file and the output in text mode.
+
+
+   \item {\bf demo\_8: Compass on source code using GUI interface} \\
+      There are two tests that demonstrate compass, the first is a source code and
+   the second is a binary; (demo\_8a and demo\_8b, respectively).
+
+
+   \item {\bf demo\_9: Show construction of Compass checker (using gen\_checker.sh)} \\
+      This demo shows the construction of Compass checker (using gen\_checker.sh).
+   The constructed checker has default behavior, but is a valid check that can be filled in with
+   vulnerability specific analysis, using existing analysis in ROSE, etc. The final
+   edited files are tar'd up as a directory and submitted to Compass for verification
+   (both automatic and manual verification of the checker is required) and then inserted into
+   Compass.
+
+
+   \item {\bf demo\_10: Translation of Binary to Source Code (Power-PC example)} \\
+      The demo shows the translation of a binary into a low level representation to support general 
+   instruction set independent analysis.  Also demonstrated disassemble and semantic analysis of 
+   Power-PC instruction set.  The semantic analysis of binaries is supported for x86 and Power-PC
+   (but not yet for ARM).
+
+
+   \item {\bf demo\_11: Demo of Binary File Compare (Binary File Format)} \\
+      This demo evaluates the differences between two binaries generated from the same source
+   file, one with debugging information (compiled using {\em -g} option) and the other
+   without any debugging information.
+
+
+   \item {\bf demo\_12: Demo of Binary File Compare (Instructions)} \\
+      This demo evaluates the differences between two binaries generated from the same
+   source file, one without optimization and the other with optimization (compiled using
+   {\em -O3} option) and the other without any debugging information.
+
+
+   \item {\bf demo\_13: Compass on Large Projects} \\
+      This demo shows how a data base is built (before running Compass) and then used with
+   Compass to define a project with many files (this example shows the use of only a dozen
+   files).
+
+
+   \item {\bf demo\_13: Static Binary Rewriting} \\
+      This demo shows the addition of a named section to an existing binary file.  The to
+   support this the section table of names is edited and an additional name added, this
+   causes the entire binary to be offset by the length of the name (and it's null
+   terminator).  A new section is added to the binary with some random data. All the 
+   stored offsets in the binary must be recomputed and reset as part of the final
+   regeneration of the binary as and executable with extra data.
+
+% template for more demos
+%   \item {\bf xxx} \\
+
+\end{enumerate}
+
+
+
+\chapter{demo\_1: Detecting Unsafe Signal Handlers in Binaries}
+\label{chapter:asynSafeSignalHandleInBinary}
+
+Reference: Mitre Common Weakness Enumeration (CWE) 479\\
+{\bf http://cwe.mitre.org/data/definitions/479.html}
+
+This flaw is a subset of race conditions occurring in signal handler calls which is
+concerned primarily with memory corruption caused by calls to non-reentrant functions
+in signal handlers. Non-reentrant functions are functions that cannot safely be
+called, interrupted, and then recalled before the first call has finished without
+resulting in memory corruption. The function call syslog() is an example of this. In
+order to perform its functionality, it allocates a small amount of memory as "scratch
+space." If syslog() is suspended by a signal call and the signal handler calls
+syslog(), the memory used by both of these functions enters an undefined, and
+possibly, exploitable state.
+
+We've written an analysis tool that evaluates a binary executable (not source code),
+performing the following actions:
+\begin{enumerate}
+   \item Detects calls to dynamically-linked C library functions that register signal handlers and attempts to determine the entry points of all potential signal handlers.
+   \item Builds a function call graph for each potential signal handler.
+   \item Finds all potential calls to dynamically-linked functions and determines the names of those functions.
+   \item Consults a list of known async-signal-safe standard C functions and reports warnings for calls to functions not on that list.
+\end{enumerate}
+
+We deviate from CWE-479 in these ways:
+\begin{itemize}
+   \item We use a function call graph to detect both direct and indirect calls to unsafe functions.
+   \item We use the somewhat more strict »async-signal-safe… rather than »reentrant… condition.
+\end{itemize}
+
+We don't yet handle:
+\begin{itemize}
+   \item Registering signal handlers with sigaction
+   \item Calls to signal with a non-constant signal-handler argument.
+   \item Both of these cases are relatively common and will require an implementation of constant propagation in ROSE. See notes at the end of this document for more info.
+\end{itemize}
+
+\begin{verbatim}
+Example code:
+ 1  /* Signal handler set directly using signal() */
+ 2  
+ 3  #include <signal.h>
+ 4  #include <stdio.h>
+ 5  #include <stdlib.h>
+ 6  #include <unistd.h>
+ 7  
+ 8  int ncaught;
+ 9  
+10  void
+11  bar() {
+12      puts("Hello, world.\n");    /* this unsafe call should be reported as foo->bar->puts */
+13  }
+14  
+15  void
+16  foo() {
+17      bar();
+18      _exit(0);                   /* this is a safe call */
+19  }
+20  
+21  void
+22  handler(int signo)
+23  {
+24      ncaught++;
+25      foo();
+26      foo();                      /* only one set of warnings is emitted */
+27      signal(SIGUSR1, handler);   /* re-arm handler, but check handler() once, not twice */
+28  }
+29  
+30  int
+31  main() 
+32  {
+33      signal(SIGUSR1, handler);
+34      return 0;
+35  }
+\end{verbatim}
+Listing 1: developersScratchSpace/Robb/DynamicLinking/test1.c
+
+The handler is registered at line 33 and is called handler. The signal handler makes three
+calls to dynamically linked standard library functions: signal at line 27, {\tt \_exit} at
+line 18, and puts at line 12.  The puts call is of interest because it is not
+async-signal-safe. Furthermore, it is somewhat difficult to detect since it's not
+called directly by the signal handler.
+
+Disassembly of the non-optimized, non-stripped example code shows a very simple,
+straightforward translation to assembly. Function boundaries are easily obtained,
+names are available from the symbol table, and the functions and function calls follow
+a regular pattern.
+
+
+\begin{verbatim}
+0000000000400590 <bar>:
+  400590:       55                      push   %rbp
+  400591:       48 89 e5                mov    %rsp,%rbp
+  400594:       bf f8 06 40 00          mov    $0x4006f8,%edi
+  400599:       e8 0a ff ff ff          callq  4004a8 <puts@plt>
+  40059e:       c9                      leaveq 
+  40059f:       c3                      retq   
+00000000004005a0 <foo>:
+  4005a0:       55                      push   %rbp
+  4005a1:       48 89 e5                mov    %rsp,%rbp
+  4005a4:       b8 00 00 00 00          mov    $0x0,%eax
+  4005a9:       e8 e2 ff ff ff          callq  400590 <bar>
+  4005ae:       bf 00 00 00 00          mov    $0x0,%edi
+  4005b3:       e8 10 ff ff ff          callq  4004c8 <_exit@plt>
+00000000004005b8 <handler>:
+  4005b8:       55                      push   %rbp
+  4005b9:       48 89 e5                mov    %rsp,%rbp
+  4005bc:       48 83 ec 10             sub    $0x10,%rsp
+  4005c0:       89 7d fc                mov    %edi,-0x4(%rbp)
+  4005c3:       8b 05 73 0a 20 00       mov    0x200a73(%rip),%eax        # 60103c <ncaught>
+  4005c9:       ff c0                   inc    %eax
+  4005cb:       89 05 6b 0a 20 00       mov    %eax,0x200a6b(%rip)        # 60103c <ncaught>
+  4005d1:       b8 00 00 00 00          mov    $0x0,%eax
+  4005d6:       e8 c5 ff ff ff          callq  4005a0 <foo>
+  4005db:       b8 00 00 00 00          mov    $0x0,%eax
+  4005e0:       e8 bb ff ff ff          callq  4005a0 <foo>
+  4005e5:       be b8 05 40 00          mov    $0x4005b8,%esi
+  4005ea:       bf 0a 00 00 00          mov    $0xa,%edi
+  4005ef:       e8 e4 fe ff ff          callq  4004d8 <signal@plt>
+  4005f4:       c9                      leaveq 
+  4005f5:       c3                      retq   
+00000000004005f6 <main>:
+  4005f6:       55                      push   %rbp
+  4005f7:       48 89 e5                mov    %rsp,%rbp
+  4005fa:       be b8 05 40 00          mov    $0x4005b8,%esi
+  4005ff:       bf 0a 00 00 00          mov    $0xa,%edi
+  400604:       e8 cf fe ff ff          callq  4004d8 <signal@plt>
+  400609:       b8 00 00 00 00          mov    $0x0,%eax
+  40060e:       c9                      leaveq 
+  40060f:       c3                      retq   
+\end{verbatim}
+Listing 2: Compiled as gcc -O0 test1.c
+
+The current (work-in-progress) output from the checker for the unoptimized, non-stripped executable is:
+
+\begin{verbatim}
+(rose-trunk) matzke@work DynamicLinking $ ./binaryAsyncSignalHandler a.out
+/lt-binaryAsyncSignalHandler: disassembling...
+/lt-binaryAsyncSignalHandler: scanning for ELF File Header...
+0x0040049e: jmp instruction doesn't have a value expression.
+0x004004a8: jmp instruction doesn't have a value expression.
+0x004004b8: jmp instruction doesn't have a value expression.
+0x004004c8: jmp instruction doesn't have a value expression.
+0x004004d8: jmp instruction doesn't have a value expression.
+0x0040052c: call instruction doesn't have a value expression.
+0x0040054e: call instruction doesn't have a value expression.
+0x00400589: jmp instruction doesn't have a value expression.
+0x0040067c: call instruction doesn't have a value expression.
+0x004006cb: call instruction doesn't have a value expression.
+/lt-binaryAsyncSignalHandler: found 8 function definitions
+0x00400480-0x004004f0: defn=0x7f9f8ff48010 sym=0x7f9f900771d0 <_init>
+0x004004f0-0x00400590: defn=0x7f9f8ff480a0 sym=0x7f9f90076720 <_start>
+0x00400590-0x004005a0: defn=0x7f9f8ff48130 sym=0x7f9f900767b0 <bar>
+0x004005a0-0x004005b8: defn=0x7f9f8ff481c0 sym=0x7f9f90076cc0 <foo>
+0x004005b8-0x004005f6: defn=0x7f9f8ff48250 sym=0x7f9f90076840 <handler>
+0x004005f6-0x00400610: defn=0x7f9f8ff482e0 sym=0x7f9f90077140 <main>
+0x00400610-0x00400612: defn=0x7f9f8ff48370 sym=0x7f9f90076690 <__libc_csu_fini>
+0x00400620-0x004006aa: defn=0x7f9f8ff48400 sym=0x7f9f90076e70 <__libc_csu_init>
+/lt-binaryAsyncSignalHandler: scanning instructions in 0x004004f0 to 0x004006e4 (.text section)
+/lt-binaryAsyncSignalHandler: found 5 dynamic calls
+0x004005ef call signal()
+0x00400604 call signal()
+/lt-binaryAsyncSignalHandler: found 1 potential signal handler
+0x004005b8: signal handler handler()
+  possible unsafe call to foo->bar->puts
+\end{verbatim}
+Listing 3: Checker output for unoptimized, non-stripped executable
+
+The main thing to note is the final line of output, indicating that the unsafe function
+puts is called from bar, which was called by foo, which was called by the signal
+handler, handler.
+
+Stripping the executable of its symbol tables (strip a.out) is a very common occurrence
+for installed software. A stripped executable is more difficult to analyze because one
+cannot determine function boundaries by looking at symbol table entries. We are very
+close to being able to determine function boundaries using alternative methods,
+including analyzing branch relationships between basic blocks.
+
+The optimized, non-stripped executable:
+\begin{verbatim}
+0000000000400590 <main>:
+  400590:       48 83 ec 08             sub    $0x8,%rsp
+  400594:       be e0 05 40 00          mov    $0x4005e0,%esi
+  400599:       bf 0a 00 00 00          mov    $0xa,%edi
+  40059e:       e8 35 ff ff ff          callq  4004d8 <signal@plt>
+  4005a3:       31 c0                   xor    %eax,%eax
+  4005a5:       48 83 c4 08             add    $0x8,%rsp
+  4005a9:       c3                      retq   
+  4005aa:       66 0f 1f 44 00 00       nopw   0x0(%rax,%rax,1)
+00000000004005b0 <foo>:
+  4005b0:       bf e8 06 40 00          mov    $0x4006e8,%edi
+  4005b5:       48 83 ec 08             sub    $0x8,%rsp
+  4005b9:       e8 ea fe ff ff          callq  4004a8 <puts@plt>
+  4005be:       31 ff                   xor    %edi,%edi
+  4005c0:       e8 03 ff ff ff          callq  4004c8 <_exit@plt>
+  4005c5:       66 66 2e 0f 1f 84 00    nopw   %cs:0x0(%rax,%rax,1)
+  4005cc:       00 00 00 00 
+00000000004005d0 <bar>:
+  4005d0:       bf e8 06 40 00          mov    $0x4006e8,%edi
+  4005d5:       e9 ce fe ff ff          jmpq   4004a8 <puts@plt>
+  4005da:       66 0f 1f 44 00 00       nopw   0x0(%rax,%rax,1)
+00000000004005e0 <handler>:
+  4005e0:       48 83 ec 08             sub    $0x8,%rsp
+  4005e4:       bf e8 06 40 00          mov    $0x4006e8,%edi
+  4005e9:       ff 05 4d 0a 20 00       incl   0x200a4d(%rip)        # 60103c <ncaught>
+  4005ef:       e8 b4 fe ff ff          callq  4004a8 <puts@plt>
+  4005f4:       31 ff                   xor    %edi,%edi
+  4005f6:       e8 cd fe ff ff          callq  4004c8 <_exit@plt>
+  4005fb:       90                      nop    
+  4005fc:       90                      nop    
+  4005fd:       90                      nop    
+  4005fe:       90                      nop    
+  4005ff:       90                      nop    
+\end{verbatim}
+Listing 4: Compiled as gcc -O3 test1.c
+
+Some things to note about the optimized version are:
+\begin{itemize}
+   \item The foo and bar functions are in-lined into handler, but remain as stand alone functions due to the fact that they're externally visible (i.e., not declared static)
+   \item Function prologues and epilogues no longer follow a simple pattern. In fact, the bar function has neither.
+   \item Function calls don't always use the call instruction. The call to puts at 0x405d5 is such an example: since bar didn't adjust the stack frame, the return in puts will return to bar's caller.
+   \item Function calls that are known to not return, at first glance appear to fall off the end of the function. For example, the call at 0x4005c0 doesn't ever return, thus foo doesn't need to contain a function epilogue.
+\end{itemize}
+
+Again, we can detect function boundaries by consulting the symbol table, and thus build a function call graph. Here's the analysis output:
+\begin{verbatim}
+(rose-trunk) matzke@work DynamicLinking $ ./binaryAsyncSignalHandler a.out
+/lt-binaryAsyncSignalHandler: disassembling...
+/lt-binaryAsyncSignalHandler: scanning for ELF File Header...
+0x0040049e: jmp instruction doesn't have a value expression.
+0x004004a8: jmp instruction doesn't have a value expression.
+0x004004b8: jmp instruction doesn't have a value expression.
+0x004004c8: jmp instruction doesn't have a value expression.
+0x004004d8: jmp instruction doesn't have a value expression.
+0x0040052c: call instruction doesn't have a value expression.
+0x0040054e: call instruction doesn't have a value expression.
+0x00400589: jmp instruction doesn't have a value expression.
+0x0040066c: call instruction doesn't have a value expression.
+0x004006bb: call instruction doesn't have a value expression.
+/lt-binaryAsyncSignalHandler: found 6 function definitions
+0x00400480-0x004004f0: defn=0x7f4028efb010 sym=0x7f402902a1d0 <_init>
+0x004004f0-0x00400590: defn=0x7f4028efb0a0 sym=0x7f4029029720 <_start>
+0x00400590-0x004005aa: defn=0x7f4028efb130 sym=0x7f402902a140 <main>
+0x004005e0-0x004005fb: defn=0x7f4028efb1c0 sym=0x7f4029029840 <handler>
+0x00400600-0x00400602: defn=0x7f4028efb250 sym=0x7f4029029690 <__libc_csu_fini>
+0x00400610-0x0040069a: defn=0x7f4028efb2e0 sym=0x7f4029029e70 <__libc_csu_init>
+/lt-binaryAsyncSignalHandler: scanning instructions in 0x004004f0 to 0x004006d4 (.text section)
+/lt-binaryAsyncSignalHandler: found 6 dynamic calls
+0x0040059e call signal()
+/lt-binaryAsyncSignalHandler: found 1 potential signal handler
+0x004005e0: signal handler handler()
+  possible unsafe call to puts
+\end{verbatim}
+Listing 5: Checker output for optimized, non-stripped executable
+
+Note that the call site for puts is reported as being in handler rather than bar. The puts call in bar is not reported at all since it cannot be reached from the signal handler.
+
+Future work:
+\begin{itemize}
+   \item Better detection of function boundaries when symbol tables are not present in the executable. This work should be completed in the next couple days.
+   \item Ability to track constant propagation to handle the case where the argument to signal is supplied in function arguments. This is a common occurrence since signal semantics are somewhat variable across platforms and source code accommodates that by using a wrapper functions whose action is determined at compile time through macros and conditional compilation. By runtime the wrapper has usually degenerated to something fairly simple:
+      \begin{verbatim}
+         void signal_wrapper(int signum, sighandler_t func) {
+         signal(signum, func);
+         }
+      \end{verbatim}
+   \item Ability to detect signal handlers registered with sigaction. This is important because most modern codes use this more standardized call rather than signal. What makes this difficult for analysis is that the signal handler is supplied as a pointer in a pointed-to struct.
+   \item Ability to detect signal registration in statically linked and statically linked stripped
+    executables. In these cases there is no obvious call to signal or sigaction but we
+    should be able to detect them via code signatures or by looking for the actual Linux
+    syscall that those two functions eventually execute.
+\end{itemize}
+
+% This chapter organization permits us to later put in figures to represent screen shots
+% of the different things seen in the demo (later).
+
+
+\chapter{demo\_2: Support for Linux (ELF) and Windows (PE, also NE, LE, MS-DOS)}
+\label{chapter:fileFormatsAndInstructionSets}
+
+   ROSE works on both Elf and PE formatted binaries and on multiple instruction sets:
+ARM (typically Elf), Power-PC (typically Elf), and x86 (either Elf or PE).
+Show disassembly of:
+\begin{itemize}
+   \item an Linux (x86 Elf) executable (with and without the instructions), 
+   \item an ARM (Elf) executable (with and without the instructions), 
+   \item and an MS Windows executable (x86 PE) (with and without the instructions).
+\end{itemize}
+   The demo builds a number of dot files representing the graphs held in memory and made
+available for program analysis. ROSE support the specification of program analysis
+on the graphs via predefined traversals {\em (described in detail in the ROSE Tutorial)}.
+The {\em *.dot} files will be visualized using zgrviewer. We will see more x86 (Elf) examples 
+and also a Power-PC example later in the demo.
+
+   An ASCII formated file is also output from the reading of each binary, {\em *.dump}
+files.  These files contain all the information help in the AST and are mostly useful
+for internal debugging.  The IR nodes shown in the visualizations of the AST contain 
+this data (much more than is shown in the visualization).
+
+% This chapter organization permits us to later put in figures to represent screen shots
+% of the different things seen in the demo (later).
+
+
+\chapter{demo\_3: Binary Analysis Demo (running separate forms of analysis)}
+\label{chapter:binaryAnalysisGraphs}
+
+   ROSE contains program analysis to describe the behavior of binaries.  Specifically
+this demo shows the use of BinQ and program used to support the development of
+different forms of program analysis on binaries, here we show the generation of:
+\begin{itemize}
+   \item the {\em "Binary Call Graph"} which generates the file {\em "callgraph.dot"},
+   \item the {\em "Control Flow Graph"} which generates the file {\em "cfg.dot"},
+   \item and the {\em "Data Flow Graph"} which generates the file {\em "dfg.dot"}
+\end{itemize}
+   These files will be visualized using zgrviewer:
+
+   This demo shows the results of running three different forms of analysis, the demo
+will open in the BinQ program (GUI interface) and the user (whoever is running the demo)
+is required to click on the {\bf Binary Call Graph Analysis} and click {\bf run}, then 
+click on the {\bf Control Flow Analysis} and click {\bf run}, then click on the 
+{\bf Data Flow Analysis} and click {\bf run}, then click on {\bf Quit}.  The
+{\bf zgrviewer} program will then be run on the generated files and they can be discussed.
+\begin{itemize}
+   \item {\bf "callgraph.dot"} \\
+     This shows the call graph of the functions identified in the binary.  The functions
+    have names because they are either available via dll names (which are not stripped)
+    or because they correspond to existing symbols (which could be stripped; in which case
+    the function names are lost). 
+\fixme{Need to lookup what the colors mean.}
+     Colors: (???)
+
+     Note that the function {\em main} is not called directly since 
+    {\em "\_\_lib\_start\_main()"} calls {\em "main"} and we
+     don't see the dynamically linked library functions in the dynamic library  (future work).
+
+   \item {\bf "cfg.dot"} \\
+     This shows the control flow graph of the instructions (and their basic blocks) in the
+     binary. Colors in the graph are:
+      \begin{itemize}
+         \item Yellow (normal instructions)
+         \item Green nodes and edges (conditional branches) 
+         \item Dark Purple (Functions starts)
+         \item Light Purple nodes (function calls and returns)
+         \item Blue edges (returns)
+         \item Red edges (calls)
+         \item Yellow edges (next instruction in sequence without control flow)
+      \end{itemize}
+
+   \item {\bf "dfg.dot"} \\
+     This shows the data flow graph, specific where registers are assigned values and
+     where they are used. Colors of edges are the same as in the CFG, colors of nodes
+     in the graph are:
+      \begin{itemize}
+         \item Yellow nodes (unreachable instructions; as computed using intra-procedural 
+            analysis; inter-procedural analysis is more complex and not demoed)
+         \item Red nodes (Moves into memory; e.g. non-register moves)
+         \item Green (all other nodes)
+      \end{itemize}
+\end{itemize}
+
+
+\chapter{demo\_4: Binary analysis Demo (buffer overflow)}
+\label{chapter:simpleBufferOverflow}
+
+   Buffer overflows are a common sort of vulnerability introduced in application
+programs and not checked by compilers of runtime systems for most languages 
+(e.g. C and C++).  This demo show the detection of one specific flavor of buffer 
+overflow in a binary.
+
+\begin{verbatim}
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(int argc, char* argv) {
+  int* arr = (int*) malloc( sizeof(int)*10);
+
+  int i=0;
+  for (i=0; i<10;++i) {
+    arr[i]=5;
+  }
+  int x = arr[12];
+}
+\end{verbatim}
+
+This demo runs a predefined (hard coded) collection of analysis algorithms as part of
+the startup (the output is):
+\begin{verbatim}
+Running analysis : Binary Dynamic Info
+Running analysis : Data Flow Graph
+Running analysis : Forbidden Function Call
+Running analysis : Forbidden Function Call   time : 0.001724   Problems : 0
+Running analysis : Malloc needs Free
+Found malloc in function main
+Running analysis : Malloc needs Free   time : 0.001513   Problems : 1 malloc() called but no free() found:  (  4004bc) : call   0x4003e0  <malloc> <malloc>  in function: main
+Running analysis : Null After Free
+Running analysis : Null After Free   time : 0.00143099   Problems : 0
+Running analysis : Init Pointer to Null
+Running analysis : Init Pointer to Null   time : 0.0015769   Problems : 0
+Running analysis : Complexity Metric
+Running analysis : Complexity Metric   time : 0.00144196   Problems : 0
+Running analysis : Buffer Overflow Analysis
+Dataflow analysis run before ... 
+\end{verbatim}
+
+   Using the analysis results accumulated in the prerequisite analysis, the buffer overflow
+analysis can be run.  The output from this analysis is:
+\begin{verbatim}
+Running analysis : Buffer Overflow Analysis   time : 0.0040741   Problems : 1
+\end{verbatim}
+
+
+   This demo shows the results of a number of properties of the target binary.
+A few of these are:
+\begin{enumerate}
+
+   \item A {\bf malloc} function call in function {\bf main} has no associated call to
+         function {\bf free} (must use the same pointer variable as returned from the 
+         {\bf malloc} function call and the variable must not have been redefined).
+
+   \item A buffer overflow of the array allocated by the malloc
+         The access of the 12th array element exceeds the size of the length 10 array.
+         The checker reports that the byte 48 exceeds the bound of the array at byte 40.
+         The result of the detection of the buffer overflow analysis includes the
+         address of the instruction where it occurs.  
+
+   \item This demo also shows that we can associate function name with function calls
+         See that function call at address 4004bc is a call to "malloc"
+         This analysis is done by the "BinaryDynamicInfo"
+
+   \item Note that forbidden function analysis searches for the existence of the following
+        functions:
+           "vfork",
+           "sprintf",
+           "scanf",
+           "sscanf",
+           "gets",
+           "strcpy",
+           "\_mbscpy",
+           "lstrcat",
+           "memcpy",
+           "strcat",
+           "rand",
+           "rewind",
+           "atoi",
+           "atol",
+           "atoll", and
+           "atof".
+        These functions, if present in the binary, are reported.
+\end{enumerate}
+
+\fixme{Add a demo specific to the forbidden function analysis.}
+
+% This chapter organization permits us to later put in figures to represent screen shots
+% of the different things seen in the demo (later).
+
+
+\chapter{demo\_5: Binary analysis Demo (more complex buffer overflow)}
+\label{chapter:complexBufferOverflow}
+
+   This buffer overflow example is not caught by the checker in demo\_4, and would require 
+additional analysis (specifically type analysis) to support its detection. In this
+case the type analysis is only to determine the size and so is is simpler than a 
+more complete binary type analysis (e.g. to distinguish between signed and unsigned
+values in registers or memory).
+
+\begin{figure}[!hbp]
+{\indent
+{\mySmallFontSize
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\BinQExampleDirectory/bufftest.c}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\BinQExampleDirectory/bufftest.c}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example showing buffer overflow that requires type analysis.}
+\label{figure:moreComplexBufferOverflowExample}
+\end{figure}
+
+The figure \ref{figure:moreComplexBufferOverflowExample} shows how a integer
+array is allocated to be length 5 and the first and second 4-byte integers are
+read from the array.  The first 4-byte read is not a problem, but the second
+4-byte read extends 3-byte over the boundary of the array.  Since this is
+a buffer overflow of only the last part of the integer, but not the first
+byte of the 4-byte integer, we don't presently detect it as a buffer overflow.
+There are upwards of a hundred different types of buffer overflows and 
+significant work would have to be done to detect them all, but it is 
+quite reasonable to do.
+
+
+
+\chapter{demo\_6: Comparing ROSE vs. IDA-Pro (on same 32-bit example)}
+\label{chapter:comparingROSEvsIDAPro}
+
+   Notice that the disassembly using ROSE is slightly different. This work uses
+a database of the results from IDA Pro built as part of collaborations with 
+other researchers. This demo does not run IDA Pro, that data based was previously 
+constructed.  In this demo the "Binary Dynamic Info" analysis can be run to 
+fill in names of functions (e.g. the call to "malloc" in main).  This work allows us
+to compare our results with IDA Pro.  In some cases we have confirmed IDA Pro
+bugs using this technique (data flow in IDA is not very sophisticated and appears
+to only look locally for values independent of conditional branches).
+
+   Although it is a later demo, it is interesting to run the {\bf BinaryDiff} 
+analysis and see how ROSE differs from IDA Pro on the function {\bf main}
+in the binary.  Notice the for the same instruction ROSE disassembles it
+as an {\bf add} instruction and IDA Pro disassembles it as an increment
+instruction {\bf inc} (the two are the same).
+
+% This chapter organization permits us to later put in figures to represent screen shots
+% of the different things seen in the demo (later).
+
+
+\chapter{demo\_7: Compass on binary file (text mode)}
+\label{chapter:compassOnBinaryInTextMode}
+
+   Compass can be run on both source code and binaries to detect the violation of
+rules that can be on implemented by users. This demo show the results of running 
+Compass on a binary file and the output in text mode. There are three binary specific
+checkers in compass:
+\begin{enumerate}
+   \item Loop detector (on binary)
+   \item Statics on instruction frequency
+   \item Unparser (for instructions)
+\end{enumerate}
+
+   These checkers have been used to test the internal support for writing Compass checkers
+on binaries and validate this support.  Compass work started first on source code and
+has migrated to handling both source code and binaries.  Initial work in Compass also
+focused on checkers built using the AST, this has been broadened to include checkers
+that can be expressed on the AST and any other form of internal graph result from 
+the program analysis work in ROSE.
+
+   The first part of this demo {\bf demo\_7a} runs compass on the compass binary (about
+100K in size, not stripped). The output is in text form to support general handling of
+detected violations or detected software features (on of several output formats of Compass).
+The second part of this demo {\bf demo\_7b} runs compass on the linux "ls" binary (about
+80K in size, stripped).
+
+The output of the loop detector in the run using Compass (without the GIU interface) is:
+% Loop Detection (make demo_small):
+\begin{verbatim}
+    Running checker CycleDetection 
+    Found a cycle between  x86_jne (  40ac1a) and x86_mov (  40ac04)
+    Found a cycle between  x86_call (  40b4a9) and x86_leave (  40b4ae)
+    Found a cycle between  x86_mov (  40956a) and x86_mov (  40956e)
+    Found a cycle between  x86_jne (  409579) and x86_mov (  409562)
+    Found a cycle between  x86_mov (  409594) and x86_mov (  409598)
+    Found a cycle between  x86_jne (  4095a3) and x86_mov (  40958c)
+    Found a cycle between  x86_jne (  40cd7c) and x86_call (  40cd71)
+    Found a cycle between  x86_call (  40b6a6) and x86_leave (  40b6ab)
+    Found a cycle between  x86_call (  409772) and x86_leave (  409774)
+    Found a cycle between  x86_call (  40b02e) and x86_leave (  40b033)
+    Found a cycle between  x86_jne (  40a538) and x86_mov (  40a522)
+    Found a cycle between  x86_jne (  40af66) and x86_mov (  40af2a)
+    Found a cycle between  x86_call (  40ad61) and x86_leave (  40ad66)
+    Found a cycle between  x86_jne (  40852a) and x86_add (  408510)
+    Found a cycle between  x86_call (  40851b) and x86_mov (  40851d)
+    Found a cycle between  x86_call (  40b15e) and x86_leave (  40b163)
+    Found a cycle between  x86_jne (  40bb28) and x86_mov (  40bb09)
+    Found a cycle between  x86_call (  409cd0) and x86_leave (  409cd2)
+    Found a cycle between  x86_jne (  40b384) and x86_mov (  40b348)
+    Found a cycle between  x86_jg (  40a8b4) and x86_stosq (  40a893)
+    Found a cycle between  x86_call (  40b4fa) and x86_leave (  40b4ff)
+\end{verbatim}
+
+
+The output of the instruction frequency counter in the run using Compass (without the GIU interface) is:
+% Fragments of some of the output presents is: Instruction frequency (make demo_linux):
+\begin{verbatim}
+    Running checker BinPrintAsmInstruction 
+    running binPrintAsmInstuction checker... 
+    x86_mov:6160 
+    x86_call:917 
+    x86_jmp:798 
+    x86_add:775 
+    x86_cmp:687 
+    x86_pop:685 
+    x86_sysenter:649 
+    x86_punpckldq:629 
+    x86_lea:591 
+    x86_je:589 
+    x86_stosq:358 
+    x86_jne:303 
+    x86_xchg:247 
+    x86_rep_stosd:212 
+    x86_nop:176 
+    x86_movzx:119 
+    x86_jae:101 
+    x86_ja:82 
+    x86_and:77 
+    x86_jbe:58 
+    x86_or:52 
+\end{verbatim}
+
+For each instruction the representation can be output, this is useful for
+reporting details of violations of rules and internal debugging.  This a 
+fragment of the output from the {\bf \_fini} function in the binary (binaries
+written by compilers typically have this function in their binary). 
+The output appears as:
+% Unparsing of instructions (make demo_linux):
+\begin{verbatim}
+    Running checker BinPrintAsmFunctions 
+    running binary checker: binPrintAsmFunctions 
+    ******** function : _fini ********** 
+    ******** block  ********** 
+    8057044  1    55                       push   ebp
+    8057045  2    89 e5                    mov    ebp, esp
+    8057047  1    53                       push   ebx
+    8057048  1    e8                       call   0x805704d  <_fini>
+    ******** block  ********** 
+    805704d  1    5b                       pop    ebx
+    805704e  4    81 c3 23 45              add    ebx, 0x4523
+    8057054  1    50                       push   eax
+    8057055  5    e8 de 2c ff ff           call   0x8049d38  <_init>
+    ******** block  ********** 
+    805705a  1    59                       pop    ecx
+    805705b  1    5b                       pop    ebx
+    805705c  1    c9                       leave  
+    805705d  1    c3                       ret    
+    ******** block  ********** 
+    805705e  0                             add    BYTE PTR ds:[eax], al
+\end{verbatim}
+
+
+\chapter{demo\_8: Compass on source code and binary using GUI interface}
+\label{chapter:compassOnSourceCodeAndBinaryInGuiMode}
+   There are two tests that demonstrate compass, the first is a source code and
+the second is a binary; (demo\_8a and demo\_8b, respectively).
+
+
+\chapter{demo\_9: Show construction of Compass checker (using gen\_checker.sh)}
+\label{chapter:buildCompassChecker}
+
+   This demo shows the construction of Compass checker (using gen\_checker.sh).
+The constructed checker has default behavior, but is a valid check that can be filled in with
+vulnerability specific analysis, using existing analysis in ROSE, etc. The final
+edited files are tar'd up as a directory and submitted to Compass for verification
+(both automatic and manual verification of the checker is required) and then inserted into
+Compass.
+
+The command to build a checker in any directory is:
+\begin{verbatim}
+  <path to ROSE directory>/projects/compass/src/compass_scripts/gen_checker.sh buffer overflow checker
+\end{verbatim}
+This command will build a subdirectory with name {\bf bufferOverflowChecker} and 
+populate that directory with the files:
+\begin{verbatim}
+tux270.llnl.gov{dquinlan}359: ls -l bufferOverflowChecker/
+total 136
+-rw-rw-r--  1 dquinlan dquinlan  3895 Jan 19 18:27 bufferOverflowChecker.C
+-rw-rw-r--  1 dquinlan dquinlan  1480 Jan 19 18:27 bufferOverflowCheckerDocs.tex
+-rw-rw-r--  1 dquinlan dquinlan   282 Jan 19 18:27 bufferOverflowChecker.inc
+-r--r--r--  1 dquinlan dquinlan   252 Jan 19 18:27 bufferOverflowCheckerMain.C
+-rw-rw-r--  1 dquinlan dquinlan    35 Jan 19 18:27 bufferOverflowCheckerTest1.C
+-rw-rw-r--  1 dquinlan dquinlan 33085 Jan 19 18:27 compass.C
+-rw-rw-r--  1 dquinlan dquinlan 15415 Jan 19 18:27 compass.h
+-rw-rw-r--  1 dquinlan dquinlan   131 Jan 19 18:27 compass_parameters
+-rw-rw-r--  1 dquinlan dquinlan  1541 Jan 19 18:27 compassTestMain.C
+-rw-rw-r--  1 dquinlan dquinlan     0 Jan 19 18:27 instantiate_prerequisites.h
+-rw-rw-r--  1 dquinlan dquinlan  2459 Jan 19 18:27 Makefile
+-rw-rw-r--  1 dquinlan dquinlan   147 Jan 19 18:27 prerequisites.h
+tux270.llnl.gov{dquinlan}360:
+\end{verbatim}
+
+Using this directory of files as a base, a checker can be constructed by the following
+steps:
+\begin{enumerate}
+
+   \item Edit the {\bf bufferOverflowChecker.C} \\
+      This file defines the implementation of the checker, it has a skeleton of a checked in
+   place, but the checker does nothing but traverse the AST.  Modifications to this
+   checker permit the implementation of a rule to be used by the rest of Compass to 
+   detect violations (or the rule) in source code or binaries.
+
+   \item {Fix up the {\bf Makefile}} \\
+      Of these files, the {\bf Makefile} must be edited to fix up the correct paths
+   to the installation directory for ROSE and any additional paths for optional
+   features should be fixed up.
+
+   \item {Add documentation} \\
+   The documentation should be edited to reflect the details of the checker just built.
+
+   \item {Add test code}
+   A test code is required to show a violation of the checker, the checker must
+   correctly detect the violation of the rule (this is tested internally within Compass).
+
+\end{enumerate}
+
+    The checker can be developed and tested in this directory, the Makefile supports
+the compilation and testing rules required to simplify these steps.  When the checker is
+finished, it may be submitted to Compass for verification (there are both automated
+tests and a manual check required before the new checker can be accepted).
+
+    To submit the checker to Compass, the whole directory should be tar'd up and
+submitted using the Compass checker submission script.
+\begin{verbatim}
+  <path to ROSE directory>/projects/compass/src/compass_scripts/submit_checker.sh bufferOverflowChecker.tar.gz
+\end{verbatim}
+
+
+
+
+
+\chapter{demo\_10: Translation of Binary to Source Code (Power-PC example)}
+\label{chapter:binaryTranslationToSource}
+
+   The demo shows the translation of a binary into a low level representation to support general 
+instruction set independent analysis.  Also demonstrated disassemble and semantic analysis of 
+Power-PC instruction set.  The semantic analysis of binaries is supported for x86 and Power-PC
+(but not yet for ARM).
+
+% In directory:
+%   /home/dquinlan/ROSE/ROSE_CompileTree/svn-LINUX-64bit-4.2.2/projects/assemblyToSourceAst
+%   Run "make ppc-check"
+%   then "head -300 /home/dquinlan/ROSE/ROSE_CompileTree/svn-LINUX-64bit-4.2.2/projects/assemblyToSourceAst/rose_powerpcOutputFileTemplate.C
+
+   This example shows the translation of the binary: {\bf /ROSE/developersScratchSpace/Dan/Disassembler\_tests/fnord.ppc}
+
+\begin{verbatim}
+tux270.llnl.gov{dquinlan}142: ls -l fnord.ppc
+-rwxrwxr-x  1 dquinlan overture 29540 Oct 20 17:36 fnord.ppc
+tux270.llnl.gov{dquinlan}143:
+\end{verbatim}
+
+   A Power-PC executable (small 29K in size): fnord.ppc is used for this demo.  
+\begin{enumerate}
+   \item The file is read as a binary and disassembled by it's binary file format, 
+   \item The starting address of the execution is computed and instructions are disassembled 
+      and constructed into the binary AST. All the the details of executable
+      file format and the instructions (including expression subtrees) are recorded
+      including many details, such as the holes between sections, etc. 
+   \item Using the semantics of each instruction (x86 or Power-PC), each instruction
+      is translated to a lower level formulation.
+   \item The lower level formulation is translated to C code and a new source based
+      AST is constructed (ROSE handled both source code and binaries and so is 
+      unique in permitting this step).
+   \item The generate source based AST (translated from the semantics of the instructions 
+      and the details from the binary executable analyzed and transformed. A number
+      of analysis and optimization passes are done to propagate information and 
+      removed inefficient automatically generated code.
+   \item The AST representing the source code is unparsed to form the rose\_XXX.C file.
+   \item Separate work can be done to compile this file and run it as an executable using
+      work not presently contained in ROSE.
+   \item The information in the AST is used to reassemble an new binary, and a 
+      byte-wise file comparison is done to verify that it is identical to the 
+      original input binary.
+\end{enumerate}
+
+
+An example of the generated code is:
+{\mySmallFontSize
+\begin{verbatim}
+int main(int ,char **)
+{
+  run();
+  return 0;
+}
+
+
+void run()
+{
+  while(true)
+    switch(ip){
+      case 0x10000094U:
+{
+        
+#pragma 0x10000094:or     r9, r1, r1
+        addr_0x10000094:
+        ip = 0x10000098U;
+        gpr9 = gpr1;
+        continue; 
+      }
+      case 0x10000098U:
+{
+        
+#pragma 0x10000098:rlwinm r1, r1, 0, 0, 27
+        addr_0x10000098:
+        ip = 0x1000009cU;
+        gpr1 = gpr1 << 0x0U & 0xfffffff0U | gpr1 >> 0x0 & 0xfffffff0U;
+        continue; 
+      }
+      case 0x1000009cU:
+{
+        
+#pragma 0x1000009c:addi   r0, 0, 0
+        addr_0x1000009c:
+        ip = 0x100000a0U;
+        gpr0 = 0x0U;
+        continue; 
+      }
+      case 0x100000a0U:
+{
+        
+#pragma 0x100000a0:stwu   r1, -16(r1)
+        addr_0x100000a0:
+        ip = 0x100000a4U;
+        memoryWriteDWord(gpr1 + 0xfffffff0U,gpr1);
+        gpr1 = gpr1 + 0xfffffff0U;
+        continue; 
+      }
+      case 0x100000a4U:
+{
+        
+#pragma 0x100000a4:mtspr  r0, lr
+        addr_0x100000a4:
+        ip = 0x100000a8U;
+        gpr0 = lr;
+        continue; 
+      }
+\end{verbatim}
+}
+
+
+
+\chapter{demo\_11: Demo of Binary File Compare}
+\label{chapter:binaryFileCompare}
+
+% In directory:
+% /home/dquinlan/ROSE/ROSE_CompileTree/svn-LINUX-64bit-4.2.2/developersScratchSpace/Dan/astEquivalence_tests
+% Run "make testBinaryEquivalence"
+
+   This demo evaluates the differences between to binaries generated from the same source
+file, one with debugging information (compiled using {\em -g} option) and the other
+without any debugging information.
+
+
+The C source code is:
+\begin{verbatim}
+int this_is_a_variable = 0x01234567;
+
+int
+main()
+   {
+     int another_variable = this_is_a_variable + 7;
+     int y,z;
+
+     int x = 7;
+     y = x;
+     z = y;
+
+     return 0;
+   }
+\end{verbatim}
+
+The are built into a binary and compared using both AST comparison on the source code AST
+and the binary AST.  The results are shown using the edit graph, from which one can
+read off the additions and deletions required to convert one into another.
+
+\begin{verbatim}
+tux270.llnl.gov{dquinlan}157: ls -l testProgram_?
+-rwxrwxr-x  1 dquinlan overture 7967 Jan 16 18:44 testProgram_1
+-rwxrwxr-x  1 dquinlan overture 6551 Jan 16 18:44 testProgram_2
+\end{verbatim}
+
+   This test looks only at the binary file structure and not the instructions
+(a later demo will look only at the instructions, using BinQ).
+
+   This test uses a classic tree edit distance algorithm (written and optimized by
+the ROSE team) to determine the minimum additions and deletion to make any to files
+(typically different files) the same. The demo generates a file called "output.dot"
+which can be visualized using zgrviewer.  the generated file is a large graph which
+take 20 minutes to layout using dot, but shows the details edits required to translate
+one file into the other. 
+
+   There are a number of novel aspects to this work, first it operates on the
+file structure (instead of the byte stream, which would be meaningless).
+Second it is cheaper as a result of operating on the file structure,
+the file structure can be compared for equivalence separately and this provides
+for a number of level of granularity in comparing any two binary files.  
+The instruction sequence can also be compared using different levels of
+normalization (however, only a single normalization is currently implemented in ROSE).
+This represents ongoing research work and is of interest because of the ways it can be
+done with different level of fidelity and how it addresses the canonical order
+$n^2$ complexity of conventional tree edit distance algorithms.
+
+
+
+\chapter{demo\_12: Compass on Large Projects}
+\label{chapter:compassOnLargeProjects}
+
+% In directory:
+% /home/dquinlan/ROSE/ROSE_CompileTree/svn-LINUX-64bit-4.2.2/projects/compass/tools/compass/gui
+% Run "make demo"
+
+   This demo shows how a data base is built (before running Compass) and then used with
+   Compass to define a project with many files (this example shows the use of only a dozen
+   files).
+   The database stores the command-line require to compile source code.  The compass is
+   run using the database as input.  Click "regenerate" and "refresh" to display the 
+   results.  The "regenerate" button will run compass on all the items in the 
+   database, this can take a little while (a few seconds in the demo on a fast machine).
+   Then the "refresh" button will sort and display the results.  Clicking on a specific
+   rule (from the list in the upper left window), will cause the locations of violations 
+   of that rule to be displayed in the upper center window.  Clicking on an entry in the 
+   upper center window causes the lower windows to load that specific file and highlight
+   the line in the file where the violation occurred.  Currently both binaries and source
+   code work in Compass, but the GUI handles the source code better, this will become 
+   more uniform in time.
+
+
+\chapter{demo\_13: Static Binary Rewriting}
+\label{chapter:staticBinaryRewriting}
+
+
+% In directory:
+% /home/dquinlan/ROSE/ROSE_CompileTree/svn-LINUX-64bit-4.2.2/developersScratchSpace/Dan/translator_tests
+% Run "make demo"
+
+   This demo shows the addition of a named section to an existing binary file.  The to
+support this the section table of names is edited and an additional name added, this
+causes the entire binary to be offset by the length of the name (and it's null
+terminator).  A new section is added to the binary with some random data. All the 
+stored offsets in the binary must be recomputed and reset as part of the final
+regeneration of the binary as and executable with extra data.
+
+   The binary equivalence test is used to test the original and the modified binary.
+The edit distance it isolated to a single point in the AST (excerpt of output).
+
+\begin{verbatim}
+editOperation = substitution from_label = 10562 to_label = 10727 
+editOperation = substitution from_label = 10397 to_label = 10562 
+editOperation = substitution from_label = 10232 to_label = 10397 
+editOperation = substitution from_label = 10067 to_label = 10232 
+editOperation = insertion from_label = 10066 to_label = 10067 
+editOperation = insertion from_label = 10065 to_label = 10066 
+editOperation = substitution from_label = 9900 to_label = 10065 
+editOperation = substitution from_label = 9735 to_label = 9900 
+editOperation = substitution from_label = 9570 to_label = 9735 
+editOperation = substitution from_label = 9405 to_label = 9570
+\end{verbatim}
+
+   The dot file visualization representing the edit graph is 6Meg and too large to 
+layout using dot (Graph-Viz).
+
