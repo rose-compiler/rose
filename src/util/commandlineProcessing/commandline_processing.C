@@ -663,6 +663,7 @@ CommandlineProcessing::isFortranFileNameSuffix ( const std::string & suffix )
          || suffix == "f95"
          || suffix == "f03"
          || suffix == "f08"
+         || suffix == "caf"
       // For Fortran, upper case is used to indicate that CPP preprocessing is required.
          || suffix == "F"
          || suffix == "F77" 
@@ -670,6 +671,7 @@ CommandlineProcessing::isFortranFileNameSuffix ( const std::string & suffix )
          || suffix == "F95"
          || suffix == "F03"
          || suffix == "F08"
+         || suffix == "CAF"
          || suffix == "rmod" //FMZ 5/28/2008: for importing module declaration
              )
 #else//It is a case insensitive system
@@ -685,6 +687,7 @@ CommandlineProcessing::isFortranFileNameSuffix ( const std::string & suffix )
          || suffix == "F95"
          || suffix == "F03"
          || suffix == "F08"
+         || suffix == "CAF"
          || suffix == "rmod" //FMZ 5/28/2008: for importing module declaration
              )
 #endif
@@ -710,6 +713,7 @@ CommandlineProcessing::isFortranFileNameSuffixRequiringCPP ( const std::string &
          || suffix == "f95"
          || suffix == "f03"
          || suffix == "f08"
+         || suffix == "caf"
          || suffix == "rmod" //FMZ (10/15/2008)
              )
           returnValue = false;
@@ -844,6 +848,29 @@ CommandlineProcessing::isFortran2008FileNameSuffix ( const std::string & suffix 
      return returnValue;
    }
 
+bool
+CommandlineProcessing::isCoArrayFortranFileNameSuffix ( const std::string & suffix )
+   {
+  // DQ (1/23/2009): Added Co-Array fortran mode specific suffix checking
+
+  // Returns true only if this is a valid Co-Array Fortran (extension of Fortran 2003) source file name extension (suffix)
+
+     bool returnValue = false;
+
+  // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
+
+#if(CASE_SENSITIVE_SYSTEM == 1)
+     if ( suffix == "caf" || suffix == "CAF" )
+#else//It is a case insensitive system
+     if ( suffix == "caf" )
+#endif
+        {
+          returnValue = true;
+        }
+
+     return returnValue;
+   }
+
 //Liao, 6/6/2008 Support for UPC
 bool
 CommandlineProcessing::isUPCFileNameSuffix ( const std::string & suffix )
@@ -910,6 +937,7 @@ CommandlineProcessing::initSourceFileSuffixList ( )
           validSourceFileSuffixes.push_back(".f95");
           validSourceFileSuffixes.push_back(".f03");
           validSourceFileSuffixes.push_back(".f08");
+          validSourceFileSuffixes.push_back(".caf");
      /*
           validSourceFileSuffixes.push_back(".CC");
           validSourceFileSuffixes.push_back(".CP");
@@ -923,6 +951,7 @@ CommandlineProcessing::initSourceFileSuffixList ( )
           validSourceFileSuffixes.push_back(".F95");
           validSourceFileSuffixes.push_back(".F03");
           validSourceFileSuffixes.push_back(".F08");
+          validSourceFileSuffixes.push_back(".CAF");
           validSourceFileSuffixes.push_back(".rmod"); //FMZ 5/28/2008
 
      // Liao (6/6/2008)  Support for UPC   
@@ -948,12 +977,14 @@ CommandlineProcessing::initSourceFileSuffixList ( )
           validSourceFileSuffixes.push_back(".f95");
           validSourceFileSuffixes.push_back(".f03");
           validSourceFileSuffixes.push_back(".f08");
+          validSourceFileSuffixes.push_back(".caf");
           validSourceFileSuffixes.push_back(".F");
           validSourceFileSuffixes.push_back(".F77");
           validSourceFileSuffixes.push_back(".F90");
           validSourceFileSuffixes.push_back(".F95");
           validSourceFileSuffixes.push_back(".F03");
           validSourceFileSuffixes.push_back(".F08");
+          validSourceFileSuffixes.push_back(".CAF");
           validSourceFileSuffixes.push_back(".rmod"); //FMZ 5/28/2008
           validSourceFileSuffixes.push_back(".upc");
           validSourceFileSuffixes.push_back(".php");
