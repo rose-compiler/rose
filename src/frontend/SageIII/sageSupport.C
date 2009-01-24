@@ -1014,6 +1014,26 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
              }
         }
 
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(caf|CAF|CoArrayFortran)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("Co-Array Fortran only mode ON \n");
+          set_CoArrayFortran_only(true);
+
+       // Set this as also being F2003 code since Co-Array Fortran is an extension of Fortran 2003
+          set_F2003_only(true);
+          set_Fortran_only(true);
+
+       // It is requested (by Laksono at Rice) that CoArray Fortran defaults be to skip the syntax checking
+          set_skip_syntax_check(false);
+
+          if (get_sourceFileUsesCoArrayFortranFileExtension() == false)
+             {
+               printf ("Warning, Non Co-Array Fortran source file name specificed with explicit -rose:CoArrayFortran language option! \n");
+               set_CoArrayFortran_only(false);
+             }
+        }
+
   // Fixed format v.s. free format option handling (ROSE defaults to fix or free format, depending on the file extension).
   // F77 default is fixed format, F90 and later default is free format.
   // Fortran source file format options for different compilers(for IBM/XL,Intel,Portland,GNU):
@@ -1637,6 +1657,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string>& argv )
      optionCount = sla(argv, "-rose:", "($)", "(f90|F90|Fortran90)",1);
      optionCount = sla(argv, "-rose:", "($)", "(f95|F95|Fortran95)",1);
      optionCount = sla(argv, "-rose:", "($)", "(f2003|F2003|Fortran2003)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(caf|CAF|CoArrayFortran)",1);
 
   // DQ (8/27/2007):Support for Fortran language output format
 
@@ -2061,6 +2082,20 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
                     file->set_backendCompileFormat(SgFile::e_free_form_output_format);
 
                     file->set_F2003_only(true);
+                  }
+
+               if (CommandlineProcessing::isCoArrayFortranFileNameSuffix(filenameExtension) == true)
+                  {
+                 // printf ("Calling file->set_sourceFileUsesFortran2003FileExtension(true) \n");
+                    file->set_sourceFileUsesCoArrayFortranFileExtension(true);
+
+                 // Use the filename suffix as a default means to set this value
+                    file->set_outputFormat(SgFile::e_free_form_output_format);
+                    file->set_backendCompileFormat(SgFile::e_free_form_output_format);
+
+                 // DQ (1/23/2009): I think that since CAF is an extension of F2003, we want to mark this as F2003 as well.
+                    file->set_F2003_only(true);
+                    file->set_CoArrayFortran_only(true);
                   }
 
                if (CommandlineProcessing::isFortran2008FileNameSuffix(filenameExtension) == true)
@@ -4214,16 +4249,17 @@ SgFile::callFrontEnd()
 #if 0
                this->get_project()->display("SgProject::callFrontEnd()");
                display("SgFile::callFrontEnd()");
-               printf ("get_C_only()       = %s \n",(get_C_only()       == true) ? "true" : "false");
-               printf ("get_C99_only()     = %s \n",(get_C99_only()     == true) ? "true" : "false");
-               printf ("get_Cxx_only()     = %s \n",(get_Cxx_only()     == true) ? "true" : "false");
-               printf ("get_Fortran_only() = %s \n",(get_Fortran_only() == true) ? "true" : "false");
-               printf ("get_F77_only()     = %s \n",(get_F77_only()     == true) ? "true" : "false");
-               printf ("get_F90_only()     = %s \n",(get_F90_only()     == true) ? "true" : "false");
-               printf ("get_F95_only()     = %s \n",(get_F95_only()     == true) ? "true" : "false");
-               printf ("get_F2003_only()   = %s \n",(get_F2003_only()   == true) ? "true" : "false");
-               printf ("get_PHP_only()     = %s \n",(get_PHP_only()     == true) ? "true" : "false");
-               printf ("get_binary_only()  = %s \n",(get_binary_only()  == true) ? "true" : "false");
+               printf ("get_C_only()              = %s \n",(get_C_only()       == true) ? "true" : "false");
+               printf ("get_C99_only()            = %s \n",(get_C99_only()     == true) ? "true" : "false");
+               printf ("get_Cxx_only()            = %s \n",(get_Cxx_only()     == true) ? "true" : "false");
+               printf ("get_Fortran_only()        = %s \n",(get_Fortran_only() == true) ? "true" : "false");
+               printf ("get_F77_only()            = %s \n",(get_F77_only()     == true) ? "true" : "false");
+               printf ("get_F90_only()            = %s \n",(get_F90_only()     == true) ? "true" : "false");
+               printf ("get_F95_only()            = %s \n",(get_F95_only()     == true) ? "true" : "false");
+               printf ("get_F2003_only()          = %s \n",(get_F2003_only()   == true) ? "true" : "false");
+               printf ("get_CoArrayFortran_only() = %s \n",(get_CoArrayFortran_only()   == true) ? "true" : "false");
+               printf ("get_PHP_only()            = %s \n",(get_PHP_only()     == true) ? "true" : "false");
+               printf ("get_binary_only()         = %s \n",(get_binary_only()  == true) ? "true" : "false");
 
             // DQ (18/2008): We now explicit mark files that require C preprocessing...
                printf ("get_requires_C_preprocessor() = %s \n",(get_requires_C_preprocessor() == true) ? "true" : "false");
@@ -5344,17 +5380,18 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
 #if 0
   // display("SgFile::buildCompilerCommandLineOptions()");
-     printf ("C   compiler       = %s \n",BACKEND_C_COMPILER_NAME_WITH_PATH);
-     printf ("C++ compiler       = %s \n",BACKEND_CXX_COMPILER_NAME_WITH_PATH);
-     printf ("Fortran compiler   = %s \n",BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH);
-     printf ("get_C_only()       = %s \n",(get_C_only() == true) ? "true" : "false");
-     printf ("get_C99_only()     = %s \n",(get_C99_only() == true) ? "true" : "false");
-     printf ("get_Cxx_only()     = %s \n",(get_Cxx_only() == true) ? "true" : "false");
-     printf ("get_Fortran_only() = %s \n",(get_Fortran_only() == true) ? "true" : "false");
-     printf ("get_F77_only()     = %s \n",(get_F77_only() == true) ? "true" : "false");
-     printf ("get_F90_only()     = %s \n",(get_F90_only() == true) ? "true" : "false");
-     printf ("get_F95_only()     = %s \n",(get_F95_only() == true) ? "true" : "false");
-     printf ("get_F2003_only()   = %s \n",(get_F2003_only() == true) ? "true" : "false");
+     printf ("C   compiler              = %s \n",BACKEND_C_COMPILER_NAME_WITH_PATH);
+     printf ("C++ compiler              = %s \n",BACKEND_CXX_COMPILER_NAME_WITH_PATH);
+     printf ("Fortran compiler          = %s \n",BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH);
+     printf ("get_C_only()              = %s \n",(get_C_only() == true) ? "true" : "false");
+     printf ("get_C99_only()            = %s \n",(get_C99_only() == true) ? "true" : "false");
+     printf ("get_Cxx_only()            = %s \n",(get_Cxx_only() == true) ? "true" : "false");
+     printf ("get_Fortran_only()        = %s \n",(get_Fortran_only() == true) ? "true" : "false");
+     printf ("get_F77_only()            = %s \n",(get_F77_only() == true) ? "true" : "false");
+     printf ("get_F90_only()            = %s \n",(get_F90_only() == true) ? "true" : "false");
+     printf ("get_F95_only()            = %s \n",(get_F95_only() == true) ? "true" : "false");
+     printf ("get_F2003_only()          = %s \n",(get_F2003_only() == true) ? "true" : "false");
+     printf ("get_CoArrayFortran_only() = %s \n",(get_CoArrayFortran_only() == true) ? "true" : "false");
 #endif
 
   // DQ (9/10/2006): We now explicitly store the C and C++ compiler names with 
@@ -6085,6 +6122,8 @@ SgFile::usage ( int status )
 "     -rose:Fortran, -rose:F, -rose:f\n"
 "                             compile Fortran code, determining version of\n"
 "                             Fortran from file suffix)\n"
+"     -rose:CoArrayFortran, -rose:CAF, -rose:caf\n"
+"                             compile Co-Array Fortran code (extension of Fortran 2003)\n"
 "     -rose:Fortran2003, -rose:F2003, -rose:f2003\n"
 "                             compile Fortran 2003 code\n"
 "     -rose:Fortran95, -rose:F95, -rose:f95\n"
@@ -6111,7 +6150,7 @@ SgFile::usage ( int status )
 "                               phases (in CSV form) is placed for later\n"
 "                               processing (using script/graphPerformance)\n"
 "     -rose:exit_after_parser just call the parser (fortran only)\n"
-"     -rose:skip_syntax_check skip Fortran syntax checking (required for F2003 code\n"
+"     -rose:skip_syntax_check skip Fortran syntax checking (required for F2003 and Co-Array Fortran code\n"
 "                               when using gfortran versions greater than 4.1)\n"
 "     -rose:skip_rose         process command line and call backend directly,\n"
 "                               skipping all ROSE-specific processing\n"

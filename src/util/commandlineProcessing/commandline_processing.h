@@ -91,6 +91,9 @@ namespace CommandlineProcessing
           bool isFortran2003FileNameSuffix ( const std::string & suffix );
           bool isFortran2008FileNameSuffix ( const std::string & suffix );
 
+       // DQ (1/23/2009): Added support for Co-Array Fortran file extension.
+          bool isCoArrayFortranFileNameSuffix ( const std::string & suffix );
+
           bool isPHPFileNameSuffix ( const std::string & suffix );
 
           void initSourceFileSuffixList();

@@ -4425,6 +4425,7 @@ HEADER_APPLICATION_PROJECT_START
           bool get_F90_only (void) const;
           bool get_F95_only (void) const;
           bool get_F2003_only (void) const;
+          bool get_CoArrayFortran_only (void) const;
 
           bool get_PHP_only(void) const;
 
@@ -10067,6 +10068,9 @@ SgFile::initialization()
      p_F95_only                = false;
      p_F2003_only              = false;
 
+  // DQ (1/23/2009): Added CoArray Fortran support.
+     p_CoArrayFortran_only     = false;
+
      p_PHP_only                = false;
 
      p_requires_C_preprocessor = false;
@@ -10285,7 +10289,10 @@ X aggressive
      p_sourceFileUsesFortran77FileExtension   = false;
      p_sourceFileUsesFortran90FileExtension   = false;
      p_sourceFileUsesFortran95FileExtension   = false;
-     p_sourceFileUsesFortran2003FileExtension = false;     
+     p_sourceFileUsesFortran2003FileExtension = false;
+
+  // DQ (1/23/2009): Added support for Co-Array Fortran (file extensions)
+     p_sourceFileUsesCoArrayFortranFileExtension = false;     
 
      p_sourceFileUsesPHPFileExtension = false;
 
@@ -10655,6 +10662,7 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_F90_only()                           = %s \n",(p_F90_only == true) ? "true" : "false");
      printf ("     p_F95_only()                           = %s \n",(p_F95_only == true) ? "true" : "false");
      printf ("     p_F2003_only()                         = %s \n",(p_F2003_only == true) ? "true" : "false");
+     printf ("     p_CoArrayFortran_only()                = %s \n",(p_CoArrayFortran_only == true) ? "true" : "false");
      printf ("     p_PHP_only()                           = %s \n",(p_PHP_only == true) ? "true" : "false");
 
      printf ("     p_requires_C_preprocessor              = %s \n",(p_requires_C_preprocessor == true) ? "true" : "false");
@@ -11304,6 +11312,19 @@ SgProject::get_F2003_only (void) const
         {
           SgFile & file = get_file(i);
           result = result || (bool) file.get_F2003_only();
+        }
+     return result;
+   }
+
+bool
+SgProject::get_CoArrayFortran_only (void) const
+   {
+  // look at how the files are set
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_CoArrayFortran_only();
         }
      return result;
    }

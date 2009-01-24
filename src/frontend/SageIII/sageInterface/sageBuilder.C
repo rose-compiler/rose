@@ -114,8 +114,7 @@ SageBuilder::buildInitializedName_nfi ( const SgName & name, SgType* type, SgIni
 // extern int i;
 //  int i;
 SgVariableDeclaration* 
-SageBuilder::buildVariableDeclaration \
- (const SgName & name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope)
+SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope)
  //(const SgName & name, SgType* type, SgInitializer * varInit= NULL, SgScopeStatement* scope = NULL)
 {
   if (scope == NULL)
@@ -161,8 +160,7 @@ SageBuilder::buildVariableDeclaration \
 // extern int i;
 //  int i;
 SgVariableDeclaration* 
-SageBuilder::buildVariableDeclaration_nfi \
- (const SgName & name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope)
+SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope)
  //(const SgName & name, SgType* type, SgInitializer * varInit= NULL, SgScopeStatement* scope = NULL)
 {
   ROSE_ASSERT (scope != NULL);
@@ -2843,7 +2841,10 @@ SgTypeFloat * SageBuilder::buildFloatType()
     nondefdecl->setForward();    
     if (scope != NULL) {
       SgClassSymbol* mysymbol = new SgClassSymbol(nondefdecl);
-      ROSE_ASSERT(mysymbol);
+      ROSE_ASSERT(mysymbol != NULL);
+
+   // printf ("In SageBuilder::buildNondefiningClassDeclaration(): for nondefdecl = %p built SgClassSymbol = %p \n",nondefdecl,mysymbol);
+
       scope->insert_symbol(name, mysymbol);
       nondefdecl->set_scope(scope);
       nondefdecl->set_parent(scope);
