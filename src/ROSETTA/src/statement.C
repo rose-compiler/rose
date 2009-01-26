@@ -722,6 +722,9 @@ Grammar::setUpStatements ()
 					    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+  // DQ (1/25/2009): Added support for asm names for functions (see test2009_10.C)
+     FunctionDeclaration.setDataPrototype ( "std::string", "asm_name", "= \"\"",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #if 0
   // DQ (11/21/2007): In Fortran, we now support the bind attribute.
      FunctionDeclaration.setDataPrototype ( "std::string", "bind_language", "=\"\"",

@@ -2511,6 +2511,15 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                unparseExceptionSpecification(exceptionSpecifierList,info);
              }
 
+       // DQ (1/25/2009): Function can be defined using asm function names. The name is held as a string.
+          if (funcdecl_stmt->get_asm_name().empty() == false)
+             {
+            // an asm ("<function name>") is in use
+               curprint ( string(" asm (\""));
+               curprint ( funcdecl_stmt->get_asm_name() );
+               curprint ( string("\")"));
+             }
+
           if (funcdecl_stmt->isForward() && !ninfo.SkipSemiColon())
              {
                curprint ( string(";"));
@@ -3596,6 +3605,17 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                           curprint ( string(" asm (\""));
                        // curprint ( string("<unparse register name>";
                           curprint ( unparse_register_name(decl_item->get_register_name_code()));
+                          curprint ( string("\")"));
+                       }
+
+                 // DQ (1/25/2009): If we are not using the Assembly Register codes then we might be using the string 
+                 // mechanism (stored in SgInitializedName::p_register_name_string). The new EDG/Sage interface can
+                 // support the use of either Assembly Register codes or raw strings.
+                    if (decl_item->get_register_name_string().empty() == false)
+                       {
+                      // an asm ("<register name>") is in use
+                          curprint ( string(" asm (\""));
+                          curprint ( decl_item->get_register_name_string() );
                           curprint ( string("\")"));
                        }
                   }
