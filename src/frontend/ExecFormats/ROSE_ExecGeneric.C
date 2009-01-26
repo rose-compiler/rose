@@ -2120,6 +2120,46 @@ SgAsmGenericSection::content_ucl(addr_t offset, addr_t size)
     return returnValue;
 }
 
+/** Extract an unsigned LEB128 value and adjust the offset according to how many bytes it occupied. */
+uint64_t
+SgAsmGenericSection::content_uleb128(rose_addr_t *atp)
+{
+    int shift=0;
+    uint64_t retval=0;
+    while (1) {
+        unsigned char byte;
+        content(*atp, 1, &byte);
+        *atp += 1;
+        ROSE_ASSERT(shift<64);
+        retval |= (byte & 0x7f) << shift;
+        shift += 7;
+        if (0==(byte & 0x80))
+            break;
+    }
+    return retval;
+}
+
+/** Extract a signed LEB128 value and adjust the offset according to how many bytes it occupied. */
+int64_t
+SgAsmGenericSection::content_sleb128(rose_addr_t *atp)
+{
+    int shift=0;
+    int64_t retval=0;
+    while (1) {
+        unsigned char byte;
+        content(*atp, 1, &byte);
+        *atp += 1;
+        ROSE_ASSERT(shift<64);
+        retval |= (byte & 0x7f) << shift;
+        shift += 7;
+        if (0==(byte & 0x80))
+            break;
+    }
+    retval = (retval << (64-shift)) >> (64-shift); /*sign extend*/
+    return retval;
+}
+
+
 /** Write data to a file section.
  *
  *   @param f       Output steam to which to write
