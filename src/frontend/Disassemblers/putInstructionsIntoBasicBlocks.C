@@ -56,6 +56,8 @@ putInstructionsIntoBasicBlocks(const std::map<uint64_t, SgAsmBlock*>& basicBlock
     return mainBlock;
 }
 
+/** Using the list of function entry addresses, create an SgAsmBlock containing a list of SgAsmFunctionDeclaration objects,
+ *  each of which has the list of basic blocks for the particular function. */
 SgAsmBlock *
 putInstructionsIntoFunctions(SgAsmBlock* blk, const DisassemblerCommon::FunctionStarts& functionStarts)
 {
@@ -65,6 +67,7 @@ putInstructionsIntoFunctions(SgAsmBlock* blk, const DisassemblerCommon::Function
         SgAsmFunctionDeclaration* f = new SgAsmFunctionDeclaration();
         f->set_address(i->first);
         f->set_name(i->second.name);
+        f->set_reason(i->second.reason);
         funcs.insert(make_pair(i->first, f));
         newBlk->get_statementList().push_back(f);
         f->set_parent(newBlk);
