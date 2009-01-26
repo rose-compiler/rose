@@ -1,3 +1,19 @@
+2009-01-26 22:00  liao6
+
+	* [r4173] /trunk/ROSE/scripts/roseFreshTestStub-Leo-head.sh: Added
+	  Robb into the notification recipient list
+
+2009-01-26 21:19  matzke
+
+	* [r4172]
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilderAsm.h:
+	  Fixed include
+
+2009-01-26 20:25  matzke
+
+	* [r4171] /trunk/ROSE/docs/Rose/developersAppendix.tex: Documented
+	  the preferred commit message style
+
 2009-01-26 19:42  matzke
 
 	* [r4169]
