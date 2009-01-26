@@ -1,7 +1,7 @@
 #ifndef ROSE_SAGEBUILDERASM_H
 #define ROSE_SAGEBUILDERASM_H
 
-#include "../Disassemblers/disassemblers.h" /* For defn of DisassemblerCommon::FunctionStarts */
+#include "../../Disassemblers/disassemblers.h" /* For defn of DisassemblerCommon::FunctionStarts */
 
 namespace PutInstructionsIntoBasicBlocks { // From src/frontend/Disassemblers/putInstructionsIntoBasicBlocks.C
     SgAsmBlock* putInstructionsIntoBasicBlocks(const std::map<uint64_t, SgAsmBlock*> &basicBlocks,
