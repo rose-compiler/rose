@@ -229,6 +229,8 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO    ( AsmElfDynamicEntryList,      "AsmElfDynamicEntryList",      "AsmElfDynamicEntryListTag"      );
      NEW_TERMINAL_MACRO    ( AsmElfEHFrameEntryCI,        "AsmElfEHFrameEntryCI",        "AsmElfEHFrameEntryCITag"        );
      NEW_TERMINAL_MACRO    ( AsmElfEHFrameEntryCIList,    "AsmElfEHFrameEntryCIList",    "AsmElfEHFrameEntryCIListTag"    );
+     NEW_TERMINAL_MACRO    ( AsmElfEHFrameEntryFD,        "AsmElfEHFrameEntryFD",        "AsmElfEHFrameEntryFDTag"        );
+     NEW_TERMINAL_MACRO    ( AsmElfEHFrameEntryFDList,    "AsmElfEHFrameEntryFDList",    "AsmElfEHFrameEntryFDListTag"    );
 
      NEW_TERMINAL_MACRO    ( AsmPERVASizePair,       "AsmPERVASizePair",       "AsmPERVASizePairTag"       );
      NEW_TERMINAL_MACRO    ( AsmPEExportDirectory,   "AsmPEExportDirectory",   "AsmPEExportDirectoryTag"   );
@@ -386,7 +388,7 @@ Grammar::setUpBinaryInstructions ()
 
   // Root of class hierarchy for binary file support
      NEW_NONTERMINAL_MACRO ( AsmExecutableFileFormat,
-               AsmGenericDLL           | AsmGenericFormat        | AsmGenericDLLList           |
+               AsmGenericDLL           | AsmGenericFormat        | AsmGenericDLLList           | AsmElfEHFrameEntryFD     |
                AsmGenericFile          | AsmGenericSection       | AsmGenericSymbol            | AsmGenericStrtab         |
                AsmGenericSymbolList    | AsmGenericSectionList   | AsmGenericHeaderList        | AsmGenericString         |
                AsmElfSectionTableEntry | AsmElfSegmentTableEntry | AsmElfSymbolList            | AsmPEImportILTEntry      |
@@ -396,8 +398,8 @@ Grammar::setUpBinaryInstructions ()
                AsmPERVASizePair        | AsmCoffSymbolList       | AsmPERVASizePairList        | AsmElfEHFrameEntryCI     |
                AsmPEImportHNTEntryList | AsmPEImportILTEntryList | AsmPEImportLookupTable      | AsmPEImportDirectoryList |
                AsmNEEntryPoint         | AsmNERelocEntry         | AsmNESectionTableEntry      | AsmElfEHFrameEntryCIList |
-               AsmLEPageTableEntry     | AsmLEEntryPoint         | AsmLESectionTableEntry      | 
-               AsmDwarfInformation, "AsmExecutableFileFormat", "AsmExecutableFileFormatTag", false /* canHaveInstances = false */ );
+               AsmLEPageTableEntry     | AsmLEEntryPoint         | AsmLESectionTableEntry      | AsmElfEHFrameEntryFDList |
+               AsmDwarfInformation, "AsmExecutableFileFormat", "AsmExecutableFileFormatTag", false /* canHaveInstances = false */);
 
 
   // This is the IR node for a binary executable that loosely corresponds to the SgFile IR node for 
@@ -720,6 +722,11 @@ Grammar::setUpBinaryInstructions ()
 
 
 
+     AsmElfEHFrameEntryFDList.setDataPrototype("SgAsmElfEHFrameEntryFDPtrList", "entries", "",
+                                               NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+
      /* ELF Error Handling Frame Entry, Common Information Entry Format */
      AsmElfEHFrameEntryCI.setFunctionPrototype("HEADER_ELF_EH_FRAME_ENTRY_CI", "../Grammar/BinaryInstruction.code");
      AsmElfEHFrameEntryCI.setDataPrototype("int", "version", "= 0",
@@ -740,7 +747,21 @@ Grammar::setUpBinaryInstructions ()
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfEHFrameEntryCI.setDataPrototype("SgUnsignedCharList", "instructions", "",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfEHFrameEntryCI.setDataPrototype("SgAsmElfEHFrameEntryFDList*", "fd_entries", "= NULL",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+
+
+     /* ELF Error Handling Frame Entry, Frame Description Entry Format */
+     AsmElfEHFrameEntryFD.setFunctionPrototype("HEADER_ELF_EH_FRAME_ENTRY_FD", "../Grammar/BinaryInstruction.code");
+     AsmElfEHFrameEntryFD.setDataPrototype("rose_rva_t", "begin_rva", "",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfEHFrameEntryFD.setDataPrototype("rose_addr_t", "size", "= 0",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfEHFrameEntryFD.setDataPrototype("SgUnsignedCharList", "augmentation_data", "",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfEHFrameEntryFD.setDataPrototype("SgUnsignedCharList", "instructions", "",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
 

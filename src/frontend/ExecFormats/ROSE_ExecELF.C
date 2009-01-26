@@ -3275,6 +3275,9 @@ SgAsmElfEHFrameEntryCI::ctor(SgAsmElfEHFrameSection *ehframe)
     ehframe->get_ci_entries()->get_entries().push_back(this);
     ROSE_ASSERT(ehframe->get_ci_entries()->get_entries().size()>0);
     set_parent(ehframe->get_ci_entries());
+
+    p_fd_entries = new SgAsmElfEHFrameEntryFDList;
+    p_fd_entries->set_parent(this);
 }
 
 /* Print some debugging info */
@@ -3301,9 +3304,46 @@ SgAsmElfEHFrameEntryCI::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %d\n", p, w, "prh_encoding", get_prh_encoding());
     fprintf(f, "%s%-*s = %d\n", p, w, "addr_encoding", get_addr_encoding());
     if (get_instructions().size()>0) {
-        fprintf(f, "%s%-*s = %zu bytes\n", p, w, "instructions", get_instructions().size());
+        fprintf(f, "%s%-*s = 0x%08zx (%zu) bytes\n", p, w, "instructions",
+                get_instructions().size(), get_instructions().size());
         hexdump(f, 0, std::string(p)+"insns at ", get_instructions());
     }
+    for (size_t i=0; i<get_fd_entries()->get_entries().size(); i++) {
+        SgAsmElfEHFrameEntryFD *fde = get_fd_entries()->get_entries()[i];
+        fde->dump(f, p, i);
+    }
+}
+
+/* Non-parsing constructor */
+void
+SgAsmElfEHFrameEntryFD::ctor(SgAsmElfEHFrameEntryCI *cie)
+{
+    ROSE_ASSERT(cie->get_fd_entries()!=NULL);
+    cie->get_fd_entries()->get_entries().push_back(this);
+    ROSE_ASSERT(cie->get_fd_entries()->get_entries().size()>0);
+    set_parent(cie->get_fd_entries());
+}
+
+/* Print some debugging info */
+void
+SgAsmElfEHFrameEntryFD::dump(FILE *f, const char *prefix, ssize_t idx) const
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sFDE[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sFDE.", prefix);
+    }
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+
+    fprintf(f, "%s%-*s = %s\n", p, w, "begin_rva", get_begin_rva().to_string().c_str());
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes\n", p, w, "size", get_size(), get_size());
+    fprintf(f, "%s%-*s = 0x%08zx (%zu) bytes\n", p, w, "aug_data",
+            get_augmentation_data().size(), get_augmentation_data().size());
+    hexdump(f, 0, std::string(p)+"data at ", get_augmentation_data());
+    fprintf(f, "%s%-*s = 0x%08zx (%zu) bytes\n", p, w, "instructions",
+            get_instructions().size(), get_instructions().size());
+    hexdump(f, 0, std::string(p)+"insns at ", get_instructions());
 }
 
 /* Non-parsing constructor */
@@ -3396,7 +3436,35 @@ SgAsmElfEHFrameSection::parse()
 
         } else {
             /* This is a FDE record */
-            fprintf(stderr, "FIXME:  %s: frame descriptor entry\n", __func__);
+            ROSE_ASSERT(last_cie!=NULL);
+            ROSE_ASSERT(last_cie_offset + cie_back_offset == record_offset + length_field_size);
+            SgAsmElfEHFrameEntryFD *fde = new SgAsmElfEHFrameEntryFD(last_cie);
+
+            /* PC Begin (begin_rva) and size */
+            switch (last_cie->get_addr_encoding()) {
+              case 0x01: {
+                  content(at, 4, &u32_disk); at+=4;
+                  fde->set_begin_rva(le_to_host(u32_disk));
+                  content(at, 4, &u32_disk); at+=4;
+                  fde->set_size(le_to_host(u32_disk));
+                  break;
+              }
+              default:
+                assert(!"unknown FDE address encoding");
+                abort();
+            }
+
+            /* Augmentation Data */
+            std::string astring = last_cie->get_augmentation_string();
+            if (astring.size()>0 && astring[0]=='z') {
+                addr_t aug_length = content_uleb128(&at);
+                fde->get_augmentation_data() = content_ucl(at, aug_length);
+                at += aug_length;
+            }
+
+            /* Call frame instructions */
+            addr_t cf_insn_size = (length_field_size + record_size) - (at - record_offset);
+            fde->get_instructions() = content_ucl(at, cf_insn_size);
         }
 
         record_offset += length_field_size + record_size;
@@ -3438,7 +3506,6 @@ SgAsmElfEHFrameSection::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         sprintf(p, "%sElfEHFrameSection.", prefix);
     }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     SgAsmElfSection::dump(f, p, -1);
     for (size_t i=0; i<get_ci_entries()->get_entries().size(); i++) {

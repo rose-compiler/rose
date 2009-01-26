@@ -1654,12 +1654,24 @@ HEADER_ELF_EH_FRAME_ENTRY_CI_START
 	public:
 		explicit SgAsmElfEHFrameEntryCI(SgAsmElfEHFrameSection *ehframe)
 			: p_version(0), p_code_alignment_factor(0), p_data_alignment_factor(0), p_augmentation_data_length(0),
-			p_lsda_encoding(-1), p_prh_encoding(-1), p_addr_encoding(-1)
+			p_lsda_encoding(-1), p_prh_encoding(-1), p_addr_encoding(-1), p_fd_entries(NULL)
 			{ctor(ehframe);}
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 	private:
 		void ctor(SgAsmElfEHFrameSection*);
 HEADER_ELF_EH_FRAME_ENTRY_CI_END
+
+
+
+HEADER_ELF_EH_FRAME_ENTRY_FD_START
+	public:
+		explicit SgAsmElfEHFrameEntryFD(SgAsmElfEHFrameEntryCI *cie)
+			: p_size(0)
+			{ctor(cie);}
+		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+	private:
+		void ctor(SgAsmElfEHFrameEntryCI*);
+HEADER_ELF_EH_FRAME_ENTRY_FD_END
 
 
 
