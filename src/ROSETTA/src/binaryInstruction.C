@@ -160,11 +160,12 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( AsmDOSFileHeader,      "AsmDOSFileHeader",      "AsmDOSFileHeaderTag"    );
      NEW_NONTERMINAL_MACRO ( AsmGenericHeader, AsmPEFileHeader  | AsmLEFileHeader |  AsmNEFileHeader | AsmDOSFileHeader |  AsmElfFileHeader, "AsmGenericHeader",    "AsmGenericHeaderTag", true /* canHaveInstances = true */ );
 
-  // A lot of IR nodes are derived from the AsmGenericSection (segments were eliminated and became sections under Robb's recent changes).
-     NEW_TERMINAL_MACRO    ( AsmElfRelocSection,  "AsmElfRelocSection",  "AsmElfRelocSectionTag"   );
-     NEW_TERMINAL_MACRO    ( AsmElfDynamicSection,"AsmElfDynamicSection","AsmElfDynamicSectionTag");
-     NEW_TERMINAL_MACRO    ( AsmElfSymbolSection, "AsmElfSymbolSection", "AsmElfSymbolSectionTag" );
-     NEW_TERMINAL_MACRO    ( AsmElfStringSection, "AsmElfStringSection", "AsmElfStringSectionTag" );
+  // A lot of IR nodes are derived from the AsmGenericSection.
+     NEW_TERMINAL_MACRO(AsmElfRelocSection,   "AsmElfRelocSection",   "AsmElfRelocSectionTag");
+     NEW_TERMINAL_MACRO(AsmElfDynamicSection, "AsmElfDynamicSection", "AsmElfDynamicSectionTag");
+     NEW_TERMINAL_MACRO(AsmElfSymbolSection,  "AsmElfSymbolSection",  "AsmElfSymbolSectionTag");
+     NEW_TERMINAL_MACRO(AsmElfStringSection,  "AsmElfStringSection",  "AsmElfStringSectionTag");
+     NEW_TERMINAL_MACRO(AsmElfEHFrameSection, "AsmElfEHFrameSection", "AsmElfEHFrameSection");
 
   // DQ (9/9/2008): Added support for String Table (part of Robb's work)
      NEW_TERMINAL_MACRO ( AsmElfStrtab,          "AsmElfStrtab",          "AsmElfStrtabTag"          );
@@ -172,7 +173,8 @@ Grammar::setUpBinaryInstructions ()
      NEW_NONTERMINAL_MACRO( AsmGenericStrtab, AsmElfStrtab | AsmCoffStrtab, "AsmGenericStrtab", "AsmGenericStrtabTag", false);
 
      NEW_NONTERMINAL_MACRO ( AsmElfSection,
-                             AsmElfSymbolSection | AsmElfRelocSection | AsmElfDynamicSection | AsmElfStringSection,
+                             AsmElfSymbolSection | AsmElfRelocSection | AsmElfDynamicSection | AsmElfStringSection |
+                             AsmElfEHFrameSection,
                              "AsmElfSection", "AsmElfSectionTag", true /* canHaveInstances = true */ );
 
      NEW_TERMINAL_MACRO    ( AsmElfSectionTable,  "AsmElfSectionTable",  "AsmElfSectionTableTag"  );
@@ -225,6 +227,8 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO    ( AsmElfRelocEntryList,        "AsmElfRelocEntryList",        "AsmElfRelocEntryListTag"        );
      NEW_TERMINAL_MACRO    ( AsmElfDynamicEntry,          "AsmElfDynamicEntry",          "AsmElfDynamicEntryTag"          );
      NEW_TERMINAL_MACRO    ( AsmElfDynamicEntryList,      "AsmElfDynamicEntryList",      "AsmElfDynamicEntryListTag"      );
+     NEW_TERMINAL_MACRO    ( AsmElfEHFrameEntryCI,        "AsmElfEHFrameEntryCI",        "AsmElfEHFrameEntryCITag"        );
+     NEW_TERMINAL_MACRO    ( AsmElfEHFrameEntryCIList,    "AsmElfEHFrameEntryCIList",    "AsmElfEHFrameEntryCIListTag"    );
 
      NEW_TERMINAL_MACRO    ( AsmPERVASizePair,       "AsmPERVASizePair",       "AsmPERVASizePairTag"       );
      NEW_TERMINAL_MACRO    ( AsmPEExportDirectory,   "AsmPEExportDirectory",   "AsmPEExportDirectoryTag"   );
@@ -389,9 +393,9 @@ Grammar::setUpBinaryInstructions ()
                AsmElfRelocEntry        | AsmElfRelocEntryList    | AsmPEExportEntry            | AsmPEExportEntryList     |
                AsmElfDynamicEntry      | AsmElfDynamicEntryList  | AsmElfSegmentTableEntryList | AsmStringStorage         |
                AsmPEImportDirectory    | AsmPEImportHNTEntry     | AsmPESectionTableEntry      | AsmPEExportDirectory     |
-               AsmPERVASizePair        | AsmCoffSymbolList       | AsmPERVASizePairList        |
+               AsmPERVASizePair        | AsmCoffSymbolList       | AsmPERVASizePairList        | AsmElfEHFrameEntryCI     |
                AsmPEImportHNTEntryList | AsmPEImportILTEntryList | AsmPEImportLookupTable      | AsmPEImportDirectoryList |
-               AsmNEEntryPoint         | AsmNERelocEntry         | AsmNESectionTableEntry      |
+               AsmNEEntryPoint         | AsmNERelocEntry         | AsmNESectionTableEntry      | AsmElfEHFrameEntryCIList |
                AsmLEPageTableEntry     | AsmLEEntryPoint         | AsmLESectionTableEntry      | 
                AsmDwarfInformation, "AsmExecutableFileFormat", "AsmExecutableFileFormatTag", false /* canHaveInstances = false */ );
 
@@ -701,6 +705,42 @@ Grammar::setUpBinaryInstructions ()
 
      AsmElfDynamicEntryList.setDataPrototype("SgAsmElfDynamicEntryPtrList","entries","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+
+     /* ELF Error Handling Frame Section (.eh_frame) */
+     AsmElfEHFrameSection.setFunctionPrototype("HEADER_ELF_EH_FRAME_SECTION", "../Grammar/BinaryInstruction.code");
+     AsmElfEHFrameSection.setDataPrototype("SgAsmElfEHFrameEntryCIList*", "ci_entries", "= NULL",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+
+
+     AsmElfEHFrameEntryCIList.setDataPrototype("SgAsmElfEHFrameEntryCIPtrList", "entries", "",
+                                               NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+
+     /* ELF Error Handling Frame Entry, Common Information Entry Format */
+     AsmElfEHFrameEntryCI.setFunctionPrototype("HEADER_ELF_EH_FRAME_ENTRY_CI", "../Grammar/BinaryInstruction.code");
+     AsmElfEHFrameEntryCI.setDataPrototype("int", "version", "= 0",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfEHFrameEntryCI.setDataPrototype("std::string", "augmentation_string", "= \"\"",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfEHFrameEntryCI.setDataPrototype("uint64_t", "code_alignment_factor", "= 0",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfEHFrameEntryCI.setDataPrototype("int64_t", "data_alignment_factor", "= 0",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfEHFrameEntryCI.setDataPrototype("uint64_t", "augmentation_data_length", "= 0",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfEHFrameEntryCI.setDataPrototype("int", "lsda_encoding", "= -1",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfEHFrameEntryCI.setDataPrototype("int", "prh_encoding", "= -1",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfEHFrameEntryCI.setDataPrototype("int", "addr_encoding", "= -1",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfEHFrameEntryCI.setDataPrototype("SgUnsignedCharList", "instructions", "",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
 
 

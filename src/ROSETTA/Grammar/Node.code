@@ -693,6 +693,9 @@ typedef SgAsmElfRelocEntryPtrList*                SgAsmElfRelocEntryPtrListPtr;
 typedef Rose_STL_Container<SgAsmElfDynamicEntry*> SgAsmElfDynamicEntryPtrList;
 typedef SgAsmElfDynamicEntryPtrList*              SgAsmElfDynamicEntryPtrListPtr;
 
+typedef Rose_STL_Container<SgAsmElfEHFrameEntryCI*> SgAsmElfEHFrameEntryCIPtrList;
+typedef SgAsmElfEHFrameEntryCIPtrList*              SgAsmElfEHFrameEntryCIPtrListPtr;
+
 typedef Rose_STL_Container<SgAsmElfSegmentTableEntry*> SgAsmElfSegmentTableEntryPtrList;
 typedef SgAsmElfSegmentTableEntryPtrList SgAsmElfSegmentTableEntryPtrListPtr;
 
