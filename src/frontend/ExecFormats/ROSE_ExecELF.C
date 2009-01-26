@@ -1386,6 +1386,15 @@ SgAsmElfSectionTable::parse()
                       is_parsed[i] = relocsec;
                       break;
                   }
+                  case SgAsmElfSectionTableEntry::SHT_PROGBITS: {
+                      std::string section_name = section_name_strings->content_str(entry->get_sh_name(), true);
+                      if (section_name == ".eh_frame") {
+                          is_parsed[i] = new SgAsmElfEHFrameSection(fhdr);
+                      } else {
+                          is_parsed[i] = new SgAsmElfSection(fhdr);
+                      }
+                      break;
+                  }
                   default:
                     is_parsed[i] = new SgAsmElfSection(fhdr);
                     break;
@@ -3251,4 +3260,189 @@ SgAsmElfSymbolSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     if (variantT() == V_SgAsmElfSymbolSection) //unless a base class
         hexdump(f, 0, std::string(p)+"data at ", p_data);
+}
+
+/********************************************************************************************************************************
+ * Error Handling Frame (.eh_frame) Section
+ * See http://refspecs.freestandards.org/LSB_3.1.0/LSB-Core-generic/LSB-Core-generic/ehframechpt.html
+ ********************************************************************************************************************************/
+
+/* Non-parsing constructor */
+void
+SgAsmElfEHFrameEntryCI::ctor(SgAsmElfEHFrameSection *ehframe)
+{
+    ROSE_ASSERT(ehframe->get_ci_entries()!=NULL);
+    ehframe->get_ci_entries()->get_entries().push_back(this);
+    ROSE_ASSERT(ehframe->get_ci_entries()->get_entries().size()>0);
+    set_parent(ehframe->get_ci_entries());
+}
+
+/* Print some debugging info */
+void
+SgAsmElfEHFrameEntryCI::dump(FILE *f, const char *prefix, ssize_t idx) const
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sCIE[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sCIE.", prefix);
+    }
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+
+    fprintf(f, "%s%-*s = %d\n", p, w, "version", get_version());
+    fprintf(f, "%s%-*s = \"%s\"\n", p, w, "augStr", get_augmentation_string().c_str());
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "code_align",
+            get_code_alignment_factor(), get_code_alignment_factor());
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRId64")\n", p, w, "data_align",
+            get_data_alignment_factor(), get_data_alignment_factor());
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "aug_length",
+            get_augmentation_data_length(), get_augmentation_data_length());
+    fprintf(f, "%s%-*s = %d\n", p, w, "lsda_encoding", get_lsda_encoding());
+    fprintf(f, "%s%-*s = %d\n", p, w, "prh_encoding", get_prh_encoding());
+    fprintf(f, "%s%-*s = %d\n", p, w, "addr_encoding", get_addr_encoding());
+    if (get_instructions().size()>0) {
+        fprintf(f, "%s%-*s = %zu bytes\n", p, w, "instructions", get_instructions().size());
+        hexdump(f, 0, std::string(p)+"insns at ", get_instructions());
+    }
+}
+
+/* Non-parsing constructor */
+void
+SgAsmElfEHFrameSection::ctor()
+{
+    p_ci_entries = new SgAsmElfEHFrameEntryCIList;
+    p_ci_entries->set_parent(this);
+}
+
+/* Initialize by parsing a file. */
+SgAsmElfEHFrameSection *
+SgAsmElfEHFrameSection::parse()
+{
+    SgAsmElfSection::parse();
+    SgAsmElfFileHeader *fhdr = get_elf_header();
+    ROSE_ASSERT(fhdr!=NULL);
+
+    addr_t record_offset=0, last_cie_offset=0;
+    SgAsmElfEHFrameEntryCI *last_cie = NULL;
+
+    while (record_offset<get_size()) {
+        addr_t at = record_offset;
+        unsigned char u8_disk;
+        uint32_t u32_disk;
+        uint64_t u64_disk;
+
+        /* Length or extended length */
+        addr_t length_field_size = 4; /*number of bytes not counted in length*/
+        content(at, 4, &u32_disk); at += 4;
+        addr_t record_size = disk_to_host(fhdr->get_sex(), u32_disk);
+        if (record_size==0xffffffff) {
+            content(at, 8, &u64_disk); at += 8;
+            record_size = disk_to_host(fhdr->get_sex(), u64_disk);
+            length_field_size += 8; /*FIXME: it's not entirely clear whether ExtendedLength includes this field*/
+        }
+        if (0==record_size)
+            break;
+
+        /* Backward offset to CIE record, or zero if this is a CIE record. */
+        content(at, 4, &u32_disk); at += 4;
+        addr_t cie_back_offset = disk_to_host(fhdr->get_sex(), u32_disk);
+        if (0==cie_back_offset) {
+            /* This is a CIE record */
+            SgAsmElfEHFrameEntryCI *cie = new SgAsmElfEHFrameEntryCI(this);
+            last_cie_offset = record_offset;
+            last_cie = cie;
+
+            /* Version */
+            uint8_t cie_version;
+            content(at++, 1, &cie_version);
+            cie->set_version(cie_version);
+
+            /* Augmentation String */
+            std::string astr = content_str(at, true);
+            at += astr.size() + 1;
+            cie->set_augmentation_string(astr);
+
+            /* Alignment factors */
+            cie->set_code_alignment_factor(content_uleb128(&at));
+            cie->set_data_alignment_factor(content_sleb128(&at));
+
+            /* Augmentation data */
+            cie->set_augmentation_data_length(content_uleb128(&at));
+            if (astr[0]=='z') {
+                for (size_t i=1; i<astr.size(); i++) {
+                    if ('L'==astr[i]) {
+                        content(at++, 1, &u8_disk);
+                        cie->set_lsda_encoding(u8_disk);
+                    } else if ('P'==astr[i]) {
+                        /* The first byte is an encoding method which describes the following bytes, which are the address of
+                         * a Personality Routine Handler. */
+                        content(at++, 1, &u8_disk);
+                        cie->set_prh_encoding(u8_disk);
+                        ROSE_ASSERT(!"not implemented"); /*unable to find documentation*/
+                    } else if ('R'==astr[i]) {
+                        content(at++, 1, &u8_disk);
+                        cie->set_addr_encoding(u8_disk);
+                    } else {
+                        ROSE_ASSERT(!"invalid .eh_frame augmentation string");
+                        abort();
+                    }
+                }
+            }
+
+            /* Initial instructions */
+            addr_t init_insn_size = (length_field_size + record_size) - (at - record_offset);
+            cie->get_instructions() = content_ucl(at, init_insn_size);
+            ROSE_ASSERT(cie->get_instructions().size()==init_insn_size);
+
+        } else {
+            /* This is a FDE record */
+            fprintf(stderr, "FIXME:  %s: frame descriptor entry\n", __func__);
+        }
+
+        record_offset += length_field_size + record_size;
+    }
+    return this;
+}
+
+/* Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. */
+rose_addr_t
+SgAsmElfEHFrameSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
+{
+    /* FIXME */
+    return 0;
+}
+
+/* Called prior to unparsing. */
+bool
+SgAsmElfEHFrameSection::reallocate()
+{
+    bool reallocated = SgAsmElfSection::reallocate();
+    /*FIXME*/
+    return reallocated;
+}
+
+/* Write data to .eh_frame section */
+void
+SgAsmElfEHFrameSection::unparse(std::ostream &f) const
+{
+    /*FIXME*/
+}
+
+/* Print some debugging info */
+void
+SgAsmElfEHFrameSection::dump(FILE *f, const char *prefix, ssize_t idx) const
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sElfEHFrameSection[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sElfEHFrameSection.", prefix);
+    }
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+
+    SgAsmElfSection::dump(f, p, -1);
+    for (size_t i=0; i<get_ci_entries()->get_entries().size(); i++) {
+        SgAsmElfEHFrameEntryCI *cie = get_ci_entries()->get_entries()[i];
+        cie->dump(f, p, i);
+    }
 }

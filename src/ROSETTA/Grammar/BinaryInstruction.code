@@ -1634,6 +1634,35 @@ HEADER_ELF_DYNAMIC_ENTRY_END
 
 
 
+HEADER_ELF_EH_FRAME_SECTION_START
+	public:
+		explicit SgAsmElfEHFrameSection(SgAsmElfFileHeader *fhdr)
+			: SgAsmElfSection(fhdr), p_ci_entries(NULL)
+			{ctor();}
+		virtual SgAsmElfEHFrameSection *parse();
+		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const;
+		virtual bool reallocate();
+		virtual void unparse(std::ostream&) const;
+		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+	private:
+		void ctor();
+HEADER_ELF_EH_FRAME_SECTION_END
+
+
+
+HEADER_ELF_EH_FRAME_ENTRY_CI_START
+	public:
+		explicit SgAsmElfEHFrameEntryCI(SgAsmElfEHFrameSection *ehframe)
+			: p_version(0), p_code_alignment_factor(0), p_data_alignment_factor(0), p_augmentation_data_length(0),
+			p_lsda_encoding(-1), p_prh_encoding(-1), p_addr_encoding(-1)
+			{ctor(ehframe);}
+		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+	private:
+		void ctor(SgAsmElfEHFrameSection*);
+HEADER_ELF_EH_FRAME_ENTRY_CI_END
+
+
+
 HEADER_ELF_SEGMENT_TABLE_START
 	public:
 		explicit SgAsmElfSegmentTable(SgAsmElfFileHeader *fhdr)
