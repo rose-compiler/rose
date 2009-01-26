@@ -435,116 +435,78 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
      const SgAsmStatementPtrList& computedBasicBlocks = blk->get_statementList();
 
   // printf ("computedBasicBlocks.size() = %zu \n",computedBasicBlocks.size());
-     for (size_t i = 0; i < computedBasicBlocks.size(); ++i)
-        {
-       // DQ (10/14/2008): Is this the sort of coding style that we want to have in a for loop?
+     for (size_t i = 0; i < computedBasicBlocks.size(); ++i) {
+         // DQ (10/14/2008): Is this the sort of coding style that we want to have in a for loop?
+         SgAsmBlock* bb = isSgAsmBlock(computedBasicBlocks[i]);
+         if (!bb) continue;
 
-          SgAsmBlock* bb = isSgAsmBlock(computedBasicBlocks[i]);
-          if (!bb) continue;
+         SgAsmGenericSection* section = file.getSectionOfAddress(bb->get_address());
+         if (!section) continue;
 
-          SgAsmGenericSection* section = file.getSectionOfAddress(bb->get_address());
-          if (!section) continue;
+         // These conditionals are all loop invariant
+         ROSE_ASSERT (section->get_header() == header);
+         SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
+         bool isFunctionStart = false;
 
-       // These conditionals are all loop invariant
-          ROSE_ASSERT (section->get_header() == header);
-          SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
-          bool isFunctionStart = false;
-
-          if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_IA32_Family)
-             {
-            // if (!heuristicFunctionDetection)
-               if (heuristicFunctionDetection == false)
-                  {
-                    if (t.globalFunctionMap.find(bb->get_address()) != t.globalFunctionMap.end())
-                       {
+         if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_IA32_Family) {
+             if (!heuristicFunctionDetection) {
+                 if (t.globalFunctionMap.find(bb->get_address()) != t.globalFunctionMap.end()) {
+                     isFunctionStart = true;
+                     funcName = t.globalFunctionMap[bb->get_address()]->get_name()->get_string();
+                 } else {
+                     isFunctionStart = false;
+                 }
+             } else {
+                 isFunctionStart = X86Disassembler::doesBBStartFunction(bb, false);
+             }
+         } else {
+             if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_X8664_Family) {
+                 if (!heuristicFunctionDetection) {
+                     if (t.globalFunctionMap.find(bb->get_address()) != t.globalFunctionMap.end()) {
                          isFunctionStart = true;
                          funcName = t.globalFunctionMap[bb->get_address()]->get_name()->get_string();
-                       }
-                      else
+                     } else {
                          isFunctionStart = false;
-                  }
-                 else
-                    isFunctionStart = X86Disassembler::doesBBStartFunction(bb, false);
-             }
-            else
-             {
-               if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_X8664_Family)
-                  {
-                 // if (!heuristicFunctionDetection)
-                    if (heuristicFunctionDetection == false)
-                       {
-                         if (t.globalFunctionMap.find(bb->get_address()) != t.globalFunctionMap.end())
-                            {
-                              isFunctionStart = true;
-                              funcName = t.globalFunctionMap[bb->get_address()]->get_name()->get_string();
-                            }
-                           else
-                            {
-                              isFunctionStart = false;
-                            }
-                       }
-                      else
-                       {
-                         isFunctionStart = X86Disassembler::doesBBStartFunction(bb, true);
-                       }
-                  }
-                 else
-                  {
-                   if (isa == SgAsmExecutableFileFormat::ISA_ARM_Family)
-                      {
-                        isFunctionStart = false; // FIXME
-                      }
-                     else
-                      {
-                        if (isSgAsmDOSFileHeader(header))
-                           {
-                             isFunctionStart = false; // FIXME
-                           }
-                          else
-                           {
-                             if (isa == SgAsmExecutableFileFormat::ISA_PowerPC)
-                                {
-                               // DQ (10/14/2008): Added support for PowerPC in location after addition of function symbols.
-
-                                  if (heuristicFunctionDetection == false)
-                                     {
-                                       if (t.globalFunctionMap.find(bb->get_address()) != t.globalFunctionMap.end())
-                                          {
-                                            isFunctionStart = true; 
-                                            funcName = t.globalFunctionMap[bb->get_address()]->get_name()->get_string();
-                                          }
-                                         else
-                                          {
-                                            isFunctionStart = false;
-                                          }
-                                     }
-                                    else
-                                     {
-                                       isFunctionStart = PowerpcDisassembler::doesBBStartFunction(bb, true);
-                                     }
-
+                     }
+                 } else {
+                     isFunctionStart = X86Disassembler::doesBBStartFunction(bb, true);
+                 }
+             } else {
+                 if (isa == SgAsmExecutableFileFormat::ISA_ARM_Family) {
+                     isFunctionStart = false; // FIXME
+                 } else {
+                     if (isSgAsmDOSFileHeader(header)) {
+                         isFunctionStart = false; // FIXME
+                     } else {
+                         if (isa == SgAsmExecutableFileFormat::ISA_PowerPC) {
+                             // DQ (10/14/2008): Added support for PowerPC in location after addition of function symbols.
+                             if (!heuristicFunctionDetection) {
+                                 if (t.globalFunctionMap.find(bb->get_address()) != t.globalFunctionMap.end()) {
+                                     isFunctionStart = true; 
+                                     funcName = t.globalFunctionMap[bb->get_address()]->get_name()->get_string();
+                                 } else {
+                                     isFunctionStart = false;
+                                 }
+                             } else {
+                                 isFunctionStart = PowerpcDisassembler::doesBBStartFunction(bb, true);
+                             }
 #if 0
-                                  printf ("Exit after disassembling the first instruction after reading function symbols! \n");
-                                  ROSE_ASSERT(false);
+                             printf ("Exit after disassembling the first instruction after reading function symbols! \n");
+                             ROSE_ASSERT(false);
 #endif
-                                }
-                               else
-                                {
-                                  cerr << "Bad architecture to disassemble (interpreting functions)" << endl;
-                                  abort();
-                                }
-                           }
-                      }
-                  }
+                         } else {
+                             cerr << "Bad architecture to disassemble (interpreting functions)" << endl;
+                             abort();
+                         }
+                     }
+                 }
              }
-
-          if (isFunctionStart)
-             {
-               functionStarts.insert(make_pair(bb->get_address(),funcName));
-             }
-
-       // printf ("Processed a block! computedBasicBlocks[%zu] = %p \n",i,computedBasicBlocks[i]);
-        }
+         }
+         if (isFunctionStart) {
+             functionStarts.insert(make_pair(bb->get_address(),funcName));
+         }
+         // printf ("Processed a block! computedBasicBlocks[%zu] = %p \n",i,computedBasicBlocks[i]);
+     }
 
   // DQ (10/16/2008): This outputs a hexidecimal number at times!
   // (tps - 2Jun08) : commented out for now until we investigate this further... breaking the current function analysis
