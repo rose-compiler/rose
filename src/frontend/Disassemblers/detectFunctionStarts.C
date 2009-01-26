@@ -106,7 +106,65 @@ mark_func_symbols(SgAsmInterpretation *interp,
         }
     }
 }
-                    
+
+/** Use the inter-basicblock branch information to determine the length of each function, creating new functions as necessary
+ *  when a suspected function is shortened.  We make the following assumptions:
+ *     1. Function entry points that are already determined will remain
+ *     2. The first (lowest address) basic block serves as the single entry point for a function.
+ *     3. The body of the function is contiguous basic blocks.
+ *     4. Each basic block that follows a function is the entry point of a subsequent function. */
+static void
+mark_graph_edges(SgAsmInterpretation *interp,
+                 std::map<uint64_t, SgAsmInstruction*> &insns,
+                 BasicBlockStarts &basicBlockStarts,
+                 FunctionStarts &functionStarts)
+{
+    std::set<rose_addr_t, std::greater<rose_addr_t> > pending_functions; /*sorted from highest to lowest*/
+    for (FunctionStarts::iterator i=functionStarts.begin(); i!=functionStarts.end(); i++)
+        pending_functions.insert(i->first);
+
+    while (!pending_functions.empty()) {
+        /* Find begin/end address of highest pending function */
+        rose_addr_t func_begin = *(pending_functions.begin());
+        rose_addr_t func_end = (rose_addr_t)-1;
+        FunctionStarts::iterator funci = functionStarts.find(func_begin);
+        ROSE_ASSERT(funci!=functionStarts.end());
+        if (++funci!=functionStarts.end())
+            func_end = funci->first;
+
+        /* First basic block of function under consideration is always part of that function. */
+        BasicBlockStarts::iterator bbi = basicBlockStarts.find(func_begin);
+        ROSE_ASSERT(bbi!=basicBlockStarts.end());
+
+        /* Find the first subsequent basic block that can be shown to not be a part of this function.  Such blocks satisfy one
+         * or more of these conditions. The first condition that is true determines the value of "called".
+         *    1. We've advanced beyond the end of the basic block list (called=false), or
+         *    2. This block's starting address is the starting address of another known function (called=false), or
+         *    3. This block has a caller address that is less than the start of this function (called=true), or
+         *    4. This block has a caller address that is beyond the assumed end of this function (called=true) */
+        bool called=false;
+        for (bbi++; bbi!=basicBlockStarts.end(); bbi++) {
+            if (functionStarts.find(bbi->first)!=functionStarts.end())
+                break; /*bb starts some other function*/
+            for (std::set<rose_addr_t>::iterator ci=bbi->second.begin(); !called && ci!=bbi->second.end(); ci++)
+                called = (*ci<func_begin || *ci>=func_end);
+            if (called)
+                break;
+        }
+
+        /* If this block isn't the start of a known function then we need to create a new function. Furthermore, we need to
+         * reevaluate the boundary of this function since its implied ending address has been reduced. */
+        if (called) {
+            rose_addr_t bb_addr = bbi->first;
+            ROSE_ASSERT(functionStarts.find(bb_addr)==functionStarts.end());
+            functionStarts[bb_addr].reason = SgAsmFunctionDeclaration::FUNC_GRAPH;
+            pending_functions.insert(bb_addr);
+        } else {
+            pending_functions.erase(func_begin);
+        }
+    }
+}
+
 void
 detectFunctionStarts(SgAsmInterpretation *interp,
                      std::map<uint64_t, SgAsmInstruction*> &insns,
@@ -123,65 +181,9 @@ detectFunctionStarts(SgAsmInterpretation *interp,
         if (basicBlockStarts.find(i->first)==basicBlockStarts.end())
             basicBlockStarts[i->first] = DisassemblerCommon::BasicBlockStarts::mapped_type();
 
-#if 0 /*DEBUGGING*/
-    fprintf(stderr, "After detecting function starting addresses:\n");
-    fprintf(stderr, "  Function starting addresses:\n");
-    for (FunctionStarts::iterator i=functionStarts.begin(); i!=functionStarts.end(); i++) {
-        fprintf(stderr, "    0x%08"PRIx64"\n", i->first);
-    }
-    fprintf(stderr, "  Basic block starting addresses:\n");
-    for (BasicBlockStarts::iterator i=basicBlockStarts.begin(); i!=basicBlockStarts.end(); i++) {
-        fprintf(stderr, "    0x%08"PRIx64"\n", i->first);
-    }
-#endif
+    /* This one depends on basic block starts being consistent with function starts. */
+    mark_graph_edges(interp, insns, basicBlockStarts, functionStarts);
 }
 
 
 } /*namespace*/
-
-
-
-
-
-
-#if 0
-
-/* Add edges to the call graph based on the last instruction of each block */
-static void
-add_insn_edges(map<uint64_t, SgAsmBlock*> &bblocks) {
-    for (iterator i=bblocks.begin(); i!=bblocks.end(); i++) {
-        BasicBlock *bb = i->second;
-        SgAsmStatementPtrList insn_list = bb->block_node->get_statementList();
-        SgAsmx86Instruction *insn = isSgAsmx86Instruction(insn_list.back());
-        bool call_target = (x86_call==insn->get_kind() || x86_farcall==insn->get_kind());
-
-        rose_addr_t callee_rva = 0;
-        if (x86GetKnownBranchTarget(insn, callee_rva)) {
-            BasicBlock *callee = lookup_by_rva(callee_rva);
-            if (callee) {
-                bb->add_callee(callee);
-                callee->add_caller(bb, call_target);
-            }
-        }
-
-        if (!x86InstructionIsUnconditionalBranch(insn)) {
-            callee_rva = bb->get_address() + bb->get_size();
-            BasicBlock *callee = lookup_by_rva(callee_rva);
-            if (callee) {
-                bb->add_callee(callee);
-                callee->add_caller(bb, false);
-            }
-        }
-    }
-}
-
-
-/** Assigns basic blocks (SgAsmBlock) to newly-created function definitions (SgAsmFunctionDeclaration). */
-std::vector<SgAsmFunctionDeclaration*>
-assignBlocksToFunctions(map<uint64_t, SgAsmBlock*> &basicBlocks, SgAsmGenericHeader *fhdr)
-{
-    map<uint64_t, std::string> functionStarts;
-    mark_entry_points(basicBlocks, fhdr, &function_starts);
-}
-
-#endif

@@ -3190,6 +3190,7 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
 		FUNC_EH_FRAME	 = 0x04,		/* Address mentioned in the ELF .eh_frame section */
 		FUNC_SYMBOL	 = 0x08,		/* Address of a function symbol in a symbol table */
 		FUNC_PATTERN	 = 0x10,		/* Appears to be a function based on pattern of instructions */
+		FUNC_GRAPH	 = 0x20,		/* Implied by inter-basicblock branching */
 	};
 
 	//! enum declaration as specified in proposed Sabre database schema

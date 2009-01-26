@@ -87,7 +87,7 @@ namespace PowerpcDisassembler
 
 namespace DisassemblerCommon {
     /* Map of basic block starting addresses. The key is the RVA of the first instruction in the basic block; the value is the
-     * set of all addresses of instructions known to branch to this basic block. */
+     * set of all addresses of instructions known to branch to this basic block (i.e., set of all known callers). */
     typedef std::map<rose_addr_t, std::set<rose_addr_t> > BasicBlockStarts;
 
     /* Map of function starting addresses. The key is the RVA of the first instruction in the function; the value consists of
