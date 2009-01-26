@@ -1,3 +1,294 @@
+2009-01-26 19:42  matzke
+
+	* [r4169]
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/arm-ctrlaltdel.ans,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecELF.C: .eh_frame
+	  terminated with zero length field
+
+2009-01-26 19:42  matzke
+
+	* [r4168]
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/binaryFunctionBoundary.C:
+	  Demo bugfix in binaryFunctionBoundary
+
+2009-01-26 19:42  matzke
+
+	* [r4167] /trunk/ROSE/tests/roseTests/binaryTests/runTest.C:
+	  Adjusted test case for new binary function detection
+	  
+	  This test case assumed that the only functions in a binary
+	  executable
+	  were those that had symbols in the symbol table. This is no
+	  longer
+	  true since we now determine function boundaries with a wider
+	  variety of
+	  heuristics.
+	  
+	  Here's the current state of function detection for the test that
+	  was
+	  failing, generated with binaryFunctionBoundary.C:
+	  
+	  Functions detected from binary executable:
+	  Key for reason(s) address is a suspected function:
+	  E = entry address C = call target X = exception frame
+	  S = function symbol P = instruction pattern G = interblock branch
+	  graph
+	  
+	  Start End Reason Kind Name
+	  ---------- ---------- ------ --------
+	  --------------------------------
+	  0x08048278-0x08048283: .C.S.. unknown _init
+	  0x08048290-0x080482a0: .....G unknown
+	  0x080482a0-0x080482b0: .C.... unknown
+	  0x080482b0-0x080482c0: .C.... unknown
+	  0x080482c0-0x080482e1: E..S.. unknown _start
+	  0x080482e4-0x080482ed: .C.S.. unknown call_gmon_start
+	  0x080482ed-0x080482ff: .C.... unknown
+	  0x08048310-0x0804831f: .C.S.. unknown __do_global_dtors_aux
+	  0x08048340-0x0804834f: .C.S.. unknown frame_dummy
+	  0x08048364-0x08048381: ...S.. unknown main
+	  0x080483c0-0x080483ce: ...S.. unknown __libc_csu_init
+	  0x080483ce-0x080483da: .C.... unknown
+	  0x08048414-0x0804841f: ...S.. unknown __libc_csu_fini
+	  0x0804841f-0x0804843f: .C.... unknown
+	  0x08048460-0x08048476: .C.S.. unknown __do_global_ctors_aux
+	  0x08048494-0x0804849d: .C.S.. unknown _fini
+	  0x0804849d-0x080484aa: .C.... unknown
+	  ---------- ---------- ------ --------
+	  --------------------------------
+	  
+	  For example, the GOT/PLT entries for dynamic linking are detected
+	  as the
+	  three unnamed functions after _init. The other three unnamed
+	  functions
+	  are due to the address being used in a CALL-like instruction.
+
+2009-01-26 19:41  matzke
+
+	* [r4166]
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/binaryFunctionBoundary.C:
+	  Updated demo to use new code
+	  
+	  This was originally an experimenting area, but now that all the
+	  functionality has been migrated into the library, I've entirely
+	  rewritten it to demonstrate how functions are detected in a
+	  binary
+	  executable.
+
+2009-01-26 19:41  matzke
+
+	* [r4165]
+	  /trunk/ROSE/src/frontend/Disassemblers/detectFunctionStarts.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/disassemblerCommon.C:
+	  Minor change to function detection
+
+2009-01-26 19:41  matzke
+
+	* [r4164]
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/binaryAsyncSignalHandler.C:
+	  Test case indicates reason for function existence
+
+2009-01-26 19:41  matzke
+
+	* [r4163]
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/binaryAsyncSignalHandler.C:
+	  Added debugging code to test case
+
+2009-01-26 19:41  matzke
+
+	* [r4162] /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/frontend/Disassemblers/detectFunctionStarts.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/disassemblers.h: Added
+	  mark_graph_edges
+	  
+	  This function detects disassembled function boundaries by looking
+	  at the
+	  branch relationships between basic blocks.
+
+2009-01-26 19:41  matzke
+
+	* [r4161]
+	  /trunk/ROSE/src/frontend/Disassemblers/disassemblerCommon.C:
+	  Added documentation
+
+2009-01-26 19:41  matzke
+
+	* [r4160]
+	  /trunk/ROSE/src/frontend/Disassemblers/putInstructionsIntoBasicBlocks.C:
+	  Make sure "reason" is set in SgAsmFunctionDeclaration
+
+2009-01-26 19:41  matzke
+
+	* [r4159]
+	  /trunk/ROSE/src/frontend/Disassemblers/detectFunctionStarts.C:
+	  Added some debugging code
+
+2009-01-26 19:40  matzke
+
+	* [r4158]
+	  /trunk/ROSE/src/frontend/Disassemblers/putInstructionsIntoBasicBlocks.C:
+	  Reindented for etags/ctags
+
+2009-01-26 19:40  matzke
+
+	* [r4157] /trunk/ROSE/projects/palette/rose.P: Regenerated file
+
+2009-01-26 19:40  matzke
+
+	* [r4156] /trunk/ROSE/src/ROSETTA/src/binaryInstruction.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/detectFunctionStarts.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/disassemblerCommon.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/disassemblers.h:
+	  BasicBlockStarts caller links
+	  
+	  Removed the boolean "externally visible" value per basic block.
+	  Replaced
+	  it with a std::set to keep track of all known caller addresses.
+	  This
+	  graph will be useful when trying to derive function boundaries.
+
+2009-01-26 19:40  matzke
+
+	* [r4155]
+	  /trunk/ROSE/src/frontend/Disassemblers/disassemblerCommon.C:
+	  Reindented code prior to modification
+
+2009-01-26 19:40  matzke
+
+	* [r4154]
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/binaryAsyncSignalHandler.C,
+	  /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/ROSETTA/src/binaryInstruction.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/detectFunctionStarts.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/disassemblerCommon.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/disassemblers.h,
+	  /trunk/ROSE/src/frontend/Disassemblers/putInstructionsIntoBasicBlocks.C:
+	  Function boundary reasons
+
+2009-01-26 19:40  matzke
+
+	* [r4153]
+	  /trunk/ROSE/src/frontend/Disassemblers/disassemblerCommon.C:
+	  Final simplification of loop in disassembleInterpretation
+
+2009-01-26 19:40  matzke
+
+	* [r4152]
+	  /trunk/ROSE/src/frontend/Disassemblers/disassemblerCommon.C:
+	  Reduced 'if' nesting
+	  
+	  Replace some '} else { if () {}' with
+	  } else if () {}'
+	  to reduce nesting level for deeply nested construct.
+
+2009-01-26 19:39  matzke
+
+	* [r4151]
+	  /trunk/ROSE/src/frontend/Disassemblers/disassemblerCommon.C:
+	  Removed extraneous settings for isFunctionStart
+
+2009-01-26 19:39  matzke
+
+	* [r4150]
+	  /trunk/ROSE/src/frontend/Disassemblers/disassemblerCommon.C:
+	  Reformat
+	  
+	  Reformatted some complex code so it fits on one page. Lined up
+	  indentation.
+
+2009-01-26 19:39  matzke
+
+	* [r4149]
+	  /trunk/ROSE/src/frontend/Disassemblers/detectFunctionStarts.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/disassemblerCommon.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/disassemblers.h,
+	  /trunk/ROSE/src/frontend/Disassemblers/putInstructionsIntoBasicBlocks.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilderAsm.h:
+	  Added typedefs for basicBlockStarts and functionStarts
+
+2009-01-26 19:39  matzke
+
+	* [r4148]
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/binaryAsyncSignalHandler.C:
+	  Changed a printf in binaryAsyncSignalHandler.C
+	  
+	  This is in combination with the new function boundary detection
+	  stuff in
+	  order to print the function name and/or reason that this
+	  instruction is
+	  considered to be the entry point of a function.
+
+2009-01-26 19:39  matzke
+
+	* [r4147]
+	  /trunk/ROSE/src/frontend/Disassemblers/detectFunctionStarts.C:
+	  WIP: detection of function boundaries in disassembled code
+
+2009-01-26 19:39  matzke
+
+	* [r4146] /trunk/ROSE/src/frontend/Disassemblers/Makefile.am,
+	  /trunk/ROSE/src/frontend/Disassemblers/detectFunctionStarts.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/disassemblerCommon.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/disassemblers.h: Basic
+	  ability to find function starts in binary code
+
+2009-01-26 19:39  matzke
+
+	* [r4145]
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/runExecFormatsTest:
+	  Added --relax switch to test case
+
+2009-01-26 19:39  matzke
+
+	* [r4144] /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/ROSETTA/src/binaryInstruction.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecELF.C: More robust
+	  parse/unparse for ELF .eh_frame section
+
+2009-01-26 19:38  matzke
+
+	* [r4143] /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecELF.C:
+	  Added encoding formats for SgAsmElfEHFrameSection
+
+2009-01-26 19:38  matzke
+
+	* [r4142] /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/ROSETTA/src/binaryInstruction.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecELF.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecGeneric.C:
+	  Unparsing for .eh_frame sections of ELF
+
+2009-01-26 19:38  matzke
+
+	* [r4141] /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Node.code,
+	  /trunk/ROSE/src/ROSETTA/astNodeList,
+	  /trunk/ROSE/src/ROSETTA/src/binaryInstruction.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecELF.C: Added
+	  SgAsmElfEHFrameEntryFD
+
+2009-01-26 19:38  matzke
+
+	* [r4140] /trunk/ROSE/projects/palette/rose.P,
+	  /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Node.code,
+	  /trunk/ROSE/src/ROSETTA/astNodeList,
+	  /trunk/ROSE/src/ROSETTA/src/binaryInstruction.C,
+	  /trunk/ROSE/src/ROSETTA/src/buildStorageClasses.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecELF.C: Added
+	  SgAsmElfEHFrameSection and SgAsmElfEHFrameEntryCI
+
+2009-01-26 19:37  matzke
+
+	* [r4139] /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecGeneric.C: Added
+	  signed/unsigned LEB128 decoders
+
+2009-01-26 18:50  liao6
+
+	* [r4137] /trunk/ROSE/scripts/updateChangeLog2.sh: Added a script
+	  to automatically update ChangeLog2
+
 2009-01-26 16:34  dquinlan
 
 	* [r4134]
