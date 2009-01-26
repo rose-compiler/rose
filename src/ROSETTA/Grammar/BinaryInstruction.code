@@ -803,7 +803,9 @@ HEADER_GENERIC_SECTION_START
 		addr_t        write(std::ostream&, addr_t offset, const std::string &str) const;
 		addr_t        write(std::ostream&, addr_t offset, char c) const;
 		addr_t        write(std::ostream&, addr_t offset, const SgFileContentList &buf) const;
-		addr_t	write(std::ostream&, addr_t offset, const SgUnsignedCharList &buf) const;
+		addr_t	      write(std::ostream&, addr_t offset, const SgUnsignedCharList &buf) const;
+		addr_t        write_uleb128(unsigned char*, addr_t offset, uint64_t) const;
+		addr_t        write_sleb128(unsigned char*, addr_t offset, int64_t) const;
 
 		/* Functions for accessing content */
 		const unsigned char *content(addr_t offset, addr_t size);/*returns ptr to SIZE bytes starting at OFFSET */
@@ -1641,8 +1643,8 @@ HEADER_ELF_EH_FRAME_SECTION_START
 			{ctor();}
 		virtual SgAsmElfEHFrameSection *parse();
 		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const;
-		virtual bool reallocate();
 		virtual void unparse(std::ostream&) const;
+		addr_t unparse(std::ostream*) const;
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 	private:
 		void ctor();
@@ -1657,6 +1659,7 @@ HEADER_ELF_EH_FRAME_ENTRY_CI_START
 			p_lsda_encoding(-1), p_prh_encoding(-1), p_addr_encoding(-1), p_fd_entries(NULL)
 			{ctor(ehframe);}
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+		std::string unparse(const SgAsmElfEHFrameSection*) const;
 	private:
 		void ctor(SgAsmElfEHFrameSection*);
 HEADER_ELF_EH_FRAME_ENTRY_CI_END
@@ -1669,6 +1672,7 @@ HEADER_ELF_EH_FRAME_ENTRY_FD_START
 			: p_size(0)
 			{ctor(cie);}
 		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+		std::string unparse(const SgAsmElfEHFrameSection*, SgAsmElfEHFrameEntryCI*) const;
 	private:
 		void ctor(SgAsmElfEHFrameEntryCI*);
 HEADER_ELF_EH_FRAME_ENTRY_FD_END

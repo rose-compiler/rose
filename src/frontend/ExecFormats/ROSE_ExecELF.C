@@ -3265,6 +3265,7 @@ SgAsmElfSymbolSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 /********************************************************************************************************************************
  * Error Handling Frame (.eh_frame) Section
  * See http://refspecs.freestandards.org/LSB_3.1.0/LSB-Core-generic/LSB-Core-generic/ehframechpt.html
+ * Additional information can be found in the DWARF 3 documentation under "Other Debugging Information: Call Frame Information".
  ********************************************************************************************************************************/
 
 /* Non-parsing constructor */
@@ -3278,6 +3279,80 @@ SgAsmElfEHFrameEntryCI::ctor(SgAsmElfEHFrameSection *ehframe)
 
     p_fd_entries = new SgAsmElfEHFrameEntryFDList;
     p_fd_entries->set_parent(this);
+}
+
+/* Unparse one Common Information Entry (CIE) without unparsing the Frame Description Entries (FDE) to which it points. The
+ * initial length fields are not included in the result string. */
+std::string
+SgAsmElfEHFrameEntryCI::unparse(const SgAsmElfEHFrameSection *ehframe) const 
+{
+    SgAsmElfFileHeader *fhdr = ehframe->get_elf_header();
+    ROSE_ASSERT(fhdr!=NULL);
+
+    /* Allocate worst-case size for results */
+    size_t worst_size = (4+
+                         1+
+                         get_augmentation_string().size()+1+
+                         10+
+                         10+
+                         10+
+                         get_augmentation_data_length()+
+                         get_instructions().size()+
+                         fhdr->get_word_size());
+    unsigned char *buf = new unsigned char[worst_size];
+
+    addr_t at = 0;
+    uint32_t u32_disk;
+    unsigned char u8_disk;
+
+    /* CIE back offset (always zero) */
+    u32_disk=0;
+    memcpy(buf+at, &u32_disk, 4); at+=4;
+
+    /* Version */
+    u8_disk = get_version();
+    memcpy(buf+at, &u8_disk, 1); at+=1;
+
+    /* NUL-terminated Augmentation String */
+    size_t sz = get_augmentation_string().size()+1;
+    memcpy(buf+at, get_augmentation_string().c_str(), sz); at+=sz;
+
+    /* Alignment factors */
+    at = ehframe->write_uleb128(buf, at, get_code_alignment_factor());
+    at = ehframe->write_sleb128(buf, at, get_data_alignment_factor());
+
+    /* Augmentation data */
+    at = ehframe->write_uleb128(buf, at, get_augmentation_data_length());
+    std::string astr = get_augmentation_string();
+    if (astr[0]=='z') {
+        for (size_t i=1; i<astr.size(); i++) {
+            if ('L'==astr[i]) {
+                u8_disk = get_lsda_encoding();
+                buf[at++] = u8_disk;
+            } else if ('P'==astr[i]) {
+                u8_disk = get_prh_encoding();
+                buf[at++] = u8_disk;
+                ROSE_ASSERT(!"not implemented"); /*see parser*/
+            } else if ('R'==astr[i]) {
+                u8_disk = get_addr_encoding();
+                buf[at++] = u8_disk;
+            } else {
+                ROSE_ASSERT(!"invalid .eh_frame augmentation string");
+                abort();
+            }
+        }
+    }
+
+    /* Initial instructions */
+    sz = get_instructions().size();
+    if (sz>0) {
+        memcpy(buf+at, &(get_instructions()[0]), sz);
+        at += sz;
+    }
+
+    std::string retval((char*)buf, at);
+    delete[] buf;
+    return retval;
 }
 
 /* Print some debugging info */
@@ -3323,6 +3398,60 @@ SgAsmElfEHFrameEntryFD::ctor(SgAsmElfEHFrameEntryCI *cie)
     ROSE_ASSERT(cie->get_fd_entries()->get_entries().size()>0);
     set_parent(cie->get_fd_entries());
 }
+
+/* Unparse the Frame Description Entry (FDE) into a string but do not include the leading length field(s) or the CIE back pointer.
+ */
+std::string
+SgAsmElfEHFrameEntryFD::unparse(const SgAsmElfEHFrameSection *ehframe, SgAsmElfEHFrameEntryCI *cie) const
+{
+    SgAsmElfFileHeader *fhdr = ehframe->get_elf_header();
+    ROSE_ASSERT(fhdr!=NULL);
+
+    /* Allocate worst-case size for results */
+    size_t worst_size = 8 + get_augmentation_data().size() + get_instructions().size() + fhdr->get_word_size();
+    unsigned char *buf = new unsigned char[worst_size];
+
+    size_t sz;
+    addr_t at = 0;
+    uint32_t u32_disk;
+
+    /* PC Begin (begin_rva) and size */
+    switch (cie->get_addr_encoding()) {
+      case 0x01: {
+          host_to_le(get_begin_rva().get_rva(), &u32_disk);
+          memcpy(buf+at, &u32_disk, 4); at+=4;
+          host_to_le(get_size(), &u32_disk);
+          memcpy(buf+at, &u32_disk, 4); at+=4;
+          break;
+      }
+      default:
+        assert(!"unknown FDE address encoding");
+        abort();
+    }
+
+    /* Augmentation Data */
+    std::string astr = cie->get_augmentation_string();
+    if (astr.size()>0 && astr[0]=='z') {
+        at = ehframe->write_uleb128(buf, at, get_augmentation_data().size());
+        sz = get_augmentation_data().size();
+        if (sz>0) {
+            memcpy(buf+at, &(get_augmentation_data()[0]), sz);
+            at += sz;
+        }
+    }
+
+    /* Call frame instructions */
+    sz = get_instructions().size();
+    if (sz>0) {
+        memcpy(buf+at, &(get_instructions()[0]), sz);
+        at += sz;
+    }
+
+    std::string retval((char*)buf, at);
+    delete[] buf;
+    return retval;
+}
+
 
 /* Print some debugging info */
 void
@@ -3460,11 +3589,13 @@ SgAsmElfEHFrameSection::parse()
                 addr_t aug_length = content_uleb128(&at);
                 fde->get_augmentation_data() = content_ucl(at, aug_length);
                 at += aug_length;
+                ROSE_ASSERT(fde->get_augmentation_data().size()==aug_length);
             }
 
             /* Call frame instructions */
             addr_t cf_insn_size = (length_field_size + record_size) - (at - record_offset);
             fde->get_instructions() = content_ucl(at, cf_insn_size);
+            ROSE_ASSERT(fde->get_instructions().size()==cf_insn_size);
         }
 
         record_offset += length_field_size + record_size;
@@ -3472,28 +3603,103 @@ SgAsmElfEHFrameSection::parse()
     return this;
 }
 
-/* Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. */
+/** Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. Since EH Frame Sections are
+ *  run-length encoded, we need to actually unparse the section in order to determine its size. */
 rose_addr_t
 SgAsmElfEHFrameSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
-    /* FIXME */
-    return 0;
-}
-
-/* Called prior to unparsing. */
-bool
-SgAsmElfEHFrameSection::reallocate()
-{
-    bool reallocated = SgAsmElfSection::reallocate();
-    /*FIXME*/
-    return reallocated;
+    addr_t whole = unparse(NULL);
+    if (entsize)
+        *entsize = 0;
+    if (required)
+        *required = 0;
+    if (optional)
+        *optional = 0;
+    if (entcount)
+        *entcount = 0;
+    return whole;
 }
 
 /* Write data to .eh_frame section */
 void
 SgAsmElfEHFrameSection::unparse(std::ostream &f) const
 {
-    /*FIXME*/
+    unparse(&f);
+}
+
+/* Unparses the section into the optional output stream and returns the number of bytes written. If there is no output stream
+ * we still go through the actions but don't write anything. This is the only way to determine the amount of memory required
+ * to store the section since the section is run-length encoded. */
+rose_addr_t
+SgAsmElfEHFrameSection::unparse(std::ostream *fp) const
+{
+    SgAsmElfFileHeader *fhdr = get_elf_header();
+    ROSE_ASSERT(fhdr!=NULL);
+
+    addr_t at=0;
+    uint32_t u32_disk;
+    uint64_t u64_disk;
+
+    for (size_t i=0; i<get_ci_entries()->get_entries().size(); i++) {
+        addr_t last_cie_offset = at;
+        SgAsmElfEHFrameEntryCI *cie = get_ci_entries()->get_entries()[i];
+        std::string s = cie->unparse(this);
+        if (s.size()<0xffffffff) {
+            host_to_disk(fhdr->get_sex(), s.size(), &u32_disk);
+            if (fp)
+                write(*fp, at, 4, &u32_disk);
+            at += 4;
+        } else {
+            u32_disk = 0xffffffff;
+            if (fp)
+                write(*fp, at, 4, &u32_disk);
+            at += 4;
+            host_to_disk(fhdr->get_sex(), s.size(), &u64_disk);
+            if (fp)
+                write(*fp, at, 8, &u64_disk);
+            at += 8;
+        }
+        if (fp)
+            write(*fp, at, s);
+        at += s.size();
+
+        for (size_t j=0; j<cie->get_fd_entries()->get_entries().size(); j++) {
+            SgAsmElfEHFrameEntryFD *fde = cie->get_fd_entries()->get_entries()[j];
+            std::string s = fde->unparse(this, cie);
+
+            /* Record size, not counting run-length coded size field, but counting CIE back offset. */
+            addr_t record_size = 4 + s.size();
+            if (record_size<0xffffffff) {
+                host_to_disk(fhdr->get_sex(), record_size, &u32_disk);
+                if (fp)
+                    write(*fp, at, 4, &u32_disk);
+                at += 4;
+            } else {
+                u32_disk = 0xffffffff;
+                if (fp)
+                    write(*fp, at, 4, &u32_disk);
+                at += 4;
+                host_to_disk(fhdr->get_sex(), record_size, &u64_disk);
+                if (fp)
+                    write(*fp, at, 8, &u64_disk);
+                at += 8;
+            }
+
+            /* CIE back offset. Number of bytes from the beginning of the current CIE record (including the Size fields) to
+             * the beginning of the FDE record (excluding the Size fields but including the CIE back offset). */
+            addr_t cie_back_offset = at - last_cie_offset;
+            host_to_disk(fhdr->get_sex(), cie_back_offset, &u32_disk);
+            if (fp)
+                write(*fp, at, 4, &u32_disk);
+            at += 4;
+
+            /* The FDE record itself */
+            if (fp)
+                write(*fp, at, s);
+            at += s.size();
+        }
+    }
+    return at;
 }
 
 /* Print some debugging info */

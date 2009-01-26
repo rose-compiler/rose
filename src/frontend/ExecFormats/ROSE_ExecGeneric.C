@@ -2258,6 +2258,44 @@ SgAsmGenericSection::write(std::ostream &f, addr_t offset, char c) const
     return write(f, offset, 1, &c);
 }
 
+/** Encode an unsigned value as LEB128 and return the next offset. */
+rose_addr_t
+SgAsmGenericSection::write_uleb128(unsigned char *buf, addr_t offset, uint64_t val) const
+{
+    if (val==0) {
+        buf[offset++] = 0;
+    } else {
+        while (val) {
+            unsigned char byte = val & 0x7f;
+            val >>= 7;
+            if (val!=0)
+                byte |= 0x80;
+            buf[offset++] = byte;
+        }
+    }
+    return offset;
+}
+
+/** Encode a signed value as LEB128 and return the next offset. */
+rose_addr_t
+SgAsmGenericSection::write_sleb128(unsigned char *buf, addr_t offset, int64_t val) const
+{
+    if (val==0) {
+        buf[offset++] = 0;
+    } else if (val==-1) {
+        buf[offset++] = 0x7f;
+    } else {
+        while (val!=0 && val!=-1) {
+            unsigned char byte = (uint64_t)val & 0x7f;
+            val >>= 7; /*sign extending*/
+            if (val!=0 && val!=-1)
+                byte |= 0x80;
+            buf[offset++] = byte;
+        }
+    }
+    return offset;
+}
+
 /** Get a list of internal holes, which are parts of a section that have not been referenced during parsing. */
 ExtentMap
 SgAsmGenericSection::get_internal_holes() const
