@@ -3094,13 +3094,15 @@ void Unparse_ExprStmt::unparseExprCond(SgExpression* expr, SgUnparse_Info& info)
         }
      unparseExpression(expr_cond->get_conditional_exp(), info);
 
-  // DQ (1/26/2009): Added spaces to make the formatting nicer.
-     curprint ( " ? "); 
+  // DQ (1/26/2009): Added spaces to make the formatting nicer (but it breaks the diff tests in the loop processor, so fix this later).
+  // curprint (" ? "); 
+     curprint ("?"); 
 
      unparseExpression(expr_cond->get_true_exp(), info);
 
-  // DQ (1/26/2009): Added spaces to make the formatting nicer.
-     curprint ( " : "); 
+  // DQ (1/26/2009): Added spaces to make the formatting nicer (but it breaks the diff tests in the loop processor, so fix this later).
+  // curprint (" : "); 
+     curprint (":"); 
 
      unparseExpression(expr_cond->get_false_exp(), info);
   // if (! toplevel_expression || expr_cond->get_is_lvalue())
