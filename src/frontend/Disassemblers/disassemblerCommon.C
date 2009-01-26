@@ -170,44 +170,33 @@ DisassemblerCommon::AsmFileWithData::disassembleRecursively(vector<uint64_t>& wo
                  << " worklist size = " << worklist.size()
                  << ", done = " << insns.size() << endl;
         }
+
+        /* Disassemble an instruction, returning all known successor addresses of this instruction. */
         set<uint64_t> knownSuccessors;
         SgAsmInstruction* insn = disassembleOneAtAddress(addr, knownSuccessors);
         if (!insn) {cerr << "Bad instruction at 0x" << hex << addr << endl; continue;}
         insns.insert(make_pair(addr, insn));
+
+        /* Build branching-graph based on the known successor addresses. Non-branching instructions will return at most one
+         * successor which we do not add to the graph because we want edges between the basic blocks, not within a basic
+         * block. Unconditional branches will also return at most one successor, but the successor will probably not be the
+         * next address but rather some distant address which we store as an edge in the graph.  Instructions that have more
+         * than one successor are such things as conditional branches or CALL-like instructions where one of the successors is
+         * probably the next address--we store all of these successor edges (the distant addresses obviously need to be stored,
+         * but the next address is also stored because it's an edge to another basic block. */
         for (set<uint64_t>::const_iterator i = knownSuccessors.begin(); i != knownSuccessors.end(); ++i) {
-            if (!inCodeSegment(*i)) {
-                // Assume no jumps to data segments
-                /* cerr << "Found succ outside code segment at 0x" << hex << *i << endl; */
+            if (!inCodeSegment(*i))
                 continue;
-            }
-
-            /* If control branches to something other than the next instruction then remember that. We'll be using this
-             * information when we try to detect function boundaries. */
-            if (*i != addr + insn->get_raw_bytes().size())
+            if (knownSuccessors.size()>1 || *i != addr + insn->get_raw_bytes().size())
                 basicBlockStarts[*i].insert(addr);
-
-            if (insns.find(*i) == insns.end()) {
+            if (insns.find(*i) == insns.end())
                 worklist.push_back(*i);
-            }
         }
-
-#if 0 /* I don't think we need this anymore as it is handled above. [RPM 2009-01-21] */
-        // The return location for a call needs to be externally visible, which
-        // it wouldn't be by the other rules
-        SgAsmx86Instruction* x86insn = isSgAsmx86Instruction(insn);
-        SgAsmArmInstruction* arminsn = isSgAsmArmInstruction(insn);
-        if ((x86insn && x86InstructionIsUnconditionalBranch(x86insn)) ||
-            (arminsn && (arminsn->get_kind() == arm_b || arminsn->get_kind() == arm_bl ||
-                         arminsn->get_kind() == arm_blx || arminsn->get_kind() == arm_bx ||
-                         arminsn->get_kind() == arm_bxj))) {
-            basicBlockStarts[addr + insn->get_raw_bytes().size()] = true;
-        }
-#endif
 
         /* Scan for constant operands that are code pointers. Such operands are often used in a closely following instruction
          * as a jump target. E.g., "move 0x400600, reg1; ...; jump reg1". We don't know when (or even if) the execution branch
-         * occurs, but for the sake of keep track of branching we'll just say it happes at this instruction. (In practice, it
-         * almost always happens at the end of this instruction's basic block.) */
+         * occurs, but for the sake of inter basic block branching we'll just say it happes at this instruction. (In practice,
+         * it almost always happens at the end of this instruction's basic block.) */
         SgAsmOperandList* ol = insn->get_operandList();
         const vector<SgAsmExpression*>& operands = ol->get_operands();
         for (size_t i = 0; i < operands.size(); ++i) {
