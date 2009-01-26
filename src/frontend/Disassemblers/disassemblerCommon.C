@@ -160,57 +160,67 @@ DisassemblerCommon::AsmFileWithData::disassembleRecursively(vector<uint64_t>& wo
                                                             BasicBlockStarts &basicBlockStarts
                                                             ) const
 {
-  while (!worklist.empty()) {
-    uint64_t addr = worklist.back();
-    worklist.pop_back();
-    if (insns.find(addr) != insns.end()) continue;
-    ++instructionsDisassembled;
-    if (instructionsDisassembled % 10000 == 0) {
-      cerr << instructionsDisassembled << " disassembling " << addr << " worklist size = " << worklist.size() << ", done = " << insns.size() << endl;
-    }
-    set<uint64_t> knownSuccessors;
-    SgAsmInstruction* insn = disassembleOneAtAddress(addr, knownSuccessors);
-    if (!insn) {cerr << "Bad instruction at 0x" << hex << addr << endl; continue;}
-    insns.insert(make_pair(addr, insn));
-    for (set<uint64_t>::const_iterator i = knownSuccessors.begin(); i != knownSuccessors.end(); ++i) {
-      if (!inCodeSegment(*i)) { /* cerr << "Found succ outside code segment at 0x" << hex << *i << endl; */ continue;} // Assume no jumps to data segments
-      if (knownSuccessors.size() != 1 || *i != addr + insn->get_raw_bytes().size()) {
-        basicBlockStarts[*i] |= false; // Ensure it exists, but don't change its value if it was already true
-        // basicBlockStarts[*i] = true; // Be more conservative
-      }
-      if (insns.find(*i) == insns.end()) {
-        worklist.push_back(*i);
-      }
-    }
-    // The return location for a call needs to be externally visible, which
-    // it wouldn't be by the other rules
-    SgAsmx86Instruction* x86insn = isSgAsmx86Instruction(insn);
-    SgAsmArmInstruction* arminsn = isSgAsmArmInstruction(insn);
-    if ((x86insn && x86InstructionIsUnconditionalBranch(x86insn)) ||
-        (arminsn && (arminsn->get_kind() == arm_b || arminsn->get_kind() == arm_bl || arminsn->get_kind() == arm_blx || arminsn->get_kind() == arm_bx || arminsn->get_kind() == arm_bxj))) {
-      basicBlockStarts[addr + insn->get_raw_bytes().size()] = true;
-    }
-    // Scan for constant operands that are code pointers
-    SgAsmOperandList* ol = insn->get_operandList();
-    const vector<SgAsmExpression*>& operands = ol->get_operands();
-    for (size_t i = 0; i < operands.size(); ++i) {
-      uint64_t constant = 0;
-      switch (operands[i]->variantT()) {
-        case V_SgAsmWordValueExpression: constant = isSgAsmWordValueExpression(operands[i])->get_value(); break;
-        case V_SgAsmDoubleWordValueExpression: constant = isSgAsmDoubleWordValueExpression(operands[i])->get_value(); break;
-        case V_SgAsmQuadWordValueExpression: constant = isSgAsmQuadWordValueExpression(operands[i])->get_value(); break;
-        default: continue; // Not an appropriately-sized constant
-      }
-      if (inCodeSegment(constant)) {
-        // The second part of the condition is trying to handle if
-        // something pushes the address of the next instruction
-        basicBlockStarts[constant] = true;
-        if (insns.find(constant) == insns.end()) {
-          worklist.push_back(constant);
+    while (!worklist.empty()) {
+        uint64_t addr = worklist.back();
+        worklist.pop_back();
+        if (insns.find(addr) != insns.end()) continue;
+        ++instructionsDisassembled;
+        if (instructionsDisassembled % 10000 == 0) {
+            cerr << instructionsDisassembled << " disassembling " << addr
+                 << " worklist size = " << worklist.size()
+                 << ", done = " << insns.size() << endl;
         }
-      }
+        set<uint64_t> knownSuccessors;
+        SgAsmInstruction* insn = disassembleOneAtAddress(addr, knownSuccessors);
+        if (!insn) {cerr << "Bad instruction at 0x" << hex << addr << endl; continue;}
+        insns.insert(make_pair(addr, insn));
+        for (set<uint64_t>::const_iterator i = knownSuccessors.begin(); i != knownSuccessors.end(); ++i) {
+            if (!inCodeSegment(*i)) {
+                // Assume no jumps to data segments
+                /* cerr << "Found succ outside code segment at 0x" << hex << *i << endl; */
+                continue;
+            }
+            if (knownSuccessors.size() != 1 || *i != addr + insn->get_raw_bytes().size()) {
+                basicBlockStarts[*i] |= false; // Ensure it exists, but don't change its value if it was already true
+                // basicBlockStarts[*i] = true; // Be more conservative
+            }
+            if (insns.find(*i) == insns.end()) {
+                worklist.push_back(*i);
+            }
+        }
+
+        // The return location for a call needs to be externally visible, which
+        // it wouldn't be by the other rules
+        SgAsmx86Instruction* x86insn = isSgAsmx86Instruction(insn);
+        SgAsmArmInstruction* arminsn = isSgAsmArmInstruction(insn);
+        if ((x86insn && x86InstructionIsUnconditionalBranch(x86insn)) ||
+            (arminsn && (arminsn->get_kind() == arm_b || arminsn->get_kind() == arm_bl ||
+                         arminsn->get_kind() == arm_blx || arminsn->get_kind() == arm_bx ||
+                         arminsn->get_kind() == arm_bxj))) {
+            basicBlockStarts[addr + insn->get_raw_bytes().size()] = true;
+        }
+
+        // Scan for constant operands that are code pointers
+        SgAsmOperandList* ol = insn->get_operandList();
+        const vector<SgAsmExpression*>& operands = ol->get_operands();
+        for (size_t i = 0; i < operands.size(); ++i) {
+            uint64_t constant = 0;
+            switch (operands[i]->variantT()) {
+              case V_SgAsmWordValueExpression: constant = isSgAsmWordValueExpression(operands[i])->get_value(); break;
+              case V_SgAsmDoubleWordValueExpression: constant = isSgAsmDoubleWordValueExpression(operands[i])->get_value(); break;
+              case V_SgAsmQuadWordValueExpression: constant = isSgAsmQuadWordValueExpression(operands[i])->get_value(); break;
+              default: continue; // Not an appropriately-sized constant
+            }       
+            if (inCodeSegment(constant)) {
+                // The second part of the condition is trying to handle if
+                // something pushes the address of the next instruction
+                basicBlockStarts[constant] = true;
+                if (insns.find(constant) == insns.end()) {
+                    worklist.push_back(constant);
+                }
+            }
+        }
     }
-  }
 }
 
 // DQ (8/26/2008): Added initialization for default mode of disassembler
