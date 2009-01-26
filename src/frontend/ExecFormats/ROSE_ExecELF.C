@@ -3750,6 +3750,13 @@ SgAsmElfEHFrameSection::unparse(std::ostream *fp) const
             at += s.size();
         }
     }
+
+    /* Write a zero length to indicate the end of the CIE list */
+    u32_disk = 0;
+    if (fp)
+        write(*fp, at, 4, &u32_disk);
+    at += 4;
+
     return at;
 }
 
