@@ -11,7 +11,6 @@
 static void
 mark_entry_targets(SgAsmInterpretation *interp,
                    std::map<uint64_t, SgAsmInstruction*> &insns,
-                   std::map<uint64_t, bool> &bb_starts,
                    std::map<uint64_t, std::string> &func_starts)
 {
     SgAsmGenericHeader *fhdr = interp->get_header();
@@ -19,10 +18,8 @@ mark_entry_targets(SgAsmInterpretation *interp,
     SgRVAList entries = fhdr->get_entry_rvas();
     for (size_t i=0; i<entries.size(); i++) {
         rose_addr_t entry_rva = entries[i].get_rva();
-        if (insns.find(entry_rva)!=insns.end()) {
-            bb_starts[entry_rva] = true;
+        if (insns.find(entry_rva)!=insns.end())
             func_starts[entry_rva] += ENTRY_POINT;
-        }
     }
 }
 
@@ -32,7 +29,6 @@ mark_entry_targets(SgAsmInterpretation *interp,
 static void
 mark_call_targets(SgAsmInterpretation *interp,
                   std::map<uint64_t, SgAsmInstruction*> &insns,
-                  std::map<uint64_t, bool> &bb_starts,
                   std::map<uint64_t, std::string> &func_starts)
 {
     std::map<uint64_t, SgAsmInstruction*>::iterator ii;
@@ -49,10 +45,8 @@ mark_call_targets(SgAsmInterpretation *interp,
         if (insn && (x86_call==insn->get_kind() || x86_farcall==insn->get_kind())) {
             rose_addr_t callee_rva = 0;
             if (x86GetKnownBranchTarget(insn, callee_rva/*out*/) &&
-                insns.find(callee_rva)!=insns.end()) {
-                bb_starts[callee_rva] = true;
+                insns.find(callee_rva)!=insns.end())
                 func_starts[callee_rva] += CALL_TARGET;
-            }
         }
     }
 }
@@ -61,7 +55,6 @@ mark_call_targets(SgAsmInterpretation *interp,
 static void
 mark_eh_frames(SgAsmInterpretation *interp,
                std::map<uint64_t, SgAsmInstruction*> &insns,
-               std::map<uint64_t, bool> &bb_starts,
                std::map<uint64_t, std::string> &func_starts)
 {
     SgAsmGenericHeader *fhdr = interp->get_header();
@@ -76,10 +69,8 @@ mark_eh_frames(SgAsmInterpretation *interp,
                 for (size_t k=0; k<fd_entries->get_entries().size(); k++) {
                     SgAsmElfEHFrameEntryFD *fde = fd_entries->get_entries()[k];
                     rose_addr_t target = fde->get_begin_rva().get_rva();
-                    if (insns.find(target)!=insns.end()) {
-                        bb_starts[target] = true;
+                    if (insns.find(target)!=insns.end())
                         func_starts[target] += EH_FRAME;
-                    }
                 }
             }
         }
@@ -90,11 +81,8 @@ mark_eh_frames(SgAsmInterpretation *interp,
 static void
 mark_func_symbols(SgAsmInterpretation *interp,
                   std::map<uint64_t, SgAsmInstruction*> &insns,
-                  std::map<uint64_t, bool> &bb_starts,
                   std::map<uint64_t, std::string> &func_starts)
 {
-    /*FIXME: We could glean even more info from the symbol table since the symbols
-     *       also contain information about where the end of each function is located. [RPM 2009-01-16] */
     SgAsmGenericHeader *fhdr = interp->get_header();
 
     /* FIXME [RPM 2009-01-16] */
@@ -115,7 +103,6 @@ mark_func_symbols(SgAsmInterpretation *interp,
                     symbol->get_type()==SgAsmGenericSymbol::SYM_FUNC &&
                     insns.find(symbol->get_value())!=insns.end()) {
                     rose_addr_t value = symbol->get_value();
-                    bb_starts[value] = true;
                     func_starts[value] += FUNC_SYMBOL;
                 }
             }
@@ -133,6 +120,10 @@ Disassembler::detectFunctionStarts(SgAsmInterpretation *interp,
     mark_call_targets(interp, insns, basicBlockStarts, functionStarts);
     mark_eh_frames(interp, insns, basicBlockStarts, functionStarts);
     mark_func_symbols(interp, insns, basicBlockStarts, functionStarts);
+
+    /* All function entry points are also the starts of "externally visible" (i.e., true) basic blocks. */
+    for (std::map<uint64_t, std::string>::iterator i=functionStarts.begin(); i!=functionStarts.end(); i++)
+        basicBlockStarts[i->first] = true;
 }
 
 
