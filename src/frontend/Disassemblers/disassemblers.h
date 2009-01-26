@@ -86,29 +86,42 @@ namespace PowerpcDisassembler
    }
 
 namespace DisassemblerCommon {
-  typedef std::map<rose_addr_t, bool> BasicBlockStarts;
-  typedef std::map<rose_addr_t, std::string> FunctionStarts;
+    /* Map of basic block starting addresses. The key is the RVA of the first instruction in the basic block; the value
+     * indicates whether the block came from a parameter (true), or just a constant jump target or fallthrough (false) */
+    typedef std::map<rose_addr_t, bool> BasicBlockStarts;
 
-  struct AsmFileWithData {
-    SgAsmInterpretation* interp;
-    mutable size_t instructionsDisassembled;
+    /* Map of function starting addresses. The key is the RVA of the first instruction in the function; the value consists of
+     * a bit flag indicating why we think this is the beginning of a function, and a name (if known) of the function. */
+    struct FunctionStart {
+        FunctionStart()
+            : reason(SgAsmFunctionDeclaration::FUNC_NONE)
+            {}
+        FunctionStart(SgAsmFunctionDeclaration::FunctionReason reason, std::string name)
+            : reason(reason), name(name)
+            {}
+        unsigned reason;                        /* FunctionReason bit flags */
+        std::string name;
+    };
+    typedef std::map<rose_addr_t, FunctionStart> FunctionStarts;
 
-    AsmFileWithData(SgAsmInterpretation* interp): interp(interp), instructionsDisassembled(0) {}
+    struct AsmFileWithData {
+        SgAsmInterpretation* interp;
+        mutable size_t instructionsDisassembled;
 
-    SgAsmGenericSection* getSectionOfAddress(uint64_t addr) const;
-    bool inCodeSegment(uint64_t addr) const;
-    SgAsmInstruction* disassembleOneAtAddress(uint64_t addr, std::set<uint64_t>& knownSuccessors) const;
+        AsmFileWithData(SgAsmInterpretation* interp): interp(interp), instructionsDisassembled(0)
+            {}
+        SgAsmGenericSection* getSectionOfAddress(uint64_t addr) const;
+        bool inCodeSegment(uint64_t addr) const;
+        SgAsmInstruction* disassembleOneAtAddress(uint64_t addr, std::set<uint64_t>& knownSuccessors) const;
 
-    // Value field of basicBlockStarts is whether the block came from a
-    // parameter, or just a constant jump target or fallthrough (when true, it
-    // states that an indirect jump may be pointing there)
-
-    void disassembleRecursively(uint64_t addr, std::map<uint64_t, SgAsmInstruction*>& insns,
-                                BasicBlockStarts&) const;
-    void disassembleRecursively(std::vector<uint64_t>& worklist, std::map<uint64_t, SgAsmInstruction*>& insns,
-                                BasicBlockStarts&) const;
-  };
-
+        void disassembleRecursively(uint64_t addr, std::map<uint64_t, SgAsmInstruction*>& insns,
+                                    BasicBlockStarts&) const;
+        void disassembleRecursively(std::vector<uint64_t>& worklist, std::map<uint64_t, SgAsmInstruction*>& insns,
+                                    BasicBlockStarts&) const;
+    };
+    
+    void detectFunctionStarts(SgAsmInterpretation *interp, std::map<uint64_t, SgAsmInstruction*> &insns,
+                              BasicBlockStarts&, FunctionStarts&);
 }
 
 namespace Disassembler
@@ -119,8 +132,6 @@ namespace Disassembler
 
      void disassembleFile(SgAsmFile* f);
      void disassembleInterpretation(SgAsmInterpretation* interp);
-     void detectFunctionStarts(SgAsmInterpretation *interp, std::map<uint64_t, SgAsmInstruction*> &insns,
-                               DisassemblerCommon::BasicBlockStarts&, DisassemblerCommon::FunctionStarts&);
    }
 
 #endif // ROSE_DISASSEMBLERS_H

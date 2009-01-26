@@ -61,7 +61,7 @@ namespace PutInstructionsIntoBasicBlocks {
     for (DisassemblerCommon::FunctionStarts::const_iterator i = functionStarts.begin(); i != functionStarts.end(); ++i) {
       SgAsmFunctionDeclaration* f = new SgAsmFunctionDeclaration();
       f->set_address(i->first);
-      f->set_name(i->second);
+      f->set_name(i->second.name);
       funcs.insert(make_pair(i->first, f));
       newBlk->get_statementList().push_back(f);
       f->set_parent(newBlk);

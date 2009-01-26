@@ -3176,23 +3176,34 @@ HEADER_BINARY_OPERAND_LIST_END
 
 HEADER_BINARY_FUNCTION_DECLARATION_START
 	int nrOfValidInstructions(std::vector<SgNode*>& succs);
-          //void append_block( SgAsmBlock* operand );
-          void append_statement( SgAsmStatement* statement );
-          void remove_statement( SgAsmStatement* statement );	
-	  void append_dest( SgAsmStatement* instruction );		
-          void remove_children (  );
+	//void append_block(SgAsmBlock* operand);
+	void append_statement(SgAsmStatement* statement);
+	void remove_statement(SgAsmStatement* statement);
+	void append_dest(SgAsmStatement* instruction);
+	void remove_children();
 
-       //! enum declaration as specified in proposed Sabre database schema
-          enum function_kind_enum
-             {
-               e_unknown  = 0,
-               e_standard = 1,
-               e_library  = 2,
-               e_imported = 3,
-               e_thunk    = 4,
-               e_last
-             };
+	/* Reasons why an instruction might be considered the beginning of a function. */
+	enum FunctionReason {
+		FUNC_NONE	 = 0x00,		/* Used for initialization; not a bit flag */
+		FUNC_ENTRY_POINT = 0x01,		/* An entry point specified in the file header */
+		FUNC_CALL_TARGET = 0x02,		/* Target of a CALL-like instruction */
+		FUNC_EH_FRAME	 = 0x04,		/* Address mentioned in the ELF .eh_frame section */
+		FUNC_SYMBOL	 = 0x08,		/* Address of a function symbol in a symbol table */
+		FUNC_PATTERN	 = 0x10,		/* Appears to be a function based on pattern of instructions */
+	};
+
+	//! enum declaration as specified in proposed Sabre database schema
+	enum function_kind_enum {
+		e_unknown  = 0,
+		e_standard = 1,
+		e_library  = 2,
+		e_imported = 3,
+		e_thunk	   = 4,
+		e_last
+	};
 HEADER_BINARY_FUNCTION_DECLARATION_END
+
+
 
 HEADER_BINARY_DATA_STRUCTURE_START
           void append_declaration( SgAsmDeclaration* declaration );

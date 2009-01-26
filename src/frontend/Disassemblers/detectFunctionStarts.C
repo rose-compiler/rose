@@ -2,16 +2,13 @@
 #include <inttypes.h>
 #include "rose.h"
 
-#define ENTRY_POINT "E"
-#define CALL_TARGET "C"
-#define EH_FRAME    "F"
-#define FUNC_SYMBOL "S"
+namespace DisassemblerCommon {
 
 /** Marks program entry addresses (stored in the SgAsmGenericHeader) as functions. */
 static void
 mark_entry_targets(SgAsmInterpretation *interp,
                    std::map<uint64_t, SgAsmInstruction*> &insns,
-                   DisassemblerCommon::FunctionStarts &func_starts)
+                   FunctionStarts &func_starts)
 {
     SgAsmGenericHeader *fhdr = interp->get_header();
     ROSE_ASSERT(fhdr!=NULL);
@@ -19,7 +16,7 @@ mark_entry_targets(SgAsmInterpretation *interp,
     for (size_t i=0; i<entries.size(); i++) {
         rose_addr_t entry_rva = entries[i].get_rva();
         if (insns.find(entry_rva)!=insns.end())
-            func_starts[entry_rva] += ENTRY_POINT;
+            func_starts[entry_rva].reason |= SgAsmFunctionDeclaration::FUNC_ENTRY_POINT;
     }
 }
 
@@ -29,7 +26,7 @@ mark_entry_targets(SgAsmInterpretation *interp,
 static void
 mark_call_targets(SgAsmInterpretation *interp,
                   std::map<uint64_t, SgAsmInstruction*> &insns,
-                  DisassemblerCommon::FunctionStarts &func_starts)
+                  FunctionStarts &func_starts)
 {
     std::map<uint64_t, SgAsmInstruction*>::iterator ii;
     for (ii=insns.begin(); ii!=insns.end(); ii++) {
@@ -46,7 +43,7 @@ mark_call_targets(SgAsmInterpretation *interp,
             rose_addr_t callee_rva = 0;
             if (x86GetKnownBranchTarget(insn, callee_rva/*out*/) &&
                 insns.find(callee_rva)!=insns.end())
-                func_starts[callee_rva] += CALL_TARGET;
+                func_starts[callee_rva].reason |= SgAsmFunctionDeclaration::FUNC_CALL_TARGET;
         }
     }
 }
@@ -55,7 +52,7 @@ mark_call_targets(SgAsmInterpretation *interp,
 static void
 mark_eh_frames(SgAsmInterpretation *interp,
                std::map<uint64_t, SgAsmInstruction*> &insns,
-               DisassemblerCommon::FunctionStarts &func_starts)
+               FunctionStarts &func_starts)
 {
     SgAsmGenericHeader *fhdr = interp->get_header();
     SgAsmGenericSectionList *sections = fhdr->get_sections();
@@ -70,7 +67,7 @@ mark_eh_frames(SgAsmInterpretation *interp,
                     SgAsmElfEHFrameEntryFD *fde = fd_entries->get_entries()[k];
                     rose_addr_t target = fde->get_begin_rva().get_rva();
                     if (insns.find(target)!=insns.end())
-                        func_starts[target] += EH_FRAME;
+                        func_starts[target].reason |= SgAsmFunctionDeclaration::FUNC_EH_FRAME;
                 }
             }
         }
@@ -81,7 +78,7 @@ mark_eh_frames(SgAsmInterpretation *interp,
 static void
 mark_func_symbols(SgAsmInterpretation *interp,
                   std::map<uint64_t, SgAsmInstruction*> &insns,
-                  DisassemblerCommon::FunctionStarts &func_starts)
+                  FunctionStarts &func_starts)
 {
     SgAsmGenericHeader *fhdr = interp->get_header();
 
@@ -103,7 +100,7 @@ mark_func_symbols(SgAsmInterpretation *interp,
                     symbol->get_type()==SgAsmGenericSymbol::SYM_FUNC &&
                     insns.find(symbol->get_value())!=insns.end()) {
                     rose_addr_t value = symbol->get_value();
-                    func_starts[value] += FUNC_SYMBOL;
+                    func_starts[value].reason |= SgAsmFunctionDeclaration::FUNC_SYMBOL;
                 }
             }
         }
@@ -111,10 +108,10 @@ mark_func_symbols(SgAsmInterpretation *interp,
 }
                     
 void
-Disassembler::detectFunctionStarts(SgAsmInterpretation *interp,
-                                   std::map<uint64_t, SgAsmInstruction*> &insns,
-                                   DisassemblerCommon::BasicBlockStarts &basicBlockStarts,
-                                   DisassemblerCommon::FunctionStarts &functionStarts)
+detectFunctionStarts(SgAsmInterpretation *interp,
+                     std::map<uint64_t, SgAsmInstruction*> &insns,
+                     BasicBlockStarts &basicBlockStarts,
+                     FunctionStarts &functionStarts)
 {
     mark_entry_targets(interp, insns, functionStarts);
     mark_call_targets(interp, insns, functionStarts);
@@ -122,12 +119,12 @@ Disassembler::detectFunctionStarts(SgAsmInterpretation *interp,
     mark_func_symbols(interp, insns, functionStarts);
 
     /* All function entry points are also the starts of "externally visible" (i.e., true) basic blocks. */
-    for (std::map<uint64_t, std::string>::iterator i=functionStarts.begin(); i!=functionStarts.end(); i++)
+    for (FunctionStarts::iterator i=functionStarts.begin(); i!=functionStarts.end(); i++)
         basicBlockStarts[i->first] = true;
 }
 
 
-
+} /*namespace*/
 
 
 

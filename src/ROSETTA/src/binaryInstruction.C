@@ -1865,6 +1865,8 @@ Grammar::setUpBinaryInstructions ()
      AsmFunctionDeclaration.setFunctionPrototype        ( "HEADER_BINARY_FUNCTION_DECLARATION", "../Grammar/BinaryInstruction.code");
      AsmFunctionDeclaration.setDataPrototype("std::string","name","= \"\"",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmFunctionDeclaration.setDataPrototype("unsigned", "reason", "= SgAsmFunctionDeclaration::FUNC_NONE", /*bit flags*/
+                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmFunctionDeclaration.setDataPrototype("SgAsmFunctionDeclaration::function_kind_enum","function_kind","= SgAsmFunctionDeclaration::e_unknown",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
   // AsmFunctionDeclaration.setDataPrototype("int","function_kind","= 0",
