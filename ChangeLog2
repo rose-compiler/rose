@@ -1,3 +1,277 @@
+2009-01-26 16:34  dquinlan
+
+	* [r4134]
+	  /trunk/ROSE/src/backend/unparser/CxxCodeGeneration/unparseCxx_expressions.C:
+	  Removed use of spaces in formatting '? :' operator unparsing
+	  since it breaks the diff-based tests in the loop processor.
+
+2009-01-26 15:55  dquinlan
+
+	* [r4133]
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2001_06.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2003_25.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_01.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_02.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_09.C,
+	  /trunk/ROSE/projects/compass/src/compassSupport/compass.C,
+	  /trunk/ROSE/projects/compass/tools/compass/gui/compassGui.C,
+	  /trunk/ROSE/projects/palette/rose.P,
+	  /trunk/ROSE/src/ROSETTA/src/statement.C,
+	  /trunk/ROSE/src/backend/unparser/CxxCodeGeneration/unparseCxx_expressions.C,
+	  /trunk/ROSE/src/backend/unparser/CxxCodeGeneration/unparseCxx_statements.C,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_4.0/src/rose_lang_feat.h,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/new_sage_gen_be.C,
+	  /trunk/ROSE/src/frontend/SageIII/astPostProcessing/astPostProcessing.C,
+	  /trunk/ROSE/src/frontend/SageIII/astVisualization/wholeAST.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilder.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilder.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/midend/astProcessing/AstDOTGeneration.C: Summary:
+	  Added more C++ support to EDG/ROSE interface using EDG 4.0.
+	  
+	  Detailed changes in this commit:
+	  1) Added more C++ support to new EDG/ROSE intrface (using EDG
+	  4.0) (more class
+	  declarations and namespace declarations; more C++ tests codes
+	  pass).
+	  2) Added assembly name support (using strings) to the unparser.
+	  This was
+	  previously only supported using register codes which made ROSE
+	  x86 specific
+	  (a strange concept for a source-to-source compiler). The new
+	  interface can
+	  support either assembly register codes as internal codes (support
+	  more analysis)
+	  or as strings (which provides greater portability (only supported
+	  in the new
+	  interface).
+	  3) Added code to help debug demo_12 seg fault (a problem in
+	  Compass with the new
+	  command line data-base support). This is something to resolved
+	  between Andreas
+	  and Thomas and maybe me as well, if I can be of any help.
+	  4) Turned on EDG macros: ASM_FUNCTION_ALLOWED and
+	  INCLUDE_COMMENTS_IN_ASM_FUNC_BODY
+	  to support ans much source code details as is reasonable. Also
+	  added
+	  "case stmk_asm_func_body" to switch statements in new EDG/ROSE
+	  interface.
+	  5) Added support for asm names for functions (previously only
+	  supported for variables).
+	  This required a string be added to the SgFunctionDeclaration IR
+	  node.
+	  6) Fixed firstNondefiningDeclaration reference in SgAsmStatement
+	  (in new EDG/ROSE
+	  interface).
+	  7) Fixed lots of details in the sageBuilder.C file implementation
+	  of how to construct
+	  SgClassDeclaration. Fixed to work with new EDG/ROSE interface and
+	  the tests codes
+	  in tests/roseTests/astInterfaceTests.
+	  8) Addes support for lvalue adjustment (a special kind of cast
+	  where some type
+	  qualifiers are dropped (might be C++ specific). New support for:
+	  eok_lvalue_adjust,
+	  eok_reference_to, eok_ref_indirect, eok_ref_cast.
+	  9) Added information to whole AST graph to present if
+	  declarations are declared as
+	  forward references. This is mostly debugging support for details
+	  of the new
+	  EDG/ROSE interface (and the C++ specific details).
+
+2009-01-24 04:07  dquinlan
+
+	* [r4097] /trunk/ROSE/ROSE_ResearchPapers/CompassInitialPaper.pdf,
+	  /trunk/ROSE/ROSE_ResearchPapers/ParallelProgramAnalysis.pdf,
+	  /trunk/ROSE/ROSE_ResearchPapers/SignatureVisualizationOfBinaries.pdf,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_08.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_03.f90,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_04.f90,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_05.caf,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_06.CAF,
+	  /trunk/ROSE/scripts/configure_with_assemblySemantics,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Support.code,
+	  /trunk/ROSE/src/ROSETTA/src/support.C,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/new_sage_gen_be.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilder.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C,
+	  /trunk/ROSE/src/util/commandlineProcessing/commandline_processing.C,
+	  /trunk/ROSE/src/util/commandlineProcessing/commandline_processing.h:
+	  Changes in this commit:
+	  1) Added support for Co-Array Fortran file extension and test
+	  codes.
+	  2) Added more support for C++ details in new EDG/ROSE interface.
+	  3) Added 3 relatively recent papers to the ROSE_ResearchPapers
+	  directory.
+	  4) Added a few more Fortran tests codes.
+
+2009-01-23 18:25  panas2
+
+	* [r4091]
+	  /trunk/ROSE/projects/compass/src/compassSupport/compass.C: Fixed
+	  the problem that binaries can not be handled with Compass GUI
+
+2009-01-23 16:58  dquinlan
+
+	* [r4090] /trunk/ROSE/Makefile.am, /trunk/ROSE/configure.in,
+	  /trunk/ROSE/demo, /trunk/ROSE/demo/Makefile.am,
+	  /trunk/ROSE/demo/demo.txt,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2001_01.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_03.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_04.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_05.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_06.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_07.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_01.f90,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_02.f,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_02_global.h,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_02_mpif.h,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_02_mpinpb.h,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_02_npbparams.h,
+	  /trunk/ROSE/developersScratchSpace/Dan/astEquivalence_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/astEquivalence_tests/astEquivalenceGraphForBinaryCode3.png,
+	  /trunk/ROSE/developersScratchSpace/Dan/astEquivalence_tests/testProgram.c,
+	  /trunk/ROSE/developersScratchSpace/Dan/astEquivalence_tests/testProgram_alt.c,
+	  /trunk/ROSE/developersScratchSpace/Dan/astEquivalence_tests/treeEditDistance.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/translator_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/Makefile.am,
+	  /trunk/ROSE/docs/Rose/AvailableDocumentation.docs.in,
+	  /trunk/ROSE/docs/Rose/Makefile.am,
+	  /trunk/ROSE/docs/Rose/ROSE_DemoGuide.tex.in,
+	  /trunk/ROSE/docs/Rose/Tutorial/Makefile.am,
+	  /trunk/ROSE/docs/Rose/demo.tex,
+	  /trunk/ROSE/docs/Rose/gettingStarted.tex.in,
+	  /trunk/ROSE/docs/Rose/installRose.tex,
+	  /trunk/ROSE/projects/BinQ/Makefile.am,
+	  /trunk/ROSE/projects/BinQ/buffer2.bin.32bit,
+	  /trunk/ROSE/projects/compass/tools/compass/Makefile.am,
+	  /trunk/ROSE/rose.docs.in, /trunk/ROSE/scripts/erase_test_dirs.sh,
+	  /trunk/ROSE/src/ROSETTA/src/support.C,
+	  /trunk/ROSE/src/backend/unparser/FortranCodeGeneration/unparseFortran_statements.C,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/debugging.C,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/new_sage_gen_be.C,
+	  /trunk/ROSE/src/frontend/OpenFortranParser_SAGE_Connection/FortranParserActionROSE.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilder.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilder.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C,
+	  /trunk/ROSE/src/midend/astProcessing/AstDOTGeneration.C,
+	  /trunk/ROSE/src/util/commandlineProcessing/commandline_processing.C,
+	  /trunk/ROSE/tests/CompileTests/C_tests/constants.c,
+	  /trunk/ROSE/tests/CompileTests/C_tests/test2006_135.c,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testGnuOptions/Makefile.am:
+	  Changes in this commit:
+	  1) Added Craig's corrections (from his students) to the Fortran
+	  support in ROSE.
+	  2) Fixed bug the processing of multiple filename son the command
+	  line
+	  (previously "translator a.out a.out.new" fails because the first
+	  filename was a
+	  substring in the second filename.
+	  3) Added 16 demos of the binary analysis support in ROSE and a
+	  general support for
+	  future demos of other parts of ROSE. Makefile "demo" rules were
+	  added to numerous
+	  Makefile.am files in ROSE to support specialized demos of ROSE
+	  work.
+	  4) Added ROSE_DemoGuide.pdf (which explains how to run the demos
+	  in ROSE and will
+	  eventually have screen shots to better explain each demo).
+	  5) Fixed a number of minor bugs in ROSE (as part of preparation
+	  of the demos).
+	  6) Added more test codes to the Fortran tests (in
+	  developersScratchSpace/Dan/Fortran_tests).
+	  7) Added more test codes to the C++ tests (in
+	  developersScratchSpace/Dan/Fortran_tests).
+	  8) Added more C++ support to the new EDG 4.0 based interface to
+	  ROSE. functions and
+	  member function now contain function and member function types,
+	  respectively. Also
+	  static functions are not correctly marked. Lots of other work has
+	  been done here as
+	  well.
+	  9) Added more documentation specific to Mac OSX, Qing reports
+	  that OSX 10.4 will not
+	  work and that the upgrade to OSX 10.5 fixed the previous ROSE
+	  linking issues.
+	  Note: At some point we need to test the OSX version in the
+	  configure step in ROSE.
+	  10) Added GNU Options test directory to test different GNU
+	  specific options (required
+	  for Linux compilation).
+	  11) Fixed build functions for functions and added support for
+	  member functions to handle
+	  function type issues correctly (all member functions must have a
+	  member function
+	  type (not a regular function type).
+	  12) Built 32-bit version of projects/BinQ/buffer2.bin to use in
+	  binary diff demo.
+	  13) Added
+	  developersScratchSpace/Dan/astEquivalence_tests/astEquivalenceGraphForBinaryCode3.png
+	  to support demo (since zgrviewer takes 25 minutes to layout the
+	  resulting edit
+	  distance graph).
+
+2009-01-23 01:48  liao6
+
+	* [r4080] /trunk/ROSE/README: test email
+
+2009-01-23 01:31  liao6
+
+	* [r4079] /trunk/ROSE/TODO: test commit from a 64-bit machine with
+	  different path to svnlook
+
+2009-01-23 01:04  liao6
+
+	* [r4078] /trunk/ROSE/RELEASE_WEB_SITE: fixed typo.
+	  test email notifications
+
+2009-01-23 00:54  liao6
+
+	* [r4076] /trunk/ROSE/docs/Rose/developersAppendix.tex: Added
+	  instructions about how to generate ChangeLog2
+
+2009-01-22 23:29  panas2
+
+	* [r4075]
+	  /trunk/ROSE/projects/compass/tools/compass/gui/compassGui.C,
+	  /trunk/ROSE/projects/compass/tools/compass/gui/compassInterface.C:
+	  fixed some bugs with MPI
+
+2009-01-22 21:35  panas2
+
+	* [r4074]
+	  /trunk/ROSE/projects/compass/extensions/checkers/binPrintAsmFunctions/binPrintAsmFunctions.C,
+	  /trunk/ROSE/projects/compass/extensions/checkers/binPrintAsmInstruction/binPrintAsmInstruction.C,
+	  /trunk/ROSE/projects/compass/extensions/checkers/cycleDetection/cycleDetection.C,
+	  /trunk/ROSE/projects/compass/extensions/prerequisites/SourceDefUsePrerequisite.h,
+	  /trunk/ROSE/projects/compass/src/compassSupport/compass.C,
+	  /trunk/ROSE/projects/compass/tools/compass/gui/Makefile.am,
+	  /trunk/ROSE/projects/compass/tools/compass/gui/compassMainGui.C,
+	  /trunk/ROSE/projects/compass/tools/compass/gui/compassViolation.C:
+	  made changes so binary results show in Compass GUI and fixed MPI
+	  problems
+
+2009-01-21 21:17  liao6
+
+	* [r4061] /trunk/ROSE/docs/Rose/leftmenu.html.in: Added a link to
+	  ROSE mailing lists on the left menu
+
+2009-01-21 18:21  liao6
+
+	* [r4058] /trunk/ROSE/ChangeLog2, /trunk/ROSE/Makefile.am: Added a
+	  second ChangeLog for ROSE.
+	  
+	  It was automatically generated from svn log by a command:
+	  svn log --xml --verbose | xsltproc --stringparam include-rev yes
+	  --stringparam ignore-message-starting "Automatic updates"
+	  /home/liao6/opt/svn2cl-0.11/svn2cl.xsl - > ChangeLog2
+
 2009-01-19 23:47  matzke
 
 	* [r4035]
