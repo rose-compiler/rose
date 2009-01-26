@@ -101,10 +101,10 @@ namespace DisassemblerCommon {
     // parameter, or just a constant jump target or fallthrough (when true, it
     // states that an indirect jump may be pointing there)
 
-    void disassembleRecursively(uint64_t addr, std::map<uint64_t, SgAsmInstruction*>& insns, std::map<uint64_t, bool>& basicBlockStarts, 
-				std::map<uint64_t,std::string>& functionStarts, bool heuristicFunctionDetection) const;
-    void disassembleRecursively(std::vector<uint64_t>& worklist, std::map<uint64_t, SgAsmInstruction*>& insns, std::map<uint64_t, bool>& basicBlockStarts, 
-				std::map<uint64_t,std::string>& functionStarts,  bool heuristicFunctionDetection) const;
+    void disassembleRecursively(uint64_t addr, std::map<uint64_t, SgAsmInstruction*>& insns,
+                                std::map<uint64_t, bool>& basicBlockStarts) const;
+    void disassembleRecursively(std::vector<uint64_t>& worklist, std::map<uint64_t, SgAsmInstruction*>& insns,
+                                std::map<uint64_t, bool>& basicBlockStarts) const;
   };
 
 }
@@ -117,6 +117,10 @@ namespace Disassembler
 
      void disassembleFile(SgAsmFile* f);
      void disassembleInterpretation(SgAsmInterpretation* interp);
+     void detectFunctionStarts(SgAsmInterpretation *interp,
+                               std::map<uint64_t, SgAsmInstruction*> &insns,
+                               std::map<uint64_t, bool> &basicBlockStarts,
+                               std::map<uint64_t, std::string> &functionsStarts);
    }
 
 #endif // ROSE_DISASSEMBLERS_H
