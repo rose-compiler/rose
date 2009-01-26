@@ -55,10 +55,10 @@ namespace PutInstructionsIntoBasicBlocks {
     return mainBlock;
   }
 
-  SgAsmBlock* putInstructionsIntoFunctions(SgAsmBlock* blk, const map<uint64_t, std::string>& functionStarts) {
+  SgAsmBlock* putInstructionsIntoFunctions(SgAsmBlock* blk, const DisassemblerCommon::FunctionStarts& functionStarts) {
     map<uint64_t, SgAsmFunctionDeclaration*> funcs;
     SgAsmBlock* newBlk = new SgAsmBlock();
-    for (map<uint64_t,std::string>::const_iterator i = functionStarts.begin(); i != functionStarts.end(); ++i) {
+    for (DisassemblerCommon::FunctionStarts::const_iterator i = functionStarts.begin(); i != functionStarts.end(); ++i) {
       SgAsmFunctionDeclaration* f = new SgAsmFunctionDeclaration();
       f->set_address(i->first);
       f->set_name(i->second);

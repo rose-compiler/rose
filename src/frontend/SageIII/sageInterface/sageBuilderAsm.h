@@ -1,11 +1,12 @@
 #ifndef ROSE_SAGEBUILDERASM_H
 #define ROSE_SAGEBUILDERASM_H
 
+#include "../Disassemblers/disassemblers.h" /* For defn of DisassemblerCommon::FunctionStarts */
+
 namespace PutInstructionsIntoBasicBlocks { // From src/frontend/Disassemblers/putInstructionsIntoBasicBlocks.C
-  SgAsmBlock* putInstructionsIntoBasicBlocks(
-      const std::map<uint64_t, SgAsmBlock*>& basicBlocks,
-      const std::map<uint64_t, SgAsmInstruction*>& insns);
-  SgAsmBlock* putInstructionsIntoFunctions(SgAsmBlock* top, const std::map<uint64_t,std::string>& functionStarts);
+    SgAsmBlock* putInstructionsIntoBasicBlocks(const std::map<uint64_t, SgAsmBlock*> &basicBlocks,
+                                               const std::map<uint64_t, SgAsmInstruction*> &insns);
+    SgAsmBlock* putInstructionsIntoFunctions(SgAsmBlock* top, const DisassemblerCommon::FunctionStarts &functionStarts);
 }
 
 namespace SageBuilderAsm {

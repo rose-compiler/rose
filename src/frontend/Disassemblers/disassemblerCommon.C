@@ -222,7 +222,7 @@ SgAsmInstruction* DisassemblerCommon::AsmFileWithData::disassembleOneAtAddress(u
 void
 DisassemblerCommon::AsmFileWithData::disassembleRecursively(uint64_t addr,
                                                             map<uint64_t, SgAsmInstruction*>& insns,
-                                                            map<uint64_t, bool>& basicBlockStarts
+                                                            BasicBlockStarts &basicBlockStarts
                                                             ) const
 {
   vector<uint64_t> worklist(1, addr);
@@ -234,7 +234,7 @@ DisassemblerCommon::AsmFileWithData::disassembleRecursively(uint64_t addr,
 void
 DisassemblerCommon::AsmFileWithData::disassembleRecursively(vector<uint64_t>& worklist,
                                                             map<uint64_t, SgAsmInstruction*>& insns,
-                                                            map<uint64_t, bool>& basicBlockStarts
+                                                            BasicBlockStarts &basicBlockStarts
                                                             ) const
 {
   while (!worklist.empty()) {
@@ -326,8 +326,8 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
 
      DisassemblerCommon::AsmFileWithData file(interp);
      map<uint64_t, SgAsmInstruction*> insns;
-     map<uint64_t, bool> basicBlockStarts;
-     map<uint64_t, std::string> functionStarts;
+     DisassemblerCommon::BasicBlockStarts basicBlockStarts;
+     DisassemblerCommon::FunctionStarts functionStarts;
 
 
      SgAsmGenericHeader* header = interp->get_header();

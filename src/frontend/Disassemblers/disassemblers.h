@@ -86,6 +86,8 @@ namespace PowerpcDisassembler
    }
 
 namespace DisassemblerCommon {
+  typedef std::map<rose_addr_t, bool> BasicBlockStarts;
+  typedef std::map<rose_addr_t, std::string> FunctionStarts;
 
   struct AsmFileWithData {
     SgAsmInterpretation* interp;
@@ -102,9 +104,9 @@ namespace DisassemblerCommon {
     // states that an indirect jump may be pointing there)
 
     void disassembleRecursively(uint64_t addr, std::map<uint64_t, SgAsmInstruction*>& insns,
-                                std::map<uint64_t, bool>& basicBlockStarts) const;
+                                BasicBlockStarts&) const;
     void disassembleRecursively(std::vector<uint64_t>& worklist, std::map<uint64_t, SgAsmInstruction*>& insns,
-                                std::map<uint64_t, bool>& basicBlockStarts) const;
+                                BasicBlockStarts&) const;
   };
 
 }
@@ -117,10 +119,8 @@ namespace Disassembler
 
      void disassembleFile(SgAsmFile* f);
      void disassembleInterpretation(SgAsmInterpretation* interp);
-     void detectFunctionStarts(SgAsmInterpretation *interp,
-                               std::map<uint64_t, SgAsmInstruction*> &insns,
-                               std::map<uint64_t, bool> &basicBlockStarts,
-                               std::map<uint64_t, std::string> &functionsStarts);
+     void detectFunctionStarts(SgAsmInterpretation *interp, std::map<uint64_t, SgAsmInstruction*> &insns,
+                               DisassemblerCommon::BasicBlockStarts&, DisassemblerCommon::FunctionStarts&);
    }
 
 #endif // ROSE_DISASSEMBLERS_H

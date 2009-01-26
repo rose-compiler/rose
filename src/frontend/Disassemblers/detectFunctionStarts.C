@@ -11,7 +11,7 @@
 static void
 mark_entry_targets(SgAsmInterpretation *interp,
                    std::map<uint64_t, SgAsmInstruction*> &insns,
-                   std::map<uint64_t, std::string> &func_starts)
+                   DisassemblerCommon::FunctionStarts &func_starts)
 {
     SgAsmGenericHeader *fhdr = interp->get_header();
     ROSE_ASSERT(fhdr!=NULL);
@@ -29,7 +29,7 @@ mark_entry_targets(SgAsmInterpretation *interp,
 static void
 mark_call_targets(SgAsmInterpretation *interp,
                   std::map<uint64_t, SgAsmInstruction*> &insns,
-                  std::map<uint64_t, std::string> &func_starts)
+                  DisassemblerCommon::FunctionStarts &func_starts)
 {
     std::map<uint64_t, SgAsmInstruction*>::iterator ii;
     for (ii=insns.begin(); ii!=insns.end(); ii++) {
@@ -55,7 +55,7 @@ mark_call_targets(SgAsmInterpretation *interp,
 static void
 mark_eh_frames(SgAsmInterpretation *interp,
                std::map<uint64_t, SgAsmInstruction*> &insns,
-               std::map<uint64_t, std::string> &func_starts)
+               DisassemblerCommon::FunctionStarts &func_starts)
 {
     SgAsmGenericHeader *fhdr = interp->get_header();
     SgAsmGenericSectionList *sections = fhdr->get_sections();
@@ -81,7 +81,7 @@ mark_eh_frames(SgAsmInterpretation *interp,
 static void
 mark_func_symbols(SgAsmInterpretation *interp,
                   std::map<uint64_t, SgAsmInstruction*> &insns,
-                  std::map<uint64_t, std::string> &func_starts)
+                  DisassemblerCommon::FunctionStarts &func_starts)
 {
     SgAsmGenericHeader *fhdr = interp->get_header();
 
@@ -113,13 +113,13 @@ mark_func_symbols(SgAsmInterpretation *interp,
 void
 Disassembler::detectFunctionStarts(SgAsmInterpretation *interp,
                                    std::map<uint64_t, SgAsmInstruction*> &insns,
-                                   std::map<uint64_t, bool> &basicBlockStarts,
-                                   std::map<uint64_t, std::string> &functionStarts)
+                                   DisassemblerCommon::BasicBlockStarts &basicBlockStarts,
+                                   DisassemblerCommon::FunctionStarts &functionStarts)
 {
-    mark_entry_targets(interp, insns, basicBlockStarts, functionStarts);
-    mark_call_targets(interp, insns, basicBlockStarts, functionStarts);
-    mark_eh_frames(interp, insns, basicBlockStarts, functionStarts);
-    mark_func_symbols(interp, insns, basicBlockStarts, functionStarts);
+    mark_entry_targets(interp, insns, functionStarts);
+    mark_call_targets(interp, insns, functionStarts);
+    mark_eh_frames(interp, insns, functionStarts);
+    mark_func_symbols(interp, insns, functionStarts);
 
     /* All function entry points are also the starts of "externally visible" (i.e., true) basic blocks. */
     for (std::map<uint64_t, std::string>::iterator i=functionStarts.begin(); i!=functionStarts.end(); i++)
