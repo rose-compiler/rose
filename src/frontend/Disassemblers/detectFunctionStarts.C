@@ -122,6 +122,18 @@ detectFunctionStarts(SgAsmInterpretation *interp,
     for (FunctionStarts::iterator i=functionStarts.begin(); i!=functionStarts.end(); i++)
         if (basicBlockStarts.find(i->first)==basicBlockStarts.end())
             basicBlockStarts[i->first] = DisassemblerCommon::BasicBlockStarts::mapped_type();
+
+#if 0 /*DEBUGGING*/
+    fprintf(stderr, "After detecting function starting addresses:\n");
+    fprintf(stderr, "  Function starting addresses:\n");
+    for (FunctionStarts::iterator i=functionStarts.begin(); i!=functionStarts.end(); i++) {
+        fprintf(stderr, "    0x%08"PRIx64"\n", i->first);
+    }
+    fprintf(stderr, "  Basic block starting addresses:\n");
+    for (BasicBlockStarts::iterator i=basicBlockStarts.begin(); i!=basicBlockStarts.end(); i++) {
+        fprintf(stderr, "    0x%08"PRIx64"\n", i->first);
+    }
+#endif
 }
 
 
