@@ -457,38 +457,34 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
              } else {
                  isFunctionStart = X86Disassembler::doesBBStartFunction(bb, false);
              }
-         } else {
-             if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_X8664_Family) {
-                 if (!heuristicFunctionDetection) {
-                     if (t.globalFunctionMap.find(bb->get_address()) != t.globalFunctionMap.end()) {
-                         isFunctionStart = true;
-                         funcName = t.globalFunctionMap[bb->get_address()]->get_name()->get_string();
-                     }
-                 } else {
-                     isFunctionStart = X86Disassembler::doesBBStartFunction(bb, true);
+         } else if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_X8664_Family) {
+             if (!heuristicFunctionDetection) {
+                 if (t.globalFunctionMap.find(bb->get_address()) != t.globalFunctionMap.end()) {
+                     isFunctionStart = true;
+                     funcName = t.globalFunctionMap[bb->get_address()]->get_name()->get_string();
                  }
              } else {
-                 if (isa != SgAsmExecutableFileFormat::ISA_ARM_Family) {
-                     if (!isSgAsmDOSFileHeader(header)) {
-                         if (isa == SgAsmExecutableFileFormat::ISA_PowerPC) {
-                             // DQ (10/14/2008): Added support for PowerPC in location after addition of function symbols.
-                             if (!heuristicFunctionDetection) {
-                                 if (t.globalFunctionMap.find(bb->get_address()) != t.globalFunctionMap.end()) {
-                                     isFunctionStart = true; 
-                                     funcName = t.globalFunctionMap[bb->get_address()]->get_name()->get_string();
-                                 }
-                             } else {
-                                 isFunctionStart = PowerpcDisassembler::doesBBStartFunction(bb, true);
-                             }
-#if 0
-                             printf ("Exit after disassembling the first instruction after reading function symbols! \n");
-                             ROSE_ASSERT(false);
-#endif
-                         } else {
-                             cerr << "Bad architecture to disassemble (interpreting functions)" << endl;
-                             abort();
+                 isFunctionStart = X86Disassembler::doesBBStartFunction(bb, true);
+             }
+         } else if (isa != SgAsmExecutableFileFormat::ISA_ARM_Family) {
+             if (!isSgAsmDOSFileHeader(header)) {
+                 if (isa == SgAsmExecutableFileFormat::ISA_PowerPC) {
+                     // DQ (10/14/2008): Added support for PowerPC in location after addition of function symbols.
+                     if (!heuristicFunctionDetection) {
+                         if (t.globalFunctionMap.find(bb->get_address()) != t.globalFunctionMap.end()) {
+                             isFunctionStart = true; 
+                             funcName = t.globalFunctionMap[bb->get_address()]->get_name()->get_string();
                          }
+                     } else {
+                         isFunctionStart = PowerpcDisassembler::doesBBStartFunction(bb, true);
                      }
+#if 0
+                     printf ("Exit after disassembling the first instruction after reading function symbols! \n");
+                     ROSE_ASSERT(false);
+#endif
+                 } else {
+                     cerr << "Bad architecture to disassemble (interpreting functions)" << endl;
+                     abort();
                  }
              }
          }
