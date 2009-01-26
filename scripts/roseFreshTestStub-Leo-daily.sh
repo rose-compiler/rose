@@ -39,6 +39,7 @@ MAKEFLAGS="-j16"
 # my additional stuff
 # Disable upload svn for now, waiting for binary distribution package to be ready
 ENABLE_UPLOAD_SVN=1
+ENABLE_UPLOAD_CHANGELOG2=1
 ENABLE_UPLOAD_WEB=1
 #KEEP_TEST_DIR=1
 NORMAL_INSTALL_DIR=1 # no chmod 000 for 'install'

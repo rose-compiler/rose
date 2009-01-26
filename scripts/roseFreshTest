@@ -45,6 +45,22 @@ shift
 myuserid=`whoami`
 myname="`./getRealName "$myuserid" || echo "$myuserid"`"
 
+#------------------------------------------------------
+# Preprocessing Section
+#------------------------------------------------------
+# we update ChangeLog2 when needed here
+# Only Liao can enable this option now due to the installation of the required software
+if [ 0$ENABLE_UPLOAD_CHANGELOG2 -ne 0 ] ; then
+  # update the log
+  /home/liao6/rose/scripts/updateChangeLog2.sh
+  if [ $? -ne 0 ]; then
+    echo "Error: updateChangeLog2.sh finishes abnormally!" 
+    exit 1
+  else
+    echo "updateChangeLog2.sh finishes normally."
+  fi
+fi
+
 set -e
 rm -rf ${ROSE_TOP}
 mkdir -p ${ROSE_TOP}
@@ -54,7 +70,6 @@ cd ${ROSE_TOP}
 mkdir tmp
 TMPDIR=${ROSE_TOP}/tmp/
 export TMPDIR
-
 #------------------------------------------------------
 # Starting Section
 #------------------------------------------------------

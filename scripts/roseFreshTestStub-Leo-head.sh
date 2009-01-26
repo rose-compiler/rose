@@ -22,7 +22,7 @@ ROSE_TOP=/home/liao6/daily-test-rose/${TIMESTAMP}
 CONFIGURE_FLAGS=(--with-boost=${BOOST_ROOT} --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --prefix=${ROSE_TOP}/install "$@")
 
 ROSE_SVNROOT=file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
-MAILADDRS="liaoch@llnl.gov panas2@llnl.gov quinlan1@llnl.gov matzke@spizella.com"
+MAILADDRS="liaoch@llnl.gov panas2@llnl.gov quinlan1@llnl.gov matzke1@llnl.gov"
 
 # the right version of subversion is essential!!
 SVN=/nfs/apps/subversion/1.5.1/bin/svn
@@ -41,6 +41,7 @@ ENABLE_BUILD_BINARY_EDG=1
 
 # my additional stuff
 ENABLE_UPLOAD_SVN=1
+ENABLE_UPLOAD_CHANGELOG2=1
 ENABLE_UPLOAD_WEB=1
 
 #KEEP_TEST_DIR=1
