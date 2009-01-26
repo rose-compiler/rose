@@ -409,90 +409,70 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
   // printf ("Warning (conservative disassembly): Skipping search for pointers that reference executable code (valid sections) \n");
 #endif
 
-  /* Adjusts basicBlockStarts and functionStarts to indicate the starting (lowest) address of all known functions. */
-  detectFunctionStarts(interp, insns, basicBlockStarts, functionStarts);
-  
-  // DQ (10/12/2008): I think that the code below interprets the instructions just generated to distinguish (and build) functions from blocks.
-     map<uint64_t, SgAsmBlock*> basicBlocks;
-     for (map<uint64_t, bool>::const_iterator i = basicBlockStarts.begin(); i != basicBlockStarts.end(); ++i)
-        {
-          uint64_t addr = i->first;
-          SgAsmBlock* b = new SgAsmBlock();
-          b->set_address(addr);
-          b->set_id(addr);
-          b->set_externallyVisible(i->second);
-          basicBlocks[addr] = b;
+    /* Adjust basicBlockStarts and functionStarts to indicate the starting (lowest) address of all known functions. This must
+     * be done before we assign instructions to basic blocks since any newly detected function starts must necessarily also be
+     * the beginning of a basic block. */
+    detectFunctionStarts(interp, insns, basicBlockStarts, functionStarts);
+
+    /* Assign instructions to basic blocks based on the addresses in the basicBlockStarts map. */
+    map<uint64_t, SgAsmBlock*> basicBlocks;
+    for (BasicBlockStarts::const_iterator i = basicBlockStarts.begin(); i != basicBlockStarts.end(); ++i) {
+        uint64_t addr = i->first;
+        SgAsmBlock* b = new SgAsmBlock();
+        b->set_address(addr);
+        b->set_id(addr);
+        b->set_externallyVisible(i->second);
+        basicBlocks[addr] = b;
+    }
+    MapGlobalVariables t;
+    t.traverse(interp, preorder);
+    printf ("Number of global functions = %zu \n",t.globalFunctionMap.size());
+
+    SgAsmBlock* blk = PutInstructionsIntoBasicBlocks::putInstructionsIntoBasicBlocks(basicBlocks, insns);
+
+    // Find the signatures that indicate the beginnings of functions -- they
+    // are only considered if they are at the start of a basic block
+    const SgAsmStatementPtrList& computedBasicBlocks = blk->get_statementList();
+    SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
+    for (size_t i = 0; i < computedBasicBlocks.size(); ++i) {
+        SgAsmBlock* bb = isSgAsmBlock(computedBasicBlocks[i]);
+        if (!bb) continue;
+
+        SgAsmGenericSection* section = file.getSectionOfAddress(bb->get_address());
+        if (!section) continue;
+        ROSE_ASSERT (section->get_header() == header);
+
+        bool isFunctionStart = false;
+        std::string funcName="none";
+
+        if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_IA32_Family) {
+            if (heuristicFunctionDetection) {
+                isFunctionStart = X86Disassembler::doesBBStartFunction(bb, false);
+            } else if (t.globalFunctionMap.find(bb->get_address()) != t.globalFunctionMap.end()) {
+                isFunctionStart = true;
+                funcName = t.globalFunctionMap[bb->get_address()]->get_name()->get_string();
+            }
+        } else if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_X8664_Family) {
+            if (heuristicFunctionDetection) {
+                isFunctionStart = X86Disassembler::doesBBStartFunction(bb, true);
+            } else if (t.globalFunctionMap.find(bb->get_address()) != t.globalFunctionMap.end()) {
+                isFunctionStart = true;
+                funcName = t.globalFunctionMap[bb->get_address()]->get_name()->get_string();
+            }
+        } else if (isa == SgAsmExecutableFileFormat::ISA_PowerPC) {
+            if (heuristicFunctionDetection) {
+                isFunctionStart = PowerpcDisassembler::doesBBStartFunction(bb, true);
+            } else if (t.globalFunctionMap.find(bb->get_address()) != t.globalFunctionMap.end()) {
+                isFunctionStart = true; 
+                funcName = t.globalFunctionMap[bb->get_address()]->get_name()->get_string();
+            }
+        } else {
+            fprintf(stderr, "Bad architecture to disassemble (isa=0x%04x)\n", isa);
+            abort();
         }
-
-     MapGlobalVariables t;
-     t.traverse(interp, preorder);
-  // printf ("Number of global functions = %zu \n",t.globalFunctionMap.size());
-     std::string funcName="none";
-
-     SgAsmBlock* blk = PutInstructionsIntoBasicBlocks::putInstructionsIntoBasicBlocks(basicBlocks, insns);
-  // Find the signatures that indicate the beginnings of functions -- they
-  // are only considered if they are at the start of a basic block
-     const SgAsmStatementPtrList& computedBasicBlocks = blk->get_statementList();
-
-  // printf ("computedBasicBlocks.size() = %zu \n",computedBasicBlocks.size());
-     for (size_t i = 0; i < computedBasicBlocks.size(); ++i) {
-         // DQ (10/14/2008): Is this the sort of coding style that we want to have in a for loop?
-         SgAsmBlock* bb = isSgAsmBlock(computedBasicBlocks[i]);
-         if (!bb) continue;
-
-         SgAsmGenericSection* section = file.getSectionOfAddress(bb->get_address());
-         if (!section) continue;
-
-         // These conditionals are all loop invariant
-         ROSE_ASSERT (section->get_header() == header);
-         SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
-         bool isFunctionStart = false;
-
-         if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_IA32_Family) {
-             if (!heuristicFunctionDetection) {
-                 if (t.globalFunctionMap.find(bb->get_address()) != t.globalFunctionMap.end()) {
-                     isFunctionStart = true;
-                     funcName = t.globalFunctionMap[bb->get_address()]->get_name()->get_string();
-                 }
-             } else {
-                 isFunctionStart = X86Disassembler::doesBBStartFunction(bb, false);
-             }
-         } else if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_X8664_Family) {
-             if (!heuristicFunctionDetection) {
-                 if (t.globalFunctionMap.find(bb->get_address()) != t.globalFunctionMap.end()) {
-                     isFunctionStart = true;
-                     funcName = t.globalFunctionMap[bb->get_address()]->get_name()->get_string();
-                 }
-             } else {
-                 isFunctionStart = X86Disassembler::doesBBStartFunction(bb, true);
-             }
-         } else if (isa != SgAsmExecutableFileFormat::ISA_ARM_Family) {
-             if (!isSgAsmDOSFileHeader(header)) {
-                 if (isa == SgAsmExecutableFileFormat::ISA_PowerPC) {
-                     // DQ (10/14/2008): Added support for PowerPC in location after addition of function symbols.
-                     if (!heuristicFunctionDetection) {
-                         if (t.globalFunctionMap.find(bb->get_address()) != t.globalFunctionMap.end()) {
-                             isFunctionStart = true; 
-                             funcName = t.globalFunctionMap[bb->get_address()]->get_name()->get_string();
-                         }
-                     } else {
-                         isFunctionStart = PowerpcDisassembler::doesBBStartFunction(bb, true);
-                     }
-#if 0
-                     printf ("Exit after disassembling the first instruction after reading function symbols! \n");
-                     ROSE_ASSERT(false);
-#endif
-                 } else {
-                     cerr << "Bad architecture to disassemble (interpreting functions)" << endl;
-                     abort();
-                 }
-             }
-         }
-         if (isFunctionStart) {
-             functionStarts.insert(make_pair(bb->get_address(),funcName));
-         }
-         // printf ("Processed a block! computedBasicBlocks[%zu] = %p \n",i,computedBasicBlocks[i]);
-     }
+        if (isFunctionStart)
+            functionStarts[bb->get_address()] += funcName;
+    }
 
   // DQ (10/16/2008): This outputs a hexidecimal number at times!
   // (tps - 2Jun08) : commented out for now until we investigate this further... breaking the current function analysis
