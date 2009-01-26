@@ -453,8 +453,6 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
                  if (t.globalFunctionMap.find(bb->get_address()) != t.globalFunctionMap.end()) {
                      isFunctionStart = true;
                      funcName = t.globalFunctionMap[bb->get_address()]->get_name()->get_string();
-                 } else {
-                     isFunctionStart = false;
                  }
              } else {
                  isFunctionStart = X86Disassembler::doesBBStartFunction(bb, false);
@@ -465,27 +463,19 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
                      if (t.globalFunctionMap.find(bb->get_address()) != t.globalFunctionMap.end()) {
                          isFunctionStart = true;
                          funcName = t.globalFunctionMap[bb->get_address()]->get_name()->get_string();
-                     } else {
-                         isFunctionStart = false;
                      }
                  } else {
                      isFunctionStart = X86Disassembler::doesBBStartFunction(bb, true);
                  }
              } else {
-                 if (isa == SgAsmExecutableFileFormat::ISA_ARM_Family) {
-                     isFunctionStart = false; // FIXME
-                 } else {
-                     if (isSgAsmDOSFileHeader(header)) {
-                         isFunctionStart = false; // FIXME
-                     } else {
+                 if (isa != SgAsmExecutableFileFormat::ISA_ARM_Family) {
+                     if (!isSgAsmDOSFileHeader(header)) {
                          if (isa == SgAsmExecutableFileFormat::ISA_PowerPC) {
                              // DQ (10/14/2008): Added support for PowerPC in location after addition of function symbols.
                              if (!heuristicFunctionDetection) {
                                  if (t.globalFunctionMap.find(bb->get_address()) != t.globalFunctionMap.end()) {
                                      isFunctionStart = true; 
                                      funcName = t.globalFunctionMap[bb->get_address()]->get_name()->get_string();
-                                 } else {
-                                     isFunctionStart = false;
                                  }
                              } else {
                                  isFunctionStart = PowerpcDisassembler::doesBBStartFunction(bb, true);
