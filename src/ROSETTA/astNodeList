@@ -429,6 +429,8 @@ SgAsmElfRelocEntryList
 SgAsmElfEHFrameSection
 SgAsmElfEHFrameEntryCI
 SgAsmElfEHFrameEntryCIList
+SgAsmElfEHFrameEntryFD
+SgAsmElfEHFrameEntryFDList
 SgAsmPESection
 SgAsmPESectionTable
 SgAsmPEImportSection
