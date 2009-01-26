@@ -3535,8 +3535,12 @@ SgAsmElfEHFrameSection::parse()
             cie->set_code_alignment_factor(content_uleb128(&at));
             cie->set_data_alignment_factor(content_sleb128(&at));
 
-            /* Augmentation data */
+            /* Augmentation data length. This is apparently the length of the data described by the Augmentation String plus
+             * the Initial Instructions plus any padding. [RPM 2009-01-15] */
             cie->set_augmentation_data_length(content_uleb128(&at));
+
+            /* Augmentation data. The format of the augmentation data in the CIE record is determined by reading the
+             * characters of the augmentation string. */ 
             if (astr[0]=='z') {
                 for (size_t i=1; i<astr.size(); i++) {
                     if ('L'==astr[i]) {
@@ -3544,10 +3548,20 @@ SgAsmElfEHFrameSection::parse()
                         cie->set_lsda_encoding(u8_disk);
                     } else if ('P'==astr[i]) {
                         /* The first byte is an encoding method which describes the following bytes, which are the address of
-                         * a Personality Routine Handler. */
+                         * a Personality Routine Handler. There appears to be very little documentation about these fields. */
                         content(at++, 1, &u8_disk);
                         cie->set_prh_encoding(u8_disk);
-                        ROSE_ASSERT(!"not implemented"); /*unable to find documentation*/
+                        switch (cie->get_prh_encoding()) {
+                          case 0x06:            /* See second CIE record for Gentoo-Amd64 /usr/bin/addftinfo */
+                          case 0x07:            /* See first CIE record for Gentoo-Amd64 /usr/bin/addftinfo */
+                            content(at++, 1, &u8_disk);       /* not sure what this is; argument for __gxx_personality_v0? */
+                            content(at, 4, &u32_disk); at+=4; /* address of <__gxx_personality_v0@plt> */
+                            break;
+                          default:
+                            fprintf(stderr, "%s:%u: ELF CIE (0x%08"PRIx64") PRH encoding (0x%02x) is unknown\n", 
+                                    __func__, __LINE__, get_offset()+record_offset, cie->get_prh_encoding());
+                            abort();
+                        }
                     } else if ('R'==astr[i]) {
                         content(at++, 1, &u8_disk);
                         cie->set_addr_encoding(u8_disk);
@@ -3558,7 +3572,8 @@ SgAsmElfEHFrameSection::parse()
                 }
             }
 
-            /* Initial instructions */
+            /* Initial instructions. These are apparently included in the augmentation_data_length. The final instructions can
+             * be zero padding (no-op instructions) to bring the record up to a multiple of the word size. */
             addr_t init_insn_size = (length_field_size + record_size) - (at - record_offset);
             cie->get_instructions() = content_ucl(at, init_insn_size);
             ROSE_ASSERT(cie->get_instructions().size()==init_insn_size);
@@ -3571,7 +3586,8 @@ SgAsmElfEHFrameSection::parse()
 
             /* PC Begin (begin_rva) and size */
             switch (last_cie->get_addr_encoding()) {
-              case 0x01: {
+              case 0x01:
+              case 0x03: {
                   content(at, 4, &u32_disk); at+=4;
                   fde->set_begin_rva(le_to_host(u32_disk));
                   content(at, 4, &u32_disk); at+=4;
@@ -3579,7 +3595,8 @@ SgAsmElfEHFrameSection::parse()
                   break;
               }
               default:
-                assert(!"unknown FDE address encoding");
+                fprintf(stderr, "%s:%u: ELF FDE (0x%08"PRIx64") address encoding (0x%02x) is unknown\n", 
+                        __func__, __LINE__, get_offset()+record_offset, last_cie->get_addr_encoding());
                 abort();
             }
 
