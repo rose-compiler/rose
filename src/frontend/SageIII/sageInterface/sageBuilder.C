@@ -2695,7 +2695,7 @@ SgTypeFloat * SageBuilder::buildFloatType()
 }
 
   //! Build a constant type.
-  SgType* SageBuilder::buildConstType(SgType* base_type /*=NULL*/)
+SgType* SageBuilder::buildConstType(SgType* base_type /*=NULL*/)
  {
    SgModifierType *result = new SgModifierType(base_type);
    ROSE_ASSERT(result!=NULL);
@@ -2704,7 +2704,7 @@ SgTypeFloat * SageBuilder::buildFloatType()
  }
 
   //! Build a volatile type.
-  SgType* SageBuilder::buildVolatileType(SgType* base_type /*=NULL*/)
+SgType* SageBuilder::buildVolatileType(SgType* base_type /*=NULL*/)
  {
    SgModifierType *result = new SgModifierType(base_type);
    ROSE_ASSERT(result!=NULL);
@@ -2713,7 +2713,7 @@ SgTypeFloat * SageBuilder::buildFloatType()
 
  }
   //! Build a restrict type.
-  SgType* SageBuilder::buildRestrictType(SgType* base_type)
+SgType* SageBuilder::buildRestrictType(SgType* base_type)
  {
    ROSE_ASSERT(base_type!=NULL);
    if (!isSgPointerType(base_type) && !isSgReferenceType(base_type))
@@ -2730,7 +2730,7 @@ SgTypeFloat * SageBuilder::buildFloatType()
  }
 
   //! Build a UPC strict type.
-  SgType* SageBuilder::buildUpcStrictType(SgType* base_type /*=NULL*/)
+SgType* SageBuilder::buildUpcStrictType(SgType* base_type /*=NULL*/)
  {
    SgModifierType *result = new SgModifierType(base_type);
    ROSE_ASSERT(result!=NULL);
@@ -2739,7 +2739,7 @@ SgTypeFloat * SageBuilder::buildFloatType()
  }
 
   //! Build a UPC relaxed type.
-  SgType* SageBuilder::buildUpcRelaxedType(SgType* base_type /*=NULL*/)
+SgType* SageBuilder::buildUpcRelaxedType(SgType* base_type /*=NULL*/)
  {
    SgModifierType *result = new SgModifierType(base_type);
    ROSE_ASSERT(result!=NULL);
@@ -2748,7 +2748,7 @@ SgTypeFloat * SageBuilder::buildFloatType()
  }
 
   //! Build a UPC shared type.
-  SgType* SageBuilder::buildUpcSharedType(SgType* base_type /*=NULL*/)
+SgType* SageBuilder::buildUpcSharedType(SgType* base_type /*=NULL*/)
  {
    SgModifierType *result = new SgModifierType(base_type);
    ROSE_ASSERT(result!=NULL);
@@ -2758,7 +2758,7 @@ SgTypeFloat * SageBuilder::buildFloatType()
  }
 
   //! Build a UPC shared[] type.
-  SgType* SageBuilder::buildUpcBlockIndefiniteType(SgType* base_type /*=NULL*/)
+SgType* SageBuilder::buildUpcBlockIndefiniteType(SgType* base_type /*=NULL*/)
  {
    SgModifierType *result = isSgModifierType(buildUpcSharedType(base_type));
    ROSE_ASSERT(result!=NULL);
@@ -2767,7 +2767,7 @@ SgTypeFloat * SageBuilder::buildFloatType()
  }
 
   //! Build a UPC shared[*] type.
-  SgType* SageBuilder::buildUpcBlockStarType(SgType* base_type /*=NULL*/)
+SgType* SageBuilder::buildUpcBlockStarType(SgType* base_type /*=NULL*/)
  {
    SgModifierType *result = isSgModifierType(buildUpcSharedType(base_type));
    ROSE_ASSERT(result!=NULL);
@@ -2776,7 +2776,7 @@ SgTypeFloat * SageBuilder::buildFloatType()
  }
 
   //! Build a UPC shared[n] type.
-  SgType* SageBuilder::buildUpcBlockNumberType(SgType* base_type, long block_factor)
+SgType* SageBuilder::buildUpcBlockNumberType(SgType* base_type, long block_factor)
  {
    SgModifierType *result = isSgModifierType(buildUpcSharedType(base_type));
    ROSE_ASSERT(result!=NULL);
@@ -2785,7 +2785,7 @@ SgTypeFloat * SageBuilder::buildFloatType()
  }
 
   //! Build a complex type.
-  SgTypeComplex* SageBuilder::buildComplexType(SgType* base_type /*=NULL*/)
+SgTypeComplex* SageBuilder::buildComplexType(SgType* base_type /*=NULL*/)
  {
    SgTypeComplex *result = new SgTypeComplex(base_type);
    ROSE_ASSERT(result!=NULL);
@@ -2793,14 +2793,14 @@ SgTypeFloat * SageBuilder::buildFloatType()
  }
 
   //! Build an imaginary type.
-  SgTypeImaginary* SageBuilder::buildImaginaryType(SgType* base_type /*=NULL*/)
+SgTypeImaginary* SageBuilder::buildImaginaryType(SgType* base_type /*=NULL*/)
  {
    SgTypeImaginary *result = new SgTypeImaginary(base_type);
    ROSE_ASSERT(result!=NULL);
    return result;
  }
 
-  SgClassDefinition* SageBuilder::buildClassDefinition(SgClassDeclaration *d/*= NULL*/)
+SgClassDefinition* SageBuilder::buildClassDefinition(SgClassDeclaration *d/*= NULL*/)
   {
     SgClassDefinition* result = NULL;
     if (d!=NULL) // the constructor does not check for NULL d, causing segmentation fault
@@ -2816,7 +2816,7 @@ SgTypeFloat * SageBuilder::buildFloatType()
     return result;
   }
 
-  SgClassDefinition* SageBuilder::buildClassDefinition_nfi(SgClassDeclaration *d/*= NULL*/)
+SgClassDefinition* SageBuilder::buildClassDefinition_nfi(SgClassDeclaration *d/*= NULL*/)
   {
     SgClassDefinition* result = NULL;
     if (d!=NULL) // the constructor does not check for NULL d, causing segmentation fault
@@ -2832,101 +2832,368 @@ SgTypeFloat * SageBuilder::buildFloatType()
     return result;
   }
 
-  SgClassDeclaration* SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope) {
-    SgClassDeclaration* nondefdecl = new SgClassDeclaration(name,kind,NULL,NULL);
-    ROSE_ASSERT(nondefdecl);
-    setOneSourcePositionNull(nondefdecl);
-    nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
-    nondefdecl->set_definingDeclaration(NULL);
-    nondefdecl->setForward();    
-    if (scope != NULL) {
-      SgClassSymbol* mysymbol = new SgClassSymbol(nondefdecl);
-      ROSE_ASSERT(mysymbol != NULL);
+SgClassDeclaration* SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope)
+   {
+#define REUSE_CLASS_DECLARATION_FROM_SYMBOL 0
 
-   // printf ("In SageBuilder::buildNondefiningClassDeclaration(): for nondefdecl = %p built SgClassSymbol = %p \n",nondefdecl,mysymbol);
+#if (REUSE_CLASS_DECLARATION_FROM_SYMBOL == 0)
+     SgClassDeclaration* nondefdecl = new SgClassDeclaration(name,kind,NULL,NULL);
+     ROSE_ASSERT(nondefdecl != NULL);
 
-      scope->insert_symbol(name, mysymbol);
-      nondefdecl->set_scope(scope);
-      nondefdecl->set_parent(scope);
-    }
-    return nondefdecl;
-  }
+     printf ("SageBuilder::buildNondefiningClassDeclaration_nfi(): (and setting source position) nondefdecl = %p \n",nondefdecl);
 
-  SgEnumDeclaration* SageBuilder::buildNondefiningEnumDeclaration_nfi(const SgName& name, SgScopeStatement* scope) {
-    SgEnumDeclaration* nondefdecl = new SgEnumDeclaration(name, NULL);
-    ROSE_ASSERT(nondefdecl);
-    setOneSourcePositionNull(nondefdecl);
-    nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
-    nondefdecl->set_definingDeclaration(NULL);
-    nondefdecl->setForward();    
-    if (scope != NULL) {
-      SgEnumSymbol* mysymbol = new SgEnumSymbol(nondefdecl);
-      ROSE_ASSERT(mysymbol);
-      scope->insert_symbol(name, mysymbol);
-      nondefdecl->set_scope(scope);
-      nondefdecl->set_parent(scope);
-    }
-    SgEnumType* t = new SgEnumType(nondefdecl);
-    nondefdecl->set_type(t);
-    return nondefdecl;
-  }
+  // The non-defining declaration asociated with a declaration does not have a 
+  // source position...unless it is the position of the defining declaration.
+  // setOneSourcePositionNull(nondefdecl);
+     setSourcePosition(nondefdecl);
 
-  SgClassDeclaration * SageBuilder::buildStructDeclaration(const SgName& name, SgScopeStatement* scope /*=NULL*/)
-  {
-    if (scope == NULL)
-      scope = SageBuilder::topScopeStack();
-     //TODO How about class type??
-    // build defining declaration
-    SgClassDefinition* classDef = buildClassDefinition();
-   
-    SgClassDeclaration* defdecl = new SgClassDeclaration 
-           (name,SgClassDeclaration::e_struct,NULL,classDef);
-    ROSE_ASSERT(defdecl);
-    setOneSourcePositionForTransformation(defdecl);
-    // constructor is side-effect free
-    classDef->set_declaration(defdecl);
-    defdecl->set_definingDeclaration(defdecl);
+  // This is find for now, but a little later in this function (if we can find a symbol) 
+  // we want to find the first non-defining declaration (using the symbol table) and use 
+  // that as a paramter to "nondefdecl->set_firstNondefiningDeclaration()".
+     nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
+     nondefdecl->set_definingDeclaration(NULL);
+     nondefdecl->setForward();
 
-    // build the nondefining declaration
-    SgClassDeclaration* nondefdecl = new SgClassDeclaration
-           (name,SgClassDeclaration::e_struct,NULL,NULL);
-    ROSE_ASSERT(nondefdecl);
-    setOneSourcePositionForTransformation(nondefdecl);
-    nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
-    nondefdecl->set_definingDeclaration(defdecl);
-    defdecl->set_firstNondefiningDeclaration(nondefdecl);
-    nondefdecl->setForward();
+  // This is the structural parent (the logical scope can be different than the parent).
+     nondefdecl->set_parent(topScopeStack());
 
-    if (scope !=NULL )  // put into fixStructDeclaration() or alike later on
-    {
-      fixStructDeclaration(nondefdecl,scope);
-      fixStructDeclaration(defdecl,scope);
-#if 0
-      SgClassSymbol* mysymbol = new SgClassSymbol(nondefdecl);
-      ROSE_ASSERT(mysymbol);
-      scope->insert_symbol(name, mysymbol);
-      defdecl->set_scope(scope);
-      nondefdecl->set_scope(scope);
-      defdecl->set_parent(scope);
-      nondefdecl->set_parent(scope);
+  // This is the logical scope...
+     nondefdecl->set_scope(scope);
+
+     ROSE_ASSERT(nondefdecl->get_parent() != NULL);
+#else
+     SgClassDeclaration* nondefdecl = NULL;
 #endif
-    }
-    return defdecl;    
-  } //buildStructDeclaration()
 
-  SgClassDeclaration * SageBuilder::buildStructDeclaration(const string& name, SgScopeStatement* scope/*=NULL*/)
-  {
-    SgName myname(name);
-    return buildStructDeclaration(myname, scope);
-  }
+     SgClassDeclaration* firstNondefdecl = NULL;
+     if (scope != NULL)
+        {
+#if 0
+          SgClassSymbol* mysymbol = new SgClassSymbol(nondefdecl);
+          ROSE_ASSERT(mysymbol != NULL);
 
-  SgClassDeclaration * SageBuilder::buildStructDeclaration(const char* name, SgScopeStatement* scope/*=NULL*/)
-  {
-    SgName myname(name);
-    return buildStructDeclaration(myname, scope);
-  }
+       // printf ("In SageBuilder::buildNondefiningClassDeclaration(): for nondefdecl = %p built SgClassSymbol = %p \n",nondefdecl,mysymbol);
 
-  SgEnumDeclaration * SageBuilder::buildEnumDeclaration(const SgName& name, SgScopeStatement* scope /*=NULL*/)
+          scope->insert_symbol(name, mysymbol);
+#else
+       // Reuse any previously defined symbols (to avoid redundant symbols in the symbol table) 
+       // and find the firstNondefiningDeclaration.
+          SgClassSymbol* mysymbol = scope->lookup_class_symbol(name);
+          if (mysymbol != NULL)
+             {
+               firstNondefdecl = isSgClassDeclaration(mysymbol->get_declaration());
+               ROSE_ASSERT(firstNondefdecl != NULL);
+
+#if (REUSE_CLASS_DECLARATION_FROM_SYMBOL == 0)
+               ROSE_ASSERT(nondefdecl != NULL);
+               ROSE_ASSERT(nondefdecl->get_parent() != NULL);
+
+               nondefdecl->set_firstNondefiningDeclaration(firstNondefdecl);
+
+            // This might be NULL if the defining declaration has not been seen yet!
+               nondefdecl->set_definingDeclaration(firstNondefdecl->get_definingDeclaration());
+
+            // Share the type!
+               if (nondefdecl->get_type() != firstNondefdecl->get_type())
+                  {
+                 // Remove the type from the new SgClassDeclaration and set the reference to the type in the firstNondefiningDeclaration.
+                    delete nondefdecl->get_type();
+                    nondefdecl->set_type(firstNondefdecl->get_type());
+                  }
+#else
+               ROSE_ASSERT(nondefdecl == NULL);
+#endif
+            // This function should return a new nondefining declaration each time (to support multile class prototypes!).
+            // nondefdecl = firstNondefdecl;
+             }
+            else
+             {
+#if REUSE_CLASS_DECLARATION_FROM_SYMBOL
+            // DQ (1/25/2009): We only want to build a new declaration if we can't reuse the existing declaration.
+               nondefdecl = new SgClassDeclaration(name,kind,NULL,NULL);
+               ROSE_ASSERT(nondefdecl != NULL);
+
+               printf ("SageBuilder::buildNondefiningClassDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
+
+               setOneSourcePositionNull(nondefdecl);
+
+               nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
+               nondefdecl->set_definingDeclaration(NULL);
+               nondefdecl->setForward();
+#endif
+               mysymbol = new SgClassSymbol(nondefdecl);
+               firstNondefdecl = nondefdecl;
+
+               scope->insert_symbol(name, mysymbol);
+             }
+
+          ROSE_ASSERT(mysymbol != NULL);
+          ROSE_ASSERT(firstNondefdecl != NULL);
+#endif
+          nondefdecl->set_scope(scope);
+
+       // DQ (1/25/2009): The scope is not the same as the parent, since the scope is logical, and the parent is structural (note that topScopeStack() is structural).
+       // nondefdecl->set_parent(scope);
+          nondefdecl->set_parent(topScopeStack());
+        }
+
+  // The support for SgEnumDeclaration handles the type, but why not for SgClassDeclaration?
+     ROSE_ASSERT(nondefdecl->get_type() != NULL);
+
+     ROSE_ASSERT(nondefdecl->get_parent() != NULL);
+
+     return nondefdecl;
+   }
+
+SgEnumDeclaration* SageBuilder::buildNondefiningEnumDeclaration_nfi(const SgName& name, SgScopeStatement* scope)
+   {
+  // The support for SgEnumDeclaration is identical to that for SgClassDeclaration (excpet for the type handleing, why is that?).
+
+     SgEnumDeclaration* nondefdecl = new SgEnumDeclaration(name, NULL);
+     ROSE_ASSERT(nondefdecl);
+     setOneSourcePositionNull(nondefdecl);
+     nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
+     nondefdecl->set_definingDeclaration(NULL);
+
+  // Any non-defining declaration is not always a forward declaration.
+     nondefdecl->setForward();    
+
+     if (scope != NULL)
+        {
+          SgEnumSymbol* mysymbol = new SgEnumSymbol(nondefdecl);
+          ROSE_ASSERT(mysymbol);
+          scope->insert_symbol(name, mysymbol);
+          nondefdecl->set_scope(scope);
+
+       // Can this be defined in C++ so that it is in a logical scope different from its structural scope?
+          nondefdecl->set_parent(scope);
+        }
+
+  // DQ (1/25/2009): I want to check into this later, since it is not symetric with SageBuilder::buildNondefiningClassDeclaration()
+     printf ("Need to check if SgEnumDeclaration constructor builds the SgEnumType already nondefdecl->get_type() = %p \n",nondefdecl->get_type());
+     ROSE_ASSERT(nondefdecl->get_type() != NULL);
+
+     SgEnumType* t = new SgEnumType(nondefdecl);
+     nondefdecl->set_type(t);
+
+     return nondefdecl;
+   }
+
+// This should take a SgClassDeclaration::class_types kind parameter!
+SgClassDeclaration * SageBuilder::buildStructDeclaration(const SgName& name, SgScopeStatement* scope /*=NULL*/)
+   {
+#if 0
+     if (scope == NULL)
+          scope = SageBuilder::topScopeStack();
+
+  // TODO How about class type??
+  // build defining declaration
+     SgClassDefinition* classDef = buildClassDefinition();
+   
+     SgClassDeclaration* defdecl = new SgClassDeclaration (name,SgClassDeclaration::e_struct,NULL,classDef);
+     ROSE_ASSERT(defdecl);
+     setOneSourcePositionForTransformation(defdecl);
+  // constructor is side-effect free
+     classDef->set_declaration(defdecl);
+     defdecl->set_definingDeclaration(defdecl);
+
+  // build the nondefining declaration
+     SgClassDeclaration* nondefdecl = new SgClassDeclaration (name,SgClassDeclaration::e_struct,NULL,NULL);
+     ROSE_ASSERT(nondefdecl);
+
+     setOneSourcePositionForTransformation(nondefdecl);
+     nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
+     nondefdecl->set_definingDeclaration(defdecl);
+     defdecl->set_firstNondefiningDeclaration(nondefdecl);
+     nondefdecl->setForward();
+
+     if (scope !=NULL )  // put into fixStructDeclaration() or alike later on
+        {
+          fixStructDeclaration(nondefdecl,scope);
+          fixStructDeclaration(defdecl,scope);
+#if 0
+          SgClassSymbol* mysymbol = new SgClassSymbol(nondefdecl);
+          ROSE_ASSERT(mysymbol);
+          scope->insert_symbol(name, mysymbol);
+          defdecl->set_scope(scope);
+          nondefdecl->set_scope(scope);
+          defdecl->set_parent(scope);
+          nondefdecl->set_parent(scope);
+#endif
+        }
+#else
+  // DQ (1/24/2009): Refactored to use the buildStructDeclaration_nfi function.
+  // (if this work it needs to be done uniformally for the other nfi functions)
+  // Also, "_nfi" is not a great name.
+     SgClassDeclaration* defdecl = buildClassDeclaration_nfi(name,SgClassDeclaration::e_struct,scope,NULL);
+
+     setOneSourcePositionForTransformation(defdecl);
+     ROSE_ASSERT(defdecl->get_firstNondefiningDeclaration() != NULL);
+     setOneSourcePositionForTransformation(defdecl->get_firstNondefiningDeclaration());
+#endif
+
+  // DQ (1/26/2009): I think this should be an error, but that appears it would
+  // break the existing interface. Need to discuss this with Liao.
+  // ROSE_ASSERT(defdecl->get_parent() != NULL);
+
+     return defdecl;
+   }
+
+// DQ (1/24/2009): Built this "nfi" version but factored the code.
+SgClassDeclaration * SageBuilder::buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgClassDeclaration* nonDefiningDecl )
+   {
+     if (scope == NULL)
+          scope = SageBuilder::topScopeStack();
+
+  // TODO How about class type??
+  // build defining declaration
+     SgClassDefinition* classDef = buildClassDefinition();
+
+#if 1
+     SgClassDeclaration* defdecl = new SgClassDeclaration (name,kind,NULL,classDef);
+     ROSE_ASSERT(defdecl != NULL);
+
+     printf ("SageBuilder::buildClassDeclaration_nfi(): defdecl = %p \n",defdecl);
+
+     setOneSourcePositionForTransformation(defdecl);
+  // constructor is side-effect free
+     classDef->set_declaration(defdecl);
+     defdecl->set_definingDeclaration(defdecl);
+#endif
+
+#if 0
+  // build the nondefining declaration, but only if the input nonDefiningDecl pointer was NULL
+  // SgClassDeclaration* nondefdecl = new SgClassDeclaration (name,kind,NULL,NULL);
+     SgClassDeclaration* nondefdecl = (nonDefiningDecl != NULL) ? nonDefiningDecl : new SgClassDeclaration (name,kind,NULL,NULL);
+     ROSE_ASSERT(nondefdecl != NULL);
+#else
+  // Get the nondefining declaration from the symbol if it has been built (if this works, 
+  // then we likely don't need the "SgClassDeclaration* nonDefiningDecl" parameter).
+     SgClassDeclaration* nondefdecl = NULL;
+
+  // DQ (1/26/2009): It seems that (scope == NULL) can happen in the tests/roseTests/astInterfaceTests test codes.
+  // ROSE_ASSERT(scope != NULL);
+     SgClassSymbol* mysymbol = NULL;
+     if (scope != NULL)
+        {
+          mysymbol = scope->lookup_class_symbol(name);
+        }
+       else
+        {
+       // DQ (1/26/2009): I think this should be an error, but that appears it would
+       // break the existing interface. Need to discuss this with Liao.
+          printf ("Warning: In SageBuilder::buildClassDeclaration_nfi(): scope == NULL \n");
+        }
+
+     printf ("In SageBuilder::buildClassDeclaration_nfi(): mysymbol = %p \n",mysymbol);
+     if (mysymbol != NULL)
+        {
+          nondefdecl = isSgClassDeclaration(mysymbol->get_declaration());
+
+          ROSE_ASSERT(nondefdecl != NULL);
+          ROSE_ASSERT(nondefdecl->get_parent() != NULL);
+
+          nondefdecl->set_definingDeclaration(defdecl);
+
+          ROSE_ASSERT(nondefdecl->get_definingDeclaration() == defdecl);
+          ROSE_ASSERT(nondefdecl->get_firstNondefiningDeclaration() != defdecl);
+        }
+       else
+        {
+       // DQ (1/25/2009): We only want to build a new declaration if we can't reuse the existing declaration.
+          nondefdecl = new SgClassDeclaration(name,kind,NULL,NULL);
+          ROSE_ASSERT(nondefdecl != NULL);
+
+          printf ("SageBuilder::buildClassDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
+
+       // The nondefining declaration will not appear in the source code, but is compiler
+       // generated (so we have something about the class that we can reference; e.g in
+       // types).  At the moment we make it a transformation, there might be another kind 
+       // of source position that would be more precise.  FIXME.
+       // setOneSourcePositionNull(nondefdecl);
+          setOneSourcePositionForTransformation(nondefdecl);
+
+          nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
+          nondefdecl->set_definingDeclaration(defdecl);
+          nondefdecl->setForward();
+
+          nondefdecl->set_parent(topScopeStack());
+
+          if (scope != NULL)
+             {
+               mysymbol = new SgClassSymbol(nondefdecl);
+               scope->insert_symbol(name, mysymbol);
+             }
+            else
+             {
+            // DQ (1/26/2009): I think this should be an error, but that appears it would
+            // break the existing interface. Need to discuss this with Liao.
+               printf ("Warning: no scope provided to support symbol table entry! \n");
+             }
+        }
+#endif
+
+     printf ("SageBuilder::buildClassDeclaration_nfi(): nondefdecl = %p \n",nondefdecl);
+
+  // setOneSourcePositionForTransformation(nondefdecl);
+     setOneSourcePositionNull(nondefdecl);
+
+  // nondefdecl->set_firstNondefiningDeclaration(nondefdecl);
+  // nondefdecl->set_definingDeclaration(defdecl);
+     defdecl->set_firstNondefiningDeclaration(nondefdecl);
+
+  // I don't think this is always a forward declaration (e.g. if it is not used in a prototype).
+  // Checking the olded EDG/ROSE interface it appears that it is always marked forward (unless 
+  // used in a defining declaration).
+     nondefdecl->setForward();
+
+     if (scope != NULL)  // put into fixStructDeclaration() or alike later on
+        {
+          fixStructDeclaration(nondefdecl,scope);
+          fixStructDeclaration(defdecl,scope);
+#if 0
+          SgClassSymbol* mysymbol = new SgClassSymbol(nondefdecl);
+          ROSE_ASSERT(mysymbol);
+          scope->insert_symbol(name, mysymbol);
+#endif
+          printf ("@@@@@@@@@@@@@@ In buildClassDeclaration_nfi(): setting scope of defining and non-defining declaration to scope = %s \n",scope->class_name().c_str());
+          defdecl->set_scope(scope);
+          nondefdecl->set_scope(scope);
+
+       // defdecl->set_parent(scope);
+
+       // DQ (1/25/2009): The scope is not the same as the parent, since the scope is logical, and the parent is structural (note that topScopeStack() is structural).
+       // nondefdecl->set_parent(scope);
+          nondefdecl->set_parent(topScopeStack());
+        }
+
+     defdecl->set_parent(topScopeStack());
+
+  // DQ (1/26/2009): I think we should assert this, but it breaks the interface as defined
+  // by the test code in tests/roseTests/astInterfaceTests.
+  // ROSE_ASSERT(defdecl->get_parent() != NULL);
+
+  // ROSE_ASSERT(nonDefiningDecl->get_parent() != NULL);
+
+     ROSE_ASSERT(defdecl->get_definingDeclaration() == defdecl);
+     ROSE_ASSERT(defdecl->get_firstNondefiningDeclaration() != defdecl->get_definingDeclaration());
+
+     return defdecl;    
+   }
+
+SgClassDeclaration * SageBuilder::buildStructDeclaration(const string& name, SgScopeStatement* scope/*=NULL*/)
+   {
+     SgName myname(name);
+     return buildStructDeclaration(myname, scope);
+   }
+
+SgClassDeclaration * SageBuilder::buildStructDeclaration(const char* name, SgScopeStatement* scope/*=NULL*/)
+   {
+     SgName myname(name);
+     return buildStructDeclaration(myname, scope);
+   }
+
+SgEnumDeclaration * SageBuilder::buildEnumDeclaration(const SgName& name, SgScopeStatement* scope /*=NULL*/)
   {
  // DQ (1/11/2009): This function has semantics very different from the buildEnumDeclaration_nfi() function!
 
@@ -2939,7 +3206,7 @@ SgTypeFloat * SageBuilder::buildFloatType()
     return decl;    
   } //buildEnumDeclaration()
 
-  SgEnumDeclaration * SageBuilder::buildEnumDeclaration_nfi(const SgName& name, SgScopeStatement* scope)
+SgEnumDeclaration * SageBuilder::buildEnumDeclaration_nfi(const SgName& name, SgScopeStatement* scope)
   {
     SgEnumDeclaration* defdecl = new SgEnumDeclaration (name,NULL);
     ROSE_ASSERT(defdecl);
@@ -3034,18 +3301,13 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
       return result;
   }// end SgFile* buildFile()
 
-PreprocessingInfo* SageBuilder::buildComment(SgLocatedNode* target, const std::string & content,
-               PreprocessingInfo::RelativePositionType position/*=PreprocessingInfo::before*/,
-   PreprocessingInfo::DirectiveType dtype
-     /* = PreprocessingInfo::CpreprocessorUnknownDeclaration*/)
+PreprocessingInfo* SageBuilder::buildComment(SgLocatedNode* target, const std::string & content,PreprocessingInfo::RelativePositionType position/*=PreprocessingInfo::before*/,PreprocessingInfo::DirectiveType dtype/* = PreprocessingInfo::CpreprocessorUnknownDeclaration*/)
 {
   return SageInterface::attachComment(target,content, position, dtype);  
 }
 
 //! #define xxx yyy 
-  PreprocessingInfo* SageBuilder::buildCpreprocessorDefineDeclaration(SgLocatedNode* target, 
-                const std::string & content,
-               PreprocessingInfo::RelativePositionType position /* =PreprocessingInfo::before*/)
+PreprocessingInfo* SageBuilder::buildCpreprocessorDefineDeclaration(SgLocatedNode* target,const std::string & content,PreprocessingInfo::RelativePositionType position /* =PreprocessingInfo::before*/)
   {
     ROSE_ASSERT(target != NULL); //dangling #define xxx is not allowed in the ROSE AST
     // simple input verification

@@ -422,7 +422,15 @@ void CompassGui::run()
 	{
 		runningROSE+=" -rose:skip_rose ";
 
+   // DQ (1/24/2009): Added debugging code
+      printf ("runningROSE = %s \n",runningROSE.c_str());
+
 		errorCodeROSE = system(runningROSE.c_str()) ;
+
+   // DQ (1/24/2009): Added a ROSE_ASSERT().
+      ROSE_ASSERT(errorCodeROSE == 0);
+
+   // DQ (1/24/2009): It might be more helpful if this as a ROSE_ASSERT(false) instead of "abort();"
 		if(errorCodeROSE) abort();
 
 

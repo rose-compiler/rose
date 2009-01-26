@@ -100,6 +100,12 @@ void postProcessingSupport (SgNode* node)
        // can be set properly.
           resetParentPointersInMemoryPool();
 
+       // DQ (6/27/2005): fixup the defining and non-defining declarations referenced at each SgDeclarationStatement
+       // This is a more sophisticated fixup than that done by fixupDeclarations. See test2009_09.C for an example
+       // of a non-defining declaration appearing before a defining declaration and requiring a fixup of the
+       // non-defining declaration reference to the defining declaration.
+          fixupAstDefiningAndNondefiningDeclarations(node);
+
        // Fixup the symbol tables (in each scope) and the global function type 
        // symbol table. This is less important for C, but required for C++.
        // But since the new EDG interface has to handle C and C++ we don't

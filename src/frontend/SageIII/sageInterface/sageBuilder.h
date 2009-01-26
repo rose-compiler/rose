@@ -690,6 +690,9 @@ SgClassDeclaration * buildStructDeclaration(const SgName& name, SgScopeStatement
 SgClassDeclaration * buildStructDeclaration(const std::string& name, SgScopeStatement* scope=NULL);
 SgClassDeclaration * buildStructDeclaration(const char* name, SgScopeStatement* scope=NULL);
 
+// DQ (1/24/2009): Added this "_nfi" function but refactored buildStructDeclaration to also use it (thsi needs to be done uniformally).
+SgClassDeclaration * buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgClassDeclaration* nonDefiningDecl);
+
 //! Build an enum, It is also a declaration statement in SAGE III
 SgEnumDeclaration * buildEnumDeclaration(const SgName& name, SgScopeStatement* scope=NULL);
 

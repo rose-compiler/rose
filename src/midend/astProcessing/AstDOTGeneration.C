@@ -150,6 +150,18 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
         }
      string nodelabel=string("\\n")+node->sage_class_name();
 
+  // DQ (1/24/2009): Added support for output of isForward flag in the dot graph.
+     SgDeclarationStatement* genericDeclaration = isSgDeclarationStatement(node);
+     if (genericDeclaration != NULL)
+        {
+       // At the moment the mnemonic name is stored, but it could be computed in the 
+       // future from the kind and the tostring() function.
+          string name = (genericDeclaration->isForward() == true) ? "isForward" : "!isForward";
+          ROSE_ASSERT(name.empty() == false);
+
+          nodelabel += string("\\n") + name;
+        }
+
   // DQ (1/19/2009): Added support for output of what specific instrcution this is in the dot graph.
      SgAsmInstruction* genericInstruction = isSgAsmInstruction(node);
      if (genericInstruction != NULL)

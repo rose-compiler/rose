@@ -1119,8 +1119,10 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                   {
                     SgClassDeclaration* classDeclaration = isSgClassDeclaration(node);
                     additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"Blue\",fillcolor=peru,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    string flagString = (classDeclaration->isForward() == true) ? "isForward" : "!isForward";
                     labelWithSourceCode = "\\n  " + classDeclaration->get_name().getString() + 
-                                          "\\n  " +  StringUtility::numberToString(classDeclaration) + "  ";
+                                          "\\n  " + flagString +
+                                          "\\n  " + StringUtility::numberToString(classDeclaration) + "  ";
                  // printf ("########## classDeclaration->get_name() = %s \n",classDeclaration->get_name().str());
                     break;
                   }

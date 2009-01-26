@@ -857,6 +857,16 @@ Compass::outputDb( std::string  dbName,
   {
     const Sg_File_Info *info = (*itr)->getNode()->get_file_info();
 
+ // DQ (1/24/2009): Added debugging code to understand where errors are happening...fails when (*itr)->getNode() is a SgProject (because a SgProject does not have a source file position)
+    if (info == NULL)
+       {
+         ROSE_ASSERT( (*itr)->getNode() != NULL );
+         printf ("This IR node's use of get_file_info() results in NULL pointer! (*itr)->getNode() = %p = %s \n",(*itr)->getNode(),(*itr)->getNode()->class_name().c_str());
+       }
+
+ // DQ (1/24/2009): Assertion added for debugging...
+    ROSE_ASSERT(info != NULL);
+
     sqlite3x::sqlite3_command cmd(con, db_select_n.c_str());
     cmd.bind(1, (*itr)->getCheckerName() );
     cmd.bind(2, (*itr)->getString() );

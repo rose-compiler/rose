@@ -3909,6 +3909,8 @@ SageInterface::lookupVariableSymbolInParentScopes (const SgName &  name,
 void
 SageInterface::setSourcePosition( SgLocatedNode* locatedNode )
    {
+  // DQ (1/24/2009): It might be thst this function is only called from the Fortran support.
+
   // This function sets the source position to be marked as not 
   // available (since we often don't have token information)
   // These nodes WILL be unparsed in the conde generation phase.
@@ -3937,119 +3939,168 @@ SageInterface::setSourcePosition( SgLocatedNode* locatedNode )
      locatedNode->get_endOfConstruct  ()->set_parent(locatedNode);
    }
 
-void SageInterface::setOneSourcePositionForTransformation(SgNode *node)
-{
-    ROSE_ASSERT(node);
-    SgLocatedNode * locatedNode = isSgLocatedNode(node);
-    SgExpression*    expression    = isSgExpression(node);
-    SgInitializedName *initName = isSgInitializedName(node);
-    SgPragma * pragma = isSgPragma(node); // missed this one!! Liao, 1/30/2008
-    SgGlobal *global = isSgGlobal(node); //SgGlobal should have NULL endOfConstruct()
+void
+SageInterface::setOneSourcePositionForTransformation(SgNode *node)
+   {
+  // DQ (1/24/2009): I think this should be renamed to be "setSourcePositionAsTransformation(SgNode *node)"
+  // The logic should be make more independent of if (locatedNode->get_startOfConstruct() == NULL)
+  // Since that make understanding where the function is applied too complex.  
+  // If (locatedNode->get_startOfConstruct() != NULL), then we should just make that Sg_File_Info as 
+  // a transforamtion directly, this function misses that step.
 
-    if ((locatedNode) &&(locatedNode->get_startOfConstruct()   == NULL))
-    //if ((locatedNode) &&(locatedNode->get_endOfConstruct()   == NULL))
-    {
-      locatedNode->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
-      locatedNode->get_startOfConstruct()->set_parent(locatedNode);
+     ROSE_ASSERT(node != NULL);
 
-      if (global==NULL)
-      {  
-        locatedNode->set_endOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
-        locatedNode->get_endOfConstruct  ()->set_parent(locatedNode); 
-      }
-      if (expression!=NULL)
-      {
-        expression->set_operatorPosition(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
-        expression->get_operatorPosition()->set_parent(expression);
-      } 
-    }  else if ((initName)&&(initName->get_startOfConstruct() == NULL))
-    { //  no endOfConstruct for SgInitializedName
-        initName->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());   
-       initName->get_startOfConstruct()->set_parent(initName);
-    } else if ((pragma)&&(pragma->get_startOfConstruct() == NULL))
-    { 
-        pragma->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
-       pragma->get_startOfConstruct()->set_parent(pragma);
-    }
-    
-    
-}
+     SgLocatedNode*     locatedNode = isSgLocatedNode(node);
+     SgExpression*      expression  = isSgExpression(node);
+     SgInitializedName* initName    = isSgInitializedName(node);
+     SgPragma*          pragma      = isSgPragma(node); // missed this one!! Liao, 1/30/2008
+     SgGlobal*          global      = isSgGlobal(node); // SgGlobal should have NULL endOfConstruct()
 
-void SageInterface::setOneSourcePositionNull(SgNode *node)
-{
-    ROSE_ASSERT(node);
-    SgLocatedNode * locatedNode = isSgLocatedNode(node);
-    SgExpression*    expression    = isSgExpression(node);
-    SgInitializedName *initName = isSgInitializedName(node);
-    SgPragma * pragma = isSgPragma(node); // missed this one!! Liao, 1/30/2008
-    SgGlobal *global = isSgGlobal(node); //SgGlobal should have NULL endOfConstruct()
+  // if ((locatedNode) && (locatedNode->get_endOfConstruct() == NULL))
+     if ( (locatedNode != NULL) && (locatedNode->get_startOfConstruct() == NULL) )
+        {
+          locatedNode->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
+          locatedNode->get_startOfConstruct()->set_parent(locatedNode);
 
-    if ((locatedNode) &&(locatedNode->get_startOfConstruct()   == NULL))
-    //if ((locatedNode) &&(locatedNode->get_endOfConstruct()   == NULL))
-    {
-      locatedNode->set_startOfConstruct(NULL);
+          if (global==NULL)
+             {  
+               locatedNode->set_endOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
+               locatedNode->get_endOfConstruct  ()->set_parent(locatedNode); 
+             }
 
-      if (global==NULL)
-      {  
-        locatedNode->set_endOfConstruct(NULL);
-      }
-      if (expression!=NULL)
-      {
-        expression->set_operatorPosition(NULL);
-      } 
-    }  else if ((initName)&&(initName->get_startOfConstruct() == NULL))
-    { //  no endOfConstruct for SgInitializedName
-        initName->set_startOfConstruct(NULL);   
-    } else if ((pragma)&&(pragma->get_startOfConstruct() == NULL))
-    { 
-        pragma->set_startOfConstruct(NULL);
-    }
-}
+       // Only SgExpression IR nodes have a 3rd source position data structure.
+          if (expression!=NULL)
+             {
+               expression->set_operatorPosition(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
+               expression->get_operatorPosition()->set_parent(expression);
+             }
+        }
+       else
+        {
+          if ( (initName != NULL) && (initName->get_startOfConstruct() == NULL) )
+             {
+           //  no endOfConstruct for SgInitializedName
+               initName->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());   
+               initName->get_startOfConstruct()->set_parent(initName);
+             }
+            else 
+             {
+               if ( (pragma != NULL) && (pragma->get_startOfConstruct() == NULL) )
+                  {
+                    pragma->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
+                    pragma->get_startOfConstruct()->set_parent(pragma);
+                  }
+             }
+        }
+   }
 
-void SageInterface::setSourcePositionForTransformation(SgNode *root)
-{
-  Rose_STL_Container <SgNode*> nodeList= NodeQuery::querySubTree(root,V_SgNode);
-  for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i!=nodeList.end(); i++ )
-  {
-    setOneSourcePositionForTransformation(*i); 
-   
-  }// end for
-}
 
-void SageInterface::setSourcePositionForTransformation_memoryPool()
-{
-  VariantVector vv(V_SgNode);
-  Rose_STL_Container<SgNode*> nodeList = NodeQuery::queryMemoryPool(vv);
-  for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i!=nodeList.end(); i++ )
-  {
-    setOneSourcePositionForTransformation(*i);
+void
+SageInterface::setOneSourcePositionNull(SgNode *node)
+   {
+  // DQ (1/24/2009): I think this should be renamed to be "setSourcePositionToNULL(SgNode *node)"
+  // However, if this is doen then the logic should be that it asserts that: (locatedNode->get_startOfConstruct() == NULL)
+  // so that we know when we are leaking memory.  Similarly, we should assert that:
+  // (locatedNode->get_endOfConstruct() == NULL).
+  // But then this function just asserts that everything is already NULL and is less about setting them to NULL.
+  // If (locatedNode->get_startOfConstruct() != NULL), should we delete the existing Sg_File_Info object?
+  // This function misses that step.
 
-  }// end for
+     ROSE_ASSERT(node != NULL);
 
-}
+     SgLocatedNode *    locatedNode = isSgLocatedNode(node);
+     SgExpression*      expression  = isSgExpression(node);
+     SgInitializedName* initName    = isSgInitializedName(node);
+     SgPragma*          pragma      = isSgPragma(node); // missed this one!! Liao, 1/30/2008
+     SgGlobal*          global      = isSgGlobal(node); // SgGlobal should have NULL endOfConstruct()
 
-// Liao, 1/9/2008, get the first global scope from current project
-// mostly used to prepare for AST construction under the global scope
+  // DQ (1/24/2009): If the point is to set the source position to NULL pointers, 
+  // why do we only handle the case when (get_startOfConstruct() == NULL) 
+  // (i.e. when the start source postion is already NULL).
+
+  // if ((locatedNode) && (locatedNode->get_endOfConstruct() == NULL))
+     if ( (locatedNode != NULL) && (locatedNode->get_startOfConstruct() == NULL) )
+        {
+          locatedNode->set_startOfConstruct(NULL);
+
+       // Note that SgGlobal should have NULL endOfConstruct()
+          if (global == NULL)
+             {
+               locatedNode->set_endOfConstruct(NULL);
+             }
+
+       // Only SgExpression IR nodes have a 3rd source position data structure.
+          if (expression != NULL)
+             {
+               expression->set_operatorPosition(NULL);
+             }
+        }
+       else
+        {
+          if ( (initName != NULL) && (initName->get_startOfConstruct() == NULL) )
+             { //  no endOfConstruct for SgInitializedName
+               initName->set_startOfConstruct(NULL);   
+             }
+            else
+             {
+               if ( (pragma != NULL) && (pragma->get_startOfConstruct() == NULL) )
+                  {
+                    pragma->set_startOfConstruct(NULL);
+                  }
+             }
+        }
+   }
+
+
+// DQ (1/24/2009): Could we change the name to be "setSourcePositionAtRootAndAllChildrenAsTransformation(SgNode *root)"
+void
+SageInterface::setSourcePositionForTransformation(SgNode *root)
+   {
+     Rose_STL_Container <SgNode*> nodeList= NodeQuery::querySubTree(root,V_SgNode);
+     for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i!=nodeList.end(); i++ )
+        {
+          setOneSourcePositionForTransformation(*i);   
+        }
+   }
+
+
+void
+SageInterface::setSourcePositionForTransformation_memoryPool()
+   {
+  // DQ (1/24/2009): This seems like a very dangerous function to have, is it required!
+
+     VariantVector vv(V_SgNode);
+     Rose_STL_Container<SgNode*> nodeList = NodeQuery::queryMemoryPool(vv);
+     for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++ )
+        {
+          setOneSourcePositionForTransformation(*i);
+        }
+   }
+
 
 SgGlobal * SageInterface::getFirstGlobalScope(SgProject *project)
-{
-  
-  ROSE_ASSERT(project);
+   {
+  // Liao, 1/9/2008, get the first global scope from current project
+  // mostly used to prepare for AST construction under the global scope
+     ROSE_ASSERT(project != NULL);
 
-// SgGlobal* global = project->get_file(0).get_root();
-  SgSourceFile* file = isSgSourceFile(project->get_fileList()[0]);
-  SgGlobal* global = file->get_globalScope();
+  // DQ (1/24/2009): Added a check to make sure STL list is non-empty.
+     ROSE_ASSERT(project->get_fileList().empty() == false);
+
+  // SgGlobal* global = project->get_file(0).get_root();
+     SgSourceFile* file = isSgSourceFile(project->get_fileList()[0]);
+     SgGlobal* global = file->get_globalScope();
 
 #if 0
-  SgFilePtrListPtr fileList = project->get_fileList();
-  SgFilePtrList::const_iterator i= fileList->begin();
+     SgFilePtrListPtr fileList = project->get_fileList();
+     SgFilePtrList::const_iterator i= fileList->begin();
 
-  SgGlobal* global = (*i)->get_globalScope();
+     SgGlobal* global = (*i)->get_globalScope();
 #endif
-  ROSE_ASSERT(global);
-  return global;
-  
-}
+     ROSE_ASSERT(global != NULL);
+
+     return global;
+   }
 
 // Liao, 1/10/2008, get the last stmt from the scope
 // two cases 
@@ -4082,9 +4133,11 @@ SgStatement* SageInterface::getFirstStatement(SgScopeStatement *scope, bool incl
 
   if (scope->containsOnlyDeclarations())
     {
+   // DQ Note: Do we really need to make a copy of the list just to return a pointer to the first entry?
       SgDeclarationStatementPtrList declList = scope->getDeclarationList();
       if (includingCompilerGenerated)
       {  
+       // DQ Note: (declList.empty() == false) is a much faster test  O(1) than (declList.size() > 0), which is O(n).
           if (declList.size()>0)
              stmt = isSgStatement(declList.front());
       } else
@@ -4115,9 +4168,11 @@ SgStatement* SageInterface::getFirstStatement(SgScopeStatement *scope, bool incl
     }
   else
   {
+ // DQ Note: Do we really need to make a copy of the list just to return a pointer to the first entry?
     SgStatementPtrList stmtList = scope->getStatementList();
    if (includingCompilerGenerated)
     {
+   // DQ Note: (stmtList.empty() == false) is a much faster test  O(1) than (stmtList.size() > 0), which is O(n).
       if (stmtList.size()>0)
       stmt = stmtList.front();
     } else
