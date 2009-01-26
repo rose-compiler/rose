@@ -180,15 +180,18 @@ DisassemblerCommon::AsmFileWithData::disassembleRecursively(vector<uint64_t>& wo
                 /* cerr << "Found succ outside code segment at 0x" << hex << *i << endl; */
                 continue;
             }
-            if (knownSuccessors.size() != 1 || *i != addr + insn->get_raw_bytes().size()) {
-                basicBlockStarts[*i] |= false; // Ensure it exists, but don't change its value if it was already true
-                // basicBlockStarts[*i] = true; // Be more conservative
-            }
+
+            /* If control branches to something other than the next instruction then remember that. We'll be using this
+             * information when we try to detect function boundaries. */
+            if (*i != addr + insn->get_raw_bytes().size())
+                basicBlockStarts[*i].insert(addr);
+
             if (insns.find(*i) == insns.end()) {
                 worklist.push_back(*i);
             }
         }
 
+#if 0 /* I don't think we need this anymore as it is handled above. [RPM 2009-01-21] */
         // The return location for a call needs to be externally visible, which
         // it wouldn't be by the other rules
         SgAsmx86Instruction* x86insn = isSgAsmx86Instruction(insn);
@@ -199,22 +202,31 @@ DisassemblerCommon::AsmFileWithData::disassembleRecursively(vector<uint64_t>& wo
                          arminsn->get_kind() == arm_bxj))) {
             basicBlockStarts[addr + insn->get_raw_bytes().size()] = true;
         }
+#endif
 
-        // Scan for constant operands that are code pointers
+        /* Scan for constant operands that are code pointers. Such operands are often used in a closely following instruction
+         * as a jump target. E.g., "move 0x400600, reg1; ...; jump reg1". We don't know when (or even if) the execution branch
+         * occurs, but for the sake of keep track of branching we'll just say it happes at this instruction. (In practice, it
+         * almost always happens at the end of this instruction's basic block.) */
         SgAsmOperandList* ol = insn->get_operandList();
         const vector<SgAsmExpression*>& operands = ol->get_operands();
         for (size_t i = 0; i < operands.size(); ++i) {
             uint64_t constant = 0;
             switch (operands[i]->variantT()) {
-              case V_SgAsmWordValueExpression: constant = isSgAsmWordValueExpression(operands[i])->get_value(); break;
-              case V_SgAsmDoubleWordValueExpression: constant = isSgAsmDoubleWordValueExpression(operands[i])->get_value(); break;
-              case V_SgAsmQuadWordValueExpression: constant = isSgAsmQuadWordValueExpression(operands[i])->get_value(); break;
-              default: continue; // Not an appropriately-sized constant
-            }       
+              case V_SgAsmWordValueExpression:
+                constant = isSgAsmWordValueExpression(operands[i])->get_value();
+                break;
+              case V_SgAsmDoubleWordValueExpression:
+                constant = isSgAsmDoubleWordValueExpression(operands[i])->get_value();
+                break;
+              case V_SgAsmQuadWordValueExpression:
+                constant = isSgAsmQuadWordValueExpression(operands[i])->get_value();
+                break;
+              default:
+                 continue; // Not an appropriately-sized constant
+            }
             if (inCodeSegment(constant)) {
-                // The second part of the condition is trying to handle if
-                // something pushes the address of the next instruction
-                basicBlockStarts[constant] = true;
+                basicBlockStarts[constant].insert(addr);
                 if (insns.find(constant) == insns.end()) {
                     worklist.push_back(constant);
                 }
@@ -248,90 +260,82 @@ void Disassembler::disassembleFile(SgAsmFile* f)
         }
    }
 
-void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
+void
+Disassembler::disassembleInterpretation(SgAsmInterpretation* interp)
+{
+    // DQ (8/26/2008): Set the agressive mode in the disassembler based on the SgFile (evaluated from the command line).
+    SgAsmFile* asmFile = isSgAsmFile(interp->get_parent());
+    ROSE_ASSERT (asmFile);
+    SgBinaryFile* fileNode = isSgBinaryFile(asmFile->get_parent());
+    ROSE_ASSERT(fileNode != NULL);
+    aggressive_mode = fileNode->get_aggressive();
 
-  // DQ (8/26/2008): Set the agressive mode in the disassembler based on the SgFile (evaluated from the command line).
-     SgAsmFile* asmFile = isSgAsmFile(interp->get_parent());
-     ROSE_ASSERT (asmFile);
-     SgBinaryFile* fileNode = isSgBinaryFile(asmFile->get_parent());
-     ROSE_ASSERT(fileNode != NULL);
-     aggressive_mode = fileNode->get_aggressive();
+    DisassemblerCommon::AsmFileWithData file(interp);
+    map<uint64_t, SgAsmInstruction*> insns;
+    DisassemblerCommon::BasicBlockStarts basicBlockStarts;
+    DisassemblerCommon::FunctionStarts functionStarts;
 
-     DisassemblerCommon::AsmFileWithData file(interp);
-     map<uint64_t, SgAsmInstruction*> insns;
-     DisassemblerCommon::BasicBlockStarts basicBlockStarts;
-     DisassemblerCommon::FunctionStarts functionStarts;
+    SgAsmGenericHeader* header = interp->get_header();
+    ROSE_ASSERT (header);
 
-
-     SgAsmGenericHeader* header = interp->get_header();
-     ROSE_ASSERT (header);
-
-  // Compute the location of the first instruction in the file.
-     uint64_t entryPoint = header->get_entry_rva() + header->get_base_va();
-
-  // printf ("In Disassembler::disassembleInterpretation(): entryPoint = %p \n",(void*)entryPoint);
-
-     basicBlockStarts[entryPoint] = true;
-
-  // Build up the binary AST with instruction IR nodes generated by disassembly.
-     file.disassembleRecursively(entryPoint, insns, basicBlockStarts);
+    /* Seed the disassembly with the entry point(s) stored in the file header. */
+    SgRVAList entry_rvalist = header->get_entry_rvas();
+    for (size_t i=0; i<entry_rvalist.size(); i++) {
+        uint64_t entryPoint = entry_rvalist[i].get_rva() + header->get_base_va();
+        if (basicBlockStarts.find(entryPoint)==basicBlockStarts.end())
+            basicBlockStarts[entryPoint] = DisassemblerCommon::BasicBlockStarts::mapped_type();
+        file.disassembleRecursively(entryPoint, insns, basicBlockStarts);
+    }
 
 #if 0
-     printf ("Disassembler::disassembleFile(): Looking for pointers that reference executable code (valid sections) \n");
+    // This is a test that attempts to detect executable code in the sections of the binary
+    // by looking for pointers to existing executable sections.
+    printf ("Disassembler::disassembleFile(): Looking for pointers that reference executable code (valid sections) \n");
+    const vector<SgAsmGenericSection*> & sections = interp->get_header()->get_sections()->get_sections();
+    for (size_t i = 0; i < sections.size(); ++i) {
+        SgAsmGenericSection* sect = sections[i];
+        if (sect->is_mapped()) {
+            // Scan for pointers to code
+            SgAsmGenericHeader* header = sect->get_header();
+            ROSE_ASSERT (header);
+            SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
+            size_t pointerSize = 0;
+            if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_IA32_Family) {
+                pointerSize = 4;
+            } else if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_X8664_Family) {
+                pointerSize = 8;
+            } else if (isa == SgAsmExecutableFileFormat::ISA_ARM_Family) {
+                pointerSize = 4;
+            } else {
+                cerr << "Bad architecture to disassemble (aggressive)" << endl;
+                abort();
+            }
+            ROSE_ASSERT (pointerSize != 0);
+            uint64_t endOffset = sect->get_size(); // Size within section
 
-// This is a test that attempts to detect executable code in the sections of the binary
-// by looking for pointers to existing executable sections.
-  const vector<SgAsmGenericSection*> & sections = interp->get_header()->get_sections()->get_sections();
-  for (size_t i = 0; i < sections.size(); ++i) {
-    SgAsmGenericSection* sect = sections[i];
-    if (sect->is_mapped()) {
-      // Scan for pointers to code
-      SgAsmGenericHeader* header = sect->get_header();
-      ROSE_ASSERT (header);
-      SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
-      size_t pointerSize = 0;
-      if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_IA32_Family) {
-        pointerSize = 4;
-      } else if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_X8664_Family) {
-        pointerSize = 8;
-      } else if (isa == SgAsmExecutableFileFormat::ISA_ARM_Family) {
-        pointerSize = 4;
-      } else {
-        cerr << "Bad architecture to disassemble (aggressive)" << endl;
-        abort();
-      }
-      ROSE_ASSERT (pointerSize != 0);
-      uint64_t endOffset = sect->get_size(); // Size within section
+            for (uint64_t j = 0;
+                 j + pointerSize <= endOffset;
+                 j += pointerSize) {
+                uint64_t addr = 0;
+                // This code packs sequences of bytes starting on aligned boundaries together to see 
+                // if they generate addresses that then map to an executable section.  This is used as
+                // a way to identify hidden parts of the executable that may be instructions.
+                // FIXME: assumes file is little endian
+                // This could be a perfomance problem depending upon the implementation of the "content()" function using STL.
+                for (size_t k = pointerSize; k > 0; --k) {
+                    addr <<= 8;
+                    addr |= *sect->content(j + k - 1, 1);
+                }
 
-      for (uint64_t j = 0;
-           j + pointerSize <= endOffset;
-           j += pointerSize) {
-        uint64_t addr = 0;
-
-     // This code packs sequences of bytes starting on aligned boundaries together to see 
-     // if they generate addresses that then map to an executable section.  This is used as
-     // a way to identify hidden parts of the executable that may be instructions.
-     // FIXME: assumes file is little endian
-        for (size_t k = pointerSize; k > 0; --k) {
-          addr <<= 8;
-
-       // This could be a perfomance problem depending upon the implementation of the "content()" function using STL.
-          addr |= *sect->content(j + k - 1, 1);
+                addr += header->get_base_va();
+                if (file.inCodeSegment(addr)) {
+                    basicBlockStarts[addr] = true;
+                    printf ("Disassembler::disassembleFile(): SgAsmGenericSection list[%zu]: addr = %p \n",i,(void*)addr);
+                    file.disassembleRecursively(addr, insns, basicBlockStarts);
+                }
+            }
         }
-
-        addr += header->get_base_va();
-        if (file.inCodeSegment(addr)) {
-          basicBlockStarts[addr] = true;
-
-          printf ("Disassembler::disassembleFile(): SgAsmGenericSection list[%zu]: addr = %p \n",i,(void*)addr);
-
-          file.disassembleRecursively(addr, insns, basicBlockStarts);
-        }
-      }
     }
-  }
-#else
-  // printf ("Warning (conservative disassembly): Skipping search for pointers that reference executable code (valid sections) \n");
 #endif
 
     /* Adjust basicBlockStarts and functionStarts to indicate the starting (lowest) address of all known functions. This must
@@ -346,7 +350,6 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
         SgAsmBlock* b = new SgAsmBlock();
         b->set_address(addr);
         b->set_id(addr);
-        b->set_externallyVisible(i->second);
         basicBlocks[addr] = b;
     }
     SgAsmBlock *blk = PutInstructionsIntoBasicBlocks::putInstructionsIntoBasicBlocks(basicBlocks, insns);
@@ -386,5 +389,4 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
     blk = PutInstructionsIntoBasicBlocks::putInstructionsIntoFunctions(blk, functionStarts);
     interp->set_global_block(blk);
     blk->set_parent(interp);
-    blk->set_externallyVisible(true);
 }

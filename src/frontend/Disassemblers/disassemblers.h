@@ -86,9 +86,9 @@ namespace PowerpcDisassembler
    }
 
 namespace DisassemblerCommon {
-    /* Map of basic block starting addresses. The key is the RVA of the first instruction in the basic block; the value
-     * indicates whether the block came from a parameter (true), or just a constant jump target or fallthrough (false) */
-    typedef std::map<rose_addr_t, bool> BasicBlockStarts;
+    /* Map of basic block starting addresses. The key is the RVA of the first instruction in the basic block; the value is the
+     * set of all addresses of instructions known to branch to this basic block. */
+    typedef std::map<rose_addr_t, std::set<rose_addr_t> > BasicBlockStarts;
 
     /* Map of function starting addresses. The key is the RVA of the first instruction in the function; the value consists of
      * a bit flag indicating why we think this is the beginning of a function, and a name (if known) of the function. */
@@ -99,7 +99,7 @@ namespace DisassemblerCommon {
         FunctionStart(SgAsmFunctionDeclaration::FunctionReason reason, std::string name)
             : reason(reason), name(name)
             {}
-        unsigned reason;                        /* FunctionReason bit flags */
+        unsigned reason;                        /* SgAsmFunctionDeclaration::FunctionReason bit flags */
         std::string name;
     };
     typedef std::map<rose_addr_t, FunctionStart> FunctionStarts;

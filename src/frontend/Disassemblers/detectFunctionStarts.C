@@ -118,9 +118,10 @@ detectFunctionStarts(SgAsmInterpretation *interp,
     mark_eh_frames(interp, insns, functionStarts);
     mark_func_symbols(interp, insns, functionStarts);
 
-    /* All function entry points are also the starts of "externally visible" (i.e., true) basic blocks. */
+    /* All function entry points are also the starts of basic blocks. */
     for (FunctionStarts::iterator i=functionStarts.begin(); i!=functionStarts.end(); i++)
-        basicBlockStarts[i->first] = true;
+        if (basicBlockStarts.find(i->first)==basicBlockStarts.end())
+            basicBlockStarts[i->first] = DisassemblerCommon::BasicBlockStarts::mapped_type();
 }
 
 
