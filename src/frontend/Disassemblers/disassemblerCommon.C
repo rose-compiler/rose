@@ -356,7 +356,6 @@ Disassembler::disassembleInterpretation(SgAsmInterpretation* interp)
             ROSE_ASSERT (section->get_header() == header);
 
             bool isFunctionStart = false;
-            std::string funcName="none";
 
             if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_IA32_Family) {
                 isFunctionStart = X86Disassembler::doesBBStartFunction(bb, false);
@@ -369,8 +368,7 @@ Disassembler::disassembleInterpretation(SgAsmInterpretation* interp)
                 abort();
             }
             if (isFunctionStart)
-                functionStarts[bb->get_address()] = DisassemblerCommon::FunctionStart(SgAsmFunctionDeclaration::FUNC_PATTERN,
-                                                                                      funcName);
+                functionStarts[bb->get_address()].reason |= SgAsmFunctionDeclaration::FUNC_PATTERN;
         }
     }
 

@@ -101,6 +101,8 @@ mark_func_symbols(SgAsmInterpretation *interp,
                     insns.find(symbol->get_value())!=insns.end()) {
                     rose_addr_t value = symbol->get_value();
                     func_starts[value].reason |= SgAsmFunctionDeclaration::FUNC_SYMBOL;
+                    if (func_starts[value].name=="")
+                        func_starts[value].name = symbol->get_name()->get_string();
                 }
             }
         }
