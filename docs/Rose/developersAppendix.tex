@@ -222,7 +222,32 @@ there are a number of steps to the checkin process:
             developers who update often.
    \end{itemize}
 
-   \item svn commit -m "<description of what you did>".
+   \item svn commit
+   \begin{itemize}
+      \item The commit will fail if someone else has committed while you were running
+            your pre-commit tests. If this happens you will generally need to restart
+            the check-in process from the top.
+      \item {\tt svn commit} will start your favorite editor where you should enter a
+	    description of your changes. The first line of that description should be
+            a short, one-line summary ({\it i.e.}, a title with just the first word capitalized),
+            followed by a blank line, and as much detail as necessary. There is generally
+            no need to includes your name, date, names of files, etc. as this information
+            is readily available from the source revision management system. Do not prefix
+            the summary with tags like ``Summary:'', ``Title:'' etc. since it's already
+            implied that the first line is the summary.
+
+	    Here's an example:
+	    {\indent
+	       \begin{verbatim}
+    	          Adjusted test case for new binary function detection
+    
+    	          This test case assumed that the only functions in a binary executable
+    	          were those that had symbols in the symbol table.  This is no longer
+    	          true since we now determine function boundaries with a wider variety of
+    	          heuristics.
+	       \end{verbatim} 
+            }
+   \end{itemize}
 
 %   \item ROSE/ChangeLog
 %   a new entry has to include at least the following information:
