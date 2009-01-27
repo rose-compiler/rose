@@ -1,3 +1,18 @@
+2009-01-27 01:26  matzke
+
+	* [r4176] /trunk/ROSE/src/frontend/Disassemblers/Makefile.am: Fixed
+	  makefile
+	  
+	  Hopefully
+
+2009-01-26 22:23  liao6
+
+	* [r4175] /trunk/ROSE/scripts/roseFreshTest,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Leo-daily.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Leo-head.sh: Enhanced the
+	  regression test scripts to update ChangeLog2 automatically when
+	  needed.
+
 2009-01-26 22:00  liao6
 
 	* [r4173] /trunk/ROSE/scripts/roseFreshTestStub-Leo-head.sh: Added
