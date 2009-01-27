@@ -8,6 +8,6 @@ noinst_LTLIBRARIES = libroseDisassemblers.la
 libroseDisassemblers_la_DEPENDENCIES =
 libroseDisassemblers_la_SOURCES = x86Disassembler.C armDisassembler.C powerpcDisassembler.C putInstructionsIntoBasicBlocks.C disassemblers.h disassemblerCommon.C detectFunctionStarts.C
 
-dist_include_HEADERS = disassemblers.h
+dist_include_HEADERS =
 
-include_HEADERS = 
+include_HEADERS =  disassemblers.h
