@@ -1,22 +1,19 @@
-#include "visualisation.h"
-#include "CmdlineOptions.h"
+/* {DFI} is replaced with o_ShapeGraphLifted or o_ShapeGraphSetLifted
+ * for srw98 or nnh99, respectively.
+ * this is done in the Makefile.
+ **/
 
-extern ShapeAnalyzerOptions *opt; // reference to global cmdline options
+// dfi_write_ creates the gdl visualisation for every basic block.
+// PAG creates the visualisation layout and calls this function
+// that provides the layout within every basic block
 
-static int edge = 0; // global variable for setting edges on/off
-
-// dfi_write is called to create the .gdl representation of the
-// analysis information present at the edges. if writes the .gdl
-// code directly to the file that PAG fills with the surrouning
-// cfg visualisation */
-
-void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_ShapeGraphSetLifted info,int id,int insnum,int ctx) {
+void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, {DFI} info,int id,int insnum,int ctx) {
     // We have only one instruction per basic block !
     assert((id==-1 && insnum==-1) || insnum==0);
-    if (o_ShapeGraphSetLifted_istop(info) || o_ShapeGraphSetLifted_isbottom(info)) {
+    if ({DFI}_istop(info) || {DFI}_isbottom(info)) {
         fprintf(fp, "node: { /*single instruction*/\n");
         fprintf(fp, "  title: \"%s\"\n", name);
-        fprintf(fp, "  label: \"%s\"\n", o_ShapeGraphSetLifted_istop(info)?GDL_TOP:GDL_BOT);
+        fprintf(fp, "  label: \"%s\"\n", {DFI}_istop(info)?GDL_TOP:GDL_BOT);
         fprintf(fp, "}\n\n");
         return;
     }
@@ -41,10 +38,10 @@ void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_ShapeGraphSetLifte
     fprintf(fp, "  %s\n", attrib);
 
     int n_nodes = 0;
-    if (!o_ShapeGraphSetLifted_istop(info) && !o_ShapeGraphSetLifted_isbottom(info)) {
+    if (!{DFI}_istop(info) && !{DFI}_isbottom(info)) {
         int n_graphs = 0;
 
-        o_SrwNnhPair gpair = o_extract_graphs(o_ShapeGraphSetLifted_drop(info));
+        o_SrwNnhPair gpair = o_extract_graphs({DFI}_drop(info));
         
         if (opt->showAsSummaryGraph()) {
 			      //gstats.addGraphs(1);
@@ -119,7 +116,8 @@ int dfi_write_ShapeGraph_fp(FILE *fp, char *name, int n_graphs,  char *attrib, o
         if (o_NodeList_is_elem(is_shared, node))
         {
             fprintf(fp, "      shape: rhomb\n");
-            if (!edge)
+            // vpavlu: 2008-12-01: edge was always set to 0
+            //if (!edge)
             {
                 if (o_Node_is_empty(node)) 
                     fprintf(fp, "      color: darkmagenta\n");

@@ -3,17 +3,6 @@
    Year  : 2006, 2007, 2008
 */
 
-ExpressionId      = ExpressionId * ExpressionId          // SATIrE predefined Type
-VariableId        = VariableId * VariableId * VariableId // SATIrE predefined Type
-TypeId            = TypeId * TypeId * TypeId * TypeId    // SATIrE predefined Type
-
-/*
-// use these defines for better error messages when resolving type errors
-ExpressionId      = (SATIrE_Type1||SATIrE_Type1|SATIrE_Type1)
-VariableId        = (SATIrE_Type2||SATIrE_Type2|SATIrE_Type2)
-TypeId            = (SATIrE_Type3||SATIrE_Type3|SATIrE_Type3)
-*/
-
 BoolSet           = set(bool)
 
 EnumSide          = (Side_LHS,Side_RHS||Side_RHS|Side_LHS)

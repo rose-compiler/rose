@@ -4,8 +4,8 @@
 #
 
 .PHONY: all clean
-.PHONY: nnh99shape nnh99clean
-.PHONY: srw98shape srw98clean
+.PHONY: nnh99shape nnh99clean nnh99optla
+.PHONY: srw98shape srw98clean srw98optla
 .PHONY: shapetool shapetoolclean
 
 info:
@@ -22,68 +22,74 @@ all: nnh99shape srw98shape shapetool
 clean: nnh99clean srw98clean shapetoolclean
 
 
-
-
-# nnh99shape compiles and links nnh99 as standalone binary.
-# it uses the custom main.[Ch] files in the subdirectory
-# to include GraphStats and the custom visualisation.
-# the building is done in-place for easy debugging
-
-nnh99shape: nnh99/nnh99.optla nnh99/nnh99.set nnh99/GraphStats.h nnh99/Makefile
-	# put custom C code in place
-	cp common_main.C    nnh99/main.C
-	cp CmdlineOptions.C nnh99
-	cp CmdlineOptions.h nnh99
-	cp visualisation.h  nnh99
-	cat visualisation.c >> nnh99/main-support.C
+# nnh99shape compiles and links the analysis as standalone binary.
+# postprocess-main edits the newanalysis-generated main.[Ch]
+# files to include the common code fragments like visualisation
+nnh99shape: nnh99/nnh99.optla nnh99/main.C nnh99/CmdlineOptions.C nnh99/CmdlineOptions.h nnh99/visualisation.h
 	$(MAKE) all -C nnh99
 
 nnh99/nnh99.optla: nnh99/nnh99.code
-	cpp -C -P nnh99/nnh99.code | sed -e 's/dfi/ShapeGraphSetLifted/g' | grep -v "prefix *: *nnh99" > nnh99/nnh99.optla
+	# include common_*.optla into nnh99.optla, customize DFI, remove prefix
+	cpp -C -P nnh99/nnh99.code | sed -e 's/{DFI}/ShapeGraphSetLifted/g' | grep -v "prefix *: *nnh99" > nnh99/nnh99.optla
 
-nnh99/GraphStats.h: GraphStats.h
-	cp GraphStats.h nnh99/
-
-nnh99/Makefile:
+nnh99/main.C: nnh99/nnh99.optla
 	newanalysis nnh99
+	./postprocess-main nnh99/main.C nnh99
+
+nnh99/visualisation.h: visualisation.h
+	sed visualisation.h -e 's/{DFI}/o_ShapeGraphSetLifted/g' > nnh99/visualisation.h
+
+nnh99/CmdlineOptions.C: CmdlineOptions.C
+	cp CmdlineOptions.C nnh99/
+
+nnh99/CmdlineOptions.h: CmdlineOptions.h
+	cp CmdlineOptions.h nnh99/
+
 
 nnh99clean:
 	test ! -e nnh99/Makefile || $(MAKE) clean -C nnh99
-	rm -f nnh99/nnh99.optla nnh99/GraphStats.h nnh99/CmdlineOptions.[Ch] nnh99/visualisation.[ch]
+	rm -f nnh99/nnh99.optla nnh99/GraphStats.h nnh99/CmdlineOptions.[Ch] nnh99/visualisation.h
 	rm -f nnh99/Makefile
-	rm -f nnh99/main-support.[Ch] nnh99/main.[Ch]
+	rm -f nnh99/main-support.[Ch] nnh99/main.[Ch] nnh99/nnh99_implementation.[Ch]
 	rm -f nnh99/runtests
 
 
-# srw98shape compiles and links srw98 as standalone binary.
-# it uses the custom main.[Ch] files in the subdirectory
-# to include GraphStats and the custom visualisation.
-# the building is done in-place for easy debugging
 
-srw98shape: srw98/srw98.optla srw98/srw98.set srw98/GraphStats.h srw98/Makefile
-	# put custom visualisation main.C in place
-	cp common_main.C    srw98/main.C
-	cp CmdlineOptions.C srw98
-	cp CmdlineOptions.h srw98
-	sed -e 's/ShapeGraphSetLifted/ShapeGraphLifted/g' visualisation.h >  srw98/visualisation.h
-	sed -e 's/ShapeGraphSetLifted/ShapeGraphLifted/g' visualisation.c >> srw98/main-support.C
+
+# srw98shape compiles and links the analysis as standalone binary.
+# postprocess-main edits the newanalysis-generated main.[Ch]
+# files to include the common code fragments like visualisation
+srw98shape: srw98/srw98.optla srw98/main.C srw98/CmdlineOptions.C srw98/CmdlineOptions.h srw98/visualisation.h
 	$(MAKE) all -C srw98
 
 srw98/srw98.optla: srw98/srw98.code
-	cpp -C -P srw98/srw98.code | sed -e 's/dfi/ShapeGraphLifted/g' | grep -v "prefix *: *srw98" > srw98/srw98.optla
+	# include common_*.optla into srw98.optla, customize DFI, remove prefix
+	cpp -C -P srw98/srw98.code | sed -e 's/{DFI}/ShapeGraphLifted/g' | grep -v "prefix *: *srw98" > srw98/srw98.optla
 
-srw98/GraphStats.h: GraphStats.h
-	cp GraphStats.h srw98/
-
-srw98/Makefile:
+srw98/main.C: srw98/srw98.optla
 	newanalysis srw98
+	./postprocess-main srw98/main.C srw98
+
+srw98/visualisation.h: visualisation.h
+	sed visualisation.h -e 's/{DFI}/o_ShapeGraphLifted/g' > srw98/visualisation.h
+
+srw98/CmdlineOptions.C: CmdlineOptions.C
+	cp CmdlineOptions.C srw98/
+
+srw98/CmdlineOptions.h: CmdlineOptions.h
+	cp CmdlineOptions.h srw98/
+
 
 srw98clean:
 	test ! -e srw98/Makefile || $(MAKE) clean -C srw98
-	rm -f srw98/srw98.optla srw98/GraphStats.h srw98/CmdlineOptions.[Ch] srw98/visualisation.[ch]
+	rm -f srw98/srw98.optla srw98/GraphStats.h srw98/CmdlineOptions.[Ch] srw98/visualisation.h
 	rm -f srw98/Makefile
-	rm -f srw98/main-support.[Ch] srw98/main.[Ch]
+	rm -f srw98/main-support.[Ch] srw98/main.[Ch] srw98/srw98_implementation.[Ch]
 	rm -f srw98/runtests
+
+
+
+
 
 
 
@@ -97,17 +103,14 @@ BIN=shape
 shapetool:
 	# prepare dummy analysis
 	mkdir -p $(BIN)
-	cp shape.optla $(BIN)/$(BIN).optla
-	cpp -C -P shape.set $(BIN)/$(BIN).set
+	cpp -C -P shapetool.optla > $(BIN)/$(BIN).optla
 	# prepare srw98
 	mkdir -p $(BIN)/srw98
-	cpp -C -P srw98/srw98.code | sed -e 's/dfi/ShapeGraphLifted/g' > $(BIN)/srw98/srw98.optla
-	cpp -C -P srw98/srw98.set  > $(BIN)/srw98/srw98.set
+	cpp -C -P srw98/srw98.code | sed -e 's/{DFI}/ShapeGraphLifted/g' > $(BIN)/srw98/srw98.optla
 	cp srw98/Makefile.custom $(BIN)/srw98/Makefile.custom
 	# prepare nnh99
 	mkdir -p $(BIN)/nnh99
-	cpp -C -P nnh99/nnh99.code | sed -e 's/dfi/ShapeGraphSetLifted/g' > $(BIN)/nnh99/nnh99.optla
-	cpp -C -P nnh99/nnh99.set  > $(BIN)/nnh99/nnh99.set
+	cpp -C -P nnh99/nnh99.code | sed -e 's/{DFI}/ShapeGraphSetLifted/g' > $(BIN)/nnh99/nnh99.optla
 	cp nnh99/Makefile.custom $(BIN)/nnh99/Makefile.custom
 	# compile and link
 	newcombinedanalysis $(BIN) srw98 nnh99
@@ -123,13 +126,14 @@ shapetool:
 	echo '#include "cfg_support.h"'                               >> $(BIN)/nnh99/main-support.C
 	echo '#include "analysis_info.h"'                             >> $(BIN)/nnh99/main-support.C
 	cp $(BIN)/nnh99/main-support.C $(BIN)/srw98/main-support.C
-	sed -e 's/o_extract_/o_srw98o_extract_/g' -e 's/o_vars_by_/o_srw98o_vars_by_/g' -e 's/dfi_write_/o_srw98dfi_write_/g' -e 's/ShapeGraphSetLifted/ShapeGraphLifted/g' visualisation.c  >> $(BIN)/srw98/main-support.C
-	sed -e 's/o_extract_/o_nnh99o_extract_/g' -e 's/o_vars_by_/o_nnh99o_vars_by_/g' -e 's/dfi_write_/o_nnh99dfi_write_/g'                                               visualisation.c  >> $(BIN)/nnh99/main-support.C
+	# prefix and customize {DFI}
+	sed -e 's/o_extract_/o_srw98o_extract_/g' -e 's/o_vars_by_/o_srw98o_vars_by_/g' -e 's/dfi_write_/o_srw98dfi_write_/g' -e 's/{DFI}/ShapeGraphLifted/g'    visualisation.c >> $(BIN)/srw98/main-support.C
+	sed -e 's/o_extract_/o_nnh99o_extract_/g' -e 's/o_vars_by_/o_nnh99o_vars_by_/g' -e 's/dfi_write_/o_nnh99dfi_write_/g' -e 's/{DFI}/ShapeGraphSetLifted/g' visualisation.c >> $(BIN)/nnh99/main-support.C
 	# --2, visualisation.h put there for inclusion
-	sed -e 's/dfi_write_/o_srw98dfi_write_/g' -e 's/ShapeGraphSetLifted/ShapeGraphLifted/g' visualisation.h  > $(BIN)/srw98/visualisation.h
-	sed -e 's/dfi_write_/o_nnh99dfi_write_/g'                                               visualisation.h  > $(BIN)/nnh99/visualisation.h
+	sed -e 's/dfi_write_/o_srw98dfi_write_/g' -e 's/{DFI}/ShapeGraphLifted/g'    visualisation.h > $(BIN)/srw98/visualisation.h
+	sed -e 's/dfi_write_/o_nnh99dfi_write_/g' -e 's/{DFI}/ShapeGraphSetLifted/g' visualisation.h > $(BIN)/nnh99/visualisation.h
 	# --3, cmdlineoptions.[Ch] too
-	cp common_main.C       $(BIN)/main.C
+	cp shapetool_main.C    $(BIN)/main.C
 	cp CmdlineOptions.[Ch] $(BIN)
 	cp CmdlineOptions.[Ch] $(BIN)/srw98
 	cp CmdlineOptions.[Ch] $(BIN)/nnh99

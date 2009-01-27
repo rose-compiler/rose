@@ -2,6 +2,13 @@
 // E-mail: markus@complang.tuwien.ac.at
 // Year  : 2006, 2007, 2008
 
+SET
+#include "../common.set"
+
+DOMAIN
+ShapeGraphLifted = flat(ShapeGraph)
+ENDDOMAIN
+
 UNIVERSAL
 option_kill_normalisation_temps : bool#
 

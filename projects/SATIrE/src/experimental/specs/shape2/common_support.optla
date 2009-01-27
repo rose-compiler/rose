@@ -347,32 +347,9 @@ node_by_var(x,((S0,_),_) as g) = hd([nk !! (k,nk) <-- S0, if (k=x)]);
 node_by_src_sel::Node,VariableId,ShapeGraph->Node;
 node_by_src_sel(x,sel,((_,H0),_)) = hd([nk !! (x1,sel1,nk) <-- H0, if x1 = x && sel1 = sel]);
 
-
-// Predefined SATIrE Support Functions
-expr_type::Expression->Type;
-expr_exprid::Expression->ExpressionId;
-exprid_expr::ExpressionId->Expression;
-exprid_str::ExpressionId->str;
-
-varsym_varid::VariableSymbolNT->VariableId;
-varref_varid::Expression->VariableId;
-varid_exprid::VariableId->ExpressionId;
-varid_str::VariableId->str;
-
-exprid_typeid::ExpressionId->TypeId;
-type_typeid::Type->TypeId;
-typeid_type::TypeId->Type;
-typeid_str::TypeId->str;
-
-is_tmpvarid::VariableId->bool;
-add_tmpvarid::TypeId->VariableId;
-
-stmt_asttext::Statement->str;
-expr_asttext::Expression->str;
-
 // garbage collection (Markus Schordan)
 /*
-gc::dfi->dfi;
+gc::{DFI}->{DFI};
 gc(lifted_sg) = if option_kill_unreachable_nodes then
   case drop(lifted_sg) of sgs => lift(remove_empty_graph({gc_sg(sg) !! sg <-- sgs})); endcase
 else

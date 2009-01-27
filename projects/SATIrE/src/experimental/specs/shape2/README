@@ -1,8 +1,4 @@
-This directory contains all common auxiliary functions for the shape analyses,
-i.e. matching of nested expressions, normalisation, alias predicates, etc.
-
-Its subdirectories contain the specifications of the following
-shape analysis algorithms:
+The subdirectories contain the specs of these shape analysis algorithms:
 
 nnh99/ The analysis described in the book "Principle of Program Analysis"
        (F. Nielson, H.R. Nielson, C. Hankin).
@@ -10,13 +6,14 @@ nnh99/ The analysis described in the book "Principle of Program Analysis"
 srw98/ The analysis from TOPLAS'98, "Solving shape-analysis problems
        in languages with destructive updating" (M. Sagiv, T. Reps, R. Wilhelm)
 
+What is common between the analyses, i.e. matching of nested expressions,
+normalisation, alias predicates, visualisation, etc. is kept in the
+toplevel files named common_* and visualisation.[Ch].
 
+To customize the generalized common code, replace ${DFI} with the type of
+the carrier, that is with
 
-Targets to choose from:
+  nnh99: o_ShapeGraphSetLifted
+  srw98: o_ShapeGraphLifted
 
-  nnh99shape -- builds nnh99 standalone
-  srw98shape -- builds srw98 standalone
-  all -- both of the above
-
-  shapetool -- both analyses in a single executable
-
+These replacements are done automatically by the Makefile.

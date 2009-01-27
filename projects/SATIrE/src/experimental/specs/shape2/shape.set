@@ -1,6 +1,0 @@
-// empty .set-file
-SET
-#include "common.set"
-
-DOMAIN
-ShapeGraphLifted = flat(ShapeGraph)

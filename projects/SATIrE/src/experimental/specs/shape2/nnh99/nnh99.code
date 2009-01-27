@@ -1,6 +1,18 @@
 // Author: Viktor Pavlu
 // E-mail: e0425543@student.tuwien.ac.at
-// Year  : 2006, 2007, 2008
+// Year  : 2006--2008
+
+SET
+#include "../common.set"
+ShapeGraphSetList = list(ShapeGraphSet)  // for enunion
+
+HeapEdgeTuple     = HeapEdge * HeapEdge  // for check_inv3
+HeapEdgeTupleSet  = set(HeapEdgeTuple)   // for check_inv3
+NodeSetList       = list(NodeSet)        // for check_inv4
+
+DOMAIN
+ShapeGraphSetLifted = flat(ShapeGraphSet)
+ENDDOMAIN
 
 UNIVERSAL
 option_kill_normalisation_temps : bool#
@@ -14,20 +26,20 @@ BLOCK
 label       : snum#
 
 PROBLEM nnh99
-  prefix    : nnh99
-  direction : forward
-  carrier   : ShapeGraphSetLifted
-  init      : bot
-  init_start: lift({(({},{}),{})})
-  combine   : comb
-  retfunc   : comb
-  widening  : wide
-  equal     : eq
+prefix    : nnh99
+direction : forward
+carrier   : ShapeGraphSetLifted
+init      : bot
+init_start: lift({(({},{}),{})})
+combine   : comb
+retfunc   : comb
+widening  : wide
+equal     : eq
 
 TRANSFER
-  #include "../common_transfer.optla"
+#include "../common_transfer.optla"
 
-  SUPPORT
+SUPPORT
 comb::ShapeGraphSetLifted,ShapeGraphSetLifted->ShapeGraphSetLifted;
 comb(a,bot) = a;
 comb(a,top) = top;

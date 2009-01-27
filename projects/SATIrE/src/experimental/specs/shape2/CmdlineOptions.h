@@ -2,6 +2,8 @@
 #define CMDLINEOPTIONS_H
 
 #include "AnalyzerOptions.h"
+#include <ostream>
+#include <sstream>
 
 class ShapeAnalyzerOptions : public AnalyzerOptions {
 public:
@@ -124,10 +126,10 @@ public:
         setExpertHelpOptionsText("<expert>");
     }
 
-    string getExpertHelpOptionsText() { return _expertHelpOptionsText; }
-    void setExpertHelpOptionsText(string text) { _expertHelpOptionsText = text; }
+    std::string getExpertHelpOptionsText() { return _expertHelpOptionsText; }
+    void setExpertHelpOptionsText(std::string text) { _expertHelpOptionsText = text; }
 
-    string getVersionText() {
+    std::string getVersionText() {
         return "SATIrE Shape Analysis Tool 0.2\n"
                "\n"
                "Built with satire-0.8.2 for rose-0.9.1a_DEV pag-8.7.6.17\n"
@@ -180,7 +182,7 @@ protected:
     bool _versionMessageRequested;
     Implementation _implementation;
 
-    string _expertHelpOptionsText;
+    std::string _expertHelpOptionsText;
 };
 
 class ShapeCommandLineParser : public CommandLineParser {
@@ -244,10 +246,10 @@ public:
         } else if (optionMatch(argv[i], "--help")) {
             scl->helpMessageRequestedOn();
 //        } else if (optionMatch(argv[i], "--help-expert")) {
-//            cout << scl->getExpertHelpOptionsText() << endl;
+//            std::cout << scl->getExpertHelpOptionsText() << std::endl;
 //            exit(EXIT_SUCCESS);
         } else if (optionMatch(argv[i], "--version")) {
-            cout << scl->getVersionText() << endl;
+            std::cout << scl->getVersionText() << std::endl;
             exit(EXIT_SUCCESS);
 
 /*        } else if (optionMatch(argv[i], "--language=c++")) {
@@ -259,14 +261,14 @@ public:
 */
         } else if ((!optionMatchPrefix(argv[i], "-") && !optionMatchPrefix(argv[i],"--")) ) {
             // handle as filename, pass filenames through
-            cout << "Found input file '" << argv[i] << "'." << endl;
+            std::cout << "Found input file '" << argv[i] << "'." << std::endl;
             // GB (2008-06-02): Using appendInputFile here; this method sets the input
             // file name, appends the name to the command line, and increments the file
             // name counter.
             scl->appendInputFile(argv[i]);
         } else {
-            stringstream s;
-            s << "unrecognized option: " << argv[i] << endl;
+            std::stringstream s;
+            s << "unrecognized option: " << argv[i] << std::endl;
             scl->setOptionsErrorMessage(s.str());
             return 1;
         }
@@ -275,4 +277,4 @@ public:
 };
 
 #endif
-// vim: ts=4 sts=2 expandtab:
+// vim: ts=4 sts=2 expandtab

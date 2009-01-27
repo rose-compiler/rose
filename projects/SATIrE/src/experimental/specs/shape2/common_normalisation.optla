@@ -8,16 +8,16 @@
 // assign normalises to handle arbitrarily nested expressions
 // ----------------------------------------------------------
 
-delete_vars::dfi,*VariableSymbolNT->dfi;
+delete_vars::{DFI},*VariableSymbolNT->{DFI};
 delete_vars(g,[!]) = g;
 delete_vars(g,VariableSymbol(_) as v::vs) = delete_vars(delete_var(g,varsym_varid(v)), vs);
 
-delete_var::dfi,VariableId->dfi;
+delete_var::{DFI},VariableId->{DFI};
 delete_var(top,_) = top;
 delete_var(bot,_) = bot;
 delete_var(  g,v) = lift(tassign_x_null(v,drop(g)));
 
-assign::Expression,Expression,dfi-> dfi;
+assign::Expression,Expression,{DFI}-> {DFI};
 assign(_,_,top) = top;
 assign(_,_,bot) = bot;
 assign(lhs,rhs,lifted_g) =
@@ -69,7 +69,7 @@ assign(lhs,rhs,lifted_g) =
   execute_instructionlist(ops_transfer ++ ops_cleanup,lifted_g);
 
 // call transfer functions according to given instruction in instructionlist
-execute_instructionlist::InstructionList,dfi->dfi;
+execute_instructionlist::InstructionList,{DFI}->{DFI};
 execute_instructionlist(           [], g) = g;
 execute_instructionlist((op,args):cdr, g) =
   let new_g = case op of
