@@ -1,3 +1,20 @@
+2009-01-28 00:00  matzke
+
+	* [r4178] /trunk/ROSE/src/frontend/Disassemblers/Makefile.am,
+	  /trunk/ROSE/src/frontend/Disassemblers/disassemblers.h,
+	  /trunk/ROSE/src/frontend/Disassemblers/putInstructionsIntoBasicBlocks.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilderAsm.h,
+	  /trunk/ROSE/src/rose.h: Removed all disassembler-related stuff
+	  from SageIII header
+	  
+	  It turns out that things compile fine without any of the
+	  disassembler
+	  stuff in the SageIII header. So I removed it, thus eliminating a
+	  circular dependency. I'm not sure why it was there originally.
+	  
+	  Also split interface and implementation for
+	  putInstructionsIntoBasicBlocks.
+
 2009-01-27 01:26  matzke
 
 	* [r4176] /trunk/ROSE/src/frontend/Disassemblers/Makefile.am: Fixed
