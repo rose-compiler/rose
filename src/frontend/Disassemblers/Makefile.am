@@ -10,4 +10,4 @@ libroseDisassemblers_la_SOURCES = x86Disassembler.C armDisassembler.C powerpcDis
 
 dist_include_HEADERS =
 
-include_HEADERS =  disassemblers.h
+include_HEADERS =  disassemblers.h putInstructionsIntoBasicBlocks.h

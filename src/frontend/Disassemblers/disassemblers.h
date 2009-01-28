@@ -5,7 +5,6 @@
 #include <vector>
 #include <map>
 #include <set>
-#include "rose.h"
 
 // DQ (8/21/2008): Removed references to old code from before the use of the new IR nodes.
 // #include "ExecGeneric.h"

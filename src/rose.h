@@ -116,6 +116,7 @@ namespace ELF{
 
 // Files in src/frontend/Disassemblers
   #include "disassemblers.h"
+  #include "putInstructionsIntoBasicBlocks.h"
 
 // Files in src/backend/asmUnparser
   #include "unparseAsm.h"
