@@ -29,6 +29,8 @@ const char* dfi_input_start = 0;
 
 top TOP
 bottom BOTTOM
+setbegin \{\[
+setclose \]\}
 int \-?[0-9]+
 assign \-\>
 /* kudos to kregexpeditor: */
@@ -41,6 +43,8 @@ undef \<undefined\ dfi\>
 {top}    { return TOP; }
 {bottom} { return BOTTOM; }
 {assign} { return ASSIGN; }
+{setbegin} { return SET_BEGIN; }
+{setclose} { return SET_CLOSE; }
 
 {int}   { //cerr<<"INT "<<yytext<<endl; 
           dfilval.intValue = (int)strtol(dfitext, NULL, 10); 

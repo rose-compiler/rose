@@ -25,6 +25,8 @@ void dfierror(const char *);
 %token <strValue> ASSIGN
 %token <intValue> INT 
 %token <strValue> UNDEF 
+%token <strValue> SET_BEGIN
+%token <strValue> SET_CLOSE
 
 /*data structure*/
 %union {
@@ -92,7 +94,7 @@ value:
   | TOKEN          { $$ = new PrologAtom(*$1); delete $1; }
   | topbot         { $$ = $1; }
   | '(' values ')' { $$ = new PrologList(*$2); }
-  | '{' values '}' { 
+  | SET_BEGIN values SET_CLOSE { 
       PrologCompTerm* t = new PrologCompTerm("set");
       t->addSubterm(new PrologList(*$2));
       $$ = t;
@@ -121,6 +123,7 @@ void dfierror(const char* msg)
   dfiterm = new PrologCompTerm(dfi_name);
   dfiterm->addSubterm(new PrologAtom("parse error"));
   dfiterm->addSubterm(new PrologAtom(dfitext));
+  exit(1);
 }
 
 

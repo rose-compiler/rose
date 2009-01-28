@@ -46,8 +46,8 @@ int main ( int argc, char ** argv ) {
   
   //create prolog term
   BasicTermPrinter tp;
-  //tp.traverse(root);
-  tp.traverseInputFiles(root);
+  //tp.traverse(root); // With headers
+  tp.traverseInputFiles(root); // Without headers
   PrologTerm* genTerm = tp.getTerm();
 
   ofstream ofile(outputFileName);
