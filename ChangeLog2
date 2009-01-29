@@ -1,3 +1,9 @@
+2009-01-29 18:30  dquinlan
+
+	* [r4203]
+	  /trunk/ROSE/src/3rdPartyLibraries/fortran-parser/src/fortran/ofp/parser/FortranLexer.g:
+	  Added comment about why this fix is required and what it permits.
+
 2009-01-28 00:00  matzke
 
 	* [r4178] /trunk/ROSE/src/frontend/Disassemblers/Makefile.am,
