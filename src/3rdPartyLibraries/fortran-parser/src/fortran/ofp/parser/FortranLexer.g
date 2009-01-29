@@ -211,8 +211,17 @@ import fortran.ofp.parser.java.FortranToken;
             /* File did not exist.  */
             return null;
         } else {
-             // Liao, 12/19/2008, It caused all include 'header.h' fail
-            //return null;
+         // Liao, 12/19/2008, It caused all include 'header.h' fail
+         // DQ (1/29/2009): I think this fix only allows the
+         // current directory as a default location for header 
+         // files and by returning "null" the user MUST specify an 
+         // include path (even to the current directory) for any 
+         // header files to be found.  Since ROSE explicitly 
+         // specifies the include path to find header files when 
+         // they are not in the default directory, but we want the
+         // default directory behavior as well, we should not return
+         // "null". This gives OFP the same behavior as gfortran.
+         // return null;
             return tmpFile;
         }
     }// end findFile()
