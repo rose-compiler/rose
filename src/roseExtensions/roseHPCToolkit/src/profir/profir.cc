@@ -11,6 +11,9 @@
 
 using namespace std;
 using namespace RoseHPCT;
+#include <iostream>
+#include <sstream>
+#include <string>
 
 /* ---------------------------------------------------------------- */
 
@@ -45,6 +48,10 @@ RoseHPCT::Named::setName (const std::string& new_name)
   name_ = new_name;
 }
 
+std::string RoseHPCT::Named::toString(void) const
+{
+  return name_;
+}
 /* ---------------------------------------------------------------- */
 
 Metric::Metric (void)
@@ -79,6 +86,12 @@ Metric::setValue (double new_val)
   value_ = new_val;
 }
 
+std::string Metric::toString(void) const
+{
+  std::ostringstream o;
+  o<<getValue();
+  return RoseHPCT::Named::toString()+":"+o.str();
+}
 /* ---------------------------------------------------------------- */
 
 Observable::Observable (void)
@@ -148,6 +161,19 @@ Observable::endMetric (void) const
   return metrics_.end ();
 }
 
+std::string Observable::toString() const
+{
+  std::string result;
+  ConstMetricIterator iter= beginMetric();
+  for (;iter!=endMetric(); iter++)
+  { 
+    if (iter!=beginMetric())
+      result+=" ";
+    result+=(*iter).toString(); 
+  }
+  return result;
+}
+
 /* ---------------------------------------------------------------- */
 
 Located::Located (void)
@@ -200,7 +226,71 @@ Located::setLines (size_t b, size_t e)
   setLastLine (e);
 }
 
+std::string Located::toString() const
+{
+  std::string result;
+  std::ostringstream o1,o2;
+  o1<<begin_;
+  o2<<end_;
+  result = o1.str()+"-"+o2.str();
+  return result;
+}
 /* ---------------------------------------------------------------- */
+std::string IRNode::toString() const
+{
+  std::string result;
+  result += Named::toString()+ " " + Observable::toString();
+  return result;
+}
+/* ---------------------------------------------------------------- */
+std::string Program::toString() const
+{
+  std::string result;
+  result = "Program"+IRNode::toString();
+  return result;
+}
+std::string Group::toString() const
+{
+  std::string result;
+  result = "Group "+IRNode::toString();
+  return result;
+}
+std::string Module::toString() const
+{
+  std::string result;
+  result = "Module "+IRNode::toString();
+  return result;
+}
+std::string File::toString() const
+{
+  std::string result;
+  result = "File "+IRNode::toString();
+  return result;
+}
+
+
+
+
+std::string Procedure::toString() const
+{
+  std::string result;
+  result = "Procedure "+IRNode::toString() +"@"+Located::toString();
+  return result;
+}
+
+std::string Loop::toString() const
+{
+  std::string result;
+  result = "Loop " +IRNode::toString() +"@"+Located::toString();
+  return result;
+}
+
+std::string Statement::toString() const
+{
+  std::string result;
+  result = "Statement "+ IRNode::toString() +"@"+Located::toString();
+  return result;
+}
 
 Statement::Statement (void)
 {

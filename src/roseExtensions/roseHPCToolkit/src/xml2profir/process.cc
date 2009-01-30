@@ -91,7 +91,8 @@ RoseHPCT::loadXMLTrees (const FilenameList_t& filenames)
       cerr << "[Reading profile: " << (*i) << "]" << endl;
       XMLParser p (*i);
       if (p.getDoc () != NULL) // valid file
-	{
+	{ 
+          // Collect all metrics available in the xml input
 	  map<string, string> mettab = XMLQuery::getMetricTable (p.getDoc ());
 	  IRTree_t* prog_root = convertXMLToProfIR (p.getDoc ());
 	  translateMetricNames (prog_root, mettab);
@@ -159,9 +160,11 @@ PathTranslator::visitFile (File* node) const
 {
   string filename = node->getName ();
   string dirname = getDirname (filename);
+  // find a matching entry for the eqpaths
   EquivPathMap_t::const_iterator ep = eqpaths_.find (dirname);
   if (ep != eqpaths_.end ())
     {
+      // replace the file path with the second path of the entry
       string basename = getBaseFilename (filename);
       string new_filename = ep->second + "/" + basename;
       node->setName (new_filename);
