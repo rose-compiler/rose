@@ -59,6 +59,7 @@ namespace RoseHPCT
     ~Named (void);
 
     const std::string& getName (void) const;
+    virtual std::string toString(void) const;
     void setName (const std::string& new_name);
 
   private:
@@ -77,6 +78,7 @@ namespace RoseHPCT
     Metric (const std::string& name, double value);
     ~Metric (void);
 
+    virtual std::string toString() const;  
     double getValue (void) const;
     void setValue (double new_val);
 
@@ -85,7 +87,7 @@ namespace RoseHPCT
   };
 
   /*!
-   *  \brief A class derived from Observable can have metrics
+   *  \brief A class derived from Observable can have one or more metrics
    *  associated with it.
    */
   class Observable
@@ -121,6 +123,8 @@ namespace RoseHPCT
     */
     void addMetric (const Metric& m);
 
+    virtual std::string toString() const;
+
   private:
     std::vector<Metric> metrics_; //!< Contains child metrics.
   };
@@ -144,6 +148,7 @@ namespace RoseHPCT
     void setLastLine (size_t l);
 
     void setLines (size_t b, size_t e);
+    virtual std::string toString() const;
 
   private:
     size_t begin_;
@@ -161,6 +166,8 @@ namespace RoseHPCT
    */
   class IRNode : public Named, public Observable
   {
+  public:
+    virtual std::string toString() const;
   protected:
     IRNode (void) {}
     IRNode (const std::string& name) : Named (name) {}
@@ -172,11 +179,14 @@ namespace RoseHPCT
   {
   public:
     Program (const std::string& name) : IRNode (name) {}
+    virtual std::string toString() const;
   };
 
   //! Group node ("G")
   class Group : public IRNode
   {
+    public:
+      virtual std::string toString() const;
   };
   
 
@@ -185,6 +195,7 @@ namespace RoseHPCT
   {
   public:
     Module (const std::string& name) : IRNode (name) {}
+    virtual std::string toString() const;
   };
   
   //! File node ("F")
@@ -192,6 +203,7 @@ namespace RoseHPCT
   {
   public:
     File (const std::string& name) : IRNode (name) {}
+    virtual std::string toString() const;
   };
 
   //! Procedure node ("P")
@@ -200,6 +212,7 @@ namespace RoseHPCT
   public:
     Procedure (const std::string& name, size_t b, size_t e)
       : IRNode (name), Located(b, e) {}
+    virtual std::string toString() const;  
   };
 
   //! Loop node ("L")
@@ -208,6 +221,7 @@ namespace RoseHPCT
   public:
     Loop (const std::string& name, size_t b, size_t e)
       : IRNode (name), Located(b, e) {}
+    virtual std::string toString() const;  
   };
 
   //! Statement node ("S")
@@ -224,6 +238,7 @@ namespace RoseHPCT
 
     id_t getId (void) const;
     void setId (id_t new_id);
+    virtual std::string toString() const;  
 
   private:
     id_t id;

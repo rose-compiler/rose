@@ -10,11 +10,14 @@
  *
  *  $Id: attach.cc,v 1.1 2008/01/08 02:56:43 dquinlan Exp $
  */
-
+#include <rose.h>
 #include <map>
 #include <list>
 #include <set>
 #include "rosehpct/profir2sage/profir2sage.hh"
+#include <iostream>
+#include <sstream>
+#include <string>
 
 /* ---------------------------------------------------------------- */
 
@@ -140,10 +143,12 @@ class MetricAttachTraversal : public AstSimpleProcessing
 public:
   MetricAttachTraversal (const RoseHPCT::IRTree_t* hpc_root);
   void setVerbose (bool enable = false);
-
+  //a map between profile IR nodes and their matching AST nodes
+  //note that a profile IR node may corresponding multiple AST nodes(a code range)
   typedef std::map<const RoseHPCT::IRNode *, SgLocNodeSet_t> AttachedNodes_t;
   AttachedNodes_t& getAttachedNodes (void);
-
+  //! Insert the metrics info. into source as comments, mostly for debugging
+  void annotateSourceCode(void);
 protected:
   MetricAttachTraversal (void);
   virtual void visit (SgNode* n);
@@ -519,7 +524,40 @@ MetricAttachTraversal::visit (SgNode* n)
         }
     }
 }
-
+//! 
+void MetricAttachTraversal::annotateSourceCode(void)
+{
+  AttachedNodes_t::const_iterator iter = attached_.begin();
+  for (;iter!=attached_.end();iter++)
+  {
+    const RoseHPCT::IRNode * profileNode = (*iter).first;
+    SgLocNodeSet_t sgNodeSet=(*iter).second;
+    SgLocNodeSet_t::iterator iter2 = sgNodeSet.begin();
+    for (;iter2!=sgNodeSet.end();iter2++)
+    {
+      SgLocatedNode* node = *iter2;
+      std::ostringstream o;
+      o<<node;
+      std::string text = "\n/* HPCToolKit raw data: " +profileNode->toString();
+      text += " -> "+ string(node->sage_class_name()) + " " + o.str() + "*/\n"; 
+      // attach the text before the node (node is e_after the text)
+      SageInterface::addTextForUnparser(node,text,AstUnparseAttribute::e_after);
+#if 0
+      // Not all SgLocatedNode can have comments, so we use arbitrary text support instead
+      if ((isSgForInitStatement(node))||isSgTypedefSeq(node)||isSgCtorInitializerList(node))
+      {
+        cerr<<"Warning: annotation for the following Node is not allowed"<<endl;
+        cerr<<profileNode->toString()<<endl;
+        cerr<<node->sage_class_name()<<node->unparseToString()<<endl;
+      }
+      else
+      {  
+        SageInterface::attachComment(node, text);
+      }
+#endif      
+    } 
+  }
+}
 /* ---------------------------------------------------------------- */
 
 //! Normalizes AST metrics.
@@ -627,9 +665,13 @@ gatherMetricNames (const MetricAttachTraversal::AttachedNodes_t& attached,
 //! Implements a pass over the AST to fix-up parent/child metrics.
 /*!
  *  For each AST node v with a metric attribute m(v), this pass
- *  enforces the condition that m(v) <= m(parent(v)). This pass is a
- *  companion to normalizeMetrics(), and should be called
+ *  enforces the condition that m(v) <= m(parent(v)). 
+ *  It set child node's metric value to its parent node's value
+ *  if m(v) > m(parent(v))
+ *  This pass is a companion to normalizeMetrics(), and should be called
  *  _afterwards_.
+ *
+ *  TODO any metrics become smaller after aggregation??
  */
 class MetricFixupTraversal : public AstSimpleProcessing
 {
@@ -668,6 +710,8 @@ MetricFixupTraversal::visit (SgNode* n)
               const MetricAttr* m_par =
                 dynamic_cast<const MetricAttr *> (par->getAttribute (*name));
               ROSE_ASSERT (m_n && m_par);
+              // synchronize a node's performance metric value with its parent node's value
+              // should be <= parent_value
               if (m_n->getValue () > m_par->getValue ())
                 {
                   m_n->setValue (m_par->getValue ());
@@ -686,6 +730,8 @@ RoseHPCT::attachMetrics (const IRTree_t* hpc_root, SgProject* sage_root,
   MetricAttachTraversal attacher (hpc_root);
   attacher.setVerbose (verbose);
   attacher.traverse (sage_root, preorder);
+  if (verbose)
+    attacher.annotateSourceCode();
 
   MetricAttachTraversal::AttachedNodes_t& attached
     = attacher.getAttachedNodes ();

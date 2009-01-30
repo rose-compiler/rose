@@ -25,20 +25,24 @@ namespace Trees
   //@{
 
   /*!
-   *  \brief Templated tree data structure, parameterized by the type
+   *  \brief Templated tree data structure (a tree node), parameterized by the type
    *  of the value (VT) stored at each node and type for indices
    *  (IT) used to 'name' the child nodes.
    *
    *  Both IT and VT should have value semantics.
+   *  This tree abstraction provides interfaces to 
+   *    create, destroy trees,
+   *    retrieve and set child nodes
+   *    iterate children nodes
    */
   template <class VT, class IT = size_t>
   class Tree
   {
-    //! Child node container type.
+    //! Child node container type. A map from indices to pointers of child nodes
     typedef typename std::map<IT, Tree<VT, IT>*> ChildList_t;
 
   public:
-    typedef VT Val_t;
+    typedef VT Val_t; 
     typedef IT Ind_t;
 
     //! Value stored at this node

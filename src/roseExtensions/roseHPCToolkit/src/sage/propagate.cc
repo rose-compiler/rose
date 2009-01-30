@@ -39,6 +39,8 @@ MetricScopePropagator::MetricScopePropagator (const string& name)
  *  \note See the sum operator for metric attributes for the
  *  conditions under which a sum of metric attributes may be correctly
  *  computed.
+ *  If the metric name of a metric from attr_list does not match attr_name,
+ *  the result metricAttr will be empty. 
  */
 static
 MetricAttr
@@ -114,7 +116,7 @@ RoseHPCT::toFileLoc (const SgLocatedNode* node)
 
   return ::toFileLoc (filename, line_start, line_end) + " " + class_name;
 }
-
+// add values from attr_list and set it to the current node's metric
 template <class SgType>
 bool
 MetricScopePropagator::eval (SgType* node,
@@ -129,9 +131,16 @@ MetricScopePropagator::eval (SgType* node,
 	cerr << "  [" << toFileLoc (node) << "]"
 	     << " " << total.toString ()
 	     << endl;
-
-        node->setAttribute (metric_name_, new MetricAttr (total));
-	return true;
+        // ignore this step if it already has a metric with the same name
+        // This is a double check, since eval() is called for nodes without the metric only
+        //node->setAttribute (metric_name_, new MetricAttr (total));
+        if (!node->attributeExists(metric_name_))
+        {  
+          node->setAttribute (metric_name_, new MetricAttr (total));
+          return true;
+        }
+        else
+          return false;
       }
   return false;
 }
@@ -165,23 +174,24 @@ MetricScopePropagator::evaluateSynthesizedAttribute
    (SgNode* node, SynthesizedAttributesList attr_list)
 {
   MetricAttr* raw_attr = checkMetricAttribute (node, metric_name_);
-  if (raw_attr == NULL) // try to synthesize
-    {
-      bool can_eval =
-        eval (isSgForInitStatement (node), attr_list)
-	|| eval (isSgScopeStatement (node), attr_list)
-	|| eval (isSgFunctionDeclaration (node), attr_list)
-	;
-      if (can_eval)
-	raw_attr = checkMetricAttribute (node, metric_name_);
-    }
+  // try to synthesize only when the node has no existing such metric
+  if (raw_attr == NULL) 
+  {
+    bool can_eval =
+      eval (isSgForInitStatement (node), attr_list)
+      || eval (isSgScopeStatement (node), attr_list)
+      || eval (isSgFunctionDeclaration (node), attr_list)
+      ;
+    if (can_eval)
+      raw_attr = checkMetricAttribute (node, metric_name_);
+  }
   if (raw_attr != NULL)
     return *raw_attr;
   else
-    {
-      MetricAttr empty_attr;
-      return empty_attr;
-    }
+  {
+    MetricAttr empty_attr;
+    return empty_attr;
+  }
 }
 
 void
