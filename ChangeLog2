@@ -1,3 +1,19 @@
+2009-01-30 17:49  liao6
+
+	* [r4218]
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/include/rosehpct/profir/profir.hh,
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/include/rosehpct/util/tree2.hh,
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/src/profir/profir.cc,
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/src/profir2sage/attach.cc,
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/src/sage/propagate.cc,
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/src/xml2profir/process.cc:
+	  * Added debugging support for the profile IR representing
+	  performance metrics
+	  generated from HPCToolKit.
+	  * Enabled outputting the annotated raw metrics into the
+	  translated source tree
+	  using arbitrary text attachment support of ROSE
+
 2009-01-29 18:30  dquinlan
 
 	* [r4203]
