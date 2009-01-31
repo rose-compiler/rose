@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)/graph 
+INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)/graph -I$(srcdir)/libraryIdentification
 
 noinst_LTLIBRARIES = libbinaryMidend.la
 
@@ -14,12 +14,12 @@ libbinaryMidend_la_SOURCES =  RoseBin_CompareAnalysis.cpp RoseBin_ControlFlowAna
      dataflowanalyses/InterruptAnalysis.cpp \
      dataflowanalyses/RoseBin_Emulate.cpp \
      dataflowanalyses/RoseBin_DataFlowAbstract.cpp \
-     graph/RoseBin_DotGraph.cpp graph/RoseBin_Graph.cpp graph/RoseBin_GmlGraph.cpp  
+     graph/RoseBin_DotGraph.cpp graph/RoseBin_Graph.cpp graph/RoseBin_GmlGraph.cpp \
+     libraryIdentification/libraryIdentification_reader.C libraryIdentification/libraryIdentification_writer.C
 
 BUILT_SOURCES = 
 
 CLEANFILES = $(BUILT_SOURCES)
-
 
 BINARY_DISASSEMBLY_HEADER_FILES = \
    RoseBin_CompareAnalysis.h RoseBin_ControlFlowAnalysis.h RoseBin_printInstructions.h \
@@ -31,7 +31,8 @@ BINARY_DISASSEMBLY_HEADER_FILES = \
    dataflowanalyses/RoseBin_Emulate.h \
    dataflowanalyses/RoseBin_DataFlowAbstract.h \
    graph/RoseBin_DotGraph.h graph/RoseBin_Graph.h \
-   graph/RoseBin_GmlGraph.h 
+   graph/RoseBin_GmlGraph.h \
+   libraryIdentification/libraryIdentification.h
 
 include_HEADERS = $(BINARY_DISASSEMBLY_HEADER_FILES)
 

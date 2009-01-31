@@ -179,6 +179,9 @@ Grammar::setUpExpressions ()
 
   // User defined operator for Fortran named operators.
      NEW_TERMINAL_MACRO (UserDefinedBinaryOp,   "UserDefinedBinaryOp",   "USER_DEFINED_BINARY_OP" );
+
+  // DQ (1/31/2009): Added Fortran pointer assignment operator (to support pointer assignment statement).
+     NEW_TERMINAL_MACRO (PointerAssignOp,       "PointerAssignOp",       "POINTER_ASSIGN_OP" );
 #endif
 
   // An expression with a designator, used for designated initialization in
@@ -206,7 +209,7 @@ Grammar::setUpExpressions ()
           BitXorOp       | BitAndOp         | BitOrOp         | CommaOpExp       | LshiftOp      | RshiftOp       |
           PntrArrRefExp  | ScopeOp          | AssignOp        | PlusAssignOp     | MinusAssignOp | AndAssignOp    |
           IorAssignOp    | MultAssignOp     | DivAssignOp     | ModAssignOp      | XorAssignOp   | LshiftAssignOp |
-          RshiftAssignOp | ExponentiationOp | ConcatenationOp | UserDefinedBinaryOp,"BinaryOp","BINARY_EXPRESSION", false);
+          RshiftAssignOp | ExponentiationOp | ConcatenationOp | PointerAssignOp  | UserDefinedBinaryOp,"BinaryOp","BINARY_EXPRESSION", false);
 
      NEW_NONTERMINAL_MACRO (ValueExp,
           BoolValExp     | StringVal        | ShortVal               | CharVal         | UnsignedCharVal |
@@ -477,6 +480,8 @@ Grammar::setUpExpressions ()
                                   "../Grammar/Expression.code" );
      RshiftAssignOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
+     PointerAssignOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
+                                  "../Grammar/Expression.code" );
 
      ThrowOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
@@ -599,6 +604,7 @@ Grammar::setUpExpressions ()
      XorAssignOp.editSubstitute     ( "PRECEDENCE_VALUE", " 2" );
      LshiftAssignOp.editSubstitute  ( "PRECEDENCE_VALUE", " 2" );
      RshiftAssignOp.editSubstitute  ( "PRECEDENCE_VALUE", " 2" );
+     PointerAssignOp.editSubstitute ( "PRECEDENCE_VALUE", " 2" );
      ThrowOp.editSubstitute         ( "PRECEDENCE_VALUE", "15" );
 
      ConcatenationOp.editSubstitute ( "PRECEDENCE_VALUE", " 3" );
@@ -1154,6 +1160,7 @@ Grammar::setUpExpressions ()
      XorAssignOp.setFunctionPrototype ( "HEADER_XOR_ASSIGNMENT_OPERATOR", "../Grammar/Expression.code" );
      LshiftAssignOp.setFunctionPrototype ( "HEADER_LEFT_SHIFT_ASSIGNMENT_OPERATOR", "../Grammar/Expression.code" );
      RshiftAssignOp.setFunctionPrototype ( "HEADER_RIGHT_SHIFT_ASSIGNEMENT_OPERATOR", "../Grammar/Expression.code" );
+     PointerAssignOp.setFunctionPrototype ( "HEADER_POINTER_ASSIGNMENT_OPERATOR", "../Grammar/Expression.code" );
 
      RefExp.setFunctionPrototype ( "HEADER_REFERENCE_EXPRESSION", "../Grammar/Expression.code" );
      RefExp.setDataPrototype     ( "SgType*", "type_name", "= NULL",
@@ -1519,6 +1526,8 @@ Grammar::setUpExpressions ()
      XorAssignOp.setFunctionSource ( "SOURCE_XOR_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      LshiftAssignOp.setFunctionSource ( "SOURCE_LEFT_SHIFT_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      RshiftAssignOp.setFunctionSource ( "SOURCE_RIGHT_SHIFT_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
+     PointerAssignOp.setFunctionSource  ( "SOURCE_POINTER_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
+
      RefExp.setFunctionSource ( "SOURCE_REFERENCE_EXPRESSION","../Grammar/Expression.code" );
      ThrowOp.setFunctionSource ( "SOURCE_THROW_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      Initializer.setFunctionSource ( "SOURCE_INITIALIZER_EXPRESSION","../Grammar/Expression.code" );

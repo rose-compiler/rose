@@ -264,5 +264,7 @@ void buildVariableDeclarationAndCleanupTypeStack( Token_t * label );
 // file streams to read a ROSE generated *.rmod file.
 bool isARoseModuleFile( std::string filename );
 
+void generateAssignmentStatement( Token_t* label, bool isPointerAssignment );
+
 // endif for ROSE_FORTRAN_SUPPORT
 #endif

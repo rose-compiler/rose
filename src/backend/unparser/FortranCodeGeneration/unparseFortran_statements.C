@@ -2742,8 +2742,14 @@ FortranCodeGeneration_locatedNode::unparseSwitchStmt(SgStatement* stmt, SgUnpars
      SgSwitchStatement* switch_stmt = isSgSwitchStatement(stmt);
      ROSE_ASSERT(switch_stmt != NULL);
 
+     if (switch_stmt->get_string_label().empty() == false)
+        {
+       // Output the string label
+          curprint(switch_stmt->get_string_label() + ": ");
+        }
+
      curprint("SELECT CASE(");
-  // DQ (8/14/2007): This has been change to a statement because it is a statement in 
+  // DQ (8/14/2007): This has been changed to a statement because it is a statement in 
   // the C and C++ grammar, but it is an expression in the Fortran Grammar, I think).
   // unparseExpression(switch_stmt->get_item_selector(), info);
   // unparseStatement(switch_stmt->get_item_selector(), info);
@@ -2761,6 +2767,12 @@ FortranCodeGeneration_locatedNode::unparseSwitchStmt(SgStatement* stmt, SgUnpars
 
      curprint("END SELECT");
 
+     if (switch_stmt->get_string_label().empty() == false)
+        {
+       // Output the string label
+          curprint(" " + switch_stmt->get_string_label());
+        }
+
      ROSE_ASSERT(unp != NULL);
      unp->cur.insert_newline(1); 
    }
@@ -2776,6 +2788,12 @@ FortranCodeGeneration_locatedNode::unparseCaseStmt(SgStatement* stmt, SgUnparse_
      unparseExpression(case_stmt->get_key(), info);
      curprint(")");
   
+     if (case_stmt->get_case_construct_name().empty() == false)
+        {
+       // Output the string case construct name
+          curprint(" " + case_stmt->get_case_construct_name());
+        }
+
      if (case_stmt->get_body())
         {
           unparseStatement(case_stmt->get_body(), info);
@@ -2790,6 +2808,13 @@ FortranCodeGeneration_locatedNode::unparseDefaultStmt(SgStatement* stmt, SgUnpar
      ROSE_ASSERT(default_stmt != NULL);
   
      curprint("CASE DEFAULT");
+
+     if (default_stmt->get_default_construct_name().empty() == false)
+        {
+       // Output the string default construct name
+          curprint(" " + default_stmt->get_default_construct_name());
+        }
+
      if (default_stmt->get_body())
         {
           unparseStatement(default_stmt->get_body(), info);
@@ -5176,6 +5201,25 @@ FortranCodeGeneration_locatedNode::unparseAllocateStatement(SgStatement* stmt, S
 
      curprint("allocate( ");
      unparseExprList(exprList, info, false /*paren*/);
+
+     if (s->get_stat_expression() != NULL)
+        {
+          curprint(", STAT = ");
+          unparseExpression(s->get_stat_expression(), info);
+        }
+
+     if (s->get_errmsg_expression() != NULL)
+        {
+          curprint(", ERRMSG = ");
+          unparseExpression(s->get_errmsg_expression(), info);
+        }
+
+     if (s->get_source_expression() != NULL)
+        {
+          curprint(", SOURCE = ");
+          unparseExpression(s->get_source_expression(), info);
+        }
+
      curprint(" )");
      unp->cur.insert_newline(1); 
    }
@@ -5189,6 +5233,19 @@ FortranCodeGeneration_locatedNode::unparseDeallocateStatement(SgStatement* stmt,
 
      curprint("deallocate( ");
      unparseExprList(exprList, info, false /*paren*/);
+
+     if (s->get_stat_expression() != NULL)
+        {
+          curprint(", STAT = ");
+          unparseExpression(s->get_stat_expression(), info);
+        }
+
+     if (s->get_errmsg_expression() != NULL)
+        {
+          curprint(", ERRMSG = ");
+          unparseExpression(s->get_errmsg_expression(), info);
+        }
+
      curprint(" )");
      unp->cur.insert_newline(1); 
    }

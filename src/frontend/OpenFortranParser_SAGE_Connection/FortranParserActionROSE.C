@@ -7179,7 +7179,46 @@ void c_action_allocate_stmt(Token_t *label, Token_t *allocateKeyword, Token_t *e
      ROSE_ASSERT(allocateKeyword != NULL);
      setSourcePosition(allocateStatement,allocateKeyword);
 
-  // allocateStatement->get_name_list().push_back("xxx");
+  // DQ (1/31/2009): Added support for alloc options
+     if (hasAllocOptList == true)
+        {
+          while (astNameStack.empty() == false)
+             {
+               ROSE_ASSERT(astNameStack.empty() == false);
+               Token_t* token = astNameStack.front();
+               astNameStack.pop_front();
+
+               ROSE_ASSERT(astExpressionStack.empty() == false);
+               string text = token->text;
+               if (matchingName(text,"STAT"))
+                  {
+                    allocateStatement->set_stat_expression(astExpressionStack.front());
+                  }
+                 else
+                  {
+                    if (matchingName(text,"ERRMSG"))
+                       {
+                         allocateStatement->set_errmsg_expression(astExpressionStack.front());
+                       }
+                      else
+                       {
+                      // This is an F2003 specific option.
+                         if (matchingName(text,"SOURCE"))
+                            {
+                              allocateStatement->set_source_expression(astExpressionStack.front());
+                            }
+                           else
+                            {
+                           // Error
+                              printf ("Unknown dealloc option: %s \n",text.c_str());
+                              ROSE_ASSERT(false);
+                            }
+                       }
+                  }
+
+               astExpressionStack.pop_front();
+             }
+        }
 
      SgExprListExp* exprList = isSgExprListExp(astExpressionStack.front());
      ROSE_ASSERT(exprList != NULL);
@@ -7188,9 +7227,6 @@ void c_action_allocate_stmt(Token_t *label, Token_t *allocateKeyword, Token_t *e
      astExpressionStack.pop_front();
 
      astScopeStack.front()->append_statement(allocateStatement);
-
-  // This is a meaningless construction which will clear the stack!
-  // buildAttributeSpecificationStatement(SgAttributeSpecificationStatement::e_allocatableStatement,label,allocateKeyword);
 
 #if 0
   // Output debugging information about saved state (stack) information.
@@ -7209,6 +7245,16 @@ void c_action_alloc_opt(Token_t * allocOpt)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In R624 c_action_alloc_opt() allocOpt = %p = %s \n",allocOpt,allocOpt != NULL ? allocOpt->text : "NULL");
+
+     ROSE_ASSERT(allocOpt != NULL);
+
+  // This is either the STAT token, ERRMSG token, or SOURCE token.
+     astNameStack.push_front(allocOpt);
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R624 c_action_alloc_opt()");
+#endif
    }
 
 /** R624 list
@@ -7432,6 +7478,39 @@ void c_action_deallocate_stmt(Token_t *label, Token_t *deallocateKeyword, Token_
      ROSE_ASSERT(deallocateKeyword != NULL);
      setSourcePosition(deallocateStatement,deallocateKeyword);
 
+  // DQ (1/31/2009): Added support for dealloc options
+     if (hasDeallocOptList == true)
+        {
+          while (astNameStack.empty() == false)
+             {
+               ROSE_ASSERT(astNameStack.empty() == false);
+               Token_t* token = astNameStack.front();
+               astNameStack.pop_front();
+
+               ROSE_ASSERT(astExpressionStack.empty() == false);
+               string text = token->text;
+               if (matchingName(text,"STAT"))
+                  {
+                    deallocateStatement->set_stat_expression(astExpressionStack.front());
+                  }
+                 else
+                  {
+                    if (matchingName(text,"ERRMSG"))
+                       {
+                         deallocateStatement->set_errmsg_expression(astExpressionStack.front());
+                       }
+                      else
+                       {
+                      // Error
+                         printf ("Unknown dealloc option: %s \n",text.c_str());
+                         ROSE_ASSERT(false);
+                       }
+                  }
+
+               astExpressionStack.pop_front();
+             }
+        }
+
      SgExprListExp* exprList = isSgExprListExp(astExpressionStack.front());
      ROSE_ASSERT(exprList != NULL);
      deallocateStatement->set_expr_list(exprList);
@@ -7456,6 +7535,11 @@ void c_action_dealloc_opt(Token_t *id)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_dealloc_opt(): id = %p = %s \n",id,id != NULL ? id->text : "NULL");
+
+     ROSE_ASSERT(id != NULL);
+
+  // This is either the STAT token or the ERRMSG token.
+     astNameStack.push_front(id);
 
 #if 1
   // Output debugging information about saved state (stack) information.
@@ -8455,6 +8539,16 @@ void c_action_assignment_stmt(Token_t *label, Token_t *eos)
 #endif
 
 #if !SKIP_C_ACTION_IMPLEMENTATION
+  // DQ (1/31/2009): Moved this to the TOP of the function.
+  // Refactored the code to build support function
+     initialize_global_scope_if_required();
+     build_implicit_program_statement_if_required();
+
+#if 1
+  // DQ (1/31/2009): Refactored code to support us in R735 pointer assignment statement.
+     bool isPointerAssignment = false;
+     generateAssignmentStatement(label,isPointerAssignment);
+#else
      ROSE_ASSERT(astExpressionStack.empty() == false);
      SgExpression* rhs = astExpressionStack.front();
      astExpressionStack.pop_front();
@@ -8499,9 +8593,11 @@ void c_action_assignment_stmt(Token_t *label, Token_t *eos)
 
      setStatementNumericLabelUsingStack(expressionStatement);
 
+  // DQ (1/31/2009): Moved this to the TOP of the function.
   // Refactored the code to build support function
-     initialize_global_scope_if_required();
-     build_implicit_program_statement_if_required();
+  // initialize_global_scope_if_required();
+  // build_implicit_program_statement_if_required();
+
      SgScopeStatement* currentScope = getTopOfScopeStack();
      currentScope->append_statement(expressionStatement);
 
@@ -8535,6 +8631,7 @@ void c_action_assignment_stmt(Token_t *label, Token_t *eos)
           ROSE_ASSERT(astExpressionStack.empty() == true);
         }
 #endif
+#endif
    }
 
 /** R735
@@ -8552,8 +8649,32 @@ void c_action_assignment_stmt(Token_t *label, Token_t *eos)
  */
 // void c_action_pointer_assignment_stmt(Token_t * label, ofp_bool hasBoundsSpecList, ofp_bool hasBoundsRemappingList)
 void c_action_pointer_assignment_stmt(Token_t *label, Token_t *eos, ofp_bool hasBoundsSpecList, ofp_bool hasBRList)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In R735 c_action_pointer_assignment_stmt() label = %p hasBoundsSpecList = %s hasBRList = %s \n",label,hasBoundsSpecList ? "true" : "false",hasBRList ? "true" : "false");
+
+
+  // We map the pointer assignment operator "=>" to the regular assignment expression.
+  // But in the unparser we detect that the l-value is a pointer type and use "=>" in the
+  // generated code instead of "=".
+
+  // DQ (1/31/2009): Refactored code to support us in R735 pointer assignment statement.
+     bool isPointerAssignment = true;
+     generateAssignmentStatement(label,isPointerAssignment);
+
+  // DQ (1/31/2009): I need an example of this code before I can handle these cases.
+     ROSE_ASSERT(hasBoundsSpecList == false);
+     ROSE_ASSERT(hasBRList == false);
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R735 c_action_pointer_assignment_stmt()");
+#endif
+#if 0
+     printf ("Exiting in R735 c_action_pointer_assignment_stmt() \n");
+     ROSE_ASSERT(false);
+#endif
+   }
 
 /** R737 list
  * bounds_spec_list
@@ -9749,9 +9870,9 @@ void c_action_select_case_stmt(Token_t *label, Token_t *id, Token_t *selectKeywo
                label,label ? label->text : "NULL",id,id ? id->text : "NULL",selectKeyword,selectKeyword ? selectKeyword->text : "NULL",
                caseKeyword,caseKeyword ? caseKeyword->text : "NULL");
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
-     outputState("At TOP of R809 c_action_select_case_stmt__begin()");
+     outputState("At TOP of R809 c_action_select_case_stmt()");
 #endif
 
      SgExpression* itemSelectorExpression = getTopOfExpressionStack();
@@ -9765,6 +9886,14 @@ void c_action_select_case_stmt(Token_t *label, Token_t *id, Token_t *selectKeywo
      SgSwitchStatement* switchStatement = new SgSwitchStatement(itemSelectorStatement,body);
      ROSE_ASSERT(selectKeyword != NULL);
      setSourcePosition(switchStatement,selectKeyword);
+
+  // A valid id is will be a named label
+     if (id != NULL)
+        {
+          setStatementStringLabel(switchStatement,id);
+          printf ("Set the named label: %s (in switchStatement = %p) \n",id->text,switchStatement);
+       // ROSE_ASSERT(false);
+        }
 
      body->set_parent(switchStatement);
      setSourcePosition(body);
@@ -9795,23 +9924,57 @@ void c_action_case_stmt(Token_t *label, Token_t *caseKeyword, Token_t *id, Token
           printf ("In c_action_case_stmt() label = %p = %s caseKeyword = %p = %s id = %p = %s \n",
                label,label ? label->text : "NULL",caseKeyword,caseKeyword ? caseKeyword->text : "NULL",id,id ? id->text : "NULL");
      
-     SgExpression* keyExpression = getTopOfExpressionStack();
-     astExpressionStack.pop_front();
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R810 c_action_case_stmt()");
+#endif
+
+  // ROSE_ASSERT(astExpressionStack.empty() == false);
 
      SgBasicBlock* body  = new SgBasicBlock();
      ROSE_ASSERT(body != NULL);
 
-     SgCaseOptionStmt* caseStatement = new SgCaseOptionStmt(keyExpression,body);
-     setSourcePosition(caseStatement);
+     SgStatement* caseOrDefaultStatement = NULL;
 
-     body->set_parent(caseStatement);
+     if (astExpressionStack.empty() == true)
+        {
+          ROSE_ASSERT(astNameStack.empty() == false);
+          ROSE_ASSERT(matchingName(astNameStack.front()->text,"default") == true);
+          astNameStack.pop_front();
+
+          caseOrDefaultStatement = new SgDefaultOptionStmt(body);
+
+       // A valid id is will be a "default construct name"
+          if (id != NULL)
+             {
+               isSgDefaultOptionStmt(caseOrDefaultStatement)->set_default_construct_name(id->text);
+             }
+        }
+       else
+        {     
+          SgExpression* keyExpression = getTopOfExpressionStack();
+          astExpressionStack.pop_front();
+
+          caseOrDefaultStatement = new SgCaseOptionStmt(keyExpression,body);
+
+       // A valid id is will be a "case construct name"
+          if (id != NULL)
+             {
+               isSgCaseOptionStmt(caseOrDefaultStatement)->set_case_construct_name(id->text);
+             }
+        }
+
+     setSourcePosition(caseOrDefaultStatement);
+
+     body->set_parent(caseOrDefaultStatement);
      setSourcePosition(body);
 
      ROSE_ASSERT(astScopeStack.empty() == false);
-     astScopeStack.front()->append_statement(caseStatement);
+     astScopeStack.front()->append_statement(caseOrDefaultStatement);
 
      astScopeStack.push_front(body);
-#if 0
+
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R810 c_action_case_stmt()");
 #endif
@@ -9855,6 +10018,14 @@ void c_action_case_selector(Token_t *defaultToken)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_case_selector(): defaultToken = %p = %s \n",defaultToken,defaultToken != NULL ? defaultToken->text : "NULL");
+
+  // There is no expression that it makes sense to push onto the stack, so let an empty
+  // expression stack and a name stack with the "default" token imply the use of the
+  // default case.
+
+  // ROSE_ASSERT(defaultToken != NULL);
+     if (defaultToken != NULL)
+          astNameStack.push_front(defaultToken);
    }
 
 /**
@@ -16574,7 +16745,7 @@ void c_action_start_of_file(const char *filename)
   // New function to support Fortran include mechanism
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_start_of_file(%s) \n",filename);
-#if 0
+#if 1
      printf ("astIncludeStack.size() = %zu \n",astIncludeStack.size());
      printf ("##### Swiching from %s to %s \n",(astIncludeStack.size() == 0) ? "FIRST FILE" : getCurrentFilename().c_str(),filename);
 #endif

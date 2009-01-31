@@ -4487,3 +4487,105 @@ isARoseModuleFile( string filename )
 
      return result;
    }
+
+
+void
+generateAssignmentStatement(Token_t* label, bool isPointerAssignment )
+   {
+  // This function builds the SgAssignOp and the SgExprStatement and 
+  // inserts it into the current scope.
+
+     ROSE_ASSERT(astExpressionStack.empty() == false);
+     SgExpression* rhs = astExpressionStack.front();
+     astExpressionStack.pop_front();
+
+     ROSE_ASSERT(astExpressionStack.empty() == false);
+     SgExpression* lhs = astExpressionStack.front();
+     astExpressionStack.pop_front();
+
+  // Note that the type provided is NULL, since ROSE will internally (dynamically) evaluate the type 
+  // as required.  This avoids state in the AST and better supports transformations on the AST.
+  // SgAssignOp* assignmentExpr = new SgAssignOp(lhs,rhs,NULL);
+     SgExpression* assignmentExpr = NULL;
+     if (isPointerAssignment == true)
+        {
+       // This is "p => x"
+          assignmentExpr = new SgPointerAssignOp(lhs,rhs,NULL);
+        }
+       else
+        {
+       // This is "p = x"
+          assignmentExpr = new SgAssignOp(lhs,rhs,NULL);
+        }
+
+     setSourcePosition(assignmentExpr);
+
+  // DQ (1/22/2008): Set the source position based on the internal expressions
+     resetSourcePosition(assignmentExpr,lhs);
+  // resetSourcePosition(assignmentExpr,rhs);
+
+  // Now build the expression statement required for insertion into the current 
+  // scope (note that expressions cannot be directly inserted into scopes).
+
+     SgExprStatement* expressionStatement = new SgExprStatement(assignmentExpr);
+
+     if (label != NULL)
+        {
+       // A label was provided so set the label in the expressionStatement
+
+       // Setup the label on the statement if it is available.
+          setStatementNumericLabel(expressionStatement,label);
+
+       // If there is a label then at least try to use it to set the source 
+       // position approximately (better than nothing).
+          setSourcePosition(expressionStatement,label);
+        }
+       else
+        {
+       // No source position information is available
+          setSourcePosition(expressionStatement);
+
+       // DQ (1/22/2008): Try this
+          resetSourcePosition(expressionStatement,assignmentExpr);
+        }
+
+     setStatementNumericLabelUsingStack(expressionStatement);
+
+  // DQ (1/31/2009): Moved this to the TOP of the function.
+  // Refactored the code to build support function
+  // initialize_global_scope_if_required();
+  // build_implicit_program_statement_if_required();
+
+     SgScopeStatement* currentScope = getTopOfScopeStack();
+     currentScope->append_statement(expressionStatement);
+
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("Pushing this expressionStatement onto the astNodeStack for optional use by where statement \n");
+
+  // This is needed for test2007_67.f90
+     astNodeStack.push_front(expressionStatement);
+
+#if 0
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R734 c_action_assignment_stmt()");
+#endif
+
+  // Error checking for astExpressionStack
+     ROSE_ASSERT(astScopeStack.empty() == false);
+     ROSE_ASSERT(astScopeStack.front()->get_parent() != NULL);
+     SgWhereStatement* whereStatement = isSgWhereStatement(astScopeStack.front()->get_parent());
+     SgIfStmt* ifStatement = isSgIfStmt(astScopeStack.front()->get_parent());
+     if (whereStatement != NULL || ifStatement != NULL)
+        {
+       // If in a where statement produced with R 619:section-subscript-list__begin then the 
+       // condition is on the stack, else if it was produced with R744:where-construct-stmt 
+       // then the condition was used directly and already cleared from the stack.
+       // ROSE_ASSERT(astExpressionStack.empty() == false);
+          ROSE_ASSERT(astExpressionStack.size() <= 1);
+        }
+       else
+        {
+       // If this is NOT a where statement then the stack should be empty.
+          ROSE_ASSERT(astExpressionStack.empty() == true);
+        }
+   }
