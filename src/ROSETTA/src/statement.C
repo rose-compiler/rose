@@ -2424,15 +2424,26 @@ Grammar::setUpStatements ()
      AttributeSpecificationStatement.setDataPrototype    ( "SgDimensionObjectPtrList", "dimension_object_list", "",
                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (1/29/2009): I think we want an expression list and not a name list, also the
+  // F2003 case is more complex (and not yet supported in ROSE).
+  // AllocateStatement.setDataPrototype    ( "SgStringList", "name_list", "",
+  //              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AllocateStatement.setDataPrototype    ( "SgExprListExp*", "expr_list", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-     AllocateStatement.setDataPrototype    ( "SgStringList", "name_list", "",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     DeallocateStatement.setDataPrototype    ( "SgStringList", "name_list", "",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     ContainsStatement.setDataPrototype    ( "SgStringList", "name_list", "",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     SequenceStatement.setDataPrototype    ( "SgStringList", "name_list", "",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (1/29/2009): I think we want an expression list and not a name list, also the
+  // F2003 case is more complex (and not yet supported in ROSE).
+  // DeallocateStatement.setDataPrototype    ( "SgStringList", "name_list", "",
+  //              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     DeallocateStatement.setDataPrototype    ( "SgExprListExp*", "expr_list", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (1/29/2009): The "contains" statment does not have a name list (or expression list)
+  // ContainsStatement.setDataPrototype    ( "SgStringList", "name_list", "",
+  //              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (1/29/2009): The "sequence" statment does not have a name list (or expression list)
+  // SequenceStatement.setDataPrototype    ( "SgStringList", "name_list", "",
+  //              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // Required for F77 support (but depricated in F90)
      ArithmeticIfStatement.setDataPrototype    ( "SgExpression*", "conditional", "= NULL",

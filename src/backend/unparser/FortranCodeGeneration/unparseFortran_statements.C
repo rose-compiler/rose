@@ -273,6 +273,9 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement*
 
           case V_SgFortranIncludeLine:         unparseFortranIncludeLine(stmt, info); break;
 
+          case V_SgAllocateStatement:          unparseAllocateStatement(stmt, info); break;
+          case V_SgDeallocateStatement:        unparseDeallocateStatement(stmt, info); break;
+
        // Language independent code generation (placed in base class)
        // scope
        // case V_SgGlobal:                     unparseGlobalStmt(stmt, info); break;
@@ -292,7 +295,7 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement*
 
           default:
              {
-               printf("FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement: Error: No handler for %s (variant: %d)\n",stmt->sage_class_name(), stmt->variantT());
+               printf("FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement: Error: No unparse function for %s (variant: %d)\n",stmt->sage_class_name(), stmt->variantT());
                ROSE_ASSERT(false);
                break;
              }
@@ -5164,3 +5167,28 @@ FortranCodeGeneration_locatedNode::unparseClassDefnStmt(SgStatement* stmt, SgUnp
   // printf ("Leaving unparseClassDefnStmt \n");
    }
 
+void
+FortranCodeGeneration_locatedNode::unparseAllocateStatement(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgAllocateStatement* s = isSgAllocateStatement(stmt);
+     SgExprListExp* exprList = s->get_expr_list();
+     ROSE_ASSERT(exprList != NULL);
+
+     curprint("allocate( ");
+     unparseExprList(exprList, info, false /*paren*/);
+     curprint(" )");
+     unp->cur.insert_newline(1); 
+   }
+ 
+void
+FortranCodeGeneration_locatedNode::unparseDeallocateStatement(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgDeallocateStatement* s = isSgDeallocateStatement(stmt);
+     SgExprListExp* exprList = s->get_expr_list();
+     ROSE_ASSERT(exprList != NULL);
+
+     curprint("deallocate( ");
+     unparseExprList(exprList, info, false /*paren*/);
+     curprint(" )");
+     unp->cur.insert_newline(1); 
+   }

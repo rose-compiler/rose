@@ -17,6 +17,8 @@ extern "C" {
 } /* End extern C. */
 #endif
 
+// Include the module specific header file here.
+#include "FortranModuleInfo.h"
 
 // Control output from Fortran parser
 #define DEBUG_FORTRAN_SUPPORT true
@@ -249,6 +251,18 @@ bool isPubliclyAccessible( SgSymbol* symbol );
 
 // DQ (11/12/2008): Used to convert module names to lower case.
 std::string convertToLowerCase( const std::string & inputString );
+
+// DQ (1/27/2009): Refactored code so that I can better support test2009_13.f
+// (multiple levels of include files).
+void cleanupTypeStackAfterDeclaration();
+
+// DQ (1/27/2009): Refactored code so that I can better support test2009_13.f
+// (multiple levels of include files).
+void buildVariableDeclarationAndCleanupTypeStack( Token_t * label );
+
+// DQ (1/28/2009): Added fix to avoid output of SgFortranInclude IR nodes when we switch
+// file streams to read a ROSE generated *.rmod file.
+bool isARoseModuleFile( std::string filename );
 
 // endif for ROSE_FORTRAN_SUPPORT
 #endif
