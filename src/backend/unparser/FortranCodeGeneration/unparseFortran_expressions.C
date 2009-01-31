@@ -46,6 +46,7 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificExpression(SgExpressio
           case V_SgBinaryOp:           unparseBinaryExpr(expr, info); break;
 
           case V_SgAssignOp:           unparseAssnOp(expr, info); break;
+          case V_SgPointerAssignOp:    unparsePointerAssnOp(expr, info); break;
 
           case V_SgNotOp:              unparseNotOp(expr, info); break;
           case V_SgAndOp:              unparseAndOp(expr, info); break;
@@ -385,32 +386,37 @@ FortranCodeGeneration_locatedNode::unparseBinaryOperator(SgExpression* expr, con
 
 void 
 FortranCodeGeneration_locatedNode::unparseAssnOp(SgExpression* expr, SgUnparse_Info& info) 
-{ 
-  // Sage node corresponds to Fortran assignment
-  unparseBinaryOperator(expr, "=", info); 
-}
+   {
+     unparseBinaryOperator(expr, "=", info); 
+   }
+
+
+void 
+FortranCodeGeneration_locatedNode::unparsePointerAssnOp(SgExpression* expr, SgUnparse_Info& info) 
+   {
+     unparseBinaryOperator(expr, "=>", info); 
+   }
 
 
 void 
 FortranCodeGeneration_locatedNode::unparseNotOp(SgExpression* expr, SgUnparse_Info& info) 
-{ 
-  // Sage node corresponds to Fortran logical inversion operator
-  unparseUnaryOperator(expr, ".NOT.", info);
-}
+   { 
+     unparseUnaryOperator(expr, ".NOT.", info);
+   }
 
 void
 FortranCodeGeneration_locatedNode::unparseAndOp(SgExpression* expr, SgUnparse_Info& info)
-{ 
+   {
   // Sage node corresponds to Fortran logical-and operator
-  unparseBinaryOperator(expr, ".AND.", info);
-}
+     unparseBinaryOperator(expr, ".AND.", info);
+   }
 
 void
 FortranCodeGeneration_locatedNode::unparseOrOp(SgExpression* expr, SgUnparse_Info& info)
-{ 
+   { 
   // Sage node corresponds to Fortran logical-or operator
-  unparseBinaryOperator(expr, ".OR.", info);
-}
+     unparseBinaryOperator(expr, ".OR.", info);
+   }
 
 
 void

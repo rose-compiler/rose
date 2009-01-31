@@ -1573,6 +1573,10 @@ Grammar::setUpStatements ()
      CaseOptionStmt.setDataPrototype ( "SgExpression*", "key_range_end", " = NULL",
                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+  // DQ (1/31/2009): Added support for named case construct.
+     CaseOptionStmt.setDataPrototype ( "std::string", "case_construct_name", " = \"\"",
+                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      TryStmt.setFunctionPrototype ( "HEADER_TRY_STATEMENT", "../Grammar/Statement.code" );
      TryStmt.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
      TryStmt.editSubstitute       ( "LIST_DATA_TYPE", "SgStatementPtrList" );
@@ -1587,12 +1591,12 @@ Grammar::setUpStatements ()
 				NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      CatchStatementSeq.setFunctionPrototype ( "HEADER_CATCH_STATEMENT_SEQ", "../Grammar/Statement.code" );
-     CatchStatementSeq.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
-     CatchStatementSeq.editSubstitute      ( "LIST_DATA_TYPE", "SgStatementPtrList" );
-     CatchStatementSeq.editSubstitute      ( "LIST_NAME", "catch_statement_seq" );
-     CatchStatementSeq.editSubstitute      ( "LIST_FUNCTION_RETURN_TYPE", "void" );
-     CatchStatementSeq.editSubstitute      ( "LIST_FUNCTION_NAME", "catch_statement" );
-     CatchStatementSeq.editSubstitute      ( "LIST_ELEMENT_DATA_TYPE", "SgStatement*" );
+     CatchStatementSeq.editSubstitute   ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
+     CatchStatementSeq.editSubstitute   ( "LIST_DATA_TYPE", "SgStatementPtrList" );
+     CatchStatementSeq.editSubstitute   ( "LIST_NAME", "catch_statement_seq" );
+     CatchStatementSeq.editSubstitute   ( "LIST_FUNCTION_RETURN_TYPE", "void" );
+     CatchStatementSeq.editSubstitute   ( "LIST_FUNCTION_NAME", "catch_statement" );
+     CatchStatementSeq.editSubstitute   ( "LIST_ELEMENT_DATA_TYPE", "SgStatement*" );
      CatchStatementSeq.setDataPrototype ( "SgStatementPtrList", "catch_statement_seq", "",
 				  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
   // DQ (12/4/2004): Now we automate the generation of the destructors
@@ -1610,6 +1614,10 @@ Grammar::setUpStatements ()
      DefaultOptionStmt.setFunctionPrototype ( "HEADER_DEFAULT_OPTION_STATEMENT", "../Grammar/Statement.code" );
      DefaultOptionStmt.setDataPrototype ( "SgStatement*", "body"   , "= NULL",
 					  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (1/31/2009): Added support for named default case construct.
+     DefaultOptionStmt.setDataPrototype ( "std::string", "default_construct_name", " = \"\"",
+                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      BreakStmt.setFunctionPrototype ( "HEADER_BREAK_STATEMENT", "../Grammar/Statement.code" );
 
@@ -2430,12 +2438,22 @@ Grammar::setUpStatements ()
   //              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AllocateStatement.setDataPrototype    ( "SgExprListExp*", "expr_list", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AllocateStatement.setDataPrototype    ( "SgExpression*", "stat_expression", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AllocateStatement.setDataPrototype    ( "SgExpression*", "errmsg_expression", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AllocateStatement.setDataPrototype    ( "SgExpression*", "source_expression", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (1/29/2009): I think we want an expression list and not a name list, also the
   // F2003 case is more complex (and not yet supported in ROSE).
   // DeallocateStatement.setDataPrototype    ( "SgStringList", "name_list", "",
   //              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      DeallocateStatement.setDataPrototype    ( "SgExprListExp*", "expr_list", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     DeallocateStatement.setDataPrototype    ( "SgExpression*", "stat_expression", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     DeallocateStatement.setDataPrototype    ( "SgExpression*", "errmsg_expression", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (1/29/2009): The "contains" statment does not have a name list (or expression list)
