@@ -4345,12 +4345,10 @@ SgFile::callFrontEnd()
   // AST fixups are not so temporary so the name of the function might change at some point.
   // Notice that all AST fixup is done before attachment of the comments to the AST.
   // temporaryAstFixes(this);
-  //
 
-  // FMZ  
 #if 0
+  // FMZ (this is just debugging support)
      list<SgScopeStatement*> *stmp = &astScopeStack;
-
      printf("FMZ :: before AstPostProcessing astScopeStack = %p \n",stmp);
 #endif
  
@@ -4358,7 +4356,7 @@ SgFile::callFrontEnd()
 
   // FMZ: 05/30/2008.  Do not generate .rmod file for the PU imported by "use" stmt
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-     if (get_Fortran_only() == true && FortranModuleInfo::isRmodFile()==false)
+     if (get_Fortran_only() == true && FortranModuleInfo::isRmodFile() == false)
         {
           if (get_verbose() > 1)
                printf ("Generating a Fortran 90 module file (*.rmod) \n");
@@ -4526,7 +4524,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
           fortran_C_preprocessor_commandLine.push_back("-E");
 
-                      // DQ (5/20/2008): Need to select between fixed and free format
+       // DQ (5/20/2008): Need to select between fixed and free format
           fortran_C_preprocessor_commandLine.push_back("-ffree-line-length-none");
 
           string sourceFilename              = get_sourceFileNameWithPath();

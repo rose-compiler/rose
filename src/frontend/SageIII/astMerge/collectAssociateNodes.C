@@ -1764,6 +1764,10 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
        // DQ (2/18/2008): Added support for another IR node.
           case V_SgFortranIncludeLine:
 
+       // DQ (1/30/2009): Added support for two more IR nodes.
+          case V_SgAllocateStatement:
+          case V_SgDeallocateStatement:
+
        // Ignore these scope statements since they are not yet shared
           case V_SgBasicBlock:
           case V_SgNamespaceDefinitionStatement:
@@ -1850,7 +1854,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           case V_SgTypedefType:
           case V_SgPartialFunctionModifierType:
           case V_SgTypeEllipse:
-          // case V_SgUnknownMemberFunctionType:
+       // case V_SgUnknownMemberFunctionType:
           case V_SgQualifiedNameType:
              {
             // printf ("addAssociatedNodes(): ignoring this case of node = %p = %s = %s \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str());

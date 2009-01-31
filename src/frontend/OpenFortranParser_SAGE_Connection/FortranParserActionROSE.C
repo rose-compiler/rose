@@ -19,7 +19,7 @@
 #include "fortran_support.h"
 
 // FMZ
-#include "FortranModuleInfo.h"
+// #include "FortranModuleInfo.h" (DQ (1/28/2009) modified to be included in fortran_support.h)
 #include "FortranParserState.h"
 
 #define SKIP_C_ACTION_IMPLEMENTATION 0
@@ -138,7 +138,7 @@ void c_action_specification_part(int numUseStmts, int numImportStmts, int numDec
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_specification_part: numUseStmts = %d numImportStmts = %d numDeclConstructs = %d \n",numUseStmts,numImportStmts,numDeclConstructs);
 
-  // I we have got to this point and not had to build a containing main function then we will not
+  // We have got to this point and not had to build a containing main function then we will not
   // likely be any further before we process an action statement (not declaration statement).
      build_implicit_program_statement_if_required();
 
@@ -621,6 +621,8 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                outputState("case of CHARACTER*n in R403 c_action_intrinsic_type_spec()");
 #endif
 
+            // printf ("(isSgTypeChar(intrinsicType) != NULL): astExpressionStack.empty() = %s \n",(astExpressionStack.empty() == true) ? "true" : "false");
+
                if (astExpressionStack.empty() == false)
                   {
                     ROSE_ASSERT(astExpressionStack.empty() == false);
@@ -659,6 +661,8 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                   }
              }
 
+       // printf ("Test 1: astExpressionStack.empty() = %s \n",(astExpressionStack.empty() == true) ? "true" : "false");
+
        // If there is an entry on the astExpressionStack, then it is because of a type defined such as "real*8".
           if (astExpressionStack.empty() == false)
              {
@@ -666,15 +670,20 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                SgIntVal* integerExpression = isSgIntVal(astExpressionStack.front());
                ROSE_ASSERT(integerExpression != NULL);
 
+            // printf ("integerExpression->get_value() = %d \n",integerExpression->get_value());
+
             // Use this as a way to make sure that we have the correct type in place on the stack!
             // If we don't have the correct type then replace the type on the stack with the correct type
                switch(integerExpression->get_value())
                   {
+                 // Note that I think that there can be more values than just the value 8, 
+                 // but I have not seen any codes that use them.
                     case 8:
                        {
                          ROSE_ASSERT(keyword1 != NULL);
                          if ( strncasecmp(keyword1->text,"real",4) == 0 )
                             {
+                              printf ("Processing the real case \n");
                               SgType* currentType = astTypeStack.front();
                               SgTypeDouble* typeDouble = isSgTypeDouble(currentType);
                               if (typeDouble == NULL)
@@ -691,24 +700,46 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                                    currentType = NULL;
                                  }
                             }
-                         else if ( strncasecmp(keyword1->text,"integer",7) == 0 )
+                           else
                             {
-                              SgType* currentType = astTypeStack.front();
-                              SgTypeLong* typeLong = isSgTypeLong(currentType);
-                              if (typeLong == NULL)
+                              if ( strncasecmp(keyword1->text,"integer",7) == 0 )
                                  {
-                                // Note that since types are shared we don't want to delete the currentType
-                                   printf ("Incorrectly constructed type = %s should be SgTypeLong \n",currentType->class_name().c_str());
-                                   SgType* newType = SgTypeLong::createType();
+                                // printf ("Processing the integer case \n");
+#if 0
+                                // Output debugging information about saved state (stack) information.
+                                   outputState("Processing the integer case in R403 c_action_intrinsic_type_spec()");
+#endif
+                                   ROSE_ASSERT(astBaseTypeStack.empty() == false);
+                                // ROSE_ASSERT(astTypeStack.empty() == false);
 
-                                // DQ (12/8/2007): Use the new mechanism using the astBaseTypeStack.
-                                // astTypeStack.pop_front();
-                                // astTypeStack.push_front(newType);
-                                   astBaseTypeStack.pop_front();
-                                   astBaseTypeStack.push_front(newType);
-                                   currentType = NULL;
+                                // DQ (1/26/2009): This was supposed to use the astBaseTypeStack not the astTypeStack (which is empty).
+                                // SgType* currentType = astTypeStack.front();
+                                   SgType* currentType = astBaseTypeStack.front();
+
+                                   SgTypeLong* typeLong = isSgTypeLong(currentType);
+
+                                // printf ("Processing the integer case: typeLong = %p \n",typeLong);
+
+                                   if (typeLong == NULL)
+                                      {
+                                     // Note that since types are shared we don't want to delete the currentType
+                                     // printf ("Incorrectly constructed type = %s should be SgTypeLong \n",currentType->class_name().c_str());
+                                        SgType* newType = SgTypeLong::createType();
+
+                                     // DQ (12/8/2007): Use the new mechanism using the astBaseTypeStack.
+                                     // astTypeStack.pop_front();
+                                     // astTypeStack.push_front(newType);
+
+                                        ROSE_ASSERT(astBaseTypeStack.empty() == false);
+
+                                        astBaseTypeStack.pop_front();
+                                        astBaseTypeStack.push_front(newType);
+                                        currentType = NULL;
+                                      }
                                  }
                             }
+
+                         ROSE_ASSERT(astExpressionStack.empty() == false);
 
                       // Clear out the entry on the top of the stack
                          astExpressionStack.pop_front();
@@ -725,7 +756,10 @@ void c_action_intrinsic_type_spec(Token_t * keyword1, Token_t * keyword2, int ty
                        }
                   }
              }
-
+#if 0
+          printf ("Test 2: astExpressionStack.empty() = %s \n",(astExpressionStack.empty() == true) ? "true" : "false");
+          printf ("Test 2: astTypeKindStack.empty()   = %s \n",(astTypeKindStack.empty()   == true) ? "true" : "false");
+#endif
           if ( (astTypeParameterStack.empty() == false) || (astTypeKindStack.empty() == false) )
              {
             // Build one SgModifierType object
@@ -1057,6 +1091,34 @@ void c_action_real_literal_constant(Token_t * realConstant,
 #endif
    }
 
+/**
+ * R421
+ * complex_literal_constant
+ *
+ */
+void c_action_complex_literal_constant()
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_complex_literal_constant() \n");
+
+  // DQ (1/27/2009): Take the two expressions on the stack (should be literal value
+  // expressions) and use them to build a complex value, and push it into the stack.
+
+     ROSE_ASSERT(astExpressionStack.empty() == false);
+     SgValueExp* imaginaryValue = isSgValueExp(astExpressionStack.front());
+     astExpressionStack.pop_front();
+
+     ROSE_ASSERT(astExpressionStack.empty() == false);
+     SgValueExp* realValue = isSgValueExp(astExpressionStack.front());
+     astExpressionStack.pop_front();
+
+     SgValueExp* complexValue = new SgComplexVal(realValue,imaginaryValue,realValue->get_type(),"");
+     setSourcePosition(complexValue);
+
+  // Push the complex value onto the expression stack
+     astExpressionStack.push_front(complexValue);
+   }
+
 /** R422
  * real_part
  * 
@@ -1067,8 +1129,10 @@ void c_action_real_literal_constant(Token_t * realConstant,
  * @param id The named-constant (optional)
  */
 void c_action_real_part(ofp_bool hasIntConstant, ofp_bool hasRealConstant, Token_t * id)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_real_part(): hasIntConstant = %s hasRealConstant = %s id = %s \n",hasIntConstant ? "true" : "false",hasRealConstant ? "true" : "false",id != NULL ? id->text : "NULL");
+   }
 
 /** R423
  * imag_part
@@ -1080,8 +1144,10 @@ void c_action_real_part(ofp_bool hasIntConstant, ofp_bool hasRealConstant, Token
  * @param id The named-constant (optional)
  */
 void c_action_imag_part(ofp_bool hasIntConstant, ofp_bool hasRealConstant, Token_t * id)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_imag_part(): hasIntConstant = %s hasRealConstant = %s id = %s \n",hasIntConstant ? "true" : "false",hasRealConstant ? "true" : "false",id != NULL ? id->text : "NULL");
+   }
 
 /** R424
  * char-selector
@@ -1567,21 +1633,19 @@ void c_action_data_component_def_stmt(Token_t *label, Token_t *eos, ofp_bool has
 #if !SKIP_C_ACTION_IMPLEMENTATION
   // printf ("astNameStack.size() = %zu \n",astNameStack.size());
 
-     SgVariableDeclaration* variableDeclaration = buildVariableDeclaration(label,false);
+  // DQ (1/28/2009): The variable declaration may have already been built (if so then the scacks are empty).
+     if (astNodeStack.empty() == false && astBaseTypeStack.empty() == false)
+        {
+          SgVariableDeclaration* variableDeclaration = buildVariableDeclaration(label,false);
 
-     ROSE_ASSERT(variableDeclaration->get_file_info()->isCompilerGenerated() == false);
+          ROSE_ASSERT(variableDeclaration->get_file_info()->isCompilerGenerated() == false);
 
-  // Attach the variableDeclaration to the current scope
-     SgScopeStatement* currentScope = getTopOfScopeStack();
-     ROSE_ASSERT(currentScope->variantT() == V_SgClassDefinition);
-     currentScope->append_statement(variableDeclaration);
+       // Attach the variableDeclaration to the current scope
+          SgScopeStatement* currentScope = getTopOfScopeStack();
+          ROSE_ASSERT(currentScope->variantT() == V_SgClassDefinition);
+          currentScope->append_statement(variableDeclaration);
+        }
 #endif
-
-  // Pop the list we used to store the initailized names off the stack
-  // ROSE_ASSERT(astNameListStack.empty() == false);
-  // astNameListStack.pop_front();
-  // ROSE_ASSERT(astNameStack.empty() == false);
-  // astNameStack.pop_front();
    }
 
 /** R441
@@ -1807,6 +1871,20 @@ void c_action_component_decl_list(int count)
   // ROSE_ASSERT(astNameStack.size() == (size_t)count);
   // printf ("astNodeStack.size() = %zu count = %d \n",astNodeStack.size(),count);
      ROSE_ASSERT(astNodeStack.size() == (size_t)count);
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R442 c_action_component_decl_list()");
+#endif
+
+#if 1
+  // DQ (1/28/2009): This is called for variable declarations in structures.
+     ROSE_ASSERT (astNodeStack.empty() == false && astBaseTypeStack.empty() == false);
+
+  // DQ (1/28/2009): Refactored this code so it could be called in R442, R501, R504 and R1238.
+  // Note that there is no token for this rule, so we pass in a NULL pointer.
+     buildVariableDeclarationAndCleanupTypeStack(NULL);
+#endif
    }
 
 /** R443
@@ -2659,7 +2737,8 @@ void c_action_ac_implied_do_control( ofp_bool hasStride )
  * scalar_int_variable
  *
  */
-void c_action_scalar_int_variable()
+void
+c_action_scalar_int_variable()
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_scalar_int_variable() \n");
@@ -2676,7 +2755,8 @@ void c_action_scalar_int_variable()
  * @param eos Token for the end of the statement.
  */
 // void c_action_type_declaration_stmt(Token_t * label, int numAttributes)
-void c_action_type_declaration_stmt(Token_t * label, int numAttributes, Token_t * eos)
+void
+c_action_type_declaration_stmt(Token_t * label, int numAttributes, Token_t * eos)
    {
   // This is a variable declaration (build the SgVariableDeclaration and populate it using data saved on the stack).
 
@@ -2691,75 +2771,57 @@ void c_action_type_declaration_stmt(Token_t * label, int numAttributes, Token_t 
      build_implicit_program_statement_if_required();
 
   // printf ("getTopOfScopeStack() = %p = %s \n",getTopOfScopeStack(),getTopOfScopeStack()->class_name().c_str());
-  // ROSE_ASSERT(getTopOfScopeStack()->variantT() == V_SgBasicBlock);
      ROSE_ASSERT(getTopOfScopeStack()->variantT() == V_SgBasicBlock || getTopOfScopeStack()->variantT() == V_SgClassDefinition);
 
-     SgVariableDeclaration* variableDeclaration = buildVariableDeclaration(label,false);
+#if 1
+  // DQ (1/28/2009): I think we can assert this, and if so we can eliminate the call 
+  // to buildVariableDeclarationAndCleanupTypeStack().
+     ROSE_ASSERT (astNodeStack.empty() == true && astBaseTypeStack.empty() == true);
 
-     ROSE_ASSERT(variableDeclaration->get_file_info()->isCompilerGenerated() == false);
-
-  // DQ (11/29/2007): commented out, we can't assume this (see test2007_133.f03)
-  // DQ (9/30/2007):
-  // I think this is now uniformally true for all type declarations.  If so then we can
-  // remove the conditionaly handling below.  See the note in R504 c_action_entity_decl()
-  // for more details.
-  // ROSE_ASSERT(astTypeStack.empty() == true);
-#if 0
-     outputState("In R501 c_action_type_declaration_stmt()");
-#endif
-  // We should have used all the types stored on the stack at this point!
-  // Except for the case of an array type which will have pushed the base type 
-  // onto the stack and then an array type.  In this case we will still have 
-  // the base type on the stack.  If there was a scalar variable then it will 
-  // have used the type on the stack, but we should take care of this by always 
-  // pushing a type onto the stack for each variable to use and then making 
-  // sure that we have the base type still on the stack at this point, so the 
-  // stack at this point should never be empty and should have the unused base 
-  // type on top (and the stack size should be 1).
-  // ROSE_ASSERT(astTypeStack.empty() == true);
-  // ROSE_ASSERT(astTypeStack.size() == 1);
-  // astTypeStack.pop_front();
-     if (astTypeStack.empty() == false)
+  // DQ (1/28/2009): Refactored this code so it could be called in R442, R501, R504 and R1238.
+     buildVariableDeclarationAndCleanupTypeStack(label);
+#else
+  // DQ (1/28/2009): Part of fix for nested include (test2009_14.f).
+  // Only try to build a varialbe if there is information to support this on the stack.
+  // I am trying to have variable built earlier than before since the Fortran "include"
+  // mechanism can be called before this R501 rule and that causes problems.  Basically
+  // each new include file needs to be started with an empty stack(s).
+     if (astNodeStack.empty() == false && astBaseTypeStack.empty() == false)
         {
-       // This should be only a base type that has been left on the stack.
-       // printf ("WARNING, astTypeStack not empty: astTypeStack.front() = %p = %s \n",astTypeStack.front(),astTypeStack.front()->class_name().c_str());
+          SgVariableDeclaration* variableDeclaration = buildVariableDeclaration(label,false);
 
-       // If there was an array declaration then the base type is left on the stack, else 
-       // the stack is empty.  Cleanup the stack of the one possible base type left there!
+          ROSE_ASSERT(variableDeclaration->get_file_info()->isCompilerGenerated() == false);
+
+       // DQ (11/29/2007): commented out, we can't assume this (see test2007_133.f03)
+       // DQ (9/30/2007):
+       // I think this is now uniformally true for all type declarations.  If so then we can
+       // remove the conditionaly handling below.  See the note in R504 c_action_entity_decl()
+       // for more details.
+       // ROSE_ASSERT(astTypeStack.empty() == true);
+#if 0
+          outputState("In R501 c_action_type_declaration_stmt() (after buildVariableDeclaration())");
+#endif
+       // We should have used all the types stored on the stack at this point!
+       // Except for the case of an array type which will have pushed the base type 
+       // onto the stack and then an array type.  In this case we will still have 
+       // the base type on the stack.  If there was a scalar variable then it will 
+       // have used the type on the stack, but we should take care of this by always 
+       // pushing a type onto the stack for each variable to use and then making 
+       // sure that we have the base type still on the stack at this point, so the 
+       // stack at this point should never be empty and should have the unused base 
+       // type on top (and the stack size should be 1).
+       // ROSE_ASSERT(astTypeStack.empty() == true);
+       // ROSE_ASSERT(astTypeStack.size() == 1);
        // astTypeStack.pop_front();
 
-          if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
-               printf ("WARNING, astTypeStack not empty: astTypeStack.front() = %p = %s (CLEARING astTypeStack) \n",astTypeStack.front(),astTypeStack.front()->class_name().c_str());
+       // DQ (1/27/2009): Refactored code so that I can handle test2009_13.f (nested include files).
+          cleanupTypeStackAfterDeclaration();
 
-          astTypeStack.clear();
-#if 0
-          if (astTypeStack.empty() == false)
-               outputState("Error: astTypeStack.empty() == false in R502 c_action_declaration_type_spec()");
-#endif
-          ROSE_ASSERT(astTypeStack.empty() == true);
+          ROSE_ASSERT(getTopOfScopeStack()->variantT() == V_SgBasicBlock || getTopOfScopeStack()->variantT() == V_SgClassDefinition);
+
+          getTopOfScopeStack()->append_statement(variableDeclaration);
         }
-
-     if (astBaseTypeStack.empty() == false)
-        {
-          if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
-               printf ("WARNING, astBaseTypeStack not empty: astBaseTypeStack.front() = %p = %s (CLEARING astBaseTypeStack) \n",astBaseTypeStack.front(),astBaseTypeStack.front()->class_name().c_str());
-
-          astBaseTypeStack.clear();
-#if 0
-          if (astBaseTypeStack.empty() == false)
-               outputState("Error: astBaseTypeStack.empty() == false in R502 c_action_declaration_type_spec()");
 #endif
-          ROSE_ASSERT(astBaseTypeStack.empty() == true);
-        }
-
-     SgScopeStatement* currentScope = getTopOfScopeStack();
-  // ROSE_ASSERT(currentScope->variantT() == V_SgBasicBlock);
-     ROSE_ASSERT(getTopOfScopeStack()->variantT() == V_SgBasicBlock || getTopOfScopeStack()->variantT() == V_SgClassDefinition);
-     currentScope->append_statement(variableDeclaration);
-
-  // Pop the list we used to store the initailized names off the stack
-  // ROSE_ASSERT(astNameListStack.empty() == false);
-  // astNameListStack.pop_front();
 #endif
 
   // printf ("Leaving c_action_type_declaration_stmt: numAttributes = %d \n",numAttributes);
@@ -3167,8 +3229,18 @@ void c_action_entity_decl(Token_t * id)
      ROSE_ASSERT(id != NULL);
      ROSE_ASSERT(id->text != NULL);
 
+  // DQ (1/28/2009): We need to have the global scope and the function scope in place before
+  // building variable declarations.  See test2007_09.f90.
+  // initialize_global_scope_if_required(); not required!
+     build_implicit_program_statement_if_required();
+
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In R504 c_action_entity_decl(): save variableName = %s \n",id->text);
+        {
+       // printf ("In R504 c_action_entity_decl(): save variableName = %s \n",id->text);
+          string current_filename = getCurrentFilename();
+          printf ("In R504 c_action_entity_decl(): save variableName = %s file = %s \n",id->text,current_filename.c_str());
+        }
+
 #if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R504 c_action_entity_decl()");
@@ -3434,7 +3506,7 @@ void c_action_entity_decl_list__begin()
 
      ROSE_ASSERT(astBaseTypeStack.empty() == false);
 
-  // This is the start of an intity list (used in variable declarations to hold the variables being declared
+  // This is the start of an entity list (used in variable declarations to hold the variables being declared
   // build the list and add the variable identifiers to the list
   // AstNameListType* nameList = new AstNameListType();
   // astNameListStack.push_front(nameList);
@@ -3451,6 +3523,17 @@ void c_action_entity_decl_list(int count)
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In R504 c_action_entity_decl_list: (number of variable declarations) count = %d \n",count);
+
+  // Note that we are not really using the count, but the astNodeStack.size() should match the count.
+  // DQ (1/28/2009): Can we assert this!
+     ROSE_ASSERT(astNodeStack.size() == (size_t) count);
+
+  // DQ (1/28/2009): Refactored this code so it could be called in R442, R501, R504 and R1238.
+  // I think this is the earliest point at which this can be called, after this point if
+  // there additional modified for the variables, then they will have to update the
+  // declaration and/or build new statements to do the modifications (e.g. dimension statments).
+
+     buildVariableDeclarationAndCleanupTypeStack(NULL);
 
 #if 0
   // Output debugging information about saved state (stack) information.
@@ -3793,8 +3876,7 @@ void c_action_array_spec_element(int type)
      ROSE_ASSERT(type >= ArraySpecElement_expr);
      if (type != ArraySpecElement_expr)
         {
-       // Build the corect expression and put it onto the stack.
-
+       // Build the correct expression and put it onto the stack.
        // printf ("Processing a non-value-expression dimension type = %d \n",type);
 
           SgExpression* expression = NULL;
@@ -3802,7 +3884,7 @@ void c_action_array_spec_element(int type)
              {
                case ArraySpecElement_expr:
                   {
-                    printf ("Error: This sort of entry should have been processed already \n");
+                    printf ("Error: This sort of case ArraySpecElement_expr should have been processed already \n");
                     ROSE_ASSERT(false);
                     break;
                   }
@@ -3812,18 +3894,12 @@ void c_action_array_spec_element(int type)
                  // DQ (1/23/2009): Fix suggested by one of Craig's students (need name of student).
                  // I think that example test code: test2009_03.f90 demonstrates this case.
                     expression = buildSubscriptExpression(true, false, false, false);
-
-                 // printf ("Error: Need an example of this before I can support it. \n");
-                 // ROSE_ASSERT(false);
                     break;
                   }
                 
                case ArraySpecElement_expr_colon_expr:
                   {
                  // See test2008_62.f90 for an example of this.
-                 // expression = new SgColonShapeExp();
-                 // setSourcePosition(expression);
-
                  // DQ (11/14/2008): A colon expression at this point can only have a base and bound (no stride).
                     bool hasLowerBound = true;
                     bool hasUpperBound = true;
@@ -3831,65 +3907,41 @@ void c_action_array_spec_element(int type)
                     bool isAmbiguous   = false;
 
                     expression = buildSubscriptExpression(hasLowerBound,hasUpperBound,hasStride,isAmbiguous);
-
-#if 0
-                 // Output debugging information about saved state (stack) information.
-                    outputState("In case ArraySpecElement_expr_colon_expr of R510 #3 c_action_array_spec_element()");
-#endif
-#if 0
-                    printf ("Error: Need an example of this before I can support it. \n");
-                    ROSE_ASSERT(false);
-#endif
                     break;
                   }
 
                case ArraySpecElement_expr_colon_asterisk:
                   {
-                    printf ("Error: Need an example of this before I can support it. \n");
-                    ROSE_ASSERT(false);
+                 // DQ (11/14/2008): A colon expression at this point can only have a base and bound (no stride).
+                    bool hasLowerBound = true;
+                    bool hasUpperBound = true;
+                    bool hasStride     = false;
+                    bool isAmbiguous   = false;
+
+                 // DQ (1/26/2009): Build a "*" and push it onto the stack so that we can form the subscript expression "<expression>:*"
+                    SgExpression* tempExpression = new SgAsteriskShapeExp();
+                    setSourcePosition(tempExpression);
+                    astExpressionStack.push_front(tempExpression);
+
+                    expression = buildSubscriptExpression(hasLowerBound,hasUpperBound,hasStride,isAmbiguous);
                     break;
                   }
                 
                case ArraySpecElement_asterisk:
                   {
-                 // SgExpression *lowerBound = new SgNullExpression();
-                 // SgExpression *stride     = new SgNullExpression();
-                 // expression = new SgSubscriptAsterisk(lowerBound,stride);
-
                  // expression = new SgSubscriptAsterisk();
                     expression = new SgAsteriskShapeExp();
 
                     setSourcePosition(expression);
-
-                 // printf ("Error: Need an example of this before I can support it. \n");
-                 // ROSE_ASSERT(false);
                     break;
                   }
 
                case ArraySpecElement_colon:
                   {
-                 // SgExpression *lowerBound = new SgNullExpression();
-                 // SgExpression *upperBound = new SgNullExpression();
-                 // SgExpression *stride     = new SgNullExpression();
-
-                 // setSourcePosition(lowerBound);
-                 // setSourcePosition(upperBound);
-                 // setSourcePosition(stride);
-
-                 // expression = new SgSubscriptExpression(lowerBound,upperBound,stride);
-                 // expression = new SgSubscriptColon(lowerBound,upperBound,stride);
-                 // expression = new SgColon();
-                 // expression = new SgColonShapeExp();
-                 // setSourcePosition(expression);
-
                  // DQ (1/23/2009): Fix suggested by one of Craig's students (need name of student).
                  // I think that example test code: test2009_03.f90 demonstrates this case.
                  // CER (9/24/2008): I think SgSubscriptExpression is the correct thing to do here
                     expression = buildSubscriptExpression(false, false, false, false);
-
-                 // lowerBound->set_parent(expression);
-                 // upperBound->set_parent(expression);
-                 // stride->set_parent(expression);
                     break;
                   }
                 
@@ -3901,7 +3953,6 @@ void c_action_array_spec_element(int type)
              }
 
        // DQ (11/20/2007): Changed to push_front to be consistent.
-       // astExpressionStack.push_back(expression);
           astExpressionStack.push_front(expression);
         }
 
@@ -7105,8 +7156,47 @@ void c_action_section_subscript_list(int count)
  */
 // void c_action_allocate_stmt(Token_t * label, ofp_bool hasTypeSpec, ofp_bool hasAllocOptList)
 void c_action_allocate_stmt(Token_t *label, Token_t *allocateKeyword, Token_t *eos, ofp_bool hasTypeSpec, ofp_bool hasAllocOptList)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In R623 c_action_allocate_stmt() label = %p = %s allocateKeyword = %p = %s hasTypeSpec = %s hasAllocOptList = %s \n",
+               label,label != NULL ? label->text : "NULL",
+               allocateKeyword,allocateKeyword != NULL ? allocateKeyword->text : "NULL",
+               hasTypeSpec ? "true" : "false", hasAllocOptList ? "true" : "false");
+
+  // An AttributeSpecification statement can be the first statement in a program
+     build_implicit_program_statement_if_required();
+
+#if 0
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R623 c_action_allocate_stmt()");
+#endif
+
+  // There should be a SgExprListExp on the astExpressionStack.
+     ROSE_ASSERT(astExpressionStack.empty() == false);
+
+     SgAllocateStatement* allocateStatement = new SgAllocateStatement();
+
+     ROSE_ASSERT(allocateKeyword != NULL);
+     setSourcePosition(allocateStatement,allocateKeyword);
+
+  // allocateStatement->get_name_list().push_back("xxx");
+
+     SgExprListExp* exprList = isSgExprListExp(astExpressionStack.front());
+     ROSE_ASSERT(exprList != NULL);
+     allocateStatement->set_expr_list(exprList);
+
+     astExpressionStack.pop_front();
+
+     astScopeStack.front()->append_statement(allocateStatement);
+
+  // This is a meaningless construction which will clear the stack!
+  // buildAttributeSpecificationStatement(SgAttributeSpecificationStatement::e_allocatableStatement,label,allocateKeyword);
+
+#if 0
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R623 c_action_allocate_stmt()");
+#endif
+   }
 
 /** R624
  * alloc_opt
@@ -7116,8 +7206,10 @@ void c_action_allocate_stmt(Token_t *label, Token_t *allocateKeyword, Token_t *e
  * @param allocOpt Identifier representing {'STAT','ERRMSG','SOURCE'}
  */
 void c_action_alloc_opt(Token_t * allocOpt)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In R624 c_action_alloc_opt() allocOpt = %p = %s \n",allocOpt,allocOpt != NULL ? allocOpt->text : "NULL");
+   }
 
 /** R624 list
  * alloc_opt_list
@@ -7126,11 +7218,15 @@ void c_action_alloc_opt(Token_t * allocOpt)
  * @param count The number of items in the list.
  */
 void c_action_alloc_opt_list__begin()
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In R624 c_action_alloc_opt_list__begin() \n");
+   }
 void c_action_alloc_opt_list(int count)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In R624 c_action_alloc_opt_list() count = %d \n",count);
+   }
 
 /** R628, R631-F2008
  * allocation
@@ -7146,8 +7242,11 @@ void c_action_alloc_opt_list(int count)
  * @param hasAllocateCoArraySpec True if allocate-co-array-spec is present.
  */
 void c_action_allocation(ofp_bool hasAllocateShapeSpecList, ofp_bool hasAllocateCoArraySpec)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In R628 c_action_allocation() hasAllocateShapeSpecList = %s hasAllocateCoArraySpec = %s \n",
+               hasAllocateShapeSpecList ? "true" : "false", hasAllocateCoArraySpec ? "true" : "false");
+   }
 
 /** R628 list
  * allocation_list
@@ -7156,11 +7255,33 @@ void c_action_allocation(ofp_bool hasAllocateShapeSpecList, ofp_bool hasAllocate
  * @param count The number of items in the list.
  */
 void c_action_allocation_list__begin()
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In R628 (list) c_action_allocation_list__begin() \n");
+   }
 void c_action_allocation_list(int count)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In R628 (list) c_action_allocation_list() count = %d \n",count);
+
+     SgExprListExp* expressionList = new SgExprListExp();
+     setSourcePosition(expressionList);
+
+     for (int i = 0; i < count; i++)
+        {
+       // Transfer the IR node from the astExpressionStack to the astInitializerStack.
+          ROSE_ASSERT(astExpressionStack.empty() == false);
+          SgExpression* expr = astExpressionStack.front();
+          astExpressionStack.pop_front();
+
+          ROSE_ASSERT(expr != NULL);
+       // expressionList->append_expression(expr);
+          expressionList->prepend_expression(expr);
+        }
+
+  // Save the SgExprListExp on the astExpressionStack
+     astExpressionStack.push_front(expressionList);
+   }
 
 /**
  * R629
@@ -7170,7 +7291,7 @@ void c_action_allocation_list(int count)
 void c_action_allocate_object()
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_allocate_object() \n");
+          printf ("In R629 c_action_allocate_object() \n");
    }
 
 /** R629 list
@@ -7180,11 +7301,37 @@ void c_action_allocate_object()
  * @param count The number of items in the list.
  */
 void c_action_allocate_object_list__begin()
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In R629 (list) c_action_allocate_object_list__begin() \n");
+   }
 void c_action_allocate_object_list(int count)
-{
-}
+   {
+  // This is the function that is called before the deallocate action to do for
+  // c_action_deallocate_stmt() what c_action_allocation_list() does for 
+  // c_action_allocate_stmt().  I don't know why it is named "c_action_allocate_object_list()"
+
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In R629 (list) c_action_allocate_object_list() count = %d \n",count);
+
+     SgExprListExp* expressionList = new SgExprListExp();
+     setSourcePosition(expressionList);
+
+     for (int i = 0; i < count; i++)
+        {
+       // Transfer the IR node from the astExpressionStack to the astInitializerStack.
+          ROSE_ASSERT(astExpressionStack.empty() == false);
+          SgExpression* expr = astExpressionStack.front();
+          astExpressionStack.pop_front();
+
+          ROSE_ASSERT(expr != NULL);
+       // expressionList->append_expression(expr);
+          expressionList->prepend_expression(expr);
+        }
+
+  // Save the SgExprListExp on the astExpressionStack
+     astExpressionStack.push_front(expressionList);
+   }
 
 /** R630
  * allocate_shape_spec
@@ -7196,8 +7343,11 @@ void c_action_allocate_object_list(int count)
  * @param hasUpperBound True if upper-bound-expr is present (note always true).
  */
 void c_action_allocate_shape_spec(ofp_bool hasLowerBound, ofp_bool hasUpperBound)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In R630 c_action_allocate_shape_spec(): hasLowerBound = %s hasUpperBound = %s \n",
+               hasLowerBound ? "true" : "false", hasUpperBound ? "true" : "false");
+   }
 
 /** R630 list
  * allocate_shape_spec_list
@@ -7206,11 +7356,15 @@ void c_action_allocate_shape_spec(ofp_bool hasLowerBound, ofp_bool hasUpperBound
  * @param count The number of items in the list.
  */
 void c_action_allocate_shape_spec_list__begin()
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In R630 (list) c_action_allocate_shape_spec_list__begin() \n");
+   }
 void c_action_allocate_shape_spec_list(int count)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In R630 (list) c_action_allocate_shape_spec_list() count = %d \n",count);
+   }
 
 /** R633
  *	nullify_stmt
@@ -7222,8 +7376,9 @@ void c_action_allocate_shape_spec_list(int count)
 void c_action_nullify_stmt(Token_t *label, Token_t *nullifyKeyword, Token_t *eos)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_level_1_expr(): label = %p = %s nullifyKeyword = %p = %s \n",
-               label,label != NULL ? label->text : "NULL",nullifyKeyword,nullifyKeyword != NULL ? nullifyKeyword->text : "NULL");
+          printf ("In c_action_nullify_stmt(): label = %p = %s nullifyKeyword = %p = %s \n",
+               label,label != NULL ? label->text : "NULL",
+               nullifyKeyword,nullifyKeyword != NULL ? nullifyKeyword->text : "NULL");
    }
 
 /** R634 list
@@ -7233,11 +7388,15 @@ void c_action_nullify_stmt(Token_t *label, Token_t *nullifyKeyword, Token_t *eos
  * @param count The number of items in the list.
  */
 void c_action_pointer_object_list__begin()
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In R634 (list) c_action_pointer_object_list__begin() \n");
+   }
 void c_action_pointer_object_list(int count)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In R634 (list) c_action_pointer_object_list() count = %d \n",count);
+   }
 
 /** R635
  * deallocate_stmt
@@ -7250,8 +7409,64 @@ void c_action_pointer_object_list(int count)
  */
 // void c_action_deallocate_stmt(Token_t * label,ofp_bool hasDeallocOptList)
 void c_action_deallocate_stmt(Token_t *label, Token_t *deallocateKeyword, Token_t *eos, ofp_bool hasDeallocOptList)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_deallocate_stmt(): label = %p = %s nullifyKeyword = %p = %s hasDeallocOptList = %s \n",
+               label,label != NULL ? label->text : "NULL",
+               deallocateKeyword,deallocateKeyword != NULL ? deallocateKeyword->text : "NULL",
+               hasDeallocOptList ? "true" : "false");
+
+  // An AttributeSpecification statement can be the first statement in a program
+     build_implicit_program_statement_if_required();
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R635 c_action_deallocate_stmt()");
+#endif
+
+  // There should be a SgExprListExp on the astExpressionStack.
+     ROSE_ASSERT(astExpressionStack.empty() == false);
+
+     SgDeallocateStatement* deallocateStatement = new SgDeallocateStatement();
+
+     ROSE_ASSERT(deallocateKeyword != NULL);
+     setSourcePosition(deallocateStatement,deallocateKeyword);
+
+     SgExprListExp* exprList = isSgExprListExp(astExpressionStack.front());
+     ROSE_ASSERT(exprList != NULL);
+     deallocateStatement->set_expr_list(exprList);
+
+     astExpressionStack.pop_front();
+
+     astScopeStack.front()->append_statement(deallocateStatement);
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R635 c_action_deallocate_stmt()");
+#endif
+   }
+
+/**
+ * R636
+ * dealloc_opt
+ *
+ * @param id T_IDENT for 'STAT' or 'ERRMSG'.
+ */
+void c_action_dealloc_opt(Token_t *id)
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_dealloc_opt(): id = %p = %s \n",id,id != NULL ? id->text : "NULL");
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R636 c_action_dealloc_opt()");
+#endif
+#if 0
+     printf ("Exiting in c_action_dealloc_opt() \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
 
 /** R636 list
  * dealloc_opt_list
@@ -7260,11 +7475,15 @@ void c_action_deallocate_stmt(Token_t *label, Token_t *deallocateKeyword, Token_
  * @param count The number of items in the list.
  */
 void c_action_dealloc_opt_list__begin()
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In R636 (list) c_action_dealloc_opt_list__begin() \n");
+   }
 void c_action_dealloc_opt_list(int count)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In R636 (list) c_action_dealloc_opt_list() count = %d \n",count);
+   }
 
 /** R637-F2008 list
  * allocate_co_shape_spec_list
@@ -7273,11 +7492,15 @@ void c_action_dealloc_opt_list(int count)
  * @param count The number of items in the list.
  */
 void c_action_allocate_co_shape_spec_list__begin()
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In R637 (list) c_action_allocate_co_shape_spec_list__begin() \n");
+   }
 void c_action_allocate_co_shape_spec_list(int count)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In R637 (list) c_action_allocate_co_shape_spec_list() count = %d \n",count);
+   }
 
 /** R701
  * primary
@@ -9436,13 +9659,15 @@ void c_action_if_stmt(Token_t *label, Token_t *ifKeyword)
 
   // This rule is for statements of the sort: "if (a) b = 0" withouth an associated endif statement.
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R807 c_action_if_stmt()");
 #endif
 
 #if !SKIP_C_ACTION_IMPLEMENTATION
-     SgExpression* conditionalExpression   = getTopOfExpressionStack();
+     ROSE_ASSERT(astExpressionStack.empty() == false);
+
+     SgExpression* conditionalExpression = getTopOfExpressionStack();
      astExpressionStack.pop_front();
 
      SgExprStatement* conditionalStatement = new SgExprStatement(conditionalExpression);
@@ -11898,11 +12123,22 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
 
      astExpressionStack.pop_front();
 
+  // DQ (1/26/2009): test2009_07.f demonstrates that the astExpressionStack can have the
+  // conditional expression from another part of the statement if this is an "if"
+  // statement.
+
   // If this was "print *,i" then we would now have a "*" on the stack, but if
   // there was a format label then we will have a integer literal on the stack.
-     if (astExpressionStack.empty() == false)
+
+  // DQ (1/26/2009): Avoid getting things from the stack that are at least wrong to be used in a print format.
+  // if (astExpressionStack.empty() == false)
+     if (astExpressionStack.empty() == false && isSgBinaryOp(astExpressionStack.front()) == NULL)
         {
           SgExpression* formatLabel = astExpressionStack.front();
+
+       // DQ (1/26/2009): This should not be a binary operator (else it is likely an error).
+          ROSE_ASSERT(isSgBinaryOp(formatLabel) == NULL);
+
 #if 1
           SgExpression* labelRefExp = buildLabelRefExp(formatLabel);
           printStatement->set_format(labelRefExp);
@@ -11938,6 +12174,12 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
      ROSE_ASSERT(current_IO_Control_Spec == NULL);
 #endif
 
+#if 0
+  // Output debugging information about saved state (stack) information.
+     outputState("Before test of (astExpressionStack.empty() == false) in R912 c_action_print_stmt()");
+#endif
+
+#if 0
   // Error checking: there may still be something on the stack from an  unhandled implied do loop
   // when we have a correctly handled implied do loop (there are three flavors) this should not be required.
      if (astExpressionStack.empty() == false)
@@ -11949,6 +12191,20 @@ void c_action_print_stmt(Token_t *label, Token_t *printKeyword, Token_t *eos, of
                astExpressionStack.pop_front();
              }
         }
+#else
+  // DQ (1/26/2009): test2009_07.f shows the use of "if (7==8) print *, 'proc coords: ', 1, 2, 3"
+  // for this case we can't clear the stack, let's see what other test codes fail if we 
+  // skip clearing the stack after and implied do in a print statement.
+     if (astExpressionStack.empty() == false)
+        {
+          printf ("WARNING: astExpressionStack still has %zu entries (Ok if used in a statement for example) (print) \n",astExpressionStack.size());
+        }
+#endif
+
+#if 0
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R912 c_action_print_stmt()");
+#endif
    }
 
 /** R913
@@ -12089,12 +12345,15 @@ void c_action_input_item_list__begin()
    }
 void c_action_input_item_list(int count)
    {
+  // This takes the number of expression on the stack (given by 'count'). clears them from
+  // the stack, and puts them into an expression list and puts that on the stack.
+
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("c_action_input_item_list(): count = %d \n",count);
 
 #if 0
   // Output debugging information about saved state (stack) information.
-     outputState("At TOP of R916 list c_action_output_item_list()");
+     outputState("At TOP of R915 list c_action_input_item_list()");
 #endif
 
      SgExprListExp* exprListExp = new SgExprListExp();
@@ -12114,7 +12373,7 @@ void c_action_input_item_list(int count)
 
 #if 0
   // Output debugging information about saved state (stack) information.
-     outputState("At BOTTOM of R916 list c_action_output_item_list()");
+     outputState("At BOTTOM of R915 list c_action_input_item_list()");
 #endif
    }
 
@@ -12152,6 +12411,9 @@ void c_action_output_item_list__begin()
 
 void c_action_output_item_list(int count)
    {
+  // This takes the number of expression on the stack (given by 'count'). clears them from
+  // the stack, and puts them into an expression list and puts that on the stack.
+
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("c_action_output_item_list(): count = %d \n",count);
 
@@ -14132,21 +14394,20 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
        // from other translation units.
 
        // Once we find the module declaration to the module
-
 #if 0
           printf ("Error: module not found in current translation unit! (need contribution from Rice) \n");
           ROSE_ASSERT(false);
 #else 
-        // FMZ:(5/28/2008) importing the module declaration from modName.rmod file
-        // save the global variable
+       // FMZ:(5/28/2008) importing the module declaration from modName.rmod file
+       // save the global variable
         
-        // FMZ(10/22008) in the new version (rice branch) SgFile*=>SgSourceFile
-        // SgFile* savedFilePointer = OpenFortranParser_globalFilePointer;
+       // FMZ(10/22008) in the new version (rice branch) SgFile*=>SgSourceFile
+       // SgFile* savedFilePointer = OpenFortranParser_globalFilePointer;
           SgSourceFile* savedFilePointer = OpenFortranParser_globalFilePointer;
         
           FortranModuleInfo rmodFile;
         
-        //  need to check module/def/decl or read from .rmod file
+       // need to check module/def/decl or read from .rmod file
           string modName = useStatement->get_name();
 
        // DQ (11/12/2008): Convert generated file name to lower case.
@@ -14154,6 +14415,10 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
        // a unique name module file.
           modName = StringUtility::convertToLowerCase(modName);
 
+       // This should open the appropriate *.rmod file using ROSE and read it.
+       // DQ (1/28/2009): Currently there is a bug which causes a Fortran include
+       // directive to be output in the generated module file, but it does not appear
+       // to be a problem when we read the *.rmod file.
           moduleStatement = FortranModuleInfo::getModule(modName);
 
           if (moduleStatement == NULL)
@@ -16255,7 +16520,53 @@ void c_action_stmt_function_stmt(Token_t *label, Token_t *functionName, Token_t 
 void c_action_end_of_stmt(Token_t * eos)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_end_of_stmt() astNodeStack = %zu \n",astNodeStack.size());
+          printf ("In c_action_end_of_stmt() astNodeStack size = %zu astExpressionStack size = %zu \n",astNodeStack.size(),astExpressionStack.size());
+
+  // DQ (1/28/2009): If at this point we have not yet setup the function scope (see
+  // test2007_19.f90) then do so.
+  // build_implicit_program_statement_if_required();
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R1238 c_action_end_of_stmt()");
+#endif
+
+#if 0
+  // DQ (1/28/2009): I think we can assert this, and if so we can eliminate the call 
+  // to buildVariableDeclarationAndCleanupTypeStack(). 
+  // (Later) We can not assert this since test2007_13.f90 demonstrates that the
+  // variable declaration rules called for variables in structure declarations (fields)
+  // are different from those called for the function scope (R504 is not called,
+  // but R442 should be called).  So handle the variables in R442 and leave this
+  // assertion in place.
+
+  // DQ (1/28/2009): Commenting out as test for test2007_19.f90
+  // ROSE_ASSERT (astNodeStack.empty() == true && astBaseTypeStack.empty() == true);
+
+  // DQ (1/28/2009): Refactored this code so it could be called in R442, R501, R504 and R1238.
+  // Note that there is no token for this rule, so we pass in a NULL pointer.
+     buildVariableDeclarationAndCleanupTypeStack(NULL);
+#endif
+
+#if 0
+  // Debugging support...
+     ROSE_ASSERT(astScopeStack.empty() == false);
+     SgStatementPtrList statementList = astScopeStack.front()->generateStatementList();
+     printf ("In c_action_end_of_stmt(): statementList.size() = %zu \n",statementList.size());
+     for (SgStatementPtrList::iterator i = statementList.begin(); i != statementList.end(); i++)
+        {
+          printf ("   statement in scope = %p = %s = %s line = %d file = %s \n",(*i),(*i)->class_name().c_str(),SageInterface::get_name(*i).c_str(),(*i)->get_file_info()->get_line(),(*i)->get_file_info()->get_filenameString().c_str());
+        }
+#endif
+
+#if 0
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R1238 c_action_end_of_stmt()");
+#endif
+
+  // DQ (1/28/2009): This should be something that we can assert now!
+  // Comment this out see test2007_19.f90.
+  // ROSE_ASSERT(astNodeStack.empty() == true);
    }
 
 void c_action_start_of_file(const char *filename)
@@ -16263,30 +16574,104 @@ void c_action_start_of_file(const char *filename)
   // New function to support Fortran include mechanism
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_start_of_file(%s) \n",filename);
+#if 0
+     printf ("astIncludeStack.size() = %zu \n",astIncludeStack.size());
+     printf ("##### Swiching from %s to %s \n",(astIncludeStack.size() == 0) ? "FIRST FILE" : getCurrentFilename().c_str(),filename);
+#endif
 
   // This is the earliest location to setup the global scope (I think).
      initialize_global_scope_if_required();
 
+#if 0
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of c_action_start_of_file()");
+#endif
+
+  // DQ (1/27/2009): This should be clear before going onto a new include file.
+//   ROSE_ASSERT(astNodeStack.empty() == true);
+
      string filenameString = filename;
 
      static bool firstTime = true;
-     if (firstTime == true)
+
+  // DQ (1/28/2009): there are two cases wehre we don't want to generate an include IR node:
+  //    1) When this is the first time were are reading a fortran source file.
+  //    2) When we have switch file streams to read an *.rmod file as part of
+  //       processing a "use" statement referencing a module.
+  // if (firstTime == true)
+     if ( (firstTime == true) || (isARoseModuleFile(filename) == true) )
         {
+       // Ignore the first time this function is called...
           firstTime = false;
         }
        else
         {
+       // After the first time, ever call to this function is significant (represents use of the
+       // Fortran include mechanism; not formally a part of the language grammar).
+
           SgFortranIncludeLine* includeLine = new SgFortranIncludeLine(filenameString);
+
+          if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+               printf ("Note: Need a token to represent the the filename so that we can get the position of the include statment \n");
+
+       // Get the last statment (this is an expensive way to do that).
+          SgScopeStatement* scope = astScopeStack.front();
+          SgStatement* lastStatement = scope;
+          SgStatementPtrList statementList = scope->generateStatementList();
+          if (statementList.empty() == false)
+             {
+               lastStatement = statementList.back();
+             }
+
+          int lineNumberOfLastStatement = (astScopeStack.empty() == false) ? lastStatement->get_file_info()->get_line() : 0;
+
+       // Increment to next line since an include must be on it's own line (as I understand the Fortran standard).
+          lineNumberOfLastStatement++;
+
+          int columnNumber = 0;
+
+       // The filename where the include is located is not the filename specified with the include!
+          string filenameOfIncludeLocation = getCurrentFilename();
+
+          Sg_File_Info* fileInfo = new Sg_File_Info(filenameOfIncludeLocation,lineNumberOfLastStatement,columnNumber);
 
        // We need a way to get the source position o fthe Fortran include line.
        // setSourcePositionCompilerGenerated(includeLine);
-          setSourcePosition(includeLine);
+       // setSourcePosition(includeLine);
+          includeLine->set_file_info(fileInfo);
+
+          includeLine->get_file_info()->display("c_action_start_of_file()");
+
+       // DQ (1/27/2009): Make sure that the filenames match (make sure this is a STL string equality test!).
+       // This is a test for a recursive file inclusion.
+       // This fails for: module_A_file.f90 or module_B_file.f90.  Also for these
+       // files the call to c_action_start_of_file() is triggered by a symantic
+       // handling of the use statement, not the existance of the Fortran include
+       // so it should be a mistake to insert an Fortran include statement!
+       // ROSE_ASSERT(includeLine->get_file_info()->get_filenameString() != string(filename));
 
           ROSE_ASSERT(astScopeStack.empty() == false);
+#if 0
+          printf ("Inserting includeLine into astScopeStack.front() = %s \n",astScopeStack.front()->class_name().c_str());
 
-       // printf ("Inserting includeLine into astScopeStack.front() = %s \n",astScopeStack.front()->class_name().c_str());
+          printf ("BEFORE include: statementList.size() = %zu \n",statementList.size());
+          for (SgStatementPtrList::iterator i = statementList.begin(); i != statementList.end(); i++)
+             {
+               printf ("   statement in scope = %p = %s = %s line = %d file = %s \n",(*i),(*i)->class_name().c_str(),SageInterface::get_name(*i).c_str(),(*i)->get_file_info()->get_line(),(*i)->get_file_info()->get_filenameString().c_str());
+             }
+#endif
 
+       // This does not always appear to be appending to the scope
           astScopeStack.front()->append_statement(includeLine);
+#if 0
+       // Reset the statementList after the append_statment() call.
+          statementList = scope->generateStatementList();
+          printf ("AFTER include: statementList.size() = %zu \n",statementList.size());
+          for (SgStatementPtrList::iterator i = statementList.begin(); i != statementList.end(); i++)
+             {
+               printf ("   statement in scope = %p = %s = %s line = %d file = %s \n",(*i),(*i)->class_name().c_str(),SageInterface::get_name(*i).c_str(),(*i)->get_file_info()->get_line(),(*i)->get_file_info()->get_filenameString().c_str());
+             }
+#endif
         }
 
      astIncludeStack.push_back(filenameString);
@@ -16303,6 +16688,17 @@ void c_action_end_of_file()
           printf ("In c_action_end_of_file() filenameString = %s \n",filenameString.c_str());
 
      astIncludeStack.pop_back();
+
+#if 0
+  // Debugging support...
+     ROSE_ASSERT(astScopeStack.empty() == false);
+     SgStatementPtrList statementList = astScopeStack.front()->generateStatementList();
+     printf ("AFTER include: statementList.size() = %zu \n",statementList.size());
+     for (SgStatementPtrList::iterator i = statementList.begin(); i != statementList.end(); i++)
+        {
+          printf ("   statement in scope = %p = %s = %s line = %d file = %s \n",(*i),(*i)->class_name().c_str(),SageInterface::get_name(*i).c_str(),(*i)->get_file_info()->get_line(),(*i)->get_file_info()->get_filenameString().c_str());
+        }
+#endif
    }
 
 void c_action_cleanUp()

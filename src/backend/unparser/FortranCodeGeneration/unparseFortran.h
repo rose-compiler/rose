@@ -400,6 +400,9 @@ class FortranCodeGeneration_locatedNode : public UnparseLanguageIndependentConst
           void getDirectives ( char* sourceFilename );
 #endif
 
+       // DQ (1/30/2009): Added support for Fortran allocate and deallocate statements.
+          void unparseAllocateStatement(SgStatement* stmt, SgUnparse_Info& info); 
+          void unparseDeallocateStatement(SgStatement* stmt, SgUnparse_Info& info);
 
       //! begin the unparser (unparser.C)
           void run_unparser();

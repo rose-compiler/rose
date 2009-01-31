@@ -240,7 +240,12 @@ void
 setSourcePosition  ( SgLocatedNode* locatedNode, Token_t* token )
    {
      if ( SgProject::get_verbose() > 0 )
-          printf ("In setSourcePosition locatedNode = %p = %s token = %p line = %d \n",locatedNode,locatedNode->class_name().c_str(),token,token != NULL ? token->line : -1);
+        {
+       // DQ (1/26/2009): Output additional information as to what file we are in now that we support
+       // more complex file include handling and we are testing more complex multi-file support.
+       // printf ("In setSourcePosition locatedNode = %p = %s token = %p line = %d \n",locatedNode,locatedNode->class_name().c_str(),token,token != NULL ? token->line : -1);
+          printf ("In setSourcePosition locatedNode = %p = %s token = %p (file = %s) line = %d \n",locatedNode,locatedNode->class_name().c_str(),token,getCurrentFilename().c_str(),token != NULL ? token->line : -1);
+        }
 
   // The SgLocatedNode has both a startOfConstruct and endOfConstruct source position.
      ROSE_ASSERT(locatedNode != NULL);
@@ -1221,6 +1226,9 @@ buildLabelRefExp(SgExpression* expression)
        // printf ("################## In buildLabelRefExp(): labelRefExp = %p value = %d \n",labelRefExp,labelRefExp->get_symbol()->get_numeric_label_value());
 
           setSourcePosition(labelRefExp);
+
+       // DQ (1/26/2009): Set the parent of the SgIntVal IR node.
+          integerValue->set_parent(labelRefExp);
 
           returnExpression = labelRefExp;
         }
@@ -3057,6 +3065,12 @@ buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attrib
      ROSE_ASSERT(sourcePositionToken != NULL);
      setSourcePosition(attributeSpecificationStatement,sourcePositionToken);
 
+#if 0
+  // DQ (1/29/2009): the save statement will be associated with the wrong file if it is the
+  // last statement of an include file.  See tests: test2009_12.f test2009_13.f
+     attributeSpecificationStatement->get_file_info()->display("In buildAttributeSpecificationStatement()");
+#endif
+
      attributeSpecificationStatement->set_attribute_kind(kind);
 
   // printf ("In buildAttributeSpecificationStatement(): astNameStack.size() = %zu \n",astNameStack.size());
@@ -4356,4 +4370,120 @@ isPubliclyAccessible( SgSymbol* symbol )
      return returnValue;
    }
 
+void
+cleanupTypeStackAfterDeclaration()
+   {
+  // This function is called in R501 c_action_type_declaration_stmt().
 
+  // We should have used all the types stored on the stack at this point!
+  // Except for the case of an array type which will have pushed the base type 
+  // onto the stack and then an array type.  In this case we will still have 
+  // the base type on the stack.  If there was a scalar variable then it will 
+  // have used the type on the stack, but we should take care of this by always 
+  // pushing a type onto the stack for each variable to use and then making 
+  // sure that we have the base type still on the stack at this point, so the 
+  // stack at this point should never be empty and should have the unused base 
+  // type on top (and the stack size should be 1).
+
+     if (astTypeStack.empty() == false)
+        {
+       // This should be only a base type that has been left on the stack.
+       // printf ("WARNING, astTypeStack not empty: astTypeStack.front() = %p = %s \n",astTypeStack.front(),astTypeStack.front()->class_name().c_str());
+
+       // If there was an array declaration then the base type is left on the stack, else 
+       // the stack is empty.  Cleanup the stack of the one possible base type left there!
+       // astTypeStack.pop_front();
+
+          if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+               printf ("WARNING, astTypeStack not empty: astTypeStack.front() = %p = %s (CLEARING astTypeStack) \n",astTypeStack.front(),astTypeStack.front()->class_name().c_str());
+
+          astTypeStack.clear();
+#if 0
+          if (astTypeStack.empty() == false)
+               outputState("Error: astTypeStack.empty() == false in R502 c_action_declaration_type_spec()");
+#endif
+          ROSE_ASSERT(astTypeStack.empty() == true);
+        }
+
+     if (astBaseTypeStack.empty() == false)
+        {
+          if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+               printf ("WARNING, astBaseTypeStack not empty: astBaseTypeStack.front() = %p = %s (CLEARING astBaseTypeStack) \n",astBaseTypeStack.front(),astBaseTypeStack.front()->class_name().c_str());
+
+          astBaseTypeStack.clear();
+#if 0
+          if (astBaseTypeStack.empty() == false)
+               outputState("Error: astBaseTypeStack.empty() == false in R502 c_action_declaration_type_spec()");
+#endif
+          ROSE_ASSERT(astBaseTypeStack.empty() == true);
+        }
+   }
+
+
+
+
+void
+buildVariableDeclarationAndCleanupTypeStack( Token_t * label )
+   {
+  // This function is called in R501 c_action_type_declaration_stmt().
+
+  // DQ (1/28/2009): Part of fix for nested include (test2009_14.f).
+  // Only try to build a varialbe if there is information to support this on the stack.
+  // I am trying to have variable built earlier than before since the Fortran "include"
+  // mechanism can be called before this R501 rule and that causes problems.  Basically
+  // each new include file needs to be started with an empty stack(s).
+     if (astNodeStack.empty() == false && astBaseTypeStack.empty() == false)
+        {
+          SgVariableDeclaration* variableDeclaration = buildVariableDeclaration(label,false);
+
+          ROSE_ASSERT(variableDeclaration->get_file_info()->isCompilerGenerated() == false);
+
+       // DQ (11/29/2007): commented out, we can't assume this (see test2007_133.f03)
+       // DQ (9/30/2007):
+       // I think this is now uniformally true for all type declarations.  If so then we can
+       // remove the conditionaly handling below.  See the note in R504 c_action_entity_decl()
+       // for more details.
+       // ROSE_ASSERT(astTypeStack.empty() == true);
+#if 0
+          outputState("In buildVariableDeclarationAndCleanupTypeStack() (after buildVariableDeclaration())");
+#endif
+       // We should have used all the types stored on the stack at this point!
+       // Except for the case of an array type which will have pushed the base type 
+       // onto the stack and then an array type.  In this case we will still have 
+       // the base type on the stack.  If there was a scalar variable then it will 
+       // have used the type on the stack, but we should take care of this by always 
+       // pushing a type onto the stack for each variable to use and then making 
+       // sure that we have the base type still on the stack at this point, so the 
+       // stack at this point should never be empty and should have the unused base 
+       // type on top (and the stack size should be 1).
+       // ROSE_ASSERT(astTypeStack.empty() == true);
+       // ROSE_ASSERT(astTypeStack.size() == 1);
+       // astTypeStack.pop_front();
+
+       // DQ (1/27/2009): Refactored code so that I can handle test2009_13.f (nested include files).
+          cleanupTypeStackAfterDeclaration();
+
+          ROSE_ASSERT(getTopOfScopeStack()->variantT() == V_SgBasicBlock || getTopOfScopeStack()->variantT() == V_SgClassDefinition);
+
+          getTopOfScopeStack()->append_statement(variableDeclaration);
+        }
+   }
+
+
+bool
+isARoseModuleFile( string filename )
+   {
+     bool result = false;
+
+     string targetSuffix = MOD_FILE_SUFFIX;
+     size_t filenameLength = filename.size();
+
+  // if ( (filenameLength > 5) && (filename.substr(filenameLength - 5) == ".rmod") )
+     if ( (filenameLength > targetSuffix.size()) && (filename.substr(filenameLength - 5) == MOD_FILE_SUFFIX) )
+          result = true;
+#if 0
+     printf ("################ filename = %s result = %s \n",filename.c_str(),(result == true) ? "true" : "false");
+#endif
+
+     return result;
+   }

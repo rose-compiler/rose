@@ -18,7 +18,12 @@ class Unparser;
 // #include IOSTREAM_HEADER_FILE
 #include <iostream>
 
-#define MAXCHARSONLINE 1000
+// DQ (1/26/2009): a value of 1000 is too small for Fortran code (see test2009_09.f; from Bill Henshaw)
+// This value is now increased to 1,000,000.  If this is too small then likely we want to
+// know about it anyway!
+// #define MAXCHARSONLINE 1000
+#define MAXCHARSONLINE 1000000
+
 #define MAXINDENT  60
 
 // DQ: Try out a larger setting
@@ -60,14 +65,14 @@ typedef enum
 
 class UnparseFormat 
    {
-     int currentLine; //! stores current line number being unparsed
+     int currentLine;   //! stores current line number being unparsed
      int currentIndent; //! indent of the current line
      int chars_on_line; //! the number of characters printed on the line
-     int stmtIndent; // the current indent for statement
-     int linewrap; // the characters allowed perline before wraping the line
-     int indentstop; // the number of spaces allowed for indenting
-     SgLocatedNode* prevnode;
-     std::ostream* os; //! the directed output for the current file
+     int stmtIndent;    //! the current indent for statement
+     int linewrap;      //! the characters allowed perline before wraping the line
+     int indentstop;    //! the number of spaces allowed for indenting
+     SgLocatedNode* prevnode; //! The previous SgLocatedNode unparsed
+     std::ostream* os;  //! the directed output for the current file
      UnparseFormatHelp *formatHelpInfo;
 
   // void insert_newline(int i = 1, int indent = -1);
