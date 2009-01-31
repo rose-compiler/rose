@@ -20,6 +20,11 @@
 #include <string>
 
 /* ---------------------------------------------------------------- */
+namespace RoseHPCT
+{
+  //! A quick reference to all file nodes of Profile IR
+  std::set<const RoseHPCT::IRNode *> profFileNodes_;	
+}
 
 static
 bool
@@ -67,6 +72,7 @@ doLinesOverlap (const SgLocatedNode* node,
 /*!
  *  \brief Implements a RoseHPCTIR tree walk which searches for a metric
  *  that matches the given Sage node.
+ *  true means the traversal is read-only
  */
 class MetricFinder : public Trees::Traversal<RoseHPCT::IRTree_t, true>
 {
@@ -86,9 +92,11 @@ public:
   /*! \brief Returns 'true' if a match found. */
   bool found (void) const;
 
-  /*! \brief Returns a list of matching nodes. */
+  /*! \brief Returns a set of matching nodes. */
   const MatchSet_t& getMatches (void) const;
 
+  /*! \brief Returns a set of file nodes, regardless matching status */
+  const MatchSet_t& getFiles (void) const;
 protected:
 
   MetricFinder (void);
@@ -109,6 +117,7 @@ protected:
 private:
   const SgLocatedNode* target_; //!< Node to find
   MatchSet_t matches_; //!< All matching ProfIR nodes
+  MatchSet_t files_; //!< All file nodes in profIR, used to find hottest file later on
   bool verbose_; //!< True <==> verbose messaging desired by caller
   bool prune_branch_; //!< Indicates a tree branch may be pruned from search
 
@@ -147,6 +156,7 @@ public:
   //note that a profile IR node may corresponding multiple AST nodes(a code range)
   typedef std::map<const RoseHPCT::IRNode *, SgLocNodeSet_t> AttachedNodes_t;
   AttachedNodes_t& getAttachedNodes (void);
+  std::set<const RoseHPCT::IRNode *>& getProfFileNodes (void);
   //! Insert the metrics info. into source as comments, mostly for debugging
   void annotateSourceCode(void);
 protected:
@@ -156,6 +166,7 @@ protected:
 private:
   const RoseHPCT::IRTree_t* hpc_root_; //!< Root of profiling data tree
   AttachedNodes_t attached_; //!< Lists of attached nodes
+  std::set<const RoseHPCT::IRNode *> files_; //!< set of all profir file nodes
   bool verbose_; //!< Enable verbose messaging
 };
 
@@ -227,6 +238,11 @@ MetricFinder::getMatches (void) const
   return matches_;
 }
 
+const MetricFinder::MatchSet_t&
+MetricFinder::getFiles(void) const
+{
+  return files_;
+}
 bool
 MetricFinder::isTargetSgGlobal (void) const
 {
@@ -280,15 +296,20 @@ void
 MetricFinder::visit (const File* f)
 {
   if (f)
+  {
+    files_.insert(f);
+    if (!doFilenamesMatch (target_, f->getName ()))
+      prune_branch_ = true;
+    else  // match file name
     {
-      if (!doFilenamesMatch (target_, f->getName ()))
+      if (isTargetSgGlobal ()) 
+      // match SgNode type: looking for a file (global) scope
+      {
+        matches_.insert (f);
         prune_branch_ = true;
-      else if (isTargetSgGlobal ()) // looking for a file (global) scope
-        {
-          matches_.insert (f);
-          prune_branch_ = true;
-        }
+      }
     }
+  }
 }
 
 void
@@ -488,15 +509,29 @@ MetricAttachTraversal::getAttachedNodes (void)
   return attached_;
 }
 
+std::set<const RoseHPCT::IRNode *>&
+MetricAttachTraversal::getProfFileNodes(void)
+{
+  return files_;
+}
 void
 MetricAttachTraversal::visit (SgNode* n)
 {
+  static int exe_counter=0; // used to collect file nodes of profir only once
   SgLocatedNode* n_loc = isSgLocatedNode (n);
   if (n_loc)
     {
       MetricFinder finder (n_loc);
       finder.setVerbose (verbose_);
+      // for current SgNode, find matching prof ir nodes
       finder.traverse (hpc_root_);
+      // for collecting File nodes of profile IR
+      exe_counter++;
+      if (exe_counter==1) 
+       {
+         // store them into MetricAttachTraversal::files
+         files_ = finder.getFiles();
+       } 
       if (finder.found ())
         {
           MetricFinder::MatchSet_t matches = finder.getMatches ();
@@ -723,6 +758,7 @@ MetricFixupTraversal::visit (SgNode* n)
 }
 
 /* ---------------------------------------------------------------- */
+// attach a profile ir tree to a sage project
 void
 RoseHPCT::attachMetrics (const IRTree_t* hpc_root, SgProject* sage_root,
 			bool verbose)
@@ -731,7 +767,20 @@ RoseHPCT::attachMetrics (const IRTree_t* hpc_root, SgProject* sage_root,
   attacher.setVerbose (verbose);
   attacher.traverse (sage_root, preorder);
   if (verbose)
+  {  
     attacher.annotateSourceCode();
+#if 0    
+    std::set<const RoseHPCT::IRNode *>&files = attacher.getProfFileNodes();
+    std::set<const RoseHPCT::IRNode *>::iterator iter= files.begin();
+    for (;iter!=files.end(); iter++)
+      cout<<"debug:"<< (*iter)->toString()<<endl;
+#endif       
+  }
+  // Accumulate file metrics, used to find hot files later on
+  std::set<const RoseHPCT::IRNode *>&files = attacher.getProfFileNodes();
+  std::set<const RoseHPCT::IRNode *>::iterator iter= files.begin();
+  for (;iter!=files.end(); iter++)
+   profFileNodes_.insert(*iter); 
 
   MetricAttachTraversal::AttachedNodes_t& attached
     = attacher.getAttachedNodes ();
