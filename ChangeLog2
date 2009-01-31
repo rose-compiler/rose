@@ -1,3 +1,96 @@
+2009-01-31 06:45  dquinlan
+
+	* [r4226]
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_12.f,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_12.h,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_12_nested.h,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_13.f,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_13.h,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_14.f,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_14.h,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_15.f90,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_16.f90,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_17.f90,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_18.f90,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_19.f90,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_20.f90,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_21.f90,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_22.f90,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_23.f90,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_24.f90,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_25.f90,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_26.f90:
+	  Added missing Fortran test codes.
+
+2009-01-31 03:26  dquinlan
+
+	* [r4225]
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_10.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_01.f90,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_01b.f90,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_07.f,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_08.f,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_09.f,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_10.f,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_11.f,
+	  /trunk/ROSE/developersScratchSpace/Dan/translator_tests/exceptionHandling.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/translator_tests/input_exceptionHandling.C,
+	  /trunk/ROSE/src/ROSETTA/src/statement.C,
+	  /trunk/ROSE/src/backend/unparser/FortranCodeGeneration/unparseFortran.h,
+	  /trunk/ROSE/src/backend/unparser/FortranCodeGeneration/unparseFortran_modfile.C,
+	  /trunk/ROSE/src/backend/unparser/FortranCodeGeneration/unparseFortran_statements.C,
+	  /trunk/ROSE/src/backend/unparser/formatSupport/unparse_format.h,
+	  /trunk/ROSE/src/frontend/OpenFortranParser_SAGE_Connection/FortranParserActionROSE.C,
+	  /trunk/ROSE/src/frontend/OpenFortranParser_SAGE_Connection/fortran_support.C,
+	  /trunk/ROSE/src/frontend/OpenFortranParser_SAGE_Connection/fortran_support.h,
+	  /trunk/ROSE/src/frontend/SageIII/astMerge/collectAssociateNodes.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C: Summary: Added
+	  more Fortran support
+	  
+	  Detailed changes in this commit:
+	  1) Fixed test2009_07.f, demonstrating use of implied do loop in
+	  print statement inside
+	  an if statement.
+	  2) Added support for R421 "c_action_complex_literal_constant()".
+	  3) Fixed support for Fortran declarations using "<expr>:*"
+	  4) Modified max line length of generated code to be 1,000,000
+	  characters
+	  (test2009_09.f demonstrated obscene line lengths). Previous max
+	  line length was 1000 and would introduce a <CR> at the nearest
+	  expression. This was a problem with 8K character fortran lines
+	  because we don't get the information aobut continuation line
+	  positions
+	  and the source code we generate is compiled so it can be
+	  contiguous on
+	  a line (we use the -ffree-line-length-none or
+	  -ffixed-line-length-none
+	  depending of if the generated file is free or fixed format). In
+	  general
+	  we preserve the fixed or free format of the input code, but fixed
+	  form
+	  can be output as free format or visa virsa.
+	  5) Fixed Fortran support to handle two examples of machine
+	  generated Fortran that
+	  typically breaks many Fortran compiler.
+	  6) Continuing to work on SPEC Fortran benchmark bug reported by
+	  Imperial.
+	  7) Added support for complex literals to Fortran support in ROSE.
+	  8) Fixed Fortran allocate statement
+	  9) Fixed Fortran deallocate statement
+	  10) Identify several include bugs which will be worked on with
+	  LANL over the weekend.
+
+2009-01-31 01:26  liao6
+
+	* [r4223]
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/include/rosehpct/profir2sage/profir2sage.hh,
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/src/profir2sage/attach.cc:
+	  Extended roseHPCToolkit 's MetricAttachTraversal() to accumulate
+	  file-related performance metrics.
+	  This is useful for top-down performance analysis to find hot
+	  files.
+
 2009-01-30 17:49  liao6
 
 	* [r4218]
