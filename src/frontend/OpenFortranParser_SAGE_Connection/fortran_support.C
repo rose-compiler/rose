@@ -3602,6 +3602,30 @@ convertTypeOnStackToArrayType( int count )
      ROSE_ASSERT(astBaseTypeStack.empty() == false);
      SgType* baseType = astBaseTypeStack.front();
 
+  // DQ (2/1/2009): If this is associated with a pointer to an array, then the base type has already been 
+  // converted to a pointer and we need to undo this new feature. The problem is that test2009_27.f90
+  // demonstrates that a pointer type is was not properly built (now fixed) and in that case the
+  // c_action_array_spec() rule is not called.  So we have to convert base types to pointer types 
+  // when we see the pointer attribute, however if we later see an array attribute then it is a 
+  // pointer to an array, not a array of pointers, so we have to undo the pointer conversion and
+  // subsitute an array converstion (to get an array of the base type) and then generate the pointer
+  // to the array.  Or so I think at the moment!
+     SgPointerType* pointerType = isSgPointerType(baseType);
+     bool convertedPointerBaseTypeToArrayOfBaseType = false;
+     if (pointerType != NULL)
+        {
+          printf ("In convertTypeOnStackToArrayType(): Reaching for the base type of SgPointerType (to undo convertion of base type to pointer type) \n");
+          SgType* tmp_baseType = pointerType->get_base_type();
+          ROSE_ASSERT(tmp_baseType != NULL);
+          baseType = tmp_baseType;
+
+       // Delete the pointer type (should not have been shared)...
+          delete pointerType;
+          pointerType = NULL;
+
+          convertedPointerBaseTypeToArrayOfBaseType = true;
+        }
+
      ROSE_ASSERT(baseType != NULL);
 
   // Leave this on the stack so that other arrays or references to it can use it as a 
@@ -4588,4 +4612,17 @@ generateAssignmentStatement(Token_t* label, bool isPointerAssignment )
        // If this is NOT a where statement then the stack should be empty.
           ROSE_ASSERT(astExpressionStack.empty() == true);
         }
+   }
+
+
+
+void
+convertBaseTypeOnStackToPointer()
+   {
+     ROSE_ASSERT(astBaseTypeStack.empty() == false);
+     SgType* baseType = astBaseTypeStack.front();
+     astBaseTypeStack.pop_front();
+     ROSE_ASSERT(astBaseTypeStack.empty() == true);
+     SgPointerType* pointerType = new SgPointerType(baseType);
+     astBaseTypeStack.push_front(pointerType);
    }

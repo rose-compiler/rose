@@ -1665,7 +1665,7 @@ void c_action_data_component_def_stmt(Token_t *label, Token_t *eos, ofp_bool has
 void c_action_component_attr_spec(Token_t * attrKeyword, int specType)
 {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_attr_spec(): attrKeyword = %p = %s specType = %d \n",attrKeyword,attrKeyword != NULL ? attrKeyword->text : "NULL",specType);
+          printf ("In c_action_component_attr_spec(): attrKeyword = %p = %s specType = %d \n",attrKeyword,attrKeyword != NULL ? attrKeyword->text : "NULL",specType);
 
 /*
 static const int ComponentAttrSpec_pointer=ComponentAttrSpecBase+0;
@@ -1682,6 +1682,9 @@ static const int ComponentAttrSpec_len=ComponentAttrSpecBase+6;
              {
                if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                     printf ("found a ComponentAttrSpec_pointer spec \n");
+
+            // DQ (2/1/2009): This is the earlies point to change this.
+               convertBaseTypeOnStackToPointer();
                break;
              }
 
@@ -3025,6 +3028,11 @@ static const int AttrSpec_NON_OVERRIDABLE=AttrSpecBase+22;
 static const int AttrSpec_DEFERRED=AttrSpecBase+23;
 */
 
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R503 c_action_attr_spec()");
+#endif
+
      switch(attr)
         {
            case AttrSpec_none:
@@ -3130,6 +3138,20 @@ static const int AttrSpec_DEFERRED=AttrSpecBase+23;
               {
                  if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                       printf ("found a POINTER spec \n");
+
+              // DQ (2/1/2009): Change the type on the astBaseTypeStack 
+              // to be a pointer with that base type. This attribute 
+              // really should have an immediate effect.
+#if 1
+                 convertBaseTypeOnStackToPointer();
+#else
+                 ROSE_ASSERT(astBaseTypeStack.empty() == false);
+                 SgType* baseType = astBaseTypeStack.front();
+                 astBaseTypeStack.pop_front();
+                 ROSE_ASSERT(astBaseTypeStack.empty() == true);
+                 SgPointerType* pointerType = new SgPointerType(baseType);
+                 astBaseTypeStack.push_front(pointerType);
+#endif
                  break;
               }
 
@@ -3211,7 +3233,7 @@ static const int AttrSpec_DEFERRED=AttrSpecBase+23;
           astAttributeSpecStack.push_front(attr);
         }
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R503 c_action_attr_spec()");
 #endif
@@ -3241,7 +3263,7 @@ void c_action_entity_decl(Token_t * id)
           printf ("In R504 c_action_entity_decl(): save variableName = %s file = %s \n",id->text,current_filename.c_str());
         }
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R504 c_action_entity_decl()");
 #endif
@@ -3474,7 +3496,7 @@ void c_action_entity_decl(Token_t * id)
      astNameStack.pop_front();
 #endif
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R504 c_action_entity_decl()");
 #endif
@@ -16697,7 +16719,7 @@ void c_action_end_of_stmt(Token_t * eos)
   // test2007_19.f90) then do so.
   // build_implicit_program_statement_if_required();
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R1238 c_action_end_of_stmt()");
 #endif
@@ -16745,7 +16767,7 @@ void c_action_start_of_file(const char *filename)
   // New function to support Fortran include mechanism
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_start_of_file(%s) \n",filename);
-#if 1
+#if 0
      printf ("astIncludeStack.size() = %zu \n",astIncludeStack.size());
      printf ("##### Swiching from %s to %s \n",(astIncludeStack.size() == 0) ? "FIRST FILE" : getCurrentFilename().c_str(),filename);
 #endif

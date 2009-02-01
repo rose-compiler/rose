@@ -772,8 +772,7 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
        // DQ (8/21/2005): Suppress comments when unparsing to build type names
           if ( !info.SkipComments() || !info.SkipCPPDirectives() )
              {
-               curprint ( "\n /* In unparseExpression paren " + expr->sage_class_name() +
-				  " paren printParen = " + (printParen ? "true" : "false") + " */ \n");
+               curprint ( string("\n /* In unparseExpression paren ") + expr->sage_class_name() + string(" paren printParen = ") + (printParen ? "true" : "false") + string(" */ \n"));
              }
 #endif
        // if (printParen)
@@ -1620,8 +1619,8 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
                if (addParensForLhs == true)
                   {
                  // DQ (2/22/2005): Removed special case from Unparse_ExprStmt::unp->u_sage->PrintStartParen(SgExpression* expr, SgUnparse_Info& info)
-                 // curprint ( "/* added paren in binary operator */ ( ";
-                    curprint ( "(");
+                 // curprint ("/* added paren in binary operator */ ( ");
+                    curprint ("(");
                   }
 
             // unparseExpression(binary_op->get_lhs_operand(), info);
@@ -1630,8 +1629,8 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
 
                if (addParensForLhs == true)
                   {
-                 // curprint ( "/* closing paren */ ) ";
-                    curprint ( ")");
+                 // curprint ("/* closing paren */ ) ");
+                    curprint (")");
                   }
 
             // Check if the rhs is not a member function. If so, then it is most likely a  

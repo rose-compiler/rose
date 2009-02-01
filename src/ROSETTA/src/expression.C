@@ -547,8 +547,25 @@ Grammar::setUpExpressions ()
      BinaryOp.setSubTreeFunctionPrototype    ( "HEADER_PRECEDENCE", "../Grammar/Expression.code" );
      BinaryOp.excludeFunctionPrototype       ( "HEADER_PRECEDENCE", "../Grammar/Expression.code" );
 
-     // Now set the precedence values for each leaf of the grammar 
-     // (where the precedence member function is defined)
+
+  // DQ (2/1/2009: Added comment.
+  // ***********************************************************
+  //    This whole mechanism is not used presently.  Someone
+  //    implemented a table in: "int GetPrecedence(int variant)"
+  //    in file: modified_sage.C in the unparser.  This table 
+  //    is used to get all operator precedence information.
+  //    The information set below is an older mechanism (that
+  //    was ignored by the person who reimplemented the precedence
+  //    support. Either this code should be kept and the GetPrecedence()
+  //    function modified to use it, or this code should be removed.
+  //    I would like to have the precedence be part of the operators
+  //    instead of accessed via the unparser, so I would prefer to
+  //    modify the GetPrecedence() function in the unparser.
+  //    This may be done soon.
+  // ***********************************************************
+
+  // Now set the precedence values for each leaf of the grammar 
+  // (where the precedence member function is defined)
      SizeOfOp.editSubstitute        ( "PRECEDENCE_VALUE", "16" );
      TypeIdOp.editSubstitute        ( "PRECEDENCE_VALUE", "16" );
      ArrowExp.editSubstitute        ( "PRECEDENCE_VALUE", "16" );
