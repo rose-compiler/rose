@@ -6,6 +6,8 @@ noinst_LTLIBRARIES = libbinaryMidend.la
 
 # Isolated part of library that is independent of the mysql database
 libbinaryMidend_la_DEPENDENCIES =
+
+if ROSE_USE_SQLITE_DATABASE
 libbinaryMidend_la_SOURCES =  RoseBin_CompareAnalysis.cpp RoseBin_ControlFlowAnalysis.cpp \
      RoseBin_printInstructions.cpp RoseBin_DataFlowAnalysis.cpp \
      RoseBin_CallGraphAnalysis.cpp RoseBin_FlowAnalysis.cpp \
@@ -14,8 +16,20 @@ libbinaryMidend_la_SOURCES =  RoseBin_CompareAnalysis.cpp RoseBin_ControlFlowAna
      dataflowanalyses/InterruptAnalysis.cpp \
      dataflowanalyses/RoseBin_Emulate.cpp \
      dataflowanalyses/RoseBin_DataFlowAbstract.cpp \
-     graph/RoseBin_DotGraph.cpp graph/RoseBin_Graph.cpp graph/RoseBin_GmlGraph.cpp \
-     libraryIdentification/libraryIdentification_reader.C libraryIdentification/libraryIdentification_writer.C
+     libraryIdentification/libraryIdentification_reader.C \
+     libraryIdentification/libraryIdentification_writer.C \
+     graph/RoseBin_DotGraph.cpp graph/RoseBin_Graph.cpp graph/RoseBin_GmlGraph.cpp
+else
+libbinaryMidend_la_SOURCES =  RoseBin_CompareAnalysis.cpp RoseBin_ControlFlowAnalysis.cpp \
+     RoseBin_printInstructions.cpp RoseBin_DataFlowAnalysis.cpp \
+     RoseBin_CallGraphAnalysis.cpp RoseBin_FlowAnalysis.cpp \
+     dataflowanalyses/RoseBin_DefUseAnalysis.cpp \
+     dataflowanalyses/RoseBin_VariableAnalysis.cpp \
+     dataflowanalyses/InterruptAnalysis.cpp \
+     dataflowanalyses/RoseBin_Emulate.cpp \
+     dataflowanalyses/RoseBin_DataFlowAbstract.cpp \
+     graph/RoseBin_DotGraph.cpp graph/RoseBin_Graph.cpp graph/RoseBin_GmlGraph.cpp
+endif
 
 BUILT_SOURCES = 
 
