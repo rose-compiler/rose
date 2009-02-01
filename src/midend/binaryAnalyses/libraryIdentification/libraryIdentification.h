@@ -1,3 +1,5 @@
+#ifndef LIBRARY_IDENTIFICATION_H
+#define LIBRARY_IDENTIFICATION_H
 
 namespace LibraryIdentification
    {
@@ -47,4 +49,4 @@ namespace LibraryIdentification
         };
 
    }
-
+#endif

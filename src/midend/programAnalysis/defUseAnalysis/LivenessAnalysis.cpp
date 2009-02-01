@@ -70,7 +70,7 @@ LivenessAnalysis::printInAndOut(SgNode* sgNode) {
   if (DEBUG_MODE)
     cout << endl;
 
-  std::vector<SgInitializedName*> currOut = out[sgNode];
+  std::vector<SgInitializedName*> currOut =  out.find(sgNode) != out.end() ?  out[sgNode] : std::vector<SgInitializedName*>() ;
   std::vector<SgInitializedName*>::const_iterator it3 = currOut.begin();
   if (DEBUG_MODE)
     cout << "   out : " ;
@@ -120,6 +120,8 @@ bool LivenessAnalysis::hasANodeAboveCurrentChanged(T source) {
   return changed;
 
 }
+
+
 
 
 template <typename T>
@@ -190,12 +192,14 @@ bool LivenessAnalysis::defuse(T cfgNode, bool *unhandled) {
     FilteredCFGNode<IsDFAFilter> filterNode = filterEdge.target();
     SgNode* sgNodeNext = filterNode.getNode();
     ROSE_ASSERT(sgNodeNext);
-    std::vector<SgInitializedName*> tmpIn = in[sgNodeNext];
-    if (DEBUG_MODE)
+    std::vector<SgInitializedName*> tmpIn = in.find(sgNodeNext) != in.end() ? in[sgNodeNext] : std::vector<SgInitializedName*>(); 
+#if 0
+    if (DEBUG_MODE )
       cout << "   out : previous node : " << sgNodeNext << " " << sgNodeNext->class_name() << "   in Size : " << 
 	tmpIn.size() << "   out[sgNode].size = " << out[sgNode].size() << endl;
+#endif
     //    out[sgNode].swap(tmpIn);
-    std::vector<SgInitializedName*> tmpOut = out[sgNode];
+    std::vector<SgInitializedName*> tmpOut = out.find(sgNode) != out.end() ?  out[sgNode] : std::vector<SgInitializedName*>() ;
     out[sgNode]=merge_no_dups(tmpOut,tmpIn);
     std::sort(out[sgNode].begin(), out[sgNode].end(),sort_using_greater_than);
   }
@@ -222,7 +226,7 @@ bool LivenessAnalysis::defuse(T cfgNode, bool *unhandled) {
     // go through all initialized names for out
     // and cancel the InitializedName for in if it is 
     // defined for this node
-    std::vector<SgInitializedName*> vec  = out[sgNode];
+    std::vector<SgInitializedName*> vec = out.find(sgNode) != out.end() ?  out[sgNode] : std::vector<SgInitializedName*>() ; 
     std::vector<SgInitializedName*>::iterator inIt = vec.begin();
     for (;inIt!=vec.end();++inIt) {
       SgInitializedName* initN = isSgInitializedName(*inIt);
@@ -290,11 +294,15 @@ bool LivenessAnalysis::defuse(T cfgNode, bool *unhandled) {
   }
 
 
-  
-  in[sgNode] = out[sgNode];
+  std::map<SgNode*, std::vector<SgInitializedName*> >::const_iterator it = out.find(sgNode);
+  if (it!=out.end()) 
+     in[sgNode] = out[sgNode];
   if (defNode) {
-    std::vector<SgInitializedName*> vec  = in[sgNode];
-    std::vector<SgInitializedName*>::iterator inIt = vec.begin();
+    std::map<SgNode*, std::vector<SgInitializedName*> >::const_iterator it = in.find(sgNode);
+    std::vector<SgInitializedName*> vec;
+    if (it!=in.end())    
+      vec = in[sgNode];
+      std::vector<SgInitializedName*>::iterator inIt = vec.begin();
     for (;inIt!=vec.end();++inIt) {
       if (*inIt==initName) {
 	vec.erase(inIt); // = initName
@@ -304,7 +312,10 @@ bool LivenessAnalysis::defuse(T cfgNode, bool *unhandled) {
     in[sgNode]=vec;
   }
   if (useNode) {
-    std::vector<SgInitializedName*> vec  = in[sgNode];
+   std::map<SgNode*, std::vector<SgInitializedName*> >::const_iterator it = in.find(sgNode);
+   std::vector<SgInitializedName*> vec;
+   if (it!=in.end()) 
+      vec = in[sgNode];
     std::vector<SgInitializedName*>::iterator inIt = vec.begin();
     bool found=false;
     for (;inIt!=vec.end();++inIt) {
@@ -315,23 +326,31 @@ bool LivenessAnalysis::defuse(T cfgNode, bool *unhandled) {
     }
     if (!found) {
       std::string name = initName->get_name().str();
+#if 0
       if (DEBUG_MODE)
 	cout << " did not find initName : " << name << " in in[sgNode]    size: " << in[sgNode].size() <<endl;
+#endif
       in[sgNode].push_back(initName); // = varRef
       std::sort(in[sgNode].begin(), in[sgNode].end(),sort_using_greater_than);
+
+#if 0 
       if (DEBUG_MODE)
 	cout << " added sgNode :   new size [sgNode] = " <<in[sgNode].size() <<endl;
+#endif
     }
   }
 
-  if (defNode || useNode) {
+
+
+  if (defNode || useNode) { 
     if (DEBUG_MODE)
       cout << " This was a def or use node " << endl;
     // has_changed only applies here
     bool equal = false;
-    std::map<SgNode*, std::vector<SgInitializedName*> >::const_iterator it = in.find(sgNode);
-    if (it!=in.end()) {
-      equal = std::equal(in[sgNode].begin(),in[sgNode].end(),out[sgNode].begin());
+    std::map<SgNode*, std::vector<SgInitializedName*> >::const_iterator it = out.find(sgNode);
+    if (it!=out.end()) {
+      if (out[sgNode].size()>0 && out[sgNode][0]!=NULL)
+        equal = std::equal(in[sgNode].begin(),in[sgNode].end(),out[sgNode].begin());
       if (!equal)
 	has_changed=true;
       if (DEBUG_MODE) {

@@ -32,7 +32,7 @@ true ${FFLAGS:=}
 # DQ (3/11/2006): Changed name of config.h to rose_config.h 
 # to avoid collisions with other projects using a config.h file.
 AM_CONFIG_HEADER(rose_config.h)
-
+CHECK_SSL
 configure_date=`date '+%A %B %e %H:%M:%S %Y'`
 AC_SUBST(configure_date)
 # echo "In ROSE/con figure: configure_date = $configure_date"

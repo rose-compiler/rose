@@ -67,20 +67,38 @@ colorTable(BinQGUI* instance,  const std::vector<int >& addInstr,  const std::ve
 {
   if (instance==NULL)
     return;
+  std::cout << "Add instructions: " << addInstr.size() << " remove instructions " << minusInst.size() << std::endl;
   const char* results [] = {"PLUS", "MINUS"};
   std::vector<QColor> colors;
+  colors.push_back( QColor(255,255,255)  );
+  colors.push_back( QColor(255,206,255)  );
+/*
   colors.push_back( QColor(233,150,122)  );
-  colors.push_back( QColor(135,206,255)  );
+  colors.push_back( QColor(135,206,255)  );*/
+  for (int j=1;j<instance->maxrows;j++)
+  {
+         instance->itemsFileB[205]->bg=colors[0];
+         instance->itemsFileA[205]->bg=colors[1];
 
+<<<<<<< .mine
+  instance->codeTableWidget2->setBgColor(instance->itemsFileB[205]->bg,j,205);
+  instance->codeTableWidget->setBgColor(instance->itemsFileA[205]->bg,j,205);
+  std::cout << "Coloring" << std::endl;
+  }
+
+  for( unsigned int choice = 0; choice < sizeof(results)/sizeof(char*) ; choice++ )
+  {
+
+=======
   for( unsigned int choice = 0; choice < sizeof(results)/sizeof(char*) ; choice++ )  {
+>>>>>>> .r4239
     std::string currentName(results[choice]);
     const std::vector< int >& currentResults = ( choice == 0 ? addInstr : minusInst ); 
     QColor& color = colors[choice];
 
     for (unsigned int k=0;k<currentResults.size();++k) {
       int insnNr = currentResults[k];
-      SgAsmInstruction* instA = choice == 1 ? isSgAsmInstruction(insnsA[insnNr]) : NULL;
-      SgAsmInstruction* instB = choice == 0 ? isSgAsmInstruction(insnsB[insnNr]) :NULL;
+      SgAsmInstruction* inst = choice == 1 ? isSgAsmInstruction(insnsA[insnNr]) : isSgAsmInstruction(insnsB[insnNr]);
       
 #if 0
       cerr << choice << " Found " << currentName << " in A  (a:" << a <<",b:"<<b<<") : " << endl << 
@@ -90,15 +108,14 @@ colorTable(BinQGUI* instance,  const std::vector<int >& addInstr,  const std::ve
                                instB->get_mnemonic() <<endl;
 #endif
 
-      int myPosA=0;
-      int myPosB=0;
+      int myPos=0;
       if(choice == 1)    {
         for(size_t i=0; i < instance->itemsFileA.size(); i++ )    {
           SgAsmStatement* stmts = isSgAsmStatement(instance->itemsFileA[i]->statement);
           //	ROSE_ASSERT(stmts);
           SgAsmInstruction* inst = isSgAsmInstruction(stmts);
-          if (inst && inst->get_address()==instA->get_address()) {
-            myPosA=instance->itemsFileA[i]->row;
+          if (inst && inst->get_address()==inst->get_address()) {
+            myPos=instance->itemsFileA[i]->row;
             //  instance->itemsFileA[i]->plus=true;
             instance->itemsFileA[i]->bg=color;
 #if 0
@@ -115,37 +132,54 @@ colorTable(BinQGUI* instance,  const std::vector<int >& addInstr,  const std::ve
 	      RoseBin_support::HexToString(instA->get_address()) << "  color : " << cols << endl;
 #endif
             for (int j=1;j<instance->maxrows;j++) {
+            {
               instance->codeTableWidget->setBgColor(instance->itemsFileA[i]->bg,j,i);
+<<<<<<< .mine
+            }
+=======
 	    }
+>>>>>>> .r4239
           }
         }
       } else
+      {
         for(size_t i=0; i < instance->itemsFileB.size(); i++ )    {
           SgNode* stmts = instance->itemsFileB[i]->statement;
           SgAsmInstruction* inst = isSgAsmInstruction(stmts);
-          if (inst && inst->get_address()==instB->get_address()) {
-            myPosB=instance->itemsFileB[i]->row;
+          if (inst && inst->get_address()==inst->get_address()) {
+            myPos=instance->itemsFileB[i]->row;
             instance->itemsFileB[i]->bg=color;
             for (int j=1;j<instance->maxrows;j++)
+            {
+
               instance->codeTableWidget2->setBgColor(instance->itemsFileB[i]->bg,j,i);
+            }
           }
         }
+      }
 
+<<<<<<< .mine
+      std::string resultsString = choice == 1 ? "%1 Found " + currentName + " in A  (a insnNr:%2) (a pos:%3)  %4 %5   "
+        : "%1 Found " + currentName + " in B  (b insnNr:%2) (b pos:%3)  %4 %5   ";
+=======
       std::string resultsString ="%1 Found " + currentName + " in A  (a:%2,b:%3) (a:%4,b:%5)  %6 %7   ";
+>>>>>>> .r4239
       QString res = QString( resultsString.c_str())
         .arg(k)
         .arg(insnNr)
-        .arg(insnNr)
-        .arg(myPosA)
-        .arg(myPosB)
-        .arg(QString(RoseBin_support::HexToString(choice == 1 ? instA->get_address() : instB->get_address()).c_str()))
-        .arg(QString( choice == 1 ? instA->get_mnemonic().c_str() : instB->get_mnemonic().c_str()));
+        .arg(myPos)
+        .arg(QString(RoseBin_support::HexToString( inst->get_address()).c_str()))
+        .arg(QString( inst->get_mnemonic().c_str()));
 
       instance->analysisResult->append(res);  
 
     }
+    instance->codeTableWidget->update();
+
+    instance->codeTableWidget2->update();
 
   }
   //  if (instance)
   //  instance->updateByteItemList();
+
 }

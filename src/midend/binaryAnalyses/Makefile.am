@@ -18,6 +18,7 @@ libbinaryMidend_la_SOURCES =  RoseBin_CompareAnalysis.cpp RoseBin_ControlFlowAna
      dataflowanalyses/RoseBin_DataFlowAbstract.cpp \
      libraryIdentification/libraryIdentification_reader.C \
      libraryIdentification/libraryIdentification_writer.C \
+     libraryIdentification/functionIdentification.C \
      graph/RoseBin_DotGraph.cpp graph/RoseBin_Graph.cpp graph/RoseBin_GmlGraph.cpp
 else
 libbinaryMidend_la_SOURCES =  RoseBin_CompareAnalysis.cpp RoseBin_ControlFlowAnalysis.cpp \
@@ -46,7 +47,9 @@ BINARY_DISASSEMBLY_HEADER_FILES = \
    dataflowanalyses/RoseBin_DataFlowAbstract.h \
    graph/RoseBin_DotGraph.h graph/RoseBin_Graph.h \
    graph/RoseBin_GmlGraph.h \
-   libraryIdentification/libraryIdentification.h
+   libraryIdentification/libraryIdentification.h \
+   libraryIdentification/functionIdentification.h
+   
 
 include_HEADERS = $(BINARY_DISASSEMBLY_HEADER_FILES)
 
