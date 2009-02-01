@@ -1,3 +1,94 @@
+2009-02-01 05:56  saebjornsen1
+
+	* [r4242]
+	  /trunk/ROSE/src/midend/binaryAnalyses/libraryIdentification/functionIdentification.C:
+	  optimization of function identification: created index on md5 sum
+	  in vectors
+
+2009-02-01 05:42  saebjornsen1
+
+	* [r4241] /trunk/ROSE/projects/BinQ/Clone.C,
+	  /trunk/ROSE/src/frontend/SageIII/rose_attributes_list.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C,
+	  /trunk/ROSE/src/midend/programAnalysis/defUseAnalysis/LivenessAnalysis.cpp:
+	  reverted some files
+
+2009-02-01 05:23  saebjornsen1
+
+	* [r4240] /trunk/ROSE/config/check_ssl.m4,
+	  /trunk/ROSE/configure.in, /trunk/ROSE/projects/BinQ/Clone.C,
+	  /trunk/ROSE/src/frontend/SageIII/rose_attributes_list.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C,
+	  /trunk/ROSE/src/midend/binaryAnalyses/Makefile.am,
+	  /trunk/ROSE/src/midend/binaryAnalyses/libraryIdentification/functionIdentification.C,
+	  /trunk/ROSE/src/midend/binaryAnalyses/libraryIdentification/functionIdentification.h,
+	  /trunk/ROSE/src/midend/binaryAnalyses/libraryIdentification/libraryIdentification.h,
+	  /trunk/ROSE/src/midend/programAnalysis/defUseAnalysis/LivenessAnalysis.cpp,
+	  /trunk/ROSE/tests/roseTests/binaryTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/binaryTests/testLibraryDb.C: Added
+	  the storing of library handling data in a database
+
+2009-02-01 01:13  dquinlan
+
+	* [r4239]
+	  /trunk/ROSE/developersScratchSpace/Dan/libraryIdentification_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/libraryIdentification_tests/testProgram.c,
+	  /trunk/ROSE/projects/palette/rose.P,
+	  /trunk/ROSE/src/midend/binaryAnalyses/Makefile.am,
+	  /trunk/ROSE/src/midend/binaryAnalyses/libraryIdentification/libraryIdentification.h,
+	  /trunk/ROSE/src/midend/binaryAnalyses/libraryIdentification/libraryIdentification_writer.C:
+	  Summary: Added more support for identification and recognition of
+	  library functions.
+	  
+	  Detailed changes in this commit:
+	  1) Added initial support to call interface agreed upon with
+	  Andreas.
+	  2) Added LibraryIdentification directory to
+	  src/midend/binaryAnalysis
+	  3) Added test code into new directory:
+	  developersScratchSpace/Dan/libraryIdentification_tests
+
+2009-01-31 23:24  dquinlan
+
+	* [r4238] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_16.f90,
+	  /trunk/ROSE/developersScratchSpace/Dan/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/libraryIdentification_tests,
+	  /trunk/ROSE/developersScratchSpace/Dan/libraryIdentification_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/libraryIdentification_tests/libraryIdentificationTest.C,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Expression.code,
+	  /trunk/ROSE/src/ROSETTA/astNodeList,
+	  /trunk/ROSE/src/ROSETTA/src/expression.C,
+	  /trunk/ROSE/src/ROSETTA/src/statement.C,
+	  /trunk/ROSE/src/backend/unparser/FortranCodeGeneration/unparseFortran.h,
+	  /trunk/ROSE/src/backend/unparser/FortranCodeGeneration/unparseFortran_expressions.C,
+	  /trunk/ROSE/src/backend/unparser/FortranCodeGeneration/unparseFortran_statements.C,
+	  /trunk/ROSE/src/frontend/OpenFortranParser_SAGE_Connection/FortranParserActionROSE.C,
+	  /trunk/ROSE/src/frontend/OpenFortranParser_SAGE_Connection/fortran_support.C,
+	  /trunk/ROSE/src/frontend/OpenFortranParser_SAGE_Connection/fortran_support.h,
+	  /trunk/ROSE/src/midend/binaryAnalyses/Makefile.am,
+	  /trunk/ROSE/src/midend/binaryAnalyses/libraryIdentification,
+	  /trunk/ROSE/src/midend/binaryAnalyses/libraryIdentification/libraryIdentification.h,
+	  /trunk/ROSE/src/midend/binaryAnalyses/libraryIdentification/libraryIdentification_reader.C,
+	  /trunk/ROSE/src/midend/binaryAnalyses/libraryIdentification/libraryIdentification_writer.C:
+	  Summary: Added more Fortran support
+	  
+	  Detailed changes in this commit:
+	  1) Added support for Fortran 90 allocate and deallocate
+	  statements.
+	  Added support for F2003 variations of these statements.
+	  2) Added new IR node to support Fortran pointer assignement
+	  operator ("=>").
+	  3) Fixed default case handling in Fortran select statement.
+	  4) Added named label support to Fortran select statment.
+	  5) Added case_construct_name support for Fortran cases (in select
+	  statment).
+	  6) Added default_construct_name support for Fortran default case
+	  (in select statment).
+	  7) Added initial support for recognition of binary functions from
+	  libraries.
+
 2009-01-31 06:45  dquinlan
 
 	* [r4226]
