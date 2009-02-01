@@ -29,6 +29,13 @@ FunctionIdentification::createTables()
     cerr << "Exception Occurred: " << ex.what() << endl;
   }
  
+  try {
+    con.executenonquery("create index if not exists vectors_by_md5 on vectors(md5_sum)");
+  }
+  catch(exception &ex) {
+    cerr << "Exception Occurred: " << ex.what() << endl;
+  }
+
 };
 
 
