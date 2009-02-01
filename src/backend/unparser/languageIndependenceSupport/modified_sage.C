@@ -615,6 +615,8 @@ int GetPrecedence(int variant)
           case V_SgExprListExp: 
           case V_SgCommaOpExp:       return 1;
           case V_SgAssignOp:         return 2;
+       // DQ (2/1/2009): Added precedence for SgPointerAssignOp (Fortran 90)
+          case V_SgPointerAssignOp:  return 2;
           case V_SgPlusAssignOp:     return 2;
           case V_SgMinusAssignOp:    return 2; 
           case V_SgAndAssignOp:      return 2; 
@@ -640,6 +642,11 @@ int GetPrecedence(int variant)
           case V_SgLshiftOp:         return 11;
           case V_SgRshiftOp:         return 11;
           case V_SgAddOp:            return 12; 
+
+       // DQ (2/1/2009): Added operator (which should have been here before)
+          case V_SgMinusOp:          return 15;
+          case V_SgUnaryAddOp:       return 15;
+
           case V_SgSubtractOp:       return 12; 
           case V_SgMultiplyOp:       return 13; 
           case V_SgIntegerDivideOp:
@@ -664,12 +671,44 @@ int GetPrecedence(int variant)
           case V_SgLabelRefExp:      return 16;
           case V_SgActualArgumentExpression: return 16;
 
+       // DQ (2/1/2009): Added support for Fortran operator.
+          case V_SgExponentiationOp: return 16;
+          case V_SgConcatenationOp:  return 11;
+          case V_SgSubscriptExpression:  return 16;  // Make the same as for SgPntrArrRefExp
+
+       // DQ (2/1/2009): This was missing from before.
+          case V_SgThisExp:          return 0;
+          case V_SgCastExp:          return 0;
+          case V_SgBoolValExp:       return 0;
+          case V_SgIntVal:           return 0;
+          case V_SgThrowOp:          return 0;
+          case V_SgDoubleVal:        return 0;
+          case V_SgUnsignedIntVal:   return 0;
+          case V_SgAssignInitializer: return 0;
+          case V_SgFloatVal:         return 0;
+          case V_SgVarArgOp:         return 0;
+          case V_SgLongDoubleVal:    return 0;
+          case V_SgLongIntVal:       return 0;
+          case V_SgVarArgStartOp:    return 0;
+          case V_SgNewExp:           return 0;
+          case V_SgStringVal:        return 0;
+          case V_SgCharVal:          return 0;
+          case V_SgUnsignedLongLongIntVal: return 0;
+          case V_SgUnsignedLongVal:  return 0;
+          case V_SgComplexVal:       return 0;
+#if 0
+       // Template
+          case V_:              return 0;
+#endif
+
        // DQ (11/24/2007): Added default case!
           default:
              {
-#if PRINT_DEVELOPER_WARNINGS
+#if PRINT_DEVELOPER_WARNINGS | 1
                printf ("GetPrecedence(): Undefined expression variant = %d = %s \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
 #endif
+
+            // DQ (2/1/2009): Make this an error, so that we avoid unnecessary debugging.
             // ROSE_ASSERT(false);
              }
         }
@@ -731,12 +770,19 @@ int GetAssociativity(int variant)
           case V_SgArrowExp:         return -1;
           case V_SgDotExp:           return -1;
 
+       // DQ (2/1/2009): Added support for Fortran operator.
+       // case V_SgExponentiationOp: return 0;
+
        // DQ (11/24/2007): Added default case!
           default:
              {
+            // The implementation of this function assumes unhandled cases are not associative.
+
+            // DQ (2/1/2009): Modified to output a message when not handled!
 #if PRINT_DEVELOPER_WARNINGS
                printf ("GetAssociativity(): Undefined expression variant = %d = %s \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
 #endif
+            // DQ (2/1/2009): Make this an error, so that we avoid unnecessary debugging.
             // ROSE_ASSERT(false);
              }
         }
@@ -810,7 +856,7 @@ bool Unparse_MOD_SAGE::PrintStartParen(SgExpression* expr, SgUnparse_Info& info)
 #endif
           return false;
         }
-#if 1        
+#if 1
     // Liao, 8/27/2008, bug 229
     // A nasty workaround since set_need_paren() has no definite effect 
     //SgExprListExp-> SgAssignInitializer -> SgFunctionCallExp:  

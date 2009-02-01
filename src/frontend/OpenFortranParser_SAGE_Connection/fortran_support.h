@@ -266,5 +266,7 @@ bool isARoseModuleFile( std::string filename );
 
 void generateAssignmentStatement( Token_t* label, bool isPointerAssignment );
 
+void convertBaseTypeOnStackToPointer();
+
 // endif for ROSE_FORTRAN_SUPPORT
 #endif
