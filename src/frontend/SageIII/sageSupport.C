@@ -226,14 +226,6 @@ SgProject::processCommandLine(const vector<string>& input_argv)
   // the modification of the command line by SLA (to save the original command line)
      vector<string> local_commandLineArgumentList = input_argv;
 
-     std::cerr << "The commandline processCommandLine: " << std::endl;
-     for(int i = 0  ; i < input_argv.size(); i++)
-     {
-       std::cerr << input_argv[i] << " ";
-
-     };
-     std::cerr <<std::endl;
-
   // Save a deep copy fo the original command line input the the translator
   // pass in out copies of the argc and argv to make clear that we don't modify argc and argv
      set_originalCommandLineArgumentList( local_commandLineArgumentList );
@@ -2320,7 +2312,6 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // DQ (1/17/2006): test this
   // ROSE_ASSERT(get_fileInfo() != NULL);
 
-     std::cout << "Size of inputcommandline: " << inputCommandLine.size() << std::endl;
   // printf ("##### Inside of SgFile::build_EDG_CommandLine file = %s \n",get_file_info()->get_filenameString().c_str());
   // printf ("##### Inside of SgFile::build_EDG_CommandLine file = %s = %s \n",get_file_info()->get_filenameString().c_str(),get_sourceFileNameWithPath().c_str());
      ROSE_ASSERT(get_file_info()->get_filenameString() == get_sourceFileNameWithPath());
@@ -2417,9 +2408,6 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
                int jlength = headerSuffix.size();
                int length = currentArgument.size();
-
-                if( ( currentArgument.compare(length - jlength, jlength, headerSuffix) == 0 ) || CommandlineProcessing::isSourceFilename(currentArgument));
-               std::cerr << currentArgument << std::endl;
                ROSE_ASSERT( length > jlength);
                ROSE_ASSERT( ( currentArgument.compare(length - jlength, jlength, headerSuffix) == 0 ) || CommandlineProcessing::isSourceFilename(currentArgument));
 
@@ -3650,13 +3638,6 @@ SgFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
    {
   // JJW 10-26-2007 ensure that this object is not on the stack
      preventConstructionOnStack(this);
-     std::cerr << "The commandline doSetupForConstructor: " << std::endl;
-     for(int i = 0  ; i < argv.size(); i++)
-     {
-       std::cerr << argv[i] << " ";
-
-     };
-     std::cerr <<std::endl;
 
   // printf ("!!!!!!!!!!!!!!!!!! Inside of SgFile::doSetupForConstructor() !!!!!!!!!!!!!!! \n");
 
@@ -3995,11 +3976,6 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
             // bool foundSourceFile = false;
 
             // printf ("isExecutableFilename(%s) = %s \n",(*i).c_str(),isExecutableFilename(*i) ? "true" : "false");
-               if( i->find("-include") != string::npos ) { i++; counter++; goto incrementPosition;
-                 std::cout << "This was a a file that was included" << std::endl;
-               
-               }
-                 
                if ( isSourceFilename(*i) == false && isObjectFilename(*i) == false && isExecutableFilename(*i) == true )
             // if ( isSourceFilename(*i) == false && isObjectFilename(*i) == false && isValidFileWithExecutableFileSuffixes(*i) == true )
                   {
@@ -4101,7 +4077,7 @@ SgFile::callFrontEnd()
    {
   // DQ (1/17/2006): test this
   // ROSE_ASSERT(get_fileInfo() != NULL);
-     
+
      int fileNameIndex = 0;
 
   // DQ (4/21/2006): I think we can now assert this!
@@ -4125,13 +4101,6 @@ SgFile::callFrontEnd()
                printf ("argv[%d] = %s \n",i,argv[i]);
         }
 #endif
-     std::cerr << "The commandline: " << std::endl;
-     for(int i = 0  ; i < argv.size(); i++)
-     {
-       std::cerr << argv[i] << " ";
-
-     };
-     std::cerr <<std::endl;
 
   // printf ("Inside of SgFile::callFrontEnd(): fileNameIndex = %d \n",fileNameIndex);
 
@@ -4150,44 +4119,13 @@ SgFile::callFrontEnd()
      vector<string> localCopy_argv = argv;
   // printf ("DONE with copy of command line! \n");
 
-
-     std::cerr << "The commandline: " << std::endl;
-     for(int i = 0  ; i < localCopy_argv.size(); i++)
-     {
-       std::cerr << localCopy_argv[i] << " ";
-
-     };
-     std::cerr <<std::endl;
-
   // Process command line options specific to ROSE
   // This leaves all filenames and non-rose specific option in the argv list
      processRoseCommandLineOptions (localCopy_argv);
- 
-     std::cerr << "The commandline: " << std::endl;
-     for(int i = 0  ; i < localCopy_argv.size(); i++)
-     {
-       std::cerr << localCopy_argv[i] << " ";
-
-     };
-     std::cerr <<std::endl;
-    std::cerr << "The commandline: " << std::endl;
-     for(int i = 0  ; i < localCopy_argv.size(); i++)
-     {
-       std::cerr << localCopy_argv[i] << " ";
-
-     };
-     std::cerr <<std::endl;
 
   // DQ (6/21/2005): Process template specific options so that we can generated 
   // code for the backend compiler (this processing is backend specific).
      processBackendSpecificCommandLineOptions (localCopy_argv);
-     std::cerr << "The commandline: " << std::endl;
-     for(int i = 0  ; i < localCopy_argv.size(); i++)
-     {
-       std::cerr << localCopy_argv[i] << " ";
-
-     };
-     std::cerr <<std::endl;
 
   // display("AFTER processRoseCommandLineOptions in SgFile::callFrontEnd()");
 
