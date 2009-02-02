@@ -1,3 +1,29 @@
+2009-02-01 21:28  dquinlan
+
+	* [r4245]
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_27.f90,
+	  /trunk/ROSE/developersScratchSpace/Dan/Fortran_tests/test2009_28.f90,
+	  /trunk/ROSE/src/ROSETTA/src/expression.C,
+	  /trunk/ROSE/src/backend/unparser/languageIndependenceSupport/modified_sage.C,
+	  /trunk/ROSE/src/backend/unparser/languageIndependenceSupport/unparseLanugageIndependentConstructs.C,
+	  /trunk/ROSE/src/frontend/OpenFortranParser_SAGE_Connection/FortranParserActionROSE.C,
+	  /trunk/ROSE/src/frontend/OpenFortranParser_SAGE_Connection/fortran_support.C,
+	  /trunk/ROSE/src/frontend/OpenFortranParser_SAGE_Connection/fortran_support.h:
+	  Summary: Fixed Fortran specific issues that caused last chechin
+	  to fail.
+	  
+	  Detailed changes in this commit:
+	  1) Added mising operators to operator precedence table (int
+	  GetPrecedence(int variant))
+	  and noted the redundancy of this with the operator precedence
+	  specification in the
+	  expression.C file (ROSETTA).
+	  2) Fixed handling of pointers in Fortran and there usin with
+	  array declarations.
+	  3) Fixed operator precedence of pointer assignment statement (new
+	  operator from yesterday).
+
 2009-02-01 05:56  saebjornsen1
 
 	* [r4242]
