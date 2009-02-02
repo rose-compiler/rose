@@ -26,6 +26,8 @@ class QRoseOutputObject
 
           virtual void addOutput(Compass::OutputViolationBase* theOutput)
              {
+               ROSE_ASSERT( isSgLocatedNode(theOutput->getNode()) != NULL 
+                   || isSgFile(theOutput->getNode()) != NULL );
                outputList.push_back(theOutput);
                printf ("In QRoseOutputObject::addOutput(): getString() = %s \n",theOutput->getString().c_str());
              }
