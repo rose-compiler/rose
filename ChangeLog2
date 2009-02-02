@@ -1,3 +1,10 @@
+2009-02-02 18:22  saebjornsen1
+
+	* [r4251]
+	  /trunk/ROSE/projects/compass/src/compassSupport/compassMain.C:
+	  added assertion rule: what is added as a violation should have a
+	  position associated with it
+
 2009-02-01 21:28  dquinlan
 
 	* [r4245]
