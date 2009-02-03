@@ -4935,8 +4935,20 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
      if ( get_verbose() > 1 )
           printf ("Calling openFortranParser_main(): OpenFortranParser_globalFilePointer = %p \n",OpenFortranParser_globalFilePointer);
 
+#if USE_ROSE_SSL_SUPPORT
+  // The use of the JVM required to support Java is a problem when linking to the SSL library (either -lssl or -lcrypto)
+  // this may be fixed in Java version 6, but this is a hope, it has not been tested.  Java version 6 does
+  // appear to fix the problem with zlib (we think) and this appears to be a similar problem).
+     int frontendErrorLevel = 1;
+
+     printf ("********************************************************************************************** \n");
+     printf ("Fortran support using the JVM is incompatable with the use of the SSL library. \n");
+     printf ("To enable the use of Fortran support in ROSE don't use --enable-ssl on configure command line. \n");
+     printf ("********************************************************************************************** \n");
+#else
   // frontendErrorLevel = openFortranParser_main (numberOfCommandLineArguments, inputCommandLine);
      int frontendErrorLevel = openFortranParser_main (openFortranParser_argc, openFortranParser_argv);
+#endif
 
      if ( get_verbose() > 1 )
           printf ("DONE: Calling the openFortranParser_main() function (which loads the JVM) \n");
@@ -5290,7 +5302,7 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
           frontendErrorLevel = build_Fortran_AST(argv,inputCommandLine);
 #else
           fprintf(stderr, "Trying to parse a Fortran file when Fortran is not supported (ROSE must be configured using with Java (default)) \n");
-          abort();
+          ROSE_ASSERT(false);
 #endif
         }
        else
