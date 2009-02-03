@@ -34,7 +34,12 @@ true ${FFLAGS:=}
 AM_CONFIG_HEADER(rose_config.h)
 
 # This appears to be a problem for Java (and so the Fortran support).
-CHECK_SSL
+# CHECK_SSL
+ROSE_SUPPORT_SSL
+
+# Need the SSL automake conditional so that libssl can be added selectively for only those
+# translators that require it (since it conflicts with use of Java, and thus Fortran support).
+AM_CONDITIONAL(ROSE_USE_SSL_SUPPORT, [test "x$enable_ssl" = xyes])
 
 configure_date=`date '+%A %B %e %H:%M:%S %Y'`
 AC_SUBST(configure_date)

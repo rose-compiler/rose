@@ -5,13 +5,25 @@
 // The cdoe that was here is not in libraryIdentification.h
 // #include "functionIdentification.h"
 
+// Note that no special -I options are required to use SSL (so it seems).
 #include <openssl/md5.h>
-#include <stdio.h>
-#include <string.h>
+
+// #include <stdio.h>
+// #include <string.h>
+
+// Used for conversions of types to and from strings.
 #include <boost/lexical_cast.hpp>
 
 // For debugging, this allows us to alternatively skip the MD5 checksum.
 #define USE_MD5_AS_HASH 1
+
+// If no SSL support is available, then save the opcode vector into the database
+// (by skipping the generation of an MD5 checksum of the vector).
+#if ( (USE_ROSE_SSL_SUPPORT == 0) && (USE_MD5_AS_HASH != 0) )
+   #warning "SSL is unavailable so resetting USE_MD5_AS_HASH to false..."
+   #undef USE_MD5_AS_HASH
+   #define USE_MD5_AS_HASH 0
+#endif
 
 using namespace std;
 using namespace sqlite3x;
