@@ -21,4 +21,5 @@ LibraryIdentification::matchAgainstLibraryIdentificationDataBase( string databas
 
      printf ("Going to process AST of project %p to recognize functions from Library Identification database: %s \n",project,databaseName.c_str());
 
+     libraryIdentificationDataBaseSupport( databaseName, project, /* generate_database */ false);
    }

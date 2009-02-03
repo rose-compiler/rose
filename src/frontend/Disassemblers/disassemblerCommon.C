@@ -38,8 +38,9 @@ SgAsmGenericSection* DisassemblerCommon::AsmFileWithData::getSectionOfAddress(ui
 SgAsmGenericSection*
 DisassemblerCommon::AsmFileWithData::getSectionOfAddress(uint64_t addr) const
    {
+     ROSE_ASSERT (interp != NULL);
      SgAsmGenericHeader* header = interp->get_header();
-     ROSE_ASSERT (header);
+     ROSE_ASSERT (header != NULL);
 
      uint64_t rva = addr - header->get_base_va();
 

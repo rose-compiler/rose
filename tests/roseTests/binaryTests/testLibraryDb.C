@@ -1,4 +1,11 @@
-#include "functionIdentification.h"
+
+// This is now included in libraryIdentification.h
+// #include "functionIdentification.h"
+
+#include "rose.h"
+
+// At some point this will be put into rose.h.
+#include "libraryIdentification.h"
 
 using namespace   LibraryIdentification;
 

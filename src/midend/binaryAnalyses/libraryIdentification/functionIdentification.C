@@ -1,9 +1,17 @@
-#include "functionIdentification.h"
+// rose is required because libraryIdentification.h refeences IR nodes.
+#include "rose.h"
+#include "libraryIdentification.h"
+
+// The cdoe that was here is not in libraryIdentification.h
+// #include "functionIdentification.h"
+
 #include <openssl/md5.h>
 #include <stdio.h>
 #include <string.h>
 #include <boost/lexical_cast.hpp>
 
+// For debugging, this allows us to alternatively skip the MD5 checksum.
+#define USE_MD5_AS_HASH 1
 
 using namespace std;
 using namespace sqlite3x;
@@ -41,35 +49,66 @@ FunctionIdentification::createTables()
 
 //Add an entry to store the pair <library_handle,string> in the database
 void 
-FunctionIdentification::set_function_match( library_handle handle, std::string functionString  )
+FunctionIdentification::set_function_match( const library_handle & handle, const unsigned char* str, size_t str_length  )
 {
   string db_select_n = "INSERT INTO vectors( file, function_name, begin, end, md5_sum ) VALUES(?,?,?,?,?)";
 
   //construct the entry that is inserted into the database
   unsigned char md[16];
-  MD5( (const unsigned char*)functionString.c_str() , functionString.size(), md ) ;
+  MD5( str , str_length, md );
+
   sqlite3_command cmd(con, db_select_n.c_str());
   cmd.bind(1, handle.filename );
   cmd.bind(2, handle.function_name );
   cmd.bind(3, (long long int)handle.begin);
   cmd.bind(4, (long long int)handle.end);
+
+// Permit ignoring the MD5 generation
+#if USE_MD5_AS_HASH
   cmd.bind(5, md,16);
+#else
+  cmd.bind(5, str,str_length);
+#endif
 
   cmd.executenonquery();
 
 };
+
+// Interface to lower level function taking unsigned char* and length
+void 
+FunctionIdentification::set_function_match( const library_handle & handle, const std::string functionString  )
+   {
+     set_function_match( handle, (const unsigned char*)functionString.c_str() , functionString.size() );
+   }
+
+// Interface to lower level function taking unsigned char* and length
+void 
+FunctionIdentification::set_function_match( const library_handle & handle, const SgUnsignedCharList & opcode_vector )
+   {
+     set_function_match( handle, (const unsigned char*) &(*(opcode_vector.begin())) , opcode_vector.size() );
+   }
+
+
+
 //Return the library_handle matching string from the database. bool false
 //is returned if no such match was found, true otherwise.
 bool 
-FunctionIdentification::get_function_match(library_handle& handle, std::string functionString)
+FunctionIdentification::get_function_match( library_handle & handle, const unsigned char* str, size_t str_length )
 {
   //Constructing query command to get the entry from the database
   unsigned char md[16];
-  MD5( (unsigned const char*)functionString.c_str() , functionString.size(), md ) ;
+  MD5( str , str_length, md );
+
   std::string db_select_n = "select file, function_name, begin,end from vectors where md5_sum=?";
 //    +boost::lexical_cast<string>(md) + "'";
   sqlite3_command cmd(con, db_select_n );
+
+// Permit ignoring the MD5 generation
+#if USE_MD5_AS_HASH
   cmd.bind(1,md,16);
+#else
+  cmd.bind(1,str,str_length);
+#endif
 
   sqlite3_reader r = cmd.executereader();
 
@@ -92,7 +131,18 @@ FunctionIdentification::get_function_match(library_handle& handle, std::string f
   }
 
   return false;
-
-
 };
+
+bool 
+FunctionIdentification::get_function_match( library_handle & handle, const std::string functionString) const
+   {
+     return const_cast<FunctionIdentification*>(this)->get_function_match( handle, (const unsigned char*)functionString.c_str() , functionString.size() );
+   }
+
+// Interface to lower level function taking unsigned char* and length
+bool
+FunctionIdentification::get_function_match( library_handle & handle, const SgUnsignedCharList & opcode_vector ) const
+   {
+     return const_cast<FunctionIdentification*>(this)->get_function_match( handle, (const unsigned char*) &(*(opcode_vector.begin())) , opcode_vector.size() );
+   }
 
