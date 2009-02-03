@@ -598,9 +598,9 @@ void MetricAttachTraversal::annotateSourceCode(void)
     {
       SgLocatedNode* node = *iter2;
       std::ostringstream o;
-      o<<node;
-      std::string text = "\n/* HPCToolKit raw data: " +profileNode->toString();
-      text += " -> "+ string(node->sage_class_name()) + " " + o.str() + "*/\n"; 
+      o<<node <<" at "<<node->get_startOfConstruct()->get_line();
+      std::string text = "\n/* ROSE-HPCT raw data: " +profileNode->toString();
+      text += " -> "+ string(node->sage_class_name()) + " " + o.str() + " */\n"; 
       // attach the text before the node (node is e_after the text)
       SageInterface::addTextForUnparser(node,text,AstUnparseAttribute::e_after);
 #if 0
@@ -652,52 +652,64 @@ normalizeMetrics (SgProject* sage_root,
   // Normalize
   MetricAttachTraversal::AttachedNodes_t::iterator ir_node;
   for (ir_node = attached.begin (); ir_node != attached.end (); ++ir_node)
+  {
+    // Extract key-value pair, <i, sg_nodes>
+    const IRNode* i = ir_node->first;
+    SgLocNodeSet_t& sg_nodes = ir_node->second;
+
+    // Build a map, depth_map[k] == # of nodes at depth k
+    using std::map;
+    map<size_t, size_t> depth_map;
+    for (SgLocNodeSet_t::iterator np = sg_nodes.begin ();
+        np != sg_nodes.end (); ++np)
     {
-      // Extract key-value pair, <i, sg_nodes>
-      const IRNode* i = ir_node->first;
-      SgLocNodeSet_t& sg_nodes = ir_node->second;
-
-      // Build a map, depth_map[k] == # of nodes at depth k
-      using std::map;
-      map<size_t, size_t> depth_map;
-      for (SgLocNodeSet_t::iterator np = sg_nodes.begin ();
-           np != sg_nodes.end (); ++np)
-        {
-          size_t depth = getTreeDepthAttr (*np);
-          depth_map[depth]++;
-        }
-
-      // Normalize attributes
-      for (Observable::ConstMetricIterator m = i->beginMetric ();
-           m != i->endMetric (); ++m)
-        {
-          string attr_name = m->getName ();
-          for (SgLocNodeSet_t::iterator np = sg_nodes.begin ();
-               np != sg_nodes.end (); ++np)
-            {
-              MetricAttr* attr_sage = getMetric (attr_name, *np);
-              ROSE_ASSERT (attr_sage);
-
-              size_t depth = getTreeDepthAttr (*np);
-              size_t n_matches = depth_map[depth];
-              if (n_matches > 1)
-                {
-                  double old_val = attr_sage->getValue ();
-                  double new_val = old_val / n_matches;
-                  attr_sage->setValue (new_val);
-
-                  if (verbose)
-                    cerr << "[Normalizing by " << n_matches
-                         << " at depth " << depth
-                         << ": [" << toFileLoc (*np) << "]"
-                         << " " << attr_name
-                         << " (" << old_val << ")"
-                         << " -> " << attr_sage->toString ()
-                         << "]" << endl;
-                }
-            }
-        }
+      size_t depth = getTreeDepthAttr (*np);
+      depth_map[depth]++;
     }
+
+    // Normalize attributes
+    for (Observable::ConstMetricIterator m = i->beginMetric ();
+        m != i->endMetric (); ++m)
+    {
+      string attr_name = m->getName ();
+      for (SgLocNodeSet_t::iterator np = sg_nodes.begin ();
+          np != sg_nodes.end (); ++np)
+      {
+        MetricAttr* attr_sage = getMetric (attr_name, *np);
+        ROSE_ASSERT (attr_sage);
+
+        size_t depth = getTreeDepthAttr (*np);
+        size_t n_matches = depth_map[depth];
+        if (n_matches > 1)
+        {
+          double old_val = attr_sage->getValue ();
+          double new_val = old_val / n_matches;
+          attr_sage->setValue (new_val);
+
+          if (verbose)
+          {
+            cerr << "[Normalizing by " << n_matches
+              << " at depth " << depth
+              << ": [" << toFileLoc (*np) << "]"
+              << " " << attr_name
+              << " (" << old_val << ")"
+              << " -> " << attr_sage->toString ()
+              << "]" << endl;
+            // Annotate source code for debugging
+              std::ostringstream o;
+              o << "\n/* ROSE-HPCT normalizes it by " << n_matches
+              << " at depth " << depth
+              << " " << attr_name
+              << " old (" << old_val << ")"
+              << " -> new " << attr_sage->toString ()
+              << ": [" << (*np)->sage_class_name()<< " "<<(*np) << "]"
+              << "*/\n"; 
+             SageInterface::addTextForUnparser(*np,o.str(), AstUnparseAttribute::e_after); 
+          }
+        }
+      }
+    }
+  }
 }
 
 /* ---------------------------------------------------------------- */

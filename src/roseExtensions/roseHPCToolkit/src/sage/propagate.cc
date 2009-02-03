@@ -128,6 +128,14 @@ MetricScopePropagator::eval (SgType* node,
   if (total.getValue () > 0)
     if (total.getName () == metric_name_)
       {
+        std::ostringstream o;
+        o<<"\n/* ROSE-HPCT propagated metrics "
+        << metric_name_ << ":"<<total.getValue() 
+        << "["<< node->sage_class_name() << " at " << node
+        << "] */\n";
+
+        SageInterface::addTextForUnparser(node,o.str(),AstUnparseAttribute::e_after); 
+
 	cerr << "  [" << toFileLoc (node) << "]"
 	     << " " << total.toString ()
 	     << endl;
