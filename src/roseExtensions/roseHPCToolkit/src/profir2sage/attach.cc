@@ -26,6 +26,8 @@ namespace RoseHPCT
   std::set<const RoseHPCT::IRNode *> profFileNodes_;	
 }
 
+//! Tell if a Sage node's file info. matches a given filename
+// A match means both path and name match
 static
 bool
 doFilenamesMatch (const SgLocatedNode* node, const std::string& filename)
@@ -41,6 +43,8 @@ doFilenamesMatch (const SgLocatedNode* node, const std::string& filename)
   return sg_dir == target_dir && sg_file == target_file;
 }
 
+//! Check if the code portions specified by Sage Node and [b-start, b_end]
+// have any kind of overlap 
 static
 bool
 doLinesOverlap (const SgLocatedNode* node,
@@ -55,16 +59,30 @@ doLinesOverlap (const SgLocatedNode* node,
   size_t a_start = (size_t)info_start->get_line ();
   Sg_File_Info* info_end = node->get_endOfConstruct ();
   size_t a_end = (info_end == NULL) ? a_start : info_end->get_line ();
-
-  if (a_end < a_start)
+  // adjust for wrong line information, See Bugs-Internal 311
+  // some non-scope statement's end line numbers are not correct from ROSE
+  // especially for SgForInitStatement and loop condition statements
+  // We adjust their end line info. to be the same as the beginning line numbers
+  // This is generally risky for ROSE, but should work for ROSE-HPCT 
+  // since the HPCToolkit generates metrics specified with beginning line only 
+  // Liao, 2/2/2009
+  if ((a_end < a_start)||(isSgStatement(node)&&!(isSgScopeStatement(node))))
+  {
     a_end = a_start;
+    //ROSE_ASSERT(false); // should not happen for ROSE, but live with it for now
+  }
   if (b_end < b_start)
+  {
     b_end = b_start;
+    //ROSE_ASSERT(false); // Some metrics location information from HPCToolkit are buggy
+  }
 
-  return (b_start <= a_start && a_end <= b_end)
-    || (a_start <= b_start && b_end <= a_end)
-    || (a_start <= b_start && b_end <= a_end)
-    || (b_start <= a_start && a_end <= b_end);
+  return (b_start <= a_start && a_end <= b_end) // SgNode's file portion is a subset of Profile's information 
+    || (a_start <= b_start && b_end <= a_end);  // Profile's info is a subset of SgNode's portion
+//    || (a_start <= b_start && b_end <= a_end)  // redundant condition? TODO should be partial overlap
+//     like (b_start <= a_start && b_end <= a_end)
+//    || (b_start <= a_start && a_end <= b_end);
+//    // or (a_start <= b_start && a_end <= b_end);??
 }
 
 /* ---------------------------------------------------------------- */
@@ -188,8 +206,15 @@ MetricFinder::MetricFinder (const SgLocatedNode* target)
   : target_ (target), verbose_ (false), prune_branch_ (false),
     nonscope_stmt_target_ (0)
 {
-  if (!dynamic_cast<const SgScopeStatement *> (target_))
-    nonscope_stmt_target_ = dynamic_cast<const SgStatement *> (target_);
+#if 0  // not in use since it messes up metrics normalization by leaving a metric gap in AST
+  //! SgForInitStatement is special, it is not under scope statement but should be
+  //Liao, 2/2/2009
+  if (dynamic_cast<const SgForInitStatement*> (target_))
+    nonscope_stmt_target_ = 0;
+  else  
+#endif    
+    if (!dynamic_cast<const SgScopeStatement *> (target_))
+      nonscope_stmt_target_ = dynamic_cast<const SgStatement *> (target_);
 }
 
 void
@@ -363,6 +388,7 @@ notifyAttached (SgLocatedNode* node,
   cerr << "[" << toFileLoc (node) << "]"
        << "  " << attr_name << " = " << attr->toString ()
        << endl;
+ cerr<<node->unparseToString()<<endl;      
 }
 
 /*!
@@ -603,6 +629,9 @@ void MetricAttachTraversal::annotateSourceCode(void)
  *  cycles for a source line consisting four distinct statements:
  *
  *     a[0] = 0; a[1] = 1; a[2] = 2; a++;
+ *
+ *     Another example is loop headers
+ *     for (i=0;i<100; i++)
  *
  *  The MetricAttachTraversal will assign 100 to each of the
  *  statements. This pass will assign each statement the value of 25,
