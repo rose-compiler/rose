@@ -1,8 +1,8 @@
 AC_DEFUN([ROSE_SUPPORT_IDA],
 [
-# Begin macro ROSE_SUPPORT_MAPLE.
+# Begin macro ROSE_SUPPORT_IDA.
 
-# Inclusion of test for Maple Symbolic Algebra Package and it's location.
+# Inclusion of test for the Interactive Disassembler IDA Pro package and it's location.
 
 AC_MSG_CHECKING(for ida)
 AC_ARG_WITH(ida,
