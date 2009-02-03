@@ -40,7 +40,7 @@ InitPointerToNull::visit(SgNode* node) {
       return;
 
     // we have found a mov instruction
-    // we need to check if it is a   mov mem, (value or reg) // assignment of variable
+    // we need to check if it is a   mov mem, (value or reg) // assignment of variable // forgot mov mem, mem
     // or we find a                  mov reg, mem // usage of variable
     // make sure a variable is assigned before used
     SgAsmOperandList * ops = inst->get_operandList();
@@ -68,17 +68,19 @@ InitPointerToNull::visit(SgNode* node) {
 	iteration++;
       }
     } //for
-    if ((memL && regR) || (memL && Val)) {
+    if ((memL && regR) || (memL && Val) || (memL && memR)) {
       // could be assignment to address
       rose_addr_t addr=BinQSupport::evaluateMemoryExpression(inst,memL);      
-      bool containsBP = BinQSupport::memoryExpressionContainsRegister(x86_regclass_gpr,x86_gpr_bp, memL);
-      if (containsBP) {
+      // apparently the reference to memory does not always have to be BP but
+      // can also be IP if it is a static variable. How will we handle global variables?
+      //bool containsBP = BinQSupport::memoryExpressionContainsRegister(x86_regclass_gpr,x86_gpr_bp, memL);
+      //if (containsBP) {
 	// this is memory write with offset to BP
 	// remember this memory location as a write
 	if (debug)
 	cerr << "found a memory write (REG) : " << RoseBin_support::HexToString(inst->get_address())<<" "<<unparseInstruction(inst)<<endl;
 	memoryWrites.insert(addr);
-      }
+	//}
     } else if (regL && memR) {
       // could be usage of address
       rose_addr_t addr=BinQSupport::evaluateMemoryExpression(inst,memR);      

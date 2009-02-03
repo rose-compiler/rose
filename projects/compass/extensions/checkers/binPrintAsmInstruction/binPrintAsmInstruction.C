@@ -33,7 +33,7 @@ namespace CompassAnalyses
             // Checker specific parameters should be allocated here.
                Compass::OutputObject* output;
 	       std::string stringOutput;
-	       SgProject* project;
+	       SgBinaryFile* file;
                public:
                     Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
 		    rose_hash::hash_map<std::string, int> instMap;
@@ -82,8 +82,8 @@ namespace CompassAnalyses
           const std::string checkerName      = "BinPrintAsmInstruction";
 
        // Descriptions should not include the newline character "\n".
-          const std::string shortDescription = "Short description not written yet!";
-          const std::string longDescription  = "Long description not written yet!";
+          const std::string shortDescription = "Statistics about the number of different instructions";
+          const std::string longDescription  = "This analysis reports the number of different instructions in a binary in a sorted order";
         } //End of namespace BinPrintAsmInstruction.
    } //End of namespace CompassAnalyses.
 
@@ -110,7 +110,8 @@ finish(SgNode* n) {
     stringOutput += instType + ":" + RoseBin_support::ToString(nr) + " \n";
   }
 
-  output->addOutput(new CheckerOutput(project, stringOutput));
+  if (file!=NULL)
+    output->addOutput(new CheckerOutput(file, stringOutput));
 }
 
 
@@ -122,15 +123,16 @@ Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
   // YourParameter = Compass::parseInteger(inputParameters["BinPrintAsmInstruction.YourParameter"]);
      stringOutput = "";
      instMap.clear();
-     project=NULL;
+     file=NULL;
    }
 
 void
 CompassAnalyses::BinPrintAsmInstruction::Traversal::
 visit(SgNode* n)
    { 
-     if (isSgProject(n) && project==NULL)
-       project = isSgProject(n);
+
+     if (isSgBinaryFile(n) && file==NULL)
+       file = isSgBinaryFile(n);
 
   SgAsmx86Instruction* binInst = isSgAsmx86Instruction(n);
   if (binInst==NULL) return;

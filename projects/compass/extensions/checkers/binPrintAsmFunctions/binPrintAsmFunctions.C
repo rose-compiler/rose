@@ -34,7 +34,7 @@ namespace CompassAnalyses
                Compass::OutputObject* output;
 	       std::string stringOutput;
 	       //SgAsmFunctionDeclaration* project;
-	       SgProject* project;
+	       SgBinaryFile* file;
                public:
                     Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
 
@@ -81,8 +81,8 @@ namespace CompassAnalyses
           const std::string checkerName      = "BinPrintAsmFunctions";
           
        // Descriptions should not include the newline character "\n".
-          const std::string shortDescription = "Short description not written yet!";
-          const std::string longDescription  = "Long description not written yet!";
+          const std::string shortDescription = "Simple Binary Unparser Test";
+          const std::string longDescription  = "Simple Binary Unparser Test";
         } //End of namespace BinPrintAsmFunctions.
    } //End of namespace CompassAnalyses.
 
@@ -98,14 +98,15 @@ Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
   // Initalize checker specific parameters here, for example: 
   // YourParameter = Compass::parseInteger(inputParameters["BinPrintAsmFunctions.YourParameter"]);
      stringOutput="";
-     project=NULL;
+     file=NULL;
    }
 
 void
 CompassAnalyses::BinPrintAsmFunctions::Traversal::
 finalize() {
   std::cerr << stringOutput << std::endl;
-  output->addOutput(new CheckerOutput(project, stringOutput));
+  if (file!=NULL)
+    output->addOutput(new CheckerOutput(file, stringOutput));
 }
 
 void
@@ -113,10 +114,10 @@ CompassAnalyses::BinPrintAsmFunctions::Traversal::
 visit(SgNode* n)
    { 
      // mark the first Function as the output object
-     //     if (isSgAsmFunctionDeclaration(n) && project==NULL)
-     //project = isSgAsmFunctionDeclaration(n);
-     if (isSgProject(n) && project==NULL)
-       project = isSgProject(n);
+     //     if (isSgAsmFunctionDeclaration(n) && file==NULL)
+     //file = isSgAsmFunctionDeclaration(n);
+     if (isSgBinaryFile(n) && file==NULL)
+       file = isSgBinaryFile(n);
   SgAsmInstruction* binInst = isSgAsmInstruction(n);
   SgAsmFunctionDeclaration* funcDecl = isSgAsmFunctionDeclaration(n);
   SgAsmBlock* block = isSgAsmBlock(n);

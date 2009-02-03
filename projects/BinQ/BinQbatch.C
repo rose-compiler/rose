@@ -53,14 +53,14 @@ void BinQbatch::initAnalyses() {
   analyses.clear();
   preanalyses.clear();
   preanalyses.push_back(new DynamicInfo());
-  preanalyses.push_back(new BinDataFlowAnalysis());
+  //preanalyses.push_back(new BinDataFlowAnalysis());
 
   analyses.push_back(new ForbiddenFunctionCall());
   analyses.push_back(new MallocAndFree());
   analyses.push_back(new NullAfterFree());
   analyses.push_back(new InitPointerToNull());
   analyses.push_back(new ComplexityMetric());
-  analyses.push_back(new BufferOverflow());
+  //analyses.push_back(new BufferOverflow());
 
 }
 
