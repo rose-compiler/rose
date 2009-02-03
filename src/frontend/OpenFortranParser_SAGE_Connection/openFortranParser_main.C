@@ -115,9 +115,13 @@ int openFortranParser_main(int argc, char **argv)
     assert(env_status == 0);
 #endif
 
- /* printf ("Call the function that will start a JVM and call the OFP \n"); */
+#if 0
+    printf ("Call the function that will start a JVM and call the OFP \n");
+#endif
     int status = runOFP(argc, argv);
- /* printf ("DONE: Call the function that will start a JVM and call the OFP status = %d \n",status); */
+#if 0
+    printf ("DONE: Call the function that will start a JVM and call the OFP status = %d \n",status);
+#endif
 
  /* Reset to the saved value */
 #if OVERWRITE_LD_LIBRARY_PATH
