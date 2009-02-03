@@ -1,3 +1,54 @@
+2009-02-03 06:18  dquinlan
+
+	* [r4258] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/developersScratchSpace/Dan/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/libraryIdentification_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/libraryIdentification_tests/libraryIdentificationTest.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/disassemblerCommon.C,
+	  /trunk/ROSE/src/frontend/OpenFortranParser_SAGE_Connection/openFortranParser_main.C,
+	  /trunk/ROSE/src/midend/binaryAnalyses/libraryIdentification/functionIdentification.C,
+	  /trunk/ROSE/src/midend/binaryAnalyses/libraryIdentification/functionIdentification.h,
+	  /trunk/ROSE/src/midend/binaryAnalyses/libraryIdentification/libraryIdentification.h,
+	  /trunk/ROSE/src/midend/binaryAnalyses/libraryIdentification/libraryIdentification_reader.C,
+	  /trunk/ROSE/src/midend/binaryAnalyses/libraryIdentification/libraryIdentification_writer.C,
+	  /trunk/ROSE/tests/roseTests/binaryTests/testLibraryDb.C: Summary:
+	  Added binary library identification techniques to binary
+	  analysis.
+	  
+	  Detailed changes in this commit:
+	  1) This is the second iteration of this work and this version
+	  uses a
+	  SQLite database (thanks to Andreas) and computes the MD5 checksum
+	  of each function in an input binary.
+	  2) The other side of this mechanism is that any function can be
+	  checked
+	  for its existance in a named database. If it exists then it is
+	  the
+	  same as a known function previous identified in the other binary
+	  (typically
+	  this will be a library of known functions: libc.a, libc++.a,
+	  etc.).
+	  3) A test code:
+	  developersScratchSpace/Dan/libraryIdentification_tests/libraryIdentificationTest.C
+	  demonstrates the use of this mechanism to build a database from
+	  any binary
+	  and then check all the function in the binary to make sure that
+	  each is in the
+	  database.
+	  4) This took a while to debug since the binary had the unexpected
+	  result of having
+	  two functions that were identical. This causes duplication in the
+	  database.
+	  It is unclear how we will handle this case in the next iteration.
+
+2009-02-03 00:36  liao6
+
+	* [r4255]
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/src/profir2sage/attach.cc:
+	  Enabled ROSE-HPCT to tolerate wrong end line numbers in ROSE AST
+	  This fixes the messed up performance metrics attached to ROSE
+	  AST.
+
 2009-02-02 18:22  saebjornsen1
 
 	* [r4251]
