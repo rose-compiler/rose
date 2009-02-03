@@ -1,3 +1,50 @@
+2009-02-03 18:47  dquinlan
+
+	* [r4265]
+	  /trunk/ROSE/src/midend/binaryAnalyses/libraryIdentification/functionIdentification.C:
+	  Fixed access to MD5() which was a problem for Mac OSX.
+
+2009-02-03 17:26  dquinlan
+
+	* [r4263] /trunk/ROSE/src/frontend/SageIII/sageSupport.C: Summary:
+	  Fortran support now outputs a message when used with SSL support
+	  enabled.
+	  
+	  Detailed changes in this commit:
+	  1) Fixed Fortran support in ROSE to output a message explaining
+	  why Fortran support
+	  using OFP (which requires Java support) is disabled.
+	  2) An alternative fix might to to disable the java support in the
+	  configuation of ROSE
+	  when we detect that SSL is enabled.
+
+2009-02-03 17:02  dquinlan
+
+	* [r4262] /trunk/ROSE/config/Makefile.for.ROSE.includes.and.libs,
+	  /trunk/ROSE/config/check_ssl.m4,
+	  /trunk/ROSE/config/support-ida.m4,
+	  /trunk/ROSE/config/support-ssl.m4, /trunk/ROSE/configure.in,
+	  /trunk/ROSE/developersScratchSpace/Dan/libraryIdentification_tests/Makefile.am,
+	  /trunk/ROSE/src/midend/binaryAnalyses/libraryIdentification/functionIdentification.C:
+	  Summary: Implemented optional configure support for SSL (so it
+	  does not break the Java support required for Fortran).
+	  
+	  Detailed changes in this commit:
+	  1) Removed use of "check_ssl.m4" in configure.in.
+	  2) build new SSL support macro in support-ssl.m4
+	  3) Added option handling of SSL only when --enable-ssl is used
+	  on the configure command line.
+	  4) Added optional use of SSL libraries only when --enable-ssl is
+	  used.
+	  5) Modified use of MD5() function to only be used when SSL
+	  support is enabled.
+	  Else the opcode vectore is checked into the database instead of
+	  the
+	  checksum computed on the vector (making the data base larger and
+	  the
+	  test for equality more expensive).
+	  6) Removed "check_ssl.m4" macro from config directory.
+
 2009-02-03 06:18  dquinlan
 
 	* [r4258] /trunk/ROSE/configure.in,
