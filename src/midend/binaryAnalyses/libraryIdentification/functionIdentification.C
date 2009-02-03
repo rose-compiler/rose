@@ -67,7 +67,9 @@ FunctionIdentification::set_function_match( const library_handle & handle, const
 
   //construct the entry that is inserted into the database
   unsigned char md[16];
+#if USE_MD5_AS_HASH
   MD5( str , str_length, md );
+#endif
 
   sqlite3_command cmd(con, db_select_n.c_str());
   cmd.bind(1, handle.filename );
@@ -109,7 +111,9 @@ FunctionIdentification::get_function_match( library_handle & handle, const unsig
 {
   //Constructing query command to get the entry from the database
   unsigned char md[16];
+#if USE_MD5_AS_HASH
   MD5( str , str_length, md );
+#endif
 
   std::string db_select_n = "select file, function_name, begin,end from vectors where md5_sum=?";
 //    +boost::lexical_cast<string>(md) + "'";
