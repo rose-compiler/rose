@@ -97,8 +97,8 @@ class MetricFinder : public Trees::Traversal<RoseHPCT::IRTree_t, true>
 public:
   typedef std::set<const RoseHPCT::IRNode *> MatchSet_t;
 
-  /*! \brief Initialize, specifying the target node. */
-  MetricFinder (const SgLocatedNode* target);
+  /*! \brief Initialize, specifying the target node, and a pointer to a record for matched IRNode to  SgNode to avoid redundant attachment*/
+  MetricFinder (const SgLocatedNode* target, std::map<const RoseHPCT::IRNode *, std::set<SgLocatedNode *> >  * historyRecord);
   virtual ~MetricFinder (void) {}
 
   /*! \brief Enable verbose messaging during traversal. */
@@ -132,12 +132,17 @@ protected:
 
   bool doLinesOverlap (size_t a, size_t b) const;
 
+  /*! \brief Check if the target node is a shadow node of 
+   * the previously matched nodes to a profile node */
+ bool isShadowNode(const RoseHPCT::IRNode* profNode) const; 
+
 private:
   const SgLocatedNode* target_; //!< Node to find
   MatchSet_t matches_; //!< All matching ProfIR nodes
   MatchSet_t files_; //!< All file nodes in profIR, used to find hottest file later on
   bool verbose_; //!< True <==> verbose messaging desired by caller
   bool prune_branch_; //!< Indicates a tree branch may be pruned from search
+  std::map<const RoseHPCT::IRNode *, std::set<SgLocatedNode *> >  * historyRecord_; //! A map between IRNode to matched SgNodes, used to avoid redundant attaching for code expanded from macro, Liao, 2/3/2009
 
 protected:
   //! \name Query target node for Sage type information
@@ -198,13 +203,13 @@ using namespace RoseHPCT;
 
 MetricFinder::MetricFinder (void)
   : target_ (0), verbose_ (false), prune_branch_ (false),
-    nonscope_stmt_target_ (0)
+    nonscope_stmt_target_ (0),historyRecord_(0)
 {
 }
 
-MetricFinder::MetricFinder (const SgLocatedNode* target)
+MetricFinder::MetricFinder (const SgLocatedNode* target,std::map<const RoseHPCT::IRNode *, SgLocNodeSet_t>  * historyRecord)
   : target_ (target), verbose_ (false), prune_branch_ (false),
-    nonscope_stmt_target_ (0)
+    nonscope_stmt_target_ (0),historyRecord_(historyRecord)
 {
 #if 0  // not in use since it messes up metrics normalization by leaving a metric gap in AST
   //! SgForInitStatement is special, it is not under scope statement but should be
@@ -308,6 +313,56 @@ MetricFinder::doLinesOverlap (size_t a, size_t b) const
   return ::doLinesOverlap (target_, a, b);
 }
 
+//! Check if the target SgNode is a shadow node of a previously  matched 
+// SgNode to the current RoseHPCT::IRNode (profNode) node. 
+//
+// This is used to help avoid redundant metric attachment to 
+// both parent and child nodes expanded from a single line of macro.
+// It takes advantage of the preorder traversal to attach a metric only once
+// on the highest level of AST node matching the source line, 
+// all other nodes below the highest level of node are called shadow nodes 
+// and are ignored.  If we have multiple nodes at the same highest level,
+// we still attach them all and let the Normalization phase to adjust metrics 
+// later.
+//
+// The original code naively attached performance metrics to all AST nodes 
+// with matching source line numbers,
+// which caused problems when an AST subtree is expanded from a single line macro call.
+// In this case, all nodes in the expanded AST tree will have the same source line number as the macro
+// and they all got the same metrics attached. A later metric propagation phase would wrongfully 
+// accumulate the redundant metrics within the subtree and got very off metrics in the end. 
+//
+// Limitations: Some crazy macros used in SMG2000 are expanded to both loop control headers 
+// and part of the loop body. This shadow node concept only helps get the correct final accumulated metrics
+// and cannot attribute the metrics to headers and partial loop body (the performance tool does 
+// not provide sufficient information neither). 
+// In fact, the metrics of the crazy macros are attached to loop headers only since loop headers 
+// are visited before the loop body.
+//
+// TODO A final top-down propagation phase may be needed to attribute the top level metric further
+// down the children and grandchildren nodes. But We don't see the need yet right now.
+// Liao, 2/3/2009
+bool 
+MetricFinder::isShadowNode(const RoseHPCT::IRNode* profNode) const
+{
+  ROSE_ASSERT(historyRecord_!=NULL);
+  ROSE_ASSERT(profNode!=NULL);
+
+  bool result=false;
+  if ((*historyRecord_)[profNode].size()==0)
+    result = false; // not record at all, not shadowed
+  else
+  {
+    SgNode* existing_node= *((*historyRecord_)[profNode].begin());
+    if (existing_node->get_parent() == target_->get_parent())
+      result = false; // same level in tree path, not shadowed
+    else
+      result = true; // all other cases mean shadowed, 
+      //either a child-parent relationships or different tree paths
+  }
+  return result;
+}
+
 void
 MetricFinder::visit (TreeParamPtr_t tree)
 {
@@ -327,7 +382,7 @@ MetricFinder::visit (const File* f)
       prune_branch_ = true;
     else  // match file name
     {
-      if (isTargetSgGlobal ()) 
+      if (isTargetSgGlobal () )
       // match SgNode type: looking for a file (global) scope
       {
         matches_.insert (f);
@@ -363,7 +418,8 @@ void
 MetricFinder::visit (const Statement* s)
 {
   if (s && isTargetSgStatementNonScope ()
-      && doLinesOverlap (s->getFirstLine (), s->getLastLine ()))
+      && doLinesOverlap (s->getFirstLine (), s->getLastLine ())
+      && !isShadowNode(s)) // We only consider shadow SgNodes for statement profile results for now
     {
       matches_.insert (s);
       prune_branch_ = true;
@@ -547,7 +603,7 @@ MetricAttachTraversal::visit (SgNode* n)
   SgLocatedNode* n_loc = isSgLocatedNode (n);
   if (n_loc)
     {
-      MetricFinder finder (n_loc);
+      MetricFinder finder (n_loc,&attached_);
       finder.setVerbose (verbose_);
       // for current SgNode, find matching prof ir nodes
       finder.traverse (hpc_root_);
