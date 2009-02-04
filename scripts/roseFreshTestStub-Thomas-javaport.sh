@@ -29,8 +29,8 @@ source /usr/apps/qt/4.4.2/setup.sh
 export CLASSPATH=/home/panas2/lib/yed.jar:./:/home/panas2/development/jogl/jogl-1.1.1/jogl/build/jogl.jar:/home/panas2/development/jogl/jogl-1.1.1/gluegen/build/gluegen-rt.jar 
 export BOOST_ROOT=/home/panas2/development/boost-install-gcc4-64bit/
 export BOOST_LD=/home/panas2/development/boost-install-gcc4-64bit/lib/
-export PATH=/home/panas2/programs/sqlite/sqlite-3.5.8/bin:${HOME}/development/babel-64bit/runtime/bin:/home/panas2/development/ROSE-64bit/install-gcc4/bin:/home/panas2/programs/crosstool/gcc-4.1.0-glibc-2.3.2/arm-unknown-linux-gnu/bin:${SWIG}/bin:${CCACHE}/bin/:${PATH}
-export LD_LIBRARY_PATH=/home/panas2/programs/sqlite/sqlite-3.5.8/lib:${HOME}/java/jdk1.6.0-64bit/lib/:${HOME}/java/jdk1.6.0-64bit/jre/lib/amd64/server/:${HOME}/development/babel-64bit/runtime/lib:${LD_LIBRARY_PATH}
+export PATH=${HOME}/development/babel-64bit/runtime/bin:/home/panas2/development/ROSE-64bit/install-gcc4/bin:/home/panas2/programs/crosstool/gcc-4.1.0-glibc-2.3.2/arm-unknown-linux-gnu/bin:${SWIG}/bin:${CCACHE}/bin/:${PATH}
+export LD_LIBRARY_PATH=${HOME}/java/jdk1.6.0-64bit/lib/:${HOME}/java/jdk1.6.0-64bit/jre/lib/amd64/server/:${HOME}/development/babel-64bit/runtime/lib:${LD_LIBRARY_PATH}
 
 export ANT_HOME=/home/panas2/programs/ant/ant-install
 export JAVA_HOME=/home/panas2/java/jdk1.6.0-64bit
