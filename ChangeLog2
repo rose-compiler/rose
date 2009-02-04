@@ -1,3 +1,67 @@
+2009-02-04 19:33  liao6
+
+	* [r4286] /trunk/ROSE/docs/Rose/developersAppendix.tex: Edited the
+	  developer guide for a simplified the resynchronization process
+	  Added actual command line examples.
+
+2009-02-04 19:03  panas2
+
+	* [r4285]
+	  /trunk/ROSE/scripts/roseFreshTestStub-Thomas-binarysql.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Thomas-javaport.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Thomas.sh: changed scripts
+
+2009-02-04 18:21  dquinlan
+
+	* [r4284] /trunk/ROSE/docs/Rose/developersAppendix.tex: Added
+	  section on how to resyn ROSE with external projects.
+
+2009-02-04 16:58  dquinlan
+
+	* [r4282]
+	  /trunk/ROSE/developersScratchSpace/Dan/libraryIdentification_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/libraryIdentification_tests/libraryIdentificationTest.C,
+	  /trunk/ROSE/docs/Rose/languageExtensions.tex,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Node.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Support.code,
+	  /trunk/ROSE/src/ROSETTA/src/support.C,
+	  /trunk/ROSE/src/backend/unparser/unparser.C,
+	  /trunk/ROSE/src/backend/unparser/unparser.h,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecGeneric.C,
+	  /trunk/ROSE/src/frontend/SageIII/attach_all_info.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C,
+	  /trunk/ROSE/src/midend/binaryAnalyses/libraryIdentification/libraryIdentification_writer.C,
+	  /trunk/ROSE/src/util/stringSupport/string_functions.C,
+	  /trunk/ROSE/src/util/stringSupport/string_functions.h: Summary:
+	  Added handling of library archive files to support binary library
+	  identification.
+	  
+	  Detailed changes in this commit:
+	  1) ROSE now processes *.a files and extracts the object files and
+	  reads each of them
+	  to form an AST to support binary analysis. This was done to
+	  support the newest
+	  work to compute and save binary function signatures in a database
+	  as part of
+	  the later recognition of these functions in statically link
+	  binaries.
+	  There are still some bugs in the current work and this checkin
+	  permits Robb and
+	  I to work on this together. However, all the ROSE tests pass.
+	  2) Added a LaTeX chapter languageExtensions.tex (added to
+	  docs/Rose) but not
+	  yet added to the ROSE Manual. This documents the few IR nodes and
+	  changes
+	  to a few IR nodes that have been added as part of collaborations
+	  with
+	  external groups (Rice for now). The goal is to get aspects of
+	  this in
+	  to the documentation but not so much that it interferes with
+	  their development
+	  work. External groups should feel free to edit this chapter to
+	  better
+	  document their additions for ROSE, and EDG or OFP.
+
 2009-02-04 00:57  liao6
 
 	* [r4271]
