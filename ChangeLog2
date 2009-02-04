@@ -1,3 +1,42 @@
+2009-02-04 00:57  liao6
+
+	* [r4271]
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/src/profir2sage/attach.cc:
+	  rose-HPCT:
+	  Fixed wrong performance metrics attachment for source code with
+	  macro calls
+	  The solution is to attach a metric only once to a highest level
+	  Sage node
+	  matching the source line.
+
+2009-02-04 00:25  panas2
+
+	* [r4270] /trunk/ROSE/projects/assemblyToSourceAst/Makefile.am,
+	  /trunk/ROSE/projects/assemblyToSourceAst/tests/Makefile.am,
+	  /trunk/ROSE/projects/compass/src/compassSupport/Makefile.am,
+	  /trunk/ROSE/projects/compass/tools/compass/buildInterpreter/Makefile.am,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Thomas.sh: enable some
+	  components to be compiled with MPI enabled. This didnt work when
+	  I enabled some configuration needed in demos
+
+2009-02-03 21:21  liao6
+
+	* [r4269]
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/src/profir2sage/attach.cc,
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/src/sage/propagate.cc:
+	  Enabled more source annotations for metrics normalization and
+	  propagation in ROSE-HPCT
+
+2009-02-03 21:13  panas2
+
+	* [r4267] /trunk/ROSE/projects/BinQ/BinQbatch.C,
+	  /trunk/ROSE/projects/BinQ/InitPointerToNull.C,
+	  /trunk/ROSE/projects/compass/extensions/checkers/binPrintAsmFunctions/binPrintAsmFunctions.C,
+	  /trunk/ROSE/projects/compass/extensions/checkers/binPrintAsmInstruction/binPrintAsmInstruction.C,
+	  /trunk/ROSE/projects/runtimeErrorCheck/example.C: The binary
+	  checkers attach defects to the SgBinaryFile node now instead of
+	  the Project
+
 2009-02-03 18:47  dquinlan
 
 	* [r4265]
