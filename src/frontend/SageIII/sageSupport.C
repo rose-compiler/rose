@@ -29,6 +29,27 @@ using namespace std;
 
 
 
+void
+whatTypeOfFileIsThis( const string & name )
+   {
+  // DQ (2/3/2009): It is helpful to report what type of file this is where possible.
+  // Call the Unix "file" command, it would be great if this was an available 
+  // system call (but Robb thinks it might not always be available).
+
+     vector<string> commandLineVector;
+     commandLineVector.push_back("file -b " + name);
+
+  // printf ("Unknown file: %s ",name.c_str());
+     printf ("Error: unknown file type: ");
+     flush(cout);
+     
+  // I could not make this work!
+  // systemFromVector (commandLineVector);
+
+  // Use "-b" for brief mode!
+     string commandLine = "file " + name;
+     system(commandLine.c_str());
+   }
 
 
 
@@ -42,8 +63,8 @@ outputTypeOfFileAndExit( const string & name )
 
   // printf ("In outputTypeOfFileAndExit(%s): Evaluate the file type \n",name.c_str());
 
-#if 1
-  // I could not get this code to work for me, so I just used something internally built on the system command (that has some security checking).
+#if 0
+  // DQ (2/3/2009): This works now, I think that Andreas fixed it.
 
   // Use file(1) to try to figure out the file type to report in the exception
      int child_stdout[2];
@@ -52,53 +73,42 @@ outputTypeOfFileAndExit( const string & name )
 
      printf ("pid = %d \n",pid);
 
-     if (pid == -1) { // Error
-        perror("fork: error in outputTypeOfFileAndExit ");
-        exit (1);
-     } if (0 == pid)
-     {
-       close(0);
-       dup2(child_stdout[1], 1);
-       close(child_stdout[0]);
-       close(child_stdout[1]);
-       execlp("/usr/bin/file", "/usr/bin/file", "-b", name.c_str(), NULL);
-       exit(1);
-     }
-     else
-       {
-         int status;
-         if (waitpid(pid, &status, 0) == -1) {
-           perror("waitpid");
-           abort();
-         }
+     if (pid == -1)
+        { // Error
+          perror("fork: error in outputTypeOfFileAndExit ");
+          exit (1);
+        }
+     if (0 == pid)
+        {
+          close(0);
+          dup2(child_stdout[1], 1);
+          close(child_stdout[0]);
+          close(child_stdout[1]);
+          execlp("/usr/bin/file", "/usr/bin/file", "-b", name.c_str(), NULL);
+          exit(1);
+        }
+       else
+        {
+          int status;
+          if (waitpid(pid, &status, 0) == -1)
+             {
+               perror("waitpid");
+               abort();
+             }
 
-         char buf[4096];
-         memset(buf, 0, sizeof buf);
-         read(child_stdout[0], buf, sizeof buf);
-         std::string buffer(buf);
-         buffer =  name+ " unrecognized file format: " + buffer;
+          char buf[4096];
+          memset(buf, 0, sizeof buf);
+          read(child_stdout[0], buf, sizeof buf);
+          std::string buffer(buf);
+          buffer =  name+ " unrecognized file format: " + buffer;
 
-         throw SgAsmGenericFile::FormatError(buffer.c_str());
-       }
+       // DQ (2/3/2009): It is helpful to report what type of file this is where possible.
+          whatTypeOfFileIsThis(name);
+
+          throw SgAsmGenericFile::FormatError(buffer.c_str());
+        }
 #else
-  // Call the Unix "file" command, it would be great if this was an available 
-  // system call (but Robb thinks it might not be available).
-
-     vector<string> commandLineVector;
-     commandLineVector.push_back("file -b " + name);
-
-  // ios::sync_with_stdio();     // Syncs C++ and C I/O subsystems!
-
-  // printf ("Unknown file: %s ",name.c_str());
-     printf ("Error: unknown file type: ");
-     flush(cout);
-     
-  // I could not make this work!
-  // systemFromVector (commandLineVector);
-
-  // Use "-b" for brief mode!
-     string commandLine = "file " + name;
-     system(commandLine.c_str());
+     whatTypeOfFileIsThis(name);
 
   // printf ("\n\nExiting: Unknown file Error \n\n");
   // ROSE_ASSERT(false);
@@ -1821,7 +1831,8 @@ isBinaryExecutableFile ( string sourceFilename )
    {
      bool returnValue = false;
 
-  // printf ("Inside of isBinaryExecutableFile(%s) \n",sourceFilename.c_str());
+     if ( SgProject::get_verbose() > 1 )
+          printf ("Inside of isBinaryExecutableFile(%s) \n",sourceFilename.c_str());
 
   // Open file for reading
      FILE* f = fopen(sourceFilename.c_str(), "rb");
@@ -1835,10 +1846,12 @@ isBinaryExecutableFile ( string sourceFilename )
      int character1 = fgetc(f);
 
   // The first character of an ELF binary is '\127' and for a PE binary it is 'M'
-  // if (character0 == 127)
+  // Note also that some MS-DOS headers can start with "ZM" instead of "MZ" due to
+  // early confusion about little endian handling for MS-DOS where it was ported 
+  // to not x86 plaforms.  I am not clear how wide spread loaders of this type are.
+
      if (character0 == 127 || character0 == 77)
         {
-       // returnValue = true;
           if (character1 == 'E' || character1 == 'Z')
              {
                returnValue = true;
@@ -1849,6 +1862,42 @@ isBinaryExecutableFile ( string sourceFilename )
 
       return returnValue;
     }
+
+bool
+isLibraryArchiveFile ( string sourceFilename )
+   {
+  // The if this is a "*.a" file, not that "*.so" files
+  // will appear as an executable (same for Windows "*.dll"
+  // files.
+
+     bool returnValue = false;
+
+     if ( SgProject::get_verbose() > 1 )
+          printf ("Inside of isLibraryArchiveFile(%s) \n",sourceFilename.c_str());
+
+  // Open file for reading
+     FILE* f = fopen(sourceFilename.c_str(), "rb");
+     if (!f)
+        {
+          printf ("Could not open file in isLibraryArchiveFile()");
+          ROSE_ASSERT(false);
+        }
+
+     string magicHeader;
+     for (int i = 0; i < 7; i++)
+        {
+          magicHeader = magicHeader + (char)getc(f);
+        }
+
+  // printf ("magicHeader = %s \n",magicHeader.c_str());
+     returnValue = (magicHeader == "!<arch>");
+
+  // printf ("isLibraryArchiveFile() returning %s \n",returnValue ? "true" : "false");
+
+     fclose(f);
+
+     return returnValue;
+   }
 
 void
 SgFile::initializeSourcePosition( const std::string & sourceFilename )
@@ -2187,15 +2236,19 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
                             }
                            else
                             {
-                           // This is not a source file recognized by ROSE, so it is either a binary executable or something that we can't process.
+                           // This is not a source file recognized by ROSE, so it is either a binary executable or library archive or something that we can't process.
 
                            // printf ("This still might be a binary file (can not be an object file, since these are not accepted into the fileList by CommandlineProcessing::generateSourceFilenames()) \n");
 
                            // Detect if this is a binary (executable) file!
                               bool isBinaryExecutable = isBinaryExecutableFile(sourceFilename);
-                              if (isBinaryExecutable == true)
+                              bool isLibraryArchive   = isLibraryArchiveFile(sourceFilename);
+                              if (isBinaryExecutable == true || isLibraryArchive == true)
                                  {
-                                   file = new SgBinaryFile ( argv,  project );
+                                // Build a SgBinaryFile to represent either the binary executable or the library archive.
+                                // file = new SgBinaryFile ( argv,  project );
+                                   SgBinaryFile* binaryFile = new SgBinaryFile ( argv,  project );
+                                   file = binaryFile;
 
                                 // This should have already been setup!
                                 // file->initializeSourcePosition();
@@ -2207,6 +2260,71 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
                                    file->set_requires_C_preprocessor(false);
 
                                    ROSE_ASSERT(file->get_file_info() != NULL);
+
+                                   if (isLibraryArchive == true)
+                                      {
+                                     // This is the case of processing a library archive (*.a) file. We want to process these files so that 
+                                     // we can test the library identification mechanism to build databases of the binary functions in 
+                                     // libraries (so that we detect these in staticaly linked binaries).
+                                        ROSE_ASSERT(isBinaryExecutable == false);
+
+                                     // Note that since a archive can contain many *.o files each of these will be a SgAsmFile object and 
+                                     // the SgBinaryFile will contain a list of SgAsmFile objects to hold them all.
+                                        string archiveName = file->get_sourceFileNameWithPath();
+
+                                        printf ("archiveName = %s \n",archiveName.c_str());
+
+                                     // Mark this as a library archive.
+                                        file->set_isLibraryArchive(true);
+
+                                     // Later we can make the tmp file specific to a given archive if we want to do that.
+                                     // string commandLine = "mkdir -p tmp_objects; cd tmp_objects; ar -vox " + archiveName;
+
+                                     // Put the names of the extracted objects into a file and the extracted object file into the directory: tmp_objects
+                                        string objectNameFile = "object_names.txt";
+                                        string commandLine = "mkdir -p tmp_objects; cd tmp_objects; ar -vox " + archiveName + " > ../object_names.txt";
+                                        printf ("Running System Command: %s \n",commandLine.c_str());
+
+                                     // Run the system command...
+                                        system(commandLine.c_str());
+
+                                        vector<string> wordList = StringUtility::readWordsInFile(objectNameFile);
+                                        vector<string> objectFileList;
+
+                                        for (vector<string>::iterator i = wordList.begin(); i != wordList.end(); i++)
+                                           {
+                                          // Get each word in the file of names (*.o)
+                                             string word = *i;
+                                             printf ("word = %s \n",word.c_str());
+                                             size_t wordSize = word.length();
+                                             string targetSuffix = ".o";
+                                             size_t targetSuffixSize = targetSuffix.length();
+                                             if (wordSize > targetSuffixSize && word.substr(wordSize-targetSuffixSize) == targetSuffix)
+                                                  objectFileList.push_back(word);
+                                           }
+
+                                        for (vector<string>::iterator i = objectFileList.begin(); i != objectFileList.end(); i++)
+                                           {
+                                          // Get each object file name (*.o)
+                                             string objectFileName = *i;
+                                             printf ("objectFileName = %s \n",objectFileName.c_str());
+#if 0
+                                          // Later we want to build a list of SgAsmFile objects in the SgBinaryFile object.
+                                             SgAsmFile* asmFile = new SgAsmFile();
+                                             asmFile->set_name(objectFileName);
+                                             asmFile->set_parent(file);
+
+                                          // DQ (2/3/2009): Using new data member: binaryFileList
+                                             binaryFile->get_binaryFileList().push_back(asmFile);
+#else
+                                             binaryFile->get_libraryArchiveObjectFileNameList().push_back(objectFileName);
+#endif
+                                             printf ("binaryFile->get_libraryArchiveObjectFileNameList().size() = %zu \n",binaryFile->get_libraryArchiveObjectFileNameList().size());
+                                           }
+
+                                        printf ("Exiting in processing a library archive file. \n");
+                                     // ROSE_ASSERT(false);
+                                      }
                                  }
                                 else
                                  {
@@ -2224,13 +2342,17 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
 
                                    ROSE_ASSERT(file->get_file_info() != NULL);
                                 // file->set_parent(project);
+
+                                // DQ (2/3/2009): Uncommented this to report the file type when we don't process it...
                                 // outputTypeOfFileAndExit(sourceFilename);
+                                   printf ("Warning: This is an unknown file type, not being processed by ROSE \n");
+                                   outputTypeOfFileAndExit(sourceFilename);
                                  }
                             }
                        }
                   }
 
-                 file->set_sourceFileUsesFortranFileExtension(false);
+               file->set_sourceFileUsesFortranFileExtension(false);
              }
         }
        else
@@ -2249,7 +2371,11 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
        // printf ("No source file found on command line, assuming to be linker command line \n");
         }
 
-  // The frontend is called exlicitly outside the constructor since that allows for a cleaner
+  // DQ (2/3/2009): I think this is a new assertion!
+     ROSE_ASSERT(file != NULL);
+  // file->display("SgFile* determineFileType(): before calling file->callFrontEnd()");
+
+  // The frontend is called explicitly outside the constructor since that allows for a cleaner
   // control flow. The callFrontEnd() relies on all the "set_" flags to be already called therefore
   // it was placed here.
      if ( isSgUnknownFile(file) == NULL && file != NULL  )
@@ -2262,7 +2388,7 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
   // The reason we have the Sg_File_Info object is so that we can easily support filename matching based on
   // the integer values instead of string comparisions.  Required for the handling co CPP directives and comments.
 
-  // display("SgFile::setupSourceFilename()");
+  // display("SgFile* determineFileType()");
 
      return file;
    }
@@ -3206,14 +3332,18 @@ SgBinaryFile::callFrontEnd()
 int
 SgUnknownFile::callFrontEnd()
    {
-     abort(); 
+  // DQ (2/3/2009): This function is defined, but should never be called.
+     printf ("Error: calling SgUnknownFile::callFrontEnd() \n");
+     ROSE_ASSERT(false);
+
      return 0;
    }
 
 SgBinaryFile::SgBinaryFile ( vector<string> & argv ,  SgProject* project )
 // : SgFile (argv,errorCode,fileNameIndex,project)
    {
-     p_binaryFile = NULL;
+  // DQ (2/3/2009): This data member has disappeared (in favor of a list).
+  // p_binaryFile = NULL;
 
   // Assume a binary generated from a compiler for now since this 
   // is easier, the more aggressive modes are still in development.
@@ -3271,13 +3401,15 @@ SgProject::parse()
           printf ("currentFileName = %s \n",currentFileName.c_str());
 #endif
        // DQ (11/13/2008): Removed overly complex logic here!
-       // printf ("+++++++++++++++ Calling determineFileType() currentFileName = %s \n",currentFileName.c_str());
+#if 0
+          printf ("+++++++++++++++ Calling determineFileType() currentFileName = %s \n",currentFileName.c_str());
+#endif
           SgFile* newFile = determineFileType(argv, nextErrorCode, this);
           ROSE_ASSERT (newFile != NULL);
-
-       // printf ("+++++++++++++++ DONE: Calling determineFileType() currentFileName = %s \n",currentFileName.c_str());
-       // printf ("In SgProject::parse(): newFile = %p = %s \n",newFile,newFile->class_name().c_str());
-
+#if 0
+          printf ("+++++++++++++++ DONE: Calling determineFileType() currentFileName = %s \n",currentFileName.c_str());
+          printf ("In SgProject::parse(): newFile = %p = %s \n",newFile,newFile->class_name().c_str());
+#endif
           ROSE_ASSERT (newFile->get_startOfConstruct() != NULL);
           ROSE_ASSERT (newFile->get_parent() != NULL);
 
@@ -3333,239 +3465,6 @@ SgProject::parse()
 
      return errorCode;
    }
-
-#if 0
-void
-SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fileNameIndex, SgProject* project)
-   {
-
-  // JJW 10-26-2007 ensure that this object is not on the stack
-     preventConstructionOnStack(this);
-
-  // FMZ 6/10/2008 create new stacks for the SgFile
-#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-     FortranParserState* currStks = new FortranParserState(); 
-#endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-
-     // printf ("Inside of SgFile::doSetupForConstructor() \n");
-
-  // DQ (4/21/2006): I think we can now assert this! This is an unused function parameter!
-     ROSE_ASSERT(fileNameIndex == 0);
-
-  // DQ (5/9/2007): Moved this call down to after where the file name is available so that we could include the filename in the label.
-  // DQ (7/6/2005): Introduce tracking of performance of ROSE.
-  // TimingPerformance timer ("AST SgFile Constructor:");
-
-  // Set the project early in the construction phase so that we can access data in 
-  // the parent if needed (useful for template handling but also makes sure the parent is
-  // set (and avoids fixup (currently done, but too late in the construction process for 
-  // the template support).
-     if (project != NULL)
-          set_parent(project);
-
-     ROSE_ASSERT (project != NULL);
-
-     ROSE_ASSERT(get_parent() != NULL);
-
-  // DQ (5/9/2007): The initialization() should do this, so this should not be required.
-  // p_root = NULL;
-
-  // This should be set in the new SgBinaryFile IR node.
-  // p_binaryFile = NULL;
-
-  // initalize all local variables to default values
-     initialization();
-
-     ROSE_ASSERT(get_parent() != NULL);
-
-  // DQ (4/21/2006): Setup the source filename as early as possible
-     //setupSourceFilename(argv);
-
-     Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argv);
-
-     // this->display("In SgFile::setupSourceFilename()");
-     // printf ("listToString(argv) = %s \n",StringUtility::listToString(argv).c_str());
-     // printf ("listToString(fileList) = %s \n",StringUtility::listToString(fileList).c_str());
-
-     if (fileList.empty() == false)
-     {
-
-       string sourceFilename = *(fileList.begin());
-
-       // printf ("Before conversion to absolute path: sourceFilename = %s \n",sourceFilename.c_str());
-
-       // sourceFilename = StringUtility::getAbsolutePathFromRelativePath(sourceFilename);
-       sourceFilename = StringUtility::getAbsolutePathFromRelativePath(sourceFilename, true);
-
-       set_sourceFileNameWithPath(sourceFilename);
-
-       //printf ("In SgFile::setupSourceFilename(const vector<string>& argv): p_sourceFileNameWithPath = %s \n",get_sourceFileNameWithPath().c_str());
-
-
-       set_sourceFileNameWithoutPath( ROSE::stripPathFromFileName(get_sourceFileNameWithPath().c_str()) );
-       get_file_info()->set_filenameString( get_sourceFileNameWithPath() );
-     }else{
-       //A file should never be created without a filename so this branch should be impossible
-       abort();
-     }
-
-     
-#if 1
-  // DQ (9/5/2008): Handle the case that this is a SgSourceFile.  This is awkward code, and may be a temporary fix.
-     const SgSourceFile* sourceFile = isSgSourceFile(this);
-     if (sourceFile != NULL)
-        {
-       // DQ (1/21/2008): Set the filename in the SgGlobal IR node so that the traversal to add CPP directives and comments will succeed.
-          ROSE_ASSERT (sourceFile->get_globalScope() != NULL);
-          ROSE_ASSERT(sourceFile->get_globalScope()->get_startOfConstruct() != NULL);
-
-       // DQ (8/21/2008): Modified to make endOfConstruct consistant (avoids warning in AST consistancy check).
-       // ROSE_ASSERT(p_root->get_endOfConstruct()   == NULL);
-          ROSE_ASSERT(sourceFile->get_globalScope()->get_endOfConstruct()   != NULL);
-
-       // p_root->get_file_info()->set_filenameString(p_sourceFileNameWithPath);
-       // ROSE_ASSERT(p_root->get_file_info()->get_filenameString().empty() == false);
-
-
-          sourceFile->get_globalScope()->get_startOfConstruct()->set_filenameString(p_sourceFileNameWithPath);
-          ROSE_ASSERT(sourceFile->get_globalScope()->get_startOfConstruct()->get_filenameString().empty() == false);
-
-       // DQ (8/21/2008): Uncommented to make the endOfConstruct consistant (avoids warning in AST consistancy check).
-          sourceFile->get_globalScope()->get_endOfConstruct()->set_filenameString(p_sourceFileNameWithPath);
-          ROSE_ASSERT(sourceFile->get_globalScope()->get_endOfConstruct()->get_filenameString().empty() == false);
-        }
-#else
-  // DQ (1/21/2008): Set the filename in the SgGlobal IR node so that the traversal to add CPP directives and comments will succeed.
-     ROSE_ASSERT (p_root != NULL);
-     ROSE_ASSERT(p_root->get_startOfConstruct() != NULL);
-
-  // DQ (8/21/2008): Modified to make endOfConstruct consistant (avoids warning in AST consistancy check).
-  // ROSE_ASSERT(p_root->get_endOfConstruct()   == NULL);
-     ROSE_ASSERT(p_root->get_endOfConstruct()   != NULL);
-
-  // p_root->get_file_info()->set_filenameString(p_sourceFileNameWithPath);
-  // ROSE_ASSERT(p_root->get_file_info()->get_filenameString().empty() == false);
-     p_root->get_startOfConstruct()->set_filenameString(p_sourceFileNameWithPath);
-     ROSE_ASSERT(p_root->get_startOfConstruct()->get_filenameString().empty() == false);
-
-  // DQ (8/21/2008): Uncommented to make the endOfConstruct consistant (avoids warning in AST consistancy check).
-     p_root->get_endOfConstruct()->set_filenameString(p_sourceFileNameWithPath);
-     ROSE_ASSERT(p_root->get_endOfConstruct()->get_filenameString().empty() == false);
-#endif
-
-  // printf ("Found a Sg_File_Info using filename == NULL_FILE: fileInfo = %p SgGlobal (p_root = %p) p_root->get_file_info()->get_filenameString() = %s \n",p_root->get_file_info(),p_root,p_root->get_file_info()->get_filenameString().c_str());
-
-  // DQ (5/9/2007): Moved this call from above to where the file name is available so that we could include 
-  // the filename in the label.  This helps to identify the performance data with individual files where
-  // multiple source files are specificed on the command line.
-  // printf ("p_sourceFileNameWithPath = %s \n",p_sourceFileNameWithPath);
-     string timerLabel = "AST SgFile Constructor for " + p_sourceFileNameWithPath + ":";
-     TimingPerformance timer (timerLabel);
-
-  // Build a DEEP COPY of the input parameters!
-     vector<string> local_commandLineArgumentList = argv;
-
-#if 0
-   // Moved into SgFile::build_EDG_CommandLine()
-  // Liao, 6/6/2008. add --edg:upc if the file has .upc suffix but --edg:upc or -edg:upc is not specified
-     if(get_UPC_only()) 
-     {  
-       if ((CommandlineProcessing::isOption(local_commandLineArgumentList,"--edg:","(upc)",false) ==false) &&
-        (CommandlineProcessing::isOption(local_commandLineArgumentList,"-edg:","(upc)",false) ==false)) 
-         local_commandLineArgumentList.push_back("--edg:upc");
-
-       // Liao, 6/11/2008. Enable restrict by default if UPC is used. 
-        if ((CommandlineProcessing::isOption(local_commandLineArgumentList,"--edg:","(restrict)",false) ==false) &&
-        (CommandlineProcessing::isOption(local_commandLineArgumentList,"-edg:","(restrict)",false) ==false)) 
-         local_commandLineArgumentList.push_back("--edg:restrict");
-    }    
-#endif 
-
-  // Save the commandline as a list of strings (we made a deep copy because the "callFrontEnd()" function might change it!
-     set_originalCommandLineArgumentList( local_commandLineArgumentList );
-
-  // DQ (5/22/2005): Store the file name index in the SgFile object so that it can figure out 
-  // which file name applies to it.  This helps support functions such as "get_filename()" 
-  // used elsewhere in Sage III.  Not clear if we really need this!
-  // p_fileNameIndex = fileNameIndex;
-
-#if 0
-     printf ("In SgFile::doSetupForConstructor() after initialization: get_skipfinalCompileStep() = %s \n",
-          get_skipfinalCompileStep() ? "true" : "false");
-#endif
-
-  // printf ("In SgFile constructor: fileNameIndex = %d \n",fileNameIndex);
-
-  // Store the command line for later use with compiling the unparsed code
-  // set_NumberOfCommandLineArguments ( argc );
-  // set_CommandLineArgumentList ( argv );
-
-  // ROSE_ASSERT (p_root != NULL);
-
-  // error checking
-     ROSE_ASSERT (argv.size() > 1);
-
-  // printf ("DONE with copy of command line in SgFile constructor! \n");
-
-#if 0
-     printf ("In SgFile::doSetupForConstructor() before callFrontEnd(): get_skipfinalCompileStep() = %s \n",
-          get_skipfinalCompileStep() ? "true" : "false");
-#endif
-
-
-#if 0
-  //AS(10/04/08) Removed code because of refactoring into determineFileType(..). callFrontEnd relies on all
-  //the appropriate flags being set first.
-
-  // DQ (10/16/2005): Modified to make clear that argc and argv are not modified
-  // Call the EDG fron-end to generate the abstract syntax tree
-  // int EDG_FrontEndErrorCode = callFrontEnd ( argc, argv, *this, fileNameIndex );
-  // int EDG_FrontEndErrorCode = callFrontEnd (  local_commandLineArgumentList, *this, fileNameIndex );
-  // int EDG_FrontEndErrorCode = callFrontEnd (  local_commandLineArgumentList );
-  // int EDG_FrontEndErrorCode = callFrontEnd();
-
-     int EDG_FrontEndErrorCode =  get_sourceFileTypeIsUnknown() == false ? callFrontEnd() : 0 ;
-
-  // Warning from EDG processing are OK but not errors
-     ROSE_ASSERT (EDG_FrontEndErrorCode <= 3);
-
-     errorCode = EDG_FrontEndErrorCode;
-
-  // cout << "EDG/SAGE/ROSE Processing DONE! " << endl;
-#endif
-
-#if 0
-     printf ("In SgFile::doSetupForConstructor() after callFrontEnd(): get_skipfinalCompileStep() = %s \n",
-          get_skipfinalCompileStep() ? "true" : "false");
-#endif
-
-  // DQ (5/24/2005): Fixup the file info information at the SgFile and the global scope (SgGlobal)
-  // Opps, SgFile object does not have a Sg_File_Info pointer data member.
-  // Sg_File_Info* localfileInfo = new Sg_File_Info(p_sourceFileNamesWithPath[fileNameIndex],0,0);
-  // ROSE_ASSERT (localfileInfo != NULL);
-  // set_file_info(localfileInfo);
-
-
-
-  // DQ (1/18/2006): Set the filename in the SgFile::p_file_info
-     ROSE_ASSERT(get_file_info() != NULL);
-     get_file_info()->set_filenameString(p_sourceFileNameWithPath);
-
-
-
-  // DQ (5/3/2007): Added assertion.
-     ROSE_ASSERT (get_startOfConstruct() != NULL);
-
-  // DQ (8/21/2008): Added assertion.
-  // ROSE_ASSERT (p_root->get_startOfConstruct() != NULL);
-  // ROSE_ASSERT (p_root->get_endOfConstruct()   != NULL);
-
-  // FMZ(5/19/2008)
-#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-     delete  currStks ;
-#endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-   }
-#endif
 
 
 void
@@ -4942,7 +4841,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
      int frontendErrorLevel = 1;
 
      printf ("********************************************************************************************** \n");
-     printf ("Fortran support using the JVM is incompatable with the use of the SSL library. \n");
+     printf ("Fortran support using the JVM is incompatable with the use of the SSL library (fails in jvm).  \n");
      printf ("To enable the use of Fortran support in ROSE don't use --enable-ssl on configure command line. \n");
      printf ("********************************************************************************************** \n");
 #else
@@ -5196,20 +5095,114 @@ SgSourceFile::build_PHP_AST()
      return frontendErrorLevel;
    }
 
-int
-SgBinaryFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
+
+void
+SgBinaryFile::buildAsmAST( string executableFileName )
    {
-  // Note that inputCommandLine is unused!
-
-  // printf ("Calling SgBinaryFile::buildAST() \n");
-
-     string executableFileName = this->get_sourceFileNameWithPath();
-
      if ( get_verbose() > 0 )
           printf ("Disassemble executableFileName = %s \n",executableFileName.c_str());
 
+  // Disassemble the binary file (using recursive disassembler based on objdump.
+  // SgAsmFile* asmFile = objdumpToRoseBinaryAst(executableFileName);
+     SgAsmFile* asmFile = new SgAsmFile();
+     ROSE_ASSERT(asmFile != NULL);
+
+  // printf ("ERROR: The SgAsmFile should be in the SgBinaryFile \n");
+  // ROSE_ASSERT(false);
+
+  // Attach the SgAsmFile to the SgFile
+
+  // DQ (2/3/2009): This is now a list of pointers to SgAsmFile objects.
+  // DQ (9/2/2008): commented out the setting of the binaryFile, now moved to the new SgBinaryFile IR node.
+  // this->set_binaryFile(asmFile);
+     get_binaryFileList().push_back(asmFile);
+     asmFile->set_parent(this);
+
+  // printf ("Calling generateBinaryExecutableFileInformation() \n");
+
+  // Get the structure of the binary file (only implemented for ELF formatted files currently).
+  // Later we will implement a PE reader to get the structure of MS Windows executables.
+     generateBinaryExecutableFileInformation(executableFileName,asmFile);
+
+  // Find the headers in the executable format and convert
+  // them into SgAsmInterpretation objects
+     SgAsmGenericFile* genericFile = asmFile->get_genericFile();
+     ROSE_ASSERT (genericFile != NULL);
+     SgAsmGenericHeaderList* headerList = genericFile->get_headers();
+     ROSE_ASSERT (headerList);
+     const SgAsmGenericHeaderPtrList& headers = headerList->get_headers();
+     for (size_t i = 0; i < headers.size(); ++i)
+        {
+          SgAsmInterpretation* interp = new SgAsmInterpretation();
+          interp->set_parent(asmFile);
+          interp->set_header(headers[i]);
+          asmFile->get_interpretations().push_back(interp);
+
+       // If dwarf is available then read it into the AST.
+        }
+
+#if USE_ROSE_DWARF_SUPPORT
+  // DQ (11/7/2008): New Dwarf support in ROSE (Dwarf IR nodes are generated in the AST).
+  // readDwarf(asmFile);
+     printf ("WARNING: COMMENTED OUT DWARF SUPPORT! \n");
+#endif
+
+  // Fill in the instructions into the SgAsmFile IR node
+     SgProject* project = isSgProject(this->get_parent());
+     ROSE_ASSERT(project != NULL);
+
+#if 1
+  // DQ (8/16/2008): Added support to only read the binary executable file format.
+  // this will allow us to separate out different kinds of testing.
+     if (get_read_executable_file_format_only() == false)
+        {
+          Disassembler::disassembleFile(asmFile);
+        }
+       else
+        {
+          printf ("\nWARNING: Skipping instruction disassembly \n\n");
+        }
+#else
+     printf ("\nWARNING: Skipping instruction disassembly \n\n");
+#endif
+   }
+
+int
+SgBinaryFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
+   {
+  // Note that both argv and inputCommandLine is unused!
+
+  // printf ("Calling SgBinaryFile::buildAST() \n");
+
   // We likely need some error reporting from objdumpToRoseBinaryAst()
      int frontendErrorLevel = 0;
+
+     if (get_isLibraryArchive() == true)
+        {
+          ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty() == false);
+
+          ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty() == (get_isLibraryArchive() == false));
+
+          for (size_t i = 0; i < get_libraryArchiveObjectFileNameList().size(); i++)
+             {
+               printf ("Build binary AST for get_libraryArchiveObjectFileNameList()[%zu] = %s \n",i,get_libraryArchiveObjectFileNameList()[i].c_str());
+
+               string filename = "tmp_objects/" + get_libraryArchiveObjectFileNameList()[i];
+               printf ("Build SgAsmFile from: %s \n",filename.c_str());
+
+               buildAsmAST(filename);
+             }
+        }
+       else
+        {
+          ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty() == true);
+
+       // string executableFileName = this->get_sourceFileNameWithPath();
+#if 1
+          buildAsmAST(this->get_sourceFileNameWithPath());
+#else
+     if ( get_verbose() > 0 )
+          printf ("Disassemble executableFileName = %s \n",executableFileName.c_str());
 
   // Disassemble the binary file (using recursive disassembler based on objdump.
   // SgAsmFile* asmFile = objdumpToRoseBinaryAst(executableFileName);
@@ -5271,6 +5264,8 @@ SgBinaryFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
 #else
      printf ("\nWARNING: Skipping instruction disassembly \n\n");
 #endif
+#endif
+        }
 
   // DQ (1/22/2008): The generated unparsed assemble code can not currently be compiled because the 
   // addresses are unparsed (see Jeremiah for details).

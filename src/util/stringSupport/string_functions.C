@@ -74,6 +74,32 @@ StringUtility::findfile(std::string patternString, std::string pathString)
      return patternMatches;
    }
 
+
+//Read all the words in a file into an vector of strings
+std::vector<std::string> 
+StringUtility::readWordsInFile( std::string filename)
+   {
+     std::vector<std::string> variantsToUse;
+     std::fstream file_op(filename.c_str());
+     if (file_op.fail()) {
+	  std::cout << "error: could not find file \"" << filename 
+	           << "\" which is meant to include the styles to enforce with " 
+		   << "the name checker." << std::endl;
+			          exit(1);    // abort program
+				      
+				  }
+
+     std::string current_word;
+
+     while(file_op >> current_word){
+       //First word denotes what the regular expression should operate
+       //upon. Second word denotes the regular expression
+       variantsToUse.push_back(current_word);
+     }
+
+     return variantsToUse;
+   }
+
 //
 //Rama: 12/06/06
 //We need a function getAbsolutePathFromRelativePath that takes any filename and returns the absolute file name  (with path)
@@ -1259,7 +1285,7 @@ StringUtility::convertToLowerCase( const string & inputString )
 
   // printf ("Before conversion to lower case: inputString = %s \n",inputString.c_str());
      string returnString = inputString;
-     for (int i=0; i < returnString.length(); i++)
+     for (size_t i=0; i < returnString.length(); i++)
         {
           returnString[i] = tolower(returnString[i]);
         }

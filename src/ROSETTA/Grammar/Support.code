@@ -4277,9 +4277,19 @@ HEADER_APPLICATION_BINARY_FILE_START
       //  JJW (9/5/2008): the normal constructor has defaults for all of its arguments, so this is ambiguous
       //  SgBinaryFile() ROSE_DEPRECATED_FUNCTION;
 
-           virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project);
+          virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project);
 
           virtual int buildAST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
+
+       // DQ (2/3/2009): Added support for library archive files.
+      //! These function implement the interface required to support the previous usage of a single SgAsmFile in a SgBinaryFile object.
+      //! However, now we have a list of them to support library archives which contain multiple object files (*.o's).
+          const SgAsmFile* get_binaryFile() const;
+          SgAsmFile* get_binaryFile();
+          void set_binaryFile( SgAsmFile* file );
+
+       //! This is refactored code, called once for a binary executable, and called on each object file for a library archive.
+          void buildAsmAST( std::string executableFileName );
 
 HEADER_APPLICATION_BINARY_FILE_END
 
@@ -10922,6 +10932,28 @@ SgSourceFile::SgSourceFile ()
 SOURCE_APPLICATION_SOURCE_FILE_END
 
 SOURCE_APPLICATION_BINARY_FILE_START
+
+const SgAsmFile* 
+SgBinaryFile::get_binaryFile() const
+   {
+     ROSE_ASSERT(p_binaryFileList.size() == 1);
+     return p_binaryFileList[0];
+   }
+
+SgAsmFile*
+SgBinaryFile::get_binaryFile()
+   {
+     ROSE_ASSERT(p_binaryFileList.size() == 1);
+     return p_binaryFileList[0];
+   }
+
+void
+SgBinaryFile::set_binaryFile( SgAsmFile* file )
+   {
+     ROSE_ASSERT(p_binaryFileList.empty() == true);
+     p_binaryFileList.push_back(file);
+   }
+
 SOURCE_APPLICATION_BINARY_FILE_END
 
 SOURCE_APPLICATION_UNKNOWN_FILE_START

@@ -1054,13 +1054,22 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "sourceFileTypeIsUnknown", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (2/3/2009): Commented out the single SgAsmFile pointer to support a vector of them (so that
+  // we can optionally support library archives which are a collection of object files).
   // DQ (10/13/2007): Add the binary file to the SgFile IR node so that we can hold both the source
   // code AST and the binary AST together.  This also permits the binary AST to be handled similarly
   // the the source code AST (for traversals, file I/O, etc.).
   // File.setDataPrototype         ( "SgAsmFile*", "binaryFile", "= NULL",
   //             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     BinaryFile.setDataPrototype         ( "SgAsmFile*", "binaryFile", "= NULL",
-                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  // BinaryFile.setDataPrototype         ( "SgAsmFile*", "binaryFile", "= NULL",
+  //             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (2/3/2009): Build a list of SgAsmFile for use by archive files to represent their object files.
+  // To be consistant with the use of binaryFile we will implement get_binaryFile() and set_binaryFile()
+  // functions so that we can support the more common (previous) interface where there was only a single
+  // SgAsmFile pointers called "binaryFile".
+     BinaryFile.setDataPrototype         ( "SgAsmFilePtrList", "binaryFileList", "",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (11/5/2008): This should maybe be added to the SgAsmFile instead of the SgBinaryFile, if so 
   // we will move it.  For now we can't add it to SgAsmFile becuase we could not traverse both a 
@@ -1095,6 +1104,15 @@ Grammar::setUpSupport ()
   // but not unparsed in the code given to the backend compiler, since this can fail. (See 
   // test2007_20.C from Linux Kernel for an example).
      File.setDataPrototype         ( "bool", "skip_unparse_asm_commands", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (2/3/2009): For a library archive, these are the name of the object files it contains.
+  // This information is obtained via "ar -vox <archive>", and saving and reading the list.
+     File.setDataPrototype("SgStringList","libraryArchiveObjectFileNameList", "",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (2/3/2009): added boolean data member to record if this is a library archive.
+     File.setDataPrototype         ( "bool", "isLibraryArchive", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (8/26/2008): Adds support for more agressive disassembly of sections that are in 

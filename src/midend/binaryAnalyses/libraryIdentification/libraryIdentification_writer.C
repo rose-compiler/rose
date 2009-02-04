@@ -151,8 +151,8 @@ LibraryIdentification::libraryIdentificationDataBaseSupport( string databaseName
 
      Rose_STL_Container<SgNode*> binaryInterpretationList = NodeQuery::querySubTree (project,V_SgAsmInterpretation);
 
-  // This is something we can assert on Linux (Elf binary file format)
-     ROSE_ASSERT(binaryInterpretationList.size() == 1);
+  // This is something we can assert on Linux (Elf binary file format), but not for a library archive.
+  // ROSE_ASSERT(binaryInterpretationList.size() == 1);
 
      vector<SgUnsignedCharList> functionOpcodeList;
 
@@ -185,6 +185,12 @@ LibraryIdentification::libraryIdentificationDataBaseSupport( string databaseName
                functionOpcodeList.push_back(s);
 
                testForDuplicateEntries(functionOpcodeList);
+
+               if (s.empty() == true)
+                  {
+                    printf ("Warning: zero length function \n");
+                    continue;
+                  }
 
                if (generate_database == true)
                   {
@@ -232,7 +238,7 @@ LibraryIdentification::FlattenAST::visit(SgNode* n)
      SgAsmInstruction* asmInstruction = isSgAsmInstruction(n);
      if (asmInstruction != NULL)
         {
-       // printf ("asmInstruction = %p \n",asmInstruction);
+          printf ("asmInstruction = %p \n",asmInstruction);
 
           size_t instructionAddress = asmInstruction->get_address();
           if (startAddress == 0)
@@ -248,18 +254,30 @@ LibraryIdentification::FlattenAST::visit(SgNode* n)
        // Always update the endAddress (and add the length of the last instruction
           endAddress = instructionAddress + opCodeString.size();
         }
+
+  // ROSE_ASSERT(endAddress != startAddress);
    }
 
 
 SgUnsignedCharList
 LibraryIdentification::generateOpCodeVector(SgAsmInterpretation* asmInterpretation, SgNode* node, size_t & startOffset, size_t & endOffset)
    {
+     ROSE_ASSERT(asmInterpretation != NULL);
+
      SgUnsignedCharList s;
      FlattenAST t(s);
+
      printf ("Traverse the AST for this function to generate byte stream, node = %p \n",node);
      t.traverse(node,preorder);
-  // printf ("DONE: Traverse the AST for this function to generate byte stream \n");
+     printf ("DONE: Traverse the AST for this function to generate byte stream s.size() = %zu \n",s.size());
 
+     size_t startAddress = t.startAddress;
+     size_t endAddress   = t.endAddress;
+
+     printf ("startAddress = %p endAddress = %p \n",(void*)startAddress,(void*)endAddress);
+
+     if (s.empty() == false)
+        {
   // Compute the offset from the address...
   // Need to compute these from the adress...
   // Use: size_t fileOffset = rva - section->get_mapped_rva() + section->get_offset();
@@ -271,9 +289,7 @@ LibraryIdentification::generateOpCodeVector(SgAsmInterpretation* asmInterpretati
   // We need a DisassemblerCommon::AsmFileWithData object to call getSectionOfAddress()
   // SgAsmGenericSection* section = DisassemblerCommon::AsmFileWithData::getSectionOfAddress(t.startAddress);
      SgAsmGenericSection* section = asmFileInformation.getSectionOfAddress(t.startAddress);
-
-     size_t startAddress = t.startAddress;
-     size_t endAddress   = t.endAddress;
+     ROSE_ASSERT(section != NULL);
 
      startOffset = startAddress - section->get_mapped_rva() + section->get_offset();
      endOffset   = endAddress - section->get_mapped_rva() + section->get_offset();
@@ -285,6 +301,11 @@ LibraryIdentification::generateOpCodeVector(SgAsmInterpretation* asmInterpretati
 
      printf ("---- lengthOfOpcodeVectorByAddress = %zu lengthOfOpcodeVectorBySize = %zu \n",lengthOfOpcodeVectorByAddress,lengthOfOpcodeVectorBySize);
      ROSE_ASSERT(lengthOfOpcodeVectorByAddress == lengthOfOpcodeVectorBySize);
+        }
+       else
+        {
+          printf ("Warning: found a zero length function node = %p \n",node);
+        }
 
      return s;
    }

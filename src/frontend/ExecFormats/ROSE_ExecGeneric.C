@@ -1985,6 +1985,7 @@ SgAsmGenericSection::clear_mapped()
 rose_addr_t
 SgAsmGenericSection::get_mapped_size() const
 {
+    ROSE_ASSERT(this != NULL);
     return p_mapped_size;
 }
 
@@ -1993,6 +1994,7 @@ SgAsmGenericSection::get_mapped_size() const
 void
 SgAsmGenericSection::set_mapped_size(addr_t size)
 {
+    ROSE_ASSERT(this != NULL);
     if (p_mapped_size!=size)
         set_isModified(true);
     p_mapped_size = size;
@@ -2002,6 +2004,7 @@ SgAsmGenericSection::set_mapped_size(addr_t size)
 rose_addr_t
 SgAsmGenericSection::get_mapped_rva() const
 {
+    ROSE_ASSERT(this != NULL);
     return p_mapped_rva;
 }
 
@@ -2009,6 +2012,7 @@ SgAsmGenericSection::get_mapped_rva() const
 void
 SgAsmGenericSection::set_mapped_rva(addr_t a)
 {
+    ROSE_ASSERT(this != NULL);
     if (p_mapped_rva!=a)
         set_isModified(true);
     p_mapped_rva = a;
@@ -2018,6 +2022,7 @@ SgAsmGenericSection::set_mapped_rva(addr_t a)
 rose_addr_t
 SgAsmGenericSection::get_mapped_va()
 {
+    ROSE_ASSERT(this != NULL);
     if (is_mapped())
         return get_base_va() + get_mapped_rva();
     return 0;
@@ -2027,6 +2032,7 @@ SgAsmGenericSection::get_mapped_va()
 rose_addr_t
 SgAsmGenericSection::get_base_va() const
 {
+    ROSE_ASSERT(this != NULL);
     SgAsmGenericHeader *hdr = get_header();
     return hdr ? hdr->get_base_va() : 0;
 }
@@ -2035,6 +2041,7 @@ SgAsmGenericSection::get_base_va() const
 ExtentPair
 SgAsmGenericSection::get_mapped_extent() const
 {
+    ROSE_ASSERT(this != NULL);
     return ExtentPair(get_mapped_rva(), get_mapped_size());
 }
 
@@ -2178,6 +2185,8 @@ SgAsmGenericSection::write(std::ostream &f, addr_t offset, size_t bufsize, const
 {
     size_t nwrite, nzero;
 
+    ROSE_ASSERT(this != NULL);
+
     /* Don't write past end of section */
     if (offset>=get_size()) {
         nwrite = 0;
@@ -2193,6 +2202,16 @@ SgAsmGenericSection::write(std::ostream &f, addr_t offset, size_t bufsize, const
     /* Don't write past end of current EOF if we can help it. */
     f.seekp(0, std::ios::end);
     addr_t filesize = f.tellp();
+
+#if 0
+ // DQ (2/3/2009): Added to help debug problem that I was unable to figure out (handling *.o files).
+    if (filesize == 0)
+       {
+         printf ("In SgAsmGenericSection::write(): filesize = %zu offset = %zu bufsize = %zu \n",filesize,offset,bufsize);
+      // return offset+bufsize;
+       }
+#endif
+
     while (nwrite>0 && 0==((const char*)buf)[nwrite-1] && get_offset()+offset+nwrite>filesize)
         --nwrite;
 

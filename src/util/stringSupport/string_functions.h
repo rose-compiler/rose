@@ -342,6 +342,8 @@ namespace StringUtility
 	    /* Added htmlEscape necessary for QROSE work to this utility library - tps (9Oct2008) */
 	    std::string htmlEscape(const std::string& s);
 
+    // DQ (2/3/2009): Moved this function from attach_all_info.C
+       std::vector<std::string> readWordsInFile( std::string filename);
 
    };
 

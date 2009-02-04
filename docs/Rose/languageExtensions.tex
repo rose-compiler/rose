@@ -1,0 +1,57 @@
+
+\chapter{Language Extensions}
+\label{languageExtensions::overview}
+
+\section{Introduction}
+
+   A number of groups have proposed language extensions to the langauges
+supported by ROSE and we have tried to accomidate this as part of 
+collaborations with them.  In all case so far, these are language
+extensions that they have proposed and which represent their own research 
+work.  Supporting research work in this direction is a goal for the ROSE
+project so we are interested in helping out were possible.
+
+\section{Rice Co-Array Fortran}
+   Research work to add parallelism to Fortran is an especially attractive
+target and Co-Array as an emerging standard has been advocated by a number of groups.
+Rice has been doing research in this direction and has make additions to the
+Fortran work and added it to ROSE.
+
+\subsection{Changes to OFP}
+    A small number of additions to OFP have been added by Rice to support
+the co-arrray language features and to extend the design in directions that
+are part of their research effort.  
+
+\subsection{Changes to ROSE}
+    The language additions to OFP naturally result in additions to the
+IR used in ROSE.  Specific addional nodes are:
+\begin{enumerate}
+   \item New SgType: SgTypeCafTeam \\
+          Used for "image_team" declaration. For coarray team declaration "image_team ocean" we will set "ocean" has type "SgTypeCafTeam".
+
+   \item New SgStatement: SgWithTeamStatement \\
+          Used for "withteam" statement which can appear anywhere in the execution part of a PU. The coarray statement "withteam ocean"
+
+   \item New SgExpression: SgCoExpression \\
+          Used for co-array reference such as :
+\begin{verbatim}
+                A(10)[me+1@ocean]
+\end{verbatim}
+\end{enumerate}
+
+   Changes to existing IR nodes include:
+\begin{enumerate}
+     \item An addional type modifier \\
+          This is used to modify the access permission, but this will stay locally since
+          we need to based on our runtime system to set the data member.
+
+\end{enumerate}
+
+\fixme{Needs to be better documented to add more context.}
+
+
+\section{Rice C/C++ work}
+    This is where proposed language extensions that are a part of research work from other
+    projects t Rice can be outlined.
+
+

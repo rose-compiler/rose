@@ -237,6 +237,9 @@ class Unparser
           void unparseFile ( SgSourceFile* file, SgUnparse_Info& info );
           void unparseFile ( SgBinaryFile* file, SgUnparse_Info& info );
 
+       // DQ (2/3/2009): Added support for library archives, which many object files (which map to SgAsmFile objects).
+          void unparseAsmFile ( SgAsmFile* asmFile, SgUnparse_Info & info );
+
       //! remove unneccessary white space to build a condensed string
           static std::string removeUnwantedWhiteSpace ( const std::string & X );
 
