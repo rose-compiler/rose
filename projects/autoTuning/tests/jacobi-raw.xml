@@ -1,0 +1,123 @@
+<?xml version="1.0"?>
+<!DOCTYPE PROFILE [
+<!-- Profile: correlates profiling info with program structure. -->
+<!ELEMENT PROFILE (PROFILEHDR, PROFILEPARAMS, PROFILESCOPETREE)>
+<!ATTLIST PROFILE
+	version CDATA #REQUIRED>
+  <!ELEMENT PROFILEHDR (#PCDATA)>
+  <!ELEMENT PROFILEPARAMS (TARGET, METRICS)>
+    <!ELEMENT TARGET EMPTY>
+    <!ATTLIST TARGET
+	name CDATA #REQUIRED>
+    <!ELEMENT METRICS (METRIC)+>
+    <!ELEMENT METRIC EMPTY>
+    <!ATTLIST METRIC
+	shortName   CDATA #REQUIRED
+	nativeName  CDATA #REQUIRED
+	period      CDATA #REQUIRED
+	units       CDATA #IMPLIED
+	displayName CDATA #IMPLIED
+	display     (true|false) #IMPLIED>
+  <!ELEMENT PROFILESCOPETREE (PGM)*>
+    <!-- This is essentially the PGM dtd with M element added. -->
+    <!ELEMENT PGM (G|LM|F|M)+>
+    <!ATTLIST PGM
+	n CDATA #REQUIRED>
+    <!-- Groups create arbitrary sets of other elements except PGM. -->
+    <!ELEMENT G (G|LM|F|P|L|S|M)*>
+    <!ATTLIST G
+	n CDATA #IMPLIED>
+    <!-- Runtime load modules for PGM (e.g., DSOs, exe) -->
+    <!ELEMENT LM (G|F|M)*>
+    <!ATTLIST LM
+	n CDATA #REQUIRED>
+    <!-- Files contain procedures and source line info -->
+    <!ELEMENT F (G|P|L|S|M)*>
+    <!ATTLIST F
+	n CDATA #REQUIRED>
+    <!-- Procedures contain source line info 
+         n: processed name; ln: link name -->
+    <!ELEMENT P (G|L|S|M)*>
+    <!ATTLIST P
+	n  CDATA #REQUIRED
+	ln CDATA #IMPLIED
+	b CDATA #IMPLIED
+	e CDATA #IMPLIED>
+    <!-- Loops -->
+    <!ELEMENT L (G|L|S|M)*>
+    <!ATTLIST L
+	b CDATA #IMPLIED
+	e CDATA #IMPLIED>
+    <!-- Statement/Statement range -->
+    <!ELEMENT S (M)*>
+    <!ATTLIST S
+	b CDATA #REQUIRED
+	e CDATA #IMPLIED
+	id CDATA #IMPLIED>
+    <!ELEMENT M EMPTY>
+    <!ATTLIST M
+	n CDATA #REQUIRED
+	v CDATA #REQUIRED>
+]>
+<PROFILE version="3.0">
+<PROFILEHDR></PROFILEHDR>
+<PROFILEPARAMS>
+  <TARGET name="./jacobi"/>
+  <METRICS>
+    <METRIC shortName="0" nativeName="WALLCLK" displayName="WALLCLK" period="1" units="PAPI events"/>
+  </METRICS>
+</PROFILEPARAMS>
+<PROFILESCOPETREE>
+<PGM n="./jacobi">
+  <LM n="/home/liao6/svnrepos/projects/empirical-tuning/rose-support/jacobi">
+    <F n="./jacobi.c">
+      <P n="initialize">
+        <S b="129">
+          <M n="0" v="2"/>
+        </S>
+        <S b="131">
+          <M n="0" v="3"/>
+        </S>
+        <S b="132">
+          <M n="0" v="2"/>
+        </S>
+      </P>
+      <P n="jacobi">
+        <S b="186">
+          <M n="0" v="12"/>
+        </S>
+        <S b="187">
+          <M n="0" v="1307"/>
+        </S>
+        <S b="188">
+          <M n="0" v="3996"/>
+        </S>
+        <S b="190">
+          <M n="0" v="13"/>
+        </S>
+        <S b="191">
+          <M n="0" v="817"/>
+        </S>
+        <S b="193">
+          <M n="0" v="13195"/>
+        </S>
+        <S b="196">
+          <M n="0" v="5239"/>
+        </S>
+        <S b="197">
+          <M n="0" v="1357"/>
+        </S>
+      </P>
+      <P n="error_check">
+        <S b="233">
+          <M n="0" v="1"/>
+        </S>
+        <S b="234">
+          <M n="0" v="1"/>
+        </S>
+      </P>
+    </F>
+  </LM>
+</PGM>
+</PROFILESCOPETREE>
+</PROFILE>

@@ -1,0 +1,34 @@
+ROSE_INS = /home/liao6/opt/roseLatest
+BOOST_ROOT=/home/liao6/opt/boost_1_35_0
+
+#-------------translator---------------------------
+SRC_FILE=autoTuningSupport.C main.C
+#---------------input code ----------------------
+INPUT_CODE=jacobi.c
+
+
+CXXFLAGS=-g3 -Wall
+#CPP_FLAG=-D_GLIBCXX_CONCEPT_CHECKS -D_GLIBCXX_DEBUG -g3
+
+.PHONY :clean test default
+all:clean test
+default: a.out test
+
+# create the translator
+a.out:$(SRC_FILE)
+	g++ $(CXXFLAGS) $(SRC_FILE) -I $(BOOST_ROOT)/include/boost-1_35 -I $(ROSE_INS)/include -I/usr/include/libxml2 -L$(ROSE_INS)/lib -lxml2 -lrose -lrosehpct 
+
+# test the translator
+# -rose:skipfinalCompileStep
+# --edg:no_warnings
+
+ROSE_FLAGS=-rose:verbose 2 -g3  
+ROSE_FLAGS+=-rose:hpct:prof jacobi-raw.xml 
+# -rose:hpct:eqpath .=`cd ../../../workingRose/tutorial/roseHPCT && pwd`
+ROSE_FLAGS+=-rose:hpct:eqpath .=/home/liao6/svnrepos/projects/empirical-tuning/rose-support
+
+test: a.out
+	./a.out -c  $(ROSE_FLAGS) $(INPUT_CODE) 
+#	./a.out -c  -rose:astMerge -rose:verbose 0 -g3 $(INPUT_CODE) 
+clean:
+	rm -rf a.out *.o rose_* *.dot

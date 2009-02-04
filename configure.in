@@ -1050,6 +1050,8 @@ projects/AstEquivalence/Makefile
 projects/AstEquivalence/gui/Makefile
 projects/autoParallelization/Makefile
 projects/autoParallelization/tests/Makefile
+projects/autoTuning/Makefile
+projects/autoTuning/tests/Makefile
 projects/BinQ/Makefile
 projects/compass/Makefile
 projects/compass/src/Makefile
