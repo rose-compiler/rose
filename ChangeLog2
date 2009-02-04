@@ -1,3 +1,38 @@
+2009-02-04 22:29  liao6
+
+	* [r4290] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/projects/Makefile.am,
+	  /trunk/ROSE/projects/autoTuning,
+	  /trunk/ROSE/projects/autoTuning/Makefile.am,
+	  /trunk/ROSE/projects/autoTuning/README,
+	  /trunk/ROSE/projects/autoTuning/autoTuning.C,
+	  /trunk/ROSE/projects/autoTuning/autoTuningSupport.C,
+	  /trunk/ROSE/projects/autoTuning/autoTuningSupport.h,
+	  /trunk/ROSE/projects/autoTuning/makefile-external,
+	  /trunk/ROSE/projects/autoTuning/tests,
+	  /trunk/ROSE/projects/autoTuning/tests/Makefile.am,
+	  /trunk/ROSE/projects/autoTuning/tests/jacobi-raw.xml,
+	  /trunk/ROSE/projects/autoTuning/tests/jacobi.c: A new project for
+	  SciDAC PERI autotuning:
+	  
+	  It implements the modules needed to support end-to-end empirical
+	  tuning.
+	  Currently, it has support for
+	  * reading in performance profile xml files generated from
+	  HPCToolKit
+	  * code triage to locate a candidate loop based on hot statements
+	  * call outliner to outline the candidate loop.
+	  
+	  A toy program is included also to demonstrate the capabilities
+
+2009-02-04 21:01  panas2
+
+	* [r4288]
+	  /trunk/ROSE/scripts/roseFreshTestStub-Thomas-binarysql.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Thomas-javaport.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Thomas.sh: Changed my tests
+	  scripts to handle sqlite
+
 2009-02-04 19:33  liao6
 
 	* [r4286] /trunk/ROSE/docs/Rose/developersAppendix.tex: Edited the
