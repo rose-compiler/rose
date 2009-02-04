@@ -161,6 +161,61 @@ svn/text/hooks or svn/ROSE/hooks) keeps our email recipient list.\\
 
 \end{itemize}
 
+% DQ (2/4/2009): Added documentation for how to sync external version of ROSE
+\section{Resync-ing with a full version of ROSE}
+   As part of work with external collaborators, where they have 
+access to the EDG source code, we sometime have to update their
+version of the parts of ROSE that are not released publicly
+(e.g. EDG and the EDG/ROSE translation work which uses EDG).
+A typical reason why this is required is that the external
+collaborator has made a change to the ROSE IR that is incompatible
+with the binary distribution of the EDG and EDG/ROSE translation code,
+and so they need a most recent version of the full distribution of
+ROSE so that they can build EDG and the EDG/ROSE translation fresh
+and run the automated tests.
+
+We wish to outline this process:
+\begin{enumerate}
+   \item Let us know that you are trying to follow these directions.
+   \item Ask for a tarball of the full source code of ROSE from our internal SVN repository.
+      We will provide you a tarball of ROSE that matches a specific revision number
+      that was externally released on the web (thus we know that it has passed all of our tests to 
+      be released).  This will also define a mapping between internal and 
+      external SVN revision numbers, which is also in the commit log message on the web site.
+      For example:
+\begin{verbatim}
+      File      Rev.    Age       Author   Last log entry 
+      trunk/    243   6 hours     liaoch   Load rose-0.9.4a-4275 into trunk.
+\end{verbatim}
+     In this case the internal SVN revision number is {\em 4275} and it mapped to the 
+     external SVN revision number {\em 243}.  We will make a tarball of ROSE using 
+     revision number {\em 4275}.   The command to do this, on our side is:
+\begin{verbatim}
+          scripts/make_svn_tarball 4275
+\end{verbatim}
+with typical output:
+\begin{verbatim}
+          Built tarball ROSE-svn-Feb03-2009-r4275.tar.gz from SVN revision r4275
+\end{verbatim}
+This builds the file: {\tt ROSE-svn-Feb03-2009-r4275.tar.gz}
+which we then send to you.  This is a full source code release of ROSE which includes the
+    protected EDG source code, we will know if you have a license for this.  
+    {\em You should not distribute this to anyone who does not have an EDG license.}
+   \item Then you update your branch with the trunk at the external revision number (in our
+    example this would be revision {\em 243}).
+   \item Then build a patch to represent your changes from the trunk revision.  See the
+    documentation in this guide about how to make patches.
+   \item Apply that patch to the tarball of ROSE that we sent you (representing
+     the full source code for EDG and everything) and you how have a way to test
+     your work and recompile the EDG work for either a new machine or with the IR changes
+     that you have added.
+   \item After you have passed all tests, then build a patch and apply that patch to your
+     external branch.  This will update your branch with everything required, even though
+     it may not pass tests using the released binary of EDG.
+   \item Let us know when your done and we can review and merge your branch into the trunk of the
+    internal SVN repository.  At this point we have accepted your changes into ROSE and
+    the next external release of ROSE (usually nightly) will reflect your changes.
+\end{enumerate}
 
 % DQ (6/5/2008): This is the resulting lesson from the erasure
 % of my ROSE directory as the result of a bad cron script.
