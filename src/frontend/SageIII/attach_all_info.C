@@ -41,6 +41,10 @@ static const char* OPTION_INCLUDEDIRECTIVESFILENAME  = "*includeCommentsAndDirec
 //Read all the words in a file into an vector of strings
 std::vector<std::string> 
 readWordsInFile( std::string filename){
+#if 1
+// DQ (2/3/2009): Moved functionality to StringUtility namespace.
+   StringUtility::readWordsInFile(filename);
+#else
      std::vector<std::string> variantsToUse;
      std::fstream file_op(filename.c_str());
      if (file_op.fail()) {
@@ -60,6 +64,7 @@ readWordsInFile( std::string filename){
      }
 
     return variantsToUse;
+#endif
 }
 
 //! Wrapper around the SLA string option processing routine.

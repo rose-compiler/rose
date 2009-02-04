@@ -319,6 +319,199 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info )
 
 // DQ (9/2/2008): Seperate out the details of unparsing source files from binary files.
 void
+Unparser::unparseAsmFile ( SgAsmFile* asmFile, SgUnparse_Info& info )
+   {
+  // This is code that is refactored so that it can be called form a much shorter 
+  // Unparser::unparseFile() function (below).
+
+     ROSE_ASSERT(asmFile != NULL);
+
+  // ROSE_ASSERT(asmFile->get_binary_only() == true) ;
+  // file->display("file: binary unparse");
+
+  // string outputFileName = "unparse.s";
+  // string outputFileName = asmFile->get_unparse_output_filename();
+     string outputFileName = asmFile->get_name();
+
+  // DQ (8/14/2008): Added test to make sure that there is a valid SgAsmBlock with instructions.
+  // So that we can optionally just test the binary file format details.
+     unparseAsmFileToFile(outputFileName, asmFile);
+
+  // DQ (8/20/2008): Output the re-assembled binary from the parts in the represnetation of the binary file format 
+  // (Note that this does not support transformations on instructions, so this is not a backend code generator).
+
+  // Writes a new executable based on the parse tree. The new executable should be byte-for-byte identical with 
+  // the original.  This work supports testing that we have completely represented the binary executable file format.
+  // Any transformations to parts of the binary executable file format (in the AST) will be represented in the 
+  // re-generated binary. Note that we didn't have to disassemble the instructions to re-generate the binary, that
+  // is an orthogonal concept (so this step does not depend upon the value of get_read_executable_file_format_only()).
+#if 0
+  // The output filename should perhaps be the one in: file->get_unparse_output_filename()
+  // Need to think about this, since it might overwrite the input binary executable.
+     string newFilename = file->get_unparse_output_filename();
+#else
+  // string sourceFilename = asmFile->get_sourceFileNameWithoutPath();
+     string sourceFilename = asmFile->get_name();
+
+     printf ("In Unparser::unparseAsmFile(): sourceFilename = %s \n",sourceFilename.c_str());
+
+  // DQ (8/30/2008): This is temporary, we should review how we want to name the files 
+  // generated in the unparse phase of processing a binary.
+     string newFilename = sourceFilename + ".new";
+     size_t slash = sourceFilename.find_last_of('/');
+     if (slash!=sourceFilename.npos)
+          newFilename.replace(0, slash+1, "");
+
+  // DQ (8/21/2008): Only output a message when we we use verbose option.
+     if ( SgProject::get_verbose() >= 1 )
+          std::cout << "output re-generated binary as: " << newFilename << std::endl;
+#endif
+
+#if 0
+  // Regenerate the binary executable.
+     SgAsmExecutableFileFormat::unparseBinaryFormat(newFilename, asmFile);
+#else
+     printf ("WARNING: SKIPPING SgAsmExecutableFileFormat::unparseBinaryFormat() \n");
+#endif
+
+  // Dump detailed info from the AST representation of the binary executable file format.
+  // string baseName = file->get_sourceFileNameWithoutPath();
+     string baseName = asmFile->get_name();
+
+  // DQ (8/30/2008): This is temporary, we should review how we want to name the files 
+  // generated in the unparse phase of processing a binary.
+     std::string dumpName = baseName + ".dump";
+
+     printf ("In Unparser::unparseAsmFile(): dumpName = %s \n",dumpName.c_str());
+
+     FILE *dumpFile = fopen(dumpName.c_str(), "wb");
+
+  // DQ (2/3/2009): Added assertion.
+     ROSE_ASSERT(dumpFile != NULL);
+
+     if (dumpFile != NULL)
+        {
+          SgAsmGenericFile *genericFile = asmFile->get_genericFile();
+          ROSE_ASSERT(genericFile != NULL);
+
+       // The file type should be the first; test harness depends on it
+          fprintf(dumpFile, "%s\n", genericFile->format_name());
+
+       // A table describing the sections of the file
+          genericFile->dump(dumpFile);
+
+       // Detailed info about each section
+          const SgAsmGenericSectionPtrList &sections = genericFile->get_sections();
+          for (size_t i = 0; i < sections.size(); i++)
+             {
+            // printf ("In unparser: output section #%zu \n",i);
+               fprintf(dumpFile, "Section [%zd]:\n", i);
+
+               ROSE_ASSERT(sections[i] != NULL);
+#if 0
+               sections[i]->dump(dumpFile, "  ", -1);
+#else
+               printf ("WARNING: SKIPPING SgAsmGenericSection::dump() for i = %zu \n",i);
+#endif
+               bool outputInstruction = (sections[i]->is_mapped() == true);
+
+#if 0
+            // Handle special case of Extended DOS Header (initial part of PE files)
+               if (sections[i]->get_mapped() == false && sections[i]->get_name() == "Extended DOS Header")
+                  {
+                    printf ("Handling the special case of the Extended DOS Header \n");
+                    outputInstruction = true;
+                  }
+#endif
+
+            // If this section was mapped to memory then output the associated instructions 
+            // that have been disassembled.
+            // printf ("Section [%zd]: outputInstruction = %s \n",i,outputInstruction ? "true" : "false"); 
+               if (outputInstruction == true)
+                  {
+                 // Output the instructions
+                    SgAsmGenericHeader* genericHeader = sections[i]->get_header();
+                    ROSE_ASSERT(genericHeader != NULL);
+
+                 // printf ("header name = %s \n",genericHeader->get_name()->c_str());
+
+                    rose_addr_t imageBase = genericHeader->get_base_va();
+ 
+                 // printf ("section %s imageBase = 0x%08"PRIx64"\n",sections[i]->get_name()->c_str(),imageBase);
+
+                    rose_addr_t addressBase  =  imageBase + sections[i]->get_mapped_rva();
+                    rose_addr_t addressBound =  addressBase + sections[i]->get_mapped_size();
+
+                 // This is an error to uncomment, but used to provide useful information for debugging.
+                 // fprintf(f, "%s%-*s = rva=0x%08"PRIx64", size=%"PRIu64" bytes\n", p, w, "mapped",  p_mapped_rva, p_mapped_size);
+
+                 // printf ("section %s starting address = 0x%08"PRIx64" ending address = 0x%08"PRIx64"\n",sections[i]->get_name()->c_str(),addressBase,addressBound);
+
+                 // DQ (9/1/2008): This is part of code to include the disassembled
+                 // instructions in a specific range relevant to a section (unfinished).
+                 // It is supposed to map around (exclude) address ranges represented 
+                 // by merged sections in PE formated binaries.
+
+                 // Build a bitvector of the current section's mapped address space.
+                    vector<bool> sectionAddressSpace(sections[i]->get_mapped_size(),true);
+                    for (size_t j = 0; j < sections.size(); j++)
+                       {
+                      // exclude all the other sections
+                         if ( (j != i) && (sections[j]->is_mapped() == true) )
+                            {
+                              SgAsmGenericHeader* genericHeader  = sections[j]->get_header();
+                              rose_addr_t temp_imageBase = genericHeader->get_base_va();
+                              rose_addr_t nestedAddressBase  = temp_imageBase    + sections[j]->get_mapped_rva();
+                              rose_addr_t nestedAddressBound = nestedAddressBase + sections[j]->get_mapped_size();
+                           // printf ("Exclude range in section %s starting address = 0x%08"PRIx64" ending address = 0x%08"PRIx64"\n",sections[j]->get_name().c_str(),nestedAddressBase,nestedAddressBound);
+
+#if 0
+                              for (rose_addr_t k = nestedAddressBase; k < nestedAddressBound; k++)
+                                 {
+                                   rose_addr_t relativeNestedAddressBase = nestedAddressBase - addressBase;
+                                   if (relativeNestedAddressBase >= 0)
+                                        sectionAddressSpace[k] = false;
+                                 }
+#endif
+                            }
+                                         
+                       }
+#if 0
+                 // DQ (10/18/2008): I would like to unparse the instructions associated with 
+                 // the current section, but I am not sure how best to do that.
+                    fprintf(dumpFile, "\n\n");
+                    fprintf(dumpFile, "**************************************************\n");
+                    fprintf(dumpFile, "Output the disassembled instructions (by section):\n");
+                    fprintf(dumpFile, "**************************************************\n");
+                    fprintf(dumpFile, "\n");
+                    const SgAsmInterpretationPtrList & interps = asmFile->get_interpretations();
+                    printf ("interps.size() = %zu \n",interps.size());
+                    for (size_t i = 0; i < interps.size(); ++i)
+                       {
+                      // fprintf(dumpFile, "%s\n", unparseAsmInterpretation(interps[i]).c_str());
+                       }
+#endif
+                  }
+             }
+
+       // The instructions are mostly from the ".text" section, but some come from other 
+       // sections and it would be useful to distinguish this detail in the dump output.
+          fprintf(dumpFile, "\n\n");
+          fprintf(dumpFile, "*************************************\n");
+          fprintf(dumpFile, "Output the disassembled instructions:\n");
+          fprintf(dumpFile, "*************************************\n");
+          fprintf(dumpFile, "\n");
+          const SgAsmInterpretationPtrList & interps = asmFile->get_interpretations();
+          for (size_t i = 0; i < interps.size(); ++i)
+             {
+               fprintf(dumpFile, "%s\n", unparseAsmInterpretation(interps[i]).c_str());
+             }
+
+          fclose(dumpFile);
+        }
+   }
+
+void
 Unparser::unparseFile ( SgBinaryFile* file, SgUnparse_Info& info )
    {
      ROSE_ASSERT(file != NULL);
@@ -330,8 +523,61 @@ Unparser::unparseFile ( SgBinaryFile* file, SgUnparse_Info& info )
   // string outputFileName = "unparse.s";
      string outputFileName = file->get_unparse_output_filename();
 
+  // DQ (2/3/2009): We now store a list of SgAsmFile at the SgBinaryFile to support library archives (that can have many object files).
+     ROSE_ASSERT(file->get_binaryFileList().empty() == false);
+  // SgAsmFile* asmFile = file->get_binaryFile();
+
+#if 0
+  // Case #1 this is the code that I want to use!
+  // This would be the ideal code to call, and for a non-library archive file there would be just one entry in the list.
+  // But the refactored code fails for the case single SgAsmFile (or rather I had to comment out parts so it would not fail).
+
+     for (size_t i = 0; i < file->get_binaryFileList().size(); i++)
+        {
+          SgAsmFile* asmFile = file->get_binaryFileList()[i];
+          ROSE_ASSERT(asmFile != NULL);
+          unparseAsmFile(asmFile,info);
+        }
+#else
+  // Case #2 this is at least partiallly refactored code, second choice code that we could use!
+  // This is code which at least separates out the two cases of a file that either is or is not a libary archive.
+  // This code allows us to call the original code for the case where we have a non-libary archive file (normal executable).
+     if (file->get_isLibraryArchive() == true)
+        {
+          ROSE_ASSERT(file->get_libraryArchiveObjectFileNameList().empty() == false);
+
+          ROSE_ASSERT(file->get_libraryArchiveObjectFileNameList().empty() == (file->get_isLibraryArchive() == false));
+
+          for (size_t i = 0; i < file->get_binaryFileList().size(); i++)
+             {
+               printf ("Unparse binary AST for file->get_libraryArchiveObjectFileNameList()[%zu] = %s \n",i,file->get_libraryArchiveObjectFileNameList()[i].c_str());
+
+               SgAsmFile* asmFile = file->get_binaryFileList()[i];
+               ROSE_ASSERT(asmFile != NULL);
+
+               printf ("Unparse: asmFile->get_name() = %s \n",asmFile->get_name().c_str());
+
+               unparseAsmFile(asmFile,info);
+             }
+        }
+       else
+        {
+       // This is the case of a normal binary file (non-libary archive file).
+
+       // Start of case where: get_isLibraryArchive() == false
+          ROSE_ASSERT(file->get_libraryArchiveObjectFileNameList().empty() == true);
+
+       // string executableFileName = this->get_sourceFileNameWithPath();
+#if 0
+       // DQ (2/3/2009): This fails (it is the new refactored code)...
+          buildAsmAST(this->get_sourceFileNameWithPath());
+#else
+  // DQ (2/3/2009): Ths is the original code (refactored code fails to execute properly).
+  // This is the older code which I tried to refactor, but this work and the refactored code fails.
+  // so for the case of a single SgAsmFile in a SgBinaryFile, execut this code until I can figure out
+  // what is wrong with the refactored code.
+
      SgAsmFile* asmFile = file->get_binaryFile();
-     ROSE_ASSERT(asmFile != NULL);
 
   // DQ (8/14/2008): Added test to make sure that there is a valid SgAsmBlock with instructions.
   // So that we can optionally just test the binary file format details.
@@ -488,6 +734,11 @@ Unparser::unparseFile ( SgBinaryFile* file, SgUnparse_Info& info )
 
           fclose(dumpFile);
         }
+
+// End of case where: get_isLibraryArchive() == false
+        }
+#endif
+#endif
    }
 
 #if 0
