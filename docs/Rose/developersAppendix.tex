@@ -182,7 +182,7 @@ We wish to outline this process:
       that was externally released on the web (thus we know that it has passed all of our tests to 
       be released).  This will also define a mapping between internal and 
       external SVN revision numbers, which is also in the commit log message on the web site.
-      For example:
+      For example, it shows the lat log entry of the main trunk on the page of (\htmladdnormallink{https://outreach.scidac.gov/plugins/scmsvn/viewcvs.php/?root=rose}{https://outreach.scidac.gov/plugins/scmsvn/viewcvs.php/?root=rose}):
 \begin{verbatim}
       File      Rev.    Age       Author   Last log entry 
       trunk/    243   6 hours     liaoch   Load rose-0.9.4a-4275 into trunk.
@@ -202,18 +202,52 @@ which we then send to you.  This is a full source code release of ROSE which inc
     protected EDG source code, we will know if you have a license for this.  
     {\em You should not distribute this to anyone who does not have an EDG license.}
    \item Then you update your branch with the trunk at the external revision number (in our
-    example this would be revision {\em 243}).
-   \item Then build a patch to represent your changes from the trunk revision.  See the
-    documentation in this guide about how to make patches.
-   \item Apply that patch to the tarball of ROSE that we sent you (representing
+    example this would be revision {\em 243}). See the instructions in
+    \verb\Working with The ROSE SVN repositories\ of this guide about
+    how to merge the new updates of the main trunk into your branch.
+    Make sure it pass make check.
+   \item Then build a patch to represent your branch's changes from the
+   external trunk revision.  %See the documentation in this guide about how to make patches. 
+   A typical  command to generate a patch looks like the following:
+    \begin{verbatim}
+    diff -NaU5 -rbB -x \*.orig -x \*.o -x \*.swp -x \*.bak -x \*.pdf \
+      -x \*.html -x \*.rej -x \*~ -x Makefile.in -x \*.gz \
+      -x autom4te.cache -x .svn -x aclocal.m4 -x config.guess \
+      -x configure -x config.sub external_trunk your_updated_branch > my.patch
+    \end{verbatim}
+    You may need to check the generated patch and add or remove the items
+    in the exclusion list to regenerate a desired patch as needed.
+    The final patch should only contains your contributions.
+   \item Apply that patch to the tarball of the internal ROSE's trunk that we sent you (representing
      the full source code for EDG and everything) and you how have a way to test
      your work and recompile the EDG work for either a new machine or with the IR changes
      that you have added.
-   \item After you have passed all tests, then build a patch and apply that patch to your
-     external branch.  This will update your branch with everything required, even though
-     it may not pass tests using the released binary of EDG.
-   \item Let us know when your done and we can review and merge your branch into the trunk of the
-    internal SVN repository.  At this point we have accepted your changes into ROSE and
+     \begin{verbatim}
+      cd internal_ROSE_trunk
+      # test run only
+      patch -p1 --dry-run <../my.patch
+      # if everything looks normal, do the actual patching
+      patch -p1 < ../my.patch
+     \end{verbatim}
+   \item After you have passed all tests, then build a patch between the
+   patched internal ROSE trunk and it's original form. 
+    \begin{verbatim}
+    diff -NaU5 -rbB -x \*.orig -x \*.o -x \*.swp -x \*.bak -x \*.pdf \
+      -x \*.html -x \*.rej -x \*~ -x Makefile.in -x \*.gz \
+      -x autom4te.cache -x .svn -x aclocal.m4 -x config.guess \
+      -x configure -x config.sub internal_ROSE_trunk_orig
+      internal_ROSE_trunk_patched > my.patch2
+    \end{verbatim}
+    Again, please tweak the exclusion list above to generate a clean and
+    complete patch. This patch contains your contributions tested against
+    with the full internal source tree. Please record the revision number
+    of your branch associated with this patch. The number will be treated
+    as a synchronization point between your branch and the main trunk. 
+% \item Apply that patch to your external branch.  This will update your branch with everything required, even though   it may not pass tests using the released binary of EDG.
+%   \item Let us know when your done and we can review and merge your branch into the trunk of the 
+   \item Let us know when you are done and we can get your patch applicable to
+   our internal SVN repository. At this point we can review and apply the
+   patch to the internal ROSE and
     the next external release of ROSE (usually nightly) will reflect your changes.
 \end{enumerate}
 
