@@ -30,7 +30,7 @@ export CLASSPATH=/home/panas2/lib/yed.jar:./:/home/panas2/development/jogl/jogl-
 export BOOST_ROOT=/home/panas2/development/boost-install-gcc4-64bit/
 export BOOST_LD=/home/panas2/development/boost-install-gcc4-64bit/lib/
 export PATH=${HOME}/development/babel-64bit/runtime/bin:/home/panas2/development/ROSE-64bit/install-gcc4/bin:/home/panas2/programs/crosstool/gcc-4.1.0-glibc-2.3.2/arm-unknown-linux-gnu/bin:${SWIG}/bin:${CCACHE}/bin/:${PATH}
-export LD_LIBRARY_PATH=${HOME}/java/jdk1.6.0-64bit/lib/:${HOME}/java/jdk1.6.0-64bit/jre/lib/amd64/server/:${HOME}/development/babel-64bit/runtime/lib:${LD_LIBRARY_PATH}
+export LD_LIBRARY_PATH=:/home/panas2/programs/sqlite/sqlite-3.5.8/lib:${HOME}/java/jdk1.6.0-64bit/lib/:${HOME}/java/jdk1.6.0-64bit/jre/lib/amd64/server/:${HOME}/development/babel-64bit/runtime/lib:${LD_LIBRARY_PATH}
 
 export ANT_HOME=/home/panas2/programs/ant/ant-install
 export JAVA_HOME=/home/panas2/java/jdk1.6.0-64bit
@@ -38,7 +38,7 @@ export PATH=/home/panas2/development/subversion/1.4.3/bin:/home/panas2/java/jdk1
 export LD_LIBRARY_PATH=/home/panas2/development/subversion/1.4.3/lib:/home/panas2/development/ROSE-64bit/install-gcc4/lib:/home/panas2/development/jogl/jogl-1.1.1/gluegen/build/obj/:/home/panas2/development/jogl/jogl-1.1.1/jogl/build/obj/:/usr/lib/:${BOOST_LD}:/home/panas2/programs/dwarf/dwarf-20081013/libdwarf/:${LD_LIBRARY_PATH}
 
 export PATH=${HOME}/bin:/usr/apps/gcc/4.2.2-64bit/bin/:${PATH}
-export LD_LIBRARY_PATH=/home/panas2/development/surface-gl/glut-3.6/lib/glut/:/usr/apps/gcc/4.2.2-64bit/lib64/:/usr/apps/gcc/4.2.2-64bit/lib/:/home/panas2/programs/sqlite/sqlite-3.5.8/lib:${LD_LIBRARY_PATH}
+export LD_LIBRARY_PATH=/home/panas2/development/surface-gl/glut-3.6/lib/glut/:/usr/apps/gcc/4.2.2-64bit/lib64/:/usr/apps/gcc/4.2.2-64bit/lib/:${LD_LIBRARY_PATH}
 
 
 # using a time stamp to avoid overwriting previous tests
