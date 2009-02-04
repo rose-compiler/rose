@@ -2,25 +2,13 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 
 if ROSE_MPI
-INCLUDES = $(ROSE_INCLUDES) -DROSE_MPI -I$(compass_prereqs_dir)
+INCLUDES = $(ROSE_INCLUDES) -DROSE_MPI -I$(compass_prereqs_dir) 
 else
 INCLUDES = $(ROSE_INCLUDES) -I$(compass_prereqs_dir)
 endif
 
 lib_LTLIBRARIES = libCompass.la
 
-if ROSE_MPI
-#LTCXXCOMPILE = \
-#	$(LIBTOOL) --tag=CXX --mode=compile $(MPICXX) $(DEFS) \
-#        $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
-#        $(AM_CXXFLAGS) $(CXXFLAGS)
-#CXXCOMPILE = \
-#	$(MPICXX) $(DEFS) \
-#        $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
-#        $(AM_CXXFLAGS) $(CXXFLAGS)
-#CXXLINK = $(LIBTOOL) --tag=CXX --mode=link $(MPICXX) $(AM_CXXFLAGS) \
-#        $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-endif
 
 bin_PROGRAMS = compassEmptyMain 
 

@@ -3,6 +3,7 @@ include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 
 if ROSE_USE_SQLITE_DATABASE
 
+
 $(compass_build_tooldir)/compass/libCompassCheckers.la:
 	cd .. && $(MAKE) libCompassCheckers.la
 

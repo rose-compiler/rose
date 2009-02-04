@@ -4,8 +4,21 @@ SUBDIRS = tests
 
 if ROSE_USE_ASSEMBLY_SEMANTICS
 
+if ROSE_MPI
+INCLUDES = $(ROSE_INCLUDES)  -DROSE_MPI
+else
 INCLUDES = $(ROSE_INCLUDES)
+endif
+
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+if ROSE_USE_GCC_OMP
+ LDADD += -lgomp
+ CPPFLAGS += -fopenmp
+endif
+
+
+
 
 bin_PROGRAMS = x86AssemblyToCDemo powerpcAssemblyToCDemo x86AssemblyToNetlist x86AssemblyToBtor simplifyCnf removeUnusedVariables unitResolve factorLiteralCoincidences doubleStep eliminateRedundantVariables readAndWriteSets binaryClauseSimplify lookForErrors btorUnroll btorCleanup
 lib_LTLIBRARIES = libroseBtorSupport.la libroseSatProblem.la
