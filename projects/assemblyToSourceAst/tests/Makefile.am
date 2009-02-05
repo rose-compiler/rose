@@ -1,6 +1,6 @@
-if ROSE_MPI
+#if ROSE_MPI
 
-else
+#else
 
 CFLAGS = -nostdlib -static -m32 -O3 -s
 LDFLAGS = -nostdlib -static -m32 -s
@@ -20,4 +20,4 @@ test2_SOURCES = test2.c lib.h
 
 endif
 
-endif
+#endif
