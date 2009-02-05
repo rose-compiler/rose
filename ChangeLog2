@@ -1,3 +1,24 @@
+2009-02-04 23:51  liao6
+
+	* [r4294] /trunk/ROSE/projects/autoTuning/tests/Makefile.am: minor
+	  fix
+
+2009-02-04 23:06  panas2
+
+	* [r4293]
+	  /trunk/ROSE/scripts/roseFreshTestStub-Thomas-binarysql.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Thomas-javaport.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Thomas.sh: change in
+	  scripts to make sqlite work
+
+2009-02-04 22:58  panas2
+
+	* [r4292]
+	  /trunk/ROSE/scripts/roseFreshTestStub-Thomas-binarysql.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Thomas-javaport.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Thomas.sh: changes to
+	  crontab scripts
+
 2009-02-04 22:29  liao6
 
 	* [r4290] /trunk/ROSE/configure.in,
