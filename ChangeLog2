@@ -1,3 +1,15 @@
+2009-02-05 19:07  liao6
+
+	* [r4306] /trunk/ROSE/scripts/roseFreshTestStub-Dan.sh: updated
+	  mailing list
+
+2009-02-05 18:10  panas2
+
+	* [r4304] /trunk/ROSE/projects/assemblyToSourceAst/Makefile.am,
+	  /trunk/ROSE/projects/assemblyToSourceAst/tests/Makefile.am: Added
+	  guard for MPI configuration with ROSE. This code should not be
+	  compiled in the case of MPI usage
+
 2009-02-04 23:51  liao6
 
 	* [r4294] /trunk/ROSE/projects/autoTuning/tests/Makefile.am: minor
