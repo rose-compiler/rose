@@ -4054,7 +4054,7 @@ HEADER_APPLICATION_FILE_START
                e_Cxx_output_language,     /*!< value used to specify output of C++ (for testing C++ unparser) */
                e_Fortran_output_language, /*!< value used to specify output of Fortran (for testing the Fortran unparser from C) */
                e_Promela_output_language, /*!< value used to specify output of Promela for uses with SPIN (unsupported option) */
-               e_PHP_output_language, /*!< value used to specify output of PHP */
+               e_PHP_output_language,     /*!< value used to specify output of PHP */
                e_last_output_language     /*!< upper bound on the range of values supported for the outputLanguageOption_enum */
              };
 
@@ -4208,6 +4208,11 @@ HEADER_APPLICATION_FILE_START
        // This function is called at several locations to build SgSourceFiles of different types (languages).
           void initializeSourcePosition( const std::string & sourceFilename );
 
+       // DQ (2/5/2009): This is now a data member at SgProject and SgFile.
+       // DQ (2/4/2009): Added the data member to the SgProject and tha access function to the SgFile,
+       // it was previously reversed.
+       // bool get_binary_only (void) const;
+
 #if 0
 // DQ (9/5/2008): Moved to SgSourceFile
 #if ALT_FIXUP_COPY
@@ -4290,6 +4295,12 @@ HEADER_APPLICATION_BINARY_FILE_START
 
        //! This is refactored code, called once for a binary executable, and called on each object file for a library archive.
           void buildAsmAST( std::string executableFileName );
+
+      //! Support for explicit marking of sections in object files (*.o) to be disassembled.
+          std::map<rose_addr_t,std::string> markSectionsForDisassembly(SgAsmFile* asmFile);
+
+      //! Support for updating SgAsmFunctionDeclaration IR nodes with the mangled names (carries type information)
+          void updateFunctionNames(SgAsmFile* asmFile, std::map<rose_addr_t,std::string> & addressToFunctionNameMap );
 
 HEADER_APPLICATION_BINARY_FILE_END
 
@@ -4439,7 +4450,8 @@ HEADER_APPLICATION_PROJECT_START
 
           bool get_PHP_only(void) const;
 
-          bool get_binary_only (void) const;
+       // DQ (2/4/2009): This is now a data member at the SgProject and so is automatically generated asa member function.
+       // bool get_binary_only (void) const;
 
           void display ( const std::string & label ) const;
 
@@ -9864,6 +9876,19 @@ int SgFile::buildAST( std::vector<std::string> argv, std::vector<std::string> in
      ROSE_ASSERT(false);
    }
 
+#if 0
+// DQ (2/5/2009): This is a data member in both the SgProject (records the command line setting, and the SgFile
+// (specifies file type). So we don't need this member function from yesterday.
+// DQ (2/4/2009): This is now a data member at the SgProject and so is automatically generated asa member function.
+bool
+SgFile::get_binary_only (void) const
+   {
+     SgProject* project = isSgProject(get_parent());
+     ROSE_ASSERT(project != NULL);
+     return project->get_binary_only();
+   }
+#endif
+
 Sg_File_Info*
 SgFile::get_file_info() const
    {
@@ -10085,7 +10110,12 @@ SgFile::initialization()
 
      p_requires_C_preprocessor = false;
 
+  // DQ (2/5/2009): Putting this back now, so we have one at the SgProject and one at the SgFile.
+  // DQ (2/4/2009): This was moved to the SgProject
      p_binary_only             = false;
+
+  // DQ (2/5/2009): Support binary analysis of object files.
+     p_isObjectFile            = false;
 
      p_inputFormat             = SgFile::e_unknown_output_format;
      p_outputFormat            = SgFile::e_unknown_output_format;
@@ -10677,7 +10707,9 @@ SgFile::display ( const std::string & label ) const
 
      printf ("     p_requires_C_preprocessor              = %s \n",(p_requires_C_preprocessor == true) ? "true" : "false");
 
+  // DQ (2/5/2009): Putting this back now, so we have one at the SgProject and one at the SgFile.
      printf ("     p_binary_only()                        = %s \n",(p_binary_only == true) ? "true" : "false");
+     printf ("     p_isObjectFile()                       = %s \n",(p_isObjectFile == true) ? "true" : "false");
 
      string inputFormatName;
      switch(p_inputFormat)
@@ -11072,6 +11104,9 @@ SgProject::initialization()
 
      p_verbose                             = 0;
 
+  // DQ (2/4/2009): This was moved to the SgProject from the SgFile
+     p_binary_only                         = false;
+
   // DQ (1/16/2008): This is part of a ROSE supported mechanism for the 
   // specification of exclude/include paths/files for interpretation by 
   // the ROSE translator.
@@ -11374,6 +11409,8 @@ SgProject::get_PHP_only (void) const
      return result;
    }
 
+#if 0
+// DQ (2/4/2009): This is now a data member at the SgProject and so is automatically generated asa member function.
 bool
 SgProject::get_binary_only (void) const
    {
@@ -11386,6 +11423,7 @@ SgProject::get_binary_only (void) const
         }
      return result;
    }
+#endif
 
 void
 SgProject::skipfinalCompileStep(bool value)
@@ -11456,6 +11494,9 @@ SgProject::display ( const std::string & label ) const
 
      printf ("   p_preincludeDirectoryList.size()       = %zu \n", p_preincludeDirectoryList.size());
      printf ("   p_preincludeDirectoryList              = \n      %s \n",StringUtility::listToString(p_preincludeDirectoryList).c_str());
+
+  // DQ (2/4/2009): Moved from SgFile to SgProject.
+     printf ("   p_binary_only()                        = %s \n",(p_binary_only == true) ? "true" : "false");
 
      printf ("In this project: numberOfFiles() = %d \n",numberOfFiles());
      for (int i = 0; i < numberOfFiles(); i++)

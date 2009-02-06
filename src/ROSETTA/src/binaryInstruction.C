@@ -1665,6 +1665,18 @@ Grammar::setUpBinaryInstructions ()
      AsmGenericSection.setDataPrototype("bool","congealed","= false",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (2/4/2009): Added support for specification of code to be disassembled.  this is important for
+  // object files where all the sections are marked as non-executable, yet they have functions which
+  // we clearly want to disassemble.
+     AsmGenericSection.setDataPrototype("bool","contains_code","= false",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (2/4/2009): The new code must have an address where it can be mapped, but clearly since it is
+  // from a section marked non-mapped (and not even executable), these are addresses that we are assigning 
+  // arbitrarily.
+     AsmGenericSection.setDataPrototype("rose_addr_t","rose_mapped_rva","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      
   // DQ (8/2/2008): This was removed from the design by Robb.
   /* All segments belonging within this section */

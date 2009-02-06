@@ -55,7 +55,7 @@ namespace CommandlineProcessing
           std::string generateStringFromArgList ( Rose_STL_Container<std::string> argList, bool skipInitialEntry, bool skipSourceFiles );
 
       //! Build the list of isolated file names from the command line
-          Rose_STL_Container<std::string> generateSourceFilenames ( Rose_STL_Container<std::string> argList );
+          Rose_STL_Container<std::string> generateSourceFilenames ( Rose_STL_Container<std::string> argList, bool binaryMode );
 
        // DQ and PC (6/1/2006): Added Peter's suggested fixes to support auto-documentation.
       //! Add another valid source file suffix
