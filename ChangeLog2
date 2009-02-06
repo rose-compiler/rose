@@ -1,3 +1,22 @@
+2009-02-06 16:00  dquinlan
+
+	* [r4325]
+	  /trunk/ROSE/developersScratchSpace/Dan/translator_tests/reverseTraversal.C:
+	  Added AST copy to the reverse traversal example to build new file
+	  (copy) from a declaration backward to the root.
+
+2009-02-06 15:14  dquinlan
+
+	* [r4324]
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/arm-ctrlaltdel.ans,
+	  /trunk/ROSE/developersScratchSpace/Dan/translator_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/translator_tests/inputReverseTraversal.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/translator_tests/reverseTraversal.C,
+	  /trunk/ROSE/tests/roseTests/astFileIOTests/Makefile.am: Added
+	  example of reverse traversal and commited new
+	  Disassembler_tests/arm-ctrlaltdel.ans file.
+
 2009-02-06 02:05  dquinlan
 
 	* [r4313]
