@@ -453,3 +453,5 @@ test1: test1A.C test1B.C
 	./test1
 
 
+test-binary: astFileIO
+	./astFileIO -rose:verbose 0 $(srcdir)/buffer2.bin
