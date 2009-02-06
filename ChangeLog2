@@ -1,3 +1,91 @@
+2009-02-06 02:05  dquinlan
+
+	* [r4313]
+	  /trunk/ROSE/src/3rdPartyLibraries/fortran-parser/Makefile.am,
+	  /trunk/ROSE/src/3rdPartyLibraries/fortran-parser/src/fortran/ofp/parser/FortranLexer.g.afterFix:
+	  Corrected FortranLexer.g.afterFix to be the latest version from
+	  Craig.
+
+2009-02-06 01:57  panas2
+
+	* [r4312] /trunk/ROSE/tests/roseTests/astFileIOTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/astFileIOTests/buffer2.bin: Tests
+	  FileIO for binaries
+
+2009-02-06 01:42  panas2
+
+	* [r4311] /trunk/ROSE/projects/BinQ/Makefile.am: added test rule
+	  for binaryASTFile
+
+2009-02-06 01:27  panas2
+
+	* [r4310] /trunk/ROSE/projects/BinQ/BinQAbstract.C,
+	  /trunk/ROSE/projects/BinQ/BinQAbstract.h,
+	  /trunk/ROSE/projects/BinQ/BinQMain.C,
+	  /trunk/ROSE/projects/BinQ/BinQbatch.C,
+	  /trunk/ROSE/projects/BinQ/BinQbatch.h: Added a test for writing
+	  Binaries to BinaryASTFile Format
+
+2009-02-06 01:21  dquinlan
+
+	* [r4309]
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/libraryIdentification_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/libraryIdentification_tests/libraryIdentificationTest.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/fortran-parser/src/fortran/ofp/FrontEnd.java.afterFix,
+	  /trunk/ROSE/src/3rdPartyLibraries/fortran-parser/src/fortran/ofp/FrontEnd.java.beforeFix,
+	  /trunk/ROSE/src/3rdPartyLibraries/fortran-parser/src/fortran/ofp/parser/FortranLexer.g.afterFix,
+	  /trunk/ROSE/src/3rdPartyLibraries/fortran-parser/src/fortran/ofp/parser/FortranLexer.g.beforeFix,
+	  /trunk/ROSE/src/3rdPartyLibraries/fortran-parser/src/fortran/ofp/parser/FortranParser.g.afterFix,
+	  /trunk/ROSE/src/3rdPartyLibraries/fortran-parser/src/fortran/ofp/parser/FortranParser.g.beforeFix,
+	  /trunk/ROSE/src/3rdPartyLibraries/fortran-parser/src/fortran/ofp/parser/java/FortranLexicalPrepass.java.afterFix,
+	  /trunk/ROSE/src/3rdPartyLibraries/fortran-parser/src/fortran/ofp/parser/java/FortranLexicalPrepass.java.beforeFix,
+	  /trunk/ROSE/src/3rdPartyLibraries/fortran-parser/src/fortran/ofp/parser/java/FortranTokenStream.java.afterFix,
+	  /trunk/ROSE/src/3rdPartyLibraries/fortran-parser/src/fortran/ofp/parser/java/FortranTokenStream.java.beforeFix,
+	  /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Support.code,
+	  /trunk/ROSE/src/ROSETTA/src/binaryInstruction.C,
+	  /trunk/ROSE/src/ROSETTA/src/support.C,
+	  /trunk/ROSE/src/backend/unparser/unparser.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/disassemblerCommon.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecGeneric.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilder.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C,
+	  /trunk/ROSE/src/midend/binaryAnalyses/libraryIdentification/libraryIdentification_writer.C,
+	  /trunk/ROSE/src/util/commandlineProcessing/commandline_processing.C,
+	  /trunk/ROSE/src/util/commandlineProcessing/commandline_processing.h,
+	  /trunk/ROSE/src/util/stringSupport/string_functions.C,
+	  /trunk/ROSE/src/util/stringSupport/string_functions.h: Summary:
+	  Added support for analysis of object files.
+	  
+	  Detailed changes in this commit:
+	  1) Added analysis to determin what sections of an object file
+	  (*.o)
+	  should be disassembled and modified disassemble to work on those
+	  sections.
+	  This is broader support than just the disassembly of those
+	  sections
+	  marked as executable, since object file sections are never marked
+	  as executable.
+	  2) Added "contains_code" and "rose_mapped_rva" fields to
+	  SgAsmGenericSection
+	  to support the handling of object files (required for processing
+	  of *.a files).
+	  3) Added the new Fortran files from Craig, but they don't
+	  compile, so we are still
+	  working on that issue (added the to SVN as *.afterFix). Copied
+	  old versions of
+	  relevant files to *.beforeFix and checked them into SVN as well.
+	  4) Fixed lots of details specific to the new library
+	  identification work.
+	  5) Added function to wrap Unix "popen" command.
+	  6) Added function to demangle mangled functions (calling
+	  "c++filt" command)
+	  to support the mangled file name input into the database with the
+	  MD5 checksum for
+	  each function.
+	  7) Binary function recognition identified and needing more work.
+
 2009-02-05 19:07  liao6
 
 	* [r4306] /trunk/ROSE/scripts/roseFreshTestStub-Dan.sh: updated
