@@ -2514,6 +2514,13 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx) const
         fprintf(f, "%s%-*s = <not mapped>\n",    p, w, "mapped");
     }
 
+   // DQ (2/4/2009): Added variable to support specification of where code is since in object files
+   // sections are marked as non-executable even when they contain code and the disassembler
+   // looks only at if sections (maybe segments) are marked executable (this will change to 
+   // include sections explicit marked as code using this variable).
+      fprintf(f, "%s%-*s = %s\n", p, w, "contains_code", get_contains_code()?"true":"false");
+      fprintf(f, "%s%-*s = %"PRIx64" (%"PRIu64") \n", p, w, "rose_mapped_rva", p_rose_mapped_rva,p_rose_mapped_rva);
+
     /* Show holes based on what's been referenced so far */
     {
       fprintf(f, "%s%-*s = %s\n", p, w, "congealed", get_congealed()?"true":"false");

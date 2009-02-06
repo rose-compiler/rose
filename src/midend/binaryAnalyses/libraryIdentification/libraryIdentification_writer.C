@@ -166,26 +166,38 @@ LibraryIdentification::libraryIdentificationDataBaseSupport( string databaseName
           SgAsmInterpretation* asmInterpretation = isSgAsmInterpretation(*j);
           ROSE_ASSERT(asmInterpretation != NULL);
 
-          Rose_STL_Container<SgNode*> binaryFunctionList       = NodeQuery::querySubTree (asmInterpretation,V_SgAsmFunctionDeclaration);
+          printf ("Calling the NodeQuery::querySubTree() on SgAsmFunctionDeclaration \n");
+          Rose_STL_Container<SgNode*> binaryFunctionList = NodeQuery::querySubTree (asmInterpretation,V_SgAsmFunctionDeclaration);
+          printf ("DONE: Calling the NodeQuery::querySubTree() on SgAsmFunctionDeclaration \n");
 
           for (Rose_STL_Container<SgNode*>::iterator i = binaryFunctionList.begin(); i != binaryFunctionList.end(); i++)
              {
-               printf ("\n\n*********************************** \n");
-               printf ("    Binary Function %p    \n",*i);
-               printf ("*********************************** \n");
-
             // Build a pointer to the current type so that we can call the get_name() member function.
                SgAsmFunctionDeclaration* binaryFunction = isSgAsmFunctionDeclaration(*i);
                ROSE_ASSERT(binaryFunction != NULL);
+
+               string mangledFunctionName   = binaryFunction->get_name();
+               printf ("mangledFunctionName = %s \n",mangledFunctionName.c_str());
+               string demangledFunctionName = StringUtility::demangledName(mangledFunctionName);
+               printf ("demangledFunctionName = %s \n",demangledFunctionName.c_str());
+#if 0
+            // For debugging ... skip the unnamed functions where are not really present in the object file.
+               if (binaryFunction->get_name().empty() == true)
+                    continue;
+#endif
+               printf ("\n\n*********************************************************** \n");
+               printf ("    Binary Function %p = %s demangled = %s \n",binaryFunction,mangledFunctionName.c_str(),demangledFunctionName.c_str());
+               printf ("******************************************************************* \n");
 
             // Note that we need a SgAsmInterpretation object in generateOpCodeVector() to compute the 
             // section.  This might not make sense.
                size_t startOffset = 0, endOffset = 0;
                SgUnsignedCharList s = generateOpCodeVector(asmInterpretation,binaryFunction, startOffset, endOffset);
                functionOpcodeList.push_back(s);
-
+#if 0
+            // There seem to be a lot of dumplicate entries in object files.
                testForDuplicateEntries(functionOpcodeList);
-
+#endif
                if (s.empty() == true)
                   {
                     printf ("Warning: zero length function \n");
@@ -196,7 +208,8 @@ LibraryIdentification::libraryIdentificationDataBaseSupport( string databaseName
                   {
                  // Generate the database using all the functions ... (in this file).
                     string fileName = SageInterface::generateProjectName(project); // "foo";
-                    string functionName = "function-" + StringUtility::numberToString(counter);
+                 // string functionName = "function-" + StringUtility::numberToString(counter);
+                    string functionName = binaryFunction->get_name();
 
                     write_database (ident,fileName,functionName,startOffset,endOffset,s);
                   }
@@ -210,12 +223,12 @@ LibraryIdentification::libraryIdentificationDataBaseSupport( string databaseName
 
                     printf ("found_match test: fileName = %s functionName = %s found_match = %s \n",fileName.c_str(),functionName.c_str(),found_match ? "true" : "false");
                   }
-
+#if 0
             // Debugging output
                outputOpCodeVector(s,counter);
-
+#endif
             // Increment the counter used to name the functions
-               counter++;
+            // counter++;
              }
         }
      printf ("DONE: Traverse the AST to file functions \n");
@@ -238,7 +251,7 @@ LibraryIdentification::FlattenAST::visit(SgNode* n)
      SgAsmInstruction* asmInstruction = isSgAsmInstruction(n);
      if (asmInstruction != NULL)
         {
-          printf ("asmInstruction = %p \n",asmInstruction);
+       // printf ("asmInstruction = %p \n",asmInstruction);
 
           size_t instructionAddress = asmInstruction->get_address();
           if (startAddress == 0)

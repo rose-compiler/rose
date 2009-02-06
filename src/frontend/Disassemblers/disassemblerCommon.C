@@ -44,104 +44,194 @@ DisassemblerCommon::AsmFileWithData::getSectionOfAddress(uint64_t addr) const
 
      uint64_t rva = addr - header->get_base_va();
 
+  // printf ("In getSectionOfAddress(): addr = 0x%"PRIx64" rva = 0x%"PRIx64"\n",addr,rva);
+
      SgAsmGenericFile* file = header->get_file();
      ROSE_ASSERT (file);
 
-     SgAsmGenericSectionList* sectionList = header->get_sections();
-     const SgAsmGenericSectionPtrList& sections = sectionList->get_sections();
+     SgAsmGenericSectionList* sectionList        = header->get_sections();
+     const SgAsmGenericSectionPtrList & sections = sectionList->get_sections();
 
-     for (size_t i = 0; i < sections.size(); ++i) {
-       SgAsmGenericSection* section = sections[i];
-       ROSE_ASSERT(section->get_header() == header);
-       if (!section->is_mapped() && !isSgAsmDOSFileHeader(header)) continue; // Workaround for bug FIXME
-       if (rva < section->get_mapped_rva()) continue;
-       if (rva >= section->get_mapped_rva() + section->get_mapped_size())
-         continue;
-       if (Disassembler::aggressive_mode) {
-         // Only allow ELF segments
-         ROSE_ASSERT (!"Aggressive mode not supported");
-       } else {
-         if (!isSgAsmElfSection(section) && !isSgAsmPESection(section) && !isSgAsmDOSFileHeader(header)) continue;
+     for (size_t i = 0; i < sections.size(); ++i)
+        {
+          SgAsmGenericSection* section = sections[i];
+          ROSE_ASSERT(section->get_header() == header);
 
-      // printf ("In DisassemblerCommon::AsmFileWithData::getSectionOfAddress(%p): returning section %s \n",(void*)addr,section->get_name().c_str());
-         return section;
-       }
-     }
+       // DQ (2/5/2009): I think this would be an error for a section we explicitly marked as contining code to disassemble.
+       // if (!section->is_mapped() && !isSgAsmDOSFileHeader(header))
+          if (section->get_contains_code() == false && section->is_mapped() == false && !isSgAsmDOSFileHeader(header))
+             {
+            // printf ("note: section->is_mapped() = %s (continue) \n",section->is_mapped() ? "true" : "false");
+               continue; // Workaround for bug FIXME
+             }
+
+       // if (rva < section->get_mapped_rva()) continue;
+          if (section->get_contains_code() == true)
+             {
+               if (rva < section->get_rose_mapped_rva())
+                    continue;
+             }
+            else
+             {
+               if (rva < section->get_mapped_rva())
+                    continue;
+             }
+
+       // if (rva >= section->get_mapped_rva() + section->get_mapped_size()) continue;
+          if (section->get_contains_code() == true)
+             {
+            // Error checking (mapped_size == 0 if the section is not mapped).
+            // if (section->get_mapped_size() == 0)
+            //      printf ("In DisassemblerCommon::AsmFileWithData::getSectionOfAddress(%p): section->get_mapped_size() == 0 section name %s \n",(void*)addr,section->get_name()->c_str());
+            // ROSE_ASSERT(section->get_mapped_size() > 0);
+               ROSE_ASSERT(section->get_size() > 0);
+
+               if (rva >= section->get_rose_mapped_rva() + section->get_size())
+                    continue;
+             }
+            else
+             {
+               if (rva >= section->get_mapped_rva() + section->get_mapped_size())
+                    continue;
+             }
+
+       // We want to support two or more modes, but this is unfinished.
+          if (Disassembler::aggressive_mode)
+             {
+            // Only allow ELF segments
+               ROSE_ASSERT (!"Aggressive mode not supported");
+             }
+            else
+             {
+               if (!isSgAsmElfSection(section) && !isSgAsmPESection(section) && !isSgAsmDOSFileHeader(header)) continue;
+
+            // printf ("In DisassemblerCommon::AsmFileWithData::getSectionOfAddress(%p): returning section %s \n",(void*)addr,section->get_name()->c_str());
+               return section;
+             }
+        }
+
      return NULL;
    }
 
-bool DisassemblerCommon::AsmFileWithData::inCodeSegment(uint64_t addr) const {
-  SgAsmGenericSection* sectionOfThisPtr = getSectionOfAddress(addr);
-  if (sectionOfThisPtr != NULL &&
-      sectionOfThisPtr->get_mapped_xperm()) {
-    return true;
-  }
-  return false;
-}
+bool
+DisassemblerCommon::AsmFileWithData::inCodeSegment(uint64_t addr) const
+   {
+     SgAsmGenericSection* sectionOfThisPtr = getSectionOfAddress(addr);
 
-SgAsmInstruction* DisassemblerCommon::AsmFileWithData::disassembleOneAtAddress(uint64_t addr, set<uint64_t>& knownSuccessors) const {
-  SgAsmGenericSection* section = getSectionOfAddress(addr);
-  if (!section) return 0;
+  // DQ (2/4/2009): Change this to check the get_contains_code() boolean function (flag)
+  // to see if this is a section that should be disassembled even if it was not marked 
+  // as executable (such as in object files).
+  // if (sectionOfThisPtr != NULL && sectionOfThisPtr->get_mapped_xperm())
+     if (sectionOfThisPtr != NULL && (sectionOfThisPtr->get_mapped_xperm() == true || sectionOfThisPtr->get_contains_code() == true) )
+        {
+          return true;
+        }
 
-// Check if this is marked as executable
-  if (!section->get_mapped_xperm()) {
-    return 0;
-  }
+     return false;
+   }
 
-// Compute the location of the first instruction in the data saved from the AST binary file format IR.
-  ROSE_ASSERT (section->get_header() == interp->get_header());
-  SgAsmGenericHeader* header = interp->get_header();
-  ROSE_ASSERT (header);
-  uint64_t rva = addr - header->get_base_va();
-  SgAsmGenericFile* file = isSgAsmGenericFile(header->get_parent()->get_parent());
-  ROSE_ASSERT (file);
-  size_t fileOffset = rva - section->get_mapped_rva() + section->get_offset();
-  ROSE_ASSERT (fileOffset < file->get_orig_size());
-  SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
-  SgAsmInstruction* insn = NULL;
+SgAsmInstruction*
+DisassemblerCommon::AsmFileWithData::disassembleOneAtAddress(uint64_t addr, set<uint64_t>& knownSuccessors) const
+   {
+     SgAsmGenericSection* section = getSectionOfAddress(addr);
 
-  try {
-    if (isSgAsmDOSFileHeader(header)) { // FIXME
-      X86Disassembler::Parameters params(addr, x86_insnsize_16);
-      insn = X86Disassembler::disassemble(params, &(file->content()[0]), file->get_orig_size(), fileOffset, &knownSuccessors);
-    } else if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_IA32_Family) {
-      X86Disassembler::Parameters params(addr, x86_insnsize_32);
-      insn = X86Disassembler::disassemble(params, &(file->content()[0]), file->get_orig_size(), fileOffset, &knownSuccessors);
-    } else if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_X8664_Family) {
-      X86Disassembler::Parameters params(addr, x86_insnsize_64);
-      insn = X86Disassembler::disassemble(params, &(file->content()[0]), file->get_orig_size(), fileOffset, &knownSuccessors);
-    } else if (isa == SgAsmExecutableFileFormat::ISA_ARM_Family) {
-      ArmDisassembler::Parameters params(addr, true);
-      insn = ArmDisassembler::disassemble(params, &(file->content()[0]), file->get_orig_size(), fileOffset, &knownSuccessors);
-    } else if (isa == SgAsmExecutableFileFormat::ISA_PowerPC) {
-
-   // DQ (10/12/2008): Added support for PowerPC.
-      PowerpcDisassembler::Parameters params(addr);
-
-   // printf ("Initial file starting address (entry point) = %p  file size = %zu  fileOffset = %zu \n",&(file->content()[0]),file->get_orig_size(),fileOffset);
-
-      insn = PowerpcDisassembler::disassemble(params, &(file->content()[0]), file->get_orig_size(), fileOffset, &knownSuccessors);
-#if 0
-      printf ("Exit after disassembling the first instruction! \n");
-      ROSE_ASSERT(false);
+  // Trap first possible case of error (addr was not in any section).
+     if (section == NULL)
+        {
+#if 1
+          printf ("getSectionOfAddress(addr = 0x%"PRIx64") returned NULL \n",addr);
 #endif
-    } else {
+          return NULL;
+        }
 
-   // DQ (10/12/2008): Output a bit more information when we fail!
-      printf ("Error: unsupported instruction set isa = %d = 0x%x \n",isa,isa);
+  // DQ (2/4/2009): Change this to check the get_contains_code() boolean function (flag)
+  // to see if this is a section that should be disassembled even if it was not marked 
+  // as executable (such as in object files).
 
-      cerr << "Bad architecture to disassemble (disassembleOneAtAddress)" << endl;
-      abort();
-    }
-    ROSE_ASSERT (insn != NULL);
-    return insn;
-  } catch (BadInstruction) {
-    knownSuccessors.clear();
-    return 0;
-  } catch (OverflowOfInstructionVector) {
-    return 0;
-  }
-}
+  // Check if this is marked as executable, if not then was it marked to have code anyway (e.g. object file, if so then it will be disassembled)
+  // if (!section->get_mapped_xperm())
+     if (section->get_mapped_xperm() == false && section->get_contains_code() == false)
+        {
+          printf ("In DisassemblerCommon::AsmFileWithData::disassembleOneAtAddress(), but section->get_mapped_xperm() == false && section->get_contains_code() == false \n");
+          return NULL;
+        }
+
+  // Compute the location of the first instruction in the data saved from the AST binary file format IR.
+     ROSE_ASSERT (section->get_header() == interp->get_header());
+     SgAsmGenericHeader* header = interp->get_header();
+     ROSE_ASSERT (header);
+     uint64_t rva = addr - header->get_base_va();
+     SgAsmGenericFile* file = isSgAsmGenericFile(header->get_parent()->get_parent());
+     ROSE_ASSERT (file);
+#if 0
+  // Original code.
+     size_t fileOffset = rva - section->get_mapped_rva() + section->get_offset();
+     ROSE_ASSERT (fileOffset < file->get_orig_size());
+#else
+  // DQ (2/5/2009): This is the modified version to handle sections from object file that are not marked 
+  // executable and for which we have introduced a mechansim to explicitly mark them as containing code 
+  // (marking is done via a separate analysis usingteh symbols in the object file).
+     size_t fileOffset = 0;
+     if (section->get_contains_code() == true)
+        {
+       // This is a section in an object file that is explicitly marked as containing code.
+       // printf ("In getSectionOfAddress() addr = 0x%"PRIx64" section->get_rose_mapped_rva() = 0x%"PRIx64" section->get_offset() = %zu \n",addr,section->get_rose_mapped_rva(),section->get_offset());
+          fileOffset = rva - section->get_rose_mapped_rva() + section->get_offset();
+          ROSE_ASSERT (fileOffset < file->get_orig_size());
+        }
+       else
+        {
+          fileOffset = rva - section->get_mapped_rva() + section->get_offset();
+          ROSE_ASSERT (fileOffset < file->get_orig_size());
+        }
+#endif
+
+     SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
+     SgAsmInstruction* insn = NULL;
+
+     try{
+          if (isSgAsmDOSFileHeader(header)) { // FIXME
+               X86Disassembler::Parameters params(addr, x86_insnsize_16);
+               insn = X86Disassembler::disassemble(params, &(file->content()[0]), file->get_orig_size(), fileOffset, &knownSuccessors);
+          } else if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_IA32_Family) {
+               X86Disassembler::Parameters params(addr, x86_insnsize_32);
+               insn = X86Disassembler::disassemble(params, &(file->content()[0]), file->get_orig_size(), fileOffset, &knownSuccessors);
+          } else if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_X8664_Family) {
+               X86Disassembler::Parameters params(addr, x86_insnsize_64);
+               insn = X86Disassembler::disassemble(params, &(file->content()[0]), file->get_orig_size(), fileOffset, &knownSuccessors);
+          } else if (isa == SgAsmExecutableFileFormat::ISA_ARM_Family) {
+               ArmDisassembler::Parameters params(addr, true);
+               insn = ArmDisassembler::disassemble(params, &(file->content()[0]), file->get_orig_size(), fileOffset, &knownSuccessors);
+          } else if (isa == SgAsmExecutableFileFormat::ISA_PowerPC) {
+
+            // DQ (10/12/2008): Added support for PowerPC.
+               PowerpcDisassembler::Parameters params(addr);
+
+            // printf ("Initial file starting address (entry point) = %p  file size = %zu  fileOffset = %zu \n",&(file->content()[0]),file->get_orig_size(),fileOffset);
+
+               insn = PowerpcDisassembler::disassemble(params, &(file->content()[0]), file->get_orig_size(), fileOffset, &knownSuccessors);
+          } else {
+
+            // DQ (10/12/2008): Output a bit more information when we fail!
+               printf ("Error: unsupported instruction set isa = %d = 0x%x \n",isa,isa);
+
+               cerr << "Bad architecture to disassemble (disassembleOneAtAddress)" << endl;
+               abort();
+          }
+          ROSE_ASSERT (insn != NULL);
+          return insn;
+        }
+
+     catch (BadInstruction)
+        {
+          knownSuccessors.clear();
+          return NULL;
+        } 
+     catch (OverflowOfInstructionVector)
+        {
+          return NULL;
+        }
+   }
 
 void
 DisassemblerCommon::AsmFileWithData::disassembleRecursively(uint64_t addr,
@@ -160,39 +250,58 @@ DisassemblerCommon::AsmFileWithData::disassembleRecursively(vector<uint64_t>& wo
                                                             map<uint64_t, SgAsmInstruction*>& insns,
                                                             BasicBlockStarts &basicBlockStarts
                                                             ) const
-{
-    while (!worklist.empty()) {
-        uint64_t addr = worklist.back();
-        worklist.pop_back();
-        if (insns.find(addr) != insns.end()) continue;
-        ++instructionsDisassembled;
-        if (instructionsDisassembled % 10000 == 0) {
-            cerr << instructionsDisassembled << " disassembling " << addr
-                 << " worklist size = " << worklist.size()
-                 << ", done = " << insns.size() << endl;
-        }
+   {
+     while (!worklist.empty())
+        {
+          uint64_t addr = worklist.back();
+          worklist.pop_back();
 
-        /* Disassemble an instruction, returning all known successor addresses of this instruction. */
-        set<uint64_t> knownSuccessors;
-        SgAsmInstruction* insn = disassembleOneAtAddress(addr, knownSuccessors);
-        if (!insn) {cerr << "Bad instruction at 0x" << hex << addr << endl; continue;}
-        insns.insert(make_pair(addr, insn));
+       // Check if this instruction has already been decoded.
+          if (insns.find(addr) != insns.end())
+             {
+            // printf ("addr = 0x%"PRIx64" is in instruction map: insns (already decoded, so continue) \n",addr);
+               continue;
+             }
+        
+          ++instructionsDisassembled;
 
-        /* Build branching-graph based on the known successor addresses. Non-branching instructions will return at most one
-         * successor which we do not add to the graph because we want edges between the basic blocks, not within a basic
-         * block. Unconditional branches will also return at most one successor, but the successor will probably not be the
-         * next address but rather some distant address which we store as an edge in the graph.  Instructions that have more
-         * than one successor are such things as conditional branches or CALL-like instructions where one of the successors is
-         * probably the next address--we store all of these successor edges (the distant addresses obviously need to be stored,
-         * but the next address is also stored because it's an edge to another basic block. */
-        for (set<uint64_t>::const_iterator i = knownSuccessors.begin(); i != knownSuccessors.end(); ++i) {
-            if (!inCodeSegment(*i))
-                continue;
-            if (knownSuccessors.size()>1 || *i != addr + insn->get_raw_bytes().size())
-                basicBlockStarts[*i].insert(addr);
-            if (insns.find(*i) == insns.end())
-                worklist.push_back(*i);
-        }
+          if (instructionsDisassembled % 10000 == 0)
+             {
+               cerr << instructionsDisassembled << " disassembling " << addr
+                    << " worklist size = " << worklist.size()
+                    << ", done = " << insns.size() << endl;
+             }
+
+       /* Disassemble an instruction, returning all known successor addresses of this instruction. */
+          set<uint64_t> knownSuccessors;
+          SgAsmInstruction* insn = disassembleOneAtAddress(addr, knownSuccessors);
+
+       // Check if there was an error, NULL return value means that the instruction was not decoded.
+       // This is likely because it was an illegal instruction (data instead of code).
+          if (insn == NULL)
+             {
+               cerr << "Bad instruction at 0x" << hex << addr << endl; 
+               continue;
+             }
+
+          insns.insert(make_pair(addr, insn));
+
+       /* Build branching-graph based on the known successor addresses. Non-branching instructions will return at most one
+        * successor which we do not add to the graph because we want edges between the basic blocks, not within a basic
+        * block. Unconditional branches will also return at most one successor, but the successor will probably not be the
+        * next address but rather some distant address which we store as an edge in the graph.  Instructions that have more
+        * than one successor are such things as conditional branches or CALL-like instructions where one of the successors is
+        * probably the next address--we store all of these successor edges (the distant addresses obviously need to be stored,
+        * but the next address is also stored because it's an edge to another basic block. */
+          for (set<uint64_t>::const_iterator i = knownSuccessors.begin(); i != knownSuccessors.end(); ++i)
+             {
+               if (!inCodeSegment(*i))
+                   continue;
+               if (knownSuccessors.size()>1 || *i != addr + insn->get_raw_bytes().size())
+                   basicBlockStarts[*i].insert(addr);
+               if (insns.find(*i) == insns.end())
+                   worklist.push_back(*i);
+             }
 
         /* Scan for constant operands that are code pointers. Such operands are often used in a closely following instruction
          * as a jump target. E.g., "move 0x400600, reg1; ...; jump reg1". We don't know when (or even if) the execution branch
@@ -226,10 +335,11 @@ DisassemblerCommon::AsmFileWithData::disassembleRecursively(vector<uint64_t>& wo
 }
 
 // DQ (8/26/2008): Added initialization for default mode of disassembler
-bool Disassembler::aggressive_mode = false;
+bool Disassembler::aggressive_mode            = false;
 bool Disassembler::heuristicFunctionDetection = false;
 
-void Disassembler::disassembleFile(SgAsmFile* f)
+void
+Disassembler::disassembleFile(SgAsmFile* f)
    {
   // This is the entry point into the disassembler code.  This function is the single call made from 
   // file: sageSupport.C, function: SgBinaryFile::buildAST()
@@ -246,36 +356,57 @@ void Disassembler::disassembleFile(SgAsmFile* f)
      const SgAsmInterpretationPtrList& interps = f->get_interpretations();
      for (size_t i = 0; i < interps.size(); ++i)
         {
+       // printf ("In Calling Disassembler::disassembleFile(): disassembler for SgAsmInterpretation = %p \n",interps[i]);
           disassembleInterpretation(interps[i]);
         }
    }
 
 void
 Disassembler::disassembleInterpretation(SgAsmInterpretation* interp)
-{
-    // DQ (8/26/2008): Set the agressive mode in the disassembler based on the SgFile (evaluated from the command line).
-    SgAsmFile* asmFile = isSgAsmFile(interp->get_parent());
-    ROSE_ASSERT (asmFile);
-    SgBinaryFile* fileNode = isSgBinaryFile(asmFile->get_parent());
-    ROSE_ASSERT(fileNode != NULL);
-    aggressive_mode = fileNode->get_aggressive();
+   {
+  // DQ (8/26/2008): Set the agressive mode in the disassembler based on the SgFile (evaluated from the command line).
+     SgAsmFile* asmFile = isSgAsmFile(interp->get_parent());
+     ROSE_ASSERT (asmFile);
+     SgBinaryFile* fileNode = isSgBinaryFile(asmFile->get_parent());
+     ROSE_ASSERT(fileNode != NULL);
 
-    DisassemblerCommon::AsmFileWithData file(interp);
-    map<uint64_t, SgAsmInstruction*> insns;
-    DisassemblerCommon::BasicBlockStarts basicBlockStarts;
-    DisassemblerCommon::FunctionStarts functionStarts;
+  // Evaluate what mode of analysis is requested from the command line.
+     aggressive_mode = fileNode->get_aggressive();
 
-    SgAsmGenericHeader* header = interp->get_header();
-    ROSE_ASSERT (header);
+     DisassemblerCommon::AsmFileWithData  file(interp);
+     map<uint64_t, SgAsmInstruction*>     insns;
+     DisassemblerCommon::BasicBlockStarts basicBlockStarts;
+     DisassemblerCommon::FunctionStarts   functionStarts;
 
-    /* Seed the disassembly with the entry point(s) stored in the file header. */
-    SgRVAList entry_rvalist = header->get_entry_rvas();
-    for (size_t i=0; i<entry_rvalist.size(); i++) {
-        uint64_t entryPoint = entry_rvalist[i].get_rva() + header->get_base_va();
-        if (basicBlockStarts.find(entryPoint)==basicBlockStarts.end())
-            basicBlockStarts[entryPoint] = DisassemblerCommon::BasicBlockStarts::mapped_type();
-        file.disassembleRecursively(entryPoint, insns, basicBlockStarts);
-    }
+     SgAsmGenericHeader* header = interp->get_header();
+     ROSE_ASSERT (header != NULL);
+
+  /* Seed the disassembly with the entry point(s) stored in the file header. */
+     SgRVAList entry_rvalist = header->get_entry_rvas();
+
+  // printf ("entry_rvalist.size() = %zu \n",entry_rvalist.size());
+     for (size_t i = 0; i < entry_rvalist.size(); i++)
+        {
+       // DQ (2/5/2009): ELF files only have a single entry in the RVA list.  For object files we have added 
+       // the start of each section that contains code (as an address) to the header->get_entry_rvas(). So 
+       // that we can traverse all the sections that have code and disassemble those sections.
+          uint64_t entryPoint = entry_rvalist[i].get_rva() + header->get_base_va();
+#if 0
+          printf ("entry_rvalist[i].get_rva()             = 0x%"PRIx64" \n",entry_rvalist[i].get_rva());
+          printf ("header->get_base_va()                  = 0x%"PRIx64" \n",header->get_base_va());
+          printf ("Computed entryPoint                    = 0x%"PRIx64" \n",entryPoint);
+#endif
+       // DQ (2/5/2009): Added comment: If the entryPoint is not in the list of block statrts then add it as a mapped_type...
+          if (basicBlockStarts.find(entryPoint) == basicBlockStarts.end())
+             {
+            // printf ("Adding this entryPoint = %zu to the basicBlockStarts list \n",entryPoint);
+               basicBlockStarts[entryPoint] = DisassemblerCommon::BasicBlockStarts::mapped_type();
+             }
+
+       // printf ("In Disassembler::disassembleInterpretation(): calling disassembleRecursively() for entry_rvalist[%zu] \n",i);
+          file.disassembleRecursively(entryPoint, insns, basicBlockStarts);
+       // printf ("DONE: In Disassembler::disassembleInterpretation(): calling disassembleRecursively() for entry_rvalist[%zu] \n",i);
+        }
 
 #if 0
     // This is a test that attempts to detect executable code in the sections of the binary
@@ -331,18 +462,19 @@ Disassembler::disassembleInterpretation(SgAsmInterpretation* interp)
     /* Adjust basicBlockStarts and functionStarts to indicate the starting (lowest) address of all known functions. This must
      * be done before we assign instructions to basic blocks since any newly detected function starts must necessarily also be
      * the beginning of a basic block. */
-    detectFunctionStarts(interp, insns, basicBlockStarts, functionStarts);
+     detectFunctionStarts(interp, insns, basicBlockStarts, functionStarts);
 
-    /* Assign instructions to basic blocks based on the addresses in the basicBlockStarts map. */
-    map<uint64_t, SgAsmBlock*> basicBlocks;
-    for (DisassemblerCommon::BasicBlockStarts::const_iterator i = basicBlockStarts.begin(); i != basicBlockStarts.end(); ++i) {
-        uint64_t addr = i->first;
-        SgAsmBlock* b = new SgAsmBlock();
-        b->set_address(addr);
-        b->set_id(addr);
-        basicBlocks[addr] = b;
-    }
-    SgAsmBlock *blk = PutInstructionsIntoBasicBlocks::putInstructionsIntoBasicBlocks(basicBlocks, insns);
+  /* Assign instructions to basic blocks based on the addresses in the basicBlockStarts map. */
+     map<uint64_t, SgAsmBlock*> basicBlocks;
+     for (DisassemblerCommon::BasicBlockStarts::const_iterator i = basicBlockStarts.begin(); i != basicBlockStarts.end(); ++i) {
+          uint64_t addr = i->first;
+          SgAsmBlock* b = new SgAsmBlock();
+          b->set_address(addr);
+          b->set_id(addr);
+          basicBlocks[addr] = b;
+        }
+
+     SgAsmBlock *blk = PutInstructionsIntoBasicBlocks::putInstructionsIntoBasicBlocks(basicBlocks, insns);
 
     /* Look for basic blocks that have instruction patterns that indicate they could be the start of a function. */
     if (heuristicFunctionDetection) {

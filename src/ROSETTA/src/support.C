@@ -814,12 +814,15 @@ Grammar::setUpSupport ()
   // Fortran with *.F?? extension an explicitly set to false for fortran with *.f?? extension and binaries).
      File.setDataPrototype         ( "bool", "requires_C_preprocessor", "= true",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
+#if 1
+  // DQ (2/5/2009): I think we need to make each file as binary or not and also record the setting on the command line.
+  // DQ (2/4/2009): Moved this to the SgProject since it applies to the command line and all files.
   // DQ (1/9/2008): This permits a file to be marked explicitly as a binary file and avoids 
   // confusion when processing object files within linking (where no source file is present 
   // and the object file could be interpreted as being provided for binary analysis).
      File.setDataPrototype         ( "bool", "binary_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
   // DQ (8/19/2007): Added more options specific to Fortran support
   // File.setDataPrototype         ( "bool", "fixedFormat", "= false",
@@ -1113,6 +1116,10 @@ Grammar::setUpSupport ()
 
   // DQ (2/3/2009): added boolean data member to record if this is a library archive.
      File.setDataPrototype         ( "bool", "isLibraryArchive", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (2/5/2009): added boolean data member to record if this is an object file being processed for binary analysis.
+     File.setDataPrototype         ( "bool", "isObjectFile", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (8/26/2008): Adds support for more agressive disassembly of sections that are in 
@@ -1451,6 +1458,14 @@ Grammar::setUpSupport ()
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Project.setDataPrototype("SgStringList","excludeFileList", "",
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if 1
+  // DQ (2/4/2009): Moved this to the SgProject since it applies to the command line and all files.
+  // DQ (1/9/2008): This permits a file to be marked explicitly as a binary file and avoids 
+  // confusion when processing object files within linking (where no source file is present 
+  // and the object file could be interpreted as being provided for binary analysis).
+     Project.setDataPrototype ( "bool", "binary_only", "= false",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
 
      Attribute.setDataPrototype    ( "std::string"  , "name", "= \"\"",

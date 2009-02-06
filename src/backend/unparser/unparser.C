@@ -408,7 +408,7 @@ Unparser::unparseAsmFile ( SgAsmFile* asmFile, SgUnparse_Info& info )
                fprintf(dumpFile, "Section [%zd]:\n", i);
 
                ROSE_ASSERT(sections[i] != NULL);
-#if 0
+#if 1
                sections[i]->dump(dumpFile, "  ", -1);
 #else
                printf ("WARNING: SKIPPING SgAsmGenericSection::dump() for i = %zu \n",i);

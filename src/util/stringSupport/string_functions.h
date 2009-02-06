@@ -171,6 +171,14 @@ namespace StringUtility
        //! Convert string to lower case (e.g. for module file name generation).
            std::string convertToLowerCase( const std::string & inputString );
 
+   // std::string mangledName ( std::string s );
+
+  //! Popen wrapper to support demangling mangled functions
+      bool popen_wrapper ( const std::string & command, std::vector<std::string> & result );
+
+  //! Support for demangling mangled functions
+      std::string demangledName ( std::string s );
+
 //--------------------------------------------------------------
 //@{
 /*! @name File name strings

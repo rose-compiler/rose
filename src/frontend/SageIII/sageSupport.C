@@ -123,7 +123,6 @@ outputTypeOfFileAndExit( const string & name )
 // there implementation is not as dependent upon the IR as other functions
 // (e.g. IR node member functions).
 
-#if 1
 bool
 CommandlineProcessing::isOptionWithParameter ( vector<string> & argv, string optionPrefix, string option, string & optionParameter, bool removeOption )
    {
@@ -142,7 +141,7 @@ CommandlineProcessing::isOptionWithParameter ( vector<string> & argv, string opt
 
      return (optionCount > 0);
    }
-#endif
+
 
 string
 findRoseSupportPathFromSource(const string& sourceTreeLocation,
@@ -229,7 +228,9 @@ SgProject::processCommandLine(const vector<string>& input_argv)
   // This function now makes an internal copy of the command line parameters to
   // allow the originals to remain unmodified (SLA modifies the command line).
 
-  // printf ("Inside of SgProject::processCommandLine() \n");
+#if 0
+     printf ("Inside of SgProject::processCommandLine() \n");
+#endif
 
   // local copies of argc and argv variables
   // The purpose of building local copies is to avoid
@@ -555,7 +556,21 @@ SgProject::processCommandLine(const vector<string>& input_argv)
   // DQ (12/22/2008): This should only be called once (outside of the loop over all command line arguments!
   // DQ (12/8/2007): This leverages existing support in commandline processing
   // printf ("In SgProject::processCommandLine(): Calling CommandlineProcessing::generateSourceFilenames(argv) \n");
-     p_sourceFileNameList = CommandlineProcessing::generateSourceFilenames(argv);
+
+  // Note that we need to process this option before the interpretation of the filenames (below).
+  // DQ (2/4/2009): Data member was moved to SgProject from SgFile.
+  // DQ (12/27/2007): Allow defaults to be set based on filename extension.
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(binary|binary_only)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("Binary only mode ON \n");
+          set_binary_only(true);
+        }
+
+  // DQ (2/4/2009): The specification of "-rose:binary" causes filenames to be interpreted 
+  // differently if they are object files or libary archive files.
+  // p_sourceFileNameList = CommandlineProcessing::generateSourceFilenames(argv);
+     p_sourceFileNameList = CommandlineProcessing::generateSourceFilenames(argv,get_binary_only());
 
   // Build a list of source, object, and library files on the command line
   // int sourceFileNameCounter = 0;
@@ -574,20 +589,17 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 
        // printf ("In SgProject::processCommandLine(): p_sourceFileNameList.size() = %zu \n",p_sourceFileNameList.size());
 
-#if 0
-       // look only for .o  (object code files)
-          if ( (length > 2) && 
-               ( (argv[i][0] != '-') || (argv[i][0] != '+') ) && 
-               ( (argv[i][length-2] == '.') && (argv[i][length-1] == 'o') ) )
-             {
-               std::string objectFile = argv[i];
-               p_objectFileNameList.push_back(objectFile);
-             }
-#else
+       // DQ (2/4/2009): Only put *.o files into the objectFileNameList is they are not being 
+       // processed as binary source files (targets for analysis, as opposed to linking).
        // DQ (1/16/2008): This is a better (simpler) implementation
-          if (CommandlineProcessing::isObjectFilename(argv[i]) == true)
+       // if (CommandlineProcessing::isObjectFilename(argv[i]) == true)
+       // printf ("get_binary_only() = %s \n",get_binary_only() ? "true" : "false");
+          if ( (get_binary_only() == false) && (CommandlineProcessing::isObjectFilename(argv[i]) == true) )
+             {
+               printf ("Adding argv[%u] = %s to p_objectFileNameList \n",i,argv[i].c_str());
                p_objectFileNameList.push_back(argv[i]);
-#endif
+             }
+          
 
        // look only for .a files (library files)
           if ( (length > 2) &&
@@ -596,6 +608,14 @@ SgProject::processCommandLine(const vector<string>& input_argv)
              {
                std::string libraryFile = argv[i];
                p_libraryFileList.push_back(libraryFile);
+
+            // DQ (2/4/2009): Make sure that this is not handled incorrectly is we wanted it to be a target for binary analysis.
+            // If so, then is should end up on the source code list (target list for analysis).
+               if (get_binary_only() == true)
+                  {
+                    printf ("This may be an error, since the library archive should be treated as a source file for binary analysis. \n");
+                    ROSE_ASSERT(false);
+                  }
              }
 
        // look only for -l library files (library files)
@@ -932,6 +952,8 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 #endif
         }
 
+  // DQ (2/5/2009): We now have one at the SgProject and the SgFile levels.
+  // DQ (2/4/2009): Moved to SgProject.
   // DQ (12/27/2007): Allow defaults to be set based on filename extension.
      if ( CommandlineProcessing::isOption(argv,"-rose:","(binary|binary_only)",true) == true )
         {
@@ -1163,6 +1185,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
                ROSE_ASSERT(false);
              }
         }
+
      if ( CommandlineProcessing::isOption(argv,"-rose:","(compileFree|backendCompileFreeFormat)",true) == true )
         {
           if ( SgProject::get_verbose() >= 1 )
@@ -1189,7 +1212,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
              }
         }
 
-//Liao 10/28/2008: I changed it to a more generic flag to indicate support for either Fortran or C/C++
+  // Liao 10/28/2008: I changed it to a more generic flag to indicate support for either Fortran or C/C++
   // DQ (8/19/2007): I have added the option here so that we can start to support OpenMP for Fortran.
   // Allows handling of OpenMP "!$omp" directives in free form and "c$omp", *$omp and "!$omp" directives in fixed form, enables "!$" conditional 
   // compilation sentinels in free form and "c$", "*$" and "!$" sentinels in fixed form and when linking arranges for the OpenMP runtime library 
@@ -1744,6 +1767,8 @@ SgFile::stripRoseCommandLineOptions ( vector<string>& argv )
   // DQ (8/26/2007): Disassembly support from segments (true) instead of sections (false, default).
      optionCount = sla(argv, "-rose:", "($)", "(aggressive)",1);
 
+  // DQ (2/5/2009): Remove use of "-rose:binary" to prevent it being passed on.
+     optionCount = sla(argv, "-rose:", "($)", "(binary|binary_only)",1);
    }
 
 void
@@ -1863,6 +1888,7 @@ isBinaryExecutableFile ( string sourceFilename )
       return returnValue;
     }
 
+
 bool
 isLibraryArchiveFile ( string sourceFilename )
    {
@@ -1898,6 +1924,7 @@ isLibraryArchiveFile ( string sourceFilename )
 
      return returnValue;
    }
+
 
 void
 SgFile::initializeSourcePosition( const std::string & sourceFilename )
@@ -2002,14 +2029,18 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
    {
      SgFile* file = NULL;
 
+  // DQ (2/4/2009): The specification of "-rose:binary" causes filenames to be interpreted 
+  // differently if they are object files or libary archive files.
   // DQ (4/21/2006): New version of source file name handling (set the source file name early)
   // printf ("In determineFileType(): Calling CommandlineProcessing::generateSourceFilenames(argv) \n");
-     Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argv);
+  // Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argv);
+     ROSE_ASSERT(project != NULL);
+     Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argv,project->get_binary_only());
 
 #if 0
   // this->display("In SgFile::setupSourceFilename()");
-     printf ("listToString(argv) = %s \n",StringUtility::listToString(argv).c_str());
-     printf ("listToString(fileList) = %s \n",StringUtility::listToString(fileList).c_str());
+     printf ("In determineFileType(): listToString(argv) = %s \n",StringUtility::listToString(argv).c_str());
+     printf ("In determineFileType(): listToString(fileList) = %s \n",StringUtility::listToString(fileList).c_str());
 #endif
 
   // DQ (12/23/2008): I think that we may be able to assert this is true, if so then we can simplify the code below.
@@ -2243,6 +2274,8 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
                            // Detect if this is a binary (executable) file!
                               bool isBinaryExecutable = isBinaryExecutableFile(sourceFilename);
                               bool isLibraryArchive   = isLibraryArchiveFile(sourceFilename);
+
+                           // printf ("isBinaryExecutable = %s isLibraryArchive = %s \n",isBinaryExecutable ? "true" : "false",isLibraryArchive ? "true" : "false");
                               if (isBinaryExecutable == true || isLibraryArchive == true)
                                  {
                                 // Build a SgBinaryFile to represent either the binary executable or the library archive.
@@ -2254,6 +2287,17 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
                                 // file->initializeSourcePosition();
 
                                    file->set_sourceFileUsesBinaryFileExtension(true);
+
+                                // If this is an object file being processed for binary analysis then mark it as an object 
+                                // file so that we can trigger analysis to mar the sections that will be disassembled.
+                                   string binaryFileName = file->get_sourceFileNameWithPath();
+                                   if (CommandlineProcessing::isObjectFilename(binaryFileName) == true)
+                                      {
+                                        file->set_isObjectFile(true);
+                                      }
+
+                                // DQ (2/5/2009): Put this at both the SgProject and SgFile levels.
+                                // DQ (2/4/2009):  This is now a data member on the SgProject instead of on the SgFile.
                                    file->set_binary_only(true);
 
                                 // DQ (5/18/2008): Set this to false (since binaries are never preprocessed using the C preprocessor).
@@ -2295,7 +2339,7 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
                                            {
                                           // Get each word in the file of names (*.o)
                                              string word = *i;
-                                             printf ("word = %s \n",word.c_str());
+                                          // printf ("word = %s \n",word.c_str());
                                              size_t wordSize = word.length();
                                              string targetSuffix = ".o";
                                              size_t targetSuffixSize = targetSuffix.length();
@@ -2308,22 +2352,13 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
                                           // Get each object file name (*.o)
                                              string objectFileName = *i;
                                              printf ("objectFileName = %s \n",objectFileName.c_str());
-#if 0
-                                          // Later we want to build a list of SgAsmFile objects in the SgBinaryFile object.
-                                             SgAsmFile* asmFile = new SgAsmFile();
-                                             asmFile->set_name(objectFileName);
-                                             asmFile->set_parent(file);
-
-                                          // DQ (2/3/2009): Using new data member: binaryFileList
-                                             binaryFile->get_binaryFileList().push_back(asmFile);
-#else
                                              binaryFile->get_libraryArchiveObjectFileNameList().push_back(objectFileName);
-#endif
                                              printf ("binaryFile->get_libraryArchiveObjectFileNameList().size() = %zu \n",binaryFile->get_libraryArchiveObjectFileNameList().size());
                                            }
-
+#if 0
                                         printf ("Exiting in processing a library archive file. \n");
                                      // ROSE_ASSERT(false);
+#endif
                                       }
                                  }
                                 else
@@ -3179,7 +3214,9 @@ SgProject::parse(const vector<string>& argv)
   // DQ (7/6/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST (SgProject::parse(argc,argv)):");
 
-  // printf ("Inside of SgProject::parse(const vector<string>& argv) \n");
+#if 0
+     printf ("Inside of SgProject::parse(const vector<string>& argv) \n");
+#endif
 
   // builds file list (or none if this is a link line)
 	  processCommandLine(argv);
@@ -3472,52 +3509,6 @@ SgSourceFile::doSetupForConstructor(const vector<string>& argv, SgProject* proje
    {
   // Call the base class implementation!
      SgFile::doSetupForConstructor(argv, project);
-
-#if 0
-  // DQ (12/23/2008): This code has been moved to the function initializeGlobalScope()
-
-  // DQ (1/21/2008): Set the filename in the SgGlobal IR node so that the traversal to add CPP directives and comments will succeed.
-     ROSE_ASSERT (get_globalScope() != NULL);
-     ROSE_ASSERT(get_globalScope()->get_startOfConstruct() != NULL);
-
-  // DQ (8/21/2008): Modified to make endOfConstruct consistant (avoids warning in AST consistancy check).
-  // ROSE_ASSERT(p_root->get_endOfConstruct()   == NULL);
-     ROSE_ASSERT(get_globalScope()->get_endOfConstruct()   != NULL);
-
-  // p_root->get_file_info()->set_filenameString(p_sourceFileNameWithPath);
-  // ROSE_ASSERT(p_root->get_file_info()->get_filenameString().empty() == false);
-
-     Sg_File_Info::display_static_data("Resetting the SgGlobal startOfConstruct and endOfConstruct");
-     printf ("Resetting the SgGlobal startOfConstruct and endOfConstruct filename (p_sourceFileNameWithPath = %s) \n",p_sourceFileNameWithPath.c_str());
-
-  // DQ (12/22/2008): Added to support CPP preprocessing of Fortran files.
-     string filename = p_sourceFileNameWithPath;
-     if (get_requires_C_preprocessor() == true)
-        {
-          filename = generate_C_preprocessor_intermediate_filename(filename);
-        }
-
-     printf ("get_requires_C_preprocessor() = %s filename = %s \n",get_requires_C_preprocessor() ? "true" : "false",filename.c_str());
-
-  // get_globalScope()->get_startOfConstruct()->set_filenameString(p_sourceFileNameWithPath);
-     get_globalScope()->get_startOfConstruct()->set_filenameString(filename);
-     ROSE_ASSERT(get_globalScope()->get_startOfConstruct()->get_filenameString().empty() == false);
-
-  // DQ (8/21/2008): Uncommented to make the endOfConstruct consistant (avoids warning in AST consistancy check).
-  // get_globalScope()->get_endOfConstruct()->set_filenameString(p_sourceFileNameWithPath);
-     get_globalScope()->get_endOfConstruct()->set_filenameString(filename);
-     ROSE_ASSERT(get_globalScope()->get_endOfConstruct()->get_filenameString().empty() == false);     
-
-     printf ("DONE: Resetting the SgGlobal startOfConstruct and endOfConstruct filename (filename = %s) \n",filename.c_str());
-     Sg_File_Info::display_static_data("DONE: Resetting the SgGlobal startOfConstruct and endOfConstruct");
-
-  // DQ (12/23/2008): These should be in the Sg_File_Info map already.
-     ROSE_ASSERT(Sg_File_Info::getIDFromFilename(get_file_info()->get_filename()) >= 0);
-     if (get_requires_C_preprocessor() == true)
-        {
-          ROSE_ASSERT(Sg_File_Info::getIDFromFilename(generate_C_preprocessor_intermediate_filename(get_file_info()->get_filename())) >= 0);
-        }
-#endif
    }
 
 void
@@ -3555,9 +3546,13 @@ SgFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
 
      ROSE_ASSERT(get_parent() != NULL);
 
+  // DQ (2/4/2009): The specification of "-rose:binary" causes filenames to be interpreted 
+  // differently if they are object files or libary archive files.
   // DQ (4/21/2006): Setup the source filename as early as possible
   // setupSourceFilename(argv);
-     Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argv);
+  // Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argv);
+  // Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argv,get_binary_only());
+     Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argv,project->get_binary_only());
 
   // DQ (12/23/2008): Use of this assertion will simplify the code below!
      ROSE_ASSERT (fileList.empty() == false);
@@ -3842,7 +3837,7 @@ CommandlineProcessing::isOptionTakingThirdParameter( string argument )
 
 // DQ (1/16/2008): This function was moved from the commandling_processing.C file to support the debugging specific to binary analysis
 Rose_STL_Container<string>
-CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argList )
+CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argList, bool binaryMode )
    {
      Rose_STL_Container<string> sourceFileList;
 
@@ -3875,14 +3870,16 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
             // bool foundSourceFile = false;
 
             // printf ("isExecutableFilename(%s) = %s \n",(*i).c_str(),isExecutableFilename(*i) ? "true" : "false");
-               if ( isSourceFilename(*i) == false && isObjectFilename(*i) == false && isExecutableFilename(*i) == true )
             // if ( isSourceFilename(*i) == false && isObjectFilename(*i) == false && isValidFileWithExecutableFileSuffixes(*i) == true )
+            // if ( isSourceFilename(*i) == false && isObjectFilename(*i) == false && isExecutableFilename(*i) == true )
+               if ( isSourceFilename(*i) == false && ((isObjectFilename(*i) == false) || (binaryMode == true)) && isExecutableFilename(*i) == true )
                   {
                  // printf ("This is an executable file: *i = %s \n",(*i).c_str());
                  // executableFileList.push_back(*i);
                     sourceFileList.push_back(*i);
                     goto incrementPosition;
                   }
+
             // PC (4/27/2006): Support for custom source file suffixes
             // if ( isSourceFilename(*i) )
                if ( isObjectFilename(*i) == false && isSourceFilename(*i) == true )
@@ -3907,7 +3904,6 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
                     objectFileList.push_back(*i);
                   }
 #endif
-
              }
 
        // DQ (12/8/2007): Looking for rose options that take filenames that would accidentally be considered as source files.
@@ -5143,9 +5139,30 @@ SgBinaryFile::buildAsmAST( string executableFileName )
 
 #if USE_ROSE_DWARF_SUPPORT
   // DQ (11/7/2008): New Dwarf support in ROSE (Dwarf IR nodes are generated in the AST).
-  // readDwarf(asmFile);
-     printf ("WARNING: COMMENTED OUT DWARF SUPPORT! \n");
+     readDwarf(asmFile);
+  // printf ("WARNING: COMMENTED OUT DWARF SUPPORT! \n");
 #endif
+
+     map<rose_addr_t,string> addressToFunctionNameMap;
+
+  // DQ (2/4/2009): This is some analysis inserted between the reading of the binary file format and the disassembly.
+  // The point is to explicitly mark sections which require disassemble in object files (*.o files) as part of the 
+  // support for reading library archive files (*.a) files and building library identification support.
+  // if (get_isLibraryArchive() == true)
+     if ( (get_isLibraryArchive() == true) || (get_isObjectFile() == true) )
+        {
+       // Do the analysis to specify in the binary file format (just built) what sections contain code and should be disassembled.
+       // Note that for an object file none of the sections will be marked as executable, so we have to explictly pick out what
+       // sections we want to disassemble. And save the mapping of addresses to function names.
+          printf ("Do the analysis required to mark the sections in the object file that contain code and should be disassembled. \n");
+          addressToFunctionNameMap = markSectionsForDisassembly(asmFile);
+
+          printf ("Do the analysis required to mark the sections in the object file that contain code and should be disassembled. \n");
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
 
   // Fill in the instructions into the SgAsmFile IR node
      SgProject* project = isSgProject(this->get_parent());
@@ -5156,7 +5173,9 @@ SgBinaryFile::buildAsmAST( string executableFileName )
   // this will allow us to separate out different kinds of testing.
      if (get_read_executable_file_format_only() == false)
         {
+       // printf ("Calling the Disassembler::disassembleFile(asmFile = %p) \n",asmFile),
           Disassembler::disassembleFile(asmFile);
+       // printf ("DONE: Calling the Disassembler::disassembleFile(asmFile = %p) \n",asmFile);
         }
        else
         {
@@ -5164,6 +5183,14 @@ SgBinaryFile::buildAsmAST( string executableFileName )
         }
 #else
      printf ("\nWARNING: Skipping instruction disassembly \n\n");
+#endif
+
+  // Update the function names with the mangled names (to preserve all type information).
+     updateFunctionNames(asmFile,addressToFunctionNameMap);
+
+#if 0
+     printf ("At base of SgBinaryFile::buildAsmAST(): exiting... \n");
+     ROSE_ASSERT(false);
 #endif
    }
 
@@ -6653,4 +6680,231 @@ SgC_PreprocessorDirectiveStatement::createDirective ( PreprocessingInfo* current
 
      return cppDirective;
    }
+
+
+
+namespace SgNode_markSectionsForDisassembly
+   {
+  // This namespace hold the class required to support the marking of sections in object 
+  // files that contain code so that the disassembler can know to disassemble them.
+
+     class MarkSectionsTraversal : public AstSimpleProcessing
+        {
+          public:
+              SgAsmInterpretation* currentAsmInterpretation;
+              rose_addr_t rose_file_mapped_rva;
+
+           // Mapping of address (where the function's instructions will 
+           // assigned a position in memory) relative to rose_mapped_rva.
+              map<rose_addr_t,string> addressToFunctionNameMap;
+
+              MarkSectionsTraversal() : currentAsmInterpretation(NULL), rose_file_mapped_rva(0) {}
+
+              void visit ( SgNode* astNode );
+        };
+   }
+
+void
+SgNode_markSectionsForDisassembly::MarkSectionsTraversal::visit ( SgNode* astNode )
+   {
+     SgAsmInterpretation* asmInterpretation = isSgAsmInterpretation(astNode);
+     if (asmInterpretation != NULL)
+        {
+       // Set the current SgAsmInterpretation so that we can reference the header and the SgRVAList
+          currentAsmInterpretation = asmInterpretation;
+          ROSE_ASSERT(currentAsmInterpretation != NULL);
+        }
+
+     SgAsmGenericSymbol* symbol = isSgAsmGenericSymbol(astNode);
+     if (symbol != NULL)
+        {
+          if (symbol->get_type() == SgAsmGenericSymbol::SYM_FUNC)
+             {
+            // Found a symbol of type function.
+               ROSE_ASSERT(symbol->get_name() != NULL);
+               SgAsmGenericSection* boundSection = symbol->get_bound();
+               ROSE_ASSERT(boundSection != NULL);
+#if 1
+               printf ("Found a symbol of type function symbol = %p = %s bound to section = %p = %s \n",
+                    symbol,symbol->get_name()->c_str(),boundSection,boundSection->get_name()->c_str());
+#endif
+            // Mark this section as containing code.
+               boundSection->set_contains_code(true);
+
+            // Define an artificial starting address for the instructions 
+            // to be located at when they are disassembled.
+               boundSection->set_rose_mapped_rva(rose_file_mapped_rva);
+
+               ROSE_ASSERT(currentAsmInterpretation != NULL);
+               SgAsmGenericHeader* header = currentAsmInterpretation->get_header();
+               ROSE_ASSERT (header != NULL);
+
+               SgRVAList & entry_rvalist = header->get_entry_rvas();
+               entry_rvalist.push_back(rose_file_mapped_rva);
+
+               printf ("function name at address = %p using symbol = %p = %s \n",(void*)rose_file_mapped_rva,symbol,symbol->get_name()->c_str());
+               addressToFunctionNameMap[rose_file_mapped_rva] = symbol->get_name()->c_str();
+
+            // printf ("entry_rvalist.size() = %zu \n",entry_rvalist.size());
+
+            // Increment the rose_file_mapped_rva so that all the function 
+            // will have unique addresses in the file.
+            // rose_file_mapped_rva += (1 << 16);
+               rose_file_mapped_rva += boundSection->get_size();
+             }
+        }
+   }
+
+map<rose_addr_t,string>
+SgBinaryFile::markSectionsForDisassembly(SgAsmFile* asmFile)
+   {
+  // This function marks sections which correspond to symbols that are of type "function"
+  // and initializes the header->get_entry_rvas() to point to the function starts (defining
+  // a unique address for each one to begin at when disassembled.  For the sections it
+  // also sets the rose_mapped_rva.  The traversal also computes the mapping of
+  // function names to their addresses (in ROSE Virtual Address Space) so that the names
+  // can be saved to the SgAsmFunctionDeclaration IR nodes after disassembly.
+
+  // FIXME: for functions bound to the same section, this will reset the rose_mapped_rva, is this a problem?
+
+     SgNode_markSectionsForDisassembly::MarkSectionsTraversal t;
+     t.traverse(asmFile,preorder);
+
+  // Return the address to function name map.
+     return t.addressToFunctionNameMap;
+   }
+
+void
+SgBinaryFile::updateFunctionNames(SgAsmFile* asmFile, map<rose_addr_t,string> & addressToFunctionNameMap )
+   {
+  // DQ (2/5/2009): This function updates the names in the SgAsmFunctionDeclaration IR nodes in the AST
+  // using the addressToFunctionNameMap generated from the markSectionsForDisassembly() function.
+     class MarkFunctionsTraversal : public AstSimpleProcessing
+        {
+          public:
+               map<rose_addr_t,string> & local_addressToFunctionNameMap;
+               int functionCounter;
+               int nonfunctionCounter;
+
+               MarkFunctionsTraversal(map<rose_addr_t,string> & x)
+                  : local_addressToFunctionNameMap(x), functionCounter(0), nonfunctionCounter(0) {}
+
+               void visit ( SgNode* astNode )
+                  {
+                    SgAsmFunctionDeclaration* asmFunctionDeclaration = isSgAsmFunctionDeclaration(astNode);
+                    if (asmFunctionDeclaration != NULL)
+                       {
+                      // asmFunctionDeclaration->set_name(local_addressToFunctionNameMap[asmFunctionDeclaration->get_address()]);
+                         rose_addr_t address = asmFunctionDeclaration->get_address();
+                         string functionName = local_addressToFunctionNameMap[address];
+
+                         functionCounter++;
+
+                         if (functionName.empty() == true)
+                            {
+                           // This is a SgFunctionDeclaration in the AST that does not correspond to a function in the object file.
+                           // These function are perhaps an example of over-eager function recognition in the disassembly.
+#if 0
+                              printf ("Function at address = %p does not map to function in the object file. \n");
+#endif
+                              nonfunctionCounter++;
+                            }
+                           else
+                            {
+                              printf ("Updating function names in SgAsmFunctionDeclaration IR nodes: function = %p = %s \n",(void*)address,functionName.c_str());
+                              asmFunctionDeclaration->set_name(local_addressToFunctionNameMap[asmFunctionDeclaration->get_address()]);
+                            }
+                       }
+                  }
+        };
+
+     MarkFunctionsTraversal t(addressToFunctionNameMap);
+     t.traverse(asmFile,preorder);
+
+#if 0
+  // It seems that we recognize too many functions and so we need to tune our function recognition a bit.
+  // This provides a count of the total number of functions recognized and the number of nonfunctions found by mistake.
+     printf ("Over-eager function recognition: functionCounter = %d nonfunctionCounter = %d \n",t.functionCounter,t.nonfunctionCounter);
+#endif
+
+#if 0
+     printf ("Exiting in SgBinaryFile::updateFunctionNames() \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+
+
+bool
+StringUtility::popen_wrapper ( const string & command, vector<string> & result )
+   {
+  // DQ (2/5/2009): Simple wrapper for Unix popen command.
+
+     const int  SIZE = 10000;
+     bool       returnValue = true;
+     FILE*      fp = NULL;
+     char       buffer[SIZE];
+
+     result = vector<string>();
+
+     if ((fp = popen(command.c_str (), "r")) == NULL)
+        {
+          cerr << "Files or processes cannot be created" << endl;
+          returnValue = false;
+          return returnValue;
+        }
+
+     string  current_string;
+     while (fgets(buffer, sizeof (buffer), fp))
+        {
+          current_string = buffer;
+          if (current_string [current_string.size () - 1] != '\n')
+             {
+               cerr << "SIZEBUF too small (" << SIZE << ")" << endl;
+               returnValue = false;
+               return returnValue;
+             }
+          ROSE_ASSERT(current_string [current_string.size () - 1] == '\n');
+          result.push_back (current_string.substr (0, current_string.size () - 1));
+        }
+
+     if (pclose(fp) == -1)
+        {
+          cerr << ("Cannot execute pclose");
+          returnValue = false;
+        }
+
+     return returnValue;
+   }
+
+string
+StringUtility::demangledName ( string s )
+   {
+  // Support for demangling of C++ names. We take care of an empty 
+  // string, but an input string with a single space might be an issue.
+
+     vector<string> result;
+     if (s.empty() == false)
+        {
+          if (!popen_wrapper ("c++filt " + s, result))
+             {
+               cout << "Cannot execute popen_wrapper" << endl;
+               return "unknown demangling " + s;
+             }
+#if 0
+       // Debugging...
+          for (size_t i = 0; i < result.size (); i++)
+             {
+               cout << "[" << i << "]\t : " << result [i] << endl;
+             }
+#endif
+        }
+       else
+        {
+          result.push_back("unknown");
+        }
+
+     return result[0];
+   }
+ 
 

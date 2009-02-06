@@ -3279,7 +3279,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
       arglist.push_back("-rose:o");
       arglist.push_back(outputFileName);
 
-      Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(arglist);
+      Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(arglist,/* binaryMode = */ false);
       CommandlineProcessing::removeAllFileNamesExcept(arglist,fileList,sourceFilename);
 
    // DQ (9/3/2008): Added support for SgSourceFile IR node

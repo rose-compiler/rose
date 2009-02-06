@@ -775,7 +775,7 @@ HEADER_GENERIC_SECTION_START
 			: local_data_pool(0), p_file(f), p_header(NULL), p_size(1), p_offset(f->get_current_size()),
 			p_file_alignment(0), p_purpose(SP_UNSPECIFIED), p_synthesized(false), p_id(-1), p_name(0),
 			p_mapped_rva(0), p_mapped_size(0), p_mapped_alignment(0), p_mapped_rperm(false), p_mapped_wperm(false),
-			p_mapped_xperm(false), p_congealed(false)
+         p_mapped_xperm(false), p_congealed(false), p_contains_code(false), p_rose_mapped_rva(0)
 			{ctor(f, fhdr);}
 
 		// This destructor modifies the SgAsmGenericFile data to remove its section from the section list!
