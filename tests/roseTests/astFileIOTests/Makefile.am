@@ -452,6 +452,11 @@ test1: test1A.C test1B.C
 	@echo "Running resulting executable ..."
 	./test1
 
-
+# DQ (2/5/2009): This is a demonstration that the AST generated 
+# from a binary executable fails when being written to disk.
+# Ideas about how to simplify this problem:
+#  1) Skip the dwarf information to make the problem smaller
+#
+# Example from Thomas.
 test-binary: astFileIO
 	./astFileIO -rose:verbose 0 $(srcdir)/buffer2.bin
