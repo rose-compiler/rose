@@ -46,16 +46,25 @@ import fortran.ofp.parser.java.FortranToken;
     private ArrayList<String> includeDirs;
     private Stack<FortranStream> oldStreams;
 
+    /* the action object is shared with the parser */
+    private IFortranParserAction action = null;
+    
+    /* 
+     * The filename stack is shared with the parser. The lexer pushes
+     * on T_INCLUDE and the parser pops on T_EOF.
+     */
+    private Stack<String> filenameStack = null;
+    
     protected StringBuilder whiteText = new StringBuilder();
 
     public Token emit() {
-        FortranToken t = new FortranToken(input, type, channel,
-            tokenStartCharIndex, getCharIndex()-1);
-        t.setLine(tokenStartLine);
-        t.setText(text);
-        t.setCharPositionInLine(tokenStartCharPositionInLine);
+        FortranToken t = new FortranToken(input, state.type, state.channel,
+                                      state.tokenStartCharIndex, getCharIndex()-1);
+        t.setLine(state.tokenStartLine);
+        t.setText(state.text);
+        t.setCharPositionInLine(state.tokenStartCharPositionInLine);
 
-        if(channel == HIDDEN) {
+        if (state.channel == HIDDEN) {
             whiteText.append(getText());
         } else {
             t.setWhiteText(whiteText.toString());
@@ -90,11 +99,11 @@ import fortran.ofp.parser.java.FortranToken;
      * values are.  This is done when we switch streams for including files.
      */    
     private void resetLexerState() {
-        tokenStartCharIndex = input.index();
-        tokenStartCharPositionInLine = input.getCharPositionInLine();
-        tokenStartLine = input.getLine();
-        token = null;
-        text = null;
+        state.tokenStartCharIndex = input.index();
+        state.tokenStartCharPositionInLine = input.getCharPositionInLine();
+        state.tokenStartLine = input.getLine();
+        state.token = null;
+        state.text = null;
     }// end resetLexerState()
 
 
@@ -103,7 +112,7 @@ import fortran.ofp.parser.java.FortranToken;
         Token tmpToken;
         tmpToken = super.nextToken();
 
-        if(tmpToken.getType() == EOF) {
+        if (tmpToken.getType() == EOF) {
             tmpToken.setChannel(Token.DEFAULT_CHANNEL);
             if(this.oldStreams != null && this.oldStreams.empty() == false) {
                 FortranToken eofToken = 
@@ -156,6 +165,16 @@ import fortran.ofp.parser.java.FortranToken;
     
     public CharStream getInput() {
         return this.input;
+    }
+    
+        
+    public void setAction(IFortranParserAction action) {
+        this.action = action;
+    }
+    
+    
+    public void setFileStack(Stack<String> stack) {
+        this.filenameStack = stack;
     }
 
 
@@ -211,30 +230,13 @@ import fortran.ofp.parser.java.FortranToken;
             /* File did not exist.  */
             return null;
         } else {
-         // Liao, 12/19/2008, It caused all include 'header.h' fail
-         // DQ (1/29/2009): I think this fix only allows the
-         // current directory as a default location for header 
-         // files and by returning "null" the user MUST specify an 
-         // include path (even to the current directory) for any 
-         // header files to be found.  Since ROSE explicitly 
-         // specifies the include path to find header files when 
-         // they are not in the default directory, but we want the
-         // default directory behavior as well, we should not return
-         // "null". This gives OFP the same behavior as gfortran.
-         // return null;
             return tmpFile;
         }
     }// end findFile()
 
 
     private void includeFile() {
-        /* For debugging, print out the list of include dirs.  */
-        if(this.includeDirs == null || this.includeDirs.size() == 0) {
-            System.err.println("no include dirs given!");
-            return;
-        }
-
-        if(prevToken != null) {
+        if (prevToken != null) {
             String fileName = null;
             String charConst = null;
             FortranStream includedStream = null;
@@ -245,14 +247,11 @@ import fortran.ofp.parser.java.FortranToken;
 
             /* Find the file, including it's complete path.  */
             includedFile = findFile(fileName);
-            if(includedFile == null) {
+            if (includedFile == null) {
                 System.err.println("Error: Could not open file '" + 
                     charConst.substring(1, charConst.length()-1) + "'");
                 return;
             }
-
-//             System.err.println("includedFile.getAbsolutePath() is: " + 
-//                 includedFile.getAbsolutePath());
 
             /* Create a new stream for the included file.  */
             try {
@@ -263,7 +262,11 @@ import fortran.ofp.parser.java.FortranToken;
                 e.printStackTrace();
                 return;
             }
-
+            
+            /* pushing file and call to action method moved from parser */
+            filenameStack.push(includedFile.getAbsolutePath());
+            action.start_of_file(includedFile.getAbsolutePath());
+            
             /* Save current character stream.  */
             oldStreams.push((FortranStream)(this.input));
             this.input = includedStream;
@@ -275,7 +278,7 @@ import fortran.ofp.parser.java.FortranToken;
         }
 
         return;
-    }// end includeFile()
+    } // end includeFile()
 
 }
 
@@ -301,11 +304,11 @@ T_EOS
     // we need to ignore it.  
     if(prevToken == null || 
         (prevToken != null && prevToken.getType() == T_EOS)) {
-        $channel=HIDDEN;
+        state.channel = HIDDEN;
     } 
 
     if(includeLine) {
-        $channel=HIDDEN;
+        state.channel = HIDDEN;
         // Part of include file handling..
         includeFile();
         includeLine = false;
@@ -321,13 +324,12 @@ T_EOS
 
 /* if this is a fragment, the generated code never seems to execute the
  * action.  the action needs to set the flag so T_EOS knows whether it should
- * be channel 99'ed or not (ignor T_EOS if continuation is true, which is the
+ * be channel 99'ed or not (ignore T_EOS if continuation is true, which is the
  * case of the & at the end of a line).
  */
-CONTINUE_CHAR : '&' { continueFlag = !continueFlag;
-//                       _channel = 99;
-                    $channel=HIDDEN;
-//                     $channel=99;
+CONTINUE_CHAR : '&' {
+            continueFlag = !continueFlag;
+            $channel = HIDDEN;
         }
               ;
 
@@ -335,16 +337,12 @@ CONTINUE_CHAR : '&' { continueFlag = !continueFlag;
 // R427 from char-literal-constant
 T_CHAR_CONSTANT
         : ('\'' ( SQ_Rep_Char )* '\'')+ { 
-            if(includeLine) 
-//                 _channel=99;
-                $channel=HIDDEN;
-//             $channel=99;
+            if (includeLine) 
+                $channel = HIDDEN;
         }
         | ('\"' ( DQ_Rep_Char )* '\"')+ { 
-            if(includeLine) 
-//                _channel=99;
-                $channel=HIDDEN;
-//             $channel=99;
+            if (includeLine) 
+                $channel = HIDDEN;
         }
         ;
 
@@ -371,11 +369,9 @@ HEX_CONSTANT
     ;
 
 
-WS  :  (' '|'\r'|'\t'|'\u000C') {// _channel=99;
-            $channel=HIDDEN;
-//             $channel=99;
-//             _channel=99;
-        }
+WS  :  (' '|'\r'|'\t'|'\u000C') {
+            $channel = HIDDEN;
+       }
     ;
 
 /*
@@ -414,15 +410,14 @@ Letter : ('a'..'z' | 'A'..'Z') ;
 fragment
 Digit : '0'..'9'  ;
 
-PREPROCESS_LINE : '#' ~('\n'|'\r')*  { // _channel=99;
-            $channel=HIDDEN;
-//             $channel=99;
+PREPROCESS_LINE : '#' ~('\n'|'\r')*  {
+            $channel = HIDDEN;
         } ;
 
 T_INCLUDE 
-options {k=1;} : 'INCLUDE' { includeLine = true; // _channel=99;
-            $channel=HIDDEN;
-//             $channel=99;
+options {k=1;} : 'INCLUDE' {
+            includeLine = true;
+            $channel = HIDDEN;
         };
 
 
@@ -694,14 +689,11 @@ options {k=1;}
 
 LINE_COMMENT
     : '!'  ~('\n'|'\r')*  
-
-        {// _channel=99;
-            $channel=HIDDEN;
-//             $channel=99;
+        {
+            $channel = HIDDEN;
         }
     ;
 
 /* Need a catch-all rule because of fixed-form being allowed to use any 
    character in column 6 to designate a continuation.  */
 MISC_CHAR : ~('\n' | '\r') ;
-
