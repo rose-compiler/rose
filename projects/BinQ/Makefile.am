@@ -93,6 +93,8 @@ test_3:
 test_4:
 	./BinQ -a $(srcdir)/linux-ls
 
+test_fileASTFile:
+	./BinQ -a $(srcdir)/buffer2.bin -save test.ast --batch
 
 
 check-local:
