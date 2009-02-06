@@ -65,6 +65,7 @@ class BinQAbstract //: public QWidget
     std::string fileNameA,fileNameB;
     bool sourceFile;    
   protected:
+    std::string saveAST;
     // used for testing
     bool test;
     // holds function information that is displayed in function tables

@@ -8,7 +8,7 @@
 #include "icons.h"
 #include "folder.xpm"
 
-
+#include "../DistributedMemoryAnalysisCompass/LoadSaveAST.h"
 
 using namespace qrs;
 using namespace boost::filesystem;
@@ -24,6 +24,13 @@ void BinQAbstract::init(){
   std::string sourceFileS;
   fileA = binqsupport->disassembleFile(fileNameA, sourceFileS);
   ROSE_ASSERT(fileA);
+
+  if (saveAST!="") {
+    std::cerr << "ROSE saving FILE.... " << saveAST << std::endl;
+    LoadSaveAST::saveAST(saveAST, isSgProject(fileA)); 
+    exit(0);
+  }
+
   fileB=NULL;
   if (fileNameB!="") {
     cerr << "\nDisassemble File B ... " << fileNameB << endl;

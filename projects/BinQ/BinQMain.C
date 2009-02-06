@@ -1,6 +1,3 @@
-/*
- *
- */
 
 #include "rose.h"
 #include <vector>
@@ -11,6 +8,7 @@
 #include <boost/program_options.hpp>
 #include <iostream>
 #include "boost/filesystem/operations.hpp" // includes boost/filesystem/path.hpp
+
 
 
 using namespace qrs;
@@ -62,11 +60,20 @@ int main( int argc, char **argv )
   bool test=false;
   bool debug=false;
   bool batch=false;
+
+  std::string saveFile="";
   for (int i=1; i<argc; ++i) {
     string token = argv[i];
     if (debug)
       cerr << "Recognized argument " << i << " : >" << token <<"<"<< endl;
-#if 1
+
+    if (token=="-save") {
+      if (debug)
+	cerr << " saving ..." << endl;
+      saveFile=argv[i+1];
+      ++i;
+      continue;
+    }
     if (token=="--test") {
       if (debug)
 	cerr << " found test" << endl;
@@ -77,7 +84,6 @@ int main( int argc, char **argv )
 	cerr << " found batch" << endl;
       batch=true;
     }
-#endif
     if (aActive && token!="-b" && token!="--test" && token!="--batch") {
       if (debug)
 	cerr << " a active" << endl;
@@ -122,6 +128,8 @@ int main( int argc, char **argv )
     }
   }
 
+
+
   if (test && !batch) {
     BinQinteractive binGui(fileA,fileB,dllA,dllB,test);
     printAssembly(fileA,fileB, binGui.fileA, binGui.fileB, binGui.sourceFile);
@@ -133,14 +141,14 @@ int main( int argc, char **argv )
     return QROSE::exec();
   } else if (batch && !test) {
     QROSE::init(argc,argv);
-    BinQbatch binGui(fileA,fileB,dllA,dllB,test);
+    BinQbatch binGui(fileA,fileB,dllA,dllB,test,saveFile);
     binGui.runAnalyses(binGui.preanalyses,true);
     binGui.runAnalyses(binGui.analyses,false);
     printAssembly(fileA,fileB, binGui.fileA, binGui.fileB, binGui.sourceFile);
 
     return QROSE::exec();
   } else {
-    BinQbatch binGui(fileA,fileB,dllA,dllB,test);
+    BinQbatch binGui(fileA,fileB,dllA,dllB,test,saveFile);
     printAssembly(fileA,fileB, binGui.fileA, binGui.fileB, binGui.sourceFile);
   }
   return 0;

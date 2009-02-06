@@ -17,8 +17,9 @@ using namespace __gnu_cxx;
 
 // Constructor
 BinQbatch::BinQbatch(std::string fA, std::string fB, std::vector<std::string> dllAA, 
-		     std::vector<std::string> dllBB, bool t) { 
+		     std::vector<std::string> dllBB, bool t, std::string save) { 
   window=0;
+  saveAST=save;
   fileNameA=fA;
   fileNameB=fB;
   test =t;
