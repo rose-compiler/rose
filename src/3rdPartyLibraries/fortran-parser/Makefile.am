@@ -85,3 +85,19 @@ EXTRA_DIST = INSTALL README get_antlr.sh config src tests
 
 clean-local:
 	rm -rf build/ tmp/
+
+
+copy_as_before_fix:
+	cp $(srcdir)/src/fortran/ofp/parser/FortranLexer.g.beforeFix $(srcdir)/src/fortran/ofp/parser/FortranLexer.g
+	cp $(srcdir)/src/fortran/ofp/parser/FortranParser.g.beforeFix $(srcdir)/src/fortran/ofp/parser/FortranParser.g
+	cp $(srcdir)/src/fortran/ofp/parser/java/FortranLexicalPrepass.java.beforeFix $(srcdir)/src/fortran/ofp/parser/java/FortranLexicalPrepass.java
+	cp $(srcdir)/src/fortran/ofp/parser/java/FortranTokenStream.java.beforeFix $(srcdir)/src/fortran/ofp/parser/java/FortranTokenStream.java
+	cp $(srcdir)/src/fortran/ofp/FrontEnd.java.beforeFix $(srcdir)/src/fortran/ofp/FrontEnd.java
+
+copy_as_after_fix:
+	cp $(srcdir)/src/fortran/ofp/parser/FortranLexer.g.afterFix $(srcdir)/src/fortran/ofp/parser/FortranLexer.g
+	cp $(srcdir)/src/fortran/ofp/parser/FortranParser.g.afterFix $(srcdir)/src/fortran/ofp/parser/FortranParser.g
+	cp $(srcdir)/src/fortran/ofp/parser/java/FortranLexicalPrepass.java.afterFix $(srcdir)/src/fortran/ofp/parser/java/FortranLexicalPrepass.java
+	cp $(srcdir)/src/fortran/ofp/parser/java/FortranTokenStream.java.afterFix $(srcdir)/src/fortran/ofp/parser/java/FortranTokenStream.java
+	cp $(srcdir)/src/fortran/ofp/FrontEnd.java.afterFix $(srcdir)/src/fortran/ofp/FrontEnd.java
+
