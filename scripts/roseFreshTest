@@ -311,7 +311,7 @@ else
   printenv >> $mailtext
   echo "" >> $mailtext
   echo ">>> -------------------- Error summary --------------------" >> $mailtext
-  tail -100 buildlog >> $mailtext
+  tail -500 buildlog >> $mailtext
   echo "" >> $mailtext
 fi
 # echo "-------------------- Full log      --------------------" >> $mailtext
