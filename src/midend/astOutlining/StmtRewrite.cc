@@ -29,7 +29,11 @@ ASTtools::appendCopy (const SgStatement* s, SgBasicBlock* b)
 {
   if (b && s)
     {
+#if 1      
       SgStatement* s_copy = isSgStatement (deepCopy (s));
+#else
+       SgStatement* s_copy = SageInterface::deepCopy<SgStatement> (s);
+#endif         
       ROSE_ASSERT (s_copy);
       b->append_statement (s_copy); // TODO: a smarter append_statement should be
 				// be able to set the symbol tables

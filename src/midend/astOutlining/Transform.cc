@@ -25,7 +25,12 @@ Outliner::Result
 Outliner::Transform::outlineBlock (SgBasicBlock* s,
                                       const string& func_name_str)
 {
-  // Save some preprocessing information.
+  // Generate a new source file for the outlined function, if requested
+  SgSourceFile* new_file = NULL;
+  if (Outliner::useNewFile)
+    new_file = generateNewSourceFile(s,func_name_str);
+
+  // Save some preprocessing information for later restoration. 
   AttachedPreprocessingInfoType ppi_before, ppi_after;
   ASTtools::cutPreprocInfo (s, PreprocessingInfo::before, ppi_before);
   ASTtools::cutPreprocInfo (s, PreprocessingInfo::after, ppi_after);
@@ -34,27 +39,34 @@ Outliner::Transform::outlineBlock (SgBasicBlock* s,
   ASTtools::VarSymSet_t syms;
   collectVars (s, syms);
 
-  SgScopeStatement * p_scope = s->get_scope();
-  ROSE_ASSERT(p_scope);
-  // Generate outlined function.
-//  printf ("In Outliner::Transform::outlineBlock() function name to build: func_name_str = %s \n",func_name_str.c_str());
-  SgFunctionDeclaration* func = generateFunction (s, func_name_str, syms);
-  ROSE_ASSERT (func != NULL);
-
   // Insert outlined function.
+  //  grab target scope first
   SgGlobal* glob_scope =
     const_cast<SgGlobal *> (TransformationSupport::getGlobalScope (s));
+
+  if (Outliner::useNewFile)  // change scope to the one within the new source file
+  {
+    glob_scope = new_file->get_globalScope();
+  }
+
+  // Generate outlined function.
+//  printf ("In Outliner::Transform::outlineBlock() function name to build: func_name_str = %s \n",func_name_str.c_str());
+  SgFunctionDeclaration* func = generateFunction (s, func_name_str, syms, glob_scope);
+  ROSE_ASSERT (func != NULL);
+
   SgFunctionDeclaration* func_orig =
     const_cast<SgFunctionDeclaration *> (SageInterface::getEnclosingFunctionDeclaration (s));
-  insert (func, glob_scope, func_orig);
-// DQ (9/7/2007): Need to add function symbol to global scope!
-//   printf ("Fixing up the symbol table in scope = %p = %s for function = %p = %s \n",glob_scope,glob_scope->class_name().c_str(),func,func->get_name().str());
-   SgFunctionSymbol* functionSymbol = new SgFunctionSymbol(func);
-   glob_scope->insert_symbol(func->get_name(),functionSymbol);
-   ROSE_ASSERT(glob_scope->lookup_function_symbol(func->get_name()) != NULL);
-
-   ROSE_ASSERT(func->get_definingDeclaration()         != NULL);
-   ROSE_ASSERT(func->get_firstNondefiningDeclaration() != NULL);
+    
+  // Insert the function and its prototype as necessary  
+  insert (func, glob_scope, func_orig); //Outliner::Transform::insert() 
+  // DQ (9/7/2007): Need to add function symbol to global scope!
+  //   printf ("Fixing up the symbol table in scope = %p = %s for function = %p = %s \n",glob_scope,glob_scope->class_name().c_str(),func,func->get_name().str());
+//  if (glob_scope->lookup_function_symbol(func->get_name()) == NULL)
+  {
+    SgFunctionSymbol* functionSymbol = new SgFunctionSymbol(func);
+    glob_scope->insert_symbol(func->get_name(),functionSymbol);
+    ROSE_ASSERT(glob_scope->lookup_function_symbol(func->get_name()) != NULL);
+  }
 
   //Generate packing statements
   std::string wrapper_name;
@@ -62,6 +74,9 @@ Outliner::Transform::outlineBlock (SgBasicBlock* s,
     wrapper_name= generatePackingStatements(s,syms);
 
   // Generate a call to the outlined function.
+  SgScopeStatement * p_scope = s->get_scope();
+  ROSE_ASSERT(p_scope);
+
   SgStatement *func_call = generateCall (func, syms, wrapper_name,p_scope);
   ROSE_ASSERT (func_call != NULL);
   
@@ -73,7 +88,14 @@ Outliner::Transform::outlineBlock (SgBasicBlock* s,
   ASTtools::pastePreprocInfoBack (ppi_after, func_call);
 
   SageInterface::fixVariableReferences(p_scope);
-  return Result (func, func_call);
+  if (new_file)
+  {
+    SageInterface::fixVariableReferences(new_file);
+    // SgProject * project2= new_file->get_project();
+    // AstTests::runAllTests(project2);// turn it off for now
+    // project2->unparse();
+  }
+  return Result (func, func_call, new_file);
 }
 
 /* For a set of variables to be passed into the outlined function, 
@@ -117,6 +139,31 @@ std::string Outliner::Transform::generatePackingStatements(SgStatement* target, 
     SageInterface::insertStatementBefore(target, expstmti);
     counter ++;
   }
- return wrapper_name; 
+  return wrapper_name; 
 }
+
+SgSourceFile* 
+Outliner::Transform::generateNewSourceFile(SgBasicBlock* s, const string& file_name)
+{
+  SgSourceFile* new_file = NULL;
+  SgProject * project = getEnclosingNode<SgProject> (s);
+  ROSE_ASSERT(project != NULL);
+  // s could be transformation generated, so use the root SgFile for file name
+  SgFile* cur_file = getEnclosingNode<SgFile> (s);
+  ROSE_ASSERT (cur_file != NULL);
+  //grab the file suffix, 
+  // TODO another way is to generate suffix according to source language type
+  std::string orig_file_name = cur_file->get_file_info()->get_filenameString();
+  //cout<<"debug:orig_file_name="<<orig_file_name<<endl;
+  std::string file_suffix = StringUtility::fileNameSuffix(orig_file_name);
+  ROSE_ASSERT(file_suffix !="");
+  std::string new_file_name = file_name+"."+file_suffix;
+  // remove pre-existing file with the same name
+  remove (new_file_name.c_str());
+  new_file = isSgSourceFile(buildFile(new_file_name, new_file_name,project));
+  //new_file = isSgSourceFile(buildFile(new_file_name, new_file_name));
+  ROSE_ASSERT(new_file != NULL);
+  return new_file;
+}
+
 // eof

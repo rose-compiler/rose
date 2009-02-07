@@ -129,6 +129,11 @@ namespace ASTtools
   //! Dump a symbol table.
   void dumpSymTab (const SgScopeStatement* s, const std::string& tag,
                    std::ostream& o);
+  //! Reset source position as transformation for the current node only
+  void setSourcePositionAsTransformation(SgNode* node);
+
+  //! Reset source position as transformation recursively 
+  void setSourcePositionAtRootAndAllChildrenAsTransformation(SgNode* node);
 
 } // namespace ASTtools
 

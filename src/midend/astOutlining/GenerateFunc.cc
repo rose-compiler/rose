@@ -37,14 +37,14 @@ using namespace SageBuilder;
 static
 SgFunctionDeclaration *
 createFuncSkeleton (const string& name, SgType* ret_type,
-                    SgFunctionParameterList* params)
+                    SgFunctionParameterList* params, SgScopeStatement* scope)
 {
   SgFunctionType *func_type = new SgFunctionType (ret_type, false);
   ROSE_ASSERT (func_type);
 
   SgFunctionDeclaration* func;
   SgProcedureHeaderStatement* fortranRoutine;
-// Liao 12/13/2007, generate SgProcedureHeaderStatement for Fortran code
+  // Liao 12/13/2007, generate SgProcedureHeaderStatement for Fortran code
   if (SageInterface::is_Fortran_language()) 
   {
     fortranRoutine = new SgProcedureHeaderStatement(ASTtools::newFileInfo (), name, func_type);
@@ -58,14 +58,14 @@ createFuncSkeleton (const string& name, SgType* ret_type,
   }
 
   ROSE_ASSERT (func);
-// DQ (9/7/2007): Fixup the defining and non-defining declarations
+  // DQ (9/7/2007): Fixup the defining and non-defining declarations
   ROSE_ASSERT(func->get_definingDeclaration() == NULL);
   func->set_definingDeclaration(func);
   ROSE_ASSERT(func->get_firstNondefiningDeclaration() != func);
 
   SgFunctionDefinition *func_def =
     new SgFunctionDefinition (ASTtools::newFileInfo (), func);
-  func_def->set_parent (func);	//necessary or not?
+  func_def->set_parent (func);  //necessary or not?
 
   SgBasicBlock *func_body = new SgBasicBlock (ASTtools::newFileInfo ());
   func_def->set_body (func_body);
@@ -585,45 +585,39 @@ remapVarSyms (const VarSymRemap_t& vsym_remap, SgBasicBlock* b)
 SgFunctionDeclaration *
 Outliner::Transform::generateFunction (const SgBasicBlock* s,
                                           const string& func_name_str,
-                                          const ASTtools::VarSymSet_t& syms)
+                                          const ASTtools::VarSymSet_t& syms,
+                                          SgScopeStatement* scope)
 {
-  ROSE_ASSERT (s);
+  ROSE_ASSERT (s&&scope);
 
   // Create function skeleton, 'func'.
   SgName func_name (func_name_str);
-  SgFunctionParameterList *parameterList =
-    new SgFunctionParameterList (ASTtools::newFileInfo ());
-  ROSE_ASSERT (parameterList);
-
-  //! \todo Why doesn't constructor do this by default?
-  parameterList->set_definingDeclaration (parameterList);
-  //! \todo Why doesn't constructor do this by default?
-  parameterList->set_firstNondefiningDeclaration (parameterList);
+  SgFunctionParameterList *parameterList = buildFunctionParameterList();
 
   SgFunctionDeclaration* func = createFuncSkeleton (func_name,
-                                                    SgTypeVoid::createType (),
-                                                    parameterList);
+      SgTypeVoid::createType (),
+      parameterList, scope);
   ROSE_ASSERT (func);
-// Liao 10/30/2007 maintain the symbol table
-   SgFunctionSymbol * func_symbol = new SgFunctionSymbol(func);
-   const_cast<SgBasicBlock *>(s)->insert_symbol(func->get_name(), func_symbol);
+  // Liao 10/30/2007 maintain the symbol table
+     SgFunctionSymbol * func_symbol = new SgFunctionSymbol(func);
+     const_cast<SgBasicBlock *>(s)->insert_symbol(func->get_name(), func_symbol);
 
-// Only apply to C++ , pure C has trouble in recognizing extern "C"
-//  Another way is to attach the function with preprocessing info:
-//  #if __cplusplus 
-//  extern "C"
-//  #endif
-//  We don't choose it since the language linkage information is not explicit in AST
-//  if (!SageInterface::is_Fortran_language())
+  // Only apply to C++ , pure C has trouble in recognizing extern "C"
+  //  Another way is to attach the function with preprocessing info:
+  //  #if __cplusplus 
+  //  extern "C"
+  //  #endif
+  //  We don't choose it since the language linkage information is not explicit in AST
+  //  if (!SageInterface::is_Fortran_language())
   if (SageInterface::is_Cxx_language()||
       is_mixed_C_and_Cxx_language ()||
       is_mixed_Fortran_and_Cxx_language ()||
       is_mixed_Fortran_and_C_and_Cxx_language ()
-      )
+     )
   {
-  // Make function 'extern "C"'
-  func->get_declarationModifier ().get_storageModifier ().setExtern ();
-  func->set_linkage ("C");
+    // Make function 'extern "C"'
+    func->get_declarationModifier ().get_storageModifier ().setExtern ();
+    func->set_linkage ("C");
   }
 
   // Generate the function body by deep-copying 's'.
@@ -631,6 +625,8 @@ Outliner::Transform::generateFunction (const SgBasicBlock* s,
   ROSE_ASSERT (func_body);
 
   ASTtools::appendStmtsCopy (s, func_body);
+  if (Outliner::useNewFile)
+      ASTtools::setSourcePositionAtRootAndAllChildrenAsTransformation(func_body);
 #if 0
   // Liao, 12/27/2007, for DO .. CONTINUE loop, bug 171
   // copy a labeled CONTINUE at the end when it is missing

@@ -59,7 +59,7 @@ void foobar ()
      void prod (int x);
 
   // Can't use global qualification here since there is no "prod" function declared in global scope.
-  // Since we don't know exactly where "void prod()" is we can't use explicit qualifiaction.
+  // Since we don't know exactly where "void prod()" is we can't use explicit qualification.
      prod (0);
    }
 

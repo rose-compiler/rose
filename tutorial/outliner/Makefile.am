@@ -161,7 +161,7 @@ cleanDocs:
 	rm -f *.C *.cc *.ti *.out 
 
 clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files *.ti $(generatedFiles)
+	rm -rf rose_*.c rose_*.C OUT__* $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files *.ti $(generatedFiles)
 	rm -f $(generatedFiles) *.o *~ core *.BAK
 
 distclean-local:

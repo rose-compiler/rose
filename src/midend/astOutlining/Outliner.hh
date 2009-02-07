@@ -35,7 +35,10 @@ namespace Outliner
   //! A set of flags to control the internal behavior of the outliner
   // use a wrapper for all variables or one parameter for a variable or a wrapper for all variables
   extern bool useParameterWrapper;  // use a wrapper for parameters of the outlined function
-  extern bool preproc_only_;  // preprocessing only
+                   // turned on by command line option:   -rose:outline:parameter_wrapper
+  extern bool preproc_only_;  // preprocessing only, -rose:outline:preproc-only
+  extern bool useNewFile; // Generate the outlined function into a separated new source file
+                          // -rose:outline:new_file
 
   //! Accept a set of command line options to adjust internal behaviors
   // Please use this function before calling the frontend() to set the internal flags
@@ -50,11 +53,15 @@ namespace Outliner
     //! The outlined function's declaration and definition.
     SgFunctionDeclaration* decl_;
 
-    //! A statement to invoke the outlined function.
+    //! A call statement to invoke the outlined function.
     SgStatement* call_;
 
+    //! A SgFile pointer to the newly generated source file containing the
+    // outlined function if -rose:outline:new_file is specified (useNewFile==true)
+    SgFile* file_;
+
     Result (void); //! Sets all fields to 0
-    Result (SgFunctionDeclaration *, SgStatement *);
+    Result (SgFunctionDeclaration *, SgStatement *, SgFile* file=NULL);
     Result (const Result&); //! Copy constructor.
     ~Result (void) {}; //! Shallow; does not delete fields.
     bool isValid (void) const; //! Returns true iff result is usable
@@ -80,13 +87,21 @@ namespace Outliner
    */
   std::string generateFuncArgName (const SgStatement* stmt);
 
-  //! Outlines the given statement.
+  //! Outlines the given statement. The main programming interface.
   /*!
-   *  This function outlines the specified statement, s. It creates a
+   *  This function pre-process the target stmt first and 
+   *  outlines the specified statement, s. It creates a
    *  new outlined function definition, f, inserts f into the first
    *  scope surrounding s that may contain a function (or member
    *  function) definition, replaces s with a call to f, and finally
    *  returns f.
+   *
+   *  It can also does pre-processing only if directed by the internal flag,
+   *  which is specified by user command line option and processed by 
+   *  commandLineProcessing();
+   *
+   *  Programmers are expected to tell if a statement is outlineable before
+   *  calling this function.
    */
   Result outline (SgStatement* s);
 

@@ -124,6 +124,8 @@ $(TEST_F03_Objects): ../outlineSelection $(ALL_TESTCODES) ../outline
 
 ../outlineSelection:
 	cd ..; $(MAKE) outlineSelection
+../outline:
+	cd ..; $(MAKE) outline
 
 PASSING_TEST_Objects = \
 $(TEST_F77_Objects) \
@@ -141,7 +143,7 @@ $(TEST_F03_Objects)
 # Include makefile rules specific to QMTest
 include $(top_srcdir)/config/QMTest_makefile.inc
 
-check-local:
+check-local: ../outline ../outlineSelection
 	@echo "Tests for outlining Fortran."
 #	@$(MAKE) $(TEST_F77_Objects)
 	@$(MAKE) $(PASSING_TEST_Objects)

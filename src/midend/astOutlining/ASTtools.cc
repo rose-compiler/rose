@@ -512,5 +512,64 @@ ASTtools::newFileInfo (void)
 {
   return Sg_File_Info::generateDefaultFileInfoForTransformationNode();
 }
+//TODO  move to SageInterface when thoroughly tested, especially how to free previously allocated memory for file info nodes
+void ASTtools::setSourcePositionAsTransformation(SgNode* node)
+{
+  ROSE_ASSERT(node != NULL);
+
+  SgLocatedNode*     locatedNode = isSgLocatedNode(node);
+  SgExpression*      expression  = isSgExpression(node);
+  SgInitializedName* initName    = isSgInitializedName(node);
+  SgPragma*          pragma      = isSgPragma(node); // missed this one!! Liao, 1/30/2008
+  SgGlobal*          global      = isSgGlobal(node); // SgGlobal should have NULL endOfConstruct()
+
+  if  (locatedNode != NULL)
+  {
+    locatedNode->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
+    locatedNode->get_startOfConstruct()->set_parent(locatedNode);
+
+    if (global==NULL)
+    {  
+      locatedNode->set_endOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
+      locatedNode->get_endOfConstruct  ()->set_parent(locatedNode); 
+    }
+
+    // Only SgExpression IR nodes have a 3rd source position data structure.
+    if (expression!=NULL)
+    {
+      expression->set_operatorPosition(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
+      expression->get_operatorPosition()->set_parent(expression);
+    }
+  }
+  else
+  {
+    if (initName != NULL) 
+    {
+      //  no endOfConstruct for SgInitializedName
+      initName->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());   
+      initName->get_startOfConstruct()->set_parent(initName);
+    }
+    else 
+    {
+      if (pragma != NULL) 
+      {
+        pragma->set_startOfConstruct(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
+        pragma->get_startOfConstruct()->set_parent(pragma);
+      }
+    }
+  }
+}
+
+
+
+
+void ASTtools::setSourcePositionAtRootAndAllChildrenAsTransformation(SgNode* root)
+{
+  Rose_STL_Container <SgNode*> nodeList= NodeQuery::querySubTree(root,V_SgNode);
+  for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i!=nodeList.end(); i++ )
+  {
+   setSourcePositionAsTransformation(*i);   
+  }
+}
 
 // eof

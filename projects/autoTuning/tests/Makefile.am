@@ -19,13 +19,14 @@ rose_jacobi.c:../autoTuning
 EXTRA_DIST = jacobi-raw.xml jacobi.c
 
 clean-local:
-	rm -f *.o rose_*.[cC] *.dot 
+	rm -f *.o rose_*.[cC] *.dot  OUT_*
 
 #-------------------------------
 if ROSE_BUILD_ROSEHPCT
 check-local:
 	@echo "Test for auto tuning... "
 	@$(MAKE) rose_jacobi.c
+	@echo "Test for auto tuning terminated normally"
 else
 #-------------------------------
 check-local:

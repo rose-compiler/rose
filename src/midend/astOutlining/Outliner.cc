@@ -24,6 +24,7 @@ namespace Outliner {
   // use a wrapper for all variables or one parameter for a variable or a wrapper for all variables
   bool useParameterWrapper;  // use a wrapper for parameters of the outlined function
   bool preproc_only_;  // preprocessing only
+  bool useNewFile; // generate the outlined function into a new source file
 };
 
 // =====================================================================
@@ -130,13 +131,23 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
   else
     useParameterWrapper= false;
 
+  if (CommandlineProcessing::isOption (argvList,"-rose:outline:","new_file",true))
+  {
+    cout<<"Enabling new source file for outlined functions..."<<endl;
+    useNewFile= true;
+  }
+  else
+    useNewFile= false;
+
+  // keep --help option after processing, let other modules respond also
   if (CommandlineProcessing::isOption (argvList,"--help","",false))
   {
     cout<<"Outliner-specific options"<<endl;
     cout<<"Usage: outline [OPTION]... FILENAME..."<<endl;
     cout<<"Main operation mode:"<<endl;
-    cout<<"\t-rose:outline:preprc-only           preprocessing only, no actual outlining"<<endl;
+    cout<<"\t-rose:outline:preproc-only           preprocessing only, no actual outlining"<<endl;
     cout<<"\t-rose:outline:parameter_wrapper     use an array of pointers for the variables to be passed"<<endl;
+    cout<<"\t-rose:outline:new_file              use a new source file for the generated outlined function"<<endl;
     cout <<"---------------------------------------------------------------"<<endl;
   }
 }
@@ -161,8 +172,8 @@ Outliner::Result::Result (void)
 }
 
 Outliner::Result::Result (SgFunctionDeclaration* decl,
-                             SgStatement* call)
-  : decl_ (decl), call_ (call)
+                             SgStatement* call, SgFile* file/*=NULL*/)
+  : decl_ (decl), call_ (call), file_(file)
 {
 }
 

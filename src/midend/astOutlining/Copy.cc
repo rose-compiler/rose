@@ -21,7 +21,12 @@ static SgTreeCopy g_treeCopy;
 SgNode *
 ASTtools::deepCopy (const SgNode* n)
 {
+#if 1  
   return n ? n->copy (g_treeCopy) : 0;
+#else  
+  return SageInterface::deepCopyNode(n);  
+  // has some problem in handling test2005_27.C
+#endif  
 }
 
 // eof

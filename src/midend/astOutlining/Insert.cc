@@ -30,10 +30,11 @@ using namespace std;
 //! Creates a 'prototype' (forward declaration) for a function.
 static
 SgFunctionDeclaration *
-generatePrototype (const SgFunctionDeclaration* full_decl)
+generatePrototype (const SgFunctionDeclaration* full_decl, SgScopeStatement* scope)
 {
   if (!full_decl) return 0; // nothing to do
 
+#if 1
   // Temporarily "hide" definition.
   SgFunctionDeclaration* tmp = const_cast<SgFunctionDeclaration *> (full_decl);
   SgFunctionDefinition* def = full_decl->get_definition ();
@@ -51,15 +52,19 @@ generatePrototype (const SgFunctionDeclaration* full_decl)
 
   proto->set_forward (true);
   proto->set_definingDeclaration (tmp);
+#else
+  SgFunctionDeclaration* proto = SageBuilder::buildNondefiningFunctionDeclaration(full_decl,scope);
+  ROSE_ASSERT(proto!=NULL);
+#endif  
   return proto;
 }
 
 //! Generates a 'friend' declaration from a given function declaration.
 static
 SgFunctionDeclaration *
-generateFriendPrototype (const SgFunctionDeclaration* full_decl)
+generateFriendPrototype (const SgFunctionDeclaration* full_decl, SgScopeStatement* scope)
 {
-  SgFunctionDeclaration* proto = generatePrototype (full_decl);
+  SgFunctionDeclaration* proto = generatePrototype (full_decl,scope);
   ROSE_ASSERT (proto);
 
   // Remove any 'extern' modifiers
@@ -130,11 +135,12 @@ public:
   const SgFunctionDeclaration* getProto (void) const { return proto_; }
 
   static SgFunctionDeclaration*
+
   insertManually (SgFunctionDeclaration* def_decl,
                   SgGlobal* scope,
                   SgDeclarationStatement* target)
   {
-    SgFunctionDeclaration* proto = generatePrototype (def_decl);
+    SgFunctionDeclaration* proto = generatePrototype (def_decl,scope);
     ROSE_ASSERT (proto);
     
     SgDeclarationStatement* insert_point =
@@ -142,10 +148,17 @@ public:
     ROSE_ASSERT (insert_point);
 
     ASTtools::moveBeforePreprocInfo (insert_point, proto);    
+#if 1    
     scope->insert_statement (insert_point, proto, true);
     proto->set_parent (scope);
     proto->set_scope (scope);
-    def_decl->set_firstNondefiningDeclaration (proto);
+#else
+    // this only insert it under a parent node,not a scope node
+    //SageInterface::insertStatementBefore(insert_point,proto);
+    SageInterface::prependStatement(proto,scope);
+#endif    
+    if (!Outliner::useNewFile)
+      def_decl->set_firstNondefiningDeclaration (proto);
 
     return proto;
   }
@@ -161,7 +174,7 @@ private:
   SgFunctionDeclaration* proto_;
 };
 
-//! Inserts a prototype into global scope.
+//! Inserts a prototype into the original global scope of the outline target
 static
 SgFunctionDeclaration *
 insertGlobalPrototype (SgFunctionDeclaration* def,
@@ -171,30 +184,30 @@ insertGlobalPrototype (SgFunctionDeclaration* def,
 {
   SgFunctionDeclaration* proto = 0;
   if (def && scope)
+  {
+    try
     {
-      try
-        {
-          GlobalProtoInserter ins (def, scope);
-          ins.traverse (scope, preorder);
-          proto = ins.getProto ();
-        }
-      catch (string& s) { ROSE_ASSERT (s == "done"); }
-
-      if (!proto && default_target) // No declaration found
-        proto = GlobalProtoInserter::insertManually (def,
-                                                     scope,
-                                                     default_target);
+      GlobalProtoInserter ins (def, scope);
+      ins.traverse (scope, preorder);
+      proto = ins.getProto ();
     }
+    catch (string& s) { ROSE_ASSERT (s == "done"); }
+
+    if (!proto && default_target) // No declaration found
+      proto = GlobalProtoInserter::insertManually (def,
+          scope,
+          default_target);
+  }
 
   // Fix-up remaining prototypes.
   if (proto)
     for (FuncDeclList_t::iterator i = protos.begin (); i != protos.end (); ++i)
-      {
-        SgFunctionDeclaration* proto_i = *i;
-        ROSE_ASSERT (proto_i);
-        proto_i->set_firstNondefiningDeclaration (proto);
-        proto_i->set_definingDeclaration (def);
-      }
+    {
+      SgFunctionDeclaration* proto_i = *i;
+      ROSE_ASSERT (proto_i);
+      proto_i->set_firstNondefiningDeclaration (proto);
+      proto_i->set_definingDeclaration (def);
+    }
 
   return proto;
 }
@@ -217,7 +230,7 @@ insertFriendDecl (const SgFunctionDeclaration* func,
       SgDeclarationStatementPtrList::iterator i = mems.begin ();
 
       // Create the friend declaration.
-      friend_proto = generateFriendPrototype (func);
+      friend_proto = generateFriendPrototype (func,cls_scope);
       ROSE_ASSERT (friend_proto);
 
       // Insert it into the class.
@@ -379,7 +392,9 @@ insertFriendDecls (SgFunctionDeclaration* func,
 }
 
 // =====================================================================
-
+//! Insert func into scope (could be either original scope or the new scope from a new file), 
+//  and insert necessary declarations into the global scope of
+//  target's original enclosing function). 
 void
 Outliner::Transform::insert (SgFunctionDeclaration* func,
                                 SgGlobal* scope,
@@ -387,27 +402,67 @@ Outliner::Transform::insert (SgFunctionDeclaration* func,
 {
   ROSE_ASSERT (func && scope && target_func);
 
+  // x. Insert the defining function 
   // Put the actual defining declaration at the end of global scope.
+#if 1 
   scope->append_declaration (func);
   func->set_scope (scope);
   func->set_parent (scope);
+#else
+  SageInterface::appendStatement(func,scope);
+#endif  
+
+  // x. Insert the defining function's prototype right before target_func
+  //
+  // the scope parameter may be from the new source file 
+  // so we grab the original global scope from the target_func (original enclosing function)
+  SgGlobal* src_global = SageInterface::getGlobalScope(target_func);
+  ROSE_ASSERT(src_global != NULL);
+  if (!Outliner::useNewFile)
+    ROSE_ASSERT(scope == src_global);
 
   // no forward declaration is needed for Fortran 77 
-// Liao, 12/13/2007
+  // Liao, 12/13/2007
   if (!SageInterface::is_Fortran_language())
   {
-  // Insert all necessary 'friend' declarations.
-  FuncDeclList_t protos;
-  insertFriendDecls (func, scope, protos);
+    // Insert all necessary 'friend' declarations.
+    FuncDeclList_t protos;
+    insertFriendDecls (func, src_global, protos);
 
-  // Insert a single, global prototype (i.e., a first non-defining
-  // declaration), which specifies the linkage property of 'func'.
-  insertGlobalPrototype (func, protos, scope, target_func);
+    // Insert a single, global prototype (i.e., a first non-defining
+    // declaration), which specifies the linkage property of 'func'.
+    insertGlobalPrototype (func, protos, src_global, target_func);
   }
   else
   {
-     func->set_firstNondefiningDeclaration (func);
-//     func->set_definingDeclaration (def);
+    func->set_firstNondefiningDeclaration (func);
+    //     func->set_definingDeclaration (def);
+  }
+
+#if 1 //Should be removed once SageBuilder is used
+  // DQ (9/7/2007): Need to add function symbol to global scope!
+  //   printf ("Fixing up the symbol table in scope = %p = %s for function = %p = %s \n",glob_scope,glob_scope->class_name().c_str(),func,func->get_name().str());
+  if (src_global->lookup_function_symbol(func->get_name()) == NULL)  
+  {
+    SgFunctionSymbol* functionSymbol = new SgFunctionSymbol(func);
+    src_global->insert_symbol(func->get_name(),functionSymbol);
+    ROSE_ASSERT(src_global->lookup_function_symbol(func->get_name()) != NULL);
+  }
+
+// Fixup the symbol in the newly generated file for the inserted function definition
+  if (Outliner::useNewFile &&
+      (scope->lookup_function_symbol(func->get_name()) == NULL) ) 
+  {
+    SgFunctionSymbol* functionSymbol = new SgFunctionSymbol(func);
+    scope->insert_symbol(func->get_name(),functionSymbol);
+    ROSE_ASSERT(scope->lookup_function_symbol(func->get_name()) != NULL);
+  }
+#endif 
+  ROSE_ASSERT(func->get_definingDeclaration()         != NULL);
+  if  (!Outliner::useNewFile) 
+  {
+    // there can be NULL nondefining declaration if it is inserted into a brand new source file
+    ROSE_ASSERT(func->get_firstNondefiningDeclaration() != NULL);
   }
 }
 

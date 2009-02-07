@@ -59,6 +59,7 @@ endif # ROSE_USE_LONG_MAKE_CHECK_RULE
 
 # Outliner utility and flags to run with the tests.
 OUTLINER_BIN = ./outlineSelection$(EXEEXT)
+# this flag is used for the long list of CXX test files
 TEST_CXXFLAGS = $(TEST_INCLUDES) -rose:verbose 0 -rose:outline:seq 7 -rose:outline:parameter_wrapper
 
 # Additional tests using #pragma rose_outline, Liao, 12/17/2008
@@ -66,7 +67,8 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	 moreTest1.c \
 	 array1.c
 CXX_TESTCODES_REQUIRED_TO_PASS = \
-	array2.cpp	 
+	array2.cpp \
+	moreTest2.cpp
 
 TESTCODE_CURRENTLY_FAILING =  	
 
@@ -75,7 +77,10 @@ $(C_TESTCODES_REQUIRED_TO_PASS) \
 $(CXX_TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODE_CURRENTLY_FAILING)
 
-OUTLINE_FLAG= --edg:no_warnings -rose:verbose 0 -rose:outline:parameter_wrapper
+# this flag is used for the files listed within this file: C_TESTCODES_REQUIRED_TO_PASS and CXX_TESTCODES_REQUIRED_TO_PASS
+# TODO remove -rose:skipfinalCompileStep when the command line issue is solved
+OUTLINE_FLAG= --edg:no_warnings -rose:verbose 0 -rose:outline:parameter_wrapper -rose:outline:new_file -rose:skipfinalCompileStep
+ 
 
 PASSING_C_TEST_Objects = $(C_TESTCODES_REQUIRED_TO_PASS:.c=.o)
 PASSING_CXX_TEST_Objects = $(CXX_TESTCODES_REQUIRED_TO_PASS:.cpp=.o)
@@ -92,7 +97,7 @@ EXTRA_DIST = build_tests-1pass.sh RandomStmtSelector.hh $(ALL_EXTRA_TESTCODE)
 CLEANFILES = Makefile-1pass LIST.dat
 
 # DQ (8/29/2008): Added dependences
-check-local: outline injectOutlinePragmas outlineRandom outlineSelection
+check-local: outline$(EXEEXT) injectOutlinePragmas outlineRandom outlineSelection
 	@echo "Test for ROSE outliner."
 	$(MAKE) $(PASSING_C_TEST_Objects)
 	$(MAKE) $(PASSING_CXX_TEST_Objects)
@@ -107,7 +112,7 @@ check-local: outline injectOutlinePragmas outlineRandom outlineSelection
 	@echo "***********************************************************************************************************"
 
 clean-local:
-	rm -f *.o test*.C rose_*.c rose_*.cpp rose_*.C *.C.pdf *.c.pdf
+	rm -f *.o test*.C rose_*.c rose_*.cpp rose_*.C *.C.pdf *.c.pdf OUT_*
 
 one-pass: Makefile-1pass $(OUTLINER_BIN)
 

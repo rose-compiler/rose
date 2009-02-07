@@ -32,6 +32,12 @@ namespace Outliner
      *  passed to the outlined routine.
      */
     void collectVars (const SgStatement* s, ASTtools::VarSymSet_t& syms);
+    
+    /*!\brief Generate a new source file under the same SgProject as
+     * target, the file's base name is file_name_str. Suffix is automatically
+     * generated according to the file suffix of s
+     */
+    SgSourceFile* generateNewSourceFile(SgBasicBlock* target, const std::string& file_name);
 
     /*!
      *  \brief Returns a new outlined function containing a deep-copy
@@ -55,7 +61,8 @@ namespace Outliner
     SgFunctionDeclaration*
     generateFunction (const SgBasicBlock* s,
                       const std::string& func_name_str,
-                      const ASTtools::VarSymSet_t& syms);
+                      const ASTtools::VarSymSet_t& syms,
+                      SgScopeStatement* scope);
 
      //! Generate packing statements for the variables to be passed 
      //return the unique wrapper parameter for the outlined function

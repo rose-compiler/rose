@@ -142,8 +142,6 @@ private:
   MatchSet_t files_; //!< All file nodes in profIR, used to find hottest file later on
   bool verbose_; //!< True <==> verbose messaging desired by caller
   bool prune_branch_; //!< Indicates a tree branch may be pruned from search
-  std::map<const RoseHPCT::IRNode *, std::set<SgLocatedNode *> >  * historyRecord_; //! A map between IRNode to matched SgNodes, used to avoid redundant attaching for code expanded from macro, Liao, 2/3/2009
-
 protected:
   //! \name Query target node for Sage type information
   //@{
@@ -152,6 +150,9 @@ protected:
   bool isTargetSgProcedure (void) const;
   bool isTargetSgLoop (void) const;
   bool isTargetSgStatementNonScope (void) const;
+  std::map<const RoseHPCT::IRNode *, std::set<SgLocatedNode *> >  * historyRecord_; //! A map between IRNode to matched SgNodes, used to avoid redundant attaching for code expanded from macro, Liao, 2/3/2009
+
+
   //@}
 };
 
