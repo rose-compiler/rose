@@ -1,3 +1,67 @@
+2009-02-07 01:52  panas2
+
+	* [r4335] /trunk/ROSE/src/Makefile.am,
+	  /trunk/ROSE/src/midend/astQuery/queryVariant.C: commented out
+	  precompiled header work for now since it does not work for dist
+	  check
+
+2009-02-07 01:41  liao6
+
+	* [r4334] /trunk/ROSE/projects/autoTuning/autoTuning.C,
+	  /trunk/ROSE/projects/autoTuning/tests/Makefile.am,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Leo-daily.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Leo-head.sh,
+	  /trunk/ROSE/src/backend/unparser/languageIndependenceSupport/name_qualification_support.C,
+	  /trunk/ROSE/src/midend/astOutlining/ASTtools.cc,
+	  /trunk/ROSE/src/midend/astOutlining/ASTtools.hh,
+	  /trunk/ROSE/src/midend/astOutlining/CollectVars.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Copy.cc,
+	  /trunk/ROSE/src/midend/astOutlining/GenerateFunc.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Insert.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Outliner.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Outliner.hh,
+	  /trunk/ROSE/src/midend/astOutlining/StmtRewrite.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Transform.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Transform.hh,
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/src/profir2sage/attach.cc,
+	  /trunk/ROSE/src/util/stringSupport/string_functions.h,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2005_179.C,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/buildFile.C,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/inputbuildFile.C,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/fortranTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/moreTest2.cpp,
+	  /trunk/ROSE/tutorial/outliner/Makefile.am: Extended outliner to
+	  preliminarily support generating the outlined code into a
+	  separated file
+	  Connected autoTuning to use this new feature
+
+2009-02-07 01:38  liao6
+
+	* [r4333] /trunk/ROSE/scripts/roseFreshTest: Extended error summary
+	  to 500 lines
+
+2009-02-07 01:32  panas2
+
+	* [r4332] /trunk/ROSE/projects/BinQ/BinQMain.C,
+	  /trunk/ROSE/src/Makefile.am, /trunk/ROSE/src/rose.h: fixed MPI
+	  problem
+
+2009-02-07 00:57  panas2
+
+	* [r4331] /trunk/ROSE/src/Makefile.am, /trunk/ROSE/src/rose.h:
+	  testing if header file can be precompiled
+
+2009-02-07 00:28  panas2
+
+	* [r4330] /trunk/ROSE/projects/BinQ/Makefile.am: test case for fast
+	  header file compilation
+
+2009-02-07 00:28  panas2
+
+	* [r4329] /trunk/ROSE/src/Makefile.am: Added support for fast
+	  header file compilation of rose.h
+
 2009-02-06 16:00  dquinlan
 
 	* [r4325]
