@@ -99,7 +99,7 @@ include_HEADERS = \
 # bin_PROGRAMS = testSharedRoseLib # testMultiRoseLib
 noinst_PROGRAMS = testSharedRoseLib 
 
-all-local: testSharedRoseLib$(EXEEXT)
+all-local: testSharedRoseLib$(EXEEXT) roseh
 # Test if programs using ROSE can be run
 	@echo "Testing whether a simple program linked against ROSE can be run:" >&2
 	@echo "The translator will be run without any input files, and will print a warning about that; the warning is normal." >&2
@@ -141,6 +141,10 @@ print:
 # DQ (1/10/2004): remove the librose.a and libedg.a files so that distclean will work cleanly
 clean-local:
 	rm -rf *.a *.so testSharedRoseLib testMultiRoseLib $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files
+
+roseh:
+	echo gcc -o $(srcdir)/rose.h.gch $(srcdir)/rose.h -I$(top_builddir)/   #$(ROSE_INCLUDES) 
+	g++ -o $(srcdir)/rose.h.gch $(srcdir)/rose.h -I$(top_builddir) $(ROSE_INCLUDES) 
 
 distclean-local:
 	rm -rf *.a *.so testSharedRoseLib testMultiRoseLib Templates.DB
