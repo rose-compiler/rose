@@ -1,4 +1,4 @@
-#include "rose.h"
+//#include "rose.h"
 
 // include file for transformation specification support
 // include "specification.h"

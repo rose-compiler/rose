@@ -149,7 +149,7 @@ else
 
 roseh:
 	echo $(CXX)  -DHAVE_CONFIG_H -g -o $(srcdir)/rose.h.gch $(srcdir)/rose.h -I$(top_builddir)/   #$(ROSE_INCLUDES) 
-	$(CXX)  -DHAVE_CONFIG_H -g -o $(srcdir)/rose.h.gch $(srcdir)/rose.h -I$(top_builddir) $(ROSE_INCLUDES) 
+#	$(CXX)  -DHAVE_CONFIG_H -g -o $(srcdir)/rose.h.gch $(srcdir)/rose.h -I$(top_builddir) $(ROSE_INCLUDES) 
 
 endif
 
