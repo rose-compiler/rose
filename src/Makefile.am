@@ -142,9 +142,16 @@ print:
 clean-local:
 	rm -rf *.a *.so testSharedRoseLib testMultiRoseLib $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files
 
+if ROSE_MPI
+roseh:
+
+else
+
 roseh:
 	echo $(CXX)  -DHAVE_CONFIG_H -g -o $(srcdir)/rose.h.gch $(srcdir)/rose.h -I$(top_builddir)/   #$(ROSE_INCLUDES) 
 	$(CXX)  -DHAVE_CONFIG_H -g -o $(srcdir)/rose.h.gch $(srcdir)/rose.h -I$(top_builddir) $(ROSE_INCLUDES) 
+
+endif
 
 distclean-local:
 	rm -rf *.a *.so testSharedRoseLib testMultiRoseLib Templates.DB

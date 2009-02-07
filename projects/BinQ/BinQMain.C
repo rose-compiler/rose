@@ -1,5 +1,6 @@
 
 #include "rose.h"
+
 #include <vector>
 #include <qrose.h>
 #include "BinQGui.h"
