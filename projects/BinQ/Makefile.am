@@ -39,7 +39,8 @@ BinQ_SOURCES = \
 
 BinQ_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
 
-INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I.
+INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I. -Winvalid-pch 
+
 
 # DQ (1/15/2009): Added demo rule to support ROSE reviews.
 
