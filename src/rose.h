@@ -4,6 +4,11 @@
 #ifndef ROSE_H
 #define ROSE_H
 
+/* Define to force use of thread-safe errno, h_errno, and other functions */
+#undef _REENTRANT 
+
+
+
 #if 0
 // Forward references to namespaces used in the binary execuable file format support.
 namespace Exec{
@@ -146,6 +151,10 @@ namespace ELF{
 #if USE_ROSE_DWARF_SUPPORT
 #include "dwarfSupport.h"
 #endif
+
+
+/* Define to force use of thread-safe errno, h_errno, and other functions */
+#undef _REENTRANT 
 
 // ifndef ROSE_H
 #endif

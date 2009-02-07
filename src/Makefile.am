@@ -143,8 +143,8 @@ clean-local:
 	rm -rf *.a *.so testSharedRoseLib testMultiRoseLib $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files
 
 roseh:
-	echo gcc -o $(srcdir)/rose.h.gch $(srcdir)/rose.h -I$(top_builddir)/   #$(ROSE_INCLUDES) 
-	g++ -o $(srcdir)/rose.h.gch $(srcdir)/rose.h -I$(top_builddir) $(ROSE_INCLUDES) 
+	echo $(CXX)  -DHAVE_CONFIG_H -g -o $(srcdir)/rose.h.gch $(srcdir)/rose.h -I$(top_builddir)/   #$(ROSE_INCLUDES) 
+	$(CXX)  -DHAVE_CONFIG_H -g -o $(srcdir)/rose.h.gch $(srcdir)/rose.h -I$(top_builddir) $(ROSE_INCLUDES) 
 
 distclean-local:
 	rm -rf *.a *.so testSharedRoseLib testMultiRoseLib Templates.DB
