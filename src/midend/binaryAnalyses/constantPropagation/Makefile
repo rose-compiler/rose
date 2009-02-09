@@ -1,13 +1,43 @@
-all: findConstants tokenizeLinux
+# ------------ You probably need to adjust these settings ------------------
+# Source and build directories
+ROSE_SRC=/home/matzke/GS-CAD/ROSE/sources/trunk
+ROSE_BLD=/home/matzke/GS-CAD/ROSE/build/trunk
 
-ROSE_INSTALL = /home/willcock2/rose-svn-checkout/install
-BOOST_INSTALL = /home/willcock2/boost-1.35-install64
+# Install point for BOOST. Use "/usr" if installed system-wide
+BOOST=/home/matzke/GS-CAD/boost_1_35_0/installed
 
-findConstants: findConstants.C flowEquations.h tokenizeLinux.C tokenizeLinux.h $(ROSE_INSTALL)/include/x86InstructionSemantics.h
-	g++ -g -Wall -o findConstants findConstants.C tokenizeLinux.C -I$(ROSE_INSTALL)/include -I$(BOOST_INSTALL)/include/boost-1_35 -L$(ROSE_INSTALL)/lib -lrose
+# Location of libjvm.so used by librose.so
+JVM=/etc/java-config-2/current-system-vm/jre/lib/amd64/server
+# --------------------------------------------------------------------------
 
-tokenizeLinux: tokenizeLinux.C tokenizeLinuxMain.C tokenizeLinux.h
-	g++ -g -Wall -o tokenizeLinux tokenizeLinux.C tokenizeLinuxMain.C -I$(ROSE_INSTALL)/include -I$(BOOST_INSTALL)/include/boost-1_35
 
+
+# Comment out to see full compiler commands
+SILENT=@
+
+all: findConstants tokenizeLinuxMain
+
+# *.h files are scattered all over the source and build trees. This command constructs the list of include directories.
+# We need to exclude the "rose-0.9.4a (and similar) build directories that are created from "make distcheck"
+# Also exclude headers from EDG since they conflict with system headers (e.g., getopt.h)
+INCDIRS=$(shell find $(ROSE_SRC) $(ROSE_BLD) -name '*.h' -printf '%h\n' |sort |uniq |grep -v /rose- |grep -v /EDG_)
+
+CXXFLAGS=-g -Wall $(patsubst %,-I%,$(INCDIRS)) -I$(BOOST)/include
+LDFLAGS=-L$(ROSE_BLD)/src/.libs -lrose -Wl,-rpath,$(JVM) -Wl,-rpath,$(BOOST)/lib
+
+tokenizeLinuxMain: tokenizeLinuxMain.o tokenizeLinux.o
+	@echo "  LINK $@"
+	$(SILENT)$(CXX) -o $@ $^ $(LDFLAGS)
+
+findConstants: findConstants.o tokenizeLinux.o
+	@echo "  LINK $@"
+	$(SILENT)$(CXX) -o $@ $^ $(LDFLAGS)
+
+.C.o:
+	@echo "  COMPILE $@"
+	$(SILENT)$(CXX) $(CXXFLAGS) -o $@ -c $<
+
+.PHONY: clean
 clean:
-	-rm -f findConstants
+	rm -f findConstants.o tokenizeLinux.o tokenizeLinuxMain.o
+	rm -f findConstants tokenizeLinuxMain
