@@ -934,17 +934,30 @@ struct FindConstantsPolicy {
 
     void finishBlock(uint64_t addr) {}
 
-    uint32_t entryPoint;
+    /** Returns true if the specified instruction is "externally visible". The old implementation based the assessment on
+     *  whether the specified instruction was the first instruction of an "externally visible" basic block. However, r4156
+     *  removed SgAsmBlock::externallyVisible in favor of better algorithms to detect function boundaries, so now it's
+     *  sufficient to just ask if the instruction starts a function. */
     bool isInstructionExternallyVisible(SgAsmInstruction* insn) const {
-        SgAsmBlock* blk = isSgAsmBlock(insn->get_parent());
-        ROSE_ASSERT (blk);
-#if 1
-        if (blk->get_externallyVisible() && insn == blk->get_statementList().front()) {
-            return true;
-        }
-#endif
-        if (insn->get_address() == entryPoint) return true;
-        return false;
+        return isFunctionEntry(insn);
+    }
+
+    /** Returns true if the specified instruction is the entry point of a function. */
+    bool isFunctionEntry(SgAsmInstruction *insn) const {
+        SgAsmFunctionDeclaration *fdefn = containingFunction(insn);
+        ROSE_ASSERT(fdefn);
+        SgAsmBlock *first_bb = isSgAsmBlock(fdefn->get_statementList()[0]);
+        return first_bb->get_id()==insn->get_address();
+    }
+    
+    /** Returns the function to which the specified instruction belongs. */
+    SgAsmFunctionDeclaration *
+    containingFunction(SgAsmInstruction *insn) const {
+        SgAsmBlock *bb = isSgAsmBlock(insn->get_parent());
+        ROSE_ASSERT(bb!=NULL);
+        SgAsmFunctionDeclaration *fdefn = isSgAsmFunctionDeclaration(bb->get_parent());
+        ROSE_ASSERT(fdefn!=NULL);
+        return fdefn;
     }
 
     void startInstruction(SgAsmInstruction* insn) {
