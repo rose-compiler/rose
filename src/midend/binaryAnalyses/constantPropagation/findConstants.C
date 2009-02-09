@@ -1091,6 +1091,7 @@ main(int argc, char** argv)
     SgAsmInterpretation* interp = isSgAsmInterpretation(n);
     SgAsmGenericHeader* header = interp->get_header();
 
+#if 0  /*Jeremiah's search for syscalls*/
     /* Initialize semantics with entry address for executable */
     FindConstantsPolicy policy; /*defined above*/
     X86InstructionSemantics<FindConstantsPolicy, XVariablePtr> t(policy);
@@ -1113,6 +1114,9 @@ main(int argc, char** argv)
     vector<linux_syscall> syscalls = getSyscalls("/usr/src/linux-2.6.27-gentoo-r8/include/linux/syscalls.h",
                                                  "syscall_list");
 
+    /* For each INT instruction look at the contents of the AX register, which contains the system call number. If that
+     * register contains a known constant value that corresponds to one of the syscall numbers we identified above then we
+     * know what system call is being invoked by that INT instruction. (This is x86-specific). */
     for (map<uint64_t, RegisterSet>::const_iterator i = policy.rsets.begin(); i != policy.rsets.end(); ++i) {
         SgAsmx86Instruction* insn = isSgAsmx86Instruction(info.getInstructionAtAddress(i->first));
         if (insn == NULL) continue;
@@ -1140,6 +1144,10 @@ main(int argc, char** argv)
                     call.arguments.clear();
                 }
                 cout << "Found system call " << call.name << endl;
+
+                /* System call arguments are passed in these general purpose registers.  Print the contents of each register
+                 * as a LatticeElement which contains a known constant or a named (unknown) constant, or a named constant plus a
+                 * known constant addend. */
                 for (size_t param = 0; param < call.arguments.size(); ++param) {
                     string name = call.arguments[param].name;
                     X86GeneralPurposeRegister paramRegs[] = {
@@ -1153,5 +1161,37 @@ main(int argc, char** argv)
             }
         }
     }
+#else /*Robb's search for signal handlers*/
+
+    /* Compute semantics only for specified range of addresses in order to avoid bad instruction assertions. The assertions
+     * sometimes fail because we disassembled an instruction at a weird address (like part way into some other instruction). */
+    rose_addr_t minaddr = 0x0;
+    rose_addr_t maxaddr = 0xffffffff;
+    std::cout <<"processing instruction semantics...\n";
+    FindConstantsPolicy policy;
+    X86InstructionSemantics<FindConstantsPolicy, XVariablePtr> t(policy);
+    for (size_t i=0; i<instructions.size(); i++) {
+        SgAsmx86Instruction *insn = isSgAsmx86Instruction(instructions[i]);
+        ROSE_ASSERT(insn);
+        if (insn->get_address()>=minaddr && insn->get_address()<=maxaddr)
+            t.processInstruction(insn);
+    }
+
+    /* Build the graph (info) containing information about how each instruction calls another. */
+    std::cout <<"building auxiliary information graph...\n";
+    VirtualBinCFG::AuxiliaryInformation info(proj);
+
+    /* Show each instruction along with its initial register set. */
+    for (std::map<uint64_t, RegisterSet>::const_iterator i = policy.rsets.begin(); i != policy.rsets.end(); ++i) {
+        SgAsmx86Instruction* insn = isSgAsmx86Instruction(info.getInstructionAtAddress(i->first));
+        if (insn == NULL) continue;
+
+        const RegisterSet& rset = i->second;
+        std::cout <<std::hex <<i->first <<": initial conditions...\n"
+                  <<rset  /*implied endl*/
+                  <<"    " <<std::dec <<": " <<unparseInstruction(insn) <<"\n\n";
+    }
+
+#endif
     return 0;
 }
