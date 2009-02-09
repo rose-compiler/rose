@@ -1033,7 +1033,7 @@ main(int argc, char** argv)
     /* Obtain syscall info: name of system call, call number, and names and types for formal arguments.  The *.h file contains
      * the declarations in the kernel for the system calls. The second file is a text file contaiing one line per syscall
      * where each line is an integer followed by the syscall name. */
-    vector<linux_syscall> syscalls = getSyscalls("/usr/src/kernels/2.6.9-78.0.1.EL-x86_64/include/linux/syscalls.h",
+    vector<linux_syscall> syscalls = getSyscalls("/usr/src/linux-2.6.27-gentoo-r8/include/linux/syscalls.h",
                                                  "syscall_list");
 
     for (map<uint64_t, RegisterSet>::const_iterator i = policy.rsets.begin(); i != policy.rsets.end(); ++i) {
