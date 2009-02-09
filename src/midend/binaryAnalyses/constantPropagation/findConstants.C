@@ -588,25 +588,31 @@ struct RegisterSet {
     }
 };
 
-ostream& operator<<(ostream& o, const RegisterSet& rs) {
+ostream&
+operator<<(ostream& o, const RegisterSet& rs)
+{
+    std::string prefix = "    ";
     for (size_t i = 0; i < 8; ++i)
-        o << gprToString((X86GeneralPurposeRegister)i) << " = " << rs.gpr[i] << endl;
+        o <<prefix << gprToString((X86GeneralPurposeRegister)i) << " = " << rs.gpr[i] << endl;
     for (size_t i = 0; i < 6; ++i)
-        o << segregToString((X86SegmentRegister)i) << " = " << rs.segreg[i] << endl;
+        o <<prefix << segregToString((X86SegmentRegister)i) << " = " << rs.segreg[i] << endl;
     for (size_t i = 0; i < 16; ++i)
-        o << flagToString((X86Flag)i) << " = " << rs.flag[i] << endl;
-    o << "memory = ";
+        o <<prefix << flagToString((X86Flag)i) << " = " << rs.flag[i] << endl;
+    o <<prefix << "memory = ";
     if (rs.memoryWrites->get().isTop) {
-        o << "<top>\n";
+        o <<prefix << "<top>\n";
     } else if (rs.memoryWrites->get().writes.empty()) {
-        o << "{}\n";
+        o <<"{}\n";
     } else {
-        o << "{\n";
+        o <<"{\n";
         for (size_t i = 0; i < rs.memoryWrites->get().writes.size(); ++i) {
-            o << "  " << rs.memoryWrites->get().writes[i].address
-              << ":" << rs.memoryWrites->get().writes[i].len << " -> " << rs.memoryWrites->get().writes[i].data << "\n";
+            o <<prefix <<"    "
+              <<"size=" <<rs.memoryWrites->get().writes[i].len
+              << "; addr=" <<rs.memoryWrites->get().writes[i].address
+              << "; value=" <<rs.memoryWrites->get().writes[i].data
+              <<"\n";
         }
-        o << "}\n";
+        o <<prefix << "}\n";
     }
     return o;
 }
