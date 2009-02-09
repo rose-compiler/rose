@@ -9,33 +9,50 @@
 using namespace std;
 using namespace IntegerOps;
 
-template <size_t Len>
+/** A LatticeElement contains the value of a register or memory location. The value can either be one of three types:
+ *  1. An unknown value (X).  Each potential unknown value is given a unique identifying "name" (a positive integer) which
+ *     distinguishes it from all other unknown values, whether they are equal or unequal.
+ *
+ *  2. A known offset from an unknown value (X+N). These are represented as the name of X plus the offset N. For instance, if
+ *     register "ax" has an unknown value "X" named "v123" and we execute "add ax,0x4" then the result will be that register "ax"
+ *     will have the value v123+4, or X+4.
+ *
+ *  3. A known constant, C.  All known constants have a zero name and the value is stored in the "offset" field. */
+template <size_t Len>                         // Sums are modulo 2^Len
 struct LatticeElement {
     bool isTop;
-    uint64_t name; // 0 for constants, nonzero for everything else
-    SgAsmx86Instruction* definingInstruction; // Functionally dependent on name
-    bool negate; // Switch between name+offset and -name+offset; should be false for constants
-    uint64_t offset; // Offset from name
+    uint64_t name;                            // 0 for constants, a nonzero ID number for everything else
+    SgAsmx86Instruction* definingInstruction; // Functionally dependent on name (mostly for debugging)
+    bool negate;                              // Switch between name+offset and -name+offset; should be false for constants
+    uint64_t offset;                          // Offset from name
 
-    // Sums are modulo 2^Len
+    /* Constructs a "top" lattice element */
     LatticeElement()
         : isTop(true), name(0), definingInstruction(NULL), negate(false), offset(0)
         {}
+
+    /* Construct a named lattice element (no offset) */
+    static LatticeElement nonconstant(uint64_t name, SgAsmx86Instruction* definingInstruction) {
+        return LatticeElement(name, definingInstruction, false, 0);
+    }
+
+    /* Construct a non-top, named lattice element with optional offset. */
     LatticeElement(uint64_t name, SgAsmx86Instruction* definingInstruction, bool negate, uint64_t offset)
         : isTop(false), name(name), definingInstruction(definingInstruction), negate(negate),
           offset(offset & (GenMask<uint64_t, Len>::value))
         {}
+
+    /* Construct a named lattice element with optional offset. */
     LatticeElement(bool isTop, uint64_t name, SgAsmx86Instruction* definingInstruction, bool negate, uint64_t offset)
         : isTop(isTop), name(name), definingInstruction(definingInstruction), negate(negate),
           offset(offset & (GenMask<uint64_t, Len>::value))
         {}
 
+    /* Construct a constant lattice element */
     static LatticeElement constant(uint64_t c, SgAsmx86Instruction* definingInstruction) {
         return LatticeElement(0, definingInstruction, false, c);
     }
-    static LatticeElement nonconstant(uint64_t name, SgAsmx86Instruction* definingInstruction) {
-        return LatticeElement(name, definingInstruction, false, 0);
-    }
+
     friend bool operator==(const LatticeElement& a, const LatticeElement& b) {
         if (a.isTop != b.isTop) return false;
         if (a.isTop) return true;
@@ -101,17 +118,23 @@ ostream& operator<<(ostream& o, const LatticeElement<Len>& e)
     return o;
 }
 
+/** Counter to generate unique names for XVariables (and thereby, LatticeElements). */
 uint64_t xvarNameCounter = 0;
+
+/** Instruction on which we are currently working. Set by FindConstantsPolicy::startInstruction, cleared by
+ *  FindConstantsPolicy::finishInstruction, and accessed by the XVariable constructor. */
 SgAsmx86Instruction* currentInstruction = NULL;
 
 template <size_t Len>
-struct XVariable: public Variable {
+struct XVariable: public Variable { /*Variable defined in flowEquations.h*/
     LatticeElement<Len> value;
     uint64_t myName;
     SgAsmx86Instruction* def;
     XVariable()
         : value(), myName(++xvarNameCounter), def(currentInstruction)
         {}
+
+    /** Give the variable a new value, keeping track of changes via the Variable superclass. */
     void set(const LatticeElement<Len>& le) {
         LatticeElement<Len> newValue = value;
         newValue.merge(le, myName, def);
@@ -120,11 +143,14 @@ struct XVariable: public Variable {
         value = newValue;
         this->pushChanges();
     }
+
+    /** Gets the variable's current value. */
     LatticeElement<Len> get() const {
         return value;
     }
 };
 
+/** A pointer to an XVariable. */
 template <size_t Len>
 struct XVariablePtr {
     XVariable<Len>* var;
@@ -148,6 +174,8 @@ ostream& operator<<(ostream& o, XVariablePtr<Len> v) {
     return o;
 }
 
+/** Information about the contents of memory at a given address. The contents and address are both lattice elements and
+ *  therefore can have unknown values. */
 struct MemoryWrite {
     LatticeElement<32> address;
     LatticeElement<32> data;
@@ -160,24 +188,34 @@ struct MemoryWrite {
     }
 };
 
+/** Returns true if the contents of memory location @p a could possibly overlap with @p b. In other words, returns false only
+ *  if memory location @p a cannot overlap with memory location @p b. */
 bool mayAlias(const MemoryWrite& a, const MemoryWrite& b) {
     LatticeElement<32> addr1 = a.address;
     LatticeElement<32> addr2 = b.address;
-    if (addr1.isTop)
+
+    if (addr1.isTop || addr2.isTop)
         return false;
-    if (addr2.isTop)
-        return false;
+
+    /* Two different unknown values or offsets from two different unknown values. */
     if (addr1.name != addr2.name)
         return true;
+
+    /* Same unknown base values but inverses (any offset). */
     if (addr1.name != 0 && addr1.negate != addr2.negate)
         return true;
-    // Same name, same negate -- check offsets
-    uint32_t offsetDiff = (uint32_t)(addr1.offset - addr2.offset); // This is required to wrap properly
+
+    /* If they have the same base values (or are both constant) then check the offsets. The 32-bit casts are purportedly
+     * necessary to wrap propertly, but I'm not sure this will work for addresses (LatticeElements) that have a length other
+     * than 32 bits. [FIXME RPM 2009-02-03]. */
+    uint32_t offsetDiff = (uint32_t)(addr1.offset - addr2.offset);
     if (offsetDiff < a.len || offsetDiff > (uint32_t)(-b.len))
         return true;
+
     return false;
 }
 
+/** Returns true if memory locations @p a and @p b are the same (note that "same" is more strict than "overlap"). */
 bool mustAlias(const MemoryWrite& a, const MemoryWrite& b) {
     if (!mayAlias(a, b)) return false;
     return a.address.offset == b.address.offset;
@@ -189,14 +227,17 @@ XVariablePtr<To> extendByMSB(XVariablePtr<From>);
 template <size_t From, size_t To, size_t Len>
 XVariablePtr<To - From> extract(XVariablePtr<Len>);
 
+/** A set of values stored in memory. */
+/* FIXME: Why are addresses and data always 32 bits? Will this work for a 64-bit architecture? [RPM 2009-02-03] */
 struct MemoryWriteSet {
     bool isTop;
-    vector<MemoryWrite> writes;
+    vector<MemoryWrite> writes;         /* Always sorted by address */
 
     MemoryWriteSet()
         : isTop(true), writes()
         {}
 
+    /** Add a value to memory. Any existing writes that may overlap with the new data are removed from this MemoryWriteSet. */
     void addWrite(LatticeElement<32> address, LatticeElement<32> data, unsigned int len) {
         isTop = false;
         MemoryWrite mw;
@@ -205,20 +246,25 @@ struct MemoryWriteSet {
         mw.len = len;
         vector<MemoryWrite> newWrites;
         for (size_t i = 0; i < writes.size(); ++i) {
-            if (!mayAlias(writes[i], mw)) newWrites.push_back(writes[i]);
+            if (!mayAlias(writes[i], mw))
+                newWrites.push_back(writes[i]);
         }
         newWrites.push_back(mw);
         writes = newWrites;
         sort(writes.begin(), writes.end());
     }
 
+    /** Obtains the value stored at the specified memory address, returning true if the address is defined or false otherwise. */
     template <size_t Len> // In bits
     bool getValueAtAddress(LatticeElement<32> address, LatticeElement<Len>& result, uint32_t resultName,
                            SgAsmx86Instruction* resultDef) const {
+        /* Construct the MemoryWrite object for the address in question since it's needed by mustAlias() */
         MemoryWrite mw;
         mw.address = address;
         mw.data = LatticeElement<32>::constant(0, resultDef);
         mw.len = Len / 8;
+
+        /* Scan vector until we find a match and then return that value. */
         for (size_t i = 0; i < writes.size(); ++i) {
             if (mustAlias(writes[i], mw)) {
                 cout << "Found data " << writes[i].data << " for address " << address << endl;
@@ -227,6 +273,8 @@ struct MemoryWriteSet {
                 return true;
             }
         }
+
+        /* No match found */
         result = isTop ? LatticeElement<Len>() : LatticeElement<Len>::nonconstant(resultName, resultDef);
         return false;
     }
@@ -239,10 +287,14 @@ struct MemoryWriteSet {
     }
 
     bool mergeIn(const MemoryWriteSet& o) { // Returns to determine whether changes were made
-        if (o.isTop) return false;
-        if (this->isTop) {*this = o; return !o.isTop;}
+        if (o.isTop)
+            return false;
+        if (this->isTop) {
+            *this = o;
+            return !o.isTop;
+        }
         bool result = !writes.empty();
-        *this = bottom(); // FIXME
+        *this = bottom(); // FIXME [JJW]
         return result;
     }
 
