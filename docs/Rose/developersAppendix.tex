@@ -37,6 +37,7 @@ feature to ROSE, show us your tests.
 We have two subversion repositories for ROSE: an internal one at LLNL and
 an external one at SciDAC Outreach Center (using a vendor drop scheme). 
 Some tips for using them are gathered in this section. 
+
 \subsection{The External Repository}
 If you are our external (non-LLNL) users who make contributions to ROSE,
 we highly recommend you to work on a dedicated branch of the external repository. 
@@ -86,13 +87,157 @@ the second is usually the head revision of the main trunk.
         https://outreach.scidac.gov/svn/rose/trunk} \\
         \textit{svn merge -r 56:69
         https://outreach.scidac.gov/svn/rose/trunk} 
-   \item Solve conflicts as needed.     
+   \item Solve conflicts as needed.
    \item svn commit: {\bf Note:please record the start and end revision numbers of
-   the main trunk being merged into the commit log to keep track of merging.}
+   the main trunk being merged into the commit log to keep track of merging.
+   Please put this information on the first line if this is a commit following a
+   merge of your branch with the main trunk (see Commit Message Format in subsection~\ref{CommitMessageFormat} for details)}
 \end{itemize}                
 \item You can check the archive of email notifications of the svn commits
 from \htmladdnormallink{https://osp5.lbl.gov/pipermail/rose-commits}{https://osp5.lbl.gov/pipermail/rose-commits} 
 \end{itemize}
+
+\subsection{Commit Message Format}
+\label{CommitMessageFormat}
+   The automatically generated ChangeLog2 file will provide everyone with
+detailed information about what changes are made to ROSE over time. To
+make this information as clear and consistant as possible we have two
+(slightly different) commit message formats:
+% There are two styles of commit message formats: 
+1) normal commits of your local contributions to your branch or to 
+   the internal SVN trunk; and
+2) commits after a merge of the main trunk's changes.
+\begin{enumerate}
+   \item Normal svn commit (not those following an svn merge)
+   \begin{itemize}
+      \item {\tt svn commit} will start your favorite editor where you should enter a
+	    description of your changes. The first line of that description should be
+            a short, one-line summary ({\it i.e.}, a title with just the first word capitalized),
+            followed by a blank line, and as much detail as necessary. There is generally
+            no need to includes your name, date, names of files, etc. as this information
+            is readily available from the source revision management system. Do not prefix
+            the summary with tags like ``Summary:'', ``Title:'' etc. since it's already
+            implied that the first line is the summary.
+
+	    Here's an example specific to a commit on the internal SVN or an SVN branch:
+	    {\indent
+	       \begin{verbatim}
+Adjusted test case for new binary function detection
+    
+This test case assumed that the only functions in a binary executable
+were those that had symbols in the symbol table.  This is no longer
+true since we now determine function boundaries with a wider variety of
+heuristics.
+	       \end{verbatim} 
+            }
+   \end{itemize}
+   \item For the svn commit at any point after your svn merge \\
+	    Here's an example specific to a commit message on an SVN branch after a merge:
+	    {\indent
+	       \begin{verbatim}
+svn merge -r 402:428 https://outreach.scidac.gov/svn/rose/trunk
+	       \end{verbatim} 
+            }
+   \item If you mix a merge and a local contribution (via svn merge) (we don't suggest mixing them)\\
+	    Here's an example specific to a commit on an SVN branch ({\em note first line}):
+	    {\indent
+	       \begin{verbatim}
+svn merge -r 402:428
+Adjusted test case for new binary function detection
+    
+This test case assumed that the only functions in a binary executable
+were those that had symbols in the symbol table.  This is no longer
+true since we now determine function boundaries with a wider variety of
+heuristics.
+	       \end{verbatim} 
+            }
+\end{enumerate}
+
+
+% Moved this from being a section (1.6) to being a subsection (1.2.2)
+\subsection{Check In Process}
+
+   The following information applies to both the internal SVN reposiotry and the 
+branches that we provide to external collaborators.  There are a number of details
+that we need to make sure that your developent work can be used to update ROSE.
+
+For internal SVN users:
+{\bf Please get permission from the ROSE Development Team before you make your first check-in!}
+
+For all SVN users:
+   If you have access to the SVN repository (at LLNL) and are building the development 
+version of ROSE (available only from SVN, not what we package as a ROSE distribution; 
+e.g. not from a file name such as ROSE-\VersionNumber.tar.gz) then 
+% the README file in the top level directory also has instructions for how to get started. 
+there are a number of steps to the checkin process:
+%The README\_CHECKIN file has the instructions for our standard testing process.
+%This should be done before you check anything in; we don't reprint it so it is
+%represented at most only once.
+% {\bf NOTE: Get permission from the ROSE Development Team before you make your first check-in!}
+\begin{enumerate}
+   \item Make sure you are working with the latest update (run {\tt svn update} in the top
+    level directory.
+
+ % \item In {\em ROSE/configure.in} modify version number (X.Y.ZZL) at the top of the file.
+
+   \item Run {\tt make} \&\& {\tt make docs} \&\& {\tt make check} \&\&
+   {\tt make dist} \&\& 
+         {\tt make distcheck} \&\& {\tt make install} \&\& {\tt make installcheck}, depending
+         on how aggressively you want your changes to be tested.
+   \begin{itemize}
+      \item Not all tests must be run, but we will know who you are (via {\tt svn blame} 
+            if the nightly test fail :-)).
+      \item All changes must at least compile, so that you don't hold back other
+            developers who update often.
+   \end{itemize}
+   \item The commit will fail if someone else has committed while you were running
+         your pre-commit tests. If this happens you will generally need to restart
+         the check-in process from the top.
+   \item Please follow the commit message format (see Commit Message Format in 
+         subsection~\ref{CommitMessageFormat} for details).
+
+%   \item ROSE/ChangeLog
+%   a new entry has to include at least the following information:
+%   - new version number
+%   - who checked it in
+%   - comments on changes
+%   - run 'cvschk' in your ROSE directory.
+%     copy the output of 'cvschk' to the ChangeLog (except "Extra Files")
+%     (this includes all version numbers of tools used, etc.)
+%
+% 4) Send an e-mail to casc-rose@llnl.gov that you are checking in a new 
+%    version of ROSE. Include the new version number in this e-mail.
+%
+% 6) check out a fresh version of ROSE in a new directory
+%   - run all tests as above, in part 2, on this checked-out version
+%   - make sure all tests succeed
+%
+% 7) cvs rtag ROSE-X-Y-ZZL ROSE
+%    - X-Y-ZZL has to be the same version number as in configure.in
+%      (X, Y, Z are numbers, L is a letter, note that here '-' is used instead
+%       of '.' as in configure.in)
+%
+% 8) send out e-mail that check-in was successful
+%    - copy & paste the output of make distcheck that the new version is ready
+%      for distribution in this e-mail.
+%    - include your new comments from the ChangeLog
+%
+% regular definition of version number:
+% X=Y=Z=[0-9], L=[a-z]
+% X.Y.ZZL /* in configure.in */
+% X-Y-ZZL /* when using cvs rtag */
+%
+% Note that in configure.in '.' is used to separate X,Y,ZZL where as with
+% etag '-' must be used, X-Y-ZZL!
+
+\end{enumerate}
+
+If you do not have access to the SVN repository at LLNL, and you wish to contribute
+work to the ROSE project, please make a patch.  Using the external SVN access via
+LBL use {\tt svn diff} to build a patch.
+Consider options: {\em --diff-cmd arg}.
+DQ(7/28/2008): This section still needs to be completed!
+
 
 
 \subsection{The Internal Repository}
@@ -280,106 +425,6 @@ permit larger internal buffer sizes.  All the other LaTeX documentation, such as
 User Manual but not the Reference Manual may be built without problems using the 
 default configuration for LaTeX.
 }
-
-\section{Check In Process}
-
-{\bf NOTE: Get permission from the ROSE Development Team before you make your first check-in!}
-
-   If you have access to the SVN repository (at LLNL) and are building the development 
-version of ROSE (available only from SVN, not what we package as a ROSE distribution; 
-e.g. not from a file name such as ROSE-\VersionNumber.tar.gz) then 
-% the README file in the top level directory also has instructions for how to get started. 
-there are a number of steps to the checkin process:
-%The README\_CHECKIN file has the instructions for our standard testing process.
-%This should be done before you check anything in; we don't reprint it so it is
-%represented at most only once.
-% {\bf NOTE: Get permission from the ROSE Development Team before you make your first check-in!}
-\begin{enumerate}
-   \item Make sure you are working with the latest update (run {\tt svn update} in the top
-    level directory.
-
- % \item In {\em ROSE/configure.in} modify version number (X.Y.ZZL) at the top of the file.
-
-   \item Run {\tt make} \&\& {\tt make docs} \&\& {\tt make check} \&\&
-   {\tt make dist} \&\& 
-         {\tt make distcheck} \&\& {\tt make install} \&\& {\tt make installcheck}, depending
-         on how aggressively you want your changes to be tests.
-   \begin{itemize}
-      \item Not all tests must be run, but we will know who you are (via {\tt svn blame} 
-            if the nightly test fail :-).
-      \item All changes must at least compile, so that you don't hold back other
-            developers who update often.
-   \end{itemize}
-
-   \item svn commit
-   \begin{itemize}
-      \item The commit will fail if someone else has committed while you were running
-            your pre-commit tests. If this happens you will generally need to restart
-            the check-in process from the top.
-      \item {\tt svn commit} will start your favorite editor where you should enter a
-	    description of your changes. The first line of that description should be
-            a short, one-line summary ({\it i.e.}, a title with just the first word capitalized),
-            followed by a blank line, and as much detail as necessary. There is generally
-            no need to includes your name, date, names of files, etc. as this information
-            is readily available from the source revision management system. Do not prefix
-            the summary with tags like ``Summary:'', ``Title:'' etc. since it's already
-            implied that the first line is the summary.
-
-	    Here's an example:
-	    {\indent
-	       \begin{verbatim}
-    	          Adjusted test case for new binary function detection
-    
-    	          This test case assumed that the only functions in a binary executable
-    	          were those that had symbols in the symbol table.  This is no longer
-    	          true since we now determine function boundaries with a wider variety of
-    	          heuristics.
-	       \end{verbatim} 
-            }
-   \end{itemize}
-
-%   \item ROSE/ChangeLog
-%   a new entry has to include at least the following information:
-%   - new version number
-%   - who checked it in
-%   - comments on changes
-%   - run 'cvschk' in your ROSE directory.
-%     copy the output of 'cvschk' to the ChangeLog (except "Extra Files")
-%     (this includes all version numbers of tools used, etc.)
-%
-% 4) Send an e-mail to casc-rose@llnl.gov that you are checking in a new 
-%    version of ROSE. Include the new version number in this e-mail.
-%
-% 6) check out a fresh version of ROSE in a new directory
-%   - run all tests as above, in part 2, on this checked-out version
-%   - make sure all tests succeed
-%
-% 7) cvs rtag ROSE-X-Y-ZZL ROSE
-%    - X-Y-ZZL has to be the same version number as in configure.in
-%      (X, Y, Z are numbers, L is a letter, note that here '-' is used instead
-%       of '.' as in configure.in)
-%
-% 8) send out e-mail that check-in was successful
-%    - copy & paste the output of make distcheck that the new version is ready
-%      for distribution in this e-mail.
-%    - include your new comments from the ChangeLog
-%
-% regular definition of version number:
-% X=Y=Z=[0-9], L=[a-z]
-% X.Y.ZZL /* in configure.in */
-% X-Y-ZZL /* when using cvs rtag */
-%
-% Note that in configure.in '.' is used to separate X,Y,ZZL where as with
-% etag '-' must be used, X-Y-ZZL!
-
-\end{enumerate}
-
-If you do not have access to the SVN repository at LLNL, and you wish to contribute
-work to the ROSE project, please make a patch.  Using the external SVN access via
-LBL use {\tt svn diff} to build a patch.
-Consider options: {\em --diff-cmd arg}.
-DQ(7/28/2008): This section still needs to be completed!
-
 
 
 \section {Adding New SAGE III IR Nodes (Developers Only)}
