@@ -250,58 +250,52 @@ DisassemblerCommon::AsmFileWithData::disassembleRecursively(vector<uint64_t>& wo
                                                             map<uint64_t, SgAsmInstruction*>& insns,
                                                             BasicBlockStarts &basicBlockStarts
                                                             ) const
-   {
-     while (!worklist.empty())
-        {
-          uint64_t addr = worklist.back();
-          worklist.pop_back();
+{
+    while (!worklist.empty()) {
+        uint64_t addr = worklist.back();
+        worklist.pop_back();
 
-       // Check if this instruction has already been decoded.
-          if (insns.find(addr) != insns.end())
-             {
-            // printf ("addr = 0x%"PRIx64" is in instruction map: insns (already decoded, so continue) \n",addr);
-               continue;
-             }
+        // Check if this instruction has already been decoded.
+        if (insns.find(addr) != insns.end())
+            continue;
         
-          ++instructionsDisassembled;
+        ++instructionsDisassembled;
 
-          if (instructionsDisassembled % 10000 == 0)
-             {
-               cerr << instructionsDisassembled << " disassembling " << addr
-                    << " worklist size = " << worklist.size()
-                    << ", done = " << insns.size() << endl;
-             }
+        if (instructionsDisassembled % 10000 == 0) {
+            cerr << instructionsDisassembled << " disassembling " << addr
+                 << " worklist size = " << worklist.size()
+                 << ", done = " << insns.size() << endl;
+        }
 
-       /* Disassemble an instruction, returning all known successor addresses of this instruction. */
-          set<uint64_t> knownSuccessors;
-          SgAsmInstruction* insn = disassembleOneAtAddress(addr, knownSuccessors);
+        /* Disassemble an instruction, returning all known successor addresses of this instruction. */
+        set<uint64_t> knownSuccessors;
+        SgAsmInstruction* insn = disassembleOneAtAddress(addr, knownSuccessors);
 
-       // Check if there was an error, NULL return value means that the instruction was not decoded.
-       // This is likely because it was an illegal instruction (data instead of code).
-          if (insn == NULL)
-             {
-               cerr << "Bad instruction at 0x" << hex << addr << endl; 
-               continue;
-             }
+        // Check if there was an error, NULL return value means that the instruction was not decoded.
+        // This is likely because it was an illegal instruction (data instead of code).
+        if (insn == NULL) {
+            cerr << "Bad instruction at 0x" << hex << addr << endl; 
+            continue;
+        }
 
-          insns.insert(make_pair(addr, insn));
+        insns.insert(make_pair(addr, insn));
 
-       /* Build branching-graph based on the known successor addresses. Non-branching instructions will return at most one
-        * successor which we do not add to the graph because we want edges between the basic blocks, not within a basic
-        * block. Unconditional branches will also return at most one successor, but the successor will probably not be the
-        * next address but rather some distant address which we store as an edge in the graph.  Instructions that have more
-        * than one successor are such things as conditional branches or CALL-like instructions where one of the successors is
-        * probably the next address--we store all of these successor edges (the distant addresses obviously need to be stored,
-        * but the next address is also stored because it's an edge to another basic block. */
-          for (set<uint64_t>::const_iterator i = knownSuccessors.begin(); i != knownSuccessors.end(); ++i)
-             {
-               if (!inCodeSegment(*i))
-                   continue;
-               if (knownSuccessors.size()>1 || *i != addr + insn->get_raw_bytes().size())
-                   basicBlockStarts[*i].insert(addr);
-               if (insns.find(*i) == insns.end())
-                   worklist.push_back(*i);
-             }
+        /* Build branching-graph based on the known successor addresses. Non-branching instructions will return at most one
+         * successor which we do not add to the graph because we want edges between the basic blocks, not within a basic
+         * block. Unconditional branches will also return at most one successor, but the successor will probably not be the
+         * next address but rather some distant address which we store as an edge in the graph.  Instructions that have more
+         * than one successor are such things as conditional branches or CALL-like instructions where one of the successors is
+         * probably the next address--we store all of these successor edges (the distant addresses obviously need to be stored,
+         * but the next address is also stored because it's an edge to another basic block. */
+        for (set<uint64_t>::const_iterator i = knownSuccessors.begin(); i != knownSuccessors.end(); ++i) {
+            rose_addr_t work_addr = *i;
+            if (!inCodeSegment(work_addr))
+                continue;
+            if (knownSuccessors.size()>1 || work_addr != addr + insn->get_raw_bytes().size())
+                basicBlockStarts[work_addr].insert(addr);
+            if (insns.find(work_addr) == insns.end())
+                worklist.push_back(work_addr);
+        }
 
         /* Scan for constant operands that are code pointers. Such operands are often used in a closely following instruction
          * as a jump target. E.g., "move 0x400600, reg1; ...; jump reg1". We don't know when (or even if) the execution branch
