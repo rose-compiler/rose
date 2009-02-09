@@ -10,6 +10,9 @@ procnum: snum #
 BLOCK
 label: snum #
 
+POSITION
+position: snum #
+
 
 // ---- dummy problem declaration ----
 PROBLEM SATIrE_dummy_analysis

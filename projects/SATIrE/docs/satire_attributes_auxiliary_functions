@@ -1,4 +1,4 @@
-$Id: satire_attributes_auxiliary_functions,v 1.15 2008-11-13 20:11:30 gergo Exp $
+$Id: satire_attributes_auxiliary_functions,v 1.16 2009-02-09 11:02:36 gergo Exp $
 
 This file lists all CFG attributes, types, and auxiliary functions
 accessible from PAG analysis specifications when using the SATIrE system.
@@ -42,6 +42,14 @@ label: snum #
     A unique numerical label for the block; as each block in SATIrE consists
     of exactly one statement, this can also be considered a unique label for
     each statement. Labels are never negative.
+
+POSITION Attributes
+-------------------
+position: snum #
+    A numerical label for what PAG calls the "position" of the analysis
+    information: The pair (procnum, position) is a unique (opaque)
+    identifier for the interprocedural analysis context at the current point
+    in the analysis.
 
 
 SATIrE Types

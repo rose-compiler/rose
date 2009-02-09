@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: pag_support.C,v 1.18 2008-08-23 13:46:46 gergo Exp $
+// $Id: pag_support.C,v 1.19 2009-02-09 11:02:36 gergo Exp $
 
 #include <iostream>
 
@@ -250,6 +250,11 @@ extern "C" snum kfg_get_routine_attribute__procnum(KFG, int procnum)
 extern "C" snum kfg_get_bblock_attribute__label(KFG cfg, KFG_NODE bb)
 {
     return int_to_snum(kfg_get_id(cfg, bb));
+}
+/* position (context) IDs */
+extern "C" snum kfg_get_position_attribute__position(KFG, KFG_NODE, int, int p)
+{
+    return int_to_snum(p);
 }
 
 /* external support functions */
