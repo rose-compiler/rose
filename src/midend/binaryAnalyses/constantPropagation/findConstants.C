@@ -63,20 +63,41 @@ struct LatticeElement {
     }
 };
 
+/** Shows values like this (all integers are hexadecimal, offsets are signed):
+ *    1. Unknown value:                      v5b9
+ *    2. Known offset from unknown value:    v5b9+45
+ *    3. Constant:                           0xfffffffc (-0x4)
+ *    4. Top elements:                       <top>
+ */
 template <size_t Len>
-ostream& operator<<(ostream& o, const LatticeElement<Len>& e) {
+ostream& operator<<(ostream& o, const LatticeElement<Len>& e)
+{
     if (e.isTop) {
-        o << "<top>"; return o;
+        o << "<top>";
+    } else {
+        uint64_t sign_bit = (uint64_t)1 << (Len-1);  /* e.g., 80000000 */
+        uint64_t val_mask = sign_bit - 1;            /* e.g., 7fffffff */
+        uint64_t negative = (e.offset & sign_bit) ? (~e.offset & val_mask) + 1 : 0; /*magnitude of negative value*/
+
+        if (e.name!=0) {
+            /* This is a named value rather than a constant. */
+            const char *sign = e.negate ? "-" : "";
+            o <<sign <<"v" <<hex <<e.name;
+            if (negative) {
+                o <<"-" <<negative;
+            } else if (e.offset) {
+                o <<"+" <<e.offset;
+            }
+        } else {
+            /* This is a constant */
+            ROSE_ASSERT(!e.negate);
+            o  <<"0x" <<hex <<e.offset;
+            if (negative)
+                o <<" (-0x" <<hex <<negative <<")";
+        }
+        if (e.definingInstruction!=NULL)
+            o << " [from " << unparseInstructionWithAddress(e.definingInstruction) << "]";
     }
-    if (e.name != 0) {
-        if (e.negate) o << "-";
-        o << "v" << e.name;
-        if (e.offset != 0) o << "+";
-    }
-    if (e.offset != 0 || e.name == 0)
-        o << e.offset;
-    if (e.definingInstruction != NULL)
-        o << " [from " << unparseInstructionWithAddress(e.definingInstruction) << "]";
     return o;
 }
 
