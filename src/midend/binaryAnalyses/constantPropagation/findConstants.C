@@ -988,27 +988,41 @@ int
 main(int argc, char** argv)
 {
     SgProject* proj = frontend(argc, argv);
-    FindConstantsPolicy policy;
-    X86InstructionSemantics<FindConstantsPolicy, XVariablePtr> t(policy);
+
+    /* Find all x86 instructions */
     vector<SgNode*> instructions = NodeQuery::querySubTree(proj, V_SgAsmx86Instruction);
     ROSE_ASSERT (!instructions.empty());
+
+    /* Find the interpretation and header */
     SgAsmNode* n = isSgAsmNode(instructions[0]);
     while (n && !isSgAsmInterpretation(n))
         n = isSgAsmNode(n->get_parent());
     ROSE_ASSERT (n);
     SgAsmInterpretation* interp = isSgAsmInterpretation(n);
     SgAsmGenericHeader* header = interp->get_header();
+
+    /* Initialize semantics with entry address for executable */
+    FindConstantsPolicy policy; /*defined above*/
+    X86InstructionSemantics<FindConstantsPolicy, XVariablePtr> t(policy);
     uint32_t entry = header->get_entry_rva() + header->get_base_va();
     policy.entryPoint = entry;
+
     for (size_t i = 0; i < instructions.size(); ++i) {
         SgAsmx86Instruction* insn = isSgAsmx86Instruction(instructions[i]);
         ROSE_ASSERT (insn);
         cerr << "Working on address 0x" << hex << insn->get_address() << dec << endl;
         t.processInstruction(insn);
     }
+
+    /* Build the graph (info) containing information about each instruction calls another. */
     VirtualBinCFG::AuxiliaryInformation info(proj);
+
+    /* Obtain syscall info: name of system call, call number, and names and types for formal arguments.  The *.h file contains
+     * the declarations in the kernel for the system calls. The second file is a text file contaiing one line per syscall
+     * where each line is an integer followed by the syscall name. */
     vector<linux_syscall> syscalls = getSyscalls("/usr/src/kernels/2.6.9-78.0.1.EL-x86_64/include/linux/syscalls.h",
                                                  "syscall_list");
+
     for (map<uint64_t, RegisterSet>::const_iterator i = policy.rsets.begin(); i != policy.rsets.end(); ++i) {
         SgAsmx86Instruction* insn = isSgAsmx86Instruction(info.getInstructionAtAddress(i->first));
         if (insn == NULL) continue;
