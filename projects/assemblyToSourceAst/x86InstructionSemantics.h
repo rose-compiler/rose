@@ -1910,7 +1910,11 @@ struct X86InstructionSemantics {
         read16(operands[0]); // To catch access control violations
         break;
       }
-      default: fprintf(stderr, "Bad instruction %s\n", toString(kind).c_str()); abort();
+      default: {
+          std::cerr <<"Bad instruction [0x" <<std::hex <<insn->get_address() <<": " <<unparseInstruction(insn) <<"] (skipping semantic analysis)\n";
+          //abort();            /* Commented out so we can at least do something partially useful [RPM 2009-02-06] */
+          break;
+      }
     }
   }
 
