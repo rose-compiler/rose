@@ -1,8 +1,63 @@
+/* Algorithms to detect where functions begin in the set of machine instructions. See detectFunctionStarts() near the end of this file. */
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 #include "rose.h"
 
 namespace DisassemblerCommon {
+
+/* Returns the value of an SgAsmValueExpression by casting to each possible subtype since there's no virtual function to get
+ * the value. */
+static rose_addr_t
+value_of(SgAsmValueExpression *e)
+{
+    if (!e) {
+        return 0;
+    } else if (isSgAsmWordValueExpression(e)) {
+        return isSgAsmWordValueExpression(e)->get_value();
+    } else if (isSgAsmDoubleWordValueExpression(e)) {
+        return isSgAsmDoubleWordValueExpression(e)->get_value();
+    } else if (isSgAsmQuadWordValueExpression(e)) {
+        return isSgAsmQuadWordValueExpression(e)->get_value();
+    } else {
+        return 0;
+    }
+}
+
+/* Return the virtual address that holds the branch target for an indirect branch. For example, when called with these
+ * instructions:
+ *     jmp DWORD PTR ds:[0x80496b0]        -> (x86)   returns 80496b0
+ *     jmp QWORD PTR ds:[rip+0x200b52]     -> (amd64) returns 200b52 + address following instruction
+ *
+ * We only instructions that appear as the first instruction in an ELF .plt entry. */
+static rose_addr_t
+get_indirection_addr(SgAsmInstruction *g_insn)
+{
+    rose_addr_t retval = 0;
+
+    SgAsmx86Instruction *insn = isSgAsmx86Instruction(g_insn);
+    if (!insn ||
+        !x86InstructionIsUnconditionalBranch(insn) ||
+        1!=insn->get_operandList()->get_operands().size())
+        return retval;
+    
+    SgAsmMemoryReferenceExpression *mref = isSgAsmMemoryReferenceExpression(insn->get_operandList()->get_operands()[0]);
+    if (!mref)
+        return retval;
+
+    SgAsmExpression *mref_addr = mref->get_address();
+    if (isSgAsmBinaryExpression(mref_addr)) {
+        SgAsmBinaryExpression *mref_bin = isSgAsmBinaryExpression(mref_addr);
+        SgAsmx86RegisterReferenceExpression *reg = isSgAsmx86RegisterReferenceExpression(mref_bin->get_lhs());
+        SgAsmValueExpression *val = isSgAsmValueExpression(mref_bin->get_rhs());
+        if (reg->get_register_class()==x86_regclass_ip && val!=NULL) {
+            retval = value_of(val) + insn->get_address() + insn->get_raw_bytes().size();
+        }
+    } else if (isSgAsmValueExpression(mref_addr)) {
+        retval = value_of(isSgAsmValueExpression(mref_addr));
+    }
+
+    return retval; /*calculated value, or defaults to zero*/
+}
 
 /** Marks program entry addresses (stored in the SgAsmGenericHeader) as functions. */
 static void
@@ -22,7 +77,11 @@ mark_entry_targets(SgAsmInterpretation *interp,
 
 /** Marks CALL targets as functions. Not all functions are called this way, but we assume that all appearances of a CALL-like
  *  instruction with a constant target which corresponds to the known address of an instruction causes that target to become
- *  the entry point of a function. */
+ *  the entry point of a function.
+ *  
+ *  Note: any CALL whose target is the next instruction is ignored since this usually just happens for ip-relative calls that
+ *        need a reloc applied, and thus have a zero offset. Such calls are common in ELF object files contained in library
+ *        archives (lib*.a). */
 static void
 mark_call_targets(SgAsmInterpretation *interp,
                   std::map<uint64_t, SgAsmInstruction*> &insns,
@@ -40,10 +99,14 @@ mark_call_targets(SgAsmInterpretation *interp,
         }
 
         if (insn && (x86_call==insn->get_kind() || x86_farcall==insn->get_kind())) {
+            bool needs_reloc=false;             /*does relocation appear to be necessary?*/
             rose_addr_t callee_rva = 0;
             if (x86GetKnownBranchTarget(insn, callee_rva/*out*/) &&
-                insns.find(callee_rva)!=insns.end())
-                func_starts[callee_rva].reason |= SgAsmFunctionDeclaration::FUNC_CALL_TARGET;
+                insns.find(callee_rva)!=insns.end()) {
+                bool needs_reloc = callee_rva == insn->get_address() + insn->get_raw_bytes().size();
+                if (!needs_reloc)
+                    func_starts[callee_rva].reason |= SgAsmFunctionDeclaration::FUNC_CALL_TARGET;
+            }
         }
     }
 }
@@ -165,60 +228,6 @@ mark_graph_edges(SgAsmInterpretation *interp,
             pending_functions.erase(func_begin);
         }
     }
-}
-
-/* Returns the value of an SgAsmValueExpression by casting to each possible subtype since there's no virtual function to get
- * the value. */
-static rose_addr_t
-value_of(SgAsmValueExpression *e)
-{
-    if (!e) {
-        return 0;
-    } else if (isSgAsmWordValueExpression(e)) {
-        return isSgAsmWordValueExpression(e)->get_value();
-    } else if (isSgAsmDoubleWordValueExpression(e)) {
-        return isSgAsmDoubleWordValueExpression(e)->get_value();
-    } else if (isSgAsmQuadWordValueExpression(e)) {
-        return isSgAsmQuadWordValueExpression(e)->get_value();
-    } else {
-        return 0;
-    }
-}
-
-/* Return the virtual address that holds the branch target for an indirect branch. For example, when called with these
- * instructions:
- *     jmp DWORD PTR ds:[0x80496b0]        -> (x86)   returns 80496b0
- *     jmp QWORD PTR ds:[rip+0x200b52]     -> (amd64) returns 200b52 + address following instruction
- *
- * We only instructions that appear as the first instruction in an ELF .plt entry. */
-static rose_addr_t
-get_indirection_addr(SgAsmInstruction *g_insn)
-{
-    rose_addr_t retval = 0;
-
-    SgAsmx86Instruction *insn = isSgAsmx86Instruction(g_insn);
-    if (!insn ||
-        !x86InstructionIsUnconditionalBranch(insn) ||
-        1!=insn->get_operandList()->get_operands().size())
-        return retval;
-    
-    SgAsmMemoryReferenceExpression *mref = isSgAsmMemoryReferenceExpression(insn->get_operandList()->get_operands()[0]);
-    if (!mref)
-        return retval;
-
-    SgAsmExpression *mref_addr = mref->get_address();
-    if (isSgAsmBinaryExpression(mref_addr)) {
-        SgAsmBinaryExpression *mref_bin = isSgAsmBinaryExpression(mref_addr);
-        SgAsmx86RegisterReferenceExpression *reg = isSgAsmx86RegisterReferenceExpression(mref_bin->get_lhs());
-        SgAsmValueExpression *val = isSgAsmValueExpression(mref_bin->get_rhs());
-        if (reg->get_register_class()==x86_regclass_ip && val!=NULL) {
-            retval = value_of(val) + insn->get_address() + insn->get_raw_bytes().size();
-        }
-    } else if (isSgAsmValueExpression(mref_addr)) {
-        retval = value_of(isSgAsmValueExpression(mref_addr));
-    }
-
-    return retval; /*calculated value, or defaults to zero*/
 }
 
 /** Give names to the dynamic linking trampolines in the .plt section. This method must be called after function entry points
