@@ -1,3 +1,6 @@
+#ifndef findConstants_H
+#define findConstants_H
+
 #include "x86InstructionSemantics.h"
 #include "integerOps.h"
 #include "flowEquations.h"
@@ -264,7 +267,7 @@ struct MemoryWriteSet {
         /* Scan vector until we find a match and then return that value. */
         for (size_t i = 0; i < writes.size(); ++i) {
             if (mustAlias(writes[i], mw)) {
-                std::cout << "Found data " << writes[i].data << " for address " << address << std::endl;
+                //std::cout << "Found data " << writes[i].data << " for address " << address << std::endl;
                 const LatticeElement<32>& data = writes[i].data;
                 result = LatticeElement<Len>(data.isTop, data.name, data.definingInstruction, data.negate, data.offset);
                 return true;
@@ -1073,3 +1076,5 @@ struct FindConstantsPolicy {
         }
     }
 };
+
+#endif /* !findConstants_H */
