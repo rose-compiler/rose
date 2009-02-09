@@ -5,7 +5,7 @@
 
    We will be happy to work with you if you want to add new features to ROSE.
 We can setup a special SVN branch for you so that you can checkin your work and
-also update with our constant work on ROSE (on you schedule).  We can syncronize with 
+also update with our constant work on ROSE (on you schedule).  We can synchronize with 
 you to decide when we can review your work and merge your branch into the main trunk.
 
 {\bf The number one most important aspect about any contribution you make is that it
@@ -18,15 +18,15 @@ in the document over time.
 
 The purpose of the test codes in our automated tests are:
 \begin{itemize}
-   \item Make sure that future great ideas in ROSE gon't break your feature.
-   \item Allow us to easily detect maintaince problems as early as possible.
+   \item Make sure that future great ideas in ROSE don't break your feature.
+   \item Allow us to easily detect maintenance problems as early as possible.
    \item Help us sleep at night knowing that ROSE is really working.
    \item Give everyone else using ROSE confidence in future releases.
 \end{itemize}
 
 We take this subject very seriously, since it can be a significant problem.
 In the future we will likely not accept contributions that are not accompanied 
-by sufficent test codes that demontrate that they work and will be part of the
+by sufficient test codes that demonstrate that they work and will be part of the
 automated tests ({\em make check} makefile rule).  If you want to add a new 
 feature to ROSE, show us your tests.
 
@@ -71,10 +71,18 @@ and \textit{--with-ssl}) or set the right \textit{LD\_LIBRARY\_PATH} for it
 https://outreach.scidac.gov/svn/rose/branches/branch\_name rose} 
 \item Merge the new updates of the main trunk into your working branch. 
 Conceptually, svn merge works as two step: diff two revisions and merge the different into a working copy.
-So you need to know two revision numbers of the main trunk: the first is
+So you need to know two revision numbers of the main
+trunk:
+the first is
 the latest revision number of the main trunk from which your branch was
 created (or most recently synchronized);
 the second is usually the head revision of the main trunk.
+\footnote{Subversion 1.5 is said to support svn merge with the head of
+a main trunk without explicitly specifying the beginning and end revision
+numbers. But this new feature is not mature enough to be used in our work
+as our tests showed. We will try to use the new feature later on when it
+becomes dependable.}: 
+
 \begin{itemize}
   \item find the revision in which your branch was created or the last
   synchronization point with the trunk:\\ 
