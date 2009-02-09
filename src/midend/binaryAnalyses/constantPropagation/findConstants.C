@@ -6,9 +6,6 @@
 #include <cstdio>
 #include <boost/lexical_cast.hpp>
 
-using namespace std;
-using namespace IntegerOps;
-
 /** A LatticeElement contains the value of a register or memory location. The value can either be one of three types:
  *  1. An unknown value (X).  Each potential unknown value is given a unique identifying "name" (a positive integer) which
  *     distinguishes it from all other unknown values, whether they are equal or unequal.
@@ -39,13 +36,13 @@ struct LatticeElement {
     /* Construct a non-top, named lattice element with optional offset. */
     LatticeElement(uint64_t name, SgAsmx86Instruction* definingInstruction, bool negate, uint64_t offset)
         : isTop(false), name(name), definingInstruction(definingInstruction), negate(negate),
-          offset(offset & (GenMask<uint64_t, Len>::value))
+          offset(offset & (IntegerOps::GenMask<uint64_t, Len>::value))
         {}
 
     /* Construct a named lattice element with optional offset. */
     LatticeElement(bool isTop, uint64_t name, SgAsmx86Instruction* definingInstruction, bool negate, uint64_t offset)
         : isTop(isTop), name(name), definingInstruction(definingInstruction), negate(negate),
-          offset(offset & (GenMask<uint64_t, Len>::value))
+          offset(offset & (IntegerOps::GenMask<uint64_t, Len>::value))
         {}
 
     /* Construct a constant lattice element */
@@ -87,7 +84,7 @@ struct LatticeElement {
  *    4. Top elements:                       <top>
  */
 template <size_t Len>
-ostream& operator<<(ostream& o, const LatticeElement<Len>& e)
+std::ostream& operator<<(std::ostream& o, const LatticeElement<Len>& e)
 {
     if (e.isTop) {
         o << "<top>";
@@ -99,7 +96,7 @@ ostream& operator<<(ostream& o, const LatticeElement<Len>& e)
         if (e.name!=0) {
             /* This is a named value rather than a constant. */
             const char *sign = e.negate ? "-" : "";
-            o <<sign <<"v" <<hex <<e.name;
+            o <<sign <<"v" <<std::hex <<e.name;
             if (negative) {
                 o <<"-" <<negative;
             } else if (e.offset) {
@@ -108,9 +105,9 @@ ostream& operator<<(ostream& o, const LatticeElement<Len>& e)
         } else {
             /* This is a constant */
             ROSE_ASSERT(!e.negate);
-            o  <<"0x" <<hex <<e.offset;
+            o  <<"0x" <<std::hex <<e.offset;
             if (negative)
-                o <<" (-0x" <<hex <<negative <<")";
+                o <<" (-0x" <<std::hex <<negative <<")";
         }
         if (e.definingInstruction!=NULL)
             o << " [from " << unparseInstructionWithAddress(e.definingInstruction) << "]";
@@ -169,7 +166,7 @@ struct XVariablePtr {
 };
 
 template <size_t Len>
-ostream& operator<<(ostream& o, XVariablePtr<Len> v) {
+std::ostream& operator<<(std::ostream& o, XVariablePtr<Len> v) {
     o << v->value;
     return o;
 }
@@ -231,7 +228,7 @@ XVariablePtr<To - From> extract(XVariablePtr<Len>);
 /* FIXME: Why are addresses and data always 32 bits? Will this work for a 64-bit architecture? [RPM 2009-02-03] */
 struct MemoryWriteSet {
     bool isTop;
-    vector<MemoryWrite> writes;         /* Always sorted by address */
+    std::vector<MemoryWrite> writes;         /* Always sorted by address */
 
     MemoryWriteSet()
         : isTop(true), writes()
@@ -244,14 +241,14 @@ struct MemoryWriteSet {
         mw.address = address;
         mw.data = data;
         mw.len = len;
-        vector<MemoryWrite> newWrites;
+        std::vector<MemoryWrite> newWrites;
         for (size_t i = 0; i < writes.size(); ++i) {
             if (!mayAlias(writes[i], mw))
                 newWrites.push_back(writes[i]);
         }
         newWrites.push_back(mw);
         writes = newWrites;
-        sort(writes.begin(), writes.end());
+        std::sort(writes.begin(), writes.end());
     }
 
     /** Obtains the value stored at the specified memory address, returning true if the address is defined or false otherwise. */
@@ -267,7 +264,7 @@ struct MemoryWriteSet {
         /* Scan vector until we find a match and then return that value. */
         for (size_t i = 0; i < writes.size(); ++i) {
             if (mustAlias(writes[i], mw)) {
-                cout << "Found data " << writes[i].data << " for address " << address << endl;
+                std::cout << "Found data " << writes[i].data << " for address " << address << std::endl;
                 const LatticeElement<32>& data = writes[i].data;
                 result = LatticeElement<Len>(data.isTop, data.name, data.definingInstruction, data.negate, data.offset);
                 return true;
@@ -640,16 +637,16 @@ struct RegisterSet {
     }
 };
 
-ostream&
-operator<<(ostream& o, const RegisterSet& rs)
+std::ostream&
+operator<<(std::ostream& o, const RegisterSet& rs)
 {
     std::string prefix = "    ";
     for (size_t i = 0; i < 8; ++i)
-        o <<prefix << gprToString((X86GeneralPurposeRegister)i) << " = " << rs.gpr[i] << endl;
+        o <<prefix << gprToString((X86GeneralPurposeRegister)i) << " = " << rs.gpr[i] << std::endl;
     for (size_t i = 0; i < 6; ++i)
-        o <<prefix << segregToString((X86SegmentRegister)i) << " = " << rs.segreg[i] << endl;
+        o <<prefix << segregToString((X86SegmentRegister)i) << " = " << rs.segreg[i] << std::endl;
     for (size_t i = 0; i < 16; ++i)
-        o <<prefix << flagToString((X86Flag)i) << " = " << rs.flag[i] << endl;
+        o <<prefix << flagToString((X86Flag)i) << " = " << rs.flag[i] << std::endl;
     o <<prefix << "memory = ";
     if (rs.memoryWrites->get().isTop) {
         o <<prefix << "<top>\n";
@@ -686,12 +683,12 @@ UNARY_COMPUTATION_SPECIAL(extract, Len, To - From, {
             result->set(LatticeElement<To - From>::nonconstant(result->myName, result->def));
             return;
         }
-        result->set(LatticeElement<To - From>::constant((le1.offset >> From) & (SHL1<uint64_t, To - From>::value - 1),
+        result->set(LatticeElement<To - From>::constant((le1.offset >> From) & (IntegerOps::SHL1<uint64_t, To - From>::value - 1),
                                                         result->def));
     })
 
 struct FindConstantsPolicy {
-    map<uint64_t, RegisterSet> rsets;
+    std::map<uint64_t, RegisterSet> rsets;
     RegisterSet currentRset;
     uint32_t addr;
     XVariablePtr<32> newIp; // To determine if it is a constant
@@ -761,7 +758,8 @@ struct FindConstantsPolicy {
                 result->set(LatticeElement<To - From>::nonconstant(result->myName, result->def));
                 return;
             }
-            result->set(LatticeElement<To - From>::constant((le1.offset >> From) & (SHL1<uint64_t, To - From>::value - 1),
+            result->set(LatticeElement<To - From>::constant((le1.offset >> From) &
+                                                              (IntegerOps::SHL1<uint64_t, To - From>::value - 1),
                                                             result->def));
         })
 
@@ -848,7 +846,7 @@ struct FindConstantsPolicy {
     UNARY_COMPUTATION(equalToZero, Len, 1, {return (a == 0);})
 
     template <size_t Len, size_t SCLen>
-    UNARY_COMPUTATION(generateMask, SCLen, Len, {return genMask<uint64_t>(a);})
+    UNARY_COMPUTATION(generateMask, SCLen, Len, {return IntegerOps::genMask<uint64_t>(a);})
 
     template <size_t Len>
     BINARY_COMPUTATION_SPECIAL(add, Len, Len, Len, {
@@ -950,7 +948,7 @@ struct FindConstantsPolicy {
     template <size_t Len>
     UNARY_COMPUTATION(leastSignificantSetBit, Len, Len, {
             for (int i = 0; i < (int)Len; ++i) {
-                if (a & shl1<uint64_t>(i))
+                if (a & IntegerOps::shl1<uint64_t>(i))
                     return i;
             }
             return 0;
@@ -959,7 +957,7 @@ struct FindConstantsPolicy {
     template <size_t Len>
     UNARY_COMPUTATION(mostSignificantSetBit, Len, Len, {
             for (int i = (int)Len - 1; i >= 0; --i) {
-                if (a & shl1<uint64_t>(i))
+                if (a & IntegerOps::shl1<uint64_t>(i))
                     return i;
             }
             return 0;
@@ -1053,7 +1051,7 @@ struct FindConstantsPolicy {
         currentInstruction = NULL;
         SgAsmx86Instruction* insnx = isSgAsmx86Instruction(insn);
         ROSE_ASSERT (insnx);
-        vector<uint64_t> succs;
+        std::vector<uint64_t> succs;
         if (newIp->get().name == 0) {
             succs.push_back(newIp->get().offset);
         } else {
@@ -1082,7 +1080,7 @@ main(int argc, char** argv)
     SgProject* proj = frontend(argc, argv);
 
     /* Find all x86 instructions */
-    vector<SgNode*> instructions = NodeQuery::querySubTree(proj, V_SgAsmx86Instruction);
+    std::vector<SgNode*> instructions = NodeQuery::querySubTree(proj, V_SgAsmx86Instruction);
     ROSE_ASSERT (!instructions.empty());
 
     /* Find the interpretation and header */
