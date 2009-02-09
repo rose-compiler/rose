@@ -692,11 +692,19 @@ UNARY_COMPUTATION_SPECIAL(extract, Len, To - From, {
 
 struct FindConstantsPolicy {
     std::map<uint64_t, RegisterSet> rsets;
-    RegisterSet currentRset;
+    RegisterSet currentRset, *initialRset;
     uint32_t addr;
     XVariablePtr<32> newIp; // To determine if it is a constant
     
-    FindConstantsPolicy(): addr(0) {}
+    FindConstantsPolicy()
+        : initialRset(NULL), addr(0)
+        {}
+
+    /* Use this constructor when performing constant propagation analysis on a function where you want the entry point of the
+     * function to use the specified initial values. See FindConstantsPolicy::startInstruction() for how this is used. */
+    FindConstantsPolicy(RegisterSet *initial_rs)
+        : initialRset(initial_rs), addr(0) {}
+
 
     XVariablePtr<32> readGPR(X86GeneralPurposeRegister r) {
         return currentRset.gpr[r];
@@ -1040,24 +1048,34 @@ struct FindConstantsPolicy {
         return fdefn;
     }
 
+    /** Called at the beginning of X86InstructionSemantics::processInstruction() */
     void startInstruction(SgAsmInstruction* insn) {
         addr = insn->get_address();
         newIp = number<32>(addr);
         if (isInstructionExternallyVisible(insn)) {
-            rsets[addr].setToBottom();
+            if (initialRset) {
+                rsets[addr] = *initialRset;
+                initialRset = NULL;
+            } else {
+                rsets[addr].setToBottom();
+            }
         }
         currentRset = rsets[addr];
         currentInstruction = isSgAsmx86Instruction(insn);
     }
 
+    /** Called at the end of X86InstructionSemantics::processInstruction() to merge the current register set (as modified by
+     *  the instruction recently processed) into the successor instructions. */
     void finishInstruction(SgAsmInstruction* insn) {
         currentInstruction = NULL;
         SgAsmx86Instruction* insnx = isSgAsmx86Instruction(insn);
         ROSE_ASSERT (insnx);
         std::vector<uint64_t> succs;
         if (newIp->get().name == 0) {
+            /* We know the address of the next instruction. */
             succs.push_back(newIp->get().offset);
         } else {
+            /* We don't know the address of the next instruction, so compute it from successors */
             uint64_t nextAddr = insnx->get_address() + insnx->get_raw_bytes().size();
             if (!x86InstructionIsUnconditionalBranch(insnx)) {
                 succs.push_back(nextAddr);
@@ -1070,6 +1088,8 @@ struct FindConstantsPolicy {
                 }
             }
         }
+
+        /* Merge result of processing instruction into register sets for successors */
         for (size_t i = 0; i < succs.size(); ++i) {
             uint64_t s = succs[i];
             rsets[s].mergeIn(currentRset);
