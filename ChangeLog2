@@ -1,3 +1,319 @@
+2009-02-10 00:42  matzke
+
+	* [r4399] /trunk/ROSE/tests/roseTests/binaryTests/runTest.C: More
+	  adjustments to r4167 due to changing function detection
+	  
+	  A couple of "functions" disappeared because they correspond to
+	  CALL
+	  instructions that had zero offsets w.r.t. the instruction
+	  pointer.
+	  
+	  Functions detected from binary executable:
+	  Key for reason(s) address is a suspected function:
+	  E = entry address C = call target X = exception frame
+	  S = function symbol P = instruction pattern G = interblock branch
+	  graph
+	  
+	  Num Start Size End Reason Kind Name
+	  --- ---------- ---------- ---------- ------ --------
+	  --------------------------------
+	  1 0x08048278 0x0000001e 0x08048296 .C.S.. unknown _init
+	  2 0x08048290 0x00000010 0x080482a0 .....G unknown
+	  3 0x080482a0 0x00000010 0x080482b0 .C.... unknown malloc
+	  4 0x080482b0 0x00000010 0x080482c0 .C.... unknown
+	  __libc_start_main
+	  5 0x080482c0 0x00000024 0x080482e4 E..S.. unknown _start
+	  6 0x080482e4 0x0000002c 0x08048310 .C.S.. unknown call_gmon_start
+	  7 0x08048310 0x00000030 0x08048340 .C.S.. unknown
+	  __do_global_dtors_aux
+	  8 0x08048340 0x00000024 0x08048364 .C.S.. unknown frame_dummy
+	  9 0x08048364 0x0000005c 0x080483c0 ...S.. unknown main
+	  10 0x080483c0 0x00000054 0x08048414 ...S.. unknown
+	  __libc_csu_init
+	  11 0x08048414 0x0000004c 0x08048460 ...S.. unknown
+	  __libc_csu_fini
+	  12 0x08048460 0x00000034 0x08048494 .C.S.. unknown
+	  __do_global_ctors_aux
+	  13 0x08048494 0x0000001c 0x080484b0 .C.S.. unknown _fini
+	  --- ---------- ---------- ---------- ------ --------
+	  --------------------------------
+
+2009-02-09 23:30  matzke
+
+	* [r4398]
+	  /trunk/ROSE/src/frontend/Disassemblers/detectFunctionStarts.C:
+	  Function detection ignores CALLs to next instruction
+	  
+	  These are typically instruction pointer relative calls with a
+	  zero
+	  offset that hasn't been corrected by application of a relocation
+	  entry.
+
+2009-02-09 23:30  matzke
+
+	* [r4397]
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/robb.C:
+	  Fixed bug in recursive search for unsafe dynamic calls
+
+2009-02-09 23:30  matzke
+
+	* [r4396]
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/robb.C:
+	  Propagate register set across CALL
+	  
+	  This isn't fully implemented and isn't accurate, but then it's
+	  also not
+	  part of ROSE proper. It turns out we need to assume that a CALL
+	  instruction tends to return to the next address in order to do
+	  anything
+	  useful with constant propagation.
+
+2009-02-09 23:30  matzke
+
+	* [r4395]
+	  /trunk/ROSE/projects/assemblyToSourceAst/x86InstructionSemantics.h:
+	  default case no longer aborts
+
+2009-02-09 23:30  matzke
+
+	* [r4394]
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/robb.C:
+	  Detection of signal handlers set by signal() wrapper
+	  
+	  This is working for a test case that sets a signal handler via a
+	  wrapper:
+	  void setsignal(int signo, sighandler_t handler) {
+	  signal(signo, handler);
+	  }
+	  
+	  We are able to compute the value of 'handler' when 'setsignal' is
+	  called
+	  with a constant argument.
+	  
+	  Only works for ELF x86 due to instruction semantics not being
+	  implemented for other instruction sets.
+
+2009-02-09 23:30  matzke
+
+	* [r4393]
+	  /trunk/ROSE/projects/BinaryConstantPropagation/findConstants.h:
+	  FindConstantsPolicy accepts initial conditions
+	  
+	  This change enables constant propagation within a function based
+	  on the
+	  register set at the time the function was called.
+
+2009-02-09 23:29  matzke
+
+	* [r4392]
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/robb.C:
+	  robb.C checkpoint
+
+2009-02-09 23:29  matzke
+
+	* [r4391]
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/robb.C:
+	  FunctionCallGraph can restrict by arbitrary predicate
+
+2009-02-09 23:29  matzke
+
+	* [r4390]
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/showConstPropagation.C,
+	  /trunk/ROSE/projects/BinaryConstantPropagation/findConstants.C:
+	  New executable to show constant propagation
+
+2009-02-09 23:29  matzke
+
+	* [r4389]
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/robb.C:
+	  Added test case for async-signal-handling
+
+2009-02-09 23:29  matzke
+
+	* [r4388]
+	  /trunk/ROSE/projects/BinaryConstantPropagation/findConstants.h:
+	  Removed debugging output
+
+2009-02-09 23:29  matzke
+
+	* [r4387]
+	  /trunk/ROSE/src/frontend/Disassemblers/detectFunctionStarts.C:
+	  Function detection tries harder to find names
+	  
+	  Any function that's a trampoline in the ELF .plt section will be
+	  given a
+	  name based on the symbol that points to the corresponding address
+	  in the
+	  .got.plt section.
+
+2009-02-09 23:29  matzke
+
+	* [r4386]
+	  /trunk/ROSE/src/frontend/SageIII/virtualCFG/virtualBinCFG.h:
+	  Minor changes and formatting
+
+2009-02-09 23:29  matzke
+
+	* [r4385] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/projects/BinaryConstantPropagation/Makefile,
+	  /trunk/ROSE/projects/BinaryConstantPropagation/Makefile.am,
+	  /trunk/ROSE/projects/Makefile.am: Incorporated
+	  BinaryConstantPropagation into automake
+
+2009-02-09 23:28  matzke
+
+	* [r4384]
+	  /trunk/ROSE/projects/BinaryConstantPropagation/findConstants.C,
+	  /trunk/ROSE/projects/BinaryConstantPropagation/findConstants.h:
+	  Split header material from main()
+
+2009-02-09 23:28  matzke
+
+	* [r4383] /trunk/ROSE/projects/BinaryConstantPropagation,
+	  /trunk/ROSE/projects/BinaryConstantPropagation/Makefile,
+	  /trunk/ROSE/projects/BinaryConstantPropagation/findConstants.C,
+	  /trunk/ROSE/projects/BinaryConstantPropagation/flowEquations.h,
+	  /trunk/ROSE/src/midend/binaryAnalyses/constantPropagation/Makefile,
+	  /trunk/ROSE/src/midend/binaryAnalyses/constantPropagation/findConstants.C,
+	  /trunk/ROSE/src/midend/binaryAnalyses/constantPropagation/flowEquations.h:
+	  Moved from midend to projects
+	  
+	  The move is necessary because this work depends on
+	  x86InstructionSemantics, which is also a project and not part of
+	  ROSE-proper.
+
+2009-02-09 23:28  matzke
+
+	* [r4382]
+	  /trunk/ROSE/src/midend/binaryAnalyses/constantPropagation/findConstants.C:
+	  Replaced syscall example with debugging dumps
+	  
+	  This main() will need to move somewhere else shortly.
+
+2009-02-09 23:28  matzke
+
+	* [r4381]
+	  /trunk/ROSE/src/midend/binaryAnalyses/constantPropagation/findConstants.C:
+	  Removed "using namespace"
+
+2009-02-09 23:28  matzke
+
+	* [r4380]
+	  /trunk/ROSE/src/midend/binaryAnalyses/constantPropagation/findConstants.C:
+	  Added more comments
+
+2009-02-09 23:28  matzke
+
+	* [r4379]
+	  /trunk/ROSE/src/midend/binaryAnalyses/constantPropagation/findConstants.C:
+	  Changed output format for RegisterSet
+
+2009-02-09 23:28  matzke
+
+	* [r4378]
+	  /trunk/ROSE/src/midend/binaryAnalyses/constantPropagation/findConstants.C:
+	  Changed output format for LatticeElement
+
+2009-02-09 23:27  matzke
+
+	* [r4377]
+	  /trunk/ROSE/src/midend/binaryAnalyses/constantPropagation/findConstants.C:
+	  Fixed hard-coded file names for Robb's machine
+
+2009-02-09 23:27  matzke
+
+	* [r4376]
+	  /trunk/ROSE/src/midend/binaryAnalyses/constantPropagation/Makefile:
+	  Rewrote Makefile to use non-installed version of ROSE
+	  
+	  The makefile was rewritten to be able to use the build rather
+	  than
+	  install directory of ROSE. This more tightly integrates this work
+	  with
+	  ROSE and prevents us from having to do a complete, lengthy
+	  install.
+
+2009-02-09 23:27  matzke
+
+	* [r4375]
+	  /trunk/ROSE/src/midend/binaryAnalyses/constantPropagation/findConstants.C:
+	  Rewrote isInstructionExternallyVisible()
+	  
+	  The get_externallyVisible() function was recently removed from
+	  ROSE (by
+	  me) because its intention was unclear. It wasn't used by anything
+	  in
+	  ROSE and it seems to be superceded by the code that detects
+	  function
+	  starts.
+	  
+	  The new implementation checks to see whether the instruction is
+	  an entry
+	  point of a function.
+
+2009-02-09 23:27  matzke
+
+	* [r4374]
+	  /trunk/ROSE/src/midend/binaryAnalyses/constantPropagation/findConstants.C:
+	  Added some comments
+
+2009-02-09 23:27  matzke
+
+	* [r4373]
+	  /trunk/ROSE/src/midend/binaryAnalyses/constantPropagation/findConstants.C,
+	  /trunk/ROSE/src/midend/binaryAnalyses/constantPropagation/flowEquations.h:
+	  Reformatted some code
+
+2009-02-09 23:27  matzke
+
+	* [r4372]
+	  /trunk/ROSE/src/midend/binaryAnalyses/constantPropagation,
+	  /trunk/ROSE/src/midend/binaryAnalyses/constantPropagation/Makefile,
+	  /trunk/ROSE/src/midend/binaryAnalyses/constantPropagation/findConstants.C,
+	  /trunk/ROSE/src/midend/binaryAnalyses/constantPropagation/flowEquations.h:
+	  Added Jeremiah's conditional constant propagation
+
+2009-02-09 23:27  matzke
+
+	* [r4371]
+	  /trunk/ROSE/src/frontend/Disassemblers/disassemblerCommon.C:
+	  Minor change for ease of setting a breakpoint
+
+2009-02-09 23:27  matzke
+
+	* [r4370]
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/binaryFunctionBoundary.C:
+	  Adjusted some output
+
+2009-02-09 21:29  liao6
+
+	* [r4369] /trunk/ROSE/docs/Rose/developersAppendix.tex: Minor
+	  changes to the developers' guide
+
+2009-02-09 21:22  liao6
+
+	* [r4368] /trunk/ROSE/docs/Rose/developersAppendix.tex: Added some
+	  explanations about why start and end revision numbers are needed
+	  for svn merge.
+
+2009-02-09 20:35  dquinlan
+
+	* [r4366] /trunk/ROSE/docs/Rose/developersAppendix.tex,
+	  /trunk/ROSE/docs/Rose/leftmenu.html.in: Editing of ROSE
+	  Developers Guide.
+	  
+	  Detailed changes in this commit:
+	  1) Editing of documentation, added subsection "Commit Message
+	  Format"
+	  and moved it to the section "Working with the ROSE SVN
+	  repositories".
+	  Also moved section on the "Check In Process to this same section.
+	  2) Changed documentation description from "Programmer's
+	  Reference"
+	  to "Doxygen Documentation" in left-hand side of Rose web page.
+
 2009-02-07 01:52  panas2
 
 	* [r4335] /trunk/ROSE/src/Makefile.am,
