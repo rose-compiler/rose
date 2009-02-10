@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS =
 
-include_HEADERS = findConstants.h
+include_HEADERS = findConstants.h flowEquations.h
 
 bin_PROGRAMS = findConstants
 
