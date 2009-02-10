@@ -6,9 +6,8 @@
 
 #ifndef __DefUseAnalysisAbstractPF_HXX_LOADED__
 #define __DefUseAnalysisAbstractPF_HXX_LOADED__
-#include <string>
 
-#include "rose.h"
+//#include "rose.h"
 #include "support.h"
 #include <virtualCFG.h>
 #include <cfgToDot.h>
@@ -17,6 +16,7 @@
 #include "DFAFilter.h"
 #include "DefUseAnalysis.h"
 #include "dfaToDot.h"
+#include <string>
 
 class DefUseAnalysisAbstract : public Support {
  protected:

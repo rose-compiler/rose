@@ -140,7 +140,7 @@ print:
 
 # DQ (1/10/2004): remove the librose.a and libedg.a files so that distclean will work cleanly
 clean-local:
-	rm -rf *.a *.so testSharedRoseLib testMultiRoseLib $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files
+	rm -rf *.a *.so testSharedRoseLib testMultiRoseLib $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files rose.h.gch
 
 if ROSE_MPI
 roseh:
@@ -148,13 +148,13 @@ roseh:
 else
 
 roseh:
-	echo $(CXX)  -DHAVE_CONFIG_H -g -o $(srcdir)/rose.h.gch $(srcdir)/rose.h -I$(top_builddir)/   #$(ROSE_INCLUDES) 
-#	$(CXX)  -DHAVE_CONFIG_H -g -o $(srcdir)/rose.h.gch $(srcdir)/rose.h -I$(top_builddir) $(ROSE_INCLUDES) 
+	echo $(CXX)  -DHAVE_CONFIG_H -g -o rose.h.gch $(srcdir)/rose.h -I$(top_builddir)/   #$(ROSE_INCLUDES) 
+	$(CXX)  -DHAVE_CONFIG_H -g -o rose.h.gch $(srcdir)/rose.h -I$(top_builddir) $(ROSE_INCLUDES) 
 
 endif
 
 distclean-local:
-	rm -rf *.a *.so testSharedRoseLib testMultiRoseLib Templates.DB
+	rm -rf *.a *.so testSharedRoseLib testMultiRoseLib Templates.DB rose.h.gch
 
 cleanTest:
 	rm -rf *.lo testSharedRoseLib testMultiRoseLib

@@ -4,6 +4,7 @@
  * created by tps in Feb 2007
  *****************************************/
 
+#include "rose.h"
 #include "LivenessAnalysis.h"
 #include "DefUseAnalysis_perFunction.h"
 #include "GlobalVarAnalysis.h"

@@ -6,9 +6,9 @@
 
 #ifndef __DFAnalysis_support_HXX_LOADED__
 #define __DFAnalysis_support_HXX_LOADED__
-
+//#include "rose.h"
 #include <string>
-#include "rose.h"
+
 // A set of utility functions
 class Support {
  public:

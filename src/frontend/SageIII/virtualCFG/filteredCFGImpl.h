@@ -1,4 +1,4 @@
-#include <rose.h>
+//#include <rose.h>
 #include "filteredCFG.h"
 #include <sstream>
 #include <iomanip>

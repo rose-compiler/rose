@@ -1,7 +1,7 @@
 #ifndef DFA_TO_DOT_H
 #define DFA_TO_DOT_H
 
-#include "rose.h"
+//#include "rose.h"
 #include <string>
 #include <map>
 #include <set>

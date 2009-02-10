@@ -5,7 +5,7 @@
  *****************************************/
 
 
-
+#include "rose.h"
 #include "DefUseAnalysis.h"
 #include "DefUseAnalysis_perFunction.h"
 #include "GlobalVarAnalysis.h"
