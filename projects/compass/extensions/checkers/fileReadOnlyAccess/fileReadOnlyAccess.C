@@ -2,6 +2,7 @@
 // Author: Gary Yuan
 // Date: 03-January-2008
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_FILE_READ_ONLY_ACCESS_H

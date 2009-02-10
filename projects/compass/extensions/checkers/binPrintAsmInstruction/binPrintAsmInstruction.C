@@ -2,6 +2,7 @@
 // Author: Thomas Panas
 // Date: 08-August-2008
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_BIN_PRINT_ASM_INSTRUCTION_H

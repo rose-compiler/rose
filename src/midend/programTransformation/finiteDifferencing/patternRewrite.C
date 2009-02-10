@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "patternRewrite.h"
 #include "expressionTreeEqual.h"
 #include <vector>

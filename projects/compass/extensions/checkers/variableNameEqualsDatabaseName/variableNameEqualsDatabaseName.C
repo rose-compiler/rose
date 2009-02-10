@@ -2,6 +2,7 @@
 // Author: Andreas Saebjoernsen,,,
 // Date: 12-August-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_VARIABLE_NAME_EQUALS_DATABASE_NAME_H

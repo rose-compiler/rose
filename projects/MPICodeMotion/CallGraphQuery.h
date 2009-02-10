@@ -1,7 +1,7 @@
 #ifndef __CALL_GRAPH_QUERY_H__
 #define __CALL_GRAPH_QUERY_H__
 
-#include "rose.h"
+//#include "rose.h"
 #include <CallGraph.h>
 
 class CallGraphQuery

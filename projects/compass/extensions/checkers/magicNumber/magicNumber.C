@@ -2,6 +2,7 @@
 // Author: Gergo Barany
 // Date: 19-July-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_MAGIC_NUMBER_H

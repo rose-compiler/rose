@@ -2,6 +2,7 @@
 // Author: pants,,,
 // Date: 31-August-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_RIGHT_SHIFT_MASK_H

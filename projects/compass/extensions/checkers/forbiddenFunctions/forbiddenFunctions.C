@@ -2,6 +2,7 @@
 // Author: Gary Yuan
 // Date: 28-December-2007
 
+#include "rose.h"
 #include "compass.h"
 #include <map>
 #include <string>

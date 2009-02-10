@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "compass.h"
 #include <rose.h>
 #include <iostream>

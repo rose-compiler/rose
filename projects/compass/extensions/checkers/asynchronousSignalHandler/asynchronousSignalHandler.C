@@ -2,6 +2,7 @@
 // Author: Daniel J. Quinlan
 // Date: 05-August-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_ASYNCHRONOUS_SIGNAL_HANDLER_H

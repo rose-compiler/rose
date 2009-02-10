@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "btorProblem.h"
 #include "x86AssemblyToNetlist.h"
 #include "integerOps.h"

@@ -1,7 +1,7 @@
 #ifndef PALETTE_COMMON_H
 #define PALETTE_COMMON_H
 
-#include "rose.h"
+//#include "rose.h"
 #include "Cxx_GrammarMemoryPoolSupport.h"
 #include "compass.h"
 #include <iostream>

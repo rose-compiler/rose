@@ -3,7 +3,7 @@
 #ifndef __helper__
 #define __helper__
 
-#include <rose.h>
+//#include <rose.h>
 
 #include <sys/types.h>
 #include <dirent.h>

@@ -1,6 +1,7 @@
 #if ROSE_MPI
 #include <mpi.h>
 #endif
+#include "rose.h"
 #include "compassChecker.h"
 
 #include <boost/algorithm/string.hpp>

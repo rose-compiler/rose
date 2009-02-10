@@ -1,7 +1,7 @@
 #ifndef __MOTION_INFORMATION_H__
 #define __MOTION_INFORMATION_H__
 
-#include "rose.h"
+
 #include "DependenceGraph.h"
 #include "CallGraphQuery.h"
 

@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "CallGraphQuery.h"
 
 using namespace std;

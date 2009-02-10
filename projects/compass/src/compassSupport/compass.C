@@ -1,12 +1,19 @@
+
 #if ROSE_MPI
 #include <mpi.h>
 #endif
 
+#ifdef PALETTE_USE_ROSE
 #include "compass.h"
+#else
+#include "rose.h"
+#include "compass.h"
+#endif
+
 
 //for exists
 #include "boost/filesystem/operations.hpp"
-#include <rose.h>
+//#include <rose.h>
 #include <sstream>
 #include <fstream>
 #include <iostream> 

@@ -2,6 +2,7 @@
 // Author: Gary M. Yuan
 // Date: 06-September-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_FOPEN_FORMAT_PARAMETER_H

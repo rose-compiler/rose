@@ -2,6 +2,7 @@
 // Author: Han Suk  Kim
 // Date: 01-August-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_TERNARY_OPERATOR_H

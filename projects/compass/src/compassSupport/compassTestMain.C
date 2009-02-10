@@ -8,7 +8,7 @@
 // of the detector in isolation.
 
 #include "compass.h"
-#include <rose.h>
+//#include <rose.h>
 #include <iostream>
 
 #if PERFLOG

@@ -2,6 +2,7 @@
 // Author: Gary M. Yuan
 // Date: 24-August-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_ONE_LINE_PER_DECLARATION_H

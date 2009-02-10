@@ -1,7 +1,7 @@
 #ifndef ROSE_X86INSTRUCTIONSEMANTICS_H
 #define ROSE_X86INSTRUCTIONSEMANTICS_H
 
-#include "rose.h"
+//#include "rose.h"
 #include "semanticsModule.h"
 #include <cassert>
 #include <cstdio>

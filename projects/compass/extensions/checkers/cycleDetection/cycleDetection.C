@@ -5,6 +5,7 @@
 // Author: Thomas Panas
 // Date: 15-August-2008
 
+#include "rose.h"
 #include "compass.h"
 
 using namespace std;

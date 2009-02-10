@@ -2,6 +2,7 @@
 // Author: pants,,,
 // Date: 30-July-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_NON_STANDARD_TYPE_REF_RETURNS_H

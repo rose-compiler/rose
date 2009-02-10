@@ -2,6 +2,7 @@
 // Author: Gergo  Barany
 // Date: 31-July-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_NONMEMBER_FUNCTION_INTERFACE_NAMESPACE_H

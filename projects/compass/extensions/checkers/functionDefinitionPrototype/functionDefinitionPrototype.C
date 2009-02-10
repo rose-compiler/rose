@@ -2,6 +2,7 @@
 // Author: Gary M. Yuan
 // Date: 23-July-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_FUNCTION_DEFINITION_PROTOTYPE_H

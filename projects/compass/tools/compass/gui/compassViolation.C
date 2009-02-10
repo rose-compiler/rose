@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "compassViolation.h"
 
 CompassViolation::CompassViolation(std::string d, std::string f, int lStart, int lEnd,

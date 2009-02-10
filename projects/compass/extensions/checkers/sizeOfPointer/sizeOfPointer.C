@@ -2,6 +2,7 @@
 // Author: pants,,,
 // Date: 24-August-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_SIZE_OF_POINTER_H

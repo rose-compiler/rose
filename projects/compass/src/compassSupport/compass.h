@@ -1,12 +1,15 @@
 #ifndef ROSE_COMPASS_H
 #define ROSE_COMPASS_H
 #if ROSE_MPI
+#undef SEEK_SET
+#undef SEEK_CUR
+#undef SEEK_END
 #include <mpi.h>
 #endif
 
-#include <rose.h>
-#include "DefUseAnalysis.h"
+//#include <rose.h>
 #include "DefUseAnalysis_perFunction.h"
+#include "DefUseAnalysis.h"
 #include <boost/function.hpp>
 #include <boost/any.hpp>
 

@@ -2,6 +2,7 @@
 // Author: Gergo  Barany
 // Date: 07-August-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_DISCARD_ASSIGNMENT_H

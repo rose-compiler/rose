@@ -2,6 +2,7 @@
 // Author: Gergo Barany
 // Date: 31-July-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_INTERNAL_DATA_SHARING_H

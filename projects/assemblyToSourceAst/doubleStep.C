@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "satProblem.h"
 #include "x86AssemblyToNetlist.h"
 #include <map>

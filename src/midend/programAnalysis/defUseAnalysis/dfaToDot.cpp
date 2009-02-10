@@ -1,4 +1,5 @@
 
+#include "rose.h"
 #include "dfaToDot.h"
 #include "DFAFilter.h"
 #include "LivenessAnalysis.h"

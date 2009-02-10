@@ -9,7 +9,7 @@
 #include <string>
 
 
-#include "rose.h"
+//#include "rose.h"
 
 class DFAnalysis {
  public:

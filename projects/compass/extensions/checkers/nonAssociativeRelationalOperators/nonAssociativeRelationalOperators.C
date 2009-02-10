@@ -2,6 +2,7 @@
 // Author: Gary Yuan
 // Date: 02-January-2008
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_NON_ASSOCIATIVE_RELATIONAL_OPERATORS_H

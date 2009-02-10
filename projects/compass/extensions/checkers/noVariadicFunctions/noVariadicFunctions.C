@@ -2,6 +2,7 @@
 // Author: Gary M. Yuan
 // Date: 15-July-2008
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_NO_VARIADIC_FUNCTIONS_H

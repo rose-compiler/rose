@@ -4,6 +4,7 @@
  * created by tps in Feb 2007
  *****************************************/
 
+#include "rose.h"
 #include "DefUseAnalysis.h"
 #include "LivenessAnalysis.h"
 #include <string>

@@ -3,7 +3,7 @@
 
 // #include "config.h"
 
-#include "rose.h"
+//#include "rose.h"
 #include <vector>
 
 //! Definition of a rewrite rule on a given SgNode.  The rule modifies the node

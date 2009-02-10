@@ -5,6 +5,7 @@
  * Purpose: No Exit In Mpi Code header
  */
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_NO_EXIT_IN_MPI_CODE_H

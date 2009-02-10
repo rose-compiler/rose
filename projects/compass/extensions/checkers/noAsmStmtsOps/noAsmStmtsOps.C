@@ -2,6 +2,7 @@
 // Author: Gary Yuan
 // Date: 19-December-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_NO_ASM_STMTS_OPS_H

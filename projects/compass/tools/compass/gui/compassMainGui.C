@@ -2,6 +2,7 @@
   #include <mpi.h>
 #endif
 
+#include "rose.h"
 #include <vector>
 #include <qrose.h>
 

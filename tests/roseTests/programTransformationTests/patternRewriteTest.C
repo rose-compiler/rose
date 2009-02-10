@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "patternRewrite.h"
 
 int main (int argc, char* argv[]) {

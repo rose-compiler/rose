@@ -2,6 +2,7 @@
 // Author: Gary M. Yuan
 // Date: 06-September-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_TIME_T_DIRECT_MANIPULATION_H

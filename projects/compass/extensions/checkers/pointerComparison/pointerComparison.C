@@ -5,6 +5,7 @@
 // Author: Chunhua Liao
 // Date: 30-October-2008
 
+#include "rose.h"
 #include "compass.h"
 
 extern const Compass::Checker* const pointerComparisonChecker;

@@ -2,6 +2,7 @@
 // Author: Gary M. Yuan
 // Date: 27-August-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_NO_RAND_H

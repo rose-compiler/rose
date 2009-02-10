@@ -2,6 +2,7 @@
 // Author: Gergo Barany
 // Date: 24-July-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_DEEP_NESTING_H

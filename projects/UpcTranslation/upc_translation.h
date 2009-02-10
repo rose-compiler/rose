@@ -2,8 +2,9 @@
 #ifndef ROSE_UPC_TRANSLATION_INTERFACE
 #define ROSE_UPC_TRANSLATION_INTERFACE
 
+//#include "rose.h"
 #include <string>
-#include "rose.h"
+
 #include <vector>
 
 /* Support anonymous upc barrier, 

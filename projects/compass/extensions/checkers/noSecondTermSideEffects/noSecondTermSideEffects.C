@@ -2,6 +2,7 @@
 // Author: pants,,,
 // Date: 24-August-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_NO_SECOND_TERM_SIDE_EFFECTS_H

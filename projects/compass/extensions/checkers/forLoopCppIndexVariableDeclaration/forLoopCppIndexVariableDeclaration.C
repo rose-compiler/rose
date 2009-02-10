@@ -2,6 +2,7 @@
 // Author: Gary M. Yuan
 // Date: 24-July-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_FOR_LOOP_CPP_INDEX_VARIABLE_DECLARATION_H

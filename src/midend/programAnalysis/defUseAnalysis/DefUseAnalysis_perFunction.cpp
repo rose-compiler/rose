@@ -3,7 +3,7 @@
   * DefUse Analysis Declaration (per Function)                                         
   * created by tps in Feb 2007                                                         
   *****************************************/   
-
+#include "rose.h"
 #include "DefUseAnalysis_perFunction.h"
 
 using namespace std;

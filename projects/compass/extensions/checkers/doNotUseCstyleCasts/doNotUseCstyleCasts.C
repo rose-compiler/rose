@@ -2,6 +2,7 @@
 // Author: Mark Lewandowski, -422-3849
 // Date: 18-December-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_DO_NOT_USE_CSTYLE_CASTS_H

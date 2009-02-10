@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "compassChecker.h"
 #include "compassInterface.h"
 #include <exception>

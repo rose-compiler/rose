@@ -2,6 +2,7 @@
 // Author: Andreas Saebjoernsen
 // Date: 23-July-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_CONST_CAST_H

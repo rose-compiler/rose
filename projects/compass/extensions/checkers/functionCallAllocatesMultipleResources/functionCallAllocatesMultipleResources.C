@@ -2,6 +2,7 @@
 // Author: Gary Yuan
 // Date: 21-December-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_FUNCTION_CALL_ALLOCATES_MULTIPLE_RESOURCES_H

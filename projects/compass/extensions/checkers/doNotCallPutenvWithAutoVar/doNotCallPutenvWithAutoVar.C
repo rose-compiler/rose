@@ -2,6 +2,7 @@
 // Author: Mark Lewandowski, -422-3849
 // Date: 30-August-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_DO_NOT_CALL_PUTENV_WITH_AUTO_VAR_H

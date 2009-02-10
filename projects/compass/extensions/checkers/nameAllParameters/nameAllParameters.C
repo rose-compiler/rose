@@ -2,6 +2,7 @@
 // Author: Valentin  David
 // Date: 03-August-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_NAME_ALL_PARAMETERS_H

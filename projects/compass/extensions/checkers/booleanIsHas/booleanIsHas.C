@@ -2,6 +2,7 @@
 // Author: pants,,,
 // Date: 24-July-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_BOOLEAN_IS_HAS_H

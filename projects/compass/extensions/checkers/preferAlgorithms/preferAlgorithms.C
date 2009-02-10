@@ -2,6 +2,7 @@
 // Author: Gergo  Barany
 // Date: 29-August-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_PREFER_ALGORITHMS_H

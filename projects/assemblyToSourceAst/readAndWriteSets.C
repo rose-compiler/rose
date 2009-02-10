@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "x86InstructionSemantics.h"
 #include <cassert>
 #include <cstdio>

@@ -207,6 +207,7 @@ cat >./"${SOURCE_DIRECTORY_NAME}/${FILE_NAME_PREFIX}.C" <<END
 // Author: ${USER_NAME}
 // Date: ${DATE}
 
+#include "rose.h"
 #include "compass.h"
 
 extern const Compass::Checker* const ${FILE_NAME_PREFIX}Checker;

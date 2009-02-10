@@ -2,6 +2,7 @@
 // Author: Gary M. Yuan
 // Date: 23-July-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_FOR_LOOP_CONSTRUCTION_CONTROL_STMT_H

@@ -2,6 +2,7 @@
 // Author: pants,,,
 // Date: 14-August-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_LOWER_RANGE_LIMIT_H

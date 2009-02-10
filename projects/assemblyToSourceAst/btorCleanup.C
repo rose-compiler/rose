@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "btorProblem.h"
 #include <boost/lexical_cast.hpp>
 

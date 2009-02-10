@@ -2,6 +2,7 @@
 // Author: Gary M. Yuan
 // Date: 25-July-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_ENUM_DECLARATION_NAMESPACE_CLASS_SCOPE_H

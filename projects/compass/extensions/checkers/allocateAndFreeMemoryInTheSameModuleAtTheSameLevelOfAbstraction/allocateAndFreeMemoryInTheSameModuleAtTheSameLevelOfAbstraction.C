@@ -3,6 +3,7 @@
 // Date: 16-November-2007
 // tps, rewrote Dec22-2008
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_ALLOCATE_AND_FREE_MEMORY_IN_THE_SAME_MODULE_AT_THE_SAME_LEVEL_OF_ABSTRACTION_H

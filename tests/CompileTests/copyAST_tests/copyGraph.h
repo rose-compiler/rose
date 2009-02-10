@@ -1,7 +1,7 @@
 #ifndef COPYGRAPH_H
 #define COPYGRAPH_H
 
-#include "rose.h"
+//#include "rose.h"
 #include <set>
 #include <string>
 

@@ -3,6 +3,7 @@
 // Date: 19-September-2007
 // reimplemented tps 23Dec 2008
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_SET_POINTERS_TO_NULL_H

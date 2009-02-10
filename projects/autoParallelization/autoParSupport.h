@@ -2,7 +2,8 @@
 #define auto_par_support_INCLUDED
 
 //Common headers for a ROSE translator
-#include <rose.h>
+//#include <rose.h>
+#include "LivenessAnalysis.h"
 #include "CommandOptions.h"
 
 //OpenMP attribute for OpenMP 3.0
@@ -22,7 +23,7 @@
 
 //Variable classification support
 #include "DefUseAnalysis.h"
-#include "LivenessAnalysis.h"
+
 
 //Other standard C++ headers
 #include <vector>

@@ -2,6 +2,8 @@
 // Author: Gary M. Yuan
 // Date: 24-August-2007
 
+
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_EXPLICIT_CHAR_SIGN_H

@@ -2,6 +2,7 @@
 // Author: Andreas Saebjornsen
 // Date: 25-July-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_CHAR_STAR_FOR_STRING_H

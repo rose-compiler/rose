@@ -2,6 +2,7 @@
 // Author: Gary M. Yuan
 // Date: 14-September-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_DO_NOT_DELETE_THIS_H

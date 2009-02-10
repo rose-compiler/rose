@@ -1,9 +1,9 @@
-
-#include "GenRepresentation.h"
+//#include "rose.h"
 #include "helpFunctions.h"
+#include "GenRepresentation.h"
 #include "ControlStructure.h" 
 #include "AttributeType.h"
-#include "rose.h"
+
 #define GENGEN_DEBUG TRUE
 
 #define GC_CONDITIONAL_PRINT(variableName,AT) (*attribute) ( "\n#if CGRAPHPP_USE_GC \n if (GCpointerCheck("+variableName+")==1)\n #else \nif ((" + variableName + ")!=NULL)\n#endif\n", AT);

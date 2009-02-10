@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "findConstants.h"
 
 /* Robb's part of this file has been moved into showConstPropagation.C in the developersScratchSpace/Robb directory.

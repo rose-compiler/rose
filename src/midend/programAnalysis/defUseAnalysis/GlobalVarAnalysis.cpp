@@ -4,6 +4,7 @@
  * created by tps in Feb 2007
  *****************************************/
 
+#include "rose.h"
 #include "GlobalVarAnalysis.h"
 
 using namespace std;

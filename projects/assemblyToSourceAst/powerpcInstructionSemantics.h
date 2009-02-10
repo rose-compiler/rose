@@ -1,7 +1,7 @@
 #ifndef ROSE_POWERPCINSTRUCTIONSEMANTICS_H
 #define ROSE_POWERPCINSTRUCTIONSEMANTICS_H
 
-#include "rose.h"
+//#include "rose.h"
 #include "semanticsModule.h"
 #include <cassert>
 #include <cstdio>

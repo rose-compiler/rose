@@ -5,6 +5,7 @@
  * Purpose: Cpp Calls Setjmp Longjmp header
  */
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_CPP_CALLS_SETJMP_LONGJMP_H

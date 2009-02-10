@@ -1,5 +1,6 @@
 // Implementation of UPC related translation
 // All things are inside the namespace by default. 
+#include "rose.h"
 #include "upc_translation.h" 
 #include <algorithm>
 #include <functional>      // For greater<int>( )

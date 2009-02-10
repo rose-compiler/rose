@@ -1,7 +1,7 @@
 #ifndef GENERATEDCOPTS_H
 #define GENERATEDCOPTS_H
 
-#include "rose.h"
+//#include "rose.h"
 #include "x86AssemblyToC.h"
 #include "filteredCFG.h"
 #include <fstream>

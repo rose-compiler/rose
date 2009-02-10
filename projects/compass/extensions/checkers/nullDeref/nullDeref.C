@@ -2,6 +2,7 @@
 // Author: Thomas Panas
 // Date: 24-August-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_NULL_DEREF_H

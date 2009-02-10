@@ -2,12 +2,13 @@
 //AS(091107) Tool to generate an input vector file for the
 //Deccard clone detection tool. 
 
-#include "rose.h"
+//#include "rose.h"
+
+//#include "createCloneDetectionVectors.h"
+#include "createCloneDetectionVectors.C"
 
 using namespace std;
 
-#include "createCloneDetectionVectors.h"
-#include "createCloneDetectionVectors.C"
 
 
 ////////////////////////////////////////////////////////////////////

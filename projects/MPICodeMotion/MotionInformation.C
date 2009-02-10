@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "MotionInformation.h"
 #include "virtualCFG.h"
 #include "filteredCFG.h"

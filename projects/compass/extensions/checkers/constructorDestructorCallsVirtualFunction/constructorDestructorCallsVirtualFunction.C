@@ -2,6 +2,7 @@
 // Author: Gary Yuan
 // Date: 20-December-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_CONSTRUCTOR_DESTRUCTOR_CALLS_VIRTUAL_FUNCTION_H

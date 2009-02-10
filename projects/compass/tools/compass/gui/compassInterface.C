@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "compassChecker.h"
 #include <iostream>
 

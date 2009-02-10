@@ -1,7 +1,7 @@
 #ifndef ROSE_SEMANTICSMODULE_H
 #define ROSE_SEMANTICSMODULE_H
 
-#include "rose.h"
+//#include "rose.h"
 #include <stdint.h>
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS

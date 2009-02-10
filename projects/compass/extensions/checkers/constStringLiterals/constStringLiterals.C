@@ -2,6 +2,7 @@
 // Author: Gergo  Barany
 // Date: 07-September-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_CONST_STRING_LITERALS_H

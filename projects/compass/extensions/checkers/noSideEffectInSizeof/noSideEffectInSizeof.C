@@ -2,6 +2,7 @@
 // Author: Han Suk  Kim
 // Date: 24-August-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_NO_SIDE_EFFECT_IN_SIZEOF_H

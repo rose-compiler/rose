@@ -1,6 +1,6 @@
 #include "rose.h"
-#include "x86AssemblyToC.h"
 #include "filteredCFG.h"
+#include "x86AssemblyToC.h"
 #include <fstream>
 #include "generatedCOpts.h"
 

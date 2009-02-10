@@ -1,3 +1,4 @@
+#include "rose.h"
 #include <cassert>
 #include <cstdio>
 #include <stdint.h>

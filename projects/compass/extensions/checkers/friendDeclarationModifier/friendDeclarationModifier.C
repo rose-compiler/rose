@@ -2,6 +2,7 @@
 // Author: Gary M. Yuan
 // Date: 30-July-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_FRIEND_DECLARATION_MODIFIER_H

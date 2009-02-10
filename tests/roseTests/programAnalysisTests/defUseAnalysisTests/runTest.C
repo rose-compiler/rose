@@ -3,7 +3,7 @@
  * Application to test the Def-Use Analysis
  * created by tps in Feb 2007
  *****************************************/
-
+#include "rose.h"
 #include "DefUseAnalysis.h"
 #include <string>
 #include <iostream>

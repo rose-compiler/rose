@@ -2,6 +2,7 @@
 // Author: Gary M. Yuan
 // Date: 23-July-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_SINGLE_PARAMETER_CONSTRUCTOR_EXPLICIT_MODIFIER_H

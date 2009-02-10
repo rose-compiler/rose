@@ -2,6 +2,7 @@
 // Author: Valentin  David
 // Date: 02-August-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_LOCALIZED_VARIABLES_H

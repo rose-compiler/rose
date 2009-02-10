@@ -2,6 +2,7 @@
 // Author: Mark Lewandowski, -422-3849
 // Date: 20-November-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_PREFER_SETVBUF_TO_SETBUF_H

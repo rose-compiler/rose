@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "autoParSupport.h"
 
 #include <iterator> // ostream_iterator

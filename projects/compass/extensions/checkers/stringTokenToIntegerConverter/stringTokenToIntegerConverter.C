@@ -2,6 +2,7 @@
 // Author: Han Suk  Kim
 // Date: 04-September-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_STRING_TOKEN_TO_INTEGER_CONVERTER_H

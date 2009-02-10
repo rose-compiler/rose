@@ -4,7 +4,7 @@
 // ROSE is a tool for building preprocessors, this file is an example preprocessor built with ROSE.
 // rose.C: Example (default) ROSE Preprocessor: used for testing ROSE infrastructure
 
-#include "rose.h"
+//#include "rose.h"
 #include <stack>
 
 class LinInheritedAttribute

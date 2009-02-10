@@ -1,7 +1,7 @@
 #ifndef ROSE_X86_ASSEMBLY_TO_C_H
 #define ROSE_X86_ASSEMBLY_TO_C_H
 
-#include "rose.h"
+//#include "rose.h"
 #include "x86InstructionSemantics.h"
 
 #if 0

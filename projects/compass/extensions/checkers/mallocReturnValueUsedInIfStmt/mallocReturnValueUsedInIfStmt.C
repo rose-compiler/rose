@@ -2,6 +2,7 @@
 // Author: Gary M. Yuan
 // Date: 24-July-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_MALLOC_RETURN_VALUE_USED_IN_IF_STMT_H

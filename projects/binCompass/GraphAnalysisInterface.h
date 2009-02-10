@@ -3,7 +3,7 @@
 #ifndef __BinCompass_GraphAnalysisInterface__
 #define __BinCompass_GraphAnalysisInterface__
 
-#include "rose.h"
+//#include "rose.h"
 
 #include "RoseBin_DataFlowAbstract.h"
 #include "RoseBin_DefUseAnalysis.h"

@@ -2,6 +2,7 @@
 // Author: Mark Lewandowski, -422-3849
 // Date: 26-November-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_AVOID_USING_THE_SAME_HANDLER_FOR_MULTIPLE_SIGNALS_H

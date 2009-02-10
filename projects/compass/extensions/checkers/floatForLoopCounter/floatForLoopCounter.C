@@ -2,6 +2,7 @@
 // Author: Gary M. Yuan
 // Date: 11-September-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_FLOAT_FOR_LOOP_COUNTER_H

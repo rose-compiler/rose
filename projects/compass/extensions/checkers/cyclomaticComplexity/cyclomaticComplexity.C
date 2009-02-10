@@ -2,6 +2,7 @@
 // Author: Thomas Panas
 // Date: 23-July-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_CYCLOMATIC_COMPLEXITY_H

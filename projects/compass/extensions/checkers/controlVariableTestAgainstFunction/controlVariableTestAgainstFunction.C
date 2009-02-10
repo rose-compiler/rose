@@ -2,6 +2,7 @@
 // Author: Han Suk  Kim
 // Date: 24-July-2007
 
+#include "rose.h"
 #include "compass.h"
 
 #ifndef COMPASS_CONTROL_VARIABLE_TEST_AGAINST_FUNCTION_H
