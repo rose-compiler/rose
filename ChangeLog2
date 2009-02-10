@@ -1,3 +1,35 @@
+2009-02-10 15:46  matzke
+
+	* [r4404]
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/robb.C,
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/test1.c,
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/test2.c,
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/test3.c,
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/test4.c:
+	  WIP signal handler detection for sigaction
+
+2009-02-10 15:46  matzke
+
+	* [r4403]
+	  /trunk/ROSE/projects/BinaryConstantPropagation/Makefile.am: Fixed
+	  missing include file in make distcheck
+
+2009-02-10 15:46  matzke
+
+	* [r4402]
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/robb.C:
+	  Improved output from async signal safe test
+
+2009-02-10 15:46  matzke
+
+	* [r4401]
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/robb.C:
+	  Handle functions that call non-returning functions
+	  
+	  Fixes function call graph where a function calls a non-returning
+	  function such as exit() or abort(). This also happens in dynamic
+	  calls.
+
 2009-02-10 00:42  matzke
 
 	* [r4399] /trunk/ROSE/tests/roseTests/binaryTests/runTest.C: More
