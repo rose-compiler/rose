@@ -109,8 +109,8 @@ int main(int argc, char** argv) {
   cerr << " Number of nodes == " << callanalysis->nodesVisited() << endl;
   cerr << " Number of edges == " << callanalysis->edgesVisited() << endl;
   // tps (25 Aug 2008) : changed this because of results from IDAPro
-  ROSE_ASSERT(callanalysis->nodesVisited()==16 || callanalysis->nodesVisited()==10 || callanalysis->nodesVisited()==17);
-  ROSE_ASSERT(callanalysis->edgesVisited()==20 || callanalysis->edgesVisited()==8  || callanalysis->edgesVisited()==21);
+  ROSE_ASSERT(callanalysis->nodesVisited()==16 || callanalysis->nodesVisited()==10 || callanalysis->nodesVisited()==13);
+  ROSE_ASSERT(callanalysis->edgesVisited()==20 || callanalysis->edgesVisited()==8  || callanalysis->edgesVisited()==13);
 
 
   cerr << " creating dataflow graph ... " << endl;
@@ -130,10 +130,10 @@ int main(int argc, char** argv) {
   // values for old implementation -- using objdump
 
   ROSE_ASSERT(dfanalysis->nodesVisited()==211 || dfanalysis->nodesVisited()==200 || dfanalysis->nodesVisited()==215);
-  ROSE_ASSERT(dfanalysis->edgesVisited()==252 || dfanalysis->edgesVisited()==240 || dfanalysis->edgesVisited()==257);
-  ROSE_ASSERT(dfanalysis->nrOfMemoryWrites()==8 || dfanalysis->nrOfMemoryWrites()==12 || dfanalysis->nrOfMemoryWrites()==14);
-  ROSE_ASSERT(dfanalysis->nrOfRegisterWrites()==56 || dfanalysis->nrOfRegisterWrites()==33);
-  ROSE_ASSERT(dfanalysis->nrOfDefinitions()==161 || dfanalysis->nrOfDefinitions()==147 || dfanalysis->nrOfDefinitions()==165);
+  ROSE_ASSERT(dfanalysis->edgesVisited()==252 || dfanalysis->edgesVisited()==240 || dfanalysis->edgesVisited()==254);
+  ROSE_ASSERT(dfanalysis->nrOfMemoryWrites()==8 || dfanalysis->nrOfMemoryWrites()==12 || dfanalysis->nrOfMemoryWrites()==18);
+  ROSE_ASSERT(dfanalysis->nrOfRegisterWrites()==56 || dfanalysis->nrOfRegisterWrites()==33 || dfanalysis->nrOfRegisterWrites()==40);
+  ROSE_ASSERT(dfanalysis->nrOfDefinitions()==161 || dfanalysis->nrOfDefinitions()==147 || dfanalysis->nrOfDefinitions()==157);
   ROSE_ASSERT(dfanalysis->nrOfUses()==24 || dfanalysis->nrOfUses()==23 || dfanalysis->nrOfUses()==26);
   /*
   ROSE_ASSERT(dfanalysis->nodesVisited()==237);
