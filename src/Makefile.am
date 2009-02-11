@@ -147,10 +147,11 @@ roseh:
 
 else
 
+# DQ (2/11/2009): This is part of the support for Precompiled Headers (PCH) using GNU g++
 roseh:
 	echo $(CXX)  -DHAVE_CONFIG_H -g -o rose.h.gch $(srcdir)/rose.h -I$(top_builddir)/   #$(ROSE_INCLUDES) 
-# DQ (2/10/2009): Rush for the off switch on precompiled header files :-).
-#	$(CXX)  -DHAVE_CONFIG_H -g -o rose.h.gch $(srcdir)/rose.h -I$(top_builddir) $(ROSE_INCLUDES) 
+#	DQ (2/10/2009): Rush for the off switch on precompiled header files, comment out to skip use of PCH.
+	$(CXX)  -DHAVE_CONFIG_H -g -o rose.h.gch $(srcdir)/rose.h -I$(top_builddir) $(ROSE_INCLUDES) 
 
 endif
 

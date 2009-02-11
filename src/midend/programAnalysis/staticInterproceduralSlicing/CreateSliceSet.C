@@ -1,3 +1,5 @@
+#include "rose.h"
+
 #include "CreateSliceSet.h"
 #include <set>
 

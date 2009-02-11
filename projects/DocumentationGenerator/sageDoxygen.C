@@ -1,9 +1,12 @@
-#include <sageDoxygen.h>
-#include <iostream>
-#include <stdio.h>
-#include <string>
-#include <functional>
-#include <limits.h>
+#include "rose.h"
+
+#include "sageDoxygen.h"
+
+// #include <iostream>
+// #include <stdio.h>
+// #include <string>
+// #include <functional>
+// #include <limits.h>
 
 using namespace std;
 
