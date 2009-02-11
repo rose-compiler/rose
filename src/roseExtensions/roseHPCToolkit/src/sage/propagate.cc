@@ -20,6 +20,8 @@
  *  $Id: propagate.cc,v 1.1 2008/01/08 02:56:43 dquinlan Exp $
  */
 
+#include "rose.h"
+
 #include "rosehpct/util/general.hh"
 #include "rosehpct/sage/sage.hh"
 

@@ -1,6 +1,9 @@
 // Refined OmpAttribute connected to a parser using Bison
 //Liao, 9/18/2008
 //
+
+#include "rose.h"
+
 #include "OmpAttribute.h"
 #include <algorithm>
 using namespace std;
