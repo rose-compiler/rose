@@ -1,3 +1,34 @@
+2009-02-11 19:39  panas2
+
+	* [r4422] /trunk/ROSE/projects/BinQ/moc_MyBars.C,
+	  /trunk/ROSE/projects/BinQ/moc_slide.C: removed two files that are
+	  now generated
+
+2009-02-11 19:24  panas2
+
+	* [r4421] /trunk/ROSE/projects/BinQ/Makefile.am: Fixed the moc
+	  problem in BinQ.
+
+2009-02-11 19:16  dquinlan
+
+	* [r4420]
+	  /trunk/ROSE/src/midend/programTransformation/functionCallNormalization/FunctionNormalization.h:
+	  Fixed reference to rose.h in another header file.
+
+2009-02-11 18:12  dquinlan
+
+	* [r4419]
+	  /trunk/ROSE/projects/DocumentationGenerator/sageDoxygen.C,
+	  /trunk/ROSE/src/Makefile.am,
+	  /trunk/ROSE/src/frontend/SageIII/OmpAttribute.C,
+	  /trunk/ROSE/src/midend/programAnalysis/staticInterproceduralSlicing/CreateSliceSet.C,
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/src/rosehpct.cc,
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/src/sage/collect.cc,
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/src/sage/depth.cc,
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/src/sage/metric.cc,
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/src/sage/propagate.cc:
+	  Fixed more pre-compiled header problems.
+
 2009-02-11 06:34  dquinlan
 
 	* [r4417] /trunk/ROSE/scripts/roseFreshTestStub-Dan-OSX-scidac.sh,
