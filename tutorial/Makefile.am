@@ -605,8 +605,17 @@ testSeedBugsExample_arrayIndexing: seedBugsExample_arrayIndexing
 testVolatileTypeModifier: volatileTypeModifier
 	./volatileTypeModifier -rose:verbose 0 -c $(srcdir)/inputCode_volatileTypeModifier.C
 
+if ROSE_USE_DWARF
+# This should only be tested if Dwarf is in use, and it should not 
+# be used on the Mac OSX system because we build the executable and
+# ROSE does not yet handle the Mach-O executable i386 binary file format.
 inputCode_dwarfAnalysis:
 	g++ -g3 -o inputCode_dwarfAnalysis $(srcdir)/inputCode_dwarfAnalysis.C
+else
+inputCode_dwarfAnalysis:
+	cp $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/i386-nologin inputCode_dwarfAnalysis
+endif
+
 
 testDwarfAnalysis: dwarfAnalysis inputCode_dwarfAnalysis 
 # Note: different stages of AST representation and visualization.

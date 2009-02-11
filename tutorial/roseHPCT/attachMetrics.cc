@@ -1,6 +1,8 @@
 // attachMetrics.cc -- Sample translator showing how to attach
 // HPCToolkit data to the ROSE AST.
 
+#include "rose.h"
+
 #include <iostream>
 #include <list>
 #include <rosehpct/rosehpct.hh>

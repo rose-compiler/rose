@@ -8,6 +8,8 @@
  *  $Id: process_cmdline.cc,v 1.1 2008/01/08 02:57:07 dquinlan Exp $
  */
 
+#include "rose.h"
+
 #include <iostream>
 #include <string>
 #include <vector>
@@ -15,7 +17,7 @@
 #include <rosehpct/util/general.hh>
 #include <rosehpct/rosehpct.hh>
 
-#include "rose.h"
+// #include "rose.h"
 
 using namespace std;
 using namespace GenUtil;

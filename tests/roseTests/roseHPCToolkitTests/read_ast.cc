@@ -8,6 +8,8 @@
  *  $Id: read_ast.cc,v 1.1 2008/01/08 02:57:07 dquinlan Exp $
  */
 
+#include "rose.h"
+
 #include <iostream>
 #include <string>
 #include <map>

@@ -1,4 +1,4 @@
-// -*- mode:C++; tab-wdith:8; indent-tabs-mode:nil -*-
+// -*- mode:C++; tab-width:8; indent-tabs-mode:nil -*-
 /*!
  *  \file examples/test_highlevel.cc
  *  \brief Demonstrates a high-level interface to ROSE-HPCT.
@@ -9,6 +9,8 @@
  *
  *  $Id: test_highlevel.cc,v 1.1 2008/01/08 02:57:08 dquinlan Exp $
  */
+
+#include "rose.h"
 
 #include <iostream>
 #include <rosehpct/rosehpct.hh>

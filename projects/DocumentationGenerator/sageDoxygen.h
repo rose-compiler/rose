@@ -1,5 +1,5 @@
 #include <commentObj.h>
-#include <rose.h>
+// #include <rose.h>
 #include <string>
 #include <map>
 

@@ -1,7 +1,7 @@
 #ifndef AST_REWRITE_AST_FRAGMENT_STRING_TEMPLATES_C
 #define AST_REWRITE_AST_FRAGMENT_STRING_TEMPLATES_C
 
-#include "rose.h"
+// #include "rose.h"
 
 // ************************************************************
 //               Source Code String Class

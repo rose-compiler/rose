@@ -1,7 +1,7 @@
 #ifndef AST_REWRITE_PREFIX_GENERATION_C
 #define AST_REWRITE_PREFIX_GENERATION_C
 
-#include "rose.h"
+// #include "rose.h"
 #include "rewrite.h"
 
 template <class ASTNodeCollection>

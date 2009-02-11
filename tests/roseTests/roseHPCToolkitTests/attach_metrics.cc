@@ -18,6 +18,8 @@
  *  $Id: attach_metrics.cc,v 1.1 2008/01/08 02:57:07 dquinlan Exp $
  */
 
+#include "rose.h"
+
 #include <iostream>
 #include <string>
 #include <vector>
@@ -25,7 +27,6 @@
 #include <rosehpct/profir2sage/profir2sage.hh>
 #include <rosehpct/rosehpct.hh>
 
-#include "rose.h"
 
 using namespace std;
 

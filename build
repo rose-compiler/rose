@@ -33,6 +33,8 @@ rm -rf autom4te.cache
 # JJW (11/8/2008): force libtoolize everywhere, and prefer libtoolize to
 # glibtoolize if it is present (libltdl is missing on ninjai, so I need to use
 # my own libtool installation)
+# DQ (2/10/2009): Must use "/Users/dquinlan/local/libtool-install/bin/libtoolize --force --copy --ltdl --automake"
+# the first time.
 if which libtoolize > /dev/null; then
   libtoolize --force --copy --ltdl --automake
 elif which glibtoolize > /dev/null; then

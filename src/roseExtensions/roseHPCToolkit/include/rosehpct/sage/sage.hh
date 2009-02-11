@@ -34,7 +34,7 @@ $Id: sage.hh,v 1.1 2008/01/08 02:56:43 dquinlan Exp $
 #include <vector>
 
 #include <rosehpct/sage/collectors.hh>
-#include "rose.h"
+// #include "rose.h"
 
 namespace RoseHPCT
 {

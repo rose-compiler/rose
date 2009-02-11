@@ -8,7 +8,7 @@
 #ifndef UNPARSER_FHELP
 #define UNPARSER_FHELP
 
-#include "rose.h"
+// #include "rose.h"
 #include "unparser.h"
 
 class Unparser;

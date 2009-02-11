@@ -1,6 +1,6 @@
 #include "rose.h"
 #include "compass.h"
-#include <rose.h>
+// #include <rose.h>
 #include <iostream>
 
 // This file is a simple test of the compassSupport,  compass infrastructure
