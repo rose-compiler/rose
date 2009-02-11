@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.h,v 1.31 2009-02-10 23:16:09 gergo Exp $
+// $Id: cfg_support.h,v 1.32 2009-02-11 10:03:44 gergo Exp $
 
 #ifndef H_CFG_SUPPORT
 #define H_CFG_SUPPORT
@@ -132,8 +132,12 @@ public:
     std::map<SgVariableSymbol *, SgExpression *> globals_initializers;
 
  // access to statement labels
+    bool statementHasLabels(SgStatement *);
     std::pair<int, int> statementEntryExitLabels(SgStatement *);
     std::set<int> statementAllLabels(SgStatement *);
+    void registerStatementLabel(int label, SgStatement *stmt);
+ // debugging
+    void print_map() const;
 
  // a single symbol for all return variables in the program
     SgVariableSymbol *global_return_variable_symbol;
@@ -166,6 +170,9 @@ private:
     std::vector<BlockListIterator *> iteratorsToDelete;
 #endif
     std::vector<char *> cStringsToDelete;
+
+    std::map<int, SgStatement *> block_stmt_map;
+    std::map<SgStatement *, std::set<int> > stmt_blocks_map;
 };
 
 class BasicBlock

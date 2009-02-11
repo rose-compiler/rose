@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.h,v 1.9 2009-02-10 23:16:09 gergo Exp $
+// $Id: ExprTransformer.h,v 1.10 2009-02-11 10:03:44 gergo Exp $
 
 #ifndef H_EXPRTRANSFORMER
 #define H_EXPRTRANSFORMER
@@ -29,8 +29,7 @@ public:
  // GB (2008-05-05): New interface to roll expression labeling and numbering
  // into one operation.
     ExprTransformer(int node_id, int procnum, int expnum, CFG *cfg,
-            BasicBlock *after, std::map<int, SgStatement *> &block_stmt_map,
-            SgStatement *stmt);
+            BasicBlock *after, SgStatement *stmt);
     SgExpression *labelAndTransformExpression(SgExpression *expr);
 
 protected:
@@ -44,7 +43,6 @@ private:
     BasicBlock *after, *last;
     BasicBlock *retval;
     SgVariableSymbol *root_var;
-    std::map<int, SgStatement *> &block_stmt_map;
     SgStatement *stmt;
     ExprLabeler el;
     StatementAttribute *stmt_start, *stmt_end;

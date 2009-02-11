@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.h,v 1.14 2008-11-14 17:11:15 gergo Exp $
+// $Id: CFGTraversal.h,v 1.15 2009-02-11 10:03:44 gergo Exp $
 
 #ifndef H_CFGTRAVERSAL
 #define H_CFGTRAVERSAL
@@ -18,9 +18,6 @@ public:
  // CFGTraversal(std::deque<Procedure *> *);
     CFGTraversal(ProcTraversal &, AnalyzerOptions *options = NULL);
     CFG *getCFG();
-
-    void print_map() const;
-    std::map<int, SgStatement *> block_stmt_map;
 
  // Can be called before the traversal to choose whether the expressions and
  // types in the program should be numbered. Default is yes. If the

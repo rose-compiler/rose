@@ -254,12 +254,7 @@ TermPrinter<DFI_STORE_TYPE>::getAnalysisResult(SgStatement* stmt)
   }
 # endif
 # ifdef PAG_VERSION
-  // We want to annotate only statements within functions. No compound
-  // statements for now, although they could be supported.
-  bool interestingStatement = isSgScopeStatement(stmt->get_parent())
-                              && !isSgGlobal(stmt->get_parent())
-                              && !isSgBasicBlock(stmt);
-  if (cfg != NULL && interestingStatement) {
+  if (cfg != NULL && cfg->statementHasLabels(stmt)) {
     std::pair<int, int> entryExit = cfg->statementEntryExitLabels(stmt);
     PrologCompTerm *pair = new PrologInfixOperator("-");
     pair->addSubterm(new PrologInt(entryExit.first));

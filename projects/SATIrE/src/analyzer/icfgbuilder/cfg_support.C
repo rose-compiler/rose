@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.C,v 1.30 2009-02-10 23:16:09 gergo Exp $
+// $Id: cfg_support.C,v 1.31 2009-02-11 10:03:44 gergo Exp $
 
 #include "CFGTraversal.h"
 #include "cfg_support.h"
@@ -806,6 +806,19 @@ BasicBlock::~BasicBlock()
 
 #include "satire/analysis_info.h"
 
+bool
+CFG::statementHasLabels(SgStatement *stmt)
+{
+    StatementAttribute *start, *end;
+    start = (stmt->attributeExists("PAG statement start")
+            ? (StatementAttribute *) stmt->getAttribute("PAG statement start")
+            : NULL);
+    end = (stmt->attributeExists("PAG statement end")
+          ? (StatementAttribute *) stmt->getAttribute("PAG statement end")
+          : NULL);
+    return (start != NULL && end != NULL);
+}
+
 std::pair<int, int>
 CFG::statementEntryExitLabels(SgStatement *stmt)
 {
@@ -821,10 +834,9 @@ CFG::statementEntryExitLabels(SgStatement *stmt)
         && (start == NULL || end == NULL))
     {
         std::cerr
-            << "*** error in CFG: statement "
-            << stmt->class_name() << std::endl;
-        std::cerr
-            << Ir::fragmentToString(stmt)
+            << "*** internal error: " << __FILE__ << ":" << __LINE__
+            << ": in function CFG::statementEntryExitLabels: statement "
+            << stmt->class_name() << " of type " << Ir::fragmentToString(stmt)
             << " has no valid statement start/end attributes"
             << std::endl;
         std::abort();
@@ -832,6 +844,32 @@ CFG::statementEntryExitLabels(SgStatement *stmt)
     int startLabel = start->get_bb()->id;
     int endLabel = end->get_bb()->id;
     return std::make_pair(startLabel, endLabel);
+}
+
+std::set<int>
+CFG::statementAllLabels(SgStatement *stmt)
+{
+    return stmt_blocks_map[stmt];
+}
+
+void
+CFG::registerStatementLabel(int label, SgStatement *stmt)
+{
+    block_stmt_map[label] = stmt;
+    stmt_blocks_map[stmt].insert(label);
+}
+
+void 
+CFG::print_map() const
+{
+    std::map<int, SgStatement *>::const_iterator i;
+    for (i = block_stmt_map.begin(); i != block_stmt_map.end(); ++i)
+    {
+        std::cout
+            << "block " << std::setw(4) << i->first
+            << " stmt " << i->second << ": "
+            << Ir::fragmentToString((i->second)) << std::endl;
+    }
 }
 
 #if 0

@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.55 2009-02-10 23:16:09 gergo Exp $
+// $Id: CFGTraversal.C,v 1.56 2009-02-11 10:03:44 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -68,11 +68,11 @@ CFGTraversal::processProcedureArgBlocks()
           ExprTransformer et(node_id, (*i)->procnum, expnum, cfg, NULL);
           et.traverse(new_expr, preorder);
           for (int z = node_id; z < et.get_node_id(); ++z) {
-            block_stmt_map[z] = current_statement;
+            cfg->registerStatementLabel(z, current_statement);
           }
 #else
           ExprTransformer et(node_id, (*i)->procnum, expnum, cfg, NULL,
-                  block_stmt_map, current_statement);
+                  current_statement);
           et.labelAndTransformExpression(new_expr);
 #endif
           node_id = et.get_node_id();
@@ -389,8 +389,8 @@ CFGTraversal::kill_unreachable_nodes() {
             SgStatement *stmt;
          // The statement in question might be transformed, so see if we can
          // get the original statement through the block_stmt_map.
-            if (block_stmt_map[(*n)->id] != NULL)
-                stmt = block_stmt_map[(*n)->id];
+            if (block_stmt_map!(*n)->id! != NULL)
+                stmt = block_stmt_map!(*n)->id!;
             else
                 stmt = (*n)->statements.front();
 
@@ -1245,7 +1245,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
       
       switch ((*i)->variantT()) {
       case V_SgIfStmt: {
-        block_stmt_map[node_id] = current_statement;
+        cfg->registerStatementLabel(node_id, current_statement);
         BasicBlock *join_block
           = new BasicBlock(node_id++, INNER, proc->procnum);
         cfg->nodes.push_back(join_block);
@@ -1254,7 +1254,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
         after = join_block;
 
         SgIfStmt *ifs = isSgIfStmt(*i);
-        block_stmt_map[node_id] = current_statement;
+        cfg->registerStatementLabel(node_id, current_statement);
         BasicBlock *if_block
           = new BasicBlock(node_id++, INNER, proc->procnum);
         cfg->nodes.push_back(if_block);
@@ -1270,10 +1270,10 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
         ExprTransformer et(node_id, proc->procnum, expnum, cfg, if_block);
         et.traverse(new_expr, preorder);
         for (int z = node_id; z < et.get_node_id(); ++z)
-            block_stmt_map[z] = current_statement;
+            cfg->registerStatementLabel(z, current_statement);
 #else
         ExprTransformer et(node_id, proc->procnum, expnum, cfg, if_block,
-                block_stmt_map, cond);
+                cond);
         new_expr = et.labelAndTransformExpression(new_expr);
 #endif
         node_id = et.get_node_id();
@@ -1325,7 +1325,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
         SgForStatement *fors = isSgForStatement(*i);
         /* create a block for the "real" head of the for
          * statement (where the condition is tested) */
-        block_stmt_map[node_id] = current_statement;
+        cfg->registerStatementLabel(node_id, current_statement);
         BasicBlock *for_block
           = new BasicBlock(node_id++, INNER, proc->procnum);
         cfg->nodes.push_back(for_block);
@@ -1354,10 +1354,10 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
             ExprTransformer et(node_id, proc->procnum, expnum, cfg, init_block);
             et.traverse(new_expr, preorder);
             for (int z = node_id; z < et.get_node_id(); ++z)
-              block_stmt_map[z] = current_statement;
+              cfg->registerStatementLabel(z, current_statement);
 #else
             ExprTransformer et(node_id, proc->procnum, expnum, cfg, init_block,
-                    block_stmt_map, current_statement);
+                    current_statement);
             et.labelAndTransformExpression(new_expr);
 #endif
             node_id = et.get_node_id();
@@ -1400,11 +1400,11 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
                    // (init_block_after != NULL ? init_block_after : init_block));
               et.traverse(new_expr, preorder);
               for (int z = node_id; z < et.get_node_id(); ++z) {
-                  block_stmt_map[z] = current_statement;
+                  cfg->registerStatementLabel(z, current_statement);
               }
 #else
               ExprTransformer et(node_id, proc->procnum, expnum, cfg,
-                      init_block, block_stmt_map, current_statement);
+                      init_block, current_statement);
               new_expr = et.labelAndTransformExpression(new_expr);
 #endif
               node_id = et.get_node_id();
@@ -1454,11 +1454,11 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
         ExprTransformer et(node_id, proc->procnum, expnum, cfg, for_block);
         et.traverse(new_expr, preorder);
         for (int z = node_id; z < et.get_node_id(); ++z) {
-          block_stmt_map[z] = current_statement;
+          cfg->registerStatementLabel(z, current_statement);
         }
 #else
         ExprTransformer et(node_id, proc->procnum, expnum, cfg, for_block,
-                block_stmt_map, cond);
+                cond);
         new_expr = et.labelAndTransformExpression(new_expr);
 #endif
         node_id = et.get_node_id();
@@ -1483,7 +1483,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 #endif
         BasicBlock *for_block_after = et.get_after();
         /* create a block for the increment statement */
-        block_stmt_map[node_id] = current_statement;
+        cfg->registerStatementLabel(node_id, current_statement);
         BasicBlock *incr_block
           = new BasicBlock(node_id++, INNER, proc->procnum);
         cfg->nodes.push_back(incr_block);
@@ -1497,11 +1497,11 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
         ExprTransformer et_inc(node_id, proc->procnum, expnum, cfg, incr_block);
         et_inc.traverse(new_expr_inc, preorder);
         for (int z = node_id; z < et_inc.get_node_id(); ++z) {
-          block_stmt_map[z] = current_statement;
+          cfg->registerStatementLabel(z, current_statement);
         }
 #else
         ExprTransformer et_inc(node_id, proc->procnum, expnum, cfg, incr_block,
-                block_stmt_map, current_statement);
+                current_statement);
         new_expr_inc = et_inc.labelAndTransformExpression(new_expr_inc);
 #endif
         node_id = et_inc.get_node_id();
@@ -1549,7 +1549,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
       break;
 
       case V_SgWhileStmt: {
-	block_stmt_map[node_id] = current_statement;
+	cfg->registerStatementLabel(node_id, current_statement);
 	BasicBlock *join_block
 	  = new BasicBlock(node_id++, INNER, proc->procnum);
 	cfg->nodes.push_back(join_block);
@@ -1558,7 +1558,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 	after = join_block;
 
 	SgWhileStmt* whiles = isSgWhileStmt(*i);
-	block_stmt_map[node_id] = current_statement;
+	cfg->registerStatementLabel(node_id, current_statement);
 	BasicBlock* while_block
 	  = new BasicBlock(node_id++, INNER, proc->procnum);
 	cfg->nodes.push_back(while_block);
@@ -1575,11 +1575,11 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 			   cfg, while_block);
 	et.traverse(new_expr, preorder);
 	for (int z = node_id; z < et.get_node_id(); ++z) {
-	  block_stmt_map[z] = current_statement;
+	  cfg->registerStatementLabel(z, current_statement);
 	}
 #else
     ExprTransformer et(node_id, proc->procnum, expnum, cfg, while_block,
-            block_stmt_map, cond);
+            cond);
     new_expr = et.labelAndTransformExpression(new_expr);
 #endif
 	node_id = et.get_node_id();
@@ -1616,7 +1616,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 
       case V_SgDoWhileStmt: {
 	SgDoWhileStmt *dowhiles = isSgDoWhileStmt(*i);
-	block_stmt_map[node_id] = current_statement;
+	cfg->registerStatementLabel(node_id, current_statement);
 	BasicBlock *dowhile_block
 	  = new BasicBlock(node_id++, INNER, proc->procnum);
 	cfg->nodes.push_back(dowhile_block);
@@ -1633,11 +1633,11 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 			   cfg, dowhile_block);
 	et.traverse(new_expr, preorder);
 	for (int z = node_id; z < et.get_node_id(); ++z) {
-                    block_stmt_map[z] = current_statement;
+                    cfg->registerStatementLabel(z, current_statement);
 	}
 #else
     ExprTransformer et(node_id, proc->procnum, expnum, cfg, dowhile_block,
-            block_stmt_map, cond);
+            cond);
     new_expr = et.labelAndTransformExpression(new_expr);
 #endif
 	node_id = et.get_node_id();
@@ -1678,7 +1678,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
       case V_SgBreakStmt: {
 	SgBreakStmt *breaks = isSgBreakStmt(*i);
 	if (new_block == NULL) {
-	  block_stmt_map[node_id] = current_statement;
+	  cfg->registerStatementLabel(node_id, current_statement);
 	  new_block
 	    = new BasicBlock(node_id++, INNER, proc->procnum);
 	  cfg->nodes.push_back(new_block);
@@ -1702,7 +1702,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
       case V_SgContinueStmt: {
 	SgContinueStmt *continues = isSgContinueStmt(*i);
 	if (new_block == NULL) {
-	  block_stmt_map[node_id] = current_statement;
+	  cfg->registerStatementLabel(node_id, current_statement);
 	  new_block
 	    = new BasicBlock(node_id++, INNER, proc->procnum);
 	  cfg->nodes.push_back(new_block);
@@ -1723,7 +1723,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
             break;
       case V_SgSwitchStatement: {
 	SgSwitchStatement *switchs = isSgSwitchStatement(*i);
-	block_stmt_map[node_id] = current_statement;
+	cfg->registerStatementLabel(node_id, current_statement);
 	BasicBlock *switch_block
 	  = new BasicBlock(node_id++, INNER, proc->procnum);
 	cfg->nodes.push_back(switch_block);
@@ -1750,11 +1750,11 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 			   cfg, switch_block);
 	et.traverse(new_expr, preorder);
 	for (int z = node_id; z < et.get_node_id(); ++z) {
-	  block_stmt_map[z] = current_statement;
+	  cfg->registerStatementLabel(z, current_statement);
 	}
 #else
     ExprTransformer et(node_id, proc->procnum, expnum, cfg, switch_block,
-            block_stmt_map, item_sel);
+            item_sel);
     new_expr = et.labelAndTransformExpression(new_expr);
 #endif
 	node_id = et.get_node_id();
@@ -1925,11 +1925,11 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 			   cfg, new_block);
 	et.traverse(new_expr, preorder);
 	for (int z = node_id; z < et.get_node_id(); ++z) {
-	  block_stmt_map[z] = current_statement;
+	  cfg->registerStatementLabel(z, current_statement);
 	}
 #else
     ExprTransformer et(node_id, proc->procnum, expnum, cfg, new_block,
-            block_stmt_map, current_statement);
+            current_statement);
     new_expr = et.labelAndTransformExpression(new_expr);
 #endif
 	node_id = et.get_node_id();
@@ -2012,10 +2012,10 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
           ExprTransformer et(node_id, proc->procnum, expnum, cfg, new_block);
           et.traverse(new_expr, preorder);
           for (int z = node_id; z < et.get_node_id(); ++z)
-              block_stmt_map[z] = current_statement;
+              cfg->registerStatementLabel(z, current_statement);
 #else
           ExprTransformer et(node_id, proc->procnum, expnum, cfg, new_block,
-                  block_stmt_map, current_statement);
+                  current_statement);
           new_expr = et.labelAndTransformExpression(new_expr);
 #endif
           node_id = et.get_node_id();
@@ -2050,11 +2050,11 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 			       cfg, after);
 	    et.traverse(new_expr, preorder);
 	    for (int z = node_id; z < et.get_node_id(); ++z) {
-	      block_stmt_map[z] = current_statement;
+	      cfg->registerStatementLabel(z, current_statement);
 	    }
 #else
         ExprTransformer et(node_id, proc->procnum, expnum, cfg, after,
-                block_stmt_map, current_statement);
+                current_statement);
         new_expr = et.labelAndTransformExpression(new_expr);
 #endif
 	    node_id = et.get_node_id();
@@ -2191,11 +2191,11 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 			     cfg, new_block);
 	  et.traverse(new_expr, preorder);
 	  for (int z = node_id; z < et.get_node_id(); ++z) {
-                    block_stmt_map[z] = current_statement;
+                    cfg->registerStatementLabel(z, current_statement);
 	  }
 #else
       ExprTransformer et(node_id, proc->procnum, expnum, cfg, new_block,
-              block_stmt_map, current_statement);
+              current_statement);
       new_expr = et.labelAndTransformExpression(new_expr);
 #endif
 	  node_id = et.get_node_id();
@@ -2452,7 +2452,7 @@ BasicBlock*
 CFGTraversal::allocate_block_without_successor(BasicBlock *nb) {
   if (nb == NULL) {
     if (current_statement != NULL)
-      block_stmt_map[node_id] = current_statement;
+      cfg->registerStatementLabel(node_id, current_statement);
     nb = new BasicBlock(node_id++, INNER, proc->procnum);
     cfg->nodes.push_back(nb);
   }
@@ -2543,16 +2543,6 @@ CFGTraversal::call_base_destructors(Procedure *p, BasicBlock *after) {
   }
 
   return after;
-}
-
-void 
-CFGTraversal::print_map() const {
-  std::map<int, SgStatement *>::const_iterator i;
-  for (i = block_stmt_map.begin(); i != block_stmt_map.end(); ++i) {
-    std::cout << "block " << std::setw(4) << i->first
-              << " stmt " << i->second << ": "
-              << Ir::fragmentToString((i->second)) << std::endl;
-  }
 }
 
 void
