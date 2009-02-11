@@ -6,6 +6,9 @@ source /usr/apps/graphviz/2.6/setup.sh
 #export PATH="/usr/apps/java/jdk1.5.0_11/bin:$PATH"
 #export LD_LIBRARY_PATH="/home/dquinlan/ROSE/OpenFortranParser/ofp_install/lib/:$LD_LIBRARY_PATH"
 
+# QT and QROSE
+source /usr/apps/qt/4.4.2/setup.sh
+
 export JAVA_HOME=/usr/apps/java/jdk1.5.0_11
 export BOOST_ROOT="/home/liao6/opt/boost_1_35_0"
 export LD_LIBRARY_PATH="/usr/apps/java/jdk1.5.0_11/lib:${JAVA_HOME}/jre/lib/i386/server:$LD_LIBRARY_PATH"
@@ -19,7 +22,7 @@ TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 ROSE_TOP=/home/liao6/daily-test-rose/${TIMESTAMP}
 
 # for regular build and tests
-CONFIGURE_FLAGS=(--with-boost=${BOOST_ROOT} --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --prefix=${ROSE_TOP}/install "$@")
+CONFIGURE_FLAGS=(--with-boost=${BOOST_ROOT} --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-qt=/usr/apps/qt/4.4.2 --prefix=${ROSE_TOP}/install "$@")
 
 ROSE_SVNROOT=file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
 MAILADDRS="liaoch@llnl.gov panas2@llnl.gov quinlan1@llnl.gov matzke1@llnl.gov"
