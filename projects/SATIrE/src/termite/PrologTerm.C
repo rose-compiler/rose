@@ -66,6 +66,10 @@ bool init_termite(int argc, char **argv, bool interactive)
   av[ac++] = argv[0];
   av[ac++] = strdup("-q");
   av[ac++] = strdup("-O");
+  av[ac++] = strdup("-L65536k");  // Local stack
+  av[ac++] = strdup("-G8192M");  // Global stack
+  av[ac++] = strdup("-A1024M");  // Argument stack
+  av[ac++] = strdup("-T8192k");  // Trail stack
 
   if (interactive == false) {
     // At runtime, it is advised to pass the flag -nosignals, which

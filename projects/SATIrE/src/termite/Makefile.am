@@ -20,14 +20,14 @@ INCLUDES = -I$(top_srcdir)/src/satire \
 
 AM_LDFLAGS=-L$(ROSE_LIB_DIR) -Wl,-rpath $(ROSE_LIB_DIR) -L$(BOOST_LIB_DIR) -Wl,-rpath $(BOOST_LIB_DIR) 
 
-bin_PROGRAMS = termpretty rose2term term2rose
-bin_SCRIPTS = c2term term2c
+bin_PROGRAMS = termpretty c2term term2rose
+bin_SCRIPTS = term2c
 
 AM_YFLAGS = -d
 
 lib_LIBRARIES = libtermite.a
 libtermite_a_SOURCES = \
-	PrologSupport.C \
+	RoseToProlog.C \
 	dfiparser.tab.c++ dfiparser.tab.h++ dfiscanner.c++ \
 	PrologToRose.C PrologTerm.C
 
@@ -44,11 +44,11 @@ dfiscanner.c++: $(srcdir)/dfiscanner.l++ Makefile
 
 termpretty_SOURCES = termpretty.l++
 
-rose2term_SOURCES = toProlog.C 
+c2term_SOURCES = c2term.C 
 term2rose_SOURCES = toC.C 
 
 term2rose_LDADD = libtermite.a -lrose
-rose2term_LDADD = libtermite.a -lrose
+c2term_LDADD = libtermite.a -lrose
 
 CLEANFILES = termpretty.c++ \
 	     dfiparser.c++ dfiparser.h dfiscanner.c++ \
@@ -65,7 +65,7 @@ nobase_include_HEADERS = \
 	satire/PrologAtom.h \
 	satire/PrologInt.h \
 	satire/PrologVariable.h \
-	satire/PrologSupport.h
+	satire/RoseToProlog.h
 
 if WITH_SWI_PROLOG
   INCLUDES += -I$(SWI_PROLOG_INCLUDE_DIR) 
@@ -99,7 +99,7 @@ EXTRA_DIST = \
   tests/test5.C tests/test8.C tests/test_class2.C tests/test_minimal.C \
   tests/test_typedef.C \
   \
-  c2term term2c \
+  term2c \
   dfiparser.y++ dfiscanner.l++ \
   clang/README clang/INSTALL clang/BUILD-clang.sh clang/clang-termite.patch
 

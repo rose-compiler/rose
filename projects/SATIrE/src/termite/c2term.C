@@ -39,27 +39,27 @@ int main ( int argc, char ** argv ) {
   // to turn off the frontend's warnings; they are distracting in the
   // automated test outputs.
   char warningFlag[] = "-edg:w";
-  argv[argc-1] = warningFlag;
+  argv[2] = warningFlag;
 
-  SgProject * project = frontend(argc,argv);
+  SgProject * root = frontend(argc,argv);
 
   //Create dot and pdf files
   //DOT generation (numbering:preoder)
   //AstDOTGeneration dotgen;
 
-  //dotgen.generateInputFiles(project,AstDOTGeneration::PREORDER);
+  //dotgen.generateInputFiles(root,AstDOTGeneration::PREORDER);
   //PDF generation
   //AstPDFGeneration pdfgen;
-  //pdfgen.generateInputFiles(project);
+  //pdfgen.generateInputFiles(root);
 
   init_termite(argc, argv);
   
   //create prolog term
   BasicTermPrinter tp;
   if (strip_headers) 
-    tp.traverseInputFiles(project); // Without headers
+    tp.traverseInputFiles(root); // Without headers
   else
-    tp.traverse(project); // With headers
+    tp.traverse(root); // With headers
 
   PrologTerm* genTerm = tp.getTerm();
 

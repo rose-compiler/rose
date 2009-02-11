@@ -89,7 +89,7 @@ private:
   PrologCompTerm* listTerm(SgNode* astNode, SynthesizedAttributesList synList);
 
 # ifndef COMPACT_TERM_NOTATION
-  /** add the class name to the term, using PrologSupport::prologize*/
+  /** add the class name to the term, using RoseToProlog::prologize*/
   void addClassname(SgNode* astNode,PrologCompTerm*);
 #endif
 
@@ -109,19 +109,10 @@ typedef TermPrinter<void*> BasicTermPrinter;
 
 /***********************************************************************
  * TermPrinter (Implementation)
- * Author: Christoph Bonitz
- * Purpose: Traverse AST to create a PROLOG term representing it.
- *
- * Uses:
- * - AstBottomUpProcessing (traversal infrastructure)
- * - PrologSupport for character manipulation (PrologSupport::prologize()),
- *   adding file info and term specific information
- * - PrologTerm* and subclasses for term representation
- *
  ***********************************************************************/
 
 /*includes*/
-#include "PrologSupport.h"
+#include "RoseToProlog.h"
 #include <sstream>
 #include <iostream>
 
@@ -217,7 +208,7 @@ TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, Synth
       }
     }
     /* add node specific information to the term*/
-    PrologSupport::addSpecific(astNode, (PrologCompTerm*)t);
+    RoseToProlog::addSpecific(astNode, (PrologCompTerm*)t);
 
     /* add analysis information to the term*/
     if (SgStatement* n = isSgStatement(astNode)) {
@@ -232,7 +223,7 @@ TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, Synth
     }
 
     /* add file info term */
-    ((PrologCompTerm*)t)->addSubterm(PrologSupport::getFileInfo(fi));
+    ((PrologCompTerm*)t)->addSubterm(RoseToProlog::getFileInfo(fi));
   }
   else {
     t = new PrologAtom("null");
@@ -309,7 +300,7 @@ PrologCompTerm*
 TermPrinter<DFI_STORE_TYPE>::leafTerm(SgNode* astNode, SynthesizedAttributesList synList) 
 {
 #ifdef COMPACT_TERM_NOTATION
-	PrologCompTerm* t = new PrologCompTerm(PrologSupport::prologize(astNode->class_name()));
+	PrologCompTerm* t = new PrologCompTerm(RoseToProlog::prologize(astNode->class_name()));
 #else
 	/* create composite term and add class name*/
 	PrologCompTerm* t = new PrologCompTerm("leaf_node");
@@ -324,7 +315,7 @@ PrologCompTerm*
 TermPrinter<DFI_STORE_TYPE>::unaryTerm(SgNode* astNode, SynthesizedAttributesList synList) 
 {
 #ifdef COMPACT_TERM_NOTATION
-	PrologCompTerm* t = new PrologCompTerm(PrologSupport::prologize(astNode->class_name()));
+	PrologCompTerm* t = new PrologCompTerm(RoseToProlog::prologize(astNode->class_name()));
 #else
 	/* create composite term and add class name*/
 	PrologCompTerm* t = new PrologCompTerm("unary_node");
@@ -341,7 +332,7 @@ PrologCompTerm*
 TermPrinter<DFI_STORE_TYPE>::binaryTerm(SgNode* astNode, SynthesizedAttributesList synList) 
 {
 #ifdef COMPACT_TERM_NOTATION
-	PrologCompTerm* t = new PrologCompTerm(PrologSupport::prologize(astNode->class_name()));
+	PrologCompTerm* t = new PrologCompTerm(RoseToProlog::prologize(astNode->class_name()));
 #else
 	/* create composite term and add class name*/
 	PrologCompTerm* t = new PrologCompTerm("binary_node");
@@ -359,7 +350,7 @@ PrologCompTerm*
 TermPrinter<DFI_STORE_TYPE>::ternaryTerm(SgNode* astNode, SynthesizedAttributesList synList) 
 {
 #ifdef COMPACT_TERM_NOTATION
-	PrologCompTerm* t = new PrologCompTerm(PrologSupport::prologize(astNode->class_name()));
+	PrologCompTerm* t = new PrologCompTerm(RoseToProlog::prologize(astNode->class_name()));
 #else
 	/* create composite term and add class name*/
 	PrologCompTerm* t = new PrologCompTerm("ternary_node");
@@ -377,7 +368,7 @@ PrologCompTerm*
 TermPrinter<DFI_STORE_TYPE>::quaternaryTerm(SgNode* astNode, SynthesizedAttributesList synList) 
 {
 #ifdef COMPACT_TERM_NOTATION
-	PrologCompTerm* t = new PrologCompTerm(PrologSupport::prologize(astNode->class_name()));
+	PrologCompTerm* t = new PrologCompTerm(RoseToProlog::prologize(astNode->class_name()));
 #else
 	/* create composite term and add class name*/
 	PrologCompTerm* t = new PrologCompTerm("quaternary_node"); 
@@ -396,7 +387,7 @@ PrologCompTerm*
 TermPrinter<DFI_STORE_TYPE>::listTerm(SgNode* astNode, SynthesizedAttributesList synList) 
 {
 #ifdef COMPACT_TERM_NOTATION
-  PrologCompTerm* t = new PrologCompTerm(PrologSupport::prologize(astNode->class_name()));
+  PrologCompTerm* t = new PrologCompTerm(RoseToProlog::prologize(astNode->class_name()));
 #else
   /* create composite term and add class name*/
   PrologCompTerm* t = new PrologCompTerm("list_node");
@@ -424,7 +415,7 @@ void
 TermPrinter<DFI_STORE_TYPE>::addClassname(SgNode* astNode, PrologCompTerm* t) {
 	/* create a new atom with Class name (ZigZagCase transfomed to zig_zag_case
 	 * to avoid being seen as a variable)*/
-	PrologAtom* cName = new PrologAtom(PrologSupport::prologize(astNode->class_name()));
+	PrologAtom* cName = new PrologAtom(RoseToProlog::prologize(astNode->class_name()));
 	t->addSubterm(cName);
 }
 #endif 

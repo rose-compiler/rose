@@ -95,7 +95,7 @@ value:
   | topbot         { $$ = $1; }
   | '(' values ')' { $$ = new PrologList(*$2); }
   | SET_BEGIN values SET_CLOSE { 
-      PrologCompTerm* t = new PrologCompTerm("set");
+      PrologCompTerm* t = new PrologCompTerm("lifted_set");
       t->addSubterm(new PrologList(*$2));
       $$ = t;
     }
