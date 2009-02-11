@@ -22,6 +22,7 @@
 #include <QRSelect.h>
 #include <QRProgress.h>
 #include <QRSeparator.h>
+#include <QRTree.h>
 // ROSE components
 
 #endif

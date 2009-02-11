@@ -8,21 +8,21 @@ INCLUDES = $(ROSE_INCLUDES) $(QT_INCLUDES)
 #LD_FLAGS = @LIB_ROSE@ @ROSE_LDFLAGS@  @LIB_QT@ @QT_LDFLAGS@
 METASOURCES = auto
 
-include_HEADERS = QRButtons.h QRToolBar.h QRTable.h QREdit.h QRSelect.h QRProgress.h QRSeparator.h
+include_HEADERS = QRButtons.h QRToolBar.h QRTable.h QREdit.h QRSelect.h QRProgress.h QRSeparator.h QRTree.h
 
 noinst_LTLIBRARIES = libqrwidgets.la
 
-MOC_SOURCES = moc_QRButtons.cpp moc_QRToolBar.cpp moc_QRTable.cpp moc_QREdit.cpp moc_QRSelect.cpp moc_QRProgress.cpp moc_QRSeparator.cpp moc_QRSelect_p.cpp
+MOC_SOURCES = moc_QRButtons.C moc_QRToolBar.C moc_QRTable.C moc_QREdit.C moc_QRSelect.C moc_QRProgress.C moc_QRSeparator.C moc_QRSelect_p.C moc_QRTree.C
 
-libqrwidgets_la_SOURCES = $(MOC_SOURCES) QRTable_p.cpp QREdit_p.cpp QRProgress_p.cpp QRSeparator_p.cpp QRButtons.cpp QRToolBar.cpp QRTable.cpp  QREdit.cpp  QRSelect.cpp QRSelect_p.cpp QRProgress.cpp QRSeparator.cpp
+libqrwidgets_la_SOURCES = $(MOC_SOURCES) QRTable_p.C QREdit_p.C QRProgress_p.C QRSeparator_p.C QRButtons.C QRToolBar.C QRTable.C  QREdit.C  QRSelect.C QRSelect_p.C QRProgress.C QRSeparator.C QRTree.C
 
-CLEANFILES=moc_*.cpp
+CLEANFILES=moc_*.C
 
 if QROSE_USE_WINDOWS
-moc_%.cpp: $(srcdir)/%.h 
+moc_%.C: $(srcdir)/%.h 
 	$(MOC) -o $@ `cygpath -w $<` -p$(srcdir)
 else
-moc_%.cpp: $(srcdir)/%.h 
+moc_%.C: $(srcdir)/%.h 
 	$(MOC) -o $@ $<
 endif 
 

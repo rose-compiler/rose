@@ -6,12 +6,14 @@ if ROSE_USE_QT
 
 bin_PROGRAMS = BinQ 
 
+MOC_SOURCES = moc_slide.C  moc_MyBars.C
+
 BinQ_SOURCES = \
+        ${MOC_SOURCES} \
 	BinQMain.C \
 	BinQSupport.C \
 	BinQGui.C \
 	slide.C \
-	slide_moc.cpp \
         LCS.C   \
 	Clone.C \
         FunctionDiff.C \
@@ -23,7 +25,6 @@ BinQ_SOURCES = \
 	InterruptAnalysis.C \
 	BinDynamicInfo.C \
 	MyBars.C \
-	MyBars_moc.cpp \
 	BinQAbstract.C \
 	BinQbatch.C \
 	ForbiddenFunctionCall.C \
@@ -34,7 +35,13 @@ BinQ_SOURCES = \
 	ComplexityMetric.C \
 	DwarfFileInfo.C
 
-
+if QROSE_USE_WINDOWS
+moc_%.C: $(srcdir)/%.h 
+	echo $(MOC) -o $@ `cygpath -w $<` -p$(srcdir)
+else
+moc_%.C: $(srcdir)/%.h 
+	echo $(MOC) -o $@ $<
+endif 
 
 
 BinQ_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
@@ -120,7 +127,8 @@ CLEANFILES =
 
 
 clean:
-	rm -f *.o BinQ *.s *.dump *.txt
+	rm -f *.o BinQ *.s *.dump *.txt 
+#moc_*.C
 
 endif
 
