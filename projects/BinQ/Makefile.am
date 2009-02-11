@@ -35,12 +35,15 @@ BinQ_SOURCES = \
 	ComplexityMetric.C \
 	DwarfFileInfo.C
 
+# This section was added by Gabriel and generates moc files 
+# tps: I added the sed line that includes the rose.h on top of the generated file
 if QROSE_USE_WINDOWS
 moc_%.C: $(srcdir)/%.h 
 	echo $(MOC) -o $@ `cygpath -w $<` -p$(srcdir)
 else
 moc_%.C: $(srcdir)/%.h 
-	echo $(MOC) -o $@ $<
+	 $(MOC) -o $@ $<
+	 sed -i '1i #include "rose.h"' $@
 endif 
 
 
@@ -127,8 +130,7 @@ CLEANFILES =
 
 
 clean:
-	rm -f *.o BinQ *.s *.dump *.txt 
-#moc_*.C
+	rm -f *.o BinQ *.s *.dump *.txt moc_*.C
 
 endif
 
