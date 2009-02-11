@@ -1,3 +1,200 @@
+2009-02-11 06:34  dquinlan
+
+	* [r4417] /trunk/ROSE/scripts/roseFreshTestStub-Dan-OSX-scidac.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Dan-OSX.sh: Fixed boost
+	  path for OSX scripts.
+
+2009-02-11 05:50  dquinlan
+
+	* [r4416]
+	  /trunk/ROSE/developersScratchSpace/Dan/C_tests/Makefile.am:
+	  Reversed the elimination of a test that fails under Mac OSX.
+	  --enable-dq-developer-tests is not used in the automated nightly
+	  tests so this was not seen previously.
+
+2009-02-11 05:27  dquinlan
+
+	* [r4415] /trunk/ROSE/README.OSX, /trunk/ROSE/build,
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/Makefile.am,
+	  /trunk/ROSE/projects/BinaryConstantPropagation/Makefile.am,
+	  /trunk/ROSE/projects/DocumentationGenerator/sageDoxygen.h,
+	  /trunk/ROSE/projects/compass/src/compassSupport/compassEmptyMain.C,
+	  /trunk/ROSE/src/Makefile.am,
+	  /trunk/ROSE/src/backend/unparser/formatSupport/unparseFormatHelp.h,
+	  /trunk/ROSE/src/frontend/SageIII/OmpAttribute.h,
+	  /trunk/ROSE/src/midend/astRewriteMechanism/ASTFragmentCollectorTraversalImpl.h,
+	  /trunk/ROSE/src/midend/astRewriteMechanism/nodeCollectionTemplatesImpl.h,
+	  /trunk/ROSE/src/midend/astRewriteMechanism/prefixGenerationImpl.h,
+	  /trunk/ROSE/src/midend/astRewriteMechanism/rewriteASTFragementStringTemplatesImpl.h,
+	  /trunk/ROSE/src/midend/astRewriteMechanism/rewriteDebuggingSupportTemplatesImpl.h,
+	  /trunk/ROSE/src/midend/astRewriteMechanism/rewriteMidLevelInterfaceTemplatesImpl.h,
+	  /trunk/ROSE/src/midend/astRewriteMechanism/rewriteSynthesizedAttributeTemplatesImpl.h,
+	  /trunk/ROSE/src/midend/programAnalysis/dominanceAnalysis/DominatorTree.h,
+	  /trunk/ROSE/src/midend/programAnalysis/dominanceAnalysis/DominatorTreeImpl.h,
+	  /trunk/ROSE/src/midend/programAnalysis/staticInterproceduralSlicing/CreateSlice.h,
+	  /trunk/ROSE/src/midend/programAnalysis/staticInterproceduralSlicing/CreateSliceSet.h,
+	  /trunk/ROSE/src/midend/programAnalysis/staticInterproceduralSlicing/DependenceGraph.h,
+	  /trunk/ROSE/src/midend/programAnalysis/staticInterproceduralSlicing/EDefUse.h,
+	  /trunk/ROSE/src/midend/programAnalysis/staticInterproceduralSlicing/InterproceduralInfo.h,
+	  /trunk/ROSE/src/midend/programAnalysis/staticInterproceduralSlicing/SDGLibraryExtender.h,
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/include/rosehpct/sage/collectors.hh,
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/include/rosehpct/sage/sage.hh,
+	  /trunk/ROSE/tests/roseTests/roseHPCToolkitTests/attach_metrics.cc,
+	  /trunk/ROSE/tests/roseTests/roseHPCToolkitTests/dump_ast.cc,
+	  /trunk/ROSE/tests/roseTests/roseHPCToolkitTests/process_cmdline.cc,
+	  /trunk/ROSE/tests/roseTests/roseHPCToolkitTests/propagate_metrics.cc,
+	  /trunk/ROSE/tests/roseTests/roseHPCToolkitTests/read_ast.cc,
+	  /trunk/ROSE/tests/roseTests/roseHPCToolkitTests/test_highlevel.cc,
+	  /trunk/ROSE/tutorial/Makefile.am,
+	  /trunk/ROSE/tutorial/roseHPCT/attachMetrics.cc: Added support for
+	  precompiled headers and fixed dwarf for Mac OSX
+	  
+	  1) Added "rose.h" to a number of *.C files and removed "rose.h"
+	  from a number of header files as part of continuing support for
+	  the GNU precompiled header mechanism (this time using g++ 4.0.1).
+	  
+	  2) Added use of ELF 386 binary for dwarf tests when dwarf is not
+	  configured.
+	  This is required for Mac OSX since otherwise we build a Mach-O
+	  binary which
+	  ROSE can not currently process.
+
+2009-02-11 03:15  dquinlan
+
+	* [r4414] /trunk/ROSE/scripts/roseFreshTestStub-Dan-OSX-scidac.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Dan-OSX.sh: Added scripts
+	  so that Quinlan can run OSX nightly tests.
+
+2009-02-11 02:41  liao6
+
+	* [r4413] /trunk/ROSE/docs/Rose/developersAppendix.tex: Reminding
+	  us to add external branches' commit messages into svn commit to
+	  out internal trunk, following a svn merge.
+
+2009-02-11 02:35  panas2
+
+	* [r4412] /trunk/ROSE/projects/BinQ/Makefile.am,
+	  /trunk/ROSE/projects/BinQ/MyBars_moc.cpp,
+	  /trunk/ROSE/projects/BinQ/moc_MyBars.C,
+	  /trunk/ROSE/projects/BinQ/moc_slide.C,
+	  /trunk/ROSE/projects/BinQ/slide_moc.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/Makefile.am,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/QRException.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/QRException.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/QRMain.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/QRMain.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/QRMain_p.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/QRMain_p.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/QRPanel.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/QRPanel.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/QRSpaceWidget.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/QRSpaceWidget.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/QRTiledWidget.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/QRTiledWidget.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/QRWidgetAccess.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/QRWidgetAccess.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/QRWindow.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/QRWindow.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/moc_QRMain_p.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/moc_QRSpaceWidget.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/moc_QRTiledWidget.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/moc_QRWindow.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/qrose.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/QRoseLib/Makefile.am,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/QRoseLib/qroselib.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/QRoseLib/qroselib.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/Makefile.am,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/QRButtons.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/QRButtons.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/QREdit.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/QREdit.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/QREdit_p.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/QREdit_p.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/QRProgress.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/QRProgress.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/QRProgress_p.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/QRProgress_p.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/QRSelect.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/QRSelect.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/QRSelect_p.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/QRSelect_p.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/QRSeparator.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/QRSeparator.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/QRSeparator_p.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/QRSeparator_p.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/QRTable.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/QRTable.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/QRTable_p.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/QRTable_p.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/QRToolBar.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/QRToolBar.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/QRTree.C,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/QRTree.h,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/moc_QRButtons.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/moc_QREdit.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/moc_QRProgress.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/moc_QRSelect.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/moc_QRSelect_p.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/moc_QRSeparator.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/moc_QRTable.cpp,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/moc_QRToolBar.cpp:
+	  svn merge -c 210
+	  https://outreach.scidac.gov/svn/rose/branches/imperial
+
+2009-02-11 01:57  liao6
+
+	* [r4411] /trunk/ROSE/scripts/roseFreshTestStub-Leo-daily.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Leo-head.sh: Enabled Qt and
+	  QROSE for 32-bit regression tests
+
+2009-02-11 01:03  panas2
+
+	* [r4410] /trunk/ROSE/projects/BinQ/AlignFunctions.C,
+	  /trunk/ROSE/projects/BinQ/AlignFunctions.h,
+	  /trunk/ROSE/projects/BinQ/BinAnalyses.h,
+	  /trunk/ROSE/projects/BinQ/BinCallGraph.C,
+	  /trunk/ROSE/projects/BinQ/BinCallGraph.h,
+	  /trunk/ROSE/projects/BinQ/BinControlFlowAnalysis.C,
+	  /trunk/ROSE/projects/BinQ/BinControlFlowAnalysis.h,
+	  /trunk/ROSE/projects/BinQ/BinDataFlowAnalysis.C,
+	  /trunk/ROSE/projects/BinQ/BinDataFlowAnalysis.h,
+	  /trunk/ROSE/projects/BinQ/BinDynamicInfo.C,
+	  /trunk/ROSE/projects/BinQ/BinDynamicInfo.h,
+	  /trunk/ROSE/projects/BinQ/BinQAbstract.C,
+	  /trunk/ROSE/projects/BinQ/BinQAbstract.h,
+	  /trunk/ROSE/projects/BinQ/BinQGui.C,
+	  /trunk/ROSE/projects/BinQ/BinQSupport.C,
+	  /trunk/ROSE/projects/BinQ/BinQSupport.h,
+	  /trunk/ROSE/projects/BinQ/BinQbatch.C,
+	  /trunk/ROSE/projects/BinQ/BinQinteractive.C,
+	  /trunk/ROSE/projects/BinQ/BufferOverflow.C,
+	  /trunk/ROSE/projects/BinQ/BufferOverflow.h,
+	  /trunk/ROSE/projects/BinQ/Clone.C,
+	  /trunk/ROSE/projects/BinQ/Clone.h,
+	  /trunk/ROSE/projects/BinQ/ComplexityMetric.C,
+	  /trunk/ROSE/projects/BinQ/ComplexityMetric.h,
+	  /trunk/ROSE/projects/BinQ/DwarfFileInfo.C,
+	  /trunk/ROSE/projects/BinQ/DwarfFileInfo.h,
+	  /trunk/ROSE/projects/BinQ/ForbiddenFunctionCall.C,
+	  /trunk/ROSE/projects/BinQ/ForbiddenFunctionCall.h,
+	  /trunk/ROSE/projects/BinQ/FunctionDiff.C,
+	  /trunk/ROSE/projects/BinQ/FunctionDiff.h,
+	  /trunk/ROSE/projects/BinQ/InitPointerToNull.C,
+	  /trunk/ROSE/projects/BinQ/InitPointerToNull.h,
+	  /trunk/ROSE/projects/BinQ/InterruptAnalysis.C,
+	  /trunk/ROSE/projects/BinQ/InterruptAnalysis.h,
+	  /trunk/ROSE/projects/BinQ/Item.h,
+	  /trunk/ROSE/projects/BinQ/MallocAndFree.C,
+	  /trunk/ROSE/projects/BinQ/MallocAndFree.h,
+	  /trunk/ROSE/projects/BinQ/MyBars.h,
+	  /trunk/ROSE/projects/BinQ/MyBars_moc.cpp,
+	  /trunk/ROSE/projects/BinQ/NullAfterFree.C,
+	  /trunk/ROSE/projects/BinQ/NullAfterFree.h,
+	  /trunk/ROSE/projects/BinQ/slide.h,
+	  /trunk/ROSE/projects/BinQ/slide_moc.cpp, /trunk/ROSE/src/rose.h:
+	  had to fix some files in BinQ so that the precompiled header
+	  stuff works
+
 2009-02-10 22:34  panas2
 
 	* [r4407] /trunk/ROSE/config/Makefile.for.ROSE.includes.and.libs,
