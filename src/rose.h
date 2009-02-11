@@ -4,10 +4,6 @@
 #ifndef ROSE_H
 #define ROSE_H
 
-/* Define to force use of thread-safe errno, h_errno, and other functions */
-// tps: Feb 6 2009: Testing precompilation of rose.h
-//#undef _REENTRANT 
-
 
 #if 0
 // Forward references to namespaces used in the binary execuable file format support.
@@ -153,9 +149,6 @@ namespace ELF{
 #endif
 
 
-/* Define to force use of thread-safe errno, h_errno, and other functions */
-// tps: Feb 6 2009: Testing precompilation of rose.h
-//#undef _REENTRANT 
 
 // ifndef ROSE_H
 #endif

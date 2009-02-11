@@ -142,16 +142,23 @@ print:
 clean-local:
 	rm -rf *.a *.so testSharedRoseLib testMultiRoseLib $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files rose.h.gch
 
+
+if ROSE_PCH
 if ROSE_MPI
+# TPS (11Feb2009): PCH only works when multithreading is off.
+# We should not use PCH and MPI together.
 roseh:
 
 else
-
 # DQ (2/11/2009): This is part of the support for Precompiled Headers (PCH) using GNU g++
 roseh:
 	echo $(CXX)  -DHAVE_CONFIG_H -g -o rose.h.gch $(srcdir)/rose.h -I$(top_builddir)/   #$(ROSE_INCLUDES) 
 #	DQ (2/10/2009): Rush for the off switch on precompiled header files, comment out to skip use of PCH.
 	$(CXX)  -DHAVE_CONFIG_H -g -o rose.h.gch $(srcdir)/rose.h -I$(top_builddir) $(ROSE_INCLUDES) 
+endif
+else
+# default, do nothing.
+roseh:
 
 endif
 
