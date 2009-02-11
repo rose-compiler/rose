@@ -20,8 +20,7 @@ INCLUDES = -I$(top_srcdir)/src/satire \
 
 AM_LDFLAGS=-L$(ROSE_LIB_DIR) -Wl,-rpath $(ROSE_LIB_DIR) -L$(BOOST_LIB_DIR) -Wl,-rpath $(BOOST_LIB_DIR) 
 
-bin_PROGRAMS = termpretty c2term term2rose
-bin_SCRIPTS = term2c
+bin_PROGRAMS = termpretty c2term term2c
 
 AM_YFLAGS = -d
 
@@ -45,9 +44,9 @@ dfiscanner.c++: $(srcdir)/dfiscanner.l++ Makefile
 termpretty_SOURCES = termpretty.l++
 
 c2term_SOURCES = c2term.C 
-term2rose_SOURCES = toC.C 
+term2c_SOURCES = term2c.C 
 
-term2rose_LDADD = libtermite.a -lrose
+term2c_LDADD = libtermite.a -lrose
 c2term_LDADD = libtermite.a -lrose
 
 CLEANFILES = termpretty.c++ \
@@ -102,5 +101,4 @@ EXTRA_DIST = \
   term2c \
   dfiparser.y++ dfiscanner.l++ \
   clang/README clang/INSTALL clang/BUILD-clang.sh clang/clang-termite.patch
-
 
