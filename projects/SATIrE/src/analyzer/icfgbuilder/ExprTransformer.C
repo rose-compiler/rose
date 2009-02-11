@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.C,v 1.30 2008-11-13 20:13:03 gergo Exp $
+// $Id: ExprTransformer.C,v 1.31 2009-02-10 23:16:09 gergo Exp $
 
 #include <satire_rose.h>
 #include <patternRewrite.h>
@@ -28,7 +28,9 @@ ExprTransformer::ExprTransformer(int node_id, int procnum, int expnum,
   : node_id(node_id), procnum(procnum), expnum(expnum), cfg(cfg),
     after(after), retval(after), root_var(NULL),
     block_stmt_map(block_stmt_map), stmt(stmt),
-    el(expnum, cfg, (*cfg->procedures)[procnum])
+    el(expnum, cfg, (*cfg->procedures)[procnum]),
+    stmt_start(NULL),
+    stmt_end(new StatementAttribute(after, POS_PRE))
 {
 }
 
@@ -41,8 +43,16 @@ ExprTransformer::labelAndTransformExpression(SgExpression *expr)
  // Transform expression
     traverse(expr, preorder);
  // Remember what statement this expression comes from
-    for (int z = original_node_id; z < node_id; ++z)
-        block_stmt_map[z] = stmt;
+    if (stmt != NULL)
+    {
+        for (int z = original_node_id; z < node_id; ++z)
+            block_stmt_map[z] = stmt;
+        stmt_start = new StatementAttribute(after, POS_PRE);
+        if (!stmt->attributeExists("PAG statement start"))
+            stmt->addNewAttribute("PAG statement start", stmt_start);
+        if (!stmt->attributeExists("PAG statement end"))
+            stmt->addNewAttribute("PAG statement end", stmt_end);
+    }
  // Set the new expnum computed by the ExprLabeler
     expnum = el.get_expnum();
 

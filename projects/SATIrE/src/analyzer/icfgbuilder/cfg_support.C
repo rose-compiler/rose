@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.C,v 1.29 2008-11-04 10:04:24 gergo Exp $
+// $Id: cfg_support.C,v 1.30 2009-02-10 23:16:09 gergo Exp $
 
 #include "CFGTraversal.h"
 #include "cfg_support.h"
@@ -802,6 +802,36 @@ BasicBlock::~BasicBlock()
         if (dynamic_cast<IcfgStmt *>(*s))
             delete *s;
     }
+}
+
+#include "satire/analysis_info.h"
+
+std::pair<int, int>
+CFG::statementEntryExitLabels(SgStatement *stmt)
+{
+    StatementAttribute *start, *end;
+    start = (stmt->attributeExists("PAG statement start")
+            ? (StatementAttribute *) stmt->getAttribute("PAG statement start")
+            : NULL);
+    end = (stmt->attributeExists("PAG statement end")
+          ? (StatementAttribute *) stmt->getAttribute("PAG statement end")
+          : NULL);
+    if (isSgScopeStatement(stmt->get_parent())
+        && !isSgGlobal(stmt->get_parent())
+        && (start == NULL || end == NULL))
+    {
+        std::cerr
+            << "*** error in CFG: statement "
+            << stmt->class_name() << std::endl;
+        std::cerr
+            << Ir::fragmentToString(stmt)
+            << " has no valid statement start/end attributes"
+            << std::endl;
+        std::abort();
+    }
+    int startLabel = start->get_bb()->id;
+    int endLabel = end->get_bb()->id;
+    return std::make_pair(startLabel, endLabel);
 }
 
 #if 0

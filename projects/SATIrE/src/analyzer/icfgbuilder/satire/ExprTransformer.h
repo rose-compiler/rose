@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.h,v 1.8 2008-10-20 10:32:26 gergo Exp $
+// $Id: ExprTransformer.h,v 1.9 2009-02-10 23:16:09 gergo Exp $
 
 #ifndef H_EXPRTRANSFORMER
 #define H_EXPRTRANSFORMER
@@ -10,6 +10,7 @@
 
 #include "cfg_support.h"
 #include "ExprLabeler.h"
+#include "analysis_info.h"
 
 // this must be used postorder
 class ExprTransformer : public AstSimpleProcessing
@@ -46,6 +47,7 @@ private:
     std::map<int, SgStatement *> &block_stmt_map;
     SgStatement *stmt;
     ExprLabeler el;
+    StatementAttribute *stmt_start, *stmt_end;
 
     std::string find_mangled_func_name(SgFunctionRefExp *) const;
   //SgName find_mangled_memberf_name(SgMemberFunctionRefExp *) const;

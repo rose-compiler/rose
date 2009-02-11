@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.h,v 1.30 2008-11-11 13:57:36 gergo Exp $
+// $Id: cfg_support.h,v 1.31 2009-02-10 23:16:09 gergo Exp $
 
 #ifndef H_CFG_SUPPORT
 #define H_CFG_SUPPORT
@@ -130,6 +130,10 @@ public:
     std::map<std::string, SgExpression *> names_initializers;
     std::vector<SgVariableSymbol *> globals;
     std::map<SgVariableSymbol *, SgExpression *> globals_initializers;
+
+ // access to statement labels
+    std::pair<int, int> statementEntryExitLabels(SgStatement *);
+    std::set<int> statementAllLabels(SgStatement *);
 
  // a single symbol for all return variables in the program
     SgVariableSymbol *global_return_variable_symbol;

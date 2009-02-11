@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.54 2008-11-20 19:41:18 gergo Exp $
+// $Id: CFGTraversal.C,v 1.55 2009-02-10 23:16:09 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -19,8 +19,8 @@
 // CFGTraversal::CFGTraversal(std::deque<Procedure *> *procs)
 CFGTraversal::CFGTraversal(ProcTraversal &p, AnalyzerOptions *options)
     : node_id(0), procnum(0), cfg(new CFG()), real_cfg(NULL), proc(NULL),
-      call_num(0), lognum(0), expnum(0), traversalTimer(NULL),
-      flag_numberExpressions(true)
+      call_num(0), lognum(0), expnum(0), current_statement(NULL),
+      traversalTimer(NULL), flag_numberExpressions(true)
 {
   TimingPerformance timer("Initial setup of ICFG (entry, exit, argument nodes):");
   cfg->procedures = p.get_procedures();
@@ -1273,7 +1273,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
             block_stmt_map[z] = current_statement;
 #else
         ExprTransformer et(node_id, proc->procnum, expnum, cfg, if_block,
-                block_stmt_map, current_statement);
+                block_stmt_map, cond);
         new_expr = et.labelAndTransformExpression(new_expr);
 #endif
         node_id = et.get_node_id();
@@ -1458,7 +1458,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
         }
 #else
         ExprTransformer et(node_id, proc->procnum, expnum, cfg, for_block,
-                block_stmt_map, current_statement);
+                block_stmt_map, cond);
         new_expr = et.labelAndTransformExpression(new_expr);
 #endif
         node_id = et.get_node_id();
@@ -1579,7 +1579,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 	}
 #else
     ExprTransformer et(node_id, proc->procnum, expnum, cfg, while_block,
-            block_stmt_map, current_statement);
+            block_stmt_map, cond);
     new_expr = et.labelAndTransformExpression(new_expr);
 #endif
 	node_id = et.get_node_id();
@@ -1637,7 +1637,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 	}
 #else
     ExprTransformer et(node_id, proc->procnum, expnum, cfg, dowhile_block,
-            block_stmt_map, current_statement);
+            block_stmt_map, cond);
     new_expr = et.labelAndTransformExpression(new_expr);
 #endif
 	node_id = et.get_node_id();
@@ -1754,7 +1754,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 	}
 #else
     ExprTransformer et(node_id, proc->procnum, expnum, cfg, switch_block,
-            block_stmt_map, current_statement);
+            block_stmt_map, item_sel);
     new_expr = et.labelAndTransformExpression(new_expr);
 #endif
 	node_id = et.get_node_id();
@@ -2239,12 +2239,16 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
       /* if for some reason the attributes were not computed
        * above, insert dummies (because attributes may not be
        * null) */
+      // now also checking whether attributes exist already; for expression
+      // statements, they might be set by the expression transformer
       if (stmt_start == NULL)
           stmt_start = new StatementAttribute(NULL, POS_PRE);
-      (*i)->addNewAttribute("PAG statement start", stmt_start);
+      if (!(*i)->attributeExists("PAG statement start"))
+          (*i)->addNewAttribute("PAG statement start", stmt_start);
       if (stmt_end == NULL)
           stmt_end = new StatementAttribute(NULL, POS_PRE);
-      (*i)->addNewAttribute("PAG statement end", stmt_end);
+      if (!(*i)->attributeExists("PAG statement end"))
+          (*i)->addNewAttribute("PAG statement end", stmt_end);
     }
     
     return after;
