@@ -475,6 +475,17 @@ If you build libtool on your machine and add the installed libtool {\tt bin} dir
 to you path, then it should work.  I often use {\tt libtool-2.2.4.tar} when I have 
 this problem on a new platform.
 
+Report from use:
+\begin{verbatim}
+Reason for the problem: I am not building libtools from source, instead using
+the packages from the Linux distribution repository. On my distribution
+(Ubuntu 8.04, X86_64), the libltdl3 (and libltdl3-dev)  does not come with
+the libtool package. After installing the libtools, I still need to install
+both the libltdl3 and libltdl3-dev package. That is the issues of unable to
+find libltdl folders.
+\end{verbatim}
+
+
 \end{enumerate}
 
 
