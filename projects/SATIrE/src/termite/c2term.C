@@ -39,7 +39,7 @@ int main ( int argc, char ** argv ) {
   // to turn off the frontend's warnings; they are distracting in the
   // automated test outputs.
   char warningFlag[] = "-edg:w";
-  argv[2] = warningFlag;
+  argv[argc-1] = warningFlag;
 
   SgProject * project = frontend(argc,argv);
 
