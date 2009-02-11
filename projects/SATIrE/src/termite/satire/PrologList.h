@@ -16,8 +16,8 @@ class PrologList : public PrologTerm {
   /**default constructor*/
   PrologList() {}
   /** construct from vector*/
-  PrologList(std::vector<PrologTerm*> v) : mTerms(v) {}
-  PrologList(std::deque<PrologTerm*> v) :mTerms(v.begin(), v.end()) {}
+  PrologList(std::deque<PrologTerm*> v) : mTerms(v) {}
+  PrologList(std::vector<PrologTerm*> v) :mTerms(v.begin(), v.end()) {}
   
   /// return size of the list
   int getArity() {return mTerms.size();}
@@ -25,7 +25,7 @@ class PrologList : public PrologTerm {
   bool isGround() {
     bool ground = true;
     //List is ground if all elements are.
-    std::vector<PrologTerm*>::iterator it = mTerms.begin();
+    std::deque<PrologTerm*>::iterator it = mTerms.begin();
     while(it != mTerms.end()) {
       ground = ground && (*it)->isGround();
       it++;
@@ -39,7 +39,7 @@ class PrologList : public PrologTerm {
   std::string getRepresentation() {
     /*Pattern: name(...all subterms separated by commas..) */
     std::string rep = "[";
-    std::vector<PrologTerm*>::iterator it;
+    std::deque<PrologTerm*>::iterator it;
     it = mTerms.begin();
     // append the representation of all subterms
     while (it != mTerms.end()) {
@@ -53,13 +53,17 @@ class PrologList : public PrologTerm {
 
   /// add a list element
   void addElement(PrologTerm* t) {mTerms.push_back(t);}
+
+  /// add a list element at the beginning
+  void addFirstElement(PrologTerm* t) {mTerms.push_front(t);}
+
   /// get the i-th element
   PrologTerm* at(int i) {return mTerms.at(i);}
   /// return a list of successors
-  std::vector<PrologTerm*>* getSuccs() {return &mTerms;}
+  std::deque<PrologTerm*>* getSuccs() {return &mTerms;}
  private:
   /// the successors
-  std::vector<PrologTerm*> mTerms;
+  std::deque<PrologTerm*> mTerms;
 };
 
 # else
@@ -147,6 +151,11 @@ class PrologList : public PrologTerm {
 #   endif
   }
 
+  /// add the first list element
+  void addFirstElement(PrologTerm* t) {
+    PL_cons_list(term, t->getTerm(), term);
+  }
+
   /// get the i-th element
   PrologTerm* at(int i) {
     term_t t = PL_copy_term_ref(term);
@@ -158,7 +167,7 @@ class PrologList : public PrologTerm {
   }
 
   /// return a list of successors
-  std::vector<PrologTerm*>* getSuccs()  {
+  std::deque<PrologTerm*>* getSuccs()  {
     if (mTerms.size() == 0) {
       term_t tail = PL_copy_term_ref(term);
       term_t head = PL_new_term_ref();
@@ -171,7 +180,7 @@ class PrologList : public PrologTerm {
 
  private:
   /// the successors
-  std::vector<PrologTerm*> mTerms;
+  std::deque<PrologTerm*> mTerms;
 };
 
 

@@ -36,8 +36,9 @@ dfiparser.tab.c++: $(srcdir)/dfiparser.y++ Makefile
 
 dfiparser.tab.h++: dfiparser.tab.c++
 
+# need to do this explicitly to replace the "yy_" prefix with "dfi_"
 dfiscanner.c++: $(srcdir)/dfiscanner.l++ Makefile
-	flex -Pdfi $(srcdir)/dfiscanner.l++ && \
+	$(LEX) -Pdfi $(srcdir)/dfiscanner.l++ && \
 	mv lex.dfi.c dfiscanner.c++
 
 

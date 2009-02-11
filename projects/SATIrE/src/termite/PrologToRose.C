@@ -6,7 +6,6 @@ Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
 #include <satire_rose.h>
 #include "termite.h"
 #include "PrologToRose.h"
-#include <vector>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -406,9 +405,9 @@ PrologToRose::listToRose(PrologCompTerm* t,string tname) {
   /*get child nodes (prefix traversal step)*/
   SgNode* cur = NULL;
   /* recursively, create ROSE-IR for list-members*/
-  vector<PrologTerm*>* succterms = l->getSuccs();
-  vector<SgNode*>* succs = new vector<SgNode*>();
-  vector<PrologTerm*>::iterator it = succterms->begin();
+  deque<PrologTerm*>* succterms = l->getSuccs();
+  deque<SgNode*>* succs = new deque<SgNode*>();
+  deque<PrologTerm*>::iterator it = succterms->begin();
   while (it != succterms->end()) {
     cur = toRose(*it);
     if(cur != (SgNode*) 0) {
@@ -467,25 +466,25 @@ PrologToRose::leafToRose(PrologCompTerm* t,string tname) {
   /* some list nodes become leaf nodes when the list is empty
    * -> create dummy list and call corresponding factory methods*/
   if (tname == SG_PREFIX "function_parameter_list") {
-    vector<SgNode*>* adummy = new vector<SgNode*>;
+    deque<SgNode*>* adummy = new deque<SgNode*>;
     s = createFunctionParameterList(fi,adummy);
   } else if (tname == SG_PREFIX "basic_block") {
-    vector<SgNode*>* adummy = new vector<SgNode*>;
+    deque<SgNode*>* adummy = new deque<SgNode*>;
     s = createBasicBlock(fi,adummy);
   } else if (tname == SG_PREFIX "class_definition") {
-    vector<SgNode*>* adummy = new vector<SgNode*>;
+    deque<SgNode*>* adummy = new deque<SgNode*>;
     s = createClassDefinition(fi,adummy,t);
   } else if (tname == SG_PREFIX "ctor_initializer_list") {
-    vector<SgNode*>* adummy = new vector<SgNode*>;
+    deque<SgNode*>* adummy = new deque<SgNode*>;
     s = createCtorInitializerList(fi,adummy);
   } else if (tname == SG_PREFIX "expr_list_exp") {
-    vector<SgNode*>* adummy = new vector<SgNode*>;
+    deque<SgNode*>* adummy = new deque<SgNode*>;
     s = createExprListExp(fi,adummy);
   } else if (tname == SG_PREFIX "namespace_definition_statement") {
-    vector<SgNode*>* adummy = new vector<SgNode*>;
+    deque<SgNode*>* adummy = new deque<SgNode*>;
     s = createNamespaceDefinitionStatement(fi,adummy);
   } else if (tname == SG_PREFIX "for_init_statement") {
-    vector<SgNode*>* adummy = new vector<SgNode*>;
+    deque<SgNode*>* adummy = new deque<SgNode*>;
     s = createForInitStatement(fi,adummy);
     /* regular leaf nodes*/
   } else if (tname == SG_PREFIX "var_ref_exp") {
@@ -1187,8 +1186,8 @@ PrologToRose::createUnaryOp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
     /*need to retrieve types */
     PrologList* typel = dynamic_cast<PrologList*>(annot->at(3));
     ROSE_ASSERT(typel != NULL);
-    vector<PrologTerm*>* succs = typel->getSuccs();
-    vector<PrologTerm*>::iterator it = succs->begin();
+    deque<PrologTerm*>* succs = typel->getSuccs();
+    deque<PrologTerm*>::iterator it = succs->begin();
     SgTypePtrListPtr tpl = new SgTypePtrList();
     while (it != succs->end()) {
       tpl->push_back(createType(*it));
@@ -1209,9 +1208,9 @@ PrologToRose::createUnaryOp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
  * create SgProject
  */
 SgProject*
-PrologToRose::createProject(Sg_File_Info* fi,vector<SgNode*>* succs) {
+PrologToRose::createProject(Sg_File_Info* fi,deque<SgNode*>* succs) {
   SgProject* project = new SgProject();
-  for (vector<SgNode*>::iterator it = succs->begin();
+  for (deque<SgNode*>::iterator it = succs->begin();
        it != succs->end(); ++it) {
     SgFile* file = dynamic_cast<SgFile*>(*it);
     ROSE_ASSERT(file);
@@ -1287,9 +1286,9 @@ PrologToRose::createReturnStmt(Sg_File_Info* fi, SgNode* succ,PrologCompTerm* t)
  * create a SgBasicBlock
  */
 SgBasicBlock*
-PrologToRose::createBasicBlock(Sg_File_Info* fi,vector<SgNode*>* succs) {
+PrologToRose::createBasicBlock(Sg_File_Info* fi,deque<SgNode*>* succs) {
   SgBasicBlock* b = NULL;
-  vector<SgNode*>::iterator it = succs->begin();
+  deque<SgNode*>::iterator it = succs->begin();
   /*first statement comes in the constructor*/
   if(it != succs->end()) {
     b = new SgBasicBlock(fi,dynamic_cast<SgStatement*>(*it));
@@ -1457,12 +1456,12 @@ PrologToRose::createMemberFunctionType(PrologTerm* t) {
  * create a SgFunctionParameterList
  */
 SgFunctionParameterList*
-PrologToRose::createFunctionParameterList(Sg_File_Info* fi,vector<SgNode*>* succs) {
+PrologToRose::createFunctionParameterList(Sg_File_Info* fi,deque<SgNode*>* succs) {
   debug("function parameter list");
   /* create list*/
   SgFunctionParameterList* l = new SgFunctionParameterList(fi);
   /*append successors*/
-  vector<SgNode*>::iterator it = succs->begin();
+  deque<SgNode*>::iterator it = succs->begin();
   while(it != succs->end()) {
     if((*it) != NULL) {
       l->append_arg(dynamic_cast<SgInitializedName*>(*it));
@@ -1588,13 +1587,13 @@ PrologToRose::retrieveAnnotation(PrologCompTerm* t) {
  * and convert content
  */
 SgGlobal*
-PrologToRose::createGlobal(Sg_File_Info* fi,vector<SgNode*>* succs) {
+PrologToRose::createGlobal(Sg_File_Info* fi,deque<SgNode*>* succs) {
   /*simple constructor*/
   SgGlobal* glob = new SgGlobal(fi);
   debug("in SgGlobal:");
   testFileInfo(fi);
   /*add successors*/
-  vector<SgNode*>::iterator it = succs->begin();
+  deque<SgNode*>::iterator it = succs->begin();
   SgDeclarationStatement* curdec = NULL;
   while(it != succs->end()) {
     /* all successors that arent NULL (we don't create SgNullStatements, instead
@@ -1855,7 +1854,7 @@ PrologToRose::createExprStatement(Sg_File_Info* fi, SgNode* succ, PrologCompTerm
  * create a SgVariableDeclaration
  */
 SgVariableDeclaration*
-PrologToRose::createVariableDeclaration(Sg_File_Info* fi,vector<SgNode*>* succs,PrologCompTerm* t) {
+PrologToRose::createVariableDeclaration(Sg_File_Info* fi,deque<SgNode*>* succs,PrologCompTerm* t) {
   /*extract annotation*/
   PrologCompTerm* annot = retrieveAnnotation(t);
   ROSE_ASSERT(t != NULL);
@@ -1864,7 +1863,7 @@ PrologToRose::createVariableDeclaration(Sg_File_Info* fi,vector<SgNode*>* succs,
   ROSE_ASSERT(fi != NULL);
   debug("created variable declaration");
   /* add initialized names*/
-  vector<SgNode*>::iterator it = succs->begin();
+  deque<SgNode*>::iterator it = succs->begin();
   ROSE_ASSERT(it != succs->end());
 
   SgInitializer* ini_initializer;
@@ -1943,11 +1942,11 @@ PrologToRose::createWhileStmt(Sg_File_Info* fi, SgNode* child1, SgNode* child2, 
 
 /** create SgForInitStatement*/
 SgForInitStatement*
-PrologToRose::createForInitStatement(Sg_File_Info* fi,vector<SgNode*>* succs) {
+PrologToRose::createForInitStatement(Sg_File_Info* fi,deque<SgNode*>* succs) {
   SgForInitStatement* ini = new SgForInitStatement(fi);
   ROSE_ASSERT(ini != NULL);
   /*append initializer statements*/
-  vector<SgNode*>::iterator it = succs->begin();
+  deque<SgNode*>::iterator it = succs->begin();
   while(it != succs->end()) {
     SgStatement* stmt = NULL;
     stmt = dynamic_cast<SgStatement*>(*it);
@@ -2120,7 +2119,7 @@ PrologToRose::makeLabel(Sg_File_Info* fi,string s) {
 
 /** create a class definition*/
 SgClassDefinition*
-PrologToRose::createClassDefinition(Sg_File_Info* fi, vector<SgNode*>* succs,PrologCompTerm* t) {
+PrologToRose::createClassDefinition(Sg_File_Info* fi, deque<SgNode*>* succs,PrologCompTerm* t) {
   /*the unparser needs a Sg_File_Info for determining the end of construct
    * hence it is put in the annotation and retrieved here */
   PrologCompTerm* annot = retrieveAnnotation(t);
@@ -2135,7 +2134,7 @@ PrologToRose::createClassDefinition(Sg_File_Info* fi, vector<SgNode*>* succs,Pro
   d = new SgClassDefinition(fi);
   ROSE_ASSERT(d != NULL);
   /* append declarations*/
-  vector<SgNode*>::iterator it = succs->begin();
+  deque<SgNode*>::iterator it = succs->begin();
   while(it != succs->end()) {
     SgDeclarationStatement* s = NULL;
     s = isSgDeclarationStatement(*it);
@@ -2284,12 +2283,12 @@ PrologToRose::createClassType(PrologTerm* p) {
 
 /**Create SgCtorInitializerList*/
 SgCtorInitializerList* 
-PrologToRose::createCtorInitializerList(Sg_File_Info* fi,vector<SgNode*>* succs) {
+PrologToRose::createCtorInitializerList(Sg_File_Info* fi,deque<SgNode*>* succs) {
   //this is a typical list node. only needs file info in constructor
   SgCtorInitializerList* l = new SgCtorInitializerList(fi);
   ROSE_ASSERT(l != NULL);
   //append constructor initializers
-  vector<SgNode*>::iterator it = succs->begin();
+  deque<SgNode*>::iterator it = succs->begin();
   while(it != succs->end()) {
     SgInitializedName* n = NULL;
     n = isSgInitializedName(*it);
@@ -2310,17 +2309,17 @@ PrologToRose::abort_unless(bool condition,string message) {
   assert(condition);
 }
 
-/** create bit vector from PrologList*/
+/** create bit deque from PrologList*/
 SgBitVector*
 PrologToRose::createBitVector(PrologTerm* t) {
   /*cast the argument to the list and extract elements*/
   PrologList* l = dynamic_cast<PrologList*>(t);
   ROSE_ASSERT(t != 0);
-  vector<PrologTerm*>* succs = l->getSuccs();
+  deque<PrologTerm*>* succs = l->getSuccs();
   /*create a bit vector*/
   vector<bool>* bv = new vector<bool>();
   /*extract bits from list*/
-  vector<PrologTerm*>::iterator it = succs->begin();
+  deque<PrologTerm*>::iterator it = succs->begin();
   while(it != succs->end()) {
     PrologInt * i = NULL;
     i = dynamic_cast<PrologInt*>(*it);
@@ -2336,7 +2335,7 @@ PrologToRose::createBitVector(PrologTerm* t) {
  * create SgEnumDeclaration
  * */
 SgEnumDeclaration*
-PrologToRose::createEnumDeclaration(Sg_File_Info* fi, vector<SgNode*>* succs, PrologCompTerm* t) {
+PrologToRose::createEnumDeclaration(Sg_File_Info* fi, deque<SgNode*>* succs, PrologCompTerm* t) {
   /*retrieve name*/
   PrologCompTerm* annot = retrieveAnnotation(t);
   ROSE_ASSERT(t != NULL);
@@ -2347,7 +2346,7 @@ PrologToRose::createEnumDeclaration(Sg_File_Info* fi, vector<SgNode*>* succs, Pr
   /*create a type*/
   dec->set_type(SgEnumType::createType(dec));	
   /* append enumerators (name or name/value)*/
-  vector<SgNode*>::iterator it = succs->begin();
+  deque<SgNode*>::iterator it = succs->begin();
   SgInitializedName* iname;
   while(it != succs->end()) {
     iname = isSgInitializedName(*it);
@@ -2562,12 +2561,12 @@ PrologToRose::createDeleteExp(Sg_File_Info* fi, SgNode* child1, PrologCompTerm* 
  * create SgExprListExp 
  */
 SgExprListExp*
-PrologToRose::createExprListExp(Sg_File_Info* fi, vector<SgNode*>* succs) {
+PrologToRose::createExprListExp(Sg_File_Info* fi, deque<SgNode*>* succs) {
   /* just create SgExprListExp* and append expressions*/
   debug("SgExprListExp");
   SgExprListExp* e = new SgExprListExp(fi);
   ROSE_ASSERT(e != NULL);
-  vector<SgNode*>::iterator it = succs->begin();
+  deque<SgNode*>::iterator it = succs->begin();
   while (it != succs->end()) {
     SgExpression* ex = NULL;
     ex = isSgExpression(*it);
@@ -3032,13 +3031,13 @@ PrologToRose::createMemberFunctionRefExp(Sg_File_Info* fi, PrologCompTerm* ct) {
  * create SgNamespaceDefinitionStatement
  */
 SgNamespaceDefinitionStatement*
-PrologToRose::createNamespaceDefinitionStatement(Sg_File_Info* fi, vector<SgNode*>* succs) {
+PrologToRose::createNamespaceDefinitionStatement(Sg_File_Info* fi, deque<SgNode*>* succs) {
   debug("now creating namespace definition");
   /* create definition (declaration is set later)*/
   SgNamespaceDefinitionStatement* d = new SgNamespaceDefinitionStatement(fi,NULL);
   ROSE_ASSERT(d != NULL);
   /* append declarations*/
-  vector<SgNode*>::iterator it = succs->begin();
+  deque<SgNode*>::iterator it = succs->begin();
   while(it != succs->end()) {
     SgDeclarationStatement* s = NULL;
     s = isSgDeclarationStatement(*it);
@@ -3133,10 +3132,10 @@ PrologToRose::createCatchOptionStmt(Sg_File_Info* fi, SgNode* child1, SgNode* ch
  * create SgCatchStatementSeq
  */
 SgCatchStatementSeq*
-PrologToRose::createCatchStatementSeq(Sg_File_Info* fi, vector<SgNode*>* succs) {
+PrologToRose::createCatchStatementSeq(Sg_File_Info* fi, deque<SgNode*>* succs) {
   SgCatchStatementSeq* seq = new SgCatchStatementSeq(fi);
   ROSE_ASSERT(seq != NULL);
-  vector<SgNode*>::iterator it = succs->begin();
+  deque<SgNode*>::iterator it = succs->begin();
   while(it != succs->end()) {
     SgStatement* s = isSgStatement(*it);
     if (s != NULL) {

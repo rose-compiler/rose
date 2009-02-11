@@ -6,7 +6,6 @@ Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
 #define PROLOGTOROSE_H_
 #include <satire_rose.h>
 #include "termite.h"
-#include <vector>
 #include <iostream>
 
 /**
@@ -126,18 +125,18 @@ private:
   /*quaternary nodes*/
   SgForStatement* createForStatement(Sg_File_Info*, SgNode*, SgNode*, SgNode*, SgNode*, PrologCompTerm*);
   /*list nodes*/
-  SgFunctionParameterList* createFunctionParameterList(Sg_File_Info*,  std::vector<SgNode*>*);
-  SgBasicBlock* createBasicBlock(Sg_File_Info*, std::vector<SgNode*>*);
-  SgGlobal* createGlobal(Sg_File_Info*, std::vector<SgNode*>*);
-  SgProject* createProject(Sg_File_Info*, std::vector<SgNode*>*);
-  SgVariableDeclaration* createVariableDeclaration(Sg_File_Info*, std::vector<SgNode*>*, PrologCompTerm*);
-  SgForInitStatement* createForInitStatement(Sg_File_Info*, std::vector<SgNode*>*);
-  SgClassDefinition* createClassDefinition(Sg_File_Info*, std::vector<SgNode*>*, PrologCompTerm* t);
-  SgCtorInitializerList* createCtorInitializerList(Sg_File_Info*, std::vector<SgNode*>*);
-  SgEnumDeclaration* createEnumDeclaration(Sg_File_Info*, std::vector<SgNode*>*, PrologCompTerm*);
-  SgExprListExp* createExprListExp(Sg_File_Info*, std::vector<SgNode*>*);
-  SgNamespaceDefinitionStatement* createNamespaceDefinitionStatement(Sg_File_Info*, std::vector<SgNode*>*);
-  SgCatchStatementSeq* createCatchStatementSeq(Sg_File_Info*, std::vector<SgNode*>*);
+  SgFunctionParameterList* createFunctionParameterList(Sg_File_Info*,  std::deque<SgNode*>*);
+  SgBasicBlock* createBasicBlock(Sg_File_Info*, std::deque<SgNode*>*);
+  SgGlobal* createGlobal(Sg_File_Info*, std::deque<SgNode*>*);
+  SgProject* createProject(Sg_File_Info*, std::deque<SgNode*>*);
+  SgVariableDeclaration* createVariableDeclaration(Sg_File_Info*, std::deque<SgNode*>*, PrologCompTerm*);
+  SgForInitStatement* createForInitStatement(Sg_File_Info*, std::deque<SgNode*>*);
+  SgClassDefinition* createClassDefinition(Sg_File_Info*, std::deque<SgNode*>*, PrologCompTerm* t);
+  SgCtorInitializerList* createCtorInitializerList(Sg_File_Info*, std::deque<SgNode*>*);
+  SgEnumDeclaration* createEnumDeclaration(Sg_File_Info*, std::deque<SgNode*>*, PrologCompTerm*);
+  SgExprListExp* createExprListExp(Sg_File_Info*, std::deque<SgNode*>*);
+  SgNamespaceDefinitionStatement* createNamespaceDefinitionStatement(Sg_File_Info*, std::deque<SgNode*>*);
+  SgCatchStatementSeq* createCatchStatementSeq(Sg_File_Info*, std::deque<SgNode*>*);
   /*leaf nodes*/
   SgVarRefExp* createVarRefExp(Sg_File_Info*, PrologCompTerm*);
   SgBreakStmt* createBreakStmt(Sg_File_Info*, PrologCompTerm*);
