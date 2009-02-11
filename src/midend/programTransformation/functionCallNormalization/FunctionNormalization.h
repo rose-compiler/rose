@@ -5,7 +5,7 @@
 #include <sstream>
 #include <iostream>
 #include <string>
-#include "rose.h"
+// #include "rose.h"
 
 struct Declaration {
   SgStatement *initVarDeclaration, *nonInitVarDeclaration, *assignment;
