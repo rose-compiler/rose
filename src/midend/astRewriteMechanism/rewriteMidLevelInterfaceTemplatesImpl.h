@@ -1,7 +1,7 @@
 #ifndef AST_REWRITE_MID_LEVEL_INTERFACE_TEMPLATES_C
 #define AST_REWRITE_MID_LEVEL_INTERFACE_TEMPLATES_C
 
-#include "rose.h"
+// #include "rose.h"
 #include "rewrite.h"
 #include <vector>
 #include <string>

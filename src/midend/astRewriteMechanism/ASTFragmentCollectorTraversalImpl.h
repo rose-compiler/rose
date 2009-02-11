@@ -1,7 +1,7 @@
 #ifndef AST_REWRITE_FRAGMENT_COLLECTOR_TRAVERSAL_C
 #define AST_REWRITE_FRAGMENT_COLLECTOR_TRAVERSAL_C
 
-#include "rose.h"
+// #include "rose.h"
 #include "rewrite.h"
 
 // ####################################################################

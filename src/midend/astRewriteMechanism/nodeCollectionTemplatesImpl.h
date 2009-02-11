@@ -1,7 +1,7 @@
 #ifndef ABSTRACT_INTERFACE_NODE_COLLECTION_TEMPLATES_C
 #define ABSTRACT_INTERFACE_NODE_COLLECTION_TEMPLATES_C
 
-#include "rose.h"
+// #include "rose.h"
 #include "rewrite.h"
 
 // ************************************************************

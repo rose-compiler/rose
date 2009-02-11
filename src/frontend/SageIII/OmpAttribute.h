@@ -6,7 +6,7 @@
 //
 // Liao 9/17, 2008
 
-#include <rose.h>
+// #include <rose.h>
 #include <iostream>
 #include <string>
 #include <map>

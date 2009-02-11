@@ -4,7 +4,7 @@
 #include <GraphDotOutput.h>
 #include <map>
 #include "filteredCFG.h"
-#include "rose.h"
+// #include "rose.h"
 namespace DominatorTreesAndDominanceFrontiers
 {
 	/* ! \class TemplatedDominatorTree

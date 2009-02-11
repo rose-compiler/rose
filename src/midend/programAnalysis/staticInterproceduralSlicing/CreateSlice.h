@@ -13,7 +13,7 @@
    generated and then marking the nodes of the slice as to be output. It may
    be better in the future to create a second AST containing just the nodes of 
    the slice. */
-#include "rose.h"
+// #include "rose.h"
 #include <set>
 
 class BooleanSafeKeeper
