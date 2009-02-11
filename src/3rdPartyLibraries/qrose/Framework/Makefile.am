@@ -36,4 +36,8 @@ EXTRA_DIST = QRException.h \
              QRTiledWidget.h \
              QRWidgetAccess.h \
              QRWidgetX.h \
-             QRWindow.h 
+             QRWindow.h \
+             moc_QRMain_p.C \
+             moc_QRSpaceWidget.C \
+             moc_QRTiledWidget.C \
+             moc_QRWindow.C
