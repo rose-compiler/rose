@@ -461,6 +461,19 @@ previously installed version of Boost and issue a warning message to not use
 the configuration will report this as well and make clear that it will use the Boost
 include directory with a {\tt -I} option.
 
+   \item libtoolize not available (or old version) \\
+  The problem is that ROSE is calling {\tt libtoolize} or {\tt glibtoolize} and 
+it seems that you don't have it on your machine (called by the build script). 
+You will need it, it is a requirement. The {\tt build} script will run this to build you the
+required libtool support.  Since this happens upsteam of {\tt configure} we don't have a test
+for it. The clue is the output:
+\begin{verbatim}
+ls: cannot access libltdl/*: No such file or directory
+libtoolize: cannot list files in `/usr/share/libtool/libltdl'
+\end{verbatim}
+If you build libtool on your machine and add the installed libtool {\tt bin} directory
+to you path, then it should work.  I often use {\tt libtool-2.2.4.tar} when I have 
+this problem on a new platform.
 
 \end{enumerate}
 
