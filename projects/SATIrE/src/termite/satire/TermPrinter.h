@@ -17,6 +17,7 @@ Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
 // GB (2008-10-03): The declaration (and definition) of PagDfiTextPrinter is
 // now provided in a special header.
 #  include <PagDfiTextPrinter.h>
+#  include <cfg_support.h>
 #endif
 
 /* See main.C-template and toProlog.C for examples how to use this */
@@ -33,9 +34,13 @@ template<typename DFI_STORE_TYPE>
 class TermPrinter: public AstBottomUpProcessing<PrologTerm*> 
 {
 public:
-  TermPrinter(DFI_STORE_TYPE analysis_info = 0) 
+  TermPrinter(DFI_STORE_TYPE analysis_info = 0
 # ifdef PAG_VERSION
-      :pagDfiTextPrinter(analysis_info)
+          , CFG *cfg = 0
+# endif
+          )
+# ifdef PAG_VERSION
+      :pagDfiTextPrinter(analysis_info), cfg(cfg)
 # endif
   { 
 #if HAVE_SWI_PROLOG
@@ -46,6 +51,7 @@ public:
 #endif  
     withPagAnalysisResults = (analysis_info != 0); 
   }
+
 
   /** return the term*/
   PrologTerm* getTerm() {return mTerm;};
@@ -89,6 +95,11 @@ private:
 
   /** the current term */
   PrologTerm* mTerm;
+
+  /** the CFG */
+# ifdef PAG_VERSION
+  CFG *cfg;
+#endif
 
   PrologCompTerm* getAnalysisResult(SgStatement* stmt);  
   PrologCompTerm* pagToProlog(std::string name, std::string dfi);
@@ -238,21 +249,37 @@ PrologCompTerm*
 TermPrinter<DFI_STORE_TYPE>::getAnalysisResult(SgStatement* stmt)
 {
   PrologCompTerm *ar;
-  PrologTerm *preInfo, *postInfo;
   ar   = new PrologCompTerm("analysis_info");
+  PrologList *infos;
+  infos = new PrologList();
 
 # ifdef PAG_VERSION
   if (withPagAnalysisResults && stmt->get_attributeMechanism()) {
+    PrologTerm *preInfo, *postInfo;
      preInfo = pagToProlog("pre_info", pagDfiTextPrinter.getPreInfo(stmt));
     postInfo = pagToProlog("post_info",pagDfiTextPrinter.getPostInfo(stmt));
-  } else 
-# endif
-  {
-     preInfo = new PrologAtom("null");
-    postInfo = new PrologAtom("null");
+    infos->addElement(preInfo);
+    infos->addElement(postInfo);
   }
-  ar->addSubterm(preInfo);
-  ar->addSubterm(postInfo);
+# endif
+# ifdef PAG_VERSION
+  // We want to annotate only statements within functions. No compound
+  // statements for now, although they could be supported.
+  bool interestingStatement = isSgScopeStatement(stmt->get_parent())
+                              && !isSgGlobal(stmt->get_parent())
+                              && !isSgBasicBlock(stmt);
+  if (cfg != NULL && interestingStatement) {
+    std::pair<int, int> entryExit = cfg->statementEntryExitLabels(stmt);
+    PrologCompTerm *pair = new PrologInfixOperator("-");
+    pair->addSubterm(new PrologInt(entryExit.first));
+    pair->addSubterm(new PrologInt(entryExit.second));
+    PrologCompTerm *ee;
+    ee = new PrologCompTerm("entry_exit_labels");
+    ee->addSubterm(pair);
+    infos->addElement(ee);
+  }
+# endif
+  ar->addSubterm(infos);
 
   return ar;
 }
