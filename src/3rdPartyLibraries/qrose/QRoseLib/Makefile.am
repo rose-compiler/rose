@@ -4,7 +4,7 @@ if ROSE_USE_QT
 
 lib_LTLIBRARIES = libqrose.la
 libqrose_la_LIBADD = ../Framework/libqrframework.la ../Widgets/libqrwidgets.la
-libqrose_la_SOURCES = qroselib.cpp
+libqrose_la_SOURCES = qroselib.C
 if QROSE_USE_MINGW32
    libqrose_la_LDFLAGS = -no-undefined @QT_LDFLAGS@
 else
