@@ -50,6 +50,7 @@ public:
 	   && "please run TermiteInit(argc, argv) first.");
 #endif  
     withPagAnalysisResults = (analysis_info != 0); 
+    mTerm = new PrologAtom("error");
   }
 
 

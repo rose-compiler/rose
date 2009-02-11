@@ -41,25 +41,25 @@ int main ( int argc, char ** argv ) {
   char warningFlag[] = "-edg:w";
   argv[2] = warningFlag;
 
-  SgProject * root = frontend(argc,argv);
+  SgProject * project = frontend(argc,argv);
 
   //Create dot and pdf files
   //DOT generation (numbering:preoder)
   //AstDOTGeneration dotgen;
 
-  //dotgen.generateInputFiles(root,AstDOTGeneration::PREORDER);
+  //dotgen.generateInputFiles(project,AstDOTGeneration::PREORDER);
   //PDF generation
   //AstPDFGeneration pdfgen;
-  //pdfgen.generateInputFiles(root);
+  //pdfgen.generateInputFiles(project);
 
   init_termite(argc, argv);
   
   //create prolog term
   BasicTermPrinter tp;
   if (strip_headers) 
-    tp.traverseInputFiles(root); // Without headers
+    tp.traverseInputFiles(project); // Without headers
   else
-    tp.traverse(root); // With headers
+    tp.traverse(project); // With headers
 
   PrologTerm* genTerm = tp.getTerm();
 
