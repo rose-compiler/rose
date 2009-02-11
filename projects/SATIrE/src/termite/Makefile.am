@@ -75,7 +75,7 @@ else
 	        termparser.tab.h++
   BUILT_SOURCES = termparser.tab.c++ termparser.tab.h++ \
                   dfiparser.tab.c++ dfiparser.tab.h++
-  libtermite_a_SOURCES += termparser.y++ termparser.tab.h++ termlexer.l++
+  libtermite_a_SOURCES += termparser.y++ termlexer.l++
   nobase_include_HEADERS += satire/termparser.h
 
 termparser.tab.c++: $(srcdir)/termparser.y++ Makefile
