@@ -1,6 +1,6 @@
 #ifndef INTERRUPTANALYSIS_R_H
 #define INTERRUPTANALYSIS_R_H
-#include "rose.h"
+//#include "rose.h"
 
 #include <iostream>
 #include <list>

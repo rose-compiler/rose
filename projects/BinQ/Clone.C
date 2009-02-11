@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "BinQGui.h"
 #include "BinQSupport.h"
 #include "LCS.h"

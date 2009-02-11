@@ -1,6 +1,6 @@
 #ifndef BUFFEROVERFLOW_R_H
 #define BUFFEROVERFLOW_R_H
-#include "rose.h"
+//#include "rose.h"
 
 #include <iostream>
 #include <list>

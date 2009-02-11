@@ -1,6 +1,6 @@
 #ifndef ALIGNFUNCTION_R_H
 #define ALIGNFUNCTION_R_H
-#include "rose.h"
+//#include "rose.h"
 
 #include <iostream>
 #include <list>

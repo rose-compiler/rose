@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "BinQinteractive.h"
 
 #include "boost/filesystem/operations.hpp" 

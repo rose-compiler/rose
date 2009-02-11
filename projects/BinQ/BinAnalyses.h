@@ -1,6 +1,6 @@
 #ifndef BINANALYSES_R_H
 #define BINANALYSES_R_H
-#include "rose.h"
+//#include "rose.h"
 
 #include <iostream>
 

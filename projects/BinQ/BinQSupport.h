@@ -1,6 +1,6 @@
 #ifndef BINQSUPPORT_H
 #define BINQSUPPORT_H
-#include "rose.h"
+//#include "rose.h"
 
 SgAsmExpressionPtrList& getOperands(SgAsmInstruction* insn);
 

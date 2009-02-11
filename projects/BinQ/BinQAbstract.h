@@ -1,6 +1,6 @@
 #ifndef BINQA_GUI_H
 #define BINQA_GUI_H
-#include "rose.h"
+//#include "rose.h"
 #include <qrose.h>
 
 #include "Item.h"

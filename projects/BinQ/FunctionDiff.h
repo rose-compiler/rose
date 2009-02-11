@@ -1,6 +1,6 @@
 #ifndef DIFFCLONE_R_H
 #define DIFFCLONE_R_H
-#include "rose.h"
+//#include "rose.h"
 
 #include <iostream>
 #include <list>

@@ -7,6 +7,7 @@
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
 
+#include "rose.h"
 #include "MyBars.h"
 #if !defined(Q_MOC_OUTPUT_REVISION)
 #error "The header file 'MyBars.h' doesn't include <QObject>."

@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "BinQbatch.h"
 
 #include "boost/filesystem/operations.hpp" 

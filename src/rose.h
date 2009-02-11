@@ -6,7 +6,7 @@
 
 /* Define to force use of thread-safe errno, h_errno, and other functions */
 // tps: Feb 6 2009: Testing precompilation of rose.h
-#undef _REENTRANT 
+//#undef _REENTRANT 
 
 
 #if 0
@@ -155,7 +155,7 @@ namespace ELF{
 
 /* Define to force use of thread-safe errno, h_errno, and other functions */
 // tps: Feb 6 2009: Testing precompilation of rose.h
-#undef _REENTRANT 
+//#undef _REENTRANT 
 
 // ifndef ROSE_H
 #endif

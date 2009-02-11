@@ -1,6 +1,6 @@
 #ifndef CLONE_R_H
 #define CLONE_R_H
-#include "rose.h"
+//#include "rose.h"
 
 
 #include <iostream>

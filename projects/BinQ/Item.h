@@ -1,6 +1,6 @@
 #ifndef ITEM_R_H
 #define ITEM_R_H
-#include "rose.h"
+//#include "rose.h"
 
 class Item {
  public:

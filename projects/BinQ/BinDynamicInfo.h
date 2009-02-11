@@ -1,6 +1,6 @@
 #ifndef DYNAMICINFO_R_H
 #define DYNAMICINFO_R_H
-#include "rose.h"
+//#include "rose.h"
 
 #include <iostream>
 #include <list>
