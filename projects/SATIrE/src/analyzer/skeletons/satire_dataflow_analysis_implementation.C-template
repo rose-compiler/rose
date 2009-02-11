@@ -247,7 +247,7 @@ Implementation::outputAnnotatedProgram(Program *program)
     if (program->options->outputTerm())
     {
         TimingPerformance timer("Output Prolog term:");
-        TermPrinter<DFI_STORE> tp((DFI_STORE) analysisInfo);
+        TermPrinter<DFI_STORE> tp((DFI_STORE) analysisInfo, program->icfg);
 
         if (program->options->analysisWholeProgram())
             tp.traverse(program->astRoot);
