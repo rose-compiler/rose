@@ -14,9 +14,11 @@ noinst_LTLIBRARIES = libqrwidgets.la
 
 MOC_SOURCES = moc_QRButtons.C moc_QRToolBar.C moc_QRTable.C moc_QREdit.C moc_QRSelect.C moc_QRProgress.C moc_QRSeparator.C moc_QRSelect_p.C moc_QRTree.C
 
-libqrwidgets_la_SOURCES = $(MOC_SOURCES) QRTable_p.C QREdit_p.C QRProgress_p.C QRSeparator_p.C QRButtons.C QRToolBar.C QRTable.C  QREdit.C  QRSelect.C QRSelect_p.C QRProgress.C QRSeparator.C QRTree.C
+#libqrwidgets_la_SOURCES = $(MOC_SOURCES) QRTable_p.C QREdit_p.C QRProgress_p.C QRSeparator_p.C QRButtons.C QRToolBar.C QRTable.C  QREdit.C  QRSelect.C QRSelect_p.C QRProgress.C QRSeparator.C QRTree.C
+libqrwidgets_la_SOURCES = QRTable_p.C QREdit_p.C QRProgress_p.C QRSeparator_p.C QRButtons.C QRToolBar.C QRTable.C  QREdit.C  QRSelect.C QRSelect_p.C QRProgress.C QRSeparator.C QRTree.C
+nodist_libqrwidgets_la_SOURCES = $(MOC_SOURCES)
 
-CLEANFILES=moc_*.C
+CLEANFILES = moc_*.C
 
 if QROSE_USE_WINDOWS
 moc_%.C: $(srcdir)/%.h 
