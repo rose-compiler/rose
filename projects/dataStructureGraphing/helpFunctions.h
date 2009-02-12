@@ -2,7 +2,7 @@
 #define HELP_FUNCTIONS_H
 
 
-#include "rose.h"
+//#include "rose.h"
 
 // using namespace std; 
 typedef std::vector <SgNode *, std::allocator <SgNode * > > SgNodePtrVector;

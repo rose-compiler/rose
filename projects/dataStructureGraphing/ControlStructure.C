@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "ControlStructure.h"
 
 using namespace std;
