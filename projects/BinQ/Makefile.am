@@ -9,7 +9,6 @@ bin_PROGRAMS = BinQ
 MOC_SOURCES = moc_slide.C  moc_MyBars.C
 
 BinQ_SOURCES = \
-        ${MOC_SOURCES} \
 	BinQMain.C \
 	BinQSupport.C \
 	BinQGui.C \
@@ -34,6 +33,8 @@ BinQ_SOURCES = \
 	InitPointerToNull.C \
 	ComplexityMetric.C \
 	DwarfFileInfo.C
+
+nodist_BinQ_SOURCES = $(MOC_SOURCES)
 
 # This section was added by Gabriel and generates moc files 
 # tps: I added the sed line that includes the rose.h on top of the generated file
