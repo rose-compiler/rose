@@ -2,7 +2,7 @@
 #define BinQT_LCS_H
 #include <boost/smart_ptr.hpp>
 #include <vector>
-#include <rose.h>
+//#include <rose.h>
 #include <string>
 #include <map>
 namespace LCS{
