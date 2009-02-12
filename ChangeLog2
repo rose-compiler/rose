@@ -1,3 +1,82 @@
+2009-02-12 05:37  dquinlan
+
+	* [r4436] /trunk/ROSE/projects/BinQ/Makefile.am,
+	  /trunk/ROSE/projects/assemblyToSourceAst/tests/test1.c: Fixed
+	  Makefiles to use nodist_ rules and fixed use of asm statement for
+	  g++ 4.3.2.
+
+2009-02-12 05:36  dquinlan
+
+	* [r4435]
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/Makefile.am,
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Widgets/Makefile.am:
+	  Fixed Makefiles to use nodist_ rules.
+
+2009-02-12 02:40  panas2
+
+	* [r4434]
+	  /trunk/ROSE/projects/dataStructureGraphing/GenGeneration.C,
+	  /trunk/ROSE/projects/dataStructureGraphing/GenRepresentation.C,
+	  /trunk/ROSE/projects/dataStructureGraphing/helpMethods.C: still
+	  some rose.h pch issues
+
+2009-02-12 02:08  panas2
+
+	* [r4433] /trunk/ROSE/projects/dataStructureGraphing/main.C: added
+	  rose.h to main.C in dataStructureGraphing
+
+2009-02-12 01:46  panas2
+
+	* [r4432] /trunk/ROSE/projects/BinQ/LCS.C: fixing a rose.h problem
+
+2009-02-12 01:22  panas2
+
+	* [r4431] /trunk/ROSE/scripts/roseFreshTestStub-Thomas-mpi.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Thomas.sh: fixed my nightly
+	  test
+
+2009-02-12 01:13  panas2
+
+	* [r4430] /trunk/ROSE/scripts/roseFreshTestStub-Thomas.sh: modified
+	  my nightly test
+
+2009-02-12 01:04  panas2
+
+	* [r4429]
+	  /trunk/ROSE/projects/dataStructureGraphing/ControlStructure.C,
+	  /trunk/ROSE/projects/dataStructureGraphing/helpFunctions.C,
+	  /trunk/ROSE/projects/dataStructureGraphing/helpFunctions.h: Found
+	  another rose.h in a header file
+
+2009-02-12 00:57  panas2
+
+	* [r4428] /trunk/ROSE/projects/BinQ/LCS.h: Found another rose.h in
+	  a header file
+
+2009-02-11 23:03  dquinlan
+
+	* [r4427]
+	  /trunk/ROSE/src/3rdPartyLibraries/qrose/Framework/Makefile.am:
+	  Fixed EXTRA_DIST variable to include moc_ files.
+
+2009-02-11 22:35  dquinlan
+
+	* [r4426] /trunk/ROSE/docs/Rose/installRose.tex: Added more
+	  documentation (Rice libtoolize problem) to trouble shooting
+	  section.
+
+2009-02-11 21:37  dquinlan
+
+	* [r4425] /trunk/ROSE/docs/Rose/installRose.tex: Added
+	  documentation (Rice libtoolize problem) to trouble shooting
+	  section.
+
+2009-02-11 20:54  panas2
+
+	* [r4424] /trunk/ROSE/configure.in, /trunk/ROSE/src/Makefile.am,
+	  /trunk/ROSE/src/rose.h: Added a flag that allows pre-compiled
+	  header compilation to be turned on with --with-pch
+
 2009-02-11 19:39  panas2
 
 	* [r4422] /trunk/ROSE/projects/BinQ/moc_MyBars.C,
