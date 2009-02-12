@@ -613,7 +613,10 @@ inputCode_dwarfAnalysis:
 	g++ -g3 -o inputCode_dwarfAnalysis $(srcdir)/inputCode_dwarfAnalysis.C
 else
 inputCode_dwarfAnalysis:
-	cp $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/i386-nologin inputCode_dwarfAnalysis
+#	DQ (2/12/2009): This fails when make check is run and the file ($(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/i386-nologin)
+#	is not available (e.g. external distributions).
+#	cp $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/i386-nologin inputCode_dwarfAnalysis
+	cp $(srcdir)/buffer2.bin inputCode_dwarfAnalysis
 endif
 
 
