@@ -1098,18 +1098,15 @@ void BinQGUI::showFile(int row, qrs::QRTable* currentWidget,
       addRow=true;
     }
 
-    if (rowC>7000) {
-      cerr << " Allowing only 7000 table entries for now ..." << endl;
-      break;
-    }
-    else
       if (addRow) {
 	if ((rowC%500)==0)
 	  cerr << "Adding Row : " << RoseBin_support::ToString(rowC) << "/"<< RoseBin_support::ToString(itemsFile.size()) << endl;
+	// tps : this is still very slow and commented out for now
+
+		currentWidget->setHAlignment(true, false, 3); // left horizontal alignment
 #if 0
 	currentWidget->setHAlignment(true, false, 0); // left horizontal alignment
 	currentWidget->setHAlignment(true, false, 1); // left horizontal alignment
-	currentWidget->setHAlignment(true, false, 3); // left horizontal alignment
 	currentWidget->setHAlignment(true, false, 2); // left horizontal alignment
 	currentWidget->setHAlignment(true, false, 4); // left horizontal alignment
 #endif
