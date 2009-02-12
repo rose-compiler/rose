@@ -1,8 +1,9 @@
+#include "rose.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include "GenGeneration.h"
-#include "rose.h"
+
 
 using namespace std;
 

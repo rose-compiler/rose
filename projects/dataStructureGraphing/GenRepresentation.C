@@ -1,4 +1,5 @@
 // Author: Andreas Saebjoernsen
+#include "rose.h"
 #include "GenRepresentation.h"
 #ifndef GENERALREPRESENTATION_C
 #define GENERALREPRESENTATION_C
