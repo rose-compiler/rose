@@ -1,3 +1,20 @@
+2009-02-12 19:37  panas2
+
+	* [r4441] /trunk/ROSE/projects/BinQ/BinQGui.C: Removed the
+	  restriction on the number of table entries for BinQ
+
+2009-02-12 15:50  dquinlan
+
+	* [r4439] /trunk/ROSE/tutorial/Makefile.am: Fixed dependency on
+	  developersScratchSpace/Dan/Disassembler_tests/i386-nologin binary
+	  file.
+
+2009-02-12 07:32  panas2
+
+	* [r4438]
+	  /trunk/ROSE/src/midend/programAnalysis/defUseAnalysis/LivenessAnalysis.cpp:
+	  Modified this Analysis because it breaks a test
+
 2009-02-12 05:37  dquinlan
 
 	* [r4436] /trunk/ROSE/projects/BinQ/Makefile.am,
