@@ -331,7 +331,8 @@ bool LivenessAnalysis::defuse(T cfgNode, bool *unhandled) {
     // has_changed only applies here
     bool equal = false;
     std::map<SgNode*, std::vector<SgInitializedName*> >::const_iterator it = in.find(sgNode);
-    if (it!=in.end()) {
+    std::vector<SgInitializedName*> vec = out[sgNode];
+    if (it!=in.end() && vec.size()>0) {
       equal = std::equal(in[sgNode].begin(),in[sgNode].end(),out[sgNode].begin());
       if (!equal)
 	has_changed=true;
