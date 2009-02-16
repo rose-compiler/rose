@@ -1753,11 +1753,6 @@ struct X86InstructionSemantics {
 #define STRINGOP_LOAD_DI(len, cond)                                                                                            \
         readMemory<(8 * (len))>(x86_segreg_es, policy.readGPR(x86_gpr_di), (cond))
 
-#define STRINGOP_LOOP                                                                                                          \
-        policy.writeIP(policy.ite(ecxNotZero, /* If true, repeat this instruction, otherwise go to the next one */             \
-                                  number<32>((uint32_t)(insn->get_address())),                                                 \
-                                  policy.readIP()));
-
 #define STRINGOP_LOOP_E                                                                                                        \
         /* If true, repeat this instruction, otherwise go to the next one */                                                   \
         policy.writeIP(policy.ite(policy.and_(ecxNotZero, policy.readFlag(x86_flag_zf)),                                       \
@@ -1898,7 +1893,9 @@ struct X86InstructionSemantics {
                                      policy.ite(ecxNotZero,                                                                    \
                                                 policy.ite(policy.readFlag(x86_flag_df), number<32>(-(len)), number<32>(len)), \
                                                 number<32>(0))));                                                              \
-          STRINGOP_LOOP                                                                                                        \
+          policy.writeIP(policy.ite(ecxNotZero, /* If true, repeat this instruction, otherwise go to the next one */           \
+                                    number<32>((uint32_t)(insn->get_address())),                                               \
+                                    policy.readIP()));                                                                         \
           break;                                                                                                               \
       }
 
@@ -1932,7 +1929,9 @@ struct X86InstructionSemantics {
                                      policy.ite(ecxNotZero,
                                                 policy.ite(policy.readFlag(x86_flag_df), number<32>(-1), number<32>(1)),
                                                 number<32>(0))));
-          STRINGOP_LOOP
+          policy.writeIP(policy.ite(ecxNotZero, /* If true, repeat this instruction, otherwise go to the next one */
+                                    number<32>((uint32_t)(insn->get_address())),
+                                    policy.readIP()));
           break;
       }
       case x86_stosw: {
@@ -1960,7 +1959,9 @@ struct X86InstructionSemantics {
                                      policy.ite(ecxNotZero,
                                                 policy.ite(policy.readFlag(x86_flag_df), number<32>(-2), number<32>(2)),
                                                 number<32>(0))));
-          STRINGOP_LOOP
+          policy.writeIP(policy.ite(ecxNotZero, /* If true, repeat this instruction, otherwise go to the next one */
+                                    number<32>((uint32_t)(insn->get_address())),
+                                    policy.readIP()));
           break;
       }
       case x86_stosd: {
@@ -1988,7 +1989,9 @@ struct X86InstructionSemantics {
                                      policy.ite(ecxNotZero,
                                                 policy.ite(policy.readFlag(x86_flag_df), number<32>(-4), number<32>(4)),
                                                 number<32>(0))));
-          STRINGOP_LOOP
+          policy.writeIP(policy.ite(ecxNotZero, /* If true, repeat this instruction, otherwise go to the next one */
+                                    number<32>((uint32_t)(insn->get_address())),
+                                    policy.readIP()));
           break;
       }
 
@@ -2011,7 +2014,6 @@ struct X86InstructionSemantics {
 #undef STRINGOP_LOAD_SI
 #undef STRINGOP_LOAD_DI
 #undef STRINGOP_UPDATE_CX
-#undef STRINGOP_LOOP
 #undef STRINGOP_LOOP_E
 #undef STRINGOP_LOOP_NE
 
