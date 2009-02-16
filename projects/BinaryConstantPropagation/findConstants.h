@@ -642,6 +642,41 @@ struct RegisterSet {
             (new MergeConstraint<1>(flag[i], rs.flag[i]))->activate();
         (new MemoryMergeConstraint(memoryWrites, rs.memoryWrites))->activate();
     }
+
+    /** Show register set, but only the parts that differ from @p base. */
+    std::string diff(const RegisterSet &orig, std::string prefix="") {
+        std::ostringstream s;
+        for (size_t i=0; i<8; i++) {
+            if (!(orig.gpr[i]->get()==gpr[i]->get())) {
+                s <<prefix <<gprToString((X86GeneralPurposeRegister)i) <<" = " <<gpr[i] <<"\n";
+            }
+        }
+        for (size_t i=0; i<6; i++) {
+            if (!(orig.segreg[i]->get()==segreg[i]->get())) {
+                s <<prefix <<segregToString((X86SegmentRegister)i) <<" = " <<segreg[i] <<"\n";
+            }
+        }
+        for (size_t i=0; i<16; i++) {
+            if (!(orig.flag[i]->get()==flag[i]->get())) {
+                s <<prefix <<flagToString((X86Flag)i) << " = " <<flag[i] <<"\n";
+            }
+        }
+        /* Show memory in this register set that is different than the original */
+        if (!memoryWrites->get().isTop) {
+            for (size_t i=0; i<memoryWrites->get().writes.size(); i++) {
+                LatticeElement<32> addr = memoryWrites->get().writes[i].address;
+                LatticeElement<32> orig_data;
+                if (!orig.memoryWrites->get().getValueAtAddress(addr, orig_data/*out*/, 0, NULL) ||
+                    !(orig_data==memoryWrites->get().writes[i].data)) {
+                    s <<prefix <<"mem @ " <<addr <<" = " <<memoryWrites->get().writes[i].data <<"\n";
+                }
+            }
+        }
+        
+
+        return s.str();
+    }
+    
 };
 
 std::ostream&
