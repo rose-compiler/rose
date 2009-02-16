@@ -689,6 +689,7 @@ int GetPrecedence(int variant)
           case V_SgVarArgOp:         return 0;
           case V_SgLongDoubleVal:    return 0;
           case V_SgLongIntVal:       return 0;
+          case V_SgLongLongIntVal:   return 0;
           case V_SgVarArgStartOp:    return 0;
           case V_SgNewExp:           return 0;
           case V_SgStringVal:        return 0;
@@ -705,7 +706,7 @@ int GetPrecedence(int variant)
           default:
              {
 #if PRINT_DEVELOPER_WARNINGS | 1
-               printf ("GetPrecedence(): Undefined expression variant = %d = %s \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
+               printf ("Warning: GetPrecedence() in modified_sage.C: Undefined expression variant = %d = %s \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
 #endif
 
             // DQ (2/1/2009): Make this an error, so that we avoid unnecessary debugging.

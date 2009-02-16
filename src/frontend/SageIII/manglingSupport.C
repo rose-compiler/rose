@@ -582,7 +582,11 @@ mangleValueExp (const SgValueExp* expr)
         mangled_name =
           mangleSgValueExp<SgLongIntVal> (isSgLongIntVal (expr));
         break;
-      case V_SgShortVal:
+     case V_SgLongLongIntVal: // Added by Liao, 2/10/2009
+        mangled_name =
+          mangleSgValueExp<SgLongLongIntVal> (isSgLongLongIntVal (expr));
+        break;
+     case V_SgShortVal:
         mangled_name =
           mangleSgValueExp<SgShortVal> (isSgShortVal (expr));
         break;
@@ -626,6 +630,7 @@ mangleValueExp (const SgValueExp* expr)
         }
         break;
       default:
+        std::cerr<<"Error! Unhandled case in mangleValueExp() for "<<expr->sage_class_name()<<std::endl; 
         ROSE_ASSERT (false); // Unhandled case.
         break;
       }
