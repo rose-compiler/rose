@@ -42,6 +42,58 @@ struct X86InstructionSemantics {
         return ecxNotZero;
     }
 
+    /* Instruction semantics for rep_stosN where N is 1(b), 2(w), or 4(d) */
+    template<size_t N>
+    void rep_stos_semantics(SgAsmx86Instruction *insn) {
+        const SgAsmExpressionPtrList& operands = insn->get_operandList()->get_operands();
+        ROSE_ASSERT(operands.size() == 0);
+        ROSE_ASSERT(insn->get_addressSize() == x86_insnsize_32);
+
+        /* Decrement counter (CX) if nonzero */
+        Word(1) ecxNotZero = policy.invert(policy.equalToZero(policy.readGPR(x86_gpr_cx)));
+        policy.writeGPR(x86_gpr_cx,
+                        policy.add(policy.readGPR(x86_gpr_cx),
+                                   policy.ite(ecxNotZero, number<32>(-1), number<32>(0))));
+
+        /* Fill memory pointed to by ES:[DI] with contents of AX register. */
+        policy.writeMemory(x86_segreg_es,
+                           policy.readGPR(x86_gpr_di),
+                           extract<0, 8*N>(policy.readGPR(x86_gpr_ax)),
+                           ecxNotZero);
+
+        /* Update DI */ /*FIXME: Is this correct? Shouldn't it be zero afterward? [RPM 2009-02-11]*/
+        policy.writeGPR(x86_gpr_di,
+                        policy.add(policy.readGPR(x86_gpr_di),
+                                   policy.ite(ecxNotZero,
+                                              policy.ite(policy.readFlag(x86_flag_df), number<32>(-N), number<32>(N)),
+                                              number<32>(0))));
+
+        /* If CX is nonzero then repeat this instruction, otherwise go to the next one. */
+        policy.writeIP(policy.ite(ecxNotZero,
+                                  number<32>((uint32_t)(insn->get_address())),
+                                  policy.readIP()));
+    }
+
+    /* Instruction semantics for stosN where N is 1(b), 2(w), or 4(d) */
+    template<size_t N>
+    void stos_semantics(SgAsmx86Instruction *insn) {
+        const SgAsmExpressionPtrList& operands = insn->get_operandList()->get_operands();
+        ROSE_ASSERT(operands.size() == 0);
+        ROSE_ASSERT(insn->get_addressSize() == x86_insnsize_32);
+
+        /* Fill memory pointed to by ES:[DI] with contents of AX. */
+        policy.writeMemory(x86_segreg_es,
+                           policy.readGPR(x86_gpr_di),
+                           extract<0, 8*N>(policy.readGPR(x86_gpr_ax)),
+                           policy.true_());
+
+        /* Update DI */ /*FIXME: Is this correct? Shouldn't it be zero afterward? [RPM 2009-02-11]*/
+        policy.writeGPR(x86_gpr_di,
+                        policy.add(policy.readGPR(x86_gpr_di),
+                                   policy.ite(policy.readFlag(x86_flag_df), number<32>(-N), number<32>(N))));
+    }
+    
+
   template <size_t Len>
   Word(Len) invertMaybe(const Word(Len)& w, bool inv) {
     if (inv) {
@@ -1905,93 +1957,29 @@ struct X86InstructionSemantics {
 #undef MOVS
 
       case x86_stosb: {
-          ROSE_ASSERT (operands.size() == 0);
-          ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
-          policy.writeMemory(x86_segreg_es,
-                             policy.readGPR(x86_gpr_di),
-                             extract<0, 8>(policy.readGPR(x86_gpr_ax)),
-                             policy.true_());
-          policy.writeGPR(x86_gpr_di,
-                          policy.add(policy.readGPR(x86_gpr_di),
-                                     policy.ite(policy.readFlag(x86_flag_df), number<32>(-1), number<32>(1))));
+          stos_semantics<1>(insn);
           break;
       }
       case x86_rep_stosb: {
-          ROSE_ASSERT (operands.size() == 0);
-          ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
-          Word(1) ecxNotZero = stringop_setup_loop();
-          policy.writeMemory(x86_segreg_es,
-                             policy.readGPR(x86_gpr_di),
-                             extract<0, 8>(policy.readGPR(x86_gpr_ax)),
-                             ecxNotZero);
-          policy.writeGPR(x86_gpr_di,
-                          policy.add(policy.readGPR(x86_gpr_di),
-                                     policy.ite(ecxNotZero,
-                                                policy.ite(policy.readFlag(x86_flag_df), number<32>(-1), number<32>(1)),
-                                                number<32>(0))));
-          policy.writeIP(policy.ite(ecxNotZero, /* If true, repeat this instruction, otherwise go to the next one */
-                                    number<32>((uint32_t)(insn->get_address())),
-                                    policy.readIP()));
+          rep_stos_semantics<1>(insn);
           break;
       }
+
       case x86_stosw: {
-          ROSE_ASSERT (operands.size() == 0);
-          ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
-          policy.writeMemory(x86_segreg_es,
-                             policy.readGPR(x86_gpr_di),
-                             extract<0, 16>(policy.readGPR(x86_gpr_ax)),
-                             policy.true_());
-          policy.writeGPR(x86_gpr_di,
-                          policy.add(policy.readGPR(x86_gpr_di),
-                                     policy.ite(policy.readFlag(x86_flag_df), number<32>(-2), number<32>(2))));
+          stos_semantics<2>(insn);
           break;
       }
       case x86_rep_stosw: {
-          ROSE_ASSERT (operands.size() == 0);
-          ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
-          Word(1) ecxNotZero = stringop_setup_loop();
-          policy.writeMemory(x86_segreg_es,
-                             policy.readGPR(x86_gpr_di),
-                             extract<0, 16>(policy.readGPR(x86_gpr_ax)),
-                             ecxNotZero);
-          policy.writeGPR(x86_gpr_di,
-                          policy.add(policy.readGPR(x86_gpr_di),
-                                     policy.ite(ecxNotZero,
-                                                policy.ite(policy.readFlag(x86_flag_df), number<32>(-2), number<32>(2)),
-                                                number<32>(0))));
-          policy.writeIP(policy.ite(ecxNotZero, /* If true, repeat this instruction, otherwise go to the next one */
-                                    number<32>((uint32_t)(insn->get_address())),
-                                    policy.readIP()));
+          rep_stos_semantics<2>(insn);
           break;
       }
+
       case x86_stosd: {
-          ROSE_ASSERT (operands.size() == 0);
-          ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
-          policy.writeMemory(x86_segreg_es,
-                             policy.readGPR(x86_gpr_di),
-                             extract<0, 32>(policy.readGPR(x86_gpr_ax)),
-                             policy.true_());
-          policy.writeGPR(x86_gpr_di,
-                          policy.add(policy.readGPR(x86_gpr_di),
-                                     policy.ite(policy.readFlag(x86_flag_df), number<32>(-4), number<32>(4))));
+          stos_semantics<4>(insn);
           break;
       }
       case x86_rep_stosd: {
-          ROSE_ASSERT (operands.size() == 0);
-          ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
-          Word(1) ecxNotZero = stringop_setup_loop();
-          policy.writeMemory(x86_segreg_es,
-                             policy.readGPR(x86_gpr_di),
-                             extract<0, 32>(policy.readGPR(x86_gpr_ax)),
-                             ecxNotZero);
-          policy.writeGPR(x86_gpr_di,
-                          policy.add(policy.readGPR(x86_gpr_di),
-                                     policy.ite(ecxNotZero,
-                                                policy.ite(policy.readFlag(x86_flag_df), number<32>(-4), number<32>(4)),
-                                                number<32>(0))));
-          policy.writeIP(policy.ite(ecxNotZero, /* If true, repeat this instruction, otherwise go to the next one */
-                                    number<32>((uint32_t)(insn->get_address())),
-                                    policy.readIP()));
+          rep_stos_semantics<4>(insn);
           break;
       }
 
