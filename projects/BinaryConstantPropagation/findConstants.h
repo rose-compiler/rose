@@ -1047,9 +1047,25 @@ struct FindConstantsPolicy {
         return c->result;
     }
 
+    /** Writes @p data at the specified address. */
     template <size_t Len>
     void writeMemory(X86SegmentRegister segreg, XVariablePtr<32> addr, XVariablePtr<Len> data, XVariablePtr<1> cond) {
         currentRset.memoryWrites = memoryWriteHelper(currentRset.memoryWrites, addr, data);
+    }
+
+    /** Writes @p data at the specified address and following bytes, repeating @p repeat times. */
+    template <size_t nbits>
+    void writeMemory(X86SegmentRegister segreg, XVariablePtr<32> addr, XVariablePtr<nbits> data, XVariablePtr<32> repeat,
+                     XVariablePtr<1> cond) {
+        /* If repeat is a constant then perform the write that number of times. */
+        if (0==repeat->get().name) {
+            for (size_t i=0; i<repeat->get().offset; i++) {
+                XVariablePtr<32> tmp_addr = add(addr, number<32>(i*nbits/8));
+                currentRset.memoryWrites = memoryWriteHelper(currentRset.memoryWrites, tmp_addr, data);
+            }
+        } else {
+            currentRset.memoryWrites = memoryWriteHelper(currentRset.memoryWrites, addr, data);
+        }
     }
 
     void hlt() {} // FIXME
