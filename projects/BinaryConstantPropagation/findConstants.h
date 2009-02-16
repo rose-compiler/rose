@@ -69,8 +69,12 @@ struct LatticeElement {
     }
     void merge(const LatticeElement& elt, uint64_t newName, SgAsmx86Instruction* def) {
         if (elt.isTop) return;
-        if (this->isTop) {*this = elt; return;}
-        if (*this == elt) return;
+        if (this->isTop) {
+            *this = elt;
+            return;
+        }
+        if (*this == elt)
+            return;
         this->isTop = false;
         this->name = newName;
         this->definingInstruction = def;
@@ -99,11 +103,11 @@ std::ostream& operator<<(std::ostream& o, const LatticeElement<Len>& e)
         if (e.name!=0) {
             /* This is a named value rather than a constant. */
             const char *sign = e.negate ? "-" : "";
-            o <<sign <<"v" <<std::hex <<e.name;
+            o <<sign <<"v" <<std::dec <<e.name;
             if (negative) {
-                o <<"-" <<negative;
+                o <<"-0x" <<std::hex <<negative;
             } else if (e.offset) {
-                o <<"+" <<e.offset;
+                o <<"+0x" <<std::hex <<e.offset;
             }
         } else {
             /* This is a constant */
