@@ -1743,13 +1743,6 @@ struct X86InstructionSemantics {
       case x86_nop: break;
 
         
-#define STRINGOP_UPDATE_REG_COND(reg, amount)                                                                                  \
-        policy.writeGPR(reg,                                                                                                   \
-                        policy.add(policy.readGPR(reg),                                                                        \
-                                   policy.ite(ecxNotZero,                                                                      \
-                                              policy.ite(policy.readFlag(x86_flag_df), number<32>(-amount), number<32>(amount)), \
-                                              number<32>(0))));
-
 #define STRINGOP_LOAD_SI(len, cond)                                                                                            \
         readMemory<(8 * (len))>((insn->get_segmentOverride() == x86_segreg_none ?                                              \
                                  x86_segreg_ds :                                                                               \
@@ -1832,8 +1825,16 @@ struct X86InstructionSemantics {
                                     true,                                                                                      \
                                     policy.false_(),                                                                           \
                                     ecxNotZero);                                                                               \
-          STRINGOP_UPDATE_REG_COND(x86_gpr_si, (len));                                                                         \
-          STRINGOP_UPDATE_REG_COND(x86_gpr_di, (len));                                                                         \
+          policy.writeGPR(x86_gpr_si,                                                                                          \
+                          policy.add(policy.readGPR(x86_gpr_si),                                                               \
+                                     policy.ite(ecxNotZero,                                                                    \
+                                                policy.ite(policy.readFlag(x86_flag_df), number<32>(-(len)), number<32>(len)), \
+                                                number<32>(0))));                                                              \
+          policy.writeGPR(x86_gpr_di,                                                                                          \
+                          policy.add(policy.readGPR(x86_gpr_di),                                                               \
+                                     policy.ite(ecxNotZero,                                                                    \
+                                                policy.ite(policy.readFlag(x86_flag_df), number<32>(-(len)), number<32>(len)), \
+                                                number<32>(0))));                                                              \
           loopmacro                                                                                                            \
           break;                                                                                                               \
       }
@@ -1887,8 +1888,16 @@ struct X86InstructionSemantics {
           ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);                                                            \
           Word(1) ecxNotZero = stringop_setup_loop();                                                                          \
           policy.writeMemory(x86_segreg_es, policy.readGPR(x86_gpr_di), STRINGOP_LOAD_SI(len, ecxNotZero), ecxNotZero);        \
-          STRINGOP_UPDATE_REG_COND(x86_gpr_si, len)                                                                            \
-          STRINGOP_UPDATE_REG_COND(x86_gpr_di, len)                                                                            \
+          policy.writeGPR(x86_gpr_si,                                                                                          \
+                          policy.add(policy.readGPR(x86_gpr_si),                                                               \
+                                     policy.ite(ecxNotZero,                                                                    \
+                                                policy.ite(policy.readFlag(x86_flag_df), number<32>(-(len)), number<32>(len)), \
+                                                number<32>(0))));                                                              \
+          policy.writeGPR(x86_gpr_di,                                                                                          \
+                          policy.add(policy.readGPR(x86_gpr_di),                                                               \
+                                     policy.ite(ecxNotZero,                                                                    \
+                                                policy.ite(policy.readFlag(x86_flag_df), number<32>(-(len)), number<32>(len)), \
+                                                number<32>(0))));                                                              \
           STRINGOP_LOOP                                                                                                        \
           break;                                                                                                               \
       }
@@ -1918,7 +1927,11 @@ struct X86InstructionSemantics {
                              policy.readGPR(x86_gpr_di),
                              extract<0, 8>(policy.readGPR(x86_gpr_ax)),
                              ecxNotZero);
-          STRINGOP_UPDATE_REG_COND(x86_gpr_di, 1)
+          policy.writeGPR(x86_gpr_di,
+                          policy.add(policy.readGPR(x86_gpr_di),
+                                     policy.ite(ecxNotZero,
+                                                policy.ite(policy.readFlag(x86_flag_df), number<32>(-1), number<32>(1)),
+                                                number<32>(0))));
           STRINGOP_LOOP
           break;
       }
@@ -1942,7 +1955,11 @@ struct X86InstructionSemantics {
                              policy.readGPR(x86_gpr_di),
                              extract<0, 16>(policy.readGPR(x86_gpr_ax)),
                              ecxNotZero);
-          STRINGOP_UPDATE_REG_COND(x86_gpr_di, 2)
+          policy.writeGPR(x86_gpr_di,
+                          policy.add(policy.readGPR(x86_gpr_di),
+                                     policy.ite(ecxNotZero,
+                                                policy.ite(policy.readFlag(x86_flag_df), number<32>(-2), number<32>(2)),
+                                                number<32>(0))));
           STRINGOP_LOOP
           break;
       }
@@ -1966,7 +1983,11 @@ struct X86InstructionSemantics {
                              policy.readGPR(x86_gpr_di),
                              extract<0, 32>(policy.readGPR(x86_gpr_ax)),
                              ecxNotZero);
-          STRINGOP_UPDATE_REG_COND(x86_gpr_di, 4)
+          policy.writeGPR(x86_gpr_di,
+                          policy.add(policy.readGPR(x86_gpr_di),
+                                     policy.ite(ecxNotZero,
+                                                policy.ite(policy.readFlag(x86_flag_df), number<32>(-4), number<32>(4)),
+                                                number<32>(0))));
           STRINGOP_LOOP
           break;
       }
@@ -1987,7 +2008,6 @@ struct X86InstructionSemantics {
       LODS(d, 4, policy.writeGPR)
 #undef LODS
 
-#undef STRINGOP_UPDATE_REG_COND
 #undef STRINGOP_LOAD_SI
 #undef STRINGOP_LOAD_DI
 #undef STRINGOP_UPDATE_CX
