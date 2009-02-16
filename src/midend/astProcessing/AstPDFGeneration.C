@@ -114,10 +114,15 @@ AstPDFGeneration_private::get_bookmark_name(SgNode* node)
                   {
                  // ss << "(" << fi->get_line() << "," << fi->get_col() << ") in \"" << fi->get_filename() << "\"";
                  // nodefilename=string(fi->get_filename());
-                    ss << "(compilerGenerated:" << fi->isCompilerGenerated()
-                       << ",transformation:" << fi->isTransformation()
-                       << ",unparse:" << fi->isOutputInCodeGeneration() << ") ";
+#if 1      
+                //  if (fi->isCompilerGenerated())
+                //    ss << " compilerGenerated "; 
+                  if (fi->isTransformation())
+                      ss << " transformation " ;
+                  if (fi->isOutputInCodeGeneration())   
+                       ss<< " unparsable ";
                     ss << "(" << fi->get_line() << "," << fi->get_col() << ") in \"" << fi->get_filename() << "\"";
+#endif                       
                     nodefilename=string(fi->get_filename());
                   }
                  else
@@ -137,158 +142,195 @@ AstPDFGeneration_private::get_bookmark_name(SgNode* node)
 
 void 
 AstPDFGeneration_private::edit_page(size_t pageNumber, SgNode* node, PDFInheritedAttribute inheritedValue)
-   {
+{
   // JW (added by DQ 7/23/2004): Adds address of each IR node to the top of the page
-     HPDF_Page_SetRGBFill(currentPage, 1, 0, 0);
+  HPDF_Page_SetRGBFill(currentPage, 1, 0, 0);
   // DQ (1/20/2006): Modified for 64 bit machines
   // ostringstream _ss; _ss << "0x" << std::hex << (int)node;
-     ostringstream _ss; _ss << "pointer:" << std::hex << node;
-     HPDF_Page_ShowTextNextLine(currentPage, _ss.str().c_str());
+  ostringstream _ss; 
+  _ss << "pointer:" << std::hex << node;
+  HPDF_Page_ShowTextNextLine(currentPage, _ss.str().c_str());
 
-     // JW hack to show expression types
-     if (isSgExpression(node))
-       HPDF_Page_ShowTextNextLine(currentPage, ("Expression type: " + isSgExpression(node)->get_type()->unparseToString()).c_str());
+  // Liao, 2/11/2009, move some essential information from bookmark into the page also
+  // since some deep levels of bookmarks cannot display long lines properly by acrobat reader
+  HPDF_Page_ShowTextNextLine(currentPage, node->sage_class_name());
+  SgLocatedNode* sgLocNode = dynamic_cast<SgLocatedNode*> (node);
+  if(sgLocNode)
+  {
+    Sg_File_Info* fi = sgLocNode->get_file_info();
+    ostringstream temp;
+    temp<<fi->get_filename()<<" "<<fi->get_line()<<":"<<fi->get_col();
+    if(fi)
+      HPDF_Page_ShowTextNextLine(currentPage,temp.str().c_str());
+    if (fi->isTransformation()) 
+      HPDF_Page_ShowTextNextLine(currentPage,"IsTransformation:1");
+    else
+      HPDF_Page_ShowTextNextLine(currentPage,"IsTransformation:0");
 
-     HPDF_Page_SetRGBFill(currentPage, 0, 1, 0);
+    if (fi->isOutputInCodeGeneration())   
+      HPDF_Page_ShowTextNextLine(currentPage,"IsOutputInCodeGeneration:1");
+    else        
+      HPDF_Page_ShowTextNextLine(currentPage,"IsOutputInCodeGeneration:0");
 
-     if (inheritedValue.parentPage==NULL)
-        {
-          HPDF_Page_ShowTextNextLine(currentPage, "");
-          HPDF_Page_ShowTextNextLine(currentPage, "      root node");
-        }
-       else
-        {
-          HPDF_Page_ShowTextNextLine(currentPage, "");
-          HPDF_Page_ShowTextNextLine(currentPage, "     ");
-          create_textlink("Click here to go to the parent node", inheritedValue.parentPage, 9);
-        }
-     HPDF_Page_ShowTextNextLine(currentPage, "");
-     HPDF_Page_ShowTextNextLine(currentPage, "");
+  }
+  if (isSgDeclarationStatement(node))
+  {
+    HPDF_Page_ShowTextNextLine(currentPage, ("Declaration mangled name: " + isSgDeclarationStatement(node)->get_mangled_name().getString()).c_str());
+#if 0  // not necessary, p_name field gives the similar information   
+    if (isSgDeclarationStatement(node)->hasAssociatedSymbol())
+    {
+      SgSymbol *symbol = isSgDeclarationStatement(node)->get_symbol_from_symbol_table ();
+      if (symbol)
+        HPDF_Page_ShowTextNextLine(currentPage, ("Symbol name: " + symbol->get_name().getString()).c_str());
+    }
+#endif    
+ }
+
+
+  // JW hack to show expression types
+  if (isSgExpression(node))
+    HPDF_Page_ShowTextNextLine(currentPage, ("Expression type: " + isSgExpression(node)->get_type()->unparseToString()).c_str());
+
+  HPDF_Page_SetRGBFill(currentPage, 0, 1, 0);
+
+  if (inheritedValue.parentPage==NULL)
+  {
+    HPDF_Page_ShowTextNextLine(currentPage, "");
+    HPDF_Page_ShowTextNextLine(currentPage, "      root node");
+  }
+  else
+  {
+    HPDF_Page_ShowTextNextLine(currentPage, "");
+    HPDF_Page_ShowTextNextLine(currentPage, "     ");
+    create_textlink("Click here to go to the parent node", inheritedValue.parentPage, 9);
+  }
+  HPDF_Page_ShowTextNextLine(currentPage, "");
+  HPDF_Page_ShowTextNextLine(currentPage, "");
 
   // generate RTI information for SgNode
-   {
-     RTIReturnType rti=node->roseRTI();
-     for(RTIReturnType::iterator i=rti.begin(); i<rti.end(); i++)
-        {
-          if (strlen(i->type) >= 7 &&
-              strncmp(i->type, "static ", 7) == 0) {
-            continue; // Skip static members
-          }
-          HPDF_Page_SetRGBFill(currentPage, 0.5, 0, 0.1);
-          HPDF_Page_ShowTextNextLine(currentPage, i->type);
-          HPDF_Page_ShowText(currentPage, " ");
-          HPDF_Page_SetRGBFill(currentPage, 0.0, 0.5, 0.5);
-          HPDF_Page_ShowText(currentPage, i->name);
-          HPDF_Page_ShowText(currentPage, " : ");
-          HPDF_Page_SetRGBFill(currentPage, 0.0, 0.0, 0.0);
-      
-          string value=i->value;
-          if (value.size() >= 80) { // HPDF doesn't like strings > 64k, and we probably shouldn't be trying to print them anyway; this trims things to a reasonable length
-            value = "<too long>: " + value.substr(0, 80);
-          }
-          if (value.size() >= 80) {
-            value = "<too long>: " + value.substr(0, 80);
-          }
-          AstNodeVisitMapping::MappingType::iterator mapit;
-      
+  {
+    RTIReturnType rti=node->roseRTI();
+    for(RTIReturnType::iterator i=rti.begin(); i<rti.end(); i++)
+    {
+      if (strlen(i->type) >= 7 &&
+          strncmp(i->type, "static ", 7) == 0) {
+        continue; // Skip static members
+      }
+      HPDF_Page_SetRGBFill(currentPage, 0.5, 0, 0.1);
+      HPDF_Page_ShowTextNextLine(currentPage, i->type);
+      HPDF_Page_ShowText(currentPage, " ");
+      HPDF_Page_SetRGBFill(currentPage, 0.0, 0.5, 0.5);
+      HPDF_Page_ShowText(currentPage, i->name);
+      HPDF_Page_ShowText(currentPage, " : ");
+      HPDF_Page_SetRGBFill(currentPage, 0.0, 0.0, 0.0);
+
+      string value=i->value;
+      if (value.size() >= 80) { // HPDF doesn't like strings > 64k, and we probably shouldn't be trying to print them anyway; this trims things to a reasonable length
+        value = "<too long>: " + value.substr(0, 80);
+      }
+      if (value.size() >= 80) {
+        value = "<too long>: " + value.substr(0, 80);
+      }
+      AstNodeVisitMapping::MappingType::iterator mapit;
+
       // ensure that mapping value exists (otherwise it would be added to the map)
       // and decide whether to create a link to a page (representing a node) or not
-         mapit=addrPageMapping.find(value);
-         if (mapit!=addrPageMapping.end())
-            {
-                   size_t destPageNum = mapit->second;
-                   ROSE_ASSERT (destPageNum < pageDests.size());
-	           create_textlink(value.c_str(), pageDests[destPageNum] /* targetpage */);
-            }
-           else 
-            {
-              HPDF_Page_ShowText(currentPage,value.c_str());
-            }
-        }
-   }
+      mapit=addrPageMapping.find(value);
+      if (mapit!=addrPageMapping.end())
+      {
+        size_t destPageNum = mapit->second;
+        ROSE_ASSERT (destPageNum < pageDests.size());
+        create_textlink(value.c_str(), pageDests[destPageNum] /* targetpage */);
+      }
+      else 
+      {
+        HPDF_Page_ShowText(currentPage,value.c_str());
+      }
+    }
+  }
 
   // generate AstAttribute information
-   {
-  // printf ("In AstPDFGeneration_private::edit_page(): using new attribute interface \n");
-  // if (node->get_attribute() != NULL)
+  {
+    // printf ("In AstPDFGeneration_private::edit_page(): using new attribute interface \n");
+    // if (node->get_attribute() != NULL)
 #if 0
-     if (node->getAttribute() != NULL)
-        {
-          AstAttributeMechanism::AttributeIdentifiers aidents = node->attribute().getAttributeIdentifiers();
-          PDF_continue_text(pdfFile, ""); // next line
-          PDF_setrgbcolor(pdfFile, 0.0, 0.2, 0.7);
-          PDF_continue_text(pdfFile, "AstAttributes:"); // next line
-          for (AstAttributeMechanism::AttributeIdentifiers::iterator it = aidents.begin(); it != aidents.end(); it++)
-             {
-               PDF_continue_text(pdfFile, ""); // next line
-               PDF_setrgbcolor(pdfFile, 0.0, 0.2, 0.7);
-               PDF_show(pdfFile,((*it)+": ").c_str());
-               PDF_setrgbcolor(pdfFile, 0.0, 0.0, 0.0);
-            // float textxpos=PDF_get_value(pdfFile,"textx",0.0);
-            // float textypos=PDF_get_value(pdfFile,"texty",0.0); 
-               string attributeValue = (node->attribute()[*it])->toString();
+    if (node->getAttribute() != NULL)
+    {
+      AstAttributeMechanism::AttributeIdentifiers aidents = node->attribute().getAttributeIdentifiers();
+      PDF_continue_text(pdfFile, ""); // next line
+      PDF_setrgbcolor(pdfFile, 0.0, 0.2, 0.7);
+      PDF_continue_text(pdfFile, "AstAttributes:"); // next line
+      for (AstAttributeMechanism::AttributeIdentifiers::iterator it = aidents.begin(); it != aidents.end(); it++)
+      {
+        PDF_continue_text(pdfFile, ""); // next line
+        PDF_setrgbcolor(pdfFile, 0.0, 0.2, 0.7);
+        PDF_show(pdfFile,((*it)+": ").c_str());
+        PDF_setrgbcolor(pdfFile, 0.0, 0.0, 0.0);
+        // float textxpos=PDF_get_value(pdfFile,"textx",0.0);
+        // float textypos=PDF_get_value(pdfFile,"texty",0.0); 
+        string attributeValue = (node->attribute()[*it])->toString();
 
-            // split string into different substrings separated by newlines
-               string substring="";
-               int oldpos=0;
-               int newpos;
-               do {
-                    newpos=attributeValue.find('\n', oldpos);
-                    substring=attributeValue.substr(oldpos,newpos-oldpos);
-                    if(oldpos==0)
-                         PDF_show(pdfFile, substring.append("   ").c_str());
-                      else
-                         PDF_continue_text(pdfFile, substring.c_str());
-                    oldpos = newpos+1; // go to next '\n' and skip it
-                  }
-            // DQ (8/9/2005): Suggested fix from Rich (fixes infinite loop where AST Attributes are attached)
-            // while( newpos < (int) attributeValue.size());
-               while( newpos < (int) attributeValue.size() && newpos >= 0 );
-            // PDF_show_boxed(pdfFile, attributeValue.c_str(), textxpos, textypos, 0, 0, "left", "");
-             }
+        // split string into different substrings separated by newlines
+        string substring="";
+        int oldpos=0;
+        int newpos;
+        do {
+          newpos=attributeValue.find('\n', oldpos);
+          substring=attributeValue.substr(oldpos,newpos-oldpos);
+          if(oldpos==0)
+            PDF_show(pdfFile, substring.append("   ").c_str());
+          else
+            PDF_continue_text(pdfFile, substring.c_str());
+          oldpos = newpos+1; // go to next '\n' and skip it
         }
+        // DQ (8/9/2005): Suggested fix from Rich (fixes infinite loop where AST Attributes are attached)
+        // while( newpos < (int) attributeValue.size());
+        while( newpos < (int) attributeValue.size() && newpos >= 0 );
+        // PDF_show_boxed(pdfFile, attributeValue.c_str(), textxpos, textypos, 0, 0, "left", "");
+      }
+    }
 #else
-  // DQ (4/10/2006): New AstAttribute Interface (but access the AstAttributeMechanism directly 
-  // since "getAttributeIdentifiers()" is not in the interface implemented at the IR nodes).
-     if (node->get_attributeMechanism() != NULL)
-        {
-          AstAttributeMechanism::AttributeIdentifiers aidents = node->get_attributeMechanism()->getAttributeIdentifiers();
-          HPDF_Page_ShowTextNextLine(currentPage, ""); // next line
-          HPDF_Page_SetRGBFill(currentPage, 0.0, 0.2, 0.7);
-          HPDF_Page_ShowTextNextLine(currentPage, "AstAttributes:"); // next line
-          for (AstAttributeMechanism::AttributeIdentifiers::iterator it = aidents.begin(); it != aidents.end(); it++)
-             {
-               HPDF_Page_ShowTextNextLine(currentPage, ""); // next line
-               HPDF_Page_SetRGBFill(currentPage, 0.0, 0.2, 0.7);
-               HPDF_Page_ShowText(currentPage,((*it)+": ").c_str());
-               HPDF_Page_SetRGBFill(currentPage, 0.0, 0.0, 0.0);
-            // float textxpos=PDF_get_value(pdfFile,"textx",0.0);
-            // float textypos=PDF_get_value(pdfFile,"texty",0.0); 
-            // string attributeValue = (node->attribute()[*it])->toString();
-               string attributeValue = node->getAttribute(*it)->toString();
+    // DQ (4/10/2006): New AstAttribute Interface (but access the AstAttributeMechanism directly 
+    // since "getAttributeIdentifiers()" is not in the interface implemented at the IR nodes).
+    if (node->get_attributeMechanism() != NULL)
+    {
+      AstAttributeMechanism::AttributeIdentifiers aidents = node->get_attributeMechanism()->getAttributeIdentifiers();
+      HPDF_Page_ShowTextNextLine(currentPage, ""); // next line
+      HPDF_Page_SetRGBFill(currentPage, 0.0, 0.2, 0.7);
+      HPDF_Page_ShowTextNextLine(currentPage, "AstAttributes:"); // next line
+      for (AstAttributeMechanism::AttributeIdentifiers::iterator it = aidents.begin(); it != aidents.end(); it++)
+      {
+        HPDF_Page_ShowTextNextLine(currentPage, ""); // next line
+        HPDF_Page_SetRGBFill(currentPage, 0.0, 0.2, 0.7);
+        HPDF_Page_ShowText(currentPage,((*it)+": ").c_str());
+        HPDF_Page_SetRGBFill(currentPage, 0.0, 0.0, 0.0);
+        // float textxpos=PDF_get_value(pdfFile,"textx",0.0);
+        // float textypos=PDF_get_value(pdfFile,"texty",0.0); 
+        // string attributeValue = (node->attribute()[*it])->toString();
+        string attributeValue = node->getAttribute(*it)->toString();
 
-            // split string into different substrings separated by newlines
-               string substring="";
-               int oldpos=0;
-               int newpos;
-               do {
-                    newpos=attributeValue.find('\n', oldpos);
-                    substring=attributeValue.substr(oldpos,newpos-oldpos);
-                    if(oldpos==0)
-                         HPDF_Page_ShowText(currentPage, substring.append("   ").c_str());
-                      else
-                         HPDF_Page_ShowTextNextLine(currentPage, substring.c_str());
-                    oldpos = newpos+1; // go to next '\n' and skip it
-                  }
-            // DQ (8/9/2005): Suggested fix from Rich (fixes infinite loop where AST Attributes are attached)
-            // while( newpos < (int) attributeValue.size());
-               while( newpos < (int) attributeValue.size() && newpos >= 0 );
-            // PDF_show_boxed(pdfFile, attributeValue.c_str(), textxpos, textypos, 0, 0, "left", "");
-             }
+        // split string into different substrings separated by newlines
+        string substring="";
+        int oldpos=0;
+        int newpos;
+        do {
+          newpos=attributeValue.find('\n', oldpos);
+          substring=attributeValue.substr(oldpos,newpos-oldpos);
+          if(oldpos==0)
+            HPDF_Page_ShowText(currentPage, substring.append("   ").c_str());
+          else
+            HPDF_Page_ShowTextNextLine(currentPage, substring.c_str());
+          oldpos = newpos+1; // go to next '\n' and skip it
         }
+        // DQ (8/9/2005): Suggested fix from Rich (fixes infinite loop where AST Attributes are attached)
+        // while( newpos < (int) attributeValue.size());
+        while( newpos < (int) attributeValue.size() && newpos >= 0 );
+        // PDF_show_boxed(pdfFile, attributeValue.c_str(), textxpos, textypos, 0, 0, "left", "");
+      }
+    } // end if 
 #endif
-   }
+  }
 
-   }
+}
 
 #endif

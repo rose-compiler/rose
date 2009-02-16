@@ -1223,186 +1223,186 @@ TestAstNullPointers::visitWithAstNodePointersList(SgNode* node, AstNodePointersL
 
 void
 TestAstTemplateProperties::visit ( SgNode* astNode )
-   {
+{
   // DQ (3/31/2004): Added to support templates
   // This function tests properties on the new template specific IR nodes
 
   // printf ("astNode = %s \n",astNode->sage_class_name());
 
-     switch(astNode->variantT())
+  switch(astNode->variantT())
+  {
+    case V_SgTemplateInstantiationDecl:
+      {
+        SgTemplateInstantiationDecl* s = isSgTemplateInstantiationDecl(astNode);
+        ROSE_ASSERT (s->get_templateDeclaration() != NULL);
+
+        // DQ (8/12/2005): There are non-trivial cases where a template declaration can be compiler generated (e.g. when it is a nested class)
+        bool couldBeCompilerGenerated = MarkAsCompilerGenerated::templateDeclarationCanBeMarkedAsCompilerGenerated(s->get_templateDeclaration());
+
+        if (couldBeCompilerGenerated == false)
         {
-          case V_SgTemplateInstantiationDecl:
-             {
-               SgTemplateInstantiationDecl* s = isSgTemplateInstantiationDecl(astNode);
-               ROSE_ASSERT (s->get_templateDeclaration() != NULL);
+          // DQ (6/17/2005): Template declarations should not be marked as comiler generated 
+          // (only the instantiations are possibly marked as compiler generated).
+          if (s->get_templateDeclaration()->get_file_info()->isCompilerGenerated() == true)
+          {
+            printf ("Error: SgTemplateInstantiationDecl's original template declaration should not be compiler generated \n");
+            s->get_templateDeclaration()->get_file_info()->display("debug");
+          }
+          ROSE_ASSERT (s->get_templateDeclaration()->get_file_info()->isCompilerGenerated() == false);
+        }
+        break;
+      }
 
-            // DQ (8/12/2005): There are non-trivial cases where a template declaration can be compiler generated (e.g. when it is a nested class)
-               bool couldBeCompilerGenerated = MarkAsCompilerGenerated::templateDeclarationCanBeMarkedAsCompilerGenerated(s->get_templateDeclaration());
+    case V_SgTemplateInstantiationFunctionDecl:
+      {
+        SgTemplateInstantiationFunctionDecl* s = isSgTemplateInstantiationFunctionDecl(astNode);
+        // DQ (5/8/2004): templateName() removed
+        // ROSE_ASSERT (s->get_templateName().str() != NULL);
+        ROSE_ASSERT (s->get_templateDeclaration() != NULL);
 
-               if (couldBeCompilerGenerated == false)
-                  {
-                 // DQ (6/17/2005): Template declarations should not be marked as comiler generated 
-                 // (only the instatiations are posibily marked as compiler generated).
-                    if (s->get_templateDeclaration()->get_file_info()->isCompilerGenerated() == true)
-                       {
-                         printf ("Error: template declarations should not be compiler generated \n");
-                         s->get_templateDeclaration()->get_file_info()->display("debug");
-                       }
-                    ROSE_ASSERT (s->get_templateDeclaration()->get_file_info()->isCompilerGenerated() == false);
-                  }
-               break;
-             }
+        // DQ (6/17/2005): Template declarations should not be marked as compiler generated 
+        // (only the instantiations are possibly marked as compiler generated).
+        if (s->get_templateDeclaration()->get_file_info()->isCompilerGenerated() == true)
+        {
+          printf ("Error: SgTemplateInstantiationFunctionDecl's original template declaration %s is marked as compiler generated: \n", s->get_templateDeclaration()->get_qualified_name().str());
+          s->get_startOfConstruct()->display("SgTemplateInstantiationFunctionDecl debug");
+          s->get_templateDeclaration()->get_startOfConstruct()->display("SgTemplateDecl debug");
+        }
+        //             ROSE_ASSERT (s->get_templateDeclaration()->get_file_info()->isCompilerGenerated() == false);
+        break;
+      }
 
-          case V_SgTemplateInstantiationFunctionDecl:
-             {
-               SgTemplateInstantiationFunctionDecl* s = isSgTemplateInstantiationFunctionDecl(astNode);
-            // DQ (5/8/2004): templateName() removed
-            // ROSE_ASSERT (s->get_templateName().str() != NULL);
-               ROSE_ASSERT (s->get_templateDeclaration() != NULL);
+    case V_SgTemplateInstantiationMemberFunctionDecl:
+      {
+        SgTemplateInstantiationMemberFunctionDecl* s = isSgTemplateInstantiationMemberFunctionDecl(astNode);
+        // DQ (5/8/2004): templateName() removed
+        // ROSE_ASSERT (s->get_templateName().str() != NULL);
+        ROSE_ASSERT (s->get_templateDeclaration() != NULL);
 
-            // DQ (6/17/2005): Template declarations should not be marked as comiler generated 
-            // (only the instatiations are posibily marked as compiler generated).
-               if (s->get_templateDeclaration()->get_file_info()->isCompilerGenerated() == true)
-                  {
-                    printf ("Error: in how SgTemplateInstantiationFunctionDecl is marked as compiler generated \n");
-                    s->get_startOfConstruct()->display("Error: in how SgTemplateInstantiationFunctionDecl is marked as compiler generated (SgTemplateInstantiationFunctionDecl): debug");
-                    s->get_templateDeclaration()->get_startOfConstruct()->display("Error: in how SgTemplateInstantiationFunctionDecl is marked as compiler generated (SgTemplateDeclaration): debug");
-                  }
-//             ROSE_ASSERT (s->get_templateDeclaration()->get_file_info()->isCompilerGenerated() == false);
-               break;
-             }
-
-          case V_SgTemplateInstantiationMemberFunctionDecl:
-             {
-               SgTemplateInstantiationMemberFunctionDecl* s = isSgTemplateInstantiationMemberFunctionDecl(astNode);
-            // DQ (5/8/2004): templateName() removed
-            // ROSE_ASSERT (s->get_templateName().str() != NULL);
-               ROSE_ASSERT (s->get_templateDeclaration() != NULL);
-
-            // explicit specializations in the source code should not be marked as compiler generated
-               if (s->isSpecialization() == true || s->isPartialSpecialization() == true)
-                  {
-                    if (s->get_file_info()->isCompilerGenerated() == true)
-                       {
-                         printf ("SgTemplateInstantiationMemberFunctionDecl (%p) is marked as a specialization and compiler generated (not allowed) \n",s);
-                         s->get_file_info()->display("SgTemplateInstantiationMemberFunctionDecl: debug");
-                         printf ("s->get_name() = %s \n",s->get_name().str());
-                       }
-                    ROSE_ASSERT(s->get_file_info()->isCompilerGenerated() == false);
-                  }
+        // explicit specializations in the source code should not be marked as compiler generated
+        if (s->isSpecialization() == true || s->isPartialSpecialization() == true)
+        {
+          if (s->get_file_info()->isCompilerGenerated() == true)
+          {
+            printf ("SgTemplateInstantiationMemberFunctionDecl (%p) is marked as a specialization and compiler generated (not allowed) \n",s);
+            s->get_file_info()->display("SgTemplateInstantiationMemberFunctionDecl: debug");
+            printf ("s->get_name() = %s \n",s->get_name().str());
+          }
+          ROSE_ASSERT(s->get_file_info()->isCompilerGenerated() == false);
+        }
 
 #if 0
-            // DQ (6/20/2005): This is actually OK, since the template declaration is in the 
-            // outer classes template specialization!
-            // DQ (6/17/2005): Template declarations should not be marked as comiler generated 
-            // (only the instatiations are posibily marked as compiler generated).
-               if (s->get_templateDeclaration()->get_file_info()->isCompilerGenerated() == true)
-                  {
-                    s->get_templateDeclaration()->get_file_info()->display("debug");
-                    printf ("s->get_templateDeclaration()->get_name() = %s string = %s \n",
-                         s->get_templateDeclaration()->get_name().str(),
-                         s->get_templateDeclaration()->get_string().str());
-                  }
-            // ROSE_ASSERT (s->get_templateDeclaration()->get_file_info()->isCompilerGenerated() == false);
-#endif
-               break;
-             }
-
-          case V_SgClassDefinition:
-          case V_SgTemplateInstantiationDefn:
-             {
-            // DQ (6/22/2005): templated class declarations can be hidden in base class specifications
-               SgClassDefinition* classDefinition = isSgClassDefinition(astNode);
-               ROSE_ASSERT(classDefinition != NULL);
-
-               SgBaseClassPtrList::iterator i = classDefinition->get_inheritances().begin();
-               while ( i != classDefinition->get_inheritances().end() )
-                  {
-                 // Check the parent pointer to make sure it is properly set
-                    ROSE_ASSERT( (*i)->get_parent() != NULL);
-                    ROSE_ASSERT( (*i)->get_parent() == classDefinition);
-
-                 // Calling resetTemplateName()
-                    SgClassDeclaration* baseClassDeclaration = (*i)->get_base_class();
-                    ROSE_ASSERT(baseClassDeclaration != NULL);
-                 // printf ("In AST Consistancy test: baseClassDeclaration->get_name() = %s \n",baseClassDeclaration->get_name().str());
-                    SgTemplateInstantiationDecl* templateInstantiation = isSgTemplateInstantiationDecl(baseClassDeclaration);
-                    if (templateInstantiation != NULL)
-                       {
-                      // printf ("In AST Consistancy test: templateInstantiation->get_templateName() = %s \n",templateInstantiation->get_templateName().str());
-                         ROSE_ASSERT(templateInstantiation->get_nameResetFromMangledForm() == true);
-                       }
-
-                    i++;
-                  }
-               break;
-             }
-
-          default: 
-             {
-            // DQ (5/9/2005): Make sure that all non-templated IR nodes are marked as SgDeclarationStatement::e_no_specialization.
-               SgVariableDeclaration *variableDeclaration = isSgVariableDeclaration(astNode);
-               if (variableDeclaration != NULL)
-                  {
-                    SgScopeStatement* scope = variableDeclaration->get_scope();
-                    SgClassDefinition* classDefinition = isSgClassDefinition(scope);
-                    if (classDefinition != NULL)
-                       {
-                         SgClassDeclaration* classDeclaration = classDefinition->get_declaration();
-                         ROSE_ASSERT(classDeclaration != NULL);
-                         if (isSgTemplateInstantiationDecl(classDefinition->get_declaration()) == NULL)
-                            {
-                           // this is NOT a data member of the templated class (or nested class of a templated class)
-                              if (variableDeclaration->get_specialization() != SgClassDeclaration::e_no_specialization)
-                                 {
-                                   printf ("Note: variableDeclaration->get_specialization() = %d != SgClassDeclaration::e_no_specialization  (variableDeclaration = %p) \n",
-                                        variableDeclaration->get_specialization(),variableDeclaration);
-                                   variableDeclaration->get_file_info()->display("variableDeclaration->get_specialization() != SgClassDeclaration::e_no_specialization");
-                                 }
-                           // DQ (6/30/2005): Commented out to focus more on KULL, output a warning for now!
-                           // ROSE_ASSERT(variableDeclaration->get_specialization() == SgClassDeclaration::e_no_specialization);
-                            }
-                           else
-                            {
-                           // Make sure that all template class declarations are associated with a template definition!
-                              ROSE_ASSERT( isSgTemplateInstantiationDefn(classDefinition) != NULL);
-                            }
-                       }
-                  }
-
-            // DQ (5/9/2005): Make sure that all non-templated IR nodes are marked as SgDeclarationStatement::e_no_specialization.
-               SgClassDeclaration *classDeclaration = isSgClassDeclaration(astNode);
-               if (classDeclaration != NULL)
-                  {
-                    if (isSgTemplateInstantiationDecl(classDeclaration) == NULL)
-                       {
-                      // this is NOT a data member of the templated class (or nested class of a templated class)
-                         if (classDeclaration->get_specialization() != SgClassDeclaration::e_no_specialization)
-                            {
-                              printf ("AST ConsistancyTest: classDeclaration = %p = %s classDeclaration->get_specialization() = %d != SgClassDeclaration::e_no_specialization \n",
-                                   classDeclaration,classDeclaration->get_name().str(),classDeclaration->get_specialization());
-                              printf ("     classDeclaration at file %s line = %d \n",
-                                   classDeclaration->get_file_info()->get_raw_filename().c_str(),
-                                   classDeclaration->get_file_info()->get_raw_line());
-                            }
-                         ROSE_ASSERT(classDeclaration->get_specialization() == SgClassDeclaration::e_no_specialization);
-                       }
-                  }
-
-            // DQ (5/9/2005): Make sure that all non-templated IR nodes are marked as SgDeclarationStatement::e_no_specialization.
-               SgFunctionDeclaration *functionDeclaration = isSgFunctionDeclaration(astNode);
-               if (functionDeclaration != NULL)
-                  {
-                    if ( isSgTemplateInstantiationFunctionDecl(functionDeclaration) == NULL &&
-                         isSgTemplateInstantiationMemberFunctionDecl(functionDeclaration) == NULL )
-                       {
-                      // this is NOT a data member of the templated class (or nested class of a templated class)
-                         ROSE_ASSERT(functionDeclaration->get_specialization() == SgFunctionDeclaration::e_no_specialization);
-                       }
-                  }
-             }
+        // DQ (6/20/2005): This is actually OK, since the template declaration is in the 
+        // outer classes template specialization!
+        // DQ (6/17/2005): Template declarations should not be marked as comiler generated 
+        // (only the instatiations are posibily marked as compiler generated).
+        if (s->get_templateDeclaration()->get_file_info()->isCompilerGenerated() == true)
+        {
+          s->get_templateDeclaration()->get_file_info()->display("debug");
+          printf ("s->get_templateDeclaration()->get_name() = %s string = %s \n",
+              s->get_templateDeclaration()->get_name().str(),
+              s->get_templateDeclaration()->get_string().str());
         }
-   }
+        // ROSE_ASSERT (s->get_templateDeclaration()->get_file_info()->isCompilerGenerated() == false);
+#endif
+        break;
+      }
+
+    case V_SgClassDefinition:
+    case V_SgTemplateInstantiationDefn:
+      {
+        // DQ (6/22/2005): templated class declarations can be hidden in base class specifications
+        SgClassDefinition* classDefinition = isSgClassDefinition(astNode);
+        ROSE_ASSERT(classDefinition != NULL);
+
+        SgBaseClassPtrList::iterator i = classDefinition->get_inheritances().begin();
+        while ( i != classDefinition->get_inheritances().end() )
+        {
+          // Check the parent pointer to make sure it is properly set
+          ROSE_ASSERT( (*i)->get_parent() != NULL);
+          ROSE_ASSERT( (*i)->get_parent() == classDefinition);
+
+          // Calling resetTemplateName()
+          SgClassDeclaration* baseClassDeclaration = (*i)->get_base_class();
+          ROSE_ASSERT(baseClassDeclaration != NULL);
+          // printf ("In AST Consistancy test: baseClassDeclaration->get_name() = %s \n",baseClassDeclaration->get_name().str());
+          SgTemplateInstantiationDecl* templateInstantiation = isSgTemplateInstantiationDecl(baseClassDeclaration);
+          if (templateInstantiation != NULL)
+          {
+            // printf ("In AST Consistancy test: templateInstantiation->get_templateName() = %s \n",templateInstantiation->get_templateName().str());
+            ROSE_ASSERT(templateInstantiation->get_nameResetFromMangledForm() == true);
+          }
+
+          i++;
+        }
+        break;
+      }
+
+    default: 
+      {
+        // DQ (5/9/2005): Make sure that all non-templated IR nodes are marked as SgDeclarationStatement::e_no_specialization.
+        SgVariableDeclaration *variableDeclaration = isSgVariableDeclaration(astNode);
+        if (variableDeclaration != NULL)
+        {
+          SgScopeStatement* scope = variableDeclaration->get_scope();
+          SgClassDefinition* classDefinition = isSgClassDefinition(scope);
+          if (classDefinition != NULL)
+          {
+            SgClassDeclaration* classDeclaration = classDefinition->get_declaration();
+            ROSE_ASSERT(classDeclaration != NULL);
+            if (isSgTemplateInstantiationDecl(classDefinition->get_declaration()) == NULL)
+            {
+              // this is NOT a data member of the templated class (or nested class of a templated class)
+              if (variableDeclaration->get_specialization() != SgClassDeclaration::e_no_specialization)
+              {
+                printf ("Note: variableDeclaration->get_specialization() = %d != SgClassDeclaration::e_no_specialization  (variableDeclaration = %p) \n",
+                    variableDeclaration->get_specialization(),variableDeclaration);
+                variableDeclaration->get_file_info()->display("variableDeclaration->get_specialization() != SgClassDeclaration::e_no_specialization");
+              }
+              // DQ (6/30/2005): Commented out to focus more on KULL, output a warning for now!
+              // ROSE_ASSERT(variableDeclaration->get_specialization() == SgClassDeclaration::e_no_specialization);
+            }
+            else
+            {
+              // Make sure that all template class declarations are associated with a template definition!
+              ROSE_ASSERT( isSgTemplateInstantiationDefn(classDefinition) != NULL);
+            }
+          }
+        }
+
+        // DQ (5/9/2005): Make sure that all non-templated IR nodes are marked as SgDeclarationStatement::e_no_specialization.
+        SgClassDeclaration *classDeclaration = isSgClassDeclaration(astNode);
+        if (classDeclaration != NULL)
+        {
+          if (isSgTemplateInstantiationDecl(classDeclaration) == NULL)
+          {
+            // this is NOT a data member of the templated class (or nested class of a templated class)
+            if (classDeclaration->get_specialization() != SgClassDeclaration::e_no_specialization)
+            {
+              printf ("AST ConsistancyTest: classDeclaration = %p = %s classDeclaration->get_specialization() = %d != SgClassDeclaration::e_no_specialization \n",
+                  classDeclaration,classDeclaration->get_name().str(),classDeclaration->get_specialization());
+              printf ("     classDeclaration at file %s line = %d \n",
+                  classDeclaration->get_file_info()->get_raw_filename().c_str(),
+                  classDeclaration->get_file_info()->get_raw_line());
+            }
+            ROSE_ASSERT(classDeclaration->get_specialization() == SgClassDeclaration::e_no_specialization);
+          }
+        }
+
+        // DQ (5/9/2005): Make sure that all non-templated IR nodes are marked as SgDeclarationStatement::e_no_specialization.
+        SgFunctionDeclaration *functionDeclaration = isSgFunctionDeclaration(astNode);
+        if (functionDeclaration != NULL)
+        {
+          if ( isSgTemplateInstantiationFunctionDecl(functionDeclaration) == NULL &&
+              isSgTemplateInstantiationMemberFunctionDecl(functionDeclaration) == NULL )
+          {
+            // this is NOT a data member of the templated class (or nested class of a templated class)
+            ROSE_ASSERT(functionDeclaration->get_specialization() == SgFunctionDeclaration::e_no_specialization);
+          }
+        }
+      }
+  }
+}
 
 void
 TestAstCompilerGeneratedNodes::visit ( SgNode* node )

@@ -27,7 +27,7 @@ namespace autoTuning
   std::map<string, std::map< std::string, double > >
     generateFileMetricsMap(std::set<const RoseHPCT::IRNode *> profFileNodes)
     {
-      ROSE_ASSERT( profFileNodes.size()>0);
+      //ROSE_ASSERT( profFileNodes.size()>0);
       // convert file profile file nodes into a map for quick information retrieval 
       std::map<string, std::map< std::string, double > > fileMetrics;
       std::set<const RoseHPCT::IRNode *>::iterator iter= profFileNodes.begin();

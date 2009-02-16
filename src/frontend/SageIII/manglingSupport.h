@@ -1,4 +1,5 @@
-
+#ifndef mangling_support_INCLUDED
+#define mangling_support_INCLUDED
 std::string replaceNonAlphaNum (const std::string& s);
 
 //! Returns the input std::string stripped of leading and trailing spaces.
@@ -15,7 +16,7 @@ std::string joinMangledQualifiersToString (const std::string& base, const std::s
 //! Joins two sets of mangled qualifiers to form a new mangled qualifier.
 SgName joinMangledQualifiers (const SgName& base, const SgName& name);
 
-//! Returns the function definintion containing the specified statement.
+//! Returns the function definition containing the specified statement.
 const SgFunctionDefinition* findRootFunc (const SgScopeStatement* scope);
 
 // *****************************************************************
@@ -183,3 +184,4 @@ mangleSgValueExp (const SgValueExpType_* expr)
   }
 #endif
 
+#endif // mangling_support_INCLUDED

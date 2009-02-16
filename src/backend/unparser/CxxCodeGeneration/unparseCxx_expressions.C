@@ -3539,102 +3539,102 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
 
 void
 Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
-   {
+{
 #if 0
-     printf ("In Unparse_ExprStmt::unparseConInit expr = %p \n",expr);
-     printf ("WARNING: This is redundent with the Unparse_ExprStmt::unp->u_sage->unparseOneElemConInit (This function does not handle qualidied names!) \n");
+  printf ("In Unparse_ExprStmt::unparseConInit expr = %p \n",expr);
+  printf ("WARNING: This is redundent with the Unparse_ExprStmt::unp->u_sage->unparseOneElemConInit (This function does not handle qualidied names!) \n");
 #endif
 
-     SgConstructorInitializer* con_init = isSgConstructorInitializer(expr);
-     ROSE_ASSERT(con_init != NULL);
+  SgConstructorInitializer* con_init = isSgConstructorInitializer(expr);
+  ROSE_ASSERT(con_init != NULL);
   /* code inserted from specification */
 
-     SgUnparse_Info newinfo(info);
-     bool outputParenthisis = false;
+  SgUnparse_Info newinfo(info);
+  bool outputParenthisis = false;
 
 #if 0
   // printf ("con_init->get_need_name()        = %s \n",(con_init->get_need_name() == true) ? "true" : "false");
   // printf ("con_init->get_is_explicit_cast() = %s \n",(con_init->get_is_explicit_cast() == true) ? "true" : "false");
-     curprint ( "\n /* con_init->get_need_name()        = %s " + (con_init->get_need_name() ? "true" : "false") + " */ \n");
-     curprint ( "\n /* con_init->get_is_explicit_cast() = %s " + (con_init->get_is_explicit_cast() ? "true" : "false") + " */ \n");
+  curprint ( "\n /* con_init->get_need_name()        = %s " + (con_init->get_need_name() ? "true" : "false") + " */ \n");
+  curprint ( "\n /* con_init->get_is_explicit_cast() = %s " + (con_init->get_is_explicit_cast() ? "true" : "false") + " */ \n");
 #endif
 
   // DQ (3/17/2005): Ignoring ned_name in favor of is_explicit_cast!
   // if (con_init->get_need_name() == true)
-     if ((con_init->get_need_name() == true) && (con_init->get_is_explicit_cast() == true) )
-        {
-       // for foo(B())
-          SgName nm;
+  if ((con_init->get_need_name() == true) && (con_init->get_is_explicit_cast() == true) )
+  {
+    // for foo(B())
+    SgName nm;
 
-       // DQ (12/4/2003): Added assertion (one of these is required!)
-       // ROSE_ASSERT (con_init->get_declaration() != NULL || con_init->get_class_decl() != NULL);
+    // DQ (12/4/2003): Added assertion (one of these is required!)
+    // ROSE_ASSERT (con_init->get_declaration() != NULL || con_init->get_class_decl() != NULL);
 
-       // DQ (8/5/2005): Both are now required (under a policy of not having NULL pointers)
-       // Well actually the case of a cast introduced by initialization from the return of 
-       // a function does not have the information about the class declaration or the constructor, 
-       // so we can't assert this. The value of the field bool p_associated_class_unknown 
-       // now indicates when both pointers are NULL (else they should be valid pointers).
-       // ROSE_ASSERT (con_init->get_declaration() != NULL && con_init->get_class_decl() != NULL);
+    // DQ (8/5/2005): Both are now required (under a policy of not having NULL pointers)
+    // Well actually the case of a cast introduced by initialization from the return of 
+    // a function does not have the information about the class declaration or the constructor, 
+    // so we can't assert this. The value of the field bool p_associated_class_unknown 
+    // now indicates when both pointers are NULL (else they should be valid pointers).
+    // ROSE_ASSERT (con_init->get_declaration() != NULL && con_init->get_class_decl() != NULL);
 
-          ROSE_ASSERT ( con_init->get_associated_class_unknown() == true || 
-                        con_init->get_declaration() != NULL || 
-                        con_init->get_class_decl() != NULL);
+    ROSE_ASSERT ( con_init->get_associated_class_unknown() == true || 
+        con_init->get_declaration() != NULL || 
+        con_init->get_class_decl() != NULL);
 
-       // DQ (4/27/2006): Maybe we can finally assert this!
-       // ROSE_ASSERT ( con_init->get_associated_class_unknown() == true);
+    // DQ (4/27/2006): Maybe we can finally assert this!
+    // ROSE_ASSERT ( con_init->get_associated_class_unknown() == true);
 
-       // DQ (8/5/2005): Now this logic is greatly simplified! Unforntunately not!
+    // DQ (8/5/2005): Now this logic is greatly simplified! Unforntunately not!
 #if 0
-          if (con_init->get_declaration() != NULL)
-             {
-               nm = con_init->get_declaration()->get_qualified_name();
-             }
+    if (con_init->get_declaration() != NULL)
+    {
+      nm = con_init->get_declaration()->get_qualified_name();
+    }
 #else
-       // printf ("con_init->get_declaration() = %s \n",con_init->get_declaration() ? "true" : "false");
-       // curprint ( "\n /* con_init->get_declaration() = %s " + (con_init->get_declaration() ? "true" : "false") + " */ \n";
-          if (con_init->get_declaration() != NULL)
-             {
+    // printf ("con_init->get_declaration() = %s \n",con_init->get_declaration() ? "true" : "false");
+    // curprint ( "\n /* con_init->get_declaration() = %s " + (con_init->get_declaration() ? "true" : "false") + " */ \n";
+    if (con_init->get_declaration() != NULL)
+    {
 #if 0
-            // printf ("con_init->get_need_qualifier() = %s \n",con_init->get_need_qualifier() ? "true" : "false");
-               if (con_init->get_need_qualifier())
-                    nm = con_init->get_declaration()->get_qualified_name();
-                 else
-                    nm = con_init->get_declaration()->get_name();
+      // printf ("con_init->get_need_qualifier() = %s \n",con_init->get_need_qualifier() ? "true" : "false");
+      if (con_init->get_need_qualifier())
+        nm = con_init->get_declaration()->get_qualified_name();
+      else
+        nm = con_init->get_declaration()->get_name();
 #else
-               nm = con_init->get_declaration()->get_qualified_name();
+      nm = con_init->get_declaration()->get_qualified_name();
 #endif
-             }
-            else
-             {
-            // printf ("con_init->get_class_decl() = %s \n",con_init->get_class_decl() ? "true" : "false");
-               if (con_init->get_class_decl() != NULL)
-                  {
+    }
+    else
+    {
+      // printf ("con_init->get_class_decl() = %s \n",con_init->get_class_decl() ? "true" : "false");
+      if (con_init->get_class_decl() != NULL)
+      {
 #if 0
-                 // printf ("con_init->get_need_qualifier() = %s \n",con_init->get_need_qualifier() ? "true" : "false");
-                    if (con_init->get_need_qualifier())
-                         nm = con_init->get_class_decl()->get_qualified_name();
-                      else
-                         nm = con_init->get_class_decl()->get_name();
+        // printf ("con_init->get_need_qualifier() = %s \n",con_init->get_need_qualifier() ? "true" : "false");
+        if (con_init->get_need_qualifier())
+          nm = con_init->get_class_decl()->get_qualified_name();
+        else
+          nm = con_init->get_class_decl()->get_name();
 #else
-                    nm = con_init->get_class_decl()->get_qualified_name();
+        nm = con_init->get_class_decl()->get_qualified_name();
 #endif
-                  }
-             }
+      }
+    }
 #endif
-          ROSE_ASSERT ( nm.is_null() == false );
-       // printf ("In Unparse_ExprStmt::unparseConInit: info.PrintName() = %s nm = %s \n",info.PrintName() ? "true" : "false",nm.str());
-       // curprint ( "\n /* Debugging In Unparse_ExprStmt::unparseConInit: nm = " + nm.str() + " */ \n";
+    ROSE_ASSERT ( nm.is_null() == false );
+    // printf ("In Unparse_ExprStmt::unparseConInit: info.PrintName() = %s nm = %s \n",info.PrintName() ? "true" : "false",nm.str());
+    // curprint ( "\n /* Debugging In Unparse_ExprStmt::unparseConInit: nm = " + nm.str() + " */ \n";
 
-       // purify error: nm.str() could be a NULL string
-       // if (unp->u_sage->printConstructorName(con_init) && info.PrintName())
-       // if ( unp->u_sage->printConstructorName(con_init) )
-          if ( unp->u_sage->printConstructorName(con_init) && !nm.is_null() )
-             {
-            // printf ("unp->u_sage->printConstructorName(con_init) == true \n");
-               curprint ( nm.str());
-               outputParenthisis = true;
-             }
-        }
+    // purify error: nm.str() could be a NULL string
+    // if (unp->u_sage->printConstructorName(con_init) && info.PrintName())
+    // if ( unp->u_sage->printConstructorName(con_init) )
+    if ( unp->u_sage->printConstructorName(con_init) && !nm.is_null() )
+    {
+      // printf ("unp->u_sage->printConstructorName(con_init) == true \n");
+      curprint ( nm.str());
+      outputParenthisis = true;
+    }
+  }
 
   // printf ("Now unparse the constructor arguments \n");
   // newinfo.display("Unparse_ExprStmt::unparseConInit");
@@ -3642,88 +3642,88 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
 #if 0
   // DQ (11/13/2004): Remove the parenthesis if we don't output the constructor name
   // this would only work if there was a single argument to the constructor!
-     if (con_init->get_args() && unp->u_sage->printConstructorName(con_init))
-        {
-          curprint ( "("); 
-        }
+  if (con_init->get_args() && unp->u_sage->printConstructorName(con_init))
+  {
+    curprint ( "("); 
+  }
 #endif
 
 #if 0
   // DQ (4/1/2005): If we have arguments then definitly output the opening and closing parenthesis
   // if (con_init->get_args())
-     if ( (con_init->get_args() != NULL) && (con_init->get_args()->get_expressions().empty() == false) )
-        {
-          curprint ( "/* (reset) trigger output of ()  outputParenthisis = " + (outputParenthisis ? "true" : "false") + " */ ");
-          outputParenthisis = true;
-        }
+  if ( (con_init->get_args() != NULL) && (con_init->get_args()->get_expressions().empty() == false) )
+  {
+    curprint ( "/* (reset) trigger output of ()  outputParenthisis = " + (outputParenthisis ? "true" : "false") + " */ ");
+    outputParenthisis = true;
+  }
 #else
-     if ( con_init->get_args() == NULL )
-        {
-          printf ("Error: con_init->get_args() == NULL \n");
-          con_init->get_file_info()->display("Error: con_init->get_args() == NULL");
-        }
-     ROSE_ASSERT(con_init->get_args() != NULL);
-     if ( con_init->get_need_parenthesis_after_name() == true )
-        {
-       // printf ("Output the parenthisis after the class name \n");
-          outputParenthisis = true;
-        }
+  if ( con_init->get_args() == NULL )
+  {
+    printf ("Error: con_init->get_args() == NULL \n");
+    con_init->get_file_info()->display("Error: con_init->get_args() == NULL");
+  }
+  ROSE_ASSERT(con_init->get_args() != NULL);
+  if ( con_init->get_need_parenthesis_after_name() == true )
+  {
+    // printf ("Output the parenthisis after the class name \n");
+    outputParenthisis = true;
+  }
 #endif
 
   // DQ (4/1/2005): sometimes con_init->get_args() is NULL (as in test2005_42.C)
-     if (outputParenthisis == true)
-          curprint ( "(");
+  if (outputParenthisis == true)
+    curprint ( "(");
 
-     if (con_init->get_args())
-        {
-       // DQ (11/13/2004): Remove the parenthesis if we don't output the constructor name
-       // this would only work if there was a single argument to the constructor!
+  if (con_init->get_args())
+  {
+    // DQ (11/13/2004): Remove the parenthesis if we don't output the constructor name
+    // this would only work if there was a single argument to the constructor!
 
-       // DQ (3/17/2005): Remove the parenthesis if we don't output the constructor name
-       // DQ (3/17/2005): Put the parenthesis BACK!
-       // We need this to avoid: doubleArray *arrayPtr1 = (new doubleArray 42); (where it should have been "(42)")
-       // if (con_init->get_is_explicit_cast() == true)
-       //      curprint ( "(";
+    // DQ (3/17/2005): Remove the parenthesis if we don't output the constructor name
+    // DQ (3/17/2005): Put the parenthesis BACK!
+    // We need this to avoid: doubleArray *arrayPtr1 = (new doubleArray 42); (where it should have been "(42)")
+    // if (con_init->get_is_explicit_cast() == true)
+    //      curprint ( "(";
 
-          unparseExpression(con_init->get_args(), newinfo);
+    unparseExpression(con_init->get_args(), newinfo);
 
-       // DQ (3/17/2005): Remove the parenthesis if we don't output the constructor name
-       // if (con_init->get_is_explicit_cast() == true)
-       //      curprint ( ")";
-        }
+    // DQ (3/17/2005): Remove the parenthesis if we don't output the constructor name
+    // if (con_init->get_is_explicit_cast() == true)
+    //      curprint ( ")";
+  }
 
-     if (outputParenthisis == true)
-        {
-          curprint ( ")");
-        }
+  if (outputParenthisis == true)
+  {
+    curprint ( ")");
+  }
 
 #if 0
-       else
-        {
-       // DQ (5/29/2004) Skip this so that we can avoid unparsing "B b;" as "B b();" since
-       // this is a problem for g++ if a reference is taken to "b" (see test2004_44.C).
-       // Verify that P::P():B() {} will still unparse correctly, ... it does!
-       // for P::P():B() {}
-       // if (con_init->get_need_name() || con_init->get_need_paren())
-          if (con_init->get_need_paren() == true)
-             {
-               printf ("Handle case of: P::P():B() {} (where B is a data member in the preinitialization list) \n");
-               curprint ( "()");
-             }
-        }
+  else
+  {
+    // DQ (5/29/2004) Skip this so that we can avoid unparsing "B b;" as "B b();" since
+    // this is a problem for g++ if a reference is taken to "b" (see test2004_44.C).
+    // Verify that P::P():B() {} will still unparse correctly, ... it does!
+    // for P::P():B() {}
+    // if (con_init->get_need_name() || con_init->get_need_paren())
+    if (con_init->get_need_paren() == true)
+    {
+      printf ("Handle case of: P::P():B() {} (where B is a data member in the preinitialization list) \n");
+      curprint ( "()");
+    }
+  }
 #endif
 
 #if 0
   // DQ (11/13/2004): Remove the parenthesis if we don't output the constructor name
   // this would only work if there was a single argument to the constructor!
-     if (con_init->get_args() && unp->u_sage->printConstructorName(con_init))
-        {
-          curprint ( ")"); 
-        }
+  if (con_init->get_args() && unp->u_sage->printConstructorName(con_init))
+  {
+    curprint ( ")"); 
+  }
 #endif
 
   // printf ("Leaving Unparse_ExprStmt::unparseConInit \n");
-   }
+}
 
 void
 Unparse_ExprStmt::unparseAssnInit(SgExpression* expr, SgUnparse_Info& info)

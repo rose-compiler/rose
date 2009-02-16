@@ -2185,7 +2185,7 @@ int CompareFileInfoOfSgSymbols(SgSymbol* p_symbol_pointer, SgSymbol* it_symbol_p
 
                 else {
 
-                        cout << "In hiddenlist computation: ERROR in CompareFileInfoOfSgSymbols!!!" << endl;
+                        cout << "In hiddenlist computation: ERROR in CompareFileInfoOfSgSymbols!!! At least one of symbols has no file info." << endl;
                         return 0;
 
                 }
@@ -2194,7 +2194,7 @@ int CompareFileInfoOfSgSymbols(SgSymbol* p_symbol_pointer, SgSymbol* it_symbol_p
         }
         else {
 
-                cout << "In hiddenlist computation: ERROR in CompareFileInfoOfSgSymbols!!!" << endl;
+                cout << "In hiddenlist computation: ERROR in CompareFileInfoOfSgSymbols!!! At least one of symbols has no corresponding declaration. " << endl;
                 return 0;
 
         }
@@ -2208,52 +2208,52 @@ int CompareFileInfoOfSgSymbols(SgSymbol* p_symbol_pointer, SgSymbol* it_symbol_p
 //  functions returns 2 for different file names
 int CompareFileNamesOfSgSymbols(SgSymbol* p_symbol_pointer, SgSymbol* it_symbol_pointer) {
 
-        // ok, get the declaration of these symbols and then compare the file-info:
-        SgDeclarationStatement* decl_stat_p_symbol_pointer = NULL;
-        SgDeclarationStatement* decl_stat_it_symbol_pointer = NULL;
+  // ok, get the declaration of these symbols and then compare the file-info:
+  SgDeclarationStatement* decl_stat_p_symbol_pointer = NULL;
+  SgDeclarationStatement* decl_stat_it_symbol_pointer = NULL;
 
-        // as we can find out in HiddenList_Intersection.C p_symbol_pointer should be a class or an enum..
-        decl_stat_p_symbol_pointer = GetSgDeclarationStatementOutOfSgSymbol(p_symbol_pointer);
-        decl_stat_it_symbol_pointer = GetSgDeclarationStatementOutOfSgSymbol(it_symbol_pointer);
+  // as we can find out in HiddenList_Intersection.C p_symbol_pointer should be a class or an enum..
+  decl_stat_p_symbol_pointer = GetSgDeclarationStatementOutOfSgSymbol(p_symbol_pointer);
+  decl_stat_it_symbol_pointer = GetSgDeclarationStatementOutOfSgSymbol(it_symbol_pointer);
 
-        if(decl_stat_p_symbol_pointer != NULL && decl_stat_it_symbol_pointer != NULL) {
+  if(decl_stat_p_symbol_pointer != NULL && decl_stat_it_symbol_pointer != NULL) {
 
-                Sg_File_Info* p_file_info;
-                Sg_File_Info* it_file_info;
+    Sg_File_Info* p_file_info;
+    Sg_File_Info* it_file_info;
 
-                p_file_info = decl_stat_p_symbol_pointer->get_file_info();
-                it_file_info = decl_stat_it_symbol_pointer->get_file_info();
+    p_file_info = decl_stat_p_symbol_pointer->get_file_info();
+    it_file_info = decl_stat_it_symbol_pointer->get_file_info();
 
-                if(p_file_info != NULL && it_file_info != NULL) {
+    if(p_file_info != NULL && it_file_info != NULL) {
 
-                        if(p_file_info->get_filename() == it_file_info->get_filename()) {
+      if(p_file_info->get_filename() == it_file_info->get_filename()) {
 
-                                return 1;
+        return 1;
 
-                        }
-                        else {
+      }
+      else {
 
-                                return 2;
+        return 2;
 
-                        }
+      }
 
-                }
+    }
 
-                else {
+    else {
 
-                        cout << "In hiddenlist computation: ERROR in CompareFileInfoOfSgSymbols!!!" << endl;
-                        return 0;
+      cout << "In hiddenlist computation: ERROR in CompareFileNamesOfSgSymbols()!!! At least one of them has NULL file info" << endl;
+      return 0;
 
-                }
+    }
 
 
-        }
-        else {
+  }
+  else {
 
-                cout << "In hiddenlist computation: ERROR in CompareFileInfoOfSgSymbols!!!" << endl;
-                return 0;
+    cout << "In hiddenlist computation: ERROR in CompareFileNamesOfSgSymbols()!!! At least one of them has NULL declaration" << endl;
+    return 0;
 
-        }
+  }
 
 
 }

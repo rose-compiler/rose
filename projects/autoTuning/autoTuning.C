@@ -101,8 +101,8 @@ int main(int argc, char * argv[])
     }
     else
     {
-      cerr<<"Fatal error: no handling for hot statements outside a for loop"<<endl;
-      ROSE_ASSERT(false);
+      cerr<<"Warning: no handling for hot statements outside a for loop"<<endl;
+      cerr<<hot_node->unparseToString()<<endl;
     }
 
   } // end for each file
