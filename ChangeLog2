@@ -1,3 +1,23 @@
+2009-02-16 17:58  liao6
+
+	* [r4497] /trunk/ROSE/projects/autoTuning/autoTuning.C,
+	  /trunk/ROSE/projects/autoTuning/autoTuningSupport.C,
+	  /trunk/ROSE/src/backend/unparser/CxxCodeGeneration/unparseCxx_expressions.C,
+	  /trunk/ROSE/src/backend/unparser/CxxCodeGeneration/unparseCxx_statements.C,
+	  /trunk/ROSE/src/backend/unparser/languageIndependenceSupport/modified_sage.C,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/sage_gen_be.C,
+	  /trunk/ROSE/src/frontend/SageIII/astHiddenTypeAndDeclarationLists/HiddenList.C,
+	  /trunk/ROSE/src/frontend/SageIII/manglingSupport.C,
+	  /trunk/ROSE/src/frontend/SageIII/manglingSupport.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C,
+	  /trunk/ROSE/src/midend/astDiagnostics/AstConsistencyTests.C,
+	  /trunk/ROSE/src/midend/astProcessing/AstPDFGeneration.C: Misc
+	  fixes
+	  
+	  * handling SgLongLongIntVal in several switch-case statements
+	  * fixing some typos
+	  * indenting some code for readability
+
 2009-02-12 19:37  panas2
 
 	* [r4441] /trunk/ROSE/projects/BinQ/BinQGui.C: Removed the
