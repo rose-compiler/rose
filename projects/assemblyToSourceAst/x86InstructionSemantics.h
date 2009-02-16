@@ -28,9 +28,19 @@ static inline X86SegmentRegister getSegregFromMemoryReference(SgAsmMemoryReferen
 template <typename Policy, template <size_t> class WordType>
 struct X86InstructionSemantics {
 #define Word(Len) WordType<(Len)>
-  Policy& policy;
+    Policy& policy;
 
-  X86InstructionSemantics(Policy& policy): policy(policy) {}
+    X86InstructionSemantics(Policy& policy): policy(policy) {}
+
+    /* If the counter (cx register) is non-zero then decrement it. The return value is a flag indicating whether cx was
+     * originally non-zero. */
+    Word(1) stringop_setup_loop() {
+        Word(1) ecxNotZero = policy.invert(policy.equalToZero(policy.readGPR(x86_gpr_cx)));
+        policy.writeGPR(x86_gpr_cx,
+                        policy.add(policy.readGPR(x86_gpr_cx),
+                                   policy.ite(ecxNotZero, number<32>(-1), number<32>(0))));
+        return ecxNotZero;
+    }
 
   template <size_t Len>
   Word(Len) invertMaybe(const Word(Len)& w, bool inv) {
@@ -1731,38 +1741,59 @@ struct X86InstructionSemantics {
         break;
       }
       case x86_nop: break;
-#define STRINGOP_SETUP_LOOP \
-                    Word(1) ecxNotZero = policy.invert(policy.equalToZero(policy.readGPR(x86_gpr_cx))); \
-                    policy.writeGPR(x86_gpr_cx, policy.add(policy.readGPR(x86_gpr_cx), policy.ite(ecxNotZero, number<32>(-1), number<32>(0))));
-#define STRINGOP_UPDATE_REG(reg, amount) \
-                    policy.writeGPR(reg, policy.add(policy.readGPR(reg), policy.ite(policy.readFlag(x86_flag_df), number<32>(-amount), number<32>(amount))));
-#define STRINGOP_UPDATE_REG_COND(reg, amount) \
-                    policy.writeGPR(reg, policy.add(policy.readGPR(reg), policy.ite(ecxNotZero, policy.ite(policy.readFlag(x86_flag_df), number<32>(-amount), number<32>(amount)), number<32>(0))));
-#define STRINGOP_LOAD_SI(len, cond) readMemory<(8 * (len))>((insn->get_segmentOverride() == x86_segreg_none ? x86_segreg_ds : insn->get_segmentOverride()), policy.readGPR(x86_gpr_si), (cond))
-#define STRINGOP_LOAD_DI(len, cond) readMemory<(8 * (len))>(x86_segreg_es, policy.readGPR(x86_gpr_di), (cond))
-#define STRINGOP_STORE_DI(len, cond, val) policy.writeMemory(x86_segreg_es, policy.readGPR(x86_gpr_di), (val), (cond))
-#define STRINGOP_LOOP \
-        policy.writeIP(policy.ite(ecxNotZero, /* If true, repeat this instruction, otherwise go to the next one */ \
-                                 number<32>((uint32_t)(insn->get_address())), \
-                                 policy.readIP()));
-#define STRINGOP_LOOP_E \
-        policy.writeIP(policy.ite(policy.and_(ecxNotZero, policy.readFlag(x86_flag_zf)), /* If true, repeat this instruction, otherwise go to the next one */ \
-                                 number<32>((uint32_t)(insn->get_address())), \
-                                 policy.readIP()));
-#define STRINGOP_LOOP_NE \
-        policy.writeIP(policy.ite(policy.and_(ecxNotZero, policy.invert(policy.readFlag(x86_flag_zf))), /* If true, repeat this instruction, otherwise go to the next one */ \
-                                 number<32>((uint32_t)(insn->get_address())), \
-                                 policy.readIP()));
-#define REP_SCAS(suffix, len, repsuffix, loopmacro) \
-      case x86_rep##repsuffix##_scas##suffix: { \
-        ROSE_ASSERT (operands.size() == 0); \
-        ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32); \
-        STRINGOP_SETUP_LOOP \
-        doAddOperation<(len * 8)>(extract<0, (len * 8)>(policy.readGPR(x86_gpr_ax)), policy.invert(STRINGOP_LOAD_DI(len, ecxNotZero)), true, policy.false_(), ecxNotZero); \
-        STRINGOP_UPDATE_REG_COND(x86_gpr_di, (len)) \
-        loopmacro \
-        break; \
+
+        
+#define STRINGOP_UPDATE_REG_COND(reg, amount)                                                                                  \
+        policy.writeGPR(reg,                                                                                                   \
+                        policy.add(policy.readGPR(reg),                                                                        \
+                                   policy.ite(ecxNotZero,                                                                      \
+                                              policy.ite(policy.readFlag(x86_flag_df), number<32>(-amount), number<32>(amount)), \
+                                              number<32>(0))));
+
+#define STRINGOP_LOAD_SI(len, cond)                                                                                            \
+        readMemory<(8 * (len))>((insn->get_segmentOverride() == x86_segreg_none ?                                              \
+                                 x86_segreg_ds :                                                                               \
+                                 insn->get_segmentOverride()),                                                                 \
+                                policy.readGPR(x86_gpr_si),                                                                    \
+                                (cond))
+            
+#define STRINGOP_LOAD_DI(len, cond)                                                                                            \
+        readMemory<(8 * (len))>(x86_segreg_es, policy.readGPR(x86_gpr_di), (cond))
+
+#define STRINGOP_LOOP                                                                                                          \
+        policy.writeIP(policy.ite(ecxNotZero, /* If true, repeat this instruction, otherwise go to the next one */             \
+                                  number<32>((uint32_t)(insn->get_address())),                                                 \
+                                  policy.readIP()));
+
+#define STRINGOP_LOOP_E                                                                                                        \
+        /* If true, repeat this instruction, otherwise go to the next one */                                                   \
+        policy.writeIP(policy.ite(policy.and_(ecxNotZero, policy.readFlag(x86_flag_zf)),                                       \
+                                  number<32>((uint32_t)(insn->get_address())),                                                 \
+                                  policy.readIP()));
+
+#define STRINGOP_LOOP_NE                                                                                                       \
+        /* If true, repeat this instruction, otherwise go to the next one */                                                   \
+        policy.writeIP(policy.ite(policy.and_(ecxNotZero, policy.invert(policy.readFlag(x86_flag_zf))),                        \
+                                  number<32>((uint32_t)(insn->get_address())),                                                 \
+                                  policy.readIP()));
+
+#define REP_SCAS(suffix, len, repsuffix, loopmacro)                                                                            \
+      case x86_rep##repsuffix##_scas##suffix: {                                                                                \
+          ROSE_ASSERT (operands.size() == 0);                                                                                  \
+          ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);                                                            \
+          Word(1) ecxNotZero = stringop_setup_loop();                                                                          \
+          doAddOperation<(len * 8)>(extract<0, (len * 8)>(policy.readGPR(x86_gpr_ax)),                                         \
+                                    policy.invert(STRINGOP_LOAD_DI(len, ecxNotZero)),                                          \
+                                    true,                                                                                      \
+                                    policy.false_(),                                                                           \
+                                    ecxNotZero);                                                                               \
+          policy.writeGPR(x86_gpr_di,                                                                                          \
+                          policy.add(policy.readGPR(x86_gpr_di),                                                               \
+                                     policy.ite(policy.readFlag(x86_flag_df), number<32>(-(len)), number<32>(len))));          \
+          loopmacro                                                                                                            \
+          break;                                                                                                               \
       }
+
       REP_SCAS(b, 1, ne, STRINGOP_LOOP_NE)
       REP_SCAS(w, 2, ne, STRINGOP_LOOP_NE)
       REP_SCAS(d, 4, ne, STRINGOP_LOOP_NE)
@@ -1770,29 +1801,43 @@ struct X86InstructionSemantics {
       REP_SCAS(w, 2, e, STRINGOP_LOOP_E)
       REP_SCAS(d, 4, e, STRINGOP_LOOP_E)
 #undef REP_SCAS
-#define SCAS(suffix, len) \
-      case x86_scas##suffix: { \
-        ROSE_ASSERT (operands.size() == 0); \
-        ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32); \
-        doAddOperation<(len * 8)>(extract<0, (len * 8)>(policy.readGPR(x86_gpr_ax)), policy.invert(STRINGOP_LOAD_DI(len, policy.true_())), true, policy.false_(), policy.true_()); \
-        STRINGOP_UPDATE_REG(x86_gpr_di, (len)) \
-        break; \
+
+#define SCAS(suffix, len)                                                                                                      \
+      case x86_scas##suffix: {                                                                                                 \
+          ROSE_ASSERT (operands.size() == 0);                                                                                  \
+          ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);                                                            \
+          doAddOperation<(len * 8)>(extract<0, (len * 8)>(policy.readGPR(x86_gpr_ax)),                                         \
+                                    policy.invert(STRINGOP_LOAD_DI(len, policy.true_())),                                      \
+                                    true,                                                                                      \
+                                    policy.false_(),                                                                           \
+                                    policy.true_());                                                                           \
+          policy.writeGPR(x86_gpr_di,                                                                                          \
+                          policy.add(policy.readGPR(x86_gpr_di),                                                               \
+                                     policy.ite(policy.readFlag(x86_flag_df), number<32>(-(len)), number<32>(len))));          \
+          break;                                                                                                               \
       }
+
       SCAS(b, 1)
       SCAS(w, 2)
       SCAS(d, 4)
 #undef SCAS
-#define REP_CMPS(suffix, len, repsuffix, loopmacro) \
-      case x86_rep##repsuffix##_cmps##suffix: { \
-        ROSE_ASSERT (operands.size() == 0); \
-        ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32); \
-        STRINGOP_SETUP_LOOP \
-        doAddOperation<(len * 8)>(STRINGOP_LOAD_SI(len, ecxNotZero), policy.invert(STRINGOP_LOAD_DI(len, ecxNotZero)), true, policy.false_(), ecxNotZero); \
-        STRINGOP_UPDATE_REG_COND(x86_gpr_si, (len)); \
-        STRINGOP_UPDATE_REG_COND(x86_gpr_di, (len)); \
-        loopmacro \
-        break; \
+
+#define REP_CMPS(suffix, len, repsuffix, loopmacro)                                                                            \
+      case x86_rep##repsuffix##_cmps##suffix: {                                                                                \
+          ROSE_ASSERT (operands.size() == 0);                                                                                  \
+          ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);                                                            \
+          Word(1) ecxNotZero = stringop_setup_loop();                                                                          \
+          doAddOperation<(len * 8)>(STRINGOP_LOAD_SI(len, ecxNotZero),                                                         \
+                                    policy.invert(STRINGOP_LOAD_DI(len, ecxNotZero)),                                          \
+                                    true,                                                                                      \
+                                    policy.false_(),                                                                           \
+                                    ecxNotZero);                                                                               \
+          STRINGOP_UPDATE_REG_COND(x86_gpr_si, (len));                                                                         \
+          STRINGOP_UPDATE_REG_COND(x86_gpr_di, (len));                                                                         \
+          loopmacro                                                                                                            \
+          break;                                                                                                               \
       }
+
       REP_CMPS(b, 1, ne, STRINGOP_LOOP_NE)
       REP_CMPS(w, 2, ne, STRINGOP_LOOP_NE)
       REP_CMPS(d, 4, ne, STRINGOP_LOOP_NE)
@@ -1800,85 +1845,156 @@ struct X86InstructionSemantics {
       REP_CMPS(w, 2, e, STRINGOP_LOOP_E)
       REP_CMPS(d, 4, e, STRINGOP_LOOP_E)
 #undef REP_CMPS
-#define CMPS(suffix, len) \
-      case x86_cmps##suffix: { \
-        ROSE_ASSERT (operands.size() == 0); \
-        ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32); \
-        doAddOperation<(len * 8)>(STRINGOP_LOAD_SI(len, policy.true_()), policy.invert(STRINGOP_LOAD_DI(len, policy.true_())), true, policy.false_(), policy.true_()); \
-        STRINGOP_UPDATE_REG(x86_gpr_si, (len)); \
-        STRINGOP_UPDATE_REG(x86_gpr_di, (len)); \
-        break; \
+
+#define CMPS(suffix, len)                                                                                                      \
+      case x86_cmps##suffix: {                                                                                                 \
+          ROSE_ASSERT (operands.size() == 0);                                                                                  \
+          ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);                                                            \
+          doAddOperation<(len * 8)>(STRINGOP_LOAD_SI(len, policy.true_()),                                                     \
+                                    policy.invert(STRINGOP_LOAD_DI(len, policy.true_())),                                      \
+                                    true,                                                                                      \
+                                    policy.false_(),                                                                           \
+                                    policy.true_());                                                                           \
+          policy.writeGPR(x86_gpr_si,                                                                                          \
+                          policy.add(policy.readGPR(x86_gpr_si),                                                               \
+                                     policy.ite(policy.readFlag(x86_flag_df), number<32>(-(len)), number<32>(len))));          \
+          policy.writeGPR(x86_gpr_di,                                                                                          \
+                          policy.add(policy.readGPR(x86_gpr_di),                                                               \
+                                     policy.ite(policy.readFlag(x86_flag_df), number<32>(-(len)), number<32>(len))));          \
+          break;                                                                                                               \
       }
+
       CMPS(b, 1)
       CMPS(w, 2)
       CMPS(d, 4)
 #undef CMPS
-#define MOVS(suffix, len) \
-      case x86_movs##suffix: { \
-        ROSE_ASSERT (operands.size() == 0); \
-        ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32); \
-        STRINGOP_STORE_DI(len, policy.true_(), STRINGOP_LOAD_SI(len, policy.true_())); \
-        STRINGOP_UPDATE_REG(x86_gpr_si, len) \
-        STRINGOP_UPDATE_REG(x86_gpr_di, len) \
-        break; \
-      } \
-      case x86_rep_movs##suffix: { \
-        ROSE_ASSERT (operands.size() == 0); \
-        ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32); \
-        STRINGOP_SETUP_LOOP \
-        STRINGOP_STORE_DI(len, ecxNotZero, STRINGOP_LOAD_SI(len, ecxNotZero)); \
-        STRINGOP_UPDATE_REG_COND(x86_gpr_si, len) \
-        STRINGOP_UPDATE_REG_COND(x86_gpr_di, len) \
-        STRINGOP_LOOP \
-        break; \
+
+#define MOVS(suffix, len)                                                                                                      \
+      case x86_movs##suffix: {                                                                                                 \
+          ROSE_ASSERT (operands.size() == 0);                                                                                  \
+          ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);                                                            \
+          policy.writeMemory(x86_segreg_es, policy.readGPR(x86_gpr_di), STRINGOP_LOAD_SI(len, policy.true_()), policy.true_()); \
+          policy.writeGPR(x86_gpr_si,                                                                                          \
+                          policy.add(policy.readGPR(x86_gpr_si),                                                               \
+                                     policy.ite(policy.readFlag(x86_flag_df), number<32>(-(len)), number<32>(len))));          \
+          policy.writeGPR(x86_gpr_di,                                                                                          \
+                          policy.add(policy.readGPR(x86_gpr_di),                                                               \
+                                     policy.ite(policy.readFlag(x86_flag_df), number<32>(-(len)), number<32>(len))));          \
+          break;                                                                                                               \
+      }                                                                                                                        \
+      case x86_rep_movs##suffix: {                                                                                             \
+          ROSE_ASSERT (operands.size() == 0);                                                                                  \
+          ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);                                                            \
+          Word(1) ecxNotZero = stringop_setup_loop();                                                                          \
+          policy.writeMemory(x86_segreg_es, policy.readGPR(x86_gpr_di), STRINGOP_LOAD_SI(len, ecxNotZero), ecxNotZero);        \
+          STRINGOP_UPDATE_REG_COND(x86_gpr_si, len)                                                                            \
+          STRINGOP_UPDATE_REG_COND(x86_gpr_di, len)                                                                            \
+          STRINGOP_LOOP                                                                                                        \
+          break;                                                                                                               \
       }
+
       MOVS(b, 1)
       MOVS(w, 2)
       MOVS(d, 4)
 #undef MOVS
-#define STOS(suffix, len) \
-      case x86_stos##suffix: { \
-        ROSE_ASSERT (operands.size() == 0); \
-        ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32); \
-        STRINGOP_STORE_DI(len, policy.true_(), (extract<0, (8 * (len))>(policy.readGPR(x86_gpr_ax)))); \
-        STRINGOP_UPDATE_REG(x86_gpr_di, len) \
-        break; \
-      } \
-      case x86_rep_stos##suffix: { \
-        ROSE_ASSERT (operands.size() == 0); \
-        ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32); \
-        STRINGOP_SETUP_LOOP \
-        STRINGOP_STORE_DI(len, ecxNotZero, (extract<0, (8 * (len))>(policy.readGPR(x86_gpr_ax)))); \
-        STRINGOP_UPDATE_REG_COND(x86_gpr_di, len) \
-        STRINGOP_LOOP \
-        break; \
+
+      case x86_stosb: {
+          ROSE_ASSERT (operands.size() == 0);
+          ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
+          policy.writeMemory(x86_segreg_es,
+                             policy.readGPR(x86_gpr_di),
+                             extract<0, 8>(policy.readGPR(x86_gpr_ax)),
+                             policy.true_());
+          policy.writeGPR(x86_gpr_di,
+                          policy.add(policy.readGPR(x86_gpr_di),
+                                     policy.ite(policy.readFlag(x86_flag_df), number<32>(-1), number<32>(1))));
+          break;
       }
-      STOS(b, 1)
-      STOS(w, 2)
-      STOS(d, 4)
-#undef STOS
-#define LODS(suffix, len, regupdate) \
-      case x86_lods##suffix: { \
-        ROSE_ASSERT (operands.size() == 0); \
-        ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32); \
-        regupdate(x86_gpr_ax, STRINGOP_LOAD_SI(len, policy.true_())); \
-        STRINGOP_UPDATE_REG(x86_gpr_si, len) \
-        break; \
+      case x86_rep_stosb: {
+          ROSE_ASSERT (operands.size() == 0);
+          ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
+          Word(1) ecxNotZero = stringop_setup_loop();
+          policy.writeMemory(x86_segreg_es,
+                             policy.readGPR(x86_gpr_di),
+                             extract<0, 8>(policy.readGPR(x86_gpr_ax)),
+                             ecxNotZero);
+          STRINGOP_UPDATE_REG_COND(x86_gpr_di, 1)
+          STRINGOP_LOOP
+          break;
       }
+      case x86_stosw: {
+          ROSE_ASSERT (operands.size() == 0);
+          ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
+          policy.writeMemory(x86_segreg_es,
+                             policy.readGPR(x86_gpr_di),
+                             extract<0, 16>(policy.readGPR(x86_gpr_ax)),
+                             policy.true_());
+          policy.writeGPR(x86_gpr_di,
+                          policy.add(policy.readGPR(x86_gpr_di),
+                                     policy.ite(policy.readFlag(x86_flag_df), number<32>(-2), number<32>(2))));
+          break;
+      }
+      case x86_rep_stosw: {
+          ROSE_ASSERT (operands.size() == 0);
+          ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
+          Word(1) ecxNotZero = stringop_setup_loop();
+          policy.writeMemory(x86_segreg_es,
+                             policy.readGPR(x86_gpr_di),
+                             extract<0, 16>(policy.readGPR(x86_gpr_ax)),
+                             ecxNotZero);
+          STRINGOP_UPDATE_REG_COND(x86_gpr_di, 2)
+          STRINGOP_LOOP
+          break;
+      }
+      case x86_stosd: {
+          ROSE_ASSERT (operands.size() == 0);
+          ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
+          policy.writeMemory(x86_segreg_es,
+                             policy.readGPR(x86_gpr_di),
+                             extract<0, 32>(policy.readGPR(x86_gpr_ax)),
+                             policy.true_());
+          policy.writeGPR(x86_gpr_di,
+                          policy.add(policy.readGPR(x86_gpr_di),
+                                     policy.ite(policy.readFlag(x86_flag_df), number<32>(-4), number<32>(4))));
+          break;
+      }
+      case x86_rep_stosd: {
+          ROSE_ASSERT (operands.size() == 0);
+          ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
+          Word(1) ecxNotZero = stringop_setup_loop();
+          policy.writeMemory(x86_segreg_es,
+                             policy.readGPR(x86_gpr_di),
+                             extract<0, 32>(policy.readGPR(x86_gpr_ax)),
+                             ecxNotZero);
+          STRINGOP_UPDATE_REG_COND(x86_gpr_di, 4)
+          STRINGOP_LOOP
+          break;
+      }
+
+#define LODS(suffix, len, regupdate)                                                                                           \
+      case x86_lods##suffix: {                                                                                                 \
+          ROSE_ASSERT (operands.size() == 0);                                                                                  \
+          ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);                                                            \
+          regupdate(x86_gpr_ax, STRINGOP_LOAD_SI(len, policy.true_()));                                                        \
+          policy.writeGPR(x86_gpr_si,                                                                                          \
+                          policy.add(policy.readGPR(x86_gpr_si),                                                               \
+                                     policy.ite(policy.readFlag(x86_flag_df), number<32>(-(len)), number<32>(len))));          \
+          break;                                                                                                               \
+      }
+
       LODS(b, 1, updateGPRLowByte)
       LODS(w, 2, updateGPRLowWord)
       LODS(d, 4, policy.writeGPR)
 #undef LODS
-#undef STRINGOP_SETUP_LOOP
-#undef STRINGOP_UPDATE_REG
+
 #undef STRINGOP_UPDATE_REG_COND
 #undef STRINGOP_LOAD_SI
 #undef STRINGOP_LOAD_DI
-#undef STRINGOP_STORE_DI
 #undef STRINGOP_UPDATE_CX
 #undef STRINGOP_LOOP
 #undef STRINGOP_LOOP_E
 #undef STRINGOP_LOOP_NE
+
       case x86_hlt: {
         ROSE_ASSERT (operands.size() == 0);
         policy.hlt();
