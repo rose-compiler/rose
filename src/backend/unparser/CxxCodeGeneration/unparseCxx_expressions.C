@@ -3100,9 +3100,10 @@ void Unparse_ExprStmt::unparseExprCond(SgExpression* expr, SgUnparse_Info& info)
 
      unparseExpression(expr_cond->get_true_exp(), info);
 
+   // Liao, 2/16/2009. We have to have space to avoid first?x:::std::string("") Three colons in a row!
   // DQ (1/26/2009): Added spaces to make the formatting nicer (but it breaks the diff tests in the loop processor, so fix this later).
-  // curprint (" : "); 
-     curprint (":"); 
+   curprint (" : "); 
+  //   curprint (":"); 
 
      unparseExpression(expr_cond->get_false_exp(), info);
   // if (! toplevel_expression || expr_cond->get_is_lvalue())
