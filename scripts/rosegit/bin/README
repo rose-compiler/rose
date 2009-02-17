@@ -1,0 +1,7 @@
+rosegit-ats            -- tests and tags a commit in the specified local Git repository using a test target (see below)
+rosegit-robotic-test   -- calls rosegit-ats from a crontab being careful not to overload the system
+rosegit-env            -- set up environment for compiling and run a command or start a shell
+test-env               -- prints environment; suitable as a target for rosegit-ats or direct run by user
+quick-test             -- builds parts of rose; suitable as a target for rosegit-ats or direct run by user
+rat-test               -- a full pre-commit test; suitable as a target for rosegit-ats or direct run by user
+rosegit-functions.sh   -- shell script sourced by scripts to define lots of functions

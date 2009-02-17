@@ -1,0 +1,47 @@
+#!/bin/bash
+#
+# This test is used by the ROSE Automated Tester (RAT) to tag branch tips as passing or failing. It also serves as the
+# canonical example of how to write a test script. All test scripts should refer to this documentation!
+#
+# Commands always use hyphens in their names and are meant to be called by users and can also be executed by other scripts.
+# Functions always use underscores and are not intended to be called by users. A test script should be a command (thus the
+# hyphen in its name) but they are also commonly executed by other scripts, most importantly rosegit-ats.
+#
+# You may assume that this scripts current working directory is somewhere in the build tree.  When it's called by rosegit-ats
+# the cwd will always be the top of the build tree.
+#
+# Any kind of progress information that you want to appear on stdout of rosegit-ats should be sent to file descriptor 6.
+# Keep progress info short and to the point!  When a test is run by rosegit-ats, rosegit-ats redirects file descriptor 6 to
+# the output and saves this scripts standard out and error to a log file which will become the basis for an error report in
+# the event of a failure. On the other hand, when you run this script interactively you probably don't care about progress
+# reports and they just get thrown away.  Here's some ways you could redirect output (assuming you're not using a brain-dead
+# shell):
+#
+#       rat-test 6>&1 >saved.outout >&2          # save output, show progress
+#       rat-test 6>&1                            # show progress along with output
+#       rat-test                                 # show output, toss progress
+#
+
+#-------------------------------------------------------------------------------------------------------------------------------
+# Every test script starts with these lines to set up the build environment. This takes care of all the ways this script
+# can be called (from rosegit-ats or interactively, from the top of a build tree or deep inside a build tree, with an
+# environment already set up or not, etc.)
+
+mydir=${0%/*}
+source $mydir/rosegit-functions.sh || exit 1
+rosegit_tester_preamble
+
+#-------------------------------------------------------------------------------------------------------------------------------
+# rosegit_run is a convenient way to run a command since it emits some progress information and statistics. The first argument
+# is the progress message and the remaining arguments are the command. If the command has meta characters you can enclose the
+# entire command in quotes, or enclose individual arguments in quotes.
+
+rosegit_run "build"          "(cd $ROSE_SRC && ./build)"            || exit 1
+rosegit_run "configure"      "(cd $ROSE_BLD && $ROSEGIT_CONFIGURE)" || exit 1
+rosegit_run "make"           rosegit_make                           || exit 1
+rosegit_run "make distcheck" rosegit_make distcheck                 || exit 1
+
+# Or you can just run your own commands and generate your own progress messages...
+
+#echo "test completed" >&6                        # this is a progress report
+#echo "$myname: test completed successfully."     # this is normal output

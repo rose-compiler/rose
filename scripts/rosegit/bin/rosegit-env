@@ -1,0 +1,70 @@
+#!/bin/bash
+#
+# Purpose:
+#     Configures environment for building ROSE and invokes the command you specify (or a shell). This is the exact same thing
+#     that happens when you run any of the test scripts in the scripts/rosegit/bin directory, other than a command of your choice
+#     is run rather than the test.
+#
+#     The following actions occur:
+#         * If the top build directory ($ROSE_BLD) is not defined then we try to figure it out. If your current working
+#           directory looks like an existing top-of-build-tree or its empty then we use it. Otherwise we scan upward in the
+#           directory tree until we find something that looks right.
+#
+#         * If the top of the source tree ($ROSE_SRC) is not defined then we look for it. We look in the ancestor directories
+#           and children of those ansesters that have the same name as the build directory's base name. That is, if $ROSE_BLD
+#           is /home/matzke/foo/bar/baz then we'll look for sources in:
+#                /home/matzke/foo/bar
+#                /home/matzke/foo
+#                /home/matzke/foo/baz
+#                /home/matzke
+#                /home/matzke/baz
+#                /home
+#                /home/baz
+#                /
+#                /baz
+#
+#         * If configuration files have not been loaded (see scripts/rosegit/config/defaults.conf) then we obtain the current
+#           branch name from Git and use it to load the configuration files.
+#
+#         * Finally, we make some adjustments to LD_LIBRARY_PATH so symbolic debuggers like gdb can be invoked from the
+#           build directory without having to install ROSE.
+#
+# Usage: rosegit-env [SWITCHES] [COMMAND ARGS...]
+#    --blddir=DIR
+#         Use the specified directory as the top of the build tree rather than what's in $ROSE_BLD or guessing.
+#
+#    --srcdir=DIR
+#         Use the specified directory as the top of the source tree rather than what's in $ROSE_SRC or guessing.
+#
+# Your current working directory should be somewhere in the rose build tree.
+#
+# A quick, easy way to see your configuration settings and directory names is to run:
+#      rosegit-env true
+#
+
+mydir=${0%/*}
+source $mydir/rosegit-functions.sh || exit 1
+
+# Parse command-line arguments
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+	--) shift; break;;
+	--blddir=$) ROSE_BLD="${1##--blddir=}"; shift;;
+	--srcdir=*) ROSE_SRC="${1##--srcdir=}"; shift;;
+	-*) rosegit_die "unknown switch: $1";;
+	*) break;;
+    esac
+done
+
+# Find build and source trees and load configurations
+rosegit_tester_preamble
+
+# Run the subordinate command. If there is none then run bash instead.
+if [ "$#" -eq 0 ]; then
+    export PS1_STACK="(rose-$(basename $ROSE_BLD)) $PS1STACK"
+    exec /bin/bash
+else
+    exec "$@"
+fi
+echo "$0: exec failed" >&2
+exit 1

@@ -1,0 +1,41 @@
+#!/bin/bash
+#
+# Purpose: Run from a crontab to test and tag a ROSE repository.
+#
+# Algorithm:
+#    1. Is a robot already running? If so, exit
+#    2. Is a commit ready to test? If not, exit
+#    3. Is that commit the same that was ready last time? If not, exit
+#    4. Run rosegit-ats to perform the test and tag the repo
+#
+# Usage:
+#    rosegit-robotic-test [ROSGIT_ATS_ARGS] REPOSITORY
+#
+mydir=${0%/*}
+source $mydir/rosegit-functions.sh || exit 1
+
+lockfile=$HOME/.rosegit-robotic-test.pid
+prevfile=$HOME/.rosegit-robotic-test.prev
+
+# Create the lock file
+echo $$ >$lockfile.$$
+if ln $lockfile.$$ $lockfile 2>/dev/null; then
+    rm -f $lockfile.$$
+    trap "rm -f $lockfile" EXIT
+else
+    oldpid=$(cat $lockfile)
+    kill -0 $oldpid && rosegit_die "already running with pid $oldpid"
+    rosegit_die "possible stale lock file: $lockfile"
+fi
+
+# Are there any commits ready for testing?
+commit=$($mydir/rosegit-ats --query "$@")
+[ -n "$commit" ] || rosegit_die "nothing ready to test"
+
+# Is this the same commit as we last saw? If not then the repository is changing too fast and we should wait a while. This
+# check prevents us from wasting time checking the tip of a branch if someone is about to advance the branch to a new tip.
+[ "$(cat $prevfile 2>/dev/null)" != $commit ] && echo $commit >$prevfile && rosegit_die "repository has recently changed"
+echo $commit >$prevfile
+
+# Everything looks good. Run the test
+$mydir/rosegit-ats "$@"

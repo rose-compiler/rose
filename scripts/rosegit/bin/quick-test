@@ -1,0 +1,26 @@
+#!/bin/bash
+#
+# A relatively quick and dirty test.
+#    It runs "build" only if there's not configure script
+#    It runs "configure" if the top-level makefile is out of date
+#    It runs "make" in a variety of directories
+#
+# You may run it from anywhere in the build tree.
+#
+# See rat-test for additional documentation.
+
+mydir=${0%/*}
+source $mydir/rosegit-functions.sh || exit 1
+rosegit_tester_preamble
+
+[ -f $ROSE_SRC/configure ] ||\
+    rosegit_run "build" "(cd $ROSE_SRC && ./build)" || exit 1
+
+[ -f $ROSE_BLD/Makefile ] || [ $ROSE_BLD/Makefile -nt $ROSE_SRC/configure ] ||\
+    rosegit_run "configure" "(cd $ROSE_BLD && $ROSEGIT_CONFIGURE)" || exit 1
+
+rosegit_run "make (src)"               rose-make -C $ROSE_BLD/src || exit 1
+rosegit_run "make (compass)"           rose-make -C $ROSE_BLD/projects/compass && rose-make || exit 1
+rosegit_run "make (Dan/Disassembler)"  rose-make -C $ROSE_BLD/developersScratchSpace/Dan/Disassembler_tests || exit 1
+rosegit_run "make (Dan/translator)"    rose-make -C $ROSE_BLD/developersScratchSpace/Dan/translator_tests || exit 1
+rosegit_run "make (Robb)"              rose-make -C $ROSE_BLD/developersScratchSpace/Robb || exit 1

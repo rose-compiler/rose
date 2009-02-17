@@ -1,0 +1,229 @@
+#!/bin/bash
+#
+# Purpose: Runs tests on the tips of branches and tags those branches as passing or failing. This script accesses the local
+# repository specified on the command line (sets/clears tags, etc), but clones the repo to a temporary location for the long-
+# running tests.
+#
+# Usage: rosegit-ats [SWITCHES] LOCALREPO
+#       --branch=BRANCH
+#            Consider only the specified branch when choosing a commit to test.
+#       --commit=REV
+#            Test (or retest) the specified commit, even if it's been tested already.
+#       --config=FILE
+#            Read the specied file as the last, most specific, configuration file. If FILE is in fact a directory then use that
+#            directory when searching for any of the configuration files.
+#       --debug
+#            Turn on lots of debugging output
+#       --dry-run
+#            Don't make any changes to the repository and do not actually run the test.
+#       --multi
+#            If specified then allow this test to start even if other tests are running in the same name space.
+#       --namespace=NS
+#            Use the specified three-letter namespace (lower case) to find configuration files.
+#       --query
+#            Simply print the name of the commit that would be tested, and do nothing else.
+#
+# Related commands:
+#   To see what tests are running in a particular namespace (like "rat"):
+#      $ git tag -l rat-testing-*
+#   To see the list of all tests that are running
+#      $ git tag -l *-testing-*
+#   To see what changes a test is testing (also substitute "pass" or "fail" for "testing")
+#      $ git log -p rat-testing-123
+#   To see the errors from a failed test
+#      $ git show rat-fail-123
+#   To cause the test to skip a particular commit (and all older commits) tag it with "skip"
+#      $ git tag rat-skip-123
+#   To cancel all tests
+#      Kill all the test scripts
+#      Remove their working directories
+#      Remove the tags: git tag -l rat-testing-* |xargs -n1 git tag -d
+
+mydir=${0%/*}
+source $mydir/rosegit-functions.sh || exit 1
+
+# Command-line switches
+allow_multi= branches= commit= config= dry_run= query_only=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+	--branch=*)    branches="${1#--branch=}"; shift ;;
+	--commit=*)    commit="${1#--commit=}"; shift ;;
+	--config=*)    config="${1#--config=}"; shift ;;
+	--debug)       set -x; shift ;;
+	--dry-run)     dry_run=yes; shift ;;
+	--multi*)      allow_multi=yes; shift ;;
+	--namespace=*) ROSEGIT_NAMESPACE="${1#--namespace=}"; shift ;;
+	--query)       query_only=yes; shift ;;
+	--) 	       shift; break ;;
+	-*) 	       rosegit_die "unknown switch: $1" ;;
+	*)             break ;;
+    esac
+done
+[ "$#" -gt 0 ] || rosegit_die "no repository specified"
+[ "$#" -gt 1 ] && rosegit_die "too many arguments for command"
+repo="$1"; shift
+
+# Sanity checks
+[ -n "$branches" -a -n "$commit" ] && rosegit_die "--branch and --commit are mutually exclusive"
+[ -d "$repo/.git" ] || rosegit_die "not a repository: $repo/.git"
+[ -n "$branches" ] || branches="$(cd $repo/.git/refs/heads && echo *)"
+repo=$(cd $repo && pwd)
+namespace=$(rosegit_namespace)
+
+# Choose one of the commits that needs to be tested. If the caller didn't specify one then we'll choose the latest one that
+# isn't an automatic update and doesn't have one of the testing/pass/fail tags set. We'll use the first branch we find.
+if [ ! -n "$commit" ]; then
+    for branch in $branches; do
+	(cd $repo && git rev-parse $branch >/dev/null 2>&1) || rosegit_die "unknown branch name: $branch"
+	last_testing=$(rosegit_latest_tag $repo "$namespace-testing-*" $branch);
+	last_pass=$(rosegit_latest_tag $repo "$namespace-pass-*" $branch);
+	last_fail=$(rosegit_latest_tag $repo "$namespace-fail-*" $branch);
+	last_skip=$(rosegit_latest_tag $repo "$namespace-skip-*" $branch);
+	last_tagged=$(cd $repo && git rev-list -n1 $last_testing $last_pass $last_fail $last_skip)
+	for x in "" $(cd $repo && git rev-list $branch ^$last_testing ^$last_pass ^$last_fail ^$last_skip); do
+	    [ -n "$x" ] || continue
+	    if (cd $repo && git log --pretty=oneline $x^..$x |grep ' Automatic updates of ' >/dev/null); then
+		: skip
+	    else
+		commit=$x
+		break
+	    fi
+	done
+	[ -n "$commit" ] && break
+    done
+else
+    branch=$(rosegit_branch_of $repo $commit)
+fi
+if [ -n "$query_only" ]; then
+    [ -n "$commit" ] && echo $commit
+    exit 0
+fi
+if [ ! -n "$commit" ]; then
+    echo "$myname: nothing left to test"
+    exit 0
+fi
+commitname="$(cd $repo && git log --pretty=oneline $commit^..$commit |cut -c42-170)" # limit to reasonable size
+
+# Load configuration now that we know the branch name.
+echo "On branch '$branch'"
+rosegit_load_config $repo $namespace $branch $config
+ROSEGIT_REPOSITORY=$repo
+
+# Create a scratch directory for this test.
+serial=$(rosegit_next_serial $repo $namespace)
+working_tag=$namespace-testing-$serial
+mkdir -p $(rosegit_workdir)
+workdir=$(rosegit_workdir)/$myname-$working_tag-$$
+
+# Are there other tests running for the same namespace?
+if [ ! -n "$allow_multi" ]; then
+    running=$(cd $repo && git tag -l "$namespace-testing-*")
+    if [ -n "$running" ]; then
+	echo "The following tests are still running:" $running
+	echo "If they have failed then:"
+	echo "  1. Remove their directories (possibly in $(rosegit_workdir))"
+	echo "  2. Remove their tags (shown above)"
+	echo "Use the --multi switch to bypass this check."
+	exit 0
+    fi
+fi
+
+# Display some output and mail it if desired
+mailcontent=$(rosegit_workdir)/$myname-$serial-$$.mail
+(
+    echo -n "Testing "; (cd $repo && git --no-pager log --dirstat $commit^..$commit)
+    echo; echo "------------------------- Default Environment --------------------------"
+    echo "Serial number:     $serial"
+    rosegit_show_environment; echo
+) |tee $mailcontent
+          echo "------------------------------------------------------------------------"
+if [ ! -n "$dry_run" ]; then
+    subject="[$namespace.$branch START] $commitname"
+    rosegit_mail "START" "$subject" $mailcontent
+fi
+rm -f $mailcontent
+
+# Nothing else to do if this is a dry run
+[ -n "$dry_run" ] && exit 0
+
+# Adjust tags on the repo. We have to remove test-related tags because the --commit switch can be used to retest.
+for tag in "" $(rosegit_tags_of $repo $commit "$namespace-*"); do
+    [ -n "$tag" ] || continue
+    if (echo $tag |grep -P "^$namespace-(testing|pass|fail)-" >/dev/null); then
+	(cd $repo && git tag -d $tag)
+    fi
+done
+(cd $repo && git tag -a -F <(echo "Testing in progress"; echo; rosegit_show_environment) $working_tag $commit) \
+    || rosegit_die "tagging failed for $working_tag"
+
+# Tag that the commit is being tested, then clone a working copy.
+git clone --no-checkout $repo $workdir || rosegit_die "clone failed"
+(cd $workdir && git checkout -b $working_tag $working_tag)
+
+# Final testing setup
+builddir=$workdir/_test_build
+tester="$(rosegit_tester)"
+tester_output=$workdir/$myname.output
+mkdir $builddir || rosegit_die "cannot create test build area: $builddir"
+export ROSE_SRC=$workdir
+export ROSE_BLD=$builddir
+
+# Run the test
+tester_result=pass
+starttime=$(date +%s)
+(cd $builddir && (eval "$tester") 6>&1 >$tester_output 2>&1) || tester_result=fail
+endtime=$(date +%s)
+
+# Build messages heads
+if [ "$tester_result" = "pass" ]; then
+    echo "Passed!"
+    echo "Test passed in" $(rosegit_elapsed_human $((endtime - starttime))) >$workdir/$myname.mesg
+else
+    echo "Failed!"
+    echo "Details in $tester_output"
+    echo "Summary in Git repository tag $namespace-fail-$serial"
+    echo "Test failed after" $(rosegit_elapsed_human $((endtime - starttime))) >$workdir/$myname.mesg
+fi
+
+# Build message body
+(
+    # Don't change these delimiter lines without looking at the sed command below.
+    echo
+    echo "------------------------------- Commit ---------------------------------"
+    echo -n "Tested "; (cd $repo && git log --dirstat $commit^..$commit)
+    echo
+    echo "--------------------------- ROSE Environment ---------------------------"
+    echo "Serial number:     $serial"
+    (cd $builddir; rosegit_environment; rosegit_show_environment)
+) >>$workdir/$myname.mesg
+
+# Error messages for failure
+if [ "$tester_result" = "fail" ]; then
+    rosegit_filter_make_error <$tester_output >$tester_output.abbr
+    [ $(wc -l <$tester_output.abbr) -gt 0 ] && tester_output=$tester_output.abbr
+    (
+	echo "---------------------------- Configuration -----------------------------"
+	export |grep '^ROSEGIT_'
+	echo
+	echo "------------------------------- Output ---------------------------------"
+	echo "Details in $workdir/$myname.output"   # not $tester_output
+	echo "Last few lines of output follow:"
+	echo
+	tail -n200 $tester_output
+    ) >>$workdir/$myname.mesg
+fi
+
+# Create new tag for result (stripping out commit info); remove old tags
+
+(cd $repo && \
+ git tag -a -F <(sed '/-- Commit --/,/^-----/d' <$workdir/$myname.mesg) "$namespace-$tester_result-$serial" $commit)
+(cd $repo && git tag -d $working_tag)
+
+# Send email if desired
+facility=$(echo $tester_result |tr [:lower:] [:upper:])
+rosegit_mail $facility "[$namespace.$branch $facility] $commitname" $workdir/$myname.mesg
+rm -f $workdir/$myname.mesg
+
+# Exit
+[ "$tester_result" = "pass" ] && exit 0
+exit 1

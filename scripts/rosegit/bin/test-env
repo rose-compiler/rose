@@ -1,0 +1,12 @@
+#!/bin/bash
+# Debugging tester. Run this to see how your build environment is set up.
+
+mydir=${0%/*}
+source $mydir/rosegit-functions.sh || exit 1
+rosegit_tester_preamble
+
+echo "Test environment"
+set |egrep '^[a-z_A-Z]'
+echo
+echo "Failing out..."
+exit 1
