@@ -1,3 +1,201 @@
+2009-02-16 20:56  matzke
+
+	* [r4511]
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/AsyncMilestone1b.odt,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/AsyncMilestone1b.pdf,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/AsyncSignalSafety.odp,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/AsyncSignalSafety.pdf,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/test6.c:
+	  Added documentation for async signal safe SMS Milestone 1
+
+2009-02-16 20:52  matzke
+
+	* [r4510]
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/asyncSafety.C,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test1.O0.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test1.O3.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test1.s.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test2.O0.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test2.O3.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test2.s.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test3.O0.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test3.O3.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test3.s.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test4.O0.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test4.O3.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test4.s.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test5.O0.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test5.O3.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test5.s.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test6.O0.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test6.O3.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test6.s.bin.ans:
+	  Turned off some debugging output
+
+2009-02-16 20:51  matzke
+
+	* [r4509] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/TestMakefile,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/asyncSafety.C,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/asyncSafetyOld.C,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test1.O0.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test1.O0.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test1.O3.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test1.O3.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test1.s.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test1.s.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test2.O0.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test2.O0.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test2.O3.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test2.O3.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test2.s.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test2.s.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test3.O0.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test3.O0.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test3.O3.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test3.O3.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test3.s.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test3.s.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test4.O0.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test4.O0.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test4.O3.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test4.O3.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test4.s.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test4.s.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test5.O0.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test5.O0.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test5.O3.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test5.O3.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test5.s.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test5.s.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test6.O0.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test6.O0.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test6.O3.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test6.O3.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test6.s.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test6.s.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/test1.c,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/test2.c,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/test3.c,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/test4.c,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/test5.c,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/test6.c,
+	  /trunk/ROSE/developersScratchSpace/Robb/BinaryTools,
+	  /trunk/ROSE/developersScratchSpace/Robb/BinaryTools/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Robb/BinaryTools/functionBoundaries.C,
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/binaryAsyncSignalHandler.C,
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/binaryFunctionBoundary.C,
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/robb.C,
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/test1.c,
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/test2.c,
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/test3.c,
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/test4.c,
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/test5.c,
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/test6.c,
+	  /trunk/ROSE/developersScratchSpace/Robb/Makefile.am:
+	  Rearrangement of files; addition of test cases
+	  
+	  The AsyncSafety work was arranged into its own directory in
+	  Robb's
+	  scratchspace and test cases were added for "make check"
+	  
+	  The i686-*.bin files were compiled on Knoppix-4.0, GCC-3.3.6,
+	  Linux-2.6.12, Intel Xeon X5460, running under VirtualBox.
+
+2009-02-16 20:51  matzke
+
+	* [r4508]
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/robb.C:
+	  Async signal safe test relaxes const propagation analysis
+	  
+	  I relaxed the way constant are propogated across branch
+	  instructions so
+	  as to have a better chance of finding signal handlers at the
+	  expense of
+	  the constant propagation analysis being less than 100% correct.
+	  
+	  Also urned off some debugging output
+
+2009-02-16 20:51  matzke
+
+	* [r4507]
+	  /trunk/ROSE/projects/BinaryConstantPropagation/findConstants.h,
+	  /trunk/ROSE/projects/assemblyToSourceAst/x86InstructionSemantics.h:
+	  Fixed instruction semantics for "rep_stosN"
+	  
+	  Old semantics didn't seem to take the repeat counter into effect.
+	  The
+	  new method will update memory to the AX value, using the repeat
+	  count if
+	  known, and then set the repeat count to zero (old method
+	  decremented
+	  instead) and the string pointer (DI) to the ending value (old
+	  method
+	  moved it only one place).
+
+2009-02-16 20:51  matzke
+
+	* [r4506]
+	  /trunk/ROSE/projects/assemblyToSourceAst/x86InstructionSemantics.h:
+	  Factored out common code to functions
+
+2009-02-16 20:51  matzke
+
+	* [r4505]
+	  /trunk/ROSE/projects/assemblyToSourceAst/x86InstructionSemantics.h:
+	  Expanded STRINGOP_LOOP macro for debugging
+
+2009-02-16 20:51  matzke
+
+	* [r4504]
+	  /trunk/ROSE/projects/assemblyToSourceAst/x86InstructionSemantics.h:
+	  Expanded STRINGOP_UPDATE_REG_COND macro for debugging
+
+2009-02-16 20:51  matzke
+
+	* [r4503]
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/robb.C,
+	  /trunk/ROSE/projects/assemblyToSourceAst/x86InstructionSemantics.h:
+	  checkpoint
+
+2009-02-16 20:51  matzke
+
+	* [r4502]
+	  /trunk/ROSE/projects/BinaryConstantPropagation/findConstants.h:
+	  Added abbreviated RegisterSet output
+
+2009-02-16 20:50  matzke
+
+	* [r4501]
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/robb.C,
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/test5.c,
+	  /trunk/ROSE/developersScratchSpace/Robb/DynamicLinking/test6.c:
+	  Ability to detect signal handlers with sigaction
+	  
+	  This works when sigaction is called with a struct siaction
+	  address which
+	  is filled in with a signal handler address which is a constant or
+	  a
+	  function argument.
+	  
+	  It also works for a wrapper to which an already initialized
+	  sigaction
+	  struct is passed, as long as the caller of the wrapper is the
+	  function
+	  where the siaction struct is initialized.
+	  
+	  See example code: test4.c test5.c test6.c
+
+2009-02-16 20:49  matzke
+
+	* [r4500]
+	  /trunk/ROSE/projects/BinaryConstantPropagation/findConstants.h:
+	  Minor format changes
+
 2009-02-16 17:58  liao6
 
 	* [r4497] /trunk/ROSE/projects/autoTuning/autoTuning.C,
