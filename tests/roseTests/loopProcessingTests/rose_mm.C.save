@@ -1,7 +1,7 @@
 
 int min2(int a0,int a1)
 {
-  return a0 < a1?a0:a1;
+  return a0 < a1?a0 : a1;
 }
 
 #define N 50
