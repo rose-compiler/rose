@@ -1,3 +1,24 @@
+2009-02-17 15:01  matzke
+
+	* [r4527] /trunk/ROSE/scripts/rosegit,
+	  /trunk/ROSE/scripts/rosegit/bin,
+	  /trunk/ROSE/scripts/rosegit/bin/README,
+	  /trunk/ROSE/scripts/rosegit/bin/quick-test,
+	  /trunk/ROSE/scripts/rosegit/bin/rat-test,
+	  /trunk/ROSE/scripts/rosegit/bin/rosegit-ats,
+	  /trunk/ROSE/scripts/rosegit/bin/rosegit-env,
+	  /trunk/ROSE/scripts/rosegit/bin/rosegit-functions.sh,
+	  /trunk/ROSE/scripts/rosegit/bin/rosegit-robotic-test,
+	  /trunk/ROSE/scripts/rosegit/bin/rosegit-src,
+	  /trunk/ROSE/scripts/rosegit/bin/test-env,
+	  /trunk/ROSE/scripts/rosegit/config,
+	  /trunk/ROSE/scripts/rosegit/config/README,
+	  /trunk/ROSE/scripts/rosegit/config/defaults.conf,
+	  /trunk/ROSE/scripts/rosegit/config/rat.rpm.conf,
+	  /trunk/ROSE/scripts/rosegit/config/rat.trunk.conf,
+	  /trunk/ROSE/scripts/rosegit/config/rpm.conf: Added rosegit
+	  scripts
+
 2009-02-16 20:56  matzke
 
 	* [r4511]
