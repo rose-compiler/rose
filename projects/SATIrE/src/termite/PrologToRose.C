@@ -2311,25 +2311,30 @@ PrologToRose::abort_unless(bool condition,string message) {
 
 /** create bit deque from PrologList*/
 SgBitVector*
-PrologToRose::createBitVector(PrologTerm* t) {
+PrologToRose::createBitVector(PrologTerm* t, map<string, int> names) {
   /*cast the argument to the list and extract elements*/
   PrologList* l = dynamic_cast<PrologList*>(t);
   ROSE_ASSERT(t != 0);
   deque<PrologTerm*>* succs = l->getSuccs();
   /*create a bit vector*/
-  vector<bool>* bv = new vector<bool>();
+  SgBitVector* bv = new SgBitVector();
+  bv->resize(names.size(), false);
   /*extract bits from list*/
   deque<PrologTerm*>::iterator it = succs->begin();
   while(it != succs->end()) {
-    PrologInt * i = NULL;
-    i = dynamic_cast<PrologInt*>(*it);
-    ROSE_ASSERT(i != NULL);
-    bv->push_back((bool) i->getValue());
+    PrologAtom *a = dynamic_cast<PrologAtom*>(*it);
+    ROSE_ASSERT(a != NULL);
+    (*bv)[names[a->getName()]] = true;
     it++;
   }
   return bv;
 }
 
+/** create enum from PrologAtom */
+int
+PrologToRose::createEnum(PrologAtom* a, map<string, int> names) {
+  return names[a->getName()];
+}
 
 /**
  * create SgEnumDeclaration
@@ -2678,7 +2683,6 @@ PrologToRose::createVarArgCopyOp(Sg_File_Info* fi, SgNode* child1,SgNode* child2
   return o;
 }
 
-
 /**
  * create SgAccessModifier
  */
@@ -2688,7 +2692,9 @@ PrologToRose::createAccessModifier(PrologTerm* t) {
   ROSE_ASSERT(c != NULL);
   SgAccessModifier* a = new SgAccessModifier();
   ROSE_ASSERT(a != NULL);
-  a->set_modifier((SgAccessModifier::access_modifier_enum) toInt(c->at(0)));
+  a->set_modifier((SgAccessModifier::access_modifier_enum) 
+		  createEnum((PrologAtom*)c->at(0), 
+			      roseEnums.access_modifier));
   return a;
 }
 /**
@@ -2700,8 +2706,12 @@ PrologToRose::createBaseClassModifier(PrologTerm* t) {
   ROSE_ASSERT(c != NULL);
   SgBaseClassModifier* b = new SgBaseClassModifier();
   ROSE_ASSERT(b != NULL);
-  b->set_modifier((SgBaseClassModifier::baseclass_modifier_enum) toInt(c->at(0)));
-  b->get_accessModifier().set_modifier((SgAccessModifier::access_modifier_enum) toInt(c->at(1)));
+  b->set_modifier((SgBaseClassModifier::baseclass_modifier_enum) 
+    toInt(c->at(0)));
+
+  b->get_accessModifier().set_modifier(
+   (SgAccessModifier::access_modifier_enum) 
+   createEnum((PrologAtom*)c->at(1), roseEnums.access_modifier));
   return b;
 }
 /**
@@ -2713,7 +2723,7 @@ PrologToRose::createFunctionModifier(PrologTerm* t) {
   ROSE_ASSERT(c != NULL);
   //extract bit vector list and create bit vector
   // ( cast done in createBitVector)
-  SgBitVector b =	*(createBitVector(c->at(0)));
+  SgBitVector b = *(createBitVector(c->at(0), roseEnums.function_modifier));
   SgFunctionModifier* m = new SgFunctionModifier();
   ROSE_ASSERT(m != NULL);
   m->set_modifierVector(b);
@@ -2728,7 +2738,8 @@ PrologToRose::createSpecialFunctionModifier(PrologTerm* t) {
   ROSE_ASSERT(c != NULL);
   //extract bit vector list and create bit vector
   // ( cast done in createBitVector)
-  SgBitVector b =	*(createBitVector(c->at(0)));
+  SgBitVector b = *(createBitVector(c->at(0), 
+				    roseEnums.special_function_modifier));
   SgSpecialFunctionModifier* m = new SgSpecialFunctionModifier();
   ROSE_ASSERT(m != NULL);
   m->set_modifierVector(b);
@@ -2738,31 +2749,14 @@ PrologToRose::createSpecialFunctionModifier(PrologTerm* t) {
 /**
  * create SgStorageModifier
  */
-// GB (2008-12-11)
-SgStorageModifier::storage_modifier_enum
-PrologToRose::parseStorageModifier(PrologAtom* a) {
-  SgStorageModifier::storage_modifier_enum result;
-  if (a->getName() == "s_extern")
-    result = SgStorageModifier::e_extern;
-  else if (a->getName() == "s_static")
-    result = SgStorageModifier::e_static;
-  else if (a->getName() == "s_auto")
-    result = SgStorageModifier::e_auto;
-  else if (a->getName() == "s_register")
-    result = SgStorageModifier::e_register;
-  else if (a->getName() == "s_mutable")
-    result = SgStorageModifier::e_mutable;
-  else
-    result = SgStorageModifier::e_default;
-  return result;
-}
 SgStorageModifier*
 PrologToRose::createStorageModifier(PrologTerm* t) {
   PrologCompTerm* c = isPrologCompTerm(t);
   ROSE_ASSERT(c != NULL);
   SgStorageModifier* a = new SgStorageModifier();
   ROSE_ASSERT(a != NULL);
-  a->set_modifier(parseStorageModifier((PrologAtom*) c->at(0)));
+  a->set_modifier((SgStorageModifier::storage_modifier_enum)
+	  createEnum((PrologAtom*)c->at(0), roseEnums.storage_modifier));
   return a;
 }
 /**
@@ -2789,23 +2783,7 @@ PrologToRose::createElaboratedTypeModifier(PrologTerm* t) {
   a->set_modifier((SgElaboratedTypeModifier::elaborated_type_modifier_enum) toInt(c->at(0)));
   return a;
 }
-/**
- * parse SgConstVolatileModifier atom (auxiliary function)
- */
-// GB (2008-12-11): Introduced this function to support the use of
-// descriptive atoms rather than numeric constants for enumeration values.
-SgConstVolatileModifier::cv_modifier_enum
-PrologToRose::parseConstVolatileModifier(PrologAtom* a) {
-  ROSE_ASSERT(a != NULL);
-  SgConstVolatileModifier::cv_modifier_enum result;
-  if (a->getName() == "cv_const")
-    result = SgConstVolatileModifier::e_const;
-  else if (a->getName() == "cv_volatile")
-    result = SgConstVolatileModifier::e_volatile;
-  else
-    result = SgConstVolatileModifier::e_default;
-  return result;
-}
+
 /**
  * create SgConstVolatileModifier
  */
@@ -2815,7 +2793,8 @@ PrologToRose::createConstVolatileModifier(PrologTerm* t) {
   ROSE_ASSERT(c != NULL);
   SgConstVolatileModifier* a = new SgConstVolatileModifier();
   ROSE_ASSERT(a != NULL);
-  a->set_modifier(parseConstVolatileModifier((PrologAtom*) c->at(0)));
+  a->set_modifier((SgConstVolatileModifier::cv_modifier_enum)
+		  createEnum((PrologAtom*)c->at(0), roseEnums.cv_modifier));
   return a;
 }
 /**
@@ -2855,11 +2834,15 @@ PrologToRose::setTypeModifier(PrologTerm* t, SgTypeModifier* tm) {
   ROSE_ASSERT(c != NULL);
   ROSE_ASSERT(tm != NULL);
   /* set bit vector and internal modifiers*/
-  SgBitVector b =	*(createBitVector(c->at(0)));
+  SgBitVector b = *(createBitVector(c->at(0), roseEnums.type_modifier));
   tm->set_modifierVector(b);
-  tm->get_upcModifier().set_modifier((SgUPC_AccessModifier::upc_access_modifier_enum) toInt(c->at(1)));
-  tm->get_constVolatileModifier().set_modifier(parseConstVolatileModifier((PrologAtom*) c->at(2)));
-  tm->get_elaboratedTypeModifier().set_modifier((SgElaboratedTypeModifier::elaborated_type_modifier_enum) toInt(c->at(3)));
+  tm->get_upcModifier().set_modifier(
+    (SgUPC_AccessModifier::upc_access_modifier_enum) toInt(c->at(1)));
+  tm->get_constVolatileModifier().set_modifier(
+    (SgConstVolatileModifier::cv_modifier_enum)
+    createEnum((PrologAtom*)c->at(2), roseEnums.cv_modifier));
+  tm->get_elaboratedTypeModifier().set_modifier(
+    (SgElaboratedTypeModifier::elaborated_type_modifier_enum) toInt(c->at(3)));
 }
 
 /**
@@ -2885,13 +2868,16 @@ PrologToRose::setDeclarationModifier(PrologTerm* t, SgDeclarationModifier* d) {
   PrologCompTerm* c = isPrologCompTerm(t);
   ROSE_ASSERT(c != NULL);
   /* create and set bit vector*/
-  SgBitVector b =	*(createBitVector(c->at(0)));
+  SgBitVector b = *(createBitVector(c->at(0), roseEnums.declaration_modifier));
   d->set_modifierVector(b);
   /* set type modifier values*/
   setTypeModifier(c->at(1),&(d->get_typeModifier()));
   /* set access modifier value*/
-  d->get_accessModifier().set_modifier((SgAccessModifier::access_modifier_enum) toInt(c->at(2)));
-  d->get_storageModifier().set_modifier(parseStorageModifier((PrologAtom*) c->at(3)));
+  d->get_accessModifier().set_modifier((SgAccessModifier::access_modifier_enum) 
+     createEnum((PrologAtom*)c->at(2), roseEnums.access_modifier));
+  d->get_storageModifier().set_modifier(
+     (SgStorageModifier::storage_modifier_enum)
+     createEnum((PrologAtom*)c->at(3), roseEnums.storage_modifier));
 }
 
 /**

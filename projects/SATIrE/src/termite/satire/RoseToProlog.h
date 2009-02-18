@@ -7,6 +7,7 @@ Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
 #define PROLOGSUPPORT_H_ 
 #include <satire_rose.h>
 #include "termite.h"
+#include "RoseEnums.h"
 #include <string>
 #include <vector>
 
@@ -15,73 +16,78 @@ Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
  *
  */
 class RoseToProlog {
-	public:
-		static void addSpecific(SgNode*,PrologCompTerm*);
-		static PrologCompTerm* getFileInfo(Sg_File_Info*);
-		static std::string prologize(std::string);
-                static std::string escape_string(std::string s);
-	private:
-		static PrologTerm* getFunctionDeclarationSpecific(SgFunctionDeclaration*);
-		static PrologTerm* getUnaryOpSpecific(SgUnaryOp*);
-		static PrologTerm* getBinaryOpSpecific(SgBinaryOp*);
-		static PrologTerm* getValueExpSpecific(SgValueExp*);
-		static PrologTerm* getInitializedNameSpecific(SgInitializedName*);
-		static PrologTerm* getVarRefExpSpecific(SgVarRefExp*);
-		static PrologTerm* getAssignInitializerSpecific(SgAssignInitializer*);
-		static PrologTerm* getTypeSpecific(SgType*);
-		static PrologTerm* getFunctionTypeSpecific(SgType*);
-		static PrologTerm* getPointerTypeSpecific(SgType*);
-		static PrologTerm* getClassTypeSpecific(SgType*);
-		static PrologTerm* getTypedefTypeSpecific(SgType*);
-		static PrologTerm* getEnumTypeSpecific(SgType*);
-		static PrologTerm* getClassDeclarationSpecific(SgClassDeclaration*);
-		static PrologTerm* getClassDefinitionSpecific(SgClassDefinition*);
-		static PrologTerm* getBitVector(SgBitVector v);
-		static PrologTerm* getLabelStatementSpecific(SgLabelStatement*);
-		static PrologTerm* getGotoStatementSpecific(SgGotoStatement*);
-		static PrologTerm* getConditionalExpSpecific(SgConditionalExp*);
-		static PrologTerm* getEnumDeclarationSpecific(SgEnumDeclaration*);
-		static PrologTerm* getDeclarationAttributes(SgDeclarationStatement*);
-		static PrologTerm* traverseSingleNode(SgNode*);
-		static PrologTerm* getDeleteExpSpecific(SgDeleteExp*);
-		static PrologTerm* getRefExpSpecific(SgRefExp*);
-		static PrologTerm* getVarArgSpecific(SgExpression*);
-		static PrologTerm* getAccessModifierSpecific(SgAccessModifier*);
-		static PrologTerm* getBaseClassModifierSpecific(SgBaseClassModifier*); 
-		static PrologTerm* getFunctionModifierSpecific(SgFunctionModifier*);
-		static PrologTerm* getSpecialFunctionModifierSpecific(SgSpecialFunctionModifier*);
-		static PrologTerm* getLinkageModifierSpecific(SgLinkageModifier*);
-        static PrologAtom* createStorageModifierAtom(SgStorageModifier&);
-		static PrologTerm* getStorageModifierSpecific(SgStorageModifier*);
-		static PrologTerm* getElaboratedTypeModifierSpecific(SgElaboratedTypeModifier*);
-        static PrologAtom* createConstVolatileModifierAtom(SgConstVolatileModifier&);
-		static PrologTerm* getConstVolatileModifierSpecific(SgConstVolatileModifier*);
-		static PrologTerm* getUPC_AccessModifierSpecific(SgUPC_AccessModifier*);
-		static PrologTerm* getTypeModifierSpecific(SgTypeModifier*);
-		static PrologTerm* getDeclarationModifierSpecific(SgDeclarationModifier*);
-		static PrologTerm* getArrayTypeSpecific(SgType*);
-		static PrologTerm* getModifierTypeSpecific(SgType*);
-		static PrologTerm* getFunctionRefExpSpecific(SgFunctionRefExp*);
-		static PrologTerm* getFunctionCallExpSpecific(SgFunctionCallExp*);
-		static PrologTerm* getMemberFunctionDeclarationSpecific(SgMemberFunctionDeclaration*);
-		static PrologTerm* getTypePtrListSpecific(SgTypePtrList&);
-		static PrologTerm* getMemberFunctionTypeSpecific(SgType*);
-		static PrologTerm* getClassScopeName(SgClassDefinition*);
-		static PrologTerm* getMemberFunctionSymbolSpecific(SgMemberFunctionSymbol*);
-		static PrologTerm* getMemberFunctionRefExpSpecific(SgMemberFunctionRefExp*);
-		static PrologTerm* getNamespaceScopeName(SgNamespaceDefinitionStatement*);
-		static PrologTerm* getNamespaceDeclarationStatementSpecific(SgNamespaceDeclarationStatement*);
-		static PrologTerm* getSizeOfOpSpecific(SgSizeOfOp*);
-		static PrologTerm* getVariableDeclarationSpecific(SgVariableDeclaration*);
-		static PrologTerm* getTypedefDeclarationSpecific(SgTypedefDeclaration*);
-		static PrologTerm* getConstructorInitializerSpecific(SgConstructorInitializer*);
-		static PrologTerm* getNewExpSpecific(SgNewExp*);
+public:
+  void addSpecific(SgNode*,PrologCompTerm*);
+  PrologCompTerm* getFileInfo(Sg_File_Info*);
+  static std::string prologize(std::string);
+  static std::string escape_string(std::string s);
+private:
+  RoseEnums roseEnums;
+  PrologTerm* getFunctionDeclarationSpecific(SgFunctionDeclaration*);
+  PrologTerm* getUnaryOpSpecific(SgUnaryOp*);
+  PrologTerm* getBinaryOpSpecific(SgBinaryOp*);
+  PrologTerm* getValueExpSpecific(SgValueExp*);
+  PrologTerm* getInitializedNameSpecific(SgInitializedName*);
+  PrologTerm* getVarRefExpSpecific(SgVarRefExp*);
+  PrologTerm* getAssignInitializerSpecific(SgAssignInitializer*);
+  PrologTerm* getTypeSpecific(SgType*);
+  PrologTerm* getFunctionTypeSpecific(SgType*);
+  PrologTerm* getPointerTypeSpecific(SgType*);
+  PrologTerm* getClassTypeSpecific(SgType*);
+  PrologTerm* getTypedefTypeSpecific(SgType*);
+  PrologTerm* getEnumTypeSpecific(SgType*);
+  PrologTerm* getClassDeclarationSpecific(SgClassDeclaration*);
+  PrologTerm* getClassDefinitionSpecific(SgClassDefinition*);
+  PrologTerm* getBitVector(const SgBitVector&, const std::vector<std::string>&);
+  PrologTerm* getEnum(int enum_val, const std::vector<std::string>&);
 
-		static PrologTerm* getPragmaSpecific(SgPragma*);
+  PrologTerm* getLabelStatementSpecific(SgLabelStatement*);
+  PrologTerm* getGotoStatementSpecific(SgGotoStatement*);
+  PrologTerm* getConditionalExpSpecific(SgConditionalExp*);
+  PrologTerm* getEnumDeclarationSpecific(SgEnumDeclaration*);
+  PrologTerm* getDeclarationAttributes(SgDeclarationStatement*);
+  PrologTerm* traverseSingleNode(SgNode*);
+  PrologTerm* getDeleteExpSpecific(SgDeleteExp*);
+  PrologTerm* getRefExpSpecific(SgRefExp*);
+  PrologTerm* getVarArgSpecific(SgExpression*);
+  //PrologTerm* getAccessModifierSpecific(SgAccessModifier*);
+  PrologTerm* getBaseClassModifierSpecific(SgBaseClassModifier*); 
+  PrologTerm* getFunctionModifierSpecific(SgFunctionModifier*);
+  PrologTerm* getSpecialFunctionModifierSpecific(SgSpecialFunctionModifier*);
+  PrologTerm* getLinkageModifierSpecific(SgLinkageModifier*);
+  PrologAtom* createStorageModifierAtom(SgStorageModifier&);
+  PrologAtom* createAccessModifierAtom(SgAccessModifier&);
+  PrologTerm* getStorageModifierSpecific(SgStorageModifier*);
+  PrologTerm* getElaboratedTypeModifierSpecific(SgElaboratedTypeModifier*);
+  PrologAtom* createConstVolatileModifierAtom(SgConstVolatileModifier&);
+  PrologTerm* getConstVolatileModifierSpecific(SgConstVolatileModifier*);
+  PrologTerm* getUPC_AccessModifierSpecific(SgUPC_AccessModifier*);
+  PrologTerm* getTypeModifierSpecific(SgTypeModifier*);
+  PrologTerm* getDeclarationModifierSpecific(SgDeclarationModifier*);
+  PrologTerm* getArrayTypeSpecific(SgType*);
+  PrologTerm* getModifierTypeSpecific(SgType*);
+  PrologTerm* getFunctionRefExpSpecific(SgFunctionRefExp*);
+  PrologTerm* getFunctionCallExpSpecific(SgFunctionCallExp*);
+  PrologTerm* getMemberFunctionDeclarationSpecific(SgMemberFunctionDeclaration*);
+  PrologTerm* getTypePtrListSpecific(SgTypePtrList&);
+  PrologTerm* getMemberFunctionTypeSpecific(SgType*);
+  PrologTerm* getClassScopeName(SgClassDefinition*);
+  PrologTerm* getMemberFunctionSymbolSpecific(SgMemberFunctionSymbol*);
+  PrologTerm* getMemberFunctionRefExpSpecific(SgMemberFunctionRefExp*);
+  PrologTerm* getNamespaceScopeName(SgNamespaceDefinitionStatement*);
+  PrologTerm* getNamespaceDeclarationStatementSpecific(SgNamespaceDeclarationStatement*);
+  PrologTerm* getSizeOfOpSpecific(SgSizeOfOp*);
+  PrologTerm* getVariableDeclarationSpecific(SgVariableDeclaration*);
+  PrologTerm* getTypedefDeclarationSpecific(SgTypedefDeclaration*);
+  PrologTerm* getConstructorInitializerSpecific(SgConstructorInitializer*);
+  PrologTerm* getNewExpSpecific(SgNewExp*);
+
+  PrologTerm* getPragmaSpecific(SgPragma*);
 		
-		static char toLower(const char);
-		static bool isUpper(const char);
+  static char toLower(const char);
+  static bool isUpper(const char);
 		
 	       	
 };
+
 #endif

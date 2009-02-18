@@ -28,7 +28,7 @@ lib_LIBRARIES = libtermite.a
 libtermite_a_SOURCES = \
 	RoseToProlog.C \
 	dfiparser.tab.c++ dfiparser.tab.h++ dfiscanner.c++ \
-	PrologToRose.C PrologTerm.C
+	PrologToRose.C PrologTerm.C RoseEnums.C
 
 
 dfiparser.tab.c++: $(srcdir)/dfiparser.y++ Makefile
@@ -65,7 +65,8 @@ nobase_include_HEADERS = \
 	satire/PrologAtom.h \
 	satire/PrologInt.h \
 	satire/PrologVariable.h \
-	satire/RoseToProlog.h
+	satire/RoseToProlog.h \
+	satire/RoseEnums.h
 
 if WITH_SWI_PROLOG
   INCLUDES += -I$(SWI_PROLOG_INCLUDE_DIR) 

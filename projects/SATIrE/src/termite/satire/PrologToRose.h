@@ -6,7 +6,10 @@ Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
 #define PROLOGTOROSE_H_
 #include <satire_rose.h>
 #include "termite.h"
+#include "RoseEnums.h"
 #include <iostream>
+#include <string>
+#include <map>
 
 /**
  * Class for creating a ROSE-IR (made for unparsing)
@@ -21,6 +24,7 @@ public:
   SgNode* toRose(const char* filename);
 
 private:
+  RoseEnums roseEnums;
   /* arity specific node generation*/
   SgNode* leafToRose(PrologCompTerm*, std::string);
   SgNode* unaryToRose(PrologCompTerm*, std::string);
@@ -49,7 +53,9 @@ private:
   void testFileInfo(Sg_File_Info*);
   SgClassDeclaration* createDummyClassDeclaration(std::string, int);
   SgMemberFunctionDeclaration* createDummyMemberFunctionDeclaration(std::string s,int c_type); /* TODO */
-  SgBitVector* createBitVector(PrologTerm*);
+  SgBitVector* createBitVector(PrologTerm*, std::map<std::string, int>);
+  int createEnum(PrologAtom* a, std::map<std::string, int> names);
+
   SgLabelStatement* makeLabel(Sg_File_Info*, std::string);
   PrologInt* isPrologInt(PrologTerm*);
   PrologList* isPrologList(PrologTerm*);
@@ -66,11 +72,10 @@ private:
   SgBaseClassModifier* createBaseClassModifier(PrologTerm*);
   SgFunctionModifier* createFunctionModifier(PrologTerm*);
   SgSpecialFunctionModifier* createSpecialFunctionModifier(PrologTerm*);
-  SgStorageModifier::storage_modifier_enum parseStorageModifier(PrologAtom*);
+
   SgStorageModifier* createStorageModifier(PrologTerm*);
   SgLinkageModifier* createLinkageModifier(PrologTerm*);
   SgElaboratedTypeModifier* createElaboratedTypeModifier(PrologTerm*);
-  SgConstVolatileModifier::cv_modifier_enum parseConstVolatileModifier(PrologAtom*);
   SgConstVolatileModifier* createConstVolatileModifier(PrologTerm*);
   SgUPC_AccessModifier* createUPC_AccessModifier(PrologTerm*);
   SgTypeModifier* createTypeModifier(PrologTerm*);

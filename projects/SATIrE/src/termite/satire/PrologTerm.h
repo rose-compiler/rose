@@ -37,11 +37,14 @@ class PrologTerm {
 
   /// Properly quote an atom if necessary
   static std::string quote(const std::string atom) {
+    std::string s;
     if (atom.length() == 0) return "''";
     if (((atom.length() > 0) && (!islower(atom[0])) && (!isdigit(atom[0])))
-	|| contains_bad_char(atom)) {
-      std::string s;
-      s = "'" + atom  + "'";
+	|| needs_quotes(atom)) {
+      s = "'" + atom + "'";
+      return s;
+    } else if (is_reserved_operator(atom)) {
+      s = "(" + atom + ")";
       return s;
     }
     return atom;
@@ -49,7 +52,11 @@ class PrologTerm {
 
 protected:
 
-  static bool contains_bad_char(const std::string s) {
+  static bool is_reserved_operator(const std::string s) {
+    return s == "volatile";
+  }
+
+  static bool needs_quotes(const std::string s) {
     if (s.length() == 0) 
       return true;
 
