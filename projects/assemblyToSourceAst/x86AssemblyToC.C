@@ -298,17 +298,27 @@ struct X86CTranslationPolicy: public CTranslationPolicy {
   }
 
   template <size_t Len>
-  void writeMemory(X86SegmentRegister segreg, WordWithExpression<32> address, WordWithExpression<Len> data, WordWithExpression<1> cond) {
-    SgFunctionSymbol* mwSym = NULL;
-    switch (Len) {
-      case 8: mwSym = memoryWriteByteSym; break;
-      case 16: mwSym = memoryWriteWordSym; break;
-      case 32: mwSym = memoryWriteDWordSym; break;
-      case 64: mwSym = memoryWriteQWordSym; break;
-      default: ROSE_ASSERT (false);
-    }
-    ROSE_ASSERT (mwSym);
-    appendStatement(buildIfStmt(buildNotEqualOp(cond.expr(), buildIntVal(0)), buildExprStatement(buildFunctionCallExp(mwSym, buildExprListExp(address.expr(), data.expr()))), NULL), bb);
+  void writeMemory(X86SegmentRegister segreg, WordWithExpression<32> address, WordWithExpression<Len> data,
+                   WordWithExpression<1> cond) {
+      SgFunctionSymbol* mwSym = NULL;
+      switch (Len) {
+        case 8: mwSym = memoryWriteByteSym; break;
+        case 16: mwSym = memoryWriteWordSym; break;
+        case 32: mwSym = memoryWriteDWordSym; break;
+        case 64: mwSym = memoryWriteQWordSym; break;
+        default: ROSE_ASSERT (false);
+      }
+      ROSE_ASSERT (mwSym);
+      appendStatement(buildIfStmt(buildNotEqualOp(cond.expr(), buildIntVal(0)),
+                                  buildExprStatement(buildFunctionCallExp(mwSym, buildExprListExp(address.expr(),
+                                                                                                  data.expr()))),
+                                  NULL),
+                      bb);
+  }
+  template <size_t Len>
+  void writeMemory(X86SegmentRegister segreg, WordWithExpression<32> address, WordWithExpression<Len> data,
+                   WordWithExpression<32> repeat, WordWithExpression<1> cond) {
+      writeMemory(segreg, address, data, cond);
   }
 
 // Thee might exist so that static analysis can be used to generate more about the indirect jump.

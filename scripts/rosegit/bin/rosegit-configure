@@ -1,0 +1,16 @@
+#!/bin/bash
+#
+# Configures ROSE:
+#    1. Runs "build" in the source tree if it looks like it needs it
+#    2. Runs whatever configure command was set in the rosegit configuration files for this user and branch
+#
+# You may run this script from any directory in the build tree.
+#
+# See rat-test for additional documentation.
+
+mydir=${0%/*}
+source $mydir/rosegit-functions.sh || exit 1
+rosegit_tester_preamble
+
+[ -f $ROSE_SRC/configure ] || rosegit_run "build" "(cd $ROSE_SRC && ./build)" || exit 1
+rosegit_run "configure" "(cd $ROSE_BLD && $ROSEGIT_CONFIGURE)" || exit 1

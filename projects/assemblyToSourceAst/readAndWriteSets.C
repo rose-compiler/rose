@@ -241,6 +241,10 @@ struct ReadAndWriteSetPolicy {
   void writeMemory(X86SegmentRegister segreg, const W<32>& addr, const W<Len>& data, W<1> cond) {
     readAndWriteSets[currentAddr].writtenMemory = true;
   }
+  template <size_t Len>
+  void writeMemory(X86SegmentRegister segreg, const W<32>& addr, const W<Len>& data, const W<32> repeat, W<1> cond) {
+      writeMemory(segreg, addr, data, cond);
+  }
 
   W<32> filterIndirectJumpTarget(const W<32>& addr) {return addr;}
   W<32> filterCallTarget(const W<32>& addr) {return addr;}

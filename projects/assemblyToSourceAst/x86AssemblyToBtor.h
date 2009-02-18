@@ -299,10 +299,17 @@ struct BtorTranslationPolicy {
 
   template <size_t Len>
   void writeMemory(X86SegmentRegister segreg, const BtorWordType<32>& addr, const BtorWordType<Len>& data, BtorWordType<1> cond) {
-    BOOST_STATIC_ASSERT (Len % 8 == 0);
-    for (size_t i = 0; i < Len / 8; ++i) {
-      writeMemoryByte(segreg, (i == 0 ? (Comp)addr : problem.build_op_add(addr, problem.build_constant(32, i))), extractVar(data, i * 8, i * 8 + 8), cond);
-    }
+      BOOST_STATIC_ASSERT (Len % 8 == 0);
+      for (size_t i = 0; i < Len / 8; ++i) {
+          writeMemoryByte(segreg, (i == 0 ? (Comp)addr : problem.build_op_add(addr, problem.build_constant(32, i))),
+                          extractVar(data, i * 8, i * 8 + 8), cond);
+      }
+  }
+
+  template <size_t Len>
+  void writeMemory(X86SegmentRegister segreg, const BtorWordType<32>& addr, const BtorWordType<Len>& data,
+                   BtorWordType<32> repeat, BtorWordType<1> cond) {
+      writeMemory(segreg, addr, data, cond);
   }
 
   BtorWordType<32> filterIndirectJumpTarget(const BtorWordType<32>& addr);

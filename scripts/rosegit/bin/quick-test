@@ -19,8 +19,8 @@ rosegit_tester_preamble
 [ -f $ROSE_BLD/Makefile ] || [ $ROSE_BLD/Makefile -nt $ROSE_SRC/configure ] ||\
     rosegit_run "configure" "(cd $ROSE_BLD && $ROSEGIT_CONFIGURE)" || exit 1
 
-rosegit_run "make (src)"               rose-make -C $ROSE_BLD/src || exit 1
-rosegit_run "make (compass)"           rose-make -C $ROSE_BLD/projects/compass && rose-make || exit 1
-rosegit_run "make (Dan/Disassembler)"  rose-make -C $ROSE_BLD/developersScratchSpace/Dan/Disassembler_tests || exit 1
-rosegit_run "make (Dan/translator)"    rose-make -C $ROSE_BLD/developersScratchSpace/Dan/translator_tests || exit 1
-rosegit_run "make (Robb)"              rose-make -C $ROSE_BLD/developersScratchSpace/Robb || exit 1
+rosegit_run "make (src)"               rosegit_make -C $ROSE_BLD/src || exit 1
+rosegit_run "make (compass)"           rosegit_make -C $ROSE_BLD/projects/compass || exit 1
+rosegit_run "make (Dan/Disassembler)"  rosegit_make -C $ROSE_BLD/developersScratchSpace/Dan/Disassembler_tests || exit 1
+rosegit_run "make (Dan/translator)"    rosegit_make -C $ROSE_BLD/developersScratchSpace/Dan/translator_tests || exit 1
+rosegit_run "make (Robb)"              rosegit_make -C $ROSE_BLD/developersScratchSpace/Robb || exit 1

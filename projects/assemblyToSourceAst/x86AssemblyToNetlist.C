@@ -291,17 +291,22 @@ struct NetlistTranslationPolicy {
   }
 
   void writeMemoryByte(X86SegmentRegister segreg, const LitList(32)& addr, const LitList(8)& data, Lit cond) {
-    // fprintf(stderr, "memory%zu = write(memory%zu, addr, data, cond)\n", memoryIndexCounter, currentMemoryIndex);
-    MemoryAccess ma(addr, data, problem.andGate(cond, isThisIp));
-    if (memoryWrites.size() <= currentMemoryIndex) {
-      memoryWrites.resize(currentMemoryIndex + 1);
-    }
-    memoryWrites[currentMemoryIndex].push_back(ma);
-    ++currentMemoryIndex;
+      // fprintf(stderr, "memory%zu = write(memory%zu, addr, data, cond)\n", memoryIndexCounter, currentMemoryIndex);
+      MemoryAccess ma(addr, data, problem.andGate(cond, isThisIp));
+      if (memoryWrites.size() <= currentMemoryIndex) {
+          memoryWrites.resize(currentMemoryIndex + 1);
+      }
+      memoryWrites[currentMemoryIndex].push_back(ma);
+      ++currentMemoryIndex;
   }
 
   template <size_t Len>
   void writeMemory(X86SegmentRegister segreg, const LitList(32)& addr, const LitList(Len)& data, LitList(1) cond) {
+    WriteMemoryHelper<Len, 0, NetlistTranslationPolicy>::go(segreg, addr, data, cond[0], *this);
+  }
+  template <size_t Len>
+  void writeMemory(X86SegmentRegister segreg, const LitList(32)& addr, const LitList(Len)& data, const LitList(32)& repeat, 
+                   LitList(1) cond) {
     WriteMemoryHelper<Len, 0, NetlistTranslationPolicy>::go(segreg, addr, data, cond[0], *this);
   }
 

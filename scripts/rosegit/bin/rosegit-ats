@@ -171,7 +171,7 @@ export ROSE_BLD=$builddir
 # Run the test
 tester_result=pass
 starttime=$(date +%s)
-(cd $builddir && (eval "$tester") 6>&1 >$tester_output 2>&1) || tester_result=fail
+(cd $builddir && (PATH="$PATH:$mydir" eval "$tester") 6>&1 >$tester_output 2>&1) || tester_result=fail
 endtime=$(date +%s)
 
 # Build messages heads

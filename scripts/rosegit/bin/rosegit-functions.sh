@@ -356,18 +356,9 @@ rosegit_tags_of () {
     echo $tags
 }
 
-# Returns the name of the test script
+# Returns the name of the test script. This could be a file name or a whole shell command.
 rosegit_tester () {
-    [ -n "$ROSEGIT_TESTER" ] || ROSEGIT_TESTER=rosegit_runtest
-    local cmd=$(echo "$ROSEGIT_TESTER" |perl -ane 'print $F[0]')
-
-    if (echo "$cmd" |grep / >/dev/null); then
-	: qualified name
-    elif type "$cmd" >/dev/null 2>&1; then
-	: found in path
-    else
-	ROSEGIT_TESTER="$mydir/$ROSEGIT_TESTER"
-    fi
+    [ -n "$ROSEGIT_TESTER" ] || rosegit_die "no test configured in ROSEGIT_TESTER"
     echo "$ROSEGIT_TESTER"
 }
 
@@ -378,6 +369,7 @@ rosegit_tester_preamble () {
     if [ ! -n "$ROSEGIT_LOADED" ]; then
 	local blddir=$ROSE_BLD; [ -n "$blddir" ] || blddir=$(rosegit_find_builddir)
 	local srcdir=$ROSE_SRC; [ -n "$srcdir" ] || srcdir=$(rosegit_find_sources $blddir)
+	[ -d "$srcdir" ] || rosegit_die "could not find source directory"
 	local branch=$(cd $srcdir && git branch |sed -n '/^\*/s/^\* //p')
 	rosegit_load_config $srcdir $(rosegit_namespace) $branch $srcdir/scripts/rosegit/config
     fi

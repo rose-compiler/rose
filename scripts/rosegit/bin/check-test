@@ -1,0 +1,23 @@
+#!/bin/bash
+#
+# ./build    (if necessary)
+# configure  (if necessary)
+# make
+# make check (but not a distcheck)
+#
+# Does not do a "make distcheck" since that doubles the testing time.
+# You may run it from anywhere in the build tree.
+# See rat-test for additional documentation.
+
+mydir=${0%/*}
+source $mydir/rosegit-functions.sh || exit 1
+rosegit_tester_preamble
+
+[ -f $ROSE_SRC/configure ] ||\
+    rosegit_run "build" "(cd $ROSE_SRC && ./build)" || exit 1
+
+[ -f $ROSE_BLD/Makefile ] || [ $ROSE_BLD/Makefile -nt $ROSE_SRC/configure ] ||\
+    rosegit_run "configure" "(cd $ROSE_BLD && $ROSEGIT_CONFIGURE)" || exit 1
+
+rosegit_run "make"               rosegit_make -C $ROSE_BLD       || exit 1
+rosegit_run "make check"         rosegit_make -C $ROSE_BLD check || exit 1
