@@ -47,7 +47,7 @@ static void toolbarClick(int id)
   CompassGui *instance = QROSE::cbData<CompassGui *>();
   switch (id) 
   {      
-    case TB_RUN:                instance->run();       break;
+    case TB_RUN:                instance->run(); instance->select(TB_SEL_ALL); instance->refresh();      break;
     case TB_REFRESH:		instance->refresh();      break;
     case TB_RESET:		instance->reset();    break;
     case TB_SEL_ALL:          
