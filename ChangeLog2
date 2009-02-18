@@ -1,3 +1,86 @@
+2009-02-18 16:15  matzke
+
+	* [r4548] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/AsyncMilestone1b.odt,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/AsyncMilestone1b.pdf,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/AsyncSignalSafety.odp,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/AsyncSignalSafety.pdf,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/TestMakefile,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/asyncSafety.C,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/asyncSafetyOld.C,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test1.O0.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test1.O0.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test1.O3.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test1.O3.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test1.s.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test1.s.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test2.O0.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test2.O0.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test2.O3.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test2.O3.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test2.s.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test2.s.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test3.O0.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test3.O0.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test3.O3.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test3.O3.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test3.s.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test3.s.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test4.O0.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test4.O0.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test4.O3.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test4.O3.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test4.s.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test4.s.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test5.O0.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test5.O0.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test5.O3.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test5.O3.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test5.s.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test5.s.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test6.O0.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test6.O0.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test6.O3.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test6.O3.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test6.s.bin,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/i686-test6.s.bin.ans,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/test1.c,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/test2.c,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/test3.c,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/test4.c,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/test5.c,
+	  /trunk/ROSE/developersScratchSpace/Robb/AsyncSafety/test6.c,
+	  /trunk/ROSE/developersScratchSpace/Robb/Makefile.am: Moved some
+	  code that wasn't working anymore.
+
+2009-02-18 16:09  matzke
+
+	* [r4547]
+	  /trunk/ROSE/projects/assemblyToSourceAst/readAndWriteSets.C,
+	  /trunk/ROSE/projects/assemblyToSourceAst/x86AssemblyToBtor.h,
+	  /trunk/ROSE/projects/assemblyToSourceAst/x86AssemblyToC.C,
+	  /trunk/ROSE/projects/assemblyToSourceAst/x86AssemblyToNetlist.C,
+	  /trunk/ROSE/scripts/rosegit/bin/check-test,
+	  /trunk/ROSE/scripts/rosegit/bin/quick-test,
+	  /trunk/ROSE/scripts/rosegit/bin/rosegit-ats,
+	  /trunk/ROSE/scripts/rosegit/bin/rosegit-configure,
+	  /trunk/ROSE/scripts/rosegit/bin/rosegit-functions.sh,
+	  /trunk/ROSE/scripts/rosegit/config/defaults.conf,
+	  /trunk/ROSE/scripts/rosegit/config/rpm.conf: Various adjustments
+	  to rosegit scripts
+	  
+	  * Added file that runs build and configure
+	  * Append $PATH before running test
+	  * Added --enable-assembly-semantics to testing
+	  * rosegit-configure only runs "build" if it looks necessary
+	  * Fixed a couple bugs in rosegit scripts
+	  * Reorganized configure switches; added --with-pch
+	  * Removed calls to old code no longer present
+	  * New file for testing "make check"
+	  * defaults.conf was pointing to the wrong test target
+	  * Fixing compiler errors for missing functions
+
 2009-02-17 23:16  liao6
 
 	* [r4533]
