@@ -1,3 +1,18 @@
+2009-02-17 23:16  liao6
+
+	* [r4533]
+	  /trunk/ROSE/src/backend/unparser/CxxCodeGeneration/unparseCxx_expressions.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/Makefile-pass.inc,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/inputBug317.C,
+	  /trunk/ROSE/tests/roseTests/loopProcessingTests/rose_dgemm.C.save,
+	  /trunk/ROSE/tests/roseTests/loopProcessingTests/rose_lufac.C.save,
+	  /trunk/ROSE/tests/roseTests/loopProcessingTests/rose_lufac_split.C.save,
+	  /trunk/ROSE/tests/roseTests/loopProcessingTests/rose_mm.C.save,
+	  /trunk/ROSE/tests/roseTests/loopProcessingTests/rose_mm_cp2_bk3.C.save:
+	  Fixed bug 317 by enabling spacing around colon for expression
+	  a ? b : c
+	  otherwise compilation error when c have prefix like '::std'.
+
 2009-02-17 15:01  matzke
 
 	* [r4527] /trunk/ROSE/scripts/rosegit,
