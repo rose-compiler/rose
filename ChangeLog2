@@ -1,3 +1,16 @@
+2009-02-19 18:18  liao6
+
+	* [r4567]
+	  /trunk/ROSE/src/backend/unparser/CxxCodeGeneration/unparseCxx_expressions.C,
+	  /trunk/ROSE/src/backend/unparser/languageIndependenceSupport/modified_sage.C,
+	  /trunk/ROSE/src/backend/unparser/languageIndependenceSupport/unparseLanugageIndependentConstructs.h,
+	  /trunk/ROSE/src/frontend/SageIII/astPostProcessing/markLhsValues.C,
+	  /trunk/ROSE/src/midend/astDiagnostics/AstPerformance.C: Fixed the
+	  performance timing problem (bug 206)
+	  It was introduced by the work of porting ROSE to MAC OS
+	  The start timer was uninitialized.
+	  Added code to work around the isOperator() problem (bug 320)
+
 2009-02-19 01:34  saebjornsen1
 
 	* [r4555]
