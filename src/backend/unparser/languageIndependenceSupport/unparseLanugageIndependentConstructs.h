@@ -18,7 +18,7 @@ class Unparser;
 
 class UnparseLanguageIndependentConstructs
    {
-  // DQ (8/13/2007): This is a base class for the lanaguage dependent parts of the unparser.
+  // DQ (8/13/2007): This is a base class for the language dependent parts of the unparser.
 
      protected:
           Unparser* unp;

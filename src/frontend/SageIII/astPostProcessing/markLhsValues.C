@@ -7,7 +7,8 @@
 void
 markLhsValues( SgNode* node )
    {
-     TimingPerformance timer ("Fixup l-values:");
+// Liao, 2/19/2009, turn this off since it is called hundreds times and pollute the timing report   
+//     TimingPerformance timer ("Fixup l-values:");
 
      MarkLhsValues astFixupTraversal;
 
