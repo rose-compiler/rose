@@ -2836,6 +2836,19 @@ Unparse_ExprStmt::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
 
                     if ( (mfunc_ref != NULL) && mfunc_ref->get_symbol()->get_declaration()->get_specialFunctionModifier().isOperator() )
                          print_paren = false;
+#if 1  //Liao, work around for bug 320, operator flag for *i is not set properly, 2/18/2009
+       // Please turn this code off when the bug is fixed!                  
+                     if   (mfunc_ref != NULL)
+                     {
+                       string name = mfunc_ref->get_symbol()->get_name().getString();
+                       if (name=="operator*")
+                       {
+                         print_paren=false;
+                         if (mfunc_ref->get_symbol()->get_declaration()->get_specialFunctionModifier().isOperator() ==false)
+                           cerr<<"unparseCxx_expresssions.C error: found a function named as operator* which is not set as isOperator! \n Fixed its unparsing here temporarily but please consult bug 320!"<<endl;
+                       }
+                     }
+#endif                         
 
                  // DQ (2/20/2005) The operator()() is the parenthesis operator and for this case we do want to output "(" and ")"
                     if (unp->u_sage->isBinaryParenOperator(rhs) == true)

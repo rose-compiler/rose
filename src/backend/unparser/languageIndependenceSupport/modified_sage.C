@@ -607,7 +607,7 @@ int GetPrecedence(int variant)
    {
   // DQ (11/24/2007): This is a redundant mechanism for computing the precidence of expressions
 #if PRINT_DEVELOPER_WARNINGS
-     printf ("This is a redundant mechanism for computing the precidence of expressions \n");
+     printf ("This is a redundant mechanism for computing the precedence of expressions \n");
 #endif
 
      switch (variant)
@@ -692,6 +692,7 @@ int GetPrecedence(int variant)
           case V_SgLongLongIntVal:   return 0;
           case V_SgVarArgStartOp:    return 0;
           case V_SgNewExp:           return 0;
+          case V_SgDeleteExp:        return 0;
           case V_SgStringVal:        return 0;
           case V_SgCharVal:          return 0;
           case V_SgUnsignedLongLongIntVal: return 0;

@@ -700,7 +700,8 @@ TimingPerformance::TimingPerformance ( std::string s , bool outputReport )
 // Save the label explaining what the performance number means
    : AstPerformance(s,outputReport)
    {
-     // timer = clock();
+      timer = clock(); // Liao, 2/18/2009, fixing bug 2009. This has to be turned on 
+                      //since timer is used as the start time for calculating performance 
    }
 
 TimingPerformance::~TimingPerformance()
@@ -708,6 +709,12 @@ TimingPerformance::~TimingPerformance()
   // DQ (9/1/2006): Refactor the code to stop the timing so that we can call it in the 
   // destructor and the report generation (both trigger the stopping of all timers).
      assert(localData != NULL);
+     double p = ProcessingPhase::getCurrentDelta(timer);
+     if (p<0.0) // Liao, 2/18/2009, avoid future bug 
+     {
+       cerr<<"Error: AstPerformance.C TimingPerformance::~TimingPerformance() set negative performance value!"<<endl;
+       ROSE_ASSERT(false);
+     }
      localData->set_performance(ProcessingPhase::getCurrentDelta(timer));
      localData->set_resolution(performanceResolution());
 #if 0
