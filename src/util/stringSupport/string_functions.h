@@ -33,7 +33,16 @@ namespace StringUtility
           std::string toString() const;
         };
 
-	 typedef std::vector<StringWithLineNumber> FileWithLineNumbers;
+#ifndef USE_ROSE
+  typedef std::vector<StringWithLineNumber> FileWithLineNumbers;
+#else
+  // workaround of bug 315, separating definitions for a namespace
+  // Liao, 2/16/2009
+}
+namespace StringUtility
+{
+  typedef std::vector<StringUtility::StringWithLineNumber> FileWithLineNumbers;
+#endif
 
 	 inline std::ostream& operator<<(std::ostream& os, const StringWithLineNumber& s) {
 	   os << s.toString();

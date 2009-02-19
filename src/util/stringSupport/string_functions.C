@@ -17,7 +17,9 @@
 #include <sstream>              /* std::ostringstream */
 
 #include "string_functions.h"
+#ifndef USE_ROSE
 #include <boost/lexical_cast.hpp>
+#endif
 
 // DQ (9/29/2006): This is required for 64-bit g++ 3.4.4 compiler.
 #include <errno.h>
@@ -269,7 +271,7 @@ StringUtility::stringToList ( const string & X )
 string
 StringUtility::listToString ( const list<int> & X, bool separateStrings )
    {
-  // Build a string representing the concatination of the list of strings
+  // Build a string representing the concatenation of the list of strings
 
      string returnString;
      list<int>::const_iterator listStringElementIterator;
@@ -285,41 +287,77 @@ StringUtility::listToString ( const list<int> & X, bool separateStrings )
 
      return returnString;
    }
+#ifdef USE_ROSE   
+// Liao, 2/11/2009, Alternative to boost::lexical_cast,
+// since ROSE has problem in compiling it. Bug 313
+// https://outreach.scidac.gov/tracker/index.php?func=detail&aid=313&group_id=24&atid=185
+template <typename T>
+static std::string numToString(T x)
+{
+  std::ostringstream os;
+  os <<x;
+  return os.str();
+}
+#endif
 
 string
 StringUtility::numberToString ( long long x )
    {
+#ifndef USE_ROSE     
      return boost::lexical_cast<std::string>(x);
+#else
+     return numToString<long long>(x);
+#endif
    }
 
 string
 StringUtility::numberToString ( unsigned long long x )
    {
+#ifndef USE_ROSE     
      return boost::lexical_cast<std::string>(x);
+#else     
+     return numToString<unsigned long long >(x);
+#endif     
    }
 
 string
 StringUtility::numberToString ( long x )
    {
+#ifndef USE_ROSE     
      return boost::lexical_cast<std::string>(x);
+#else     
+     return numToString<long>(x);
+#endif     
    }
 
 string
 StringUtility::numberToString ( unsigned long x )
    {
+#ifndef USE_ROSE     
      return boost::lexical_cast<std::string>(x);
+#else     
+     return numToString<unsigned long>(x);
+#endif     
    }
 
 string
 StringUtility::numberToString ( int x )
    {
+#ifndef USE_ROSE     
      return boost::lexical_cast<std::string>(x);
+#else     
+     return numToString<int >(x);
+#endif     
    }
 
 string
 StringUtility::numberToString ( unsigned int x )
    {
+#ifndef USE_ROSE     
      return boost::lexical_cast<std::string>(x);
+#else     
+     return numToString<unsigned int >(x);
+#endif     
    }
 
 #if 0

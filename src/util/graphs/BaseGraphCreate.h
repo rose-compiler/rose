@@ -63,7 +63,11 @@ class BaseGraphCreateWrap : public BaseGraphCreate
    }
   virtual void 
   MoveEdgeEndPoint( BaseGraphEdge *e, BaseGraphNode *n, 
+#ifdef USE_ROSE  
+                     ::GraphAccess::EdgeDirection dir)
+#else  
                      GraphAccess::EdgeDirection dir)
+#endif  
     { 
       assert( ContainEdge(e) && ContainNode(n));
       static_cast<typename GraphImpl::Edge*>(e)->MoveEndPoint( static_cast<typename GraphImpl::Node*>(n), 
@@ -78,12 +82,20 @@ class BaseGraphCreateWrap : public BaseGraphCreate
     { return new IteratorImplTemplate<Node*,typename GraphImpl::NodeIterator>
             (impl->GetNodeIterator()); }
   EdgeIterator GetNodeEdgeIterator( const Node* n, 
+#ifdef USE_ROSE
+                                 ::GraphAccess::EdgeDirection dir) const
+#else  
                                  GraphAccess::EdgeDirection dir) const
+#endif                                 
    { return new IteratorImplTemplate<Edge*,typename GraphImpl::EdgeIterator>
              (impl->GetNodeEdgeIterator(static_cast<const typename GraphImpl::Node*>(n),
                                         TranslateDirection(dir))); }
   Node* GetEdgeEndPoint( const BaseGraphEdge* e, 
+#ifdef USE_ROSE  
+                                ::GraphAccess::EdgeDirection dir) const
+#else
                                 GraphAccess::EdgeDirection dir) const
+#endif                                
     { return  impl->GetEdgeEndPoint(static_cast<const typename GraphImpl::Edge*>(e), 
                                     TranslateDirection(dir)); }
   bool ContainNode( const BaseGraphNode* n) const 
@@ -94,11 +106,23 @@ class BaseGraphCreateWrap : public BaseGraphCreate
   GraphImpl* impl;
 
   typename GraphImpl::EdgeDirection
+#ifdef USE_ROSE  
+  TranslateDirection( ::GraphAccess::EdgeDirection dir) const
+#else  
   TranslateDirection( GraphAccess::EdgeDirection dir) const
+#endif  
   { switch (dir) {
+#ifdef USE_ROSE  
+     case ::GraphAccess::EdgeOut: 
+#else     
      case GraphAccess::EdgeOut: 
+#endif     
        return GraphImpl::EdgeOut;
+#ifdef USE_ROSE  
+     case ::GraphAccess::EdgeIn: 
+#else     
      case GraphAccess::EdgeIn: 
+#endif     
        return GraphImpl::EdgeIn;
      default:
        assert(false);
