@@ -312,10 +312,6 @@ void CompassGui::run()
 
     //Make sure that the violations table exists and is empty
     try {
-      sqlite3x::sqlite3_command cmd(Compass::con, "drop table if exists violations" );
-      cmd.executenonquery();
-    } catch (std::exception& e) {std::cerr << "Exception: " << e.what() << std::endl;}
-    try {
       Compass::con.executenonquery("create table IF NOT EXISTS violations( row_number INTEGER PRIMARY KEY, checker_name TEXT,  error_body TEXT, filename TEXT, line INTEGER, short_description TEXT )");
     } catch (std::exception& e) {std::cerr << "Exception: " << e.what() << std::endl;}
 

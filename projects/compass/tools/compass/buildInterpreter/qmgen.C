@@ -399,6 +399,13 @@ void write_rose_db()
     std::cerr << "Exception Occurred: " << ex.what() << std::endl;
   }
 
+  try {
+    con.executenonquery("create table IF NOT EXISTS file_last_modified( row_number INTEGER PRIMARY KEY, filename TEXT, last_modified TEXT)");
+  }
+  catch(std::exception &ex) {
+    std::cerr << "Exception Occurred: " << ex.what() << std::endl;
+  }
+
   std::string db_select_n = "";
 
   std::string argumentString;
