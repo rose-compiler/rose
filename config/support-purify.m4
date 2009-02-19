@@ -114,7 +114,12 @@ if test "$enable_purify_linker" = yes ; then
   esac
 else
       CCLD="$CC"
-      CXXLD="$CXX"
+# Liao: 2/17/2009, enable CXXLD environment variable to be accepted during configuration,
+# especially when roseTranslator is used and it is not ready to be used as a linker
+      CXXLD="$CXXLD"
+     if test "x$CXXLD" = x; then
+         CXXLD="$CXX"
+      fi 
 # BP : 10/29/2001, the above two lines were originally 
 #      CCLD="$(CC)"
 #      CXXLD="$(CXX)"
@@ -122,8 +127,9 @@ else
 fi
 
 AC_SUBST(AUX_LINKER)
-
+echo "In macro ROSE SUPPORT INSURE: CC    = $CC"
 echo "In macro ROSE SUPPORT PURIFY: CCLD = $CCLD"
+echo "In macro ROSE SUPPORT INSURE: CXX   = $CXX"
 echo "In macro ROSE SUPPORT PURIFY: CXXLD = $CXXLD"
 
 AC_SUBST(CCLD)

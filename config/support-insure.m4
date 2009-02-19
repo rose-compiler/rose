@@ -117,8 +117,13 @@ if test "$enable_insure" = yes ; then
     ;;
   esac
 else
-      CCLD="$CC"
-      CXXLD="$CXX"
+     CCLD="$CC"
+# Liao: 2/17/2009, enable CXXLD environment variable to be accepted during configuration,
+# especially when roseTranslator is used and it is not ready to be used as a linker
+      CXXLD="$CXXLD"
+      if test "x$CXXLD" = x; then
+         CXXLD="$CXX"
+      fi 
 # BP : 10/29/2001, the above two lines were originally 
 #      CCLD="$(CC)"
 #      CXXLD="$(CXX)"

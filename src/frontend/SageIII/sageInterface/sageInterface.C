@@ -1920,7 +1920,12 @@ SageInterface::buildForwardFunctionDeclaration ( SgTemplateInstantiationMemberFu
                     ROSE_ASSERT(returnValue != NULL);
                     return returnValue;
                   }
-        } nondefiningFunctionDeclarationCopy;
+        } 
+#ifdef USE_ROSE // workaround for bug 322
+        ;
+#else        
+        nondefiningFunctionDeclarationCopy;
+#endif        
 
   // DQ (10/20/2007): The more accurate copy mechanism now builds us a defining declaration to go with the non-defining declaration!
   // This is because we have to remove the pointers from non-defining declaration to the definition (which should be pointed to ONLY by the defining declaration!
@@ -1934,8 +1939,11 @@ SageInterface::buildForwardFunctionDeclaration ( SgTemplateInstantiationMemberFu
           ROSE_ASSERT( memberFunctionInstantiation != memberFunctionInstantiation->get_definingDeclaration() );
           memberFunctionInstantiation->set_definition(NULL);
         }
-
+#ifdef USE_ROSE
+     SgNode* copyOfMemberFunctionNode = memberFunctionInstantiation->copy(NondefiningFunctionDeclarationCopyType);
+#else     
      SgNode* copyOfMemberFunctionNode = memberFunctionInstantiation->copy(nondefiningFunctionDeclarationCopy);
+#endif     
      SgTemplateInstantiationMemberFunctionDecl* copyOfMemberFunction = static_cast<SgTemplateInstantiationMemberFunctionDecl*>(copyOfMemberFunctionNode);
 
   // printf ("\n\nHOW DO WE KNOW WHEN TO NOT COPY THE DEFINING DECLARATION SO THAT WE CAN JUST BUILD A FUNCTION PROTOTYPE! \n");
@@ -3508,7 +3516,6 @@ SageInterface::functionCallExpressionPreceedsDeclarationWhichAssociatesScope ( S
                     ROSE_ASSERT(functionCall != NULL);
                     ROSE_ASSERT(functionCall->get_function() != NULL);
                     SgExpression* functionExpression = functionCall->get_function();
-                    ROSE_ASSERT(functionExpression != NULL);
 
                     switch (functionExpression->variantT())
                        {
