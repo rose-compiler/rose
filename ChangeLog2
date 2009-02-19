@@ -1,3 +1,23 @@
+2009-02-19 01:34  saebjornsen1
+
+	* [r4555]
+	  /trunk/ROSE/projects/compass/tools/compass/buildInterpreter/qmgen.C,
+	  /trunk/ROSE/projects/compass/tools/compass/gui/compassGui.C:
+	  compass gui: added feature to only recompile the files that has
+	  changed
+
+2009-02-18 23:41  saebjornsen1
+
+	* [r4554]
+	  /trunk/ROSE/projects/compass/tools/compass/gui/compassGui.C:
+	  fixed compass gui so that all results are displayed by default
+	  after rerunning the analyses
+
+2009-02-18 23:15  saebjornsen1
+
+	* [r4553] /trunk/ROSE/src/frontend/SageIII/rose_attributes_list.C:
+	  Added explicit inclusion of errno.h
+
 2009-02-18 16:15  matzke
 
 	* [r4548] /trunk/ROSE/configure.in,
