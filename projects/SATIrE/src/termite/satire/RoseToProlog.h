@@ -22,7 +22,7 @@ public:
   static std::string prologize(std::string);
   static std::string escape_string(std::string s);
 private:
-  RoseEnums roseEnums;
+  RoseEnums re;;
   PrologTerm* getFunctionDeclarationSpecific(SgFunctionDeclaration*);
   PrologTerm* getUnaryOpSpecific(SgUnaryOp*);
   PrologTerm* getBinaryOpSpecific(SgBinaryOp*);

@@ -225,7 +225,8 @@ RoseToProlog::getMemberFunctionTypeSpecific(SgType* mytype) {
   /*arguments*/
   t->addSubterm(getTypePtrListSpecific(ftype->get_arguments()));
   /* mfunc_specifier*/
-  t->addSubterm(new PrologInt(ftype->get_mfunc_specifier()));
+  t->addSubterm(getEnum(ftype->get_mfunc_specifier(), 
+			re.declaration_modifiers));
   return t;
 }
 
@@ -287,7 +288,7 @@ RoseToProlog::getClassTypeSpecific(SgType* mtype) {
   SgClassDeclaration* d = isSgClassDeclaration(ctype->get_declaration());
   ROSE_ASSERT(d != NULL);
   /* what kind of class is this?*/
-  t->addSubterm(new PrologInt(d->get_class_type()));
+  t->addSubterm(getEnum(d->get_class_type(), re.class_types));
   /* add qualified name of scope*/
   t->addSubterm(new PrologAtom(d->get_scope()->get_scope()->get_qualified_name().getString()));
   return t;
@@ -482,7 +483,7 @@ RoseToProlog::getUnaryOpSpecific(SgUnaryOp* op) {
     // GB (2008-08-23): As of ROSE 0.9.3.a-1593, throw ops no longer have a
     // type list. Or was it only removed temporarily? TODO: Check again
     // sometime.
-    annot->addSubterm(new PrologInt((int) thrw->get_throwKind()));
+    annot->addSubterm(getEnum(thrw->get_throwKind(), re.throw_kinds));
 #if 0
     SgTypePtrListPtr types = thrw->get_typeList ();
     SgTypePtrList::iterator it = types->begin();
@@ -494,7 +495,7 @@ RoseToProlog::getUnaryOpSpecific(SgUnaryOp* op) {
 #endif
   } else if (SgCastExp* cst = dynamic_cast<SgCastExp*>(op)) {
     /*Casts have a cast type*/
-    annot->addSubterm(new PrologInt((int) cst->get_cast_type()));
+    annot->addSubterm(getEnum(cst->get_cast_type(), re.cast_types));
     /*assure that arity = 4*/
     annot->addSubterm(new PrologAtom("null"));
   } else {
@@ -743,7 +744,7 @@ RoseToProlog::getClassDeclarationSpecific(SgClassDeclaration* cd) {
   PrologCompTerm* t = new PrologCompTerm("class_declaration_annotation");
   /* add name and type*/
   t->addSubterm(new PrologAtom(cd->get_name().str()));
-  t->addSubterm(new PrologInt(cd->get_class_type()));
+  t->addSubterm(getEnum(cd->get_class_type(), re.class_types));
   t->addSubterm(getTypeSpecific(cd->get_type()));
   return t;
 }
@@ -985,7 +986,7 @@ RoseToProlog::getFunctionModifierSpecific(SgFunctionModifier* f) {
   PrologCompTerm* t = new PrologCompTerm("function_modifier");
   /* get bit vector and convert to PROLOG*/
   t->addSubterm(getBitVector(f->get_modifierVector(), 
-			     roseEnums.function_modifiers));
+			     re.function_modifiers));
   return t;
 }
 
@@ -999,7 +1000,7 @@ RoseToProlog::getSpecialFunctionModifierSpecific(SgSpecialFunctionModifier* f) {
   PrologCompTerm* t = new PrologCompTerm("special_function_modifier");
   /* get bit vector and convert to PROLOG*/
   t->addSubterm(getBitVector(f->get_modifierVector(),
-			     roseEnums.special_function_modifiers));
+			     re.special_function_modifiers));
   return t;
 }
 /**
@@ -1021,7 +1022,7 @@ RoseToProlog::getLinkageModifierSpecific(SgLinkageModifier* a) {
 PrologTerm*
 RoseToProlog::getStorageModifierSpecific(SgStorageModifier* a) {
   PrologCompTerm* t = new PrologCompTerm("storage_modifier");
-  t->addSubterm(getEnum(a->get_modifier(), roseEnums.storage_modifiers));
+  t->addSubterm(getEnum(a->get_modifier(), re.storage_modifiers));
   return t;
 }
 /**
@@ -1043,7 +1044,7 @@ RoseToProlog::getElaboratedTypeModifierSpecific(SgElaboratedTypeModifier* a) {
 PrologTerm*
 RoseToProlog::getConstVolatileModifierSpecific(SgConstVolatileModifier* a) {
   PrologCompTerm* t = new PrologCompTerm("const_volatile_modifier");
-  t->addSubterm(getEnum(a->get_modifier(), roseEnums.cv_modifiers));
+  t->addSubterm(getEnum(a->get_modifier(), re.cv_modifiers));
   return t;
 }
 /**
@@ -1054,7 +1055,7 @@ RoseToProlog::getConstVolatileModifierSpecific(SgConstVolatileModifier* a) {
 PrologTerm*
 RoseToProlog::getUPC_AccessModifierSpecific(SgUPC_AccessModifier* a) {
   PrologCompTerm* t = new PrologCompTerm("upc_access_modifier");
-  t->addSubterm(new PrologInt((int) a->get_modifier()));
+  t->addSubterm(getEnum(a->get_modifier(), re.upc_access_modifiers));
   return t;
 }
 
@@ -1071,12 +1072,14 @@ RoseToProlog::getTypeModifierSpecific(SgTypeModifier* a) {
   PrologCompTerm* t = new PrologCompTerm("type_modifier");
   ROSE_ASSERT(t != NULL);
   /* get bit vector and convert to PROLOG*/
-  t->addSubterm(getBitVector(a->get_modifierVector(), roseEnums.type_modifiers));
+  t->addSubterm(getBitVector(a->get_modifierVector(), re.type_modifiers));
   /* add enums*/
-  t->addSubterm(new PrologInt((int) a->get_upcModifier().get_modifier()));
+  t->addSubterm(getEnum(a->get_upcModifier().get_modifier(), 
+			re.upc_access_modifiers));
   t->addSubterm(getEnum(a->get_constVolatileModifier().get_modifier(),
-			roseEnums.cv_modifiers));
-  t->addSubterm(new PrologInt((int) a->get_elaboratedTypeModifier().get_modifier()));
+			re.cv_modifiers));
+  t->addSubterm(getEnum(a->get_elaboratedTypeModifier().get_modifier(), 
+			   re.elaborated_type_modifiers));
   return t;
 }
 
@@ -1093,12 +1096,12 @@ RoseToProlog::getDeclarationModifierSpecific(SgDeclarationModifier* dm) {
   PrologCompTerm* t = new PrologCompTerm("declaration_modifier");
   ROSE_ASSERT(t != NULL);
   t->addSubterm(getBitVector(dm->get_modifierVector(), 
-			     roseEnums.declaration_modifiers));
+			     re.declaration_modifiers));
   t->addSubterm(getTypeModifierSpecific(&(dm->get_typeModifier())));
   t->addSubterm(getEnum(dm->get_accessModifier().get_modifier(), 
-			roseEnums.access_modifiers));
+			re.access_modifiers));
   t->addSubterm(getEnum(dm->get_storageModifier().get_modifier(),
-			roseEnums.storage_modifiers));
+			re.storage_modifiers));
   return t;
 	
 }
@@ -1208,13 +1211,12 @@ RoseToProlog::getClassScopeName(SgClassDefinition* def) {
   /* get qualified name of scope and type of class declaration*/
   SgClassDeclaration* decl = def->get_declaration();
   ROSE_ASSERT(decl != NULL);
-  int tpe = decl->get_class_type();
   string qname = decl->get_qualified_name().getString();
   /* create a PrologCompTerm*/
   PrologCompTerm* t = new PrologCompTerm("class_scope");
   ROSE_ASSERT(t != NULL);
   t->addSubterm(new PrologAtom(qname));
-  t->addSubterm(new PrologInt(tpe));
+  t->addSubterm(getEnum(decl->get_class_type(), re.class_types));
   return t;
 }
 

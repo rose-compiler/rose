@@ -1172,17 +1172,17 @@ PrologToRose::createUnaryOp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
   /* For a cast we need to retrieve cast type (enum)*/
   else if (opname == SG_PREFIX "cast_exp") {
     //cerr<<"######castexp "<< annot->getRepresentation()<< "bug in ROSE?" <<endl;
-    PrologInt* ctype = dynamic_cast<PrologInt*>(annot->at(2));
-    ROSE_ASSERT(ctype != NULL);
-    SgCastExp* e = new SgCastExp(fi,sgexp,sgtype,(SgCastExp::cast_type_enum) ctype->getValue());
+    SgCastExp* e = new SgCastExp(fi, sgexp, sgtype,
+				 (SgCastExp::cast_type_enum)
+				 createEnum(annot->at(2), re.cast_type));
     //cerr<< e->unparseToString()<< endl;
     return e;
   } 
   /* some more initialization necessary for a throw */
   else if (opname == SG_PREFIX "throw_op") { 
     /*need to retrieve throw kind* (enum)*/
-    PrologInt* tkind = dynamic_cast<PrologInt*>(annot->at(2));
-    ROSE_ASSERT(tkind != NULL);
+    int tkind = createEnum(annot->at(2), re.throw_kind);
+    // FIXME: use kind!
     /*need to retrieve types */
     PrologList* typel = dynamic_cast<PrologList*>(annot->at(3));
     ROSE_ASSERT(typel != NULL);
@@ -1435,7 +1435,7 @@ PrologToRose::createMemberFunctionType(PrologTerm* t) {
   /* has ellipses?*/
   bool has_ellipses = (bool) toInt(tterm->at(1));
   /* mfunc_specifier*/
-  int mfuncs = toInt(tterm->at(3));
+  int mfuncs = createEnum(tterm->at(3), re.declaration_modifier);
   /*create type
    * note thate no SgMemberFunctionDefinition is given
    * this is because the unparser does not use it!
@@ -2163,14 +2163,20 @@ PrologToRose::createClassDeclaration(Sg_File_Info* fi,SgNode* child1 ,PrologComp
   PrologAtom* class_name_s = dynamic_cast<PrologAtom*>(annot->at(0));
   ROSE_ASSERT(class_name_s != NULL);
   /* get the class type enum*/
-  PrologInt* class_type = dynamic_cast<PrologInt*>(annot->at(1));
+  PrologAtom* class_type = dynamic_cast<PrologAtom*>(annot->at(1));
   ROSE_ASSERT(class_type != NULL);
   /* get the type*/
   PrologCompTerm* type_s = dynamic_cast<PrologCompTerm*>(annot->at(2));
   ROSE_ASSERT(type_s != NULL);
   SgClassType* sg_class_type = createClassType(type_s);
   SgName class_name = class_name_s->getName();
-  SgClassDeclaration* d = new SgClassDeclaration(fi,class_name,(SgClassDeclaration::class_types)class_type->getValue(),sg_class_type,class_def);
+  SgClassDeclaration* d = 
+    new SgClassDeclaration(fi, 
+			   class_name,
+			   (SgClassDeclaration::class_types)
+			   createEnum(class_type, re.class_type),
+			   sg_class_type,
+			   class_def);
   ROSE_ASSERT(d != NULL);
   /* set declaration or the forward flag*/
   if(class_def != NULL) {
@@ -2189,8 +2195,7 @@ PrologToRose::fakeClassScope(string s, int c_type,SgDeclarationStatement* stat) 
   /*create a dummy class declaration*/
   SgClassDeclaration* d = createDummyClassDeclaration(s,c_type);
   SgClassDefinition* def = new SgClassDefinition(
-						 Sg_File_Info::generateDefaultFileInfoForTransformationNode(),
-						 d);
+    Sg_File_Info::generateDefaultFileInfoForTransformationNode(), d);
   ROSE_ASSERT(def != NULL);
   /* scope is changed here as a side effect!*/
   def->append_member(stat);
@@ -2332,7 +2337,9 @@ PrologToRose::createBitVector(PrologTerm* t, map<string, int> names) {
 
 /** create enum from PrologAtom */
 int
-PrologToRose::createEnum(PrologAtom* a, map<string, int> names) {
+PrologToRose::createEnum(PrologTerm* t, map<string, int> names) {
+  PrologAtom* a = dynamic_cast<PrologAtom*>(t);
+  ROSE_ASSERT(a != NULL && "atom expected");
   return names[a->getName()];
 }
 
@@ -2693,8 +2700,7 @@ PrologToRose::createAccessModifier(PrologTerm* t) {
   SgAccessModifier* a = new SgAccessModifier();
   ROSE_ASSERT(a != NULL);
   a->set_modifier((SgAccessModifier::access_modifier_enum) 
-		  createEnum((PrologAtom*)c->at(0), 
-			      roseEnums.access_modifier));
+		  createEnum(c->at(0), re.access_modifier));
   return a;
 }
 /**
@@ -2711,7 +2717,7 @@ PrologToRose::createBaseClassModifier(PrologTerm* t) {
 
   b->get_accessModifier().set_modifier(
    (SgAccessModifier::access_modifier_enum) 
-   createEnum((PrologAtom*)c->at(1), roseEnums.access_modifier));
+   createEnum(c->at(1), re.access_modifier));
   return b;
 }
 /**
@@ -2723,7 +2729,7 @@ PrologToRose::createFunctionModifier(PrologTerm* t) {
   ROSE_ASSERT(c != NULL);
   //extract bit vector list and create bit vector
   // ( cast done in createBitVector)
-  SgBitVector b = *(createBitVector(c->at(0), roseEnums.function_modifier));
+  SgBitVector b = *(createBitVector(c->at(0), re.function_modifier));
   SgFunctionModifier* m = new SgFunctionModifier();
   ROSE_ASSERT(m != NULL);
   m->set_modifierVector(b);
@@ -2739,7 +2745,7 @@ PrologToRose::createSpecialFunctionModifier(PrologTerm* t) {
   //extract bit vector list and create bit vector
   // ( cast done in createBitVector)
   SgBitVector b = *(createBitVector(c->at(0), 
-				    roseEnums.special_function_modifier));
+				    re.special_function_modifier));
   SgSpecialFunctionModifier* m = new SgSpecialFunctionModifier();
   ROSE_ASSERT(m != NULL);
   m->set_modifierVector(b);
@@ -2756,7 +2762,7 @@ PrologToRose::createStorageModifier(PrologTerm* t) {
   SgStorageModifier* a = new SgStorageModifier();
   ROSE_ASSERT(a != NULL);
   a->set_modifier((SgStorageModifier::storage_modifier_enum)
-	  createEnum((PrologAtom*)c->at(0), roseEnums.storage_modifier));
+	  createEnum(c->at(0), re.storage_modifier));
   return a;
 }
 /**
@@ -2794,7 +2800,7 @@ PrologToRose::createConstVolatileModifier(PrologTerm* t) {
   SgConstVolatileModifier* a = new SgConstVolatileModifier();
   ROSE_ASSERT(a != NULL);
   a->set_modifier((SgConstVolatileModifier::cv_modifier_enum)
-		  createEnum((PrologAtom*)c->at(0), roseEnums.cv_modifier));
+		  createEnum(c->at(0), re.cv_modifier));
   return a;
 }
 /**
@@ -2806,7 +2812,8 @@ PrologToRose::createUPC_AccessModifier(PrologTerm* t) {
   ROSE_ASSERT(c != NULL);
   SgUPC_AccessModifier* a = new SgUPC_AccessModifier();
   ROSE_ASSERT(a != NULL);
-  a->set_modifier((SgUPC_AccessModifier::upc_access_modifier_enum) toInt(c->at(0)));
+  a->set_modifier((SgUPC_AccessModifier::upc_access_modifier_enum)
+		  createEnum(c->at(0), re.upc_access_modifier));
   return a;
 }
 
@@ -2834,15 +2841,20 @@ PrologToRose::setTypeModifier(PrologTerm* t, SgTypeModifier* tm) {
   ROSE_ASSERT(c != NULL);
   ROSE_ASSERT(tm != NULL);
   /* set bit vector and internal modifiers*/
-  SgBitVector b = *(createBitVector(c->at(0), roseEnums.type_modifier));
+  SgBitVector b = *(createBitVector(c->at(0), re.type_modifier));
   tm->set_modifierVector(b);
+
   tm->get_upcModifier().set_modifier(
-    (SgUPC_AccessModifier::upc_access_modifier_enum) toInt(c->at(1)));
+    (SgUPC_AccessModifier::upc_access_modifier_enum)
+    createEnum(c->at(1), re.upc_access_modifier));
+
   tm->get_constVolatileModifier().set_modifier(
     (SgConstVolatileModifier::cv_modifier_enum)
-    createEnum((PrologAtom*)c->at(2), roseEnums.cv_modifier));
+    createEnum(c->at(2), re.cv_modifier));
+
   tm->get_elaboratedTypeModifier().set_modifier(
-    (SgElaboratedTypeModifier::elaborated_type_modifier_enum) toInt(c->at(3)));
+    (SgElaboratedTypeModifier::elaborated_type_modifier_enum)
+    createEnum(c->at(3), re.elaborated_type_modifier));
 }
 
 /**
@@ -2868,16 +2880,16 @@ PrologToRose::setDeclarationModifier(PrologTerm* t, SgDeclarationModifier* d) {
   PrologCompTerm* c = isPrologCompTerm(t);
   ROSE_ASSERT(c != NULL);
   /* create and set bit vector*/
-  SgBitVector b = *(createBitVector(c->at(0), roseEnums.declaration_modifier));
+  SgBitVector b = *(createBitVector(c->at(0), re.declaration_modifier));
   d->set_modifierVector(b);
   /* set type modifier values*/
   setTypeModifier(c->at(1),&(d->get_typeModifier()));
   /* set access modifier value*/
   d->get_accessModifier().set_modifier((SgAccessModifier::access_modifier_enum) 
-     createEnum((PrologAtom*)c->at(2), roseEnums.access_modifier));
+     createEnum(c->at(2), re.access_modifier));
   d->get_storageModifier().set_modifier(
      (SgStorageModifier::storage_modifier_enum)
-     createEnum((PrologAtom*)c->at(3), roseEnums.storage_modifier));
+     createEnum(c->at(3), re.storage_modifier));
 }
 
 /**

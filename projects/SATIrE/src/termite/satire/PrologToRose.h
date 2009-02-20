@@ -24,7 +24,7 @@ public:
   SgNode* toRose(const char* filename);
 
 private:
-  RoseEnums roseEnums;
+  RoseEnums re;
   /* arity specific node generation*/
   SgNode* leafToRose(PrologCompTerm*, std::string);
   SgNode* unaryToRose(PrologCompTerm*, std::string);
@@ -54,7 +54,7 @@ private:
   SgClassDeclaration* createDummyClassDeclaration(std::string, int);
   SgMemberFunctionDeclaration* createDummyMemberFunctionDeclaration(std::string s,int c_type); /* TODO */
   SgBitVector* createBitVector(PrologTerm*, std::map<std::string, int>);
-  int createEnum(PrologAtom* a, std::map<std::string, int> names);
+  int createEnum(PrologTerm*, std::map<std::string, int>);
 
   SgLabelStatement* makeLabel(Sg_File_Info*, std::string);
   PrologInt* isPrologInt(PrologTerm*);

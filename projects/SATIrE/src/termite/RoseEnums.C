@@ -2,10 +2,12 @@
 
 /* This is needed for the SgBitVector translation
  *
- * Ideally, the contents of most of this files 
- * could be generated from the ROSE sources! 
+ * Ideally, the contents of most of this file 
+ * would be generated from the ROSE sources! 
  *
  * see "rose/src/ROSETTA/Grammar/Support.code"
+ *
+ * 2009 Adrian Prantl <adrian@complang.tuwien.ac.at>
  */
 
 
@@ -87,6 +89,20 @@ static const char* e_type_modifier[] = {
   "gnu_attribute__stdcall__"            // = 23,/*!< GNU specific attribute for function type (GNU extension) */
   //"last_modifier" /*!< last value (upper bound on range of values, used in error checking) */
 };
+
+static const char* e_elaborated_type_modifier[] = {
+  // Only one value can be specified ???
+  "unknown", // = 0, /*!< error value */
+  "default", //  = 1, /*!< default value (default) */
+  "class", //    = 2, /*!< class type */
+  "struct", //   = 3, /*!< struct type */
+  "union", //    = 4, /*!< union type */
+  "enum", //     = 5, /*!< enum type */
+  "typename" // = 6, /*!< typename type */
+  //e_last_modifier /*!< last value (upper bound on range of values, used in error checking) */
+};
+
+
 static const char* e_declaration_modifier[] = {
   "unknown", // = 0,  /*!< Unknown value (error) */
   "default", // = 1,  /*!< Default value */
@@ -131,12 +147,46 @@ static const char* e_access_modifier[] = {
     //last_modifier         /*!< last value (upper bound on range of values, used in error checking) */
 };
 
+static const char* e_upc_access_modifier[] = {
+  // Bit values can support multiple values in a single enum type
+  "unknown",       /*!< error value */
+  "default",       /*!< default value */
+  // DQ and Liao (6/13/2008): "shared" can be used with "strict" and "relaxed" so it must be handled separately.
+  // e_upc_shared,    /*!< UPC shared */
+  "upc_strict",    /*!< UPC strict */
+  "upc_relaxed",   /*!< UPC relaxed */
+  //e_last_modifier  /*!< last value (upper bound on range of values, used in error checking) */
+};
+
 static const char* e_cv_modifier[] = {
   "unknown",      /*!< Unknown value (error value) */
   "default",      /*!< Default value (default) */
   "const",        /*!< Const qualifier */
   "volatile"      /*!< Volatile qualifier */
   //e_last_modifier /*!< last value (unused, serves as upper bound on values) */
+};
+
+static const char* e_class_type[] = { 
+  "class", 
+  "struct", 
+  "union", 
+  "template_parameter" 
+};
+
+static const char* e_throw_kind[] = { 
+  "unknown_throw",
+  "throw_expression", 
+  "rethrow" 
+};
+
+static const char* e_cast_type[] = { 
+  "e_unknown", 
+  "e_default", 
+  "e_C_style_cast", 
+  "e_const_cast", 
+  "e_static_cast", 
+  "e_dynamic_cast", 
+  "e_reinterpret_cast"
 };
 
 /////////////////////////////////////////////////////////////////////////
@@ -156,8 +206,14 @@ RoseEnums::RoseEnums() {
   INIT(e_function_modifier, function_modifier, function_modifiers)
   INIT(e_special_function_modifier, special_function_modifier, special_function_modifiers)
   INIT(e_type_modifier, type_modifier, type_modifiers)
+  INIT(e_elaborated_type_modifier, elaborated_type_modifier, elaborated_type_modifiers)
   INIT(e_declaration_modifier, declaration_modifier, declaration_modifiers)
   INIT(e_access_modifier, access_modifier, access_modifiers)
+  INIT(e_upc_access_modifier, upc_access_modifier, upc_access_modifiers)
   INIT(e_storage_modifier, storage_modifier, storage_modifiers)
   INIT(e_cv_modifier, cv_modifier, cv_modifiers)
+
+  INIT(e_class_type, class_type, class_types)
+  INIT(e_throw_kind, throw_kind, throw_kinds)
+  INIT(e_cast_type, cast_type, cast_types)
 }
