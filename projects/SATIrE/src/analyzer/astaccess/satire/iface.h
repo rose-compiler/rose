@@ -20,13 +20,12 @@ typedef enum
 } KFG_NODE_TYPE;
 typedef int KFG_NODE_ID;
 #endif
-#if 1
-typedef void *KFG;
-typedef void *KFG_NODE;
-typedef void *KFG_NODE_LIST;
-typedef unsigned int KFG_EDGE_TYPE;
-#endif
+
+#include "kfg_types.h"
+
+#if HAVE_PAG
 #include "genkfg.h"
+#endif
 #if 0
 #define genkfg2_Il1l_I_
 typedef struct{char const*attr_def_name;int attr_def_id;}KFG_ATTR_DEF;

@@ -9,6 +9,7 @@
 #include <iostream>
 #include <cstdlib>
 
+#ifdef HAVE_PAG
 extern char* animation;
 extern int cfg_ordering;
 extern int sel_mapping;
@@ -25,6 +26,7 @@ extern int verbose;
 extern int global_retfunc;
 
 extern "C" int pag_auto_configure_memsize(int quiet, int perc, int size);
+#endif
 
 // GB (2008-07-01): This global variable is accessed from deprecated support
 // functions to determine whether they should emit a warning about their
@@ -32,6 +34,7 @@ extern "C" int pag_auto_configure_memsize(int quiet, int perc, int size);
 bool satire_warn_deprecated;
 
 void setPagOptions(AnalyzerOptions opt) {
+#ifdef HAVE_PAG
   cfg_ordering=opt.getCfgOrdering();
   debug_stat=opt.statistics(); // bool->int
 
@@ -50,8 +53,6 @@ void setPagOptions(AnalyzerOptions opt) {
     // share_min and share_num appear to be set appropriately for a
     // startbanks value of 10, so there is nothing else to do
   }
-
-  satire_warn_deprecated = opt.deprecatedWarnings();
 
   //output=(char*)(opt.getGdlFileName().c_str());
   animation=(char*)(opt.getOutputGdlAnimDirName().c_str());  
@@ -77,6 +78,30 @@ void setPagOptions(AnalyzerOptions opt) {
   //start_bank=opt.getStartBank();
   //share_min=opt.getShareMin();
   //share_num=opt.getShareNum();
+
+  if(opt.vivu()) {
+    mapping_data.map_l = opt.getVivuLoopUnrolling(); // [default 2]
+    if(opt.getCallStringLength()==1) {
+      sel_mapping=3; // VIVU 1 (simple)
+    }
+    if(opt.getCallStringLength()==2) {
+      sel_mapping=4; // VIVU 2 (extended)
+    }
+    if(opt.getCallStringLength()>=3) {
+      sel_mapping=5; // VIVU ht (extended), callstringlength defines chop size
+    }
+  }
+  if(opt.getVivu4MaxUnrolling()!=-1) {
+    sel_mapping=6;
+    mapping_data.map_global_max_cut=opt.getVivu4MaxUnrolling();
+  }
+  if(opt.retFuncUsed()) {
+    /* use retfunc for combining information from local and return edge */
+    global_retfunc = 1;
+  }
+#endif
+
+  satire_warn_deprecated = opt.deprecatedWarnings();
 
   int formatMode=0;
   {
@@ -113,26 +138,5 @@ void setPagOptions(AnalyzerOptions opt) {
     default: std::cerr << "Wrong format mode or print mode for nodes (Expression) in gdl file"; std::abort();    
     }
     ExpressionId::setPrintFormat(printMode);
-  }
-
-  if(opt.vivu()) {
-    mapping_data.map_l = opt.getVivuLoopUnrolling(); // [default 2]
-    if(opt.getCallStringLength()==1) {
-      sel_mapping=3; // VIVU 1 (simple)
-    }
-    if(opt.getCallStringLength()==2) {
-      sel_mapping=4; // VIVU 2 (extended)
-    }
-    if(opt.getCallStringLength()>=3) {
-      sel_mapping=5; // VIVU ht (extended), callstringlength defines chop size
-    }
-  }
-  if(opt.getVivu4MaxUnrolling()!=-1) {
-    sel_mapping=6;
-    mapping_data.map_global_max_cut=opt.getVivu4MaxUnrolling();
-  }
-  if(opt.retFuncUsed()) {
-    /* use retfunc for combining information from local and return edge */
-    global_retfunc = 1;
   }
 }

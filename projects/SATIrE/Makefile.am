@@ -1,7 +1,14 @@
 ## Process this file with automake to create Makefile.in.
 
 SUBDIRS= src tools examples
-DISTCHECK_CONFIGURE_FLAGS=--with-rosedir=$(ROSEDIR) --with-pagdir=$(PAGDIR) --with-boostdir=$(BOOSTDIR) CXX=$(CXX)
+DISTCHECK_CONFIGURE_FLAGS=--with-rosedir=$(ROSEDIR) --with-boostdir=$(BOOSTDIR) CXX=$(CXX)
+
+if WITH_PAG
+DISTCHECK_CONFIGURE_FLAGS += --with-pagdir=$(PAGDIR)
+else
+DISTCHECK_CONFIGURE_FLAGS += --without-pag
+endif
+
 EXTRA_DIST= README LICENSE ChangeLog KNOWN_BUGS BugLog \
         docs/satire_cfgconstruction.pdf \
 	docs/satire_overview.pdf \

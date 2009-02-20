@@ -37,6 +37,7 @@ public:
 
 #endif
 
+#if HAVE_PAG
 EXTERN_C FLO_BOOL o_varid_has_location(void *vp);
 EXTERN_C void *o_varid_location(void *vp);
 EXTERN_C FLO_BOOL o_exprid_has_location(void *ep);
@@ -84,5 +85,6 @@ EXTERN_C void o_Location_acur_reset(unsigned long *p);
 EXTERN_C void o_Location_acur_next(unsigned long *p);
 EXTERN_C void *o_Location_acur_get(unsigned long *p);
 EXTERN_C FLO_BOOL o_Location_acur_is_empty(unsigned long *p);
+#endif
 
 #endif

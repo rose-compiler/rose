@@ -12,6 +12,11 @@ V0.?.? ? AP,...
   - Correct generation of container nodes even when the list of successors
     is empty (arity used to be broken).
 
+* Building SATIrE without PAG [GB]
+  - SATIrE can now be built without requiring PAG; use --without-pag
+    configure flag. C++ source code can check for definition of the HAVE_PAG
+    macro (to some true value) for conditional compilation.
+
 * New data flow analysis attribute "position" [GB]
   - can be used to get information about the interprocedural analysis context
 

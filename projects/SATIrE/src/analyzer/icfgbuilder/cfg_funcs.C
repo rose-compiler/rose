@@ -589,7 +589,7 @@ extern "C" KFG_EDGE_TYPE kfg_edge_type(KFG_NODE n1, KFG_NODE n2)
     std::cerr << "ERROR: there is no edge from node " << n1
         << " to node " << n2 << std::endl;
     std::abort();
-    return 42;
+    return (KFG_EDGE_TYPE) 42;
 }
 
 extern "C" int kfg_which_in_edges(KFG_NODE node)

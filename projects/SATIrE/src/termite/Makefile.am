@@ -14,9 +14,12 @@ INCLUDES = -I$(top_srcdir)/src/satire \
 	   -I$(top_srcdir)/src/analyzer/support \
 	   -I$(top_srcdir)/src/analyzer/support/satire \
 	   -I$(ROSE_INCLUDE_DIR) \
-	   -I$(BOOST_INCLUDE_DIR) \
-	   -I$(PAG_INCLUDE_DIR)/pag \
-           -I$(PAG_INCLUDE_DIR)/pag/analyzer
+	   -I$(BOOST_INCLUDE_DIR)
+
+if WITH_PAG
+  INCLUDES += -I$(PAG_INCLUDE_DIR)/pag \
+              -I$(PAG_INCLUDE_DIR)/pag/analyzer
+endif
 
 AM_LDFLAGS=-L$(ROSE_LIB_DIR) -Wl,-rpath $(ROSE_LIB_DIR) -L$(BOOST_LIB_DIR) -Wl,-rpath $(BOOST_LIB_DIR) 
 

@@ -5,9 +5,6 @@
 // These functions are described in the PAG manual in Section 11.3
 // "Type-Storage Interface".
 
-#include "gc_mem.h"
-#include "unum.h"
-#include "str.h"
 #include <cstring>
 
 #include "cfg_support.h"
@@ -24,7 +21,13 @@ static unsigned long numberOfExpressions = 0;
 // initial value, can be changed by ExpressionId::setPrintFormat
 ExpressionId::PrintFormat ExpressionId::printFormat = ExpressionId::F_Expression;
 
+#if HAVE_PAG
+
 // PAG functions follow
+#include "gc_mem.h"
+#include "unum.h"
+#include "str.h"
+
 extern "C" void o_ExpressionId_mark(void *)
 {
  // dummy: ExpressionId does not contain any pointers, so there is nothing to
@@ -236,6 +239,8 @@ extern "C" FLO_BOOL o_ExpressionId_acur_is_empty(unsigned long *p)
 {
     return (*p >= numberOfExpressions ? FLO_TRUE : FLO_FALSE);
 }
+
+#endif
 
 // implementation of ExpressionId member functions
 std::string ExpressionId::print() const

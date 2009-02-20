@@ -2,6 +2,8 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
 // $Id: pag_support.C,v 1.19 2009-02-09 11:02:36 gergo Exp $
 
+#ifdef HAVE_PAG
+
 #include <iostream>
 
 #include <satire_rose.h>
@@ -728,3 +730,5 @@ int kfg_routine_is_infeasible (KFG cfg, KFG_ROUTINE routine)
 {
     return 0;
 }
+
+#endif

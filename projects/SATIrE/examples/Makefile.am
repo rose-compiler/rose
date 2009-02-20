@@ -76,7 +76,10 @@ testdir=installcheck-executable-examples
 # The tests are now split into separate targets to facilitate a
 # paralellized run of the testsuite (make -j #N installcheck)
 
-.PHONY: tests sl1rd sl2rd nnh99_shape srw98_shape pointsto_live_variables testsuite termite
+TESTS_WITH_PAG = sl1rd sl2rd nnh99_shape srw98_shape pointsto_live_variables testsuite
+TESTS_WITHOUT_PAG = termite
+
+.PHONY: tests $(TESTS_WITH_PAG) $(TESTS_WITHOUT_PAG)
 
 installcheck-local: 
 	rm -f init.token
@@ -87,7 +90,16 @@ installcheck-local:
 	rm -f init.token
 
 
-tests: sl1rd sl2rd nnh99_shape srw98_shape pointsto_live_variables testsuite termite
+if WITH_PAG
+tests: $(TESTS_WITH_PAG) $(TESTS_WITHOUT_PAG)
+else
+tests: $(TESTS_WITHOUT_PAG)
+	@echo
+	@echo "========================================================================"
+	@echo "The following tests were not run because SATIrE was built without PAG:"
+	@echo "$(TESTS_WITH_PAG)"
+	@echo "========================================================================"
+endif
 
 init.token:
 	@echo "Init..."

@@ -1,6 +1,10 @@
 #ifndef H_TYPE_ID
 #define H_TYPE_ID
 
+#if HAVE_PAG
+#include "global.h"
+#endif
+
 #ifdef __cplusplus
 
 #define EXTERN_C extern "C"
@@ -25,11 +29,8 @@ public:
     static PrintFormat printFormat;
 };
 
-#include "global.h"
+#if HAVE_PAG
 #include "str.h"
-
-extern "C" FLO_BOOL o_TypeId_eq(void *p, void *q);
-extern "C" FLO_BOOL o_TypeId_neq(void *p, void *q);
 extern "C" void *o_type_typeid(void *p);
 extern "C" void *o_typeid_type(void *p);
 extern "C" str o_typeid_str(void *p);
@@ -42,6 +43,7 @@ extern "C" void o_TypeId_acur_reset(unsigned long *p);
 extern "C" void o_TypeId_acur_next(unsigned long *p);
 extern "C" void *o_TypeId_acur_get(unsigned long *p);
 extern "C" FLO_BOOL o_TypeId_acur_is_empty(unsigned long *p);
+#endif
 
 #else
 /* C part */
@@ -49,6 +51,7 @@ extern "C" FLO_BOOL o_TypeId_acur_is_empty(unsigned long *p);
 
 #endif
 
+#if HAVE_PAG
 typedef void *o_TypeId;
 
 #define o_TypeId_mark_self(x)  ((x) == NULL ? (void) 0 : GC_mark((void **) &x))
@@ -87,5 +90,6 @@ EXTERN_C void o_TypeId_acur_reset(unsigned long *p);
 EXTERN_C void o_TypeId_acur_next(unsigned long *p);
 EXTERN_C void *o_TypeId_acur_get(unsigned long *p);
 EXTERN_C FLO_BOOL o_TypeId_acur_is_empty(unsigned long *p);
+#endif
 
 #endif

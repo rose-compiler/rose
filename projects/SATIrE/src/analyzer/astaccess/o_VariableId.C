@@ -9,9 +9,6 @@
 // These functions are described in the PAG manual in Section 11.3
 // "Type-Storage Interface".
 
-#include "gc_mem.h"
-#include "unum.h"
-#include "str.h"
 #include <cstring>
 
 #include "cfg_support.h"
@@ -27,7 +24,13 @@ int VariableId::type_id = -1;
 // initial value, can be changed by VariableId::setPrintFormat
 VariableId::PrintFormat VariableId::printFormat = VariableId::F_Name;
 
+#if HAVE_PAG
+
 // PAG functions follow
+#include "gc_mem.h"
+#include "unum.h"
+#include "str.h"
+
 extern "C" void o_VariableId_mark(void *)
 {
  // dummy: VariableId does not contain any pointers, so there is nothing to
@@ -289,6 +292,8 @@ extern "C" FLO_BOOL o_VariableId_acur_is_empty(unsigned long *p)
     return (*p >= globalVariableIdPool.size() ? FLO_TRUE : FLO_FALSE);
 }
 
+#endif
+
 // implementation of VariableId member functions
 std::string VariableId::print() const
 {
@@ -322,6 +327,14 @@ void VariableId::setPrintFormat(PrintFormat format)
 {
     printFormat = format;
 }
+
+#if !HAVE_PAG
+static VariableId *
+GC_alloc(int)
+{
+    return new VariableId();
+}
+#endif
 
 VariableId *VariableId::allocateGC(unsigned long id)
 {

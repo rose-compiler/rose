@@ -24,9 +24,11 @@
 // might not really hurt, as every variable should still belong to exactly
 // one unique location.)
 
+#if HAVE_PAG
 #include "gc_mem.h"
 #include "unum.h"
 #include "str.h"
+#endif
 
 #include "cfg_support.h"
 #include "IrCreation.h"
@@ -47,6 +49,7 @@ static unsigned long numberOfLocations = 0;
 // initial value, can be changed by ExpressionId::setPrintFormat
 // ExpressionId::PrintFormat ExpressionId::printFormat = ExpressionId::F_Expression;
 
+#if HAVE_PAG
 // PAG functions follow
 extern "C" void o_Location_mark(void *)
 {
@@ -65,6 +68,7 @@ extern "C" void o_Location_mcopy(void *src, void *dst)
 
 // number of locations; to be initialized after points-to analysis
 ull o_Location_power;
+#endif
 
 int o_Location_is_power_unendl = 0;
 
@@ -95,6 +99,14 @@ get_icfgPointsToAnalysis(void)
     return pointsToAnalysis;
 }
 
+#if !HAVE_PAG
+static LocationWrapper *
+GC_alloc(int)
+{
+    return new LocationWrapper();
+}
+#endif
+
 LocationWrapper *createLocationWrapper(PointsToAnalysis::Location *loc)
 {
     void *n = GC_alloc(LocationWrapper::type_id);
@@ -116,6 +128,7 @@ LocationWrapper *createLocationWrapper(PointsToAnalysis::Location *loc)
     return l;
 }
 
+#if HAVE_PAG
 extern "C" FLO_BOOL o_Location_eq(void *p, void *q)
 {
     LocationWrapper *a = (LocationWrapper *) p;
@@ -429,6 +442,7 @@ extern "C" FLO_BOOL o_Location_acur_is_empty(unsigned long *p)
 {
     return (*p >= numberOfLocations ? FLO_TRUE : FLO_FALSE);
 }
+#endif
 
 
 // implementation of LocationWrapper member functions

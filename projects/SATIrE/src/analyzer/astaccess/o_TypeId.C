@@ -1,9 +1,6 @@
 // GB (2008-06-04): Completing the move to an Id-based API by providing
 // TypeId as abstract type usable in PAG analyses.
 
-#include "gc_mem.h"
-#include "unum.h"
-#include "str.h"
 #include <cstring>
 
 #include "cfg_support.h"
@@ -20,6 +17,11 @@ static unsigned long numberOfTypes = 0;
 // initial value, can be changed by TypeId::setPrintFormat
 TypeId::PrintFormat TypeId::printFormat = TypeId::F_Type;
 
+#if HAVE_PAG
+
+#include "gc_mem.h"
+#include "unum.h"
+#include "str.h"
 
 // PAG functions follow
 extern "C" void o_TypeId_mark(void *)
@@ -244,6 +246,8 @@ extern "C" FLO_BOOL o_TypeId_acur_is_empty(unsigned long *p)
 {
     return (*p >= numberOfTypes ? FLO_TRUE : FLO_FALSE);
 }
+
+#endif
 
 
 // implementation of TypeId member functions

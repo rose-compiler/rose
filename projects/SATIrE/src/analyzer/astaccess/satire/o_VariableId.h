@@ -1,6 +1,10 @@
 #ifndef H_VARIABLE_ID
 #define H_VARIABLE_ID
 
+#if HAVE_PAG
+#include "global.h"
+#endif
+
 /* GB (2008-05-19): Made this header includable by C programs because we
    need to replace the PAG-generated o_VariableId.h by ours, and we still
    compile PAG analyzers as C. */
@@ -40,7 +44,7 @@ public:
     static VariableId *allocateGC(unsigned long id);
 };
 
-#include "global.h"
+#if HAVE_PAG
 #include "str.h"
 
 extern "C" FLO_BOOL o_VariableId_eq(void *p, void *q);
@@ -59,6 +63,7 @@ extern "C" void o_VariableId_acur_reset(unsigned long *p);
 extern "C" void o_VariableId_acur_next(unsigned long *p);
 extern "C" void *o_VariableId_acur_get(unsigned long *p);
 extern "C" FLO_BOOL o_VariableId_acur_is_empty(unsigned long *p);
+#endif
 
 #else
 /* C part */
@@ -68,6 +73,7 @@ extern "C" FLO_BOOL o_VariableId_acur_is_empty(unsigned long *p);
 
 typedef void *o_VariableId;
 
+#if HAVE_PAG 
 /* Macros required by PAG-generated code, taken from PAG manual (but with
    two errors fixed here). */
 #define o_VariableId_mark_self(x)  \
@@ -113,5 +119,6 @@ EXTERN_C void o_VariableId_acur_reset(unsigned long *p);
 EXTERN_C void o_VariableId_acur_next(unsigned long *p);
 EXTERN_C void *o_VariableId_acur_get(unsigned long *p);
 EXTERN_C FLO_BOOL o_VariableId_acur_is_empty(unsigned long *p);
+#endif
 
 #endif

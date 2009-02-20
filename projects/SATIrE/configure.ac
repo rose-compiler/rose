@@ -35,22 +35,31 @@ AC_ARG_WITH(rose_libdir,
 AC_SUBST(ROSE_LIB_DIR)
 
 # PAG PATH
+AC_ARG_WITH([pag],
+            [AS_HELP_STRING([--without-pag],
+                            [disable support for PAG])],
+            [],
+            [with_pag=yes])
+
 PAGDIR='/opt/pag'
 AC_ARG_WITH(pagdir,
            [  --with-pagdir=DIR            PAG install path (default in /opt/pag)],
-           [PAGDIR="$withval"])
+           [with_pag=yes
+            PAGDIR="$withval"])
 AC_SUBST(PAGDIR)
 
 PAG_INCLUDE_DIR="$PAGDIR/include"
 AC_ARG_WITH(pag_includedir,
            [  --with-pag-includedir=DIR    PAG include path (default in /opt/pag/include)],
-           [PAG_INCLUDE_DIR="$withval"])
+           [with_pag=yes
+            PAG_INCLUDE_DIR="$withval"])
 AC_SUBST(PAG_INCLUDE_DIR)
 
 PAG_LIB_DIR="$PAGDIR/lib/pag"
 AC_ARG_WITH(pag_libdir,
            [  --with-pag-libdir=DIR        PAG library path (default in /opt/pag/lib)],
-           [PAG_LIB_DIR="$withval"])
+           [with_pag=yes
+            PAG_LIB_DIR="$withval"])
 AC_SUBST(PAG_LIB_DIR)
 
 # BOOST PATH
@@ -123,44 +132,61 @@ AC_SUBST(have_swi_prolog)
 #-----------------------------------
 
 # Checks for libraries.
-AC_SEARCH_LIBS([fcosf], [m])
-AC_CHECK_LIB([pag], [pag_version], AC_MSG_RESULT([** Found PAG.]), 
-             [echo "Could not find '-lpag' in '-L${PAG_LIB_DIR}'."
-              echo "Please consider using one of the --with-pag* options."
-              exit -1 ],
-             [-L${PAG_LIB_DIR}])
+# GB (2009-02-20): There is no fcosf function in the C math library, *and*
+# we do not use the C math library anyway!
+# AC_SEARCH_LIBS([fcosf], [m])
+
+AS_IF([test "x$with_pag" != xno],
+      [AC_CHECK_LIB([pag], [pag_version],
+                    [AC_MSG_RESULT([** Found PAG.])
+                     AC_DEFINE([HAVE_PAG], [1], [Define if you have PAG])],
+                    [AC_MSG_FAILURE(
+                        [PAG test failed (--without-pag to disable, --with-pag* to fix paths)])],
+                    [-L${PAG_LIB_DIR}])],
+      [AC_MSG_RESULT([** Skipping check for PAG.])])
+AM_CONDITIONAL(WITH_PAG, [test "x$with_pag" = xyes])
+#AC_CHECK_LIB([pag], [pag_version], AC_MSG_RESULT([** Found PAG.]),
+#             [echo "Could not find '-lpag' in '-L${PAG_LIB_DIR}'."
+#              echo "Please consider using one of the --with-pag* options."
+#              exit -1 ],
+#             [-L${PAG_LIB_DIR}])
+
 AC_CHECK_LIB([rose], [ROSE_DEBUG], AC_MSG_RESULT([** Found ROSE.]), 
              [echo "Could not find '-lrose' in '-L${ROSE_LIB_DIR}'."
               echo "Please consider using one of the --with-rose* options."
               exit -1 ], 
              [-L${ROSE_LIB_DIR}])
+
 AC_CHECK_FILE(${BOOST_LIB_DIR}/libboost_filesystem-${BOOST_COMPILER_STRING}-mt.so,
              AC_MSG_RESULT([** Found Boost (hopefully).]),
              [echo "Could not find 'libboost_filesystem-${BOOST_COMPILER_STRING}-mt.so' in '${BOOST_LIB_DIR}'."
               echo "Please consider using one of the --with-boost* options."
               exit -1 ])
 
-
-# Checks for header files.
-AC_HEADER_STDC
-AC_CHECK_HEADERS([inttypes.h stdlib.h string.h unistd.h])
-
+# GB (2009-02-20): Disabled these checks, as most of the features are not
+# even used (int16_t etc.). Also, in the year 2009, it is not really
+# necessary to check for a C89 implementation on a system that is capable of
+# supporting ROSE...
+# # Checks for header files.
+# AC_HEADER_STDC
+# AC_CHECK_HEADERS([inttypes.h stdlib.h string.h unistd.h])
+#
 # Checks for typedefs, structures, and compiler characteristics.
-AC_HEADER_STDBOOL
-AC_C_CONST
-AC_TYPE_INT16_T
-AC_TYPE_INT32_T
-AC_TYPE_INT8_T
-AC_TYPE_SIZE_T
-AC_STRUCT_TM
-AC_TYPE_UINT16_T
-AC_TYPE_UINT32_T
-AC_TYPE_UINT8_T
-
-# Checks for library functions.
-AC_FUNC_MALLOC
-AC_FUNC_REALLOC
-AC_CHECK_FUNCS([memset])
+# AC_HEADER_STDBOOL
+# AC_C_CONST
+# AC_TYPE_INT16_T
+# AC_TYPE_INT32_T
+# AC_TYPE_INT8_T
+# AC_TYPE_SIZE_T
+# AC_STRUCT_TM
+# AC_TYPE_UINT16_T
+# AC_TYPE_UINT32_T
+# AC_TYPE_UINT8_T
+#
+# # Checks for library functions.
+# AC_FUNC_MALLOC
+# AC_FUNC_REALLOC
+# AC_CHECK_FUNCS([memset])
 
 AC_CONFIG_FILES([
 Makefile

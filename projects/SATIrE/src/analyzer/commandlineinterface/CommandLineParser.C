@@ -1,7 +1,7 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany, Adrian Prantl
 // $Id: CommandLineParser.C,v 1.28 2008-11-14 17:11:10 gergo Exp $
 
-#include <config.h>
+// #include <config.h>
 
 #include <sstream>
 #include "CommandLineParser.h"

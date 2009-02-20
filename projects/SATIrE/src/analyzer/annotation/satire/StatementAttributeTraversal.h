@@ -5,7 +5,7 @@
 #ifndef STATEMENTATTRIBUTETRAVERSAL_H
 #define STATEMENTATTRIBUTETRAVERSAL_H
 
-#include <config.h>
+// #include <config.h>
 #include "CFGTraversal.h"
 #include "ProcTraversal.h"
 // GB (2008-03-03): Changed all unparseToString calls to Ir::fragmentToString.

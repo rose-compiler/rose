@@ -1,8 +1,6 @@
 ## Process this file with automake to create Makefile.in.
 
 INCLUDES = -I$(ROSE_INCLUDE_DIR) \
-	-I$(PAG_INCLUDE_DIR)/pag \
-	-I$(PAG_INCLUDE_DIR)/pag/analyzer \
 	-I$(BOOST_INCLUDE_DIR) \
 	-I$(top_srcdir)/src/satire \
 	-I$(top_srcdir)/src/analyzer/astaccess  \
@@ -17,6 +15,11 @@ INCLUDES = -I$(ROSE_INCLUDE_DIR) \
 
 if WITH_SWI_PROLOG
   INCLUDES += -I$(SWI_PROLOG_INCLUDE_DIR) 
+endif
+
+if WITH_PAG
+  INCLUDES += -I$(PAG_INCLUDE_DIR)/pag \
+			  -I$(PAG_INCLUDE_DIR)/pag/analyzer
 endif
 
 

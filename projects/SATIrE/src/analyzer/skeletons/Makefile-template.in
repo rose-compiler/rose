@@ -27,7 +27,7 @@ LPATH = -L$(ROSE_LIB) -Wl,-rpath $(ROSE_LIB) -L$(BOOST_LIB) @plldadd@ -Wl,-rpath
 LIBS = $(ANALYSIS).a $(OTHERANALYSISLIBS) -lsatire -lsyntree -ltermite -lpagdatatypes -lrose -lpag
 
 # common macro definitions passed on the command line
-D_FLAGS = -DCARRIER_TYPE=$(CARRIER_TYPE) -DPREFIX=$(PREFIX) -DPREFIX_SET=$(PREFIX_SET)
+D_FLAGS = -DCARRIER_TYPE=$(CARRIER_TYPE) -DPREFIX=$(PREFIX) -DPREFIX_SET=$(PREFIX_SET) -DHAVE_PAG=1
 
 .PHONY: all clean check update newanalysis
 

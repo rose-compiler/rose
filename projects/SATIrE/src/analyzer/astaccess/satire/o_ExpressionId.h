@@ -1,6 +1,10 @@
 #ifndef H_EXPRESSION_ID
 #define H_EXPRESSION_ID
 
+#if HAVE_PAG
+#include "global.h"
+#endif
+
 /* GB (2008-05-19): Made this header includable by C programs because we
    need to replace the PAG-generated o_ExpressionId.h. */
 #ifdef __cplusplus
@@ -34,22 +38,12 @@ public:
     static PrintFormat printFormat;
 };
 
-#include "global.h"
+#if HAVE_PAG
 #include "str.h"
-
-extern "C" FLO_BOOL o_ExpressionId_eq(void *p, void *q);
-extern "C" FLO_BOOL o_ExpressionId_neq(void *p, void *q);
 extern "C" void *o_expr_exprid(void *p);
 extern "C" void *o_exprid_expr(void *p);
 extern "C" str o_exprid_str(void *p);
-extern "C" char *o_ExpressionId_print(void *p);
-extern "C" void o_ExpressionId_print_fp(FILE *f, void *p);
-extern "C" char *o_ExpressionId_to_charp(void *p);
-extern "C" char *o_ExpressionId_gdlprint(void *p);
-extern "C" void o_ExpressionId_acur_reset(unsigned long *p);
-extern "C" void o_ExpressionId_acur_next(unsigned long *p);
-extern "C" void *o_ExpressionId_acur_get(unsigned long *p);
-extern "C" FLO_BOOL o_ExpressionId_acur_is_empty(unsigned long *p);
+#endif
 
 #else
 /* C part */
@@ -57,6 +51,7 @@ extern "C" FLO_BOOL o_ExpressionId_acur_is_empty(unsigned long *p);
 
 #endif
 
+#if HAVE_PAG
 typedef void *o_ExpressionId;
 
 #define o_ExpressionId_mark_self(x)  \
@@ -97,5 +92,6 @@ EXTERN_C void o_ExpressionId_acur_reset(unsigned long *p);
 EXTERN_C void o_ExpressionId_acur_next(unsigned long *p);
 EXTERN_C void *o_ExpressionId_acur_get(unsigned long *p);
 EXTERN_C FLO_BOOL o_ExpressionId_acur_is_empty(unsigned long *p);
+#endif
 
 #endif

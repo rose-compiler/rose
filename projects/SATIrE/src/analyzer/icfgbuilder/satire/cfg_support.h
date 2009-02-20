@@ -8,35 +8,17 @@
 #include <deque>
 #include <typeinfo>
 
+#include <cassert>
 #include "AttributeMechanism.h"
 
-#include "iface.h"
+// #include <config.h>
+
+#include "kfg_types.h"
+// #include "iface.h"
+
 #include "EqualityTraversal.h"
 #include "AnalyzerOptions.h"
 
-enum edgetypes
-{
-    LOCAL,
-    BB_INTERN,
-    TRUE_EDGE,
-    FALSE_EDGE,
-    NORMAL_EDGE,
-    CALL_EDGE,
-    RETURN_EDGE,
-    //NO_EDGE,
-    EDGE_TYPE_MAX /* whatever you do, leave this dummy as the last constant */
-};
-
-/* in analogy with:
-typedef enum
-{
-    CALL,
-    RETURN,
-    START,
-    END,
-    INNER
-} KFG_NODE_TYPE;
-*/
 enum
 {
     X_FunctionCall = CALL,
