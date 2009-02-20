@@ -107,22 +107,43 @@ init.token:
 	mkdir -p $(testdir)
 	touch init.token
 
+%.termite: %.c
+	@echo "TERMITE: performing a translation circle of" $<
+	cp $< $(testdir)/TEST0.c
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term TEST0.c  TEST1.pl
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST1.pl TEST2.c
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term TEST2.c  TEST3.pl
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST3.pl TEST4.c
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term --strip-headers TEST0.c TEST1.pl
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST1.pl TEST2.c
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term --strip-headers TEST2.c TEST3.pl
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST3.pl TEST4.c
+
+%.termite: %.C
+	@echo "TERMITE: performing a translation circle of" $<
+	cp $< $(testdir)/TEST0.C
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term TEST0.C  TEST1.pl
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST1.pl TEST2.C
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term TEST2.C  TEST3.pl
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST3.pl TEST4.C
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term --strip-headers TEST0.C TEST1.pl
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST1.pl TEST2.C
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term --strip-headers TEST2.C TEST3.pl
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST3.pl TEST4.C
+
+
 termite: init.token
 	@echo
 	@echo "========================================================================"
 	@echo "TERMITE tests"
 	@echo "========================================================================"
-	cp $(top_srcdir)/examples/constprop/tests/bigger.c $(testdir)/TEST0.c
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term TEST0.c  TEST1.pl
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST1.pl TEST2.c
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term TEST2.c  TEST3.pl
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST3.pl TEST4.c
+#	cp $(top_srcdir)/examples/*/tests/* $(testdir)
+	@echo "TERMITE language C:"
+	$(MAKE) -j1 $(patsubst %.c,%.termite,$(wildcard $(top_srcdir)/examples/*/tests/*.c))
+	@echo "TERMITE language C++:"
 
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term --strip-headers TEST0.c  TEST1.pl
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST1.pl TEST2.c
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term --strip-headers TEST2.c  TEST3.pl
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST3.pl TEST4.c
-
+# known fails...
+#$(MAKE) -j1 $(patsubst %.C,%.termite,$(wildcard $(top_srcdir)/examples/*/tests/*.C))
 
 sl1rd: init.token
 	@echo
