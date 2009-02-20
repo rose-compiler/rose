@@ -1,3 +1,19 @@
+2009-02-19 23:06  liao6
+
+	* [r4572] /trunk/ROSE/config/support-insure.m4,
+	  /trunk/ROSE/config/support-purify.m4,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/util/graphs/BaseGraphCreate.h,
+	  /trunk/ROSE/src/util/stringSupport/string_functions.C,
+	  /trunk/ROSE/src/util/stringSupport/string_functions.h: Changes to
+	  help using identityTranslator to compile ROSE,
+	  
+	  * enabled configure to use a different CXXLD from CXX,
+	  so g++ can be specified as the linker, a workaround for bug 318.
+	  * avoid using boost::lexical_cast if a rose translator is used
+	  (#ifdef USE_ROSE)
+	  * some other changes to deal with bug 322 and bug 315
+
 2009-02-19 18:18  liao6
 
 	* [r4567]
