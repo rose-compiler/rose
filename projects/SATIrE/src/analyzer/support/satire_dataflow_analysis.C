@@ -73,8 +73,10 @@ DataFlowAnalysis::processResults(Program *program)
     /* Print the program as annotated text or term if requested. */
     p_impl->outputAnnotatedProgram(program);
 
+#if HAVE_PAG
     /* Print call strings if requested. */
     outputCallStrings(program);
+#endif
 }
 
 DataFlowAnalysis::DataFlowAnalysis(
@@ -88,6 +90,7 @@ DataFlowAnalysis::~DataFlowAnalysis()
 }
 
 // ---- private DataFlowAnalysis methods
+#if HAVE_PAG
 void
 DataFlowAnalysis::outputCallStrings(Program *program) const
 {
@@ -169,5 +172,6 @@ DataFlowAnalysis::outputCallString(
         std::abort();
     }
 }
+#endif
 
 }

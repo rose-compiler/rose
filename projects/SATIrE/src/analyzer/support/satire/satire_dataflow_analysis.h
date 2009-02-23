@@ -64,9 +64,11 @@ private:
     DataFlowAnalysis(const DataFlowAnalysis &);
     DataFlowAnalysis &operator=(const DataFlowAnalysis &);
 
+#if HAVE_PAG
  // Helper methods for printing call strings.
     void outputCallStrings(Program *program) const;
     void outputCallString(Program *program, int *callstring, int length) const;
+#endif
 };
 
 }
