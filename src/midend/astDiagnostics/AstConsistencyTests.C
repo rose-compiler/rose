@@ -166,7 +166,7 @@ AstTests::runAllTests(SgProject* sageProject)
 
   // DQ (7/6/2005): Introduce tracking of performance of ROSE.
   // ROSE_Performance::TimingPerformance("AST Consistancy Tests");
-     TimingPerformance timer ("AST Consistancy Tests:");
+     TimingPerformance timer ("AST Consistency Tests:");
 
   // printf ("Exiting at top of AstTests::runAllTests() \n");
   // ROSE_ASSERT(false);

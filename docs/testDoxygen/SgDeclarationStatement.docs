@@ -40,11 +40,11 @@ then there would be no defining declaration (only a non-defining declaration).
 type "foobar": \n
      typedef struct foobar *((FunctionPointer)(void);\n
      foobar* foobar_pointer = NULL; \n
-and yet is vailid code (even though there is no explicit forward declaration
+and yet is valid code (even though there is no explicit forward declaration
 of "foobar" as a class (or struct).  In this case foobar is represented
 using a non-defining declaration internally and that declaration is 
 reference multiple types (once within each statement).  Note that
-the code abouve is valid C++, and not valid C code (to make it valid C code 
+the code above is valid C++, and not valid C code (to make it valid C code 
 we would have to add "struct" the pointer declaration, for example:
      struct foobar* foobar_pointer = NULL; \n
 So C++ is not always a super set of C :-).

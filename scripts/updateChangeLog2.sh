@@ -1,4 +1,4 @@
-#!/bin/sh -xv
+#!/bin/sh
 # This script checks if a new ChangeLog2 file needs to be checked in.
 # Please run this script before running the daily regression test scripts
 # which updating the external repository. 
