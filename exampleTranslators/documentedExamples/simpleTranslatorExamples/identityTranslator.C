@@ -7,7 +7,7 @@ int main( int argc, char * argv[] )
   // Build the AST used by ROSE
      SgProject* sageProject = frontend(argc,argv);
 
-  // Run internal consistancy tests on AST
+  // Run internal consistency tests on AST
      AstTests::runAllTests(sageProject);
 
   // Insert your own manipulation of the AST here...
