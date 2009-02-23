@@ -9,7 +9,7 @@
 #include <iostream>
 #include <cstdlib>
 
-#ifdef HAVE_PAG
+#if HAVE_PAG
 extern char* animation;
 extern int cfg_ordering;
 extern int sel_mapping;
@@ -34,7 +34,7 @@ extern "C" int pag_auto_configure_memsize(int quiet, int perc, int size);
 bool satire_warn_deprecated;
 
 void setPagOptions(AnalyzerOptions opt) {
-#ifdef HAVE_PAG
+#if HAVE_PAG
   cfg_ordering=opt.getCfgOrdering();
   debug_stat=opt.statistics(); // bool->int
 

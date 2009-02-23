@@ -8,7 +8,7 @@
 
 // #include <config.h>
 
-#ifdef HAVE_PAG
+#if HAVE_PAG
 
 // setting PAG's options requires the use of a number of global variables
 // therefore we separate out this function to bundle all those accesses in
