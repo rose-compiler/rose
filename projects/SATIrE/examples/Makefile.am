@@ -118,6 +118,9 @@ init.token:
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST1.pl TEST2.c
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term --strip-headers TEST2.c TEST3.pl
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST3.pl TEST4.c
+# the freshly copied TEST0.c has the permissions of the original file, which
+# is read-only in distcheck mode
+	chmod u+w $(testdir)/TEST0.c
 
 %.termite: %.C
 	@echo "TERMITE: performing a translation circle of" $<
@@ -130,6 +133,9 @@ init.token:
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST1.pl TEST2.C
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term --strip-headers TEST2.C TEST3.pl
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST3.pl TEST4.C
+# the freshly copied TEST0.c has the permissions of the original file, which
+# is read-only in distcheck mode
+	chmod u+w $(testdir)/TEST0.c
 
 
 termite: init.token
