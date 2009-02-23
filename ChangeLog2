@@ -1,3 +1,17 @@
+2009-02-23 19:34  liao6
+
+	* [r4620] /trunk/ROSE/docs/Rose/rose.cfg.in,
+	  /trunk/ROSE/docs/testDoxygen/SgDeclarationStatement.docs,
+	  /trunk/ROSE/exampleTranslators/documentedExamples/simpleTranslatorExamples/identityTranslator.C,
+	  /trunk/ROSE/scripts/updateChangeLog2.sh,
+	  /trunk/ROSE/src/midend/astDiagnostics/AstConsistencyTests.C:
+	  Added @top_srcdir@/docs/testDoxygen into Doxygen search list
+
+2009-02-23 17:09  panas2
+
+	* [r4619] /trunk/ROSE/projects/BinQ/Makefile.am: Added files that
+	  need to be in Distribution
+
 2009-02-19 23:06  liao6
 
 	* [r4572] /trunk/ROSE/config/support-insure.m4,
