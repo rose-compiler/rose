@@ -162,5 +162,11 @@ EXTRA_DIST = BinQGui.h \
              MallocAndFree.h \
              InitPointerToNull.h \
              ComplexityMetric.h \
-             DwarfFileInfo.h
+             DwarfFileInfo.h \
+             buffer2.bin bufftest.c buffer2b.bin buffer2.bin.32bit \
+             buffer2-tsv/address_comments_1.tsv buffer2-tsv/address_references_1.tsv buffer2-tsv/basic_blocks_1.tsv buffer2-tsv/callgraph_1.tsv \ 
+             buffer2-tsv/control_flow_graph_1.tsv buffer2-tsv/expression_substitutions_1.tsv buffer2-tsv/expression_tree_1.tsv buffer2-tsv/functions_1.tsv \
+             buffer2-tsv/instructions_1.tsv buffer2-tsv/modules.tsv buffer2-tsv/operand_expressions_1.tsv buffer2-tsv/operand_strings_1.tsv \
+             buffer2-tsv/operand_tuples_1.tsv
+                
 
