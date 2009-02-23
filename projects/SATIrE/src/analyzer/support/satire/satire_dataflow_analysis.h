@@ -63,6 +63,10 @@ private:
  // Copying of DataFlowAnalysis objects is explicitly prohibited.
     DataFlowAnalysis(const DataFlowAnalysis &);
     DataFlowAnalysis &operator=(const DataFlowAnalysis &);
+
+ // Helper methods for printing call strings.
+    void outputCallStrings(Program *program) const;
+    void outputCallString(Program *program, int *callstring, int length) const;
 };
 
 }

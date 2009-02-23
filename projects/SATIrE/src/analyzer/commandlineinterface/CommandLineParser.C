@@ -257,6 +257,10 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     cl->resolveFuncPtrCallsOn();
   } else if (optionMatch(argv[i], "--no-resolve-funcptr-calls")) {
     cl->resolveFuncPtrCallsOff();
+  } else if (optionMatch(argv[i], "--output-call-strings")) {
+    cl->outputCallStringsOn();
+  } else if (optionMatch(argv[i], "--no-output-call-strings")) {
+    cl->outputCallStringsOff();
   } else if ((!optionMatchPrefix(argv[i], "-") && !optionMatchPrefix(argv[i],"--")) ) {
     /* handle as filename, pass filenames through */
     cout << "Found input file '" << argv[i] << "'." << endl;

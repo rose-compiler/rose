@@ -17,8 +17,11 @@ V0.?.? ? AP,...
     configure flag. C++ source code can check for definition of the HAVE_PAG
     macro (to some true value) for conditional compilation.
 
-* New data flow analysis attribute "position" [GB]
-  - can be used to get information about the interprocedural analysis context
+* Information about interprocedural contexts [GB]
+  - New data flow analysis attribute "position" can be used to get
+    information about the interprocedural analysis context
+  - Experimental --output-call-strings command line flag prints a
+    representation of PAG's call strings
 
 V0.8.5 2008-11-22 GB,AP,VP,MS
 

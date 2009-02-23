@@ -65,11 +65,11 @@ void setPagOptions(AnalyzerOptions opt) {
     sel_mapping=csl; 
   }
   if(csl>=2) {
-    sel_mapping=2;
+    sel_mapping=PAG_MAPPING_CALLSTRING_N;
     mapping_data.map_n = csl;
   }
   if(csl==-1) {
-    sel_mapping=5;
+    sel_mapping=PAG_MAPPING_CALLSTRING_INF;
   }
   global_print_post_info=opt.postInfo();
   global_print_pre_info=opt.preInfo();
@@ -82,19 +82,26 @@ void setPagOptions(AnalyzerOptions opt) {
   if(opt.vivu()) {
     mapping_data.map_l = opt.getVivuLoopUnrolling(); // [default 2]
     if(opt.getCallStringLength()==1) {
-      sel_mapping=3; // VIVU 1 (simple)
+      sel_mapping=PAG_MAPPING_VIVU_1; // VIVU 1 (simple)
     }
     if(opt.getCallStringLength()==2) {
-      sel_mapping=4; // VIVU 2 (extended)
+      sel_mapping=PAG_MAPPING_VIVU_2; // VIVU 2 (extended)
     }
     if(opt.getCallStringLength()>=3) {
-      sel_mapping=5; // VIVU ht (extended), callstringlength defines chop size
+      sel_mapping=PAG_MAPPING_VIVU_HT; // VIVU ht (extended), callstringlength defines chop size
     }
   }
   if(opt.getVivu4MaxUnrolling()!=-1) {
-    sel_mapping=6;
+    sel_mapping=PAG_MAPPING_VIVU_4;
     mapping_data.map_global_max_cut=opt.getVivu4MaxUnrolling();
   }
+
+  if(opt.outputCallStrings()) {
+ // GB (2009-02-23): This setting ensures that PAG does not garbage-collect
+ // call string data if we want to access it.
+    mapping_data.map_force = 0;
+  }
+
   if(opt.retFuncUsed()) {
     /* use retfunc for combining information from local and return edge */
     global_retfunc = 1;
