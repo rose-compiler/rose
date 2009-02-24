@@ -1,3 +1,5 @@
+#include <mpi.h>
+#include "rose.h"
 #include "parallel_compass.h"
 
 #include "functionLevelTraversal.h"

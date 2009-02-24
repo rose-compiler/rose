@@ -152,7 +152,7 @@ endif
 
 # support for precompiled headers
 if ROSE_PCH
-  ROSE_PCH_INCLUDE = -Winvalid-pch
+  ROSE_PCH_INCLUDE = -Winvalid-pch -fPIC -DPIC
 endif
 
 # Note use of "-isystem" option in ROSE_BOOST_PREINCLUDE_PATH to have the 

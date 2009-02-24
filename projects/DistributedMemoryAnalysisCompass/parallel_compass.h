@@ -1,7 +1,7 @@
 #ifndef PARALLEL_COMPASS_H
 #define PARALLEL_COMPASS_H
 
-#include <mpi.h>
+//#include <mpi.h>
 
 
 #include "AstSharedMemoryParallelProcessing.h"
