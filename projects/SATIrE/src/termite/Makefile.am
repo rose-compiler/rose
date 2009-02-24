@@ -27,8 +27,8 @@ bin_PROGRAMS = termpretty c2term term2c
 
 AM_YFLAGS = -d
 
-lib_LIBRARIES = libtermite.a
-libtermite_a_SOURCES = \
+lib_LIBRARIES = libtermsupport.a
+libtermsupport_a_SOURCES = \
 	RoseToProlog.C \
 	dfiparser.tab.c++ dfiparser.tab.h++ dfiscanner.c++ \
 	PrologToRose.C PrologTerm.C RoseEnums.C
@@ -50,8 +50,8 @@ termpretty_SOURCES = termpretty.l++
 c2term_SOURCES = c2term.C 
 term2c_SOURCES = term2c.C 
 
-term2c_LDADD = libtermite.a -lrose
-c2term_LDADD = libtermite.a -lrose
+term2c_LDADD = libtermsupport.a -lrose
+c2term_LDADD = libtermsupport.a -lrose
 
 CLEANFILES = termpretty.c++ \
 	     dfiparser.c++ dfiparser.h dfiscanner.c++ \
@@ -80,7 +80,7 @@ else
 	        termparser.tab.h++
   BUILT_SOURCES = termparser.tab.c++ termparser.tab.h++ \
                   dfiparser.tab.c++ dfiparser.tab.h++
-  libtermite_a_SOURCES += termparser.y++ termlexer.l++
+  libtermsupport_a_SOURCES += termparser.y++ termlexer.l++
   nobase_include_HEADERS += satire/termparser.h
 
 termparser.tab.c++: $(srcdir)/termparser.y++ Makefile

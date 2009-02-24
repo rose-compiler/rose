@@ -76,7 +76,7 @@ testdir=installcheck-executable-examples
 # The tests are now split into separate targets to facilitate a
 # paralellized run of the testsuite (make -j #N installcheck)
 
-TESTS_WITH_PAG = sl1rd sl2rd nnh99_shape srw98_shape pointsto_live_variables testsuite
+TESTS_WITH_PAG = sl1rd sl2rd nnh99_shape srw98_shape pointsto_live_variables testsuite interval
 TESTS_WITHOUT_PAG = termite
 
 .PHONY: tests $(TESTS_WITH_PAG) $(TESTS_WITHOUT_PAG)
@@ -196,6 +196,16 @@ pointsto_live_variables: init.token
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u pointsto_live_variables
 	$(MAKE) check -C $(testdir)/pointsto_live_variables
 
+interval: init.token
+	@echo
+	@echo "Testing interval"
+	@echo "====================="
+	cp -ur $(top_srcdir)/tools/interval $(testdir)
+	chmod u+rwx -R $(testdir)/interval
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis interval
+	$(MAKE) check -C $(testdir)/interval
+	cd $(testdir) ; sh testsuite/testsuite.sh interval/interval testsuite
+
 testsuite: init.token
 	@echo
 	@echo "Testsuite..."
@@ -214,16 +224,3 @@ testsuite: init.token
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis constprop
 	$(MAKE) -C $(testdir)/constprop
 	cd $(testdir) ; sh testsuite/testsuite.sh constprop/constprop testsuite
-
-	##cp -ur $(top_srcdir)/examples/srw98_shape $(testdir)
-	##chmod u+rwx -R $(testdir)/srw98_shape
-	##cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u srw98_shape
-	##$(MAKE) -C $(testdir)/srw98_shape
-	##cd $(testdir) ; sh testsuite/testsuite.sh srw98_shape/srw98_shape testsuite
-
-	##cp -ur $(top_srcdir)/examples/nnh99_shape $(testdir)
-	##chmod u+rwx -R $(testdir)/nnh99_shape
-	##cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u nnh99_shape
-	##$(MAKE) -C $(testdir)/nnh99_shape
-	##cd $(testdir) ; sh testsuite/testsuite.sh nnh99_shape/nnh99_shape testsuite 
-
