@@ -6,7 +6,10 @@ SUBDIRS = astFileIO astMerge astFixup astPostProcessing sageInterface virtualCFG
 
 # Force sage.docs to be make by default 
 # (if sage.docs.in is modified)
-all-local: sage.docs
+all-local: roseh sage.docs 
+
+
+	
 
 # INCLUDES = $(ROSE_INCLUDES)
 # INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/EDG_SAGE_Connection -I$(top_srcdir)/src/frontend/EDG/EDG_3.3/src $(WAVE_INCLUDES)
@@ -124,7 +127,31 @@ endif
 # $(CXX_TEMPLATE_OBJECTS)
 # libsage3_la_DEPENDENCIES = preproc.o $(GENERATED_OBJECTS) astFixup/*.o astPostProcessing/*.o astMerge/*.o astFileIO/*.o sageInterface/*.o virtualCFG/*.o 
 
-rose_attributes_list.lo : rose_attributes_list.h
+rose_attributes_list.lo : rose_attributes_list.h 
+
+if ROSE_PCH
+if ROSE_MPI
+# TPS (11Feb2009): PCH only works when multithreading is off.
+# We should not use PCH and MPI together.
+roseh:
+
+else
+# DQ (2/11/2009): This is part of the support for Precompiled Headers (PCH) using GNU g++
+roseh:
+	echo "CREATING PREDEFINED HEADER -------------------------------------------------"
+	echo $(CXX) $(CXXFLAGS) $(CFLAGS) $(CPPFLAGS) -g -o rose.h.gch $(top_srcdir)/src/rose.h -I$(top_builddir)/   $(ROSE_INCLUDES) 
+#	DQ (2/10/2009): Rush for the off switch on precompiled header files, comment out to skip use of PCH.
+#       TPS (23 Feb 2009): Hardcoded -fpic and -DPIC for now because 
+#       for some reason it is used by most files although not specified on configure
+	$(CXX)  -fPIC -DPIC $(CXXFLAGS) $(CFLAGS) $(CPPFLAGS) -g -o rose.h.gch $(top_srcdir)/src/rose.h -I$(top_builddir) $(ROSE_INCLUDES) 
+endif
+else
+# default, do nothing.
+roseh:
+
+endif
+
+test_roseh: roseh
 
 # DQ (10/18/2007): Added AST_FILE_IO.h StorageClasses.h
 # Removed sla.h (redundant with location in src/util/commandlineProcessing/sla.h)
@@ -163,9 +190,11 @@ clean-local:
 	rm -rf Cxx_Grammar* AST_FILE_IO.C StorageClasses.C
 	rm -rf AST_FILE_IO.h StorageClasses.h AstQueryMemoryPool.h
 	rm -rf generated_abstractcppgrammar.atg
+	rm -f rose.h.gch
 
 distclean-local:
 	rm -rf Templates.DB
+	rm -f rose.h.gch
 
 removeHashLineDirectivesFromGeneratedCode:
 	cp Cxx_Grammar.h  Cxx_Grammar.h.withLineDirectives

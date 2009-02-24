@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "MyIndenting.h"
 
 MyIndenting::MyIndenting():tabSize(4) {

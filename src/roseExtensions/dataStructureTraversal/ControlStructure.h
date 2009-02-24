@@ -2,7 +2,7 @@
 #include <config.h>
 #endif
 
-#include "rose.h"
+
 
 #ifndef CONTROL_STRUCTURE_H
 #define CONTROL_STRUCTURE_H

@@ -1,8 +1,9 @@
+#include "rose.h"
 #include "rose_config.h"
 
 #ifndef USE_ROSE_PHP_SUPPORT // If PHP is disabled then compile a stub
 
-#include "rose.h"
+
 #include <iostream>
 
 int php_main(std::string, SgFile*)
@@ -13,7 +14,7 @@ int php_main(std::string, SgFile*)
 
 #else // Else if PHP *is enabled*
 
-#include "rose.h"
+
 #include <AST.h>
 #include <AST_fold.h>
 #include <parsing/parse.h>

@@ -56,6 +56,7 @@ functions/variables.
 
 
 
+#include "rose.h"
 
 #include <iostream>
 #include <stdio.h>
@@ -63,7 +64,7 @@ functions/variables.
 #include <string>
 #include <list>
 
-#include "rose.h"
+
 
 using namespace std;
 

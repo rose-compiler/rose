@@ -1,9 +1,9 @@
-
+#include "rose.h"
 #include <general.h>
 
 #include "pre.h"
 #include "finiteDifferencing.h"
-#include "rose.h"
+
 
 // DQ (1/2/2008): I think this is no longer used!
 // #include "copy_unparser.h"

@@ -1,4 +1,5 @@
 // Example ROSE Translator: used within ROSE/tutorial
+#include "rose.h"
 #include "doCompleteMapping.h"
 
 

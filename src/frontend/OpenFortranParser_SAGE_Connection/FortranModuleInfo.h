@@ -7,7 +7,7 @@
 #ifndef __FORTRANMODULEINFO_H_
 #define __FORTRANMODULEINFO_H_
 
-#include "rose.h"
+//#include "rose.h"
 #include "fortran_support.h"
 
 #define  MOD_FILE_SUFFIX   ".rmod"

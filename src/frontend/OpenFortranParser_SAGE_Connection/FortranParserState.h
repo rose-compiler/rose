@@ -1,7 +1,7 @@
 #ifndef __FORTRANPARSERSTATE_H_
 #define __FORTRANPARSERSTATE_H_
 
-#include "rose.h"
+
 #include "fortran_support.h"
 
 #define astScopeStack              (*(FortranParserState::getCurrentScopeStack()))

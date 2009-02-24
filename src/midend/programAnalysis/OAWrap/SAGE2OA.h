@@ -3,7 +3,7 @@
 #ifndef _SAGE2OA_H
 #define _SAGE2OA_H
 
-#include "rose.h"
+
 
 #include <OAWrap/OAConfig.h>
 

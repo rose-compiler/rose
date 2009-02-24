@@ -2,7 +2,7 @@
 #ifndef COPY_UNPARSER_H
 #define COPY_UNPARSER_H
                                                                                                          
-#include "rose.h"
+
 
 #include <list>
 #include <string>

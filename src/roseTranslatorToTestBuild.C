@@ -1,13 +1,13 @@
 // Example ROSE Preprocessor
 // used for testing ROSE infrastructure
-
+#include "rose.h"
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
 #include <string>
 #include <iomanip>
-#include "rose.h"
+
 #include "AstTests.h"
 
 int

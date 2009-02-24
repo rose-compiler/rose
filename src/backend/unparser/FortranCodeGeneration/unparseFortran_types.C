@@ -3,7 +3,7 @@
  * Code to unparse Sage/Fortran type nodes.
  * 
  */
-
+#include "rose.h"
 #include "unparser.h"
 
 //----------------------------------------------------------------------------

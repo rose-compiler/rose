@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "MyVisitor.h"
 
 MyVisitor::visit(SgNode* node) {

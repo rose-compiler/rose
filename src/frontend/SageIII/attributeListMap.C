@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "rose_config.h"
 
 #if CAN_NOT_COMPILE_WITH_ROSE != true

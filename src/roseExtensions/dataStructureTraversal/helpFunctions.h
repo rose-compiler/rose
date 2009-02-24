@@ -6,7 +6,7 @@
 #define HELP_FUNCTIONS_H
 
 
-#include "rose.h"
+
 
 // DQ (12/30/2005): This is a Bad Bad thing to do (I can explain)
 // it hides names in the global namespace and causes errors in 

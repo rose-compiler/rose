@@ -1,4 +1,4 @@
-
+#include "rose.h"
 #include "FortranParserState.h"
 
 stack<FortranParserState*>  FortranParserState::statesStack;

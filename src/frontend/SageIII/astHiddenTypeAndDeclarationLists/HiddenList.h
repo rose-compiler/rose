@@ -5,7 +5,7 @@
 #ifndef DEBUG_HIDDENLIST_H_
 #define DEBUG_HIDDENLIST_H_
 
- #include "rose.h"
+
  #include <iostream>
  #include <set>
  #include <algorithm>

@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "sage3.h"
 #include "AST_FILE_IO.h"
 

@@ -1,7 +1,7 @@
 #ifndef UNPARSER_PHP
 #define UNPARSER_PHP
 
-#include "rose.h"
+
 #include "unparser.h"
 #include "unparseLanugageIndependentConstructs.h"
 

@@ -1,6 +1,6 @@
 // This is part of a sub-project within ROSE to define a higher level interface 
 // for the construction of the AST.
-
+#include "rose.h"
 #include "highLevelInterface.h"
 
 

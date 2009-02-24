@@ -1,7 +1,7 @@
 // outlinePreproc.cc: Shows the outliner's preprocessor-only phase.
-
-#include <iostream>
 #include <rose.h>
+#include <iostream>
+
 #include <Outliner.hh>
 
 using namespace std;

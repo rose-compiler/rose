@@ -1,4 +1,4 @@
-#include <rose.h>
+
 #include <list>
 #include <utility>
 

@@ -1,7 +1,7 @@
 #ifndef PROGRAM_VERIFICATION_H
 #define PROGRAM_VERIFICATION_H
 
-#include <rose.h>
+
 
 class Conditions;
 

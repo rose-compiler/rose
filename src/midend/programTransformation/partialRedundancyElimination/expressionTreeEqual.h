@@ -1,7 +1,7 @@
 #ifndef EXPRESSIONTREEEQUAL_H
 #define EXPRESSIONTREEEQUAL_H
 
-#include "rose.h"
+
 
 // DQ (3/21/2006): Added namespace to separate the 
 // PRE specific work (and it's use of the type named 

@@ -1,12 +1,13 @@
 // This avoids requiring the user to use config.h and follows 
 // the automake manual request that we use <> instead of ""
+#include "rose.h"
 #ifdef HAVE_INCLUDE_H
 #include <config.h>
 #endif
 #include "helpFunctions.h"
 #include "ControlStructure.h" 
 #include "GenGeneration.h"
-#include "rose.h"
+
 
 #include "rewrite.h"
 #include <vector>

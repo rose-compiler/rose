@@ -13,7 +13,7 @@
  * Unparse_ExprStmt::unparseStatement is called.
  *
  */
-
+#include "rose.h"
 #include "unparser.h"
 
 // DQ (12/31/2005): This is OK if not declared in a header file

@@ -150,6 +150,11 @@ if ROSE_USE_SSL_SUPPORT
   ROSE_SSL_LIBS = -lssl -lcrypto
 endif
 
+# support for precompiled headers
+if ROSE_PCH
+  ROSE_PCH_INCLUDE = -Winvalid-pch
+endif
+
 # Note use of "-isystem" option in ROSE_BOOST_PREINCLUDE_PATH to have the 
 # boost specified on the configure
 # command-line be used instead of the OS version of boost that is sometimes
@@ -158,9 +163,8 @@ endif
 # version of Boost (e.g /usr/include/boost) that we don't want to use.
 ROSE_INCLUDES = \
      $(ROSE_BOOST_PREINCLUDE_PATH) \
-     -I$(top_builddir)/src \
-     -I$(top_srcdir)/src \
      -I$(top_builddir)/src/frontend/SageIII \
+     -I$(top_srcdir)/src \
      -I$(top_srcdir)/src/frontend/SageIII \
      -I$(top_srcdir)/src/frontend/SageIII/astFixup \
      -I$(top_srcdir)/src/frontend/SageIII/astPostProcessing \
@@ -248,7 +252,8 @@ ROSE_INCLUDES = \
      $(ROSE_WINE_INCLUDES) \
      $(VALGRIND_CFLAGS) \
      $(SQLITE3_CFLAGS) \
-     $(ROSE_BOOST_NORMAL_INCLUDE_PATH) -DBOOST_REGEX_MATCH_EXTRA
+     $(ROSE_BOOST_NORMAL_INCLUDE_PATH) -DBOOST_REGEX_MATCH_EXTRA \
+     $(ROSE_PCH_INCLUDE)
 
 # DQ (12/22/2008): Move Boost directory to front and used "-isystem" option so
 # that a system with a previous (older) installation of boost does not interfer 

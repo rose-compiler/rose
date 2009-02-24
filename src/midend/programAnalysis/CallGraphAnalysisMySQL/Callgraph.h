@@ -11,7 +11,7 @@
 #define CALLGRAPH_H
 
 #include "/home/thuerey1/local/include/config.h"
-#include <rose.h>
+
 #include "DatabaseGraph.h"
 #include "Classhierarchy.h"
 

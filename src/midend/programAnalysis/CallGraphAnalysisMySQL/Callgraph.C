@@ -7,7 +7,7 @@
  *****************************************************************************/
 
 
-
+#include <rose.h>
 // database access
 #include "Callgraph.h"
 USE_TABLE_FILES();

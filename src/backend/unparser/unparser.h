@@ -7,7 +7,7 @@
 #ifndef UNPARSER_H
 #define UNPARSER_H
 
-#include "rose.h"
+
 #include "unparser_opt.h"
 #include "unparse_format.h"
 

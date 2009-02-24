@@ -4,6 +4,7 @@
  *
  */
 
+#include "rose.h"
 #include "unparser.h"
 
 using namespace std;
