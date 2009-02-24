@@ -7,7 +7,7 @@ V0.?.? ? AP,...
 	speed and stability improvements.
 	* This also paves the road for PROLOG-based analyses and
 	transformations to be run directly within an analyzer.
-  - Replaced some of the numerical constants for type modifiers with more
+  - Replaced all of the numerical constants for type modifiers with more
     descriptive atoms.
   - Correct generation of container nodes even when the list of successors
     is empty (arity used to be broken).
