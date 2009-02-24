@@ -96,11 +96,10 @@ void setPagOptions(AnalyzerOptions opt) {
     mapping_data.map_global_max_cut=opt.getVivu4MaxUnrolling();
   }
 
-  if(opt.outputCallStrings()) {
- // GB (2009-02-23): This setting ensures that PAG does not garbage-collect
- // call string data if we want to access it.
-    mapping_data.map_force = 0;
-  }
+  // GB (2009-02-23): This setting ensures that PAG does not garbage-collect
+  // call string data if we want to access it. As we want to compute context
+  // information by default, always set this.
+  mapping_data.map_force = 0;
 
   if(opt.retFuncUsed()) {
     /* use retfunc for combining information from local and return edge */

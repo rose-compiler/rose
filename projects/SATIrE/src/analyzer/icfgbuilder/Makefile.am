@@ -17,11 +17,20 @@ nobase_include_HEADERS = \
 	satire/AstNumberOfNodesStatistics.h \
 	satire/CFGTraversal.h \
 	satire/ExprTransformer.h \
+	satire/Context.h \
         satire/testcfg.h
 
-libIcfgBuilder_a_SOURCES = AstNumberOfNodesStatistics.C  cfg_funcs.C  cfg_support.C  CFGTraversal.C  ExprLabeler.C \
-                           ExprTransformer.C  IrCreation.C  ProcTraversal.C \
-			   testcfg.c
+libIcfgBuilder_a_SOURCES = \
+	AstNumberOfNodesStatistics.C \
+	cfg_funcs.C \
+	cfg_support.C \
+	CFGTraversal.C \
+	ExprLabeler.C \
+	ExprTransformer.C \
+	Context.C \
+	IrCreation.C \
+	ProcTraversal.C \
+	testcfg.c
 
 if WITH_PAG
 libIcfgBuilder_a_LIBADD = $(CFGOBJS)

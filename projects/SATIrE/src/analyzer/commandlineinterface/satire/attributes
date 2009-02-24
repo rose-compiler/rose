@@ -76,4 +76,5 @@ STRING_ATTR(OutputBinaryAstFileName, "")
 BOOL_ATTR(runPointsToAnalysis, Off)
 BOOL_ATTR(resolveFuncPtrCalls, Off)
 
+BOOL_ATTR(computeCallStrings, On)
 BOOL_ATTR(outputCallStrings, Off)

@@ -31,6 +31,8 @@ class BasicBlock;
 class Procedure;
 class CFG;
 
+#include "Context.h"
+
 // GB (2008-11-11): Including "pointsto.h" here doesn't work; it leads to
 // cycles and keeps certain type declarations from being seen. However, we
 // don't really need anything here except the name of the PointsToAnalysis
@@ -120,6 +122,14 @@ public:
     void registerStatementLabel(int label, SgStatement *stmt);
  // debugging
     void print_map() const;
+
+#if HAVE_PAG
+ // context/call string info
+    bool hasContextInfo() const;
+    void addContext(const Context &c);
+    typedef std::vector<Context> ContextContainer;
+    ContextContainer contexts;
+#endif
 
  // a single symbol for all return variables in the program
     SgVariableSymbol *global_return_variable_symbol;

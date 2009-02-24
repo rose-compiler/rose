@@ -257,6 +257,10 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     cl->resolveFuncPtrCallsOn();
   } else if (optionMatch(argv[i], "--no-resolve-funcptr-calls")) {
     cl->resolveFuncPtrCallsOff();
+  } else if (optionMatch(argv[i], "--compute-call-strings")) {
+    cl->computeCallStringsOn();
+  } else if (optionMatch(argv[i], "--no-compute-call-strings")) {
+    cl->computeCallStringsOff();
   } else if (optionMatch(argv[i], "--output-call-strings")) {
     cl->outputCallStringsOn();
   } else if (optionMatch(argv[i], "--no-output-call-strings")) {

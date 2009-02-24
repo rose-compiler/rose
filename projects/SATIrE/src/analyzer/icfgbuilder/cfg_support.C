@@ -872,6 +872,20 @@ CFG::print_map() const
     }
 }
 
+#if HAVE_PAG
+bool
+CFG::hasContextInfo() const
+{
+    return !contexts.empty();
+}
+
+void
+CFG::addContext(const Context &c)
+{
+    contexts.push_back(c);
+}
+#endif
+
 #if 0
 void
 CFG::add_iteratorToDelete(BlockListIterator *i)
