@@ -1,3 +1,22 @@
+2009-02-24 18:00  panas2
+
+	* [r4636] /trunk/ROSE/projects/javaport/Makefile.am: fixing swig to
+	  work with precompiled headers
+
+2009-02-24 15:47  panas2
+
+	* [r4634] /trunk/ROSE/config/Makefile.for.ROSE.includes.and.libs,
+	  /trunk/ROSE/projects/DistributedMemoryAnalysisCompass/parallel_compass.C,
+	  /trunk/ROSE/projects/DistributedMemoryAnalysisCompass/parallel_compass.h,
+	  /trunk/ROSE/projects/DistributedMemoryAnalysisCompass/parallel_file_compass.C,
+	  /trunk/ROSE/projects/DistributedMemoryAnalysisCompass/parallel_functionBased_ASTBalance.C,
+	  /trunk/ROSE/projects/DistributedMemoryAnalysisCompass/parallel_functionBased_dynamicBalance.C,
+	  /trunk/ROSE/src/frontend/SageIII/Makefile.am,
+	  /trunk/ROSE/src/midend/programAnalysis/distributedMemoryAnalysis/DistributedMemoryAnalysis.C,
+	  /trunk/ROSE/src/midend/programAnalysis/distributedMemoryAnalysis/DistributedMemoryAnalysis.h,
+	  /trunk/ROSE/src/midend/programAnalysis/distributedMemoryAnalysis/functionNames.C:
+	  Fixing MPI work so nightly test will pass
+
 2009-02-24 06:04  panas2
 
 	* [r4624] /trunk/ROSE/Makefile.am,
