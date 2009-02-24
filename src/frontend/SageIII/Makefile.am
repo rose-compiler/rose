@@ -9,8 +9,6 @@ SUBDIRS = astFileIO astMerge astFixup astPostProcessing sageInterface virtualCFG
 all-local: roseh sage.docs 
 
 
-	
-
 # INCLUDES = $(ROSE_INCLUDES)
 # INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/EDG_SAGE_Connection -I$(top_srcdir)/src/frontend/EDG/EDG_3.3/src $(WAVE_INCLUDES)
 # INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/EDG_SAGE_Connection -I$(top_srcdir)/src/frontend/EDG/EDG_3.3/src
