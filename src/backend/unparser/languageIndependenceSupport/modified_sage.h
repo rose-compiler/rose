@@ -8,7 +8,7 @@
 #ifndef UNPARSER_MOD_SAGE
 #define UNPARSER_MOD_SAGE
 
-#include "rose.h"
+
 #include "unparser.h"
 
 class Unparser;

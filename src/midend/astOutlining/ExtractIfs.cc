@@ -6,12 +6,12 @@
  *
  *  \author Richard Vuduc <richie@llnl.gov>
  */
-
+#include <rose.h>
 #include <iostream>
 #include <string>
 #include <stack>
 
-#include <rose.h>
+
 #include "ASTtools.hh"
 #include "IfDirectiveExtractor.hh"
 #include "IfDirectiveContextFinder.hh"

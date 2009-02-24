@@ -1,4 +1,4 @@
-#include <rose.h>
+
 class MarkAST4Unparse:public AstTopDownBottomUpProcessing <bool,bool>
 {
 	public:

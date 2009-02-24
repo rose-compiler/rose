@@ -1,12 +1,13 @@
 #line 1 "buildCheckers.C.in"
 // This is an automatically generated file
-#include "rose_config.h"
+
 #if ROSE_MPI
 #include <mpi.h>
 #endif
+#include <rose.h>
+#include "rose_config.h"
 
 #include <iostream>
-#include <rose.h>
 #include <vector>
 #include "compass.h"
 #include "checkers.h"

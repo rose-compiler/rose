@@ -6,7 +6,7 @@
 
 #include <string>
 #include <iostream>
-#include "rose.h"
+
 
 // using namespace std;
 

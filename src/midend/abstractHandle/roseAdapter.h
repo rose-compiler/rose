@@ -1,7 +1,7 @@
 #ifndef rose_adapter_INCLUDED
 #define rose_adapter_INCLUDED
 
-#include <rose.h>
+
 #include <iostream>
 #include <string>
 

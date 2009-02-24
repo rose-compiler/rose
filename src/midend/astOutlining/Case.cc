@@ -5,9 +5,9 @@
  *
  *  \author Richard Vuduc <richie@llnl.gov>
  */
-
-#include <string>
 #include <rose.h>
+#include <string>
+
 #include "If.hh"
 #include "ASTtools.hh"
 

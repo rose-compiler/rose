@@ -1,3 +1,4 @@
+#include <rose.h>
 #include <stdio.h>
 
 #include <genCfg.h>

@@ -1,7 +1,8 @@
+#include <rose.h>
 #include <iostream>
 
 #include "config.h"
-#include <rose.h>
+
 
 #include "broadway.h"
 

@@ -7,7 +7,7 @@
 #ifndef C2PROMELAUNPARSER_H
 #define C2PROMELAUNPARSER_H
 
-#include "rose.h"
+
 #include "unparser_opt.h"
 #include "unparse_format.h"
 #include "unparser.h"

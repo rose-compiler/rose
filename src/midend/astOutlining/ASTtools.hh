@@ -14,7 +14,7 @@
 #include <set>
 #include <map>
 
-#include <rose.h>
+
 
 namespace ASTtools
 {

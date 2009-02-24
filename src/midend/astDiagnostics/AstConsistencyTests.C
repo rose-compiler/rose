@@ -1,6 +1,8 @@
 // Author: Markus Schordan
 // $Id: AstConsistencyTests.C,v 1.8 2008/01/25 02:25:46 dquinlan Exp $
 
+#include "rose.h"
+
 #ifndef ASTTESTS_C
 #define ASTTESTS_C
 // DQ (8/9/2004): Modified to put code below outside of ASTTESTS_C if ... endif

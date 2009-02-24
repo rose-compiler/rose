@@ -3,11 +3,11 @@
  *  \brief Preprocessor phase to convert 'this' expressions
  *  to-be-outlined into references to a local variable.
  */
-
+#include <rose.h>
 #include <iostream>
 #include <list>
 #include <string>
-#include <rose.h>
+
 
 #include "Preprocess.hh"
 #include "ASTtools.hh"

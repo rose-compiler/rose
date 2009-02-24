@@ -3,7 +3,7 @@
 #ifndef __BinCompass_AnalysisInterface__
 #define __BinCompass_AnalysisInterface__
 
-#include "rose.h"
+
 
 class BC_AnalysisInterface   : public AstSimpleProcessing {
  protected:

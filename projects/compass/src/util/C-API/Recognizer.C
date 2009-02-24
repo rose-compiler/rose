@@ -4,7 +4,7 @@
  *  \brief Implements a class that recognizes API signature entities in
  *  an AST.
  */
-
+#include <rose.h>
 #include <cassert>
 #include <string>
 #include "Recognizer.h"

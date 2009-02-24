@@ -1,6 +1,7 @@
 /*
 Hi Dan,
 compiling the following code
+#include "rose.h"
 #include <stdarg.h>
 
 int main(){
@@ -9,7 +10,7 @@ int main(){
 }
 
 using the translator:
-#include "rose.h"
+
 int main( int argc, char * argv[] )
    {
      SgProject* project = frontend(argc,argv);

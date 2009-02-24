@@ -1,4 +1,4 @@
-//#include "rose.h"
+#include "rose.h"
 #include "MPINonBlockingCodeMotion.h"
 
 using namespace MPIOptimization;

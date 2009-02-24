@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "pre.h"
 #include <vector>
 #include <string>

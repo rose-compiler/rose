@@ -1,7 +1,7 @@
 //! outline.cc: Demonstrates the pragma-interface of the Outliner.
-
-#include <iostream>
 #include <rose.h>
+#include <iostream>
+
 #include <Outliner.hh>
 #include <vector>
 #include <string>

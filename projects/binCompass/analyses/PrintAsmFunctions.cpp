@@ -1,4 +1,4 @@
-
+#include "rose.h"
 
 #include "PrintAsmFunctions.h"
 #include "string.h"

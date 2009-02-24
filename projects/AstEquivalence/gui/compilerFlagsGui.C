@@ -1,3 +1,4 @@
+#include "rose.h"
 #include <boost/algorithm/string.hpp>
 #include "compilerFlagsGui.h"
 #include <ext/hash_map>

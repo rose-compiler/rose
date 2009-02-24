@@ -8,7 +8,7 @@
 #ifndef UNPARSER_LANGUAGE_INDEPENDENT_SUPPORT
 #define UNPARSER_LANGUAGE_INDEPENDENT_SUPPORT
 
-#include "rose.h"
+
 #include "unparser.h"
 
 // DQ (8/13/2007): This should not be in a header file!

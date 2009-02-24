@@ -3,7 +3,7 @@
 
 // #include "config.h"
 
-#include "rose.h"
+
 #include "inlinerSupport.h"
 #include "replaceExpressionWithStatement.h"
 #include "expressionTreeEqual.h"

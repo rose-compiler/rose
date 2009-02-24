@@ -5,7 +5,7 @@
  *  \brief Implements utility routines for recognizing and querying
  *  MPI abstraction use.
  */
-
+#include "rose.h"
 #include <fstream>
 #include "Recognizer.h"
 

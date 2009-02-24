@@ -1,7 +1,7 @@
 #ifndef BASICBLOCKATTRIBUTE_IS_DEFINED
 #define BASICBLOCKATTRIBUTE_IS_DEFINED
 
-#include "rose.h"
+
 
 /*!
 Local index counter within a basic block.

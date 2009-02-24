@@ -1,7 +1,7 @@
 #ifndef CFGVISITOR_HH
 #define CFGVISITOR_HH
 
-#include <rose.h>
+
 #include "common.hh"
 
 class Relation;

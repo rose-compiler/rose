@@ -1,3 +1,4 @@
+#include "rose.h"
 #include <defaultFunctionGenerator.h>
 #include <shortCircuitingTransformation.h>
 #include <destructorCallAnnotator.h>

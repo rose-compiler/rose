@@ -1,8 +1,5 @@
 #include "rose.h"
 #include "iostream"
-#include "rose.h"
-#include "iostream"
-
 
 #include "MPI_ASTAttrib.h"
 

@@ -1,7 +1,7 @@
 #ifndef MAP_SCOPES_IN_TOKEN_STREAM_AND_AST
 #define MAP_SCOPES_IN_TOKEN_STREAM_AND_AST
 
-#include "rose.h"
+
 #include <functional>
 #include "linearizeAST.h"
 #include <vector>

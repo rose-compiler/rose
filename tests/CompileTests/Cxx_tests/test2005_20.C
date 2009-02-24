@@ -20,13 +20,13 @@ Vera
 
 */
 #if 0
-
+#include "rose.h"
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "rose.h"
+
 
 int main(int argc, char *argv[]){
 

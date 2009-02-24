@@ -9,13 +9,13 @@
  *  This implementation was extracted by Liao from his ROSE
  *  OpenMP_Translator project.
  */
-
+#include <rose.h>
 #include <iostream>
 #include <sstream>
 #include <list>
 #include <algorithm>
 
-#include <rose.h>
+
 #include "ASTtools.hh"
 
 // =====================================================================

@@ -1,6 +1,6 @@
-
-#include <config.h>
 #include <rose.h>
+#include <config.h>
+
 #include <qrose.h>
 
 class QueryCollection {

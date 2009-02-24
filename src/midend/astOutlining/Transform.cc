@@ -3,11 +3,11 @@
  *
  *  \brief Implements the outlining transformation.
  */
-
+#include <rose.h>
 #include <iostream>
 #include <list>
 #include <string>
-#include <rose.h>
+
 
 #include "Transform.hh"
 #include "ASTtools.hh"

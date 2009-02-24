@@ -4,9 +4,9 @@
  *  \brief Implements routines to assist in variable symbol analysis
  *  and manipulation.
  */
-
-#include <algorithm>
 #include <rose.h>
+#include <algorithm>
+
 #include "VarSym.hh"
 
 // ========================================================================

@@ -1,7 +1,8 @@
 /* Algorithms to detect where functions begin in the set of machine instructions. See detectFunctionStarts() near the end of this file. */
 #define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 #include "rose.h"
+#include <inttypes.h>
+
 
 namespace DisassemblerCommon {
 

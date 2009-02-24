@@ -19,6 +19,7 @@
  *  forced_transformation_format - controls whether or not to use file information
  *				   when formatting 
 !*/
+#include <stdio.h>
 
 class Unparser_Opt
    {
@@ -54,7 +55,7 @@ class Unparser_Opt
           bool get_unparse_includes_opt();
           void set_unparse_includes_opt(bool opt);
 
-          void display ( const std::string & label );
+          void display ( const std::string& label );
 
      private:
           bool auto_opt;

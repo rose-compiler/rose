@@ -5,7 +5,7 @@
 // changed to rose_config.h and is included directly by rose.h.
 // #include "config.h"
 
-#include "rose.h"
+
 #include <string>
 
 // DQ (3/12/2006): This is available from rose.h

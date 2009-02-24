@@ -8,12 +8,12 @@
  *  routines for use in an empirical tuning application. Such routines
  *  can be isolated into their own, dynamically shareable modules.
  */
-
+#include <rose.h>
 #include <iostream>
 #include <string>
 #include <sstream>
 
-#include <rose.h>
+
 #include "Transform.hh"
 #include "ASTtools.hh"
 #include "VarSym.hh"

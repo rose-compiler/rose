@@ -1,7 +1,8 @@
+#include "rose.h"
 #include <stdint.h>
 #include <fcntl.h>
 #include <vector>
-#include "rose.h"
+
 #include "integerOps.h"
 
 using namespace std;

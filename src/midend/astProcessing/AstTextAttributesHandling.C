@@ -3,7 +3,7 @@
 
 #ifndef ASTTEXTATTRIBUTEHANDLING_C
 #define ASTTEXTATTRIBUTEHANDLING_C
-
+#include "rose.h"
 #include <string>
 #include "AstTextAttributesHandling.h"
 

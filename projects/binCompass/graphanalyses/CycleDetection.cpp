@@ -1,5 +1,5 @@
 
-
+#include "rose.h"
 #include "CycleDetection.h"
 #include "string.h"
 

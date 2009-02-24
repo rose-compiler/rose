@@ -9,7 +9,7 @@
  * just use p_value for now. When Sage is rebuilt, we should be able to fix this.
  *
  */
-
+#include "rose.h"
 #include "unparser.h"
 #include <limits>
 

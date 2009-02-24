@@ -2,7 +2,7 @@
  * Runtime Instrumentation 
  * 12 May 2008 - tps
  ****************************************/
-
+#include <rose.h>
 #include "RuntimeInstrumentation.h"
 
 using namespace std;

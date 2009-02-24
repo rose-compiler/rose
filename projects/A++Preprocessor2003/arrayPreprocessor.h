@@ -1,7 +1,7 @@
 #ifndef ROSE_ARRAY_PREPROCESSOR_H
 #define ROSE_ARRAY_PREPROCESSOR_H
 
-#include "rose.h"
+
 
 // Support for use of query library
 #include "roseQueryLib.h"

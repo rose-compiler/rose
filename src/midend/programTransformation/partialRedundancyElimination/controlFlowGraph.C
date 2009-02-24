@@ -1,7 +1,6 @@
+#include "rose.h"
 #include <sstream>
 #include <vector>
-
-#include "rose.h"
 
 #include "CFG.h"
 #include <AstInterface_ROSE.h>

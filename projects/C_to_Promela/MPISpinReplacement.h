@@ -1,6 +1,6 @@
 #include <map>
 #include <string>
-#include "rose.h"
+
 #include "SpinPStructContainer.h"
 #include "MPICallListHelper.h"
 

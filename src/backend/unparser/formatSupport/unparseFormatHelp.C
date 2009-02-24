@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "unparseFormatHelp.h"
 
 UnparseFormatHelp::~UnparseFormatHelp()

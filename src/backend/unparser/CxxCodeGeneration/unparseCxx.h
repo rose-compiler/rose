@@ -8,7 +8,7 @@
 #ifndef UNPARSER_EXPRSTMT
 #define UNPARSER_EXPRSTMT
 
-#include "rose.h"
+
 #include "unparser.h"
 #include "unparseLanugageIndependentConstructs.h"
 

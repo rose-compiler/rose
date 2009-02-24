@@ -12,7 +12,7 @@
 
 #if 0
 // This causes EDG to file (g++ sstream header file will not parse using EDG)
-#include "rose.h"
+//#include "rose.h"
 #endif
 
 #include "math.h"

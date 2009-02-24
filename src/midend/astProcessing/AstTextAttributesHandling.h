@@ -7,7 +7,7 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
-#include "rose.h"
+
 #include "Cxx_Grammar.h"
 #include "AstProcessing.h"
 

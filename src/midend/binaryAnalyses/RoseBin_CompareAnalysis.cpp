@@ -6,7 +6,7 @@
  *              binary Tree
  * todo : color the variables and names in the src/bin tree
  ****************************************************/
-
+#include "rose.h"
 #include "RoseBin_CompareAnalysis.h"
 
 using namespace std;

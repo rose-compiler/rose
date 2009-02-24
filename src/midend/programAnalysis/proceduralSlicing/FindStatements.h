@@ -1,7 +1,7 @@
 #ifndef FINDSTATEMENTS_IS_DEFINED
 #define FINDSTATEMENTS_IS_DEFINED
 
-#include "rose.h"
+
 #include <AstInterface.h>
 #include <StmtInfoCollect.h>
 #include <ReachingDefinition.h>

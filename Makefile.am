@@ -22,7 +22,24 @@ ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I /usr/share/aclocal
 
 # Force rose.docs to be make by default 
 # (if rose.docs.in is modified)
-all-local: rose.docs
+all-local: rose.docs 
+
+all: detect_roseh detect_rosec
+
+# tps: script that checks that no header file includes rose.h
+detect_roseh:
+	@echo "***************************************************************************************"
+	@echo "***** ROSE uses pre-compiled headers and needs to check integrity. ********************"
+	@echo "***** ROSE ensures that no header files includes rose.h and that   ********************"
+	@echo "***** the first header file in a source file is rose.h (if used)   ********************"
+	@echo "***************************************************************************************"
+	@echo Testing for rose.h in header files...
+	@if test `find $(top_srcdir) -type f \( -name "*.h" -o -name "*.hh" \) -exec grep -H "#include \"rose.h\"\|#include <rose.h>" {} \; |  grep -v "//#include \"rose.h\"\|//#include <rose.h>" | grep -v "// #include \"rose.h\"\|// #include <rose.h>" | wc | awk '{print \$$1}'` -eq 0; then echo "rose.h header check passed."; else echo "header files exist that include rose.h"; find $(top_srcdir) -type f \( -name "*.h" -o -name "*.hh" \) -exec grep -H "#include \"rose.h\"\|#include <rose.h>" {} \; | grep -v "//#include \"rose.h\"\|//#include <rose.h>" | grep -v "// #include \"rose.h\"\|// #include <rose.h>" ; exit 1; fi
+
+# tps: added script from Andreas with small modifications - find all C files that dont include rose in the top of the file 
+detect_rosec:
+	@echo Testing for rose.h in source files...
+	@if test `find $(top_srcdir) -type f \( -name "*.C" -o -name "*.cpp" -o -name "*.cc" \) -exec grep -H "#include" {} \; | grep "\"rose.h\"\|<rose.h>" | grep -v "\/\/" | cut -d ':' -f 1 | grep -v "preproc-fortran.cc" | grep -v "preproc-fortran-fixed.cc" | uniq | xargs -n 1 grep -m 1 -HP "^#include" | grep -v "rose.h\|mpi.h" | wc | awk '{print \$$1}'` -eq 0; then echo "rose.h source file check passed.";  else echo "There are source files that dont include rose.h as the first header file."; find $(top_srcdir) -type f \( -name "*.C" -o -name "*.cpp" -o -name "*.cc" \) -exec grep -H "#include" {} \; | grep "\"rose.h\"\|<rose.h>" | grep -v "\/\/" | cut -d ':' -f 1 | grep -v "preproc-fortran.cc" | grep -v "preproc-fortran-fixed.cc" | uniq | xargs -n 1 grep -m 1 -HP "^#include" | grep -v "rose.h\|mpi.h"; exit 1; fi
 
 # DQ (6/29/2004): I don't think we need this!
 # LIBS = @LIBS@ ${SAGE_LIBS}

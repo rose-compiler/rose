@@ -5,7 +5,7 @@
 #ifndef DEBUG_NAMESPACESANDCLASSTRAVERSAL_H_
 #define DEBUG_NAMESPACESANDCLASSTRAVERSAL_H_
 
- #include "rose.h"
+
  #include <iostream>
  #include <set>
  #include <algorithm>

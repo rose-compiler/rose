@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "createCloneDetectionVectors.h"
 
 using namespace std;

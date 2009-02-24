@@ -5,7 +5,7 @@
 // changed to rose_config.h and is included directly by rose.h.
 // #include "config.h"
 
-#include "rose.h"
+
 #include "rewrite.h"
 #include "replaceExpressionWithStatement.h"
 #include "inlinerSupport.h"

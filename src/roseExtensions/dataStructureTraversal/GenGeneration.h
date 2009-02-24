@@ -4,7 +4,7 @@
 #include "GenRepresentation.h"
 #include "helpFunctions.h"
 #include "ControlStructure.h" 
-#include "rose.h"
+
 
 #define GC_CONDITIONAL_PRINT(variableName) (*dotout) << "#ifdef CGRAPHPP_USE_GC \n if ( GC_base(classReference->" + variableName + ") != NULL)\n #endif \n"
 #define METHOD_PREFIX "save"

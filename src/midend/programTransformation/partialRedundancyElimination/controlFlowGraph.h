@@ -2,7 +2,7 @@
 #define CONTROLFLOWGRAPH_H
 
 // #include "config.h"
-#include "rose.h"
+
 
 #include "CFG.h"
 #include <sstream>

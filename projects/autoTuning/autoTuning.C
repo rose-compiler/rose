@@ -15,7 +15,7 @@
  *
  * Liao, 1/28/2009
  */
-
+#include "rose.h"
 #include "autoTuningSupport.h"
 
 using namespace std;

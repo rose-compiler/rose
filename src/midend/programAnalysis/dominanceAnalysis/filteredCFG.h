@@ -1,7 +1,7 @@
 #ifndef FILTEREDCFGVIEW_H
 #define FILTEREDCFGVIEW_H
 
-#include "rose.h"
+
 #include "virtualCFG.h"
 #include <string>
 #include <vector>

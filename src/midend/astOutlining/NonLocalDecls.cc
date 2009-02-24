@@ -6,11 +6,11 @@
  *
  *  \todo Implement gathering of local type declarations.
  */
-
+#include <rose.h>
 #include <iostream>
 #include <list>
 #include <string>
-#include <rose.h>
+
 
 #include "Preprocess.hh"
 #include "Copy.hh"

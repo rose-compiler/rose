@@ -4,7 +4,7 @@
  * Date : 3Apr07
  * Decription : Interface to user
  ****************************************************/
-
+#include "rose.h"
 #include <sys/time.h>
 
 using namespace std;
@@ -17,7 +17,7 @@ using namespace std;
 
 #include <stdio.h>
 #include <iostream>
-#include "rose.h"
+
 #include "RoseFile.h"
 #include "RoseBin_file.h"
 #include "RoseBin_support.h"

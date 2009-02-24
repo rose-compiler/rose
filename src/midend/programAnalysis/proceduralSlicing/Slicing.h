@@ -1,7 +1,7 @@
 #ifndef Slicing_IS_DEFINED
 #define Slicing_IS_DEFINED
 
-#include "rose.h"
+
 #include "SlicingCriterion.h"
 #include "FindStatements.h"
 #include "MarkingNodes.h"

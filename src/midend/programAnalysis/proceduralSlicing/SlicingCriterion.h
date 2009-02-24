@@ -1,7 +1,7 @@
 #ifndef SlicingCriterion_IS_DEFINED
 #define SlicingCriterion_IS_DEFINED
 
-#include "rose.h"
+
 
 /*!
   \class SlicingCriterion

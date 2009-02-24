@@ -1,4 +1,4 @@
-#include <rose.h>
+
 class IdentifyInlineTargets:public AstBottomUpProcessing <bool>
 {
 	public:

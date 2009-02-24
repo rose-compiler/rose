@@ -11,9 +11,9 @@
  *
  *  \todo Extend this interface.
  */
-
-#include <string>
 #include <rose.h>
+#include <string>
+
 
 #include "Outliner.hh"
 #include "ASTtools.hh"

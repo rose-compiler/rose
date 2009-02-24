@@ -1,7 +1,7 @@
 #ifndef KEEPATTRIBUTE_IS_DEFINED
 #define KEEPATTRIBUTE_IS_DEFINED
 
-#include "rose.h"
+
 
 /*! 
   This attribute is added to all AST nodes which we want to keep in the slice of a program code.

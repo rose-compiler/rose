@@ -5,7 +5,7 @@
 // changed to rose_config.h and is included directly by rose.h.
 // #include "config.h"
 
-#include "rose.h"
+
 
 // DQ (3/12/2006): This is included within rose.h
 // #include <map>

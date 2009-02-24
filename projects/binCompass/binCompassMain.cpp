@@ -1,4 +1,4 @@
-//#include <rose.h>
+#include <rose.h>
 #include "binCompassAnalysisInterface.h"
 #include "GraphAnalysisInterface.h"
 #include <sys/types.h>

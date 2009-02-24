@@ -1,9 +1,8 @@
-#include "AstAttributeDOT.h"
-
-
 #ifndef ASTATTRIBUTEDOT_C
 #define ASTATTRIBUTEDOT_C
 
+#include "rose.h"
+#include "AstAttributeDOT.h"
 
 
 AstAttributeDOT::AstAttributeDOT ()

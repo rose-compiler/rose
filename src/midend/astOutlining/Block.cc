@@ -3,11 +3,11 @@
  *  \brief Preprocessor phase to convert a statement into an
  *  SgBasicBlock.
  */
-
+#include <rose.h>
 #include <iostream>
 #include <list>
 #include <string>
-#include <rose.h>
+
 
 #include "Preprocess.hh"
 #include "ASTtools.hh"

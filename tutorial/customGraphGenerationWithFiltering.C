@@ -9,10 +9,10 @@
 
 // Example ROSE Preprocessor
 // used for testing ROSE infrastructure
-
+#include "rose.h"
 #include <assert.h>
 #include <string>
-#include "rose.h"
+
 #include <iomanip>
 #include "AstConsistencyTests.h"
 #include <functional>

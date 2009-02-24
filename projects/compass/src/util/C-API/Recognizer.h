@@ -9,7 +9,7 @@
 #define INC_C_API_RECOGNIZER_H //!< Recognizer.h included.
 
 #include <C-API/C-API.h>
-#include <rose.h>
+
 
 namespace C_API
 {

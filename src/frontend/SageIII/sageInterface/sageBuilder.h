@@ -1,7 +1,7 @@
 #ifndef ROSE_SAGE_BUILDER_INTERFACE
 #define ROSE_SAGE_BUILDER_INTERFACE
 
-#include "rose.h"
+
 #include <string>
 
 /*!

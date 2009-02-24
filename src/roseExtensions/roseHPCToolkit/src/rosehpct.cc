@@ -11,7 +11,7 @@
 
 #include "rosehpct/rosehpct.hh"
 #include "rosehpct/util/general.hh"
-#include "rose.h"
+
 
 using namespace std;
 using namespace GenUtil;

@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "sage3.h"
 #include "sageInterface.h"
 // DQ (10/14/2006): Added supporting help functions

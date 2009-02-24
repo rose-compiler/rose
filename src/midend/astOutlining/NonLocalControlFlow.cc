@@ -6,11 +6,11 @@
  *  to indicate what non-local jump is taken. This transformation
  *  simplifies outlining of code containing non-local jumps.
  */
-
+#include <rose.h>
 #include <iostream>
 #include <list>
 #include <string>
-#include <rose.h>
+
 
 #include "Preprocess.hh"
 #include "ASTtools.hh"

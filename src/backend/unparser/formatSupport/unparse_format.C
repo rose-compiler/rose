@@ -2,7 +2,7 @@
  * Contains the implementation of the constructors, destructor, formatting functions,
  * and fucntions that unparse directives.
  */
-
+#include "rose.h"
 #include "unparser.h"
 // #include "unparse_format.h"
 #include "unparseFormatHelp.h"

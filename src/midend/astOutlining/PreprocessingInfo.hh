@@ -12,7 +12,7 @@
 #define INC_ASTTOOLS_PREPROCESSINGINFO_HH
 
 #include <iostream>
-#include <rose.h>
+
 
 namespace ASTtools
 {

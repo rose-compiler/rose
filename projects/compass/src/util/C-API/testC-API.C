@@ -2,14 +2,14 @@
  *  \file testC-API.C
  *  \brief Unit test for C-API module.
  */
-
+#include <rose.h>
 #include <iostream>
 #include <string>
 
 #include <C-API/C-API.h>
 #include <C-API/Recognizer.h>
 
-#include <rose.h>
+
 #include <commandline_processing.h>
 
 using namespace std;

@@ -1,3 +1,4 @@
+#include "rose.h"
 #include <boost/algorithm/string.hpp>
 #include "astEquivalenceGui.h"
 #include <ext/hash_map>

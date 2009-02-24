@@ -4,11 +4,11 @@
  *  \brief Collect variable references that need to be passed through
  *  the outlined-function call interface.  SgBasicBlock.
  */
-
+#include <rose.h>
 #include <iostream>
 #include <list>
 #include <string>
-#include <rose.h>
+
 
 #include "Transform.hh"
 #include "ASTtools.hh"

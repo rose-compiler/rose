@@ -15,9 +15,6 @@
 //    4) variable declarations that use "extern" are mangled the same. e.g 
 //       "int x;" and "extern int x;"
 
-// #include <rose.h>
-
-// #include "merge.h"
 #include "rose.h"
 
 // #include "colorTraversal.h"

@@ -4,7 +4,7 @@
  *  \brief Implements a module to extract the '#if' directive
  *  structure of a program.
  */
-
+#include "rose.h"
 #include "ASTtools.hh"
 #include "PreprocessingInfo.hh"
 #include "IfDirectiveExtractor.hh"

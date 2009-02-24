@@ -1,7 +1,7 @@
 #ifndef ROSE_ABISTUFF_H
 #define ROSE_ABISTUFF_H
 
-#include "rose.h"
+
 #include <vector>
 #include <string>
 #include <iosfwd>

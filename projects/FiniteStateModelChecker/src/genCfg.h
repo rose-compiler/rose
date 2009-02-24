@@ -1,7 +1,7 @@
 #ifndef GENCFG_H
 #define GENCFG_H
 
-#include <rose.h>
+
 #include <gcj/cni.h>
 #include <mops/CfgFunction.h>
 #include <mops/Ast.h>

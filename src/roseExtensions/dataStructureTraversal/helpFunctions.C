@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "helpFunctions.h"
 /*
  * The function:

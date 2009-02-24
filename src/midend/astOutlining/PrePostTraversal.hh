@@ -9,7 +9,7 @@
 #if !defined(INC_PREPOSTTRAVERSAL_HH)
 #define INC_PREPOSTTRAVERSAL_HH //!< PrePostTraversal.hh included.
 
-#include <rose.h>
+
 
 namespace ASTtools
 {

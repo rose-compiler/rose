@@ -1,4 +1,4 @@
-
+#include "rose.h"
 
 #include "BufferOverflow.h"
 #include "string.h"

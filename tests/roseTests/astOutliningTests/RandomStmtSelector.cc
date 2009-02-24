@@ -4,13 +4,13 @@
  *  \brief Implements a routine that can select a random number of
  *  outlineable statements from a project.
  */
-
+#include <rose.h>
 #include <iostream>
 #include <set>
 #include <string>
 #include <vector>
 
-#include <rose.h>
+
 
 #include <ASTtools.hh>
 #include <Outliner.hh>

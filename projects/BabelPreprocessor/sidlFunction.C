@@ -1,7 +1,8 @@
 
 // We need this header file so that we can use the mechanisms within ROSE to build a preprocessor
-#include <set>
 #include "rose.h"
+#include <set>
+
 
 // DQ (1/1/2006): This is OK if not declared in a header file
 using namespace std;

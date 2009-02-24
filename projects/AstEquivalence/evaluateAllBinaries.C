@@ -1,3 +1,4 @@
+#include "rose.h"
 #include <boost/program_options.hpp>
 #include "boost/filesystem/operations.hpp"
 #include "boost/filesystem/path.hpp"
@@ -7,7 +8,7 @@
 
 #include <iostream>
 #include <list>
-#include "rose.h"
+
 #include "sqlite3x.h"
 
 

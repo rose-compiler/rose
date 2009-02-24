@@ -1,7 +1,7 @@
 #ifndef __MPI_NON_BLOCKING_CODE_MOTION_H__
 #define __MPI_NON_BLOCKING_CODE_MOTION_H__
 
-#include "rose.h"
+
 #include "DependenceGraph.h"
 #include "MotionInformation.h"
 #include "CallGraphQuery.h"

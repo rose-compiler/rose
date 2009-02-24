@@ -2,7 +2,7 @@
 #ifndef CheckMark_IS_INCLUDED
 #define CheckMark_IS_INCLUDED
 
-#include "rose.h"
+
 /*!
   This class is only for checking which AST nodes have and don't have the astAttribute "keep". This class is not necessary for the slicing process.
 */

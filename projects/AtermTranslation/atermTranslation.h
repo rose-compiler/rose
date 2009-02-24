@@ -1,7 +1,7 @@
 #ifndef ATERMTRANSLATION_H
 #define ATERMTRANSLATION_H
 
-#include "rose.h"
+
 #include "aterm1.h"
 #include <iostream>
 #include <sstream>

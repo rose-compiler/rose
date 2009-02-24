@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "tools.h"
 #include "CToProMeLaASTAttrib.h"
 #include "StateVecVarAttrib.h"

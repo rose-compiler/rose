@@ -4,7 +4,7 @@
  * Date : 5Apr07
  * Decription : unparser
  ****************************************************/
-
+#include "rose.h"
 #include "RoseBin_printInstructions.h"
 
 using namespace std;

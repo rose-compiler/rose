@@ -1,4 +1,4 @@
-#include "rose.h"
+
 #include "iostream"
 #define MPI_AST_ASTATTRIBSTR "CTP_MPI_AST_ATTRIB"
 

@@ -1,6 +1,6 @@
 // Author: Markus Schordan, Vienna University of Technology, 2004.
-// $Id: LoopNestingInfoProcessing.C,v 1.3 2006/04/24 00:21:26 dquinlan Exp $
-
+// $Id: LoopNestingInfoProcessing.C,v 1.3 2006/04/24 00:21:26 dquinlan Exp 
+#include "rose.h"
 #include "LoopNestingInfoProcessing.h"
 
 NestingLevel

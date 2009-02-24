@@ -17,7 +17,7 @@
  *
  * Liao, 1/28/2009
  */
-#include "rose.h"
+
 
 // rose-hpct headers 
 #include "rosehpct/util/general.hh"

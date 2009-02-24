@@ -19,12 +19,12 @@ main.cpp and the two testfiles are attached.
 Vera
 
 
-
+#include "rose.h"
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "rose.h"
+
 
 int main(int argc, char *argv[]){
 

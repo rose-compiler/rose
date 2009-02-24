@@ -4,7 +4,7 @@
 #ifndef PRINTVARS_H
 #define PRINTVARS_H
 
-#include "rose.h"
+
 
 // using namespace std;
 

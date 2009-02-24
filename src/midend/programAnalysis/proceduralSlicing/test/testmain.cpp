@@ -1,8 +1,9 @@
+#include "rose.h"
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "rose.h"
+
 
 #include "GlobalIndexing.h"
 #include "InsertPragma.h"

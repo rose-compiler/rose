@@ -3,7 +3,7 @@
 #ifndef __BinCompass_interruptanalysis__
 #define __BinCompass_interruptanalysis__
 
-#include "rose.h"
+
 #include "../GraphAnalysisInterface.h"
 
 

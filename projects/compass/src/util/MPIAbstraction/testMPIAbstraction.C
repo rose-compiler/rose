@@ -3,6 +3,7 @@
  *  \brief Unit test for the MPIAbstraction module.
  */
 
+#include "rose.h"
 #include <iostream>
 #include <string>
 #include <sstream>

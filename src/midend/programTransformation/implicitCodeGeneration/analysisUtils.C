@@ -1,3 +1,4 @@
+#include <rose.h>
 #include <analysisUtils.h>
 #include <shortCircuitingTransformation.h>
 

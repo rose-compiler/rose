@@ -4,13 +4,13 @@
  *  \brief Inserts the outlined function declarations (i.e., including
  *  prototypes) and function calls.
  */
-
+#include <rose.h>
 #include <iostream>
 #include <list>
 #include <string>
 #include <sstream>
 
-#include <rose.h>
+
 #include "Transform.hh"
 #include "ASTtools.hh"
 #include "PreprocessingInfo.hh"

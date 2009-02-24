@@ -2,7 +2,7 @@
 #ifndef RemovalOfNodes_IS_INCLUDED
 #define RemovalOfNodes_IS_INCLUDED
 
-#include "rose.h"
+
 /*!
   This class removes AST nodes which don't have the astAttribute "keep".
 */

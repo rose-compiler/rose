@@ -2,7 +2,7 @@
 #define SIDEEFFEECT_H
 
 #include "config.h"
-#include <rose.h>
+
 #include <list>
 
 // DQ (12/30/2005): This is a Bad Bad thing to do (I can explain)

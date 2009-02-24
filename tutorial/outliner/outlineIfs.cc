@@ -1,9 +1,9 @@
 // outlineIfs.cc: Calls Outliner directly to outline if statements.
-
+#include <rose.h>
 #include <iostream>
 #include <set>
 #include <list>
-#include <rose.h>
+
 #include <Outliner.hh>
 
 using namespace std;

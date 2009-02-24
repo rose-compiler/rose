@@ -5,7 +5,7 @@
  *  attributes, i.e., implements a variation on the simple traversal
  *  that exposes the top-down and bottom-up visits.
  */
-
+#include <rose.h>
 #include "PrePostTraversal.hh"
 
 _DummyAttribute

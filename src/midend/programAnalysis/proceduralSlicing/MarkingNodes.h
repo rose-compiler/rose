@@ -1,6 +1,6 @@
 
 #include <set>
-#include "rose.h" 
+
 #include "KeepAttribute.h"
 
 #ifndef MARKALL_IS_DEFINED

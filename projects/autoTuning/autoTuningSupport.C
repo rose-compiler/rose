@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "autoTuningSupport.h"
 
 using namespace std;

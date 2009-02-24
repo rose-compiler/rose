@@ -9,7 +9,7 @@
  *  This program randomly selects 'k' statements from the input file,
  *  and inserts '#pragma rose_outline' declarations.
  */
-
+#include <rose.h>
 #include <iostream>
 #include <set>
 #include <vector>
@@ -17,7 +17,7 @@
 #include <string>
 #include <sstream>
 #include <cstdlib>
-#include <rose.h>
+
 #include <commandline_processing.h>
 
 #include "Outliner.hh"

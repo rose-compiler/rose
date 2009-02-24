@@ -40,6 +40,7 @@ Output file:
 */
 
 #if 0
+#include "rose.h"
 int main()
 
 { /* local stack #0 */
@@ -93,7 +94,7 @@ X
 #ifndef INSERT_IS_DEFINED
 #define INSERT_IS_DEFINED
 
-#include "rose.h"
+
 
 class Insert : public SgSimpleProcessing{
 
@@ -110,7 +111,7 @@ class Insert : public SgSimpleProcessing{
 #include "config.h"
 #endif
 
-#include "rose.h"
+
 #include "Insert.h"
 
 

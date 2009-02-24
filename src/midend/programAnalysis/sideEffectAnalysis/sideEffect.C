@@ -1,3 +1,4 @@
+#include <rose.h>
 #include "sideEffect.h"
 
 #if 1

@@ -11,7 +11,7 @@
 //#include <mysql.h>
 #include <stdio.h>
 #include <iostream>
-#include "rose.h"
+
 //#include "RoseBin_support.h"
 #include "MyAstAttribute.h"
 //#include "RoseBin_unparse_visitor.h"

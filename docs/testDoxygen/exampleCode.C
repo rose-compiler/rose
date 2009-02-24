@@ -1,8 +1,9 @@
+#include "rose.h"
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
-#include "rose.h"
+
 
 /**
 \brief This function creates a function and tries to insert and InitializeName variable into its parameter list. It fails to insert the variable. 

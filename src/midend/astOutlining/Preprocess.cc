@@ -6,11 +6,11 @@
  *  outlineable statement into a canonical form that simplifies the
  *  core outlining algorithm.
  */
-
+#include <rose.h>
 #include <iostream>
 #include <list>
 #include <string>
-#include <rose.h>
+
 
 #include "Preprocess.hh"
 

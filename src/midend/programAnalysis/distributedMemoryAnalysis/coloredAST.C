@@ -1,9 +1,9 @@
 // Distributed memory traversal demo application.
 // Author: Gergo Barany
 // $Id: coloredAST.C,v 1.1 2008/01/08 02:55:52 dquinlan Exp $
-
-#include "DistributedMemoryAnalysis.h"
 #include <rose.h>
+#include "DistributedMemoryAnalysis.h"
+
 
 static const char *colors[] = {
     "red4", "green4", "blue4", "yellow4", "red3", "green3", "blue3", "yellow3",

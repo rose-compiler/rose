@@ -1,7 +1,7 @@
 /*
  *
  */
-
+#include "rose.h"
 #include <vector>
 #include <qrose.h>
 #include "astEquivalenceGui.h"

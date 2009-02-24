@@ -1,9 +1,10 @@
 /* Copyright 2008 Lawrence Livermore National Security, LLC */
 
 #define _FILE_OFFSET_BITS 64
+#include "rose.h"
 #include <sys/stat.h>
 
-#include "rose.h"
+
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 

@@ -8,7 +8,7 @@
 #if ROSE_MPI
 
 #include <mpi.h>
-#include <rose.h>
+
 #include <utility>
 
 void initializeDistributedMemoryProcessing(int *argc, char ***argv);

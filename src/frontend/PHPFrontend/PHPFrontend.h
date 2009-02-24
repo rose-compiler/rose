@@ -1,7 +1,7 @@
 #ifndef PHP_FRONTEND_H
 #define PHP_FRONTEND_H
 
-#include <rose.h>
+
 
 #include <string>
 

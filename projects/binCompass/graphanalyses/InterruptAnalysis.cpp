@@ -1,4 +1,4 @@
-
+#include "rose.h"
 
 #include "InterruptAnalysis.h"
 #include "string.h"

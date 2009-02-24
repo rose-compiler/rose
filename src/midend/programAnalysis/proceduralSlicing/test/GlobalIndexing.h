@@ -1,7 +1,7 @@
 #ifndef GLOBALINDEX_IS_DEFINED
 #define GLOBALINDEX_IS_DEFINED
 
-#include "rose.h"
+
 
 /*!
   This AstAttriubute class is for assigning an AST statement node a global index.
@@ -21,7 +21,7 @@ class GlobalIndex : public AstAttribute{
 #ifndef PRAGMAINSERT_IS_DEFINED
 #define PRAGMAINSERT_IS_DEFINED
 
-#include "rose.h"
+
 
 /*!
 

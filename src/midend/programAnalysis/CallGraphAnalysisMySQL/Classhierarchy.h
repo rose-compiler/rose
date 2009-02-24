@@ -10,7 +10,7 @@
 #define CLASSHIERARCHY_H
 
 #include "/home/thuerey1/local/include/config.h"
-#include <rose.h>
+
 #include "DatabaseGraph.h"
 #ifndef TABLES_DEFINED
 USE_TABLE_TYPES();

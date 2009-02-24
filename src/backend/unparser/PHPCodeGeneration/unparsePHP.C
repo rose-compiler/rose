@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "unparser.h"
 
 #include <iostream>

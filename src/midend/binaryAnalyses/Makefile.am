@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)/graph -I$(srcdir)/libraryIdentification
+INCLUDES = -Winvalid-pch $(ROSE_INCLUDES) -I$(srcdir)/graph -I$(srcdir)/libraryIdentification 
 
 noinst_LTLIBRARIES = libbinaryMidend.la
 

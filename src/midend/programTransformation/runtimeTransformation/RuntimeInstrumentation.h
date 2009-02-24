@@ -7,7 +7,7 @@
 #ifndef __RuntimeInstrumentation_
 #define __RuntimeInstrumentation_
 
-#include <rose.h>
+
 #include <sstream>
 
 

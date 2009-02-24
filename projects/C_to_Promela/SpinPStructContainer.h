@@ -1,6 +1,6 @@
 #ifndef SPINPSTRUCTCONTAINER_H
 #define SPINPSTRUCTCONTAINER_H
-#include "rose.h"
+
 #include <string>
 #include <vector>
 

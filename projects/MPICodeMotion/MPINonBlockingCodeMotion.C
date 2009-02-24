@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "MPINonBlockingCodeMotion.h"
 
 using namespace std;

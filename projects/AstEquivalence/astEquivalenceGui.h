@@ -1,6 +1,6 @@
 #ifndef COMPASS_GUI_H
 #define COMPASS_GUI_H
-#include "rose.h"
+
 
 #include <qrose.h>
 #include <QTextBrowser>

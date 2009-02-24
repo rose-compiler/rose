@@ -1891,6 +1891,7 @@ Grammar::buildSourceFiles( Terminal & node, StringUtility::FileWithLineNumbers &
   // Now write out the file!
      string fileExtension = ".C";
      string directoryName = sourceCodeDirectoryName();
+
      writeFile ( editedSourceFileString, directoryName, node.getName(), fileExtension );
 #endif
 
@@ -2417,11 +2418,16 @@ Grammar::buildCode ()
      // AST SOURCE FILE GENERATION
      StringUtility::FileWithLineNumbers ROSE_ArrayGrammarSourceFile;
      // Now build the source files
+
+     // tps (Feb 23 2009): added rose.h since I had to remove it from the .h header files
+     string includeHeaderFileNameROSE = "rose.h";
+     string includeHeaderStringROSE =
+       "// MACHINE GENERATED ROSE SOURCE FILE --- DO NOT MODIFY!\n\n #include \"" + includeHeaderFileNameROSE + "\"\n\n";
      
      string includeHeaderFileName = "sage3.h";
-     string includeHeaderString =
-  // GrammarString::stringConcatenate("// MACHINE GENERATED SOURCE FILE --- DO NOT MODIFY!\n\n"
-  // "#ifdef HAVE_CONFIG_H\n#include <config.h>\n#endif\n\n#include \"",includeHeaderFileName);
+     string includeHeaderString = includeHeaderStringROSE+
+       "// MACHINE GENERATED SOURCE FILE WITH ROSE --- DO NOT MODIFY!\n\n #include \"" + includeHeaderFileName + "\"\n\n";
+     string includeHeaderStringWithoutROSE = 
        "// MACHINE GENERATED SOURCE FILE --- DO NOT MODIFY!\n\n #include \"" + includeHeaderFileName + "\"\n\n";
 
   // DQ (10/18/2007): These have been moved to the src/frontend/SageIII directory
@@ -2727,7 +2733,7 @@ Grammar::buildCode ()
   // generate code for memory pool support header
   // --------------------------------------------
      StringUtility::FileWithLineNumbers ROSE_MemoryPoolSupportFile;
-     ROSE_MemoryPoolSupportFile.push_back(StringUtility::StringWithLineNumber(includeHeaderString, "", 1));
+     ROSE_MemoryPoolSupportFile.push_back(StringUtility::StringWithLineNumber(includeHeaderStringWithoutROSE, "", 1));
      ROSE_ASSERT (rootNode != NULL);
      buildStringForMemoryPoolSupport(rootNode,ROSE_MemoryPoolSupportFile);
      cout << "DONE: buildStringForMemoryPoolSupport()" << endl;

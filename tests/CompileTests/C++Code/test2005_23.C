@@ -30,12 +30,12 @@ int main(){
 */
 
 #if 0
-
+#include "rose.h"
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "rose.h"
+
 
 /*********************************************************************************
  * To demonstrate problems/ difficulties with adding a printf-call in the AST.

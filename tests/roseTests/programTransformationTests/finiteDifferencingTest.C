@@ -1,4 +1,4 @@
-
+#include "rose.h"
 #include "finiteDifferencing.h"
 #include "pre.h"
 

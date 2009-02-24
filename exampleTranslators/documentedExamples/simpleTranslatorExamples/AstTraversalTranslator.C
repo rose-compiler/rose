@@ -1,8 +1,9 @@
+#include "rose.h"
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
-#include "rose.h"
+
 
 // Build an inherited attribute for the tree traversal to test the rewrite mechanism
 class MyInheritedAttribute {};

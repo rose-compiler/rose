@@ -4,12 +4,12 @@
  *  \brief Given the outlined-function, this routine generates the
  *  actual function call.
  */
-
+#include <rose.h>
 #include <iostream>
 #include <string>
 #include <sstream>
 
-#include <rose.h>
+
 #include "Transform.hh"
 #include "ASTtools.hh"
 #include "VarSym.hh"

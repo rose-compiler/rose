@@ -11,7 +11,7 @@
 #define BOOST_WAVE_ADVANCED_PREPROCESSING_HOOKS_INCLUDED
 
 // ROSE standard include files
-#include "rose.h"
+
 
 #include <cstdio>
 #include <ostream>

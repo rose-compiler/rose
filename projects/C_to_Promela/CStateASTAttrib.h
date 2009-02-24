@@ -1,4 +1,4 @@
-#include "rose.h"
+
 #include "iostream"
 #include "vector"
 #define CSTATEASTATTRIBSTR "C_STATE_VECTOR"

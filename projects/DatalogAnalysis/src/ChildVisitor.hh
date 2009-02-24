@@ -1,7 +1,7 @@
 #ifndef CHILDVISITOR_HH
 #define CHILDVISITOR_HH
 
-#include <rose.h>
+
 #include "common.hh"
 
 class Relation;

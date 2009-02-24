@@ -1,3 +1,4 @@
+#include "rose.h"
 #ifdef HAVE_CONFIG_H
 #include "rose_config.h"
 //#include "config.h"

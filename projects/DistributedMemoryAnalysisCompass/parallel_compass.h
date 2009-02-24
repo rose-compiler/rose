@@ -2,7 +2,7 @@
 #define PARALLEL_COMPASS_H
 
 #include <mpi.h>
-#include <rose.h>
+
 
 #include "AstSharedMemoryParallelProcessing.h"
 

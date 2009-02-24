@@ -10,11 +10,12 @@
  *  preprocessing phase.
  */
 
+#include <rose.h>
 #include <iostream>
 #include <string>
 #include <cstdlib>
 #include <algorithm>
-#include <rose.h>
+
 #include <commandline_processing.h>
 #include "Outliner.hh"
 

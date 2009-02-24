@@ -1,9 +1,10 @@
+#include "rose.h"
 #include <stdint.h>
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 #include <fcntl.h>
 #include <vector>
-#include "rose.h"
+
 
 using namespace std;
 using namespace SageBuilderAsm;

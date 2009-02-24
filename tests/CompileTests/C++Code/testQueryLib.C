@@ -1,13 +1,13 @@
 // ROSE is a tool for building preprocessors, this file is an example preprocessor built with ROSE.
 // rose.C: Example (default) ROSE Preprocessor: used for testing ROSE infrastructure
-
+#include "rose.h"
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
 #include <string>
 #include <iomanip>
-#include "rose.h"
+
 #include "AstTests.h"
 
 #include <algorithm>

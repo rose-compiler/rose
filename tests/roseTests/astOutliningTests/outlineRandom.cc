@@ -14,7 +14,7 @@
  *  testing of the outliner independent of whether '#pragmas' are
  *  working properly.
  */
-
+#include <rose.h>
 #include <iostream>
 #include <algorithm>
 #include <list>
@@ -22,7 +22,7 @@
 #include <cstdlib>
 #include <algorithm>
 
-#include <rose.h>
+
 #include <commandline_processing.h>
 
 #include <ASTtools.hh>

@@ -22,6 +22,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //  include often used files from the stdlib
+#include "rose.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -30,7 +31,7 @@
 #include <iterator>
 #include <map>
 
-#include "rose.h"
+
 
 ///////////////////////////////////////////////////////////////////////////////
 //  include boost config

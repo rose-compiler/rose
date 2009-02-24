@@ -22,6 +22,9 @@
  * http://java.sun.com/j2se/1.4.2/docs/guide/jni/spec/jniTOC.html
  * http://java.sun.com/docs/books/jni/html/invoke.html 
  */
+// Include rose.h so that we can reference SgSourceFile::build_classpath() 
+#include "rose.h"
+
 #include <string.h>
 #include <string>
 #include <stdlib.h>
@@ -63,8 +66,6 @@ using namespace std;
 
 int runOFP(int argc, char **argv);
 
-// Include rose.h so that we can reference SgSourceFile::build_classpath() 
-#include "rose.h"
 
 /* Include the paths to the source tree and build tree for ROSE */
 #include "rose_config.h"

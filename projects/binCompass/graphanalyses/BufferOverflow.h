@@ -3,7 +3,7 @@
 #ifndef __BinCompass_bufferoverflow__
 #define __BinCompass_bufferoverflow__
 
-#include "rose.h"
+
 #include "../GraphAnalysisInterface.h"
 
 

@@ -3,7 +3,7 @@
 #define PARALLEL_COMPASS_FUNCTIONNAMES_H
 
 #include "DistributedMemoryAnalysis.h"
-#include <rose.h>
+
 
 #define DEBUG_OUTPUT_FUNCNAMES false
 

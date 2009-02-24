@@ -1,7 +1,7 @@
 #ifndef INSERT_IS_DEFINED
 #define INSERT_IS_DEFINED
 
-#include "rose.h"
+
 #include "BasicBlockLocalIndex.h"
 #include <string>
 //#include <ASTNodeCollection.h>

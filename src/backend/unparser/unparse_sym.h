@@ -8,7 +8,7 @@
 #ifndef UNPARSER_SYM
 #define UNPARSER_SYM
 
-#include "rose.h"
+
 #include "unparser.h"
 
 class Unparser;

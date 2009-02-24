@@ -3,7 +3,7 @@
 #ifndef __BinCompass_cycledetection__
 #define __BinCompass_cycledetection__
 
-#include "rose.h"
+
 #include "../GraphAnalysisInterface.h"
 
 

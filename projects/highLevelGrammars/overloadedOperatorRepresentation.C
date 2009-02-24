@@ -4,10 +4,10 @@
 // Notes on fonts and colors
 //   list all fonts on linux: "xlsfonts"
 //   list all colors on linux: "man colors"
-
+#include "rose.h"
 #include <string>
 #include <iomanip>
-#include "rose.h"
+
 #include "AstConsistencyTests.h"
 
 #include <algorithm>

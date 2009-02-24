@@ -1,3 +1,4 @@
+#include <rose.h>
 #include "CFGVisitor.hh"
 #include "DBFactory.hh"
 #include <ext/hash_set>

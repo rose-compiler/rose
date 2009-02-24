@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "createMap.h"
 #include <algorithm>
 using namespace std;

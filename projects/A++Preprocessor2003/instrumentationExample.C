@@ -1,12 +1,12 @@
 // ROSE is a tool for building preprocessors, this file is an example preprocessor built with ROSE.
 // Specifically it shows the design of a transformation to instrument source code, placing source code
 // at the top and bottome of each basic block.
-
+#include "rose.h"
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
-#include "rose.h"
+
 #include "Cxx_GrammarTreeTraversalClass.h"
 
 // this is required as a way to hand the SgProject to the prependSourceCode, 

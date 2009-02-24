@@ -1,3 +1,4 @@
+#include <rose.h>
 #include "ChildVisitor.hh"
 #include "DBFactory.hh"
 

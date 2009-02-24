@@ -6,13 +6,13 @@
  *
  *  \author Richard Vuduc <richie@llnl.gov>
  */
-
+#include <rose.h>
 #include <iostream>
 #include <list>
 #include <string>
 #include <algorithm>
 
-#include <rose.h>
+
 
 #include "Preprocess.hh"
 #include "ASTtools.hh"

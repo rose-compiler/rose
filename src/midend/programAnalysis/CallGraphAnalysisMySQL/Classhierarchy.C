@@ -6,7 +6,7 @@
  *
  *****************************************************************************/
 
-
+#include <rose.h>
 #include "Classhierarchy.h"
 #include "GlobalDatabaseConnection.h"
 

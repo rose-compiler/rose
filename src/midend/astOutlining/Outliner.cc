@@ -2,12 +2,12 @@
  *  \file Outliner.cc
  *  \brief An outlining implementation.
  */
-
+#include <rose.h>
 #include <iostream>
 #include <string>
 #include <sstream>
 
-#include <rose.h>
+
 
 #include "NameGenerator.hh"
 #include "Outliner.hh"

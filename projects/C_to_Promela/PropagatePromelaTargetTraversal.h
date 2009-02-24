@@ -1,4 +1,4 @@
-#include <rose.h>
+
 
 class PropagatePromelaTargetTraversal:public AstBottomUpProcessing <bool>
 {
