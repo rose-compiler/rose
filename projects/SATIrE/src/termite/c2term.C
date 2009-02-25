@@ -11,8 +11,9 @@ Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
 #include <satire_rose.h>
 
 // GB (2009-02-25): We want to build c2term without ICFG stuff to avoid
-// having to link against libsatire.
+// having to link against libsatire. Also, want to avoid PAG DFI stuff.
 #define HAVE_SATIRE_ICFG 0
+#undef HAVE_PAG
 #include "TermPrinter.h"
 
 using namespace std;

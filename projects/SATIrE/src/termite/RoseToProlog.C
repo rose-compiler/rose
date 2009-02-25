@@ -6,6 +6,8 @@
 #include <string>
 #include <list>
 #include "termite.h" 
+// GB (2009-02-25): Use the term printer without DFI stuff.
+#undef HAVE_PAG
 #include "TermPrinter.h"
 #include "RoseToProlog.h"
 #include "satire.h"

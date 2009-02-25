@@ -4,6 +4,8 @@
 #ifndef H_PAG_DFI_TEXT_PRINTER
 #define H_PAG_DFI_TEXT_PRINTER
 
+#include "StatementAttributeTraversal.h"
+
 template <typename DFI_STORE_TYPE>
 class PagDfiTextPrinter : public DfiTextPrinter<DFI_STORE_TYPE>
 {
