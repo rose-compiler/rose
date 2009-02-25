@@ -1,3 +1,9 @@
+2009-02-25 00:45  liao6
+
+	* [r4640]
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/outlineSelection.cc:
+	  Solved the command line processing conflicts for outlineSelection
+
 2009-02-24 18:00  panas2
 
 	* [r4636] /trunk/ROSE/projects/javaport/Makefile.am: fixing swig to
