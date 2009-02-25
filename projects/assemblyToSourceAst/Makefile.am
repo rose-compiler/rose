@@ -16,20 +16,20 @@ lib_LTLIBRARIES = libroseBtorSupport.la libroseSatProblem.la
 
 BUILT_SOURCES = libroseBtorSupport.la libroseSatProblem.la
 
-x86AssemblyToCDemo_SOURCES = x86AssemblyToC.C generatedCOpts.C generatedCOpts.h x86InstructionSemantics.h semanticsModule.h
+x86AssemblyToCDemo_SOURCES = x86AssemblyToC.C generatedCOpts.C generatedCOpts.h
 x86AssemblyToCDemo_CPPFLAGS = $(ROSE_INCLUDES)
 x86AssemblyToCDemo_LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-powerpcAssemblyToCDemo_SOURCES = powerpcAssemblyToC.C generatedCOpts.C generatedCOpts.h powerpcInstructionSemantics.h semanticsModule.h
+powerpcAssemblyToCDemo_SOURCES = powerpcAssemblyToC.C generatedCOpts.C generatedCOpts.h powerpcInstructionSemantics.h
 powerpcAssemblyToCDemo_CPPFLAGS = $(ROSE_INCLUDES)
 powerpcAssemblyToCDemo_LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-powerpcAssemblyToCDemo_DEPENDENCIES = powerpcAssemblyToC.C powerpcInstructionSemantics.h semanticsModule.h
-x86AssemblyToNetlist_SOURCES = x86AssemblyToNetlist.C satProblem.h x86InstructionSemantics.h x86AssemblyToNetlist.h semanticsModule.h
+powerpcAssemblyToCDemo_DEPENDENCIES = powerpcAssemblyToC.C powerpcInstructionSemantics.h
+x86AssemblyToNetlist_SOURCES = x86AssemblyToNetlist.C satProblem.h x86AssemblyToNetlist.h
 x86AssemblyToNetlist_CPPFLAGS = $(ROSE_INCLUDES)
 x86AssemblyToNetlist_LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lroseSatProblem
-x86AssemblyToBtor_SOURCES = x86AssemblyToBtorMain.C x86AssemblyToBtor.h btorProblem.h x86InstructionSemantics.h x86AssemblyToNetlist.h semanticsModule.h
+x86AssemblyToBtor_SOURCES = x86AssemblyToBtorMain.C x86AssemblyToBtor.h btorProblem.h x86AssemblyToNetlist.h
 x86AssemblyToBtor_CPPFLAGS = $(ROSE_INCLUDES)
 x86AssemblyToBtor_LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lroseBtorSupport
-readAndWriteSets_SOURCES = readAndWriteSets.C x86InstructionSemantics.h semanticsModule.h
+readAndWriteSets_SOURCES = readAndWriteSets.C
 readAndWriteSets_CPPFLAGS = $(ROSE_INCLUDES)
 readAndWriteSets_LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
@@ -57,7 +57,7 @@ libroseBtorSupport_la_SOURCES = btorProblem.C x86AssemblyToBtor.C btorProblem.h
 libroseBtorSupport_la_LIBADD = $(ROSE_LIBS)
 libroseSatProblem_la_SOURCES = satProblem.h satProblem.C
 
-include_HEADERS = x86AssemblyToC.h satProblem.h x86InstructionSemantics.h powerpcInstructionSemantics.h x86AssemblyToNetlist.h semanticsModule.h x86AssemblyToBtor.h btorProblem.h
+include_HEADERS = x86AssemblyToC.h satProblem.h powerpcInstructionSemantics.h x86AssemblyToNetlist.h x86AssemblyToBtor.h btorProblem.h
 
 #powerpcAssemblyToCDemo-powerpcAssemblyToC.o: powerpcInstructionSemantics.h
 

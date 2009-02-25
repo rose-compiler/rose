@@ -48,8 +48,10 @@ BINARY_DISASSEMBLY_HEADER_FILES = \
    graph/RoseBin_DotGraph.h graph/RoseBin_Graph.h \
    graph/RoseBin_GmlGraph.h \
    libraryIdentification/libraryIdentification.h \
-   libraryIdentification/functionIdentification.h
-   
+   libraryIdentification/functionIdentification.h \
+   instructionSemantics/semanticsModule.h \
+   instructionSemantics/x86InstructionSemantics.h
+
 
 include_HEADERS = $(BINARY_DISASSEMBLY_HEADER_FILES)
 
