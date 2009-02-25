@@ -67,7 +67,7 @@ rosegit_tester_preamble $config
 
 # Run the subordinate command. If there is none then run bash instead.
 if [ "$#" -eq 0 ]; then
-    export PS1_STACK="(rose-$(basename $ROSE_BLD)) $PS1STACK"
+    export PS1_STACK="(rose-$(basename $ROSE_BLD)) $PS1_STACK"
     exec /bin/bash
 else
     exec "$@"

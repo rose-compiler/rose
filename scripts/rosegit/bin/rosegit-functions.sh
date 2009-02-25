@@ -82,7 +82,7 @@ rosegit_environment () {
     type path-adjust >/dev/null 2>&1 && eval $(path-adjust --var=LD_LIBRARY_PATH remove --regexp /ROSE/ /boost_)
     LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$BOOST_ROOT/lib"
     LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROSE_BLD/src/.libs"
-    LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROSE_BLD/3rdPartyLibraries/libharu-2.1.0/src/.libs"
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$ROSE_BLD/src/3rdPartyLibraries/libharu-2.1.0/src/.libs"
     export LD_LIBRARY_PATH
 }
 
@@ -101,9 +101,9 @@ rosegit_filter_make_error () {
             x
             /\nmake.*: \*\*\*/ {
                 i\
-============================================================================================= \
-=== Error detected in this section of the output                                          === \
-=============================================================================================
+=============================================================================== \
+=== Error detected in this section of the output                            === \
+===============================================================================
                 p
             }
         }
@@ -304,6 +304,7 @@ rosegit_run () {
     local name="$1"; shift         # first arg is name, the rest are the command
     local start_time=$(date +%s)
     echo -n "$name..." >&6
+    [ -n "$XTERM" ] && echo -en "\033]0;$myname: $name\007" # set title of Xterm
     eval "$@"; local status=$?
     local end_time=$(date +%s)
     local elapsed=$(rosegit_elapsed_human $((end_time - start_time)))

@@ -64,7 +64,6 @@ done
 repo="$1"; shift
 
 # Sanity checks
-[ -n "$branches" -a -n "$commit" ] && rosegit_die "--branch and --commit are mutually exclusive"
 [ -d "$repo/.git" ] || rosegit_die "not a repository: $repo/.git"
 [ -n "$branches" ] || branches="$(cd $repo/.git/refs/heads && echo *)"
 repo=$(cd $repo && pwd)
@@ -91,8 +90,15 @@ if [ ! -n "$commit" ]; then
 	done
 	[ -n "$commit" ] && break
     done
+elif [ -n "$branches" ]; then
+    branch="$branches"
 else
     branch=$(rosegit_branch_of $repo $commit)
+fi
+if (cd $repo && git rev-list $branch |grep $commit >/dev/null); then
+    : ok
+else
+    rosegit_die "commit $commit is not on branch $branch"
 fi
 if [ -n "$query_only" ]; then
     [ -n "$commit" ] && echo $commit
@@ -132,11 +138,17 @@ fi
 mailcontent=$(rosegit_workdir)/$myname-$serial-$$.mail
 (
     echo -n "Testing "; (cd $repo && git --no-pager log --dirstat $commit^..$commit)
-    echo; echo "------------------------- Default Environment --------------------------"
+    echo
+    echo "------------------------- Default Environment --------------------------"
     echo "Serial number:     $serial"
     rosegit_show_environment; echo
+    echo
+    echo "---------------------------- Configuration -----------------------------"
+    for var in $(export |sed -n 's/.*\(ROSEGIT[A-Za-z_0-9]*\).*/\1/p'); do
+	eval "echo $var=\"\$$var\""
+    done
 ) |tee $mailcontent
-          echo "------------------------------------------------------------------------"
+echo "------------------------------------------------------------------------"
 if [ ! -n "$dry_run" ]; then
     subject="[$namespace.$branch START] $commitname"
     rosegit_mail "START" "$subject" $mailcontent
@@ -195,6 +207,12 @@ fi
     echo "--------------------------- ROSE Environment ---------------------------"
     echo "Serial number:     $serial"
     (cd $builddir; rosegit_environment; rosegit_show_environment)
+    echo
+    echo "---------------------------- Configuration -----------------------------"
+    for var in $(export |sed -n 's/.*\(ROSEGIT[A-Za-z_0-9]*\).*/\1/p'); do
+	eval "echo $var=\"\$$var\""
+    done
+    echo
 ) >>$workdir/$myname.mesg
 
 # Error messages for failure
@@ -202,12 +220,9 @@ if [ "$tester_result" = "fail" ]; then
     rosegit_filter_make_error <$tester_output >$tester_output.abbr
     [ $(wc -l <$tester_output.abbr) -gt 0 ] && tester_output=$tester_output.abbr
     (
-	echo "---------------------------- Configuration -----------------------------"
-	export |grep '^ROSEGIT_'
-	echo
 	echo "------------------------------- Output ---------------------------------"
 	echo "Details in $workdir/$myname.output"   # not $tester_output
-	echo "Last few lines of output follow:"
+	echo "Relevant portion of output follow:"
 	echo
 	tail -n200 $tester_output
     ) >>$workdir/$myname.mesg
