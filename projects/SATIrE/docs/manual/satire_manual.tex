@@ -22,8 +22,8 @@
 This is the manual for SATIrE version \version.
 
 This manual is not done yet. Parts are missing, other parts are probably
-wrong, and the overall structure is not fixed. All of this means that this
-manual is the best documentation SATIrE has ever had :-)
+wrong, and the overall structure is not fixed. In short, this manual is the
+best documentation SATIrE has ever had :-)
 
 \tableofcontents
 
@@ -98,13 +98,6 @@ file names, this object contains additional options such as user requests
 for sanity checks on the program representation, or for visualizations (of
 the ICFG).
 
-The general \texttt{Program} (Section~\ref{sec:satire_program}) object used
-by SATIrE analyzers is built by calling its
-\begin{verbatim}
-    Program(AnalyzerOptions *o);
-\end{verbatim}
-constructor.
-
 The ROSE AST (Section~\ref{sec:rose_ast}) can be built by calling:
 \begin{verbatim}
     SgProject *createRoseAst(AnalyzerOptions *options);
@@ -113,21 +106,29 @@ Note that this either reads source code, or a binary representation of a
 previously constructed ROSE AST, depending on flags passed on the command
 line.
 
-Finally, the SATIrE ICFG (Section~\ref{sec:satire_icfg}) is built from a
+The SATIrE ICFG (Section~\ref{sec:satire_icfg}) is built from a
 ROSE AST by calling:
 \begin{verbatim}
     CFG *createICFG(SgProject *astRoot, AnalyzerOptions *opts);
 \end{verbatim}
 
-Annotated or transformed programs represented by a ROSE AST can be output by
-calling the
+Despite there being special functions for explicit creation of various
+specialized program representations, it is often best to use SATIrE's
+general high-level \texttt{Program} (Section~\ref{sec:satire_program})
+class. Building a \texttt{Program} is performed by calling its
 \begin{verbatim}
-    void outputProgramRepresentation(SgProject *astRoot,
+    Program(AnalyzerOptions *o);
+\end{verbatim}
+constructor.
+
+Annotated or transformed programs can be output by calling the
+\begin{verbatim}
+    void outputProgramRepresentation(Program *program,
                                      AnalyzerOptions *options);
 \end{verbatim}
 function. This function will output the program as source code, as a binary
 AST representation, or as a Termite term, depending on the command line
-options.
+options. It will also output a visualization of the ICFG if requested.
 
 Using these parts, one can build a very small SATIrE program that already
 allows various forms of program visualization and transformation:
@@ -139,8 +140,8 @@ allows various forms of program visualization and transformation:
     int main(int argc, char **argv)
     {
         AnalyzerOptions *options = extractOptions(argc, argv);
-        SgProject *root = createRoseAst(options);
-        outputProgramRepresentation(root, options);
+        Program *program = new Program(options);
+        outputProgramRepresentation(program, options);
     }
 \end{verbatim}
 
@@ -867,7 +868,8 @@ handling of structures. In practice, it is still very fast, however.
 
 The points-to analysis runs on the ICFG, using the traversal mechanism
 described in Section~\ref{sec:icfg_traversal}. It is most easily activated
-using the \texttt{--run-pointsto-analysis} command line flag.
+by invoking the analyzer with the \texttt{--run-pointsto-analysis} command
+line flag.
 
 The \texttt{CFG} class contains a member that may be instantiated to a
 points-to analyzer object:
@@ -887,14 +889,15 @@ for access to \texttt{Location}s for expressions or variable/function
 symbols, where two expressions/symbols may be aliases iff they are
 associated with the same \texttt{Location} pointer;
 \begin{verbatim}
-    const std::list<SgSymbol *> &location_symbols(Location *loc) const;
+    const std::list<SgSymbol *> &
+    location_symbols(Location *loc) const;
 \end{verbatim}
 for access to all the symbols that are associated with a given
 \texttt{Location};
 \begin{verbatim}
     bool mayBeAliased(Location *loc) const;
 \end{verbatim}
-to find out whether there might be some pointer pointing to a given
+to find out whether there might be a pointer pointing to a given
 \texttt{Location}; and
 \begin{verbatim}
     Location *base_location(Location *loc);
@@ -919,105 +922,190 @@ latter will also allow analysis of points-to relationships on the heap.
 \label{appendix:command_line}
 
 SATIrE analyzers take a number of command line flags, arbitrarily
-intermingled with input file names. The following flags are known:
-{\scriptsize
+intermingled with input file names. This appendix lists these flags grouped
+by topic.
+
+\section{General Flags}
+\label{sec:general_flags}
+
+The flags listed in this section are available for use with all analyzers
+that use the \texttt{AnalyzerOptions} object (see
+Section~\ref{sec:command_line}).
+
+\subsection{Front End Options}
+
+The following options control various issues related to reading input
+programs:
+{\footnotesize
 \begin{verbatim}
-  Frond End options:
-   --language=c++|c99|c89   select input language [default=c++]
-   --frontend-warnings      show Front End warnings when parsing file(s)
-   --no-frontend-warnings   do not show Front End warnings when parsing
-                            file(s) [default]
-   -I<path>                 specify path for include files
-   --input-binary-ast=<FILENAME> read AST from binary file instead of a
-                            source file
-
- Analysis options:
-   --callstringlength=<num> set callstring length to <num> [default=0]
-   --callstringinfinite     select infinite callstring (for non-recursive
-                            programs only)
-   --cfgordering=<num>      set ordering that is used by the iteration
-                            algorithm where
-                                  <num> = 1 : dfs preorder [default]
-                                          2 : bfs preorder
-                                          3 : reversed dfs postorder
-                                          4 : bfs postorder
-                                          5 : topsort scc dfs preorder
-                                          6 : topsort scc bfs preorder
-                                          7 : topsort scc reversed bfs
-                                              dfs postorder
-                                          8 : topsort scc bfs postorder
-   --check-ast              run all ROSE tests for checking
-                            whether ROSE-AST is correct
-   --no-check-ast           do not run ROSE AST tests
-   --check-icfg             run PAG's ICFG consistency checks
-   --no-check-icfg          do not run ICFG checks
-   --analysis-files=all|cl  analyse all source files or only those
-                            specified on the command line (cl)
-   --analysis-annotation    annotate analysis results in AST and output
-   --no-analysis-annotation do not annotate analysis results in AST
-   --number-expressions     number expressions and types in the ICFG
-   --no-number-expressions  do not number expressions and types in the ICFG
-   --pag-memsize-mb=<num>   allocate <num> MB of memory for PAG analysis
-   --pag-memsize-perc=<num> allocate <num>% of system memory (autodetected)
-   --pag-memsize-grow=<num> grow memory if less than <num>% are free after GC
-   --run-pointsto-analysis  run a points-to analysis on the ICFG
-   --resolve-funcptr-calls  resolve indirect calls using pointer analysis
-   --compute-call-strings   asdfasf
-
- Output options:
-   --statistics             output analyzer statistics on stdout
-   --no-statistics          do not show analyzer statistics on stdout
-   --verbose                output analyzer info on stdout
-   --no-verbose             do not print analyzer info on stdout
-   --output-text            print analysis results for each statement
-   --output-collectedfuncs  print all functions that are collected for
-                            the icfg generation
-   --output-source=<FILENAME> generate source file with annotated
-                            analysis results for each statement
-   --output-term=<FILENAME> generate Prolog term representation of input
-                            program AST
-   --output-icfg=<FILENAME> output icfg of input program
-   --output-binary-ast=<FILENAME> write AST to binary file
-   --output-call-strings    experimental: print call strings used by PAG
-   --no-output-call-strings do not attempt to output call strings
-   --warn-deprecated        warn about the use of deprecated features
-   --no-warn-deprecated     do not warn about the use of deprecated features
-   --help                   print this help message on stdout
-   --help-rose              print the ROSE help message on stdout
-
- Multiple input/output files options:
-   --output-sourceprefix=<PREFIX> generate for each input file one output file
-                            with prefixed name
-
- GDL output options:
-   --gdl-preinfo            output analysis info before cfg nodes
-   --no-gdl-preinfo         do not output analysis info before cfg nodes
-   --gdl-postinfo           output analysis info after cfg nodes
-   --no-gdl-postinfo        do not output analysis info after cfg nodes
-   --gdl-nodeformat=FORMAT  where FORMAT=varid|varname|exprid|exprsource
-                                        |asttext|no-varid|no-varname
-                                        |no-exprid|no-exprsource|no-asttext
-                            the format can be specified multiple times to
-                            have different formats printed at the same node
-                            The output is only affected if VariableId
-                            and/or ExpressionId is used in the carrier type
-   --output-gdl=<FILENAME>  output program as gdl graph
-   --output-gdlanim=<DIRNAME> output animation gdl files in
-                            directory <dirname>
-
- Default options:           --language=c++ --no-gdl-preinfo --gdl-postinfo
-                            --callstringlength=0 --cfg-ordering=1
-                            --no-check-ast --no-check-icfg
-                            --number-expressions --pag-memsize-mb=5
-                            --pag-memsize-grow=30 --no-statistics
-                            --analysis-files=all --analyis-annotation
-                            --verbose --compute-call-strings
-                            --no-output-call-strings --warn-deprecated
-                            --gdl-nodeformat=no-asttext
-                            --gdl-nodeformat=no-varid --gdl-nodeformat=varname
-                            --gdl-nodeformat=no-exprid
-                            --gdl-nodeformat=exprsource
+--language=c++|c99|c89   select input language [default=c++]
+--frontend-warnings      show Front End warnings when parsing file(s)
+--no-frontend-warnings   do not show Front End warnings when parsing
+                         file(s) [default]
+-I<path>                 specify path for include files
+--input-binary-ast=<FILENAME> read AST from binary file instead of a
+                         source file
 \end{verbatim}
 }
+
+\subsection{General Analysis Options}
+
+These options mostly deal with what sanity checks and provided analysis
+steps should be performed by SATIrE.
+
+{\footnotesize
+\begin{verbatim}
+--check-ast              run all ROSE tests for checking
+                         whether ROSE-AST is correct
+--no-check-ast           do not run ROSE AST tests [default]
+--check-icfg             run PAG's ICFG consistency checks
+--no-check-icfg          do not run ICFG checks [default]
+--analysis-files=all|cl  analyse all source files or only those
+                         specified on the command line [default=cl]
+--analysis-annotation    annotate analysis results in AST and output
+                         [default]
+--no-analysis-annotation do not annotate analysis results in AST
+--number-expressions     number expressions and types in the ICFG [default]
+--no-number-expressions  do not number expressions and types in the ICFG
+--run-pointsto-analysis  run a points-to analysis on the ICFG
+--resolve-funcptr-calls  resolve indirect calls using pointer analysis
+\end{verbatim}
+}
+
+The default setting is not to run points-to analysis
+(Section~\ref{sec:analysis_pointsto}), and thus also not to attempt to
+resolve function pointer calls.
+
+\subsection{Output Options}
+
+These flags control the amount and type of output---informational messages,
+annotated programs, analysis results---from the analyzer.
+
+{\footnotesize
+\begin{verbatim}
+--statistics             output analyzer statistics on stdout
+--no-statistics          do not show analyzer statistics on stdout
+--verbose                output analyzer info on stdout
+--no-verbose             do not print analyzer info on stdout
+--output-text            print analysis results for each statement
+--output-collectedfuncs  print all functions that are collected for
+                         the icfg generation
+--output-source=<FILENAME> generate source file with annotated 
+                         analysis results for each statement
+--output-term=<FILENAME> generate Prolog term representation of input
+                         program AST
+--output-icfg=<FILENAME> output icfg of input program
+--output-binary-ast=<FILENAME> write AST to binary file
+--warn-deprecated        warn about the use of deprecated features
+--no-warn-deprecated     do not warn about the use of deprecated features
+--help                   print this help message on stdout
+--help-rose              print the ROSE help message on stdout
+\end{verbatim}
+}
+
+The default output settings are as if the \texttt{--no-statistics
+--verbose --warn-deprecated} flags had been specified.
+
+\subsection{Multiple Input/Output Files Options}
+
+This option can be used to set a file name prefix for output of several source
+files for several input files.
+
+{\footnotesize
+\begin{verbatim}
+--output-sourceprefix=<PREFIX> generate for each input file one output file
+                         with prefixed name
+\end{verbatim}
+}
+
+\section{PAG-Specific Flags}
+\label{sec:pag_flags}
+
+The flags listed in this section are only available if SATIrE has been built
+with PAG support (see Appendix~\ref{appendix:installing}).
+
+\subsection{PAG-Specific Analysis Options}
+
+These flags control options mostly related to PAG's fixed point search: The
+maximal call string length to use for context-sensitive interprocedural
+analysis, whether to compute SATIrE's context information (see
+Section~\ref{sec:call_strings}) from PAG's representation, the CFG ordering
+to use, and issues related to trading memory against execution time.
+
+{\footnotesize
+\begin{verbatim}
+--callstringlength=<num> set callstring length to <num> [default=0]
+--callstringinfinite     select infinite callstring (for non-recursive
+                         programs only)
+--compute-call-strings   compute representation of call strings [default]
+--no-compute-call-strings do not compute call strings
+--output-call-strings    experimental: print call strings used by PAG
+--no-output-call-strings do not attempt to output call strings [default]
+                         programs only)
+--cfgordering=<num>      set ordering that is used by the iteration
+                         algorithm where
+                               <num> = 1 : dfs preorder [default]
+                                       2 : bfs preorder
+                                       3 : reversed dfs postorder
+                                       4 : bfs postorder
+                                       5 : topsort scc dfs preorder
+                                       6 : topsort scc bfs preorder
+                                       7 : topsort scc reversed bfs
+                                           dfs postorder
+                                       8 : topsort scc bfs postorder
+--pag-memsize-mb=<num>   allocate <num> MB of memory for PAG analysis
+--pag-memsize-perc=<num> allocate <num>% of system memory (autodetected)
+--pag-memsize-grow=<num> grow memory if less than <num>% are free after GC
+\end{verbatim}
+}
+
+The default settings in addition to the defaults indicated above are:
+\texttt{--pag-memsize-mb=5 --pag-memsize-grow=30}.
+
+\subsection{GDL Output Options}
+
+These options control the GDL visualization that PAG can generate for use
+with the aiSee program. The most interesting flag is
+\texttt{--gdl-nodeformat}, which can be used multiple times to specify a
+combination of formatting options. These formats control whether SATIrE's
+supporting \texttt{Id} types (see Section~\ref{sec:support_types}) are to be
+printed as numeric identifiers, as variable names/source code, or as both,
+in the analysis information. The \texttt{asttext} setting controls whether
+ICFG statements are to be shown as source code or as a structural
+representation of the AST (similar to PAG's patterns).
+
+{\footnotesize
+\begin{verbatim}
+--gdl-preinfo            output analysis info before cfg nodes
+--no-gdl-preinfo         do not output analysis info before cfg nodes
+--gdl-postinfo           output analysis info after cfg nodes
+--no-gdl-postinfo        do not output analysis info after cfg nodes
+--gdl-nodeformat=FORMAT  where FORMAT=varid|varname|exprid|exprsource
+                                     |asttext|no-varid|no-varname
+                                     |no-exprid|no-exprsource|no-asttext
+                         the format can be specified multiple times to
+                         have different formats printed at the same node
+                         The output is only affected if VariableId
+                         and/or ExpressionId is used in the carrier type
+--output-gdl=<FILENAME>  output program as gdl graph
+--output-gdlanim=<DIRNAME> output animation gdl files in 
+                         directory <dirname>
+\end{verbatim}
+}
+
+The default settings are as if the following flags were specified on the
+command line:
+{\footnotesize
+\begin{verbatim}
+    --no-gdl-preinfo --gdl-postinfo
+    --gdl-nodeformat=no-asttext
+    --gdl-nodeformat=no-varid --gdl-nodeformat=varname
+    --gdl-nodeformat=no-exprid --gdl-nodeformat=exprsource
+\end{verbatim}
+}
+
+That is, statements, variables, and expressions are printed only as they
+would be represented in source code. Analysis information is associated with
+the outgoing edges of ICFG nodes.
 
 \end{document}

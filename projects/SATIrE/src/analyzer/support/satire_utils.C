@@ -99,7 +99,7 @@ CFG *createICFG(SgProject *astRoot, AnalyzerOptions *options)
     return cfg;
 }
 
-void outputProgramRepresentation(SgProject *astRoot, AnalyzerOptions *options)
+void outputRoseAst(SgProject *astRoot, AnalyzerOptions *options)
 {
     /* Handle command line option --output-source. */
     if (options->outputSource())
@@ -132,6 +132,39 @@ void outputProgramRepresentation(SgProject *astRoot, AnalyzerOptions *options)
     {
         AST_FILE_IO::startUp(astRoot);
         AST_FILE_IO::writeASTToFile(options->getOutputBinaryAstFileName());
+    }
+}
+
+void outputProgramRepresentation(Program *program, AnalyzerOptions *options)
+{
+    /* This function handles various forms of AST output, including terms. */
+    outputRoseAst(program->astRoot, options);
+
+    if (options->outputIcfg())
+    {
+        /* If the outputIcfg flag is set, ICFG construction generates
+         * appropriate output. That is, the ICFG is output iff it is
+         * constructed; in other words, all we need to do here is to ensure
+         * that the ICFG exists. */
+        if (program->icfg == NULL)
+            program->icfg = createICFG(program->astRoot, options);
+    }
+
+    /* Handle command line option --output-term. */
+    if (options->outputTerm())
+    {
+        TimingPerformance timer("Output Prolog term:");
+        TermPrinter<void *> tp(NULL, program->icfg);
+        if (options->analysisWholeProgram())
+            tp.traverse(program->astRoot);
+        else
+            tp.traverseInputFiles(program->astRoot);
+        std::ofstream termfile;
+        std::string filename = program->options->getOutputTermFileName();
+        termfile.open(filename.c_str());
+        termfile << "% Termite term representation" << std::endl;
+        termfile << tp.getTerm()->getRepresentation() << "." << std::endl;
+        termfile.close();
     }
 }
 

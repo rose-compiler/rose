@@ -16,14 +16,19 @@ STRING_ATTR(HelpOptionsText, "")
 
 STRING_ATTR(OutputSourceFileName, "")
 STRING_ATTR(OutputFilePrefix, "")
-STRING_ATTR(OutputGdlFileName, "")
 STRING_ATTR(OutputIcfgFileName, "")
 STRING_ATTR(OutputTermFileName, "")
+#if HAVE_PAG
+STRING_ATTR(OutputGdlFileName, "")
 STRING_ATTR(OutputGdlAnimDirName, "")
+#endif
 
+#if HAVE_PAG
 INT_ATTR_NOSTUB(CfgOrdering, 1)
 INT_ATTR(CallStringLength, 0)
+#endif
 
+#if HAVE_PAG
 INT_ATTR_NOSTUB(GcLow,  30)
 INT_ATTR_NOSTUB(GcHigh, 30)
 INT_ATTR(StartBank, 0) /* ?? */
@@ -33,6 +38,7 @@ INT_ATTR_NOSTUB(MemsizeMB, 5)
 INT_ATTR_NOSTUB(MemsizePerc, 1)
 BOOL_ATTR(memsizeMBSet, Off)
 BOOL_ATTR(memsizePercSet, Off)
+#endif
 
 BOOL_ATTR(frontendWarnings, Off)
 BOOL_ATTR(deprecatedWarnings, On)
@@ -48,13 +54,17 @@ BOOL_ATTR(preInfo, Off)
 BOOL_ATTR(postInfo, On)
 BOOL_ATTR(statistics, Off)
 BOOL_ATTR(analysisWholeProgram, On)
+#if HAVE_PAG
 BOOL_ATTR(gdlProcedureSubgraphs, On)
+#endif
 BOOL_ATTR(outputText, Off)
 BOOL_ATTR(outputSource, Off)
 BOOL_ATTR(outputTerm, Off)
 BOOL_ATTR(outputIcfg, Off)
+#if HAVE_PAG
 BOOL_ATTR(outputGdl, Off)
 BOOL_ATTR(outputGdlAnim, Off)
+#endif
 BOOL_ATTR(numberExpressions, On)
 BOOL_ATTR(nodeFormatVarId,Off)
 BOOL_ATTR(nodeFormatVarName,On)
@@ -62,9 +72,11 @@ BOOL_ATTR(nodeFormatExprId,Off)
 BOOL_ATTR(nodeFormatExprSource,On)
 BOOL_ATTR(nodeFormatAstText,Off)
 
+#if HAVE_PAG
 BOOL_ATTR(vivu, Off) /* callstring length defines chop size */
 INT_ATTR(VivuLoopUnrolling, 2)
 INT_ATTR(Vivu4MaxUnrolling, -1)
+#endif
 
 /* GB (2008-05-28): Options for input/output of binary ASTs (binary input is
  * much faster than building the AST from source). */
@@ -76,5 +88,7 @@ STRING_ATTR(OutputBinaryAstFileName, "")
 BOOL_ATTR(runPointsToAnalysis, Off)
 BOOL_ATTR(resolveFuncPtrCalls, Off)
 
+#if HAVE_PAG
 BOOL_ATTR(computeCallStrings, On)
 BOOL_ATTR(outputCallStrings, Off)
+#endif

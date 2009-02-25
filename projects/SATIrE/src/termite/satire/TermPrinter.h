@@ -12,12 +12,21 @@ Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
 #include <satire_rose.h>
 #include "termite.h"
 
-#ifdef PAG_VERSION
+// GB (2009-02-25): Want to build with ICFG support unless explicitly told
+// (by c2term.C) not to.
+#ifndef HAVE_SATIRE_ICFG
+#  define HAVE_SATIRE_ICFG 1
+#endif
+
+#if HAVE_SATIRE_ICFG
+#  include <cfg_support.h>
+#endif
+
+#if HAVE_PAG
 #  include <config.h>
 // GB (2008-10-03): The declaration (and definition) of PagDfiTextPrinter is
 // now provided in a special header.
 #  include <PagDfiTextPrinter.h>
-#  include <cfg_support.h>
 #endif
 
 #include "RoseToProlog.h"
@@ -33,20 +42,30 @@ Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
  *
  * Additionally, this template can be instatiated with the DFI_STORE type
  * in the case the Terms should contain PAG analysis results.
- * This feature is only enabled if PAG_VERSION is defined.
+ * This feature is only enabled if Termite was configured with PAG support
+ * (i.e., HAVE_PAG is defined).
  */
 template<typename DFI_STORE_TYPE>
 class TermPrinter: public AstBottomUpProcessing<PrologTerm*> 
 {
 public:
   TermPrinter(DFI_STORE_TYPE analysis_info = 0
-# ifdef PAG_VERSION
-          , CFG *cfg = 0
-# endif
-          )
-# ifdef PAG_VERSION
-      :pagDfiTextPrinter(analysis_info), cfg(cfg)
-# endif
+#if HAVE_SATIRE_ICFG
+            , CFG *cfg = 0
+#endif
+            )
+#if HAVE_PAG || HAVE_SATIRE_ICFG
+      :
+#endif
+#if HAVE_PAG
+      pagDfiTextPrinter(analysis_info)
+#endif
+#if HAVE_PAG && HAVE_SATIRE_ICFG
+      ,
+#endif
+#if HAVE_SATIRE_ICFG
+      cfg(cfg)
+#endif
   { 
 #if HAVE_SWI_PROLOG
     int argc;
@@ -71,9 +90,9 @@ protected:
     defaultSynthesizedAttribute() {return new PrologAtom("null");};
 
   bool withPagAnalysisResults;
-# ifdef PAG_VERSION
+#if HAVE_PAG
     PagDfiTextPrinter<DFI_STORE_TYPE> pagDfiTextPrinter;
-# endif
+#endif
 
 private:
   /** should generate list instead of tuple? */
@@ -105,8 +124,8 @@ private:
   /** the converter */
   RoseToProlog termConv;
 
+#if HAVE_SATIRE_ICFG
   /** the CFG */
-# ifdef PAG_VERSION
   CFG *cfg;
 #endif
 
@@ -240,7 +259,7 @@ TermPrinter<DFI_STORE_TYPE>::getAnalysisResult(SgStatement* stmt)
   PrologList *infos;
   infos = new PrologList();
 
-# ifdef PAG_VERSION
+#if HAVE_PAG
   if (withPagAnalysisResults && stmt->get_attributeMechanism()) {
     PrologTerm *preInfo, *postInfo;
      preInfo = pagToProlog("pre_info", pagDfiTextPrinter.getPreInfo(stmt));
@@ -248,8 +267,8 @@ TermPrinter<DFI_STORE_TYPE>::getAnalysisResult(SgStatement* stmt)
     infos->addElement(preInfo);
     infos->addElement(postInfo);
   }
-# endif
-# ifdef PAG_VERSION
+#endif
+#if HAVE_SATIRE_ICFG
   if (cfg != NULL && cfg->statementHasLabels(stmt)) {
     std::pair<int, int> entryExit = cfg->statementEntryExitLabels(stmt);
     PrologCompTerm *pair = new PrologInfixOperator("-");
@@ -260,7 +279,7 @@ TermPrinter<DFI_STORE_TYPE>::getAnalysisResult(SgStatement* stmt)
     ee->addSubterm(pair);
     infos->addElement(ee);
   }
-# endif
+#endif
   ar->addSubterm(infos);
 
   return ar;

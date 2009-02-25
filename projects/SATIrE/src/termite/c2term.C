@@ -9,6 +9,10 @@ Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
 #include <iostream>
 #include <fstream>
 #include <satire_rose.h>
+
+// GB (2009-02-25): We want to build c2term without ICFG stuff to avoid
+// having to link against libsatire.
+#define HAVE_SATIRE_ICFG 0
 #include "TermPrinter.h"
 
 using namespace std;

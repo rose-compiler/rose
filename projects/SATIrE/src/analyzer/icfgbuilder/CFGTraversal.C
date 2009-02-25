@@ -2134,6 +2134,10 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 	/* outgoing: TODO, insert it in
 	 * perform_goto_backpatching */
 	// stmt_end = new StatementAttribute();
+    // GB (2009-02-25): Right now, I think that the post information of the
+    // goto should in fact be on its outgoing edge. In fact, I cannot reason
+    // of any reason *not* to put it here. So here it is.
+	stmt_end = new StatementAttribute(new_block, POS_POST);
 
 	after = new_block;
 	new_block = NULL;

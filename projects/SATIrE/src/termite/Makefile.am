@@ -21,7 +21,7 @@ if WITH_PAG
               -I$(PAG_INCLUDE_DIR)/pag/analyzer
 endif
 
-AM_LDFLAGS=-L$(ROSE_LIB_DIR) -Wl,-rpath $(ROSE_LIB_DIR) -L$(BOOST_LIB_DIR) -Wl,-rpath $(BOOST_LIB_DIR) 
+AM_LDFLAGS=-L$(ROSE_LIB_DIR) -Wl,-rpath $(ROSE_LIB_DIR) -L$(BOOST_LIB_DIR) -Wl,-rpath $(BOOST_LIB_DIR)
 
 bin_PROGRAMS = termpretty c2term term2c
 

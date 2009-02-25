@@ -39,9 +39,31 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo(""),_n
     "   --input-binary-ast=<FILENAME> read AST from binary file instead of a\n"
     "                            source file\n"
     "\n"
-    " Analysis options:\n"
+    " General analysis options:\n"
+    "   --check-ast              run all ROSE tests for checking\n"
+    "                            whether ROSE-AST is correct\n"
+    "   --no-check-ast           do not run ROSE AST tests [default]\n"
+    "   --check-icfg             run PAG's ICFG consistency checks\n"
+    "   --no-check-icfg          do not run ICFG checks [default]\n"
+    "   --analysis-files=all|cl  analyse all source files or only those\n"
+    "                            specified on the command line [default=cl]\n"
+    "   --analysis-annotation    annotate analysis results in AST and output\n"
+    "                            [default]\n"
+    "   --no-analysis-annotation do not annotate analysis results in AST\n"
+    "   --number-expressions     number expressions and types in the ICFG [default]\n"
+    "   --no-number-expressions  do not number expressions and types in the ICFG\n"
+    "   --run-pointsto-analysis  run a points-to analysis on the ICFG\n"
+    "   --resolve-funcptr-calls  resolve indirect calls using pointer analysis\n"
+    "\n"
+#if HAVE_PAG
+    " PAG-specific analysis options:\n"
     "   --callstringlength=<num> set callstring length to <num> [default=0]\n"
     "   --callstringinfinite     select infinite callstring (for non-recursive\n"
+    "                            programs only)\n"
+    "   --compute-call-strings   compute representation of call strings [default]\n"
+    "   --no-compute-call-strings do not compute call strings\n"
+    "   --output-call-strings    experimental: print call strings used by PAG\n"
+    "   --no-output-call-strings do not attempt to output call strings [default]\n"
     "                            programs only)\n"
     "   --cfgordering=<num>      set ordering that is used by the iteration\n"
     "                            algorithm where\n"
@@ -54,25 +76,14 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo(""),_n
     "                                          7 : topsort scc reversed bfs\n"
     "                                              dfs postorder\n"
     "                                          8 : topsort scc bfs postorder\n"
-    "   --check-ast              run all ROSE tests for checking\n"
-    "                            whether ROSE-AST is correct\n"
-    "   --no-check-ast           do not run ROSE AST tests\n"
-    "   --check-icfg             run PAG's ICFG consistency checks\n"
-    "   --no-check-icfg          do not run ICFG checks\n"
-    "   --analysis-files=all|cl  analyse all source files or only those\n"
-    "                            specified on the command line (cl)\n"
-    "   --analysis-annotation    annotate analysis results in AST and output\n"
-    "   --no-analysis-annotation do not annotate analysis results in AST\n"
-    "   --number-expressions     number expressions and types in the ICFG\n"
-    "   --no-number-expressions  do not number expressions and types in the ICFG\n"
     "   --pag-memsize-mb=<num>   allocate <num> MB of memory for PAG analysis\n"
     "   --pag-memsize-perc=<num> allocate <num>% of system memory (autodetected)\n"
     "   --pag-memsize-grow=<num> grow memory if less than <num>% are free after GC\n"
-    "   --run-pointsto-analysis  run a points-to analysis on the ICFG\n"
-    "   --resolve-funcptr-calls  resolve indirect calls using pointer analysis\n"
-    "   --compute-call-strings   compute representation of PAG call strings\n"
-    "   --no-compute-call-strings do not compute call strings\n"
     "\n"
+    " Default PAG options:\n"
+    "       --pag-memsize-mb=5 --pag-memsize-grow=30\n"
+    "\n"
+#endif
     " Output options:\n"
     "   --statistics             output analyzer statistics on stdout\n"
     "   --no-statistics          do not show analyzer statistics on stdout\n"
@@ -87,17 +98,19 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo(""),_n
     "                            program AST\n"
     "   --output-icfg=<FILENAME> output icfg of input program\n"
     "   --output-binary-ast=<FILENAME> write AST to binary file\n"
-    "   --output-call-strings    experimental: print call strings used by PAG\n"
-    "   --no-output-call-strings do not attempt to output call strings\n"
     "   --warn-deprecated        warn about the use of deprecated features\n"
     "   --no-warn-deprecated     do not warn about the use of deprecated features\n"
     "   --help                   print this help message on stdout\n"
     "   --help-rose              print the ROSE help message on stdout\n"
     "\n"
+    " Default output options:\n"
+    "       --no-statistics --verbose --warn-deprecated\n"
+    "\n"
     " Multiple input/output files options:\n"
     "   --output-sourceprefix=<PREFIX> generate for each input file one output file\n"
     "                            with prefixed name\n"
     "\n"
+#if HAVE_PAG
     " GDL output options:\n"
     "   --gdl-preinfo            output analysis info before cfg nodes\n"
     "   --no-gdl-preinfo         do not output analysis info before cfg nodes\n"
@@ -114,18 +127,12 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo(""),_n
     "   --output-gdlanim=<DIRNAME> output animation gdl files in \n"
     "                            directory <dirname>\n"
     "\n"
-    " Default options:           --language=c++ --no-gdl-preinfo --gdl-postinfo\n"
-    "                            --callstringlength=0 --cfg-ordering=1\n"
-    "                            --no-check-ast --no-check-icfg\n"
-    "                            --number-expressions --pag-memsize-mb=5\n"
-    "                            --pag-memsize-grow=30 --no-statistics\n"
-    "                            --analysis-files=all --analyis-annotation\n"
-    "                            --verbose --compute-call-strings\n"
-    "                            --no-output-call-strings --warn-deprecated\n"
-    "                            --gdl-nodeformat=no-asttext\n"
-    "                            --gdl-nodeformat=no-varid --gdl-nodeformat=varname\n"
-    "                            --gdl-nodeformat=no-exprid\n"
-    "                            --gdl-nodeformat=exprsource\n"
+    " Default GDL options:\n"
+    "       --no-gdl-preinfo --gdl-postinfo\n"
+    "       --gdl-nodeformat=no-asttext\n"
+    "       --gdl-nodeformat=no-varid --gdl-nodeformat=varname\n"
+    "       --gdl-nodeformat=no-exprid --gdl-nodeformat=exprsource\n"
+#endif
     /*
     " PAG garbage collection options:\n"
     "   --pag-gc-lowperc <num>            the value <num> [0..99] gives the percentage of free heap,\n"
@@ -149,8 +156,10 @@ std::string AnalyzerOptions::toString() {
     + "Input FileName: "+getInputFileName()+"\n"
     + "Output Source Filename: "+getOutputSourceFileName()+"\n"
     + "Output Term Filename: "+getOutputTermFileName()+"\n"
+#if HAVE_PAG
     + "Output GDL Filename: "+getOutputGdlFileName()+"\n"
     + "Output GDL Anim DirName: "+getOutputGdlAnimDirName()+"\n"
+#endif
     + "ROSE Command Line: "+getCommandLine()+"\n"
     ;
 }
@@ -177,6 +186,7 @@ std::string AnalyzerOptions::getOptionsInfo() {
 #undef INT_ATTR_NOSTUB
 #undef BOOL_ATTR
 
+#if HAVE_PAG
 void AnalyzerOptions::setCfgOrdering(int ordering) { 
   if(ordering <1 || ordering>8) {
     setOptionsErrorMessage("ERROR: Cfg ordering must be a value between 1 to 8.");
@@ -216,6 +226,7 @@ void AnalyzerOptions::setMemsizePerc(int perc) {
     _MemsizePerc = perc;
   }
 }
+#endif
 
 AnalyzerOptions::Language AnalyzerOptions::getLanguage() { return _language; }
 void AnalyzerOptions::setLanguage(AnalyzerOptions::Language language) { _language=language; }

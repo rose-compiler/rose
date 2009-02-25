@@ -19,6 +19,7 @@
 #include "testcfg.h"
 
 #include "StatementAttributeTraversal.h"
+#include "TermPrinter.h"
 
 #include "satire_program_representation.h"
 

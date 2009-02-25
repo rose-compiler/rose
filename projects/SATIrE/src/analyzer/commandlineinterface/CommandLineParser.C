@@ -60,27 +60,32 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
 
   int old_i = i;
 
-  if (optionMatchPrefix(argv[i], "--cfgordering=")) {
-    cl->setCfgOrdering(atoi(argv[i]+prefixLength));
-  } else if (optionMatch(argv[i], "--statistics")) {
+  if (optionMatch(argv[i], "--statistics")) {
     cl->statisticsOn();
   } else if (optionMatch(argv[i], "--no-statistics")) {
     cl->statisticsOff();
+#if HAVE_PAG
+  } else if (optionMatchPrefix(argv[i], "--cfgordering=")) {
+    cl->setCfgOrdering(atoi(argv[i]+prefixLength));
+#endif
   } else if (optionMatch(argv[i], "--no-result")) {
     cl->resultGenerationOff();
   } else if (optionMatch(argv[i], "--no_anim")) {
     cout << "SATIrE commandline option: --no_anim is deprecated (has no effect)." << endl;
     //cl->outputGdlAnimOff();
+#if HAVE_PAG
   } else if (optionMatchPrefix(argv[i], "--callstringlength=")) {
     cl->setCallStringLength(atoi(argv[i]+prefixLength));
   } else if (optionMatch(argv[i], "--callstringinfinite")) {
     cl->setCallStringLength(-1);
+#endif
   } else if (optionMatch(argv[i], "--verbose")) {
     cl->verboseOn();
     cl->quietOff();
   } else if (optionMatch(argv[i], "--no-verbose")) {
     cl->verboseOff();
     cl->quietOn();
+#if HAVE_PAG
   } else if (optionMatchPrefix(argv[i], "--pag-memsize-mb=")) {
     if (cl->memsizeMBSet() || cl->memsizePercSet()) {
       cl->setOptionsErrorMessage("only one --pag-memsize-mb or --pag-memsize-perc flag is allowed");
@@ -107,6 +112,8 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     cl->setShareMin(atoi(argv[i]+prefixLength));
   } else if (optionMatch(argv[i], "--pag-sharenum")) {
     cl->setShareNum(atoi(argv[i]+prefixLength));
+#endif
+#if HAVE_PAG
   } else if (optionMatch(argv[i], "--gdl-preinfo")) {
     cl->preInfoOn();
   } else if (optionMatch(argv[i], "--no-gdl-preinfo")) {
@@ -139,6 +146,7 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     cl->nodeFormatAstTextOn();
   } else if (optionMatch(argv[i], "--gdl-nodeformat=no-asttext")) {
     cl->nodeFormatAstTextOff();
+#endif
   } else if (optionMatch(argv[i], "--analysis-files=all")) {
     cl->analysisWholeProgramOn();
   } else if (optionMatch(argv[i], "--analysis-files=cl")) {
@@ -187,12 +195,14 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
   } else if (optionMatchPrefix(argv[i], "--output-term=")) {
     cl->outputTermOn();
     cl->setOutputTermFileName(strdup(argv[i]+prefixLength));
+#if HAVE_PAG
   } else if (optionMatchPrefix(argv[i], "--output-gdl=")) {
     cl->outputGdlOn();
     cl->setOutputGdlFileName(strdup(argv[i]+prefixLength));
   } else if (optionMatchPrefix(argv[i], "--output-gdlanim=")) {
     cl->outputGdlAnimOn();
     cl->setOutputGdlAnimDirName(strdup(argv[i]+prefixLength));
+#endif
   } else if (optionMatchPrefix(argv[i], "--input-binary-ast=")) {
     if (cl->inputBinaryAst()) {
       cl->setOptionsErrorMessage("--input-binary-ast specified more than once");
@@ -232,12 +242,14 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     cl->deprecatedWarningsOn();
   } else if (optionMatch(argv[i], "--no-warn-deprecated")) {
     cl->deprecatedWarningsOff();
+#if HAVE_PAG
   } else if (optionMatch(argv[i], "--pag-vivu")) {
     cl->vivuOn();
   } else if (optionMatchPrefix(argv[i], "--pag-vivuLoopUnrolling=")) {
     cl->setVivuLoopUnrolling(atoi(argv[i]+prefixLength));
   } else if (optionMatchPrefix(argv[i], "--pag-vivu4MaxUnrolling=")) {
     cl->setVivu4MaxUnrolling(atoi(argv[i]+prefixLength));
+#endif
   } else if (optionMatch(argv[i], "--help")) {
     cl->helpMessageRequestedOn();
   } else if (!strncmp(argv[i], "-I",2)) {
@@ -257,6 +269,7 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     cl->resolveFuncPtrCallsOn();
   } else if (optionMatch(argv[i], "--no-resolve-funcptr-calls")) {
     cl->resolveFuncPtrCallsOff();
+#if HAVE_PAG
   } else if (optionMatch(argv[i], "--compute-call-strings")) {
     cl->computeCallStringsOn();
   } else if (optionMatch(argv[i], "--no-compute-call-strings")) {
@@ -265,6 +278,7 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     cl->outputCallStringsOn();
   } else if (optionMatch(argv[i], "--no-output-call-strings")) {
     cl->outputCallStringsOff();
+#endif
   } else if ((!optionMatchPrefix(argv[i], "-") && !optionMatchPrefix(argv[i],"--")) ) {
     /* handle as filename, pass filenames through */
     cout << "Found input file '" << argv[i] << "'." << endl;

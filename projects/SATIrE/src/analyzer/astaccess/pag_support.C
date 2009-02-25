@@ -2,8 +2,6 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
 // $Id: pag_support.C,v 1.19 2009-02-09 11:02:36 gergo Exp $
 
-#if HAVE_PAG
-
 #include <iostream>
 
 #include <satire_rose.h>
@@ -12,6 +10,16 @@
 #include "pignodelist.h"
 #include "pag_support.h"
 #include "IrCreation.h"
+
+CFG *global_cfg = NULL;
+
+CFG *get_global_cfg()
+{
+    return global_cfg;
+}
+
+
+#if HAVE_PAG
 
 // GB (2008-05-08): The manual doesn't tell you this, but apparently these
 // need to be initialized to negative values in the beginning; then the
@@ -294,13 +302,6 @@ extern "C" void *o_binary_get_right_child(void *expr)
 {
     assert(o_is_binary(expr) == FLO_TRUE);
     return isSgBinaryOp((SgNode *) expr)->get_rhs_operand();
-}
-
-CFG *global_cfg = NULL;
-
-CFG *get_global_cfg()
-{
-    return global_cfg;
 }
 
 // GB (2008-07-01): Global variables are not very elegant. I know.

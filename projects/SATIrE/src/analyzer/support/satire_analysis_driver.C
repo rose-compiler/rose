@@ -71,7 +71,7 @@ void
 AnalysisDriver::outputProgram(Program *program)
 {
     /* By default, call the general output function. */
-    outputProgramRepresentation(program->astRoot, program->options);
+    outputProgramRepresentation(program, program->options);
 }
 
 }

@@ -19,9 +19,13 @@ SgProject *createRoseAst(AnalyzerOptions *options);
 // outputs a visualization if requested by the analyzer options.
 CFG *createICFG(SgProject *astRoot, AnalyzerOptions *options);
 
-// This function generates various representations of the program -- source
+// This function generates various representations of the AST -- source
 // or binary AST -- as requested by the options.
-void outputProgramRepresentation(SgProject *astRoot, AnalyzerOptions *options);
+void outputRoseAst(SgProject *astRoot, AnalyzerOptions *options);
+
+// This is the general driver for any program output as requested by the
+// user.
+void outputProgramRepresentation(Program *program, AnalyzerOptions *options);
 
 }
 
