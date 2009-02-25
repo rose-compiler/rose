@@ -1,0 +1,1023 @@
+% This is a first shot at a somewhat comprehensive SATIrE manual. It is all
+% in one file, which is not very nice. This file should be broken up into
+% separate files for the chapters once the structure of the document has
+% stabilized.
+
+\documentclass[a4paper,12pt]{report}
+
+\input{manual_vars}
+
+\def\version{foo}
+
+\title{SATIrE Manual}
+\author{}
+
+\pagestyle{headings}
+
+\begin{document}
+\maketitle
+
+\chapter*{About this document}
+
+This is the manual for SATIrE version \version.
+
+This manual is not done yet. Parts are missing, other parts are probably
+wrong, and the overall structure is not fixed. All of this means that this
+manual is the best documentation SATIrE has ever had :-)
+
+\tableofcontents
+
+\chapter{Introduction}
+\label{chap:introduction}
+
+SATIrE (\emph{Static Analysis Tool Integration Engine}) is a framework for
+combining various tools for static analysis of computer programs. Its aim is
+to support a wide range of source-level analyses and transformations
+(including annotations and instrumentation) for C and C++ programs.
+
+SATIrE is being developed at Vienna University of
+Technology\footnote{\texttt{http://www.tuwien.ac.at}} and University of
+Applied Sciences Technikum
+Wien\footnote{\texttt{http://www.technikum-wien.at}}. It lives at:
+\begin{center}
+\verb|http://www.complang.tuwien.ac.at/satire/|
+\end{center}
+
+Major software products integrated in SATIrE are:
+\begin{itemize}
+\item the Program Analyzer Generator (PAG)
+\item relevant parts of the ROSE source-to-source infrastructure and its
+binding to the EDG C and C++ frontend
+\item Termite
+\end{itemize}
+
+Work on using clang as an alternative C frontend is in progress.
+
+Additionally, SATIrE comes with a number of standard analyses that can be
+used as building blocks when implementing custom program analyzers and
+transformers.
+
+Development of SATIrE has been funded within the ARTIST2 Network of
+Excellence on Embedded Systems
+Design\footnote{\texttt{http://www.artist-embedded.org}} and the ALL-TIMES
+project\footnote{\texttt{http://www.all-times.org}}.
+
+\chapter{SATIrE Analyzer Architecture}
+\label{chap:analyzer}
+
+This chapter describes the general structure of analyzers and their
+interactions with the infrastructure provided by the SATIrE framework.
+
+Note: Most of the identifiers described in this chapter live in the
+\texttt{SATIrE} C++ namespace. They can be accessed by including the
+\verb|<satire.h>| header.
+
+\section{Command Line Flags}
+\label{sec:command_line}
+
+SATIrE contains a command line parser that reads options and input file
+names and encapsulates them in an instance of the \texttt{AnalyzerOptions}
+class.
+
+The command line can be parsed using the
+\begin{verbatim}
+    AnalyzerOptions *extractOptions(int argc, char **argv);
+\end{verbatim}
+function. A list of all the flags understood by the command line parser, and
+information on how to access this information from SATIrE analyzers, is
+given in Appendix~\ref{appendix:command_line}.
+
+\section{Program Input and Output}
+\label{sec:program_io}
+
+For each of the different program representations supported by SATIrE
+(see Chapter~\ref{chap:program_representation}), there is a corresponding
+function to build that representation from appropriate inputs. Each of these
+functions takes an \texttt{AnalyzerOptions} object; besides specifying input
+file names, this object contains additional options such as user requests
+for sanity checks on the program representation, or for visualizations (of
+the ICFG).
+
+The general \texttt{Program} (Section~\ref{sec:satire_program}) object used
+by SATIrE analyzers is built by calling its
+\begin{verbatim}
+    Program(AnalyzerOptions *o);
+\end{verbatim}
+constructor.
+
+The ROSE AST (Section~\ref{sec:rose_ast}) can be built by calling:
+\begin{verbatim}
+    SgProject *createRoseAst(AnalyzerOptions *options);
+\end{verbatim}
+Note that this either reads source code, or a binary representation of a
+previously constructed ROSE AST, depending on flags passed on the command
+line.
+
+Finally, the SATIrE ICFG (Section~\ref{sec:satire_icfg}) is built from a
+ROSE AST by calling:
+\begin{verbatim}
+    CFG *createICFG(SgProject *astRoot, AnalyzerOptions *opts);
+\end{verbatim}
+
+Annotated or transformed programs represented by a ROSE AST can be output by
+calling the
+\begin{verbatim}
+    void outputProgramRepresentation(SgProject *astRoot,
+                                     AnalyzerOptions *options);
+\end{verbatim}
+function. This function will output the program as source code, as a binary
+AST representation, or as a Termite term, depending on the command line
+options.
+
+Using these parts, one can build a very small SATIrE program that already
+allows various forms of program visualization and transformation:
+\begin{verbatim}
+    #include <satire.h>
+
+    using namespace SATIrE;
+
+    int main(int argc, char **argv)
+    {
+        AnalyzerOptions *options = extractOptions(argc, argv);
+        SgProject *root = createRoseAst(options);
+        outputProgramRepresentation(root, options);
+    }
+\end{verbatim}
+
+The tasks this program performs depend on the command line flags passed to
+it by the user. Despite its power, this program is probably shorter than the
+compiler command line you need to build and run it correctly :-)
+
+\section{Analyzer Interface}
+\label{sec:analyzer_interface}
+
+This section describes the general interface SATIrE analyzers are expected
+to implement. This interface is the public interface of the abstract
+\texttt{Analysis} class, from which all analyzers should be derived. There
+is a more elaborate \texttt{DataFlowAnalysis} subclass for data-flow
+analyzers generated using SATIrE and PAG; this class is described in more
+detail in Chapter~\ref{chap:data_flow}.
+
+The analyzer interface consists of several parts; first, there is a part for
+meta information about the analyzer:
+\begin{verbatim}
+    virtual std::string identifier() const = 0;
+    virtual std::string description() const = 0;
+\end{verbatim}
+The identifier is expected to be a single word naming the analyzer, while
+the description is a brief human-readable summary of what the analyzer does.
+
+The second part of the interface comprises methods for running the analysis
+itself, and for performing actions depending on the results the analysis
+computed:
+\begin{verbatim}
+    virtual void run(Program *program) = 0;
+    virtual void processResults(Program *program) = 0;
+\end{verbatim}
+Note that these methods take as argument an instance of the general
+\texttt{Program} class. This enables SATIrE to use a single analyzer
+interface, while each analyzer can still decide which part of this program
+representation (AST, ICFG, etc.) to run on. See
+Chapter~\ref{chap:program_representation} for details on this issue.
+
+Conceptually, the \texttt{run} method is meant to be a read-only analyzer
+run that only collects information about the program and leaves the program
+representation unchanged; the \texttt{processResults} method can then
+annotate or transform the program as appropriate given those results. This
+structure encourages modular analysis and transformation, but the separation
+is not enforced by SATIrE.
+
+The third part of the analyzer interface concerns dependencies between
+analyzers. One of SATIrE's goals is modular construction of program
+analyzers by combining, and building on, results from supporting analyses.
+Where an analysis relies on results from other analyses, it must be ensured
+that the supporting analyses are run before the client analysis. This is the
+aim of the methods related to analyzer dependencies:
+\begin{verbatim}
+    void dependsOnAnalysis(Analysis *analysis);
+    std::vector<Analysis *> &dependencies() const;
+    void clearDependencies();
+\end{verbatim}
+The \texttt{dependsOnAnalysis} method is used to declare that the receiver
+of the method call depends on results from the analyzer passed in the method
+argument; the other two methods can be used to query the dependencies
+declared so far, or to remove all of these dependencies.
+
+\section{Running an Analyzer}
+\label{sec:run_analyzer}
+
+To run an analyzer with (or without) dependencies, rather than calling
+its~\texttt{run} method directly, SATIrE's analysis scheduler should be
+used. As far as users are concerned, this amounts to calling a single method
+on the global scheduler object provided by SATIrE:
+\begin{verbatim}
+    analysisScheduler.runAnalysisWithDependencies(analysis,
+                                                  program);
+\end{verbatim}
+This call is like calling
+\begin{verbatim}
+    analysis->run(program);
+\end{verbatim}
+except that the scheduler is aware of the dependencies between analyzers,
+and ensures that they are satisfied.
+
+If analyzer~\(A\) depends on analyzers~\(B\) and~\(C\), SATIrE's analysis
+scheduler will thus ensure that~\(B\) and~\(C\) will be run---in some
+unspecified order that is consistent with all the dependencies in the
+system---before \(A\)'s \texttt{run} method is finally called by the
+scheduler.
+
+\section{ARAL: Representing Analysis Results}
+\label{sec:aral}
+
+This section is not here yet.
+
+\chapter{Program Representation in SATIrE}
+\label{chap:program_representation}
+
+This chapter describes the various ways SATIrE can represent programs under
+analysis. The major representations are the ROSE abstract syntax tree~(AST),
+SATIrE's interprocedural control flow graph~(ICFG), and the Termite term
+representation of the AST. The \texttt{Program} class provides a unified
+container for these representations.
+
+\section{The ROSE AST}
+\label{sec:rose_ast}
+
+SATIrE uses the EDG C and C++ frontend provided with ROSE for parsing
+programs. Thus, the AST used by ROSE is an important form of program
+representation in SATIrE.\footnote{When support for clang is nearing
+completion, SATIrE will offer the possibility to use clang instead of EDG as
+the frontend. However, the representation built using this alternative
+frontend will still use the ROSE AST classes.}
+
+The ROSE AST is an object-oriented AST modeling the abstract syntax of a
+given C or C++ program in great detail. ROSE programs can be traversed and
+transformed in various ways; the reader is referred to the ROSE
+documentation for details\footnote{\texttt{http://www.rosecompiler.org}}.
+ROSE's program transformation capabilities and its unparser are used by
+SATIrE to annotate ASTs and unparse them to annotated source code.
+
+\section{The SATIrE ICFG}
+\label{sec:satire_icfg}
+
+SATIrE provides a representation of the program under analysis as an
+inter-procedural control flow graph~(ICFG). The ICFG is designed to support
+data-flow analysis using PAG, but it can also be used for other types of
+analysis. The traversal mechanism provided by SATIrE (described below) makes
+it possible to use the ICFG for flow-insensitive analysis in a way that is
+similar to ROSE's AST traversals.
+
+\subsection{Structure of the ICFG}
+\label{sec:icfg_structure}
+
+The ICFG is a directed graph consisting of nodes connected by labeled edges.
+Each node contains a single statement, which can be a statement from the
+original program, a transformed version of some original program statement,
+or a new statement that does not directly correspond to a program statement,
+but rather to a program point. Statements are represented using ROSE classes
+as far as possible; statement types not occurring in ROSE are implemented by
+subclassing ROSE's \texttt{SgStatement} class (via SATIrE's
+\texttt{IcfgStmt} class).
+
+Edges model (all) possible control flow, with labels providing information
+on the type of flow: \verb|normal_edge| for regular flow; \verb|jump_edge|
+for unconditional jumps; \verb|true_edge| and \verb|false_edge| for branches
+(including loops); \verb|call_edge|, \verb|return_edge|, and
+\verb|local_edge| for function calls, returns, and for connecting call and
+return site in the caller, respectively. There are no interprocedural edges
+except for calls and returns.
+
+The following paragraphs list SATIrE's ICFG statements grouped by topic.
+
+\paragraph{Variable scopes} The ICFG represents not only variable
+declarations, but also `undeclarations' where variables go out of scope. The
+corresponding statements are \verb|DeclareStmt| and \verb|UndeclareStmt|.
+Compared to the ROSE AST, variable declarations are normalized such that
+each \verb|DeclareStmt| declares exactly one variable; any initializers are
+modeled using subsequent assignments.
+
+\paragraph{Function boundaries} Functions (also called `procedures') in the
+ICFG have explicit \verb|FunctionEntry| and \verb|FunctionExit| statements.
+All calls and returns pass through these statements.
+
+\paragraph{Function arguments} The ICFG makes argument passing explicit. It
+introduces special global variables, collectively referred to as `tmpvars',
+which behave similarly to argument registers in machine code. In particular,
+before each function call node (see below), the ICFG contains a series of
+nodes with \verb|ArgumentAssignment| statements. Each of these assigns the
+value of some argument expression to a tmpvar. Within each function, the
+entry node is followed by a sequence of \verb|ParamAssignment| statements
+that assign each argument tmpvar to the corresponding parameter variable
+inside the function.
+
+\paragraph{Function return values} Returning values from functions is
+similar to the handling of function arguments. Each \verb|return| statement
+in the original program introduces an assignment to the global return
+tmpvar. After the return from a function call, the ICFG introduces a
+\verb|ReturnAssignment| statement that assigns the tmpvar's value to another
+tmpvar specific to this call site. The original expression containing the
+function call is rewritten in the ICFG to refer to the function's return
+value through this tmpvar.
+
+\paragraph{Function calls} Calls to functions that can be resolved
+statically by the ICFG builder are represented by \verb|FunctionCall| and
+\verb|FunctionReturn| ICFG statements. From the call node, there is a
+\verb|call_edge| to the called function's entry node; that function's exit
+node is connected to the caller's return node by a \verb|return_edge|. The
+call and return nodes in the caller are also connected by a
+\verb|local_edge|. Calls that the ICFG builder cannot resolve by itself are
+modeled similarly, but using \verb|ExternalCall| and \verb|ExternalReturn|
+statements; some analyzers may be able to discover call targets and add
+appropriate edges to the ICFG (SATIrE's points-to analysis does this, see
+Section~\ref{sec:analysis_pointsto}). Constructor and destructor calls are
+modeled like normal function calls if they can be resolved; otherwise, they
+are modeled using \verb|ConstructorCall| and \verb|DestructorCall|
+statements, respectively.
+
+\paragraph{Loops and branches} All \verb|for| loops are normalized to
+\verb|while| loops with the same semantics. The point just after the loop
+exit is marked with a \verb|WhileJoin| statement; the point where the paths
+from an \verb|if| statement converge is marked with \verb|IfJoin|.
+
+\paragraph{Short-circuiting operators} The control flow related to operators
+that do not necessarily evaluate all of their arguments---the \verb|&&|,
+\verb&||&, \verb|?:| operators---must be modeled explicitly in the ICFG.
+This is done using the \verb|LogicalIf| statement. This statement is like a
+regular \verb|if| statement; the node containing it has outgoing
+\verb|true_edge| and \verb|false_edge| edges to nodes modeling evaluation of
+subexpressions as appropriate. Intermediate results are stored in tmpvars.
+
+\subsection{Accessing ICFG Information}
+\label{sec:icfg_information}
+
+The SATIrE ICFG is represented by an instance of SATIrE's \texttt{CFG}
+class. The members of this class provide a lot of information about the
+ICFG, but there is no nice public interface yet. The header file
+\verb|cfg_support.h| provides access to the definition of this class and its
+helpers.
+
+As the ICFG was implemented to support data-flow analysis using PAG, SATIrE
+provides a complete implementation of the ICFG query functions required by
+PAG and documented in Chapter~9 of the PAG manual\footnote{PAG is not
+available to the general public. You might be able to get a copy of PAG,
+or at least its manual, by asking AbsInt nicely. PAG's homepage is at
+\texttt{http://www.absint.de/pag/}.}. The \texttt{KFG} type
+required by PAG is defined to be the \verb|CFG *| pointer type.
+
+\subsection{Traversing the ICFG}
+\label{sec:icfg_traversal}
+
+SATIrE provides an ICFG traversal mechanism similar in spirit to ROSE's AST
+traversals. This traversal is an efficient way to visit all statements in
+the ICFG to perform flow-insensitive analysis. Note that statements are
+visited in no particular order; in fact, even visits to statements in
+different functions may be intermingled.
+
+The traversal mechanism is implemented in the abstract
+\texttt{IcfgTraversal} class in \verb|CFGTraversal.h|. Users must define a
+derived class and provide a definition for at least this pure virtual
+method:
+\begin{verbatim}
+    virtual void icfgVisit(SgNode *node) = 0;
+\end{verbatim}
+This method will be invoked by the traversal mechanism on each statement of
+the ICFG. Additionally, it is also invoked for each initializer expression
+provided for a global variable in the program. The ICFG traversal only
+touches the roots of initializer expressions and ICFG statements; if you
+wish to descend deeper into expressions and statements, you will need to use
+some additional mechanism (e.\,g., ROSE's AST traversals).
+
+In addition to the visit method, the following methods may also be
+overridden:
+\begin{verbatim}
+    virtual void atIcfgTraversalStart();
+    virtual void atIcfgTraversalEnd();
+\end{verbatim}
+These methods are called before the first time the visit method is called,
+and after the last time the visit method has been called, respectively. The
+default implementations do nothing.
+
+As noted above, the order in which parts of the ICFG are visited may appear
+chaotic. The traversal mechanism provides a number of member functions to
+help in finding out what is being visited. The
+\begin{verbatim}
+    bool is_icfg_statement() const;
+\end{verbatim}
+function can be called from within the visit method to determine whether the
+node being visited is a global initializer expression or a statement in the
+ICFG. When visiting ICFG statements, the following methods may also be
+called:
+\begin{verbatim}
+    int get_node_id() const;
+    int get_node_procnum() const;
+\end{verbatim}
+These provide unique numeric identifiers for the current ICFG node, and for
+the procedure the current node is part of.
+
+The traversal itself is started by calling the following method of the
+\texttt{IcfgTraversal} class on an ICFG:
+\begin{verbatim}
+    void traverse(CFG *icfg);
+\end{verbatim}
+
+\section{Termite Terms}
+\label{sec:representation_termite}
+
+This section is not here yet. But a reference to Chapter~\ref{chap:termite}
+is here.
+
+\section{SATIrE's \texttt{Program} class}
+\label{sec:satire_program}
+
+The \texttt{Program} class defined by SATIrE encapsulates the various forms
+of program representation mentioned above. \texttt{Program} enables SATIrE
+to use a single interface for all analyzers, even though internally they may
+prefer different program representations. It has public members
+corresponding to the options associated with the program, and the
+representations that have been computed for it:
+\begin{verbatim}
+    AnalyzerOptions *options;
+    SgProject *astRoot;
+    CFG *icfg;
+\end{verbatim}
+(A Termite term pointer should be added at some point.)
+
+The \texttt{options} member is initialized by \texttt{Program}'s
+constructor, which takes a mandatory \verb|AnalyzerOptions *| argument. This
+constructor typically also ensures that the ROSE AST member is initialized.
+However, the ICFG member will typically be \texttt{NULL} until it is needed;
+analyzers that run on the ICFG should check this pointer and initialize it
+using the \texttt{createICFG} function (Section~\ref{sec:program_io}) if
+necessary.
+
+\chapter{Writing Data-Flow Analyzers}
+\label{chap:data_flow}
+
+This chapter describes how to implement data-flow analyzers using PAG and
+SATIrE. In this connection, PAG is used to generate a data-flow analyzer
+from a functional specification, while SATIrE provides the program
+representation (the ICFG) the analyzer runs on, as well as a number of
+useful support functions, supporting types, and supporting analyses.
+
+\section{Implementing an Analyzer}
+\label{sec:pag_analyzer}
+
+Implementation of a new data-flow analyzer starts with initializing an
+analyzer directory using SATIrE's \texttt{newanalysis} script.
+\texttt{newanalysis} can be called with an analyzer name provided on the
+command line, in which case it will create a new directory with that name;
+otherwise, it will use the current directory as the analyzer directory. In
+any case, \texttt{newanalysis} creates a number of C++ code and header files
+as well as some additional files.
+
+\texttt{newanalysis} is also meant to create a Makefile for the analyzer.
+However, this can only be done if it knows the name of the carrier type of
+the analysis. This name can either be passed on the command line, or
+\texttt{newanalysis} attempts to find it in the \texttt{.optla} file of the
+analysis. If no \texttt{.optla} file has been written yet, the script will
+not create a Makefile; you can invoke it again later, once the
+\texttt{.optla} file is there.
+
+How to implement the analysis specification itself is covered in detail in
+the PAG manual. SATIrE supports both separate \texttt{.set} and
+\texttt{.optla} files, as well as a single \texttt{.optla} file that also
+contains all type information, as described in the PAG manual. Once (a
+rudimentary version of) the analysis specification exists, and a Makefile
+has been generated (possibly by a repeated invocation of
+\texttt{newanalysis}), simply type \verb|make|. This will call PAG to
+generate C code from the specification, compile that code and SATIrE's
+support code, and build an executable with the same name as the analyzer
+directory.
+
+This executable is your analyzer program: It takes file names and additional
+options on the command line and performs the analysis on the input programs.
+The options determine how analysis results are visualized or made permanent.
+See Appendix~\ref{appendix:command_line} on the command line flags you can
+pass to the analyzer.
+
+\section{SATIrE Support Features}
+\label{sec:support_stuff}
+
+This section lists all CFG attributes, types, and auxiliary functions
+accessible from PAG analysis specifications when using the SATIrE system.
+Declarations for all of these features are provided by SATIrE; the user need
+not repeat these declarations.
+
+\newcommand{\ttitemX}[1]{\item[\texttt{#1}]}
+\newcommand{\ttitem}[1]{\ttitemX{#1} \mbox{} \\}
+
+\subsection{Attributes}
+\label{sec:support_attributes}
+
+A CFG attribute is accessible from the analysis specification by name,
+essentially like a variable that may have different values in different
+places. See Chapter 12 of the PAG manual for details on the general concept.
+The attributes are presented in a way that is similar to the syntax used in
+the \texttt{.optla} file.
+
+
+\paragraph{\texttt{GLOBAL} Attributes}
+\begin{description}
+\ttitem{globals: *VariableSymbolNT \#}
+    A list of the global variables in the program. Types and initializers of
+    global variables can be accessed via auxiliary functions, see below.
+
+\ttitem{numtypes: unum \#}
+    The number of different data types in the program. Types are associated
+    with unique numbers that can be manipulated using auxiliary functions,
+    see below.
+
+\ttitem{numexprs: unum \#}
+    The number of lexically different expressions in the program. Each
+    expression is associated with a unique integer that can be manipulated
+    using auxiliary functions, see below.
+\end{description}
+
+\paragraph{\texttt{ROUTINE} Attributes}
+\begin{description}
+\ttitem{procnum: snum \#}
+    A unique numerical identifier for the current procedure. Procedure
+    numbers are never negative.
+\end{description}
+
+\paragraph{\texttt{BLOCK} Attributes}
+\begin{description}
+\ttitem{label: snum \#}
+    A unique numerical label for the block; as each block in SATIrE consists
+    of exactly one statement, this can also be considered a unique label for
+    each statement. Labels are never negative.
+\end{description}
+
+\paragraph{\texttt{POSITION} Attributes}
+\begin{description}
+\ttitem{position: snum \#}
+    A numerical label for what PAG calls the `position' of the analysis
+    information: The pair (procnum, position) is a unique (opaque)
+    identifier for the interprocedural analysis context at the current point
+    in the analysis.
+\end{description}
+
+\subsection{Types}
+\label{sec:support_types}
+
+SATIrE defines a number of data types that can be used in PAG analysis
+specifications. In contrast to the AST types defined in the syn file, the
+types listed here behave more like built-in PAG types. In particular, they
+can be used in the analyzer's carrier type.
+
+The following types are provided as opaque identifiers for important data:
+
+\begin{description}
+\ttitem{VariableId}
+    A unique identifier for each variable in the program. Two variables have
+    the same identifier iff they are in fact the same variable. That is,
+    variables with the same name, but in different scopes, have different
+    \texttt{VariableId}s. There are conversion functions described below
+    that convert \texttt{VariableSymbolNT}s or \texttt{VarRefExp}s to the
+    variable's \texttt{VariableId}.
+
+\ttitem{ExpressionId}
+    A unique identifier for each expression in the program. Expressions are
+    identified iff they are structurally equivalent, that is, they consist
+    of identical operators applied to identical operands. Leaf variables are
+    compared as \texttt{VariableId}s are, so two occurrences of \verb|a + b|
+    in the program text will get the same \texttt{ExpressionId} iff they
+    refer to the same variables \texttt{a} and \texttt{b}.
+
+\ttitem{TypeId}
+    A unique identifier for each type in the program. Types are identical if
+    they are the same basic type or the same class type (i.\,e., have the
+    same definition, structural equivalence does not suffice) or are derived
+    from the same basic/class type using exactly the same specifiers and
+    modifiers (pointer, \texttt{const}, etc.).
+
+\ttitem{Location}
+    An abstract `memory region' computed by points-to analysis for every
+    program variable and other expression that refers to an object in
+    memory, such as a pointer dereference, structure field access, etc. Two
+    expressions may be aliases iff they correspond to the same
+    \texttt{Location}; conversely, expressions that have different
+    \texttt{Location}s are definitely not aliases.
+
+    See Section~\ref{sec:analysis_pointsto} for more information on SATIrE's
+    points-to analysis.
+\end{description}
+
+Comparisons for equality and total ordering relations for these types are
+provided by SATIrE.
+
+\subsection{Functions}
+\label{sec:support_functions}
+
+Auxiliary functions are functions provided by the SATIrE library to support
+some common operations that would be impossible or very complicated to
+implement in FULA. The definitions for these functions are automatically
+linked against the generated analyzer. The declarations below are
+automatically included in any analyzer created with SATIrE.
+
+TODO: syn file!
+
+\begin{description}
+\ttitem{is\_unary :: Expression -> bool;}
+    test whether an Expression is a unary expression
+
+\ttitem{is\_binary :: Expression -> bool;}
+    test whether an Expression is a binary expression
+
+\ttitem{is\_value :: Expression -> bool;}
+    test whether an Expression is a value expression (a constant appearing
+    in the source code)
+
+\ttitem{unary\_get\_child :: Expression -> Expression;}
+    get the operand expression of a unary expression
+
+\ttitem{binary\_get\_left\_child :: Expression -> Expression;}
+    get left child of a binary expression
+
+\ttitem{binary\_get\_right\_child :: Expression -> Expression;}
+    get right child of a binary expression
+
+\ttitem{is\_subtype\_of :: Type, Type -> bool;}
+    test whether type1 is a subtype of type2 (in the object oriented class
+    hierarchy)
+
+\ttitem{expr\_type :: Expression -> Type;}
+    get the type of an expression
+
+\ttitem{global\_get\_type :: VariableSymbolNT -> Type;}
+    get the type of the global variable
+
+\ttitem{global\_has\_initializer :: VariableSymbolNT -> bool;}
+    test whether the global variable has an initializer expression
+
+\ttitem{global\_get\_initializer :: VariableSymbolNT -> Expression;}
+    get the initializer expression of the global variable
+
+\ttitem{varsym\_varid :: VariableSymbolNT -> VariableId;}
+    maps a variable symbol to its VariableId
+
+\ttitem{varref\_varid :: Expression -> VariableId;}
+    maps a VarRefExp to its VariableId; it is an error to call this with any
+    other subtype of Expression!
+
+\ttitem{expr\_exprid :: Expression -> ExpressionId;}
+    maps the expression to its ExpressionId
+
+\ttitem{exprid\_expr :: ExpressionId -> Expression;}
+    maps the expression identifier to the actual expression it represents
+
+\ttitem{is\_tmpvarid :: VariableId -> bool;}
+    determines whether the variable identifier refers to a temporary
+    variable introduced by SATIrE (for logical values, function return
+    values, etc.)
+
+\ttitem{varid\_str :: VariableId -> str;}
+    gives the name of the variable with the given identifier
+
+\ttitem{exprid\_str :: ExpressionId -> str;}
+    gives the string representation of the expression with the given
+    identifier
+
+\ttitem{varid\_exprid :: VariableId -> ExpressionId;}
+    maps a variable identifier to an expression identifier which denotes a
+    VarRefExp for that variable
+
+\ttitem{type\_typeid :: Type -> TypeId;}
+    convert a type to its corresponding TypeId
+
+\ttitem{typeid\_type :: TypeId -> Type;}
+    convert a type identifier to the actual type it represents
+
+\ttitem{typeid\_str :: TypeId -> str;}
+    convert a type identifier to a string representation of the type
+
+\ttitem{exprid\_typeid :: ExpressionId -> TypeId;}
+    get the type identifier for a given expression identifier
+
+\ttitem{add\_tmpvarid :: TypeId -> VariableId;}
+    creates a new, unique temporary variable of the given type; this
+    function returns different values for each call
+
+\ttitem{stmt\_asttext :: Statement -> str;}
+    returns a string representing the structure of the given statement in a
+    format very similar to PAG's pattern syntax
+
+\ttitem{expr\_asttext :: Expression -> str;}
+    returns a string representing the structure of the given expression in a
+    format very similar to PAG's pattern syntax
+
+\ttitemX{varid\_has\_location :: VariableId -> bool;}
+\ttitem{varid\_location :: VariableId -> Location;}
+    determine the abstract memory location corresponding to a variable;
+    program variables have locations, SATIrE's temporary variables do not
+
+\ttitemX{exprid\_has\_location :: ExpressionId -> bool;}
+\ttitem{exprid\_location :: ExpressionId -> Location;}
+    determine the abstract memory location corresponding to an expression,
+    this can be a simple variable reference, but also a pointer dereference
+    or other more complex expression; expressions that denote one of
+    SATIrE's temporary variables, or expressions that do not denote an
+    object in memory (an "lvalue") do not have locations
+
+\ttitem{location\_varsyms :: Location -> *VariableSymbolNT;}
+    returns the list of program variables stored in the given location
+
+\ttitem{may\_be\_aliased :: Location -> bool;}
+    determines whether the given location may be "aliased", i.e., whether
+    some other location may hold a pointer to it
+
+\ttitem{is\_ptr\_location :: Location -> bool;}
+    determines whether the given location contains a pointer to some other
+    location
+
+\ttitem{dereference :: Location -> Location;}
+    returns the pointed-to location of a given location that holds a pointer
+\end{description}
+
+\section{Access to Call Strings}
+\label{sec:call_strings}
+
+SATIrE provides access to the call strings computed by PAG during
+context-sensitive interprocedural analysis. After a PAG analysis has
+completed, context information is added to the ICFG in its \texttt{contexts}
+member. This is a container of \texttt{Context} objects as defined in
+\verb|Context.h|. Each \texttt{Context} contains the corresponding procedure
+and position identifiers as well as the call string itself: a sequence of
+calls.
+
+This feature is work in progress. In the future, it will be more powerful;
+in particular, it will provide a way to access the caller's \texttt{Context}
+from a given \texttt{Context}.
+
+The \verb|--output-call-strings| command line flag instructs SATIrE
+data-flow analyzers to print call string information. This call string
+information looks something like this (the format is not set in stone):
+\begin{verbatim}
+    my_abs/0/0: main/613  ->  my_abs
+    my_abs/0/1: main/613  ->  encode/233  ->  my_abs
+    main/16/0: <spontaneous>
+\end{verbatim}
+
+Each line represents a context and the associated call string. The line
+starts with the identifier of the context: the name of the current function,
+its number, and the number of the context within this function. The call
+string is a sequence of call sites leading to this function. Each call site
+is identified by the name of the function containing the call, and the
+identifier of the ICFG node containing the call statement. This ensures that
+call sites can be uniquely identified even in functions that contain more
+than one call to the same callee. Some contexts are identified as
+`spontaneous'; this is typically the case for functions that are not called
+from other functions in the program.
+
+\chapter{Termite: Symbolic Program Analysis and Transformation}
+\label{chap:termite}
+
+This chapter is not here yet.
+
+\appendix
+
+\chapter{Installing SATIrE}
+\label{appendix:installing}
+
+See the \texttt{README} file in the SATIrE distribution. Use the
+\texttt{--without-pag} configure flag if you wish to install SATIrE without
+PAG support.
+
+\chapter{Analyzers Provided by SATIrE}
+\label{appendix:analyzers}
+
+This appendix lists the analyzers that come with SATIrE to provide support
+for other analyzers you wish to build.
+
+\section{Points-to Analysis}
+\label{sec:analysis_pointsto}
+
+%// The basic abstraction computed by this analysis is the Location, an
+%// abstract memory region. Variables and functions (identified by their
+%// respective symbols) live in Locations. Pointers are modeled by points-to
+%// relations between Locations: each Location may have at most one "base
+%// location", which is what it may point to. In this unification-based
+%// analysis, Locations are merged when the same pointer may point to each of
+%// them; that is, if the program contains the assignment sequence
+%//      p = &a; p = &b;
+%// then p's Location will point to a Location that contains both variables a
+%// and b.
+%// Each array is treated as a single object, i.e., all members live in the
+%// same Location. It is assumed that array indexing and pointer arithmetic
+%// always stay in the same object (as required by the Standard), so these
+%// are safely ignored.
+%// In contrast, structs are treated field-sensitively: Each struct instance
+%// corresponds to a location, and each of its fields has its own location as
+%// well. Such structs are collapsed when needed (if pointer arithmetic is
+%// performed on a pointer to the structure or one of its members).
+%
+%// In principle, the heap can be modeled using the same abstractions.
+%// However, this requires function summaries for allocation functions, which
+%// are not here yet.
+%
+%    Points-to analysis must be activated using the
+%    \texttt{--run-pointsto-analysis} command line flag; otherwise, analyzers
+%    trying to access \texttt{Location}s will segfault. The analysis is a
+%    variant of Steensgaard's flow-insensitive, context-insensitive analysis.
+%    It works on C programs that are complete, i.\,e., do not call any
+%    external functions. Casting and structures are supported. Pointer
+%    arithmetic is supported as long as each pointer stays within one memory
+%    region (array).
+
+
+SATIrE comes with a flow-insensitive context-insensitive unification-based
+points-to analysis in the spirit of Steensgaard~[cite\dots]. The analysis
+computes points-to information for complete C programs, i.\,e., programs
+that do not call any external functions. The analysis supports all C
+language features, including typecasts, structures, arrays, pointer
+arithmetic, and function pointers. It does not compute alias pairs; however,
+a client analysis could in principle compute may-alias pairs from the
+points-to representation.
+
+The basic abstraction computed by the points-to analysis is the
+\texttt{Location}, an abstract memory region. Variables and functions
+(identified by their respective symbols) live in \texttt{Location}s.
+Pointers are modeled by points-to relations between \texttt{Location}s: Each
+\texttt{Location} may have at most one `base location', which is what it may
+point to. In this unification-based analysis, \texttt{Location}s are merged
+when the same pointer may point to each of them; that is, if the program
+contains the assignments
+\begin{verbatim}
+    p = &a;
+    p = &b;
+\end{verbatim}
+then \verb|p|'s \texttt{Location} will point to a \texttt{Location} that
+contains both variables \verb|a| and \verb|b|.
+
+Each array is treated as a single object, i.\,e., all members live in the
+same \texttt{Location}. It is assumed that array indexing and pointer
+arithmetic always stay in the same object (as required by the Standard), so
+these are safely ignored. In contrast, structures are treated
+field-sensitively: Each \texttt{struct} instance corresponds to a
+\texttt{Location}, and each of its fields has its own \texttt{Location} as
+well. Such structures are collapsed when needed (if pointer arithmetic is
+performed on a pointer to the structure or one of its members).
+
+Steensgaard's basic analysis is almost linear in the program size, taking
+\(O(N \alpha(N))\), where \(N\) is some reasonable measure of the program
+size and \(\alpha\) is an inverse of Ackermann's function. The SATIrE
+implementation is a little more complex because of its more sophisticated
+handling of structures. In practice, it is still very fast, however.
+
+The points-to analysis runs on the ICFG, using the traversal mechanism
+described in Section~\ref{sec:icfg_traversal}. It is most easily activated
+using the \texttt{--run-pointsto-analysis} command line flag.
+
+The \texttt{CFG} class contains a member that may be instantiated to a
+points-to analyzer object:
+\begin{verbatim}
+    SATIrE::Analyses::PointsToAnalysis *pointsToAnalysis;
+\end{verbatim}
+
+The \texttt{PointsToAnalysis} class is defined in the \verb|pointsto.h|
+header file. It implements the general analyzer interface described in
+Section~\ref{sec:analyzer_interface}. The most important methods for
+accessing points-to analysis results are:
+\begin{verbatim}
+    Location *expressionLocation(SgExpression *expr);
+    Location *symbol_location(SgSymbol *sym);
+\end{verbatim}
+for access to \texttt{Location}s for expressions or variable/function
+symbols, where two expressions/symbols may be aliases iff they are
+associated with the same \texttt{Location} pointer;
+\begin{verbatim}
+    const std::list<SgSymbol *> &location_symbols(Location *loc) const;
+\end{verbatim}
+for access to all the symbols that are associated with a given
+\texttt{Location};
+\begin{verbatim}
+    bool mayBeAliased(Location *loc) const;
+\end{verbatim}
+to find out whether there might be some pointer pointing to a given
+\texttt{Location}; and
+\begin{verbatim}
+    Location *base_location(Location *loc);
+    bool valid_location(Location *loc) const;
+\end{verbatim}
+to check what (if anything) a given \texttt{Location} may point to.
+
+While the points-to analysis works fine, there is work in progress on making
+it more precise and applicable to a wider range of programs. Precision will
+be improved by adding context-sensitive elements; it will be possible to use
+the analysis even for incomplete programs by providing summaries for
+external functions. Using such summaries for allocation functions, the
+latter will also allow analysis of points-to relationships on the heap.
+
+\section{Loop Bounds Analysis}
+\label{sec:analysis_loopbounds}
+
+\section{Coherence Analysis}
+\label{sec:analysis_coherence}
+
+\chapter{SATIrE Analyzer Command Line Flags}
+\label{appendix:command_line}
+
+SATIrE analyzers take a number of command line flags, arbitrarily
+intermingled with input file names. The following flags are known:
+{\scriptsize
+\begin{verbatim}
+  Frond End options:
+   --language=c++|c99|c89   select input language [default=c++]
+   --frontend-warnings      show Front End warnings when parsing file(s)
+   --no-frontend-warnings   do not show Front End warnings when parsing
+                            file(s) [default]
+   -I<path>                 specify path for include files
+   --input-binary-ast=<FILENAME> read AST from binary file instead of a
+                            source file
+
+ Analysis options:
+   --callstringlength=<num> set callstring length to <num> [default=0]
+   --callstringinfinite     select infinite callstring (for non-recursive
+                            programs only)
+   --cfgordering=<num>      set ordering that is used by the iteration
+                            algorithm where
+                                  <num> = 1 : dfs preorder [default]
+                                          2 : bfs preorder
+                                          3 : reversed dfs postorder
+                                          4 : bfs postorder
+                                          5 : topsort scc dfs preorder
+                                          6 : topsort scc bfs preorder
+                                          7 : topsort scc reversed bfs
+                                              dfs postorder
+                                          8 : topsort scc bfs postorder
+   --check-ast              run all ROSE tests for checking
+                            whether ROSE-AST is correct
+   --no-check-ast           do not run ROSE AST tests
+   --check-icfg             run PAG's ICFG consistency checks
+   --no-check-icfg          do not run ICFG checks
+   --analysis-files=all|cl  analyse all source files or only those
+                            specified on the command line (cl)
+   --analysis-annotation    annotate analysis results in AST and output
+   --no-analysis-annotation do not annotate analysis results in AST
+   --number-expressions     number expressions and types in the ICFG
+   --no-number-expressions  do not number expressions and types in the ICFG
+   --pag-memsize-mb=<num>   allocate <num> MB of memory for PAG analysis
+   --pag-memsize-perc=<num> allocate <num>% of system memory (autodetected)
+   --pag-memsize-grow=<num> grow memory if less than <num>% are free after GC
+   --run-pointsto-analysis  run a points-to analysis on the ICFG
+   --resolve-funcptr-calls  resolve indirect calls using pointer analysis
+   --compute-call-strings   asdfasf
+
+ Output options:
+   --statistics             output analyzer statistics on stdout
+   --no-statistics          do not show analyzer statistics on stdout
+   --verbose                output analyzer info on stdout
+   --no-verbose             do not print analyzer info on stdout
+   --output-text            print analysis results for each statement
+   --output-collectedfuncs  print all functions that are collected for
+                            the icfg generation
+   --output-source=<FILENAME> generate source file with annotated
+                            analysis results for each statement
+   --output-term=<FILENAME> generate Prolog term representation of input
+                            program AST
+   --output-icfg=<FILENAME> output icfg of input program
+   --output-binary-ast=<FILENAME> write AST to binary file
+   --output-call-strings    experimental: print call strings used by PAG
+   --no-output-call-strings do not attempt to output call strings
+   --warn-deprecated        warn about the use of deprecated features
+   --no-warn-deprecated     do not warn about the use of deprecated features
+   --help                   print this help message on stdout
+   --help-rose              print the ROSE help message on stdout
+
+ Multiple input/output files options:
+   --output-sourceprefix=<PREFIX> generate for each input file one output file
+                            with prefixed name
+
+ GDL output options:
+   --gdl-preinfo            output analysis info before cfg nodes
+   --no-gdl-preinfo         do not output analysis info before cfg nodes
+   --gdl-postinfo           output analysis info after cfg nodes
+   --no-gdl-postinfo        do not output analysis info after cfg nodes
+   --gdl-nodeformat=FORMAT  where FORMAT=varid|varname|exprid|exprsource
+                                        |asttext|no-varid|no-varname
+                                        |no-exprid|no-exprsource|no-asttext
+                            the format can be specified multiple times to
+                            have different formats printed at the same node
+                            The output is only affected if VariableId
+                            and/or ExpressionId is used in the carrier type
+   --output-gdl=<FILENAME>  output program as gdl graph
+   --output-gdlanim=<DIRNAME> output animation gdl files in
+                            directory <dirname>
+
+ Default options:           --language=c++ --no-gdl-preinfo --gdl-postinfo
+                            --callstringlength=0 --cfg-ordering=1
+                            --no-check-ast --no-check-icfg
+                            --number-expressions --pag-memsize-mb=5
+                            --pag-memsize-grow=30 --no-statistics
+                            --analysis-files=all --analyis-annotation
+                            --verbose --compute-call-strings
+                            --no-output-call-strings --warn-deprecated
+                            --gdl-nodeformat=no-asttext
+                            --gdl-nodeformat=no-varid --gdl-nodeformat=varname
+                            --gdl-nodeformat=no-exprid
+                            --gdl-nodeformat=exprsource
+\end{verbatim}
+}
+
+\end{document}
