@@ -1,3 +1,74 @@
+2009-02-25 18:51  matzke
+
+	* [r4654] /trunk/ROSE/scripts/rosegit/bin/rosegit-ats,
+	  /trunk/ROSE/scripts/rosegit/bin/rosegit-configure,
+	  /trunk/ROSE/scripts/rosegit/bin/rosegit-env,
+	  /trunk/ROSE/scripts/rosegit/bin/rosegit-functions.sh,
+	  /trunk/ROSE/scripts/rosegit/config/rat.trunk.conf: rosegit
+	  scripts minor changes
+	  
+	  * The rosegit-configure script does a better job of trying to
+	  determine
+	  if "build" needs to be run.
+	  
+	  * rosegit-env bugfix for updating $PS1 prompt
+	  
+	  * The rosegit_run function changes the Xterm window title
+	  
+	  * Narrowed header for e-mail message
+	  
+	  * Fixed printing of configuration-related env vars
+	  
+	  * Fixed typo in LD_LIBRARY_PATH
+	  
+	  * Turned off START e-mail for rat.trunk
+	  
+	  * --branch and --commit can be used together
+
+2009-02-25 18:51  matzke
+
+	* [r4653] /trunk/ROSE/developersScratchSpace/Robb/Makefile.am:
+	  Fixed makefile in Robb's scratch space
+
+2009-02-25 18:51  matzke
+
+	* [r4652] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/developersScratchSpace/Robb/extras,
+	  /trunk/ROSE/developersScratchSpace/Robb/extras/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Robb/extras/README: Added
+	  extras directory to Robb's scratch space
+
+2009-02-25 18:51  matzke
+
+	* [r4651] /trunk/ROSE/scripts/rosegit/bin/quick-test,
+	  /trunk/ROSE/scripts/rosegit/bin/rosegit-env,
+	  /trunk/ROSE/scripts/rosegit/bin/rosegit-functions.sh: rosegit
+	  scripts changed; added --config switch
+
+2009-02-25 18:50  matzke
+
+	* [r4650] /trunk/ROSE/config/Makefile.for.ROSE.includes.and.libs,
+	  /trunk/ROSE/configure.in,
+	  /trunk/ROSE/projects/BinaryConstantPropagation/Makefile.am,
+	  /trunk/ROSE/projects/BinaryConstantPropagation/findConstants.C,
+	  /trunk/ROSE/projects/BinaryConstantPropagation/findConstants.h,
+	  /trunk/ROSE/projects/BinaryConstantPropagation/flowEquations.h,
+	  /trunk/ROSE/projects/Makefile.am,
+	  /trunk/ROSE/src/midend/binaryAnalyses/instructionSemantics/findConstants.h,
+	  /trunk/ROSE/src/midend/binaryAnalyses/instructionSemantics/flowEquations.h:
+	  Moved binary constant propagation into ROSE src
+
+2009-02-25 18:50  matzke
+
+	* [r4649] /trunk/ROSE/projects/assemblyToSourceAst/Makefile.am,
+	  /trunk/ROSE/projects/assemblyToSourceAst/semanticsModule.h,
+	  /trunk/ROSE/projects/assemblyToSourceAst/x86InstructionSemantics.h,
+	  /trunk/ROSE/src/midend/binaryAnalyses/Makefile.am,
+	  /trunk/ROSE/src/midend/binaryAnalyses/instructionSemantics,
+	  /trunk/ROSE/src/midend/binaryAnalyses/instructionSemantics/semanticsModule.h,
+	  /trunk/ROSE/src/midend/binaryAnalyses/instructionSemantics/x86InstructionSemantics.h:
+	  Moved x86 instruction semantics into ROSE src
+
 2009-02-25 00:45  liao6
 
 	* [r4640]
