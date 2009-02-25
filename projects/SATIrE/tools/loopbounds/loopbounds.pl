@@ -1,4 +1,4 @@
-#!/usr/local/mstools/bin/pl -q  -O  -L64M -G64M -t main -f 
+#!/usr/bin/pl -q  -O  -L64M -G64M -t main -f 
 % -*- prolog -*-
 
 %-----------------------------------------------------------------------
@@ -15,10 +15,10 @@
 %
 % References
 %
-% [1] A. Prantl, J. Knoop, M. Schordan and M. Triska Constraint
-%     solving for high-level WCET analysis The 18th Workshop on
-%     Logic-based methods in Programming Environments
-%     (WLPE 2008) Udine, Italy, December 12, 2008.
+% [1] A. Prantl, J. Knoop, M. Schordan and M. Triska.
+%     Constraint solving for high-level WCET analysis.
+%     The 18th Workshop on Logic-based methods in Programming
+%     Environments (WLPE 2008). Udine, Italy, December 12, 2008.
 %
 %
 % Authors
@@ -39,19 +39,23 @@
 % GNU General Public License for more details.
 %
 %-----------------------------------------------------------------------
-:- prolog_load_context(directory, Dir),
-   atom_concat(Dir, '/lib', LibDir),
-   asserta(library_directory(LibDir)).
+:- prolog_load_context(directory, CurDir),
+   asserta(library_directory(CurDir)),
+   getenv('TERMITE_LIB', TermitePath),
+   ( atom(TermitePath)
+   ; writeln('**ERROR: Please set then environment variable $TERMITE_LIB')
+   ),
+   asserta(library_directory(TermitePath)).
 
 :- use_module(library(ast_transform)),
    use_module(library(ast_properties)),
+   use_module(library(loops)),
    use_module(library(types)),
    use_module(library(utils)),
    use_module(while2for),
    use_module(library(assoc)),
    use_module(library(apply_macros)),
    use_module(library(swi/pce_profile)).
-:- guitracer.
 
 %-----------------------------------------------------------------------
 % merge_info/3
@@ -60,7 +64,7 @@
 % FIXME: Rewrite this more efficiently using assoc
 %
 
-merge_info(equiv(_,Var), _, _) :- var(Var), trace, fail.
+merge_info(equiv(_,Var), _, _) :- var(Var), gtrace, fail.
 
 merge_info(Info, [X|Xs], Merged) :-
   merge_info(Info, X, M1),
@@ -74,7 +78,7 @@ merge_info([equiv(Var,_)|Xs], equiv(Var,Term), Merged) :-
   append([equiv(Var,Term)], Xs, Merged), !.
 merge_info([X|Xs], Info, [X|Ms]) :-
   merge_info(Xs, Info, Ms), !.
-merge_info(A, B, C) :- write('ERROR: merge_info '), writeln(A), writeln(B),writeln(C),nl,trace.
+merge_info(A, B, C) :- write('ERROR: merge_info '), writeln(A), writeln(B),writeln(C),nl,gtrace.
 
 interval_of(AI-_, Var, Interval) :-
   term_interval(AI, Var, Interval).
@@ -82,14 +86,14 @@ interval_of(AI-_, Var, Interval) :-
 interval_of(_-Info, Var, Interval) :-
   (   memberchk(has(Var,Interval), Info)
   ;
-      %write('WARNING: Could not analyze interval_of('), unparse(Var), writeln(')'),
+      %write('INFO: Could not analyze interval_of('), unparse(Var), writeln(')'),
       fail
   ), !.
 
 equiv_with(Info, Var, Val) :-
   (   memberchk(equiv(Var,Val), Info)
   ;
-      %write('WARNING: Could not eval equiv_with('), unparse(Var), writeln(')'),
+      %write('INFO: Could not eval equiv_with('), unparse(Var), writeln(')'),
       fail
   ), !.
 
@@ -357,7 +361,7 @@ is_real_for_loop(for_statement(ForInit,
 		 Info, Ai, Body, IterationVar,
 		 interval(Min, Max),
 		 Step) :-
-  %unparse(for_statement(ForInit,ForTest,ForStep,[], _, _, _)),nl,trace,
+  %unparse(for_statement(ForInit,ForTest,ForStep,[], _, _, _)),nl,gtrace,
   (isSimpleForInit(ForInit, IterationVar, B1v)
   -> (
       term_interval(Ai, B1v, B1),
@@ -378,7 +382,7 @@ is_real_for_loop(for_statement(ForInit,
     %unparse(B1v), write('->'), unparse(B1), nl,
     %writeln(B2v),
     %unparse(B2v), write('->'), unparse(B2), nl,
-%trace,
+%gtrace,
   % Assure we only have one induction variable
   isBinOpLhs(TestOp, I2),   var_stripped(I2, IterationVar),
   simplify(ForStep, SimpleForStep),
@@ -561,7 +565,7 @@ main :-
     close(rstrm), 
     compound(Input),
 
-    %profile(annot(Input, Output)),trace,
+    %profile(annot(Input, Output)),gtrace,
     annot(Input, Output),
    
     % Write output file

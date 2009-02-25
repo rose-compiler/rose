@@ -79,6 +79,11 @@ testdir=installcheck-executable-examples
 TESTS_WITH_PAG = sl1rd sl2rd nnh99_shape srw98_shape pointsto_live_variables testsuite interval
 TESTS_WITHOUT_PAG = termite
 
+if WITH_SWI_PROLOG
+TESTS_WITH_PAG += loopbounds
+endif
+
+
 .PHONY: tests $(TESTS_WITH_PAG) $(TESTS_WITHOUT_PAG)
 
 installcheck-local: 
@@ -110,6 +115,10 @@ init.token:
 %.termite: %.c
 	@echo "TERMITE: performing a translation circle of" $<
 	cp $< $(testdir)/TEST0.c
+# the freshly copied TEST0.c has the permissions of the original file, which
+# is read-only in distcheck mode
+	chmod u+w $(testdir)/TEST0.c
+
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term TEST0.c  TEST1.pl
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST1.pl TEST2.c
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term TEST2.c  TEST3.pl
@@ -118,13 +127,11 @@ init.token:
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST1.pl TEST2.c
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term --strip-headers TEST2.c TEST3.pl
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST3.pl TEST4.c
-# the freshly copied TEST0.c has the permissions of the original file, which
-# is read-only in distcheck mode
-	chmod u+w $(testdir)/TEST0.c
 
 %.termite: %.C
 	@echo "TERMITE: performing a translation circle of" $<
 	cp $< $(testdir)/TEST0.C
+	chmod u+w $(testdir)/TEST0.C
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term TEST0.C  TEST1.pl
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST1.pl TEST2.C
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term TEST2.C  TEST3.pl
@@ -133,10 +140,6 @@ init.token:
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST1.pl TEST2.C
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term --strip-headers TEST2.C TEST3.pl
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST3.pl TEST4.C
-# the freshly copied TEST0.c has the permissions of the original file, which
-# is read-only in distcheck mode
-	chmod u+w $(testdir)/TEST0.c
-
 
 termite: init.token
 	@echo
@@ -206,6 +209,20 @@ interval: init.token
 	$(MAKE) check -C $(testdir)/interval
 	cd $(testdir) ; sh testsuite/testsuite.sh interval/interval testsuite
 
+%.loop.term: %.c
+	@echo "Analyzing loops in" $<
+	@cp $< $(testdir)/loopbounds/looptest.c
+	@chmod u+w $(testdir)/loopbounds/looptest.c
+# still work in progress... cd $(testdir)/loopbounds ; sh lb.sh looptest.c
+
+loopbounds: interval
+	@echo
+	@echo "Testing loopbounds"
+	@echo "====================="
+	cp -ur $(top_srcdir)/tools/loopbounds $(testdir)
+	chmod u+rwx -R $(testdir)/loopbounds
+	$(MAKE) -j1 $(patsubst %.c,%.loop.term,$(wildcard $(top_srcdir)/examples/*/tests/*.c))
+
 testsuite: init.token
 	@echo
 	@echo "Testsuite..."
@@ -216,7 +233,7 @@ testsuite: init.token
 
 	cp -ur $(top_srcdir)/examples/constprop $(testdir)
 	chmod u+rwx -R $(testdir)/constprop
-	##GB working around possible problems with old constprop.set files
+##      GB working around possible problems with old constprop.set files
 	@if [ -e $(testdir)/constprop/constprop.set ] ; then \
 		echo "info: $(top_srcdir)/examples/constprop/constprop.set no longer in CVS, ignoring your local copy" ; \
 		rm -f $(testdir)/constprop/constprop.set ; \

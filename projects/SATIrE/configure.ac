@@ -208,6 +208,7 @@ src/Makefile
 examples/Makefile
 tools/Makefile
 tools/icfgbuilder/Makefile
+tools/loopbounds/Makefile
 ])
 
 

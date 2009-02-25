@@ -74,8 +74,10 @@ nobase_include_HEADERS = \
 if WITH_SWI_PROLOG
   INCLUDES += -I$(SWI_PROLOG_INCLUDE_DIR) 
   AM_LDFLAGS += $(SWI_PROLOG_LDADD)
-
-else
+  nobase_dist_data_DATA =  termite/ast_properties.pl  termite/loops.pl \
+			   termite/ast_transform.pl   termite/utils.pl \
+		           termite/ast_walk.pl
+else	
   CLEANFILES += termparser.c++ termparser.h termlexer.c++ termparser.tab.c++ \
 	        termparser.tab.h++
   BUILT_SOURCES = termparser.tab.c++ termparser.tab.h++ \

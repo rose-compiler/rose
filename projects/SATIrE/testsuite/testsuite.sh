@@ -36,9 +36,10 @@ succs_ok=0
 fail_errors=""
 succ_errors=""
 
-STATSFILE=runtests.stats
-TMPFILE=runtests.tmp
-DATFILE=runtests.dat
+RAND=`date +%N` # necessary for -j
+STATSFILE=runtests-$RAND.stats
+TMPFILE=runtests-$RAND.tmp
+DATFILE=runtests-$RAND.dat
 
 printf "outfile\ttime\_rose\_frontend\tEDG-AST-construction\tROSE-AST-construction\tAST-post-processing\tAST-comment-processing\tICFG-construction\tExpr-numbering\tICFG-checks\tPAG-analysis\tresult\ttime\_sys\ttime\_user\ttime\_wall\ttime\_pag\_run\ttime\_pag\_init\ttime\_pag\_iter\ttime\_pag\_gc\tPAG-analysis\tSATIrE-ICFG\tROSE-AST\ttotal_memory\tanalysis\toptions\tfile\n" \
     > $DATFILE
