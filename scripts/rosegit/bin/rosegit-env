@@ -36,6 +36,10 @@
 #    --srcdir=DIR
 #         Use the specified directory as the top of the source tree rather than what's in $ROSE_SRC or guessing.
 #
+#    --config=CONF
+#         The name of a configuration file that is the last one to be loaded, or the name of a directory containing the
+#         configuration files. This is ignored if the configuration appears to be loaded already.
+#
 # Your current working directory should be somewhere in the rose build tree.
 #
 # A quick, easy way to see your configuration settings and directory names is to run:
@@ -46,10 +50,12 @@ mydir=${0%/*}
 source $mydir/rosegit-functions.sh || exit 1
 
 # Parse command-line arguments
+config=
 while [ "$#" -gt 0 ]; do
     case "$1" in
 	--) shift; break;;
-	--blddir=$) ROSE_BLD="${1##--blddir=}"; shift;;
+	--blddir=*) ROSE_BLD="${1##--blddir=}"; shift;;
+	--config=*) config="${1##--config=}"; shift;;
 	--srcdir=*) ROSE_SRC="${1##--srcdir=}"; shift;;
 	-*) rosegit_die "unknown switch: $1";;
 	*) break;;
@@ -57,7 +63,7 @@ while [ "$#" -gt 0 ]; do
 done
 
 # Find build and source trees and load configurations
-rosegit_tester_preamble
+rosegit_tester_preamble $config
 
 # Run the subordinate command. If there is none then run bash instead.
 if [ "$#" -eq 0 ]; then

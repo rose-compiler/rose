@@ -13,11 +13,15 @@ mydir=${0%/*}
 source $mydir/rosegit-functions.sh || exit 1
 rosegit_tester_preamble
 
-[ -f $ROSE_SRC/configure ] ||\
+# Run "build" if there's no configure file or there's a Makefile.am that's newer than configure
+if [ ! -f $ROSE_SRC/configure ] || [ $(find $ROSE_SRC -name Makefile.am -newer $ROSE_SRC/configure |wc -l) -gt 0 ]; then
     rosegit_run "build" "(cd $ROSE_SRC && ./build)" || exit 1
+fi
 
-[ -f $ROSE_BLD/Makefile ] || [ $ROSE_BLD/Makefile -nt $ROSE_SRC/configure ] ||\
+# Run "configure" if there's no Makefile or if configure is newer than the Makefile
+if [ ! -f $ROSE_BLD/Makefile ] || [ $ROSE_BLD/configure -nt $ROSE_BLD/Makefile ]; then
     rosegit_run "configure" "(cd $ROSE_BLD && $ROSEGIT_CONFIGURE)" || exit 1
+fi
 
 rosegit_run "make (src)"               rosegit_make -C $ROSE_BLD/src || exit 1
 rosegit_run "make (compass)"           rosegit_make -C $ROSE_BLD/projects/compass || exit 1

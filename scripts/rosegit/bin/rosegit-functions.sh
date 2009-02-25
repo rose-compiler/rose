@@ -366,12 +366,13 @@ rosegit_tester () {
 # called by a user it loads configuration files just like rosegit-ats would have done, and it can be called from any directory
 # of the build tree.
 rosegit_tester_preamble () {
+    local config="$1";      # optional configuration file or directory
     if [ ! -n "$ROSEGIT_LOADED" ]; then
 	local blddir=$ROSE_BLD; [ -n "$blddir" ] || blddir=$(rosegit_find_builddir)
 	local srcdir=$ROSE_SRC; [ -n "$srcdir" ] || srcdir=$(rosegit_find_sources $blddir)
 	[ -d "$srcdir" ] || rosegit_die "could not find source directory"
 	local branch=$(cd $srcdir && git branch |sed -n '/^\*/s/^\* //p')
-	rosegit_load_config $srcdir $(rosegit_namespace) $branch $srcdir/scripts/rosegit/config
+	rosegit_load_config $srcdir $(rosegit_namespace) $branch $config
     fi
 
     rosegit_environment
