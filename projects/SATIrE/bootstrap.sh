@@ -8,7 +8,7 @@ then
     exit 1
 fi
 
-JOBS=-j4 # 4 parallel compiler jobs
+JOBS=-j8 # 8 parallel compiler jobs
 
 autoreconf -i && \
   ./configure --prefix=$1 --with-rosedir=/usr/local/mstools/rose --with-pagdir=/usr/local/mstools/pag --with-boostdir=/usr/local/mstools/boost CXXFLAGS="-O2 -ggdb -Werror" CXX=g++-4.2.0 && \
