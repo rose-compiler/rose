@@ -197,6 +197,7 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/midend/binaryAnalyses \
      -I$(top_srcdir)/src/midend/binaryAnalyses/graph \
      -I$(top_srcdir)/src/midend/binaryAnalyses/dataflowanalyses \
+     -I$(top_srcdir)/src/midend/binaryAnalyses/instructionSemantics \
      -I$(top_srcdir)/src/midend/astUtil/astSupport \
      -I$(top_srcdir)/src/midend/astUtil/astInterface \
      -I$(top_srcdir)/src/midend/astUtil/symbolicVal \
