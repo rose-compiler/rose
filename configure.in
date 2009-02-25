@@ -1297,6 +1297,7 @@ developersScratchSpace/Dan/MicrosoftWindows_tests/Makefile
 developersScratchSpace/Dan/QRose_tests/Makefile
 developersScratchSpace/Dan/libraryIdentification_tests/Makefile
 developersScratchSpace/Robb/Makefile
+developersScratchSpace/Robb/extras/Makefile
 developersScratchSpace/Robb/BinaryTools/Makefile
 developersScratchSpace/Robb/DynamicLinking/Makefile
 ])
