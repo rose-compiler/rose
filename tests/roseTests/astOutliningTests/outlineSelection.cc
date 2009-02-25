@@ -146,7 +146,8 @@ main (int argc, char* argv[])
   {
     size_t count = 0;
     string outfinal_prefix;
-    if (opts.preproc_only_)
+    if(Outliner::preproc_only_) // Liao, 2/24/2009, we moved this into Outliner::commandLineProcessing()
+    //if (opts.preproc_only_)
     {
       cerr << "[Running outliner's preprocessing phase only...]" << endl;
       count = preprocessSelection (proj, opts);
