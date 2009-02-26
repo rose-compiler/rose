@@ -5213,6 +5213,185 @@ class FindUsedAndAllLabelsVisitor: public AstSimpleProcessing {
     cond->set_parent(loopStmt);
   }
 
+//! Normalize a for loop, part of migrating Qing's loop handling into SageInterface
+// NormalizeCPP.C  NormalizeLoopTraverse::ProcessLoop()
+//bool SageInterface::forLoopNormalization(SgForStatement* loop)
+//{
+//  bool result=false;
+//  ROSE_ASSERT(loop != NULL);
+//  // Must only have one initialization statement
+//  SgStatementPtrList &init = loop ->get_init_stmt();
+//  if (init.size !=1)
+//    return false;
+//
+//  return result;
+//}
+
+//! A helper function to strip off possible type casting operations for an expression
+// usually useful when compare two expressions to see if they actually refer to the same variable
+static SgExpression* SkipCasting (SgExpression* exp)
+{
+  SgCastExp* cast_exp = isSgCastExp(exp);
+   if (cast_exp != NULL)
+   {
+      SgExpression* operand = cast_exp->get_operand();
+      assert(operand != 0);
+      return SkipCasting(operand);
+   }
+  else      
+    return exp;
+}
+
+//! Based on AstInterface::IsFortranLoop() and ASTtools::getLoopIndexVar()
+//TODO check the loop index is not being written in the loop body
+bool SageInterface::isCanonicalForLoop(SgNode* loop,SgInitializedName** ivar/*=NULL*/, SgExpression** lb/*=NULL*/, SgExpression** ub/*=NULL*/, SgExpression** step/*=NULL*/, SgStatement** body/*=NULL*/)
+{
+  ROSE_ASSERT(loop != NULL);
+  SgForStatement* fs = isSgForStatement(loop);
+  if (fs == NULL)
+    return false;
+  // 1. Check initialization statement is something like i=xx;
+  SgStatementPtrList & init = fs->get_init_stmt();
+  if (init.size() !=1)
+    return false;
+  SgStatement* init1 = init.front();
+  SgExpression* ivarast=NULL, *lbast=NULL, *ubast=NULL, *stepast=NULL;
+  SgInitializedName* ivarname=NULL;  
+
+  bool isCase1=false, isCase2=false;
+  //consider C99 style: for (int i=0;...)
+  if (isSgVariableDeclaration(init1))
+   {
+     SgVariableDeclaration* decl = isSgVariableDeclaration(init1);
+     ivarname = decl->get_variables().front();
+     ROSE_ASSERT(ivarname != NULL);
+     SgInitializer * initor = ivarname->get_initializer(); 
+     if (isSgAssignInitializer(initor))
+     {
+       lbast = isSgAssignInitializer(initor)->get_operand();
+       isCase1 = true;
+     }
+   }// other regular case: for (i=0;..)
+   else if (isAssignmentStatement(init1, &ivarast, &lbast))
+   { 
+     SgVarRefExp* var = isSgVarRefExp(SkipCasting(ivarast));
+     if (var)
+     {
+       ivarname = var->get_symbol()->get_declaration();
+       isCase2 = true;
+     }
+   }
+   // Cannot be both true
+   ROSE_ASSERT(!(isCase1&&isCase2));
+   // if not either case is true
+    if (!(isCase1||isCase2))
+      return false;
+
+  //Check loop index's type
+  if (!isStrictIntegerType(ivarname->get_type()))
+    return false;
+
+  //2. Check test expression i [<=, >=, <, > ,!=] bound 
+  SgBinaryOp* test = isSgBinaryOp(fs->get_test_expr());
+  if (test == NULL)
+    return false;
+  switch (test->variantT()) {
+    case V_SgLessOrEqualOp:
+    case V_SgLessThanOp:
+    case V_SgGreaterOrEqualOp:
+    case V_SgGreaterThanOp:
+    case V_SgNotEqualOp: // Do we really want to allow this != operator ?
+      break;
+    default:  
+      return false;
+  }
+  // check the tested variable is the same as the loop index
+  SgVarRefExp* testvar = isSgVarRefExp(SkipCasting(test->get_lhs_operand())); 
+  if (testvar == NULL)
+    return false;
+  if (testvar->get_symbol() != ivarname->get_symbol_from_symbol_table ())  
+    return false;
+  //grab the upper bound
+  ubast = test->get_rhs_operand();
+
+  //3. Check the increment expression
+  SgExpression* incr = fs->get_increment();
+  SgVarRefExp* incr_var = NULL;
+  switch (incr->variantT()) {
+    case V_SgPlusAssignOp: //+=
+    case V_SgMinusAssignOp://-=
+      incr_var = isSgVarRefExp(SkipCasting(isSgBinaryOp(incr)->get_lhs_operand()));
+      stepast = isSgBinaryOp(incr)->get_rhs_operand();
+      break;
+    case V_SgPlusPlusOp:   //++
+    case V_SgMinusMinusOp:  //--
+      incr_var = isSgVarRefExp(SkipCasting(isSgUnaryOp(incr)->get_operand()));
+      stepast = buildIntVal(1); // will this dangling SgNode cause any problem?
+      break;
+    default:
+      return false;
+  }
+  if (incr_var == NULL) 
+    return false;
+  if (incr_var->get_symbol() != ivarname->get_symbol_from_symbol_table ())
+    return false;
+
+  // return loop information if requested
+  if (ivar != NULL)
+    *ivar = ivarname;
+  if (lb != NULL)
+    *lb = lbast;
+  if (ub != NULL)
+    *ub = ubast;
+  if (step != NULL)
+    *step = stepast;
+  if (body != NULL) {
+    *body = fs->get_loop_body();
+  }
+  return true;
+}
+
+
+//! Check if a SgNode _s is an assignment statement (any of =,+=,-=,&=,/=, ^=, etc)
+//!
+//! Return the left hand, right hand expressions and if the left hand variable is also being read. This code is from AstInterface::IsAssignment()
+bool SageInterface::isAssignmentStatement(SgNode* s, SgExpression** lhs/*=NULL*/, SgExpression** rhs/*=NULL*/, bool* readlhs/*=NULL*/)
+{
+  SgExprStatement *n = isSgExprStatement(s);
+  SgExpression *exp = (n != 0)? n->get_expression() : isSgExpression(s);
+  if (exp != 0) {
+    switch (exp->variantT()) {
+      case V_SgPlusAssignOp:
+      case V_SgMinusAssignOp:
+      case V_SgAndAssignOp:
+      case V_SgIorAssignOp:
+      case V_SgMultAssignOp:
+      case V_SgDivAssignOp:
+      case V_SgModAssignOp:
+      case V_SgXorAssignOp:
+      case V_SgAssignOp:
+        {
+          SgBinaryOp* s2 = isSgBinaryOp(exp);
+          if (lhs != 0)
+            *lhs = s2->get_lhs_operand();
+          if (rhs != 0) {
+            SgExpression* init = s2->get_rhs_operand();
+            if ( init->variantT() == V_SgAssignInitializer) 
+              init = isSgAssignInitializer(init)->get_operand();
+            *rhs = init;
+          }
+          if (readlhs != 0)
+            *readlhs = (exp->variantT() != V_SgAssignOp);
+          return true;
+        }
+      default: 
+         return false;
+    }
+  }
+  return false;
+}
+
+
   void SageInterface::removeConsecutiveLabels(SgNode* top) {
    Rose_STL_Container<SgNode*> gotos = NodeQuery::querySubTree(top,V_SgGotoStatement);
    for (size_t i = 0; i < gotos.size(); ++i) {
