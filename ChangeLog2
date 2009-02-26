@@ -1,3 +1,38 @@
+2009-02-26 04:54  saebjornsen1
+
+	* [r4657] /trunk/ROSE/config/ax_lib_sqlite3.m4,
+	  /trunk/ROSE/configure.in, /trunk/ROSE/projects/MacroRewrapper,
+	  /trunk/ROSE/projects/MacroRewrapper/argumentFilterer.C,
+	  /trunk/ROSE/projects/MacroRewrapper/argumentFilterer.h,
+	  /trunk/ROSE/projects/MacroRewrapper/macdb,
+	  /trunk/ROSE/projects/MacroRewrapper/macdb/access-macros.cpp,
+	  /trunk/ROSE/projects/MacroRewrapper/macdb/access-macros.d,
+	  /trunk/ROSE/projects/MacroRewrapper/macdb/macro.h,
+	  /trunk/ROSE/projects/MacroRewrapper/macdb/out2html.d,
+	  /trunk/ROSE/projects/MacroRewrapper/macdb/out2html.h,
+	  /trunk/ROSE/projects/MacroRewrapper/macdb/outputInconsistencies.cpp,
+	  /trunk/ROSE/projects/MacroRewrapper/macdb/outputInconsistencies.d,
+	  /trunk/ROSE/projects/MacroRewrapper/macroRewrapper.C,
+	  /trunk/ROSE/projects/MacroRewrapper/macroRewrapper.h,
+	  /trunk/ROSE/projects/MacroRewrapper/macroRewrapperTest.C,
+	  /trunk/ROSE/projects/MacroRewrapper/main.C,
+	  /trunk/ROSE/projects/MacroRewrapper/matchTokenStreamToAST.C,
+	  /trunk/ROSE/projects/MacroRewrapper/testFindSmallestStmt.C,
+	  /trunk/ROSE/projects/MacroRewrapper/testLinearization.C,
+	  /trunk/ROSE/projects/MacroRewrapper/testMapping.C,
+	  /trunk/ROSE/projects/Makefile.am,
+	  /trunk/ROSE/projects/compass/src/compassSupport/compassMain.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testCpreprocessorOption/Makefile.am,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testCpreprocessorOption/doChooseMe,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testCpreprocessorOption/doChooseMe/dummyHeader.h,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testCpreprocessorOption/doNotChooseMe,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testCpreprocessorOption/doNotChooseMe/dummyHeader.h,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testCpreprocessorOption/testIncludeOptionOrder.c:
+	  Fixed three bugs in ROSE. 1) bug in system include handling 2)
+	  bug in configure file 3) missing handling of gcc -MF option. Also
+	  added Macro Rewrapper.
+
 2009-02-25 18:51  matzke
 
 	* [r4654] /trunk/ROSE/scripts/rosegit/bin/rosegit-ats,
