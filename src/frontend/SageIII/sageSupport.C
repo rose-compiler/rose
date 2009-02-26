@@ -553,6 +553,23 @@ SgProject::processCommandLine(const vector<string>& input_argv)
      vector<string> argv = get_originalCommandLineArgumentList();
      ROSE_ASSERT(argv.size() > 0);
 
+     //AS (2/22/08): GCC looks for system headers in '-I' first. We need to support this. 
+//     for (unsigned int i = argv.size()-1; i >= 0; i--)
+     for (unsigned int i = 0; i < argv.size(); i++)
+
+        {
+       // find the source code filenames and modify them to be the output filenames
+          unsigned int length = argv[i].size();
+       // look only for -I include directories (directories where #include<filename> will be found)
+          if ( (length > 2) && (argv[i][0] == '-') && (argv[i][1] == 'I') )
+             {
+            // AS Changed source code to support absolute paths
+               std::string includeDirectorySpecifier =  argv[i].substr(2);
+               includeDirectorySpecifier = StringUtility::getAbsolutePathFromRelativePath(includeDirectorySpecifier );
+               p_preincludeDirectoryList.insert(p_preincludeDirectoryList.begin(),includeDirectorySpecifier);
+             }
+
+        } 
   // DQ (12/22/2008): This should only be called once (outside of the loop over all command line arguments!
   // DQ (12/8/2007): This leverages existing support in commandline processing
   // printf ("In SgProject::processCommandLine(): Calling CommandlineProcessing::generateSourceFilenames(argv) \n");
@@ -3801,6 +3818,9 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
 
        // DQ (9/30/2008): Added support for java class specification required for Fortran use of OFP.
           argument == "--class" ||
+          //AS(02/20/08):  When used with -M or -MM, -MF specifies a file to write 
+          //the dependencies to. Need to tell ROSE to ignore that output paramater
+          argument == "-MF" ||
           false)
         {
           result = true;

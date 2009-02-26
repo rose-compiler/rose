@@ -55,13 +55,12 @@ AC_DEFUN([AX_LIB_SQLITE3],
             ac_sqlite3_path="$withval"
         fi
         ],
-        [WANT_SQLITE3="yes"]
+        [WANT_SQLITE3="no"]
     )
 
     SQLITE3_CFLAGS=""
     SQLITE3_LDFLAGS=""
     SQLITE3_VERSION=""
-
     if test "x$WANT_SQLITE3" = "xyes"; then
 
         ac_sqlite3_header="sqlite3.h"

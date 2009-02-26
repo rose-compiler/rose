@@ -1145,6 +1145,7 @@ projects/bugSeeding/Makefile
 projects/bugSeeding/bugSeeding.tex
 projects/UpcTranslation/Makefile
 projects/UpcTranslation/tests/Makefile
+projects/MacroRewrapper/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile

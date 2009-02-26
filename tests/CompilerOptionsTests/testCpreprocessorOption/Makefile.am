@@ -30,6 +30,12 @@ TEST_Objects = ${TESTCODES:.C=.o}
 
 TEST_TRANSLATOR = $(top_builddir)/tests/testTranslator $(ROSE_FLAGS)
 
+
+testIncludeOptionOrder: testIncludeOptionOrder.c
+	$(CC) -isystem $(srcdir)/doNotChooseMe -I$(srcdir)/doChooseMe -c $(srcdir)/testIncludeOptionOrder.c > testIncludeOptionOrder.out
+	$(TEST_TRANSLATOR) -isystem $(srcdir)/doNotChooseMe -I$(srcdir)/doChooseMe -c $(srcdir)/testIncludeOptionOrder.c > testIncludeOptionOrder.out
+
+
 # This rule is run after automake's internal check rule (which we don't want to use)
 check-local:
 	@echo "##############################"
@@ -37,6 +43,7 @@ check-local:
 	@echo "     a standard compiler option which runs the \"C\" preprocessor (cpp) and pipes output to stdout"
 	@echo "##############################"
 	@$(MAKE) $(TEST_Objects)
+	@$(MAKE) testIncludeOptionOrder
 	@echo "********************************************************************************************************************"
 	@echo "****** ROSE/tests/CompilerOptionTests/testCpreprocessorOption: make check rule complete (terminated normally) ******"
 	@echo "********************************************************************************************************************"
@@ -52,11 +59,13 @@ EXTRA_DIST = \
    lazyarray.h optimization.h A++_notemplates.h config.h descriptor_notemplates.h \
    inline_support.h lazy_statement.h machine.h partitioning.h A++_templates.h constants.h \
    descriptor_templates.h index.h lazy_aggregate.h lazy_task.h max_array_dim.h where.h \
-   expression_templates.h inline_expression_templates.h $(TESTCODES)
+   expression_templates.h inline_expression_templates.h $(TESTCODES) doNotChooseMe doChooseMe \
+   doNotChooseMe/dummyHeader.h doChooseMe/dummyHeader.h testIncludeOptionOrder.c
 
 clean-local:
 	rm -f *.o rose_*.C *.sage.C test2001_??.C.show outputFile *.out.C \
-              *.C.pdf *.C.edg.pdf *.pdf *.int.C rose_directives_list.txt core
+              *.C.pdf *.C.edg.pdf *.pdf *.int.C rose_directives_list.txt core testIncludeOptionOrder.out \
+              rose_testIncludeOptionOrder.c
 	rm -rf ti_files
 
 

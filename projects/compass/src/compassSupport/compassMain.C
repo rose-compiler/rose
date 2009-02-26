@@ -5,6 +5,15 @@
 #include "rose.h"
 #include "compass.h"
 
+//Header file for the stat struct and fstat function
+//to determine last file modification time
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+#include <boost/lexical_cast.hpp>
+
 #ifdef USE_QROSE
 // This is part of incomplete GUI interface for Compass using QRose from Imperial.
 
@@ -70,6 +79,90 @@ int main(int argc, char** argv)
   // to the ROSE frontend to make use with Compass more appropriate.
   // SgProject* project = frontend(argc,argv);
      SgProject* project = frontend(commandLineArray);
+
+
+#ifdef HAVE_SQLITE3
+
+     std::vector<bool> was_modified;
+
+     //Determine if any file has been modified since the last run. If so, rerun
+     //the compass checkers. The first run will always run the compass checkers.
+     for (int i = 0; i < project->numberOfFiles(); ++i)
+     {
+       // In each file find all declarations in global scope
+       SgSourceFile* sageFile = isSgSourceFile(project->get_fileList()[i]);
+       std::string filename   = sageFile->getFileName();
+
+       struct stat file_info;
+       
+       if ( stat(filename.c_str(), &file_info) != 0 )
+         {
+           std::cerr << "Error: Can not determine last modification time of file " << filename 
+                     << std::endl;
+       }else{
+
+         std::string last_modified = boost::lexical_cast<std::string>(file_info.st_mtime);
+         try {
+
+           /* Read in from database here */
+           sqlite3x::sqlite3_command cmd(Compass::con, "SELECT last_modified from file_last_modified where filename=\""+filename+ "\"" );
+
+           sqlite3x::sqlite3_reader r = cmd.executereader();
+
+
+           while (r.read()) {
+             std::string last_modified_in_db = r.getstring(0);
+             was_modified.push_back( (last_modified_in_db == last_modified) ? false : true );
+
+           }
+
+         } catch (std::exception& e) {std::cerr << "Exception: " << e.what() << std::endl;}
+
+         //Update last modified time in database
+         try{
+           sqlite3x::sqlite3_command cmd(Compass::con,"DELETE from file_last_modified where filename=\""+filename+ "\"");
+           cmd.executenonquery();
+         } catch (std::exception& e) {std::cerr << "Exception: " << e.what() << std::endl;}
+
+         try{
+           sqlite3x::sqlite3_command cmd(Compass::con,"INSERT into file_last_modified(filename, last_modified) VALUES(?,?)");
+           cmd.bind(1,filename);
+           cmd.bind(2,last_modified);
+
+           cmd.executenonquery();
+         } catch (std::exception& e) {std::cerr << "Exception: " << e.what() << std::endl;}
+
+                  
+       };
+
+
+     }
+
+     //Continue processign iff at least one file was modified
+     if( ( find(was_modified.begin(), was_modified.end(), true) != was_modified.end() )
+         ||  (was_modified.size() == 0) )
+     {
+       //Delete violation entries that correspond to this file
+       for (int i = 0; i < project->numberOfFiles(); ++i)
+       {
+         // In each file find all declarations in global scope
+         SgSourceFile* sageFile = isSgSourceFile(project->get_fileList()[i]);
+         std::string filename   = sageFile->getFileName();
+         try{
+           sqlite3x::sqlite3_command cmd(Compass::con,"DELETE from violations where filename=\""+filename+ "\"");
+           cmd.executenonquery();
+         } catch (std::exception& e) {std::cerr << "Exception: " << e.what() << std::endl;}
+
+
+       }
+       //continue processing
+     }else
+       exit(0);
+
+
+
+
+#endif
 
 
 #if 0
