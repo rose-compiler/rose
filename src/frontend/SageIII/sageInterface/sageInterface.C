@@ -5213,20 +5213,6 @@ class FindUsedAndAllLabelsVisitor: public AstSimpleProcessing {
     cond->set_parent(loopStmt);
   }
 
-//! Normalize a for loop, part of migrating Qing's loop handling into SageInterface
-// NormalizeCPP.C  NormalizeLoopTraverse::ProcessLoop()
-//bool SageInterface::forLoopNormalization(SgForStatement* loop)
-//{
-//  bool result=false;
-//  ROSE_ASSERT(loop != NULL);
-//  // Must only have one initialization statement
-//  SgStatementPtrList &init = loop ->get_init_stmt();
-//  if (init.size !=1)
-//    return false;
-//
-//  return result;
-//}
-
 //! A helper function to strip off possible type casting operations for an expression
 // usually useful when compare two expressions to see if they actually refer to the same variable
 static SgExpression* SkipCasting (SgExpression* exp)
@@ -5240,6 +5226,91 @@ static SgExpression* SkipCasting (SgExpression* exp)
    }
   else      
     return exp;
+}
+
+//! Normalize a for loop, part of migrating Qing's loop handling into SageInterface
+// Her loop translation does not pass AST consistency tests so we rewrite some of them here
+// NormalizeCPP.C  NormalizeLoopTraverse::ProcessLoop()
+bool SageInterface::forLoopNormalization(SgForStatement* loop)
+{
+  ROSE_ASSERT(loop != NULL);
+  // Must only have one initialization statement
+  // Only roughly check here, isCanonicalForLoop() should be called to have a stricter check
+  SgStatementPtrList &init = loop ->get_init_stmt();
+  if (init.size() !=1)
+    return false;
+
+  // Normalized the test expressions
+  SgExpression* test = loop->get_test_expr();
+  SgExpression* testlhs=NULL, * testrhs=NULL;
+  if (isSgBinaryOp(test))
+  {
+    testlhs = isSgBinaryOp(test)->get_lhs_operand();
+    testrhs = isSgBinaryOp(test)->get_rhs_operand();
+    ROSE_ASSERT(testlhs && testrhs);
+  }
+  else
+    return false;
+  // keep the variable since test will be removed later on
+  SgVarRefExp* testlhs_var = isSgVarRefExp(SkipCasting(testlhs));
+  if (testlhs_var == NULL )
+    return false;
+  SgVariableSymbol * var_symbol = testlhs_var->get_symbol();
+   if (var_symbol==NULL)
+    return false;
+
+  switch (test->variantT()) {
+    case V_SgLessThanOp:  // i<x is normalized to i<= (x-1)
+      replaceExpression(test, buildLessOrEqualOp(deepCopy(testlhs),
+            buildSubtractOp(deepCopy(testrhs), buildIntVal(1))));
+      // deepDelete(test);// replaceExpression() does this already by default.
+      break;
+    case V_SgGreaterThanOp: // i>x is normalized to i>= (x+1)
+      replaceExpression( test, buildGreaterOrEqualOp(deepCopy(testlhs),
+            buildAddOp(deepCopy(testrhs), buildIntVal(1))));
+      break;
+    case V_SgLessOrEqualOp:
+    case V_SgGreaterOrEqualOp:
+    case V_SgNotEqualOp: //TODO Do we want to allow this?
+      break;
+    default:
+      return false;
+  }
+  // Normalize the increment expression
+  SgExpression* incr = loop->get_increment();
+  ROSE_ASSERT(incr != NULL);
+  switch (incr->variantT()) {
+    case V_SgPlusPlusOp: //i++ is normalized to i+=1
+     {
+      // check if the variables match
+      SgVarRefExp* incr_var = isSgVarRefExp(SkipCasting(isSgPlusPlusOp(incr)->get_operand())); 
+      if (incr_var == NULL) return false;
+      if ( incr_var->get_symbol() != var_symbol) 
+       return false; 
+      replaceExpression(incr,
+         buildPlusAssignOp(isSgExpression(deepCopy(incr_var)),buildIntVal(1)));
+      break;
+    }
+    case V_SgMinusMinusOp: //i-- is normalized to i+=-1
+    {
+       // check if the variables match
+      SgVarRefExp* incr_var = isSgVarRefExp(SkipCasting(isSgMinusMinusOp(incr)->get_operand())); 
+      if (incr_var == NULL) return false;
+      if ( incr_var->get_symbol() != var_symbol) 
+       return false; 
+      replaceExpression(incr,
+          buildPlusAssignOp(isSgExpression(deepCopy(incr_var)), buildIntVal(-1)));
+      break;
+    } 
+    case V_SgAssignOp:
+    case V_SgPlusAssignOp:
+    case V_SgMinusAssignOp:
+      break;
+    default:
+      return false;
+  }
+
+  return true;
 }
 
 //! Based on AstInterface::IsFortranLoop() and ASTtools::getLoopIndexVar()

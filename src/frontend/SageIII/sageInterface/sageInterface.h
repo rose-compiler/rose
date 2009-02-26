@@ -686,10 +686,19 @@ void setLoopCondition(SgScopeStatement* loop, SgStatement* cond);
 
 //! Check if a for-loop has a canonical form, return loop index, bounds, step, and body if requested
 //!
-//! A canonical form is defined as : one initialization statement, a test expression, and an increment expression 
+//! A canonical form is defined as : one initialization statement, a test expression, and an increment expression , loop index variable should be of an integer type.
 bool isCanonicalForLoop(SgNode* loop, SgInitializedName** ivar=NULL, SgExpression** lb=NULL, SgExpression** ub=NULL, SgExpression** step=NULL, SgStatement** body=NULL);
-//! Normalize a for loop
-//bool forLoopNormalization(SgForStatement* loop);
+
+//! Normalize a for loop, return true if successful
+//!
+//! Translations are 
+//!    * test expression:
+//!           i<x is normalized to i<= (x-1)
+//!           i>x is normalized to i>= (x+1)
+//!    * increment expression:
+//!           i++ is normalized to i+=1
+//!           i-- is normalized to i+=-1
+bool forLoopNormalization(SgForStatement* loop);
 
 //@}
 
