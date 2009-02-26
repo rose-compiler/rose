@@ -1,4 +1,4 @@
-all:
+all: satire_manual.pdf
 	$(MAKE) -C cfgconstruction
 	$(MAKE) -C pig-doc
 	$(MAKE) -C pag-interface
@@ -9,8 +9,14 @@ all:
 	$(MAKE) clean -C pig-doc
 	$(MAKE) clean -C pag-interface
 
+.PHONY: satire_manual.pdf
+satire_manual.pdf:
+	$(MAKE) -C manual
+	cp manual/satire_manual.pdf .
+
 clean:
 	$(MAKE) clean -C cfgconstruction
 	$(MAKE) clean -C pig-doc
 	$(MAKE) clean -C pag-interface
-	rm -f cfgconstruction.pdf pig-doc.pdf pag-interface.pdf
+	$(MAKE) clean -C manual
+	rm -f cfgconstruction.pdf pig-doc.pdf pag-interface.pdf satire_manual.pdf

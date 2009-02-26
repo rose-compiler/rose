@@ -7,8 +7,6 @@
 
 \input{manual_vars}
 
-\def\version{foo}
-
 \title{SATIrE Manual}
 \author{}
 
@@ -617,8 +615,6 @@ implement in FULA. The definitions for these functions are automatically
 linked against the generated analyzer. The declarations below are
 automatically included in any analyzer created with SATIrE.
 
-TODO: syn file!
-
 \begin{description}
 \ttitem{is\_unary :: Expression -> bool;}
     test whether an Expression is a unary expression
@@ -735,6 +731,12 @@ TODO: syn file!
 \ttitem{dereference :: Location -> Location;}
     returns the pointed-to location of a given location that holds a pointer
 \end{description}
+
+\section{Abstract Syntax of SATIrE ICFG Statements}
+
+The tree grammar describing the abstract syntax of the statements in the
+ICFG is defined in the \texttt{syn} file in the SATIrE distribution. This is
+the file PAG uses to generate its pattern matching code.
 
 \section{Access to Call Strings}
 \label{sec:call_strings}

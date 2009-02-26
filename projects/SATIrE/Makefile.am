@@ -1,5 +1,9 @@
 ## Process this file with automake to create Makefile.in.
 
+.PHONY: docs
+docs:
+	$(MAKE) SATIRE_VERSION=$(VERSION) satire_manual.pdf -C docs
+
 SUBDIRS= src tools examples
 DISTCHECK_CONFIGURE_FLAGS=--with-rosedir=$(ROSEDIR) --with-boostdir=$(BOOSTDIR) CXX=$(CXX)
 
@@ -12,7 +16,6 @@ endif
 EXTRA_DIST= README LICENSE ChangeLog KNOWN_BUGS BugLog \
         docs/satire_cfgconstruction.pdf \
 	docs/satire_overview.pdf \
-        docs/ \
 	docs/satire_attributes_auxiliary_functions \
 	\
 	testsuite/testsuite.sh \
