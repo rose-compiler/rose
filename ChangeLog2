@@ -1,3 +1,14 @@
+2009-02-26 17:32  liao6
+
+	* [r4660]
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface_type.C,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/canonicalLoop.C,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/inputcanonicalLoop.C:
+	  Added new SageInterface function: isCanonicalForLoop() etc.
+
 2009-02-26 04:54  saebjornsen1
 
 	* [r4657] /trunk/ROSE/config/ax_lib_sqlite3.m4,
