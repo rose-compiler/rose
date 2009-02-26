@@ -17,7 +17,7 @@ noinst_PROGRAMS = \
     buildCpreprocessorDefineDeclaration instrumentEndOfFunction \
     isUpcSharedType isUpcPhaseLessSharedType buildLabelStatement \
     buildSizeOfOp abiStuffTest abiStuffTestUPC buildNullStatement \
-    buildForStmt
+    buildForStmt canonicalLoop
 
 # list of test SAGE AST builders 
 buildFunctionDeclaration_SOURCES = buildFunctionDeclaration.C
@@ -45,6 +45,7 @@ abiStuffTest_SOURCES             = abiStuffTest.C
 abiStuffTestUPC_SOURCES          = abiStuffTestUPC.C
 buildNullStatement_SOURCES       = buildNullStatement.C
 buildForStmt_SOURCES             = buildForStmt.C
+canonicalLoop_SOURCES            = canonicalLoop.C
 
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
@@ -79,7 +80,8 @@ generatedCodeExamples = \
   abiStuffTestDone \
   rose_inputAbiStuffTestUPC.upc \
   rose_inputbuildNullStatement.C \
-  rose_inputbuildForStmt.C
+  rose_inputbuildForStmt.C \
+  rose_inputcanonicalLoop.C
 
 # turn off edg warnings such as "variable x declared but never referenced" for test input files
 TEST_CXXFLAGS = -rose:verbose 0 --edg:no_warnings -g3
@@ -144,6 +146,9 @@ rose_inputbuildNullStatement.C:buildNullStatement
 rose_inputbuildForStmt.C:buildForStmt
 	./buildForStmt$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildForStmt.C
 
+rose_inputcanonicalLoop.C:canonicalLoop
+	./canonicalLoop$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputcanonicalLoop.C
+
 # MUST keep this up-to-date!!
 EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDeclaration.C \
        inputbuildAssignmentStmt.C inputbuildFunctionCalls.C inputbuildFunctionCalls.h \
@@ -153,7 +158,7 @@ EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDecla
        inputbuildCpreprocessorDefineDeclaration.C inputinstrumentEndOfFunction.C \
        inputisUpcSharedType.upc inputisUpcPhaseLessSharedType.upc inputbuildLabelStatement.C \
        inputbuildSizeOfOp.C inputAbiStuffTest.c inputAbiStuffTestUPC.upc \
-       inputbuildNullStatement.C inputbuildForStmt.C
+       inputbuildNullStatement.C inputbuildForStmt.C inputcanonicalLoop.C
 
 check-local:
 	@echo "Test for ROSE SAGE Interfaces."

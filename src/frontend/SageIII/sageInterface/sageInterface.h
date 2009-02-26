@@ -397,6 +397,11 @@ class StatementGenerator {
   virtual SgStatement* generate(SgExpression* where_to_write_answer) = 0;
 };
 
+//! Check if a SgNode _s is an assignment statement (any of =,+=,-=,&=,/=, ^=, etc)
+//!
+//! Return the left hand, right hand expressions and if the left hand variable is also being read
+  bool isAssignmentStatement(SgNode* _s, SgExpression** lhs=NULL, SgExpression** rhs=NULL, bool* readlhs=NULL);
+
 
 //@}
 
@@ -423,7 +428,6 @@ class StatementGenerator {
   bool is_mixed_Fortran_and_C_language ();
   bool is_mixed_Fortran_and_Cxx_language ();
   bool is_mixed_Fortran_and_C_and_Cxx_language ();
-  
 //@}
 
 //------------------------------------------------------------------------
@@ -532,6 +536,11 @@ PreprocessingInfo* attachComment(SgLocatedNode* target, const std::string & cont
 //! Get the right bool type according to C or C++ language input
 SgType* getBoolType(SgNode* n);
 
+
+//! Check if a type is an integral type, only allowing signed/unsigned short, int, long, long long.
+////!
+////! There is another similar function named SgType::isIntegerType(), which allows additional types char, wchar, and bool to be treated as integer types
+bool isStrictIntegerType(SgType* t);
 //!Get the data type of the first initialized name of a declaration statement
 SgType* getFirstVarType(SgVariableDeclaration* decl);
 
@@ -571,6 +580,11 @@ bool isRestrictType(SgType* t);
 /*! We define the following SgType as scalar types: char, short, int, long , void, Wchar, Float, double, long long, string, bool, complex, imaginary
  */
 bool isScalarType(SgType* t);
+
+//! Check if a type is an integral type, only allowing signed/unsigned short, int, long, long long. 
+//!
+//! There is another similar function named SgType::isIntegerType(), which allows additional types char, wchar, and bool.
+bool isStrictIntegerType(SgType* t);
 
 //! Check if a type is a struct type (a special SgClassType in ROSE) 
 bool isStructType(SgType* t);
@@ -657,16 +671,25 @@ void addStepToLoopBody(SgScopeStatement* loopStmt, SgStatement* step);
 void moveForStatementIncrementIntoBody(SgForStatement* f);
 void convertForToWhile(SgForStatement* f);
 void convertAllForsToWhiles(SgNode* top);
-//! change continue statements in a given block of code to gotos to a label
+//! Change continue statements in a given block of code to gotos to a label
 void changeContinuesToGotos(SgStatement* stmt, SgLabelStatement* label);
  
 //! Routines to get and set the body of a loop
 SgStatement* getLoopBody(SgScopeStatement* loop);
 void setLoopBody(SgScopeStatement* loop, SgStatement* body);
 
-//! Routines to get and set the condition of a loop
+//! Routines to get the condition of a loop. It recognize While-loop, For-loop, and Do-While-loop 
 SgStatement* getLoopCondition(SgScopeStatement* loop);
+
+//! Set the condition statement of a loop, including While-loop, For-loop, and Do-While-loop. 
 void setLoopCondition(SgScopeStatement* loop, SgStatement* cond);
+
+//! Check if a for-loop has a canonical form, return loop index, bounds, step, and body if requested
+//!
+//! A canonical form is defined as : one initialization statement, a test expression, and an increment expression 
+bool isCanonicalForLoop(SgNode* loop, SgInitializedName** ivar=NULL, SgExpression** lb=NULL, SgExpression** ub=NULL, SgExpression** step=NULL, SgStatement** body=NULL);
+//! Normalize a for loop
+//bool forLoopNormalization(SgForStatement* loop);
 
 //@}
 
