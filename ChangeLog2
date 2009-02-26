@@ -1,3 +1,18 @@
+2009-02-26 21:53  saebjornsen1
+
+	* [r4663] /trunk/ROSE/projects/MacroRewrapper/Makefile.am: Added
+	  missing Makefile.am
+
+2009-02-26 21:40  liao6
+
+	* [r4662]
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.h,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/inputloopNormalization.C,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/loopNormalization.C:
+	  Added a new SageInterface function: forLoopNormalization()
+
 2009-02-26 17:32  liao6
 
 	* [r4660]
