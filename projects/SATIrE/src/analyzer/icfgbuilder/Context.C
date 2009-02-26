@@ -77,31 +77,25 @@ Context::toString() const
     else
     {
         CallString::const_iterator i = callstring.begin();
-        CallString::const_iterator j = i + 1;
-        while (j != callstring.end())
+        CallString::const_iterator prev = i;
+        while (i != callstring.end())
         {
             str << i->callerName << "/" << i->node_id << "  ->  ";
-            if (i->target_procnum != j->procnum)
+            if (prev != i && prev->target_procnum != i->procnum)
             {
                 std::cerr
                     << "*** SATIrE callstring internal consistency error: "
-                    << i->procnum << "->" << i->target_procnum << " / "
-                    << j->procnum << "->" << j->target_procnum << std::endl;
+                    << prev->procnum << "->" << prev->target_procnum << " / "
+                    << i->procnum << "->" << i->target_procnum << std::endl;
                 std::abort();
             }
-
-            i = j;
-            ++j;
+            prev = i;
+            ++i;
         }
-        if (i == callstring.begin())
-        {
-         // The call string contains exactly one call; print that one...
-            str << i->callerName << "/" << i->node_id << "  ->  ";
-        }
-     // When we get here, j == callstring.end(); thus, i is the last
+     // When we get here, i == callstring.end(); thus, prev is the last
      // CallSite in the callstring (note that we ensured above that the
      // callstring is non-empty). The last procedure is printed specially.
-        str << i->targetName;
+        str << prev->targetName;
     }
 
     return str.str();
