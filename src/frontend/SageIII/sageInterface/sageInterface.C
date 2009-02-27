@@ -6,6 +6,14 @@
 // Liao 1/24/2008 : need access to scope stack sometimes
 #include "sageBuilder.h"
 
+// For reusing some code from Qing's loop optimizer
+// Liao, 2/26/2009
+#include "AstInterface_ROSE.h"
+#include "LoopTransformInterface.h"
+#include "DepInfoAnal.h" // for AnalyzeStmtRefs()
+#include "ArrayAnnot.h"
+#include "ArrayInterface.h"
+
 #include <sstream>
 #include <iostream>
 
@@ -33,6 +41,7 @@ string getVariantName ( VariantT v )
      extern const char* roseGlobalVariantNameList[];
      return string(roseGlobalVariantNameList[v]);
    }
+
 
 
 SgNamespaceDefinitionStatement*
@@ -7063,3 +7072,145 @@ void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, Statem
    ROSE_ASSERT(mainInt);
    return mainInt;
  }
+
+//! Variable references can be introduced by SgVarRef, SgPntrArrRefExp, SgInitializedName, SgMemberFunctionRef etc. This function will convert them all to SgInitializedName.
+static SgInitializedName* convertRefToInitializedName(SgNode* current)
+{
+  SgInitializedName* name = NULL;
+  ROSE_ASSERT(current != NULL);
+  if (isSgInitializedName(current))
+  {
+    name = isSgInitializedName(current);   } else if (isSgPntrArrRefExp(current))
+    {
+      bool suc=false;
+      suc= SageInterface::isArrayReference(isSgExpression(current),&name);
+      ROSE_ASSERT(suc = true);
+    } else if (isSgVarRefExp(current))
+    {
+      name = isSgVarRefExp(current)->get_symbol()->get_declaration();
+    }
+  else
+  { //TODO consult  AstInterface::IsVarRef() for more cases
+    cerr<<"In convertRefToInitializedName(): unhandled reference type:"<<current->class_name()<<endl;
+    ROSE_ASSERT(false);
+  }
+  return name;
+}
+
+//! Collect all read and write references within stmt, which can be a function, a scope statement, or a single statement. Note that a reference can be both read and written, like i++
+//! This is a wrapper function to Qing's side effect analysis from loop optimization
+//! Liao, 2/26/2009
+bool
+SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& readRefs, std::vector<SgNode*>& writeRefs)
+{   // The type cannot be SgExpression since variable declarations have SgInitializedName as the reference, not SgVarRefExp.
+  ROSE_ASSERT(stmt !=NULL);
+
+  // We should allow accumulate the effects for multiple statements
+  // ROSE_ASSERT(readRefs.size() == 0);
+  // ROSE_ASSERT(writeRefs.size() == 0);
+
+  // convert a request for a defining function declaration to its function body
+  SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(stmt);
+  if (funcDecl != NULL)
+  {
+    funcDecl= isSgFunctionDeclaration(funcDecl->get_definingDeclaration ());
+    if (funcDecl == NULL)
+    {
+      cerr<<"In collectReadWriteRefs(): cannot proceed without a function body!"<<endl;
+    }
+    stmt = funcDecl->get_definition()->get_body();
+  }
+
+  // get function level information
+  SgFunctionDefinition* funcDef = SageInterface::getEnclosingFunctionDefinition(stmt);
+  ROSE_ASSERT(funcDef != NULL);
+  SgBasicBlock* funcBody = funcDef->get_body();
+  ROSE_ASSERT(funcBody!= NULL);
+
+  // prepare Loop transformation environment
+  AstInterfaceImpl faImpl(funcBody);
+  AstInterface fa(&faImpl);
+  ArrayAnnotation* annot = ArrayAnnotation::get_inst();
+  ArrayInterface array_interface (*annot);
+  array_interface.initialize(fa, AstNodePtrImpl(funcDef));
+  array_interface.observe(fa);
+  LoopTransformInterface * lpTrans = new LoopTransformInterface(fa, array_interface);
+
+  // variables to store results
+  DoublyLinkedListWrap<AstNodePtr> rRef1, wRef1;
+  CollectDoublyLinkedList<AstNodePtr> crRef1(rRef1),cwRef1(wRef1);
+  AstNodePtr s1 = AstNodePtrImpl(stmt);
+
+  // Actual side effect analysis
+  if (!AnalyzeStmtRefs(*lpTrans, s1, cwRef1, crRef1))
+  {
+    cerr<<"error in side effect analysis!"<<endl;
+    return false;
+  }
+
+  // transfer results into STL containers.
+  for (DoublyLinkedEntryWrap<AstNodePtr>* p = rRef1.First(); p != 0; )
+  {
+    DoublyLinkedEntryWrap<AstNodePtr>* p1 = p;
+    p = rRef1.Next(p);
+    AstNodePtr cur = p1->GetEntry();
+    SgNode* sgRef = AstNodePtrImpl(cur).get_ptr();
+   ROSE_ASSERT(sgRef != NULL);
+    readRefs.push_back(sgRef);
+    //cout<<"read reference:"<<sgRef->unparseToString()<<" address "<<sgRef<<
+    //    " sage type:"<< sgRef->class_name()<< endl;
+  }
+
+  for (DoublyLinkedEntryWrap<AstNodePtr>* p = wRef1.First(); p != 0; )
+  {
+    DoublyLinkedEntryWrap<AstNodePtr>* p1 = p;
+    p = wRef1.Next(p);
+    AstNodePtr cur = p1->GetEntry();
+    SgNode* sgRef = AstNodePtrImpl(cur).get_ptr();
+    ROSE_ASSERT(sgRef != NULL);
+    writeRefs.push_back(sgRef);
+  //  cout<<"write reference:"<<sgRef->unparseToString()<<" address "<<sgRef<<
+  //      " sage type:"<< sgRef->class_name()<< endl;
+  }
+  return true;
+}
+
+//!Collect unique variables which are read or written within a statement. Note that a variable can be both read and written. The statement can be either of a function, a scope, or a single line statement.
+bool SageInterface::collectReadWriteVariables(SgStatement* stmt, vector<SgInitializedName*>& readVars, vector<SgInitializedName*>& writeVars)
+{
+  ROSE_ASSERT(stmt != NULL);
+  vector <SgNode* > readRefs, writeRefs;
+  if (!collectReadWriteRefs(stmt, readRefs, writeRefs))
+    return false;
+  // process read references
+  vector<SgNode*>::iterator iter = readRefs.begin();
+  for (; iter!=readRefs.end();iter++)
+  {
+    SgNode* current = *iter;
+    SgInitializedName* name = convertRefToInitializedName(current);
+   // Only insert unique ones
+    vector <SgInitializedName*>::iterator iter2 = find (readVars.begin(), readVars.end(), name);
+    if (iter2==readVars.end())
+    {
+      readVars.push_back(name);
+    //  cout<<"inserting read SgInitializedName:"<<name->unparseToString()<<endl;
+    }
+  }
+  // process write references
+  vector<SgNode*>::iterator iterw = writeRefs.begin();
+  for (; iterw!=writeRefs.end();iterw++)
+  {
+    SgNode* current = *iterw;
+    SgInitializedName* name = convertRefToInitializedName(current);
+   // Only insert unique ones
+    vector <SgInitializedName*>::iterator iter2 = find (writeVars.begin(), writeVars.end(), name);
+    if (iter2==writeVars.end())
+    {
+      writeVars.push_back(name);
+     // cout<<"inserting written SgInitializedName:"<<name->unparseToString()<<endl;
+    }
+  }
+  return true;
+}
+
+
