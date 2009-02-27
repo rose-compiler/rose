@@ -400,6 +400,11 @@ else
 fi
 
 
+# TP (2-27-2009) -- support for RTED
+ROSE_SUPPORT_RTED
+
+AM_CONDITIONAL(ROSE_USE_RTED,test ! "$with_rted" = no)
+
 # TP SUPPORT FOR OPENGL
 AC_PATH_X dnl We need to do this by hand for some reason
 MDL_HAVE_OPENGL
@@ -1119,6 +1124,7 @@ projects/DatalogAnalysis/tests/Makefile
 projects/DistributedMemoryAnalysisCompass/Makefile
 projects/DocumentationGenerator/Makefile
 projects/runtimeErrorCheck/Makefile
+projects/RTED/Makefile
 projects/C_to_Promela/Makefile
 projects/OpenMP_Translator/Makefile
 projects/OpenMP_Translator/includes/Makefile

@@ -18,7 +18,8 @@ using namespace __gnu_cxx;
 
 // Constructor
 BinQbatch::BinQbatch(std::string fA, std::string fB, std::vector<std::string> dllAA, 
-		     std::vector<std::string> dllBB, bool t, std::string save) { 
+		     std::vector<std::string> dllBB, bool t, 
+		     std::string save) { 
   window=0;
   saveAST=save;
   fileNameA=fA;
@@ -45,6 +46,7 @@ BinQbatch::BinQbatch(std::string fA, std::string fB, std::vector<std::string> dl
     createGUI();
   cerr << "Initialization done." <<endl;
   if (test) {
+    // only run for single tests
     testAnalyses(preanalyses);
     testAnalyses(analyses);
   }

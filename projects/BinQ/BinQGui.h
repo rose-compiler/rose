@@ -90,6 +90,11 @@ class BinQGUI : public BinQAbstract
     void updateByteItemList();
     void insertSectionInformation(SgAsmElfSection* sec,std::string filename);
     void insertFileInformation();
+
+    // testing several analyses at once
+    std::map<std::string, int> getTestAnalysisResults();
+    double getTestAnalysisTime();
+
   protected:
     // used for testing
     void testAnalyses(std::vector<BinAnalyses*>& analysesVec);

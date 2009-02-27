@@ -25,11 +25,15 @@ std::string BinControlFlowAnalysis::getDescription() {
 
 void
 BinControlFlowAnalysis::run(SgNode* fileA, SgNode* fileB) {
-  BinQGUI *instance = QROSE::cbData<BinQGUI *>();
+  instance=NULL;
+  if (!testFlag)
+    instance = QROSE::cbData<BinQGUI *>();
   if (isSgProject(fileA)==NULL) {
     cerr << "This is not a valid file for this analysis!" << endl;
-    QString res = QString("This is not a valid file for this analysis");
-    instance->analysisResult->append(res);  
+    if (!testFlag) {
+      QString res = QString("This is not a valid file for this analysis");
+      instance->analysisResult->append(res);  
+    }
     return;
   }
 
@@ -43,11 +47,13 @@ BinControlFlowAnalysis::run(SgNode* fileA, SgNode* fileB) {
 
 
   // control flow analysis  *******************************************************
+  if (!testFlag) {
   ROSE_ASSERT(instance);
   ROSE_ASSERT(instance->analysisTab);
   instance->analysisTab->setCurrentIndex(1);
   QString res = QString("Creating control flow graph ");
   instance->analysisResult->append(res);  
+  }
   string cfgFileName = "cfg.dot";
   graph= new RoseBin_DotGraph(info);
   bool dot=true;
@@ -65,44 +71,19 @@ BinControlFlowAnalysis::run(SgNode* fileA, SgNode* fileB) {
     new RoseBin_ControlFlowAnalysis(interp->get_global_block(), forward, new RoseObj(), edges, info);
   ROSE_ASSERT(cfganalysis);
   cfganalysis->run(graph, cfgFileName, mergedEdges);
-  res = QString("nr of nodes visited %1. nr of edges visited %2. ")
+  if (!testFlag) {
+  QString res = QString("nr of nodes visited %1. nr of edges visited %2. ")
     .arg(cfganalysis->nodesVisited())
     .arg(cfganalysis->edgesVisited());
     
   instance->analysisResult->append(res);  
-  
+  }  
 }
 
 void
 BinControlFlowAnalysis::test(SgNode* fileA, SgNode* fileB) {
-
-
-  RoseBin_Graph* graph=NULL;
-  ROSE_ASSERT(isSgProject(fileA));
-  SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
-  SgAsmFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
-  ROSE_ASSERT(file);
-
-  VirtualBinCFG::AuxiliaryInformation* info = new VirtualBinCFG::AuxiliaryInformation(file);
-
-
-  // control flow analysis  *******************************************************
-  string cfgFileName = "cfg.dot";
-  graph= new RoseBin_DotGraph(info);
-  bool dot=true;
-  bool forward=true;
-  bool edges=true;
-  bool mergedEdges=true;
-  if (dot==false) {
-    cfgFileName = "cfg.gml";
-    graph= new RoseBin_GMLGraph(info);
-  }
-
-
-  SgAsmInterpretation* interp = SageInterface::getMainInterpretation(file);
-  RoseBin_ControlFlowAnalysis* cfganalysis = 
-    new RoseBin_ControlFlowAnalysis(interp->get_global_block(), forward, new RoseObj(), edges, info);
-  ROSE_ASSERT(cfganalysis);
-  cfganalysis->run(graph, cfgFileName, mergedEdges);
+  testFlag=true;
+  run(fileA,fileB);
+  testFlag=false;
   
 }

@@ -71,9 +71,11 @@ ComplexityMetric::run(SgNode* fileA, SgNode* fileB) {
     instance = QROSE::cbData<BinQGUI *>();
 
   if (isSgProject(fileA)==NULL) {
-    cerr << "This is not a valid file for this analysis!" << endl;
-    QString res = QString("This is not a valid file for this analysis");
-    instance->analysisResult->append(res);  
+    cerr << "This is not a valid file for this analysis!  fileA = " << fileA->class_name() << endl;
+    if (!testFlag) {
+      QString res = QString("This is not a valid file for this analysis");
+      instance->analysisResult->append(res);  
+    }
     return;
   }
 

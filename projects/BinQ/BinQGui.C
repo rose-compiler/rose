@@ -743,6 +743,7 @@ void BinQGUI::reset() {
 // This is for testing purposes only
 void
 BinQGUI::testAnalyses(std::vector<BinAnalyses*>& analysesVec) {
+  testAnalysisResults.clear();
   int problems=0;
   double startTotal = RoseBin_support::getTime();
   for (unsigned int i=0;i<analysesVec.size();++i) {
@@ -759,7 +760,7 @@ BinQGUI::testAnalyses(std::vector<BinAnalyses*>& analysesVec) {
 	problems+=resu.size();
 	cerr << "Running analysis : " << currentAnalysis->name() <<
 	  "   time : " << time << "   Problems : " << RoseBin_support::ToString(resu.size()) << endl;
-
+	testAnalysisResults[currentAnalysis->name()]=resu.size();
       }
     }
   } 
@@ -767,6 +768,17 @@ BinQGUI::testAnalyses(std::vector<BinAnalyses*>& analysesVec) {
   double endTotal = RoseBin_support::getTime();
   double timeTotal = (double) (endTotal - startTotal);
   cerr << "\nTotal time : " << timeTotal << "  problems : " << problems << endl;
+  testAnalysisTime=timeTotal;
+}
+
+std::map<std::string, int>
+BinQGUI::getTestAnalysisResults() {
+  return testAnalysisResults;
+}
+
+double
+BinQGUI::getTestAnalysisTime() {
+  return testAnalysisTime;
 }
 
 // this is the implementation of the run function in the GUI
@@ -1102,9 +1114,9 @@ void BinQGUI::showFile(int row, qrs::QRTable* currentWidget,
 	if ((rowC%500)==0)
 	  cerr << "Adding Row : " << RoseBin_support::ToString(rowC) << "/"<< RoseBin_support::ToString(itemsFile.size()) << endl;
 	// tps : this is still very slow and commented out for now
-
-		currentWidget->setHAlignment(true, false, 3); // left horizontal alignment
 #if 0
+		currentWidget->setHAlignment(true, false, 3); // left horizontal alignment
+
 	currentWidget->setHAlignment(true, false, 0); // left horizontal alignment
 	currentWidget->setHAlignment(true, false, 1); // left horizontal alignment
 	currentWidget->setHAlignment(true, false, 2); // left horizontal alignment

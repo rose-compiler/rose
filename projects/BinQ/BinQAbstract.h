@@ -83,6 +83,9 @@ class BinQAbstract //: public QWidget
     void createItem(SgNode* file, std::vector<Item*>& itemsFile,std::vector<SgNode*>& funcsFile, bool dll);
     void createFunction(SgNode* file,std::vector<SgNode*>& funcsFile, bool dll);
 
+    // variables for testing several files at once
+    double testAnalysisTime;
+    std::map<std::string, int> testAnalysisResults;
 }; //class BinQGUI
 
 #endif

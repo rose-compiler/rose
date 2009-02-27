@@ -19,6 +19,7 @@ class BinControlFlowAnalysis : public BinAnalyses {
   std::map<SgNode*,std::string> getResult(){return result;}
  private:
   std::map<SgNode*,std::string> result;
+  BinQGUI *instance;
  
 
 

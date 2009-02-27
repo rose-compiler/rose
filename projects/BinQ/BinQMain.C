@@ -10,7 +10,7 @@
 #include <iostream>
 #include "boost/filesystem/operations.hpp" // includes boost/filesystem/path.hpp
 
-
+#include <fstream>
 
 using namespace qrs;
 using namespace boost::program_options;
@@ -18,7 +18,93 @@ using namespace boost;
 using namespace std;
 using namespace boost::filesystem;
 
-void printAssembly(string fileNameA, string fileNameB, SgNode* fileA, SgNode* fileB,
+// runs a list of files and returns the results
+void
+runListMode(string saveFile, 
+	    string listFile) {
+  cerr << " Running in List Mode. Loading File: " << listFile << endl;
+  ifstream inFile;
+  vector<string> files;
+  string fileName;
+  inFile.open(listFile.c_str());
+  if (!inFile) {
+    cout << "Unable to open listFile" << endl;
+    exit(1); // terminate with error
+  }
+  while (inFile >> fileName) {
+    //    if (!is_directory(fileName))
+      files.push_back(fileName);
+  }
+  inFile.close();
+  cerr << "Reading done. Files found: " << files.size() << endl;
+
+  // store the final results per file
+  map<string, map<string,int> > fileResults;
+  int i=0;
+  string timeStr="Time";
+  string empty="";
+  vector<string> emptyVec;
+  // iterate through all files
+  vector<string>::const_iterator it = files.begin();
+  for (;it!=files.end();++it) {
+    string fileName = *it;
+    cerr << "Analyzing : " << fileName ;
+    if (i<5) {
+      BinQbatch binGui(fileName, empty, emptyVec, emptyVec, 
+		       true,saveFile);
+      // run Analyses here and collect info
+      double timeForFile = binGui.getTestAnalysisTime();
+      // iterate through all results and add to current file
+      map<string,int> analysisResults = binGui.getTestAnalysisResults();
+      analysisResults[timeStr]=(int)timeForFile*10;
+      fileResults[fileName]= analysisResults;
+      cerr << " time : " << analysisResults[timeStr]<<endl;
+    }
+    i++;
+  }
+
+  // print results to file
+  ofstream fp_out;
+  bool firstIt=true;
+  fp_out.open("results.xls", ios::out);
+  map<string, map<string,int> >::const_iterator it2= fileResults.begin();
+  for (;it2!=fileResults.end();++it2) {
+    string fileName = it2->first;
+    map<string,int> analysisRes = it2->second;
+    cerr << "Writing results for : " << fileName << endl;
+    if (firstIt) {
+	firstIt=false;
+	fp_out << "FILENAME " ;
+	map<string,int>::const_iterator it4 = analysisRes.begin();
+	for (;it4!=analysisRes.end();++it4) {
+	  string analysisName = it4->first;
+	  fp_out << "\t" << analysisName ;
+	}
+	fp_out << endl;
+    }
+    map<string,int>::const_iterator it3 = analysisRes.begin();
+    fp_out << fileName ;
+    for (;it3!=analysisRes.end();++it3) {
+      int value = it3->second;
+      ++it3;
+      if (it3==(analysisRes.end())) {
+	double val = value/10;
+	fp_out << "\t" << val;
+	--it3;
+      } else {
+	--it3;
+	fp_out << "\t" << value;
+      }
+    }
+    fp_out << endl;
+  }
+  fp_out.close(); 
+}
+
+
+// unparser for testing purposes
+void 
+printAssembly(string fileNameA, string fileNameB, SgNode* fileA, SgNode* fileB,
 		   bool sourceFile) {
       // this part writes the file out to an assembly file -----------------------------------
 
@@ -42,18 +128,22 @@ void printAssembly(string fileNameA, string fileNameB, SgNode* fileA, SgNode* fi
 }
 
 
-int main( int argc, char **argv )
-{
+// main function for BinQ
+int 
+main( int argc, char **argv ) {
 #if 0
+  // testing of frontend
   RoseBin_Def::RoseAssemblyLanguage = RoseBin_Def::x86;
   fprintf(stderr, "Starting binCompass frontend...\n");
   SgProject* project = frontend(argc,argv);
   ROSE_ASSERT (project != NULL);
   fprintf(stderr, "End binCompass frontend...\n\n\n");
 #endif
+
+  string listName="";
   vector<std::string> dllA;
   vector<std::string> dllB;
-  cerr << "\nUSAGE : BinQ -a binaryFileA [.so|.dll]* [-b binaryFileB|IdaFile|SourceFile [.so|.dll]*] [--test] [--batch]\n\n " << endl;
+  cerr << "\nUSAGE : BinQ -a binaryFileA [.so|.dll]* [-b binaryFileB|IdaFile|SourceFile [.so|.dll]*] [--test] [--batch] [--list listFile]\n\n " << endl;
   std::string fileA="";
   std::string fileB="";
   bool aActive=false;
@@ -71,6 +161,7 @@ int main( int argc, char **argv )
     if (token=="-save") {
       if (debug)
 	cerr << " saving ..." << endl;
+      ROSE_ASSERT(argc>(i+1));
       saveFile=argv[i+1];
       ++i;
       continue;
@@ -80,12 +171,19 @@ int main( int argc, char **argv )
 	cerr << " found test" << endl;
       test=true;
     }
+    if (token=="--list") {
+      if (debug)
+	cerr << " found list" << endl;
+      ROSE_ASSERT(argc>(i+1));
+      listName=argv[i+1];
+      ++i;
+    }
     if (token=="--batch") {
       if (debug)
 	cerr << " found batch" << endl;
       batch=true;
     }
-    if (aActive && token!="-b" && token!="--test" && token!="--batch") {
+    if (aActive && token!="-b" && token!="--test" && token!="--batch" && token!="--list") {
       if (debug)
 	cerr << " a active" << endl;
       if (fileA=="") 
@@ -93,7 +191,7 @@ int main( int argc, char **argv )
       else
 	dllA.push_back(argv[i]);
     }
-    if (bActive && token!="--test" && token!="--batch") {
+    if (bActive && token!="--test" && token!="--batch" && token!="--list") {
       if (debug)
 	cerr << " b active" << endl;
       if (fileB=="") 
@@ -116,8 +214,9 @@ int main( int argc, char **argv )
 
   }
   
-  cerr << "FileA: " << fileA << "  FileB: " << fileB << "    test: " << test << "   batch : " << batch << endl;
-  if (fileA=="") exit(1);
+  cerr << "FileA: " << fileA << "  FileB: " << fileB << "    test: " << test << "   batch : " 
+       << batch << " List : " << listName << endl;
+  if (fileA=="" && listName=="") exit(1);
   vector<std::string>::const_iterator it= dllA.begin();
   for (;it!=dllA.end();++it) {
     cerr << "  File A dll : " << *it<<endl; 
@@ -129,7 +228,10 @@ int main( int argc, char **argv )
     }
   }
 
-
+  if (listName!="" ) {
+    runListMode(saveFile, listName);
+    return 0;
+  }
 
   if (test && !batch) {
     BinQinteractive binGui(fileA,fileB,dllA,dllB,test);

@@ -134,8 +134,10 @@ InitPointerToNull::run(SgNode* fileA, SgNode* fileB) {
 
   if (isSgProject(fileA)==NULL) {
     cerr << "This is not a valid file for this analysis!" << endl;
-    QString res = QString("This is not a valid file for this analysis");
-    instance->analysisResult->append(res);  
+    if (!testFlag) {
+      QString res = QString("This is not a valid file for this analysis");
+      instance->analysisResult->append(res);  
+    }
     return;
   }
 

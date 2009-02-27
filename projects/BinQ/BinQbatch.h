@@ -8,7 +8,8 @@ class BinQbatch : public BinQGUI
   public:
   BinQbatch(std::string, std::string,     
 	  std::vector<std::string> dllA,     
-	    std::vector<std::string> dllB, bool test, std::string saveFile);
+	    std::vector<std::string> dllB, bool test, 
+	    std::string saveFile);
     ~BinQbatch();
 
     void runAnalyses(std::vector<BinAnalyses*>& analysesVec, bool init);

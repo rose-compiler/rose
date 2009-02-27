@@ -25,11 +25,15 @@ std::string BinCallGraph::getDescription() {
 
 void
 BinCallGraph::run(SgNode* fileA, SgNode* fileB) {
-  BinQGUI *instance = QROSE::cbData<BinQGUI *>();
+  instance=NULL;
+  if (!testFlag)
+    instance = QROSE::cbData<BinQGUI *>();
   if (isSgProject(fileA)==NULL) {
     cerr << "This is not a valid file for this analysis!" << endl;
-    QString res = QString("This is not a valid file for this analysis");
-    instance->analysisResult->append(res);  
+    if (!testFlag) {
+      QString res = QString("This is not a valid file for this analysis");
+      instance->analysisResult->append(res);  
+    }
     return;
   }
 
@@ -43,11 +47,13 @@ BinCallGraph::run(SgNode* fileA, SgNode* fileB) {
 
   // call graph analysis  *******************************************************
   cerr << " creating call graph ... " << endl;
+ if (!testFlag) {
   ROSE_ASSERT(instance);
   ROSE_ASSERT(instance->analysisTab);
-  instance->analysisTab->setCurrentIndex(1);
   QString res = QString("Creating call graph ");
-  instance->analysisResult->append(res);  
+  instance->analysisTab->setCurrentIndex(1);
+   instance->analysisResult->append(res);  
+  }
   
   graph= new RoseBin_DotGraph(info);
   ROSE_ASSERT(graph);
@@ -67,11 +73,13 @@ BinCallGraph::run(SgNode* fileA, SgNode* fileB) {
   ROSE_ASSERT(callanalysis);
   callanalysis->run(graph, callFileName, mergedEdges);
 
-  res = QString("nr of nodes visited %1. nr of edges visited %2. ")
+  if (!testFlag) {
+  QString res = QString("nr of nodes visited %1. nr of edges visited %2. ")
     .arg(callanalysis->nodesVisited())
     .arg(callanalysis->edgesVisited());
-    
-  instance->analysisResult->append(res);  
+
+    instance->analysisResult->append(res);  
+  }
 
   cerr << " nr of nodes visited in callanalysis : " << callanalysis->nodesVisited() << endl;
   cerr << " nr of edges visited in callanalysis : " << callanalysis->edgesVisited() << endl;
@@ -80,42 +88,9 @@ BinCallGraph::run(SgNode* fileA, SgNode* fileB) {
 
 void
 BinCallGraph::test(SgNode* fileA, SgNode* fileB) {
-  RoseBin_Graph* graph=NULL;
-  ROSE_ASSERT(isSgProject(fileA));
-  SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
-  SgAsmFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
-  ROSE_ASSERT(file);
-
-  VirtualBinCFG::AuxiliaryInformation* info = new VirtualBinCFG::AuxiliaryInformation(file);
-
-  // call graph analysis  *******************************************************
-  cerr << " creating call graph ... " << endl;
-  
-  graph= new RoseBin_DotGraph(info);
-  ROSE_ASSERT(graph);
-  string callFileName = "callgraph.dot";
-  bool dot=true;
-  bool mergedEdges=true;
-  if (dot==false) {
-    callFileName = "callgraph.gml";
-    graph= new RoseBin_GMLGraph(info);
-  }
-
-  SgAsmInterpretation* interp = SageInterface::getMainInterpretation(file);
-  RoseBin_CallGraphAnalysis* callanalysis = 
-   new RoseBin_CallGraphAnalysis(interp->get_global_block(), new RoseObj(), info);
-
-  ROSE_ASSERT(callanalysis);
-  callanalysis->run(graph, callFileName, mergedEdges);
-
-    
-  cerr << " nr of nodes visited in callanalysis : " << callanalysis->nodesVisited() << endl;
-  cerr << " nr of edges visited in callanalysis : " << callanalysis->edgesVisited() << endl;
-
-  // print out as gml as well!
-  callFileName = "callgraph.gml";
-  graph= new RoseBin_GMLGraph(info);
-  callanalysis->run(graph, callFileName, mergedEdges);
+  testFlag=true;
+  run(fileA,fileB);
+  testFlag=false;
 
   
 }
