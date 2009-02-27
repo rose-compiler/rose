@@ -170,6 +170,8 @@ AC_CHECK_FILE(${BOOST_LIB_DIR}/libboost_filesystem-${BOOST_COMPILER_STRING}-mt.s
 
 AC_CONFIG_FILES([
 Makefile
+docs/Makefile
+docs/manual/manual_vars.tex
 src/termite/Makefile
 src/termite/satire/termite.h
 src/analyzer/annotation/Makefile
