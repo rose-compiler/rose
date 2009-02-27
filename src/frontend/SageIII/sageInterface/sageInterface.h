@@ -604,6 +604,10 @@ size_t getArrayElementCount(SgArrayType* t);
 //! Get the element type of an array
 SgType* getArrayElementType(SgArrayType* t);
 
+//! Check if an expression is an array access. If so, return its name and subscripts if requested. Based on AstInterface::IsArrayAccess()
+bool isArrayReference(SgExpression* ref, SgInitializedName** arrayName=NULL, std::vector<SgExpression*>** subscripts=NULL);
+
+
 //! Has a UPC shared type of any kinds (shared-to-shared, private-to-shared, shared-to-private, shared scalar/array)? An optional parameter, mod_type_out, stores the first SgModifierType with UPC access information.
 /*!
  * Note: we classify private-to-shared as 'has shared' type for convenience here. It is indeed a private type in strict sense. 
@@ -1046,9 +1050,16 @@ void updateDefiningNondefiningLinks(SgFunctionDeclaration* func, SgScopeStatemen
 
 //------------------------------------------------------------------------
 //@{
-/*! @name Advanced AST transformations and optimizations
+/*! @name Advanced AST transformations, analyses, and optimizations
   \brief Some complex but commonly used AST transformations. 
   */
+
+//! Collect all read and write references within stmt, which can be a function, a scope statement, or a single statement. Note that a reference can be both read and written, like i++
+bool
+collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& readRefs, std::vector<SgNode*>& writeRefs);
+
+//!Collect unique variables which are read or written within a statement. Note that a variable can be both read and written. The statement can be either of a function, a scope, or a single line statement.
+bool collectReadWriteVariables(SgStatement* stmt, std::vector<SgInitializedName*>& readVars, std::vector<SgInitializedName*>& writeVars);
 
 //!Instrument(Add a statement, often a function call) into a function right before the return points, handle multiple return statements and return expressions with side effects. Return the number of statements inserted. 
 /*! Useful when adding a runtime library call to terminate the runtime system right before the end of a program, especially for OpenMP and UPC runtime systems. Return with complex expressions with side effects are rewritten using an additional assignment statement. 

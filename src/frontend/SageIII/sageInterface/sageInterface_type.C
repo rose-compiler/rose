@@ -202,8 +202,40 @@ namespace SageInterface
     return false;
   }
 
-  //! Calculate the number of elements of an array type
+  //! Check if an expression is an array access. If so, return its name and subscripts if requested. Based on AstInterface::IsArrayAccess()
+  bool isArrayReference(SgExpression* ref, SgInitializedName** arrayName/*=NULL*/, vector<SgExpression*>** subscripts/*=NULL*/)
+ {
+  SgExpression* arrayRef=NULL;
+  if (ref->variantT() == V_SgPntrArrRefExp) {
+    if (subscripts != 0 || arrayName != 0) {
+      SgExpression* n = ref;
+      while (true) {
+        SgPntrArrRefExp *arr = isSgPntrArrRefExp(n);
+        if (arr == 0)
+          break;
+        n = arr->get_lhs_operand();
+        // store left hand for possible reference exp to array variable
+        if (arrayName!= 0)
+          arrayRef = n;
+        // right hand stores subscripts
+        if (subscripts != 0)
+          (*subscripts)->push_back(arr->get_rhs_operand());
+      } // end while
+      if  (arrayName !=NULL)
+      {
+        ROSE_ASSERT(arrayRef != NULL);
+        if (isSgVarRefExp(arrayRef))
+          *arrayName = isSgVarRefExp(arrayRef)->get_symbol()->get_declaration();
+      }
 
+    }
+    return true;
+  }
+  return false;
+}
+ 
+ 
+  //! Calculate the number of elements of an array type
   size_t getArrayElementCount(SgArrayType* t)
   {
     ROSE_ASSERT(t);
