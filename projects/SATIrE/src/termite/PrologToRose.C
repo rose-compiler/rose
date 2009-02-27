@@ -94,7 +94,10 @@ PrologToRose::toRose(const char* filename) {
   PrologTerm* prote = PrologTerm::wrap_PL_Term(term);
   
 #endif
-  return toRose(prote);
+  SgNode* root = toRose(prote);
+  ROSE_ASSERT(initializedNamesWithoutScope.empty());
+  ROSE_ASSERT(declarationStatementsWithoutScope.empty());
+  return root;
 }
 
 /**
@@ -167,12 +170,34 @@ PrologToRose::toRose(PrologTerm* t) {
     Sg_File_Info* fi = ln->get_file_info();
     fi->set_classificationBitField(fi->get_classificationBitField() 
 				   | Sg_File_Info::e_compiler_generated 
-				   /*| Sg_File_Info::e_output_in_code_generation*/);
+			   /*| Sg_File_Info::e_output_in_code_generation*/);
 	  
     // Set EndOfConstruct
-    ln->set_endOfConstruct( Sg_File_Info::generateDefaultFileInfoForTransformationNode() );
+    ln->set_endOfConstruct( 
+      Sg_File_Info::generateDefaultFileInfoForTransformationNode());
   }
-	
+
+  // Set Scope of children
+  SgScopeStatement* scope = dynamic_cast<SgScopeStatement*>(node);
+  if (scope != NULL) {
+    for (vector<SgInitializedName*>::iterator it = 
+	       initializedNamesWithoutScope.begin();
+	 it != initializedNamesWithoutScope.end(); it++) {
+      cerr<<"Setting scope1..."<<endl;
+      (*it)->set_scope(scope);
+    }
+    initializedNamesWithoutScope.clear();
+
+    for (vector<SgDeclarationStatement*>::iterator it = 
+	       declarationStatementsWithoutScope.begin();
+	 it != declarationStatementsWithoutScope.end(); it++) {
+      cerr<<"Setting scope2..."<<endl;
+      (*it)->set_scope(scope);
+    }
+    declarationStatementsWithoutScope.clear();
+
+  }
+  	
   return node;
 }
 
@@ -664,7 +689,8 @@ PrologToRose::createTypedefType(PrologTerm* t) {
   SgTypedefDeclaration* decl = new SgTypedefDeclaration(fi,n,i,NULL,NULL,NULL);
   ROSE_ASSERT(decl != NULL);
   /*fake parent scope*/
-  fakeParentScope(decl);
+  //fakeParentScope(decl);
+  declarationStatementsWithoutScope.push_back(decl);
   SgTypedefType* tpe = SgTypedefType::createType(decl);
   ROSE_ASSERT(tpe != NULL);
 	
@@ -956,6 +982,7 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
     SgEnumDeclaration* decdummy = dynamic_cast<SgEnumDeclaration*>(toRose(annot->at(2)));
     ROSE_ASSERT(decdummy != NULL);
     fakeParentScope(decdummy);
+   
     SgEnumVal* valnode = new SgEnumVal(fi,value,decdummy,v_name);
     ROSE_ASSERT(valnode != NULL);
     ROSE_ASSERT(valnode->get_declaration() == decdummy);
@@ -1339,6 +1366,8 @@ PrologToRose::createInitializedName(Sg_File_Info* fi, SgNode* succ, PrologCompTe
   ROSE_ASSERT(siname != NULL);
 
   siname->set_file_info(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
+
+  initializedNamesWithoutScope.push_back(siname);
   return siname;
 }
 
@@ -1355,10 +1384,8 @@ PrologToRose::inameFromAnnot(PrologCompTerm* annot) {
   SgName sgnm = nstring->getName().c_str();
   /* create a dummy varialbe declaration, only for the unparser to get the scope */
   SgVariableDeclaration* vdec = new SgVariableDeclaration(
-							  Sg_File_Info::generateDefaultFileInfoForTransformationNode(),
-							  sgnm,
-							  tpe,
-							  NULL);
+     Sg_File_Info::generateDefaultFileInfoForTransformationNode(),
+     sgnm, tpe,  NULL);
   ROSE_ASSERT(vdec != NULL);
   SgInitializedName* siname = new SgInitializedName(sgnm,tpe,NULL,vdec,NULL);
   ROSE_ASSERT(siname != NULL);
@@ -1395,6 +1422,7 @@ PrologToRose::inameFromAnnot(PrologCompTerm* annot) {
       ROSE_ASSERT(isSgNamespaceDefinitionStatement(siname->get_declaration()->get_parent()) != NULL);
     }
   }
+  initializedNamesWithoutScope.push_back(siname);
   return siname;
 }
 
@@ -2185,7 +2213,9 @@ PrologToRose::createClassDeclaration(Sg_File_Info* fi,SgNode* child1 ,PrologComp
     d->set_forward(1);
   }
   d->set_firstNondefiningDeclaration(d);
-	
+
+  declarationStatementsWithoutScope.push_back(d);
+
   return d;
 }
 
@@ -2226,7 +2256,7 @@ PrologToRose::fakeNamespaceScope(string s, int unnamed, SgDeclarationStatement* 
   SgNamespaceDeclarationStatement* dec = new SgNamespaceDeclarationStatement(dfi,n,def,u_b);
   def->set_namespaceDeclaration(dec); // AP 4.2.2008 
   ROSE_ASSERT(dec != NULL);
-  //fakeParentScope(dec); //AP 1.2.2008 remove a ROSE 0.9.0b warning 
+  fakeParentScope(dec); //AP 1.2.2008 remove a ROSE 0.9.0b warning 
   SgGlobal* dummy = new SgGlobal(dfi);
   ROSE_ASSERT(dummy != NULL);
   dec->set_parent(dummy);
@@ -2240,7 +2270,8 @@ PrologToRose::createDummyClassDeclaration(string s,int c_type) {
   SgName class_name = s;
   SgClassDeclaration* d = new SgClassDeclaration(fi,class_name,(SgClassDeclaration::class_types)c_type,NULL,NULL);
   ROSE_ASSERT(d != NULL);
-  fakeParentScope(d);
+  //fakeParentScope(d);
+  declarationStatementsWithoutScope.push_back(d);
   return d;
 }
 
@@ -2266,15 +2297,16 @@ PrologToRose::createClassType(PrologTerm* p) {
   ROSE_ASSERT(t != NULL);
   /* first term is class name*/
   string s = *toStringP(t->at(0));
-  int c_type = toInt(t->at(1));
   /* create dummy declaration*/
-  SgClassDeclaration* d = createDummyClassDeclaration(s,c_type);
+  SgClassDeclaration* d = 
+    createDummyClassDeclaration(s, createEnum(t->at(1), re.class_type));
   ROSE_ASSERT(d != NULL);
   string scopename = *(toStringP(t->at(2)));
   if(scopename != "") {
     fakeNamespaceScope(scopename,0,d);
   } else {
-    fakeParentScope(d);
+    //fakeParentScope(d);
+    declarationStatementsWithoutScope.push_back(d);
   }
   /* the unparser wants this*/
   d->set_definition(new SgClassDefinition());
@@ -2445,7 +2477,8 @@ PrologToRose::pciDeclarationStatement(SgDeclarationStatement* s,PrologTerm* t) {
   s->set_skipElaborateType(toInt(atts->at(3)));
   //	s->set_need_name_qualifier(toInt(atts->at(4)));
   if (s->get_scope() == NULL) {
-    fakeParentScope(s);
+    //fakeParentScope(s);
+    declarationStatementsWithoutScope.push_back(s);
   }
 }
 
@@ -2546,6 +2579,7 @@ PrologToRose::toStringP(PrologTerm* t) {
 int
 PrologToRose::toInt(PrologTerm* t) {
   PrologInt* i = isPrologInt(t);
+  ROSE_ASSERT(i);
   return i->getValue();
 }
 

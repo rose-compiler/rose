@@ -1,4 +1,4 @@
-/*
+/* -*- C++ -*-
 Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
           2008 Adrian Prantl <adrian@complang.tuwien.ac.at>
 */
@@ -10,6 +10,7 @@ Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
 #include <iostream>
 #include <string>
 #include <map>
+#include <vector>
 
 /**
  * Class for creating a ROSE-IR (made for unparsing)
@@ -24,7 +25,11 @@ public:
   SgNode* toRose(const char* filename);
 
 private:
+  /* enum <-> atom conversion */
   RoseEnums re;
+  /* fixups */
+  std::vector<SgInitializedName*> initializedNamesWithoutScope;
+  std::vector<SgDeclarationStatement*> declarationStatementsWithoutScope;
   /* arity specific node generation*/
   SgNode* leafToRose(PrologCompTerm*, std::string);
   SgNode* unaryToRose(PrologCompTerm*, std::string);

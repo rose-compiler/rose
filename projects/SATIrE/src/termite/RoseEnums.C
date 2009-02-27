@@ -180,13 +180,13 @@ static const char* e_throw_kind[] = {
 };
 
 static const char* e_cast_type[] = { 
-  "e_unknown", 
-  "e_default", 
-  "e_C_style_cast", 
-  "e_const_cast", 
-  "e_static_cast", 
-  "e_dynamic_cast", 
-  "e_reinterpret_cast"
+  "unknown", 
+  "default", 
+  "C_style_cast", 
+  "const_cast", 
+  "static_cast", 
+  "dynamic_cast", 
+  "reinterpret_cast"
 };
 
 /////////////////////////////////////////////////////////////////////////
