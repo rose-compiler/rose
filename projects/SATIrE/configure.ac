@@ -10,10 +10,18 @@ AM_INIT_AUTOMAKE
 
 # Checks for programs.
 AC_PROG_YACC
+AS_IF([test "x$YACC" = x],[AC_MSG_FAILURE([Please install bison])])
 AC_PROG_CXX
+AS_IF([test "x$CXX" = x],[AC_MSG_FAILURE([Please install g++])])
 AC_PROG_CC
+AS_IF([test "x$CC" = x],[AC_MSG_FAILURE([Please install gcc])])
 AC_PROG_LEX
+AS_IF([test "x$LEX" = x],[AC_MSG_FAILURE([Please install flex])])
 AC_PROG_RANLIB
+AS_IF([test "x$RANLIB" = x],[AC_MSG_FAILURE([Please install ranlib])])
+AC_PROG_SED
+AS_IF([test "x$SED" = x],[AC_MSG_FAILURE([Please install sed])])
+
 
 # ROSE PATH
 ROSEDIR='/opt/rose'
@@ -132,9 +140,6 @@ AC_SUBST(have_swi_prolog)
 #-----------------------------------
 
 # Checks for libraries.
-# GB (2009-02-20): There is no fcosf function in the C math library, *and*
-# we do not use the C math library anyway!
-# AC_SEARCH_LIBS([fcosf], [m])
 
 AS_IF([test "x$with_pag" != xno],
       [AC_CHECK_LIB([pag], [pag_version],
@@ -162,31 +167,6 @@ AC_CHECK_FILE(${BOOST_LIB_DIR}/libboost_filesystem-${BOOST_COMPILER_STRING}-mt.s
              [echo "Could not find 'libboost_filesystem-${BOOST_COMPILER_STRING}-mt.so' in '${BOOST_LIB_DIR}'."
               echo "Please consider using one of the --with-boost* options."
               exit -1 ])
-
-# GB (2009-02-20): Disabled these checks, as most of the features are not
-# even used (int16_t etc.). Also, in the year 2009, it is not really
-# necessary to check for a C89 implementation on a system that is capable of
-# supporting ROSE...
-# # Checks for header files.
-# AC_HEADER_STDC
-# AC_CHECK_HEADERS([inttypes.h stdlib.h string.h unistd.h])
-#
-# Checks for typedefs, structures, and compiler characteristics.
-# AC_HEADER_STDBOOL
-# AC_C_CONST
-# AC_TYPE_INT16_T
-# AC_TYPE_INT32_T
-# AC_TYPE_INT8_T
-# AC_TYPE_SIZE_T
-# AC_STRUCT_TM
-# AC_TYPE_UINT16_T
-# AC_TYPE_UINT32_T
-# AC_TYPE_UINT8_T
-#
-# # Checks for library functions.
-# AC_FUNC_MALLOC
-# AC_FUNC_REALLOC
-# AC_CHECK_FUNCS([memset])
 
 AC_CONFIG_FILES([
 Makefile
