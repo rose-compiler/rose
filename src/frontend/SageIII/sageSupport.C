@@ -3861,7 +3861,34 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
    {
      Rose_STL_Container<string> sourceFileList;
 
+
+     bool isSourceCodeCompiler = false;
+     if(1)
+     { //Find out if the command line is a source code compile line
+       Rose_STL_Container<string>::iterator j = argList.begin();
+       // skip the 0th entry since this is just the name of the program (e.g. rose)
+       ROSE_ASSERT(argList.size() > 0);
+       j++;
+
+       while ( j != argList.end() )
+       {
+
+         if ( (*j).size() >=2 && (((*j)[0] == '-') && ((*j)[1] == 'o')) )
+         {
+           isSourceCodeCompiler = true;
+           std::cout << "Set isSourceCodeCompiler " << *j << std::endl;
+           break;
+         }
+         j++;
+
+       }
+
+
+     }
+
+
      Rose_STL_Container<string>::iterator i = argList.begin();
+
 
   // printf ("######################### Inside of CommandlineProcessing::generateSourceFilenames() ############################ \n");
 
@@ -3869,7 +3896,8 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
      ROSE_ASSERT(argList.size() > 0);
      i++;
 
-     int counter = 0;
+
+
      while ( i != argList.end() )
         {
        // Count up the number of filenames (if it is ZERO then this is likely a 
@@ -3896,8 +3924,11 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
                   {
                  // printf ("This is an executable file: *i = %s \n",(*i).c_str());
                  // executableFileList.push_back(*i);
-                    sourceFileList.push_back(*i);
+                    if(isSourceCodeCompiler == false || binaryMode == true)
+                      sourceFileList.push_back(*i);
                     goto incrementPosition;
+
+
                   }
 
             // PC (4/27/2006): Support for custom source file suffixes
@@ -3914,8 +3945,10 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
                   {
                  // printf ("This is at least an existing file of some kind: *i = %s \n",(*i).c_str());
                  // foundSourceFile = true;
-                    sourceFileList.push_back(*i);
+                    if(isSourceCodeCompiler == false || binaryMode == true)
+                      sourceFileList.push_back(*i);
                     goto incrementPosition;
+
                   }
 #endif
 #if 0
@@ -3933,18 +3966,15 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
                if (isOptionTakingThirdParameter(*i) == true)
                   {
                  // Jump over the next argument when such options are identified.
-                    counter++;
                     i++;
                   }
 
             // Jump over the next argument when such options are identified.
-               counter++;
                i++;
              }
 
 incrementPosition:
 
-          counter++;
           i++;
         }
 
