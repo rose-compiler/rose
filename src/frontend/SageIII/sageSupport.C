@@ -3863,7 +3863,7 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
 
 
      bool isSourceCodeCompiler = false;
-     if(1)
+
      { //Find out if the command line is a source code compile line
        Rose_STL_Container<string>::iterator j = argList.begin();
        // skip the 0th entry since this is just the name of the program (e.g. rose)
@@ -3876,7 +3876,7 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
          if ( (*j).size() >=2 && (((*j)[0] == '-') && ((*j)[1] == 'o')) )
          {
            isSourceCodeCompiler = true;
-           std::cout << "Set isSourceCodeCompiler " << *j << std::endl;
+           //std::cout << "Set isSourceCodeCompiler " << *j << std::endl;
            break;
          }
          j++;
