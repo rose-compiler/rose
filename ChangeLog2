@@ -1,3 +1,51 @@
+2009-02-28 00:15  panas2
+
+	* [r4678] /trunk/ROSE/projects/RTED/runtimeCheck.cpp: rted
+	  extensions
+
+2009-02-27 23:49  panas2
+
+	* [r4677] /trunk/ROSE/config/support-rted.m4,
+	  /trunk/ROSE/configure.in,
+	  /trunk/ROSE/projects/BinQ/BinCallGraph.C,
+	  /trunk/ROSE/projects/BinQ/BinCallGraph.h,
+	  /trunk/ROSE/projects/BinQ/BinControlFlowAnalysis.C,
+	  /trunk/ROSE/projects/BinQ/BinControlFlowAnalysis.h,
+	  /trunk/ROSE/projects/BinQ/BinDynamicInfo.C,
+	  /trunk/ROSE/projects/BinQ/BinQAbstract.h,
+	  /trunk/ROSE/projects/BinQ/BinQGui.C,
+	  /trunk/ROSE/projects/BinQ/BinQGui.h,
+	  /trunk/ROSE/projects/BinQ/BinQMain.C,
+	  /trunk/ROSE/projects/BinQ/BinQbatch.C,
+	  /trunk/ROSE/projects/BinQ/BinQbatch.h,
+	  /trunk/ROSE/projects/BinQ/ComplexityMetric.C,
+	  /trunk/ROSE/projects/BinQ/ForbiddenFunctionCall.C,
+	  /trunk/ROSE/projects/BinQ/InitPointerToNull.C,
+	  /trunk/ROSE/projects/BinQ/MallocAndFree.C,
+	  /trunk/ROSE/projects/BinQ/NullAfterFree.C,
+	  /trunk/ROSE/projects/Makefile.am, /trunk/ROSE/projects/RTED,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/example.C,
+	  /trunk/ROSE/projects/RTED/runtimeCheck.cpp: Added new RTED
+	  project and improved parts of BinQ
+
+2009-02-27 21:09  liao6
+
+	* [r4676]
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface_type.C,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/collectReadWriteVariables.C,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/inputcollectReadWriteVariables.C:
+	  Added functions and test cases to collect read/write references
+	  from AST
+	  
+	  They are basically wrapper functions of Qing's loop optimizer's
+	  side effect analysis
+	  isArrayReference() collectReadWriteRefs()
+	  collectReadWriteVariables()
+
 2009-02-26 21:53  saebjornsen1
 
 	* [r4663] /trunk/ROSE/projects/MacroRewrapper/Makefile.am: Added
