@@ -1,3 +1,14 @@
+2009-02-28 22:11  saebjornsen1
+
+	* [r4689] /trunk/ROSE/src/frontend/SageIII/sageSupport.C: Removed
+	  debugging message
+
+2009-02-28 21:09  saebjornsen1
+
+	* [r4688] /trunk/ROSE/src/frontend/SageIII/sageSupport.C: Fixed
+	  bug: ROSE can now work as a linker again. Made disassembling
+	  conditional on the
+
 2009-02-28 00:15  panas2
 
 	* [r4678] /trunk/ROSE/projects/RTED/runtimeCheck.cpp: rted
