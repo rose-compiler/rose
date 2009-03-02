@@ -199,7 +199,12 @@ namespace VirtualBinCFG {
     } else if (succsIter == indirectJumpTargets.end()) {
       return emptySet;
     } else {
+#ifdef USE_ROSE 
+      return (*succsIter).second;
+#else      
+      // rose translator has trouble in unparsing it correctly.
       return succsIter->second;
+#endif      
     }
   }
 

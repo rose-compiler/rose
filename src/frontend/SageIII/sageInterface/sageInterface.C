@@ -1933,6 +1933,8 @@ SageInterface::buildForwardFunctionDeclaration ( SgTemplateInstantiationMemberFu
         } 
 #ifdef USE_ROSE // workaround for bug 322
         ;
+        NondefiningFunctionDeclarationCopyType nondefiningFunctionDeclarationCopy;
+
 #else        
         nondefiningFunctionDeclarationCopy;
 #endif        
@@ -1949,11 +1951,7 @@ SageInterface::buildForwardFunctionDeclaration ( SgTemplateInstantiationMemberFu
           ROSE_ASSERT( memberFunctionInstantiation != memberFunctionInstantiation->get_definingDeclaration() );
           memberFunctionInstantiation->set_definition(NULL);
         }
-#ifdef USE_ROSE
-     SgNode* copyOfMemberFunctionNode = memberFunctionInstantiation->copy(NondefiningFunctionDeclarationCopyType);
-#else     
      SgNode* copyOfMemberFunctionNode = memberFunctionInstantiation->copy(nondefiningFunctionDeclarationCopy);
-#endif     
      SgTemplateInstantiationMemberFunctionDecl* copyOfMemberFunction = static_cast<SgTemplateInstantiationMemberFunctionDecl*>(copyOfMemberFunctionNode);
 
   // printf ("\n\nHOW DO WE KNOW WHEN TO NOT COPY THE DEFINING DECLARATION SO THAT WE CAN JUST BUILD A FUNCTION PROTOTYPE! \n");
@@ -5563,84 +5561,91 @@ class ConditionalExpGenerator: public StatementGenerator
 
 } // end of namespace for the helper classes
 
-   //! Merged from replaceExpressionWithStatement.C
-    SgAssignInitializer* SageInterface::splitExpression(SgExpression* from, string newName/* ="" */) 
-    {
-    if (!SageInterface::isCopyConstructible(from->get_type())) {
-      std::cerr << "Type " << from->get_type()->unparseToString() << " of expression " << from->unparseToString() << " is not copy constructible" << std::endl;
-      ROSE_ASSERT (false);
-    }
+//! Merged from replaceExpressionWithStatement.C
+SgAssignInitializer* SageInterface::splitExpression(SgExpression* from, string newName/* ="" */) 
+{
+  if (!SageInterface::isCopyConstructible(from->get_type())) {
+    std::cerr << "Type " << from->get_type()->unparseToString() << " of expression " << from->unparseToString() << " is not copy constructible" << std::endl;
+    ROSE_ASSERT (false);
+  }
 
-    assert (SageInterface::isCopyConstructible(from->get_type())); // How do we report errors?
-    SgStatement* stmt = getStatementOfExpression(from);
-    assert (stmt);
-    if (!isSgForInitStatement(stmt->get_parent())) {
-      SageInterface::ensureBasicBlockAsParent(stmt);
-    }
+  assert (SageInterface::isCopyConstructible(from->get_type())); // How do we report errors?
+  SgStatement* stmt = getStatementOfExpression(from);
+  assert (stmt);
+  if (!isSgForInitStatement(stmt->get_parent())) {
+    SageInterface::ensureBasicBlockAsParent(stmt);
+  }
 
-    SgScopeStatement* parent = isSgScopeStatement(stmt->get_parent());
-    // cout << "parent is a " << (parent ? parent->sage_class_name() : "NULL") << endl;
-    if (!parent && isSgForInitStatement(stmt->get_parent()))
-      parent = isSgScopeStatement(stmt->get_parent()->get_parent()->get_parent());
-    assert (parent);
-    // cout << "parent is a " << parent->sage_class_name() << endl;
-    // cout << "parent is " << parent->unparseToString() << endl;
-    // cout << "stmt is " << stmt->unparseToString() << endl;
-    SgName varname = "rose_temp__";
-    if (newName == "") {
-      varname << ++SageInterface::gensym_counter;
-    } else {
-      varname = newName;
-    }
+  SgScopeStatement* parent = isSgScopeStatement(stmt->get_parent());
+  // cout << "parent is a " << (parent ? parent->sage_class_name() : "NULL") << endl;
+  if (!parent && isSgForInitStatement(stmt->get_parent()))
+    parent = isSgScopeStatement(stmt->get_parent()->get_parent()->get_parent());
+  assert (parent);
+  // cout << "parent is a " << parent->sage_class_name() << endl;
+  // cout << "parent is " << parent->unparseToString() << endl;
+  // cout << "stmt is " << stmt->unparseToString() << endl;
+  SgName varname = "rose_temp__";
+  if (newName == "") {
+    varname << ++SageInterface::gensym_counter;
+  } else {
+    varname = newName;
+  }
 
-    SgType* vartype = from->get_type();
-    SgNode* fromparent = from->get_parent();
-    vector<SgExpression*> ancestors;
-    for (SgExpression *expr = from, *anc = isSgExpression(fromparent); anc != 0;
-         expr = anc, anc = isSgExpression(anc->get_parent())) {
-      if ((isSgAndOp(anc) && expr != isSgAndOp(anc)->get_lhs_operand()) ||
-          (isSgOrOp(anc) && expr != isSgOrOp(anc)->get_lhs_operand()) ||
-          (isSgConditionalExp(anc) && expr != isSgConditionalExp(anc)->get_conditional_exp()))
-        ancestors.push_back(anc); // Closest first
+  SgType* vartype = from->get_type();
+  SgNode* fromparent = from->get_parent();
+  vector<SgExpression*> ancestors;
+#ifdef USE_ROSE //workaround for bug 326
+  SgExpression *expr = from, *anc = isSgExpression(fromparent);
+  for ( ; anc != 0;
+      expr = anc, anc = isSgExpression(anc->get_parent())) 
+#else  
+  for (SgExpression *expr = from, *anc = isSgExpression(fromparent); anc != 0;
+      expr = anc, anc = isSgExpression(anc->get_parent())) 
+#endif    
+  {
+    if ((isSgAndOp(anc) && expr != isSgAndOp(anc)->get_lhs_operand()) ||
+        (isSgOrOp(anc) && expr != isSgOrOp(anc)->get_lhs_operand()) ||
+        (isSgConditionalExp(anc) && expr != isSgConditionalExp(anc)->get_conditional_exp()))
+      ancestors.push_back(anc); // Closest first
+  }
+  // cout << "This expression to split has " << ancestors.size() << " ancestor(s)" << endl;
+  for (vector<SgExpression*>::reverse_iterator ai = ancestors.rbegin(); ai != ancestors.rend(); ++ai)
+  {
+    StatementGenerator* gen;
+    switch ((*ai)->variantT()) {
+      case V_SgAndOp: 
+        gen = new AndOpGenerator(isSgAndOp(*ai)); break;
+      case V_SgOrOp:
+        gen = new OrOpGenerator(isSgOrOp(*ai)); break;
+      case V_SgConditionalExp:
+        gen = new ConditionalExpGenerator(isSgConditionalExp(*ai)); break;
+      default: assert (!"Should not happen");
     }
-    // cout << "This expression to split has " << ancestors.size() << " ancestor(s)" << endl;
-    for (vector<SgExpression*>::reverse_iterator ai = ancestors.rbegin(); ai != ancestors.rend(); ++ai)
-    {
-      StatementGenerator* gen;
-      switch ((*ai)->variantT()) {
-        case V_SgAndOp: 
-           gen = new AndOpGenerator(isSgAndOp(*ai)); break;
-        case V_SgOrOp:
-           gen = new OrOpGenerator(isSgOrOp(*ai)); break;
-        case V_SgConditionalExp:
-           gen = new ConditionalExpGenerator(isSgConditionalExp(*ai)); break;
-        default: assert (!"Should not happen");
-      }
-      replaceExpressionWithStatement(*ai, gen);
-      delete gen;
-    } // for
-    if (ancestors.size() != 0) {
-      return splitExpression(from); 
-      // Need to recompute everything if there were ancestors
-    }
-    SgVariableDeclaration* vardecl = SageBuilder::buildVariableDeclaration(varname, vartype, NULL, parent);
-    SgVariableSymbol* sym = SageInterface::getFirstVarSym(vardecl);
-    ROSE_ASSERT (sym);
-    SgInitializedName* initname = sym->get_declaration();
-    ROSE_ASSERT (initname);
-    SgVarRefExp* varref = SageBuilder::buildVarRefExp(sym);
-    replaceExpressionWithExpression(from, varref);
-    // std::cout << "Unparsed 3: " << fromparent->sage_class_name() << " --- " << fromparent->unparseToString() << endl;
-    // cout << "From is a " << from->sage_class_name() << endl;
-       SgAssignInitializer* ai = SageBuilder::buildAssignInitializer(from);
-       initname->set_initializer(ai);
-       ai->set_parent(initname);
-    myStatementInsert(stmt, vardecl, true);
-    // vardecl->set_parent(stmt->get_parent());
-    // FixSgTree(vardecl);
-    // FixSgTree(parent);
-    return ai;
-  } //splitExpression()
+    replaceExpressionWithStatement(*ai, gen);
+    delete gen;
+  } // for
+  if (ancestors.size() != 0) {
+    return splitExpression(from); 
+    // Need to recompute everything if there were ancestors
+  }
+  SgVariableDeclaration* vardecl = SageBuilder::buildVariableDeclaration(varname, vartype, NULL, parent);
+  SgVariableSymbol* sym = SageInterface::getFirstVarSym(vardecl);
+  ROSE_ASSERT (sym);
+  SgInitializedName* initname = sym->get_declaration();
+  ROSE_ASSERT (initname);
+  SgVarRefExp* varref = SageBuilder::buildVarRefExp(sym);
+  replaceExpressionWithExpression(from, varref);
+  // std::cout << "Unparsed 3: " << fromparent->sage_class_name() << " --- " << fromparent->unparseToString() << endl;
+  // cout << "From is a " << from->sage_class_name() << endl;
+  SgAssignInitializer* ai = SageBuilder::buildAssignInitializer(from);
+  initname->set_initializer(ai);
+  ai->set_parent(initname);
+  myStatementInsert(stmt, vardecl, true);
+  // vardecl->set_parent(stmt->get_parent());
+  // FixSgTree(vardecl);
+  // FixSgTree(parent);
+  return ai;
+} //splitExpression()
 
   //! This generalizes the normal splitExpression to allow loop tests and
   void SageInterface::splitExpressionIntoBasicBlock(SgExpression* expr) {
