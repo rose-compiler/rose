@@ -1,4 +1,4 @@
-#!/bin/sh 
+#!/bin/bash
 
 # Basic test script
 # (C) 2008 Adrian Prantl, Viktor Pavlu
@@ -107,10 +107,10 @@ for file in $FILES; do
         time_icfg=` cat $TMPFILE | awk '/Traversal to construct/ {print $7;exit}'`
         if [ $debug == 42 ]; then echo "time_icfg = $time_icfg because \"`grep 'Traversal to construct' $TMPFILE`\""; fi
         time_expr_numbering=`cat $TMPFILE | awk '/Numbering of expressions and types/ {print $8; exit}'`
-        if [ x$time_expr_numbering == x ]; then time_expr_numbering=0; fi
+        if [ x$time_expr_numbering = x ]; then time_expr_numbering=0; fi
         if [ $debug == 42 ]; then echo "time_expr_numbering = $time_expr_numbering because \"`grep 'Numbering of expressions and types' $TMPFILE`\""; fi
         time_icfg_check=` cat $TMPFILE | awk '/CFG consistency check: time = .* .sec/ {print $6;exit}'`
-        if [ x$time_icfg_check == x ]; then time_icfg_check=0; fi
+        if [ x$time_icfg_check = x ]; then time_icfg_check=0; fi
         if [ $debug == 42 ]; then echo "time_icfg_check = $time_icfg_check because \"`grep 'CFG consistency check' $TMPFILE`\""; fi
         time_analysis=` cat $TMPFILE | awk '/Actual data-flow.*: time = .* .sec/ {print $7;exit}'`
         if [ $debug == 42 ]; then echo "time_analysis = $time_analysis because \"`grep 'Actual data-flow' $TMPFILE`\""; fi

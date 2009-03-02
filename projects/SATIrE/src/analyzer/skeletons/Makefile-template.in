@@ -90,4 +90,4 @@ clean:
 	rm -rf otheranalyses/
 
 check:  $(ANALYSIS)
-	sh runtests
+	bash runtests

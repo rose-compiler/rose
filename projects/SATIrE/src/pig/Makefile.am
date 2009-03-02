@@ -5,6 +5,9 @@ noinst_PROGRAMS = pig
 pig_SOURCES = generate.h    Rule.h    spec.h   yystype.h \
               generate.c++  Rule.c++  spec.c++ pigparser.y++ pigscanner.l++ 
 
+# dependency for parallel builds: yacc must run before lex
+pigscanner.l++: pigparser.c++
+
 SYNOBJS = ../grato/libgrato.a
 
 pig_LDADD = $(SYNOBJS)

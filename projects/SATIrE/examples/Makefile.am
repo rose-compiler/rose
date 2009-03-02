@@ -207,7 +207,7 @@ interval: init.token
 	chmod u+rwx -R $(testdir)/interval
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis interval
 	$(MAKE) check -C $(testdir)/interval
-	cd $(testdir) ; sh testsuite/testsuite.sh interval/interval testsuite
+	cd $(testdir) ; bash testsuite/testsuite.sh interval/interval testsuite
 
 %.loop.term: %.c
 	@echo "Analyzing loops in" $<
@@ -233,11 +233,6 @@ testsuite: init.token
 
 	cp -ur $(top_srcdir)/examples/constprop $(testdir)
 	chmod u+rwx -R $(testdir)/constprop
-##      GB working around possible problems with old constprop.set files
-	@if [ -e $(testdir)/constprop/constprop.set ] ; then \
-		echo "info: $(top_srcdir)/examples/constprop/constprop.set no longer in CVS, ignoring your local copy" ; \
-		rm -f $(testdir)/constprop/constprop.set ; \
-	fi
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis constprop
 	$(MAKE) -C $(testdir)/constprop
-	cd $(testdir) ; sh testsuite/testsuite.sh constprop/constprop testsuite
+	cd $(testdir) ; bash testsuite/testsuite.sh constprop/constprop testsuite

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Basic test script
 # (C) 2007 Adrian Prantl, Viktor Pavlu
@@ -36,7 +36,7 @@ rm -f $CMDFILE
 ARGS="$UNARY_OPTIONS"
 prev=""
 for tok in $BINARY_OPTIONS; do
-    if [ "$prev" == "" ]; then
+    if [ "x$prev" = x ]; then
         prev=$tok
     else
         ARGS="$ARGS $prev:$tok"
@@ -101,7 +101,7 @@ for file in $FILES; do
 	    runAnalysis $argset
     done 
 	# even no options (only the prefix)
-	if [ "$ARGS" == "" ]; then
+	if [ "x$ARGS" = x ]; then
 	    runAnalysis ""
 	fi
 done
