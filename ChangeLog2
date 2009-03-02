@@ -1,3 +1,32 @@
+2009-03-02 19:37  panas2
+
+	* [r4713] /trunk/ROSE/projects/BinQ/BinQGui.C,
+	  /trunk/ROSE/projects/BinQ/BinQGui.h,
+	  /trunk/ROSE/projects/BinQ/BinQMain.C: Added Destructor calls for
+	  Memory efficiency
+
+2009-03-02 18:45  panas2
+
+	* [r4712] /trunk/ROSE/demo/Makefile.am: added automated checking of
+	  demos
+
+2009-03-02 18:45  panas2
+
+	* [r4711] /trunk/ROSE/projects/BinQ/BinDynamicInfo.C,
+	  /trunk/ROSE/projects/BinQ/BinDynamicInfo.h,
+	  /trunk/ROSE/projects/BinQ/BinQMain.C,
+	  /trunk/ROSE/projects/BinQ/ComplexityMetric.C,
+	  /trunk/ROSE/projects/BinQ/ComplexityMetric.h,
+	  /trunk/ROSE/projects/BinQ/ForbiddenFunctionCall.C,
+	  /trunk/ROSE/projects/BinQ/ForbiddenFunctionCall.h,
+	  /trunk/ROSE/projects/BinQ/InitPointerToNull.C,
+	  /trunk/ROSE/projects/BinQ/InitPointerToNull.h,
+	  /trunk/ROSE/projects/BinQ/MallocAndFree.C,
+	  /trunk/ROSE/projects/BinQ/MallocAndFree.h,
+	  /trunk/ROSE/projects/BinQ/NullAfterFree.C,
+	  /trunk/ROSE/projects/BinQ/NullAfterFree.h: Added capabilities to
+	  BinQ
+
 2009-02-28 22:11  saebjornsen1
 
 	* [r4689] /trunk/ROSE/src/frontend/SageIII/sageSupport.C: Removed
