@@ -3773,7 +3773,7 @@ HEADER_FILE_INFORMATION_START
                 -# Any implicit or unnecessary casts not explicitly represented in the source code
                 -# Instantiated templates
              - Examples of compiler-generated code marked for output (in code generation phase) include:
-                -# Any transformed template instatiations
+                -# Any transformed template instantiations
                 -# required templates assigned to specific files (see ROSE prelinking details)
              - Examples of shared IR nodes include:
                 -# All types (not implemented yet)
