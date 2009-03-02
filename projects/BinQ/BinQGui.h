@@ -36,7 +36,28 @@ class BinQGUI : public BinQAbstract
   //	  std::vector<std::string> dllB, 
   //	  bool test);
   BinQGUI();
-    ~BinQGUI();
+  ~BinQGUI() {
+    itemsFileA.clear();
+    itemsFileB.clear();
+    byteItemFileA.clear();
+    byteItemFileB.clear();
+    rowItemFileA.clear();
+    rowItemFileB.clear();
+
+    if (fileA)
+      delete fileA;
+    if (fileB)
+      delete fileB;
+
+    if( window ) 
+      delete window;
+
+    if (currentSelectedFile)
+      delete currentSelectedFile;
+    if (currentAnalysis)
+      delete currentAnalysis;
+    
+  };
 
     // public functions ---- GUI
     void run( ) ;

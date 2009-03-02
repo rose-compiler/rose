@@ -1157,9 +1157,6 @@ void BinQGUI::showFile(int row, qrs::QRTable* currentWidget,
 }
 
 
-BinQGUI::~BinQGUI(){
-  if( window ) delete window;
-} //BinQGUI::~BinQGUI()
 
 
 
