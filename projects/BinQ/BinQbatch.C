@@ -152,6 +152,3 @@ BinQbatch::runAnalyses( std::vector<BinAnalyses*>& analysesVec, bool init) {
 
 
 
-BinQbatch::~BinQbatch(){
-
-} //BinQGUI::~BinQGUI()

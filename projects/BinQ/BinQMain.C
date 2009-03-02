@@ -61,12 +61,11 @@ double
 createAndDeleteBinGUI(std::string fileName, std::string empty, 
 		      std::vector<std::string> emptyVec, 
 		      std::string saveFile, map<std::string,int>& analysisResults) {
-  BinQbatch* binGui = new BinQbatch(fileName, empty, emptyVec, emptyVec, true, saveFile);
+  BinQbatch binGui(fileName, empty, emptyVec, emptyVec, true, saveFile);
   // run Analyses here and collect info
-  double timeForFile = binGui->getTestAnalysisTime();
+  double timeForFile = binGui.getTestAnalysisTime();
   // iterate through all results and add to current file
-  analysisResults = binGui->getTestAnalysisResults();
-  delete binGui;
+  analysisResults = binGui.getTestAnalysisResults();
   return timeForFile;
 }
 

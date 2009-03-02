@@ -494,6 +494,12 @@ BinQGUI::insertFileInformation() {
 BinQGUI::BinQGUI(){
 }
 
+void 
+BinQGUI::DeleteSgTree( SgNode* root) {
+  DeleteAST deleteTree;
+  deleteTree.traverse(root,postorder);
+}
+
 
 // The GUI is created here
 void BinQGUI::createGUI() {

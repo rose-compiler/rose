@@ -59,7 +59,12 @@ MallocAndFree::visit(SgNode* node) {
 	uint64_t front = succList.front();
 	succList.pop_front();
 	SgAsmx86Instruction* succInst = isSgAsmx86Instruction(info->getInstructionAtAddress(front));
-	SgAsmBlock* succBlock = isSgAsmBlock(succInst->get_parent());
+	SgNode* succBlock = NULL;
+	if (project) 
+	  succBlock= isSgAsmBlock(succInst->get_parent());
+	else //we run IDA, this is different
+	  succBlock=succInst;
+
 	if (succBlock==NULL)
 	  continue;
 	SgAsmFunctionDeclaration* succFunc = isSgAsmFunctionDeclaration(succBlock->get_parent());

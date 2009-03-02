@@ -27,6 +27,21 @@
 class Slide;
 class BinQSupport;
 
+class DeleteAST : public SgSimpleProcessing {
+ public:
+  //! Required traversal function
+  void visit (SgNode* node) {
+    if (node) {
+      // tps , 2March 2009
+      // This node can't be deleted for some reason?!
+      if (!isSgAsmExecutableFileFormat(node)) {
+      	delete node;
+      }
+    }
+  }
+};
+
+
 
 class BinQGUI : public BinQAbstract
 {
@@ -37,6 +52,15 @@ class BinQGUI : public BinQAbstract
   //	  bool test);
   BinQGUI();
   ~BinQGUI() {
+    if (fileA) {
+      DeleteSgTree(fileA);
+      delete fileA;
+    }
+    if (fileB) {
+      DeleteSgTree(fileB);
+      delete fileB;
+    }
+
     itemsFileA.clear();
     itemsFileB.clear();
     byteItemFileA.clear();
@@ -44,10 +68,6 @@ class BinQGUI : public BinQAbstract
     rowItemFileA.clear();
     rowItemFileB.clear();
 
-    if (fileA)
-      delete fileA;
-    if (fileB)
-      delete fileB;
 
     if( window ) 
       delete window;
@@ -56,9 +76,11 @@ class BinQGUI : public BinQAbstract
       delete currentSelectedFile;
     if (currentAnalysis)
       delete currentAnalysis;
+
     
   };
-
+  
+    void DeleteSgTree(SgNode* root);
     // public functions ---- GUI
     void run( ) ;
     void open();
