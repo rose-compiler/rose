@@ -19,6 +19,7 @@ class MallocAndFree : public BinAnalyses, AstSimpleProcessing {
   std::map<SgNode*,std::string> getResult(){return result;}
   
  private:
+  bool project;
   SgAsmGenericFile *genericF;
   void visit(SgNode* node);
   void runTraversal(SgNode* project);

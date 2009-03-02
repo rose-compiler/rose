@@ -33,10 +33,16 @@ ForbiddenFunctionCall::visit(SgNode* node) {
 	//cerr << " match : " << name << endl;
 	string res = "Dont call: ";
 	string funcname="";
-	SgAsmBlock* b = isSgAsmBlock(inst->get_parent());
+	SgNode* instBlock = NULL;
+	if (project) 
+	  instBlock= isSgAsmBlock(inst->get_parent());
+	else //we run IDA, this is different
+	  instBlock=inst;
+
+
 	SgAsmFunctionDeclaration* func = NULL;
-	if (b)
-	  func=isSgAsmFunctionDeclaration(b->get_parent()); 
+	if (instBlock)
+	  func=isSgAsmFunctionDeclaration(instBlock->get_parent()); 
 	if (func)
 	  funcname = func->get_name();
 	res+=name+" ("+RoseBin_support::HexToString(inst->get_address())+") : "+unparseInstruction(inst)+" <"+inst->get_comment()+">";
@@ -90,7 +96,7 @@ ForbiddenFunctionCall::run(SgNode* fileA, SgNode* fileB) {
   if (!testFlag)
     instance = QROSE::cbData<BinQGUI *>();
 
-  if (isSgProject(fileA)==NULL) {
+  if (isSgProject(fileA)==NULL && isSgAsmBlock(fileA)==NULL) {
     cerr << "This is not a valid file for this analysis!" << endl;
     if (!testFlag) {
       QString res = QString("This is not a valid file for this analysis");
@@ -99,10 +105,15 @@ ForbiddenFunctionCall::run(SgNode* fileA, SgNode* fileB) {
     return;
   }
 
-  SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
-  SgAsmFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
-  ROSE_ASSERT(file);
-  info = new VirtualBinCFG::AuxiliaryInformation(file);
+  project=false;
+  SgAsmFile* file = NULL;
+  if (isSgProject(fileA)) {
+    project=true;
+    SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
+    file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
+    ROSE_ASSERT(file);
+    info = new VirtualBinCFG::AuxiliaryInformation(file);
+  }
 
   if (debug)
     cerr << " Running forbidden function call ... " << endl;
@@ -110,12 +121,18 @@ ForbiddenFunctionCall::run(SgNode* fileA, SgNode* fileB) {
     ROSE_ASSERT(instance);
     ROSE_ASSERT(instance->analysisTab);
     instance->analysisTab->setCurrentIndex(1);
-    QString res = QString("Looking at dynamic information : %1").arg(file->get_name().c_str());
-    instance->analysisResult->append(res);  
+    if (isSgProject(fileA)) {
+      QString res = QString("Looking at dynamic information : %1").arg(file->get_name().c_str());
+      instance->analysisResult->append(res);  
+    }
   }
 
-  genericF = file->get_genericFile() ;
-  runTraversal(isSgProject(fileA));
+  if (isSgProject(fileA)) {
+    genericF = file->get_genericFile() ;
+    runTraversal(isSgProject(fileA));
+  }
+  else
+    runTraversal(isSgAsmBlock(fileA));
 
   //  if (debug) {
     std::set<std::string>::const_iterator it = foundFunction.begin();

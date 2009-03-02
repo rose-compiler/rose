@@ -33,7 +33,12 @@ InitPointerToNull::visit(SgNode* node) {
     // this is the address of the mov instruction prior to the call
     //rose_addr_t resolveAddr=0;
     SgAsmx86Instruction* inst = isSgAsmx86Instruction(node);
-    SgAsmBlock* instBlock = isSgAsmBlock(inst->get_parent());
+    SgNode* instBlock = NULL;
+    if (project) 
+      instBlock= isSgAsmBlock(inst->get_parent());
+    else //we run IDA, this is different
+      instBlock=inst;
+
     if (instBlock==NULL)
       return;
     SgAsmFunctionDeclaration* instFunc = isSgAsmFunctionDeclaration(instBlock->get_parent());
@@ -132,7 +137,7 @@ InitPointerToNull::run(SgNode* fileA, SgNode* fileB) {
   if (!testFlag)
     instance = QROSE::cbData<BinQGUI *>();
 
-  if (isSgProject(fileA)==NULL) {
+  if (isSgProject(fileA)==NULL && isSgAsmBlock(fileA)==NULL) {
     cerr << "This is not a valid file for this analysis!" << endl;
     if (!testFlag) {
       QString res = QString("This is not a valid file for this analysis");
@@ -141,22 +146,34 @@ InitPointerToNull::run(SgNode* fileA, SgNode* fileB) {
     return;
   }
 
-  SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
-  SgAsmFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
-  ROSE_ASSERT(file);
-  info = new VirtualBinCFG::AuxiliaryInformation(file);
+  project=false;
+  SgAsmFile* file = NULL;
+  if (isSgProject(fileA)) {
+    project=true;
+    SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
+    file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
+    ROSE_ASSERT(file);
+    info = new VirtualBinCFG::AuxiliaryInformation(file);
+  }
+  else
+    info = new VirtualBinCFG::AuxiliaryInformation(fileA);
 
   if (!testFlag) {
     ROSE_ASSERT(instance);
     ROSE_ASSERT(instance->analysisTab);
     instance->analysisTab->setCurrentIndex(1);
-    QString res = QString("Looking at dynamic information : %1").arg(file->get_name().c_str());
-    instance->analysisResult->append(res);  
+    if (isSgProject(fileA)) {
+      QString res = QString("Looking at dynamic information : %1").arg(file->get_name().c_str());
+      instance->analysisResult->append(res);  
+    }
   }
 
-
-  genericF = file->get_genericFile() ;
-  runTraversal(isSgProject(fileA));
+  if (isSgProject(fileA)) {
+    genericF = file->get_genericFile() ;
+    runTraversal(isSgProject(fileA));
+  }
+  else
+    runTraversal(isSgAsmBlock(fileA));
 
 
   if (instance) {

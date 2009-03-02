@@ -20,6 +20,8 @@ class DynamicInfo : public BinAnalyses,AstSimpleProcessing {
   std::map<SgNode*,std::string> getResult(){return result;}
 
  private:
+  void addCommentsForIDAFiles(SgAsmBlock* fileA);
+  bool project;
   SgAsmGenericFile *genericF;
   void visit(SgNode* node);
   void printOutRelaEntries(SgNode* project);

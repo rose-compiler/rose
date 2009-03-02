@@ -23,7 +23,35 @@ std::string DynamicInfo::getDescription() {
 
 
 void
+DynamicInfo::addCommentsForIDAFiles(SgAsmBlock* fileA) {
+  if (fileA==NULL)
+    return;
+  this->traverse(fileA,preorder);
+}
+
+void
 DynamicInfo::visit(SgNode* node) {
+  if (!project) {
+    // IDA FILE
+    SgAsmx86Instruction* inst = isSgAsmx86Instruction(node);
+    if (inst && inst->get_kind() == x86_call ) {
+      SgAsmOperandList * ops = inst->get_operandList();
+      SgAsmExpressionPtrList& opsList = ops->get_operands();
+      SgAsmExpressionPtrList::const_iterator itOP = opsList.begin();
+      string comment="";
+      for (;itOP!=opsList.end();++itOP) {
+	SgAsmExpression* exp = *itOP;
+	if (exp->get_replacement()!="")
+	  comment = exp->get_replacement();
+      }
+      if (comment!="") {
+	if (comment[0]=='_')
+	  comment = comment.substr(1,comment.size());
+      }
+      inst->set_comment(comment);
+    }
+  }
+  else {
   if (firstIteration) 
     //    if (isSgAsmElfRelaEntryList(node)) {
     if (isSgAsmElfRelocEntryList(node)) {
@@ -144,6 +172,7 @@ DynamicInfo::visit(SgNode* node) {
       }
 
     }
+  }
 }
 
 void
@@ -157,7 +186,7 @@ DynamicInfo::run(SgNode* fileA, SgNode* fileB) {
   if (!testFlag)
     instance = QROSE::cbData<BinQGUI *>();
 
-  if (isSgProject(fileA)==NULL) {
+  if (isSgProject(fileA)==NULL && isSgAsmBlock(fileA)==NULL) {
     cerr << "This is not a valid file for this analysis!" << endl;
     if (!testFlag) {
       QString res = QString("This is not a valid file for this analysis");
@@ -166,12 +195,17 @@ DynamicInfo::run(SgNode* fileA, SgNode* fileB) {
     return;
   }
 
-  SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
-  SgAsmFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
-  ROSE_ASSERT(file);
-  info = new VirtualBinCFG::AuxiliaryInformation(file);
-
-  //  VirtualBinCFG::AuxiliaryInformation* info = new VirtualBinCFG::AuxiliaryInformation(file);
+  project=false;
+  SgAsmFile* file = NULL;
+  if (isSgProject(fileA)) {
+    project=true;
+    SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
+    file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
+    ROSE_ASSERT(file);
+    info = new VirtualBinCFG::AuxiliaryInformation(file);
+  }
+  else
+    info = new VirtualBinCFG::AuxiliaryInformation(fileA);
 
   // call graph analysis  *******************************************************
   if (debug)
@@ -180,10 +214,22 @@ DynamicInfo::run(SgNode* fileA, SgNode* fileB) {
     ROSE_ASSERT(instance);
     ROSE_ASSERT(instance->analysisTab);
     instance->analysisTab->setCurrentIndex(1);
-    QString res = QString("Looking at dynamic information : %1").arg(file->get_name().c_str());
-    instance->analysisResult->append(res);  
+    if (isSgProject(fileA)) {
+      QString res = QString("Looking at dynamic information : %1").arg(file->get_name().c_str());
+      instance->analysisResult->append(res);  
+    }
   }
 
+  if (!isSgProject(fileA)) {
+    // IDA FILE
+    // run here and add comment for call instructions
+    addCommentsForIDAFiles(isSgAsmBlock(fileA));
+    if (instance) {
+      QString res = QString("\n>>>>>>>>>>>>>>>> Resolving call addresses to names ...");
+      instance->analysisResult->append(res);  
+    }
+    return;
+  }
 
   genericF = file->get_genericFile() ;
   symbolMap.clear();

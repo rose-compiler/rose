@@ -18,6 +18,58 @@ using namespace boost;
 using namespace std;
 using namespace boost::filesystem;
 
+
+// unparser for testing purposes
+void 
+printAssembly(string fileNameA, string fileNameB, SgNode* fileA, SgNode* fileB,
+	      bool sourceFile) {
+  // this part writes the file out to an assembly file -----------------------------------
+
+    
+  if(is_directory( fileNameA ) == false ) {
+    SgBinaryFile* binaryFileA = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
+    SgAsmFile* file1 = binaryFileA != NULL ? binaryFileA->get_binaryFile() : NULL;
+    SgAsmInterpretation* interpA = SageInterface::getMainInterpretation(file1);
+
+    unparseAsmStatementToFile(fileNameA+".dump2", interpA->get_global_block());
+  } else if (is_directory( fileNameA ) == true ) {
+    cerr << " Node : " << fileA->class_name() << endl;
+    SgAsmBlock* block = isSgAsmBlock(fileA);
+    if (block) {
+      //      SgProject* proj = new SgProject();
+      //      proj->append_statement(block);
+      //proj->insertStatementInScope(block,false);
+      //      SageInterface::appendStatement(
+      //     isSgStatement(block),isSgScopeStatement(proj));
+      //block->set_parent(proj);
+
+
+      //fileA=proj;
+    }
+  }
+
+  if (fileNameB!="") 
+    if(is_directory( fileNameB  ) == false && sourceFile==false) {
+      SgBinaryFile* binaryFileB = isSgBinaryFile(isSgProject(fileB)->get_fileList()[0]);
+      SgAsmFile* file2 = binaryFileB != NULL ? binaryFileB->get_binaryFile() : NULL;
+      SgAsmInterpretation* interpB = SageInterface::getMainInterpretation(file2);
+      unparseAsmStatementToFile(fileNameB+".dump2", interpB->get_global_block());
+    }
+}
+
+double
+createAndDeleteBinGUI(std::string fileName, std::string empty, 
+		      std::vector<std::string> emptyVec, 
+		      std::string saveFile, map<std::string,int>& analysisResults) {
+  BinQbatch binGui(fileName, empty, emptyVec, emptyVec, 
+		   true,saveFile);
+  // run Analyses here and collect info
+  double timeForFile = binGui.getTestAnalysisTime();
+  // iterate through all results and add to current file
+  analysisResults = binGui.getTestAnalysisResults();
+  return timeForFile;
+}
+
 // runs a list of files and returns the results
 void
 runListMode(string saveFile, 
@@ -33,99 +85,79 @@ runListMode(string saveFile,
   }
   while (inFile >> fileName) {
     //    if (!is_directory(fileName))
-      files.push_back(fileName);
+    files.push_back(fileName);
   }
   inFile.close();
   cerr << "Reading done. Files found: " << files.size() << endl;
 
   // store the final results per file
-  map<string, map<string,int> > fileResults;
+  int columns=0;
   int i=0;
   string timeStr="Time";
   string empty="";
   vector<string> emptyVec;
+  ofstream fp_out;
+  bool firstIt=true;
+  int* totalBugs = NULL;
+  double totalTime=0;
+  fp_out.open("results.xls", ios::out);
   // iterate through all files
   vector<string>::const_iterator it = files.begin();
+  map<string,int> analysisRes;
   for (;it!=files.end();++it) {
     string fileName = *it;
     cerr << "Analyzing : " << fileName ;
-    if (i<5) {
-      BinQbatch binGui(fileName, empty, emptyVec, emptyVec, 
-		       true,saveFile);
-      // run Analyses here and collect info
-      double timeForFile = binGui.getTestAnalysisTime();
-      // iterate through all results and add to current file
-      map<string,int> analysisResults = binGui.getTestAnalysisResults();
-      analysisResults[timeStr]=(int)timeForFile*10;
-      fileResults[fileName]= analysisResults;
-      cerr << " time : " << analysisResults[timeStr]<<endl;
+    //if (i<10) {
+    analysisRes.clear();
+    double timeForFile = createAndDeleteBinGUI(fileName, empty, emptyVec, 
+					       saveFile, analysisRes);
+    if (i==0) {
+      columns=analysisRes.size();
+      totalBugs = new int[columns];
+      for (int i=0;i<columns;++i) {
+	totalBugs[i]=0;
+      }
     }
-    i++;
-  }
-
-  // print results to file
-  ofstream fp_out;
-  bool firstIt=true;
-  fp_out.open("results.xls", ios::out);
-  map<string, map<string,int> >::const_iterator it2= fileResults.begin();
-  for (;it2!=fileResults.end();++it2) {
-    string fileName = it2->first;
-    map<string,int> analysisRes = it2->second;
+    // remove -tsv
+    if (fileName.size()>4)
+      fileName = fileName.substr(0,fileName.size()-4);
+    //map<string,int> analysisRes = it2->second;
     cerr << "Writing results for : " << fileName << endl;
     if (firstIt) {
-	firstIt=false;
-	fp_out << "FILENAME " ;
-	map<string,int>::const_iterator it4 = analysisRes.begin();
-	for (;it4!=analysisRes.end();++it4) {
-	  string analysisName = it4->first;
-	  fp_out << "\t" << analysisName ;
-	}
-	fp_out << endl;
+      firstIt=false;
+      fp_out << "FILENAME " ;
+      map<string,int>::const_iterator it4 = analysisRes.begin();
+      for (;it4!=analysisRes.end();++it4) {
+	string analysisName = it4->first;
+	fp_out << "\t" << analysisName ;
+      }
+      fp_out << "\tTotal Bugs \tTime" << endl;
     }
     map<string,int>::const_iterator it3 = analysisRes.begin();
     fp_out << fileName ;
+    int totalbugsRow=0;
+    int j=0;
     for (;it3!=analysisRes.end();++it3) {
       int value = it3->second;
-      ++it3;
-      if (it3==(analysisRes.end())) {
-	double val = value/10;
-	fp_out << "\t" << val;
-	--it3;
-      } else {
-	--it3;
-	fp_out << "\t" << value;
-      }
+      fp_out << "\t" << value;
+      totalbugsRow +=value;
+      totalBugs[j]+=value;
+      j++;
     }
-    fp_out << endl;
+    totalTime += timeForFile;
+    fp_out << "\t" <<totalbugsRow << "\t" <<timeForFile << endl;
+    //      }
+    i++;
+
   }
+  for (int i=0;i<columns;++i) {
+    fp_out << "\t" <<totalBugs[i];
+  }
+  fp_out << "\t" << totalTime << endl;
   fp_out.close(); 
 }
 
 
-// unparser for testing purposes
-void 
-printAssembly(string fileNameA, string fileNameB, SgNode* fileA, SgNode* fileB,
-		   bool sourceFile) {
-      // this part writes the file out to an assembly file -----------------------------------
-
-    
-       if(is_directory( fileNameA ) == false ) {
-
-        SgBinaryFile* binaryFileA = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
-        SgAsmFile* file1 = binaryFileA != NULL ? binaryFileA->get_binaryFile() : NULL;
-        SgAsmInterpretation* interpA = SageInterface::getMainInterpretation(file1);
-
-        unparseAsmStatementToFile(fileNameA+".dump2", interpA->get_global_block());
-      }
-
-      if (fileNameB!="") 
-        if(is_directory( fileNameB  ) == false && sourceFile==false) {
-        SgBinaryFile* binaryFileB = isSgBinaryFile(isSgProject(fileB)->get_fileList()[0]);
-        SgAsmFile* file2 = binaryFileB != NULL ? binaryFileB->get_binaryFile() : NULL;
-        SgAsmInterpretation* interpB = SageInterface::getMainInterpretation(file2);
-        unparseAsmStatementToFile(fileNameB+".dump2", interpB->get_global_block());
-      }
-}
 
 
 // main function for BinQ
