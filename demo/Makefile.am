@@ -73,25 +73,29 @@ demo_1:
 	@echo "End of demo_1"
 
 # This demo show the handling of different formats (ELF and PE) and different instruction sets (ARM, PowerPC, x86).
-demo_2:
+demo_2: demo_2_test
+	emacs $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests/asm_code_samples_gcc.exe.dump
+	@echo "End of demo_2"
+
+demo_2_test:
 	cd $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests; $(MAKE) demo_binary_file_format_Linux
 	cd $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests; $(MAKE) demo_with_instructions_Linux
 	cd $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests; $(MAKE) demo_binary_file_format_PE
 	cd $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests; $(MAKE) demo_with_instructions_PE
 	cd $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests; $(MAKE) demo_binary_file_format_ARM
 	cd $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests; $(MAKE) demo_with_instructions_ARM
-	emacs $(top_builddir)/developersScratchSpace/Dan/Disassembler_tests/asm_code_samples_gcc.exe.dump
-	@echo "End of demo_2"
 
 # This demo shows the generation of a few different forms of analysis on binaries
-demo_3:
-	cd $(top_builddir)/projects/BinQ; $(MAKE) demo_show_source_code;
+demo_3: demo_3_test
 	@echo "Run callgraph analysis, control flow analysis, and data flow analysis"
 	cd $(top_builddir)/projects/BinQ; $(MAKE) demo_withoutAnalysisRunInBatchMode;
 	cd $(top_builddir)/projects/BinQ; zgrviewer callgraph.dot &
 	cd $(top_builddir)/projects/BinQ; zgrviewer cfg.dot &
 	cd $(top_builddir)/projects/BinQ; zgrviewer dfg.dot &
 	@echo "End of demo_3"
+
+demo_3_test:
+	cd $(top_builddir)/projects/BinQ; $(MAKE) demo_show_source_code;
 
 # Example of buffer overflow detector
 demo_4:
@@ -222,6 +226,11 @@ demoBinaryEquivalence: testBinaryEquivalence
 check-local:
 	@echo "ROSE demo."
 	@$(MAKE) $(PASSING_TEST_Objects)
+	@echo "Testing demos..." 
+	make demo_2_test
+	make demo_3_test
+	make demo_10
+	make demo_13
 	@echo "****************************************************************************"
 	@echo "******** ROSE/demo: make check rule complete (terminated normally) *********"
 	@echo "****************************************************************************"
