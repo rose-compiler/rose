@@ -1,3 +1,24 @@
+2009-03-02 21:51  panas2
+
+	* [r4717] /trunk/ROSE/projects/BinQ/BinQGui.C,
+	  /trunk/ROSE/projects/BinQ/BinQGui.h,
+	  /trunk/ROSE/projects/BinQ/BinQMain.C,
+	  /trunk/ROSE/projects/BinQ/BinQbatch.C,
+	  /trunk/ROSE/projects/BinQ/BinQbatch.h,
+	  /trunk/ROSE/projects/BinQ/MallocAndFree.C: Fixed Memory leaks
+
+2009-03-02 21:41  panas2
+
+	* [r4716] /trunk/ROSE/demo/Makefile.am: demo 13 didnt seem to work
+	  on tux248 lunch test -- commented out
+
+2009-03-02 21:19  liao6
+
+	* [r4715] /trunk/ROSE/src/ROSETTA/Grammar/Support.code,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/frontend/SageIII/virtualCFG/virtualBinCFG.C:
+	  Enabled more ROSE source files to be compiled by rose translators
+
 2009-03-02 19:37  panas2
 
 	* [r4713] /trunk/ROSE/projects/BinQ/BinQGui.C,
