@@ -6,6 +6,13 @@
 #include "IrCreation.h"
 #include <cstring>
 
+CFG::CFG()
+  : global_return_variable_symbol(NULL), global_this_variable_symbol(NULL),
+    global_unknown_type(NULL), analyzerOptions(NULL),
+    pointsToAnalysis(NULL), contextInformation(NULL)
+{
+}
+
 CFG::~CFG()
 {
     std::deque<Procedure *>::iterator p;
@@ -871,20 +878,6 @@ CFG::print_map() const
             << Ir::fragmentToString((i->second)) << std::endl;
     }
 }
-
-#if HAVE_PAG
-bool
-CFG::hasContextInfo() const
-{
-    return !contexts.empty();
-}
-
-void
-CFG::addContext(const Context &c)
-{
-    contexts.push_back(c);
-}
-#endif
 
 #if 0
 void

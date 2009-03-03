@@ -6,11 +6,60 @@
 
 #if HAVE_PAG
 
-class Context;
+#include <vector>
+#include <map>
+#include <ostream>
 
+class CFG;
+
+class ContextInformation
+{
+public:
+    class Context;
+    class CallSite;
+    class CallString;
+
+    const std::vector<Context> &allContexts() const;
+    const CallString &contextCallString(const Context &c) const;
+    bool isSpontaneousContext(const Context &c) const;
+    const std::vector<Context> &parentContexts(const Context &c) const;
+
+    void print(std::ostream &stream) const;
+    void printContextGraph(std::ostream &stream) const;
+
+    ContextInformation(CFG *icfg);
+
+private:
+    CFG *icfg;
+    std::vector<Context> contexts;
+    std::map<Context, CallString> callstrings;
+    std::map<Context, std::vector<Context> > parents;
+
+    void computeParentInfo(const Context &c);
+};
+
+// Only include cfg_support.h here; this has to do with circular
+// dependencies between this file and that one. Life is hard.
 #include "cfg_support.h"
 
-class CallSite
+class ContextInformation::Context
+{
+public:
+    int procnum;
+    int position;
+
+    std::string procName;
+    std::string toString() const;
+
+    Context(int procnum, int position, CFG *icfg);
+};
+
+bool
+operator<(const ContextInformation::Context &a,
+          const ContextInformation::Context &b);
+
+class ContextInformation::CallSite
+
 {
 public:
     int procnum;    // the number of the calling procedure
@@ -23,23 +72,14 @@ public:
     CallSite(int procnum, int node_id, int target_procnum, CFG *icfg);
 };
 
-class Context
+class ContextInformation::CallString
 {
 public:
-    int procnum;
-    int position;
-
-    std::string procName;
-
- // This is the sequence of call sites, callers first. I.e., if f calls g,
  // and g calls h, then this will contain the call sites <f, g>, <g, h> in
  // this order.
-    typedef std::vector<CallSite> CallString;
-    CallString callstring;
+    std::vector<CallSite> callstring;
 
-    Context(int procnum, int position, CFG *icfg);
-
-    bool isSpontaneous() const;
+    CallString(int procnum, int position, CFG *icfg);
     std::string toString() const;
 };
 

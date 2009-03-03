@@ -91,4 +91,6 @@ BOOL_ATTR(resolveFuncPtrCalls, Off)
 #if HAVE_PAG
 BOOL_ATTR(computeCallStrings, On)
 BOOL_ATTR(outputCallStrings, Off)
+BOOL_ATTR(outputContextGraph, Off)
+STRING_ATTR(ContextGraphFileName, "")
 #endif

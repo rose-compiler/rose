@@ -65,6 +65,7 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo(""),_n
     "   --output-call-strings    experimental: print call strings used by PAG\n"
     "   --no-output-call-strings do not attempt to output call strings [default]\n"
     "                            programs only)\n"
+    "   --output-context-graph=<FILENAME> output DOT graph of calling contexts\n"
     "   --cfgordering=<num>      set ordering that is used by the iteration\n"
     "                            algorithm where\n"
     "                                  <num> = 1 : dfs preorder [default]\n"

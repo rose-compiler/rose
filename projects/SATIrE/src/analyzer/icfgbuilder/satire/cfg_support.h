@@ -123,14 +123,6 @@ public:
  // debugging
     void print_map() const;
 
-#if HAVE_PAG
- // context/call string info
-    bool hasContextInfo() const;
-    void addContext(const Context &c);
-    typedef std::vector<Context> ContextContainer;
-    ContextContainer contexts;
-#endif
-
  // a single symbol for all return variables in the program
     SgVariableSymbol *global_return_variable_symbol;
  // a single set of argument variables for all function calls
@@ -146,6 +138,12 @@ public:
 
     SATIrE::Analyses::PointsToAnalysis *pointsToAnalysis;
 
+#if HAVE_PAG
+ // context/call string info
+    ContextInformation *contextInformation;
+#endif
+
+    CFG();
     ~CFG();
 
 #if 0

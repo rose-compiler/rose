@@ -67,7 +67,7 @@ private:
 #if HAVE_PAG
  // Helper methods for computing/printing call strings.
     void computeCallStrings(Program *program) const;
-    void outputCallStrings(Program *program) const;
+    void outputContextData(Program *program) const;
 #endif
 };
 

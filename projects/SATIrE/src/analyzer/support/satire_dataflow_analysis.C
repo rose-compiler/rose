@@ -81,8 +81,8 @@ DataFlowAnalysis::processResults(Program *program)
     p_impl->outputAnnotatedProgram(program);
 
 #if HAVE_PAG
-    /* Print call strings if requested. */
-    outputCallStrings(program);
+    /* Print call strings and other context data if requested. */
+    outputContextData(program);
 #endif
 }
 
@@ -101,45 +101,49 @@ DataFlowAnalysis::~DataFlowAnalysis()
 void
 DataFlowAnalysis::computeCallStrings(Program *program) const
 {
- // See if there is anything to do at all...
     CFG *icfg = program->icfg;
-    if (icfg->hasContextInfo())
-        return;
-
-    int procs = kfg_num_procs(icfg);
-    for (int p = 0; p < procs; p++)
-    {
-        KFG_NODE entry = kfg_numproc(icfg, p);
-        int arity = kfg_arity_id(kfg_get_id(icfg, entry));
-        for (int pos = 0; pos < arity; pos++)
-            icfg->addContext(Context(p, pos, icfg));
-    }
+    if (icfg->contextInformation == NULL)
+        icfg->contextInformation = new ContextInformation(icfg);
 }
 
 
 void
-DataFlowAnalysis::outputCallStrings(Program *program) const
+DataFlowAnalysis::outputContextData(Program *program) const
 {
-    if (!program->options->outputCallStrings())
-        return;
-
     CFG *icfg = program->icfg;
-
- // Shouldn't happen: The context info should be computed beforehand.
-    if (!icfg->hasContextInfo())
+    if (program->options->outputCallStrings())
     {
-        std::cerr
-            << "*** SATIrE internal error: output of call strings requested, "
-            << "but no context info is available!"
-            << std::endl;
-        std::abort();
+        if (icfg->contextInformation == NULL)
+        {
+            std::cerr
+                << "*** error: can't output context data, no data available!"
+                << std::endl;
+            std::abort();
+        }
+
+        icfg->contextInformation->print(std::cout);
     }
-
-    CFG::ContextContainer::iterator c = icfg->contexts.begin();
-    while (c != icfg->contexts.end())
+    if (program->options->outputContextGraph())
     {
-        std::cout << c->toString() << std::endl;
-        ++c;
+        if (icfg->contextInformation == NULL)
+        {
+            std::cerr
+                << "*** error: can't output context data, no data available!"
+                << std::endl;
+            std::abort();
+        }
+
+        std::ofstream outfile(
+                program->options->getContextGraphFileName().c_str());
+        if (!outfile)
+        {
+            std::cerr
+                << "*** error: couldn't open output file "
+                << program->options->getContextGraphFileName()
+                << std::endl;
+            std::abort();
+        }
+        icfg->contextInformation->printContextGraph(outfile);
     }
 }
 #endif
