@@ -229,7 +229,7 @@ check-local:
 	@echo "Testing demos..." 
 	make demo_2_test
 	make demo_3_test
-	make demo_10
+#	make demo_10
 #	make demo_13
 	@echo "****************************************************************************"
 	@echo "******** ROSE/demo: make check rule complete (terminated normally) *********"
