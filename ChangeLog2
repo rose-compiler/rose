@@ -1,3 +1,11 @@
+2009-03-03 21:27  liao6
+
+	* [r4729] /trunk/ROSE/projects/compass/tools/compass/Makefile.am,
+	  /trunk/ROSE/projects/compass/tools/compass/tests/Makefile.am,
+	  /trunk/ROSE/projects/compass/tools/compassVerifier/Makefile.am,
+	  /trunk/ROSE/projects/compass/tools/sampleCompassSubset/Makefile.am:
+	  fixed compass-related distclean problem
+
 2009-03-03 18:42  liao6
 
 	* [r4727]
