@@ -153,11 +153,16 @@ Sg_File_Info* GetFileInfo()
 
 SgScopeStatement* GetNullScope()
 {
+#if 1  //This will break AstTests::runAllTests(), Liao, 2/24/2009
+       // No secondary SgGlobal is allowed in a single SgFile
   static SgGlobal* global = 0;
   if (global == 0) {
     global = new SgGlobal();
   }
   return global;
+#else
+  return NULL;
+#endif  
 }
 
 inline bool HasNullParent(SgNode* n)
@@ -257,7 +262,7 @@ SgScopeStatement* GetScope( SgNode* loc)
      ROSE_ASSERT(cur != NULL);
      return cur;
 }
-
+//! Build a variable reference expression from _exp
 SgVarRefExp* ToVarRef( AstInterface& fa, const AstNodePtr& _exp)
 {
   SgNode* exp = AstNodePtrImpl(_exp).get_ptr();
@@ -1258,8 +1263,7 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
 }
 //! Check if a node is an assignment statement/expression, grab its lhs and rhs
 //Set readlhs to false if the operation is not Assign op (Others read lhs and write it also)
-bool AstInterface::
-IsAssignment( const AstNodePtr& _s, AstNodePtr* lhs, AstNodePtr* rhs, bool *readlhs) 
+bool AstInterface::IsAssignment( const AstNodePtr& _s, AstNodePtr* lhs, AstNodePtr* rhs, bool *readlhs) 
 { 
   SgNode* s = AstNodePtrImpl(_s).get_ptr(); 
   SgExprStatement *n = isSgExprStatement(s);
@@ -1714,6 +1718,7 @@ void AstInterfaceImpl:: AddNewVarDecls()
       newVarList.clear();
    } 
 
+//Build a variable reference expression based on varname and scope of _loc
 AstNodePtr AstInterface::CreateVarRef( string varname, const AstNodePtr& _loc) 
    {
       SgNode* loc = AstNodePtrImpl(_loc).get_ptr();
@@ -1730,7 +1735,7 @@ AstNodePtr AstInterface::CreateVarRef( string varname, const AstNodePtr& _loc)
       SgScopeStatement *scope = (loc == 0)? 0 : GetScope(loc);
       SgVariableSymbol *sym = impl->GetVar(varname, scope);
       if (sym == 0) {
-         cerr << "Error : variable " << varname << " not found in scope " << scope << ". \n";
+         cerr << "Error in AstInterface::CreateVarRef(): variable " << varname << " not found in scope " << scope << ". \n";
          assert(false); 
       }
       SgVarRefExp *r = new SgVarRefExp( GetFileInfo(), sym);
@@ -2357,7 +2362,7 @@ bool AstInterface::IsFortranLoop( const AstNodePtr& _s, AstNodePtr* ivar ,
    if (fs == 0) {
       return false;
     }
-    // Must have initialization statements
+    // Must have initialization statements like i=1;
     SgStatementPtrList &init = fs->get_init_stmt();
     if (init.size() != 1) return false;
     
@@ -2370,7 +2375,7 @@ bool AstInterface::IsFortranLoop( const AstNodePtr& _s, AstNodePtr* ivar ,
       if (! AstInterface::IsVarRef(ivarast, 0, &varname)) {
          return false; 
       }
-
+     // verify test expression
       SgExpression* test = fs->get_test_expr();
       int t = test->variantT();
       switch (t) {
@@ -2385,7 +2390,9 @@ bool AstInterface::IsFortranLoop( const AstNodePtr& _s, AstNodePtr* ivar ,
       string testvarname;
       if (!AstInterface::IsVarRef(AstInterface::SkipCasting(testlhs), 0, &testvarname) ||
               varname != testvarname) return false;
+              // grab the right hand operand as the upper bound
       ubast = isSgBinaryOp(test)->get_rhs_operand();
+      //3. test increment expression
       SgExpression* incr = fs->get_increment();
       switch (incr->variantT()) {
         case V_SgPlusAssignOp:
@@ -2393,6 +2400,7 @@ bool AstInterface::IsFortranLoop( const AstNodePtr& _s, AstNodePtr* ivar ,
         default:
            return false;
       }
+      // get the variable being incremented
       AstNodePtrImpl incrlhs = isSgBinaryOp(incr)->get_lhs_operand();
       string incrvarname;
       if ( !AstInterface::IsVarRef(AstInterface::SkipCasting(incrlhs), 0, &incrvarname) ||
@@ -3074,7 +3082,12 @@ ReplaceAst( SgNode* orig, SgNode* n)
     }
     */
     SgNode *p = orig->get_parent();
-    if (p == 0) return false;
+    if (p == 0) 
+    {
+      printf("AstInterface.C ReplaceAst(): the original Ast has NULL parent!\n");
+    //  assert (false); //Liao, TODO here
+      return false;
+    }
     SgStatement *stmtOrig = isSgStatement(orig);
     SgStatement* stmtParent = isSgStatement(p);
     if (stmtOrig != 0) {
