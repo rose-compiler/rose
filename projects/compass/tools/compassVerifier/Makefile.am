@@ -35,7 +35,7 @@ check-local:
 EXTRA_DIST = CHECKER_LIST RULE_SELECTION.in
 
 clean-local:
-	rm -f compass_parameters *.ti a.out *.lo *.la
+	rm -f compass_parameters *.ti a.out *.lo *.la rose_*.[cC]
 	rm -f *_tmp*.txt verify.makefile catChecker*
 
 CLEANFILES = CHECKER_LIST_WITHOUT_COMMENTS compass_parameters buildCheckers.C checkers.h verify.inc verify.makefile compass_makefile.inc functions.allow compassTestMain.C RULE_SELECTION

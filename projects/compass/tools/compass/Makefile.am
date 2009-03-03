@@ -42,7 +42,7 @@ distclean-local:
 	rm -rf Templates.DB ale3d-typedefs.sn *.sn
 
 clean-local:
-	rm -f *.ti a.out *.lo *.la
+	rm -f *.ti a.out *.lo *.la rose_*.[cC]
 
 EXTRA_DIST = CHECKER_LIST RULE_SELECTION.in certExample.txt ChangeLog NOTES \
 	emacs_compass_config.el

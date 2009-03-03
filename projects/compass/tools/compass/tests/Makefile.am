@@ -38,6 +38,6 @@ distclean-local:
 	rm -rf Makefile 
 
 clean-local:
-	rm -rf *.o 
+	rm -rf *.o rose_*.[cC]
 
 EXTRA_DIST = exampleTest_1.C exampleTest_2.C README
