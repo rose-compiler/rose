@@ -116,7 +116,7 @@ SgNode* BinQSupport::disassembleFile(std::string tsv_directory, std::string& sou
     ending =tsv_directory.substr(found+1,tsv_directory.length());
   }
   std::cout << "\nDisassembling: " << tsv_directory << " Ending : " << ending << std::endl;
-  
+    
   if(is_directory( tsv_directory  ) == true ){
     std::cout << "\nsql: " << tsv_directory << std::endl;
     RoseBin_Def::RoseAssemblyLanguage=RoseBin_Def::x86;

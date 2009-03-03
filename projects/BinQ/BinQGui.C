@@ -496,8 +496,56 @@ BinQGUI::BinQGUI(){
 
 void 
 BinQGUI::DeleteSgTree( SgNode* root) {
+#if 0
+  VariantVector vv1 = V_SgNode;
+  std::cout << "Number of nodes before: " << 
+    NodeQuery::queryMemoryPool(vv1).size() << std::endl;
+
   DeleteAST deleteTree;
   deleteTree.traverse(root,postorder);
+
+  vector<SgNode*> vec = NodeQuery::queryMemoryPool(vv1);
+  std::cout << "Number of nodes after deleting in AST: " << 
+    vec.size() << std::endl;
+
+  vector<SgNode*>::const_iterator it = vec.begin();
+  for (;it!=vec.end();++it) {
+    SgNode* node = *it;
+    // tps :: the following nodes are not deleted with the 
+    // AST traversal. We can only delete some of them -
+    // but not all within the memory pool traversal
+    cerr << "  Not deleted : " << node->class_name() ;
+    if (!isSgAsmTypeByte(node) &&
+	!isSgAsmTypeWord(node) &&
+	!isSgAsmTypeDoubleWord(node) &&
+	!isSgAsmTypeQuadWord(node) &&
+
+	!isSgAsmType128bitFloat(node) && 
+	!isSgAsmType80bitFloat(node) && 
+	!isSgAsmTypeDoubleFloat(node) && 
+	!isSgAsmTypeDoubleQuadWord(node) && 
+	!isSgAsmTypeSingleFloat(node) && 
+	!isSgAsmTypeVector(node) && 
+
+	!isSgAsmGenericFile(node) &&
+	!isSgAsmGenericHeader(node) &&
+	!isSgAsmGenericSection(node) &&
+	!isSgAsmExecutableFileFormat(node) &&
+	!isSgSupport(node) &&
+	!isSgAsmFile(node) &&
+	!isSgAsmInterpretation(node) &&
+	!isSgProject(node) &&
+	!isSgNode(node)
+	) {
+      cerr << " .. deleting. " ;
+      delete node;
+    }
+    cerr << endl;
+  }
+
+    std::cout << "Number of nodes after deeleting in Memory pool: " << 
+  NodeQuery::queryMemoryPool(vv1).size() << std::endl;
+#endif  
 }
 
 

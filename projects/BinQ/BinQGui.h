@@ -34,7 +34,7 @@ class DeleteAST : public SgSimpleProcessing {
     if (node) {
       // tps , 2March 2009
       // This node can't be deleted for some reason?!
-      if (!isSgAsmExecutableFileFormat(node)) {
+      if (!isSgAsmExecutableFileFormat(node) ) {
       	delete node;
       }
     }
@@ -43,15 +43,11 @@ class DeleteAST : public SgSimpleProcessing {
 
 
 
-class BinQGUI : public BinQAbstract
-{
+class BinQGUI : public BinQAbstract {
   public:
-  //  BinQGUI(std::string, std::string,     
-  //	  std::vector<std::string> dllA,     
-  //	  std::vector<std::string> dllB, 
-  //	  bool test);
   BinQGUI();
   ~BinQGUI() {
+    //std::cerr << "Calling Destructor" << std::endl;
     if (fileA) {
       DeleteSgTree(fileA);
       delete fileA;
@@ -67,7 +63,6 @@ class BinQGUI : public BinQAbstract
     byteItemFileB.clear();
     rowItemFileA.clear();
     rowItemFileB.clear();
-
 
     if( window ) 
       delete window;
