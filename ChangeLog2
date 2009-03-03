@@ -1,3 +1,45 @@
+2009-03-03 18:42  liao6
+
+	* [r4727]
+	  /trunk/ROSE/developersScratchSpace/Dan/Compass_tests/Makefile.am,
+	  /trunk/ROSE/projects/OpenMP_Translator/ompTranslator.C,
+	  /trunk/ROSE/projects/compass/src/compassSupport/compassMain.C,
+	  /trunk/ROSE/projects/compass/tools/compass/Makefile.am,
+	  /trunk/ROSE/projects/compass/tools/compass/tests/Makefile.am,
+	  /trunk/ROSE/projects/compass/tools/compassVerifier/Makefile.am,
+	  /trunk/ROSE/projects/compass/tools/sampleCompassSubset/Makefile.am,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Leo-daily.sh,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Leo-head.sh,
+	  /trunk/ROSE/src/backend/unparser/CxxCodeGeneration/unparseCxx_types.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C,
+	  /trunk/ROSE/src/midend/astUtil/astInterface/AstInterface.C,
+	  /trunk/ROSE/src/midend/loopProcessing/driver/NormalizeCPP.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/Makefile-pass.inc,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/inputBug327.C,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/build_tests-1pass.sh:
+	  Various fixes to enable compassMain handle more ROSE source files
+	  
+	  * Handled more rose specific command line options introduced by
+	  compassMain() in SgFile::stripRoseCommandLineOptions()
+	  * Fixed bug 327: enabling unparsing const for pointer to member
+	  function in function parameter lists
+	  * Enabled compassMain to act like a compiler, -rose:skip_unparser
+	  -rose:skipfinalCompileStep have to be used to have an
+	  analysis-only behavior
+
+2009-03-03 18:30  panas2
+
+	* [r4726] /trunk/ROSE/projects/BinQ/BinQGui.C,
+	  /trunk/ROSE/projects/BinQ/BinQGui.h,
+	  /trunk/ROSE/projects/BinQ/BinQSupport.C,
+	  /trunk/ROSE/projects/BinQ/Makefile.am,
+	  /trunk/ROSE/projects/BinQ/test.C: Experiments with Memory
+	  Deallocation
+
+2009-03-03 17:22  panas2
+
+	* [r4725] /trunk/ROSE/demo/Makefile.am: Commented out demo for now
+
 2009-03-02 21:51  panas2
 
 	* [r4717] /trunk/ROSE/projects/BinQ/BinQGui.C,
