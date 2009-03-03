@@ -577,7 +577,13 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                        }
                     curprint ( ")"); 
                  // curprint ( "\n/* In unparseMemberPointerType(): end of argument list */ \n";
+                 
                     unparseType(ftype->get_return_type(), info); // second part
+
+                 // Liao, 2/27/2009, add "const" specifier to fix bug 327
+                    if (ftype->isConstFunc()) 
+                      curprint(" const ");
+ 
                   }
                  else
                   {

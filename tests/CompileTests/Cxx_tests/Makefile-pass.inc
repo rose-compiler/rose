@@ -655,7 +655,8 @@ lexPhase2003_01.C \
 math.C \
 inputForLoopLocator.C \
 X.C \
-inputBug317.C
+inputBug317.C \
+inputBug327.C
 
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS_SHORT = \
 test2001_02.C \

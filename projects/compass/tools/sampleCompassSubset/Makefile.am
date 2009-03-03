@@ -23,7 +23,7 @@ sampleCompassSubset_LDADD = -lSampleCompassSubsetCheckers $(ROSE_LIBS)
 sampleCompassSubset_DEPENDENCIES = $(compass_support_bdir)/libCompass.la $(compass_detector_libs) libSampleCompassSubsetCheckers.la
 
 test: sampleCompassSubset compass_parameters $(compass_test_dir)/exampleTest_1.C
-	env COMPASS_PARAMETERS=./compass_parameters ./sampleCompassSubset $(compass_test_dir)/exampleTest_1.C 
+	env COMPASS_PARAMETERS=./compass_parameters ./sampleCompassSubset -rose:skip_unparser -rose:skipfinalCompileStep $(compass_test_dir)/exampleTest_1.C 
 
 docs:
 	@echo "Write your documentation rule here"

@@ -20,10 +20,10 @@ compassMain_DEPENDENCIES = $(compass_support_bdir)/libCompass.la $(compass_detec
 
 
 test: compassMain compass_parameters $(compass_test_dir)/exampleTest_1.C 
-	env COMPASS_PARAMETERS=./compass_parameters ./compassMain $(compass_test_dir)/exampleTest_1.C
+	env COMPASS_PARAMETERS=./compass_parameters ./compassMain -rose:skip_unparser -rose:skipfinalCompileStep $(compass_test_dir)/exampleTest_1.C
 
 testCmdLineMashup: compassMain compass_parameters $(compass_test_dir)/exampleTest_1.C $(srcdir)/NOTES
-	env COMPASS_PARAMETERS=./compass_parameters ./compassMain $(srcdir)/NOTES $(compass_test_dir)/exampleTest_1.C
+	env COMPASS_PARAMETERS=./compass_parameters ./compassMain -rose:skip_unparser -rose:skipfinalCompileStep $(srcdir)/NOTES $(compass_test_dir)/exampleTest_1.C
 
 docs:
 	cd doc; $(MAKE) docs

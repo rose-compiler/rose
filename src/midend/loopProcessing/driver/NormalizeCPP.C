@@ -65,7 +65,7 @@ class NormalizeLoopTraverse : public ProcessAstTree
       if (fs == 0) 
         { succ = false; return true; }
 
-      // Must have init statements
+      // Must have only one init statement
       SgStatementPtrList &init = fs->get_init_stmt();
       if (init.size() != 1)  
         {succ = false; return true; }

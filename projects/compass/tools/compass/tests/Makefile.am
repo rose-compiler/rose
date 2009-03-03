@@ -19,7 +19,7 @@ VALGRIND =
 TEST_Objects = ${TESTCODES:.C=.o}
 
 $(TEST_Objects): ../compassMain ../compass_parameters
-	env COMPASS_PARAMETERS=../compass_parameters $(VALGRIND) ../compassMain --compass:silent $(ROSE_FLAGS) -I$(top_builddir) $(INCLUDES) -rose:includeFile $(@:.o=) -c $(srcdir)/$(@:.o=.C)
+	env COMPASS_PARAMETERS=../compass_parameters $(VALGRIND) ../compassMain --compass:silent $(ROSE_FLAGS) -I$(top_builddir) $(INCLUDES) -rose:includeFile $(@:.o=) -rose:skip_unparser -rose:skipfinalCompileStep -c $(srcdir)/$(@:.o=.C)
 
 ../compass_parameters:
 	cd ..; $(MAKE) compass_parameters

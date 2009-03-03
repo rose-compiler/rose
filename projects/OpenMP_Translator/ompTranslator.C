@@ -1070,6 +1070,7 @@ int ASTtools::deepCopy(SgStatement* srcstmt, SgBasicBlock * targetbb)
 // get the loop index variable from a for loop
 // 2 cases: for (i=X,...) or for (int i=X,...)
 // only consider canonical form because that is the only legal form for OpenMP loop
+// TODO: replace with SageInterface::isCanonicalForLoop(SgNode* loop,SgInitializedName** ivar/*=NULL*/, SgExpression** lb/*=NULL*/, SgExpression** ub/*=NULL*/, SgExpression** step/*=NULL*/, SgStatement** body/*=NULL*/)
 SgInitializedName * ASTtools::getLoopIndexVar(SgForStatement* forstmt)
 {
    SgVarRefExp *loopvar = NULL;

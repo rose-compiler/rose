@@ -1773,6 +1773,13 @@ SgFile::stripRoseCommandLineOptions ( vector<string>& argv )
   // DQ (12/8/2007): Strip use of the "-rose:output <filename> option.
      optionCount = sla(argv, "-rose:", "($)^", "(o|output)", filename, 1);
 
+  // Liao 2/26/2009: strip use of -rose:excludePath <pathname> , -rose:excludeFile <filename> ,etc 
+  // which are introduced in Compass::commandLineProcessing()
+     char* pathname = NULL;
+     optionCount = sla(argv, "-rose:", "($)^", "(excludePath)", pathname,1);
+     optionCount = sla(argv, "-rose:", "($)^", "(excludeFile)", filename,1);
+     optionCount = sla(argv, "-rose:", "($)^", "(includeFile)", filename,1);
+
   // DQ (8/16/2008): parse binary executable file format only (some uses of ROSE may only do analysis of 
   // the binary executable file format and not the instructions).  This is also useful for testing.
      optionCount = sla(argv, "-rose:", "($)", "(read_executable_file_format_only)",1);

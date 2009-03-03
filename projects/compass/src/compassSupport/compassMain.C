@@ -255,5 +255,10 @@ int main(int argc, char** argv)
 #ifdef ROSE_MPI
   MPI_Finalize();
 #endif
+#if 1  // Liao, 2/26/2009, add this backend support to be more friendly to build systems
+       // 
+     return backend(project);
+#else     
      return 0;
+#endif     
    }

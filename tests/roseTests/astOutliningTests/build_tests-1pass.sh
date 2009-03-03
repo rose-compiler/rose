@@ -45,7 +45,7 @@ echo \
 #  Liao, 12/6/2007,
 # 	test2006_98
 #	test2006_99.C bug 135: GCC 4.x does not allow address of explicit register var.
-# works fine now: test2004_162,test2005_04,test2005_88,
+# Liao, 3/2/2009, inputBug327: pointer to function as parameter, not handled yet
 TEST_LIST=""
 for f in `cat "${TEST_LIST_RAW}"` ; do
     base_name=`basename "${f}"`
@@ -55,6 +55,7 @@ for f in `cat "${TEST_LIST_RAW}"` ; do
         && test x"${test_name}" != x"test2006_99" \
         && test x"${test_name}" != x"test2006_159" \
         && test x"${test_name}" != x"test2005_56" \
+        && test x"${test_name}" != x"inputBug327" \
     ; then
         TEST_LIST="${TEST_LIST} ${f}"
     fi

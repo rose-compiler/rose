@@ -24,7 +24,7 @@ compassVerifier_LDADD = -lCompassVerifierCheckers $(ROSE_LIBS)
 compassVerifier_DEPENDENCIES = $(compass_support_bdir)/libCompass.la $(compass_detector_libs) libCompassVerifierCheckers.la
 
 test: compassVerifier compass_parameters $(compass_test_dir)/exampleTest_1.C
-	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier $(compass_test_dir)/exampleTest_1.C 
+	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -rose:skip_unparser -rose:skipfinalCompileStep $(compass_test_dir)/exampleTest_1.C 
 
 check-local:
 	@$(MAKE) test
