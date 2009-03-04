@@ -39,6 +39,8 @@ namespace Outliner
   extern bool preproc_only_;  // preprocessing only, -rose:outline:preproc-only
   extern bool useNewFile; // Generate the outlined function into a separated new source file
                           // -rose:outline:new_file
+  extern bool temp_variable; // Use temporary variables to reduce the uses of pointer dereferencing. Activated by -rose:outline:temp_variable
+  extern bool enable_debug; // output debug information for outliner
 
   //! Accept a set of command line options to adjust internal behaviors
   // Please use this function before calling the frontend() to set the internal flags

@@ -79,7 +79,7 @@ $(TESTCODE_CURRENTLY_FAILING)
 
 # this flag is used for the files listed within this file: C_TESTCODES_REQUIRED_TO_PASS and CXX_TESTCODES_REQUIRED_TO_PASS
 # TODO remove -rose:skipfinalCompileStep when the command line issue is solved
-OUTLINE_FLAG= --edg:no_warnings -rose:verbose 0 -rose:outline:parameter_wrapper -rose:outline:new_file -rose:skipfinalCompileStep
+OUTLINE_FLAG= --edg:no_warnings -rose:verbose 0 -rose:outline:parameter_wrapper -rose:outline:new_file -rose:outline:temp_variable -rose:skipfinalCompileStep
  
 
 PASSING_C_TEST_Objects = $(C_TESTCODES_REQUIRED_TO_PASS:.c=.o)

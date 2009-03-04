@@ -276,4 +276,104 @@ ASTtools::collectLocalVisibleVarSyms (const SgStatement* root,
     }
 }
 
+//! Collect variable reference a using addresses within s, including &a expression and foo(a) when type2 foo(Type& parameter) in C++
+void ASTtools::collectVarRefsUsingAddress(const SgStatement* s, std::set<SgVarRefExp* >& varSetB)
+{
+  Rose_STL_Container <SgNode*> var_refs = NodeQuery::querySubTree (const_cast<SgStatement *> (s), V_SgVarRefExp);
+
+  Rose_STL_Container<SgNode*>::iterator iter = var_refs.begin();
+  for (; iter!=var_refs.end(); iter++)
+  {
+    SgVarRefExp* ref = isSgVarRefExp(*iter); 
+    ROSE_ASSERT(ref != NULL);
+    ROSE_ASSERT(ref->get_parent() != NULL);
+    // case 1: ref is used as an operator for & (SgAddressofOp)
+    // TODO tolerate possible type casting operations in between ?
+    if (isSgAddressOfOp(ref->get_parent())) 
+    {
+      if (Outliner::enable_debug)
+      cout<<"Found a reference used as an operator for SgAddressofOp:"<<ref->unparseToString()<<endl;
+      varSetB.insert(ref);
+    }
+    // case 2. ref is used as a function call's parameter, and the parameter has reference type in C++
+    else if ((SageInterface::is_Cxx_language())&&(isSgExprListExp(ref->get_parent())))  
+    {
+      SgNode* grandparent = ref->get_parent()->get_parent();
+      ROSE_ASSERT(grandparent);
+      if (isSgFunctionCallExp(grandparent)) // Is used as a function call's parameter 
+      {
+        // find which parameter ref is in SgExpressionPtrList
+        int param_index =0;
+        SgExpressionPtrList expList = isSgExprListExp(ref->get_parent())->get_expressions();
+        Rose_STL_Container<SgExpression*>::const_iterator iter= expList.begin();
+        for (; iter!=expList.end(); iter++)
+        {
+          if (*iter == ref)
+            break;
+          else  
+            param_index++;
+        }
+        // find the parameter type of the corresponding function declaration
+        SgFunctionRefExp * funcRef = isSgFunctionRefExp(isSgFunctionCallExp(grandparent)->get_function()); 
+        SgFunctionDeclaration* funcDecl = isSgFunctionSymbol(funcRef->get_symbol())->get_declaration();
+        SgInitializedNamePtrList nameList = funcDecl->get_args();
+        //TODO tolerate typedef chains
+        if (isSgReferenceType(nameList[param_index]->get_type()))
+        {
+          if (Outliner::enable_debug)
+           cout<<"Found a reference used as a function call parameter with C++ reference type:"<<ref->unparseToString()<<endl;
+          varSetB.insert(ref);
+        }
+      } 
+    } 
+  }
+}
+
+
+//! Collect variable references with a type which does not support =operator or copy construction  
+//TODO this function can be merged with the one above for better performance, but separated out for clarity
+void ASTtools::collectVarRefsOfTypeWithoutAssignmentSupport(const SgStatement* s, std::set<SgVarRefExp* >& varSetB)
+{
+  Rose_STL_Container <SgNode*> var_refs = NodeQuery::querySubTree (const_cast<SgStatement *> (s), V_SgVarRefExp); 
+  Rose_STL_Container<SgNode*>::iterator iter = var_refs.begin();
+  for (; iter!=var_refs.end(); iter++)
+  {
+    SgVarRefExp* ref = isSgVarRefExp(*iter);
+    SgType* vtype = isSgVariableSymbol(ref->get_symbol())->get_declaration()->get_type();
+    if (!SageInterface::isCopyConstructible(vtype)||(!SageInterface::isAssignable(vtype)))
+    {
+      if (Outliner::enable_debug)
+        cout<<"Found a reference does not support copy construction or assign operator:"<<ref->unparseToString()<<endl;
+      varSetB.insert(ref);
+    }
+  }
+}
+ 
+
+//! Collect variables to be replaced by pointer dereferencing (pd)
+void ASTtools::collectPointerDereferencingVarSyms(const SgStatement*s, VarSymSet_t& pdSyms)
+{
+  std::set<SgVarRefExp* > varSetB;
+  std::set<SgVarRefExp* >::const_iterator iter;
+
+  collectVarRefsUsingAddress(s, varSetB);
+  collectVarRefsOfTypeWithoutAssignmentSupport(s,varSetB);
+  // collect symbols from variable references
+  for (iter=varSetB.begin(); iter!=varSetB.end(); iter++)
+  {
+    SgVarRefExp* ref = *iter;
+    ROSE_ASSERT(ref->get_symbol()!=NULL);
+    pdSyms.insert(ref->get_symbol());
+  }
+  if (Outliner::enable_debug)
+  {
+    cout<<"Executing ASTtools::collectPointerDereferencingVarSyms()....."<<endl;
+    cout<<"Found "<<pdSyms.size()<<" symbols which must use pointer dereferencing if replaced:";
+    VarSymSet_t::const_iterator iter=pdSyms.begin();
+    for (;iter!=pdSyms.end();iter++)
+      cout<<(*iter)->get_name().getString()<<" ";
+  }
+    cout<<endl;
+}
+
 // eof

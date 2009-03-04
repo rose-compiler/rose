@@ -56,12 +56,17 @@ namespace Outliner
      *  flow appropriately. See \ref
      *  Outliner::transformNonLocalControlFlow() for more details.
      *
+     *  pdSyms is used to store symbols which must be replaced with 
+     *  their corresponding pointer dereferencing if replaced during 
+     *  outlining. Used to support -rose:outline:temp_variable
+     *
      *  \pre The statement does not contain non-local control flow.
      */
     SgFunctionDeclaration*
     generateFunction (const SgBasicBlock* s,
                       const std::string& func_name_str,
                       const ASTtools::VarSymSet_t& syms,
+                      const ASTtools::VarSymSet_t& pdSyms,
                       SgScopeStatement* scope);
 
      //! Generate packing statements for the variables to be passed 

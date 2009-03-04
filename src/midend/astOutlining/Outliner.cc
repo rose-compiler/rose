@@ -25,6 +25,8 @@ namespace Outliner {
   bool useParameterWrapper;  // use a wrapper for parameters of the outlined function
   bool preproc_only_;  // preprocessing only
   bool useNewFile; // generate the outlined function into a new source file
+  bool temp_variable; // use temporary variables to reduce pointer dereferencing
+  bool enable_debug; // 
 };
 
 // =====================================================================
@@ -118,6 +120,15 @@ Outliner::outline (SgStatement* s, const std::string& func_name)
 //! Set internal options based on command line options
 void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
 {
+  if (CommandlineProcessing::isOption (argvList,"-rose:outline:","enable_debug",true))
+  {
+    cout<<"Enabling debugging mode for outlined functions..."<<endl;
+    enable_debug= true;
+  }
+  else
+    enable_debug= false;
+
+
   if (CommandlineProcessing::isOption (argvList,"-rose:outline:","preproc-only",true))
     preproc_only_ = true;
   else 
@@ -125,7 +136,8 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
 
   if (CommandlineProcessing::isOption (argvList,"-rose:outline:","parameter_wrapper",true))
   {
-    cout<<"Enabling parameter wrapping..."<<endl;
+    if (enable_debug)
+      cout<<"Enabling parameter wrapping..."<<endl;
     useParameterWrapper= true;
   }
   else
@@ -133,11 +145,22 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
 
   if (CommandlineProcessing::isOption (argvList,"-rose:outline:","new_file",true))
   {
-    cout<<"Enabling new source file for outlined functions..."<<endl;
+    if (enable_debug)
+      cout<<"Enabling new source file for outlined functions..."<<endl;
     useNewFile= true;
   }
   else
     useNewFile= false;
+
+  if (CommandlineProcessing::isOption (argvList,"-rose:outline:","temp_variable",true))
+  {
+    if (enable_debug)
+      cout<<"Enabling using temp variables to reduce pointer dereferencing for outlined functions..."<<endl;
+    temp_variable = true;
+  }
+  else
+    temp_variable = false;
+
 
   // keep --help option after processing, let other modules respond also
   if (CommandlineProcessing::isOption (argvList,"--help","",false))
@@ -147,7 +170,9 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
     cout<<"Main operation mode:"<<endl;
     cout<<"\t-rose:outline:preproc-only           preprocessing only, no actual outlining"<<endl;
     cout<<"\t-rose:outline:parameter_wrapper     use an array of pointers for the variables to be passed"<<endl;
+    cout<<"\t-rose:outline:temp_variable         use temp variables to reduce pointer dereferencing for the variables to be passed"<<endl;
     cout<<"\t-rose:outline:new_file              use a new source file for the generated outlined function"<<endl;
+    cout<<"\t-rose:outline:enable_debug          run outliner in a debugging mode"<<endl;
     cout <<"---------------------------------------------------------------"<<endl;
   }
 }

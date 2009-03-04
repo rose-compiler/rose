@@ -205,8 +205,8 @@ createParam (const string& init_name, const SgType* init_type)
  *
  *  OUT_XXX (void * __out_argv[n])
  *  {
- *    int * _p_i = * (int*)__out_argv[0];
- *    int * _p_j = * (int*)__out_argv[1];
+ *    int * _p_i =  (int*)__out_argv[0];
+ *    int * _p_j =  (int*)__out_argv[1];
  *    ....
  *  }
  * The key is to set local_name, local_type, and local_val for all cases
@@ -214,6 +214,7 @@ createParam (const string& init_name, const SgType* init_type)
 static
 SgVariableDeclaration *
 createUnpackDecl (SgInitializedName* param, int index,
+                  bool isPointerDeref, 
                   const string& local_var_name,
                   SgType* local_var_type, SgScopeStatement* scope)
 {
@@ -237,7 +238,9 @@ createUnpackDecl (SgInitializedName* param, int index,
   ROSE_ASSERT (local_var_type_ptr);
   SgCastExp* cast_expr = buildCastExp(param_ref,local_var_type_ptr,SgCastExp::e_C_style_cast);
 
-  SgPointerDerefExp* param_deref_expr = buildPointerDerefExp(cast_expr);
+  // the right hand of the declaration
+  SgPointerDerefExp* param_deref_expr = NULL;
+  param_deref_expr = buildPointerDerefExp(cast_expr);
 
   // Declare a local variable to store the dereferenced argument.
   SgName local_name (local_var_name.c_str ());
@@ -249,9 +252,22 @@ createUnpackDecl (SgInitializedName* param, int index,
   SgAssignInitializer* local_val = buildAssignInitializer(param_deref_expr);
   if (SageInterface::is_Fortran_language())
     local_val = NULL;
-  else  if  (is_C_language()) // using pointer dereferences
+  else  if (Outliner::temp_variable)
+   {
+     // int* ip = (int *)(__out_argv[1]); // isPointerDeref == true
+     // int i = *(int *)(__out_argv[1]);
+     if (isPointerDeref)
+      local_val = buildAssignInitializer(cast_expr); // casting is enough for pointer types
+     else // temp variable need additional dereferencing from the parameter on the right side
+       local_val = buildAssignInitializer(buildPointerDerefExp(cast_expr));
+
+   } 
+  else
   {
-    local_val = buildAssignInitializer(cast_expr);
+    if  (is_C_language()) // using pointer dereferences
+    {
+      local_val = buildAssignInitializer(cast_expr);
+    }
   }
  
 
@@ -265,15 +281,26 @@ createUnpackDecl (SgInitializedName* param, int index,
   //  is not recognized at all.
   if (SageInterface::is_Fortran_language())
     local_type= local_var_type;
-  else if (is_C_language())
-  {   
-    //have to use pointer dereference
-    local_type = buildPointerType(param_deref_type);
-  }
-  else // C++ language
-  { 
-    local_type= isSgReferenceType(param_deref_type)
-      ?param_deref_type:SgReferenceType::createType(param_deref_type);
+  else if (Outliner::temp_variable) 
+  // unique processing for C/C++ if temp variables are used
+  {
+    if (isPointerDeref)
+      local_type = buildPointerType(param_deref_type);
+    else
+      local_type = param_deref_type;
+  }  
+  else  
+  {
+    if (is_C_language())
+    {   
+      //have to use pointer dereference
+      local_type = buildPointerType(param_deref_type);
+    }
+    else // C++ language
+    { 
+      local_type= isSgReferenceType(param_deref_type)
+        ?param_deref_type:SgReferenceType::createType(param_deref_type);
+    }
   }
   ROSE_ASSERT (local_type);
 
@@ -316,20 +343,29 @@ isReadOnlyType (const SgType* type)
  *  This routine takes the original "unpack" definition, of the form
  *
  *    TYPE local_unpack_var = *outlined_func_arg;
+ *    int i = *(int *)(__out_argv[1]); // parameter wrapping case
  *
  *  and creates the "re-pack" assignment expression,
  *
  *    *outlined_func_arg = local_unpack_var
+ *    *(int *)(__out_argv[1]) =i; // parameter wrapping case
+ *
+ *
  */
 static
 SgAssignOp *
 createPackExpr (SgInitializedName* local_unpack_def)
 {
-  if (is_C_language())
-    return NULL;
+  if (!Outliner::temp_variable)
+  {
+    if (is_C_language()) //skip for pointer dereferencing used in C language
+      return NULL;
+    if (isSgReferenceType (local_unpack_def->get_type ()))  
+      return NULL;
+  }
   if (local_unpack_def
-      && !isReadOnlyType (local_unpack_def->get_type ())
-      && !isSgReferenceType (local_unpack_def->get_type ()))
+      && !isReadOnlyType (local_unpack_def->get_type ()))
+//      && !isSgReferenceType (local_unpack_def->get_type ()))
     {
       SgName local_var_name (local_unpack_def->get_name ());
 
@@ -339,9 +375,16 @@ createPackExpr (SgInitializedName* local_unpack_def)
 
       // Create the LHS, which derefs the function argument, by
       // copying the original dereference expression.
+      // 
       SgPointerDerefExp* param_deref_unpack =
         isSgPointerDerefExp (local_var_init->get_operand_i ());
-      ROSE_ASSERT (param_deref_unpack);
+      if (param_deref_unpack == NULL)  
+      {
+        cout<<"packing statement is:"<<local_unpack_def->get_declaration()->unparseToString()<<endl;
+        cout<<"local unpacking stmt's initializer's operand has non-pointer deferencing type:"<<local_var_init->get_operand_i ()->class_name()<<endl;
+        ROSE_ASSERT (param_deref_unpack);
+      }
+
       SgPointerDerefExp* param_deref_pack =
         isSgPointerDerefExp (ASTtools::deepCopy (param_deref_unpack));
       ROSE_ASSERT (param_deref_pack);
@@ -414,7 +457,7 @@ recordSymRemap (const SgVariableSymbol* orig_sym,
                 VarSymRemap_t& sym_remap)
 {
   if (orig_sym && name_new)
-    {
+    { //TODO use the existing symbol associated with name_new!
       SgVariableSymbol* sym_new = new SgVariableSymbol (name_new);
       ROSE_ASSERT (sym_new);
       sym_remap.insert (VarSymRemap_t::value_type (orig_sym, sym_new));
@@ -468,6 +511,7 @@ recordSymRemap (const SgVariableSymbol* orig_sym,
 static
 void
 appendParams (const ASTtools::VarSymSet_t& syms,
+              const ASTtools::VarSymSet_t& pdSyms,
               SgFunctionDeclaration* func,
               VarSymRemap_t& sym_remap)
 {
@@ -499,6 +543,7 @@ appendParams (const ASTtools::VarSymSet_t& syms,
     SgType* i_type = i_name->get_type ();
 
     // Create parameters and insert it into the parameter list.
+    // ----------------------------------------
     SgInitializedName* p_init_name = NULL;
          // Case 1: using a wrapper for all variables 
     if (Outliner::useParameterWrapper)
@@ -523,8 +568,20 @@ appendParams (const ASTtools::VarSymSet_t& syms,
       prependArg(params,p_init_name);
     }
 
-    //Create unpacking statements
-    SgVariableDeclaration*  local_var_decl  = createUnpackDecl (p_init_name, counter, name_str, i_type,body);
+    // Create unpacking statements
+    // ----------------------------------------
+    bool isPointerDeref = false; 
+    if (Outliner::temp_variable) 
+    { // Check if the current variable belongs to the symbol set 
+      //suitable for using pointer dereferencing
+      const SgVariableSymbol* i_sym = isSgVariableSymbol(i_name->get_symbol_from_symbol_table ());
+      ROSE_ASSERT(i_sym!=NULL);
+      if ( pdSyms.find(i_sym)!=pdSyms.end())
+        isPointerDeref = true;
+    }  
+
+    SgVariableDeclaration*  local_var_decl  = 
+         createUnpackDecl (p_init_name, counter, isPointerDeref, name_str, i_type,body);
     ROSE_ASSERT (local_var_decl);
     prependStatement (local_var_decl,body);
     if (SageInterface::is_Fortran_language())
@@ -533,12 +590,29 @@ appendParams (const ASTtools::VarSymSet_t& syms,
 
     // Create and insert companion re-pack statement in the end of the function body
     // If necessary
+    // ----------------------------------------
     SgInitializedName* local_var_init =
       local_var_decl->get_decl_item (SgName (name_str.c_str ()));
-    SgExprStatement* pack_stmt = createPackStmt (local_var_init);
-    if (pack_stmt)
-      appendStatement (pack_stmt,body);
+    if (!SageInterface::is_Fortran_language())  
+      ROSE_ASSERT(local_var_init!=NULL);  
 
+    // Only generate restoring statement for non-pointer dereferencing cases
+    // if temp variable mode is enabled
+    if (Outliner::temp_variable)
+    {
+      if(!isPointerDeref)
+      {
+        SgExprStatement* pack_stmt = createPackStmt (local_var_init);
+        if (pack_stmt)
+          appendStatement (pack_stmt,body);
+      }
+    }
+    else
+    {
+      SgExprStatement* pack_stmt = createPackStmt (local_var_init);
+      if (pack_stmt)
+        appendStatement (pack_stmt,body);
+    }
     counter ++;
   } //end for
 }
@@ -549,7 +623,7 @@ appendParams (const ASTtools::VarSymSet_t& syms,
 // based on an existing symbol-to-symbol map
 static
 void
-remapVarSyms (const VarSymRemap_t& vsym_remap, SgBasicBlock* b)
+remapVarSyms (const VarSymRemap_t& vsym_remap, const ASTtools::VarSymSet_t& pdSyms, SgBasicBlock* b)
 {
   if (!vsym_remap.empty ()) // Check if any remapping is even needed.
   {
@@ -567,14 +641,32 @@ remapVarSyms (const VarSymRemap_t& vsym_remap, SgBasicBlock* b)
       if (ref_new != vsym_remap.end ()) // Needs replacement
       {
         SgVariableSymbol* sym_new = ref_new->second;
-        if (is_C_language())
-        {
-          SgPointerDerefExp * deref_exp = SageBuilder::buildPointerDerefExp(buildVarRefExp(sym_new));
-          deref_exp->set_need_paren(true);
-          SageInterface::replaceExpression(isSgExpression(ref_orig),isSgExpression(deref_exp));
+        if (Outliner::temp_variable)
+        // uniform handling if temp variables of the same type are used
+        {// two cases: variable using temp vs. variables using pointer dereferencing!
+
+          if (pdSyms.find(ref_orig->get_symbol())==pdSyms.end()) //using temp
+            ref_orig->set_symbol (sym_new);
+          else
+          {
+            SgPointerDerefExp * deref_exp = SageBuilder::buildPointerDerefExp(buildVarRefExp(sym_new));
+            deref_exp->set_need_paren(true);
+            SageInterface::replaceExpression(isSgExpression(ref_orig),isSgExpression(deref_exp));
+
+          }
         }
         else
-          ref_orig->set_symbol (sym_new);
+        {
+          if (is_C_language()) 
+          // old method of using pointer dereferencing indiscriminately for C input
+          {
+            SgPointerDerefExp * deref_exp = SageBuilder::buildPointerDerefExp(buildVarRefExp(sym_new));
+            deref_exp->set_need_paren(true);
+            SageInterface::replaceExpression(isSgExpression(ref_orig),isSgExpression(deref_exp));
+          }
+          else
+            ref_orig->set_symbol (sym_new);
+        }
       } //find an entry
     } // for every refs
   }
@@ -582,10 +674,12 @@ remapVarSyms (const VarSymRemap_t& vsym_remap, SgBasicBlock* b)
 
 // =====================================================================
 //! Create a function named 'func_name_str', with a parameter list from 'syms'
+// pdSyms specifies symbols which must use pointer dereferencing if replaced during outlining, only used when -rose:outline:temp_variable is used
 SgFunctionDeclaration *
 Outliner::Transform::generateFunction (const SgBasicBlock* s,
                                           const string& func_name_str,
                                           const ASTtools::VarSymSet_t& syms,
+                                          const ASTtools::VarSymSet_t& pdSyms,
                                           SgScopeStatement* scope)
 {
   ROSE_ASSERT (s&&scope);
@@ -664,8 +758,8 @@ Outliner::Transform::generateFunction (const SgBasicBlock* s,
 
   // Create parameters for outlined vars, and fix-up symbol refs in
   // the body.
-  appendParams (syms, func, vsym_remap);
-  remapVarSyms (vsym_remap, func_body);
+  appendParams (syms, pdSyms, func, vsym_remap);
+  remapVarSyms (vsym_remap, pdSyms, func_body);
 
   ROSE_ASSERT (func);
   return func;

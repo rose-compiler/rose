@@ -36,9 +36,21 @@ Outliner::Transform::outlineBlock (SgBasicBlock* s,
   ASTtools::cutPreprocInfo (s, PreprocessingInfo::after, ppi_after);
 
   // Determine variables to be passed to outlined routine.
-  ASTtools::VarSymSet_t syms;
+  // Also collect symbols which must use pointer dereferencing if replaced during outlining
+  ASTtools::VarSymSet_t syms, pdSyms;
   collectVars (s, syms);
 
+  //Determine variables to be replaced by temp copy or pointer dereferencing.
+  if (Outliner::temp_variable)
+  {
+#if 0    
+    std::set<SgVarRefExp* > varRefSetB;
+    ASTtools::collectVarRefsUsingAddress(s,varRefSetB);
+    ASTtools::collectVarRefsOfTypeWithoutAssignmentSupport(s,varRefSetB);
+#endif
+    ASTtools::collectPointerDereferencingVarSyms(s,pdSyms);
+  }
+    
   // Insert outlined function.
   //  grab target scope first
   SgGlobal* glob_scope =
@@ -51,7 +63,7 @@ Outliner::Transform::outlineBlock (SgBasicBlock* s,
 
   // Generate outlined function.
 //  printf ("In Outliner::Transform::outlineBlock() function name to build: func_name_str = %s \n",func_name_str.c_str());
-  SgFunctionDeclaration* func = generateFunction (s, func_name_str, syms, glob_scope);
+  SgFunctionDeclaration* func = generateFunction (s, func_name_str, syms, pdSyms, glob_scope);
   ROSE_ASSERT (func != NULL);
 
   SgFunctionDeclaration* func_orig =

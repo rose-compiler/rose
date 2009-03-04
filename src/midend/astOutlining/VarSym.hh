@@ -10,6 +10,7 @@
 #define INC_ASTTOOLS_VARSYM_HH
 
 #include <set>
+#include "Outliner.hh"
 
 class SgVariableSymbol;
 class SgVariableDeclaration;
@@ -39,6 +40,15 @@ namespace ASTtools
 
   //! Convert a variable symbol set to a string-friendly form for debugging.
   std::string toString (const VarSymSet_t& syms);
+
+  //! Collect variable references using addresses for s
+  void collectVarRefsUsingAddress(const SgStatement* s, std::set<SgVarRefExp* >& varSetB);
+
+  //! Collect variable references with a type which does not support =operator or copy construction. Those two support is essential for temp variables used to copy and restore parameters
+  void collectVarRefsOfTypeWithoutAssignmentSupport(const SgStatement* s, std::set<SgVarRefExp* >& varSetB);
+
+  //! Collect variables to be replaced by pointer dereferencing (pd)
+  void collectPointerDereferencingVarSyms(const SgStatement*s, VarSymSet_t& pdSyms);
 
 } // namespace ASTtools
 

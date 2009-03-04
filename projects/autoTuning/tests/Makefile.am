@@ -7,7 +7,7 @@ ROSE_FLAGS+=-rose:hpct:prof $(srcdir)/jacobi-raw.xml
 ROSE_FLAGS+=-rose:hpct:eqpath .=`cd $(srcdir) && pwd`
 
 # test command line options for outliner
-ROSE_FLAGS+= -rose:outline:parameter_wrapper -rose:outline:new_file
+ROSE_FLAGS+= -rose:outline:parameter_wrapper -rose:outline:new_file -rose:outline:temp_variable
 
 
 rose_jacobi.c:../autoTuning
