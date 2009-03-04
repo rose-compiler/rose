@@ -1,74 +1,52 @@
-Index: clang.xcodeproj/project.pbxproj
+Index: include/clang/AST/DeclBase.h
 ===================================================================
---- clang.xcodeproj/project.pbxproj	(revision 57167)
-+++ clang.xcodeproj/project.pbxproj	(working copy)
-@@ -371,7 +371,7 @@
- 		84AF36A00CB17A3B00C820A5 /* DeclObjC.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = DeclObjC.h; path = clang/AST/DeclObjC.h; sourceTree = "<group>"; };
- 		84D9A8870C1A57E100AC7ABC /* AttributeList.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = AttributeList.cpp; path = lib/Parse/AttributeList.cpp; sourceTree = "<group>"; };
- 		84D9A88B0C1A581300AC7ABC /* AttributeList.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = AttributeList.h; path = clang/Parse/AttributeList.h; sourceTree = "<group>"; };
--		8DD76F6C0486A84900D96B5E /* clang */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = clang; sourceTree = BUILT_PRODUCTS_DIR; };
-+		8DD76F6C0486A84900D96B5E /* clang */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "compiled.mach-o.executable"; path = clang; sourceTree = BUILT_PRODUCTS_DIR; };
- 		9030C1090E807A9300941490 /* RewriteBlocks.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RewriteBlocks.cpp; path = Driver/RewriteBlocks.cpp; sourceTree = "<group>"; };
- 		DE01DA480B12ADA300AC22CE /* PPCallbacks.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PPCallbacks.h; sourceTree = "<group>"; };
- 		DE06756B0C051CFE00EBBFD8 /* ParseExprCXX.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ParseExprCXX.cpp; path = lib/Parse/ParseExprCXX.cpp; sourceTree = "<group>"; };
-@@ -1084,7 +1084,6 @@
- 		08FB7793FE84155DC02AAC07 /* Project object */ = {
- 			isa = PBXProject;
- 			buildConfigurationList = 1DEB923508733DC60010E9CD /* Build configuration list for PBXProject "clang" */;
--			compatibilityVersion = "Xcode 2.4";
- 			hasScannedForEncodings = 1;
- 			mainGroup = 08FB7794FE84155DC02AAC07 /* clang */;
- 			projectDirPath = "";
-Index: include/clang/AST/Stmt.h
-===================================================================
---- include/clang/AST/Stmt.h	(revision 57167)
-+++ include/clang/AST/Stmt.h	(working copy)
-@@ -35,6 +35,7 @@
-   class StringLiteral;
-   class SwitchStmt;
-   class PrinterHelper;
-+  class QualType;
-     
- /// Stmt - This represents one statement.
- ///
-@@ -89,6 +90,24 @@
-   void dumpAll() const;
-   void dumpAll(SourceManager &SM) const;
+--- include/clang/AST/DeclBase.h	(revision 63505)
++++ include/clang/AST/DeclBase.h	(working copy)
+@@ -197,7 +197,7 @@
+   Decl(Kind DK, DeclContext *DC, SourceLocation L) 
+     : Loc(L), NextDeclarator(0), NextDeclInScope(0), 
+       DeclCtx(reinterpret_cast<uintptr_t>(DC)), DeclKind(DK), InvalidDecl(0),
+-      HasAttrs(false), Implicit(false) {
++      HasAttrs(false), Implicit(false), Access(AS_none) {
+     if (Decl::CollectingStats()) addDeclKind(DK);
+   }
  
-+  /// termDump - This does a local dump of the specified AST fragment.  It dumps the
-+  /// specified node and a few nodes underneath it, but not the whole subtree.
-+  /// This is useful in a debugger.
-+  void termDump() const;
-+  void termDump(SourceManager &SM) const;
-+
-+  // FIXME do a TermiteHelper instead
-+  static std::string termGetType(QualType T);
-+  static std::string termGetClassDecl(QualType T);
-+  static std::string termDumpDecl(SourceManager &SM, Decl *D);
-+  static std::string termGetDeclarationModifier(Decl* VD);
-+  static std::string termGetStorageModifier(Decl* VD);
-+
-+  /// termDumpAll - This does a dump of the specified AST fragment and
-+  /// all subtrees.
-+  void termDumpAll() const;
-+  void termDumpAll(SourceManager &SM) const;
-+
-   /// dumpPretty/printPretty - These two methods do a "pretty print" of the AST
-   /// back to its original source language syntax.
-   void dumpPretty() const;
+Index: include/clang/AST/Expr.h
+===================================================================
+--- include/clang/AST/Expr.h	(revision 63505)
++++ include/clang/AST/Expr.h	(working copy)
+@@ -1750,12 +1750,18 @@
+   virtual child_iterator child_end();
+   
+   typedef std::vector<Stmt *>::iterator iterator;
++  typedef std::vector<Stmt *>::const_iterator const_iterator;
+   typedef std::vector<Stmt *>::reverse_iterator reverse_iterator;
++  typedef std::vector<Stmt *>::const_reverse_iterator const_reverse_iterator;
+   
+   iterator begin() { return InitExprs.begin(); }
++  const_iterator begin() const { return InitExprs.begin(); }
+   iterator end() { return InitExprs.end(); }
++  const_iterator end() const { return InitExprs.end(); }
+   reverse_iterator rbegin() { return InitExprs.rbegin(); }
++  const_reverse_iterator rbegin() const { return InitExprs.rbegin(); }
+   reverse_iterator rend() { return InitExprs.rend(); }
++  const_reverse_iterator rend() const { return InitExprs.rend(); }
+   
+   // Serailization.
+   virtual void EmitImpl(llvm::Serializer& S) const;
 Index: Driver/clang.cpp
 ===================================================================
---- Driver/clang.cpp	(revision 57167)
+--- Driver/clang.cpp	(revision 63505)
 +++ Driver/clang.cpp	(working copy)
-@@ -73,6 +73,7 @@
+@@ -83,6 +83,7 @@
    EmitHTML,                     // Translate input source into HTML.
    ASTPrint,                     // Parse ASTs and print them.
    ASTDump,                      // Parse ASTs and dump them.
 +  ASTTermDump,                  // Parse ASTs and dump them in TERMITE format.
    ASTView,                      // Parse ASTs and view them in Graphviz.
+   PrintDeclContext,             // Print DeclContext and their Decls.
    TestSerialization,            // Run experimental serialization code.
-   ParsePrintCallbacks,          // Parse and print each callback.
-@@ -106,6 +107,8 @@
+@@ -124,6 +125,8 @@
                          "Build ASTs and then pretty-print them"),
               clEnumValN(ASTDump, "ast-dump",
                          "Build ASTs and then debug dump them"),
@@ -76,213 +54,48 @@ Index: Driver/clang.cpp
 +                        "Build ASTs and then export them in the TERMITE format"),
               clEnumValN(ASTView, "ast-view",
                          "Build ASTs and view them with GraphViz"),
-              clEnumValN(TestSerialization, "test-pickling",
-@@ -1044,6 +1047,9 @@
+              clEnumValN(PrintDeclContext, "print-decl-contexts",
+@@ -490,12 +493,12 @@
+                        llvm::cl::desc("Disallow implicit conversions between "
+                                       "vectors with a different number of "
+                                       "elements or different element types"));
++
+ static llvm::cl::opt<bool>
+-EnableBlocks("fblocks", llvm::cl::desc("enable the 'blocks' language feature"), llvm::cl::ValueDisallowed);
++EnableBlocks("fblocks", llvm::cl::desc("enable the 'blocks' language feature"),
++             llvm::cl::ValueDisallowed, llvm::cl::AllowInverse,
++             llvm::cl::ZeroOrMore);
+ 
+-static llvm::cl::inverse_opt
+-DisableBlocks("fno-blocks", llvm::cl::opposite_of(EnableBlocks), llvm::cl::ValueDisallowed);
+-
+ static llvm::cl::opt<bool>
+ ObjCNonFragileABI("fobjc-nonfragile-abi", llvm::cl::desc("enable objective-c's nonfragile abi"));
+ 
+@@ -623,7 +626,7 @@
+   if (NoLaxVectorConversions.getPosition())
+       Options.LaxVectorConversions = 0;
+   Options.Exceptions = Exceptions;
+-  if (EnableBlocks.getPosition() || DisableBlocks.getPosition())
++  if (EnableBlocks.getPosition())
+     Options.Blocks = EnableBlocks;
+ 
+   // Override the default runtime if the user requested it.
+@@ -1272,6 +1275,9 @@
      case ASTDump:
        return CreateASTDumper();
        
 +    case ASTTermDump:
-+      return CreateASTTermDumper();
++      return CreateASTTermDumper(InFile, OutputFile);
 +      
      case ASTView:
        return CreateASTViewer();   
-       
-Index: Driver/ASTConsumers.cpp
+ 
+Index: Driver/TermDumper.cpp
 ===================================================================
---- Driver/ASTConsumers.cpp	(revision 57167)
-+++ Driver/ASTConsumers.cpp	(working copy)
-@@ -538,6 +538,165 @@
- ASTConsumer *clang::CreateASTViewer() { return new ASTViewer(); }
- 
- //===----------------------------------------------------------------------===//
-+/// ASTTermDumper - TERMITE dump of ASTs
-+
-+namespace {
-+  class ASTTermDumper : public ASTConsumer, public DeclPrinter {
-+    SourceManager *SM;
-+    FILE* F;
-+  public:
-+    ASTTermDumper() : DeclPrinter() {}
-+
-+
-+    void Initialize(ASTContext &Context) {
-+      SM = &Context.getSourceManager();
-+      F = stderr;
-+      fprintf(F, "project([\n");
-+      lastFile = "";
-+      lastDecl = 0;
-+    }
-+
-+    ~ASTTermDumper() {
-+      lastDecl = 0;
-+      fprintf(F, "], ");     closeDecl(); // global
-+      fprintf(F, ", null,"); closeDecl(); // file
-+      fprintf(F, "], ");     closeDecl(); // project
-+      fprintf(F, ".\n");
-+    }
-+
-+    virtual void HandleTopLevelDecl(Decl *D) {
-+
-+      lastDecl = D;
-+      std::string fileName = SM->getSourceName(lastDecl->getLocation());
-+
-+      std::string close = "";
-+      // Start a new file() ?
-+      if (fileName != lastFile) {
-+	if (lastFile != "") {
-+	  fprintf(F, "], "); closeDecl(); // global
-+	  fprintf(F, ", ");  closeDecl(); // file
-+	  fprintf(F, ", ");
-+	}
-+	fprintf(F, "file(\n  global([\n    ");
-+	lastFile = fileName;
-+      } else {
-+	fprintf(F, ", ");
-+      }
-+      
-+      if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-+	DumpFunctionDecl(FD);
-+      } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
-+	fprintf(F, Stmt::termDumpDecl(*SM, TD).c_str());
-+	fprintf(F, ", ");
-+	fileInfo();
-+      } else if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D)) {
-+        Out << "Read top-level variable decl: '" << SD->getName() << "'\n";
-+      } else if (ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(D)) {
-+        Out << "Read objc interface '" << OID->getName() << "'\n";
-+      } else if (ObjCProtocolDecl *OPD = dyn_cast<ObjCProtocolDecl>(D)) {
-+        Out << "Read objc protocol '" << OPD->getName() << "'\n";
-+      } else if (ObjCCategoryDecl *OCD = dyn_cast<ObjCCategoryDecl>(D)) {
-+        Out << "Read objc category '" << OCD->getName() << "'\n";
-+      } else if (isa<ObjCForwardProtocolDecl>(D)) {
-+        Out << "Read objc fwd protocol decl\n";
-+      } else if (isa<ObjCClassDecl>(D)) {
-+        Out << "Read objc fwd class decl\n";
-+      } else if (isa<FileScopeAsmDecl>(D)) {
-+        Out << "Read file scope asm decl\n";
-+      } else if (ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(D)) {
-+        Out << "Read objc method decl: '" << MD->getSelector().getName()
-+            << "'\n";
-+        if (MD->getBody()) {
-+          // FIXME: convert dumper to use std::ostream?
-+          MD->getBody()->dumpAll(*SM);
-+          Out << '\n';
-+        }
-+      } else if (isa<ObjCImplementationDecl>(D)) {
-+        Out << "Read objc implementation decl\n";
-+      } else if (isa<ObjCCategoryImplDecl>(D)) {
-+        Out << "Read objc category implementation decl\n";
-+      } else {
-+        assert(0 && "Unknown decl type!");
-+      }      
-+    }
-+
-+  private:
-+    std::string lastFile;
-+    Decl* lastDecl;
-+
-+    void closeDecl() {
-+      fprintf(F, "default_annotation(null, analysis_result(null,null)), ");
-+      fileInfo();
-+    }
-+
-+    void fileInfo() {
-+      if (lastDecl) {
-+	fprintf(F, "file_info('%s', %d, %d))", 
-+		SM->getSourceName(lastDecl->getLocation()),
-+		SM->getLineNumber(lastDecl->getLocation()),
-+		SM->getColumnNumber(lastDecl->getLocation()));
-+      } else fprintf(F, "file_info(null, 0, 0))");
-+    }
-+
-+
-+    void DumpFunctionDecl(FunctionDecl *FD) {
-+      fprintf(F, "function_declaration(");
-+      fprintf(F, "function_parameter_list(");
-+
-+      // FIXME...
-+
-+      if (FD->isInline())
-+	assert(0 && "FIXME inline ");
-+
-+      const FunctionType *AFT = FD->getType()->getAsFunctionType();
-+      if (const FunctionTypeProto *FT = dyn_cast<FunctionTypeProto>(AFT)) {
-+	for (unsigned i = 0, e = FD->getNumParams(); i != e; ++i) {
-+	  Stmt::termDumpDecl(*SM, FD->getParamDecl(i));
-+	}
-+    
-+	if (FT->isVariadic()) {
-+	  fprintf(F, "ellipse_expr(");
-+	  closeDecl();
-+	}
-+      }
-+      closeDecl(); // parameter list
-+      fprintf(F, ", ");
-+  
-+      if (FD->getBody()) {
-+	fprintf(F, "function_definition(");
-+	// FIXME: convert dumper to use std::ostream?
-+	FD->getBody()->termDumpAll(*SM);
-+	fprintf(F, ", "); closeDecl();
-+	fprintf(F, ", ");
-+      } else 
-+	fprintf(F, "null");
-+
-+      fprintf(F, "function_declaration_annotation(");
-+      fprintf(F, "function_type(%s",
-+	      Stmt::termGetType(AFT->getResultType()).c_str());
-+      if (const FunctionTypeProto *FT = dyn_cast<FunctionTypeProto>(AFT)) {
-+	fprintf(F, ", %d,", FT->isVariadic());
-+	fprintf(F, "[");
-+	for (unsigned i = 0, e = FD->getNumParams(); i != e; ++i) {
-+	  QualType T = FD->getParamDecl(i)->getType();
-+	  fprintf(F, Stmt::termGetType(T).c_str());
-+	  if (i+1 < e) fprintf(F, ", ");
-+	}
-+	fprintf(F, "]),");
-+      } else fprintf(F, "0, []),");
-+
-+      fprintf(F, "%s, %s, analysis_result(null, null)),", 
-+	      FD->getName(),
-+	      Stmt::termGetDeclarationModifier(FD).c_str()); // decl. annot
-+      fileInfo(); // declaration
-+    }
-+  };
-+}
-+
-+ASTConsumer *clang::CreateASTTermDumper() { return new ASTTermDumper(); }
-+
-+
-+//===----------------------------------------------------------------------===//
- // AST Serializer
- 
- namespace {
-@@ -653,6 +812,7 @@
-   return new SingleFileSerializer(FName, Diags);
- }
- 
-+
- class LLVMCodeGenWriter : public ASTConsumer {
-   llvm::OwningPtr<CodeGenerator> Gen;
-   const std::string &InFile;
-Index: Driver/ASTConsumers.h
-===================================================================
---- Driver/ASTConsumers.h	(revision 57167)
-+++ Driver/ASTConsumers.h	(working copy)
-@@ -35,6 +35,8 @@
- 
- ASTConsumer *CreateASTDumper();
- 
-+ASTConsumer *CreateASTTermDumper();
-+
- ASTConsumer *CreateASTViewer();
- 
- ASTConsumer *CreateCodeRewriterTest(const std::string& InFile,
-Index: lib/AST/StmtTermDumper.cpp
-===================================================================
---- lib/AST/StmtTermDumper.cpp	(revision 0)
-+++ lib/AST/StmtTermDumper.cpp	(revision 0)
-@@ -0,0 +1,939 @@
+--- Driver/TermDumper.cpp	(revision 0)
++++ Driver/TermDumper.cpp	(revision 0)
+@@ -0,0 +1,1885 @@
 +//===--- StmtTermDumper.cpp - TermDumping implementation for Stmt ASTs ----===//
 +//
 +//                     The LLVM Compiler Infrastructure
@@ -292,933 +105,1970 @@ Index: lib/AST/StmtTermDumper.cpp
 +//
 +//===----------------------------------------------------------------------===//
 +//
-+// This file implements the Stmt::termDump/Stmt::print methods, which
-+// termDump out the AST in a form that exposes type details and other
-+// fields.
++// This file implements a pass to emit clang's internal AST into an external
++// file using the Termite representation of SATIrE.
++// 
++// See: http://www.complang.tuwien.ac.at/satire/
++//      http://www.complang.tuwien.ac.at/adrian/termite/
 +//
 +//===----------------------------------------------------------------------===//
 +
++#include "ASTConsumers.h"
++#include "clang/AST/ASTConsumer.h"
++#include "clang/AST/ASTContext.h"
 +#include "clang/AST/StmtVisitor.h"
 +#include "clang/AST/DeclObjC.h"
++#include "clang/AST/DeclCXX.h"
 +#include "clang/Basic/SourceManager.h"
++#include "clang/Basic/FileManager.h"
 +#include "llvm/Support/Compiler.h"
 +#include <cstdio>
++#include <iostream>
++#include <fstream>
 +#include <sstream>
 +using namespace clang;
-+using namespace std;
++
++#define AIB "analysis_info([])"
++#define AI "analysis_info(null,null)"
++#define DA "default_annotation(null), " AI
++#define DAB "default_annotation(null), " AIB
 +
 +//===----------------------------------------------------------------------===//
-+// StmtTermDumper Visitor
-+//===----------------------------------------------------------------------===//
++/// ASTTermDumper - TERMITE dump of ASTs
 +
-+namespace  {
-+  typedef pair<string,string> StringPair;
++namespace {
++  class AtomSetStream {
++    std::ostream &O;
++    const char *Def;
++    bool isFirst;
 +
-+  class VISIBILITY_HIDDEN StmtTermDumper : public StmtVisitor<StmtTermDumper> {
-+    SourceManager *SM;
-+    FILE *F;
-+    unsigned IndentLevel;
-+    
-+    /// MaxDepth - When doing a normal termDump (not termDumpAll) we
-+    /// only want to termDump the first few levels of an AST.  This
-+    /// keeps track of how many ast levels are left.
-+    unsigned MaxDepth;
-+#   define AR "analysis_result(null,null)"
-+#   define DA " default_annotation(null, " AR "),"
-+
-+    
 +  public:
-+    StmtTermDumper(SourceManager *sm, FILE *f, unsigned maxDepth)
-+      : SM(sm), F(f), IndentLevel(0-1), MaxDepth(maxDepth) {
++    AtomSetStream(std::ostream &o, const char *def = "")
++        : O(o), Def(def), isFirst(true) {
 +    }
-+    
-+    void TermDumpSubTree(Stmt *S) {
-+      // Prune the recursion if not using termDump all.
-+      if (MaxDepth == 0) return;
-+      
-+      ++IndentLevel;
-+      if (S) {
-+        if (DeclStmt* DS = dyn_cast<DeclStmt>(S))
-+          VisitDeclStmt(DS);
-+        else {
-+          Visit(S);
-+          
-+          // Print out children.
-+          Stmt::child_iterator CI = S->child_begin(), CE = S->child_end();
-+	  for (; CI != CE; CI++) {
-+	    if (*CI) {
-+	      StringPair w = wrap(*CI, S);
-+	      fprintf(F, "\n%s", w.first.c_str());
-+ 
-+	      TermDumpSubTree(*CI);
-+	      fprintf(F, "%s,", w.second.c_str());
-+	    }
-+          }
-+	  // Print annotations, if not already there
-+	  switch(S->getStmtClass()) {
-+	  case Stmt::DeclRefExprClass:
-+	  case Stmt::DeclStmtClass:
-+	  case Stmt::IntegerLiteralClass:
-+	    break;
-+	  case Stmt::UnaryOperatorClass: {
-+	    UnaryOperator* op = dyn_cast<UnaryOperator>(S);
-+	    fprintf(F, " unary_op_annotation(");
-+	    fprintf(F, "%d, ", op->isPostfix());
-+	    TermDumpType(op->getType());
-+	    fprintf(F, ", %s, %s, %s),", "null" /*throw_kind*/, "null", AR);
-+	    break;
-+	  }
-+	  case Stmt::BinaryOperatorClass:
-+	  case Stmt::CompoundAssignOperatorClass:
-+	    fprintf(F, " binary_op_annotation(");
-+	    TermDumpType((dyn_cast<Expr>(S))->getType());
-+	    fprintf(F, ", " AR "),");
-+	    break;
-+	  case Stmt::IfStmtClass: {
-+	    // if_stmt - add an empty else branch
-+	    Stmt::child_iterator Else = S->child_begin(); ++Else;
-+	    if (Else != S->child_end() && *Else) {
-+	      fprintf(F, "null, ");
-+	    } 
-+	  } //fallthrough
-+	  default:
-+	    fprintf(F, DA);
-+	  }
-+	  TermDumpSourceRange(S);
-+          fprintf(F, ")");
-+        }
-+      } else {
-+	assert(0);
-+        Indent();
-+        fprintf(F, "<<<NULL>>>");
++
++    std::ostream &operator <<(const std::string &s) {
++      if (!isFirst)
++        O << ", ";
++      else
++        O << "[";
++
++      O << s;
++
++      isFirst = false;
++
++      return O;
++    }
++
++    void close() {
++      if (isFirst)
++        O << "[" << Def;
++
++      O << "]";
++
++      isFirst = true;
++    }
++  };
++
++  class ASTTermDumper : public ASTConsumer {
++    /** reference to the source manager
++     */
++    SourceManager *SM;
++
++    /** name of the input source file.
++     */
++    const std::string &infile;
++
++    /** name of the output (term) file
++     */
++    const std::string &outfile;
++
++    /** output stream for term
++     */
++    std::ostream &Out;
++
++    // TODO: check if needed
++    std::string lastFile;
++
++    /** return a outputstream for the given output-filename. If the name is "-"
++     *  std::cout is returned.
++     */
++    static std::ostream& getOutputStream(const std::string &outfilename) {
++      if (outfilename.empty())
++        return std::cout;
++      else
++        return *new std::ofstream(outfilename.c_str());
++    }
++  public:
++    ASTTermDumper(const std::string &infilename, const std::string &outfilename)
++        : infile(infilename), outfile(outfilename),
++          Out(getOutputStream(outfilename)) {
++    }
++
++    void Initialize(ASTContext &Context) {
++      SM = &Context.getSourceManager();
++      Out << "project([\n";
++      lastFile = "";
++    }
++
++    ~ASTTermDumper() {
++      lastFile = "";
++
++      Out <<  "], " DAB ", "; fileInfo(Out); // global
++      Out <<  ", null,"; closeDecl(Out); // file
++      Out <<  "], ";     closeDecl(Out); // project
++      Out <<  ".\n";
++
++      // free the output stream
++      if (&Out != &std::cout) {
++        delete &Out;
 +      }
-+      --IndentLevel;
-+    }
-+    
-+    void Indent() const {
-+      for (int i = 0, e = IndentLevel; i < e; ++i)
-+        fprintf(F, "  ");
-+    }
-+    
-+    void TermDumpStmt(const Stmt *Node);
-+    
-+    void TermDumpExpr(const Expr *Node) {
-+      TermDumpStmt(Node);
 +    }
 +
-+    void TermDumpType(QualType T) {
-+      fprintf(F, Stmt::termGetType(T).c_str());
++    virtual void HandleTopLevelDecl(Decl *D) {
++      const char *fileName = "";
++      SourceLocation Loc = D->getLocation();
++      SourceLocation SpellingLoc = SM->getSpellingLoc(Loc);
++
++      if (!SpellingLoc.isInvalid()) {
++        PresumedLoc PLoc = SM->getPresumedLoc(SpellingLoc);
++
++        fileName = PLoc.getFilename();
++      }
++
++      std::string close = "";
++      // Start a new file() ?
++      if (fileName != lastFile) {
++	if (lastFile != "") {
++	  Out << "], "; closeDecl(Out); // global
++	  Out << ", ";  closeDecl(Out); // file
++	  Out << ", ";
++	}
++	Out << "file(\n  global([\n    ";
++	lastFile = fileName;
++      } else {
++	Out << ", ";
++      }
++
++      termDecl(Out, D);
++
++      if (D->getNextDeclarator()) {
++        HandleTopLevelDecl(D->getNextDeclarator());
++      }
 +    }
-+
-+    void TermDumpSourceRange(const Stmt *Node);
-+    string getFileInfo(const Stmt *Node);
-+    string getFileInfo(const SourceLocation PhysLoc);
-+    const string getDefaultAnnotation() const { return DA; }
-+
-+    void DumpFunctionDecl(FunctionDecl *FD);
-+   
-+    // Stmts.
-+    void VisitStmt(Stmt *Node);
-+    void VisitDeclStmt(DeclStmt *Node);
-+    void VisitLabelStmt(LabelStmt *Node);
-+    void VisitGotoStmt(GotoStmt *Node);
-+    
-+    // Exprs
-+    void VisitExpr(Expr *Node);
-+    void VisitDeclRefExpr(DeclRefExpr *Node);
-+    void VisitPredefinedExpr(PredefinedExpr *Node);
-+    void VisitCharacterLiteral(CharacterLiteral *Node);
-+    void VisitIntegerLiteral(IntegerLiteral *Node);
-+    void VisitFloatingLiteral(FloatingLiteral *Node);
-+    void VisitStringLiteral(StringLiteral *Str);
-+    void VisitUnaryOperator(UnaryOperator *Node);
-+    void VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr *Node);
-+    void VisitMemberExpr(MemberExpr *Node);
-+    void VisitExtVectorElementExpr(ExtVectorElementExpr *Node);
-+    void VisitBinaryOperator(BinaryOperator *Node);
-+    void VisitCompoundAssignOperator(CompoundAssignOperator *Node);
-+    void VisitAddrLabelExpr(AddrLabelExpr *Node);
-+    void VisitTypesCompatibleExpr(TypesCompatibleExpr *Node);
-+
-+    // C++
-+    void VisitCXXCastExpr(CXXCastExpr *Node);
-+    void VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node);
-+
-+    // ObjC
-+    void VisitObjCEncodeExpr(ObjCEncodeExpr *Node);
-+    void VisitObjCMessageExpr(ObjCMessageExpr* Node);
-+    void VisitObjCSelectorExpr(ObjCSelectorExpr *Node);
-+    void VisitObjCProtocolExpr(ObjCProtocolExpr *Node);
-+    void VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node);
-+    void VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node);
 +
 +  private:
-+    StringPair wrap(Stmt* Child, Stmt* Parent);
++    /***************************************************************************
++     * Helper                                                                  *
++     **************************************************************************/
++
++    void closeDecl(std::ostream &O, const Decl *D = NULL) {
++      O << DA ", ";
++      fileInfo(O, D);
++    }
++
++    void fileInfo(std::ostream &O, const SourceLocation Loc) {
++      SourceLocation SpellingLoc = SM->getSpellingLoc(Loc);
++
++      if (SpellingLoc.isInvalid()) {
++        O << "file_info('<invalid>', '<invalid>', '<invalid>'))";
++      }
++      else {
++        PresumedLoc PLoc = SM->getPresumedLoc(SpellingLoc);
++
++        O << "file_info('" << PLoc.getFilename() << "', " << PLoc.getLine()
++          << ", " << PLoc.getColumn() << "))";
++      }
++    }
++
++    void fileInfo(std::ostream &O, const Decl *D) {
++      if (!D) {
++        O << "file_info('<invalid>', '<invalid>', '<invalid>'))";
++      }
++      else {
++        fileInfo(O, D->getLocation());
++      }
++    }
++
++    void fileInfo(std::ostream &O, const Stmt *S = NULL) {
++      if (!S) {
++        O << "file_info('<invalid>', '<invalid>', '<invalid>'))";
++      }
++      else {
++        fileInfo(O, S->getSourceRange().getBegin());
++      }
++    }
++
++    /**
++    * convert ZigZagCase to zig_zag_case.
++    * The reason we need this is that in PROLOG strings
++    * starting with uppercase letters are variables.
++    */
++    std::string prologize(std::string s) {
++      std::string t;
++      std::string::iterator it;
++      it = s.begin();
++
++      // skip all leading '_'
++      while (*it == '_')
++        it++;
++
++      //lowercase first char (without prepending underscore)
++      if(it != s.end()) {
++        if(isUpper(*it)) {
++          t.push_back(toLower(*it));
++        } else {
++          t.push_back(*it);
++        }
++        it++;
++      }
++
++      //replace an uppercase letter with an underscore
++      //and its lowercase equivalent
++      while(it != s.end()) {
++        if(*it == ' ')
++          t.push_back('_');
++        else if(isUpper(*it)) {
++          t.push_back('_');
++          t.push_back(toLower(*it));
++        } else {
++          t.push_back(*it);
++        }
++        it++;
++      }
++      return t;
++    }
++
++
++    /** get lower case of upper case letter*/
++    char toLower(const char c) {
++      return (c - ('A'-'a'));
++    };
++
++    /** is a letter upper case?*/
++    bool isUpper(const char c) {
++      return (('A' <= c) && ('Z' >= c));
++    }
++
++    /***************************************************************************
++     * Declarations                                                            *
++     **************************************************************************/
++
++    /** Print the termite representation of a some declaration.
++     */
++    void termDecl(std::ostream &O, const Decl *D);
++
++    void termTypedef(std::ostream &O, const Decl *D);
++    void termFunctionDecl(std::ostream &O, const Decl *D);
++    void termEnum(std::ostream &O, const Decl *D);
++    void termRecord(std::ostream &O, const Decl *D);
++    void termField(std::ostream &O, const Decl *D);
++
++    /***************************************************************************
++     * Types                                                                   *
++     **************************************************************************/
++
++    /** Print the termite representation of a type.
++     */
++    void termType(std::ostream &O, const QualType &T);
++
++    const Decl *getTypeDecl(const Type *T) const;
++    const QualType getQualType(const Decl *D) const;
++
++    /***************************************************************************
++     * Expression                                                              *
++     **************************************************************************/
++
++    /** print the termite representation of an expression.
++     */
++    void termStmt(std::ostream &O, const Stmt *S);
++    void termStmtWrapped(std::ostream &O, const Stmt *S);
++
++    void termUnaryOperator(std::ostream &O, const Stmt *S);
++    void termBinaryOperator(std::ostream &O, const Stmt *S);
++    void termDeclStmt(std::ostream &O, const Stmt *S);
++    void termCallExpr(std::ostream &O, const Stmt *S);
++    void termDeclRefExpr(std::ostream &O, const Stmt *S);
++    void termVarRefExpr(std::ostream &O, const Decl *D, const QualType &T,
++                        const Stmt *SL);
++
++    /***************************************************************************
++     * Misc                                                                    *
++     **************************************************************************/
++
++    /** Print an Identifier, if NULL print <anonymous>.
++     */
++    void termIdentifier(std::ostream &O, const IdentifierInfo *I);
++
++    /** print the initialized name tag for a named variable
++     */
++    void termInitializedName(std::ostream &O, const Decl *D);
++
++    /** print an initializer
++     */
++    void termInitializer(std::ostream &O, const Stmt *S);
++
++    /** print if the declaration is static storage. queries variable and
++     *  function declarations, and assumes non static for all others.
++     */
++    void termStaticStorage(std::ostream &O, const Decl *D);
++
++    /** print access modifier information for a declaration
++     */
++    void termAccessModifier(std::ostream &O, const Decl *D);
++
++    /** print storage modifier information for a declaration
++     */
++    void termStorageModifier(std::ostream &O, const Decl *D);
++
++    /** print modifier information for a declaration
++     */
++    void termModifier(std::ostream &O, const Decl *D);
++
++    /** print modifier information for the type of a declaration
++     */
++    void termTypeModifier(std::ostream &O, const Decl *D);
++    void termTypeModifier(std::ostream &O, const QualType T);
++
++    /** print declaration attributes
++     */
++    void termDeclAttributes(std::ostream &O, const Decl *D);
++
++    /** print the context/scope of a declaration
++     */
++    void termDeclContext(std::ostream &O, const DeclContext *C);
 +  };
-+}
 +
-+//===----------------------------------------------------------------------===//
-+//  Utilities
-+//===----------------------------------------------------------------------===//
++  void ASTTermDumper::termDecl(std::ostream &O, const Decl *D) {
++    switch (D->getKind()) {
++      case Decl::Typedef:
++        termTypedef(O, D);
++        break;
 +
-+void StmtTermDumper::TermDumpSourceRange(const Stmt *Node) {
-+  fprintf(stderr, getFileInfo(Node).c_str());
-+}
++      case Decl::Enum:
++        termEnum(O, D);
++        break;
 +
-+string StmtTermDumper::getFileInfo(const Stmt *Node) {
-+  // Can't translate locations if a SourceManager isn't available.
-+  if (SM == 0) return "file_info(null, 0, 0)";
-+  
-+  SourceRange R = Node->getSourceRange();
-+  SourceLocation PhysLoc = SM->getPhysicalLoc(R.getBegin());
-+  return getFileInfo(PhysLoc);
-+}
++      case Decl::Record:
++        termRecord(O, D);
++        break;
 +
-+string StmtTermDumper::getFileInfo(const SourceLocation PhysLoc) {
-+  stringstream ss;
-+  ss << " file_info('"
-+     << SM->getSourceName(PhysLoc) << "', "
-+     << SM->getLineNumber(PhysLoc) << ", "
-+     << SM->getColumnNumber(PhysLoc) << ")";
-+  return ss.str();
-+}
++      case Decl::Function:
++        termFunctionDecl(O, D);
++        break;
 +
++      // Variables/Parameters/Values ---------------
++      case Decl::EnumConstant:
++      case Decl::Var:
++      case Decl::OriginalParmVar: // original type for implicit promotes missing
++      case Decl::ImplicitParam:
++        O << "variable_declaration([";
++          termInitializedName(O, D);
++        O << "], variable_declaration_specific(";
++          termModifier(O, D);
++        O << "), " AIB ", ";
++          fileInfo(O, D);
++        break;
 +
++      case Decl::ParmVar: // TODO: ObjC-in/out + C++-default-value missing
++        termInitializedName(O, D);
++        break;
 +
-+//===----------------------------------------------------------------------===//
-+//  Stmt printing methods.
-+//===----------------------------------------------------------------------===//
++      case Decl::Field:
++        termField(O, D);
++        break;
 +
-+void StmtTermDumper::TermDumpStmt(const Stmt *Node) {
-+  const char* n;
++      case Decl::LinkageSpec:
 +
-+  switch (Node->getStmtClass()) {
-+    // Normal Statements.
-+  case Stmt::NullStmtClass: n = "null_expression"; break;
-+  case Stmt::CompoundStmtClass: n = "basic_block"; break;
-+  case Stmt::CaseStmtClass: n = "case_option_stmt"; break;
-+  case Stmt::DefaultStmtClass: n = "default_option_stmt"; break;
-+  case Stmt::LabelStmtClass: n = "label_statement"; break;
-+  case Stmt::IfStmtClass: n = "if_stmt"; break;
-+  case Stmt::SwitchStmtClass: n = "switch_statement"; break;
-+  case Stmt::WhileStmtClass: n = "while_stmt"; break;
-+  case Stmt::DoStmtClass: n = "do_while_stmt"; break;
-+  case Stmt::ForStmtClass: n = "for_statement"; break;
-+  case Stmt::GotoStmtClass: n = "goto_statement"; break;
-+  case Stmt::IndirectGotoStmtClass: n = "indirect_goto_stmt"; break;
-+  case Stmt::ContinueStmtClass: n = "continue_stmt"; break;
-+  case Stmt::BreakStmtClass: n = "break_stmt"; break;
-+  case Stmt::ReturnStmtClass: n = "return_stmt"; break;
-+  case Stmt::DeclStmtClass: n = "variable_declaration"; break;
-+  case Stmt::SwitchCaseClass: n = "FIXME???switch_case_stmt"; break;
++      // C++/ObjC-C++ ---------------
++      case Decl::OverloadedFunction:
++      case Decl::ObjCIvar:
++      case Decl::ObjCAtDefsField:
++      case Decl::Namespace:
++      case Decl::CXXRecord:
++      case Decl::CXXMethod:
++      case Decl::CXXConstructor:
++      case Decl::CXXDestructor:
++      case Decl::CXXConversion:
++      case Decl::CXXClassVar: // is a VarDecl -- see termInitializedName
++      case Decl::NonTypeTemplateParm: // is a VarDecl -- see termInitializedName
++      case Decl::TemplateTypeParm: 
++      case Decl::ObjCMethod:
++//         if (ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(D)) {
++//           Out << "Read objc method decl: '" << MD->getSelector().getAsString()
++//               << "'\n";
++//           if (MD->getBody()) {
++// //             FIXME: convert dumper to use std::ostream?
++//             MD->getBody()->dumpAll(*SM);
++//             Out << '\n';
++//           }
++      case Decl::ObjCContainer:
++      case Decl::ObjCCategory:
++      case Decl::ObjCProtocol:
++      case Decl::ObjCInterface:
++      case Decl::ObjCCategoryImpl:
++      case Decl::ObjCProperty:
++      case Decl::ObjCCompatibleAlias:
++      case Decl::ObjCPropertyImpl:
++      case Decl::ObjCImplementation:
++      case Decl::ObjCForwardProtocol:
++      case Decl::ObjCClass:
 +
-+    // GNU Stmt Extensions
-+  case Stmt::AsmStmtClass: n = "asm_statement"; break;
-+
-+    // Obj-C statements
-+  case Stmt::ObjCAtTryStmtClass: n = "objc_at_try_stmt"; break;
-+  case Stmt::ObjCAtCatchStmtClass: n = "objc_at_catch_stmt"; break;
-+  case Stmt::ObjCAtFinallyStmtClass: n = "objc_at_finally_stmt"; break;
-+  case Stmt::ObjCAtThrowStmtClass: n = "objc_at_throw_stmt"; break;
-+  case Stmt::ObjCAtSynchronizedStmtClass: 
-+    n = "objc_at_synchronized_stmt"; break;
-+    // Obj-C2 statements
-+  case Stmt::ObjCForCollectionStmtClass: 
-+    n = "objc_for_collection_stmt"; break;
-+    // Expressions.
-+  case Stmt::ExprClass: n = "expr_statement"; break;
-+  case Stmt::PredefinedExprClass: n = "FIXME_predefined_expr"; break;
-+  case Stmt::DeclRefExprClass: n = "var_ref_exp"; break;
-+  case Stmt::IntegerLiteralClass: n = "int_val"; break;
-+  case Stmt::FloatingLiteralClass: n = "double_val"; break;
-+  case Stmt::ImaginaryLiteralClass: n = "imag_val"; break;
-+  case Stmt::StringLiteralClass: n = "string_val"; break;
-+  case Stmt::CharacterLiteralClass: n = "char_val"; break;
-+  case Stmt::ParenExprClass: n = "clang_paren_expr"; 
-+    n = "expr_statement"; break;
-+  case Stmt::UnaryOperatorClass: n = "unary_op_exp"; break;
-+  case Stmt::SizeOfAlignOfTypeExprClass: n = "size_of_exp"; break;
-+  case Stmt::ArraySubscriptExprClass: n = "pntr_arr_ref_exp"; break;
-+  case Stmt::CallExprClass: n = "function_call_exp"; break;
-+  case Stmt::MemberExprClass: n = "dot_exp"; break;
-+  case Stmt::CastExprClass: n = "cast_exp"; break;
-+  case Stmt::BinaryOperatorClass: {
-+    n = "binary_op_exp"; 
-+    /* This one will be treated by VisitBinaryOperator() anyway */
-+    return;
-+  }
-+  case Stmt::CompoundAssignOperatorClass: {
-+    n = "clang_compound_assign_operator"; 
-+    /* This one will be treated by VisitBinaryOperator() anyway */
-+    return;
-+  }
-+  case Stmt::ConditionalOperatorClass: n = "conditional_exp"; break;
-+  case Stmt::ImplicitCastExprClass: n = "cast_exp"; break;
-+  case Stmt::ExplicitCastExprClass: n = "cast_exp"; break;
-+  case Stmt::CompoundLiteralExprClass: 
-+    n = "FIXME_compound_literal_exp initializer?"; break;
-+  case Stmt::ExtVectorElementExprClass: 
-+    n = "?ext_vector_element_exp"; break;
-+  case Stmt::InitListExprClass: n = "initialized_name"; break;
-+  case Stmt::VAArgExprClass: n = "ellipse_exp"; break;
-+
-+    // GNU Extensions.
-+  case Stmt::AddrLabelExprClass: n = "gnu_addr_label_exp"; break;
-+  case Stmt::StmtExprClass: n = "gnu_stmt_exp"; break;
-+  case Stmt::TypesCompatibleExprClass: 
-+    n = "gnu_types_compatible_expr_exp"; break;
-+  case Stmt::ChooseExprClass: n = "gnu_choose_exp"; break;
-+
-+    // C++ Expressions.
-+  case Stmt::CXXCastExprClass: n = "CXXcast_exp"; break;
-+  case Stmt::CXXBoolLiteralExprClass: n = "bool_val"; break;
-+  case Stmt::CXXThrowExprClass: n = "throw_exp"; break;
-+  case Stmt::CXXDefaultArgExprClass: n = "default_arg_exp"; break;
-+  case Stmt::CXXFunctionalCastExprClass: n = "FUNCcast_exp"; break;
-+  case Stmt::CXXZeroInitValueExprClass: n = "zero_init_exp"; break;
-+  case Stmt::CXXConditionDeclExprClass: n = "condition_decl_exp"; break;
-+
-+    // Obj-C Expressions.
-+  case Stmt::ObjCStringLiteralClass: n = "objc_string_val"; break;
-+  case Stmt::ObjCEncodeExprClass: n = "objc_encode_expr"; break;
-+  case Stmt::ObjCMessageExprClass: n = "objc_message_expr"; break;
-+  case Stmt::ObjCSelectorExprClass: n = "objc_selector_expr"; break;
-+  case Stmt::ObjCProtocolExprClass: n = "objc_protocol_expr"; break;
-+  case Stmt::ObjCIvarRefExprClass: n = "objc_var_ref_expr"; break;
-+  case Stmt::ObjCPropertyRefExprClass: n = "objc_property_ref_expr"; break;
-+
-+    // Clang Extensions.
-+  case Stmt::OverloadExprClass: n = "clang_overload_expr"; break;
-+  case Stmt::ShuffleVectorExprClass: n = "clang_shuffle_vector_expr"; break;
-+  case Stmt::BlockExprClass: n = "clang_block_expr"; break;
-+  case Stmt::BlockDeclRefExprClass: n = "clang_block_decl_expr"; break;
-+
-+  default: n = "FIXME_stmt";
-+  }
-+
-+  Indent();
-+  fprintf(F, "%s(", n);
-+}
-+
-+void StmtTermDumper::VisitStmt(Stmt *Node) {
-+  TermDumpStmt(Node);
-+}
-+
-+void StmtTermDumper::VisitDeclStmt(DeclStmt *Node) {
-+  TermDumpStmt(Node);
-+  fprintf(F,"\n");
-+  for (ScopedDecl *D = Node->getDecl(); D; D = D->getNextDeclarator()) {
-+    ++IndentLevel;
-+    Indent();
-+    fprintf(F, "%s", Stmt::termDumpDecl(*SM, D).c_str());
-+    if (D->getNextDeclarator())
-+      fprintf(F,"\n");
-+    --IndentLevel;
-+  }
-+}
-+
-+void StmtTermDumper::VisitLabelStmt(LabelStmt *Node) {
-+  TermDumpStmt(Node);
-+  fprintf(F, " '%s'", Node->getName());
-+}
-+
-+void StmtTermDumper::VisitGotoStmt(GotoStmt *Node) {
-+  TermDumpStmt(Node);
-+  fprintf(F, " '%s':%p", Node->getLabel()->getName(), (void*)Node->getLabel());
-+}
-+
-+
-+/// Translate between the structural differences of clang and ROSE:
-+///   wraps, for example, the first child of for() into a
-+///   for_init_statment node return the closing parenthesis characters
-+StringPair StmtTermDumper::wrap(Stmt* Child, Stmt* Parent) {
-+  stringstream open, close;
-+
-+  if (Child == 0) {
-+    return StringPair(open.str(), close.str());
-+  }
-+
-+  // for_statement
-+  if (Parent->getStmtClass() == Stmt::ForStmtClass) {
-+    Stmt::child_iterator init = Parent->child_begin();
-+    Stmt::child_iterator test = init; ++test;
-+    if (Child == *init) {
-+      open << "for_init_statement([expr_statement(";
-+      close << ", " << DA << getFileInfo(Child) 
-+	    << ")], "<<DA << getFileInfo(Child) << ")";
-+    } else if (Child == *test) {
-+      open << "expr_statement(";
-+      close << ", " << DA << getFileInfo(Child) << ")";
++      // Misc ---------------
++      case Decl::TranslationUnit:
++      case Decl::FileScopeAsm:
++      case Decl::Block:
++      default:
++        O << "unknown_decl(" << D->getDeclKindName() << ")";
 +    }
 +  }
 +
-+  // Wrap expressions inside of a basic block into an expr_statement
-+  if ((Parent->getStmtClass() == Stmt::CompoundStmtClass ||
-+       Parent->getStmtClass() == Stmt::IfStmtClass) 
-+      &&
-+      (Child->getStmtClass() == Stmt::UnaryOperatorClass ||
-+       Child->getStmtClass() == Stmt::BinaryOperatorClass ||
-+       Child->getStmtClass() == Stmt::CompoundAssignOperatorClass
-+       /*||
-+       Child->getStmtClass() == Stmt::ExprClass ||
-+       Child->getStmtClass() == Stmt::PredefinedExprClass ||
-+       Child->getStmtClass() == Stmt::DeclRefExprClass ||
-+       Child->getStmtClass() == Stmt::IntegerLiteralClass ||
-+       Child->getStmtClass() == Stmt::FloatingLiteralClass ||
-+       Child->getStmtClass() == Stmt::ImaginaryLiteralClass ||
-+       Child->getStmtClass() == Stmt::StringLiteralClass ||
-+       Child->getStmtClass() == Stmt::CharacterLiteralClass ||
-+       Child->getStmtClass() == Stmt::ParenExprClass ||
-+       Child->getStmtClass() == Stmt::UnaryOperatorClass ||
-+       Child->getStmtClass() == Stmt::SizeOfAlignOfTypeExprClass ||
-+       Child->getStmtClass() == Stmt::ArraySubscriptExprClass ||
-+       Child->getStmtClass() == Stmt::CallExprClass ||
-+       Child->getStmtClass() == Stmt::MemberExprClass ||
-+       Child->getStmtClass() == Stmt::CastExprClass ||
-+       Child->getStmtClass() == Stmt::BinaryOperatorClass ||
-+       Child->getStmtClass() == Stmt::CompoundAssignOperatorClass ||
-+       Child->getStmtClass() == Stmt::ConditionalOperatorClass ||
-+       Child->getStmtClass() == Stmt::ImplicitCastExprClass ||
-+       Child->getStmtClass() == Stmt::ExplicitCastExprClass ||
-+       Child->getStmtClass() == Stmt::CompoundLiteralExprClass ||
-+       Child->getStmtClass() == Stmt::ExtVectorElementExprClass ||
-+       Child->getStmtClass() == Stmt::InitListExprClass ||
-+       Child->getStmtClass() == Stmt::VAArgExprClass ||
-+       Child->getStmtClass() == Stmt::AddrLabelExprClass || 
-+       Child->getStmtClass() == Stmt::StmtExprClass ||
-+       Child->getStmtClass() == Stmt::TypesCompatibleExprClass ||
-+       Child->getStmtClass() == Stmt::ChooseExprClass ||
-+       Child->getStmtClass() == Stmt::CXXCastExprClass ||
-+       Child->getStmtClass() == Stmt::CXXBoolLiteralExprClass ||
-+       Child->getStmtClass() == Stmt::CXXThrowExprClass ||
-+       Child->getStmtClass() == Stmt::CXXDefaultArgExprClass ||
-+       Child->getStmtClass() == Stmt::CXXFunctionalCastExprClass ||
-+       Child->getStmtClass() == Stmt::CXXZeroInitValueExprClass ||
-+       Child->getStmtClass() == Stmt::CXXConditionDeclExprClass*/)) {
-+    open << "expr_statement(";
-+    close << ", " DA << getFileInfo(Child) << ")";
++  void ASTTermDumper::termTypedef(std::ostream &O, const Decl *D) {
++    const TypedefDecl *TD = cast<TypedefDecl>(D);
++
++    O << "typedef_declaration(";
++
++    const Decl* UD = getTypeDecl(TD->getUnderlyingType().getTypePtr());
++    if (UD)
++      termDecl(O, UD);
++    else
++      O << "null";
++// TODO: check what to do here
++//       termType(O, TD->getUnderlyingType());
++
++    O << ", typedef_annotation(";
++      termIdentifier(O, TD->getIdentifier());
++    O << ", ";
++      termType(O, TD->getUnderlyingType());
++    O << ", ";
++    if (UD)
++      termDecl(O, UD);
++    else
++      O << "null";
++
++    O << "), " AIB ", ";
++    fileInfo(O, TD);
 +  }
 +
-+  // basic_block -> list
-+  if (Parent->getStmtClass() == Stmt::CompoundStmtClass) {
-+    Stmt::child_iterator CI = Parent->child_begin(), CE = Parent->child_end();
-+    Stmt::child_iterator lastNonZero = CI;
-+    // First
-+    if (Child == *CI) {
-+      string s = open.str();
-+      open.str("");
-+      open << "[" << s;
++  void ASTTermDumper::termFunctionDecl(std::ostream &O, const Decl *D) {
++    const FunctionDecl *FD = cast<FunctionDecl>(D);
++
++    O << "function_declaration("
++      << "function_parameter_list([";
++
++    // TODO: Qualifier e.g. FD->isInline(), isVirtual, isPure, ...
++    //       Storage Class
++
++    // print parameter list
++    const FunctionType *AFT = FD->getType()->getAsFunctionType();
++    if (const FunctionTypeProto *FT = dyn_cast<FunctionTypeProto>(AFT)) {
++      bool first = true;
++      for (unsigned i = 0, e = FD->getNumParams(); i != e; ++i) {
++        if (!first)
++          O << ", ";
++
++        termDecl(O, FD->getParamDecl(i));
++        first = false;
++      }
++
++      if (FT->isVariadic()) {
++        // TODO: replace by ellipse_expr ?? - from Adrian's original patch
++        O << ",initialized_name(null, "
++             "initialized_name_annotation(type_ellipse, '', default, null), " AI
++             ", ";
++        fileInfo(O, FD);
++      }
++    }
++    O << "], " DAB ", ";
++      fileInfo(O, FD); // close parameter list
++
++    if (FD->getBody()) {
++      O << ", function_definition(";
++        termStmt(O, FD->getBody());
++      O << ", " DAB ", ";
++        fileInfo(O, FD);
++      O << ", ";
++    } else
++      O << ", null, ";
++
++    O << "function_declaration_annotation(";
++    // TODO: check if we should dump the complete function type here?
++    // Alternatively rename the tag to result_type?
++    termType(O, FD->getType());
++
++    O << ", ";
++      termIdentifier(O, FD->getIdentifier());
++    O << ", ";
++      termModifier(O, D);
++    O << "), " AIB ",";
++      fileInfo(Out, FD); // declaration
++  }
++
++  void ASTTermDumper::termEnum(std::ostream &O, const Decl *D) {
++    const EnumDecl *E = cast<EnumDecl>(D);
++
++    O << "enum_declaration([";
++
++    bool first = true;
++    for(EnumDecl::enumerator_iterator i = E->enumerator_begin(),
++        ie = E->enumerator_end(); i != ie; i++) {
++      if (!first)
++        O << ", ";
++      termInitializedName(O, *i);
++      first = false;
 +    }
 +
-+    // Last
-+    for (; CI != CE; CI++) {
-+      if (*CI) lastNonZero = CI;
++    O << "], enum_declaration_annotation(";
++      termIdentifier(O, E->getIdentifier());
++    O << ", ";
++      termDeclAttributes(O, D);
++    O << ", 1"  // TODO: d->get_embedded() from rose??
++         "), " AIB ", ";
++
++    fileInfo(O, D);
++  }
++
++  void ASTTermDumper::termRecord(std::ostream &O, const Decl *D) {
++    const RecordDecl *R = cast<RecordDecl>(D);
++
++    O << "class_declaration(class_definition([";
++
++    // print fields
++    bool first = true;
++    for(RecordDecl::field_iterator i = R->field_begin(), ie = R->field_end();
++        i != ie; i++) {
++      if (!first)
++        O << ", ";
++
++      termField(O, *i);
++      first = false;
 +    }
-+    if (Child == *lastNonZero) 
-+      close << "]";
++    O << "], class_definition_annotation(";
++      fileInfo(O, D);
++
++    O << ", " AIB ", ";
++      fileInfo(O, D);
++
++    O << ", class_declaration_annotation(";
++      termIdentifier(O, R->getIdentifier());
++    O << ", " << R->getKindName() << ", class_type(";
++      termIdentifier(O, R->getIdentifier());
++    O << ", " << R->getKindName() << ", ";
++      termDeclContext(O, R->getDeclContext());
++    O << ")), " AIB ", ";
++      fileInfo(O, D);
 +  }
 +
-+  return StringPair(open.str(), close.str());
-+}
++  void ASTTermDumper::termField(std::ostream &O, const Decl *D) {
 +
-+//===----------------------------------------------------------------------===//
-+//  Expr printing methods.
-+//===----------------------------------------------------------------------===//
++    // TODO: isMutable, isBitField
++    // const FieldDecl *F = cast<FieldDecl>(D);
 +
-+void StmtTermDumper::VisitExpr(Expr *Node) {
-+  TermDumpExpr(Node);
-+}
-+
-+void StmtTermDumper::VisitDeclRefExpr(DeclRefExpr *Node) {
-+  TermDumpExpr(Node);
-+
-+  fprintf(F, " ");
-+  switch (Node->getDecl()->getKind()) {
-+    case Decl::Function: fprintf(F,"FunctionDecl"); break;
-+    case Decl::Var: 
-+    case Decl::ParmVar: 
-+      fprintf(F,"var_ref_exp_annotation(");
-+      TermDumpType(Node->getType());
-+      fprintf(F,", '%s', %s, %s, %s)", Node->getDecl()->getName(), 
-+	      "0"/*static?*/, 
-+	      "null"/*scope*/,
-+	      AR); 
-+      break;
-+    case Decl::EnumConstant: fprintf(F,"EnumConstant"); break;
-+    case Decl::Typedef: fprintf(F,"Typedef"); break;
-+    case Decl::Struct: fprintf(F,"Struct"); break;
-+    case Decl::Union: fprintf(F,"Union"); break;
-+    case Decl::Class: fprintf(F,"Class"); break;
-+    case Decl::Enum: fprintf(F,"Enum"); break;
-+    case Decl::CXXStruct: fprintf(F,"CXXStruct"); break;
-+    case Decl::CXXUnion: fprintf(F,"CXXUnion"); break;
-+    case Decl::CXXClass: fprintf(F,"CXXClass"); break;
-+    case Decl::ObjCInterface: fprintf(F,"ObjCInterface"); break;
-+    case Decl::ObjCClass: fprintf(F,"ObjCClass"); break;
-+    default: fprintf(F,"Decl"); break;
++    O << "variable_declaration([";
++      termInitializedName(O, D);
++    O << "], variable_declaration_specific(";
++      termModifier(O, D);
++    O << "), " AIB ", ";
++      fileInfo(O, D);
 +  }
-+  fprintf(F, ",");  
-+  //fprintf(F, "='%s' %p", Node->getDecl()->getName(), (void*)Node->getDecl());
-+}
 +
-+void StmtTermDumper::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
-+  TermDumpExpr(Node);
++  /***************************************************************************
++  * Types                                                                   *
++  **************************************************************************/
 +
-+  fprintf(F, " %sDecl='%s' %p", Node->getDecl()->getDeclKindName(), 
-+                            Node->getDecl()->getName(), (void*)Node->getDecl());
-+  if (Node->isFreeIvar())
-+    fprintf(F, " isFreeIvar");
-+}
++  void ASTTermDumper::termType(std::ostream &O, const QualType &T) {
++    if (T.getCVRQualifiers()) {
++      O << "modifier_type(";
++    }
 +
-+void StmtTermDumper::VisitPredefinedExpr(PredefinedExpr *Node) {
-+  TermDumpExpr(Node);
-+  switch (Node->getIdentType()) {
-+  default: assert(0 && "unknown case");
-+  case PredefinedExpr::Func:           fprintf(F, " __func__"); break;
-+  case PredefinedExpr::Function:       fprintf(F, " __FUNCTION__"); break;
-+  case PredefinedExpr::PrettyFunction: fprintf(F, " __PRETTY_FUNCTION__");break;
-+  case PredefinedExpr::ObjCSuper:      fprintf(F, "super"); break;
-+  }
-+}
++    switch (T->getTypeClass()) {
++      case Type::Builtin:
++        O << "type_" << prologize(cast<BuiltinType>(T)->getName());
++        break;
 +
-+void StmtTermDumper::VisitCharacterLiteral(CharacterLiteral *Node) {
-+  TermDumpExpr(Node);
-+  fprintf(F, " null, value_annotation('%c', " AR "),", 
-+	  Node->getValue());
-+}
++      // Pointer ------------
++      case Type::Pointer:
++        O << "pointer_type(";
++          termType(O, cast<PointerLikeType>(T)->getPointeeType());
++        O << ")";
++        break;
 +
-+void StmtTermDumper::VisitIntegerLiteral(IntegerLiteral *Node) {
-+  TermDumpExpr(Node);
++      // Arrays ------------
++      case Type::ConstantArray: // fallthrough
++      case Type::VariableArray: // fallthrough
++      case Type::IncompleteArray: // fallthrough
++      case Type::DependentSizedArray:
++      {
++        ArrayType *AT = cast<ArrayType>(T);
 +
-+  bool isSigned = Node->getType()->isSignedIntegerType();
-+  fprintf(F, " null, value_annotation(%s, " AR "),", 
-+	  Node->getValue().toString(10, isSigned).c_str());
-+}
-+void StmtTermDumper::VisitFloatingLiteral(FloatingLiteral *Node) {
-+  TermDumpExpr(Node);
-+  fprintf(F, " null, value_annotation(%f, " AR "),", 
-+	  Node->getValueAsApproximateDouble());
-+}
++        O << "array_type(";
++          termType(O, AT->getElementType());
 +
-+void StmtTermDumper::VisitStringLiteral(StringLiteral *Str) {
-+  TermDumpExpr(Str);
-+  // FIXME: this doesn't print wstrings right.
-+  fprintf(F, " null, value_annotation('%s",
-+	  Str->isWide() ? "L" : "");
++        switch (T->getTypeClass()) {
++          case Type::ConstantArray:
++            O << ", unsigned_long_val(null,"
++                 "value_annotation("
++              << cast<ConstantArrayType>(T)->getSize().toString(10, false) <<
++                 "), analysis_info(null, null), file_info('<invalid>', '<invalid>', '<invalid>'))";
++            break;
++          case Type::VariableArray:
++             termStmt(O, cast<VariableArrayType>(T)->getSizeExpr());
++            break;
++          case Type::IncompleteArray:
++            break;
++          case Type::DependentSizedArray:
++             termStmt(O, cast<DependentSizedArrayType>(T)->getSizeExpr());
++            break;
++          default:
++            assert(false);
++        }
 +
-+  for (unsigned i = 0, e = Str->getByteLength(); i != e; ++i) {
-+    switch (char C = Str->getStrData()[i]) {
-+    default:
-+      if (isprint(C))
-+        fputc(C, F); 
-+      else
-+        fprintf(F, "\\%03o", C);
-+      break;
-+    // Handle some common ones to make dumps prettier.
-+    case '\\': fprintf(F, "\\\\"); break;
-+    case '"':  fprintf(F, "\\\""); break;
-+    case '\n': fprintf(F, "\\n"); break;
-+    case '\t': fprintf(F, "\\t"); break;
-+    case '\a': fprintf(F, "\\a"); break;
-+    case '\b': fprintf(F, "\\b"); break;
++        // TODO: check how to dump for ROSE
++        // switch (AT->getSizeModifier()) {
++        //   case ArrayType::Normal: O << ", Normal"; break;
++        //   case ArrayType::Static: O << ", Static"; break;
++        //   case ArrayType::Star:   O << ", Star"; break;
++        // }
++
++        // TODO: Don't know what this is exactly.
++        // O << ", " << AT->getIndexTypeQualifier();
++        O << ")";
++        break;
++      }
++
++      // Function ------------
++      case Type::FunctionNoProto:
++        O << "function_type(";
++          termType(O, cast<FunctionTypeNoProto>(T)->getResultType());
++        O << ", ellipses, [])";
++        break;
++      case Type::FunctionProto:
++      {
++        // TODO: print qualifier
++        // << FT->getTypeQuals()
++
++        FunctionTypeProto *FT = cast<FunctionTypeProto>(T);
++        O << "function_type(";
++          termType(O, FT->getResultType());
++        O << ", " << (FT->isVariadic() ? "ellipses" : "default")
++          << ", [";
++
++        bool first = true;
++        for(FunctionTypeProto::arg_type_iterator i = FT->arg_type_begin(),
++            ie = FT->arg_type_end(); i != ie; i++) {
++          if (!first)
++            O << ", ";
++          termType(O, *i);
++          first = false;
++        }
++
++        if (FT->isVariadic()) {
++          if (!first)
++            O << ", ";
++
++          O << "type_ellipse";
++        }
++
++        O << "])";
++        break;
++      }
++
++      // TypeOf ------------
++      case Type::TypeOfExp:
++        O << "type_of_expr(";
++          termStmt(O, cast<TypeOfExpr>(T)->getUnderlyingExpr());
++        O << ")";
++        break;
++      case Type::TypeOfTyp:
++        O << "type_of_type(";
++          termType(O, cast<TypeOfType>(T)->getUnderlyingType());
++        O << ")";
++        break;
++
++      // Typedefs ------------
++      case Type::TypeName: {
++        TypedefType *TDT = cast<TypedefType>(T);
++        QualType Simplified = TDT->LookThroughTypedefs();
++        O << "typedef_type(";
++          termIdentifier(O, TDT->getDecl()->getIdentifier());
++        O << ", ";
++          termType(O, Simplified);
++        O << ")";
++        break;
++      }
++
++      // Tagged ------------
++      case Type::Tagged:
++        if (RecordType *RT = dyn_cast<RecordType>(T)) {
++          O << "class_type(";
++            termIdentifier(O, RT->getDecl()->getIdentifier());
++          O << ", " << RT->getDecl()->getKindName() << ", ";
++            termDeclContext(O, RT->getDecl()->getDeclContext());
++          O << ")";
++        }
++        else if (EnumType *ET = dyn_cast<EnumType>(T)) {
++          O << "enum_type(";
++            termDecl(O, ET->getDecl());
++          O << ")";
++        }
++        else assert(0 && "Unknown Tagged Type");
++        break;
++
++      // C-C++/ObjC-C++/Embedded-C ------------
++      case Type::Reference:
++      case Type::MemberPointer:
++      case Type::ASQual:
++      case Type::TemplateTypeParm:
++      case Type::ObjCInterface:
++      case Type::ObjCQualifiedInterface:
++      case Type::ObjCQualifiedId:
++
++      // Misc ------------
++      case Type::Vector:
++      case Type::ExtVector:
++      case Type::Complex:
++      case Type::BlockPointer:
++      default:
++        O << "some_type, ";
++    }
++
++    if (T.getCVRQualifiers()) {
++      O << ", ";
++        termTypeModifier(O, T);
++      O << ")";
 +    }
 +  }
-+  fprintf(F, "', " AR "),");
-+}
 +
-+void StmtTermDumper::VisitUnaryOperator(UnaryOperator *Node) {
-+  const char* n;
-+  switch (Node->getOpcode()) {
-+  case UnaryOperator::PostInc:   n = "plus_plus_op";      break;
-+  case UnaryOperator::PostDec:   n = "minus_minus_op";    break;
-+  case UnaryOperator::PreInc:    n = "plus_plus_op";      break;
-+  case UnaryOperator::PreDec:    n = "minus_minus_op";    break;
-+  case UnaryOperator::AddrOf:    n = "address_of_op";     break;
-+  case UnaryOperator::Deref:     n = "pointer_deref_exp"; break;
-+  case UnaryOperator::Plus:      n = "plus_op";           break;
-+  case UnaryOperator::Minus:     n = "minus_op";          break;  
-+  case UnaryOperator::Not:       n = "bit_complement_op"; break;  
-+  case UnaryOperator::LNot:      n = "not_op";            break;   
-+  case UnaryOperator::SizeOf:    n = "size_of_op";        break;
-+  case UnaryOperator::AlignOf:   n = "align_op";          break;  
-+  case UnaryOperator::Real:      n = "real_op";           break;  
-+  case UnaryOperator::Imag:      n = "imag_op";           break;     
-+  case UnaryOperator::Extension: n = "extension_op";      break;  
-+  case UnaryOperator::OffsetOf:  n = "offset_op";         break;  
++  const Decl *ASTTermDumper::getTypeDecl(const Type *T) const {
++    switch (T->getTypeClass()) {
++      case Type::Tagged: 
++        if (const RecordType *RT = dyn_cast<RecordType>(T)) {
++          return  RT->getDecl();
++        }
++        else if (const EnumType *ET = dyn_cast<EnumType>(T)) {
++          return ET->getDecl();
++        }
++        else assert(0 && "Unknown Tagged Type");
++      default:
++        return NULL;
++    }
 +  }
-+  Indent();
-+  fprintf(F, "%s(", n);
-+  //fprintf(F, " %s '%s'", Node->isPostfix() ? "postfix" : "prefix",
-+  //        UnaryOperator::getOpcodeStr(Node->getOpcode()));
-+}
-+void StmtTermDumper::VisitSizeOfAlignOfTypeExpr(SizeOfAlignOfTypeExpr *Node) {
-+  TermDumpExpr(Node);
-+  fprintf(F, " %s ", Node->isSizeOf() ? "sizeof" : "alignof");
-+  TermDumpType(Node->getArgumentType());
-+}
 +
-+void StmtTermDumper::VisitMemberExpr(MemberExpr *Node) {
-+  TermDumpExpr(Node);
-+  fprintf(F, " %s%s %p", Node->isArrow() ? "->" : ".",
-+          Node->getMemberDecl()->getName(), (void*)Node->getMemberDecl());
-+}
-+void StmtTermDumper::VisitExtVectorElementExpr(ExtVectorElementExpr *Node) {
-+  TermDumpExpr(Node);
-+  fprintf(F, " %s", Node->getAccessor().getName());
-+}
-+void StmtTermDumper::VisitBinaryOperator(BinaryOperator *Node) {
-+  const char* n;
-+  switch (Node->getOpcode()) {
-+  case BinaryOperator::Mul:       n =         "multiply_op"; break;
-+  case BinaryOperator::Div:       n =           "divide_op"; break; 
-+  case BinaryOperator::Rem:       n =              "mod_op"; break;
-+  case BinaryOperator::Add:       n =              "add_op"; break; 
-+  case BinaryOperator::Sub:       n =         "subtract_op"; break;
-+  case BinaryOperator::Shl:       n =           "lshift_op"; break;
-+  case BinaryOperator::Shr:       n =           "rshift_op"; break;
-+  case BinaryOperator::LT:        n =        "less_than_op"; break; 
-+  case BinaryOperator::GT:        n =     "greater_than_op"; break;
-+  case BinaryOperator::LE:        n =    "less_or_equal_op"; break;
-+  case BinaryOperator::GE:        n = "greater_or_equal_op"; break; 
-+  case BinaryOperator::EQ:        n =         "equality_op"; break;
-+  case BinaryOperator::NE:        n =        "not_equal_op"; break;
-+  case BinaryOperator::And:       n =          "bit_and_op"; break;
-+  case BinaryOperator::Xor:       n =          "bit_xor_op"; break;
-+  case BinaryOperator::Or:        n =           "bit_or_op"; break;
-+  case BinaryOperator::LAnd:      n =              "and_op"; break;
-+  case BinaryOperator::LOr:       n =               "or_op"; break;
-+  case BinaryOperator::Assign:    n =           "assign_op"; break; 
-+  case BinaryOperator::MulAssign: n =      "mult_assign_op"; break;
-+  case BinaryOperator::DivAssign: n =       "div_assign_op"; break;
-+  case BinaryOperator::RemAssign: n =       "mod_assign_op"; break;
-+  case BinaryOperator::AddAssign: n =       "add_assign_op"; break;
-+  case BinaryOperator::SubAssign: n =     "minus_assign_op"; break;
-+  case BinaryOperator::ShlAssign: n =    "lshift_assign_op"; break;
-+  case BinaryOperator::ShrAssign: n =    "rshift_assign_op"; break;
-+  case BinaryOperator::AndAssign: n =       "and_assign_op"; break;
-+  case BinaryOperator::XorAssign: n =       "xor_assign_op"; break;
-+  case BinaryOperator::OrAssign:  n =        "or_assign_op"; break;
-+  case BinaryOperator::Comma:     n =            "comma_op"; break;
-+  default: n = "FIXME_op";
++  const QualType ASTTermDumper::getQualType(const Decl *D) const {
++    QualType type(NULL, 0);
++
++    // Translate type modifier
++    if (const VarDecl *V = dyn_cast<VarDecl>(D)) {
++      type = V->getType();
++    }
++    else if (const EnumConstantDecl *E = dyn_cast<EnumConstantDecl>(D)) {
++      type = E->getType();
++    }
++    else if (const FunctionDecl *F = dyn_cast<FunctionDecl>(D)) {
++      type = F->getType();
++    }
++    else if (const FieldDecl *F = dyn_cast<FieldDecl>(D)) {
++      type = F->getType();
++    }
++    else
++      assert(0 && "Unknown decl type!");
++
++    return type;
 +  }
-+  Indent();
-+  fprintf(F, "%s(", n);
-+  TermDumpExpr(Node);
-+}
-+void StmtTermDumper::VisitCompoundAssignOperator(CompoundAssignOperator *Node) {
-+  VisitBinaryOperator(Node);
-+}
 +
-+// GNU extensions.
++  /***************************************************************************
++  * Expression                                                              *
++  **************************************************************************/
 +
-+void StmtTermDumper::VisitAddrLabelExpr(AddrLabelExpr *Node) {
-+  TermDumpExpr(Node);
-+  fprintf(F, " %s %p", Node->getLabel()->getName(), (void*)Node->getLabel());
-+}
++  void ASTTermDumper::termStmt(std::ostream &O, const Stmt *S) {
++    enum cast_kind_t {
++      ck_undef,
++      ck_implicit,
++      ck_c_style,
++      ck_const,
++      ck_static,
++      ck_dynamic,
++      ck_reinterpret
++    };
++    cast_kind_t castKind = ck_undef;
 +
-+void StmtTermDumper::VisitTypesCompatibleExpr(TypesCompatibleExpr *Node) {
-+  TermDumpExpr(Node);
-+  fprintf(F, " ");
-+  TermDumpType(Node->getArgType1());
-+  fprintf(F, " ");
-+  TermDumpType(Node->getArgType2());
-+}
++    switch (S->getStmtClass()) {
++      case Stmt::NullStmtClass:
++        O << "null_expr";
++        break;
 +
-+//===----------------------------------------------------------------------===//
-+// C++ Expressions
-+//===----------------------------------------------------------------------===//
++      case Stmt::CompoundStmtClass:
++        {
++          const CompoundStmt *CS = cast<CompoundStmt>(S);
++          O << "basic_block([";
 +
-+void StmtTermDumper::VisitCXXCastExpr(CXXCastExpr *Node) {
-+  TermDumpExpr(Node);
-+  fprintf(F, " %s", CXXCastExpr::getOpcodeStr(Node->getOpcode()));
-+}
++          bool first = true;
++          for(CompoundStmt::const_body_iterator i = CS->body_begin(),
++              ie = CS->body_end(); i != ie; i++) {
++            if (!first)
++              O << ", ";
 +
-+void StmtTermDumper::VisitCXXBoolLiteralExpr(CXXBoolLiteralExpr *Node) {
-+  TermDumpExpr(Node);
-+  fprintf(F, " %s", Node->getValue() ? "true" : "false");
-+}
++            termStmtWrapped(O, *i);
++            first = false;
++          }
 +
-+//===----------------------------------------------------------------------===//
-+// Obj-C Expressions
-+//===----------------------------------------------------------------------===//
++          O << "], " DAB ", ";
++            fileInfo(O, S);
++          break;
++        }
 +
-+void StmtTermDumper::VisitObjCMessageExpr(ObjCMessageExpr* Node) {
-+  TermDumpExpr(Node);
-+  fprintf(F, " selector=%s", Node->getSelector().getName().c_str());
-+  IdentifierInfo* clsName = Node->getClassName();
-+  if (clsName) fprintf(F, " class=%s", clsName->getName());
-+}
++      case Stmt::SwitchCaseClass:
++        assert(false && "Should never be found.");
++        break;
 +
-+void StmtTermDumper::VisitObjCEncodeExpr(ObjCEncodeExpr *Node) {
-+  TermDumpExpr(Node);
-+ 
-+  fprintf(F, " ");
-+  TermDumpType(Node->getEncodedType());
-+}
++      case Stmt::CaseStmtClass:
++        {
++          const CaseStmt *CS = cast<CaseStmt>(S);
 +
-+void StmtTermDumper::VisitObjCSelectorExpr(ObjCSelectorExpr *Node) {
-+  TermDumpExpr(Node);
-+  
-+  fprintf(F, " ");
-+  Selector selector = Node->getSelector();
-+  fprintf(F, "%s", selector.getName().c_str());
-+}
++          assert(!CS->getRHS() && "GNU extension for case not supported.\n");
 +
-+void StmtTermDumper::VisitObjCProtocolExpr(ObjCProtocolExpr *Node) {
-+  TermDumpExpr(Node);
-+  
-+  fprintf(F, " ");
-+  fprintf(F, "%s", Node->getProtocol()->getName());
-+}
++          O << "case_option_stmt(";
++            termStmt(O, CS->getLHS());
++          O << ", ";
++            termStmtWrapped(O, CS->getSubStmt());
++          // TODO: find what this is for.
++          O << ", null"
++               ", " DAB ", ";
++            fileInfo(O, CS);
++          break;
++        }
 +
-+void StmtTermDumper::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
-+  TermDumpExpr(Node);
++      case Stmt::DefaultStmtClass:
++        {
++          const DefaultStmt *DS = cast<DefaultStmt>(S);
 +
-+  if (Node->getKind() == ObjCPropertyRefExpr::MethodRef) {
-+    ObjCMethodDecl *Getter = Node->getGetterMethod();
-+    ObjCMethodDecl *Setter = Node->getSetterMethod();
-+    fprintf(F, " Kind=MethodRef Getter=\"%s\" Setter=\"%s\"", 
-+            Getter->getSelector().getName().c_str(),
-+            Setter ? Setter->getSelector().getName().c_str() : "(null)");
-+  } else {
-+    fprintf(F, " Kind=PropertyRef Property=\"%s\"", Node->getProperty()->getName());
++          O << "default_option_stmt(";
++            termStmtWrapped(O, DS->getSubStmt());
++          O << ", " DAB ", ";
++            fileInfo(O, DS);
++          break;
++        }
++
++      case Stmt::LabelStmtClass:
++        {
++          const LabelStmt *L = cast<LabelStmt>(S);
++          O << "label_statement(label_annotation("
++            // TODO: escaping
++            << L->getName() << "), " AIB ", ";
++            fileInfo(O, S);
++
++          if (L->getSubStmt()->getStmtClass() != Stmt::NullStmtClass) {
++            O << ", ";
++            termStmt(O, L->getSubStmt());
++          }
++          break;
++        }
++
++      case Stmt::IfStmtClass:
++        {
++          const IfStmt *IFS = cast<IfStmt>(S);
++          O << "if_stmt(";
++            termStmtWrapped(O, IFS->getCond());
++          O << ", ";
++            termStmt(O, IFS->getThen());
++          if (IFS->getElse()) {
++            O << ", ";
++              termStmt(O, IFS->getElse());
++          }
++          else
++            O << ", null";
++          O << ", " DAB ", ";
++            fileInfo(O, S);
++          break;
++        }
++
++      case Stmt::SwitchStmtClass:
++        {
++          const SwitchStmt *SS = cast<SwitchStmt>(S);
++
++          O << "switch_statement(";
++            termStmtWrapped(O, SS->getCond());
++          O << ", ";
++            termStmt(O, SS->getBody());
++          O << ", " DAB ", ";
++            fileInfo(O, SS);
++          break;
++        }
++
++      case Stmt::WhileStmtClass:
++        {
++          const WhileStmt *WS = cast<WhileStmt>(S);
++
++          O << "while_stmt(";
++            termStmtWrapped(O, WS->getCond());
++          O << ", ";
++            termStmt(O, WS->getBody());
++          O << ", " DAB ", ";
++            fileInfo(O, WS);
++          break;
++        }
++
++      case Stmt::DoStmtClass:
++        {
++          const DoStmt *DS = cast<DoStmt>(S);
++
++          O << "do_while_stmt(";
++            termStmt(O, DS->getBody());
++          O << ", ";
++            termStmtWrapped(O, DS->getCond());
++          O << ", " DAB ", ";
++            fileInfo(O, DS);
++          break;
++        }
++
++      case Stmt::ForStmtClass:
++        {
++          const ForStmt *FS = cast<ForStmt>(S);
++
++          O << "for_statement("
++               "for_init_statement([";
++            termStmtWrapped(O, FS->getInit());
++          O << "], " DAB ", "; // for_init_statement
++            fileInfo(O, FS);
++          O << ", ";
++            termStmtWrapped(O, FS->getCond());
++          O << ", ";
++            termStmt(O, FS->getInc());
++          O << ", ";
++            termStmt(O, FS->getBody());
++          O << ", " DAB ", "; // for_stmt
++            fileInfo(O, FS);
++          break;
++        }
++
++      case Stmt::GotoStmtClass:
++        O << "goto_statement(label_annotation("
++          // TODO: escaping
++          << cast<GotoStmt>(S)->getLabel()->getName() << "), " AIB ", ";
++          fileInfo(O, S);
++        break;
++
++//       case Stmt::IndirectGotoStmtClass:
++      case Stmt::ContinueStmtClass:
++        O << "continue_stmt(" DAB ", ";
++          fileInfo(O, S);
++        break;
++
++      case Stmt::BreakStmtClass:
++        O << "break_stmt(" DAB ", ";
++          fileInfo(O, S);
++        break;
++
++      case Stmt::ReturnStmtClass:
++        {
++          const ReturnStmt *RS = cast<ReturnStmt>(S);
++          O << "return_stmt(";
++            termStmt(O, RS->getRetValue());
++          O << ", " DAB ", ";
++            fileInfo(O, S);
++          break;
++        }
++
++      case Stmt::DeclStmtClass:
++        termDeclStmt(O, S);
++        break;
++
++      // GNU Stmt Extensions
++//       case Stmt::AsmStmtClass:
++
++      // Obj-C statements
++//       case Stmt::ObjCAtTryStmtClass:
++//       case Stmt::ObjCAtCatchStmtClass:
++//       case Stmt::ObjCAtFinallyStmtClass:
++//       case Stmt::ObjCAtThrowStmtClass:
++//       case Stmt::ObjCAtSynchronizedStmtClass:
++      // Obj-C2 statements
++//       case Stmt::ObjCForCollectionStmtClass:
++
++      // C++ statements
++//       case Stmt::CXXCatchStmtClass:
++//       case Stmt::CXXTryStmtClass:
++
++      // Expressions.
++//       case Stmt::ExprClass:
++//       case Stmt::PredefinedExprClass:
++//           TermDumpExpr(Node);
++//           switch (Node->getIdentType()) {
++//           default: assert(0 && "unknown case");
++//           case PredefinedExpr::Func:           fprintf(F, " __func__"); break;
++//           case PredefinedExpr::Function:       fprintf(F, " __FUNCTION__"); break;
++//           case PredefinedExpr::PrettyFunction: fprintf(F, " __PRETTY_FUNCTION__");break;
++//           }
++
++      case Stmt::DeclRefExprClass:
++        termDeclRefExpr(O, S);
++        break;
++
++      case Stmt::IntegerLiteralClass:
++        {
++          const IntegerLiteral *IL = cast<IntegerLiteral>(S);
++          const BuiltinType *ILT = cast<BuiltinType>(IL->getType());
++          bool isSigned = ILT->isSignedIntegerType();
++
++          switch (ILT->getKind()) {
++            case BuiltinType::Char_U:    O << "unsigned_char"; break;
++            case BuiltinType::UChar:     O << "unsigned_char"; break;
++            case BuiltinType::UShort:    O << "unsigned_short"; break;
++            case BuiltinType::UInt:      O << "unsigned_int"; break;
++            case BuiltinType::ULong:     O << "unsigned_long"; break;
++            case BuiltinType::ULongLong: O << "unsigned_longlong"; break;
++
++            case BuiltinType::Char_S:    O << "char"; break;
++            case BuiltinType::SChar:     O << "char"; break;
++            case BuiltinType::WChar:     O << "wchar"; break;
++            case BuiltinType::Short:     O << "short"; break;
++            case BuiltinType::Int:       O << "int"; break;
++            case BuiltinType::Long:      O << "long"; break;
++            case BuiltinType::LongLong:  O << "longlong"; break;
++            default:
++              assert(false);
++          }
++
++          O << "_val(null, value_annotation("
++            << IL->getValue().toString(10, isSigned) << "), " AI ",";
++            fileInfo(O, S);
++          break;
++        }
++      case Stmt::FloatingLiteralClass:
++        {
++          const FloatingLiteral *FL = cast<FloatingLiteral>(S);
++          const BuiltinType *FLT = cast<BuiltinType>(FL->getType());
++          switch (FLT->getKind()) {
++            case BuiltinType::Float:      O << "float"; break;
++            case BuiltinType::Double:     O << "double"; break;
++            case BuiltinType::LongDouble: O << "long_double"; break;
++            default:
++              assert(false);
++          }
++          O << "_val(null, value_annotation("
++            << FL->getValueAsApproximateDouble() << "), " AI ",";
++            fileInfo(O, S);
++          break;
++        }
++      case Stmt::StringLiteralClass:
++        {
++          const StringLiteral *SL = cast<StringLiteral>(S);
++          O << "string_val(null, value_annotation('"
++            << (SL->isWide() ? "L" : "");
++
++          // TODO: check escaping
++          for (unsigned i = 0, e = SL->getByteLength(); i != e; ++i) {
++            switch (char C = SL->getStrData()[i]) {
++              // Handle some common ones to make dumps prettier.
++              case '\\': O << "\\\\"; break;
++              case '"':  O << "\\\""; break;
++              case '\n': O << "\\n"; break;
++              case '\t': O << "\\t"; break;
++              case '\a': O << "\\a"; break;
++              case '\b': O << "\\b"; break;
++              default:
++                if (isprint(C))
++                  O << C;
++                else
++                  O << "\\" << std::oct << C;
++                break;
++            }
++          }
++
++          O << "'), " AI ",";
++            fileInfo(O, S);
++          break;
++        }
++      case Stmt::CharacterLiteralClass:
++        {
++          const CharacterLiteral *CL = cast<CharacterLiteral>(S);
++          O << "char_val(null, value_annotation('";
++
++          switch (char C = CL->getValue()) {
++            // Handle some common ones to make dumps prettier.
++            case '\\': O << "\\\\"; break;
++            case '"':  O << "\\\""; break;
++            case '\n': O << "\\n"; break;
++            case '\t': O << "\\t"; break;
++            case '\a': O << "\\a"; break;
++            case '\b': O << "\\b"; break;
++            default:
++              if (isprint(C))
++                O << C;
++              else
++                O << "\\" << std::oct << C;
++              break;
++          }
++
++          O << "'), " AI ",",
++           fileInfo(O, S);
++          break;
++        }
++
++//       case Stmt::ImaginaryLiteralClass: // "imag_val"
++// 
++      case Stmt::ParenExprClass:
++        {
++          // TODO: represent in ROSE
++          const ParenExpr *PE = cast<ParenExpr>(S);
++          termStmt(O, PE->getSubExpr());
++          break;
++        }
++
++      case Stmt::UnaryOperatorClass:
++        termUnaryOperator(O, S);
++        break;
++
++      case Stmt::SizeOfAlignOfExprClass:
++        {
++          const SizeOfAlignOfExpr *SoP = cast<SizeOfAlignOfExpr>(S);
++
++          if (SoP->isSizeOf())
++            O << "size_of_op(";
++          else
++            // TODO: check if align of is available in ROSE
++            O << "align_of_op(";
++
++          if (SoP->isArgumentType())
++            O << "null";
++          else
++            termStmt(O, SoP->getArgumentExpr());
++
++          if (SoP->isSizeOf()) {
++            O << ", size_of_op_annotation(";
++              termType(O, SoP->getTypeOfArgument());
++            O << ", ";
++              termType(O, SoP->getType());
++            O << ")";
++          }
++
++          O << ", " AI ", ";
++            fileInfo(O, SoP);
++          break;
++        }
++
++      case Stmt::ArraySubscriptExprClass:
++        {
++          const ArraySubscriptExpr *ASE = cast<ArraySubscriptExpr>(S);
++
++          O << "pntr_arr_ref_exp(";
++            termStmt(O, ASE->getBase());
++          O << ", ";
++            termStmt(O, ASE->getIdx());
++          O << ", binary_op_annotation(";
++            termType(O, ASE->getType());
++          O << "), " AI ", ";
++            fileInfo(O, ASE);
++          break;
++        }
++
++      case Stmt::CallExprClass:
++        termCallExpr(O, S);
++        break;
++
++      case Stmt::MemberExprClass:
++        {
++          const MemberExpr *ME = cast<MemberExpr>(S);
++
++          if (ME->isArrow())
++            O << "arrow_exp(";
++          else
++            O << "dot_exp(";
++
++          termStmt(O, ME->getBase());
++          O << ", ";
++            termVarRefExpr(O, ME->getMemberDecl(), ME->getType(), ME);
++          O << ", binary_op_annotation(";
++            termType(O, ME->getType());
++          O << "), " AI ", ";
++            fileInfo(O, ME);
++          break;
++        }
++
++      case Stmt::ImplicitCastExprClass:
++        if (castKind == ck_undef)
++          castKind = ck_implicit;
++      case Stmt::CStyleCastExprClass:
++        if (castKind == ck_undef)
++          castKind = ck_c_style;
++      case Stmt::ExplicitCastExprClass:
++        if (castKind == ck_undef) {
++          assert(false);
++          // TODO: add support when clang is able to handle const, reinterpret
++          // and dynamic casts
++          castKind = ck_undef;
++        }
++      case Stmt::CastExprClass:
++        {
++          const CastExpr *CE = cast<CastExpr>(S);
++
++          // avoid cast on declaration references
++          if (CE->getSubExpr()->getStmtClass() == Stmt::DeclRefExprClass) {
++            const DeclRefExpr *DRE = cast<DeclRefExpr>(CE->getSubExpr());
++
++            if (const ValueDecl *VD = cast<ValueDecl>(DRE->getDecl())) {
++              const PointerLikeType *PT = cast<PointerLikeType>(CE->getType());
++
++              if (VD->getType() == PT->getPointeeType() ||
++                  (VD->getType()->isArrayType() &&
++                       cast<ArrayType>(VD->getType())->getElementType() ==
++                          PT->getPointeeType())) {
++                termStmt(O, CE->getSubExpr());
++                return; // exit here!!
++              }
++            }
++          }
++
++          O << "cast_exp(";
++            termStmt(O, CE->getSubExpr());
++          O << ", null, unary_op_annotation(prefix, ";
++            termType(O, CE->getType());
++          O << ",";
++          switch (castKind) {
++            case ck_implicit: O << "implicit"; break;
++            case ck_c_style: O << "c_style"; break;
++            case ck_const: O << "const"; break;
++            case ck_static: O << "static"; break;
++            case ck_dynamic: O << "dynamic"; break;
++            case ck_reinterpret: O << "reinterpret"; break;
++            case ck_undef:
++              assert(false);
++          }
++          O << ", null), " AI ", ";
++            fileInfo(O, CE);
++          break;
++        }
++
++      case Stmt::BinaryOperatorClass:
++      case Stmt::CompoundAssignOperatorClass:
++        termBinaryOperator(O, S);
++        break;
++
++      case Stmt::ConditionalOperatorClass:
++        {
++          const ConditionalOperator *CO = cast<ConditionalOperator>(S);
++
++          O << "conditional_exp(";
++            termStmt(O, CO->getCond());
++          O << ", ";
++            termStmt(O, CO->getTrueExpr());
++          O << ", ";
++            termStmt(O, CO->getFalseExpr());
++          O << ", conditional_exp_annotation(";
++            termType(O, CO->getType());
++          O << ")"
++               ", " AI ", ";
++            fileInfo(O, CO);
++          break;
++        }
++
++//       case Stmt::CompoundLiteralExprClass:
++//       case Stmt::ExtVectorElementExprClass:
++      case Stmt::InitListExprClass:
++        {
++          const InitListExpr *ILE = cast<InitListExpr>(S);
++
++          O << "expr_list_exp([";
++
++          bool first = true;
++          for(InitListExpr::const_iterator i = ILE->begin(), ie = ILE->end();
++              i != ie; i++) {
++            if (!first)
++              O << ", ";
++
++            termInitializer(O, *i);
++            first = false;
++          }
++
++          O << "], " DA ", ";
++            // TODO: file info seems to be invalid for ILE??
++            fileInfo(O, ILE);
++          break;
++        }
++
++//       case Stmt::DesignatedInitExprClass:
++//       case Stmt::ImplicitValueInitExprClass:
++//       case Stmt::VAArgExprClass:
++
++      // GNU Extensions.
++//       case Stmt::AddrLabelExprClass:
++//         TermDumpExpr(Node);
++//         fprintf(F, " %s %p", Node->getLabel()->getName(), (void*)Node->getLabel());
++
++//       case Stmt::StmtExprClass:
++//       case Stmt::TypesCompatibleExprClass:
++//           TermDumpExpr(Node);
++//           fprintf(F, " ");
++//           TermDumpType(Node->getArgType1());
++//           fprintf(F, " ");
++//           TermDumpType(Node->getArgType2());
++
++//       case Stmt::ChooseExprClass:
++//       case Stmt::GNUNullExprClass:
++
++      // C++ Expressions.
++//       case Stmt::CXXOperatorCallExprClass:
++//       case Stmt::CXXMemberCallExprClass:
++//       case Stmt::CXXNamedCastExprClass:
++//       case Stmt::CXXStaticCastExprClass:
++//       case Stmt::CXXDynamicCastExprClass:
++//       case Stmt::CXXReinterpretCastExprClass:
++//       case Stmt::CXXConstCastExprClass:
++//       case Stmt::CXXFunctionalCastExprClass:
++//       case Stmt::CXXTemporaryObjectExprClass:
++//       case Stmt::CXXTypeidExprClass:
++//       case Stmt::CXXBoolLiteralExprClass:
++//       case Stmt::CXXThisExprClass:
++//       case Stmt::CXXThrowExprClass:
++//       case Stmt::CXXDefaultArgExprClass:
++//       case Stmt::CXXZeroInitValueExprClass:
++//       case Stmt::CXXConditionDeclExprClass:
++//       case Stmt::CXXNewExprClass:
++//       case Stmt::CXXDeleteExprClass:
++//       case Stmt::CXXDependentNameExprClass:
++//       case Stmt::UnaryTypeTraitExprClass:
++//       case Stmt::QualifiedDeclRefExprClass:
++
++      // Obj-C Expressions.
++//       case Stmt::ObjCStringLiteralClass:
++//       case Stmt::ObjCEncodeExprClass:
++//       case Stmt::ObjCMessageExprClass:
++//       case Stmt::ObjCSelectorExprClass:
++//       case Stmt::ObjCProtocolExprClass:
++//       case Stmt::ObjCIvarRefExprClass:
++//       case Stmt::ObjCPropertyRefExprClass:
++//       case Stmt::ObjCKVCRefExprClass:
++//       case Stmt::ObjCSuperExprClass:
++
++      // Clang Extensions.
++//       case Stmt::OverloadExprClass:
++//       case Stmt::ShuffleVectorExprClass:
++//       case Stmt::BlockExprClass:
++//       case Stmt::BlockDeclRefExprClass:
++      default:
++        O << "some_expression(" << S->getStmtClassName() << ")";
++    }
++
++    // NOTE: Controll does not allways reach this point here for all statements
++    // and expressions.
 +  }
-+}
 +
-+//===----------------------------------------------------------------------===//
-+// Stmt method implementations
-+//===----------------------------------------------------------------------===//
++  void ASTTermDumper::termStmtWrapped(std::ostream &O, const Stmt *S) {
++    if (dyn_cast<Expr>(S)) {
++      O << "expr_statement(";
++    }
 +
-+/// termDump - This does a local dump of the specified AST fragment.
-+/// It dumps the specified node and a few nodes underneath it, but not
-+/// the whole subtree.  This is useful in a debugger.
-+void Stmt::termDump(SourceManager &SM) const {
-+  StmtTermDumper P(&SM, stderr, 4);
-+  P.TermDumpSubTree(const_cast<Stmt*>(this));
-+  fprintf(stderr, "\n");
-+}
++    termStmt(O, S);
 +
-+/// termDump - This does a local termDump of the specified AST
-+/// fragment.  It termDumps the specified node and a few nodes
-+/// underneath it, but not the whole subtree.  This is useful in a
-+/// debugger.
-+void Stmt::termDump() const {
-+  StmtTermDumper P(0, stderr, 4);
-+  P.TermDumpSubTree(const_cast<Stmt*>(this));
-+  fprintf(stderr, "\n");
-+}
++    if (dyn_cast<Expr>(S)) {
++      O << ", " DAB ", ";
++        fileInfo(O, S);
++    }
++  }
 +
-+/// termDumpAll - This does a termDump of the specified AST fragment
-+/// and all subtrees.
-+void Stmt::termDumpAll(SourceManager &SM) const {
-+  StmtTermDumper P(&SM, stderr, ~0U);
-+  P.TermDumpSubTree(const_cast<Stmt*>(this));
-+  fprintf(stderr, "\n");
-+}
++  void ASTTermDumper::termUnaryOperator(std::ostream &O, const Stmt *S) {
++    const UnaryOperator* UO = cast<UnaryOperator>(S);
 +
-+/// termDumpAll - This does a termDump of the specified AST fragment
-+/// and all subtrees.
-+void Stmt::termDumpAll() const {
-+  StmtTermDumper P(0, stderr, ~0U);
-+  P.TermDumpSubTree(const_cast<Stmt*>(this));
-+  fprintf(stderr, "\n");
-+}
++    switch (UO->getOpcode()) {
++      case UnaryOperator::PostInc:   O << "plus_plus_op";      break;
++      case UnaryOperator::PostDec:   O << "minus_minus_op";    break;
++      case UnaryOperator::PreInc:    O << "plus_plus_op";      break;
++      case UnaryOperator::PreDec:    O << "minus_minus_op";    break;
++      case UnaryOperator::AddrOf:    O << "address_of_op";     break;
++      case UnaryOperator::Deref:     O << "pointer_deref_exp"; break;
++      case UnaryOperator::Plus:      O << "plus_op";           break;
++      case UnaryOperator::Minus:     O << "minus_op";          break;
++      case UnaryOperator::Not:       O << "bit_complement_op"; break;
++      case UnaryOperator::LNot:      O << "not_op";            break;
++      case UnaryOperator::Real:      O << "real_op";           break;
++      case UnaryOperator::Imag:      O << "imag_op";           break;
++      case UnaryOperator::Extension: O << "extension_op";      break;
++      case UnaryOperator::OffsetOf:  O << "offset_op";         break;
++    }
 +
-+string Stmt::termGetClassDecl(QualType T) {
-+  return "null";
-+}
++    O << "(";
++      termStmt(O, UO->getSubExpr());
++    O << ", unary_op_annotation("
++      << (UO->isPostfix() ? "postfix, " : "prefix, ");
++      termType(O, UO->getType());
++    O << ", null, null), " AI ", ";
++      fileInfo(O, S);
++  }
 +
-+/*
-+enum class_type {
-+  class = 0,
-+  struct = 1,
-+  union = 2,
-+  template_parameter = 3
-+  } 
-+*/
-+string Stmt::termGetType(QualType T) {
-+  stringstream s;
-+  if (PointerLikeType *PLT = dyn_cast<PointerLikeType>(T)) {
-+    assert(0 && "Pointerlike Type");
-+  } 
-+  else if (VectorType *VT = dyn_cast<VectorType>(T)) {
-+    assert(0 && "Vector Type");
-+  } 
-+  else if (ConstantArrayType *AT = dyn_cast<ConstantArrayType>(T)) {
-+    s << "array_type(" << termGetType(AT->getElementType())
-+      << AT->getSize().toString(10, false) << ")";
-+  } 
-+  else if (ArrayType *AT = dyn_cast<ArrayType>(T)) {
-+    assert(0 && "Array Type");
-+  } 
-+  else if (RecordType *RT = dyn_cast<RecordType>(T)) {
-+    s << "class_type("
-+      << "'" << RT->getDecl()->getName() << "'," //RT.getAsString() 
-+      << "1," 
-+      << /*termGetScope(T)*/   "null),";
-+  }
-+  else if (EnumType *ET = dyn_cast<EnumType>(T)) {
-+    assert(0 && "Enum Type");
-+  }
-+  else if (ComplexType *CT = dyn_cast<ComplexType>(T)) {
-+    assert(0 && "Complex Type");
-+  }
-+  else if (TagType *TT = dyn_cast<TagType>(T)) {
-+    assert(0 && "Tag Type");
-+  }
-+  else if (TypedefType *TDT = dyn_cast<TypedefType>(T)) {
-+    QualType Simplified = TDT->LookThroughTypedefs();
-+    s << "typedef_type(type_"
-+      << Simplified.getAsString() << ", '" 
-+      << TDT->getDecl()->getName() << "'),";
-+  } 
-+  else if (FunctionType *FT = dyn_cast<FunctionType>(T)) {
-+    assert(0 && "Function Type");
-+  }
-+  else if (FunctionTypeProto *FT = dyn_cast<FunctionTypeProto>(T)) {
-+    assert(0 && "Funciton Type Proto");
-+  }
-+  else if (ExtVectorType *VT = dyn_cast<ExtVectorType>(T)) {
-+    assert(0 && "Ext. Vector Type");
-+  }
-+  else if (BuiltinType *TT = dyn_cast<BuiltinType>(T)) {
-+    s << "type_" << T.getAsString();
-+  }
-+  else if (ObjCInterfaceType *TT = dyn_cast<ObjCInterfaceType>(T)) {
-+    assert(0 && "ObjC Interface Type");
-+  }
-+  else if (ObjCQualifiedIdType *TT = dyn_cast<ObjCQualifiedIdType>(T)) {
-+    assert(0 && "ObjC Qualified Type");
-+  }
-+  else if (ObjCQualifiedInterfaceType *TT = 
-+	   dyn_cast<ObjCQualifiedInterfaceType>(T)) {
-+    assert(0 && "ObjC Qualified Interface Type");
-+  }
-+  else assert(0 && "Unknown Type");
-+  return s.str();
-+}
++  void ASTTermDumper::termBinaryOperator(std::ostream &O, const Stmt *S) {
++    const BinaryOperator* BO = cast<BinaryOperator>(S);
 +
-+string Stmt::termDumpDecl(SourceManager &SM, Decl *D) {
-+  stringstream annot;
-+  FILE* F = stderr;
-+  StmtTermDumper P(&SM, stderr, ~0U);
-+  // FIXME: Need to complete/beautify this... this code simply shows the
-+  // nodes are where they need to be.
-+  if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
-+      string name = TD->getName();
-+      string type = TD->getUnderlyingType().getAsString();
-+      fprintf(stderr, "typedef_declaration(%s, "
-+	      "typedef_annotation('%s', %s, 'typedef %s %s')", 
-+	      "null", 
-+	      name.c_str(), 
-+	      termGetType(TD->getUnderlyingType()).c_str(),
-+	      name.c_str(), type.c_str());
-+  } else if (ValueDecl *VD = dyn_cast<ValueDecl>(D)) {
++    switch (BO->getOpcode()) {
++    case BinaryOperator::Mul:       O <<         "multiply_op"; break;
++    case BinaryOperator::Div:       O <<           "divide_op"; break;
++    case BinaryOperator::Rem:       O <<              "mod_op"; break;
++    case BinaryOperator::Add:       O <<               "add_op"; break;
++    case BinaryOperator::Sub:       O <<          "subtract_op"; break;
++    case BinaryOperator::Shl:       O <<            "lshift_op"; break;
++    case BinaryOperator::Shr:       O <<            "rshift_op"; break;
++    case BinaryOperator::LT:        O <<        "less_than_op"; break;
++    case BinaryOperator::GT:        O <<     "greater_than_op"; break;
++    case BinaryOperator::LE:        O <<    "less_or_equal_op"; break;
++    case BinaryOperator::GE:        O << "greater_or_equal_op"; break;
++    case BinaryOperator::EQ:        O <<         "equality_op"; break;
++    case BinaryOperator::NE:        O <<        "not_equal_op"; break;
++    case BinaryOperator::And:       O <<          "bit_and_op"; break;
++    case BinaryOperator::Xor:       O <<          "bit_xor_op"; break;
++    case BinaryOperator::Or:        O <<           "bit_or_op"; break;
++    case BinaryOperator::LAnd:      O <<              "and_op"; break;
++    case BinaryOperator::LOr:       O <<               "or_op"; break;
++    case BinaryOperator::Assign:    O <<           "assign_op"; break;
++    case BinaryOperator::MulAssign: O <<      "mult_assign_op"; break;
++    case BinaryOperator::DivAssign: O <<       "div_assign_op"; break;
++    case BinaryOperator::RemAssign: O <<       "mod_assign_op"; break;
++    case BinaryOperator::AddAssign: O <<       "add_assign_op"; break;
++    case BinaryOperator::SubAssign: O <<     "minus_assign_op"; break;
++    case BinaryOperator::ShlAssign: O <<     "lshift_assign_op"; break;
++    case BinaryOperator::ShrAssign: O <<     "rshift_assign_op"; break;
++    case BinaryOperator::AndAssign: O <<        "and_assign_op"; break;
++    case BinaryOperator::XorAssign: O <<        "xor_assign_op"; break;
++    case BinaryOperator::OrAssign:  O <<         "or_assign_op"; break;
++    case BinaryOperator::Comma:     O <<             "comma_op"; break;
++    }
++    O << "(";
++      termStmt(O, BO->getLHS());
++    O << ", ";
++      termStmt(O, BO->getRHS());
++    O << ", binary_op_annotation(";
++      termType(O, BO->getType());
++    O << "), " AI ", ";
++      fileInfo(O, BO);
++  }
 +
-+    string namespace_definition = "null";
-+    string fi = P.getFileInfo(VD->getLocation());
++  void ASTTermDumper::termDeclStmt(std::ostream &O, const Stmt *S) {
++    const DeclStmt *DS = cast<DeclStmt>(S);
++
++    bool first = true;
++    for(DeclStmt::const_decl_iterator d = DS->decl_begin(),
++        de = DS->decl_end(); d != de; ++d) {
++      if (!first)
++        O << ", ";
++
++      termDecl(O, *d);
++      first = false;
++    }
++  }
++
++  void ASTTermDumper::termCallExpr(std::ostream &O, const Stmt *S) {
++    const CallExpr *CE = cast<CallExpr>(S);
++
++    O << "function_call_exp(";
++      termStmt(O,CE->getCallee());
++    O << ", expr_list_exp([";
++
++    bool first = true;
++    for(CallExpr::const_arg_iterator i = CE->arg_begin(), ie = CE->arg_end();
++        i != ie; ++i) {
++      if (!first)
++        O << ", ";
++
++      termStmt(O, *i);
++      first = false;
++    }
++    O << "], " DA ", ";
++      fileInfo(O, S);
++    O << ", function_call_exp_annotation(";
++      termType(O, CE->getType());
++    O << "), " AI ", ";
++      fileInfo(O, S);
++  }
++
++  void ASTTermDumper::termDeclRefExpr(std::ostream &O, const Stmt *S) {
++    const DeclRefExpr *DRE = cast<DeclRefExpr>(S);
++    const Decl *D = DRE->getDecl();
++
++    std::string ref_type("");
++    switch (D->getKind()) {
++      case Decl::Function:
++        O << "function_ref_exp("
++             "function_ref_exp_annotation(";
++          termIdentifier(O, cast<FunctionDecl>(D)->getIdentifier());
++        O << ", ";
++          termType(O, cast<FunctionDecl>(D)->getType());
++        O << "), " AI ", ";
++          fileInfo(O, S);
++        break;
++
++      case Decl::Var:
++      case Decl::OriginalParmVar:
++      case Decl::ImplicitParam:
++      case Decl::ParmVar:
++        termVarRefExpr(O, D, DRE->getType(), DRE);
++        break;
++
++      default:
++        assert(false && "Can not handle declatation in DeclRefExpr.\n");
++    }
++  }
++
++  void ASTTermDumper::termVarRefExpr(std::ostream &O, const Decl *D,
++                                     const QualType &T,
++                                     const Stmt *SL) {
++    O << "var_ref_exp("
++         "var_ref_exp_annotation(";
++      termType(O, T);
++    O << ", ";
++      termIdentifier(O, cast<NamedDecl>(D)->getIdentifier());
++    O << ", ";
++      termStaticStorage(O, D);
++    O << ", ";
++      termDeclContext(O, D->getDeclContext());
++    O << "), " AI ", ";
++      fileInfo(O, SL);
++  }
++
++  /***************************************************************************
++  * Misc                                                                    *
++  **************************************************************************/
++
++  void ASTTermDumper::termIdentifier(std::ostream &O, const IdentifierInfo *I) {
++    if (I)
++      O << prologize(I->getName());
++    else
++      O << "'<anonymous>'";
++  }
++
++  void ASTTermDumper::termInitializedName(std::ostream &O, const Decl *D) {
++    const NamedDecl *V = cast<NamedDecl>(D);
++
++    const Expr* init = NULL;
++    QualType type(getQualType(V));
++    if (VarDecl::classof(V)) {
++      const VarDecl *VD = cast<VarDecl>(V);
++      init = VD->getInit();
++    }
++    else if (EnumConstantDecl::classof(V)) {
++      const EnumConstantDecl *ED = cast<EnumConstantDecl>(V);
++      init = ED->getInitExpr();
++    }
 +
 +    // If this is a vardecl with an initializer, emit it.
-+    fprintf(F, "[initialized_name(");
-+    if (VarDecl *V = dyn_cast<VarDecl>(VD)) {
-+      Expr* init = V->getInit();
-+      if (init) {
-+	fprintf(F, "assign_initializer(");
-+        P.TermDumpSubTree(init);
-+	fprintf(F, ", assign_initializer_annotation(%s, %s),  %s)",
-+		termGetType(init->getType()).c_str(), AR, 
-+		P.getFileInfo(init).c_str());
-+      } else fprintf(F, "null");
++    O << "initialized_name(";
++    if (init) {
++      termInitializer(O , init);
 +    }
-+
-+    fprintf(F, ",");
-+
-+    stringstream ina;
-+    ina << "initialized_name_annotation("
-+      << termGetType(VD->getType()) << ", '" 
-+      << VD->getName()              << "', "
-+      << termGetStorageModifier(D)  << ", " 
-+      << namespace_definition       << ", "
-+      << AR "), " << fi << ")],";
-+    fprintf(F, ina.str().c_str());
-+	 
-+    annot << "variable_declaration_specific("
-+	  << termGetDeclarationModifier(D) << ", "
-+	  << AR "), " << fi << ")";
-+    
-+  } else if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
-+    // print a free standing tag decl (e.g. "struct x;").
-+    const char *tagname;
-+    if (const IdentifierInfo *II = TD->getIdentifier())
-+      tagname = II->getName();
 +    else
-+      tagname = "<anonymous>";
-+    fprintf(F, "\"%s %s;\"", TD->getKindName(), tagname);
-+    // FIXME: print tag bodies.
-+  } else {
-+    assert(0 && "Unexpected decl");
++      O << "null";
++
++    O << ", initialized_name_annotation(";
++    if (type.isNull())
++      O << "null";
++    else
++      termType(O, type);
++
++    O << ", ";
++      termIdentifier(O, V->getIdentifier());
++    O << ", ";
++      termStaticStorage(O, V);
++    O << ", ";
++      termDeclContext(O, V->getDeclContext());
++    O << "), " AI ", ";
++      fileInfo(O, D);
 +  }
 +
-+  return annot.str();
-+}
++  void ASTTermDumper::termInitializer(std::ostream &O, const Stmt *S) {
++    const Expr *E = dyn_cast<Expr>(S);
++
++    bool is_aggregate = E && (E->getType()->isRecordType() ||
++                              E->getType()->isArrayType());
++
++    if (is_aggregate)
++      O << "aggregate_initializer(";
++    else
++      O << "assign_initializer(";
++
++    termStmt(O, S);
++
++    if (!is_aggregate) {
++      O << ", assign_initializer_annotation(";
++      if (E)
++        termType(O, E->getType());
++      else
++        O << "null";
++
++      O << "), " AI ", ";
++    }
++    else {
++      O << ", " DA ", ";
++    }
++    fileInfo(O, S);
++  }
++
++  void ASTTermDumper::termStaticStorage(std::ostream &O, const Decl *D) {
++    const VarDecl *V = dyn_cast<VarDecl>(D);
++    const FunctionDecl *F = dyn_cast<FunctionDecl>(D);
++    bool isStatic = (V && V->getStorageClass() == VarDecl::Static) ||
++                    (F && F->getStorageClass() == FunctionDecl::Static);
++
++    O << (isStatic ? "static" : "default");
++  }
 +
 +
-+string Stmt::termGetStorageModifier(Decl* VD) {
-+  // Translate Storage classes
-+  if (VarDecl *V = dyn_cast<VarDecl>(VD)) {
-+    switch (V->getStorageClass()) {
-+    case VarDecl::None:     return "0";
-+    case VarDecl::Extern:   return "2"; 
-+    case VarDecl::Static:   return "3";  
-+    case VarDecl::Auto:     return "4"; 
-+    case VarDecl::Register: return "6"; 
-+    default: assert(0 && "Unknown storage class!");
-+      return "0";
++  void ASTTermDumper::termAccessModifier(std::ostream &O, const Decl *D) {
++    switch (D->getAccess()) {
++      case AS_none:      O << "default"; break;
++      case AS_public:    O << "public"; break;
++      case AS_protected: O << "protected"; break;
++      case AS_private:   O << "private"; break;
++    }
++  }
++
++  void ASTTermDumper::termStorageModifier(std::ostream &O, const Decl *D) {
++    // Translate Storage classes
++    if (const VarDecl *V = dyn_cast<VarDecl>(D)) {
++      switch (V->getStorageClass()) {
++      case VarDecl::None:     O << "default"; break;
++      case VarDecl::Extern:   O << "extern"; break;
++      case VarDecl::Static:   O << "static"; break;
++      case VarDecl::Auto:     O << "auto"; break;
++      case VarDecl::Register: O << "register"; break;
++      case VarDecl::PrivateExtern:   O << "privateExtern"; break;
++      // TODO: will never be used for clang?
 +      //unparse_storage_modifier(7) :- !, write('mutable ').
 +      //unparse_storage_modifier(8) :- !, write('typedef ').
 +      //unparse_storage_modifier(9) :- !, write('asm ').
++      }
 +    }
-+  }
-+  if (FunctionDecl *F = dyn_cast<FunctionDecl>(F)) {
-+    switch (F->getStorageClass()) {
-+    case FunctionDecl::None:     return "0";
-+    case FunctionDecl::Extern:   return "2"; 
-+    case FunctionDecl::Static:   return "3"; 
-+    case FunctionDecl::PrivateExtern:   return "2";  
-+    default: assert(0 && "Unknown storage class!");
-+      return "0";
++    else if (const FunctionDecl *F = dyn_cast<FunctionDecl>(D)) {
++      switch (F->getStorageClass()) {
++      case FunctionDecl::None:     O << "default"; break;
++      case FunctionDecl::Extern:   O << "extern"; break;
++      case FunctionDecl::Static:   O << "static"; break;
++      case FunctionDecl::PrivateExtern:   O << "privateExtern"; break;
++      // TODO: will never be used for clang?
 +      //unparse_storage_modifier(7) :- !, write('mutable ').
 +      //unparse_storage_modifier(8) :- !, write('typedef ').
 +      //unparse_storage_modifier(9) :- !, write('asm ').
++      }
++    }
++    else if (dyn_cast<FieldDecl>(D)) {
++      O << "default";
++    }
++    else
++      assert(0 && "Unknown decl type!");
++  }
++
++  void ASTTermDumper::termModifier(std::ostream &O, const Decl *D) {
++    // TODO: dump real values here - text version prefered
++    O << "declaration_modifier("
++        // TODO: find these modifiers in clang.
++        // e_unknown    Unknown value (error)
++        // e_default    Default value
++        // e_friend    Friend qualifier
++        // e_typedef    Typedef qualifier (not clear if this is used, I don't think typedef is a modifier)
++        // e_export    Export qualifier
++        // e_throw    Exception handling support (throw)
++        // e_bind    Fortran bind attribute for declarations (functions, variable, and classes)
++        // e_final    PHP support for specification to not be extended (should be useful for Java, if required in the future)
++         "[default],";
++        termTypeModifier(O, D);
++    O << ", ";
++        termAccessModifier(O, D);
++    O << ", ";
++        termStorageModifier(O, D);
++    O << ")";
++  }
++
++  void ASTTermDumper::termTypeModifier(std::ostream &O, const Decl *D) {
++    QualType type(getQualType(D));
++    assert(!type.isNull());
++
++    O << "type_modifier(";
++
++    // -------------------------
++    AtomSetStream Q(O, "default");
++
++    if (type.isRestrictQualified())
++      Q << "restrict";
++
++    // TODO: fortran specific
++//     // Fortran specific modifiers (in Fortran these are called attribute specifiers)
++//     // Note that public and private access attributes are mapped to the C/C++ access modifiers in SgDeclarationModifier
++//     "public_access",  // = 3, /*!< public qualifier (for Fortran 90) */
++//     "private_access", // = 4, /*!< private qualifier (for Fortran 90) */
++//     "allocatable",    // = 3, /*!< allocatable attribute specifier (for Fortran 90) */
++//     "asynchronous",   // = 4, /*!< asynchronous attribute specifier (for Fortran 2003) */
++//     "bind", // = 5, /*!< bind attribute specifier (for Fortran 2003, this is closely related to the SgLinkageModifier) */
++//     "data", // = 6, /*!< data attribute specifier (for Fortran 77) */
++//     "dimension", // = 7, /*!< dimension attribute specifier (for Fortran 77) */
++//     // This should map to the C/C++ extern modifier in SgStorageModifier
++//     //"external       ", // = x, /*!< external attribute specifier (for Fortran 77, this is less related to the SgLinkageModifier than the SgStorageModifier) */
++//     "intent_in",    // = 8, /*!< intent(in) attribute specifier (for Fortran 90) */
++//     "intent_out",   // = 9, /*!< intent(out) attribute specifier (for Fortran 90) */
++//     "intent_inout", // = 10,/*!< intent(inout) attribute specifier (for Fortran 90) */
++//     "intrinsic",    // = 11,/*!< intrinsic attribute specifier (for Fortran 90) */
++//     "optional",     // = 12,/*!< optional attribute specifier (for Fortran 90) */
++//     // This should map to const in the SgConstVolatileModifier
++//     //"parameter      ", // = xx,/*!< parameter attribute specifier (for Fortran 77) */
++// 
++//     // This should be mapped to the SgPointerType in C/C++
++//     //"pointer        ", // = xx,/*!< pointer attribute specifier (for Fortran 90) */
++//     // Note that protected access attribute is mapped to the C/C++ protected access modifiers in SgDeclarationModifier
++//     //"protected      ", // = xx,/*!< protected attribute specifier (for Fortran 2003) */
++//     "save",   // = 13,/*!< save attribute specifier (for Fortran 77) */
++//     "target", // = 14,/*!< target attribute specifier (for Fortran 90) */
++//     "value",  // = 15,/*!< value attribute specifier (for Fortran 2003) */
++//     // This should map to volatile in the SgConstVolatileModifier
++//     //"volatile       ", // = xx,/*!< volatile attribute specifier (for Fortran 2003) */
++
++    // DQ (12/4/2007): Added support for GNU specific attributes
++    if (D->getAttr<UnusedAttr>())
++      Q << "gnu_attribute__unused__";
++
++    if (D->getAttr<PackedAttr>())
++      Q << "gnu_attribute__packed__";
++
++    if (D->getAttr<DeprecatedAttr>())
++      Q << "gnu_attribute__deprecated__";
++
++    if (D->getAttr<TransparentUnionAttr>())
++      Q << "gnu_attribute__transparent_union__";
++
++    if (D->getAttr<NoReturnAttr>())
++      Q << "gnu_attribute__noreturn__";
++
++    if (D->getAttr<ConstAttr>())
++      Q << "gnu_attribute__const__";
++
++    if (D->getAttr<PackedAttr>())
++      Q << "gnu_attribute__cdecl__";
++
++    if (D->getAttr<StdCallAttr>())
++      Q << "gnu_attribute__stdcall__";
++
++    // TODO: lots of other attributes in clang available
++
++    Q.close();
++
++    // -------------------------
++    // TODO: find equivalent in clang
++    //  e_default    default value
++    //  e_upc_strict    UPC strict
++    //  e_upc_relaxed    UPC relaxed
++    //  e_last_modifier    last value (upper bound on range of values, used in error checking)
++    O << ", default, ";
++
++    // -------------------------
++    if (type.isConstQualified())
++      O << "const, ";
++    else if (type.isVolatileQualified())
++      O << "volatile, ";
++    else
++      O << "default, ";
++
++    // -------------------------
++    if (type->isClassType())
++      O << "class";
++    else if (type->isStructureType())
++      O << "struct";
++    else if (type->isUnionType())
++      O << "union";
++    else if (type->isEnumeralType())
++      O << "enum";
++    else if (type->isTemplateTypeParmType())
++      O << "typename";
++    else
++      O << "default";
++
++    O << ")";
++  }
++
++  void ASTTermDumper::termTypeModifier(std::ostream &O, const QualType T) {
++    O << "type_modifier(";
++
++    // -------------------------
++    AtomSetStream Q(O, "default");
++
++    if (T.isRestrictQualified())
++      Q << "restrict";
++
++    // TODO: fortran specific
++//     // Fortran specific modifiers (in Fortran these are called attribute specifiers)
++//     // Note that public and private access attributes are mapped to the C/C++ access modifiers in SgDeclarationModifier
++//     "public_access",  // = 3, /*!< public qualifier (for Fortran 90) */
++//     "private_access", // = 4, /*!< private qualifier (for Fortran 90) */
++//     "allocatable",    // = 3, /*!< allocatable attribute specifier (for Fortran 90) */
++//     "asynchronous",   // = 4, /*!< asynchronous attribute specifier (for Fortran 2003) */
++//     "bind", // = 5, /*!< bind attribute specifier (for Fortran 2003, this is closely related to the SgLinkageModifier) */
++//     "data", // = 6, /*!< data attribute specifier (for Fortran 77) */
++//     "dimension", // = 7, /*!< dimension attribute specifier (for Fortran 77) */
++//     // This should map to the C/C++ extern modifier in SgStorageModifier
++//     //"external       ", // = x, /*!< external attribute specifier (for Fortran 77, this is less related to the SgLinkageModifier than the SgStorageModifier) */
++//     "intent_in",    // = 8, /*!< intent(in) attribute specifier (for Fortran 90) */
++//     "intent_out",   // = 9, /*!< intent(out) attribute specifier (for Fortran 90) */
++//     "intent_inout", // = 10,/*!< intent(inout) attribute specifier (for Fortran 90) */
++//     "intrinsic",    // = 11,/*!< intrinsic attribute specifier (for Fortran 90) */
++//     "optional",     // = 12,/*!< optional attribute specifier (for Fortran 90) */
++//     // This should map to const in the SgConstVolatileModifier
++//     //"parameter      ", // = xx,/*!< parameter attribute specifier (for Fortran 77) */
++// 
++//     // This should be mapped to the SgPointerType in C/C++
++//     //"pointer        ", // = xx,/*!< pointer attribute specifier (for Fortran 90) */
++//     // Note that protected access attribute is mapped to the C/C++ protected access modifiers in SgDeclarationModifier
++//     //"protected      ", // = xx,/*!< protected attribute specifier (for Fortran 2003) */
++//     "save",   // = 13,/*!< save attribute specifier (for Fortran 77) */
++//     "target", // = 14,/*!< target attribute specifier (for Fortran 90) */
++//     "value",  // = 15,/*!< value attribute specifier (for Fortran 2003) */
++//     // This should map to volatile in the SgConstVolatileModifier
++//     //"volatile       ", // = xx,/*!< volatile attribute specifier (for Fortran 2003) */
++
++    Q.close();
++
++    // -------------------------
++    // TODO: find equivalent in clang
++    //  e_default    default value
++    //  e_upc_strict    UPC strict
++    //  e_upc_relaxed    UPC relaxed
++    //  e_last_modifier    last value (upper bound on range of values, used in error checking)
++    O << ", default, ";
++
++    // -------------------------
++    if (T.isConstQualified())
++      O << "const, ";
++    else if (T.isVolatileQualified())
++      O << "volatile, ";
++    else
++      O << "default, ";
++
++    // -------------------------
++    if (T->isClassType())
++      O << "class";
++    else if (T->isStructureType())
++      O << "struct";
++    else if (T->isUnionType())
++      O << "union";
++    else if (T->isEnumeralType())
++      O << "enum";
++    else if (T->isTemplateTypeParmType())
++      O << "typename";
++    else
++      O << "default";
++
++    O << ")";
++  }
++
++  void ASTTermDumper::termDeclAttributes(std::ostream &O, const Decl *D) {
++    // TODO: real values here
++    O << "decl_attributes(0, 0, 0, 0, 0)";
++  }
++
++  void ASTTermDumper::termDeclContext(std::ostream &O, const DeclContext *C) {
++    switch (C->getDeclKind()) {
++      case Decl::Namespace:
++        termIdentifier(O, cast<NamespaceDecl>(C)->getIdentifier());
++        break;
++      case Decl::Record:
++        if (const RecordDecl *RD = dyn_cast<RecordDecl>(C)) {
++          // TODO: fully qualified name??
++          O << "class_scope(";
++            termIdentifier(O, RD->getIdentifier());
++          O << ", " << RD->getKindName() << ")";
++          break;
++        }
++      default:
++        O << "''";
 +    }
 +  }
-+  assert(0 && "Unknown decl type!");
 +}
 +
-+// FIXME!!!
-+string Stmt::termGetDeclarationModifier(Decl* VD) {
-+  stringstream decl_mod;
-+  /* e_unknown = 0, 
-+     e_private = 1, 
-+     e_protected = 2, 
-+     e_public = 3, 
-+     e_default = e_public, 
-+     e_last_modifier */
-+  string access_mod = "3";
-+  string bit_vec = "[0,0,0,0,0,0,0,0]";
-+  /*
-+   * arg b: bit vector of SgTypeModifier
-+   * arg u: enum of SgUPC_AccessModifier
-+   * arg c: enum of SgConstVolatileModifier
-+   * arg e: enum of SgElaboratedTypeModifier
-+   */
-+  string type_mod = 
-+    "type_modifier([0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],1,1,1)";
-+  
-+  decl_mod << "declaration_modifier("
-+    << bit_vec    << ", " 
-+    << type_mod   << ", " 
-+    << access_mod << ", " 
-+    << termGetStorageModifier(VD) << ")";
-+  return decl_mod.str();
++ASTConsumer *clang::CreateASTTermDumper(const std::string &infile,
++                                        const std::string &outfile) {
++  return new ASTTermDumper(infile, outfile);
 +}
++
+Index: Driver/ASTConsumers.h
+===================================================================
+--- Driver/ASTConsumers.h	(revision 63505)
++++ Driver/ASTConsumers.h	(working copy)
+@@ -36,6 +36,9 @@
+ 
+ ASTConsumer *CreateASTDumper();
+ 
++ASTConsumer *CreateASTTermDumper(const std::string &infile,
++                                 const std::string &outfile);
++
+ ASTConsumer *CreateASTViewer();
+ 
+ ASTConsumer *CreateDeclContextPrinter();
+Index: tools/ccc/ccclib/HostInfo.py
+===================================================================
+--- tools/ccc/ccclib/HostInfo.py	(revision 63505)
++++ tools/ccc/ccclib/HostInfo.py	(working copy)
+@@ -89,6 +89,45 @@
+             
+     raise RuntimeError,'Unrecognized Darwin platform: %r:%r' % (machine, bits)
+ 
++# Linux
++
++class LinuxHostInfo(HostInfo):
++    def __init__(self, driver):
++        super(LinuxHostInfo, self).__init__(driver)
++        self.gccVersion = (4,2,1)
++
++    def useDriverDriver(self):
++        return False
++
++    def getToolChain(self):
++        return self.getToolChainForArch(self.getArchName(None))
++
++    def getToolChainForArch(self, arch):
++        return ToolChain.Generic_GCC_ToolChain(self.driver)
++
++class LinuxX86HostInfo(LinuxHostInfo):
++    def getArchName(self, args):
++        if args and args.getLastArg(args.parser.m_64Option):
++            return 'x86_64'
++        return 'i386'
++
++class LinuxX86_64HostInfo(LinuxHostInfo):
++    def getArchName(self, args):
++        if args and args.getLastArg(args.parser.m_32Option):
++            return 'i386'
++        return 'x86_64'
++
++def getLinuxHostInfo(driver):
++    machine = driver.getHostMachine()
++    bits = driver.getHostBits()
++    if machine == 'i386':
++        if bits == '32':
++            return LinuxX86HostInfo(driver)
++        if bits == '64':
++            return LinuxX86_64HostInfo(driver)
++
++    raise RuntimeError,'Unrecognized Linux platform: %r:%r' % (machine, bits)
++
+ # Unknown
+ 
+ class UnknownHostInfo(HostInfo):
+@@ -107,7 +146,8 @@
+ ####
+ 
+ kSystems = {
+-    'darwin' : getDarwinHostInfo,
++    'darwin'  : getDarwinHostInfo,
++    'linux'   : getLinuxHostInfo,
+     'unknown' : getUnknownHostInfo,
+     }
+ 
+Index: tools/ccc/ccclib/Tools.py
+===================================================================
+--- tools/ccc/ccclib/Tools.py	(revision 63505)
++++ tools/ccc/ccclib/Tools.py	(working copy)
+@@ -178,6 +178,12 @@
+ 
+         patchOutputNameForPTH = False
+ 
++        cmd_args.append('-arch')
++        if arch:
++            cmd_args.append(arch)
++        else:
++            cmd_args.append(self.toolChain.driver.hostInfo.getArchName(arglist))
++
+         if isinstance(phase.phase, Phases.AnalyzePhase):
+             assert outputType is Types.PlistType
+             cmd_args.append('-analyze')

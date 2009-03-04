@@ -1,4 +1,4 @@
 BASE=`pwd`
-pushd /nfstmp/adrian/llvm/tools/clang
+pushd /raid0/ebner/all-times/tools/clang
 svn diff >$BASE/clang-termite.patch
 popd
