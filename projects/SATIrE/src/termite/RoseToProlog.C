@@ -197,7 +197,8 @@ RoseToProlog::getFunctionTypeSpecific(SgType* mytype) {
   /*recurse with getTypeSpecific*/
   t->addSubterm(getTypeSpecific(ftype->get_return_type()));
   /*we need to know wether it has ellipses for the constructor when unparsing*/
-  t->addSubterm(new PrologInt((int) ftype->get_has_ellipses()));
+  t->addSubterm(getEnum(ftype->get_has_ellipses(),
+			re.ellipses_flags));
   /*arguments*/
   t->addSubterm(getTypePtrListSpecific(ftype->get_arguments()));
   return t;
@@ -223,7 +224,8 @@ RoseToProlog::getMemberFunctionTypeSpecific(SgType* mytype) {
   /*recurse with getTypeSpecific*/
   t->addSubterm(getTypeSpecific(ftype->get_return_type()));
   /*we need to know wether it has ellipses for the constructor when unparsing*/
-  t->addSubterm(new PrologInt((int) ftype->get_has_ellipses()));
+  t->addSubterm(getEnum(ftype->get_has_ellipses(),
+			re.ellipses_flags));
   /*arguments*/
   t->addSubterm(getTypePtrListSpecific(ftype->get_arguments()));
   /* mfunc_specifier*/
@@ -688,9 +690,10 @@ RoseToProlog::getVarRefExpSpecific(SgVarRefExp* vr) {
   /* static? (relevant for unparsing if scope is a class)*/
   SgDeclarationStatement* vdec = n->get_declaration();
   if (vdec != NULL) {
-    annot->addSubterm(new PrologInt(vdec->get_declarationModifier().get_storageModifier().isStatic()));
+    annot->addSubterm(getEnum(vdec->get_declarationModifier().get_storageModifier().isStatic(),
+                              re.static_flags));
   } else {
-    annot->addSubterm(new PrologInt(0));
+    annot->addSubterm(getEnum(0, re.static_flags));
   }
   if (vdec != NULL) {
     /* named scope or irrelevant?*/
@@ -722,7 +725,8 @@ RoseToProlog::getInitializedNameSpecific(SgInitializedName* n) {
   t->addSubterm(getTypeSpecific(n->get_typeptr()));
   t->addSubterm(new PrologAtom(n->get_name().getString()));
   /* static? (relevant for unparsing if scope is a class)*/
-  t->addSubterm(new PrologInt(n->get_storageModifier().isStatic()));
+  t->addSubterm(getEnum(n->get_storageModifier().isStatic(), 
+			re.static_flags));
   /* named scope or irrelevant?*/
   if(SgNamespaceDefinitionStatement* scn = isSgNamespaceDefinitionStatement(n->get_scope())) {
     t->addSubterm(getNamespaceScopeName(scn));

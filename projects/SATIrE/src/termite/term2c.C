@@ -20,6 +20,16 @@ int main(int argc, char** argv) {
 
   PrologToRose conv;
   SgNode* p = conv.toRose(argv[1]);
+
+  //Create dot and pdf files
+  //DOT generation (numbering:preoder)
+//   AstDOTGeneration dotgen;
+//   dotgen.generateInputFiles((SgProject*)p,AstDOTGeneration::PREORDER);
+
+  //PDF generation
+//   AstPDFGeneration pdfgen;
+//   pdfgen.generateInputFiles((SgProject*)p);
+
   conv.unparse(argv[2], p);
   return 0;
 }

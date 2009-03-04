@@ -27,6 +27,8 @@ class RoseEnums {
   std::vector<std::string> class_types;
   std::vector<std::string> throw_kinds;
   std::vector<std::string> cast_types;
+  std::vector<std::string> static_flags;
+  std::vector<std::string> ellipses_flags;
 
   // TERMITE -> ROSE
   std::map<std::string, int> function_modifier;
@@ -41,6 +43,8 @@ class RoseEnums {
   std::map<std::string, int> class_type;
   std::map<std::string, int> throw_kind;
   std::map<std::string, int> cast_type;
+  std::map<std::string, int> static_flag;
+  std::map<std::string, int> ellipses_flag;
 };
 
 #endif

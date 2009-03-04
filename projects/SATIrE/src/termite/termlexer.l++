@@ -1,7 +1,7 @@
 %{ // -*- C++ -*-
 /* 
 Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
-     2007-2008 Adrian Prantl <adrian@complang.tuwien.ac.at>
+     2007-2009 Adrian Prantl <adrian@complang.tuwien.ac.at>
 */
 using namespace std;
 #include <string>
@@ -31,6 +31,7 @@ doublequoted \"([^\"\\]*(\\.[^\"\\]*)*)\"
 quoted \'([^\'\\]*(\\.[^\'\\]*)*)\'
 variable [A-Z][A-Za-z_]*
 int \-?[0-9]+
+float \-?[0-9]+\.[0-9]+
 atom [a-z][A-Za-z_0-9]*
 operator [\-\+\*\/\<\=\>\:\.\#]+
 
@@ -81,6 +82,7 @@ operator [\-\+\*\/\<\=\>\:\.\#]+
 
 {variable} { count(); yylval.strValue = new string(yytext); return(VARIABLE); }
 {int}      { count(); yylval.intValue = atoi(yytext);       return(INT);      }
+{float}    { count(); yylval.floatValue = atof(yytext);     return(FLOAT);    }
 {atom}     { count(); yylval.strValue = new string(yytext); return(ATOM);     }
 {operator} { count(); yylval.strValue = new string(yytext); return(OPERATOR); }
 .          { count(); return(yytext[0]); }

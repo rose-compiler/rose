@@ -26,6 +26,7 @@ void yyerror(const char *);
 %token <strValue> OPERATOR
 %token <strValue> STRING
 %token <intValue> INT 
+%token <floatValue> FLOAT
 
 
 
@@ -34,6 +35,7 @@ void yyerror(const char *);
 %union {
 	std::string* strValue;
 	int intValue;
+	double floatValue;
 	PrologTerm* singleTerm;
 	std::vector<PrologTerm*>* termList;
 }
@@ -68,7 +70,8 @@ term:
  | infix_pair { $$ = $1;                     }
  | plist      { $$ = $1;                     }
  | INT        { $$ = new PrologInt($1);      }
-| '(' term ')'{ $$ = $2;                     } 
+ | FLOAT      { $$ = new PrologFloat($1);   }
+ | '(' term ')'{ $$ = $2;                    } 
 ;
 
 comp_term:

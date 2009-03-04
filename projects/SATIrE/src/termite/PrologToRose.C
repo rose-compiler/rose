@@ -183,7 +183,6 @@ PrologToRose::toRose(PrologTerm* t) {
     for (vector<SgInitializedName*>::iterator it = 
 	       initializedNamesWithoutScope.begin();
 	 it != initializedNamesWithoutScope.end(); it++) {
-      cerr<<"Setting scope1..."<<endl;
       (*it)->set_scope(scope);
     }
     initializedNamesWithoutScope.clear();
@@ -191,7 +190,6 @@ PrologToRose::toRose(PrologTerm* t) {
     for (vector<SgDeclarationStatement*>::iterator it = 
 	       declarationStatementsWithoutScope.begin();
 	 it != declarationStatementsWithoutScope.end(); it++) {
-      cerr<<"Setting scope2..."<<endl;
       (*it)->set_scope(scope);
     }
     declarationStatementsWithoutScope.clear();
@@ -565,7 +563,11 @@ PrologToRose::createFileInfo(PrologTerm* t) {
     assert((PrologCompTerm*) 0 != u);	
     assert(u->getName() == "file_info");
     assert_arity(u, 3);
-    if(u->at(0)->getName() != "compilergenerated") {
+    if ((u->at(0)->getName() == "compilergenerated") || 
+        (u->at(0)->getName() == "<invalid>")) {
+      fi = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
+    }
+    else {
       /* a filename is present => retrieve data from term and generete node*/
       PrologAtom* filename = dynamic_cast<PrologAtom*>(u->at(0));
       PrologInt* line = dynamic_cast<PrologInt*>(u->at(1));
@@ -578,10 +580,6 @@ PrologToRose::createFileInfo(PrologTerm* t) {
       assert(line->getValue() >= 0);
       assert(col->getValue() >= 0);
       fi = new Sg_File_Info(filename->getName(),line->getValue(),col->getValue());
-    } else  if (u->at(0)->getName() == "compilergenerated") {
-      fi = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();		
-    } else {
-      fi = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
     }
   } 
   ROSE_ASSERT(fi != NULL);
@@ -991,6 +989,9 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
 
     /* floating point types*/
   } else if (vtype == SG_PREFIX "float_val") {
+    // FIXME 
+    //} else if (PrologFloat* val = dynamic_cast<PrologFloat*>(annot->at(0))) {
+    //  f = val->getValue();
     debug("unparsing float");
     PrologCompTerm* annot = retrieveAnnotation(t);
     ROSE_ASSERT(annot != NULL);
@@ -1399,7 +1400,7 @@ PrologToRose::inameFromAnnot(PrologCompTerm* annot) {
   siname->set_file_info(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
 
   /* static?*/
-  int stat = toInt(annot->at(2));
+  int stat = (int) createEnum(annot->at(2), re.static_flag);
   if(stat != 0) {
     debug("setting static");
     vdec->get_declarationModifier().get_storageModifier().setStatic();
@@ -1411,8 +1412,10 @@ PrologToRose::inameFromAnnot(PrologCompTerm* annot) {
     if (scope_type == "class_scope") {
       debug("var ref exp class scope");
       string scope_name = *(toStringP(scope->at(0)));
-      int scope_int = (toInt(scope->at(1)));
-      fakeClassScope(scope_name,scope_int,vdec);
+      SgClassDeclaration::class_types class_type = 
+          (SgClassDeclaration::class_types) 
+            createEnum(scope->at(1), re.class_type);
+      fakeClassScope(scope_name,class_type,vdec);
       ROSE_ASSERT(isSgClassDefinition(siname->get_declaration()->get_parent()) != NULL);
     } else if (scope_type == "namespace_scope") {
       debug("var ref exp namespace scope");
@@ -1437,7 +1440,7 @@ PrologToRose::createFunctionType(PrologTerm* t) {
   /* create the reutnr type*/
   SgType* ret_type = createType(tterm->at(0));
   /* has ellipses?*/
-  bool has_ellipses = (bool) toInt(tterm->at(1));
+  bool has_ellipses = (bool) createEnum(tterm->at(1), re.ellipses_flag);
   /* create type */
   SgFunctionType* func_type = new SgFunctionType(ret_type,has_ellipses);
   ROSE_ASSERT(func_type != NULL);
@@ -1461,7 +1464,7 @@ PrologToRose::createMemberFunctionType(PrologTerm* t) {
   /* create the reutnr type*/
   SgType* ret_type = createType(tterm->at(0));
   /* has ellipses?*/
-  bool has_ellipses = (bool) toInt(tterm->at(1));
+  bool has_ellipses = (bool) createEnum(tterm->at(1), re.ellipses_flag);
   /* mfunc_specifier*/
   int mfuncs = createEnum(tterm->at(3), re.declaration_modifier);
   /*create type

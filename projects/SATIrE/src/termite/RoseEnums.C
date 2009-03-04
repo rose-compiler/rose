@@ -189,6 +189,16 @@ static const char* e_cast_type[] = {
   "reinterpret_cast"
 };
 
+static const char* e_static_flag[] = { 
+  "default", 
+  "static"
+};
+
+static const char* e_ellipses_flag[] = { 
+  "default", 
+  "ellipses"
+};
+
 /////////////////////////////////////////////////////////////////////////
 
 //#include <iostream>
@@ -216,4 +226,7 @@ RoseEnums::RoseEnums() {
   INIT(e_class_type, class_type, class_types)
   INIT(e_throw_kind, throw_kind, throw_kinds)
   INIT(e_cast_type, cast_type, cast_types)
+
+  INIT(e_static_flag, static_flag, static_flags)
+  INIT(e_ellipses_flag, ellipses_flag, ellipses_flags)
 }
