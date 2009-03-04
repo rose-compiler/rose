@@ -1,3 +1,42 @@
+2009-03-04 18:39  liao6
+
+	* [r4737] /trunk/ROSE/projects/autoTuning/tests/Makefile.am,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface_type.C,
+	  /trunk/ROSE/src/midend/astOutlining/GenerateFunc.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Outliner.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Outliner.hh,
+	  /trunk/ROSE/src/midend/astOutlining/Transform.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Transform.hh,
+	  /trunk/ROSE/src/midend/astOutlining/VarSym.cc,
+	  /trunk/ROSE/src/midend/astOutlining/VarSym.hh,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/inputtypeTraits.C,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/typeTraits.C,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/Makefile.am:
+	  Extended outliner to use temp variable for much less using of
+	  pointer-dereferencing
+	  
+	  * A new outliner option: -rose:outline:temp_variable
+	  This will enable the outliner to collect variable references
+	  using variables' addresses:
+	  such as &a, or foo(a) when foo() has a C++ reference type
+	  parameter
+	  For those variables, pointer dereferencing are necessary.
+	  All other variable references using variable values, temp
+	  variables are used to participate
+	  computations in the outlined function.
+	  A copy construction statement and a restore statement are used to
+	  copy-in and copy-back the values.
+	  So the variables must also be copy constructible and assignable.
+	  * A new outliner option: -rose:outline:enable_debug to output
+	  internal debugging information
+	  * Added a supporting function SageInterface::isAssignable()
+	  * Fixed SageInterface::isCopyConstructible() in regard to array
+	  types
+	  * Changed projects/autoTuning/tests to use the outliner's new
+	  feature
+
 2009-03-03 21:27  liao6
 
 	* [r4729] /trunk/ROSE/projects/compass/tools/compass/Makefile.am,
