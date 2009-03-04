@@ -550,6 +550,9 @@ bool isDefaultConstructible(SgType* type);
 //! Is a type copy constructible?  This may not quite work properly.
 bool isCopyConstructible(SgType* type);
 
+//! Is a type assignable?  This may not quite work properly.
+bool isAssignable(SgType* type);
+
 //! Does a type have a trivial (built-in) destructor?
 bool hasTrivialDestructor(SgType* t);
 

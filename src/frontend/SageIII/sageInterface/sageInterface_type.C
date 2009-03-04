@@ -407,7 +407,8 @@ namespace SageInterface
   bool isCopyConstructible(SgType* type) {
     switch (type->variantT()) {
       case V_SgArrayType:
-        return isCopyConstructible(isSgArrayType(type)->get_base_type());
+        return false; //Liao, array types are not copy constructible, 3/3/2009
+        //return isCopyConstructible(isSgArrayType(type)->get_base_type());
         break;
 
       case V_SgModifierType:
@@ -416,6 +417,7 @@ namespace SageInterface
 
       case V_SgFunctionType:
       case V_SgMemberFunctionType:
+      case V_SgTypeEllipse:
         return false;
         break;
 
@@ -423,7 +425,9 @@ namespace SageInterface
         SgClassDeclaration* decl = 
           isSgClassDeclaration(isSgClassType(type)->get_declaration());
         assert (decl);
-        SgClassDefinition* defn = decl->get_definition();
+        assert (decl->get_definingDeclaration());
+        // from forward declaration to defining declaration 
+        SgClassDefinition* defn = isSgClassDeclaration(decl->get_definingDeclaration())->get_definition();
         assert (defn);
         bool hasPublicCopyConstructor = false, hasAnyCopyConstructor = false;
         // Look for user-defined constructors
@@ -457,12 +461,12 @@ namespace SageInterface
             SgInitializedNamePtrList& vars = decl->get_variables();
             for (SgInitializedNamePtrList::iterator j = vars.begin();
                 j != vars.end(); ++j) {
-              if (isCopyConstructible((*j)->get_type()))
-                return true;
+              if (!isCopyConstructible((*j)->get_type()))
+                return false;
             }
           }
         }
-        return false;
+        return true; // If no non-copy constructible data member, return true.
       }
         break;
 
@@ -505,8 +509,120 @@ namespace SageInterface
         break;
 
       default:
-        std::cerr << "In isCopyConstructible(), type is a " << type->class_name() << std::endl;
+        std::cerr << "In SageInterface::isCopyConstructible(), type is a " << type->class_name() << std::endl;
         assert (!"Unknown type in isCopyConstructible()");
+    }
+    return true;
+  }
+  // Is a type assignable?  This may not quite work properly.
+  // Liao, 3/3/2009 based on the code for isCopyConstructible()
+  // TYPE a, b; is a=b; allowed ?
+  bool isAssignable(SgType* type) {
+    switch (type->variantT()) {
+      case V_SgArrayType:
+        return false; 
+        break;
+
+      case V_SgModifierType:
+        return isAssignable(isSgModifierType(type)->get_base_type()); 
+        break;
+
+      case V_SgFunctionType:
+      case V_SgMemberFunctionType:
+      case V_SgReferenceType: //I think C++ reference types cannot be reassigned. 
+      case V_SgTypeEllipse:
+        return false;
+        break;
+
+      case V_SgClassType: {
+        SgClassDeclaration* decl = isSgClassDeclaration(isSgClassType(type)->get_declaration());
+        assert (decl);
+        assert (decl->get_definingDeclaration());
+        // from forward declaration to defining declaration 
+        SgClassDefinition* defn = isSgClassDeclaration(decl->get_definingDeclaration())->get_definition();
+        assert (defn);
+
+        bool hasPublicAssignOperator= false, hasAnyAssignOperator = false;
+        // Look for user-defined operator=
+        SgDeclarationStatementPtrList& classMembers = defn->get_members();
+        for (SgDeclarationStatementPtrList::iterator i = classMembers.begin();
+            i != classMembers.end(); ++i) {
+          if (isSgFunctionDeclaration(*i)) {
+            SgFunctionDeclaration* fundecl = isSgFunctionDeclaration(*i);
+            bool thisIsAnAssignOperator= 
+              (fundecl->get_specialFunctionModifier().isConstructor())&&
+              (fundecl->get_name().getString()=="operator=");
+            // check parameter list has TYPE&      
+            std::list<SgType*> args;
+            args.push_back(new SgReferenceType(type));
+            bool isAssignOperator= acceptsArguments(fundecl, args);
+            if (thisIsAnAssignOperator&& isAssignOperator) {
+              hasAnyAssignOperator= true;
+              if ((*i)->get_declarationModifier().
+                  get_accessModifier().isPublic())
+                hasPublicAssignOperator= true;
+            }
+          }
+        }
+        if (hasPublicAssignOperator) return true;
+        if (hasAnyAssignOperator) return false;
+        // Return true if all non-static data members are assignable
+        for (SgDeclarationStatementPtrList::iterator i = classMembers.begin();
+            i != classMembers.end(); ++i) {
+          if (isSgVariableDeclaration(*i)) {
+            SgVariableDeclaration* decl = isSgVariableDeclaration(*i);
+            if (decl->get_declarationModifier().get_storageModifier().isStatic())
+              continue;
+            SgInitializedNamePtrList& vars = decl->get_variables();
+            for (SgInitializedNamePtrList::iterator j = vars.begin();
+                j != vars.end(); ++j) {
+              if (!isAssignable((*j)->get_type()))
+                return false;
+            }
+          }
+        }
+        return true; // If no non-assignable data member, return true.
+      }
+        break;
+
+      case V_SgTypedefType:
+        return isAssignable(isSgTypedefType(type)->get_base_type());
+        break;
+
+      case V_SgTypeComplex: // C99 complex is assignable
+      case V_SgTypeImaginary:
+      case V_SgEnumType:
+      case V_SgPointerType:
+      case V_SgPointerMemberType:
+      case V_SgTypeBool:
+      case V_SgTypeChar:
+      case V_SgTypeDefault:
+      case V_SgTypeDouble:
+      case V_SgTypeFloat:
+      case V_SgTypeGlobalVoid:
+      case V_SgTypeInt:
+      case V_SgTypeLong:
+      case V_SgTypeLongDouble:
+      case V_SgTypeLongLong:
+      case V_SgTypeShort:
+      case V_SgTypeSignedChar:
+      case V_SgTypeSignedInt:
+      case V_SgTypeSignedLong:
+      case V_SgTypeSignedShort:
+      case V_SgTypeString:
+      case V_SgTypeUnsignedChar:
+      case V_SgTypeUnsignedInt:
+      case V_SgTypeUnsignedLong:
+      case V_SgTypeUnsignedLongLong:
+      case V_SgTypeUnsignedShort:
+      case V_SgTypeVoid:
+      case V_SgTypeWchar:
+        return true;
+        break;
+
+      default:
+        std::cerr << "In SageInterface::isAssignable(), type is a " << type->class_name() << std::endl;
+        assert (!"Unknown type in isAssignable()");
     }
     return true;
   }
