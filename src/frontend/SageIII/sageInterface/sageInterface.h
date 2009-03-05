@@ -79,6 +79,38 @@ extern int gensym_counter;
  // Get the value of a disassembled constant
  uint64_t getAsmConstant(SgAsmValueExpression* e);
 
+//! Function to add "C" style comment to statement.
+ void addMessageStatement( SgStatement* stmt, std::string message );
+
+// DQ (2/24/2009): Simple function to delete an AST subtree (used in outlining).
+//! Function to delete AST subtree, user must take care of any dangling pointers that result.
+ void deleteAST(SgNode* node);
+
+// DQ (2/25/2009): Added new function to support outliner.
+//! Move statements in first block to the second block (preserves order and rebuilds the symbol table).
+ void moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicBlock* targetBlock );
+
+// DQ (3/1/2009): After rebuilding the copied scope's symbol table 
+// all the symbol table references in the copied AST need to be reset.
+ void fixupReferencesToSymbols( const SgScopeStatement* this_scope,  SgScopeStatement* copy_scope, SgCopyHelp & help );
+
+// DQ (3/2/2009): Added support for collectiong an merging the referenced symbols in the outlined 
+// function into the list used to edit the outlined code subtree to fixup references (from symbols 
+// in the original file to the symbols in the newer separate file).
+// typedef rose_hash::hash_map<SgNode*, SgNode*, hash_nodeptr> ReplacementMapType;
+// void supplementReplacementSymbolMap ( const ReplacementMapTraversal::ReplacementMapType & inputReplacementMap );
+struct hash_nodeptr
+   {
+     rose_hash::hash<char*> hasher;
+
+     public:
+          size_t operator()(SgNode* node) const
+             {
+               return (size_t) node;
+             }
+   };
+
+ void supplementReplacementSymbolMap ( rose_hash::hash_map<SgNode*, SgNode*, hash_nodeptr> & inputReplacementMap );
 
 //------------------------------------------------------------------------
 //@{
@@ -927,6 +959,10 @@ void appendStatement(SgStatement *stmt, SgScopeStatement* scope=NULL);
 
 //! Append a list of statements to the end of the current scope, handle side effect of appending statements, e.g. preprocessing info, defining/nondefining pointers etc.
 void appendStatementList(const std::vector<SgStatement*>& stmt, SgScopeStatement* scope=NULL);
+
+// DQ (2/6/2009): Added function to support outlining into separate file.
+//! Append statement and include any referenced declarations required if inserted into a compiler generated file.
+void appendStatementWithDependentDeclaration( SgDeclarationStatement* decl, SgGlobal* scope = NULL, SgStatement* original_statement = NULL );
 
 //! Prepend a statement to the beginning of the current scope, handling side
 //! effects as appropriate

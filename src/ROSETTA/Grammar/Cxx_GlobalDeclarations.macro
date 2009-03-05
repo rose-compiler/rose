@@ -74,17 +74,19 @@ void         print_pragma          ( SgAttributePtrList&       , std::ostream& )
 // replacement; apply() calls it and appropriately checks and writes back the
 // result.
 
-struct ReferenceToPointerHandler {
-  template <typename NodeSubclass>
-  void apply(NodeSubclass*& r, const SgName& n) {
-    SgNode* sgn = r;
-    (*this)(sgn, n);
-    ROSE_ASSERT (sgn == NULL || dynamic_cast<NodeSubclass*>(sgn));
-    r = dynamic_cast<NodeSubclass*>(sgn);
-  }
+struct ReferenceToPointerHandler
+   {
+     template <typename NodeSubclass>
+     void apply(NodeSubclass*& r, const SgName& n)
+        {
+          SgNode* sgn = r;
+          (*this)(sgn, n);
+          ROSE_ASSERT (sgn == NULL || dynamic_cast<NodeSubclass*>(sgn));
+          r = dynamic_cast<NodeSubclass*>(sgn);
+        }
 
-  virtual void operator()(SgNode*&, const SgName&) = 0;
-  virtual ~ReferenceToPointerHandler() {}
-};
+     virtual void operator()(SgNode*&, const SgName&) = 0;
+     virtual ~ReferenceToPointerHandler() {}
+   };
 
 #endif // REFERENCETOPOINTERHANDLER_DEFINED

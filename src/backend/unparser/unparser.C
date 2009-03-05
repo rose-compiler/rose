@@ -429,6 +429,7 @@ Unparser::unparseAsmFile ( SgAsmFile* asmFile, SgUnparse_Info& info )
             // printf ("Section [%zd]: outputInstruction = %s \n",i,outputInstruction ? "true" : "false"); 
                if (outputInstruction == true)
                   {
+#if 0
                  // Output the instructions
                     SgAsmGenericHeader* genericHeader = sections[i]->get_header();
                     ROSE_ASSERT(genericHeader != NULL);
@@ -445,8 +446,8 @@ Unparser::unparseAsmFile ( SgAsmFile* asmFile, SgUnparse_Info& info )
                  // This is an error to uncomment, but used to provide useful information for debugging.
                  // fprintf(f, "%s%-*s = rva=0x%08"PRIx64", size=%"PRIu64" bytes\n", p, w, "mapped",  p_mapped_rva, p_mapped_size);
 
-                 // printf ("section %s starting address = 0x%08"PRIx64" ending address = 0x%08"PRIx64"\n",sections[i]->get_name()->c_str(),addressBase,addressBound);
-
+                    printf ("section %s starting address = 0x%08"PRIx64" ending address = 0x%08"PRIx64"\n",sections[i]->get_name()->c_str(),addressBase,addressBound);
+#endif
                  // DQ (9/1/2008): This is part of code to include the disassembled
                  // instructions in a specific range relevant to a section (unfinished).
                  // It is supposed to map around (exclude) address ranges represented 
@@ -459,12 +460,13 @@ Unparser::unparseAsmFile ( SgAsmFile* asmFile, SgUnparse_Info& info )
                       // exclude all the other sections
                          if ( (j != i) && (sections[j]->is_mapped() == true) )
                             {
+#if 0
                               SgAsmGenericHeader* genericHeader  = sections[j]->get_header();
                               rose_addr_t temp_imageBase = genericHeader->get_base_va();
                               rose_addr_t nestedAddressBase  = temp_imageBase    + sections[j]->get_mapped_rva();
                               rose_addr_t nestedAddressBound = nestedAddressBase + sections[j]->get_mapped_size();
-                           // printf ("Exclude range in section %s starting address = 0x%08"PRIx64" ending address = 0x%08"PRIx64"\n",sections[j]->get_name().c_str(),nestedAddressBase,nestedAddressBound);
-
+                              printf ("Exclude range in section %s starting address = 0x%08"PRIx64" ending address = 0x%08"PRIx64"\n",sections[j]->get_name().c_str(),nestedAddressBase,nestedAddressBound);
+#endif
 #if 0
                               for (rose_addr_t k = nestedAddressBase; k < nestedAddressBound; k++)
                                  {
@@ -660,17 +662,18 @@ Unparser::unparseFile ( SgBinaryFile* file, SgUnparse_Info& info )
 
                  // printf ("header name = %s \n",genericHeader->get_name()->c_str());
 
+#if 0
                     rose_addr_t imageBase = genericHeader->get_base_va();
  
                  // printf ("section %s imageBase = 0x%08"PRIx64"\n",sections[i]->get_name()->c_str(),imageBase);
-
                     rose_addr_t addressBase  =  imageBase + sections[i]->get_mapped_rva();
                     rose_addr_t addressBound =  addressBase + sections[i]->get_mapped_size();
 
                  // This is an error to uncomment, but used to provide useful information for debugging.
                  // fprintf(f, "%s%-*s = rva=0x%08"PRIx64", size=%"PRIu64" bytes\n", p, w, "mapped",  p_mapped_rva, p_mapped_size);
 
-                 // printf ("section %s starting address = 0x%08"PRIx64" ending address = 0x%08"PRIx64"\n",sections[i]->get_name()->c_str(),addressBase,addressBound);
+                    printf ("section %s starting address = 0x%08"PRIx64" ending address = 0x%08"PRIx64"\n",sections[i]->get_name()->c_str(),addressBase,addressBound);
+#endif
 
                  // DQ (9/1/2008): This is part of code to include the disassembled
                  // instructions in a specific range relevant to a section (unfinished).
@@ -684,12 +687,13 @@ Unparser::unparseFile ( SgBinaryFile* file, SgUnparse_Info& info )
                       // exclude all the other sections
                          if ( (j != i) && (sections[j]->is_mapped() == true) )
                             {
+#if 0
                               SgAsmGenericHeader* genericHeader  = sections[j]->get_header();
                               rose_addr_t temp_imageBase = genericHeader->get_base_va();
                               rose_addr_t nestedAddressBase  = temp_imageBase    + sections[j]->get_mapped_rva();
                               rose_addr_t nestedAddressBound = nestedAddressBase + sections[j]->get_mapped_size();
-                           // printf ("Exclude range in section %s starting address = 0x%08"PRIx64" ending address = 0x%08"PRIx64"\n",sections[j]->get_name().c_str(),nestedAddressBase,nestedAddressBound);
-
+                              printf ("Exclude range in section %s starting address = 0x%08"PRIx64" ending address = 0x%08"PRIx64"\n",sections[j]->get_name().c_str(),nestedAddressBase,nestedAddressBound);
+#endif
 #if 0
                               for (rose_addr_t k = nestedAddressBase; k < nestedAddressBound; k++)
                                  {
@@ -1666,7 +1670,9 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
        // Open the file where we will put the generated code
           string outputFilename = get_output_filename(*file);
 
-       // printf ("Calling the unparser: outputFilename = %s \n",outputFilename.c_str());
+          if ( SgProject::get_verbose() == true )
+               printf ("Calling the unparser: outputFilename = %s \n",outputFilename.c_str());
+
           fstream ROSE_OutputFile(outputFilename.c_str(),ios::out);
        // ROSE_OutputFile.open(s_file.c_str());
 

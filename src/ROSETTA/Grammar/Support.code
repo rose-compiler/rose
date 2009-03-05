@@ -9910,6 +9910,8 @@ SgFile::getFileName () const
    {
   // Get the filename from the Sage III file object
 
+     ROSE_ASSERT(this != NULL);
+
   // ROSE_ASSERT(get_fileInfo() != NULL);
 #if 0
   // DQ (9/4/2008): Moved the global scope to the new SgSourceFile IR node.

@@ -765,6 +765,85 @@ CustomMemoryPoolDOTGeneration::typeFilter(SgNode* node)
    }
 
 void
+CustomMemoryPoolDOTGeneration::symbolFilter(SgNode* node)
+   {
+  // This function skips the representation of types and IR nodes associated with types
+     if (isSgSymbol(node) != NULL)
+        {
+          skipNode(node);
+        }
+   }
+
+void
+CustomMemoryPoolDOTGeneration::emptySymbolTableFilter(SgNode* node)
+   {
+  // This function skips the representation of types and IR nodes associated with types
+     if (isSgSymbolTable(node) != NULL)
+        {
+          skipNode(node);
+        }
+   }
+
+void
+CustomMemoryPoolDOTGeneration::expressionFilter(SgNode* node)
+   {
+  // This function skips the representation of types and IR nodes associated with types
+     if (isSgExpression(node) != NULL)
+        {
+          skipNode(node);
+        }
+   }
+
+void
+CustomMemoryPoolDOTGeneration::variableDefinitionFilter(SgNode* node)
+   {
+  // This function skips the representation of types and IR nodes associated with types
+     if (isSgVariableDefinition(node) != NULL)
+        {
+          skipNode(node);
+        }
+   }
+
+void
+CustomMemoryPoolDOTGeneration::variableDeclarationFilter(SgNode* node)
+   {
+  // This function skips the representation of types and IR nodes associated with types
+     if (isSgVariableDeclaration(node) != NULL)
+        {
+          skipNode(node);
+        }
+
+     if (isSgInitializedName(node) != NULL)
+        {
+          skipNode(node);
+        }
+
+     if (isSgStorageModifier(node) != NULL)
+        {
+          skipNode(node);
+        }
+
+     if (isSgFunctionParameterList(node) != NULL)
+        {
+          skipNode(node);
+        }
+
+     variableDefinitionFilter(node);
+   }
+
+
+void
+CustomMemoryPoolDOTGeneration::ctorInitializerListFilter(SgNode* node)
+   {
+  // This function skips the representation of types and IR nodes associated with types
+     if (isSgCtorInitializerList(node) != NULL)
+        {
+          skipNode(node);
+        }
+   }
+
+
+void
 CustomMemoryPoolDOTGeneration::binaryExecutableFormatFilter(SgNode* node)
    {
   // This function skips the representation of specific kinds of IR nodes 
@@ -1098,7 +1177,11 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                   {
                     SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(node);
                     additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"Blue\",fillcolor=RoyalBlue,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    string forwardFlagString = (functionDeclaration->isForward() == true) ? "isForward" : "!isForward";
+                    string friendFlagString = (functionDeclaration->get_declarationModifier().isFriend() == true) ? "isFriend" : "!isFriend";
                     labelWithSourceCode = string("\\n  ") + functionDeclaration->get_name().getString() +
+                                          "\\n  " + forwardFlagString +
+                                          "\\n  " + friendFlagString +
                                           "\\n  " +  StringUtility::numberToString(functionDeclaration) + "  ";
                  // printf ("########## functionDeclaration->get_name() = %s \n",functionDeclaration->get_name().str());
                     break;
@@ -1634,20 +1717,42 @@ SimpleColorMemoryPoolTraversal::visit(SgNode* node)
 #if 1
      defaultFilter(node);
 #endif
-#if 0
+
+#if 1
+  // DQ (3/1/2009): Uncommented to allow filtering of types.
      typeFilter(node);
 #endif
+
+#if 1
+  // DQ (3/2/2009): Remove some more nodes to make the graphs more clear.
+     expressionFilter(node);
+#endif
+#if 0
+     emptySymbolTableFilter(node);
+#endif
+#if 1
+     variableDefinitionFilter(node);
+     variableDeclarationFilter(node);
+     ctorInitializerListFilter(node);
+#endif
+#if 0
+     symbolFilter(node);
+#endif
+
 #if 1
      defaultColorFilter(node);
 #endif
+
 #if 1
   // Ignore Sg_File_Info objects associated with comments and CPP directives
      commentAndDirectiveFilter(node);
 #endif
+
 #if 1
   // Control output of Sg_File_Info object in graph of whole AST.
      fileInfoFilter(node);
 #endif
+
 #if 0
   // DQ (5/11/2006): Skip any IR nodes that are part of a gnu compatability specific subtree of the AST
      Sg_File_Info* currentNodeFileInfo = isSg_File_Info(node);

@@ -63,7 +63,7 @@ SgLocatedNode::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
      class Traversal : public AstSimpleProcessing
         {
           private:
-              SgCopyHelp & helpSupport;
+               SgCopyHelp & helpSupport;
 
           public:
                Traversal (SgCopyHelp & help) : helpSupport(help) {}
@@ -359,7 +359,19 @@ SgFunctionDeclaration::fixupCopy_references(SgNode* copy, SgCopyHelp & help) con
      if (this->get_definition() != NULL)
         {
           ROSE_ASSERT(isForward() == false);
-          this->get_definition()->fixupCopy_references(functionDeclaration_copy->get_definition(),help);
+
+       // DQ (2/26/2009): Handle special cases where the copyHelp function is non-trivial.
+       // Is every version of copyHelp object going to be a problem?
+
+       // For the outlining, our copyHelp object does not copy defining function declarations 
+       // and substitutes a non-defining declarations, so if the copy has been built this way 
+       // then skip trying to reset the SgFunctionDefinition.
+       // printf ("In SgFunctionDeclaration::fixupCopy_references(): functionDeclaration_copy->get_definition() = %p \n",functionDeclaration_copy->get_definition());
+       // this->get_definition()->fixupCopy_references(functionDeclaration_copy->get_definition(),help);
+          if (functionDeclaration_copy->get_definition() != NULL)
+             {
+               this->get_definition()->fixupCopy_references(functionDeclaration_copy->get_definition(),help);
+             }
 
        // If this is a declaration with a definition then it is a defining declaration
        // functionDeclaration_copy->set_definingDeclaration(functionDeclaration_copy);

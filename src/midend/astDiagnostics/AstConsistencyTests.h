@@ -343,4 +343,18 @@ class TestLValueExpressions : public AstSimpleProcessing
           void visit ( SgNode* node );
    };
 
+class TestMultiFileConsistancy : public ROSE_VisitTraversal // AstSimpleProcessing
+   {
+  // This class uses a traversal to test expressions that should be marked 
+  // as lvalues and makes sure that other expressions are not marked as lvalues.
+
+     public:
+
+      //! static function to do test on any IR node
+          static void test();
+
+      //! visit function required for traversal
+          void visit ( SgNode* node );
+   };
+
 #endif

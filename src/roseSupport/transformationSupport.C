@@ -1992,6 +1992,8 @@ $VARIABLE_DECLARATIONS\n\n\
 SgProject*
 TransformationSupport::getProject( const SgNode* astNode )
    {
+     ROSE_ASSERT(astNode != NULL);
+
      const SgNode* parentNode = astNode;
   // printf ("Starting at parentNode->sage_class_name() = %s \n",parentNode->sage_class_name());
      while (parentNode->get_parent() != NULL)
@@ -2033,6 +2035,8 @@ TransformationSupport::getProject( const SgNode* astNode )
 SgFile*
 TransformationSupport::getFile( const SgNode* astNode )
    {
+     ROSE_ASSERT(astNode != NULL);
+
      const SgNode* parentNode = astNode;
      while ( (isSgFile(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
         {
@@ -2074,6 +2078,8 @@ TransformationSupport::getFile( const SgNode* astNode )
 SgSourceFile*
 TransformationSupport::getSourceFile( const SgNode* astNode )
    {
+     ROSE_ASSERT(astNode != NULL);
+
      const SgNode* parentNode = astNode;
      while ( (isSgSourceFile(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
         {
@@ -2095,7 +2101,11 @@ TransformationSupport::getSourceFile( const SgNode* astNode )
         {
           if ( dynamic_cast<const SgType*>(parentNode) != NULL || dynamic_cast<const SgSymbol*>(parentNode) != NULL )
              {
-               printf ("Error: can't locate an associated SgSourceFile from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
+            // DQ (3/4/2009): This test will remove most of the instances of this warning (ignoring types).
+               if (isSgType(parentNode) == NULL)
+                  {
+                    printf ("Warning: can't locate an associated SgSourceFile from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
+                  }
                return NULL;
              }
         }
@@ -2115,6 +2125,8 @@ TransformationSupport::getSourceFile( const SgNode* astNode )
 SgBinaryFile*
 TransformationSupport::getBinaryFile( const SgNode* astNode )
    {
+     ROSE_ASSERT(astNode != NULL);
+
      const SgNode* parentNode = astNode;
      while ( (isSgBinaryFile(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
         {
@@ -2155,6 +2167,8 @@ TransformationSupport::getBinaryFile( const SgNode* astNode )
 SgGlobal*
 TransformationSupport::getGlobalScope( const SgNode* astNode )
    {
+     ROSE_ASSERT(astNode != NULL);
+
      const SgNode* parentNode = astNode;
   // printf ("TransformationSupport::getGlobalScope(): Starting node: parentNode = %p = %s \n",parentNode,parentNode->class_name().c_str());
      while ( (isSgGlobal(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
@@ -2197,6 +2211,9 @@ TransformationSupport::getGlobalScope( const SgNode* astNode )
 SgStatement*
 TransformationSupport::getStatement( const SgNode* astNode )
    {
+  // DQ (3/1/2009): Added assertion.
+     ROSE_ASSERT(astNode != NULL);
+
      const SgNode* parentNode = astNode;
 
   // DQ (6/27/2007): These IR nodes are not contained in any statement

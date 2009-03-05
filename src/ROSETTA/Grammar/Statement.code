@@ -3229,6 +3229,12 @@ SgStatement::get_scope(void) const
 #if 0
                     printf ("stmt->sage_class_name() = %s \n",stmt->sage_class_name());
 #endif
+                    if (stmt->get_parent() == NULL)
+                       {
+                         printf ("Error: NULL parent pointer not allowed for statement = %p = %s = %s \n",stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str());
+                         ROSE_ASSERT(stmt->get_file_info() != NULL);
+                         stmt->get_file_info()->display("Error: NULL parent pointer not allowed for statement");
+                       }
                     ROSE_ASSERT (stmt->get_parent() != NULL);
 #if 0
                     printf ("stmt->get_parent()->sage_class_name() = %s \n",stmt->get_parent()->sage_class_name());
@@ -6610,11 +6616,14 @@ SgDeclarationStatement::get_declaration_associated_with_symbol() const
        else
         {
           ROSE_ASSERT(declarationAssociatedWithSymbol != NULL);
-       // printf ("declarationAssociatedWithSymbol != NULL: this = %p = %s \n",declarationAssociatedWithSymbol,this->class_name().c_str());
+#if 0
+          printf ("declarationAssociatedWithSymbol != NULL: this = %p = %s \n",declarationAssociatedWithSymbol,this->class_name().c_str());
+#endif
           if (declarationAssociatedWithSymbol->get_symbol_from_symbol_table() == NULL)
              {
-            // printf ("declarationAssociatedWithSymbol->get_symbol_from_symbol_table() == NULL \n");
-
+#if 0
+               printf ("declarationAssociatedWithSymbol->get_symbol_from_symbol_table() == NULL \n");
+#endif
                SgDeclarationStatement* previousDeclarationAssociatedWithSymbol = declarationAssociatedWithSymbol;
 
                declarationAssociatedWithSymbol = this->get_definingDeclaration();
@@ -6682,6 +6691,10 @@ SgDeclarationStatement::get_declaration_associated_with_symbol() const
         }
 
   // ROSE_ASSERT(declarationAssociatedWithSymbol != NULL);
+
+#if 0
+     printf ("In get_declaration_associated_with_symbol(): declarationAssociatedWithSymbol = %p \n",declarationAssociatedWithSymbol);
+#endif
 
      return declarationAssociatedWithSymbol;
    }
@@ -8928,6 +8941,11 @@ SgMemberFunctionDeclaration::get_class_scope(void) const
 SgSymbol*
 SgMemberFunctionDeclaration::get_symbol_from_symbol_table() const
    {
+#if 0
+     printf ("In SgMemberFunctionDeclaration::get_symbol_from_symbol_table(): this = %p = %s = %s scope = %p = %s scope->get_symbol_table() = %p \n",
+          this,this->class_name().c_str(),SageInterface::get_name(this).c_str(),get_scope(),get_scope()->class_name().c_str(),get_scope()->get_symbol_table());
+#endif
+
      SgSymbol* symbol = NULL;
      if (get_scope() == NULL)
         {

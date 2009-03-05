@@ -82,6 +82,10 @@ SgScopeStatement::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
 
      SageInterface::rebuildSymbolTable(copyScopeStatement);
 
+  // DQ (3/1/2009): After rebuilding the symbol table, we have to reset references 
+  // to old symbols (from the original symbol table) to the new symbols just built.
+     SageInterface::fixupReferencesToSymbols(this,copyScopeStatement,help);
+
   // printf ("\nLeaving SgScopeStatement::fixupCopy_symbols() for %p = %s copy = %p \n\n",this,this->class_name().c_str(),copy);
    }
 
@@ -217,7 +221,19 @@ SgFunctionDeclaration::fixupCopy_symbols(SgNode* copy, SgCopyHelp & help) const
      if (this->get_definition() != NULL)
         {
           ROSE_ASSERT(isForward() == false);
-          this->get_definition()->fixupCopy_symbols(functionDeclaration_copy->get_definition(),help);
+
+       // DQ (2/26/2009): Handle special cases where the copyHelp function is non-trivial.
+       // Is every version of copyHelp object going to be a problem?
+
+       // For the outlining, our copyHelp object does not copy defining function declarations 
+       // and substitutes a non-defining declarations, so if the copy has been built this way 
+       // then skip trying to reset the SgFunctionDefinition.
+       // printf ("In SgFunctionDeclaration::fixupCopy_symbols(): functionDeclaration_copy->get_definition() = %p \n",functionDeclaration_copy->get_definition());
+       // this->get_definition()->fixupCopy_symbols(functionDeclaration_copy->get_definition(),help);
+          if (functionDeclaration_copy->get_definition() != NULL)
+             {
+               this->get_definition()->fixupCopy_symbols(functionDeclaration_copy->get_definition(),help);
+             }
 
        // If this is a declaration with a definition then it is a defining declaration
        // functionDeclaration_copy->set_definingDeclaration(functionDeclaration_copy);

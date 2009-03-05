@@ -77,7 +77,7 @@ $(RoseDoxygenDocumentation): $(RoseDocsDependencies) $(ROSE_MAINPAGE_DOCUMENTATI
 
 # We can't specify the source directory to latex so we have to build
 # links to the files in the source directory.  Other ideas?
-latexFiles = preface.tex acknowledgments.tex introduction.tex requirements.tex \
+latexFiles = preface.tex acknowledgments.tex introduction.tex \
              designOfRose.tex preprocessorDesign.tex examples.tex \
              loopTransformDoc.tex mm.tex lu.tex \
              tridvpk.tex appendix.tex glossary.tex bibliography.tex \
@@ -85,6 +85,9 @@ latexFiles = preface.tex acknowledgments.tex introduction.tex requirements.tex \
              writingYourFirstTranslator.tex overviewOfRose.tex \
              developersAppendix.tex astMerge.tex installRose.tex \
              binaryAnalysis.tex demo.tex
+
+# DQ (3/4/2009): Removed requirements.tex since it is not longer used.
+# requirements.tex
 
 roseDirectoryMap.pdf: Makefile
 	$(top_srcdir)/scripts/lsdot $(top_srcdir) --format=ps --exclude='CVS\|\.svn\|autom4te.cache\|developersScratchSpace\|testDoxygen\|ckpt\|compass' --basename -o=roseDirectoryMap.ps;
@@ -225,10 +228,13 @@ EXTRA_DIST = \
    fixme.sty  acknowledgments.tex \
    bibliography.tex  examples.tex fd-docs.tex overviewOfRose.tex pre-docs.tex loopTransformDoc.tex  \
    mm.tex preprocessorDesign.tex tridvpk.tex writingYourFirstTranslator.tex appendix.tex \
-   developersAppendix.tex designOfRose.tex  FAQ.tex glossary.tex introduction.tex lu.tex preface.tex \
-   requirements.tex rose-processing-phases.pdf compass_rose.gif SageIII.tex QueryLibrary.tex \
+   developersAppendix.tex designOfRose.tex  FAQ.tex glossary.tex introduction.tex lu.tex \
+   preface.tex rose-processing-phases.pdf compass_rose.gif SageIII.tex QueryLibrary.tex \
    AstRewrite.tex ProgramAnalysis.tex AstProcessing.tex testing.tex astMerge.tex installRose.tex \
    roseExecutionOutput.txt roseHelpOutput.txt asm_code_samples_gcc.pdf
+
+# DQ (3/4/2009): Removed requirements.tex since it is not longer used.
+# requirements.tex
 
 clean-web-pages:
 	test ! -d ROSE_WebPages || (test -d ROSE_WebPages && ( chmod +w -R ROSE_WebPages ))

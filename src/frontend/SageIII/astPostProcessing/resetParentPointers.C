@@ -1646,7 +1646,12 @@ void
 ResetParentPointersInMemoryPool::visit(SgNode* node)
    {
 #if 0
-     printf ("##### ResetParentPointersInMemoryPool::visit(node = %p = %s) \n",node,node->class_name().c_str());
+     SgLocatedNode* temp_locatedNode = isSgLocatedNode(node);
+     if ( (temp_locatedNode != NULL) && (temp_locatedNode->get_file_info()->isFrontendSpecific() == false) )
+        {
+       // Only do I/O on nodes not in the header of predefined functions.
+          printf ("##### ResetParentPointersInMemoryPool::visit(node = %p = %s) \n",node,node->class_name().c_str());
+        }
 #endif
 
      SgType*        type        = isSgType(node);
@@ -1887,6 +1892,12 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
                          SgDeclarationStatement* definingDeclaration    = functionDeclaration->get_definingDeclaration();
                          SgDeclarationStatement* nondefiningDeclaration = functionDeclaration->get_firstNondefiningDeclaration();
 
+                         if (nondefiningDeclaration == NULL)
+                            {
+                              printf ("Error: nondefiningDeclaration == NULL for functionDeclaration = %p = %s \n",functionDeclaration,SageInterface::get_name(functionDeclaration).c_str());
+                              printf ("   definingDeclaration = %p \n",definingDeclaration);
+                              printf ("   functionDeclaration->get_parent() = %p = %s \n",functionDeclaration->get_parent(),functionDeclaration->get_parent()->class_name().c_str());
+                            }
                          ROSE_ASSERT(nondefiningDeclaration != NULL);
 #if PRINT_DEVELOPER_WARNINGS
                          printf ("Warning from ResetParentPointersInMemoryPool::visit(): parent == NULL for function name = %s definingDeclaration = %p nondefiningDeclaration = %p parent = %p \n",

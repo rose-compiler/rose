@@ -390,8 +390,18 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
   // DQ (11/18/2004): Added support for qualified name of template declaration!
   // But it appears that the qualified name is included within the template text string so that 
   // we should not output the qualified name spearately!
-#if 1
+#if 0
+  // DQ (3/4/2009): This code fails for tutorial/rose_inputCode_InstrumentationTranslator.C
+  // commented out this branch in favor of the other one!
+
   // printf ("Before calling generateNameQualifier(): ninfo.get_current_scope() = %p = %s \n",ninfo.get_current_scope(),ninfo.get_current_scope()->class_name().c_str());
+
+  // DQ (2/22/2009): Added assertion.
+  // ROSE_ASSERT(funcdecl_stmt->get_symbol_from_symbol_table() != NULL);
+     if (funcdecl_stmt->get_firstNondefiningDeclaration() != NULL)
+        {
+          ROSE_ASSERT (funcdecl_stmt->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table() != NULL);
+        }
 
      SgName nameQualifier = unp->u_name->generateNameQualifier( funcdecl_stmt , ninfo );
 #else
@@ -399,10 +409,11 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
   // but it does not yet address friend functions which might require qualification.
 
      SgUnparse_Info ninfoForFunctionName(ninfo);
-     if (isSgClassDefinition(funcdecl_stmt->get_parent())) {
+     if (isSgClassDefinition(funcdecl_stmt->get_parent()))
+        {
        // JJW 10-23-2007 Never qualify a member function name
-       ninfoForFunctionName.set_SkipQualifiedNames();
-     }
+          ninfoForFunctionName.set_SkipQualifiedNames();
+        }
      SgName nameQualifier = unp->u_name->generateNameQualifier( funcdecl_stmt , ninfoForFunctionName );
 #endif
   // printf ("In unparse_helper(): nameQualifier (from unp->u_name->generateNameQualifier function) = %s \n",nameQualifier.str());
@@ -2482,6 +2493,103 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
        // qualifier is not used in function declarations, but is used for function calls.
           ninfo.set_declstatement_ptr(NULL);
           ninfo.set_declstatement_ptr(funcdecl_stmt);
+
+       // DQ (2/22/2009): Added assertion.
+          if (funcdecl_stmt->get_firstNondefiningDeclaration() != NULL)
+             {
+               SgFunctionDeclaration* firstNondefiningFunction = isSgFunctionDeclaration(funcdecl_stmt->get_firstNondefiningDeclaration());
+               ROSE_ASSERT(firstNondefiningFunction != NULL);
+               ROSE_ASSERT(firstNondefiningFunction->get_firstNondefiningDeclaration() != NULL);
+#if 0
+               printf ("firstNondefiningFunction                                    = %p \n",firstNondefiningFunction);
+               printf ("firstNondefiningFunction->get_firstNondefiningDeclaration() = %p \n",firstNondefiningFunction->get_firstNondefiningDeclaration());
+               printf ("firstNondefiningFunction->get_definingDeclaration()         = %p \n",firstNondefiningFunction->get_definingDeclaration());
+               printf ("firstNondefiningFunction->get_scope()                       = %p \n",firstNondefiningFunction->get_scope());
+#endif
+#if 0
+               SgSourceFile* sourceFile = TransformationSupport::getSourceFile(funcdecl_stmt);
+               printf ("sourceFile->getFileName() = %s \n",sourceFile->getFileName().c_str());
+#endif
+               if (firstNondefiningFunction != NULL)
+                  {
+                    ROSE_ASSERT(TransformationSupport::getSourceFile(funcdecl_stmt) != NULL);
+                    ROSE_ASSERT(TransformationSupport::getSourceFile(firstNondefiningFunction) != NULL);
+                    if (TransformationSupport::getSourceFile(funcdecl_stmt) != TransformationSupport::getSourceFile(firstNondefiningFunction))
+                       {
+                         printf ("firstNondefiningFunction = %p \n",firstNondefiningFunction);
+                         printf ("funcdecl_stmt = %p funcdecl_stmt->get_scope()                                        = %p \n",funcdecl_stmt,funcdecl_stmt->get_scope());
+                         printf ("funcdecl_stmt = %p funcdecl_stmt->get_declarationModifier().isFriend()               = %s \n",funcdecl_stmt,funcdecl_stmt->get_declarationModifier().isFriend() ? "true" : "false");
+                         printf ("firstNondefiningFunction = %p firstNondefiningFunction->get_declarationModifier().isFriend() = %s \n",firstNondefiningFunction,firstNondefiningFunction->get_declarationModifier().isFriend() ? "true" : "false");
+                         printf ("TransformationSupport::getSourceFile(funcdecl_stmt = %p)->getFileName()              = %s \n",funcdecl_stmt,TransformationSupport::getSourceFile(funcdecl_stmt)->getFileName().c_str());
+                         printf ("TransformationSupport::getSourceFile(funcdecl_stmt->get_scope() = %p)->getFileName() = %s \n",funcdecl_stmt->get_scope(),TransformationSupport::getSourceFile(funcdecl_stmt->get_scope())->getFileName().c_str());
+                         printf ("TransformationSupport::getSourceFile(firstNondefiningFunction = %p)->getFileName()   = %s \n",firstNondefiningFunction,TransformationSupport::getSourceFile(firstNondefiningFunction)->getFileName().c_str());
+                         printf ("TransformationSupport::getSourceFile(firstNondefiningFunction->get_scope() = %p)->getFileName() = %s \n",firstNondefiningFunction->get_scope(),TransformationSupport::getSourceFile(firstNondefiningFunction->get_scope())->getFileName().c_str());
+
+                         printf ("TransformationSupport::getSourceFile(funcdecl_stmt = %p)->getFileName()            = %s \n",funcdecl_stmt,TransformationSupport::getSourceFile(funcdecl_stmt)->getFileName().c_str());
+                         printf ("TransformationSupport::getSourceFile(firstNondefiningFunction = %p)->getFileName() = %s \n",firstNondefiningFunction,TransformationSupport::getSourceFile(firstNondefiningFunction)->getFileName().c_str());
+                       }
+                    ROSE_ASSERT(TransformationSupport::getSourceFile(funcdecl_stmt) == TransformationSupport::getSourceFile(firstNondefiningFunction));
+
+                 // DQ (2/26/2009): Commented out because moreTest3.cpp fails for outlining to a separate file.
+                    if (TransformationSupport::getSourceFile(funcdecl_stmt->get_scope()) != TransformationSupport::getSourceFile(firstNondefiningFunction))
+                       {
+                         printf ("firstNondefiningFunction = %p \n",firstNondefiningFunction);
+                         printf ("funcdecl_stmt = %p funcdecl_stmt->get_scope()                                        = %p \n",funcdecl_stmt,funcdecl_stmt->get_scope());
+                         printf ("funcdecl_stmt = %p funcdecl_stmt->get_declarationModifier().isFriend()               = %s \n",funcdecl_stmt,funcdecl_stmt->get_declarationModifier().isFriend() ? "true" : "false");
+                         printf ("firstNondefiningFunction = %p firstNondefiningFunction->get_declarationModifier().isFriend() = %s \n",firstNondefiningFunction,firstNondefiningFunction->get_declarationModifier().isFriend() ? "true" : "false");
+                         printf ("TransformationSupport::getSourceFile(funcdecl_stmt = %p)->getFileName()              = %s \n",funcdecl_stmt,TransformationSupport::getSourceFile(funcdecl_stmt)->getFileName().c_str());
+                         printf ("TransformationSupport::getSourceFile(funcdecl_stmt->get_scope() = %p)->getFileName() = %s \n",funcdecl_stmt->get_scope(),TransformationSupport::getSourceFile(funcdecl_stmt->get_scope())->getFileName().c_str());
+                         printf ("TransformationSupport::getSourceFile(firstNondefiningFunction = %p)->getFileName()   = %s \n",firstNondefiningFunction,TransformationSupport::getSourceFile(firstNondefiningFunction)->getFileName().c_str());
+                         printf ("TransformationSupport::getSourceFile(firstNondefiningFunction->get_scope() = %p)->getFileName() = %s \n",firstNondefiningFunction->get_scope(),TransformationSupport::getSourceFile(firstNondefiningFunction->get_scope())->getFileName().c_str());
+                       }
+                    ROSE_ASSERT(TransformationSupport::getSourceFile(funcdecl_stmt->get_scope()) == TransformationSupport::getSourceFile(firstNondefiningFunction));
+                  }
+#if 0
+               printf ("Unparser: firstNondefiningFunction = %p \n",firstNondefiningFunction);
+#endif
+
+            // DQ (3/4/2009): This test appear to only fail for tutorial/rose_inputCode_InstrumentationTranslator.C 
+               if (firstNondefiningFunction->get_symbol_from_symbol_table() == NULL)
+                  {
+                    printf ("Warning failing test: firstNondefiningFunction->get_symbol_from_symbol_table() != NULL, apepars to happen for tutorial/rose_inputCode_InstrumentationTranslator.C \n");
+                  }
+            // ROSE_ASSERT(firstNondefiningFunction->get_symbol_from_symbol_table() != NULL);
+             }
+
+#if 0
+          printf ("Unparser: funcdecl_stmt = %p \n",funcdecl_stmt);
+#endif
+
+#if 0
+       // DQ (3/4/2009): Comment out as a test!
+
+       // DQ (2/24/2009): If this is the defining declaration and when there is no non-defining 
+       // declaration the symbol references the defining declaration.
+          if (funcdecl_stmt->get_firstNondefiningDeclaration() == NULL)
+             {
+               if (funcdecl_stmt->get_definingDeclaration() != funcdecl_stmt)
+                  {
+                    printf ("funcdecl_stmt = %p = %s = %s \n",funcdecl_stmt,funcdecl_stmt->class_name().c_str(),SageInterface::get_name(funcdecl_stmt).c_str());
+                    printf ("funcdecl_stmt = %p != funcdecl_stmt->get_definingDeclaration() = %p \n",funcdecl_stmt,funcdecl_stmt->get_definingDeclaration());
+                    printf ("funcdecl_stmt = %p != funcdecl_stmt->get_scope() = %p = %s \n",funcdecl_stmt,funcdecl_stmt->get_scope(),funcdecl_stmt->get_scope()->class_name().c_str());
+                    printf ("Error: funcdecl_stmt = %p != funcdecl_stmt->get_definingDeclaration() = %p \n",funcdecl_stmt,funcdecl_stmt->get_definingDeclaration());
+                  }
+            // DQ (3/4/2009): This fails for test2006_78.C because the only non-defining declaration 
+            // is a declaration in the scope of a function which does not provide enough information 
+            // to associate the scope.
+            // ROSE_ASSERT (funcdecl_stmt->get_definingDeclaration() == funcdecl_stmt);
+            // ROSE_ASSERT (funcdecl_stmt->get_definingDeclaration() == funcdecl_stmt || isSgBasicBlock(funcdecl_stmt->get_scope()) != NULL);
+               ROSE_ASSERT (funcdecl_stmt->get_definingDeclaration() == funcdecl_stmt || isSgBasicBlock(funcdecl_stmt->get_parent()) != NULL);
+#if 0
+               printf ("TransformationSupport::getSourceFile(funcdecl_stmt = %p)->getFileName() = %s \n",funcdecl_stmt,TransformationSupport::getSourceFile(funcdecl_stmt)->getFileName().c_str());
+#endif
+               ROSE_ASSERT (funcdecl_stmt->get_symbol_from_symbol_table() != NULL);
+             }
+            else
+             {
+               ROSE_ASSERT (funcdecl_stmt->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table() != NULL);
+             }
+#endif
 
           unparse_helper(funcdecl_stmt, ninfo);
 

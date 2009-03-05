@@ -110,6 +110,22 @@ and limitations on how their software may be used.
    \item {\bf Libtool}: version $>=$1.5.6.  Needed \emph{ONLY} for development versions. 
 \end{itemize}
 
+{\bf Required Software for ROSE Demos:} \\
+     The ROSE demos make use of additional external software which we also find useful for
+     internal development.
+\begin{itemize}
+   \item {\bf zgrviewer}: \\
+     Zgrviewer is a dot file viewer that allows simple zooming, panning, etc. It is
+     available on SourceForge.  Zgerviewer is a java program and installs easily.
+     however the detail memory setting for java are insufficent for large dot files
+     generated within ROSE (and by the ROSE demos).  We suggest a number of options
+     to excute zgrviewer with more memory using java.  A zgrviewer script (called
+     zgrviewerExampleScript) is available in the ROSE/scripts directory (see the 
+     script for details).
+
+\end{itemize}
+
+
 \paragraph{Mac OSX Support:}
    It has been reported that our binary version of EDG requires Mac OS 10.5
 (which might make sense because we build it using Mac OSX version 10.5.6).  More

@@ -196,9 +196,13 @@ ResetTypes::visit(SgNode* node)
                        {
                          if (declaration->get_type() != definingDeclaration->get_type())
                             {
-                              printf ("Error: types in declaration = %p = %s and definingDeclaration = %p not shared \n",declaration,declaration->class_name().c_str(),definingDeclaration);
-                              declaration->get_file_info()->display("Error: types in declaration and definingDeclaration are not shared");
-                              printf ("definingDeclaration->unparseToString() = %s \n",definingDeclaration->unparseToString().c_str());
+                           // DQ (3/3/2009): Make this conditional upon it being a transformation, since they cause types to be build redundantly in the SageBuilder function (I think).
+                              if (declaration->get_file_info()->isTransformation() == false)
+                                 {
+                                   printf ("Error: types in declaration = %p = %s and definingDeclaration = %p not shared \n",declaration,declaration->class_name().c_str(),definingDeclaration);
+                                   declaration->get_file_info()->display("Error: types in declaration and definingDeclaration are not shared");
+                                   printf ("definingDeclaration->unparseToString() = %s \n",definingDeclaration->unparseToString().c_str());
+                                 }
 
                               if (definingDeclaration->get_type() != NULL)
                                  {
