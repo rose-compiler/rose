@@ -1,3 +1,137 @@
+2009-03-05 03:05  dquinlan
+
+	* [r4742]
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/fortranTests/Makefile.am:
+	  Commented out Fortran outlining tests for now.
+
+2009-03-05 03:04  dquinlan
+
+	* [r4741] /trunk/ROSE/demo/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_11.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/inputCode_dwarfAnalysis_Mach-O,
+	  /trunk/ROSE/developersScratchSpace/Dan/copyAST_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/copyAST_tests/copyExample.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/copyAST_tests/copyGraph.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/copyAST_tests/copyGraph.h,
+	  /trunk/ROSE/developersScratchSpace/Dan/translator_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/translator_tests/MakefileForSDGexample,
+	  /trunk/ROSE/developersScratchSpace/Dan/translator_tests/SDG_traversal.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/translator_tests/inputReverseTraversal.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/translator_tests/inputSDG_failingCase.c,
+	  /trunk/ROSE/developersScratchSpace/Dan/translator_tests/reverseTraversal.C,
+	  /trunk/ROSE/docs/Rose/Makefile.am,
+	  /trunk/ROSE/docs/Rose/acknowledgments.tex,
+	  /trunk/ROSE/docs/Rose/demo.tex,
+	  /trunk/ROSE/docs/Rose/installRose.tex,
+	  /trunk/ROSE/docs/Rose/requirements.tex,
+	  /trunk/ROSE/projects/compass/tools/compass/gui/Makefile.am,
+	  /trunk/ROSE/scripts/erase_test_dirs.sh,
+	  /trunk/ROSE/src/Makefile.am,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Cxx_GlobalDeclarations.macro,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Expression.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Statement.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Support.code,
+	  /trunk/ROSE/src/backend/unparser/CxxCodeGeneration/unparseCxx_statements.C,
+	  /trunk/ROSE/src/backend/unparser/languageIndependenceSupport/name_qualification_support.C,
+	  /trunk/ROSE/src/backend/unparser/languageIndependenceSupport/unparseLanugageIndependentConstructs.C,
+	  /trunk/ROSE/src/backend/unparser/unparser.C,
+	  /trunk/ROSE/src/frontend/SageIII/astMerge/buildReplacementMap.C,
+	  /trunk/ROSE/src/frontend/SageIII/astMerge/buildReplacementMap.h,
+	  /trunk/ROSE/src/frontend/SageIII/astMerge/buildSetOfFrontendSpecificNodes.C,
+	  /trunk/ROSE/src/frontend/SageIII/astMerge/collectAssociateNodes.C,
+	  /trunk/ROSE/src/frontend/SageIII/astMerge/fixupTraversal.C,
+	  /trunk/ROSE/src/frontend/SageIII/astMerge/fixupTraversal.h,
+	  /trunk/ROSE/src/frontend/SageIII/astPostProcessing/fixupDeclarations.C,
+	  /trunk/ROSE/src/frontend/SageIII/astPostProcessing/fixupDefiningAndNondefiningDeclarations.C,
+	  /trunk/ROSE/src/frontend/SageIII/astPostProcessing/fixupSymbolTables.C,
+	  /trunk/ROSE/src/frontend/SageIII/astPostProcessing/fixupTypes.C,
+	  /trunk/ROSE/src/frontend/SageIII/astPostProcessing/resetParentPointers.C,
+	  /trunk/ROSE/src/frontend/SageIII/astVisualization/Makefile.am,
+	  /trunk/ROSE/src/frontend/SageIII/astVisualization/copyGraph.C,
+	  /trunk/ROSE/src/frontend/SageIII/astVisualization/copyGraph.h,
+	  /trunk/ROSE/src/frontend/SageIII/astVisualization/wholeAST.C,
+	  /trunk/ROSE/src/frontend/SageIII/astVisualization/wholeAST.h,
+	  /trunk/ROSE/src/frontend/SageIII/astVisualization/wholeAST_API.h,
+	  /trunk/ROSE/src/frontend/SageIII/fixupCopy_references.C,
+	  /trunk/ROSE/src/frontend/SageIII/fixupCopy_scopes.C,
+	  /trunk/ROSE/src/frontend/SageIII/fixupCopy_symbols.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilder.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilder.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C,
+	  /trunk/ROSE/src/midend/astDiagnostics/AstConsistencyTests.C,
+	  /trunk/ROSE/src/midend/astDiagnostics/AstConsistencyTests.h,
+	  /trunk/ROSE/src/midend/astOutlining/GenerateCall.cc,
+	  /trunk/ROSE/src/midend/astOutlining/GenerateFunc.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Insert.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Outliner.cc,
+	  /trunk/ROSE/src/midend/astOutlining/PragmaInterface.cc,
+	  /trunk/ROSE/src/midend/astOutlining/StmtRewrite.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Transform.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Transform.hh,
+	  /trunk/ROSE/src/midend/binaryAnalyses/libraryIdentification/libraryIdentification_writer.C,
+	  /trunk/ROSE/src/roseSupport/transformationSupport.C,
+	  /trunk/ROSE/tests/CompileTests/copyAST_tests/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/copyAST_tests/copyExample.C,
+	  /trunk/ROSE/tests/CompileTests/copyAST_tests/copyGraph.C,
+	  /trunk/ROSE/tests/CompileTests/copyAST_tests/copyGraph.h,
+	  /trunk/ROSE/tests/CompileTests/copyAST_tests/make_copy_graph.tcl,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/Makefile-pass.inc,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/README,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/build_tests-1pass.sh,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/fortranTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/moreTest2.cpp,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/moreTest3.cpp,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/moreTest4.cpp,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/moreTest5.cpp,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/moreTest6.cpp,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/moreTest7.cpp,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/outline.cc,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/test_class_ODR_violation_main.C,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/test_class_ODR_violation_outlined.C,
+	  /trunk/ROSE/tests/testTranslator.C: Added support for outlining
+	  into a separate file (ongoing work).
+	  
+	  Detailed changes in this commit:
+	  1) outlining into the original source file (default).
+	  This adds an additional function to the file where
+	  the code was outlined. This is the more robust mode.
+	  2) Outlining to a separate file is now supported, this
+	  includes detecting all dependent declarations and
+	  copying them to the separate file used to hold the
+	  outlined function. Note that this seemingly trivial
+	  step is quite complex and requires that a lot of internal
+	  infrastructure works perfectly. Complexities include:
+	  a) Symbol tables must be built to include the dependent
+	  declarations.
+	  b) The AST copy must correctly handle all details to
+	  avoid multiple file inconsistancies (e.g. all defining
+	  and non-defining declarations must be in the same file.
+	  c) All references to symbols and declarations in the copied
+	  AST and the moved outlined function must be reset to
+	  refer to the associated symbols and declarations.
+	  d) Lots of more details (see code).
+	  3) A lot of work on the robustness of the AST copy mechanism in
+	  ROSE.
+	  4) Added documentation to make the requirements for the ROSE
+	  demos
+	  more clear.
+	  
+	  Note: The outlining of code to separate files is work in
+	  progress.
+	  Due to a conflict in the handling of Hidden Lists, I was force
+	  to revert to the previous HiddenList implementation and this
+	  breakst moreTest3.cpp and moreTest4.cpp in the directory:
+	  tests/roseTests/astOutliningTests. There is a fix to the
+	  HiddenList analysis which allows these test to pass, but this
+	  fix breaks at least one of the C++ test codes so it was
+	  reverted to allow the more common ROSE tests to pass.
+	  This conflict will be worked on after this checkin which
+	  serves to put the work by Liao and myself in sync.
+
 2009-03-04 18:39  liao6
 
 	* [r4737] /trunk/ROSE/projects/autoTuning/tests/Makefile.am,
