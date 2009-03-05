@@ -1,3 +1,16 @@
+2009-03-05 17:47  dquinlan
+
+	* [r4745]
+	  /trunk/ROSE/developersScratchSpace/Dan/copyAST_tests/copytest2009_01.C:
+	  Added developersScratchSpace/Dan/copyAST_tests/copytest2009_01.C
+	  file.
+
+2009-03-05 16:37  dquinlan
+
+	* [r4744]
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/Makefile.am: Fixed
+	  bug in tests/roseTests/astOutlining/Makefile.am.
+
 2009-03-05 03:05  dquinlan
 
 	* [r4742]
