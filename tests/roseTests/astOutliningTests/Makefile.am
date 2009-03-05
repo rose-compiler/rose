@@ -150,11 +150,13 @@ test_class_ODR_violation: $(srcdir)/test_class_ODR_violation_main.C $(srcdir)/te
 	g++ -c $(srcdir)/test_class_ODR_violation_outlined.C
 #	Order does not appear to matter in the linking.
 	g++ test_class_ODR_violation_main.o test_class_ODR_violation_outlined.o -o test_class_ODR_violation
-#	g++ test_class_ODR_violation_outlined.o test_class_ODR_violation_main.o -o test_class_ODR_violation
 
-EXTRA_DIST = build_tests-1pass.sh RandomStmtSelector.hh $(ALL_EXTRA_TESTCODE)
+# DQ (3/5/2009): Removed use of script to generate the test code cases.
+# EXTRA_DIST = build_tests-1pass.sh RandomStmtSelector.hh $(ALL_EXTRA_TESTCODE)
+# CLEANFILES = Makefile-1pass LIST.dat
 
-CLEANFILES = Makefile-1pass LIST.dat
+EXTRA_DIST = RandomStmtSelector.hh $(ALL_EXTRA_TESTCODE)
+CLEANFILES = 
 
 # DQ (8/29/2008): Added dependences
 check-local: outline$(EXEEXT) injectOutlinePragmas outlineRandom outlineSelection
@@ -178,5 +180,4 @@ clean-local:
 #	echo $(TESTCODES_REQUIRED_TO_PASS) > LIST.dat
 #Makefile-1pass: ./build_tests-1pass.sh LIST.dat
 #	$(srcdir)/build_tests-1pass.sh $(top_srcdir) LIST.dat
-
 # eof
