@@ -114,7 +114,23 @@ Outliner::outline (SgStatement* s, const std::string& func_name)
     return fake;
   }  
   else
-    return Transform::outlineBlock (s_post, func_name);
+  {
+ // return Transform::outlineBlock (s_post, func_name);
+
+    Outliner::Result returnResult = Transform::outlineBlock (s_post, func_name);
+
+#if 0
+// This is now done in ASTtools::replaceStatement().
+// DQ (2/24/2009): I think that at this point we should delete the subtree represented by "s_post"
+// But it might have made more sense to not do a deep copy on "s_post" in the first place.
+// Why is there a deep copy on "s_post"?
+   SageInterface::deleteAST(s_post);
+#else
+   printf ("############ Skipped deletion of AST subtree at s_post = %p = %s \n",s_post,s_post->class_name().c_str());
+#endif
+
+   return returnResult;
+  }  
 }
 
 //! Set internal options based on command line options

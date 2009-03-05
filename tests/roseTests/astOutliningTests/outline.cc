@@ -31,29 +31,76 @@ using namespace std;
 
 int
 main (int argc, char* argv[])
-{
-  //! Accepting command line options to the outliner
-  vector<string> argvList(argv, argv + argc);
-  Outliner::commandLineProcessing(argvList);
+   {
+  // Accepting command line options to the outliner
+     vector<string> argvList(argv, argv + argc);
+     Outliner::commandLineProcessing(argvList);
 
-  SgProject* proj = frontend (argvList);
-  ROSE_ASSERT (proj);
+     SgProject* project = frontend (argvList);
+     ROSE_ASSERT (project != NULL);
 
-  bool make_pdfs = proj->get_verbose () >= 2;
-  if (make_pdfs)
-    makePDF (proj);
+  // Make sure we have a valid AST before we do the outlining.
+     AstTests::runAllTests(project);
 
-  if (!proj->get_skip_transformation ())
-  {
-    size_t count = 0;
-    count = Outliner::outlineAll (proj);
+     bool make_pdfs = project->get_verbose () >= 2;
+     if (make_pdfs)
+          makePDF (project);
 
-    if (make_pdfs)
-      makePDF (proj, "outlined-");
-  }
+     if (!project->get_skip_transformation ())
+        {
+          size_t count = 0;
+          count = Outliner::outlineAll (project);
 
-  return backend (proj);
-}
+       // Rerun the test on the AST with the outlined code
+       // AstTests::runAllTests(project);
+
+#if 0
+          if (make_pdfs)
+               makePDF (project, "outlined-");
+#endif
+        }
+
+#if 0
+     printf ("Generate the dot output of the SAGE III AST \n");
+  // generateDOT ( *project );
+     generateDOTforMultipleFile ( *project );
+     printf ("DONE: Generate the dot output of the SAGE III AST \n");
+#endif
+
+#if 1
+     const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 3000;
+  // printf ("Generate whole AST graph if small enough (size = %d) \n",SgNode::numberOfNodesInSubtree());
+     printf ("Generate whole AST graph if small enough (size = %d) \n",numberOfNodes());
+     generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);
+     printf ("DONE: Generate whole AST graph if small enough \n");
+#endif
+
+#if 1
+     if (numberOfNodes() < 4000)
+        {
+          std::string filename = SageInterface::generateProjectName(project) + "_copy_graph";
+
+          ROSE_ASSERT(project->get_fileList().empty() == false);
+
+          SgFile* originalSourceFile = project->get_fileList()[0];
+          ROSE_ASSERT(originalSourceFile != NULL);
+
+       // Getting all the AST nodes is not enough, so use the mechanism from AST 
+       // merge to get all nodes that can be reached from the AST nodes.
+       // set<SgNode*> originalSourceFileNodes = getAllNodes(originalSourceFile);
+          set<SgNode*> originalSourceFileNodes = buildRequiredNodeList(originalSourceFile);
+
+          graphNodesAfterCopy(originalSourceFileNodes, filename );
+        }
+#endif
+
+#if 1
+  // Rerun the test on the AST with the outlined code
+     AstTests::runAllTests(project);
+#endif
+
+     return backend (project);
+   }
 
 // =====================================================================
 

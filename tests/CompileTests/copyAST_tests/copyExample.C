@@ -1,7 +1,9 @@
 
 #include "rose.h"
 
-#include "copyGraph.C"
+// DQ (2/26/2009): The copyGraph.[hC] files have been moved to the src/frontend/SageIII/astVisualization 
+// directory and are not included in librose.so.
+// #include "copyGraph.C"
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;

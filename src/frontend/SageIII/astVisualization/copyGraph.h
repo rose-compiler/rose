@@ -7,6 +7,7 @@
 
 // Run this before copy
 std::set<SgNode*> getAllNodes();
+std::set<SgNode*> getAllNodes( SgNode* node );
 
 // Run this after copy, using the data structure produced before
 void graphNodesAfterCopy(const std::set<SgNode*>& nodesBeforeCopy, std::string filename);

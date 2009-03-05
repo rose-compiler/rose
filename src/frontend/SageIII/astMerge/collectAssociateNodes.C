@@ -919,6 +919,14 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
 
                nodeList.insert(namespaceDeclaration);
 
+            // DQ (2/20/2009): Added assertion.
+               if (namespaceDeclaration->get_parent() == NULL)
+                  {
+                    printf ("ERROR: namespaceDeclaration->get_parent() == NULL in addAssociatedNodes \n");
+                    break;
+                  }
+               ROSE_ASSERT(namespaceDeclaration->get_parent() != NULL);
+
                SgScopeStatement* scopeStatement = namespaceDeclaration->get_scope();
                ROSE_ASSERT(scopeStatement != NULL);
             // printf ("addAssociatedNodes(): Looking for typedef symbol in scope = %p for %s \n",scopeStatement,namespaceDeclaration->get_name().str());

@@ -62,8 +62,10 @@ namespace Outliner
      *
      *  \pre The statement does not contain non-local control flow.
      */
+ // DQ (2/25/2009): Modified function interface to pass "SgBasicBlock*" as not const parameter.
+ // SgFunctionDeclaration* generateFunction (const SgBasicBlock* s,const std::string& func_name_str,const ASTtools::VarSymSet_t& syms,SgScopeStatement* scope);
     SgFunctionDeclaration*
-    generateFunction (const SgBasicBlock* s,
+    generateFunction (SgBasicBlock* s,
                       const std::string& func_name_str,
                       const ASTtools::VarSymSet_t& syms,
                       const ASTtools::VarSymSet_t& pdSyms,
@@ -86,7 +88,8 @@ namespace Outliner
      */
     void insert (SgFunctionDeclaration* func,
                  SgGlobal* scope,
-                 SgFunctionDeclaration* target_func);
+                 SgFunctionDeclaration* target_func,
+                 SgBasicBlock* target_outlined_code );
 
     /*!
      *  \brief Generates a call to an outlined function.

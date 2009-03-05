@@ -144,6 +144,12 @@ FixupAstSymbolTables::visit ( SgNode* node )
                ROSE_ASSERT(symbolTable->get_parent() != NULL);
              }
           ROSE_ASSERT(symbolTable != NULL);
+
+          if (symbolTable->get_parent() == NULL)
+             {
+               printf ("Warning: Fixing up symbolTable, calling symbolTable->set_parent() (parent not previously set) \n");
+               symbolTable->set_parent(scope);
+             }
           ROSE_ASSERT(symbolTable->get_parent() != NULL);
 
        // Make sure that the internal hash table used in the symbol table is also present!

@@ -36,3 +36,23 @@ class FixupTraversal : public ROSE_VisitTraversal
 // (via set_difference algorithm).
 // void fixupTraversal(ReplacementMapTraversal::ReplacementMapType & replacementMap );
 void fixupTraversal( const ReplacementMapTraversal::ReplacementMapType & replacementMap, const std::set<SgNode*> & deleteList );
+
+
+// DQ (2/25/2009): Function added to support similar concept for AST outlining.
+// this function fixups up references in a subtree (the outlined file when the 
+// outlining is done to a separate file).
+class FixupSubtreeTraversal : public SgSimpleProcessing
+   {
+     public:
+       // Map of IR node values to be replaced with the new value (first (in pair) is replaced with second (in pair))
+          const ReplacementMapTraversal::ReplacementMapType & replacementMap;
+
+          const FixupTraversal::listToDeleteType & deleteList;
+
+          FixupSubtreeTraversal ( const ReplacementMapTraversal::ReplacementMapType & inputReplacementMap, const FixupTraversal::listToDeleteType & inputListToDelete );
+
+          void visit ( SgNode* node);
+   };
+
+void fixupSubtreeTraversal( SgNode* node, const ReplacementMapTraversal::ReplacementMapType & inputReplacementMap, const FixupTraversal::listToDeleteType & inputListToDelete );
+

@@ -68,7 +68,7 @@ class ReplacementMapTraversal : public ROSE_VisitTraversal
        // Convert the list< pair<SgNode*,SgNode*> > into a list<SgNode*> (note that these specify subtrees)
           static std::set<SgNode*> buildListOfODRviolations ( ReplacementMapTraversal::ODR_ViolationType & ODR_Violations );
 
-          static void displayReplacementMap ( ReplacementMapTraversal::ReplacementMapType & m );
+          static void displayReplacementMap ( const ReplacementMapTraversal::ReplacementMapType & m );
 
        // static void displayDeleteList ( ListToDeleteType & deleteList );
 

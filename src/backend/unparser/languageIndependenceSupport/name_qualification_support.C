@@ -306,16 +306,17 @@ Unparser_Nameq::generateNameQualifier( SgDeclarationStatement* declarationStatem
             // A SgFunctionSymbol uses the firstNondefiningDeclaration if it is available.
             // declarationAssociatedWithSymbol = declarationStatement->get_firstNondefiningDeclaration();
             // DQ (7/4/2007): New function to refactor code and provide basis for internal testing.
-            // printf ("In generateNameQualifier(): declarationStatement = %p = %s = %s \n",declarationStatement,declarationStatement->class_name().c_str(),SageInterface::get_name(declarationStatement).c_str());
-            // printf ("In generateNameQualifier(): declarationStatement->get_scope() = %p = %s \n",declarationStatement->get_scope(),declarationStatement->get_scope()->class_name().c_str());
+#if 0
+               printf ("In generateNameQualifier(): declarationStatement = %p = %s = %s \n",declarationStatement,declarationStatement->class_name().c_str(),SageInterface::get_name(declarationStatement).c_str());
+               printf ("In generateNameQualifier(): declarationStatement->get_scope() = %p = %s \n",declarationStatement->get_scope(),declarationStatement->get_scope()->class_name().c_str());
+#endif
                declarationAssociatedWithSymbol = declarationStatement->get_declaration_associated_with_symbol();
                if (declarationAssociatedWithSymbol == NULL)
-               {
-                 cerr<<"Fatal error: declaration without symbol for "<<
-                 SageInterface::get_name(declarationStatement)<<endl;
+                  {
+                    cerr << "Fatal error: declaration without symbol for " << SageInterface::get_name(declarationStatement) << endl;
+                    ROSE_ASSERT(declarationAssociatedWithSymbol != NULL);
+                  }
 
-                 ROSE_ASSERT(declarationAssociatedWithSymbol != NULL);
-               }
                if (declarationAssociatedWithSymbol->get_symbol_from_symbol_table() == NULL)
                   {
                     printf ("declarationAssociatedWithSymbol = %p = %s = %s \n",declarationAssociatedWithSymbol,declarationAssociatedWithSymbol->class_name().c_str(),SageInterface::get_name(declarationAssociatedWithSymbol).c_str());

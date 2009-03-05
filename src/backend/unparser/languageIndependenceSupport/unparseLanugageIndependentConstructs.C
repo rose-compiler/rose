@@ -112,7 +112,9 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
             // numbers so that we can remove the string comparision operator.
             // statementfilename = ROSE::getFileName(stmt);
                statementfilename = stmt->get_file_info()->get_filenameString();
-
+#if 0
+               printf ("Inside of statementFromFile(): statementfilename = %s sourceFilename = %s \n",statementfilename.c_str(),sourceFilename.c_str());
+#endif
             // DQ (10/22/2007): Allow empty name strings (to support #line n "")
             // ROSE_ASSERT (statementfilename.empty() == false);
 
@@ -135,7 +137,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
 
 #if 0
      printf ("statementInFile = %p = %s = %s = %s \n",stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str(),(statementInFile == true) ? "true" : "false");
-     stmt->get_file_info()->display("debug why false");
+  // stmt->get_file_info()->display("debug why false");
 #endif
 
 #if 0
@@ -948,6 +950,7 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
 
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
      printf ("\n ***** Unparsing the global Scope ***** \n\n");
+     printf ("global scope file = %s \n",TransformationSupport::getSourceFile(globalScope)->getFileName().c_str());
      printf ("global scope size = %ld \n",globalScope->get_declarations().size());
 #endif
 
@@ -957,6 +960,10 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
 
   // curprint ( string(" /* global scope size = " + globalScope->get_declarations().size() + " */ \n ";
 
+#if 0
+     int declarationCounter = 0;
+#endif
+
   // Setup an iterator to go through all the statements in the top scope of the file.
      SgDeclarationStatementPtrList & globalStatementList = globalScope->get_declarations();
      SgDeclarationStatementPtrList::iterator statementIterator = globalStatementList.begin();
@@ -964,6 +971,10 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
         {
           SgStatement* currentStatement = *statementIterator;
           ROSE_ASSERT(currentStatement != NULL);
+
+#if 0
+          printf ("In unparseGlobalStmt(): declaration #%d is %p = %s = %s \n",declarationCounter++,currentStatement,currentStatement->class_name().c_str(),SageInterface::get_name(currentStatement).c_str());
+#endif
 
           if (ROSE_DEBUG > 3)
              {

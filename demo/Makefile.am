@@ -165,7 +165,7 @@ demo_11b:
 	cd $(top_builddir)/projects/BinQ; $(MAKE) demo_diff
 	@echo "End of demo_11b"
 
-# Using Compass with large projects
+# Using Compass with large projects (the trick is to click: regenerate, select all, and refresh).
 demo_12:
 	cd $(top_builddir)/projects/compass/tools/compass/gui; $(MAKE) demo
 	@echo "End of demo_12"

@@ -38,44 +38,52 @@ static
 SgFunctionDeclaration *
 createFuncSkeleton (const string& name, SgType* ret_type,
                     SgFunctionParameterList* params, SgScopeStatement* scope)
-{
-  SgFunctionType *func_type = new SgFunctionType (ret_type, false);
-  ROSE_ASSERT (func_type);
+   {
+     SgFunctionType *func_type = new SgFunctionType (ret_type, false);
+     ROSE_ASSERT (func_type);
 
-  SgFunctionDeclaration* func;
-  SgProcedureHeaderStatement* fortranRoutine;
+     SgFunctionDeclaration* func;
+     SgProcedureHeaderStatement* fortranRoutine;
   // Liao 12/13/2007, generate SgProcedureHeaderStatement for Fortran code
-  if (SageInterface::is_Fortran_language()) 
-  {
-    fortranRoutine = new SgProcedureHeaderStatement(ASTtools::newFileInfo (), name, func_type);
-    fortranRoutine->set_subprogram_kind(SgProcedureHeaderStatement::e_subroutine_subprogram_kind);
+     if (SageInterface::is_Fortran_language()) 
+        {
+          fortranRoutine = new SgProcedureHeaderStatement(ASTtools::newFileInfo (), name, func_type);
+          fortranRoutine->set_subprogram_kind(SgProcedureHeaderStatement::e_subroutine_subprogram_kind);
 
-    func = isSgFunctionDeclaration(fortranRoutine);   
-  }
-  else
-  {
-    func = new SgFunctionDeclaration (ASTtools::newFileInfo (), name, func_type);
-  }
+          func = isSgFunctionDeclaration(fortranRoutine);   
+        }
+       else
+        {
+       // DQ (2/24/2009): Modified to use SageBuild functions with Liao.
+       // func = new SgFunctionDeclaration (ASTtools::newFileInfo (), name, func_type);
+          func = SageBuilder::buildDefiningFunctionDeclaration(name,ret_type,params,scope);
+        }
 
-  ROSE_ASSERT (func);
-  // DQ (9/7/2007): Fixup the defining and non-defining declarations
-  ROSE_ASSERT(func->get_definingDeclaration() == NULL);
-  func->set_definingDeclaration(func);
-  ROSE_ASSERT(func->get_firstNondefiningDeclaration() != func);
+     ROSE_ASSERT (func);
 
-  SgFunctionDefinition *func_def =
-    new SgFunctionDefinition (ASTtools::newFileInfo (), func);
-  func_def->set_parent (func);  //necessary or not?
+  // This code is placed in a conditional because the Fortran case (above) does not use the SagBuilder 
+  // functions.  Once it does then this should not be required.  I will debug the Fortran case with 
+  // Liao after we get the C/C++ case finished.
+     if (SageInterface::is_Fortran_language()) 
+        {
+       // DQ (9/7/2007): Fixup the defining and non-defining declarations
+          ROSE_ASSERT(func->get_definingDeclaration() == NULL);
+          func->set_definingDeclaration(func);
+          ROSE_ASSERT(func->get_firstNondefiningDeclaration() != func);
 
-  SgBasicBlock *func_body = new SgBasicBlock (ASTtools::newFileInfo ());
-  func_def->set_body (func_body);
-  func_body->set_parent (func_def);
+          SgFunctionDefinition *func_def = new SgFunctionDefinition (ASTtools::newFileInfo (), func);
+          func_def->set_parent (func);  //necessary or not?
 
-  func->set_parameterList (params);
-  params->set_parent (func);
+          SgBasicBlock *func_body = new SgBasicBlock (ASTtools::newFileInfo ());
+          func_def->set_body (func_body);
+          func_body->set_parent (func_def);
 
-  return func;
-}
+          func->set_parameterList (params);
+          params->set_parent (func);
+        }
+
+     return func;
+   }
 
 // ===========================================================
 
@@ -88,9 +96,11 @@ createInitName (const string& name, SgType* type,
                 SgInitializer* init = 0)
 {
   SgName sg_name (name.c_str ());
-  SgInitializedName* new_name =
-    new SgInitializedName (ASTtools::newFileInfo (), sg_name, type, init,
-                           decl, scope, 0);
+
+// DQ (2/24/2009): Added assertion.
+  ROSE_ASSERT(name.empty() == false);
+
+  SgInitializedName* new_name = new SgInitializedName (ASTtools::newFileInfo (), sg_name, type, init,decl, scope, 0);
   ROSE_ASSERT (new_name);
 
   // Insert symbol
@@ -249,27 +259,50 @@ createUnpackDecl (SgInitializedName* param, int index,
     local_name = SgName(param->get_name());
 
   // The value of the assignment statement
-  SgAssignInitializer* local_val = buildAssignInitializer(param_deref_expr);
-  if (SageInterface::is_Fortran_language())
-    local_val = NULL;
-  else  if (Outliner::temp_variable)
-   {
-     // int* ip = (int *)(__out_argv[1]); // isPointerDeref == true
-     // int i = *(int *)(__out_argv[1]);
-     if (isPointerDeref)
-      local_val = buildAssignInitializer(cast_expr); // casting is enough for pointer types
-     else // temp variable need additional dereferencing from the parameter on the right side
-       local_val = buildAssignInitializer(buildPointerDerefExp(cast_expr));
 
-   } 
-  else
-  {
-    if  (is_C_language()) // using pointer dereferences
-    {
-      local_val = buildAssignInitializer(cast_expr);
-    }
-  }
- 
+  // DQ (2/24/2009): Modified construction of variable initializer.
+  // SgAssignInitializer* local_val = buildAssignInitializer(param_deref_expr);
+     SgAssignInitializer* local_val = NULL;
+     if (SageInterface::is_Fortran_language())
+        {
+          local_val = NULL;
+        }
+       else
+        {
+          if (Outliner::temp_variable)
+             {
+            // int* ip = (int *)(__out_argv[1]); // isPointerDeref == true
+            // int i = *(int *)(__out_argv[1]);
+               if (isPointerDeref)
+                    local_val = buildAssignInitializer(cast_expr); // casting is enough for pointer types
+                 else // temp variable need additional dereferencing from the parameter on the right side
+                    local_val = buildAssignInitializer(buildPointerDerefExp(cast_expr));
+             } 
+            else
+             {
+               if  (is_C_language()) // using pointer dereferences
+                  {
+                    local_val = buildAssignInitializer(cast_expr);
+                  }
+                 else
+                  {
+                    if  (is_Cxx_language()) // using pointer dereferences
+                       {
+                         SgPointerDerefExp* param_deref_expr = buildPointerDerefExp(cast_expr);
+                      // printf ("In createUnpackDecl(): param_deref_expr = %p \n",param_deref_expr);
+
+                         local_val = buildAssignInitializer(param_deref_expr);
+                       }
+                      else
+                       {
+                         printf ("No other languages are supported by outlining currently. \n");
+                         ROSE_ASSERT(false);
+                       }
+                  }
+             }
+        }
+  
+// printf ("In createUnpackDecl(): local_val = %p \n",local_val);
 
   SgType* local_type = NULL;
   // Rich's idea was to leverage C++'s reference type: two cases:
@@ -305,6 +338,9 @@ createUnpackDecl (SgInitializedName* param, int index,
   ROSE_ASSERT (local_type);
 
   SgVariableDeclaration* decl = buildVariableDeclaration(local_name,local_type,local_val,scope);
+
+// printf ("In createUnpackDecl(): getFirstInitializedName(decl)->get_initializer() = %p \n",SageInterface::getFirstInitializedName(decl)->get_initializer());
+
   return decl;
 }
 
@@ -385,8 +421,7 @@ createPackExpr (SgInitializedName* local_unpack_def)
         ROSE_ASSERT (param_deref_unpack);
       }
 
-      SgPointerDerefExp* param_deref_pack =
-        isSgPointerDerefExp (ASTtools::deepCopy (param_deref_unpack));
+      SgPointerDerefExp* param_deref_pack = isSgPointerDerefExp (ASTtools::deepCopy (param_deref_unpack));
       ROSE_ASSERT (param_deref_pack);
               
       // Create the RHS, which references the local variable.
@@ -458,6 +493,9 @@ recordSymRemap (const SgVariableSymbol* orig_sym,
 {
   if (orig_sym && name_new)
     { //TODO use the existing symbol associated with name_new!
+   // DQ (2/24/2009): Added assertion.
+      ROSE_ASSERT(name_new->get_name().is_null() == false);
+
       SgVariableSymbol* sym_new = new SgVariableSymbol (name_new);
       ROSE_ASSERT (sym_new);
       sym_remap.insert (VarSymRemap_t::value_type (orig_sym, sym_new));
@@ -672,11 +710,14 @@ remapVarSyms (const VarSymRemap_t& vsym_remap, const ASTtools::VarSymSet_t& pdSy
   }
 }
 
+
 // =====================================================================
+
+// DQ (2/25/2009): Modified function interface to pass "SgBasicBlock*" as not const parameter.
 //! Create a function named 'func_name_str', with a parameter list from 'syms'
 // pdSyms specifies symbols which must use pointer dereferencing if replaced during outlining, only used when -rose:outline:temp_variable is used
 SgFunctionDeclaration *
-Outliner::Transform::generateFunction (const SgBasicBlock* s,
+Outliner::Transform::generateFunction ( SgBasicBlock* s,
                                           const string& func_name_str,
                                           const ASTtools::VarSymSet_t& syms,
                                           const ASTtools::VarSymSet_t& pdSyms,
@@ -685,42 +726,59 @@ Outliner::Transform::generateFunction (const SgBasicBlock* s,
   ROSE_ASSERT (s&&scope);
 
   // Create function skeleton, 'func'.
-  SgName func_name (func_name_str);
-  SgFunctionParameterList *parameterList = buildFunctionParameterList();
+     SgName func_name (func_name_str);
+     SgFunctionParameterList *parameterList = buildFunctionParameterList();
 
-  SgFunctionDeclaration* func = createFuncSkeleton (func_name,
-      SgTypeVoid::createType (),
-      parameterList, scope);
-  ROSE_ASSERT (func);
+     SgFunctionDeclaration* func = createFuncSkeleton (func_name,SgTypeVoid::createType (),parameterList, scope);
+     ROSE_ASSERT (func);
+
+#if 0
+  // DQ (2/24/2009): This is already built by the SageBuilder  functions called in createFuncSkeleton().
   // Liao 10/30/2007 maintain the symbol table
      SgFunctionSymbol * func_symbol = new SgFunctionSymbol(func);
+     printf ("In Outliner::Transform::generateFunction(): func_symbol = %p \n",func_symbol);
      const_cast<SgBasicBlock *>(s)->insert_symbol(func->get_name(), func_symbol);
+#endif
 
   // Only apply to C++ , pure C has trouble in recognizing extern "C"
-  //  Another way is to attach the function with preprocessing info:
-  //  #if __cplusplus 
-  //  extern "C"
-  //  #endif
-  //  We don't choose it since the language linkage information is not explicit in AST
-  //  if (!SageInterface::is_Fortran_language())
-  if (SageInterface::is_Cxx_language()||
-      is_mixed_C_and_Cxx_language ()||
-      is_mixed_Fortran_and_Cxx_language ()||
-      is_mixed_Fortran_and_C_and_Cxx_language ()
-     )
-  {
-    // Make function 'extern "C"'
-    func->get_declarationModifier ().get_storageModifier ().setExtern ();
-    func->set_linkage ("C");
-  }
+  // Another way is to attach the function with preprocessing info:
+  // #if __cplusplus 
+  // extern "C"
+  // #endif
+  // We don't choose it since the language linkage information is not explicit in AST
+  // if (!SageInterface::is_Fortran_language())
+     if ( SageInterface::is_Cxx_language() || is_mixed_C_and_Cxx_language() || is_mixed_Fortran_and_Cxx_language() || is_mixed_Fortran_and_C_and_Cxx_language() )
+        {
+       // Make function 'extern "C"'
+          func->get_declarationModifier().get_storageModifier().setExtern();
+          func->set_linkage ("C");
+        }
 
   // Generate the function body by deep-copying 's'.
-  SgBasicBlock* func_body = func->get_definition ()->get_body ();
-  ROSE_ASSERT (func_body);
+     SgBasicBlock* func_body = func->get_definition()->get_body();
+     ROSE_ASSERT (func_body != NULL);
 
-  ASTtools::appendStmtsCopy (s, func_body);
-  if (Outliner::useNewFile)
-      ASTtools::setSourcePositionAtRootAndAllChildrenAsTransformation(func_body);
+  // This does a copy of the statements in "s" to the function body of the outlined function.
+     ROSE_ASSERT(func_body->get_statements().empty() == true);
+#if 0
+  // This calls AST copy on each statement in the SgBasicBlock, but not on the block, so the 
+  // symbol table is not setup by AST copy mechanism and not setup properly by the outliner.
+     ASTtools::appendStmtsCopy (s, func_body);
+#else
+     SageInterface::moveStatementsBetweenBlocks (s, func_body);
+#endif
+
+     if (Outliner::useNewFile)
+          ASTtools::setSourcePositionAtRootAndAllChildrenAsTransformation(func_body);
+
+#if 0
+  // We can't call this here because "s" is passed in as "cont".
+  // DQ (2/24/2009): I think that at this point we should delete the subtree represented by "s"
+  // But it might have made more sense to not do a deep copy on "s" in the first place.
+  // Why is there a deep copy on "s"?
+     SageInterface::deleteAST(s);
+#endif
+
 #if 0
   // Liao, 12/27/2007, for DO .. CONTINUE loop, bug 171
   // copy a labeled CONTINUE at the end when it is missing
@@ -751,18 +809,22 @@ Outliner::Transform::generateFunction (const SgBasicBlock* s,
     } // end doStmt
   }
 #endif
-  //----------------------------------
 
   // Store parameter list information.
-  VarSymRemap_t vsym_remap;
+     VarSymRemap_t vsym_remap;
 
   // Create parameters for outlined vars, and fix-up symbol refs in
   // the body.
   appendParams (syms, pdSyms, func, vsym_remap);
   remapVarSyms (vsym_remap, pdSyms, func_body);
 
-  ROSE_ASSERT (func);
-  return func;
-}
+     ROSE_ASSERT (func != NULL);
+
+  // Retest this...
+     ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
+  // printf ("After resetting the parent: func->get_definition() = %p func->get_definition()->get_body()->get_parent() = %p \n",func->get_definition(),func->get_definition()->get_body()->get_parent());
+
+     return func;
+   }
 
 // eof

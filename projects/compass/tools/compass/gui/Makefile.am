@@ -41,9 +41,12 @@ test: compass_parameters compassMainGui $(compass_test_dir)/exampleTest_1.C
 test2: compass_parameters compassMainGui $(compass_test_dir)/exampleTest_1.C $(compass_test_dir)/exampleTest_2.C
 	env COMPASS_PARAMETERS=./compass_parameters ./compassMainGui $(compass_test_dir)/exampleTest_1.C $(compass_checker_dir)/allowedFunctions/allowedFunctionsTest1.C
 
-demo: compass_parameters compassMainGui $(compass_test_dir)/exampleTest_1.C 
-	$(MAKE) -C ../buildInterpreter test  
-	cp $(top_srcdir)/tests/CompileTests/C_tests/*.c $(top_srcdir)/tests/CompileTests/C_tests/*.h .
+# This demo copys a collection of C source files and builds an SQLite database of there command lines and uses that with Compass.
+demo: compass_parameters compassMainGui $(compass_test_dir)/exampleTest_1.C
+	$(MAKE) -C ../buildInterpreter test
+#	DQ (2/22/2009): In the SciDAC distribution there are no header files in this directiry, but there are in my version and also in the internal SVN).
+#	cp $(top_srcdir)/tests/CompileTests/C_tests/*.c $(top_srcdir)/tests/CompileTests/C_tests/*.h .
+	cp $(top_srcdir)/tests/CompileTests/C_tests/*.[ch] .
 	env COMPASS_PARAMETERS=./compass_parameters ./compassMainGui --outputDb $(top_builddir)/tests/CompileTests/C_tests/test.db
 	rm -f *.c *.h
 

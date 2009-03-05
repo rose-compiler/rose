@@ -44,7 +44,7 @@ set output [open $outputFile w]
 puts $output "digraph copyGraph {"
 writeClusterSpacing $output
 puts $output "subgraph clusterOld {"
-puts $output "label=\"Old nodes\"; fillcolor=pink; style=filled; fontsize=36;"
+puts $output "label=\"Old nodes\"; fillcolor=lightgreen; style=filled; fontsize=36;"
 foreach line $dotFile {
   if {[isNodeLine $line]} {
     regexp {^"([^_"]*)".*} $line _ nodename

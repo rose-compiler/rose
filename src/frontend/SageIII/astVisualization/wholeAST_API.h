@@ -11,3 +11,6 @@ void generateGraphOfAST( SgProject* project, std::string filename, std::set<SgNo
 
 void generateGraphOfAST( SgProject* project, std::string filename );
 
+// Include debugging visualization support used for AST Copy and AST Outlining (when done to a separate file).
+#include "copyGraph.h"
+

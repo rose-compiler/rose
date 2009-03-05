@@ -443,15 +443,18 @@ replacementMapTraversal (
    }
 
 void
-ReplacementMapTraversal::displayReplacementMap ( ReplacementMapTraversal::ReplacementMapType & m )
+ReplacementMapTraversal::displayReplacementMap ( const ReplacementMapTraversal::ReplacementMapType & m )
    {
   // typedef multimap<SgNode*,SgNode*> ReplacementMapType;
 
      printf ("ReplacementMapTraversal::displayReplacementMap(): size() = %zu \n",m.size());
 
-     ReplacementMapTraversal::ReplacementMapType::iterator i = m.begin();
+     ReplacementMapTraversal::ReplacementMapType::const_iterator i = m.begin();
      while (i != m.end())
         {
+          ROSE_ASSERT(i->first != NULL);
+          ROSE_ASSERT(i->second != NULL);
+
           Sg_File_Info* first_fileInfo  = i->first->get_file_info();
           Sg_File_Info* second_fileInfo = i->second->get_file_info();
           printf ("ReplacementMapTraversal::displayReplacementMap(): i->first  = %p = %s from: %s \n",

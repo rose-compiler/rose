@@ -8,6 +8,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # Default header file search path
 INCLUDES = $(ROSE_INCLUDES)
 
+include $(srcdir)/Makefile-pass.inc
+
+
 # DQ (!/24/2008): We should not need this!
 #        -I$(top_srcdir) -I$(top_builddir)
 #       -I$(top_srcdir)/src/midend/astOutlining/src
@@ -50,7 +53,7 @@ outlineSelection_LDFLAGS = $(OUTLINER_LIBS)
 
 
 # Import a list of C++ test codes expected to pass.
-include $(TEST_DIR)/Makefile-pass.inc
+# include $(TEST_DIR)/Makefile-pass.inc
 if ROSE_USE_LONG_MAKE_CHECK_RULE
 TESTCODES_REQUIRED_TO_PASS = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS)
 else # !ROSE_USE_LONG_MAKE_CHECK_RULE
@@ -77,13 +80,16 @@ $(C_TESTCODES_REQUIRED_TO_PASS) \
 $(CXX_TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODE_CURRENTLY_FAILING)
 
+# DQ (2/6/2009): The last option should be possible to remove...-rose:skipfinalCompileStep
 # this flag is used for the files listed within this file: C_TESTCODES_REQUIRED_TO_PASS and CXX_TESTCODES_REQUIRED_TO_PASS
 # TODO remove -rose:skipfinalCompileStep when the command line issue is solved
-OUTLINE_FLAG= --edg:no_warnings -rose:verbose 0 -rose:outline:parameter_wrapper -rose:outline:new_file -rose:outline:temp_variable -rose:skipfinalCompileStep
- 
+# OUTLINE_FLAG= --edg:no_warnings -rose:verbose 0 -rose:outline:parameter_wrapper -rose:outline:temp_variable -rose:skipfinalCompileStep
+OUTLINE_FLAG= --edg:no_warnings -rose:verbose 0 -rose:outline:parameter_wrapper
 
 PASSING_C_TEST_Objects = $(C_TESTCODES_REQUIRED_TO_PASS:.c=.o)
 PASSING_CXX_TEST_Objects = $(CXX_TESTCODES_REQUIRED_TO_PASS:.cpp=.o)
+
+EXTERNAL_PASSING_CXX_TEST_Objects = $(TESTCODES_REQUIRED_TO_PASS:.C=.o)
 
 $(PASSING_C_TEST_Objects): %.o: $(srcdir)/%.c outline 
 	./outline$(EXEEXT) $(OUTLINE_FLAG) -c $<
@@ -91,6 +97,60 @@ $(PASSING_C_TEST_Objects): %.o: $(srcdir)/%.c outline
 $(PASSING_CXX_TEST_Objects): %.o: $(srcdir)/%.cpp outline
 	./outline$(EXEEXT) ${OUTLINE_FLAG} -c $<
 
+$(EXTERNAL_PASSING_CXX_TEST_Objects): %.o: $(top_srcdir)/tests/CompileTests/Cxx_tests/%.C outline
+	./outline$(EXEEXT) ${OUTLINE_FLAG} -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $<
+
+test1: outline$(EXEEXT)
+	./outline$(EXEEXT) ${OUTLINE_FLAG} -rose:outline:new_file -rose:outline:temp_variable -c $(srcdir)/moreTest1.c
+
+test1_singleFile: outline$(EXEEXT)
+	./outline$(EXEEXT) ${OUTLINE_FLAG} -c $(srcdir)/moreTest1.c
+
+test2: outline$(EXEEXT)
+	./outline$(EXEEXT) ${OUTLINE_FLAG} -rose:outline:new_file -rose:outline:temp_variable -c $(srcdir)/moreTest2.cpp
+
+test2_singleFile: outline$(EXEEXT)
+	./outline$(EXEEXT) ${OUTLINE_FLAG} -c $(srcdir)/moreTest2.cpp
+
+test2_preprocess: outline$(EXEEXT)
+	./outline$(EXEEXT) -rose:outline:parameter_wrapper -rose:outline:preproc-only -c $(srcdir)/moreTest2.cpp
+
+test3: outline$(EXEEXT)
+	./outline$(EXEEXT) ${OUTLINE_FLAG} -rose:outline:new_file -rose:outline:temp_variable -c $(srcdir)/moreTest3.cpp
+
+test3_singleFile: outline$(EXEEXT)
+	./outline$(EXEEXT) ${OUTLINE_FLAG} -c $(srcdir)/moreTest3.cpp
+
+test4: outline$(EXEEXT)
+	./outline$(EXEEXT) ${OUTLINE_FLAG} -rose:outline:new_file -rose:outline:temp_variable -c $(srcdir)/moreTest4.cpp
+
+test4_singleFile: outline$(EXEEXT)
+	./outline$(EXEEXT) ${OUTLINE_FLAG} -c $(srcdir)/moreTest4.cpp
+
+test5: outline$(EXEEXT)
+	./outline$(EXEEXT) ${OUTLINE_FLAG} -rose:outline:new_file -rose:outline:temp_variable -c $(srcdir)/moreTest5.cpp
+
+test5_singleFile: outline$(EXEEXT)
+	./outline$(EXEEXT) ${OUTLINE_FLAG} -c $(srcdir)/moreTest5.cpp
+
+test6: outline$(EXEEXT)
+	./outline$(EXEEXT) ${OUTLINE_FLAG} -rose:outline:new_file -rose:outline:temp_variable -c $(srcdir)/moreTest6.cpp
+
+test6_singleFile: outline$(EXEEXT)
+	./outline$(EXEEXT) ${OUTLINE_FLAG} -c $(srcdir)/moreTest6.cpp
+
+test7: outline$(EXEEXT)
+	./outline$(EXEEXT) ${OUTLINE_FLAG} -rose:outline:new_file -rose:outline:temp_variable -c $(srcdir)/moreTest7.cpp
+
+test7_singleFile: outline$(EXEEXT)
+	./outline$(EXEEXT) ${OUTLINE_FLAG} -c $(srcdir)/moreTest7.cpp
+
+test_class_ODR_violation: $(srcdir)/test_class_ODR_violation_main.C $(srcdir)/test_class_ODR_violation_outlined.C
+	g++ -c $(srcdir)/test_class_ODR_violation_main.C
+	g++ -c $(srcdir)/test_class_ODR_violation_outlined.C
+#	Order does not appear to matter in the linking.
+	g++ test_class_ODR_violation_main.o test_class_ODR_violation_outlined.o -o test_class_ODR_violation
+#	g++ test_class_ODR_violation_outlined.o test_class_ODR_violation_main.o -o test_class_ODR_violation
 
 EXTRA_DIST = build_tests-1pass.sh RandomStmtSelector.hh $(ALL_EXTRA_TESTCODE)
 
@@ -101,25 +161,22 @@ check-local: outline$(EXEEXT) injectOutlinePragmas outlineRandom outlineSelectio
 	@echo "Test for ROSE outliner."
 	$(MAKE) $(PASSING_C_TEST_Objects)
 	$(MAKE) $(PASSING_CXX_TEST_Objects)
-	$(MAKE) one-pass
-	test -f Makefile-1pass
-	$(MAKE) -f Makefile-1pass \
-	    TEST_DIR="$(TEST_DIR)" \
-	    OUTLINER_BIN="$(OUTLINER_BIN)" \
-	    TEST_CXXFLAGS="$(TEST_CXXFLAGS)"
+	$(MAKE) $(EXTERNAL_PASSING_CXX_TEST_Objects)
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/tests/roseTests/astOutliningTests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
 
 clean-local:
-	rm -f *.o test*.C rose_*.c rose_*.cpp rose_*.C *.C.pdf *.c.pdf OUT_*
+	rm -f *.o test*.C rose_*.c rose_*.cpp rose_*.C *.pdf OUT_* *.dot *.*_copy_graph_old_nodes test_class_ODR_violation
 
-one-pass: Makefile-1pass $(OUTLINER_BIN)
-
-LIST.dat: $(TEST_DIR)/Makefile-pass.inc
-	echo $(TESTCODES_REQUIRED_TO_PASS) > LIST.dat
-
-Makefile-1pass: ./build_tests-1pass.sh LIST.dat
-	$(srcdir)/build_tests-1pass.sh $(top_srcdir) LIST.dat
+# DQ (3/4/2009): Removed use of script to generate list of files to test.
+# test -f Makefile-1pass
+# $(MAKE) -f Makefile-1pass TEST_DIR="$(TEST_DIR)" OUTLINER_BIN="$(OUTLINER_BIN)" TEST_CXXFLAGS="$(TEST_CXXFLAGS)"
+# $(MAKE) one-pass
+# one-pass: Makefile-1pass $(OUTLINER_BIN)
+#LIST.dat: $(TEST_DIR)/Makefile-pass.inc
+#	echo $(TESTCODES_REQUIRED_TO_PASS) > LIST.dat
+#Makefile-1pass: ./build_tests-1pass.sh LIST.dat
+#	$(srcdir)/build_tests-1pass.sh $(top_srcdir) LIST.dat
 
 # eof

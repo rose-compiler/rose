@@ -108,8 +108,11 @@ processFortranComment(SgLocatedNode* node)
        j!=removeList.end();j++)
   {
     comments->erase(find(comments->begin(), comments->end(),*j));
-    // free memory also
-    free(*j);
+
+ // DQ (2/27/2009): Don't mix free with C++ code (malloc/free for C and new/delete for C++)
+ // free memory also
+ // free(*j);
+    delete(*j);
   }
 
   return target; // const_cast<SgStatement *> (target);
@@ -123,22 +126,35 @@ processFortranComment(SgLocatedNode* node)
 
 Outliner::Result
 Outliner::outline (SgPragmaDeclaration* decl)
-{
-  SgStatement* s = processPragma (decl);
-  if (!s)
-    return Result ();
+   {
+     SgStatement* s = processPragma (decl);
+     if (!s)
+          return Result ();
 
   // Generate outlined function, removing 's' from the tree.
-  string name = generateFuncName (s);
-  Result result = outline (s, name);
-  ROSE_ASSERT (result.isValid ());
+     string name = generateFuncName (s);
+     Result result = outline (s, name);
+     ROSE_ASSERT (result.isValid());
+
+  // DQ (2/26/2009): If this was sucessful, then delete the input block? (this may be a problem for moreTest1.c).
+  // SageInterface::deleteAST(s);
 
   // Remove pragma
-  ASTtools::moveBeforePreprocInfo (decl, result.call_);
-  ASTtools::moveAfterPreprocInfo (decl, result.call_);
-  LowLevelRewrite::remove (decl);
-  return result;
-}
+     ASTtools::moveBeforePreprocInfo (decl, result.call_);
+     ASTtools::moveAfterPreprocInfo (decl, result.call_);
+
+#if 1
+  // This will search the parent for the location of decl, but this is not found
+     LowLevelRewrite::remove (decl);
+#else
+  // DQ (2/24/2009): Added more direct concept of remove.
+  // We just want a more direct and simpler concept of remove (remove the AST, 
+  // because potential dangling pointers have been taken care of).
+     SageInterface::deleteAST(decl);
+#endif
+
+     return result;
+   }
 
 SgBasicBlock *
 Outliner::preprocess (SgPragmaDeclaration* decl)
@@ -253,10 +269,20 @@ Outliner::outlineAll (SgProject* project)
     PragmaList_t pragmas;
     if (collectPragmas (project, pragmas))
     {
-      for (PragmaList_t::iterator i = pragmas.begin ();
-          i != pragmas.end (); ++i)
-        if (outline (*i).isValid ())
-          ++num_outlined;
+       for (PragmaList_t::iterator i = pragmas.begin (); i != pragmas.end (); ++i)
+         {
+            if (outline (*i).isValid ())
+               {
+                 ++num_outlined;
+               }
+         }
+
+    // DQ (2/24/2009): Now remove the pragma from the original source code.
+    // Any dangling pointers have already been taken care of.
+       for (PragmaList_t::iterator i = pragmas.begin (); i != pragmas.end (); ++i)
+         {
+           SageInterface::deleteAST(*i);
+         }
     }
   }
   return num_outlined;

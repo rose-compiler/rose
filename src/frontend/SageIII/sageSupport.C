@@ -2067,6 +2067,7 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
      printf ("In determineFileType(): listToString(fileList) = %s \n",StringUtility::listToString(fileList).c_str());
 #endif
 
+  // DQ (2/6/2009): This fails for the build function SageBuilder::buildFile(), so OK to comment it out.
   // DQ (12/23/2008): I think that we may be able to assert this is true, if so then we can simplify the code below.
      ROSE_ASSERT(fileList.empty() == false);
 
@@ -2416,6 +2417,9 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
         }
        else
         {
+       // DQ (2/6/2009): This case is used by the build function SageBuilder::buildFile().
+
+#if 1
        // DQ (12/22/2008): Make any error message from this branch more clear for debugging!
        // AS Is this option possible?
           printf ("Is this branch reachable? \n");
@@ -2424,22 +2428,28 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
 
        // ROSE_ASSERT (p_numberOfSourceFileNames == 0);
           ROSE_ASSERT (file->get_sourceFileNameWithPath().empty() == true);
-       // If no source code file name was found then likely this is a link command
+
+       // If no source code file name was found then likely this is:
+       //   1) a link command, or
+       //   2) called as part of the SageBuilder::buildFile()
        // using the C++ compiler.  In this case skip the EDG processing.
           file->set_disable_edg_backend(true);
+#endif
        // printf ("No source file found on command line, assuming to be linker command line \n");
         }
 
+  // DQ (2/6/2009): Can use this assertion with the build function SageBuilder::buildFile().
   // DQ (2/3/2009): I think this is a new assertion!
-     ROSE_ASSERT(file != NULL);
+  // ROSE_ASSERT(file != NULL);
   // file->display("SgFile* determineFileType(): before calling file->callFrontEnd()");
 
   // The frontend is called explicitly outside the constructor since that allows for a cleaner
   // control flow. The callFrontEnd() relies on all the "set_" flags to be already called therefore
   // it was placed here.
-     if ( isSgUnknownFile(file) == NULL && file != NULL  )
+  // if ( isSgUnknownFile(file) == NULL && file != NULL  )
+     if ( file != NULL && isSgUnknownFile(file) == NULL )
         {
-          nextErrorCode = file->callFrontEnd() ;
+          nextErrorCode = file->callFrontEnd();
           ROSE_ASSERT ( nextErrorCode <= 3);
         }
 
@@ -5444,43 +5454,43 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
 
 vector<string>
 SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameIndex, const string& compilerName )
-{
+   {
   // This function assembles the commandline that will be passed to the backend (vendor) C++/C compiler 
   // (using the new generated source code from the ROSE unparser).
 
   // DQ (4/21/2006): I think we can now assert this!
-  ROSE_ASSERT(fileNameIndex == 0);
+     ROSE_ASSERT(fileNameIndex == 0);
 
   // display("Data in SgFile in buildCompilerCommandLineOptions()");
 
-  if ( SgProject::get_verbose() >= 1 )
-  {
-    printf ("In buildCompilerCommandLineOptions(): compilerName = %s \n",compilerName.c_str());
-  }
+     if ( SgProject::get_verbose() >= 1 )
+        {
+          printf ("In buildCompilerCommandLineOptions(): compilerName = %s \n",compilerName.c_str());
+        }
 
   // To use rose in place of a C or C++ compiler specify the compiler name using
   //      rose -compiler <originalCompilerName> ...
   // the default value of "originalCompilerName" is "CC"
-  vector<string> compilerNameString;
-  compilerNameString.push_back(compilerName);
+     vector<string> compilerNameString;
+     compilerNameString.push_back(compilerName);
 
   // DQ (1/17/2006): test this
   // ROSE_ASSERT(get_fileInfo() != NULL);
 
 #if 0
   // display("SgFile::buildCompilerCommandLineOptions()");
-  printf ("C   compiler              = %s \n",BACKEND_C_COMPILER_NAME_WITH_PATH);
-  printf ("C++ compiler              = %s \n",BACKEND_CXX_COMPILER_NAME_WITH_PATH);
-  printf ("Fortran compiler          = %s \n",BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH);
-  printf ("get_C_only()              = %s \n",(get_C_only() == true) ? "true" : "false");
-  printf ("get_C99_only()            = %s \n",(get_C99_only() == true) ? "true" : "false");
-  printf ("get_Cxx_only()            = %s \n",(get_Cxx_only() == true) ? "true" : "false");
-  printf ("get_Fortran_only()        = %s \n",(get_Fortran_only() == true) ? "true" : "false");
-  printf ("get_F77_only()            = %s \n",(get_F77_only() == true) ? "true" : "false");
-  printf ("get_F90_only()            = %s \n",(get_F90_only() == true) ? "true" : "false");
-  printf ("get_F95_only()            = %s \n",(get_F95_only() == true) ? "true" : "false");
-  printf ("get_F2003_only()          = %s \n",(get_F2003_only() == true) ? "true" : "false");
-  printf ("get_CoArrayFortran_only() = %s \n",(get_CoArrayFortran_only() == true) ? "true" : "false");
+     printf ("C   compiler              = %s \n",BACKEND_C_COMPILER_NAME_WITH_PATH);
+     printf ("C++ compiler              = %s \n",BACKEND_CXX_COMPILER_NAME_WITH_PATH);
+     printf ("Fortran compiler          = %s \n",BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH);
+     printf ("get_C_only()              = %s \n",(get_C_only() == true) ? "true" : "false");
+     printf ("get_C99_only()            = %s \n",(get_C99_only() == true) ? "true" : "false");
+     printf ("get_Cxx_only()            = %s \n",(get_Cxx_only() == true) ? "true" : "false");
+     printf ("get_Fortran_only()        = %s \n",(get_Fortran_only() == true) ? "true" : "false");
+     printf ("get_F77_only()            = %s \n",(get_F77_only() == true) ? "true" : "false");
+     printf ("get_F90_only()            = %s \n",(get_F90_only() == true) ? "true" : "false");
+     printf ("get_F95_only()            = %s \n",(get_F95_only() == true) ? "true" : "false");
+     printf ("get_F2003_only()          = %s \n",(get_F2003_only() == true) ? "true" : "false");
+     printf ("get_CoArrayFortran_only() = %s \n",(get_CoArrayFortran_only() == true) ? "true" : "false");
 #endif
 
   // DQ (9/10/2006): We now explicitly store the C and C++ compiler names with 
@@ -5489,251 +5499,261 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // We need a better way of identifying the C compiler which might not be known
   // ideally it should be specified at configure time so that it can be known in 
   // case the -rose:C_only option is used.
-  if (get_C_only() == true || get_C99_only() == true)
-  {
-    // compilerNameString = "gcc ";
-    compilerNameString[0] = BACKEND_C_COMPILER_NAME_WITH_PATH;
-
-    // DQ (6/4/2008): Added support to trigger use of C99 for older versions of GNU that don't use use C99 as the default.
-    if (get_C99_only() == true)
-    {
-      compilerNameString.push_back("-std=gnu99");
-    }
-  }
-  else
-  {
-    compilerNameString[0] = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
-    if (get_Fortran_only() == true)
-    {
-      // compilerNameString = "f77 ";
-      compilerNameString[0] = ROSE_GFORTRAN_PATH;
-
-      if (get_backendCompileFormat() == e_fixed_form_output_format)
-      {
-        // If backend compilation is specificed to be fixed form, then allow any line length (to simplify code generation for now)
-        // compilerNameString += "-ffixed-form ";
-        // compilerNameString += "-ffixed-line-length- "; // -ffixed-line-length-<n>
-        compilerNameString.push_back("-ffixed-line-length-none");
-      }
-      else
-      {
-        if (get_backendCompileFormat() == e_free_form_output_format)
+     if (get_C_only() == true || get_C99_only() == true)
         {
-          // If backend compilation is specificed to be free form, then allow any line length (to simplify code generation for now)
-          // compilerNameString += "-ffree-form ";
-          // compilerNameString += "-ffree-line-length-<n> "; // -ffree-line-length-<n>
-          compilerNameString.push_back("-ffree-line-length-none");
+       // compilerNameString = "gcc ";
+          compilerNameString[0] = BACKEND_C_COMPILER_NAME_WITH_PATH;
+
+       // DQ (6/4/2008): Added support to trigger use of C99 for older versions of GNU that don't use use C99 as the default.
+          if (get_C99_only() == true)
+             {
+               compilerNameString.push_back("-std=gnu99");
+             }
         }
-        else
+       else
         {
-          // Do nothing (don't specify any option to control compilation of a specific format, assume defaults)
+          compilerNameString[0] = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
+          if (get_Fortran_only() == true)
+             {
+            // compilerNameString = "f77 ";
+               compilerNameString[0] = ROSE_GFORTRAN_PATH;
 
-          // Make this the default
-          if ( SgProject::get_verbose() >= 1 )
-            printf ("Compiling generated code using gfortran -ffixed-line-length-none to avoid 72 column limit in code generation \n");
+               if (get_backendCompileFormat() == e_fixed_form_output_format)
+                  {
+                 // If backend compilation is specificed to be fixed form, then allow any line length (to simplify code generation for now)
+                 // compilerNameString += "-ffixed-form ";
+                 // compilerNameString += "-ffixed-line-length- "; // -ffixed-line-length-<n>
+                    compilerNameString.push_back("-ffixed-line-length-none");
+                  }
+                 else
+                  {
+                    if (get_backendCompileFormat() == e_free_form_output_format)
+                       {
+                      // If backend compilation is specificed to be free form, then allow any line length (to simplify code generation for now)
+                      // compilerNameString += "-ffree-form ";
+                      // compilerNameString += "-ffree-line-length-<n> "; // -ffree-line-length-<n>
+                         compilerNameString.push_back("-ffree-line-length-none");
+                       }
+                      else
+                       {
+                      // Do nothing (don't specify any option to control compilation of a specific format, assume defaults)
 
-          compilerNameString.push_back("-ffixed-line-length-none");
+                      // Make this the default
+                         if ( SgProject::get_verbose() >= 1 )
+                              printf ("Compiling generated code using gfortran -ffixed-line-length-none to avoid 72 column limit in code generation \n");
+
+                         compilerNameString.push_back("-ffixed-line-length-none");
+                       }
+                  }
+             }
         }
-      }
-    }
-  }
 
   // printf ("compilerName       = %s \n",compilerName);
   // printf ("compilerNameString = %s \n",compilerNameString.c_str());
 
   // tps (28 Aug 2008) : changed this so it does not pick up mpicc for icc
-  string name = StringUtility::stripPathFromFileName(compilerNameString[0]);
-  //     if (compilerNameString[0].find("icc") != string::npos)
-  if (name == "icc")
-  {
-    // This is the Intel C compiler: icc, we need to add the -restrict option
-    compilerNameString.push_back("-restrict");
-  }
+     string name = StringUtility::stripPathFromFileName(compilerNameString[0]);
+     //     if (compilerNameString[0].find("icc") != string::npos)
+     if (name == "icc")
+        {
+       // This is the Intel C compiler: icc, we need to add the -restrict option
+          compilerNameString.push_back("-restrict");
+        }
 
-  //     if (compilerNameString[0].find("icpc") != string::npos)
-  if (name == "icpc")
-  {
-    // This is the Intel C++ compiler: icc, we need to add the -restrict option
-    compilerNameString.push_back("-restrict");
-  }
+     //     if (compilerNameString[0].find("icpc") != string::npos)
+     if (name == "icpc")
+        {
+       // This is the Intel C++ compiler: icc, we need to add the -restrict option
+          compilerNameString.push_back("-restrict");
+        }
 
   // DQ (9/24/2006): Not clear if we want this, if we just skip stripping it out then it will be passed to the backend directly!
   // But we have to add it in the case of "-rose:strict", so we have to add it uniformally and strip it from the input.
-  if (get_strict_language_handling() == true)
-  {
-    // Check if it is appears as "-ansi" on the original commandline
-    if ( CommandlineProcessing::isOption(argv,"-","ansi",false) == true )
-    {
-      printf ("Option -ansi detected on the original commandline \n");
-    }
-    else
-    {
-      // This is might be specific to GNU
-      compilerNameString.push_back("-ansi");
-    }
-  }
+     if (get_strict_language_handling() == true)
+        {
+       // Check if it is appears as "-ansi" on the original commandline
+          if ( CommandlineProcessing::isOption(argv,"-","ansi",false) == true )
+             {
+               printf ("Option -ansi detected on the original commandline \n");
+             }
+            else
+             {
+            // This is might be specific to GNU
+               compilerNameString.push_back("-ansi");
+             }
+        }
 
-  // printf ("Selected compiler = %s \n",compilerNameString.c_str());
+#if 0
+     printf ("Selected compilerNameString.size() = %zu compilerNameString = %s \n",compilerNameString.size(),StringUtility::listToString(compilerNameString).c_str());
+#endif
 
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
   // DQ (1/12/2009): Allow in internal indicator that EDG version 3.10 or 4.0 (or greater) 
   // is in use to be properly passed on the compilation of the generated code.
-  compilerNameString.push_back("-DROSE_USE_NEW_EDG_INTERFACE");
+     compilerNameString.push_back("-DROSE_USE_NEW_EDG_INTERFACE");
 #endif
 
   // Liao, 2/13/2009. I think we should pass this macro to the backend compiler also
   // User programs may have rose-specific tweaks to enable ROSE translators to compile them
   // Part of solution to bug 316 :
   // https://outreach.scidac.gov/tracker/index.php?func=detail&aid=316&group_id=24&atid=185
-  compilerNameString.push_back("-DUSE_ROSE");
+     compilerNameString.push_back("-DUSE_ROSE");
 
   // Since we need to do this often, support is provided in the utility_functions.C
   // and we can simplify this code.
-  std::string currentDirectory = getWorkingDirectory();
+     std::string currentDirectory = getWorkingDirectory();
 
   // printf ("In buildCompilerCommandLineOptions(): currentDirectory = %s \n",currentDirectory);
 
   // specify compilation only option (new style command line processing)
-  if ( CommandlineProcessing::isOption(argv,"-","c",false) == true )
-  {
-    // printf ("Option -c found (compile only)! \n");
-    set_compileOnly(true);
-  }
-  else
-  {
-    // printf ("Option -c not found (compile AND link) ... \n");
-    // compilerNameString += " -c ";
-  }
+     if ( CommandlineProcessing::isOption(argv,"-","c",false) == true )
+        {
+       // printf ("Option -c found (compile only)! \n");
+          set_compileOnly(true);
+        }
+       else
+        {
+       // printf ("Option -c not found (compile AND link) ... \n");
+       // compilerNameString += " -c ";
+        }
 
   // DQ (3/31/2004): New cleaned up source file handling
-  Rose_STL_Container<string> argcArgvList = argv;
+     Rose_STL_Container<string> argcArgvList = argv;
 
   // DQ (9/25/2007): Moved to std::vector from std::list uniformally within ROSE.
   // Remove the first argument (argv[0])
   // argcArgvList.pop_front();
-  argcArgvList.erase(argcArgvList.begin());
+     argcArgvList.erase(argcArgvList.begin());
 
-  SgProject* project = isSgProject(this->get_parent());
-  ROSE_ASSERT (project != NULL);
-  Rose_STL_Container<string> sourceFilenames = project->get_sourceFileNameList();
+     SgProject* project = isSgProject(this->get_parent());
+     ROSE_ASSERT (project != NULL);
+     Rose_STL_Container<string> sourceFilenames = project->get_sourceFileNameList();
 
-  // printf ("sourceFilenames.size() = %zu sourceFilenames = %s \n",sourceFilenames.size(),StringUtility::listToString(sourceFilenames).c_str());
+#if 0
+     printf ("sourceFilenames.size() = %zu sourceFilenames = %s \n",sourceFilenames.size(),StringUtility::listToString(sourceFilenames).c_str());
+#endif
 
   // DQ (4/20/2006): Modified to only do this when generating code and compiling it
   // Remove the source names from the argcArgvList (translated versions of these will be inserted later)
   // if (get_skip_unparse() == true && get_skipfinalCompileStep() == false)
-  if (get_skip_unparse() == false)
-  {
-    for (Rose_STL_Container<string>::iterator i = sourceFilenames.begin(); i != sourceFilenames.end(); i++)
-    {
-      // printf ("Removing sourceFilenames list element i = %s \n",(*i).c_str());
+     if (get_skip_unparse() == false)
+        {
+          for (Rose_STL_Container<string>::iterator i = sourceFilenames.begin(); i != sourceFilenames.end(); i++)
+             {
+#if 0
+               printf ("Removing sourceFilenames list element i = %s \n",(*i).c_str());
+#endif
+
 #if USE_ABSOLUTE_PATHS_IN_SOURCE_FILE_LIST
 #error "USE_ABSOLUTE_PATHS_IN_SOURCE_FILE_LIST is not supported yet"
 
-      // DQ (9/1/2006): Check for use of absolute path and convert filename to absolute path if required
-      bool usesAbsolutePath = ((*i)[0] == '/');
-      if (usesAbsolutePath == false)
-      {
-        string targetSourceFileToRemove = StringUtility::getAbsolutePathFromRelativePath(*i);
-        // printf ("Converting source file to absolute path to search for it and remove it! targetSourceFileToRemove = %s \n",targetSourceFileToRemove.c_str());
-        argcArgvList.remove(targetSourceFileToRemove);
-      }
-      else
-      {
-        // printf ("This source file used the absolute path so no conversion to absolute path is required! \n");
-        argcArgvList.remove(*i);
-      }
+            // DQ (9/1/2006): Check for use of absolute path and convert filename to absolute path if required
+               bool usesAbsolutePath = ((*i)[0] == '/');
+               if (usesAbsolutePath == false)
+                  {
+                    string targetSourceFileToRemove = StringUtility::getAbsolutePathFromRelativePath(*i);
+                 // printf ("Converting source file to absolute path to search for it and remove it! targetSourceFileToRemove = %s \n",targetSourceFileToRemove.c_str());
+                    argcArgvList.remove(targetSourceFileToRemove);
+                  }
+                 else
+                  {
+                 // printf ("This source file used the absolute path so no conversion to absolute path is required! \n");
+                    argcArgvList.remove(*i);
+                  }
 #else
-      // DQ (9/25/2007): Moved to std::vector from std::list uniformally within ROSE.
-      // printf ("Skipping test for absolute path removing the source filename as it appears in the source file name list file = % \n",i->c_str());
-      // argcArgvList.remove(*i);
-      // The if here is to skip binaries that don't appear on the command line for those cases when a single project has both binaries and source code
-      if (find(argcArgvList.begin(),argcArgvList.end(),*i) != argcArgvList.end()) {
-        argcArgvList.erase(find(argcArgvList.begin(),argcArgvList.end(),*i));
-      }
+            // DQ (9/25/2007): Moved to std::vector from std::list uniformally within ROSE.
+            // printf ("Skipping test for absolute path removing the source filename as it appears in the source file name list file = % \n",i->c_str());
+            // argcArgvList.remove(*i);
+            // The if here is to skip binaries that don't appear on the command line for those cases when a single project has both binaries and source code
+               if (find(argcArgvList.begin(),argcArgvList.end(),*i) != argcArgvList.end())
+                  {
+                    argcArgvList.erase(find(argcArgvList.begin(),argcArgvList.end(),*i));
+                  }
 #endif
-    }
-  }
+             }
+        }
 
-  // printf ("After removing source file name: argcArgvList.size() = %zu argcArgvList = %s \n",argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
+#if 0
+     printf ("After removing source file name: argcArgvList.size() = %zu argcArgvList = %s \n",argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
   // ROSE_ASSERT(false);
+#endif
 
   // AS(080704) Fix so that if user specifies name of -o file rose do not specify another in addition 
-  bool  objectNameSpecified = false;
-  for (Rose_STL_Container<string>::iterator i = argcArgvList.begin(); i != argcArgvList.end(); i++)
-  {
-    // printf ("In SgFile::buildCompilerCommandLineOptions(): Loop over commandline arguments i = %s \n",i->c_str());
-    // DQ (8/17/2006): This fails for directories such as "ROSE/projects/OpenMP_Translator/tests/npb2.3-omp-c"
-    // which can be repeated in the specification of include directives on the commandline.
-    // We need to check for the leading characters and nothing else.
-    // if (i->find("-o") != std::string::npos)
-    // if (i->find("-o ") != std::string::npos)
-    // printf ("i->substr(0,2) = %s \n",i->substr(0,2).c_str());
-    if (i->substr(0,2) == "-o")
-    {
-      // DQ (6/12/2005): Added error checking!
-      if (objectNameSpecified == true)
-      {
-        // Error: "-o" has been specified twice
-        printf ("Error: \"-o \" has been specified twice \n");
-      }
-      ROSE_ASSERT(objectNameSpecified == false);
-      objectNameSpecified = true;
-    }
-  }
+     bool  objectNameSpecified = false;
+     for (Rose_STL_Container<string>::iterator i = argcArgvList.begin(); i != argcArgvList.end(); i++)
+        {
+       // printf ("In SgFile::buildCompilerCommandLineOptions(): Loop over commandline arguments i = %s \n",i->c_str());
+       // DQ (8/17/2006): This fails for directories such as "ROSE/projects/OpenMP_Translator/tests/npb2.3-omp-c"
+       // which can be repeated in the specification of include directives on the commandline.
+       // We need to check for the leading characters and nothing else.
+       // if (i->find("-o") != std::string::npos)
+       // if (i->find("-o ") != std::string::npos)
+       // printf ("i->substr(0,2) = %s \n",i->substr(0,2).c_str());
+          if (i->substr(0,2) == "-o")
+             {
+            // DQ (6/12/2005): Added error checking!
+               if (objectNameSpecified == true)
+                  {
+                 // Error: "-o" has been specified twice
+                    printf ("Error: \"-o \" has been specified twice \n");
+                  }
+               ROSE_ASSERT(objectNameSpecified == false);
+               objectNameSpecified = true;
+             }
+        }
 
   // DQ (4/14/2005): Fixup quoted strings in args fix "-DTEST_STRING_MACRO="Thu Apr 14 08:18:33 PDT 2005" 
   // to be -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\"  This is a problem in the compilation of
   // a Kull file (version.cc), when the backend is specified as /usr/apps/kull/tools/mpig++-3.4.1.  The
   // problem is that /usr/apps/kull/tools/mpig++-3.4.1 is a wrapper for a shell script /usr/local/bin/mpiCC
   // which does not tend to observe quotes well.  The solution is to add additional escaped quotes.
-  for (Rose_STL_Container<string>::iterator i = argcArgvList.begin(); i != argcArgvList.end(); i++)
-  {
+     for (Rose_STL_Container<string>::iterator i = argcArgvList.begin(); i != argcArgvList.end(); i++)
+        {
 #if 0
-    printf ("sizeof(std::string::size_type) = %d \n",sizeof(std::string::size_type));
-    printf ("sizeof(std::string::iterator)  = %d \n",sizeof(std::string::iterator));
-    printf ("sizeof(unsigned int)           = %d \n",sizeof(unsigned int));
-    printf ("sizeof(unsigned long)          = %d \n",sizeof(unsigned long));
+          printf ("sizeof(std::string::size_type) = %d \n",sizeof(std::string::size_type));
+          printf ("sizeof(std::string::iterator)  = %d \n",sizeof(std::string::iterator));
+          printf ("sizeof(unsigned int)           = %d \n",sizeof(unsigned int));
+          printf ("sizeof(unsigned long)          = %d \n",sizeof(unsigned long));
 #endif
 
-    // DQ (1/26/2006): Fix for 64 bit support.
-    // unsigned int startingQuote = i->find("\"");
-    std::string::size_type startingQuote = i->find("\"");
-    if (startingQuote != std::string::npos)
-    {
-      // This string at least has a quote
-      // unsigned int endingQuote   = i->rfind("\"");
-      std::string::size_type endingQuote   = i->rfind("\"");
+       // DQ (1/26/2006): Fix for 64 bit support.
+       // unsigned int startingQuote = i->find("\"");
+          std::string::size_type startingQuote = i->find("\"");
+          if (startingQuote != std::string::npos)
+             {
+            // This string at least has a quote
+            // unsigned int endingQuote   = i->rfind("\"");
+               std::string::size_type endingQuote   = i->rfind("\"");
 
-      // There should be a double quote on both ends of the string
-      ROSE_ASSERT (endingQuote != std::string::npos);
+            // There should be a double quote on both ends of the string
+               ROSE_ASSERT (endingQuote != std::string::npos);
 
-      std::string quotedSubstring = i->substr(startingQuote,endingQuote);
-      // printf ("quotedSubstring = %s \n",quotedSubstring.c_str());
+               std::string quotedSubstring = i->substr(startingQuote,endingQuote);
+            // printf ("quotedSubstring = %s \n",quotedSubstring.c_str());
 
-      std::string fixedQuotedSubstring = std::string("\\\"") + quotedSubstring + std::string("\\\"");
-      // printf ("fixedQuotedSubstring = %s \n",fixedQuotedSubstring.c_str());
+               std::string fixedQuotedSubstring = std::string("\\\"") + quotedSubstring + std::string("\\\"");
+            // printf ("fixedQuotedSubstring = %s \n",fixedQuotedSubstring.c_str());
 
-      // Now replace the quotedSubstring with the fixedQuotedSubstring
-      i->replace(startingQuote,endingQuote,fixedQuotedSubstring);
+            // Now replace the quotedSubstring with the fixedQuotedSubstring
+               i->replace(startingQuote,endingQuote,fixedQuotedSubstring);
 
-      // printf ("Modified argument = %s \n",(*i).c_str());
-    }
-  }
+            // printf ("Modified argument = %s \n",(*i).c_str());
+             }
+        }
 
   // Add any options specified by the user (and add space at the end)
-  compilerNameString.insert(compilerNameString.end(), argcArgvList.begin(), argcArgvList.end());
+     compilerNameString.insert(compilerNameString.end(), argcArgvList.begin(), argcArgvList.end());
 
   // printf ("buildCompilerCommandLineOptions() #1: compilerNameString = \n%s \n",compilerNameString.c_str());
 
-  std::string sourceFileName = get_sourceFileNameWithPath();
+     std::string sourceFileName = get_sourceFileNameWithPath();
 
-  std::string oldFileNamePathOnly = ROSE::getPathFromFileName(sourceFileName.c_str());
-  std::string oldFileName         = ROSE::stripPathFromFileName(sourceFileName.c_str());
+     std::string oldFileNamePathOnly = ROSE::getPathFromFileName(sourceFileName.c_str());
+     std::string oldFileName         = ROSE::stripPathFromFileName(sourceFileName.c_str());
 
 #if 0
-  printf ("oldFileNamePathOnly = %s \n",oldFileNamePathOnly.c_str());
-  printf ("oldFileName         = %s \n",oldFileName.c_str());
+     printf ("oldFileNamePathOnly = %s \n",oldFileNamePathOnly.c_str());
+     printf ("oldFileName         = %s \n",oldFileName.c_str());
 #endif
 
   // DQ (12/8/2004): Add -Ipath option so that source file's directory will be searched for any 
@@ -5746,47 +5766,48 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // Only add the path if it is a valid name (not an empty name, in which case skip it since the oldFile 
   // is in the current directory (likely a generated file itself; e.g. swig or ROSE applied recursively, etc.)).
   // printf ("oldFileNamePathOnly.length() = %d \n",oldFileNamePathOnly.length());
-  if (oldFileNamePathOnly.empty() == false)
-    compilerNameString.push_back(std::string("-I") + oldFileNamePathOnly);
+     if (oldFileNamePathOnly.empty() == false)
+          compilerNameString.push_back(std::string("-I") + oldFileNamePathOnly);
 
   // DQ (4/20/2006): This allows the ROSE translator to be just a wrapper for the backend (vendor) compiler.
   // compilerNameString += get_unparse_output_filename();
-  if (get_skip_unparse() == false)
-  {
-    // Generate the name of the ROSE generated source file (instead of the original source file)
-    // this file will be compiled by the backend (vendor) compiler.
-    ROSE_ASSERT(get_unparse_output_filename().empty() == false);
-    compilerNameString.push_back(get_unparse_output_filename());
-  }
-  else
-  {
-    // In this case the compilerNameString already has the original file name since it was not removed
-    // compilerNameString += get_unparse_output_filename();
-    // printf ("Case of skip_unparse() == true: original source file name should be present compilerNameString = %s \n",compilerNameString.c_str());
-  }
+     if (get_skip_unparse() == false)
+        {
+       // Generate the name of the ROSE generated source file (instead of the original source file)
+       // this file will be compiled by the backend (vendor) compiler.
+          ROSE_ASSERT(get_unparse_output_filename().empty() == false);
+          compilerNameString.push_back(get_unparse_output_filename());
+        }
+       else
+        {
+       // In this case the compilerNameString already has the original file name since it was not removed
+       // compilerNameString += get_unparse_output_filename();
+       // printf ("Case of skip_unparse() == true: original source file name should be present compilerNameString = %s \n",compilerNameString.c_str());
+        }
+     
+     if ( get_compileOnly() == true )
+        {
+          std::string objectFileName = generateOutputFileName();
+       // printf ("In buildCompilerCommandLineOptions: objectNameSpecified = %s objectFileName = %s \n",objectNameSpecified ? "true" : "false",objectFileName.c_str());
 
-  if ( get_compileOnly() == true )
-  {
-    std::string objectFileName = generateOutputFileName();
-    // printf ("In buildCompilerCommandLineOptions: objectNameSpecified = %s objectFileName = %s \n",objectNameSpecified ? "true" : "false",objectFileName.c_str());
-
-    // DQ (7/14/2004): Suggested fix from Andreas
-    if (objectNameSpecified == false)
-    {
-      compilerNameString.push_back("-o");
-      compilerNameString.push_back(currentDirectory + "/" + objectFileName);
-    }
-  }
-
-  // printf ("At base of buildCompilerCommandLineOptions: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
-
+       // DQ (7/14/2004): Suggested fix from Andreas
+          if (objectNameSpecified == false)
+             {
+               compilerNameString.push_back("-o");
+               compilerNameString.push_back(currentDirectory + "/" + objectFileName);
+             }
+        }
 #if 0
-  printf ("Exiting at base of buildCompilerCommandLineOptions() ... \n");
-  ROSE_ASSERT (false);
+     printf ("At base of buildCompilerCommandLineOptions: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+#endif
+#if 0
+     printf ("Exiting at base of buildCompilerCommandLineOptions() ... \n");
+     ROSE_ASSERT (false);
 #endif
 
-  return compilerNameString;
-}
+     return compilerNameString;
+   }
+
 
 int
 SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& compilerNameOrig )
@@ -6770,6 +6791,8 @@ namespace SgNode_markSectionsForDisassembly
 void
 SgNode_markSectionsForDisassembly::MarkSectionsTraversal::visit ( SgNode* astNode )
    {
+#define ADD_PADDING_AROUND_BINARY_FUNCTIONS 1
+
      SgAsmInterpretation* asmInterpretation = isSgAsmInterpretation(astNode);
      if (asmInterpretation != NULL)
         {
@@ -6812,8 +6835,11 @@ SgNode_markSectionsForDisassembly::MarkSectionsTraversal::visit ( SgNode* astNod
 
             // Increment the rose_file_mapped_rva so that all the function 
             // will have unique addresses in the file.
+#if ADD_PADDING_AROUND_BINARY_FUNCTIONS
             // rose_file_mapped_rva += (1 << 16);
+#else
                rose_file_mapped_rva += boundSection->get_size();
+#endif
              }
         }
    }
@@ -6971,3 +6997,186 @@ StringUtility::demangledName ( string s )
    }
  
 
+#if 1
+// DQ (2/16/2009): Moved from expression.code to sageSupport.C while this is tested and debugged!
+
+// DQ (2/8/2009): I always wanted to have this function!
+SgFunctionDeclaration*
+SgFunctionCallExp::getAssociatedFunctionDeclaration() const
+   {
+  // This is helpful in chasing down the associated declaration to this function reference.
+     SgFunctionDeclaration* returnFunctionDeclaration = NULL;
+
+#if 0
+  // Note that as I recall there are a number of different types of IR nodes that 
+  // the functionCallExp->get_function() can return (this is the complete list, 
+  // as tested in astConsistancyTests.C):
+  //   - SgDotExp
+  //   - SgDotStarOp
+  //   - SgArrowExp
+  //   - SgArrowStarOp
+  //   - SgPointerDerefExp
+  //   - SgFunctionRefExp
+  //   - SgMemberFunctionRefExp
+
+     SgExpression* functionExp = this->get_function();
+     switch(functionExp->variantT())
+        {
+          case V_SgFunctionRefExp:
+             {
+               SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(functionExp);
+               ROSE_ASSERT(functionRefExp != NULL);
+               SgFunctionSymbol* functionSymbol = functionRefExp->get_symbol();
+
+            // DQ (2/8/2009): Can we assert this! What about pointers to functions?
+               ROSE_ASSERT(functionSymbol != NULL);
+
+            // It might be that a pointer to a function would not have a symbol.
+               if (functionSymbol != NULL)
+                    returnFunctionDeclaration = functionSymbol->get_declaration();
+               break;
+             }
+
+          case V_SgMemberFunctionRefExp:
+             {
+               SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(functionExp);
+               ROSE_ASSERT(memberFunctionRefExp != NULL);
+               SgMemberFunctionSymbol* memberFunctionSymbol = memberFunctionRefExp->get_symbol();
+
+            // DQ (2/8/2009): Can we assert this! What about pointers to functions?
+               ROSE_ASSERT(memberFunctionSymbol != NULL);
+
+            // It might be that a pointer to a function would not have a symbol.
+               if (memberFunctionSymbol != NULL)
+                    returnFunctionDeclaration = memberFunctionSymbol->get_declaration();
+               break;
+             }
+
+          case V_SgArrowExp:
+             {
+            // The lhs is the this pointer (SgThisExp) and the rhs is the member function.
+               SgArrowExp* arrayExp = isSgArrowExp(functionExp);
+               ROSE_ASSERT(arrayExp != NULL);
+
+               SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(arrayExp->get_rhs_operand());
+               ROSE_ASSERT(memberFunctionRefExp != NULL);
+               SgMemberFunctionSymbol* memberFunctionSymbol = memberFunctionRefExp->get_symbol();
+
+            // DQ (2/8/2009): Can we assert this! What about pointers to functions?
+               ROSE_ASSERT(memberFunctionSymbol != NULL);
+
+            // It might be that a pointer to a function would not have a symbol.
+               if (memberFunctionSymbol != NULL)
+                    returnFunctionDeclaration = memberFunctionSymbol->get_declaration();
+               break;
+             }
+
+          case V_SgDotExp:
+          case V_SgDotStarOp:
+          case V_SgArrowStarOp:
+          case V_SgPointerDerefExp:
+             {
+               printf ("ERROR: Sorry, cases of SgDotExp,SgDotStarOp, SgArrowExp,SgArrowStarOp, SgPointerDerefExp not implemented yet in SgFunctionCallExp::getAssociatedFunctionDeclaration() functionExp = %p = %s \n",functionExp,functionExp->class_name().c_str());
+               break;
+             }
+
+          default:
+             {
+               printf ("Error: There should be no other cases functionExp = %p = %s \n",functionExp,functionExp->class_name().c_str());
+               ROSE_ASSERT(false);
+             }
+        }
+#else
+  // Refactored code separates out the generation of the SgFunctionSymbol from the SgFunctionCallExp
+     SgFunctionSymbol* associatedFunctionSymbol = getAssociatedFunctionSymbol();
+     ROSE_ASSERT(associatedFunctionSymbol != NULL);
+     returnFunctionDeclaration = associatedFunctionSymbol->get_declaration();
+#endif
+
+     ROSE_ASSERT(returnFunctionDeclaration != NULL);
+
+     return returnFunctionDeclaration;
+   }
+
+
+
+SgFunctionSymbol*
+SgFunctionCallExp::getAssociatedFunctionSymbol() const
+   {
+  // This is helpful in chasing down the associated declaration to this function reference.
+  // But this refactored function does the first step of getting the symbol, so that it
+  // can also be used separately in the outlining support.
+     SgFunctionSymbol* returnSymbol = NULL;
+
+  // Note that as I recall there are a number of different types of IR nodes that 
+  // the functionCallExp->get_function() can return (this is the complete list, 
+  // as tested in astConsistancyTests.C):
+  //   - SgDotExp
+  //   - SgDotStarOp
+  //   - SgArrowExp
+  //   - SgArrowStarOp
+  //   - SgPointerDerefExp
+  //   - SgFunctionRefExp
+  //   - SgMemberFunctionRefExp
+
+     SgExpression* functionExp = this->get_function();
+     switch(functionExp->variantT())
+        {
+          case V_SgFunctionRefExp:
+             {
+               SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(functionExp);
+               ROSE_ASSERT(functionRefExp != NULL);
+               returnSymbol = functionRefExp->get_symbol();
+
+            // DQ (2/8/2009): Can we assert this! What about pointers to functions?
+               ROSE_ASSERT(returnSymbol != NULL);
+               break;
+             }
+
+          case V_SgMemberFunctionRefExp:
+             {
+               SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(functionExp);
+               ROSE_ASSERT(memberFunctionRefExp != NULL);
+               returnSymbol = memberFunctionRefExp->get_symbol();
+
+            // DQ (2/8/2009): Can we assert this! What about pointers to functions?
+               ROSE_ASSERT(returnSymbol != NULL);
+               break;
+             }
+
+          case V_SgArrowExp:
+             {
+            // The lhs is the this pointer (SgThisExp) and the rhs is the member function.
+               SgArrowExp* arrayExp = isSgArrowExp(functionExp);
+               ROSE_ASSERT(arrayExp != NULL);
+
+               SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(arrayExp->get_rhs_operand());
+               ROSE_ASSERT(memberFunctionRefExp != NULL);
+               returnSymbol = memberFunctionRefExp->get_symbol();
+
+            // DQ (2/8/2009): Can we assert this! What about pointers to functions?
+               ROSE_ASSERT(returnSymbol != NULL);
+               break;
+             }
+
+          case V_SgDotExp:
+          case V_SgDotStarOp:
+          case V_SgArrowStarOp:
+          case V_SgPointerDerefExp:
+             {
+               printf ("ERROR: Sorry, cases of SgDotExp,SgDotStarOp, SgArrowExp,SgArrowStarOp, SgPointerDerefExp not implemented yet in SgFunctionCallExp::getAssociatedSymbol() functionExp = %p = %s \n",functionExp,functionExp->class_name().c_str());
+               break;
+             }
+
+          default:
+             {
+               printf ("Error: There should be no other cases functionExp = %p = %s \n",functionExp,functionExp->class_name().c_str());
+               ROSE_ASSERT(false);
+             }
+        }
+
+     ROSE_ASSERT(returnSymbol != NULL);
+
+     return returnSymbol;
+   }
+#endif

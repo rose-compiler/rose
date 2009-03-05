@@ -96,7 +96,9 @@ getSetOfNonFrontendSpecificNodes()
                    Sg_File_Info* fileInfo = NULL;
                    fileInfo = n->get_file_info();
 
-                // printf ("In (gather frontend specific nodes) NodeListTraversal::visit(): n = %p = %s nodeList.size() = %ld \n",n,n->class_name().c_str(),nodeList.size());
+#if 0
+                   printf ("In (gather frontend specific nodes) NodeListTraversal::visit(): n = %p = %s = %s nodeList.size() = %ld \n",n,n->class_name().c_str(),SageInterface::get_name(n).c_str(),nodeList.size());
+#endif
 
                    if (fileInfo != NULL)
                       {

@@ -234,3 +234,116 @@ fixupTraversal( const ReplacementMapTraversal::ReplacementMapType & replacementM
      printf ("numberOfValidDataMemberPointersReset                                    = %d \n",traversal.numberOfValidDataMemberPointersReset);
    }
 
+
+FixupSubtreeTraversal::FixupSubtreeTraversal ( const ReplacementMapTraversal::ReplacementMapType & inputReplacementMap, const FixupTraversal::listToDeleteType & inputListToDelete )
+   : replacementMap(inputReplacementMap), deleteList(inputListToDelete)
+   {
+  // Nothing to do here.
+   }
+
+
+void
+FixupSubtreeTraversal::visit ( SgNode* node)
+   {
+  // This traversal is similar to the one above but operates on an AST subtree and is 
+  // specific to use in the outliner to fixup IR nodes between files when outlining 
+  // is done to a separate file.
+
+     bool traceReplacement = false;
+
+     if (traceReplacement == true)
+        {
+          SgSourceFile* sourceFile = isSgSourceFile(node);
+          if (sourceFile != NULL)
+             {
+               printf ("sourceFile = %s \n",sourceFile->getFileName().c_str());
+             }
+
+          printf ("FixupSubtreeTraversal::visit: node = %p = %s \n",node,node->class_name().c_str());
+          printf ("Output the replacementMap: \n");
+          ReplacementMapTraversal::displayReplacementMap (replacementMap);
+        }
+
+     struct Replacer: public ReferenceToPointerHandler
+        {
+          FixupSubtreeTraversal & ft;
+          bool traceReplacement;
+          SgNode* node;
+          Replacer(FixupSubtreeTraversal& ft, bool traceReplacement, SgNode* node): ft(ft), traceReplacement(traceReplacement), node(node) {}
+
+       // Put the work to be done into the "()" operator.
+          virtual void operator()(SgNode*& key, const SgName & debugStringName)
+             {
+               const string & debugString = debugStringName.getString();
+
+               if (traceReplacement == true)
+                  {
+                    printf ("FixupSubtreeTraversal:Replacer:operator(): Evaluate the key (IR node) (%p = %s) on %p = %s \n",key,debugString.c_str(),node,node->class_name().c_str());
+                  }
+
+            // DQ (2/8/2007): Only handle non-NULL valued pointers (only valid pointers to IR nodes that need be reset).
+            // However, since we have few NULL pointers in the AST by design this is not a significant optimization.
+               if (key != NULL)
+                  {
+                 // Check that the key is in the map
+                 // DQ (2/19/2007): This is more efficient since it looks up the element from the map only once.
+                    ReplacementMapTraversal::ReplacementMapType::const_iterator replacementMap_it = ft.replacementMap.find(key);
+
+                    if (replacementMap_it != ft.replacementMap.end())
+                       {
+                         SgNode* originalNode = replacementMap_it->second;
+
+                         if (traceReplacement == true)
+                            {
+                              printf ("FixupSubtreeTraversal::visit(): Set the key (IR node) (%p = %s) on %p = %s to %p = %s \n",key,debugString.c_str(),node,node->class_name().c_str(),originalNode,originalNode->class_name().c_str());
+                            }
+
+                      // Skip the trival case of resetting the pointer value to itself!
+                         if (key != originalNode)
+                            {
+#if 0
+                              printf ("Resetting debugStringName: key = %p = %s = %s to originalNode = %p = %s = %s \n",
+                                   key,key->class_name().c_str(),SageInterface::get_name(key).c_str(),
+                                   originalNode,originalNode->class_name().c_str(),SageInterface::get_name(originalNode).c_str());
+#endif
+                           // Now reset the pointer to the subtree identified as redundent with a
+                           // subtree in the original AST to the subtree in the original (merged) AST.
+                              key = originalNode;
+
+                           // Keep a count of the number of IR nodes that are reset.
+                           // ft.numberOfValidDataMemberPointersReset++;
+                            }
+                       }
+                      else
+                       {
+                         if (traceReplacement == true)
+                              printf ("replacementMap_it == replacementMap.end() \n");
+                       }
+                  }
+                 else
+                  {
+                    if (traceReplacement == true)
+                         printf ("key == NULL \n");
+                  }
+             }
+        };
+
+     Replacer r(*this, traceReplacement, node);
+     node->processDataMemberReferenceToPointers(&r);
+   }
+
+
+
+// DQ (2/25/2009): Function added to support similar concept for AST outlining.
+// this function fixups up references in a subtree (the outlined file when the 
+// outlining is done to a separate file).
+void
+fixupSubtreeTraversal( SgNode* subtree, const ReplacementMapTraversal::ReplacementMapType & replacementMap, const std::set<SgNode*> & deleteList )
+   {
+     TimingPerformance timer ("Reset the AST to share IR nodes:");
+
+  // printf ("In fixupSubtreeTraversal(): replacementMap.size() = %zu deleteList.size() = %zu \n",replacementMap.size(),deleteList.size());
+     FixupSubtreeTraversal traversal(replacementMap,deleteList);
+     traversal.traverse(subtree,preorder);
+   }
+

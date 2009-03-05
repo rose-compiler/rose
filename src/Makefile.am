@@ -143,7 +143,6 @@ clean-local:
 	rm -rf *.a *.so testSharedRoseLib testMultiRoseLib $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files 
 
 
-
 distclean-local:
 	rm -rf *.a *.so testSharedRoseLib testMultiRoseLib Templates.DB 
 

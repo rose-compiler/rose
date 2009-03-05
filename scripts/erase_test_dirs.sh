@@ -7,3 +7,6 @@ chmod -R +x $(TEST_DIR)/[1-9]*
 chmod -R +r $(TEST_DIR)/[1-9]*
 rm -rf $(TEST_DIR)/[1-9]*
 
+# OR:
+# chmod -R +x [1-9]*; chmod -R +r [1-9]*; rm -rf [1-9]*
+

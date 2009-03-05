@@ -1,100 +1,19 @@
-include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+######################################################
+# These are C+ testcodes targeting aspects of both C #
+# and C++ that can be compiled using a C++ compiler  #
+#                                                    #
+# This Makefile stub defines the macro:              #
+#                                                    #
+#   EXAMPLE_TESTCODES_REQUIRED_TO_PASS               #
+#     A list of all possible example test codes that #
+#     should pass.                                   #
+#                                                    #
+#   EXAMPLE_TESTCODES_REQUIRED_TO_PASS_SHORT         #
+#     A shorter list for faster testing.             #
+#                                                    #
+######################################################
 
-INCLUDES = $(ROSE_INCLUDES)
-
-bin_PROGRAMS = copyExample copyLoops copyBlocks copyFunctionDefinitions
-
-copyExample_SOURCES = copyExample.C
-
-copyLoops_SOURCES = copyLoops.C
-
-copyBlocks_SOURCES = copyBlocks.C
-
-copyFunctionDefinitions_SOURCES = copyFunctionDefinitions.C
-
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-
-# DQ (1/8/2008):
-# These need to be specified outside of the conditionals so that
-# a distribution built when the conditional was false can be used 
-# when configured with the conditional being true.
-
-LONG_LIST_TESTCODES_REQUIRED_TO_PASS = \
-   copytest2007_01.C \
-   copytest2007_02.C \
-   copytest2007_03.C \
-   copytest2007_04.C \
-   copytest2007_05.C \
-   copytest2007_06.C \
-   copytest2007_07.C \
-   copytest2007_08.C \
-   copytest2007_09.C \
-   copytest2007_10.C \
-   copytest2007_11.C \
-   copytest2007_12.C \
-   copytest2007_13.C \
-   copytest2007_14.C \
-   copytest2007_15.C \
-   copytest2007_16.C \
-   copytest2007_17.C \
-   copytest2007_18.C \
-   copytest2007_19.C \
-   copytest2007_20.C \
-   copytest2007_21.C \
-   copytest2007_22.C \
-   copytest2007_23.C \
-   copytest2007_24.C \
-   copytest2007_25.C \
-   copytest2007_26.C \
-   copytest2007_27.C \
-   copytest2007_29.C \
-   copytest2007_30.C \
-   copytest2007_31.C \
-   copytest2007_32.C \
-   copytest2007_33.C \
-   copytest2007_34.C \
-   copytest2007_35.C \
-   copytest2007_36.C \
-   copytest2007_37.C \
-   copytest2007_39.C \
-   copytest2007_40.C \
-   copytest2007_41.C \
-   copytest2007_42.C \
-   copytest2007_44.C \
-   copytest2007_45.C \
-   copytest2007_46.C \
-   copytest2007_47.C \
-   copytest2007_49.C \
-   copytest2007_50.C \
-   copyExampleInput.C
-
-# These fail the strict test that the original AST and the copy of the AST are the same size
-#  copytest2007_28.C
-#  copytest2007_38.C
-#  copytest2007_43.C 
-#  copytest2007_48.C
-
-LONG_LIST_TESTCODE_CURRENTLY_FAILING = \
-   copytest2007_51.C \
-   copytest2007_52.C \
-   copytest2007_53.C \
-   copytest2007_54.C \
-   copytest2007_55.C \
-   copytest2007_56.C \
-   copytest2007_57.C \
-   copytest2007_58.C \
-   copytest2007_59.C \
-   copytest2007_60.C \
-   copytest2007_61.C \
-   copytest2007_62.C \
-   copytest2007_63.C \
-   copytest2007_64.C \
-   copytest2007_65.C \
-   copytest2007_66.C \
-   copytest2007_67.C \
-   copytest2007_68.C
-
-LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS = \
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
 test_CplusplusMacro_Cpp.C \
 test2001_01.C \
 test2001_02.C \
@@ -106,8 +25,12 @@ test2001_07.C \
 test2001_08.C \
 test2001_09.C \
 test2001_10.C \
+test2001_11.C \
+test2001_12.C \
+test2001_13.C \
 test2001_14.C \
 test2001_15.C \
+test2001_16.C \
 test2001_17.C \
 test2001_18.C \
 test2001_19.C \
@@ -118,6 +41,7 @@ test2001_23.C \
 test2001_24.C \
 test2001_25.C \
 test2001_26.C \
+test2001_27.C \
 test2001_28.C \
 test2001_29.C \
 test2002_01.C \
@@ -180,7 +104,6 @@ test2004_26.C \
 test2004_27.C \
 test2004_28.C \
 test2004_29.C \
-test2004_30.C \
 test2004_31.C \
 test2004_32.C \
 test2004_33.C \
@@ -286,6 +209,7 @@ test2004_139.C \
 test2004_140.C \
 test2004_141.C \
 test2004_142.C \
+test2004_143.C \
 test2004_144.C \
 test2004_145.C \
 test2004_146.C \
@@ -406,6 +330,7 @@ test2005_100.C \
 test2005_101.C \
 test2005_102.C \
 test2005_103.C \
+test2005_104.C \
 test2005_105.C \
 test2005_106.C \
 test2005_107.C \
@@ -450,7 +375,9 @@ test2005_146.C \
 test2005_147.C \
 test2005_148.C \
 test2005_149.C \
+test2005_150.C \
 test2005_152.C \
+test2005_153.C \
 test2005_154.C \
 test2005_155.C \
 test2005_156.C \
@@ -524,6 +451,7 @@ test2006_28.C \
 test2006_34.C \
 test2006_37.C \
 test2006_38.C \
+test2006_39.C \
 test2006_40.C \
 test2006_41.C \
 test2006_42.C \
@@ -532,6 +460,7 @@ test2006_47.C \
 test2006_50.C \
 test2006_52.C \
 test2006_53.C \
+test2006_54.C \
 test2006_55.C \
 test2006_56.C \
 test2006_57.C \
@@ -573,7 +502,6 @@ test2006_95.C \
 test2006_96.C \
 test2006_97.C \
 test2006_98.C \
-test2006_99.C \
 test2006_101.C \
 test2006_102.C \
 test2006_103.C \
@@ -616,7 +544,6 @@ test2006_152.C \
 test2006_153.C \
 test2006_154.C \
 test2006_155.C \
-test2006_156.C \
 test2006_157.C \
 test2006_158.C \
 test2006_159.C \
@@ -627,13 +554,9 @@ test2006_163.C \
 test2006_164.C \
 test2006_165.C \
 test2006_166.C \
-test2006_167.C \
 test2006_181.C \
-test2006_182.C \
 test2006_183.C \
-test2006_184.C \
 test2006_185.C \
-test2006_188.C \
 test2007_01.C \
 test2007_02.C \
 test2007_03.C \
@@ -668,6 +591,7 @@ test2007_47.C \
 test2007_48.C \
 test2007_49.C \
 test2007_50.C \
+test2007_51.C \
 test2007_52.C \
 test2007_53.C \
 test2007_55.C \
@@ -684,6 +608,7 @@ test2007_82.C \
 test2007_83.C \
 test2007_84.C \
 test2007_85.C \
+test2007_90.C \
 test2007_94.C \
 test2007_98.C \
 test2007_102.C \
@@ -693,11 +618,31 @@ test2007_130.C \
 test2007_133.C \
 test2007_135.C \
 test2007_137.C \
+test2007_140.C \
 test2007_141.C \
 test2007_142.C \
 test2007_147.C \
 test2007_150.C \
+test2007_151.C \
+test2007_152.C \
+test2007_154.C \
+test2007_155.C \
+test2007_157.C \
 test2007_158.C \
+test2007_159.C \
+test2007_160.C \
+test2007_161.C \
+test2007_162.C \
+test2007_163.C \
+test2007_164.C \
+test2007_165.C \
+test2007_166.C \
+test2007_167.C \
+test2007_170.C \
+test2007_171.C \
+test2007_172.C \
+test2007_173.C \
+test2008_04.C \
 test_int_lexemes.C \
 test_int_lexemes_donot_pass.C \
 test_simple_int.C \
@@ -705,208 +650,37 @@ test_wchars.C \
 lexPhase2003_01.C \
 math.C \
 inputForLoopLocator.C \
-X.C
+X.C \
+inputBug317.C
 
-# These fail the strict test that the original AST and the copy of the AST are the same size
-# test2001_11.C 
-# test2001_12.C 
-# test2001_13.C 
-# test2001_16.C 
-# test2001_27.C 
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS_SHORT = \
+test2001_02.C \
+test2001_03.C \
+test2004_116.C
 
 
-# DQ (1/8/2008): This is not a file that is copied to the distribution.
-# test2004_83.C
-# test2005_172.C
-# test2007_56.C
-# test2007_95.C -- broken test case
+# DQ (10/5/2007): Previous problems fixed, this is a remaining problem.
+# test2005_188.C 
+# test2005_205.C
+# test2007_95.C -- JJW 3-3-2008 gcc doesn't accept this code, and the stuff in ROSE to allow it broke Naim
 
-# JJW 5-22-2008 This test is not portable to Mac OS X
+# DQ (1/8/2008): This does not pass the tests in: tests/roseTests/astOutliningTests
+# test2007_169.C 
+
+# JJW 5-22-2008 This is not portable to Mac OS X
 # test2006_44.C
 
-# Configure-time automake conditional
-if ROSE_USE_LONG_MAKE_CHECK_RULE
-
-# The longer set of tests
-TESTCODES_REQUIRED_TO_PASS = $(LONG_LIST_TESTCODES_REQUIRED_TO_PASS)
-
-TESTCODE_CURRENTLY_FAILING =  $(LONG_LIST_TESTCODE_CURRENTLY_FAILING)
-
-EXTRA_TESTCODES_REQUIRED_TO_PASS = $(LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS)
-
-else
-
-# The shorter set of tests
-
-TESTCODES_REQUIRED_TO_PASS = \
-   copytest2007_01.C \
-   copytest2007_02.C \
-   copytest2007_03.C \
-   copyExampleInput.C
-
-TESTCODE_CURRENTLY_FAILING = 
-
-EXTRA_TESTCODES_REQUIRED_TO_PASS = \
-test_CplusplusMacro_Cpp.C \
-test2001_01.C \
-test2001_02.C \
-test2001_03.C 
-
-endif
-
-# LONG_LIST_ALL_FILES = $(LONG_LIST_TESTCODES_REQUIRED_TO_PASS) $(LONG_LIST_TESTCODE_CURRENTLY_FAILING) $(LONG_LIST_EXTRA_TESTCODES_REQUIRED_TO_PASS)
-LONG_LIST_ALL_FILES = $(LONG_LIST_TESTCODES_REQUIRED_TO_PASS) $(LONG_LIST_TESTCODE_CURRENTLY_FAILING)
-
-# This have been copied into copytest2007_51-58.C
-TESTS_STILL_TOO_HARD = \
-test2004_143.C \
-test2005_104.C \
-test2005_150.C \
-test2005_153.C \
-test2005_168.C \
-test2006_54.C  \
-test2007_51.C  \
-test2007_90.C 
-
-# This test requires a special commandline so it should not be included.
+# Filter test list
+#   My bugs: test2004_162, test2006_97, test2006_98
+#   ROSE bugs: test2005_04, test2005_06, test2005_88
+#   Requires test-specific defines: test2005_56
+#  Liao, 12/6/2007,
+# 	test2006_98
+#	test2006_99.C bug 135: GCC 4.x does not allow address of explicit register var.
+# works fine now: test2004_162,test2005_04,test2005_88,
+# Files previously excluded from the outlining tests:
+# test2004_30.C
+# test2006_99.C
+# test2006_159.C
 # test2005_56.C
-
-
-
-# Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
-# TESTCODES = $(EXTRA_TESTCODES_REQUIRED_TO_PASS) $(TESTCODES_REQUIRED_TO_PASS)
-TESTCODES = $(TESTCODES_REQUIRED_TO_PASS) $(EXTRA_TESTCODES_REQUIRED_TO_PASS)
-# TESTCODES = $(TESTCODES_REQUIRED_TO_PASS)
-
-# QMTest allows both passing and failing tests.
-ALL_TESTCODES = \
-$(TESTCODES_REQUIRED_TO_PASS) \
-$(TESTCODE_CURRENTLY_FAILING)
-
-EXTRA_ALL_TESTCODES = $(EXTRA_TESTCODES_REQUIRED_TO_PASS) $(TESTS_STILL_TOO_HARD)
-
-# ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict
-ROSE_FLAGS = -rose:verbose 0 --edg:restrict
-
-## Include the path to A++ and the transformation specification
-TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
-
-# VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
-VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --suppressions=$(top_srcdir)/scripts/rose-suppressions-for-valgrind
-# VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)
-# VALGRIND = valgrind $(VALGRIND_OPTIONS)
-VALGRIND =
-
-PASSING_TEST_Objects = ${TESTCODES:.C=.o}
-TEST_Objects = ${ALL_TESTCODES:.C=.o}
-# TEST_Objects = ${EXTRA_ALL_TESTCODES:.C=.o}
-
-EXTRA_TEST_Objects = ${EXTRA_ALL_TESTCODES:.C=.o}
-
-# $(TEST_Objects): copyExample $(srcdir)/$(@:.o=.C)
-# $(TEST_Objects): copyExample
-$(TEST_Objects): copyExample 
-	@echo "Calling Copy AST mechanism using TEST_Objects rule: "
-	$(VALGRIND) ./copyExample $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.C) 
-
-# Use tests from the Cxx_tests directory
-# $(EXTRA_TEST_Objects): copyExample $(srcdir)/$(@:.o=.C)
-$(EXTRA_TEST_Objects): copyExample
-	@echo "Copy the file to the local build tree so that we can change the file name suffix (to be a C language file) ..."
-	$(VALGRIND) ./copyExample $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.o=.C)
-
-QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
-
-# Make rule to build the QMTest database files
-CURRENT_DIRECTORY = `pwd`
-$(QMTEST_Objects): copyExample $(srcdir)/$(@:.qmt=.C)
-	@echo "Calling QMTEST_Objects rule: "
-	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/copyExample NULL $(ROSE_FLAGS) -c $(srcdir)/$(@:.qmt=.C)
-
-# This is a rule to add the current files into a QMTest database
-build_qmtest_database: $(QMTEST_Objects)
-#	@echo "Building QMTest database using file "
-	rm -rf QMTest;
-	mkdir QMTest;
-	rm -rf QMTest/*.qmt
-	mv *.qmt QMTest
-	cd QMTest; qmtest -D`pwd` create-tdb
-
-run_qm_tests:
-	cd QMTest; qmtest run -o TestResults.qmr -j4
-
-run_qm_gui:
-	cd QMTest; qmtest gui
-
-
-
-testCopyLoops: copyLoops
-	./copyLoops $(ROSE_FLAGS) $(srcdir)/copytest2007_60.C
-
-testCopyBlocks: copyBlocks
-	./copyBlocks $(ROSE_FLAGS) $(srcdir)/copytest2007_63.C
-
-testCopyFunctionDefinitions: copyFunctionDefinitions
-	./copyFunctionDefinitions $(ROSE_FLAGS) $(srcdir)/copytest2007_63.C
-
-
-
-# INCLUDES = $(ROSE_INCLUDES)
-
-# bin_PROGRAMS = copyExample
-
-# copyExample_SOURCES = copyExample.C
-# copyExample_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
-
-# LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
-
-# TESTCODES_REQUIRED_TO_PASS = copyExampleInput.C
-
-# TESTCODE_CURRENTLY_FAILING = 
-
-# Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
-# TESTCODES = $(TESTCODES_REQUIRED_TO_PASS)
-
-# QMTest allows both passing and failing tests.
-# ALL_TESTCODES = $(TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
-
-# ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict
-# ROSE_FLAGS = --edg:no_warnings -w --edg:restrict
-
-# PASSING_TEST_Objects = ${TESTCODES:.C=.o}
-# TEST_Objects = ${ALL_TESTCODES:.C=.o}
-
-# Add the dependence upon the source file to trigger recompilation each time the makefile is run!
-# $(TEST_Objects): copyExample $(srcdir)/$(@:.o=.C)
-# # $(TEST_Objects): copyExample
-# 	./copyExample $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.C)
-
-# QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
-
-# Make rule to build the QMTest database files
-# CURRENT_DIRECTORY = `pwd`
-# $(QMTEST_Objects): copyExample $(srcdir)/$(@:.qmt=.C)
-# 	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/copyExample NULL $(ROSE_FLAGS) -c $(srcdir)/$(@:.qmt=.C)
-
-# Include makefile rules specific to QMTest
-# include $(top_srcdir)/config/QMTest_makefile.inc
-
-# DQ (2/26/2009): The copyGraph.[hC] files have been moved to the src/frontend/SageIII/astVisualization directory.
-# EXTRA_DIST = $(ALL_TESTCODES) copyGraph.C copyGraph.h
-# EXTRA_DIST = $(LONG_LIST_ALL_FILES) copyGraph.C copyGraph.h
-EXTRA_DIST = $(LONG_LIST_ALL_FILES)
-
-check-local:
-	@echo "Tests for AST Copy."
-	@$(MAKE) $(PASSING_TEST_Objects)
-	@echo "***************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/copyAST_tests: make check rule complete (terminated normally) ******"
-	@echo "***************************************************************************************************"
-
-clean-local:
-	rm -f *.o rose_*.[cC]
-	rm -rf QMTest
-
-distclean-local:
-	rm -rf Templates.DB *_copy_graph_old_nodes *.dot
 

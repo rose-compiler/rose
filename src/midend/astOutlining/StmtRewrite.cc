@@ -71,7 +71,7 @@ ASTtools::appendCopy (const SgStatement* s, SgBasicBlock* b)
 void
 ASTtools::appendStmtsCopy (const SgBasicBlock* a, SgBasicBlock* b)
 {
-  if (a)
+  if (a != NULL)
     {
       SgStatementPtrList src_stmts = a->get_statements ();
       for_each (src_stmts.begin (),
@@ -102,7 +102,15 @@ ASTtools::replaceStatement (SgStatement* s_cur, SgStatement* s_new)
 
       targetBB->get_statements().insert(i, s_new);
       s_new->set_parent(targetBB);
+#if 1
+   // This will search the parent for the location of decl, but this is not found
       LowLevelRewrite::remove (oldblock);
+#else
+   // DQ (2/24/2009): Added more direct concept of remove.
+   // We just want a more direct and simpler concept of remove (remove the AST, 
+   // because potential dangling pointers have been taken care of).
+      SageInterface::deleteAST(oldblock);
+#endif
       break;
     }
     case V_SgIfStmt: {

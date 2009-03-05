@@ -68,12 +68,21 @@ Outliner::Transform::generateCall (SgFunctionDeclaration* out_func,
                                       const ASTtools::VarSymSet_t& syms, std::string wrapper_name, SgScopeStatement* scope)
 {
   // Create a reference to the function.
+#if 0
   SgFunctionSymbol* func_symbol = new SgFunctionSymbol (out_func);
+#else
+  SgGlobal* glob_scope = TransformationSupport::getGlobalScope(scope);
+  ROSE_ASSERT(glob_scope != NULL);
+  SgFunctionSymbol* func_symbol = glob_scope->lookup_function_symbol(out_func->get_name());
+  ROSE_ASSERT(func_symbol != NULL);
+#endif
+
   ROSE_ASSERT (func_symbol);
   SgFunctionRefExp* func_ref_exp =
     new SgFunctionRefExp (ASTtools::newFileInfo (),
                           func_symbol, out_func->get_type ());
   ROSE_ASSERT (func_ref_exp);
+
 
   // Create an argument list.
   SgExprListExp* exp_list_exp = new SgExprListExp (ASTtools::newFileInfo ());

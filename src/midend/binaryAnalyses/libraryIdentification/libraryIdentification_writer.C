@@ -264,7 +264,7 @@ LibraryIdentification::FlattenAST::visit(SgNode* n)
                data.push_back(opCodeString[i]);
              }
 
-       // Always update the endAddress (and add the length of the last instruction
+       // Always update the endAddress (and add the length of the last instruction)
           endAddress = instructionAddress + opCodeString.size();
         }
 

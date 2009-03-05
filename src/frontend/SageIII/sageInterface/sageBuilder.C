@@ -442,7 +442,11 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
   // argument verification
      if (scope == NULL)
           scope = SageBuilder::topScopeStack();
-     ROSE_ASSERT(scope != NULL);
+
+  // printf ("Building non-defining function for scope = %p in file = %s \n",scope,TransformationSupport::getSourceFile(scope)->getFileName().c_str());
+
+  // DQ (2/25/2009): I think I added this recently but it is overly restrictive.
+  // ROSE_ASSERT(scope != NULL);
 
   // ROSE_ASSERT(scope->containsOnlyDeclarations()); 
   // this function is also called when building a function reference before the function declaration exists.  So, skip the check
@@ -472,36 +476,55 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
           func_type = buildFunctionType(return_type,paralist);
         }
 
-  // search before using the function type to create the function declaration 
-  // TODO only search current scope or all ancestor scope??
-  // We don't have lookup_member_function_symbol  yet
-     SgFunctionSymbol *func_symbol = scope->lookup_function_symbol(name,func_type);
-
   // function declaration
      actualFunction* func = NULL;
 
+  // search before using the function type to create the function declaration 
+  // TODO only search current scope or all ancestor scope??
+  // We don't have lookup_member_function_symbol  yet
+  // SgFunctionSymbol *func_symbol = scope->lookup_function_symbol(name,func_type);
+     SgFunctionSymbol *func_symbol = NULL;
+     if (scope != NULL)
+          func_symbol = scope->lookup_function_symbol(name,func_type);
+
+  // printf ("In SageBuilder::buildNondefiningFunctionDeclaration_T(): scope = %p func_symbol = %p \n",scope,func_symbol);
      if (func_symbol == NULL)
         {
        // first prototype declaration
           func = new actualFunction (name,func_type,NULL);
-          ROSE_ASSERT(func);
+          ROSE_ASSERT(func != NULL);
 
-       // function symbol table
-          if (isSgMemberFunctionDeclaration(func))
-               func_symbol= new SgMemberFunctionSymbol(func);
-            else
-               func_symbol= new SgFunctionSymbol(func);
+       // NOTE: we want to allow the input scope to be NULL (and even the SageBuilder::topScopeStack() == NULL)
+       // so that function can be built bottom up style.  However this means that the symbol tables in the 
+       // scope of the returned function declaration will have to be setup separately.
+          if (scope != NULL)
+             {
+            // function symbol table
+               if (isSgMemberFunctionDeclaration(func))
+                    func_symbol = new SgMemberFunctionSymbol(func);
+                 else
+                    func_symbol = new SgFunctionSymbol(func);
 
-          ROSE_ASSERT(func_symbol);
-          scope->insert_symbol(name, func_symbol);
-       // ROSE_ASSERT(scope->lookup_function_symbol(name,func_type) != NULL);
-       // ROSE_ASSERT(scope->lookup_function_symbol(name) != NULL);// Did not pass for member function?
+            // printf ("In SageBuilder::buildNondefiningFunctionDeclaration_T(): scope = %p func_symbol = %p = %s = %s \n",scope,func_symbol,func_symbol->class_name().c_str(),SageInterface::get_name(func_symbol).c_str());
+               ROSE_ASSERT(func_symbol != NULL);
+
+               scope->insert_symbol(name, func_symbol);
+
+            // ROSE_ASSERT(scope->lookup_function_symbol(name,func_type) != NULL);
+
+            // DQ (2/26/2009): uncommented assertion.
+               ROSE_ASSERT(scope->lookup_function_symbol(name) != NULL); // Did not pass for member function? Should we have used the mangled name?
+             }
 
           func->set_firstNondefiningDeclaration(func);
           func->set_definingDeclaration(NULL);
+
+          ROSE_ASSERT(func->get_definingDeclaration() == NULL);
         }
        else 
-        { 
+        {
+          ROSE_ASSERT(scope != NULL);
+
        // 2nd, or 3rd... prototype declaration
        // reuse function type, function symbol of previous declaration
 
@@ -516,10 +539,37 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
        // we don't care if it is member function or function here for a pointer
           SgFunctionDeclaration* prevDecl = NULL;
           prevDecl = func_symbol->get_declaration();
-   
-          func->set_firstNondefiningDeclaration(prevDecl->get_firstNondefiningDeclaration());
+          ROSE_ASSERT(prevDecl != NULL);
+
+       // printf ("In SageBuilder::buildNondefiningFunctionDeclaration_T(): prevDecl = %p \n",prevDecl);
+
+          if (prevDecl == prevDecl->get_definingDeclaration())
+             {
+            // The symbol points to a defining declaration and now that we have added a non-defining 
+            // declaration we should have the symbol point to the new non-defining declaration.
+            // printf ("Switching declaration in functionSymbol to point to the non-defining declaration \n");
+
+               func_symbol->set_declaration(func);
+             }
+
+       // If this is the first non-defining declaration then set the associated data member.
+          SgDeclarationStatement* nondefiningDeclaration = prevDecl->get_firstNondefiningDeclaration();
+          if (nondefiningDeclaration == NULL)
+             {
+               nondefiningDeclaration = func;
+             }
+
+          ROSE_ASSERT(nondefiningDeclaration != NULL);
+
+       // func->set_firstNondefiningDeclaration(prevDecl->get_firstNondefiningDeclaration());
+          func->set_firstNondefiningDeclaration(nondefiningDeclaration);
           func->set_definingDeclaration(prevDecl->get_definingDeclaration());
         }
+
+  // DQ (2/24/2009): Delete the old parameter list build by the actualFunction (template argument) constructor.
+     ROSE_ASSERT(func->get_parameterList() != NULL);
+     delete func->get_parameterList();
+     func->set_parameterList(NULL);
 
   // parameter list
      setParameterList(func, paralist);
@@ -530,6 +580,9 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
         {
        // std::cout<<"patching argument's scope.... "<<std::endl;
           (*argi)->set_scope(scope);
+
+       // DQ (2/23/2009): Also set the declptr (to NULL)
+       // (*argi)->set_declptr(NULL);
         }
   // TODO double check if there are exceptions
      func->set_scope(scope);
@@ -540,11 +593,20 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
 
      func->set_parent(scope);
 
+  // DQ (2/21/2009): We can't assert that this is always NULL or non-NULL.
+  // ROSE_ASSERT(func->get_definingDeclaration() == NULL);
+
+  // DQ (2/21/2009): Added assertion
+     ROSE_ASSERT(func->get_firstNondefiningDeclaration() != NULL);
+
   // mark as a forward declartion
      func->setForward();
 
   // set File_Info as transformation generated
      setSourcePositionForTransformation(func);
+
+  // printf ("In SageBuilder::buildNondefiningFunctionDeclaration_T(): generated function func = %p \n",func);
+
      return func;  
    }
 
@@ -558,13 +620,67 @@ SageBuilder::buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* f
   SgFunctionType * funcType = funcdecl->get_type();
   SgType* return_type = funcType->get_return_type();
   SgFunctionParameterList* paralist = deepCopy<SgFunctionParameterList>(funcdecl->get_parameterList());
-  return buildNondefiningFunctionDeclaration(name,return_type,paralist,scope);
+
+// DQ (2/19/2009): Fixed to handle extern "C" state in input "funcdecl"
+// return buildNondefiningFunctionDeclaration(name,return_type,paralist,scope);
+  SgFunctionDeclaration* returnFunction = buildNondefiningFunctionDeclaration(name,return_type,paralist,scope);
+
+  returnFunction->set_linkage(funcdecl->get_linkage());
+
+  if (funcdecl->get_declarationModifier().get_storageModifier().isExtern() == true)
+     {
+       returnFunction->get_declarationModifier().get_storageModifier().setExtern();
+     }
+
+// DQ (2/22/2009): I think this can be null or valid
+// ROSE_ASSERT(returnFunction->get_definingDeclaration() == NULL);
+  ROSE_ASSERT(returnFunction->get_firstNondefiningDeclaration() != NULL);
+
+  // Make sure that internal referneces are to the same file (else the symbol table information will not be consistant).
+     if (scope != NULL)
+        {
+       // ROSE_ASSERT(returnFunction->get_parent() != NULL);
+          ROSE_ASSERT(returnFunction->get_firstNondefiningDeclaration() != NULL);
+          ROSE_ASSERT(TransformationSupport::getSourceFile(returnFunction) == TransformationSupport::getSourceFile(returnFunction->get_firstNondefiningDeclaration()));
+          ROSE_ASSERT(TransformationSupport::getSourceFile(returnFunction->get_scope()) == TransformationSupport::getSourceFile(returnFunction->get_firstNondefiningDeclaration()));
+        }
+
+  return returnFunction;
 }
 
-SgFunctionDeclaration* SageBuilder::buildNondefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope)
+SgFunctionDeclaration*
+SageBuilder::buildNondefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope)
 {
   SgFunctionDeclaration * result = buildNondefiningFunctionDeclaration_T <SgFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ false, scope);
   return result;
+}
+
+//! Build a prototype for an existing member function declaration (defining or nondefining ) 
+SgMemberFunctionDeclaration *
+SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDeclaration* funcdecl, SgScopeStatement* scope/*=NULL*/)
+{
+  ROSE_ASSERT(funcdecl!=NULL);
+  SgName name=funcdecl->get_name(); 
+  SgFunctionType * funcType = funcdecl->get_type();
+  SgType* return_type = funcType->get_return_type();
+  SgFunctionParameterList* paralist = deepCopy<SgFunctionParameterList>(funcdecl->get_parameterList());
+
+// DQ (2/19/2009): Fixed to handle extern "C" state in input "funcdecl"
+// return buildNondefiningFunctionDeclaration(name,return_type,paralist,scope);
+  SgMemberFunctionDeclaration* returnFunction = buildNondefiningMemberFunctionDeclaration(name,return_type,paralist,scope);
+
+  returnFunction->set_linkage(funcdecl->get_linkage());
+
+  if (funcdecl->get_declarationModifier().get_storageModifier().isExtern() == true)
+     {
+       returnFunction->get_declarationModifier().get_storageModifier().setExtern();
+     }
+
+// DQ (2/26/2009): Make this consistant with the non-member functions.
+// ROSE_ASSERT(returnFunction->get_definingDeclaration() == NULL);
+  ROSE_ASSERT(returnFunction->get_firstNondefiningDeclaration() != NULL);
+
+  return returnFunction;
 }
 
 SgMemberFunctionDeclaration* SageBuilder::buildNondefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope)
@@ -3237,74 +3353,108 @@ SgEnumDeclaration * SageBuilder::buildEnumDeclaration_nfi(const SgName& name, Sg
   //! Build a SgFile node
 SgSourceFile*
 SageBuilder::buildFile(const std::string& inputFileName, const std::string& outputFileName, SgProject* project/*=NULL*/)
-  {
+   {
      ROSE_ASSERT(inputFileName.size()!=0);// empty file name is not allowed.
      string sourceFilename = inputFileName, fullname;
      Rose_STL_Container<std::string> arglist;
-    int nextErrorCode = 0;
+     int nextErrorCode = 0;
 
-     if (project==NULL)
+     if (project == NULL)
       // SgProject is created on the fly
       // Make up an arglist in order to reuse the code inside SgFile::setupSourceFilename()
-      { 
-        project = new SgProject();
-        ROSE_ASSERT(project);
-        project->get_fileList().clear();
+        {
+          project = new SgProject();
+          ROSE_ASSERT(project);
+          project->get_fileList().clear();
 
-        arglist.push_back("cc"); 
-        arglist.push_back("-c"); 
-        project->set_originalCommandLineArgumentList (arglist);
-      } 
+          arglist.push_back("cc"); 
+          arglist.push_back("-c"); 
+          project->set_originalCommandLineArgumentList (arglist);
+        }
 
      ifstream testfile(inputFileName.c_str());
      if (!testfile.is_open()) 
-    {
-      // create a temporary file if the file does not exist.
-      // have to do this, otherwise StringUtility::getAbsolutePathFromRelativePath() complains
-      // which is called by result->setupSourceFilename(arglist);
-       testfile.close();
-       ofstream outputfile(inputFileName.c_str(),ios::out); 
-       //outputfile<<"// test file "<<endl;
-       outputfile.close();
-     }
-     else // file already exists , load and parse it
-     { // should not reparse all files in case their ASTs have unsaved changes, 
-      // just parse the newly loaded file only.
-      // use argv here, change non-existing input file later on
-      // TODO add error code handling 
-     }  
-      testfile.close();
-      arglist = project->get_originalCommandLineArgumentList ();
-      arglist.push_back(sourceFilename);
-      arglist.push_back("-rose:o");
-      arglist.push_back(outputFileName);
+        {
+       // create a temporary file if the file does not exist.
+       // have to do this, otherwise StringUtility::getAbsolutePathFromRelativePath() complains
+       // which is called by result->setupSourceFilename(arglist);
+          testfile.close();
+          ofstream outputfile(inputFileName.c_str(),ios::out); 
+       // DQ (2/6/2009): I think this comment is helpful to put into the file (helps explain why the file exists).
+       // outputfile<<"// Output file generated so that StringUtility::getAbsolutePathFromRelativePath() will see a vaild file ... unparsed file will have rose_ prefix "<<endl;
+          outputfile.close();
+        }
+       else // file already exists , load and parse it
+        {
+       // should not reparse all files in case their ASTs have unsaved changes, 
+       // just parse the newly loaded file only.
+       // use argv here, change non-existing input file later on
+       // TODO add error code handling 
 
-      Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(arglist,/* binaryMode = */ false);
-      CommandlineProcessing::removeAllFileNamesExcept(arglist,fileList,sourceFilename);
+       // DQ (2/6/2009): Avoid closing this file twice (so put this here, instead of below).
+          testfile.close();
+        }
 
-   // DQ (9/3/2008): Added support for SgSourceFile IR node
-   // SgFile* result = new SgFile (arglist, nextErrorCode, 0, project);
-      //AS(10/04/08) Because of refactoring we require the determineFileType function to be called 
-      //to construct the node. 
-      //SgSourceFile* result = new SgSourceFile (arglist, nextErrorCode, 0, project);
-      SgSourceFile* result = isSgSourceFile(determineFileType(arglist, nextErrorCode, project));
-      
-      
-      ROSE_ASSERT(result!=NULL);
-      result->set_parent(project);
-      project->set_file(*result); 
-      project->set_frontendErrorCode(max(project->get_frontendErrorCode(), nextErrorCode));
-      // Not sure why a warning shows up from astPostProcessing.C
-      // SgNode::get_globalMangledNameMap().size() != 0 size = %zu (clearing mangled name cache)
-      if (result->get_globalMangledNameMap().size() != 0) 
-        result->clearGlobalMangledNameMap();
-      return result;
-  }// end SgFile* buildFile()
+  // DQ (2/6/2009): Avoid closing this file twice (moved to false branch above).
+  // testfile.close();
+
+  // DQ (2/6/2009): Need to add the inputFileName to the source file list in the project, 
+  // because this list will be used to subtract off the source files as required to build 
+  // the commandline for the backend compiler.
+     project->get_sourceFileNameList().push_back(inputFileName);
+
+     Rose_STL_Container<string> sourceFilenames = project->get_sourceFileNameList();
+  // printf ("In SageBuilder::buildFile(): sourceFilenames.size() = %zu sourceFilenames = %s \n",sourceFilenames.size(),StringUtility::listToString(sourceFilenames).c_str());
+
+     arglist = project->get_originalCommandLineArgumentList();
+
+  // DQ (2/6/2009): We will be compiling the source code generated in the 
+  // "rose_<inputFileName>" file, so we don't want this on the argument stack.
+     arglist.push_back(sourceFilename);
+
+#if 1
+  // DQ (2/6/2009): Modified.
+     if (outputFileName.empty() == false)
+        {
+          arglist.push_back("-rose:o");
+       // arglist.push_back("-o");
+          arglist.push_back(outputFileName);
+        }
+#endif
+
+  // This handles the case where the original command line may have referenced multiple files.
+     Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(arglist,/* binaryMode = */ false);
+     CommandlineProcessing::removeAllFileNamesExcept(arglist,fileList,sourceFilename);
+
+  // DQ (9/3/2008): Added support for SgSourceFile IR node
+  // SgFile* result = new SgFile (arglist, nextErrorCode, 0, project);
+  // AS(10/04/08) Because of refactoring we require the determineFileType function to be called 
+  // to construct the node.
+  // SgSourceFile* result = new SgSourceFile (arglist, nextErrorCode, 0, project);
+     SgSourceFile* result = isSgSourceFile(determineFileType(arglist, nextErrorCode, project));
+     ROSE_ASSERT(result != NULL);
+
+#if 0
+     result->display("SageBuilder::buildFile()");
+#endif
+
+     result->set_parent(project);
+     project->set_file(*result); 
+     project->set_frontendErrorCode(max(project->get_frontendErrorCode(), nextErrorCode));
+
+  // Not sure why a warning shows up from astPostProcessing.C
+  // SgNode::get_globalMangledNameMap().size() != 0 size = %zu (clearing mangled name cache)
+     if (result->get_globalMangledNameMap().size() != 0) 
+          result->clearGlobalMangledNameMap();
+
+     return result;
+   }// end SgFile* buildFile()
+
 
 PreprocessingInfo* SageBuilder::buildComment(SgLocatedNode* target, const std::string & content,PreprocessingInfo::RelativePositionType position/*=PreprocessingInfo::before*/,PreprocessingInfo::DirectiveType dtype/* = PreprocessingInfo::CpreprocessorUnknownDeclaration*/)
-{
-  return SageInterface::attachComment(target,content, position, dtype);  
-}
+   {
+     return SageInterface::attachComment(target,content, position, dtype);  
+   }
 
 //! #define xxx yyy 
 PreprocessingInfo* SageBuilder::buildCpreprocessorDefineDeclaration(SgLocatedNode* target,const std::string & content,PreprocessingInfo::RelativePositionType position /* =PreprocessingInfo::before*/)

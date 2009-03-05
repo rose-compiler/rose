@@ -1,0 +1,21 @@
+This directory tests the outliner within ROSE.
+
+There are two options:
+  1) outlining into the original source file (default).
+     This adds an additional function to the file where 
+     the code was outlined. This is the more robust mode.
+  2) Outlining to a separate file is now supported, this
+     includes detecting all dependent declarations and
+     copying them to the separate file used to hold the 
+     outlined function. Note that this seemingly trivial 
+     step is quite complex and requires that a lot of internal
+     infrastructure works perfectly.  Complexities include:
+     a) Symbol tables must be built to include the dependent 
+        declarations.
+     b) The AST copy must correctly handle all details to 
+        avoid multiple file inconsistancies (e.g. all defining 
+        and non-defining declarations must be in the same file.
+     c) All references to symbols and declarations in the copied
+        AST and the moved outlined function must be reset to 
+        refer to the associated symbols and declarations.
+     d) Lots of more details (see code).

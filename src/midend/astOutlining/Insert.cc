@@ -31,49 +31,118 @@ using namespace std;
 static
 SgFunctionDeclaration *
 generatePrototype (const SgFunctionDeclaration* full_decl, SgScopeStatement* scope)
-{
-  if (!full_decl) return 0; // nothing to do
+   {
+     if (!full_decl) return 0; // nothing to do
 
-#if 1
+#if 0
   // Temporarily "hide" definition.
-  SgFunctionDeclaration* tmp = const_cast<SgFunctionDeclaration *> (full_decl);
-  SgFunctionDefinition* def = full_decl->get_definition ();
-  ROSE_ASSERT (tmp);
-  tmp->set_definition (0);
+     SgFunctionDeclaration* tmp = const_cast<SgFunctionDeclaration *> (full_decl);
+     SgFunctionDefinition* def = full_decl->get_definition();
+     ROSE_ASSERT (tmp != NULL);
+     tmp->set_definition (NULL);
 
   // Clone the declaration with the hidden definition.
-  SgFunctionDeclaration* proto =
-    isSgFunctionDeclaration (ASTtools::deepCopy (tmp));
-  ROSE_ASSERT (proto);
+     SgFunctionDeclaration* proto = isSgFunctionDeclaration (ASTtools::deepCopy (tmp));
+     ROSE_ASSERT (proto != NULL);
+
+     ROSE_ASSERT (proto != full_decl);
 
   // Restore the definition.
-  tmp->set_definition (def);
-  def->set_parent (tmp);
+     tmp->set_definition (def);
+     def->set_parent (tmp);
 
-  proto->set_forward (true);
-  proto->set_definingDeclaration (tmp);
+     proto->set_forward (true);
+     proto->set_definingDeclaration (tmp);
 #else
-  SgFunctionDeclaration* proto = SageBuilder::buildNondefiningFunctionDeclaration(full_decl,scope);
-  ROSE_ASSERT(proto!=NULL);
-#endif  
-  return proto;
-}
+// DQ (2/23/2009): Use this code instead.
+     SgFunctionDeclaration* proto = SageBuilder::buildNondefiningFunctionDeclaration(full_decl,scope);
+     ROSE_ASSERT(proto != NULL);
+
+     if (Outliner::useNewFile == true)
+        {
+          ROSE_ASSERT(proto->get_definingDeclaration() == NULL);
+        }
+
+  // This should be the defining declaration (check it).
+     ROSE_ASSERT(full_decl->get_definition() != NULL);
+
+  // printf ("full_decl                            = %p = %s \n",full_decl,full_decl->class_name().c_str());
+  // printf ("full_decl->get_definingDeclaration() = %p = %s \n",full_decl->get_definingDeclaration(),full_decl->get_definingDeclaration()->class_name().c_str());
+     ROSE_ASSERT(full_decl->get_definingDeclaration() == full_decl);
+
+  // DQ (2/23/2009): This will result in a cross file edge if we have outlined to a separate file.
+  // SgFunctionDeclaration* tmp = const_cast<SgFunctionDeclaration *> (full_decl);
+  // proto->set_definingDeclaration(tmp);
+  // ROSE_ASSERT(proto->get_definingDeclaration() != NULL);
+  // ROSE_ASSERT(proto->get_definingDeclaration() == NULL);
+#endif
+
+  // printf ("In generateFriendPrototype(): proto->get_definingDeclaration() = %p \n",proto->get_definingDeclaration());
+  // printf ("In generateFriendPrototype(): full_decl = %p returning SgFunctionDeclaration prototype = %p \n",full_decl,proto);
+
+  // Make sure that internal referneces are to the same file (else the symbol table information will not be consistant).
+     ROSE_ASSERT(proto != NULL);
+     ROSE_ASSERT(proto->get_firstNondefiningDeclaration() != NULL);
+
+  // Note that the function prototype has not been inserted into the AST, so it does not have a path to SgSourceFile.
+  // ROSE_ASSERT(TransformationSupport::getSourceFile(proto) == NULL);
+     ROSE_ASSERT(TransformationSupport::getSourceFile(proto) != NULL);
+     ROSE_ASSERT(TransformationSupport::getSourceFile(scope) != NULL);
+
+#if 0
+     if (TransformationSupport::getSourceFile(proto) != NULL)
+          printf ("TransformationSupport::getSourceFile(proto)->getFileName()                                    = %s \n",TransformationSupport::getSourceFile(proto)->getFileName().c_str());
+     printf ("TransformationSupport::getSourceFile(scope)->getFileName()                                    = %s \n",TransformationSupport::getSourceFile(scope)->getFileName().c_str());
+#endif
+
+     ROSE_ASSERT(TransformationSupport::getSourceFile(proto->get_firstNondefiningDeclaration()) != NULL);
+  // printf ("TransformationSupport::getSourceFile(proto->get_firstNondefiningDeclaration())->getFileName() = %s \n",TransformationSupport::getSourceFile(proto->get_firstNondefiningDeclaration())->getFileName().c_str());
+
+     ROSE_ASSERT(TransformationSupport::getSourceFile(scope) == TransformationSupport::getSourceFile(proto->get_firstNondefiningDeclaration()));
+     ROSE_ASSERT(TransformationSupport::getSourceFile(proto->get_scope()) == TransformationSupport::getSourceFile(proto->get_firstNondefiningDeclaration()));
+
+     return proto;
+   }
 
 //! Generates a 'friend' declaration from a given function declaration.
 static
 SgFunctionDeclaration *
 generateFriendPrototype (const SgFunctionDeclaration* full_decl, SgScopeStatement* scope)
-{
-  SgFunctionDeclaration* proto = generatePrototype (full_decl,scope);
-  ROSE_ASSERT (proto);
+   {
+     SgFunctionDeclaration* proto = generatePrototype (full_decl,scope);
+     ROSE_ASSERT (proto != NULL);
 
   // Remove any 'extern' modifiers
-  proto->get_declarationModifier ().get_storageModifier ().reset ();
+     proto->get_declarationModifier ().get_storageModifier ().reset ();
 
   // Set the 'friend' modifier
-  proto->get_declarationModifier ().setFriend ();
-  return proto;
-}
+     proto->get_declarationModifier ().setFriend ();
+
+  // DQ (2/26/2009): Remove the SgFunctionSymbol since this is a "friend" function.
+  // Since this is a friend we don't want to have the SgFunctionSymbol in "scope" 
+  // so remove the symbol.  The SageBuilder function generated the SgFunctionSymbol
+  // and at this point we need to remove it.  Friend function don't have symbols
+  // in the class scope where they may appear as a declaration.  The SageBuilder
+  // function could be provided a parameter to indicate that a friend function is
+  // required, this would then supress the construction of the symbol in the scope's
+  // symbol table (and the scope of the function is not the same as the class scope 
+  // in this case as well.
+     SgFunctionSymbol* friendFunctionSymbol = isSgFunctionSymbol(scope->lookup_symbol(full_decl->get_name()));
+     ROSE_ASSERT(friendFunctionSymbol != NULL);
+  // printf ("@@@@@@@@@@@@ In generateFriendPrototype(): removing SgFunctionSymbol = %p with friendFunctionSymbol->get_declaration() = %p \n",friendFunctionSymbol,friendFunctionSymbol->get_declaration());
+     scope->remove_symbol(friendFunctionSymbol);
+     delete friendFunctionSymbol;
+     friendFunctionSymbol = NULL;
+
+  // printf ("In generatePrototype(): Returning SgFunctionDeclaration prototype = %p \n",proto);
+
+  // ROSE_ASSERT(copyDeclarationStatement->get_firstNondefiningDeclaration()->get_definingDeclaration() != NULL);
+
+     ROSE_ASSERT(proto->get_definingDeclaration() == NULL);
+  // proto->set_definingDeclaration(full_decl);
+
+     return proto;
+   }
 
 /*!
  *  \brief Beginning at the given declaration statement, this routine
@@ -143,12 +212,14 @@ public:
     SgFunctionDeclaration* proto = generatePrototype (def_decl,scope);
     ROSE_ASSERT (proto);
     
-    SgDeclarationStatement* insert_point =
-      findClosestGlobalInsertPoint (target);
+    SgDeclarationStatement* insert_point = findClosestGlobalInsertPoint (target);
     ROSE_ASSERT (insert_point);
 
-    ASTtools::moveBeforePreprocInfo (insert_point, proto);    
-#if 1    
+    ASTtools::moveBeforePreprocInfo (insert_point, proto);
+#if 1
+ // ROSE_ASSERT(insert_point->get_scope() == scope);
+    ROSE_ASSERT(find(scope->getDeclarationList().begin(),scope->getDeclarationList().end(),insert_point) != scope->getDeclarationList().end());
+
     scope->insert_statement (insert_point, proto, true);
     proto->set_parent (scope);
     proto->set_scope (scope);
@@ -156,7 +227,8 @@ public:
     // this only insert it under a parent node,not a scope node
     //SageInterface::insertStatementBefore(insert_point,proto);
     SageInterface::prependStatement(proto,scope);
-#endif    
+#endif
+
     if (!Outliner::useNewFile)
       def_decl->set_firstNondefiningDeclaration (proto);
 
@@ -178,39 +250,73 @@ private:
 static
 SgFunctionDeclaration *
 insertGlobalPrototype (SgFunctionDeclaration* def,
-                       FuncDeclList_t& protos,
+                       FuncDeclList_t & friendFunctionPrototypeList,
                        SgGlobal* scope,
                        SgDeclarationStatement* default_target)
 {
-  SgFunctionDeclaration* proto = 0;
+  SgFunctionDeclaration* prototype = NULL;
+
+
   if (def && scope)
   {
+ // DQ (3/3/2009): Why does this code use try .. catch blocks (exception handling)?
     try
     {
       GlobalProtoInserter ins (def, scope);
       ins.traverse (scope, preorder);
-      proto = ins.getProto ();
+      prototype = ins.getProto();
     }
-    catch (string& s) { ROSE_ASSERT (s == "done"); }
+    catch (string & s) { ROSE_ASSERT (s == "done"); }
 
-    if (!proto && default_target) // No declaration found
-      proto = GlobalProtoInserter::insertManually (def,
-          scope,
-          default_target);
+    if (!prototype && default_target) // No declaration found
+       {
+         prototype = GlobalProtoInserter::insertManually (def,scope,default_target);
+      // printf ("In insertGlobalPrototype(): Calling GlobalProtoInserter::insertManually(): prototype = %p = %s \n",prototype,prototype->class_name().c_str());
+         if (Outliner::useNewFile == true)
+            {
+              ROSE_ASSERT(prototype->get_definingDeclaration() == NULL);
+            }
+       }
   }
 
   // Fix-up remaining prototypes.
-  if (proto)
-    for (FuncDeclList_t::iterator i = protos.begin (); i != protos.end (); ++i)
-    {
-      SgFunctionDeclaration* proto_i = *i;
-      ROSE_ASSERT (proto_i);
-      proto_i->set_firstNondefiningDeclaration (proto);
-      proto_i->set_definingDeclaration (def);
-    }
+     if (prototype != NULL)
+        {
+       // printf ("In insertGlobalPrototype(): proto = %p protos.size() = %zu \n",prototype,friendFunctionPrototypeList.size());
+          for (FuncDeclList_t::iterator i = friendFunctionPrototypeList.begin (); i != friendFunctionPrototypeList.end (); ++i)
+             {
+               SgFunctionDeclaration* proto_i = *i;
+               ROSE_ASSERT (proto_i);
+               proto_i->set_firstNondefiningDeclaration (prototype);
 
-  return proto;
-}
+            // Only set the friend function prototype to reference the defining declaration
+            // of we will NOT be moving the defining declaration to a separate file.
+               if (Outliner::useNewFile == false)
+                    proto_i->set_definingDeclaration(def);
+             }
+
+       // DQ (2/20/2009): Set the non-defining declaration
+          if (def->get_firstNondefiningDeclaration() == NULL)
+             {
+               prototype->set_firstNondefiningDeclaration(prototype);
+             }
+
+       // DQ (2/20/2009): Added assertions.
+          ROSE_ASSERT(prototype->get_parent() != NULL);
+          ROSE_ASSERT(prototype->get_firstNondefiningDeclaration() != NULL);
+
+       // DQ (2/23/2009): After change in generatePrototype() to use build functions this is now NULL (OK for now)
+       // ROSE_ASSERT(proto->get_definingDeclaration() != NULL);
+          if (Outliner::useNewFile == true)
+             {
+               ROSE_ASSERT(prototype->get_definingDeclaration() == NULL);
+             }
+        }
+
+  // printf ("In insertGlobalPrototype(): Returning global SgFunctionDeclaration prototype = %p \n",prototype);
+
+     return prototype;
+   }
 
 /*!
  *  \brief Given a 'friend' declaration, insert it into the given
@@ -231,7 +337,8 @@ insertFriendDecl (const SgFunctionDeclaration* func,
 
       // Create the friend declaration.
       friend_proto = generateFriendPrototype (func,cls_scope);
-      ROSE_ASSERT (friend_proto);
+      ROSE_ASSERT (friend_proto != NULL);
+      ROSE_ASSERT(friend_proto->get_definingDeclaration() == NULL);
 
       // Insert it into the class.
       if (i != mems.end ())
@@ -240,6 +347,9 @@ insertFriendDecl (const SgFunctionDeclaration* func,
       friend_proto->set_parent (cls_scope);
       friend_proto->set_scope (scope);
     }
+
+  // printf ("In insertFriendDecl(): Returning SgFunctionDeclaration prototype = %p \n",friend_proto);
+
   return friend_proto;
 }
 
@@ -261,6 +371,7 @@ isProtPriv (const SgDeclarationStatement* decl)
       return decl && (decl_access_mod.isPrivate ()
                       || decl_access_mod.isProtected ());
     }
+
   return false;
 }
 
@@ -285,7 +396,8 @@ isProtPrivMember (SgVarRefExp* v)
             return cl_def;
         }
     }
-  return 0; // default: is not
+
+  return NULL; // default: is not
 }
 
 /*!
@@ -311,6 +423,7 @@ isProtPrivType (SgType* t)
             return isSgClassDefinition (decl->get_parent ());
         }
     }
+
   return false;
 }
 
@@ -350,11 +463,13 @@ insertFriendDecls (SgFunctionDeclaration* func,
 {
   if (func && scope)
     {
-      // Collect a list of all classes that need a 'friend' decl.
+   // printf ("In insertFriendDecls(): friends list size = %zu \n",friends.size());
+
+   // Collect a list of all classes that need a 'friend' decl.
       typedef set<SgClassDefinition *> ClassDefSet_t;
       ClassDefSet_t classes;
       
-      // First, look for references to private variables.
+   // First, look for references to private variables.
       typedef Rose_STL_Container<SgNode *> NodeList_t;
       NodeList_t var_refs = NodeQuery::querySubTree (func, V_SgVarRefExp);
       for (NodeList_t::iterator v = var_refs.begin (); v != var_refs.end (); ++v)
@@ -368,9 +483,8 @@ insertFriendDecls (SgFunctionDeclaration* func,
             classes.insert (cl_def);
         }
       
-      // Get a list of all function reference expressions.
-      NodeList_t func_refs = NodeQuery::querySubTree (func,
-                                                      V_SgMemberFunctionRefExp);
+   // Get a list of all function reference expressions.
+      NodeList_t func_refs = NodeQuery::querySubTree (func,V_SgMemberFunctionRefExp);
       for (NodeList_t::iterator f = func_refs.begin (); f != func_refs.end ();
            ++f)
         {
@@ -380,16 +494,31 @@ insertFriendDecls (SgFunctionDeclaration* func,
             classes.insert (cl_def);
         }
 
-      // Insert 'em
+   // Insert 'em
       for (ClassDefSet_t::iterator c = classes.begin (); c != classes.end (); ++c)
         {
           ROSE_ASSERT (*c);
           SgFunctionDeclaration* friend_decl = insertFriendDecl (func, scope, *c);
-          ROSE_ASSERT (friend_decl);
+          ROSE_ASSERT (friend_decl != NULL);
+#if 0
+          printf ("+++++++++++++++++++ friend_decl = %p = %s \n",friend_decl,friend_decl->class_name().c_str());
+#endif
+       // DQ (2/23/2009): Added assertion.
+          ROSE_ASSERT(friend_decl->get_definingDeclaration() == NULL);
+
+          ROSE_ASSERT(friend_decl->get_scope() == scope);
+
+       // DQ (2/27/2009): If we are outlining to a separate file, then we don't want to attach
+       // a reference to the defining declaration which will be moved to the different file 
+       // (violates file consistancy rules that are not well enforced).
+          ROSE_ASSERT(friend_decl->get_definingDeclaration() == NULL);
+       // printf ("friend_decl = %p friend_decl->get_definingDeclaration() = %p \n",friend_decl,friend_decl->get_definingDeclaration());
+
           friends.push_back (friend_decl);
         }
     }
 }
+
 
 // =====================================================================
 //! Insert func into scope (could be either original scope or the new scope from a new file), 
@@ -397,73 +526,528 @@ insertFriendDecls (SgFunctionDeclaration* func,
 //  target's original enclosing function). 
 void
 Outliner::Transform::insert (SgFunctionDeclaration* func,
-                                SgGlobal* scope,
-                                SgFunctionDeclaration* target_func)
-{
-  ROSE_ASSERT (func && scope && target_func);
+                             SgGlobal* scope,
+                             SgFunctionDeclaration* target_func,
+                             SgBasicBlock* target_outlined_code )
+   {
+  // Scope is the global scope of the outlined location (could be in a separate file).
 
-  // x. Insert the defining function 
-  // Put the actual defining declaration at the end of global scope.
-#if 1 
-  scope->append_declaration (func);
-  func->set_scope (scope);
-  func->set_parent (scope);
+     ROSE_ASSERT (func != NULL && scope != NULL && target_func != NULL);
+     ROSE_ASSERT(target_outlined_code != NULL);
+
+  // This is the global scope of the original file
+     SgGlobal* src_global = SageInterface::getGlobalScope(target_func);
+     ROSE_ASSERT(src_global != NULL);
+
+  // The scopes are the same only if this the outlining is NOT being output to a separate file.
+     ROSE_ASSERT( (Outliner::useNewFile == true && scope != src_global) || (Outliner::useNewFile == false || scope == src_global) );
+
+  // Make sure this is a defining function
+     ROSE_ASSERT(func->get_definition() != NULL);
+     ROSE_ASSERT(func->get_definingDeclaration() != NULL);
+     ROSE_ASSERT(func->get_definingDeclaration() == func);
+
+#if 0
+     printf ("******************************************************************************************** \n");
+     printf ("Outliner::Transform::insert(): input function func = %p func->get_definingDeclaration() = %p \n",func,func->get_definingDeclaration());
+     printf ("******************************************************************************************** \n");
+#endif
+
+     ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
+
+  // The constructed defining declaration should have a symbol in its scope, remove it.
+     SgFunctionSymbol* definingFunctionSymbol = isSgFunctionSymbol(scope->lookup_symbol(func->get_name()));
+     ROSE_ASSERT(definingFunctionSymbol != NULL);
+     scope->remove_symbol(definingFunctionSymbol);
+     delete definingFunctionSymbol;
+     definingFunctionSymbol = NULL;
+     ROSE_ASSERT(scope->lookup_symbol(func->get_name()) == NULL);
+
+  // Put the input function into the target scope
+     scope->append_declaration (func);
+     func->set_scope (scope);
+     func->set_parent (scope);
+
+  // Error checking...
+     if (Outliner::useNewFile == false)
+        {
+          ROSE_ASSERT(func->get_scope() == src_global);
+          ROSE_ASSERT(func->get_scope() == scope);
+          ROSE_ASSERT(scope == src_global);
+        }
+       else
+        {
+          ROSE_ASSERT(scope != src_global);
+          ROSE_ASSERT(func->get_scope() == scope);
+          ROSE_ASSERT(func->get_scope() != src_global);
+        }
+
+#if 0
+     printf ("************************************************************ \n");
+     printf ("Building the outline function prototype in the ORIGINAL file \n");
+     printf ("************************************************************ \n");
+#endif
+     
+  // I don't understand what this is (appears to be a list of oulined function prototypes (non-defining declarations)).
+  // It is used by both the insertGlobalPrototype() and 
+     FuncDeclList_t friendFunctionPrototypeList;
+
+     if (SageInterface::is_Fortran_language() == false)
+        {
+#if 1
+       // Insert all necessary 'friend' declarations. This step will not build symbols for the symbol
+       // table (although the build functions will they are removed in the insertFriendDecls() function).
+          insertFriendDecls (func, src_global, friendFunctionPrototypeList);
 #else
-  SageInterface::appendStatement(func,scope);
-#endif  
+          printf ("Skipping the insertion of friend function declarations (testing only) \n");
+#endif
+        }
+
+  // This is done in the original file (does not effect the separate file if we outline the function there)
+  // Insert a single, global prototype (i.e., a first non-defining
+  // declaration), which specifies the linkage property of 'func'.
+  // insertGlobalPrototype (func, protos, src_global, target_func);
+     SgFunctionDeclaration* sourceFileFunctionPrototype = insertGlobalPrototype (func, friendFunctionPrototypeList, src_global, target_func);
+
+     SgFunctionSymbol* sourceFileFunctionPrototypeSymbol = isSgFunctionSymbol(src_global->lookup_symbol(func->get_name()));
+     ROSE_ASSERT(sourceFileFunctionPrototypeSymbol != NULL);
+     ROSE_ASSERT(sourceFileFunctionPrototypeSymbol->get_declaration() == sourceFileFunctionPrototype);
+
+     ROSE_ASSERT(sourceFileFunctionPrototype->get_firstNondefiningDeclaration() == sourceFileFunctionPrototype);
+  // sourceFileFunctionPrototype->set_firstNondefiningDeclaration(sourceFileFunctionPrototype);
+
+  // DQ (2/27/2009): Assert this as a test!
+     ROSE_ASSERT(sourceFileFunctionPrototype->get_definingDeclaration() == NULL);
+
+  // This is the outlined function prototype that is put into the separate file (when outlining is done to a separate file).
+     SgFunctionDeclaration* outlinedFileFunctionPrototype = NULL;
+     if (Outliner::useNewFile == true)
+        {
+#if 0
+          printf ("************************************************************ \n");
+          printf ("Building the outline function prototype in the SEPARATE file \n");
+          printf ("************************************************************ \n");
+
+          printf ("Before: Number of symbols in scope = %p symbol table = %d \n",scope,scope->get_symbol_table()->size());
+          printf ("Output the symbol table: \n");
+          scope->get_symbol_table()->print("Building the outline function prototype in the SEPARATE file");
+#endif
+
+       // Build a function prototype and insert it first (will be at the top of the generated file).
+          outlinedFileFunctionPrototype = SageBuilder::buildNondefiningFunctionDeclaration (func,scope);
+       // scope->append_declaration (outlinedFileFunctionPrototype);
+          scope->prepend_declaration (outlinedFileFunctionPrototype);
+
+#if 0
+          printf ("After: Number of symbols in scope = %p symbol table = %d \n",scope,scope->get_symbol_table()->size());
+          printf ("In Outliner::Transform::insert(): outlinedFileFunctionPrototype = %p \n",outlinedFileFunctionPrototype);
+#endif
+
+       // The build function should have build symbol for the symbol table.
+          SgFunctionSymbol* outlinedFileFunctionPrototypeSymbol = isSgFunctionSymbol(scope->lookup_symbol(func->get_name()));
+          ROSE_ASSERT(outlinedFileFunctionPrototypeSymbol != NULL);
+          ROSE_ASSERT(outlinedFileFunctionPrototypeSymbol->get_declaration() == outlinedFileFunctionPrototype);
+
+       // DQ (2/27/2009): Assert this as a test!
+          ROSE_ASSERT(outlinedFileFunctionPrototype->get_definingDeclaration() == NULL);
+
+       // DQ (2/20/2009): ASK LIAO: If func is a defining declaration then shouldn't the 
+       // SageBuilder::buildNondefiningFunctionDeclaration() set the definingDeclaration?
+          outlinedFileFunctionPrototype->set_definingDeclaration(func);
+          outlinedFileFunctionPrototype->set_parent(scope);
+          outlinedFileFunctionPrototype->set_scope(scope);
+
+       // Set the func_prototype as the first non-defining declaration.
+          func->set_firstNondefiningDeclaration(outlinedFileFunctionPrototype);
+
+          ROSE_ASSERT(outlinedFileFunctionPrototype->get_parent() != NULL);
+          ROSE_ASSERT(outlinedFileFunctionPrototype->get_firstNondefiningDeclaration() != NULL);
+          ROSE_ASSERT(outlinedFileFunctionPrototype->get_definingDeclaration() != NULL);
+
+       // Since the outlined function has been moved to a new file we can't have a pointer to the defining declaration.
+          ROSE_ASSERT(sourceFileFunctionPrototype->get_definingDeclaration() == NULL);
+
+       // Add a message to the top of the outlined function that has been added
+          SageInterface::addMessageStatement(outlinedFileFunctionPrototype,"/* OUTLINED FUNCTION PROTOTYPE */");
+
+       // Make sure that internal referneces are to the same file (else the symbol table information will not be consistant).
+          ROSE_ASSERT(func->get_firstNondefiningDeclaration() != NULL);
+          ROSE_ASSERT(TransformationSupport::getSourceFile(func) == TransformationSupport::getSourceFile(func->get_firstNondefiningDeclaration()));
+          ROSE_ASSERT(TransformationSupport::getSourceFile(func->get_scope()) == TransformationSupport::getSourceFile(func->get_firstNondefiningDeclaration()));
+        }
+       else
+        {
+       // Since the outlined function has been kept in the same file we can have a pointer to the defining declaration.
+          sourceFileFunctionPrototype->set_definingDeclaration(func);
+          ROSE_ASSERT(sourceFileFunctionPrototype->get_definingDeclaration() != NULL);
+
+       // DQ (2/23/2009): If this is outlined into the same file then set the pointer to 
+       // the defining declaration, else avoid pointers acorss files.
+       // sourceFileFunctionPrototype->set_definingDeclaration(func);
+       // ROSE_ASSERT(sourceFileFunctionPrototype->get_definingDeclaration() != NULL);
+        }
+
+     if (SageInterface::is_Fortran_language() == true)
+        {
+       // This needs to be re-thought when we debug the Fortran cases
+
+          func->set_firstNondefiningDeclaration(func);
+       // func->set_definingDeclaration (def);
+
+          printf ("Fortran outlining support not yet fixed up! \n");
+          ROSE_ASSERT(false);
+        }
+
+     ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
+     ROSE_ASSERT(func->get_firstNondefiningDeclaration() != NULL);
+   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#if 0
+
+// Older version of code rewritten above!
+
+#error "DEAD CODE!"
+
+// =====================================================================
+//! Insert func into scope (could be either original scope or the new scope from a new file), 
+//  and insert necessary declarations into the global scope of
+//  target's original enclosing function). 
+void
+Outliner::Transform::insert (SgFunctionDeclaration* func,
+                             SgGlobal* scope,
+                             SgFunctionDeclaration* target_func,
+                             SgBasicBlock* target_outlined_code )
+   {
+  // DQ (2/16/2009): Note that the target_outlined_code is the code selected by the #pragma after 
+  // it has been placed into a SgBasicBlock.  If there are dependences upon typedefs in the function
+  // then these need to be reproduced in the outlined code (not handled yet).
+
+  // This function consists of a few steps:
+  //    1) Move the function to the new file.
+  //       Do this first so that function prototypes added afterward along with their 
+  //       symbol table requirements can be addressed along the way.   Likely 
+  //       we should remove and rebuild the symbol tables entries as required.
+  //    2) Build a prototye for the outlined function.
+  //       If outlined to a separate file then build one in the outlined file
+  //       and one in the original file.  Symbol tables in goth files must be made consistant.
+  //        
+
+     ROSE_ASSERT (func != NULL && scope != NULL && target_func != NULL);
+     ROSE_ASSERT(target_outlined_code != NULL);
+
+  // Make sure this is a defining function
+     ROSE_ASSERT(func->get_definition() != NULL);
+     ROSE_ASSERT(func->get_definingDeclaration() != NULL);
+     ROSE_ASSERT(func->get_definingDeclaration() == func);
+
+     printf ("******************************************************************************************** \n");
+     printf ("Outliner::Transform::insert(): input function func = %p func->get_definingDeclaration() = %p \n",func,func->get_definingDeclaration());
+     printf ("******************************************************************************************** \n");
+
+     ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
+
+  // x. Insert the defining function
+#if 0
+  // The constructed defining declaration should have a symbol in its scope.
+     SgFunctionSymbol* definingFunctionSymbol = isSgFunctionSymbol(scope->lookup_symbol(func->get_name()));
+     ROSE_ASSERT(definingFunctionSymbol != NULL);
+     scope->remove_symbol(definingFunctionSymbol);
+     delete definingFunctionSymbol;
+     definingFunctionSymbol = NULL;
+     ROSE_ASSERT(scope->lookup_symbol(func->get_name()) == NULL);
+#endif
+
+     if (useNewFile == false)
+        {
+       // Put the actual defining declaration at the end of global scope for the original file.
+
+       // DQ (2/16/2009): When inserting the outlined function into the current file we 
+       // don't need to reproduce dependent declarations (they are already defined).
+          scope->append_declaration (func);
+          func->set_scope (scope);
+          func->set_parent (scope);
+        }
+       else
+        {
+       // Put the actual defining declaration at the end of global scope of the separately constructed file.
+
+       // FIXME: Refactor this code to be with the case of adding a function prototype for the outlined function for the source file
+
+#error "DEAD CODE!"
+
+
+#if 1
+       // Build a function prototype and insert it first (will be at the top of the generated file).
+          SgFunctionDeclaration* func_prototype = SageBuilder::buildNondefiningFunctionDeclaration (func,scope);
+          scope->append_declaration (func_prototype);
+
+          printf ("In Outliner::Transform::insert(): func_prototype = %p \n",func_prototype);
+
+       // DQ (2/202/2009): ASK LIAO: If func is a defining declaration then shouldn't the 
+       // SageBuilder::buildNondefiningFunctionDeclaration() set the definingDeclaration?
+          func_prototype->set_definingDeclaration(func);
+          func_prototype->set_parent(scope);
+          func_prototype->set_scope(scope);
+
+       // Set the func_prototype as the first non-defining declaration.
+          func->set_firstNondefiningDeclaration(func_prototype);
+
+          ROSE_ASSERT(func_prototype->get_parent() != NULL);
+          ROSE_ASSERT(func_prototype->get_firstNondefiningDeclaration() != NULL);
+          ROSE_ASSERT(func_prototype->get_definingDeclaration() != NULL);
+
+       // Add a message to the top of the outlined function that has been added
+          SageInterface::addMessageStatement(func_prototype,"/* OUTLINED FUNCTION PROTOTYPE */");
+
+       // Now insert the outlined function (specify the scope to be that of the global scope in the separate (new) file.
+          scope->append_declaration(func);
+          func->set_scope(scope);
+          func->set_parent(scope);
+
+       // Make sure that internal referneces are to the same file (else the symbol table information will not be consistant).
+          ROSE_ASSERT(func->get_firstNondefiningDeclaration() != NULL);
+          ROSE_ASSERT(TransformationSupport::getSourceFile(func) == TransformationSupport::getSourceFile(func->get_firstNondefiningDeclaration()));
+          ROSE_ASSERT(TransformationSupport::getSourceFile(func->get_scope()) == TransformationSupport::getSourceFile(func->get_firstNondefiningDeclaration()));
+#else
+          printf ("Skipped building the function prototype (testing only)! \n");
+
+       // Now insert the outlined function (specify the scope to be that of the global scope in the separate (new) file.
+          scope->append_declaration(func);
+          func->set_scope(scope);
+          func->set_parent(scope);
+#endif
+        }
+
+     ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
+
+  // This is asserted to early, in the case of a single file, the because the function prototype
+  // for the outlined function for the original file has not been built yet. We also want to
+  // avoid cross file references.
+  // ROSE_ASSERT(func->get_firstNondefiningDeclaration() != NULL);
 
   // x. Insert the defining function's prototype right before target_func
   //
-  // the scope parameter may be from the new source file 
+  // the scope parameter may be from the new source file
   // so we grab the original global scope from the target_func (original enclosing function)
-  SgGlobal* src_global = SageInterface::getGlobalScope(target_func);
-  ROSE_ASSERT(src_global != NULL);
-  if (!Outliner::useNewFile)
-    ROSE_ASSERT(scope == src_global);
+     SgGlobal* src_global = SageInterface::getGlobalScope(target_func);
+     ROSE_ASSERT(src_global != NULL);
+
+#error "DEAD CODE!"
+
+  // The scopes are the same only if this the outlining is NOT being output to a separate file.
+     if (!Outliner::useNewFile)
+        {
+          ROSE_ASSERT(scope == src_global);
+        }
+  
+     FuncDeclList_t protos;
 
   // no forward declaration is needed for Fortran 77 
   // Liao, 12/13/2007
-  if (!SageInterface::is_Fortran_language())
-  {
-    // Insert all necessary 'friend' declarations.
-    FuncDeclList_t protos;
-    insertFriendDecls (func, src_global, protos);
+     if (SageInterface::is_Fortran_language() == false)
+        {
+#if 1
+       // Insert all necessary 'friend' declarations. This step will not build symbols for the symbol
+       // table (although the build functions will they are removed in the insertFriendDecls() function).
+          insertFriendDecls (func, src_global, protos);
+#else
+          printf ("Skipping the insertion of friend function declarations (testing only) \n");
+#endif
 
-    // Insert a single, global prototype (i.e., a first non-defining
-    // declaration), which specifies the linkage property of 'func'.
-    insertGlobalPrototype (func, protos, src_global, target_func);
-  }
-  else
-  {
-    func->set_firstNondefiningDeclaration (func);
-    //     func->set_definingDeclaration (def);
-  }
+          printf ("After insertFriendDecls(): src_global        = %p = %s \n",src_global,(src_global != NULL) ? src_global->class_name().c_str() : "NULL");
+          printf ("After insertFriendDecls(): func->get_scope() = %p = %s \n",func->get_scope(),(func->get_scope() != NULL) ? func->get_scope()->class_name().c_str() : "NULL");
 
-#if 1 //Should be removed once SageBuilder is used
+          printf ("TransformationSupport::getFile(src_global = %p)->getFileName() = %s \n",src_global,TransformationSupport::getFile(src_global)->getFileName().c_str());
+          printf ("TransformationSupport::getFile(scope      = %p)->getFileName() = %s \n",scope,TransformationSupport::getFile(scope)->getFileName().c_str());
+
+       // DQ (2/19/2009): I think that the AST copy might not be generating the correct global scope when we are outlining to a new file!
+          if (Outliner::useNewFile == false)
+             {
+               ROSE_ASSERT(func->get_scope() == src_global);
+               ROSE_ASSERT(func->get_scope() == scope);
+               ROSE_ASSERT(scope == src_global);
+             }
+            else
+             {
+               ROSE_ASSERT(scope != src_global);
+               ROSE_ASSERT(func->get_scope() == scope);
+               ROSE_ASSERT(func->get_scope() != src_global);
+             }
+
+          printf ("TransformationSupport::getFile(func       = %p)->getFileName() = %s \n",func,TransformationSupport::getFile(func)->getFileName().c_str());
+
+#error "DEAD CODE!"
+
+       // This assertion is too early for the case of outlinng to the same file.
+       // ROSE_ASSERT(func->get_firstNondefiningDeclaration() != NULL);
+
+       // This is done in the original file (does not effect the separate file if we outline the function there)
+       // Insert a single, global prototype (i.e., a first non-defining
+       // declaration), which specifies the linkage property of 'func'.
+       // insertGlobalPrototype (func, protos, src_global, target_func);
+          SgFunctionDeclaration* sourceFileFunctionPrototype = insertGlobalPrototype (func, protos, src_global, target_func);
+
+          ROSE_ASSERT(func->get_firstNondefiningDeclaration() != NULL);
+
+          if (Outliner::useNewFile == true)
+             {
+               ROSE_ASSERT(sourceFileFunctionPrototype->get_definingDeclaration() == NULL);
+             }
+
+          if (Outliner::useNewFile == false)
+             {
+            // DQ (2/23/2009): If this is outlined into the same file then set the pointer to 
+            // the defining declaration, else avoid pointers acorss files.
+               sourceFileFunctionPrototype->set_definingDeclaration(func);
+               ROSE_ASSERT(sourceFileFunctionPrototype->get_definingDeclaration() != NULL);
+             }
+            else
+             {
+               ROSE_ASSERT(sourceFileFunctionPrototype->get_definingDeclaration() == NULL);
+             }
+
+          ROSE_ASSERT(sourceFileFunctionPrototype != NULL);
+       // ROSE_ASSERT(sourceFileFunctionPrototype->get_definingDeclaration() != NULL);
+       // ROSE_ASSERT(sourceFileFunctionPrototype->get_definingDeclaration() == target_func);
+          ROSE_ASSERT(sourceFileFunctionPrototype->get_firstNondefiningDeclaration() != NULL);
+       // ROSE_ASSERT(sourceFileFunctionPrototype->get_firstNondefiningDeclaration() == sourceFileFunctionPrototype);
+#if 0
+          printf ("++++++++++++++++++++++++ Called insertGlobalPrototype(): sourceFileFunctionPrototype = %p = %s func = %p = %s \n",sourceFileFunctionPrototype,sourceFileFunctionPrototype->class_name().c_str(),func,func->class_name().c_str());
+#endif
+          ROSE_ASSERT(sourceFileFunctionPrototype != func);
+
+          if (Outliner::useNewFile == false)
+             {
+            // printf ("func = %p func->get_firstNondefiningDeclaration() = %p \n",func,func->get_firstNondefiningDeclaration());
+               ROSE_ASSERT(func->get_firstNondefiningDeclaration() != NULL);
+            // func->set_firstNondefiningDeclaration(sourceFileFunctionPrototype);
+            // ROSE_ASSERT(func->get_firstNondefiningDeclaration() != NULL);
+             }
+            else
+             {
+               sourceFileFunctionPrototype->set_firstNondefiningDeclaration(sourceFileFunctionPrototype);
+
+            // DQ (2/25/2009): We build the function prototype for the case of a separate file at the 
+            // start of this function. At that location we initialize the firstNondefiningDeclaration()
+            // for "func" so that it is valid for "func" location in the new file.  Now that this avoids 
+            // cross file references which are not allowed in a consistant AST. so don't reset to NULL.
+            // func->set_firstNondefiningDeclaration(NULL);
+             }
+
+       // printf ("In Outliner::Transform::insert(): func = %p = %s \n",func,func->class_name().c_str());
+        }
+       else
+        {
+          func->set_firstNondefiningDeclaration (func);
+       // func->set_definingDeclaration (def);
+        }
+
+#error "DEAD CODE!"
+
+     ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
+     ROSE_ASSERT(func->get_firstNondefiningDeclaration() != NULL);
+
+#if 0
+  // DQ (2/22/2009): Ask Liao when we can remove this!
+
+  // Should be removed once SageBuilder is used
   // DQ (9/7/2007): Need to add function symbol to global scope!
   //   printf ("Fixing up the symbol table in scope = %p = %s for function = %p = %s \n",glob_scope,glob_scope->class_name().c_str(),func,func->get_name().str());
-  if (src_global->lookup_function_symbol(func->get_name()) == NULL)  
-  {
-    SgFunctionSymbol* functionSymbol = new SgFunctionSymbol(func);
-    src_global->insert_symbol(func->get_name(),functionSymbol);
-    ROSE_ASSERT(src_global->lookup_function_symbol(func->get_name()) != NULL);
-  }
+     if (src_global->lookup_function_symbol(func->get_name()) == NULL)  
+        {
+          printf ("Adding the SgFunctionSymbol for func->get_name() = %s to the original source file's symbol table \n",func->get_name().str());
+          SgFunctionSymbol* functionSymbol = new SgFunctionSymbol(func);
+          src_global->insert_symbol(func->get_name(),functionSymbol);
+          ROSE_ASSERT(src_global->lookup_function_symbol(func->get_name()) != NULL);
+        }
 
-// Fixup the symbol in the newly generated file for the inserted function definition
-  if (Outliner::useNewFile &&
-      (scope->lookup_function_symbol(func->get_name()) == NULL) ) 
-  {
-    SgFunctionSymbol* functionSymbol = new SgFunctionSymbol(func);
-    scope->insert_symbol(func->get_name(),functionSymbol);
-    ROSE_ASSERT(scope->lookup_function_symbol(func->get_name()) != NULL);
-  }
-#endif 
-  ROSE_ASSERT(func->get_definingDeclaration()         != NULL);
-  if  (!Outliner::useNewFile) 
-  {
-    // there can be NULL nondefining declaration if it is inserted into a brand new source file
-    ROSE_ASSERT(func->get_firstNondefiningDeclaration() != NULL);
-  }
-}
+     ROSE_ASSERT(func->get_firstNondefiningDeclaration() != NULL);
+     ROSE_ASSERT(TransformationSupport::getSourceFile(func) == TransformationSupport::getSourceFile(func->get_firstNondefiningDeclaration()));
+     ROSE_ASSERT(TransformationSupport::getSourceFile(func->get_scope()) == TransformationSupport::getSourceFile(func->get_firstNondefiningDeclaration()));
+
+  // Fixup the symbol in the newly generated file for the inserted function definition
+     if (Outliner::useNewFile && (scope->lookup_function_symbol(func->get_name()) == NULL) ) 
+        {
+          printf ("Adding the SgFunctionSymbol for func->get_name() = %s to the separate file's symbol table \n",func->get_name().str());
+          SgFunctionSymbol* functionSymbol = new SgFunctionSymbol(func);
+          scope->insert_symbol(func->get_name(),functionSymbol);
+          ROSE_ASSERT(scope->lookup_function_symbol(func->get_name()) != NULL);
+
+          printf ("Added the SgFunctionSymbol for func->get_name() = %s to the separate file's symbol table \n",func->get_name().str());
+          ROSE_ASSERT(false);
+        }
+       else
+        {
+          printf ("No need to add the SgFunctionSymbol for func->get_name() = %s to the separate file's symbol table (scope = %p) \n",func->get_name().str(),scope);
+
+          printf ("Outliner::useNewFile = %s \n",Outliner::useNewFile ? "true" : "false");
+          if (Outliner::useNewFile == true)
+             {
+               ROSE_ASSERT(scope->lookup_function_symbol(func->get_name()) != NULL);
+             }
+#if 0
+          printf ("Exiting as a test \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+  // Check that they associated symbols are in the symbol tables for each scope (where they are different).
+     ROSE_ASSERT(src_global->lookup_function_symbol(func->get_name()) != NULL);
+     ROSE_ASSERT(scope->lookup_function_symbol(func->get_name()) != NULL);
+
+  // Check that there is a vaild type!
+     SgFunctionType* functionType = func->get_type();
+     ROSE_ASSERT(functionType != NULL);
+     if (SgNode::get_globalFunctionTypeTable()->get_function_type_table()->find_function_type(functionType->get_mangled_type()) == NULL)
+        {
+       // We need to add a SgFunctionType symbol to the function type table.
+          printf ("Adding the function type to the global function type table. \n");
+       // SgNode::get_globalFunctionTypeTable()->get_function_type_table()->insert_function_type(functionType->get_mangled_type(),functionType);
+          SgNode::get_globalFunctionTypeTable()->insert_function_type(functionType->get_mangled_type(),functionType);
+        }
+     ROSE_ASSERT(SgNode::get_globalFunctionTypeTable()->get_function_type_table()->find_function_type(functionType->get_mangled_type()) != NULL);
+#endif
+
+#error "DEAD CODE!"
+
+     ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
+
+     ROSE_ASSERT(func->get_definingDeclaration() != NULL);
+     if  (!Outliner::useNewFile) 
+        {
+       // there can be NULL nondefining declaration if it is inserted into a brand new source file
+          ROSE_ASSERT(func->get_firstNondefiningDeclaration() != NULL);
+        }
+
+     ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
+   }
+
+#error "DEAD CODE!"
+
+#endif
 
 // eof

@@ -217,6 +217,19 @@ class CustomMemoryPoolDOTGeneration
 
        // Mechanism to ignore all SgFile Info IR nodes (often they just get in the way)
           void fileInfoFilter(SgNode* node);
+
+       // DQ (3/2/2009): Ignore empty symbol tables
+          void emptySymbolTableFilter(SgNode* n);
+
+       // DQ (3/2/2009): Ignore expression IR nodes
+          void expressionFilter(SgNode* n);
+
+       // DQ (3/2/2009): Ignore SgVariableDefinition IR nodes
+          void variableDefinitionFilter(SgNode* n);
+          void variableDeclarationFilter(SgNode* n);
+          void ctorInitializerListFilter(SgNode* n);
+          void symbolFilter(SgNode* n);
+
    };
 
 

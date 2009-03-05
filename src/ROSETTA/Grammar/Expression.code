@@ -263,6 +263,10 @@ HEADER_FUNCTION_REF_EXPRESSION_START
        // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
        // virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 
+       // DQ (2/8/2009): I always wanted to have this function!
+      //! This is helpful in chasing down the associated declaration to this function reference.
+          SgFunctionDeclaration* getAssociatedFunctionDeclaration() const;
+
 HEADER_FUNCTION_REF_EXPRESSION_END
 
 
@@ -277,6 +281,10 @@ HEADER_MEMBER_FUNCTION_REF_EXPRESSION_START
        // DQ (11/7/2007): I think this is not used any more.
        // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
        // virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
+
+       // DQ (2/8/2009): I always wanted to have this function!
+      //! This is helpful in chasing down the associated declaration to this member function reference.
+          SgMemberFunctionDeclaration* getAssociatedMemberFunctionDeclaration() const;
 
 HEADER_MEMBER_FUNCTION_REF_EXPRESSION_END
 
@@ -380,6 +388,14 @@ HEADER_LIST_DECLARATIONS
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+       // DQ (2/8/2009): I always wanted to have this function!
+      //! This is helpful in chasing down the associated declaration to this function reference.
+          SgFunctionDeclaration* getAssociatedFunctionDeclaration() const;
+
+       // DQ (3/2/2009): Refactored getAssociatedFunctionDeclaration() to separate out the part that gets the SgFunctionSymbol.
+      //! This is helpful in chasing down the symbol associated with a function call.
+          SgFunctionSymbol* getAssociatedFunctionSymbol() const;
 
 HEADER_FUNCTION_CALL_EXPRESSION_END
 
@@ -2015,6 +2031,25 @@ SgFunctionRefExp::set_type()
    }
 #endif
 
+// DQ (2/8/2009): I always wanted to have this function!
+SgFunctionDeclaration*
+SgFunctionRefExp::getAssociatedFunctionDeclaration() const
+   {
+  // This is helpful in chasing down the associated declaration to this function reference.
+     SgFunctionDeclaration* returnFunctionDeclaration = NULL;
+     SgFunctionSymbol* functionSymbol = this->get_symbol();
+
+  // DQ (2/8/2009): Can we assert this! What about pointers to functions?
+     ROSE_ASSERT(functionSymbol != NULL);
+
+  // It might be that a pointer to a function would not have a symbol.
+     if (functionSymbol != NULL)
+          returnFunctionDeclaration = functionSymbol->get_declaration();
+
+     return returnFunctionDeclaration;
+   }
+
+
 SOURCE_FUNCTION_REFERENCE_EXPRESSION_END
 
 
@@ -2097,6 +2132,24 @@ SgMemberFunctionRefExp::set_type()
         }
    }
 #endif
+
+// DQ (2/8/2009): I always wanted to have this function!
+SgMemberFunctionDeclaration*
+SgMemberFunctionRefExp::getAssociatedMemberFunctionDeclaration() const
+   {
+  // This is helpful in chasing down the associated declaration to this member function reference.
+     SgMemberFunctionDeclaration* returnMemberFunctionDeclaration = NULL;
+     SgMemberFunctionSymbol* memberFunctionSymbol = this->get_symbol();
+
+  // DQ (2/8/2009): Can we assert this! What about pointers to functions?
+     ROSE_ASSERT(memberFunctionSymbol != NULL);
+
+  // It might be that a pointer to a function would not have a symbol.
+     if (memberFunctionSymbol != NULL)
+          returnMemberFunctionDeclaration = memberFunctionSymbol->get_declaration();
+
+     return returnMemberFunctionDeclaration;
+   }
 
 SOURCE_MEMBER_FUNCTION_REFERENCE_EXPRESSION_END
 
@@ -2241,6 +2294,7 @@ SOURCE_UPC_MYTHREAD_EXPRESSION_START
 SOURCE_UPC_MYTHREAD_EXPRESSION_END
 
 SOURCE_FUNCTION_CALL_EXPRESSION_START
+
 void
 SgFunctionCallExp::post_construction_initialization() 
    {
@@ -2388,6 +2442,111 @@ SgFunctionCallExp::get_type() const
 
      return returnType;
    }
+
+#if 0
+// DQ (2/16/2009): Moved to sageSupport.C while this is tested and debugged!
+
+// DQ (2/8/2009): I always wanted to have this function!
+SgFunctionDeclaration*
+SgFunctionCallExp::getAssociatedFunctionDeclaration() const
+   {
+  // This is helpful in chasing down the associated declaration to this function reference.
+     SgFunctionDeclaration* returnFunctionDeclaration = NULL;
+
+  // Note that as I recall there are a number of different types of IR nodes that 
+  // the functionCallExp->get_function() can return (this is the complete list, 
+  // as tested in astConsistancyTests.C):
+  //   - SgDotExp
+  //   - SgDotStarOp
+  //   - SgArrowExp
+  //   - SgArrowStarOp
+  //   - SgPointerDerefExp
+  //   - SgFunctionRefExp
+  //   - SgMemberFunctionRefExp
+
+#if 1
+     SgExpression* functionExp = this->get_function();
+     switch(functionExp->variantT())
+        {
+          case V_SgFunctionRefExp:
+             {
+               SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(this->get_function());
+               SgFunctionSymbol* functionSymbol = functionRefExp->get_symbol();
+
+            // DQ (2/8/2009): Can we assert this! What about pointers to functions?
+               ROSE_ASSERT(functionSymbol != NULL);
+
+            // It might be that a pointer to a function would not have a symbol.
+               if (functionSymbol != NULL)
+                    returnFunctionDeclaration = functionSymbol->get_declaration();
+               break;
+             }
+
+          case V_SgMemberFunctionRefExp:
+             {
+               SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(this->get_function());
+               SgMemberFunctionSymbol* memberFunctionSymbol = memberFunctionRefExp->get_symbol();
+
+            // DQ (2/8/2009): Can we assert this! What about pointers to functions?
+               ROSE_ASSERT(memberFunctionSymbol != NULL);
+
+            // It might be that a pointer to a function would not have a symbol.
+               if (memberFunctionSymbol != NULL)
+                    returnFunctionDeclaration = memberFunctionSymbol->get_declaration();
+               break;
+             }
+
+          case V_SgDotExp:
+          case V_SgDotStarOp:
+          case V_SgArrowExp:
+          case V_SgArrowStarOp:
+          case V_SgPointerDerefExp:
+             {
+               printf ("ERROR: Sorry, cases of SgDotExp,SgDotStarOp, SgArrowExp,SgArrowStarOp, SgPointerDerefExp not implemented yet in SgFunctionCallExp::getAssociatedFunctionDeclaration() functionExp = %p = %s \n",functionExp,functionExp->class_name().c_str());
+               break;
+             }
+
+          default:
+             {
+               printf ("Error: There should be no other cases functionExp = %p = %s \n",functionExp,functionExp->class_name().c_str());
+               ROSE_ASSERT(false);
+             }
+        }
+#else
+     SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(this->get_function());
+     if (functionRefExp != NULL)
+        {
+          SgFunctionSymbol* functionSymbol = functionRefExp->get_symbol();
+
+       // DQ (2/8/2009): Can we assert this! What about pointers to functions?
+          ROSE_ASSERT(functionSymbol != NULL);
+
+       // It might be that a pointer to a function would not have a symbol.
+          if (functionSymbol != NULL)
+               returnFunctionDeclaration = functionSymbol->get_declaration();
+        }
+
+     SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(this->get_function());
+     if (memberFunctionRefExp != NULL)
+        {
+          SgMemberFunctionSymbol* memberFunctionSymbol = memberFunctionRefExp->get_symbol();
+
+       // DQ (2/8/2009): Can we assert this! What about pointers to functions?
+          ROSE_ASSERT(memberFunctionSymbol != NULL);
+
+       // It might be that a pointer to a function would not have a symbol.
+          if (memberFunctionSymbol != NULL)
+               returnFunctionDeclaration = memberFunctionSymbol->get_declaration();
+        }
+
+     if (returnFunctionDeclaration == NULL)
+        {
+          printf ("Sorry, cases of SgDotExp,SgDotStarOp, SgArrowExp,SgArrowStarOp, SgPointerDerefExp not implemented yet in SgFunctionCallExp::getAssociatedFunctionDeclaration() \n");
+        }
+#endif
+     return returnFunctionDeclaration;
+   }
+#endif
 
 SOURCE_FUNCTION_CALL_EXPRESSION_END
 
