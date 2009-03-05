@@ -67,11 +67,17 @@ TEST_CXXFLAGS = $(TEST_INCLUDES) -rose:verbose 0 -rose:outline:seq 7 -rose:outli
 
 # Additional tests using #pragma rose_outline, Liao, 12/17/2008
 C_TESTCODES_REQUIRED_TO_PASS = \
-	 moreTest1.c \
-	 array1.c
+	 array1.c \
+	 moreTest1.c
+
 CXX_TESTCODES_REQUIRED_TO_PASS = \
 	array2.cpp \
-	moreTest2.cpp
+	moreTest2.cpp \
+	moreTest3.cpp \
+	moreTest4.cpp \
+	moreTest5.cpp \
+	moreTest6.cpp \
+	moreTest7.cpp
 
 TESTCODE_CURRENTLY_FAILING =  	
 
@@ -88,62 +94,27 @@ OUTLINE_FLAG= --edg:no_warnings -rose:verbose 0 -rose:outline:parameter_wrapper
 
 PASSING_C_TEST_Objects = $(C_TESTCODES_REQUIRED_TO_PASS:.c=.o)
 PASSING_CXX_TEST_Objects = $(CXX_TESTCODES_REQUIRED_TO_PASS:.cpp=.o)
+PASSING_CXX_SEPARATE_FILE_TEST_Objects = $(CXX_TESTCODES_REQUIRED_TO_PASS:.cpp=.o)
 
 EXTERNAL_PASSING_CXX_TEST_Objects = $(TESTCODES_REQUIRED_TO_PASS:.C=.o)
 
+# This rule tests the use of outlining in the original file and to a separate file.
 $(PASSING_C_TEST_Objects): %.o: $(srcdir)/%.c outline 
+	@echo "***************** Testing C specific outlining...(in the same file) *****************"
 	./outline$(EXEEXT) $(OUTLINE_FLAG) -c $<
+	@echo "***************** Testing C specific outlining...(to a separate file) *****************"
+	./outline$(EXEEXT) $(OUTLINE_FLAG) -rose:outline:new_file -rose:outline:temp_variable -c $<
 
+# This rule tests the use of outlining in the original file and to a separate file.
 $(PASSING_CXX_TEST_Objects): %.o: $(srcdir)/%.cpp outline
+	@echo "***************** Testing C++ specific outlining...(in the same file) *****************"
 	./outline$(EXEEXT) ${OUTLINE_FLAG} -c $<
+	@echo "***************** Testing C++ specific outlining...(to a separate file) *****************"
+	./outline$(EXEEXT) ${OUTLINE_FLAG} -rose:outline:new_file -rose:outline:temp_variable -c $<
 
+# This rule currently only tests outlining to the original file (not a separate file also).
 $(EXTERNAL_PASSING_CXX_TEST_Objects): %.o: $(top_srcdir)/tests/CompileTests/Cxx_tests/%.C outline
 	./outline$(EXEEXT) ${OUTLINE_FLAG} -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $<
-
-test1: outline$(EXEEXT)
-	./outline$(EXEEXT) ${OUTLINE_FLAG} -rose:outline:new_file -rose:outline:temp_variable -c $(srcdir)/moreTest1.c
-
-test1_singleFile: outline$(EXEEXT)
-	./outline$(EXEEXT) ${OUTLINE_FLAG} -c $(srcdir)/moreTest1.c
-
-test2: outline$(EXEEXT)
-	./outline$(EXEEXT) ${OUTLINE_FLAG} -rose:outline:new_file -rose:outline:temp_variable -c $(srcdir)/moreTest2.cpp
-
-test2_singleFile: outline$(EXEEXT)
-	./outline$(EXEEXT) ${OUTLINE_FLAG} -c $(srcdir)/moreTest2.cpp
-
-test2_preprocess: outline$(EXEEXT)
-	./outline$(EXEEXT) -rose:outline:parameter_wrapper -rose:outline:preproc-only -c $(srcdir)/moreTest2.cpp
-
-test3: outline$(EXEEXT)
-	./outline$(EXEEXT) ${OUTLINE_FLAG} -rose:outline:new_file -rose:outline:temp_variable -c $(srcdir)/moreTest3.cpp
-
-test3_singleFile: outline$(EXEEXT)
-	./outline$(EXEEXT) ${OUTLINE_FLAG} -c $(srcdir)/moreTest3.cpp
-
-test4: outline$(EXEEXT)
-	./outline$(EXEEXT) ${OUTLINE_FLAG} -rose:outline:new_file -rose:outline:temp_variable -c $(srcdir)/moreTest4.cpp
-
-test4_singleFile: outline$(EXEEXT)
-	./outline$(EXEEXT) ${OUTLINE_FLAG} -c $(srcdir)/moreTest4.cpp
-
-test5: outline$(EXEEXT)
-	./outline$(EXEEXT) ${OUTLINE_FLAG} -rose:outline:new_file -rose:outline:temp_variable -c $(srcdir)/moreTest5.cpp
-
-test5_singleFile: outline$(EXEEXT)
-	./outline$(EXEEXT) ${OUTLINE_FLAG} -c $(srcdir)/moreTest5.cpp
-
-test6: outline$(EXEEXT)
-	./outline$(EXEEXT) ${OUTLINE_FLAG} -rose:outline:new_file -rose:outline:temp_variable -c $(srcdir)/moreTest6.cpp
-
-test6_singleFile: outline$(EXEEXT)
-	./outline$(EXEEXT) ${OUTLINE_FLAG} -c $(srcdir)/moreTest6.cpp
-
-test7: outline$(EXEEXT)
-	./outline$(EXEEXT) ${OUTLINE_FLAG} -rose:outline:new_file -rose:outline:temp_variable -c $(srcdir)/moreTest7.cpp
-
-test7_singleFile: outline$(EXEEXT)
-	./outline$(EXEEXT) ${OUTLINE_FLAG} -c $(srcdir)/moreTest7.cpp
 
 test_class_ODR_violation: $(srcdir)/test_class_ODR_violation_main.C $(srcdir)/test_class_ODR_violation_outlined.C
 	g++ -c $(srcdir)/test_class_ODR_violation_main.C
@@ -161,7 +132,9 @@ CLEANFILES =
 # DQ (8/29/2008): Added dependences
 check-local: outline$(EXEEXT) injectOutlinePragmas outlineRandom outlineSelection
 	@echo "Test for ROSE outliner."
+	@echo "***************** Testing C specific outlining *******************"
 	$(MAKE) $(PASSING_C_TEST_Objects)
+	@echo "***************** Testing C++ specific outlining ******************"
 	$(MAKE) $(PASSING_CXX_TEST_Objects)
 	$(MAKE) $(EXTERNAL_PASSING_CXX_TEST_Objects)
 	@echo "***********************************************************************************************************"
