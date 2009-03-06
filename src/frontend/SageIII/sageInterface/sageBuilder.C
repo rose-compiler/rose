@@ -1388,6 +1388,19 @@ SgCastExp * SageBuilder::buildCastExp(SgExpression *  operand_i,
   return result;
 }
 
+SgNewExp * SageBuilder::buildNewExp(SgType* type, 
+				    SgExprListExp* exprListExp, 
+				    SgConstructorInitializer* constInit, 
+				    SgExpression* expr, 
+				    short int val, 
+				    SgFunctionDeclaration* funcDecl)
+{
+  SgNewExp* result = new SgNewExp(type, exprListExp, constInit, expr, val, funcDecl);
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
 SgCastExp * SageBuilder::buildCastExp_nfi(SgExpression *  operand_i,
                 SgType * expression_type,
                 SgCastExp::cast_type_enum cast_type)
@@ -1430,6 +1443,7 @@ SgPlusPlusOp *SageBuilder::buildPlusPlusOp(SgExpression* operand_i, SgUnaryOp::S
   result->set_mode(a_mode);
   return result;
 }
+
 
 SgPlusPlusOp *SageBuilder::buildPlusPlusOp_nfi(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode)
 {
@@ -2051,12 +2065,31 @@ SageBuilder::buildMemberFunctionRefExp_nfi(SgMemberFunctionSymbol* sym, bool vir
   return func_ref;
 }
 
+// lookup member function symbol to create a reference to it
+SgMemberFunctionRefExp *
+SageBuilder::buildMemberFunctionRefExp(SgMemberFunctionSymbol* sym, bool virtual_call, bool need_qualifier)
+{
+  SgMemberFunctionRefExp* func_ref = new SgMemberFunctionRefExp(sym, virtual_call, NULL, need_qualifier);
+  setOneSourcePositionForTransformation(func_ref);
+  ROSE_ASSERT(func_ref);
+  return func_ref;
+}
+
 // lookup class symbol to create a reference to it
 SgClassNameRefExp *
 SageBuilder::buildClassNameRefExp_nfi(SgClassSymbol* sym)
 {
   SgClassNameRefExp* class_ref = new SgClassNameRefExp(sym);
   setOneSourcePositionNull(class_ref);
+  ROSE_ASSERT(class_ref);
+  return class_ref;
+}
+
+SgClassNameRefExp *
+SageBuilder::buildClassNameRefExp(SgClassSymbol* sym)
+{
+  SgClassNameRefExp* class_ref = new SgClassNameRefExp(sym);
+  setOneSourcePositionForTransformation(class_ref);
   ROSE_ASSERT(class_ref);
   return class_ref;
 }
@@ -2164,6 +2197,17 @@ SageBuilder::buildFunctionCallExp_nfi(SgExpression* f, SgExprListExp* parameters
   if (f) f->set_parent(func_call_expr);
   if (parameters) parameters->set_parent(func_call_expr);
   setOneSourcePositionNull(func_call_expr);
+  ROSE_ASSERT(func_call_expr);
+  return func_call_expr;  
+}
+
+SgFunctionCallExp* 
+SageBuilder::buildFunctionCallExp(SgExpression* f, SgExprListExp* parameters)
+{
+  SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(f,parameters,f->get_type());
+  if (f) f->set_parent(func_call_expr);
+  if (parameters) parameters->set_parent(func_call_expr);
+  setOneSourcePositionForTransformation(func_call_expr);
   ROSE_ASSERT(func_call_expr);
   return func_call_expr;  
 }
