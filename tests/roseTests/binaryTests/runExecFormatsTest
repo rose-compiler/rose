@@ -1,0 +1,145 @@
+#!/bin/bash
+# Parses and disassembles executable files, then unparses them and compares them with the original.
+#
+# Any arguments that begin with "-rose" are passed to the underlying rose test(s).
+# Remaining arguments are a list of executable names and/or directories (recursively scanned) of executables.
+
+# Set to "yes" to delete all the output files that were created
+# Set to "some" to delete outputs except for failed executables
+# Set to "no" (or anything else) to save all outputs
+cleanup=some
+
+# Parse command-line arguments
+rose_args=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+	--)
+            shift
+	    break
+	    ;;
+	-rose*)
+	    # Rose arguments are passed to ROSE_execFormatsTest
+            rose_args="$rose_args $1"
+	    shift
+	    ;;
+	--relax)
+	    # Rather than compare executables byte by byte, compare the dump files.
+	    do_relax=yes
+	    shift
+	    ;;
+        -*)
+	    echo "$0: unknown switch: $arg" >&2
+	    exit 1
+	    ;;
+	*)
+	    break
+	    ;;
+    esac
+done
+
+# Run execFormatsTest on supplied executable.
+run_rose () {
+    local exename="$1"
+    local newname="$(basename $exename).new"
+    echo "+ ./execFormatsTest $rose_args $exename" >>$stderr
+    if ./execFormatsTest $rose_args "$exename"; then
+	[ -f "$newname" ] && return 0
+	echo "Apparently no new executable written to $newname" >>$stderr
+	echo "Perhaps the executable ($exename)" >>$stderr
+	echo "was not actually an executable format that we recognize." >>$stderr
+    else
+	echo "execFormatsTest failed ($?)" >>$stderr
+    fi
+    return 1
+}
+
+# Test against a single executable.  Echoes passed/failed status and diagnostics to stdout.
+# Returns success/failure.
+test_one () {
+    local exename="$1"
+    local basename="$(basename $exename)"
+    local passed=
+
+
+    local newname="$(basename $exename).new"
+    local dumpname="$(basename $exename).dump"
+    local assemblyCodeName="rose_$(basename $exename).s"
+    local stdout="$(basename $exename).stdout"
+    local stderr="$(basename $exename).stderr"
+
+    >$stdout
+    >$stderr
+
+    if [ -h "$exename" ]; then
+	echo "File is a symbolic link and we are skipping it." >>$stderr
+	echo "It is skipped because the name stored in SgAsmFile is not the same as the" >>$stderr
+	echo "name that we opened. Therefore we don't know what name would be used for the" >>$stderr
+	echo "generated file (it should be $newname, but is based on the symlink" >>$stderr
+	echo "contents instead)." >>$stderr
+	goto failed;
+    fi
+
+    if run_rose "$exename" >>$stdout 2>>$stderr; then
+	if [ -n "$do_relax" ]; then
+	    if run_rose "$basename.new" >>$stdout 2>>$stderr; then
+		if diff -u --label "$exename" <(grep -v 'data at 0x' "$basename.dump") \
+		      --label "$basename.new" <(grep -v 'data at 0x' "$basename.new.dump") >>$stdout 2>>$stderr; then
+		    passed=yes
+		else
+		    echo "First and second dump files differ. See" >>$stderr
+		    echo "  $basename.dump generated from $exename" >>$stderr
+		    echo "  $basename.new.dump generated from $basename.new" >>$stderr
+		fi
+	    else
+		echo "Unable to run execFormatsTest on the generated file." >>$stderr
+	    fi
+	else
+	    if diff "$exename" "$basename.new" >/dev/null 2>&1; then
+		passed=yes
+	    else
+		echo "Generated file ($basename.new) differs from original executable." >>$stderr
+		[ -f "$basename.dump" ] && echo "Details of the format are in $basename.dump" >>$stderr
+		diff -u --label "$basename" <(hexdump -Cv "$exename") \
+			--label "generated file" <(hexdump -Cv "$basename.new") >>$stdout
+	    fi
+	fi
+    fi
+
+    if [ -n "$passed" ]; then
+	filetype=$(cat $dumpname |head -n1)
+	echo "passed $filetype: $exename"
+	[ "$cleanup" = "yes" -o "$cleanup" = "some" ] && rm -f $newname $dumpname $assemblyCodeName $stdout $stderr
+	return 0
+    else
+	echo "FAILED: $exename"
+	cat $stderr $stdout |sed 's/^/        /'
+	[ "$cleanup" = "yes" ] && rm -f $newname $dumpname $assemblyCodeName $stdout $stderr
+	return 1
+    fi
+}
+
+nfailed=0
+npassed=0
+
+for f in "$@"; do
+
+    # Obtain an array of all the file names to be tested.
+    old_IFS="$IFS"
+    IFS=$'\n'
+  # DQ (8/19/2008): Remove non-portable "-L" option (avoid skipping over symbolic links)
+  # filenames=($(find -L "$f" -type f |sort))
+    filenames=($(find "$f" -type f |sort))
+    IFS="$old_IFS"
+
+    for exename in "${filenames[@]}"; do
+	if test_one "$exename"; then
+	    npassed=$[npassed+1]
+	else
+	    nfailed=$[nfailed+1]
+        fi
+    done
+done
+
+echo "Results: $npassed passed; $nfailed failed."
+[ $nfailed -ne 0 ] && exit 1
+exit 0

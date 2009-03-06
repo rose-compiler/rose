@@ -1304,9 +1304,9 @@ developersScratchSpace/Dan/MicrosoftWindows_tests/Makefile
 developersScratchSpace/Dan/QRose_tests/Makefile
 developersScratchSpace/Dan/libraryIdentification_tests/Makefile
 developersScratchSpace/Robb/Makefile
-developersScratchSpace/Robb/extras/Makefile
 developersScratchSpace/Robb/BinaryTools/Makefile
 developersScratchSpace/Robb/DynamicLinking/Makefile
+developersScratchSpace/Robb/extras/Makefile
 ])
 
 # DQ (12/31/2008): Skip these, since we don't have SPEC and NAS benchmarks setup yet.

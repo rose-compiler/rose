@@ -1,5 +1,11 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+# Demo of binary executable functionality. See binaryTests/Makefile.am for the complete list.
+# This demo does not require Qt.
+demo_1:
+	$(MAKE) -C $(top_builddir)/tests/roseTests/binaryTests demos
+	@echo "End of demo_1"
+
 # These demos require QT to support the QRose work used for the GUI in several ROSE tools
 # that are a part of this demo.
 if ROSE_USE_QT
@@ -65,12 +71,6 @@ demo_binary_analysis_C:
 	$(MAKE) demo_14
 	@echo "End of binary_analysis demos"
 
-
-# Demo of Async Signal Handling test on binary (similar to Compass checker on source code)
-# Note to giving this demo: C^s on 3 second sleep intervals and C^q to continue.
-demo_1:
-	cd $(top_builddir)/developersScratchSpace/Robb/DynamicLinking; $(MAKE) demo
-	@echo "End of demo_1"
 
 # This demo show the handling of different formats (ELF and PE) and different instruction sets (ARM, PowerPC, x86).
 demo_2: demo_2_test
