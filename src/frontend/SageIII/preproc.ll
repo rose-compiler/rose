@@ -959,14 +959,14 @@ ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
 
      if ( fileName.empty() == false )
         {
-	  std::map<std::string,std::vector<PreprocessingInfo*>* >::iterator iItr= 
+	  std::map<std::string,ROSEAttributesList* >::iterator iItr= 
 		  mapFilenameToAttributes.find(fileName);
 	  //std::cout << "Trying to find fileName " << fileName << std::endl;
           if ( iItr != mapFilenameToAttributes.end())
              {
                      //std::cout << "Found requested file: " << fileName << " size: " << iItr->second->size() << std::endl; 
-	       for(std::vector<PreprocessingInfo*>::iterator jItr = iItr->second->begin(); 
-			       jItr != iItr->second->end(); ++jItr){
+	       for(std::vector<PreprocessingInfo*>::iterator jItr = iItr->second->getList().begin(); 
+			       jItr != iItr->second->getList().end(); ++jItr){
 		     //std::cout << "Inserting element" <<  (*jItr)->getString() << std::endl;
                      preprocessorInfoList->insertElement(**jItr);
 

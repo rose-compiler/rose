@@ -91,8 +91,12 @@ class AttachPreprocessingInfoTreeTrav
        // For now I will not touch the Wave specific implementation.
        // std::map<std::string,ROSEAttributesList*>* currentMapOfAttributes;
 
-      //! AS(011306) Use_Wave == true specifies if a wave preprocessor is used
+      //! Use_Wave == true specifies if a wave preprocessor is used
           bool use_Wave;
+
+      //  The mapOfAttributes declaration is specific to wave usage.
+      //! Map of filenames to list of attributes as found by WAVE.  
+          std::map<std::string,ROSEAttributesList*>* mapOfAttributes; 
 
       //! AS(092107) Optimization variable to avoid n^2 complexity in 
       //! iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber()	  
@@ -135,9 +139,12 @@ class AttachPreprocessingInfoTreeTrav
           void display(const std::string & label) const;
 
           AttributeMapType & get_attributeMapForAllFiles() { return attributeMapForAllFiles; }
-
+       
        // Access function for elements in the map of attribute lists.
           ROSEAttributesList* getListOfAttributes ( int currentFileNameId );
+
+          void setMapOfAttributes();
+
 
        // output for debugging.
        // void display_static_data( const std::string & label ) const;

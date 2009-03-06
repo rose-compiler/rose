@@ -1,6 +1,5 @@
 #include "macroRewrapper.h"
-
-
+#define VERBOSE_MESSAGES_OF_WAVE true
 
 
 
@@ -9,6 +8,8 @@ AnalyzeMacroCalls::AnalyzeMacroCalls(SgProject* p){
      if(SgProject::get_verbose() >= 1)
 	  std::cout << "INTERNAL INCLUDE PATHS " << "CXX_INCLUDE_STRING" << std::endl;
      std::vector<std::string>  tmpIncludePathList = CommandlineProcessing::generateArgListFromString(internalIncludePaths);
+
+     std::cout << "Test" << std::endl;
 
   //internalIncludePathList.push_back("-I"+string(CurrentPath)+"/");
 
@@ -35,7 +36,8 @@ AnalyzeMacroCalls::AnalyzeMacroCalls(SgProject* p){
 
      project = p;
      mapDefsToCalls = map_def_call();
-     macro_def_call_type macrosCallsMappedToDefs = allCallsToMacro(internalIncludePathList);
+     std::cout << "allCallsToMacro" << std::endl;
+     macro_def_call_type macrosCallsMappedToDefs = allCallsToMacro2(internalIncludePathList);
      iterate_over_all_macro_calls(macrosCallsMappedToDefs);
      //compare_all_macro_calls();
 
@@ -61,9 +63,71 @@ AnalyzeMacroCalls::findSmallestStmtMatchingMacroCallUsingPositions(Preprocessing
      ROSE_ASSERT(macro_call != NULL);
      token_type a_call = macro_call->macro_call;
 
+
+     //Try to see if the current macrodefinition is only consisting of macro arguments
+     PreprocessingInfo::r_macro_def* macro_def   = macro_call->macro_def->get_macro_def();
+     if( macro_def->is_functionlike == true )
+     {
+       token_container& paramaters      = macro_def->paramaters;
+       token_list_container& definition = macro_def->definition;
+
+       int tokens_not_arguments =0;
+       for(token_list_container::iterator defIt = definition.begin(); 
+           defIt != definition.end(); defIt++ )
+       {
+         //Check to see if token maps to uninteresting elements of the grammar
+         using namespace boost;
+         switch(boost::wave::token_id(*defIt) /* defIt->token_id() */ )
+         {
+           case boost::wave::T_CCOMMENT:
+           case boost::wave::T_CPPCOMMENT:
+           case boost::wave::T_SPACE:
+           case boost::wave::T_SPACE2:
+           case boost::wave::T_CONTLINE:
+           case boost::wave::T_NEWLINE:
+           case boost::wave::T_LEFTPAREN:
+           case boost::wave::T_RIGHTPAREN:
+             continue;
+         }
+
+         //Check to see if the token maps to an argument
+         bool is_uninteresting = false;
+         for(token_container::iterator paramIt = paramaters.begin(); 
+             paramIt != paramaters.end(); paramIt++ )
+         {
+           if( defIt->get_value() == paramIt->get_value() )
+           {
+             is_uninteresting = true;
+             break;
+           }
+
+         }
+
+         if(is_uninteresting == true ) continue;
+
+         //Othewise, this is an interestin token, and as long as
+         //we have found at least one interesting token this macro
+         //is interesting
+         tokens_not_arguments++;
+         break;
+         
+
+
+       }
+       //No interesting tokens in this macro
+       if(tokens_not_arguments==0) return NULL;
+
+
+     }
+
+
+
+     //See if any nodes from the macro call can be found in the AST
+
      int line = a_call.get_position().get_line();
      int col  = a_call.get_position().get_column();
 
+     std::cerr << "findSmallestStmtMatchingMacroCallUsingPositions " << std::endl;
      Sg_File_Info* posOfMacroCall = new Sg_File_Info(a_call.get_position().get_file().c_str(),line,col);
      if(VERBOSE_MESSAGES_OF_WAVE == true)
         std::cout <<  "inside findSmallestStmtMatchingMacroCallUsingPositions" << std::endl; 
@@ -72,14 +136,15 @@ AnalyzeMacroCalls::findSmallestStmtMatchingMacroCallUsingPositions(Preprocessing
      NodesAtLineNumber nodePos;
 //     std::pair<std::vector<SgNode*>*,Sg_File_Info>* nodePosPair = new std::pair<std::vector<SgNode*>*,Sg_File_Info*>(&nodesAtPosition,file_info);
      AstQueryNamespace::querySubTree(project,std::bind2nd( nodePos,  std::pair<std::vector<SgNode*>*,Sg_File_Info*>(&nodesAtPosition,posOfMacroCall)));
-     smallestStmt = *nodesAtPosition.begin();
-     SgNode* backupNode=smallestStmt;
      if(nodesAtPosition.size()==0){
 	  std::cout << "filename:" << a_call.get_position().get_file().c_str() << " l" << line << " c" << col << std::endl;
 	  std::cout << currentInfo->getString() << std::endl;
-     }
-     if(nodesAtPosition.size()==0)
 	  return NULL;
+     }
+
+     ROSE_ASSERT(nodesAtPosition.size() > 0);
+     smallestStmt = *nodesAtPosition.begin();
+     SgNode* backupNode=smallestStmt;
   //ROSE_ASSERT(nodesAtPostion.size()>0);
      int counter=0;
      ROSE_ASSERT(smallestStmt != NULL);
@@ -335,7 +400,7 @@ AnalyzeMacroCalls::iterate_over_all_macro_calls(macro_def_call_type& macro_def){
 
 
 
-		if( VERBOSE_MESSAGES_OF_WAVE == true )
+		//if( VERBOSE_MESSAGES_OF_WAVE == true )
 			std::cout << "Macro def found at: " << macro_def_pos->get_filenameString() << " l" <<
 				macro_def_pos->get_line() << " c" << macro_def_pos->get_col() << std::endl;
 

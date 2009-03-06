@@ -2,7 +2,7 @@
 #define MACRO_REWRWAPPER_H
 
 
-#include "macdb/macro.h"
+#include "macro.h"
 
 #include <boost/wave.hpp>
 

@@ -64,6 +64,10 @@ using namespace std;
 // Debug flag
 #define DEBUG_ATTACH_PREPROCESSING_INFO 0
 
+// DQ (11/30/2008): Refactored this code out of the simpler function to isolate 
+// the Wave specific handling.  
+
+
 AttachPreprocessingInfoTreeTrav::AttachPreprocessingInfoTreeTrav( SgSourceFile* file, bool includeDirectivesAndCommentsFromAllFiles )
    {
   // previousLocNodePtr            = NULL;
@@ -439,6 +443,7 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 
      if (use_Wave == false)
         {
+          //std::cerr << "Not using wave" << std::endl;
        // DQ (4/12/2007): Introduce tracking of performance of ROSE.
           TimingPerformance timer ("AST evaluateInheritedAttribute (use_Wave == false):");
 
@@ -557,14 +562,16 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
        // int currentFileNameId = currentFilePtr->get_file_info()->get_file_id();
        // std::string currentStringFilename = Sg_File_Info::getFilenameFromID(currentFileNameId);
           string currentStringFilename = sourceFile->get_file_info()->get_filename();
+          std::cerr << "The filename in the preprocessor : " << currentStringFilename << std::endl;
 
-#if 0
+#if 1
        // DQ (12/12/2008): Comment out for now while we work on non-wave support.
           ROSE_ASSERT(mapOfAttributes != NULL);
           if (mapOfAttributes->find(currentStringFilename) == mapOfAttributes->end())
              {
             // There is no existing list for this file, so build an empty list.
-            // returnListOfAttributes = new ROSEAttributesList();
+             returnListOfAttributes = new ROSEAttributesList();
+              
              }
             else
              {
@@ -635,6 +642,7 @@ AttachPreprocessingInfoTreeTrav::getListOfAttributes ( int currentFileNameId )
              }
             else
              {
+
                currentListOfAttributes = attributeMapForAllFiles[currentFileNameId];
                ROSE_ASSERT(currentListOfAttributes != NULL);
              }
@@ -701,7 +709,8 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute (
                return inheritedAttribute;
              }
 #endif
-          ROSE_ASSERT(attributeMapForAllFiles.find(currentFileNameId) == attributeMapForAllFiles.end());
+            //std::cerr << "The filename " << sourceFile->get_file_info()->get_filename() << std::endl;
+//          ROSE_ASSERT(attributeMapForAllFiles.find(currentFileNameId) == attributeMapForAllFiles.end());
 
        // This will cause the CPP directives and comments list to be generated for the source file.
           ROSEAttributesList* currentListOfAttributes = getListOfAttributes(currentFileNameId);

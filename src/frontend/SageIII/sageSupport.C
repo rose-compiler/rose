@@ -3890,7 +3890,7 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
        while ( j != argList.end() )
        {
 
-         if ( (*j).size() >=2 && (((*j)[0] == '-') && ((*j)[1] == 'o')) )
+         if ( (*j).size() ==2 && (((*j)[0] == '-') && ( ((*j)[1] == 'o') || ((*j)[1] == 'c') ) ) )
          {
            isSourceCodeCompiler = true;
            //std::cout << "Set isSourceCodeCompiler " << *j << std::endl;

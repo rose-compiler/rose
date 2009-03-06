@@ -1,3 +1,4 @@
+#include "rose.h"
 #include "argumentFilterer.h"
 #include "helpFunctions.h"
 
@@ -76,10 +77,10 @@ ComparisonLinearization::preOrderVisit(SgNode* node){
 }
 
 
-std::list<SgNode*> queryForNotOnLine(SgNode* node, Sg_File_Info* compareFileInfo){
-    std::list<SgNode*> thisNode = queryForLine(node, compareFileInfo);  
+std::vector<SgNode*> queryForNotOnLine(SgNode* node, Sg_File_Info* compareFileInfo){
+    std::vector<SgNode*> thisNode = queryForLine(node, compareFileInfo);  
 
-    std::list<SgNode*> returnList;
+    std::vector<SgNode*> returnList;
 
     if(thisNode.size()==0)
         returnList.push_back(node);
@@ -94,21 +95,21 @@ ComparisonLinearization::skipNode(SgNode* node) {
 
     if(isSgBinaryOp(node)!=NULL){
         SgBinaryOp* binOp = isSgBinaryOp(node);
-        std::list<SgNode*> listOfNodesAtPos;
+        std::vector<SgNode*> vectorOfNodesAtPos;
 
-        listOfNodesAtPos =   NodeQuery::querySubTree(binOp->get_lhs_operand(),std::bind2nd(std::ptr_fun(queryForLine), posOfMacroCall));
+        vectorOfNodesAtPos =   NodeQuery::querySubTree(binOp->get_lhs_operand(),std::bind2nd(std::ptr_fun(queryForLine), posOfMacroCall));
 
         //SKIP Right Operand?
         bool skipLeft = false;
-        if(listOfNodesAtPos.size() == 0 ){
+        if(vectorOfNodesAtPos.size() == 0 ){
             skipLeft = true;
             skipNodeAndSubTree.push_back(binOp->get_lhs_operand());            
         }
 
         //SKIP Left Operand?
         bool skipRight = false;
-        listOfNodesAtPos =   NodeQuery::querySubTree(binOp->get_rhs_operand(),std::bind2nd(std::ptr_fun(queryForLine),  posOfMacroCall));
-        if(listOfNodesAtPos.size() == 0 ){
+        vectorOfNodesAtPos =   NodeQuery::querySubTree(binOp->get_rhs_operand(),std::bind2nd(std::ptr_fun(queryForLine),  posOfMacroCall));
+        if(vectorOfNodesAtPos.size() == 0 ){
             skipRight = true;
              std::cout <<"SkipRight" << std::endl;
             skipNodeAndSubTree.push_back(binOp->get_rhs_operand());            
@@ -213,12 +214,12 @@ return skip;
 
 /*****************************************************************
   * The function
-  *  std::list<SgNode*> queryForLine(SgNode* node, Sg_File_Info* compareFileInfo){
+  *  std::vector<SgNode*> queryForLine(SgNode* node, Sg_File_Info* compareFileInfo){
   * finds all AST constructs at a given positions (filename, line, column).
   ***************************************************************/
-std::list<SgNode*> queryForAllNodes(SgNode* node){
+std::vector<SgNode*> queryForAllNodes(SgNode* node){
 
-     std::list<SgNode*> returnList;
+     std::vector<SgNode*> returnList;
 
      returnList.push_back(node);
      return returnList;
@@ -306,12 +307,12 @@ NodesAtLineNumber::result_type NodesAtLineNumber::operator()(first_argument_type
 
 /*****************************************************************
  * The function
- *  std::list<SgNode*> queryForLine(SgNode* node, Sg_File_Info* compareFileInfo){
+ *  std::vector<SgNode*> queryForLine(SgNode* node, Sg_File_Info* compareFileInfo){
  * finds all AST constructs at a given positions (filename, line, column).
  ***************************************************************/
-std::list<SgNode*> queryForLine(SgNode* node, Sg_File_Info* compareFileInfo){
+std::vector<SgNode*> queryForLine(SgNode* node, Sg_File_Info* compareFileInfo){
 
-     std::list<SgNode*> returnList;
+     std::vector<SgNode*> returnList;
 
      SgLocatedNode* locNode = isSgLocatedNode(node);
 

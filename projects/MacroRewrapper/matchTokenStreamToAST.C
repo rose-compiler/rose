@@ -4,7 +4,7 @@
 #include <functional>
 using namespace std;
 
-bool VERBOSE_MESSAGES_OF_WAVE = false;
+bool VERBOSE_MESSAGES_OF_WAVE = true;
 #include "macroRewrapper.h"
 #include <vector>
 
@@ -25,7 +25,7 @@ int main( int argc, char * argv[] )
 
       SgProject* project = frontend(argc,argv);
       AnalyzeMacroCalls* macroCalls = new AnalyzeMacroCalls(project);
-	 acro_def_call_type macrosCallsMappedToDefs = macroCalls->getMapOfDefsToCalls();
+	 macro_def_call_type macrosCallsMappedToDefs = macroCalls->getMapOfDefsToCalls();
 
 	test_iterate_over_all_macro_calls(macroCalls,project,macrosCallsMappedToDefs);
 //     return backend(project);
