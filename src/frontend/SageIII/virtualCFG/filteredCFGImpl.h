@@ -109,7 +109,7 @@ namespace VirtualCFG
     }
     // ---------------------------------------------
     // DOT OUT IMPL
-    template < typename NodeT, typename EdgeT > class CfgToDotImpl
+    template < typename NodeT, typename EdgeT ,bool Debug> class CfgToDotImpl
     {
         std::multimap < SgNode *, NodeT > exploredNodes;
         std::set < SgNode * >nodesPrinted;
@@ -150,8 +150,8 @@ namespace VirtualCFG
     template < typename NodeT, typename EdgeT > void printNodePlusEdges(std::ostream & o,
                                                                         NodeT n);
 
-    template < typename NodeT, typename EdgeT >
-        void CfgToDotImpl < NodeT, EdgeT >::processNodes(NodeT n)
+    template < typename NodeT, typename EdgeT ,bool Debug>
+        void CfgToDotImpl < NodeT, EdgeT, Debug >::processNodes(NodeT n)
     {
         ROSE_ASSERT(n.getNode());
         std::pair < typename std::multimap < SgNode *, NodeT >::const_iterator,
@@ -216,7 +216,7 @@ namespace VirtualCFG
     {
         o << "digraph " << graphName << " {\n";
         CfgToDotImpl < FilteredCFGNode < FilterFunction >,
-            FilteredCFGEdge < FilterFunction > >impl(o);
+            FilteredCFGEdge < FilterFunction > ,false>impl(o);
         impl.processNodes(start);
         o << "}\n";
         return o;
