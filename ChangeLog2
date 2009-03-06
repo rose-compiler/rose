@@ -1,3 +1,43 @@
+2009-03-06 00:12  saebjornsen1
+
+	* [r4751] /trunk/ROSE/projects/MacroRewrapper/Makefile.am,
+	  /trunk/ROSE/projects/MacroRewrapper/access-macros.cpp,
+	  /trunk/ROSE/projects/MacroRewrapper/argumentFilterer.C,
+	  /trunk/ROSE/projects/MacroRewrapper/helpFunctions.C,
+	  /trunk/ROSE/projects/MacroRewrapper/helpFunctions.h,
+	  /trunk/ROSE/projects/MacroRewrapper/macro.h,
+	  /trunk/ROSE/projects/MacroRewrapper/macroRewrapper.C,
+	  /trunk/ROSE/projects/MacroRewrapper/macroRewrapper.h,
+	  /trunk/ROSE/projects/MacroRewrapper/main.C,
+	  /trunk/ROSE/projects/MacroRewrapper/matchTokenStreamToAST.C,
+	  /trunk/ROSE/projects/MacroRewrapper/waveHelpers.C,
+	  /trunk/ROSE/projects/MacroRewrapper/waveHelpers.h,
+	  /trunk/ROSE/src/frontend/SageIII/attachPreprocessingInfo.C,
+	  /trunk/ROSE/src/frontend/SageIII/attachPreprocessingInfoTraversal.C,
+	  /trunk/ROSE/src/frontend/SageIII/attachPreprocessingInfoTraversal.h,
+	  /trunk/ROSE/src/frontend/SageIII/preproc.ll,
+	  /trunk/ROSE/src/frontend/SageIII/rose_attributes_list.C,
+	  /trunk/ROSE/src/frontend/SageIII/rose_attributes_list.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C: Fixed bugs and
+	  did improvements 1) ROSE as linker - fixed bug where ROSE
+	  disassembled the object files 2) ROSE using Wave - Wave support
+	  was non-functional and broken 3) Macro Rewrapper - Fixed several
+	  issues
+
+2009-03-05 20:05  dquinlan
+
+	* [r4748]
+	  /trunk/ROSE/src/frontend/SageIII/astHiddenTypeAndDeclarationLists/HiddenList.C,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/Makefile.am: Added
+	  support for outlining into a separate file (ongoing work).
+	  
+	  Detailed changes in this commit:
+	  1) Fixed the hidden list analysis so that the outlining
+	  to a separate file works for tests #3 and #4.
+	  2) Fixed the Makefile.am in tests/roseTests/astOutliningTests
+	  so that the outlined tests to a spearate file are now
+	  automatically run as part of "make check" rule.
+
 2009-03-05 17:47  dquinlan
 
 	* [r4745]
