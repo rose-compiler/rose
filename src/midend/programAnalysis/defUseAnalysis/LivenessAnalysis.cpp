@@ -238,12 +238,16 @@ bool LivenessAnalysis::defuse(T cfgNode, bool *unhandled) {
 	}
       }
     }    
+    if (DEBUG_MODE)
+    {
     if (initName)
       cout << " This is an assignment :  initName = " <<
 	initName->get_name().str() << "  def : " << defNode << endl;
     else {
       cout << " !!! This is an assignment but no initName matched. defnode = "
 	   << defNode << endl;
+	   
+       }
     }
     break;
   }

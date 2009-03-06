@@ -1298,8 +1298,6 @@ unsigned long long getIntegerConstantValue(SgValueExp* expr);
   bool isDtor (const SgFunctionDeclaration* func);
 
    // src/midend/astInlining/typeTraits.h
-  bool isDefaultConstructible(SgType* type);
-  bool isCopyConstructible(SgType* type);
   bool hasTrivialDestructor(SgType* t);
   bool isNonconstReference(SgType* t);
   bool isReferenceType(SgType* t);

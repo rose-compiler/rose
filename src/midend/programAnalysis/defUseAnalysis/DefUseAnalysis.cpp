@@ -532,10 +532,12 @@ int DefUseAnalysis::run() {
   // traverse through all functions and for each function doWorklist
   aborted=start_traversal_of_functions();
   clock_t ends = clock();
-
+  if (DEBUG_MODE)
+  {
   cout << "\n\n>>>>> Time for dfa-test: " << (double) (ends - start) / CLOCKS_PER_SEC << " sec"<< endl;
   cout <<     ">>>>> Total CFG nodes: " << getDefSize() << 
     "  --  #CFG nodes visited: "<< nrOfNodesVisited << endl;
+    }
 
   //if (DEBUG_MODE) 
   //cout << "FINISH: DefUse Analysis " <<  (DEBUG_MODE ? "True" : "False") << endl;
