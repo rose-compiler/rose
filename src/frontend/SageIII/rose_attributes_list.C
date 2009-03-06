@@ -2,7 +2,7 @@
 // #include "rose.h"
 #include "sage3.h"
 #include "errno.h"
-// #include "rose_attributes_list.h"
+#include "rose_attributes_list.h"
 
 
 #if CAN_NOT_COMPILE_WITH_ROSE != true
@@ -23,7 +23,7 @@ token_container wave_tokenStream;
 
 //AS(01/04/07) Global map of filenames to PreprocessingInfo*'s as it is inefficient
 //to get this by a traversal of the AST
-std::map<std::string,std::vector<PreprocessingInfo*>* > mapFilenameToAttributes;
+std::map<std::string,ROSEAttributesList* > mapFilenameToAttributes;
 
 
 
