@@ -83,9 +83,9 @@ fi
 # and (2) XEmacs doesn't get regexp stack overflows when parsing compiler output.
 if [ "$do_quiet" = "yes" ]; then
     find . -name Makefile.in | grep -v libharu | grep -v libltdl | xargs sed -i~ \
-	-e 's/^\(LT\)\{0,1\}\(CXX\)\{0,1\}COMPILE =/& @echo "  COMPILE $@";/' \
-	-e 's/^\(CXX\)\{0,1\}LINK =/& @echo "  LINK    $@";/'       \
-	-e 's/@LIBTOOL@/& --quiet/g'
+	-e '/echo.*COMPILE/!s/^\(LT\)\{0,1\}\(CXX\)\{0,1\}COMPILE =/& @echo "  COMPILE $@";/' \
+	-e '/echo.*LINK/!s/^\(CXX\)\{0,1\}LINK =/& @echo "  LINK    $@";/'       \
+	-e '/LIBTOOL.*quiet/!s/@LIBTOOL@/& --quiet/g'
 fi
 
 echo "***** BUILD TERMINATED NORMALLY *****"
