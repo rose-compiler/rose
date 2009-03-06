@@ -343,6 +343,24 @@ rosegit_show_environment () {
     free -tom
 }
 
+# Show various information about what is being tested.
+rosegit_show_info () {
+    local repo="$1"         # optional repository use when including commit info in output
+    local commit="$2"       # optional commit whose message is displayed
+
+    if [ -n "$commit" -a -n "$repo" ]; then
+	(cd $repo && git --no-pager log --dirstat $commit^..$commit)
+	echo
+    fi
+    echo "------------------------- Default Environment --------------------------"
+    rosegit_show_environment; echo
+    echo
+    echo "---------------------------- Configuration -----------------------------"
+    for var in $(export |sed -n 's/.*\(ROSEGIT[A-Za-z_0-9]*\).*/\1/p'); do
+	eval "echo $var=\"\$$var\""
+    done
+}
+
 # Returns all tags that are defined for the specified commit
 rosegit_tags_of () {
     local repo="$1";    [ -d "$repo" ]    || rosegit_die "not a repository: $repo"

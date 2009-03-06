@@ -90,11 +90,16 @@ if [ ! -n "$commit" ]; then
 	done
 	[ -n "$commit" ] && break
     done
+    if [ ! -n "$commit" ]; then
+	echo "$myname: nothing left to test"
+	exit 0
+    fi
 elif [ -n "$branches" ]; then
     branch="$branches"
 else
     branch=$(rosegit_branch_of $repo $commit)
 fi
+
 if (cd $repo && git rev-list $branch |grep $commit >/dev/null); then
     : ok
 else
@@ -102,10 +107,6 @@ else
 fi
 if [ -n "$query_only" ]; then
     [ -n "$commit" ] && echo $commit
-    exit 0
-fi
-if [ ! -n "$commit" ]; then
-    echo "$myname: nothing left to test"
     exit 0
 fi
 commitname="$(cd $repo && git log --pretty=oneline $commit^..$commit |cut -c42-170)" # limit to reasonable size
@@ -136,18 +137,7 @@ fi
 
 # Display some output and mail it if desired
 mailcontent=$(rosegit_workdir)/$myname-$serial-$$.mail
-(
-    echo -n "Testing "; (cd $repo && git --no-pager log --dirstat $commit^..$commit)
-    echo
-    echo "------------------------- Default Environment --------------------------"
-    echo "Serial number:     $serial"
-    rosegit_show_environment; echo
-    echo
-    echo "---------------------------- Configuration -----------------------------"
-    for var in $(export |sed -n 's/.*\(ROSEGIT[A-Za-z_0-9]*\).*/\1/p'); do
-	eval "echo $var=\"\$$var\""
-    done
-) |tee $mailcontent
+(echo -n "Testing "; rosegit_show_info $repo $commit) |tee $mailcontent
 echo "------------------------------------------------------------------------"
 if [ ! -n "$dry_run" ]; then
     subject="[$namespace.$branch START] $commitname"
@@ -198,22 +188,7 @@ else
 fi
 
 # Build message body
-(
-    # Don't change these delimiter lines without looking at the sed command below.
-    echo
-    echo "------------------------------- Commit ---------------------------------"
-    echo -n "Tested "; (cd $repo && git log --dirstat $commit^..$commit)
-    echo
-    echo "--------------------------- ROSE Environment ---------------------------"
-    echo "Serial number:     $serial"
-    (cd $builddir; rosegit_environment; rosegit_show_environment)
-    echo
-    echo "---------------------------- Configuration -----------------------------"
-    for var in $(export |sed -n 's/.*\(ROSEGIT[A-Za-z_0-9]*\).*/\1/p'); do
-	eval "echo $var=\"\$$var\""
-    done
-    echo
-) >>$workdir/$myname.mesg
+(echo -n "Tested "; rosegit_show_info $repo $commit) >>$workdir/$myname.mesg
 
 # Error messages for failure
 if [ "$tester_result" = "fail" ]; then
@@ -222,22 +197,22 @@ if [ "$tester_result" = "fail" ]; then
     (
 	echo "------------------------------- Output ---------------------------------"
 	echo "Details in $workdir/$myname.output"   # not $tester_output
-	echo "Relevant portion of output follow:"
+	echo "Relevant portion of output follows:"
 	echo
 	tail -n200 $tester_output
     ) >>$workdir/$myname.mesg
 fi
 
 # Create new tag for result (stripping out commit info); remove old tags
-
-(cd $repo && \
- git tag -a -F <(sed '/-- Commit --/,/^-----/d' <$workdir/$myname.mesg) "$namespace-$tester_result-$serial" $commit)
-(cd $repo && git tag -d $working_tag)
+(
+    cd $repo
+    git tag -a -F <(sed '/-- Commit --/,/^-----/d' <$workdir/$myname.mesg) "$namespace-$tester_result-$serial" $commit
+    git tag -d $working_tag
+)
 
 # Send email if desired
 facility=$(echo $tester_result |tr [:lower:] [:upper:])
 rosegit_mail $facility "[$namespace.$branch $facility] $commitname" $workdir/$myname.mesg
-rm -f $workdir/$myname.mesg
 
 # Exit
 [ "$tester_result" = "pass" ] && exit 0
