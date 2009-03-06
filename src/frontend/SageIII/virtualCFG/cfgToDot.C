@@ -10,7 +10,7 @@
 using namespace std;
 
 namespace VirtualCFG {
-
+#if 0 // redefinition , perviously defined in filteredCFGImpl.h, Liao, 3/6/2009
 template <typename NodeT, typename EdgeT, bool Debug>
 class CfgToDotImpl {
   multimap<SgNode*, NodeT> exploredNodes;
@@ -21,7 +21,7 @@ class CfgToDotImpl {
   CfgToDotImpl(ostream& o): exploredNodes(), nodesPrinted(), o(o) {}
   void processNodes(NodeT n);
 };
-
+#endif
 template <typename NodeT, bool Debug>
 inline void printNode(ostream& o, const NodeT& n) {
   string id = n.id();
@@ -40,6 +40,7 @@ inline void printEdge(ostream& o, const EdgeT& e, bool isInEdge) {
 template <typename NodeT, typename EdgeT, bool Debug>
 void printNodePlusEdges(ostream& o, NodeT n);
 
+#if 0 //redefinition, already defined in filteredCFGImpl.h, Liao, 3/6/2009
 template <typename NodeT, typename EdgeT, bool Debug>
 void CfgToDotImpl<NodeT, EdgeT, Debug>::processNodes(NodeT n) {
   ROSE_ASSERT (n.getNode());
@@ -63,7 +64,7 @@ void CfgToDotImpl<NodeT, EdgeT, Debug>::processNodes(NodeT n) {
     }
   }
 }
-
+#endif
 template <typename NodeT, typename EdgeT, bool Debug>
 void printNodePlusEdges(ostream& o, NodeT n) {
   printNode<NodeT, Debug>(o, n);

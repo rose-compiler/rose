@@ -12,6 +12,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <set>
 
 
 #include "Transform.hh"
@@ -550,6 +551,7 @@ static
 void
 appendParams (const ASTtools::VarSymSet_t& syms,
               const ASTtools::VarSymSet_t& pdSyms,
+              std::set<SgInitializedName*> & readOnlyVars,
               SgFunctionDeclaration* func,
               VarSymRemap_t& sym_remap)
 {
@@ -583,7 +585,7 @@ appendParams (const ASTtools::VarSymSet_t& syms,
     // Create parameters and insert it into the parameter list.
     // ----------------------------------------
     SgInitializedName* p_init_name = NULL;
-         // Case 1: using a wrapper for all variables 
+    // Case 1: using a wrapper for all variables 
     if (Outliner::useParameterWrapper)
     {
       if (i==syms.rbegin())
@@ -619,7 +621,7 @@ appendParams (const ASTtools::VarSymSet_t& syms,
     }  
 
     SgVariableDeclaration*  local_var_decl  = 
-         createUnpackDecl (p_init_name, counter, isPointerDeref, name_str, i_type,body);
+      createUnpackDecl (p_init_name, counter, isPointerDeref, name_str, i_type,body);
     ROSE_ASSERT (local_var_decl);
     prependStatement (local_var_decl,body);
     if (SageInterface::is_Fortran_language())
@@ -640,9 +642,26 @@ appendParams (const ASTtools::VarSymSet_t& syms,
     {
       if(!isPointerDeref)
       {
-        SgExprStatement* pack_stmt = createPackStmt (local_var_init);
-        if (pack_stmt)
-          appendStatement (pack_stmt,body);
+        // skip read only variables, must compare to the original init name (i_name), 
+        // not the local copy (local_var_init)
+        if (readOnlyVars.find(const_cast<SgInitializedName*> (i_name))==readOnlyVars.end())  // variables not in read-only set have to be restored
+        {
+          if (Outliner::enable_debug)
+            cout<<"Generating restoring statement for non-read-only variable:"<<local_var_init->unparseToString()<<endl;
+
+          SgExprStatement* pack_stmt = createPackStmt (local_var_init);
+          if (pack_stmt)
+            appendStatement (pack_stmt,body);
+        }
+        else
+        {
+          if (Outliner::enable_debug)
+            cout<<"skipping a read-only variable for restoring its value:"<<local_var_init->unparseToString()<<endl;
+        }
+      } else
+      {
+        if (Outliner::enable_debug)
+          cout<<"skipping a variable using pointer-dereferencing for restoring its value:"<<local_var_init->unparseToString()<<endl;
       }
     }
     else
@@ -724,6 +743,21 @@ Outliner::Transform::generateFunction ( SgBasicBlock* s,
                                           SgScopeStatement* scope)
 {
   ROSE_ASSERT (s&&scope);
+
+   // Collect read only variables of the outlining target
+    std::set<SgInitializedName*> readOnlyVars;
+    if (Outliner::temp_variable)
+    {
+      SageInterface::collectReadOnlyVariables(s,readOnlyVars);
+      if (Outliner::enable_debug)
+      {
+        cout<<"Outliner::Transform::generateFunction() -----Found "<<readOnlyVars.size()<<" read only variables..:";
+        for (std::set<SgInitializedName*>::const_iterator iter = readOnlyVars.begin();
+            iter!=readOnlyVars.end(); iter++)
+          cout<<" "<<(*iter)->get_name().getString()<<" ";
+        cout<<endl;
+      }
+    }
 
   // Create function skeleton, 'func'.
      SgName func_name (func_name_str);
@@ -815,7 +849,7 @@ Outliner::Transform::generateFunction ( SgBasicBlock* s,
 
   // Create parameters for outlined vars, and fix-up symbol refs in
   // the body.
-  appendParams (syms, pdSyms, func, vsym_remap);
+  appendParams (syms, pdSyms,readOnlyVars, func, vsym_remap);
   remapVarSyms (vsym_remap, pdSyms, func_body);
 
      ROSE_ASSERT (func != NULL);

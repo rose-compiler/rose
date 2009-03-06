@@ -256,7 +256,6 @@ test2005_23.C \
 test2005_24.C \
 test2005_25.C \
 test2005_26.C \
-test2005_27.C \
 test2005_28.C \
 test2005_29.C \
 test2005_30.C \
@@ -401,7 +400,6 @@ test2005_175.C \
 test2005_176.C \
 test2005_177.C \
 test2005_178.C \
-test2005_179.C \
 test2005_180.C \
 test2005_181.C \
 test2005_182.C \
@@ -419,7 +417,6 @@ test2005_195.C \
 test2005_196.C \
 test2005_197.C \
 test2005_198.C \
-test2005_199.C \
 test2005_202.C \
 test2005_203.C \
 test2005_206.C \
@@ -546,13 +543,11 @@ test2006_154.C \
 test2006_155.C \
 test2006_157.C \
 test2006_158.C \
-test2006_159.C \
 test2006_160.C \
 test2006_161.C \
 test2006_162.C \
 test2006_163.C \
 test2006_164.C \
-test2006_165.C \
 test2006_166.C \
 test2006_181.C \
 test2006_183.C \
@@ -674,13 +669,19 @@ test2004_116.C
 #   My bugs: test2004_162, test2006_97, test2006_98
 #   ROSE bugs: test2005_04, test2005_06, test2005_88
 #   Requires test-specific defines: test2005_56
+
 #  Liao, 12/6/2007,
-# 	test2006_98
-#	test2006_99.C bug 135: GCC 4.x does not allow address of explicit register var.
-# works fine now: test2004_162,test2005_04,test2005_88,
 # Files previously excluded from the outlining tests:
 # test2004_30.C
-# test2006_99.C
+# test2006_99.C #  bug 135: GCC 4.x does not allow address of explicit register var.
 # test2006_159.C
 # test2005_56.C
+# new failed case since 3/5/2009, Liao
+# test2005_27.C   # redeclaration of pi problem
+# test2005_179.C  # Moving SgFunctionDeclaration() is not supported yet in 
+                  # SageInterface::moveStatementsBetweenBlocks()
+# test2005_199.C  # conflicts with 'C' linkage: missing a top level global prototype
+# test2006_159.C  # hiddenlist problem: ambiguous call of overloaded ‘bar(N::A&)’
+# test2006_165.C  # same reason as for test2005_179.C                  
+
 

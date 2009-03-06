@@ -1,10 +1,12 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-ROSE_FLAGS=-rose:verbose 2 -g3 
+ROSE_FLAGS=-rose:verbose 0 -g3 
 
 ROSE_FLAGS+=-rose:hpct:prof $(srcdir)/jacobi-raw.xml 
 # the eqpath has to be the absolute path 
 ROSE_FLAGS+=-rose:hpct:eqpath .=`cd $(srcdir) && pwd`
+# source file annotation with performance metrics
+#ROSE_FLAGS+=-rose:hpct:enable_debug 
 
 # test command line options for outliner
 ROSE_FLAGS+= -rose:outline:parameter_wrapper -rose:outline:new_file -rose:outline:temp_variable

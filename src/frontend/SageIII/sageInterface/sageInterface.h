@@ -5,12 +5,15 @@
 
 
 #include "sage3.h"
-SgFile*                         determineFileType ( std::vector<std::string> argv, int nextErrorCode, SgProject* project );
+SgFile* determineFileType ( std::vector<std::string> argv, int nextErrorCode, SgProject* project );
 
 #include "rewrite.h"
 
 // DQ (7/20/2008): Added support for unparsing abitrary strings in the unparser.
 #include "astUnparseAttribute.h"
+#include <set>
+
+#include "LivenessAnalysis.h"
 
 // DQ (8/19/2004): Moved from ROSE/src/midend/astRewriteMechanism/rewrite.h
 //! A global function for getting the string associated with an enum (which is defined in global scope)
@@ -1098,7 +1101,19 @@ bool
 collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& readRefs, std::vector<SgNode*>& writeRefs);
 
 //!Collect unique variables which are read or written within a statement. Note that a variable can be both read and written. The statement can be either of a function, a scope, or a single line statement.
-bool collectReadWriteVariables(SgStatement* stmt, std::vector<SgInitializedName*>& readVars, std::vector<SgInitializedName*>& writeVars);
+bool collectReadWriteVariables(SgStatement* stmt, std::set<SgInitializedName*>& readVars, std::set<SgInitializedName*>& writeVars);
+
+//!Collect read only variables within a statement. The statement can be either of a function, a scope, or a single line statement.
+void collectReadOnlyVariables(SgStatement* stmt, std::set<SgInitializedName*>& readOnlyVars);
+
+//!Collect read only variable symbols within a statement. The statement can be either of a function, a scope, or a single line statement.
+void collectReadOnlySymbols(SgStatement* stmt, std::set<SgVariableSymbol*>& readOnlySymbols);
+
+//!Call liveness analysis on an entire project
+LivenessAnalysis * call_liveness_analysis(SgProject* project, bool debug=false);
+
+//!get liveIn and liveOut variables for a for loop from liveness analysis result liv.
+void getLiveVariables(LivenessAnalysis * liv, SgForStatement* loop, std::set<SgInitializedName*>& liveIns, std::set<SgInitializedName*> & liveOuts);
 
 //!Instrument(Add a statement, often a function call) into a function right before the return points, handle multiple return statements and return expressions with side effects. Return the number of statements inserted. 
 /*! Useful when adding a runtime library call to terminate the runtime system right before the end of a program, especially for OpenMP and UPC runtime systems. Return with complex expressions with side effects are rewritten using an additional assignment statement. 

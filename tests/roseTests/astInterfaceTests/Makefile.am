@@ -18,7 +18,7 @@ noinst_PROGRAMS = \
     isUpcSharedType isUpcPhaseLessSharedType buildLabelStatement \
     buildSizeOfOp abiStuffTest abiStuffTestUPC buildNullStatement \
     buildForStmt canonicalLoop loopNormalization collectReadWriteVariables \
-    typeTraits
+    typeTraits livenessAnalysis
 
 # list of test SAGE AST builders 
 buildFunctionDeclaration_SOURCES = buildFunctionDeclaration.C
@@ -50,6 +50,7 @@ canonicalLoop_SOURCES            = canonicalLoop.C
 loopNormalization_SOURCES        = loopNormalization.C 
 collectReadWriteVariables_SOURCES=collectReadWriteVariables.C
 typeTraits_SOURCES               =typeTraits.C
+livenessAnalysis_SOURCES         =livenessAnalysis.C
 
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
@@ -88,7 +89,8 @@ generatedCodeExamples = \
   rose_inputcanonicalLoop.C \
   rose_inputloopNormalization.C \
   rose_inputcollectReadWriteVariables.C \
-  rose_inputtypeTraits.C
+  rose_inputtypeTraits.C \
+  rose_inputlivenessAnalysis.C 
 
 # turn off edg warnings such as "variable x declared but never referenced" for test input files
 TEST_CXXFLAGS = -rose:verbose 0 --edg:no_warnings -g3
@@ -165,6 +167,8 @@ rose_inputcollectReadWriteVariables.C:collectReadWriteVariables
 rose_inputtypeTraits.C:typeTraits
 	./typeTraits$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputtypeTraits.C
 
+rose_inputlivenessAnalysis.C:livenessAnalysis
+	./livenessAnalysis$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputlivenessAnalysis.C
 # MUST keep this up-to-date!!
 EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDeclaration.C \
        inputbuildAssignmentStmt.C inputbuildFunctionCalls.C inputbuildFunctionCalls.h \
@@ -175,7 +179,8 @@ EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDecla
        inputisUpcSharedType.upc inputisUpcPhaseLessSharedType.upc inputbuildLabelStatement.C \
        inputbuildSizeOfOp.C inputAbiStuffTest.c inputAbiStuffTestUPC.upc \
        inputbuildNullStatement.C inputbuildForStmt.C inputcanonicalLoop.C \
-       inputloopNormalization.C inputcollectReadWriteVariables.C inputtypeTraits.C
+       inputloopNormalization.C inputcollectReadWriteVariables.C inputtypeTraits.C \
+       inputlivenessAnalysis.C
 
 check-local:
 	@echo "Test for ROSE SAGE Interfaces."
@@ -185,5 +190,5 @@ check-local:
 	@echo "***********************************************************************************************************"
 
 clean-local:
-	rm -f *.o test*.C rose_*.c rose_*.C rose_*.cpp *.C.pdf *.c.pdf testfile525.cpp testfile626.cpp rose_*.upc abiStuffTestDone
+	rm -f *.o test*.C rose_*.c rose_*.C rose_*.cpp *.C.pdf *.c.pdf testfile525.cpp testfile626.cpp rose_*.upc abiStuffTestDone *.dot
 

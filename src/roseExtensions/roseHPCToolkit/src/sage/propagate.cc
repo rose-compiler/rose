@@ -21,7 +21,7 @@
  */
 
 #include "rose.h"
-
+#include "rosehpct/rosehpct.hh"
 #include "rosehpct/util/general.hh"
 #include "rosehpct/sage/sage.hh"
 
@@ -130,17 +130,19 @@ MetricScopePropagator::eval (SgType* node,
   if (total.getValue () > 0)
     if (total.getName () == metric_name_)
       {
-        std::ostringstream o;
-        o<<"\n/* ROSE-HPCT propagated metrics "
-        << metric_name_ << ":"<<total.getValue() 
-        << "["<< node->sage_class_name() << " at " << node
-        << "] */\n";
+        if (RoseHPCT::enable_debug)
+        {
+          std::ostringstream o;
+          o<<"\n/* ROSE-HPCT propagated metrics "
+            << metric_name_ << ":"<<total.getValue() 
+            << "["<< node->sage_class_name() << " at " << node
+            << "] */\n";
 
-        SageInterface::addTextForUnparser(node,o.str(),AstUnparseAttribute::e_after); 
-
-	cerr << "  [" << toFileLoc (node) << "]"
-	     << " " << total.toString ()
-	     << endl;
+          SageInterface::addTextForUnparser(node,o.str(),AstUnparseAttribute::e_after); 
+          cerr << "  [" << toFileLoc (node) << "]"
+            << " " << total.toString ()
+            << endl;
+        }
         // ignore this step if it already has a metric with the same name
         // This is a double check, since eval() is called for nodes without the metric only
         //node->setAttribute (metric_name_, new MetricAttr (total));
@@ -225,7 +227,8 @@ RoseHPCT::propagateMetrics (SgProject* node,
        ++i)
     {
       string name = prefix + *i;
-      cerr << "Propagating " << name << "..." << endl;
+      if (enable_debug)
+        cerr << "Propagating " << name << "..." << endl;
       MetricScopePropagator prop (name);
       prop.traverseInputFiles (node);
     }

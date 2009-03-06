@@ -27,6 +27,7 @@ namespace Outliner {
   bool useNewFile; // generate the outlined function into a new source file
   bool temp_variable; // use temporary variables to reduce pointer dereferencing
   bool enable_debug; // 
+  bool exclude_headers;
 };
 
 // =====================================================================
@@ -146,7 +147,11 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
 
 
   if (CommandlineProcessing::isOption (argvList,"-rose:outline:","preproc-only",true))
+  {
+    if (enable_debug)
+      cout<<"Enabling proprocessing only ..."<<endl;
     preproc_only_ = true;
+  }
   else 
     preproc_only_ = false;
 
@@ -168,6 +173,16 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
   else
     useNewFile= false;
 
+  if (CommandlineProcessing::isOption (argvList,"-rose:outline:","exclude_headers",true))
+  {
+    if (enable_debug)
+      cout<<"Excluding headers in the new file containing outlined functions.."<<endl;
+    exclude_headers= true;
+  }
+  else
+    exclude_headers= false;
+
+
   if (CommandlineProcessing::isOption (argvList,"-rose:outline:","temp_variable",true))
   {
     if (enable_debug)
@@ -179,7 +194,8 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
 
 
   // keep --help option after processing, let other modules respond also
-  if (CommandlineProcessing::isOption (argvList,"--help","",false))
+  if ((CommandlineProcessing::isOption (argvList,"--help","",false)) ||
+   (CommandlineProcessing::isOption (argvList,"-help","",false)))
   {
     cout<<"Outliner-specific options"<<endl;
     cout<<"Usage: outline [OPTION]... FILENAME..."<<endl;

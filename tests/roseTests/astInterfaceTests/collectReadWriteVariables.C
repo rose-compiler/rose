@@ -4,7 +4,7 @@
  *  */
 #include "rose.h"
 #include <iostream>
-#include <vector>
+#include <set>
 using namespace std;
 int main(int argc, char * argv[])
 {
@@ -12,14 +12,14 @@ int main(int argc, char * argv[])
   SgFunctionDeclaration* func = SageInterface::findMain(project);
   ROSE_ASSERT(func != NULL);
 
-  vector<SgInitializedName*> readNames, writeNames;
+  set<SgInitializedName*> readNames, writeNames;
   if (!SageInterface::collectReadWriteVariables(func,readNames,writeNames))
   {
     ROSE_ASSERT(false);
   }
   // i, j, b , k, argc, argv
   ROSE_ASSERT(readNames.size() ==6);
-  vector<SgInitializedName*>::iterator iter;
+  set<SgInitializedName*>::iterator iter;
   for (iter=readNames.begin();iter!=readNames.end();iter++)
     cout<<"read variable:"<<(*iter)->unparseToString()<<endl;
   /* i, j, a, b
@@ -27,8 +27,14 @@ int main(int argc, char * argv[])
   ROSE_ASSERT(writeNames.size() ==4);
   for (iter=writeNames.begin();iter!=writeNames.end();iter++)
     cout<<"written variable:"<<(*iter)->unparseToString()<<endl;
+  // read only variables  
+  set<SgInitializedName*> readOnlyVars;
+  SageInterface::collectReadOnlyVariables(func,readOnlyVars);
+  for (iter=readOnlyVars.begin();iter!=readOnlyVars.end();iter++)
+    cout<<"read-only variable:"<<(*iter)->unparseToString()<<endl;
+ 
   // run all tests
-  AstTests::runAllTests(project);
+  //AstTests::runAllTests(project);
 
   // Generate source code from AST and call the vendor's compiler
   return backend(project);

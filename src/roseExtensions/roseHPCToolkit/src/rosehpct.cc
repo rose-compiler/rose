@@ -11,9 +11,15 @@
 
 #include "rosehpct/rosehpct.hh"
 #include "rosehpct/util/general.hh"
-
+#include "commandline_processing.h"
 
 using namespace std;
+
+namespace RoseHPCT
+{
+   bool enable_debug; // output debug information
+};
+
 using namespace GenUtil;
 using namespace RoseHPCT;
 
@@ -60,6 +66,29 @@ getRoseOptionValues (vector<string> & argvList, const char* opt_name,
   return num_matches;
 }
 
+//! Extra command line processing tasks
+static 
+void commandLineProcessing(std::vector<std::string> &argvList)
+{
+  if (CommandlineProcessing::isOption (argvList,"-rose:hpct:","enable_debug",true))
+  {
+    cout<<"Enabling debugging mode for RoseHPCT..."<<endl;
+    enable_debug= true;
+  }
+  else
+    enable_debug= false;
+
+    // keep --help option after processing, let other modules respond also
+  if( (CommandlineProcessing::isOption (argvList,"--help","",false))||
+      (CommandlineProcessing::isOption (argvList,"-help","",false)))
+  {
+    cout<<"RoseHPCT-specific options"<<endl;
+    cout<<"\t-rose:hpct:prof                     specify xml format performance results"<<endl;
+    cout<<"\t-rose:hpct:eqpath                   specify equivalent path for file paths used in the xml performance file "<<endl;
+    cout<<"\t-rose:hpct:enable_debug             run roseHPCT in a debugging mode"<<endl;
+    cout <<"---------------------------------------------------------------"<<endl;  
+  }
+}
 
 /*!
  *
@@ -141,6 +170,7 @@ RoseHPCT::getEquivPaths (vector<string>& argvList)
 RoseHPCT::ProgramTreeList_t
 RoseHPCT::loadHPCTProfiles (vector<string>& argvList)
 {
+  commandLineProcessing(argvList);// handle -help, -rose:hpct:enable_debug here
   EquivPathMap_t eqpaths = getEquivPaths (argvList);
   FilenameList_t filenames = getProfileOptions (argvList);
   ProgramTreeList_t profiles = loadXMLTrees (filenames);

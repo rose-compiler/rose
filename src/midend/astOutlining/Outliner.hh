@@ -41,6 +41,7 @@ namespace Outliner
                           // -rose:outline:new_file
   extern bool temp_variable; // Use temporary variables to reduce the uses of pointer dereferencing. Activated by -rose:outline:temp_variable
   extern bool enable_debug; // output debug information for outliner
+  extern bool exclude_headers; // exclude headers from the new file containing outlined functions
 
   //! Accept a set of command line options to adjust internal behaviors
   // Please use this function before calling the frontend() to set the internal flags

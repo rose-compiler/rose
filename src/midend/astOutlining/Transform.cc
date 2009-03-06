@@ -8,7 +8,6 @@
 #include <list>
 #include <string>
 
-
 #include "Transform.hh"
 #include "ASTtools.hh"
 #include "PreprocessingInfo.hh"
@@ -39,9 +38,12 @@ Outliner::Transform::outlineBlock (SgBasicBlock* s, const string& func_name_str)
   ASTtools::VarSymSet_t syms, pdSyms;
   collectVars (s, syms);
 
+  std::set<SgInitializedName*> readOnlyVars;
+
   //Determine variables to be replaced by temp copy or pointer dereferencing.
   if (Outliner::temp_variable)
   {
+    SageInterface::collectReadOnlyVariables(s,readOnlyVars);
 #if 0    
     std::set<SgVarRefExp* > varRefSetB;
     ASTtools::collectVarRefsUsingAddress(s,varRefSetB);

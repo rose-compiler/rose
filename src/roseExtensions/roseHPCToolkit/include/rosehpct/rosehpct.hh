@@ -38,6 +38,8 @@ namespace RoseHPCT
   //! \addtogroup ROSEHPCT_HL
   //@{
 
+  extern bool enable_debug; // output debug information
+
   //! Loads HPCToolkit XML profiling data given on the command-line.
   ProgramTreeList_t loadHPCTProfiles (std::vector<std::string>& argvList);
 

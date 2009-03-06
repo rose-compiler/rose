@@ -16,6 +16,7 @@
 
 #include <sstream>
 #include <iostream>
+#include <algorithm> //for set operations
 
 typedef std::set<SgLabelStatement*> SgLabelStatementPtrSet;
 
@@ -41,8 +42,6 @@ string getVariantName ( VariantT v )
      extern const char* roseGlobalVariantNameList[];
      return string(roseGlobalVariantNameList[v]);
    }
-
-
 
 SgNamespaceDefinitionStatement*
 SageInterface::enclosingNamespaceScope( SgDeclarationStatement* declaration )
@@ -3935,7 +3934,7 @@ SageInterface::lookupFunctionSymbolInParentScopes(const SgName & functionName, S
 void
 SageInterface::addTextForUnparser ( SgNode* astNode, string s, AstUnparseAttribute::RelativePositionType inputlocation )
    {
-     printf ("addText(): using new attribute interface (s = %s) \n",s.c_str());
+    // printf ("addText(): using new attribute interface (s = %s) \n",s.c_str());
 
      if (isSgType(astNode) != NULL)
         {
@@ -8725,7 +8724,7 @@ SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& rea
 }
 
 //!Collect unique variables which are read or written within a statement. Note that a variable can be both read and written. The statement can be either of a function, a scope, or a single line statement.
-bool SageInterface::collectReadWriteVariables(SgStatement* stmt, vector<SgInitializedName*>& readVars, vector<SgInitializedName*>& writeVars)
+bool SageInterface::collectReadWriteVariables(SgStatement* stmt, set<SgInitializedName*>& readVars, set<SgInitializedName*>& writeVars)
 {
   ROSE_ASSERT(stmt != NULL);
   vector <SgNode* > readRefs, writeRefs;
@@ -8738,12 +8737,17 @@ bool SageInterface::collectReadWriteVariables(SgStatement* stmt, vector<SgInitia
     SgNode* current = *iter;
     SgInitializedName* name = convertRefToInitializedName(current);
    // Only insert unique ones
+#if 0   // 
     vector <SgInitializedName*>::iterator iter2 = find (readVars.begin(), readVars.end(), name);
     if (iter2==readVars.end())
     {
       readVars.push_back(name);
     //  cout<<"inserting read SgInitializedName:"<<name->unparseToString()<<endl;
     }
+#else
+    // We use std::set to ensure uniqueness now
+    readVars.insert(name); 
+#endif    
   }
   // process write references
   vector<SgNode*>::iterator iterw = writeRefs.begin();
@@ -8752,14 +8756,169 @@ bool SageInterface::collectReadWriteVariables(SgStatement* stmt, vector<SgInitia
     SgNode* current = *iterw;
     SgInitializedName* name = convertRefToInitializedName(current);
    // Only insert unique ones
+#if 0   // 
     vector <SgInitializedName*>::iterator iter2 = find (writeVars.begin(), writeVars.end(), name);
     if (iter2==writeVars.end())
     {
       writeVars.push_back(name);
      // cout<<"inserting written SgInitializedName:"<<name->unparseToString()<<endl;
     }
+#else
+    // We use std::set to ensure uniqueness now
+    writeVars.insert(name);
+#endif    
   }
   return true;
 }
 
+//!Collect read only variables within a statement. The statement can be either of a function, a scope, or a single line statement.
+void SageInterface::collectReadOnlyVariables(SgStatement* stmt, std::set<SgInitializedName*>& readOnlyVars)
+{
+  ROSE_ASSERT(stmt != NULL);
+  set<SgInitializedName*> readVars, writeVars;
+  collectReadWriteVariables(stmt, readVars, writeVars);
+  // read only = read - write
+  set_difference(readVars.begin(), readVars.end(), 
+                  writeVars.begin(), writeVars.end(),
+                  std::inserter(readOnlyVars, readOnlyVars.begin())); 
+}
 
+
+//!Collect read only variable symbols within a statement. The statement can be either of a function, a scope, or a single line statement.
+void SageInterface::collectReadOnlySymbols(SgStatement* stmt, std::set<SgVariableSymbol*>& readOnlySymbols)
+{
+  set<SgInitializedName*> temp;
+  collectReadOnlyVariables(stmt, temp);
+
+  for (set<SgInitializedName*>::const_iterator iter = temp.begin();
+      iter!=temp.end(); iter++)
+  {
+    SgSymbol* symbol = (*iter)->get_symbol_from_symbol_table () ;
+    ROSE_ASSERT(symbol != NULL );
+    ROSE_ASSERT(isSgVariableSymbol(symbol));
+    readOnlySymbols.insert(isSgVariableSymbol(symbol));  
+  }
+
+}
+
+//!Call liveness analysis on an entire project
+LivenessAnalysis * SageInterface::call_liveness_analysis(SgProject* project, bool debug)
+{
+  LivenessAnalysis* liv = NULL;
+  static DFAnalysis * defuse = NULL; // only one instance
+  // Prepare def-use analysis
+  if (defuse==NULL)
+  {
+    ROSE_ASSERT(project != NULL);
+    defuse = new DefUseAnalysis(project);
+  }
+
+  ROSE_ASSERT(defuse != NULL);
+  defuse->run(debug);
+
+  if (debug)
+    defuse->dfaToDOT();
+
+  //Prepare variable liveness analysis
+  liv = new LivenessAnalysis(debug,(DefUseAnalysis*)defuse);
+  ROSE_ASSERT(liv != NULL);
+
+  std::vector <FilteredCFGNode < IsDFAFilter > > dfaFunctions;
+  NodeQuerySynthesizedAttributeType vars =
+          NodeQuery::querySubTree(project, V_SgFunctionDefinition);
+  NodeQuerySynthesizedAttributeType::const_iterator i;
+  bool abortme=false;
+     // run liveness analysis on each function body
+  for (i= vars.begin(); i!=vars.end();++i)
+  {
+    SgFunctionDefinition* func = isSgFunctionDefinition(*i);
+    if (debug)
+    {
+      std::string name = func->class_name();
+      string funcName = func->get_declaration()->get_qualified_name().str();
+      cout<< " .. running liveness analysis for function: " << funcName << endl;
+    }
+    FilteredCFGNode <IsDFAFilter> rem_source = liv->run(func,abortme);
+    if (rem_source.getNode()!=NULL)
+      dfaFunctions.push_back(rem_source);
+    if (abortme)
+      break;
+  } // end for ()
+  if(debug)
+  {
+    cout << "Writing out liveness analysis results into var.dot... " << endl;
+    std::ofstream f2("var.dot");
+    dfaToDot(f2, string("var"), dfaFunctions, (DefUseAnalysis*)defuse, liv);
+    f2.close();
+  }
+  if (abortme) {
+    cerr<<"Error: Liveness analysis is ABORTING ." << endl;
+    ROSE_ASSERT(false);
+  }
+  return liv;
+  //return !abortme;
+}
+
+//!get liveIn and liveOut variables for a for loop
+void SageInterface::getLiveVariables(LivenessAnalysis * liv, SgForStatement* loop, std::set<SgInitializedName*>& liveIns, std::set<SgInitializedName*> & liveOuts)
+{
+  ROSE_ASSERT(liv != NULL);
+  ROSE_ASSERT(loop != NULL);
+  SgForStatement *forstmt = loop;
+  std::vector<SgInitializedName*> liveIns0, liveOuts0; // store the original one
+
+  // Jeremiah's hidden constructor parameter value '2' to grab the right one
+  // Several CFG nodes are used for the same SgForStatement, only one of the is needed.
+  CFGNode cfgnode(forstmt,2);
+  FilteredCFGNode<IsDFAFilter> filternode= FilteredCFGNode<IsDFAFilter> (cfgnode);
+  // This one does not return the one we want even its getNode returns the
+  // right for statement
+  //FilteredCFGNode<IsDFAFilter> filternode= FilteredCFGNode<IsDFAFilter> (forstmt->cfgForBeginning());
+  ROSE_ASSERT(filternode.getNode()==forstmt);
+
+  // Check out edges
+  vector<FilteredCFGEdge < IsDFAFilter > > out_edges = filternode.outEdges();
+  ROSE_ASSERT(out_edges.size()==2);
+  vector<FilteredCFGEdge < IsDFAFilter > >::iterator iter= out_edges.begin();
+
+  for (; iter!=out_edges.end();iter++)
+  {
+    FilteredCFGEdge < IsDFAFilter > edge= *iter;
+    //SgForStatement should have two outgoing edges based on the loop condition
+    // one true(going into the loop body) and one false (going out the loop)
+    //x. Live-in (loop) = live-in (first-stmt-in-loop)
+    if (edge.condition()==eckTrue)
+    {
+      SgNode* firstnode= edge.target().getNode();
+      liveIns0 = liv->getIn(firstnode);
+      // cout<<"Live-in variables for loop:"<<endl;
+      for (std::vector<SgInitializedName*>::iterator iter = liveIns0.begin();
+          iter!=liveIns0.end(); iter++)
+      {
+        // SgInitializedName* name = *iter;
+        liveIns.insert(*iter);
+        //           cout<< name->get_qualified_name().getString()<<endl;
+      }
+    }
+    //x. live-out(loop) = live-in (first-stmt-after-loop)
+    else if (edge.condition()==eckFalse)
+    {
+      SgNode* firstnode= edge.target().getNode();
+      liveOuts0 = liv->getIn(firstnode);
+      //  cout<<"Live-out variables for loop:"<<endl;
+      for (std::vector<SgInitializedName*>::iterator iter = liveOuts0.begin();
+          iter!=liveOuts0.end(); iter++)
+      {
+        // SgInitializedName* name = *iter;
+        //  cout<< name->get_qualified_name().getString()<<endl;
+        liveOuts.insert(*iter);
+      }
+    }
+    else
+    {
+      cerr<<"Unexpected CFG out edge type for SgForStmt!"<<endl;
+      ROSE_ASSERT(false);
+    }
+  } // end for (edges)
+
+}
