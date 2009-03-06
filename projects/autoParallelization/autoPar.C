@@ -85,7 +85,7 @@ main (int argc, char *argv[])
       } // end for-loop for declarations
      // insert omp.h if needed
      if (hasOpenMP)
-       SageInterface::insertHeader("omp.h",false,root);
+       SageInterface::insertHeader("omp.h",PreprocessingInfo::after,false,root);
    } //end for-loop of files
 
   // Qing's loop normalization is not robust enough to pass all tests

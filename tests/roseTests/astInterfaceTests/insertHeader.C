@@ -7,7 +7,7 @@ int main (int argc, char *argv[])
 {
   SgProject *project = frontend (argc, argv);
 
-  insertHeader("stdio.h",true,getFirstGlobalScope(project));
+  insertHeader("stdio.h",PreprocessingInfo::after,true,getFirstGlobalScope(project));
 
   AstTests::runAllTests(project);
   return backend (project);

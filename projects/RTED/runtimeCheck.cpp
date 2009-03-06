@@ -1,5 +1,10 @@
+/* -----------------------------------------------------------
+ * tps : 6th March 2009: RTED
+ * -----------------------------------------------------------*/
 #include <rose.h>
 #include <string>
+
+#include "RtedTransformation.h"
 
 #include <sys/types.h>
 #include <dirent.h>
@@ -18,7 +23,32 @@ using namespace boost::filesystem;
 static string rtedpath;
 static vector<string> cdirs;
 
-int 
+/* -----------------------------------------------------------
+ * Check arguments to main
+ * -----------------------------------------------------------*/
+std::string
+containsArgument(int argc, char** argv, char* pattern) {
+  for (int i = 1; i < argc ; i++) {
+    if (!strcmp(argv[i], pattern)) {
+      return argv[i+1];
+    }
+  }
+  return "";
+}
+
+/* -----------------------------------------------------------
+ * Cleanup Project
+ * -----------------------------------------------------------*/
+void
+cleanUp(SgProject* proj) {
+  // make sure all nodes in the project are deleted.
+}
+
+/* -----------------------------------------------------------
+ * Read in all directories of RTED project.
+ * Needed for automation
+ * -----------------------------------------------------------*/
+int
 getdir (string dir, map<string, vector<string> > &files) {
   DIR *dp;
   struct dirent *dirp;
@@ -57,22 +87,99 @@ getdir (string dir, map<string, vector<string> > &files) {
   return 0;
 }
 
-
+/* -----------------------------------------------------------
+ * Main Function for RTED
+ * -----------------------------------------------------------*/
 int main(int argc, char** argv) {
-  ROSE_ASSERT(argc>1);
-  rtedpath=argv[1];
-  cerr <<"Running RTED in :" <<rtedpath << endl;
+  // INIT -----------------------------------------------------
+  // call RTED like this:
+  if (argc<7) {
+    cerr << "./runtimeCheck -rtedpath RTED-PATH -path PATH -file FILE [-I...]" << endl;
+    exit(0);
+  }
+  // make sure the arguments are valid and perpare the output files
+  rtedpath=containsArgument(argc, argv, (char*)"-rtedpath");
+  string path=containsArgument(argc, argv, (char*)"-path");
+  string rtedfile=containsArgument(argc, argv, (char*)"-file");
+  string includePath ="-I"+rtedpath+path;
+  string abs_path=rtedpath+path+rtedfile;
+  string abs_path_new="rose_"+rtedfile;
+  cerr <<"Running RTED in :" <<abs_path << "  New file : " << abs_path_new << endl;
 
+  // if the arguments are invalid, we assume that this is a test of a regular file
+  // we check if it compiles and exit
+  if (rtedpath=="") {
+    // run only frontend for testing
+    frontend(argc,argv);
+    exit(0);
+  }
+  ROSE_ASSERT(rtedpath!="");
+
+  // adjust all input parameters
+  int moved=0;
+  argv[1]=(char*)(abs_path).c_str();
+  argv[2]=(char*)(includePath).c_str();
+  for (int i=3;i<7;++i)
+    if (i<argc)
+      argv[i]=(char*)"";
+  for (int i=7;i<argc;++i) {
+    argv[i-4]=argv[i];
+    moved++;
+  }
+  argc=moved+3;
+  // INIT -----------------------------------------------------
+
+
+  // AUTOMATION -----------------------------------------------------
+  // Collect information about RTED directories
+  // for automation of this work
   map<string,vector<string> > files;
   getdir(rtedpath,files);
-  map<string,vector<string> >::const_iterator it = files.begin();
-  for (;it != files.end() ;++it) {
-    string lang = it->first;
-    vector<string> path = it->second;
-    for (int i=0;i<path.size();++i) {
-      cout << "Language : " << lang << "  Path : " << path[i] << endl;
-    }
+  cout <<"RTED contains " << files.size() << " Language Folders." << endl;
+  // AUTOMATION -----------------------------------------------------
+
+  // PARSE AND TRANSFORM - 1rst round--------------------------------
+  // Init Transformation object
+  RtedTransformation rted(files);
+  // Start parsing the project and insert header files
+  cerr <<"Parsing project (1st time)..." << endl;
+  SgProject* project = rted.parse(argc, argv);
+  cerr <<"Creating pdf..." << endl;
+  AstPDFGeneration pdf;
+  pdf.generateInputFiles(project);
+  cerr << "Adding headers to project and writing out the project." << endl;
+  rted.insertProlog(project);
+  cerr << "Calling backend (1st time)..." << endl;
+  for (int i=0; i<argc;++i) {
+    cout << argv[i] << " ";
   }
+  cout << endl;
+  // The backend results in a file called rose_filename.c
+  backend(project);
+  // PARSE AND TRANSFORM - 1rst round--------------------------------
+
+
+  // PARSE AND TRANSFORM - 2rst round--------------------------------
+  // clean up the project and delete all nodes
+  cerr << "Cleaning up old project..." << endl;
+  cleanUp(project);
+
+  // read in the generated project
+  argv[1]=(char*)(abs_path_new).c_str();
+  cerr << "Running new project... (2st time)" << endl;
+  project = rted.parse(argc, argv);
+  // perform all necessary transformations (calls)
+  cerr << "Transforming ... " << endl;
+  rted.transform(project);
+  cerr << "Calling backend... (2st time)" << endl;
+  for (int i=0; i<argc;++i) {
+    cout << argv[i] << " ";
+  }
+  cout << endl;
+  // call backend and create a new rose_rose_filename.c source file
+  backend(project);
+  // PARSE AND TRANSFORM - 2rst round--------------------------------
+  return 0;
 }
 
 

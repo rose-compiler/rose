@@ -332,6 +332,14 @@ SgMinusMinusOp *buildMinusMinusOp_nfi(SgExpression* operand_i, SgUnaryOp::Sgop_m
 SgPlusPlusOp* buildPlusPlusOp(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode);
 SgPlusPlusOp* buildPlusPlusOp_nfi(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode);
 
+SgNewExp * buildNewExp(SgType* type, 
+		       SgExprListExp* exprListExp, 
+		       SgConstructorInitializer* constInit, 
+		       SgExpression* expr, 
+		       short int val, 
+		       SgFunctionDeclaration* funcDecl);
+ 
+
 #undef BUILD_UNARY_PROTO
 
 //! Template function to build a binary expression of type T, taking care of parent pointers, file info, lvalue, etc. Available instances include: buildAddOp(), buildAndAssignOp(), buildAndOp(), buildArrowExp(),buildArrowStarOp(), buildAssignOp(),buildBitAndOp(),buildBitOrOp(),buildBitXorOp(),buildCommaOpExp(), buildConcatenationOp(),buildDivAssignOp(),buildDivideOp(),buildDotExp(),buildEqualityOp(),buildExponentiationOp(),buildGreaterOrEqualOp(),buildGreaterThanOp(),buildIntegerDivideOp(),buildIorAssignOp(),buildLessOrEqualOp(),buildLessThanOp(),buildLshiftAssignOp(),buildLshiftOp(),buildMinusAssignOp(),buildModAssignOp(),buildModOp(),buildMultAssignOp(),buildMultiplyOp(),buildNotEqualOp(),buildOrOp(),buildPlusAssignOp(),buildPntrArrRefExp(),buildRshiftAssignOp(),buildRshiftOp(),buildScopeOp(),buildSubtractOp()buildXorAssignOp()
@@ -453,11 +461,14 @@ SgFunctionRefExp * buildFunctionRefExp(const char* name,SgScopeStatement* scope=
 SgFunctionRefExp * buildFunctionRefExp(SgFunctionSymbol* sym);
 SgFunctionRefExp * buildFunctionRefExp_nfi(SgFunctionSymbol* sym);
 SgMemberFunctionRefExp * buildMemberFunctionRefExp_nfi(SgMemberFunctionSymbol* sym, bool virtual_call, bool need_qualifier);
+SgMemberFunctionRefExp * buildMemberFunctionRefExp(SgMemberFunctionSymbol* sym, bool virtual_call, bool need_qualifier);
 SgClassNameRefExp * buildClassNameRefExp_nfi(SgClassSymbol* sym);
+SgClassNameRefExp * buildClassNameRefExp(SgClassSymbol* sym);
 
 //! Build a function call expression
 SgFunctionCallExp* buildFunctionCallExp(SgFunctionSymbol* sym, SgExprListExp* parameters);
 SgFunctionCallExp* buildFunctionCallExp_nfi(SgExpression* f, SgExprListExp* parameters);
+SgFunctionCallExp* buildFunctionCallExp(SgExpression* f, SgExprListExp* parameters);
 
 //! Build a function call expression,it will automatically search for function symbols internally to build a right function reference etc.
 SgFunctionCallExp* 

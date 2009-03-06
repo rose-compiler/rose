@@ -1482,7 +1482,7 @@ int OmpMidend::insertHeaders(SgProject* project)
   {
     SgGlobal* globalscope = isSgGlobal(*i);
     ROSE_ASSERT (globalscope != NULL);
-    SageInterface::insertHeader("ompcLib.h",false,globalscope);
+    SageInterface::insertHeader("ompcLib.h",PreprocessingInfo::after,false,globalscope);
    }
   return 0; //assume always successful currently
 }

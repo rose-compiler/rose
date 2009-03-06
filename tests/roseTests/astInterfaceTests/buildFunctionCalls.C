@@ -25,7 +25,7 @@ int main (int argc, char *argv[])
   MiddleLevelRewrite::insert(globalscope,"#include \"inputbuildFunctionCalls.h\" \n",scope,locationInScope);
 #else
   
-  insertHeader("inputbuildFunctionCalls.h",false,globalscope);
+  insertHeader("inputbuildFunctionCalls.h",PreprocessingInfo::after,false,globalscope);
 #endif
   // go to the function body
   SgFunctionDeclaration* mainFunc= findMain(project);

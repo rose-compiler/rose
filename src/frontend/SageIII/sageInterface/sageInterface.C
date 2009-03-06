@@ -6471,7 +6471,7 @@ PreprocessingInfo* SageInterface::attachComment(
   return result;
  }
 
-  PreprocessingInfo* SageInterface::insertHeader(const string& filename, bool isSystemHeader /*=false*/, SgScopeStatement* scope /*=NULL*/)
+PreprocessingInfo* SageInterface::insertHeader(const string& filename, PreprocessingInfo::RelativePositionType position /*=after*/, bool isSystemHeader /*=false*/, SgScopeStatement* scope /*=NULL*/)
   {
     bool successful = false;
     if (scope == NULL)
@@ -6502,7 +6502,7 @@ PreprocessingInfo* SageInterface::attachComment(
        result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
                 content, "Transformation generated",0, 0, 0, PreprocessingInfo::before);
 	   ROSE_ASSERT(result);
-	   (*j)->addToAttachedPreprocessingInfo(result);
+	   (*j)->addToAttachedPreprocessingInfo(result,position);
            successful = true;
 	    break;
 	  }
@@ -6513,7 +6513,7 @@ PreprocessingInfo* SageInterface::attachComment(
        result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
                 content, "Transformation generated",0, 0, 0, PreprocessingInfo::after);
        ROSE_ASSERT(result);
-       globalScope->addToAttachedPreprocessingInfo(result);
+       globalScope->addToAttachedPreprocessingInfo(result,position);
        successful = true;
     }
     // must be inserted once somehow

@@ -243,7 +243,7 @@ void RuntimeInstrumentation::run(SgNode* project) {
   pushScopeStack (isSgScopeStatement (globalScope));
 
   // insert rose header
-  insertHeader("iostream",true,globalScope);
+  insertHeader("iostream",PreprocessingInfo::after, true,globalScope);
 
   // defining  void chec_var(SgNode*, string desc)
   // build parameter list first

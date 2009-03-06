@@ -36,9 +36,9 @@ namespace upcTranslation{
                   PreprocessingInfo::before);
 
   // Add UPCR system headers
-     insertHeader("upcr.h",false,global_scope); 
+     insertHeader("upcr.h",PreprocessingInfo::after,false,global_scope); 
    //  insertHeader("whirl2c.h",false,global_scope); 
-     insertHeader("upcr_proxy.h",false,global_scope); 
+     insertHeader("upcr_proxy.h",PreprocessingInfo::after,false,global_scope); 
      //insertHeader("upcr_geninclude/stdio.h",false,global_scope); 
   }
 

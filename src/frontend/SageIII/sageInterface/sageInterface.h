@@ -511,7 +511,7 @@ class StatementGenerator {
 */
 
 //! Insert  #include "filename" or #include <filename> (system header) into the global scope containing the current scope, right after other #include XXX. 
-PreprocessingInfo* insertHeader(const std::string& filename, bool isSystemHeader=false, SgScopeStatement* scope=NULL);
+PreprocessingInfo* insertHeader(const std::string& filename, PreprocessingInfo::RelativePositionType position=PreprocessingInfo::after, bool isSystemHeader=false, SgScopeStatement* scope=NULL);
 
 //! Move preprocessing information of stmt_src to stmt_dst, Only move preprocessing informationat the specified relative position, otherwise move all preprocessing information.  
 void moveUpPreprocessingInfo (SgStatement* stmt_dst, SgStatement* stmt_src, PreprocessingInfo::RelativePositionType position=PreprocessingInfo::undef);
