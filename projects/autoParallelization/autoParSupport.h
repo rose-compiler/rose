@@ -36,6 +36,7 @@ namespace AutoParallelization
   // Required analysis and their initialization
   extern DFAnalysis * defuse;
   extern LivenessAnalysis* liv;
+  extern bool enable_debug; 
 
   // Conduct necessary analyses on the project, can be called multiple times during program transformations. 
   bool initialize_analysis(SgProject* project=NULL,bool debug=false);
