@@ -1,3 +1,55 @@
+2009-03-06 16:42  matzke
+
+	* [r4762] /trunk/ROSE/build: Fixed "build" so it never adds "@echo"
+	  more than once
+
+2009-03-06 16:42  matzke
+
+	* [r4761] /trunk/ROSE/configure.in, /trunk/ROSE/demo/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/ROSE_execFormatsTest.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/arm-ctrlaltdel.ans,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/execFormatsTest.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/runExecFormatsTest,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/schulz-sample1-p.so,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/schulz-sample1.so,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/schulz-sample2-p.so,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/schulz-sample2.so,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/shiftResizeSection.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/testElfByteOrder.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/testElfConstruct.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/testElfSchulz.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/testElfStrtab.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/testElfWordSize.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/testPeConstruct.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/testShiftResizeSection.sh,
+	  /trunk/ROSE/tests/roseTests/binaryTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/binaryTests/arm-ctrlaltdel,
+	  /trunk/ROSE/tests/roseTests/binaryTests/arm-ctrlaltdel.ans,
+	  /trunk/ROSE/tests/roseTests/binaryTests/arm-poweroff,
+	  /trunk/ROSE/tests/roseTests/binaryTests/execFormatsTest.C,
+	  /trunk/ROSE/tests/roseTests/binaryTests/runExecFormatsTest,
+	  /trunk/ROSE/tests/roseTests/binaryTests/schulz-sample1-p.so,
+	  /trunk/ROSE/tests/roseTests/binaryTests/schulz-sample1.so,
+	  /trunk/ROSE/tests/roseTests/binaryTests/schulz-sample2-p.so,
+	  /trunk/ROSE/tests/roseTests/binaryTests/schulz-sample2.so,
+	  /trunk/ROSE/tests/roseTests/binaryTests/shiftResizeSection.C,
+	  /trunk/ROSE/tests/roseTests/binaryTests/testElfByteOrder.C,
+	  /trunk/ROSE/tests/roseTests/binaryTests/testElfConstruct.C,
+	  /trunk/ROSE/tests/roseTests/binaryTests/testElfSchulz.C,
+	  /trunk/ROSE/tests/roseTests/binaryTests/testElfStrtab.C,
+	  /trunk/ROSE/tests/roseTests/binaryTests/testElfWordSize.C,
+	  /trunk/ROSE/tests/roseTests/binaryTests/testPeConstruct.C,
+	  /trunk/ROSE/tests/roseTests/binaryTests/testShiftResizeSection.sh:
+	  Added binary demos; moved source code
+
+2009-03-06 16:41  matzke
+
+	* [r4760] /trunk/ROSE/scripts/rosegit/bin/rosegit-ats,
+	  /trunk/ROSE/scripts/rosegit/bin/rosegit-functions.sh,
+	  /trunk/ROSE/scripts/rosegit/config/rpm.conf: Refactored some code
+	  in test script
+
 2009-03-06 00:12  saebjornsen1
 
 	* [r4751] /trunk/ROSE/projects/MacroRewrapper/Makefile.am,
