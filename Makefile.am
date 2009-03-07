@@ -28,6 +28,8 @@ all: detect_roseh detect_rosec
 
 # tps: script that checks that no header file includes rose.h
 detect_roseh:
+	touch $(top_builddir)/src/frontend/SageIII/rose.h.pch
+	rm $(top_builddir)/src/frontend/SageIII/rose.h.pch
 	@echo "***************************************************************************************"
 	@echo "***** ROSE uses pre-compiled headers and needs to check integrity. ********************"
 	@echo "***** ROSE ensures that no header files includes rose.h and that   ********************"
