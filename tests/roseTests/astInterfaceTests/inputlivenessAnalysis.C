@@ -4,7 +4,7 @@ int main(void)
 {
   for (i=0;i<100;i+=1)
   {
-    a[i]=i+x+j;
+    a[i]=i+x+j+b[i];
     k=i;
   }
   i=k;
