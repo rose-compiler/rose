@@ -59,7 +59,7 @@ build_file1: modifyTestCode
 	@echo "RTED is configured in dir : $(rted_path)"
 	@echo "Transforming original test program ... "
 # This breaks right now because of the backend!
-	./runtimeCheck -rtedpath $(rted_path) -path /C/array_index_out_of_bound/ -file c_E_1_1_a.c -rose:Cxx $(INCLUDES) -I$(top_builddir) -I$(srcdir) # $(srcdir)/RuntimeSystem.cpp
+	./runtimeCheck -rtedpath $(rted_path) -path /C/array_index_out_of_bound/ -file c_E_1_1_a.c -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) # $(srcdir)/RuntimeSystem.cpp
 # created a new file called rose_c_E_1_1_a.c and rose_rose_E_1_1_a.c	
 	cp $(srcdir)/index_array.txt .
 
