@@ -73,6 +73,6 @@ check-local: runtimeCheck $(TESTCODES) build_file1 compile_gcc_file1
 	@echo "***************************************************************************************"
 
 clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) test_bin* *.o rose_*.C rose_*.c *.dot Templates.DB
+	rm -rf $(CXX_TEMPLATE_OBJECTS) test_bin* *.o rose_*.C rose_*.c *.dot Templates.DB *~ rose_rose*
 
 endif

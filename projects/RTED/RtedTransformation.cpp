@@ -96,6 +96,51 @@ RtedTransformation::insertArrayCreateCall(SgInitializedName* n, SgExpression* va
 }
 
 /* -----------------------------------------------------------
+ * Perform Transformation: insertArrayCreateAccessCall
+ * -----------------------------------------------------------*/
+void
+RtedTransformation::insertArrayCreateAccessCall(SgVarRefExp* arrayNameRef, SgExpression* value) {
+  ROSE_ASSERT(arrayNameRef);
+  SgVariableSymbol* varSymbol = arrayNameRef->get_symbol();
+  ROSE_ASSERT(varSymbol);
+  SgInitializedName* initName = varSymbol->get_declaration();
+  ROSE_ASSERT(initName);
+
+  SgStatement* stmt = getSurroundingStatement(arrayNameRef);
+  if (isSgStatement(stmt)) {
+    SgScopeStatement* scope = stmt->get_scope();
+
+    ROSE_ASSERT(scope);
+    if (isSgBasicBlock(scope)) {
+      string name = initName->get_mangled_name().str();
+      SgStringVal* callNameExp = buildStringVal(name);
+
+      SgExprListExp* arg_list = buildExprListExp();
+      appendExpression(arg_list,callNameExp);
+      appendExpression(arg_list,value);
+
+      SgVarRefExp* varRef_l = buildVarRefExp("runtimeSystem",globalScope);
+      string symbolName = varRef_l->get_symbol()->get_name().str();
+      //cerr << " >>>>>>>> Symbol VarRef: " << symbolName << endl;
+
+      ROSE_ASSERT(roseArrayAccess);
+      string symbolName2 = roseArrayAccess->get_name().str();
+      //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
+      SgMemberFunctionRefExp* memRef_r = buildMemberFunctionRefExp(roseArrayAccess,false,true);
+      SgArrowExp* sgArrowExp = buildArrowExp(varRef_l,memRef_r);
+
+      SgFunctionCallExp* funcCallExp = buildFunctionCallExp(sgArrowExp,arg_list);
+      SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
+      insertStatementBefore(isSgStatement(stmt),exprStmt) ;
+    }
+
+  } else {
+    cerr << "RuntimeInstrumentation :: Surrounding Statement could not be found! " <<endl;
+    exit(0);
+  }
+}
+
+/* -----------------------------------------------------------
  * Insert the header files (Step 1)
  * -----------------------------------------------------------*/
 void
@@ -180,6 +225,14 @@ RtedTransformation::transform(SgProject* project) {
     SgExpression* array_size = it->second;
     insertArrayCreateCall(array_node,array_size);
   }
+
+  cerr << "\n Number of Elements in create_array_access_call  : " << create_array_access_call.size() << endl;
+  std::map<SgVarRefExp*, SgExpression*>::const_iterator ita=create_array_access_call.begin();
+  for (;ita!=create_array_access_call.end();ita++) {
+	SgVarRefExp* array_node = ita->first;
+    SgExpression* array_size = ita->second;
+    insertArrayCreateAccessCall(array_node,array_size);
+  }
 }
 
 
@@ -248,6 +301,21 @@ RtedTransformation::visit(SgNode* n) {
     }
   }
 
+  // *********************** DETECT THE rose CreateArray func call in Runtime System -- needed for Transformations ***************
+  SgMemberFunctionDeclaration* roseArrayAccess_tmp = isSgMemberFunctionDeclaration(n);
+  if (roseArrayAccess_tmp) {
+    if (roseArrayAccess_tmp->get_symbol_from_symbol_table()) {
+    string memberName = roseArrayAccess_tmp->get_symbol_from_symbol_table()->get_name().str();
+    //cerr <<"Found MemberName : " << memberName << endl;
+    if (memberName=="roseArrayAccess") {
+      cerr <<">>>>>>>>>>>>> Found MemberName : " << memberName << endl;
+      roseArrayAccess = isSgMemberFunctionSymbol(roseArrayAccess_tmp->get_symbol_from_symbol_table());
+    }
+    }
+  }
+
+
+
   // *********************** DETECT ALL array creations ***************
   SgInitializedName* initName = isSgInitializedName(n);
   if (initName) {
@@ -258,15 +326,26 @@ RtedTransformation::visit(SgNode* n) {
       SgExpression * expr = array->get_index();
       //cerr <<"Found SgInitalizedName with type : " << type->class_name() << " array expr: " << expr << endl;
       if (expr!=NULL)
-	     create_array_call[initName]=expr;
+    	  create_array_call[initName]=expr;
     }
   }
 
   // *********************** DETECT ALL array accesses ***************
   SgPntrArrRefExp* arrRefExp = isSgPntrArrRefExp(n);
   if (arrRefExp) {
-	 //SgVarRefExp* arrayNameRef = arrRefExp->get_lhs();
-	 //SgVarRefExp* arrayparamRef = arrRefExp->get_rhs();
+	 SgExpression* left = arrRefExp->get_lhs_operand();
+	 SgExpression* right = arrRefExp->get_rhs_operand();
+	 SgVarRefExp* arrayNameRef = isSgVarRefExp(left);
+	 SgVarRefExp* arrayparamRef = isSgVarRefExp(right);
+	 if (arrayNameRef==NULL) {
+		 cerr << "SgPntrArrRefExp:: unknown left side : " << left->class_name() << endl;
+		 return;
+	 }
+	 if (arrayparamRef==NULL) {
+		 cerr << "SgPntrArrRefExp:: unknown right side : " << right->class_name() << endl;
+		 return;
+	 }
+	 create_array_access_call[arrayNameRef]=arrayparamRef;
   }
 }
 

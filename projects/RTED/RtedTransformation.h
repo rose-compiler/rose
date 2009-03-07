@@ -14,10 +14,12 @@ class RtedTransformation : public AstSimpleProcessing {
   SgGlobal* globalScope;
   // The array of callArray calls that need to be inserted
   std::map<SgInitializedName*, SgExpression*> create_array_call;
+  std::map<SgVarRefExp*, SgExpression*> create_array_access_call;
 
   // The following are vars that are needed for transformations
   // and retrieved through the visit function
   SgMemberFunctionSymbol* roseCreateArray;
+  SgMemberFunctionSymbol* roseArrayAccess;
   SgClassSymbol* runtimeClassSymbol;
   SgScopeStatement* rememberTopNode;
 
@@ -36,6 +38,7 @@ class RtedTransformation : public AstSimpleProcessing {
 
   // Function that inserts call to array : runtimeSystem->callArray
   void insertArrayCreateCall(SgInitializedName* name,SgExpression* value);
+  void insertArrayCreateAccessCall(SgVarRefExp* n, SgExpression* value);
 
  public:
   RtedTransformation(std::map<std::string,std::vector<std::string> >& files) {
@@ -43,6 +46,7 @@ class RtedTransformation : public AstSimpleProcessing {
     globalScope=NULL;
     create_array_call.clear();
     roseCreateArray=NULL;
+    roseArrayAccess=NULL;
   };
   virtual ~RtedTransformation(){
     inputFiles.clear();
