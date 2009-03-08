@@ -1,3 +1,36 @@
+2009-03-08 18:22  dquinlan
+
+	* [r4781] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/developersScratchSpace/Dan/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Pin_tests,
+	  /trunk/ROSE/developersScratchSpace/Dan/Pin_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Pin_tests/README,
+	  /trunk/ROSE/developersScratchSpace/Dan/Pin_tests/dynamicBinaryInfo.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Pin_tests/dynamicStaticBinaryAnalysis.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Pin_tests/graphTrace.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Pin_tests/imageload.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Pin_tests/input_testcode.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Pin_tests/memcopy-elf.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Pin_tests/staticBinaryAnalysis.C,
+	  /trunk/ROSE/src/frontend/SageIII/astHiddenTypeAndDeclarationLists/HiddenList.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.h,
+	  /trunk/ROSE/src/midend/astOutlining/Transform.cc: Added support
+	  for dynamic binary instrumentation using Intel Pin
+	  (--with-IntelPin).
+	  
+	  Detailed changes in this commit:
+	  1) Added directory of examples in
+	  developersScratchSpace/Dan/Pin_tests
+	  demonstrating the use of dynamic binary analysis within ROSE.
+	  This is part of ongoing work to combine static and dynamic
+	  analysis
+	  to support the analysis of source code and binaries.
+	  2) Added internal support for Liao's new command line option to
+	  skip the
+	  generation of #include directives when outlinin to a separate
+	  file.
+
 2009-03-07 01:17  panas2
 
 	* [r4769] /trunk/ROSE/Makefile.am,
