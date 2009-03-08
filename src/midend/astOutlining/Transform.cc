@@ -185,7 +185,7 @@ Outliner::Transform::outlineBlock (SgBasicBlock* s, const string& func_name_str)
           printf ("******************************************************************** \n");
 #endif
        // If the outline function will be placed into it's own file then we need to reconstruct any dependent statements (and #include CPP directives).
-          SageInterface::appendStatementWithDependentDeclaration(func,glob_scope,func_orig);
+          SageInterface::appendStatementWithDependentDeclaration(func,glob_scope,func_orig,exclude_headers);
        // printf ("DONE: Now calling SageInterface::appendStatementWithDependentDeclaration() \n");
 #else
           printf ("Skipping call to SageInterface::appendStatementWithDependentDeclaration() (testing only)\n");
