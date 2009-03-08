@@ -1077,9 +1077,8 @@ InheritedAttributeSgScopeStatement HiddenListComputationTraversal :: evaluateInh
                                         VectorOutput( (*(this->NamespacesIteratorHashMap[ namespace_name ]).it_vec_namesp_info).VectorOfSymbolInformation );
 #endif
 
-#if 1
                                      // DQ (3/5/2009): This is the original code (which allows all the C++ test codes to pass).
-                                     // This is required for test2005_206.C to pass.
+                                     // This is required for test2005_206.C to pass, however it had to be modified to allow the outlining test to a separate file to pass.
 
                                      // printf ("b = %d bound = %d find_it->second.size() = %zu \n",b,bound, find_it->second.size());
 
@@ -1105,51 +1104,6 @@ InheritedAttributeSgScopeStatement HiddenListComputationTraversal :: evaluateInh
                                                 }
                                                 b++;
                                            }
-#else
-                                     // DQ (3/5/2009): this is the modified code that allows the AST outlining to a separate file to pass.
-                                     // This causes test2005_206.C to fail.
-#error "DEAD CODE!"
-                                     // for(it_VecOfNamespInfo = this->NamespacesHashMap[namespace_name].begin(); (b <= bound); ++it_VecOfNamespInfo) {
-                                     // ROSE_ASSERT(find_it != NULL);
-#if 0
-                                        printf ("b = %d bound = %d find_it->second.size() = %zu \n",b,bound, find_it->second.size());
-#endif
-                                     // for (it_VecOfNamespInfo = find_it->second.begin(); (b <= bound); ++it_VecOfNamespInfo)
-
-                                     // DQ (2/21/2009): Change test from "b <= bound" to "b < bound".
-                                     // for (it_VecOfNamespInfo = find_it->second.begin(); (b <= bound); ++it_VecOfNamespInfo)
-                                        for (it_VecOfNamespInfo = find_it->second.begin(); (b < bound); ++it_VecOfNamespInfo)
-                                           {
-                                          // DQ (2/21/2009): Commented out as part of debugging outlining.
-                                          // DQ (2/17/2009): Added assertion.
-                                          // ROSE_ASSERT((*it_VecOfNamespInfo).VectorOfSymbolInformation.empty() == false);
-                                             if ( (*it_VecOfNamespInfo).VectorOfSymbolInformation.empty() == false )
-                                                {
-                                               // DQ (2/19/2009): Added conditional to keep from running off the end of the list.  
-                                               // I don't like this code!  This hidden list support needs to be reimplemented.
-                                               // ROSE_ASSERT(it_VecOfNamespInfo != find_it->second.end());
-                                                  if (it_VecOfNamespInfo != find_it->second.end())
-                                                     {
-#if 0
-                                                       printf ("In loop: b = %d bound = %d \n",b,bound);
-                                                       printf ("(*it_VecOfNamespInfo).VectorOfSymbolInformation.size() = %zu \n",(*it_VecOfNamespInfo).VectorOfSymbolInformation.size());
-#endif
-                                                       Vector_Of_SymbolInformation::iterator it_VecSymbolInfo;
-                                                       for(it_VecSymbolInfo = (*it_VecOfNamespInfo).VectorOfSymbolInformation.begin(); it_VecSymbolInfo != (*it_VecOfNamespInfo).VectorOfSymbolInformation.end(); ++it_VecSymbolInfo )
-                                                          {
-                                                         // printf ("Before: Update with NAME \n");
-                                                         // cout << "Update with NAME: " << (*it_VecSymbolInfo).name<< endl;
-                                                            temp_symboltable.push_back( (*it_VecSymbolInfo) );
-#ifdef HIDDEN_LIST_DEBUG
-                                                         // cout << "Update of temp_symboltable" << endl;
-                                                         // VectorOutput(temp_symboltable);
-#endif
-                                                          }
-                                                     }
-                                                }
-                                             b++;
-                                           }
-#endif
                                 }
                                 else {
 

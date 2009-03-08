@@ -7987,7 +7987,7 @@ SageInterface::addMessageStatement( SgStatement* stmt, string message )
 
 // DQ (2/6/2009): Added function to support outlining into separate file.
 void
-SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* decl, SgGlobal* scope, SgStatement* original_statement )
+SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* decl, SgGlobal* scope, SgStatement* original_statement, bool excludeHeaderFiles)
    {
   // New function to support outlining of functions into separate files (with their required declarations).
 
@@ -8437,11 +8437,18 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
   // Add a message to the top of the dependent declarations that have been added
      addMessageStatement(firstStatmentInFile,"/* REQUIRED DEPENDENT DECLARATIONS */");
 
-     vector<PreprocessingInfo*>::reverse_iterator j = requiredDirectivesList.rbegin();
-     while ( j != requiredDirectivesList.rend() )
+  // DQ (3/6/2009): Added support to permit exclusion of "#include<header.h>" files since they can make it 
+  // much more difficult for external tools. Later we will check if there are remaining unsatisfied dependent
+  // declarations (which must be in the header file) so we can automate this step.
+     if (excludeHeaderFiles == false)
         {
-          firstStatmentInFile->addToAttachedPreprocessingInfo(*j,PreprocessingInfo::before);
-          j++;
+       // Include all the "#include<header.h>" cpp directives obtained from the original file.
+          vector<PreprocessingInfo*>::reverse_iterator j = requiredDirectivesList.rbegin();
+          while ( j != requiredDirectivesList.rend() )
+             {
+               firstStatmentInFile->addToAttachedPreprocessingInfo(*j,PreprocessingInfo::before);
+               j++;
+             }
         }
 
   // Add a message to the top of the CPP directives that have been added
