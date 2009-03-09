@@ -1,3 +1,30 @@
+2009-03-08 21:31  dquinlan
+
+	* [r4786]
+	  /trunk/ROSE/developersScratchSpace/Dan/Pin_tests/Makefile.am:
+	  Fixed Makefile.am to only run make check on ROSE/Pin tests rules
+	  when --with-IntelPin is used to configure ROSE.
+
+2009-03-08 19:56  dquinlan
+
+	* [r4785] /trunk/ROSE/config/support-IntelPin.m4: Added
+	  config/support-IntelPin.m4 as part of Intel Pin support in ROSE.
+
+2009-03-08 19:46  dquinlan
+
+	* [r4784] /trunk/ROSE/projects/AstEquivalence/Makefile.am,
+	  /trunk/ROSE/projects/AstEquivalence/gui/Makefile.am: Fixed
+	  Makefile.am that has QT referenced, but didn't require
+	  configuration to use QT. This fixes some current failures of our
+	  nightly tests.
+
+2009-03-08 19:45  dquinlan
+
+	* [r4783] /trunk/ROSE/projects/MacroRewrapper/Makefile.am: Fixed
+	  Makefile.am that has QT referenced, but didn't require
+	  configuration to use QT. This fixes some current failures of our
+	  nightly tests.
+
 2009-03-08 18:22  dquinlan
 
 	* [r4781] /trunk/ROSE/configure.in,
