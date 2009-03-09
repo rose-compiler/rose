@@ -48,7 +48,7 @@ ROSE_TOP=/home/panas2/ROSE/svn-test-rose/${TIMESTAMP}
 
 
 #mpi
-CONFIGURE_FLAGS=(--with-boost=${BOOST_ROOT}  --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-CXXFLAGS=-fPIC -with-CFLAGS=-fPIC --with-CXX_DEBUG=-g --with-boost=/home/panas2/development/boost-install-gcc4-64bit/  --without-Mesa --with-qt=/usr/apps/qt/4.4.2/ --with-sqlite3=/home/panas2/programs/sqlite/sqlite3 --with-java LDFLAGS=-L/home/panas2/programs/freeglut/lib --with-pch CPPFLAGS=-I/home/panas2/programs/freeglut/freeglut-2.4.0/include --prefix=${ROSE_TOP}/install "$@")
+CONFIGURE_FLAGS=(--with-boost=${BOOST_ROOT}  --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-CXXFLAGS=-fPIC -with-CFLAGS=-fPIC --with-CXX_DEBUG=-g --with-boost=/home/panas2/development/boost-install-gcc4-64bit/  --without-Mesa --with-qt=/usr/apps/qt/4.4.2/ --with-sqlite3=/home/panas2/programs/sqlite/sqlite3 --with-java LDFLAGS=-L/home/panas2/programs/freeglut/lib --with-pch CPPFLAGS=-I/home/panas2/programs/freeglut/freeglut-2.4.0/include --with-rted=/home/panas2/development/rted/RTED --prefix=${ROSE_TOP}/install "$@")
 
 
 
