@@ -29,7 +29,7 @@ Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
 #  include <PagDfiTextPrinter.h>
 #endif
 
-#include "RoseToProlog.h"
+#include "RoseToTerm.h"
 #include <sstream>
 #include <iostream>
 

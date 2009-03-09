@@ -23,7 +23,7 @@ if WITH_PAG
 endif
 
 
-noinst_LIBRARIES = libAnalysisSupport.a
+noinst_LTLIBRARIES = libAnalysisSupport.la
 nobase_include_HEADERS = \
     satire/satire_analysis_driver.h     satire/satire.h \
 	satire/satire_analysis.h            satire/satire_program_representation.h\
@@ -31,7 +31,7 @@ nobase_include_HEADERS = \
 	satire/satire_dataflow_analysis.h \
 	satire/PagDfiTextPrinter.h          satire/PagDfiCommentAnnotator.h
 
-libAnalysisSupport_a_SOURCES = \
+libAnalysisSupport_la_SOURCES = \
     satire_analysis.C            satire_dataflow_analysis.C \
 	satire_analysis_driver.C     satire_program_representation.C \
 	satire_analysis_scheduler.C  satire_utils.C

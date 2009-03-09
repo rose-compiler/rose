@@ -8,8 +8,9 @@
 #include "termite.h" 
 // GB (2009-02-25): Use the term printer without DFI stuff.
 #undef HAVE_PAG
+#define HAVE_SATIRE_ICFG 0
 #include "TermPrinter.h"
-#include "RoseToProlog.h"
+#include "RoseToTerm.h"
 #include "satire.h"
 
 using namespace std;

@@ -17,11 +17,12 @@ AC_PROG_CC
 AS_IF([test "x$CC" = x],[AC_MSG_FAILURE([Please install gcc])])
 AC_PROG_LEX
 AS_IF([test "x$LEX" = x],[AC_MSG_FAILURE([Please install flex])])
-AC_PROG_RANLIB
-AS_IF([test "x$RANLIB" = x],[AC_MSG_FAILURE([Please install ranlib])])
+dnl AC_PROG_RANLIB
+dnl AS_IF([test "x$RANLIB" = x],[AC_MSG_FAILURE([Please install ranlib])])
 AC_PROG_SED
 AS_IF([test "x$SED" = x],[AC_MSG_FAILURE([Please install sed])])
-
+AC_PROG_LIBTOOL
+AS_IF([test "x$LIBTOOL" = x],[AC_MSG_FAILURE([Please install libtool])])
 
 # ROSE PATH
 ROSEDIR='/opt/rose'
@@ -127,12 +128,12 @@ AS_IF([test "x$with_swi_prolog" = xyes],
       [AC_SUBST([SWI_PROLOG_LDADD], ["-Wl,-rpath $PLLIB -L$PLLIB -lpl"])
        AC_SUBST([SWI_PROLOG_INCLUDE_DIR], ["$PLBASE/include"])
        AC_DEFINE([HAVE_SWI_PROLOG], [1], [Define if you have SWI Prolog])
-       AC_MSG_RESULT([** Termite will be built with SWI-Prolog support.])
+       AC_MSG_RESULT([> Termite will be built with SWI-Prolog support.])
        have_swi_prolog=1],
       [AC_SUBST([SWI_PROLOG_LDADD], [""])  # set a safe dummy default path
        AC_SUBST([SWI_PROLOG_INCLUDE_DIR], ["/usr/include"])
        AC_DEFINE([HAVE_SWI_PROLOG], [0], [Define if you have SWI Prolog])
-       AC_MSG_RESULT([** Termite will be built WITHOUT SWI-Prolog support.])
+       AC_MSG_RESULT([> Termite will be built WITHOUT SWI-Prolog support.])
        have_swi_prolog=0])
 
 AM_CONDITIONAL(WITH_SWI_PROLOG, [test "x$with_swi_prolog" = xyes])
@@ -143,27 +144,22 @@ AC_SUBST(have_swi_prolog)
 
 AS_IF([test "x$with_pag" != xno],
       [AC_CHECK_LIB([pag], [pag_version],
-                    [AC_MSG_RESULT([** Found PAG.])
+                    [AC_MSG_RESULT([> Found PAG.])
                      AC_DEFINE([HAVE_PAG], [1], [Define if you have PAG])],
                     [AC_MSG_FAILURE(
                         [PAG test failed (--without-pag to disable, --with-pag* to fix paths)])],
                     [-L${PAG_LIB_DIR}])],
-      [AC_MSG_RESULT([** Skipping check for PAG.])])
+      [AC_MSG_RESULT([> Skipping check for PAG.])])
 AM_CONDITIONAL(WITH_PAG, [test "x$with_pag" = xyes])
-#AC_CHECK_LIB([pag], [pag_version], AC_MSG_RESULT([** Found PAG.]),
-#             [echo "Could not find '-lpag' in '-L${PAG_LIB_DIR}'."
-#              echo "Please consider using one of the --with-pag* options."
-#              exit -1 ],
-#             [-L${PAG_LIB_DIR}])
 
-AC_CHECK_LIB([rose], [ROSE_DEBUG], AC_MSG_RESULT([** Found ROSE.]), 
+AC_CHECK_LIB([rose], [ROSE_DEBUG], AC_MSG_RESULT([> Found ROSE.]), 
              [echo "Could not find '-lrose' in '-L${ROSE_LIB_DIR}'."
               echo "Please consider using one of the --with-rose* options."
               exit -1 ], 
              [-L${ROSE_LIB_DIR}])
 
 AC_CHECK_FILE(${BOOST_LIB_DIR}/libboost_filesystem-${BOOST_COMPILER_STRING}-mt.so,
-             AC_MSG_RESULT([** Found Boost (hopefully).]),
+             AC_MSG_RESULT([> Found Boost (hopefully).]),
              [echo "Could not find 'libboost_filesystem-${BOOST_COMPILER_STRING}-mt.so' in '${BOOST_LIB_DIR}'."
               echo "Please consider using one of the --with-boost* options."
               exit -1 ])
@@ -195,3 +191,22 @@ tools/loopbounds/Makefile
 
 
 AC_OUTPUT
+
+# SUMMARY
+
+SWI_STATUS="disabled"
+if [[ x$with_swi_prolog = xyes ]]; then
+    SWI_STATUS="enabled"
+fi
+
+PAG_STATUS="disabled"
+if [[ x$with_pag = xyes ]]; then
+    PAG_STATUS="enabled"
+fi
+
+echo
+echo "------------------------------------------------------------------------"
+echo "  SATIrE configuration summary:"
+echo "    PAG .................." $PAG_STATUS
+echo "    SWI-Prolog............" $SWI_STATUS
+echo "------------------------------------------------------------------------"

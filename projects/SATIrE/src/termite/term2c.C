@@ -6,7 +6,7 @@ Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
 #include <iostream>
 #include <stdio.h>
 #include <satire_rose.h>
-#include "PrologToRose.h"
+#include "TermToRose.h"
 
 using namespace std;
 

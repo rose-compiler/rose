@@ -16,23 +16,64 @@ INCLUDES = -I$(top_srcdir)/src/satire \
 	   -I$(ROSE_INCLUDE_DIR) \
 	   -I$(BOOST_INCLUDE_DIR)
 
+nobase_include_HEADERS = \
+	satire/termite.h \
+	satire/TermPrinter.h \
+	\
+	satire/TermToRose.h \
+	satire/PrologTerm.h \
+	satire/PrologCompTerm.h	\
+	satire/PrologList.h \
+	satire/PrologAtom.h \
+	satire/PrologInt.h \
+	satire/PrologVariable.h \
+	satire/RoseToTerm.h \
+	satire/RoseEnums.h
+
 if WITH_PAG
   INCLUDES += -I$(PAG_INCLUDE_DIR)/pag \
               -I$(PAG_INCLUDE_DIR)/pag/analyzer
 endif
 
-AM_LDFLAGS=-L$(ROSE_LIB_DIR) -Wl,-rpath $(ROSE_LIB_DIR) -L$(BOOST_LIB_DIR) -Wl,-rpath $(BOOST_LIB_DIR)
+ROSE_LDFLAGS=-L$(ROSE_LIB_DIR) -Wl,-rpath $(ROSE_LIB_DIR) -L$(BOOST_LIB_DIR) -Wl,-rpath $(BOOST_LIB_DIR)
 
 bin_PROGRAMS = termpretty c2term term2c
 
 AM_YFLAGS = -d
 
-lib_LIBRARIES = libtermsupport.a
-libtermsupport_a_SOURCES = \
-	RoseToProlog.C \
+lib_LTLIBRARIES = libtermsupport.la
+libtermsupport_la_SOURCES = \
+	RoseToTerm.C \
 	dfiparser.tab.c++ dfiparser.tab.h++ dfiscanner.c++ \
-	PrologToRose.C PrologTerm.C RoseEnums.C
+	TermToRose.C PrologTerm.C RoseEnums.C
 
+CLEANFILES = termpretty.c++ \
+	     dfiparser.c++ dfiparser.h dfiscanner.c++ \
+             dfiparser.tab.c++ dfiparser.tab.h++
+
+if WITH_SWI_PROLOG
+INCLUDES += -I$(SWI_PROLOG_INCLUDE_DIR) 
+ROSE_LDFLAGS += $(SWI_PROLOG_LDADD)
+nobase_dist_data_DATA =  termite/ast_properties.pl  termite/loops.pl \
+                         termite/ast_transform.pl   termite/utils.pl \
+                         termite/ast_walk.pl
+else	
+CLEANFILES += termparser.c++ termparser.h termlexer.c++ termparser.tab.c++ \
+              termparser.tab.h++
+BUILT_SOURCES = termparser.tab.c++ termparser.tab.h++ \
+                dfiparser.tab.c++ dfiparser.tab.h++
+libtermsupport_la_SOURCES += termparser.y++ termlexer.l++
+nobase_include_HEADERS += satire/termparser.h
+
+termparser.tab.c++: $(srcdir)/termparser.y++ Makefile
+	$(YACC) -d $(srcdir)/termparser.y++ && \
+	mv y.tab.c termparser.tab.c++ && \
+	mv y.tab.h termparser.tab.h++
+
+# dummy dependendcy for make -j
+termparser.tab.h++: termparser.tab.c++
+
+endif
 
 dfiparser.tab.c++: $(srcdir)/dfiparser.y++ Makefile
 	bison -p dfi -d $(srcdir)/dfiparser.y++
@@ -50,50 +91,11 @@ termpretty_SOURCES = termpretty.l++
 c2term_SOURCES = c2term.C 
 term2c_SOURCES = term2c.C 
 
-term2c_LDADD = libtermsupport.a -lrose
-c2term_LDADD = libtermsupport.a -lrose
+term2c_LDADD = libtermsupport.la -lrose 
+c2term_LDADD = libtermsupport.la -lrose
 
-CLEANFILES = termpretty.c++ \
-	     dfiparser.c++ dfiparser.h dfiscanner.c++ \
-             dfiparser.tab.c++ dfiparser.tab.h++
-
-nobase_include_HEADERS = \
-	satire/termite.h \
-	satire/TermPrinter.h \
-	\
-	satire/PrologToRose.h \
-	satire/PrologTerm.h \
-	satire/PrologCompTerm.h	\
-	satire/PrologList.h \
-	satire/PrologAtom.h \
-	satire/PrologInt.h \
-	satire/PrologVariable.h \
-	satire/RoseToProlog.h \
-	satire/RoseEnums.h
-
-if WITH_SWI_PROLOG
-  INCLUDES += -I$(SWI_PROLOG_INCLUDE_DIR) 
-  AM_LDFLAGS += $(SWI_PROLOG_LDADD)
-  nobase_dist_data_DATA =  termite/ast_properties.pl  termite/loops.pl \
-			   termite/ast_transform.pl   termite/utils.pl \
-		           termite/ast_walk.pl
-else	
-  CLEANFILES += termparser.c++ termparser.h termlexer.c++ termparser.tab.c++ \
-	        termparser.tab.h++
-  BUILT_SOURCES = termparser.tab.c++ termparser.tab.h++ \
-                  dfiparser.tab.c++ dfiparser.tab.h++
-  libtermsupport_a_SOURCES += termparser.y++ termlexer.l++
-  nobase_include_HEADERS += satire/termparser.h
-
-termparser.tab.c++: $(srcdir)/termparser.y++ Makefile
-	$(YACC) -d $(srcdir)/termparser.y++ && \
-	mv y.tab.c termparser.tab.c++ && \
-	mv y.tab.h termparser.tab.h++
-
-# dummy dependendcy for make -j
-termparser.tab.h++: termparser.tab.c++
-
-endif
+term2c_LDFLAGS = $(ROSE_LDFLAGS)
+c2term_LDFLAGS = $(ROSE_LDFLAGS)
 
 EXTRA_DIST = \
   README doc tests \

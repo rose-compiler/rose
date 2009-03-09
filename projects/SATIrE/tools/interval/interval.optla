@@ -1,4 +1,4 @@
-// -- -*- haskell -*- (Fake Emacs mode for syntax highlighting
+// -- -*- haskell -*- (Fake Emacs mode for syntax highlighting)
 // -- ------------------------------------------------------------------------
 // -- Authors: Gergo Barany, 2006 (original constprop)
 // --          Adrian Prantl, 2008 (interval extensions)
@@ -13,6 +13,7 @@
 // -- * pointer aliasing is ignored
 // -- * type casts are ignored
 // -- * interval arithmetic needs to be checked for correctness (esp. | and &)
+// -- * wraparound is untestet
 // -- 
 // -- ------------------------------------------------------------------------
 

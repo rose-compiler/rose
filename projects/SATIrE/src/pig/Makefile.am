@@ -8,7 +8,7 @@ pig_SOURCES = generate.h    Rule.h    spec.h   yystype.h \
 # dependency for parallel builds: yacc must run before lex
 pigscanner.l++: pigparser.c++
 
-SYNOBJS = ../grato/libgrato.a
+SYNOBJS = ../grato/libgrato.la
 
 pig_LDADD = $(SYNOBJS)
 

@@ -5,7 +5,7 @@ Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
 
 #include <satire_rose.h>
 #include "termite.h"
-#include "PrologToRose.h"
+#include "TermToRose.h"
 #include <iostream>
 #include <sstream>
 #include <string>
