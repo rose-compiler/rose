@@ -1,3 +1,13 @@
+2009-03-09 17:31  panas2
+
+	* [r4796] /trunk/ROSE/projects/RTED/Makefile.am: Fixed Makefile.am
+	  to perform parallel processing correctly
+
+2009-03-09 17:30  panas2
+
+	* [r4795] /trunk/ROSE/scripts/roseFreshTestStub-Thomas.sh: Added
+	  rted to nightly test
+
 2009-03-08 21:31  dquinlan
 
 	* [r4786]
