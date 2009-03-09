@@ -3,11 +3,23 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 if ROSE_USE_RTED
 
 # To keep compile commands tidy, please ONLY put required include flags here.
-INCLUDES = $(ROSE_INCLUDES) -I.
+INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I. -Winvalid-pch 
 INCLUDES2 = $(ROSE_INCLUDES) -I../../
 
 # This test program does not require the rest of ROSE so it can be handled locally
 bin_PROGRAMS  = runtimeCheck
+
+noinst_PROGRAMS = \
+	test
+
+test_SOURCES = test.C
+test_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
+
+TEST_CXXFLAGS = -rose:verbose 0 --edg:no_warnings -g3
+
+run_test:test
+	./test$(EXEEXT) $(TEST_CXXFLAGS) $(srcdir)/buffer2.c 
+
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -ldl
 
@@ -19,7 +31,7 @@ runtimeCheck_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 TESTCODES =  $(srcdir)/example.C 
 
-runtimeCheck.o: runtimeCheck.cpp
+runtimeCheck.o: runtimeCheck.cpp 
 
 # Build the list of object files
 TEST_Objects = ${TESTCODES:.C=.o}
@@ -72,7 +84,8 @@ check-local: runtimeCheck $(TESTCODES) compile_gcc_file1
 	@echo "*** ROSE/projects/runtimeErrorCheck: make check rule complete (terminated normally) ***"
 	@echo "***************************************************************************************"
 
+
 clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) test_bin* *.o rose_*.C rose_*.c *.dot Templates.DB *~ rose_rose*
+	rm -rf $(CXX_TEMPLATE_OBJECTS) test_bin* *.o rose_*.C rose_*.c *.dot Templates.DB *~ rose_rose* test 
 
 endif

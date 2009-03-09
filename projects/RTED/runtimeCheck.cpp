@@ -41,7 +41,26 @@ containsArgument(int argc, char** argv, char* pattern) {
  * -----------------------------------------------------------*/
 void
 cleanUp(SgProject* proj) {
+#if 0
   // make sure all nodes in the project are deleted.
+	  VariantVector vv1 = V_SgNode;
+	  vector<SgNode*> vec = NodeQuery::queryMemoryPool(vv1);
+	  std::cout << "Number of nodes before deleting: " <<
+	    vec.size() << std::endl;
+
+	  vector<SgNode*>::const_iterator it = vec.begin();
+	  for (;it!=vec.end();++it) {
+	    SgNode* node = *it;
+	    // tps :: the following nodes are not deleted with the
+	    // AST traversal. We can only delete some of them -
+	    // but not all within the memory pool traversal
+//	    cerr << "  Not deleted : " << node->class_name() << endl;
+        delete node;
+	  }
+
+	    std::cout << "Number of nodes after deleting in Memory pool: " <<
+	  NodeQuery::queryMemoryPool(vv1).size() << std::endl;
+#endif
 }
 
 /* -----------------------------------------------------------
@@ -168,6 +187,7 @@ int main(int argc, char** argv) {
   argv[1]=(char*)(abs_path_new).c_str();
   cerr << "Running new project... (2st time)" << endl;
   project = rted.parse(argc, argv);
+  ROSE_ASSERT(project);
   // perform all necessary transformations (calls)
   cerr << "Transforming ... " << endl;
   rted.transform(project);
