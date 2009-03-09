@@ -43,7 +43,7 @@ EXTRA_DIST = example.C \
 
 CLEANFILES = *.out *.ti *.pdf test_runtime* *.txt rose_test_c_E_1_1_a
 
-compile_gcc_file1:
+compile_gcc_file1: build_file1
 	@echo "Compiling new program with g++"
 # make sure rose_c_E_1_1_a.c and rose_rose_E_1_1_a.c compile
 	$(CXX) $(INCLUDES) -I$(rted_path)/C/array_index_out_of_bound/ -I$(top_builddir) -I$(srcdir) rose_c_E_1_1_a.c $(srcdir)/RuntimeSystem.cpp -o rose_test_c_E_1_1_a 
@@ -64,7 +64,7 @@ build_file1: modifyTestCode
 	cp $(srcdir)/index_array.txt .
 
 # DQ (7/25/2005): The current changes to the AST break these test programs:
-check-local: runtimeCheck $(TESTCODES) build_file1 compile_gcc_file1
+check-local: runtimeCheck $(TESTCODES) compile_gcc_file1
 	@echo "Running the new program"
 	./rose_test_c_E_1_1_a
 	./rose_rose_test_c_E_1_1_a
