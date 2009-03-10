@@ -1268,14 +1268,15 @@ PrologToRose::createUnaryOp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
 SgProject*
 PrologToRose::createProject(Sg_File_Info* fi,deque<SgNode*>* succs) {
   SgProject* project = new SgProject();
+  SgFilePtrList *fl = new SgFilePtrList;
+  
   for (deque<SgNode*>::iterator it = succs->begin();
        it != succs->end(); ++it) {
     SgFile* file = dynamic_cast<SgFile*>(*it);
     ROSE_ASSERT(file);
-    SgFilePtrList *fl = new SgFilePtrList;
     fl->push_back(file);
-    project->set_fileList(fl);
   }
+  project->set_fileList(fl);
   return project;
 }
 

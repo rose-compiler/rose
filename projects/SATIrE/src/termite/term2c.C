@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
   //  cout << prote->getRepresentation();
   const char* infile = "";
   const char* outfile= "";
-  const char* outdir = "";
+  const char* outdir = ".";
   const char* suffix = ".unparsed";
 
   while (1) {
