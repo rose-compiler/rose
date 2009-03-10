@@ -14,4 +14,3 @@ libsatire_la_LIBADD = analyzer/icfgbuilder/libIcfgBuilder.la \
                       analyzer/support/libAnalysisSupport.la \
                       analyzer/provided/pointsto/libPointsTo.la
 
-EXTRA_DIST = buildsatirelib
