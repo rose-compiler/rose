@@ -1,3 +1,13 @@
+2009-03-10 18:17  panas2
+
+	* [r4815] /trunk/ROSE/projects/BinQ/Makefile.am: Added a file to
+	  EXTRA_DIST
+
+2009-03-10 16:47  panas2
+
+	* [r4814] /trunk/ROSE/projects/BinQ/Makefile.am: Added a file to
+	  EXTRA_DIST
+
 2009-03-10 00:07  panas2
 
 	* [r4802]
