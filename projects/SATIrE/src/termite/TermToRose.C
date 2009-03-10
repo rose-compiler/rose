@@ -27,10 +27,11 @@ using namespace boost;
  */
 
 void PrologToRose::unparseFile(SgFile& f, string suffix, SgUnparse_Info* ui) {
-  const char* fn = 
-    regex_replace(f.get_file_info()->get_filenameString(), 
-		  regex("(\\..+?)$"),	
-		  suffix+string("\\1")).c_str();
+  const char* fn = regex_replace(
+      regex_replace(f.get_file_info()->get_filenameString(), 
+		    regex("(\\..+?)$"),	
+		    suffix+string("\\1")),
+    regex("^.*/"), "").c_str();
   ofstream ofile(fn);
   cerr << "Unparsing " << fn << endl;
   ofile << globalUnparseToString(f.get_globalScope(), ui);
