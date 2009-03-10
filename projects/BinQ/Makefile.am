@@ -4,7 +4,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 if ROSE_USE_QT
 
-bin_PROGRAMS = BinQ test
+bin_PROGRAMS = BinQ 
+nobin_PROGRAMS = test
 
 MOC_SOURCES = moc_slide.C  moc_MyBars.C
 
@@ -135,7 +136,7 @@ CLEANFILES =
 
 
 clean:
-	rm -f *.o BinQ *.s *.dump *.txt moc_*.C
+	rm -f *.o BinQ *.s *.dump *.txt moc_*.C 
 
 endif
 
@@ -167,7 +168,7 @@ EXTRA_DIST = BinQGui.h \
              InitPointerToNull.h \
              ComplexityMetric.h \
              DwarfFileInfo.h \
-             buffer2.bin bufftest.c buffer2b.bin buffer2.bin.32bit \
+             buffer2.bin bufftest.c buffer2.c buffer2b.bin buffer2.bin.32bit \
              buffer2-tsv/address_comments_1.tsv buffer2-tsv/address_references_1.tsv buffer2-tsv/basic_blocks_1.tsv buffer2-tsv/callgraph_1.tsv \
              buffer2-tsv/control_flow_graph_1.tsv buffer2-tsv/expression_substitutions_1.tsv buffer2-tsv/expression_tree_1.tsv buffer2-tsv/functions_1.tsv \
              buffer2-tsv/instructions_1.tsv buffer2-tsv/modules.tsv buffer2-tsv/operand_expressions_1.tsv buffer2-tsv/operand_strings_1.tsv \
