@@ -5,6 +5,8 @@ AC_PREREQ(2.61)
 AC_INIT(SATIrE, 0.8.5, markus@complang.tuwien.ac.at)
 AC_CONFIG_SRCDIR([README])
 
+AC_CONFIG_MACRO_DIR([m4])
+
 AM_INIT_AUTOMAKE
 
 

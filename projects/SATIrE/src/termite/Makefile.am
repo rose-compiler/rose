@@ -35,7 +35,7 @@ if WITH_PAG
               -I$(PAG_INCLUDE_DIR)/pag/analyzer
 endif
 
-ROSE_LDFLAGS=-L$(ROSE_LIB_DIR) -Wl,-rpath $(ROSE_LIB_DIR) -L$(BOOST_LIB_DIR) -Wl,-rpath $(BOOST_LIB_DIR)
+ROSELDFLAGS=-L$(ROSE_LIB_DIR) -Wl,-rpath $(ROSE_LIB_DIR) -L$(BOOST_LIB_DIR) -Wl,-rpath $(BOOST_LIB_DIR)
 
 bin_PROGRAMS = termpretty c2term term2c
 
@@ -53,7 +53,7 @@ CLEANFILES = termpretty.c++ \
 
 if WITH_SWI_PROLOG
 INCLUDES += -I$(SWI_PROLOG_INCLUDE_DIR) 
-ROSE_LDFLAGS += $(SWI_PROLOG_LDADD)
+ROSELDFLAGS += $(SWI_PROLOG_LDADD)
 nobase_dist_data_DATA =  termite/ast_properties.pl  termite/loops.pl \
                          termite/ast_transform.pl   termite/utils.pl \
                          termite/ast_walk.pl
@@ -94,8 +94,8 @@ term2c_SOURCES = term2c.C
 term2c_LDADD = libtermsupport.la -lrose 
 c2term_LDADD = libtermsupport.la -lrose
 
-term2c_LDFLAGS = $(ROSE_LDFLAGS)
-c2term_LDFLAGS = $(ROSE_LDFLAGS)
+term2c_LDFLAGS = $(ROSELDFLAGS)
+c2term_LDFLAGS = $(ROSELDFLAGS)
 
 EXTRA_DIST = \
   README doc tests \
