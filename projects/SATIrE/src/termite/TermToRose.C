@@ -26,18 +26,22 @@ using namespace boost;
  * Unparse to a file
  */
 
-void PrologToRose::unparseFile(SgFile& f, string suffix, SgUnparse_Info* ui) {
+void PrologToRose::unparseFile(SgFile& f, string prefix, string suffix, 
+			       SgUnparse_Info* ui) 
+{
   const char* fn = regex_replace(
       regex_replace(f.get_file_info()->get_filenameString(), 
 		    regex("(\\..+?)$"),	
 		    suffix+string("\\1")),
-    regex("^.*/"), "").c_str();
+      regex("^.*/"), prefix+string("/")).c_str();
   ofstream ofile(fn);
   cerr << "Unparsing " << fn << endl;
   ofile << globalUnparseToString(f.get_globalScope(), ui);
 }
 
-void PrologToRose::unparse(string filename, string suffix, SgNode* node) {
+void PrologToRose::unparse(string filename, string dir, string suffix, 
+			   SgNode* node) 
+{
   SgUnparse_Info* unparseInfo = new SgUnparse_Info();
   unparseInfo->unset_SkipComments();    // generate comments
   unparseInfo->unset_SkipWhitespaces(); // generate all whitespaces to
@@ -67,9 +71,9 @@ void PrologToRose::unparse(string filename, string suffix, SgNode* node) {
     // seperate files
     if (SgProject* project = dynamic_cast<SgProject*>(node))
       for (int i = 0; i < project->numberOfFiles(); ++i)
-	unparseFile(project->get_file(i), suffix, unparseInfo);
+	unparseFile(project->get_file(i), dir, suffix, unparseInfo);
     else if (SgFile* file = dynamic_cast<SgFile*>(node))
-      unparseFile(*file, suffix, unparseInfo);
+      unparseFile(*file, dir, suffix, unparseInfo);
     else cout << node->unparseToString();
   }
 }
@@ -713,7 +717,7 @@ PrologToRose::createTypedefType(PrologTerm* t) {
   SgTypedefDeclaration* decl = new SgTypedefDeclaration(fi,n,i,NULL,NULL,NULL);
   ROSE_ASSERT(decl != NULL);
   /*fake parent scope*/
-  //fakeParentScope(decl);
+  fakeParentScope(decl);
   declarationStatementsWithoutScope.push_back(decl);
   SgTypedefType* tpe = SgTypedefType::createType(decl);
   ROSE_ASSERT(tpe != NULL);
@@ -2285,7 +2289,7 @@ PrologToRose::fakeNamespaceScope(string s, int unnamed, SgDeclarationStatement* 
   SgNamespaceDeclarationStatement* dec = new SgNamespaceDeclarationStatement(dfi,n,def,u_b);
   def->set_namespaceDeclaration(dec); // AP 4.2.2008 
   ROSE_ASSERT(dec != NULL);
-  fakeParentScope(dec); //AP 1.2.2008 remove a ROSE 0.9.0b warning 
+  //fakeParentScope(dec); //Adrian 1.2.2008 remove a ROSE 0.9.0b warning 
   SgGlobal* dummy = new SgGlobal(dfi);
   ROSE_ASSERT(dummy != NULL);
   dec->set_parent(dummy);

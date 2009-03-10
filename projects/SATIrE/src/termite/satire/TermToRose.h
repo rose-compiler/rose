@@ -20,7 +20,7 @@ class PrologToRose {
 public:
   PrologToRose() {};
   ~PrologToRose() {};
-  void unparse(std::string filename, std::string suffix, SgNode*);
+  void unparse(std::string, std::string, std::string, SgNode*);
   SgNode* toRose(PrologTerm*);
   SgNode* toRose(const char* filename);
 
@@ -38,7 +38,7 @@ private:
   SgNode* quaternaryToRose(PrologCompTerm*, std::string);
   SgNode* listToRose(PrologCompTerm*, std::string);
   /*helpers*/
-  void unparseFile(SgFile&, std::string, SgUnparse_Info*);
+  void unparseFile(SgFile&, std::string, std::string, SgUnparse_Info*);
   void warn_msg(std::string);
   Sg_File_Info* createFileInfo(PrologTerm*);
   SgType* createType(PrologTerm*);
