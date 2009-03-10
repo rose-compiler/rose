@@ -304,3 +304,13 @@ Implementation::outputAnalysisVisualization(Program *program)
 } // namespace ANALYSIS
 
 } // namespace SATIrE
+
+// GB (2009-03-10): This used to be in pag_support.C. However, when we moved
+// to libtool and dynamic linking, it started segfaulting mysteriously. It
+// seems to work here.
+extern "C"
+const char *Expression_print(void *e)
+{
+    std::cout << expr_to_string(isSgExpression((SgNode *) e));
+    return "";
+}

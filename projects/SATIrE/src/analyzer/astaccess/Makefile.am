@@ -20,7 +20,7 @@ nobase_include_HEADERS = satire/ast_support_funcs.h \
 libAstAccess_la_SOURCES = pag_support.C
 
 BUILT_SOURCES = satire/syntree.h  satire/syntree.c satire/syntree.cxx
-CLEANFILES =    satire/syntree.h  satire/syntree.c \
+CLEANFILES =    satire/syntree.h  satire/syntree.c satire/syntree.cxx \
                       pig_temp.h        pig_temp.c \
                      pig_temp2.h       pig_temp2.c 
 
