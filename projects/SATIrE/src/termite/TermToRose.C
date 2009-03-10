@@ -10,6 +10,7 @@ Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
 #include <sstream>
 #include <string>
 #include <assert.h>
+#include <boost/regex.hpp>
 
 #if !HAVE_SWI_PROLOG
 #  include "termparser.tab.h++"
@@ -19,34 +20,57 @@ extern PrologTerm* prote;
 #endif
 
 using namespace std;
+using namespace boost;
 
 /**
  * Unparse to a file
  */
 
-void PrologToRose::unparse(const char* filename, SgNode* node) {
+void PrologToRose::unparseFile(SgFile& f, string suffix, SgUnparse_Info* ui) {
+  const char* fn = 
+    regex_replace(f.get_file_info()->get_filenameString(), 
+		  regex("(\\..+?)$"),	
+		  suffix+string("\\1")).c_str();
+  ofstream ofile(fn);
+  cerr << "Unparsing " << fn << endl;
+  ofile << globalUnparseToString(f.get_globalScope(), ui);
+}
+
+void PrologToRose::unparse(string filename, string suffix, SgNode* node) {
   SgUnparse_Info* unparseInfo = new SgUnparse_Info();
   unparseInfo->unset_SkipComments();    // generate comments
-  unparseInfo->unset_SkipWhitespaces(); // generate all whitespaces to format the code
-  unparseInfo->set_SkipQualifiedNames(); // Adrian:  skip qualified names -> this would cause a call to the EDG otherwise
+  unparseInfo->unset_SkipWhitespaces(); // generate all whitespaces to
+					// format the code
+  unparseInfo->set_SkipQualifiedNames(); // Adrian: skip qualified
+					 // names -> this would cause
+					 // a call to the EDG
+					 // otherwise
 
   //resetParentPointers(glob, file);
   //AstPostProcessing(glob);
 
   /* we stop unparsing at SgGlobal level! output results and be happy.*/
-  //cout << "/*unparsing from PROLOG representation*/\n";
-  //cout << glob->unparseToString();
 
-  ofstream ofile(filename);
-  if (SgProject* project = dynamic_cast<SgProject*>(node))
-    for (int i = 0; i < project->numberOfFiles(); ++i) {
-      SgFile &sageFile = project->get_file(i);
-      ofile << globalUnparseToString(sageFile.get_globalScope(), unparseInfo);
-    }
-  else if (SgFile* file = dynamic_cast<SgFile*>(node))
-    ofile << globalUnparseToString(file->get_globalScope(), unparseInfo);
-  else ofile << node->unparseToString();
-  ofile.close();
+  if (filename != "") {
+    // All into one big file
+    ofstream ofile(filename.c_str());
+    if (SgProject* project = dynamic_cast<SgProject*>(node))
+      for (int i = 0; i < project->numberOfFiles(); ++i) {
+	SgFile &sageFile = project->get_file(i);
+	ofile << globalUnparseToString(sageFile.get_globalScope(), unparseInfo);
+      }
+    else if (SgFile* file = dynamic_cast<SgFile*>(node))
+      ofile << globalUnparseToString(file->get_globalScope(), unparseInfo);
+    else ofile << node->unparseToString();
+  } else {
+    // seperate files
+    if (SgProject* project = dynamic_cast<SgProject*>(node))
+      for (int i = 0; i < project->numberOfFiles(); ++i)
+	unparseFile(project->get_file(i), suffix, unparseInfo);
+    else if (SgFile* file = dynamic_cast<SgFile*>(node))
+      unparseFile(*file, suffix, unparseInfo);
+    else cout << node->unparseToString();
+  }
 }
 
 SgNode*
@@ -168,9 +192,10 @@ PrologToRose::toRose(PrologTerm* t) {
   // Set the CompilerGenerated Flag
   if (SgLocatedNode* ln = isSgLocatedNode(node)) {
     Sg_File_Info* fi = ln->get_file_info();
-    fi->set_classificationBitField(fi->get_classificationBitField() 
-				   | Sg_File_Info::e_compiler_generated 
-			   /*| Sg_File_Info::e_output_in_code_generation*/);
+    //fi->set_classificationBitField(fi->get_classificationBitField() 
+    //				   | Sg_File_Info::e_compiler_generated 
+			   /*| Sg_File_Info::e_output_in_code_generation*/
+    //);
 	  
     // Set EndOfConstruct
     ln->set_endOfConstruct( 
@@ -585,8 +610,8 @@ PrologToRose::createFileInfo(PrologTerm* t) {
   ROSE_ASSERT(fi != NULL);
 
   // Set the CompilerGenerated Flag (Adrian)
-  fi->setCompilerGenerated();
-  fi->setOutputInCodeGeneration();
+  //fi->setCompilerGenerated();
+  //fi->setOutputInCodeGeneration();
 
   return fi;
 }

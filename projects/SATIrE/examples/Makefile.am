@@ -120,26 +120,26 @@ init.token:
 	chmod u+w $(testdir)/TEST0.c
 
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term TEST0.c  TEST1.pl
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST1.pl TEST2.c
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST1.pl -o TEST2.c
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term TEST2.c  TEST3.pl
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST3.pl TEST4.c
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST3.pl -o TEST4.c
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term --strip-headers TEST0.c TEST1.pl
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST1.pl TEST2.c
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST1.pl -o TEST2.c
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term --strip-headers TEST2.c TEST3.pl
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST3.pl TEST4.c
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST3.pl -o TEST4.c
 
 %.termite: %.C
 	@echo "TERMITE: performing a translation circle of" $<
 	cp $< $(testdir)/TEST0.C
 	chmod u+w $(testdir)/TEST0.C
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term TEST0.C  TEST1.pl
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST1.pl TEST2.C
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST1.pl -o TEST2.C
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term TEST2.C  TEST3.pl
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST3.pl TEST4.C
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST3.pl -o TEST4.C
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term --strip-headers TEST0.C TEST1.pl
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST1.pl TEST2.C
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST1.pl -o TEST2.C
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term --strip-headers TEST2.C TEST3.pl
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST3.pl TEST4.C
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST3.pl -o TEST4.C
 
 termite: init.token
 	@echo
@@ -208,6 +208,7 @@ interval: init.token
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis interval
 	$(MAKE) check -C $(testdir)/interval
 	cd $(testdir) ; bash testsuite/testsuite.sh interval/interval testsuite
+	@echo "Correctness tests..."
 
 %.loop.term: %.c
 	@echo "Analyzing loops in" $<
