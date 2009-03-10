@@ -1,3 +1,17 @@
+2009-03-10 00:07  panas2
+
+	* [r4802]
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/variableLivenessTests/runTest.C:
+	  Enforcing stronger testing for variableLiveAnalysis
+
+2009-03-09 20:50  panas2
+
+	* [r4801] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/buffer2.c,
+	  /trunk/ROSE/projects/RTED/runtimeCheck.cpp,
+	  /trunk/ROSE/projects/RTED/test.C: Added testcase for cleaning up
+	  the source - AST
+
 2009-03-09 17:31  panas2
 
 	* [r4796] /trunk/ROSE/projects/RTED/Makefile.am: Fixed Makefile.am
