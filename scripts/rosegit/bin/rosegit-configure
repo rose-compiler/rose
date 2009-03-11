@@ -18,4 +18,4 @@ if [ ! -f $ROSE_SRC/configure ] || [ $(find $ROSE_SRC -name Makefile.am -newer $
 fi
 
 # Always run configure
-rosegit_run "configure" "(cd $ROSE_BLD && $ROSEGIT_CONFIGURE)" || exit 1
+rosegit_run "configure" "(cd $ROSE_BLD && $ROSEGIT_CONFIGURE $*)" || exit 1
