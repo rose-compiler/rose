@@ -26,5 +26,5 @@ CLEANFILES =
 
 endif
 
-EXTRA_DIST = 
+EXTRA_DIST = argumentFilterer.h  helpFunctions.h  macro.h  macroRewrapper.h  waveHelpers.h
 
