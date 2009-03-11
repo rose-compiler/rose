@@ -1,0 +1,138 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Allocate And Free Memory In The Same Module At The Same Level Of Abstraction}
+\label{AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction::overview}
+
+% write your introduction
+Allocating and freeing memory in different modules and levels of abstraction
+burdens the programmer with tracking the lifetime of that block of memory. This
+may cause confusion regarding when and if a block of memory has been allocated
+or freed, leading to programming defects such as double-free vulnerabilities,
+accessing freed memory, or writing to unallocated memory.
+
+To avoid these situations, it is recommended that memory be allocated and freed
+at the same level of abstraction, and ideally in the same code module.
+
+The affects of not following this recommendation are best demonstrated by an
+actual vulnerability. Freeing memory in different modules resulted in a
+vulnerability in MIT Kerberos 5 MITKRB5-SA-2004-002 . The problem was that the
+MIT Kerberos 5 code contained error-handling logic, which freed memory allocated
+by the ASN.1 decoders if pointers to the allocated memory were non-NULL.
+However, if a detectable error occured, the ASN.1 decoders freed the memory that
+they had allocated. When some library functions received errors from the ASN.1
+decoders, they also attempted to free, causing a double-free vulnerability.
+
+\subsection{Parameter Requirements}
+
+%Write the Parameter specification here.
+   No Parameter specifications.
+
+\subsection{Implementation}
+
+%Details of the implementation go here.
+   No implementation yet!
+
+\subsection{Non-Compliant Code Example}
+
+% write your non-compliant code subsection
+This example demonstrates an error that can occur when memory is freed in
+different functions. The array, which is referred to by list and its size,
+number, are then passed to the verify\_list() function. If the number of
+elements in the array is less than the value MIN\_SIZE\_ALLOWED, list is
+processed. Otherwise, it is assumed an error has occurred, list is freed, and
+the function returns. If the error occurs in verify\_list(), the dynamic memory
+referred to by list will be freed twice: once in verify\_list() and again at the
+end of process\_list().
+
+\begin{verbatim}
+
+% write your non-compliant code example
+int verify_size(char *list, size_t list_size) {
+  if (size < MIN_SIZE_ALLOWED) {
+    /* Handle Error Condition */
+    free(list);
+    return -1;
+  }
+  return 0;
+}
+
+void process_list(size_t number) {
+  char *list = malloc(number);
+
+  if (list == NULL) {
+    /* Handle Allocation Error */
+  }
+
+  if (verify_size(list, number) == -1) {
+    /* Handle Error */
+
+  }
+
+  /* Continue Processing list */
+
+  free(list);
+}
+
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+% write your compliant code subsection
+To correct this problem, the logic in the error handling code in verify\_list()
+should be changed so that it no longer frees list. This change ensures that list
+is freed only once, in process\_list().
+
+\begin{verbatim}
+
+% write your compliant code example
+int verify_size(char *list, size_t list_size) {
+  if (size < MIN_SIZE_ALLOWED) {
+    /* Handle Error Condition */
+    return -1;
+  }
+  return 0;
+}
+
+void process_list(size_t number) {
+  char *list = malloc(number);
+
+  if (list == NULL) {
+    /* Handle Allocation Error */
+  }
+
+  if (verify_size(list, number) == -1) {
+    /* Handle Error */
+  }
+
+  /* Continue Processing list */
+
+  free(list);
+}
+
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Write your checker algorithm
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
+
+\htmladdnormallink{ISO/IEC9899-1999}{https://www.securecoding.cert.org/confluence/display/seccode/MEM00-A.+Allocate+and+free+memory+in+the+same+module\%2C+at+the+same+level+of+abstraction} MEM00-A. Allocate and free memory in the same module, at the same level of abstraction
