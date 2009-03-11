@@ -99,6 +99,7 @@ char *carrierPrintFunction(CarrierType c)
 
 
 
+#if 0
 // Definitions of a few functions for retrieving and stringizing analysis
 // results.
 CarrierType
@@ -132,7 +133,9 @@ get_statement_post_info(DFI_STORE store, SgStatement *stmt)
 {
     return select_info(store, stmt, "PAG statement end");
 }
+#endif
 
+#if OLD
 std::string
 get_statement_pre_info_string(DFI_STORE store, SgStatement* stmt)
 {
@@ -152,6 +155,73 @@ get_statement_post_info_string(DFI_STORE store, SgStatement* stmt)
     else
         return "<undefined dfi>";
 }
+#else
+std::string
+statement_info_string(DFI_STORE store, SgStatement *stmt, std::string attrName)
+{
+    if (!stmt->attributeExists(attrName))
+        return "<undefined dfi>";
+
+    std::stringstream str;
+
+    CarrierType info;
+    StatementAttribute *stmtAttr
+        = dynamic_cast<StatementAttribute *>(stmt->getAttribute(attrName));
+    BasicBlock *block = stmtAttr->get_bb();
+    int procnum = block->procnum;
+    int arity = kfg_arity_id(block->id);  // number of contexts
+    int prePost = stmtAttr->get_pos();
+    if (prePost == POS_PRE)
+    {
+        for (int ctx = 0; ctx < arity; ctx++)
+        {
+            info = dfi_get_pre(store, block->id, ctx);
+            str << "Context(" << procnum << "," << ctx << "):"
+                << carrierPrintFunction(info) << " ";
+        }
+        str << "Merged:"
+            << carrierPrintFunction(dfi_get_pre_info(store, block->id));
+    }
+    else
+    {
+     // outedges is a bitmask with a 1 bit for each type of edge leaving
+     // this block
+        unsigned int outedges = kfg_which_out_edges(block);
+        unsigned int edge;
+        for(edge = 0; outedges != 0; edge++, outedges >>= 1)
+        {
+            if (outedges & 1 != 0)
+            {
+                for (int ctx = 0; ctx < arity; ctx++)
+                {
+                    info = dfi_get_post(store, block->id, ctx,
+                                        (KFG_EDGE_TYPE) edge);
+                    str << "Edge(" << edgetypenames[edge] << "):"
+                        << "Context(" << procnum << "," << ctx << "):"
+                        << carrierPrintFunction(info) << std::endl << " ";
+                }
+                str << "Merged:"
+                    << carrierPrintFunction(
+                            dfi_get_post_info_all(store, block->id));
+            }
+        }
+    }
+
+    return str.str();
+}
+
+std::string
+get_statement_pre_info_string(DFI_STORE store, SgStatement* stmt)
+{
+    return statement_info_string(store, stmt, "PAG statement start");
+}
+
+std::string
+get_statement_post_info_string(DFI_STORE store, SgStatement* stmt)
+{
+    return statement_info_string(store, stmt, "PAG statement end");
+}
+#endif
 
 
 // Now PAG's identifiers are as they should be; we can now include template

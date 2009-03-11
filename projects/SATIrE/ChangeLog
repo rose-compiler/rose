@@ -1,5 +1,8 @@
 V0.?.? ? AP,...
 
+* Build system [AP,GB]
+  - Using libtool to create dynamic libraries.
+
 * Termite [AP,GB]
   - New (optional) dependency: SWI-Prolog >= 5.6
     (auto-detected by ./configure, or use --with-swi-prolog=[yes,no])
@@ -25,6 +28,8 @@ V0.?.? ? AP,...
   - After context-sensitive data flow analysis, the ICFG now contains a
     collection of Context objects (Context.h) that contain call string
     information.
+  - Data-flow analysis results are output context-sensitively (including
+    Termite annotations).
 
 V0.8.5 2008-11-22 GB,AP,VP,MS
 

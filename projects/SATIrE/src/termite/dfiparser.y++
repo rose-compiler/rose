@@ -27,6 +27,9 @@ void dfierror(const char *);
 %token <strValue> UNDEF 
 %token <strValue> SET_BEGIN
 %token <strValue> SET_CLOSE
+%token <strValue> EDGE
+%token <strValue> CONTEXT
+%token <strValue> MERGED
 
 /*data structure*/
 %union {
@@ -37,6 +40,11 @@ void dfierror(const char *);
 }
 
 /*nonterminal types*/
+%type <singleTerm> start
+%type <termList>   dfis
+%type <singleTerm> dfi
+%type <singleTerm> edgespec
+%type <singleTerm> contextspec
 %type <singleTerm> result
 %type <singleTerm> value
 %type <singleTerm> topbot
@@ -48,22 +56,82 @@ void dfierror(const char *);
 
 /*grammar*/
 
+start:
+  dfis {
+    dfiterm = new PrologCompTerm(dfi_name);
+    dfiterm->addSubterm(new PrologList(*$1));
+    $$ = dfiterm;
+  }
+;
+
+dfis:
+  dfi { $$ = new deque<PrologTerm*>(); $$->push_front($1); }
+  | dfi dfis { $2->push_front($1); $$=$2; }
+;
+
+dfi:
+  edgespec contextspec result {
+    $$ = $3;
+    if ($2 != NULL) {
+      PrologInfixOperator* ifx = new PrologInfixOperator(":");
+      ifx->addSubterm($2);
+      ifx->addSubterm($$);
+      $$ = ifx;
+    }
+    if ($1 != NULL) {
+      PrologInfixOperator* ifx = new PrologInfixOperator(":");
+      ifx->addSubterm($1);
+      ifx->addSubterm($$);
+      $$ = ifx;
+    }
+  }
+;
+
+edgespec:
+  EDGE '(' TOKEN ')' ':' {
+    PrologCompTerm* comp = new PrologCompTerm("edge");
+    comp->addSubterm(new PrologAtom(*$3));
+    $$ = comp;
+  }
+  | { $$ = NULL; }
+;
+
+contextspec:
+  CONTEXT '(' INT ',' INT ')' ':' {
+    PrologCompTerm* comp = new PrologCompTerm("context");
+    comp->addSubterm(new PrologInt($3));
+    comp->addSubterm(new PrologInt($5));
+    $$ = comp;
+  }
+  | MERGED ':' { $$ = new PrologAtom("merged"); }
+  | { $$ = NULL; }
+;
+
 result:
   '[' value ':' ']' { 
-    dfiterm = new PrologCompTerm(dfi_name);
-    dfiterm->addSubterm($2); 
-    dfiterm->addSubterm(new PrologList());
+    PrologCompTerm* comp = new PrologCompTerm("map");
+    comp->addSubterm($2);
+    comp->addSubterm(new PrologList());
+    $$ = comp;
+ // dfiterm = new PrologCompTerm(dfi_name);
+ // dfiterm->addSubterm($2); 
+ // dfiterm->addSubterm(new PrologList());
     //cerr << dfiterm->getRepresentation() << endl;
   }
   | '[' value ':' assignments ']' { 
-    dfiterm = new PrologCompTerm(dfi_name);
-    dfiterm->addSubterm($2); 
-    dfiterm->addSubterm(new PrologList(*$4));
+    PrologCompTerm* comp = new PrologCompTerm("map");
+    comp->addSubterm($2);
+    comp->addSubterm(new PrologList(*$4));
+    $$ = comp;
+ // dfiterm = new PrologCompTerm(dfi_name);
+ // dfiterm->addSubterm($2); 
+ // dfiterm->addSubterm(new PrologList(*$4));
     //cerr << dfiterm->getRepresentation() << endl;
   } 
   | value { 
-    dfiterm = new PrologCompTerm(dfi_name);
-    dfiterm->addSubterm($1);
+    $$ = $1;
+ // dfiterm = new PrologCompTerm(dfi_name);
+ // dfiterm->addSubterm($1);
     //cerr << dfiterm->getRepresentation() << endl;
   } 
   | UNDEF { $$ = new PrologAtom("undefined dfi"); }

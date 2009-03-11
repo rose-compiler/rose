@@ -6,6 +6,18 @@
 #include "IrCreation.h"
 #include <cstring>
 
+const char * const edgetypenames[] =
+{
+    "local_edge",
+    "bb_intern",
+    "true_edge",
+    "false_edge",
+    "normal_edge",
+    "call_edge",
+    "return_edge",
+    "<NOT AN EDGE!>"
+};
+
 CFG::CFG()
   : global_return_variable_symbol(NULL), global_this_variable_symbol(NULL),
     global_unknown_type(NULL), analyzerOptions(NULL),

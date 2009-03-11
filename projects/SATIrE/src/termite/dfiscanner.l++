@@ -36,12 +36,19 @@ assign \-\>
 /* kudos to kregexpeditor: */
 token (::)?[_a-zA-Z\$][A-Za-z_0-9\$]*(::[a-zA-Z][A-Za-z_0-9]*)?
 undef \<undefined\ dfi\>
+edge Edge
+context Context
+merged Merged
+ws [ \t\r\n]
 
 %%
 
 {undef}  { return UNDEF; }
 {top}    { return TOP; }
 {bottom} { return BOTTOM; }
+{edge}   { return EDGE; }
+{context} { return CONTEXT; }
+{merged} { return MERGED; }
 {assign} { return ASSIGN; }
 {setbegin} { return SET_BEGIN; }
 {setclose} { return SET_CLOSE; }
@@ -54,6 +61,7 @@ undef \<undefined\ dfi\>
 	  return(TOKEN); }
 \,\}    { //cerr<<"my }"<< endl;
           return '}'; /* don't want to deal with this ugliness in the parser*/}
+{ws}    ;
 .       { //cerr<<"ID "<<yytext<<endl;
           return(dfitext[0]); }
 

@@ -13,6 +13,8 @@ enum edgetypes
     EDGE_TYPE_MAX
 };
 
+extern const char * const edgetypenames[];
+
 enum nodetypes
 {
     CALL,

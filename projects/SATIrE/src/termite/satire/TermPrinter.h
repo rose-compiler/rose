@@ -232,8 +232,9 @@ TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, Synth
     } else {
       /* empty analysis result */
       PrologCompTerm* ar = new PrologCompTerm("analysis_info");
-      ar->addSubterm(new PrologAtom("null"));
-      ar->addSubterm(new PrologAtom("null"));
+   // ar->addSubterm(new PrologAtom("null"));
+   // ar->addSubterm(new PrologAtom("null"));
+      ar->addSubterm(new PrologList());
       ((PrologCompTerm*)t)->addSubterm(ar);
     }
 
@@ -264,8 +265,8 @@ TermPrinter<DFI_STORE_TYPE>::getAnalysisResult(SgStatement* stmt)
     PrologTerm *preInfo, *postInfo;
      preInfo = pagToProlog("pre_info", pagDfiTextPrinter.getPreInfo(stmt));
     postInfo = pagToProlog("post_info",pagDfiTextPrinter.getPostInfo(stmt));
-    infos->addElement(preInfo);
-    infos->addElement(postInfo);
+    infos->addFirstElement(postInfo);
+    infos->addFirstElement(preInfo);
   }
 #endif
 #if HAVE_SATIRE_ICFG
@@ -277,7 +278,7 @@ TermPrinter<DFI_STORE_TYPE>::getAnalysisResult(SgStatement* stmt)
     PrologCompTerm *ee;
     ee = new PrologCompTerm("entry_exit_labels");
     ee->addSubterm(pair);
-    infos->addElement(ee);
+    infos->addFirstElement(ee);
   }
 #endif
   ar->addSubterm(infos);
@@ -405,13 +406,13 @@ TermPrinter<DFI_STORE_TYPE>::listTerm(SgNode* astNode, SynthesizedAttributesList
 #endif
  /* add children's subterms to list*/
   PrologList* l = new PrologList();
-  SynthesizedAttributesList::iterator it;
-  it = synList.begin();
-  while(it !=synList.end()) {
+  SynthesizedAttributesList::reverse_iterator it;
+  it = synList.rbegin();
+  while(it !=synList.rend()) {
     /* strip "null" Atoms */
     PrologAtom* atom = dynamic_cast<PrologAtom*>(*it);
     if (!(atom && (atom->getName() == "null")))
-      l->addElement(*it);
+      l->addFirstElement(*it);
     it++;
   }
   /* add list to term*/
