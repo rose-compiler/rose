@@ -1193,8 +1193,8 @@ PrologToRose::createUnaryOp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
   ROSE_ASSERT(sgexp != NULL);
   PrologCompTerm* annot = retrieveAnnotation(t);
   ROSE_ASSERT(annot != NULL);
-  /* the annotation should have arity of 4*/
-  ROSE_ASSERT(annot->getArity() == 4);
+  /* the annotation should have arity of 5*/
+  ROSE_ASSERT(annot->getArity() == 5);
   // GB (2008-12-04): A unary op's mode is now represented by an atom
   // 'prefix' or 'postfix', not by a numerical constant.
   // PrologInt* mode = dynamic_cast<PrologInt*>(annot->at(0));
@@ -3051,7 +3051,7 @@ PrologToRose::createFunctionRefExp(Sg_File_Info* fi, PrologCompTerm* ct) {
   ROSE_ASSERT(ct != NULL);
   PrologCompTerm* annot = retrieveAnnotation(ct);
   ROSE_ASSERT(annot != NULL);
-  ROSE_ASSERT(annot->getArity() == 2);
+  ROSE_ASSERT(annot->getArity() == 3);
   string* s = toStringP(annot->at(0));
   ROSE_ASSERT(s != NULL);
   /* create function symbol*/
