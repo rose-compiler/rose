@@ -1131,6 +1131,7 @@ projects/DistributedMemoryAnalysisCompass/Makefile
 projects/DocumentationGenerator/Makefile
 projects/runtimeErrorCheck/Makefile
 projects/RTED/Makefile
+projects/taintcheck/Makefile
 projects/C_to_Promela/Makefile
 projects/OpenMP_Translator/Makefile
 projects/OpenMP_Translator/includes/Makefile

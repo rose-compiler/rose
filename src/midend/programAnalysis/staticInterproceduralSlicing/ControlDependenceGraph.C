@@ -252,31 +252,32 @@ void ControlDependenceGraph::buildCDG()
 void ControlDependenceGraph::computeAdditionalFunctioncallDepencencies()
 {
   for (Rose_STL_Container< SgNode * >::iterator  i=functionCalls.begin();i!=functionCalls.end();i++)
+  {
+
+    SgFunctionCallExp * call=isSgFunctionCallExp(*i);
+    // get the next interesting node
+    //SgNode * interestingNode=DUVariableAnalysisExt::getNextParentInterstingNode(*i);
+    //ROSE_ASSERT(interestingNode!=NULL);
+    
+    //if (isSgStatement(interestingNode->get_parent())) interestingNode=interestingNode->get_parent();
+    // add actual out (return-value)  edge			
+    
+    establishEdge(getNode(call),getNode(DependenceNode::ACTUALRETURN,call),DependenceGraph::BELONGS_TO);
+    getNode(DependenceNode::ACTUALRETURN,call)->setName(std::string("RETURN"));
+    //for every parameter in the calls SgExpListExpr
+    Rose_STL_Container<SgExpression*> params=call->get_args()->get_expressions();
+    for (Rose_STL_Container<SgExpression*>::iterator j=params.begin();j!=params.end();j++)
     {
-      // bla bla bla
-      SgFunctionCallExp * call=isSgFunctionCallExp(*i);
-      // get the next interesting node
-      SgNode * interestingNode=DUVariableAnalysisExt::getNextParentInterstingNode(*i);
-      ROSE_ASSERT(interestingNode!=NULL);
-      if (isSgStatement(interestingNode->get_parent())) interestingNode=interestingNode->get_parent();
-      // add actual out (return-value)  edge			
-   
-      establishEdge(getNode(interestingNode),getNode(DependenceNode::ACTUALRETURN,call),DependenceGraph::BELONGS_TO);
-      getNode(DependenceNode::ACTUALRETURN,call)->setName(std::string("RETURN"));
-      //for every parameter in the calls SgExpListExpr
-      Rose_STL_Container<SgExpression*> params=call->get_args()->get_expressions();
-      for (Rose_STL_Container<SgExpression*>::iterator j=params.begin();j!=params.end();j++)
-	{
-	  // and establish an edge, since the depencencies for thoese nodes depende to the dependency of the parent node and parameters and subexpressions are not representet here... just belong
-	  establishEdge(getNode(interestingNode),getNode(DependenceNode::ACTUALIN,*j),DependenceGraph::BELONGS_TO);
-	  establishEdge(getNode(interestingNode),getNode(DependenceNode::ACTUALOUT,*j),DependenceGraph::CONTROL);
-	  // however it is necessary to maintain a sysntactic correctness for the parameters
-	  establishEdge(getNode(interestingNode),getNode(DependenceNode::ACTUALIN,*j),DependenceGraph::SYNTACTIC);
-	  establishEdge(getNode(DependenceNode::ACTUALIN,*j),getNode(interestingNode),DependenceGraph::SYNTACTIC);
-	  establishEdge(getNode(DependenceNode::ACTUALIN,*j),getNode(interestingNode),DependenceGraph::CONTROL);
-	  //				establishEdge(getNode(parentStmt),getNode(DependenceNode::ACTUALOUT,*j),BELONGS_TO);
-	}
+      // and establish an edge, since the depencencies for thoese nodes depende to the dependency of the parent node and parameters and subexpressions are not represented here... just belong
+      establishEdge(getNode(call),getNode(DependenceNode::ACTUALIN,*j),DependenceGraph::BELONGS_TO);
+      establishEdge(getNode(call),getNode(DependenceNode::ACTUALOUT,*j),DependenceGraph::CONTROL);
+      // however it is necessary to maintain a sysntactic correctness for the parameters
+      establishEdge(getNode(call),getNode(DependenceNode::ACTUALIN,*j),DependenceGraph::SYNTACTIC);
+      establishEdge(getNode(DependenceNode::ACTUALIN,*j),getNode(call),DependenceGraph::SYNTACTIC);
+      establishEdge(getNode(DependenceNode::ACTUALIN,*j),getNode(call),DependenceGraph::CONTROL);
+      //				establishEdge(getNode(parentStmt),getNode(DependenceNode::ACTUALOUT,*j),BELONGS_TO);
     }
+  }
 }
 
 

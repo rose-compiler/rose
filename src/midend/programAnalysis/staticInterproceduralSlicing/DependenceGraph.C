@@ -373,12 +373,20 @@ bool IsImportantForSliceSgFilter(SgNode * n){
 		}
 		return false;
 #endif
-		// control-constructs will be filtered out, this is necessary to enshure proper handling of control-statements
-	/*	if (isSgIfStmt(n))
-			return false;
-		if (isSgFunctionParameterList(n))
-			return false;
-		*/
+
+
+		// statements are intersting, but not the FunctionparameterList or SgExprStatements
+    // Jim Leek: 2/21/2009: Defuse now ignores SgExprStatements, so we should too.  
+    // Added to fix problem with dupicate nodes appearing in Dominance Tree.  
+    if(isSgExprStatement(n)) {
+      return false;
+    }
+		// function calls are now always interesting, since we ignore sgExprStatements.
+		if (isSgFunctionCallExp(n))
+		{
+      return true;
+		}
+
 		// get rid of all beginning nodes
 #ifdef SIMPLE_FILTER	
 		if (isSgStatement(n))

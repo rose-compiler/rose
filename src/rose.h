@@ -139,7 +139,7 @@ namespace ELF{
 #endif
 
 // added .h file for error check transformations
-#include "RuntimeInstrumentation.h"
+//#include "RuntimeInstrumentation.h"
 
 #include "PHPFrontend.h"
 

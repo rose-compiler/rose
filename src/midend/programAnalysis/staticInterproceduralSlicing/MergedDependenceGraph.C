@@ -155,7 +155,7 @@ set < DependenceNode * >MergedDependenceGraph::_getReachable(set <
                 {
                     EdgeType edge = *j;
 
-                    if (edge & edgeTypesToFollow)
+                    if (edge & edgeTypesToFollow  && !(edge & DO_NOT_FOLLOW))
                     {           // it's a bit vector
                         addToRemaining = true;
                     }
