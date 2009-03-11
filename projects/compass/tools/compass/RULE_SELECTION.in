@@ -1,4 +1,4 @@
-+:AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction
++:AllocateAndFreeMemoryInTheSameModule
 +:AllowedFunctions
 +:AssignmentOperatorCheckSelf
 +:AssignmentReturnConstThis

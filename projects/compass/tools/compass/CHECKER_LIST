@@ -2,7 +2,7 @@
 #nameConsistency
 #possiblyReplicatedVariables
 #typeTypedef
-allocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction
+allocateAndFreeMemoryInTheSameModule
 allowedFunctions
 assignmentOperatorCheckSelf
 assignmentReturnConstThis

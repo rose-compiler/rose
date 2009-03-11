@@ -13,7 +13,7 @@ using namespace std;
 
 namespace CompassAnalyses
 { 
-  namespace AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction
+  namespace AllocateAndFreeMemoryInTheSameModule
   { 
     /*! \brief Allocate And Free Memory In The Same Module At The Same Level Of Abstraction: Add your description here 
      */
@@ -68,35 +68,35 @@ namespace CompassAnalyses
 // Date: 16-November-2007
 
 #include "compass.h"
-// #include "allocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction.h"
+// #include "allocateAndFreeMemoryInTheSameModule.h"
 
 namespace CompassAnalyses
 { 
-  namespace AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction
+  namespace AllocateAndFreeMemoryInTheSameModule
   { 
-    const std::string checkerName      = "AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction";
+    const std::string checkerName      = "AllocateAndFreeMemoryInTheSameModule";
 
     // Descriptions should not include the newline character "\n".
     const std::string shortDescription = "Every malloc must be followed by a free.";
     const std::string longDescription  = "Allocating and freeing memory in different modules and levels of abstraction burdens the programmer with tracking the lifetime of that block of memory. This may cause confusion regarding when and if a block of memory has been allocated or freed, leading to programming defects such as double-free vulnerabilities, accessing freed memory, or writing to unallocated memory.To avoid these situations, it is recommended that memory be allocated and freed at the same level of abstraction, and ideally in the same code module.The affects of not following this recommendation are best demonstrated by an actual vulnerability. Freeing memory in different modules resulted in a vulnerability in MIT Kerberos 5 MITKRB5-SA-2004-002 . The problem was that the MIT Kerberos 5 code contained error-handling logic, which freed memory allocated by the ASN.1 decoders if pointers to the allocated memory were non-NULL. However, if a detectable error occured, the ASN.1 decoders freed the memory that they had allocated. When some library functions received errors from the ASN.1 decoders, they also attempted to free, causing a double-free vulnerability.";
-  } //End of namespace AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction.
+  } //End of namespace AllocateAndFreeMemoryInTheSameModule.
 } //End of namespace CompassAnalyses.
 
-CompassAnalyses::AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction::
+CompassAnalyses::AllocateAndFreeMemoryInTheSameModule::
 CheckerOutput::CheckerOutput ( SgNode* node, const std::string & reason  )
   : OutputViolationBase(node,checkerName,reason+shortDescription)
 {}
 
-CompassAnalyses::AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction::Traversal::
+CompassAnalyses::AllocateAndFreeMemoryInTheSameModule::Traversal::
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
   : output(output)
 {
   // Initialize checker specific parameters here, for example: 
-  // YourParameter = Compass::parseInteger(inputParameters["AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction.YourParameter"]);
+  // YourParameter = Compass::parseInteger(inputParameters["AllocateAndFreeMemoryInTheSameModule.YourParameter"]);
 }
 
 void
-CompassAnalyses::AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction::Traversal::
+CompassAnalyses::AllocateAndFreeMemoryInTheSameModule::Traversal::
 visit(SgNode* node)
 { 
      
@@ -245,18 +245,18 @@ visit(SgNode* node)
    
 
 static void run(Compass::Parameters params, Compass::OutputObject* output) {
-  CompassAnalyses::AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+  CompassAnalyses::AllocateAndFreeMemoryInTheSameModule::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
 }
 
 static Compass::AstSimpleProcessingWithRunFunction* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
-  return new CompassAnalyses::AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction::Traversal(params, output);
+  return new CompassAnalyses::AllocateAndFreeMemoryInTheSameModule::Traversal(params, output);
 }
 
-extern const Compass::Checker* const allocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstractionChecker =
+extern const Compass::Checker* const allocateAndFreeMemoryInTheSameModuleChecker =
   new Compass::CheckerUsingAstSimpleProcessing(
-					       CompassAnalyses::AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction::checkerName,
-					       CompassAnalyses::AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction::shortDescription,
-					       CompassAnalyses::AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction::longDescription,
+					       CompassAnalyses::AllocateAndFreeMemoryInTheSameModule::checkerName,
+					       CompassAnalyses::AllocateAndFreeMemoryInTheSameModule::shortDescription,
+					       CompassAnalyses::AllocateAndFreeMemoryInTheSameModule::longDescription,
 					       Compass::C | Compass::Cpp,
 					       Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
 					       run,
