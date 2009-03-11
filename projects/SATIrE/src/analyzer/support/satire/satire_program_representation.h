@@ -17,6 +17,7 @@ public:
     AnalyzerOptions *options;
     SgProject *astRoot;
     CFG *icfg;
+    PrologTerm *prologTerm;
 
     Program(AnalyzerOptions *o);
     ~Program();

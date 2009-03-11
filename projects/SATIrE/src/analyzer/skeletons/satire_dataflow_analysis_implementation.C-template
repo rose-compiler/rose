@@ -246,20 +246,24 @@ Implementation::outputAnnotatedProgram(Program *program)
     /* Handle command line option --output-term. */
     if (program->options->outputTerm())
     {
-        TimingPerformance timer("Output Prolog term:");
-        TermPrinter<DFI_STORE> tp((DFI_STORE) analysisInfo, program->icfg);
+        if (program->prologTerm == NULL)
+        {
+            TimingPerformance timer("Output Prolog term:");
+            TermPrinter<DFI_STORE> tp((DFI_STORE) analysisInfo, program->icfg);
 
-        if (program->options->analysisWholeProgram())
-            tp.traverse(program->astRoot);
-        else
-            tp.traverseInputFiles(program->astRoot);
+            if (program->options->analysisWholeProgram())
+                tp.traverse(program->astRoot);
+            else
+                tp.traverseInputFiles(program->astRoot);
 
-        ofstream termfile;
-        string filename = program->options->getOutputTermFileName();
-        termfile.open(filename.c_str());
-        termfile << "% Termite term representation" << endl;
-        termfile << tp.getTerm()->getRepresentation() << "." << endl;
-        termfile.close();
+            ofstream termfile;
+            string filename = program->options->getOutputTermFileName();
+            termfile.open(filename.c_str());
+            termfile << "% Termite term representation" << endl;
+            termfile << tp.getTerm()->getRepresentation() << "." << endl;
+            termfile.close();
+            program->prologTerm = tp.getTerm();
+        }
     }
 }
 

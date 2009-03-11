@@ -439,8 +439,8 @@ representations that have been computed for it:
     AnalyzerOptions *options;
     SgProject *astRoot;
     CFG *icfg;
+    PrologTerm *prologTerm;
 \end{verbatim}
-(A Termite term pointer should be added at some point.)
 
 The \texttt{options} member is initialized by \texttt{Program}'s
 constructor, which takes a mandatory \verb|AnalyzerOptions *| argument. This
@@ -449,6 +449,10 @@ However, the ICFG member will typically be \texttt{NULL} until it is needed;
 analyzers that run on the ICFG should check this pointer and initialize it
 using the \texttt{createICFG} function (Section~\ref{sec:program_io}) if
 necessary.
+
+The \texttt{prologTerm} member can point to a Termite term representing the
+program. It is initialized by the \texttt{outputProgramRepresentation}
+function if the option to output a Termite term is set.
 
 \chapter{Writing Data-Flow Analyzers}
 \label{chap:data_flow}

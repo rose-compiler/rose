@@ -74,12 +74,12 @@ public:
 	   && "please run TermiteInit(argc, argv) first.");
 #endif  
     withPagAnalysisResults = (analysis_info != 0); 
-    mTerm = new PrologAtom("error");
+    rootTerm = new PrologAtom("error");
   }
 
 
   /** return the term*/
-  PrologTerm* getTerm() {return mTerm;};
+  PrologTerm* getTerm() {return rootTerm;};
 
 protected:
   /** reimplemented from AstBottomUpProcessing*/
@@ -119,7 +119,7 @@ private:
 #endif
 
   /** the current term */
-  PrologTerm* mTerm;
+  PrologTerm* rootTerm;
 
   /** the converter */
   RoseToProlog termConv;
@@ -245,7 +245,7 @@ TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, Synth
   }
 
   /* remember the last term */
-  mTerm = t;
+  rootTerm = t;
   return t;
 }
 

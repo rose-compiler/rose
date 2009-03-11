@@ -9,6 +9,7 @@
 #define H_SATIRE
 
 #include "satire_rose.h"
+#include "termite.h"
 
 #include "AnalyzerOptions.h"
 #include "CommandLineParser.h"

@@ -167,18 +167,22 @@ void outputProgramRepresentation(Program *program, AnalyzerOptions *options)
     /* Handle command line option --output-term. */
     if (options->outputTerm())
     {
-        TimingPerformance timer("Output Prolog term:");
-        TermPrinter<void *> tp(NULL, program->icfg);
-        if (options->analysisWholeProgram())
-            tp.traverse(program->astRoot);
-        else
-            tp.traverseInputFiles(program->astRoot);
-        std::ofstream termfile;
-        std::string filename = program->options->getOutputTermFileName();
-        termfile.open(filename.c_str());
-        termfile << "% Termite term representation" << std::endl;
-        termfile << tp.getTerm()->getRepresentation() << "." << std::endl;
-        termfile.close();
+        if (program->prologTerm == NULL)
+        {
+            TimingPerformance timer("Output Prolog term:");
+            TermPrinter<void *> tp(NULL, program->icfg);
+            if (options->analysisWholeProgram())
+                tp.traverse(program->astRoot);
+            else
+                tp.traverseInputFiles(program->astRoot);
+            std::ofstream termfile;
+            std::string filename = program->options->getOutputTermFileName();
+            termfile.open(filename.c_str());
+            termfile << "% Termite term representation" << std::endl;
+            termfile << tp.getTerm()->getRepresentation() << "." << std::endl;
+            termfile.close();
+            program->prologTerm = tp.getTerm();
+        }
     }
 }
 
