@@ -123,16 +123,28 @@ test_testElfStrtab.passed: testElfStrtab
 	$(VALGRIND) ./testElfStrtab $(srcdir)/arm-poweroff
 	@touch $@
 
-test_testElfByteOrder.passed: testElfByteOrder
+# cannot run in parallel with testElfStrtab
+test_testElfByteOrder.passed: testElfByteOrder test_testElfStrtab.passed
 	$(VALGRIND) ./testElfByteOrder $(srcdir)/arm-poweroff
 	$(VALGRIND) ./execFormatsTest ./arm-poweroff.new
 	@if diff -u ./arm-poweroff.new{,.new}; then :; else echo "Files differ; byte order test failed"; exit 1; fi
 	@touch $@
 
-test_testElfWordSize.passed: testElfWordSize
+# cannot run in parallel with testElfStrtab or testElfByteOrder
+test_testElfWordSize.passed: testElfWordSize test_testElfStrtab.passed test_testElfByteOrder.passed
 	$(VALGRIND) ./testElfWordSize $(srcdir)/arm-poweroff
 	$(VALGRIND) ./execFormatsTest ./arm-poweroff.new
-	@if diff -u ./arm-poweroff.new{,.new}; then :; else echo "Files differ; word size test failed"; exit 1; fi
+	@if diff -u ./arm-poweroff.new{,.new}; then								\
+		: ok;												\
+	else													\
+		sed -n '0,/^Section/p' <arm-poweroff.dump;							\
+		hexdump -Cv arm-poweroff.new >arm-poweroff.new.hexump;						\
+		hexdump -Cv arm-poweroff.new.new >arm-poweroff.new.new.hexump;					\
+		diff -u arm-poweroff.new{,.new}.hexdump |head -n100;						\
+		rm -f arm-poweroff.new{,.new}.hexdump;								\
+		echo "Files differ; word size test failed";							\
+		exit 1;												\
+	fi
 	@touch $@
 
 test_testElfSchulz.passed: test_testElfSchulz-1.passed test_testElfSchulz-2.passed
