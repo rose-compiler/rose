@@ -5,11 +5,11 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 if ROSE_USE_QT
 
 bin_PROGRAMS = BinQ 
-nobin_PROGRAMS = test
+#nobin_PROGRAMS = test
 
 MOC_SOURCES = moc_slide.C  moc_MyBars.C
 
-test_SOURCES = test.C
+#test_SOURCES = test.C
 
 BinQ_SOURCES = \
 	BinQMain.C \
@@ -53,7 +53,7 @@ endif
 
 BinQ_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
 
-test_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
+#test_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
 
 INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I. -Winvalid-pch 
 
