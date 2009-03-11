@@ -11,6 +11,117 @@
 #include <iostream>
 using namespace std;
 
+void testOneFunctionDEFUSE( std::string funcParamName,
+		      vector<string> argvList,
+		      bool debug, int nrOfNodes,
+		      multimap <string, int> results,
+		      multimap <string, int> useresults) {
+  cout << " \n\n------------------------------------------\nrunning ... " << argvList[1] << endl;
+  // Build the AST used by ROSE
+  SgProject* project = frontend(argvList);
+  // Call the Def-Use Analysis
+  DFAnalysis* defuse = new DefUseAnalysis(project);
+  int val = defuse->run(debug);
+  std::cout << "Analysis run is : " << (val ?  "failure" : "success" ) << " " << val << std::endl;
+  if (val==1) exit(1);
+
+  if (debug==false)
+    defuse->dfaToDOT();
+
+//std::list<SgNode*> vars = NodeQuery::querySubTree(project, V_SgFunctionDefinition);
+//std::list<SgNode*>::const_iterator i = vars.begin();
+  NodeQuerySynthesizedAttributeType vars = NodeQuery::querySubTree(project, V_SgFunctionDefinition);
+  NodeQuerySynthesizedAttributeType::const_iterator i = vars.begin();
+  for (; i!=vars.end();++i) {
+    SgFunctionDefinition* func = isSgFunctionDefinition(*i);
+    std::string name = func->class_name();
+    string funcName = func->get_declaration()->get_qualified_name().str();
+    int maxNodes = defuse->getDefSize();
+    int nodeNr = defuse->getIntForSgNode(func);
+    if (nodeNr == -1)
+      continue;
+    //cout << " checking function : " << funcName << endl;
+    if (funcName!=funcParamName)
+      continue;
+
+    cout << "\n------------------------\nchecking for " << name << " -- " << funcName << " -- " << nodeNr << endl;
+    if (maxNodes!=nrOfNodes) {
+      cout << " Error: Test should have " << nrOfNodes << " nodes. found: " << maxNodes << endl;
+      abort();
+    }
+    cout << " Test has nodes:  " << nrOfNodes <<  endl;
+
+    cout <<"\nChecking all definitions ... " << endl;
+    // check nodes in multimap
+    std::vector <std::pair < SgInitializedName*, SgNode*> > map = defuse->getDefMultiMapFor(func);
+    if (map.size()>0) {
+      std::vector < std::pair <SgInitializedName*, SgNode*> >::const_iterator j = map.begin();
+      unsigned int hit=0;
+      for (;j!=map.end();++j) {
+	SgInitializedName* in_node = j->first;
+	SgNode* node = j->second;
+	string name= in_node->get_qualified_name().str();
+	cout << " ... checking :  " << name << endl;
+	multimap <string, int>::const_iterator k =results.begin();
+	for (;k!=results.end();++k) {
+	  string resName = k->first;
+	  int resNr = k->second;
+	  int tableNr = defuse->getIntForSgNode(node);
+	  if (name==resName)
+	    cout << " ... defNr: " << resNr << "  inTable: " << tableNr <<  endl;
+	  if (name==resName && tableNr==resNr) {
+	    hit++;
+	    cout << " Hit " << hit << "/" << results.size() << " - (" << name << "," << resNr << ")" << endl;
+	  }
+	}
+
+      }
+      if (hit!=results.size()) {
+	cout << " Error: No hit! ... DFA values of node " << nrOfNodes << " are not correct! " << endl;
+	exit(1);
+      }
+    } else {
+      if (results.size()!=0) {
+	cout << " Error: Test node " << defuse->getIntForSgNode(func) << " should have a multimap. " << endl;
+	exit(1);
+      }
+    }
+
+    cout <<"\nChecking all uses ... " << endl;
+    // check nodes in multimap
+    map = defuse->getUseMultiMapFor(func);
+    if (map.size()>0) {
+      std::vector <std::pair <SgInitializedName*, SgNode*> >::const_iterator j = map.begin();
+      size_t hit=0;
+      for (;j!=map.end();++j) {
+	SgInitializedName* in_node = j->first;
+	SgNode* node = j->second;
+	string name= in_node->get_qualified_name().str();
+	cout << " ... checking :  " << name << endl;
+	multimap <string, int>::const_iterator k =useresults.begin();
+	for (;k!=useresults.end();++k) {
+	  string resName = k->first;
+	  int resNr = k->second;
+	  int tableNr = defuse->getIntForSgNode(node);
+	  if (name==resName)
+	    cout << " ... defNr: " << resNr << "  inTable: " << tableNr <<  endl;
+	  if (name==resName && tableNr==resNr) {
+	    hit++;
+	    cout << " Hit " << hit << "/" << useresults.size() << " - (" << name << "," << resNr << ")" << endl;
+	  }
+	}
+
+      }
+      if (hit!=useresults.size()) {
+	cout << " Error: No hit! ... DFA values of node " << nrOfNodes << " are not correct! " << endl;
+	exit(1);
+      }
+    } // if
+  }
+  std::cout << "Analysis test is success." << std::endl;
+}
+
+
 void testOneFunction( std::string funcParamName,
 		      vector<string> argvList,
 		      bool debug, int nrOfNodes,
@@ -43,6 +154,8 @@ void testOneFunction( std::string funcParamName,
     std::string name = func->class_name();
     string funcName = func->get_declaration()->get_qualified_name().str();
     cerr << " .. running live analysis for func : " << funcName << endl;
+    if (funcName!=funcParamName)
+			return;
     FilteredCFGNode <IsDFAFilter> rem_source = liv->run(func,abortme);
     if (rem_source.getNode()!=NULL)
       dfaFunctions.push_back(rem_source);
@@ -100,7 +213,7 @@ void testOneFunction( std::string funcParamName,
 		 	     if (results==inName)
 				    cerr <<"Contents in IN vector is correct! " << endl;
 		 	     else {
-					cerr << " >>>>>>>>>> Problem with contents ! " << endl;
+					cerr << " >>>>>>>>>> Problem with contents for IN ! " << endl;
 					cerr << " >>>>>>>>>> RESULT ... " << endl;
 				    std::vector<string>::const_iterator itv = inName.begin();
 				    for (;itv!=inName.end();++itv) {
@@ -133,9 +246,9 @@ void testOneFunction( std::string funcParamName,
 		  if (tableNr==resNr) {
 		 	     std::sort(results.begin(), results.end());
 		 	     if (results==outName)
-				    cerr <<"Contents in IN vector is correct! " << endl;
+				    cerr <<"Contents in OUT vector is correct! " << endl;
 		 	     else {
-					cerr << " >>>>>>>>>> Problem with contents ! " << endl;
+					cerr << " >>>>>>>>>> Problem with contents for OUT ! " << endl;
 					cerr << " >>>>>>>>>> RESULT ... " << endl;
 				    std::vector<string>::const_iterator itv = outName.begin();
 				    for (;itv!=outName.end();++itv) {
@@ -300,6 +413,241 @@ int main( int argc, char * argv[] )
 
     cerr << " RUNNING VARIABLE ANALYSIS (DEFUSE) TESTS -- NR: " << startNrInt << endl;
 
+    // -------------------------------------- use-def tests
+    {
+    multimap <string, int> useresults;
+    multimap <string, int> resultsMe;
+
+    if (startNrInt<=1 || testAll) {
+         // ------------------------------ TESTCASE 1 -----------------------------------------
+         argvList[1]=srcdir+"tests/test1.C";
+         resultsMe.clear();      useresults.clear();
+         resultsMe.insert(pair<string,int>("a", 8));
+         resultsMe.insert(pair<string,int>("a", 17));
+         resultsMe.insert(pair<string,int>("c", 18));
+         testOneFunctionDEFUSE("::main",argvList, debug, 21, resultsMe,useresults);
+       }
+
+       if (startNrInt<=2 || testAll) {
+         // ------------------------------ TESTCASE 2 -----------------------------------------
+         argvList[1]=srcdir+"tests/test2.C";
+         resultsMe.clear();      useresults.clear();
+         resultsMe.insert(pair<string,int>("a", 8));
+         resultsMe.insert(pair<string,int>("a", 17));
+         resultsMe.insert(pair<string,int>("c", 18));
+         testOneFunctionDEFUSE("::main",argvList, debug, 19, resultsMe,useresults);
+       }
+
+       if (startNrInt<=3 || testAll) {
+         // ------------------------------ TESTCASE 3 -----------------------------------------
+         argvList[1]=srcdir+"tests/test3.C";
+         resultsMe.clear();       useresults.clear();
+         resultsMe.insert(pair<string,int>("d", 15));
+         testOneFunctionDEFUSE("::main", argvList, debug, 17, resultsMe,useresults);
+       }
+
+       if (startNrInt<=4 || testAll) {
+         // ------------------------------ TESTCASE 4 -----------------------------------------
+         argvList[1]=srcdir+"tests/test4.C";
+         resultsMe.clear();       useresults.clear();
+         resultsMe.insert(pair<string,int>("::globalvar", 12));
+         testOneFunctionDEFUSE("::main", argvList, debug, 14, resultsMe, useresults);
+       }
+
+       if (startNrInt<=5 || testAll) {
+         // ------------------------------ TESTCASE 5 -----------------------------------------
+         argvList[1]=srcdir+"tests/test5.C";
+         resultsMe.clear();       useresults.clear();
+         resultsMe.insert(pair<string,int>("x", 10));
+         resultsMe.insert(pair<string,int>("y", 16));
+         useresults.insert(pair<string,int>("x", 13));
+         testOneFunctionDEFUSE("::main", argvList, debug, 18, resultsMe, useresults);
+       }
+
+       if (startNrInt<=6 || testAll) {
+         // ------------------------------ TESTCASE 6 -----------------------------------------
+         argvList[1]=srcdir+"tests/test6.C";
+         resultsMe.clear();  useresults.clear();
+         resultsMe.insert(pair<string,int>("x", 14));
+         resultsMe.insert(pair<string,int>("x", 25));
+         resultsMe.insert(pair<string,int>("z", 26));
+         resultsMe.insert(pair<string,int>("z", 10));
+         useresults.insert(pair<string,int>("x", 16));
+         useresults.insert(pair<string,int>("z", 22));
+         testOneFunctionDEFUSE("::main", argvList, debug, 26, resultsMe,useresults);
+       }
+
+       if (startNrInt<=7 || testAll) {
+         // ------------------------------ TESTCASE 7 -----------------------------------------
+         argvList[1]=srcdir+"tests/test7.C";
+         resultsMe.clear();  useresults.clear();
+         resultsMe.insert(pair<string,int>("i", 6));
+         resultsMe.insert(pair<string,int>("i", 15));
+         useresults.insert(pair<string,int>("i", 8));
+         useresults.insert(pair<string,int>("i", 14));
+         testOneFunctionDEFUSE("::main", argvList, debug, 16, resultsMe,useresults);
+       }
+
+       if (startNrInt<=8 || testAll) {
+         // ------------------------------ TESTCASE 8 -----------------------------------------
+         argvList[1]=srcdir+"tests/test8.C";
+         resultsMe.clear();  useresults.clear();
+         resultsMe.insert(pair<string,int>("x", 24));
+         resultsMe.insert(pair<string,int>("i", 12));
+         resultsMe.insert(pair<string,int>("i", 32));
+         useresults.insert(pair<string,int>("i", 15));
+         useresults.insert(pair<string,int>("p", 26));
+         useresults.insert(pair<string,int>("x", 28));
+         testOneFunctionDEFUSE("::main", argvList, debug, 31, resultsMe,useresults);
+       }
+
+       if (startNrInt<=9 || testAll) {
+         // ------------------------------ TESTCASE 9 -----------------------------------------
+         argvList[1]=srcdir+"tests/test9.C";
+         resultsMe.clear();  useresults.clear();
+         resultsMe.insert(pair<string,int>("array", 4));
+         resultsMe.insert(pair<string,int>("i", 12));
+         resultsMe.insert(pair<string,int>("i", 31));
+         useresults.insert(pair<string,int>("i", 15));
+         // useresults.insert(pair<string,int>("array", 20)); // tps: fixed this
+         testOneFunctionDEFUSE("::main", argvList, debug, 30, resultsMe,useresults);
+       }
+
+       if (startNrInt<=10 || testAll) {
+         // ------------------------------ TESTCASE 10 -----------------------------------------
+         argvList[1]=srcdir+"tests/test10.C";
+         resultsMe.clear();  useresults.clear();
+         resultsMe.insert(pair<string,int>("z", 13));
+         resultsMe.insert(pair<string,int>("z", 22));
+         resultsMe.insert(pair<string,int>("res", 23));
+         testOneFunctionDEFUSE("::main", argvList, debug, 25, resultsMe,useresults);
+         resultsMe.clear();  useresults.clear();
+         resultsMe.insert(pair<string,int>("x", 3));
+         resultsMe.insert(pair<string,int>("y", 4));
+         resultsMe.insert(pair<string,int>("z", 5));
+         testOneFunctionDEFUSE("::f2", argvList, debug, 25, resultsMe,useresults);
+       }
+
+       if (startNrInt<=11 || testAll) {
+         // ------------------------------ TESTCASE 11 -----------------------------------------
+         argvList[1]=srcdir+"tests/test11.C";
+         resultsMe.clear();  useresults.clear();
+         resultsMe.insert(pair<string,int>("z", 19));
+         resultsMe.insert(pair<string,int>("z", 63));
+         resultsMe.insert(pair<string,int>("z", 73));
+         resultsMe.insert(pair<string,int>("p", 24));
+         resultsMe.insert(pair<string,int>("i", 28));
+         resultsMe.insert(pair<string,int>("i", 56));
+         resultsMe.insert(pair<string,int>("j", 40)); //41
+         resultsMe.insert(pair<string,int>("j", 77));
+         //      resultsMe.insert(pair<string,int>("res", 42));
+         testOneFunctionDEFUSE("::main", argvList, debug, 76, resultsMe,useresults);
+         resultsMe.clear();  useresults.clear();
+         testOneFunctionDEFUSE("::f1", argvList, debug, 76, resultsMe,useresults);
+         resultsMe.clear();  useresults.clear();
+         resultsMe.insert(pair<string,int>("x", 7));
+         resultsMe.insert(pair<string,int>("y", 8));
+         resultsMe.insert(pair<string,int>("z", 9));
+         testOneFunctionDEFUSE("::f2", argvList, debug, 76, resultsMe,useresults);
+       }
+
+       if (startNrInt<=13 || testAll) {
+         // ------------------------------ TESTCASE 13 -----------------------------------------
+         argvList[1]=srcdir+"tests/test13.C";
+         resultsMe.clear();  useresults.clear();
+         resultsMe.insert(pair<string,int>("::global", 7));
+         testOneFunctionDEFUSE("::main", argvList, debug, 9, resultsMe,useresults);
+       }
+
+       if (startNrInt<=14 || testAll) {
+         // ------------------------------ TESTCASE 14 -----------------------------------------
+         argvList[1]=srcdir+"tests/test14.C";
+         resultsMe.clear();  useresults.clear();
+         resultsMe.insert(pair<string,int>("a", 12));
+         resultsMe.insert(pair<string,int>("b", 6));
+         testOneFunctionDEFUSE("::main", argvList, debug, 14, resultsMe,useresults);
+       }
+
+       if (startNrInt<=15 || testAll) {
+         // ------------------------------ TESTCASE 15 -----------------------------------------
+         argvList[1]=srcdir+"tests/test15.C";
+         resultsMe.clear();  useresults.clear();
+         resultsMe.insert(pair<string,int>("i", 12));
+         resultsMe.insert(pair<string,int>("i", 26));
+         resultsMe.insert(pair<string,int>("index", 26));
+         resultsMe.insert(pair<string,int>("index", 8));
+         testOneFunctionDEFUSE("::main", argvList, debug, 26, resultsMe,useresults);
+       }
+
+       if (startNrInt<=18 || testAll) {
+         // ------------------------------ TESTCASE 18 -----------------------------------------
+         argvList[1]=srcdir+"tests/test18.C";
+         resultsMe.clear();  useresults.clear();
+         resultsMe.insert(pair<string,int>("i", 12));
+         resultsMe.insert(pair<string,int>("i", 49));
+         resultsMe.insert(pair<string,int>("p", 8));
+         resultsMe.insert(pair<string,int>("p", 46));
+         resultsMe.insert(pair<string,int>("x", 24));
+         resultsMe.insert(pair<string,int>("z", 39));
+         resultsMe.insert(pair<string,int>("e", 41));
+         useresults.insert(pair<string,int>("i", 15));
+         useresults.insert(pair<string,int>("x", 28));
+         testOneFunctionDEFUSE("::main", argvList, debug, 48, resultsMe,useresults);
+       }
+
+       if (startNrInt<=19 || testAll) {
+         // ------------------------------ TESTCASE 19 -----------------------------------------
+         argvList[1]=srcdir+"tests/test19.C";
+         resultsMe.clear();  useresults.clear();
+         resultsMe.insert(pair<string,int>("::global", 2));
+         resultsMe.insert(pair<string,int>("::global", 8));
+         resultsMe.insert(pair<string,int>("::global2", 28));
+         resultsMe.insert(pair<string,int>("a", 24));
+         testOneFunctionDEFUSE("::main", argvList, debug, 30, resultsMe,useresults);
+         resultsMe.clear();  useresults.clear();
+         resultsMe.insert(pair<string,int>("::global", 8));
+         resultsMe.insert(pair<string,int>("::global2", 12));
+         testOneFunctionDEFUSE("::setMe", argvList, debug, 30, resultsMe,useresults);
+       }
+
+       if (startNrInt<=20 || testAll) {
+         // ------------------------------ TESTCASE 1 -----------------------------------------
+         argvList[1]=srcdir+"tests/test20.C";
+         resultsMe.clear();      useresults.clear();
+         testOneFunctionDEFUSE("::bar",argvList, debug, 5, resultsMe,useresults);
+       }
+
+       if (startNrInt<=21 || testAll) {
+         // ------------------------------ TESTCASE 1 -----------------------------------------
+         argvList[1]=srcdir+"tests/test21.C";
+         resultsMe.clear();      useresults.clear();
+         testOneFunctionDEFUSE("::func",argvList, debug, 9, resultsMe,useresults);
+       }
+
+       if (startNrInt<=22 || testAll) {
+         // ------------------------------ TESTCASE 1 -----------------------------------------
+         argvList[1]=srcdir+"tests/test22.C";
+         resultsMe.clear();      useresults.clear();
+         resultsMe.insert(pair<string,int>("b", 7));
+         testOneFunctionDEFUSE("::func",argvList, debug, 12, resultsMe,useresults);
+       }
+
+       if (startNrInt<=23 || testAll) {
+         // ------------------------------ TESTCASE 1 -----------------------------------------
+         argvList[1]=srcdir+"tests/test23.C";
+         resultsMe.clear();      useresults.clear();
+         resultsMe.insert(pair<string,int>("a",11));
+         testOneFunctionDEFUSE("::func",argvList, debug, 30, resultsMe,useresults);
+       }
+    }
+
+       // -------------------------------------- use-def tests
+
+
+
+
+       // -------------------------------------- variable live tests
+
 
     if (startNrInt==1 || testAll) {
       // ------------------------------ TESTCASE 1 -----------------------------------------
@@ -323,6 +671,7 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 3 -----------------------------------------
       argvList[1]=srcdir+"tests/test3.C";
       results.clear();       outputResults.clear();
+#if 1
 	  vector<string> in1;
       results.insert(pair<int,  vector<string> >( make_pair(6, in1 )));
 	  vector<string> in10;
@@ -336,6 +685,7 @@ int main( int argc, char * argv[] )
       string arrout[] = {"d"};
       vector<string> out(arrout,arrout+1);
       outputResults.insert(pair<int,  vector<string> >( make_pair(8, out )));
+#endif
       testOneFunction("::main", argvList, debug, 17, results,outputResults);
     }
 
@@ -357,130 +707,93 @@ int main( int argc, char * argv[] )
 	  testOneFunction("::main", argvList, debug, 12, results, outputResults);
     }
 
-    #if 0
 
     if (startNrInt==5 || testAll) {
       // ------------------------------ TESTCASE 5 -----------------------------------------
       argvList[1]=srcdir+"tests/test5.C";
       results.clear();       outputResults.clear();
-      results.insert(pair<string,int>("x", 10));
-      results.insert(pair<string,int>("y", 16));
-      outputResults.insert(pair<string,int>("x", 13));
-      testOneFunction("::main", argvList, debug, 18, results, outputResults);
+	  vector<string> in4;
+      results.insert(pair<int,  vector<string> >( make_pair(10, in4 )));
+      string out4[] = {"x"};
+	  vector<string> out4v(out4,out4+1);
+	  outputResults.insert(pair<int,  vector<string> >( make_pair(10, out4v )));
+
+	  vector<string> in14;
+      results.insert(pair<int,  vector<string> >( make_pair(14, in14 )));
+	  vector<string> out14;
+	  outputResults.insert(pair<int,  vector<string> >( make_pair(14, in14 )));
+
+	  testOneFunction("::main", argvList, debug, 19, results, outputResults);
     }
 
     if (startNrInt==6 || testAll) {
       // ------------------------------ TESTCASE 6 -----------------------------------------
       argvList[1]=srcdir+"tests/test6.C";
       results.clear();  outputResults.clear();
-      results.insert(pair<string,int>("x", 14));
-      results.insert(pair<string,int>("x", 25));
-      results.insert(pair<string,int>("z", 26));
-      results.insert(pair<string,int>("z", 10));
-      outputResults.insert(pair<string,int>("x", 16));
-      outputResults.insert(pair<string,int>("z", 22));
-      testOneFunction("::main", argvList, debug, 26, results,outputResults);
+      string in22[] = {"z"};
+	  vector<string> in22v(in22,in22+1);
+      results.insert(pair<int,  vector<string> >( make_pair(22, in22v )));
+	  vector<string> out22;
+	  outputResults.insert(pair<int,  vector<string> >( make_pair(22, out22 )));
+
+      testOneFunction("::main", argvList, debug, 28, results,outputResults);
     }
+
+#if 1
 
     if (startNrInt==7 || testAll) {
       // ------------------------------ TESTCASE 7 -----------------------------------------
       argvList[1]=srcdir+"tests/test7.C";
       results.clear();  outputResults.clear();
-      results.insert(pair<string,int>("i", 6));
-      results.insert(pair<string,int>("i", 15));
-      outputResults.insert(pair<string,int>("i", 8));
-      outputResults.insert(pair<string,int>("i", 14));
-      testOneFunction("::main", argvList, debug, 16, results,outputResults);
+      testOneFunction("::main", argvList, debug, 17, results,outputResults);
     }
 
     if (startNrInt==8 || testAll) {
       // ------------------------------ TESTCASE 8 -----------------------------------------
       argvList[1]=srcdir+"tests/test8.C";
       results.clear();  outputResults.clear();
-      results.insert(pair<string,int>("x", 24));
-      results.insert(pair<string,int>("i", 12));
-      results.insert(pair<string,int>("i", 32));
-      outputResults.insert(pair<string,int>("i", 15));
-      outputResults.insert(pair<string,int>("p", 26));
-      outputResults.insert(pair<string,int>("x", 28));
-      testOneFunction("::main", argvList, debug, 31, results,outputResults);
+      testOneFunction("::main", argvList, debug, 34, results,outputResults);
     }
 
     if (startNrInt==9 || testAll) {
       // ------------------------------ TESTCASE 9 -----------------------------------------
       argvList[1]=srcdir+"tests/test9.C";
       results.clear();  outputResults.clear();
-      results.insert(pair<string,int>("array", 4));
-      results.insert(pair<string,int>("i", 12));
-      results.insert(pair<string,int>("i", 31));
-      outputResults.insert(pair<string,int>("i", 15));
-      outputResults.insert(pair<string,int>("array", 21));
-      testOneFunction("::main", argvList, debug, 30, results,outputResults);
+      testOneFunction("::main", argvList, debug, 32, results,outputResults);
     }
 
     if (startNrInt==10 || testAll) {
       // ------------------------------ TESTCASE 10 -----------------------------------------
       argvList[1]=srcdir+"tests/test10.C";
       results.clear();  outputResults.clear();
-      results.insert(pair<string,int>("z", 13));
-      results.insert(pair<string,int>("z", 22));
-      results.insert(pair<string,int>("res", 23));
-      testOneFunction("::main", argvList, debug, 25, results,outputResults);
-      results.clear();  outputResults.clear();
-      results.insert(pair<string,int>("x", 3));
-      results.insert(pair<string,int>("y", 4));
-      results.insert(pair<string,int>("z", 5));
-      testOneFunction("::f2", argvList, debug, 25, results,outputResults);
+      testOneFunction("::f2", argvList, debug, 6, results,outputResults);
     }
 
     if (startNrInt==11 || testAll) {
       // ------------------------------ TESTCASE 11 -----------------------------------------
       argvList[1]=srcdir+"tests/test11.C";
       results.clear();  outputResults.clear();
-      results.insert(pair<string,int>("z", 19));
-      results.insert(pair<string,int>("z", 63));
-      results.insert(pair<string,int>("z", 73));
-      results.insert(pair<string,int>("p", 24));
-      results.insert(pair<string,int>("i", 28));
-      results.insert(pair<string,int>("i", 56));
-      results.insert(pair<string,int>("j", 41));
-      results.insert(pair<string,int>("j", 77));
-      results.insert(pair<string,int>("res", 42));
-      testOneFunction("::main", argvList, debug, 76, results,outputResults);
-      results.clear();  outputResults.clear();
-      testOneFunction("::f1", argvList, debug, 76, results,outputResults);
-      results.clear();  outputResults.clear();
-      results.insert(pair<string,int>("x", 7));
-      results.insert(pair<string,int>("y", 8));
-      results.insert(pair<string,int>("z", 9));
-      testOneFunction("::f2", argvList, debug, 76, results,outputResults);
+      testOneFunction("::f2", argvList, debug, 3, results,outputResults);
     }
 
     if (startNrInt==13 || testAll) {
       // ------------------------------ TESTCASE 13 -----------------------------------------
       argvList[1]=srcdir+"tests/test13.C";
       results.clear();  outputResults.clear();
-      results.insert(pair<string,int>("::global", 7));
-      testOneFunction("::main", argvList, debug, 9, results,outputResults);
+      testOneFunction("::main", argvList, debug, 7, results,outputResults);
     }
 
     if (startNrInt==14 || testAll) {
       // ------------------------------ TESTCASE 14 -----------------------------------------
       argvList[1]=srcdir+"tests/test14.C";
       results.clear();  outputResults.clear();
-      results.insert(pair<string,int>("a", 12));
-      results.insert(pair<string,int>("b", 6));
-      testOneFunction("::main", argvList, debug, 14, results,outputResults);
+      testOneFunction("::main", argvList, debug, 15, results,outputResults);
     }
 
     if (startNrInt==15 || testAll) {
       // ------------------------------ TESTCASE 15 -----------------------------------------
       argvList[1]=srcdir+"tests/test15.C";
       results.clear();  outputResults.clear();
-      results.insert(pair<string,int>("i", 12));
-      results.insert(pair<string,int>("i", 26));
-      results.insert(pair<string,int>("index", 26));
-      results.insert(pair<string,int>("index", 8));
       testOneFunction("::main", argvList, debug, 26, results,outputResults);
     }
 
@@ -488,63 +801,51 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 18 -----------------------------------------
       argvList[1]=srcdir+"tests/test18.C";
       results.clear();  outputResults.clear();
-      results.insert(pair<string,int>("i", 12));
-      results.insert(pair<string,int>("i", 49));
-      results.insert(pair<string,int>("p", 8));
-      results.insert(pair<string,int>("p", 46));
-      results.insert(pair<string,int>("x", 24));
-      results.insert(pair<string,int>("z", 39));
-      results.insert(pair<string,int>("e", 41));
-      outputResults.insert(pair<string,int>("i", 15));
-      outputResults.insert(pair<string,int>("x", 28));
-      testOneFunction("::main", argvList, debug, 48, results,outputResults);
+      testOneFunction("::main", argvList, debug, 53, results,outputResults);
     }
 
     if (startNrInt==19 || testAll) {
       // ------------------------------ TESTCASE 19 -----------------------------------------
       argvList[1]=srcdir+"tests/test19.C";
       results.clear();  outputResults.clear();
-      results.insert(pair<string,int>("::global", 2));
-      results.insert(pair<string,int>("::global", 8));
-      results.insert(pair<string,int>("::global2", 28));
-      results.insert(pair<string,int>("a", 24));
-      testOneFunction("::main", argvList, debug, 30, results,outputResults);
-      results.clear();  outputResults.clear();
-      results.insert(pair<string,int>("::global", 8));
-      results.insert(pair<string,int>("::global2", 12));
-      testOneFunction("::setMe", argvList, debug, 30, results,outputResults);
+      testOneFunction("::setMe", argvList, debug, 9, results,outputResults);
     }
 
     if (startNrInt==20 || testAll) {
-      // ------------------------------ TESTCASE 1 -----------------------------------------
+      // ------------------------------ TESTCASE 20 -----------------------------------------
       argvList[1]=srcdir+"tests/test20.C";
       results.clear();      outputResults.clear();
-      testOneFunction("::bar",argvList, debug, 5, results,outputResults);
+      testOneFunction("::bar",argvList, debug, 8, results,outputResults);
     }
 
     if (startNrInt==21 || testAll) {
-      // ------------------------------ TESTCASE 1 -----------------------------------------
+      // ------------------------------ TESTCASE 21 -----------------------------------------
       argvList[1]=srcdir+"tests/test21.C";
       results.clear();      outputResults.clear();
-      testOneFunction("::func",argvList, debug, 9, results,outputResults);
+      testOneFunction("::func",argvList, debug, 10, results,outputResults);
     }
 
     if (startNrInt==22 || testAll) {
-      // ------------------------------ TESTCASE 1 -----------------------------------------
+      // ------------------------------ TESTCASE 22 -----------------------------------------
       argvList[1]=srcdir+"tests/test22.C";
       results.clear();      outputResults.clear();
-      results.insert(pair<string,int>("b", 7));
-      testOneFunction("::func",argvList, debug, 12, results,outputResults);
+      testOneFunction("::func",argvList, debug, 17, results,outputResults);
     }
 
     if (startNrInt==23 || testAll) {
-      // ------------------------------ TESTCASE 1 -----------------------------------------
+      // ------------------------------ TESTCASE 23 -----------------------------------------
       argvList[1]=srcdir+"tests/test23.C";
       results.clear();      outputResults.clear();
-      results.insert(pair<string,int>("a",11));
-      testOneFunction("::func",argvList, debug, 30, results,outputResults);
+      testOneFunction("::func",argvList, debug, 35, results,outputResults);
     }
 #endif
+
+    if (startNrInt==24 || testAll) {
+      // ------------------------------ TESTCASE 24 -----------------------------------------
+      argvList[1]=srcdir+"tests/inputlivenessAnalysis.C";
+      results.clear();  outputResults.clear();
+      testOneFunction("::main", argvList, debug, 65, results,outputResults);
+    }
   }
 
   cout << ">> TEST END ... " << endl;

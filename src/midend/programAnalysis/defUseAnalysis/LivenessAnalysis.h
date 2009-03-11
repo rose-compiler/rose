@@ -21,7 +21,7 @@ class LivenessAnalysis : public DefUseAnalysisAbstract {
 
   SgNode* searchNode;
   void printInAndOut(SgNode* sgNode);
-  template <class T> T merge_no_dups( T& v1,  T& v2);
+  
   bool abort;
   int counter;
   std::map<SgNode*, std::vector<SgInitializedName*> > in;
@@ -57,6 +57,13 @@ class LivenessAnalysis : public DefUseAnalysisAbstract {
   std::vector<SgInitializedName*> getIn(SgNode* sgNode) { return in[sgNode];}
   std::vector<SgInitializedName*> getOut(SgNode* sgNode) { return out[sgNode];}
   int getVisited(SgNode* n) {return visited[n];}
+
+  void setIn(SgNode* sgNode, std::vector<SgInitializedName*> vec) { in[sgNode]= vec;}
+  void setOut(SgNode* sgNode, std::vector<SgInitializedName*> vec ) { out[sgNode]=vec;}
+
+
+  // used by ASTTraversals
+  template <class T> T merge_no_dups( T& v1,  T& v2);
 };
 
 #endif
