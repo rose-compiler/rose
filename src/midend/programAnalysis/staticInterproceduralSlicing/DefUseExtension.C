@@ -81,11 +81,14 @@ namespace DUVariableAnalysisExt
 	
   SgNode * getNextParentInterstingNode(SgNode* node)
   {
-    SgNode * tmp=node;
-    while(tmp!=NULL)
-    {
-//      if (isSgStatement(tmp))
-  //      break;
+    SgNode * tmp= NULL;
+    for(tmp = node; tmp != NULL; tmp=tmp->get_parent()) {
+      
+      // Variable references themselves are not interesting.
+      if(isSgVarRefExp(tmp)) {
+        continue;
+      }
+
       // interesting are any parts that have to be in the CFG
       if (IsImportantForSliceSgFilter(tmp)) 
           break;
@@ -113,7 +116,6 @@ namespace DUVariableAnalysisExt
 
       //ddwhile(!IsImportantForSliceSgFilter(tmp) && !isSgFunctionCallExp(tmp) &&!isSgFunctionDefinition(tmp))        
     {*/
-      tmp=tmp->get_parent();   
      }
       return tmp;
   }

@@ -71,6 +71,11 @@ struct IsImportantForSliceCFGFilter
 	  else if (isSgDoWhileStmt(n) && cfgn.getIndex()!=1) return false;
 	  else if (isSgIfStmt(n) && cfgn.getIndex()!=2) return false;*/
     
+    //Jim Leek: 2/21/2009: Added to fix problem with dupicate nodes appearing in Dominance Tree.  
+    if(isSgExprStatement(n)) {
+      return false;
+    }
+
 #if 1
     if (isSgForStatement(n) || isSgDoWhileStmt(n) || isSgWhileStmt(n) || isSgIfStmt(n))
       {
@@ -243,6 +248,10 @@ class DependenceNode:public SimpleDirectedGraphNode
   void highlightNode()      
   {
     highlight=true;
+  }
+  void unHighlightNode()      
+  {
+    highlight=false;
   }
   bool isHighlighted()
   {
@@ -699,6 +708,10 @@ class DependenceGraph:public SimpleDirectedGraph
     // nice, but completely useless
     BELONGS_TO      = 0xd, /* shows for floating nodes, to which statement/node they belong to*/
     //      NUM_EDGE_TYPES  = 0x11   /* !< Set to be 1 more than the last entry, to fix size of the name array */
+
+    // Jim Leek, 2009/6/3: DO_NOT_FOLLOW is A special type of edge for controlling reachability. It can keep an edge from
+    // being traversed by _getReachable without changing the type of the edge
+    DO_NOT_FOLLOW   = 0x10,
   };
   /* ! \brief an array of C-strings for each EdgeType
      This array is initialized in DependenceGraph.C */

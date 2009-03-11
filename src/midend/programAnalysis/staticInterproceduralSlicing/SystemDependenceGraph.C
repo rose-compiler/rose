@@ -527,20 +527,16 @@ void SystemDependenceGraph::doInterproceduralConnections(InterproceduralInfo * i
 {
   //connect the retunring nodes from the function with the call-site
   SgFunctionCallExp * callSite;
-  // SgFunctionDeclaration * decl;
-  SgNode * sliceImportantNode;
   std::vector<InterproceduralInfo*> functionTargetList;
+
   // get all callsites within this function
-  // cout << "doInterproceduralConnections: " << ii->getFunctionDeclaration()->get_name().getString() << endl;
   for (int i=0;i<ii->callSiteCount();i++)
   {
-    // get the Interprocedural Information for the callSite
-    sliceImportantNode=ii->getSliceImportantFunctionCallNode(i);
-    ROSE_ASSERT(sliceImportantNode!=NULL);
-//    ROSE_ASSERT(isSgFunctionCallExp(sliceImportantNode));
     // get the SgFunctionCallExp node
     callSite=isSgFunctionCallExp(ii->getFunctionCallExpNode(i));
+
     // cout << "Found funcall: " << callSite->unparseToString() << endl;
+
     // do analysis of the function call and determine the possible call-targets
     functionTargetList=getPossibleFuncs(callSite);
     // for every possible callable function
@@ -562,9 +558,10 @@ void SystemDependenceGraph::doInterproceduralConnections(InterproceduralInfo * i
       }
 
       // create the call edge that connects the call with the callee
-      establishEdge(getNode(sliceImportantNode),getNode(DependenceNode::ENTRY,calledFunction->getFunctionEntry()),CALL);
+      establishEdge(getNode(callSite),getNode(DependenceNode::ENTRY,calledFunction->getFunctionEntry()),CALL);
       // connect the FORMAL_OUT(return) from the function to the ACTUAL_OUT of the call site
-//CMI modified 19082007            establishEdge(getNode(DependenceNode::FORMALRETURN,calledFunction->getFormalReturn()),getNode(DependenceNode::ACTUALRETURN,ii->getActualReturn(i)),PARAMETER_OUT);
+      //CMI modified 19082007            
+      establishEdge(getNode(DependenceNode::FORMALRETURN,calledFunction->getFormalReturn()),getNode(DependenceNode::ACTUALRETURN,ii->getActualReturn(i)),PARAMETER_OUT);
 
       // connect actual in to formal in and actual out to formal out
 
@@ -719,21 +716,24 @@ SystemDependenceGraph::_getPossibleFuncs(SgFunctionCallExp * funcCall)
     return retval;
 }
 
+// Jim 2009-03-04: Does a 2 stage slice as described in Horwitz, et al.
+// Honestly, a 2 stage-slice is overkill because we still don't have
+// Horwitz's linkage grammer yet.
 set < DependenceNode * >SystemDependenceGraph::getSlice(DependenceNode * node)
 {
 
-    int edgeTypes1 = CONTROL | DATA | SUMMARY | CALL;
+  int edgeTypes1 = CONTROL | DATA | SUMMARY | PARAMETER_OUT;
+  
+  int edgeTypes2 = CONTROL | DATA | SUMMARY | CALL | PARAMETER_IN;
 
-    int edgeTypes2 = CONTROL | DATA | SUMMARY/* | RETURN*/;
-
-    set < DependenceNode * >start;
-    start.insert(node);
-
-    set < DependenceNode * >phase1nodes = _getReachable(start, edgeTypes1);
-
-    set < DependenceNode * >phase2nodes = _getReachable(phase1nodes, edgeTypes2);
-
-    return phase2nodes;
+  set < DependenceNode * >start;
+  start.insert(node);
+  
+  set < DependenceNode * >phase1nodes = _getReachable(start, edgeTypes1);
+  
+  set < DependenceNode * >phase2nodes = _getReachable(phase1nodes, edgeTypes2);
+  
+  return phase2nodes;
 
 }
 
