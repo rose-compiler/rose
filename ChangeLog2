@@ -1,3 +1,56 @@
+2009-03-11 01:55  panas2
+
+	* [r4821]
+	  /trunk/ROSE/src/midend/programAnalysis/defUseAnalysis/BottomUpTraversalLiveness.h,
+	  /trunk/ROSE/src/midend/programAnalysis/defUseAnalysis/LivenessAnalysis.cpp,
+	  /trunk/ROSE/src/midend/programAnalysis/defUseAnalysis/LivenessAnalysis.h,
+	  /trunk/ROSE/src/midend/programAnalysis/defUseAnalysis/Makefile.am,
+	  /trunk/ROSE/src/rose.h,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/variableLivenessTests/runTest.C,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/variableLivenessTests/tests/inputlivenessAnalysis.C:
+	  Current work on LivenessAnalysis
+
+2009-03-11 01:52  panas2
+
+	* [r4820] /trunk/ROSE/projects/BinQ/Makefile.am: Cleanup in BinQ
+
+2009-03-11 01:41  panas2
+
+	* [r4819] /trunk/ROSE/projects/taintcheck,
+	  /trunk/ROSE/projects/taintcheck/Makefile.am,
+	  /trunk/ROSE/projects/taintcheck/taintcheck.C,
+	  /trunk/ROSE/projects/taintcheck/tests,
+	  /trunk/ROSE/projects/taintcheck/tests/driver_bad.c,
+	  /trunk/ROSE/projects/taintcheck/tests/driver_ctrlleak.c,
+	  /trunk/ROSE/projects/taintcheck/tests/driver_good.c,
+	  /trunk/ROSE/projects/taintcheck/tests/if_fail.c,
+	  /trunk/ROSE/projects/taintcheck/tests/procfail.c,
+	  /trunk/ROSE/projects/taintcheck/tests/simple_sanatize.c,
+	  /trunk/ROSE/projects/taintcheck/tests/simple_taint.c,
+	  /trunk/ROSE/projects/taintcheck/tests/typewin.c: Added Jim Leeks
+	  files
+
+2009-03-11 01:16  saebjornsen1
+
+	* [r4818] /trunk/ROSE/projects/MacroRewrapper/Makefile.am: Added
+	  headers to make dist
+
+2009-03-11 00:44  panas2
+
+	* [r4817] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/projects/Makefile.am,
+	  /trunk/ROSE/src/midend/programAnalysis/staticInterproceduralSlicing/ControlDependenceGraph.C,
+	  /trunk/ROSE/src/midend/programAnalysis/staticInterproceduralSlicing/DataDependenceGraph.C,
+	  /trunk/ROSE/src/midend/programAnalysis/staticInterproceduralSlicing/DefUseExtension.C,
+	  /trunk/ROSE/src/midend/programAnalysis/staticInterproceduralSlicing/DependenceGraph.C,
+	  /trunk/ROSE/src/midend/programAnalysis/staticInterproceduralSlicing/DependenceGraph.h,
+	  /trunk/ROSE/src/midend/programAnalysis/staticInterproceduralSlicing/MergedDependenceGraph.C,
+	  /trunk/ROSE/src/midend/programAnalysis/staticInterproceduralSlicing/SystemDependenceGraph.C,
+	  /trunk/ROSE/src/rose.h: Add's Jim Leek's taintcheck project,
+	  which does information flow control with
+	  an SDG. Interesting information is tagged with #pragma statements
+	  Also fixes a number of SDG generation bugs that had crept in.
+
 2009-03-10 18:17  panas2
 
 	* [r4815] /trunk/ROSE/projects/BinQ/Makefile.am: Added a file to
