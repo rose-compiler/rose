@@ -10,6 +10,8 @@
 #include <map>
 #include <ostream>
 
+#include "termite.h"
+
 class CFG;
 
 class ContextInformation
@@ -25,6 +27,7 @@ public:
     const std::vector<Context> &parentContexts(const Context &c) const;
 
     void print(std::ostream &stream) const;
+    PrologTerm *toPrologTerm() const;
     void printContextGraph(std::ostream &stream) const;
 
     ContextInformation(CFG *icfg);
@@ -50,6 +53,7 @@ public:
 
     std::string procName;
     std::string toString() const;
+    PrologTerm *toPrologTerm() const;
 
     Context(int procnum, int position, CFG *icfg);
 };
@@ -81,6 +85,7 @@ public:
 
     CallString(int procnum, int position, CFG *icfg);
     std::string toString() const;
+    PrologTerm *toPrologTerm() const;
 };
 
 #endif

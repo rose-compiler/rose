@@ -272,6 +272,20 @@ TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, Synth
       }
 #endif
 
+      /* call strings, if appropriate */
+#if HAVE_SATIRE_ICFG
+      if (isSgProject(astNode)) {
+        CFG *icfg = get_global_cfg();
+        if (icfg != NULL && icfg->contextInformation != NULL) {
+          PrologTerm *callStrings = icfg->contextInformation->toPrologTerm();
+          PrologCompTerm *callStringInfo
+              = new PrologCompTerm("callstringinfo");
+          callStringInfo->addSubterm(callStrings);
+          results->addFirstElement(callStringInfo);
+        }
+      }
+#endif
+
       ar->addSubterm(results);
       ((PrologCompTerm*)t)->addSubterm(ar);
     }

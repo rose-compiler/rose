@@ -70,6 +70,23 @@ ContextInformation::print(std::ostream &stream) const
     }
 }
 
+PrologTerm *
+ContextInformation::toPrologTerm() const
+{
+    PrologList *callStrings = new PrologList();
+    std::reverse_iterator<std::vector<Context>::const_iterator> c;
+    for (c = contexts.rbegin(); c != contexts.rend(); ++c)
+    {
+        PrologTerm *context = c->toPrologTerm();
+        PrologTerm *callString = contextCallString(*c).toPrologTerm();
+        PrologInfixOperator *colon = new PrologInfixOperator(":");
+        colon->addSubterm(context);
+        colon->addSubterm(callString);
+        callStrings->addFirstElement(colon);
+    }
+    return callStrings;
+}
+
 void
 ContextInformation::printContextGraph(std::ostream &stream) const
 {
@@ -148,6 +165,16 @@ ContextInformation::Context::toString() const
     std::stringstream str;
     str << procName << "/" << procnum << "/" << position;
     return str.str();
+}
+
+PrologTerm *
+ContextInformation::Context::toPrologTerm() const
+{
+    PrologCompTerm *t = new PrologCompTerm("name_procnum_pos");
+    t->addSubterm(new PrologAtom(procName));
+    t->addSubterm(new PrologInt(procnum));
+    t->addSubterm(new PrologInt(position));
+    return t;
 }
 
 ContextInformation::Context::Context(int procnum, int position, CFG *icfg)
@@ -246,6 +273,33 @@ ContextInformation::CallString::toString() const
     }
 
     return str.str();
+}
+
+PrologTerm *
+ContextInformation::CallString::toPrologTerm() const
+{
+    PrologList *callString = new PrologList();
+
+    if (!callstring.empty())
+    {
+        std::reverse_iterator<std::vector<CallSite>::const_iterator> i;
+        i = callstring.rbegin();
+
+        PrologCompTerm *target = new PrologCompTerm("target");
+        target->addSubterm(new PrologAtom(i->targetName));
+        callString->addFirstElement(target);
+
+        while (i != callstring.rend())
+        {
+            PrologCompTerm *site = new PrologCompTerm("caller_callsite");
+            site->addSubterm(new PrologAtom(i->callerName));
+            site->addSubterm(new PrologInt(i->node_id));
+            callString->addFirstElement(site);
+            ++i;
+        }
+    }
+
+    return callString;
 }
 
 #endif
