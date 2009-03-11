@@ -4,14 +4,30 @@
  * created by tps in Feb 2007
  *****************************************/
 
+/******************************************
+ * Algorithm used:
+ * for all n, in[n] = out[n] = 0
+ * w = { set of all nodes }
+ * repeat until w empty
+ *    n = w.pop()
+ *    out[n] = OR (n' ELEM SUCC[n]) in[n']
+ *    in[n] = use[n] OR (out[n] - def[n])
+ *    if change to in[n]
+ *       for all predecessors m of n, w.push(m)
+ *****************************************/
 #include "rose.h"
 #include "LivenessAnalysis.h"
 #include "DefUseAnalysis_perFunction.h"
 #include "GlobalVarAnalysis.h"
 #include <boost/config.hpp>
 #include <boost/bind.hpp>
+#include "BottomUpTraversalLiveness.h"
 using namespace std;
 
+
+/******************************************
+ * Merge two containers
+ *****************************************/
 template <class T>
 T LivenessAnalysis::merge_no_dups( T& v1,  T& v2) {
   T ret(v1);
@@ -29,7 +45,11 @@ T LivenessAnalysis::merge_no_dups( T& v1,  T& v2) {
   }
   return ret;
 }
-// Get the enclosing function definition of a node
+
+/******************************************
+ * Helper Function
+ * Get the enclosing function definition of a node
+ *****************************************/
 SgFunctionDefinition* 
 LivenessAnalysis::getFunction(SgNode* node) {
   ROSE_ASSERT(node);
@@ -51,42 +71,54 @@ LivenessAnalysis::getFunction(SgNode* node) {
   return funcDef;
 }
 
-//!Print out live-in and live-out variables for a node
+/******************************************
+ * Helper Function
+ * !Print out live-in and live-out variables for a node
+ *****************************************/
 void 
 LivenessAnalysis::printInAndOut(SgNode* sgNode) {
   if (DEBUG_MODE)
     cout << ">>> in and out for : " << sgNode << "  " << sgNode->class_name() << endl;
-  std::vector<SgInitializedName*> currIn = in[sgNode];
-  std::vector<SgInitializedName*>::const_iterator it2 = currIn.begin();
-  if (DEBUG_MODE)
-    cout << "   in : " ;
-  for (;it2!=currIn.end();++it2) {
-    SgInitializedName* init = isSgInitializedName(*it2);
-    ROSE_ASSERT(init);
-    std::string name =".";
-    name= init->get_name().str();
+  std::map<SgNode*, std::vector<SgInitializedName*> >::const_iterator it_in = in.find(sgNode);
+  if (it_in!=in.end()) {
+    std::vector<SgInitializedName*> currIn = in[sgNode];
+    std::vector<SgInitializedName*>::const_iterator it2 = currIn.begin();
     if (DEBUG_MODE)
-      cout << name << ", " ;
-  }
-  if (DEBUG_MODE)
-    cout << endl;
-
-  std::vector<SgInitializedName*> currOut = out[sgNode];
-  std::vector<SgInitializedName*>::const_iterator it3 = currOut.begin();
-  if (DEBUG_MODE)
-    cout << "   out : " ;
-  for (;it3!=currOut.end();++it3) {
-    SgInitializedName* init = isSgInitializedName(*it3);
-    ROSE_ASSERT(init);
-    std::string name =".";
-    name= init->get_name().str();
+      cout << "   in : " ;
+    for (;it2!=currIn.end();++it2) {
+      SgInitializedName* init = isSgInitializedName(*it2);
+      ROSE_ASSERT(init);
+      std::string name =".";
+      name= init->get_name().str();
+      if (DEBUG_MODE)
+	cout << name << ", " ;
+    }
     if (DEBUG_MODE)
-      cout << name << ", " ;
+      cout << endl;
   }
-  if (DEBUG_MODE)
-    cout << endl;
+  std::map<SgNode*, std::vector<SgInitializedName*> >::const_iterator it_out = out.find(sgNode);
+  if (it_out!=out.end()) {
+    std::vector<SgInitializedName*> currOut = out[sgNode];
+    std::vector<SgInitializedName*>::const_iterator it3 = currOut.begin();
+    if (DEBUG_MODE)
+      cout << "   out : " ;
+    for (;it3!=currOut.end();++it3) {
+      SgInitializedName* init = isSgInitializedName(*it3);
+      ROSE_ASSERT(init);
+      std::string name =".";
+      name= init->get_name().str();
+      if (DEBUG_MODE)
+	cout << name << ", " ;
+    }
+    if (DEBUG_MODE)
+      cout << endl;
+  }
 }
 
+/******************************************
+ * Helper Function
+ * used for sorting
+ *****************************************/
 static bool sort_using_greater_than(SgNode* u, SgNode* v){
   return u > v;
 }
@@ -119,22 +151,29 @@ bool LivenessAnalysis::hasANodeAboveCurrentChanged(T source) {
     }
   }
   return changed;
-
 }
 
-
+/**********************************************************
+ * Def-use algorithm used for variable live analysis
+ * This algorithm is almost a match to def-use algorithm
+ *********************************************************/
 template <typename T>
 bool LivenessAnalysis::defuse(T cfgNode, bool *unhandled) {
+  // get SgNode from CFG Node
   SgNode* sgNode = cfgNode.getNode();
   ROSE_ASSERT(sgNode);
+  // count the amount of times this nodes was visited (used for visualization)
   if (visited.find(sgNode)==visited.end())
     visited[sgNode]=1;
   else
     visited[sgNode]++;
+  // remember the Node the comes before
   SgNode* sgNodeBefore = getCFGPredNode(cfgNode);  
 
-  vector<FilteredCFGEdge < IsDFAFilter > > out_edges2 = cfgNode.inEdges();
-  for (vector<FilteredCFGEdge <IsDFAFilter> >::const_iterator i = out_edges2.begin(); i != out_edges2.end(); ++i) {
+  // Determine if the in_edges have been visited before
+  // Have we been here before, if not, unhandled is true
+  vector<FilteredCFGEdge < IsDFAFilter > > in_edgesCFG = cfgNode.inEdges();
+  for (vector<FilteredCFGEdge <IsDFAFilter> >::const_iterator i = in_edgesCFG.begin(); i != in_edgesCFG.end(); ++i) {
     FilteredCFGEdge<IsDFAFilter> filterEdge = *i;
     FilteredCFGNode<IsDFAFilter> filterNode = filterEdge.source();
     SgNode* sgNode2 = filterNode.getNode();
@@ -148,7 +187,9 @@ bool LivenessAnalysis::defuse(T cfgNode, bool *unhandled) {
     printInAndOut(sgNode);
   }
 
-  // get def and use for this node 
+  // ****************************************************************************
+  // USE DEF-USE ANALYSIS (previously created) to get def-use info
+  // get def and use for this node :: is this not a DEF OR A USE??
   SgInitializedName* initName = isSgInitializedName(sgNode);
   SgVarRefExp* varRef = isSgVarRefExp(sgNode);
   bool defNode = false;
@@ -163,8 +204,6 @@ bool LivenessAnalysis::defuse(T cfgNode, bool *unhandled) {
 	defNode=true;
     }
   }
-
-
   if (varRef) {
     initName = varRef->get_symbol()->get_declaration();
     ROSE_ASSERT(initName);
@@ -176,6 +215,7 @@ bool LivenessAnalysis::defuse(T cfgNode, bool *unhandled) {
 	useNode=true;
     }
   }
+  // ****************************************************************************
 
   if (DEBUG_MODE) {
     cout << "     At this point def : " << defNode << "  use : " << useNode << endl;
@@ -183,29 +223,46 @@ bool LivenessAnalysis::defuse(T cfgNode, bool *unhandled) {
       cout << "  initName : " << initName->get_name().str() << endl;
     cout << " Doing out = " << endl;
   }
-  // do the algo for variable liveness
+
+
+
+
+
+  
+  // ****************************************************************************
+  // do the algo for variable liveness : OUT[n]
+  // OUT (SgNode) = {}
+  // creating outSgNode ... so we never have to check for this again
   out[sgNode].clear();
+  // look at the outgoing edges ....
+  // According to algorithm :    out[n] = OR (n' ELEM SUCC[n]) in[n'] 
   vector<FilteredCFGEdge < IsDFAFilter > > out_edges = cfgNode.outEdges();
   for (vector<FilteredCFGEdge <IsDFAFilter> >::const_iterator i = out_edges.begin(); i != out_edges.end(); ++i) {
     FilteredCFGEdge<IsDFAFilter> filterEdge = *i;
     FilteredCFGNode<IsDFAFilter> filterNode = filterEdge.target();
     SgNode* sgNodeNext = filterNode.getNode();
     ROSE_ASSERT(sgNodeNext);
-    std::vector<SgInitializedName*> tmpIn = in[sgNodeNext];
+    std::map<SgNode*, std::vector<SgInitializedName*> >::const_iterator it_in = in.find(sgNodeNext);
+    std::vector<SgInitializedName*> tmpIn;
+    if (it_in!=in.end()) {
+      tmpIn = in[sgNodeNext];
+    }
     if (DEBUG_MODE)
       cout << "   out : previous node : " << sgNodeNext << " " << sgNodeNext->class_name() << "   in Size : " << 
-	tmpIn.size() << "   out[sgNode].size = " << out[sgNode].size() << endl;
-    //    out[sgNode].swap(tmpIn);
-    std::vector<SgInitializedName*> tmpOut = out[sgNode];
-    out[sgNode]=merge_no_dups(tmpOut,tmpIn);
+    	tmpIn.size() << "   out[sgNode].size = " << out[sgNode].size() << endl;
+
+    out[sgNode]=merge_no_dups(out[sgNode],tmpIn);
     std::sort(out[sgNode].begin(), out[sgNode].end(),sort_using_greater_than);
   }
+  // ****************************************************************************
+
 
   if (DEBUG_MODE)
     printInAndOut(sgNode);
-  if (DEBUG_MODE)
-    cout << " Doing in = " << endl;
 
+  // ****************************************************************************
+  // do the algo for variable liveness : IN[n]
+  // in[n] = use[n] OR (out[n] - def[n])
   // what if it is an assignment
   switch(sgNode->variant()) {
   case V_SgPlusPlusOp:
@@ -224,119 +281,152 @@ bool LivenessAnalysis::defuse(T cfgNode, bool *unhandled) {
     // and cancel the InitializedName for in if it is 
     // defined for this node
     std::vector<SgInitializedName*> vec  = out[sgNode];
-    std::vector<SgInitializedName*>::iterator inIt = vec.begin();
-    for (;inIt!=vec.end();++inIt) {
+    for (std::vector<SgInitializedName*>::iterator inIt = vec.begin();inIt!=vec.end();++inIt) {
       SgInitializedName* initN = isSgInitializedName(*inIt);
       std::vector <SgNode*> defs = dfa->getDefFor(sgNode, initN);      
       std::vector<SgNode*>::const_iterator it = defs.begin();
       for (;it!=defs.end();++it) {
 	SgNode* itNode = *it;
 	if (itNode==sgNode) {
+	  // We mark the current node (SgNode) as being defined here
+	  // its defined with the variable initName
 	  defNode=true;
 	  initName=initN;
 	  break;
 	}
       }
     }    
-    if (DEBUG_MODE)
-    {
-    if (initName)
-      cout << " This is an assignment :  initName = " <<
-	initName->get_name().str() << "  def : " << defNode << endl;
-    else {
-      cout << " !!! This is an assignment but no initName matched. defnode = "
-	   << defNode << endl;
-	   
-       }
+    if (DEBUG_MODE) {
+      if (initName)
+	cout << " This is an assignment :  initName = " << initName->get_name().str() << "  def : " << defNode << endl;
+      else 
+	cout << " !!! This is an assignment but no initName matched. defnode = "  << defNode << endl;
     }
     break;
   }
   default: {
-    // its none of the above
+    // WE ARE HANDLING SPECIAL CASES HERE WHERE INFINITE LOOPS MAY OCCUR
+#if 0
+    //
+    // its none of the above, meaning its not a definition
     // none of the above breakPointForWhiles is hit 
     *unhandled=true;
     // take care of the case where we have none of the above within a loop (breakPointForWhile)
     // i.e. no : VarRefExp, InitializedName, FunctionDefinition ...
     // If this unhandled node has been added to the map before (visited)
     // then we do want to mark it as handled.
-      if (isSgWhileStmt(sgNode) || isSgForStatement(sgNode)
-	  || isSgDoWhileStmt(sgNode)) {
-	if (breakPointForWhileNode==NULL) {
-	  breakPointForWhileNode=sgNode;
-	  breakPointForWhile++;
-	  if (DEBUG_MODE)
-	    cout << ">>> Setting Breakpoint : " << sgNode->class_name() << " " <<sgNode << " " << breakPointForWhile <<endl;
-	} else if (sgNode==breakPointForWhileNode) {
-	  // reaching the breakPoint for a second time
-	  // check if any node above this node up to the branch or root has changed
-	  breakPointForWhile++;
-	  bool hasAnyNodeAboveChanged = hasANodeAboveCurrentChanged(cfgNode);
-	  if (hasAnyNodeAboveChanged==false) {
-	    // need to break this loop
-	    // add current node to doNotVisitMap
-	    doNotVisitMap.insert(sgNode);
-	  }
-
-	  if (DEBUG_MODE)
-	    cout << ">>> Inc Breakpoint : " << sgNode->class_name() << " " <<sgNode << " " << breakPointForWhile <<endl;
-	  *unhandled = false;
-	  breakPointForWhileNode=NULL;
-	  breakPointForWhile=0;
-	  if (DEBUG_MODE)
-	    cout << ">>> Resetting Breakpoint : " << sgNode->class_name() << " " <<sgNode << " " << breakPointForWhile <<endl;
-	} else {
-	  if (DEBUG_MODE)
-	    cout << ">>> Skipping unhandled node ... " << endl;
+    if (isSgWhileStmt(sgNode) || isSgForStatement(sgNode) || isSgDoWhileStmt(sgNode)) {
+      if (breakPointForWhileNode==NULL) {
+	breakPointForWhileNode=sgNode;
+	breakPointForWhile++;
+	if (DEBUG_MODE)
+	  cout << ">>> Setting Breakpoint : " << sgNode->class_name() << " " <<sgNode << " " << breakPointForWhile <<endl;
+      } else if (sgNode==breakPointForWhileNode) {
+	// reaching the breakPoint for a second time
+	// check if any node above this node up to the branch or root has changed
+	breakPointForWhile++;
+	bool hasAnyNodeAboveChanged = hasANodeAboveCurrentChanged(cfgNode);
+	if (hasAnyNodeAboveChanged==false) {
+	  // need to break this loop
+	  // add current node to doNotVisitMap
+	  doNotVisitMap.insert(sgNode);
 	}
+
+	if (DEBUG_MODE)
+	  cout << ">>> Inc Breakpoint : " << sgNode->class_name() << " " <<sgNode << " " << breakPointForWhile <<endl;
+	*unhandled = false;
+	breakPointForWhileNode=NULL;
+	breakPointForWhile=0;
+	if (DEBUG_MODE)
+	  cout << ">>> Resetting Breakpoint : " << sgNode->class_name() << " " <<sgNode << " " << breakPointForWhile <<endl;
+      } else {
+	if (DEBUG_MODE)
+	  cout << ">>> Skipping unhandled node ... " << endl;
       }
-  
+    }
+#endif  
     break;
   }
   }
+  // ****************************************************************************
+
 
 
   
+  // ****************************************************************************  
+  // THE FOLLOWING ALGORITHM IS APPLIED HERE
+  // in[n] = use[n] OR (out[n] - def[n])
+  // remember the old in[sgNode]
+  std::vector<SgInitializedName*> inOLD;
+  {std::map<SgNode*, std::vector<SgInitializedName*> >::const_iterator it_in = in.find(sgNode);
+  if (it_in!=in.end()) {
+      inOLD = in[sgNode];
+  }}
+  // This is save -- out[sgNode] always exists
   in[sgNode] = out[sgNode];
+  bool sgNodeForINexists = false;
+  {std::map<SgNode*, std::vector<SgInitializedName*> >::const_iterator it_in = in.find(sgNode);
+  if (it_in!=in.end()) {
+    sgNodeForINexists = true;
+  }}
   if (defNode) {
-    std::vector<SgInitializedName*> vec  = in[sgNode];
-    std::vector<SgInitializedName*>::iterator inIt = vec.begin();
-    for (;inIt!=vec.end();++inIt) {
-      if (*inIt==initName) {
-	vec.erase(inIt); // = initName
-	break;
+    // delete all definitions
+    // (out[n] - def[n])
+    if (sgNodeForINexists) {
+      // make sure this operation is safe
+      std::vector<SgInitializedName*> vec  = in[sgNode];
+      for (    std::vector<SgInitializedName*>::iterator inIt = vec.begin();inIt!=vec.end();++inIt) {
+	if (*inIt==initName) {
+	  vec.erase(inIt); // = initName
+	  break;
+	}
       }
+      in[sgNode]=vec;
     }
-    in[sgNode]=vec;
   }
   if (useNode) {
-    std::vector<SgInitializedName*> vec  = in[sgNode];
-    std::vector<SgInitializedName*>::iterator inIt = vec.begin();
+    // if this initName is used but it is not in the in[sgNode] map
+    // then we need to add it
     bool found=false;
-    for (;inIt!=vec.end();++inIt) {
-      if (*inIt==initName) {
-	found=true;
-	break;
+    if (sgNodeForINexists) {
+      std::vector<SgInitializedName*> vec  = in[sgNode];
+      std::vector<SgInitializedName*>::iterator inIt = vec.begin();
+      for (;inIt!=vec.end();++inIt) {
+	if (*inIt==initName) {
+	  found=true;
+	  break;
+	}
       }
     }
     if (!found) {
       std::string name = initName->get_name().str();
-      if (DEBUG_MODE)
-	cout << " did not find initName : " << name << " in in[sgNode]    size: " << in[sgNode].size() <<endl;
       in[sgNode].push_back(initName); // = varRef
       std::sort(in[sgNode].begin(), in[sgNode].end(),sort_using_greater_than);
+      if (DEBUG_MODE)
+	cout << " did not find initName : " << name << " in in[sgNode]    size: " << in[sgNode].size() <<endl;
       if (DEBUG_MODE)
 	cout << " added sgNode :   new size [sgNode] = " <<in[sgNode].size() <<endl;
     }
   }
+  // ****************************************************************************  
 
+
+#if 0
+  // ****************************************************************************  
   if (defNode || useNode) {
+    // determine if the node has changed in respect to in and out maps
+    // we return whether in and out are the same, 
+    // prerequise, they are sorted
     if (DEBUG_MODE)
       cout << " This was a def or use node " << endl;
     // has_changed only applies here
     bool equal = false;
-    std::map<SgNode*, std::vector<SgInitializedName*> >::const_iterator it = in.find(sgNode);
-    std::vector<SgInitializedName*> vec = out[sgNode];
-    if (it!=in.end() && vec.size()>0) {
+    // make sure this node exists in the in and out maps
+    std::map<SgNode*, std::vector<SgInitializedName*> >::const_iterator it_in = in.find(sgNode);
+    std::map<SgNode*, std::vector<SgInitializedName*> >::const_iterator it_out = out.find(sgNode);
+    //    std::vector<SgInitializedName*> vec = out[sgNode];
+    //    if (it!=in.end() && vec.size()>0) {
+    if (it_in!=in.end() && it_out!=out.end()) {
       equal = std::equal(in[sgNode].begin(),in[sgNode].end(),out[sgNode].begin());
       if (!equal)
 	has_changed=true;
@@ -349,6 +439,22 @@ bool LivenessAnalysis::defuse(T cfgNode, bool *unhandled) {
     // if it is a arbitraty node, we assume it has changed, so we can traverse further
     has_changed=true;
   }
+  // ****************************************************************************  
+#else
+
+  // ****************************************************************************  
+  // Has in[n] changed?
+  std::map<SgNode*, std::vector<SgInitializedName*> >::const_iterator it_in = in.find(sgNode);
+  if (it_in!=in.end() && inOLD.size()>0) {
+    // compare the oldIN and the newIN and see if in[n] has changed
+    bool equal = false;
+    equal = std::equal(in[sgNode].begin(),in[sgNode].end(),inOLD.begin());
+    if (!equal) 
+      has_changed=true;
+  }  
+
+  // ****************************************************************************  
+#endif
 
   if (DEBUG_MODE) {
     cout << " value has changed ... : " << has_changed << endl;
@@ -363,6 +469,10 @@ bool LivenessAnalysis::defuse(T cfgNode, bool *unhandled) {
 FilteredCFGNode < IsDFAFilter > 
 LivenessAnalysis::run(SgFunctionDefinition* funcDecl, bool& abortme) {
   // filter functions -- to only functions in analyzed file  
+
+  // ---------------------------------------------------------------
+  // algorithm to interate over all CFG nodes and determine liveness
+  // ---------------------------------------------------------------
   abort=false;
   counter=0;
   nrOfNodesVisitedPF= 0;
@@ -390,10 +500,14 @@ LivenessAnalysis::run(SgFunctionDefinition* funcDecl, bool& abortme) {
   
   //waitAtMergeNode.clear();
 
+  bool forwardAlgo = false;
   // add this node to worklist and work through the outgoing edges
-  FilteredCFGNode < IsDFAFilter > source =
-    FilteredCFGNode < IsDFAFilter > (funcDecl->cfgForEnd());
-  CFGNode cmpSrc = CFGNode(funcDecl->cfgForEnd());
+  FilteredCFGNode < IsDFAFilter > source = FilteredCFGNode < IsDFAFilter > (funcDecl->cfgForEnd());
+  if (forwardAlgo)
+    source = FilteredCFGNode < IsDFAFilter > (funcDecl->cfgForBeginning());
+
+
+  //CFGNode cmpSrc = CFGNode(funcDecl->cfgForEnd());
   FilteredCFGNode < IsDFAFilter > rem_source = source;
 
   if (DEBUG_MODE) {
@@ -417,6 +531,8 @@ LivenessAnalysis::run(SgFunctionDefinition* funcDecl, bool& abortme) {
     if (doNotVisitMap.find(next)!=doNotVisitMap.end())
       continue;
     valueHasChanged = defuse(source, &unhandledNode);  
+    //    cerr << " First run : " << next->class_name() << "  changed: " << 
+    //  valueHasChanged << "  unhandled: " << unhandledNode << endl;
     nodeChangedMap[source.getNode()] = valueHasChanged;
     // do follow-up nodes
     // get nodes of outgoing edges and pushback (if not already contained)
@@ -427,8 +543,12 @@ LivenessAnalysis::run(SgFunctionDefinition* funcDecl, bool& abortme) {
 	   << resBool(unhandledNode) << endl;
     }
     if (valueHasChanged || unhandledNode) {
-      vector<FilteredCFGEdge < IsDFAFilter > > out_edges = source.inEdges();
-      for (vector<FilteredCFGEdge <IsDFAFilter> >::const_iterator i = out_edges.begin(); i != out_edges.end(); ++i) {
+      vector<FilteredCFGEdge < IsDFAFilter > > in_edges;
+      if (forwardAlgo)
+	in_edges = source.outEdges();
+      else
+	in_edges = source.inEdges();
+      for (vector<FilteredCFGEdge <IsDFAFilter> >::const_iterator i = in_edges.begin(); i != in_edges.end(); ++i) {
 	FilteredCFGEdge<IsDFAFilter> filterEdge = *i;
 	FilteredCFGNode<IsDFAFilter> filterNode = filterEdge.source();
 	if (find(worklist.begin(), worklist.end(), filterNode)==worklist.end()) {
@@ -457,6 +577,28 @@ LivenessAnalysis::run(SgFunctionDefinition* funcDecl, bool& abortme) {
     cout << "\nNr of nodes visited " << debug_path.size() << "  of nodes : "  << endl;
     printCFGVector(debug_path);
   }
+
+
+
+
+  // ---------------------------------------------------------------
+  // algorithm to interate over all CFG and propagate IN and OUT
+  // information from all non-statements to statements (move up in AST)
+  // ---------------------------------------------------------------
+  
+  // we should traverse the AST in bottom up order and collect information
+  // for in and out until we reach a statement
+  //BottomUpTraversalLiveness bottomUp;
+#if 0
+  SgNode* root = rem_source.getNode();
+  ROSE_ASSERT(root);
+  BottomUpTraversalLivenessIN* bottomUpIN = new BottomUpTraversalLivenessIN(this);
+  bottomUpIN->traverse(root);
+
+  BottomUpTraversalLivenessOUT* bottomUpOUT = new BottomUpTraversalLivenessOUT(this);
+  bottomUpOUT->traverse(root);
+#endif
+
   return rem_source;
 
 }

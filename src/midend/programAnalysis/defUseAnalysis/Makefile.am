@@ -29,4 +29,4 @@ clean-local:
 distclean-local:
 	rm -rf Templates.DB
 
-include_HEADERS =  DefUseAnalysis.h  DefUseAnalysis_perFunction.h  DFAFilter.h  DFAnalysis.h  dfaToDot.h  GlobalVarAnalysis.h  support.h LivenessAnalysis.h DefUseAnalysisAbstract.h
+include_HEADERS =  DefUseAnalysis.h  BottomUpTraversalLiveness.h DefUseAnalysis_perFunction.h  DFAFilter.h  DFAnalysis.h  dfaToDot.h  GlobalVarAnalysis.h  support.h LivenessAnalysis.h DefUseAnalysisAbstract.h

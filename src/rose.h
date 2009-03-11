@@ -1,4 +1,4 @@
-/* Copyright © 2008 Robb Matzke. All rights reserved. */
+/* Copyright ï¿½ 2008 Robb Matzke. All rights reserved. */
 // rose.h -- header file for the ROSE Optimizing Preprocessor
 
 #ifndef ROSE_H
@@ -38,7 +38,7 @@ namespace ELF{
 // DQ (10/18/2003) Why is this commented out (what is it)
 //#include "AgProcessing.h"
 
-// Not sure that we want this here since it uses the rewrite system 
+// Not sure that we want this here since it uses the rewrite system
 // which has not defined yet (circular reference in the header files)
 // #include "AstRestructure.h"
 
@@ -76,7 +76,7 @@ namespace ELF{
 // DQ (3/18/2006): Jeremiah Willcock's partial redundancy elimination (PRE)
 #include "pre.h"
 
-// DQ (4/8/2006): Constant folding of the AST (cleans out redundant 
+// DQ (4/8/2006): Constant folding of the AST (cleans out redundant
 // constant expresion trees save in translation from the frontend).
 // Required to be run before PRE!
 #include "constantFolding.h"
@@ -94,7 +94,7 @@ namespace ELF{
   #include "RoseBin_support.h"
 #ifdef HASH_ROSE_USE_BINARYSQL
   #include "RoseBin.h"
-#endif 
+#endif
   #include "RoseBin_abstract.h"
   #include "RoseFile.h"
   #include "RoseObj.h"
