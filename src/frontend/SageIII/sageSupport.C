@@ -244,7 +244,11 @@ SgProject::processCommandLine(const vector<string>& input_argv)
   // printf ("DONE with copy of command line in SgProject constructor! \n");
 
   // printf ("SgProject::processCommandLine(): local_commandLineArgumentList.size() = %zu \n",local_commandLineArgumentList.size());
-  // printf ("SgProject::processCommandLine(): local_commandLineArgumentList = %s \n",StringUtility::listToString(local_commandLineArgumentList).c_str());
+
+     if (SgProject::get_verbose() > 1)
+        {
+          printf ("SgProject::processCommandLine(): local_commandLineArgumentList = %s \n",StringUtility::listToString(local_commandLineArgumentList).c_str());
+        }
 
   // Build the empty STL lists
      p_fileList.clear();
@@ -320,11 +324,15 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           printf ("     Using C++ and C frontend from EDG (version %s) internally \n",edgVersionString().c_str());
         }
 #endif
+
   // DQ (10/15/2005): Added because verbose was not set when the number of files (source files) was zero (case for linking only)
   //
   // specify verbose setting for projects (should be set even for linking where there are no source files
   //
-     ROSE_ASSERT (get_verbose() == 0);
+  // DQ (3/9/2009): valid initial range is 0 ... 10.
+     ROSE_ASSERT (get_verbose() >= 0);
+     ROSE_ASSERT (get_verbose() <= 10);
+
      int integerOptionForVerbose = 0;
   // if ( CommandlineProcessing::isOptionWithParameter(argc,argv,"-rose:","(v|verbose)",integerOptionForVerbose,true) == true )
      if ( CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList,"-rose:","(v|verbose)",integerOptionForVerbose,true) == true )
@@ -2306,6 +2314,7 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
                                 // Build a SgBinaryFile to represent either the binary executable or the library archive.
                                 // file = new SgBinaryFile ( argv,  project );
                                    SgBinaryFile* binaryFile = new SgBinaryFile ( argv,  project );
+                                // printf ("Done with call to new SgBinaryFile() \n");
                                    file = binaryFile;
 
                                 // This should have already been setup!
@@ -2385,6 +2394,9 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
                                      // ROSE_ASSERT(false);
 #endif
                                       }
+#if 0
+                                   printf ("Processed as a binary file! \n");
+#endif
                                  }
                                 else
                                  {
@@ -2449,7 +2461,9 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
   // if ( isSgUnknownFile(file) == NULL && file != NULL  )
      if ( file != NULL && isSgUnknownFile(file) == NULL )
         {
+       // printf ("Calling file->callFrontEnd() \n");
           nextErrorCode = file->callFrontEnd();
+       // printf ("DONE: Calling file->callFrontEnd() \n");
           ROSE_ASSERT ( nextErrorCode <= 3);
         }
 
@@ -2457,7 +2471,15 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
   // The reason we have the Sg_File_Info object is so that we can easily support filename matching based on
   // the integer values instead of string comparisions.  Required for the handling co CPP directives and comments.
 
-  // display("SgFile* determineFileType()");
+#if 0
+     if (file != NULL)
+        {
+          printf ("Calling file->display() \n");
+          file->display("SgFile* determineFileType()");
+        }
+#endif
+
+  // printf ("Leaving determineFileType() \n");
 
      return file;
    }
@@ -3425,6 +3447,8 @@ SgBinaryFile::SgBinaryFile ( vector<string> & argv ,  SgProject* project )
   // This constructor actually makes the call to EDG to build the AST (via callFrontEnd()).
   // printf ("In SgBinaryFile::SgBinaryFile(): Calling doSetupForConstructor() \n");
      doSetupForConstructor(argv,  project);
+
+  // printf ("Leaving SgBinaryFile constructor \n");
    }
 
 
@@ -3642,6 +3666,8 @@ SgFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
 
   // DQ (5/3/2007): Added assertion.
      ROSE_ASSERT (get_startOfConstruct() != NULL);
+
+  // printf ("Leaving  SgFile::doSetupForConstructor() \n");
    }
 
 
@@ -3680,7 +3706,11 @@ CommandlineProcessing::isExecutableFilename ( string name )
    {
      initExecutableFileSuffixList();
 
-  // printf ("CommandlineProcessing::isExecutableFilename(): name = %s validExecutableFileSuffixes.size() = %zu \n",name.c_str(),validExecutableFileSuffixes.size());
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("CommandlineProcessing::isExecutableFilename(): name = %s validExecutableFileSuffixes.size() = %zu \n",name.c_str(),validExecutableFileSuffixes.size());
+        }
+
      ROSE_ASSERT(validExecutableFileSuffixes.empty() == false);
 
      int length = name.size();
@@ -3715,6 +3745,7 @@ CommandlineProcessing::isExecutableFilename ( string name )
                     bool secondBase = ( (character0 == 0x7F && character1 == 0x45) || (character0 == 0x4D && character1 == 0x5A) );
                     if (secondBase == true)
                        {
+                      // printf ("Found a valid executable file! \n");
                          returnValue = true;
                        }
 
@@ -3729,6 +3760,7 @@ CommandlineProcessing::isExecutableFilename ( string name )
 
      return false;
    }
+
 
 bool
 CommandlineProcessing::isValidFileWithExecutableFileSuffixes ( string name )
@@ -3907,7 +3939,10 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
      Rose_STL_Container<string>::iterator i = argList.begin();
 
 
-  // printf ("######################### Inside of CommandlineProcessing::generateSourceFilenames() ############################ \n");
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("######################### Inside of CommandlineProcessing::generateSourceFilenames() ############################ \n");
+        }
 
   // skip the 0th entry since this is just the name of the program (e.g. rose)
      ROSE_ASSERT(argList.size() > 0);
@@ -3995,7 +4030,11 @@ incrementPosition:
           i++;
         }
 
-  // printf ("######################### Leaving of CommandlineProcessing::generateSourceFilenames() ############################ \n");
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("sourceFileList = = %s \n",StringUtility::listToString(sourceFileList).c_str());
+          printf ("######################### Leaving of CommandlineProcessing::generateSourceFilenames() ############################ \n");
+        }
 
      return sourceFileList;
    }
@@ -4263,7 +4302,9 @@ SgFile::callFrontEnd()
                          printf ("Error: default reached in unparser: class name = %s \n",this->class_name().c_str());
                          ROSE_ASSERT(false);
                        }
-                  }          
+                  }
+
+            // printf ("After calling buildAST(): this->class_name() = %s \n",this->class_name().c_str());
 #if 0
                SgSourceFile* sourceFile = const_cast<SgSourceFile*>(isSgSourceFile(this));
                SgBinaryFile* binaryFile = const_cast<SgBinaryFile*>(isSgBinaryFile(this));
@@ -4425,7 +4466,10 @@ SgFile::callFrontEnd()
              }
         }
 
-  // display("At bottom of SgFile::callFrontEnd()");
+#if 0
+     printf ("Leaving SgFile::callFrontEnd(): fileNameIndex = %d \n",fileNameIndex);
+     display("At bottom of SgFile::callFrontEnd()");
+#endif
 
   // return the error code associated with the call to the C++ Front-end
      return frontendErrorLevel;
@@ -5162,7 +5206,7 @@ SgSourceFile::build_PHP_AST()
 void
 SgBinaryFile::buildAsmAST( string executableFileName )
    {
-     if ( get_verbose() > 0 )
+     if ( get_verbose() > 0 || SgProject::get_verbose() > 0)
           printf ("Disassemble executableFileName = %s \n",executableFileName.c_str());
 
   // Disassemble the binary file (using recursive disassembler based on objdump.
@@ -5187,6 +5231,8 @@ SgBinaryFile::buildAsmAST( string executableFileName )
   // Later we will implement a PE reader to get the structure of MS Windows executables.
      generateBinaryExecutableFileInformation(executableFileName,asmFile);
 
+  // printf ("DONE: Calling generateBinaryExecutableFileInformation() \n");
+
   // Find the headers in the executable format and convert
   // them into SgAsmInterpretation objects
      SgAsmGenericFile* genericFile = asmFile->get_genericFile();
@@ -5205,8 +5251,18 @@ SgBinaryFile::buildAsmAST( string executableFileName )
         }
 
 #if USE_ROSE_DWARF_SUPPORT
+  // DQ (3/10/2009): This fails with Intel Pin, which uses it's own version of dwarf and 
+  // thus causes a problem (compiles and links but fails at dwarf_init()).
+#if USE_ROSE_INTEL_PIN_SUPPORT
+#error "Support for both DWARF and Intel Pin fails, these configure options are incompatable."
+#endif
+
   // DQ (11/7/2008): New Dwarf support in ROSE (Dwarf IR nodes are generated in the AST).
+     if (SgProject::get_verbose() > 0)
+          printf ("Calling readDwarf() \n");
      readDwarf(asmFile);
+     if (SgProject::get_verbose() > 0)
+          printf ("DONE: Calling readDwarf() \n");
   // printf ("WARNING: COMMENTED OUT DWARF SUPPORT! \n");
 #endif
 
@@ -5293,7 +5349,9 @@ SgBinaryFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
 
        // string executableFileName = this->get_sourceFileNameWithPath();
 #if 1
+       // printf ("Calling buildAsmAST() \n");
           buildAsmAST(this->get_sourceFileNameWithPath());
+       // printf ("DONE: Calling buildAsmAST() \n");
 #else
      if ( get_verbose() > 0 )
           printf ("Disassemble executableFileName = %s \n",executableFileName.c_str());

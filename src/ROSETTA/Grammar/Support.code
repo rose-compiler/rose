@@ -11104,7 +11104,16 @@ SgProject::initialization()
   // DQ (5/2/2006): Added initialization to prevent valgrind warning.
      p_attributeMechanism                  = NULL;
 
-     p_verbose                             = 0;
+  // DQ (3/9/2009): Allow the verbose level to be set before we even call the SgProject constructor (helps debug Intel Pin usage).
+     if (p_verbose > 0)
+        {
+          printf ("Note: Verbose was already set to non-zero value = %d (valid range is 0...10) \n",p_verbose);
+          ROSE_ASSERT(p_verbose <= 10);
+        }
+       else
+        {
+          p_verbose                        = 0;
+        }
 
   // DQ (2/4/2009): This was moved to the SgProject from the SgFile
      p_binary_only                         = false;

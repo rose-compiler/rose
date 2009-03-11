@@ -155,6 +155,15 @@ if ROSE_PCH
   ROSE_PCH_INCLUDE = -Winvalid-pch -fPIC -DPIC
 endif
 
+if ROSE_USE_INTEL_PIN
+  INTEL_PIN_PATH          = @IntelPin_path@
+  INTEL_PIN_INCLUDE_PATHS = -I$(INTEL_PIN_PATH)/source/include -I$(INTEL_PIN_PATH)/source/include/gen -I$(INTEL_PIN_PATH)/extras/xed2-intel64/include
+
+# DQ (3/8/2009): These cause rose/src/testSharedRoseLib to fails, I don't know why (fails in systmem call to map()).
+  INTEL_PIN_LIB_PATHS     = -L$(INTEL_PIN_PATH)/intel64/lib -L$(INTEL_PIN_PATH)/extras/xed2-intel64/lib -L$(INTEL_PIN_PATH)/intel64/lib-ext
+  INTEL_PIN_LIBS          = -lpin -lxed -ldwarf -lelf -ldl
+endif
+
 # Note use of "-isystem" option in ROSE_BOOST_PREINCLUDE_PATH to have the 
 # boost specified on the configure
 # command-line be used instead of the OS version of boost that is sometimes
@@ -254,7 +263,8 @@ ROSE_INCLUDES = \
      $(VALGRIND_CFLAGS) \
      $(SQLITE3_CFLAGS) \
      $(ROSE_BOOST_NORMAL_INCLUDE_PATH) -DBOOST_REGEX_MATCH_EXTRA \
-     $(ROSE_PCH_INCLUDE)
+     $(ROSE_PCH_INCLUDE) \
+     $(INTEL_PIN_INCLUDE_PATHS)
 
 # DQ (12/22/2008): Move Boost directory to front and used "-isystem" option so
 # that a system with a previous (older) installation of boost does not interfer 
@@ -292,6 +302,9 @@ ROSE_LIBS = $(top_builddir)/src/librose.la -lm $(MYSQL_DATABASE_LIBS) \
   $(BOOST_WAVE_LIB) $(SQLITE3_LDFLAGS)  $(JAVA_JVM_LINK) $(RT_LIBS) \
   $(ROSE_YICES_LIBS_WITH_PATH) $(ROSE_DWARF_LIBS_WITH_PATH) $(ROSE_PHP_LIBS_WITH_PATH) \
   $(ROSE_GUI_LIBS_WITH_PATH) $(ROSE_QT_LIBS_WITH_PATH) $(ROSE_SSL_LIBS)
+
+# DQ (3/8/2009): This fails when I try to include it (fails in rose/src/testSharedRoseLib).
+#  $(INTEL_PIN_LIB_PATHS) $(INTEL_PIN_LIBS)
 
 # This ROSE_SEPARATE_LIBS is used for the linking of preprocessor.C used within
 # development. The use of the seperate libraries make the linking faster where the

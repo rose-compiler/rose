@@ -96,7 +96,12 @@ libsage3Sources = \
 noinst_LTLIBRARIES = libsage3.la
 
 libsage3_la_SOURCES = $(libsage3Sources) preproc.ll rose_paths.h
-nodist_libsage3_la_SOURCES = $(GENERATED_SOURCE) $(top_builddir)/rose_config.h
+
+# DQ (3/8/2009): I think that the dependence upon $(top_builddir)/rose_config.h 
+# is what was forcing a lot of files to be compiled after reruning configure.
+# nodist_libsage3_la_SOURCES = $(GENERATED_SOURCE) $(top_builddir)/rose_config.h
+nodist_libsage3_la_SOURCES = $(GENERATED_SOURCE)
+
 
 if ROSE_USE_BOOST_WAVE
 libsage3_la_LIBADD  = \

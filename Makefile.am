@@ -43,6 +43,15 @@ detect_rosec:
 	@echo Testing for rose.h in source files...
 	@if test `find $(top_srcdir) -type f \( -name "*.C" -o -name "*.cpp" -o -name "*.cc" \) -exec grep -H "#include" {} \; | grep "\"rose.h\"\|<rose.h>" | grep -v "\/\/" | cut -d ':' -f 1 | grep -v "preproc-fortran.cc" | grep -v "preproc-fortran-fixed.cc" | uniq | xargs -n 1 grep -m 1 -HP "^#include" | grep -v "rose.h\|mpi.h" | wc | awk '{print \$$1}'` -eq 0; then echo "rose.h source file check passed.";  else echo "There are source files that dont include rose.h as the first header file."; find $(top_srcdir) -type f \( -name "*.C" -o -name "*.cpp" -o -name "*.cc" \) -exec grep -H "#include" {} \; | grep "\"rose.h\"\|<rose.h>" | grep -v "\/\/" | cut -d ':' -f 1 | grep -v "preproc-fortran.cc" | grep -v "preproc-fortran-fixed.cc" | uniq | xargs -n 1 grep -m 1 -HP "^#include" | grep -v "rose.h\|mpi.h"; exit 1; fi
 
+
+# DQ (3/9/2009): Additional things that we can enforce within ROSE (written by Andreas).
+# Additional rules to enforce:
+#    1) Finding using declarations in header files:
+#       find -name "*.h" -exec grep -nPH "^[ \t]*using[ \t]+namespace" {} \;
+#    2) Finding link dependences in Makefile.am files:
+#       find -name Makefile.am -exec grep -nPH "^[ \t]*[a-zA-Z]*[_]?LDADD[ \t]*" {} \;
+
+
 # DQ (6/29/2004): I don't think we need this!
 # LIBS = @LIBS@ ${SAGE_LIBS}
 

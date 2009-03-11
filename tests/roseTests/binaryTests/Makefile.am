@@ -233,6 +233,9 @@ CLEANFILES = unparsed.s callgraph.gml output _binary_tree.dot cfg.dot dfg.dot Te
 
 check-local: runTest test1 $(TEST_PASSED_TARGETS)
 	./runTest $(srcdir)/buffer2.bin > output
+	@echo "*********************************************************************"
+	@echo "*** ROSE/tests/roseTests/programAnalysisTests/binaryTests: passed ***"
+	@echo "*********************************************************************"
 
 # Don't delete things indiscriminately!
 clean-local:
@@ -244,8 +247,8 @@ distclean-local:
 else
 
 check-local:
-	@echo "*********************************************************************************************************************"
-	@echo "*** ROSE/tests/roseTests/programAnalysisTests/binaryTests: skipped                                                ***"
-	@echo "*********************************************************************************************************************"
+	@echo "**********************************************************************"
+	@echo "*** ROSE/tests/roseTests/programAnalysisTests/binaryTests: skipped ***"
+	@echo "**********************************************************************"
 
 endif

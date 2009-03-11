@@ -19,8 +19,23 @@ template <size_t Len>
 struct LitListType: public boost::array<Lit, Len> {};
 #define LitList(N) LitListType<(N)> // Stored LSB first, counted in bits
 typedef std::vector<Lit> Clause;
+
+// DQ (3/8/2009): Intel Pin defines "TRUE" and "FALSE" as macros so we have
+// to be careful about using these names (we can either undefine them or 
+// added the suffix "_value" below).  Undefining the macros might be a 
+// problem if the order of the header files was reversed (should cause a syntax error).
+#ifdef TRUE
+  #warning "TRUE is defined as a macro, undefining it to support use as a constant variable."
+  #undef TRUE
+#endif
+#ifdef FALSE
+  #warning "FALSE is defined as a macro, undefining it to support use as a constant variable."
+  #undef FALSE
+#endif
 // Len and similar template parameters are always in bits, not bytes
+// const Lit TRUE_value = 0x80000000, FALSE_value = 0;
 const Lit TRUE = 0x80000000, FALSE = 0;
+
 typedef std::pair<std::string, std::vector<Lit> > InterfaceVariable;
 typedef std::vector<InterfaceVariable> InterfaceVariableList;
 

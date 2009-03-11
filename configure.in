@@ -345,6 +345,16 @@ ROSE_SUPPORT_DWARF
 # Setup Automake conditional in --- (not yet distributed)
 AM_CONDITIONAL(ROSE_USE_DWARF,test ! "$with_dwarf" = no)
 
+# DQ (3/10/2009): The Dwarf support in Intel Pin conflicts with the Dwarf support in ROSE.
+# Maybe there is a way to fix this later, for now we want to disallow it.
+# echo "with_dwarf    = $with_dwarf"
+# echo "with_IntelPin = $with_IntelPin"
+if test "$with_dwarf" != no && test "$with_IntelPin" != no; then
+ # echo "Support for both DWARF and Intel Pin fails, these configure options are incompatable."
+   AC_MSG_ERROR([Support for both DWARF and Intel Pin fails, these configure options are incompatable!])
+#   exit 1
+fi
+
 ROSE_SUPPORT_PHP
 
 AM_CONDITIONAL(ROSE_USE_PHP,test ! "$with_php" = no)

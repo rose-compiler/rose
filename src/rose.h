@@ -91,63 +91,66 @@ namespace ELF{
 
 // DQ (1/24/2008): Add these here to permit simple and uniform support of binaries.
 // File in src/frontend/BinaryDisassembly
-  #include "RoseBin_support.h"
+#include "RoseBin_support.h"
 #ifdef HASH_ROSE_USE_BINARYSQL
   #include "RoseBin.h"
 #endif
-  #include "RoseBin_abstract.h"
-  #include "RoseFile.h"
-  #include "RoseObj.h"
 
-  #include "RoseBin_DotGraph.h"
-  #include "RoseBin_GmlGraph.h"
-  #include "RoseBin_ControlFlowAnalysis.h"
-  #include "RoseBin_DataFlowAnalysis.h"
-  #include "RoseBin_CallGraphAnalysis.h"
+#include "RoseBin_abstract.h"
+#include "RoseFile.h"
+#include "RoseObj.h"
 
-  #include "AST_BIN_Traversal.h"
+#include "RoseBin_DotGraph.h"
+#include "RoseBin_GmlGraph.h"
+#include "RoseBin_ControlFlowAnalysis.h"
+#include "RoseBin_DataFlowAnalysis.h"
+#include "RoseBin_CallGraphAnalysis.h"
 
-  #include "x86InstructionEnum.h"
-  #include "x86InstructionProperties.h"
+#include "AST_BIN_Traversal.h"
 
-  #include "armInstructionEnum.h"
+#include "x86InstructionEnum.h"
+#include "x86InstructionProperties.h"
 
-  #include "powerpcInstructionEnum.h"
-  #include "powerpcInstructionProperties.h"
+#include "armInstructionEnum.h"
+
+#include "powerpcInstructionEnum.h"
+#include "powerpcInstructionProperties.h"
 
 // Files in src/frontend/Disassemblers
-  #include "disassemblers.h"
-  #include "putInstructionsIntoBasicBlocks.h"
+#include "disassemblers.h"
+#include "putInstructionsIntoBasicBlocks.h"
 
 // Files in src/backend/asmUnparser
-  #include "unparseAsm.h"
+#include "unparseAsm.h"
 
 // Endian access wrappers in src/frontend/SageIII/sageInterface
-  #include "endianWrappers.h"
+#include "endianWrappers.h"
 
 // ABI struct layout and similar helpers in src/frontend/SageIII/sageInterface
-  #include "abiStuff.h"
+#include "abiStuff.h"
 
-#define USE_NEW_BINARY_FORMAT_READER 0
-
-#if 0
-// Files in src/frontend/ExecFormats
-  #include "ExecGeneric.h"
-  #include "ExecELF.h"
-  #include "ExecPE.h"
-  #include "ExecNE.h"
-#endif
-
+// DQ (3/8/2009): Why is this here?
 // added .h file for error check transformations
 //#include "RuntimeInstrumentation.h"
 
 #include "PHPFrontend.h"
+
+#if USE_ROSE_DWARF_SUPPORT && USE_ROSE_INTEL_PIN_SUPPORT
+// DQ (3/10/2009): This fails with Intel Pin, which uses it's own version of dwarf and 
+// thus causes a problem (compiles and links but fails at dwarf_init()).
+#error "Support for both DWARF and Intel Pin fails, these configure options are incompatable."
+#endif
 
 // DQ (11/7/2008): Added Dwarf support to ROSE AST (applies only to binary executables generated with dwarf debugging information).
 #if USE_ROSE_DWARF_SUPPORT
 #include "dwarfSupport.h"
 #endif
 
+// DQ (3/8/2009): Added support for Intel Pin (Dynamic binary Instrumentation)
+#ifdef USE_ROSE_INTEL_PIN_SUPPORT
+// Note that pin.H (in it's header files) will define "TRUE" and "FALSE" as macros.
+#include "IntelPinSupport.h"
+#endif
 
 
 // ifndef ROSE_H

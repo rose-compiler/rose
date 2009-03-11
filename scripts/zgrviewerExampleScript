@@ -1,0 +1,11 @@
+#!/bin/csh
+
+# If you want to be able to run ZGRViewer from any directory,
+# set ZGRV_HOME to the absolute path of ZGRViewer's main directory
+# e.g. ZGRV_HOME=/usr/local/zgrviewer
+
+set ZGRV_HOME=/home/dquinlan/local/zgrviewer
+source /home/dquinlan/local/jdk1.5.0_06/setup.csh
+# java -cp $ZGRV_HOME/lib/zvtm.jar:$ZGRV_HOME/lib/zgrviewer.jar:$ZGRV_HOME/lib/xercesImpl.jar:$ZGRV_HOME/lib/xml-apis.jar:$ZGRV_HOME/lib/antlr.jar net.claribole.zgrviewer.ZGRViewer "$1"
+# java -Xms1000m -Xmx1500m -cp $ZGRV_HOME/lib/zvtm.jar:$ZGRV_HOME/lib/zgrviewer.jar:$ZGRV_HOME/lib/xercesImpl.jar:$ZGRV_HOME/lib/xml-apis.jar:$ZGRV_HOME/lib/antlr.jar net.claribole.zgrviewer.ZGRViewer "$1"
+java -Xms1000m -Xmx1500m -jar $ZGRV_HOME/target/zgrviewer-0.8.1.jar "$1"

@@ -2654,8 +2654,14 @@ readDwarf ( SgAsmFile* asmFile )
 
      int fileDescriptor = genericFile->get_fd();
 
+  // printf ("Calling first libdwarf function: dwarf_init() \n");
      int dwarf_init_status = dwarf_init (fileDescriptor, DW_DLC_READ, NULL, NULL, &rose_dwarf_dbg, &rose_dwarf_error);
-  // printf ("dwarf_init_status = %d \n",dwarf_init_status);
+  // printf ("DONE: Calling first libdwarf function: dwarf_init() \n");
+
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("dwarf_init_status = %d \n",dwarf_init_status);
+        }
 
   // Test if the call to dwarf_init worked!
   // ROSE_ASSERT(dwarf_init_status == DW_DLV_OK);
