@@ -27,8 +27,15 @@ void usage(const char* me)
        << "    Use the original file names with the additional suffix.\n\n"
 
        << "  -d, --dir DIRECTORY\n"
-       << "    Create the unparsed files in DIRECTORY.\n"
+       << "    Create the unparsed files in DIRECTORY.\n\n"
+
+       << "  --dot\n"
+       << "    Create a dotty graph of the syntax tree.\n\n"
+
+       << "  --pdf\n"
+       << "    Create a PDF printout of the syntax tree.\n\n"
        << endl;
+
 }
 
 int main(int argc, char** argv) {
@@ -37,10 +44,15 @@ int main(int argc, char** argv) {
   const char* outfile= "";
   const char* outdir = ".";
   const char* suffix = ".unparsed";
+  int dot_flag = 0;
+  int pdf_flag = 0;
 
   while (1) {
     static struct option long_options[] = {
       /* These options set a flag. */
+      {"dot", no_argument, &dot_flag, 1},
+      {"pdf", no_argument, &pdf_flag, 1},
+      /* These don't */
       {"dir",    required_argument, 0, 'd'},
       {"output", required_argument, 0, 'o'},
       {"suffix", required_argument, 0, 's'},
@@ -77,15 +89,17 @@ int main(int argc, char** argv) {
   PrologToRose conv;
   SgNode* p = conv.toRose(infile);
 
-//  Create dot and pdf files
-//    DOT generation (numbering:preoder)
-//    AstDOTGeneration dotgen;
-//    dotgen.generateInputFiles((SgProject*)p,AstDOTGeneration::PREORDER);
-
-//  PDF generation
-//    AstPDFGeneration pdfgen;
-//    pdfgen.generateInputFiles((SgProject*)p);
-
+  if (dot_flag) {
+    //  Create dot and pdf files
+    //  DOT generation (numbering:preoder)
+    AstDOTGeneration dotgen;
+    dotgen.generateInputFiles((SgProject*)p,AstDOTGeneration::PREORDER);
+  }
+  if (pdf_flag) {
+    //  PDF generation
+    AstPDFGeneration pdfgen;
+    pdfgen.generateInputFiles((SgProject*)p);
+  }
   conv.unparse(outfile, outdir, suffix, p);
   return 0;
 }

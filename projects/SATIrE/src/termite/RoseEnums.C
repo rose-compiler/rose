@@ -199,6 +199,58 @@ static const char* e_ellipses_flag[] = {
   "ellipses"
 };
 
+static const char* e_RelativePositionType[] = {
+  "defaultValue", // = 0, // let the zero value be an error value
+  "undef", //        = 1, // Position of the directive is only going to be defined
+  // when the preprocessing object is copied into the AST,
+  // it remains undefined before that
+  "before", //       = 2, // Directive goes before the correponding code segment
+  "after", //        = 3, // Directive goes after the correponding code segment
+  "inside", //       = 4, // Directive goes inside the correponding code segment (as in between "{" and "}" of an empty basic block)
+  "replace", //       = 5, // Support for replacing the IR node in the unparsing of any associated subtree
+  "before_syntax", // = 6, // We still have to specify the syntax
+  "after_syntax"  //  = 7  // We still have to specify the syntax
+};
+
+       // Enum type to help classify the type for string that has been saved.
+       // This helps in the unparsing to make sure that line feeds are introduced properly.
+static const char* e_DirectiveType[] = {
+  "CpreprocessorUnknownDeclaration",
+  "C_StyleComment",
+  "CplusplusStyleComment",
+  "CpreprocessorIncludeDeclaration",
+  "CpreprocessorIncludeNextDeclaration",
+  "CpreprocessorDefineDeclaration",
+  "CpreprocessorUndefDeclaration",
+  "CpreprocessorIfdefDeclaration",
+  "CpreprocessorIfndefDeclaration",
+  "CpreprocessorIfDeclaration",
+  "CpreprocessorDeadIfDeclaration",
+  "CpreprocessorElseDeclaration",
+  "CpreprocessorElifDeclaration",
+  "CpreprocessorEndifDeclaration",
+  "CpreprocessorLineDeclaration",
+  "CpreprocessorErrorDeclaration",
+
+  // DQ (10/19/2005): Added CPP warning directive
+  "CpreprocessorWarningDeclaration",
+  "CpreprocessorEmptyDeclaration",
+
+  // AS (11/18/05): Added macro support
+  "CSkippedToken",
+  "CMacroCall",
+
+  // A line replacement will replace a sub-tree in the AST
+  // after a node with position (filename",line)
+  "LineReplacement",
+  "ClinkageSpecificationStart",
+  "ClinkageSpecificationEnd",
+
+  // Added support for Fortran comments
+  "FortranStyleComment",
+  "LastDirectiveType"
+};
+
 /////////////////////////////////////////////////////////////////////////
 
 //#include <iostream>
@@ -229,4 +281,7 @@ RoseEnums::RoseEnums() {
 
   INIT(e_static_flag, static_flag, static_flags)
   INIT(e_ellipses_flag, ellipses_flag, ellipses_flags)
+
+  INIT(e_RelativePositionType, RelativePositionType, RelativePositionTypes)
+  INIT(e_DirectiveType, DirectiveType, DirectiveTypes)
 }
