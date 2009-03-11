@@ -15,6 +15,10 @@ to as wide a group of users as possible.
    ROSE handles a number of binary executable file formats and also reads Dwarf information
 into the AST to support additional analysis.
 
+   Recent work in ROSE has added support for dynamic analysis and for mixing of dynamic
+and static analysis using the Intel Pin framework. 
+Intel Pin support in ROSE is presented in section~\ref{intel_pin}.
+
 \section{The Binary AST}
 
 \subsection{The Binary Executable Format}
@@ -467,8 +471,20 @@ members of these objects can be modified and some can't.
 \end{itemize}
 
 
+\section{Dynamic Analysis Support}
+\label{intel_pin}
 
+   Recent work in ROSE has added support for dynamic analysis and for mixing of dynamic
+and static analysis using the Intel Pin framework. This optional support in ROSE
+requires a configure option ({\tt --with-IntelPin=$<path$>).  The {\tt path} in
+the configure option is the path to the top level directory of the location of
+the Intel Pin distribution.  This support for Intel Pin has only been tested
+on a 64bit Linux system using the most recent distribution of Intel Pin (version 2.6).
 
+Note: The dwarf support in ROSE is currently incompatable with the dwarf support in
+Intel Pin.  A message in the configuration of ROSE will detect if both support for
+Dwarf and Intel Pin are both specified and exit with an error message that they
+are incompatable options.
 
 
 \section{Usage}

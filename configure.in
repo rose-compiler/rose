@@ -1256,6 +1256,7 @@ tutorial/exampleMakefile
 tutorial/database/Makefile
 tutorial/roseHPCT/Makefile
 tutorial/outliner/Makefile
+tutorial/intelPin/Makefile
 exampleTranslators/Makefile
 exampleTranslators/AstCopyReplTester/Makefile
 exampleTranslators/DOTGenerator/Makefile

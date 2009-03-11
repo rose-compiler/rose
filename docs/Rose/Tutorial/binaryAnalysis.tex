@@ -231,8 +231,33 @@ The black node in ~\ref{Tutorial:examplefig2} shows such a buffer overlow, cf. s
 
 
 
+\section{Dynamic Analysis}
+
+   Recent work in ROSE has added support for dynamic analysis and for mixing of dynamic
+and static analysis using the Intel Pin framework. This optional support in ROSE
+requires a configure option ({\tt --with-IntelPin=$<path$>).  The {\tt path} in
+the configure option is the path to the top level directory of the location of
+the Intel Pin distribution.  This support for Intel Pin has only been tested
+on a 64bit Linux system using the most recent distribution of Intel Pin (version 2.6).
+
+Note: The dwarf support in ROSE is currently incompatable with the dwarf support in
+Intel Pin.  A message in the configuration of ROSE will detect if both support for
+Dwarf and Intel Pin are both specified and exit with an error message that they
+are incompatable options.
+
+See {\tt tutorial/intelPin} directory for examples using static and dynamic analysis.
+These example will be improved in the future, at the moment they just call the
+generation of the binary AST.
 
 
-
-
+Note: We have added a fix to Intel Pin pin.H file:
+\begin{verbatim}
+// DQ (3/9/2009): Avoid letting "using" declarations into header files.
+#ifndef REQUIRE_PIN_TO_USE_NAMESPACES
+using namespace LEVEL_PINCLIENT;
+#endif
+\end{verbatim}
+so that the namespace of Intel Pin would not be a problem for ROSE.
+The development team have suggested that they may fix their use of "using" 
+declarations for namespaces in their header files.
 

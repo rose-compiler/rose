@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # Add Projects that are associated with capabilities that belong to ROSE here
-SUBDIRS = database roseHPCT outliner
+SUBDIRS = database roseHPCT outliner intelPin
 
 INCLUDES = $(ROSE_INCLUDES)
 
@@ -1288,6 +1288,7 @@ docs: $(noinst_PROGRAMS) $(generatedCodeExamples)
 #	DQ (5/20/2007): Added to support Rich's work with outlining and the HPC Toolkit
 	cd outliner; $(MAKE) docs
 	cd roseHPCT; $(MAKE) docs
+	cd intelPin; $(MAKE) docs
 	@echo "******************************************************************"
 	@echo "Generated required documentation for tutorial (make docs rule) ..."
 	@echo "******************************************************************"
