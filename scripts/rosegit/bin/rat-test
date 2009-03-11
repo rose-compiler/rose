@@ -7,7 +7,7 @@
 # Functions always use underscores and are not intended to be called by users. A test script should be a command (thus the
 # hyphen in its name) but they are also commonly executed by other scripts, most importantly rosegit-ats.
 #
-# You may assume that this scripts current working directory is somewhere in the build tree.  When it's called by rosegit-ats
+# You may assume that this script's current working directory is somewhere in the build tree.  When it's called by rosegit-ats
 # the cwd will always be the top of the build tree.
 #
 # Any kind of progress information that you want to appear on stdout of rosegit-ats should be sent to file descriptor 6.
@@ -17,7 +17,7 @@
 # reports and they just get thrown away.  Here's some ways you could redirect output (assuming you're not using a brain-dead
 # shell):
 #
-#       rat-test 6>&1 >saved.outout >&2          # save output, show progress
+#       rat-test 6>&1 >saved.outout 2>&1         # save output, show progress
 #       rat-test 6>&1                            # show progress along with output
 #       rat-test                                 # show output, toss progress
 #
