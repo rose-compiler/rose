@@ -1,3 +1,113 @@
+2009-03-11 17:54  matzke
+
+	* [r4834]
+	  /trunk/ROSE/developersScratchSpace/Dan/Pin_tests/Makefile.am: Pin
+	  uses $PATH, which might not include "."
+
+2009-03-11 17:54  matzke
+
+	* [r4833] /trunk/ROSE/scripts/rosegit/bin/rat-test,
+	  /trunk/ROSE/scripts/rosegit/config/defaults.conf: added
+	  --with-IntelPin to rosegit automated testing
+
+2009-03-11 17:07  matzke
+
+	* [r4831] /trunk/ROSE/tests/roseTests/binaryTests/Makefile.am:
+	  Fixed "make check" in roseTests/binaryTests
+	  
+	  Also added a few more diagnostics to one of the tests.
+
+2009-03-11 17:07  matzke
+
+	* [r4830] /trunk/ROSE/scripts/rosegit/bin/rosegit-configure:
+	  rosegit-configure extra args are passed to configure script
+
+2009-03-11 15:52  dquinlan
+
+	* [r4829]
+	  /trunk/ROSE/developersScratchSpace/Dan/Pin_tests/Makefile.am:
+	  Added more support for dynamic binary instrumentation using Intel
+	  Pin (--with-IntelPin).
+	  
+	  Detailed changes in this commit:
+	  1) Added more examples of the connection between Intel Pin and
+	  ROSE.
+	  2) Added example of commandline handling required for ROSE.
+	  3) resolved both static and dynamic linking issues associated
+	  with using
+	  Pin tools that contain ROSE static analysis.
+	  4) Note that dwarf support in ROSE does not work with Intel Pin.
+	  Pin
+	  tools using ROSE configured to use Dwarf fail in call to the
+	  dwarf_init()
+	  function, first libdwarf function called by ROSE).
+	  5) Configuration of ROSE fixed to exit with error if both
+	  --with-dwarf and
+	  --with-IntelPin options are used.
+	  6) Added example scripts/zgrviewerExampleScript to show how to
+	  use zgrviewer
+	  with Java to allow the VM to use more meory as required for large
+	  DOT graphs.
+	  7) Added fix to Intel Pin pin.H file:
+	  // DQ (3/9/2009): Avoid letting "using" declarations into header
+	  files.
+	  #ifndef REQUIRE_PIN_TO_USE_NAMESPACES
+	  using namespace LEVEL_PINCLIENT;
+	  #endif
+	  so that the namespace of Intel Pin would not be a problem for
+	  ROSE.
+	  The Pin guys will likely fix their use of "using" declarations
+	  for
+	  namespaces in their header files.
+
+2009-03-11 14:07  dquinlan
+
+	* [r4828] /trunk/ROSE/Makefile.am,
+	  /trunk/ROSE/config/Makefile.for.ROSE.includes.and.libs,
+	  /trunk/ROSE/configure.in,
+	  /trunk/ROSE/developersScratchSpace/Dan/Pin_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Pin_tests/commandlineHandling.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Pin_tests/dynamicBinaryInfo.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Pin_tests/dynamicStaticBinaryAnalysis.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Pin_tests/graphTrace.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Pin_tests/imageload.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Pin_tests/input_testcode.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Pin_tests/memcopy-elf.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Pin_tests/staticBinaryAnalysis.C,
+	  /trunk/ROSE/projects/assemblyToSourceAst/satProblem.h,
+	  /trunk/ROSE/scripts/zgrviewerExampleScript,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Support.code,
+	  /trunk/ROSE/src/frontend/ExecFormats/IntelPinSupport.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/IntelPinSupport.h,
+	  /trunk/ROSE/src/frontend/ExecFormats/Makefile.am,
+	  /trunk/ROSE/src/frontend/SageIII/Makefile.am,
+	  /trunk/ROSE/src/frontend/SageIII/dwarfSupport.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C,
+	  /trunk/ROSE/src/rose.h,
+	  /trunk/ROSE/tests/roseTests/binaryTests/Makefile.am: Added more
+	  support for dynamic binary instrumentation using Intel Pin
+	  (--with-IntelPin).
+	  
+	  Detailed changes in this commit:
+	  1) Added more examples of the connection between Intel Pin and
+	  ROSE.
+	  2) Added example of commandline handling required for ROSE.
+	  3) resolved both static and dynamic linking issues associated
+	  with using
+	  Pin tools that contain ROSE static analysis.
+	  4) Note that dwarf support in ROSE does not work with Intel Pin.
+	  Pin
+	  tools using ROSE configured to use Dwarf fail in call to the
+	  dwarf_init()
+	  function, first libdwarf function called by ROSE).
+	  5) Configuration of ROSE fixed to exit with error if both
+	  --with-dwarf and
+	  --with-IntelPin options are used.
+	  6) Added example scripts/zgrviewerExampleScript to show how to
+	  use zgrviewer
+	  with Java to allow the VM to use more meory as required for large
+	  DOT graphs.
+
 2009-03-11 01:55  panas2
 
 	* [r4821]
