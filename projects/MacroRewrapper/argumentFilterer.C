@@ -93,33 +93,66 @@ bool
 ComparisonLinearization::skipNode(SgNode* node) {
     bool skip = false;
 
-    if(isSgBinaryOp(node)!=NULL){
+    if(isSgBinaryOp(node)!=NULL && isSgArrowExp(node) == NULL && isSgDotExp(node) == NULL  ){
         SgBinaryOp* binOp = isSgBinaryOp(node);
         std::vector<SgNode*> vectorOfNodesAtPos;
 
         vectorOfNodesAtPos =   NodeQuery::querySubTree(binOp->get_lhs_operand(),std::bind2nd(std::ptr_fun(queryForLine), posOfMacroCall));
 
+        std::cout << "Looking at binary op: " << node->unparseToString() << std::endl;
         //SKIP Right Operand?
         bool skipLeft = false;
-        if(vectorOfNodesAtPos.size() == 0 ){
+
+        //See if all variables in the subtre is skippable
+        bool allNodesInSubTreeSkipped = true;
+        for(int i=0; i < vectorOfNodesAtPos.size(); i++ )
+        {
+             if(find(nodeToFilter.begin(),nodeToFilter.end(),vectorOfNodesAtPos[i]) == nodeToFilter.end())
+               allNodesInSubTreeSkipped = false;
+        }
+
+        //If all nodes in subtree is skippable or there are no nodes in subtree from macro skip
+        if(vectorOfNodesAtPos.size() == 0 || allNodesInSubTreeSkipped == true ){
             skipLeft = true;
             skipNodeAndSubTree.push_back(binOp->get_lhs_operand());            
         }
+        for(int i=0; i < vectorOfNodesAtPos.size() ; i++)
+          std::cout << vectorOfNodesAtPos[i]->unparseToString() << std::endl;
 
         //SKIP Left Operand?
         bool skipRight = false;
         vectorOfNodesAtPos =   NodeQuery::querySubTree(binOp->get_rhs_operand(),std::bind2nd(std::ptr_fun(queryForLine),  posOfMacroCall));
-        if(vectorOfNodesAtPos.size() == 0 ){
+
+        //See if all nodes in subtree is skippable
+        allNodesInSubTreeSkipped = true;
+        for(int i=0; i < vectorOfNodesAtPos.size(); i++ )
+        {
+             if(find(nodeToFilter.begin(),nodeToFilter.end(),vectorOfNodesAtPos[i]) == nodeToFilter.end())
+               allNodesInSubTreeSkipped = false;
+        }
+
+        //If all nodes in subtree oor there are no nodes in the subtree from macro skip
+        if(vectorOfNodesAtPos.size() == 0 || allNodesInSubTreeSkipped == true ){
             skipRight = true;
              std::cout <<"SkipRight" << std::endl;
-            skipNodeAndSubTree.push_back(binOp->get_rhs_operand());            
+            skipNodeAndSubTree.push_back(binOp->get_rhs_operand());      
         }
+
+
+
+        for(int i=0; i < vectorOfNodesAtPos.size() ; i++){
+          std::cout << vectorOfNodesAtPos[i]->unparseToString() << vectorOfNodesAtPos[i]->get_file_info()->get_line() << std::endl;
+        }
+
+             std::cout <<"SkipLeft" << skipLeft << std::endl;
+             std::cout <<"SkipRight" << skipRight << std::endl;
 
 
         //SKIP Operand?
         bool binaryOpNotPartOfMacroCall = false;
-        if( queryForLine(node,posOfMacroCall).size() == 0  ){
-             binaryOpNotPartOfMacroCall  = true;
+        if( queryForLine(node,posOfMacroCall).size() == 0  || 
+            find(nodeToFilter.begin(),nodeToFilter.end(),node) != nodeToFilter.end()  ){
+          binaryOpNotPartOfMacroCall  = true;
         }
 
         //SKIP Operand and SubTree?
@@ -161,6 +194,18 @@ ComparisonLinearization::skipNode(SgNode* node) {
           
     }else if( find(nodeToFilter.begin(),nodeToFilter.end(),node) != nodeToFilter.end() ){
         skip = true;
+    }
+    
+    if(isSgUnaryOp(node) != NULL )
+    {
+
+       if( find(nodeToFilter.begin(),nodeToFilter.end(),isSgUnaryOp(node)->get_operand()) != nodeToFilter.end() ){
+        skip = true;
+       }
+
+       if(isSgPointerDerefExp(node)!=NULL || isSgCastExp(node) != NULL)
+         skip = true;
+
     }else  if( (isSgArrowExp(node) != NULL ) )
          node->get_file_info()->display(std::string(" debug ")) ;
 
@@ -320,6 +365,12 @@ std::vector<SgNode*> queryForLine(SgNode* node, Sg_File_Info* compareFileInfo){
      int compareCol  = compareFileInfo->get_col();
      std::string compareFilename = compareFileInfo->get_filenameString();
 
+	  Sg_File_Info* fileInfo = node->get_file_info();
+
+
+	  int line = fileInfo->get_line();
+	  int col  = fileInfo->get_col();
+          std::cout << " construct: " << node->class_name() <<  "line " << line << " col " << col << std::endl;
 
      if( isSgIfStmt(node) != NULL ){
 	  SgIfStmt* ifStmt         = isSgIfStmt(node);
@@ -350,7 +401,7 @@ std::vector<SgNode*> queryForLine(SgNode* node, Sg_File_Info* compareFileInfo){
 	       std::string filename = fileInfo->get_filenameString();
 
 	       if( fileInfo->isCompilerGenerated()==false ){
-		 //	    std::cout << "Start of contruct " << initName->get_name().getString() << " l" << fileInfo->get_line() << " " << fileInfo->get_col() << std::endl;       
+		 	    std::cout << "Start of contruct " << initName->get_name().getString() << " l" << fileInfo->get_line() << " " << fileInfo->get_col() << std::endl;       
 		    if( (line == compareLine) && ( col == compareCol ) && (filename == compareFilename) ){
 
 		      //std::cout << " filename: " << filename << " l" << line << " c" << col << std::endl;
@@ -374,7 +425,8 @@ std::vector<SgNode*> queryForLine(SgNode* node, Sg_File_Info* compareFileInfo){
 	  if( (line == compareLine) && ( col == compareCol ) && (filename == compareFilename) ){
 
 
-               std::cout << "Construct was found at node position:" << node->class_name() << " filename: " << filename << " l" << line << " c" << col << std::endl;
+            
+               //std::cout << "Construct was found at node position:" << node->class_name() << " filename: " << filename << " l" << line << " c" << col << std::endl;
                returnList.push_back(node);
 
 	  }else if(isSgVarRefExp(node) != NULL){

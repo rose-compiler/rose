@@ -500,7 +500,8 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
 
           ROSEAttributesList* returnListOfAttributes = new ROSEAttributesList();
 
-          std::cout << "source file name:" << sageFilePtr->generate_C_preprocessor_intermediate_filename(filename2) << std::endl;
+          if (SgProject::get_verbose() >= 1)
+            std::cout << "source file name:" << sageFilePtr->generate_C_preprocessor_intermediate_filename(filename2) << std::endl;
 //          std::vector<PreprocessingInfo*>* preproc_info = new std::vector<PreprocessingInfo*>();
           attributeMapForAllFiles[sourceFileNameId] = returnListOfAttributes;
 
@@ -508,7 +509,8 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
              {
                //preproc_info->push_back(*it_preproc);
                returnListOfAttributes->addElement(**it_preproc);
-               std::cerr << "Added Macro " << (*it_preproc)->getString() << std::endl;
+               if( SgProject::get_verbose() >= 1 )
+                 std::cerr << "Added Macro " << (*it_preproc)->getString() << std::endl;
              }
 
           if (SgProject::get_verbose() >= 1)

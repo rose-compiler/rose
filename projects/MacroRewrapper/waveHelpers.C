@@ -27,7 +27,7 @@ allCallsToMacro2( std::list<std::string> internalIncludePathList ){
 
 	  std::string filename = it_files->first;
 
-	  if(VERBOSE_MESSAGES_OF_WAVE == true){
+	  if(SgProject::get_verbose() >= 1){
 	       std::cout << "Filename to check " << filename << std::endl;
 	  }
 
@@ -75,12 +75,12 @@ allCallsToMacro2( std::list<std::string> internalIncludePathList ){
 
 				   if( tokenHasNoCorrespondingASTLocatedConstruct(*it_tok) == false ){
 					streamPossiblyMapsToAST = true;
-					if( VERBOSE_MESSAGES_OF_WAVE == true )
+					if(SgProject::get_verbose() >= 1)
 					     std::cout << it_tok->get_value() << "  maps to AST" << std::endl;
 					break;
 				   }else{
 					using namespace boost::wave;
-					if( VERBOSE_MESSAGES_OF_WAVE == true )
+					if(SgProject::get_verbose() >= 1)
 					     std::cout << get_token_name(token_id(*it_tok)) << " do not match to AST" << std::endl;
 
 				   }
@@ -91,7 +91,7 @@ allCallsToMacro2( std::list<std::string> internalIncludePathList ){
 		    if( streamPossiblyMapsToAST == true ){ 
 			 PreprocessingInfo* macro_def   = macro_call->macro_def;
 
-			 if( VERBOSE_MESSAGES_OF_WAVE == true ){
+			 if(SgProject::get_verbose() >= 1){
 			      std::cout << "macro def: " <<  macro_def->get_file_info()->get_filenameString() << " l" << macro_def->get_file_info()->get_line()
 				      << " c" << macro_def->get_file_info()->get_col() << std::endl; 
 			      std::cout << macro_def->getString() << std::endl;
@@ -678,15 +678,15 @@ checkIfNodeMaps(token_type tok, SgNode* node)
 		case T_TRUE:
 			break;
 		case T_CHARLIT:
-			if(VERBOSE_MESSAGES_OF_WAVE == true)
+			if(SgProject::get_verbose() >= 1)
 				std::cout << "char " << std::string(tok.get_value().c_str()) << std::endl;
 
 			if( isSgCharVal(node) != NULL ){
 				SgCharVal* charVal = isSgCharVal(node);
-				if(VERBOSE_MESSAGES_OF_WAVE==true)
+				if(SgProject::get_verbose() >= 1)
 					std::cout << std::string(tok.get_value().c_str()) << std::endl;
 				char tmp = charVal->get_value();
-				if(VERBOSE_MESSAGES_OF_WAVE==true)
+				if(SgProject::get_verbose() >= 1)
 					std::cout << "From charlit: " << tmp << std::endl;
 
 				if(("\""+std::string(&tmp)+"\"") == std::string(tok.get_value().c_str()) )
@@ -697,12 +697,12 @@ checkIfNodeMaps(token_type tok, SgNode* node)
 			break;
 		case T_STRINGLIT:
 			{
-				if(VERBOSE_MESSAGES_OF_WAVE==true)
+				if(SgProject::get_verbose() >= 1)
 					std::cout << "string " <<std::string(tok.get_value().c_str()) << std::endl;
 
 				if( isSgStringVal(node) != NULL ){
 					SgStringVal* stringVal = isSgStringVal(node);
-					if(VERBOSE_MESSAGES_OF_WAVE==true){
+					if(SgProject::get_verbose() >= 1){
 						std::cout << std::string(tok.get_value().c_str()) << std::endl;
 						std::cout << "stringlit: " << stringVal->get_value() << std::endl;
 					}

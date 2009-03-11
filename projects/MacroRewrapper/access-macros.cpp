@@ -1,3 +1,5 @@
+#include <rose.h>
+
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -739,72 +741,79 @@ bool random_filtered_node(std::string nodeName){
 
 }
 bool compare_macro_tokenlists(std::vector<std::string> mcall, std::vector<std::string> first_mcall, bool filter){
-	bool is_consistent = true;
-	if(filter==true){
-                std::vector<std::string> new_mcall;
-
-                 
-		//new analysis which filters on types
-                std::cout << "mcall:       ";
-		for ( std::vector<std::string>::iterator  i = mcall.begin(); i != mcall.end(); ++i)
-		{
-			std::string currentString( *i ); 
-
-			if( (is_type(currentString) == true ) 
-					||(random_filtered_node(currentString) == true ) ){
-                         
-                   }else{
-                           std::cout << *i << " ";
-
-                     new_mcall.push_back(*i);
-                   }
-
-		}
-
-                mcall = new_mcall;
-
-                new_mcall.clear();
-
-                std::vector<std::string> new_mcall2;
-
-                std::cout << std::endl;
-                std::cout << "first_mcall: ";
-		for ( std::vector<std::string>::iterator  i = first_mcall.begin(); i != first_mcall.end(); ++i)
-		{
-
-			std::string currentString( *i ); 
-			if( (is_type(currentString) == true ) 
-					||(random_filtered_node(currentString) == true ) ){
-                        }else{
-                           std::cout << *i << " ";
-
-                             new_mcall2.push_back(*i);
-
-}
-
-		}
-                 std::cout << std::endl;
-
-                first_mcall = new_mcall2;
-
-	}
-
-	//Doing old analysis
-
-	if( mcall.size() == first_mcall.size() ){
-		for ( int i = 0; i < mcall.size(); i++)
-		{
-			if( mcall[i] != first_mcall[i]){
-				is_consistent=false;
-				break;
-			}
-		}
-	}else{
-		is_consistent = false;
-	}
+  bool is_consistent = true;
+  if(filter==true){
+    std::vector<std::string> new_mcall;
 
 
-	return is_consistent;
+    //new analysis which filters on types
+
+    if(SgProject::get_verbose() >= 1)
+      std::cout << "mcall:       ";
+    for ( std::vector<std::string>::iterator  i = mcall.begin(); i != mcall.end(); ++i)
+    {
+      std::string currentString( *i ); 
+
+      if( (is_type(currentString) == true ) 
+          ||(random_filtered_node(currentString) == true ) ){
+
+      }else{
+        if(SgProject::get_verbose() >= 1)
+          std::cout << *i << " ";
+
+        new_mcall.push_back(*i);
+      }
+
+    }
+
+    mcall = new_mcall;
+
+    new_mcall.clear();
+
+    std::vector<std::string> new_mcall2;
+
+    if(SgProject::get_verbose() >= 1){
+      std::cout << std::endl;
+      std::cout << "first_mcall: ";
+    }
+    for ( std::vector<std::string>::iterator  i = first_mcall.begin(); i != first_mcall.end(); ++i)
+    {
+
+      std::string currentString( *i ); 
+      if( (is_type(currentString) == true ) 
+          ||(random_filtered_node(currentString) == true ) ){
+      }else{
+        if(SgProject::get_verbose() >= 1)
+          std::cout << *i << " ";
+
+        new_mcall2.push_back(*i);
+
+      }
+
+    }
+    if(SgProject::get_verbose() >= 1)
+      std::cout << std::endl;
+
+    first_mcall = new_mcall2;
+
+  }
+
+  //Doing old analysis
+
+  if( mcall.size() == first_mcall.size() ){
+    for ( int i = 0; i < mcall.size(); i++)
+    {
+      if( mcall[i] != first_mcall[i]){
+        is_consistent=false;
+        break;
+      }
+    }
+  }else{
+    is_consistent = false;
+  }
+
+
+  return is_consistent;
 };
 
 bool compare_macro_tokenlists(std::vector<char*> mcall, std::vector<char*> first_mcall, bool macro_def_printed, bool filter){
@@ -871,95 +880,105 @@ bool compare_macro_tokenlists(std::vector<char*> mcall, std::vector<char*> first
 
 void compare_macro_tokenlists(vector<macro_def_t*>& macdefs, vector<pair<macro_def_t*, vector<macro_call_t> > >& maccalls)
 {
-	/* Andreas: you can put the bug detection alg. here. */
+  /* Andreas: you can put the bug detection alg. here. */
 
-	/*	cout << "****** MAC DEFs *********" << endl;
-		for (vector<macro_def_t*>::const_iterator itr=macdefs.begin(); itr!=macdefs.end(); itr++)
-		output_macdef(cout, **itr);
-		cout << "****** MAC Calls ********" << endl;*/
+  /*	cout << "****** MAC DEFs *********" << endl;
+        for (vector<macro_def_t*>::const_iterator itr=macdefs.begin(); itr!=macdefs.end(); itr++)
+        output_macdef(cout, **itr);
+        cout << "****** MAC Calls ********" << endl;*/
 
-	int number_of_matches = 0;
-	int number_of_inconsistencies = 0;
+  int number_of_matches = 0;
+  int number_of_inconsistencies = 0;
 
-	for ( vector<pair<macro_def_t*, vector<macro_call_t> > >::const_iterator itr=maccalls.begin(); itr!=maccalls.end(); itr++)
-	{
-		bool macro_def_printed = false;
-		for ( vector<macro_call_t>::const_iterator itr2=(*itr).second.begin(); itr2!=(*itr).second.end(); itr2++)
-		{
+  for ( vector<pair<macro_def_t*, vector<macro_call_t> > >::const_iterator itr=maccalls.begin(); itr!=maccalls.end(); itr++)
+  {
+    bool macro_def_printed = false;
+    for ( vector<macro_call_t>::const_iterator itr2=(*itr).second.begin(); itr2!=(*itr).second.end(); itr2++)
+    {
 
-		//output_maccall(cout, *itr2);
-			macro_call_t mcall = *itr2;
-			macro_call_t first_mcall = itr->second[0];
-
-
-
-			if(  (compare_macro_tokenlists(mcall.tokenlist, first_mcall.tokenlist, true, true) == false )  &&
-					(mcall.tokenlist.size()>1) &&
-					(mcall.unparsed_statements != first_mcall.unparsed_statements ) &&
-					//Filter out macro calls from the system header files
-					( strncmp(mcall.filename,"/usr/include",12) != 0) &&
-					( strncmp(first_mcall.filename,"/usr/include",12) != 0)
-
-			  ){
-
-			if(macro_def_printed == false){
-				cout << "NEW MACRO DEF at " << hex << (*itr).first << ": " << dec; 
-				output_macdef(cout, *((*itr).first)); cout << endl;
-				macro_def_printed = true;
-			}
+      //output_maccall(cout, *itr2);
+      macro_call_t mcall = *itr2;
+      macro_call_t first_mcall = itr->second[0];
 
 
-	
 
-				output_maccall(cout, mcall);
-				std::cout << "Is inconsistent with:" << std::endl;
-				output_maccall(cout, first_mcall);
+      if(  (compare_macro_tokenlists(mcall.tokenlist, first_mcall.tokenlist, true, true) == false )  &&
+          (mcall.tokenlist.size()>1) &&
+          (mcall.unparsed_statements != first_mcall.unparsed_statements ) &&
+          //Filter out macro calls from the system header files
+          ( strncmp(mcall.filename,"/usr/include",12) != 0) &&
+          ( strncmp(first_mcall.filename,"/usr/include",12) != 0)
 
+        ){
 
-				if( compare_macro_tokenlists(mcall.tokenlist, first_mcall.tokenlist, true, true)  ==true){
-					std::cout << "MATCH when types are filtered out\n";
-				}else{
-					std::cout << "NO MATCH when types are filtered out\n";
-				}
-                                std::cout << std::endl;
-				number_of_inconsistencies+=1;
-			}else{
-
-			if(macro_def_printed == false){
-				cout << "NEW MACRO DEF at " << hex << (*itr).first << ": " << dec; 
-				output_macdef(cout, *((*itr).first)); cout << endl;
-				macro_def_printed = true;
-			}
-
-                std::cout << std::endl; 
-				output_maccall(cout, mcall);
-				std::cout << "Is consistent with:" << std::endl;
-				output_maccall(cout, first_mcall);
-                std::cout << std::endl; 
-
-				number_of_matches+=1;
-			}
+        if(macro_def_printed == false){
+          if(SgProject::get_verbose() >= 1){
+            cout << "NEW MACRO DEF at " << hex << (*itr).first << ": " << dec; 
+            output_macdef(cout, *((*itr).first)); cout << endl;
+            macro_def_printed = true;
+          }
+        }
 
 
-		}
-	}
+
+        if(SgProject::get_verbose() >= 1){
+          output_maccall(cout, mcall);
+          std::cout << "Is inconsistent with:" << std::endl;
+          output_maccall(cout, first_mcall);
+        }
 
 
-	std::cout << " NUMBER OF MATCHES: " << number_of_matches << " NUMBER OF INCONSISTENCIES: " << number_of_inconsistencies << endl;
+        if( compare_macro_tokenlists(mcall.tokenlist, first_mcall.tokenlist, true, true)  ==true){
+          std::cout << "MATCH when types are filtered out\n";
+        }else{
+          std::cout << "NO MATCH when types are filtered out\n";
+        }
+        std::cout << std::endl;
+        number_of_inconsistencies+=1;
+      }else{
+
+        if(macro_def_printed == false){
+          cout << "NEW MACRO DEF at " << hex << (*itr).first << ": " << dec; 
+          output_macdef(cout, *((*itr).first)); cout << endl;
+          macro_def_printed = true;
+        }
+
+
+        std::cout << std::endl; 
+        output_maccall(cout, mcall);
+        std::cout << "Is consistent with:" << std::endl;
+        output_maccall(cout, first_mcall);
+        std::cout << std::endl; 
+
+        number_of_matches+=1;
+      }
+
+
+    }
+  }
+
+
+  std::cout << " NUMBER OF MATCHES: " << number_of_matches << " NUMBER OF INCONSISTENCIES: " << number_of_inconsistencies << endl;
 }
+
 
 void output_macdef(ostream & out, const macro_def_t & mdef)
 {
+  if(SgProject::get_verbose() >= 1){
+
 	out << "ID:" << mdef.id << " FILE:" << mdef.filename << " LINE:" << mdef.lineno << " COL:" << mdef.colno
 		<< " MAC:" << mdef.name << " DEF:" << mdef.def << endl;
+  }
 }
 void output_maccall(ostream & out, const macro_call_t & mcall)
 {
-	out << "ID:" << mcall.id << " FILE:" << mcall.filename << " LINE:" << mcall.lineno << " COL:" << mcall.colno
-		<< " MACDEF:" << mcall.macdef_id << " \nTOKENS:";
-	for (vector<char *>::const_iterator itr=mcall.tokenlist.begin(); itr!=mcall.tokenlist.end(); ++itr)
-		out << (*itr) << ",";
-	out << " \nEXPANDED:" << mcall.expanded << " \nUNPARSED:" << mcall.unparsed_statements << endl;
+  if(SgProject::get_verbose() >= 1){
+    out << "ID:" << mcall.id << " FILE:" << mcall.filename << " LINE:" << mcall.lineno << " COL:" << mcall.colno
+      << " MACDEF:" << mcall.macdef_id << " \nTOKENS:";
+    for (vector<char *>::const_iterator itr=mcall.tokenlist.begin(); itr!=mcall.tokenlist.end(); ++itr)
+      out << (*itr) << ",";
+    out << " \nEXPANDED:" << mcall.expanded << " \nUNPARSED:" << mcall.unparsed_statements << endl;
+  }
 }
 
 char * get_varchar_in_macro_def(macro_def_id_t mid, const char * field);

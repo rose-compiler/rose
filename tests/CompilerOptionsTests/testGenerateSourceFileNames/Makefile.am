@@ -5,7 +5,7 @@ TEST_TRANSLATOR = $(top_builddir)/tests/testTranslator $(ROSE_FLAGS)
 # This rule is run after automake's internal check rule (which we don't want to use)
 check-local:
 	@echo "#################################################"
-	@echo "           Test use of GNU options ..."
+	@echo "    Test ROSEs parsing of file names from        "
 	@echo "#################################################"
 	@echo "** The 'roseTranslator -c file -o obj' should compile and not disassemble obj **"
 	$(CXX)  -c $(srcdir)/test1.C -o test1.o 
@@ -60,7 +60,7 @@ check-local:
 	$(MAKE) clean
 
 	@echo "*****************************************************************************************************************"
-	@echo "****** ROSE/tests/CompilerOptionTests/testGnuOptions: make check rule complete (terminated normally) ******"
+	@echo "*  ROSE/tests/CompilerOptionTests/testGenerateSourceFileNames: make check rule complete (terminated normally)   *"
 	@echo "*****************************************************************************************************************"
 
 
