@@ -230,11 +230,35 @@ TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, Synth
       /* analysis result */
       ((PrologCompTerm*)t)->addSubterm(getAnalysisResult(n));
     } else {
-      /* empty analysis result */
+      /* default: empty analysis result */
       PrologCompTerm* ar = new PrologCompTerm("analysis_info");
-   // ar->addSubterm(new PrologAtom("null"));
-   // ar->addSubterm(new PrologAtom("null"));
-      ar->addSubterm(new PrologList());
+      PrologList *results = new PrologList();
+
+      /* variable IDs, if appropriate */
+#if HAVE_SATIRE_ICFG
+      SgVariableSymbol *sym = NULL;
+      if (SgVarRefExp *v = isSgVarRefExp(astNode))
+        sym = v->get_symbol();
+      if (SgInitializedName *in = isSgInitializedName(astNode))
+        sym = isSgVariableSymbol(in->get_symbol_from_symbol_table());
+      if (sym != NULL) {
+        CFG *icfg = get_global_cfg();
+        if (icfg != NULL && !icfg->varsyms_ids.empty()) {
+          PrologCompTerm *varid_annot = new PrologCompTerm("variable_id");
+          std::map<SgVariableSymbol *, unsigned long>::iterator s;
+          s = icfg->varsyms_ids.find(sym);
+          if (s != icfg->varsyms_ids.end()) {
+            unsigned long id = s->second;
+            varid_annot->addSubterm(new PrologInt(id));
+          } else {
+            varid_annot->addSubterm(new PrologAtom("null"));
+          }
+          results->addFirstElement(varid_annot);
+        }
+      }
+#endif
+
+      ar->addSubterm(results);
       ((PrologCompTerm*)t)->addSubterm(ar);
     }
 
