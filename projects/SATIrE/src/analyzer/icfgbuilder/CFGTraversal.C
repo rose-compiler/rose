@@ -73,7 +73,7 @@ CFGTraversal::processProcedureArgBlocks()
 #else
           ExprTransformer et(node_id, (*i)->procnum, expnum, cfg, NULL,
                   current_statement);
-          et.labelAndTransformExpression(new_expr);
+          et.labelAndTransformExpression(new_expr, aa->get_rhs());
 #endif
           node_id = et.get_node_id();
           expnum = et.get_expnum();
@@ -1274,7 +1274,8 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 #else
         ExprTransformer et(node_id, proc->procnum, expnum, cfg, if_block,
                 cond);
-        new_expr = et.labelAndTransformExpression(new_expr);
+        new_expr = et.labelAndTransformExpression(new_expr,
+                                                  cond->get_expression());
 #endif
         node_id = et.get_node_id();
         expnum = et.get_expnum();
@@ -1358,7 +1359,8 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 #else
             ExprTransformer et(node_id, proc->procnum, expnum, cfg, init_block,
                     current_statement);
-            et.labelAndTransformExpression(new_expr);
+            et.labelAndTransformExpression(new_expr,
+                                           init_expr->get_expression());
 #endif
             node_id = et.get_node_id();
             expnum = et.get_expnum();
@@ -1405,7 +1407,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 #else
               ExprTransformer et(node_id, proc->procnum, expnum, cfg,
                       init_block, current_statement);
-              new_expr = et.labelAndTransformExpression(new_expr);
+              new_expr = et.labelAndTransformExpression(new_expr, init);
 #endif
               node_id = et.get_node_id();
               expnum = et.get_expnum();
@@ -1459,7 +1461,8 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 #else
         ExprTransformer et(node_id, proc->procnum, expnum, cfg, for_block,
                 cond);
-        new_expr = et.labelAndTransformExpression(new_expr);
+        new_expr = et.labelAndTransformExpression(new_expr,
+                                                  cond->get_expression());
 #endif
         node_id = et.get_node_id();
         expnum = et.get_expnum();
@@ -1502,7 +1505,8 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 #else
         ExprTransformer et_inc(node_id, proc->procnum, expnum, cfg, incr_block,
                 current_statement);
-        new_expr_inc = et_inc.labelAndTransformExpression(new_expr_inc);
+        new_expr_inc = et_inc.labelAndTransformExpression(new_expr_inc,
+                                                      fors->get_increment());
 #endif
         node_id = et_inc.get_node_id();
         expnum = et_inc.get_expnum();
@@ -1580,7 +1584,8 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 #else
     ExprTransformer et(node_id, proc->procnum, expnum, cfg, while_block,
             cond);
-    new_expr = et.labelAndTransformExpression(new_expr);
+    new_expr = et.labelAndTransformExpression(new_expr,
+                                              cond->get_expression());
 #endif
 	node_id = et.get_node_id();
 	expnum = et.get_expnum();
@@ -1638,7 +1643,8 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 #else
     ExprTransformer et(node_id, proc->procnum, expnum, cfg, dowhile_block,
             cond);
-    new_expr = et.labelAndTransformExpression(new_expr);
+    new_expr = et.labelAndTransformExpression(new_expr,
+                                              cond->get_expression());
 #endif
 	node_id = et.get_node_id();
 	expnum = et.get_expnum();
@@ -1755,7 +1761,8 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 #else
     ExprTransformer et(node_id, proc->procnum, expnum, cfg, switch_block,
             item_sel);
-    new_expr = et.labelAndTransformExpression(new_expr);
+    new_expr = et.labelAndTransformExpression(new_expr,
+                    isSgExprStatement(item_sel)->get_expression());
 #endif
 	node_id = et.get_node_id();
 	expnum = et.get_expnum();
@@ -1930,7 +1937,8 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 #else
     ExprTransformer et(node_id, proc->procnum, expnum, cfg, new_block,
             current_statement);
-    new_expr = et.labelAndTransformExpression(new_expr);
+    new_expr = et.labelAndTransformExpression(new_expr,
+                                              returns->get_expression());
 #endif
 	node_id = et.get_node_id();
 	expnum = et.get_expnum();
@@ -1997,10 +2005,17 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
    // cases. Even "normal" initializers are now wrapped in a
    // SgAssignInitializer node! Analysis specifications must be aware.
       SgExpression *new_expr = NULL;
+      SgExpression *orig_expr = NULL;
       if (agg_init)
-          new_expr = isSgExpression(Ir::deepCopy(agg_init));
+      {
+          orig_expr = agg_init;
+          new_expr = isSgExpression(Ir::deepCopy(orig_expr));
+      }
       else if (initializer)
-          new_expr = isSgExpression(Ir::deepCopy(initializer));
+      {
+          orig_expr = initializer;
+          new_expr = isSgExpression(Ir::deepCopy(orig_expr));
+      }
 
 	  if (new_expr) {
 
@@ -2016,7 +2031,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 #else
           ExprTransformer et(node_id, proc->procnum, expnum, cfg, new_block,
                   current_statement);
-          new_expr = et.labelAndTransformExpression(new_expr);
+          new_expr = et.labelAndTransformExpression(new_expr, orig_expr);
 #endif
           node_id = et.get_node_id();
           expnum = et.get_expnum();
@@ -2055,7 +2070,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 #else
         ExprTransformer et(node_id, proc->procnum, expnum, cfg, after,
                 current_statement);
-        new_expr = et.labelAndTransformExpression(new_expr);
+        new_expr = et.labelAndTransformExpression(new_expr, constr_init);
 #endif
 	    node_id = et.get_node_id();
 	    expnum = et.get_expnum();
@@ -2200,7 +2215,8 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 #else
       ExprTransformer et(node_id, proc->procnum, expnum, cfg, new_block,
               current_statement);
-      new_expr = et.labelAndTransformExpression(new_expr);
+      new_expr = et.labelAndTransformExpression(new_expr,
+                                                exprs->get_expression());
 #endif
 	  node_id = et.get_node_id();
 	  expnum = et.get_expnum();

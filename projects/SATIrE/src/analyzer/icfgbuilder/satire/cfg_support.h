@@ -465,6 +465,15 @@ public:
     SgExpression *call_target;
 };
 
+// GB (2009-03-11): Annotating call sites (call expressions) in the AST with
+// the corresponding ICFG call block.
+class CallSiteAttribute: public AstAttribute
+{
+public:
+    CallSiteAttribute(BasicBlock *bb): bb(bb) { }
+    BasicBlock *bb;
+};
+
 // GB (2007-10-23): Added members for the expression that refers to the
 // external function and for its parameter list.
 // GB (2008-04-23): Added the ExternalReturn class.

@@ -258,6 +258,20 @@ TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, Synth
       }
 #endif
 
+      /* function call sites, if appropriate */
+#if HAVE_SATIRE_ICFG
+      if (SgFunctionCallExp *fc = isSgFunctionCallExp(astNode)) {
+        CFG *icfg = get_global_cfg();
+        if (icfg != NULL) {
+          CallSiteAttribute *csa = (CallSiteAttribute *)
+                fc->getAttribute("SATIrE ICFG call block");
+          PrologCompTerm *callsite_annot = new PrologCompTerm("call_site");
+          callsite_annot->addSubterm(new PrologInt(csa->bb->id));
+          results->addFirstElement(callsite_annot);
+        }
+      }
+#endif
+
       ar->addSubterm(results);
       ((PrologCompTerm*)t)->addSubterm(ar);
     }

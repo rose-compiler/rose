@@ -30,7 +30,8 @@ public:
  // into one operation.
     ExprTransformer(int node_id, int procnum, int expnum, CFG *cfg,
             BasicBlock *after, SgStatement *stmt);
-    SgExpression *labelAndTransformExpression(SgExpression *expr);
+    SgExpression *labelAndTransformExpression(SgExpression *expr,
+                                              SgExpression *original_expr);
 
 protected:
     void visit(SgNode *);
@@ -58,6 +59,8 @@ private:
     std::vector<std::string> *find_destructor_names(SgClassType *);
     std::vector<std::string> *find_destructor_this_names(SgClassType *);
     bool definitelyNotTheSameType(SgType*, SgType*) const;
+
+    std::vector<BasicBlock *> callSites;
 };
 
 // GB (2008-03-10): Added this function as wrapper around ROSE's
@@ -66,5 +69,18 @@ private:
 // implemented in those classes. This wrapper does nothing in such cases and
 // simply calls replaceChild otherwise.
 void satireReplaceChild(SgNode *parent, SgNode *from, SgNode *to);
+
+class CallSiteAnnotator: public AstSimpleProcessing
+{
+public:
+    CallSiteAnnotator(std::vector<BasicBlock *> &callSites);
+
+protected:
+    void visit(SgNode *);
+
+private:
+    std::vector<BasicBlock *> &callSites;
+    std::vector<BasicBlock *>::iterator callSite;
+};
 
 #endif

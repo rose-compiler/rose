@@ -33,7 +33,8 @@ ExprTransformer::ExprTransformer(int node_id, int procnum, int expnum,
 }
 
 SgExpression *
-ExprTransformer::labelAndTransformExpression(SgExpression *expr)
+ExprTransformer::labelAndTransformExpression(SgExpression *expr,
+                                             SgExpression *orig_expr)
 {
     int original_node_id = node_id;
  // Label expression
@@ -69,6 +70,10 @@ ExprTransformer::labelAndTransformExpression(SgExpression *expr)
         expr->addNewAttribute("SATIrE: call target",
                               new CallAttribute(c->call_target));
     }
+
+    CallSiteAnnotator callSiteAnnotator(callSites);
+    callSiteAnnotator.traverse(orig_expr, preorder);
+
     return expr;
 }
 
@@ -252,6 +257,7 @@ void ExprTransformer::visit(SgNode *node)
             call_block = new CallBlock(node_id++, CALL, procnum,
                     new std::vector<SgVariableSymbol *>()
                     /*entries->front()->paramlist*/, *name);
+            callSites.push_back(call_block);
             return_block = new CallBlock(node_id++, RETURN,
                     procnum, new std::vector<SgVariableSymbol *>()
                     /*entries->front()->paramlist*/,
@@ -296,6 +302,7 @@ void ExprTransformer::visit(SgNode *node)
                 = new CallBlock(node_id++, CALL, procnum,
                         new std::vector<SgVariableSymbol *>(), "<unknown function>",
                         /* add call stmt = */ false);
+            callSites.push_back(ext_call_block);
             cfg->nodes.push_back(ext_call_block);
             cfg->calls.push_back(ext_call_block);
             ext_call_block->call_target = call_target_expr;
@@ -709,6 +716,7 @@ void ExprTransformer::visit(SgNode *node)
                               new std::vector<SgVariableSymbol *>(
                                   *blocks.front()->get_params()),
                               name);
+          callSites.push_back(call_block);
           return_block
               = new CallBlock(node_id++, RETURN, procnum,
                               new std::vector<SgVariableSymbol *>(
@@ -849,6 +857,7 @@ void ExprTransformer::visit(SgNode *node)
             std::string destructor_name = *destr_name++;
             CallBlock *call_block = new CallBlock(node_id++, CALL,
                           procnum, NULL, destructor_name);
+            callSites.push_back(call_block);
             CallBlock *return_block = new CallBlock(node_id++, RETURN,
                             procnum, NULL, destructor_name);
             cfg->nodes.push_back(call_block);
@@ -1552,4 +1561,20 @@ void satireReplaceChild(SgNode *parent, SgNode *from, SgNode *to)
     }
     else
         replaceChild(parent, from, to);
+}
+
+CallSiteAnnotator::CallSiteAnnotator(std::vector<BasicBlock *> &callSites)
+  : callSites(callSites), callSite(callSites.begin())
+{
+}
+
+void
+CallSiteAnnotator::visit(SgNode *node)
+{
+    if (SgFunctionCallExp *call = isSgFunctionCallExp(node))
+    {
+        CallSiteAttribute *attribute = new CallSiteAttribute(*callSite);
+        call->addNewAttribute("SATIrE ICFG call block", attribute);
+        ++callSite;
+    }
 }
