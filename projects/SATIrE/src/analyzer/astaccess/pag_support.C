@@ -268,6 +268,14 @@ extern "C" snum kfg_get_position_attribute__position(KFG, KFG_NODE, int, int p)
 {
     return int_to_snum(p);
 }
+/* context objects */
+#include "o_ContextInfo.h"
+extern "C" void *kfg_get_position_attribute__context(KFG cfg, KFG_NODE bb,
+                                                     int, int position)
+{
+    ContextInfo c(kfg_procnumnode(cfg, bb), position);
+    return o_ContextInfo_duplicate(&c);
+}
 
 /* external support functions */
 #include "bool.h"

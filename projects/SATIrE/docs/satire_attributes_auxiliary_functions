@@ -51,6 +51,10 @@ position: snum #
     identifier for the interprocedural analysis context at the current point
     in the analysis.
 
+context: ContextInfo #
+    A ContextInfo object identifying the current interprocedural analysis
+    context.
+
 
 SATIrE Types
 ============
@@ -96,6 +100,11 @@ Location
     i.e., do not call any external functions. Casting and structures are
     supported. Pointer arithmetic is supported as long as each pointer stays
     within one memory region (array).
+
+ContextInfo
+    An abstract object representing the current interprocedural analysis
+    context. This is meant mainly to be passed to support functions that can
+    provide context-sensitive information.
 
 Comparisons for equality and total ordering relations for these types are
 provided by SATIrE.

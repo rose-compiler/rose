@@ -12,6 +12,7 @@ label: snum #
 
 POSITION
 position: snum #
+context: ContextInfo #
 
 
 // ---- dummy problem declaration ----

@@ -559,6 +559,10 @@ the \texttt{.optla} file.
     information: The pair (procnum, position) is a unique (opaque)
     identifier for the interprocedural analysis context at the current point
     in the analysis.
+
+\ttitem{context: ContextInfo \#}
+    A ContextInfo object identifying the current interprocedural analysis
+    context.
 \end{description}
 
 \subsection{Types}
@@ -605,6 +609,11 @@ The following types are provided as opaque identifiers for important data:
 
     See Section~\ref{sec:analysis_pointsto} for more information on SATIrE's
     points-to analysis.
+
+\ttitem{ContextInfo}
+    An abstract object representing the current interprocedural analysis
+    context. This is meant mainly to be passed to support functions that can
+    provide context-sensitive information.
 \end{description}
 
 Comparisons for equality and total ordering relations for these types are
