@@ -24,7 +24,8 @@ INCLUDES += -I$(ROSE_INCLUDE_DIR) \
 	-I$(top_srcdir)/src/analyzer/provided/pointsto/satire \
 	-I$(top_srcdir)/src/analyzer/support/satire \
 	-I$(top_srcdir)/src/analyzer/annotation/satire \
-	-I$(top_srcdir)/src/termite/satire
+	-I$(top_srcdir)/src/termite/satire \
+	-I$(top_builddir)/src/termite/satire
 
 noinst_LTLIBRARIES = libIcfgBuilder.la
 nobase_include_HEADERS = \
