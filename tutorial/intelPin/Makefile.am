@@ -71,7 +71,7 @@ graphTrace.so: graphTrace.o
 
 # Test example program generate a graph of the execution trace of a binary
 testGraphTrace: graphTrace.so input_testcode
-	$(INTEL_PIN_PATH)/pin -slow_asserts -t graphTrace.so -- input_testcode
+	$(INTEL_PIN_PATH)/pin -slow_asserts -t graphTrace.so -- ./input_testcode
 
 
 # **************************************************************************
@@ -81,7 +81,7 @@ imageload.so: imageload.o
 
 # Test example program generate a graph of the execution trace of a binary
 testImageload: imageload.so input_testcode
-	$(INTEL_PIN_PATH)/pin -slow_asserts -t imageload.so -- input_testcode
+	$(INTEL_PIN_PATH)/pin -slow_asserts -t imageload.so -- ./input_testcode
 
 
 # **************************************************************************
@@ -91,7 +91,7 @@ dynamicBinaryInfo.so: dynamicBinaryInfo.o
 
 # Test example program generates information about the binary (from section data for main program and each shared library).
 testDynamicBinaryInfo: dynamicBinaryInfo.so input_testcode
-	$(INTEL_PIN_PATH)/pin -slow_asserts -t dynamicBinaryInfo.so -- input_testcode
+	$(INTEL_PIN_PATH)/pin -slow_asserts -t dynamicBinaryInfo.so -- ./input_testcode
 
 # **************************************************************************
 # This builds an Intel Pin tool (for testing the command line handling with ROSE)
@@ -99,7 +99,7 @@ commandlineHandling.so: commandlineHandling.o
 	g++ -g -shared -Wl,-Bsymbolic -Wl,--version-script=$(INTEL_PIN_PATH)/source/include/pintool.ver -o commandlineHandling.so commandlineHandling.o $(NON_LIBTOOL_RPATH)
 
 testCommandlineHandling: input_testcode commandlineHandling.so
-	$(INTEL_PIN_PATH)/pin -slow_asserts -t commandlineHandling.so -- input_testcode
+	$(INTEL_PIN_PATH)/pin -slow_asserts -t commandlineHandling.so -- ./input_testcode
 
 
 # **************************************************************************
@@ -112,7 +112,7 @@ dynamicStaticBinaryAnalysis.so: dynamicStaticBinaryAnalysis.o
 # This runs the Intel Pin dynamic instumentation on "input_testcode" using the ROSE static analysis tool
 # In this case the dynamic instrumentation can call static analysis.
 testDynamicStaticBinaryAnalysis: input_testcode dynamicStaticBinaryAnalysis.so
-	$(INTEL_PIN_PATH)/pin -slow_asserts -t dynamicStaticBinaryAnalysis.so -- input_testcode
+	$(INTEL_PIN_PATH)/pin -slow_asserts -t dynamicStaticBinaryAnalysis.so -- ./input_testcode
 
 
 # **************************************************************************
@@ -125,7 +125,7 @@ staticDynamicBinaryAnalysis.so: staticDynamicBinaryAnalysis.o
 # This runs the Intel Pin dynamic instumentation on "input_testcode" using the ROSE static analysis tool
 # In this case the dynamic instrumentation can call static analysis.
 testStaticDynamicBinaryAnalysis: input_testcode staticDynamicBinaryAnalysis.so
-	$(INTEL_PIN_PATH)/pin -slow_asserts -t staticDynamicBinaryAnalysis.so -- input_testcode
+	$(INTEL_PIN_PATH)/pin -slow_asserts -t staticDynamicBinaryAnalysis.so -- ./input_testcode
 
 
 # **************************************************************************
