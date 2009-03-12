@@ -605,6 +605,10 @@ buildDefiningFunctionDeclaration (const std::string & name, SgType* return_type,
 SgFunctionDeclaration *
 buildDefiningFunctionDeclaration (const char* name, SgType* return_type, SgFunctionParameterList * parlist, SgScopeStatement* scope=NULL);
 
+//! Build a Fortran subroutine or procedure
+SgProcedureHeaderStatement* 
+buildProcedureHeaderStatement(const char* name, SgType* return_type, SgFunctionParameterList * parlist, SgProcedureHeaderStatement::subprogram_kind_enum, SgScopeStatement* scope=NULL);
+
 //! Build a function call statement
 SgExprStatement*
 buildFunctionCallStmt(const SgName& name, SgType* return_type, SgExprListExp* parameters, SgScopeStatement* scope=NULL);

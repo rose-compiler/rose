@@ -439,6 +439,11 @@ template <class actualFunction>
 actualFunction*
 SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope)
    {
+     if (SageInterface::is_Fortran_language() == true)
+     { // We don't expect this is being called for Fortran
+       cerr<<"Building nondefining function in Fortran is not allowed!"<<endl;
+       ROSE_ASSERT(false);
+     }
   // argument verification
      if (scope == NULL)
           scope = SageBuilder::topScopeStack();
@@ -823,6 +828,27 @@ SageBuilder::buildDefiningFunctionDeclaration \
 {
   SgFunctionDeclaration * func= buildDefiningFunctionDeclaration_T<SgFunctionDeclaration> \
  (name,return_type,paralist,scope);
+  return func;
+}
+
+
+//! Build a Fortran subroutine or procedure
+SgProcedureHeaderStatement*
+SageBuilder::buildProcedureHeaderStatement(const char* name, SgType* return_type, SgFunctionParameterList * paralist, SgProcedureHeaderStatement::subprogram_kind_enum kind, SgScopeStatement* scope/*=NULL*/)
+{
+  if (kind == SgProcedureHeaderStatement::e_subroutine_subprogram_kind)
+  {
+    ROSE_ASSERT(return_type == buildVoidType());
+  }
+   else if (kind != SgProcedureHeaderStatement::e_function_subprogram_kind)
+   {
+     cerr<<"unhandled subprogram kind for Fortran function unit:"<<kind<<endl;
+     ROSE_ASSERT(false);
+   }
+
+   SgProcedureHeaderStatement* func= buildDefiningFunctionDeclaration_T<SgProcedureHeaderStatement> (name,return_type,paralist,scope);
+  ROSE_ASSERT(func != NULL);
+   func->set_subprogram_kind(kind) ;
   return func;
 }
 
