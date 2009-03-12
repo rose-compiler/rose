@@ -40,18 +40,25 @@ SgFunctionDeclaration *
 createFuncSkeleton (const string& name, SgType* ret_type,
                     SgFunctionParameterList* params, SgScopeStatement* scope)
    {
+     ROSE_ASSERT(scope != NULL);
+     ROSE_ASSERT(isSgGlobal(scope)!=NULL);
+#if 0     
      SgFunctionType *func_type = new SgFunctionType (ret_type, false);
      ROSE_ASSERT (func_type);
-
+#endif
      SgFunctionDeclaration* func;
      SgProcedureHeaderStatement* fortranRoutine;
   // Liao 12/13/2007, generate SgProcedureHeaderStatement for Fortran code
      if (SageInterface::is_Fortran_language()) 
         {
+#if 0
           fortranRoutine = new SgProcedureHeaderStatement(ASTtools::newFileInfo (), name, func_type);
           fortranRoutine->set_subprogram_kind(SgProcedureHeaderStatement::e_subroutine_subprogram_kind);
 
           func = isSgFunctionDeclaration(fortranRoutine);   
+#endif
+          fortranRoutine = SageBuilder::buildProcedureHeaderStatement(name.c_str(),ret_type, params, SgProcedureHeaderStatement::e_subroutine_subprogram_kind,scope);
+          func = isSgFunctionDeclaration(fortranRoutine);  
         }
        else
         {
@@ -60,8 +67,9 @@ createFuncSkeleton (const string& name, SgType* ret_type,
           func = SageBuilder::buildDefiningFunctionDeclaration(name,ret_type,params,scope);
         }
 
-     ROSE_ASSERT (func);
+     ROSE_ASSERT (func != NULL);
 
+#if 0
   // This code is placed in a conditional because the Fortran case (above) does not use the SagBuilder 
   // functions.  Once it does then this should not be required.  I will debug the Fortran case with 
   // Liao after we get the C/C++ case finished.
@@ -82,7 +90,14 @@ createFuncSkeleton (const string& name, SgType* ret_type,
           func->set_parameterList (params);
           params->set_parent (func);
         }
+#endif        
 
+   SgFunctionSymbol* func_symbol = scope->lookup_function_symbol(func->get_name());
+   ROSE_ASSERT(func_symbol != NULL);
+   if (Outliner::enable_debug)
+   {
+     printf("Found function symbol in %p for function:%s\n",scope,func->get_name().getString().c_str());
+   }
      return func;
    }
 
@@ -743,6 +758,7 @@ Outliner::Transform::generateFunction ( SgBasicBlock* s,
                                           SgScopeStatement* scope)
 {
   ROSE_ASSERT (s&&scope);
+  ROSE_ASSERT(isSgGlobal(scope));
 
    // Collect read only variables of the outlining target
     std::set<SgInitializedName*> readOnlyVars;
@@ -857,7 +873,8 @@ Outliner::Transform::generateFunction ( SgBasicBlock* s,
   // Retest this...
      ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
   // printf ("After resetting the parent: func->get_definition() = %p func->get_definition()->get_body()->get_parent() = %p \n",func->get_definition(),func->get_definition()->get_body()->get_parent());
-
+  //
+     ROSE_ASSERT(scope->lookup_function_symbol(func->get_name()));
      return func;
    }
 

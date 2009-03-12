@@ -2263,6 +2263,8 @@ HEADER_FORTRAN_DO_START
           virtual unsigned int cfgFindNextChildIndex(SgNode* n);
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          // Added for uniform support of mangled names, Liao, 3/11/2009
+          virtual SgName get_mangled_name() const;
 HEADER_FORTRAN_DO_END
 
 HEADER_FORTRAN_NONBLOCKED_DO_START
@@ -13063,6 +13065,13 @@ SOURCE_FORTRAN_DO_STATEMENT_START
 void
 SgFortranDo::post_construction_initialization()
    {
+   }
+
+// Liao (3/11/2009): Added to provide uniform support of mangle names for all scopes
+SgName
+SgFortranDo::get_mangled_name(void) const
+   {
+     return SgName ("");
    }
 
 SOURCE_FORTRAN_DO_STATEMENT_END

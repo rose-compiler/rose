@@ -145,9 +145,7 @@ include $(top_srcdir)/config/QMTest_makefile.inc
 
 check-local: ../outline ../outlineSelection
 	@echo "Tests for outlining Fortran."
-#	@$(MAKE) $(TEST_F77_Objects)
-	echo "TEMPORARILY COMMENTED OUT FORTRAN TESTS OF OUTLINING!"
-#	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "***************************************************************************************************"
 	@echo "****** ROSE/tests/roseTests/astOutliningTests/fortranTests check rule complete (terminated normally) ******"
 	@echo "***************************************************************************************************"
@@ -170,6 +168,6 @@ EXTRA_DIST = $(ALL_F90_TESTCODES) \
 
 
 clean-local:
-	rm -f rose_* *.o *.dot *.out *.mod core* *.s *.dot *.pdf *.log *.ps *~ *.rmod
+	rm -f rose_* *.o *.dot *.out *.mod core* *.s *.dot *.pdf *.log *.ps *~ *.rmod *_copy_graph_old_nodes
 	rm -rf QMTest
 

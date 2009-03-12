@@ -1893,6 +1893,28 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                printf ("Handling a CPP directive in AST merge... node = %s \n",node->class_name().c_str());
                break;
              }
+#if 1             
+      //Liao 3/11/2009: cases for Fortran, not very sure if this is the right way
+      //TODO Need Dan to review this code.
+      // Copy the way of handling V_SgFunctionParameterList
+         case V_SgFormatItemList:
+           {
+             SgFormatItemPtrList itemlist = isSgFormatItemList(node)->get_format_item_list();
+             SgFormatItemPtrList::iterator i = itemlist.begin();
+             while (i!=itemlist.end())
+             {
+               nodeList.insert(*i);
+               addAssociatedNodes(*i,nodeList,markMemberNodesDefinedToBeDeleted);
+               i++;
+             }
+             break;
+           }
+         case V_SgFormatItem:
+         {
+           nodeList.insert(node);
+           break;
+           }
+#endif
 
   
 

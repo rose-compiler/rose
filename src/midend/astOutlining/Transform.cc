@@ -66,6 +66,7 @@ Outliner::Transform::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 //  printf ("In Outliner::Transform::outlineBlock() function name to build: func_name_str = %s \n",func_name_str.c_str());
   SgFunctionDeclaration* func = generateFunction (s, func_name_str, syms, pdSyms, glob_scope);
   ROSE_ASSERT (func != NULL);
+  ROSE_ASSERT(glob_scope->lookup_function_symbol(func->get_name()));
 
   // DQ (2/26/2009): At this point "s" has been reduced to an empty block.
      ROSE_ASSERT(s->get_statements().empty() == true);
@@ -90,7 +91,9 @@ Outliner::Transform::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 
   // DQ (2/16/2009): Added (with Liao) the target block which the outlined function will replace.
   // Insert the function and its prototype as necessary  
+     ROSE_ASSERT(glob_scope->lookup_function_symbol(func->get_name()));
      insert (func, glob_scope, func_orig, s); //Outliner::Transform::insert() 
+     ROSE_ASSERT(glob_scope->lookup_function_symbol(func->get_name()));
   // DQ (9/7/2007): Need to add function symbol to global scope!
   // printf ("Fixing up the symbol table in scope = %p = %s for function = %p = %s \n",glob_scope,glob_scope->class_name().c_str(),func,func->get_name().str());
 #if 0

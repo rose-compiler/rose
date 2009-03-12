@@ -74,7 +74,11 @@ Outliner::Transform::generateCall (SgFunctionDeclaration* out_func,
   SgGlobal* glob_scope = TransformationSupport::getGlobalScope(scope);
   ROSE_ASSERT(glob_scope != NULL);
   SgFunctionSymbol* func_symbol = glob_scope->lookup_function_symbol(out_func->get_name());
-  ROSE_ASSERT(func_symbol != NULL);
+  if (func_symbol == NULL)
+  {
+    printf("Failed to find a function symbol in %p for function %s\n", glob_scope, out_func->get_name().getString().c_str());
+    ROSE_ASSERT(func_symbol != NULL);
+  }
 #endif
 
   ROSE_ASSERT (func_symbol);

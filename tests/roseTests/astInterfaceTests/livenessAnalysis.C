@@ -16,11 +16,10 @@ int main(int argc, char * argv[])
 
   SgFunctionDeclaration* func = SageInterface::findMain(project);
   ROSE_ASSERT(func != NULL);
-
   SgBasicBlock* body = func->get_definition()->get_body();
 
-  SgStatement* stmt = SageInterface::getFirstStatement(body);
-  ROSE_ASSERT(stmt != NULL);
+   Rose_STL_Container<SgNode*> node_list = NodeQuery::querySubTree(body,V_SgForStatement);
+   SgForStatement* stmt = isSgForStatement(*(node_list.begin()));
 
   if (SageInterface::isCanonicalForLoop(stmt))
   {

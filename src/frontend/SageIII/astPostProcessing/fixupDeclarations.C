@@ -286,13 +286,13 @@ FixupDeclarations::visit (SgNode* node)
                     (isSgFunctionDeclaration(declaration->get_definingDeclaration()) != NULL && isSgTemplateInstantiationFunctionDecl(declaration->get_firstNondefiningDeclaration()) != NULL) )
                   {
 #if PRINT_DEVELOPER_WARNINGS
-                    printf ("Warning inconsitant use of SgTemplateInstantiationFunctionDecl: found a declaration = %p = %s which has a firstNondefiningDeclaration which is a SgFunctionDeclaration and which has a defining declaration which is a SgTemplateInstantiationFunctionDecl \n",
+                    printf ("Warning inconsistent use of SgTemplateInstantiationFunctionDecl: found a declaration = %p = %s which has a firstNondefiningDeclaration which is a SgFunctionDeclaration and which has a defining declaration which is a SgTemplateInstantiationFunctionDecl \n",
                          declaration,declaration->class_name().c_str());
                  // declaration->get_startOfConstruct()->display("Warning inconsitant use of SgTemplateInstantiationFunctionDecl: found a declaration has a firstNondefiningDeclaration which is a SgFunctionDeclaration and a defining declaration which is a SgTemplateInstantiationFunctionDecl");
 #endif
                   }
                  else
-                  {
+                  { // defining and nondefining pointers point to something of different types
                     if (declaration->get_definingDeclaration()->variantT() != declaration->get_firstNondefiningDeclaration()->variantT())
                        {
                          printf ("Error: declaration                                  = %p = %s \n",declaration,declaration->class_name().c_str());
