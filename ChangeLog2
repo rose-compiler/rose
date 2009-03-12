@@ -1,3 +1,118 @@
+2009-03-12 04:46  panas2
+
+	* [r4846]
+	  /trunk/ROSE/src/midend/programAnalysis/defUseAnalysis/LivenessAnalysis.cpp,
+	  /trunk/ROSE/src/midend/programAnalysis/defUseAnalysis/LivenessAnalysis.h,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/variableLivenessTests/runTest.C,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/variableLivenessTests/tests/inputlivenessAnalysis.C:
+	  Changes to LivenessAnalysis
+
+2009-03-12 01:22  liao6
+
+	* [r4845] /trunk/ROSE/src/ROSETTA/Grammar/Statement.code,
+	  /trunk/ROSE/src/frontend/SageIII/astMerge/collectAssociateNodes.C,
+	  /trunk/ROSE/src/frontend/SageIII/astPostProcessing/fixupDeclarations.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilder.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilder.h,
+	  /trunk/ROSE/src/midend/astOutlining/GenerateCall.cc,
+	  /trunk/ROSE/src/midend/astOutlining/GenerateFunc.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Insert.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Transform.cc,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/buildProcedureHeaderStatement.C,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/inputbuildProcedureHeaderStatement.f,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/inputlivenessAnalysis.C,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/livenessAnalysis.C,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/fortranTests/Makefile.am:
+	  Fixed outliner to handle fortran tests
+	  
+	  * SageBuilder: added buildProcedureHeaderStatement() to build
+	  Fortran subroutines and functions, along with test cases.
+	  * outliner:
+	  ** use buildProcedureHeaderStatement() for Fortran input
+	  ** skip generating prototypes for outlined functions for Fortran
+	  ** keep the function symbol for Fortran's defining function
+	  declarations
+	  * astMerge: added cases for V_SgFormatItemList and V_SgFormatItem
+	  * SgFortranDo: added member function get_mangled_name()
+
+2009-03-11 22:35  dquinlan
+
+	* [r4843] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/developersScratchSpace/Dan/Pin_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Pin_tests/staticDynamicBinaryAnalysis.C,
+	  /trunk/ROSE/developersScratchSpace/Robb/GitCommands.txt,
+	  /trunk/ROSE/docs/Rose/Tutorial/binaryAnalysis.tex,
+	  /trunk/ROSE/docs/Rose/binaryAnalysis.tex,
+	  /trunk/ROSE/tutorial/Makefile.am, /trunk/ROSE/tutorial/intelPin,
+	  /trunk/ROSE/tutorial/intelPin/Makefile.am,
+	  /trunk/ROSE/tutorial/intelPin/commandlineHandling.C,
+	  /trunk/ROSE/tutorial/intelPin/dynamicBinaryInfo.C,
+	  /trunk/ROSE/tutorial/intelPin/dynamicStaticBinaryAnalysis.C,
+	  /trunk/ROSE/tutorial/intelPin/graphTrace.C,
+	  /trunk/ROSE/tutorial/intelPin/imageload.C,
+	  /trunk/ROSE/tutorial/intelPin/input_testcode.C,
+	  /trunk/ROSE/tutorial/intelPin/staticDynamicBinaryAnalysis.C:
+	  Added more support for dynamic binary instrumentation using Intel
+	  Pin (--with-IntelPin).
+	  
+	  Detailed changes in this commit:
+	  1) Added example showing use of static analysis using ROSE and
+	  then
+	  dynamic analysis.
+	  2) Added Intel Pin dynamic analysis examples to the tutorial.
+	  3) Added mixed dynamic and static analysis examples to the
+	  tutorial.
+
+2009-03-11 20:51  saebjornsen1
+
+	* [r4842] /trunk/ROSE/projects/MacroRewrapper/access-macros.cpp,
+	  /trunk/ROSE/projects/MacroRewrapper/argumentFilterer.C,
+	  /trunk/ROSE/projects/MacroRewrapper/macroRewrapper.C,
+	  /trunk/ROSE/projects/MacroRewrapper/waveHelpers.C,
+	  /trunk/ROSE/src/frontend/SageIII/attachPreprocessingInfo.C,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testGenerateSourceFileNames/Makefile.am:
+	  Fixed bugs in the macro rewrapper and made debugging messages
+	  optional
+
+2009-03-11 20:50  saebjornsen1
+
+	* [r4841]
+	  /trunk/ROSE/projects/compass/extensions/checkers/allocateAndFreeMemoryInTheSameModule/allocateAndFreeMemoryInTheSameModule.C,
+	  /trunk/ROSE/projects/compass/extensions/checkers/allocateAndFreeMemoryInTheSameModule/allocateAndFreeMemoryInTheSameModule.inc,
+	  /trunk/ROSE/projects/compass/extensions/checkers/allocateAndFreeMemoryInTheSameModule/allocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction.C,
+	  /trunk/ROSE/projects/compass/extensions/checkers/allocateAndFreeMemoryInTheSameModule/allocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction.inc,
+	  /trunk/ROSE/projects/compass/extensions/checkers/allocateAndFreeMemoryInTheSameModule/allocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstractionDocs.tex,
+	  /trunk/ROSE/projects/compass/extensions/checkers/allocateAndFreeMemoryInTheSameModule/allocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstractionMain.C,
+	  /trunk/ROSE/projects/compass/extensions/checkers/allocateAndFreeMemoryInTheSameModule/allocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstractionTest1.C,
+	  /trunk/ROSE/projects/compass/extensions/checkers/allocateAndFreeMemoryInTheSameModule/allocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstractionTestOutput.txt,
+	  /trunk/ROSE/projects/compass/extensions/checkers/allocateAndFreeMemoryInTheSameModule/allocateAndFreeMemoryInTheSameModuleDocs.tex,
+	  /trunk/ROSE/projects/compass/extensions/checkers/allocateAndFreeMemoryInTheSameModule/allocateAndFreeMemoryInTheSameModuleMain.C,
+	  /trunk/ROSE/projects/compass/extensions/checkers/allocateAndFreeMemoryInTheSameModule/allocateAndFreeMemoryInTheSameModuleTest1.C,
+	  /trunk/ROSE/projects/compass/extensions/checkers/allocateAndFreeMemoryInTheSameModule/allocateAndFreeMemoryInTheSameModuleTestOutput.txt,
+	  /trunk/ROSE/projects/compass/extensions/checkers/allocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction,
+	  /trunk/ROSE/projects/compass/tools/compass/CHECKER_LIST,
+	  /trunk/ROSE/projects/compass/tools/compass/RULE_SELECTION.in,
+	  /trunk/ROSE/projects/compass/tools/compass/doc/compass_categories.tex:
+	  Moving checker to shorter name to fix cygwin build problem
+
+2009-03-11 19:19  saebjornsen1
+
+	* [r4837]
+	  /trunk/ROSE/projects/compass/extensions/checkers/allocateAndFreeMemoryInTheSameModule:
+	  Moved directory in compass to new much shorter name
+
+2009-03-11 19:11  saebjornsen1
+
+	* [r4836] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/tests/CompilerOptionsTests/Makefile.am,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testGenerateSourceFileNames,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testGenerateSourceFileNames/Makefile.am,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testGenerateSourceFileNames/doesFilesExist.sh,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testGenerateSourceFileNames/filesNotExist.sh,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testGenerateSourceFileNames/test1.C:
+	  Added test for how ROSE parses filenames on the commmand line
+
 2009-03-11 17:54  matzke
 
 	* [r4834]
