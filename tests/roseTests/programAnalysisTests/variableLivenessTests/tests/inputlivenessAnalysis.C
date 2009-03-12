@@ -1,7 +1,9 @@
-int a[100],b[100];
+
 int i,x=1,j=9,k;
 int main(void)
 {
+  int a[100],b[100];
+
   for (i=0;i<100;i+=1)
   {
     a[i]=i+x+j+b[i];

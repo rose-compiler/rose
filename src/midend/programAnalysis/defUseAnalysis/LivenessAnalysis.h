@@ -37,6 +37,9 @@ class LivenessAnalysis : public DefUseAnalysisAbstract {
   std::map<SgNode*,int> visited;
   template <typename T> bool hasANodeAboveCurrentChanged(T source);
 
+  template <class T> void getAllNodesBelow(T source,
+					   std::vector<T>& visited);
+
  public:
  LivenessAnalysis(bool debug, DefUseAnalysis* dfa_p){
    dfa=dfa_p;

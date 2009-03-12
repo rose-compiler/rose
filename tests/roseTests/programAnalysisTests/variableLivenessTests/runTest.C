@@ -844,7 +844,7 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 24 -----------------------------------------
       argvList[1]=srcdir+"tests/inputlivenessAnalysis.C";
       results.clear();  outputResults.clear();
-      testOneFunction("::main", argvList, debug, 65, results,outputResults);
+      testOneFunction("::main", argvList, debug, 71, results,outputResults);
     }
   }
 

@@ -153,6 +153,31 @@ bool LivenessAnalysis::hasANodeAboveCurrentChanged(T source) {
   return changed;
 }
 
+// get all nodes above
+template <class T>
+void LivenessAnalysis::getAllNodesBelow(T source,
+					std::vector<T>& visited) {
+  vector<FilteredCFGNode < IsDFAFilter > > worklist;
+  worklist.push_back(source);
+  while (!worklist.empty()) {
+    source = worklist.front();
+    worklist.erase(worklist.begin());
+    vector<FilteredCFGEdge < IsDFAFilter > > in_edges = source.outEdges();
+    vector<FilteredCFGEdge < IsDFAFilter > >::const_iterator it=
+      in_edges.begin();
+    for (;it!=in_edges.end();++it) {
+      FilteredCFGEdge<IsDFAFilter> filterEdge = *it;
+      FilteredCFGNode<IsDFAFilter> filterNode = filterEdge.target();
+      SgNode* sgNode = filterNode.getNode();
+      ROSE_ASSERT(sgNode);
+      if (find(visited.begin(), visited.end(), filterNode)==visited.end()) {
+	worklist.push_back(filterNode);
+	visited.push_back(filterNode);
+      }      
+    }
+  }
+}
+
 /**********************************************************
  * Def-use algorithm used for variable live analysis
  * This algorithm is almost a match to def-use algorithm
@@ -215,6 +240,24 @@ bool LivenessAnalysis::defuse(T cfgNode, bool *unhandled) {
 	useNode=true;
     }
   }
+#if 0
+  SgPntrArrRefExp* varRefArr = isSgPntrArrRefExp(sgNode);
+  if (varRefArr) {
+    SgExpression* left = varRefArr->get_lhs_operand();
+    ROSE_ASSERT(left);
+    SgVarRefExp* varRefA = isSgVarRefExp(left);
+    ROSE_ASSERT(varRefA);
+    initName = varRefA->get_symbol()->get_declaration();
+    ROSE_ASSERT(initName);
+    std::vector <SgNode*> uses = dfa->getUseFor(sgNode, initName);
+    std::vector<SgNode*>::const_iterator it = uses.begin();
+    for (;it!=uses.end();++it) {
+      SgNode* itNode = *it;
+      if (itNode==sgNode)
+	useNode=true;
+    }
+  }
+#endif
   // ****************************************************************************
 
   if (DEBUG_MODE) {
@@ -556,6 +599,20 @@ LivenessAnalysis::run(SgFunctionDefinition* funcDecl, bool& abortme) {
 	  debug_path.push_back(filterNode);
 	}
       }
+      // ------------------------
+      // lets add all nodes before that node, cf algorithm
+      vector<FilteredCFGNode <IsDFAFilter> > allNodesBefore;
+      getAllNodesBelow(source,allNodesBefore);
+      for (vector<FilteredCFGNode <IsDFAFilter> >::const_iterator i = 
+	     allNodesBefore.begin(); i != allNodesBefore.end(); ++i) {
+	//	FilteredCFGEdge<IsDFAFilter> filterEdge = *i;
+	FilteredCFGNode<IsDFAFilter> filterNode = *i;//filterEdge.source();
+	if (find(worklist.begin(), worklist.end(), filterNode)==worklist.end()) {
+	  worklist.push_back(filterNode);
+	  debug_path.push_back(filterNode);
+	}
+      }
+      // ------------------------
       if (DEBUG_MODE) 
 	printCFGVector(worklist);
     }
@@ -589,7 +646,7 @@ LivenessAnalysis::run(SgFunctionDefinition* funcDecl, bool& abortme) {
   // we should traverse the AST in bottom up order and collect information
   // for in and out until we reach a statement
   //BottomUpTraversalLiveness bottomUp;
-#if 0
+#if 1
   SgNode* root = rem_source.getNode();
   ROSE_ASSERT(root);
   BottomUpTraversalLivenessIN* bottomUpIN = new BottomUpTraversalLivenessIN(this);
