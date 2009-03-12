@@ -1,3 +1,15 @@
+2009-03-12 15:22  panas2
+
+	* [r4849]
+	  /trunk/ROSE/src/midend/programAnalysis/defUseAnalysis/LivenessAnalysis.cpp:
+	  Temporary Fix for variable Analysis
+
+2009-03-12 14:44  dquinlan
+
+	* [r4848] /trunk/ROSE/tutorial/intelPin/Makefile.am: Change
+	  references to input_testcode to ./input_testcode for portability
+	  of pin command lines.
+
 2009-03-12 04:46  panas2
 
 	* [r4846]
