@@ -624,7 +624,10 @@ LivenessAnalysis::run(SgFunctionDefinition* funcDecl, bool& abortme) {
     if (abort) {
       cerr << " \n\n\n>>>>>>>>>>>>>>>>>>>>>>>>>>> ABORTING !! INFINITE EXECUTION ... \n\n" << endl;
       worklist.clear();
+#if 0
+      // need to fix this, apperently some cases run indefinetly
       abortme=true;
+#endif
     }
   }
   nrOfNodesVisitedPF= debug_path.size();
