@@ -127,6 +127,11 @@ namespace OmpSupport{
   //! Get OmpAttribute from a SgNode, return NULL if not found
   OmpAttribute* getOmpAttribute(SgNode* node);
 
+  //! Generate a pragma declaration from OmpAttribute attached to a statement
+  void generatePragmaFromOmpAttribute(SgNode* sg_node); 
+  //TODO this is duplicated from autoParallization project's generatedOpenMPPragmas() 
+   // We should remove this duplicate once autopar is moved into rose/src 
+
 //------------------------------------------------------------------
 //------------------------------------------------------------------
 // By default, the persistent attribute attached to an OpenMP pragma node in SAGE III AST

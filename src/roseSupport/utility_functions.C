@@ -897,10 +897,10 @@ SgStatement*
 ROSE::getNextStatement ( SgStatement *currentStatement )
    {
      ROSE_ASSERT (currentStatement  != NULL);
-		 //CI (1/3/2007): This sued to be not implemented ,,, here is my try
-		 //! get next statement will return the next statement in a function or method. if at the end or outside, it WILL return NULL
+    //CI (1/3/2007): This sued to be not implemented ,,, here is my try
+    //! get next statement will return the next statement in a function or method. if at the end or outside, it WILL return NULL
      
-		 SgStatement      *nextStatement = NULL;
+     SgStatement      *nextStatement = NULL;
      SgScopeStatement *scope             = currentStatement->get_scope();
      ROSE_ASSERT (scope != NULL);
 
@@ -914,7 +914,7 @@ ROSE::getNextStatement ( SgStatement *currentStatement )
           case V_SgBasicBlock:
           case V_SgClassDefinition:
           case V_SgFunctionDefinition:
-					case V_SgStatement:
+	  case V_SgStatement:
           case V_SgFunctionParameterList:
 					
 							 ROSE_ASSERT(0);
@@ -949,12 +949,15 @@ ROSE::getNextStatement ( SgStatement *currentStatement )
             // If the target statement was the last statement in a scope then 
                if (nextStatement == NULL)
 							 {
-								 // Someone might think of a better answer that NULL
+								 // Someone might think of a better answer than NULL
 							 }
              }
 						 break;
         }
-     ROSE_ASSERT (isSgGlobal(currentStatement) != NULL || nextStatement != NULL);
+     //This assertion does not make sense. 
+     //Since a trailing statement within a scope can have null next statement, 
+     //and  the statement can be not global scope statement, Liao 3/12/2009
+     //ROSE_ASSERT (isSgGlobal(currentStatement) != NULL || nextStatement != NULL);
 
      return nextStatement;
    }

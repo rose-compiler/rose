@@ -6300,20 +6300,24 @@ int SageInterface::fixVariableReferences(SgNode* root)
     {
       SgName varName=initname->get_name();
       SgSymbol* realSymbol = lookupSymbolInParentScopes(varName,getScope(varRef));
+
       // should find a real symbol at this final fixing stage!
+      // This function can be called any time, not just final fixing stage
       if (realSymbol==NULL) 
       {
-        cerr<<"Error: cannot find a symbol for "<<varName.getString()<<endl;
-        ROSE_ASSERT(realSymbol);
+        //cerr<<"Error: cannot find a symbol for "<<varName.getString()<<endl;
+        //ROSE_ASSERT(realSymbol);
       }
-      // release placeholder initname and symbol
-      ROSE_ASSERT(realSymbol!=(varRef->get_symbol()));
+      else {
+        // release placeholder initname and symbol
+        ROSE_ASSERT(realSymbol!=(varRef->get_symbol()));
 
-      delete initname; // TODO deleteTree(), release File_Info nodes etc.
-      delete (varRef->get_symbol());
+        delete initname; // TODO deleteTree(), release File_Info nodes etc.
+        delete (varRef->get_symbol());
 
-      varRef->set_symbol(isSgVariableSymbol(realSymbol));
-      counter ++;
+        varRef->set_symbol(isSgVariableSymbol(realSymbol));
+        counter ++;
+      }
     }
   } // end for
   return counter;
