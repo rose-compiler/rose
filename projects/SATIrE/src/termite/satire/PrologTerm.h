@@ -19,6 +19,10 @@ bool init_termite(int argc, char **argv, bool interactive=false);
 
 #if !HAVE_SWI_PROLOG
 
+#include <iomanip>
+#include <string>
+#include <sstream>
+
 /// Representation of a prolog term
 class PrologTerm {
  public:
@@ -35,19 +39,19 @@ class PrologTerm {
   /// the actual prolog term that is represented by this object
   virtual std::string getRepresentation() = 0;
 
-  /// Properly quote an atom if necessary
+  /// Properly quote and escape an atom if necessary
   static std::string quote(const std::string atom) {
-    std::string s;
+    std::string s = escape(atom);
     if (atom.length() == 0) return "''";
     if (((atom.length() > 0) && (!islower(atom[0])) && (!isdigit(atom[0])))
 	|| needs_quotes(atom)) {
-      s = "'" + atom + "'";
+      s = "'" + s + "'";
       return s;
     } else if (is_reserved_operator(atom)) {
-      s = "(" + atom + ")";
+      s = "(" + s + ")";
       return s;
     }
-    return RoseToProlog::escape_string(atom);
+    return s;
   }
 
 protected:
@@ -76,6 +80,44 @@ protected:
     }
     return false;
   }
+
+  // Escape non-printable characters
+  static std::string escape(std::string s) {
+    std::string r;
+    for (unsigned int i = 0; i < s.length(); ++i) {
+      unsigned char c = s[i];
+      switch (c) {
+      case '\\': r += "\\\\"; break; // Literal backslash
+      case '\"': r += "\\\""; break; // Double quote
+      case '\'': r += "\\'"; break;  // Single quote
+      case '\n': r += "\\n"; break;  // Newline (line feed)
+      case '\r': r += "\\r"; break;  // Carriage return
+      case '\b': r += "\\b"; break;  // Backspace
+      case '\t': r += "\\t"; break;  // Horizontal tab
+      case '\f': r += "\\f"; break;  // Form feed
+      case '\a': r += "\\a"; break;  // Alert (bell)
+      case '\v': r += "\\v"; break;  // Vertical tab
+      default:
+	if (c < 32 || c > 127) {
+	  std::stringstream strm;
+	  strm << '\\' 
+	       << std::oct 
+	       << std::setfill('0') 
+	       << std::setw(3) 
+	       << (unsigned int)c // \nnn Character with octal value nnn
+	       << '\\'; // Prolog expects this weird syntax with a
+			// trailing backslash
+	  r += strm.str();
+	} else {
+	  r += c;
+	}
+      }
+    }
+    //cerr<<"escape("<<s<<") = "<< r <<endl;
+    return r;
+  }
+
+
 };
 
 #else

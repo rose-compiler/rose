@@ -3,7 +3,6 @@
         2007-2008 Adrian Prantl <adrian@complang.tuwien.ac.at>
 */
 #include <satire_rose.h>
-#include <string>
 #include <list>
 #include "termite.h" 
 // GB (2009-02-25): Use the term printer without DFI stuff.
@@ -112,9 +111,11 @@ RoseToProlog::getPreprocessingInfo(AttachedPreprocessingInfoType* inf) {
 	 it != inf->rend(); ++it) {
       PrologCompTerm* ppd = new PrologCompTerm(
         re.DirectiveTypes[(*it)->getTypeOfDirective()]);
+
       ppd->addSubterm(new PrologAtom((*it)->getString()));
       ppd->addSubterm(getEnum((*it)->getRelativePosition(),
 			    re.RelativePositionTypes));
+
       ppd->addSubterm(getFileInfo((*it)->get_file_info()));
       l->addFirstElement(ppd);
     }
@@ -554,45 +555,6 @@ RoseToProlog::getBinaryOpSpecific(SgBinaryOp* op) {
 }
 
 /**
- *
- * Escape non-printable characters
- */
-std::string 
-RoseToProlog::escape_string(std::string s) {
-  std::string r;
-  for (unsigned int i = 0; i < s.length(); ++i) {
-    unsigned char c = s[i];
-    switch (c) {
-    case '\\': r += "\\\\"; break; // Literal backslash
-    case '\"': r += "\\\""; break; // Double quote
-    case '\'': r += "\\'"; break;  // Single quote
-    case '\n': r += "\\n"; break;  // Newline (line feed)
-    case '\r': r += "\\r"; break;  // Carriage return
-    case '\b': r += "\\b"; break;  // Backspace
-    case '\t': r += "\\t"; break;  // Horizontal tab
-    case '\f': r += "\\f"; break;  // Form feed
-    case '\a': r += "\\a"; break;  // Alert (bell)
-    case '\v': r += "\\v"; break;  // Vertical tab
-    default:
-      if (c < 32 || c > 127) {
-	std::stringstream strm;
-	strm << '\\' 
-	     << std::oct 
-	     << std::setfill('0') 
-	     << std::setw(3) 
-	     << (unsigned int)c // \nnn Character with octal value nnn
-	     << '\\'; // Prolog expects this weird syntax with a trailing backslash
-	r += strm.str();
-      } else {
-	r += c;
-      }
-    }
-  }
-  //cerr<<"escape("<<s<<") = "<< r <<endl;
-  return r;
-}
-
-/**
  * class: SgValueExp
  * term: value_annotation(val)
  * arg val: value of the SgValueExp. The possibilities are integers 
@@ -682,9 +644,9 @@ RoseToProlog::getValueExpSpecific(SgValueExp* astNode) {
     ostringstream o;
     o << n->get_valueUL();
     string s = o.str();
-    t->addSubterm(new PrologAtom(escape_string(s)));
+    t->addSubterm(new PrologAtom(s));
   } else if (SgStringVal* n = dynamic_cast<SgStringVal*>(astNode)) {
-    t->addSubterm(new PrologAtom(escape_string(n->get_value())));
+    t->addSubterm(new PrologAtom(n->get_value()));
   } else {
     t->addSubterm(new PrologAtom("null"));
   }

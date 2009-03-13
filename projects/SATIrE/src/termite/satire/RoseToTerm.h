@@ -20,7 +20,6 @@ public:
   void addSpecific(SgNode*,PrologCompTerm*);
   PrologCompTerm* getFileInfo(Sg_File_Info*);
   static std::string prologize(std::string);
-  static std::string escape_string(std::string s);
 private:
   RoseEnums re;
   PrologCompTerm* getPreprocessingInfo(AttachedPreprocessingInfoType*);
