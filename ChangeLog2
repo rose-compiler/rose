@@ -1,3 +1,9 @@
+2009-03-12 22:13  saebjornsen1
+
+	* [r4853]
+	  /trunk/ROSE/tests/CompilerOptionsTests/testGenerateSourceFileNames/Makefile.am:
+	  Fixed bug for mac os x command line testing
+
 2009-03-12 15:22  panas2
 
 	* [r4849]
