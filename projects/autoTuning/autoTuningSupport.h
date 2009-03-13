@@ -34,8 +34,16 @@
 #include <string>
 #include <map>
 #include <set>
+#include <vector>
 
 namespace autoTuning{
+  //! Some internal flags controlled by command line options
+  extern bool aggressive_triage;
+  extern bool enable_debug;
+
+  //! autoTuning specific command line processing
+  void autotuning_command_processing(std::vector<std::string>&argvList);
+
   //! Check if a node has a performance metric matching a given metric name
   RoseHPCT::MetricAttr * checkMetricAttribute (SgNode* node, const std::string& metric_name);
 

@@ -8,7 +8,7 @@ int main(int argc, char *argv[]) {
   // Build the AST used by ROSE
   SgProject* sageProject = frontend(argc,argv);
 
-  // Run internal consistancy tests on AST
+  // Run internal consistency tests on AST
   AstTests::runAllTests(sageProject);
 
   // Print the CFG view of each procedure in the AST in Dot format to cout

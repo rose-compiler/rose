@@ -1007,19 +1007,41 @@ namespace AutoParallelization
   }// end DependenceElimination()
 
 
-  //Generate and insert #pragma omp parallel for 
+  //Generate and insert #pragma omp parallel for based on OmpAttribute
   //This phase is deliberately separated from building and attaching OmpAttribute
   void generatedOpenMPPragmas(SgNode* sg_node)
   {
+    SgStatement* cur_stmt = isSgStatement(sg_node);
+    ROSE_ASSERT(cur_stmt != NULL);
     OmpSupport::OmpAttribute* att = OmpSupport::getOmpAttribute(sg_node); 
     if(att)
     {  
-      cout<<"\n Parallelizing a loop at line:"
-        <<sg_node->get_file_info()->get_line()<<endl;
+      // No need to duplicate a pragma for an existing OpenMP pragma
+      if (isSgPragmaDeclaration(cur_stmt)) 
+        return;
+      // Should only insert the pragma statement 
+      // if there is no existing OpenMP pragma with the same attribute
+      SgStatement* prev_stmt = SageInterface::getPreviousStatement(cur_stmt); 
+      if (prev_stmt)
+      {
+        SgPragmaDeclaration * prev_pragma = isSgPragmaDeclaration(prev_stmt);
+        if (prev_pragma)
+        {
+          OmpSupport::OmpAttribute* prev_att= OmpSupport::getOmpAttribute(prev_pragma);
+          if (att == prev_att)
+            return;
+        }
+      }  
+      // Now we are safe to append the pragma
+      if (att->getOmpDirectiveType() ==OmpSupport::e_for ||att->getOmpDirectiveType() ==OmpSupport::e_parallel_for)
+        ROSE_ASSERT(isSgForStatement(cur_stmt) != NULL);
+
       string pragma_str= att->toOpenMPString();
+      if (enable_debug)
+        cout<<"\n Parallelizing a loop at line:" <<sg_node->get_file_info()->get_line()<<endl;
       SgPragmaDeclaration * pragma = SageBuilder::buildPragmaDeclaration(pragma_str); 
-      SageInterface::insertStatementBefore(isSgStatement(sg_node), pragma);
-    }
+      SageInterface::insertStatementBefore(cur_stmt, pragma);
+    } // if (att)
   }
 
   bool ParallelizeOutermostLoop(SgNode* loop, ArrayInterface* array_interface, ArrayAnnotation* annot)

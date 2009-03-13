@@ -27,7 +27,9 @@ using namespace autoTuning;
 int main(int argc, char * argv[]) 
 {
   vector<string> argvList (argv, argv+argc);
-  // recognize options for outliner
+  // recognize options for autotuning
+  autotuning_command_processing(argvList);
+  // options for outliner
   Outliner::commandLineProcessing(argvList);
 
   // Prepare AST with performance metrics attached.

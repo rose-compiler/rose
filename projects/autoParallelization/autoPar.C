@@ -80,7 +80,19 @@ main (int argc, char *argv[])
 	{
 	  SgNode* current_loop = *iter;
 	  //X. Parallelize loop one by one
-	  hasOpenMP = ParallelizeOutermostLoop(current_loop, &array_interface, annot);
+          // getLoopInvariant() will actually check if the loop has canonical forms 
+          // which can be handled by dependence analysis
+          SgInitializedName* invarname = getLoopInvariant(current_loop);
+          if (invarname != NULL)
+          {
+             hasOpenMP = ParallelizeOutermostLoop(current_loop, &array_interface, annot);
+          }
+           else // cannot grab loop index from a non-conforming loop, skip parallelization
+           {
+            if (enable_debug)
+              cout<<"Skipping a non-canonical loop at line:"<<current_loop->get_file_info()->get_line()<<"..."<<endl;
+             hasOpenMP = false;
+           }
 	}// end for loops
       } // end for-loop for declarations
      // insert omp.h if needed

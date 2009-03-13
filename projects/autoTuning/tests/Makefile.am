@@ -9,7 +9,7 @@ ROSE_FLAGS+=-rose:hpct:eqpath .=`cd $(srcdir) && pwd`
 #ROSE_FLAGS+=-rose:hpct:enable_debug 
 
 # test command line options for outliner
-ROSE_FLAGS+= -rose:outline:parameter_wrapper -rose:outline:new_file -rose:outline:temp_variable
+ROSE_FLAGS+= -rose:outline:parameter_wrapper -rose:outline:new_file -rose:outline:temp_variable -rose:outline:exclude_headers
 
 
 rose_jacobi.c:../autoTuning

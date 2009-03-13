@@ -50,8 +50,8 @@ $(TESTCODE_CURRENTLY_FAILING)
 TESTCODE_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII
 
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict
-ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict
-ROSE_CFLAGS = -rose:C99 --edg:no_warnings -w -rose:verbose 0 --edg:restrict
+ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict -rose:autopar:enable_debug
+ROSE_CFLAGS = -rose:C99 --edg:no_warnings -w -rose:verbose 0 --edg:restrict -rose:autopar:enable_debug
 
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes
 # VALGRIND = /usr/apps/valgrind/new/bin/valgrind $(VALGRIND_OPTIONS)

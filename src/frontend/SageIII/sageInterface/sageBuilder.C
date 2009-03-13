@@ -1886,10 +1886,11 @@ SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope/*=NULL*/
 {
   if (scope == NULL)
     scope = SageBuilder::topScopeStack();
-  ROSE_ASSERT(scope != NULL);
-
-  SgSymbol * symbol = lookupSymbolInParentScopes(name,scope); 
+ // ROSE_ASSERT(scope != NULL); // we allow to build a dangling ref without symbol
+  SgSymbol * symbol = NULL;
   SgVariableSymbol* varSymbol=NULL;
+ if (scope)
+  symbol = lookupSymbolInParentScopes(name,scope); 
  if (symbol) 
     varSymbol= isSgVariableSymbol(symbol); 
   else
@@ -2358,9 +2359,12 @@ SgForStatement * SageBuilder::buildForStatement(SgStatement* initialize_stmt, Sg
   SgForStatement * result = new SgForStatement(test,increment, loop_body);
   ROSE_ASSERT(result);
   setOneSourcePositionForTransformation(result);
-  if (test) test->set_parent(result);
-  if (loop_body) loop_body->set_parent(result);
-  if (increment) increment->set_parent(result);
+  if (test) 
+    test->set_parent(result);
+  if (loop_body) 
+    loop_body->set_parent(result);
+  if (increment) 
+    increment->set_parent(result);
 
   SgForInitStatement* init_stmt = new SgForInitStatement();
   ROSE_ASSERT(init_stmt);
@@ -2368,7 +2372,18 @@ SgForStatement * SageBuilder::buildForStatement(SgStatement* initialize_stmt, Sg
   result->set_for_init_stmt(init_stmt);   
   init_stmt->set_parent(result);
 
-  if (initialize_stmt) init_stmt->append_init_stmt(initialize_stmt);
+  if (initialize_stmt) 
+  {
+    init_stmt->append_init_stmt(initialize_stmt);
+    // Support for "for (int i=0; )", Liao, 3/11/2009
+    // The symbols are inserted into the symbol table attached to SgForStatement
+    if (isSgVariableDeclaration(initialize_stmt))
+    {
+      fixVariableDeclaration(isSgVariableDeclaration(initialize_stmt),result);
+      // fix varRefExp to the index variable used in increment, conditional expressions
+      fixVariableReferences(result);
+    }
+  }
 
   return result;
 }

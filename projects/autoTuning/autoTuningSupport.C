@@ -1,5 +1,7 @@
 #include "rose.h"
 #include "autoTuningSupport.h"
+#include "CommandOptions.h"
+#include "OmpAttribute.h"
 
 using namespace std;
 using namespace GenUtil;
@@ -8,6 +10,40 @@ using namespace Outliner;
 
 namespace autoTuning
 {
+  bool aggressive_triage;
+  bool enable_debug;
+
+ void autotuning_command_processing(vector<string>&argvList)
+  {
+    if (CommandlineProcessing::isOption (argvList,"-rose:autotuning:","enable_debug",true))
+    {
+      cout<<"Enabling debugging mode for auto tuning..."<<endl;
+      enable_debug= true;
+    }
+    else
+      enable_debug= false;
+
+    if (CommandlineProcessing::isOption (argvList,"-rose:autotuning:","aggressive_triage",true))
+    {
+      cout<<"Enabling aggressive code triage for auto tuning..."<<endl;
+      aggressive_triage= true;
+    }
+    else
+      aggressive_triage= false;
+
+
+    // keep --help option after processing, let other modules respond also
+    if ((CommandlineProcessing::isOption (argvList,"--help","",false)) ||
+        (CommandlineProcessing::isOption (argvList,"-help","",false)))
+    {       
+      cout<<"Autotuning-specific options"<<endl;
+      cout<<"\t-rose:autotuning:enable_debug           run autotuing in debugging mode"<<endl;
+      cout<<"\t-rose:autotuning:aggressive_triage      enable aggressive code triage"<<endl;
+      cout <<"---------------------------------------------------------------"<<endl;     
+    }
+
+  }
+  
   /*!
    *  \brief Checks if a given Sage node already has a metric attribute
    *  with the specified name and returns a pointer to this attribute if
@@ -158,13 +194,53 @@ namespace autoTuning
   //! Find a target loop from a hot statement
   SgForStatement* findTargetLoop(SgNode* hot_node)
   {
-    // find the innermost, consecutive (may have bare SgBasicBlocks in between), 
-    // enclosing loops of the hot statement
-    // TODO handle Fortran
+   // TODO handle Fortran
     SgForStatement* innermost_loop = isSgForStatement(SageInterface::findEnclosingLoop(isSgStatement(hot_node)));
+    if (innermost_loop==NULL) 
+      return NULL;
     SgForStatement* outermost_loop= innermost_loop;
 
-    if (innermost_loop!=NULL)
+    //find the outermost parallelizable loop as the target loop
+    // use OpenMP for pragma as hints if available
+    if (aggressive_triage) 
+    {
+      std::vector<SgForStatement*> forLoopVec;
+      forLoopVec.push_back(innermost_loop);
+      SgNode* p = innermost_loop->get_parent();
+      ROSE_ASSERT(p!=NULL);
+      while (isSgGlobal(p)==NULL)
+      {
+        if (isSgForStatement(p) )
+          forLoopVec.push_back(isSgForStatement(p));
+        p = p->get_parent();
+        ROSE_ASSERT(p!=NULL);
+      }
+
+      // reverse iterate the loop vector
+      std::vector<SgForStatement*>::reverse_iterator iter;
+      for (iter = forLoopVec.rbegin(); iter != forLoopVec.rend(); iter ++)
+       {
+          OmpSupport::OmpAttribute* attribute = OmpSupport::getOmpAttribute(*iter);
+          if (attribute)
+          {  // Could be either #pragma omp for or #pragma omp parallel for
+            if ((attribute->getOmpDirectiveType()==OmpSupport::e_for)||
+              (attribute->getOmpDirectiveType()==OmpSupport::e_parallel_for))
+            {
+              if (enable_debug)
+                cout<<"Found OMP attribute attached on loop at line:"<<(*iter)->get_file_info()->get_line()<<endl;
+              outermost_loop = *iter;
+              break;
+            }
+          }
+       } 
+#if 0      
+      SgForStatement* forloop = isSgForStatement(SageInterface::getEnclosingNode<SgForStatement>(outermost_loop));
+      if (forloop != NULL )
+        outermost_loop = forloop;
+#endif        
+    } else 
+    // find the innermost, consecutive (may have bare SgBasicBlocks in between), 
+    // enclosing loops of the hot statement
     {
       SgNode* cur_node= innermost_loop;
       SgNode* par_node = innermost_loop->get_parent();

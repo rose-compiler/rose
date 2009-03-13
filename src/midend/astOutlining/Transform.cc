@@ -12,17 +12,25 @@
 #include "ASTtools.hh"
 #include "PreprocessingInfo.hh"
 #include "StmtRewrite.hh"
-
+#include "OmpAttribute.h" //regenerate pragma from omp attribute
 // =====================================================================
 
 using namespace std;
 using namespace SageBuilder;
 using namespace SageInterface;
 // =====================================================================
-
+/**
+ * Major work of outlining is done here
+ *  Preparations: variable collection
+ *  Generate outlined function
+ *  Replace outlining target with a function call
+ *  Append dependent declarations,headers to new file if needed
+ */
 Outliner::Result
 Outliner::Transform::outlineBlock (SgBasicBlock* s, const string& func_name_str)
    {
+     //---------preparations-----------------------------------
+     //new file, cut preprocessing information, collect variables
   // Generate a new source file for the outlined function, if requested
      SgSourceFile* new_file = NULL;
      if (Outliner::useNewFile)
@@ -62,7 +70,8 @@ Outliner::Transform::outlineBlock (SgBasicBlock* s, const string& func_name_str)
           glob_scope = new_file->get_globalScope();
         }
 
-  // Generate outlined function.
+  //-------Generate outlined function------------------------------------
+  // generate the function and its prototypes if necessary
 //  printf ("In Outliner::Transform::outlineBlock() function name to build: func_name_str = %s \n",func_name_str.c_str());
   SgFunctionDeclaration* func = generateFunction (s, func_name_str, syms, pdSyms, glob_scope);
   ROSE_ASSERT (func != NULL);
@@ -107,7 +116,18 @@ Outliner::Transform::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 
   // Retest this...
      ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
-
+    // reproduce the lost OpenMP pragma attached to a outlining target loop 
+    // The assumption is that OmpAttribute is attached to both the pragma and the affected loop
+    // in the frontend already.
+    // Liao, 3/12/2009
+    Rose_STL_Container <SgNode*>  loops = NodeQuery::querySubTree(func,V_SgForStatement);
+    if (loops.size()>0)
+    {
+      Rose_STL_Container <SgNode*>::iterator liter =loops.begin();
+      SgForStatement* firstloop = isSgForStatement(*liter); 
+      OmpSupport::generatePragmaFromOmpAttribute(firstloop);
+    }
+  //-----------replace the outlining target with a function call-------------
   // Generate packing statements
      std::string wrapper_name;
      if (useParameterWrapper)
@@ -142,6 +162,7 @@ Outliner::Transform::outlineBlock (SgBasicBlock* s, const string& func_name_str)
 
      SageInterface::fixVariableReferences(p_scope);
 
+  //-----------handle dependent declarations, headers if new file is generated-------------
      if (new_file)
         {
           SageInterface::fixVariableReferences(new_file);
