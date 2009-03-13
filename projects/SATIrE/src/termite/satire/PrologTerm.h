@@ -47,7 +47,7 @@ class PrologTerm {
       s = "(" + atom + ")";
       return s;
     }
-    return atom;
+    return RoseToProlog::escape_string(atom);
   }
 
 protected:

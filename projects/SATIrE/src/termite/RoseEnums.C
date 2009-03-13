@@ -215,40 +215,39 @@ static const char* e_RelativePositionType[] = {
        // Enum type to help classify the type for string that has been saved.
        // This helps in the unparsing to make sure that line feeds are introduced properly.
 static const char* e_DirectiveType[] = {
-  "CpreprocessorUnknownDeclaration",
-  "C_StyleComment",
-  "CplusplusStyleComment",
-  "CpreprocessorIncludeDeclaration",
-  "CpreprocessorIncludeNextDeclaration",
-  "CpreprocessorDefineDeclaration",
-  "CpreprocessorUndefDeclaration",
-  "CpreprocessorIfdefDeclaration",
-  "CpreprocessorIfndefDeclaration",
-  "CpreprocessorIfDeclaration",
-  "CpreprocessorDeadIfDeclaration",
-  "CpreprocessorElseDeclaration",
-  "CpreprocessorElifDeclaration",
-  "CpreprocessorEndifDeclaration",
-  "CpreprocessorLineDeclaration",
-  "CpreprocessorErrorDeclaration",
+  "cpreprocessorUnknownDeclaration",
+  "c_StyleComment",
+  "cplusplusStyleComment",
+  "cpreprocessorIncludeDeclaration",
+  "cpreprocessorIncludeNextDeclaration",
+  "cpreprocessorDefineDeclaration",
+  "cpreprocessorUndefDeclaration",
+  "cpreprocessorIfdefDeclaration",
+  "cpreprocessorIfndefDeclaration",
+  "cpreprocessorIfDeclaration",
+  "cpreprocessorDeadIfDeclaration",
+  "cpreprocessorElseDeclaration",
+  "cpreprocessorElifDeclaration",
+  "cpreprocessorEndifDeclaration",
+  "cpreprocessorLineDeclaration",
+  "cpreprocessorErrorDeclaration",
 
   // DQ (10/19/2005): Added CPP warning directive
-  "CpreprocessorWarningDeclaration",
-  "CpreprocessorEmptyDeclaration",
+  "cpreprocessorWarningDeclaration",
+  "cpreprocessorEmptyDeclaration",
 
   // AS (11/18/05): Added macro support
-  "CSkippedToken",
-  "CMacroCall",
+  "cSkippedToken",
+  "cMacroCall",
 
   // A line replacement will replace a sub-tree in the AST
   // after a node with position (filename",line)
-  "LineReplacement",
-  "ClinkageSpecificationStart",
-  "ClinkageSpecificationEnd",
+  "lineReplacement",
+  "clinkageSpecificationStart",
+  "clinkageSpecificationEnd",
 
   // Added support for Fortran comments
-  "FortranStyleComment",
-  "LastDirectiveType"
+  "fortranStyleComment"
 };
 
 /////////////////////////////////////////////////////////////////////////

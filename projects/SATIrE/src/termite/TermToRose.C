@@ -207,6 +207,45 @@ PrologToRose::toRose(PrologTerm* t) {
       Sg_File_Info::generateDefaultFileInfoForTransformationNode());
   }
 
+  // Create the attached PreprocessingInfo
+  SgLocatedNode* ln = dynamic_cast<SgLocatedNode*>(node);
+  PrologCompTerm* ct = dynamic_cast<PrologCompTerm*>(t);
+  if (ln != NULL && ct != NULL) {
+    PrologCompTerm* annot = 
+      dynamic_cast<PrologCompTerm*>(ct->at(ct->getArity()-3));
+    ROSE_ASSERT(annot);
+
+    PrologCompTerm* ppil = 
+      dynamic_cast<PrologCompTerm*>(annot->at(annot->getArity()-1));
+    ROSE_ASSERT(ppil);
+
+    PrologList* l = dynamic_cast<PrologList*>(ppil->at(0));
+    if (l) {
+      for (deque<PrologTerm*>::iterator it = l->getSuccs()->begin();
+	   it != l->getSuccs()->end(); ++it) {
+
+	PrologCompTerm* ppi = dynamic_cast<PrologCompTerm*>(*it);
+	ROSE_ASSERT(ppi);
+
+	Sg_File_Info* fi = createFileInfo(ppi->at(ppi->getArity()-1));
+	PreprocessingInfo::RelativePositionType locationInL = 
+	  (PreprocessingInfo::RelativePositionType)
+	  createEnum(ppi->at(1), re.RelativePositionType);
+	
+	ln->addToAttachedPreprocessingInfo(
+          new PreprocessingInfo((PreprocessingInfo::DirectiveType)
+				createEnum(ppi, re.DirectiveType),
+				ppi->at(0)->getName(),
+				fi->get_filenameString(),
+				fi->get_line(),
+				fi->get_col(),
+				1 /* FIXME: nol */,
+				locationInL),
+	  locationInL);
+      }
+    }
+  }
+
   // Set Scope of children
   SgScopeStatement* scope = dynamic_cast<SgScopeStatement*>(node);
   if (scope != NULL) {
@@ -2404,9 +2443,7 @@ PrologToRose::createBitVector(PrologTerm* t, map<string, int> names) {
 /** create enum from PrologAtom */
 int
 PrologToRose::createEnum(PrologTerm* t, map<string, int> names) {
-  PrologAtom* a = dynamic_cast<PrologAtom*>(t);
-  ROSE_ASSERT(a != NULL && "atom expected");
-  return names[a->getName()];
+  return names[t->getName()];
 }
 
 /**

@@ -112,14 +112,13 @@ RoseToProlog::getPreprocessingInfo(AttachedPreprocessingInfoType* inf) {
 	 it != inf->rend(); ++it) {
       PrologCompTerm* ppd = new PrologCompTerm(
         re.DirectiveTypes[(*it)->getTypeOfDirective()]);
-
       ppd->addSubterm(new PrologAtom((*it)->getString()));
       ppd->addSubterm(getEnum((*it)->getRelativePosition(),
 			    re.RelativePositionTypes));
+      ppd->addSubterm(getFileInfo((*it)->get_file_info()));
       l->addFirstElement(ppd);
     }
     pi->addSubterm(l);
-
   }
   else pi->addSubterm(new PrologAtom("null"));
   return pi;

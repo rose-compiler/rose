@@ -10,6 +10,7 @@ void indent_line();
 %option yylineno noyywrap
 
 quoted \"([^\"\\]*(\\.[^\"\\]*)*)\"
+singlequoted \'([^\'\\]*(\\.[^\'\\]*)*)\'
 variable [A-Z][A-Za-z_]*
 int \-?[0-9]+
 node [a-z][A-Za-z_]*\_node
@@ -23,6 +24,7 @@ close_par [)\]]
 
 [ \t\n]
 {quoted} {cout << yytext;}
+{singlequoted} {cout << yytext;}
 {variable} {cout << yytext;}
 {int} {cout << yytext;}
 {node} {cout << "\n"; indent_line(); cout << yytext;}
