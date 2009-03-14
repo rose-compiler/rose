@@ -3024,6 +3024,26 @@ SageInterface::generateFileList()
      return fileTraversal.fileList;
    }
 
+// This function uses a memory pool traversal specific to the SgProject IR nodes
+SgProject*
+SageInterface::getProject()
+{
+  class ProjectTraversal : public ROSE_VisitTraversal
+  {
+    public:
+      SgProject * project;
+      void visit ( SgNode* node)
+      {
+        project = isSgProject(node);
+        ROSE_ASSERT(project!= NULL);
+      };
+      virtual ~ProjectTraversal() {}
+  };
+
+  ProjectTraversal projectTraversal;
+  SgProject::visitRepresentativeNode(projectTraversal);
+  return projectTraversal.project;
+}
 
 SgFunctionDeclaration* SageInterface::getDeclarationOfNamedFunction(SgExpression* func) {
   if (isSgFunctionRefExp(func)) {
@@ -8933,3 +8953,238 @@ void SageInterface::getLiveVariables(LivenessAnalysis * liv, SgForStatement* loo
   } // end for (edges)
 
 }
+
+//!Recognize and collect reduction variables and operations within a C/C++ loop, following OpenMP 3.0 specification for allowed reduction variable types and operation types.
+/* This code is refactored from project/autoParallelization/autoParSupport.C 
+  std::vector<SgInitializedName*>
+  RecognizeReduction(SgNode *loop, OmpSupport::OmpAttribute* attribute, std::vector<SgInitializedName*>& candidateVars/)
+  * Algorithms:
+   *   for each scalar candidate which are both live-in and live-out for the loop body 
+   *   (We don't use liveness analysis here for simplicity)
+   *    and which is not the loop invariant variable (loop index).
+   *   Consider those with only 1 or 2 references
+   *   1 reference
+   *     the operation is one of x++, ++x, x--, --x, x binop= expr
+   *   2 references belonging to the same operation
+   *     operations: one of  x= x op expr,  x = expr op x (except for subtraction)
+   * The reduction description from the OpenMP 3.0 specification.
+   *  x is not referenced in exp
+   *  expr has scalar type (no array, objects etc)
+   *  x: scalar only, aggregate types (including arrays), pointer types and reference types may not appear in a reduction clause.
+   *  op is not an overloaded operator, but +, *, -, &, ^ ,|, &&, ||
+   *  binop is not an overloaded operator, but: +, *, -, &, ^ ,|
+  */
+void SageInterface::ReductionRecognition(SgForStatement* loop, std::set< std::pair <SgInitializedName*, VariantT> > & results)
+{
+  //x. Collect variable references of scalar types as candidates, excluding loop index
+  SgInitializedName* loopindex;
+  if (!(isCanonicalForLoop(loop, &loopindex)))
+  {
+    cerr<<"Skip reduction recognition for non-canonical for loop"<<endl;
+    return; 
+  }
+  std::set<SgInitializedName*> candidateVars; // scalar variables used within the loop
+  //Store the references for each scalar variable
+  std::map <SgInitializedName*, vector<SgVarRefExp* > > var_references;
+
+  Rose_STL_Container<SgNode*> reflist = NodeQuery::querySubTree(loop, V_SgVarRefExp);
+  Rose_STL_Container<SgNode*>::iterator iter = reflist.begin();
+  for (; iter!=reflist.end(); iter++)
+  {
+    SgVarRefExp* ref_exp = isSgVarRefExp(*iter);
+    SgInitializedName* initname= ref_exp->get_symbol()->get_declaration();
+    // candidates are of scalar types and are not the loop index variable
+    if ((isScalarType(initname->get_type())) &&(initname !=loopindex))
+    {
+      candidateVars.insert(initname);
+      var_references[initname].push_back(ref_exp);
+    }
+  }
+  //
+  //Consider variables referenced at most twice
+  std::set<SgInitializedName*>::iterator niter=candidateVars.begin();
+  for (; niter!=candidateVars.end(); niter++)
+  {
+    SgInitializedName* initname = *niter;
+    bool isReduction = false;
+    VariantT optype;
+    // referenced once only
+    if (var_references[initname].size()==1)
+    {
+      if(getProject()->get_verbose()>1)
+        cout<<"Debug: SageInterface::ReductionRecognition() A candidate used once:"<<initname->get_name().getString()<<endl;
+      SgVarRefExp* ref_exp = *(var_references[initname].begin());
+      SgStatement* stmt = SageInterface::getEnclosingStatement(ref_exp);
+      if (isSgExprStatement(stmt))
+      {
+        SgExpression* exp = isSgExprStatement(stmt)->get_expression();
+        SgExpression* binop = isSgBinaryOp(exp);
+        if (isSgPlusPlusOp(exp)) // x++ or ++x
+        { // Could have multiple reduction clause with different operators!!
+          // So the variable list is associated with each kind of operator
+          optype = V_SgPlusPlusOp; 
+          isReduction = true;
+        }
+        else if (isSgMinusMinusOp(exp)) // x-- or --x
+        {
+          optype = V_SgMinusMinusOp;
+          isReduction = true;
+        }
+        else 
+        // x binop= expr where binop is one of + * - & ^ |
+        // x must be on the left hand side
+        if (binop!=NULL) {
+          SgExpression* lhs= isSgBinaryOp(exp)->get_lhs_operand ();
+          if (lhs==ref_exp)
+          {
+            switch (exp->variantT())
+            {
+              case V_SgPlusAssignOp:
+                {
+                  optype = V_SgPlusAssignOp;
+                  isReduction = true;
+                  break;
+                }
+              case V_SgMultAssignOp:
+                {
+                  optype = V_SgMultAssignOp;
+                  isReduction = true;
+                  break;
+                }
+              case V_SgMinusAssignOp:
+                {
+                  optype = V_SgMinusAssignOp;
+                  isReduction = true;
+                  break;
+                }
+              case V_SgAndAssignOp:
+                {
+                  optype = V_SgAndAssignOp;
+                  isReduction = true;
+                  break;
+                }
+              case V_SgXorAssignOp:
+                {
+                  optype = V_SgXorAssignOp;
+                  isReduction = true;
+                  break;
+                }
+              case V_SgIorAssignOp:
+                {
+                  optype = V_SgIorAssignOp;
+                  isReduction = true;
+                  break;
+                }
+              default:
+                break;
+            } // end
+          }// end if on left side
+        }
+      }
+    }
+    // referenced twice within a same statement
+    else if (var_references[initname].size()==2)
+    {
+      if(getProject()->get_verbose()>1)
+        cout<<"Debug: A candidate used twice:"<<initname->get_name().getString()<<endl;
+      SgVarRefExp* ref_exp1 = *(var_references[initname].begin());
+      SgVarRefExp* ref_exp2 = *(++var_references[initname].begin());
+      SgStatement* stmt = SageInterface::getEnclosingStatement(ref_exp1);
+      SgStatement* stmt2 = SageInterface::getEnclosingStatement(ref_exp2);
+      if (stmt != stmt2)
+        continue;
+      // must be assignment statement using
+      //  x= x op expr,  x = expr op x (except for subtraction)
+      // one reference on left hand, the other on the right hand of assignment expression
+      // the right hand uses associative operators +, *, -, &, ^ ,|, &&, ||
+      SgExprStatement* exp_stmt =  isSgExprStatement(stmt);
+      if (exp_stmt && isSgAssignOp(exp_stmt->get_expression()))
+      {
+        SgExpression* assign_lhs=NULL, * assign_rhs =NULL;
+        assign_lhs = isSgAssignOp(exp_stmt->get_expression())->get_lhs_operand();
+        assign_rhs = isSgAssignOp(exp_stmt->get_expression())->get_rhs_operand();
+        ROSE_ASSERT(assign_lhs && assign_rhs);
+        // x must show up in both lhs and rhs in any order:
+        //  e.g.: ref1 = ref2 op exp or ref2 = ref1 op exp
+        if (((assign_lhs==ref_exp1)&&SageInterface::isAncestor(assign_rhs,ref_exp2))
+            ||((assign_lhs==ref_exp2)&&SageInterface::isAncestor(assign_rhs,ref_exp1)))
+        {
+          // assignment's rhs must match the associative binary operations
+          // +, *, -, &, ^ ,|, &&, ||
+          SgBinaryOp * binop = isSgBinaryOp(assign_rhs);
+          if (binop!=NULL){
+            SgExpression* op_lhs = binop->get_lhs_operand();
+            SgExpression* op_rhs = binop->get_rhs_operand();
+            // double check that the binary expression has either ref1 or ref2 as one operand
+            if( !((op_lhs==ref_exp1)||(op_lhs==ref_exp2))
+                && !((op_rhs==ref_exp1)||(op_rhs==ref_exp2)))
+              continue;
+            bool isOnLeft = false; // true if it has form (refx op exp), instead (exp or refx)
+            if ((op_lhs==ref_exp1)||   // TODO might have in between !!
+                (op_lhs==ref_exp2))
+              isOnLeft = true;
+            switch (binop->variantT())
+            {
+              case V_SgAddOp:
+                {
+                  optype = V_SgAddOp;
+                  isReduction = true;
+                  break;
+                }
+              case V_SgMultiplyOp:
+                {
+                  optype = V_SgMultiplyOp;
+                  isReduction = true;
+                  break;
+                }
+              case V_SgSubtractOp: // special handle here!!
+                {
+                  optype = V_SgSubtractOp;
+                  if (isOnLeft) // cannot allow (exp - x)a
+                  {
+                    isReduction = true;
+                  }
+                  break;
+                }
+              case V_SgBitAndOp:
+                {
+                  optype = V_SgBitAndOp;
+                  isReduction = true;
+                  break;
+                }
+              case V_SgBitXorOp:
+                {
+                  optype = V_SgBitXorOp;
+                  isReduction = true;
+                  break;
+                }
+              case V_SgBitOrOp:
+                {
+                  optype = V_SgBitOrOp;
+                  isReduction = true;
+                  break;
+                }
+              case V_SgAndOp:
+                {
+                  optype = V_SgAndOp;
+                  isReduction = true;
+                  break;
+                }
+              case V_SgOrOp:
+                {
+                  optype = V_SgOrOp;
+                  isReduction = true;
+                  break;
+                }
+              default:
+                break;
+            }
+          } // end matching associative operations
+        }
+      } // end if assignop
+    }// end referenced twice
+    if (isReduction)
+      results.insert(make_pair(initname,optype));
+  }// end for ()
+}
+

@@ -84,6 +84,7 @@ noinst_PROGRAMS = \
    persistantAttributes \
    prePostTraversal \
    queryLibraryExample \
+   reductionRecognition \
    resolveOverloadedFunction \
    seedBugsExample_arrayIndexing \
    scopeInformation \
@@ -161,6 +162,8 @@ resolveOverloadedFunction_SOURCES = resolveOverloadedFunction.C
 templateParameter_SOURCES = templateParameter.C
 
 instrumentEndOfFunction_SOURCES = instrumentEndOfFunction.C
+
+reductionRecognition_SOURCES= reductionRecognition.C
 
 instrumentationExample_SOURCES = instrumentationExample.C
 
@@ -352,6 +355,10 @@ testInstrumentationExample: instrumentationExample
 
 testInstrumentEndOfFunction: instrumentEndOfFunction
 	./instrumentEndOfFunction -rose:verbose 0 -c $(srcdir)/inputCode_instrumentEndOfFunction.C
+
+testReductionRecognition: reductionRecognition
+	./reductionRecognition -rose:verbose 0 -c $(srcdir)/inputCode_reductionRecognition.C
+
 # turn off the warning for input code with unused variable declarations
 testAddVariableDeclaration: addVariableDeclaration
 	./addVariableDeclaration --edg:no_warnings -c $(srcdir)/inputCode_AddVariableDeclaration.C
@@ -683,6 +690,7 @@ generatedCodeExamples = \
    rose_inputCode_InstrumentationTranslator.C \
    rose_inputCode_instrumentEndOfFunction.C \
    loopRecognition.out \
+   reductionRecognition.out \
    typeInfoFromFunctionParameters.out \
    resolveOverloadedFunction.out \
    templateParameter.out \
@@ -920,6 +928,10 @@ rose_inputCode_InstrumentationTranslator.C: instrumentationExample
 rose_inputCode_instrumentEndOfFunction.C: instrumentEndOfFunction
 	@echo "Generate executable from compilation of input code ..."
 	./instrumentEndOfFunction $(ROSE_FLAGS) -c $(srcdir)/inputCode_instrumentEndOfFunction.C
+reductionRecognition.out: reductionRecognition
+	@echo "Generate executable from compilation of input code ..."
+	./reductionRecognition $(ROSE_FLAGS) -c $(srcdir)/inputCode_reductionRecognition.C >reductionRecognition.out
+
 loopRecognition.out: loopRecognition
 	@echo "Generate executable from compilation of input code (loopRecognition) ..."
 	./loopRecognition $(ROSE_FLAGS) -c $(srcdir)/inputCode_LoopRecognition.C > loopRecognition.out
@@ -1275,8 +1287,8 @@ EXTRA_DIST = \
    rose_bin_example_backup.s \
    buffer2.bin \
    inputCode_seedBugsExample_arrayIndexing.C \
-   inputCode_dwarfAnalysis.C
-
+   inputCode_dwarfAnalysis.C \
+   inputCode_reductionRecognition.C
 
 # disabled this one due to problem with copy mechanism, Liao
 #   inputCode_varSubstCopy.C 

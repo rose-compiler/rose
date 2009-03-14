@@ -577,7 +577,7 @@ namespace AutoParallelization
     }
     // reduction recognition
     // Some 'bad' examples have reduction variables which are not used after the loop
-    // So we relax the constains as liveIns only for reduction variables
+    // So we relax the constrains as liveIns only for reduction variables
 #if 0
     set_intersection(liveIns.begin(),liveIns.end(), liveOuts.begin(), liveOuts.end(),
         inserter(reductionVars, reductionVars.begin()));
