@@ -337,6 +337,9 @@ struct hash_nodeptr
    */
     std::vector < SgFile * >generateFileList ();
 
+  //! Get the current SgProject IR Node
+  SgProject * getProject();
+
   //! Given a SgExpression that represents a named function (or bound member
   //! function), return the mentioned function
   SgFunctionDeclaration* getDeclarationOfNamedFunction(SgExpression* func);
@@ -1114,6 +1117,9 @@ LivenessAnalysis * call_liveness_analysis(SgProject* project, bool debug=false);
 
 //!get liveIn and liveOut variables for a for loop from liveness analysis result liv.
 void getLiveVariables(LivenessAnalysis * liv, SgForStatement* loop, std::set<SgInitializedName*>& liveIns, std::set<SgInitializedName*> & liveOuts);
+
+//!Recognize and collect reduction variables and operations within a C/C++ loop, following OpenMP 3.0 specification for allowed reduction variable types and operation types.
+void ReductionRecognition(SgForStatement* loop, std::set< std::pair <SgInitializedName*, VariantT> > & results);
 
 //!Instrument(Add a statement, often a function call) into a function right before the return points, handle multiple return statements and return expressions with side effects. Return the number of statements inserted. 
 /*! Useful when adding a runtime library call to terminate the runtime system right before the end of a program, especially for OpenMP and UPC runtime systems. Return with complex expressions with side effects are rewritten using an additional assignment statement. 

@@ -267,6 +267,8 @@ our own use on large scale applications.}
 
 \input{loopRecognition}
 
+\input{reductionRecognition}
+
 \input{typeInfoFromFunctionParameters}
 
 \input{resolveOverloadedFunction}

@@ -1,0 +1,86 @@
+\chapter{Reduction Recognition}
+
+Figures~\ref{Tutorial:exampleReductionRecognition} 
+shows a translator which
+finds the first loop of a main function and recognizes reduction operations
+and variables within the loop.  
+A reduction recognition algorithm (\lstinline{ReductionRecognition()}) is implemented in the SageInterface
+namespace and follows the C/C++ reduction restrictions defined in the
+OpenMP 3.0 specification. 
+
+%-------------translator---------------------
+\begin{figure}[!h]
+{\indent
+{\mySmallestFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/reductionRecognition.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/reductionRecognition.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing reduction recognition.}
+\label{Tutorial:exampleReductionRecognition}
+\end{figure}
+
+
+Using this translator we can compile the code shown in 
+figure~\ref{Tutorial:exampleInputCode_reductionRecognition}.  
+The output is shown in figure~\ref{Tutorial:exampleOutput_reductionRecognition}.
+
+%-------------input code---------------------
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_reductionRecognition.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_reductionRecognition.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to loop reduction recognition processor.}
+\label{Tutorial:exampleInputCode_reductionRecognition}
+\end{figure}
+
+%-------------output---------------------
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/reductionRecognition.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/reductionRecognition.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input to reduction recognition processor.}
+\label{Tutorial:exampleOutput_reductionRecognition}
+\end{figure}
+
+
+
