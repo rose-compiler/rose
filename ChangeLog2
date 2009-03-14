@@ -1,3 +1,22 @@
+2009-03-14 00:09  liao6
+
+	* [r4866] /trunk/ROSE/docs/Rose/Tutorial/Makefile.am,
+	  /trunk/ROSE/docs/Rose/Tutorial/reductionRecognition.tex,
+	  /trunk/ROSE/docs/Rose/Tutorial/tutorial.tex.in,
+	  /trunk/ROSE/projects/autoParallelization/autoParSupport.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.h,
+	  /trunk/ROSE/tutorial/Makefile.am,
+	  /trunk/ROSE/tutorial/inputCode_reductionRecognition.C,
+	  /trunk/ROSE/tutorial/reductionRecognition.C: Refactored auto
+	  parallelization's reduction recognition into SageInterface and
+	  added a tutorial chapter (Chapter 11) for it
+	  
+	  SageInterface: new functions
+	  * getProject(): grab SgProject from memory pool
+	  * RecognizeReduction(loop, results): find reduction variables and
+	  operations within a loop
+
 2009-03-13 16:40  liao6
 
 	* [r4861] /trunk/ROSE/projects/autoParallelization/autoPar.C,
