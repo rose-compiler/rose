@@ -1,0 +1,12 @@
+This directory demonstrates the use of the Intel Pin framework for
+binary instrumentation with ROSE.  The use of Intel Pin permits
+the mixing of both static and dynamic analysis of binaries and
+also the dynamic analysis of executables built after (or before)
+the static analysis of the source code.
+
+More information on the details of using Intel Pin with ROSE is 
+in the ROSE Tutorial (in the chapter on Binary Analysis).
+
+NOTE: we currently require that as part of the Intel Pin support, 
+the user must include the location of the libdwarf.so library 
+into the LD_LIBRARY_PATH.

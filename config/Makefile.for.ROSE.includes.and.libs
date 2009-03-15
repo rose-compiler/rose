@@ -126,12 +126,35 @@ if ROSE_USE_YICES
 # ROSE_YICES_LIB_FILE = libyices.a
 endif
 
-# ROSE-DWARF libdwarf
+# ROSE-DWARF libdwarf support
 if ROSE_USE_DWARF
   ROSE_DWARF_INCLUDES = -I$(dwarf_path)
-  ROSE_DWARF_LIBS = -ldwarf
-  ROSE_DWARF_LIBS_WITH_PATH = $(dwarf_path)/libdwarf.a -lelf
+
+# DQ (3/13/2009): These do not appear to be used anywhere.
+# ROSE_DWARF_LIBS = -ldwarf
 # ROSE_DWARF_LIB_FILE = libdwarf.a
+
+if ROSE_USE_INTEL_PIN
+# DQ (3/13/2009):
+# If Dwarf is used with Intel Pin then reference the same copy of libdwarf.a (in the same
+# directory).  However, it does NOT work to link both references to libdwarf into more
+# than one dynamic (shared) library, so we need to link libdwarf dynamically.
+# To avoid additional LD_LIBRARY_PATH requirements, we do so using rpath.
+# To support this the libdwarf.so should be placed into $(INTEL_PIN_PATH)/intel64/lib-ext
+# and the static libdwarf.a moved out (renamed) so that it will not be used.
+# Note that this will also cause librose.so to use the shared library for 
+# dwarf when used with Intel Pin.
+# ROSE_DWARF_LIBS_WITH_PATH = $(INTEL_PIN_PATH)/intel64/lib-ext/libdwarf.a -lelf
+# ROSE_DWARF_LIBS_WITH_PATH = -Wl,--rpath $(INTEL_PIN_PATH)/intel64/lib-ext -L$(INTEL_PIN_PATH)/intel64/lib-ext -ldwarf -lelf
+  ROSE_DWARF_LIBS_WITH_PATH = -L$(INTEL_PIN_PATH)/intel64/lib-ext -ldwarf -lelf
+# DQ (3/14/2009): This factors the lib paths.
+  INTEL_PIN_WITH_DWARF_LIBS_PATH = $(INTEL_PIN_LIB_PATHS) -lpin -lxed -ldl $(ROSE_DWARF_LIBS_WITH_PATH)
+else
+# DQ (3/15/2009): Use the usual static linking when not using Intel Pin (what we used to do).
+# DQ (3/13/2009): Fixup libdwarf support in ROSE to always use the dynamic (shared) library.
+# ROSE_DWARF_LIBS_WITH_PATH = -Wl,--rpath $(dwarf_path) -L$(dwarf_path) -ldwarf -lelf
+  ROSE_DWARF_LIBS_WITH_PATH = $(dwarf_path)/libdwarf.a -lelf
+endif
 endif
 
 # ROSE-WINE Package (Wine is a package to permit execution of Windows binaries under Linux)
@@ -159,9 +182,17 @@ if ROSE_USE_INTEL_PIN
   INTEL_PIN_PATH          = @IntelPin_path@
   INTEL_PIN_INCLUDE_PATHS = -I$(INTEL_PIN_PATH)/source/include -I$(INTEL_PIN_PATH)/source/include/gen -I$(INTEL_PIN_PATH)/extras/xed2-intel64/include
 
-# DQ (3/8/2009): These cause rose/src/testSharedRoseLib to fails, I don't know why (fails in systmem call to map()).
-  INTEL_PIN_LIB_PATHS     = -L$(INTEL_PIN_PATH)/intel64/lib -L$(INTEL_PIN_PATH)/extras/xed2-intel64/lib -L$(INTEL_PIN_PATH)/intel64/lib-ext
+# DQ (3/8/2009): These cause rose/src/testSharedRoseLib to fail, I don't know why (fails in system call to map()).
+# INTEL_PIN_LIB_PATHS     = -L$(INTEL_PIN_PATH)/intel64/lib -L$(INTEL_PIN_PATH)/extras/xed2-intel64/lib -L$(INTEL_PIN_PATH)/intel64/lib-ext
+  INTEL_PIN_LIB_PATHS     = -L$(INTEL_PIN_PATH)/intel64/lib -L$(INTEL_PIN_PATH)/extras/xed2-intel64/lib
+
+# Do we want to handle this differently when Dwarf is used optionally with ROSE.
   INTEL_PIN_LIBS          = -lpin -lxed -ldwarf -lelf -ldl
+#if ROSE_USE_DWARF
+#  INTEL_PIN_LIBS          = -lpin -lxed -lelf -ldl
+#else
+#  INTEL_PIN_LIBS          = -lpin -lxed -ldwarf -lelf -ldl
+#endif
 endif
 
 # Note use of "-isystem" option in ROSE_BOOST_PREINCLUDE_PATH to have the 
@@ -300,11 +331,22 @@ ROSE_LIBS = $(top_builddir)/src/librose.la -lm $(MYSQL_DATABASE_LIBS) \
   $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) $(BOOST_PROGRAM_OPTIONS_LIB) \
   $(BOOST_REGEX_LIB)  $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB)  \
   $(BOOST_WAVE_LIB) $(SQLITE3_LDFLAGS)  $(JAVA_JVM_LINK) $(RT_LIBS) \
-  $(ROSE_YICES_LIBS_WITH_PATH) $(ROSE_DWARF_LIBS_WITH_PATH) $(ROSE_PHP_LIBS_WITH_PATH) \
+  $(ROSE_YICES_LIBS_WITH_PATH) $(ROSE_PHP_LIBS_WITH_PATH) $(ROSE_DWARF_LIBS_WITH_PATH) \
   $(ROSE_GUI_LIBS_WITH_PATH) $(ROSE_QT_LIBS_WITH_PATH) $(ROSE_SSL_LIBS)
+
+# DQ (3/13/2009): Removed this from ROSE_LIBS because libtool warnings say it should be in AM_LDFLAGS
+# (this is because it has been moved from being linked statically to being linked dynamically).
+# $(ROSE_DWARF_LIBS_WITH_PATH)
+# AM_LDFLAGS = $(ROSE_DWARF_LIBS_WITH_PATH)
 
 # DQ (3/8/2009): This fails when I try to include it (fails in rose/src/testSharedRoseLib).
 #  $(INTEL_PIN_LIB_PATHS) $(INTEL_PIN_LIBS)
+
+# DQ (3/14/2009): It is cleaner to just required that Intel Pin support require setting
+# the LD_LIBRARYPATH to include: $(INTEL_PIN_PATH)/intel64/lib-ext
+# DQ (3/14/2009): Need to add rpath to LDFLAGS instead of LDADD (to follow libtool rules).
+# LDFLAGS += $(ROSE_DWARF_LIBS_WITH_PATH)
+
 
 # This ROSE_SEPARATE_LIBS is used for the linking of preprocessor.C used within
 # development. The use of the seperate libraries make the linking faster where the

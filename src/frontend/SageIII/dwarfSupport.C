@@ -11,6 +11,11 @@
 // TODO: Add support for sections: .debug_pubnames, .debug_pubtypes, and .debug_macinfo
 
 
+// DQ (3/14/2009): This should only be used for debugging the static and dynamic
+// linking of dwarf within ROSE and optional packages used with ROSE (e.g. Intel Pin).
+#define TEST_DEBUG_DWARF_LINKING 0
+
+
 #include "rose.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
@@ -2644,6 +2649,123 @@ void commentOutEvertythingButDwarf (SgNode* node)
    }
 
 
+#if TEST_DEBUG_DWARF_LINKING
+// DQ (3/14/2009):
+// ************************************************************
+// This is a test code that is useful in debuggin the use of 
+// dwarf within other project optionally used with ROSE. The 
+// short solution is to make everything a dynamic library so 
+// that no two dynamic libraries will statically include the 
+// same static code.
+// ************************************************************
+
+#include "sys/fcntl.h"
+#include "elf.h"
+#include "libelf.h"
+#include "assert.h"
+#include "libdwarf.h"
+
+void
+test_dwarf(string file_name)
+   {
+    int f;
+    Elf_Cmd cmd;
+    Elf* elf;
+    Elf *arf;
+    int archive = 0;
+
+     printf ("In test_dwarf(): file = %s \n",file_name.c_str());
+
+    (void) elf_version(EV_NONE);
+
+     printf ("In test_dwarf(): Test 0 \n");
+
+    if (elf_version(EV_CURRENT) == EV_NONE) {
+
+         printf ("In test_dwarf(): Test 0.5 \n");
+
+        (void) fprintf(stderr, "dwarfdump: libelf.a out of date.\n");
+        assert(false);
+    }
+
+     printf ("In test_dwarf(): Test 1 \n");
+
+    f = open(file_name.c_str(), O_RDONLY);
+    if (f == -1) {
+        fprintf(stderr, "ERROR:  can't open %s \n",file_name.c_str());
+        assert(false);
+    }
+
+     printf ("In test_dwarf(): Test 2 \n");
+
+    cmd = ELF_C_READ;
+    arf = elf_begin(f, cmd, (Elf *) 0);
+    if (elf_kind(arf) == ELF_K_AR)
+       {
+         archive = 1;
+       }
+
+     Dwarf_Debug dbg;
+     Dwarf_Error err;
+
+     printf ("In test_dwarf(): Test 3 \n");
+
+     while ((elf = elf_begin(f, cmd, arf)) != 0)
+        {
+          Elf32_Ehdr *eh32;
+
+     printf ("In test_dwarf(): Test 4 \n");
+
+#ifdef HAVE_ELF64_GETEHDR
+          Elf64_Ehdr *eh64;
+#endif /* HAVE_ELF64_GETEHDR */
+          eh32 = elf32_getehdr(elf);
+          if (!eh32)
+             {
+#ifdef HAVE_ELF64_GETEHDR
+            /* not a 32-bit obj */
+               eh64 = elf64_getehdr(elf);
+               if (!eh64) {
+                /* not a 64-bit obj either! */
+                /* dwarfdump is quiet when not an object */
+               }
+#endif /* HAVE_ELF64_GETEHDR */
+             }
+
+          printf ("Calling dwarf_elf_init() \n");
+          ROSE_ASSERT(elf != NULL);
+
+          // Test calling dwarf_elf_init()
+          int dres = dwarf_elf_init(elf, DW_DLC_READ, NULL, NULL, &dbg, &err);
+
+          if (dres == DW_DLV_NO_ENTRY)
+             {
+               printf("No DWARF information present in %s\n", file_name.c_str());
+               assert(false);
+             }
+
+          if (dres != DW_DLV_OK)
+             {
+               printf ("Dwarf error: dwarf_elf_init \n");
+               assert(false);
+             }
+
+          cmd = elf_next(elf);
+          elf_end(elf);
+        }
+
+     printf ("In test_dwarf(): Test 5 \n");
+
+     elf_end(arf);
+
+     printf ("Calling dwarf_init_status() \n");
+     int dwarf_init_status = dwarf_init (f, DW_DLC_READ, NULL, NULL, &dbg, &err);
+
+     printf ("Leaving process_dwarf() for file = %s dwarf_init_status = %d \n",file_name.c_str(),dwarf_init_status);
+   }
+#endif
+
+
 void
 readDwarf ( SgAsmFile* asmFile )
    {
@@ -2652,16 +2774,37 @@ readDwarf ( SgAsmFile* asmFile )
      SgAsmGenericFile* genericFile = asmFile->get_genericFile();
      ROSE_ASSERT(genericFile != NULL);
 
+#if TEST_DEBUG_DWARF_LINKING
+  // DQ (3/13/2009): Added as a test (part of debugging the use of Dwarf in ROSE and also in Intel Pin used with ROSE).
+     test_dwarf("input_testcode");
+#endif
+
      int fileDescriptor = genericFile->get_fd();
 
-  // printf ("Calling first libdwarf function: dwarf_init() \n");
-     int dwarf_init_status = dwarf_init (fileDescriptor, DW_DLC_READ, NULL, NULL, &rose_dwarf_dbg, &rose_dwarf_error);
-  // printf ("DONE: Calling first libdwarf function: dwarf_init() \n");
+  // DQ (3/13/2009): Added as a test.
+     Dwarf_Debug rose_dwarf_dbg;
+     Dwarf_Error rose_dwarf_error;
 
+#if TEST_DEBUG_DWARF_LINKING
      if (SgProject::get_verbose() > 0)
         {
-          printf ("dwarf_init_status = %d \n",dwarf_init_status);
+          printf ("Calling first libdwarf function: dwarf_init() \n");
+          printf ("fileDescriptor = %d \n",fileDescriptor);
         }
+#endif
+
+  // DQ (3/13/2009): This function gets a lot of surrounding debugging information because it is 
+  // the first dwarf function call and is a special problem in the compatability between Intel Pin 
+  // and ROSE over the use of Dwarf.
+  // int dwarf_init_status = dwarf_init (fileDescriptor, DW_DLC_READ, NULL, NULL, &rose_dwarf_dbg, &rose_dwarf_error);
+     int dwarf_init_status = dwarf_init (fileDescriptor, DW_DLC_READ, NULL, NULL, &rose_dwarf_dbg, &rose_dwarf_error);
+
+#if TEST_DEBUG_DWARF_LINKING
+     if (SgProject::get_verbose() > 0)
+        {
+          printf ("DONE: Calling first libdwarf function: dwarf_init(): dwarf_init_status = %d \n",dwarf_init_status);
+        }
+#endif
 
   // Test if the call to dwarf_init worked!
   // ROSE_ASSERT(dwarf_init_status == DW_DLV_OK);

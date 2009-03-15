@@ -122,8 +122,10 @@ librose_la_LIBADD = $(libroseLibraries) $(LIB_QT) $(JAVA_JVM_FLAGS) -lm $(RT_LIB
 		    $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB) \
 		    $(BOOST_WAVE_LIB) \
 		    -L$(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src -lhpdf \
-		    $(OPT_SQLITE3_LDFLAGS)
+		    $(OPT_SQLITE3_LDFLAGS) 
+# librose_la_LDFLAGS = -no-undefined --rpath $(INTEL_PIN_PATH)/intel64/lib-ext
 librose_la_LDFLAGS = -no-undefined
+#librose_la_LDFLAGS = $(ROSE_DWARF_LIBS_WITH_PATH)
 librose_la_DEPENDENCIES = $(libroseLibraries)
 
 # Build list of all required libraries so that they can be built in parallel
@@ -131,12 +133,27 @@ librose_la_DEPENDENCIES = $(libroseLibraries)
 REQUIRED_LIBS = librose.la 
 
 
+# DQ (3/14/2009): In this file we have to overwrite existing values in LDFLAGS (to build librose.so).
+# DQ (3/14/2009): We have to clear the LDFLAGS variable...  This is not so great.
+LDFLAGS =
+
 testSharedRoseLib_SOURCES = testRoseLib.C
 testSharedRoseLib_DEPENDENCIES = $(REQUIRED_LIBS)
-testSharedRoseLib_LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
+testSharedRoseLib_LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+# testSharedRoseLib_LDFLAGS  = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(ROSE_DWARF_LIBS_WITH_PATH)
+# testSharedRoseLib_LDFLAGS  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+# testSharedRoseLib_LDFLAGS  = $(ROSE_DWARF_LIBS_WITH_PATH)
+
+# AM_LDFLAGS = $(ROSE_LIBS) $(ROSE_DWARF_LIBS_WITH_PATH)
+# AM_LDFLAGS = $(ROSE_DWARF_LIBS_WITH_PATH)
+# AM_LDFLAGS =
 
 print:
 	@echo "libroseLibraries = $(libroseLibraries)"
+	@echo "LIBS_WITH_RPATH = $(LIBS_WITH_RPATH)"
+	@echo "ROSE_LIBS = $(ROSE_LIBS)"
+	@echo "ROSE_DWARF_LIBS_WITH_PATH = $(ROSE_DWARF_LIBS_WITH_PATH)"
+	@echo "AM_LDFLAGS = $(AM_LDFLAGS)"
 
 # DQ (1/10/2004): remove the librose.a and libedg.a files so that distclean will work cleanly
 clean-local:

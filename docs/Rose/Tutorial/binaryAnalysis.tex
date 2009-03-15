@@ -227,8 +227,8 @@ This allows us to track back the value of parameters to the calls, such as eax a
 determine whether a interrupt call is for instance a write or read.
 
 Another feature is the buffer overflow analysis. By traversing the CFG, we can detect buffer overflows.
-The black node in ~\ref{Tutorial:examplefig2} shows such a buffer overlow, cf. source code above.
-
+The black node in ~\ref{Tutorial:examplefig2} shows such a buffer overlow, cf. source code
+above.
 
 
 \section{Dynamic Analysis}
@@ -236,7 +236,7 @@ The black node in ~\ref{Tutorial:examplefig2} shows such a buffer overlow, cf. s
    Recent work in ROSE has added support for dynamic analysis and for mixing of dynamic
 and static analysis using the Intel Pin framework. This optional support in ROSE
 requires a configure option ({\tt --with-IntelPin=$<path$>).  The {\tt path} in
-the configure option is the path to the top level directory of the location of
+the configure option is the {\bf absolute path} to the top level directory of the location of
 the Intel Pin distribution.  This support for Intel Pin has only been tested
 on a 64bit Linux system using the most recent distribution of Intel Pin (version 2.6).
 
@@ -261,3 +261,36 @@ so that the namespace of Intel Pin would not be a problem for ROSE.
 The development team have suggested that they may fix their use of "using" 
 declarations for namespaces in their header files.
 
+Also note that the path must be absolute since it will be the
+prefix for the {\bf pin} executable to be run in the internal tests and
+anything else might be a problem if the path does not contain the 
+current directory ({\bf "."}). Or, perhaps we should test for this
+in the future.
+
+Note 2: Linking to libdwarf.a is a special problem.  
+Both ROSE and Intel Pin use libdwarf.a and both build shred libraries 
+that link to the static version of the library (libdwarf.a).  This is 
+a problem im building Pin Tools since both the PinTool and librose.so will use 
+a statically linked dwarf library (internally).  This causes the first
+use of dwarf to fail, because there are then two versions of the same 
+library in place.  The solution is to force at most one static version 
+of the library and let the other one be a shared library.
+
+   Alternatively both the Pin tool and librose.so can be
+built using the shared version of dwarf (libdwarf.so).
+There is a makefile rule in libdwarf to build the shared
+version of the library, but the default is to only build the
+static library (libdwarf.a), so use {\tt make make libdwarf.so}
+to build the shared library.  So we allow ROSE to link to
+the libdwarf.a (statically), which is how ROSE has always
+worked (this may be revisited in the future).  And we force 
+the Pin tool to link using the shared dwarf library (libdwarf.so).
+% but with rpath so that we don't require the user to modify the LD_LIBRARY_PATH.
+{\em Note: The specification of the location of libdwarf.so in the Intel Pin 
+directory structure is problematic using {\bf rpath}, so for the case of 
+using the Intel Pin package with ROSE please set the {\bf LD_LIBRARY_PATH}
+explicitly (a better solution using {\bf rpath} may be made available in 
+the future).}
+
+
+ 

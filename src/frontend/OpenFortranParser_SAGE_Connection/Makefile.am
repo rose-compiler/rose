@@ -5,6 +5,10 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/OpenFortranParser_SAGE_
 EXTRA_DIST = preproc-fortran.ll preproc-fortran-fixed.ll
 DISTCLEANFILES = preproc-fortran.cc preproc-fortran-fixed.cc
 
+# DQ (3/14/2009): We have to clear the LDFLAGS variable...  This is not so great.
+# we now result the LD_LIBRARY_PATH to be set explicitly.
+# LDFLAGS =
+
 if ROSE_USE_OPEN_FORTRAN_PARSER
 # This shared library is built in the Open Fortran Parser using the command:
 #      gcc -shared -I/usr/apps/java/jdk1.5.0_11/include -I/usr/apps/java/jdk1.5.0_11/include/linux 
