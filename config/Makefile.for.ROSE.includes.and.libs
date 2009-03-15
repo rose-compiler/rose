@@ -180,7 +180,7 @@ endif
 
 if ROSE_USE_INTEL_PIN
   INTEL_PIN_PATH          = @IntelPin_path@
-  INTEL_PIN_INCLUDE_PATHS = -I$(INTEL_PIN_PATH)/source/include -I$(INTEL_PIN_PATH)/source/include/gen -I$(INTEL_PIN_PATH)/extras/xed2-intel64/include
+  INTEL_PIN_INCLUDE_PATHS = -I$(INTEL_PIN_PATH)/source/include -I$(INTEL_PIN_PATH)/source/include/gen -I$(INTEL_PIN_PATH)/extras/xed2-intel64/include -I$(INTEL_PIN_PATH)/source/tools/InstLib
 
 # DQ (3/8/2009): These cause rose/src/testSharedRoseLib to fail, I don't know why (fails in system call to map()).
 # INTEL_PIN_LIB_PATHS     = -L$(INTEL_PIN_PATH)/intel64/lib -L$(INTEL_PIN_PATH)/extras/xed2-intel64/lib -L$(INTEL_PIN_PATH)/intel64/lib-ext
