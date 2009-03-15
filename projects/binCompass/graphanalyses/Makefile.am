@@ -4,7 +4,9 @@ INCLUDES = $(ROSE_INCLUDES)
 
 LINK = $(CXXLINK)
 
-LDFLAGS = -module
+# DQ (3/14/2009): This is defined in config/Makefile.for.ROSE.includes.and.libs
+# LDFLAGS = -module
+LDFLAGS += -module
 
 lib_LTLIBRARIES = libInterruptAnalysis.la libBufferOverflow.la libCycleDetection.la
 

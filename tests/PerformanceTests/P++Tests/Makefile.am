@@ -53,7 +53,8 @@ AM_CXXFLAGS= -I. -I../BenchmarkBase -I$(BASE_DIR)
 
 LDFLAGS=-L./../BenchmarkBase/Base -L./../src
 
-LDADD=-lBenchmarkBase -lPpp -lPpp_static -lm
+# DQ (3/14/2009): I think it is OK to overwrite the LDFLAGS value, but let's not.
+LDADD += -lBenchmarkBase -lPpp -lPpp_static -lm
 
 ## This would be defined to be the value of the _LDADD suffix variables and we want
 ## to avoid that dependency (since it gets in the way of tests using "make -n")

@@ -998,14 +998,14 @@ rose_input_runtimeErrorCheck.C: runtimeCheck
 	@echo "Building an example runtimeCheck ... curdir= `pwd`  srcdir= " $(srcdir)
 	./runtimeCheck $(ROSE_FLAGS) $(srcdir)/input_runtimeErrorCheck.C -run -c -o rose_input_runtimeErrorCheck.o $(ROSE_FLAGS)
 	@echo "running example runtimeCheck ..."
-	$(LIBTOOL) --mode=link $(CXX) -o test_runtimeCheck rose_input_runtimeErrorCheck.o $(LDADD)
+	$(LIBTOOL) --mode=link $(CXX) -o test_runtimeCheck rose_input_runtimeErrorCheck.o $(LDADD) $(ROSE_DWARF_LIBS_WITH_PATH)
 	./test_runtimeCheck > output_runtimeCheck.C
 
 rose_input_runtimeErrorCheck2.C: runtimeCheck
 	@echo "Building an example runtimeCheck2 ... curdir= `pwd`  srcdir= " $(srcdir)
 	./runtimeCheck $(ROSE_FLAGS) $(srcdir)/input_runtimeErrorCheck2.C -run -c -o rose_input_runtimeErrorCheck2.o $(ROSE_FLAGS)
 	@echo "running example runtimeCheck2 ..."
-	$(LIBTOOL) --mode=link $(CXX) -o test_runtimeCheck2 rose_input_runtimeErrorCheck2.o $(LDADD)
+	$(LIBTOOL) --mode=link $(CXX) -o test_runtimeCheck2 rose_input_runtimeErrorCheck2.o $(LDADD) $(ROSE_DWARF_LIBS_WITH_PATH)
 	./test_runtimeCheck2 > output_runtimeCheck2.C
 
 binaryAnalysis_pic1.pdf: binaryAnalysis

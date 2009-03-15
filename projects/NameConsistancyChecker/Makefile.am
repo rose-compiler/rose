@@ -10,7 +10,9 @@ bin_PROGRAMS = nameChecker
 # DQ (1/15/2007): Use the correct boost library with suffix.
 REGEX_LIBS = -lboost_regex-@BOOST_LIB_SUFFIX@
 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(WAVE_LDFLAGS) $(REGEX_LIBS)
+# DQ (3/14/2009): Don't overwrite existing values in LDFLAGS.
+# LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(WAVE_LDFLAGS) $(REGEX_LIBS)
+LDADD += $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(WAVE_LDFLAGS) $(REGEX_LIBS)
 
 nameChecker_SOURCES = nameChecker.C checkNameImpl.C
 nameChecker_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)

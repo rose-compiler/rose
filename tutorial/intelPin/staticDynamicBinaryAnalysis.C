@@ -32,7 +32,7 @@ using namespace std;
 int main(int argc, char *argv[])
    {
   // Set the verbose level of ROSE (for debugging).
-  // SgProject::set_verbose(2);
+     SgProject::set_verbose(2);
 
      printf ("argc = %d \n",argc);
      for (int i=0; i < argc; i++)

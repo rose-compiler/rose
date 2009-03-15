@@ -135,10 +135,13 @@ namespace ELF{
 
 #include "PHPFrontend.h"
 
+#if 0
+// DQ (3/13/2009): Trying to get Dwarf in ROSE to work with Intel Pin.
 #if USE_ROSE_DWARF_SUPPORT && USE_ROSE_INTEL_PIN_SUPPORT
 // DQ (3/10/2009): This fails with Intel Pin, which uses it's own version of dwarf and 
 // thus causes a problem (compiles and links but fails at dwarf_init()).
 #error "Support for both DWARF and Intel Pin fails, these configure options are incompatable."
+#endif
 #endif
 
 // DQ (11/7/2008): Added Dwarf support to ROSE AST (applies only to binary executables generated with dwarf debugging information).

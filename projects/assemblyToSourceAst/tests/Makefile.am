@@ -3,7 +3,10 @@
 #else
 
 CFLAGS = -nostdlib -static -m32 -O3 -s
-LDFLAGS = -nostdlib -static -m32 -s
+
+# DQ (3/14/2009): Don't overwrite existing values in LDFLAGS.
+# LDFLAGS = -nostdlib -static -m32 -s
+LDFLAGS += -nostdlib -static -m32 -s
 
 CCAS = $(CC)
 CCASFLAGS = $(CFLAGS)

@@ -5251,19 +5251,11 @@ SgBinaryFile::buildAsmAST( string executableFileName )
         }
 
 #if USE_ROSE_DWARF_SUPPORT
-  // DQ (3/10/2009): This fails with Intel Pin, which uses it's own version of dwarf and 
-  // thus causes a problem (compiles and links but fails at dwarf_init()).
-#if USE_ROSE_INTEL_PIN_SUPPORT
-#error "Support for both DWARF and Intel Pin fails, these configure options are incompatable."
-#endif
+  // DQ (3/14/2009): Dwarf support now works within ROSE when used with Intel Pin
+  // (was a huge problem until everything (e.g. libdwarf) was dynamically linked).
 
   // DQ (11/7/2008): New Dwarf support in ROSE (Dwarf IR nodes are generated in the AST).
-     if (SgProject::get_verbose() > 0)
-          printf ("Calling readDwarf() \n");
      readDwarf(asmFile);
-     if (SgProject::get_verbose() > 0)
-          printf ("DONE: Calling readDwarf() \n");
-  // printf ("WARNING: COMMENTED OUT DWARF SUPPORT! \n");
 #endif
 
      map<rose_addr_t,string> addressToFunctionNameMap;
