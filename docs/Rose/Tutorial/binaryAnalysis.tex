@@ -285,10 +285,10 @@ to build the shared library.  So we allow ROSE to link to
 the libdwarf.a (statically), which is how ROSE has always
 worked (this may be revisited in the future).  And we force 
 the Pin tool to link using the shared dwarf library (libdwarf.so).
-% but with rpath so that we don't require the user to modify the LD_LIBRARY_PATH.
+% but with rpath so that we don't require the user to modify the LD\_LIBRARY\_PATH.
 {\em Note: The specification of the location of libdwarf.so in the Intel Pin 
 directory structure is problematic using {\bf rpath}, so for the case of 
-using the Intel Pin package with ROSE please set the {\bf LD_LIBRARY_PATH}
+using the Intel Pin package with ROSE please set the {\bf LD\_LIBRARY\_PATH}
 explicitly (a better solution using {\bf rpath} may be made available in 
 the future).}
 
