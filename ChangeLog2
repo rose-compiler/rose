@@ -1,3 +1,61 @@
+2009-03-15 18:14  dquinlan
+
+	* [r4882] /trunk/ROSE/config/Makefile.for.ROSE.includes.and.libs,
+	  /trunk/ROSE/configure.in,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2009_12.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Pin_tests/Makefile.am,
+	  /trunk/ROSE/docs/Rose/Tutorial/binaryAnalysis.tex,
+	  /trunk/ROSE/projects/NameConsistancyChecker/Makefile.am,
+	  /trunk/ROSE/projects/assemblyToSourceAst/Makefile.am,
+	  /trunk/ROSE/projects/assemblyToSourceAst/tests/Makefile.am,
+	  /trunk/ROSE/projects/binCompass/analyses/Makefile.am,
+	  /trunk/ROSE/projects/binCompass/graphanalyses/Makefile.am,
+	  /trunk/ROSE/src/Makefile.am,
+	  /trunk/ROSE/src/frontend/OpenFortranParser_SAGE_Connection/Makefile.am,
+	  /trunk/ROSE/src/frontend/SageIII/dwarfSupport.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C,
+	  /trunk/ROSE/src/rose.h,
+	  /trunk/ROSE/tests/PerformanceTests/A++Tests/Makefile.am,
+	  /trunk/ROSE/tests/PerformanceTests/P++Tests/Makefile.am,
+	  /trunk/ROSE/tutorial/Makefile.am,
+	  /trunk/ROSE/tutorial/intelPin/Makefile.am,
+	  /trunk/ROSE/tutorial/intelPin/README,
+	  /trunk/ROSE/tutorial/intelPin/imageload.C,
+	  /trunk/ROSE/tutorial/intelPin/staticDynamicBinaryAnalysis.C,
+	  /trunk/ROSE/tutorial/roseHPCT/Makefile.am: Added support for
+	  dwarf to be used with both ROSE and the dynamic binary
+	  instrumentation using Intel Pin.
+	  
+	  Detailed changes in this commit:
+	  1) If ROSE is configured with Dwarf support then the Intel Pin
+	  support
+	  now requires LD_LIBRARY_PATH to be fixed to include the location
+	  of
+	  the shared libdwarf.so library which must be copied into the
+	  Intel
+	  Pin directy which has the libdwarf.a file (Intel Pin may also
+	  have to
+	  be recompiled to use the dynamic library. This avoids having two
+	  shared
+	  libraries (librose.so and the Pin tool) statically linking to
+	  libdwarf.a.
+	  Note that Intel Pin uses an old version of libdwarf (5/25/2007),
+	  and
+	  this allows the use of a newer version. I think it is important
+	  that
+	  both ROSE and Intel Pin use the same version of libdwarf.so and
+	  from
+	  the same location.
+	  2) This change to ROSE permits the use of Dwarf source code to
+	  instruction
+	  address mapping (both directions) in the development of tools. It
+	  should
+	  be possible to use either the Dwarf support in ROSE of the Dwarf
+	  support
+	  in Intel Pin.
+
 2009-03-14 00:09  liao6
 
 	* [r4866] /trunk/ROSE/docs/Rose/Tutorial/Makefile.am,
