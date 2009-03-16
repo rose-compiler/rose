@@ -11,7 +11,7 @@ export BOOST_ROOTX="/Users/dquinlan/local/boost_1_35_0_installTree-gxx-4.0.1/"
 CONFIGURE_FLAGS=( --disable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS='-Wall' --with-C_WARNINGS='-Wall' --with-CXXFLAGS=-fPIC --with-CFLAGS=-fPIC --prefix=${ROSE_TOP}/install --with-boost=${BOOST_ROOTX} "$@")
 
 ROSE_SVNROOT=svn+ssh://tux270.llnl.gov/usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
-MAILADDRS="liaoch@llnl.gov panas2@llnl.gov dquinlan@llnl.gov matzke1@llnl.gov"
+MAILADDRS="dquinlan@llnl.gov liaoch@llnl.gov panas2@llnl.gov matzke1@llnl.gov saebjornsen1@llnl.gov"
 ENABLE_BUILD_BINARY_EDG=1
 
 # the right version of subversion is essential!!
