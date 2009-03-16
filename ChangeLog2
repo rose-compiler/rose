@@ -1,3 +1,52 @@
+2009-03-15 23:36  dquinlan
+
+	* [r4888]
+	  /trunk/ROSE/developersScratchSpace/Dan/SimPoints_tests/README:
+	  Added README file to SimPoints example directory.
+
+2009-03-15 23:34  dquinlan
+
+	* [r4887]
+	  /trunk/ROSE/developersScratchSpace/Dan/SimPoints_tests/Nmakefile,
+	  /trunk/ROSE/developersScratchSpace/Dan/SimPoints_tests/ORIGINAL_runpinpoints.template.sh,
+	  /trunk/ROSE/developersScratchSpace/Dan/SimPoints_tests/Step1.sh:
+	  Removed some files from SimPoint support.
+
+2009-03-15 23:31  dquinlan
+
+	* [r4886] /trunk/ROSE/config/Makefile.for.ROSE.includes.and.libs,
+	  /trunk/ROSE/configure.in,
+	  /trunk/ROSE/developersScratchSpace/Dan/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/SimPoints_tests,
+	  /trunk/ROSE/developersScratchSpace/Dan/SimPoints_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/SimPoints_tests/Nmakefile,
+	  /trunk/ROSE/developersScratchSpace/Dan/SimPoints_tests/ORIGINAL_runpinpoints.template.sh,
+	  /trunk/ROSE/developersScratchSpace/Dan/SimPoints_tests/Step.branch_predictor.sh,
+	  /trunk/ROSE/developersScratchSpace/Dan/SimPoints_tests/Step.check_pinpoints.sh,
+	  /trunk/ROSE/developersScratchSpace/Dan/SimPoints_tests/Step1.sh,
+	  /trunk/ROSE/developersScratchSpace/Dan/SimPoints_tests/Step2.sh.in,
+	  /trunk/ROSE/developersScratchSpace/Dan/SimPoints_tests/bbtrace.cpp,
+	  /trunk/ROSE/developersScratchSpace/Dan/SimPoints_tests/bimodal.H,
+	  /trunk/ROSE/developersScratchSpace/Dan/SimPoints_tests/branch_predictor.cpp,
+	  /trunk/ROSE/developersScratchSpace/Dan/SimPoints_tests/controller.cpp,
+	  /trunk/ROSE/developersScratchSpace/Dan/SimPoints_tests/input_testcode.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/SimPoints_tests/isimpoint.cpp,
+	  /trunk/ROSE/developersScratchSpace/Dan/SimPoints_tests/isimpoint_inst.H,
+	  /trunk/ROSE/developersScratchSpace/Dan/SimPoints_tests/runpinpoints.sh.in,
+	  /trunk/ROSE/developersScratchSpace/Dan/SimPoints_tests/simpoints_output_example.out:
+	  Added SimPoints support in development directory.
+	  
+	  Detailed changes in this commit:
+	  1) Added example of using Intel Pin use of Pin Point with Sim
+	  Point
+	  projects to compute simulation points for an input binary with
+	  support for mixed static and dynamic analysis.
+
+2009-03-15 19:29  dquinlan
+
+	* [r4884] /trunk/ROSE/docs/Rose/Tutorial/binaryAnalysis.tex: Fixed
+	  Latex syntax.
+
 2009-03-15 18:14  dquinlan
 
 	* [r4882] /trunk/ROSE/config/Makefile.for.ROSE.includes.and.libs,
