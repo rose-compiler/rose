@@ -18,7 +18,7 @@ int main(int argc, char * argv[])
   SgForStatement* loop = isSgForStatement(*(node_list.begin()));
   ROSE_ASSERT(loop != NULL);
 
-  //Collect reduction variables and opertions
+  //Collect reduction variables and operations
   std::set<  std::pair <SgInitializedName*, VariantT> > reductions;
   std::set<  std::pair <SgInitializedName*, VariantT> >::const_iterator iter;
   SageInterface::ReductionRecognition(loop, reductions);

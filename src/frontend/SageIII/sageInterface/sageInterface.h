@@ -950,6 +950,7 @@ SgScopeStatement* getScope(const SgNode* astNode);
   * There is a similar function bool compareFunctionDeclarations(SgFunctionDeclaration *f1, SgFunctionDeclaration *f2) from Classhierarchy.C
   */
  bool isSameFunction(SgFunctionDeclaration* func1, SgFunctionDeclaration* func2);
+
 //@}
 
 //------------------------------------------------------------------------
