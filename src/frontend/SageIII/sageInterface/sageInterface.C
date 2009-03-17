@@ -8988,13 +8988,21 @@ void SageInterface::ReductionRecognition(SgForStatement* loop, std::set< std::pa
   std::map <SgInitializedName*, vector<SgVarRefExp* > > var_references;
 
   Rose_STL_Container<SgNode*> reflist = NodeQuery::querySubTree(loop, V_SgVarRefExp);
+  SgStatement* lbody= loop->get_loop_body();
+  ROSE_ASSERT(lbody != NULL);
   Rose_STL_Container<SgNode*>::iterator iter = reflist.begin();
   for (; iter!=reflist.end(); iter++)
   {
     SgVarRefExp* ref_exp = isSgVarRefExp(*iter);
     SgInitializedName* initname= ref_exp->get_symbol()->get_declaration();
     // candidates are of scalar types and are not the loop index variable
-    if ((isScalarType(initname->get_type())) &&(initname !=loopindex))
+    // And also should be live-in: 
+    //        not declared locally (var_scope equal or lower than loop body )
+    //        or redefined (captured by ref count)
+    SgScopeStatement* var_scope = initname->get_scope();
+    ROSE_ASSERT(var_scope != NULL);
+    if ((isScalarType(initname->get_type())) &&(initname !=loopindex) 
+        && !(SageInterface::isAncestor(lbody, var_scope)||(lbody==var_scope)))
     {
       candidateVars.insert(initname);
       var_references[initname].push_back(ref_exp);

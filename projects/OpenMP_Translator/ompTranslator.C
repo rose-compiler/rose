@@ -87,7 +87,7 @@ public:
   static bool isLoopIndexVarRef(SgForStatement* forstmt, SgVarRefExp *varref);
   // Check if node1 is an ancester of node2 (parent of parent of.. node 2)
   // a reliable way to compare two scopes: 
-  static bool isAncester(SgNode* node1, SgNode* node2); 
+  static bool isAncestor(SgNode* node1, SgNode* node2); 
 };
 
 //--------------------------------------------------------------
@@ -640,7 +640,7 @@ int OmpFrontend::createOmpAttribute(SgNode* node)
             // interestingly, outer scope is 'smaller' currentscope >= orig_scope
                SgInitializedName* initname= isSgVarRefExp(*i)->get_symbol()->get_declaration();
 	       SgScopeStatement* orig_scope=isSgScopeStatement(ASTtools::get_scope(initname));
-               if (( currentscope == orig_scope)||ASTtools::isAncester(orig_scope,currentscope) )
+               if (( currentscope == orig_scope)||ASTtools::isAncestor(orig_scope,currentscope) )
                     all_var_list.push_back(initname);
              } //end for
 
@@ -877,7 +877,7 @@ int OmpFrontend::createOmpAttribute(SgNode* node)
          SgInitializedName* initname= isSgVarRefExp(*i)->get_symbol()->get_declaration();
          //if ( currentscope >= isSgScopeStatement(ASTtools::get_scope(initname)) )
          SgScopeStatement* orig_scope = isSgScopeStatement(ASTtools::get_scope(initname));
-         if (( currentscope==orig_scope) || ASTtools::isAncester(orig_scope,currentscope))
+         if (( currentscope==orig_scope) || ASTtools::isAncestor(orig_scope,currentscope))
             all_var_list.push_back(initname);
        } //end for
 
@@ -1420,8 +1420,8 @@ SgExpression* ASTtools::getForLoopTripleValues(int valuetype,SgForStatement* for
 }
 
 //-------------
-//check if node1 is an ancester of node 2
-bool ASTtools::isAncester(SgNode* node1, SgNode* node2)
+//check if node1 is an ancestor of node 2
+bool ASTtools::isAncestor(SgNode* node1, SgNode* node2)
 {
   ROSE_ASSERT(node1&&node2);
   SgNode* curnode= node2;
@@ -1746,7 +1746,7 @@ int OmpMidend::variableSubstituting(SgPragmaDeclaration * decl, \
 	      (ompattribute->isInClause(initname,e_firstprivate))||
 	      (ompattribute->isInClause(initname,e_lastprivate)))
 //		&&(currentscope >= varscope))                         ||
-		&&((currentscope==varscope)|| ASTtools::isAncester(varscope,currentscope)))                         ||
+		&&((currentscope==varscope)|| ASTtools::isAncestor(varscope,currentscope)))                         ||
            (ompattribute->isInClause(initname,e_reduction_plus)))
        { 
         //cout<<"debug:private:"<<(initname->get_name()).getString()<<endl;
@@ -1845,7 +1845,7 @@ int OmpMidend::addLastprivateStmts(SgPragmaDeclaration *decl, OmpAttribute *ompa
       SgExpression * rhs = NULL;
   
 //      if (varscope<currentscope) // I thought higher scope was smaller
-      if (ASTtools::isAncester(varscope,currentscope))
+      if (ASTtools::isAncestor(varscope,currentscope))
          {
             lhs = buildVarRefExp(initname,bBlock1);
             rhs = buildVarRefExp(name1,bBlock1);
@@ -1931,7 +1931,7 @@ int OmpMidend::addReductionCalls(SgPragmaDeclaration *decl, OmpAttribute *ompatt
           appendExpression(exp_list_exp,arg2);
         }
  //&gi for reduction variables from higher scope or for all orphaned case
-      else if (((ompattribute->isOrphaned==false)&&(ASTtools::isAncester(varscope,currentscope)))||\
+      else if (((ompattribute->isOrphaned==false)&&(ASTtools::isAncestor(varscope,currentscope)))||\
 		(ompattribute->isOrphaned==true))
         {
          SgName varName2(myname.getString());
@@ -2264,7 +2264,7 @@ int OmpMidend::addPrivateVarDeclarations(SgPragmaDeclaration *decl, \
         SgName initname2_name("_pp_"+myname.getString());
 
 //      if (varscope<currentscope)  
-      if (ASTtools::isAncester(varscope,currentscope))  
+      if (ASTtools::isAncestor(varscope,currentscope))  
       {   
         // reusing initname directly will have weird behavior during runtime.
         // so build varname1 from scratch!!
