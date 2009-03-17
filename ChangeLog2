@@ -1,3 +1,8 @@
+2009-03-17 18:42  saebjornsen1
+
+	* [r4907] /trunk/ROSE/tests/CompilerOptionsTests/Makefile.am:
+	  removed test
+
 2009-03-16 17:16  dquinlan
 
 	* [r4897] /trunk/ROSE/scripts/roseFreshTestStub-Dan-OSX.sh,
