@@ -14,10 +14,10 @@ using namespace std;
 void usage(const char* me) 
 {
   cerr << "Usage: " << me
-       << " termfile.term\n"
-       << "  Unparses a term file to its original source representation.\n\n"
+       << " [OPTION]... [FILE.term]\n"
+       << "Unparse a term file to its original source representation.\n\n"
 
-       << "  Options:\n"
+       << "Options:\n"
        << "  -o, --output sourcefile.c\n"
        << "    If specified, the contents of all files will be concatenated\n"
        << "    into the sourcefile.\n\n"
@@ -33,7 +33,7 @@ void usage(const char* me)
        << "    Create a dotty graph of the syntax tree.\n\n"
 
        << "  --pdf\n"
-       << "    Create a PDF printout of the syntax tree.\n\n"
+       << "    Create a PDF printout of the syntax tree."
        << endl;
 
 }

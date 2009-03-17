@@ -217,32 +217,32 @@ PrologToRose::toRose(PrologTerm* t) {
 
     PrologCompTerm* ppil = 
       dynamic_cast<PrologCompTerm*>(annot->at(annot->getArity()-1));
-    ROSE_ASSERT(ppil);
+    if (ppil) {
+      PrologList* l = dynamic_cast<PrologList*>(ppil->at(0));
+      if (l) {
+	for (deque<PrologTerm*>::reverse_iterator it = l->getSuccs()->rbegin();
+	     it != l->getSuccs()->rend(); ++it) {
 
-    PrologList* l = dynamic_cast<PrologList*>(ppil->at(0));
-    if (l) {
-      for (deque<PrologTerm*>::iterator it = l->getSuccs()->begin();
-	   it != l->getSuccs()->end(); ++it) {
+	  PrologCompTerm* ppi = dynamic_cast<PrologCompTerm*>(*it);
+	  ROSE_ASSERT(ppi);
 
-	PrologCompTerm* ppi = dynamic_cast<PrologCompTerm*>(*it);
-	ROSE_ASSERT(ppi);
-
-	Sg_File_Info* fi = createFileInfo(ppi->at(ppi->getArity()-1));
-	PreprocessingInfo::RelativePositionType locationInL = 
-	  (PreprocessingInfo::RelativePositionType)
-	  createEnum(ppi->at(1), re.RelativePositionType);
+	  Sg_File_Info* fi = createFileInfo(ppi->at(ppi->getArity()-1));
+	  PreprocessingInfo::RelativePositionType locationInL = 
+            (PreprocessingInfo::RelativePositionType)
+	    createEnum(ppi->at(1), re.RelativePositionType);
 	
-	ln->addToAttachedPreprocessingInfo(
-          new PreprocessingInfo((PreprocessingInfo::DirectiveType)
-				createEnum(ppi, re.DirectiveType),
-				ppi->at(0)->getName(),
-				fi->get_filenameString(),
-				fi->get_line(),
-				fi->get_col(),
-				1 /* FIXME: nol */,
-				locationInL),
-	  locationInL);
-      }
+	  ln->addToAttachedPreprocessingInfo(
+	     new PreprocessingInfo((PreprocessingInfo::DirectiveType)
+				   createEnum(ppi, re.DirectiveType),
+				   ppi->at(0)->getName(),
+				   fi->get_filenameString(),
+				   fi->get_line(),
+				   fi->get_col(),
+				   1 /* FIXME: nol */,
+				   locationInL),
+	     locationInL);
+	}
+      } else ROSE_ASSERT(ppil->at(0)->getName() == "null");
     }
   }
 
@@ -632,8 +632,9 @@ PrologToRose::createFileInfo(PrologTerm* t) {
     assert((PrologCompTerm*) 0 != u);	
     assert(u->getName() == "file_info");
     assert_arity(u, 3);
-    if ((u->at(0)->getName() == "compilergenerated") || 
+    if ((u->at(0)->getName() == "compilerGenerated") || 
         (u->at(0)->getName() == "<invalid>")) {
+      debug("compiler generated node");
       fi = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
     }
     else {
@@ -648,14 +649,11 @@ PrologToRose::createFileInfo(PrologTerm* t) {
       assert(col != (PrologInt*) 0);
       assert(line->getValue() >= 0);
       assert(col->getValue() >= 0);
-      fi = new Sg_File_Info(filename->getName(),line->getValue(),col->getValue());
+      fi = new Sg_File_Info(filename->getName(),
+			    line->getValue(), col->getValue());
     }
   } 
   ROSE_ASSERT(fi != NULL);
-
-  // Set the CompilerGenerated Flag (Adrian)
-  //fi->setCompilerGenerated();
-  //fi->setOutputInCodeGeneration();
 
   return fi;
 }
@@ -801,30 +799,30 @@ PrologToRose::createType(PrologTerm* t) {
       return NULL;
     }
     if (tname==SG_PREFIX "type_bool") return new SgTypeBool();
-    else if (tname==SG_PREFIX "type_char") return new  SgTypeChar();
-    else if (tname==SG_PREFIX "type_default") return new  SgTypeDefault();
-    else if (tname==SG_PREFIX "type_double") return new  SgTypeDouble();
-    else if (tname==SG_PREFIX "type_float") return new  SgTypeFloat();
-    else if (tname==SG_PREFIX "type_global_void") return new  SgTypeGlobalVoid(); 
-    else if (tname==SG_PREFIX "type_ellipse") {return new  SgTypeEllipse();}
-    else if (tname==SG_PREFIX "type_int") {return new  SgTypeInt();}
-    else if (tname==SG_PREFIX "type_long") return new  SgTypeLong();
-    else if (tname==SG_PREFIX "type_long_double") return new  SgTypeLongDouble();
-    else if (tname==SG_PREFIX "type_long_long") return new  SgTypeLongLong();
-    else if (tname==SG_PREFIX "type_short") return new  SgTypeShort();
-    else if (tname==SG_PREFIX "type_signed_char") return new  SgTypeSignedChar();
-    else if (tname==SG_PREFIX "type_signed_int") return new  SgTypeSignedInt();
-    else if (tname==SG_PREFIX "type_signed_long") return new  SgTypeSignedLong();
-    else if (tname==SG_PREFIX "type_signed_short") return new  SgTypeSignedShort();
-    else if (tname==SG_PREFIX "type_string") return new  SgTypeString();
-    else if (tname==SG_PREFIX "type_unknown") return new  SgTypeUnknown();
-    else if (tname==SG_PREFIX "type_unsigned_char") return new  SgTypeUnsignedChar();
-    else if (tname==SG_PREFIX "type_unsigned_int") return new  SgTypeUnsignedInt();
-    else if (tname==SG_PREFIX "type_unsigned_long") return new  SgTypeUnsignedLong();
-    else if (tname==SG_PREFIX "type_unsigned_long_long") return new  SgTypeUnsignedLongLong();
-    else if (tname==SG_PREFIX "type_unsigned_short") return new  SgTypeUnsignedShort(); 
-    else if (tname==SG_PREFIX "type_void") return new  SgTypeVoid();
-    else if (tname==SG_PREFIX "type_wchar") return new  SgTypeWchar();
+    else if (tname==SG_PREFIX "type_char") return new SgTypeChar();
+    else if (tname==SG_PREFIX "type_default") return new SgTypeDefault();
+    else if (tname==SG_PREFIX "type_double") return new SgTypeDouble();
+    else if (tname==SG_PREFIX "type_float") return new SgTypeFloat();
+    else if (tname==SG_PREFIX "type_global_void") return new SgTypeGlobalVoid(); 
+    else if (tname==SG_PREFIX "type_ellipse") {return new SgTypeEllipse();}
+    else if (tname==SG_PREFIX "type_int") {return new SgTypeInt();}
+    else if (tname==SG_PREFIX "type_long") return new SgTypeLong();
+    else if (tname==SG_PREFIX "type_long_double") return new SgTypeLongDouble();
+    else if (tname==SG_PREFIX "type_long_long") return new SgTypeLongLong();
+    else if (tname==SG_PREFIX "type_short") return new SgTypeShort();
+    else if (tname==SG_PREFIX "type_signed_char") return new SgTypeSignedChar();
+    else if (tname==SG_PREFIX "type_signed_int") return new SgTypeSignedInt();
+    else if (tname==SG_PREFIX "type_signed_long") return new SgTypeSignedLong();
+    else if (tname==SG_PREFIX "type_signed_short") return new SgTypeSignedShort();
+    else if (tname==SG_PREFIX "type_string") return new SgTypeString();
+    else if (tname==SG_PREFIX "type_unknown") return new SgTypeUnknown();
+    else if (tname==SG_PREFIX "type_unsigned_char") return new SgTypeUnsignedChar();
+    else if (tname==SG_PREFIX "type_unsigned_int") return new SgTypeUnsignedInt();
+    else if (tname==SG_PREFIX "type_unsigned_long") return new SgTypeUnsignedLong();
+    else if (tname==SG_PREFIX "type_unsigned_long_long") return new SgTypeUnsignedLongLong();
+    else if (tname==SG_PREFIX "type_unsigned_short") return new SgTypeUnsignedShort(); 
+    else if (tname==SG_PREFIX "type_void") return new SgTypeVoid();
+    else if (tname==SG_PREFIX "type_wchar") return new SgTypeWchar();
 
   }
   /* should never happen*/
@@ -1398,7 +1396,10 @@ PrologToRose::createBasicBlock(Sg_File_Info* fi,deque<SgNode*>* succs) {
   /*append statements*/
   while(it != succs->end()) {
     if ((*it) != (SgStatement*) 0) {
-      b->append_statement(dynamic_cast<SgStatement*>(*it));
+      SgStatement* stmt = dynamic_cast<SgStatement*>(*it);
+      debug((*it)->class_name());
+      ROSE_ASSERT(stmt);
+      b->append_statement(stmt);
       (*it)->set_parent(b);
       debug("adding nonempty statement");
     } else debug("empty statement not added");
@@ -3360,5 +3361,5 @@ PrologToRose::warn_msg(string msg) {
  * compiled with NDEBUG*/
 void
 PrologToRose::debug(string message) {
-  //cerr << message << "\n";
+  // cerr << message << "\n";
 }

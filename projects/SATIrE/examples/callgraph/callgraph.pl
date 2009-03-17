@@ -1,15 +1,5 @@
 #!/usr/local/mstools/bin/pl -q -t main -f
 % -*- prolog -*-
-:- module(callgraph,
-	  [callgraph/2,
-	   collect_calls/5,
-	   dump_graph/3]).
-
-:- use_module(library(ugraphs)),
-   use_module(ast_properties),
-   use_module(ast_transform),
-   use_module(utils).
-
 %-----------------------------------------------------------------------
 /** <module> Create a call graph from an AST
 
@@ -30,33 +20,17 @@ GNU General Public License for more details.
 */
 %-----------------------------------------------------------------------
 
+:- prolog_load_context(directory, CurDir),
+   asserta(library_directory(CurDir)),
+   (getenv('TERMITE_LIB', TermitePath)
+   ; (print_message(error, 'Please set then environment variable $TERMITE_LIB'),
+      halt(1))
+   ),
+   asserta(library_directory(TermitePath)).
+
+:- use_module(callgraph).
+
 :- guitracer.
-
-%% collect_calls(Sig-Edges, [], _-Edges, FunctionDecl, FunctionDecl) is det.
-% postorder traversal, unify Sig with the signature of the current function
-%
-% meant for internal use only
-
-collect_calls(Sig-Edges, [], _-Edges, FunctionDecl, FunctionDecl) :-
-  function_signature(FunctionDecl, Type, Name, _Mod), !,
-  % Create an empty signature
-  Sig = Name/Type.
-
-collect_calls(Sig-Edges, [], Sig-[Sig-Callee|Edges], CallExp, CallExp) :-
-  is_function_call_exp(CallExp, Name, Type), !,
-  Callee = Name/Type.
-collect_calls(I,I,I, N, N).
-
-%% callgraph(+P, -Graph) is det.
-% Construct a call graph from an AST. Graph is in library(ugraphs) form.
-% The nodes in the graph have the form Name/Type
-%
-% @tbd
-% NO function pointers or virtual methods yet!
-callgraph(P, Graph) :-
-  transformed_with(P, collect_calls, postorder, _-[], _-Edges, _), !,
-  add_edges([], Edges, Graph).
-
 
 %-----------------------------------------------------------------------
 % GRAPH Printing

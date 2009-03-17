@@ -316,7 +316,7 @@ Implementation::outputAnnotatedProgram(Program *program)
     {
         if (program->prologTerm == NULL)
         {
-            TimingPerformance timer("Output Prolog term:");
+            TimingPerformance timer("Output Termite term:");
             TermPrinter<DFI_STORE> tp((DFI_STORE) analysisInfo, program->icfg);
 
             if (program->options->analysisWholeProgram())

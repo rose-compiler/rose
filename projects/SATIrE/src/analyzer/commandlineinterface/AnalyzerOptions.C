@@ -95,7 +95,7 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo(""),_n
     "                            the icfg generation\n"
     "   --output-source=<FILENAME> generate source file with annotated \n"
     "                            analysis results for each statement\n"
-    "   --output-term=<FILENAME> generate Prolog term representation of input\n"
+    "   --output-term=<FILENAME> generate Termite term representation of input\n"
     "                            program AST\n"
     "   --output-icfg=<FILENAME> output icfg of input program\n"
     "   --output-binary-ast=<FILENAME> write AST to binary file\n"

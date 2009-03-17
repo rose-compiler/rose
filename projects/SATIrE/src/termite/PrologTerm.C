@@ -11,7 +11,7 @@ PrologTerm *PrologTerm::wrap_PL_Term(term_t t)
 
   PrologTerm *pt = 0;
   switch( PL_term_type(t) ) {
-  case PL_VARIABLE: assert(false);
+  case PL_VARIABLE: assert(false && "Encountered Variable!");
 
   case PL_ATOM:     
     if (PL_get_nil(t)) pt = new PrologList(t);

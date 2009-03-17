@@ -10,7 +10,7 @@ Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
 class PrologVariable : public PrologTerm {
 	public:
 		///constructor setting the name
-		PrologVariable(std::string name) : mName(name) {};
+  PrologVariable(std::string name) : mName(name) { assert(false); };
 		/// arity is always zero
 		int getArity() {return 0;};
 		/// a variable isn't ground
