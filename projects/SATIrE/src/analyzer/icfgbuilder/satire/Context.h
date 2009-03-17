@@ -25,6 +25,7 @@ public:
     const CallString &contextCallString(const Context &c) const;
     bool isSpontaneousContext(const Context &c) const;
     const std::vector<Context> &parentContexts(const Context &c) const;
+    const std::vector<Context> &childContexts(int id, const Context &c) const;
 
     void print(std::ostream &stream) const;
     PrologTerm *toPrologTerm() const;
@@ -37,6 +38,7 @@ private:
     std::vector<Context> contexts;
     std::map<Context, CallString> callstrings;
     std::map<Context, std::vector<Context> > parents;
+    std::map<std::pair<int, Context>, std::vector<Context> > children;
 
     void computeParentInfo(const Context &c);
 };

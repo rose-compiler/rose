@@ -58,6 +58,14 @@ ContextInformation::parentContexts(
     return parents.find(c)->second;
 }
 
+const std::vector<ContextInformation::Context> &
+ContextInformation::childContexts(int id, const Context &c) const
+{
+ // This find form is more complicated than [], but it appears to be
+ // necessary to preserve constness.
+    return children.find(std::make_pair(id, c))->second;
+}
+
 void
 ContextInformation::print(std::ostream &stream) const
 {
@@ -66,6 +74,19 @@ ContextInformation::print(std::ostream &stream) const
     {
         stream << c->toString() << ": ";
         stream << contextCallString(*c).toString();
+        stream << std::endl;
+    }
+    std::map<std::pair<int, Context>, std::vector<Context> >
+        ::const_iterator chld;
+    for (chld = children.begin(); chld != children.end(); ++chld)
+    {
+        stream
+            << "node " << chld->first.first
+            << " in context " << chld->first.second.toString()
+            << " may call to:";
+        const std::vector<Context> &cs = chld->second;
+        for (c = cs.begin(); c != cs.end(); ++c)
+            stream << " " << c->toString();
         stream << std::endl;
     }
 }
@@ -154,7 +175,9 @@ ContextInformation::computeParentInfo(const ContextInformation::Context &c)
             << caller_name << "/" << call_id << "/" << call_pos
             << std::endl;
 #endif
-        parentContexts.push_back(Context(caller_procnum, call_pos, icfg));
+        Context callerContext(caller_procnum, call_pos, icfg);
+        parentContexts.push_back(callerContext);
+        children[std::make_pair(call_id, callerContext)].push_back(c);
     }
 }
 
