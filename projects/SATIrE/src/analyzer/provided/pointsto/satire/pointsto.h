@@ -116,7 +116,7 @@ public:
     Location *base_location(Location *loc);
     bool valid_location(Location *loc) const;
 
-    PointsToAnalysis();
+    PointsToAnalysis(bool contextSensitive = false);
     ~PointsToAnalysis();
 
 
@@ -142,7 +142,8 @@ private:
  // This type encapsualtes the "points-to information", i.e., the analysis
  // results. This is of no public use.
     class PointsToInformation;
-    PointsToInformation *getPointsToInformation() const;
+ // unused
+ // PointsToInformation *getPointsToInformation() const;
 };
 
 } // namespace Analyses

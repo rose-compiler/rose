@@ -51,8 +51,8 @@ PointsToAnalysis::processResults(Program *)
     doDot("pointsto");
 }
 
-PointsToAnalysis::PointsToAnalysis()
-  : p_impl(new Implementation())
+PointsToAnalysis::PointsToAnalysis(bool contextSensitive)
+  : p_impl(new Implementation(contextSensitive))
 {
 }
 

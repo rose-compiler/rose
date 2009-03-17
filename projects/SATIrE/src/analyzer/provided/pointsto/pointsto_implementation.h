@@ -145,6 +145,11 @@ private:
     SgType *ptr_to_void_type;
  // the number of "auxiliary traversals" that have this info
     unsigned int auxctr;
+
+ // context-sensitive stuff
+    ContextInformation::Context *context;
+    Location *procedureLocation;
+    std::string prefix;
 };
 
 
@@ -173,9 +178,10 @@ public:
 
     const CallGraph &getCallGraph();
 
-    PointsToAnalysis::PointsToInformation *getPointsToInformation() const;
+ // unused
+ // PointsToAnalysis::PointsToInformation *getPointsToInformation() const;
 
-    Implementation();
+    Implementation(bool contextSensitive = false);
 
 private:
  // The info field stores all the points-to information; via the second
@@ -183,7 +189,8 @@ private:
  // implementation class, in particular with the auxiliary traversal
  // instance. This instance is used to start nested traversals.
     Implementation(PointsToAnalysis::PointsToInformation *info,
-                   Implementation *icfgTraversal);
+                   Implementation *icfgTraversal,
+                   PointsToAnalysis::PointsToInformation *mainInfo);
     PointsToAnalysis::PointsToInformation *info;
     Implementation *auxiliaryTraversal;
  // This latter thing is something I'm not proud of. We use this member to
@@ -192,6 +199,12 @@ private:
  // ICFG. It is, essentially, a parent pointer from the auxiliaryTraversal
  // to the implementation instance it belongs to.
     Implementation *icfgTraversal;
+
+ // Support for context sensitivity
+    bool contextSensitive;
+    std::map<ContextInformation::Context,
+             PointsToAnalysis::PointsToInformation *> allInfos;
+    PointsToInformation::PointsToInformation *mainInfo;
 
     Location *symbol_location(SgSymbol *sym);
     Location *function_location(SgFunctionDeclaration *fd,

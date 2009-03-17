@@ -137,6 +137,7 @@ public:
     AnalyzerOptions *analyzerOptions;
 
     SATIrE::Analyses::PointsToAnalysis *pointsToAnalysis;
+    SATIrE::Analyses::PointsToAnalysis *contextSensitivePointsToAnalysis;
 
 #if HAVE_PAG
  // context/call string info

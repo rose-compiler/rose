@@ -99,6 +99,36 @@ get_icfgPointsToAnalysis(void)
     return pointsToAnalysis;
 }
 
+PointsToAnalysis::PointsToAnalysis *
+get_icfgContextSensitivePointsToAnalysis(void)
+{
+    CFG *icfg = get_global_cfg();
+    if (icfg == NULL)
+    {
+        std::cerr
+            << "*** internal error: no ICFG present"
+            << std::endl;
+        std::abort();
+    }
+    PointsToAnalysis::PointsToAnalysis *cspta
+        = icfg->contextSensitivePointsToAnalysis;
+    if (cspta == NULL)
+    {
+        std::cerr
+            << "*** error: no points-to analysis instance found; did you "
+            << "specify --run-pointsto-analysis?"
+            << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    static bool once = true;
+    if (once)
+    {
+        cspta->run(icfg);
+        once = false;
+    }
+    return cspta;
+}
+
 #if !HAVE_PAG
 static LocationWrapper *
 GC_alloc(int)

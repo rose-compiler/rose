@@ -48,7 +48,10 @@ namespace Utils
     template <class NamedThing>
     std::string name(NamedThing *thing)
     {
-        return thing->get_name().str();
+        if (thing != NULL)
+            return thing->get_name().str();
+        else
+            return "<null>";
     }
 
  // Get a std::string from some ROSE class that has a get_mangled_name()
@@ -56,7 +59,10 @@ namespace Utils
     template <class NamedThing>
     std::string mangled_name(NamedThing *thing)
     {
-        return thing->get_mangled_name().str();
+        if (thing != NULL)
+            return thing->get_mangled_name().str();
+        else
+            return "<null>";
     }
 
  // Get a comma-separated list of names out of a container of named things.
@@ -101,10 +107,10 @@ using namespace Utils;
 void
 PointsToAnalysis::Implementation::atIcfgTraversalStart()
 {
-    std::deque<Procedure *> &procedures
-        = *icfgTraversal->get_icfg()->procedures;
+    CFG *icfg = icfgTraversal->get_icfg();
+    std::deque<Procedure *> &procedures = *icfg->procedures;
     size_t procs = procedures.size();
-    info->procedureLocations = std::vector<Location *>(procs, NULL);
+    mainInfo->procedureLocations = std::vector<Location *>(procs, NULL);
     size_t l;
     for (l = 0; l < procs; ++l)
     {
@@ -114,18 +120,63 @@ PointsToAnalysis::Implementation::atIcfgTraversalStart()
      // collect a dummy location containing the args.
         SgFunctionParameterList *params
             = procedures[l]->decl->get_parameterList();
+
+     // First, save each function globally.
+        info = mainInfo;
         Location *argDummy
             = AstBottomUpProcessing<Location *>::traverse(params);
         info->procedureLocations[l]
             = function_location(procedures[l]->decl, argDummy);
         freeDummyLocation(argDummy);
+
+     // Then, decorate each info with its very own copy of its function.
+        if (contextSensitive)
+        {
+            int arity = kfg_arity_id(kfg_get_id(icfg, kfg_numproc(icfg, l)));
+            for (int p = 0; p < arity; p++)
+            {
+                ContextInformation::Context context(l, p, icfg);
+                info = allInfos[context];
+                info->context = new ContextInformation::Context(context);
+                Location *argDummy
+                    = AstBottomUpProcessing<Location *>::traverse(params);
+                info->procedureLocation
+                    = function_location(procedures[l]->decl, argDummy);
+                freeDummyLocation(argDummy);
+            }
+        }
     }
 }
 
 void
 PointsToAnalysis::Implementation::icfgVisit(SgNode *node)
 {
-    AstBottomUpProcessing<Location *>::traverse(node);
+ // If this is not the context-sensitive analysis, we simply traverse the
+ // statement.
+    if (!contextSensitive)
+    {
+        AstBottomUpProcessing<Location *>::traverse(node);
+    }
+ // Otherwise, if this is a statement node, we loop through all contexts for
+ // this ICFG node and traverse the statement once in each context.
+    else if (is_icfg_statement())
+    {
+        int id = get_node_id();
+        int procnum = get_node_procnum();
+        int arity = kfg_arity_id(id);
+        for (int position = 0; position < arity; position++)
+        {
+            info = allInfos[
+                ContextInformation::Context(procnum, position, get_icfg())];
+            AstBottomUpProcessing<Location *>::traverse(node);
+        }
+    }
+ // Yet otherwise, this is some global stuff; traverse in the main context.
+    else
+    {
+        info = mainInfo;
+        AstBottomUpProcessing<Location *>::traverse(node);
+    }
 }
 
 PointsToAnalysis::Location *
@@ -140,12 +191,10 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
  // Access to the current ICFG node. Note that we also traverse some stuff
  // that is not within ICFG nodes, such as global initializers. So this
  // requires some care.
+    CFG *icfg = icfgTraversal->get_icfg();
     BasicBlock *icfgNode = NULL;
     if (icfgTraversal->is_icfg_statement())
-    {
-        CFG *cfg = icfgTraversal->get_icfg();
-        icfgNode = cfg->nodes[icfgTraversal->get_node_id()];
-    }
+        icfgNode = icfg->nodes[icfgTraversal->get_node_id()];
 
 #if VERBOSE_DEBUG
  // Display the node type and its synthesized attributes.
@@ -1580,8 +1629,8 @@ PointsToAnalysis::Implementation::join(
     if (a->baseLocation() != NULL && b->baseLocation() != NULL
                                   && a->baseLocation() != b->baseLocation())
     {
-        Location *a_set = info->disjointSets.find_set(a->baseLocation());
-        Location *b_set = info->disjointSets.find_set(b->baseLocation());
+        Location *a_set = location_representative(a->baseLocation());
+        Location *b_set = location_representative(b->baseLocation());
 
      // disjointSets.union_set(a->base_type, b->base_type);
         if (a_set != b_set)
@@ -1590,7 +1639,7 @@ PointsToAnalysis::Implementation::join(
             unify(a, b);
         }
 
-        representative = info->disjointSets.find_set(b->baseLocation());
+        representative = location_representative(b->baseLocation());
         if (representative != b->baseLocation())
         {
             representative->symbols.splice(representative->symbols.begin(),
@@ -1641,7 +1690,7 @@ PointsToAnalysis::Implementation::join(
         info->disjointSets.union_set(a->return_location, b->return_location);
         result = b;
         result->return_location
-            = info->disjointSets.find_set(b->return_location);
+            = location_representative(b->return_location);
      // Not sure why this is/was unify(a, b), and why it should be, if it
      // should. This call can lead to infinite cycles. Let's try to only
      // unify return locations.
@@ -1741,8 +1790,8 @@ PointsToAnalysis::Implementation::cjoin(
         << "conditionally joining " << a->id << " and " << b->id
         << std::endl;
 #endif
-    a = info->disjointSets.find_set(a);
-    b = info->disjointSets.find_set(b);
+    a = location_representative(a);
+    b = location_representative(b);
     if (a == b
         || (a->baseLocation() != NULL
             && a->baseLocation() == b->baseLocation()))
@@ -1786,7 +1835,7 @@ PointsToAnalysis::Implementation::join_pending_locations(
 #endif
     while (!a->pending.empty())
     {
-        Location *t = info->disjointSets.find_set(pop_front(a->pending));
+        Location *t = location_representative(pop_front(a->pending));
 #if VERBOSE_DEBUG
         std::cout << "joining pending location " << t->id << std::endl;
 #endif
@@ -2230,10 +2279,12 @@ PointsToAnalysis::Implementation::pickThePointer(
         PointsToAnalysis::Location *a, PointsToAnalysis::Location *b)
 {
     Location *result = NULL;
+    SgExpression *operand = NULL;
 
  // see if the first operand is the pointer; it might have typedefs,
  // references, modifiers wrapped around it
-    SgType *t = binOp->get_lhs_operand()->get_type();
+    operand = binOp->get_lhs_operand();
+    SgType *t = operand->get_type();
     t = t->stripType(SgType::STRIP_MODIFIER_TYPE
                    | SgType::STRIP_REFERENCE_TYPE
                    | SgType::STRIP_TYPEDEF_TYPE);
@@ -2248,7 +2299,8 @@ PointsToAnalysis::Implementation::pickThePointer(
     else
     {
      // see if the second operand is the pointer, same game as above
-        t = binOp->get_rhs_operand()->get_type();
+        operand = binOp->get_rhs_operand();
+        t = operand->get_type();
         t = t->stripType(SgType::STRIP_MODIFIER_TYPE
                        | SgType::STRIP_REFERENCE_TYPE
                        | SgType::STRIP_TYPEDEF_TYPE);
@@ -2262,11 +2314,17 @@ PointsToAnalysis::Implementation::pickThePointer(
         }
     }
 
-    if (result != NULL)
+    if (result != NULL && !operand->attributeExists("SATIrE: call target"))
     {
      // If we identified one of the operands as a pointer, make sure that
      // the associated points-to location is a pointer location, i.e., that
      // it has a base location.
+     // But only do this if the operand is not a tmpvar, which has a fake
+     // pointer type.
+#if VERBOSE_DEBUG
+        std::cout << "pickThePointer: " << Ir::fragmentToString(binOp)
+            << " / " << binOp->class_name() << std::endl;
+#endif
         if (result->baseLocation() == NULL)
             result->pointTo(createLocation());
     }
@@ -2668,7 +2726,7 @@ PointsToAnalysis::Implementation::structMemberLocation(
     }
 #endif
 
-    structure = info->disjointSets.find_set(structure);
+    structure = location_representative(structure);
 
  // Look up or create a member location for the given symbol in the given
  // structure. However, if the structure is collapsed, we do not create a
@@ -3222,6 +3280,24 @@ PointsToAnalysis::Implementation::run(Program *program)
 void
 PointsToAnalysis::Implementation::run(CFG *icfg)
 {
+    if (contextSensitive)
+    {
+        TimingPerformance t("Context-sensitive points-to analysis setup:");
+     // Make sure the ICFG has context information
+        if (icfg->contextInformation == NULL)
+            icfg->contextInformation = new ContextInformation(icfg);
+     // Allocate a PointsToInformation object for each context we will be
+     // looking at.
+        const std::vector<ContextInformation::Context> &contexts
+            = icfg->contextInformation->allContexts();
+        std::vector<ContextInformation::Context>::const_iterator c;
+        for (c = contexts.begin(); c != contexts.end(); ++c)
+        {
+            allInfos[*c] = new PointsToInformation();
+            allInfos[*c]->context = new ContextInformation::Context(*c);
+        }
+    }
+
     TimingPerformance *timer
         = new TimingPerformance("Points-to analysis traversal:");
     IcfgTraversal::traverse(icfg);
@@ -3259,7 +3335,7 @@ PointsToAnalysis::Implementation::run(CFG *icfg)
         else
         {
          // Normal case: Take the symbols from the function node.
-            Location *func_location = info->disjointSets.find_set(t->second);
+            Location *func_location = location_representative(t->second);
             std::list<SgFunctionSymbol *>::iterator sym;
             std::list<SgFunctionSymbol *> &syms = func_location->func_symbols;
             for (sym = syms.begin(); sym != syms.end(); ++sym)
@@ -3369,24 +3445,51 @@ PointsToAnalysis::Implementation::doDot(std::string filename)
     std::string dotfilename = filename + ".dot";
     std::ofstream dotfile(dotfilename.c_str());
     dotfile << "digraph " << filename << " {" << std::endl;
-    print(dotfile, "\"", "\"", ";");
+
+    if (!contextSensitive)
+    {
+        print(dotfile, "\"", "\"", ";");
+    }
+    else
+    {
+        info = mainInfo;
+        print(dotfile, "\"", "\"", ";");
+        const std::vector<ContextInformation::Context> &contexts
+            = get_icfg()->contextInformation->allContexts();
+        std::vector<ContextInformation::Context>::const_iterator c;
+        for (c = contexts.begin(); c != contexts.end(); ++c)
+        {
+            dotfile
+                << "subgraph cluster_context_"
+                << c->procnum << "_" << c->position << " {" << std::endl
+                << "label = \"" << c->toString() << "\""
+                << ";" << std::endl;
+            info = allInfos[*c];
+            std::stringstream s;
+            s << c->procnum << "_" << c->position << "_";
+            info->prefix = s.str();
+            print(dotfile, "\"", "\"", ";");
+            dotfile << "}" << std::endl;
+        }
+    }
+
     dotfile << "}" << std::endl;
     std::stringstream dotcommand;
     dotcommand
-        << "dot -Tps " << dotfilename << " > " << filename << ".eps";
+     // << "dot -Tps " << dotfilename << " > " << filename << ".eps";
+        << "fdp -Tps " << dotfilename << " > " << filename << ".eps";
     std::system(dotcommand.str().c_str());
 }
 
-PointsToAnalysis::Implementation::Implementation()
+PointsToAnalysis::Implementation::Implementation(bool contextSensitive)
   : info(new PointsToAnalysis::PointsToInformation()),
-    auxiliaryTraversal(new Implementation(info, this)),
-    icfgTraversal(this)
+    auxiliaryTraversal(new Implementation(info, this, info)),
+    icfgTraversal(this), contextSensitive(contextSensitive), mainInfo(info)
 {
  // The constructor without arguments constructs a "fresh" instance with a
  // new info object. It also creates an auxiliary implementation instance
  // which shares the info object.
 
- // Initializing these here is not quite ideal.
     info->ptr_to_void_type = SgTypeVoid::createType()->get_ptr_to();
     info->integerConstantLocation = createLiteralLocation();
     info->stringConstantLocation = createLiteralLocation();
@@ -3394,10 +3497,13 @@ PointsToAnalysis::Implementation::Implementation()
 
 PointsToAnalysis::Implementation::Implementation(
         PointsToAnalysis::PointsToInformation *info,
-        PointsToAnalysis::Implementation *icfgTraversal)
+        PointsToAnalysis::Implementation *icfgTraversal,
+        PointsToAnalysis::PointsToInformation *mainInfo)
   : info(info),
     auxiliaryTraversal(NULL),
-    icfgTraversal(icfgTraversal)
+    icfgTraversal(icfgTraversal),
+    contextSensitive(false), // this instance works with a given info object
+    mainInfo(mainInfo)
 {
  // The private constructor with an info argument constructs an "auxiliary"
  // instance of the implementation class, sharing an existing info object.
@@ -3587,7 +3693,8 @@ PointsToAnalysis::Implementation::function_location(
             std::abort();
 #endif
         }
-        info->function_locations[funcname] = location;
+     // info->function_locations[funcname] = location;
+        mainInfo->function_locations[funcname] = location;
 #if VERBOSE_DEBUG
         std::cout
             << "created location " << location->id
@@ -3697,6 +3804,7 @@ PointsToAnalysis::Implementation::freeDummyLocation(Location *t)
             << (info->locations[id-1] != NULL ? info->locations[id-1]->id : 0)
             << " instead"
             << std::endl;
+        return; // skip the freeing!
     }
     delete t;
     info->locations[id-1] = NULL;
@@ -3733,7 +3841,13 @@ PointsToAnalysis::Location *
 PointsToAnalysis::Implementation::location_representative(
         PointsToAnalysis::Location *loc)
 {
-    return info->disjointSets.find_set(loc);
+    Location *r = info->disjointSets.find_set(loc);
+    if (r == NULL)
+        r = mainInfo->disjointSets.find_set(loc);
+    if (r == NULL)
+        r = loc;
+
+    return loc;
 }
 
 void
@@ -3757,8 +3871,16 @@ PointsToAnalysis::Implementation::print(
         if (show_this_location)
         {
          // location node
+#if VERBOSE_DEBUG
+            std::cout
+                << "showing location " << info->prefix << location->id
+                << ": "
+                    << (location->return_location != NULL ? "hexagon" :
+                       !location->struct_members.empty() ? "house" : "box")
+                << std::endl;
+#endif
             stream
-                << pre << location->id << post
+                << pre << info->prefix << location->id << post
                 << " [shape="
                  // show functions as hexagons, structs as houses, other
                  // nodes as boxes
@@ -3784,11 +3906,11 @@ PointsToAnalysis::Implementation::print(
             if (location->baseLocation() != NULL)
             {
                 Location *base
-                    = info->disjointSets.find_set(location->baseLocation());
+                    = location_representative(location->baseLocation());
                 stream
-                    << pre << location->id << post
+                    << pre << info->prefix << location->id << post
                     << " -> "
-                    << pre << base->id << post
+                    << pre << info->prefix << base->id << post
                     << lineend << std::endl;
             }
          // edges from location to argument locations, if any
@@ -3799,11 +3921,11 @@ PointsToAnalysis::Implementation::print(
             {
                 if (*a == NULL)
                     continue;
-                Location *arg = info->disjointSets.find_set(*a);
+                Location *arg = location_representative(*a);
                 stream
-                    << pre << location->id << post
+                    << pre << info->prefix << location->id << post
                     << " -> "
-                    << pre << arg->id << post
+                    << pre << info->prefix << arg->id << post
                     << " [color=green, label=\"arg_" << n++ << "\"]"
                     << lineend << std::endl;
             }
@@ -3811,23 +3933,23 @@ PointsToAnalysis::Implementation::print(
             if (location->return_location != NULL)
             {
                 Location *base
-                    = info->disjointSets.find_set(location->return_location);
+                    = location_representative(location->return_location);
                 stream
-                    << pre << location->id << post
+                    << pre << info->prefix << location->id << post
                     << " -> "
-                    << pre << base->id << post
+                    << pre << info->prefix << base->id << post
                     << " [color=gold, label=\"ret\"]"
                     << lineend << std::endl;
             }
          // edge from location to equivalence class representative, if
          // different
-            Location *ecr = info->disjointSets.find_set(location);
+            Location *ecr = location_representative(location);
             if (location != ecr)
             {
                 stream
-                    << pre << location->id << post
+                    << pre << info->prefix << location->id << post
                     << " -> "
-                    << pre << ecr->id << post
+                    << pre << info->prefix << ecr->id << post
                     << " [style=dashed]"
                     << lineend << std::endl;
             }
@@ -3848,9 +3970,9 @@ PointsToAnalysis::Implementation::print(
                     std::abort();
                 }
                 stream
-                    << pre << location->id << post
+                    << pre << info->prefix << location->id << post
                     << " -> "
-                    << pre << member->id << post
+                    << pre << info->prefix << member->id << post
                     << " [color=firebrick4, label=\"" << name << "\"]"
                     << lineend << std::endl;
             }
@@ -3864,9 +3986,9 @@ PointsToAnalysis::Implementation::print(
                 for (p = pending.begin(); p != pending.end(); ++p)
                 {
                     stream
-                        << pre << location->id << post
+                        << pre << info->prefix << location->id << post
                         << " -> "
-                        << pre << (*p)->id << post
+                        << pre << info->prefix << (*p)->id << post
                         << " [color=blue, constraint=false]"
                         << lineend << std::endl;
                 }
@@ -3875,9 +3997,9 @@ PointsToAnalysis::Implementation::print(
             if (location->parent_struct != NULL)
             {
                 stream
-                    << pre << location->id << post
+                    << pre << info->prefix << location->id << post
                     << " -> "
-                    << pre << location->parent_struct->id << post
+                    << pre << info->prefix << location->parent_struct->id << post
                     << " [color=gainsboro, constraint=false]"
                     << lineend << std::endl;
             }
@@ -3889,7 +4011,7 @@ PointsToAnalysis::Implementation::print(
          i != info->symbol_locations.end(); ++i)
     {
         SgSymbol *var = i->first;
-        Location *location = info->disjointSets.find_set(i->second);
+        Location *location = location_representative(i->second);
 
      // Only show symbols if there is a problem, namely if the
      // symbol is not contained in its location's symbols list.
@@ -3905,7 +4027,7 @@ PointsToAnalysis::Implementation::print(
             stream
                 << pre << name(var) << post
                 << " -> "
-                << pre << location->id << post
+                << pre << info->prefix << location->id << post
                 << " [style=dotted, color=red]"
                 << lineend << std::endl;
         }
@@ -3936,7 +4058,7 @@ PointsToAnalysis::Implementation::expressionLocation(SgExpression *expr)
  // number of these.
     if (auxiliaryTraversal == NULL)
     {
-        auxiliaryTraversal = new Implementation(info, this);
+        auxiliaryTraversal = new Implementation(info, this, mainInfo);
         info->auxctr++;
         if (info->auxctr >= 10)
         {
@@ -3966,7 +4088,18 @@ PointsToAnalysis::Implementation::expressionLocation(SgExpression *expr)
 #endif
 
  // Make sure to return a canonical representative.
-    result = info->disjointSets.find_set(result);
+    result = location_representative(result);
+
+#if DEBUG
+    if (result == NULL)
+    {
+        std::cerr
+            << "*** warning: NULL representative location for expr '"
+            << Ir::fragmentToString(expr)
+            << "' (" << expr->class_name() << ")"
+            << std::endl;
+    }
+#endif
 
  // If this expression refers to a function, make sure the location we are
  // returning is a function location and has at least as many argument
@@ -4002,7 +4135,7 @@ std::string
 PointsToAnalysis::Implementation::locationAttributeString(
         PointsToAnalysis::Location *location)
 {
-    location = info->disjointSets.find_set(location);
+    location = location_representative(location);
     std::stringstream ss;
     ss << "location " << location->id;
     return ss.str();
@@ -4014,11 +4147,12 @@ PointsToAnalysis::Implementation::getCallGraph()
     return info->callGraph;
 }
 
-PointsToAnalysis::PointsToInformation *
-PointsToAnalysis::Implementation::getPointsToInformation() const
-{
-    return info;
-}
+// unused
+// PointsToAnalysis::PointsToInformation *
+// PointsToAnalysis::Implementation::getPointsToInformation() const
+// {
+//     return info;
+// }
 
 #if 0 && DEPRECATED
 void
@@ -4301,7 +4435,8 @@ PointsToAnalysis::PointsToInformation::PointsToInformation()
     disjointSets(RankMap(rankMap), ParentMap(parentMap)),
     integerConstantLocation(NULL),
     stringConstantLocation(NULL),
-    auxctr(1)
+    auxctr(1),
+    context(NULL)
 {
     specialFunctionNames.insert("__assert_fail");
     specialFunctionNames.insert("__ctype_b_loc");
