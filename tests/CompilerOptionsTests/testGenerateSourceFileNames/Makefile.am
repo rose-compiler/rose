@@ -3,9 +3,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 TEST_TRANSLATOR = $(top_builddir)/tests/testTranslator $(ROSE_FLAGS)
 
 # This rule is run after automake's internal check rule (which we don't want to use)
-check-local:
+test:
 	@echo "#################################################"
-	@echo "    Test ROSEs parsing of file names from        "
+	@echo "    Test ROSE's parsing of file names from       "
 	@echo "#################################################"
 	@echo "** The 'roseTranslator -c file -o obj' should compile and not disassemble obj **"
 	$(CXX)  -c $(srcdir)/test1.C -o test1.o 
@@ -61,6 +61,12 @@ check-local:
 
 	@echo "*****************************************************************************************************************"
 	@echo "*  ROSE/tests/CompilerOptionTests/testGenerateSourceFileNames: make check rule complete (terminated normally)   *"
+	@echo "*****************************************************************************************************************"
+
+check-local:
+#	$(MAKE) test
+	@echo "*****************************************************************************************************************"
+	@echo "*  ROSE/tests/CompilerOptionTests/testGenerateSourceFileNames: ############# TESTS COMMENTED OUT ############   *"
 	@echo "*****************************************************************************************************************"
 
 
