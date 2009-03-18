@@ -1,3 +1,22 @@
+2009-03-18 18:28  dquinlan
+
+	* [r4913]
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/Makefile.am: Make
+	  Fortran test in Makefile.am dependent upon Fortran being
+	  configured in ROSE.
+
+2009-03-18 16:36  dquinlan
+
+	* [r4912] /trunk/ROSE/tests/CompilerOptionsTests/Makefile.am: Fixed
+	  Makefile.am
+
+2009-03-18 15:25  dquinlan
+
+	* [r4911] /trunk/ROSE/tests/CompilerOptionsTests/Makefile.am,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testGenerateSourceFileNames/Makefile.am:
+	  Removed filename tests because they fail on OSX, Andreas will
+	  rework these tests.
+
 2009-03-17 22:59  liao6
 
 	* [r4909] /trunk/ROSE/projects/OpenMP_Translator/ompTranslator.C,
