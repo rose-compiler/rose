@@ -172,8 +172,13 @@ rose_inputtypeTraits.C:typeTraits
 rose_inputlivenessAnalysis.C:livenessAnalysis
 	./livenessAnalysis$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputlivenessAnalysis.C
 
-rose_inputbuildProcedureHeaderStatement.f:buildProcedureHeaderStatement
+rose_inputbuildProcedureHeaderStatement.f : buildProcedureHeaderStatement
+# DQ (3/18/2009): Make this dependent upon if ROSE was configured to use Fortran.
+if ROSE_USE_OPEN_FORTRAN_PARSER
 	./buildProcedureHeaderStatement$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildProcedureHeaderStatement.f
+else
+	@echo "Fortran test (rose_inputbuildProcedureHeaderStatement.f) not run because ROSE was not configured to support Fortran tests."
+endif
 
 # MUST keep this up-to-date!!
 EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDeclaration.C \
