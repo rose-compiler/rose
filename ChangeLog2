@@ -1,3 +1,9 @@
+2009-03-19 04:06  saebjornsen1
+
+	* [r4922]
+	  /trunk/ROSE/src/frontend/SageIII/attachPreprocessingInfo.C: Fixed
+	  bug in preprocessing handling
+
 2009-03-18 18:28  dquinlan
 
 	* [r4913]
