@@ -467,7 +467,7 @@ configure: error: Unable to find path to JVM library
     Some machines have a default version of Boost already installed (for example in 
 {\tt /usr/include/boost}).  This always the wrong version since the OS installation
 of Boost lags by several years.  ROSE now attempts to detect this and use the 
-\quote{-isystem} g++ option to have the explicitly specified version of boost from
+{\quote{-isystem}} g++ option to have the explicitly specified version of boost from
 the configure command-line be search before the system include directories.  This works
 well where a machine has a previously installed version of Boost, but it will fail when
 used with SWIG (so don't use {\tt --with-javaport} where a previous system installation
@@ -501,6 +501,30 @@ both the libltdl3 and libltdl3-dev package. That is the issues of unable to
 find libltdl folders.
 \end{verbatim}
 
+   \item ROSE fails to compile after {\bf svn update}: \\
+   We have seen this problem and had it reported and we don't understand it.
+It does however disappear after a fresh checkout from SVN into an empry directory.
+If you figure this out please let us know.  Where this has happened to us, we
+were using svn version  1.4.6, where as our svn repository is more commonly
+(within development) had work checked in using svn version 1.5.1; since a lot
+changed from svn version 1.4 to version 1.5, this may be the issue.
+{\scriptsize
+\begin{verbatim}
+make[2]: Entering directory `<Your ROSE compile tree path>/src/frontend/SageIII'
+  COMPILE preproc.lo
+/home/dquinlan/ROSE/svn-rose/src/frontend/SageIII/preproc.lex: In function `ROSEAttributesList* getPreprocessorDirectives(std::string)':
+/home/dquinlan/ROSE/svn-rose/src/frontend/SageIII/preproc.lex:961: error: conversion from `std::_Rb_tree_iterator<std::pair<const std::string, ROSEAttributesList*> >' to non-scalar type `std::_Rb_tree_iterator<std::pair<const std::string, std::vector<PreprocessingInfo*, std::allocator<PreprocessingInfo*> >*> >' requested
+/home/dquinlan/ROSE/svn-rose/src/frontend/SageIII/preproc.lex:963: error: no match for 'operator!=' in 'iItr != (&mapFilenameToAttributes)->std::map<_Key, _Tp, _Compare, _Alloc>::end [with _Key = std::string, _Tp = ROSEAttributesList*, _Compare = std::less<std::string>, _Alloc = std::allocator<std::pair<const std::string, ROSEAttributesList*> >]()'
+/home/dquinlan/local/gcc/3.4.3/bin/../lib/gcc/i686-pc-linux-gnu/3.4.3/../../../../include/c++/3.4.3/bits/stl_tree.h:213: note: candidates are: bool std::_Rb_tree_iterator<_Tp>::operator!=(const std::_Rb_tree_iterator<_Tp>&) const [with _Tp = std::pair<const std::string, std::vector<PreprocessingInfo*, std::allocator<PreprocessingInfo*> >*>]
+/home/dquinlan/ROSE/svn-rose/src/ROSETTA/Grammar/Node.code:50: note:      bool operator!=(const rose_rva_t&, const rose_rva_t&)
+/home/dquinlan/ROSE/svn-rose/src/ROSETTA/Grammar/Support.code:3984: note: bool operator!=(const Sg_File_Info&, const Sg_File_Info&)
+make[2]: *** [preproc.lo] Error 1
+make[2]: Leaving directory `<Your ROSE compile tree path>/src/frontend/SageIII'
+make[1]: *** [all-recursive] Error 1
+make[1]: Leaving directory `<Your ROSE compile tree path>/src/frontend/SageIII'
+make: *** [all] Error 2
+\end{verbatim}
+}
 
 \end{enumerate}
 
