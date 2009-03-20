@@ -21,7 +21,10 @@ LinearizeAST::evaluateInheritedAttribute (
 	       inorder_stack.push_back(astNode);
 	  }else if( isSgExprStatement(astNode) != NULL ){
 	       inorder_stack.push_back(astNode);
-	  }else{
+	  }else if( isRootNode == true && (isSgUnaryOp(astNode) != NULL || isSgBinaryOp(astNode) != NULL) ) {
+            //This is needed when the root node that is given the traversal is part of an expression
+            inorder_stack.push_back(astNode);
+          }else{
 	       inorder.push_back(astNode);
            if(isSgVariableDeclaration(astNode)!=NULL){
                SgInitializedNamePtrList& vars = isSgVariableDeclaration(astNode)->get_variables();
@@ -33,6 +36,8 @@ LinearizeAST::evaluateInheritedAttribute (
 
 	  }
      }
+
+     isRootNode = false;
      return inheritedAttribute;
    }
 
@@ -96,6 +101,8 @@ linearize_subtree( SgNode* node )
      LinInheritedAttribute inheritedAttribute;
 
      LinearizeAST myTraversal;
+
+     myTraversal.isRootNode = true;
 
   // Call the traversal starting at the sageProject node of the AST
      myTraversal.traverse(node,inheritedAttribute);
