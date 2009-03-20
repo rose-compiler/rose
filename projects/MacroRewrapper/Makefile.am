@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 if ROSE_USE_SQLITE_DATABASE
 
-bin_PROGRAMS = macroRewrapper #matchTokenStreamToAST
+bin_PROGRAMS = macroRewrapper testLinearization #matchTokenStreamToAST
 #bin_PROGRAMS =
 macroRewrapper_SOURCES = \
 	waveHelpers.C access-macros.cpp macroRewrapper.C argumentFilterer.C main.C helpFunctions.C
@@ -10,6 +10,13 @@ macroRewrapper_SOURCES = \
 # DQ (3/8/2009): Fixed error: If only SQLite is required, do not include $(QT_LDFLAGS) $(QROSE_LDFLAGS)
 # macroRewrapper_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
 macroRewrapper_LDADD = $(ROSE_LIBS)
+
+testLinearization_SOURCES = \
+	waveHelpers.C access-macros.cpp macroRewrapper.C argumentFilterer.C testLinearization.C helpFunctions.C
+
+# DQ (3/8/2009): Fixed error: If only SQLite is required, do not include $(QT_LDFLAGS) $(QROSE_LDFLAGS)
+# macroRewrapper_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
+testLinearization_LDADD = $(ROSE_LIBS)
 
 # DQ (3/8/2009): Fixed error: -I. and $(BOOST_CPPFLAGS) is included in $(ROSE_INCLUDES).
 # INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I.

@@ -7,6 +7,7 @@
 std::vector<SgNode*> queryForAllNodes(SgNode* node);
 std::vector<SgNode*> queryForLine(SgNode* node, Sg_File_Info* compareFileInfo);
 
+
 class NodesAtLineNumber :  public std::binary_function<SgNode*, std::pair< std::vector<SgNode*>*, Sg_File_Info*> , void* >{
   public:
 	  result_type operator()(first_argument_type node, const second_argument_type accumulatedList ) const;

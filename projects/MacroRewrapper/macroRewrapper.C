@@ -302,17 +302,57 @@ AnalyzeMacroCalls::findMappingOfTokensToAST(SgNode* node, PreprocessingInfo* cur
 		file_info->get_col() << std::endl;
 	//find a linearization of the nodes at the position we are interested in
 	std::vector<SgNode*> linearized_subtree = linearize_subtree(node);
+        std::cout << "Linearizing " << node->class_name() << " " << node->unparseToString() << std::endl;
 
+	for(std::vector<SgNode*>::iterator it_beg = linearized_subtree.begin(); it_beg != linearized_subtree.end();
+			++it_beg){
+		SgNode* nodeAtPos = *it_beg;
+
+         std::cout << nodeAtPos->class_name() << " ";
+
+
+        }
 
 	std::vector<SgNode*> linNodesAtPost;
 
 	for(std::vector<SgNode*>::iterator it_beg = linearized_subtree.begin(); it_beg != linearized_subtree.end();
 			++it_beg){
 		SgNode* nodeAtPos = *it_beg;
-		if(isSgStringVal(nodeAtPos)!= NULL){
-			//std::cout << "STring val at:" << nodeAtPos->get_file_info()->get_line() << std::endl;
+       		if(isSgStringVal(nodeAtPos)!= NULL){
+			std::cout << "STring val at:" << nodeAtPos->get_file_info()->get_line() << std::endl;
 
 		}
+
+                //Filter out the constant folded part of a constant folded expression
+                if(isSgValueExp(*it_beg) != NULL )
+                {
+                  if( SgCastExp* castExp =  isSgCastExp(isSgValueExp(*it_beg)->get_parent()) )
+                  {
+                    if(castExp->get_operand() == *it_beg)
+                    {
+                      if(isSgCastExp(castExp->get_parent()) == NULL) 
+                      {
+                      std::cout << "Skipping node 111" << std::endl;
+                      continue;
+                      }
+                    }
+                  }
+                }
+
+                if(SgLocatedNode* locatedNode = isSgLocatedNode(nodeAtPos) )
+                {
+                  if( locatedNode->get_file_info()->isCompilerGenerated() == true )
+                    continue;
+
+                }
+
+                /*
+                if( isSgType(nodeAtPos) != NULL )
+                {
+                  std::cout << "ADDED:" << nodeAtPos->class_name() << std::endl;
+
+			linNodesAtPost.push_back(nodeAtPos);
+                }*/
 
 		if( queryForLine(nodeAtPos,file_info).size()>0 ){
 			linNodesAtPost.push_back(nodeAtPos);
@@ -339,10 +379,21 @@ AnalyzeMacroCalls::findMappingOfTokensToAST(SgNode* node, PreprocessingInfo* cur
                 }
 	}
 
+        std::cout << "After added: " << std::endl;
+
+	for(std::vector<SgNode*>::iterator it_beg = linNodesAtPost.begin(); it_beg != linNodesAtPost.end();
+			++it_beg){
+		SgNode* nodeAtPos = *it_beg;
+
+         std::cout << nodeAtPos->class_name() << " ";
+
+
+        }
 
 
 	//find the mapping between the linearized nodes and the macro
 	//PreprocessingInfo::token_type a_call = macro_call->macro_call;
+
 
 	token_container expanded_macro = macro_call->expanded_macro;
 	std::vector<SgNode*> returnVector;
@@ -356,15 +407,46 @@ AnalyzeMacroCalls::findMappingOfTokensToAST(SgNode* node, PreprocessingInfo* cur
 
 	int counter = 0;
 
+
+        std::cout << "\nToken list: ";
+        for(token_container::iterator it_exp = expanded_macro.begin(); it_exp != expanded_macro.end();
+			++it_exp){
+		std::cout <<it_exp->get_value() << " " << it_exp->get_position().get_line() <<  " " << it_exp->get_position().get_column() << " " ;
+
+
+        }
+
+
+        std::cout << "\nLinearized nodes:";
+        for(std::vector<SgNode*>::iterator it_beg2 = linNodesAtPost.begin(); it_beg2 != linNodesAtPost.end();
+				++it_beg2){
+			SgNode* nodeAtPos = *it_beg2;
+                        if(isSgValueExp(nodeAtPos) != NULL )
+                            std::cout << nodeAtPos->unparseToString() << " ";
+                        else
+                            std::cout << nodeAtPos->class_name()      << " ";
+        }
+        std::cout << std::endl;
+
 	for(token_container::iterator it_exp = expanded_macro.begin(); it_exp != expanded_macro.end();
 			++it_exp){
 		for(std::vector<SgNode*>::iterator it_beg2 = linNodesAtPost.begin(); it_beg2 != linNodesAtPost.end();
 				++it_beg2){
 			SgNode* nodeAtPos = *it_beg2;
 
+                        if(isSgValueExp(nodeAtPos) != NULL ) 
+                        {
+                          SgValueExp* valExp = isSgValueExp(nodeAtPos);
+                          if(valExp->get_originalExpressionTree() != NULL)
+                            continue;
+                        }
+
+                        if(SgLocatedNode* locNode = isSgLocatedNode(nodeAtPos))
+                        std::cout << "The pos is: " << nodeAtPos->class_name() << " ";
 			//std::cout << nodeAtPos->class_name() << std::endl; 
 			if( checkIfNodeMaps(*it_exp,nodeAtPos) == true ){
-				if(SgProject::get_verbose() >= 1){
+				//if(SgProject::get_verbose() >= 1){
+                          {
 					std::cout << " Found mapping" << it_exp->get_value() << " to " << nodeAtPos->class_name() << std::endl;
 
 					if(macro_def_line != it_exp->get_position().get_line())
@@ -552,7 +634,12 @@ AnalyzeMacroCalls::iterate_over_all_macro_calls(macro_def_call_type& macro_def){
 					macroCall.ASTStringMatchingMacroCall = ASTStringMatchingMacroCall;
                                         macroCall.stmtsContainingMacro = smallestSetOfStmtsContainingMacro;
 
-					callsToThisDef.push_back(macroCall);
+                                        for(std::vector<SgNode*>::iterator iItr = macroCall.comparisonLinearization.begin();
+                                            iItr!=macroCall.comparisonLinearization.end(); iItr++)
+                                          std::cout << "The Node is:" << (*iItr)->class_name() << std::endl;
+
+
+                                        callsToThisDef.push_back(macroCall);
 
 				}else{
 					if(SgProject::get_verbose() >= 1)

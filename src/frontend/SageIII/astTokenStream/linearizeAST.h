@@ -12,6 +12,7 @@ class LinInheritedAttribute
      public:
           int loopNestDepth;
 
+
           LinInheritedAttribute ();
           LinInheritedAttribute ( const LinInheritedAttribute & X );
    };
@@ -45,10 +46,12 @@ class LinearizeAST : public SgTopDownBottomUpProcessing<LinInheritedAttribute,Li
 	  //
 	  // PS! This operation will only be applied on expression. For all other constructs the
 	  // ordering of the preorder traversal is used.
+          //Handle the case where the root node is part of an expression
 
      public:
 std::vector<SgNode*> inorder; 
           std::vector<SgNode*> inorder_stack; 
+       bool isRootNode;
 
 
        // Functions required

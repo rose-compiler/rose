@@ -179,6 +179,13 @@ checkIfNodeMaps(token_type tok, SgNode* node)
 
 	using namespace boost::wave;
 
+        //By definition a compiler generated node can
+        //not map to the token stream
+        SgLocatedNode* compilerGeneratedNode = isSgLocatedNode(node);
+        if( compilerGeneratedNode != NULL  )
+          if(compilerGeneratedNode->get_file_info()->isCompilerGenerated() == true)
+            return false;
+
 //	     std::cout << get_token_name(tok) << " " << std::string(tok.get_value().c_str()) << " " << node->class_name() << " " << node->get_file_info()->get_line() << std::endl;
 	//Mapping literal token id's
 	switch(token_id(tok)){
@@ -224,6 +231,12 @@ checkIfNodeMaps(token_type tok, SgNode* node)
 					      nodeMaps = true;
 				      break;
 			      }
+                case T_QUESTION_MARK:
+                              {
+                   		      if( isSgConditionalExp(node) != NULL )
+                                        nodeMaps = true;
+                                      break;
+                              }
 		case T_FALSE:
 		case T_TRUE:
 			      if( isSgBoolValExp(node) != NULL  )
@@ -441,7 +454,7 @@ checkIfNodeMaps(token_type tok, SgNode* node)
 	switch(token_id(tok)){
 		case T_AND:
           	case T_ANDAND:
-			if( isSgAndOp(node) != NULL  )
+			if( isSgAndOp(node) != NULL | isSgBitAndOp(node) != NULL )
 				nodeMaps = true;
 			break;
 		case T_ASSIGN:
@@ -452,7 +465,7 @@ checkIfNodeMaps(token_type tok, SgNode* node)
 			//do not know
 			break;
 		case T_OR:
-			if ( isSgOrOp(node) != NULL )
+			if ( isSgBitOrOp(node) != NULL || isSgOrOp(node) != NULL )
 				nodeMaps = true;
 			break;
 		case T_ORASSIGN:
@@ -627,10 +640,13 @@ checkIfNodeMaps(token_type tok, SgNode* node)
 
 		case T_STAR:
 			//dont know
-
+                        if ( isSgMultiplyOp(node) != NULL || isSgPointerType(node) )
+                          nodeMaps = true;
 			break;
 		case T_COMPL://~
 
+                        if( isSgBitComplementOp(node)  != NULL  )
+                          nodeMaps = true;
 			//Dont know
 			break;
 		case T_STARASSIGN:
@@ -761,7 +777,81 @@ checkIfNodeMaps(token_type tok, SgNode* node)
 
 	}
 
+        //Exceptions to the general rule
 
+		switch(token_id(tok)){
+                  case T_CHARLIT:
+                    {
+                      switch(node->variantT())
+                      {
+                        case V_SgCharVal:
+                        case V_SgComplexVal:
+                        case V_SgDoubleVal:
+                        case V_SgEnumVal:
+                        case V_SgFloatVal:
+                        case V_SgIntVal:
+                        case V_SgLongDoubleVal:
+                        case V_SgLongIntVal:
+                        case V_SgLongLongIntVal:
+                        case V_SgShortVal:
+                        case V_SgStringVal:
+                        case V_SgUnsignedCharVal:
+                        case V_SgUnsignedIntVal:
+                        case V_SgUnsignedLongLongIntVal:
+                        case V_SgUnsignedLongVal:
+                        case V_SgUnsignedShortVal:
+                        case V_SgWcharVal: 
+                          {
+                            nodeMaps=true;
+                            break;
+                          }
+                        default:
+                          break;
+
+                      };
+
+                      break;
+                    };
+                }
+	switch(boost::wave::token_id(tok)){
+		case boost::wave::T_CHAR:
+                  {
+                  if(isSgTypeChar(node) != NULL)
+                    nodeMaps=true;
+                  break;
+                  }
+		case boost::wave::T_CONST:
+                  break;
+		case boost::wave::T_DOUBLE: 		
+                  if(isSgTypeDouble(node) != NULL)
+                    nodeMaps=true;
+                  break;
+
+		case boost::wave::T_INT:
+                  if(isSgTypeInt(node) != NULL)
+                    nodeMaps=true;
+                  break;
+
+		case boost::wave::T_LONG:
+                  if(isSgTypeLong(node) != NULL)
+                    nodeMaps=true;
+                  break;
+
+		case boost::wave::T_SHORT:
+                 if(isSgTypeShort(node) != NULL)
+                    nodeMaps=true;
+                  break;
+
+		case boost::wave::T_SIGNED:
+		case boost::wave::T_UNSIGNED:
+		case boost::wave::T_VOID:
+                  if(isSgTypeVoid(node) != NULL)
+                    nodeMaps=true;
+                  break;
+		default:
+			break;
+
+	};
 
 	return nodeMaps;
 }

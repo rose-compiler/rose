@@ -4,6 +4,9 @@
 #include <functional>
 using namespace std;
 
+bool do_db_optimization = true;
+
+
 bool VERBOSE_MESSAGES_OF_WAVE = false;
 #include "macroRewrapper.h"
 #include <vector>
