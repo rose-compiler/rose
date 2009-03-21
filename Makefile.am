@@ -24,7 +24,15 @@ ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I /usr/share/aclocal
 # (if rose.docs.in is modified)
 all-local: rose.docs 
 
-all: detect_roseh detect_rosec
+# DQ (3/21/2009): This takes several minutes under Cygwin, so skip these test there.
+if ROSE_BUILD_OS_IS_CYGWIN
+  PROJECT_SOURCE_CODE_TESTS = 
+else
+  PROJECT_SOURCE_CODE_TESTS = detect_roseh detect_rosec
+endif
+
+# all: detect_roseh detect_rosec
+all: $(PROJECT_SOURCE_CODE_TESTS)
 
 # tps: script that checks that no header file includes rose.h
 detect_roseh:
