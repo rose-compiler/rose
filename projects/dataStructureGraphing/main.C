@@ -137,7 +137,7 @@ void
 MyTraversal::writeCodeToFile ()
 {
   ROSE_ASSERT (filename.length () > 0);
-  codeGeneration->writeToFile ("CodeGenerated_" + filename);
+  codeGeneration->writeToFile ("CodeGenerated_" + StringUtility::stripPathFromFileName(filename));
 
 }				/* End function: writeCodeToFile()  */
 
@@ -151,7 +151,7 @@ void
 MyTraversal::writeStaticGraphToFile ()
 {
   ROSE_ASSERT (filename.length () > 0);
-  codeGeneration->writeStaticGraphToFile ("Static_" + filename + ".dot");
+  codeGeneration->writeStaticGraphToFile ("Static_" + StringUtility::stripPathFromFileName(filename) + ".dot");
 
 }				/* End function: writeStaticGraphToFile() */
 
@@ -517,7 +517,7 @@ MySynthesizedAttribute
 	//set filename information
 	SgFile *sageFile = isSgFile (astNode);
 	ROSE_ASSERT (sageFile != NULL);
-	filename = sageFile->getFileName ();
+	filename = StringUtility::stripPathFromFileName(sageFile->getFileName ());
 	break;
 
       }
@@ -539,7 +539,7 @@ MySynthesizedAttribute
 	bool graphAllVariables = false;
 
 	ROSE_ASSERT (isSgBasicBlock (astNode) != NULL);
-	filename = astNode->get_file_info ()->get_filename ();
+	filename = StringUtility::stripPathFromFileName(astNode->get_file_info ()->get_filename ());
 	ROSE_ASSERT (filename.length () > 0);
 
 	//If a pragma statement is in one of the form described in the manual 
