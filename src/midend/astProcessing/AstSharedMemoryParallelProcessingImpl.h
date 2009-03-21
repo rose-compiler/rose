@@ -6,6 +6,9 @@
 
 #include "sage3.h"
 
+// DQ (3/20/2009): Trying to fix error on Cygwin platform.
+#include <pthread.h>
+
 #include "AstSharedMemoryParallelProcessing.h"
 
 // Throughout this file, I is the InheritedAttributeType, S is the
