@@ -6,9 +6,14 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 
 INCLUDES = $(ROSE_INCLUDES)
 
+# DQ (2/2/2004): Not clear why ROSE_LIBS is not enough.  Need to fix ROSE to use just two libraries!
+# LDADD = $(ROSE_LIBS)
+LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+if !ROSE_BUILD_OS_IS_CYGWIN
+
 bin_PROGRAMS = cgraphpp
 
-# version of A++ preprocessor (initial development)
 cgraphpp_SOURCES = \
      ControlStructure.C \
      GenGeneration.C \
@@ -23,14 +28,15 @@ cgraphpp_SOURCES = \
 # He will be here in another week, so I will not worry about this now!
 testLinkedListTestCode: cgraphpp
 	@echo "Testing of cgraphpp commented out because it appears need more work to be able use the latest version of ROSE ..."
-#	./cgraphpp -rose:gall $(srcdir)/linkedListTestCode.C
+	./cgraphpp -rose:gall $(srcdir)/linkedListTestCode.C
+
+# This rule is run after automake's internal check rule (which we don't want to use)
+check-local: testLinkedListTestCode
 	@echo "*************************************************************************************************"
 	@echo "****** ROSE/projects/dataStructureGraphing: make check rule complete (terminated normally) ******"
 	@echo "*************************************************************************************************"
 
-# DQ (2/2/2004): Not clear why ROSE_LIBS is not enough.  Need to fix ROSE to use just two libraries!
-# LDADD = $(ROSE_LIBS)
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+endif
 
 include_HEADERS = \
      AttributeType.h \
@@ -47,8 +53,6 @@ clean-local:
               *.C.pdf *.C.edg.pdf *.pdf *.dot *.int.C rose_directives_list.txt core
 	rm -rf ti_files
 
-# This rule is run after automake's internal check rule (which we don't want to use)
-check-local: testLinkedListTestCode
 
 
 
