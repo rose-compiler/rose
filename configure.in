@@ -38,10 +38,14 @@ AM_CONFIG_HEADER(rose_config.h)
 AC_CANONICAL_BUILD
 # AC_CANONICAL_HOST
 # AC_CANONICAL_TARGET
+echo "Building ROSE for cpu       = $build_cpu"
+echo "Building ROSE for OS vendor = $build_vendor"
+echo "Building ROSE for OS        = $build_os"
 
-echo "build_cpu    = $build_cpu"
-echo "build_vendor = $build_vendor"
-echo "build_os     = $build_os"
+# DQ (3/20/2009): The default is to assume Linux, so skip supporting this test.
+# AM_CONDITIONAL(ROSE_BUILD_OS_IS_LINUX,  [test "x$build_os" = xlinux-gnu])
+AM_CONDITIONAL(ROSE_BUILD_OS_IS_OSX,    [test "x$build_vendor" = xapple])
+AM_CONDITIONAL(ROSE_BUILD_OS_IS_CYGWIN, [test "x$build_os" = xcygwin])
 
 # exit 1
 
