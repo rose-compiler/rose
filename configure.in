@@ -33,6 +33,18 @@ true ${FFLAGS:=}
 # to avoid collisions with other projects using a config.h file.
 AM_CONFIG_HEADER(rose_config.h)
 
+# DQ (3/20/2009): Trying to get information about what system we are on so that I
+# can detect Cygwin and OSX (and other operating systems in the future).
+AC_CANONICAL_BUILD
+# AC_CANONICAL_HOST
+# AC_CANONICAL_TARGET
+
+echo "build_cpu    = $build_cpu"
+echo "build_vendor = $build_vendor"
+echo "build_os     = $build_os"
+
+# exit 1
+
 # This appears to be a problem for Java (and so the Fortran support).
 # CHECK_SSL
 ROSE_SUPPORT_SSL
