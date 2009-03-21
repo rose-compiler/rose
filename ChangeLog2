@@ -1,3 +1,49 @@
+2009-03-21 04:19  dquinlan
+
+	* [r4961]
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/Makefile.am:
+	  Added AM conditionals for OSX and Cygwin.
+
+2009-03-21 04:17  dquinlan
+
+	* [r4960] /trunk/ROSE/configure.in: Added AM conditionals for OSX
+	  and Cygwin.
+
+2009-03-21 03:35  dquinlan
+
+	* [r4959] /trunk/ROSE/configure.in: Adding AC_CANONICAL_BUILD to
+	  configure.in to get cpu, vendor, and operating system
+	  information.
+
+2009-03-21 01:57  dquinlan
+
+	* [r4958]
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/new_sage_gen_be.C:
+	  Added required casts for Cygwin support.
+
+2009-03-21 00:21  dquinlan
+
+	* [r4953] /trunk/ROSE/src/midend/astProcessing/AstProcessing.h,
+	  /trunk/ROSE/src/midend/astProcessing/AstSharedMemoryParallelProcessingImpl.h:
+	  Fixing support for Cygwin.
+
+2009-03-20 22:52  dquinlan
+
+	* [r4951] /trunk/ROSE/docs/Rose/installRose.tex: Fixed indentation
+	  in Trouble Shooting section and andded an entry.
+
+2009-03-20 22:29  saebjornsen1
+
+	* [r4950] /trunk/ROSE/projects/MacroRewrapper/Makefile.am,
+	  /trunk/ROSE/projects/MacroRewrapper/argumentFilterer.C,
+	  /trunk/ROSE/projects/MacroRewrapper/argumentFilterer.h,
+	  /trunk/ROSE/projects/MacroRewrapper/macroRewrapper.C,
+	  /trunk/ROSE/projects/MacroRewrapper/testLinearization.C,
+	  /trunk/ROSE/projects/MacroRewrapper/waveHelpers.C,
+	  /trunk/ROSE/src/frontend/SageIII/astTokenStream/linearizeAST.C,
+	  /trunk/ROSE/src/frontend/SageIII/astTokenStream/linearizeAST.h:
+	  Updates to the macro inconsistency checker
+
 2009-03-19 04:06  saebjornsen1
 
 	* [r4922]
