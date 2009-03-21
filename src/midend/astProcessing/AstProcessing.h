@@ -792,6 +792,9 @@ atTraversalEnd()
 
 #include "AstCombinedProcessing.h"
 
-#include "AstSharedMemoryParallelProcessing.h"
+// DQ (3/20/2009): Wrap this in a test to make sure that Cygwin is not being used.
+#if !defined(__CYGWIN__)
+  #include "AstSharedMemoryParallelProcessing.h"
+#endif
 
 #endif
