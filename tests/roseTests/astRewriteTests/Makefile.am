@@ -14,6 +14,12 @@ clean-local:
 	rm -rf rose_inputProgram*.C \
           rose_transformation_*.C *.C.pdf
 
+if ROSE_BUILD_OS_IS_CYGWIN
+
+TEST_EXECUTABLES = 
+
+else
+
 bin_PROGRAMS = \
      testCommentInsertion \
      testIncludeDirectiveInsertion \
@@ -54,6 +60,11 @@ testReplacementStatements_LDADD          = $(LDADD)
 testRemoveStatements_LDADD               = $(LDADD)
 testTranslator2004_01_LDADD              = $(LDADD)
 
+# List of executables to build
+TEST_EXECUTABLES = FORCE_TEST_CODES_TO_RUN testRewriteReplacementPermutations testRewritePermutations HighLevelInterfaceTest MidLevelInterfaceTest IncludeDirectiveInsertion
+
+endif
+
 TESTCODES = 
 
 #     inputProgram1.C \
@@ -86,7 +97,8 @@ $(TEST_Objects): $(TESTCODES) FORCE_TEST_CODES_TO_RUN \
 # DQ (8/6/2005): Comment these out while we test other work
 # This test currently fails because the AST Rewrite Mechanism still has a bug. So skip this test.
 # This rule is run after automake's internal check rule (which we don't want to use)
-check-local: FORCE_TEST_CODES_TO_RUN testRewriteReplacementPermutations testRewritePermutations HighLevelInterfaceTest MidLevelInterfaceTest IncludeDirectiveInsertion
+# check-local: FORCE_TEST_CODES_TO_RUN testRewriteReplacementPermutations testRewritePermutations HighLevelInterfaceTest MidLevelInterfaceTest IncludeDirectiveInsertion
+check-local: $(TEST_EXECUTABLES)
 	@echo "**************************************************************************************************"
 	@echo "****** ROSE/tests/roseTests/astRewriteTests: make check rule complete (terminated normally) ******"
 	@echo "**************************************************************************************************"
