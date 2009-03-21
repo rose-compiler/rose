@@ -14,7 +14,7 @@ noinst_HEADERS = \
    inputCode_collectComments.h
 
 #varSubstCopy , disabled this one Liao, and sorted the list
-noinst_PROGRAMS = \
+TUTORIAL_EXAMPLES = \
    abstractHandle1 \
    abstractHandle2 \
    accumulatorAttributeTraversal \
@@ -89,7 +89,6 @@ noinst_PROGRAMS = \
    seedBugsExample_arrayIndexing \
    scopeInformation \
    selectedFileTranslation \
-   sharedMemoryTraversals \
    sprintf_to_snprintf  \
    switchWithoutDefault \
    symbolTableHandling \
@@ -108,6 +107,14 @@ noinst_PROGRAMS = \
    wholeASTGraphGenerator \
    wholeGraphAST \
    wholeGraphFilterOnPersistantAttributes
+
+# DQ (3/21/2009): Separate those that compile under Cygwin from those that don't.
+if ROSE_BUILD_OS_IS_CYGWIN
+  noinst_PROGRAMS = $(TUTORIAL_EXAMPLES)
+else
+  noinst_PROGRAMS = $(TUTORIAL_EXAMPLES) sharedMemoryTraversals
+  sharedMemoryTraversals_SOURCES = sharedMemoryTraversals.C
+endif
 
 ASTGraphGenerator_SOURCES = ASTGraphGenerator.C
 
@@ -130,8 +137,6 @@ visitorTraversal_SOURCES = visitorTraversal.C
 prePostTraversal_SOURCES = prePostTraversal.C
 
 combinedTraversals_SOURCES = combinedTraversals.C
-
-sharedMemoryTraversals_SOURCES = sharedMemoryTraversals.C
 
 traverseIRnodeTypes_SOURCES = traverseIRnodeTypes.C
 
@@ -836,9 +841,16 @@ combinedTraversals.out: combinedTraversals
 	@echo "Generate executable from compilation of input code (combinedTraversals) ..."
 	./combinedTraversals $(ROSE_FLAGS) -c $(srcdir)/inputCode_ExampleTraversals_17.C > combinedTraversals.out
 
+# DQ (3/21/2009): sharedMemoryTraversals fails to compile under Cygwin.
+if ROSE_BUILD_OS_IS_CYGWIN
+sharedMemoryTraversals.out:
+	@echo "Commented out shared memory tests for Cygwin (sharedMemoryTraversals fails to compile) ..."
+	touch sharedMemoryTraversals.out
+else
 sharedMemoryTraversals.out: sharedMemoryTraversals
 	@echo "Generate executable from compilation of input code (sharedMemoryTraversals) ..."
 	./sharedMemoryTraversals $(ROSE_FLAGS) -c $(srcdir)/inputCode_ExampleTraversals_18.C > sharedMemoryTraversals.out
+endif
 
 classicObjectOrientedVisitorPatternTraversal.out: classicObjectOrientedVisitorPatternTraversal
 	@echo "Generate executable from compilation of input code (classicObjectOrientedVisitorPatternTraversal) ..."
