@@ -54,6 +54,9 @@ PAPI_FP_OPS.xml.aa : $(srcdir)/PAPI_FP_OPS.xml
 if ROSE_BUILD_ROSEHPCT # (--enable-rosehpct)
 #==========================================================================
 
+# DQ (3/21/2009): These fail to compile under Cygwin.
+if !ROSE_BUILD_OS_IS_CYGWIN
+
 # Build demo program
 noinst_PROGRAMS = attachMetrics
 attachMetrics_SOURCES = attachMetrics.cc
@@ -91,6 +94,23 @@ profiled-p93.pdf: profiled.c.pdf
 is-static.tex:
 	rm -f $@
 	touch $@
+
+else
+
+# DQ (3/21/2009): Copy the required files (just as for the case of --disable-rosehpct)
+profiled.out: $(srcdir)/profiled-save.out
+	cp $(srcdir)/profiled-save.out $@
+
+profiled-p93.pdf: $(srcdir)/profiled-p93-save.pdf
+	cp $(srcdir)/profiled-p93-save.pdf $@
+
+is-static.tex: $(srcdir)/static.tex
+	cp $(srcdir)/static.tex $@
+
+command-line.tex: $(srcdir)/command-line-static.tex
+	cp $(srcdir)/command-line-static.tex $@
+
+endif
 
 #==========================================================================
 else # !ROSE_BUILD_ROSEHPCT (--disable-rosehpct)
