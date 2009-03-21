@@ -1,3 +1,21 @@
+2009-03-21 18:55  dquinlan
+
+	* [r4974] /trunk/ROSE/Makefile.am: Commented out source code tests
+	  for rose.h in the case of using a Cygwin platform in the
+	  Makefile.am, since this takes several minutes under Cygwin.
+
+2009-03-21 18:39  dquinlan
+
+	* [r4973] /trunk/ROSE/tests/roseTests/astRewriteTests/Makefile.am:
+	  Commented out this test for Cygwin in the Makefile.am, since
+	  several executables fail to link.
+
+2009-03-21 17:41  dquinlan
+
+	* [r4971] /trunk/ROSE/projects/dataStructureGraphing/Makefile.am:
+	  Commented out this test for Cygwin in the Makefile.am, since it
+	  fails to link.
+
 2009-03-21 04:19  dquinlan
 
 	* [r4961]
