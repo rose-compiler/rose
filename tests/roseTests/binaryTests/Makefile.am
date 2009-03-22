@@ -243,11 +243,19 @@ TESTCODE_INCLUDES =
 
 CLEANFILES = unparsed.s callgraph.gml output _binary_tree.dot cfg.dot dfg.dot Templates.DB 
 
+# DQ (3/21/2009): These tests don't appear to run under Cygwin.
+if ROSE_BUILD_OS_IS_CYGWIN
+check-local:
+	@echo "*****************************************************************************************"
+	@echo "*** ROSE/tests/roseTests/programAnalysisTests/binaryTests: (commented out for Cygwin) ***"
+	@echo "*****************************************************************************************"
+else
 check-local: runTest test1 $(TEST_PASSED_TARGETS)
 	./runTest $(srcdir)/buffer2.bin > output
 	@echo "*********************************************************************"
 	@echo "*** ROSE/tests/roseTests/programAnalysisTests/binaryTests: passed ***"
 	@echo "*********************************************************************"
+endif
 
 # Don't delete things indiscriminately!
 clean-local:
