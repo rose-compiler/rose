@@ -1,0 +1,48 @@
+README.cygwin (as of 3/21/2009):
+
+    We have all of ROSE compiling with Cygwin now
+(checked into to both internal and external SVN repositories).
+I am working on getting it to pass all the tests, this is going
+fairly well. 
+
+Computer requirements:
+   Previous work to compile ROSE under Cygwin didn't
+work well, I expect that it is because ROSE was not 
+as far along in development and Cygwin may have improved
+over the years.  Tests in summer 2006, got initial Cygwin 
+support in place and added libtool support to ROSE to help
+make that happen (initial OSX support was added as well).
+Tests in summer 2008 revisited Cygwin support and got more
+working, but also had problems running out of memory, perhaps
+it was the low-end machine that we used. Most of ROSE has
+made to work, except Compass and some other pieces. 
+Spring 2009 revisited the Cygwin support with a larger machine
+(4 Gig 2 socket dual-core machine).  
+
+Perforamance under Cygwin:
+   Cygwin appears to be SLOW, at least compared to Linux.
+In general everything using Cygwin is about 3-4 times slower
+than using Linux. That might be partly due to the difference
+machines we use for Cygwin support and Linux development.
+We will reevaluate in the future.
+
+Status of compilation and testing:
+   Support was added to ROSE to allow platform dependent 
+compilation of the now very few parts of ROSE that remain a 
+problem to Cygwin and so now the compilation of ROSE (well 
+over 99% of ROSE now compiles, link, runs, and passes our 
+tests).  The few parts that done (e.g. complex arithmetic 
+support) are well documented as being conditionally compiled 
+and/or conditionally tested using macro (__CYGWIN__) and 
+Automake conditional (ROSE_BUILD_OS_IS_CYGWIN).
+
+  In general, there are so few that I am mostly eliminating 
+them from being compiled or run under Cygwin (then we can
+see where we stand).  Clearly over 99% of ROSE
+will compile, link and run and pass over 99% of the tests.
+
+It all works so well that it is a mystery why anything
+fails to compile, link and pass the tests.  In one case
+it is because Cygwin does not appear to support
+(or have) and complex.h header file, so all those
+tests were eliminated from being run.
