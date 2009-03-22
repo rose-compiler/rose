@@ -60,7 +60,21 @@ genFileNames:
 	 '
 
 
-# This rule is run after automake's internal check rule (which we don't want to use)
+# This rule is run after automakes internal check rule (which we don't want to use)
+# DQ (3/21/2009): These tests don't appear to run under Cygwin.
+if ROSE_BUILD_OS_IS_CYGWIN
+check-local: genFileNames
+	chmod a-r test_simple_file_no_permissions.C
+	@echo "#########################################"
+	@echo "Testing use of filenames skipped for now!"
+	@echo "#########################################"
+	@$(MAKE) testFilenames
+#	@$(MAKE) testLongFilenames
+	@echo "***********************************************************************************************************************"
+	@echo "****** ROSE/tests/CompilerOptionTests/testFileNamesAndExtensions: make check rule complete (terminated normally) ******"
+	@echo "***********************************************************************************************************************"
+	chmod a+r test_simple_file_no_permissions.C
+else
 check-local: genFileNames
 	chmod a-r test_simple_file_no_permissions.C
 	@echo "#########################################"
@@ -72,6 +86,7 @@ check-local: genFileNames
 	@echo "****** ROSE/tests/CompilerOptionTests/testFileNamesAndExtensions: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************************"
 	chmod a+r test_simple_file_no_permissions.C
+endif
 
 # Test the -H option with all of these example files
 $(TEST_Objects): $(TESTCODES)
