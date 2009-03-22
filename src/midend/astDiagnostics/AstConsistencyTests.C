@@ -1274,7 +1274,7 @@ TestAstTemplateProperties::visit ( SgNode* astNode )
         // (only the instantiations are possibly marked as compiler generated).
         if (s->get_templateDeclaration()->get_file_info()->isCompilerGenerated() == true)
         {
-          printf ("Error: SgTemplateInstantiationFunctionDecl's original template declaration %s is marked as compiler generated: \n", s->get_templateDeclaration()->get_qualified_name().str());
+          printf ("Warning: SgTemplateInstantiationFunctionDecl's original template declaration %s is marked as compiler generated: \n", s->get_templateDeclaration()->get_qualified_name().str());
           s->get_startOfConstruct()->display("SgTemplateInstantiationFunctionDecl debug");
           s->get_templateDeclaration()->get_startOfConstruct()->display("SgTemplateDecl debug");
         }

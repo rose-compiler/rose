@@ -6,7 +6,10 @@
 % \includegraphics[width=5in]{@top_pwd@/docs/Rose/compass_rose.gif}
 % \includegraphics[width=5in]{@top_srcdir@/docs/Rose/compass_rose.ps}
 
-   There are three forms of documentation for ROSE:
+   There are three forms of documentation for ROSE, and also a ROSE web Page and email
+lists. For more detailed information on getting started, see the ROSE User Manual, 
+chapter {\em Getting Started} for more details).
+
 \begin{enumerate}
      \item ROSE User Manual \\
            The User Manual presents how to get started with ROSE and documents 
@@ -54,11 +57,13 @@
            \htmladdnormallink{http://www.rosecompiler.org}{http://www.rosecompiler.org}
 
      \item ROSE Email List \\
-           The ROSE project maintains a mailing list (casc-rose *at* llnl *dot* gov).
-           The email list is only used to get help and announce internal and external releases.
-           Anyone who would like to be on the email list can send me email (dquinlan *at* llnl *dot* gov).
-%          Those with access may check who is on the email list at:
-%          \htmladdnormallink{ROSE Email List (current subscribers, URL link)}{http://cmg-r.llnl.gov/casc/computing/mailing_lists/casc-rose.html}
+         % The ROSE project maintains a mailing list (casc-rose *at* llnl *dot* gov).
+         % The email list is only used to get help and announce internal and external releases.
+         % Anyone who would like to be on the email list can send me email (dquinlan *at* llnl *dot* gov).
+         % DQ (1/20/2009): Fixing the reference to the email list for ROSE.
+           The ROSE project maintains an external mailing list (see information at:
+           \htmladdnormallink{www.roseCompiler.org}{http://www.roseCompiler.org} and click on the
+           {\bf Mailing Lists} link for how to join).
 \end{enumerate}
 
 

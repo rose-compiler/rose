@@ -120,8 +120,9 @@ ROSE distributions:
 
 % DQ (1/20/2009): Fixing the reference to the email list for ROSE.
 The ROSE project maintains an external mailing list (see information at:
-\htmladdnormallink{https://outreach.scidac.gov/projects/rose/}{https://outreach.scidac.gov/projects/rose/}
-for how to join).
+%\htmladdnormallink{https://outreach.scidac.gov/projects/rose/}{https://outreach.scidac.gov/projects/rose/}
+\htmladdnormallink{www.roseCompiler.org}{http://www.roseCompiler.org} and click on the
+{\bf Mailing Lists} link for how to join).
 
 % The ROSE project maintains a mailing list (see information at: casc-rose *at* llnl *dot* gov).
 % The email list is only used to request help and announce internal and external releases.

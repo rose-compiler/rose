@@ -49,8 +49,7 @@ EXTRA_DIST = linkedListTestCode.C
 
 clean-local:
 	rm -rf Templates.DB ii_files ti_files
-	rm -f a.out *.o rose_*.C *.sage.C \
-              *.C.pdf *.C.edg.pdf *.pdf *.dot *.int.C rose_directives_list.txt core
+	rm -f a.out *.o rose_*.C *.sage.C *.C.pdf *.C.edg.pdf *.pdf *.dot *.int.C rose_directives_list.txt core CodeGenerated_*
 	rm -rf ti_files
 
 

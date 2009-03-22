@@ -2,12 +2,16 @@
 #define _GNU_SOURCE
 #endif
 
+#if !defined(__CYGWIN__)
 #include <complex.h>
+#endif
+
 #include <math.h>
 
 // Test use of C99 and common C constants
 void foo()
    {
+#if !defined(__CYGWIN__)
      float _Complex an_i = _Complex_I;
 
      _Complex_I;
@@ -38,5 +42,8 @@ void foo()
      float  an_infinity_float  = __INFINITY__;
      double an_infinity_double = __INFINITY__;
 #endif
+#endif
+
+// if !defined(__CYGWIN__)
 #endif
    }

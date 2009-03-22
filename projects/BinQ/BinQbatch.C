@@ -64,7 +64,11 @@ void BinQbatch::initAnalyses() {
   analyses.push_back(new NullAfterFree());
   analyses.push_back(new InitPointerToNull());
   analyses.push_back(new ComplexityMetric());
-  //analyses.push_back(new BufferOverflow());
+
+// DQ (3/21/2009): Need to have Thomas look at this, I have commented it back out for now!
+// DQ (3/19/2009): Uncommented this test.
+// analyses.push_back(new BufferOverflow());
+// analyses.push_back(new BufferOverflow());
 
 }
 

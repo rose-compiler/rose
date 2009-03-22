@@ -81,12 +81,12 @@ testCompass:
 	$(MAKE) "CHK_SOURCES=$(compass_support_dir)/compassMain.C" check-syntax
 
 # This runs compass on the compass binary, small because this is dynamically linked
-demo_small:
-	./compassMain .libs/compassMain
+demo_small: test
+	env COMPASS_PARAMETERS=./compass_parameters ./compassMain .libs/compassMain
 
 # Linux binary selected from Linux
-demo_linux:
-	./compassMain $(top_srcdir)/projects/BinQ/linux-ls
+demo_linux: test
+	env COMPASS_PARAMETERS=./compass_parameters ./compassMain $(top_srcdir)/projects/BinQ/linux-ls
 
 #demo_bufferOverflow:
 #	./compassMain $(top_srcdir)/projects/BinQ/buffer2.bin
