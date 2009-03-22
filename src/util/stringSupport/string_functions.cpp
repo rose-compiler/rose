@@ -5,17 +5,26 @@
 // DQ (3/22/2009): Added MSVS support for ROSE.
 #include "rose_msvc.h"
 
+#if !ROSE_MICROSOFT_OS
 // AS added to support the function getAbsolutePathFromRelativePath
 #include <sys/param.h>
+#endif
 
 // AS added to support the function findfile
 #include <stdlib.h>
 #include <stdio.h>              /* standard input/output routines.    */
+
+#if !ROSE_MICROSOFT_OS
 #include <dirent.h>             /* readdir(), etc.                    */
 #include <sys/stat.h>           /* stat(), etc.                       */
+#endif
+
 #include <string.h>             /* strstr(), etc.                     */
+
+#if !ROSE_MICROSOFT_OS
 #include <libgen.h>             /* basename(), dirame()               */
 #include <unistd.h>             /* getcwd(), etc.                     */
+#endif
 #include <iostream>              /* std::cerr */
 #include <sstream>              /* std::ostringstream */
 
@@ -51,12 +60,16 @@ StringUtility::htmlEscape(const std::string& s) {
 std::list<std::string> 
 StringUtility::findfile(std::string patternString, std::string pathString)
    {
+     std::list<std::string> patternMatches;
+
+#if ROSE_MICROSOFT_OS
+	 printf ("Error: MSVS implementation of StringUtility::findfile required (not implemented) \n");
+	 ROSE_ASSERT(false);
+#else
      DIR* dir;			      /* pointer to the scanned directory. */
      struct dirent* entry;	/* pointer to one directory entry.   */
   // struct stat dir_stat; /* used by stat().                   */
-
-     std::list<std::string> patternMatches;
-     
+    
   /* open the directory for reading */
      dir = opendir(pathString.c_str());
      if (!dir) {
@@ -76,6 +89,7 @@ StringUtility::findfile(std::string patternString, std::string pathString)
 	  }
 
      }
+#endif
      return patternMatches;
    }
 
@@ -124,11 +138,17 @@ StringUtility::getAbsolutePathFromRelativePath ( const std::string & relativePat
      string returnString;
      char resolved_path[MAXPATHLEN];
 
+#if ROSE_MICROSOFT_OS
+	 const char* resultingPath = NULL;
+	 printf ("Error: realPath() not supported in MSVC (work around not implemented) \n");
+	 ROSE_ASSERT(false);
+#else
   // DQ (9/3/2006): Note that "realpath()" 
   // can return an error if it processes a file or directory that does not exist.  This is 
   // a problem for include paths that are specified on the commadline and which don't exist; 
   // most compilers silently ignore these and we have to at least ignore them.
      const char* resultingPath = realpath( relativePath.c_str(), resolved_path);
+#endif
 
   // If there was an error then resultingPath is NULL, else it points to resolved_path.
      if ( resultingPath == NULL )
@@ -1111,8 +1131,14 @@ StringUtility::stripPathFromFileName ( const string & fileNameWithPath )
      ROSE_ASSERT (fileNameWithPath.size() + 1 < PATH_MAX);
      strcpy(c_version, fileNameWithPath.c_str());
 
+#if ROSE_MICROSOFT_OS
+	 printf ("Error: basename() not available in MSVS (work around not implemented) \n");
+	 ROSE_ASSERT(false);
+#else
      returnString = basename(c_version);
-     return returnString;
+#endif
+
+	 return returnString;
 #endif
 
 #if 0
@@ -1253,7 +1279,13 @@ StringUtility::getPathFromFileName ( const string & fileNameWithPath )
      ROSE_ASSERT (fileNameWithPath.size() + 1 < PATH_MAX);
      strcpy(c_version, fileNameWithPath.c_str());
 
+#if ROSE_MICROSOFT_OS
+     string returnString;
+	 printf ("Error: dirname() not supported in MSVS 9work around not implemented) \n");
+	 ROSE_ASSERT(false);
+#else
      string returnString = dirname(c_version);
+#endif
      //dirname returns a "." if fileNameWithPath does not contain "/"'s
      //I am not sure why this function was written and so, preserve the functionality using empty return string in such cases.
 
