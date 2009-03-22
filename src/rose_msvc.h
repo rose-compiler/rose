@@ -95,4 +95,7 @@
 // to 4096 bytes on Windows NT/2000/XP/2003 systems.
 #define PATH_MAX 4096
 
+// This is defined in <sys/param.h> but MSVS does not support that header file.
+#define MAXPATHLEN PATH_MAX
+
 #endif
