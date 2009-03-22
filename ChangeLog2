@@ -1,3 +1,53 @@
+2009-03-22 18:43  dquinlan
+
+	* [r5009] /trunk/ROSE/src/util/commandlineProcessing/sla.c: Removed
+	  sla.c, source code file not used in ROSE.
+
+2009-03-22 18:06  dquinlan
+
+	* [r5007] /trunk/ROSE/README.Cygwin,
+	  /trunk/ROSE/src/util/stringSupport/Makefile.am,
+	  /trunk/ROSE/src/util/stringSupport/string_functions.C,
+	  /trunk/ROSE/src/util/stringSupport/string_functions.cpp: Changing
+	  filename extension of C++ file from *.C to *.cpp as part of work
+	  to use MSVS (fixed Makefile.am as well).
+
+2009-03-22 17:36  dquinlan
+
+	* [r5006] /trunk/ROSE/README.Cygwin,
+	  /trunk/ROSE/tutorial/Makefile.am: Commented out test that fails
+	  under Cygwin (modified check-local rule).
+
+2009-03-22 17:05  dquinlan
+
+	* [r5005] /trunk/ROSE/Makefile.am: Added README.Cygwin file to
+	  EXTRA_DIST.
+
+2009-03-22 17:04  dquinlan
+
+	* [r5004] /trunk/ROSE/README.Cygwin: Added README.Cygwin file with
+	  notes about Cygwin support in ROSE.
+
+2009-03-22 16:47  dquinlan
+
+	* [r5003]
+	  /trunk/ROSE/tests/CompilerOptionsTests/testFileNamesAndExtensions/Makefile.am:
+	  Commented out test that fails under Cygwin (modified check-local
+	  rule).
+
+2009-03-22 16:34  dquinlan
+
+	* [r5002] /trunk/ROSE/tests/roseTests/binaryTests/Makefile.am:
+	  Commented out test that fails under Cygwin (modified check-local
+	  rule).
+
+2009-03-22 16:01  dquinlan
+
+	* [r5000]
+	  /trunk/ROSE/tests/roseTests/astPerformanceTests/Makefile.am:
+	  Commented out test that fails under Cygwin (modified check-local
+	  rule).
+
 2009-03-22 04:54  dquinlan
 
 	* [r4990]
