@@ -72,13 +72,20 @@ EXTRA_DIST = TestDriver pass1.C pass2.C pass3.C rose_pass1.C.save rose_pass2.C.s
              inputCode_constantFoldingTransformation.C \
              inputCode_implicitCodeGenerationTest.C
 
-# to deactivate tests comment out check-local
+# DQ (3/21/2009): These tests don't appear to run under Cygwin.
+if ROSE_BUILD_OS_IS_CYGWIN
+check-local:
+	@echo "***************************************************************************************************"
+	@echo "****** ROSE/tests/roseTests/programTransformationTests: (commented out all tests for Cygwin) ******"
+	@echo "***************************************************************************************************"
+else
 check-local:
 	$(MAKE) testConstantFolding testImplicitCodeGeneration
 	$(MAKE) FORCE_TEST_CODES_TO_RUN
 	@echo "*******************************************************************************************************"
 	@echo "*** ROSE/tests/roseTests/programTransformationTests: make check rule complete (terminated normally) ***"
 	@echo "*******************************************************************************************************"
+endif
 
 clean-local:
 	rm -rf Templates.DB ii_files ti_files cxx_templates rose_*.C
