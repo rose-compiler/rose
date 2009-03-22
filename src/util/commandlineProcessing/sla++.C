@@ -1,12 +1,13 @@
-// #ifdef HAVE_CONFIG_H
 // This avoids requiring the user to use rose_config.h and follows 
 // the automake manual request that we use <> instead of ""
 #include <rose_config.h>
 #include <assert.h>
-// #endif
+
+// DQ (3/22/2009): Added MSVS support for ROSE.
+#include "rose_msvc.h"
+
 
 /*
-
 String list assignment (sla) functions to process assignment instructions and flags.
 Copyright (C) 1998,1999 Brian T. N. Gunney
 
