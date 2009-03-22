@@ -69,7 +69,7 @@ detect_rosec:
 # (because it has the file: config/Makefile.for.ROSE.includes.and.libs)
 # EXTRA_DIST = stamp-h.in stamp-h1.in GNU_HEADERS config
 # EXTRA_DIST = stamp-h.in stamp-h1.in rose.docs.in GNU_HEADERS COPYWRITE ROSE_ResearchPapers
-EXTRA_DIST = stamp-h.in stamp-h1.in rose.docs.in COPYRIGHT ROSE_ResearchPapers README.OSX build ChangeLog2
+EXTRA_DIST = stamp-h.in stamp-h1.in rose.docs.in COPYRIGHT ROSE_ResearchPapers README.OSX README.Cygwin build ChangeLog2
 
 # At some point we want to put tals into the distribution (likely just PDF files, but not yet).
 # ROSE_Talks
