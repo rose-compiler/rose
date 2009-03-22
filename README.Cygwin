@@ -22,9 +22,10 @@ Spring 2009 revisited the Cygwin support with a larger machine
 Perforamance under Cygwin:
    Cygwin appears to be SLOW, at least compared to Linux.
 In general everything using Cygwin is about 3-4 times slower
-than using Linux. That might be partly due to the difference
-machines we use for Cygwin support and Linux development.
-We will reevaluate in the future.
+than using Linux (maybe more). That might be partly due to the 
+difference machines we use for Cygwin support and Linux development.
+We will reevaluate in the future.  I can't imagine doing serious
+development on a Cygwin machine.
 
 Status of compilation and testing:
    Support was added to ROSE to allow platform dependent 
