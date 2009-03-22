@@ -1,3 +1,6 @@
+// DQ (3/21/2009): The header file "complex.h" is not available in Cygwin.
+#if !defined(__CYGWIN__)
+
 #include <complex.h>
 
 int main (void)
@@ -18,8 +21,6 @@ int main (void)
   // ROSE does not yet support the imaginary add operator
      _Complex float a_complex_value = 0.0;
 
-  // JJW (12/15/2008): The complex.h header on Linux doesn't define _Imaginary
-#if 0
 #ifndef __INTEL_COMPILER
   // This is now to specify imaginary numbers in EDG, not supported in GNU, so
   // the code generation using GNU aas a backend drops the "_Imaginary" prefix.
@@ -29,5 +30,6 @@ int main (void)
 
      a_complex_value = 4.0 + x_edg_imaginary;
 #endif
-#endif
    }
+
+#endif

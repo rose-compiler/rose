@@ -14,6 +14,9 @@
    "_Bool", "_Complex", "_Imaginary", "__I__", "__NAN__", "__INFINITY__",
 */
 
+// DQ (3/21/2009): The header file "complex.h" is not available in Cygwin.
+#if !defined(__CYGWIN__)
+
 #include <complex.h>
 
 int main (void)
@@ -63,6 +66,7 @@ int main (void)
      return 0;
    }
 
+#endif
 
 
 

@@ -1,3 +1,7 @@
+
+// DQ (3/21/2009): The header file "complex.h" is not available in Cygwin.
+#if !defined(__CYGWIN__)
+
 // #include "defines.h"
 // #include "args.h"
 #include <sse_debug.h>
@@ -108,3 +112,5 @@ main (void)
 
   return 0;
 }
+
+#endif

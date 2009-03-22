@@ -8,6 +8,9 @@
    "_Bool", "_Complex", "_Imaginary", "__I__", "__NAN__", "__INFINITY__",
 */
 
+// DQ (3/21/2009): The header file "complex.h" is not available in Cygwin.
+#if !defined(__CYGWIN__)
+
 #include <complex.h>
 
 int main (void)
@@ -25,12 +28,12 @@ int main (void)
   // ROSE does not yet support the imaginary add operator
      _Complex float a_complex_value = 0.0;
 
-  // a_complex_value = 4.0;
+     a_complex_value = 4.0;
 
-  // a_complex_value = 3.0f + (4.0f * __I__);
-  // a_complex_value = 3.0f - 4.0f * __I__;
-  // a_complex_value = 3.0f * (4.0f * __I__);
-  // a_complex_value = 3.0f / (4.0f * __I__);
+     a_complex_value = 3.0f + (4.0f * __I__);
+     a_complex_value = 3.0f - 4.0f * __I__;
+     a_complex_value = 3.0f * (4.0f * __I__);
+     a_complex_value = 3.0f / (4.0f * __I__);
 
   // Newer syntax for specification of complex types
      _Complex float       x = 1.0;
@@ -113,6 +116,7 @@ int main (void)
      return 0;
    }
 
+#endif
 
 
 
