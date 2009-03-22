@@ -1,3 +1,6 @@
+// DQ (3/22/2009): Added MSVS support for ROSE.
+#include "rose_msvc.h"
+
 #include "string_functions.h"
 
 #include <sys/utsname.h>

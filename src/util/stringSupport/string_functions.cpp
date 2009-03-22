@@ -2,10 +2,13 @@
 // the automake manual request that we use <> instead of ""
 #include <rose_config.h>
 
-//AS added to support the function getAbsolutePathFromRelativePath
+// DQ (3/22/2009): Added MSVS support for ROSE.
+#include "rose_msvc.h"
+
+// AS added to support the function getAbsolutePathFromRelativePath
 #include <sys/param.h>
 
-//AS added to support the function findfile
+// AS added to support the function findfile
 #include <stdlib.h>
 #include <stdio.h>              /* standard input/output routines.    */
 #include <dirent.h>             /* readdir(), etc.                    */

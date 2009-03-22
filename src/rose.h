@@ -1,4 +1,3 @@
-/* Copyright � 2008 Robb Matzke. All rights reserved. */
 // rose.h -- header file for the ROSE Optimizing Preprocessor
 
 #ifndef ROSE_H
@@ -15,8 +14,11 @@ namespace ELF{
 }
 #endif
 
+
 #include "sage3.h"
-#include "roseInternal.h"
+
+// DQ (3/22/2009): This is already included in sage3.h"
+// #include "roseInternal.h"
 
 // DQ (10/27/2003): Needed access to global function defined in unparser.h
 // I think it makes sense to include all of the unparser into the interface

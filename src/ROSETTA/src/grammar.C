@@ -2,7 +2,9 @@
 // #                           Header Files                       #
 // ################################################################
 
-#include "ROSETTA_macros.h"
+// DQ (3/22/2009): This is redundant with inclusion in "grammar.h"
+// #include "ROSETTA_macros.h"
+
 #include "grammar.h"
 #include "terminal.h"
 #include "grammarString.h"

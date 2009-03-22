@@ -3,6 +3,9 @@
 #ifndef ROSE_INTERNAL_H
 #define ROSE_INTERNAL_H
 
+// DQ (3/22/2009): Added support for detection of Microsoft Compiler (MSVC) details.
+#include "rose_msvc.h"
+
 // Removed support for this, since C++ has "true" and "false" values already
 // JJW (8/26/2008): Removing these
 // #ifndef TRUE
