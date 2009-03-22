@@ -1,3 +1,108 @@
+2009-03-22 04:54  dquinlan
+
+	* [r4990]
+	  /trunk/ROSE/tests/roseTests/programTransformationTests/Makefile.am:
+	  Commented out test that fails under Cygwin (modified check-local
+	  rule).
+
+2009-03-22 04:42  dquinlan
+
+	* [r4989]
+	  /trunk/ROSE/tests/roseTests/roseHPCToolkitTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/utilTests/Makefile.am: Commented out
+	  test that fails under Cygwin (modified check-local rule).
+
+2009-03-22 04:27  dquinlan
+
+	* [r4988] /trunk/ROSE/tests/roseTests/utilTests/Makefile.am:
+	  Commented out test that fails under Cygwin (modified check-local
+	  rule).
+
+2009-03-22 04:02  dquinlan
+
+	* [r4987]
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/test2006_146.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2006_146.C:
+	  Commented out code using dprintf under Cygwin (compile error
+	  under Cygwin).
+
+2009-03-22 03:36  dquinlan
+
+	* [r4986]
+	  /trunk/ROSE/developersScratchSpace/Dan/C99_tests/constants.c,
+	  /trunk/ROSE/tests/CompileTests/C99_tests/constants.c: Commented
+	  out code using complex.h under Cygwin (no support for complex.h
+	  under Cygwin is available).
+
+2009-03-22 03:31  dquinlan
+
+	* [r4985]
+	  /trunk/ROSE/developersScratchSpace/Dan/C99_tests/complex_01.c,
+	  /trunk/ROSE/developersScratchSpace/Dan/C99_tests/complex_02.c,
+	  /trunk/ROSE/developersScratchSpace/Dan/C99_tests/complex_03.c,
+	  /trunk/ROSE/developersScratchSpace/Dan/C99_tests/complex_04.c,
+	  /trunk/ROSE/tests/CompileTests/C99_tests/complex_01.c,
+	  /trunk/ROSE/tests/CompileTests/C99_tests/complex_02.c,
+	  /trunk/ROSE/tests/CompileTests/C99_tests/complex_03.c,
+	  /trunk/ROSE/tests/CompileTests/C99_tests/complex_04.c: Commented
+	  out code using complex.h under Cygwin (no support for complex.h
+	  under Cygwin is available).
+
+2009-03-22 03:10  dquinlan
+
+	* [r4984]
+	  /trunk/ROSE/developersScratchSpace/Dan/C_tests/complex_01.c,
+	  /trunk/ROSE/developersScratchSpace/Dan/C_tests/constants.c,
+	  /trunk/ROSE/developersScratchSpace/Dan/C_tests/test2006_132.c,
+	  /trunk/ROSE/developersScratchSpace/Dan/Pin_tests/graphTrace.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/Pin_tests/input_testcode.C,
+	  /trunk/ROSE/docs/Rose/Tutorial/gettingStarted.tex.in,
+	  /trunk/ROSE/docs/Rose/developersAppendix.tex,
+	  /trunk/ROSE/docs/Rose/gettingStarted.tex.in,
+	  /trunk/ROSE/docs/Rose/writingYourFirstTranslator.tex,
+	  /trunk/ROSE/projects/BinQ/BinQbatch.C,
+	  /trunk/ROSE/projects/compass/tools/compass/Makefile.am,
+	  /trunk/ROSE/projects/dataStructureGraphing/Makefile.am,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/new_sage_gen_be.C,
+	  /trunk/ROSE/src/midend/astDiagnostics/AstConsistencyTests.C,
+	  /trunk/ROSE/src/midend/astProcessing/AstProcessing.h,
+	  /trunk/ROSE/tests/CompileTests/C_tests/complex_01.c,
+	  /trunk/ROSE/tests/CompileTests/C_tests/constants.c,
+	  /trunk/ROSE/tests/CompileTests/C_tests/test2006_132.c: Added
+	  fixes to support compilation, linking, and tests under Cygwin.
+	  
+	  Detailed changes in this commit:
+	  1) Uncommented test in dataStructureGraphing, since it appears to
+	  compile and run.
+	  2) Lots of minor changes of the last few days to better support
+	  portability.
+	  3) Added documentation specific to configuration using
+	  AC_CANONICAL_BUILD.
+
+2009-03-21 23:27  saebjornsen1
+
+	* [r4981] /trunk/ROSE/projects/dataStructureGraphing/main.C: Did
+	  bugfixes to dataStructureGraphing
+
+2009-03-21 21:13  dquinlan
+
+	* [r4980]
+	  /trunk/ROSE/exampleTranslators/documentedExamples/AstRewriteExamples/Makefile.am:
+	  Commented out executable for case of using a Cygwin platform in
+	  the Makefile.am, since this fails to compile under Cygwin.
+
+2009-03-21 20:49  dquinlan
+
+	* [r4979] /trunk/ROSE/tutorial/Makefile.am: Commented out
+	  sharedMemoryTraversals for case of using a Cygwin platform in the
+	  Makefile.am, since this fails to compile under Cygwin.
+
+2009-03-21 20:22  dquinlan
+
+	* [r4978] /trunk/ROSE/tutorial/roseHPCT/Makefile.am: Commented out
+	  HPCToolkit support in ROSE for case of using a Cygwin platform in
+	  the Makefile.am, since this fails to compile under Cygwin.
+
 2009-03-21 18:55  dquinlan
 
 	* [r4974] /trunk/ROSE/Makefile.am: Commented out source code tests
