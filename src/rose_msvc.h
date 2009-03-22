@@ -89,4 +89,10 @@
 #if ROSE_MICROSOFT_OS
 // Using boost/cstdint.hpp instead.
 // typedef uint64_t unsigned long long;
+
+// DQ (3/22/2009): This is defined in <linux/limits.h>, for MS we pick a value consistatn with MKS.
+// Expanded API PATH_MAX. The size of PATH_MAX used by the MKS Toolkit UNIX APIs has been increased 
+// to 4096 bytes on Windows NT/2000/XP/2003 systems.
+#define PATH_MAX 4096
+
 #endif
