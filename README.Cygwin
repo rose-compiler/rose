@@ -19,7 +19,7 @@ made to work, except Compass and some other pieces.
 Spring 2009 revisited the Cygwin support with a larger machine
 (4 Gig 2 socket dual-core machine).  
 
-Perforamance under Cygwin:
+Performance under Cygwin:
    Cygwin appears to be SLOW, at least compared to Linux.
 In general everything using Cygwin is about 3-4 times slower
 than using Linux (maybe more). That might be partly due to the 
@@ -47,3 +47,10 @@ fails to compile, link and pass the tests.  In one case
 it is because Cygwin does not appear to support
 (or have) and complex.h header file, so all those
 tests were eliminated from being run.
+
+
+Notes:
+  1) Makefile dependences cause many source files to be recompiled
+     where under Linux they would just be relinked.  Not clear
+     why this is.
+

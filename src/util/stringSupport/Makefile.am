@@ -6,7 +6,7 @@ INCLUDES = $(ROSE_INCLUDES)
 ## Don't use the repository in ../src
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
-libRoseStringSupportSources = string_functions.C FileNameClassifier.C escape.C
+libRoseStringSupportSources = string_functions.cpp FileNameClassifier.C escape.C
 
 # lib_LIBRARIES = libRoseStringSupport.a
 # libRoseStringSupport_a_SOURCES  = $(libRoseStringSupportSources)
