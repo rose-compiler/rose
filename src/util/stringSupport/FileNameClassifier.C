@@ -3,7 +3,12 @@
 
 #include "string_functions.h"
 
+// DQ (3/22/2009): Windows does not have this header.
+#if ROSE_MICROSOFT_OS
+// Unclear what to use here for Windows.
+#else
 #include <sys/utsname.h>
+#endif
 
 using namespace std;
 
@@ -260,6 +265,12 @@ namespace StringUtility
     OSType
     getOSType()
     {
+#if ROSE_MICROSOFT_OS
+        string sysname;
+     // We should have a proper implementation instead of defaulting to Windows.
+		printf ("Error: uname() not supported in MSVS (not implemented but will default to WINDOWS) \n");
+		ROSE_ASSERT(false);
+#else
         struct utsname val;
 
         int ret = uname(&val);
@@ -267,8 +278,8 @@ namespace StringUtility
             return OS_TYPE_UNKNOWN;
 
         string sysname = val.sysname;
-
-        if (sysname == "Linux")
+#endif
+		if (sysname == "Linux")
             return OS_TYPE_LINUX;
         else if (sysname == "Darwin")
             return OS_TYPE_OSX;

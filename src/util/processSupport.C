@@ -1,16 +1,30 @@
+#include "rose_msvc.h"
+
+#if !ROSE_MICROSOFT_OS
 #include <sys/stat.h>
 #include <sys/wait.h>
+#endif
+
 #include <vector>
 #include <string>
+
+#if !ROSE_MICROSOFT_OS
 #include <unistd.h>
 #include <cassert>
+#endif
+
 #include <stdlib.h>
 #include <string.h>
+
+// DQ (3/22/2009): This should be required, but only MSVS catches it.
+#include <assert.h>
 
 using namespace std;
 
 int systemFromVector(const vector<string>& argv) {
   assert (!argv.empty());
+
+#if !ROSE_MICROSOFT_OS
   pid_t pid = fork();
   if (pid == -1) {perror("fork"); abort();}
   if (pid == 0) { // Child
@@ -28,6 +42,11 @@ int systemFromVector(const vector<string>& argv) {
     if (err == -1) {perror("waitpid"); abort();}
     return status;
   }
+#else
+  assert(false);
+
+  return 1;
+#endif
 }
 
 // EOF is not handled correctly here -- EOF is normally set when the child
@@ -35,6 +54,8 @@ int systemFromVector(const vector<string>& argv) {
 FILE* popenReadFromVector(const vector<string>& argv) {
   assert (!argv.empty());
   int pipeDescriptors[2];
+
+#if !ROSE_MICROSOFT_OS
   int pipeErr = pipe(pipeDescriptors);
   if (pipeErr == -1) {perror("pipe"); abort();}
   pid_t pid = fork();
@@ -57,11 +78,24 @@ FILE* popenReadFromVector(const vector<string>& argv) {
     if (closeErr == -1) {perror("close (in parent)"); abort();}
     return fdopen(pipeDescriptors[0], "r");
   }
+#else
+  printf ("Error: no MSVS implementation available popenReadFromVector() (not implemented) \n");
+  assert(false);
+
+  return NULL;
+#endif
 }
 
 int pcloseFromVector(FILE* f) { // Assumes there is only one child process
   int status;
+
+#if !ROSE_MICROSOFT_OS
   /* pid_t err = */ wait(&status);
+#else
+  printf ("Error: no MSVS implementation available pcloseFromVector()(not implemented) \n");
+  assert(false);
+#endif
+
   fclose(f);
   return status;
 }
