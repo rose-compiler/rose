@@ -83,3 +83,10 @@
 //         80386		_M_IX86 = 300
 //         80486		_M_IX86 = 400
 #endif
+
+
+// DQ (3/22/2009): MS does not define some of the standard Linux types
+#if ROSE_MICROSOFT_OS
+// Using boost/cstdint.hpp instead.
+// typedef uint64_t unsigned long long;
+#endif
