@@ -90,7 +90,8 @@ EXTRA_DIST = extra.docs
 include_HEADERS = \
      rose.h \
      roseInternal.h \
-     rose_msvc.h
+     rose_msvc.h \
+     msvc_stdint.h
 
 # DQ (9/22/2006): Because we now use libtool, the shared library is a reference to the separate
 # dynamic libraries in each directory and so testMultiRoseLib is redundant with testSharedRoseLib.
