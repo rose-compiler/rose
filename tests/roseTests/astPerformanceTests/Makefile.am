@@ -30,11 +30,20 @@ checkRosePerformance: rosePerformanceTest
 
 EXTRA_DIST =
 
+# DQ (3/21/2009): These tests don't appear to run under Cygwin.
+if ROSE_BUILD_OS_IS_CYGWIN
+check-local:
+#	@$(MAKE) checkPerformance
+	@echo "****************************************************************************"
+	@echo "*** ROSE/tests/roseTests/astPerformanceTests: (commented out for Cygwin) ***"
+	@echo "****************************************************************************"
+else
 check-local:
 	@$(MAKE) checkPerformance
 	@echo "************************************************************************************************"
 	@echo "*** ROSE/tests/roseTests/astPerformanceTests: make check rule complete (terminated normally) ***"
 	@echo "************************************************************************************************"
+endif
 
 clean-local:
 	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files rose_*.C rose_performance_report_lockfile.lock
