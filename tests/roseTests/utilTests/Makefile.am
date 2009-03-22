@@ -24,7 +24,7 @@ testFilenameSupport: filenameSupport
 
 # EXTRA_DIST = $(TESTCODES)
 
-# DQ (3/21/2009): fails to run under Cygwin.
+# DQ (3/21/2009): testFileNameClassifier fails to run under Cygwin.
 if ROSE_BUILD_OS_IS_CYGWIN
 check-local: $(TEST_Objects)
 	@echo "Executing ROSE string function tests ..."
