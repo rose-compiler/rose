@@ -1228,3 +1228,26 @@ C++ applications.  The C++ symbols appear at the bottom of the listing.
 
 \end{itemize}
 
+
+\subsection{Output from {\bf AC\_CANONICAL\_BUILD} Autoconf macro}
+
+   The ROSE {\em configure.in} calls the {\bf AC\_CANONICAL\_BUILD} Autoconf 
+macro as a way to determine some details about the target machine.  The
+results of these for the machines commonly used for development are:
+\begin{verbatim}
+Linux (tux270, 64 bit):
+   build_cpu    = x86_64
+   build_vendor = redhat
+   build_os     = linux-gnu
+
+OSX (ninjai: 64bit Mac Desktop):
+   build_cpu    = i386
+   build_vendor = apple
+   build_os     = darwin9.6.0
+
+Cygwin (tux245: 32 bit Windows XP running Cygwin):
+   build_cpu    = i686
+   build_vendor = pc
+   build_os     = cygwin
+\end{verbatim}
+

@@ -793,6 +793,10 @@ atTraversalEnd()
 #include "AstCombinedProcessing.h"
 
 // DQ (3/20/2009): Wrap this in a test to make sure that Cygwin is not being used.
+// This causes a problem:
+//      error: there are no arguments to ∆cvLoadImage« that depend on a template parameter, so a declaration of <function name> must be available
+// which requires:
+//      -fpermissive to compile without error (and then it generates a lot of warnings).
 #if !defined(__CYGWIN__)
   #include "AstSharedMemoryParallelProcessing.h"
 #endif
