@@ -21,7 +21,7 @@ class LivenessAnalysis : public DefUseAnalysisAbstract {
 
   SgNode* searchNode;
   void printInAndOut(SgNode* sgNode);
-  
+
   bool abort;
   int counter;
   std::map<SgNode*, std::vector<SgInitializedName*> > in;
@@ -39,6 +39,8 @@ class LivenessAnalysis : public DefUseAnalysisAbstract {
 
   template <class T> void getAllNodesBelow(T source,
 					   std::vector<T>& visited);
+  template <class T> void getAllNodesAbove(T source, std::vector<T>& visited);
+  bool forwardAlgo;
 
  public:
  LivenessAnalysis(bool debug, DefUseAnalysis* dfa_p){
@@ -47,7 +49,7 @@ class LivenessAnalysis : public DefUseAnalysisAbstract {
    DEBUG_MODE_EXTRA=false;
    breakPointForWhile=0;
    breakPointForWhileNode=NULL;
-   
+
   };
   virtual ~LivenessAnalysis() {}
 
@@ -67,6 +69,7 @@ class LivenessAnalysis : public DefUseAnalysisAbstract {
 
   // used by ASTTraversals
   template <class T> T merge_no_dups( T& v1,  T& v2);
+  void fixupStatementsINOUT(SgFunctionDefinition* funcDecl);
 };
 
 #endif

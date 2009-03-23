@@ -16,13 +16,14 @@ void testOneFunctionDEFUSE( std::string funcParamName,
 		      bool debug, int nrOfNodes,
 		      multimap <string, int> results,
 		      multimap <string, int> useresults) {
-  cout << " \n\n------------------------------------------\nrunning ... " << argvList[1] << endl;
+  cout << " \n\n------------------------------------------\nrunning (defuse)... " << argvList[1] << endl;
   // Build the AST used by ROSE
   SgProject* project = frontend(argvList);
   // Call the Def-Use Analysis
   DFAnalysis* defuse = new DefUseAnalysis(project);
   int val = defuse->run(debug);
   std::cout << "Analysis run is : " << (val ?  "failure" : "success" ) << " " << val << std::endl;
+  ROSE_ASSERT(val!=1);
   if (val==1) exit(1);
 
   if (debug==false)
@@ -127,7 +128,7 @@ void testOneFunction( std::string funcParamName,
 		      bool debug, int nrOfNodes,
 		      multimap <int, vector<string> >  resultsIn,
 		      multimap <int, vector<string> > resultsOut) {
-  cout << " \n\n------------------------------------------\nrunning ... " << argvList[1] << endl;
+  cout << " \n\n------------------------------------------\nrunning (variable)... " << argvList[1] << endl;
 
   // Build the AST used by ROSE
   SgProject* project = frontend(argvList);
@@ -154,13 +155,15 @@ void testOneFunction( std::string funcParamName,
     std::string name = func->class_name();
     string funcName = func->get_declaration()->get_qualified_name().str();
     cerr << " .. running live analysis for func : " << funcName << endl;
-    if (funcName!=funcParamName)
-			return;
     FilteredCFGNode <IsDFAFilter> rem_source = liv->run(func,abortme);
-    if (rem_source.getNode()!=NULL)
-      dfaFunctions.push_back(rem_source);
     if (abortme)
       break;
+    if (funcName!=funcParamName) {
+        cerr << "    .. skipping live analysis check for func : " << funcName << endl;
+        continue;
+    }
+    if (rem_source.getNode()!=NULL)
+      dfaFunctions.push_back(rem_source);
 
     NodeQuerySynthesizedAttributeType nodes = NodeQuery::querySubTree(func, V_SgNode);
     SgFunctionDeclaration* decl = isSgFunctionDeclaration(func->get_declaration());
@@ -292,8 +295,31 @@ void testOneFunction( std::string funcParamName,
 
   if (abortme) {
     cerr<<"ABORTING ." << endl;
-    exit(1);
+    ROSE_ASSERT(false);
+//    exit(1);
   }
+
+  // iterate again and write second var.dot file
+  i = vars.begin();
+  abortme=false;
+  std::vector <FilteredCFGNode < IsDFAFilter > > dfaFunctions2;
+  for (; i!=vars.end();++i) {
+    SgFunctionDefinition* func = isSgFunctionDefinition(*i);
+    std::string name = func->class_name();
+    string funcName = func->get_declaration()->get_qualified_name().str();
+    cerr << " .. running live analysis for func (fixupStatementsINOUT): " << funcName << endl;
+    FilteredCFGNode <IsDFAFilter> rem_source = liv->run(func,abortme);
+    liv->fixupStatementsINOUT(func);
+    if (rem_source.getNode()!=NULL)
+      dfaFunctions2.push_back(rem_source);
+
+  }
+  cerr << "Writing out to varFix.dot... " << endl;
+  std::ofstream f3("varFix.dot");
+  dfaToDot(f3, string("varFix"), dfaFunctions2,
+	   (DefUseAnalysis*)defuse, liv);
+  f3.close();
+
   std::cout << "Analysis test is success." << std::endl;
 }
 
@@ -418,7 +444,7 @@ int main( int argc, char * argv[] )
     multimap <string, int> useresults;
     multimap <string, int> resultsMe;
 
-    if (startNrInt<=1 || testAll) {
+    if (startNrInt==1 || testAll) {
          // ------------------------------ TESTCASE 1 -----------------------------------------
          argvList[1]=srcdir+"tests/test1.C";
          resultsMe.clear();      useresults.clear();
@@ -428,7 +454,7 @@ int main( int argc, char * argv[] )
          testOneFunctionDEFUSE("::main",argvList, debug, 21, resultsMe,useresults);
        }
 
-       if (startNrInt<=2 || testAll) {
+       if (startNrInt==2 || testAll) {
          // ------------------------------ TESTCASE 2 -----------------------------------------
          argvList[1]=srcdir+"tests/test2.C";
          resultsMe.clear();      useresults.clear();
@@ -438,7 +464,7 @@ int main( int argc, char * argv[] )
          testOneFunctionDEFUSE("::main",argvList, debug, 19, resultsMe,useresults);
        }
 
-       if (startNrInt<=3 || testAll) {
+       if (startNrInt==3 || testAll) {
          // ------------------------------ TESTCASE 3 -----------------------------------------
          argvList[1]=srcdir+"tests/test3.C";
          resultsMe.clear();       useresults.clear();
@@ -446,7 +472,7 @@ int main( int argc, char * argv[] )
          testOneFunctionDEFUSE("::main", argvList, debug, 17, resultsMe,useresults);
        }
 
-       if (startNrInt<=4 || testAll) {
+       if (startNrInt==4 || testAll) {
          // ------------------------------ TESTCASE 4 -----------------------------------------
          argvList[1]=srcdir+"tests/test4.C";
          resultsMe.clear();       useresults.clear();
@@ -454,7 +480,7 @@ int main( int argc, char * argv[] )
          testOneFunctionDEFUSE("::main", argvList, debug, 14, resultsMe, useresults);
        }
 
-       if (startNrInt<=5 || testAll) {
+       if (startNrInt==5 || testAll) {
          // ------------------------------ TESTCASE 5 -----------------------------------------
          argvList[1]=srcdir+"tests/test5.C";
          resultsMe.clear();       useresults.clear();
@@ -464,7 +490,7 @@ int main( int argc, char * argv[] )
          testOneFunctionDEFUSE("::main", argvList, debug, 18, resultsMe, useresults);
        }
 
-       if (startNrInt<=6 || testAll) {
+       if (startNrInt==6 || testAll) {
          // ------------------------------ TESTCASE 6 -----------------------------------------
          argvList[1]=srcdir+"tests/test6.C";
          resultsMe.clear();  useresults.clear();
@@ -477,7 +503,7 @@ int main( int argc, char * argv[] )
          testOneFunctionDEFUSE("::main", argvList, debug, 26, resultsMe,useresults);
        }
 
-       if (startNrInt<=7 || testAll) {
+       if (startNrInt==7 || testAll) {
          // ------------------------------ TESTCASE 7 -----------------------------------------
          argvList[1]=srcdir+"tests/test7.C";
          resultsMe.clear();  useresults.clear();
@@ -488,7 +514,7 @@ int main( int argc, char * argv[] )
          testOneFunctionDEFUSE("::main", argvList, debug, 16, resultsMe,useresults);
        }
 
-       if (startNrInt<=8 || testAll) {
+       if (startNrInt==8 || testAll) {
          // ------------------------------ TESTCASE 8 -----------------------------------------
          argvList[1]=srcdir+"tests/test8.C";
          resultsMe.clear();  useresults.clear();
@@ -501,7 +527,7 @@ int main( int argc, char * argv[] )
          testOneFunctionDEFUSE("::main", argvList, debug, 31, resultsMe,useresults);
        }
 
-       if (startNrInt<=9 || testAll) {
+       if (startNrInt==9 || testAll) {
          // ------------------------------ TESTCASE 9 -----------------------------------------
          argvList[1]=srcdir+"tests/test9.C";
          resultsMe.clear();  useresults.clear();
@@ -513,7 +539,7 @@ int main( int argc, char * argv[] )
          testOneFunctionDEFUSE("::main", argvList, debug, 30, resultsMe,useresults);
        }
 
-       if (startNrInt<=10 || testAll) {
+       if (startNrInt==10 || testAll) {
          // ------------------------------ TESTCASE 10 -----------------------------------------
          argvList[1]=srcdir+"tests/test10.C";
          resultsMe.clear();  useresults.clear();
@@ -528,7 +554,7 @@ int main( int argc, char * argv[] )
          testOneFunctionDEFUSE("::f2", argvList, debug, 25, resultsMe,useresults);
        }
 
-       if (startNrInt<=11 || testAll) {
+       if (startNrInt==11 || testAll) {
          // ------------------------------ TESTCASE 11 -----------------------------------------
          argvList[1]=srcdir+"tests/test11.C";
          resultsMe.clear();  useresults.clear();
@@ -551,7 +577,7 @@ int main( int argc, char * argv[] )
          testOneFunctionDEFUSE("::f2", argvList, debug, 76, resultsMe,useresults);
        }
 
-       if (startNrInt<=13 || testAll) {
+       if (startNrInt==13 || testAll) {
          // ------------------------------ TESTCASE 13 -----------------------------------------
          argvList[1]=srcdir+"tests/test13.C";
          resultsMe.clear();  useresults.clear();
@@ -559,7 +585,7 @@ int main( int argc, char * argv[] )
          testOneFunctionDEFUSE("::main", argvList, debug, 9, resultsMe,useresults);
        }
 
-       if (startNrInt<=14 || testAll) {
+       if (startNrInt==14 || testAll) {
          // ------------------------------ TESTCASE 14 -----------------------------------------
          argvList[1]=srcdir+"tests/test14.C";
          resultsMe.clear();  useresults.clear();
@@ -568,7 +594,7 @@ int main( int argc, char * argv[] )
          testOneFunctionDEFUSE("::main", argvList, debug, 14, resultsMe,useresults);
        }
 
-       if (startNrInt<=15 || testAll) {
+       if (startNrInt==15 || testAll) {
          // ------------------------------ TESTCASE 15 -----------------------------------------
          argvList[1]=srcdir+"tests/test15.C";
          resultsMe.clear();  useresults.clear();
@@ -579,7 +605,7 @@ int main( int argc, char * argv[] )
          testOneFunctionDEFUSE("::main", argvList, debug, 26, resultsMe,useresults);
        }
 
-       if (startNrInt<=18 || testAll) {
+       if (startNrInt==18 || testAll) {
          // ------------------------------ TESTCASE 18 -----------------------------------------
          argvList[1]=srcdir+"tests/test18.C";
          resultsMe.clear();  useresults.clear();
@@ -595,7 +621,7 @@ int main( int argc, char * argv[] )
          testOneFunctionDEFUSE("::main", argvList, debug, 48, resultsMe,useresults);
        }
 
-       if (startNrInt<=19 || testAll) {
+       if (startNrInt==19 || testAll) {
          // ------------------------------ TESTCASE 19 -----------------------------------------
          argvList[1]=srcdir+"tests/test19.C";
          resultsMe.clear();  useresults.clear();
@@ -610,21 +636,21 @@ int main( int argc, char * argv[] )
          testOneFunctionDEFUSE("::setMe", argvList, debug, 30, resultsMe,useresults);
        }
 
-       if (startNrInt<=20 || testAll) {
+       if (startNrInt==20 || testAll) {
          // ------------------------------ TESTCASE 1 -----------------------------------------
          argvList[1]=srcdir+"tests/test20.C";
          resultsMe.clear();      useresults.clear();
          testOneFunctionDEFUSE("::bar",argvList, debug, 5, resultsMe,useresults);
        }
 
-       if (startNrInt<=21 || testAll) {
+       if (startNrInt==21 || testAll) {
          // ------------------------------ TESTCASE 1 -----------------------------------------
          argvList[1]=srcdir+"tests/test21.C";
          resultsMe.clear();      useresults.clear();
          testOneFunctionDEFUSE("::func",argvList, debug, 9, resultsMe,useresults);
        }
 
-       if (startNrInt<=22 || testAll) {
+       if (startNrInt==22 || testAll) {
          // ------------------------------ TESTCASE 1 -----------------------------------------
          argvList[1]=srcdir+"tests/test22.C";
          resultsMe.clear();      useresults.clear();
@@ -632,16 +658,40 @@ int main( int argc, char * argv[] )
          testOneFunctionDEFUSE("::func",argvList, debug, 12, resultsMe,useresults);
        }
 
-       if (startNrInt<=23 || testAll) {
+       if (startNrInt==23 || testAll) {
          // ------------------------------ TESTCASE 1 -----------------------------------------
          argvList[1]=srcdir+"tests/test23.C";
          resultsMe.clear();      useresults.clear();
          resultsMe.insert(pair<string,int>("a",11));
          testOneFunctionDEFUSE("::func",argvList, debug, 30, resultsMe,useresults);
        }
+
+       if (startNrInt==24 || testAll) {
+         // ------------------------------ TESTCASE 24 -----------------------------------------
+         argvList[1]=srcdir+"tests/inputlivenessAnalysis.C";
+         resultsMe.clear();      useresults.clear();
+         testOneFunctionDEFUSE("::func",argvList, debug, 30, resultsMe,useresults);
+       }
+
+       if (startNrInt==25 || testAll) {
+         // ------------------------------ TESTCASE 24 -----------------------------------------
+         argvList[1]=srcdir+"tests/jacobi_seq.C";
+         resultsMe.clear();  useresults.clear();
+         testOneFunctionDEFUSE("::jacobi", argvList, debug, 548, resultsMe,useresults);
+         testOneFunctionDEFUSE("::main", argvList, debug, 548, resultsMe,useresults);
+       }
+
     }
 
        // -------------------------------------- use-def tests
+
+
+
+
+
+
+
+
 
 
 
@@ -773,7 +823,7 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 11 -----------------------------------------
       argvList[1]=srcdir+"tests/test11.C";
       results.clear();  outputResults.clear();
-      testOneFunction("::f2", argvList, debug, 3, results,outputResults);
+      testOneFunction("::f2", argvList, debug, 6, results,outputResults);
     }
 
     if (startNrInt==13 || testAll) {
@@ -845,6 +895,14 @@ int main( int argc, char * argv[] )
       argvList[1]=srcdir+"tests/inputlivenessAnalysis.C";
       results.clear();  outputResults.clear();
       testOneFunction("::main", argvList, debug, 71, results,outputResults);
+    }
+
+    if (startNrInt==25 || testAll) {
+      // ------------------------------ TESTCASE 24 -----------------------------------------
+      argvList[1]=srcdir+"tests/jacobi_seq.C";
+      results.clear();  outputResults.clear();
+      testOneFunction("::jacobi", argvList, debug, 264, results,outputResults);
+      testOneFunction("::main", argvList, debug, 24, results,outputResults);
     }
   }
 

@@ -88,24 +88,24 @@ std::string ToString(T t) {
     if (live==NULL) {
       typedef std::vector < std::pair < SgInitializedName* , SgNode*>  > multitype;
       std::vector < std::pair <SgInitializedName*, SgNode*> > multi = dfa->getDefMultiMapFor(n);
-      for (multitype::const_iterator j = multi.begin(); j != multi.end(); ++j) {  
+      for (multitype::const_iterator j = multi.begin(); j != multi.end(); ++j) {
 	SgInitializedName* sgInitMM = (*j).first;
 	string name = sgInitMM->get_qualified_name().str() ;
 	SgNode* sgNodeMM = (*j).second;
-	string temp = "DEF: " +name + " ( " + ToString(dfa->getIntForSgNode(sgInitMM)) + 
+	string temp = "DEF: " +name + " ( " + ToString(dfa->getIntForSgNode(sgInitMM)) +
 	  " )  - " + ToString(dfa->getIntForSgNode(sgNodeMM)) + " \n";
 	retStr += temp;
-      }    
-      
+      }
+
       multi = dfa->getUseMultiMapFor(n);
-      for (multitype::const_iterator j = multi.begin(); j != multi.end(); ++j) {  
+      for (multitype::const_iterator j = multi.begin(); j != multi.end(); ++j) {
 	SgInitializedName* sgInitMM = (*j).first;
 	string name = sgInitMM->get_qualified_name().str() ;
 	SgNode* sgNodeMM = (*j).second;
-	string temp = "USE: " +name + " ( " + ToString(dfa->getIntForSgNode(sgInitMM)) + 
+	string temp = "USE: " +name + " ( " + ToString(dfa->getIntForSgNode(sgInitMM)) +
 	  " )  - " + ToString(dfa->getIntForSgNode(sgNodeMM)) + " \n";
 	retStr += temp;
-      }    
+      }
     } else {
       ROSE_ASSERT(n);
       ROSE_ASSERT(t);
@@ -134,26 +134,26 @@ std::string ToString(T t) {
 
       typedef std::vector < std::pair < SgInitializedName* , SgNode*>  > multitype;
       std::vector < std::pair <SgInitializedName*, SgNode*> > multi = dfa->getDefMultiMapFor(n);
-      for (multitype::const_iterator j = multi.begin(); j != multi.end(); ++j) {  
+      for (multitype::const_iterator j = multi.begin(); j != multi.end(); ++j) {
 	SgInitializedName* sgInitMM = (*j).first;
 	string name = sgInitMM->get_qualified_name().str() ;
 	SgNode* sgNodeMM = (*j).second;
-	string temp = "DEF: " +name + " ( " + ToString(dfa->getIntForSgNode(sgInitMM)) + 
+	string temp = "DEF: " +name + " ( " + ToString(dfa->getIntForSgNode(sgInitMM)) +
 	  " )  - " + ToString(dfa->getIntForSgNode(sgNodeMM)) + " \n";
 	if (sgNodeMM==n)
 	  retStr += temp;
-      }    
-      
+      }
+
       multi = dfa->getUseMultiMapFor(n);
-      for (multitype::const_iterator j = multi.begin(); j != multi.end(); ++j) {  
+      for (multitype::const_iterator j = multi.begin(); j != multi.end(); ++j) {
 	SgInitializedName* sgInitMM = (*j).first;
 	string name = sgInitMM->get_qualified_name().str() ;
 	SgNode* sgNodeMM = (*j).second;
-	string temp = "USE: " +name + " ( " + ToString(dfa->getIntForSgNode(sgInitMM)) + 
+	string temp = "USE: " +name + " ( " + ToString(dfa->getIntForSgNode(sgInitMM)) +
 	  " )  - " + ToString(dfa->getIntForSgNode(sgNodeMM)) + " \n";
 	if (sgNodeMM==n)
 	  retStr += temp;
-      }    
+      }
 
     }
 
@@ -164,14 +164,18 @@ std::string ToString(T t) {
   inline void printDFANode(ostream& o, const NodeT& n, DefUseAnalysis* dfa) {
     string id = n.id();
     string nodeColor = "black";
+    std::string funcName ="";
     if (isSgUnaryOp(n.getNode())) nodeColor = "orange";
     else if (isSgAssignInitializer(n.getNode())) nodeColor = "red";
     else if (isSgBinaryOp(n.getNode())) nodeColor = "red";
     else if (isSgFunctionCallExp(n.getNode())) nodeColor = "yellow";
     else if (isSgInitializedName(n.getNode())) nodeColor = "blue";
     else if (isSgVarRefExp(n.getNode())) nodeColor = "green";
-    o << id << " [label=\"" << escapeStringDFA(getNodeString(n, dfa) + n.toStringForDebugging() ) << 
-      "\", color=\"" << nodeColor << 
+    if (isSgFunctionDefinition(n.getNode())) {
+    	funcName = isSgFunctionDefinition(n.getNode())->get_declaration()->get_qualified_name();
+    }
+    o << id << " [label=\"" << funcName << " : " << escapeStringDFA(getNodeString(n, dfa) + n.toStringForDebugging() ) <<
+      "\", color=\"" << nodeColor <<
       "\", style=\"" << (n.isInteresting() ? "solid" : "dotted") << "\"];\n";
   }
 
@@ -180,7 +184,7 @@ std::string ToString(T t) {
 			   LivenessAnalysis* live) {
     //cout << " printDFAEdge: label: " << getEdgeString(e) << endl;
     string nodeColor = "black";
-    SgNode* ns = e.source().getNode();    
+    SgNode* ns = e.source().getNode();
     if (isSgIfStmt(ns)) {
       EdgeConditionKind kk = e.condition();
       if (kk==eckTrue)
@@ -188,9 +192,9 @@ std::string ToString(T t) {
       if (kk==eckFalse)
 	nodeColor = "red";
     }
-    o << e.source().id() << " -> " << e.target().id() << " [label=\"" << 
-      escapeString(getEdgeString(e, dfa, live) ) << 
-      "\", color=\"" << nodeColor << 
+    o << e.source().id() << " -> " << e.target().id() << " [label=\"" <<
+      escapeString(getEdgeString(e, dfa, live) ) <<
+      "\", color=\"" << nodeColor <<
       "\", style=\"" << (isInEdge ? "dotted" : "solid") << "\"];\n";
   }
 
@@ -221,7 +225,7 @@ std::string ToString(T t) {
     LivenessAnalysis* live;
 
   public:
-    DfaToDotImpl(ostream& o, DefUseAnalysis* dfa_p, LivenessAnalysis* live_p): 
+    DfaToDotImpl(ostream& o, DefUseAnalysis* dfa_p, LivenessAnalysis* live_p):
       exploredNodes(), nodesPrinted(), o(o), dfa(dfa_p), live(live_p) {}
     void explore(NodeT n);
     void processNodes(SgNode* top);
@@ -259,7 +263,7 @@ std::string ToString(T t) {
   }
 
 
-  template < typename FilterFunction > 
+  template < typename FilterFunction >
   std::ostream & dfaToDot(std::ostream & o,
 			  std::string graphName,
 			  std::vector < FilteredCFGNode < FilterFunction > > start,
@@ -278,7 +282,7 @@ std::string ToString(T t) {
     return o;
   }
 
-  template < typename FilterFunction > 
+  template < typename FilterFunction >
   std::ostream & dfaToDot(std::ostream & o,
 			  std::string graphName,
 			  std::vector < FilteredCFGNode < FilterFunction > > start,
@@ -299,10 +303,10 @@ std::string ToString(T t) {
   }
 
 
-  template std::ostream& dfaToDot(std::ostream&, std::string, 
+  template std::ostream& dfaToDot(std::ostream&, std::string,
   				  std::vector <FilteredCFGNode<IsDFAFilter> >,
   				  DefUseAnalysis* dfa);
-  template std::ostream& dfaToDot(std::ostream&, std::string, 
+  template std::ostream& dfaToDot(std::ostream&, std::string,
   				  std::vector <FilteredCFGNode<IsDFAFilter> >,
   				  DefUseAnalysis* dfa,
 				  LivenessAnalysis* live);

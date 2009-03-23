@@ -133,7 +133,8 @@ namespace VirtualCFG
             nodeColor = "green";
         else if (isSgInitializedName(n.getNode()))
             nodeColor = "red";
-        o << id << " [label=\"" << escapeString(n.
+
+        o << id << " [label=\""  << escapeString(n.
                                                 toString()) << "\", color=\"" << nodeColor <<
             "\", style=\"" << (n.isInteresting()? "solid" : "dotted") << "\"];\n";
     }
