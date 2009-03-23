@@ -1,3 +1,61 @@
+2009-03-22 22:20  dquinlan
+
+	* [r5018] /trunk/ROSE/MSVS_project_ROSETTA_empty,
+	  /trunk/ROSE/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty,
+	  /trunk/ROSE/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty.ncb,
+	  /trunk/ROSE/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty.sln,
+	  /trunk/ROSE/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty.suo,
+	  /trunk/ROSE/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty/Debug,
+	  /trunk/ROSE/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty/Debug/BuildLog.htm,
+	  /trunk/ROSE/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty/Debug/FileNameClassifier.obj,
+	  /trunk/ROSE/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty/Debug/commandline_processing.obj,
+	  /trunk/ROSE/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty/Debug/escape.obj,
+	  /trunk/ROSE/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty/Debug/processSupport.obj,
+	  /trunk/ROSE/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty/Debug/string_functions.obj,
+	  /trunk/ROSE/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty/Debug/vc80.idb,
+	  /trunk/ROSE/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty/Debug/vc80.pdb,
+	  /trunk/ROSE/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty.vcproj,
+	  /trunk/ROSE/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty.vcproj.THE-LAB.quinlan1.user,
+	  /trunk/ROSE/src/util/processSupport.C,
+	  /trunk/ROSE/src/util/stringSupport/FileNameClassifier.C,
+	  /trunk/ROSE/src/util/stringSupport/string_functions.cpp,
+	  /trunk/ROSE/src/util/stringSupport/string_functions.h:
+	  Modifications to permit initial compilation of part of ROSE using
+	  Microsoft Visual Studio 2005.
+
+2009-03-22 21:30  dquinlan
+
+	* [r5017] /trunk/ROSE/src/rose_msvc.h: Added MAXPATHLEN definition
+	  for MSVS (set to PATH_MAX).
+
+2009-03-22 21:24  dquinlan
+
+	* [r5016] /trunk/ROSE/src/rose_msvc.h: Added PATH_MAX definition
+	  for MSVS (4096, consistant with MKS).
+
+2009-03-22 20:50  dquinlan
+
+	* [r5015] /trunk/ROSE/src/Makefile.am: Added msvc_stdint.h to
+	  Makefile.am.
+
+2009-03-22 20:49  dquinlan
+
+	* [r5014] /trunk/ROSE/src/msvc_stdint.h,
+	  /trunk/ROSE/src/rose_msvc.h: Added MSVS specific support for
+	  stdint.h (not supported by MSVS).
+
+2009-03-22 20:26  dquinlan
+
+	* [r5013] /trunk/ROSE/src/Makefile.am,
+	  /trunk/ROSE/src/ROSETTA/src/grammar.C,
+	  /trunk/ROSE/src/ROSETTA/src/grammar.h, /trunk/ROSE/src/rose.h,
+	  /trunk/ROSE/src/roseInternal.h, /trunk/ROSE/src/rose_msvc.h,
+	  /trunk/ROSE/src/util/commandlineProcessing/sla++.C,
+	  /trunk/ROSE/src/util/stringSupport/FileNameClassifier.C,
+	  /trunk/ROSE/src/util/stringSupport/string_functions.cpp: Added
+	  support for detection of Microsoft compilers and details (MSVS
+	  support).
+
 2009-03-22 18:43  dquinlan
 
 	* [r5009] /trunk/ROSE/src/util/commandlineProcessing/sla.c: Removed
