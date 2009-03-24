@@ -887,3 +887,74 @@ AnalyzeMacroCalls::check_for_inconsistencies(){
     return std::pair<int,int>(consistencies,inconsistencies);
 };
 
+void
+AnalyzeMacroCalls::print_out_all_macros(std::ostream& outStream){
+
+  int inconsistencies = 0;
+  int consistencies   = 0;
+
+  for(map_def_call::iterator def_it = mapDefsToCalls.begin();
+      def_it != mapDefsToCalls.end(); ++def_it ){
+    PreprocessingInfo* macroDef = def_it->first;
+    Sg_File_Info* macro_def_pos = def_it->first->get_file_info();
+
+    bool macro_def_added = false;
+    PreprocessingInfo::rose_macro_definition* macro_def = macroDef->get_macro_def();
+    ROSE_ASSERT( macro_def != NULL );
+
+    std::string macroBodyStr;
+    for(token_list_container::iterator tok_it = macro_def->definition.begin();
+        tok_it != macro_def->definition.end(); ++tok_it ){
+      macroBodyStr = macroBodyStr + std::string(tok_it->get_value().c_str());
+    }
+
+    outStream << std::endl;
+
+
+    outStream << "Macro def at: " << macroDef->get_file_info()->get_filenameString() 
+      << " l " << macro_def_pos->get_line() << " c " 
+      << macro_def_pos->get_col() << std::endl;
+    outStream << "FORMAL BODY: " << macroBodyStr << std::endl;
+    outStream << "It has " << def_it->second.size() << " calls to it" << std::endl; 
+    outStream << std::endl;
+
+
+    std::string first_expanded_string;
+    std::string first_ASTStringMatchingMacroCall;
+    Sg_File_Info* first_macro_call_pos;
+    std::vector<std::string> first_correspondingAstNodes;
+
+    for(std::vector<MappedMacroCall>::iterator call_it = def_it->second.begin();
+        call_it != def_it->second.end(); ++call_it ){
+      PreprocessingInfo* macroCall = call_it->macro_call;
+      std::vector<std::string> correspondingAstNodes;
+
+      for(std::vector<SgNode*>::iterator it_nodes = call_it->comparisonLinearization.begin(); 
+          it_nodes != call_it->comparisonLinearization.end(); ++it_nodes)
+        correspondingAstNodes.push_back((*it_nodes)->class_name());
+
+      std::string ASTStringMatchingMacroCall = call_it->ASTStringMatchingMacroCall;
+
+      Sg_File_Info* macro_call_pos = macroCall->get_file_info();
+      std::string expanded_string;
+      if( ( macroCall->get_macro_call()->expanded_macro.size() > 1  )){
+
+        for(token_container::iterator it_exp = macroCall->get_macro_call()->expanded_macro.begin();
+            it_exp != macroCall->get_macro_call()->expanded_macro.end(); ++it_exp){
+          expanded_string = expanded_string + std::string(it_exp->get_value().c_str());
+        }
+      }
+
+
+      outStream << "Macro Call at "  
+        << macro_call_pos->get_filenameString()
+        << " l " << macro_call_pos->get_line()
+        << " c " << macro_call_pos->get_col()
+        << "EXPANDED: " << expanded_string << std::endl
+        << "Matching AST: " << ASTStringMatchingMacroCall << std::endl;   
+      outStream << "Is inconsistent with:" << std::endl;
+
+    }
+  }
+};
+

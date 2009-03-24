@@ -1,0 +1,2491 @@
+
+Macro def at: /usr/include/_G_config.h l 77 c 9
+FORMAL BODY: 0x20001
+It has 0 calls to it
+
+
+Macro def at: /usr/include/gconv.h l 34 c 9
+FORMAL BODY: ((wchar_t) 0xfffd)
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 348 c 9
+FORMAL BODY: ((_IO_FILE*)(&_IO_2_1_stdout_))
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 85 c 9
+FORMAL BODY: defined (_STATBUF_ST_BLKSIZE)
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 87 c 9
+FORMAL BODY: 8192
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 90 c 9
+FORMAL BODY: 0
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 91 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 92 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at:  l 1 c 1
+FORMAL BODY: 4
+It has 0 calls to it
+
+
+Macro def at: /usr/include/stdio.h l 125 c 10
+FORMAL BODY: "/tmp"
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 421 c 10
+FORMAL BODY: __builtin_expect ((expr), res)
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 426 c 9
+FORMAL BODY: (_IO_BE ((_fp)->_IO_read_ptr >= (_fp)->_IO_read_end, 0) 	? __uflow (_fp) : *(unsigned char *) (_fp)->_IO_read_ptr++)
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 429 c 9
+FORMAL BODY: (_IO_BE ((_fp)->_IO_read_ptr >= (_fp)->_IO_read_end, 0) 	  && __underflow (_fp) == EOF ? EOF 	: *(unsigned char *) (_fp)->_IO_read_ptr)
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/wchar.h l 21 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 400 c 9
+FORMAL BODY: __null
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/types.h l 25 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/wchar.h l 23 c 9
+FORMAL BODY: (-2147483647 - 1)
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 433 c 9
+FORMAL BODY: (_IO_BE ((_fp)->_IO_write_ptr >= (_fp)->_IO_write_end, 0)     ? __overflow (_fp, (unsigned char) (_ch))     : (unsigned char) (*(_fp)->_IO_write_ptr++ = (_ch)))
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 13 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 438 c 9
+FORMAL BODY: (_IO_BE ((_fp)->_wide_data->_IO_read_ptr >= (_fp)->_wide_data->_IO_read_end,	   0)    ? __wuflow (_fp) : (_IO_wint_t) *(_fp)->_wide_data->_IO_read_ptr++)
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/types.h l 102 c 9
+FORMAL BODY: short int
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/types.h l 104 c 9
+FORMAL BODY: int
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/types.h l 30 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/types.h l 105 c 9
+FORMAL BODY: unsigned int
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/types.h l 106 c 9
+FORMAL BODY: long int
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/types.h l 107 c 9
+FORMAL BODY: unsigned long int
+It has 0 calls to it
+
+
+Macro def at: /usr/include/wchar.h l 74 c 10
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/typesizes.h l 39 c 9
+FORMAL BODY: __S32_TYPE
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 475 c 10
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 90 c 10
+FORMAL BODY: (-1)
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/typesizes.h l 37 c 9
+FORMAL BODY: __SLONGWORD_TYPE
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 84 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/typesizes.h l 38 c 9
+FORMAL BODY: __SQUAD_TYPE
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 106 c 9
+FORMAL BODY: 2
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 105 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 126 c 9
+FORMAL BODY: 8
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 107 c 9
+FORMAL BODY: 4
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 108 c 9
+FORMAL BODY: 8
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 109 c 9
+FORMAL BODY: 16
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 110 c 9
+FORMAL BODY: 32
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 473 c 10
+FORMAL BODY: _IO_peekc_unlocked (_fp)
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 111 c 9
+FORMAL BODY: 64
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 112 c 9
+FORMAL BODY: 128
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/stdio_lim.h l 24 c 10
+FORMAL BODY: 20
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 120 c 9
+FORMAL BODY: 0xFBAD0000
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 474 c 10
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 122 c 9
+FORMAL BODY: 0xFFFF0000
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 121 c 9
+FORMAL BODY: 0xFABC0000
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 123 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 128 c 9
+FORMAL BODY: 0x20
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 127 c 9
+FORMAL BODY: 0x10
+It has 0 calls to it
+
+
+Macro def at: /usr/include/stdio.h l 120 c 9
+FORMAL BODY: 2
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 129 c 9
+FORMAL BODY: 0x40
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 131 c 9
+FORMAL BODY: 0x100
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/stdio_lim.h l 29 c 11
+FORMAL BODY: 9
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 134 c 9
+FORMAL BODY: 0x800
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/typesizes.h l 42 c 9
+FORMAL BODY: __SLONGWORD_TYPE
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 130 c 9
+FORMAL BODY: 0x80
+It has 0 calls to it
+
+
+Macro def at: /usr/include/stdio.h l 119 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/typesizes.h l 59 c 9
+FORMAL BODY: struct { int __val[2]; }
+It has 1 calls to it
+
+Macro Call at /usr/include/bits/types.h l 147 c 12EXPANDED: struct { int __val[2]; }
+Matching AST: 
+Is inconsistent with:
+
+Macro def at: /usr/include/stdio.h l 64 c 10
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/stdio.h l 70 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 270 c 9
+FORMAL BODY: _flags
+It has 0 calls to it
+
+
+Macro def at: /usr/include/stdio.h l 37 c 10
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/stdio.h l 38 c 10
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 157 c 9
+FORMAL BODY: 01000
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/types.h l 124 c 10
+FORMAL BODY: unsigned long int
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 125 c 9
+FORMAL BODY: 4
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 478 c 10
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 477 c 10
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/typesizes.h l 41 c 9
+FORMAL BODY: __UQUAD_TYPE
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 133 c 9
+FORMAL BODY: 0x400
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/typesizes.h l 43 c 9
+FORMAL BODY: __SQUAD_TYPE
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 135 c 9
+FORMAL BODY: 0x1000
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 136 c 9
+FORMAL BODY: 0x2000
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 137 c 9
+FORMAL BODY: 0x4000
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 138 c 9
+FORMAL BODY: 0x8000
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 141 c 9
+FORMAL BODY: 2
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/typesizes.h l 46 c 9
+FORMAL BODY: __ULONGWORD_TYPE
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 266 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 265 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/stdio.h l 118 c 9
+FORMAL BODY: 0
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/typesizes.h l 40 c 9
+FORMAL BODY: __ULONGWORD_TYPE
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 476 c 10
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 140 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 124 c 9
+FORMAL BODY: 2
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 42 c 9
+FORMAL BODY: wint_t
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/typesizes.h l 44 c 9
+FORMAL BODY: __ULONGWORD_TYPE
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 132 c 9
+FORMAL BODY: 0x200
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 276 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 278 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/typesizes.h l 58 c 9
+FORMAL BODY: __SLONGWORD_TYPE
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 279 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 277 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/typesizes.h l 57 c 9
+FORMAL BODY: void *
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/typesizes.h l 56 c 9
+FORMAL BODY: __S32_TYPE
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 164 c 9
+FORMAL BODY: 0200000
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/typesizes.h l 53 c 9
+FORMAL BODY: __S32_TYPE
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 275 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/typesizes.h l 55 c 9
+FORMAL BODY: __S32_TYPE
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 274 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 459 c 9
+FORMAL BODY: ((_fp)->_IO_write_ptr - (_fp)->_IO_write_base)
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 76 c 10
+FORMAL BODY: __P(protos)
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/typesizes.h l 54 c 9
+FORMAL BODY: __SLONGWORD_TYPE
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/types.h l 125 c 10
+FORMAL BODY: int
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 162 c 9
+FORMAL BODY: 040000
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 163 c 9
+FORMAL BODY: 0100000
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 273 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/gconv.h l 24 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/stdio.h l 98 c 9
+FORMAL BODY: 0
+It has 0 calls to it
+
+
+Macro def at: /usr/include/stdio.h l 100 c 9
+FORMAL BODY: 2
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/stdio_lim.h l 25 c 10
+FORMAL BODY: 238328
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 449 c 9
+FORMAL BODY: (((__fp)->_flags & _IO_ERR_SEEN) != 0)
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 43 c 9
+FORMAL BODY: stat64
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/stdio_lim.h l 26 c 10
+FORMAL BODY: 4096
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 151 c 9
+FORMAL BODY: 010
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 148 c 9
+FORMAL BODY: 01
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/typesizes.h l 48 c 9
+FORMAL BODY: __U32_TYPE
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 267 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 149 c 9
+FORMAL BODY: 02
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 268 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/typesizes.h l 50 c 9
+FORMAL BODY: __SLONGWORD_TYPE
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 152 c 9
+FORMAL BODY: 020
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 154 c 9
+FORMAL BODY: 0100
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 159 c 9
+FORMAL BODY: 04000
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/typesizes.h l 52 c 9
+FORMAL BODY: __SLONGWORD_TYPE
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 160 c 9
+FORMAL BODY: 010000
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 161 c 9
+FORMAL BODY: 020000
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 158 c 9
+FORMAL BODY: 02000
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/typesizes.h l 51 c 9
+FORMAL BODY: __U32_TYPE
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 272 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 156 c 9
+FORMAL BODY: 0400
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 155 c 9
+FORMAL BODY: 0200
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 271 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 270 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 153 c 9
+FORMAL BODY: 040
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 269 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 150 c 9
+FORMAL BODY: 04
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/typesizes.h l 49 c 9
+FORMAL BODY: __SLONGWORD_TYPE
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 448 c 9
+FORMAL BODY: (((__fp)->_flags & _IO_EOF_SEEN) != 0)
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stdarg.h l 42 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 400 c 9
+FORMAL BODY: __null
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/types.h l 130 c 10
+FORMAL BODY: typedef
+It has 0 calls to it
+
+
+Macro def at: /usr/include/gconv.h l 30 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/typesizes.h l 35 c 9
+FORMAL BODY: __U32_TYPE
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/typesizes.h l 32 c 9
+FORMAL BODY: __U32_TYPE
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/typesizes.h l 33 c 9
+FORMAL BODY: __ULONGWORD_TYPE
+It has 0 calls to it
+
+
+Macro def at: /usr/include/gconv.h l 29 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 56 c 11
+FORMAL BODY: __gnuc_va_list
+It has 2 calls to it
+
+Macro Call at /usr/include/libio.h l 482 c 4EXPANDED: 
+Matching AST: 
+Is inconsistent with:
+Macro Call at /usr/include/libio.h l 484 c 5EXPANDED: 
+Matching AST: 
+Is inconsistent with:
+
+Macro def at: /usr/include/bits/typesizes.h l 30 c 9
+FORMAL BODY: __UQUAD_TYPE
+It has 0 calls to it
+
+
+Macro def at: /usr/include/stdio.h l 105 c 10
+FORMAL BODY: _IO_BUFSIZ
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/types.h l 128 c 10
+FORMAL BODY: unsigned long int
+It has 0 calls to it
+
+
+Macro def at: /usr/include/stdio.h l 99 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/types.h l 127 c 10
+FORMAL BODY: long int
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/types.h l 126 c 10
+FORMAL BODY: unsigned int
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/types.h l 123 c 10
+FORMAL BODY: long int
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 442 c 9
+FORMAL BODY: (_IO_BE ((_fp)->_wide_data->_IO_write_ptr 	   >= (_fp)->_wide_data->_IO_write_end, 0)    ? __woverflow (_fp, _wch)    : (_IO_wint_t) (*(_fp)->_wide_data->_IO_write_ptr++ = (_wch)))
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 299 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 145 c 9
+FORMAL BODY: 8
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/typesizes.h l 47 c 9
+FORMAL BODY: __UQUAD_TYPE
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 75 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/stdio.h l 54 c 10
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/typesizes.h l 60 c 9
+FORMAL BODY: __SWORD_TYPE
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/types.h l 121 c 10
+FORMAL BODY: long int
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/types.h l 122 c 10
+FORMAL BODY: unsigned long int
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/typesizes.h l 25 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/typesizes.h l 31 c 9
+FORMAL BODY: __U32_TYPE
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/typesizes.h l 34 c 9
+FORMAL BODY: __UQUAD_TYPE
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 25 c 9
+FORMAL BODY: size_t
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/typesizes.h l 36 c 9
+FORMAL BODY: __UWORD_TYPE
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 37 c 9
+FORMAL BODY: __off_t
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 44 c 9
+FORMAL BODY: _G_HAVE_SYS_WAIT
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 45 c 9
+FORMAL BODY: _G_HAVE_ST_BLKSIZE
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 46 c 9
+FORMAL BODY: _G_BUFSIZ
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 47 c 9
+FORMAL BODY: _G_va_list
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 48 c 9
+FORMAL BODY: _G_wint_t
+It has 1 calls to it
+
+Macro Call at /usr/include/libio.h l 418 c 44EXPANDED: 
+Matching AST: 
+Is inconsistent with:
+
+Macro def at: /usr/include/_G_config.h l 98 c 10
+FORMAL BODY: ARGLIST
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 36 c 9
+FORMAL BODY: _G_fpos64_t
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 42 c 9
+FORMAL BODY: _G_uid_t
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 40 c 9
+FORMAL BODY: _G_off64_t
+It has 3 calls to it
+
+Macro Call at /usr/include/libio.h l 316 c 3EXPANDED: 
+Matching AST: 
+Is inconsistent with:
+Macro Call at /usr/include/libio.h l 488 c 45EXPANDED: 
+Matching AST: 
+Is inconsistent with:
+Macro Call at /usr/include/libio.h l 489 c 45EXPANDED: 
+Matching AST: 
+Is inconsistent with:
+
+Macro def at: /usr/include/libio.h l 38 c 9
+FORMAL BODY: _G_ssize_t
+It has 1 calls to it
+
+Macro Call at /usr/include/libio.h l 485 c 47EXPANDED: 
+Matching AST: 
+Is inconsistent with:
+
+Macro def at: /usr/include/libio.h l 37 c 9
+FORMAL BODY: _G_size_t
+It has 1 calls to it
+
+Macro Call at /usr/include/libio.h l 486 c 50EXPANDED: 
+Matching AST: 
+Is inconsistent with:
+
+Macro def at: /usr/include/libio.h l 41 c 9
+FORMAL BODY: _G_pid_t
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 43 c 9
+FORMAL BODY: _G_iconv_t
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 52 c 10
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 38 c 9
+FORMAL BODY: __off64_t
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 36 c 9
+FORMAL BODY: __ssize_t
+It has 0 calls to it
+
+
+Macro def at: /usr/include/gconv.h l 27 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/typesizes.h l 45 c 9
+FORMAL BODY: __UQUAD_TYPE
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 39 c 9
+FORMAL BODY: __pid_t
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/typesizes.h l 63 c 9
+FORMAL BODY: 1024
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 41 c 9
+FORMAL BODY: wchar_t
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 40 c 9
+FORMAL BODY: __uid_t
+It has 0 calls to it
+
+
+Macro def at: /usr/include/wchar.h l 47 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 11 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 23 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/types.h l 103 c 9
+FORMAL BODY: unsigned short int
+It has 0 calls to it
+
+
+Macro def at: /usr/include/stdio.h l 78 c 12
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/wchar.h l 24 c 9
+FORMAL BODY: (2147483647)
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 12 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 93 c 9
+FORMAL BODY: "__vt_"
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 94 c 9
+FORMAL BODY: __vt_
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 39 c 9
+FORMAL BODY: _G_off_t
+It has 1 calls to it
+
+Macro Call at /usr/include/libio.h l 297 c 3EXPANDED: 
+Matching AST: 
+Is inconsistent with:
+
+Macro def at: /usr/include/_G_config.h l 80 c 9
+FORMAL BODY: __lseek64
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 79 c 9
+FORMAL BODY: __open64
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/stdio_lim.h l 36 c 10
+FORMAL BODY: 16
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 81 c 9
+FORMAL BODY: __mmap64
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 82 c 9
+FORMAL BODY: __fxstat64 (_STAT_VER, fd, buf)
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/stdio_lim.h l 30 c 11
+FORMAL BODY: 9
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 349 c 9
+FORMAL BODY: ((_IO_FILE*)(&_IO_2_1_stderr_))
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 347 c 9
+FORMAL BODY: ((_IO_FILE*)(&_IO_2_1_stdin_))
+It has 0 calls to it
+
+
+Macro def at: /usr/include/wchar.h l 47 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 246 c 10
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 254 c 10
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 258 c 10
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 262 c 10
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 350 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 266 c 10
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 270 c 10
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at:  l 1 c 1
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at:  l 1 c 1
+FORMAL BODY: 2
+It has 0 calls to it
+
+
+Macro def at:  l 1 c 1
+FORMAL BODY: 2
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 291 c 10
+FORMAL BODY: 0
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 295 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 296 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 299 c 9
+FORMAL BODY: 200009L
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 308 c 9
+FORMAL BODY: 6
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 312 c 9
+FORMAL BODY: 2
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 313 c 9
+FORMAL BODY: 5
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 315 c 9
+FORMAL BODY: ((__GLIBC__ << 16) + __GLIBC_MINOR__ >= ((maj) << 16) + (min))
+It has 0 calls to it
+
+
+Macro def at: <built-in> l 1 c 1
+FORMAL BODY: 199901L
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 323 c 10
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs/sys/cdefs.h l 2 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 21 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 47 c 11
+FORMAL BODY: __attribute__ ((__nothrow__))
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 48 c 11
+FORMAL BODY: __attribute__ ((__nothrow__)) fct
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 74 c 9
+FORMAL BODY: args
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 75 c 9
+FORMAL BODY: args
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 80 c 9
+FORMAL BODY: x ## y
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 81 c 9
+FORMAL BODY: #x
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 84 c 9
+FORMAL BODY: void *
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 85 c 9
+FORMAL BODY: long double
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 30 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 93 c 10
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 94 c 10
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 114 c 10
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 115 c 10
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 116 c 10
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 117 c 10
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 118 c 10
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 119 c 10
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 125 c 10
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 126 c 10
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 127 c 10
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 132 c 9
+FORMAL BODY: __builtin_object_size (ptr, __USE_FORTIFY_LEVEL > 1)
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 133 c 9
+FORMAL BODY: __builtin_object_size (ptr, 0)
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 134 c 9
+FORMAL BODY: extern void name (void)
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 140 c 10
+FORMAL BODY: []
+It has 0 calls to it
+
+
+Macro def at:  l 1 c 1
+FORMAL BODY: 4
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 35 c 9
+FORMAL BODY: _G_fpos_t
+It has 0 calls to it
+
+
+Macro def at: /usr/include/libio.h l 34 c 9
+FORMAL BODY: _G_fpos_t
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 167 c 10
+FORMAL BODY: name proto __asm__ (__ASMNAME (#alias))
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 172 c 11
+FORMAL BODY: name proto __asm__ (__ASMNAME (#alias)) __THROW
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 175 c 10
+FORMAL BODY: __ASMNAME2 (__USER_LABEL_PREFIX__, cname)
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 176 c 10
+FORMAL BODY: __STRING (prefix) cname
+It has 0 calls to it
+
+
+Macro def at:  l 1 c 1
+FORMAL BODY: 4
+It has 0 calls to it
+
+
+Macro def at: /usr/include/stdio.h l 148 c 9
+FORMAL BODY: stdout
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 197 c 10
+FORMAL BODY: __attribute__ ((__malloc__))
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 5 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/stdio.h l 147 c 9
+FORMAL BODY: stdin
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 206 c 10
+FORMAL BODY: __attribute__ ((__pure__))
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 215 c 10
+FORMAL BODY: __attribute__ ((__used__))
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 216 c 10
+FORMAL BODY: __attribute__ ((__noinline__))
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 224 c 10
+FORMAL BODY: __attribute__ ((__deprecated__))
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 236 c 10
+FORMAL BODY: __attribute__ ((__format_arg__ (x)))
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 68 c 9
+FORMAL BODY: __gnuc_va_list
+It has 7 calls to it
+
+Macro Call at /usr/include/stdio.h l 343 c 8EXPANDED: 
+Matching AST: 
+Is inconsistent with:
+Macro Call at /usr/include/stdio.h l 348 c 56EXPANDED: 
+Matching AST: 
+Is inconsistent with:
+Macro Call at /usr/include/stdio.h l 351 c 8EXPANDED: 
+Matching AST: 
+Is inconsistent with:
+Macro Call at /usr/include/stdio.h l 362 c 44EXPANDED: 
+Matching AST: 
+Is inconsistent with:
+Macro Call at /usr/include/stdio.h l 418 c 7EXPANDED: 
+Matching AST: 
+Is inconsistent with:
+Macro Call at /usr/include/stdio.h l 425 c 55EXPANDED: 
+Matching AST: 
+Is inconsistent with:
+Macro Call at /usr/include/stdio.h l 430 c 42EXPANDED: 
+Matching AST: 
+Is inconsistent with:
+
+Macro def at: /usr/include/sys/cdefs.h l 246 c 10
+FORMAL BODY: __attribute__ ((__format__ (__strfmon__, a, b)))
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 255 c 10
+FORMAL BODY: __attribute__ ((__nonnull__ params))
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 263 c 10
+FORMAL BODY: __attribute__ ((__warn_unused_result__))
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 272 c 10
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 277 c 10
+FORMAL BODY: __inline __attribute__ ((__always_inline__))
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 302 c 11
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/wordsize.h l 4 c 10
+FORMAL BODY: 64
+It has 0 calls to it
+
+
+Macro def at: /usr/include/bits/wordsize.h l 5 c 10
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 331 c 10
+FORMAL BODY: name proto
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 332 c 10
+FORMAL BODY: name proto
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 333 c 10
+FORMAL BODY: name proto __THROW
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 334 c 10
+FORMAL BODY: name proto __THROW
+It has 0 calls to it
+
+
+Macro def at: /usr/include/sys/cdefs.h l 335 c 10
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/stdio.h l 149 c 9
+FORMAL BODY: stderr
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs/sys/cdefs.h l 24 c 9
+FORMAL BODY: [1]
+It has 0 calls to it
+
+
+Macro def at: /usr/include/gnu/stubs-64.h l 10 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/gnu/stubs-64.h l 11 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/gnu/stubs-64.h l 12 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/gnu/stubs-64.h l 13 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/gnu/stubs-64.h l 14 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/gnu/stubs-64.h l 15 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/gnu/stubs-64.h l 16 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/gnu/stubs-64.h l 17 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/gnu/stubs-64.h l 18 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/gnu/stubs-64.h l 19 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/gnu/stubs-64.h l 20 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/gnu/stubs-64.h l 21 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/gnu/stubs-64.h l 22 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/gnu/stubs-64.h l 23 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/gnu/stubs-64.h l 24 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/gnu/stubs-64.h l 25 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/gnu/stubs-64.h l 26 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/gnu/stubs-64.h l 27 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/gnu/stubs-64.h l 28 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/gnu/stubs-64.h l 29 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/stdio.h l 33 c 10
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 189 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 190 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 191 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 192 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 193 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 194 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 195 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 196 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 197 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 198 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 199 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 200 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 201 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 202 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 203 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 204 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stddef.h l 208 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 73 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 70 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 71 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 74 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 60 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 66 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 64 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 65 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 72 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 67 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/stdio.h l 453 c 9
+FORMAL BODY: _IO_getc (_fp)
+It has 0 calls to it
+
+
+Macro def at: /usr/include/_G_config.h l 10 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/stdio.h l 495 c 9
+FORMAL BODY: _IO_putc (_ch, _fp)
+It has 0 calls to it
+
+
+Macro def at: <builltin> l 0 c 0
+FORMAL BODY: 0
+It has 0 calls to it
+
+
+Macro def at: <builltin> l 0 c 0
+FORMAL BODY: 4
+It has 0 calls to it
+
+
+Macro def at: <builltin> l 0 c 0
+FORMAL BODY: 4
+It has 0 calls to it
+
+
+Macro def at: <builltin> l 0 c 0
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: <builltin> l 0 c 0
+FORMAL BODY: 2
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 13 c 9
+FORMAL BODY: (-1021)
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 14 c 9
+FORMAL BODY: 1.17549435e-38F
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 15 c 9
+FORMAL BODY: 8
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 16 c 9
+FORMAL BODY: 2147483647
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 17 c 9
+FORMAL BODY: 4.9406564584124654e-324
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 18 c 9
+FORMAL BODY: 0
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 19 c 9
+FORMAL BODY: (-307)
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 20 c 9
+FORMAL BODY: 0
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 21 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 22 c 9
+FORMAL BODY: 32767
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 23 c 9
+FORMAL BODY: 1.18973149535723176502e+4932L
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 24 c 9
+FORMAL BODY: long unsigned int
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 25 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 26 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 27 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 28 c 9
+FORMAL BODY: 127
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 29 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 30 c 9
+FORMAL BODY: 15
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 31 c 9
+FORMAL BODY: 1.19209290e-7F
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 32 c 9
+FORMAL BODY: 3.36210314311209350626e-4932L
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 33 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 34 c 9
+FORMAL BODY: 21
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 35 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 36 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 37 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 38 c 9
+FORMAL BODY: 1.7976931348623157e+308
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 39 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 40 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 41 c 9
+FORMAL BODY: 1024
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 42 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 43 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 44 c 9
+FORMAL BODY: 9223372036854775807LL
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 45 c 9
+FORMAL BODY: 1002
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 46 c 9
+FORMAL BODY: (-125)
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 47 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 48 c 9
+FORMAL BODY: 2.2250738585072014e-308
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 49 c 9
+FORMAL BODY: (-37)
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 50 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 51 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 52 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 53 c 9
+FORMAL BODY: 24
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 54 c 9
+FORMAL BODY: "4.1.2 20080704 (Red Hat 4.1.2-44)"
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 55 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 56 c 9
+FORMAL BODY: long unsigned int
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 57 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 58 c 9
+FORMAL BODY: 2
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 59 c 9
+FORMAL BODY: 1.08420217248550443401e-19L
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 60 c 9
+FORMAL BODY: 44
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 61 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 62 c 9
+FORMAL BODY: 18
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 63 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 64 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 65 c 9
+FORMAL BODY: 38
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 66 c 9
+FORMAL BODY: 9223372036854775807L
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 67 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 68 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 69 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 70 c 9
+FORMAL BODY: 64
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 71 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 72 c 9
+FORMAL BODY: int
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 73 c 9
+FORMAL BODY: 6
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 74 c 9
+FORMAL BODY: 2147483647
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 75 c 9
+FORMAL BODY: 128
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 76 c 9
+FORMAL BODY: 53
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 77 c 9
+FORMAL BODY: unsigned int
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 78 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 79 c 9
+FORMAL BODY: (-16381)
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 80 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 81 c 9
+FORMAL BODY: 16384
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 82 c 9
+FORMAL BODY: 4932
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 83 c 9
+FORMAL BODY: 2.2204460492503131e-16
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 84 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 85 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 86 c 9
+FORMAL BODY: 9223372036854775807L
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 87 c 9
+FORMAL BODY: 1.40129846e-45F
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 88 c 9
+FORMAL BODY: 3.40282347e+38F
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 89 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 90 c 9
+FORMAL BODY: long int
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 91 c 9
+FORMAL BODY: 308
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 92 c 9
+FORMAL BODY: 3.64519953188247460253e-4951L
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 94 c 9
+FORMAL BODY: long int
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 95 c 9
+FORMAL BODY: (-4931)
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 96 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 97 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 98 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 103 c 9
+FORMAL BODY: __restrict__
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 125 c 9
+FORMAL BODY: __builtin_stdarg_start
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 263 c 11
+FORMAL BODY: (__extension__							         ({ __typeof__(x) __x = (x); __typeof__(y) __y = (y);			            !isunordered (__x, __y) && __x > __y; }))
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 271 c 11
+FORMAL BODY: (__extension__							         ({ __typeof__(x) __x = (x); __typeof__(y) __y = (y);			            !isunordered (__x, __y) && __x >= __y; }))
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 279 c 11
+FORMAL BODY: (__extension__							         ({ __typeof__(x) __x = (x); __typeof__(y) __y = (y);			            !isunordered (__x, __y) && __x < __y; }))
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 287 c 11
+FORMAL BODY: (__extension__							         ({ __typeof__(x) __x = (x); __typeof__(y) __y = (y);			            !isunordered (__x, __y) && __x <= __y; }))
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 295 c 11
+FORMAL BODY: (__extension__							         ({ __typeof__(x) __x = (x); __typeof__(y) __y = (y);			            !isunordered (__x, __y) && (__x < __y || __y < __x); }))
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 303 c 11
+FORMAL BODY: (__extension__							         ({ __typeof__(u) __u = (u); __typeof__(v) __v = (v);			            fpclassify (__u) == FP_NAN || fpclassify (__v) == FP_NAN; }))
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 336 c 9
+FORMAL BODY: (sizeof(T1)==sizeof(T2))
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 338 c 9
+FORMAL BODY: (T1)
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 340 c 9
+FORMAL BODY: (0)
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 473 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 485 c 9
+FORMAL BODY: ((size_t) &((TYPE *)0)->MEMBER)
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 564 c 11
+FORMAL BODY: _Complex
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 565 c 11
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 566 c 11
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 571 c 9
+FORMAL BODY: __I__
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 573 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 575 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/rose_edg_required_macros_and_functions.h l 578 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/stdio.h l 27 c 10
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/stdio.h l 32 c 10
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 21 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 118 c 10
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 122 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 132 c 10
+FORMAL BODY: ((__GNUC__ << 16) + __GNUC_MINOR__ >= ((maj) << 16) + (min))
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 150 c 10
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 152 c 10
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 154 c 10
+FORMAL BODY: 200112L
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 156 c 10
+FORMAL BODY: 600
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 158 c 10
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 160 c 10
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 162 c 10
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 164 c 10
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 166 c 10
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: <built-in> l 1 c 1
+FORMAL BODY: 199901L
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 185 c 10
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 203 c 10
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 207 c 10
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 211 c 10
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 215 c 10
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 219 c 10
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 223 c 10
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 225 c 11
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 226 c 11
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 228 c 11
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 232 c 12
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /usr/include/features.h l 242 c 10
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stdbool.h l 51 c 9
+FORMAL BODY: 1
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stdbool.h l 32 c 9
+FORMAL BODY: 
+It has 0 calls to it
+
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stdbool.h l 36 c 9
+FORMAL BODY: _Bool
+It has 3 calls to it
+
+Macro Call at /home/saebjornsen1/REPOSITORY-SRC/ROSE/ROSE-svn/projects/MacroRewrapper/test1.c l 3 c 1EXPANDED: 
+Matching AST: 
+Is inconsistent with:
+Macro Call at /home/saebjornsen1/REPOSITORY-SRC/ROSE/ROSE-svn/projects/MacroRewrapper/test1.c l 9 c 3EXPANDED: 
+Matching AST: bool(*cond)();
+Is inconsistent with:
+Macro Call at /home/saebjornsen1/REPOSITORY-SRC/ROSE/ROSE-svn/projects/MacroRewrapper/test1.c l 34 c 1EXPANDED: 
+Matching AST: int fib(int n){int a = 1;int b = 1;bool(*cond)();cond =(obfuscated_condition);if(n == 0) return 1;while((n > 1) &&(((( *cond)())) != 0)){--n;int result =(a + b);a = b;a += input;b = result;a -= input;}return b;}bool obfuscated_condition(){return 1;}
+Is inconsistent with:
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stdbool.h l 37 c 9
+FORMAL BODY: 1
+It has 1 calls to it
+
+Macro Call at /home/saebjornsen1/REPOSITORY-SRC/ROSE/ROSE-svn/projects/MacroRewrapper/test1.c l 36 c 10EXPANDED: 
+Matching AST: 1
+Is inconsistent with:
+
+Macro def at: /home/saebjornsen1/REPOSITORY-BUILD/gcc-4.1.1/ROSE/trunk-boost_1_35-testing/include-staging/g++_HEADERS/hdrs5/stdbool.h l 38 c 9
+FORMAL BODY: 0
+It has 1 calls to it
+
+Macro Call at /home/saebjornsen1/REPOSITORY-SRC/ROSE/ROSE-svn/projects/MacroRewrapper/test1.c l 12 c 29EXPANDED: 
+Matching AST: 0
+Is inconsistent with:

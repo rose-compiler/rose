@@ -81,6 +81,8 @@ class AnalyzeMacroCalls{
       //The function will check for inconsistencies using the information found in
       // iterate_over_all_macro_calls(macro_def_call_type& macro_def);
       std::pair<int,int> check_for_inconsistencies();
+      void print_out_all_macros(std::ostream& outStream);
+
 };
 
 //This external variable have to be defied somewhere. It will enable very verbose 
