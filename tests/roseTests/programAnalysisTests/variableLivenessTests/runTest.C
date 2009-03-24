@@ -795,6 +795,12 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 7 -----------------------------------------
       argvList[1]=srcdir+"tests/test7.C";
       results.clear();  outputResults.clear();
+      string in8[] = {"i"};
+	  vector<string> in8v(in8,in8+1);
+      results.insert(pair<int,  vector<string> >( make_pair(8, in8v )));
+      string out12[] = {"i"};
+	  vector<string> out12v(out12,out12+1);
+	  outputResults.insert(pair<int,  vector<string> >( make_pair(12, out12v )));
       testOneFunction("::main", argvList, debug, 17, results,outputResults);
     }
 
@@ -802,6 +808,9 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 8 -----------------------------------------
       argvList[1]=srcdir+"tests/test8.C";
       results.clear();  outputResults.clear();
+      string out12[] = {"i","p","x"};
+	  vector<string> out12v(out12,out12+3);
+	  outputResults.insert(pair<int,  vector<string> >( make_pair(20, out12v )));
       testOneFunction("::main", argvList, debug, 34, results,outputResults);
     }
 
@@ -809,6 +818,17 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 9 -----------------------------------------
       argvList[1]=srcdir+"tests/test9.C";
       results.clear();  outputResults.clear();
+
+	  vector<string> out9;
+	  outputResults.insert(pair<int,  vector<string> >( make_pair(9, out9 )));
+
+	  vector<string> in12;
+      results.insert(pair<int,  vector<string> >( make_pair(12, in12 )));
+
+      string out12[] = {"i"};
+	  vector<string> out12v(out12,out12+1);
+	  outputResults.insert(pair<int,  vector<string> >( make_pair(12, out12v )));
+
       testOneFunction("::main", argvList, debug, 32, results,outputResults);
     }
 
@@ -898,7 +918,7 @@ int main( int argc, char * argv[] )
     }
 
     if (startNrInt==25 || testAll) {
-      // ------------------------------ TESTCASE 24 -----------------------------------------
+      // ------------------------------ TESTCASE 25 -----------------------------------------
       argvList[1]=srcdir+"tests/jacobi_seq.C";
       results.clear();  outputResults.clear();
       testOneFunction("::jacobi", argvList, debug, 264, results,outputResults);
