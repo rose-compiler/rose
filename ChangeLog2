@@ -1,3 +1,15 @@
+2009-03-24 18:37  saebjornsen1
+
+	* [r5049] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/tests/RunTests/AstDeleteTests,
+	  /trunk/ROSE/tests/RunTests/AstDeleteTests/Makefile.am: Added new
+	  delete AST test
+
+2009-03-24 18:27  panas2
+
+	* [r5048] /trunk/ROSE/projects/RTED/test.C: Improved Test for AST
+	  node deletion.
+
 2009-03-24 00:23  panas2
 
 	* [r5035]
