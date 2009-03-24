@@ -7,5 +7,5 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # Comment out P++ tests until they compile properly
 # SUBDIRS = A++Tests P++Tests
-SUBDIRS = A++Tests 
+SUBDIRS = A++Tests AstDeleteTests
 
