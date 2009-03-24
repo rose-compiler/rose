@@ -1,3 +1,22 @@
+2009-03-24 00:23  panas2
+
+	* [r5035]
+	  /trunk/ROSE/src/midend/programAnalysis/defUseAnalysis/DefUseAnalysis_perFunction.cpp,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/variableLivenessTests/runTest.C:
+	  Fixed arrays in LiveAnalysis
+
+2009-03-23 23:12  panas2
+
+	* [r5034]
+	  /trunk/ROSE/src/frontend/SageIII/virtualCFG/filteredCFGImpl.h,
+	  /trunk/ROSE/src/midend/programAnalysis/defUseAnalysis/DFAFilter.h,
+	  /trunk/ROSE/src/midend/programAnalysis/defUseAnalysis/LivenessAnalysis.cpp,
+	  /trunk/ROSE/src/midend/programAnalysis/defUseAnalysis/LivenessAnalysis.h,
+	  /trunk/ROSE/src/midend/programAnalysis/defUseAnalysis/dfaToDot.cpp,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/variableLivenessTests/runTest.C,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/variableLivenessTests/tests/jacobi_seq.C:
+	  Fixing the LivenessAnalysis
+
 2009-03-22 22:20  dquinlan
 
 	* [r5018] /trunk/ROSE/MSVS_project_ROSETTA_empty,
