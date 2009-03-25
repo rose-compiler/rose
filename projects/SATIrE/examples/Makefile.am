@@ -196,7 +196,7 @@ pointsto_live_variables: init.token
 	@echo "====================="
 	cp -ur $(top_srcdir)/examples/pointsto_live_variables $(testdir)
 	chmod u+rwx -R $(testdir)/pointsto_live_variables
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u pointsto_live_variables
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -p ptlv_ -u pointsto_live_variables
 	$(MAKE) check -C $(testdir)/pointsto_live_variables
 
 interval: init.token

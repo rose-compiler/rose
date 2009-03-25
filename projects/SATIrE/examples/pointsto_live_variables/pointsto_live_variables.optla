@@ -21,6 +21,7 @@ ENDDOMAIN
 
 
 PROBLEM Live_Variables_With_Points_To_Information
+    prefix:     ptlv_
     direction:  backward
     carrier:    VarLattice
     init:       bot

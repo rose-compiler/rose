@@ -18,12 +18,12 @@ extern int low_perc;
 extern int high_perc;
 extern int share_min;
 extern int share_num;
-extern int debug_stat;
+// extern int debug_stat;
 extern int global_print_post_info;
 extern int global_print_pre_info;
 extern int global_proc_as_graphs;
 extern int verbose;
-extern int global_retfunc;
+// extern int global_retfunc;
 
 extern "C" int pag_auto_configure_memsize(int quiet, int perc, int size);
 #endif
@@ -36,7 +36,10 @@ bool satire_warn_deprecated;
 void setPagOptions(AnalyzerOptions opt) {
 #if HAVE_PAG
   cfg_ordering=opt.getCfgOrdering();
-  debug_stat=opt.statistics(); // bool->int
+  // GB: debug_stat is set by the data flow analyzer object -- it is
+  // prefixed by PAG, so we can't name it here because it might be called
+  // something else at link time.
+  // debug_stat=opt.statistics(); // bool->int
 
   // GB: memory options (low_perc is not documented, and probably need not be)
   low_perc=opt.getGcLow();
@@ -103,7 +106,8 @@ void setPagOptions(AnalyzerOptions opt) {
 
   if(opt.retFuncUsed()) {
     /* use retfunc for combining information from local and return edge */
-    global_retfunc = 1;
+    // GB: Set by the data flow analyzer object.
+    // global_retfunc = 1;
   }
 #endif
 
