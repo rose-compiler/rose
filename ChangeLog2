@@ -1,3 +1,41 @@
+2009-03-24 22:14  saebjornsen1
+
+	* [r5056] /trunk/ROSE/projects/MacroRewrapper/Makefile.am,
+	  /trunk/ROSE/projects/MacroRewrapper/macroRewrapper.C,
+	  /trunk/ROSE/projects/MacroRewrapper/macroRewrapper.h,
+	  /trunk/ROSE/projects/MacroRewrapper/test1.c,
+	  /trunk/ROSE/projects/MacroRewrapper/test1.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/test2.c,
+	  /trunk/ROSE/projects/MacroRewrapper/test2.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/test3.c,
+	  /trunk/ROSE/projects/MacroRewrapper/test3.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/test4.c,
+	  /trunk/ROSE/projects/MacroRewrapper/test4.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/test5.c,
+	  /trunk/ROSE/projects/MacroRewrapper/test5.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/test6.c,
+	  /trunk/ROSE/projects/MacroRewrapper/test6.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/testMapping.C: Added tests to
+	  the macro rewrapper
+
+2009-03-24 20:02  saebjornsen1
+
+	* [r5055] /trunk/ROSE/tests/RunTests/AstDeleteTests/Makefile.am:
+	  Updated memory delete test
+
+2009-03-24 19:41  saebjornsen1
+
+	* [r5054] /trunk/ROSE/tests/RunTests/AstDeleteTests/Makefile.am,
+	  /trunk/ROSE/tests/RunTests/AstDeleteTests/test.C: Updated delete
+	  test
+
+2009-03-24 19:18  saebjornsen1
+
+	* [r5052] /trunk/ROSE/tests/RunTests/AstDeleteTests/Makefile.am,
+	  /trunk/ROSE/tests/RunTests/AstDeleteTests/test.C,
+	  /trunk/ROSE/tests/RunTests/AstDeleteTests/test1.C,
+	  /trunk/ROSE/tests/RunTests/Makefile.am: Adding AST Delete Test
+
 2009-03-24 18:37  saebjornsen1
 
 	* [r5049] /trunk/ROSE/configure.in,
