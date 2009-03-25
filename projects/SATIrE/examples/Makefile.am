@@ -199,6 +199,20 @@ pointsto_live_variables: init.token
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -p ptlv_ -u pointsto_live_variables
 	$(MAKE) check -C $(testdir)/pointsto_live_variables
 
+%.interval.run: %.c
+	@echo "Testing the correctness of the interval analysis on" $<
+	@cp $< $(testdir)/interval/intvltest.c
+	@chmod u+w $(testdir)/interval/intvltest.c
+	@cd $(testdir)/interval; ./interval --output-term=intvltest.term intvltest.c
+	@cd $(testdir)/interval; export TERMITE_LIB=$(top_srcdir)/src/termite/termite; $(SWI_PL) -q -O -t main -f validator.pl < intvltest.term > intvltest1.term
+	@cd $(testdir)/interval; term2c intvltest1.term -o intvlassert.c
+	@cd $(testdir)/interval; \
+	($(CC) -std=c99 -o intvlassert intvlassert.c \
+	 && bash -c \
+   "echo 'executing with 3sec timeout...' && ulimit -t 3 && ./intvlassert" \
+	 && echo "... success") \
+	|| (echo "** FAILED: $<" && echo && true)
+
 interval: init.token
 	@echo
 	@echo "Testing interval"
@@ -207,8 +221,10 @@ interval: init.token
 	chmod u+rwx -R $(testdir)/interval
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis interval
 	$(MAKE) check -C $(testdir)/interval
-	cd $(testdir) ; bash testsuite/testsuite.sh interval/interval testsuite
+# cd $(testdir) ; bash testsuite/testsuite.sh interval/interval testsuite
 	@echo "Correctness tests..."
+	$(MAKE) -j1 $(patsubst %.c,%.interval.run, \
+           $(wildcard $(top_srcdir)/examples/*/tests/*.c))
 
 %.loop.term: %.c
 	@echo "Analyzing loops in" $<
