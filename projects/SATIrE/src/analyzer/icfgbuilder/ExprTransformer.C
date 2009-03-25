@@ -46,7 +46,21 @@ ExprTransformer::labelAndTransformExpression(SgExpression *expr,
     {
         for (int z = original_node_id; z < node_id; ++z)
             cfg->registerStatementLabel(z, stmt);
+
         stmt_start = new StatementAttribute(after, POS_PRE);
+     // We saved the old "after" value in stmt_end in the constructor. That
+     // after block is the one that will hold the root of the transformed
+     // expression. So it is really only an "after" block if the expression
+     // transformer generated code -- otherwise, it is really the
+     // "new_block" that will hold the expression. Therefore, if after has
+     // not changed, we modify stmt_end to really be the post info of that
+     // block, rather than the pre info of the successor.
+        if (stmt_end->get_bb() == after)
+        {
+            delete stmt_end;
+            stmt_end = new StatementAttribute(after, POS_POST);
+        }
+
         if (!stmt->attributeExists("PAG statement start"))
             stmt->addNewAttribute("PAG statement start", stmt_start);
         if (!stmt->attributeExists("PAG statement end"))

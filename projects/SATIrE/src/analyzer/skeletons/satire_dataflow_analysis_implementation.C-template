@@ -196,7 +196,7 @@ statement_info_string(DFI_STORE store, SgStatement *stmt, std::string attrName)
                                         (KFG_EDGE_TYPE) edge);
                     str << "Edge(" << edgetypenames[edge] << "):"
                         << "Context(" << procnum << "," << ctx << "):"
-                        << carrierPrintFunction(info) << std::endl << " ";
+                        << carrierPrintFunction(info) << " ";
                 }
                 str << "Merged:"
                     << carrierPrintFunction(

@@ -2206,6 +2206,11 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 	  SgExpression *new_expr
 	    = isSgExpression(Ir::deepCopy(exprs->get_expression()));
 
+   // Make sure a block exists with a normal edge to after. This new_block
+   // will be used to hold the result of expression transformation; i.e.,
+   // the transformer might add some code *before* this block, and the final
+   // use of temporary variables or whatever (or the original expression)
+   // will live in the new_block.
 	  new_block = allocate_new_block(new_block, after);
 #if 0
 	  ExprLabeler el(expnum);
