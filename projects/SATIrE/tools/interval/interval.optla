@@ -1,7 +1,7 @@
 // -- -*- haskell -*- (Fake Emacs mode for syntax highlighting)
 // -- ------------------------------------------------------------------------
 // -- Authors: Gergo Barany, 2006 (original constprop)
-// --          Adrian Prantl, 2008 (interval extensions)
+// --          Adrian Prantl, 2008-2009 (interval extensions)
 // --          
 // -- Contact: adrian@complang.tuwien.ac.at
 // --
@@ -32,7 +32,7 @@ PROBLEM Interval_Analysis
   init:       bot
   init_start: lift([->(top, top)])
   combine:    comb
-  retfunc:    comb
+  retfunc:    ret
   widening:   wide
   equal:      eq
 
@@ -43,14 +43,17 @@ FunctionEntry(_), _:
     @
   else
     bot //top
-  endif;
+  ;
 
 ExprStatement(exp), _:
   if @ != bot then
-    eval(exp, @)!2!2
+    
+    let state = eval(exp, @)!2!2 ; in
+      // --print("\neval => ") print(state) print("\n") 
+      state
   else
     bot
-  endif;
+  ;
 
 ArgumentAssignment(VarRefExp(_) as var, exp), _:
   if @ != bot then
@@ -58,7 +61,7 @@ ArgumentAssignment(VarRefExp(_) as var, exp), _:
       lift(f\[varref_varid(var) -> eval(exp, @)!1!2])
   else
     bot
-  endif;
+  ;
 
 ParamAssignment(VariableSymbol(_) as var, VariableSymbol(_) as param), _:
   if @ != bot then
@@ -69,7 +72,7 @@ ParamAssignment(VariableSymbol(_) as var, VariableSymbol(_) as param), _:
     \[varsym_varid(param) -> top])
   else
     bot
-  endif;
+  ;
 
 ReturnAssignment(VariableSymbol(_) as var, VariableSymbol(_) as retvar), _:
   if @ != bot then
@@ -80,7 +83,7 @@ ReturnAssignment(VariableSymbol(_) as var, VariableSymbol(_) as retvar), _:
     \[varsym_varid(retvar) -> top])
   else
     bot
-  endif;
+  ;
 
 ScopeStatement(IfStmt(ExprStatement(cond))), true_edge:
   branch(cond, @, true, false);
@@ -107,7 +110,20 @@ FunctionExit(_, vars), _:
   kill_vars(@, vars);
 
 FunctionCall(_,_), local_edge:
-  bot;
+  if @ != bot then
+    let f <= @; in
+      lift([(v,i)->top !! (v,i) <- f\top, if islocal(v)])
+  else
+    bot
+  ;
+
+FunctionCall(_,_), call_edge:
+  if @ != bot then
+    let f <= @; in
+      lift([(v,i)->top !! (v,i) <- f\top, if isglobal(v)])
+  else
+    bot
+  ;
 
 _, _: @;
 
@@ -163,7 +179,7 @@ eval(exp, state) =
       _                     => print("**WARNING: ignoring unknown exp: ")
                                print(exp) print("\n") ((top,top), state); 
                                       // --((top,top), lift([-> top]));
-    endcase endif endif endif;
+    endcase   ;
   endcase;
           
 // -- TODO kill temporary variables - Possible Memory leak
@@ -187,7 +203,7 @@ binary(left, right, exp, state) =
       else
         let r = rr!1!2; rs = rr!2!2; in
         updatestate(rs, left, r)
-      endif;
+      ;
     // -- If this is not an assignment, we may safely evaluate
     // -- the left-hand side as well (in the "new" state after
     // -- evaluation of the rhs) and perform the operation.
@@ -205,27 +221,27 @@ binary(left, right, exp, state) =
         case exp of
           EqualityOp(_, _) => if constp then (duplift(bool_int(l1=r1)), ls) else
                               if (l2 < r1) || (l1 > r2) then (duplift(0), ls) else
-                              dontknow endif endif;
+                              dontknow  ;
 
           LessThanOp(_, _)  => if (l2 < r1) then (duplift(1), ls) else 
                                if (l1 >=r2) then (duplift(0), ls) else 
-                               dontknow endif endif;
+                               dontknow  ;
 
           GreaterThanOp(_, _) => if (l1 > r2) then (duplift(1), ls) else 
                                  if (l2 <=r1) then (duplift(0), ls) else 
-                                 dontknow endif endif;
+                                 dontknow  ;
 
           NotEqualOp(_, _) => if (l2 < r1) || (l1 > r2) then (duplift(1), ls) else
                               if (constp)  then (duplift(bool_int(l1!=r1)), ls) else
-                              dontknow endif;
+                              dontknow ;
 
           LessOrEqualOp(_, _) => if (l2 <= r1) then (duplift(1), ls) else 
                                  if (r2 <  l1) then (duplift(0), ls) else 
-                                 dontknow endif endif;
+                                 dontknow  ;
 
           GreaterOrEqualOp(_, _) => if (l1 >= r2) then (duplift(1), ls) else 
                                     if (r1 >  l2) then (duplift(0), ls) else 
-                                    dontknow endif endif;
+                                    dontknow  ;
                                              
           AddOp(_, _)     => (ltup(l1 + r1, l2 + r2), ls);
           SubtractOp(_, _)=> (ltup(l1 - r2, l2 - r1), ls);
@@ -240,15 +256,15 @@ binary(left, right, exp, state) =
           BitOrOp(_, _)   => (ltup(l1 | r1, l2 | r2), ls);
           BitXorOp(_, _)  => if constp then 
                                  (duplift(bool_int(l1 != r1)), ls)
-                             else dontknow endif;
+                             else dontknow ;
 
 	  AndOp(_, _) => if constp then
                           (duplift(bool_int((l1 != 0) && (r1 != 0))), ls)
-                         else dontknow endif;
+                         else dontknow ;
 
           OrOp(_, _)  => if constp then 
                           (duplift(bool_int((l1 != 0) || (r1 != 0))), ls)
-                         else dontknow endif;
+                         else dontknow ;
 
           ScopeOp(_, _)       => (ltup(r1, r2), ls);
           PlusAssignOp(_, _)  => updatestate(ls, left, ltup(l1 + r1, l2 + r2));
@@ -267,7 +283,7 @@ binary(left, right, exp, state) =
           _ => print("**WARNING: unsupported binary: ") print(exp) print("\n") 
                (top, lift([-> top]));
         endcase
-      endif endif;
+       ;
   endcase;
 
 unary :: Expression, Expression, State -> IntervalStatePair;
@@ -292,7 +308,7 @@ unary(child, exp, state) =
       _ => print("unsupported unary: ") print(exp) print("\n") 
            (top, lift([-> top]));
     endcase 
-  endif;
+  ;
 
 bad((top, _)) = true;
 bad((bot, _)) = true;
@@ -302,7 +318,7 @@ bad((_,_)) = false;
 
 bool_int :: bool -> snum;
 bool_int(b) =
-  if b then 1 else 0 endif;
+  if b then 1 else 0 ;
 
 int_bool :: snum -> bool;
 int_bool(0) = false;
@@ -353,7 +369,7 @@ branch(exp, state, edge, isLoopBody) =
     // --print("bot\n") 
     // --print("Never\n") 
     bot
-  endif endif endif;
+    ;
 
 
 eval_branch_condition :: Expression, State, State, bool, bool -> State;
@@ -373,45 +389,45 @@ eval_branch_condition(exp, state, newstate, edge, isLoopBody) =
             updatestate(state, var, adjust_max_plus(lhs, rhs,-1))!2!2
         else 
             updatestate(state, var, adjust_min(lhs, rhs))!2!2
-        endif;
+        ;
       LessOrEqualOp(var, _) =>
         if edge = true then 
             updatestate(state, var, adjust_max(lhs, rhs))!2!2
         else 
             updatestate(state, var, adjust_min_plus(lhs, rhs, 1))!2!2
-        endif;
+        ;
       GreaterThanOp(var, _) =>
         if edge = true then 
             updatestate(state, var, adjust_min_plus(lhs, rhs, 1))!2!2
         else 
             updatestate(state, var, adjust_max(lhs, rhs))!2!2
-        endif;
+        ;
       GreaterOrEqualOp(var, _) =>
         if edge = true then 
             updatestate(state, var, adjust_min(lhs, rhs))!2!2
         else 
             updatestate(state, var, adjust_max_plus(lhs, rhs,-1))!2!2
-        endif;
+        ;
 
       EqualityOp(var, _) =>
         if edge = true then 
             updatestate(state, var, rhs)!2!2
         else 
             newstate
-        endif;
+        ;
       NotEqualOp(var, _) =>
         if edge = true then 
             newstate
         else 
             updatestate(state, var, rhs)!2!2
-        endif;
+        ;
 
       _ => newstate;
     endcase
   else 
     lift([-> (top,top)])
     //newstate
-  endif;
+  ;
 
 
 // -- update the min portion of an interval
@@ -449,13 +465,13 @@ interval_to_bool((lift(0), lift(0))) = lift(false);
 interval_to_bool((lift(1), lift(1))) = lift(true);
 interval_to_bool(_) = top;
 
-//shiftleft :: snum, snum -> snum;
-//shiftleft(a, 0) = a;
-//shiftleft(a, b) = shiftleft(a*2, b-1);
+// --shiftleft :: snum, snum -> snum;
+// --shiftleft(a, 0) = a;
+// --shiftleft(a, b) = shiftleft(a*2, b-1);
 
-//shiftright :: snum, snum -> snum;
-//shiftright(a, 0) = a;
-//shiftright(a, b) = shiftright(a/2, b-1);
+// --shiftright :: snum, snum -> snum;
+// --shiftright(a, 0) = a;
+// --shiftright(a, b) = shiftright(a/2, b-1);
 
 comb(a, bot) = a;
 comb(bot, b) = b;
@@ -472,22 +488,31 @@ comb(a, b) =
 combi((a1, a2), (b1, b2)) = 
   (min(a1, b1), max(a2, b2));
 
+ret(a, bot) = a;
+ret(bot, b) = b;
+ret(_, top) = top;
+ret(top, _) = top;
+ret(local, exit) = 
+  let returnvar = [(v,i)->top !! (v,i) <- drop(exit)\top, if is_tmpvarid(v)];
+  in
+  local glb lift(returnvar);
+
 min(_, top) = top;
 min(top, _) = top;
 min(a, bot) = a;
 min(bot, b) = b;
-min(a, b) = if drop(a) < drop(b) then a else b endif;
+min(a, b) = if drop(a) < drop(b) then a else b ;
 
-// -- all glory to polymorphy
-mini(a, b) = if a < b then a else b endif;
+// -- all glory to polymorphism
+mini(a, b) = if a < b then a else b ;
 
 max(_, top) = top;
 max(top, _) = top;
 max(a, bot) = a;
 max(bot, b) = b;
-max(a, b) = if drop(a) > drop(b) then a else b endif;
+max(a, b) = if drop(a) > drop(b) then a else b ;
 
-maxi(a, b) = if a > b then a else b endif;
+maxi(a, b) = if a > b then a else b ;
 
 // -- default widening operator:
 //wide(_, b) = b;
@@ -499,16 +524,25 @@ wide(top, _) = top;
 wide(a, b) = lift(crunch(drop(a), drop(b), widen));
 
 widen((top, bot), b) = b;
-widen((a1, a2), (b1, b2)) = ( if a1=b1 then a1 else top /*min(a1, b1)*/ endif,
-                              if a2=b2 then a2 else top /*max(a1, b1)*/ endif );
+widen((a1, a2), (b1, b2)) = ( if a1=b1 then a1 else top /*min(a1, b1)*/ ,
+                              if a2=b2 then a2 else top /*max(a1, b1)*/  );
 
 //widen((a1, a2), (b1, b2)) = let v1 <= b1 ;
 //                                v2 <= b2 ; in 
-//                            ( if v2-v1 > 10 then top else b1 endif,
-//                              if v2-v1 > 10 then top else b2 endif) ;
+//                            ( if v2-v1 > 10 then top else b1 ,
+//                              if v2-v1 > 10 then top else b2 ) ;
 
 
 eq(a, b)   = //print("eq a: ") print(a) print("\n")
              //print("eq b: ") print(b) print("\n\n")
              (a = b);
 
+isglobal(var) = is_tmpvarid(var) || varmember(var, globals);
+islocal(var) = !isglobal(var);
+
+varmember(_, [!]) = false;
+varmember(v, g::gs) = 
+    if varsym_varid(g) = v 
+    then true 
+    else varmember(v, gs);
+    
