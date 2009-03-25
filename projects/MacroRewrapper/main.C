@@ -61,12 +61,35 @@ int main( int argc, char * argv[] )
      {
        std::vector<std::string> newArgv(argv,argv+argc);
        newArgv.insert(newArgv.begin()++,"-rose:skip_rose");
+     
        SgProject* project = frontend(newArgv);
        backend(project);
 
      }
      std::vector<std::string> newArgv(argv,argv+argc);
      newArgv.insert(newArgv.begin()++,"-rose:wave");
+
+     newArgv.push_back("-rose:excludePath");
+     newArgv.push_back("/include/g++_HEADERS/");
+     newArgv.push_back("-rose:excludePath");
+     newArgv.push_back("/include/gcc_HEADERS/");
+     newArgv.push_back("-rose:excludePath");
+     newArgv.push_back("/include-staging/g++_HEADERS/");
+     newArgv.push_back("-rose:excludePath");
+     newArgv.push_back("/include-staging/gcc_HEADERS/");
+     newArgv.push_back("-rose:excludePath");
+     newArgv.push_back("<builtin>");
+     newArgv.push_back("-rose:excludePath");
+     newArgv.push_back("<built-in>");
+     newArgv.push_back("-rose:excludePath");
+     newArgv.push_back("<builltin>");
+
+     newArgv.push_back("-rose:excludePath");
+     newArgv.push_back("/usr/include/");
+     newArgv.push_back("-rose:excludePath");
+     newArgv.push_back("/tests/CompileTest/");
+
+
 
      imd_db="/home/saebjornsen1/tmp/compile-with-rose/testing.db";
 

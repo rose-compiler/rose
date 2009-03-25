@@ -34,6 +34,30 @@ int main( int argc, char * argv[] )
      newArgv.insert(newArgv.begin()++,"-rose:wave");
 
 
+
+
+
+     newArgv.push_back("-rose:excludePath");
+     newArgv.push_back("/include/g++_HEADERS/");
+     newArgv.push_back("-rose:excludePath");
+     newArgv.push_back("/include/gcc_HEADERS/");
+     newArgv.push_back("-rose:excludePath");
+     newArgv.push_back("/include-staging/g++_HEADERS/");
+     newArgv.push_back("-rose:excludePath");
+     newArgv.push_back("/include-staging/gcc_HEADERS/");
+     newArgv.push_back("-rose:excludePath");
+     newArgv.push_back("/usr/include/");
+     newArgv.push_back("-rose:excludePath");
+     newArgv.push_back("/tests/CompileTest/");
+     newArgv.push_back("-rose:excludePath");
+     newArgv.push_back("<builtin>");
+     newArgv.push_back("-rose:excludePath");
+     newArgv.push_back("<built-in>");
+     newArgv.push_back("-rose:excludePath");
+     newArgv.push_back("<builltin>");
+
+
+
   // Build the AST used by ROSE
      SgProject* project = frontend(newArgv);
      ROSE_ASSERT(project != NULL);

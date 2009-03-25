@@ -902,6 +902,21 @@ AnalyzeMacroCalls::print_out_all_macros(std::ostream& outStream){
     PreprocessingInfo::rose_macro_definition* macro_def = macroDef->get_macro_def();
     ROSE_ASSERT( macro_def != NULL );
 
+    std::string macroDefFilename = macroDef->get_file_info()->get_filenameString();
+    //macroDefFilename = StringUtility::stripPathFromFileName(macroDefFilename);
+    SgStringList & excludePathList = project->get_excludePathList();
+
+    bool excludePath = false;
+    for( SgStringList::iterator iItr = excludePathList.begin(); 
+        iItr != excludePathList.end(); iItr++)
+      if( macroDefFilename.find(*iItr) != std::string::npos )
+      {
+        excludePath = true;
+        break;
+      }
+
+    if(excludePath == true) continue;
+
     std::string macroBodyStr;
     for(token_list_container::iterator tok_it = macro_def->definition.begin();
         tok_it != macro_def->definition.end(); ++tok_it ){
@@ -911,8 +926,9 @@ AnalyzeMacroCalls::print_out_all_macros(std::ostream& outStream){
     outStream << std::endl;
 
 
-    outStream << "Macro def at: " << macroDef->get_file_info()->get_filenameString() 
-      << " l " << macro_def_pos->get_line() << " c " 
+    macroDefFilename = StringUtility::stripPathFromFileName(macroDef->get_file_info()->get_filenameString()) ;
+
+    outStream << "Macro def at: " << macroDefFilename   << " l " << macro_def_pos->get_line() << " c " 
       << macro_def_pos->get_col() << std::endl;
     outStream << "FORMAL BODY: " << macroBodyStr << std::endl;
     outStream << "It has " << def_it->second.size() << " calls to it" << std::endl; 
@@ -945,9 +961,24 @@ AnalyzeMacroCalls::print_out_all_macros(std::ostream& outStream){
         }
       }
 
+      std::string macroDefCall = macro_call_pos->get_filenameString();
+      
+      //
+      excludePath = false;
+      for( SgStringList::iterator iItr = excludePathList.begin(); 
+          iItr != excludePathList.end(); iItr++)
+        if( macroDefCall.find(*iItr) != std::string::npos )
+        {
+          excludePath = true;
+          break;
+        }
+
+      if(excludePath == true) continue;
+
+      macroDefCall = StringUtility::stripPathFromFileName(macroDefCall);
 
       outStream << "Macro Call at "  
-        << macro_call_pos->get_filenameString()
+        <<  macroDefCall
         << " l " << macro_call_pos->get_line()
         << " c " << macro_call_pos->get_col()
         << "EXPANDED: " << expanded_string << std::endl

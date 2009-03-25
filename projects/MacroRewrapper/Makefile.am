@@ -51,8 +51,8 @@ TEST_Objects = ${ALL_TESTCODES:.c=.o}
 
 $(TEST_Objects): testMapping $(srcdir)/$(@:.o=.C)
 	rm -f $(@:.o=.c).out
-	./testMapping -c $(srcdir)/$(@:.o=.c)
-	diff $(srcdir)/$(@:.o=.c).out $(@:.o=.c).out | wc -l
+	./testMapping -c $(srcdir)/tests/$(@:.o=.c)
+	if [ "`diff $(srcdir)/tests/$(@:.o=.c).out $(@:.o=.c).out | wc -l`" != "0" ]; then exit 1; fi
 
 
 check-local:
@@ -66,8 +66,10 @@ check-local:
 
 CLEANFILES = 
 
+clean-local:
+	rm -rf *.out
 
 endif
 
-EXTRA_DIST = argumentFilterer.h  helpFunctions.h  macro.h  macroRewrapper.h  waveHelpers.h
+EXTRA_DIST = argumentFilterer.h  helpFunctions.h  macro.h  macroRewrapper.h  waveHelpers.h tests
 
