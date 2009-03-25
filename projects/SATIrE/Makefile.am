@@ -11,6 +11,11 @@ else
 DISTCHECK_CONFIGURE_FLAGS += --without-pag
 endif
 
+.PHONY: docs
+
+docs:
+	$(MAKE) -C docs docs
+
 EXTRA_DIST= README LICENSE ChangeLog KNOWN_BUGS BugLog \
         docs/satire_cfgconstruction.pdf \
 	docs/satire_overview.pdf \

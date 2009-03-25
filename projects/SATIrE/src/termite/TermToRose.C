@@ -270,11 +270,11 @@ PrologToRose::toRose(PrologTerm* t) {
 
 static void assert_arity(PrologCompTerm* t, int arity) {
   if (t->getArity() != arity) {
-    cerr << "** ERROR: Term >>" 
+    cerr << "** ERROR: " << t->getArity() << "-ary Term >>" 
 	 << t->getRepresentation() << "<<" 
-	 << " does not have arity of " << arity 
+	 << " does not have the expected arity of " << arity 
 	 << endl;
-    ROSE_ASSERT(0);
+    ROSE_ASSERT(false && "arity error");
   }
 }
 
@@ -489,8 +489,9 @@ PrologToRose::listToRose(PrologCompTerm* t,string tname) {
 	
   debug("unparsing list node");
   PrologList* l = dynamic_cast<PrologList*>(t->at(1));
-  /* assert correct arity of term*/
   assert(l != (PrologList*) 0);
+  /* assert correct arity of term*/
+  assert_arity(t, 5);
   /*create file info and check it*/
   Sg_File_Info* fi = createFileInfo(t->at(4));
   testFileInfo(fi);
@@ -629,7 +630,8 @@ PrologToRose::createFileInfo(PrologTerm* t) {
     /*file info was preserved*/
     /*=> the file info term should be named file_info and have an arity of 3*/
     PrologCompTerm* u = dynamic_cast<PrologCompTerm*>(t);
-    assert((PrologCompTerm*) 0 != u);	
+    assert((PrologCompTerm*) 0 != u);
+    debug(u->getRepresentation());
     assert(u->getName() == "file_info");
     assert_arity(u, 3);
     if ((u->at(0)->getName() == "compilerGenerated") || 
@@ -2628,18 +2630,15 @@ PrologToRose::isPrologString(PrologTerm* t) {
 }*/
 
 /**
- * create std::string* from PrologAtom* or PrologAtom*
+ * create std::string* from PrologAtom*
  * including downcast from PrologTerm*.
  * If both casts fail, an assertion will fail;
  */
 string*
 PrologToRose::toStringP(PrologTerm* t) {
-  if(PrologAtom* s =isPrologAtom(t)) {
-    return new string(s->getName());
-  } else {
-    PrologAtom* s = isPrologAtom(t);
-    ROSE_ASSERT(s != NULL);
-    return new string(s->getName());
+  if(PrologAtom* a =isPrologAtom(t)) {
+    ROSE_ASSERT(a != NULL);
+    return new string(a->getName());
   }
 }
 

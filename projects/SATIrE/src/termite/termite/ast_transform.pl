@@ -161,11 +161,7 @@ transformed_with(ListNode, Transformation, preorder, Info, InfoPost,
   apply_transformation(ListNode, Transformation, Info, InfoInner, InfoPost,
   		       ListNode1),
   % Children
-  functor(ListNode1, Type, 4),
-  arg(1, ListNode1, List),
-  arg(2, ListNode1, Annot),
-  arg(3, ListNode1, Ai),
-  arg(4, ListNode1, Fi),
+  ListNode1 =.. [Type, List, Annot, Ai, Fi],
   transformed_with(List, Transformation, preorder, InfoInner, _, ListT),
   ast_node(ListNode2, Type, [ListT], Annot, Ai, Fi).
 

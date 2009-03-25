@@ -40,7 +40,7 @@ all:
 	@ if [ $(ANALYSIS).set -nt $(ANALYSIS).optla ]; then \
 		touch $(ANALYSIS).optla; \
 	fi
-	$(MAKE) -j1 $(ANALYSIS)
+	$(MAKE) $(ANALYSIS)
 
 $(ANALYSIS).a: $(ANALYSIS).optla Makefile
 	mkdir -p anim-out

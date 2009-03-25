@@ -221,14 +221,14 @@ do_check(Node, F) :-
 % Necessary to compare terms:
 % remove file_info from VarRefExps
 strip_file_info(_,_,_,
-	var_ref_exp(var_ref_exp_annotation(Type, Name, Val, An), _Ai, _Fi),
-	var_ref_exp(var_ref_exp_annotation(Type, Name, Val, An), null, null)).
+  var_ref_exp(var_ref_exp_annotation(Type, Name, Val, An, PPI), _Ai, _Fi),
+  var_ref_exp(var_ref_exp_annotation(Type, Name, Val, An, PPI),null, null)).
 strip_file_info(_,_,_, Term, Term).
 
 %% var_stripped(+VarRefExp, -VarRefExpStripped)
 var_stripped(
-    var_ref_exp(var_ref_exp_annotation(Type, Name, Val, A1), _Ai, _Fi),
-    var_ref_exp(var_ref_exp_annotation(Type, Name, Val, A1), null, null)) :- !.
+  var_ref_exp(var_ref_exp_annotation(Type, Name, Val, A1, PPI), _Ai, _Fi),
+  var_ref_exp(var_ref_exp_annotation(Type, Name, Val, A1), PPI,null,null)) :- !.
 
 var_stripped(cast_exp(V, _, _A, _Ai, _Fi), V1) :- !,
   var_stripped(V, V1).
@@ -238,7 +238,8 @@ var_stripped(Term, Term).
 %% var_interval(+AnalysisInfo, +VarRefExp, -Interval)
 % employ the analysis result/type info to yield an interval for the VarRefExp
 var_interval(AnalysisInfo,
-	     var_ref_exp(var_ref_exp_annotation(Type, Name, _Val, _), _Ai, _Fi),
+	     var_ref_exp(var_ref_exp_annotation(Type, Name, _Val, _, _),
+			 _Ai, _Fi),
 	     interval(Min,Max)) :-
   AnalysisInfo = analysis_info(pre_info([top,top],I),_),
   member(Name->[Min1,Max1],I),
@@ -250,7 +251,7 @@ var_interval(AnalysisInfo,
   ;  type_interval(Type, interval(_, Max))).
 
 var_interval(_,
-	     var_ref_exp(var_ref_exp_annotation(Type, _, _, _), _, _),
+	     var_ref_exp(var_ref_exp_annotation(Type, _, _, _, _), _, _),
 	     Interval) :- 
   type_interval(Type, Interval).
 var_interval(_, Term, Term).
@@ -264,49 +265,49 @@ term_interval(AnalysisInfo, Term, TermC) :-
   term_mod(Term, var_interval(AnalysisInfo), TermC), !.
 
 %% isIntVal(?IntVal, ?Value) is nondet.
-isIntVal(                   int_val(_,value_annotation(Value), _, _), Value).
-isIntVal(                 short_val(_,value_annotation(Value), _, _), Value).
-isIntVal(             short_int_val(_,value_annotation(Value), _, _), Value).
-isIntVal(              long_int_val(_,value_annotation(Value), _, _), Value).
-isIntVal(         long_long_int_val(_,value_annotation(Value), _, _), Value).
-isIntVal(          unsigned_int_val(_,value_annotation(Value), _, _), Value).
-isIntVal(    unsigned_short_int_val(_,value_annotation(Value), _, _), Value).
-isIntVal(        unsigned_short_val(_,value_annotation(Value), _, _), Value).
-isIntVal(         unsigned_long_val(_,value_annotation(Value), _, _), Value).
-isIntVal(unsigned_long_long_int_val(_,value_annotation(Value), _, _), Value).
-isIntVal(              bool_val_exp(_,value_annotation(Value), _, _), Value).
+isIntVal(                   int_val(_,value_annotation(Value), _, _, _), Value).
+isIntVal(                 short_val(_,value_annotation(Value), _, _, _), Value).
+isIntVal(             short_int_val(_,value_annotation(Value), _, _, _), Value).
+isIntVal(              long_int_val(_,value_annotation(Value), _, _, _), Value).
+isIntVal(         long_long_int_val(_,value_annotation(Value), _, _, _), Value).
+isIntVal(          unsigned_int_val(_,value_annotation(Value), _, _, _), Value).
+isIntVal(    unsigned_short_int_val(_,value_annotation(Value), _, _, _), Value).
+isIntVal(        unsigned_short_val(_,value_annotation(Value), _, _, _), Value).
+isIntVal(         unsigned_long_val(_,value_annotation(Value), _, _, _), Value).
+isIntVal(unsigned_long_long_int_val(_,value_annotation(Value), _, _, _), Value).
+isIntVal(              bool_val_exp(_,value_annotation(Value), _, _, _), Value).
 
-isIntVal(char_val(_,value_annotation(Value), _, _), Value) :-
+isIntVal(char_val(_,value_annotation(Value, _), _, _), Value) :-
   integer(Value).
 
-isIntVal(unsigned_char_val(_,value_annotation(Value), _, _), Value) :-
+isIntVal(unsigned_char_val(_,value_annotation(Value, _), _, _), Value) :-
   integer(Value).
 
-isIntVal(char_val(_,value_annotation(String), _, _), Value) :-
+isIntVal(char_val(_,value_annotation(String, _), _, _), Value) :-
   string(String),
   string_to_atom(String, Atom),
   atom_codes(Atom, [Value]).
 
-isIntVal(unsigned_char_val(_,value_annotation(String), _, _), Value) :-
+isIntVal(unsigned_char_val(_,value_annotation(String, _), _, _), Value) :-
   string(String),
   string_to_atom(String, Atom),
   atom_codes(Atom, [Value]).
 
 %% isVar(?VarRefExp, ?Name) is nondet.
-isVar(var_ref_exp(var_ref_exp_annotation(_, Name, _, _), _, _), Name).
-isVar(cast_exp(var_ref_exp(var_ref_exp_annotation(_, Name, _, _), _, _),
+isVar(var_ref_exp(var_ref_exp_annotation(_, Name, _, _, _), _, _), Name).
+isVar(cast_exp(var_ref_exp(var_ref_exp_annotation(_, Name, _, _, _), _, _),
 	       null, _, _, _),
       Name).
 
 %% var_type(?VarRefExp, ?Type) is nondet.
 %  allows access to the Type of VarRefExp
-var_type(var_ref_exp(var_ref_exp_annotation(Type, _, _, _), _, _), Type).
+var_type(var_ref_exp(var_ref_exp_annotation(Type, _, _, _, _), _, _), Type).
 
 %% var_typemod(?VarRefExp, ?ConstVolatile) is nondet.
 %  allows access to the ConstVolatile modifier of VarRefExp
 %  values for ConstVolatile are 'const' and 'volatil' (sic!)
 var_typemod(VarRefExp, ConstVolatile) :-
-  VarRefExp = var_ref_exp(var_ref_exp_annotation(Type, _, _, _), _, _),
+  VarRefExp = var_ref_exp(var_ref_exp_annotation(Type, _, _, _, _), _, _),
   Type = modifier_type(_, type_modifier(_Restrict, 1, CV, 1)),
   ( (ConstVolatile = const,    CV = 2)
   ; (ConstVolatile = volatil,  CV = 3)
@@ -362,20 +363,20 @@ file_info(N, Fi) :-
 % converts between signatures and terms
 function_signature(FunctionDecl, Type, Name, Modifier) :-
   FunctionDecl = function_declaration(_Params, _Def, DeclAnnot, _, _),
-  DeclAnnot = function_declaration_annotation(Type, Name, Modifier).
+  DeclAnnot = function_declaration_annotation(Type, Name, Modifier, _).
 
 %% is_function_call(+Term, -Name, -Type) is semidet.
 %% is_function_call(-Term, +Name, +Type) is nondet.
 % construct a function call
 is_function_call(expr_statement(function_call_exp(
                    function_ref_exp(
-                     function_ref_exp_annotation(Name, Type), _Ai1, _Fi1), 
+                     function_ref_exp_annotation(Name, Type, _), _Ai1, _Fi1), 
                    _ExprListExp, _A2, _Ai2, _Fi2),
                  _A3, _Ai3, _Fi3), Name, Type).
 
 %% is_function_call_exp(+Term, -Name, -Type) is semidet.
 is_function_call_exp(function_call_exp(function_ref_exp(
-                     function_ref_exp_annotation(Name, Type), _Ai1, _Fi1), 
+                     function_ref_exp_annotation(Name, Type, _), _Ai1, _Fi1), 
 				       _ExprListExp, _A2, _Ai2, _Fi2),
 		     Name, Type).
 
@@ -396,11 +397,13 @@ function_body(function_declaration(_, function_definition(Body, _, _,_),
 pragma_text(Pragma, Text) :-
   var(Pragma), !,
   Pragma = pragma_declaration(
-               pragma(pragma_annotation(Text), analysis_result(null), null),
-	       default_annotation(null), analysis_result(null, null), null).
+               pragma(pragma_annotation(Text, _), analysis_result(null), null),
+	       default_annotation(null, preprocessor_info(null)),
+			      analysis_result(null, null), null).
 
 % +Pragma -Text
-pragma_text(pragma_declaration(pragma(pragma_annotation(String), _, _),_, _, _),
+pragma_text(pragma_declaration(pragma(pragma_annotation(String, _), _, _),
+			       _, _, _),
 	    String).
 
 %% get_annot(+Stmts, -Annotterm, -Pragma) is nondet.
