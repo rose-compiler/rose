@@ -220,8 +220,8 @@ PrologToRose::toRose(PrologTerm* t) {
     if (ppil) {
       PrologList* l = dynamic_cast<PrologList*>(ppil->at(0));
       if (l) {
-	for (deque<PrologTerm*>::reverse_iterator it = l->getSuccs()->rbegin();
-	     it != l->getSuccs()->rend(); ++it) {
+	for (deque<PrologTerm*>::iterator it = l->getSuccs()->begin();
+	     it != l->getSuccs()->end(); ++it) {
 
 	  PrologCompTerm* ppi = dynamic_cast<PrologCompTerm*>(*it);
 	  ROSE_ASSERT(ppi);
@@ -239,8 +239,7 @@ PrologToRose::toRose(PrologTerm* t) {
 				   fi->get_line(),
 				   fi->get_col(),
 				   1 /* FIXME: nol */,
-				   locationInL),
-	     locationInL);
+				   locationInL));
 	}
       } else ROSE_ASSERT(ppil->at(0)->getName() == "null");
     }
