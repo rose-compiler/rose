@@ -56,7 +56,7 @@ INCLUDES += -I$(SWI_PROLOG_INCLUDE_DIR)
 ROSELDFLAGS += $(SWI_PROLOG_LDADD)
 nobase_dist_data_DATA =  termite/ast_properties.pl  termite/loops.pl \
                          termite/ast_transform.pl   termite/utils.pl \
-                         termite/ast_walk.pl
+                         termite/ast_walk.pl        termite/callgraph.pl 
 else	
 CLEANFILES += termparser.c++ termparser.h termlexer.c++ termparser.tab.c++ \
               termparser.tab.h++
