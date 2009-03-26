@@ -1,3 +1,44 @@
+2009-03-26 01:29  panas2
+
+	* [r5078] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/runtimeCheck.cpp: Latest RTED work
+
+2009-03-25 20:19  saebjornsen1
+
+	* [r5074] /trunk/ROSE/projects/MacroRewrapper/Makefile.am,
+	  /trunk/ROSE/projects/MacroRewrapper/macroRewrapper.C,
+	  /trunk/ROSE/projects/MacroRewrapper/main.C,
+	  /trunk/ROSE/projects/MacroRewrapper/test1.c,
+	  /trunk/ROSE/projects/MacroRewrapper/test1.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/test2.c,
+	  /trunk/ROSE/projects/MacroRewrapper/test2.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/test3.c,
+	  /trunk/ROSE/projects/MacroRewrapper/test3.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/test4.c,
+	  /trunk/ROSE/projects/MacroRewrapper/test4.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/test5.c,
+	  /trunk/ROSE/projects/MacroRewrapper/test5.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/test6.c,
+	  /trunk/ROSE/projects/MacroRewrapper/test6.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/testMapping.C,
+	  /trunk/ROSE/projects/MacroRewrapper/tests,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test1.c,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test1.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test2.c,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test2.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test3.c,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test3.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test4.c,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test4.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test5.c,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test5.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test6.c,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test6.c.out: Added
+	  extra tests for the macro rewrapper
+
 2009-03-24 22:14  saebjornsen1
 
 	* [r5056] /trunk/ROSE/projects/MacroRewrapper/Makefile.am,
