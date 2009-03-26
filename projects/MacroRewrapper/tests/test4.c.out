@@ -1,29 +1,4 @@
 
-Macro def at: . l 1 c 1
-FORMAL BODY: 1
-It has 0 calls to it
-
-
-Macro def at: . l 1 c 1
-FORMAL BODY: 2
-It has 0 calls to it
-
-
-Macro def at: . l 1 c 1
-FORMAL BODY: 2
-It has 0 calls to it
-
-
-Macro def at: . l 1 c 1
-FORMAL BODY: 4
-It has 0 calls to it
-
-
-Macro def at: . l 1 c 1
-FORMAL BODY: 4
-It has 0 calls to it
-
-
 Macro def at: test4.c l 1 c 9
 FORMAL BODY: 3.14159265358979323846
 It has 0 calls to it
@@ -39,11 +14,6 @@ Is inconsistent with:
 Macro Call at test4.c l 16 c 8EXPANDED: ((Lambdasun - 0.1114041 * A4 - Lambdasun) - 360.0 * (floor((Lambdasun - 0.1114041 * A4 - Lambdasun) / 360.0)))
 Matching AST: (((Lambdasun -(0.1114041 * A4)) - Lambdasun) -(360.0 * floor((((Lambdasun -(0.1114041 * A4)) - Lambdasun) / 360.0))))
 Is inconsistent with:
-
-Macro def at: . l 1 c 1
-FORMAL BODY: 4
-It has 0 calls to it
-
 
 Macro def at: test4.c l 4 c 9
 FORMAL BODY: ((d) * (PI / 180.0))

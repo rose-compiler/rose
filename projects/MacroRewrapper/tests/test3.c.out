@@ -1,19 +1,4 @@
 
-Macro def at: . l 1 c 1
-FORMAL BODY: 4
-It has 0 calls to it
-
-
-Macro def at: test3.c l 5 c 9
-FORMAL BODY: (x ^ y ^ z)
-It has 0 calls to it
-
-
-Macro def at: test3.c l 6 c 9
-FORMAL BODY: (y ^ (x | ~z))
-It has 0 calls to it
-
-
 Macro def at: test3.c l 9 c 9
 FORMAL BODY: ( w += f(x, y, z) + data,  w = w<<s | w>>(32-s),  w += x )
 It has 69 calls to it
@@ -226,6 +211,16 @@ Macro Call at test3.c l 98 c 5EXPANDED: ( b += (d ^ (c | ~a)) + in[9] + 0xeb86d3
 Matching AST: ((((b +=(((d ^(c | ~a)) +(in[9])) +(0xeb86d391))) ,(b =((b << 21) |(b >>(32 - 21)))))) ,(b += c));
 Is inconsistent with:
 
+Macro def at: test3.c l 6 c 9
+FORMAL BODY: (y ^ (x | ~z))
+It has 0 calls to it
+
+
+Macro def at: test3.c l 5 c 9
+FORMAL BODY: (x ^ y ^ z)
+It has 0 calls to it
+
+
 Macro def at: test3.c l 4 c 9
 FORMAL BODY: F1(z, x, y)
 It has 0 calls to it
@@ -233,30 +228,5 @@ It has 0 calls to it
 
 Macro def at: test3.c l 3 c 9
 FORMAL BODY: (z ^ (x & (y ^ z)))
-It has 0 calls to it
-
-
-Macro def at: . l 1 c 1
-FORMAL BODY: 1
-It has 0 calls to it
-
-
-Macro def at: . l 1 c 1
-FORMAL BODY: 2
-It has 0 calls to it
-
-
-Macro def at: . l 1 c 1
-FORMAL BODY: 2
-It has 0 calls to it
-
-
-Macro def at: . l 1 c 1
-FORMAL BODY: 4
-It has 0 calls to it
-
-
-Macro def at: . l 1 c 1
-FORMAL BODY: 4
 It has 0 calls to it
 

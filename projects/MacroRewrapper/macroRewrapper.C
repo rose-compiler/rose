@@ -923,11 +923,15 @@ AnalyzeMacroCalls::print_out_all_macros(std::ostream& outStream){
       macroBodyStr = macroBodyStr + std::string(tok_it->get_value().c_str());
     }
 
-    outStream << std::endl;
 
 
     macroDefFilename = StringUtility::stripPathFromFileName(macroDef->get_file_info()->get_filenameString()) ;
 
+    //There are a set of files that are specific to ROSE that is not part of the user program
+    if(macroDefFilename.size()<1 || macroDefFilename.substr(0,1) == ".")
+      continue;
+
+    outStream << std::endl;
     outStream << "Macro def at: " << macroDefFilename   << " l " << macro_def_pos->get_line() << " c " 
       << macro_def_pos->get_col() << std::endl;
     outStream << "FORMAL BODY: " << macroBodyStr << std::endl;
