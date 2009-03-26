@@ -129,11 +129,6 @@ runtimeCheck(int argc, char** argv,vector <string>& rtedfiles) {
   // Start parsing the project and insert header files
   cerr << "Parsing project (1st time)..." << endl;
   SgProject* project = rted.parse(argc, argv);
-  cerr << "Creating pdf..." << endl;
-  if (rtedfiles.size()==1) {
-    AstPDFGeneration pdf;
-    pdf.generateInputFiles(project);
-  }
   cerr << "Adding headers to project and writing out the project." << endl;
   rted.insertProlog(project);
   // The backend results in a file called rose_filename.c

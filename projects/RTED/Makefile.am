@@ -71,7 +71,8 @@ build_file1: modifyTestCode
 	@echo "RTED is configured in dir : $(rted_path)"
 	@echo "Transforming original test program ... "
 # This breaks right now because of the backend!
-	./runtimeCheck 1 $(rted_path)/C/array_index_out_of_bound/c_E_1_1_a.c -rose:Cxx -c $(INCLUDES) -I$(rted_path)/C/array_index_out_of_bound/ -I$(top_builddir) -I$(srcdir) # $(srcdir)/RuntimeSystem.cpp
+	./runtimeCheck 1 $(rted_path)/C/array_index_out_of_bound/c_E_1_1_a.c -rose:Cxx -c $(INCLUDES) -I$(rted_path)/C/array_index_out_of_bound/ -I$(top_builddir) -I$(srcdir) # $(srcdir)/RuntimeSystem.cpp ; \
+        if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi 
 # created a new file called rose_c_E_1_1_a.c and rose_rose_E_1_1_a.c	
 	cp $(srcdir)/index_array.txt .
 
@@ -99,36 +100,29 @@ check-C-array:
   	    sed -i '1i\#define EXITCODE_OK 0' $$file2 ; \
 	  fi ; \
 	  echo "Script : Running Transformation ... $$file $$file2 -I$(srcdir) " ; \
-	  ./runtimeCheck 2 $$file $$file2 -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$(rted_path)/C/array_index_out_of_bound/ ; \
-	  file_rose=rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
-	  file2_rose=rose_$$(echo $$file2 | sed -e 's/^\(.*\/\)*//'  ); \
+	  ./runtimeCheck 2 $$file $$file2 -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$(rted_path)/C/array_index_out_of_bound/  ; \ 
+	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
+	  file_rose=rose_rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
+	  file2_rose=rose_rose_$$(echo $$file2 | sed -e 's/^\(.*\/\)*//'  ); \
 	  file_rose_bin=$$(echo "$$file_rose".bin); \
 	  echo "Compiling 2f:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose" ;\
 	  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$(rted_path)/C/array_index_out_of_bound/ -I$(top_builddir) -I$(srcdir) ; \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
-	  file_rose=$$(echo rose_"$$file_rose"); \
-	  file2_rose=$$(echo rose_"$$file2_rose"); \
-	  file_rose_bin=$$(echo "$$file_rose".bin); \
-	  echo "Compiling 2f:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose" ;\
-	  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$(rted_path)/C/array_index_out_of_bound/ -I$(top_builddir) -I$(srcdir) ; \
-	  echo "Executing created file $$file_rose_bin" ; \
-	  ./$$file_rose_bin ; \
+	  file_bin=$$(echo "$$file".bin); \
+	  $(CXX) -g -o $$file_bin $$file $$file2 $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$(rted_path)/C/array_index_out_of_bound/ -I$(top_builddir) -I$(srcdir) ; \
 	else \
 	  echo "Script : Running Transformation ... $$file -I$(srcdir)" ; \
 	  ./runtimeCheck 1 $$file -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$(rted_path)/C/array_index_out_of_bound/ ; \
-	  file_rose=rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
+	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
+	  file_rose=rose_rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
 	  file_rose_bin=$$(echo "$$file_rose".bin); \
 	  echo "Compiling 1f:  $(CXX) -g -o $$file_rose_bin $$file_rose" ;\
 	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$(rted_path)/C/array_index_out_of_bound/ -I$(top_builddir) -I$(srcdir) ; \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
-	  file_rose=$$(echo rose_"$$file_rose"); \
-	  file_rose_bin=$$(echo "$$file_rose".bin); \
-	  echo "Compiling 1f:  $(CXX) -g -o $$file_rose_bin $$file_rose" ;\
-	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$(rted_path)/C/array_index_out_of_bound/ -I$(top_builddir) -I$(srcdir) ; \
-	  echo "Executing created file $$file_rose_bin" ; \
-	  ./$$file_rose_bin ; \
+	  file_bin=$$(echo "$$file".bin); \
+	  $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$(rted_path)/C/array_index_out_of_bound/ -I$(top_builddir) -I$(srcdir) ; \
 	fi; \
 	else \
 	  echo "$$binfile exists." ; \
@@ -136,18 +130,19 @@ check-C-array:
 	fi; \
 	done 
 
-
-# DQ (7/25/2005): The current changes to the AST break these test programs:
-check-local: runtimeCheck $(TESTCODES) compile_gcc_file1 check-C-array
+check-C-array-onefile: compile_gcc_file1
 	@echo "Running the new program"
 	./rose_test_c_E_1_1_a
 	./rose_rose_test_c_E_1_1_a
+
+# DQ (7/25/2005): The current changes to the AST break these test programs:
+check-local: runtimeCheck $(TESTCODES) check-C-array-onefile check-C-array
 	@echo "***************************************************************************************"
 	@echo "*** ROSE/projects/runtimeErrorCheck: make check rule complete (terminated normally) ***"
 	@echo "***************************************************************************************"
 
 
 clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) test_bin* *.o rose_*.C rose_*.c *.dot Templates.DB *~ rose_rose* test 
+	rm -rf $(CXX_TEMPLATE_OBJECTS) test_bin* *.o rose_*.C rose_*.c *.dot Templates.DB *~ rose_rose* test *.bin
 
 endif
