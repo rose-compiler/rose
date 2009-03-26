@@ -16,7 +16,7 @@ using namespace std;
 * -----------------------------------------------------------*/
 void
 RuntimeSystem::roseCreateArray(std::string name, int size ){
-  cout << "Called : roseCreateArrary : " << name <<
+  cout << "Called : roseCreateArray : " << name <<
     " , " << size << endl;
   arrays[name]=size;
 }
@@ -26,11 +26,12 @@ RuntimeSystem::roseCreateArray(std::string name, int size ){
 * -----------------------------------------------------------*/
 void
 RuntimeSystem::roseArrayAccess(std::string name, int pos){
+  cout << "Called : roseArrayAccess : " << name << endl;
   map<string,int>::const_iterator it = arrays.find(name);
   if (it!=arrays.end()) {
     int size = it->second;
-    cout << "Found array : " << name << " : " << size << ", " << pos << endl;
+    cout << "  Found array : " << name << " : " << size << ", " << pos << endl;
     if (pos>=size || pos<0)
-      cout << "Violation detected." << endl;
+      cout << "  >>>>>> Violation detected." << endl;
   }
 }

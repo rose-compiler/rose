@@ -6,44 +6,21 @@ using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
 
-/* -----------------------------------------------------------
- * Helper Function that prints out infromation about the
- * testFiles to be parsed
- * -----------------------------------------------------------*/
-void
-RtedTransformation::printInputFiles() {
-  map<string,vector<string> >::const_iterator it = inputFiles.begin();
-  for (;it != inputFiles.end() ;++it) {
-    string lang = it->first;
-    vector<string> path = it->second;
-    for (unsigned int i=0;i<path.size();++i) {
-      cout << "Language : " << lang << "  Path : " << path[i] << endl;
-    }
-  }
-}
+
 
 /* -----------------------------------------------------------
  * Helper Function
  * -----------------------------------------------------------*/
-string
-RtedTransformation::getFileName(std::string& language, std::string& dir, std::string& file) {
-  //  printInputFiles();
-  string testFile="";
-  map<string,vector<string> >::const_iterator it = inputFiles.begin();
-  for (;it != inputFiles.end() ;++it) {
-    string lang = it->first;
-    if (lang==language) {
-      vector<string> path = it->second;
-      for (unsigned int i=0;i<path.size();++i) {
-	if (path[i].find(dir)!=std::string::npos)
-	  testFile=path[i]+"/"+file;
-      }
-    }
-  }
-  cout << "TestFile : " << testFile << endl;
-  return testFile;
+SgStatement*
+RtedTransformation::getStatement(SgExpression* exp) {
+	SgStatement* stmt = NULL;
+	SgNode* expr = exp;
+	while (!isSgStatement(expr) && !isSgProject(expr))
+		expr = expr->get_parent();
+	if (isSgStatement(expr))
+		stmt = isSgStatement(expr);
+	return stmt;
 }
-
 
 /* -----------------------------------------------------------
  * Run frontend and return project
@@ -99,19 +76,30 @@ RtedTransformation::insertArrayCreateCall(SgInitializedName* n, SgExpression* va
  * Perform Transformation: insertArrayCreateAccessCall
  * -----------------------------------------------------------*/
 void
-RtedTransformation::insertArrayCreateAccessCall(SgVarRefExp* arrayNameRef, SgExpression* value) {
+RtedTransformation::insertArrayAccessCall(SgVarRefExp* arrayNameRef, SgExpression* value) {
   ROSE_ASSERT(arrayNameRef);
   SgVariableSymbol* varSymbol = arrayNameRef->get_symbol();
   ROSE_ASSERT(varSymbol);
   SgInitializedName* initName = varSymbol->get_declaration();
   ROSE_ASSERT(initName);
+ // cerr << " .. Creating Array Access for  : " << arrayNameRef->unparseToString() << value->unparseToString() << endl;
 
   SgStatement* stmt = getSurroundingStatement(arrayNameRef);
   if (isSgStatement(stmt)) {
     SgScopeStatement* scope = stmt->get_scope();
-
     ROSE_ASSERT(scope);
-    if (isSgBasicBlock(scope)) {
+    cerr << "   .. Creating Array Access for  : " << arrayNameRef->unparseToString() << "-"<<value->unparseToString() <<
+		"       scope : " << scope << " " << scope->class_name() << "   : " << stmt->unparseToString() << endl;
+   	if (isSgIfStmt(stmt->get_parent()) && isSgIfStmt(stmt->get_parent())->get_conditional() == stmt) {
+   		cerr << "       >> Current stmt == if-conditional " << endl;
+   		return;
+    }
+   	else if (isSgWhileStmt(stmt->get_parent()) && isSgWhileStmt(stmt->get_parent())->get_condition() == stmt) {
+   		cerr << "       >> Current stmt == while-conditional " << endl;
+   		return;
+    }
+    scope = isSgBasicBlock(ensureBasicBlockAsParent(stmt));
+    ROSE_ASSERT (isSgBasicBlock(scope));
       string name = initName->get_mangled_name().str();
       SgStringVal* callNameExp = buildStringVal(name);
 
@@ -132,7 +120,7 @@ RtedTransformation::insertArrayCreateAccessCall(SgVarRefExp* arrayNameRef, SgExp
       SgFunctionCallExp* funcCallExp = buildFunctionCallExp(sgArrowExp,arg_list);
       SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
       insertStatementBefore(isSgStatement(stmt),exprStmt) ;
-    }
+//    }
 
   } else {
     cerr << "RuntimeInstrumentation :: Surrounding Statement could not be found! " <<endl;
@@ -146,8 +134,17 @@ RtedTransformation::insertArrayCreateAccessCall(SgVarRefExp* arrayNameRef, SgExp
 void
 RtedTransformation::insertProlog(SgProject* proj) {
   cout << "Inserting headers ... " << endl;
-  globalScope = getFirstGlobalScope(isSgProject(proj));
-  pushScopeStack (isSgScopeStatement (globalScope));
+  // grep all source (.c) files and insert headers
+  Rose_STL_Container<SgNode*> vec = 
+    NodeQuery::querySubTree(proj,V_SgSourceFile);
+  cerr << "Found source files : " << vec.size() << endl;
+  Rose_STL_Container<SgNode*>::iterator it = vec.begin();
+  for (;it!=vec.end();++it) {
+    SgSourceFile* source = isSgSourceFile(*it);
+    ROSE_ASSERT(source);
+    //  globalScope = getFirstGlobalScope(isSgProject(proj));
+    globalScope = source->get_globalScope();
+    pushScopeStack (isSgScopeStatement (globalScope));
   // this needs to be fixed
   //buildCpreprocessorDefineDeclaration(globalScope, "#define EXITCODE_OK 0");
 
@@ -162,6 +159,7 @@ RtedTransformation::insertProlog(SgProject* proj) {
 #endif
 
   popScopeStack ();
+  }
 }
 
 /* -----------------------------------------------------------
@@ -213,7 +211,7 @@ RtedTransformation::transform(SgProject* project) {
 //  ROSE_ASSERT(rememberTopNode);
 
   // insert: RuntimeSystem* runtimeSystem = new RuntimeSystem();
-  insertRuntimeSystemClass();
+  //insertRuntimeSystemClass();
 
   // ---------------------------------------
   // Perform all transformations...
@@ -231,7 +229,7 @@ RtedTransformation::transform(SgProject* project) {
   for (;ita!=create_array_access_call.end();ita++) {
 	SgVarRefExp* array_node = ita->first;
     SgExpression* array_size = ita->second;
-    insertArrayCreateAccessCall(array_node,array_size);
+    insertArrayAccessCall(array_node,array_size);
   }
 }
 
@@ -288,6 +286,9 @@ RtedTransformation::visit(SgNode* n) {
 #endif
 
 
+
+  // ******************** DETECT Member functions in RuntimeSystem.h *************************************************************
+
   // *********************** DETECT THE rose CreateArray func call in Runtime System -- needed for Transformations ***************
   SgMemberFunctionDeclaration* roseCreateArray_tmp = isSgMemberFunctionDeclaration(n);
   if (roseCreateArray_tmp) {
@@ -301,7 +302,7 @@ RtedTransformation::visit(SgNode* n) {
     }
   }
 
-  // *********************** DETECT THE rose CreateArray func call in Runtime System -- needed for Transformations ***************
+  // *********************** DETECT THE rose ArrayAccess func call in Runtime System -- needed for Transformations ***************
   SgMemberFunctionDeclaration* roseArrayAccess_tmp = isSgMemberFunctionDeclaration(n);
   if (roseArrayAccess_tmp) {
     if (roseArrayAccess_tmp->get_symbol_from_symbol_table()) {
@@ -314,7 +315,11 @@ RtedTransformation::visit(SgNode* n) {
     }
   }
 
+  // ******************** DETECT Member functions in RuntimeSystem.h *************************************************************
 
+
+
+  // ******************** DETECT functions in input program  *********************************************************************
 
   // *********************** DETECT ALL array creations ***************
   SgInitializedName* initName = isSgInitializedName(n);
@@ -334,18 +339,26 @@ RtedTransformation::visit(SgNode* n) {
   SgPntrArrRefExp* arrRefExp = isSgPntrArrRefExp(n);
   if (arrRefExp) {
 	 SgExpression* left = arrRefExp->get_lhs_operand();
+	 // right hand side can be any expression!
 	 SgExpression* right = arrRefExp->get_rhs_operand();
 	 SgVarRefExp* arrayNameRef = isSgVarRefExp(left);
-	 SgVarRefExp* arrayparamRef = isSgVarRefExp(right);
 	 if (arrayNameRef==NULL) {
-		 cerr << "SgPntrArrRefExp:: unknown left side : " << left->class_name() << endl;
-		 return;
+		 SgArrowExp* arrow = isSgArrowExp(left);
+		 if (arrow) {
+			 //cerr << " left : " << arrow->get_lhs_operand()->class_name() << endl;
+			 //cerr << " right : " << arrow->get_rhs_operand()->class_name() << endl;
+			arrayNameRef = isSgVarRefExp(arrow->get_rhs_operand());
+			ROSE_ASSERT(arrayNameRef);
+		 } else {
+			 cerr << ">> RtedTransformation::SgPntrArrRefExp:: unknown left side : " << left->class_name() <<
+			 " --" << arrRefExp->unparseToString() << "-- " <<endl;
+			 return;
+		 }
 	 }
-	 if (arrayparamRef==NULL) {
-		 cerr << "SgPntrArrRefExp:: unknown right side : " << right->class_name() << endl;
-		 return;
-	 }
-	 create_array_access_call[arrayNameRef]=arrayparamRef;
+	 create_array_access_call[arrayNameRef]=right;
   }
+
+  // ******************** DETECT functions in input program  *********************************************************************
+
 }
 
