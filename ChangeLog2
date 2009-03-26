@@ -1,3 +1,13 @@
+2009-03-26 17:57  saebjornsen1
+
+	* [r5090] /trunk/ROSE/projects/MacroRewrapper/macroRewrapper.C,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test1.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test3.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test4.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test6.c.out: Modified
+	  testing mechaism of macros due to problems with some compiler
+	  flags
+
 2009-03-26 01:29  panas2
 
 	* [r5078] /trunk/ROSE/projects/RTED/Makefile.am,
