@@ -1969,6 +1969,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 	SgExprStatement* exprstat
 	  = Ir::createExprStatement(Ir::createAssignOp(varref1, new_expr));
 	new_block->statements.push_front(exprstat);
+    new_block->isReturnStmt = true;
 	
 	/* incoming information is at the incoming edge of
 	 * the code produced by et */

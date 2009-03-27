@@ -21,13 +21,21 @@ PointsToAnalysis::Location::Location(
   : base_location(b), ellipsis_location(NULL), return_location(r),
     dummy(false), literal(false), special_function(false),
     first_access_type(NULL), collapsed(false), parent_struct(NULL),
-    collapseBase(false), mayBeAliased(false)
+    collapseBase(false), mayBeAliased(false), ownerInfo(NULL)
 {
 }
 
 void
 PointsToAnalysis::Location::pointTo(Location *base)
 {
+#if VERBOSE_DEBUG
+    std::cout
+        << (base_location == NULL ? "new" : "MOD") << " "
+        << (void *) this << "/" << this->id
+        << " -> "
+        << (void *) base << "/" << base->id
+        << std::endl;
+#endif
     base_location = base;
     base_location->mayBeAliased = true;
  // if (base_location->id == 21) std::abort();
@@ -125,7 +133,7 @@ PointsToAnalysis::Implementation::atIcfgTraversalStart()
         info = mainInfo;
         Location *argDummy
             = AstBottomUpProcessing<Location *>::traverse(params);
-        info->procedureLocations[l]
+        mainInfo->procedureLocations[l]
             = function_location(procedures[l]->decl, argDummy);
         freeDummyLocation(argDummy);
 
@@ -241,22 +249,87 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
              // attribute-based solution as for the local return variables.
              // Which means that this case and the next should be merged as
              // soon as this is debugged.
-                CallAttribute *ca;
-                assert(varRef->attributeExists("SATIrE: call target"));
-                ca = (CallAttribute *) varRef->getAttribute(
-                                               "SATIrE: call target");
-                a = expressionLocation(ca->call_target);
-                result = a->baseLocation()->return_location;
+#if VERBOSE_DEBUG
+                std::cout
+                    << "--- looking at global return variable in context "
+                    << info->prefix << std::endl;
+#endif
+                if (!contextSensitive)
+                {
+                    CallAttribute *ca;
+                    assert(varRef->attributeExists("SATIrE: call target"));
+                    ca = (CallAttribute *) varRef->getAttribute(
+                                                   "SATIrE: call target");
+                    a = expressionLocation(ca->call_target);
+                    result = a->baseLocation()->return_location;
+                }
+                else
+                {
+                 // node->isReturnStmt
+                 // In the very special case that this is a
+                 // context-sensitive analysis and we are in the middle of
+                 // an icfg traversal and the current ICFG node represents a
+                 // return statement in the current function, the global
+                 // return variable symbol's location is simply the return
+                 // location of the current context's procedure location.
+                    CFG *icfg = icfgTraversal->get_icfg();
+                    if (icfgTraversal->is_icfg_statement()
+                        && icfg->nodes[icfgTraversal->get_node_id()]
+                               ->isReturnStmt)
+                    {
+                        result = allInfos[*info->context]->procedureLocation
+                                                         ->baseLocation()
+                                                         ->return_location;
+                    }
+                 // Otherwise, this must be a ReturnAssignment statement if
+                 // it refers to the global retvar. We don't care about this
+                 // case, as we don't care about ReturnAssignment at all.
+                }
             }
             else if (varRef->attributeExists("SATIrE: call target"))
             {
              // A call-site-specific local return variable: Look up the call
              // target's return location.
-                CallAttribute *ca;
-                ca = (CallAttribute *) varRef->getAttribute(
-                                               "SATIrE: call target");
-                a = expressionLocation(ca->call_target);
-                result = a->baseLocation()->return_location;
+#if VERBOSE_DEBUG
+                std::cout
+                    << "--- looking at local return variable in context "
+                    << info->prefix << std::endl;
+#endif
+                if (!contextSensitive)
+                {
+                    CallAttribute *ca;
+                    ca = (CallAttribute *) varRef->getAttribute(
+                                                   "SATIrE: call target");
+                    a = expressionLocation(ca->call_target);
+                    result = a->baseLocation()->return_location;
+                }
+                else
+                {
+                 // In the context-sensitive case, we need to find all
+                 // possible called contexts and look at their return
+                 // locations. If there is more than one candidate, we need
+                 // to merge return locations! However, this should be rare
+                 // (hopefully).
+                    std::vector<ContextInformation::Context>::const_iterator
+                        beg, end, ctx;
+                    CallAttribute *ca;
+                    ca = (CallAttribute *) varRef->getAttribute(
+                                                    "SATIrE: call target");
+                    int call_id
+                        = icfg->call_target_call_block[ca->call_target]->id;
+                    beg = icfg->contextInformation->childContexts(
+                            call_id, *info->context).begin();
+                    end = icfg->contextInformation->childContexts(
+                            call_id, *info->context).end();
+                    result = allInfos[*beg]->procedureLocation
+                                           ->baseLocation()->return_location;
+                    for (ctx = beg + 1; ctx != end; ++ctx)
+                    {
+                        Location *a = allInfos[*ctx]->procedureLocation;
+                        a = a->baseLocation()->return_location;
+                        result = assign(result, a);
+                    }
+                }
             }
             else
             {
@@ -478,7 +551,10 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
             SgType *access_type = stripOnePointerLayer(operand->get_type());
             checkOrSetFirstAccessType(result->baseLocation(), access_type);
             if (SgClassType *class_type = isSgClassType(access_type))
-                materializeAllStructMembers(result->baseLocation(), class_type);
+            {
+                materializeAllStructMembers(result->baseLocation(),
+                                            class_type);
+            }
         }
 
         if (result->collapseBase)
@@ -755,7 +831,7 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
             }
         }
 #endif
-#if 0
+#if VERBOSE_DEBUG
         std::cout
             << "assignment: " << Ir::fragmentToString(node)
             << std::endl;
@@ -776,7 +852,7 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
             std::cout << " (" << b->baseLocation()->id << ")";
         std::cout << std::endl;
 #endif
-        result = assign(a, b);
+        result = (b != NULL ? assign(a, b) : a);
         break;
 
     case V_SgInitializedName:
@@ -911,7 +987,7 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
      // annotations could be used to disentangle these locations, or we
      // could treat them as distinct as long as their integer constant
      // values are different, and no arithmetic is performed on them
-        result = info->integerConstantLocation;
+        result = mainInfo->integerConstantLocation;
      // disregarding for the moment everything that was written above, we
      // will not treat integers as pointers unless casted to a pointer type;
      // in this case, the cast rule will take care of matters
@@ -933,7 +1009,7 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
      // constants is illegal, we might be fine identifying only strings that
      // are equal. Overall, I'm not sure what string constant points-to
      // information might be good for.
-        result = info->stringConstantLocation;
+        result = mainInfo->stringConstantLocation;
         break;
 
     case V_SgNullExpression:
@@ -1372,11 +1448,9 @@ PointsToAnalysis::Implementation::handleIcfgStatement(
  // that is not within ICFG nodes, such as global initializers. So this
  // requires some care.
     BasicBlock *icfgNode = NULL;
+    CFG *icfg = icfgTraversal->get_icfg();
     if (icfgTraversal->is_icfg_statement())
-    {
-        CFG *cfg = icfgTraversal->get_icfg();
-        icfgNode = cfg->nodes[icfgTraversal->get_node_id()];
-    }
+        icfgNode = icfg->nodes[icfgTraversal->get_node_id()];
 
     switch (icfgStmt->satireVariant())
     {
@@ -1441,51 +1515,140 @@ PointsToAnalysis::Implementation::handleIcfgStatement(
      // argument to assign to. Unify that with the location for the
      // ArgumentAssignment's rhs expression (the argument expression).
     case V_ArgumentAssignment:
-     // First, compute the location for the call target...
-        a = expressionLocation(icfgNode->call_target);
-     // ... dereference it, since it's a pointer to function ...
-        a = a->baseLocation();
-     // ... and then find the correct argument location. This is complicated
-     // by the fact that the call index may be larger than the number of
-     // arguments -- if the function has varargs. In this case, we use the
-     // last arg location, which is the ellipse.
-        a = a->arg_locations[icfgNode->call_index < a->arg_locations.size()
-                                ? icfgNode->call_index
-                                : a->arg_locations.size() - 1];
-
-     // synlist[1] is the synthesized attribute for the second traversal
-     // successor, which is the rhs expression.
-        b = synlist[1];
-
-     // Perform the assignment and clean up if necessary.
-#if VERBOSE_DEBUG
-        std::cout
-            << "argument assignment: "
-            << a->id << " := " << (b != NULL ? b->id : 0)
-            << std::endl;
-#endif
-        result = assign(a, b);
-#if VERBOSE_DEBUG
-        if (b != NULL && b->dummy)
+     // If the analysis is context-insensitive, locate the call target from
+     // the target expression; otherwise, use the call string info to locate
+     // all possible callee contexts, and use their procedureLocation.
         {
-            std::cout
-                << "dummy location for ArgumentAssignment rhs: "
-                << "expr = "
-                << Ir::fragmentToString(
-                        isArgumentAssignment(icfgStmt)->get_rhs())
-                << ", b->id = " << b->id
-                << ", has ret: "
-                    << (b->return_location != NULL ? "yes" : "no")
-                << std::endl;
-        }
+            std::vector<ContextInformation::Context>::const_iterator beg;
+            std::vector<ContextInformation::Context>::const_iterator end;
+            if (!contextSensitive)
+                a = expressionLocation(icfgNode->call_target);
+            else
+            {
+                int call_id
+                    = icfg->call_target_call_block[icfgNode->call_target]->id;
+#if VERBOSE_DEBUG
+                std::cout
+                    << "argass " << get_node_id()
+                    << " for call " << call_id
+                    << std::endl;
+                std::cout
+                    << "this context: " << info->context->toString()
+                    << std::endl;
 #endif
-        if (b != NULL && b->dummy)
-            freeDummyLocation(b);
+                beg = icfg->contextInformation->childContexts(
+                        call_id, *info->context).begin();
+                end = icfg->contextInformation->childContexts(
+                        call_id, *info->context).end();
+            }
+
+            do // loop over all called contexts
+            {
+             // First, compute the location for the call target...
+                if (contextSensitive)
+                {
+                    ContextInformation::Context c = *beg;
+                    a = allInfos[c]->procedureLocation;
+#if VERBOSE_DEBUG
+                    std::cout
+                        << "a = " << (void *) a << std::endl;
+                    std::cout
+                        << "found procloc "
+                        << allInfos[c]->prefix << a->id
+                        << std::endl;
+                    std::cout
+                        << "  -> proc: "
+                        << allInfos[c]->prefix << a->baseLocation()->id
+                        << std::endl;
+                    std::cout
+                        << "  -> arg_0: "
+                        << allInfos[c]->prefix
+                            << a->baseLocation()->arg_locations[0]->id
+                            << " ("
+                            << (void *) a->baseLocation()->arg_locations[0]
+                            << ")"
+                        << std::endl;
+#endif
+                }
+             // ... dereference it, since it's a pointer to function ...
+                a = a->baseLocation();
+#if VERBOSE_DEBUG
+                if (info->prefix != "")
+                    std::cout << "in ctx " << info->prefix << ": ";
+                std::cout
+                    << "call to function at location " << a->id
+                    << " (" << names(a->func_symbols) << ")"
+                    << std::endl;
+#endif
+             // ... and then find the correct argument location. This is
+             // complicated by the fact that the call index may be larger
+             // than the number of arguments -- if the function has varargs.
+             // In this case, we use the last arg location, which is the
+             // ellipse.
+                a = a->arg_locations[
+                    icfgNode->call_index < a->arg_locations.size()
+                                        ? icfgNode->call_index
+                                        : a->arg_locations.size() - 1];
+
+             // synlist[1] is the synthesized attribute for the second
+             // traversal successor, which is the rhs expression.
+                b = synlist[1];
+
+             // Perform the assignment and clean up if necessary.
+#if VERBOSE_DEBUG
+                std::cout
+                    << "argument assignment";
+                if (info->prefix != "")
+                    std::cout << " in ctx " << info->prefix;
+                std::cout << ": "
+                    << a->id
+                    << " (" << (void *) a << ")"
+                    << " := "
+                    << (b != NULL ? b->id : 0)
+                    << " (" << (void *) b << ")"
+                 // << " / "
+                 // << Ir::fragmentToString(icfgStmt)
+                    << std::endl;
+#endif
+                result = (b != NULL ? assign(a, b) : a);
+#if VERBOSE_DEBUG
+                std::cout
+                    << "assignment result: "
+                    << (result != NULL ? result->id : 0)
+                    << " (" << (void *) result << ")"
+                    << std::endl
+                    << std::endl;
+#endif
+#if VERBOSE_DEBUG
+                if (b != NULL && b->dummy)
+                {
+                    std::cout
+                        << "dummy location for ArgumentAssignment rhs: "
+                        << "expr = "
+                        << Ir::fragmentToString(
+                                isArgumentAssignment(icfgStmt)->get_rhs())
+                        << ", b->id = " << b->id
+                        << ", has ret: "
+                            << (b->return_location != NULL ? "yes" : "no")
+                        << std::endl;
+                }
+#endif
+                if (b != NULL && b->dummy)
+                    freeDummyLocation(b);
+            } while (contextSensitive && ++beg != end);
+        }
         break;
 
      // Find the called function's return location and assign it to the
      // return variable for this call site.
     case V_ReturnAssignment:
+     // GB (2009-03-27): It seems like all of this stuff is really not
+     // necessary. A ReturnAssignment is only relevant to assign the global
+     // retvar's value to a local retvar; however, our handling of retvars
+     // bypasses this assignment completely and goes directly to the called
+     // functions (contexts) to fetch the return location. So
+     // ReturnAssignment is a no-op.
+#if 0
      // The assignment's lhs is synlist[0], the location for the temporary
      // return variable holding the return value for this call site.
         a = synlist[0];
@@ -1497,24 +1660,54 @@ PointsToAnalysis::Implementation::handleIcfgStatement(
             << "assignment is in procedure " << icfgNode->procnum
                 << ", " << (*icfgTraversal->get_icfg()->procedures)
                                 [icfgNode->procnum]->name
+                << " in context "
+                    << (info->prefix != "" ? info->prefix : "main")
                 << std::endl;
 #endif
      // The assignment's rhs in the ICFG is the global return variable,
      // which we are not interested in. Rather, we fetch the location for
      // the call expression associated with this ICFG node.
-        b = expressionLocation(icfgNode->call_target);
-        b = b->baseLocation();
+     // For context-sensitive analysis, this must loop over the return
+     // locations of all possibly called contexts.
+        {
+            std::vector<ContextInformation::Context>::const_iterator beg;
+            std::vector<ContextInformation::Context>::const_iterator end;
+
+            if (!contextSensitive)
+                b = expressionLocation(icfgNode->call_target);
+            else
+            {
+                int call_id
+                    = icfg->call_target_call_block[icfgNode->call_target]->id;
+                beg = icfg->contextInformation->childContexts(
+                        call_id, *info->context).begin();
+                end = icfg->contextInformation->childContexts(
+                        call_id, *info->context).end();
+            }
+
+            do {
+             // b = expressionLocation(icfgNode->call_target);
+                if (contextSensitive)
+                {
+                    ContextInformation::Context c = *beg;
+                    b = allInfos[c]->procedureLocation;
+                }
+                b = b->baseLocation();
 #if VERBOSE_DEBUG
-        std::cout
-            << "for call to function location " << b->id
-            << ": " << (b->func_symbols.empty()
-                        ? "<unknown>"
-                        : names(b->func_symbols))
-            << std::endl;
+                std::cout
+                    << "for call to function location " << b->id
+                    << ": " << (b->func_symbols.empty()
+                                ? "<unknown>"
+                                : names(b->func_symbols))
+                    << std::endl;
 #endif
-     // Finally, assign the called function's return location to the local
-     // temporary variable.
-        result = assign(a, b->return_location);
+             // Finally, assign the called function's return location to the
+             // local temporary variable.
+                std::cout << "actual ReturnAssignment: ";
+                result = assign(a, b->return_location);
+            } while (contextSensitive && ++beg != end);
+        }
+#endif
         break;
 
      // I think the ParamAssignment can be ignored since we assign argument
@@ -1635,9 +1828,24 @@ PointsToAnalysis::Implementation::join(
      // disjointSets.union_set(a->base_type, b->base_type);
         if (a_set != b_set)
         {
-            info->disjointSets.link(a_set, b_set);
+#if VERBOSE_DEBUG
+            std::cout
+                << "linking " << a_set->id << " and " << b_set->id
+                << std::endl;
+#endif
+            mainInfo->disjointSets.link(a_set, b_set);
             unify(a, b);
         }
+#if VERBOSE_DEBUG
+        else
+        {
+            std::cout
+                << "a_set == b_set == "
+                << (void *) a_set << " == " << (void *) b_set
+                << "  with id  " << a_set->id << " == " << b_set->id
+                << std::endl;
+        }
+#endif
 
         representative = location_representative(b->baseLocation());
         if (representative != b->baseLocation())
@@ -1687,7 +1895,8 @@ PointsToAnalysis::Implementation::join(
     if (a->return_location != NULL && b->return_location != NULL
                                    && a->return_location != b->return_location)
     {
-        info->disjointSets.union_set(a->return_location, b->return_location);
+        mainInfo->disjointSets.union_set(a->return_location,
+                                         b->return_location);
         result = b;
         result->return_location
             = location_representative(b->return_location);
@@ -1740,6 +1949,13 @@ PointsToAnalysis::Implementation::join(
                 << std::endl
             << "a vars:      " << names(a->symbols) << std::endl
             << "b vars:      " << names(b->symbols) << std::endl;
+#endif
+#if VERBOSE_DEBUG
+        std::cout
+            << "a now points to: " << a->baseLocation()->id
+            << " (" << (void *) a->baseLocation() << ")" << std::endl
+            << "b now points to: " << b->baseLocation()->id
+            << " (" << (void *) b->baseLocation() << ")" << std::endl;
 #endif
         result = b;
     }
@@ -3293,8 +3509,12 @@ PointsToAnalysis::Implementation::run(CFG *icfg)
         std::vector<ContextInformation::Context>::const_iterator c;
         for (c = contexts.begin(); c != contexts.end(); ++c)
         {
-            allInfos[*c] = new PointsToInformation();
-            allInfos[*c]->context = new ContextInformation::Context(*c);
+            PointsToInformation *info = new PointsToInformation();
+            std::stringstream s;
+            s << c->procnum << "_" << c->position << "_";
+            info->prefix = s.str();
+            info->context = new ContextInformation::Context(*c);
+            allInfos[*c] = info;
         }
     }
 
@@ -3465,9 +3685,6 @@ PointsToAnalysis::Implementation::doDot(std::string filename)
                 << "label = \"" << c->toString() << "\""
                 << ";" << std::endl;
             info = allInfos[*c];
-            std::stringstream s;
-            s << c->procnum << "_" << c->position << "_";
-            info->prefix = s.str();
             print(dotfile, "\"", "\"", ";");
             dotfile << "}" << std::endl;
         }
@@ -3476,8 +3693,8 @@ PointsToAnalysis::Implementation::doDot(std::string filename)
     dotfile << "}" << std::endl;
     std::stringstream dotcommand;
     dotcommand
-     // << "dot -Tps " << dotfilename << " > " << filename << ".eps";
-        << "fdp -Tps " << dotfilename << " > " << filename << ".eps";
+        << "dot -Tps " << dotfilename << " > " << filename << ".eps";
+     // << "fdp -Tps " << dotfilename << " > " << filename << ".eps";
     std::system(dotcommand.str().c_str());
 }
 
@@ -3617,8 +3834,19 @@ PointsToAnalysis::Implementation::function_location(
         Location *location = i->second;
 #if VERBOSE_DEBUG
         std::cout
+            << "info " << (void *) info
+            << " map " << (void *) &info->function_locations << ": "
+                << std::endl << "    "
             << "found location " << location->id
+                << " (" << (void *) location << ")"
             << " for function " << funcname
+            << " in context " << (info->prefix == "" ? "main" : info->prefix)
+            << std::endl;
+        std::cout
+            << "    "
+            << "location: " << location-> id
+            << "/" << names(location->symbols)
+            << "/" << names(location->func_symbols)
             << std::endl;
 #endif
         return location;
@@ -3629,6 +3857,23 @@ PointsToAnalysis::Implementation::function_location(
      // function!
         Location *func_location = createFunctionLocation();
         Location *location = createLocation(func_location);
+#if VERBOSE_DEBUG
+        std::cout
+            << "info " << (void *) info
+            << " map " << (void *) &info->function_locations << ": "
+                << std::endl << "    "
+            << "created location " << location->id
+                << " (" << (void *) location << ")"
+            << " for function " << funcname
+            << " in context " << (info->prefix == "" ? "main" : info->prefix)
+            << std::endl;
+        std::cout
+            << "    "
+            << "location: " << location-> id
+            << "/" << names(location->symbols)
+            << "/" << names(location->func_symbols)
+            << std::endl;
+#endif
 
      // setup argument list from the argDummy location
         assert(argDummy != NULL);
@@ -3693,8 +3938,8 @@ PointsToAnalysis::Implementation::function_location(
             std::abort();
 #endif
         }
-     // info->function_locations[funcname] = location;
-        mainInfo->function_locations[funcname] = location;
+        info->function_locations[funcname] = location;
+     // mainInfo->function_locations[funcname] = location;
 #if VERBOSE_DEBUG
         std::cout
             << "created location " << location->id
@@ -3743,9 +3988,12 @@ PointsToAnalysis::Implementation::createLocation(
         Location *t, Location *return_location)
 {
     Location *location = new Location(t, return_location);
-    info->locations.push_back(location);
-    location->id = info->locations.size();
-    info->disjointSets.make_set(location);
+    location->ownerInfo = info;
+    if (info != mainInfo)
+        info->locations.push_back(location);
+    mainInfo->locations.push_back(location);
+    location->id = mainInfo->locations.size();
+    mainInfo->disjointSets.make_set(location);
 #if VERBOSE_DEBUG
     std::cout
         << "created new location " << location->id
@@ -3796,24 +4044,25 @@ PointsToAnalysis::Implementation::freeDummyLocation(Location *t)
             << "*** error: freeDummyLocation applied to non-dummy "
             << id << std::endl;
     }
-    if (info->locations[id-1] != t)
+    if (mainInfo->locations[id-1] != t)
     {
         std::cerr
             << "*** error: location " << id << " not present at index "
             << id-1 << ", which holds "
-            << (info->locations[id-1] != NULL ? info->locations[id-1]->id : 0)
+            << (mainInfo->locations[id-1] != NULL
+                    ? mainInfo->locations[id-1]->id : 0)
             << " instead"
             << std::endl;
         return; // skip the freeing!
     }
     delete t;
-    info->locations[id-1] = NULL;
+    mainInfo->locations[id-1] = NULL;
 }
 
 const std::vector<PointsToAnalysis::Location *> &
 PointsToAnalysis::Implementation::get_locations() const
 {
-    return info->locations;
+    return mainInfo->locations;
 }
 
 bool
@@ -3841,11 +4090,18 @@ PointsToAnalysis::Location *
 PointsToAnalysis::Implementation::location_representative(
         PointsToAnalysis::Location *loc)
 {
-    Location *r = info->disjointSets.find_set(loc);
+    Location *r = mainInfo->disjointSets.find_set(loc);
+ // if (r == NULL)
+ //     r = mainInfo->disjointSets.find_set(loc);
     if (r == NULL)
-        r = mainInfo->disjointSets.find_set(loc);
-    if (r == NULL)
-        r = loc;
+    {
+     // r = loc;
+        std::cerr
+            << "*** no representative for loc "
+            << (loc != NULL ? loc->id : 0)
+            << std::endl;
+        std::abort();
+    }
 
     return loc;
 }
@@ -3862,6 +4118,10 @@ PointsToAnalysis::Implementation::print(
 
         if (location == NULL)
             continue;
+     // Avoid doing locations twice -- they are each registered in the
+     // mainInfo's locations, and (typically) also within some function.
+        if (location->ownerInfo != info)
+            continue;
 
      // show only nonempty locations?
         bool show_this_location = false;
@@ -3873,14 +4133,15 @@ PointsToAnalysis::Implementation::print(
          // location node
 #if VERBOSE_DEBUG
             std::cout
-                << "showing location " << info->prefix << location->id
+                << "showing location "
+                << location->ownerInfo->prefix << location->id
                 << ": "
                     << (location->return_location != NULL ? "hexagon" :
                        !location->struct_members.empty() ? "house" : "box")
                 << std::endl;
 #endif
             stream
-                << pre << info->prefix << location->id << post
+                << pre << location->ownerInfo->prefix << location->id << post
                 << " [shape="
                  // show functions as hexagons, structs as houses, other
                  // nodes as boxes
@@ -3892,6 +4153,9 @@ PointsToAnalysis::Implementation::print(
                     << names(location->symbols)
                     << "; "
                     << names(location->func_symbols)
+#if VERBOSE_DEBUG
+                    << "\\n" << (void *) location
+#endif
                     << (location->mayBeAliased ? "\\naliased" : "")
                     << (location->literal ? "\\nliteral" : "")
                     << (location->special_function ? "\\n[special]" : "")
@@ -3907,10 +4171,18 @@ PointsToAnalysis::Implementation::print(
             {
                 Location *base
                     = location_representative(location->baseLocation());
+#if VERBOSE_DEBUG
+                std::cout
+                    << (void *) location << " -b-> "
+                    << (void *) location->baseLocation() << " -r-> "
+                    << (void *) base
+                    << std::endl;
+#endif
                 stream
-                    << pre << info->prefix << location->id << post
+                    << pre << location->ownerInfo->prefix << location->id
+                    << post
                     << " -> "
-                    << pre << info->prefix << base->id << post
+                    << pre << base->ownerInfo->prefix << base->id << post
                     << lineend << std::endl;
             }
          // edges from location to argument locations, if any
@@ -3923,9 +4195,10 @@ PointsToAnalysis::Implementation::print(
                     continue;
                 Location *arg = location_representative(*a);
                 stream
-                    << pre << info->prefix << location->id << post
+                    << pre << location->ownerInfo->prefix << location->id
+                    << post
                     << " -> "
-                    << pre << info->prefix << arg->id << post
+                    << pre << arg->ownerInfo->prefix << arg->id << post
                     << " [color=green, label=\"arg_" << n++ << "\"]"
                     << lineend << std::endl;
             }
@@ -3935,9 +4208,10 @@ PointsToAnalysis::Implementation::print(
                 Location *base
                     = location_representative(location->return_location);
                 stream
-                    << pre << info->prefix << location->id << post
+                    << pre << location->ownerInfo->prefix << location->id
+                    << post
                     << " -> "
-                    << pre << info->prefix << base->id << post
+                    << pre << base->ownerInfo->prefix << base->id << post
                     << " [color=gold, label=\"ret\"]"
                     << lineend << std::endl;
             }
@@ -3947,9 +4221,10 @@ PointsToAnalysis::Implementation::print(
             if (location != ecr)
             {
                 stream
-                    << pre << info->prefix << location->id << post
+                    << pre << location->ownerInfo->prefix << location->id
+                    << post
                     << " -> "
-                    << pre << info->prefix << ecr->id << post
+                    << pre << ecr->ownerInfo->prefix << ecr->id << post
                     << " [style=dashed]"
                     << lineend << std::endl;
             }
@@ -3970,9 +4245,10 @@ PointsToAnalysis::Implementation::print(
                     std::abort();
                 }
                 stream
-                    << pre << info->prefix << location->id << post
+                    << pre << location->ownerInfo->prefix << location->id
+                    << post
                     << " -> "
-                    << pre << info->prefix << member->id << post
+                    << pre << member->ownerInfo->prefix << member->id << post
                     << " [color=firebrick4, label=\"" << name << "\"]"
                     << lineend << std::endl;
             }
@@ -3986,9 +4262,10 @@ PointsToAnalysis::Implementation::print(
                 for (p = pending.begin(); p != pending.end(); ++p)
                 {
                     stream
-                        << pre << info->prefix << location->id << post
+                        << pre << location->ownerInfo->prefix << location->id
+                        << post
                         << " -> "
-                        << pre << info->prefix << (*p)->id << post
+                        << pre << (*p)->ownerInfo->prefix << (*p)->id << post
                         << " [color=blue, constraint=false]"
                         << lineend << std::endl;
                 }
@@ -3997,9 +4274,11 @@ PointsToAnalysis::Implementation::print(
             if (location->parent_struct != NULL)
             {
                 stream
-                    << pre << info->prefix << location->id << post
+                    << pre << location->ownerInfo->prefix << location->id
+                    << post
                     << " -> "
-                    << pre << info->prefix << location->parent_struct->id << post
+                    << pre << location->parent_struct->ownerInfo->prefix
+                        << location->parent_struct->id << post
                     << " [color=gainsboro, constraint=false]"
                     << lineend << std::endl;
             }
@@ -4007,8 +4286,8 @@ PointsToAnalysis::Implementation::print(
     }
 
     std::map<SgSymbol *, Location *>::iterator i;
-    for (i = info->symbol_locations.begin();
-         i != info->symbol_locations.end(); ++i)
+    for (i = mainInfo->symbol_locations.begin();
+         i != mainInfo->symbol_locations.end(); ++i)
     {
         SgSymbol *var = i->first;
         Location *location = location_representative(i->second);
@@ -4027,7 +4306,7 @@ PointsToAnalysis::Implementation::print(
             stream
                 << pre << name(var) << post
                 << " -> "
-                << pre << info->prefix << location->id << post
+                << pre << location->ownerInfo->prefix << location->id << post
                 << " [style=dotted, color=red]"
                 << lineend << std::endl;
         }
@@ -4144,7 +4423,7 @@ PointsToAnalysis::Implementation::locationAttributeString(
 const PointsToAnalysis::CallGraph &
 PointsToAnalysis::Implementation::getCallGraph()
 {
-    return info->callGraph;
+    return mainInfo->callGraph;
 }
 
 // unused
@@ -4373,8 +4652,8 @@ PointsToAnalysis::Implementation::canonicalSymbol(SgFunctionSymbol *fsym)
     SgFunctionSymbol *result = NULL;
     std::string fname = Utils::name(fsym);
     std::map<std::string, SgFunctionSymbol *>::iterator fpos;
-    fpos = info->canonicalFSymbols.find(fname);
-    if (fpos != info->canonicalFSymbols.end())
+    fpos = mainInfo->canonicalFSymbols.find(fname);
+    if (fpos != mainInfo->canonicalFSymbols.end())
     {
      // We found the canonical symbol for this function.
         result = fpos->second;
@@ -4384,8 +4663,8 @@ PointsToAnalysis::Implementation::canonicalSymbol(SgFunctionSymbol *fsym)
         {
             std::map<std::string, std::set<SgFunctionSymbol *> >::iterator
                 redundantfpos;
-            redundantfpos = info->redundantFunctionSymbols.find(fname);
-            if (redundantfpos != info->redundantFunctionSymbols.end())
+            redundantfpos = mainInfo->redundantFunctionSymbols.find(fname);
+            if (redundantfpos != mainInfo->redundantFunctionSymbols.end())
             {
              // We already have a set for these function symbols, insert our
              // symbol.
@@ -4398,7 +4677,7 @@ PointsToAnalysis::Implementation::canonicalSymbol(SgFunctionSymbol *fsym)
              // a new one containing our symbol.
                 std::set<SgFunctionSymbol *> fsymset;
                 fsymset.insert(fsym);
-                info->redundantFunctionSymbols[fname] = fsymset;
+                mainInfo->redundantFunctionSymbols[fname] = fsymset;
             }
         }
     }
@@ -4406,7 +4685,7 @@ PointsToAnalysis::Implementation::canonicalSymbol(SgFunctionSymbol *fsym)
     {
      // We do not yet have a canonical symbol for this function; the symbol
      // we got as argument will be the canonical one.
-        info->canonicalFSymbols[fname] = fsym;
+        mainInfo->canonicalFSymbols[fname] = fsym;
         result = fsym;
     }
     if (result == NULL)
@@ -4424,7 +4703,7 @@ PointsToAnalysis::Implementation::canonicalSymbol(SgFunctionSymbol *fsym)
 PointsToAnalysis::Location *
 PointsToAnalysis::Implementation::functionLocationForProcnum(int procnum)
 {
-    return info->procedureLocations[procnum]->baseLocation();
+    return mainInfo->procedureLocations[procnum]->baseLocation();
 }
 
 

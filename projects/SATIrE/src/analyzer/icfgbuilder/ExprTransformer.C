@@ -283,6 +283,7 @@ void ExprTransformer::visit(SgNode *node)
             call_block->partner = return_block;
             return_block->partner = call_block;
             call_block->call_target = call_target_expr;
+            cfg->call_target_call_block[call_target_expr] = call_block;
             return_block->call_target = call_target_expr;
 
             /* set links */
@@ -320,6 +321,7 @@ void ExprTransformer::visit(SgNode *node)
             cfg->nodes.push_back(ext_call_block);
             cfg->calls.push_back(ext_call_block);
             ext_call_block->call_target = call_target_expr;
+            cfg->call_target_call_block[call_target_expr] = ext_call_block;
          // GB (2007-10-23): This now records the expression referring to
          // the called function and the parameter list. Because the
          // parameter list has not been computed yet, pass an empty dummy

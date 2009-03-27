@@ -90,6 +90,9 @@ public:
  // location as a.
     std::list<Location *> pending;
 
+ // The info this location belongs to.
+    PointsToAnalysis::PointsToInformation *ownerInfo;
+
     Location(Location *b = NULL, Location *r = NULL);
 };
 

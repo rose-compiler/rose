@@ -63,7 +63,17 @@ ContextInformation::childContexts(int id, const Context &c) const
 {
  // This find form is more complicated than [], but it appears to be
  // necessary to preserve constness.
-    return children.find(std::make_pair(id, c))->second;
+    std::map<std::pair<int, Context>, std::vector<Context> >::const_iterator p;
+    p = children.find(std::make_pair(id, c));
+    if (p == children.end())
+    {
+        std::cerr
+            << "panic! could not find ("
+            << id << ", " << c.toString() << ") in children!"
+            << std::endl;
+        std::abort();
+    }
+    return p->second;
 }
 
 void

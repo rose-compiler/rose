@@ -28,6 +28,7 @@ enum
 };
 
 class BasicBlock;
+class CallBlock;
 class Procedure;
 class CFG;
 
@@ -109,6 +110,8 @@ public:
  // cannot be a vector because the ids are not consecutive
     std::map<SgVariableSymbol *, unsigned long> varsyms_ids;
     std::map<unsigned long, SgVariableSymbol *> ids_varsyms;
+ // mapping from each call target expression to the corresponding call block
+    std::map<SgExpression *, CallBlock *> call_target_call_block;
 
     std::map<std::string, SgVariableSymbol *> names_globals;
     std::map<std::string, SgExpression *> names_initializers;
@@ -171,7 +174,8 @@ class BasicBlock
 public:
     BasicBlock(KFG_NODE_ID id_, KFG_NODE_TYPE type_, int procnum_)
         : id(id_), node_type(type_), procnum(procnum_), call_target(NULL),
-          call_index(0), reachable(true), in_edge_mask(-1), out_edge_mask(-1)
+          call_index(0), isReturnStmt(false), reachable(true),
+          in_edge_mask(-1), out_edge_mask(-1)
     {
     }
 
@@ -189,6 +193,9 @@ public:
  // affected by each such statement.
     SgExpression *call_target;
     int call_index;
+ // GB (2009-03-27): Does this block represent the assignment that arose
+ // from a return statement in the original AST?
+    bool isReturnStmt;
  // GB (2008-05-30): Starting a move towards keeping successor/predecessor
  // blocks and the corresponding edges separated. This makes it easier to
  // iterate over block lists using pointers.
