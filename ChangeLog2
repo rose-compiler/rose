@@ -1,3 +1,11 @@
+2009-03-26 22:35  panas2
+
+	* [r5095] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/runtimeCheck.cpp: Working on 2dim
+	  arrays for RTED
+
 2009-03-26 17:57  saebjornsen1
 
 	* [r5090] /trunk/ROSE/projects/MacroRewrapper/macroRewrapper.C,
