@@ -222,9 +222,11 @@ interval: init.token
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis interval
 	$(MAKE) check -C $(testdir)/interval
 # cd $(testdir) ; bash testsuite/testsuite.sh interval/interval testsuite
+if WITH_SWI_PROLOG
 	@echo "Correctness tests..."
 	$(MAKE) -j1 $(patsubst %.c,%.interval.run, \
            $(wildcard $(top_srcdir)/examples/*/tests/*.c))
+endif
 
 %.loop.term: %.c
 	@echo "Analyzing loops in" $<
