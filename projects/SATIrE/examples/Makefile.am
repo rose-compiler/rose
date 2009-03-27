@@ -205,7 +205,7 @@ pointsto_live_variables: init.token
 	@chmod u+w $(testdir)/interval/intvltest.c
 	@cd $(testdir)/interval; ./interval --output-term=intvltest.term intvltest.c
 	@cd $(testdir)/interval; export TERMITE_LIB=$(datadir)/termite; $(SWI_PL) -q -O -t main -f validator.pl < intvltest.term > intvltest1.term
-	@cd $(testdir)/interval; term2c intvltest1.term -o intvlassert.c
+	@cd $(testdir)/interval; $(DESTDIR)/$(bindir)/term2c intvltest1.term -o intvlassert.c
 	@cd $(testdir)/interval; \
 	($(CC) -std=c99 -o intvlassert intvlassert.c \
 	 && bash -c \
