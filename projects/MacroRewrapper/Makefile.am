@@ -55,7 +55,7 @@ $(TEST_Objects): testMapping $(srcdir)/$(@:.o=.C)
 	if [ "`diff $(srcdir)/tests/$(@:.o=.c).out $(@:.o=.c).out | wc -l`" != "0" ]; then exit 1; fi
 
 
-check-local:
+test:
 	@echo "************************************************************************************"
 	@echo "*** ROSE/projects/MacroRewrapper: make check rule start                          ***"
 	@echo "************************************************************************************"
@@ -63,6 +63,8 @@ check-local:
 	@echo "************************************************************************************"
 	@echo "*** ROSE/projects/MacroRewrapper: make check rule complete (terminated normally) ***"
 	@echo "************************************************************************************"
+
+check-local:
 
 CLEANFILES = 
 
