@@ -1,3 +1,8 @@
+2009-03-27 21:08  saebjornsen1
+
+	* [r5112] /trunk/ROSE/projects/MacroRewrapper/Makefile.am: Disabled
+	  test for now
+
 2009-03-26 22:35  panas2
 
 	* [r5095] /trunk/ROSE/projects/RTED/Makefile.am,
