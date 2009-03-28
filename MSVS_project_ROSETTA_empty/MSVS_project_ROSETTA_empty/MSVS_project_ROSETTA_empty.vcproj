@@ -39,7 +39,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;c:\dquinlan\ROSE\svn-rose\src&quot;;&quot;c:\dquinlan\ROSE\svn-rose\src\util&quot;;&quot;c:\dquinlan\ROSE\svn-rose\src\util\stringSupport&quot;;&quot;c:\dquinlan\ROSE\svn-rose\src\util\commandlineProcessing&quot;;&quot;c:\dquinlan\ROSE\ROSE_CompileTree\svn-rose-Cygwin-gxx-4.2.4&quot;;&quot;c:\dquinlan\ROSE\boost_1_37_0-4.2.4-install\include\boost-1_37&quot;"
+				AdditionalIncludeDirectories="&quot;c:\dquinlan\ROSE\svn-rose\src&quot;;&quot;c:\dquinlan\ROSE\svn-rose\src\util&quot;;&quot;c:\dquinlan\ROSE\svn-rose\src\util\stringSupport&quot;;&quot;c:\dquinlan\ROSE\svn-rose\src\util\commandlineProcessing&quot;;&quot;c:\dquinlan\ROSE\ROSE_CompileTree\svn-rose-Cygwin-gxx-4.2.4&quot;;&quot;c:\dquinlan\ROSE\ROSE_CompileTree\svn-rose-cygwin-gxx-3.4.4&quot;;&quot;c:\dquinlan\ROSE\boost_1_37_0-4.2.4-install\include\boost-1_37&quot;;&quot;c:\dquinlan\ROSE\boost_1_37_0-gxx-3.4.4\include\boost-1_37&quot;"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
