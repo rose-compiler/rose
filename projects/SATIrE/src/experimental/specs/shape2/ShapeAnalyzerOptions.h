@@ -1,5 +1,4 @@
 // Copyright 2007,2008,2009 Viktor Pavlu
-// $Id:$
 
 // Author: Viktor Pavlu, 2007.
 
