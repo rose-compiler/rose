@@ -9,7 +9,6 @@
 
 ANALYSIS='please set ANALYSIS to nnh99 or srw98 when calling this makefile'
 CARRIER=ShapeGraphSetLifted
-
 BUILDDIR=build
 
 
@@ -19,17 +18,32 @@ BUILDDIR=build
 # $(ANALYSIS)shape compiles and links the analysis as standalone binary.
 # postprocess-main edits the newanalysis-generated main.[Ch]
 # files to include common code fragments like visualisation
-$(ANALYSIS)shape_: $(BUILDDIR)/$(ANALYSIS) \
-	                 $(BUILDDIR)/$(ANALYSIS)/$(ANALYSIS).optla \
-	                 $(BUILDDIR)/$(ANALYSIS)/main.C \
-	                 $(BUILDDIR)/$(ANALYSIS)/attributes \
-	                 $(BUILDDIR)/$(ANALYSIS)/ShapeAnalyzerOptions.h \
-	                 $(BUILDDIR)/$(ANALYSIS)/ShapeCommandLineParser.h \
-	                 $(BUILDDIR)/$(ANALYSIS)/ShapeAnalysisDriver.h \
-	                 $(BUILDDIR)/$(ANALYSIS)/PagAttributes.C \
-	                 $(BUILDDIR)/$(ANALYSIS)/visualisation.h \
-	                 $(BUILDDIR)/$(ANALYSIS)/Makefile.custom
+$(ANALYSIS)prepare: $(BUILDDIR)/$(ANALYSIS) \
+	                  $(BUILDDIR)/$(ANALYSIS)/$(ANALYSIS).optla \
+	                  $(BUILDDIR)/$(ANALYSIS)/main.C \
+	                  $(BUILDDIR)/$(ANALYSIS)/attributes \
+	                  $(BUILDDIR)/$(ANALYSIS)/ShapeAnalyzerOptions.h \
+	                  $(BUILDDIR)/$(ANALYSIS)/ShapeCommandLineParser.h \
+	                  $(BUILDDIR)/$(ANALYSIS)/ShapeAnalysisDriver.h \
+	                  $(BUILDDIR)/$(ANALYSIS)/PagAttributes.C \
+	                  $(BUILDDIR)/$(ANALYSIS)/visualisation.h \
+	                  $(BUILDDIR)/$(ANALYSIS)/Makefile.custom
+
+$(ANALYSIS)shape_: $(ANALYSIS)prepare
 	$(MAKE) all -C $(BUILDDIR)/$(ANALYSIS)
+
+$(ANALYSIS)test_: $(ANALYSIS)prepare
+	# generate unit-test driver functions 
+	cd $(ANALYSIS); ../fula-unit/generate-teststubs ../$(BUILDDIR)/$(ANALYSIS)/stubs ../$(BUILDDIR)/$(ANALYSIS)/calls; cd ..
+	# append test functions to .optla
+	cat $(BUILDDIR)/$(ANALYSIS)/stubs >> $(BUILDDIR)/$(ANALYSIS)/$(ANALYSIS).optla
+	cat $(BUILDDIR)/$(ANALYSIS)/calls >> $(BUILDDIR)/$(ANALYSIS)/$(ANALYSIS).optla
+	# run the tests
+	sed -i -e 's/analysisDriver.run(analysis);/analysisDriver.run(analysis);o_run_unit_tests();/g' $(BUILDDIR)/$(ANALYSIS)/main.C
+	# build it
+	$(MAKE) all -C $(BUILDDIR)/$(ANALYSIS)
+	# run it
+	@$(BUILDDIR)/$(ANALYSIS)/$(ANALYSIS) fula-unit/readme > $(BUILDDIR)/$(ANALYSIS)/testrun.txt
 
 $(BUILDDIR)/$(ANALYSIS):
 	mkdir -p $(BUILDDIR)/$(ANALYSIS)

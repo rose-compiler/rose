@@ -1,0 +1,19 @@
+how to create unit tests for fula code:
+
+ - include the functions you want tested in <fula-includes.optla>
+   with an #include "..."
+
+ - create a file whose name begins with "test_"
+   it has the following format:
+    - first line, if it begins with a // comment
+      acts as short description of the test.
+      is displayed along with the results
+    - the following lines are fula code that
+      perform the actual test. the last expression
+      returns true or false, depending on the
+      success of the test.
+
+ - if you want to disable some of the tests, rename
+   the corresponding "test_*" files. only files that
+   have a name starting with "test_" are included by
+   the test driver.

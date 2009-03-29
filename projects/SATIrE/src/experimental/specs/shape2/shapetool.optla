@@ -12,17 +12,17 @@ PROBLEM shape
   carrier   : ShapeGraphLifted
   init      : lift((({},{}),{}))
   init_start: lift((({},{}),{}))
-  combine   : foo
-  retfunc   : foo
-  widening  : foo
-  equal     : eq
+  combine   : __foo
+  retfunc   : __foo
+  widening  : __foo
+  equal     : __eq
 
 TRANSFER
 _,_: @;
 
 SUPPORT
-foo::ShapeGraphLifted,ShapeGraphLifted->ShapeGraphLifted;
-foo(a,_) = a;
-eq::ShapeGraphLifted,ShapeGraphLifted->bool;
-eq(_,_) = true;
+__foo::ShapeGraphLifted,ShapeGraphLifted->ShapeGraphLifted;
+__foo(a,_) = a;
+__eq::ShapeGraphLifted,ShapeGraphLifted->bool;
+__eq(_,_) = true;
 

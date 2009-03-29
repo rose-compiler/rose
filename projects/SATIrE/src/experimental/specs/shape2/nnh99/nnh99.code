@@ -79,7 +79,7 @@ shape_carrier_to_shapegraphset(lifted_sg) = drop(lifted_sg);
 // ----------------------------------------
 
 assign_x_null::VariableId,ShapeGraphSet->ShapeGraphSet;
-assign_x_null(x,gset) = 
+assign_x_null(x,gset) =
   let dummy = debug_print_str("lowlevel","x_null    ".varid_str(x)."\n"); in
   enunion([fassign_x_null(x,g) !! g <-- gset]);
 
@@ -94,10 +94,10 @@ assign_xsel_null(x,sel,gset) =
   enunion([fassign_xsel_null(x,sel,g) !! g <-- gset]);
 
 assign_x_y::VariableId,VariableId,ShapeGraphSet->ShapeGraphSet;
-assign_x_y(x,y,gset) = 
+assign_x_y(x,y,gset) =
   let dummy = debug_print_str("lowlevel","x_y       ".varid_str(x)."\t".varid_str(y)."\n"); in
   enunion([fassign_x_y(x,y,g) !! g <-- gset]);
-  
+
 assign_x_ysel::VariableId,VariableId,VariableId,ShapeGraphSet->ShapeGraphSet;
 assign_x_ysel(x,y,sel,gset) =
   let dummy = debug_print_str("lowlevel","x_ysel     ".varid_str(x)."\t".varid_str(y)."->".varid_str(sel)."\n"); in
@@ -119,7 +119,7 @@ fassign_x_null(x,g) =
   {kill_x(x,g)};
 
 fassign_x_y::VariableId,VariableId,ShapeGraph->ShapeGraphSet;
-fassign_x_y(x,y,((S1,H1),is1) as gi) = 
+fassign_x_y(x,y,((S1,H1),is1) as gi) =
   let S2  = union(
              {(z,gxy(x,y,nz)) !! (z,nz) <-- S1},                      // add x to all edges where y is already
              {(x,gxy(x,y,ny)) !! (y1,ny) <-- S1, if (y1 = y)});       // add a new edge (x,{x,y,...}) to where y pointed to
@@ -132,7 +132,7 @@ fassign_x_ysel(x,y,ysel,((S1,H1),is1) as g) = // it is guaranteed that x!=y
   /* three cases: (see popa, chapter 2.6 shape analysis, [x:=y.sel])
    * case 1: there is no (_,{y,_}) <-- S or no ({y,_},ysel, _) <-- H
    * case 2: there is    (_,{y,_}) <-- S   and ({y,_},ysel, u) <-- H where u != {}
-   * case 3: there is    (_,{y,_}) <-- S   and ({y,_},ysel,{}) <-- H
+   * case 3: there is    (_,{y,_}) <-- S   and ({y,_},ysel,{}) <-- H where u == {}
    */
   if !var_exists(y,g) then
     // case 1a: uninitialised variable (null pointer deref in var)
@@ -140,8 +140,7 @@ fassign_x_ysel(x,y,ysel,((S1,H1),is1) as g) = // it is guaranteed that x!=y
     {kill_x(x,g)}
   else
     if !var_sel_exists(y,ysel,g) then
-      // case 1b: uninitialised selector (null pointer deref in struct-field)
-      print("warn: dereferencing of uninitialised selector: ".varid_str(y).".".varid_str(ysel)."\n")
+      // case 1b: non-pointer value in field (eg. y->ysel is NULL)
       {kill_x(x,g)}
     else
       case heapedge_by_var_sel(y,ysel,H1) of
@@ -206,15 +205,21 @@ materialise::VariableId,VariableId,VariableId,ShapeGraph->ShapeGraphSet;
 materialise(x,y,sel,((S1,H1),is1) as G1) = 
   let dummy = debug_print_str("materialisation","materialise ".varid_str(x)." = ".varid_str(y).".".varid_str(sel)."\n"); in
   let dummy = debug_print_ShapeGraph("materialisation","graph",G1); in
+  let dummy = debug_print_ShapeGraph("mm","graph",G1); in
   // all nx is already removed from G'
   // only check for {} when determining class of edge
-  let n0nx       = {{},{x}}; in
+  let sumloc_or_x   = {{},{x}}; in
   let S2         = union(S1,{(x,{x})});
       H1externa  = {e1a !! (nv1a,sel1a,nw1a) as e1a <-- H1, if (nv1a != {}) && (nw1a != {})};
-      H1extern   = {e1 !! (nv1,sel1,nw1) as e1 <-- H1, if intersect({nv1,nw1},n0nx) = {}};
-      H1intern   = {e2 !! (nv2,sel2,nw2) as e2 <-- H1, if   (nv2 ? n0nx) &&   (nw2 ? n0nx)};
-      H1goingout = {e3 !! (nv3,sel3,nw3) as e3 <-- H1, if   (nv3 ? n0nx) && ! (nw3 ? n0nx)};
-      H1goingin  = {e4 !! (nv4,sel4,nw4) as e4 <-- H1, if ! (nv4 ? n0nx) &&   (nw4 ? n0nx)}; in
+      H1extern   = {e1 !! (nv1,sel1,nw1) as e1 <-- H1, if intersect({nv1,nw1},sumloc_or_x) = {}};
+      H1intern   = {e2 !! (nv2,sel2,nw2) as e2 <-- H1, if   (nv2 ? sumloc_or_x) &&   (nw2 ? sumloc_or_x)};
+      H1goingout = {e3 !! (nv3,sel3,nw3) as e3 <-- H1, if   (nv3 ? sumloc_or_x) && ! (nw3 ? sumloc_or_x)};
+      H1goingin  = {e4 !! (nv4,sel4,nw4) as e4 <-- H1, if ! (nv4 ? sumloc_or_x) &&   (nw4 ? sumloc_or_x)}; in
+
+  let dummy = debug_print_HeapEdgeSet("mm", "intern=", H1intern); in
+  let dummy = debug_print_HeapEdgeSet("mm", "extern=", H1extern); in
+  let dummy = debug_print_HeapEdgeSet("mm", "g-out =", H1goingout); in
+  let dummy = debug_print_HeapEdgeSet("mm", "g-in  =", H1goingin); in
 
   if union(union(H1extern,H1intern),union(H1goingin,H1goingout)) != H1 then error("logic error 1 in materialisation") else // DEBUG sanity check
   if H1externa != H1extern then error("logic error 2 in materialisation") else // DEBUG sanity check

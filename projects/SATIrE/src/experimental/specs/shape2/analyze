@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# tests an input program with srw98 and nnh99
+# Viktor Pavlu, 2009
+
+echo "Performs srw98 and nnh99 Shape Analysis on given File"
+
+builddir=build
+
+if [ "$#" -lt 1 ]; then
+  echo "usage: $0 <TESTFILE> [<OPTIONS>]"
+  exit 1
+fi
+
+nnh99=$builddir/nnh99/nnh99
+srw98=$builddir/srw98/srw98
+
+function analyse {
+  binary=$1
+  gdlfile=$2
+
+  label=srw98
+  echo "$binary" | grep nnh99 > /dev/null 2>&1 && label=nnh99
+
+  echo 
+  echo "**** $label *********************************************************************"
+  cmd="$binary --output-gdl=$gdlfile $OPTIONS $INPUT"
+  echo $cmd
+  $cmd || echo "-- ABORT --"
+  echo '********************************************************************************'
+}
+
+INPUT=$1
+shift
+OPTIONS="$* --callstringlength=42"
+
+analyse "$srw98" "srw98.gdl"
+analyse "$nnh99" "nnh99.gdl"
+echo
+

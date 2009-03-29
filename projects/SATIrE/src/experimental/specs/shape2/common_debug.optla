@@ -7,6 +7,8 @@
 // Year  : 2008
 
 debug_is_active::str->bool;
+debug_is_active("mm") = false;
+
 debug_is_active("tassign")         = false;
 debug_is_active("materialisation") = false;
 debug_is_active("lowlevel")        = false;
