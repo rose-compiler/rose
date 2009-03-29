@@ -1,6 +1,6 @@
-#include "CmdlineOptions.h"
+#include "ShapeAnalyzerOptions.h"
 
-ShapeAnalyzerOptions *opt;
+extern ShapeAnalyzerOptions *opt;
 
 // remove temporary variables introduced in the normalisation process
 PAG_BOOL get_universal_attribute__option_kill_normalisation_temps() {

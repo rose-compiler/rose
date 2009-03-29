@@ -1,6 +1,6 @@
-/* {DFI} is replaced with o_ShapeGraphLifted or o_ShapeGraphSetLifted
+/* DFI enclosed in {} is replaced with o_ShapeGraphLifted or o_ShapeGraphSetLifted
  * for srw98 or nnh99, respectively.
- * this is done in the Makefile.
+ * this is done by the postprocess-main script.
  **/
 
 // dfi_write_ creates the gdl visualisation for every basic block.
@@ -22,12 +22,12 @@ void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, {DFI} info,int id,in
     fprintf(fp, "  title: \"%s\"\n", name);
     fprintf(fp, "  label: \"\"\n");
     
-    //fprintf(fp, "status: grey\n");
-    //if (opt->gdlFoldGraphs()) {
-    //    fprintf(fp, "  status: folded\n");
-    //} else {
+    fprintf(fp, "status: grey\n");
+    if (opt->gdlFoldGraphs()) {
+        fprintf(fp, "  status: folded\n");
+    } else {
         fprintf(fp, "  status: boxed\n");
-    //}
+    }
     
     fprintf(fp, "  orientation: left_to_right\n");
     fprintf(fp, "  color: white\n");
@@ -43,7 +43,7 @@ void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, {DFI} info,int id,in
 
         o_SrwNnhPair gpair = o_extract_graphs({DFI}_drop(info));
         
-        if (opt->showAsSummaryGraph()) {
+        if (opt->gdlShowSummaryGraph()) {
 			      //gstats.addGraphs(1);
             fprintf(fp, "  graph: { /*summary graph*/\n");
             fprintf(fp, "    color: lightgrey\n");
@@ -52,7 +52,7 @@ void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, {DFI} info,int id,in
             n_nodes += dfi_write_ShapeGraph_fp(fp, name, n_graphs, attrib, o_SrwNnhPair_select_1(gpair));
         }
 
-        if (opt->showAsGraphSet()) {
+        if (opt->gdlShowIndividualGraphs()) {
             o_ShapeGraphList graphs = o_SrwNnhPair_select_2(gpair);
             while (!o_ShapeGraphList_is_empty(graphs)) {
                 o_ShapeGraph sg = o_ShapeGraphList_head(graphs);

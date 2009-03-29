@@ -10,6 +10,10 @@ AnalysisDriver::AnalysisDriver(int argc, char **argv)
   init_termite(argc, argv);
 }
 
+AnalysisDriver::AnalysisDriver()
+{
+}
+
 AnalysisDriver::~AnalysisDriver()
 {
 }

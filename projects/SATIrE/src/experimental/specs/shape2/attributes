@@ -1,0 +1,17 @@
+// commandline attributes special to the shape analysis
+
+BOOL_ATTR(aliasTextOutput, Off)
+BOOL_ATTR(aliasSourceOutput, Off)
+
+BOOL_ATTR(gdlFoldGraphs, Off)
+
+#ifdef ANALYSIS_nnh99
+BOOL_ATTR(gdlShowSummaryGraph, Off)
+BOOL_ATTR(gdlShowIndividualGraphs, On)
+#else
+BOOL_ATTR(gdlShowSummaryGraph, On)
+BOOL_ATTR(gdlShowIndividualGraphs, Off)
+#endif
+
+STRING_ATTR(graphStatisticsFile, "")
+

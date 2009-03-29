@@ -1,7 +1,9 @@
 #include "main-support.h"
 #include "main.h"
 
-#include "CmdlineOptions.C"
+#include "ShapeAnalyzerOptions.h"
+#include "ShapeCommandLineParser.h"
+#include "PagAttributes.C"
 
 #if 0
 //  optional graph statistics collector

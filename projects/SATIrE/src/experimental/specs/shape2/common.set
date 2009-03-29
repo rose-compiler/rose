@@ -1,6 +1,6 @@
 /* Author: Viktor Pavlu
    E-mail: e0425543@student.tuwien.ac.at
-   Year  : 2006, 2007, 2008
+   Year  : 2006, 2007, 2008, 2009
 */
 
 BoolSet           = set(bool)

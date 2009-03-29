@@ -23,13 +23,13 @@ protected:
  // These methods can be overwritten for further customization.
     virtual void processResults(Analysis *analysis, Program *program);
     virtual void outputProgram(Program *program);
+    AnalyzerOptions *options;
+    AnalysisDriver();
 
 private:
  // No copying.
     AnalysisDriver(const AnalysisDriver &);
     AnalysisDriver &operator=(const AnalysisDriver &);
-
-    AnalyzerOptions *options;
 };
 
 }
