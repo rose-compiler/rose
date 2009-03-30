@@ -6083,7 +6083,42 @@ void SageInterface::setPragma(SgPragmaDeclaration* decl, SgPragma *pragma)
     newStmt->set_parent(targetStmt->get_parent());
     fixStatement(newStmt,scope);
 
-    isSgStatement(parent)->insert_statement(targetStmt,newStmt,insertBefore);
+    if (isSgIfStmt(parent)) {
+      if (isSgIfStmt(parent)->get_conditional()==targetStmt)
+	insertStatement(isSgStatement(parent),newStmt,insertBefore);
+      else if (isSgIfStmt(parent)->get_true_body()==targetStmt) {
+	//ensureBasicBlockAsParent(targetStmt);
+	insertStatement(isSgStatement(parent),newStmt,insertBefore);
+      }
+      else if (isSgIfStmt(parent)->get_false_body()==targetStmt) {
+	//ensureBasicBlockAsParent(targetStmt);
+	insertStatement(isSgStatement(parent),newStmt,insertBefore);
+      }
+    } else if (isSgWhileStmt(parent)) {
+      if (isSgWhileStmt(parent)->get_condition()==targetStmt)
+	insertStatement(isSgStatement(parent),newStmt,insertBefore);
+      else if (isSgWhileStmt(parent)->get_body()==targetStmt) {
+	//ensureBasicBlockAsParent(targetStmt);
+	insertStatement(isSgStatement(parent),newStmt,insertBefore);
+      }
+    } else if (isSgDoWhileStmt(parent)) {
+      if (isSgDoWhileStmt(parent)->get_condition()==targetStmt)
+	insertStatement(isSgStatement(parent),newStmt,insertBefore);
+      else if (isSgDoWhileStmt(parent)->get_body()==targetStmt) {
+	//ensureBasicBlockAsParent(targetStmt);
+	insertStatement(isSgStatement(parent),newStmt,insertBefore);
+      }
+    } else if (isSgForStatement(parent)) {
+      if (isSgForStatement(parent)->get_loop_body()==targetStmt) {
+	//ensureBasicBlockAsParent(targetStmt);
+	insertStatement(isSgStatement(parent),newStmt,insertBefore);
+      }
+      else if (isSgForStatement(parent)->get_test()==targetStmt) {
+	insertStatement(isSgStatement(parent),newStmt,insertBefore);
+      }
+
+    } else
+      isSgStatement(parent)->insert_statement(targetStmt,newStmt,insertBefore);
 
     // update the links after insertion!
     if (isSgFunctionDeclaration(newStmt))
@@ -6744,6 +6779,7 @@ SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfFor(SgForStatement* fs)
 
   SgStatement* SageInterface::ensureBasicBlockAsParent(SgStatement* s) {
   //SgBasicBlock* ensureBasicBlockAsParent(SgStatement* s) {
+    ROSE_ASSERT(s);
     SgStatement* p = isSgStatement(s->get_parent());
     ROSE_ASSERT (p);
     switch (p->variantT()) {
@@ -6751,34 +6787,44 @@ SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfFor(SgForStatement* fs)
       case V_SgForStatement: {
         if (isSgForStatement(p)->get_loop_body() == s)
           return ensureBasicBlockAsBodyOfFor(isSgForStatement(p));
-        else ROSE_ASSERT (false);
+        else if (isSgForStatement(p)->get_test() == s) {
+        }else ROSE_ASSERT (false);
+	break;
       }
       case V_SgWhileStmt: {
         if (isSgWhileStmt(p)->get_body() == s)
           return ensureBasicBlockAsBodyOfWhile(isSgWhileStmt(p));
-        else ROSE_ASSERT (false);
+        else if (isSgWhileStmt(p)->get_condition() == s) {
+        } else ROSE_ASSERT (false);
+	break;
       }
       case V_SgDoWhileStmt: {
         if (isSgDoWhileStmt(p)->get_body() == s)
           return ensureBasicBlockAsBodyOfDoWhile(isSgDoWhileStmt(p));
-        else ROSE_ASSERT (false);
+        else if (isSgDoWhileStmt(p)->get_condition() == s) {
+	}  else ROSE_ASSERT (false);
+	break;
       }
       case V_SgSwitchStatement: {
         if (isSgSwitchStatement(p)->get_body() == s)
           return ensureBasicBlockAsBodyOfSwitch(isSgSwitchStatement(p));
         else ROSE_ASSERT (false);
+	break;
       }
       case V_SgCatchOptionStmt: {
         if (isSgCatchOptionStmt(p)->get_body() == s)
           return ensureBasicBlockAsBodyOfCatch(isSgCatchOptionStmt(p));
         else ROSE_ASSERT (false);
+	break;
       }
       case V_SgIfStmt: {
         if (isSgIfStmt(p)->get_true_body() == s)
           return ensureBasicBlockAsTrueBodyOfIf(isSgIfStmt(p));
         else if (isSgIfStmt(p)->get_false_body() == s)
           return ensureBasicBlockAsFalseBodyOfIf(isSgIfStmt(p));
-        else ROSE_ASSERT (false);
+        else if (isSgIfStmt(p)->get_conditional() == s) {
+	}  else ROSE_ASSERT (false);
+	break;
       }
       default: {
         // Liao, 7/3/2008 We allow other conditions to fall through, 
