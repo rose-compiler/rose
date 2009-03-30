@@ -108,11 +108,28 @@ getVarSym_const (const SgNode* n)
   switch (n->variantT ())
     {
     case V_SgVarRefExp:
-      v_sym = isSgVarRefExp (n)->get_symbol ();
+    {
+     //We want to handle a->b  case and return a instead of b
+     //Converge to SgInitializedName 
+     // v_sym = isSgVarRefExp(n)->get_symbol ();
+      SgInitializedName *iname = SageInterface::convertRefToInitializedName(isSgVarRefExp (const_cast<SgNode*> (n)));
+      return getVarSym_const (iname);
       break;
+    }
     case V_SgInitializedName:
-      v_sym = getVarSymFromName_const (isSgInitializedName (n));
+    {
+      //v_sym = getVarSymFromName_const (isSgInitializedName (n));
+      SgSymbol* symbol = isSgInitializedName(n)->get_symbol_from_symbol_table();
+      v_sym = isSgVariableSymbol(symbol);
+      if (v_sym == NULL)
+      {
+        cerr<<"Warning: astOutlining/VarSym.cc getVarSym_const() did not find symbol for:"<<
+        n->unparseToString()<<endl;
+        //ROSE_ASSERT(v_sym != NULL);
+        //GCC macros __FUNCTION__ and __PRETTY_FUNCTION__ have no symbols in ROSE for some reason
+      }
       break;
+    }
     default:
       break;
     }

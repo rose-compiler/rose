@@ -23,7 +23,8 @@ static
 void
 dump (const ASTtools::VarSymSet_t& V, const std::string& tag)
 {
-  if (SgProject::get_verbose () >= 2)
+//  if (SgProject::get_verbose () >= 2)
+    if (Outliner::enable_debug)
     cerr << tag << '{' << ASTtools::toString (V) << '}' << endl;
 }
 //! Collect the variables to be passed if 's' is to be outlined

@@ -441,6 +441,8 @@ class StatementGenerator {
   bool isAssignmentStatement(SgNode* _s, SgExpression** lhs=NULL, SgExpression** rhs=NULL, bool* readlhs=NULL);
 
 
+//! Variable references can be introduced by SgVarRef, SgPntrArrRefExp, SgInitializedName, SgMemberFunctionRef etc. This function will convert them all to  a top level SgInitializedName.
+SgInitializedName* convertRefToInitializedName(SgNode* current);
 //@}
 
 //------------------------------------------------------------------------
@@ -645,8 +647,8 @@ size_t getArrayElementCount(SgArrayType* t);
 //! Get the element type of an array
 SgType* getArrayElementType(SgArrayType* t);
 
-//! Check if an expression is an array access. If so, return its name and subscripts if requested. Based on AstInterface::IsArrayAccess()
-bool isArrayReference(SgExpression* ref, SgInitializedName** arrayName=NULL, std::vector<SgExpression*>** subscripts=NULL);
+//! Check if an expression is an array access. If so, return its name expression and subscripts if requested. Based on AstInterface::IsArrayAccess()
+bool isArrayReference(SgExpression* ref, SgExpression** arrayNameExp=NULL, std::vector<SgExpression*>** subscripts=NULL);
 
 
 //! Has a UPC shared type of any kinds (shared-to-shared, private-to-shared, shared-to-private, shared scalar/array)? An optional parameter, mod_type_out, stores the first SgModifierType with UPC access information.

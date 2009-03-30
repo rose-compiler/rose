@@ -96,7 +96,7 @@ int main(int argc, char * argv[])
         outline(outermost_loop);
       else
       {
-        cerr<<"Target loop is not outlineable, abort!"<<endl;
+        cerr<<"Target loop at line "<<outermost_loop->get_file_info()->get_line()<<" is not outlineable, abort!"<<endl;
         ROSE_ASSERT(false);
       }
 #endif       

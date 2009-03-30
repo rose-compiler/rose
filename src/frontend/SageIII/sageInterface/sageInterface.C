@@ -7573,7 +7573,10 @@ CollectDependentDeclarationsTraversal::visit(SgNode *astNode)
              {
             // We might want to not strip typedefs
                strippedType = type->stripType();
-             }
+             } else  if (isSgTypedefType(type))   
+          {// Liao, 3/24/2009: We have to strip typedefs, otherwise get_declaration() will return non-class declaration
+            strippedType = type->stripType();
+          }
 
           SgNamedType* namedType = isSgNamedType(strippedType);
           if (namedType != NULL)
@@ -7583,7 +7586,18 @@ CollectDependentDeclarationsTraversal::visit(SgNode *astNode)
             // separate file.
             // SgDeclarationStatement* declaration = namedType->get_declaration();
                SgClassDeclaration* classDeclaration = isSgClassDeclaration(namedType->get_declaration());
-               ROSE_ASSERT(classDeclaration != NULL);
+               if (classDeclaration == NULL)
+               {
+#if 0                 
+                 cout<<"namedType:"<<strippedType->unparseToString() <<" has non-class declaration:"<<namedType->get_declaration()->class_name()<<endl;
+
+                 SgDeclarationStatement* base_decl = namedType->get_declaration();
+                 while (isSgTypedefDeclaration(base_decl))
+                   base_decl = isSgTypedefDeclaration(base_decl)->get_declaration ();
+                 cout<<"namedType has base declaration:"<<base_decl->class_name()<<endl;
+#endif                 
+                 ROSE_ASSERT(classDeclaration != NULL);
+               }
 
             // printf ("Found class declaration: classDeclaration = %p \n",classDeclaration);
 
@@ -7593,7 +7607,7 @@ CollectDependentDeclarationsTraversal::visit(SgNode *astNode)
             // Note that since types are shared in the AST, the declaration for a named type may be (is) 
             // associated with the class declaration in the original file. However, we want to associated
             // class declaration in the current file, but since the AST copy mechanism work top-down, this
-            // mapping form the declaration in the originl file to the new declaration in the copied AST
+            // mapping form the declaration in the original file to the new declaration in the copied AST
             // is available in the SgCopyHelp map of copied IR nodes.
             // DQ (3/3/2009): Added support for symbol references to be saved (symbols in the original file).
             // these symbols will be mapped to their new symbols.
@@ -8652,27 +8666,68 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
    }
 
 
-//! Variable references can be introduced by SgVarRef, SgPntrArrRefExp, SgInitializedName, SgMemberFunctionRef etc. This function will convert them all to SgInitializedName.
-static SgInitializedName* convertRefToInitializedName(SgNode* current)
+//! Variable references can be introduced by SgVarRef, SgPntrArrRefExp, SgInitializedName, SgMemberFunctionRef etc. This function will convert them all to  a top level SgInitializedName.
+//TODO consult  AstInterface::IsVarRef() for more cases
+SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current)
 {
   SgInitializedName* name = NULL;
+  SgExpression* nameExp = NULL;
   ROSE_ASSERT(current != NULL);
   if (isSgInitializedName(current))
   {
-    name = isSgInitializedName(current);   } else if (isSgPntrArrRefExp(current))
+    name = isSgInitializedName(current);   
+  } 
+  else if (isSgPntrArrRefExp(current))
+  {
+    bool suc=false;
+    suc= SageInterface::isArrayReference(isSgExpression(current),&nameExp);
+    ROSE_ASSERT(suc == true);
+     // has to resolve this recursively
+    return convertRefToInitializedName(nameExp);
+  } 
+  else if (isSgVarRefExp(current))
+  {
+    SgNode* parent = current->get_parent();
+    if (isSgDotExp(parent))
     {
-      bool suc=false;
-      suc= SageInterface::isArrayReference(isSgExpression(current),&name);
-      ROSE_ASSERT(suc = true);
-    } else if (isSgVarRefExp(current))
-    {
-      name = isSgVarRefExp(current)->get_symbol()->get_declaration();
+       if (isSgDotExp(parent)->get_rhs_operand() == current)
+        return convertRefToInitializedName(parent);
     }
-  else
-  { //TODO consult  AstInterface::IsVarRef() for more cases
-    cerr<<"In convertRefToInitializedName(): unhandled reference type:"<<current->class_name()<<endl;
+    else if(isSgArrowExp(parent))
+    {
+      if (isSgArrowExp(parent)->get_rhs_operand() == current)
+        return convertRefToInitializedName(parent);
+    } 
+    name = isSgVarRefExp(current)->get_symbol()->get_declaration();
+  }
+  else if (isSgDotExp(current))
+  {
+    SgExpression* lhs = isSgDotExp(current)->get_lhs_operand();
+    ROSE_ASSERT(lhs); 
+     // has to resolve this recursively
+    return convertRefToInitializedName(lhs);
+  }
+   else if (isSgArrowExp(current))
+  {
+    SgExpression* lhs = isSgArrowExp(current)->get_lhs_operand();
+    ROSE_ASSERT(lhs); 
+     // has to resolve this recursively
+    return convertRefToInitializedName(lhs);
+  } // The following expression types are usually introduced by left hand operands of DotExp, ArrowExp 
+  else if (isSgPointerDerefExp(current))
+  {
+    return convertRefToInitializedName(isSgPointerDerefExp(current)->get_operand());
+  }
+  else if (isSgCastExp(current))
+  {
+    return convertRefToInitializedName(isSgCastExp(current)->get_operand());
+  }
+ else
+  { 
+    cerr<<"In SageInterface::convertRefToInitializedName(): unhandled reference type:"<<current->class_name()<<endl;
     ROSE_ASSERT(false);
   }
+  ROSE_ASSERT(name != NULL);
   return name;
 }
 
@@ -8760,7 +8815,9 @@ bool SageInterface::collectReadWriteVariables(SgStatement* stmt, set<SgInitializ
   ROSE_ASSERT(stmt != NULL);
   vector <SgNode* > readRefs, writeRefs;
   if (!collectReadWriteRefs(stmt, readRefs, writeRefs))
+  {
     return false;
+  }
   // process read references
   vector<SgNode*>::iterator iter = readRefs.begin();
   for (; iter!=readRefs.end();iter++)
@@ -8807,11 +8864,14 @@ void SageInterface::collectReadOnlyVariables(SgStatement* stmt, std::set<SgIniti
 {
   ROSE_ASSERT(stmt != NULL);
   set<SgInitializedName*> readVars, writeVars;
-  collectReadWriteVariables(stmt, readVars, writeVars);
-  // read only = read - write
-  set_difference(readVars.begin(), readVars.end(), 
-                  writeVars.begin(), writeVars.end(),
-                  std::inserter(readOnlyVars, readOnlyVars.begin())); 
+   // Only collect read only variables if collectReadWriteVariables() succeeded. 
+  if (collectReadWriteVariables(stmt, readVars, writeVars))
+  {
+    // read only = read - write
+    set_difference(readVars.begin(), readVars.end(), 
+        writeVars.begin(), writeVars.end(),
+        std::inserter(readOnlyVars, readOnlyVars.begin())); 
+  }
 }
 
 
