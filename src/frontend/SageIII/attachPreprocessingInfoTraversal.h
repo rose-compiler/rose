@@ -96,7 +96,7 @@ class AttachPreprocessingInfoTreeTrav
 
       //  The mapOfAttributes declaration is specific to wave usage.
       //! Map of filenames to list of attributes as found by WAVE.  
-          std::map<std::string,ROSEAttributesList*>* mapOfAttributes; 
+       //   std::map<std::string,ROSEAttributesList*>* mapOfAttributes; 
 
       //! AS(092107) Optimization variable to avoid n^2 complexity in 
       //! iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber()	  

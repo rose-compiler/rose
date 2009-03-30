@@ -1,0 +1,6 @@
+PreprocessingInfo test7.c line 1 col 1 : #if 1
+
+PreprocessingInfo test7.c line 2 col 1 : #else
+PreprocessingInfo test7.c line 3 col 1 : #error "Error in Wave unparsing"
+#endif
+

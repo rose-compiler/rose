@@ -1,0 +1,7 @@
+PreprocessingInfo test1.c line 1 col 1 : #include <stdio.h>
+PreprocessingInfo test1.c line 2 col 1 : #include <stdbool.h>
+PreprocessingInfo test1.c line 3 col 1 : bool
+PreprocessingInfo test1.c line 9 col 3 : bool
+PreprocessingInfo test1.c line 12 col 29 : false
+PreprocessingInfo test1.c line 34 col 1 : bool
+PreprocessingInfo test1.c line 36 col 10 : true

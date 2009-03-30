@@ -1,0 +1,13 @@
+PreprocessingInfo test6.c line 1 col 9 : #define	FOO(x)	= x;
+PreprocessingInfo test6.c line 2 col 9 : #define	EXTERN	
+PreprocessingInfo test6.c line 3 col 9 : #define	INIT(var,val)	var = val
+PreprocessingInfo test6.c line 17 col 9 : #define	ARG(x)	(ValStack[ValStackPtr - Nargs + (x)])
+PreprocessingInfo test6.c line 21 col 2 : // char* x  FOO("foobar");
+
+PreprocessingInfo test6.c line 22 col 1 : //  int   x2  FOO(1);
+
+PreprocessingInfo test6.c line 23 col 1 : EXTERN
+PreprocessingInfo test6.c line 23 col 8 : INIT( char *EndSentIg, "\"')]}>")
+PreprocessingInfo test6.c line 24 col 1 : EXTERN
+PreprocessingInfo test6.c line 24 col 8 : INIT( int EndSentIg1, 1)
+PreprocessingInfo test6.c line 25 col 1 : ARG(0)

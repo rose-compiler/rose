@@ -1,0 +1,6 @@
+PreprocessingInfo test10.c line 1 col 1 : #if 0
+
+PreprocessingInfo test10.c line 2 col 1 : #error "Error in Wave unparsing"
+void  boo(){};
+#endif
+
