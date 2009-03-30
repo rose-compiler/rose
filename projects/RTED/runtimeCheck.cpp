@@ -3,7 +3,7 @@
  * -----------------------------------------------------------*/
 #include <rose.h>
 #include <string>
-
+#include "DataStructures.h"
 #include "RtedTransformation.h"
 
 #include <sys/types.h>
@@ -121,7 +121,7 @@ int getdir(string dir, vector<string> &files, vector<string> &filesExtra) {
   return 0;
 }
 
-void 
+void
 runtimeCheck(int argc, char** argv,vector <string>& rtedfiles) {
   // PARSE AND TRANSFORM - 1rst round--------------------------------
   // Init Transformation object
@@ -197,7 +197,7 @@ int main(int argc, char** argv) {
       cerr << i << ": >>>>> Found filename : " << filename << endl;
     }
   }
-	
+
   // move arguments one to left
   for (int i=2;i<argc;++i) {
     argv[i-1]=argv[i];

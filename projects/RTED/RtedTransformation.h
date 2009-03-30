@@ -1,6 +1,9 @@
 #ifndef RTEDTRANS_H
 #define RTEDTRANS_H
 
+#include "RtedSymbols.h"
+
+
 /* -----------------------------------------------------------
  * tps : 6March 2009: This class adds transformations
  * so that runtime errors are caught at runtime before they happen
@@ -13,9 +16,12 @@ class RtedTransformation : public AstSimpleProcessing {
   // the globalScope = SgProject
   SgGlobal* globalScope;
   // The array of callArray calls that need to be inserted
-  std::map<SgInitializedName*, SgExpression*> create_array_call_initName;
-  std::map<SgVarRefExp*, SgExpression*> create_array_call_varRef;
-  std::map<SgVarRefExp*, SgExpression*> create_array_access_call;
+  std::map<SgVarRefExp*, RTedArray*> create_array_define_varRef_multiArray;
+  std::map<SgInitializedName*, RTedArray*> create_array_define_varRef_multiArray_stack;
+  std::map<SgVarRefExp*, RTedArray*> create_array_access_call;
+  // remember variables that were used to create an array. These cant be reused for array usage calls
+  std::vector<SgVarRefExp*> createVariables;
+
 
   // The following are vars that are needed for transformations
   // and retrieved through the visit function
@@ -29,7 +35,6 @@ class RtedTransformation : public AstSimpleProcessing {
   SgStatement* getStatement(SgExpression* exp);
   // Transformation specific Helper Functions
   SgStatement* getSurroundingStatement(SgNode* n);
-
   // insert: RuntimeSystem* runtimeSystem = new RuntimeSystem();
   void insertRuntimeSystemClass();
 
@@ -37,24 +42,29 @@ class RtedTransformation : public AstSimpleProcessing {
   virtual void visit(SgNode* n);
 
   // Function that inserts call to array : runtimeSystem->callArray
-  void insertArrayCreateCall(SgNode* name,SgExpression* value);
-  void insertArrayAccessCall(SgVarRefExp* n, SgExpression* value);
+  void insertArrayCreateCall(SgVarRefExp* n, RTedArray* value);
+  void insertArrayCreateCall(SgInitializedName* initName,  RTedArray* value);
+  void insertArrayCreateCall(SgStatement* stmt,SgInitializedName* initName,  RTedArray* value);
 
+  void insertArrayAccessCall(SgVarRefExp* n, RTedArray* value);
+  void insertArrayAccessCall(SgStatement* stmt,
+			SgInitializedName* initName, RTedArray* array);
 
   SgInitializedName* getRightOfDot(SgDotExp* dot , std::string str);
   SgInitializedName* getRightOfArrow(SgArrowExp* arrow , std::string str);
   SgInitializedName* getPlusPlusOp(SgPlusPlusOp* plus ,std::string str);
   SgInitializedName* getMinusMinusOp(SgMinusMinusOp* minus ,std::string str);
 
+  int getDimension(SgInitializedName* initName);
+  RtedSymbols* symbols;
 
  public:
   RtedTransformation() {
     //inputFiles=files;
     globalScope=NULL;
-    create_array_call_initName.clear();
-    create_array_call_varRef.clear();
     roseCreateArray=NULL;
     roseArrayAccess=NULL;
+    symbols = new RtedSymbols();
   };
   virtual ~RtedTransformation(){
   //  inputFiles.clear();

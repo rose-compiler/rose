@@ -25,7 +25,8 @@ LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -ldl
 
 runtimeCheck_SOURCES = runtimeCheck.cpp \
                        RtedTransformation.cpp \
-                       RuntimeSystem.cpp 
+                       RuntimeSystem.cpp \
+                       RtedSymbols.cpp
 
 runtimeCheck_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS) 
 
@@ -51,7 +52,9 @@ $(TEST_Objects): runtimeCheck $(TESTCODES)
 EXTRA_DIST = example.C \
              RtedTransformation.h \
              RuntimeSystem.h \
-             index_array.txt 
+             index_array.txt \
+             DataStructures.h \
+             RtedSymbols.h
 
 CLEANFILES = *.out *.ti *.pdf test_runtime* *.txt rose_test_c_E_1_1_a
 
