@@ -1,0 +1,218 @@
+/***************************************************************
+ * ARAL Parser
+ * Author: Markus Schordan, 2009.                              *
+ ***************************************************************/
+
+%{
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "parser_decls.h"
+
+char *input_filename = NULL;
+char *output_filename = "a.c";
+
+//void process_unit(struct func *);
+
+void MSG(char* s)
+{
+#ifdef TEST 
+	printf("%s",s);
+#endif
+}
+
+#ifndef NDEBUG
+#ifndef YYDEBUG
+#define YYDEBUG 1
+#endif
+#endif
+
+%}
+
+%union {
+char* idstring; /* IDENT */
+char* string; /* STRING */
+long intval; /* INTEGER */
+int length; /* #elements */
+Data* araldata;
+Set* aralset;
+List* arallist;
+Tuple* araltuple;
+}
+
+%token ';' ',' 
+%token '{' '}' '[' ']' '<' '>' '(' ')' 
+%token <idstring> IDENT 
+%token <intval> INTEGER
+%token <string> STRING
+
+%type <araldata> element basic_element
+%type <aralset> set_elements opt_set_elements
+%type <arallist> list_elements opt_list_elements
+%type <arallist> tuple_elements opt_tuple_elements
+
+
+%start start
+
+%%
+
+start		: data_section
+		;
+
+data_section	: data
+		;
+data		: element { std::cout << $1->toString() << std::endl; }
+		;
+
+element		: basic_element
+		| '{' opt_set_elements '}' { $$=$2; }
+		| '[' opt_list_elements ']' { $$=$2; }
+		| '(' opt_tuple_elements ')' 
+		  { 
+			Tuple* t=new Tuple($2->size());
+			int pos=0;
+			for(List::iterator i=$2->begin();i!=$2->end();++i,++pos) {
+				t->setAt(pos,*i);
+			}
+			delete $2;
+			$$=t;
+		  }
+		;
+
+basic_element	: IDENT { $$=new Int32(-1 /*dummy*/); }
+		| STRING { $$=new Int32(-2 /*dummy*/); }
+		| INTEGER { $$=new Int32($1); }
+		;
+
+opt_set_elements: /* empty */
+		{
+			$$ = new Set();
+		}
+		| set_elements
+		{
+			$$=$1;
+		}
+		;
+opt_list_elements: /* empty */
+		{
+			$$ = new List();
+		}
+		| list_elements
+		{
+			$$=$1;
+		}
+		;
+opt_tuple_elements: /* empty */
+		{
+			$$ = new List();
+		}
+		| tuple_elements
+		{
+			$$=$1;
+		}
+		;
+set_elements:
+ 	element
+	{ 	
+		$$ = new Set();
+		$$ -> add($1);
+	}
+	| set_elements ',' element	
+	{ 
+		$1->add($3);
+		$$=$1; 
+	} 
+    	;
+
+list_elements:
+ 	element
+	{ 	
+		$$ = new List();
+		$$ -> addBack($1);
+	}
+	| list_elements ',' element	
+	{ 
+		$1->addBack($3);
+		$$=$1; 
+	} 
+    	;
+
+tuple_elements:
+ 	element
+	{ 	
+		$$ = new List();
+		$$ -> addBack($1);
+	}
+	| tuple_elements ',' element	
+	{ 
+		$1->addBack($3);
+		$$=$1; 
+	} 
+    	;
+
+
+%%
+
+void
+yyerror(const char* errorMessage)
+{
+  /* yylineno, errorMessage, yytext */
+  fprintf(stderr,"ARAL parse error: line %d: %s at %s\n",yylineno,errorMessage,yytext);
+}
+
+#if 0
+void process_unit(struct func *unit)
+{
+  /* build symboltables for all functions */
+  build_symtab(unit);
+
+  /********************************************/
+  /* insert analysis and optimizations here!! */
+  /********************************************/
+
+  /* output unit */
+  output_unit(output_filename,unit); 
+}
+#endif
+
+int main(int argc, char **argv)
+{
+ int i; 
+ 
+ for(i=1;i<argc;i++) {
+    if (*argv[i]=='-') {
+       switch(*(argv[i]+1)) {
+       /* output option */
+       case 'o': 
+          output_filename=argv[i]+2; 
+          break;
+
+       /********************************/
+       /* specify your own option here */ 
+       /********************************/
+            
+       default:
+          fprintf(stderr,"%s: unknown argument option\n",argv[0]); 
+          exit(1);
+       }
+    } else {
+      if (input_filename != NULL) {
+         fprintf(stderr,"%s: only one input file allowed\n",argv[0]); 
+         exit(1);
+      }
+      input_filename = argv[i];
+    }
+ }
+
+ if (input_filename != NULL) {
+    if ((freopen(input_filename, "r",stdin))==NULL) {
+      fprintf(stderr,"%s: cannot open input file %s\n",argv[0],input_filename); 
+      exit(1);
+    }
+ }
+
+ exit(yyparse()); 
+}
+
+
