@@ -20,9 +20,11 @@
 #include <fstream>
 #include <sys/types.h>
 #include <sys/stat.h>
+#if !ROSE_MICROSOFT_OS
 #include <dirent.h>
 #include </usr/include/sys/file.h>
 #include <unistd.h>
+#endif
 #include <assert.h>
 
 #include "ROSETTA_macros.h"

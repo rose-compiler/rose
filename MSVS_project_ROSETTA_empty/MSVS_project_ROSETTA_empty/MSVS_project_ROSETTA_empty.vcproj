@@ -180,10 +180,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\util\commandlineProcessing\commandline_processing.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\src\util\stringSupport\escape.C"
 				>
 				<FileConfiguration
@@ -194,10 +190,6 @@
 						CompileAs="2"
 					/>
 				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\src\util\stringSupport\escape.h"
-				>
 			</File>
 			<File
 				RelativePath="..\..\src\util\stringSupport\FileNameClassifier.C"
@@ -224,15 +216,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\ROSE_CompileTree\svn-rose-Cygwin-gxx-4.2.4\rose_config.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\src\util\stringSupport\string_functions.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\util\stringSupport\string_functions.h"
 				>
 			</File>
 		</Filter>
@@ -242,11 +226,27 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
+				RelativePath="..\..\src\util\commandlineProcessing\commandline_processing.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\util\stringSupport\escape.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\util\processSupport.h"
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\ROSE_CompileTree\svn-rose-Cygwin-gxx-4.2.4\rose_config.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\util\setup.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\util\stringSupport\string_functions.h"
 				>
 			</File>
 		</Filter>

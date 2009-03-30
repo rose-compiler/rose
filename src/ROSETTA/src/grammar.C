@@ -348,6 +348,7 @@ Grammar::generateStringListsFromSubtreeLists ( Terminal & node,
 
 #define PREORDER_TRAVERSAL false
 
+#if !ROSE_MICROSOFT_OS
 #if (PREORDER_TRAVERSAL == true)
 
   for( grammarStringIterator = listOfIncludes.begin(); 
@@ -366,7 +367,8 @@ Grammar::generateStringListsFromSubtreeLists ( Terminal & node,
 #endif
 
 #endif
-  
+#endif
+
   if (node.getBaseClass() != NULL) {
     // Recursive function call
     generateStringListsFromSubtreeLists (*(node.getBaseClass()), includeList, excludeList, listFunction );
@@ -379,6 +381,7 @@ Grammar::generateStringListsFromSubtreeLists ( Terminal & node,
   checkListOfGrammarStrings(excludeList);
 #endif
 
+#if !ROSE_MICROSOFT_OS
 #if (PREORDER_TRAVERSAL == false)
 
   for( grammarStringIterator = listOfIncludes.begin(); 
@@ -397,7 +400,7 @@ Grammar::generateStringListsFromSubtreeLists ( Terminal & node,
 #endif
 
 #endif
-}
+#endif
 
 
 void 
@@ -417,6 +420,7 @@ Grammar::generateStringListsFromLocalLists ( Terminal & node,
   
 #define PREORDER_TRAVERSAL false
 
+#if !ROSE_MICROSOFT_OS
 #if (PREORDER_TRAVERSAL == true)
 
   for( grammarStringIterator = listOfIncludes.begin(); 
@@ -435,7 +439,8 @@ Grammar::generateStringListsFromLocalLists ( Terminal & node,
 #endif
 
 #endif
-  
+#endif
+
   if (node.getBaseClass() != NULL) {
     // Recursive function call
     generateStringListsFromLocalLists (*(node.getBaseClass()), includeList, excludeList, listFunction );
@@ -448,6 +453,7 @@ Grammar::generateStringListsFromLocalLists ( Terminal & node,
   checkListOfGrammarStrings(excludeList);
 #endif
 
+#if !ROSE_MICROSOFT_OS
 #if (PREORDER_TRAVERSAL == false)
 
   for( grammarStringIterator = listOfIncludes.begin(); 
@@ -465,6 +471,7 @@ Grammar::generateStringListsFromLocalLists ( Terminal & node,
   checkListOfGrammarStrings(excludeList);
 #endif
 
+#endif
 #endif
 }
 
