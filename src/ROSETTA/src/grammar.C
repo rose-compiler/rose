@@ -401,7 +401,7 @@ Grammar::generateStringListsFromSubtreeLists ( Terminal & node,
 
 #endif
 #endif
-
+}
 
 void 
 Grammar::generateStringListsFromLocalLists ( Terminal & node,
