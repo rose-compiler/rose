@@ -509,24 +509,25 @@ attachPreprocessingInfoUsingWave (SgSourceFile *sageFilePtr, AttributeMapType& a
           ROSEAttributesList*  attrList = it_files->second;
           mapFilenameToAttributes[filename2] = attrList;
 
-          ROSEAttributesList* returnListOfAttributes = new ROSEAttributesList();
-
           if (SgProject::get_verbose() >= 1)
             std::cout << "source file name:" << sageFilePtr->generate_C_preprocessor_intermediate_filename(filename2) << std::endl;
 //          std::vector<PreprocessingInfo*>* preproc_info = new std::vector<PreprocessingInfo*>();
-          attributeMapForAllFiles[sourceFileNameId] = returnListOfAttributes;
+    //      attributeMapForAllFiles[sourceFileNameId] = attrList;
 
+#if 1
           for (std::vector<PreprocessingInfo*>::iterator it_preproc = attrList->getList().begin(); it_preproc != attrList->getList().end(); ++it_preproc)
              {
                //preproc_info->push_back(*it_preproc);
-               returnListOfAttributes->addElement(**it_preproc);
+//               returnListOfAttributes->addElement(**it_preproc);
+               ROSE_ASSERT(*it_preproc != NULL);
                if( SgProject::get_verbose() >= 1 )
                  std::cerr << "Added Macro " << (*it_preproc)->getString() << std::endl;
              }
+#endif
 
           if (SgProject::get_verbose() >= 1)
              {
-               std::cout << "Size of vector: " << returnListOfAttributes->size() << std::endl;
+               std::cout << "Size of vector: " << attrList->size() << std::endl;
                std::cout << "Iterating over filename:" << filename2 << std::endl;
              }
         }

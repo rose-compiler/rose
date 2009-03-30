@@ -75,7 +75,7 @@ AttachPreprocessingInfoTreeTrav::AttachPreprocessingInfoTreeTrav( SgSourceFile* 
   // sizeOfCurrentListOfAttributes = 0;
   // currentFileName               = NULL;
   // currentMapOfAttributes        = NULL;
-     use_Wave                      = false;
+     use_Wave                      = file->get_wave();
      processAllIncludeFiles        = includeDirectivesAndCommentsFromAllFiles;
   // start_index                   = 0;
 
@@ -565,24 +565,29 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
           std::cerr << "The filename in the preprocessor : " << currentStringFilename << std::endl;
 
 #if 1
-       // DQ (12/12/2008): Comment out for now while we work on non-wave support.
-          ROSE_ASSERT(mapOfAttributes != NULL);
-          if (mapOfAttributes->find(currentStringFilename) == mapOfAttributes->end())
-             {
-            // There is no existing list for this file, so build an empty list.
-             returnListOfAttributes = new ROSEAttributesList();
-              
-             }
-            else
+          delete returnListOfAttributes;
+
+          returnListOfAttributes = new ROSEAttributesList();
+
+
+
+
+          //Copy the ROSEAttributesList from the global mapFilenameToAttributes as the elments that are attached to
+          //the AST from the ROSEAttributesList is set to NULL by the attachment process 
+          if (mapFilenameToAttributes.find(currentStringFilename) != mapFilenameToAttributes.end())
              {
             // If there already exists a list for the current file then get that list.
-               ROSE_ASSERT( mapOfAttributes->find(currentStringFilename)->second != NULL);
+               ROSE_ASSERT( mapFilenameToAttributes.find(currentStringFilename)->second != NULL);
 
-            // Delete the empty list build at the top of the function.
-               delete returnListOfAttributes;
-               returnListOfAttributes = NULL;
+               ROSEAttributesList* existingReturnListOfAttributes = mapFilenameToAttributes.find(currentStringFilename)->second;
 
-               returnListOfAttributes = mapOfAttributes->find(currentStringFilename)->second;
+               for (std::vector<PreprocessingInfo*>::iterator it_1 =
+                   existingReturnListOfAttributes->getList().begin(); it_1 != existingReturnListOfAttributes->getList().end();
+                   ++it_1)
+               {
+                 returnListOfAttributes->addElement(**it_1);
+               }
+
              }
 #else
           printf ("Commented out for now while we work on non-wave support. \n");
@@ -618,6 +623,7 @@ AttachPreprocessingInfoTreeTrav::getListOfAttributes ( int currentFileNameId )
        // Check if the attributes have been gathered for this file
           if (attributeMapForAllFiles.find(currentFileNameId) == attributeMapForAllFiles.end())
              {
+
             // If not then read the file and collect the CPP directives and comments from each file.
 
             // We always want to process the source file, but not always all the include files.
@@ -633,6 +639,7 @@ AttachPreprocessingInfoTreeTrav::getListOfAttributes ( int currentFileNameId )
 #endif
                if (skipProcessFile == false)
                   {
+
                     attributeMapForAllFiles[currentFileNameId] = buildCommentAndCppDirectiveList(use_Wave);
 
                     ROSE_ASSERT(attributeMapForAllFiles.find(currentFileNameId) != attributeMapForAllFiles.end());

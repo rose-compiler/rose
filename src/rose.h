@@ -2,7 +2,7 @@
 
 #ifndef ROSE_H
 #define ROSE_H
-
+#define BOOST_WAVE_PREPROCESS_PRAGMA_BODY 1
 
 #if 0
 // Forward references to namespaces used in the binary execuable file format support.
