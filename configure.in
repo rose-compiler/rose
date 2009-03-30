@@ -42,6 +42,8 @@ echo "Building ROSE for cpu       = $build_cpu"
 echo "Building ROSE for OS vendor = $build_vendor"
 echo "Building ROSE for OS        = $build_os"
 
+DETERMINE_OS
+
 # DQ (3/20/2009): The default is to assume Linux, so skip supporting this test.
 # AM_CONDITIONAL(ROSE_BUILD_OS_IS_LINUX,  [test "x$build_os" = xlinux-gnu])
 AM_CONDITIONAL(ROSE_BUILD_OS_IS_OSX,    [test "x$build_vendor" = xapple])

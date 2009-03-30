@@ -1,5 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+if !OS_MACOSX
+
 TEST_TRANSLATOR = $(top_builddir)/tests/testTranslator $(ROSE_FLAGS)
 
 # This rule is run after automake's internal check rule (which we don't want to use)
@@ -64,14 +66,16 @@ test:
 	@echo "*****************************************************************************************************************"
 
 check-local:
-#	$(MAKE) test
+	$(MAKE) test
 	@echo "*****************************************************************************************************************"
 	@echo "*  ROSE/tests/CompilerOptionTests/testGenerateSourceFileNames: ############# TESTS COMMENTED OUT ############   *"
 	@echo "*****************************************************************************************************************"
 
+endif
 
 EXTRA_DIST = doesFilesExist.sh  filesNotExist.sh test1.C 
 
 clean-local:
 	rm -f *.o test1 *.s rm *.out rose_*.C *.C.pdf *.dot core local_test-isystemOption.C *.dump *.new
+
 
