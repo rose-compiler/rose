@@ -203,36 +203,53 @@ namespace SageInterface
   }
 
   //! Check if an expression is an array access. If so, return its name and subscripts if requested. Based on AstInterface::IsArrayAccess()
-  bool isArrayReference(SgExpression* ref, SgInitializedName** arrayName/*=NULL*/, vector<SgExpression*>** subscripts/*=NULL*/)
- {
-  SgExpression* arrayRef=NULL;
-  if (ref->variantT() == V_SgPntrArrRefExp) {
-    if (subscripts != 0 || arrayName != 0) {
-      SgExpression* n = ref;
-      while (true) {
-        SgPntrArrRefExp *arr = isSgPntrArrRefExp(n);
-        if (arr == 0)
-          break;
-        n = arr->get_lhs_operand();
-        // store left hand for possible reference exp to array variable
-        if (arrayName!= 0)
-          arrayRef = n;
-        // right hand stores subscripts
-        if (subscripts != 0)
-          (*subscripts)->push_back(arr->get_rhs_operand());
-      } // end while
-      if  (arrayName !=NULL)
-      {
-        ROSE_ASSERT(arrayRef != NULL);
-        if (isSgVarRefExp(arrayRef))
-          *arrayName = isSgVarRefExp(arrayRef)->get_symbol()->get_declaration();
+  bool isArrayReference(SgExpression* ref, SgExpression** arrayName/*=NULL*/, vector<SgExpression*>** subscripts/*=NULL*/)
+  {
+    SgExpression* arrayRef=NULL;
+    if (ref->variantT() == V_SgPntrArrRefExp) {
+      if (subscripts != 0 || arrayName != 0) {
+        SgExpression* n = ref;
+        while (true) {
+          SgPntrArrRefExp *arr = isSgPntrArrRefExp(n);
+          if (arr == 0)
+            break;
+          n = arr->get_lhs_operand();
+          // store left hand for possible reference exp to array variable
+          if (arrayName!= 0)
+            arrayRef = n;
+          // right hand stores subscripts
+          if (subscripts != 0)
+            (*subscripts)->push_back(arr->get_rhs_operand());
+        } // end while
+        if  (arrayName !=NULL)
+        {
+          *arrayName = arrayRef;
+#if 0 // we decided to delegate this to convertRefToInitializedName()
+          ROSE_ASSERT(arrayRef != NULL);
+          if (isSgVarRefExp(arrayRef))
+            *arrayName = isSgVarRefExp(arrayRef)->get_symbol()->get_declaration();
+          else if (isSgDotExp(arrayRef))
+          { // just return the parent object name for now 
+             // this may not be a good choice,but we do this for collect referenced top variables
+              // within outliner  
+            SgVarRefExp* lhs = NULL;
+            lhs = isSgVarRefExp(isSgDotExp(arrayRef)->get_lhs_operand());
+            ROSE_ASSERT(lhs != NULL);
+            *arrayName = lhs->get_symbol()->get_declaration();
+          }
+          else
+           {
+            cout<<"Unhandled case in isArrayReference():"<<arrayRef->class_name()<<" "
+            arrayRef->unparseToString()<<endl;
+            ROSE_ASSERT(false);
+           }
+#endif 
+        }
       }
-
+      return true;
     }
-    return true;
+    return false;
   }
-  return false;
-}
  
  
   //! Calculate the number of elements of an array type

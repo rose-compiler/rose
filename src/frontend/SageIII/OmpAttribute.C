@@ -523,7 +523,7 @@ namespace OmpSupport{
         for (; iter!=operators.end();iter++)
         {
           if (iter!=operators.begin())
-            result+=","; // a ',' between each clause
+            result+=" "; // a ' ' between each clause
           omp_construct_enum optype = *iter;
           result += OmpSupport::toString(omp_type);
           result +=" ("+ OmpSupport::toString(optype)+":";
@@ -614,7 +614,7 @@ namespace OmpSupport{
       if (iter==clause_vector.begin())
         result+= " "; // space between directive and first clause
       else
-        result+= ",";
+        result+= " "; //avoid using ',' since GCC 4.2.x is picky about this
       result+= toOpenMPString(*iter);
     }
     return result;
