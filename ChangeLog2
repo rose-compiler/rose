@@ -1,3 +1,20 @@
+2009-03-30 16:25  dquinlan
+
+	* [r5161]
+	  /trunk/ROSE/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty.ncb,
+	  /trunk/ROSE/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty.sln,
+	  /trunk/ROSE/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty.suo,
+	  /trunk/ROSE/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty/Debug/BuildLog.htm,
+	  /trunk/ROSE/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty/Debug/commandline_processing.obj,
+	  /trunk/ROSE/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty/Debug/vc80.idb,
+	  /trunk/ROSE/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty/Debug/vc80.pdb,
+	  /trunk/ROSE/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty.vcproj,
+	  /trunk/ROSE/projects/palette/rose.P,
+	  /trunk/ROSE/src/ROSETTA/src/grammar.C,
+	  /trunk/ROSE/src/ROSETTA/src/grammar.h,
+	  /trunk/ROSE/src/ROSETTA/src/terminal.h: More MSVS support for
+	  ROSE.
+
 2009-03-28 15:51  dquinlan
 
 	* [r5125]
