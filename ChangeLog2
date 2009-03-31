@@ -1,3 +1,109 @@
+2009-03-30 23:31  panas2
+
+	* [r5168] /trunk/ROSE/projects/RTED/DataStructures.h,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedSymbols.cpp,
+	  /trunk/ROSE/projects/RTED/RtedSymbols.h,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/runtimeCheck.cpp: RTED passes
+	  c_E_5_1_e_s.c and c_E_1_1_e.c
+
+2009-03-30 23:31  panas2
+
+	* [r5167]
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C:
+	  Changes to sageInterface important for RTED work
+
+2009-03-30 22:27  saebjornsen1
+
+	* [r5166] /trunk/ROSE/config/determinte-os.m4,
+	  /trunk/ROSE/configure.in,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testGenerateSourceFileNames/Makefile.am:
+	  Added Makefile.am flags for each platform. Added test of ROSE
+	  commandline parsing on all platforms except MACOSX.
+
+2009-03-30 21:01  saebjornsen1
+
+	* [r5165] /trunk/ROSE/src/ROSETTA/src/grammar.C: Fix for bug
+	  introduced in MSVC commit
+
+2009-03-30 20:33  liao6
+
+	* [r5164] /trunk/ROSE/projects/autoTuning/autoTuning.C,
+	  /trunk/ROSE/projects/autoTuning/tests/Makefile.am,
+	  /trunk/ROSE/projects/autoTuning/tests/jacobi-omp.c,
+	  /trunk/ROSE/projects/autoTuning/tests/jacobi-raw-omp.xml,
+	  /trunk/ROSE/src/frontend/SageIII/OmpAttribute.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface_type.C,
+	  /trunk/ROSE/src/midend/astOutlining/CollectVars.cc,
+	  /trunk/ROSE/src/midend/astOutlining/VarSym.cc,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/moreTest2.c:
+	  Enabled outliner to handle variable references caused by DotExp
+	  and ArrowExp etc.
+	  Added a test case for projects/autoTuing to test aggressive code
+	  triage based on OpenMP for loop information
+	  
+	  Details:
+	  * new interface to get correct referenced variable from possible
+	  struct/class field member
+	  SageInterface::convertRefToInitializedName()
+	  * SageInterface::isArrayReference() return more generic array
+	  name expression, rather than SgInitializedName
+	  * Enable the Outliner's variable collection phase to collect root
+	  variable from struct/class field member accesses
+	  * OmpAtttribute toString(): avoid using ',' between clauses to
+	  bypass a GCC 4.2 bug
+
+2009-03-30 19:28  saebjornsen1
+
+	* [r5163] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/src/frontend/SageIII/attachPreprocessingInfo.C,
+	  /trunk/ROSE/src/frontend/SageIII/attachPreprocessingInfoTraversal.C,
+	  /trunk/ROSE/src/frontend/SageIII/attachPreprocessingInfoTraversal.h,
+	  /trunk/ROSE/src/rose.h,
+	  /trunk/ROSE/tests/CompilerOptionsTests/Makefile.am,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/Makefile.am,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/rose_test1.c,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/rose_test10.c,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/rose_test2.c,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/rose_test3.c,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/rose_test4.c,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/rose_test5.c,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/rose_test6.c,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/rose_test7.c,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/rose_test8.c,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/rose_test9.c,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/test1.c,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/test1.c.out,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/test10.c,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/test10.c.out,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/test2.c,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/test2.c.out,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/test3.c,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/test3.c.out,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/test4.c,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/test4.c.out,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/test5.c,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/test5.c.out,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/test6.c,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/test6.c.out,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/test7.c,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/test7.c.out,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/test8.c,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/test8.c.out,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/test9.c,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/test9.c.out,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/testWave.C: Bug
+	  fixes in ROSE Wave support and added tests of ROSE Wave support
+
 2009-03-30 16:25  dquinlan
 
 	* [r5161]
