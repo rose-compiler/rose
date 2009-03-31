@@ -39,7 +39,7 @@ extern "C" FLO_BOOL o_ContextInfo_eq(void *p, void *q)
             ? FLO_TRUE : FLO_FALSE);
 }
 
-extern "C" FLO_BOOL o_ContextInfo_new(void *p, void *q)
+extern "C" FLO_BOOL o_ContextInfo_neq(void *p, void *q)
 {
     return (o_ContextInfo_eq(p, q) ? FLO_FALSE : FLO_TRUE);
 }
