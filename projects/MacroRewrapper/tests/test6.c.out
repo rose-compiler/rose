@@ -1,12 +1,4 @@
 
-Macro def at: test6.c l 17 c 9
-FORMAL BODY: (ValStack[ValStackPtr - Nargs + (x)])
-It has 1 calls to it
-
-Macro Call at test6.c l 25 c 1EXPANDED: (ValStack[ValStackPtr - Nargs + (0)])
-Matching AST: ValStack[(ValStackPtr - Nargs) + 0];
-Is inconsistent with:
-
 Macro def at: test6.c l 1 c 9
 FORMAL BODY: = x;
 It has 0 calls to it
@@ -26,4 +18,12 @@ Matching AST: char *EndSentIg = "\"\')]}>";
 Is inconsistent with:
 Macro Call at test6.c l 24 c 8EXPANDED: int EndSentIg1 = 1
 Matching AST: int EndSentIg1 = 1;
+Is inconsistent with:
+
+Macro def at: test6.c l 17 c 9
+FORMAL BODY: (ValStack[ValStackPtr - Nargs + (x)])
+It has 1 calls to it
+
+Macro Call at test6.c l 25 c 1EXPANDED: (ValStack[ValStackPtr - Nargs + (0)])
+Matching AST: ValStack[(ValStackPtr - Nargs) + 0];
 Is inconsistent with:

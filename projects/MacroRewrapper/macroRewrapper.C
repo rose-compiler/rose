@@ -1,4 +1,5 @@
 #include "macroRewrapper.h"
+#include <algorithm>
 //#define VERBOSE_MESSAGES_OF_WAVE true
 
 
@@ -887,16 +888,50 @@ AnalyzeMacroCalls::check_for_inconsistencies(){
     return std::pair<int,int>(consistencies,inconsistencies);
 };
 
+  bool
+sort_preprocessing_info(const PreprocessingInfo* left, const PreprocessingInfo* right )
+{
+
+  if(left->getLineNumber() < right->getLineNumber()) return true;
+  if( (left->getLineNumber() == right->getLineNumber())
+      && ( left->getColumnNumber() < right->getColumnNumber() ) )
+    return true;
+
+  return false;
+};
+
+bool
+sort_macro_call(const MappedMacroCall& l, const MappedMacroCall& r )
+{
+  PreprocessingInfo* left  = l.macro_call;
+  PreprocessingInfo* right = r.macro_call;
+
+  return sort_preprocessing_info(left,right);
+};
+
+
 void
 AnalyzeMacroCalls::print_out_all_macros(std::ostream& outStream){
 
   int inconsistencies = 0;
   int consistencies   = 0;
 
+
+  //Need to use a preliminary to get a predictable order of the output
+  //macros. This is necessary for the sorting
+  std::vector<PreprocessingInfo*> mapping;
   for(map_def_call::iterator def_it = mapDefsToCalls.begin();
       def_it != mapDefsToCalls.end(); ++def_it ){
-    PreprocessingInfo* macroDef = def_it->first;
-    Sg_File_Info* macro_def_pos = def_it->first->get_file_info();
+    mapping.push_back( def_it->first );
+  }
+
+  std::sort( mapping.begin(), mapping.end(), std::ptr_fun(sort_preprocessing_info) );
+
+
+  for(std::vector<PreprocessingInfo*>::iterator def_it = mapping.begin();
+      def_it != mapping.end(); ++def_it ){
+    PreprocessingInfo* macroDef = *def_it;
+    Sg_File_Info* macro_def_pos = macroDef->get_file_info();
 
     bool macro_def_added = false;
     PreprocessingInfo::rose_macro_definition* macro_def = macroDef->get_macro_def();
@@ -928,14 +963,16 @@ AnalyzeMacroCalls::print_out_all_macros(std::ostream& outStream){
     macroDefFilename = StringUtility::stripPathFromFileName(macroDef->get_file_info()->get_filenameString()) ;
 
     //There are a set of files that are specific to ROSE that is not part of the user program
-    if(macroDefFilename.size()<1 || macroDefFilename.substr(0,1) == ".")
+    if(macroDefFilename.size()<1 || ( macroDefFilename.size() == 1 && (macroDefFilename.substr(0,1) == ".") ))
       continue;
+
+    std::vector<MappedMacroCall>& mappedCalls = mapDefsToCalls[macroDef];
 
     outStream << std::endl;
     outStream << "Macro def at: " << macroDefFilename   << " l " << macro_def_pos->get_line() << " c " 
       << macro_def_pos->get_col() << std::endl;
     outStream << "FORMAL BODY: " << macroBodyStr << std::endl;
-    outStream << "It has " << def_it->second.size() << " calls to it" << std::endl; 
+    outStream << "It has " << mappedCalls.size() << " calls to it" << std::endl; 
     outStream << std::endl;
 
 
@@ -944,8 +981,14 @@ AnalyzeMacroCalls::print_out_all_macros(std::ostream& outStream){
     Sg_File_Info* first_macro_call_pos;
     std::vector<std::string> first_correspondingAstNodes;
 
-    for(std::vector<MappedMacroCall>::iterator call_it = def_it->second.begin();
-        call_it != def_it->second.end(); ++call_it ){
+//    std::ptr_fun(sort_preprocessing_info);
+
+    //Need to sort in order to get predictable ordering of the macro calls in the output
+    std::sort( mappedCalls.begin(), mappedCalls.end(), std::ptr_fun(sort_macro_call));
+
+
+    for(std::vector<MappedMacroCall>::iterator call_it = mappedCalls.begin();
+        call_it != mappedCalls.end(); ++call_it ){
       PreprocessingInfo* macroCall = call_it->macro_call;
       std::vector<std::string> correspondingAstNodes;
 
