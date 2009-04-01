@@ -1,3 +1,47 @@
+2009-04-01 01:26  liao6
+
+	* [r5181]
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/Makefile.am,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/omplexer.ll,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/ompparser.yy,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/sage_gen_be.C,
+	  /trunk/ROSE/src/frontend/SageIII/Makefile.am,
+	  /trunk/ROSE/src/frontend/SageIII/OmpAttribute.C,
+	  /trunk/ROSE/src/frontend/SageIII/omplexer.ll,
+	  /trunk/ROSE/src/frontend/SageIII/ompparser.yy,
+	  /trunk/ROSE/src/frontend/SageIII/rose_attributes_list.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilder.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilder.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/macroCalls.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/parseOmp.C,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/inputreplaceMacroCalls.C,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/replaceMacroCalls.C:
+	  Added support for expanding macro calls within OpenMP pragmas
+	  
+	  Details:
+	  * Added SageInterface::replaceMacroCallsWithExpandedStrings() to
+	  handle macro call expansions for pragms
+	  * Moved OpenMP pragma handling after preprocessing handling
+	  * Better display() for PreprocessingInfo dump
+
+2009-04-01 00:26  saebjornsen1
+
+	* [r5179] /trunk/ROSE/src/frontend/SageIII/rose_attributes_list.h,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/test1.c.out,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/test2.c.out,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/test3.c.out,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/test4.c.out,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/test5.c.out,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/test6.c.out,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/testWave.C: Added
+	  new interface for getting expanded strings. Also updated tests of
+	  Wave to test this feature
+
 2009-03-30 23:31  panas2
 
 	* [r5168] /trunk/ROSE/projects/RTED/DataStructures.h,
