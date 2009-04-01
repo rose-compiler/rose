@@ -1,3 +1,3 @@
 PreprocessingInfo test2.c line 7 col 9 : #define	HYPRE_BOX_SMP_PRIVATE	i,j
 PreprocessingInfo test2.c line 8 col 9 : #define	HYPRE_SMP_PRIVATE	HYPRE_BOX_SMP_PRIVATE,hypre__nx,hypre__ny
-PreprocessingInfo test2.c line 10 col 35 : HYPRE_SMP_PRIVATE
+PreprocessingInfo test2.c line 10 col 35 : HYPRE_SMP_PRIVATE expanded: i,j,hypre__nx,hypre__ny

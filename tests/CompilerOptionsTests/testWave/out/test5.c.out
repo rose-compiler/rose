@@ -2,5 +2,5 @@ PreprocessingInfo test5.c line 1 col 9 : #define	abs(x)	((x) < 0 ? (-(x)) : (x))
 PreprocessingInfo test5.c line 6 col 1 : //  abs(phase - 0.5) < 0.01;
 
 PreprocessingInfo test5.c line 7 col 9 : #define	EPSILON	1E-6
-PreprocessingInfo test5.c line 8 col 1 : abs(phase)
-PreprocessingInfo test5.c line 8 col 14 : EPSILON
+PreprocessingInfo test5.c line 8 col 1 : abs(phase) expanded: ((phase) < 0 ? (-(phase)) : (phase))
+PreprocessingInfo test5.c line 8 col 14 : EPSILON expanded: 1E-6

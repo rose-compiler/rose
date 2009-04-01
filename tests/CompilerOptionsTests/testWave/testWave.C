@@ -77,8 +77,10 @@ print_out_all_macros(std::ostream& outStream, SgProject* project){
                   case PreprocessingInfo::CMacroCall:
 		  {
                     outStream << "PreprocessingInfo " << filename << " line " << currentInfo->getLineNumber()
-                              << " col " << currentInfo->getColumnNumber() << " : " << currentInfo->getString()
-                              << std::endl;
+                              << " col " << currentInfo->getColumnNumber() << " : " << currentInfo->getString();
+                    if(typeOfDirective == PreprocessingInfo::CMacroCall)
+                              outStream << " expanded: " << currentInfo->get_macro_call()->get_expanded_string();
+                    outStream << std::endl;
                     break;
                   }
                   default:

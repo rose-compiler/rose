@@ -6,8 +6,8 @@ PreprocessingInfo test6.c line 21 col 2 : // char* x  FOO("foobar");
 
 PreprocessingInfo test6.c line 22 col 1 : //  int   x2  FOO(1);
 
-PreprocessingInfo test6.c line 23 col 1 : EXTERN
-PreprocessingInfo test6.c line 23 col 8 : INIT( char *EndSentIg, "\"')]}>")
-PreprocessingInfo test6.c line 24 col 1 : EXTERN
-PreprocessingInfo test6.c line 24 col 8 : INIT( int EndSentIg1, 1)
-PreprocessingInfo test6.c line 25 col 1 : ARG(0)
+PreprocessingInfo test6.c line 23 col 1 : EXTERN expanded: _
+PreprocessingInfo test6.c line 23 col 8 : INIT( char *EndSentIg, "\"')]}>") expanded: char *EndSentIg = "\"')]}>"
+PreprocessingInfo test6.c line 24 col 1 : EXTERN expanded: _
+PreprocessingInfo test6.c line 24 col 8 : INIT( int EndSentIg1, 1) expanded: int EndSentIg1 = 1
+PreprocessingInfo test6.c line 25 col 1 : ARG(0) expanded: (ValStack[ValStackPtr - Nargs + (0)])
