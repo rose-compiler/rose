@@ -2527,6 +2527,15 @@ SgPragmaDeclaration * SageBuilder::buildPragmaDeclaration(const string& name, Sg
   return result;
 }
 
+//!Build SgPragma
+SgPragma* SageBuilder::buildPragma(const std::string & name)
+{
+  SgPragma* result= new SgPragma(name);
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
 SgBasicBlock * SageBuilder::buildBasicBlock(SgStatement * stmt1, SgStatement* stmt2, SgStatement* stmt3, SgStatement* stmt4, SgStatement* stmt5, SgStatement* stmt6, SgStatement* stmt7, SgStatement* stmt8, SgStatement* stmt9, SgStatement* stmt10)
 {
   SgBasicBlock* result = new SgBasicBlock();

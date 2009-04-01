@@ -1092,8 +1092,14 @@ ROSEAttributesList::display ( const string & label )
        // DQ (12/19/2008): Modified to report NULL pointers
        // ROSE_ASSERT ( (*j) != NULL );
        // printf("LineNumber: %5d: %s\n",(*j)->getLineNumber(),(*j)->getString().c_str());
+          printf("-----------------------\n"); 
           if ( *j != NULL )
-               printf("LineNumber: %5d: %s\n",(*j)->getLineNumber(),(*j)->getString().c_str());
+               printf("Directive Type: %s; Relative position: %s; \nLine:%5d; Column:%5d; String: %s\n",
+               PreprocessingInfo::directiveTypeName ((*j)->getTypeOfDirective ()).c_str (),
+               PreprocessingInfo::relativePositionName((*j)->getRelativePosition()).c_str (),
+               (*j)->getLineNumber(),
+               (*j)->getColumnNumber(), 
+               (*j)->getString().c_str());
             else
                printf ("Warning: PreprocessingInfo *j == NULL \n");
         }

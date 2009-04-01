@@ -4,6 +4,18 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # before the subdirectories.
 SUBDIRS = astFileIO astMerge astFixup astPostProcessing sageInterface virtualCFG astTokenStream astHiddenTypeAndDeclarationLists astVisualization
 
+# Liao, 3/31/2009, moved the OpenMP parser here
+#Liao, 10/27/2008. I decide to parse OpenMP pragma string here
+# Bison flags
+AM_YFLAGS = -d
+# Flex flags
+AM_LFLAGS =
+# avoid unused Flex functions which are automatically generated
+CXXFLAGS+= -DYY_NO_TOP_STATE -DYY_NO_POP_STATE
+# omplexer.cc needs a header generaetd from ompparser.yy
+omplexer.lo: ompparser.h omplexer.cc
+ompparser.h: ompparser.cc
+
 # Force sage.docs to be make by default 
 # (if sage.docs.in is modified)
 all-local: roseh sage.docs 
@@ -25,9 +37,10 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 # EXTRA_DIST = preproc.lex preproc.C sageClasses.docs sage.docs.in docs
 # EXTRA_DIST = preproc.lex preproc.C astGraphTemplate.C docs
 EXTRA_DIST = preproc.ll docs rtiHelpers.h attributeListMap.h \
-            advanced_preprocessing_hooks.h rose_attributes_list.h dwarfSupport.h
+            advanced_preprocessing_hooks.h rose_attributes_list.h dwarfSupport.h \
+           omplexer.cc ompparser.cc ompparser.h
 CLEANFILES = haveRosettaGeneratedSource
-DISTCLEANFILES = preproc.cc
+DISTCLEANFILES = preproc.cc ompparser.cc ompparser.h omplexer.cc
 
 
 # DQ (10/18/2007): Added AST_FILE_IO.C StorageClasses.C
@@ -95,7 +108,7 @@ libsage3Sources = \
 
 noinst_LTLIBRARIES = libsage3.la
 
-libsage3_la_SOURCES = $(libsage3Sources) preproc.ll rose_paths.h
+libsage3_la_SOURCES = $(libsage3Sources) preproc.ll rose_paths.h omplexer.ll ompparser.yy
 
 # DQ (3/8/2009): I think that the dependence upon $(top_builddir)/rose_config.h 
 # is what was forcing a lot of files to be compiled after reruning configure.
@@ -175,7 +188,7 @@ nodist_include_HEADERS = \
    AstQueryMemoryPool.h \
    astFileIO/AstSpecificDataManagingClass.h
 
-BUILT_SOURCES = $(GENERATED_SOURCE)
+BUILT_SOURCES = $(GENERATED_SOURCE) ompparser.cc ompparser.h omplexer.cc
 
 # DQ (9/9/2007): Put C++_include_files.h back into place
 # since it is a convinient mechanism to handle included headers 

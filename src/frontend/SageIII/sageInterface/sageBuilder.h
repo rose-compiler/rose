@@ -675,6 +675,9 @@ SgDoWhileStmt * buildDoWhileStmt_nfi(SgStatement *  body, SgStatement *condition
 SgPragmaDeclaration * buildPragmaDeclaration(const std::string & name, SgScopeStatement* scope=NULL);
 SgPragmaDeclaration * buildPragmaDeclaration_nfi(const std::string & name, SgScopeStatement* scope);
 
+//!Build SgPragma
+SgPragma* buildPragma(const std::string & name);
+
 //! Build a SgBasicBlock, setting file info internally
 SgBasicBlock * buildBasicBlock(SgStatement * stmt1 = NULL, SgStatement* stmt2 = NULL, SgStatement* stmt3 = NULL, SgStatement* stmt4 = NULL, SgStatement* stmt5 = NULL, SgStatement* stmt6 = NULL, SgStatement* stmt7 = NULL, SgStatement* stmt8 = NULL, SgStatement* stmt9 = NULL, SgStatement* stmt10 = NULL);
 SgBasicBlock * buildBasicBlock_nfi();
