@@ -17,6 +17,8 @@ class visitorTraversal : public AstSimpleProcessing
 
 void visitorTraversal::visit(SgNode* node)
 {
+  // Some OmpAttribute may be attached redundantly,
+  // e.g., omp for is attached to both the pragma and the loop. 
   OmpAttribute* attribute = getOmpAttribute(node);
   if (attribute)
     attribute->print();//debug only for now

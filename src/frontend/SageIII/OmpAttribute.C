@@ -140,8 +140,7 @@ namespace OmpSupport{
       if (symbol == NULL)          
       {
         cerr<<"Error: OmpAttribute::addVariable() cannot find symbol for variable:"<<varString<<endl;
-        // ROSE_ASSERT(symbol!= NULL);
-        // TODO add -rose:wave and process the macro call
+        ROSE_ASSERT(symbol!= NULL);
       }
       else 
         sgvar = symbol->get_declaration();

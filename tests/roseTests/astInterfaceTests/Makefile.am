@@ -18,7 +18,7 @@ noinst_PROGRAMS = \
     isUpcSharedType isUpcPhaseLessSharedType buildLabelStatement \
     buildSizeOfOp abiStuffTest abiStuffTestUPC buildNullStatement \
     buildForStmt canonicalLoop loopNormalization collectReadWriteVariables \
-    typeTraits livenessAnalysis buildProcedureHeaderStatement
+    typeTraits livenessAnalysis buildProcedureHeaderStatement replaceMacroCalls
 
 # list of test SAGE AST builders 
 buildFunctionDeclaration_SOURCES = buildFunctionDeclaration.C
@@ -52,6 +52,7 @@ collectReadWriteVariables_SOURCES=collectReadWriteVariables.C
 typeTraits_SOURCES               =typeTraits.C
 livenessAnalysis_SOURCES         =livenessAnalysis.C
 buildProcedureHeaderStatement_SOURCES = buildProcedureHeaderStatement.C
+replaceMacroCalls_SOURCES             = replaceMacroCalls.C
 
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
@@ -92,7 +93,8 @@ generatedCodeExamples = \
   rose_inputcollectReadWriteVariables.C \
   rose_inputtypeTraits.C \
   rose_inputlivenessAnalysis.C \
-  rose_inputbuildProcedureHeaderStatement.f
+  rose_inputbuildProcedureHeaderStatement.f \
+  rose_inputreplaceMacroCalls.C
 
 # turn off edg warnings such as "variable x declared but never referenced" for test input files
 TEST_CXXFLAGS = -rose:verbose 0 --edg:no_warnings -g3
@@ -180,6 +182,9 @@ else
 	@echo "Fortran test (rose_inputbuildProcedureHeaderStatement.f) not run because ROSE was not configured to support Fortran tests."
 endif
 
+rose_inputreplaceMacroCalls.C:replaceMacroCalls
+	./replaceMacroCalls$(EXEEXT) $(TEST_CXXFLAGS) -rose:wave -c $(srcdir)/inputreplaceMacroCalls.C
+
 # MUST keep this up-to-date!!
 EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDeclaration.C \
        inputbuildAssignmentStmt.C inputbuildFunctionCalls.C inputbuildFunctionCalls.h \
@@ -191,7 +196,7 @@ EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDecla
        inputbuildSizeOfOp.C inputAbiStuffTest.c inputAbiStuffTestUPC.upc \
        inputbuildNullStatement.C inputbuildForStmt.C inputcanonicalLoop.C \
        inputloopNormalization.C inputcollectReadWriteVariables.C inputtypeTraits.C \
-       inputlivenessAnalysis.C inputbuildProcedureHeaderStatement.f
+       inputlivenessAnalysis.C inputbuildProcedureHeaderStatement.f inputreplaceMacroCalls.C
 
 check-local:
 	@echo "Test for ROSE SAGE Interfaces."

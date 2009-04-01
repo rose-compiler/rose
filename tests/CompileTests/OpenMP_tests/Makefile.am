@@ -31,6 +31,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	limits_threads.c \
 	lockarray.c \
 	lu_factorization.c \
+	macroCalls.c \
 	masterSingle.c \
 	matrix_vector.c \
 	nestedpar1.c \
@@ -71,7 +72,7 @@ CXX_TESTCODES_REQUIRED_TO_PASS = \
 
 TESTCODE_CURRENTLY_FAILING =  
 
-ROSE_FLAGS = -rose:openmp --edg:no_warnings -w -rose:verbose 0 --edg:restrict
+ROSE_FLAGS = -rose:openmp --edg:no_warnings -w -rose:verbose 0 --edg:restrict #-rose:wave
 # used to find omp.h, added it as one of  rose headers
 TESTCODE_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII
 
@@ -80,7 +81,7 @@ PASSING_C_TEST_Objects = $(C_TESTCODES_REQUIRED_TO_PASS:.c=.o)
 PASSING_CXX_TEST_Objects = $(CXX_TESTCODES_REQUIRED_TO_PASS:.cpp=.o)
 
 $(PASSING_C_TEST_Objects): %.o: $(srcdir)/%.c parseOmp
-	./parseOmp $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $<
+	./parseOmp -rose:wave $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $<
 
 $(PASSING_CXX_TEST_Objects): %.o: $(srcdir)/%.cpp parseOmp
 	./parseOmp ${ROSE_FLAGS} ${TESTCODE_INCLUDES} -c $<

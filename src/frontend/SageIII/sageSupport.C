@@ -11,7 +11,6 @@
 #include "unparseFortran_modfile.h"
 #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 
-
 #ifdef HAVE_DLADDR
 #include <dlfcn.h>
 #endif
@@ -19,15 +18,22 @@
 #if USING_OLD_EXECUTABLE_FORMAT_SUPPORT
 // DQ (8/12/2008): This constructor is implemented in sageSupport.C and 
 // will be removed later once the new IR nodes are integrated into use.
-
 #include "ExecELF.h"
-
 #endif
 
+
+//Liao, 10/27/2008: parsing OpenMP pragma here
+//Handle OpenMP pragmas. This should be called after preprocessing information is attached since macro calls may exist within pragmas, Liao, 3/31/2009
+#include "OmpAttribute.h"
+extern int omp_parse();
+extern OmpSupport::OmpAttribute* getParsedDirective();
+extern void omp_parser_init(SgNode* aNode, const char* str);
+using namespace SageInterface;
+using namespace SageBuilder;
+using namespace OmpSupport;
+void attachOmpAttributeInfo(SgSourceFile* sageFilePtr);
+
 using namespace std;
-
-
-
 
 void
 whatTypeOfFileIsThis( const string & name )
@@ -4442,6 +4448,8 @@ SgFile::callFrontEnd()
                if (requiresCPP == false)
                   {
                     attachPreprocessingInfo(sourceFile);
+                    // Liao, 3/31/2009 Handle OpenMP pragmas here to see macro calls
+                    attachOmpAttributeInfo(sourceFile);
 
                  // printf ("Exiting as a test (should not be called for Fortran CPP source files) \n");
                  // ROSE_ASSERT(false);
@@ -7230,3 +7238,50 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
      return returnSymbol;
    }
 #endif
+
+// find all SgPragmaDeclaration nodes within a file and parse OpenMP pragmas into OmpAttribute info.
+void attachOmpAttributeInfo(SgSourceFile *sageFilePtr)
+{
+  ROSE_ASSERT(sageFilePtr != NULL);
+  if (sageFilePtr->get_openmp() == false)
+    return;
+  std::vector <SgNode*> all_pragmas = NodeQuery::querySubTree (sageFilePtr, V_SgPragmaDeclaration);
+  std::vector<SgNode*>::iterator iter;
+  for(iter=all_pragmas.begin();iter!=all_pragmas.end();iter++)
+  {
+    SgPragmaDeclaration* pragmaDeclaration = isSgPragmaDeclaration(*iter);
+    ROSE_ASSERT(pragmaDeclaration != NULL);
+    SageInterface::replaceMacroCallsWithExpandedStrings(pragmaDeclaration);
+    string pragmaString = pragmaDeclaration->get_pragma()->get_pragma();
+    istringstream istr(pragmaString);
+    std::string key;
+    istr >> key;
+    if (key == "omp")
+    {
+      // Liao, 3/12/2009
+      // Outliner may move pragma statements to a new file
+      // after the pragma has been attached OmpAttribute.
+      // We have to skip generating the attribute again in the new file
+      OmpAttribute* previous = getOmpAttribute(pragmaDeclaration);
+      if (previous == NULL )
+      {
+        // Call parser
+        omp_parser_init(pragmaDeclaration,pragmaString.c_str());
+        omp_parse();
+        OmpAttribute* attribute = getParsedDirective();
+        //cout<<"sage_gen_be.C:23758 debug:\n"<<pragmaString<<endl;
+        //attribute->print();//debug only for now
+        addOmpAttribute(attribute,pragmaDeclaration);
+        // We attach the attribute redundantly on affected loops also
+        // for easier loop handling later on in autoTuning's outlining step (reproducing lost pragmas)
+        if (attribute->getOmpDirectiveType() ==e_for ||attribute->getOmpDirectiveType() ==e_parallel_for)
+        {
+          SgForStatement* forstmt = isSgForStatement(getNextStatement(pragmaDeclaration));
+          ROSE_ASSERT(forstmt != NULL);
+          forstmt->addNewAttribute("OmpAttribute",attribute);
+        }
+      }
+    }
+  }// end for
+
+}

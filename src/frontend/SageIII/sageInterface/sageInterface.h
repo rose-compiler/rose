@@ -526,6 +526,8 @@ PreprocessingInfo* attachArbitraryText(SgLocatedNode* target,
                 const std::string & text,
                PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before);
 
+//!Check if a pragma declaration node has macro calls attached, if yes, replace macro calls within the pragma string with expanded strings. This only works if -rose:wave is turned on. 
+void replaceMacroCallsWithExpandedStrings(SgPragmaDeclaration* target);
 //@}
 
 
