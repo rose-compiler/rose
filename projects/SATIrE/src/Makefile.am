@@ -12,5 +12,5 @@ libsatire_la_LIBADD = analyzer/icfgbuilder/libIcfgBuilder.la \
                       analyzer/astaccess/libAstAccess.la \
                       analyzer/astnumbering/libAstNumbering.la \
                       analyzer/support/libAnalysisSupport.la \
-                      analyzer/provided/pointsto/libPointsTo.la
-
+                      analyzer/provided/pointsto/libPointsTo.la \
+					  analyzer/provided/dataflow/libDataFlow.la

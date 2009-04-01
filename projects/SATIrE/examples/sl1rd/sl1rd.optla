@@ -13,6 +13,7 @@
 \********************************************************************************/
 
 PROBLEM Reaching_Definitions
+    prefix:     sl1rd_
     direction:  forward
     carrier:    VarLabPairSetLifted
     init:       bot

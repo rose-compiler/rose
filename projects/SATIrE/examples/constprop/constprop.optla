@@ -51,6 +51,7 @@ ENDDOMAIN
 
 
 PROBLEM Constant_Propagation
+    prefix:     cp_
     direction:  forward
     carrier:    LiftedState
     init:       bot

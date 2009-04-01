@@ -160,7 +160,7 @@ sl1rd: init.token
 	@echo "====================="
 	cp -ur $(top_srcdir)/examples/sl1rd $(testdir)
 	chmod u+rwx -R $(testdir)/sl1rd
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u sl1rd
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -p sl1rd_ -u sl1rd
 	$(MAKE) check -C $(testdir)/sl1rd
 
 sl2rd: init.token
@@ -252,6 +252,6 @@ testsuite: init.token
 
 	cp -ur $(top_srcdir)/examples/constprop $(testdir)
 	chmod u+rwx -R $(testdir)/constprop
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis constprop
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -p cp_ constprop
 	$(MAKE) -C $(testdir)/constprop
 	cd $(testdir) ; bash testsuite/testsuite.sh constprop/constprop testsuite

@@ -182,6 +182,7 @@ src/analyzer/icfgbuilder/Makefile
 src/analyzer/skeletons/Makefile
 src/analyzer/support/Makefile
 src/analyzer/provided/pointsto/Makefile
+src/analyzer/provided/dataflow/Makefile
 src/analyzer/provided/Makefile
 src/analyzer/Makefile
 src/grato/Makefile

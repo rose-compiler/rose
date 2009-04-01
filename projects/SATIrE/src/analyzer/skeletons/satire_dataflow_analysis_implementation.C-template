@@ -417,6 +417,7 @@ Implementation::outputAnalysisVisualization(Program *program)
 
 } // namespace SATIrE
 
+#if 0
 // GB (2009-03-10): This used to be in pag_support.C. However, when we moved
 // to libtool and dynamic linking, it started segfaulting mysteriously. It
 // seems to work here.
@@ -426,3 +427,4 @@ const char *Expression_print(void *e)
     std::cout << expr_to_string(isSgExpression((SgNode *) e));
     return "";
 }
+#endif

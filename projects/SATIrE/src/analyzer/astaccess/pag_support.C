@@ -51,7 +51,7 @@ PIG_EXTERN_C get_value_macro(astfloat)
 PIG_EXTERN_C get_value_macro(astdouble)
 PIG_EXTERN_C get_value_macro(astldouble)
 
-#if 0
+#if 1
 PIG_EXTERN_C
 const char *Expression_print(void *e)
 {
