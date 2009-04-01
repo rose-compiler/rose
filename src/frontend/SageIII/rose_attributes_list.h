@@ -120,6 +120,18 @@ class  PreprocessingInfo
 
 	       token_container expanded_macro;                
 
+               //Get string representation of the 
+               //expanded macro
+               std::string get_expanded_string()
+               {
+                 std::ostringstream os;
+                 token_container::const_iterator iter;
+                 for (iter=expanded_macro.begin(); iter!=expanded_macro.end(); iter++)
+                   os<<(*iter).get_value();
+
+                 return os.str();
+               }
+
 	       r_macro_call()
 		       : macro_call(), arguments(),expanded_macro()
 			  {
