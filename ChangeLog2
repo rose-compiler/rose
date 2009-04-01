@@ -1,3 +1,11 @@
+2009-04-01 01:30  saebjornsen1
+
+	* [r5183] /trunk/ROSE/projects/MacroRewrapper/macroRewrapper.C,
+	  /trunk/ROSE/projects/MacroRewrapper/testMapping.C,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test3.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test6.c.out: Improved
+	  testing mechanims of the macro rewrapper
+
 2009-04-01 01:26  liao6
 
 	* [r5181]
