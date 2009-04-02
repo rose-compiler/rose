@@ -806,6 +806,83 @@ PAG support.
 This appendix lists the analyzers that come with SATIrE to provide support
 for other analyzers you wish to build.
 
+\section{Data-Flow Analyzers}
+\label{sec:analysis_dataflow}
+
+SATIrE comes with a number of data-flow analyzers implemented using PAG.
+Currently, these are:
+
+\begin{center}
+\begin{tabular}{l l p{.5\textwidth}}
+Name & Carrier & Description \\
+\hline
+\texttt{constprop} & \verb|cp_LiftedState| &
+    sketch of a constant folding/constant propagation analysis for integers
+\end{tabular}
+\end{center}
+
+\subsection{Using Provided Data-Flow Analyzers}
+\label{sec:analysis_dataflow_use}
+
+The predefined data-flow analyzers are included in the \texttt{libsatiredfa}
+library, and the declarations of the corresponding C++ classes can be
+included with the \texttt{satiredfa.h} header file. SATIrE's
+\texttt{newanalysis} script will generate Makefiles and code skeletons that
+use these automatically.
+
+To run some predefined analyzer before your analysis, use SATIrE's analysis
+scheduler (see Section~\ref{sec:run_analyzer}). At some point before the
+\texttt{run} method of your analysis is called, you can declare a dependency
+on the predefined analyzer using the \texttt{dependsOnAnalysis} method.
+
+For instance, to use SATIrE's \texttt{constprop} analyzer before another
+data-flow analyzer implemented using SATIrE, add the following statement
+before the call to \texttt{run} in your analyzer's \texttt{main.C} file:
+
+\begin{verbatim}
+    analysis->dependsOnAnalysis(new DataFlowAnalysis(
+                new SATIrE::constprop::Implementation()));
+\end{verbatim}
+
+The analysis scheduler will take care of running all analyzers in an order
+that satisfies their dependencies.
+
+You can access another analyzer's analysis data as described in the PAG
+manual in the chapter entitled `Advanced Usage: Multiple Analyses'.
+Essentially, each analysis has certain associated \texttt{NODE} and
+\texttt{POSITION} attributes that another analysis can access from its
+transfer functions.
+
+Note that the exchange of analysis data is only guaranteed to work if all
+involved analyzers use the same fixed-point iteration scheme. By default,
+all analyzers generated with SATIrE use the same iterator
+(\texttt{iterate1.t}).
+
+\subsection{SATIrE Developers: Adding Analyzers}
+\label{sec:analysis_dataflow_add}
+
+To add a data-flow analyzer to the SATIrE library, follow these steps:
+
+\begin{enumerate}
+\item Add the analyzer specification in its own subdirectory under SATIrE's
+\texttt{examples} directory. The analyzer \emph{must have an analysis
+prefix} declared using \texttt{prefix:} in the problem description.
+\item Add the type declarations for the analyzer's carrier type, and all of
+the types it is constructed from, to the \texttt{pagoptions.set} file in
+SATIrE's \texttt{src/analyzer/astaccess/satire} directory. To avoid name
+clashes, you should add the analyzer's prefix to these type names.
+\item Add the analyzer name to the definition of the \texttt{ANALYZERS}
+variable in \texttt{src/analyzer/provided/dataflow/Makefile.am}. You can
+ignore the rest o the Makefile; it will take care of building the analyzer,
+including it in \texttt{libsatiredfa}, and installing the result.
+\item Add a brief summary describing the analysis in the table above.
+\item Do a \emph{very thorough} cleaning and rebuild of SATIrE, and test
+whether other analyzers can access your analysis data.
+\end{enumerate}
+
+If all you are adding is a data-flow analyzer without any external support
+functions (except those provided by SATIrE), this should work.
+
 \section{Points-to Analysis}
 \label{sec:analysis_pointsto}
 

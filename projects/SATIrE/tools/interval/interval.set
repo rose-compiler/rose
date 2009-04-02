@@ -1,8 +1,10 @@
 SET
 
 DOMAIN
-    Bound = flat(snum)
-    Interval = Bound * Bound
+ // Bound is the same as cp_Const, which is included automatically.
+ // Bound = flat(snum)
+ // Interval = Bound * Bound
+    Interval = cp_Const * cp_Const
     fState = VariableId -> Interval
     IntervalStatePair = Interval * State
     BoolL = flat(bool)

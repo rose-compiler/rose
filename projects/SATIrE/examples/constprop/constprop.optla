@@ -9,7 +9,7 @@
 //
 // The data flow lattice is a lifted map from variables to constants, where
 // "constant" is a flat lattice over snums. In total:
-//     LiftedState = lift(VariableId -> flat(snum))
+//     cp_LiftedState = lift(VariableId -> flat(snum))
 //
 // The intended semantics are as follows. "bot" in the outermost lattice
 // means that a program point has not been reached yet and may be
@@ -43,17 +43,23 @@
 SET
 
 DOMAIN
-    Const = flat(snum)
-    State = VariableId -> Const
-    ConstStatePair = Const * State
-    LiftedState = lift(State)
+ // The carrier type cp_LiftedState and its parts cp_State and cp_Const are
+ // predefined by SATIrE.
+ // cp_Const = flat(snum)
+ // cp_State = VariableId -> cp_Const
+ // cp_LiftedState = lift(cp_State)
+
+ // The auxiliary cp_ConstStatePair type is not a part of the carrier type,
+ // it is only used by support functions; thus, it is only locally defined
+ // here.
+    cp_ConstStatePair = cp_Const * cp_State
 ENDDOMAIN
 
 
 PROBLEM Constant_Propagation
     prefix:     cp_
     direction:  forward
-    carrier:    LiftedState
+    carrier:    cp_LiftedState
     init:       bot
     init_start: lift([-> top])
     combine:    comb
@@ -146,7 +152,7 @@ _, _: @;
 
 SUPPORT
 
-eval :: Expression, State -> ConstStatePair;
+eval :: Expression, cp_State -> cp_ConstStatePair;
 eval(AssignInitializer(exp), state) =
     eval(exp, state);
 eval(exp, state) =    
@@ -182,7 +188,7 @@ eval(exp, state) =
                                  (top, [-> top]);
     endcase endif endif endif;
 
-binary :: Expression, Expression, Expression, State -> ConstStatePair;
+binary :: Expression, Expression, Expression, cp_State -> cp_ConstStatePair;
 binary(left, right, exp, state) =
  // Evaluate the right child expression, yielding a (value, state) pair
  // assigned to r and rs, respectively.
@@ -241,7 +247,7 @@ binary(left, right, exp, state) =
             endif endif;
     endcase;
 
-unary :: Expression, Expression, State -> ConstStatePair;
+unary :: Expression, Expression, cp_State -> cp_ConstStatePair;
 unary(child, exp, state) =
     let ee = eval(child, state);
     in let elifted = ee!1!2; es = ee!2!2;
@@ -268,7 +274,7 @@ int_bool :: snum -> bool;
 int_bool(i) =
     if i != 0 then true else false endif;
  
-updatestate :: State, Expression, Const -> ConstStatePair;
+updatestate :: cp_State, Expression, cp_Const -> cp_ConstStatePair;
 // Update state state by assigning the value value to the variable
 // referenced by expression exp (if any). Yields a pair of the value
 // and the new state.
@@ -280,7 +286,7 @@ updatestate(state, exp, value) =
         endcase;
     in (value, newstate);
 
-branch :: Expression, State, bool -> State;
+branch :: Expression, cp_State, bool -> cp_State;
 branch(exp, state, edge) =
     let pair = eval(exp, state);
     in let c = pair!1!2; newstate = pair!2!2;
@@ -294,7 +300,7 @@ branch(exp, state, edge) =
     endif
     endif;
 
-kill_vars :: State, *VariableSymbolNT -> State;
+kill_vars :: cp_State, *VariableSymbolNT -> cp_State;
 kill_vars(s, [!]) =
     s;
 kill_vars(s, v::vars) =

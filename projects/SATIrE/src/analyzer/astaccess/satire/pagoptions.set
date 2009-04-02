@@ -1,10 +1,16 @@
 SET
 
 DOMAIN
+ // General SATIrE definitions.
     ExpressionId = extern
     TypeId       = extern
     VariableId   = extern
     Location     = extern
     ContextInfo  = extern
+
+ // Definitions for predefined constprop analysis.
+    cp_Const = flat(snum)
+    cp_State = VariableId -> cp_Const
+    cp_LiftedState = lift(cp_State)
 
 ENDDOMAIN
