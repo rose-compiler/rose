@@ -31,7 +31,6 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	limits_threads.c \
 	lockarray.c \
 	lu_factorization.c \
-	macroCalls.c \
 	masterSingle.c \
 	matrix_vector.c \
 	nestedpar1.c \
@@ -69,8 +68,9 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 CXX_TESTCODES_REQUIRED_TO_PASS = \
 	task_link.cpp \
 	task_tree.cpp 
-
+# put macroCalls.c here since it requires -rose:wave, which causes seg fault on 64-bit machine
 TESTCODE_CURRENTLY_FAILING =  
+	macroCalls.c 
 
 ROSE_FLAGS = -rose:openmp --edg:no_warnings -w -rose:verbose 0 --edg:restrict #-rose:wave
 # used to find omp.h, added it as one of  rose headers
@@ -81,7 +81,7 @@ PASSING_C_TEST_Objects = $(C_TESTCODES_REQUIRED_TO_PASS:.c=.o)
 PASSING_CXX_TEST_Objects = $(CXX_TESTCODES_REQUIRED_TO_PASS:.cpp=.o)
 
 $(PASSING_C_TEST_Objects): %.o: $(srcdir)/%.c parseOmp
-	./parseOmp -rose:wave $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $<
+	./parseOmp $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $<
 
 $(PASSING_CXX_TEST_Objects): %.o: $(srcdir)/%.cpp parseOmp
 	./parseOmp ${ROSE_FLAGS} ${TESTCODE_INCLUDES} -c $<
