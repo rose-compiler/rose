@@ -80,13 +80,15 @@ build_file1: modifyTestCode
 	cp $(srcdir)/index_array.txt .
 
 check-C-array:
+	if [ -f "result-array.txt" ]; then rm result-array.txt; fi ; \
 	cp $(srcdir)/index_array.txt .
 	dir=$(rted_path)/C/array_index_out_of_bound/ ; \
 	echo "Dir : $$dir " ; \
-	for file in $$(find $$dir -name "*.c"); do \
-	echo "Found file : $$file" ; \
-	done; \
-	for file in $$(find $$dir -name "*.c"); do \
+	for file in $$(find $$dir -name "*.c" | sort); do \
+	  echo "Found file : $$file" ; \
+	done ; \
+	echo "Found files : `find $$dir -name "*.c" | wc` " ; \
+	for file in $$(find $$dir -name "*.c"| sort); do \
 	if !  [[ "$$file" =~ "_s.c" ]]  ; then \
 	  file2=$$(echo $$file | sed -e 's/..$$//'  ); \
 	  file2=$$(echo "$$file2"_s.c); \
@@ -95,15 +97,15 @@ check-C-array:
 	if ! [ -f $$binfile ]; then \
 	echo "inserting #define EXITCODE_OK 0 in $$file" ; \
 	if [ `grep "#define EXITCODE_OK 0" $$file | wc | awk '{print $$1}' ` -eq 0 ] ; then \
-  	  sed -i '1i\#define EXITCODE_OK 0' $$file ; \
+	  sed -i '1i\#define EXITCODE_OK 0' $$file ; \
 	fi ; \
 	if [ -f $$file2 ]; then \
 	  echo "inserting #define EXITCODE_OK 0 in $$file2" ; \
 	  if [ `grep "#define EXITCODE_OK 0" $$file2 | wc | awk '{print $$1}' ` -eq 0 ] ; then \
-  	    sed -i '1i\#define EXITCODE_OK 0' $$file2 ; \
+	    sed -i '1i\#define EXITCODE_OK 0' $$file2 ; \
 	  fi ; \
 	  echo "Script : Running Transformation ... $$file $$file2 -I$(srcdir) " ; \
-	  ./runtimeCheck 2 $$file $$file2 -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$(rted_path)/C/array_index_out_of_bound/  ; \ 
+	  ./runtimeCheck 2 $$file $$file2 -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$(rted_path)/C/array_index_out_of_bound/  ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
 	  file_rose=rose_rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
 	  file2_rose=rose_rose_$$(echo $$file2 | sed -e 's/^\(.*\/\)*//'  ); \
@@ -112,6 +114,7 @@ check-C-array:
 	  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$(rted_path)/C/array_index_out_of_bound/ -I$(top_builddir) -I$(srcdir) ; \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
+	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
 	  file_bin=$$(echo "$$file".bin); \
 	  $(CXX) -g -o $$file_bin $$file $$file2 $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$(rted_path)/C/array_index_out_of_bound/ -I$(top_builddir) -I$(srcdir) ; \
 	else \
@@ -124,6 +127,7 @@ check-C-array:
 	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$(rted_path)/C/array_index_out_of_bound/ -I$(top_builddir) -I$(srcdir) ; \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
+	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
 	  file_bin=$$(echo "$$file".bin); \
 	  $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$(rted_path)/C/array_index_out_of_bound/ -I$(top_builddir) -I$(srcdir) ; \
 	fi; \
@@ -146,6 +150,6 @@ check-local: runtimeCheck $(TESTCODES) check-C-array-onefile check-C-array
 
 
 clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) test_bin* *.o rose_*.C rose_*.c *.dot Templates.DB *~ rose_rose* test *.bin
+	rm -rf $(CXX_TEMPLATE_OBJECTS) test_bin* *.o rose_*.C rose_*.c *.dot Templates.DB *~ rose_rose* test *.bin *.txt
 
 endif

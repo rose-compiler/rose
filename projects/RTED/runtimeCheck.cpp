@@ -197,6 +197,9 @@ int main(int argc, char** argv) {
       cerr << i << ": >>>>> Found filename : " << filename << endl;
     }
   }
+  // files are pushed on through bash script
+  //sort(rtedfiles.begin(), rtedfiles.end(),greater<string>());
+  cerr << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> NR OF FILES :: " << rtedfiles.size() << endl;
 
   // move arguments one to left
   for (int i=2;i<argc;++i) {

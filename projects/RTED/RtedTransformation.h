@@ -29,6 +29,10 @@ class RtedTransformation : public AstSimpleProcessing {
   SgMemberFunctionSymbol* roseArrayAccess;
   SgClassSymbol* runtimeClassSymbol;
   SgScopeStatement* rememberTopNode;
+  SgStatement* mainLast;
+  SgStatement* mainFirst;
+  SgMemberFunctionSymbol* roseRtedClose;
+  bool insertMainBeforeLast;
 
   // FUNCTIONS ------------------------------------------------------------
   // Helper function
@@ -41,6 +45,7 @@ class RtedTransformation : public AstSimpleProcessing {
   // Traverse all nodes and check properties
   virtual void visit(SgNode* n);
 
+  void insertMainCloseCall(SgStatement* main);
   // Function that inserts call to array : runtimeSystem->callArray
   void insertArrayCreateCall(SgVarRefExp* n, RTedArray* value);
   void insertArrayCreateCall(SgInitializedName* initName,  RTedArray* value);
@@ -56,6 +61,9 @@ class RtedTransformation : public AstSimpleProcessing {
   SgInitializedName* getMinusMinusOp(SgMinusMinusOp* minus ,std::string str);
 
   int getDimension(SgInitializedName* initName);
+  int getDimension(SgInitializedName* initName,SgVarRefExp* varRef);
+  SgVarRefExp* resolveToVarRefRight(SgExpression* expr);
+  SgVarRefExp* resolveToVarRefLeft(SgExpression* expr);
   RtedSymbols* symbols;
 
  public:
@@ -65,6 +73,9 @@ class RtedTransformation : public AstSimpleProcessing {
     roseCreateArray=NULL;
     roseArrayAccess=NULL;
     symbols = new RtedSymbols();
+    mainFirst=NULL;
+    mainLast=NULL;
+    insertMainBeforeLast=false;
   };
   virtual ~RtedTransformation(){
   //  inputFiles.clear();

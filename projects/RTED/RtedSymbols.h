@@ -11,10 +11,12 @@ private:
 public:
 	SgMemberFunctionSymbol* roseCreateArray;
 	SgMemberFunctionSymbol* roseArrayAccess;
+	SgMemberFunctionSymbol* roseRtedClose;
 
 	RtedSymbols() {
 		roseCreateArray = NULL;
 		roseArrayAccess = NULL;
+		roseRtedClose = NULL;
 	}
 	;
 	virtual ~RtedSymbols() {
