@@ -1,3 +1,21 @@
+2009-04-02 17:12  panas2
+
+	* [r5196] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedSymbols.cpp,
+	  /trunk/ROSE/projects/RTED/RtedSymbols.h,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/runtimeCheck.cpp: Rted work - passing
+	  more tests
+
+2009-04-02 16:27  liao6
+
+	* [r5195] /trunk/ROSE/tests/CompileTests/OpenMP_tests/Makefile.am:
+	  Avoid using -rose:wave since it causes seg fault on 64-bit
+	  machines.
+
 2009-04-01 01:30  saebjornsen1
 
 	* [r5183] /trunk/ROSE/projects/MacroRewrapper/macroRewrapper.C,
