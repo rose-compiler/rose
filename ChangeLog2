@@ -1,3 +1,10 @@
+2009-04-03 16:59  liao6
+
+	* [r5201]
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/Makefile.am:
+	  Commented out a test case due to boost:wave's seg fault on 64-bit
+	  machines
+
 2009-04-03 02:16  saebjornsen1
 
 	* [r5199] /trunk/ROSE/config/ax_boost_filesystem.m4,
