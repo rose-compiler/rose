@@ -1,3 +1,9 @@
+2009-04-03 21:32  saebjornsen1
+
+	* [r5203] /trunk/ROSE/config/ax_boost_filesystem.m4,
+	  /trunk/ROSE/config/ax_boost_wave.m4: Made changes to configure
+	  scripts more minimal
+
 2009-04-03 16:59  liao6
 
 	* [r5201]
