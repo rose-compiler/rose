@@ -1,4 +1,6 @@
 SET
+    VarSet      = set(VariableId)
+    VarLabPair  = VariableId * snum
 
 DOMAIN
  // General SATIrE definitions.
@@ -13,10 +15,14 @@ DOMAIN
     cp_State = VariableId -> cp_Const
     cp_LiftedState = lift(cp_State)
 
-// Definitions for predefined interval analysis
+ // Definitions for predefined interval analysis
     itvl_Interval = cp_Const * cp_Const
     itvl_fState = VariableId -> itvl_Interval
     itvl_State = lift(itvl_fState)
     itvl_IntervalStatePair = itvl_Interval * itvl_State
+
+ // Definitions for predefined sl2rd analysis
+    VarLabPairSet = set(VarLabPair)
+    VarLabPairSetLifted = lift(VarLabPairSet)
 
 ENDDOMAIN

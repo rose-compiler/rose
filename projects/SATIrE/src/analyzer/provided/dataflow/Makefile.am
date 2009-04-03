@@ -7,7 +7,7 @@
 # name to this line, ignore the rest of this file, and try it out. If
 # something doesn't work, you can still come back and mess around with the
 # stuff below.
-ANALYZERS = constprop sl1rd interval
+ANALYZERS = constprop sl2rd interval
 
 
 # ----- no need to look beyond this line -----

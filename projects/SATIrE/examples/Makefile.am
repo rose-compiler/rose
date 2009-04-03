@@ -169,7 +169,7 @@ sl2rd: init.token
 	@echo "====================="
 	cp -ur $(top_srcdir)/examples/sl2rd $(testdir)
 	chmod u+rwx -R $(testdir)/sl2rd
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u sl2rd
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -p sl2rd_ -u sl2rd
 	$(MAKE) check -C $(testdir)/sl2rd
 
 nnh99_shape: init.token

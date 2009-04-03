@@ -16,6 +16,7 @@
 \********************************************************************************/
 
 PROBLEM Reaching_Definitions
+    prefix:     sl2rd_
     direction:  forward
     carrier:    VarLabPairSetLifted
     init:       bot
@@ -345,3 +346,34 @@ rd_nonlocal_vars(varset) =
 
 myinit:: -> VarLabPairSetLifted;
 myinit() = lift({(v,-1)!! v <-- global_vars()});
+
+
+
+// expr_varset(expr): Compute the variables contained in the location this
+// expression evaluates to, if any; empty set otherwise. Note that this is
+// not the set of all variables used to evaluate the expression; for
+// instance, when applied to a dereference *p, this set will not include the
+// variable p, only the variables it might point to.
+// This function uses SATIrE's auxiliary functions exprid_has_location to
+// determine whether the expression evaluates to a location, exprid_location
+// to access that location, if any, and location_varsyms to get the
+// syntactic list of variables associated with that location.
+expr_varset :: Expression -> VarSet;
+expr_varset(expr) =
+    let exprid = expr_exprid(expr);
+    in  if exprid_has_location(exprid) then
+            varsymlist_varset(location_varsyms(exprid_location(exprid)))
+        else
+            {};
+
+// varsymlist_varset(varsymlist): Compute the set of variables belonging to
+// a syntactic list of variable symbols. This must be done recursively
+// because SATIrE does not support cursors (needed for ZF expressions) over
+// syntactic lists at the moment.
+varsymlist_varset([!]) = {};
+varsymlist_varset(v::vs) =
+    let varid = varsym_varid(v);
+    in  varsymlist_varset(vs) ~ varid;
+
+// see also kills/gens functions in
+// examples/pointsto_live_variables/pointsto_live_variables.optla
