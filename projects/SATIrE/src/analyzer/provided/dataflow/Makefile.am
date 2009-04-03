@@ -7,7 +7,7 @@
 # name to this line, ignore the rest of this file, and try it out. If
 # something doesn't work, you can still come back and mess around with the
 # stuff below.
-ANALYZERS = constprop sl1rd
+ANALYZERS = constprop sl1rd interval
 
 
 # ----- no need to look beyond this line -----
@@ -57,9 +57,9 @@ local_newanalysis_script:
 	cp -r $(top_srcdir)/src/analyzer/skeletons/ local_satire_skeletons
 	chmod -R +w local_satire_skeletons
 	$(do_local_subst) < local_satire_skeletons/newanalysis.in \
-					  > local_newanalysis_script
+	                  > local_newanalysis_script
 	$(do_local_subst) < local_satire_skeletons/Makefile-template.in \
-				 	  > local_satire_skeletons/Makefile-template
+	                  > local_satire_skeletons/Makefile-template
 	echo "CUSTOM_CFLAGS = $(CUSTOM_CFLAGS) -fPIC" >> local_satire_skeletons/Makefile.custom
 	chmod +x local_newanalysis_script
 	mkdir -p local_include_dir
@@ -79,7 +79,11 @@ local_newanalysis_script:
 # newanalysis script.
 $(X_ANALYZERS): local_newanalysis_script
 	@echo "----- making $@ -----"
-	cp -r $(top_srcdir)/examples/$@ .
+	if [ -d $(top_srcdir)/examples/$@ ]; then \
+		cp -r $(top_srcdir)/examples/$@ . ; \
+	else \
+		cp -r $(top_srcdir)/tools/$@ . ; \
+	fi
 	chmod -R +w $@
 	prefix=`grep "prefix:" $@/$@.optla | awk '{ print $$2 }'` ; \
 	./local_newanalysis_script -p $$prefix $@

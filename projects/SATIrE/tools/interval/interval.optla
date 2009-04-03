@@ -28,13 +28,14 @@
 
 PROBLEM Interval_Analysis
   direction:  forward
-  carrier:    State
+  carrier:    itvl_State
   init:       bot
   init_start: lift([->(top, top)])
   combine:    comb
   retfunc:    ret
   widening:   wide
   equal:      eq
+  prefix:     intvl_
 
 TRANSFER
 
@@ -133,7 +134,7 @@ dup(a) = (a, a);
 duplift(a) = dup(lift(a));
 ltup(a,b) = (lift(a), lift(b));
 
-eval :: Expression, State -> IntervalStatePair;
+eval :: Expression, itvl_State -> itvl_IntervalStatePair;
 eval(_, bot) = bot;
 eval(_, top) = top;
 eval(exp, state) =  
@@ -185,7 +186,7 @@ eval(exp, state) =
 // -- TODO kill temporary variables - Possible Memory leak
 
 
-binary :: Expression, Expression, Expression, State -> IntervalStatePair;
+binary :: Expression, Expression, Expression, itvl_State -> itvl_IntervalStatePair;
 binary(left, right, exp, state) =
   // -- Evaluate the right child expression, yielding a (value, state)
   // -- pair assigned to r and rs, respectively.
@@ -286,7 +287,7 @@ binary(left, right, exp, state) =
        ;
   endcase;
 
-unary :: Expression, Expression, State -> IntervalStatePair;
+unary :: Expression, Expression, itvl_State -> itvl_IntervalStatePair;
 unary(child, exp, state) = 
   // --print("UNARY(") print(exp) print(")\n")
   let ee = eval(child, state); in
@@ -324,7 +325,7 @@ int_bool :: snum -> bool;
 int_bool(0) = false;
 int_bool(_) = true;
 								    
-updatestate :: State, Expression, Interval -> IntervalStatePair;
+updatestate :: itvl_State, Expression, itvl_Interval -> itvl_IntervalStatePair;
 updatestate(bot, _, _) = ((top,top),bot);
 // -- Update state state by assigning the value value to the variable
 // -- referenced by expression exp (if any). Yields a pair of the value
@@ -341,7 +342,7 @@ updatestate(state, exp, value) =
      (value, newstate);
 
 
-branch :: Expression, State, bool, bool -> State;
+branch :: Expression, itvl_State, bool, bool -> itvl_State;
 branch(exp, state, edge, isLoopBody) =
   // --print("\nbranching...\nexp: ") print(exp) 
   // --print("\nstate: ") print(state) 
@@ -372,7 +373,7 @@ branch(exp, state, edge, isLoopBody) =
     ;
 
 
-eval_branch_condition :: Expression, State, State, bool, bool -> State;
+eval_branch_condition :: Expression, itvl_State, itvl_State, bool, bool -> itvl_State;
 eval_branch_condition(exp, state, newstate, edge, isLoopBody) =
   if is_binary(exp) then
     let lhs = eval(binary_get_left_child(exp), state)!1!2;
@@ -431,36 +432,36 @@ eval_branch_condition(exp, state, newstate, edge, isLoopBody) =
 
 
 // -- update the min portion of an interval
-adjust_min :: Interval, Interval -> Interval;
+adjust_min :: itvl_Interval, itvl_Interval -> itvl_Interval;
 adjust_min((_, a2), (m, _)) = (m, max(m, a2));
 
 // -- update the max portion of an interval
-adjust_max :: Interval, Interval -> Interval;
+adjust_max :: itvl_Interval, itvl_Interval -> itvl_Interval;
 adjust_max((a1, _), (_, m)) = (min(a1, m), m);
 
 // -- update the min portion of an interval and add c
-adjust_min_plus :: Interval, Interval, snum -> Interval;
+adjust_min_plus :: itvl_Interval, itvl_Interval, snum -> itvl_Interval;
 adjust_min_plus((_, a2), (m, _), c) = 
     let m1 <= m; in
     let m2 = lift(m1+c); in
       (m2, max(m2, a2));
 
 // -- update the max portion of an interval and add c
-adjust_max_plus :: Interval, Interval, snum -> Interval;
+adjust_max_plus :: itvl_Interval, itvl_Interval, snum -> itvl_Interval;
 adjust_max_plus((a1, _), (_, m), c) =
     let m1 <= m; in
     let m2 = lift(m1+c); in
       (min(a1, m2), m2);
 
 
-kill_vars :: State, *VariableSymbolNT -> State;
+kill_vars :: itvl_State, *VariableSymbolNT -> itvl_State;
 kill_vars(s, [!]) =
   s;
 kill_vars(s, v::vars) =
   let ss <= s; in
   kill_vars(lift(ss\[varsym_varid(v) -> top]), vars);
 
-interval_to_bool :: Interval -> BoolL;
+interval_to_bool :: itvl_Interval -> BoolL;
 interval_to_bool((lift(0), lift(0))) = lift(false);
 interval_to_bool((lift(1), lift(1))) = lift(true);
 interval_to_bool(_) = top;

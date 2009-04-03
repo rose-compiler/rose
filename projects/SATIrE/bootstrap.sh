@@ -25,7 +25,7 @@ for i in $@; do
           ;;
       -enable-clang) ENABLE_CLANG="1"
           ;;
-      -disable-satire) DISABLE_SATIRE="1"
+      -disable-satire) DISABLE_SATIRE="1" # build only CLANG frontend
           ;;
       -*) echo "invalid option $i"
           exit 1

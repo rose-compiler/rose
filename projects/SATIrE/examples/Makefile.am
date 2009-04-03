@@ -219,7 +219,7 @@ interval: init.token
 	@echo "====================="
 	cp -ur $(top_srcdir)/tools/interval $(testdir)
 	chmod u+rwx -R $(testdir)/interval
-	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis interval
+	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -p intvl_ interval
 	$(MAKE) check -C $(testdir)/interval
 # cd $(testdir) ; bash testsuite/testsuite.sh interval/interval testsuite
 if WITH_SWI_PROLOG
