@@ -1,3 +1,9 @@
+2009-04-03 02:16  saebjornsen1
+
+	* [r5199] /trunk/ROSE/config/ax_boost_filesystem.m4,
+	  /trunk/ROSE/config/ax_boost_wave.m4: Updated boost macros to
+	  support configuration of boost 1.38
+
 2009-04-02 17:12  panas2
 
 	* [r5196] /trunk/ROSE/projects/RTED/Makefile.am,
