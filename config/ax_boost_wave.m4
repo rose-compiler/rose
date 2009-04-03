@@ -82,14 +82,14 @@ AC_DEFUN([AX_BOOST_WAVE],
             if test "x$ax_boost_user_wave_lib" = "x"; then
                 for libextension in `ls $BOOSTLIBDIR/libboost_wave*.{so,dylib,a}* 2>/dev/null | sed 's,.*/,,' | sed -e 's;^lib\(boost_wave.*\)\.so.*$;\1;' -e 's;^lib\(boost_wave.*\)\.a*$;\1;' -e 's;^lib\(boost_wave.*\)\.dylib$;\1;'` ; do
                      ax_lib=${libextension}
-				    AC_CHECK_LIB($ax_lib, exit,
+				    AC_CHECK_LIB($ax_lib, toupper,
                                  [BOOST_WAVE_LIB="-l$ax_lib"; AC_SUBST(BOOST_WAVE_LIB) link_wave="yes"; break],
                                  [link_wave="no"])
   				done
                 if test "x$link_wave" != "xyes"; then
                 for libextension in `ls $BOOSTLIBDIR/boost_wave*.{dll,a}* 2>/dev/null | sed 's,.*/,,' | sed -e 's;^\(boost_wave.*\)\.dll.*$;\1;' -e 's;^\(boost_wave.*\)\.a*$;\1;'` ; do
                      ax_lib=${libextension}
-				    AC_CHECK_LIB($ax_lib, exit,
+				    AC_CHECK_LIB($ax_lib, toupper,
                                  [BOOST_WAVE_LIB="-l$ax_lib"; AC_SUBST(BOOST_WAVE_LIB) link_wave="yes"; break],
                                  [link_wave="no"])
   				done
@@ -97,7 +97,7 @@ AC_DEFUN([AX_BOOST_WAVE],
 
             else
                for ax_lib in $ax_boost_user_wave_lib boost_wave-$ax_boost_user_wave_lib; do
-				      AC_CHECK_LIB($ax_lib, exit,
+				      AC_CHECK_LIB($ax_lib, main,
                                    [BOOST_WAVE_LIB="-l$ax_lib"; AC_SUBST(BOOST_WAVE_LIB) link_wave="yes"; break],
                                    [link_wave="no"])
                done
