@@ -84,21 +84,21 @@ AC_DEFUN([AX_BOOST_FILESYSTEM],
             if test "x$ax_boost_user_filesystem_lib" = "x"; then
                 for libextension in `ls $BOOSTLIBDIR/libboost_filesystem*.{so,dylib,a}* 2>/dev/null | sed 's,.*/,,' | sed -e 's;^lib\(boost_filesystem.*\)\.so.*$;\1;' -e 's;^lib\(boost_filesystem.*\)\.a*$;\1;' -e 's;^lib\(boost_filesystem.*\)\.dylib$;\1;'` ; do
                      ax_lib=${libextension}
-				    AC_CHECK_LIB($ax_lib, exit,
+				    AC_CHECK_LIB($ax_lib, toupper,
                                  [BOOST_FILESYSTEM_LIB="-l$ax_lib"; AC_SUBST(BOOST_FILESYSTEM_LIB) link_filesystem="yes"; break],
                                  [link_filesystem="no"])
   				done
                 if test "x$link_program_options" != "xyes"; then
                 for libextension in `ls $BOOSTLIBDIR/boost_filesystem*.{dll,a}* 2>/dev/null | sed 's,.*/,,' | sed -e 's;^\(boost_filesystem.*\)\.dll.*$;\1;' -e 's;^\(boost_filesystem.*\)\.a*$;\1;'` ; do
                      ax_lib=${libextension}
-				    AC_CHECK_LIB($ax_lib, exit,
+				    AC_CHECK_LIB($ax_lib, toupper,
                                  [BOOST_FILESYSTEM_LIB="-l$ax_lib"; AC_SUBST(BOOST_FILESYSTEM_LIB) link_filesystem="yes"; break],
                                  [link_filesystem="no"])
   				done
 	            fi
             else
                for ax_lib in $ax_boost_user_filesystem_lib boost_filesystem-$ax_boost_user_filesystem_lib; do
-				      AC_CHECK_LIB($ax_lib, exit,
+				      AC_CHECK_LIB($ax_lib, toupper,
                                    [BOOST_FILESYSTEM_LIB="-l$ax_lib"; AC_SUBST(BOOST_FILESYSTEM_LIB) link_filesystem="yes"; break],
                                    [link_filesystem="no"])
                   done
