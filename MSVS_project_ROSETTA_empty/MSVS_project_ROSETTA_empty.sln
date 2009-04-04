@@ -1,6 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 9.00
-# Visual Studio 2005
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MSVS_project_ROSE_common_code", "MSVS_project_ROSETTA_empty\MSVS_project_ROSETTA_empty.vcproj", "{DFEDE4D5-4255-4564-A131-35019D1001D3}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MSSV_project_ROSETTA", "MSSV_project_ROSETTA\MSSV_project_ROSETTA.vcproj", "{0243C3EB-7994-4036-B51A-537CDB26A3F0}"

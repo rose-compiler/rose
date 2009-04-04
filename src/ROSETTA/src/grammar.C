@@ -401,7 +401,8 @@ Grammar::generateStringListsFromSubtreeLists ( Terminal & node,
 
 #endif
 #endif
-}
+   }
+
 
 void 
 Grammar::generateStringListsFromLocalLists ( Terminal & node,
@@ -1617,11 +1618,13 @@ Grammar::buildHeaderFiles( Terminal & node, StringUtility::FileWithLineNumbers &
 
      editedHeaderFileString = editSubstitution (node,editedHeaderFileString);
 
+#if !ROSE_MICROSOFT_OS
 #if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
   // Now write out the file (each class in its own file)!
      string fileExtension = ".h";
      string directoryName = sourceCodeDirectoryName();
      writeFile ( editedHeaderFileString, directoryName, node.getName(), fileExtension );
+#endif
 #endif
 
   // Also output strings to single file (this outputs everything to a single file)
@@ -1896,12 +1899,14 @@ Grammar::buildSourceFiles( Terminal & node, StringUtility::FileWithLineNumbers &
   // Now apply the edit/subsitution specified within the grammar (by the user)
      editedSourceFileString = editSubstitution (node,editedSourceFileString);
 
+#if !ROSE_MICROSOFT_OS
 #if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
   // Now write out the file!
      string fileExtension = ".C";
      string directoryName = sourceCodeDirectoryName();
 
      writeFile ( editedSourceFileString, directoryName, node.getName(), fileExtension );
+#endif
 #endif
 
 #if 1

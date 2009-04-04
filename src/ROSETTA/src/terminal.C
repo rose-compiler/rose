@@ -935,8 +935,12 @@ Terminal::excludeSubTreeFunctionSource
    }
 
 // test of work around for Insure++ (removing the const declaration to avoid generation of a copy)
+#if !ROSE_MICROSOFT_OS
 #if INSURE_BUG
 void Terminal::addElementToList ( vector<GrammarString *> & targetList, GrammarString & element )
+#else
+void Terminal::addElementToList ( vector<GrammarString *> & targetList, const GrammarString & element )
+#endif
 #else
 void Terminal::addElementToList ( vector<GrammarString *> & targetList, const GrammarString & element )
 #endif
