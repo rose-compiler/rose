@@ -755,6 +755,9 @@ bool AttributeListMap::found_include_directive(TokenT directive, std::string rel
           case boost::wave::T_PP_INCLUDE:
                break;
           default:
+
+               if( directive.get_position().get_file().size() == 0 ) break;
+
                PreprocessingInfo::r_include_directive* inclDir = new PreprocessingInfo::r_include_directive;
 
                inclDir->directive = directive;
