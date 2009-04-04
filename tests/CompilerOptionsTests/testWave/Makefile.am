@@ -1,17 +1,17 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-bin_PROGRAMS = testWave #matchTokenStreamToAST
-#bin_PROGRAMS =
+bin_PROGRAMS = testWave testWave2 
+
 testWave_SOURCES = \
 	testWave.C
 
-# DQ (3/8/2009): Fixed error: If only SQLite is required, do not include $(QT_LDFLAGS) $(QROSE_LDFLAGS)
-# macroRewrapper_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
 testWave_LDADD = $(ROSE_LIBS)
 
+testWave2_SOURCES = \
+	testWave2.C
 
-# DQ (3/8/2009): Fixed error: -I. and $(BOOST_CPPFLAGS) is included in $(ROSE_INCLUDES).
-# INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I.
+testWave2_LDADD = $(ROSE_LIBS)
+
 INCLUDES = $(ROSE_INCLUDES) 
 
 TESTCODES_REQUIRED_TO_PASS = \
@@ -24,7 +24,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      test7.c \
      test8.c \
      test9.c \
-     test10.c
+     test10.c \
+     test11.C
 
 TESTCODE_CURRENTLY_FAILING = 
 
@@ -37,7 +38,8 @@ $(TESTCODES_REQUIRED_TO_PASS)
 
 
 PASSING_TEST_Objects = ${TESTCODES:.c=.o}
-TEST_Objects = ${ALL_TESTCODES:.c=.o}
+TEST_Objects  = ${ALL_TESTCODES:.c=.o}
+TEST_Objects2 = ${ALL_TESTCODES:.c=.o}
 
 $(TEST_Objects): testWave $(srcdir)/$(@:.o=.C)
 	rm -f $(@:.o=.c).out
@@ -46,6 +48,11 @@ $(TEST_Objects): testWave $(srcdir)/$(@:.o=.C)
 	if [ "`diff $(srcdir)/out/rose_$(@:.o=.c) rose_$(@:.o=.c) | wc -l`" != "0" ]; then exit 1; fi
 	rm -f $(@:.c=.o)
 
+$(TEST_Objects2): testWave2 $(srcdir)/$(@:.o=.C)
+	rm -f $(@:.o=.c).out  
+	./testWave2 -c $(srcdir)/out/$(@:.o=.c) -o $(@:.c=.o)
+	if [ "`diff $(srcdir)/out/$(@:.o=.c).test2.out $(@:.o=.c).test2.out | wc -l`" != "0" ]; then exit 1; fi
+	rm -f $(@:.c=.o)
 
 test:
 	@echo "************************************************************************************************"

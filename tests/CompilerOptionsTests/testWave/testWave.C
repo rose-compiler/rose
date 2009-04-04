@@ -99,7 +99,7 @@ int main( int argc, char * argv[] )
    {
 
      std::vector<std::string> newArgv(argv,argv+argc);
-     newArgv.insert(newArgv.begin()++,"-rose:wave");
+     newArgv.push_back("-rose:wave");
 
      newArgv.push_back("-rose:excludePath");
      newArgv.push_back("/include/g++_HEADERS/");

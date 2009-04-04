@@ -1948,7 +1948,7 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
         }
        else
         {
-          cerr << "Unable to open target source file";
+          cerr << "Unable to open target source file: " << filename << "\n";
           ROSE_ASSERT(false);
         }
 

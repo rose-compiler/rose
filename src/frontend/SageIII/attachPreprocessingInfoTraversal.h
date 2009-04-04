@@ -151,7 +151,7 @@ class AttachPreprocessingInfoTreeTrav
 
        // DQ (11/30/2008): Refactored code to isolate this from the inherited attribute evaluation.
        // static ROSEAttributesList* buildCommentAndCppDirectiveList ( SgFile *currentFilePtr, std::map<std::string,ROSEAttributesList*>* mapOfAttributes, bool use_Wave );
-          ROSEAttributesList* buildCommentAndCppDirectiveList ( bool use_Wave );
+          ROSEAttributesList* buildCommentAndCppDirectiveList ( bool use_Wave, std::string currentFilename );
    };
 
 #endif
