@@ -222,14 +222,18 @@ Grammar::setUpSupport ()
           DirectoryList         | FunctionParameterTypeList | QualifiedName       | TemplateArgumentList |
           TemplateParameterList | /* RenamePair                | InterfaceBody       |*/
           Graph                 | GraphNode                 | GraphEdge           | 
-
-#if !OLD_GRAPH_NODES
-       /* (now derived from GraphNode) DirectedGraphNode | */ GraphNodeList | GraphEdgeList |
-#endif
           NameGroup             | CommonBlockObject         | DimensionObject     | FormatItem           |
           FormatItemList        | DataStatementGroup        | DataStatementObject | DataStatementValue,
           "Support", "SupportTag", false);
 
+#if !ROSE_MICROSOFT_OS
+// DQ (3/30/2009): This is the moved because "#if !0" is a problem for MSVS.
+// Note that OLD_GRAPH_NODES is set to "1" above...
+#if 0
+// !OLD_GRAPH_NODES == 0
+  /* (now derived from GraphNode) DirectedGraphNode | */ GraphNodeList | GraphEdgeList |
+#endif
+#endif
 
 #if 0
   // Debugging code
@@ -764,7 +768,10 @@ Grammar::setUpSupport ()
   // File.setDataPrototype("std::list<std::string>","originalCommandLineArgumentList", "",
      File.setDataPrototype("SgStringList","originalCommandLineArgumentList", "",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+#if !ROSE_MICROSOFT_OS
 #warning "This should be using the BUILD_LIST_ACCESS_FUNCTIONS"
+#endif
 
   // Modified ROSE to hold variables into the File object
   // DQ (8/10/2004): modified to be an int instead of a bool
@@ -1349,7 +1356,10 @@ Grammar::setUpSupport ()
   // Project.setDataPrototype("std::list<std::string>","originalCommandLineArgumentList", "",
      Project.setDataPrototype("SgStringList","originalCommandLineArgumentList", "",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+#if !ROSE_MICROSOFT_OS
 #warning "This should be using the BUILD_LIST_ACCESS_FUNCTIONS"
+#endif
 
      Project.setDataPrototype("int","frontendErrorCode", "= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
