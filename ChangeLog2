@@ -1,3 +1,74 @@
+2009-04-04 18:35  dquinlan
+
+	* [r5216] /trunk/ROSE/MSVS_ROSE, /trunk/ROSE/MSVS_ROSE/Debug,
+	  /trunk/ROSE/MSVS_ROSE/Debug/MSVS_ROSETTA.pdb,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSE,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSE.ncb,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSE.sln,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSE.suo,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSE/Debug,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSE/Debug/BuildLog.htm,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSE/Debug/vc90.idb,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSE/Debug/vc90.pdb,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSE/MSVS_ROSE.vcproj,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSE/MSVS_ROSE.vcproj.THE-LAB.quinlan1.user,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSETTA,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSETTA/Debug,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSETTA/Debug/BuildLog.htm,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSETTA/Debug/MSVS_ROSETTA.exe.intermediate.manifest,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSETTA/Debug/vc90.idb,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSETTA/Debug/vc90.pdb,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSETTA/MSVS_ROSETTA.vcproj,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSETTA/MSVS_ROSETTA.vcproj.THE-LAB.quinlan1.user,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_UTIL,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_UTIL/Debug,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_UTIL/Debug/BuildLog.htm,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_UTIL/Debug/vc90.idb,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_UTIL/Debug/vc90.pdb,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_UTIL/MSVS_UTIL.vcproj,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_UTIL/MSVS_UTIL.vcproj.THE-LAB.quinlan1.user,
+	  /trunk/ROSE/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty.ncb,
+	  /trunk/ROSE/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty.sln,
+	  /trunk/ROSE/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty.suo,
+	  /trunk/ROSE/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty.vcproj,
+	  /trunk/ROSE/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty/MSVS_project_ROSETTA_empty.vcproj.THE-LAB.quinlan1.user,
+	  /trunk/ROSE/src/ROSETTA/src/grammar.C,
+	  /trunk/ROSE/src/ROSETTA/src/support.C,
+	  /trunk/ROSE/src/ROSETTA/src/terminal.C,
+	  /trunk/ROSE/src/ROSETTA/src/type.C: Added more support for MSVS
+	  1) New MS project with subprojects for util, ROSETTA, and the
+	  generated files from ROSETTA
+	  (located in the compile tree built by Cygwin). Current work is
+	  using the Compile tree's
+	  generated source files because I don't have ROSETTA linking
+	  properly yet.
+	  2) Fixed a collection of MSVS compatability issues, commented
+	  some out and a few
+	  will have to be fixed with MSVS versions of file I/O in the next
+	  round of MSVS development.
+
+2009-04-04 17:33  saebjornsen1
+
+	* [r5215]
+	  /trunk/ROSE/src/frontend/SageIII/attachPreprocessingInfoTraversal.C,
+	  /trunk/ROSE/src/frontend/SageIII/attachPreprocessingInfoTraversal.h,
+	  /trunk/ROSE/src/frontend/SageIII/attributeListMap.h,
+	  /trunk/ROSE/src/frontend/SageIII/rose_attributes_list.C,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/Makefile.am,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/test11.C,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/out/test11.h,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/testWave.C,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/testWave2.C:
+	  Partly fixed the attachment of all comments and directives
+
+2009-04-04 16:39  dquinlan
+
+	* [r5214]
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/Makefile-pass.inc:
+	  Skipping test2006_12.C in outlining tests since it fails on OSX
+	  (likely because the OSX header files are different form Linux),
+	  working with Liao to get this fixed.
+
 2009-04-03 21:32  saebjornsen1
 
 	* [r5203] /trunk/ROSE/config/ax_boost_filesystem.m4,
