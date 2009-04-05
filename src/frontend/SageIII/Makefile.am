@@ -108,7 +108,8 @@ libsage3Sources = \
 
 noinst_LTLIBRARIES = libsage3.la
 
-libsage3_la_SOURCES = $(libsage3Sources) preproc.ll rose_paths.h omplexer.ll ompparser.yy
+# libsage3_la_SOURCES = $(libsage3Sources) preproc.ll rose_paths.h omplexer.ll ompparser.yy
+libsage3_la_SOURCES = $(libsage3Sources) preproc.ll omplexer.ll ompparser.yy
 
 # DQ (3/8/2009): I think that the dependence upon $(top_builddir)/rose_config.h 
 # is what was forcing a lot of files to be compiled after reruning configure.
@@ -177,9 +178,10 @@ include_HEADERS = \
    attachPreprocessingInfoTraversal.h \
    attach_all_info.h manglingSupport.h C++_include_files.h \
    fixupCopy.h \
-   general_token_defs.h rose_paths.h rtiHelpers.h \
+   general_token_defs.h rtiHelpers.h \
    OmpAttribute.h omp.h dwarfSupport.h
 
+# DQ (4/5/2009): Moved rose_paths.h to src/util (where the source file is located).
 nodist_include_HEADERS = \
    Cxx_Grammar.h \
    Cxx_GrammarMemoryPoolSupport.h \
