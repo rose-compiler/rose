@@ -87,10 +87,13 @@ uninstall-local:
 distclean-local:
 	-rm -rf $(top_builddir)/include-staging/
 
-# DQ (12/3/2007): Added rose_paths.h so that it would be copied to the install tree.
-# JJW (8/25/2008): Changed to a .c file
 nodist_include_HEADERS = rose_config.h
 
+# DQ (4/5/2009): This rule is not called when compiling this directory, it is only
+# called when compiling the /src/util directory (perhaps it should be located in 
+# that directory's Makefile.am.
+# DQ (12/3/2007): Added rose_paths.h so that it would be copied to the install tree.
+# JJW (8/25/2008): Changed to a .c file
 include $(top_srcdir)/config/build_rose_paths.Makefile
 
 check-local:

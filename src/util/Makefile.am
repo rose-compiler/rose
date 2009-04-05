@@ -14,27 +14,37 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 # lib_LIBRARIES = libroseutil.a
 # libroseutil_a_DEPENDENCIES = $(libroseutilDependencies)
 
+# DQ (4/5/2009): I have moved rose_paths.h file from src/frontend/SageIII to src/util
+# so that it is better matched with where the source file is build (even though the
+# source file is generated in the associated compile tree instead of the source tree).
+# The rose_paths.[hC] data is referenced by both ROSETTA and ROSE (so it is located in src/util).
+rose_paths.C:
+	cd $(top_builddir); $(MAKE) src/util/rose_paths.C
+
 noinst_LTLIBRARIES = libroseutil.la
 
-libroseutil_la_SOURCES = processSupport.C processSupport.h
-nodist_libroseutil_la_SOURCES = rose_paths.c
+# libroseutil_la_SOURCES = processSupport.C processSupport.h
+libroseutil_la_SOURCES = processSupport.C
+nodist_libroseutil_la_SOURCES = rose_paths.C
 libroseutil_la_LIBADD = \
 	stringSupport/libRoseStringSupport.la \
 	commandlineProcessing/libRoseCommandlineUtil.la
 
-rose_paths.c:
-	cd $(top_builddir); $(MAKE) src/util/rose_paths.c
+# DQ (4/5/2009): I don't think this needs to be specified using this Automake technique.
+# The use of this technique for force rose_paths.C to be built was also what was causing
+# large parts of ROSE to be rebuilt when configure was return (this appears to be fixed now).
+# BUILT_SOURCES = rose_paths.C
 
-BUILT_SOURCES = rose_paths.c
+# DQ (4/5/2009): Added rose_paths.C to clean rule, instead of to the DISTCLEANFILES
+# DISTCLEANFILES = rose_paths.C
 
-DISTCLEANFILES = rose_paths.c
-
-include_HEADERS = setup.h processSupport.h
+include_HEADERS = setup.h processSupport.h rose_paths.h
 
 EXTRA_DIST = setup.h utilDocumentation.docs
 
+# DQ (4/5/2009): Added rose_paths.C to clean rule, instead of to the DISTCLEANFILES
 clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files
+	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files rose_paths.C
 
 distclean-local:
 	rm -rf Templates.DB
