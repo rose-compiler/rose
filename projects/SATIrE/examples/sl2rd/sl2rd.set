@@ -1,3 +1,7 @@
 SET
+    VarSet      = set(VariableId)
+    VarLabPair  = VariableId * snum
 
 DOMAIN
+    VarLabPairSet = set(VarLabPair)
+    VarLabPairSetLifted = lift(VarLabPairSet)

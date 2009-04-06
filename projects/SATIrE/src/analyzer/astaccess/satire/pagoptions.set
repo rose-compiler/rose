@@ -1,6 +1,4 @@
 SET
-    VarSet      = set(VariableId)
-    VarLabPair  = VariableId * snum
 
 DOMAIN
  // General SATIrE definitions.
@@ -20,9 +18,5 @@ DOMAIN
     itvl_fState = VariableId -> itvl_Interval
     itvl_State = lift(itvl_fState)
     itvl_IntervalStatePair = itvl_Interval * itvl_State
-
- // Definitions for predefined sl2rd analysis
-    VarLabPairSet = set(VarLabPair)
-    VarLabPairSetLifted = lift(VarLabPairSet)
 
 ENDDOMAIN
