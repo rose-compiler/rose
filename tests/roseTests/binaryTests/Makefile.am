@@ -3,7 +3,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 EXTRA_DIST = buffer2.bin runTest.C \
              arm-poweroff arm-ctrlaltdel arm-ctrlaltdel.ans \
 	     schulz-sample1.so schulz-sample1-p.so schulz-sample2.so schulz-sample2-p.so \
-	     runExecFormatsTest testShiftResizeSection.sh
+	     runExecFormatsTest testShiftResizeSection.sh libm-2.3.6.so
 
 if USE_BINARY_ANALYSIS_TESTS
 
@@ -170,6 +170,10 @@ test_testElfSchulz-2.passed: testElfSchulz
 	    else echo "Libs differ; Schulz test-2 failed"; exit 1; fi
 	@touch $@
 
+test_so_file:
+	cp $(srcdir)/libm-2.3.6.so .
+	$(top_builddir)/projects/BinQ/BinQ -a libm-2.3.6.so
+
 test_testElfConstruct.passed: testElfConstruct
 	$(VALGRIND) ./testElfConstruct
 	@touch $@
@@ -250,7 +254,7 @@ check-local:
 	@echo "*** ROSE/tests/roseTests/programAnalysisTests/binaryTests: (commented out for Cygwin) ***"
 	@echo "*****************************************************************************************"
 else
-check-local: runTest test1 $(TEST_PASSED_TARGETS)
+check-local: runTest test1 $(TEST_PASSED_TARGETS) test_so_file
 	./runTest $(srcdir)/buffer2.bin > output
 	@echo "*********************************************************************"
 	@echo "*** ROSE/tests/roseTests/programAnalysisTests/binaryTests: passed ***"
