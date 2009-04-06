@@ -41,7 +41,9 @@ putInstructionsIntoBasicBlocks(const std::map<uint64_t, SgAsmBlock*>& basicBlock
             cerr << "Found instruction that is after the last block: " << addr << endl;
             abort();
         }
-        // ROSE_ASSERT (theBlockIter != insnToBlock.end());
+	// tps (6 Apr 2009) -- The following ASSERT was commented out. It is needed because otherwise
+	// theBlock is NULL and insn->set_parent(theBlock) crashes.
+        ROSE_ASSERT (theBlockIter != insnToBlock.end());
         SgAsmBlock* theBlock = theBlockIter->second;
         insn->set_parent(theBlock);
         theBlock->get_statementList().push_back(insn);
