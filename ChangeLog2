@@ -1,3 +1,32 @@
+2009-04-05 21:09  dquinlan
+
+	* [r5235] /trunk/ROSE/Makefile.am,
+	  /trunk/ROSE/config/build_rose_paths.Makefile,
+	  /trunk/ROSE/projects/palette/rose.P,
+	  /trunk/ROSE/src/ROSETTA/astNodeList,
+	  /trunk/ROSE/src/frontend/SageIII/Makefile.am,
+	  /trunk/ROSE/src/frontend/SageIII/rose_paths.h,
+	  /trunk/ROSE/src/util/Makefile.am,
+	  /trunk/ROSE/src/util/rose_paths.h: Fixed rose_path.[hC] issues as
+	  part of support for MSVS.
+	  
+	  Detailed changes in this commit:
+	  1) Moved rose_paths.h to src/util to match the associated build
+	  directory where
+	  rose_paths.C is generated.
+	  2) Made the generated source file rose_paths.C a C++ file (used
+	  to be a C file).
+	  3) Change use of char in rose_paths.[hC] to use std::string type.
+	  4) Included header file so that linking would see a consistant
+	  declaration for
+	  the external declaration and the defining declaration (this was
+	  causing problems
+	  with portability between Linux and MSVS, and appeared to cause
+	  some problems for
+	  even some versions of g++; version 4.2.x).
+	  5) Fixed Makefile.am references to rose_paths.[hC] where
+	  required.
+
 2009-04-04 18:35  dquinlan
 
 	* [r5216] /trunk/ROSE/MSVS_ROSE, /trunk/ROSE/MSVS_ROSE/Debug,
