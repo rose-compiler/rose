@@ -1,5 +1,11 @@
 V0.?.? ? AP,...
 
+* Provided analyzers [GB]
+  - A number of SATIrE analyzers are now compiled into a shared library for
+    easy combination with other analyzers.
+  - satire_driver program provides command-line access to predefined
+    analyzers and many other SATIrE library features.
+
 * Build system [AP,GB]
   - Using libtool to create dynamic libraries.
 
@@ -30,6 +36,10 @@ V0.?.? ? AP,...
     information.
   - Data-flow analysis results are output context-sensitively (including
     Termite annotations).
+
+* Highly experimental context-sensitive points-to analysis [GB]
+  - Extension of existing points-to analysis with context information from
+    PAG, for better support of data-flow analyzers.
 
 V0.8.5 2008-11-22 GB,AP,VP,MS
 

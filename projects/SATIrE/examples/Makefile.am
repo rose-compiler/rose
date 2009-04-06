@@ -76,7 +76,7 @@ testdir=installcheck-executable-examples
 # The tests are now split into separate targets to facilitate a
 # paralellized run of the testsuite (make -j #N installcheck)
 
-TESTS_WITH_PAG = sl1rd sl2rd nnh99_shape srw98_shape pointsto_live_variables testsuite interval
+TESTS_WITH_PAG = sl1rd sl2rd nnh99_shape srw98_shape pointsto_live_variables testsuite interval satire_driver
 TESTS_WITHOUT_PAG = termite
 
 if WITH_SWI_PROLOG
@@ -241,6 +241,17 @@ loopbounds: interval
 	cp -ur $(top_srcdir)/tools/loopbounds $(testdir)
 	chmod u+rwx -R $(testdir)/loopbounds
 	$(MAKE) -j1 $(patsubst %.c,%.loop.term,$(wildcard $(top_srcdir)/examples/*/tests/*.c))
+
+satire_driver: init.token
+	@echo
+	@echo "Testing satire_driver with analysis interval"
+	@echo "============================================"
+	rm -rf $(testdir)/driver_tests
+	cp -ur $(top_srcdir)/tools/interval/tests $(testdir)/driver_tests
+	cd $(testdir)
+	for f in $(testdir)/driver_tests/*; do \
+		$(bindir)/satire_driver --analysis=interval $$f; echo; \
+	done
 
 testsuite: init.token
 	@echo

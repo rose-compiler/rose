@@ -10,6 +10,10 @@
 #include <list>
 #include <vector>
 
+namespace SATIrE {
+  class DataFlowAnalysis;
+}
+
 class AnalyzerOptions {
 public:
   AnalyzerOptions();
@@ -65,6 +69,9 @@ public:
 
   bool retFuncUsed();
 
+  void appendDataFlowAnalysis(SATIrE::DataFlowAnalysis *);
+  const std::vector<SATIrE::DataFlowAnalysis *> &getDataFlowAnalyzers() const;
+
 protected:
   void setCommandLineNum(int);
   void addCommandLineNum(int);
@@ -94,6 +101,8 @@ protected:
 #undef INT_ATTR
 #undef INT_ATTR_NOSTUB
 #undef BOOL_ATTR
+
+  std::vector<SATIrE::DataFlowAnalysis *> dataFlowAnalyzers;
 
 };
 

@@ -71,6 +71,10 @@ private:
 #endif
 };
 
+// Generated function that returns an instance of a provided data-flow
+// analyzer.
+DataFlowAnalysis *makeProvidedAnalyzer(const char *name);
+
 }
 
 #endif

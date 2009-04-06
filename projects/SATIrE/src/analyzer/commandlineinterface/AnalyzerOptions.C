@@ -54,6 +54,7 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo(""),_n
     "   --no-number-expressions  do not number expressions and types in the ICFG\n"
     "   --run-pointsto-analysis  run a points-to analysis on the ICFG\n"
     "   --resolve-funcptr-calls  resolve indirect calls using pointer analysis\n"
+    "   --analysis=<identifier>  run SATIrE's analysis <identifier> on the ICFG\n"
     "\n"
 #if HAVE_PAG
     " PAG-specific analysis options:\n"
@@ -277,3 +278,14 @@ int AnalyzerOptions::getCommandLineNum() { return _commandLineNum; }
 bool AnalyzerOptions::retFuncUsed() { return true; }
 
 int AnalyzerOptions::getNumberOfInputFiles() { return _numberOfInputFiles; }
+
+void AnalyzerOptions::appendDataFlowAnalysis(SATIrE::DataFlowAnalysis *a)
+{
+  dataFlowAnalyzers.push_back(a);
+}
+
+const std::vector<SATIrE::DataFlowAnalysis *> &
+AnalyzerOptions::getDataFlowAnalyzers() const
+{
+  return dataFlowAnalyzers;
+}

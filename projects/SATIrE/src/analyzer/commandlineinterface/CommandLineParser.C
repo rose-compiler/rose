@@ -6,6 +6,10 @@
 #include <sstream>
 #include "CommandLineParser.h"
 
+namespace SATIrE {
+  DataFlowAnalysis *makeProvidedAnalyzer(const char *name);
+}
+
 using namespace std;
 
 void CommandLineParser::exitError(string msg)
@@ -147,6 +151,16 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
   } else if (optionMatch(argv[i], "--gdl-nodeformat=no-asttext")) {
     cl->nodeFormatAstTextOff();
 #endif
+  } else if (optionMatchPrefix(argv[i], "--analysis=")) {
+    /* see if we have an analyzer with the given name */
+    SATIrE::DataFlowAnalysis *analyzer
+        = SATIrE::makeProvidedAnalyzer(argv[i]+prefixLength);
+    if (analyzer == NULL) {
+      cl->setOptionsErrorMessage("no such provided analysis: "
+                                 + std::string(argv[i]+prefixLength));
+      return 1;
+    }
+    cl->appendDataFlowAnalysis(analyzer);
   } else if (optionMatch(argv[i], "--analysis-files=all")) {
     cl->analysisWholeProgramOn();
   } else if (optionMatch(argv[i], "--analysis-files=cl")) {

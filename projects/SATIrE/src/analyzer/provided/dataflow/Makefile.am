@@ -26,7 +26,7 @@ nobase_include_HEADERS = \
 	$(foreach a, $(X_ANALYZERS), satire/$(a)_implementation.h)
 
 # Explicit rule to override default (which assumes a certain C source file).
-libsatiredfa_la_SOURCES =
+libsatiredfa_la_SOURCES = satiredfa.C
 
 # All the objects and archives we want to go into libsatiredfa, based on
 # $(ANALYZERS) specified above.
@@ -130,7 +130,56 @@ satire/satiredfa.h: $(foreach a, $(X_ANALYZERS), satire/$(a)_implementation.h)
 		cp `printf %s/%s_implementation.h $$a $$a` satire; \
 	done
 
+INCLUDES = -I$(top_srcdir)/src/satire \
+       -I$(top_srcdir)/src/termite/satire \
+       -I$(top_builddir)/src/termite/satire \
+       -I$(top_srcdir)/src/analyzer/annotation/satire \
+       -I$(top_srcdir)/src/analyzer/icfgbuilder/satire \
+       -I$(top_srcdir)/src/analyzer/astaccess \
+       -I$(top_srcdir)/src/analyzer/astaccess/satire \
+       -I$(top_srcdir)/src/analyzer/astnumbering/satire \
+       -I$(top_srcdir)/src/analyzer/annotation/satire \
+       -I$(top_srcdir)/src/analyzer/commandlineinterface/satire \
+       -I$(top_srcdir)/src/analyzer/support \
+       -I$(top_srcdir)/src/analyzer/support/satire \
+       -I$(ROSE_INCLUDE_DIR) \
+       -I$(BOOST_INCLUDE_DIR)
+
+if WITH_PAG
+INCLUDES += -I$(PAG_INCLUDE_DIR)/pag \
+            -I$(PAG_INCLUDE_DIR)/pag/analyzer
+endif
+
+if WITH_SWI_PROLOG
+INCLUDES += -I$(SWI_PROLOG_INCLUDE_DIR)
+endif
+
+satiredfa.C: satire/satiredfa.h
+	rm -f satiredfa.C
+	touch satiredfa.C
+	echo "#include <satire.h>" >> satiredfa.C
+	echo "#include \"satire/satiredfa.h\"" >> satiredfa.C
+	echo "namespace SATIrE {" >> satiredfa.C
+	echo "const char *provided_analyzers[] = {" >> satiredfa.C
+	for a in $(X_ANALYZERS); do \
+		echo "    \"$$a\"," >> satiredfa.C; \
+	done
+	echo "    (const char *) 0" >> satiredfa.C
+	echo "};" >> satiredfa.C
+	echo "DataFlowAnalysis* makeProvidedAnalyzer(const char *name) {" \
+		>> satiredfa.C
+	echo "    std::string analyzer = name;" >> satiredfa.C
+	for a in $(X_ANALYZERS); do \
+		echo "    if (analyzer == \"$$a\")" >> satiredfa.C; \
+		echo "        return new DataFlowAnalysis(new $$a::Implementation());" \
+			>> satiredfa.C; \
+	done
+	echo "    return NULL;" >> satiredfa.C
+	echo "}" >> satiredfa.C
+	echo "}" >> satiredfa.C
+
 clean-local:
 	rm -rf $(X_ANALYZERS)
 	rm -rf satire/
 	rm -rf local_satire_skeletons local_include_dir local_newanalysis_script
+	rm -rf satiredfa.C

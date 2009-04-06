@@ -5,6 +5,9 @@ INCLUDES = -I$(ROSE_INCLUDE_DIR) -I$(BOOST_INCLUDE_DIR) \
 	-I$(top_srcdir)/src/analyzer/astnumbering/satire \
 	-I$(top_srcdir)/src/analyzer/commandlineinterface/satire \
 	-I$(top_builddir)/src/analyzer/astaccess/satire \
+	-I$(top_builddir)/src/analyzer/satire \
+	-I$(top_builddir)/src/analyzer/support/satire \
+	-I$(top_builddir)/src/analyzer/annotation/satire \
 	-I$(top_srcdir)/src/termite/satire \
 	-I$(top_builddir)/src/termite/satire
 
