@@ -228,7 +228,7 @@ strip_file_info(_,_,_, Term, Term).
 %% var_stripped(+VarRefExp, -VarRefExpStripped)
 var_stripped(
   var_ref_exp(var_ref_exp_annotation(Type, Name, Val, A1, PPI), _Ai, _Fi),
-  var_ref_exp(var_ref_exp_annotation(Type, Name, Val, A1), PPI,null,null)) :- !.
+  var_ref_exp(var_ref_exp_annotation(Type, Name, Val, A1, PPI),null,null)) :- !.
 
 var_stripped(cast_exp(V, _, _A, _Ai, _Fi), V1) :- !,
   var_stripped(V, V1).
@@ -265,17 +265,17 @@ term_interval(AnalysisInfo, Term, TermC) :-
   term_mod(Term, var_interval(AnalysisInfo), TermC), !.
 
 %% isIntVal(?IntVal, ?Value) is nondet.
-isIntVal(                   int_val(_,value_annotation(Value), _, _, _), Value).
-isIntVal(                 short_val(_,value_annotation(Value), _, _, _), Value).
-isIntVal(             short_int_val(_,value_annotation(Value), _, _, _), Value).
-isIntVal(              long_int_val(_,value_annotation(Value), _, _, _), Value).
-isIntVal(         long_long_int_val(_,value_annotation(Value), _, _, _), Value).
-isIntVal(          unsigned_int_val(_,value_annotation(Value), _, _, _), Value).
-isIntVal(    unsigned_short_int_val(_,value_annotation(Value), _, _, _), Value).
-isIntVal(        unsigned_short_val(_,value_annotation(Value), _, _, _), Value).
-isIntVal(         unsigned_long_val(_,value_annotation(Value), _, _, _), Value).
-isIntVal(unsigned_long_long_int_val(_,value_annotation(Value), _, _, _), Value).
-isIntVal(              bool_val_exp(_,value_annotation(Value), _, _, _), Value).
+isIntVal(                   int_val(_,value_annotation(Value,_), _, _), Value).
+isIntVal(		  short_val(_,value_annotation(Value,_), _, _), Value).
+isIntVal(	      short_int_val(_,value_annotation(Value,_), _, _), Value).
+isIntVal(	       long_int_val(_,value_annotation(Value,_), _, _), Value).
+isIntVal(	  long_long_int_val(_,value_annotation(Value,_), _, _), Value).
+isIntVal(	   unsigned_int_val(_,value_annotation(Value,_), _, _), Value).
+isIntVal(    unsigned_short_int_val(_,value_annotation(Value,_), _, _), Value).
+isIntVal(	 unsigned_short_val(_,value_annotation(Value,_), _, _), Value).
+isIntVal(	  unsigned_long_val(_,value_annotation(Value,_), _, _), Value).
+isIntVal(unsigned_long_long_int_val(_,value_annotation(Value,_), _, _), Value).
+isIntVal(	       bool_val_exp(_,value_annotation(Value,_), _, _), Value).
 
 isIntVal(char_val(_,value_annotation(Value, _), _, _), Value) :-
   integer(Value).

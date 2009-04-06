@@ -13,4 +13,4 @@ else
 fi
 
 ../interval/interval $1 --output-term=$1.term ||exit 1
-$PL -q -O -t main -f loopbounds.pl -- $1.term $1.loops.term ||exit 1
+$PL -q -O -t main -f loopbounds.pl < $1.term > $1.loops.term ||exit 1

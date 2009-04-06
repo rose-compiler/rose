@@ -21,7 +21,7 @@ void dfierror(const char *);
 /*Token declarations*/
 %token <strValue> TOKEN
 %token <strValue> TOP 
-%token <strValue> BOTTOM
+%token <strValue> BOT
 %token <strValue> ASSIGN
 %token <intValue> INT 
 %token <strValue> UNDEF 
@@ -153,8 +153,8 @@ assignment:
 ;
 
 topbot: 
-  TOP      { $$ = new PrologAtom("top"); }
-  | BOTTOM { $$ = new PrologAtom("bottom"); }
+  TOP    { $$ = new PrologAtom("top"); }
+  | BOT  { $$ = new PrologAtom("bot"); }
 ;
 
 value:

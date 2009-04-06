@@ -276,25 +276,25 @@ unparse(Char) :-
   string_to_list(Value, [N]), write(N).
 
 unparse(enum_val(_,value_annotation(_,Value,_),_,_)) :- !, write(Value).
-unparse(char_val(_,value_annotation(Value),_,_)) :- !, write(Value).
-unparse(int_val(_,value_annotation(Value),_,_)) :- !, write(Value).
-unparse(short_val(_,value_annotation(Value),_,_)) :- !, write(Value).
-unparse(short_int_val(_,value_annotation(Value),_,_)) :- !, write(Value).
-unparse(long_int_val(_,value_annotation(Value),_,_)) :- !, write(Value).
-unparse(long_long_int_val(_,value_annotation(Value),_,_)) :- !, write(Value).
-unparse(unsigned_char_val(_,value_annotation(Value),_,_)) :- !, write(Value).
-unparse(unsigned_int_val(_,value_annotation(Value),_,_)) :- !, write(Value).
-unparse(unsigned_short_int_val(_,value_annotation(Value),_,_)) :- !, write(Value).
-unparse(unsigned_short_val(_,value_annotation(Value),_,_)) :- !, write(Value).
-unparse(unsigned_long_val(_,value_annotation(Value),_,_)) :- !, write(Value).
-unparse(unsigned_long_long_val(_,value_annotation(Value),_,_)) :- !, write(Value).
-unparse(unsigned_long_long_int_val(_,value_annotation(Value),_,_)) :- !, write(Value).
-unparse(float_val(_,value_annotation(Value),_,_)) :- !, write(Value).
-unparse(double_val(_,value_annotation(Value),_,_)) :- !, write(Value).
-unparse(string_val(_,value_annotation(Value),_,_)) :- !, write('"'), write(Value), write('"').
+unparse(char_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse(int_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse(short_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse(short_int_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse(long_int_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse(long_long_int_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse(unsigned_char_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse(unsigned_int_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse(unsigned_short_int_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse(unsigned_short_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse(unsigned_long_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse(unsigned_long_long_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse(unsigned_long_long_int_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse(float_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse(double_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse(string_val(_,value_annotation(Value,_),_,_)) :- !, write('"'), write(Value), write('"').
 unparse(bool_val_exp(_, value_annotation(0),_,_)) :- !, write('false').
 unparse(bool_val_exp(_, value_annotation(1),_,_)) :- !, write('true').
-unparse(bool_val_exp(_, value_annotation(Value),_, _)) :- !, write(Value).
+unparse(bool_val_exp(_, value_annotation(Value,_),_, _)) :- !, write(Value).
 
 % EXPRESSIONS
 unparse(function_call_exp(function_ref_exp(function_ref_exp_annotation(Name, _),
@@ -338,7 +338,7 @@ unparse([E|Es]) :- !,
 
 unparse([]) :- !.
 
-unparse(var_ref_exp(var_ref_exp_annotation(_, Name, _, _), _, _)) :- !,
+unparse(var_ref_exp(var_ref_exp_annotation(_Type, Name, _, _, _), _, _)) :- !,
   write(Name).
 
 unparse(pntr_arr_ref_exp(Base, Offset, _, _, _)) :- !, 

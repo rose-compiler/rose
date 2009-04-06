@@ -28,7 +28,7 @@ const char* dfi_input_start = 0;
 %option noyywrap
 
 top TOP
-bottom BOTTOM
+bottom BOT
 setbegin \{\[
 setclose \]\}
 int \-?[0-9]+
@@ -45,7 +45,7 @@ ws [ \t\r\n]
 
 {undef}  { return UNDEF; }
 {top}    { return TOP; }
-{bottom} { return BOTTOM; }
+{bottom} { return BOT; }
 {edge}   { return EDGE; }
 {context} { return CONTEXT; }
 {merged} { return MERGED; }

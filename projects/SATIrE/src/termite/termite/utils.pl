@@ -3,7 +3,8 @@
 
 :- module(utils,
 	  [dup/3,
-	   foldl1/3, 
+	   foldl/4,
+	   foldl1/3,
            string_to_term/2,
            term_to_string/2,
 	   atom_to_string/2,
