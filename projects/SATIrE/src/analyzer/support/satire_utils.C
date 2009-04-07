@@ -21,6 +21,7 @@ AnalyzerOptions *extractOptions(int argc, char **argv)
     AnalyzerOptions *options = new AnalyzerOptions();
     CommandLineParser clp;
     clp.parse(options, argc, argv);
+    init_termite(argc, argv);
     return options;
 }
 

@@ -71,7 +71,7 @@ public:
     int argc;
     char **argv;
     assert(PL_is_initialised(&argc, &argv) 
-	   && "please run TermiteInit(argc, argv) first.");
+	   && "please run init_termite(argc, argv) first.");
 #endif  
     withPagAnalysisResults = (analysis_info != 0); 
     rootTerm = new PrologAtom("error");
