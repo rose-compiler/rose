@@ -52,11 +52,13 @@ PIG_EXTERN_C get_value_macro(astdouble)
 PIG_EXTERN_C get_value_macro(astldouble)
 
 #if 1
+#include "str.h"
+
 PIG_EXTERN_C
 const char *Expression_print(void *e)
 {
-    std::cout << expr_to_string(isSgExpression((SgNode *) e));
-    return "";
+    std::cout << expr_to_string(isSgExpression((SgNode *) e)) << std::flush;
+    return str_create("");
 }
 #endif
 
