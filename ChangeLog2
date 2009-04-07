@@ -1,3 +1,35 @@
+2009-04-07 05:48  saebjornsen1
+
+	* [r5252] /trunk/ROSE/projects/MacroRewrapper/argumentFilterer.C,
+	  /trunk/ROSE/projects/MacroRewrapper/macroRewrapper.C,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test3.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test4.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test5.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test6.c.out: Updated
+	  version of the macro rewrapper
+
+2009-04-07 00:03  saebjornsen1
+
+	* [r5251] /trunk/ROSE/src/frontend/SageIII/sageSupport.C: Fixed bug
+	  that made ROSE fail on files having opening file names with
+	  special characters
+
+2009-04-06 21:37  panas2
+
+	* [r5249]
+	  /trunk/ROSE/src/frontend/Disassemblers/putInstructionsIntoBasicBlocks.C:
+	  Seems like an important assertion was commented out. I added it
+	  back in. If it should be commented out again, please explain why.
+
+2009-04-06 21:36  panas2
+
+	* [r5248] /trunk/ROSE/tests/roseTests/binaryTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/binaryTests/libm-2.3.6.so: Added a
+	  test for binaries. It seems that .so files can not be
+	  disassembled. Andreas mentioned that he made this work recently.
+	  This is just a test that enforces a particular .so file to be
+	  checked (32bit).
+
 2009-04-05 21:09  dquinlan
 
 	* [r5235] /trunk/ROSE/Makefile.am,
