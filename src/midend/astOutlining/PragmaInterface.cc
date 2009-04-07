@@ -55,7 +55,8 @@ processPragma (SgPragmaDeclaration* decl)
     return 0;
     
   // Get statement to outline
-  return const_cast<SgStatement *> (ASTtools::findNextStatement (decl));
+  return const_cast<SgStatement *> (SageInterface::getNextStatement(decl));
+  //return const_cast<SgStatement *> (ASTtools::findNextStatement (decl));
 }
 
 /*!

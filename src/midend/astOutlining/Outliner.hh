@@ -33,6 +33,9 @@ class SgPragmaDeclaration;
 namespace Outliner
 {
   //! A set of flags to control the internal behavior of the outliner
+  //classic outlining behavior: 
+  //side effect analysis for pass-by-value and pass-by-ref, reuse parameters
+  extern bool enable_classic; 
   // use a wrapper for all variables or one parameter for a variable or a wrapper for all variables
   extern bool useParameterWrapper;  // use a wrapper for parameters of the outlined function
                    // turned on by command line option:   -rose:outline:parameter_wrapper

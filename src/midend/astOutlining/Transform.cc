@@ -49,7 +49,7 @@ Outliner::Transform::outlineBlock (SgBasicBlock* s, const string& func_name_str)
   std::set<SgInitializedName*> readOnlyVars;
 
   //Determine variables to be replaced by temp copy or pointer dereferencing.
-  if (Outliner::temp_variable)
+  if (Outliner::temp_variable|| Outliner::enable_classic)
   {
     SageInterface::collectReadOnlyVariables(s,readOnlyVars);
 #if 0    
@@ -140,7 +140,7 @@ Outliner::Transform::outlineBlock (SgBasicBlock* s, const string& func_name_str)
   // Retest this...
      ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
 
-     SgStatement *func_call = generateCall (func, syms, wrapper_name,p_scope);
+     SgStatement *func_call = generateCall (func, syms, readOnlyVars, wrapper_name,p_scope);
      ROSE_ASSERT (func_call != NULL);
   
   // Retest this...

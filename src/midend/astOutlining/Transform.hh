@@ -94,7 +94,10 @@ namespace Outliner
     /*!
      *  \brief Generates a call to an outlined function.
      */
-    SgStatement* generateCall (SgFunctionDeclaration* out_func, const ASTtools::VarSymSet_t& syms, std::string wrapper_arg_name,SgScopeStatement* scope);
+    SgStatement* generateCall (SgFunctionDeclaration* out_func, 
+     const ASTtools::VarSymSet_t& syms, 
+      std::set<SgInitializedName*> readOnlyVars,
+     std::string wrapper_arg_name,SgScopeStatement* scope);
   } /* namespace Transform */
 } /* namespace Outliner */
 

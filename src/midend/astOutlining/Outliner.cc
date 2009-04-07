@@ -21,6 +21,7 @@ using namespace std;
 
 namespace Outliner {
   //! A set of flags to control the internal behavior of the outliner
+  bool enable_classic;
   // use a wrapper for all variables or one parameter for a variable or a wrapper for all variables
   bool useParameterWrapper;  // use a wrapper for parameters of the outlined function
   bool preproc_only_;  // preprocessing only
@@ -182,6 +183,15 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
   else
     exclude_headers= false;
 
+  if (CommandlineProcessing::isOption (argvList,"-rose:outline:","enable_classic",true))
+  {
+    if (enable_debug)
+      cout<<"Enabling a classic way for outlined functions..."<<endl;
+    enable_classic = true;
+  }
+  else
+    enable_classic = false;
+
 
   if (CommandlineProcessing::isOption (argvList,"-rose:outline:","temp_variable",true))
   {
@@ -202,6 +212,7 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
     cout<<"Main operation mode:"<<endl;
     cout<<"\t-rose:outline:preproc-only           preprocessing only, no actual outlining"<<endl;
     cout<<"\t-rose:outline:parameter_wrapper     use an array of pointers for the variables to be passed"<<endl;
+    cout<<"\t-rose:outline:enable_classic        use parameters directly in the outlined function body without transferring statement, C only"<<endl;
     cout<<"\t-rose:outline:temp_variable         use temp variables to reduce pointer dereferencing for the variables to be passed"<<endl;
     cout<<"\t-rose:outline:new_file              use a new source file for the generated outlined function"<<endl;
     cout<<"\t-rose:outline:enable_debug          run outliner in a debugging mode"<<endl;

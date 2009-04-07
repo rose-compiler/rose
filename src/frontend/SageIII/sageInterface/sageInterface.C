@@ -9013,6 +9013,8 @@ LivenessAnalysis * SageInterface::call_liveness_analysis(SgProject* project, boo
       cout<< " .. running liveness analysis for function: " << funcName << endl;
     }
     FilteredCFGNode <IsDFAFilter> rem_source = liv->run(func,abortme);
+    // propagate results to statement level
+    liv->fixupStatementsINOUT(func);
     if (rem_source.getNode()!=NULL)
       dfaFunctions.push_back(rem_source);
     if (abortme)

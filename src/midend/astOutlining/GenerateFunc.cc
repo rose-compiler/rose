@@ -115,10 +115,8 @@ createInitName (const string& name, SgType* type,
 
 // DQ (2/24/2009): Added assertion.
   ROSE_ASSERT(name.empty() == false);
-
   SgInitializedName* new_name = new SgInitializedName (ASTtools::newFileInfo (), sg_name, type, init,decl, scope, 0);
   ROSE_ASSERT (new_name);
-
   // Insert symbol
   if (scope)
     {
@@ -180,12 +178,14 @@ isBaseTypePrimitive (const SgType* type)
  */
 static
 OutlinedFuncParam_t
-createParam (const string& init_name, const SgType* init_type)
+createParam (const string& init_name, const SgType* init_type, bool readOnly=false)
 {
   ROSE_ASSERT (init_type);
-
   SgType* param_base_type = 0;
-  if (isBaseTypePrimitive (init_type))
+  if (isBaseTypePrimitive (init_type)||Outliner::enable_classic)
+    // for classic translation, there is no additional unpacking statement to 
+    // convert void* type to non-primitive type of the parameter
+    // So we don't convert the type to void* here
   {
     // Duplicate the initial type.
     param_base_type = const_cast<SgType *> (init_type); //!< \todo Is shallow copy here OK?
@@ -195,6 +195,7 @@ createParam (const string& init_name, const SgType* init_type)
   {
     param_base_type = SgTypeVoid::createType ();
     ROSE_ASSERT (param_base_type);
+    //Take advantage of the const modifier
     if (ASTtools::isConstObj (init_type))
     {
       SgModifierType* mod = new SgModifierType (param_base_type);
@@ -205,10 +206,34 @@ createParam (const string& init_name, const SgType* init_type)
   }
 
   // Stores the new parameter.
-  string new_param_name = init_name + "p__";
-  SgType* new_param_type = SgPointerType::createType (param_base_type);
+  string new_param_name = init_name;
+  SgType* new_param_type = NULL;
+  // For classic behavior, read only variables are passed by values for C/C++
+  // They share the same name and type
+  if (Outliner::enable_classic) 
+  { 
+    // read only parameter: pass-by-value, the same type and name
+    if (readOnly)
+    {
+      new_param_type = param_base_type;
+    }
+    else
+    {
+      new_param_name+= "p__";
+      new_param_type = SgPointerType::createType (param_base_type);
 
-  ROSE_ASSERT (new_param_type);
+    }
+  }
+  else
+  {
+    new_param_name+= "p__";
+    if (!SageInterface::is_Fortran_language())
+    {
+      new_param_type = SgPointerType::createType (param_base_type);
+      ROSE_ASSERT (new_param_type);
+    }
+  }
+
   if (SageInterface::is_Fortran_language())
     return OutlinedFuncParam_t (new_param_name,param_base_type);
   else 
@@ -597,10 +622,14 @@ appendParams (const ASTtools::VarSymSet_t& syms,
     SgName p_sg_name (name_str);
     SgType* i_type = i_name->get_type ();
 
+    bool readOnly = false;
+    if (readOnlyVars.find(const_cast<SgInitializedName*> (i_name)) != readOnlyVars.end())
+      readOnly = true;
     // Create parameters and insert it into the parameter list.
     // ----------------------------------------
     SgInitializedName* p_init_name = NULL;
     // Case 1: using a wrapper for all variables 
+    // all wrapped parameters have pointer type
     if (Outliner::useParameterWrapper)
     {
       if (i==syms.rbegin())
@@ -615,17 +644,20 @@ appendParams (const ASTtools::VarSymSet_t& syms,
     else // case 2: use a parameter for each variable
     {
       // It handles language-specific details internally, like pass-by-value, pass-by-reference
-      OutlinedFuncParam_t param = createParam (name_str, i_type);
+      OutlinedFuncParam_t param = createParam (name_str, i_type,readOnly);
       SgName p_sg_name (param.first.c_str ());
-      p_init_name = createInitName (param.first,
-          param.second,def->get_declaration(), def);
+      // name, type, declaration, scope, 
+      // TODO function definition's declaration should not be passed to createInitName()
+      p_init_name = createInitName (param.first, param.second, 
+                                   def->get_declaration(), def);
       ROSE_ASSERT (p_init_name);
       prependArg(params,p_init_name);
     }
 
-    // Create unpacking statements
+    // Create unpacking statements:transfer values or addresses from parameters
     // ----------------------------------------
     bool isPointerDeref = false; 
+    SgVariableDeclaration*  local_var_decl  =  NULL;
     if (Outliner::temp_variable) 
     { // Check if the current variable belongs to the symbol set 
       //suitable for using pointer dereferencing
@@ -635,20 +667,41 @@ appendParams (const ASTtools::VarSymSet_t& syms,
         isPointerDeref = true;
     }  
 
-    SgVariableDeclaration*  local_var_decl  = 
-      createUnpackDecl (p_init_name, counter, isPointerDeref, name_str, i_type,body);
-    ROSE_ASSERT (local_var_decl);
-    prependStatement (local_var_decl,body);
-    if (SageInterface::is_Fortran_language())
-      args_scope = NULL; // not sure about Fortran scope
-    recordSymRemap (*i, local_var_decl, args_scope, sym_remap);
+    if (Outliner::enable_classic)
+    {
+      if (readOnly) 
+      {
+        //read only variable should not have local variable declaration, using parameter directly
+        // taking advantage of the same parameter names for readOnly variables
+        // Let postprocessing to patch up symbols for them
+
+      }
+      else
+      {
+        // non-readonly variables need to be mapped to their parameters with different names (p__)
+        // remapVarSyms() will use pointer dereferencing for all of them by default in C, 
+        // this is enough to mimic the classic outlining work 
+        recordSymRemap(*i,p_init_name, args_scope, sym_remap); 
+      }
+    } else 
+    {
+      local_var_decl  = 
+             createUnpackDecl (p_init_name, counter, isPointerDeref, name_str, i_type,body);
+      ROSE_ASSERT (local_var_decl);
+      prependStatement (local_var_decl,body);
+      if (SageInterface::is_Fortran_language())
+        args_scope = NULL; // not sure about Fortran scope
+      recordSymRemap (*i, local_var_decl, args_scope, sym_remap);
+    }
 
     // Create and insert companion re-pack statement in the end of the function body
     // If necessary
     // ----------------------------------------
-    SgInitializedName* local_var_init =
-      local_var_decl->get_decl_item (SgName (name_str.c_str ()));
-    if (!SageInterface::is_Fortran_language())  
+    SgInitializedName* local_var_init = NULL;
+    if (local_var_decl != NULL )
+     local_var_init = local_var_decl->get_decl_item (SgName (name_str.c_str ()));
+
+    if (!SageInterface::is_Fortran_language() && !Outliner::enable_classic)  
       ROSE_ASSERT(local_var_init!=NULL);  
 
     // Only generate restoring statement for non-pointer dereferencing cases
@@ -731,6 +784,7 @@ remapVarSyms (const VarSymRemap_t& vsym_remap, const ASTtools::VarSymSet_t& pdSy
         {
           if (is_C_language()) 
           // old method of using pointer dereferencing indiscriminately for C input
+          // TODO compare the orig and new type, use pointer dereferencing only when necessary
           {
             SgPointerDerefExp * deref_exp = SageBuilder::buildPointerDerefExp(buildVarRefExp(sym_new));
             deref_exp->set_need_paren(true);
@@ -762,7 +816,7 @@ Outliner::Transform::generateFunction ( SgBasicBlock* s,
 
    // Collect read only variables of the outlining target
     std::set<SgInitializedName*> readOnlyVars;
-    if (Outliner::temp_variable)
+    if (Outliner::temp_variable||Outliner::enable_classic)
     {
       SageInterface::collectReadOnlyVariables(s,readOnlyVars);
       if (Outliner::enable_debug)

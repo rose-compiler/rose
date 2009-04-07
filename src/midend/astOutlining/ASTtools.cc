@@ -85,7 +85,7 @@ ASTtools::isConstObj (const SgType* type)
 }
 
 // ========================================================================
-
+#if 0
 const SgClassDefinition *
 ASTtools::getEnclosingClassDef (const SgNode* n)
 {
@@ -105,9 +105,9 @@ ASTtools::getEnclosingClassDef (const SgNode* n)
   // Recursively search parents.
   return getEnclosingClassDef (n->get_parent ());
 }
-
+#endif
 // ========================================================================
-
+#if 0
 /*!
  *  \brief
  *
@@ -133,7 +133,7 @@ ASTtools::findNextStatement (const SgStatement* s)
     }
   return s_next;
 }
-
+#endif
 // ========================================================================
 
 /*!

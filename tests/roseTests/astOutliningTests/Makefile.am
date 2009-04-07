@@ -69,7 +69,7 @@ TEST_CXXFLAGS = $(TEST_INCLUDES) -rose:verbose 0 -rose:outline:seq 7 -rose:outli
 C_TESTCODES_REQUIRED_TO_PASS = \
 	 array1.c \
 	 moreTest1.c
-	 moreTest2.c
+	 moreTest0.c
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
 	array2.cpp \
@@ -106,6 +106,8 @@ $(PASSING_C_TEST_Objects): %.o: $(srcdir)/%.c outline
 	./outline$(EXEEXT) $(OUTLINE_FLAG) -rose:outline:temp_variable -c $<
 	@echo "***************** Testing C specific outlining...(to a separate file) *****************"
 	./outline$(EXEEXT) $(OUTLINE_FLAG) -rose:outline:new_file -rose:outline:temp_variable -c $<
+	@echo "***************** Testing C specific outlining...(a classic scheme) *****************"
+	./outline$(EXEEXT) -rose:outline:enable_classic -c $<
 
 # This rule tests the use of outlining in the original file and to a separate file.
 $(PASSING_CXX_TEST_Objects): %.o: $(srcdir)/%.cpp outline

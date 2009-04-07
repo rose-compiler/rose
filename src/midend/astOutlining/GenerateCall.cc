@@ -25,7 +25,7 @@ using namespace std;
 //! Convert the given set of variable symbols into function call arguments.
 static
 void
-appendArgs (const ASTtools::VarSymSet_t& syms, std::string arg_name, SgExprListExp* e_list, SgScopeStatement* scope)
+appendArgs (const ASTtools::VarSymSet_t& syms,  std::set<SgInitializedName*> readOnlyVars, std::string arg_name, SgExprListExp* e_list, SgScopeStatement* scope)
 {
   if (!e_list)
     return;
@@ -33,13 +33,19 @@ appendArgs (const ASTtools::VarSymSet_t& syms, std::string arg_name, SgExprListE
   { 
     ROSE_ASSERT(scope!=NULL);
     SageInterface::appendExpression(e_list,SageBuilder::buildVarRefExp(arg_name ,scope));
-   return; 
+    return; 
   }
   else 
   {
     for (ASTtools::VarSymSet_t::const_iterator i = syms.begin ();
         i != syms.end (); ++i)
     {
+      bool readOnly =false;
+      SgInitializedName* iname = (*i)->get_declaration();
+      if (iname)
+        if (readOnlyVars.find(iname)!=readOnlyVars.end())
+          readOnly = true;
+
       // Create variable reference to pass to the function.
       SgVarRefExp* v_ref = new SgVarRefExp (ASTtools::newFileInfo (),
           const_cast<SgVariableSymbol *> (*i));
@@ -47,13 +53,23 @@ appendArgs (const ASTtools::VarSymSet_t& syms, std::string arg_name, SgExprListE
       // Liao, 12/14/2007  Pass by reference is default behavior for Fortran
       if (SageInterface::is_Fortran_language())
         e_list->append_expression(v_ref);
-      else {
+      else 
+      {
         // Construct actual function argument.
-        SgType* i_arg_type = SgPointerType::createType (v_ref->get_type ());
-        ROSE_ASSERT (i_arg_type);
-        SgExpression* i_arg = new SgAddressOfOp (ASTtools::newFileInfo (),
-            v_ref, i_arg_type);
+        SgExpression* i_arg=NULL;
+        if (Outliner::enable_classic && readOnly)
+        { // classic translation, read only variable, pass by value directly
+          i_arg = v_ref;
+        }
+        else
+        {
+          SgType* i_arg_type = SgPointerType::createType (v_ref->get_type ());
+          ROSE_ASSERT (i_arg_type);
+          i_arg =  new SgAddressOfOp (ASTtools::newFileInfo (),
+              v_ref, i_arg_type);
+        }
         ROSE_ASSERT (i_arg);
+
         e_list->append_expression (i_arg);
       } //end if
 
@@ -65,7 +81,9 @@ appendArgs (const ASTtools::VarSymSet_t& syms, std::string arg_name, SgExprListE
 
 SgStatement *
 Outliner::Transform::generateCall (SgFunctionDeclaration* out_func,
-                                      const ASTtools::VarSymSet_t& syms, std::string wrapper_name, SgScopeStatement* scope)
+                                      const ASTtools::VarSymSet_t& syms, 
+                                       std::set<SgInitializedName*>  readOnlyVars, 
+                                      std::string wrapper_name, SgScopeStatement* scope)
 {
   // Create a reference to the function.
 #if 0
@@ -84,21 +102,20 @@ Outliner::Transform::generateCall (SgFunctionDeclaration* out_func,
   ROSE_ASSERT (func_symbol);
   SgFunctionRefExp* func_ref_exp =
     new SgFunctionRefExp (ASTtools::newFileInfo (),
-                          func_symbol, out_func->get_type ());
+        func_symbol, out_func->get_type ());
   ROSE_ASSERT (func_ref_exp);
-
 
   // Create an argument list.
   SgExprListExp* exp_list_exp = new SgExprListExp (ASTtools::newFileInfo ());
   ROSE_ASSERT (exp_list_exp);
-  appendArgs (syms, wrapper_name, exp_list_exp,scope);
+  appendArgs (syms, readOnlyVars, wrapper_name, exp_list_exp,scope);
 
   // Generate the actual call.
   SgFunctionCallExp* func_call_expr =
     new SgFunctionCallExp (ASTtools::newFileInfo (),
-                           func_ref_exp,
-                           exp_list_exp,
-                           out_func->get_type ());
+        func_ref_exp,
+        exp_list_exp,
+        out_func->get_type ());
   ROSE_ASSERT (func_call_expr);
 
   SgExprStatement *func_call_stmt = new SgExprStatement (ASTtools::newFileInfo (), func_call_expr);
