@@ -167,10 +167,17 @@ ComparisonLinearization::skipNode(SgNode* node) {
 
     //See if all variables in the subtre is skippable
     bool allNodesInSubTreeSkipped = true;
+    std::cout << "vectorOfNodesAtPos: " << vectorOfNodesAtPos.size() << std::endl;
     for(int i=0; i < vectorOfNodesAtPos.size(); i++ )
     {
       if(find(nodeToFilter.begin(),nodeToFilter.end(),vectorOfNodesAtPos[i]) == nodeToFilter.end())
+      {
         allNodesInSubTreeSkipped = false;
+        std::cout << "allNodesInSubTreeSkipped NOT: " << vectorOfNodesAtPos[i]->unparseToString() << std::endl;
+
+      }else
+        std::cout << "allNodesInSubTreeSkipped: " << vectorOfNodesAtPos[i]->unparseToString() << std::endl;
+
     }
 
     //If all nodes in subtree is skippable or there are no nodes in subtree from macro skip
@@ -301,8 +308,6 @@ ComparisonLinearization::skipSubTreeOfNode(SgNode* node) {
     bool skip = false;
     if( find( skipNodeAndSubTree.begin(), skipNodeAndSubTree.end(), node) != skipNodeAndSubTree.end() )
         skip = true;
-
-
 
 
 

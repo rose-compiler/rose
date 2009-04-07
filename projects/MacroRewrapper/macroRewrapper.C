@@ -1,5 +1,7 @@
 #include "macroRewrapper.h"
 #include <algorithm>
+#include <boost/lexical_cast.hpp>
+
 //#define VERBOSE_MESSAGES_OF_WAVE true
 
 
@@ -423,9 +425,9 @@ AnalyzeMacroCalls::findMappingOfTokensToAST(SgNode* node, PreprocessingInfo* cur
 				++it_beg2){
 			SgNode* nodeAtPos = *it_beg2;
                         if(isSgValueExp(nodeAtPos) != NULL )
-                            std::cout << nodeAtPos->unparseToString() << " ";
+                            std::cout << nodeAtPos->unparseToString() << " "  << nodeAtPos->get_file_info()->get_line() <<  " " << nodeAtPos->get_file_info()->get_col() << " " ; 
                         else
-                            std::cout << nodeAtPos->class_name()      << " ";
+                            std::cout << nodeAtPos->class_name()      << " "  << nodeAtPos->get_file_info()->get_line() <<  " " << nodeAtPos->get_file_info()->get_col() << " " ;
         }
         std::cout << std::endl;
 
@@ -616,7 +618,6 @@ AnalyzeMacroCalls::iterate_over_all_macro_calls(macro_def_call_type& macro_def){
 
                                         //Create a linearization where the nodes corresponding to macro arguments is
                                         //filtered out.
-					if(SgProject::get_verbose() >= 1)
 						std::cout << "Comparison linerization " << nodeFromMacroArgument.size() << std::endl;
 					ComparisonLinearization* compLin = new ComparisonLinearization(nodeFromMacroArgument, macro_call_pos);
                                         for(std::vector<SgNode*>::iterator it_stmt = smallestSetOfStmtsContainingMacro.begin();
@@ -923,6 +924,9 @@ AnalyzeMacroCalls::print_out_all_macros(std::ostream& outStream){
   for(map_def_call::iterator def_it = mapDefsToCalls.begin();
       def_it != mapDefsToCalls.end(); ++def_it ){
     mapping.push_back( def_it->first );
+
+    if(def_it->second.size()>1)
+      std::cout<<  "111" << def_it->second.begin()->ASTStringMatchingMacroCall << std::endl;
   }
 
   std::sort( mapping.begin(), mapping.end(), std::ptr_fun(sort_preprocessing_info) );
@@ -966,6 +970,13 @@ AnalyzeMacroCalls::print_out_all_macros(std::ostream& outStream){
     if(macroDefFilename.size()<1 || ( macroDefFilename.size() == 1 && (macroDefFilename.substr(0,1) == ".") ))
       continue;
 
+   
+    /*
+    for(std::vector<MappedMacroCall>::iterator call_it = mapDefsToCalls[macroDef].begin();
+        call_it != mapDefsToCalls.end(); ++call_it ){
+
+    }*/
+
     std::vector<MappedMacroCall>& mappedCalls = mapDefsToCalls[macroDef];
 
     outStream << std::endl;
@@ -976,15 +987,8 @@ AnalyzeMacroCalls::print_out_all_macros(std::ostream& outStream){
     outStream << std::endl;
 
 
-    std::string first_expanded_string;
-    std::string first_ASTStringMatchingMacroCall;
-    Sg_File_Info* first_macro_call_pos;
-    std::vector<std::string> first_correspondingAstNodes;
-
-//    std::ptr_fun(sort_preprocessing_info);
-
     //Need to sort in order to get predictable ordering of the macro calls in the output
-    std::sort( mappedCalls.begin(), mappedCalls.end(), std::ptr_fun(sort_macro_call));
+    //std::sort( mappedCalls.begin(), mappedCalls.end(), std::ptr_fun(sort_macro_call));
 
 
     for(std::vector<MappedMacroCall>::iterator call_it = mappedCalls.begin();
@@ -992,6 +996,7 @@ AnalyzeMacroCalls::print_out_all_macros(std::ostream& outStream){
       PreprocessingInfo* macroCall = call_it->macro_call;
       std::vector<std::string> correspondingAstNodes;
 
+      std::cout << "Size of correspondingAstNodes " << call_it->comparisonLinearization.size() << std::endl;
       for(std::vector<SgNode*>::iterator it_nodes = call_it->comparisonLinearization.begin(); 
           it_nodes != call_it->comparisonLinearization.end(); ++it_nodes)
         correspondingAstNodes.push_back((*it_nodes)->class_name());
@@ -1024,12 +1029,25 @@ AnalyzeMacroCalls::print_out_all_macros(std::ostream& outStream){
 
       macroDefCall = StringUtility::stripPathFromFileName(macroDefCall);
 
+      std::string correspondingString;
+      for(std::vector<SgNode*>::iterator it_nodes = call_it->comparisonLinearization.begin(); 
+                    it_nodes != call_it->comparisonLinearization.end(); ++it_nodes)
+      {
+                           correspondingString+=(*it_nodes)->class_name()+" ";
+     //                      correspondingString+=(*it_nodes)->unparseToString()+" ";
+    //                       correspondingString+=boost::lexical_cast<std::string>((*it_nodes)->get_file_info()->get_line());
+  //                         correspondingString+= " ";
+//                           correspondingString+=boost::lexical_cast<std::string>((*it_nodes)->get_file_info()->get_col());
+
+      }
+
       outStream << "Macro Call at "  
         <<  macroDefCall
         << " l " << macro_call_pos->get_line()
         << " c " << macro_call_pos->get_col()
         << "EXPANDED: " << expanded_string << std::endl
-        << "Matching AST: " << ASTStringMatchingMacroCall << std::endl;   
+        << "Matching AST: " << call_it->ASTStringMatchingMacroCall << std::endl
+        << " Corresponding Ast Nodes: "<< correspondingString << std::endl;   
       outStream << "Is inconsistent with:" << std::endl;
 
     }

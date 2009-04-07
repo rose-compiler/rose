@@ -10,9 +10,11 @@ It has 2 calls to it
 
 Macro Call at test4.c l 15 c 15EXPANDED: ((MmP + Lambdasun) - 360.0 * (floor((MmP + Lambdasun) / 360.0)))
 Matching AST: ((MmP + Lambdasun) -(360.0 * floor(((MmP + Lambdasun) / 360.0))))
+ Corresponding Ast Nodes: SgSubtractOp SgMultiplyOp SgDoubleVal SgFunctionCallExp SgFunctionRefExp SgExprListExp SgDivideOp SgDoubleVal 
 Is inconsistent with:
 Macro Call at test4.c l 16 c 8EXPANDED: ((Lambdasun - 0.1114041 * A4 - Lambdasun) - 360.0 * (floor((Lambdasun - 0.1114041 * A4 - Lambdasun) / 360.0)))
 Matching AST: (((Lambdasun -(0.1114041 * A4)) - Lambdasun) -(360.0 * floor((((Lambdasun -(0.1114041 * A4)) - Lambdasun) / 360.0))))
+ Corresponding Ast Nodes: SgSubtractOp SgMultiplyOp SgDoubleVal SgFunctionCallExp SgFunctionRefExp SgExprListExp SgDivideOp SgDoubleVal 
 Is inconsistent with:
 
 Macro def at: test4.c l 4 c 9
@@ -21,16 +23,21 @@ It has 5 calls to it
 
 Macro Call at test4.c l 10 c 3EXPANDED: ((2 * MmP) * (3.14159265358979323846 / 180.0))
 Matching AST: ((2) * MmP) *(3.14159265358979323846 / 180.0);
+ Corresponding Ast Nodes: SgMultiplyOp SgDivideOp 
 Is inconsistent with:
 Macro Call at test4.c l 11 c 3EXPANDED: ((2 * (lP - Lambdasun)) * (3.14159265358979323846 / 180.0))
 Matching AST: ((2) *(lP - Lambdasun)) *(3.14159265358979323846 / 180.0);
+ Corresponding Ast Nodes: SgMultiplyOp SgDivideOp 
 Is inconsistent with:
 Macro Call at test4.c l 12 c 3EXPANDED: ((MmP) * (3.14159265358979323846 / 180.0))
 Matching AST: MmP *(3.14159265358979323846 / 180.0);
+ Corresponding Ast Nodes: SgMultiplyOp SgDivideOp SgDoubleVal 
 Is inconsistent with:
 Macro Call at test4.c l 13 c 20EXPANDED: ((2 * MmP) * (3.14159265358979323846 / 180.0))
 Matching AST: (((2) * MmP) *(3.14159265358979323846 / 180.0))
+ Corresponding Ast Nodes: SgMultiplyOp SgDivideOp 
 Is inconsistent with:
 Macro Call at test4.c l 14 c 21EXPANDED: ((2 * (lP - Lambdasun)) * (3.14159265358979323846 / 180.0))
 Matching AST: (((2) *(lP - Lambdasun)) *(3.14159265358979323846 / 180.0))
+ Corresponding Ast Nodes: SgMultiplyOp SgDivideOp 
 Is inconsistent with:
