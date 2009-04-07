@@ -21,6 +21,9 @@
 #include "ExecELF.h"
 #endif
 
+//Needed for boost::filesystem::exists(...)
+#include "boost/filesystem.hpp"
+
 
 //Liao, 10/27/2008: parsing OpenMP pragma here
 //Handle OpenMP pragmas. This should be called after preprocessing information is attached since macro calls may exist within pragmas, Liao, 3/31/2009
@@ -3796,14 +3799,11 @@ CommandlineProcessing::isValidFileWithExecutableFileSuffixes ( string name )
             // printf ("passed test (length > jlength) && (name.compare(length - jlength, jlength, *j) == 0): opening file to double check \n");
 
             // Open file for reading
-               FILE* f = fopen(name.c_str(), "rb");
-               if (f != NULL)
+               if ( boost::filesystem::exists(name.c_str()) )
                   {
                     returnValue = true;
 
                  // printf ("This is a valid file: %s \n",name.c_str());
-
-                    fclose(f);
                   }
                  else
                   {
