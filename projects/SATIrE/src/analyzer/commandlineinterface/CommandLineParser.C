@@ -296,6 +296,8 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     cl->outputContextGraphOn();
     cl->setContextGraphFileName(argv[i]+prefixLength);
 #endif
+  } else if (optionMatch(argv[i], "--verbatim-args")) {
+    cl->verbatimArgsOn();
   } else if ((!optionMatchPrefix(argv[i], "-") && !optionMatchPrefix(argv[i],"--")) ) {
     /* handle as filename, pass filenames through */
     cout << "Found input file '" << argv[i] << "'." << endl;
@@ -303,6 +305,8 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
  // file name, appends the name to the command line, and increments the file
  // name counter.
     cl->appendInputFile(argv[i]);
+  } else if (cl->verbatimArgs()) {
+    cl->appendCommandLine(string(argv[i]));
   } else {
     stringstream s;
     s << "unrecognized option: " << argv[i] << endl;

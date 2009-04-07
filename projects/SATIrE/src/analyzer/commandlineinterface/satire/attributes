@@ -94,3 +94,5 @@ BOOL_ATTR(outputCallStrings, Off)
 BOOL_ATTR(outputContextGraph, Off)
 STRING_ATTR(ContextGraphFileName, "")
 #endif
+
+BOOL_ATTR(verbatimArgs, Off)
