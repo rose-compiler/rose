@@ -1,3 +1,30 @@
+2009-04-07 22:34  liao6
+
+	* [r5254]
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/midend/astOutlining/ASTtools.cc,
+	  /trunk/ROSE/src/midend/astOutlining/ASTtools.hh,
+	  /trunk/ROSE/src/midend/astOutlining/GenerateCall.cc,
+	  /trunk/ROSE/src/midend/astOutlining/GenerateFunc.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Outliner.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Outliner.hh,
+	  /trunk/ROSE/src/midend/astOutlining/PragmaInterface.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Transform.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Transform.hh,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/livenessAnalysis.C,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/moreTest0.c,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/moreTest2.c: Added
+	  a new option to outliner: enable_classic to mimic the classic
+	  outlining behavior
+	  
+	  The classic outlining behavior for C is to use side effect
+	  analysis to determine the type
+	  of parameters: either pass-by-value or pass-by-reference. Also,
+	  the parameters are directly
+	  used in the function body, not after being transferred into a
+	  local temp variable.
+
 2009-04-07 05:48  saebjornsen1
 
 	* [r5252] /trunk/ROSE/projects/MacroRewrapper/argumentFilterer.C,
