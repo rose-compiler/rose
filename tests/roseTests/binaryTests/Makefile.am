@@ -254,7 +254,12 @@ check-local:
 	@echo "*** ROSE/tests/roseTests/programAnalysisTests/binaryTests: (commented out for Cygwin) ***"
 	@echo "*****************************************************************************************"
 else
-check-local: runTest test1 $(TEST_PASSED_TARGETS) test_so_file
+
+# DQ (4/8/2009): I have removed the requirement to run rule: test_so_file (added by Thomas)
+# I have left the rule in place so that we can have it availalbe for testing (but it only 
+# works if BinQ is built which is not the default configuration).
+# check-local: runTest test1 $(TEST_PASSED_TARGETS) test_so_file
+check-local: runTest test1 $(TEST_PASSED_TARGETS)
 	./runTest $(srcdir)/buffer2.bin > output
 	@echo "*********************************************************************"
 	@echo "*** ROSE/tests/roseTests/programAnalysisTests/binaryTests: passed ***"
