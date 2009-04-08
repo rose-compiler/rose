@@ -103,6 +103,9 @@ namespace AbstractHandle{
   //Get parent node, used for generate parent handle automatically
   virtual abstract_node* getParent() const;
 
+  //Get the raw IR node associated with the current abstract node
+  virtual void * getNode() const {return NULL;};
+
   //Find a node from a string for a abstract handle's string format, starting from this node
   // eg. find a file node from a string like SourceFile<name,/home/liao6/names.cpp>
   virtual abstract_node* findNode(std::string handle_str) const;  

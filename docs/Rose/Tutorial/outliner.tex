@@ -1,9 +1,9 @@
 %==========================================================================
-\chapter{Function Outlining using the AST Outliner}
+\chapter{Code Segment Outlining using the AST Outliner}
 \label{chap:outliner}
 %==========================================================================
 
-\emph{Function outlining} is the process of replacing a block of
+\emph{Outlining} is the process of replacing a block of
 consecutive statements with a function call to a new function
 containing those statements. Conceptually, outlining the inverse of
 inlining (Chapter~\ref{chap:inliner}). This chapter shows how to use
@@ -13,7 +13,10 @@ directory.
 There are two basic ways to use the outliner. The first is a
 ``user-level'' method, in which you may use a special pragma to mark
 outline targets in the input program, and then call a high-level
-driver routine to process these pragmas. The second method is to call
+driver routine to process these pragmas. 
+You can also use command line option to specify outlining targets using
+abstract handle strings (detailed in Chapter~\ref{chap:handles}). 
+The second method is to call
 ``low-level'' outlining routines that operate directly on AST nodes.
 After a brief example of what the outliner can do and a discussion
 of its limits
@@ -198,6 +201,87 @@ high-level driver, \texttt{Outliner::outlineAll()}, which scans the
 AST for outlining pragma directives (\texttt{\#pragma rose\_outline})
 that mark outline targets.}
 \label{fig:Outliner:basic}
+\end{figure}
+%==========================================================================
+\section{Outlining via Abstract Handles}
+\label{sec:Outliner:handle}
+The ROSE AST outliner also allows users to specify outlining targets using
+abstract handles (details are given in Chapter~\ref{chap:handles}) without relying
+on planting pragmas into the source code. 
+For the translator (e.g. named \texttt{outline}) built from the source
+shown in Figure~\ref{fig:Outliner:basic}, 
+it accepts a command line option in a form of \textit{-rose:outline:abstract\_handle handle\_string}. 
+The \texttt{outline} program is able to locate
+a language construct matching the handle string within an input source file and then outline the construct. 
+
+For example, a handle string \textit{"ForStatement<position,12>"} will tell the outliner to outline the for loop
+at source position line 12. \\
+Another handle,
+\textit{"FunctionDeclaration<name,initialize>::ForStatement<numbering,2>"}
+indicates that the outlining target is the second loop within a
+function named \textit{initializer}. 
+Figure~\ref{fig:Outliner:output_handle} shows the outlining results using the first handle(\textit{"ForStatement<position,12>"}) from an input source file  (shown in
+Figure~\ref{fig:Outliner:input_handle}).
+Figure~\ref{fig:Outliner:output_handleb} shows the results using the second
+handle string for the same input.
+
+%--------------------------------------------------------------------------
+\begin{figure}[!b]
+{\indent
+{\mySmallFontSize
+\begin{latexonly}
+   \lstinputlisting[language=C++,numbers=left,firstnumber=1,stepnumber=5]{\TutorialExampleDirectory/outliner/inputCode_OutlineLoop2.c}
+\end{latexonly}
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/outliner/inputCode_OutlineLoop2.cc}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{inputCode\_OutlineLoop2.c: Sample input program without pragmas.}
+\label{fig:Outliner:input_handle}
+\end{figure}
+%--------------------------------------------------------------------------
+
+%--------------------------------------------------------------------------
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+\begin{latexonly}
+   \lstinputlisting[language=C++,numbers=left,firstnumber=1,stepnumber=5]{\TutorialExampleBuildDirectory/outliner/rose_inputCode_OutlineLoop2.c}
+\end{latexonly}
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/outliner/rose_inputCode_OutlineLoop2.c}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{rose\_inputCode\_OutlineLoop2.c: The loop at line 12 of Figure~\ref{fig:Outliner:input2} has been outlined.}
+\label{fig:Outliner:output_handle}
+\end{figure}
+%--------------------------------------------------------------------------
+
+%--------------------------------------------------------------------------
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+\begin{latexonly}
+   \lstinputlisting[language=C++,numbers=left,firstnumber=1,stepnumber=5]{\TutorialExampleBuildDirectory/outliner/rose_inputCode_OutlineLoop2b.c}
+\end{latexonly}
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/outliner/rose_inputCode_OutlineLoop2b.c}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{rose\_inputCode\_OutlineLoop2b.c: The 2nd loop within a function named initializefrom Figure~\ref{fig:Outliner:input2} has been outlined.}
+\label{fig:Outliner:output_handleb}
 \end{figure}
 %--------------------------------------------------------------------------
 

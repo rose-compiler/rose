@@ -49,7 +49,18 @@ namespace AbstractHandle{
 
   bool isEqual(const source_position &pos1, const source_position &pos2)
   {
-    return(( pos1.line == pos2.line )&&(pos1.column == pos2.column ));
+    // We allow inexact comparison here since source position information can be only partial
+    // So comparison only matters if both pos information have non-empty information
+    // Otherwise we treat them as equal.
+    bool lineResult = true, colResult = true; 
+    if ((pos1.line !=0 ) && (pos2.line !=0)) 
+      lineResult = (pos1.line == pos2.line);
+    if ((pos1.column !=0 ) && (pos2.column !=0)) 
+      lineResult = (pos1.column== pos2.column);
+    return (lineResult && colResult);      
+    // exact match cannot handle the case that a compiler provides full source position but
+    // user only provides a line number. 
+   // return(( pos1.line == pos2.line )&&(pos1.column == pos2.column ));
   }
   bool isEqual(const source_position_pair &pair1, const source_position_pair &pair2)
   {
@@ -529,7 +540,7 @@ namespace AbstractHandle{
         if (parent_handle->get_parent_handle() == NULL)   
            parent_handle->set_parent_handle(root_handle);
         }   
-      }
+      } // end for
       // patch up parent handle, if not yet set
       if (parent_handle == NULL)
         parent_handle=root_handle;

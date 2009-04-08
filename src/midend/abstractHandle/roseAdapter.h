@@ -12,7 +12,7 @@ class roseNode: public AbstractHandle::abstract_node
  public:
    roseNode(SgNode* snode):mNode(snode){};
    virtual ~roseNode(){};
-   SgNode* getNode() const {return mNode; }
+   void* getNode() const {return (void*) mNode; }
    virtual std::string getConstructTypeName() const;
    virtual bool hasSourcePos() const;
    virtual bool hasName() const;

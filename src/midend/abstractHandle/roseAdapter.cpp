@@ -198,7 +198,7 @@ static VariantT getVariantT(string type_str)
     // self is counted as number 1 if no parent node exists
     if (another_node==NULL)
       return 1;
-    SgNode* root = (dynamic_cast<const roseNode*> (another_node))->getNode();
+    SgNode* root = (SgNode*) ((dynamic_cast<const roseNode*> (another_node))->getNode());
     ROSE_ASSERT(root !=NULL);
     Rose_STL_Container <SgNode*> nodeArray = NodeQuery::querySubTree(root,mNode->variantT());
     for (Rose_STL_Container<SgNode *>::iterator i=nodeArray.begin();
@@ -230,7 +230,7 @@ abstract_node* roseNode::findNode(std::string construct_type_str, specifier mspe
   VariantT vt = getVariantT(construct_type_str); 
 
   //Get all matched nodes according to node type
-  Rose_STL_Container<SgNode*> nodelist =  NodeQuery::querySubTree(getNode(),vt);
+  Rose_STL_Container<SgNode*> nodelist =  NodeQuery::querySubTree((SgNode*)(getNode()),vt);
 
   for (Rose_STL_Container<SgNode *>::iterator i=nodelist.begin();i!=nodelist.end();i++)
   {
@@ -270,7 +270,7 @@ abstract_node* roseNode::findNode(std::string construct_type_str, specifier mspe
 // A simplest implementation here, for now
 bool roseNode::operator==(const abstract_node & x) const
 {
- SgNode* other_node =  (dynamic_cast<const roseNode&> (x)).getNode();
+ SgNode* other_node = (SgNode*) ( (dynamic_cast<const roseNode&> (x)).getNode());
 
  return (mNode ==other_node);
 }

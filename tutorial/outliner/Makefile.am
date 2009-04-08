@@ -28,12 +28,15 @@ generatedFiles = inputCode_OutlineLoop$(EXEEXT) \
 	\
 	inputCode_Ifs$(EXEEXT) \
 	inputCode_Ifs.out \
-	rose_inputCode_Ifs.cc
+	rose_inputCode_Ifs.cc \
+	rose_inputCode_OutlineLoop2.c \
+	rose_inputCode_OutlineLoop2b.c
 
 #docs: $(generatedFiles) 
 
 EXTRA_DIST = \
 	inputCode_OutlineLoop.cc \
+	inputCode_OutlineLoop2.c \
 	inputCode_OutlineNonLocalJumps.cc \
 	inputCode_Ifs.cc
 
@@ -66,11 +69,9 @@ inputCode_OutlineLoop$(EXEEXT): rose_inputCode_OutlineLoop.cc
 rose_inputCode_OutlineLoop.cc: outline$(EXEEXT) \
 		$(srcdir)/inputCode_OutlineLoop.cc
 	./outline$(EXEEXT) -c $(srcdir)/inputCode_OutlineLoop.cc
-#	echo "int main() {return 0;} // Test Failed!" | tee rose_inputCode_OutlineLoop.cc
 
 inputCode_OutlineLoop.out: inputCode_OutlineLoop$(EXEEXT)
 	./$< > $@
-#	echo "Test Failed!" | tee inputCode_OutlineLoop.out
 
 # Copies the input file so unparsed output has the desired filename.
 outlined-inputCode_OutlineLoop.cc: \
@@ -80,7 +81,6 @@ outlined-inputCode_OutlineLoop.cc: \
 rose_outlined-inputCode_OutlineLoop.cc: outline$(EXEEXT) \
 		outlined-inputCode_OutlineLoop.cc
 	./outline$(EXEEXT) -c outlined-inputCode_OutlineLoop.cc
-#	echo "int main() {return 0;} // Test Failed!" | tee rose_outlined-inputCode_OutlineLoop.cc
 	test -f $@
 	if which $(INDENT_BIN); then \
 	  $(INDENT_BIN) $(INDENT_ARGS) $@; \
@@ -153,6 +153,17 @@ rose_outlined_pp-inputCode_OutlineNonLocalJumps.cc: outlinePreproc$(EXEEXT) \
 	if which $(INDENT_BIN) ; then \
 	  $(INDENT_BIN) $(INDENT_ARGS) $@ ; \
 	fi
+#========================================================================
+# example 5: abstract handle demo	
+# using source file location : a for loop at line 12,
+rose_inputCode_OutlineLoop2.c: outline$(EXEEXT) \
+		$(srcdir)/inputCode_OutlineLoop.cc
+	./outline$(EXEEXT) -rose:outline:enable_debug -rose:outline:enable_classic -rose:outline:abstract_handle "ForStatement<position,12>" -c $(srcdir)/inputCode_OutlineLoop2.c
+# using name and relative numbering: the second loop within a function named initialize()	
+rose_inputCode_OutlineLoop2b.c: outline$(EXEEXT) \
+		$(srcdir)/inputCode_OutlineLoop.cc
+	./outline$(EXEEXT) -rose:outline:enable_classic -rose:outline:enable_debug -rose:outline:abstract_handle "FunctionDeclaration<name,initialize>::ForStatement<numbering,2>" -c $(srcdir)/inputCode_OutlineLoop2.c -rose:output rose_inputCode_OutlineLoop2b.c
+
 
 #==========================================================================
 # Miscellaneous
