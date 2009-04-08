@@ -1,3 +1,85 @@
+2009-04-08 16:51  matzke
+
+	* [r5265] /trunk/ROSE/scripts/rosegit/bin/rosegit-env,
+	  /trunk/ROSE/scripts/rosegit/bin/rosegit-functions.sh,
+	  /trunk/ROSE/scripts/rosegit/config/defaults.conf,
+	  /trunk/ROSE/scripts/rosegit/config/leo.trunk.conf,
+	  /trunk/ROSE/scripts/rosegit/config/rpm.conf: Changes to rosegit
+	  scripts
+	  
+	  1. Added leo.trunk.conf
+	  
+	  2. rosegit-env accepts --namespace switch
+	  
+	  3. --config=FILE switch searches the configuration directory
+	  
+	  4. Increased make parallelism since distcc can be used to control
+	  the
+	  actual number of compilers running.
+
+2009-04-08 16:51  matzke
+
+	* [r5264]
+	  /trunk/ROSE/src/frontend/Disassemblers/detectFunctionStarts.C:
+	  Work around failure to disassemble instruction
+
+2009-04-08 16:51  matzke
+
+	* [r5263] /trunk/ROSE/scripts/rosegit/config/defaults.conf: Added
+	  --with-qt-lib to rosegit default config
+
+2009-04-08 16:51  matzke
+
+	* [r5262] /trunk/ROSE/build: Added another Makefile.in
+	  transformation
+
+2009-04-08 16:51  matzke
+
+	* [r5261] /trunk/ROSE/scripts/rosegit/config/defaults.conf:
+	  Reverting to older version of libdwarf
+
+2009-04-08 16:50  matzke
+
+	* [r5260] /trunk/ROSE/scripts/rosegit/bin/rosegit-functions.sh:
+	  Increased limit for rosegit_latest_tag
+	  
+	  This was necessary because the number of automatic commits (EDG
+	  tarballs, etc) has grown to such a high frequency that we hit a
+	  case
+	  where there's more than 30 automatic commits between two manual
+	  commits.
+	  The rosegit scripts normally ignore the automatic commits.
+
+2009-04-08 16:50  matzke
+
+	* [r5259] /trunk/ROSE/scripts/rosegit/config/defaults.conf: Added
+	  --with-dwarf to default rosegit config
+
+2009-04-08 16:50  matzke
+
+	* [r5258] /trunk/ROSE/scripts/rosegit/config/defaults.conf,
+	  /trunk/ROSE/src/midend/binaryAnalyses/instructionSemantics/findConstants.h:
+	  Adjusted location of Pin directory in rosegit scripts
+
+2009-04-08 16:50  matzke
+
+	* [r5257]
+	  /trunk/ROSE/src/midend/binaryAnalyses/instructionSemantics/x86InstructionSemantics.h:
+	  Made macros more readable
+	  
+	  Mainly by removing flow-control from the macros. Macros with
+	  flow-control side effects are surprising.
+
+2009-04-08 16:50  matzke
+
+	* [r5256]
+	  /trunk/ROSE/src/midend/binaryAnalyses/instructionSemantics/x86InstructionSemantics.h:
+	  Added more comments and some code cleanup
+	  
+	  Split some compound statements; made indentation consistent
+	  throughout
+	  the file.
+
 2009-04-07 22:34  liao6
 
 	* [r5254]
