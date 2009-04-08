@@ -271,7 +271,13 @@ name_plt_entries(SgAsmInterpretation *interp,
         if (func_addr <  elf->get_base_va() + plt->get_mapped_rva() &&
             func_addr >= elf->get_base_va() + plt->get_mapped_rva() + plt->get_mapped_size())
             continue; /* function is not in the .plt section */
-            
+
+        /* Sometimes the first instruction of a basic block cannot be disassembled and the basic block will have a different
+         * starting address than its first instruction.  If that basic block is also the start of a function then the
+         * function also will have no initial instruction. */
+        if (insns.find(func_addr)==insns.end())
+            continue;
+
         /* The target in the ".plt" section will be an indirect (through the .got.plt section) jump to the actual dynamically
          * linked function (or to the dynamic linker itself). The .got.plt address is what we're really interested in. */
         SgAsmx86Instruction *insn = isSgAsmx86Instruction(insns[func_addr]);
