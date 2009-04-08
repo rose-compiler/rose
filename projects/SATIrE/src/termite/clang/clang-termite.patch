@@ -11,6 +11,36 @@ Index: include/clang/AST/DeclBase.h
      if (Decl::CollectingStats()) addDeclKind(DK);
    }
  
+Index: include/clang/AST/ASTConsumer.h
+===================================================================
+--- include/clang/AST/ASTConsumer.h	(revision 63505)
++++ include/clang/AST/ASTConsumer.h	(working copy)
+@@ -20,7 +20,7 @@
+   class Decl;
+   class TagDecl;
+   class HandleTagDeclDefinition;
+-  
++
+ /// ASTConsumer - This is an abstract interface that should be implemented by
+ /// clients that read ASTs.  This abstraction layer allows the client to be
+ /// independent of the AST producer (e.g. parser vs AST dump file reader, etc).
+@@ -53,8 +53,15 @@
+   /// PrintStats - If desired, print any statistics.
+   virtual void PrintStats() {
+   }
+-};
+ 
++  /// This is a quick hack added to support prolog and epilog generation for consumers
++  /// that produce a whole-program representation
++  virtual void OnFirstFile(const char*) { }; //called by the driver for the very first file
++  virtual void OnNewFile(const char*)   { }; //called by the driver for every file but the very first one
++  virtual void OnLastFile()  { };            //called by the driver for the very last file
++
++};  
++  
+ } // end namespace clang.
+ 
+ #endif
 Index: include/clang/AST/Expr.h
 ===================================================================
 --- include/clang/AST/Expr.h	(revision 63505)
@@ -91,11 +121,47 @@ Index: Driver/clang.cpp
      case ASTView:
        return CreateASTViewer();   
  
+@@ -1329,7 +1335,8 @@
+ /// ProcessInputFile - Process a single input file with the specified state.
+ ///
+ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
+-                             const std::string &InFile, ProgActions PA) {
++                             const std::string &InFile, ProgActions PA,
++                             bool IsFirstFile, bool IsLastFile) {
+   llvm::OwningPtr<ASTConsumer> Consumer;
+   bool ClearSourceMgr = false;
+   
+@@ -1433,7 +1440,16 @@
+                                            /* FreeMemory = */ false);
+       TU = new TranslationUnit(*Context);
+     }
++
++    //this allows to dump prolog and epilog for a whole program representation
++    if(IsFirstFile)
++      Consumer->OnFirstFile(InFile.c_str());    
++    else
++      Consumer->OnNewFile(InFile.c_str());   
+     ParseAST(PP, Consumer.get(), TU, Stats);
++
++    if(IsLastFile)
++      Consumer->OnLastFile();
+   }
+ 
+   if (VerifyDiagnostics)
+@@ -1629,7 +1645,7 @@
+         Diags.setClient(TextDiagClient);
+ 
+       // Process the source file.
+-      ProcessInputFile(*PP, PPFactory, InFile, PCH ? GeneratePCH : ProgAction);
++      ProcessInputFile(*PP, PPFactory, InFile, PCH ? GeneratePCH : ProgAction, i == 0, i == e - 1);
+       
+       HeaderInfo.ClearFileInfo();      
+     }
 Index: Driver/TermDumper.cpp
 ===================================================================
 --- Driver/TermDumper.cpp	(revision 0)
 +++ Driver/TermDumper.cpp	(revision 0)
-@@ -0,0 +1,1885 @@
+@@ -0,0 +1,2054 @@
 +//===--- StmtTermDumper.cpp - TermDumping implementation for Stmt ASTs ----===//
 +//
 +//                     The LLVM Compiler Infrastructure
@@ -128,10 +194,11 @@ Index: Driver/TermDumper.cpp
 +#include <sstream>
 +using namespace clang;
 +
++#define PPI "preprocessing_info(null)"
 +#define AIB "analysis_info([])"
-+#define AI "analysis_info(null,null)"
-+#define DA "default_annotation(null), " AI
-+#define DAB "default_annotation(null), " AIB
++//#define AI "analysis_info(null,null)"
++#define DA "default_annotation(null, " PPI "), " AIB
++#define DAB "default_annotation(null, " PPI "), " AIB
 +
 +//===----------------------------------------------------------------------===//
 +/// ASTTermDumper - TERMITE dump of ASTs
@@ -144,7 +211,7 @@ Index: Driver/TermDumper.cpp
 +
 +  public:
 +    AtomSetStream(std::ostream &o, const char *def = "")
-+        : O(o), Def(def), isFirst(true) {
++      : O(o), Def(def), isFirst(true) {
 +    }
 +
 +    std::ostream &operator <<(const std::string &s) {
@@ -187,74 +254,76 @@ Index: Driver/TermDumper.cpp
 +     */
 +    std::ostream &Out;
 +
-+    // TODO: check if needed
-+    std::string lastFile;
-+
++    /** true, if the next top-level declaration is the first in the
++        current compilation unit
++    */
++    bool first_decl;
++    
 +    /** return a outputstream for the given output-filename. If the name is "-"
 +     *  std::cout is returned.
 +     */
 +    static std::ostream& getOutputStream(const std::string &outfilename) {
 +      if (outfilename.empty())
-+        return std::cout;
++        return std::cerr;
 +      else
-+        return *new std::ofstream(outfilename.c_str());
++        return *new std::ofstream(outfilename.c_str(), std::ofstream::app);
 +    }
 +  public:
 +    ASTTermDumper(const std::string &infilename, const std::string &outfilename)
-+        : infile(infilename), outfile(outfilename),
-+          Out(getOutputStream(outfilename)) {
++      : infile(infilename), outfile(outfilename),
++        Out(getOutputStream(outfilename)), first_decl(true) {
 +    }
 +
 +    void Initialize(ASTContext &Context) {
 +      SM = &Context.getSourceManager();
-+      Out << "project([\n";
-+      lastFile = "";
 +    }
 +
 +    ~ASTTermDumper() {
-+      lastFile = "";
-+
-+      Out <<  "], " DAB ", "; fileInfo(Out); // global
-+      Out <<  ", null,"; closeDecl(Out); // file
-+      Out <<  "], ";     closeDecl(Out); // project
-+      Out <<  ".\n";
-+
 +      // free the output stream
 +      if (&Out != &std::cout) {
 +        delete &Out;
 +      }
 +    }
 +
-+    virtual void HandleTopLevelDecl(Decl *D) {
-+      const char *fileName = "";
-+      SourceLocation Loc = D->getLocation();
-+      SourceLocation SpellingLoc = SM->getSpellingLoc(Loc);
-+
-+      if (!SpellingLoc.isInvalid()) {
-+        PresumedLoc PLoc = SM->getPresumedLoc(SpellingLoc);
-+
-+        fileName = PLoc.getFilename();
++    void HandleNewFile(const std::string &fileName, bool first) {
++      
++      if (!first) {
++        Out << "], "; closeDecl(Out); // global
++        Out << ", ";  closeDecl(Out); // file
++        Out << ", ";
 +      }
++      Out << "file(\n  global([\n    ";
++    }
++    
++    //called by the driver for the very first file
++    virtual void OnFirstFile(const char* fileName) {
++      first_decl = true;      
++      Out << "project([\n";
++      HandleNewFile(fileName, true);
++    }
 +
-+      std::string close = "";
-+      // Start a new file() ?
-+      if (fileName != lastFile) {
-+	if (lastFile != "") {
-+	  Out << "], "; closeDecl(Out); // global
-+	  Out << ", ";  closeDecl(Out); // file
-+	  Out << ", ";
-+	}
-+	Out << "file(\n  global([\n    ";
-+	lastFile = fileName;
-+      } else {
-+	Out << ", ";
-+      }
++    //called by the driver for every file but the very first one
++    virtual void OnNewFile(const char *fileName) {
++      first_decl = true;      
++      HandleNewFile(fileName, false);
++    }
 +
++    //called by the driver for the very last file
++    virtual void OnLastFile() {
++      Out <<  "], " DAB ", ";
++      fileInfo(Out); // global
++      Out <<  "), null,"; closeDecl(Out); // file
++      Out <<  "], ";     closeDecl(Out); // project
++      Out <<  ".\n";
++    }
++    
++    virtual void HandleTopLevelDecl(Decl *D) {      
++      if(!first_decl)
++        Out << ", ";
 +      termDecl(Out, D);
-+
-+      if (D->getNextDeclarator()) {
++      first_decl=false;        
++      if (D->getNextDeclarator())
 +        HandleTopLevelDecl(D->getNextDeclarator());
-+      }
 +    }
 +
 +  private:
@@ -265,25 +334,26 @@ Index: Driver/TermDumper.cpp
 +    void closeDecl(std::ostream &O, const Decl *D = NULL) {
 +      O << DA ", ";
 +      fileInfo(O, D);
++      O << ")";      
 +    }
 +
 +    void fileInfo(std::ostream &O, const SourceLocation Loc) {
 +      SourceLocation SpellingLoc = SM->getSpellingLoc(Loc);
 +
 +      if (SpellingLoc.isInvalid()) {
-+        O << "file_info('<invalid>', '<invalid>', '<invalid>'))";
++        O << "file_info('NULL_FILE', 0, 0)";
 +      }
 +      else {
 +        PresumedLoc PLoc = SM->getPresumedLoc(SpellingLoc);
 +
 +        O << "file_info('" << PLoc.getFilename() << "', " << PLoc.getLine()
-+          << ", " << PLoc.getColumn() << "))";
++          << ", " << PLoc.getColumn() << ")";
 +      }
 +    }
 +
 +    void fileInfo(std::ostream &O, const Decl *D) {
 +      if (!D) {
-+        O << "file_info('<invalid>', '<invalid>', '<invalid>'))";
++        O << "file_info('NULL_FILE', 0, 0)";
 +      }
 +      else {
 +        fileInfo(O, D->getLocation());
@@ -292,18 +362,17 @@ Index: Driver/TermDumper.cpp
 +
 +    void fileInfo(std::ostream &O, const Stmt *S = NULL) {
 +      if (!S) {
-+        O << "file_info('<invalid>', '<invalid>', '<invalid>'))";
++        O << "file_info('NULL_FILE', 0, 0)";
 +      }
 +      else {
 +        fileInfo(O, S->getSourceRange().getBegin());
 +      }
 +    }
 +
-+    /**
-+    * convert ZigZagCase to zig_zag_case.
-+    * The reason we need this is that in PROLOG strings
-+    * starting with uppercase letters are variables.
-+    */
++    void preprocessingInfo(std::ostream &O) {
++      O << PPI;
++    }  
++
 +    std::string prologize(std::string s) {
 +      std::string t;
 +      std::string::iterator it;
@@ -339,13 +408,52 @@ Index: Driver/TermDumper.cpp
 +      return t;
 +    }
 +
++    //the following three functions are borrowed from PrologTerm.h
++    static bool needs_quotes(const std::string s) {
++      if (s.length() == 0) 
++        return true;
 +
-+    /** get lower case of upper case letter*/
++      bool alldigits = isdigit(s[0]);
++      for (std::string::const_iterator c = s.begin();
++           c != s.end(); ++c) {
++
++        if (alldigits) {
++          if (!isdigit(*c))
++            return true;
++          else continue;
++        }
++
++        if (!islower(*c) && !isupper(*c) && 
++            !(*c == '_'))
++          return true;
++      }
++      return false;
++    }
++
++    static bool is_reserved_operator(const std::string s) {
++      return s == "volatile";
++    }
++
++    static std::string quote(const std::string atom) {
++      std::string s;
++      if (atom.length() == 0) return "''";
++      if (((atom.length() > 0) && (!islower(atom[0])) && (!isdigit(atom[0])))
++          || needs_quotes(atom)) {
++        s = "'" + atom + "'";
++        return s;
++      } else if (is_reserved_operator(atom)) {
++        s = "(" + atom + ")";
++        return s;
++      }
++      return atom;
++    }
++    
++    /** get lower case of upper case letter */
 +    char toLower(const char c) {
 +      return (c - ('A'-'a'));
 +    };
 +
-+    /** is a letter upper case?*/
++    /** is a letter upper case? */
 +    bool isUpper(const char c) {
 +      return (('A' <= c) && ('Z' >= c));
 +    }
@@ -398,7 +506,7 @@ Index: Driver/TermDumper.cpp
 +
 +    /** Print an Identifier, if NULL print <anonymous>.
 +     */
-+    void termIdentifier(std::ostream &O, const IdentifierInfo *I);
++    std::string declIdentifier(const Decl *D, const char* prefix="");
 +
 +    /** print the initialized name tag for a named variable
 +     */
@@ -441,85 +549,88 @@ Index: Driver/TermDumper.cpp
 +
 +  void ASTTermDumper::termDecl(std::ostream &O, const Decl *D) {
 +    switch (D->getKind()) {
-+      case Decl::Typedef:
-+        termTypedef(O, D);
-+        break;
++    case Decl::Typedef:
++      termTypedef(O, D);
++      break;
 +
-+      case Decl::Enum:
-+        termEnum(O, D);
-+        break;
++    case Decl::Enum:
++      termEnum(O, D);
++      break;
 +
-+      case Decl::Record:
-+        termRecord(O, D);
-+        break;
++    case Decl::Record:
++      termRecord(O, D);
++      break;
 +
-+      case Decl::Function:
-+        termFunctionDecl(O, D);
-+        break;
++    case Decl::Function:
++      termFunctionDecl(O, D);
++      break;
 +
 +      // Variables/Parameters/Values ---------------
-+      case Decl::EnumConstant:
-+      case Decl::Var:
-+      case Decl::OriginalParmVar: // original type for implicit promotes missing
-+      case Decl::ImplicitParam:
-+        O << "variable_declaration([";
-+          termInitializedName(O, D);
-+        O << "], variable_declaration_specific(";
-+          termModifier(O, D);
-+        O << "), " AIB ", ";
-+          fileInfo(O, D);
-+        break;
++    case Decl::EnumConstant:
++    case Decl::Var:
++    case Decl::OriginalParmVar: // original type for implicit promotes missing
++    case Decl::ImplicitParam:
++      O << "variable_declaration([";
++      termInitializedName(O, D);
++      O << "], variable_declaration_specific(";
++      termModifier(O, D);
++      O << ", ";
++      preprocessingInfo(O);      
++      O << "), " AIB ", ";
++      fileInfo(O, D);
++      O << ")";
++      break;
 +
-+      case Decl::ParmVar: // TODO: ObjC-in/out + C++-default-value missing
-+        termInitializedName(O, D);
-+        break;
++    case Decl::ParmVar: // TODO: ObjC-in/out + C++-default-value missing
++      termInitializedName(O, D);
++      break;
 +
-+      case Decl::Field:
-+        termField(O, D);
-+        break;
++    case Decl::Field:
++      termField(O, D);
++      break;
 +
-+      case Decl::LinkageSpec:
++    case Decl::LinkageSpec:
 +
 +      // C++/ObjC-C++ ---------------
-+      case Decl::OverloadedFunction:
-+      case Decl::ObjCIvar:
-+      case Decl::ObjCAtDefsField:
-+      case Decl::Namespace:
-+      case Decl::CXXRecord:
-+      case Decl::CXXMethod:
-+      case Decl::CXXConstructor:
-+      case Decl::CXXDestructor:
-+      case Decl::CXXConversion:
-+      case Decl::CXXClassVar: // is a VarDecl -- see termInitializedName
-+      case Decl::NonTypeTemplateParm: // is a VarDecl -- see termInitializedName
-+      case Decl::TemplateTypeParm: 
-+      case Decl::ObjCMethod:
-+//         if (ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(D)) {
-+//           Out << "Read objc method decl: '" << MD->getSelector().getAsString()
-+//               << "'\n";
-+//           if (MD->getBody()) {
-+// //             FIXME: convert dumper to use std::ostream?
-+//             MD->getBody()->dumpAll(*SM);
-+//             Out << '\n';
-+//           }
-+      case Decl::ObjCContainer:
-+      case Decl::ObjCCategory:
-+      case Decl::ObjCProtocol:
-+      case Decl::ObjCInterface:
-+      case Decl::ObjCCategoryImpl:
-+      case Decl::ObjCProperty:
-+      case Decl::ObjCCompatibleAlias:
-+      case Decl::ObjCPropertyImpl:
-+      case Decl::ObjCImplementation:
-+      case Decl::ObjCForwardProtocol:
-+      case Decl::ObjCClass:
++    case Decl::OverloadedFunction:
++    case Decl::ObjCIvar:
++    case Decl::ObjCAtDefsField:
++    case Decl::Namespace:
++    case Decl::CXXRecord:
++    case Decl::CXXMethod:
++    case Decl::CXXConstructor:
++    case Decl::CXXDestructor:
++    case Decl::CXXConversion:
++    case Decl::CXXClassVar: // is a VarDecl -- see termInitializedName
++    case Decl::NonTypeTemplateParm: // is a VarDecl -- see termInitializedName
++    case Decl::TemplateTypeParm: 
++    case Decl::ObjCMethod:
++      //         if (ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(D)) {
++      //           Out << "Read objc method decl: '" << MD->getSelector().getAsString()
++      //               << "'\n";
++      //           if (MD->getBody()) {
++      // //             FIXME: convert dumper to use std::ostream?
++      //             MD->getBody()->dumpAll(*SM);
++      //             Out << '\n';
++      //           }
++    case Decl::ObjCContainer:
++    case Decl::ObjCCategory:
++    case Decl::ObjCProtocol:
++    case Decl::ObjCInterface:
++    case Decl::ObjCCategoryImpl:
++    case Decl::ObjCProperty:
++    case Decl::ObjCCompatibleAlias:
++    case Decl::ObjCPropertyImpl:
++    case Decl::ObjCImplementation:
++    case Decl::ObjCForwardProtocol:
++    case Decl::ObjCClass:
 +
 +      // Misc ---------------
-+      case Decl::TranslationUnit:
-+      case Decl::FileScopeAsm:
-+      case Decl::Block:
-+      default:
-+        O << "unknown_decl(" << D->getDeclKindName() << ")";
++    case Decl::TranslationUnit:
++    case Decl::FileScopeAsm:
++    case Decl::Block:
++    default:
++      O << "unknown_decl(" << D->getDeclKindName() << ")";
 +    }
 +  }
 +
@@ -533,21 +644,26 @@ Index: Driver/TermDumper.cpp
 +      termDecl(O, UD);
 +    else
 +      O << "null";
-+// TODO: check what to do here
-+//       termType(O, TD->getUnderlyingType());
++    // TODO: check what to do here
++    //       termType(O, TD->getUnderlyingType());
 +
-+    O << ", typedef_annotation(";
-+      termIdentifier(O, TD->getIdentifier());
-+    O << ", ";
-+      termType(O, TD->getUnderlyingType());
++    O << ", typedef_annotation("
++      << declIdentifier(D)
++      << ", ";
++    
++    termType(O, TD->getUnderlyingType());
 +    O << ", ";
 +    if (UD)
 +      termDecl(O, UD);
 +    else
 +      O << "null";
-+
++    
++    O << ", ";
++    preprocessingInfo(O);
++    
 +    O << "), " AIB ", ";
 +    fileInfo(O, TD);
++    O << ")";    
 +  }
 +
 +  void ASTTermDumper::termFunctionDecl(std::ostream &O, const Decl *D) {
@@ -574,20 +690,22 @@ Index: Driver/TermDumper.cpp
 +      if (FT->isVariadic()) {
 +        // TODO: replace by ellipse_expr ?? - from Adrian's original patch
 +        O << ",initialized_name(null, "
-+             "initialized_name_annotation(type_ellipse, '', default, null), " AI
-+             ", ";
++          "initialized_name_annotation(type_ellipse, '', default, null), " AIB
++          ", ";
 +        fileInfo(O, FD);
++        O << ")";
 +      }
 +    }
 +    O << "], " DAB ", ";
-+      fileInfo(O, FD); // close parameter list
++    fileInfo(O, FD); // close parameter list
++    O << ")";
 +
 +    if (FD->getBody()) {
 +      O << ", function_definition(";
-+        termStmt(O, FD->getBody());
++      termStmt(O, FD->getBody());
 +      O << ", " DAB ", ";
-+        fileInfo(O, FD);
-+      O << ", ";
++      fileInfo(O, FD);
++      O << "), ";
 +    } else
 +      O << ", null, ";
 +
@@ -596,12 +714,16 @@ Index: Driver/TermDumper.cpp
 +    // Alternatively rename the tag to result_type?
 +    termType(O, FD->getType());
 +
++    O << ", "
++      << declIdentifier(FD)
++      << ", ";
++    
++    termModifier(O, D);
 +    O << ", ";
-+      termIdentifier(O, FD->getIdentifier());
-+    O << ", ";
-+      termModifier(O, D);
++    preprocessingInfo(O);
 +    O << "), " AIB ",";
-+      fileInfo(Out, FD); // declaration
++    fileInfo(Out, FD); // declaration
++    O << ")";
 +  }
 +
 +  void ASTTermDumper::termEnum(std::ostream &O, const Decl *D) {
@@ -611,21 +733,24 @@ Index: Driver/TermDumper.cpp
 +
 +    bool first = true;
 +    for(EnumDecl::enumerator_iterator i = E->enumerator_begin(),
-+        ie = E->enumerator_end(); i != ie; i++) {
++          ie = E->enumerator_end(); i != ie; i++) {
 +      if (!first)
 +        O << ", ";
 +      termInitializedName(O, *i);
 +      first = false;
 +    }
 +
-+    O << "], enum_declaration_annotation(";
-+      termIdentifier(O, E->getIdentifier());
-+    O << ", ";
-+      termDeclAttributes(O, D);
++    O << "], enum_declaration_annotation("
++      << declIdentifier(E)
++      << ", ";
++    
++    termDeclAttributes(O, D);
++    
 +    O << ", 1"  // TODO: d->get_embedded() from rose??
-+         "), " AIB ", ";
++      "), " AIB ", ";
 +
 +    fileInfo(O, D);
++    O << ")";
 +  }
 +
 +  void ASTTermDumper::termRecord(std::ostream &O, const Decl *D) {
@@ -644,19 +769,27 @@ Index: Driver/TermDumper.cpp
 +      first = false;
 +    }
 +    O << "], class_definition_annotation(";
-+      fileInfo(O, D);
++    fileInfo(O, D);
++    O << ", ";
++    preprocessingInfo(O);
++    O << ")";
 +
 +    O << ", " AIB ", ";
-+      fileInfo(O, D);
++    fileInfo(O, D);
 +
-+    O << ", class_declaration_annotation(";
-+      termIdentifier(O, R->getIdentifier());
-+    O << ", " << R->getKindName() << ", class_type(";
-+      termIdentifier(O, R->getIdentifier());
-+    O << ", " << R->getKindName() << ", ";
-+      termDeclContext(O, R->getDeclContext());
-+    O << ")), " AIB ", ";
-+      fileInfo(O, D);
++    O << "), class_declaration_annotation("
++      << declIdentifier(R)
++      << ", " << R->getKindName()
++      << ", class_type("
++      << declIdentifier(R)
++      << ", " << R->getKindName() << ", "
++      << "::),";
++    
++    preprocessingInfo(O);
++    O << "), " AIB ", ";
++    fileInfo(O, D);
++    O << ")";
++    //preprocessingInfo(O);    
 +  }
 +
 +  void ASTTermDumper::termField(std::ostream &O, const Decl *D) {
@@ -665,16 +798,21 @@ Index: Driver/TermDumper.cpp
 +    // const FieldDecl *F = cast<FieldDecl>(D);
 +
 +    O << "variable_declaration([";
-+      termInitializedName(O, D);
++    termInitializedName(O, D);
 +    O << "], variable_declaration_specific(";
-+      termModifier(O, D);
++    termModifier(O, D);
++
++    O << ", ";
++    preprocessingInfo(O);
++    
 +    O << "), " AIB ", ";
-+      fileInfo(O, D);
++    fileInfo(O, D);
++    O << ")";
 +  }
 +
 +  /***************************************************************************
-+  * Types                                                                   *
-+  **************************************************************************/
++   * Types                                                                   *
++   **************************************************************************/
 +
 +  void ASTTermDumper::termType(std::ostream &O, const QualType &T) {
 +    if (T.getCVRQualifiers()) {
@@ -682,45 +820,46 @@ Index: Driver/TermDumper.cpp
 +    }
 +
 +    switch (T->getTypeClass()) {
-+      case Type::Builtin:
-+        O << "type_" << prologize(cast<BuiltinType>(T)->getName());
-+        break;
++    case Type::Builtin:
++      O << "type_" << prologize(cast<BuiltinType>(T)->getName());
++      break;
 +
 +      // Pointer ------------
-+      case Type::Pointer:
-+        O << "pointer_type(";
-+          termType(O, cast<PointerLikeType>(T)->getPointeeType());
-+        O << ")";
-+        break;
++    case Type::Pointer:
++      O << "pointer_type(";
++      termType(O, cast<PointerLikeType>(T)->getPointeeType());
++      O << ")";
++      break;
 +
 +      // Arrays ------------
-+      case Type::ConstantArray: // fallthrough
-+      case Type::VariableArray: // fallthrough
-+      case Type::IncompleteArray: // fallthrough
-+      case Type::DependentSizedArray:
++    case Type::ConstantArray: // fallthrough
++    case Type::VariableArray: // fallthrough
++    case Type::IncompleteArray: // fallthrough
++    case Type::DependentSizedArray:
 +      {
 +        ArrayType *AT = cast<ArrayType>(T);
 +
 +        O << "array_type(";
-+          termType(O, AT->getElementType());
++        termType(O, AT->getElementType());
 +
 +        switch (T->getTypeClass()) {
-+          case Type::ConstantArray:
-+            O << ", unsigned_long_val(null,"
-+                 "value_annotation("
-+              << cast<ConstantArrayType>(T)->getSize().toString(10, false) <<
-+                 "), analysis_info(null, null), file_info('<invalid>', '<invalid>', '<invalid>'))";
-+            break;
-+          case Type::VariableArray:
-+             termStmt(O, cast<VariableArrayType>(T)->getSizeExpr());
-+            break;
-+          case Type::IncompleteArray:
-+            break;
-+          case Type::DependentSizedArray:
-+             termStmt(O, cast<DependentSizedArrayType>(T)->getSizeExpr());
-+            break;
-+          default:
-+            assert(false);
++        case Type::ConstantArray:
++          O << ", unsigned_long_val(null,"
++            "value_annotation("
++            << cast<ConstantArrayType>(T)->getSize().toString(10, false) <<
++            ", " << PPI << 
++            "), " AIB ", file_info('<invalid>', '<invalid>', '<invalid>'))";
++          break;
++        case Type::VariableArray:
++          termStmt(O, cast<VariableArrayType>(T)->getSizeExpr());
++          break;
++        case Type::IncompleteArray:
++          break;
++        case Type::DependentSizedArray:
++          termStmt(O, cast<DependentSizedArrayType>(T)->getSizeExpr());
++          break;
++        default:
++          assert(false);
 +        }
 +
 +        // TODO: check how to dump for ROSE
@@ -732,30 +871,30 @@ Index: Driver/TermDumper.cpp
 +
 +        // TODO: Don't know what this is exactly.
 +        // O << ", " << AT->getIndexTypeQualifier();
-+        O << ")";
++        O << ", null)";
 +        break;
 +      }
 +
 +      // Function ------------
-+      case Type::FunctionNoProto:
-+        O << "function_type(";
-+          termType(O, cast<FunctionTypeNoProto>(T)->getResultType());
-+        O << ", ellipses, [])";
-+        break;
-+      case Type::FunctionProto:
++    case Type::FunctionNoProto:
++      O << "function_type(";
++      termType(O, cast<FunctionTypeNoProto>(T)->getResultType());
++      O << ", default, [])";
++      break;
++    case Type::FunctionProto:
 +      {
 +        // TODO: print qualifier
 +        // << FT->getTypeQuals()
 +
 +        FunctionTypeProto *FT = cast<FunctionTypeProto>(T);
 +        O << "function_type(";
-+          termType(O, FT->getResultType());
++        termType(O, FT->getResultType());
 +        O << ", " << (FT->isVariadic() ? "ellipses" : "default")
 +          << ", [";
 +
 +        bool first = true;
 +        for(FunctionTypeProto::arg_type_iterator i = FT->arg_type_begin(),
-+            ie = FT->arg_type_end(); i != ie; i++) {
++              ie = FT->arg_type_end(); i != ie; i++) {
 +          if (!first)
 +            O << ", ";
 +          termType(O, *i);
@@ -774,83 +913,83 @@ Index: Driver/TermDumper.cpp
 +      }
 +
 +      // TypeOf ------------
-+      case Type::TypeOfExp:
-+        O << "type_of_expr(";
-+          termStmt(O, cast<TypeOfExpr>(T)->getUnderlyingExpr());
-+        O << ")";
-+        break;
-+      case Type::TypeOfTyp:
-+        O << "type_of_type(";
-+          termType(O, cast<TypeOfType>(T)->getUnderlyingType());
-+        O << ")";
-+        break;
++    case Type::TypeOfExp:
++      O << "type_of_expr(";
++      termStmt(O, cast<TypeOfExpr>(T)->getUnderlyingExpr());
++      O << ")";
++      break;
++    case Type::TypeOfTyp:
++      O << "type_of_type(";
++      termType(O, cast<TypeOfType>(T)->getUnderlyingType());
++      O << ")";
++      break;
 +
 +      // Typedefs ------------
-+      case Type::TypeName: {
-+        TypedefType *TDT = cast<TypedefType>(T);
-+        QualType Simplified = TDT->LookThroughTypedefs();
-+        O << "typedef_type(";
-+          termIdentifier(O, TDT->getDecl()->getIdentifier());
-+        O << ", ";
-+          termType(O, Simplified);
-+        O << ")";
-+        break;
-+      }
++    case Type::TypeName: {
++      TypedefType *TDT = cast<TypedefType>(T);
++      QualType Simplified = TDT->LookThroughTypedefs();
++      O << "typedef_type("
++        << declIdentifier(TDT->getDecl())
++        << ", ";
++      termType(O, Simplified);
++      O << ")";
++      break;
++    }
 +
 +      // Tagged ------------
-+      case Type::Tagged:
-+        if (RecordType *RT = dyn_cast<RecordType>(T)) {
-+          O << "class_type(";
-+            termIdentifier(O, RT->getDecl()->getIdentifier());
-+          O << ", " << RT->getDecl()->getKindName() << ", ";
-+            termDeclContext(O, RT->getDecl()->getDeclContext());
-+          O << ")";
-+        }
-+        else if (EnumType *ET = dyn_cast<EnumType>(T)) {
-+          O << "enum_type(";
-+            termDecl(O, ET->getDecl());
-+          O << ")";
-+        }
-+        else assert(0 && "Unknown Tagged Type");
-+        break;
++    case Type::Tagged:
++      if (RecordType *RT = dyn_cast<RecordType>(T)) {
++        O << "class_type("
++          << declIdentifier(RT->getDecl())
++          << ", " << RT->getDecl()->getKindName() << ", ";
++//         termDeclContext(O, RT->getDecl()->getDeclContext());
++        O << "::)";
++      }
++      else if (EnumType *ET = dyn_cast<EnumType>(T)) {
++        O << "enum_type(";
++        termDecl(O, ET->getDecl());
++        O << ")";
++      }
++      else assert(0 && "Unknown Tagged Type");
++      break;
 +
 +      // C-C++/ObjC-C++/Embedded-C ------------
-+      case Type::Reference:
-+      case Type::MemberPointer:
-+      case Type::ASQual:
-+      case Type::TemplateTypeParm:
-+      case Type::ObjCInterface:
-+      case Type::ObjCQualifiedInterface:
-+      case Type::ObjCQualifiedId:
++    case Type::Reference:
++    case Type::MemberPointer:
++    case Type::ASQual:
++    case Type::TemplateTypeParm:
++    case Type::ObjCInterface:
++    case Type::ObjCQualifiedInterface:
++    case Type::ObjCQualifiedId:
 +
 +      // Misc ------------
-+      case Type::Vector:
-+      case Type::ExtVector:
-+      case Type::Complex:
-+      case Type::BlockPointer:
-+      default:
-+        O << "some_type, ";
++    case Type::Vector:
++    case Type::ExtVector:
++    case Type::Complex:
++    case Type::BlockPointer:
++    default:
++      O << "some_type, ";
 +    }
 +
 +    if (T.getCVRQualifiers()) {
 +      O << ", ";
-+        termTypeModifier(O, T);
++      termTypeModifier(O, T);
 +      O << ")";
 +    }
 +  }
 +
 +  const Decl *ASTTermDumper::getTypeDecl(const Type *T) const {
 +    switch (T->getTypeClass()) {
-+      case Type::Tagged: 
-+        if (const RecordType *RT = dyn_cast<RecordType>(T)) {
-+          return  RT->getDecl();
-+        }
-+        else if (const EnumType *ET = dyn_cast<EnumType>(T)) {
-+          return ET->getDecl();
-+        }
-+        else assert(0 && "Unknown Tagged Type");
-+      default:
-+        return NULL;
++    case Type::Tagged: 
++      if (const RecordType *RT = dyn_cast<RecordType>(T)) {
++        return  RT->getDecl();
++      }
++      else if (const EnumType *ET = dyn_cast<EnumType>(T)) {
++        return ET->getDecl();
++      }
++      else assert(0 && "Unknown Tagged Type");
++    default:
++      return NULL;
 +    }
 +  }
 +
@@ -877,8 +1016,8 @@ Index: Driver/TermDumper.cpp
 +  }
 +
 +  /***************************************************************************
-+  * Expression                                                              *
-+  **************************************************************************/
++   * Expression                                                              *
++   **************************************************************************/
 +
 +  void ASTTermDumper::termStmt(std::ostream &O, const Stmt *S) {
 +    enum cast_kind_t {
@@ -892,7 +1031,14 @@ Index: Driver/TermDumper.cpp
 +    };
 +    cast_kind_t castKind = ck_undef;
 +
-+    switch (S->getStmtClass()) {
++    if(!S) {
++      O << "null_expression(" DAB ", ";
++      fileInfo(O, S);
++      O << ")";      
++    }
++    else {
++      
++      switch (S->getStmtClass()) {
 +      case Stmt::NullStmtClass:
 +        O << "null_expr";
 +        break;
@@ -904,7 +1050,7 @@ Index: Driver/TermDumper.cpp
 +
 +          bool first = true;
 +          for(CompoundStmt::const_body_iterator i = CS->body_begin(),
-+              ie = CS->body_end(); i != ie; i++) {
++                ie = CS->body_end(); i != ie; i++) {
 +            if (!first)
 +              O << ", ";
 +
@@ -913,7 +1059,8 @@ Index: Driver/TermDumper.cpp
 +          }
 +
 +          O << "], " DAB ", ";
-+            fileInfo(O, S);
++          fileInfo(O, S);
++          O << ")";
 +          break;
 +        }
 +
@@ -928,13 +1075,14 @@ Index: Driver/TermDumper.cpp
 +          assert(!CS->getRHS() && "GNU extension for case not supported.\n");
 +
 +          O << "case_option_stmt(";
-+            termStmt(O, CS->getLHS());
++          termStmt(O, CS->getLHS());
 +          O << ", ";
-+            termStmtWrapped(O, CS->getSubStmt());
++          termStmtWrapped(O, CS->getSubStmt());
 +          // TODO: find what this is for.
 +          O << ", null"
-+               ", " DAB ", ";
-+            fileInfo(O, CS);
++            ", " DAB ", ";
++          fileInfo(O, CS);
++          O << ")";          
 +          break;
 +        }
 +
@@ -943,9 +1091,10 @@ Index: Driver/TermDumper.cpp
 +          const DefaultStmt *DS = cast<DefaultStmt>(S);
 +
 +          O << "default_option_stmt(";
-+            termStmtWrapped(O, DS->getSubStmt());
++          termStmtWrapped(O, DS->getSubStmt());
 +          O << ", " DAB ", ";
-+            fileInfo(O, DS);
++          fileInfo(O, DS);
++          O << ")";
 +          break;
 +        }
 +
@@ -955,7 +1104,9 @@ Index: Driver/TermDumper.cpp
 +          O << "label_statement(label_annotation("
 +            // TODO: escaping
 +            << L->getName() << "), " AIB ", ";
-+            fileInfo(O, S);
++          fileInfo(O, S);
++          O << ")";
++      
 +
 +          if (L->getSubStmt()->getStmtClass() != Stmt::NullStmtClass) {
 +            O << ", ";
@@ -968,17 +1119,18 @@ Index: Driver/TermDumper.cpp
 +        {
 +          const IfStmt *IFS = cast<IfStmt>(S);
 +          O << "if_stmt(";
-+            termStmtWrapped(O, IFS->getCond());
++          termStmtWrapped(O, IFS->getCond());
 +          O << ", ";
-+            termStmt(O, IFS->getThen());
++          termStmt(O, IFS->getThen());
 +          if (IFS->getElse()) {
 +            O << ", ";
-+              termStmt(O, IFS->getElse());
++            termStmt(O, IFS->getElse());
 +          }
 +          else
 +            O << ", null";
 +          O << ", " DAB ", ";
-+            fileInfo(O, S);
++          fileInfo(O, S);
++          O << ")";
 +          break;
 +        }
 +
@@ -987,11 +1139,12 @@ Index: Driver/TermDumper.cpp
 +          const SwitchStmt *SS = cast<SwitchStmt>(S);
 +
 +          O << "switch_statement(";
-+            termStmtWrapped(O, SS->getCond());
++          termStmtWrapped(O, SS->getCond());
 +          O << ", ";
-+            termStmt(O, SS->getBody());
++          termStmt(O, SS->getBody());
 +          O << ", " DAB ", ";
-+            fileInfo(O, SS);
++          fileInfo(O, SS);
++          O << ")";
 +          break;
 +        }
 +
@@ -1000,11 +1153,12 @@ Index: Driver/TermDumper.cpp
 +          const WhileStmt *WS = cast<WhileStmt>(S);
 +
 +          O << "while_stmt(";
-+            termStmtWrapped(O, WS->getCond());
++          termStmtWrapped(O, WS->getCond());
 +          O << ", ";
-+            termStmt(O, WS->getBody());
++          termStmt(O, WS->getBody());
 +          O << ", " DAB ", ";
-+            fileInfo(O, WS);
++          fileInfo(O, WS);
++          O << ")";
 +          break;
 +        }
 +
@@ -1013,11 +1167,12 @@ Index: Driver/TermDumper.cpp
 +          const DoStmt *DS = cast<DoStmt>(S);
 +
 +          O << "do_while_stmt(";
-+            termStmt(O, DS->getBody());
++          termStmt(O, DS->getBody());
 +          O << ", ";
-+            termStmtWrapped(O, DS->getCond());
++          termStmtWrapped(O, DS->getCond());
 +          O << ", " DAB ", ";
-+            fileInfo(O, DS);
++          fileInfo(O, DS);
++          O << ")";
 +          break;
 +        }
 +
@@ -1026,18 +1181,19 @@ Index: Driver/TermDumper.cpp
 +          const ForStmt *FS = cast<ForStmt>(S);
 +
 +          O << "for_statement("
-+               "for_init_statement([";
-+            termStmtWrapped(O, FS->getInit());
++            "for_init_statement([";
++          if(FS->getInit()) termStmtWrapped(O, FS->getInit());
 +          O << "], " DAB ", "; // for_init_statement
-+            fileInfo(O, FS);
++          fileInfo(O, FS);
++          O << "), ";
++          termStmtWrapped(O, FS->getCond());
 +          O << ", ";
-+            termStmtWrapped(O, FS->getCond());
++          termStmt(O, FS->getInc());
 +          O << ", ";
-+            termStmt(O, FS->getInc());
-+          O << ", ";
-+            termStmt(O, FS->getBody());
++          termStmt(O, FS->getBody());
 +          O << ", " DAB ", "; // for_stmt
-+            fileInfo(O, FS);
++          fileInfo(O, FS);
++          O << ")";
 +          break;
 +        }
 +
@@ -1045,27 +1201,31 @@ Index: Driver/TermDumper.cpp
 +        O << "goto_statement(label_annotation("
 +          // TODO: escaping
 +          << cast<GotoStmt>(S)->getLabel()->getName() << "), " AIB ", ";
-+          fileInfo(O, S);
++        fileInfo(O, S);
++        O << ")";
 +        break;
 +
-+//       case Stmt::IndirectGotoStmtClass:
++        //       case Stmt::IndirectGotoStmtClass:
 +      case Stmt::ContinueStmtClass:
 +        O << "continue_stmt(" DAB ", ";
-+          fileInfo(O, S);
++        fileInfo(O, S);
++        O << ")";
 +        break;
 +
 +      case Stmt::BreakStmtClass:
 +        O << "break_stmt(" DAB ", ";
-+          fileInfo(O, S);
++        fileInfo(O, S);
++        O << ")";
 +        break;
 +
 +      case Stmt::ReturnStmtClass:
 +        {
 +          const ReturnStmt *RS = cast<ReturnStmt>(S);
 +          O << "return_stmt(";
-+            termStmt(O, RS->getRetValue());
++          termStmt(O, RS->getRetValue());
 +          O << ", " DAB ", ";
-+            fileInfo(O, S);
++          fileInfo(O, S);
++          O << ")";
 +          break;
 +        }
 +
@@ -1073,32 +1233,32 @@ Index: Driver/TermDumper.cpp
 +        termDeclStmt(O, S);
 +        break;
 +
-+      // GNU Stmt Extensions
-+//       case Stmt::AsmStmtClass:
++        // GNU Stmt Extensions
++        //       case Stmt::AsmStmtClass:
 +
-+      // Obj-C statements
-+//       case Stmt::ObjCAtTryStmtClass:
-+//       case Stmt::ObjCAtCatchStmtClass:
-+//       case Stmt::ObjCAtFinallyStmtClass:
-+//       case Stmt::ObjCAtThrowStmtClass:
-+//       case Stmt::ObjCAtSynchronizedStmtClass:
-+      // Obj-C2 statements
-+//       case Stmt::ObjCForCollectionStmtClass:
++        // Obj-C statements
++        //       case Stmt::ObjCAtTryStmtClass:
++        //       case Stmt::ObjCAtCatchStmtClass:
++        //       case Stmt::ObjCAtFinallyStmtClass:
++        //       case Stmt::ObjCAtThrowStmtClass:
++        //       case Stmt::ObjCAtSynchronizedStmtClass:
++        // Obj-C2 statements
++        //       case Stmt::ObjCForCollectionStmtClass:
 +
-+      // C++ statements
-+//       case Stmt::CXXCatchStmtClass:
-+//       case Stmt::CXXTryStmtClass:
++        // C++ statements
++        //       case Stmt::CXXCatchStmtClass:
++        //       case Stmt::CXXTryStmtClass:
 +
-+      // Expressions.
-+//       case Stmt::ExprClass:
-+//       case Stmt::PredefinedExprClass:
-+//           TermDumpExpr(Node);
-+//           switch (Node->getIdentType()) {
-+//           default: assert(0 && "unknown case");
-+//           case PredefinedExpr::Func:           fprintf(F, " __func__"); break;
-+//           case PredefinedExpr::Function:       fprintf(F, " __FUNCTION__"); break;
-+//           case PredefinedExpr::PrettyFunction: fprintf(F, " __PRETTY_FUNCTION__");break;
-+//           }
++        // Expressions.
++        //       case Stmt::ExprClass:
++        //       case Stmt::PredefinedExprClass:
++        //           TermDumpExpr(Node);
++        //           switch (Node->getIdentType()) {
++        //           default: assert(0 && "unknown case");
++        //           case PredefinedExpr::Func:           fprintf(F, " __func__"); break;
++        //           case PredefinedExpr::Function:       fprintf(F, " __FUNCTION__"); break;
++        //           case PredefinedExpr::PrettyFunction: fprintf(F, " __PRETTY_FUNCTION__");break;
++        //           }
 +
 +      case Stmt::DeclRefExprClass:
 +        termDeclRefExpr(O, S);
@@ -1111,27 +1271,28 @@ Index: Driver/TermDumper.cpp
 +          bool isSigned = ILT->isSignedIntegerType();
 +
 +          switch (ILT->getKind()) {
-+            case BuiltinType::Char_U:    O << "unsigned_char"; break;
-+            case BuiltinType::UChar:     O << "unsigned_char"; break;
-+            case BuiltinType::UShort:    O << "unsigned_short"; break;
-+            case BuiltinType::UInt:      O << "unsigned_int"; break;
-+            case BuiltinType::ULong:     O << "unsigned_long"; break;
-+            case BuiltinType::ULongLong: O << "unsigned_longlong"; break;
++          case BuiltinType::Char_U:    O << "unsigned_char"; break;
++          case BuiltinType::UChar:     O << "unsigned_char"; break;
++          case BuiltinType::UShort:    O << "unsigned_short"; break;
++          case BuiltinType::UInt:      O << "unsigned_int"; break;
++          case BuiltinType::ULong:     O << "unsigned_long"; break;
++          case BuiltinType::ULongLong: O << "unsigned_longlong"; break;
 +
-+            case BuiltinType::Char_S:    O << "char"; break;
-+            case BuiltinType::SChar:     O << "char"; break;
-+            case BuiltinType::WChar:     O << "wchar"; break;
-+            case BuiltinType::Short:     O << "short"; break;
-+            case BuiltinType::Int:       O << "int"; break;
-+            case BuiltinType::Long:      O << "long"; break;
-+            case BuiltinType::LongLong:  O << "longlong"; break;
-+            default:
-+              assert(false);
++          case BuiltinType::Char_S:    O << "char"; break;
++          case BuiltinType::SChar:     O << "char"; break;
++          case BuiltinType::WChar:     O << "wchar"; break;
++          case BuiltinType::Short:     O << "short"; break;
++          case BuiltinType::Int:       O << "int"; break;
++          case BuiltinType::Long:      O << "long"; break;
++          case BuiltinType::LongLong:  O << "longlong"; break;
++          default:
++            assert(false);
 +          }
 +
 +          O << "_val(null, value_annotation("
-+            << IL->getValue().toString(10, isSigned) << "), " AI ",";
-+            fileInfo(O, S);
++            << IL->getValue().toString(10, isSigned) << "," << PPI << "), " AIB ",";
++          fileInfo(O, S);
++          O << ")";
 +          break;
 +        }
 +      case Stmt::FloatingLiteralClass:
@@ -1139,15 +1300,16 @@ Index: Driver/TermDumper.cpp
 +          const FloatingLiteral *FL = cast<FloatingLiteral>(S);
 +          const BuiltinType *FLT = cast<BuiltinType>(FL->getType());
 +          switch (FLT->getKind()) {
-+            case BuiltinType::Float:      O << "float"; break;
-+            case BuiltinType::Double:     O << "double"; break;
-+            case BuiltinType::LongDouble: O << "long_double"; break;
-+            default:
-+              assert(false);
++          case BuiltinType::Float:      O << "float"; break;
++          case BuiltinType::Double:     O << "double"; break;
++          case BuiltinType::LongDouble: O << "long_double"; break;
++          default:
++            assert(false);
 +          }
 +          O << "_val(null, value_annotation("
-+            << FL->getValueAsApproximateDouble() << "), " AI ",";
-+            fileInfo(O, S);
++            << FL->getValueAsApproximateDouble() << ", " << PPI << "), " AIB ",";
++          fileInfo(O, S);
++          O << ")";
 +          break;
 +        }
 +      case Stmt::StringLiteralClass:
@@ -1160,32 +1322,6 @@ Index: Driver/TermDumper.cpp
 +          for (unsigned i = 0, e = SL->getByteLength(); i != e; ++i) {
 +            switch (char C = SL->getStrData()[i]) {
 +              // Handle some common ones to make dumps prettier.
-+              case '\\': O << "\\\\"; break;
-+              case '"':  O << "\\\""; break;
-+              case '\n': O << "\\n"; break;
-+              case '\t': O << "\\t"; break;
-+              case '\a': O << "\\a"; break;
-+              case '\b': O << "\\b"; break;
-+              default:
-+                if (isprint(C))
-+                  O << C;
-+                else
-+                  O << "\\" << std::oct << C;
-+                break;
-+            }
-+          }
-+
-+          O << "'), " AI ",";
-+            fileInfo(O, S);
-+          break;
-+        }
-+      case Stmt::CharacterLiteralClass:
-+        {
-+          const CharacterLiteral *CL = cast<CharacterLiteral>(S);
-+          O << "char_val(null, value_annotation('";
-+
-+          switch (char C = CL->getValue()) {
-+            // Handle some common ones to make dumps prettier.
 +            case '\\': O << "\\\\"; break;
 +            case '"':  O << "\\\""; break;
 +            case '\n': O << "\\n"; break;
@@ -1198,15 +1334,47 @@ Index: Driver/TermDumper.cpp
 +              else
 +                O << "\\" << std::oct << C;
 +              break;
++            }
 +          }
 +
-+          O << "'), " AI ",",
-+           fileInfo(O, S);
++          O << "', ";
++          preprocessingInfo(O);          
++          O << "), " AIB ",";
++          fileInfo(O, S);
++          O << ")";
++          break;
++        }
++      case Stmt::CharacterLiteralClass:
++        {
++          const CharacterLiteral *CL = cast<CharacterLiteral>(S);
++          O << "char_val(null, value_annotation('";
++
++          switch (char C = CL->getValue()) {
++            // Handle some common ones to make dumps prettier.
++          case '\\': O << "\\\\"; break;
++          case '"':  O << "\\\""; break;
++          case '\n': O << "\\n"; break;
++          case '\t': O << "\\t"; break;
++          case '\a': O << "\\a"; break;
++          case '\b': O << "\\b"; break;
++          default:
++            if (isprint(C))
++              O << C;
++            else
++              O << "\\" << std::oct << C;
++            break;
++          }
++
++          O << "'";
++          preprocessingInfo(O);
++          O << "), " AIB ",",
++            fileInfo(O, S);
++          O << ")";
 +          break;
 +        }
 +
-+//       case Stmt::ImaginaryLiteralClass: // "imag_val"
-+// 
++        //       case Stmt::ImaginaryLiteralClass: // "imag_val"
++        // 
 +      case Stmt::ParenExprClass:
 +        {
 +          // TODO: represent in ROSE
@@ -1236,14 +1404,15 @@ Index: Driver/TermDumper.cpp
 +
 +          if (SoP->isSizeOf()) {
 +            O << ", size_of_op_annotation(";
-+              termType(O, SoP->getTypeOfArgument());
++            termType(O, SoP->getTypeOfArgument());
 +            O << ", ";
-+              termType(O, SoP->getType());
++            termType(O, SoP->getType());
 +            O << ")";
 +          }
 +
-+          O << ", " AI ", ";
-+            fileInfo(O, SoP);
++          O << ", " AIB ", ";
++          fileInfo(O, SoP);
++          O << ")";
 +          break;
 +        }
 +
@@ -1252,13 +1421,16 @@ Index: Driver/TermDumper.cpp
 +          const ArraySubscriptExpr *ASE = cast<ArraySubscriptExpr>(S);
 +
 +          O << "pntr_arr_ref_exp(";
-+            termStmt(O, ASE->getBase());
++          termStmt(O, ASE->getBase());
 +          O << ", ";
-+            termStmt(O, ASE->getIdx());
++          termStmt(O, ASE->getIdx());
 +          O << ", binary_op_annotation(";
-+            termType(O, ASE->getType());
-+          O << "), " AI ", ";
-+            fileInfo(O, ASE);
++          termType(O, ASE->getType());
++          O << ", ";
++          preprocessingInfo(O);
++          O << "), " AIB ", ";
++          fileInfo(O, ASE);
++          O << ")";
 +          break;
 +        }
 +
@@ -1277,11 +1449,14 @@ Index: Driver/TermDumper.cpp
 +
 +          termStmt(O, ME->getBase());
 +          O << ", ";
-+            termVarRefExpr(O, ME->getMemberDecl(), ME->getType(), ME);
++          termVarRefExpr(O, ME->getMemberDecl(), ME->getType(), ME);
 +          O << ", binary_op_annotation(";
-+            termType(O, ME->getType());
-+          O << "), " AI ", ";
-+            fileInfo(O, ME);
++          termType(O, ME->getType());
++          O << ",";
++          preprocessingInfo(O);
++          O << "), " AIB ", ";
++          fileInfo(O, ME);
++          O << ")";
 +          break;
 +        }
 +
@@ -1303,7 +1478,8 @@ Index: Driver/TermDumper.cpp
 +          const CastExpr *CE = cast<CastExpr>(S);
 +
 +          // avoid cast on declaration references
-+          if (CE->getSubExpr()->getStmtClass() == Stmt::DeclRefExprClass) {
++          if (CE->getSubExpr()->getStmtClass() == Stmt::DeclRefExprClass && 
++              CE->getType()->isPointerLikeType() ) {
 +            const DeclRefExpr *DRE = cast<DeclRefExpr>(CE->getSubExpr());
 +
 +            if (const ValueDecl *VD = cast<ValueDecl>(DRE->getDecl())) {
@@ -1311,8 +1487,8 @@ Index: Driver/TermDumper.cpp
 +
 +              if (VD->getType() == PT->getPointeeType() ||
 +                  (VD->getType()->isArrayType() &&
-+                       cast<ArrayType>(VD->getType())->getElementType() ==
-+                          PT->getPointeeType())) {
++                   cast<ArrayType>(VD->getType())->getElementType() ==
++                   PT->getPointeeType())) {
 +                termStmt(O, CE->getSubExpr());
 +                return; // exit here!!
 +              }
@@ -1320,22 +1496,25 @@ Index: Driver/TermDumper.cpp
 +          }
 +
 +          O << "cast_exp(";
-+            termStmt(O, CE->getSubExpr());
++          termStmt(O, CE->getSubExpr());
 +          O << ", null, unary_op_annotation(prefix, ";
-+            termType(O, CE->getType());
++          termType(O, CE->getType());
 +          O << ",";
 +          switch (castKind) {
-+            case ck_implicit: O << "implicit"; break;
-+            case ck_c_style: O << "c_style"; break;
-+            case ck_const: O << "const"; break;
-+            case ck_static: O << "static"; break;
-+            case ck_dynamic: O << "dynamic"; break;
-+            case ck_reinterpret: O << "reinterpret"; break;
-+            case ck_undef:
-+              assert(false);
++          case ck_implicit: O << "implicit"; break;
++          case ck_c_style: O << "c_style"; break;
++          case ck_const: O << "const"; break;
++          case ck_static: O << "static"; break;
++          case ck_dynamic: O << "dynamic"; break;
++          case ck_reinterpret: O << "reinterpret"; break;
++          case ck_undef:
++            assert(false);
 +          }
-+          O << ", null), " AI ", ";
-+            fileInfo(O, CE);
++          O << ", null, ";
++          preprocessingInfo(O);          
++          O << "), " AIB ", ";
++          fileInfo(O, CE);
++          O << ")";
 +          break;
 +        }
 +
@@ -1349,21 +1528,22 @@ Index: Driver/TermDumper.cpp
 +          const ConditionalOperator *CO = cast<ConditionalOperator>(S);
 +
 +          O << "conditional_exp(";
-+            termStmt(O, CO->getCond());
++          termStmt(O, CO->getCond());
 +          O << ", ";
-+            termStmt(O, CO->getTrueExpr());
++          termStmt(O, CO->getTrueExpr());
 +          O << ", ";
-+            termStmt(O, CO->getFalseExpr());
++          termStmt(O, CO->getFalseExpr());
 +          O << ", conditional_exp_annotation(";
-+            termType(O, CO->getType());
++          termType(O, CO->getType());
 +          O << ")"
-+               ", " AI ", ";
-+            fileInfo(O, CO);
++            ", " AIB ", ";
++          fileInfo(O, CO);
++          O << ")";
 +          break;
 +        }
 +
-+//       case Stmt::CompoundLiteralExprClass:
-+//       case Stmt::ExtVectorElementExprClass:
++        //       case Stmt::CompoundLiteralExprClass:
++        //       case Stmt::ExtVectorElementExprClass:
 +      case Stmt::InitListExprClass:
 +        {
 +          const InitListExpr *ILE = cast<InitListExpr>(S);
@@ -1381,88 +1561,90 @@ Index: Driver/TermDumper.cpp
 +          }
 +
 +          O << "], " DA ", ";
-+            // TODO: file info seems to be invalid for ILE??
-+            fileInfo(O, ILE);
++          // TODO: file info seems to be invalid for ILE??
++          fileInfo(O, ILE);
++          O << ")";
 +          break;
 +        }
 +
-+//       case Stmt::DesignatedInitExprClass:
-+//       case Stmt::ImplicitValueInitExprClass:
-+//       case Stmt::VAArgExprClass:
++        //       case Stmt::DesignatedInitExprClass:
++        //       case Stmt::ImplicitValueInitExprClass:
++        //       case Stmt::VAArgExprClass:
 +
-+      // GNU Extensions.
-+//       case Stmt::AddrLabelExprClass:
-+//         TermDumpExpr(Node);
-+//         fprintf(F, " %s %p", Node->getLabel()->getName(), (void*)Node->getLabel());
++        // GNU Extensions.
++        //       case Stmt::AddrLabelExprClass:
++        //         TermDumpExpr(Node);
++        //         fprintf(F, " %s %p", Node->getLabel()->getName(), (void*)Node->getLabel());
 +
-+//       case Stmt::StmtExprClass:
-+//       case Stmt::TypesCompatibleExprClass:
-+//           TermDumpExpr(Node);
-+//           fprintf(F, " ");
-+//           TermDumpType(Node->getArgType1());
-+//           fprintf(F, " ");
-+//           TermDumpType(Node->getArgType2());
++        //       case Stmt::StmtExprClass:
++        //       case Stmt::TypesCompatibleExprClass:
++        //           TermDumpExpr(Node);
++        //           fprintf(F, " ");
++        //           TermDumpType(Node->getArgType1());
++        //           fprintf(F, " ");
++        //           TermDumpType(Node->getArgType2());
 +
-+//       case Stmt::ChooseExprClass:
-+//       case Stmt::GNUNullExprClass:
++        //       case Stmt::ChooseExprClass:
++        //       case Stmt::GNUNullExprClass:
 +
-+      // C++ Expressions.
-+//       case Stmt::CXXOperatorCallExprClass:
-+//       case Stmt::CXXMemberCallExprClass:
-+//       case Stmt::CXXNamedCastExprClass:
-+//       case Stmt::CXXStaticCastExprClass:
-+//       case Stmt::CXXDynamicCastExprClass:
-+//       case Stmt::CXXReinterpretCastExprClass:
-+//       case Stmt::CXXConstCastExprClass:
-+//       case Stmt::CXXFunctionalCastExprClass:
-+//       case Stmt::CXXTemporaryObjectExprClass:
-+//       case Stmt::CXXTypeidExprClass:
-+//       case Stmt::CXXBoolLiteralExprClass:
-+//       case Stmt::CXXThisExprClass:
-+//       case Stmt::CXXThrowExprClass:
-+//       case Stmt::CXXDefaultArgExprClass:
-+//       case Stmt::CXXZeroInitValueExprClass:
-+//       case Stmt::CXXConditionDeclExprClass:
-+//       case Stmt::CXXNewExprClass:
-+//       case Stmt::CXXDeleteExprClass:
-+//       case Stmt::CXXDependentNameExprClass:
-+//       case Stmt::UnaryTypeTraitExprClass:
-+//       case Stmt::QualifiedDeclRefExprClass:
++        // C++ Expressions.
++        //       case Stmt::CXXOperatorCallExprClass:
++        //       case Stmt::CXXMemberCallExprClass:
++        //       case Stmt::CXXNamedCastExprClass:
++        //       case Stmt::CXXStaticCastExprClass:
++        //       case Stmt::CXXDynamicCastExprClass:
++        //       case Stmt::CXXReinterpretCastExprClass:
++        //       case Stmt::CXXConstCastExprClass:
++        //       case Stmt::CXXFunctionalCastExprClass:
++        //       case Stmt::CXXTemporaryObjectExprClass:
++        //       case Stmt::CXXTypeidExprClass:
++        //       case Stmt::CXXBoolLiteralExprClass:
++        //       case Stmt::CXXThisExprClass:
++        //       case Stmt::CXXThrowExprClass:
++        //       case Stmt::CXXDefaultArgExprClass:
++        //       case Stmt::CXXZeroInitValueExprClass:
++        //       case Stmt::CXXConditionDeclExprClass:
++        //       case Stmt::CXXNewExprClass:
++        //       case Stmt::CXXDeleteExprClass:
++        //       case Stmt::CXXDependentNameExprClass:
++        //       case Stmt::UnaryTypeTraitExprClass:
++        //       case Stmt::QualifiedDeclRefExprClass:
 +
-+      // Obj-C Expressions.
-+//       case Stmt::ObjCStringLiteralClass:
-+//       case Stmt::ObjCEncodeExprClass:
-+//       case Stmt::ObjCMessageExprClass:
-+//       case Stmt::ObjCSelectorExprClass:
-+//       case Stmt::ObjCProtocolExprClass:
-+//       case Stmt::ObjCIvarRefExprClass:
-+//       case Stmt::ObjCPropertyRefExprClass:
-+//       case Stmt::ObjCKVCRefExprClass:
-+//       case Stmt::ObjCSuperExprClass:
++        // Obj-C Expressions.
++        //       case Stmt::ObjCStringLiteralClass:
++        //       case Stmt::ObjCEncodeExprClass:
++        //       case Stmt::ObjCMessageExprClass:
++        //       case Stmt::ObjCSelectorExprClass:
++        //       case Stmt::ObjCProtocolExprClass:
++        //       case Stmt::ObjCIvarRefExprClass:
++        //       case Stmt::ObjCPropertyRefExprClass:
++        //       case Stmt::ObjCKVCRefExprClass:
++        //       case Stmt::ObjCSuperExprClass:
 +
-+      // Clang Extensions.
-+//       case Stmt::OverloadExprClass:
-+//       case Stmt::ShuffleVectorExprClass:
-+//       case Stmt::BlockExprClass:
-+//       case Stmt::BlockDeclRefExprClass:
++        // Clang Extensions.
++        //       case Stmt::OverloadExprClass:
++        //       case Stmt::ShuffleVectorExprClass:
++        //       case Stmt::BlockExprClass:
++        //       case Stmt::BlockDeclRefExprClass:
 +      default:
 +        O << "some_expression(" << S->getStmtClassName() << ")";
++      }
 +    }
-+
++    
 +    // NOTE: Controll does not allways reach this point here for all statements
 +    // and expressions.
 +  }
 +
 +  void ASTTermDumper::termStmtWrapped(std::ostream &O, const Stmt *S) {
-+    if (dyn_cast<Expr>(S)) {
++    if (!S || dyn_cast<Expr>(S))
 +      O << "expr_statement(";
-+    }
-+
++    
 +    termStmt(O, S);
-+
-+    if (dyn_cast<Expr>(S)) {
++    
++    if (!S || dyn_cast<Expr>(S)) {
 +      O << ", " DAB ", ";
-+        fileInfo(O, S);
++      fileInfo(O, S);
++      O << ")";      
 +    }
 +  }
 +
@@ -1470,29 +1652,32 @@ Index: Driver/TermDumper.cpp
 +    const UnaryOperator* UO = cast<UnaryOperator>(S);
 +
 +    switch (UO->getOpcode()) {
-+      case UnaryOperator::PostInc:   O << "plus_plus_op";      break;
-+      case UnaryOperator::PostDec:   O << "minus_minus_op";    break;
-+      case UnaryOperator::PreInc:    O << "plus_plus_op";      break;
-+      case UnaryOperator::PreDec:    O << "minus_minus_op";    break;
-+      case UnaryOperator::AddrOf:    O << "address_of_op";     break;
-+      case UnaryOperator::Deref:     O << "pointer_deref_exp"; break;
-+      case UnaryOperator::Plus:      O << "plus_op";           break;
-+      case UnaryOperator::Minus:     O << "minus_op";          break;
-+      case UnaryOperator::Not:       O << "bit_complement_op"; break;
-+      case UnaryOperator::LNot:      O << "not_op";            break;
-+      case UnaryOperator::Real:      O << "real_op";           break;
-+      case UnaryOperator::Imag:      O << "imag_op";           break;
-+      case UnaryOperator::Extension: O << "extension_op";      break;
-+      case UnaryOperator::OffsetOf:  O << "offset_op";         break;
++    case UnaryOperator::PostInc:   O << "plus_plus_op";      break;
++    case UnaryOperator::PostDec:   O << "minus_minus_op";    break;
++    case UnaryOperator::PreInc:    O << "plus_plus_op";      break;
++    case UnaryOperator::PreDec:    O << "minus_minus_op";    break;
++    case UnaryOperator::AddrOf:    O << "address_of_op";     break;
++    case UnaryOperator::Deref:     O << "pointer_deref_exp"; break;
++    case UnaryOperator::Plus:      O << "plus_op";           break;
++    case UnaryOperator::Minus:     O << "minus_op";          break;
++    case UnaryOperator::Not:       O << "bit_complement_op"; break;
++    case UnaryOperator::LNot:      O << "not_op";            break;
++    case UnaryOperator::Real:      O << "real_op";           break;
++    case UnaryOperator::Imag:      O << "imag_op";           break;
++    case UnaryOperator::Extension: O << "extension_op";      break;
++    case UnaryOperator::OffsetOf:  O << "offset_op";         break;
 +    }
 +
 +    O << "(";
-+      termStmt(O, UO->getSubExpr());
++    termStmt(O, UO->getSubExpr());
 +    O << ", unary_op_annotation("
 +      << (UO->isPostfix() ? "postfix, " : "prefix, ");
-+      termType(O, UO->getType());
-+    O << ", null, null), " AI ", ";
-+      fileInfo(O, S);
++    termType(O, UO->getType());
++    O << ", null, null,";
++    preprocessingInfo(O);
++    O<< "), " AIB ", ";
++    fileInfo(O, S);
++    O << ")";
 +  }
 +
 +  void ASTTermDumper::termBinaryOperator(std::ostream &O, const Stmt *S) {
@@ -1531,13 +1716,16 @@ Index: Driver/TermDumper.cpp
 +    case BinaryOperator::Comma:     O <<             "comma_op"; break;
 +    }
 +    O << "(";
-+      termStmt(O, BO->getLHS());
++    termStmt(O, BO->getLHS());
 +    O << ", ";
-+      termStmt(O, BO->getRHS());
++    termStmt(O, BO->getRHS());
 +    O << ", binary_op_annotation(";
-+      termType(O, BO->getType());
-+    O << "), " AI ", ";
-+      fileInfo(O, BO);
++    termType(O, BO->getType());
++    O << ",";
++    preprocessingInfo(O);    
++    O << "), " AIB ", ";
++    fileInfo(O, BO);
++    O << ")";
 +  }
 +
 +  void ASTTermDumper::termDeclStmt(std::ostream &O, const Stmt *S) {
@@ -1545,7 +1733,7 @@ Index: Driver/TermDumper.cpp
 +
 +    bool first = true;
 +    for(DeclStmt::const_decl_iterator d = DS->decl_begin(),
-+        de = DS->decl_end(); d != de; ++d) {
++          de = DS->decl_end(); d != de; ++d) {
 +      if (!first)
 +        O << ", ";
 +
@@ -1558,7 +1746,7 @@ Index: Driver/TermDumper.cpp
 +    const CallExpr *CE = cast<CallExpr>(S);
 +
 +    O << "function_call_exp(";
-+      termStmt(O,CE->getCallee());
++    termStmt(O,CE->getCallee());
 +    O << ", expr_list_exp([";
 +
 +    bool first = true;
@@ -1571,11 +1759,14 @@ Index: Driver/TermDumper.cpp
 +      first = false;
 +    }
 +    O << "], " DA ", ";
-+      fileInfo(O, S);
-+    O << ", function_call_exp_annotation(";
-+      termType(O, CE->getType());
-+    O << "), " AI ", ";
-+      fileInfo(O, S);
++    fileInfo(O, S);
++    O << "), function_call_exp_annotation(";
++    termType(O, CE->getType());
++    O <<", ";
++    preprocessingInfo(O);
++    O << "), " AIB ", ";
++    fileInfo(O, S);
++    O << ")";
 +  }
 +
 +  void ASTTermDumper::termDeclRefExpr(std::ostream &O, const Stmt *S) {
@@ -1584,25 +1775,36 @@ Index: Driver/TermDumper.cpp
 +
 +    std::string ref_type("");
 +    switch (D->getKind()) {
-+      case Decl::Function:
-+        O << "function_ref_exp("
-+             "function_ref_exp_annotation(";
-+          termIdentifier(O, cast<FunctionDecl>(D)->getIdentifier());
-+        O << ", ";
-+          termType(O, cast<FunctionDecl>(D)->getType());
-+        O << "), " AI ", ";
-+          fileInfo(O, S);
++    case Decl::Function:
++      O << "function_ref_exp("
++        << "function_ref_exp_annotation("
++        << declIdentifier(D)
++        << ", ";
++      termType(O, cast<FunctionDecl>(D)->getType());
++      O << ",";
++      preprocessingInfo(O);
++      O << "), " AIB ", ";
++      fileInfo(O, S);
++      O << ")";      
++      break;
++      
++    case Decl::Var:
++    case Decl::OriginalParmVar:
++    case Decl::ImplicitParam:
++    case Decl::ParmVar:
++      termVarRefExpr(O, D, DRE->getType(), DRE);
++      break;
++    case Decl::EnumConstant:
++      {
++        const EnumConstantDecl *ED = cast<EnumConstantDecl>(D);
++        const llvm::APSInt &val = ED->getInitVal();
++        O << "int_val(null, value_annotation(" << val.toString(10) << ", " << PPI << "), " AIB ",";
++        fileInfo(O, S);
++        O << ")";
 +        break;
-+
-+      case Decl::Var:
-+      case Decl::OriginalParmVar:
-+      case Decl::ImplicitParam:
-+      case Decl::ParmVar:
-+        termVarRefExpr(O, D, DRE->getType(), DRE);
-+        break;
-+
-+      default:
-+        assert(false && "Can not handle declatation in DeclRefExpr.\n");
++      }
++    default:
++      assert(false && "Cannot handle declaration in DeclRefExpr.\n");
 +    }
 +  }
 +
@@ -1610,29 +1812,55 @@ Index: Driver/TermDumper.cpp
 +                                     const QualType &T,
 +                                     const Stmt *SL) {
 +    O << "var_ref_exp("
-+         "var_ref_exp_annotation(";
-+      termType(O, T);
++      "var_ref_exp_annotation(";
++    termType(O, T);
++    O << ", "
++      << declIdentifier(D)
++      << ", ";
++    termStaticStorage(O, D);
 +    O << ", ";
-+      termIdentifier(O, cast<NamedDecl>(D)->getIdentifier());
++    termDeclContext(O, D->getDeclContext());
 +    O << ", ";
-+      termStaticStorage(O, D);
-+    O << ", ";
-+      termDeclContext(O, D->getDeclContext());
-+    O << "), " AI ", ";
-+      fileInfo(O, SL);
++    preprocessingInfo(O);    
++    O << "), " AIB ", ";
++    fileInfo(O, SL);
++    O << ")";
 +  }
 +
 +  /***************************************************************************
-+  * Misc                                                                    *
-+  **************************************************************************/
++   * Misc                                                                    *
++   **************************************************************************/
++  std::string ASTTermDumper::declIdentifier(const Decl *D, const char* prefix /*=""*/) {
++    const NamedDecl *V;
++    const IdentifierInfo *I;    
++    assert(D && "identifier information expected");
++    std::string s(prefix);
 +
-+  void ASTTermDumper::termIdentifier(std::ostream &O, const IdentifierInfo *I) {
-+    if (I)
-+      O << prologize(I->getName());
-+    else
-+      O << "'<anonymous>'";
++    if((V = cast<NamedDecl>(D)) != NULL && (I = V->getIdentifier()) != NULL){
++      s += I->getName();
++    }
++    else {
++      std::ostringstream O;
++      std::string kind(D->getDeclKindName());
++      std::transform(kind.begin(), kind.end(), kind.begin(), tolower);      
++      O << "__anonymous_" << kind << "_decl";
++
++      //do we have source information?
++      const SourceLocation Loc = D->getLocation();
++      SourceLocation SpellingLoc = SM->getSpellingLoc(Loc);
++      if(!SpellingLoc.isInvalid()) {
++        PresumedLoc PLoc = SM->getPresumedLoc(SpellingLoc);
++        std::string file(std::string("/") +  PLoc.getFilename());
++        file = file.substr(file.rfind("/") + 1);
++        std::transform(file.begin(), file.end(), file.begin(), tolower);
++        O << "_" << file << "_" << PLoc.getLine() << "_" << PLoc.getColumn();
++      }
++      O << "_" << D;
++      s+= O.str();
++    }
++    return quote(s);
 +  }
-+
++  
 +  void ASTTermDumper::termInitializedName(std::ostream &O, const Decl *D) {
 +    const NamedDecl *V = cast<NamedDecl>(D);
 +
@@ -1661,14 +1889,13 @@ Index: Driver/TermDumper.cpp
 +    else
 +      termType(O, type);
 +
++    O << ", " << declIdentifier(D) << ", ";
++    termStaticStorage(O, V);
 +    O << ", ";
-+      termIdentifier(O, V->getIdentifier());
-+    O << ", ";
-+      termStaticStorage(O, V);
-+    O << ", ";
-+      termDeclContext(O, V->getDeclContext());
-+    O << "), " AI ", ";
-+      fileInfo(O, D);
++    termDeclContext(O, V->getDeclContext());
++    O << "), " AIB ", ";
++    fileInfo(O, D);
++    O << ")";
 +  }
 +
 +  void ASTTermDumper::termInitializer(std::ostream &O, const Stmt *S) {
@@ -1691,19 +1918,20 @@ Index: Driver/TermDumper.cpp
 +      else
 +        O << "null";
 +
-+      O << "), " AI ", ";
++      O << "), " AIB ", ";
 +    }
 +    else {
 +      O << ", " DA ", ";
 +    }
 +    fileInfo(O, S);
++    O << ")";
 +  }
 +
 +  void ASTTermDumper::termStaticStorage(std::ostream &O, const Decl *D) {
 +    const VarDecl *V = dyn_cast<VarDecl>(D);
 +    const FunctionDecl *F = dyn_cast<FunctionDecl>(D);
 +    bool isStatic = (V && V->getStorageClass() == VarDecl::Static) ||
-+                    (F && F->getStorageClass() == FunctionDecl::Static);
++      (F && F->getStorageClass() == FunctionDecl::Static);
 +
 +    O << (isStatic ? "static" : "default");
 +  }
@@ -1711,10 +1939,10 @@ Index: Driver/TermDumper.cpp
 +
 +  void ASTTermDumper::termAccessModifier(std::ostream &O, const Decl *D) {
 +    switch (D->getAccess()) {
-+      case AS_none:      O << "default"; break;
-+      case AS_public:    O << "public"; break;
-+      case AS_protected: O << "protected"; break;
-+      case AS_private:   O << "private"; break;
++    case AS_none:      O << "default"; break;
++    case AS_public:    O << "public"; break;
++    case AS_protected: O << "protected"; break;
++    case AS_private:   O << "private"; break;
 +    }
 +  }
 +
@@ -1728,10 +1956,10 @@ Index: Driver/TermDumper.cpp
 +      case VarDecl::Auto:     O << "auto"; break;
 +      case VarDecl::Register: O << "register"; break;
 +      case VarDecl::PrivateExtern:   O << "privateExtern"; break;
-+      // TODO: will never be used for clang?
-+      //unparse_storage_modifier(7) :- !, write('mutable ').
-+      //unparse_storage_modifier(8) :- !, write('typedef ').
-+      //unparse_storage_modifier(9) :- !, write('asm ').
++        // TODO: will never be used for clang?
++        //unparse_storage_modifier(7) :- !, write('mutable ').
++        //unparse_storage_modifier(8) :- !, write('typedef ').
++        //unparse_storage_modifier(9) :- !, write('asm ').
 +      }
 +    }
 +    else if (const FunctionDecl *F = dyn_cast<FunctionDecl>(D)) {
@@ -1740,10 +1968,10 @@ Index: Driver/TermDumper.cpp
 +      case FunctionDecl::Extern:   O << "extern"; break;
 +      case FunctionDecl::Static:   O << "static"; break;
 +      case FunctionDecl::PrivateExtern:   O << "privateExtern"; break;
-+      // TODO: will never be used for clang?
-+      //unparse_storage_modifier(7) :- !, write('mutable ').
-+      //unparse_storage_modifier(8) :- !, write('typedef ').
-+      //unparse_storage_modifier(9) :- !, write('asm ').
++        // TODO: will never be used for clang?
++        //unparse_storage_modifier(7) :- !, write('mutable ').
++        //unparse_storage_modifier(8) :- !, write('typedef ').
++        //unparse_storage_modifier(9) :- !, write('asm ').
 +      }
 +    }
 +    else if (dyn_cast<FieldDecl>(D)) {
@@ -1756,21 +1984,21 @@ Index: Driver/TermDumper.cpp
 +  void ASTTermDumper::termModifier(std::ostream &O, const Decl *D) {
 +    // TODO: dump real values here - text version prefered
 +    O << "declaration_modifier("
-+        // TODO: find these modifiers in clang.
-+        // e_unknown    Unknown value (error)
-+        // e_default    Default value
-+        // e_friend    Friend qualifier
-+        // e_typedef    Typedef qualifier (not clear if this is used, I don't think typedef is a modifier)
-+        // e_export    Export qualifier
-+        // e_throw    Exception handling support (throw)
-+        // e_bind    Fortran bind attribute for declarations (functions, variable, and classes)
-+        // e_final    PHP support for specification to not be extended (should be useful for Java, if required in the future)
-+         "[default],";
-+        termTypeModifier(O, D);
++      // TODO: find these modifiers in clang.
++      // e_unknown    Unknown value (error)
++      // e_default    Default value
++      // e_friend    Friend qualifier
++      // e_typedef    Typedef qualifier (not clear if this is used, I don't think typedef is a modifier)
++      // e_export    Export qualifier
++      // e_throw    Exception handling support (throw)
++      // e_bind    Fortran bind attribute for declarations (functions, variable, and classes)
++      // e_final    PHP support for specification to not be extended (should be useful for Java, if required in the future)
++      "[default],";
++    termTypeModifier(O, D);
 +    O << ", ";
-+        termAccessModifier(O, D);
++    termAccessModifier(O, D);
 +    O << ", ";
-+        termStorageModifier(O, D);
++    termStorageModifier(O, D);
 +    O << ")";
 +  }
 +
@@ -1781,40 +2009,41 @@ Index: Driver/TermDumper.cpp
 +    O << "type_modifier(";
 +
 +    // -------------------------
-+    AtomSetStream Q(O, "default");
++    AtomSetStream Q(O);
++    Q << "default";
 +
 +    if (type.isRestrictQualified())
 +      Q << "restrict";
 +
 +    // TODO: fortran specific
-+//     // Fortran specific modifiers (in Fortran these are called attribute specifiers)
-+//     // Note that public and private access attributes are mapped to the C/C++ access modifiers in SgDeclarationModifier
-+//     "public_access",  // = 3, /*!< public qualifier (for Fortran 90) */
-+//     "private_access", // = 4, /*!< private qualifier (for Fortran 90) */
-+//     "allocatable",    // = 3, /*!< allocatable attribute specifier (for Fortran 90) */
-+//     "asynchronous",   // = 4, /*!< asynchronous attribute specifier (for Fortran 2003) */
-+//     "bind", // = 5, /*!< bind attribute specifier (for Fortran 2003, this is closely related to the SgLinkageModifier) */
-+//     "data", // = 6, /*!< data attribute specifier (for Fortran 77) */
-+//     "dimension", // = 7, /*!< dimension attribute specifier (for Fortran 77) */
-+//     // This should map to the C/C++ extern modifier in SgStorageModifier
-+//     //"external       ", // = x, /*!< external attribute specifier (for Fortran 77, this is less related to the SgLinkageModifier than the SgStorageModifier) */
-+//     "intent_in",    // = 8, /*!< intent(in) attribute specifier (for Fortran 90) */
-+//     "intent_out",   // = 9, /*!< intent(out) attribute specifier (for Fortran 90) */
-+//     "intent_inout", // = 10,/*!< intent(inout) attribute specifier (for Fortran 90) */
-+//     "intrinsic",    // = 11,/*!< intrinsic attribute specifier (for Fortran 90) */
-+//     "optional",     // = 12,/*!< optional attribute specifier (for Fortran 90) */
-+//     // This should map to const in the SgConstVolatileModifier
-+//     //"parameter      ", // = xx,/*!< parameter attribute specifier (for Fortran 77) */
-+// 
-+//     // This should be mapped to the SgPointerType in C/C++
-+//     //"pointer        ", // = xx,/*!< pointer attribute specifier (for Fortran 90) */
-+//     // Note that protected access attribute is mapped to the C/C++ protected access modifiers in SgDeclarationModifier
-+//     //"protected      ", // = xx,/*!< protected attribute specifier (for Fortran 2003) */
-+//     "save",   // = 13,/*!< save attribute specifier (for Fortran 77) */
-+//     "target", // = 14,/*!< target attribute specifier (for Fortran 90) */
-+//     "value",  // = 15,/*!< value attribute specifier (for Fortran 2003) */
-+//     // This should map to volatile in the SgConstVolatileModifier
-+//     //"volatile       ", // = xx,/*!< volatile attribute specifier (for Fortran 2003) */
++    //     // Fortran specific modifiers (in Fortran these are called attribute specifiers)
++    //     // Note that public and private access attributes are mapped to the C/C++ access modifiers in SgDeclarationModifier
++    //     "public_access",  // = 3, /*!< public qualifier (for Fortran 90) */
++    //     "private_access", // = 4, /*!< private qualifier (for Fortran 90) */
++    //     "allocatable",    // = 3, /*!< allocatable attribute specifier (for Fortran 90) */
++    //     "asynchronous",   // = 4, /*!< asynchronous attribute specifier (for Fortran 2003) */
++    //     "bind", // = 5, /*!< bind attribute specifier (for Fortran 2003, this is closely related to the SgLinkageModifier) */
++    //     "data", // = 6, /*!< data attribute specifier (for Fortran 77) */
++    //     "dimension", // = 7, /*!< dimension attribute specifier (for Fortran 77) */
++    //     // This should map to the C/C++ extern modifier in SgStorageModifier
++    //     //"external       ", // = x, /*!< external attribute specifier (for Fortran 77, this is less related to the SgLinkageModifier than the SgStorageModifier) */
++    //     "intent_in",    // = 8, /*!< intent(in) attribute specifier (for Fortran 90) */
++    //     "intent_out",   // = 9, /*!< intent(out) attribute specifier (for Fortran 90) */
++    //     "intent_inout", // = 10,/*!< intent(inout) attribute specifier (for Fortran 90) */
++    //     "intrinsic",    // = 11,/*!< intrinsic attribute specifier (for Fortran 90) */
++    //     "optional",     // = 12,/*!< optional attribute specifier (for Fortran 90) */
++    //     // This should map to const in the SgConstVolatileModifier
++    //     //"parameter      ", // = xx,/*!< parameter attribute specifier (for Fortran 77) */
++    // 
++    //     // This should be mapped to the SgPointerType in C/C++
++    //     //"pointer        ", // = xx,/*!< pointer attribute specifier (for Fortran 90) */
++    //     // Note that protected access attribute is mapped to the C/C++ protected access modifiers in SgDeclarationModifier
++    //     //"protected      ", // = xx,/*!< protected attribute specifier (for Fortran 2003) */
++    //     "save",   // = 13,/*!< save attribute specifier (for Fortran 77) */
++    //     "target", // = 14,/*!< target attribute specifier (for Fortran 90) */
++    //     "value",  // = 15,/*!< value attribute specifier (for Fortran 2003) */
++    //     // This should map to volatile in the SgConstVolatileModifier
++    //     //"volatile       ", // = xx,/*!< volatile attribute specifier (for Fortran 2003) */
 +
 +    // DQ (12/4/2007): Added support for GNU specific attributes
 +    if (D->getAttr<UnusedAttr>())
@@ -1882,40 +2111,41 @@ Index: Driver/TermDumper.cpp
 +    O << "type_modifier(";
 +
 +    // -------------------------
-+    AtomSetStream Q(O, "default");
-+
++    AtomSetStream Q(O);
++    Q << "default";
++    
 +    if (T.isRestrictQualified())
 +      Q << "restrict";
 +
 +    // TODO: fortran specific
-+//     // Fortran specific modifiers (in Fortran these are called attribute specifiers)
-+//     // Note that public and private access attributes are mapped to the C/C++ access modifiers in SgDeclarationModifier
-+//     "public_access",  // = 3, /*!< public qualifier (for Fortran 90) */
-+//     "private_access", // = 4, /*!< private qualifier (for Fortran 90) */
-+//     "allocatable",    // = 3, /*!< allocatable attribute specifier (for Fortran 90) */
-+//     "asynchronous",   // = 4, /*!< asynchronous attribute specifier (for Fortran 2003) */
-+//     "bind", // = 5, /*!< bind attribute specifier (for Fortran 2003, this is closely related to the SgLinkageModifier) */
-+//     "data", // = 6, /*!< data attribute specifier (for Fortran 77) */
-+//     "dimension", // = 7, /*!< dimension attribute specifier (for Fortran 77) */
-+//     // This should map to the C/C++ extern modifier in SgStorageModifier
-+//     //"external       ", // = x, /*!< external attribute specifier (for Fortran 77, this is less related to the SgLinkageModifier than the SgStorageModifier) */
-+//     "intent_in",    // = 8, /*!< intent(in) attribute specifier (for Fortran 90) */
-+//     "intent_out",   // = 9, /*!< intent(out) attribute specifier (for Fortran 90) */
-+//     "intent_inout", // = 10,/*!< intent(inout) attribute specifier (for Fortran 90) */
-+//     "intrinsic",    // = 11,/*!< intrinsic attribute specifier (for Fortran 90) */
-+//     "optional",     // = 12,/*!< optional attribute specifier (for Fortran 90) */
-+//     // This should map to const in the SgConstVolatileModifier
-+//     //"parameter      ", // = xx,/*!< parameter attribute specifier (for Fortran 77) */
-+// 
-+//     // This should be mapped to the SgPointerType in C/C++
-+//     //"pointer        ", // = xx,/*!< pointer attribute specifier (for Fortran 90) */
-+//     // Note that protected access attribute is mapped to the C/C++ protected access modifiers in SgDeclarationModifier
-+//     //"protected      ", // = xx,/*!< protected attribute specifier (for Fortran 2003) */
-+//     "save",   // = 13,/*!< save attribute specifier (for Fortran 77) */
-+//     "target", // = 14,/*!< target attribute specifier (for Fortran 90) */
-+//     "value",  // = 15,/*!< value attribute specifier (for Fortran 2003) */
-+//     // This should map to volatile in the SgConstVolatileModifier
-+//     //"volatile       ", // = xx,/*!< volatile attribute specifier (for Fortran 2003) */
++    //     // Fortran specific modifiers (in Fortran these are called attribute specifiers)
++    //     // Note that public and private access attributes are mapped to the C/C++ access modifiers in SgDeclarationModifier
++    //     "public_access",  // = 3, /*!< public qualifier (for Fortran 90) */
++    //     "private_access", // = 4, /*!< private qualifier (for Fortran 90) */
++    //     "allocatable",    // = 3, /*!< allocatable attribute specifier (for Fortran 90) */
++    //     "asynchronous",   // = 4, /*!< asynchronous attribute specifier (for Fortran 2003) */
++    //     "bind", // = 5, /*!< bind attribute specifier (for Fortran 2003, this is closely related to the SgLinkageModifier) */
++    //     "data", // = 6, /*!< data attribute specifier (for Fortran 77) */
++    //     "dimension", // = 7, /*!< dimension attribute specifier (for Fortran 77) */
++    //     // This should map to the C/C++ extern modifier in SgStorageModifier
++    //     //"external       ", // = x, /*!< external attribute specifier (for Fortran 77, this is less related to the SgLinkageModifier than the SgStorageModifier) */
++    //     "intent_in",    // = 8, /*!< intent(in) attribute specifier (for Fortran 90) */
++    //     "intent_out",   // = 9, /*!< intent(out) attribute specifier (for Fortran 90) */
++    //     "intent_inout", // = 10,/*!< intent(inout) attribute specifier (for Fortran 90) */
++    //     "intrinsic",    // = 11,/*!< intrinsic attribute specifier (for Fortran 90) */
++    //     "optional",     // = 12,/*!< optional attribute specifier (for Fortran 90) */
++    //     // This should map to const in the SgConstVolatileModifier
++    //     //"parameter      ", // = xx,/*!< parameter attribute specifier (for Fortran 77) */
++    // 
++    //     // This should be mapped to the SgPointerType in C/C++
++    //     //"pointer        ", // = xx,/*!< pointer attribute specifier (for Fortran 90) */
++    //     // Note that protected access attribute is mapped to the C/C++ protected access modifiers in SgDeclarationModifier
++    //     //"protected      ", // = xx,/*!< protected attribute specifier (for Fortran 2003) */
++    //     "save",   // = 13,/*!< save attribute specifier (for Fortran 77) */
++    //     "target", // = 14,/*!< target attribute specifier (for Fortran 90) */
++    //     "value",  // = 15,/*!< value attribute specifier (for Fortran 2003) */
++    //     // This should map to volatile in the SgConstVolatileModifier
++    //     //"volatile       ", // = xx,/*!< volatile attribute specifier (for Fortran 2003) */
 +
 +    Q.close();
 +
@@ -1959,19 +2189,24 @@ Index: Driver/TermDumper.cpp
 +
 +  void ASTTermDumper::termDeclContext(std::ostream &O, const DeclContext *C) {
 +    switch (C->getDeclKind()) {
-+      case Decl::Namespace:
-+        termIdentifier(O, cast<NamespaceDecl>(C)->getIdentifier());
-+        break;
-+      case Decl::Record:
-+        if (const RecordDecl *RD = dyn_cast<RecordDecl>(C)) {
-+          // TODO: fully qualified name??
-+          O << "class_scope(";
-+            termIdentifier(O, RD->getIdentifier());
-+          O << ", " << RD->getKindName() << ")";
-+          break;
++    case Decl::Namespace:
++      O << declIdentifier(cast<NamespaceDecl>(C));
++      break;
++    case Decl::Record:
++      if (const RecordDecl *RD = dyn_cast<RecordDecl>(C)) {
++        if(RD->getKind() == Decl::Enum && !RD->getIdentifier()) {
++          //mimic the bahaviour of the ROSE implementation here
++          O << "::";
 +        }
-+      default:
-+        O << "''";
++        else {
++          O << "class_scope("
++            << declIdentifier(RD, "::")
++            << ", " << RD->getKindName() << ")";          
++        }
++        break;
++      }
++    default:
++      O << "null";
 +    }
 +  }
 +}
