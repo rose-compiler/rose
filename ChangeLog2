@@ -1,3 +1,44 @@
+2009-04-08 23:25  liao6
+
+	* [r5269] /trunk/ROSE/docs/Rose/Tutorial/abstractHandle.tex,
+	  /trunk/ROSE/docs/Rose/Tutorial/outliner.tex,
+	  /trunk/ROSE/src/midend/abstractHandle/abstract_handle.cpp,
+	  /trunk/ROSE/src/midend/abstractHandle/abstract_handle.h,
+	  /trunk/ROSE/src/midend/abstractHandle/roseAdapter.cpp,
+	  /trunk/ROSE/src/midend/abstractHandle/roseAdapter.h,
+	  /trunk/ROSE/src/midend/astOutlining/Block.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Check.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Outliner.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Outliner.hh,
+	  /trunk/ROSE/src/midend/astOutlining/PragmaInterface.cc,
+	  /trunk/ROSE/src/midend/astOutlining/StmtRewrite.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Transform.cc,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/moreTest8.c,
+	  /trunk/ROSE/tutorial/outliner/Makefile.am,
+	  /trunk/ROSE/tutorial/outliner/inputCode_OutlineLoop2.c: Enabled
+	  outline to support abstract handles
+	  
+	  Details:
+	  The outliner can now accept abstract handle strings to know which
+	  language struct to outline, an alternative to using source level
+	  pragmas.
+	  
+	  Outliner
+	  * new command line option: -rose:outline:abstract_handle
+	  handle_string
+	  * using SageInterface::replaceStatement() instead of
+	  ASTtools::replaceStatement() in outliner
+	  * isOutlineable: exclude the test statement of a for loop
+	  * added test cases
+	  * updated the ROSE tutorial to demonstrate the new feature.
+	  
+	  Abstract_handle:
+	  * now allow inexact comparison between source line information(
+	  use provides start line only but AST has column and end position
+	  information)
+	  * support getting ROSE AST node from an abstract handle
+
 2009-04-08 19:32  dquinlan
 
 	* [r5267] /trunk/ROSE/tests/roseTests/binaryTests/Makefile.am:
