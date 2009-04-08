@@ -189,9 +189,13 @@ rosegit_load_config () {
     local confdir=$repo/scripts/rosegit/config
     config=$(eval "echo $config")          # expand tidle, etc.
     if [ -n "$config" ]; then
-	if [ -d $config/. ]; then
-	    confdir=$config
+	if [ -d "$config/." ]; then
+	    confdir="$config"
 	    config=
+        elif [ -f "$config" ]; then
+	    :
+        elif [ -f "$confdir/$config" ]; then
+	    config="$confdir/$config"
 	fi
     fi
 
@@ -307,7 +311,9 @@ rosegit_run () {
     local start_time=$(date +%s)
     echo -n "$name..." >&6
     [ -n "$XTERM" ] && echo -en "\033]0;$myname: $name\007" # set title of Xterm
+    #set -x
     eval "$@"; local status=$?
+    #set +x
     local end_time=$(date +%s)
     local elapsed=$(rosegit_elapsed_human $((end_time - start_time)))
     [ $status -eq 0 ] && echo "OK ($elapsed)" >&6

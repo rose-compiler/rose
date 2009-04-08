@@ -36,6 +36,9 @@
 #    --srcdir=DIR
 #         Use the specified directory as the top of the source tree rather than what's in $ROSE_SRC or guessing.
 #
+#    --namespace=NS
+#         Use the specified three-letter namespace (lower case) to find configuration files.
+#
 #    --config=CONF
 #         The name of a configuration file that is the last one to be loaded, or the name of a directory containing the
 #         configuration files. This is ignored if the configuration appears to be loaded already.
@@ -56,6 +59,7 @@ while [ "$#" -gt 0 ]; do
 	--) shift; break;;
 	--blddir=*) ROSE_BLD="${1##--blddir=}"; shift;;
 	--config=*) config="${1##--config=}"; shift;;
+	--namespace=*) ROSEGIT_NAMESPACE="${1##--namespace=}"; shift ;;
 	--srcdir=*) ROSE_SRC="${1##--srcdir=}"; shift;;
 	-*) rosegit_die "unknown switch: $1";;
 	*) break;;
