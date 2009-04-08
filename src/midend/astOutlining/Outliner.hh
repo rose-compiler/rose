@@ -42,6 +42,7 @@ namespace Outliner
   extern bool preproc_only_;  // preprocessing only, -rose:outline:preproc-only
   extern bool useNewFile; // Generate the outlined function into a separated new source file
                           // -rose:outline:new_file
+  extern std::vector<std::string> handles;   // abstract handles of outlining targets, given by command line option -rose:outline:abstract_handle for each
   extern bool temp_variable; // Use temporary variables to reduce the uses of pointer dereferencing. Activated by -rose:outline:temp_variable
   extern bool enable_debug; // output debug information for outliner
   extern bool exclude_headers; // exclude headers from the new file containing outlined functions

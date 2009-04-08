@@ -166,11 +166,11 @@ hasVAStart (const SgStatement* s)
 
 /*!
  *  \brief Returns 'true' if the given statement is part of a 'for'
- *  statement's initializer or conditional.
+ *  statement's initializer or test statement.
  */
 static
 bool
-isForInit (const SgStatement* s)
+isForInitOrTest (const SgStatement* s)
 {
   if (!s)
     return false;
@@ -179,17 +179,25 @@ isForInit (const SgStatement* s)
     return true;
 
   const SgNode* s_par = s->get_parent ();
-
-  if (isSgForInitStatement (s_par) || isSgForStatement (s_par))
+  // Why is this?, Liao, 4/8/2009
+  // I commented it out since we want to outline inner loop sometimes
+  //if (isSgForInitStatement (s_par) || isSgForStatement (s_par))
+  if (isSgForInitStatement (s_par)) 
     return true;
 
   const SgForStatement* loop = isSgForStatement (s_par);
   if (loop)
   {
+    // Check if the statement is one of the init statements
     const SgStatementPtrList& stmts = loop->get_init_stmt ();
     if (find (stmts.begin (), stmts.end (), s) != stmts.end ())
       return true;
+   // Liao, 4/8/2009   
+   //Check if the statement is a test statement for a for loop
+    if (s == loop->get_test())
+       return true;
   }
+
   return false;
 }
 
@@ -284,10 +292,10 @@ Outliner::isOutlineable (const SgStatement* s, bool verbose)
     return false;
   }
 
-  if (isForInit (s))
+  if (isForInitOrTest (s))
   {
     if (verbose)
-      cerr << "*** Can't outline for-init statements. ***" << endl;
+      cerr << "*** Can't outline for-init or for-test statements. ***" << endl;
     return false;
   }
 

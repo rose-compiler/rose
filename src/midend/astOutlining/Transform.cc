@@ -147,7 +147,11 @@ Outliner::Transform::outlineBlock (SgBasicBlock* s, const string& func_name_str)
      ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
 
   // What is this doing (what happens to "s")
+#if 0
      ASTtools::replaceStatement (s, func_call);
+#else
+     SageInterface::replaceStatement(s,func_call);
+#endif     
 
      ROSE_ASSERT(s != NULL);
      ROSE_ASSERT(s->get_statements().empty() == true);

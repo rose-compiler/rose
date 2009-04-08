@@ -29,6 +29,7 @@ namespace Outliner {
   bool temp_variable; // use temporary variables to reduce pointer dereferencing
   bool enable_debug; // 
   bool exclude_headers;
+  std::vector<std::string> handles; //  abstract handles of outlining targets, given by command line option -rose:outline:abstract_handle for each
 };
 
 // =====================================================================
@@ -201,6 +202,18 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
   }
   else
     temp_variable = false;
+
+  std::string opstr;   
+  if (CommandlineProcessing::isOptionWithParameter (argvList,"-rose:outline:","abstract_handle",opstr, true))
+  {
+    if (enable_debug)
+    {
+      cout<<"Enabling using abstract handles to specify targets for outlining..."<<endl;
+      cout<<"Found a handle:"<<opstr<<endl;
+    }
+    handles.push_back(opstr);
+  }
+
 
 
   // keep --help option after processing, let other modules respond also

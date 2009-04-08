@@ -19,6 +19,8 @@
 #include "ASTtools.hh"
 #include "PreprocessingInfo.hh"
 #include <boost/algorithm/string/trim.hpp>
+#include "abstract_handle.h"
+#include "roseAdapter.h"
 
 //! Simplest outlining directives, applied to a single statement.
 static const std::string PRAGMA_OUTLINE ("rose_outline");
@@ -31,6 +33,7 @@ typedef Rose_STL_Container<SgStatement*> TargetList_t;
 // =====================================================================
 
 using namespace std;
+using namespace AbstractHandle;
 
 // =====================================================================
 
@@ -249,14 +252,72 @@ collectFortranTarget (SgProject* proj, TargetList_t& targets)
   return count;
 }
 
+//! Collect outlining targets specified using abstract handles
+// save them into targetList
+static size_t
+collectAbstractHandles(SgProject* proj,  TargetList_t& targets)
+{
+  ROSE_ASSERT(proj != NULL);
+  SgFilePtrList & filelist = proj->get_fileList();
+  SgFilePtrList::iterator iter= filelist.begin();
+  for (;iter!=filelist.end();iter++)
+  {
+    SgSourceFile* sfile = isSgSourceFile(*iter);
+    if (sfile != NULL)
+    {
+      // prepare a file handle first
+      abstract_node * file_node = new roseNode(sfile);
+      ROSE_ASSERT (file_node);
+      abstract_handle* fhandle = new abstract_handle(file_node);
+      ROSE_ASSERT (fhandle);
+      // try to match the string and get the statement handle
+      std::vector <std::string>::iterator iter2 = Outliner::handles.begin();
+      for (;iter2!=Outliner::handles.end(); iter2++)
+      {
+        std::string cur_handle = *iter2;
+        abstract_handle * shandle = new abstract_handle (fhandle,cur_handle);
+        // it is possible that a handle is created but no matching IR node is found
+        if (shandle != NULL)
+        {
+          if (shandle->getNode() != NULL)
+          { // get SgNode from the handle
+            SgNode* target_node = (SgNode*) (shandle->getNode()->getNode());
+            ROSE_ASSERT(isSgStatement(target_node));
+            targets.push_back(isSgStatement(target_node));
+            if (Outliner::enable_debug)
+              cout<<"Found a matching target from a handle:"<<target_node->unparseToString()<<endl;
+          }
+          else
+          {
+            if (Outliner::enable_debug)
+              cout<<"Found a matching target from a handle:"<<cur_handle<<endl;
+          }
+        }
+
+      }
+      // TODO do we care about the memory leak here?
+    } //end if sfile
+  } // end for 
+}
+
 //-------------------top level drivers----------------------------------------
 size_t
 Outliner::outlineAll (SgProject* project)
 {
   size_t num_outlined = 0;
-  if (SageInterface::is_Fortran_language ()) 
+  TargetList_t targets;
+  //generic abstract handle based target selection
+  if (Outliner::handles.size()>0)
+  {
+    collectAbstractHandles(project,targets);
+    for (TargetList_t::iterator i = targets.begin ();
+        i != targets.end (); ++i)
+      if (outline(*i).isValid())
+        ++num_outlined;
+
+  } //TODO do we want to have non-exclusive abstract handle options?
+  else  if (SageInterface::is_Fortran_language ()) 
   { // Search for the special source comments for Fortran input
-    TargetList_t targets;
     if (collectFortranTarget(project, targets))
     {
       for (TargetList_t::iterator i = targets.begin ();

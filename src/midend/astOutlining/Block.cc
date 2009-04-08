@@ -164,13 +164,15 @@ Outliner::Preprocess::createBlock (SgStatement* s)
       SgStatement * parent = isSgStatement(s->get_parent ());
       ROSE_ASSERT(parent); 
       ASTtools::moveUpPreprocInfo (b_new, s);
-      ASTtools::replaceStatement (s, b_new);
-//  parent->replace_statement(s,b_new);
+#if 0      
+     ASTtools::replaceStatement (s, b_new);
       b_new->set_parent (parent);
-
+#else
+      SageInterface::replaceStatement(s,b_new);
+#endif 
+      // insert s to b_new
       b_new->append_statement (s);
       s->set_parent (b_new);
-
       s_outline = b_new;
     }
   return isSgBasicBlock (s_outline);

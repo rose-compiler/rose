@@ -89,6 +89,7 @@ ASTtools::appendStmtsCopy (const SgBasicBlock* a, SgBasicBlock* b)
 void
 ASTtools::replaceStatement (SgStatement* s_cur, SgStatement* s_new)
 {
+#if 0  
   switch (s_cur->get_parent()->variantT()) {
     case V_SgBasicBlock: {
       SgBasicBlock* targetBB = isSgBasicBlock (s_cur->get_parent ());
@@ -133,6 +134,10 @@ ASTtools::replaceStatement (SgStatement* s_cur, SgStatement* s_new)
       abort();
     }
   }
+#else
+  cout<<"please use SageInterface::replaceStatement() instead"<<endl;
+  ROSE_ASSERT(false);
+#endif  
 }
 
 void

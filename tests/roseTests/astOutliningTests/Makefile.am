@@ -68,8 +68,9 @@ TEST_CXXFLAGS = $(TEST_INCLUDES) -rose:verbose 0 -rose:outline:seq 7 -rose:outli
 # Additional tests using #pragma rose_outline, Liao, 12/17/2008
 C_TESTCODES_REQUIRED_TO_PASS = \
 	 array1.c \
-	 moreTest1.c
-	 moreTest0.c
+	 moreTest1.c \
+	 moreTest0.c \
+	 moreTest8.c
 
 CXX_TESTCODES_REQUIRED_TO_PASS = \
 	array2.cpp \
