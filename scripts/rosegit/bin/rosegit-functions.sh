@@ -156,13 +156,15 @@ rosegit_find_sources () {
 }
 
 # Returns the commit having the most recent tag matching the specified pattern for the specified branch. If no commit within
-# the last 20 has that tag then the 20th oldest commit on the branch is returned.
+# the last 40 has that tag then the 40th oldest (or some other if not that many) commit on the branch is returned.
 rosegit_latest_tag () {
     local repo="$1";   [ -d "$repo" ]      || rosegit_die "not a repository: $repo"
     local match="$2";  [ -n "$namespace" ] || match='*'
     local branch="$3"; [ -n "$branch" ]    || rosegit_die "no branch name supplied"
 
-    local firstref=$(cd $repo && git describe --tags --long --candidates=20 --match "$match" $branch 2>/dev/null)
+    local firstref=$(cd $repo && git describe --tags --long --candidates=40 --match "$match" $branch 2>/dev/null)
+    [ -n "$firstref" ] || firstref=$(cd $repo && git rev-parse $branch~40 2>/dev/null)
+    [ -n "$firstref" ] || firstref=$(cd $repo && git rev-parse $branch~30 2>/dev/null)
     [ -n "$firstref" ] || firstref=$(cd $repo && git rev-parse $branch~20 2>/dev/null)
     [ -n "$firstref" ] || firstref=$(cd $repo && git rev-parse $branch~10 2>/dev/null)
     [ -n "$firstref" ] || firstref=$(cd $repo && git rev-parse $branch~5  2>/dev/null)
