@@ -1,3 +1,6 @@
+/* The primary purpose of this header file is to define a "policy" for instruction semantics such as for the
+ * X86InstructionSemantics class. This particular policy is for tracking the flow of constant values. */
+
 #ifndef findConstants_H
 #define findConstants_H
 
