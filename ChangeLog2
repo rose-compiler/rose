@@ -1,3 +1,8 @@
+2009-04-08 19:32  dquinlan
+
+	* [r5267] /trunk/ROSE/tests/roseTests/binaryTests/Makefile.am:
+	  Removed test using BinQ from being run by default.
+
 2009-04-08 16:51  matzke
 
 	* [r5265] /trunk/ROSE/scripts/rosegit/bin/rosegit-env,
