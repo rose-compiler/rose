@@ -171,6 +171,8 @@ public:
     void doDot(std::string filename);
 
     Location *expressionLocation(SgExpression *expr);
+    Location *expressionLocation(SgExpression *expr,
+                                 const ContextInformation::Context &context);
     std::string locationAttributeString(Location *location);
 
     const std::vector<Location *> &get_locations() const;
@@ -210,6 +212,8 @@ private:
     PointsToInformation::PointsToInformation *mainInfo;
 
     Location *symbol_location(SgSymbol *sym);
+    Location *symbol_location(SgSymbol *sym,
+                              const ContextInformation::Context &context);
     Location *function_location(SgFunctionDeclaration *fd,
                                 Location *argDummy = NULL);
     Location *functionSymbol_location(SgFunctionSymbol *fsym);

@@ -394,10 +394,15 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
 
     case V_SgFunctionRefExp:
      // Look up the function's location, creating one if necessary.
-     // result = function_type(
-     //         isSgFunctionRefExp(node)->get_symbol()->get_declaration());
-        result = functionSymbol_location(
-                isSgFunctionRefExp(node)->get_symbol());
+     // This lookup always happens in the main info as function symbols are
+     // sort of global.
+        {
+            PointsToInformation *oldInfo = info;
+            info = mainInfo;
+            result = functionSymbol_location(
+                    isSgFunctionRefExp(node)->get_symbol());
+            info = oldInfo;
+        }
      // TODO: can this symbol ever be NULL? can this lookup ever be tried
      // for some function declaration whose symbol was NULL, and fail?
         if (result->baseLocation()->return_location == NULL)
@@ -463,6 +468,9 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
             << "* dereferencing " << a->id << " ("
             << (a->baseLocation() != NULL ? a->baseLocation()->id : 0)
             << ")"
+            << " expr: " << Ir::fragmentToString(node)
+            << " in context " << (info->context != NULL ?
+                                    info->context->toString() : "<none>")
             << std::endl;
 #endif
      // Only dereference the pointer (ensuring it has a base location) if it
@@ -1781,6 +1789,10 @@ PointsToAnalysis::Implementation::assign(
 
     result = (a != b ? cjoin(a, b) : b);
 
+#if VERBOSE_DEBUG
+    std::cout << "--------------------------------------------" << std::endl;
+#endif
+
  // If b is a dummy location, and it is not identical to the result, it will
  // not be used anymore; free it.
     if (b->dummy == true && result != b)
@@ -1834,6 +1846,24 @@ PointsToAnalysis::Implementation::join(
                 << std::endl;
 #endif
             mainInfo->disjointSets.link(a_set, b_set);
+#if VERBOSE_DEBUG
+            std::cout
+                << "a = " << (void *) a
+                << " base = " << (void *) a->baseLocation()
+                << " repr = "
+                    << (void *) location_representative(a->baseLocation())
+                << " id = "
+                    << location_representative(a->baseLocation())->id
+                << std::endl;
+            std::cout
+                << "b = " << (void *) b
+                << " base = " << (void *) b->baseLocation()
+                << " repr = "
+                    << (void *) location_representative(b->baseLocation())
+                << " id = "
+                    << location_representative(b->baseLocation())->id
+                << std::endl;
+#endif
             unify(a, b);
         }
 #if VERBOSE_DEBUG
@@ -2158,6 +2188,16 @@ PointsToAnalysis::Implementation::unify(
 #endif
         )
     {
+#if VERBOSE_DEBUG
+        std::cout
+            << "unify joining base locations: "
+            << a->id << "->"
+                << (a->baseLocation() != NULL ? a->baseLocation()->id : 0)
+            << " with "
+            << b->id << "->"
+                << (b->baseLocation() != NULL ? b->baseLocation()->id : 0)
+            << std::endl;
+#endif
         join(a->baseLocation(), b->baseLocation());
     }
  // join function argument and return locations
@@ -3795,6 +3835,17 @@ PointsToAnalysis::Implementation::symbol_location(SgSymbol *sym)
 }
 
 PointsToAnalysis::Location *
+PointsToAnalysis::Implementation::symbol_location(
+        SgSymbol *sym, const ContextInformation::Context &ctx)
+{
+    PointsToInformation *old_info = info;
+    info = allInfos[ctx];
+    Location *result = symbol_location(sym);
+    info = old_info;
+    return result;
+}
+
+PointsToAnalysis::Location *
 PointsToAnalysis::Implementation::function_location(
         SgFunctionDeclaration *fd, Location *argDummy)
 {
@@ -4000,6 +4051,9 @@ PointsToAnalysis::Implementation::createLocation(
         << " with base location " << (t != NULL ? t->id : 0)
         << ", return location "
             << (return_location != NULL ? return_location->id : 0)
+        << ", representative "
+            << (location_representative(location) != NULL
+                    ? location_representative(location)->id : 0)
         << std::endl;
 #endif
  // if (location->id == 17) std::abort();
@@ -4090,6 +4144,11 @@ PointsToAnalysis::Location *
 PointsToAnalysis::Implementation::location_representative(
         PointsToAnalysis::Location *loc)
 {
+#if VERBOSE_DEBUG
+    std::cout
+        << "finding location " << (loc != NULL ? loc->id : 0)
+        << std::endl;
+#endif
     Location *r = mainInfo->disjointSets.find_set(loc);
  // if (r == NULL)
  //     r = mainInfo->disjointSets.find_set(loc);
@@ -4099,11 +4158,12 @@ PointsToAnalysis::Implementation::location_representative(
         std::cerr
             << "*** no representative for loc "
             << (loc != NULL ? loc->id : 0)
+            << " in mainInfo = " << (void *) mainInfo
             << std::endl;
         std::abort();
     }
 
-    return loc;
+    return r;
 }
 
 void
@@ -4349,8 +4409,21 @@ PointsToAnalysis::Implementation::expressionLocation(SgExpression *expr)
         }
     }
 
+ // Make sure the auxiliaryTraversal runs in the correct context.
+    PointsToInformation *auxInfo = auxiliaryTraversal->info;
+    auxiliaryTraversal->info = info;
+#if VERBOSE_DEBUG
+    std::cout
+        << "for expr " << Ir::fragmentToString(expr) << ": "
+        << "starting aux traversal with info replacement "
+        << (auxInfo->prefix != "" ? auxInfo->prefix : "main")
+        << " -> "
+        << (info->prefix != "" ? info->prefix : "main")
+        << std::endl;
+#endif
     Location *result = auxiliaryTraversal->
                             AstBottomUpProcessing<Location *>::traverse(expr);
+    auxiliaryTraversal->info = auxInfo;
 
 #if VERBOSE_DEBUG
     if (result == NULL)
@@ -4407,6 +4480,17 @@ PointsToAnalysis::Implementation::expressionLocation(SgExpression *expr)
         << std::endl;
 #endif
 
+    return result;
+}
+
+PointsToAnalysis::Location *
+PointsToAnalysis::Implementation::expressionLocation(
+        SgExpression *expr, const ContextInformation::Context &ctx)
+{
+    PointsToInformation *old_info = info;
+    info = allInfos[ctx];
+    Location *result = expressionLocation(expr);
+    info = old_info;
     return result;
 }
 

@@ -63,6 +63,8 @@ public:
  // variables (and constants as array subscripts). Two expressions may be
  // aliased iff this function returns the same pointer for both.
     Location *expressionLocation(SgExpression *expr);
+    Location *expressionLocation(SgExpression *expr,
+                                 const ContextInformation::Context &context);
  // Compute some unique string from the given location. There is a one-to-one
  // correspondence between valid Location pointers and these strings, so again
  // two expressions may be aliased iff the locationAttributeStrings for their
@@ -98,6 +100,8 @@ public:
 
  // The location corresponding to a given variable or function symbol.
     Location *symbol_location(SgSymbol *sym);
+    Location *symbol_location(SgSymbol *sym,
+                              const ContextInformation::Context &context);
  // Whether the given location may be aliased, i.e. whether some other
  // location may point to it.
     bool mayBeAliased(Location *loc) const;

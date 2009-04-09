@@ -51,7 +51,6 @@ PIG_EXTERN_C get_value_macro(astfloat)
 PIG_EXTERN_C get_value_macro(astdouble)
 PIG_EXTERN_C get_value_macro(astldouble)
 
-#if 1
 #include "str.h"
 
 PIG_EXTERN_C
@@ -60,13 +59,26 @@ const char *Expression_print(void *e)
     std::cout << expr_to_string(isSgExpression((SgNode *) e)) << std::flush;
     return str_create("");
 }
-#endif
 
 PIG_EXTERN_C
 const char *c_str_print(const void *s)
 {
     std::cout << (const char *) s;
     return (const char *) s;
+}
+
+PIG_EXTERN_C
+const char *LIST_VariableSymbolNT_print(void **l)
+{
+    std::cout << "[!";
+    while (*l != NULL)
+    {
+        SgVariableSymbol *sym = (SgVariableSymbol *) *l;
+        std::cout << sym->get_name().str() << ",";
+        l++;
+    }
+    std::cout << "!]";
+    return str_create("");
 }
 
 // GB (2007-10-31): This has been commented out for a while. The reason is

@@ -4,12 +4,17 @@
 // Support for the following functions:
 // varid_has_location :: VariableId -> bool;
 // varid_location :: VariableId -> Location;
+// varid_location_cs :: VariableId * ContextInfo -> Location;
 // exprid_has_location :: ExpressionId -> bool;
 // exprid_location :: ExpressionId -> Location;
+// exprid_location_cs :: ExpressionId * ContextInfo -> Location;
 // location_varsyms :: Location -> *VariableSymbolNT;
 // may_be_aliased :: Location -> bool;
 // is_ptr_location :: Location -> bool;
 // dereference :: Location -> Location;
+
+// The _cs variants use the context-sensitive points-to analysis
+// information.
 
 // void **Ir::createNodeList(std::vector<T> &) should come in handy
 
@@ -34,6 +39,7 @@
 #include "IrCreation.h"
 #include "o_VariableId.h"
 #include "o_ExpressionId.h"
+#include "o_ContextInfo.h"
 
 #include "pointsto.h"
 #include "o_Location.h"
@@ -74,9 +80,15 @@ int o_Location_is_power_unendl = 0;
 
 #include <cstdlib>
 
+static
+PointsToAnalysis::PointsToAnalysis *
+get_icfgContextSensitivePointsToAnalysis(void);
+
+static
 PointsToAnalysis::PointsToAnalysis *
 get_icfgPointsToAnalysis(void)
 {
+#if 0
     CFG *global_cfg = get_global_cfg();
     if (global_cfg == NULL)
     {
@@ -97,8 +109,12 @@ get_icfgPointsToAnalysis(void)
         std::exit(EXIT_FAILURE);
     }
     return pointsToAnalysis;
+#else
+    return get_icfgContextSensitivePointsToAnalysis();
+#endif
 }
 
+static
 PointsToAnalysis::PointsToAnalysis *
 get_icfgContextSensitivePointsToAnalysis(void)
 {
@@ -124,6 +140,11 @@ get_icfgContextSensitivePointsToAnalysis(void)
     if (once)
     {
         cspta->run(icfg);
+        cspta->doDot("cs_pointsto");
+
+        o_Location_power = cspta->get_locations().size();
+        numberOfLocations = cspta->get_locations().size();
+
         once = false;
     }
     return cspta;
@@ -214,12 +235,18 @@ extern "C" void o_Location_init(void)
          // the points-to analysis instance directly from the ICFG, all
          // further calls use the get_icfgPointsToAnalysis function which
          // dies if the pointer is NULL.
+         // This code is now in the "once" part of
+         // get_icfgContextSensitivePointsToAnalysis since it refers to the
+         // data of the context-sensitive points-to analysis, which has not
+         // been run at this point.
+#if 0
             const std::vector<PointsToAnalysis::Location *> &locations
                 = get_icfgPointsToAnalysis()->get_locations();
             o_Location_power = locations.size();
          // numberOfLocations is needed to test for termination of the
          // abstract cursor functions below.
             numberOfLocations = locations.size();
+#endif
         }
         else
         {
@@ -305,6 +332,21 @@ extern "C" void *o_varid_location(void *vp)
     return createLocationWrapper(loc);
 }
 
+extern "C" void *o_varid_location_cs(void *vp, void *cp)
+{
+    VariableId *v = (VariableId *) vp;
+    ContextInfo *ctx = (ContextInfo *) cp;
+ // ctx->procnum, ctx->position
+ // std::cout << ctx->print();
+    SgVariableSymbol *sym = get_global_cfg()->ids_varsyms[v->id];
+    PointsToAnalysis *pta = get_icfgContextSensitivePointsToAnalysis();
+    PointsToAnalysis::Location *loc
+        = pta->symbol_location(sym,
+                ContextInformation::Context(ctx->procnum, ctx->position,
+                                            get_global_cfg()));
+    return createLocationWrapper(loc);
+}
+
 extern "C" FLO_BOOL o_exprid_has_location(void *ep)
 {
     SgExpression *exp = (SgExpression *) o_exprid_expr(ep);
@@ -331,6 +373,18 @@ extern "C" void *o_exprid_location(void *ep)
     SgExpression *exp = (SgExpression *) o_exprid_expr(ep);
     PointsToAnalysis::Location *loc
         = get_icfgPointsToAnalysis()->expressionLocation(exp);
+    return createLocationWrapper(loc);
+}
+
+extern "C" void *o_exprid_location_cs(void *ep, void *cp)
+{
+    SgExpression *exp = (SgExpression *) o_exprid_expr(ep);
+    ContextInfo *ctx = (ContextInfo *) cp;
+    PointsToAnalysis *pta = get_icfgContextSensitivePointsToAnalysis();
+    PointsToAnalysis::Location *loc
+        = pta->expressionLocation(exp,
+                ContextInformation::Context(ctx->procnum, ctx->position,
+                                            get_global_cfg()));
     return createLocationWrapper(loc);
 }
 
