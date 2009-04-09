@@ -221,6 +221,13 @@ exprid_location :: ExpressionId -> Location;
     SATIrE's temporary variables, or expressions that do not denote an
     object in memory (an "lvalue") do not have locations
 
+varid_location_cs :: VariableId, ContextInfo -> Location;
+exprid_location_cs :: :: ExpressionId, ContextInfo -> Location;
+    context-sensitive variants of points-to support functions; the
+    ContextInfo argument must be the current value of the context attribute
+    (which is not directly available from support functions and must be
+    passed as an argument if needed)
+
 location_varsyms :: Location -> *VariableSymbolNT;
     returns the list of program variables stored in the given location
 

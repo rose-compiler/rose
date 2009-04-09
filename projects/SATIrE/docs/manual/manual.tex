@@ -129,7 +129,7 @@ AST representation, or as a Termite term, depending on the command line
 options. It will also output a visualization of the ICFG if requested.
 
 Using these parts, one can build a very small SATIrE program that already
-allows various forms of program visualization and transformation:
+allows various forms of program analysis, visualization, and transformation:
 \begin{verbatim}
     #include <satire.h>
 
@@ -145,7 +145,8 @@ allows various forms of program visualization and transformation:
 
 The tasks this program performs depend on the command line flags passed to
 it by the user. Despite its power, this program is probably shorter than the
-compiler command line you need to build and run it correctly :-)
+compiler command line you need to build and run it correctly :-) The
+\verb|satire_driver| executable provided by SATIrE is just this program.
 
 \section{Analyzer Interface}
 \label{sec:analyzer_interface}
@@ -730,6 +731,13 @@ automatically included in any analyzer created with SATIrE.
     SATIrE's temporary variables, or expressions that do not denote an
     object in memory (an "lvalue") do not have locations
 
+\ttitemX{varid\_location\_cs :: VariableId, ContextInfo -> Location;}
+\ttitem{exprid\_location\_cs :: :: ExpressionId, ContextInfo -> Location;}
+    context-sensitive variants of points-to support functions; the
+    \texttt{ContextInfo} argument must be the current value of the
+    \texttt{context} attribute (which is not directly available from support
+    functions and must be passed as an argument if needed)
+
 \ttitem{location\_varsyms :: Location -> *VariableSymbolNT;}
     returns the list of program variables stored in the given location
 
@@ -924,14 +932,19 @@ functions (except those provided by SATIrE), this should work.
 %    region (array).
 
 
-SATIrE comes with a flow-insensitive context-insensitive unification-based
-points-to analysis in the spirit of Steensgaard~[cite\dots]. The analysis
-computes points-to information for complete C programs, i.\,e., programs
-that do not call any external functions. The analysis supports all C
-language features, including typecasts, structures, arrays, pointer
-arithmetic, and function pointers. It does not compute alias pairs; however,
-a client analysis could in principle compute may-alias pairs from the
-points-to representation.
+SATIrE comes with a flow-insensitive unification-based points-to analysis in
+the spirit of Steensgaard~[cite\dots]. The analysis computes points-to
+information for complete C programs, i.\,e., programs that do not call any
+external functions. The analysis supports all C language features, including
+typecasts, structures, arrays, pointer arithmetic, and function pointers. It
+does not compute alias pairs; however, a client analysis could in principle
+compute may-alias pairs from the points-to representation.
+
+The basic analysis is context-insensitive; however, a context-sensitive
+variant can be used with context-sensitive data-flow analyzers generated
+using PAG.
+
+\subsection{General Description of the Analysis}
 
 The basic abstraction computed by the points-to analysis is the
 \texttt{Location}, an abstract memory region. Variables and functions
@@ -1003,11 +1016,36 @@ to find out whether there might be a pointer pointing to a given
 to check what (if anything) a given \texttt{Location} may point to.
 
 While the points-to analysis works fine, there is work in progress on making
-it more precise and applicable to a wider range of programs. Precision will
+it more precise and applicable to a wider range of programs. Precision can
 be improved by adding context-sensitive elements; it will be possible to use
 the analysis even for incomplete programs by providing summaries for
 external functions. Using such summaries for allocation functions, the
 latter will also allow analysis of points-to relationships on the heap.
+
+\subsection{Context-Sensitive Extension}
+
+SATIrE includes a context-sensitive variant of the points-to analysis
+described above. In this variant, each function in the program is associated
+with a number of interprocedural contexts, and is essentially analyzed
+several times, once for each context. Argument and return locations of
+function contexts are linked according to calling information between
+contexts---distinct call sites of a function typically give rise to distinct
+contexts, thus information from one call site of a function will usually not
+be propagated to other call sites.
+
+The context-sensitive points-to analysis is only availabe in conjunction
+with data-flow analyzers generated using PAG, because SATIrE uses the
+interprocedural contexts and call strings computed by PAG. This also means
+that the degree of context sensitivity depends directly on the call string
+length setting for PAG. The context-sensitive analysis is run automatically
+if points-to analysis is enabled (using the \verb|--run-pointsto-analysis|
+command line flag, for instance) and a context-sensitive data-flow analysis
+attempts to use points-to information.
+
+Due to this tight connection to PAG data-flow analyzers, the best way to
+access context-sensitive points-to analysis data is by using the appropriate
+support functions \verb|varid_location_cs| and \verb|exprid_location_cs|
+(Section~\ref{sec:support_functions}) from within a data-flow analyzer.
 
 \section{Loop Bounds Analysis}
 \label{sec:analysis_loopbounds}
@@ -1042,6 +1080,7 @@ programs:
 -I<path>                 specify path for include files
 --input-binary-ast=<FILENAME> read AST from binary file instead of a
                          source file
+--verbatim-args          trailing arguments passed to front end verbatim
 \end{verbatim}
 }
 
@@ -1066,6 +1105,7 @@ steps should be performed by SATIrE.
 --no-number-expressions  do not number expressions and types in the ICFG
 --run-pointsto-analysis  run a points-to analysis on the ICFG
 --resolve-funcptr-calls  resolve indirect calls using pointer analysis
+--analysis=<identifier>  run SATIrE's analysis <identifier> on the ICFG
 \end{verbatim}
 }
 
