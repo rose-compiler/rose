@@ -860,7 +860,9 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
             std::cout << " (" << b->baseLocation()->id << ")";
         std::cout << std::endl;
 #endif
-        result = (b != NULL ? assign(a, b) : a);
+     // This used to yield a if b was NULL. That's nonsense, however: The
+     // value of an assignment is certainly not the lhs lvalue!
+        result = (b != NULL ? assign(a, b) : NULL);
         break;
 
     case V_SgInitializedName:
@@ -4152,7 +4154,7 @@ PointsToAnalysis::Implementation::location_representative(
     Location *r = mainInfo->disjointSets.find_set(loc);
  // if (r == NULL)
  //     r = mainInfo->disjointSets.find_set(loc);
-    if (r == NULL)
+    if (loc != NULL && r == NULL)
     {
      // r = loc;
         std::cerr
@@ -4439,25 +4441,29 @@ PointsToAnalysis::Implementation::expressionLocation(SgExpression *expr)
     }
 #endif
 
- // Make sure to return a canonical representative.
-    result = location_representative(result);
+    if (result != NULL)
+    {
+     // Make sure to return a canonical representative.
+        result = location_representative(result);
 
 #if DEBUG
-    if (result == NULL)
-    {
-        std::cerr
-            << "*** warning: NULL representative location for expr '"
-            << Ir::fragmentToString(expr)
-            << "' (" << expr->class_name() << ")"
-            << std::endl;
-    }
+        if (result == NULL)
+        {
+            std::cerr
+                << "*** warning: NULL representative location for expr '"
+                << Ir::fragmentToString(expr)
+                << "' (" << expr->class_name() << ")"
+                << std::endl;
+        }
 #endif
+    }
 
  // If this expression refers to a function, make sure the location we are
  // returning is a function location and has at least as many argument
  // locations as dictated by the static type of the expression.
     if (SgFunctionType *ft = isSgFunctionType(expr->get_type()))
     {
+        assert(result != NULL);
         if (result->baseLocation() == NULL)
             result->pointTo(createFunctionLocation());
         if (result->baseLocation()->return_location == NULL)

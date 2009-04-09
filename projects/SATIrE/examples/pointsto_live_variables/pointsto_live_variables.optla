@@ -226,7 +226,11 @@ gens(expr) =
                                     => union(expr_varset(ref),
                                              union(gens(lhs), gens(rhs)));
 
-     // The address-of operator returns a value, so this is simple as well.
+     // The address-of operator returns a value, so only its operand
+     // matters. Taking the address of a variable is not a use of the
+     // variable; taking the address of a more complex expression may use
+     // variables.
+        AddressOfOp(VarRefExp(_))   => {};
         AddressOfOp(e)              => gens(e);
 
      // These are simple and verbose.
