@@ -224,6 +224,7 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
     cout<<"Usage: outline [OPTION]... FILENAME..."<<endl;
     cout<<"Main operation mode:"<<endl;
     cout<<"\t-rose:outline:preproc-only           preprocessing only, no actual outlining"<<endl;
+    cout<<"\t-rose:outline:abstract_handle handle_string    using an abstract handle to specify an outlining target"<<endl;
     cout<<"\t-rose:outline:parameter_wrapper     use an array of pointers for the variables to be passed"<<endl;
     cout<<"\t-rose:outline:enable_classic        use parameters directly in the outlined function body without transferring statement, C only"<<endl;
     cout<<"\t-rose:outline:temp_variable         use temp variables to reduce pointer dereferencing for the variables to be passed"<<endl;
