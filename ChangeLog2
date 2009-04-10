@@ -1,3 +1,8 @@
+2009-04-09 23:19  liao6
+
+	* [r5282] /trunk/ROSE/src/midend/astOutlining/Outliner.cc: added
+	  command line help about abstract handle support in outliner
+
 2009-04-08 23:25  liao6
 
 	* [r5269] /trunk/ROSE/docs/Rose/Tutorial/abstractHandle.tex,
