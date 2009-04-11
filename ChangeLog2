@@ -1,3 +1,48 @@
+2009-04-11 18:05  dquinlan
+
+	* [r5306] /trunk/ROSE/MSVS_ROSE/Debug/MSVS_ROSETTA.pdb,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSE.ncb,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSE.suo,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSE/Debug/BuildLog.htm,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSETTA/Debug/BuildLog.htm,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSETTA/Debug/vc90.idb,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSETTA/Debug/vc90.pdb,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_UTIL/Debug/BuildLog.htm,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_UTIL/Debug/vc90.idb,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_UTIL/Debug/vc90.pdb,
+	  /trunk/ROSE/src/ROSETTA/src/grammar.C: Fixing MSVS support and
+	  portability between different Windows machines.
+
+2009-04-11 17:41  dquinlan
+
+	* [r5305] /trunk/ROSE/MSVS_ROSE/MSVS_ROSE.ncb,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSE.suo,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_UTIL/Debug/BuildLog.htm,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_UTIL/Debug/vc90.idb,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_UTIL/Debug/vc90.pdb,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_UTIL/MSVS_UTIL.vcproj: Added more
+	  portable support for files in cygwin compile tree when using
+	  MSVS.
+
+2009-04-11 16:31  dquinlan
+
+	* [r5304] /trunk/ROSE/MSVS_ROSE/Debug/MSVS_ROSETTA.pdb,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSE.ncb,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSE.suo,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSE/Debug/BuildLog.htm,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSE/MSVS_ROSE.vcproj,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSETTA/Debug/BuildLog.htm,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSETTA/Debug/vc90.idb,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSETTA/Debug/vc90.pdb,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_ROSETTA/MSVS_ROSETTA.vcproj,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_UTIL/Debug/BuildLog.htm,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_UTIL/Debug/vc90.idb,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_UTIL/Debug/vc90.pdb,
+	  /trunk/ROSE/MSVS_ROSE/MSVS_UTIL/MSVS_UTIL.vcproj,
+	  /trunk/ROSE/src/ROSETTA/src/grammar.C: Ongoing MSVS support
+	  (ROSETTA now builds and runs until some string functions are
+	  called).
+
 2009-04-09 23:19  liao6
 
 	* [r5282] /trunk/ROSE/src/midend/astOutlining/Outliner.cc: added
