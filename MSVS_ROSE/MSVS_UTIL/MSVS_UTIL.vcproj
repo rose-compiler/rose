@@ -191,7 +191,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\ROSE_CompileTree\svn-rose-Cygwin-gxx-4.2.4\src\util\rose_paths.C"
+				RelativePath="..\..\..\ROSE_CompileTree\svn-rose-msvs\src\util\rose_paths.C"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
