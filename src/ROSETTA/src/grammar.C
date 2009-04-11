@@ -107,7 +107,11 @@ Grammar::Grammar ( const string& inputGrammarName,
 	   while (i != astNodeListFilename.length())
 	      {
 			if (astNodeListFilename[i] == '/')
-				astNodeListFilename[i] = '\';
+			   {
+			  // DQ (4/11/2009): My laptop version of Windows requires '\\' but it was 
+			  // not a problem for the decktop version of windows to use '\'.
+				 astNodeListFilename[i] = '\\';
+			   }
 			i++;
 	      }
 	   printf ("astNodeListFilename = %s \n",astNodeListFilename.c_str());
