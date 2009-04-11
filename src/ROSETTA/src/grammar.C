@@ -91,7 +91,27 @@ Grammar::Grammar ( const string& inputGrammarName,
 
   // JJW 2-12-2008 Use a file for this list so the numbers will be more stable
      {
-       std::string astNodeListFilename = std::string(ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR) + "/src/ROSETTA/astNodeList";
+#if !ROSE_MICROSOFT_OS
+	   std::string astNodeListFilename = std::string(ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR) + "/src/ROSETTA/astNodeList";
+#else
+	// DQ (4/4/2009): MSVS is not interpreting the type correctly here...(fixed rose_paths.[hC])
+    // DQ (4/11/2009): Using cygwin generated rose_paths.C files so need to map cygwin file prefix to Windows file prefix.
+       std::string astNodeListFilename = ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "/src/ROSETTA/astNodeList";
+	   string prefixString = "/cygdrive/c";
+	   size_t prefixLocation = astNodeListFilename.find(prefixString);
+	   ROSE_ASSERT(prefixLocation != string::npos);
+	   ROSE_ASSERT(prefixLocation == 0);
+	   astNodeListFilename = astNodeListFilename.substr(prefixLocation+prefixString.length());
+	   astNodeListFilename = "C:" + astNodeListFilename;
+	   int i = 0;
+	   while (i != astNodeListFilename.length())
+	      {
+			if (astNodeListFilename[i] == '/')
+				astNodeListFilename[i] = '\';
+			i++;
+	      }
+	   printf ("astNodeListFilename = %s \n",astNodeListFilename.c_str());
+#endif
        std::ifstream astNodeList(astNodeListFilename.c_str());
        size_t c = 1;
        while (astNodeList) {
