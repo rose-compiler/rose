@@ -24,6 +24,9 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				Description="Running ROSETTA to generate required ROSE source code."
+				CommandLine="$(OutDir)\MSVS_Rosetta.exe"
+				ExecutionBucket="2"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -33,12 +36,15 @@
 			/>
 			<Tool
 				Name="VCWebServiceProxyGeneratorTool"
+				ExecutionBucket="4"
 			/>
 			<Tool
 				Name="VCMIDLTool"
+				ExecutionBucket="5"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				ExecutionBucket="6"
 				Optimization="0"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -48,38 +54,48 @@
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
+				ExecutionBucket="7"
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
+				ExecutionBucket="8"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
+				ExecutionBucket="9"
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				ExecutionBucket="10"
 				GenerateDebugInformation="true"
 				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
+				ExecutionBucket="11"
 			/>
 			<Tool
 				Name="VCManifestTool"
+				ExecutionBucket="12"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
+				ExecutionBucket="13"
 			/>
 			<Tool
 				Name="VCBscMakeTool"
+				ExecutionBucket="14"
 			/>
 			<Tool
 				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
+				ExecutionBucket="15"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				ExecutionBucket="16"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
 			/>
 		</Configuration>
 		<Configuration
@@ -266,6 +282,10 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
 		</Filter>
+		<File
+			RelativePath=".\ClassDiagram1.cd"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

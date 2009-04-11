@@ -28,18 +28,22 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
+				ExecutionBucket="2"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+				ExecutionBucket="3"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
 			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
 				Name="VCMIDLTool"
+				ExecutionBucket="4"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				ExecutionBucket="5"
 				Optimization="0"
 				AdditionalIncludeDirectories="&quot;c:\dquinlan\ROSE\svn-rose\src&quot;;&quot;c:\dquinlan\ROSE\svn-rose\src\util&quot;;&quot;c:\dquinlan\ROSE\svn-rose\src\util\stringSupport&quot;;&quot;c:\dquinlan\ROSE\svn-rose\src\util\commandlineProcessing&quot;;&quot;c:\dquinlan\ROSE\svn-rose\src\frontend\SageIII&quot;;&quot;c:\dquinlan\ROSE\ROSE_CompileTree\svn-rose-Cygwin-gxx-4.2.4&quot;;&quot;c:\dquinlan\ROSE\ROSE_CompileTree\svn-rose-cygwin-gxx-3.4.4&quot;;&quot;c:\dquinlan\ROSE\boost_1_37_0-4.2.4-install\include\boost-1_37&quot;;&quot;c:\dquinlan\ROSE\boost_1_37_0-gxx-3.4.4\include\boost-1_37&quot;"
 				MinimalRebuild="true"
@@ -50,38 +54,48 @@
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
+				ExecutionBucket="6"
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
+				ExecutionBucket="7"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
+				ExecutionBucket="8"
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				ExecutionBucket="9"
 				GenerateDebugInformation="true"
 				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
+				ExecutionBucket="10"
 			/>
 			<Tool
 				Name="VCManifestTool"
+				ExecutionBucket="11"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
+				ExecutionBucket="12"
 			/>
 			<Tool
 				Name="VCBscMakeTool"
+				ExecutionBucket="13"
 			/>
 			<Tool
 				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
+				ExecutionBucket="14"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				ExecutionBucket="16"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
 			/>
 		</Configuration>
 		<Configuration

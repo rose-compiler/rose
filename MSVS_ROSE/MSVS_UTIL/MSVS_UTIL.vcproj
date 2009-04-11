@@ -191,6 +191,18 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\..\ROSE_CompileTree\svn-rose-Cygwin-gxx-4.2.4\src\util\rose_paths.C"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\..\src\util\stringSupport\string_functions.cpp"
 				>
 				<FileConfiguration
