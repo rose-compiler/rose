@@ -57,9 +57,6 @@ int main( int argc, char * argv[] )
      SgProject* project = frontend(newArgv);
      ROSE_ASSERT(project != NULL);
 
-  // Build a list of functions within the AST
-     AnalyzeMacroCalls* macroCalls = new AnalyzeMacroCalls(project);
-
   // Assume that there is only one file
      std::string filename;
      for(int i = 0 ; i < project->numberOfFiles(); i++)
@@ -72,7 +69,7 @@ int main( int argc, char * argv[] )
 
      ROSE_ASSERT(filename != "");
 
-     filename+=".out";
+     filename+=".mapping.out";
      filename = StringUtility::stripPathFromFileName(filename);
 
      ofstream myfile;
@@ -82,7 +79,9 @@ int main( int argc, char * argv[] )
      std::cout << "Outputing to the file " << filename << std::endl;
 
 
-     macroCalls->print_out_all_macros(myfile);
+  // Build a list of functions within the AST
+     AnalyzeMacroCalls* macroCalls = new AnalyzeMacroCalls(project, true, myfile);
+
      //     return backend(project);
      myfile.close();
 

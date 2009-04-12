@@ -19,6 +19,11 @@
 std::vector<SgNode*> queryForLine(SgNode* node, Sg_File_Info* compareFileInfo);
 
 
+//Will create a std::vecto<SgNode*> where for each index in the global vector 
+//representing the token stream there is either a corresponding SgNode or NULL.
+std::vector<SgNode*> 
+findMappingOfTokensToAST(SgNode* node, PreprocessingInfo* currentInfo );
+
 //A map of macro defs to macro calls to that def
 typedef struct { 
                  //The prepocessing info matching the macro call
@@ -45,6 +50,10 @@ class AnalyzeMacroCalls{
       map_def_call mapDefsToCalls;
 
    private:
+      //The next two variables are for testing purposes
+      bool testMappingOfTokensToAST;
+      std::ostream& outStream;
+
       SgProject* project;
       //multimap of PreprocessingInfo::CMacroDefs to PreprocessingInfo::CMacroCall
       macro_def_call_type macroDefToCalls;
@@ -52,7 +61,7 @@ class AnalyzeMacroCalls{
       //internal include paths
       std::list<std::string> internalIncludePathList;
    public:
-      AnalyzeMacroCalls(SgProject*);
+      AnalyzeMacroCalls(SgProject*, bool testMapping, std::ostream& outS);
     
       //get the map of macro definitions to macro calls 
       macro_def_call_type& getMapOfDefsToCalls();
@@ -64,11 +73,7 @@ class AnalyzeMacroCalls{
       SgNode*
       findSmallestStmtMatchingMacroCallUsingPositions(PreprocessingInfo* currentInfo);
 
-      //Will create a std::vecto<SgNode*> where for each index in the global vector 
-      //representing the token stream there is either a corresponding SgNode or NULL.
-      std::vector<SgNode*> 
-      findMappingOfTokensToAST(SgNode* node, PreprocessingInfo* currentInfo );
-
+      
       //This function will iterate over all macro calls
       void iterate_over_all_macro_calls(macro_def_call_type& macro_def);
 

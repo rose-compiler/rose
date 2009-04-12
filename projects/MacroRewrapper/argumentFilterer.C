@@ -15,8 +15,13 @@ nodeToFilter = argNodes;
 posOfMacroCall = argFileInfo;
 constFoldTraverse = TraverseOriginalExpressionTree;
 //constFoldTraverse = TraverseBoth;
-for(int i =0; i < argNodes.size() ; i++)
-std::cout << "node to filter " << argNodes[i]->class_name() <<std::endl;
+for(int i =0; i < argNodes.size() ; i++){
+  std::cout << "node to filter " << argNodes[i]->class_name() ;
+  if(isSgValueExp(argNodes[i])!= NULL )
+    std::cout << " " << argNodes[i]->unparseToString();
+  std::cout  <<std::endl;
+
+}
 
 }
 
@@ -103,9 +108,15 @@ std::vector<SgNode*> queryForNotOnLine(SgNode* node, Sg_File_Info* compareFileIn
 bool 
 ComparisonLinearization::skipNode(SgNode* node) {
   bool skip = false;
-  
+/*
+  if( find(nodeToFilter.begin(),nodeToFilter.end(),node) != nodeToFilter.end() ){
+    skip = true;
+    return skip;
+  }
+  */
+
   if( find( skipNodeAndSubTree.begin(), skipNodeAndSubTree.end(), node) != skipNodeAndSubTree.end() |
-      find(nodeToFilter.begin(),nodeToFilter.end(),node) != nodeToFilter.end() |
+      //find(nodeToFilter.begin(),nodeToFilter.end(),node) != nodeToFilter.end() |
       isSgType(node) != NULL
 
       )
@@ -113,9 +124,12 @@ ComparisonLinearization::skipNode(SgNode* node) {
     std::cout << "Skipped node: " << node->class_name() << std::endl;
     return true;
   }
+ //return skip;
 
   if(isSgValueExp(node) != NULL )
   {
+  /*
+
     if( SgCastExp* castExp =  isSgCastExp(isSgValueExp(node)->get_parent()) )
     {
       if(castExp->get_operand() == node)
@@ -127,7 +141,9 @@ ComparisonLinearization::skipNode(SgNode* node) {
         }
       }
     }
-   
+   return skip;
+   */
+  
     //Because of the structure of the code '(0)' where there will be two
     //SgIntVal's where none is marked compiler generated I have to do this
     //condition
@@ -148,7 +164,6 @@ ComparisonLinearization::skipNode(SgNode* node) {
 
   if(node!=NULL)
     std::cout << "Node is " << node->class_name() << std::endl;
-
   //  if(isSgType(node) != NULL )
   //      return true;
 
@@ -168,6 +183,8 @@ ComparisonLinearization::skipNode(SgNode* node) {
     //See if all variables in the subtre is skippable
     bool allNodesInSubTreeSkipped = true;
     std::cout << "vectorOfNodesAtPos: " << vectorOfNodesAtPos.size() << std::endl;
+
+    return skip;
     for(int i=0; i < vectorOfNodesAtPos.size(); i++ )
     {
       if(find(nodeToFilter.begin(),nodeToFilter.end(),vectorOfNodesAtPos[i]) == nodeToFilter.end())
@@ -261,10 +278,11 @@ ComparisonLinearization::skipNode(SgNode* node) {
       }
     }
 
-  }else if( find(nodeToFilter.begin(),nodeToFilter.end(),node) != nodeToFilter.end() ){
+  }else  if( find(nodeToFilter.begin(),nodeToFilter.end(),node) != nodeToFilter.end() ){
     skip = true;
   }
 
+ 
   if(isSgUnaryOp(node) != NULL )
   {
 
@@ -284,10 +302,7 @@ ComparisonLinearization::skipNode(SgNode* node) {
   if( ( valExp != NULL ) &&
       ( valExp->get_originalExpressionTree() !=NULL   )
     ){
-    if( constFoldTraverse == TraverseOriginalExpressionTree ){
       skip=true;
-    }
-
   }
 
   //The variablerefexp will represent the variable access itself so this is unnecessary
@@ -306,6 +321,8 @@ bool
 ComparisonLinearization::skipSubTreeOfNode(SgNode* node) { 
 
     bool skip = false;
+
+    return skip;
     if( find( skipNodeAndSubTree.begin(), skipNodeAndSubTree.end(), node) != skipNodeAndSubTree.end() )
         skip = true;
 
@@ -493,13 +510,13 @@ std::vector<SgNode*> queryForLine(SgNode* node, Sg_File_Info* compareFileInfo){
 
 
 	  std::string filename = fileInfo->get_filenameString();
-std::cout << "Construct was found at node position:" << node << " " << node->class_name() << " Compiler generated: "<< (fileInfo->isCompilerGenerated() ? "true" : "false") << " filename: " << filename << " l" << line << " c" << col << std::endl;
+//std::cout << "Construct was found at node position:" << node << " " << node->class_name() << " Compiler generated: "<< (fileInfo->isCompilerGenerated() ? "true" : "false") << " filename: " << filename << " l" << line << " c" << col << std::endl;
 
 	  if( (line == compareLine) && ( col == compareCol ) && (filename == compareFilename) ){
 
 
             
-               std::cout << "Construct was found at node position:" << node->class_name() << " filename: " << filename << " l" << line << " c" << col << std::endl;
+  //             std::cout << "Construct was found at node position:" << node->class_name() << " filename: " << filename << " l" << line << " c" << col << std::endl;
                returnList.push_back(node);
 
 	  }else if(isSgVarRefExp(node) != NULL){

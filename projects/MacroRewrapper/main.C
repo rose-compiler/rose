@@ -4,6 +4,7 @@
 
 #include "macro.h"
 #include <functional>
+#include <ostream>
 using namespace std;
 
 bool VERBOSE_MESSAGES_OF_WAVE = true;
@@ -115,7 +116,7 @@ int main( int argc, char * argv[] )
 
 
   // Build a list of functions within the AST
-     AnalyzeMacroCalls* macroCalls = new AnalyzeMacroCalls(project);
+     AnalyzeMacroCalls* macroCalls = new AnalyzeMacroCalls(project,false, std::cerr);
 std::cout << "Test" << std::endl;
 
      macroCalls->add_all_macro_calls_to_db();

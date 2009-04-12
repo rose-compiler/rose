@@ -5,8 +5,29 @@
 //#define VERBOSE_MESSAGES_OF_WAVE true
 
 
+bool noMapping(SgNode* node)
+{
+  
+  SgNode* nodeAtPos = node;
 
-AnalyzeMacroCalls::AnalyzeMacroCalls(SgProject* p){
+  if(isSgValueExp(nodeAtPos) != NULL ) 
+  {
+    SgValueExp* valExp = isSgValueExp(nodeAtPos);
+    if(valExp->get_originalExpressionTree() != NULL)
+      return true;
+  }
+
+
+
+  return false;
+};
+
+
+AnalyzeMacroCalls::AnalyzeMacroCalls(SgProject* p, bool testMapping, std::ostream& outS )
+:testMappingOfTokensToAST(testMapping), outStream(outS)
+{
+
+
      std::string internalIncludePaths          = "CXX_INCLUDE_STRING";
      if(SgProject::get_verbose() >= 1)
 	  std::cout << "INTERNAL INCLUDE PATHS " << "CXX_INCLUDE_STRING" << std::endl;
@@ -291,7 +312,7 @@ AnalyzeMacroCalls::findSmallestStmtMatchingMacroCallUsingPositions(Preprocessing
 //    AnalyzeMacroCalls::findMappingOfTokensToAST(SgNode* node, PreprocessingInfo* currentInfo )
 //will return a
 std::vector<SgNode*> 
-AnalyzeMacroCalls::findMappingOfTokensToAST(SgNode* node, PreprocessingInfo* currentInfo ){
+findMappingOfTokensToAST(SgNode* node, PreprocessingInfo* currentInfo ){
 	PreprocessingInfo::r_macro_call* macro_call = currentInfo->get_macro_call();
 	token_type a_call = macro_call->macro_call;
 
@@ -313,6 +334,9 @@ AnalyzeMacroCalls::findMappingOfTokensToAST(SgNode* node, PreprocessingInfo* cur
 
          std::cout << nodeAtPos->class_name() << " ";
 
+         if(isSgValueExp(nodeAtPos)!= NULL | isSgVarRefExp(nodeAtPos) != NULL)
+           std::cout << " " << nodeAtPos->unparseToString() << " " ;
+
 
         }
 
@@ -325,7 +349,9 @@ AnalyzeMacroCalls::findMappingOfTokensToAST(SgNode* node, PreprocessingInfo* cur
 			std::cout << "STring val at:" << nodeAtPos->get_file_info()->get_line() << std::endl;
 
 		}
+                
 
+#if 0
                 //Filter out the constant folded part of a constant folded expression
                 if(isSgValueExp(*it_beg) != NULL )
                 {
@@ -341,6 +367,8 @@ AnalyzeMacroCalls::findMappingOfTokensToAST(SgNode* node, PreprocessingInfo* cur
                     }
                   }
                 }
+#endif
+                std::cout << "\n1BEFORE ADDED:" << nodeAtPos->class_name() << " " << nodeAtPos->get_file_info()->get_filenameString() << " " << nodeAtPos->get_file_info()->get_line() << " " << nodeAtPos->get_file_info()->get_col() << std::endl;
 
                 if(SgLocatedNode* locatedNode = isSgLocatedNode(nodeAtPos) )
                 {
@@ -348,6 +376,13 @@ AnalyzeMacroCalls::findMappingOfTokensToAST(SgNode* node, PreprocessingInfo* cur
                     continue;
 
                 }
+                //Because of the structure of the code '(0)' where there will be two
+                //SgIntVal's where none is marked compiler generated I have to do this
+                //condition
+
+                SgValueExp* valExp = isSgValueExp(nodeAtPos);
+                if( valExp != NULL && valExp->get_originalExpressionTree() != NULL)
+                  continue;
 
                 /*
                 if( isSgType(nodeAtPos) != NULL )
@@ -356,6 +391,8 @@ AnalyzeMacroCalls::findMappingOfTokensToAST(SgNode* node, PreprocessingInfo* cur
 
 			linNodesAtPost.push_back(nodeAtPos);
                 }*/
+
+                //std::cout << "2BEFORE ADDED:" << nodeAtPos->class_name() << " " << nodeAtPos->get_file_info()->get_filenameString() << " " << nodeAtPos->get_file_info()->get_line() <<  " " << nodeAtPos->get_file_info()->get_col() << std::endl;
 
 		if( queryForLine(nodeAtPos,file_info).size()>0 ){
 			linNodesAtPost.push_back(nodeAtPos);
@@ -370,12 +407,12 @@ AnalyzeMacroCalls::findMappingOfTokensToAST(SgNode* node, PreprocessingInfo* cur
 				}
 			}
 
-                        if(SgProject::get_verbose() >=1){
+                        if( true || SgProject::get_verbose() >=1){
                           std::cout << "ADDED:" << nodeAtPos->class_name() << " " << nodeAtPos->get_file_info()->get_filenameString() << " " << nodeAtPos->get_file_info()->get_line() <<
                             " " << nodeAtPos->get_file_info()->get_col() << std::endl;
                         }
 
-		}else if(SgProject::get_verbose() >=1){
+		}else if(true || SgProject::get_verbose() >=1){
 
 			std::cout << "NOT ADDED:" << nodeAtPos->class_name() << " " << nodeAtPos->get_file_info()->get_filenameString() << " " << nodeAtPos->get_file_info()->get_line() <<
 				" " << nodeAtPos->get_file_info()->get_col() << std::endl;
@@ -420,12 +457,13 @@ AnalyzeMacroCalls::findMappingOfTokensToAST(SgNode* node, PreprocessingInfo* cur
         }
 
 
+        std::cout << "\nUnparsed nodes:"<< node->unparseToString() << std::endl;
         std::cout << "\nLinearized nodes:";
         for(std::vector<SgNode*>::iterator it_beg2 = linNodesAtPost.begin(); it_beg2 != linNodesAtPost.end();
 				++it_beg2){
 			SgNode* nodeAtPos = *it_beg2;
-                        if(isSgValueExp(nodeAtPos) != NULL )
-                            std::cout << nodeAtPos->unparseToString() << " "  << nodeAtPos->get_file_info()->get_line() <<  " " << nodeAtPos->get_file_info()->get_col() << " " ; 
+                        if(isSgValueExp(nodeAtPos) != NULL | isSgMultiplyOp(nodeAtPos) != NULL )
+                            std::cout << nodeAtPos->class_name() << " " << nodeAtPos->unparseToString() << " "  << nodeAtPos->get_file_info()->get_line() <<  " " << nodeAtPos->get_file_info()->get_col() << " " ; 
                         else
                             std::cout << nodeAtPos->class_name()      << " "  << nodeAtPos->get_file_info()->get_line() <<  " " << nodeAtPos->get_file_info()->get_col() << " " ;
         }
@@ -436,21 +474,26 @@ AnalyzeMacroCalls::findMappingOfTokensToAST(SgNode* node, PreprocessingInfo* cur
 		for(std::vector<SgNode*>::iterator it_beg2 = linNodesAtPost.begin(); it_beg2 != linNodesAtPost.end();
 				++it_beg2){
 			SgNode* nodeAtPos = *it_beg2;
-
+/*
                         if(isSgValueExp(nodeAtPos) != NULL ) 
                         {
                           SgValueExp* valExp = isSgValueExp(nodeAtPos);
                           if(valExp->get_originalExpressionTree() != NULL)
                             continue;
                         }
-
+*/
                         if(SgLocatedNode* locNode = isSgLocatedNode(nodeAtPos))
                         std::cout << "The pos is: " << nodeAtPos->class_name() << " ";
+                        std::cout << it_exp->get_value()+ "\n ";
 			//std::cout << nodeAtPos->class_name() << std::endl; 
 			if( checkIfNodeMaps(*it_exp,nodeAtPos) == true ){
 				//if(SgProject::get_verbose() >= 1){
                           {
-					std::cout << " Found mapping" << it_exp->get_value() << " to " << nodeAtPos->class_name() << std::endl;
+					std::cout << " Found mapping" << it_exp->get_value() << " to " << nodeAtPos->class_name();
+                                        if(isSgValueExp(nodeAtPos) != NULL ) 
+                                          std::cout << " " << nodeAtPos->unparseToString();
+                                          
+                                        std::cout << std::endl;
 
 					if(macro_def_line != it_exp->get_position().get_line())
 						std::cout << "Found something not from the macro " << it_exp->get_value() << std::endl;
@@ -475,197 +518,252 @@ AnalyzeMacroCalls::findMappingOfTokensToAST(SgNode* node, PreprocessingInfo* cur
 
 void 
 AnalyzeMacroCalls::iterate_over_all_macro_calls(macro_def_call_type& macro_def){
-	std::cout << " Iterate over all macro calls" << std::endl;
+  std::cout << " Iterate over all macro calls" << std::endl;
 
-	for(macro_def_call_type::iterator def_it = macro_def.begin();
-			def_it != macro_def.end(); ++def_it ){
+  for(macro_def_call_type::iterator def_it = macro_def.begin();
+      def_it != macro_def.end(); ++def_it ){
 
-		std::vector<MappedMacroCall> callsToThisDef;
+    std::vector<MappedMacroCall> callsToThisDef;
 
-		std::string compareASTStringMatchingMacroCall;
-
-
-		PreprocessingInfo::r_macro_def* macro_def = def_it->first->get_macro_def();
-		ROSE_ASSERT(macro_def != NULL);
+    std::string compareASTStringMatchingMacroCall;
 
 
-		Sg_File_Info* macro_def_pos = def_it->first->get_file_info();
+    PreprocessingInfo::r_macro_def* macro_def = def_it->first->get_macro_def();
+    ROSE_ASSERT(macro_def != NULL);
+
+
+    Sg_File_Info* macro_def_pos = def_it->first->get_file_info();
+
+
+    std::list<int> positions;
+    token_list_container& macroDefinition = macro_def->definition;
+    for(token_list_container::iterator expMacroIt = macroDefinition.begin();
+        expMacroIt != macroDefinition.end(); ++expMacroIt){
+      positions.push_back( expMacroIt->get_position().get_line() );
+
+
+    }
+    positions.unique();
+
+    for(std::list<int>::iterator iItr = positions.begin(); 
+        iItr != positions.end(); ++iItr)
+      std::cout << "\nPosition:" <<  *iItr<< std::endl;
 
 
 
-
-		if(SgProject::get_verbose() >= 1)
-			std::cout << "Macro def found at: " << macro_def_pos->get_filenameString() << " l" <<
-				macro_def_pos->get_line() << " c" << macro_def_pos->get_col() << std::endl;
-
-
-		for(macro_call_list::iterator call_it = def_it->second.begin();
-				call_it != def_it->second.end(); ++call_it ){
-
-			Sg_File_Info* macro_call_pos = (*call_it)->get_file_info();
-
-			ROSE_ASSERT(macro_call_pos!=NULL);
-
-                        //If we are using the database it does not make sense to reanalyze a macro call which
-                        //has already been entered into the database. This optimization detects when the macro
-                        //call has already been entered.
-			bool analyze_macro = true;
-			if(do_db_optimization == true)
-				if(exist_macro_call(macro_call_pos->get_filenameString(), macro_call_pos->get_line(),macro_call_pos->get_col()) == true)
-					analyze_macro = false;
-
-                        //if(call_it->expanded_macro.size()>1)
-                        //        analyze_macro = false;
-
-			if( analyze_macro == true ){  //always true if the database is not used
-
-				SgNode* stmtContainingMacroCall = findSmallestStmtMatchingMacroCallUsingPositions(*call_it);
-
-				if(stmtContainingMacroCall != NULL){
-                                        //The object of this true statement of the block is to find the smallest set of
-                                        //statements matching the macro call and filter out the arguments for usage in the
-                                        //macro inconsistency filtering
-
-					//map_tokens_to_AST(stmtContainingMacroCall, (*call_it)->get_macro_call());
-
-					ROSE_ASSERT((*call_it)->get_macro_call()!=NULL);
-					token_container expanded_macro = (*call_it)->get_macro_call()->expanded_macro;
-
-					std::vector< SgNode*> tokenMapToAST = findMappingOfTokensToAST(stmtContainingMacroCall,(*call_it));
-
-					std::vector<SgNode*> nodeFromMacroArgument;
-					int counter = 0;
-					using namespace boost::wave;
-
-                                        //Discover which nodes come from the macro argument
+    if(SgProject::get_verbose() >= 1)
+      std::cout << "Macro def found at: " << macro_def_pos->get_filenameString() << " l" <<
+        macro_def_pos->get_line() << " c" << macro_def_pos->get_col() << std::endl;
 
 
-                                        bool last_token_was_argument = false;
-					for(token_container::iterator expMacroIt = expanded_macro.begin();
-							expMacroIt != expanded_macro.end(); ++expMacroIt){
-						if( ( (unsigned int) expMacroIt->get_position().get_line() != (unsigned int) macro_def_pos->get_line() ) &&
-								( token_id(*expMacroIt) != T_SPACE ) &&
-								( token_id(*expMacroIt) != T_SEMICOLON )
-						  ){
-                                                  last_token_was_argument = true;
+    for(macro_call_list::iterator call_it = def_it->second.begin();
+        call_it != def_it->second.end(); ++call_it ){
 
-								std::cout << "Node from macro argument:" << expMacroIt->get_value() << std::endl;
+      Sg_File_Info* macro_call_pos = (*call_it)->get_file_info();
 
-							if(tokenMapToAST[counter]==NULL){
-									std::cout << "Error: the corresponding AST node to the argument token is NULL" << std::endl;
-							}else
-								nodeFromMacroArgument.push_back(tokenMapToAST[counter]);
-						}else if(tokenMapToAST[counter]!=NULL && isSgBinaryOp(tokenMapToAST[counter]) && last_token_was_argument  )
-                                                {
-                                                    nodeFromMacroArgument.push_back(tokenMapToAST[counter]);
+      ROSE_ASSERT(macro_call_pos!=NULL);
 
-								std::cout << "Node from macro argument:" << expMacroIt->get_value() << std::endl;
+      //If we are using the database it does not make sense to reanalyze a macro call which
+      //has already been entered into the database. This optimization detects when the macro
+      //call has already been entered.
+      bool analyze_macro = true;
+      if(do_db_optimization == true)
+        if(exist_macro_call(macro_call_pos->get_filenameString(), macro_call_pos->get_line(),macro_call_pos->get_col()) == true)
+          analyze_macro = false;
 
-                                                }else{
+      //if(call_it->expanded_macro.size()>1)
+      //        analyze_macro = false;
 
-								std::cout << "NOT Node from macro argument:" << expMacroIt->get_value() << std::endl;
+      if( analyze_macro == true ){  //always true if the database is not used
 
-                                                  last_token_was_argument = false;
-                                                }
+        SgNode* stmtContainingMacroCall = findSmallestStmtMatchingMacroCallUsingPositions(*call_it);
 
-						++counter;
-					};
+        if(stmtContainingMacroCall != NULL){
+          //The object of this true statement of the block is to find the smallest set of
+          //statements matching the macro call and filter out the arguments for usage in the
+          //macro inconsistency filtering
 
+          //map_tokens_to_AST(stmtContainingMacroCall, (*call_it)->get_macro_call());
 
-					std::string ASTStringMatchingMacroCall;
+          ROSE_ASSERT((*call_it)->get_macro_call()!=NULL);
+          token_container expanded_macro = (*call_it)->get_macro_call()->expanded_macro;
 
-					if(SgProject::get_verbose() >= 1)
-						std::cout << "Finding smallest set of statements" << std::endl;
+          std::vector< SgNode*> tokenMapToAST = findMappingOfTokensToAST(stmtContainingMacroCall,(*call_it));
 
 
-                                        //Smallest set of statments containing macro call
-                                        std::vector<SgNode*> smallestSetOfStmtsContainingMacro;
+          if(testMappingOfTokensToAST == true)
+          {
+            int counter = 0;
 
-                                        //If the smallest statement containing a macro call is a scope statement and at the
-                                        //same time was not part of the macro, find the set of smallest statements containing
-                                        //macro.
-					if( (isSgScopeStatement(stmtContainingMacroCall)!=NULL) && 
-							(queryForLine(stmtContainingMacroCall,macro_call_pos).size()==0) ) {
-						std::cout << " In false scope stmt branch" << std::endl;
-						SgScopeStatement*  scopeStmt = isSgScopeStatement(stmtContainingMacroCall);
-						ROSE_ASSERT(scopeStmt!=NULL);
-						SgStatementPtrList scopeStmtPtrLst = scopeStmt->generateStatementList();
-						//SgStatementPtrList scopeStmtPtrLst = scopeStmt->getStatementList();
-						NodesAtLineNumber nodePos;
+            for(token_container::iterator expMacroIt = expanded_macro.begin();
+                expMacroIt != expanded_macro.end(); ++expMacroIt){
+              SgNode* currentNode = tokenMapToAST[counter]  ;
+              outStream <<  expMacroIt->get_value() << " ";
+              
+              std::string theString;
+              if( ( isSgValueExp(currentNode) != NULL | isSgVarRefExp(currentNode) != NULL )
+                  && currentNode != NULL )
+                theString = currentNode->class_name() + " " + currentNode->unparseToString(); 
+              else
+                theString = (  currentNode != NULL ? currentNode->class_name() : "NULL" );
 
-						for(SgStatementPtrList::iterator it_stmt = scopeStmtPtrLst.begin(); 
-								it_stmt != scopeStmtPtrLst.end(); ++it_stmt){
+                
+              outStream << theString;
+              outStream << " ";
+              counter++;
+             
 
-							std::vector<SgNode*> vectorOfNodesAtPos;
-							//NodeQuery::querySubTree(*it_stmt,std::bind2nd(std::ptr_fun(queryForLine), macro_call_pos));
-							AstQueryNamespace::querySubTree(*it_stmt,std::bind2nd( nodePos,  std::pair<std::vector<SgNode*>*,Sg_File_Info*>(&vectorOfNodesAtPos,macro_call_pos)));
-							if(vectorOfNodesAtPos.size()>0){
-								ASTStringMatchingMacroCall= ASTStringMatchingMacroCall+(*it_stmt)->unparseToString();
-		                                                                
-                                                                smallestSetOfStmtsContainingMacro.push_back(*it_stmt);
-							}
+            }
+            outStream << std::endl;
 
+            continue;
+          };
 
-						}
+          std::vector<SgNode*> nodeFromMacroArgument;
+          using namespace boost::wave;
 
-					}else{
+          //Discover which nodes come from the macro argument
+          std::cout << "ABCDEF " << nodeFromMacroArgument.size() << std::endl;
 
-						ASTStringMatchingMacroCall= stmtContainingMacroCall->unparseToString();
- 
-                                                smallestSetOfStmtsContainingMacro.push_back(stmtContainingMacroCall);
+          int counter = 0;
 
-					}
+          bool last_token_was_argument = false;
+          for(token_container::iterator expMacroIt = expanded_macro.begin();
+              expMacroIt != expanded_macro.end(); ++expMacroIt){
 
-                                        //Create a linearization where the nodes corresponding to macro arguments is
-                                        //filtered out.
-						std::cout << "Comparison linerization " << nodeFromMacroArgument.size() << std::endl;
-					ComparisonLinearization* compLin = new ComparisonLinearization(nodeFromMacroArgument, macro_call_pos);
-                                        for(std::vector<SgNode*>::iterator it_stmt = smallestSetOfStmtsContainingMacro.begin();
-                                                   it_stmt != smallestSetOfStmtsContainingMacro.end(); ++it_stmt)
-                				compLin->traverse(*it_stmt);
-        
+            if(tokenMapToAST[counter] == NULL)
+            {
+              counter++;
+              continue;
+            }
 
-					if(SgProject::get_verbose() >= 1)
-						std::cout << "Ordering nodes" << std::endl;
+            std::cout << "The position l" << expMacroIt->get_position().get_line() << " c" << expMacroIt->get_position().get_column()
+              << " l" << macro_def_pos->get_line() << std::endl ;
+            if( ( find(positions.begin(),positions.end(), expMacroIt->get_position().get_line()) != positions.end() ) 
+//              &&  ( token_id(*expMacroIt) != T_SPACE ) &&
+  //              ( token_id(*expMacroIt) != T_SEMICOLON )
+              ){
+              last_token_was_argument = true;
 
-                                        //Create a container representing the information we have discovered in this function
-                                        //for usage elsewhere
-					MappedMacroCall macroCall;
-					macroCall.macro_call = (*call_it);
-                                        macroCall.comparisonLinearization = compLin->get_ordered_nodes();
-					macroCall.ASTStringMatchingMacroCall = ASTStringMatchingMacroCall;
-                                        macroCall.stmtsContainingMacro = smallestSetOfStmtsContainingMacro;
+              std::cout << "Node from macro argument:" << expMacroIt->get_value() << std::endl;
+              nodeFromMacroArgument.push_back(tokenMapToAST[counter]);
+              if(nodeFromMacroArgument.size()>0)
+                std::cout << nodeFromMacroArgument.size() <<  " " << nodeFromMacroArgument[nodeFromMacroArgument.size()-1]->class_name() 
+                  << " " << nodeFromMacroArgument[nodeFromMacroArgument.size()-1]->unparseToString()  <<std::endl;
 
-                                        for(std::vector<SgNode*>::iterator iItr = macroCall.comparisonLinearization.begin();
-                                            iItr!=macroCall.comparisonLinearization.end(); iItr++)
-                                          std::cout << "The Node is:" << (*iItr)->class_name() << std::endl;
+            }/*else if(tokenMapToAST[counter]!=NULL && isSgBinaryOp(tokenMapToAST[counter]) && last_token_was_argument  )
+            {
+              nodeFromMacroArgument.push_back(tokenMapToAST[counter]);
 
+              std::cout << "Node from macro argument:" << expMacroIt->get_value() << std::endl;
 
-                                        callsToThisDef.push_back(macroCall);
+            }*/else{
 
-				}else{
-					if(SgProject::get_verbose() >= 1)
-						std::cout << "Macro call found DID NOT have a matching statement in AST: " ;
+              std::cout << "NOT Node from macro argument:" << expMacroIt->get_value() << std::endl;
 
-				}
+              last_token_was_argument = false;
+            }
+         
+            counter++;
+          };
 
-			}
-
-			if(SgProject::get_verbose() >= 1)
-				std::cout << "Macro call found at: " << macro_call_pos->get_filenameString() << " l" <<
-					macro_call_pos->get_line() << " c" << macro_call_pos->get_col() << std::endl;
-
-
-		}
-
-		if(SgProject::get_verbose() >= 1)
-			std::cout << callsToThisDef.size() << " calls to this def" << std::endl;
-
-		mapDefsToCalls[def_it->first] = callsToThisDef;
+          std::cout << "ABCDEF " << nodeFromMacroArgument.size() << std::endl;
 
 
-	}
-	std::cout << " END Iterate over all macro calls" << std::endl;
+          std::string ASTStringMatchingMacroCall;
+
+          if(SgProject::get_verbose() >= 1)
+            std::cout << "Finding smallest set of statements" << std::endl;
+
+
+          //Smallest set of statments containing macro call
+          std::vector<SgNode*> smallestSetOfStmtsContainingMacro;
+
+          //If the smallest statement containing a macro call is a scope statement and at the
+          //same time was not part of the macro, find the set of smallest statements containing
+          //macro.
+          if( (isSgScopeStatement(stmtContainingMacroCall)!=NULL) && 
+              (queryForLine(stmtContainingMacroCall,macro_call_pos).size()==0) ) {
+            std::cout << " In false scope stmt branch" << std::endl;
+            SgScopeStatement*  scopeStmt = isSgScopeStatement(stmtContainingMacroCall);
+            ROSE_ASSERT(scopeStmt!=NULL);
+            SgStatementPtrList scopeStmtPtrLst = scopeStmt->generateStatementList();
+            //SgStatementPtrList scopeStmtPtrLst = scopeStmt->getStatementList();
+            NodesAtLineNumber nodePos;
+
+            for(SgStatementPtrList::iterator it_stmt = scopeStmtPtrLst.begin(); 
+                it_stmt != scopeStmtPtrLst.end(); ++it_stmt){
+
+              std::vector<SgNode*> vectorOfNodesAtPos;
+              //NodeQuery::querySubTree(*it_stmt,std::bind2nd(std::ptr_fun(queryForLine), macro_call_pos));
+              AstQueryNamespace::querySubTree(*it_stmt,std::bind2nd( nodePos,  std::pair<std::vector<SgNode*>*,Sg_File_Info*>(&vectorOfNodesAtPos,macro_call_pos)));
+              if(vectorOfNodesAtPos.size()>0){
+                ASTStringMatchingMacroCall= ASTStringMatchingMacroCall+(*it_stmt)->unparseToString();
+
+                smallestSetOfStmtsContainingMacro.push_back(*it_stmt);
+              }
+
+
+            }
+
+          }else{
+
+            ASTStringMatchingMacroCall= stmtContainingMacroCall->unparseToString();
+
+            smallestSetOfStmtsContainingMacro.push_back(stmtContainingMacroCall);
+
+          }
+
+          //Create a linearization where the nodes corresponding to macro arguments is
+          //filtered out.
+          std::cout << "Comparison linerization " << nodeFromMacroArgument.size() << std::endl;
+          ComparisonLinearization* compLin = new ComparisonLinearization(nodeFromMacroArgument, macro_call_pos);
+          for(std::vector<SgNode*>::iterator it_stmt = smallestSetOfStmtsContainingMacro.begin();
+              it_stmt != smallestSetOfStmtsContainingMacro.end(); ++it_stmt)
+            compLin->traverse(*it_stmt);
+
+
+          if(SgProject::get_verbose() >= 1)
+            std::cout << "Ordering nodes" << std::endl;
+
+          //Create a container representing the information we have discovered in this function
+          //for usage elsewhere
+          MappedMacroCall macroCall;
+          macroCall.macro_call = (*call_it);
+          macroCall.comparisonLinearization = compLin->get_ordered_nodes();
+          macroCall.ASTStringMatchingMacroCall = ASTStringMatchingMacroCall;
+          macroCall.stmtsContainingMacro = smallestSetOfStmtsContainingMacro;
+
+          for(std::vector<SgNode*>::iterator iItr = macroCall.comparisonLinearization.begin();
+              iItr!=macroCall.comparisonLinearization.end(); iItr++)
+            std::cout << "The Node is:" << (*iItr)->class_name() << std::endl;
+
+
+          callsToThisDef.push_back(macroCall);
+
+        }else{
+          if(SgProject::get_verbose() >= 1)
+            std::cout << "Macro call found DID NOT have a matching statement in AST: " ;
+
+        }
+
+      }
+
+      if(SgProject::get_verbose() >= 1)
+        std::cout << "Macro call found at: " << macro_call_pos->get_filenameString() << " l" <<
+          macro_call_pos->get_line() << " c" << macro_call_pos->get_col() << std::endl;
+
+
+    }
+
+    if(SgProject::get_verbose() >= 1)
+      std::cout << callsToThisDef.size() << " calls to this def" << std::endl;
+
+    mapDefsToCalls[def_it->first] = callsToThisDef;
+
+
+  }
+  std::cout << " END Iterate over all macro calls" << std::endl;
 
 
 }
@@ -1033,11 +1131,15 @@ AnalyzeMacroCalls::print_out_all_macros(std::ostream& outStream){
       for(std::vector<SgNode*>::iterator it_nodes = call_it->comparisonLinearization.begin(); 
                     it_nodes != call_it->comparisonLinearization.end(); ++it_nodes)
       {
-                           correspondingString+=(*it_nodes)->class_name()+" ";
-     //                      correspondingString+=(*it_nodes)->unparseToString()+" ";
-    //                       correspondingString+=boost::lexical_cast<std::string>((*it_nodes)->get_file_info()->get_line());
-  //                         correspondingString+= " ";
-//                           correspondingString+=boost::lexical_cast<std::string>((*it_nodes)->get_file_info()->get_col());
+
+        std::string currentString = isSgUnsignedIntVal(*it_nodes)!=NULL ? "SgIntVal": (*it_nodes)->class_name();
+
+        
+                           correspondingString+=currentString+" ";
+                           correspondingString+=(*it_nodes)->unparseToString()+" ";
+                           correspondingString+=boost::lexical_cast<std::string>((*it_nodes)->get_file_info()->get_line());
+                           correspondingString+= " ";
+                           correspondingString+=boost::lexical_cast<std::string>((*it_nodes)->get_file_info()->get_col());
 
       }
 
