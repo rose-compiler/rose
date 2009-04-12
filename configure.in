@@ -1238,6 +1238,7 @@ tests/CompileTests/hiddenTypeAndDeclarationListTests/Makefile
 tests/roseTests/Makefile
 tests/roseTests/astSymbolTableTests/Makefile
 tests/roseTests/astQueryTests/Makefile
+tests/roseTests/astTokenStreamTests/Makefile
 tests/roseTests/astInliningTests/Makefile
 tests/roseTests/astOutliningTests/Makefile
 tests/roseTests/astOutliningTests/fortranTests/Makefile

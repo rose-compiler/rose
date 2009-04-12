@@ -3,81 +3,134 @@
 
 #include "rose.h"
 #include "linearizeAST.h"
-LinInheritedAttribute::LinInheritedAttribute () : loopNestDepth(0) {};
-LinInheritedAttribute::LinInheritedAttribute ( const LinInheritedAttribute & X ) {};
-
-LinSynthesizedAttribute::LinSynthesizedAttribute() {};
 
 
-LinInheritedAttribute
+class PostSynthesizedAttribute
+   {
+     public:
+       std::vector<SgNode*> nodes;
+         PostSynthesizedAttribute()
+         {
+           
+         };
+   };
+
+
+class PostAST : public SgBottomUpProcessing<PostSynthesizedAttribute>
+   {
+     private:
+
+
+       SgNode* rootNode;
+       std::vector<SgNode*> nodes;
+
+          PostSynthesizedAttribute evaluateSynthesizedAttribute (
+              SgNode* astNode,
+              SubTreeSynthesizedAttributes synthesizedAttributeList )
+          {
+            PostSynthesizedAttribute synAttrib;
+
+            ROSE_ASSERT(synthesizedAttributeList.size() <= 2);
+
+            if(synthesizedAttributeList.size()>0)
+            {
+              synAttrib.nodes = synthesizedAttributeList[0].nodes;
+              synAttrib.nodes.push_back(astNode);
+
+              if( synthesizedAttributeList.size() == 2 )
+              {
+                for(int i = 0; i < synthesizedAttributeList[1].nodes.size();
+                    i++ )
+                  synAttrib.nodes.push_back(synthesizedAttributeList[1].nodes[i]);
+
+              }
+            }else
+              synAttrib.nodes.push_back(astNode);
+
+
+            if(astNode == rootNode)
+              nodes = synAttrib.nodes;
+             
+ 
+            return synAttrib;
+          };
+
+     public:
+
+          std::vector<SgNode*> traversePreorder(SgNode* node)
+          {
+            rootNode = node;
+
+            traverse(node);
+
+            return nodes;
+
+
+            
+          };
+
+   };
+
+
+
+LinearizeInheritedAttribute::LinearizeInheritedAttribute () : loopNestDepth(0), mustBeInherited(false) {};
+LinearizeInheritedAttribute::LinearizeInheritedAttribute ( const LinearizeInheritedAttribute & X ) {};
+
+
+
+LinearizeAST::LinearizeAST()
+{
+       isRootNode = true;
+ 
+};
+
+LinearizeInheritedAttribute
 LinearizeAST::evaluateInheritedAttribute (
      SgNode* astNode,
-     LinInheritedAttribute inheritedAttribute )
+     LinearizeInheritedAttribute inheritedAttribute )
    {
 
-     if( (isSgLocatedNode(astNode)!=NULL) && ( (isSgScopeStatement(astNode)!=NULL)||(isSgValueExp(astNode)!=NULL)||(isSgVarRefExp(astNode)!=NULL)|| (isSgLocatedNode(astNode)->get_file_info()->isCompilerGenerated() == false)) ){
+     if(isRootNode == true)
+       inheritedAttribute.mustBeInherited = false;
 
-	  if(inorder_stack.size()>0){
-	       inorder_stack.push_back(astNode);
-	  }else if( isSgExprStatement(astNode) != NULL ){
-	       inorder_stack.push_back(astNode);
-	  }else if( isRootNode == true && (isSgUnaryOp(astNode) != NULL || isSgBinaryOp(astNode) != NULL) ) {
+//     std::cout << ( inheritedAttribute.mustBeInherited ? "true":"false" ) <<std::endl;
+     if(inheritedAttribute.mustBeInherited == true)
+       return inheritedAttribute;
+
+
+     if( (isSgLocatedNode(astNode)!=NULL) && ((isSgExprStatement(astNode) != NULL ) || (isSgScopeStatement(astNode)!=NULL)||(isSgValueExp(astNode)!=NULL)||(isSgVarRefExp(astNode)!=NULL)|| (isSgLocatedNode(astNode)->get_file_info()->isCompilerGenerated() == false)) ){
+
+	 if( isRootNode == true && (isSgExpression(astNode) != NULL | isSgExprStatement(astNode) != NULL )) {
             //This is needed when the root node that is given the traversal is part of an expression
-            inorder_stack.push_back(astNode);
-          }else{
-	       inorder.push_back(astNode);
+            inheritedAttribute.mustBeInherited=true;
+            PostAST postAST;
+            std::vector<SgNode*> inSubTree = postAST.traversePreorder(astNode);
+            for(int i = 0 ; i < inSubTree.size(); i++)
+              nodes.push_back(inSubTree[i]);
+
+         }else{
+           nodes.push_back(astNode);
            if(isSgVariableDeclaration(astNode)!=NULL){
-               SgInitializedNamePtrList& vars = isSgVariableDeclaration(astNode)->get_variables();
-               for(SgInitializedNamePtrList::iterator it_var = vars.begin(); it_var != vars.end();
-                   ++it_var){
-                   inorder.push_back(*it_var);
-               }
+             SgInitializedNamePtrList& vars = isSgVariableDeclaration(astNode)->get_variables();
+             for(SgInitializedNamePtrList::iterator it_var = vars.begin(); it_var != vars.end();
+                 ++it_var){
+               nodes.push_back(*it_var);
+             }
            }
 
-	  }
-     }
+         }
 
+     }else
+           nodes.push_back(astNode);
+
+
+     //Do not register Binary ops
+     
      isRootNode = false;
      return inheritedAttribute;
    }
 
-LinSynthesizedAttribute
-LinearizeAST::evaluateSynthesizedAttribute (
-     SgNode* astNode,
-     LinInheritedAttribute inheritedAttribute,
-     SubTreeSynthesizedAttributes synthesizedAttributeList )
-   {
-     LinSynthesizedAttribute returnAttribute;
 
-     // Pop the last element in the vector
-     // build by the inherited attribute as this
-     // is the current node.
-
-     if( (inorder_stack.size()>0) && ( find(inorder.begin(),inorder.end(),astNode) == inorder.end() ) ){
-
-	  int max_size = inorder_stack.size()-1;
-	  inorder.push_back( inorder_stack[max_size] );
-
-	  //std::cout << inorder_stack[max_size]->class_name() << std::endl;
-	  inorder_stack.pop_back();
-
-
-       // Pop back the parent node of the current node
-       // if there is such a parent node on the stack.
-	  if( max_size >= 1){
-	       inorder.push_back(inorder_stack[max_size-1]);
-	  //     std::cout << "BLABLABLA" << inorder_stack[max_size-1]->class_name() << std::endl;
-
-	       inorder_stack.pop_back();
-	  }
-
-     }else if( isSgScopeStatement(astNode) != NULL ){
-	  //Double count Scope Statements
-	  inorder.push_back(astNode);
-     }
-
-     return returnAttribute;
-   }
 
 
 void LinearizeAST::printVector(std::vector<SgNode*>& vec){
@@ -91,18 +144,17 @@ void LinearizeAST::printVector(std::vector<SgNode*>& vec){
 std::vector<SgNode*>
 LinearizeAST::get_linearization(){
 
-     return inorder; 
+     return nodes; 
 }
 
 std::vector<SgNode*>
 linearize_subtree( SgNode* node )
    {
   // Build the inherited attribute
-     LinInheritedAttribute inheritedAttribute;
+     LinearizeInheritedAttribute inheritedAttribute;
+     inheritedAttribute.mustBeInherited = false;
 
      LinearizeAST myTraversal;
-
-     myTraversal.isRootNode = true;
 
   // Call the traversal starting at the sageProject node of the AST
      myTraversal.traverse(node,inheritedAttribute);

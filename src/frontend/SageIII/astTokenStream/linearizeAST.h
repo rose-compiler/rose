@@ -7,24 +7,21 @@
 //#include "rose.h"
 #include <stack>
 
-class LinInheritedAttribute
+class LinearizeInheritedAttribute
    {
      public:
           int loopNestDepth;
 
+          bool inExpressionSubTree;
 
-          LinInheritedAttribute ();
-          LinInheritedAttribute ( const LinInheritedAttribute & X );
-   };
-
-class LinSynthesizedAttribute
-   {
-     public:
-         LinSynthesizedAttribute();
+          bool mustBeInherited;
+          LinearizeInheritedAttribute ();
+          LinearizeInheritedAttribute ( const LinearizeInheritedAttribute & X );
    };
 
 
-class LinearizeAST : public SgTopDownBottomUpProcessing<LinInheritedAttribute,LinSynthesizedAttribute>
+
+class LinearizeAST : public SgTopDownProcessing<LinearizeInheritedAttribute>
    {
      private:
 	  //The idea is to create an inorder ordering of the nodes using a SgTopDownBottomUp
@@ -48,22 +45,23 @@ class LinearizeAST : public SgTopDownBottomUpProcessing<LinInheritedAttribute,Li
 	  // ordering of the preorder traversal is used.
           //Handle the case where the root node is part of an expression
 
-     public:
-std::vector<SgNode*> inorder; 
-          std::vector<SgNode*> inorder_stack; 
+
+     private:
        bool isRootNode;
 
+       std::vector<SgNode*> nodes;
 
-       // Functions required
-          LinInheritedAttribute evaluateInheritedAttribute (
-             SgNode* astNode, 
-             LinInheritedAttribute inheritedAttribute );
+          // Functions required
+          LinearizeInheritedAttribute evaluateInheritedAttribute (
+              SgNode* astNode, 
+              LinearizeInheritedAttribute inheritedAttribute );
 
-          LinSynthesizedAttribute evaluateSynthesizedAttribute (
-             SgNode* astNode,
-             LinInheritedAttribute inheritedAttribute,
-             SubTreeSynthesizedAttributes synthesizedAttributeList );
 
+      public:
+      
+       LinearizeAST();
+
+ 
 	  std::vector<SgNode*>
 	  get_linearization();
 	  void printVector(std::vector<SgNode*>& vec);
