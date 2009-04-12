@@ -135,7 +135,7 @@ PointsToAnalysis::Implementation::atIcfgTraversalStart()
             = AstBottomUpProcessing<Location *>::traverse(params);
         mainInfo->procedureLocations[l]
             = function_location(procedures[l]->decl, argDummy);
-        freeDummyLocation(argDummy);
+     // freeDummyLocation(argDummy);
 
      // Then, decorate each info with its very own copy of its function.
         if (contextSensitive)
@@ -150,7 +150,7 @@ PointsToAnalysis::Implementation::atIcfgTraversalStart()
                     = AstBottomUpProcessing<Location *>::traverse(params);
                 info->procedureLocation
                     = function_location(procedures[l]->decl, argDummy);
-                freeDummyLocation(argDummy);
+             // freeDummyLocation(argDummy);
             }
         }
     }
@@ -217,7 +217,7 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
         std::cout << (void *) *sali;
     }
     std::cout
-        << "]" << std::flush;
+        << "]" << std::endl;
 #endif
 
     switch (node->variantT())
@@ -315,19 +315,39 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
                     CallAttribute *ca;
                     ca = (CallAttribute *) varRef->getAttribute(
                                                     "SATIrE: call target");
-                    int call_id
-                        = icfg->call_target_call_block[ca->call_target]->id;
-                    beg = icfg->contextInformation->childContexts(
-                            call_id, *info->context).begin();
-                    end = icfg->contextInformation->childContexts(
-                            call_id, *info->context).end();
-                    result = allInfos[*beg]->procedureLocation
-                                           ->baseLocation()->return_location;
-                    for (ctx = beg + 1; ctx != end; ++ctx)
+                    BasicBlock *call_block
+                        = icfg->call_target_call_block[ca->call_target];
+                    int call_id = call_block->id;
+                 // See if the call block has outgoing call edges; if yes,
+                 // we can fetch information from the call's child context.
+                 // Otherwise, it's an external function to a (hopefully)
+                 // special function.
+                    if (kfg_which_out_edges(call_block) & (1U << CALL_EDGE))
                     {
-                        Location *a = allInfos[*ctx]->procedureLocation;
-                        a = a->baseLocation()->return_location;
-                        result = assign(result, a);
+                        beg = icfg->contextInformation->childContexts(
+                                call_id, *info->context).begin();
+                        end = icfg->contextInformation->childContexts(
+                                call_id, *info->context).end();
+                        result = allInfos[*beg]->procedureLocation
+                                           ->baseLocation()->return_location;
+                        for (ctx = beg + 1; ctx != end; ++ctx)
+                        {
+                            Location *a = allInfos[*ctx]->procedureLocation;
+                            a = a->baseLocation()->return_location;
+                            result = assign(result, a);
+                        }
+                    }
+                    else
+                    {
+                        Location *fp = expressionLocation(ca->call_target);
+                        result = fp->baseLocation()->return_location;
+#if VERBOSE_DEBUG
+                        std::cout
+                            << "fp: " << fp->id
+                            << " funcloc: " << fp->baseLocation()->id
+                            << " result: " << result->id
+                            << std::endl;
+#endif
                     }
                 }
             }
@@ -396,11 +416,46 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
      // Look up the function's location, creating one if necessary.
      // This lookup always happens in the main info as function symbols are
      // sort of global.
+#if VERBOSE_DEBUG
+        std::cout
+            << "function ref to func named: "
+            << name(isSgFunctionRefExp(node)->get_symbol())
+            << std::endl;
+#endif
+        if (mainInfo->specialFunctionNames.find(
+                    name(isSgFunctionRefExp(node)->get_symbol()))
+            != mainInfo->specialFunctionNames.end())
+        {
+            std::string specialFuncName
+                = name(isSgFunctionRefExp(node)->get_symbol());
+            size_t arity = isSgFunctionDeclaration(
+                                isSgFunctionRefExp(node)
+                                    ->get_symbol()->get_declaration())
+                            ->get_args().size();
+#if VERBOSE_DEBUG
+            std::cout
+                << "special function name: " << specialFuncName
+                << " arity: " << arity
+                << " in context: "
+                << (info->context != NULL
+                        ? info->context->toString() : "<none>")
+                << std::endl;
+#endif
+            result = specialFunctionLocation(specialFuncName, arity);
+        }
+        else
         {
             PointsToInformation *oldInfo = info;
             info = mainInfo;
             result = functionSymbol_location(
                     isSgFunctionRefExp(node)->get_symbol());
+#if VERBOSE_DEBUG
+            std::cout
+                << "for function "
+                << name(isSgFunctionRefExp(node)->get_symbol())
+                << ": symbol location = " << (void *) result
+                << std::endl;
+#endif
             info = oldInfo;
         }
      // TODO: can this symbol ever be NULL? can this lookup ever be tried
@@ -445,7 +500,9 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
      // location will be copied, nobody will ever keep a pointer to this
      // location itself. (I think!) Thus this can be a dummy node that is
      // freed after the one assignment it is involved in.
-        result = createDummyLocation(synlist[SgAddressOfOp_operand_i]);
+     // GB (2009-04-12): Nope, a dummy won't always do.
+     // result = createDummyLocation(synlist[SgAddressOfOp_operand_i]);
+        result = createLocation(synlist[SgAddressOfOp_operand_i]);
         break;
 
     case V_SgPointerDerefExp:
@@ -1059,7 +1116,8 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
      // Build a dummy location recording the locations of the function
      // parameters. These might be nontrivial locations due to default
      // function arguments (though not really, as we are only targeting C).
-        a = createDummyLocation();
+     // a = createDummyLocation();
+        a = createLocation();
         fillDummyLocation(a, synlist);
         if (SgFunctionParameterList *l = isSgFunctionParameterList(node))
         {
@@ -1531,12 +1589,16 @@ PointsToAnalysis::Implementation::handleIcfgStatement(
         {
             std::vector<ContextInformation::Context>::const_iterator beg;
             std::vector<ContextInformation::Context>::const_iterator end;
-            if (!contextSensitive)
+            BasicBlock *call_block
+                = icfg->call_target_call_block[icfgNode->call_target];
+            bool resolved
+                = kfg_which_out_edges(call_block) & (1U << CALL_EDGE);
+            if (!contextSensitive || !resolved)
                 a = expressionLocation(icfgNode->call_target);
             else
             {
-                int call_id
-                    = icfg->call_target_call_block[icfgNode->call_target]->id;
+             // Context-sensitive call which is resolved in the ICFG.
+                int call_id = call_block->id;
 #if VERBOSE_DEBUG
                 std::cout
                     << "argass " << get_node_id()
@@ -1555,7 +1617,7 @@ PointsToAnalysis::Implementation::handleIcfgStatement(
             do // loop over all called contexts
             {
              // First, compute the location for the call target...
-                if (contextSensitive)
+                if (contextSensitive && resolved)
                 {
                     ContextInformation::Context c = *beg;
                     a = allInfos[c]->procedureLocation;
@@ -1645,7 +1707,7 @@ PointsToAnalysis::Implementation::handleIcfgStatement(
 #endif
                 if (b != NULL && b->dummy)
                     freeDummyLocation(b);
-            } while (contextSensitive && ++beg != end);
+            } while (contextSensitive && resolved && ++beg != end);
         }
         break;
 
@@ -2602,9 +2664,17 @@ PointsToAnalysis::Implementation::newAllocationSite()
     SgName symname = name.str();
 
     SgInitializedName *initname
-        = new SgInitializedName(symfinfo, symname, info->ptr_to_void_type,
+        = new SgInitializedName(symfinfo, symname, mainInfo->ptr_to_void_type,
                                 NULL, NULL, NULL, NULL);
     SgVariableSymbol *sym = new SgVariableSymbol(initname);
+#if VERBOSE_DEBUG
+    std::cout
+        << "created allocation variable " << name.str() << " with type "
+        << (mainInfo->ptr_to_void_type != NULL
+                ? Ir::fragmentToString(mainInfo->ptr_to_void_type)
+                : "<null>")
+        << std::endl;
+#endif
 
  // The result of an allocator function is a pointer to the pseudo variable
  // denoting the allocation site.
@@ -4796,6 +4866,55 @@ PointsToAnalysis::Implementation::functionLocationForProcnum(int procnum)
     return mainInfo->procedureLocations[procnum]->baseLocation();
 }
 
+// Returns the pointer-to-function location for the named special function
+// in the current info. Each info has its own collection of these.
+PointsToAnalysis::Location *
+PointsToAnalysis::Implementation::specialFunctionLocation(
+        std::string name, size_t arity)
+{
+    Location *result = NULL;
+    std::map<std::string, Location *>::iterator pos;
+
+    pos = info->specialFunctionLocations.find(name);
+    if (pos != info->specialFunctionLocations.end())
+    {
+        result = pos->second;
+#if VERBOSE_DEBUG
+        std::cout
+            << "! stored location for func " << name << ": " << result->id
+            << " base: " << result->baseLocation()->id
+            << " ret: " << result->baseLocation()->return_location->id
+            << std::endl;
+#endif
+    }
+    else
+    {
+     // At position SgFunctionCallExp_args, there must be an argDummy
+     // location with the correct number of args; newSpecialFunctionContext
+     // returns the corresponding return location. Wrap all this in a
+     // function location and store the pointer to it.
+        Location *func_loc = createFunctionLocation();
+        func_loc->arg_locations = std::vector<Location *>(arity);
+        SynthesizedAttributesList args(SgFunctionCallExp_args + 1);
+        args[SgFunctionCallExp_args] = func_loc;
+        func_loc->return_location = newSpecialFunctionContext(name, args);
+     // newSpecialFunctionContext returns dummies because they were
+     // originally meant to be assigned right away; however, here we store
+     // the location permanently, so we make it a non-dummy.
+        func_loc->return_location->dummy = false;
+#if VERBOSE_DEBUG
+        std::cout
+            << "!!! special return location for func " << name << ": "
+            << func_loc->return_location->id
+            << std::endl;
+#endif
+
+        result = createLocation(func_loc);
+        info->specialFunctionLocations[name] = result;
+    }
+
+    return result;
+}
 
 
 

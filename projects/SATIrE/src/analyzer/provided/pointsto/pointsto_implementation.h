@@ -121,6 +121,7 @@ private:
     std::vector<Location *> procedureLocations;
 
     std::map<std::string, Location *> function_locations;
+    std::map<std::string, Location *> specialFunctionLocations;
 
  // Location constants
     Location *integerConstantLocation;
@@ -218,6 +219,7 @@ private:
                                 Location *argDummy = NULL);
     Location *functionSymbol_location(SgFunctionSymbol *fsym);
     Location *functionLocationForProcnum(int procnum);
+    Location *specialFunctionLocation(std::string name, size_t arity);
     void determineSpecialFunction(std::string name, Location *func_location);
 
     Location *createLocation(Location *t, Location *return_location = NULL);
