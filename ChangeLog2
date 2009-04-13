@@ -1,3 +1,40 @@
+2009-04-13 05:44  saebjornsen1
+
+	* [r5323] /trunk/ROSE/projects/MacroRewrapper/testPruning.C:
+	  Missing file
+
+2009-04-12 23:21  saebjornsen1
+
+	* [r5322] /trunk/ROSE/projects/MacroRewrapper/Makefile.am,
+	  /trunk/ROSE/projects/MacroRewrapper/argumentFilterer.C,
+	  /trunk/ROSE/projects/MacroRewrapper/macroRewrapper.C,
+	  /trunk/ROSE/projects/MacroRewrapper/macroRewrapper.h,
+	  /trunk/ROSE/projects/MacroRewrapper/main.C,
+	  /trunk/ROSE/projects/MacroRewrapper/testLinearization.C,
+	  /trunk/ROSE/projects/MacroRewrapper/testMapping.C,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test3.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/testLin1.c,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/testLin1.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/testLin2.c,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/testLin2.c.out:
+	  Improvements to the macro rewrapper
+
+2009-04-12 23:21  saebjornsen1
+
+	* [r5321] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/src/frontend/SageIII/astTokenStream/linearizeAST.C,
+	  /trunk/ROSE/src/frontend/SageIII/astTokenStream/linearizeAST.h,
+	  /trunk/ROSE/tests/roseTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/astTokenStreamTests,
+	  /trunk/ROSE/tests/roseTests/astTokenStreamTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/astTokenStreamTests/testLinearization.C,
+	  /trunk/ROSE/tests/roseTests/astTokenStreamTests/tests,
+	  /trunk/ROSE/tests/roseTests/astTokenStreamTests/tests/testLin1.c,
+	  /trunk/ROSE/tests/roseTests/astTokenStreamTests/tests/testLin1.c.out,
+	  /trunk/ROSE/tests/roseTests/astTokenStreamTests/tests/testLin2.c,
+	  /trunk/ROSE/tests/roseTests/astTokenStreamTests/tests/testLin2.c.out:
+	  Rewrote the AST Linearization and added tests
+
 2009-04-11 18:05  dquinlan
 
 	* [r5306] /trunk/ROSE/MSVS_ROSE/Debug/MSVS_ROSETTA.pdb,
