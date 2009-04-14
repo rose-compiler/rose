@@ -64,6 +64,23 @@ Index: include/clang/AST/Expr.h
    
    // Serailization.
    virtual void EmitImpl(llvm::Serializer& S) const;
+Index: include/clang/Lex/PPCallbacks.h
+===================================================================
+--- include/clang/Lex/PPCallbacks.h	(revision 63505)
++++ include/clang/Lex/PPCallbacks.h	(working copy)
+@@ -53,6 +53,12 @@
+   virtual void PragmaComment(SourceLocation Loc, const IdentifierInfo *Kind, 
+                              const std::string &Str) {
+   }
++
++  /// IncludeDirective - This callback is invoked when a #include directive
++  /// is read.
++  ///
++  virtual void IncludeDirective(SourceLocation Loc, const std::string &file) {
++  }
+   
+ };
+ 
 Index: Driver/clang.cpp
 ===================================================================
 --- Driver/clang.cpp	(revision 63505)
@@ -116,7 +133,7 @@ Index: Driver/clang.cpp
        return CreateASTDumper();
        
 +    case ASTTermDump:
-+      return CreateASTTermDumper(InFile, OutputFile);
++      return CreateASTTermDumper(InFile, OutputFile, PP);
 +      
      case ASTView:
        return CreateASTViewer();   
@@ -131,7 +148,7 @@ Index: Driver/clang.cpp
    llvm::OwningPtr<ASTConsumer> Consumer;
    bool ClearSourceMgr = false;
    
-@@ -1433,7 +1440,16 @@
+@@ -1433,7 +1440,17 @@
                                             /* FreeMemory = */ false);
        TU = new TranslationUnit(*Context);
      }
@@ -140,7 +157,8 @@ Index: Driver/clang.cpp
 +    if(IsFirstFile)
 +      Consumer->OnFirstFile(InFile.c_str());    
 +    else
-+      Consumer->OnNewFile(InFile.c_str());   
++      Consumer->OnNewFile(InFile.c_str());
++    
      ParseAST(PP, Consumer.get(), TU, Stats);
 +
 +    if(IsLastFile)
@@ -148,7 +166,7 @@ Index: Driver/clang.cpp
    }
  
    if (VerifyDiagnostics)
-@@ -1629,7 +1645,7 @@
+@@ -1629,7 +1646,7 @@
          Diags.setClient(TextDiagClient);
  
        // Process the source file.
@@ -161,7 +179,7 @@ Index: Driver/TermDumper.cpp
 ===================================================================
 --- Driver/TermDumper.cpp	(revision 0)
 +++ Driver/TermDumper.cpp	(revision 0)
-@@ -0,0 +1,2054 @@
+@@ -0,0 +1,2195 @@
 +//===--- StmtTermDumper.cpp - TermDumping implementation for Stmt ASTs ----===//
 +//
 +//                     The LLVM Compiler Infrastructure
@@ -179,6 +197,9 @@ Index: Driver/TermDumper.cpp
 +//
 +//===----------------------------------------------------------------------===//
 +
++#include "clang.h"
++#include "clang/Lex/PPCallbacks.h"
++#include "clang/Lex/Preprocessor.h"
 +#include "ASTConsumers.h"
 +#include "clang/AST/ASTConsumer.h"
 +#include "clang/AST/ASTContext.h"
@@ -192,6 +213,8 @@ Index: Driver/TermDumper.cpp
 +#include <iostream>
 +#include <fstream>
 +#include <sstream>
++#include <queue>
++
 +using namespace clang;
 +
 +#define PPI "preprocessing_info(null)"
@@ -237,6 +260,73 @@ Index: Driver/TermDumper.cpp
 +    }
 +  };
 +
++  class PPTracker : public PPCallbacks {
++
++  public:    
++    typedef enum {
++      ppd_include,
++      ppd_define
++    } pp_directive_t;
++   
++    typedef struct {
++      SourceLocation loc;
++      std::string code;
++      pp_directive_t type;
++    } PPDirective;
++
++  protected:
++    Preprocessor &PP;
++    SourceManager &SM;
++    
++    // a map of encountered preprocessor directives (per file)
++    std::map< FileID, std::queue<PPDirective> > PPDs;
++    
++  public:    
++    PPTracker(Preprocessor &pp) : PP(pp), SM(pp.getSourceManager()) { }
++
++    virtual void IncludeDirective(SourceLocation Loc, const std::string &file) {
++      if(!SM.isInSystemHeader(Loc)) {
++        PPDirective d;
++
++        d.loc = Loc;
++        d.code = std::string("#include ") + file;
++        d.type = ppd_include;
++        
++        assert(!Loc.isInvalid() && "expecting valid source location");
++        FileID fid = SM.getFileID(Loc);
++        PPDs[fid].push(d);
++      }
++    }
++
++    bool location_lt(SourceLocation l1, SourceLocation l2) {
++      assert(l1.isValid() && l2.isValid() && "expecting valid source locations");
++      PresumedLoc p1 = SM.getPresumedLoc(l1);
++      PresumedLoc p2 = SM.getPresumedLoc(l2);
++      
++      assert(strcmp(p1.getFilename(), p2.getFilename()) == 0
++             && "comparing locations for different files");
++      return p1.getLine() < p2.getLine() ||
++        (p1.getLine() == p2.getLine() && p1.getColumn() <= p2.getColumn());
++    }
++    
++    //dequeue directives declared _before_ loc
++    void dequeueDirectives(SourceLocation loc, std::list<PPDirective> &ppds) {
++      assert(!loc.isInvalid() && "expecting valid source location");
++      
++      FileID fid = SM.getFileID(loc);
++      std::queue<PPDirective> &Q = PPDs[fid];
++
++      while(!Q.empty()) {
++        PPDirective *d = &Q.front();
++        if(!location_lt(d->loc, loc))
++          break;
++        ppds.push_back(*d);
++        Q.pop();
++      }
++    }
++  };
++  
++  
 +  class ASTTermDumper : public ASTConsumer {
 +    /** reference to the source manager
 +     */
@@ -258,40 +348,69 @@ Index: Driver/TermDumper.cpp
 +        current compilation unit
 +    */
 +    bool first_decl;
++
++    /** name of the current source file
++     */
++    std::string current_source_file;
++
++    /** this is the current preprocessor object
++     */
++    Preprocessor *PP;
++
++    /** a preprocessor callback tracking #include and #define directives
++     */
++    PPTracker *tracker;
 +    
 +    /** return a outputstream for the given output-filename. If the name is "-"
 +     *  std::cout is returned.
 +     */
 +    static std::ostream& getOutputStream(const std::string &outfilename) {
 +      if (outfilename.empty())
-+        return std::cerr;
++        return std::cout;
 +      else
 +        return *new std::ofstream(outfilename.c_str(), std::ofstream::app);
 +    }
 +  public:
-+    ASTTermDumper(const std::string &infilename, const std::string &outfilename)
++    ASTTermDumper(const std::string &infilename,
++                  const std::string &outfilename,
++                  Preprocessor *pp)
 +      : infile(infilename), outfile(outfilename),
-+        Out(getOutputStream(outfilename)), first_decl(true) {
++        Out(getOutputStream(outfilename)), first_decl(true), PP(pp), tracker(NULL) {
++
++      //create and register a new PPTracker Object
++      assert(PP && "expecting a preprocessor object");
++      tracker = new PPTracker(*PP);
++
++      //configure the preprocessor
++      PP->setPPCallbacks(tracker);
++    }
++
++    ~ASTTermDumper() {
++
++      PP->setPPCallbacks(NULL);
++      
++      // free the output stream
++      if (&Out != &std::cout && &Out != &std::cerr) {
++        delete &Out;
++      }
 +    }
 +
 +    void Initialize(ASTContext &Context) {
 +      SM = &Context.getSourceManager();
 +    }
 +
-+    ~ASTTermDumper() {
-+      // free the output stream
-+      if (&Out != &std::cout) {
-+        delete &Out;
-+      }
-+    }
-+
 +    void HandleNewFile(const std::string &fileName, bool first) {
-+      
++
++      //finish the declaration for the last file
 +      if (!first) {
 +        Out << "], "; closeDecl(Out); // global
 +        Out << ", ";  closeDecl(Out); // file
 +        Out << ", ";
 +      }
++
++      current_source_file = fileName;
++      
++      //start a new file 
 +      Out << "file(\n  global([\n    ";
 +    }
 +    
@@ -311,7 +430,7 @@ Index: Driver/TermDumper.cpp
 +    //called by the driver for the very last file
 +    virtual void OnLastFile() {
 +      Out <<  "], " DAB ", ";
-+      fileInfo(Out); // global
++      fileInfo(Out, current_source_file); // global
 +      Out <<  "), null,"; closeDecl(Out); // file
 +      Out <<  "], ";     closeDecl(Out); // project
 +      Out <<  ".\n";
@@ -331,10 +450,10 @@ Index: Driver/TermDumper.cpp
 +     * Helper                                                                  *
 +     **************************************************************************/
 +
-+    void closeDecl(std::ostream &O, const Decl *D = NULL) {
-+      O << DA ", ";
-+      fileInfo(O, D);
-+      O << ")";      
++    void closeDecl(std::ostream &O) {
++      O << DA ", "
++        << "file_info(" << quote(current_source_file) << ", 1, 1)"
++        << ")";      
 +    }
 +
 +    void fileInfo(std::ostream &O, const SourceLocation Loc) {
@@ -369,10 +488,45 @@ Index: Driver/TermDumper.cpp
 +      }
 +    }
 +
++    void fileInfo(std::ostream &O, const std::string &file_name) {
++      O << "file_info('" << file_name << "', 0, 0)";
++    }
++    
 +    void preprocessingInfo(std::ostream &O) {
 +      O << PPI;
 +    }  
 +
++    //dequeue and emit all the preprocessing info until loc
++    void preprocessingInfo(std::ostream &O, SourceLocation loc) {
++      std::list<PPTracker::PPDirective> L;
++      tracker->dequeueDirectives(loc, L);
++      bool first = true;
++      while(!L.empty()) {
++        PPTracker::PPDirective &d = L.front();
++        assert(d.type == PPTracker::ppd_include && "only #includes are implemented so far");
++        
++        if(first) {
++          O << "preprocessing_info([";
++          first = false;
++        }
++        else {
++          O << ", ";
++        }
++
++        O << "cpreprocessorIncludeDeclaration('"
++          << d.code << "\\n', before,";
++        fileInfo(O, d.loc);
++        O << ")";
++        
++        L.pop_front();
++      }
++
++      if(first)
++        O << PPI;
++      else
++        O << "])";
++    }
++    
 +    std::string prologize(std::string s) {
 +      std::string t;
 +      std::string::iterator it;
@@ -659,7 +813,7 @@ Index: Driver/TermDumper.cpp
 +      O << "null";
 +    
 +    O << ", ";
-+    preprocessingInfo(O);
++    preprocessingInfo(O, TD->getLocation());
 +    
 +    O << "), " AIB ", ";
 +    fileInfo(O, TD);
@@ -720,7 +874,7 @@ Index: Driver/TermDumper.cpp
 +    
 +    termModifier(O, D);
 +    O << ", ";
-+    preprocessingInfo(O);
++    preprocessingInfo(O, FD->getLocation());
 +    O << "), " AIB ",";
 +    fileInfo(Out, FD); // declaration
 +    O << ")";
@@ -785,7 +939,7 @@ Index: Driver/TermDumper.cpp
 +      << ", " << R->getKindName() << ", "
 +      << "::),";
 +    
-+    preprocessingInfo(O);
++    preprocessingInfo(O, D->getLocation());
 +    O << "), " AIB ", ";
 +    fileInfo(O, D);
 +    O << ")";
@@ -1102,11 +1256,11 @@ Index: Driver/TermDumper.cpp
 +        {
 +          const LabelStmt *L = cast<LabelStmt>(S);
 +          O << "label_statement(label_annotation("
-+            // TODO: escaping
-+            << L->getName() << "), " AIB ", ";
++            << quote(L->getName()) << ", ";
++          preprocessingInfo(O);
++          O <<"), " AIB ", ";
 +          fileInfo(O, S);
 +          O << ")";
-+      
 +
 +          if (L->getSubStmt()->getStmtClass() != Stmt::NullStmtClass) {
 +            O << ", ";
@@ -1190,7 +1344,7 @@ Index: Driver/TermDumper.cpp
 +          O << ", ";
 +          termStmt(O, FS->getInc());
 +          O << ", ";
-+          termStmt(O, FS->getBody());
++          termStmtWrapped(O, FS->getBody());          
 +          O << ", " DAB ", "; // for_stmt
 +          fileInfo(O, FS);
 +          O << ")";
@@ -1199,8 +1353,9 @@ Index: Driver/TermDumper.cpp
 +
 +      case Stmt::GotoStmtClass:
 +        O << "goto_statement(label_annotation("
-+          // TODO: escaping
-+          << cast<GotoStmt>(S)->getLabel()->getName() << "), " AIB ", ";
++          << quote(cast<GotoStmt>(S)->getLabel()->getName()) <<  ", ";
++        preprocessingInfo(O);        
++        O << "), " AIB ", ";
 +        fileInfo(O, S);
 +        O << ")";
 +        break;
@@ -1318,16 +1473,15 @@ Index: Driver/TermDumper.cpp
 +          O << "string_val(null, value_annotation('"
 +            << (SL->isWide() ? "L" : "");
 +
-+          // TODO: check escaping
 +          for (unsigned i = 0, e = SL->getByteLength(); i != e; ++i) {
 +            switch (char C = SL->getStrData()[i]) {
 +              // Handle some common ones to make dumps prettier.
 +            case '\\': O << "\\\\"; break;
-+            case '"':  O << "\\\""; break;
-+            case '\n': O << "\\n"; break;
-+            case '\t': O << "\\t"; break;
-+            case '\a': O << "\\a"; break;
-+            case '\b': O << "\\b"; break;
++            case '"':  O << "\\\\\""; break;
++            case '\n': O << "\\\\n"; break;
++            case '\t': O << "\\\\t"; break;
++            case '\a': O << "\\\\a"; break;
++            case '\b': O << "\\\\b"; break;
 +            default:
 +              if (isprint(C))
 +                O << C;
@@ -1918,6 +2072,9 @@ Index: Driver/TermDumper.cpp
 +      else
 +        O << "null";
 +
++      O << ", ";
++      preprocessingInfo(O);
++      
 +      O << "), " AIB ", ";
 +    }
 +    else {
@@ -2212,20 +2369,23 @@ Index: Driver/TermDumper.cpp
 +}
 +
 +ASTConsumer *clang::CreateASTTermDumper(const std::string &infile,
-+                                        const std::string &outfile) {
-+  return new ASTTermDumper(infile, outfile);
++                                        const std::string &outfile,
++                                        Preprocessor *PP) {
++  
++  return new ASTTermDumper(infile, outfile, PP);
 +}
 +
 Index: Driver/ASTConsumers.h
 ===================================================================
 --- Driver/ASTConsumers.h	(revision 63505)
 +++ Driver/ASTConsumers.h	(working copy)
-@@ -36,6 +36,9 @@
+@@ -36,6 +36,10 @@
  
  ASTConsumer *CreateASTDumper();
  
 +ASTConsumer *CreateASTTermDumper(const std::string &infile,
-+                                 const std::string &outfile);
++                                 const std::string &outfile,
++                                 Preprocessor *PP);
 +
  ASTConsumer *CreateASTViewer();
  
@@ -2307,3 +2467,25 @@ Index: tools/ccc/ccclib/Tools.py
          if isinstance(phase.phase, Phases.AnalyzePhase):
              assert outputType is Types.PlistType
              cmd_args.append('-analyze')
+Index: lib/Lex/PPDirectives.cpp
+===================================================================
+--- lib/Lex/PPDirectives.cpp	(revision 63505)
++++ lib/Lex/PPDirectives.cpp	(working copy)
+@@ -18,6 +18,7 @@
+ #include "clang/Lex/LexDiagnostic.h"
+ #include "clang/Basic/SourceManager.h"
+ #include "llvm/ADT/APInt.h"
++#include <iostream>
+ using namespace clang;
+ 
+ //===----------------------------------------------------------------------===//
+@@ -959,6 +960,9 @@
+     DiscardUntilEndOfDirective();
+     return;
+   }
++
++  if (Callbacks)
++    Callbacks->IncludeDirective(FilenameTok.getLocation(), std::string(FilenameStart, FilenameEnd));
+   
+   bool isAngled = GetIncludeFilenameSpelling(FilenameTok.getLocation(),
+                                              FilenameStart, FilenameEnd);
