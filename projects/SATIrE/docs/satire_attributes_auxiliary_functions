@@ -235,6 +235,9 @@ may_be_aliased :: Location -> bool;
     determines whether the given location may be "aliased", i.e., whether
     some other location may hold a pointer to it
 
+is_array_location :: Location -> bool;
+    determines whether the given location is an array
+
 is_ptr_location :: Location -> bool;
     determines whether the given location contains a pointer to some other
     location

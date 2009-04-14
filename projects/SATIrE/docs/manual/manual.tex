@@ -745,6 +745,9 @@ automatically included in any analyzer created with SATIrE.
     determines whether the given location may be "aliased", i.e., whether
     some other location may hold a pointer to it
 
+\ttitem{is_array_location :: Location -> bool;}
+    determines whether the given location is an array
+
 \ttitem{is\_ptr\_location :: Location -> bool;}
     determines whether the given location contains a pointer to some other
     location

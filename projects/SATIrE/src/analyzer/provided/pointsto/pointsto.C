@@ -138,6 +138,12 @@ PointsToAnalysis::mayBeAliased(PointsToAnalysis::Location *loc) const
     return p_impl->mayBeAliased(loc);
 }
 
+bool
+PointsToAnalysis::isArrayLocation(PointsToAnalysis::Location *loc) const
+{
+    return p_impl->isArrayLocation(loc);
+}
+
 const std::list<SgSymbol *> &
 PointsToAnalysis::location_symbols(PointsToAnalysis::Location *loc) const
 {

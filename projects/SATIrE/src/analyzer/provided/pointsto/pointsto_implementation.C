@@ -21,7 +21,7 @@ PointsToAnalysis::Location::Location(
   : base_location(b), ellipsis_location(NULL), return_location(r),
     dummy(false), literal(false), special_function(false),
     first_access_type(NULL), collapsed(false), parent_struct(NULL),
-    collapseBase(false), mayBeAliased(false), ownerInfo(NULL)
+    collapseBase(false), mayBeAliased(false), array(false), ownerInfo(NULL)
 {
 }
 
@@ -2285,6 +2285,10 @@ PointsToAnalysis::Implementation::unify(
     {
         join(a->return_location, b->return_location);
     }
+    if (a->array || b->array)
+    {
+        a->array = b->array = true;
+    }
 
  // join members of non-collapsed structures; if the structures were
  // collapsed, the code above should have taken care of everything
@@ -2600,6 +2604,7 @@ PointsToAnalysis::Implementation::pickThePointer(
 {
     Location *result = NULL;
     SgExpression *operand = NULL;
+    bool isArrayType = false;
 
  // see if the first operand is the pointer; it might have typedefs,
  // references, modifiers wrapped around it
@@ -2615,6 +2620,8 @@ PointsToAnalysis::Implementation::pickThePointer(
      // an actual location.
         if (result == NULL)
             result = createLocation();
+        if (isSgArrayType(t))
+            isArrayType = true;
     }
     else
     {
@@ -2631,6 +2638,8 @@ PointsToAnalysis::Implementation::pickThePointer(
          // be an actual location.
             if (result == NULL)
                 result = createLocation();
+            if (isSgArrayType(t))
+                isArrayType = true;
         }
     }
 
@@ -2646,7 +2655,15 @@ PointsToAnalysis::Implementation::pickThePointer(
             << " / " << binOp->class_name() << std::endl;
 #endif
         if (result->baseLocation() == NULL)
-            result->pointTo(createLocation());
+        {
+            Location *arrayNode = createLocation();
+            if (isArrayType)
+            {
+                arrayNode->array = true;
+                arrayNode->symbols = result->symbols;
+            }
+            result->pointTo(arrayNode);
+        }
     }
 
     return result;
@@ -4198,6 +4215,13 @@ PointsToAnalysis::Implementation::mayBeAliased(
     return loc->mayBeAliased;
 }
 
+bool
+PointsToAnalysis::Implementation::isArrayLocation(
+        PointsToAnalysis::Location *loc) const
+{
+    return loc->array;
+}
+
 const std::list<SgSymbol *> &
 PointsToAnalysis::Implementation::location_symbols(
         PointsToAnalysis::Location *loc) const
@@ -4289,6 +4313,7 @@ PointsToAnalysis::Implementation::print(
                     << "\\n" << (void *) location
 #endif
                     << (location->mayBeAliased ? "\\naliased" : "")
+                    << (location->array ? "\\narray" : "")
                     << (location->literal ? "\\nliteral" : "")
                     << (location->special_function ? "\\n[special]" : "")
                     << (location->collapsed ? "\\n[collapsed]" : "")

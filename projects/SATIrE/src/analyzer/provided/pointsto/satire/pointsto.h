@@ -105,6 +105,9 @@ public:
  // Whether the given location may be aliased, i.e. whether some other
  // location may point to it.
     bool mayBeAliased(Location *loc) const;
+ // Whether the given location is an array (the array itself, not its
+ // address).
+    bool isArrayLocation(Location *loc) const;
  // List of all (variable or function) symbols associated with a given
  // location. Any expression referencing this location may access (only) one
  // of these objects.

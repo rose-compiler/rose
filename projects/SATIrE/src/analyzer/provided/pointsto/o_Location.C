@@ -419,6 +419,14 @@ extern "C" FLO_BOOL o_may_be_aliased(void *lp)
     return (mayBeAliased ? FLO_TRUE : FLO_FALSE);
 }
 
+extern "C" FLO_BOOL o_is_array_location(void *lp)
+{
+    LocationWrapper *wrapper = (LocationWrapper *) lp;
+    PointsToAnalysis::Location *loc = wrapper->loc;
+    bool mayBeAliased = get_icfgPointsToAnalysis()->isArrayLocation(loc);
+    return (mayBeAliased ? FLO_TRUE : FLO_FALSE);
+}
+
 extern "C" FLO_BOOL o_is_ptr_location(void *lp)
 {
     LocationWrapper *wrapper = (LocationWrapper *) lp;

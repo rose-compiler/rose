@@ -80,6 +80,10 @@ public:
  // This flag is set if there is at least one incoming points-to edge to
  // this node.
     bool mayBeAliased;
+ // This flag is set for array nodes. Arrays are represented by a pointer
+ // node pointing to an array node; *both* may have the same variable symbol
+ // (maybe this should be changed at some point).
+    bool array;
 
  // The list of "pending" locations: When assigning a non-pointer value, we
  // add the value to the pending list rather than forcing unification; a
@@ -178,6 +182,7 @@ public:
 
     const std::vector<Location *> &get_locations() const;
     bool mayBeAliased(Location *loc) const;
+    bool isArrayLocation(Location *loc) const;
     const std::list<SgSymbol *> &location_symbols(Location *) const;
     unsigned long location_id(Location *loc) const;
     Location *location_representative(Location *loc);
