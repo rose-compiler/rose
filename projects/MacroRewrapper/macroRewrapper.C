@@ -489,7 +489,10 @@ findMappingOfTokensToAST(SgNode* node, PreprocessingInfo* currentInfo ){
 			if( checkIfNodeMaps(*it_exp,nodeAtPos) == true ){
 				//if(SgProject::get_verbose() >= 1){
                           {
-					std::cout << " Found mapping" << it_exp->get_value() << " to " << nodeAtPos->class_name();
+					std::cout << " Found mapping " << it_exp->get_value() 
+                                          << " l" << it_exp->get_position().get_line() << " c" << it_exp->get_position().get_column()
+                                          << " to " << nodeAtPos->class_name() << " l" << nodeAtPos->get_file_info()->get_line()
+                                          << " c" << nodeAtPos->get_file_info()->get_col();
                                         if(isSgValueExp(nodeAtPos) != NULL ) 
                                           std::cout << " " << nodeAtPos->unparseToString();
                                           
@@ -535,21 +538,6 @@ AnalyzeMacroCalls::iterate_over_all_macro_calls(macro_def_call_type& macro_def){
     Sg_File_Info* macro_def_pos = def_it->first->get_file_info();
 
 
-    std::list<int> positions;
-    token_list_container& macroDefinition = macro_def->definition;
-    for(token_list_container::iterator expMacroIt = macroDefinition.begin();
-        expMacroIt != macroDefinition.end(); ++expMacroIt){
-      positions.push_back( expMacroIt->get_position().get_line() );
-
-
-    }
-    positions.unique();
-
-    for(std::list<int>::iterator iItr = positions.begin(); 
-        iItr != positions.end(); ++iItr)
-      std::cout << "\nPosition:" <<  *iItr<< std::endl;
-
-
 
     if(SgProject::get_verbose() >= 1)
       std::cout << "Macro def found at: " << macro_def_pos->get_filenameString() << " l" <<
@@ -558,6 +546,28 @@ AnalyzeMacroCalls::iterate_over_all_macro_calls(macro_def_call_type& macro_def){
 
     for(macro_call_list::iterator call_it = def_it->second.begin();
         call_it != def_it->second.end(); ++call_it ){
+
+      std::list<int> positions;
+      token_list_container& macroDefinition = (*call_it)->get_macro_call()->macro_def->get_macro_def()->definition;
+      for(token_list_container::iterator expMacroIt = macroDefinition.begin();
+          expMacroIt != macroDefinition.end(); ++expMacroIt){
+        positions.push_back( expMacroIt->get_position().get_line() );
+        //std::cout << "\nPosition2:" << expMacroIt->get_value() << " l" << expMacroIt->get_position().get_line()
+        //  << " c" << expMacroIt->get_position().get_column() << std::endl;
+
+
+      }
+      positions.unique();
+
+#if 0
+      for(std::list<int>::iterator iItr = positions.begin(); 
+          iItr != positions.end(); ++iItr)
+        std::cout << "\nPosition:" <<  *iItr<< std::endl;
+#endif
+
+
+
+
 
       Sg_File_Info* macro_call_pos = (*call_it)->get_file_info();
 
@@ -586,7 +596,7 @@ AnalyzeMacroCalls::iterate_over_all_macro_calls(macro_def_call_type& macro_def){
           //map_tokens_to_AST(stmtContainingMacroCall, (*call_it)->get_macro_call());
 
           ROSE_ASSERT((*call_it)->get_macro_call()!=NULL);
-          token_container expanded_macro = (*call_it)->get_macro_call()->expanded_macro;
+          token_container& expanded_macro = (*call_it)->get_macro_call()->expanded_macro;
 
           std::vector< SgNode*> tokenMapToAST = findMappingOfTokensToAST(stmtContainingMacroCall,(*call_it));
 
@@ -639,7 +649,7 @@ AnalyzeMacroCalls::iterate_over_all_macro_calls(macro_def_call_type& macro_def){
 
             std::cout << "The position l" << expMacroIt->get_position().get_line() << " c" << expMacroIt->get_position().get_column()
               << " l" << macro_def_pos->get_line() << std::endl ;
-            if( ( find(positions.begin(),positions.end(), expMacroIt->get_position().get_line()) != positions.end() ) 
+            if( ( find(positions.begin(),positions.end(), expMacroIt->get_position().get_line()) == positions.end() ) 
 //              &&  ( token_id(*expMacroIt) != T_SPACE ) &&
   //              ( token_id(*expMacroIt) != T_SEMICOLON )
               ){
@@ -1136,10 +1146,13 @@ AnalyzeMacroCalls::print_out_all_macros(std::ostream& outStream){
 
         
                            correspondingString+=currentString+" ";
+#if 0
+                           correspondingString+=boost::lexical_cast<std::string>(*it_nodes)+ " ";
                            correspondingString+=(*it_nodes)->unparseToString()+" ";
                            correspondingString+=boost::lexical_cast<std::string>((*it_nodes)->get_file_info()->get_line());
                            correspondingString+= " ";
                            correspondingString+=boost::lexical_cast<std::string>((*it_nodes)->get_file_info()->get_col());
+#endif
 
       }
 

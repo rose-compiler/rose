@@ -61,14 +61,14 @@ int main( int argc, char * argv[] )
 
      {
        std::vector<std::string> newArgv(argv,argv+argc);
-       newArgv.insert(newArgv.begin()++,"-rose:skip_rose");
+       newArgv.push_back("-rose:skip_rose");
      
        SgProject* project = frontend(newArgv);
        backend(project);
 
      }
      std::vector<std::string> newArgv(argv,argv+argc);
-     newArgv.insert(newArgv.begin()++,"-rose:wave");
+     newArgv.push_back("-rose:wave");
 
      newArgv.push_back("-rose:excludePath");
      newArgv.push_back("/include/g++_HEADERS/");

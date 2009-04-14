@@ -91,13 +91,23 @@ allCallsToMacro2( std::list<std::string> internalIncludePathList ){
 		    if( streamPossiblyMapsToAST == true ){ 
 			 PreprocessingInfo* macro_def   = macro_call->macro_def;
 
-			 if(SgProject::get_verbose() >= 1){
+			 /*if(SgProject::get_verbose() >= 1)*/{
 			      std::cout << "macro def: " <<  macro_def->get_file_info()->get_filenameString() << " l" << macro_def->get_file_info()->get_line()
 				      << " c" << macro_def->get_file_info()->get_col() << std::endl; 
 			      std::cout << macro_def->getString() << std::endl;
 			      std::cout << "macro call: " <<  currentInfo->get_file_info()->get_filenameString() << " l" << currentInfo->get_file_info()->get_line()
 				      << " c" << currentInfo->get_file_info()->get_col() << std::endl; 
 			      std::cout << currentInfo->getString() << std::endl;
+
+                              token_list_container& macroDefinition = macro_def->get_macro_def()->definition;
+                              for(token_list_container::iterator expMacroIt = macroDefinition.begin();
+                                  expMacroIt != macroDefinition.end(); ++expMacroIt){
+                                std::cout << "\nPosition:" << expMacroIt->get_value() << " l" << expMacroIt->get_position().get_line()
+                                  << " c" << expMacroIt->get_position().get_column() << std::endl;
+
+
+                              }
+
 			 }
 
 
@@ -118,6 +128,16 @@ allCallsToMacro2( std::list<std::string> internalIncludePathList ){
 	            if( mapOfDefsToCalls.find(currentInfo) == mapOfDefsToCalls.end() ){
                        //std::cout << "Adding def" << currentInfo << std::endl;
 	               mapOfDefsToCalls[currentInfo] = ( std::list<PreprocessingInfo*>());
+
+                       token_list_container& macroDefinition = currentInfo->get_macro_def()->definition;
+                       for(token_list_container::iterator expMacroIt = macroDefinition.begin();
+                           expMacroIt != macroDefinition.end(); ++expMacroIt){
+                         std::cout << "\nPosition1:" << expMacroIt->get_value() << " l" << expMacroIt->get_position().get_line()
+                           << " c" << expMacroIt->get_position().get_column() << std::endl;
+
+
+                       }
+
                     }
 
 

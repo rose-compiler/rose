@@ -42,8 +42,9 @@ void VisitEveryNode::visit ( SgNode* node )
      for (std::vector<SgNode*>::iterator it_sub =  linearizedSubtree.begin();
          it_sub != linearizedSubtree.end(); ++ it_sub){
        outStream << (*it_sub)->class_name() << " ";
-       if(isSgValueExp(*it_sub) != NULL)
+       if(isSgValueExp(*it_sub) != NULL | isSgVarRefExp(*it_sub) != NULL)
          outStream << (*it_sub)->unparseToString() + " ";
+
      }
 
      outStream << std::endl; 

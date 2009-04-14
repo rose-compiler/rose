@@ -12,39 +12,47 @@ class NodesAtLineNumber :  public std::binary_function<SgNode*, std::pair< std::
   public:
 	  result_type operator()(first_argument_type node, const second_argument_type accumulatedList ) const;
 };
-class ComparisonLinearization : public AstPreOrderTraversal {
-
-std::vector<SgNode*> nodeToFilter;
-Sg_File_Info* posOfMacroCall;
-
-std::vector<SgNode*> skipNodeAndSubTree;
 
 
-std::vector<SgNode*> orderedNodes;
-public:
 
-  enum ConstantFolding{
-           TraverseOriginalExpressionTree,
-           TraverseConstantFoldedExpression,
-           TraverseBoth
-  };
+class ComparisonLinearizationAttribute
+   {
+     public:
+       std::vector<SgNode*> nodes;
+       ComparisonLinearizationAttribute();
+   };
 
 
-  private:
-    //Variable determining which subtree to traverse
-    ConstantFolding constFoldTraverse;
+class ComparisonLinearization : public SgBottomUpProcessing<ComparisonLinearizationAttribute>
+   {
+     private:
+       std::vector<SgNode*> nodes;
+       std::vector<SgNode*> nodeToFilter;
+       Sg_File_Info* posOfMacroCall;
 
-  public:
 
-std::vector<SgNode*> 
-get_ordered_nodes();
+       ComparisonLinearizationAttribute evaluateSynthesizedAttribute (
+           SgNode* astNode,
+           SubTreeSynthesizedAttributes synthesizedAttributeList );
 
-ComparisonLinearization(std::vector<SgNode*> argNodes, Sg_File_Info* argFileInfo);
+//       bool skipNode(SgNode* node);
 
-void preOrderVisit(SgNode* node);
-bool skipNode(SgNode* node);
-bool skipSubTreeOfNode(SgNode* node);
-};
+
+     public:
+       ComparisonLinearization(std::vector<SgNode*> argNodes, Sg_File_Info* argFileInfo);
+
+
+
+          std::vector<SgNode*> 
+            get_ordered_nodes();
+
+   };
+
+
+
+
+
+
 
 extern bool VERBOSE_MESSAGES_OF_WAVE;
 

@@ -2,18 +2,17 @@
 #include "argumentFilterer.h"
 #include "helpFunctions.h"
 
+ComparisonLinearizationAttribute::ComparisonLinearizationAttribute()
+{
+
+};
 
 
-std::vector<SgNode*> 
-ComparisonLinearization::get_ordered_nodes(){
-return orderedNodes;
-}
 
 ComparisonLinearization::ComparisonLinearization(std::vector<SgNode*> argNodes, Sg_File_Info* argFileInfo){
 ROSE_ASSERT(argFileInfo!=NULL);
 nodeToFilter = argNodes;
 posOfMacroCall = argFileInfo;
-constFoldTraverse = TraverseOriginalExpressionTree;
 //constFoldTraverse = TraverseBoth;
 for(int i =0; i < argNodes.size() ; i++){
   std::cout << "node to filter " << argNodes[i]->class_name() ;
@@ -26,123 +25,18 @@ for(int i =0; i < argNodes.size() ; i++){
 }
 
 
-void 
-ComparisonLinearization::preOrderVisit(SgNode* node){
-
-     if(isSgFunctionDeclaration(node)!=NULL){
-          SgFunctionDeclaration* funcDecl    = isSgFunctionDeclaration(node);
-
-	  //Add the function return type
-	  SgFunctionType* funcType = funcDecl->get_type();
-
-	  vector<SgType*> typeVec = typeVectorFromType(funcType);
-          for(vector<SgType*>::iterator it_type = typeVec.begin(); 
-			  it_type != typeVec.end(); ++it_type){
-            if( skipNode(*it_type) == false )
-                orderedNodes.push_back(*it_type);
-	  };
-
-	  //Add the function declaration itself
-	  orderedNodes.push_back(node);
-
-	  //Add the arguments of the function declarations
-	  SgInitializedNamePtrList argsList = funcDecl->get_args();
-
-	  for(SgInitializedNamePtrList::iterator it_func = argsList.begin();
-			  it_func != argsList.end(); ++it_func){
-	       SgInitializedName* funcArg = *it_func;
-	       SgType* argType = funcArg->get_type();
-               typeVec = typeVectorFromType(funcType);
-
-               for(vector<SgType*>::iterator it_type = typeVec.begin(); 
-			  it_type != typeVec.end(); ++it_type){
-            if( skipNode(*it_type) == false )
-
-                   orderedNodes.push_back(*it_type);
-               };
-
-	       orderedNodes.push_back(funcArg);
-	  }
-     }else if(isSgVariableDeclaration(node)!=NULL){
-          SgVariableDeclaration* varDecl = isSgVariableDeclaration(node);
-	  SgInitializedNamePtrList varList = varDecl->get_variables();
-          
-	  //Add the variable declarations and their types
-	  vector<SgType*> typeVec;
-	  for(SgInitializedNamePtrList::iterator it_func = varList.begin();
-			  it_func != varList.end(); ++it_func){
-	       SgInitializedName* var = *it_func;
-	       SgType* argType = var->get_type();
-               typeVec = typeVectorFromType(argType);
-
-               for(vector<SgType*>::iterator it_type = typeVec.begin(); 
-			  it_type != typeVec.end(); ++it_type){
-                 if( skipNode(*it_type) == false )
-
-                   orderedNodes.push_back(*it_type);
-               };
-               if( skipNode(var) == false )
-
-	       orderedNodes.push_back(var);
-	  }
-     }else
-        if( skipNode(node) == false )
-         orderedNodes.push_back(node);
-
-      
+std::vector<SgNode*> 
+ComparisonLinearization::get_ordered_nodes(){
+return nodes;
 }
 
-
-std::vector<SgNode*> queryForNotOnLine(SgNode* node, Sg_File_Info* compareFileInfo){
-    std::vector<SgNode*> thisNode = queryForLine(node, compareFileInfo);  
-
-    std::vector<SgNode*> returnList;
-
-    if(thisNode.size()==0)
-        returnList.push_back(node);
-
-    return returnList;
-
-};
-
+#if 0
 bool 
 ComparisonLinearization::skipNode(SgNode* node) {
   bool skip = false;
-/*
-  if( find(nodeToFilter.begin(),nodeToFilter.end(),node) != nodeToFilter.end() ){
-    skip = true;
-    return skip;
-  }
-  */
-
-  if( find( skipNodeAndSubTree.begin(), skipNodeAndSubTree.end(), node) != skipNodeAndSubTree.end() |
-      //find(nodeToFilter.begin(),nodeToFilter.end(),node) != nodeToFilter.end() |
-      isSgType(node) != NULL
-
-      )
-  {
-    std::cout << "Skipped node: " << node->class_name() << std::endl;
-    return true;
-  }
- //return skip;
 
   if(isSgValueExp(node) != NULL )
   {
-  /*
-
-    if( SgCastExp* castExp =  isSgCastExp(isSgValueExp(node)->get_parent()) )
-    {
-      if(castExp->get_operand() == node)
-      {
-        if(isSgCastExp(castExp->get_parent()) == NULL) 
-        {
-          std::cout << "Skipping node 111" << std::endl;
-          return true;
-        }
-      }
-    }
-   return skip;
-   */
   
     //Because of the structure of the code '(0)' where there will be two
     //SgIntVal's where none is marked compiler generated I have to do this
@@ -170,132 +64,13 @@ ComparisonLinearization::skipNode(SgNode* node) {
   if(isSgExprStatement(node))
     skip = true;
 
-  if(isSgBinaryOp(node)!=NULL && isSgArrowExp(node) == NULL && isSgDotExp(node) == NULL  ){
-    SgBinaryOp* binOp = isSgBinaryOp(node);
-    std::vector<SgNode*> vectorOfNodesAtPos;
-
-    vectorOfNodesAtPos =   NodeQuery::querySubTree(binOp->get_lhs_operand(),std::bind2nd(std::ptr_fun(queryForLine), posOfMacroCall));
-
-    std::cout << "Looking at binary op: " << node->unparseToString() << std::endl;
-    //SKIP Right Operand?
-    bool skipLeft = false;
-
-    //See if all variables in the subtre is skippable
-    bool allNodesInSubTreeSkipped = true;
-    std::cout << "vectorOfNodesAtPos: " << vectorOfNodesAtPos.size() << std::endl;
-
-    return skip;
-    for(int i=0; i < vectorOfNodesAtPos.size(); i++ )
-    {
-      if(find(nodeToFilter.begin(),nodeToFilter.end(),vectorOfNodesAtPos[i]) == nodeToFilter.end())
-      {
-        allNodesInSubTreeSkipped = false;
-        std::cout << "allNodesInSubTreeSkipped NOT: " << vectorOfNodesAtPos[i]->unparseToString() << std::endl;
-
-      }else
-        std::cout << "allNodesInSubTreeSkipped: " << vectorOfNodesAtPos[i]->unparseToString() << std::endl;
-
-    }
-
-    //If all nodes in subtree is skippable or there are no nodes in subtree from macro skip
-    if(vectorOfNodesAtPos.size() == 0 || allNodesInSubTreeSkipped == true ){
-      skipLeft = true;
-      skipNodeAndSubTree.push_back(binOp->get_lhs_operand());            
-    }
-    for(int i=0; i < vectorOfNodesAtPos.size() ; i++)
-      std::cout << vectorOfNodesAtPos[i]->unparseToString() << std::endl;
-
-    //SKIP Left Operand?
-    bool skipRight = false;
-    vectorOfNodesAtPos =   NodeQuery::querySubTree(binOp->get_rhs_operand(),std::bind2nd(std::ptr_fun(queryForLine),  posOfMacroCall));
-
-    //See if all nodes in subtree is skippable
-    allNodesInSubTreeSkipped = true;
-    for(int i=0; i < vectorOfNodesAtPos.size(); i++ )
-    {
-      if(find(nodeToFilter.begin(),nodeToFilter.end(),vectorOfNodesAtPos[i]) == nodeToFilter.end())
-        allNodesInSubTreeSkipped = false;
-    }
-
-    //If all nodes in subtree oor there are no nodes in the subtree from macro skip
-    if(vectorOfNodesAtPos.size() == 0 || allNodesInSubTreeSkipped == true ){
-      skipRight = true;
-      std::cout <<"SkipRight" << std::endl;
-      skipNodeAndSubTree.push_back(binOp->get_rhs_operand());      
-    }
-
-
-
-    for(int i=0; i < vectorOfNodesAtPos.size() ; i++){
-      std::cout << vectorOfNodesAtPos[i]->unparseToString() << vectorOfNodesAtPos[i]->get_file_info()->get_line() << std::endl;
-    }
-
-    std::cout <<"SkipLeft" << skipLeft << std::endl;
-    std::cout <<"SkipRight" << skipRight << std::endl;
-
-
-    //SKIP Operand?
-    bool binaryOpNotPartOfMacroCall = false;
-    if( queryForLine(node,posOfMacroCall).size() == 0  || 
-        find(nodeToFilter.begin(),nodeToFilter.end(),node) != nodeToFilter.end()  ){
-      binaryOpNotPartOfMacroCall  = true;
-    }
-
-    //SKIP Operand and SubTree?
-    if( (skipLeft == true) &&
-        (skipRight == true) &&
-        ( binaryOpNotPartOfMacroCall == true )
-      ){
-      skip = true;
-      skipNodeAndSubTree.push_back(node);
-      std::cout << "The whole binary op filtered out" << std::endl;
-    }else if( ((skipLeft == true) | (skipRight == true)) &&
-        ( binaryOpNotPartOfMacroCall == true ) 
-        ){
-      //SKIP Operand and One Of The Subtrees?
-
-      std::cout << "The binary op itself filtered out" << std::endl;
-
-      //if( queryForLine(node->get_parent(),posOfMacroCall).size() == 0  ){
-      skip = true;
-      //std::cout << "The binary op itself filtered out : Pos" << std::endl;
-      //}
-
-
-    }
-
-    if( (isSgArrowExp(node) != NULL ) ||
-        (isSgDotExp(node) != NULL  )
-      ){
-      //ROSE has a bug such that if we have a member variable in a class which is
-      //references in a member function of that class and the this-> is not in front of
-      //the variable reference the "this->" is not marked correctly as compiler generated.
-
-      SgBinaryOp* binOp = isSgBinaryOp(node);
-      if(isSgThisExp(binOp->get_lhs_operand()) != NULL){
-        skip=true;
-        nodeToFilter.push_back(binOp->get_lhs_operand());
-      }
-    }
-
-  }else  if( find(nodeToFilter.begin(),nodeToFilter.end(),node) != nodeToFilter.end() ){
+  if( find(nodeToFilter.begin(),nodeToFilter.end(),node) != nodeToFilter.end() ){
     skip = true;
   }
 
  
-  if(isSgUnaryOp(node) != NULL )
-  {
-
-    if( find(nodeToFilter.begin(),nodeToFilter.end(),isSgUnaryOp(node)->get_operand()) != nodeToFilter.end() |
-        queryForLine(node,posOfMacroCall).size() == 0 ){
-      skip = true;
-    }
-
-    if(isSgPointerDerefExp(node)!=NULL || isSgCastExp(node) != NULL)
-      skip = true;
-
-  }else  if( (isSgArrowExp(node) != NULL ) )
-    node->get_file_info()->display(std::string(" debug ")) ;
+  if(isSgPointerDerefExp(node)!=NULL || isSgCastExp(node) != NULL)
+    skip = true;
 
   //For expressions which are constant folded choose the original expression tree
   SgValueExp* valExp = isSgValueExp(node);
@@ -317,33 +92,124 @@ ComparisonLinearization::skipNode(SgNode* node) {
   return skip;
 }
 
-bool
-ComparisonLinearization::skipSubTreeOfNode(SgNode* node) { 
-
-    bool skip = false;
-
-    return skip;
-    if( find( skipNodeAndSubTree.begin(), skipNodeAndSubTree.end(), node) != skipNodeAndSubTree.end() )
-        skip = true;
+#endif
+ComparisonLinearizationAttribute ComparisonLinearization::evaluateSynthesizedAttribute (
+    SgNode* astNode,
+    SubTreeSynthesizedAttributes synthesizedAttributeList )
+{
+  ComparisonLinearizationAttribute synAttrib;
 
 
+#if 0
+  if( synthesizedAttributeList.size() > 2)
+  {
+    std::string correspondingString =astNode->class_name()+ " ";
+    correspondingString+=(astNode)->unparseToString()+" ";
+    correspondingString+=boost::lexical_cast<std::string>((astNode)->get_file_info()->get_line());
+    correspondingString+= " ";
+    correspondingString+=boost::lexical_cast<std::string>((astNode)->get_file_info()->get_col());
+
+    std::cout << "Node with more that two synthesized attributes: " << correspondingString << std::endl;
+
+  }
+
+  ROSE_ASSERT(synthesizedAttributeList.size() <= 2);
+#endif
 
 
-    SgValueExp* valExp = isSgValueExp(node);
-    if( ( valExp != NULL ) &&
-        ( valExp->get_originalExpressionTree() !=NULL   )
-      ){
- 
-          if( constFoldTraverse == TraverseConstantFoldedExpression )
-                 skip=true;
 
-       }
- 
-return skip;
-}
+  for( SubTreeSynthesizedAttributes::iterator iItr = synthesizedAttributeList.begin() ; iItr != synthesizedAttributeList.end() ; iItr++  )
+  {
+    for(int j = 0; j < iItr->nodes.size(); j++)
+      synAttrib.nodes.push_back(iItr->nodes[j]);
+
+  }
+  nodes = synAttrib.nodes;
+
+  //The variablerefexp will represent the variable access itself so this is unnecessary
+  //and causes false positives
+  if(isSgArrowExp(astNode) || isSgDotExp(astNode) ||
+      isSgPointerDerefExp(astNode)!=NULL || isSgCastExp(astNode) != NULL ||
+      isSgExprStatement(astNode) || isSgCastExp(astNode) != NULL ||
+      isSgPntrArrRefExp(astNode) != NULL || isSgFunctionRefExp(astNode)!=NULL 
+      || isSgExprListExp(astNode) != NULL
+    )
+    return synAttrib;
+
+  //By definition a compiler generated node does not map to the
+  //token stream and it is therefore not interesting for our
+  //notion of macro inconsistencies
+  SgLocatedNode* compilerGeneratedNode = isSgLocatedNode(astNode);
+  if( compilerGeneratedNode != NULL  )
+    if(compilerGeneratedNode->get_file_info()->isCompilerGenerated() == true)
+      return synAttrib;
+
+
+  if(SgValueExp* valueExp = isSgValueExp(astNode) )
+  { // Catch the constant folded part of a constant folded expression
+    if(  valueExp->get_originalExpressionTree() !=NULL ) 
+    {
+      return synAttrib;
+    }
+  }
+
+#if 0
+
+  if( find(nodeToFilter.begin(),nodeToFilter.end(),astNode) != nodeToFilter.end() )
+    std::cout << "Found IN filter list " << astNode->unparseToString() << std::endl;
+  else
+    std::cout << "NOT Found IN filter list " << astNode->unparseToString() << std::endl;
+#endif
+
+  ///  std::cout << "AA" << std::endl;
+  bool nodeFromMacroDef =  ( queryForLine(astNode, posOfMacroCall).size() > 0 ? true : false );
+
+  bool hasKeptNodeInSubtree = false;
+  int  numberOfKeptSubtrees = 0;
+  for( SubTreeSynthesizedAttributes::iterator iItr = synthesizedAttributeList.begin() ; iItr != synthesizedAttributeList.end() ; iItr++  )
+  {
+    if( iItr->nodes.size() > 0 )
+    {
+      hasKeptNodeInSubtree = true;
+      numberOfKeptSubtrees++;
+    }
+  }
+
+  if( hasKeptNodeInSubtree == true )
+  {
+
+    if(numberOfKeptSubtrees == 1 &&
+       nodeFromMacroDef == false )
+    {
+    }else
+      synAttrib.nodes.push_back(astNode);
+
+  }else if( find(nodeToFilter.begin(),nodeToFilter.end(),astNode) == nodeToFilter.end() &&
+      nodeFromMacroDef == true )
+  {
+    synAttrib.nodes.push_back(astNode);
+  }
+
+
+  nodes = synAttrib.nodes;
+  return synAttrib;
+};
 
 
 
+
+
+std::vector<SgNode*> queryForNotOnLine(SgNode* node, Sg_File_Info* compareFileInfo){
+    std::vector<SgNode*> thisNode = queryForLine(node, compareFileInfo);  
+
+    std::vector<SgNode*> returnList;
+
+    if(thisNode.size()==0)
+        returnList.push_back(node);
+
+    return returnList;
+
+};
 
 
 /*****************************************************************
