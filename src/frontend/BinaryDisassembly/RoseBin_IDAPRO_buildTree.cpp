@@ -388,6 +388,7 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::resolveRecursivelyExpression(int addr
 
   // collect an array of children
   map<int, vector<int> >::const_iterator i = subTree.find(expr_id_root);
+  string commentChildren = "";
   if (i != subTree.end()) {
     for (vector<int>::const_iterator childIt = i->second.begin(); childIt!=i->second.end(); ++childIt) {
       // iterate though children of root node
@@ -399,12 +400,15 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::resolveRecursivelyExpression(int addr
              << " parent_id: " << par_id <<endl;
       ROSE_ASSERT (child_id < (int)rememberExpressionTree->size());
       exprTreeType exprTree = (*rememberExpressionTree)[child_id];
+      //cerr << "      ... recursive call  " << binExp << endl;
       binExp = resolveRecursivelyExpression(address, child_id, subTree, 
                                             typeOfOperand,
                                             rememberExpressionTree,
                                             operand_id,
                                             rememberSubstitution,
                                             rememberComments);
+      commentChildren += binExp->get_comment();
+      //cerr << "      ... recursive call returned " << binExp << "  cc: " << commentChildren << endl;
       children.push_back(binExp);
       debugHelpMap[binExp] = exprTree; 
       nrOfChildren++;
@@ -419,6 +423,8 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::resolveRecursivelyExpression(int addr
   exprTreeType exprTree = (*rememberExpressionTree)[expr_id_root];
   //cerr << "Working on " << exprTree.expr_type << " symbol " << exprTree.symbol << " children " << children.size() << endl;
   binExp = convertBinaryNode(&exprTree, &children, typeOfOperand);
+  binExp->set_comment(commentChildren);
+  //cerr << " New binExp : " << binExp << "   c : " << binExp->get_comment() << endl;
   // the following makes sure that if a node should be skipped
   // e.g. a SgAsmAdd because it has only one child, then
   // we attach to the previous node
@@ -435,17 +441,22 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::resolveRecursivelyExpression(int addr
   string text = getReplacementText(rememberSubstitution, operand_id, expr_id_root, address);
   string comment = getComment(address, rememberComments);
   if (comment!="") {
-    text = text + " <"+comment+">";
+    text = text + "... <"+comment+">";
   }
   if (binExp!=NULL && text!="") {
     string tt = binExp->get_replacement();
     //if (tt!="") {text = tt; cerr << "Found other replacement text " << tt << endl;} else {cerr << "Setting replacement text" << endl;}
-    // cout << "Setting replacement with " << text << endl;
-    binExp->set_replacement(text);
+    //cout << "           -- " << binExp << " Setting replacement with " << text << endl;
+    if (tt=="")
+      binExp->set_replacement(""+text);
+      binExp->set_comment("" +text);
+      //cerr << "                set : "<<binExp<<" r:" << binExp->get_replacement() << " c:" << binExp->get_comment() << endl;
+  } else if (binExp!=NULL) {
+    //binExp->set_comment("cc:" +comment+"r:"+text+"rr:"+binExp->get_replacement());
   } else {
     //    cerr << "binExp is NULL" << endl;
   }
-
+  //cerr << "                skip : " << binExp << endl;
   if (RoseBin_support::DEBUG_MODE())
     cout << ">>>> binExp = " << binExp <<  endl;
   return binExp;

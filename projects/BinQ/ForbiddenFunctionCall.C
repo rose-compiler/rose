@@ -82,8 +82,24 @@ ForbiddenFunctionCall::runTraversal(SgNode* project) {
   blackList.push_back("atol");
   blackList.push_back("atoll");
   blackList.push_back("atof");
-  blackList.push_back("unparse");
-  blackList.push_back("unparseToString");
+
+  blackList.push_back("_vfork");
+  blackList.push_back("_sprintf");
+  blackList.push_back("_scanf");
+  blackList.push_back("_sscanf");
+  blackList.push_back("_gets");
+  blackList.push_back("_strcpy");
+  blackList.push_back("__mbscpy");
+  blackList.push_back("_lstrcat");
+  blackList.push_back("_memcpy");
+
+  blackList.push_back("_strcat");
+  blackList.push_back("_rand");
+  blackList.push_back("_rewind");
+  blackList.push_back("_atoi");
+  blackList.push_back("_atol");
+  blackList.push_back("_atoll");
+  blackList.push_back("_atof");
 
   foundFunction.clear();
   foundInstruction.clear();

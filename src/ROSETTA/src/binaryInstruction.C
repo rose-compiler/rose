@@ -1923,6 +1923,9 @@ Grammar::setUpBinaryInstructions ()
   // added by tps on 5Apr07
      AsmExpression.setDataPrototype("std::string","replacement","= \"\"",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     // added by tps 6 Apr 09
+     AsmExpression.setDataPrototype("std::string","comment","= \"\"",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AsmBinaryExpression.setDataPrototype("SgAsmExpression*","lhs","= NULL",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);

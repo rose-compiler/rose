@@ -115,6 +115,8 @@ test_fileASTFile:
 
 
 check-local:
+	./BinQ -a $(srcdir)/win_buffer.exe --test --batch
+	./BinQ -a $(srcdir)/win_buffer.exe-tsv --test --batch
 	./BinQ -a $(srcdir)/buffer2.bin --test
 	./BinQ -a $(srcdir)/buffer2.bin $(srcdir)/buffer2b.bin --test
 	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2b.bin --test
@@ -172,6 +174,6 @@ EXTRA_DIST = BinQGui.h \
              buffer2-tsv/address_comments_1.tsv buffer2-tsv/address_references_1.tsv buffer2-tsv/basic_blocks_1.tsv buffer2-tsv/callgraph_1.tsv \
              buffer2-tsv/control_flow_graph_1.tsv buffer2-tsv/expression_substitutions_1.tsv buffer2-tsv/expression_tree_1.tsv buffer2-tsv/functions_1.tsv \
              buffer2-tsv/instructions_1.tsv buffer2-tsv/modules.tsv buffer2-tsv/operand_expressions_1.tsv buffer2-tsv/operand_strings_1.tsv \
-             buffer2-tsv/operand_tuples_1.tsv
+             buffer2-tsv/operand_tuples_1.tsv win_buffer.exe win_buffer.cpp win_buffer.exe-tsv
 
 

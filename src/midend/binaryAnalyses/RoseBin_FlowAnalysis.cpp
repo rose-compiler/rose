@@ -407,7 +407,7 @@ RoseBin_FlowAnalysis::process_jumps() {
 	    if (inst->get_parent()) {
               //cerr << "Inst has a parent" << endl;
 	      if (inst->get_comment()=="")
-		inst->set_comment(b_func->get_name());
+	      	inst->set_comment(""+b_func->get_name());
               SgAsmInstruction* inst_after = info->getInstructionAtAddress(inst->get_address() + inst->get_raw_bytes().size()); // inst->cfgBinFlowOutEdge(info);
               if (inst_after) {
                 //cerr << "Added dest " << std::hex << isSgAsmStatement(inst_after)->get_address() << " for function" << endl;

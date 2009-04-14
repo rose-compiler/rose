@@ -62,6 +62,7 @@ createAndDeleteBinGUI(std::string fileName, std::string empty,
 		      std::vector<std::string> emptyVec, 
 		      std::string saveFile, map<std::string,int>& analysisResults) {
   BinQbatch binGui(fileName, empty, emptyVec, emptyVec, true, saveFile);
+  printAssembly(fileName,empty, binGui.fileA, binGui.fileB, binGui.sourceFile);
   // run Analyses here and collect info
   double timeForFile = binGui.getTestAnalysisTime();
   // iterate through all results and add to current file
@@ -76,18 +77,56 @@ runListMode(string saveFile,
   cerr << " Running in List Mode. Loading File: " << listFile << endl;
   ifstream inFile;
   vector<string> files;
+  vector<string> filesSkip;
+
+  // skip current files in result.xls (dont recalculate) if 
+  // results.xls exits
+  ifstream inFile2;
+  string fileName2="results.xls";
+  string fileNameSkip="";
+  inFile2.open(fileName2.c_str());
+  if (!inFile2) {
+    cout << "Unable to open listFile2" << endl;
+  } else {
+    int i=0;
+    bool removedPreheader=false;
+    while (inFile2 >> fileNameSkip) {
+      if (!removedPreheader && i>18) {i=0; removedPreheader=true;}
+      if ( removedPreheader && (i%8)==0) {
+	filesSkip.push_back(fileNameSkip);
+	cerr << i << " skipping file : " << fileNameSkip << endl;
+      } //else 
+	//cerr << i << " junk "  << fileNameSkip << endl;
+      i++;
+
+    }
+    inFile2.close();
+  }
+
   string fileName;
   inFile.open(listFile.c_str());
   if (!inFile) {
     cout << "Unable to open listFile" << endl;
     exit(1); // terminate with error
   }
+  cerr << "Found the following filenames : " << endl;
   while (inFile >> fileName) {
     //    if (!is_directory(fileName))
-    files.push_back(fileName);
+    bool found=false;
+    vector<string>::const_iterator its = filesSkip.begin();
+    for (;its!=filesSkip.end();++its) {
+      if ((*its)==fileName)
+	found=true;
+    }
+    if (!found) {
+      files.push_back(fileName);
+      cerr << " Adding file : " << fileName << endl;
+    }
   }
+
   inFile.close();
   cerr << "Reading done. Files found: " << files.size() << endl;
+
 
   // store the final results per file
   int columns=0;
@@ -108,8 +147,10 @@ runListMode(string saveFile,
     cerr << "Analyzing : " << fileName ;
     //if (i<10) {
     analysisRes.clear();
+    try {
     double timeForFile = createAndDeleteBinGUI(fileName, empty, emptyVec, 
 					       saveFile, analysisRes);
+
     if (i==0) {
       columns=analysisRes.size();
       totalBugs = new int[columns];
@@ -118,8 +159,9 @@ runListMode(string saveFile,
       }
     }
     // remove -tsv
-    if (fileName.size()>4)
-      fileName = fileName.substr(0,fileName.size()-4);
+    if (fileName.find("-tsv")!=std::string::npos)
+      if (fileName.size()>4)
+	fileName = fileName.substr(0,fileName.size()-4);
     cerr << "Writing results for : " << fileName << endl;
     if (firstIt) {
       firstIt=false;
@@ -146,7 +188,9 @@ runListMode(string saveFile,
     fp_out << "\t" <<totalbugsRow << "\t" <<timeForFile << endl;
     //      }
     i++;
-
+    } catch (int i) {
+      cerr << "Stop -- Aborted : " << fileName << endl;
+    }
   }
   for (int i=0;i<columns;++i) {
     fp_out << "\t" <<totalBugs[i];

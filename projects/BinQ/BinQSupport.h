@@ -20,6 +20,14 @@ class BinQSupport
       memoryExpressionContainsRegister(X86RegisterClass cl, int registerNumber,
 				       SgAsmMemoryReferenceExpression* mem);
 
+    static SgAsmInstruction* getNextStmt(SgAsmInstruction* inst);
+    static rose_addr_t checkIfValidAddress(rose_addr_t next_addr, SgAsmInstruction* inst);
+    static SgAsmInstruction* getPrevStmt(SgAsmInstruction* inst);
+    // this one is not precise because it only gives you one edge
+    // along the CFG up. Unfortunately, the get_predecessors algo from
+    // Jeremiah doesnt work on IDA yet
+    static SgAsmx86Instruction* checkIfValidPredecessor(rose_addr_t next_addr, SgAsmInstruction* inst);
+
   private:
     std::string relativePathPrefix;
     std::string ToUpper(std::string myString);   

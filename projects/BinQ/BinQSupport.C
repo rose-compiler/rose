@@ -272,3 +272,94 @@ BinQSupport::memoryExpressionContainsRegister(X86RegisterClass cl, int registerN
 }
 
 
+
+
+
+SgAsmInstruction*
+BinQSupport::getNextStmt(SgAsmInstruction* inst) {
+  SgAsmInstruction* nextStmt = NULL;
+  SgAsmFunctionDeclaration * parBlock = isSgAsmFunctionDeclaration(inst->get_parent());
+  //cerr << " Checking nextStmt  :  parent : " << inst->get_parent()->class_name() << " : " << parBlock << endl;
+  if (parBlock) {
+    int pos=-1;
+    int stop=-2;
+    Rose_STL_Container<SgAsmStatement*> stmtList = parBlock->get_statementList();
+    Rose_STL_Container<SgAsmStatement*>::const_iterator it  = stmtList.begin();
+    for (;it!=stmtList.end();++it) {
+      pos++;
+      SgAsmStatement* stmt = *it;
+      ROSE_ASSERT(stmt);
+      SgAsmInstruction* stInst = isSgAsmInstruction(stmt);
+      if (stInst) {
+	if (stop==pos)
+	  nextStmt = stInst;
+	if (inst==stInst)
+	  stop =(pos+1);
+      }
+    }
+  }
+  return nextStmt;
+}
+
+
+
+rose_addr_t
+BinQSupport::checkIfValidAddress(rose_addr_t next_addr, SgAsmInstruction* inst) {
+  if (next_addr==inst->get_address()) {
+    // cant proceed to next address
+    SgAsmInstruction* nextStmt=getNextStmt(inst);
+    //cerr << "IDA found next : " << nextStmt << endl;
+    if (nextStmt) {
+      SgAsmx86Instruction* instN = isSgAsmx86Instruction(nextStmt);
+      if (instN)
+	next_addr = instN->get_address();
+    }
+    if (next_addr==inst->get_address())
+      return 0;
+  }
+  return next_addr;
+}
+
+
+SgAsmInstruction*
+BinQSupport::getPrevStmt(SgAsmInstruction* inst) {
+  SgAsmInstruction* nextStmt = NULL;
+  SgAsmFunctionDeclaration * parBlock = isSgAsmFunctionDeclaration(inst->get_parent());
+  //cerr << " Checking nextStmt  :  parent : " << inst->get_parent()->class_name() << " : " << parBlock << endl;
+  if (parBlock) {
+    Rose_STL_Container<SgAsmStatement*> stmtList = parBlock->get_statementList();
+    Rose_STL_Container<SgAsmStatement*>::const_iterator it  = stmtList.begin();
+    SgAsmInstruction* before=NULL;
+    for (;it!=stmtList.end();++it) {
+      SgAsmStatement* stmt = *it;
+      ROSE_ASSERT(stmt);
+      SgAsmInstruction* stInst = isSgAsmInstruction(stmt);
+      if (stInst) {
+	if (inst==stInst)
+	  nextStmt=before;
+	before=stInst;
+      }
+    }
+  }
+  return nextStmt;
+}
+
+SgAsmx86Instruction*
+BinQSupport::checkIfValidPredecessor(rose_addr_t next_addr, SgAsmInstruction* inst) {
+  SgAsmx86Instruction* ninst = isSgAsmx86Instruction(inst);
+  if (next_addr==inst->get_address()) {
+    // cant proceed to next address
+    SgAsmInstruction* nextStmt=getPrevStmt(inst);
+    //cerr << "IDA found next : " << nextStmt << endl;
+    if (nextStmt) {
+      SgAsmx86Instruction* instN = isSgAsmx86Instruction(nextStmt);
+      if (instN) {
+	next_addr = instN->get_address();
+	ninst=instN;
+      }
+    }
+    if (next_addr==inst->get_address())
+      return ninst;
+  }
+  return ninst;
+}

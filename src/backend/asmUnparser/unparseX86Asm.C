@@ -152,7 +152,7 @@ string unparseX86Instruction(SgAsmx86Instruction* insn) {
   }
   if (insn->get_comment()!="")
     result+="  <"+insn->get_comment()+">";
-  
+
   return result;
 }
 

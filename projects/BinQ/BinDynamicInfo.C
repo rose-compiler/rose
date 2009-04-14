@@ -39,16 +39,19 @@ DynamicInfo::visit(SgNode* node) {
       SgAsmExpressionPtrList& opsList = ops->get_operands();
       SgAsmExpressionPtrList::const_iterator itOP = opsList.begin();
       string comment="";
+#if 1
       for (;itOP!=opsList.end();++itOP) {
 	SgAsmExpression* exp = *itOP;
 	if (exp->get_replacement()!="")
-	  comment = exp->get_replacement();
+	  comment += "BD:"+exp->get_replacement();
       }
+
       if (comment!="") {
 	if (comment[0]=='_')
 	  comment = comment.substr(1,comment.size());
       }
-      inst->set_comment(comment);
+      //      inst->set_comment(comment);
+#endif
     }
   }
   else {
@@ -167,7 +170,8 @@ DynamicInfo::visit(SgNode* node) {
 	    instance->codeTableWidget->setText(sym_name, 4, row);
 	  }
 	  //cerr << ">>> set comment : " << sym_name << endl;
-	  inst->set_comment(sym_name);
+	  if (inst->get_comment()=="")
+	    inst->set_comment(sym_name);
 	}
       }
 

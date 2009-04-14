@@ -607,6 +607,8 @@ void RoseBin_FILE::process_operand_tuples_query( ) {
     int operand_id=-1;
     int position =-1;
 
+
+
     for (unsigned int i=0; i<vec_operand_tuples_1.size(); i++) {
       address = atoi(vec_operand_tuples_1[i].address.c_str());
       operand_id = atoi(vec_operand_tuples_1[i].operand_id.c_str());
@@ -663,7 +665,7 @@ void RoseBin_FILE::process_operand_tuples_query( ) {
 							 operand_id,
 							 &rememberSubstitution,
 							 &rememberComments);
-
+	//	cerr << " >>>>>>>>>>>>> Found binExp : " << binExp << " " << binExp->get_comment() << "  " << binExp->get_replacement() << endl;
       } // if operand
 
       
@@ -673,6 +675,8 @@ void RoseBin_FILE::process_operand_tuples_query( ) {
       vector<SgAsmExpression*>& currentOperands = tmp_instruction_map[address];
       if (position >= (int)currentOperands.size()) currentOperands.resize(position + 1);
       currentOperands[position] = binExp;
+      //cerr << " >>>>>>>>>>>>> SAVE binExp : " << binExp << " " << binExp->get_comment() << "  " << binExp->get_replacement() << endl;
+      //tmp_instruction_map[address] =  currentOperands;
 #if 0
       map <int, map <int, SgAsmExpression*> >::iterator tmpIt = tmp_instruction_map.find(address);
       bool found=false;
@@ -712,23 +716,22 @@ void RoseBin_FILE::process_operand_tuples_query( ) {
 	vector < SgAsmExpression*>& exprList_forInst = it->second;
 	int sizeList = exprList_forInst.size();
 	// find each element separately
+	string comment="";
 	for (int i=0; i<sizeList; i++) {
 	  SgAsmExpression* binExp = exprList_forInst[i];
-#if 0
-	  map <int, SgAsmExpression*>::iterator it = exprList_forInst.find(i);
-	  // get the elements in order!! this is important.
-	  SgAsmExpression* binExp = it->second;
-#endif
+	  comment+=""+binExp->get_comment();
 	  
 	  remInstr->get_operandList()->append_operand(binExp);
 	  binExp->set_parent(remInstr->get_operandList());
-	  
+	  //cerr << " Setting comment : " << binExp << "  comment: " << comment << endl;
 	  if (RoseBin_support::DEBUG_MODE()) {
 	    exprTreeType exprTree = buildROSE->getDebugHelp(binExp);
 	    cout << ">> append operand (to instruction): binExp: " <<binExp  
 		 << " - sym: " <<exprTree.symbol << " - immedi: " << exprTree.immediate << endl;
 	  }
 	}
+	if (comment!="")
+	remInstr->set_comment(comment);
 	// tmp_instruction_map.erase(it);
       }
     }
