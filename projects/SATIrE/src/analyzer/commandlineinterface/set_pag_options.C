@@ -57,12 +57,10 @@ void setPagOptions(AnalyzerOptions opt) {
     // startbanks value of 10, so there is nothing else to do
   }
 
-  //output=(char*)(opt.getGdlFileName().c_str());
-  animation=(char*)(opt.getOutputGdlAnimDirName().c_str());  
-  //noresult=!opt.resultGeneration();
+  setOutputGdlAnimDirName(opt.outputGdlAnim()
+                            ? (char *) opt.getOutputGdlAnimDirName().c_str()
+                            : NULL);
 
-  if(!opt.outputGdlAnim())
-    animation=NULL;
   int csl=opt.getCallStringLength();
   if(csl==0 || csl==1) { 
     sel_mapping=csl; 
@@ -149,4 +147,9 @@ void setPagOptions(AnalyzerOptions opt) {
     }
     ExpressionId::setPrintFormat(printMode);
   }
+}
+
+void setOutputGdlAnimDirName(char *animDirName)
+{
+    animation = animDirName;
 }

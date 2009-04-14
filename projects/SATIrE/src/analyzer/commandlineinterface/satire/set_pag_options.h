@@ -25,5 +25,6 @@
 #include "AnalyzerOptions.h"
 
 void setPagOptions(AnalyzerOptions opt);
+void setOutputGdlAnimDirName(char *animDirName);
 
 #endif

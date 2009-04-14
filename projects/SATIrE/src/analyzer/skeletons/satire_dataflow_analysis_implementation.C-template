@@ -337,7 +337,7 @@ Implementation::annotateProgram(Program *program)
 }
 
 void
-Implementation::outputAnnotatedProgram(Program *program)
+Implementation::outputAnnotatedProgram(Program *program, bool prefixFiles)
 {
     /* Handle command line option --output-text. */
     if (program->options->outputText())
@@ -365,7 +365,8 @@ Implementation::outputAnnotatedProgram(Program *program)
                 tp.traverseInputFiles(program->astRoot);
 
             ofstream termfile;
-            string filename = program->options->getOutputTermFileName();
+            string filename = (prefixFiles ? identifier() + "_" : "")
+                             + program->options->getOutputTermFileName();
             termfile.open(filename.c_str());
             termfile << "% Termite term representation" << endl;
             termfile << tp.getTerm()->getRepresentation() << "." << endl;
@@ -376,17 +377,26 @@ Implementation::outputAnnotatedProgram(Program *program)
 }
 
 void
-Implementation::outputAnalysisVisualization(Program *program)
+Implementation::outputAnalysisVisualization(Program *program, bool prefixFiles)
 {
     AnalyzerOptions *options = program->options;
     bool verbose = options->verbose();
 
     /* Handle command line options --output-gdl and --output-gdlanim. */
     std::string outputGdlFile;
+    std::string outputGdlAnimDir;
     if (options->outputGdl())
-        outputGdlFile = options->getOutputGdlFileName();
+    {
+        outputGdlFile = (prefixFiles ? identifier() + "_" : "")
+                       + options->getOutputGdlFileName();
+    }
     else if (options->outputGdlAnim())
-        outputGdlFile = options->getOutputGdlAnimDirName() + "/result.gdl";
+    {
+        outputGdlAnimDir = (prefixFiles ? identifier() + "_" : "")
+                          + options->getOutputGdlAnimDirName();
+        setOutputGdlAnimDirName(Ir::getCharPtr(outputGdlAnimDir));
+        outputGdlFile = outputGdlAnimDir + "/result.gdl";
+    }
 
     if (options->outputGdl() || options->outputGdlAnim())
     {
@@ -399,11 +409,7 @@ Implementation::outputAnalysisVisualization(Program *program)
         if (verbose && options->outputGdl() && options->outputGdlAnim())
             std::cout << "and ";
         if (verbose && options->outputGdlAnim())
-        {
-            std::cout
-                << "animation in directory "
-                << options->getOutputGdlAnimDirName() << " ";
-        }
+            std::cout << "animation in directory " << outputGdlAnimDir << " ";
         if (verbose)
             std::cout << "... " << std::flush;
         createGDL(outputGdlFile.c_str());

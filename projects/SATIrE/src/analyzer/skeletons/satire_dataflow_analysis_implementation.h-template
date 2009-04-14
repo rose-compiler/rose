@@ -32,8 +32,9 @@ public:
     void setGlobalRetfunc(int global_retfunc) const;
     
     void annotateProgram(Program *program);
-    void outputAnnotatedProgram(Program *program);
-    void outputAnalysisVisualization(Program *program);
+    void outputAnnotatedProgram(Program *program, bool prefixFiles = true);
+    void outputAnalysisVisualization(
+            Program *program, bool prefixFiles = true);
 
 private:
  // This member holds the information computed by the analysis; it is really
