@@ -36,6 +36,8 @@ assign \-\>
 /* kudos to kregexpeditor: */
 token (::)?[_a-zA-Z\$][A-Za-z_0-9\$]*(::[a-zA-Z][A-Za-z_0-9]*)?
 undef \<undefined\ dfi\>
+labels labels
+from_to \.\.
 edge Edge
 context Context
 merged Merged
@@ -46,6 +48,8 @@ ws [ \t\r\n]
 {undef}  { return UNDEF; }
 {top}    { return TOP; }
 {bottom} { return BOT; }
+{labels} { return LABELS; }
+{from_to} { return FROM_TO; }
 {edge}   { return EDGE; }
 {context} { return CONTEXT; }
 {merged} { return MERGED; }

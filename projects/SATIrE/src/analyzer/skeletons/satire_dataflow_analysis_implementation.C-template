@@ -203,7 +203,7 @@ statement_info_string(DFI_STORE store, SgStatement *stmt, std::string attrName)
     {
         int min = *labels.begin();
         int max = *labels.rbegin();
-        str << "labels " << min << "-" << max << ": ";
+        str << "labels " << min << ".." << max << ": ";
     }
 
     CarrierType info;

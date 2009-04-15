@@ -209,7 +209,7 @@ void StatementAttributeTraversal<DFI_STORE_TYPE>::visit(SgNode *node)
                                        || isWhileBody
                                        || isDoWhileBody
                                        || isForBody;
-            if (isInterestingStatement) {
+            if (!isSgBasicBlock(stmt) && isInterestingStatement) {
                 std::string funcname = func->get_name().str();
                 _currentFunction=funcname;
                 handleStmtDfi(stmt,getPreInfo(stmt),getPostInfo(stmt));

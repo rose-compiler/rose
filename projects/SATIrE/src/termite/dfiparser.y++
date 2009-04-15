@@ -27,6 +27,8 @@ void dfierror(const char *);
 %token <strValue> UNDEF 
 %token <strValue> SET_BEGIN
 %token <strValue> SET_CLOSE
+%token LABELS
+%token FROM_TO
 %token <strValue> EDGE
 %token <strValue> CONTEXT
 %token <strValue> MERGED
@@ -41,6 +43,7 @@ void dfierror(const char *);
 
 /*nonterminal types*/
 %type <singleTerm> start
+%type <singleTerm> dfiseq
 %type <termList>   dfis
 %type <singleTerm> dfi
 %type <singleTerm> edgespec
@@ -57,6 +60,11 @@ void dfierror(const char *);
 /*grammar*/
 
 start:
+  LABELS INT FROM_TO INT ':' dfiseq { $$ = $6; }
+  | dfiseq { $$ = $1; }
+;
+
+dfiseq:
   dfis {
     dfiterm = new PrologCompTerm(dfi_name);
     dfiterm->addSubterm(new PrologList(*$1));
@@ -184,8 +192,8 @@ extern const char* dfi_input_start;
 void dfierror(const char* msg) 
 {
   cerr << std::string(msg) 
-       << " near token """ << dfitext << """" 
-       << "(" << (int)dfitext[0] << ")" 
+       << " near token \"" << dfitext << "\"" 
+       << " (token " << (int)dfitext[0] << ")" 
        << " before """ << dfi_input << """" << endl;
   cerr << "in DFI string """ << dfi_input_start << """." << endl;
   dfiterm = new PrologCompTerm(dfi_name);
