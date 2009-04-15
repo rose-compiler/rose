@@ -66,8 +66,12 @@ ExprStatement(exp), _:
 
 ArgumentAssignment(VarRefExp(_) as var, exp), _:
   if @ != bot then
-      let f <= @; in
-      lift(f\[varref_varid(var) -> eval(exp, @, context)!1!2])
+   // -- In order to kill all tmpvars, we must here use the state returned
+   // -- by eval.
+      let e = eval(exp, @, context); in
+      let value = e!1!2;
+          state <= e!2!2; in
+      lift(state\[varref_varid(var) -> value])
   else
     bot
   ;
@@ -192,7 +196,15 @@ eval(exp, state, context) =
     else case exp of
       VarRefExp(name)       =>  // --print("###is_VARREF") 
                                 // --print(val-aststring(name)) print("\n") 
-                                (s{!varref_varid(exp)!}, state);
+                                let id = varref_varid(exp); in
+                                if is_tmpvarid(id) then
+                                    let s2 = s\[id -> top]; in
+                              // -- println("killing tmp var ref ", exp,
+                              // --         ":\n    old state = ", s,
+                              // --         ",\n    new state = ", s2)
+                                    (s{!id!}, lift(s2))
+                                else
+                                    (s{!id!}, state);
       AssignInitializer(e1) => eval(e1, state, context);
       NewExp(_,_,_)         => ((bot,bot), state);
       _                     => println("**WARNING: ignoring unknown exp: ",
@@ -202,8 +214,6 @@ eval(exp, state, context) =
     endcase   ;
   endcase;
           
-// -- TODO kill temporary variables - Possible Memory leak
-
 
 binary :: Expression, Expression, Expression, itvl_State, ContextInfo -> itvl_IntervalStatePair;
 binary(left, right, exp, state, context) =

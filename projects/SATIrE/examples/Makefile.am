@@ -225,7 +225,8 @@ interval: init.token
 if WITH_SWI_PROLOG
 	@echo "Correctness tests..."
 	$(MAKE) -j1 $(patsubst %.c,%.interval.run, \
-           $(wildcard $(top_srcdir)/examples/*/tests/*.c))
+           $(wildcard $(top_srcdir)/examples/*/tests/*.c \
+		              $(top_srcdir)/tools/interval/pto_tests/*.c))
 endif
 
 %.loop.term: %.c
