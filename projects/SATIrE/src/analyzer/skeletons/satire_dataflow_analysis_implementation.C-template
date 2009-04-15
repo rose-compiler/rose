@@ -197,6 +197,15 @@ statement_info_string(DFI_STORE store, SgStatement *stmt, std::string attrName)
 
     std::stringstream str;
 
+    CFG *icfg = get_global_cfg();
+    const std::set<int> &labels = icfg->statementAllLabels(stmt);
+    if (!labels.empty())
+    {
+        int min = *labels.begin();
+        int max = *labels.rbegin();
+        str << "labels " << min << "-" << max << ": ";
+    }
+
     CarrierType info;
     StatementAttribute *stmtAttr
         = dynamic_cast<StatementAttribute *>(stmt->getAttribute(attrName));

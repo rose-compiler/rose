@@ -194,16 +194,30 @@ void StatementAttributeTraversal<DFI_STORE_TYPE>::visit(SgNode *node)
     {
         SgStatement *stmt = isSgStatement(node);
         SgFunctionDeclaration *func = enclosing_function(stmt);
-	if(func!=NULL) {
-	  if (isSgBasicBlock(stmt->get_parent())) {
-            std::string funcname = func->get_name().str();
-	    _currentFunction=funcname;
-            handleStmtDfi(stmt,getPreInfo(stmt),getPostInfo(stmt));
-	  }
-	  if(SgBasicBlock* bb=isSgBasicBlock(stmt)) {
-	    visitBasicBlock(bb); // Basic Block has no annotation but we need it sometimes
-	  }
-	}
+        if(func!=NULL) {
+            bool isBBStatement = isSgBasicBlock(stmt->get_parent());
+            bool isIfPart = isSgIfStmt(stmt->get_parent())
+                && stmt != isSgIfStmt(stmt->get_parent())->get_conditional();
+            bool isWhileBody = isSgWhileStmt(stmt->get_parent())
+                && stmt == isSgWhileStmt(stmt->get_parent())->get_body();
+            bool isDoWhileBody = isSgDoWhileStmt(stmt->get_parent())
+                && stmt == isSgDoWhileStmt(stmt->get_parent())->get_body();
+            bool isForBody = isSgForStatement(stmt->get_parent())
+                && stmt==isSgForStatement(stmt->get_parent())->get_loop_body();
+            bool isInterestingStatement = isBBStatement
+                                       || isIfPart
+                                       || isWhileBody
+                                       || isDoWhileBody
+                                       || isForBody;
+            if (isInterestingStatement) {
+                std::string funcname = func->get_name().str();
+                _currentFunction=funcname;
+                handleStmtDfi(stmt,getPreInfo(stmt),getPostInfo(stmt));
+            }
+            if(SgBasicBlock* bb=isSgBasicBlock(stmt)) {
+                visitBasicBlock(bb); // Basic Block has no annotation but we need it sometimes
+            }
+        }
     }
 }
 
