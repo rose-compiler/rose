@@ -203,7 +203,7 @@ pointsto_live_variables: init.token
 	@echo "Testing the correctness of the interval analysis on" $<
 	@cp $< $(testdir)/interval/intvltest.c
 	@chmod u+w $(testdir)/interval/intvltest.c
-	@cd $(testdir)/interval; ./interval --output-term=intvltest.term intvltest.c
+	@cd $(testdir)/interval; ./interval --run-pointsto-analysis --callstringlength=1 --output-term=intvltest.term intvltest.c
 	@cd $(testdir)/interval; export TERMITE_LIB=$(datadir)/termite; $(SWI_PL) -q -O -t main -f validator.pl < intvltest.term > intvltest1.term
 	@cd $(testdir)/interval; $(DESTDIR)/$(bindir)/term2c intvltest1.term -o intvlassert.c
 	@cd $(testdir)/interval; \
@@ -250,7 +250,7 @@ satire_driver: init.token
 	cp -ur $(top_srcdir)/tools/interval/tests $(testdir)/driver_tests
 	cd $(testdir)
 	for f in $(testdir)/driver_tests/*; do \
-		$(bindir)/satire_driver --analysis=interval $$f; echo; \
+		$(bindir)/satire_driver --analysis=interval --run-pointsto-analysis --callstringlength=1 $$f; echo; \
 	done
 
 testsuite: init.token

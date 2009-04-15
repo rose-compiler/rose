@@ -1,6 +1,7 @@
 // -- -*- haskell -*- (Fake Emacs mode for syntax highlighting)
+// -- vim: syntax=fula
 // -- ------------------------------------------------------------------------
-// -- Authors: Gergo Barany, 2006 (original constprop)
+// -- Authors: Gergo Barany, 2006/2009 (original constprop/points-to info)
 // --          Adrian Prantl, 2008-2009 (interval extensions)
 // --          
 // -- Contact: adrian@complang.tuwien.ac.at
@@ -10,10 +11,11 @@
 // -- BOT: Variable is not yet analyzED
 // -- 
 // -- remaining problems:
-// -- * pointer aliasing is ignored
+// -- * pointer aliasing is ignored -- not anymore!
 // -- * type casts are ignored
 // -- * interval arithmetic needs to be checked for correctness (esp. | and &)
 // -- * wraparound is untestet
+// -- * structures are not handled correctly yet
 // -- 
 // -- This program is free software; you can redistribute it and/or modify
 // -- it under the terms of the GNU General Public License as published by
@@ -25,6 +27,12 @@
 // -- GNU General Public License for more details.
 // -- 
 // -- ------------------------------------------------------------------------
+
+SET
+    VarIdList = list(VariableId)
+DOMAIN
+    BoolL = flat(bool) 
+ENDDOMAIN
 
 PROBLEM Interval_Analysis
   direction:  forward
@@ -49,7 +57,7 @@ FunctionEntry(_), _:
 ExprStatement(exp), _:
   if @ != bot then
     
-    let state = eval(exp, @)!2!2 ; in
+    let state = eval(exp, @, context)!2!2 ; in
       // --print("\neval => ") print(state) print("\n") 
       state
   else
@@ -59,7 +67,7 @@ ExprStatement(exp), _:
 ArgumentAssignment(VarRefExp(_) as var, exp), _:
   if @ != bot then
       let f <= @; in
-      lift(f\[varref_varid(var) -> eval(exp, @)!1!2])
+      lift(f\[varref_varid(var) -> eval(exp, @, context)!1!2])
   else
     bot
   ;
@@ -87,22 +95,22 @@ ReturnAssignment(VariableSymbol(_) as var, VariableSymbol(_) as retvar), _:
   ;
 
 ScopeStatement(IfStmt(ExprStatement(cond))), true_edge:
-  branch(cond, @, true, false);
+  branch(cond, @, true, false, context);
 
 ScopeStatement(IfStmt(ExprStatement(cond))), false_edge:
-  branch(cond, @, false, false);
+  branch(cond, @, false, false, context);
 
 ScopeStatement(WhileStmt(ExprStatement(cond))), true_edge:
-  branch(cond, @, true, true);
+  branch(cond, @, true, true, context);
 
 ScopeStatement(WhileStmt(ExprStatement(cond))), false_edge:
-  branch(cond, @, false, false);
+  branch(cond, @, false, false, context);
 
 LogicalIf(cond), true_edge:
-  branch(cond, @, true, false);
+  branch(cond, @, true, false, context);
 
 LogicalIf(cond), false_edge:
-  branch(cond, @, false, false);
+  branch(cond, @, false, false, context);
 
 UndeclareStmt(vars), _:
   kill_vars(@, vars);
@@ -121,7 +129,10 @@ FunctionCall(_,_), local_edge:
 FunctionCall(_,_), call_edge:
   if @ != bot then
     let f <= @; in
-      lift([(v,i)->top !! (v,i) <- f\top, if isglobal(v)])
+    // -- GB: values of (possibly) aliased locals must also be passed to the
+    // -- function since they might be accessed there
+      lift([(v,i)->top !! (v,i) <- f\top, if isglobal(v)
+                                          || isaliasedlocal(v, context)])
   else
     bot
   ;
@@ -134,23 +145,29 @@ dup(a) = (a, a);
 duplift(a) = dup(lift(a));
 ltup(a,b) = (lift(a), lift(b));
 
-eval :: Expression, itvl_State -> itvl_IntervalStatePair;
-eval(_, bot) = bot;
-eval(_, top) = top;
-eval(exp, state) =  
+eval :: Expression, itvl_State, ContextInfo -> itvl_IntervalStatePair;
+eval(_, bot, _) = bot;
+eval(_, top, _) = top;
+eval(exp, state, context) =  
   // --print("eval(") print(exp) print(",") print(state) print(")\n")
   let s <= state; in
 
   case exp of 
     CommaOpExp(exp1, exp2) => let state1 = 
-                                eval(exp1, state)!2!2; in
-                                eval(exp2, state1);
+                                eval(exp1, state, context)!2!2; in
+                                eval(exp2, state1, context);
+    AssignOp(VarRefExp(_) as var, AggregateInitializer(_) as i)
+                           => let st = initialize(s, varref_varid(var),
+                                                     expr_type(var), i,
+                                                     context);
+                              in  (top, lift(st));
+
     _ =>
       if is_unary(exp) then
-        unary(unary_get_child(exp), exp, state)
+        unary(unary_get_child(exp), exp, state, context)
       else if is_binary(exp) then
         let r = binary(binary_get_left_child(exp), binary_get_right_child(exp),
-          exp, state); in r // --print("BINARY <----") print(r) print("\n") r
+          exp, state, context); in r // --print("BINARY <----") print(r) print("\n") r
       else if is_value(exp) then
         case exp of
           BoolValExp(value) => (duplift(val-astint(value)), state);
@@ -168,17 +185,19 @@ eval(exp, state) =
           // -- NOT IMPLEMENTED
           FloatVal(_) => ((top,top), state);
           DoubleVal(_) => ((top,top), state);
-          _         => print("unsupported value exp: ")
-                       print(exp) print("\n") ((top,top), state);
+          _         => println("unsupported value exp: ", exp, ": ",
+                               expr_asttext(exp))
+                       ((top,top), state);
         endcase
     else case exp of
       VarRefExp(name)       =>  // --print("###is_VARREF") 
                                 // --print(val-aststring(name)) print("\n") 
                                 (s{!varref_varid(exp)!}, state);
-      AssignInitializer(e1) => eval(e1, state);
+      AssignInitializer(e1) => eval(e1, state, context);
       NewExp(_,_,_)         => ((bot,bot), state);
-      _                     => print("**WARNING: ignoring unknown exp: ")
-                               print(exp) print("\n") ((top,top), state); 
+      _                     => println("**WARNING: ignoring unknown exp: ",
+                                       exp, ": ", expr_asttext(exp))
+                               ((top,top), state); 
                                       // --((top,top), lift([-> top]));
     endcase   ;
   endcase;
@@ -186,12 +205,12 @@ eval(exp, state) =
 // -- TODO kill temporary variables - Possible Memory leak
 
 
-binary :: Expression, Expression, Expression, itvl_State -> itvl_IntervalStatePair;
-binary(left, right, exp, state) =
+binary :: Expression, Expression, Expression, itvl_State, ContextInfo -> itvl_IntervalStatePair;
+binary(left, right, exp, state, context) =
   // -- Evaluate the right child expression, yielding a (value, state)
   // -- pair assigned to r and rs, respectively.
   // --print("BINARY(") print(exp) print(")\n")
-  let rr = eval(right, state);
+  let rr = eval(right, state, context);
       dontknow = ((top,top), state);
   in case exp of
     // -- If this is an assignment operation, update the state.
@@ -200,17 +219,17 @@ binary(left, right, exp, state) =
     AssignOp(_, _) => // --print("ASSIGNOP: ") print(left) print("=") print(rr!1!2) print(" ...\n")
       if bad(rr!1!2) then
         //(top, rr!2!2)
-        updatestate(rr!2!2, left, top)
+        updatestate(rr!2!2, left, top, context)
       else
         let r = rr!1!2; rs = rr!2!2; in
-        updatestate(rs, left, r)
+        updatestate(rs, left, r, context)
       ;
     // -- If this is not an assignment, we may safely evaluate
     // -- the left-hand side as well (in the "new" state after
     // -- evaluation of the rhs) and perform the operation.
     _ => 
       let rlifted = rr!1!2; rs = rr!2!2;
-      in let ll = eval(left, rs);
+      in let ll = eval(left, rs, context);
       in let llifted = ll!1!2; ls = ll!2!2;
       in if bad(rlifted) then dontknow else
          if bad(llifted) then dontknow else
@@ -268,47 +287,65 @@ binary(left, right, exp, state) =
                          else dontknow ;
 
           ScopeOp(_, _)       => (ltup(r1, r2), ls);
-          PlusAssignOp(_, _)  => updatestate(ls, left, ltup(l1 + r1, l2 + r2));
-          MinusAssignOp(_, _) => updatestate(ls, left, ltup(l1 - r2, l2 - r1));
+          PlusAssignOp(_, _)  => updatestate(ls, left, ltup(l1 + r1, l2 + r2), context);
+          MinusAssignOp(_, _) => updatestate(ls, left, ltup(l1 - r2, l2 - r1), context);
           MultAssignOp(_, _)  => updatestate(ls, left, 
                                                ltup(mini(l1*r1, l1*r2), 
-                                                    maxi(l2*r1, l2*r2)));
+                                                    maxi(l2*r1, l2*r2)), context);
           DivAssignOp(_, _)   => updatestate(ls, left, 
                                                ltup(mini(l1/r1, l1/r2), 
-                                                    maxi(l2/r1, l2/r2)));
-          ModAssignOp(_, _)   => updatestate(ls, left, ltup(0, r2));
+                                                    maxi(l2/r1, l2/r2)), context);
+          ModAssignOp(_, _)   => updatestate(ls, left, ltup(0, r2), context);
           LshiftAssignOp(_, _)=> updatestate(ls, left,
-                                   ltup(l1<<unum(r1), l2<<unum(r2)));
+                                   ltup(l1<<unum(r1), l2<<unum(r2)), context);
           RshiftAssignOp(_, _)=> updatestate(ls, left, 
-                                   ltup(l1>>unum(r2), l2>>unum(r1)));
+                                   ltup(l1>>unum(r2), l2>>unum(r1)), context);
+          PntrArrRefExp(_, _) => let id = expr_exprid(exp); in
+                                 let l = exprid_location_cs(id, context); in
+                                 let syms = location_varsyms(l);
+                                 in  (merged_var_values(ls, syms), ls);
           _ => print("**WARNING: unsupported binary: ") print(exp) print("\n") 
                (top, lift([-> top]));
         endcase
        ;
   endcase;
 
-unary :: Expression, Expression, itvl_State -> itvl_IntervalStatePair;
-unary(child, exp, state) = 
+unary :: Expression, Expression, itvl_State, ContextInfo -> itvl_IntervalStatePair;
+unary(child, exp, state, context) = 
   // --print("UNARY(") print(exp) print(")\n")
-  let ee = eval(child, state); in
+  let ee = eval(child, state, context); in
   let er = ee!1!2; es = ee!2!2; in
-  // -- if child node is not analyzable, bail out
-  if bad(er) then ((top,top), state) else // BUG!
-     let e1 <= er!1!2; e2 <= er!2!2; in
+    // -- if child node is a dereference expression, consult pointer analysis
     case exp of
-      MinusOp(_)    => (ltup(-e2, -e1), es);
-      UnaryAddOp(_) => (ltup( e1,  e2), es);
-      NotOp(_)      => (ltup(bool_int(e2 = 0), bool_int(e1 = 0)), es);
-      CastExp(_, _) => eval(child, state);
-      // -- the following are only correct for prefix -- and ++
-      MinusMinusOp(_) => updatestate(es, child, ltup(e1-1, e2-1));
-      PlusPlusOp(_)   => updatestate(es, child, ltup(e1+1, e2+1));
-      // -- the following is not safe at all
-      PointerDerefExp(_) => print("**WARNING: ignoring possible pointer aliasing\n")
-                            ((top,top), state);
-      _ => print("unsupported unary: ") print(exp) print("\n") 
-           (top, lift([-> top]));
-    endcase 
+      PointerDerefExp(_)  => // -- println("PointerDerefExp in context ", context)
+                             let id = expr_exprid(exp); in
+                             let l = exprid_location_cs(id, context); in
+                             let syms = location_varsyms(l);
+                             in  (merged_var_values(es, syms), es);
+
+    // -- otherwise, see if this is some arithmetic node
+      _ =>
+    // -- if child node is not analyzable, bail out
+    if bad(er) then ((top,top), state) else // BUG!
+       let e1 <= er!1!2; e2 <= er!2!2; in
+      case exp of
+        MinusOp(_)    => (ltup(-e2, -e1), es);
+        UnaryAddOp(_) => (ltup( e1,  e2), es);
+        NotOp(_)      => (ltup(bool_int(e2 = 0), bool_int(e1 = 0)), es);
+        CastExp(_, _) => eval(child, state, context);
+        // -- the following are only correct for prefix -- and ++
+        MinusMinusOp(_) => updatestate(es, child, ltup(e1-1, e2-1), context);
+        PlusPlusOp(_)   => updatestate(es, child, ltup(e1+1, e2+1), context);
+        // -- an address-of operation does not yield a useful value; ignore it
+        // -- here, the pointer analysis knows how to handle it; however, we
+        // -- use state es to reflect possible side effects of evaluating
+        // -- the operand
+        AddressOfOp(_)  => ((top,top), es);
+  
+        _ => print("unsupported unary: ") print(exp) print("\n") 
+             (top, lift([-> top]));
+      endcase;
+    endcase
   ;
 
 bad((top, _)) = true;
@@ -325,38 +362,95 @@ int_bool :: snum -> bool;
 int_bool(0) = false;
 int_bool(_) = true;
 								    
-updatestate :: itvl_State, Expression, itvl_Interval -> itvl_IntervalStatePair;
-updatestate(bot, _, _) = ((top,top),bot);
+updatestate :: itvl_State, Expression, itvl_Interval, ContextInfo -> itvl_IntervalStatePair;
+updatestate(bot, _, _, _) = ((top,top),bot);
 // -- Update state state by assigning the value value to the variable
 // -- referenced by expression exp (if any). Yields a pair of the value
 // -- and the new state.
-updatestate(state, exp, value) = 
-// --print("updatestate(") print(state) print(", ") print(exp) print(", ") print(value) print(")\n ") 
+updatestate(state, exp, value, context) = 
+// --print("updatestate(") print(state) print(", ") print(exp) print(", ") print(value) print(")\n") 
   let s <= state; in 
   let newstate =
     case exp of
       VarRefExp(var) => lift(s\[varref_varid(exp) -> value]);
-      _ => state;
+      _ => let exprid = expr_exprid(exp);
+           in  if exprid_has_location(exprid) then
+               let loc = exprid_location_cs(exprid, context); in
+               let syms = location_varsyms(loc);
+               in  // -- println("updating vars: ", syms)
+                   case syms of
+                // -- no var: error
+                   [!]    => println("*** no varsyms for lhs in updatestate: ",
+                                     exp, " :: ", expr_asttext(exp))
+                             error("dying");
+                // -- singleton var, may be an array name: strong update of
+                // -- scalar variables, weak update of arrays
+                   v::[!] => if is_array_location(loc) then
+                                 lift(weak_update_v(s, varsym_varid(v), value))
+                             else
+                                 lift(s\[varsym_varid(v) -> value]);
+                // -- otherwise: more than one var, weak update
+                   _      => // -- println("info: weak update ", syms, " := ", value)
+                             lift(weak_update(s, syms, value));
+               endcase
+           else
+               println("info: cannot updatestate for lhs expression: ",
+                       exp, " :: ", expr_asttext(exp))
+               state;
     endcase;
   in // --print("\n=> ") print(state) print("\n") 
      (value, newstate);
 
+weak_update :: itvl_fState, *VariableSymbolNT, itvl_Interval -> itvl_fState;
+weak_update(s, [!], _) = // -- println("weak update result: ", s)
+    s;
+weak_update(s, vsym::vs, value) =
+    let v = varsym_varid(vsym); in
+    let newstate = weak_update_v(s, v, value);
+    in  weak_update(newstate, vs, value);
 
-branch :: Expression, itvl_State, bool, bool -> itvl_State;
-branch(exp, state, edge, isLoopBody) =
+weak_update_v(s, v, value) =
+    let v_old_val = s{!v!}; in
+    let v_new_val = combi(v_old_val, value);
+    in  s\[v -> v_new_val];
+
+// merged_var_values(s, vsyms): Look up an interval that covers the values
+// of all variables in vsyms in state s.
+merged_var_values :: itvl_State, *VariableSymbolNT -> itvl_Interval;
+merged_var_values(top, _) = (top, top);
+merged_var_values(_, [!]) = error("merging empty list!");
+merged_var_values(lift(s), v::[!]) = s{!varsym_varid(v)!};
+merged_var_values(lift(s) as ls, v::vs) =
+    let merged = merged_var_values(ls, vs);
+    in  combi(s{!varsym_varid(v)!}, merged);
+
+initialize :: itvl_fState, VariableId, Type, Expression, ContextInfo -> itvl_fState;
+initialize(s, v, ArrayType(BasicType(_)),
+                 AggregateInitializer(ExprListExp(exprs)), context) =
+ // default value: 0 (missing initializers default to 0)
+    initialize_array(s\[v -> duplift(0)], v, exprs, context);
+
+initialize_array :: itvl_fState, VariableId, *Expression, ContextInfo -> itvl_fState;
+initialize_array(s, _, [!], _) = s;
+initialize_array(s, var, expr::exprs, ctx) =
+    let value = eval(expr, lift(s), ctx)!1!2; // -- FIXME: assumes pure exprs
+    in  initialize_array(weak_update_v(s, var, value), var, exprs, ctx);
+
+branch :: Expression, itvl_State, bool, bool, ContextInfo -> itvl_State;
+branch(exp, state, edge, isLoopBody, context) =
   // --print("\nbranching...\nexp: ") print(exp) 
   // --print("\nstate: ") print(state) 
   // --print("\nedge: ") print(edge)  
   // --print("\n")
 
-  let pair = eval(exp, state); in
+  let pair = eval(exp, state, context); in
   let c = interval_to_bool(pair!1!2); 
           newstate = pair!2!2; in
   if (c = top || isLoopBody) then 
     // -- We don't know for sure which edge will be taken
     // --print("c=top\n") 
     // --print("Maybe\n") 
-    eval_branch_condition(exp, state, newstate, edge, isLoopBody)
+    eval_branch_condition(exp, state, newstate, edge, isLoopBody, context)
   else if c = bot then 
     print("FIXME c=bot\n") 
     state
@@ -373,46 +467,46 @@ branch(exp, state, edge, isLoopBody) =
     ;
 
 
-eval_branch_condition :: Expression, itvl_State, itvl_State, bool, bool -> itvl_State;
-eval_branch_condition(exp, state, newstate, edge, isLoopBody) =
+eval_branch_condition :: Expression, itvl_State, itvl_State, bool, bool, ContextInfo -> itvl_State;
+eval_branch_condition(exp, state, newstate, edge, isLoopBody, context) =
   if is_binary(exp) then
-    let lhs = eval(binary_get_left_child(exp), state)!1!2;
-        rhs = eval(binary_get_right_child(exp), state)!1!2; in
+    let lhs = eval(binary_get_left_child(exp), state, context)!1!2;
+        rhs = eval(binary_get_right_child(exp), state, context)!1!2; in
 
     case exp of 
       AndOp(exp1, exp2) =>
         let state1 = 
-          eval_branch_condition(exp1, state, newstate, edge, isLoopBody); in
-          eval_branch_condition(exp2, state1, newstate, edge, isLoopBody);
+          eval_branch_condition(exp1, state, newstate, edge, isLoopBody, context); in
+          eval_branch_condition(exp2, state1, newstate, edge, isLoopBody, context);
   
       LessThanOp(var, _) =>
         if edge = true then 
-            updatestate(state, var, adjust_max_plus(lhs, rhs,-1))!2!2
+            updatestate(state, var, adjust_max_plus(lhs, rhs,-1), context)!2!2
         else 
-            updatestate(state, var, adjust_min(lhs, rhs))!2!2
+            updatestate(state, var, adjust_min(lhs, rhs), context)!2!2
         ;
       LessOrEqualOp(var, _) =>
         if edge = true then 
-            updatestate(state, var, adjust_max(lhs, rhs))!2!2
+            updatestate(state, var, adjust_max(lhs, rhs), context)!2!2
         else 
-            updatestate(state, var, adjust_min_plus(lhs, rhs, 1))!2!2
+            updatestate(state, var, adjust_min_plus(lhs, rhs, 1), context)!2!2
         ;
       GreaterThanOp(var, _) =>
         if edge = true then 
-            updatestate(state, var, adjust_min_plus(lhs, rhs, 1))!2!2
+            updatestate(state, var, adjust_min_plus(lhs, rhs, 1), context)!2!2
         else 
-            updatestate(state, var, adjust_max(lhs, rhs))!2!2
+            updatestate(state, var, adjust_max(lhs, rhs), context)!2!2
         ;
       GreaterOrEqualOp(var, _) =>
         if edge = true then 
-            updatestate(state, var, adjust_min(lhs, rhs))!2!2
+            updatestate(state, var, adjust_min(lhs, rhs), context)!2!2
         else 
-            updatestate(state, var, adjust_max_plus(lhs, rhs,-1))!2!2
+            updatestate(state, var, adjust_max_plus(lhs, rhs,-1), context)!2!2
         ;
 
       EqualityOp(var, _) =>
         if edge = true then 
-            updatestate(state, var, rhs)!2!2
+            updatestate(state, var, rhs, context)!2!2
         else 
             newstate
         ;
@@ -420,7 +514,7 @@ eval_branch_condition(exp, state, newstate, edge, isLoopBody) =
         if edge = true then 
             newstate
         else 
-            updatestate(state, var, rhs)!2!2
+            updatestate(state, var, rhs, context)!2!2
         ;
 
       _ => newstate;
@@ -495,8 +589,24 @@ ret(_, top) = top;
 ret(top, _) = top;
 ret(local, exit) = 
   let returnvar = [(v,i)->top !! (v,i) <- drop(exit)\top, if is_tmpvarid(v)];
-  in
-  local glb lift(returnvar);
+   // -- Here, we compute the set of locals that come back from the function.
+   // -- Their new values override any ones before the call!
+      modified_vars = [(v,i)->top !! (v,i) <- drop(exit)\top, if islocal(v)];
+  in (let localstate <= local;
+      in  // -- println("return locals: ", modified_vars)
+          lift(override(localstate, modified_vars))
+      ) glb lift(returnvar);
+
+// -- override(locals, modified): "locals" and "modified" are two maps,
+// -- typically with some shared domain objects; yield a map in which
+// -- definitions from "modified" override ones from "locals", i.e.
+// -- (Haskell syntax):
+// --   \x -> if modified(x) != top then modified(x) else locals(x)
+override(locals, modified) = crunch(locals, modified, second_if_present);
+
+second_if_present(a, b) =
+ // -- should this also check for b != bot?
+    if b != top then b else a;
 
 min(_, top) = top;
 min(top, _) = top;
@@ -540,6 +650,12 @@ eq(a, b)   = //print("eq a: ") print(a) print("\n")
 
 isglobal(var) = is_tmpvarid(var) || varmember(var, globals);
 islocal(var) = !isglobal(var);
+isaliasedlocal(var, ctx) =
+    let result = islocal(var) && varid_has_location(var)
+                              && may_be_aliased(varid_location_cs(var, ctx));
+    in  // -- println("checking aliasing of var ", var, " in context ", ctx,
+        // --         " -> ", result)
+        result;
 
 varmember(_, [!]) = false;
 varmember(v, g::gs) = 

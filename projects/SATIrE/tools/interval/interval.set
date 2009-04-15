@@ -1,9 +1,0 @@
-SET
-
-DOMAIN
-  // Already defined in pagoptions.set
-  //  Interval = cp_Const * cp_Const
-  //  fState = VariableId -> Interval
-  //  IntervalStatePair = Interval * State
-  //  State = lift(fState)
-     BoolL = flat(bool)	
