@@ -138,7 +138,7 @@ fassign_x_ysel(x,y,ysel,((S1,H1),is1) as g) = // it is guaranteed that x!=y
    */
   if !var_exists(y,g) then
     // case 1a: uninitialised variable (null pointer deref in var)
-    print("warn: dereferencing of uninitialised variable: ".varid_str(y)."\n")
+    // FIXME nur weil leere graphen im set??  print("warn: dereferencing of uninitialised variable: ".varid_str(y)."\n")
     {kill_x(x,g)}
   else
     if !var_sel_exists(y,ysel,g) then
