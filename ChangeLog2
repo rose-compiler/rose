@@ -1,3 +1,18 @@
+2009-04-14 19:37  saebjornsen1
+
+	* [r5344] /trunk/ROSE/projects/MacroRewrapper/argumentFilterer.C,
+	  /trunk/ROSE/projects/MacroRewrapper/argumentFilterer.h,
+	  /trunk/ROSE/projects/MacroRewrapper/macroRewrapper.C,
+	  /trunk/ROSE/projects/MacroRewrapper/main.C,
+	  /trunk/ROSE/projects/MacroRewrapper/testLinearization.C,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test3.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test4.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test5.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test6.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test7.c,
+	  /trunk/ROSE/projects/MacroRewrapper/waveHelpers.C: Improvements
+	  to the macro rewrapper
+
 2009-04-14 17:57  panas2
 
 	* [r5342] /trunk/ROSE/projects/BinQ/BinDynamicInfo.C,
