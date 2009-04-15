@@ -21,7 +21,8 @@ PointsToAnalysis::Location::Location(
   : base_location(b), ellipsis_location(NULL), return_location(r),
     dummy(false), literal(false), special_function(false),
     first_access_type(NULL), collapsed(false), parent_struct(NULL),
-    collapseBase(false), mayBeAliased(false), array(false), ownerInfo(NULL)
+    collapseBase(false), mayBeAliased(false), array(false),
+    functionSummary(false), ownerInfo(NULL)
 {
 }
 
@@ -115,6 +116,16 @@ using namespace Utils;
 void
 PointsToAnalysis::Implementation::atIcfgTraversalStart()
 {
+ // Create function summary node for main info. This function has a single
+ // ellipsis location, which forces all of its arguments to be aliased.
+ // Also, we make sure its return location is aliased to its argument.
+    Location *fsn = createFunctionLocation();
+    fsn->functionSummary = true;
+    fsn->arg_locations.push_back(createLocation());
+    fsn->ellipsis_location = fsn->arg_locations.front();
+    assign(fsn->return_location, fsn->ellipsis_location);
+    mainInfo->functionSummaryNode = createLocation(fsn);
+
     CFG *icfg = icfgTraversal->get_icfg();
     std::deque<Procedure *> &procedures = *icfg->procedures;
     size_t procs = procedures.size();
@@ -439,9 +450,11 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
                 << " in context: "
                 << (info->context != NULL
                         ? info->context->toString() : "<none>")
+                << " in node: " << icfgNode->id
+                << " @" << (void *) node
                 << std::endl;
 #endif
-            result = specialFunctionLocation(specialFuncName, arity);
+            result = specialFunctionLocation(node, specialFuncName, arity);
         }
         else
         {
@@ -462,7 +475,10 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
      // for some function declaration whose symbol was NULL, and fail?
         if (result->baseLocation()->return_location == NULL)
         {
-#if DEBUG
+#if VERBOSE_DEBUG
+         // The return location is NULL for some special function summaries.
+         // Not sure how much sense it makes to create an artificial return
+         // location here, but it won't hurt.
             std::cout
                 << "NULL return location for func ref! id: " << result->id
                 << " name: " << name(isSgFunctionRefExp(node)->get_symbol())
@@ -3991,8 +4007,10 @@ PointsToAnalysis::Implementation::function_location(
 #endif
         return location;
     }
-    else
+    else if (argDummy != NULL)
     {
+     // Create a new function location for a declaration, with the given
+     // argument locations.
      // any mention of a function must be treated like a pointer to the
      // function!
         Location *func_location = createFunctionLocation();
@@ -4016,7 +4034,6 @@ PointsToAnalysis::Implementation::function_location(
 #endif
 
      // setup argument list from the argDummy location
-        assert(argDummy != NULL);
         std::vector<Location *> &args = argDummy->arg_locations;
         std::vector<Location *>::iterator a;
         for (a = args.begin(); a != args.end(); ++a)
@@ -4087,6 +4104,15 @@ PointsToAnalysis::Implementation::function_location(
             << std::endl;
 #endif
         return location;
+    }
+    else // argDummy == NULL, mention of external function
+    {
+#if VERBOSE_DEBUG
+        std::cout
+            << "points-to info: using function summary "
+            << "for external function " << funcname << std::endl;
+#endif
+        return mainInfo->functionSummaryNode;
     }
 }
 
@@ -4314,6 +4340,7 @@ PointsToAnalysis::Implementation::print(
 #endif
                     << (location->mayBeAliased ? "\\naliased" : "")
                     << (location->array ? "\\narray" : "")
+                    << (location->functionSummary ? "\\nfunctionSummary" : "")
                     << (location->literal ? "\\nliteral" : "")
                     << (location->special_function ? "\\n[special]" : "")
                     << (location->collapsed ? "\\n[collapsed]" : "")
@@ -4892,15 +4919,18 @@ PointsToAnalysis::Implementation::functionLocationForProcnum(int procnum)
 }
 
 // Returns the pointer-to-function location for the named special function
-// in the current info. Each info has its own collection of these.
+// in the current info. Each info has its own collection of these. Since the
+// name is not unique (there might be several references/call sites to the
+// same function), we also use an address (of the FunctionRefExp, usually)
+// to make the key unique.
 PointsToAnalysis::Location *
 PointsToAnalysis::Implementation::specialFunctionLocation(
-        std::string name, size_t arity)
+        void *address, std::string name, size_t arity)
 {
     Location *result = NULL;
-    std::map<std::string, Location *>::iterator pos;
+    std::map<std::pair<void *, std::string>, Location *>::iterator pos;
 
-    pos = info->specialFunctionLocations.find(name);
+    pos = info->specialFunctionLocations.find(std::make_pair(address, name));
     if (pos != info->specialFunctionLocations.end())
     {
         result = pos->second;
@@ -4926,16 +4956,20 @@ PointsToAnalysis::Implementation::specialFunctionLocation(
      // newSpecialFunctionContext returns dummies because they were
      // originally meant to be assigned right away; however, here we store
      // the location permanently, so we make it a non-dummy.
-        func_loc->return_location->dummy = false;
+        if (func_loc->return_location != NULL)
+            func_loc->return_location->dummy = false;
 #if VERBOSE_DEBUG
         std::cout
-            << "!!! special return location for func " << name << ": "
-            << func_loc->return_location->id
+            << "!!! special return location for func "
+            << name << "@" << address << ": "
+            << (func_loc->return_location != NULL
+                    ? func_loc->return_location->id
+                    : 0)
             << std::endl;
 #endif
 
         result = createLocation(func_loc);
-        info->specialFunctionLocations[name] = result;
+        info->specialFunctionLocations[std::make_pair(address, name)] = result;
     }
 
     return result;
@@ -4948,6 +4982,7 @@ PointsToAnalysis::PointsToInformation::PointsToInformation()
     disjointSets(RankMap(rankMap), ParentMap(parentMap)),
     integerConstantLocation(NULL),
     stringConstantLocation(NULL),
+    functionSummaryNode(NULL),
     auxctr(1),
     context(NULL)
 {

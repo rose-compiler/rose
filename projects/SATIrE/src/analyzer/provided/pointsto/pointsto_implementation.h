@@ -84,6 +84,8 @@ public:
  // node pointing to an array node; *both* may have the same variable symbol
  // (maybe this should be changed at some point).
     bool array;
+ // This flag is set for the one external function summary node.
+    bool functionSummary;
 
  // The list of "pending" locations: When assigning a non-pointer value, we
  // add the value to the pending list rather than forcing unification; a
@@ -125,11 +127,14 @@ private:
     std::vector<Location *> procedureLocations;
 
     std::map<std::string, Location *> function_locations;
-    std::map<std::string, Location *> specialFunctionLocations;
+    std::map<std::pair<void *, std::string>, Location *>
+        specialFunctionLocations;
 
  // Location constants
     Location *integerConstantLocation;
     Location *stringConstantLocation;
+ // A summary node for external functions
+    Location *functionSummaryNode;
  // The set of functions that will get special handling using function
  // summaries.
     std::set<std::string> specialFunctionNames;
@@ -224,7 +229,7 @@ private:
                                 Location *argDummy = NULL);
     Location *functionSymbol_location(SgFunctionSymbol *fsym);
     Location *functionLocationForProcnum(int procnum);
-    Location *specialFunctionLocation(std::string name, size_t arity);
+    Location *specialFunctionLocation(void *a, std::string name, size_t arity);
     void determineSpecialFunction(std::string name, Location *func_location);
 
     Location *createLocation(Location *t, Location *return_location = NULL);
