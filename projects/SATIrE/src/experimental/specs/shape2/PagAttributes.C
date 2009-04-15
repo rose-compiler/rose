@@ -17,3 +17,14 @@ PAG_BOOL get_universal_attribute__option_kill_unreachable_nodes() {
     return false;
 }
 
+// if visualisation etc. do not require graph in srw format, omit conversion
+PAG_BOOL get_universal_attribute__option_omit_conversion_to_srw() {
+    return !opt->convertToSRW();
+}
+
+// if visualisation etc. do not require graph in nnh format, omit conversion
+PAG_BOOL get_universal_attribute__option_omit_conversion_to_nnh() {
+    return !opt->convertToNNH();
+}
+
+

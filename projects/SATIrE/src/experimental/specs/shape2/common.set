@@ -27,6 +27,8 @@ NodeSet           = set(Node)
 NodeList          = list(Node)
 
 NodeSel           = Node * VariableId
+NodeSelList       = list(NodeSel)
+NodeSelSet        = set(NodeSel)
 NodeTuple         = Node * Node
 NodeTupleList     = list(NodeTuple)
 
@@ -34,6 +36,11 @@ Graph             = StackEdgeSet * HeapEdgeSet
 ShapeGraph        = Graph * NodeSet
 ShapeGraphSet     = set(ShapeGraph)
 ShapeGraphList    = list(ShapeGraph)
+ShapeGraphSetList = list(ShapeGraphSet)
+
+HeapEdgeTuple     = HeapEdge * HeapEdge  // for check_inv3
+HeapEdgeTupleSet  = set(HeapEdgeTuple)   // for check_inv3
+NodeSetList       = list(NodeSet)        // for check_inv4
 
 OpCode            = (OP_X_NULL,OP_X_NEW,OP_X_Y,OP_X_YSEL,OP_XSEL_NULL,OP_XSEL_NEW,OP_XSEL_Y,OP_XSEL_YSEL,LHS_X,LHS_XSEL,RHS_NULL,RHS_NEW,RHS_Y,RHS_YSEL||OP_XSEL_YSEL|RHS_NULL)
 Instruction       = OpCode * VarList

@@ -3,17 +3,19 @@
  * this is done by the postprocess-main script.
  **/
 
+extern ShapeAnalyzerOptions *opt;
+
 // dfi_write_ creates the gdl visualisation for every basic block.
 // PAG creates the visualisation layout and calls this function
 // that provides the layout within every basic block
 
-void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, {DFI} info,int id,int insnum,int ctx) {
+void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_{DFI} info,int id,int insnum,int ctx) {
     // We have only one instruction per basic block !
     assert((id==-1 && insnum==-1) || insnum==0);
-    if ({DFI}_istop(info) || {DFI}_isbottom(info)) {
+    if (o_{DFI}_istop(info) || o_{DFI}_isbottom(info)) {
         fprintf(fp, "node: { /*single instruction*/\n");
         fprintf(fp, "  title: \"%s\"\n", name);
-        fprintf(fp, "  label: \"%s\"\n", {DFI}_istop(info)?GDL_TOP:GDL_BOT);
+        fprintf(fp, "  label: \"%s\"\n", o_{DFI}_istop(info)?GDL_TOP:GDL_BOT);
         fprintf(fp, "}\n\n");
         return;
     }
@@ -38,10 +40,10 @@ void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, {DFI} info,int id,in
     fprintf(fp, "  %s\n", attrib);
 
     int n_nodes = 0;
-    if (!{DFI}_istop(info) && !{DFI}_isbottom(info)) {
+    if (!o_{DFI}_istop(info) && !o_{DFI}_isbottom(info)) {
         int n_graphs = 0;
 
-        o_SrwNnhPair gpair = o_extract_graphs({DFI}_drop(info));
+        o_SrwNnhPair gpair = o_extract_graphs(o_{DFI}_drop(info));
         
         if (opt->gdlShowSummaryGraph()) {
 			      //gstats.addGraphs(1);

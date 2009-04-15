@@ -12,6 +12,8 @@ ENDDOMAIN
 UNIVERSAL
 option_kill_normalisation_temps : bool#
 
+option_omit_conversion_to_nnh   : bool#
+
 GLOBAL
 globals: *VariableSymbolNT#
 
@@ -58,7 +60,12 @@ tassign_xsel_y::VariableId,VariableId,VariableId,ShapeGraph->ShapeGraph;
 #include "../common_debug.optla"
 
 extract_graphs::ShapeGraph->SrwNnhPair;
-extract_graphs(sg) = (sg,sgSet_to_sgList(srwSG_to_nnhSG(sg)));
+extract_graphs(sg) =
+  if option_omit_conversion_to_nnh then
+    (sg, [])
+  else
+    (sg,sgSet_to_sgList(srwSG_to_nnhSG(sg)))
+  endif;
 
 // FIXME still required for alias computation:
 shape_carrier_to_shapegraphset::ShapeGraphLifted->ShapeGraphSet;

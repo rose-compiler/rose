@@ -14,6 +14,10 @@ extract_heapnodes::ShapeGraph->NodeList;
 extract_heapnodes(((EV,ES),_))  =
   [ x !! x <-- union(union({ a !! (a,_,_) <-- ES},{ c !! (_,_,c) <-- ES}),{b !! (_,b) <-- EV}) ];
 
+extract_src_sel::ShapeGraph->NodeSelList;
+extract_src_sel(((_,H),_))  =
+  [x !! x <-- {(src,sel) !! (src,sel,_) <-- H}];
+
 extract_heapedges::ShapeGraph->HeapEdgeList;
 extract_heapedges(((_,ES),_)) = [x !! x <-- ES];
 
@@ -21,13 +25,16 @@ extract_is_shared::ShapeGraph->NodeList;
 extract_is_shared((_,iss)) = [x !! x <-- iss];
 
 src_sel_exists::Node,VariableId,ShapeGraph->bool;
-src_sel_exists(src,sel,((_,H0),_)) = {e !! (nv,sv,_) as e <-- H0, if (src = nv) && (sel = sv)} != {};
+src_sel_exists(src,sel,((_,H0),_)) = {e !! (nv,sv,_) as e <-- H0, if (nv = src) && (sv = sel)} != {};
 
 var_sel_exists::VariableId,VariableId,ShapeGraph->bool;
 var_sel_exists(x,sel,((_,H0),_)) = {e !! (nv,sv,_) as e <-- H0, if (x ? nv) && (sv = sel)} != {};
 
+heapedges_by_var_sel::VariableId,VariableId,HeapEdgeSet->HeapEdgeSet;
+heapedges_by_var_sel(x,sel,edges) = {e !! (nv,sv,_) as e <-- edges, if (x ? nv) && (sv = sel)};
+
 heapedge_by_var_sel::VariableId,VariableId,HeapEdgeSet->HeapEdge;
-heapedge_by_var_sel(x,sel,edges) = hd([e !! (nv,sv,_) as e <-- edges, if (x ? nv) && (sv = sel)]);
+heapedge_by_var_sel(x,sel,edges) = hd([e !! e <-- heapedges_by_var_sel(x,sel,edges)]);
 
 no_duplicates::VarList->VarList;
 no_duplicates(list) = [x !! x <-- {y !! y <- list}];
@@ -55,57 +62,75 @@ nnhSG_to_srwSG(graphs) = rec_join_shapegraphs( (({},{}),{}), [x !! x <-- graphs]
 rec_join_shapegraphs::ShapeGraph,ShapeGraphList->ShapeGraph;
 rec_join_shapegraphs(sg, []) = sg;
 rec_join_shapegraphs(((S0,H0),is0), ((S1,H1),is1):cdr) =
-  let new_S = union(S0,S1);
-      new_H = union(H0,H1); in
-  let new_sharing = nnh_compute_is(((new_S,new_H),union(is0,is1))); in
-  rec_join_shapegraphs(((new_S,new_H),new_sharing), cdr);
-
-// computes shared nodes 
-//  - Inv4: is = intersect(is, union({n !! ({},_,n)}, nodes_that_are_more_than_once_target_of_an_heapedge()))
-//  - Inv5: i s+= (nodes_that_are_mone_than_once_target_of_an_heapedge() / {})
-nnh_compute_is::ShapeGraph->NodeSet;
-nnh_compute_is(((S,H),iss)) =
-  union(
-    // Inv4: if nx is shared, then
-    //  - Inv4a: ({},_,nx) must be one of the heapedges OR
-    //  - Inv4b: nx must be the target of more than one heapedge
-    intersect(
-      iss,
-      union(
-        {x !! x <-  dests_of_heapedges(heapedges_by_src({},H))},   // Inv 4a
-        {y !! y <-- more_than_once(dests_of_heapedges(H))}         //Inv 4b
-      )
-    ),
-    // Inv5: nx is shared if two or more heapedges have nx as their
-    // target (if nx != {})
-    nodes_target2plus(((S,H),iss))
-  );
-
-// nodes that are target of 2 (or more) heapedges, but not {}
-nodes_target2plus::ShapeGraph->NodeSet;
-nodes_target2plus(((_,H),_)) = more_than_once(dests_of_heapedges(H)) # {};
-
-dests_of_heapedges::HeapEdgeSet->NodeList;
-dests_of_heapedges(H) = [d !! (_,_,d) <-- H];
-
-more_than_once::NodeList->NodeSet;
-more_than_once(nodes) = rec_more_than_once(nodes,{},{});
-
-rec_more_than_once::NodeList,NodeSet,NodeSet->NodeSet;
-rec_more_than_once([],         _, result) = result;
-rec_more_than_once(car:cdr, seen, result) =
-  if car ? seen then
-    rec_more_than_once(cdr, seen, union(result, {car}))
-  else
-    rec_more_than_once(cdr, union(seen, {car}), result)
-  endif;
+  rec_join_shapegraphs(((union(S0,S1),union(H0,H1)),union(is0,is1)), cdr);
 
 // convert srw to nnh graph
 // nnh: set of graphs, each selector points to one node
 // srw: single graph, each selector can point to many nodes
 
 srwSG_to_nnhSG::ShapeGraph->ShapeGraphSet;
-srwSG_to_nnhSG(((ES,EH),IS)) =
+srwSG_to_nnhSG(SG) =
+  //let r_old = old_srwSG_to_nnhSG(SG); in
+  let r_new = new_srwSG_to_nnhSG(SG); in
+  //let dummy = debug_print_bool("conversion", "old conv = new conv", r_old = r_new); in
+  //let dummy = debug_print_ShapeGraphSet("conversion", "old nnh", r_old); in
+  //let dummy = debug_print_ShapeGraphSet("conversion", "new nnh", r_new); in
+  r_new;
+
+new_srwSG_to_nnhSG::ShapeGraph->ShapeGraphSet;
+new_srwSG_to_nnhSG(((S1,H1),IS1) as SG1) =
+  let vars         = vars_by_stackedges(S1);
+      heap_sources = extract_src_sel(SG1); in
+  let S2_sgs  = gen_stack_edges(vars, S1);
+      H2_sgs  = gen_heap_edges(heap_sources, H1);
+      IS2_sgs = gen_powerset([sharing !! sharing <-- IS1]); in
+  let SG2_sgs = map_cartesian([S2_sgs, H2_sgs, IS2_sgs]); in
+  let nnh_sgs = {sg !! sg <-- SG2_sgs, if is_compatible(sg)}; in
+  let dummy   = assert("srw0->nnh->srw == srw0", nnhSG_to_srwSG(nnh_sgs) = SG1); in
+  nnh_sgs;
+
+gen_stack_edges::VarList,StackEdgeSet->ShapeGraphSet; 
+gen_stack_edges(    [],     _) = {};
+gen_stack_edges(var:Vs, edges) = 
+  // generate all choices for outgoing edges of var
+  // combine recursively with all choices for other edges (vars \ var)
+  let outedges_of_var = stackedges_by_var(var,edges); in
+  // every edge could be (a) absent or (b) pointing to any one of the many
+  // targets that are represented by a single static heap
+  //let outedge_sgs     = {State2G({outedge}) !! outedge <-- outedges_of_var}; in
+  let outedge_sgs     = union({State2G({})},{State2G({outedge}) !! outedge <-- outedges_of_var}); in  // FIXME put in for correctness; but way too slow!
+  cartesian(outedge_sgs, gen_stack_edges(Vs,edges));
+  // 
+  // could be faster as the shape graph that will be searched
+  // in all following recursions is made smaller.
+  // but it may also not be faster when the reduction of the
+  // shape graph takes too much time
+  // (same can be done to gen_heap_edges)
+  // needs investigation:
+  //let remaining_edges = stackedge_subtract(edges, outedges_of_var); in
+  //cartesian(outedge_sgs, gen_stack_edges(Vs,remaining_edges));
+
+gen_heap_edges::NodeSelList,HeapEdgeSet->ShapeGraphSet;
+gen_heap_edges(            [],         _) = {};
+gen_heap_edges((src,sel):Rest,heap_edges) = 
+  // generate all choices for an edge (src,sel)
+  // for src != {}: ensure that (src,sel) is 0 or 1 time in the SG
+  // for src  = {}: |(src,sel)| > 1 is ok, ie. {},sel may be nondeterministic
+  // combine recursively with all choices for other edges (Rest)
+  let outedges    = heapedges_by_src_sel(src,sel,heap_edges); in
+  //let outedge_sgs = {Heap2G({e}) !! e <-- outedges}; in
+  let outedge_sgs = union({Heap2G({})}, {Heap2G({e}) !! e <-- outedges}); in  // FIXME put in again for correctness. but only once running time is no more of concern
+  cartesian(outedge_sgs, gen_heap_edges(Rest,heap_edges));
+
+gen_powerset::NodeList->ShapeGraphSet;
+gen_powerset(  []) = {};
+gen_powerset(n:Ns) = cartesian({Sharing2G({}),Sharing2G({n})}, gen_powerset(Ns));
+
+
+
+
+old_srwSG_to_nnhSG::ShapeGraph->ShapeGraphSet;
+old_srwSG_to_nnhSG(((ES,EH),IS)) =
   {((ESn,EHn),IS) !!
     ESn <- transform_stackedges(ES),
     EHn <- transform_heapedges(
@@ -157,6 +182,58 @@ rec_transform_heapedges(in_Graph, startnodes, res_Graph) =
 // Auxiliary functions for graph conversion
 // ----------------------------------------
 
+// vpavlu 2009-03-29: cartesian product of ShapeGraphSets is the
+// generalisation of the candidate generation code used for the
+// materialisation
+cartesian::ShapeGraphSet,ShapeGraphSet -> ShapeGraphSet;
+cartesian({}, B) = B;
+cartesian( A,{}) = A;
+cartesian( A, B) = cartesian_l([sg_a !! sg_a <-- A],[sg_b !! sg_b <-- B]);
+
+// AList x BList --> (a x BList) + (AList x BList)
+//               combine a(i) with each b in BList + recursion for remaining a(i+1..n)
+cartesian_l::ShapeGraphList,ShapeGraphList -> ShapeGraphSet;
+cartesian_l(  [], Bs) = {}; // done, we already had all combinations
+cartesian_l(a:As, Bs) = union(cartesian_r(a,Bs), cartesian_l(As,Bs));
+
+// a x BList --> (a x b) + (a x BList)
+//           combine a with b(i) + recursion for remaining b(i+1..n)
+cartesian_r::ShapeGraph,ShapeGraphList -> ShapeGraphSet;
+cartesian_r(a,   []) = {}; // done, we already had all combinations
+cartesian_r(a, b:Bs) = union({combSG(a,b)}, cartesian_r(a,Bs));
+
+// like comb, but for ShapeGraph not carrier
+combSG::ShapeGraph,ShapeGraph -> ShapeGraph;
+combSG( ((S1,H1),is1), ((S2,H2),is2) ) = ((union(S1,S2),union(H1,H2)), union(is1,is2));
+
+// reduces a list of operands with cartesian(_,_)
+map_cartesian::ShapeGraphSetList->ShapeGraphSet;
+map_cartesian([])   = {};
+map_cartesian(g:[]) = g;
+map_cartesian(g:Gs) =
+  if ShapeGraphSetList_len(Gs) = 1 then
+    cartesian(g,hd(Gs))
+  else
+    map_cartesian([cartesian(g,hd(Gs))] ++ tl(Gs))
+  endif;
+
+// create ShapeGraph from only one given component (State, Heap oder Sharing)
+State2G::StackEdgeSet->ShapeGraph;
+State2G(edges)   = ((edges,{}),{});
+Heap2G::HeapEdgeSet->ShapeGraph;
+Heap2G(edges)    = (({},edges),{});
+Sharing2G::NodeSet->ShapeGraph;
+Sharing2G(nodes) = (({},{}),nodes);
+
+
+HeapEdgeSet_len::HeapEdgeList->snum;
+HeapEdgeSet_len([]) = 0;
+HeapEdgeSet_len(car:cdr) = 1 + HeapEdgeSet_len(cdr);
+
+ShapeGraphSetList_len::ShapeGraphSetList->snum;
+ShapeGraphSetList_len([]) = 0;
+ShapeGraphSetList_len(car:cdr) = 1 + ShapeGraphSetList_len(cdr);
+
 shapeGraph_list_member::ShapeGraph,ShapeGraphList->bool;
 shapeGraph_list_member(a,b:c) = if a=b then true else shapeGraph_list_member(a,c) endif;
 shapeGraph_list_member(a,[])  = false;
@@ -184,7 +261,7 @@ vars_by_stackedges(S) = [v1 !! v1 <-- {v2 !! (v2,_) <-- S}];
 
 // all vars of stackedges (as set)
 nodes_by_stackedges::StackEdgeSet->NodeSet;
-nodes_by_stackedges(S) = {{nx} !! (nx,_) <-- S};
+nodes_by_stackedges(S) = {nx !! (_,nx) <-- S};
 
 // all vars of heapedges (as set)
 nodes_by_heapedges::HeapEdgeSet->NodeSet;
@@ -250,18 +327,27 @@ is_must_alias(a,b,sgs) = {g !! g <-- sgs, if !is_same_node(Alias_Must,a,b,g)} = 
 // returns true if both expressions refer to the same node
 is_same_node::EnumAlias,Expression,Expression,ShapeGraph->bool;
 is_same_node(alias_type,expr_a,expr_b,(_,is0) as sg) =
-  let invalid_node = {add_tmpvarid_like_expr(expr_a)}; in  // will be used to indicate "node not found" case
-  let a_nodes      = nodes_visited_by_expr(expr_a,sg,invalid_node);
-      b_nodes      = nodes_visited_by_expr(expr_b,sg,invalid_node);
+  print(alias_type) print(":\n")
+    print("  ")print(expr_asttext(expr_a)) print("\n")
+    print("  ")print(expr_asttext(expr_b)) print("\n")
+    print("in ")print(sg)
+    print("\n")
+
+  let null = {add_tmpvarid_like_expr(expr_a)}; in  // will be used to indicate "node not found" case
+  let a_nodes      = nodes_visited_by_expr(expr_a,sg,null);
+      b_nodes      = nodes_visited_by_expr(expr_b,sg,null);
       a_sels       = selectors_visited_by_expr(expr_a);
       b_sels       = selectors_visited_by_expr(expr_b); in
-  rec_is_same_node(alias_type, {} ? is0, a_sels, a_nodes, b_sels, b_nodes, invalid_node);
+  let dummy = print("invalid=")print(null)print("\n") false;in
+  let dummy = print(a_nodes) print("\n") false; in
+  let dummy = print(b_nodes) print("\n") false; in
+  rec_is_same_node(alias_type, {} ? is0, a_sels, a_nodes, b_sels, b_nodes, null);
 
 rec_is_same_node::EnumAlias,bool, VarList,NodeList, VarList,NodeList, Node->bool;
 rec_is_same_node(_, _, _, [], _,  _, _) = false;
 rec_is_same_node(_, _, _,  _, _, [], _) = false;
-rec_is_same_node(alias_type, summary_is_shared, a_sels, a:a_rest, b_sels, b:b_rest, invalid_node) =
-  if a != b || a = invalid_node || b = invalid_node then
+rec_is_same_node(alias_type, summary_is_shared, a_sels, a:a_rest, b_sels, b:b_rest, null) =
+  if a != b || a = null || b = null then
     // different nodes or not in graph at all
     false 
   else
@@ -283,7 +369,7 @@ rec_is_same_node(alias_type, summary_is_shared, a_sels, a:a_rest, b_sels, b:b_re
         if a_sels = [] || b_sels = [] || a_sels != b_sels then
           false
         else
-          rec_is_same_node(alias_type, summary_is_shared, tl(a_sels), a_rest, tl(b_sels), b_rest, invalid_node)
+          rec_is_same_node(alias_type, summary_is_shared, tl(a_sels), a_rest, tl(b_sels), b_rest, null)
         endif
       endif
     endif
@@ -310,33 +396,45 @@ rec_selectors_visited_by_expr(e, e_cursor) =
 // returns list of all heapnodes on a path given by the expression
 // [node(n), node(n-1), node(n-2), ..., node(0)]
 nodes_visited_by_expr::Expression,ShapeGraph,Node->NodeList;
-nodes_visited_by_expr(e,g,invalid_node) = rec_nodes_visited_by_expr(e, expr_depth(e),g,[],invalid_node);
+nodes_visited_by_expr(e,g,null) = rec_nodes_visited_by_expr(e, expr_depth(e),g,[],null);
 
 rec_nodes_visited_by_expr::Expression,snum,ShapeGraph,NodeList,Node->NodeList;
-rec_nodes_visited_by_expr(_,       -1, _, trail,            _) = trail; // intentionally -1, topmost case in iteration
-rec_nodes_visited_by_expr(e, e_cursor, g, trail, invalid_node) =
+rec_nodes_visited_by_expr(_,       -1, _, trail,    _) = trail; // intentionally -1, topmost case in iteration
+rec_nodes_visited_by_expr(e, e_cursor, g, trail, null) =
   let inner_e  = expr_at(e,e_cursor); in
   let new_list = case inner_e of
 
     VarRefExp(_) as ref_x =>
       let x   = varref_varid(ref_x); in
-      if var_exists(x,g) then [node_by_var(x,g)] else [invalid_node] endif;
+      if var_exists(x,g) then [node_by_var(x,g)] else [] endif;
 
-    ArrowExp(VarRefExp(_) as ref_x,VarRefExp(_) as ref_sel) =>
+    ArrowExp(VarRefExp(_) as ref_x,VarRefExp(_) as ref_sel) as ref_expr =>
       let x   = varref_varid(ref_x);
+          eid = expr_exprid(ref_expr);
           sel = varref_varid(ref_sel); in
-      let nl0 = if var_exists(x,g) then [node_by_var(x,g)] else [invalid_node] endif; in
-      let nl1 = if src_sel_exists({x},sel,g) then [node_by_src_sel({x},sel,g)] else [invalid_node] endif; in
-      nl1 ++ nl0;
+      print("++")print(expr_asttext(ref_expr))print("\n")
+      print("--")print(exprid_str(eid))print("\n")
+      print("--ArrowExp(")print(varid_str(x))print(",")print(varid_str(sel))print(")\n")
+      print("var_exists(")print(varid_str(x))print(")=")
+      if var_exists(x,g) then
+        print("true\n")
+        let src = node_by_var(x,g); in
+        if src_sel_exists(src,sel,g) then [node_by_src_sel(src,sel,g), src] else [] endif
+      else print("false\n") [] endif; 
 
     DotExp(PointerDerefExp(_),VarRefExp(_) as ref_sel) =>
       let x   = hd(trail);
           sel = varref_varid(ref_sel); in
-      if src_sel_exists(x,sel,g) then [node_by_src_sel(x,sel,g)] else [invalid_node] endif;
+      if src_sel_exists(x,sel,g) then [node_by_src_sel(x,sel,g)] else [] endif;
 
     _ => print(inner_e) print(": ") error("unhandled expression.");
   endcase; in
-  rec_nodes_visited_by_expr(e, e_cursor - 1, g, new_list ++ trail, invalid_node);
+  let dummy = print("search ") print(expr_asttext(inner_e)) print(": ") print(new_list) print("\n") false; in
+  if [] = new_list then
+    [null] ++ trail
+  else
+    rec_nodes_visited_by_expr(e, e_cursor - 1, g, new_list ++ trail, null)
+  endif;
 
 var_exists::VariableId,ShapeGraph->bool;
 var_exists(x,((S0,_),_)) =  {e !! (y,ny) as e <-- S0, if (x=y)} != {};
@@ -346,6 +444,59 @@ node_by_var(x,((S0,_),_) as g) = hd([nk !! (k,nk) <-- S0, if (k=x)]);
 
 node_by_src_sel::Node,VariableId,ShapeGraph->Node;
 node_by_src_sel(x,sel,((_,H0),_)) = hd([nk !! (x1,sel1,nk) <-- H0, if x1 = x && sel1 = sel]);
+
+// -------------------
+// is_compatible check
+// -------------------
+
+is_compatible::ShapeGraph->bool;
+is_compatible(((S0,H0),is0) as g) =
+  let vars = union(is0,union(nodes_by_stackedges(S0),nodes_by_heapedges(H0))); in
+  let res = if check_inv1(vars)
+    && check_inv2(S0)
+    && check_inv3(H0)
+    && check_inv4([x !! x <-- is0],H0)
+    && check_inv5(vars,H0,is0) then true else false endif; in
+  let dummy = debug_print_bool("materialisation", "inv1", check_inv1(vars)); in
+  let dummy = debug_print_bool("materialisation", "inv2", check_inv2(S0)); in
+  let dummy = debug_print_bool("materialisation", "inv3", check_inv3(H0)); in
+  let dummy = debug_print_bool("materialisation", "inv4", check_inv4([x !! x <-- is0],H0)); in
+  let dummy = debug_print_bool("materialisation", "inv5", check_inv5(vars,H0,is0)); in
+  res;
+
+// Inv1: two nodes a,b are either the same or have no common variables
+check_inv1::NodeSet->bool;
+check_inv1(vars) = {} = {false !! a <-- vars, b <-- vars, if (a != b) && intersect(a,b) != {}};
+
+// Inv2: if x points to a node, the nodes name must contain x (naming convention)
+check_inv2::StackEdgeSet->bool;
+check_inv2(S) = S = {(x,nx) !! (x,nx) <-- S, if x ? nx};
+
+// Inv3: no node,sel pair may point to more than one node except {},sel
+check_inv3::HeapEdgeSet->bool;
+check_inv3(H) =
+  {} = {((nv1,sel1,nw1),(nv2,sel2,nw2)) !! (nv1,sel1,nw1) <-- H, (nv2,sel2,nw2) <-- H,
+        if nv1 = nv2
+        && sel1 = sel2
+        && !(nw1 = nw2 || nv1 = {})}; // try to find edges that *violate* Inv3
+
+// Inv4: if nx is shared, there exists either {},_,nw or >1 edges pointing to nx
+check_inv4::NodeList, HeapEdgeSet->bool;
+check_inv4(           [],_) = true;
+check_inv4(shared_x:cdr, H) =
+  ( {} != {e !! ({},_,nw) as e <-- H, if nw = shared_x}
+    || n_into(shared_x,H) > 1)
+  && check_inv4(cdr,H);
+
+n_into::Node,HeapEdgeSet->snum;
+n_into(nx,H0) = HeapEdgeSet_len([e !! (_,_,nw) as e <-- H0, if nw = nx]);
+
+// Inv5: if two or more edges point to nx then nx is shared (if nx is not {})
+check_inv5::NodeSet,HeapEdgeSet,NodeSet->bool;
+check_inv5(vars,H0,is0) = {} = {nx !! nx <-- vars, if n_into(nx,H0) > 1 && nx != {} && !(nx ? is0)};
+
+
+
 
 // garbage collection (Markus Schordan)
 /*

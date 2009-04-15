@@ -1,7 +1,3 @@
-// Copyright 2007,2008,2009 Viktor Pavlu
-
-// Author: Viktor Pavlu, 2007.
-
 // FIXME: cmdline handling needs refactoring.
 // it is awkward, that for a new cmdlne option
 // if have to edit in two places
@@ -63,24 +59,29 @@ public:
       return "\n Usage: "+getProgramName()+" [OPTION]... <filename1> <filename2> ... \n\n"
            + " "+getHelpOptionsText()
            + "\n"
-             " Shape Analysis Options:\n" 
-//             "   --output-alias                output the alias pairs for each statement on stdout\n"
-//             "   --output-alias-annotation     add alias pairs to each statement in generated source file\n"
-//             "\n"
-
+             " Shape Analysis Based Aliases:\n" 
+             "   --annotate-aliases   annotate alias pairs in AST\n"
+             "   --output-alias-text  annotate alias pairs in AST and print them\n"
+//             "   --output-alias-source=<FILENAME> generate soure with annotated alias pairs\n"
+             "\n"
+             " Shape Graph GDL output options:\n"
 #ifdef ANALYSIS_nnh99
-             "   --nnh-graphs       set of compatible shapegraphs (NNH) in .gdl [default]\n"
-             "   --no-nnh-graphs    no set of compatible shape graphs in .gdl\n"
-             "   --srw-graphs       static shapegraph (SRW) in .gdl\n"
-             "   --no-srw-graphs    no static shapegraph in .gdl [default]\n"
+             "   --nnh-graphs         set of compatible shapegraphs (NNH) in .gdl [default]\n"
+             "   --no-nnh-graphs      no set of compatible shape graphs in .gdl\n"
+             "   --srw-graphs         static shapegraph (SRW) in .gdl\n"
+             "   --no-srw-graphs      no static shapegraph in .gdl [default]\n"
 #else
-             "   --nnh-graphs       set of compatible shapegraphs (NNH) in .gdl\n"
-             "   --no-nnh-graphs    no set of compatible shape graphs in .gdl [default]\n"
-             "   --srw-graphs       static shapegraph (SRW) in .gdl [default]\n"
-             "   --no-srw-graphs    no static shapegraph in .gdl\n"
+#ifdef ANALYSIS_srw98
+             "   --nnh-graphs         set of compatible shapegraphs (NNH) in .gdl\n"
+             "   --no-nnh-graphs      no set of compatible shape graphs in .gdl [default]\n"
+             "   --srw-graphs         static shapegraph (SRW) in .gdl [default]\n"
+             "   --no-srw-graphs      no static shapegraph in .gdl\n"
+#else
+             "   FIXME add commandline switches for shapetool\n"
 #endif
-             "   --foldgraphs       fold all shape graphs\n"
-             "   --no-foldgraphs    do not fold shape graphs\n"
+#endif
+             "   --foldgraphs         fold all shape graphs\n"
+             "   --no-foldgraphs      do not fold shape graphs\n"
 //             "   --output-graph-statistics=<FILENAME>  write graph statistics to <FILENAME>\n"
              ;
   }

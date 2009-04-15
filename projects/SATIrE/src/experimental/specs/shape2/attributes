@@ -1,7 +1,8 @@
 // commandline attributes special to the shape analysis
 
-BOOL_ATTR(aliasTextOutput, Off)
-BOOL_ATTR(aliasSourceOutput, Off)
+BOOL_ATTR(aliasesAnnotate, Off)
+BOOL_ATTR(aliasesOutputText, Off)
+STRING_ATTR(aliasesOutputSource, "")
 
 BOOL_ATTR(gdlFoldGraphs, Off)
 
@@ -12,6 +13,9 @@ BOOL_ATTR(gdlShowIndividualGraphs, On)
 BOOL_ATTR(gdlShowSummaryGraph, On)
 BOOL_ATTR(gdlShowIndividualGraphs, Off)
 #endif
+
+BOOL_ATTR(convertToNNH, Off)
+BOOL_ATTR(convertToSRW, Off)
 
 STRING_ATTR(graphStatisticsFile, "")
 

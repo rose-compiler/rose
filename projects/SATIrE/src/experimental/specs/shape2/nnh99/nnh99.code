@@ -4,11 +4,6 @@
 
 SET
 #include "../common.set"
-ShapeGraphSetList = list(ShapeGraphSet)  // for enunion
-
-HeapEdgeTuple     = HeapEdge * HeapEdge  // for check_inv3
-HeapEdgeTupleSet  = set(HeapEdgeTuple)   // for check_inv3
-NodeSetList       = list(NodeSet)        // for check_inv4
 
 DOMAIN
 ShapeGraphSetLifted = flat(ShapeGraphSet)
@@ -18,6 +13,8 @@ UNIVERSAL
 option_kill_normalisation_temps : bool#
 option_kill_empty_graph         : bool#
 option_kill_unreachable_nodes   : bool#
+
+option_omit_conversion_to_srw   : bool#
 
 GLOBAL
 globals     : *VariableSymbolNT#
@@ -68,7 +65,12 @@ tassign_xsel_y::VariableId,VariableId,VariableId,ShapeGraphSet->ShapeGraphSet;
 //remove_empty_graph(g) = if g = {(({},{}),{})} then {(({},{}),{})} else if option_kill_empty_graph then g # (({},{}),{}) else g endif endif;
 
 extract_graphs::ShapeGraphSet->SrwNnhPair;
-extract_graphs(sg) = (nnhSG_to_srwSG(sg), sgSet_to_sgList(sg));
+extract_graphs(sg) =
+  if option_omit_conversion_to_srw then
+    ((({},{}),{}), sgSet_to_sgList(sg))
+  else
+    (nnhSG_to_srwSG(sg), sgSet_to_sgList(sg))
+  endif;
 
 // FIXME still required for alias-computation
 shape_carrier_to_shapegraphset::ShapeGraphSetLifted->ShapeGraphSet;
@@ -182,7 +184,7 @@ fassign_xsel_null(x,s,((S0,H0),is0) as g) =
   endif;
 
 fassign_xsel_y::VariableId,VariableId,VariableId,ShapeGraph->ShapeGraphSet;
-fassign_xsel_y(x,sel,y,((S1,H1),is1) as g) = 
+fassign_xsel_y(x,sel,y,((S1,H1),is1) as g) =
   if !var_exists(x,g) || !var_exists(y,g) then
     // in both cases identity, as kill_xsel has already been performed
     {g}
@@ -199,53 +201,87 @@ fassign_x_new::VariableId,ShapeGraph->ShapeGraphSet;
 fassign_x_new(x,((S1,H1),is1) as g) =
   {((union(S1,{(x,{x})}),H1),is1)};
 
+get_extern_edges   :: HeapEdgeSet -> HeapEdgeSet;
+get_intern_edges   :: HeapEdgeSet -> HeapEdgeSet;
+get_ingoing_edges  :: HeapEdgeSet -> HeapEdgeSet;
+get_outgoing_edges :: HeapEdgeSet -> HeapEdgeSet;
+  // vpavlu 2009-03-29: all {x} occurrences in the heap are already removed, so
+  // it is sufficient to check against {} to determine the edge class.
+get_extern_edges(edges)   = {edge_ex !! (nv,sel,nw) as edge_ex <-- edges, if (nv != {}) && (nw != {})};
+get_intern_edges(edges)   = {edge_in !! (nv,sel,nw) as edge_in <-- edges, if (nv  = {}) && (nw  = {})};
+get_ingoing_edges(edges)  = {edge_gi !! (nv,sel,nw) as edge_gi <-- edges, if (nv != {}) && (nw  = {})};
+get_outgoing_edges(edges) = {edge_go !! (nv,sel,nw) as edge_go <-- edges, if (nv  = {}) && (nw != {})};
 
 
 materialise::VariableId,VariableId,VariableId,ShapeGraph->ShapeGraphSet;
-materialise(x,y,sel,((S1,H1),is1) as G1) = 
-  let dummy = debug_print_str("materialisation","materialise ".varid_str(x)." = ".varid_str(y).".".varid_str(sel)."\n"); in
-  let dummy = debug_print_ShapeGraph("materialisation","graph",G1); in
-  let dummy = debug_print_ShapeGraph("mm","graph",G1); in
-  // all nx is already removed from G'
-  // only check for {} when determining class of edge
-  let sumloc_or_x   = {{},{x}}; in
-  let S2         = union(S1,{(x,{x})});
-      H1externa  = {e1a !! (nv1a,sel1a,nw1a) as e1a <-- H1, if (nv1a != {}) && (nw1a != {})};
-      H1extern   = {e1 !! (nv1,sel1,nw1) as e1 <-- H1, if intersect({nv1,nw1},sumloc_or_x) = {}};
-      H1intern   = {e2 !! (nv2,sel2,nw2) as e2 <-- H1, if   (nv2 ? sumloc_or_x) &&   (nw2 ? sumloc_or_x)};
-      H1goingout = {e3 !! (nv3,sel3,nw3) as e3 <-- H1, if   (nv3 ? sumloc_or_x) && ! (nw3 ? sumloc_or_x)};
-      H1goingin  = {e4 !! (nv4,sel4,nw4) as e4 <-- H1, if ! (nv4 ? sumloc_or_x) &&   (nw4 ? sumloc_or_x)}; in
+materialise(x,y,sel,((S1,H1),is1) as G1) =
+  // generate candidate shape graphs for the materialisation:
+  //  - S2 is S1 + (x,{x}) edge
+  //  - H2
+  //    .) extern edges remain unchanged by materialisation
+  //    .) ingoing edges k-{} remain ingoing edges
+  //       - as the statement was [x = y->sel] it is certain that the edge (y,sel,{}) becomes (y,sel,{x})
+  //       - but all other sources could point to {} or {x} after materialisation.
+  //    .) outgoing edges {}-k remain outgoing edges
+  //       - ({},sel,k) becomes ({},sel,k) or ({x},sel,k) or both, if sharing permits it
+  //    .) intern edges {}-{} remain intern edges
+  //       - ({},sel,{}) become ({},sel,{}),({},sel,{x}),({x},sel,{}),({x},sel,{x}) and combinations if sharing permits it
+  //
+  //    for edges starting at {}: they need not be deterministic! (all other edges must be)
+  //    ie. N-sel1-{a}, N-sel2-{b} for sel1 = sel2 is only possible for N={}, not if N is a named node
+  //  - is2 is is1 if {} was unshared,
+  //        and is1 + {}, is1 + {x}, is1+{}+{x} if {} was shared.
 
-  let dummy = debug_print_HeapEdgeSet("mm", "intern=", H1intern); in
-  let dummy = debug_print_HeapEdgeSet("mm", "extern=", H1extern); in
-  let dummy = debug_print_HeapEdgeSet("mm", "g-out =", H1goingout); in
-  let dummy = debug_print_HeapEdgeSet("mm", "g-in  =", H1goingin); in
+  // --S2--
+  let S2_sgs          = {State2G( S1~(x,{x}) )}; in
 
-  if union(union(H1extern,H1intern),union(H1goingin,H1goingout)) != H1 then error("logic error 1 in materialisation") else // DEBUG sanity check
-  if H1externa != H1extern then error("logic error 2 in materialisation") else // DEBUG sanity check
+  // --H2.extern--
+  let H2extern_sgs    = {Heap2G(get_extern_edges(H1))}; in
 
-  let is2choices = if {} ? is1 then
-    // if {} is shared in G1 we have 3 cases: {}, {x} or both are shared
-    // note that the sharing can not go away, ie. there is no case where neither {} nor {x} is shared
-    [is1 ~ {},
-     is1 ~ {x},
-     is1 ~ {} ~ {x}]
+  // --H2.intern--
+  let H1intern        = get_intern_edges(H1); in
+  let H2intern_sgs    = map_cartesian(gen_sgl_for_intern_edges([e !! e <-- H1intern],{x},is1)); in
+
+  // --H2.ingoing--
+  let dummy           = assert("make sure {y}--sel-->{} is in heap", var_sel_exists(y,sel,G1)); in
+  let old_edge        = heapedge_by_var_sel(y,sel,H1);  // {y}--sel-->{}
+      new_edge        = (node_by_var(y,G1),sel,{x}); in // {y}--sel-->{x}
+
+  // all ingoing edges (k,sel,{}) are ingoing edges after the materialisation.
+  // (a) (y,sel,{}) can only become (y,sel,{x}) as the stmt was [x = y->sel]
+  let H2ingoing_sgs_a = {Heap2G({new_edge})}; in
+
+  // (b) but all other ingoing edges could point to {x} or {} after materialistion.
+  // "all other edges" -> remove old_edge before generating to avoid duplicate edges
+  // and thus non-determinism (would violate Inv3)
+  let H1ingoing       = get_ingoing_edges(H1) # old_edge; in
+  let H2ingoing_sgs_b = map_cartesian(gen_sgl_for_ingoing_edges([e !! e <-- H1ingoing],{x},is1)); in
+
+  let H2ingoing_sgs   = cartesian(H2ingoing_sgs_a, H2ingoing_sgs_b); in
+
+  // --H2.outgoing--
+  let H1outgoing      = get_outgoing_edges(H1); in
+  let H2outgoing_sgs  = map_cartesian(gen_sgl_for_outgoing_edges([e !! e <-- H1outgoing],{x},is1)); in
+
+  // --is2--
+  let is2_sgs = if {} ? is1 then
+  {
+    Sharing2G( union(is1,{{}})),    // {} shared
+    Sharing2G( union(is1,{{x}})),   // {x} shared
+    Sharing2G( union(is1,{{},{x}})) // or both shared
+  }
   else
-    // if {} is unshared, neither {} nor {x} are shared in G2
-    [is1]
+  {
+    Sharing2G( is1 )                // neither {} nor {x} shared
+  }
   endif; in
-  let candidates = enunion([generate_related_graphs(x,y,sel,S2,H1extern,H1intern,H1goingout,H1goingin,is2) !! is2 <- is2choices]); in
 
-  let xx = {G2xx !! ((S2xx,H1xx),is2xx) as G2xx <-- candidates, if (x,{x}) ? S2xx}; in // DEBUG sanity check
-  let yy = {G2yy !! ((S2yy,H1yy),is2yy) as G2yy <-- candidates, if var_exists(x,G2yy)}; in // DEBUG sanity check
-  if xx != yy then error("logic error 2 in materialisation") else // DEBUG sanity check
+  // generate combinations
+  let sgs = map_cartesian([S2_sgs, H2extern_sgs, H2intern_sgs, H2ingoing_sgs, H2outgoing_sgs, is2_sgs]); in
 
-  {G2 !! G2 <-- candidates, if is_accepted(x,y,sel,G1,G2)}
+  //{ G2 !! G2 <-- sgs, if is_compatible(G2)};
+  { G2 !! G2 <-- sgs, if is_accepted(x,y,sel,G1,G2)};
 
-  endif // DEBUG sanity check
-  endif // DEBUG sanity check
-  endif // DEBUG sanity check
-  ;
 
 is_accepted::VariableId,VariableId,VariableId,ShapeGraph,ShapeGraph->bool;
 is_accepted(x,y,sel,G1,((S2,H2),is2) as G2) =
@@ -261,184 +297,123 @@ is_accepted(x,y,sel,G1,((S2,H2),is2) as G2) =
   let dummy = debug_print_bool("materialisation","y->sel = x    ",(node_by_var(y,G2),sel,{x}) ? H2); in
   res;
 
-// generate all possible G" with related edges for H1___
-generate_related_graphs::VariableId,VariableId,VariableId,StackEdgeSet,HeapEdgeSet,HeapEdgeSet,HeapEdgeSet,HeapEdgeSet,NodeSet->ShapeGraphSet;
-generate_related_graphs(x,y,sel,S2,H1ext,H1int,H1out,H1in,is2) =
-  
-  if !var_sel_exists(y,sel,((S2,H1in),is2)) then print("edge not found: ".varid_str(y).".".varid_str(sel)) error(" logic error in generate") else // DEBUG sanity check
+gen_sgl_for_intern_edges::HeapEdgeList,Node,NodeSet -> ShapeGraphSetList;
+gen_sgl_for_intern_edges(          [],_,  _) = [];
+gen_sgl_for_intern_edges((n,sel,m):Es,x,is1) =
+  let dummy = assert("internal_edge(n,_,m) has n = {} && m = {}", n = {} && m = {}); in
+  // generate a set of all shape graphs
+  // that are the result of materialising x
+  // from {} in the internal edge e ({},sel,{})
 
-  let old_edge    = heapedge_by_var_sel(y,sel,H1in);          // y->sel must be an internal edge as y is named and target is {}
-      new_edge    = (node_by_var(y,((S2,{}),{})),sel,{x}); in // change it to the new (y,sel,x) edge
-  let H1in_no_old = [e !! e <-- (H1in # old_edge)]; in
-  let ext_choices = [H1ext];
-      int_choices = gen_internal({x},[e !! e <-- H1int],is2); 
-       in_choices = combine_H(gen_goingin({x},H1in_no_old, is2), [{new_edge}]); // replace old_edge with new_edge in every graph
-      out_choices = gen_goingout({x},[e !! e <-- H1out],is2); in                // but don't pass it into the gen_goingin func
+  let sgs = if {} ? is1 then
+  // if the summary location was shared then
+  // either {} or {x} or both must be shared
+  // in the generated graphs
+  {
+    Heap2G({({},sel,{})}),
+    Heap2G({({},sel, x)}),
+    Heap2G({( x,sel,{})}),
+    Heap2G({( x,sel, x)}),
 
-  let H2set       = combine_H(combine_H(combine_H(ext_choices,int_choices),in_choices),out_choices); in
+    Heap2G({({},sel,{}), ({},sel,x)}),
+    Heap2G({({},sel,{}), ( x,sel,{})}),
+    Heap2G({({},sel,{}), ( x,sel,x)}),
+    Heap2G({({},sel, x), ( x,sel,{})}),
+    Heap2G({({},sel, x), ( x,sel, x)}),
+    //Heap2G({( x,sel,{}), ( x,sel, x)}),                           // non-deterministic, thus incompatible
 
-  let dummy = debug_print_HeapEdgeSet("materialisation", "ext = ", H1ext); in
-  let dummy = debug_print_HeapEdgeSet("materialisation", "int = ", H1int); in
-  let dummy = debug_print_HeapEdgeSet("materialisation", "in* = ", H1in ); in
-  let dummy = debug_print_HeapEdgeSet("materialisation", " in = ", {tmp !! tmp <-H1in_no_old}); in
-  let dummy = debug_print_HeapEdgeSet("materialisation", "out = ", H1out); in
+    Heap2G({({},sel,{}), ({},sel, x), ( x,sel,{})}),
+    Heap2G({({},sel,{}), ({},sel, x), ( x,sel, x)})
+    //Heap2G({({},sel, x), ( x,sel,{}), ( x,sel, x)}),              // non-deterministic, thus incompatible
 
-  let dummy = debug_print_HeapEdgeSetList("materialisation","ext_choices", ext_choices); in
-  let dummy = debug_print_HeapEdgeSetList("materialisation","int_choices", int_choices); in
-  let dummy = debug_print_HeapEdgeSetList("materialisation"," in_choices",  in_choices); in
-  let dummy = debug_print_HeapEdgeSetList("materialisation","out_choices", out_choices); in
+    //Heap2G({({},sel,{}), ({},sel, x), ( x,sel,{}), ( x,sel, x)})  // non-deterministic, thus incompatible
+  }
+  else
 
-  {((S2,H2),is2) !! H2 <- H2set}
+  // unshared summary location, so {x} must also
+  // remain unshared! and there is already one heap
+  // edge y->next (because we materialise only for x = y->next)
+  // so {x} can not be target of *another* heap edge
+  {
+    Heap2G({({},sel,{})}),
+    //Heap2G({({},sel, x)}),                                        // would make {x} shared
+    Heap2G({( x,sel,{})}),
+    //Heap2G({( x,sel, x)}),                                        // would make {x} shared
 
-  endif; // DEBUG sanity check
+    //Heap2G({({},sel,{}), ({},sel,x)}),                            // would make {x} shared
+    Heap2G({({},sel,{}), ( x,sel,{})})
+    //Heap2G({({},sel,{}), ( x,sel,x)}),                            // would make {x} shared
+    //Heap2G({({},sel, x), ( x,sel,{})}),                           // would make {x} shared
+    //Heap2G({({},sel, x), ( x,sel, x)}),                           // would make {x} shared
+    //Heap2G({( x,sel,{}), ( x,sel, x)}),                           // non-deterministic, thus incompatible
 
-// generate all edges related to these internal edges
-gen_internal::Node,HeapEdgeList,NodeSet->HeapEdgeSetList;
-gen_internal(_,       [],  _) = [];
-gen_internal(x,edge:Hint,is2) =
-  case edge of
-    ({},sel,{}) =>
-      if ({} ? is2) || (x ? is2) then [
-        // only 1
-        {({},sel,{})},
-        {( x,sel,{})},
+    //Heap2G({({},sel,{}), ({},sel, x), ( x,sel,{})}),              // would make {x} shared
+    //Heap2G({({},sel,{}), ({},sel, x), ( x,sel, x)}),              // would make {x} shared
+    //Heap2G({({},sel, x), ( x,sel,{}), ( x,sel, x)}),              // non-deterministic, thus incompatible
 
-        // even into x as it is shared alredy
-        {({},sel, x)},
-        {( x,sel, x)},
-
-        // any 2 where x has only one out-edge
-        {({},sel,{}),({},sel, x)},
-        {({},sel,{}),( x,sel,{})},
-        {({},sel,{}),( x,sel, x)},
-        {({},sel, x),( x,sel,{})},
-        {({},sel, x),( x,sel, x)},
-                                    // x,sel,x x,sel,{} would violate Inv3
-        
-        // any 3 where x has only one out-edge
-        {({},sel,{}),({},sel, x),(x,sel,{})},
-        {({},sel,{}),({},sel, x),(x,sel, x)}
-
-        // there is no 4 where x has only one out-edge
-      ] else [
-        {({},sel,{})},  // internal edge can stay at {}
-        {( x,sel,{})},  // or come from x
-                        // but can not point to x without introducing sharing
-                        // as there is always the going-in edge (y,sel,x)
-        {({},sel,{}),(x,sel,{})} // or both
-      ]
-      endif ++ gen_internal(x,Hint,is2);
-
-    _ => error("logical error in gen_internal");
-  endcase;
-
-gen_goingin::Node,HeapEdgeList,NodeSet->HeapEdgeSetList;
-gen_goingin(_,      [],  _) = [];
-gen_goingin(x,edge:Hin,is2) =
-  case edge of
-    (y,sel,{}) =>
-      if y = {} then error("logical error 1 in gen_goingin") else // DEBUG sanity check
-
-      let cur = if ({} ? is2) || (x ? is2) then [
-        // when {} is shared, {x} is also shared
-                       // the (y,sel,_) edge can not go away
-        {(y,sel,{})},  // so either it stays at {}
-        {(y,sel,x)}    // or it moves with materialisation to the new {x} ({x} is already shared so it have n_into > 1)
-                       // but not both, as this would violate Inv3
-      ] else [
-        // when not shared
-        {(y,sel,{})}   // it can only stay at {} without introducing sharing for {x}
-      ] endif; in
-      cur ++ gen_goingin(x,Hin,is2)
-
-      endif; // DEBUG sanity check
-
-    _ => error("logical error 2 in gen_goingin");
-  endcase;
-
-gen_goingout::Node,HeapEdgeList,NodeSet->HeapEdgeSetList;
-gen_goingout(_,       [],  _) = [];
-gen_goingout(x,edge:Hout,is2) =
-  case edge of
-    ({},sel,y) =>
-      if y = {} then error("logical error 1 in gen_goingout") else // DEBUG sanity check
-
-      if y ? is2 then [
-        {({},sel,y)},
-        {( x,sel,y)},
-        {({},sel,y),(x,sel,y)}
-      ] else [
-        {({},sel,y)},
-        {( x,sel,y)}
-      ] endif ++ gen_goingout(x,Hout,is2)
-
-      endif; // DEBUG sanity check
-
-    _ => error("logical error 2 in gen_goingout");
-  endcase;
-
-// combine every a1..an from A with every b1..bm from B
-combine_H::HeapEdgeSetList,HeapEdgeSetList->HeapEdgeSetList;
-combine_H(   As,  []) = As;  // some lhs choices combined with no rhs -> identity on lhs
-combine_H(   [],  Bs) = Bs;  // accordingly here
-combine_H(ai:[],  Bs) = let dummy=assert_combine_H(ai,[],Bs); in [union(set,ai) !! set <- Bs];
-combine_H(ai:As,  Bs) = let dummy=assert_combine_H(ai,As,Bs); in [union(set,ai) !! set <- Bs] ++ combine_H(As,Bs);
-
-assert_combine_H::HeapEdgeSet,HeapEdgeSetList,HeapEdgeSetList -> bool; 
-assert_combine_H(car,cdr,rhs) =
-  let assert_0 = if {} ? {x !! x <- [car]++cdr} then error("assert failed. empty set in lhs, aka 'no edge' is one option -- but edges can not go away.") else true endif; in
-  let assert_1 = if {} ? {x !! x <- rhs}        then error("assert failed. empty set in rhs, aka 'no edge' is one option -- but edges can not go away.") else true endif; in
-  assert_0 && assert_1;
+    //Heap2G({({},sel,{}), ({},sel, x), ( x,sel,{}), ( x,sel, x)})  // non-deterministic, thus incompatible
+  }
+  endif; in
+  [sgs] ++ gen_sgl_for_intern_edges(Es,x,is1);
 
 
-/*
-,(_,sel,_) as edge:cdr,is0) =
-  let Hn = case edge of
-    ({},_,{}) => 
-      if x ? is0 then {
-        {({},sel,{})},
-        {({},sel, x)},
-        {( x,sel,{})},
-        {( x,sel, x)},
+gen_sgl_for_ingoing_edges::HeapEdgeList,Node,NodeSet -> ShapeGraphSetList;
+gen_sgl_for_ingoing_edges(  [],_,  _) = [];
+gen_sgl_for_ingoing_edges((n,sel,m):Es,x,is1) =
+  let dummy = assert("ingoing_edge(n,_,m) has n != {} && m = {}", n != {} && m = {}); in
 
-        {({},sel,{}),({},sel, x)},
-        {({},sel,{}),( x,sel,{})},
-        {({},sel,{}),( x,sel, x)},
-        {({},sel, x),( x,sel,{})},
-        {({},sel, x),( x,sel, x)},
-        {( x,sel,{}),( x,sel, x)},
-        
-        {({},sel,{}),({},sel, x),(x,sel,{})},
-        {({},sel,{}),({},sel, x),(x,sel, x)},
-        {({},sel,{}),( x,sel,{}),(x,sel, x)},
-        
-        {({},sel,{}),({},sel,x),(x,sel,{}),(x,sel,x)}
-      } else {
-        {({},sel,{})},
-        {( x,sel,{})},
+  let sgs = if {} ? is1 then
+  // if the summary location was shared then
+  // either {} or {x} or both must be shared
+  // in the generated graphs
+  {
+    Heap2G({( n,sel,{})}),
+    Heap2G({( n,sel, x)})
 
-        {({},sel,{}),(x,sel,{})}
-      } endif;
-      
-    ({},_,y) =>
-      if y ? is0 then {
-        {({},sel,y)},
-        {( x,sel,y)},
-        {({},sel,y),(x,sel,y)}
-      } else {
-        {({},sel,y)},
-        {( x,sel,y)}
-      } endif;
+    //Heap2G({(n,sel,{}), (n,sel,x)})                               // non-deterministic, thus incompatible
+  }
+  else
 
-    (y,_,{}) => {
-        {(y,sel,{})},
-        {(y,sel,x)}
-      };
-  endcase; in
-  enunion([generate_related_graphs(x,S,union(H,new_edge),cdr,is0) !! new_edge <-- Hn]);
-generate_related_graphs(_,S,H,[],is0) = {((S,H),is0)};
+  // unshared summary location, so {x} must also
+  // remain unshared! and there is already one heap
+  // edge y->next (because we materialise only for x = y->next)
+  // so {x} can not be target of *another* heap edge
+  {
+    Heap2G({(n,sel,{})})
+    //Heap2G({(n,sel, x)}),                                        // would make {x} shared
+  }
+  endif; in
+  [sgs] ++ gen_sgl_for_ingoing_edges(Es,x,is1);
 
-*/
+
+gen_sgl_for_outgoing_edges::HeapEdgeList,Node,NodeSet -> ShapeGraphSetList;
+gen_sgl_for_outgoing_edges(  [],_,  _) = [];
+gen_sgl_for_outgoing_edges((n,sel,m):Es,x,is1) =
+  let dummy = assert("outgoing_edge(n,_,m) has n = {} && m != {}", n = {} && m != {}); in
+
+  let sgs = if m ? is1 then
+  // here we test the target m for sharing
+  // before materialisation. if it was shared,
+  // it must continue to be shared after
+  // materialisation:
+  {
+    Heap2G({({},sel,m)}),             // can make m shared if two nodes in {} point to m
+    Heap2G({( x,sel,m)}),             // this alone would not make m shared, but we must
+                                      // include it nevertheless as there could be external
+                                      // edges that contribute to the sharing. nodes that
+                                      // don't fit with the explicit sharing info will be
+                                      // rejected by the is_compatible test.
+    Heap2G({({},sel,m), (x,sel,m)})   // of course, two edges to m make it shared
+  }
+  else
+  // only one edge may point to m
+  {
+    Heap2G({({},sel,m)}),             // this time, {} must represent only on node
+    Heap2G({( x,sel,m)})              // {}->m is replaced by {x}->m, ok
+  }
+  endif; in
+  [sgs] ++ gen_sgl_for_outgoing_edges(Es,x,is1);
+
 
 // -------------------
 // auxiliary functions
@@ -446,7 +421,7 @@ generate_related_graphs(_,S,H,[],is0) = {((S,H),is0)};
 
 kill_x::VariableId,ShapeGraph->ShapeGraph;
 kill_x(x,((S0,H0),is0)) =
-  let S1  = {(z,rem(x,nz)) !! (z,nz) <-- S0, if !(z=x)}; 
+  let S1  = {(z,rem(x,nz)) !! (z,nz) <-- S0, if !(z=x)};
       H1  = {(rem(x,nv),sel,rem(x,nw)) !! (nv,sel,nw) <-- H0};
       is1 = {rem(x,nx) !! nx <-- is0}; in
   ((S1,H1),is1);
@@ -463,54 +438,5 @@ gxy(x,y,Z) = if (y ? Z) then union(Z,{x}) else Z endif;
 hxU::VariableId,Node,Node->Node;
 hxU(x,U,Z) = if (Z = U) then union(U,{x}) else Z endif;
 
-n_into::Node,HeapEdgeSet->snum;
-n_into(nx,H0) = HeapEdgeSet_len([e !! (_,_,nw) as e <-- H0, if nw = nx]);
-
-HeapEdgeSet_len::HeapEdgeList->snum;
-HeapEdgeSet_len([]) = 0;
-HeapEdgeSet_len(car:cdr) = 1 + HeapEdgeSet_len(cdr);
-
-is_compatible::ShapeGraph->bool;
-is_compatible(((S0,H0),is0) as g) =
-  let vars = union(is0,union(nodes_by_stackedges(S0),nodes_by_heapedges(H0))); in
-  let res = if check_inv1(vars)
-    && check_inv2(S0)
-    && check_inv3(H0)
-    && check_inv4([x !! x <-- is0],H0)
-    && check_inv5(vars,H0,is0) then true else false endif; in
-  let dummy = debug_print_bool("materialisation", "inv1", check_inv1(vars)); in
-  let dummy = debug_print_bool("materialisation", "inv2", check_inv2(S0)); in
-  let dummy = debug_print_bool("materialisation", "inv3", check_inv3(H0)); in
-  let dummy = debug_print_bool("materialisation", "inv4", check_inv4([x !! x <-- is0],H0)); in
-  let dummy = debug_print_bool("materialisation", "inv5", check_inv5(vars,H0,is0)); in
-  res;
-
-// Inv1: two nodes a,b are either the same or have no common variables
-check_inv1::NodeSet->bool;
-check_inv1(vars) = {} = {false !! a <-- vars, b <-- vars, if (a != b) && intersect(a,b) != {}};
-
-// Inv2: if x points to a node, the nodes name must contain x (naming convention)
-check_inv2::StackEdgeSet->bool;
-check_inv2(S) = S = {(x,nx) !! (x,nx) <-- S, if x ? nx};
-
-// Inv3: no node,sel pair may point to more than one node except {},sel
-check_inv3::HeapEdgeSet->bool;
-check_inv3(H) = 
-  {} = {((nv1,sel1,nw1),(nv2,sel2,nw2)) !! (nv1,sel1,nw1) <-- H, (nv2,sel2,nw2) <-- H,
-        if nv1 = nv2
-        && sel1 = sel2
-        && !(nw1 = nw2 || nv1 = {})};
-
-// Inv4: if nx is shared, there exists either {},_,nw or >1 edges pointing to nx
-check_inv4::NodeList, HeapEdgeSet->bool;
-check_inv4(           [],_) = true;
-check_inv4(shared_x:cdr, H) = 
-  ( {} != {e !! ({},_,nw) as e <-- H, if nw = shared_x}
-    || n_into(shared_x,H) > 1)
-  && check_inv4(cdr,H);
-
-// Inv5: if two or more edges point to nx then nx is shared (if nx is not {})
-check_inv5::NodeSet,HeapEdgeSet,NodeSet->bool;
-check_inv5(vars,H0,is0) = {} = {nx !! nx <-- vars, if n_into(nx,H0) > 1 && nx != {} && !(nx ? is0)};
 
 // vim: ts=2 sts=2 sw=2 expandtab:

@@ -8,12 +8,11 @@ srw98/ The analysis from TOPLAS'98, "Solving shape-analysis problems
 
 What is common between the analyses, i.e. matching of nested expressions,
 normalisation, alias predicates, visualisation, etc. is kept in the
-toplevel files named common_* and visualisation.[Ch].
-
-To customize the generalized common code, replace ${DFI} with the type of
-the carrier, that is with
+toplevel files named common_* and visualisation.[Ch]. Where these files
+need to refer to the specific implementations of their carrier, that is
 
   nnh99: o_ShapeGraphSetLifted
   srw98: o_ShapeGraphLifted
 
-These replacements are done automatically by the Makefile.
+only {DFI} is written, the Makefile expands this to the name of the carrier
+matching the analysis.

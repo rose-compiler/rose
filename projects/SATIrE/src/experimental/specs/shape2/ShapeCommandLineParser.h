@@ -1,6 +1,4 @@
-// Copyright 2005,2006,2007 Viktor Pavlu
-
-// Author: Viktor Pavlu, 2007
+// Author: Viktor Pavlu, 2007, 2009
 
 #ifndef SHAPECOMMANDLINEPARSER_H
 #define SHAPECOMMANDLINEPARSER_H
@@ -27,17 +25,35 @@ public:
       int old_i = i;
 
       if (optionMatch(argv[i], "--nnh-graphs")) {
+          scl->convertToNNHOn();
           scl->gdlShowIndividualGraphsOn();
       } else if (optionMatch(argv[i], "--no-nnh-graphs")) {
+          scl->convertToNNHOff();
           scl->gdlShowIndividualGraphsOff();
       } else if (optionMatch(argv[i], "--srw-graphs")) {
+          scl->convertToSRWOn();
           scl->gdlShowSummaryGraphOn();
       } else if (optionMatch(argv[i], "--no-srw-graphs")) {
+          scl->convertToSRWOff();
           scl->gdlShowSummaryGraphOff();
       } else if (optionMatch(argv[i], "--foldgraphs")) {
           scl->gdlFoldGraphsOn();
       } else if (optionMatch(argv[i], "--no-foldgraphs")) {
           scl->gdlFoldGraphsOff();
+      } else if (optionMatch(argv[i], "--annotate-aliases")) {
+          scl->convertToNNHOn();
+          scl->aliasesAnnotateOn();
+      } else if (optionMatch(argv[i], "--output-alias-text")) {
+          scl->convertToNNHOn();
+          scl->aliasesAnnotateOn();
+          scl->aliasesOutputTextOn();
+      } else if (optionMatchPrefix(argv[i], "--output-alias-source=")) {
+          if (strlen(argv[i]+prefixLength) == 0) {
+              scl->setOptionsErrorMessage("empty alias output file name");
+              return 1;
+          }
+          scl->aliasesAnnotateOn();
+          scl->setaliasesOutputSource(strdup(argv[i]+prefixLength));
       } else {
           // pass argument to parent for parsing
           return CommandLineParser::handleOption(cl, i, argc, argv);

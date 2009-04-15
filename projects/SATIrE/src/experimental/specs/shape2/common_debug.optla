@@ -7,12 +7,12 @@
 // Year  : 2008
 
 debug_is_active::str->bool;
-debug_is_active("mm") = false;
-
 debug_is_active("tassign")         = false;
 debug_is_active("materialisation") = false;
 debug_is_active("lowlevel")        = false;
 debug_is_active("assign")          = false;
+debug_is_active("conversion")      = false;
+debug_is_active("always")          = true;
 debug_is_active(level) = print(level."\n") false;
 
 debug_print_str::str,str->snum;
@@ -46,3 +46,11 @@ debug_print_HeapEdgeSetList(level,label,car:cdr) =
 debug_print_HeapEdgeSet::str,str,HeapEdgeSet->snum;
 debug_print_HeapEdgeSet(level,label,H) = if debug_is_active(level) then print(label." = ") print(H) print("\n") 0 else 0 endif;
 
+debug_print_HeapEdgeList::str,str,HeapEdgeList->snum;
+debug_print_HeapEdgeList(level,label,H) = if debug_is_active(level) then print(label." = ") print(H) print("\n") 0 else 0 endif;
+
+
+
+assert::str,bool->bool;
+assert(s,e) =
+  if e then e else print("assert failed: ") error(s) endif;

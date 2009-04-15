@@ -22,12 +22,20 @@ function analyse {
   label=srw98
   echo "$binary" | grep nnh99 > /dev/null 2>&1 && label=nnh99
 
-  echo 
-  echo "**** $label *********************************************************************"
-  cmd="$binary --output-gdl=$gdlfile $OPTIONS $INPUT"
-  echo $cmd
-  $cmd || echo "-- ABORT --"
-  echo '********************************************************************************'
+  if [ -e "$binary" ]; then
+    echo 
+    echo "**** $label *********************************************************************"
+    cmd="$binary --output-gdl=$gdlfile $OPTIONS $INPUT"
+    echo $cmd
+    $cmd || echo "-- ABORT --"
+    echo '********************************************************************************'
+  else
+    echo
+    echo "$binary not found. run"
+    echo "  make $label"
+    echo "to build it."
+    echo
+  fi
 }
 
 INPUT=$1

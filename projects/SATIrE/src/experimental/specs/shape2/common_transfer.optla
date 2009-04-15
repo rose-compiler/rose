@@ -13,30 +13,39 @@ DeclareStmt(VariableSymbol(var) as varsym,type),_: @;
 UndeclareStmt(local_vars),_:
   delete_vars(@, local_vars);
 
-// before call, $arg = expr
-ArgumentAssignment(lhs,rhs),_:
-  assign(lhs,rhs,@);
+// before procedure call: $arg = expr
+ArgumentAssignment(lhs,rhs),_: assign(lhs,rhs,@);
 
+// local_edge: from Call to Return
 FunctionCall(fn,vars),local_edge: bot;
+
+// call_edge: from Call to Entry
 FunctionCall(fn,vars),call_edge: @;
-FunctionReturn(funcname,local_vars), _: delete_vars(@, local_vars);
 
+// start of procedure
 FunctionEntry(funcname),_: @;
-FunctionExit(funcname,local_vars), return_edge: delete_vars(@, local_vars);
 
-// in function, localvar = $arg
+// at beginning of procedure: localvar = $arg, $arg = null
 ParamAssignment(VariableSymbol(_) as sym_var,VariableSymbol(_) as sym_tmp),_:
   let var = varsym_varid(sym_var);
       tmp = varsym_varid(sym_tmp); in
   delete_var(lift(tassign_x_y(var,tmp,drop(@))),tmp);
 
-// after return, $retvar_i = $retvar
+// end of procedure.
+FunctionExit(funcname,local_vars), return_edge: delete_vars(@, local_vars);
+
+// join node for local_edge and call_edge
+FunctionReturn(funcname,local_vars), _: delete_vars(@, local_vars);
+
+// after return: $retvar_for_callsite = $retvar, $retvar = null
 ReturnAssignment(VariableSymbol(_) as sym_ret,VariableSymbol(_) as sym_tmp),_:
   let ret = varsym_varid(sym_ret);
       tmp = varsym_varid(sym_tmp); in
   delete_var(lift(tassign_x_y(ret,tmp,drop(@))),tmp);
 
-stmt,edge: @; //FIXME match expressions explicitly, report error on unhandled expressions
+
+
+stmt,edge: @;
 
 //ExprStatement(_),_: @;
 //ScopeStatement(WhileStmt(exprExprStatement)),_: @;
