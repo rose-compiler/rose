@@ -46,7 +46,7 @@ source $mydir/rosegit-functions.sh || exit 1
 allow_multi= branches= commit= config= dry_run= query_only=
 while [ "$#" -gt 0 ]; do
     case "$1" in
-	--branch=*)    branches="${1#--branch=}"; shift ;;
+	--branch=*)    branch="${1#--branch=}"; branches="$branch"; shift ;;
 	--commit=*)    commit="${1#--commit=}"; shift ;;
 	--config=*)    config="${1#--config=}"; shift ;;
 	--debug)       set -x; shift ;;
@@ -65,13 +65,17 @@ repo="$1"; shift
 
 # Sanity checks
 [ -d "$repo/.git" ] || rosegit_die "not a repository: $repo/.git"
-[ -n "$branches" ] || branches="$(cd $repo/.git/refs/heads && echo *)"
+[ -n "$branches" ] || branches="$(cd $repo/.git/refs/heads && echo *) $(cd $repo/.git/refs/remotes && echo *)"
 repo=$(cd $repo && pwd)
 namespace=$(rosegit_namespace)
 
-# Choose one of the commits that needs to be tested. If the caller didn't specify one then we'll choose the latest one that
-# isn't an automatic update and doesn't have one of the testing/pass/fail tags set. We'll use the first branch we find.
-if [ ! -n "$commit" ]; then
+# Choose a commit ($commit) and determine a branch ($branch) which contains that commit.
+if [ -n "$commit" ]; then
+    (cd $repo && git rev-parse "$commit" 2>/dev/null) || rosegit_die "unknown revision: $commit"
+    [ -z "$branch" ] && branch=$(rosegit_branch_of $repo $commit)
+else
+    # The user didn't specify a commit. Use the latest, non-tested, non-automatic commit on either the specified branch or
+    # an arbitrary branch.
     for branch in $branches; do
 	(cd $repo && git rev-parse $branch >/dev/null 2>&1) || rosegit_die "unknown branch name: $branch"
 	last_testing=$(rosegit_latest_tag $repo "$namespace-testing-*" $branch);
@@ -90,26 +94,27 @@ if [ ! -n "$commit" ]; then
 	done
 	[ -n "$commit" ] && break
     done
-    if [ ! -n "$commit" ]; then
+    if [ -z "$commit" ]; then
 	echo "$myname: nothing left to test"
 	exit 0
     fi
-elif [ -n "$branches" ]; then
-    branch="$branches"
-else
-    branch=$(rosegit_branch_of $repo $commit)
 fi
 
+# Make sure the branch actually contains the commit.
 if (cd $repo && git rev-list $branch |grep $commit >/dev/null); then
     : ok
 else
     rosegit_die "commit $commit is not on branch $branch"
 fi
+
+# Exit now if we're only querying what would have been tested.
 if [ -n "$query_only" ]; then
     [ -n "$commit" ] && echo $commit
     exit 0
 fi
-commitname="$(cd $repo && git log --pretty=oneline $commit^..$commit |cut -c42-170)" # limit to reasonable size
+
+# The commit name to use for the e-mail subject, summary, title, etc. Limited to a reasonable length.
+commitname="$(cd $repo && git log --pretty=oneline $commit^..$commit |cut -c42-170)"
 
 # Load configuration now that we know the branch name.
 echo "On branch '$branch'"

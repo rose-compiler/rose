@@ -15,9 +15,11 @@ rosegit_branch_of () {
 
     local head= found= score=none
     commit=$(cd $repo && git rev-parse $commit)
-    for head in $(cd $repo/.git/refs/heads && echo *); do
+    for head in $(find $repo/.git/refs/{heads,remotes} -type f -printf '%f\n'); do
+	(cd $repo && git rev-list $head |grep $commit >/dev/null 2>&1) || continue
 	local sha1=$(cd $repo && git rev-parse $head)
 	local this_score=$(cd $repo && git rev-list $head ^$commit |wc -l)
+	#echo "head=$head($sha1) score=$this_score" >&2
 	if [ "$commit" = "$sha1" ]; then
 	    echo $head # Perfect match
 	    return 0
@@ -196,6 +198,8 @@ rosegit_load_config () {
 	    :
         elif [ -f "$confdir/$config" ]; then
 	    config="$confdir/$config"
+	else
+	    rosegit_die "unable to find configuration file or directory: $config"
 	fi
     fi
 

@@ -36,10 +36,10 @@ rosegit_tester_preamble
 # is the progress message and the remaining arguments are the command. If the command has meta characters you can enclose the
 # entire command in quotes, or enclose individual arguments in quotes.
 
-rosegit_run "build"          "(cd $ROSE_SRC && ./build)"            || exit 1
-rosegit_run "configure"      "(cd $ROSE_BLD && $ROSEGIT_CONFIGURE)" || exit 1
-rosegit_run "make"           rosegit_make                           || exit 1
-rosegit_run "make distcheck" rosegit_make distcheck                 || exit 1
+rosegit_run "build"          "(cd $ROSE_SRC && ./build)"            	|| exit 1
+rosegit_run "configure"      "(cd $ROSE_BLD && $ROSEGIT_CONFIGURE)" 	|| exit 1
+rosegit_run "make"           "(cd $ROSE_BLD && rosegit_make)"       	|| exit 1
+rosegit_run "make distcheck" "(cd $ROSE_BLD && rosegit_make distcheck)" || exit 1
 
 # Or you can just run your own commands and generate your own progress messages...
 
