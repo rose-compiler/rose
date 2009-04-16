@@ -26,21 +26,21 @@ RuntimeSystem* RuntimeSystem::Instance () {
 RuntimeSystem::RuntimeSystem() 
 { 
   //... perform necessary instance initializations 
-    std::cerr << " RtedConstructor . "  << std::endl;
+  std::cerr << " RtedConstructor . "  << std::endl;
 
-    arrays1D.clear();
-    myfile = new std::ofstream("result-array.txt",std::ios::app);
-    if (!myfile) {
-      std::cerr << "Cannot open output file." << std::endl;
-      exit(1);
-    }
-    //myfile->close();
-    //myfile = new std::ofstream("result-array.txt",std::ios::app);
-    violation=false;
-    violationNr=0;
-    filename="";
-    oldFilename="";
-    fileNr=0;
+  arrays1D.clear();
+  myfile = new std::ofstream("result-array.txt",std::ios::app);
+  if (!myfile) {
+    std::cerr << "Cannot open output file." << std::endl;
+    exit(1);
+  }
+  //myfile->close();
+  //myfile = new std::ofstream("result-array.txt",std::ios::app);
+  violation=false;
+  violationNr=0;
+  filename="";
+  oldFilename="";
+  fileNr=0;
 
 }
 
@@ -55,24 +55,32 @@ RuntimeSystem::findLastUnderscore(std::string& s) {
   return name;
 }
 
+void
+RuntimeSystem::callExit() {
+  // violation Found ... dont execute it - exit normally
+  cerr << "violation found. exit program." << endl;
+  exit(0);
+}
+
 /* -----------------------------------------------------------
  * create array and store its size
  * -----------------------------------------------------------*/
 void
 RuntimeSystem::roseCreateArray(std::string name, int dimension, bool stack, long int sizeA, long int sizeB, std::string filename, int line ){
+#if 0
   if (oldFilename!=filename) {
     fileNr++;
     *myfile << fileNr << ": >>> Checking : " << findLastUnderscore(name) << " dim"<< dimension <<
-      " - [" << sizeA << "][" << sizeB << "]  file : " << filename << " line : " << line << endl;
+      " - [" << sizeA << "][" << sizeB << "]  file : " << filename <<  " line : " << line << endl;
     if (oldFilename!="" && violation==false) {
-      cerr << "No violation in this file found. Check this! " << endl;
+      cerr << "roseCreateArray :: No violation in this file found. Check this! " << endl;
       exit(1);
     }
     cerr << " Setting violation to false ! " << endl;
     violation=false;
     violationNr=0;
   }
-
+#endif
   cout << fileNr << ": >>> Called : roseCreateArray : " << findLastUnderscore(name) << " dim"<< dimension <<
     " - [" << sizeA << "][" << sizeB << "] file : " << filename << " line : " << line  << endl;
   oldFilename=filename;
@@ -93,6 +101,7 @@ RuntimeSystem::roseCreateArray(std::string name, int dimension, bool stack, long
 	cerr << " Violation detected :  Array too small to allocate more memory " << endl;
 	violation=true;
 	violationNr++;
+	callExit();
       } else {
 	cerr << " >>> CREATING Array : arr ["<<totalsize<<"]["<<sizeB<<"]"<< "  alloc : ["<<sizeA<<"]="<<sizeB<<endl;
 	array->allocate(sizeA,sizeB); //arr[sizeA][sizeB]
@@ -120,6 +129,12 @@ void
 RuntimeSystem::roseArrayAccess(std::string name, int posA, int posB, std::string filename, int line){
   filename=filename;
   cout << "    Called : roseArrayAccess : " << findLastUnderscore(name) << " ... ";
+
+  // check the stack if the variable is part of a function call
+  std::string mangl_name=findVariablesOnStack(name);  
+  if (mangl_name!="not found")
+    name=mangl_name;
+
   map<string,int>::const_iterator it = arrays1D.find(name);
   if (it!=arrays1D.end()) {
     int size = it->second;
@@ -135,6 +150,7 @@ RuntimeSystem::roseArrayAccess(std::string name, int posA, int posB, std::string
 	"  in : " << filename << "  line: " << line << endl;
       violation=true;
       violationNr++;
+      callExit();
     }
   }
 
@@ -152,12 +168,44 @@ RuntimeSystem::roseArrayAccess(std::string name, int posA, int posB, std::string
         "][" << posB << "]  in : " << filename << "  line: " << line << endl;
       violation=true;
       violationNr++;
+      callExit();
     }
   } 
   if (it==arrays1D.end() && it2==arrays2D.end()) {
     std::cout << endl;
     std::cerr << " >>> No such array was created. Can't access it. " << filename << "  l: " << line << endl;
+    exit(1);
   }
 
 }
 
+void 
+RuntimeSystem::roseFunctionCall(std::string name, std::string mangl_name, bool before) {
+  // if before ==true
+  // add the current varRef (name) on stack
+  // else remove from stack
+  if (before) {
+    RuntimeVariables* var = new RuntimeVariables(name,mangl_name);
+    runtimeVariablesOnStack.push_back(var);
+  }
+  else {
+    RuntimeVariables* var = runtimeVariablesOnStack.back();
+    runtimeVariablesOnStack.pop_back();
+    delete var;
+  }
+  cerr << "roseFunctionCall :: " << name << " " << mangl_name << " " << before << endl;
+}
+
+std::string
+RuntimeSystem::findVariablesOnStack(std::string name) {
+  std::string mang_name = "not found";
+  std::vector<RuntimeVariables*>::const_reverse_iterator stack = 
+    runtimeVariablesOnStack.rbegin();
+  for (;stack!=runtimeVariablesOnStack.rend();++stack) {
+    RuntimeVariables* rv = *stack;
+    if (name==rv->name) {
+      mang_name=rv->mangled_name;
+    }
+  }
+  return mang_name;
+}

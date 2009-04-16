@@ -35,4 +35,22 @@ class RTedArray {
   }
 };
 
+
+class RTedFunctionCall {
+ public:
+  SgInitializedName* initName;
+  SgVarRefExp* varRefExp;
+  std::string name;
+  std::string mangled_name;
+  RTedFunctionCall(SgInitializedName* init, SgVarRefExp* var,
+		   std::string n, std::string m_n) {
+    initName=init;
+    varRefExp=var;
+    name=n;
+    mangled_name=m_n;
+  }
+  virtual ~RTedFunctionCall() {}
+
+};
+
 #endif

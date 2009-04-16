@@ -3,6 +3,18 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <vector>
+
+class RuntimeVariables {
+ public:
+  std::string name;
+  std::string mangled_name;
+  RuntimeVariables(std::string n, std::string m_n) {
+    name = n;
+    mangled_name=m_n;
+  };
+  virtual ~RuntimeVariables(){}
+};
 
 class Array2D {
  public:
@@ -39,6 +51,11 @@ class RuntimeSystem  {
  private:
   static RuntimeSystem* pinstance;
 
+  std::vector<RuntimeVariables*> runtimeVariablesOnStack;
+  std::string findVariablesOnStack(std::string name);
+
+  void callExit();
+  
   std::string findLastUnderscore(std::string& s);
   // a map of all arrays that were created
   std::map<std::string, int> arrays1D;
@@ -61,7 +78,8 @@ class RuntimeSystem  {
   }
 
   void roseRtedClose() {
-    myfile->close();
+    if (myfile)
+      myfile->close();
     std::cerr << " RtedClose :: Violation : " << resBool(violation) << std::endl;
     if (violationNr>3) {
       std::cerr << "RtedClose:: Nr of violations : " << violationNr << " is suspicious. " << std::endl;
@@ -79,7 +97,8 @@ class RuntimeSystem  {
   void roseCreateArray(std::string name, int dimension, bool stack, long int sizeA, long int sizeB, std::string filename, int line);
   // check if array is out of bounds
   void roseArrayAccess(std::string name, int posA, int posB, std::string filename, int line);
-
+  
+  void roseFunctionCall(std::string name, std::string mangl_name, bool before);
 };
 
 static RuntimeSystem *runtimeSystem = RuntimeSystem::Instance();

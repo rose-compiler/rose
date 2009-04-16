@@ -27,6 +27,11 @@ void RtedSymbols::visit(SgNode* n) {
       roseRtedClose = isSgMemberFunctionSymbol(func3);
       cerr << ">>>>>>>>>>>>> Found MemberName : roseRtedClose" <<  endl;
     }
+    SgFunctionSymbol* func4 = isSgScopeStatement(n)->lookup_function_symbol("roseFunctionCall");
+    if (isSgMemberFunctionSymbol(func4)) {
+      roseFunctionCall = isSgMemberFunctionSymbol(func4);
+      cerr << ">>>>>>>>>>>>> Found MemberName : roseFunctionCall" <<  endl;
+    }
   }
 
 
