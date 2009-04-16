@@ -223,13 +223,13 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
     cout<<"Outliner-specific options"<<endl;
     cout<<"Usage: outline [OPTION]... FILENAME..."<<endl;
     cout<<"Main operation mode:"<<endl;
-    cout<<"\t-rose:outline:preproc-only           preprocessing only, no actual outlining"<<endl;
+    cout<<"\t-rose:outline:preproc-only                     preprocessing only, no actual outlining"<<endl;
     cout<<"\t-rose:outline:abstract_handle handle_string    using an abstract handle to specify an outlining target"<<endl;
-    cout<<"\t-rose:outline:parameter_wrapper     use an array of pointers for the variables to be passed"<<endl;
-    cout<<"\t-rose:outline:enable_classic        use parameters directly in the outlined function body without transferring statement, C only"<<endl;
-    cout<<"\t-rose:outline:temp_variable         use temp variables to reduce pointer dereferencing for the variables to be passed"<<endl;
-    cout<<"\t-rose:outline:new_file              use a new source file for the generated outlined function"<<endl;
-    cout<<"\t-rose:outline:enable_debug          run outliner in a debugging mode"<<endl;
+    cout<<"\t-rose:outline:parameter_wrapper                use an array of pointers for the variables to be passed"<<endl;
+    cout<<"\t-rose:outline:enable_classic                   use parameters directly in the outlined function body without transferring statement, C only"<<endl;
+    cout<<"\t-rose:outline:temp_variable                    use temp variables to reduce pointer dereferencing for the variables to be passed"<<endl;
+    cout<<"\t-rose:outline:new_file                         use a new source file for the generated outlined function"<<endl;
+    cout<<"\t-rose:outline:enable_debug                     run outliner in a debugging mode"<<endl;
     cout <<"---------------------------------------------------------------"<<endl;
   }
 }
@@ -238,7 +238,13 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
 SgBasicBlock *
 Outliner::preprocess (SgStatement* s)
 {
-  ROSE_ASSERT (isOutlineable (s, SgProject::get_verbose () >= 1));
+  bool b = isOutlineable (s, SgProject::get_verbose () >= 1);
+  if (b!= true)
+  {
+    cerr<<"Outliner::preprocess() Input statement:"<<s->unparseToString()<<"\n is not outlineable!"<<endl;
+    ROSE_ASSERT(b);
+  //  ROSE_ASSERT (isOutlineable (s, SgProject::get_verbose () >= 1));
+  }
   SgBasicBlock* s_post = Preprocess::preprocessOutlineTarget (s);
   ROSE_ASSERT (s_post); 
   return s_post;

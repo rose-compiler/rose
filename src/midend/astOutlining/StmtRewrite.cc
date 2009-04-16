@@ -140,7 +140,7 @@ ASTtools::replaceStatement (SgStatement* s_cur, SgStatement* s_new)
 #endif  
 }
 
-void
+void  // move statements from src block to dest block // same semantics to SageInterface::moveStatementsBetweenBlocks(), which is a better implementation
 ASTtools::moveStatements (SgBasicBlock* src, SgBasicBlock* dest)
 {
   if (!src) return; // no work to do
@@ -184,7 +184,7 @@ ASTtools::moveStatements (SgBasicBlock* src, SgBasicBlock* dest)
 }
 
 // =====================================================================
-
+// add an additional level of block 
 SgBasicBlock *
 ASTtools::transformToBlockShell (SgBasicBlock* b_orig)
 {

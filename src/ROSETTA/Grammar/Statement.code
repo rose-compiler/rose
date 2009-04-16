@@ -8422,14 +8422,16 @@ SgFunctionDefinition::SgFunctionDefinition(Sg_File_Info* f, SgFunctionDeclaratio
    : SgScopeStatement(f), p_body(body)
    {
      set_declaration(d); 
-     d->set_definition(this);
+     if (d!=NULL) // Liao, 4/14/2009. Support bottom-up AST building: definition is built first, declaration may be still NULL 
+      d->set_definition(this);
    }
 
 SgFunctionDefinition::SgFunctionDefinition( SgFunctionDeclaration* d, SgBasicBlock* body)
    : SgScopeStatement(), p_body(body)
    {
      set_declaration(d); 
-     d->set_definition(this);
+     if (d!=NULL)
+      d->set_definition(this);
    }
 
 SgFunctionDeclaration*

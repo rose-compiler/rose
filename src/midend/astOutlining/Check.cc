@@ -228,14 +228,14 @@ Outliner::isOutlineable (const SgStatement* s, bool verbose)
       cerr << "*** Statement must not be NULL. ***" << endl;
     return false;
   }
-
+#if 1
   if (isSgVariableDeclaration (s))
   {
     if (verbose)
       cerr << "*** Can't outline a variable declaration by itself. ***" << endl;
     return false;
   }
-
+#endif
   const SgFunctionDeclaration* decl = 
     SageInterface::getEnclosingFunctionDeclaration (const_cast<SgStatement* >(s));
   if (!decl)
@@ -250,7 +250,7 @@ Outliner::isOutlineable (const SgStatement* s, bool verbose)
   {
     // \todo Fix the template instantation case (see Cxx_tests/test2004_75.C)
     if (verbose)
-      cerr << "*** Can't outline template instantations yet. ***" << endl;
+      cerr << "*** Can't outline template instantiations yet. ***" << endl;
     return false;
   }
 

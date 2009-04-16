@@ -28,6 +28,9 @@ Outliner::Preprocess::preprocessOutlineTarget (SgStatement* s)
   ROSE_ASSERT (s);
   switch (s->variantT ())
     {
+      // Liao, 4/14/2009
+      // This branch does not make sense (will never reached) since Outliner::isOutlineable()
+      // will exclude single variable declaration statement to be processed
     case V_SgVariableDeclaration:
       s_post = normalizeVarDecl (isSgVariableDeclaration (s));
       break;

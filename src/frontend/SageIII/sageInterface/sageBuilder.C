@@ -1852,7 +1852,10 @@ SageBuilder::buildVarRefExp(SgInitializedName* initname, SgScopeStatement* scope
   ROSE_ASSERT(scope != NULL); 
 
   SgVarRefExp *varRef = NULL;
-  SgSymbol* symbol = initname->get_symbol_from_symbol_table ();
+  // there is assertion for get_scope() != NULL in get_symbol_from_symbol_table()
+  SgSymbol* symbol = NULL;
+  if (initname->get_scope()!=NULL)
+    symbol = initname->get_symbol_from_symbol_table ();
   
   if (symbol)
   {

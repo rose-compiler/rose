@@ -138,25 +138,27 @@ Outliner::outline (SgPragmaDeclaration* decl)
   // Generate outlined function, removing 's' from the tree.
      string name = generateFuncName (s);
      Result result = outline (s, name);
-     ROSE_ASSERT (result.isValid());
+     if (!preproc_only_)
+     {
+       ROSE_ASSERT (result.isValid());
 
-  // DQ (2/26/2009): If this was sucessful, then delete the input block? (this may be a problem for moreTest1.c).
-  // SageInterface::deleteAST(s);
+       // DQ (2/26/2009): If this was sucessful, then delete the input block? (this may be a problem for moreTest1.c).
+       // SageInterface::deleteAST(s);
 
-  // Remove pragma
-     ASTtools::moveBeforePreprocInfo (decl, result.call_);
-     ASTtools::moveAfterPreprocInfo (decl, result.call_);
+       // Remove pragma
+       ASTtools::moveBeforePreprocInfo (decl, result.call_);
+       ASTtools::moveAfterPreprocInfo (decl, result.call_);
 
 #if 1
-  // This will search the parent for the location of decl, but this is not found
-     LowLevelRewrite::remove (decl);
+       // This will search the parent for the location of decl, but this is not found
+       LowLevelRewrite::remove (decl);
 #else
-  // DQ (2/24/2009): Added more direct concept of remove.
-  // We just want a more direct and simpler concept of remove (remove the AST, 
-  // because potential dangling pointers have been taken care of).
-     SageInterface::deleteAST(decl);
+       // DQ (2/24/2009): Added more direct concept of remove.
+       // We just want a more direct and simpler concept of remove (remove the AST, 
+       // because potential dangling pointers have been taken care of).
+       SageInterface::deleteAST(decl);
 #endif
-
+     }
      return result;
    }
 
@@ -341,10 +343,14 @@ Outliner::outlineAll (SgProject* project)
 
     // DQ (2/24/2009): Now remove the pragma from the original source code.
     // Any dangling pointers have already been taken care of.
+    // Liao (4/14/2009):delete only if it is not preprocessing only
+      if (!preproc_only_) 
+      {
        for (PragmaList_t::iterator i = pragmas.begin (); i != pragmas.end (); ++i)
          {
            SageInterface::deleteAST(*i);
          }
+      }
     }
   }
   return num_outlined;

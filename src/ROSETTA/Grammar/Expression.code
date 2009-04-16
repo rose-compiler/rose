@@ -555,7 +555,7 @@ HEADER_VARARG_OPERATOR_START
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
-
+          int replace_expression(SgExpression*, SgExpression*) ROSE_DEPRECATED_FUNCTION;
        // void set_type( SgType* type );
 
 HEADER_VARARG_OPERATOR_END
@@ -564,6 +564,7 @@ HEADER_VARARG_END_OPERATOR_START
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+          int replace_expression(SgExpression*, SgExpression*) ROSE_DEPRECATED_FUNCTION;
 
 HEADER_VARARG_END_OPERATOR_END
 
@@ -3010,10 +3011,48 @@ $CLASSNAME::get_type() const
      return returnType;
    }
 
+
+int
+SgVarArgOp::replace_expression(SgExpression *o, SgExpression *n)
+{
+
+  ROSE_ASSERT(o != NULL);
+  ROSE_ASSERT(n != NULL);
+
+  if (get_operand_expr() == o)
+  {
+    set_operand_expr(n);
+    return 1;
+  }
+  else
+  {
+    printf ("Warning: inside of SgVarArgOp::replace_expression original SgExpression unidentified \n");
+    return 0;
+  }
+}
+
 SOURCE_VARARG_OPERATOR_END
 
 
 SOURCE_VARARG_END_OPERATOR_START
+int
+SgVarArgEndOp::replace_expression(SgExpression *o, SgExpression *n)
+{
+
+  ROSE_ASSERT(o != NULL);
+  ROSE_ASSERT(n != NULL);
+
+  if (get_operand_expr() == o)
+  {
+    set_operand_expr(n);
+    return 1;
+  }
+  else
+  {
+    printf ("Warning: inside of SgVarArgEndOp::replace_expression original SgExpression unidentified \n");
+    return 0;
+  }
+}
 
 SOURCE_VARARG_END_OPERATOR_END
 

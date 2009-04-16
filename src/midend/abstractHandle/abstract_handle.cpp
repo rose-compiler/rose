@@ -64,7 +64,12 @@ namespace AbstractHandle{
   }
   bool isEqual(const source_position_pair &pair1, const source_position_pair &pair2)
   {
-    return (isEqual(pair1.first, pair2.first) && isEqual(pair2.second,pair2.second));
+    // the line number of the first part (begin position) must match at least.
+    // Avoid the situation that empty file info. matches any position info.
+    if (pair1.first.line != pair2.first.line)
+      return false;
+    else
+      return (isEqual(pair1.first, pair2.first) && isEqual(pair2.second,pair2.second));
   }
 
   //Create a handle using the source position as the specifier by default

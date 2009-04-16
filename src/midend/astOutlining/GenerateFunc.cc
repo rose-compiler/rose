@@ -844,6 +844,7 @@ Outliner::Transform::generateFunction ( SgBasicBlock* s,
      const_cast<SgBasicBlock *>(s)->insert_symbol(func->get_name(), func_symbol);
 #endif
 
+#if 1 // Liao, 4/15/2009 , enable C code to call this outlined function
   // Only apply to C++ , pure C has trouble in recognizing extern "C"
   // Another way is to attach the function with preprocessing info:
   // #if __cplusplus 
@@ -857,7 +858,7 @@ Outliner::Transform::generateFunction ( SgBasicBlock* s,
           func->get_declarationModifier().get_storageModifier().setExtern();
           func->set_linkage ("C");
         }
-
+#endif
   // Generate the function body by deep-copying 's'.
      SgBasicBlock* func_body = func->get_definition()->get_body();
      ROSE_ASSERT (func_body != NULL);
