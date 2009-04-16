@@ -1,3 +1,44 @@
+2009-04-16 16:12  matzke
+
+	* [r5368] /trunk/ROSE/scripts/rosegit/bin/rosegit-functions.sh,
+	  /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/ROSETTA/src/binaryInstruction.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecPE.C: Fixed an
+	  uninitialized memory bug in ROSE_ExecPE.C
+
+2009-04-16 16:12  matzke
+
+	* [r5367] /trunk/ROSE/tests/roseTests/binaryTests/Makefile.am:
+	  Replaced test for "make check"
+	  
+	  The test_so_file target in tests/roseTests/binaryTests used an
+	  executable that's built by some other Makefile and therefore
+	  should have
+	  been in that other Makefile. It also didn't check whether the
+	  executable would have actually been built with this configuration
+	  before
+	  trying to run it. I replaced BinQ with execFormatsTest.
+
+2009-04-16 16:12  matzke
+
+	* [r5366] /trunk/ROSE/scripts/rosegit/bin/rat-test,
+	  /trunk/ROSE/scripts/rosegit/bin/rosegit-ats,
+	  /trunk/ROSE/scripts/rosegit/bin/rosegit-functions.sh: Changes to
+	  rosegit scripts
+	  
+	  1. Better parsing of --branch and --commit in rosegit-ats
+	  
+	  2. Fixed bug in rosegit_branch_of
+	  
+	  3. rosegit_branch_of also looks on remote branches
+	  
+	  4. rat-test is careful about current directory
+
+2009-04-16 16:11  matzke
+
+	* [r5365] /trunk/ROSE/scripts/rosegit/config/defaults.conf: Added
+	  --with-qt to default rosegit configuration
+
 2009-04-14 19:37  saebjornsen1
 
 	* [r5344] /trunk/ROSE/projects/MacroRewrapper/argumentFilterer.C,
