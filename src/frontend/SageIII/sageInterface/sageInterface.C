@@ -8726,8 +8726,8 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
                          ROSE_ASSERT(false);
                        }
                 }
-             }
-        }
+             } // end if
+        } // end for 
 
   // Remove the statements in the sourceBlock
      srcStmts.clear();

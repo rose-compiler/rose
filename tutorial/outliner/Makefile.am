@@ -30,15 +30,19 @@ generatedFiles = inputCode_OutlineLoop$(EXEEXT) \
 	inputCode_Ifs.out \
 	rose_inputCode_Ifs.cc \
 	rose_inputCode_OutlineLoop2.c \
-	rose_inputCode_OutlineLoop2b.c
+	rose_inputCode_OutlineLoop2b.c \
+	rose_declarations.c \
+	rose_thisExpression.cpp
 
 #docs: $(generatedFiles) 
-
+# declarations.c is used to test "outline -rose:outline:preproc-only"
 EXTRA_DIST = \
 	inputCode_OutlineLoop.cc \
 	inputCode_OutlineLoop2.c \
 	inputCode_OutlineNonLocalJumps.cc \
-	inputCode_Ifs.cc
+	inputCode_Ifs.cc \
+	declarations.c \
+	thisExpression.cpp
 
 INDENT_BIN = indent
 INDENT_ARGS = -npsl
@@ -163,6 +167,12 @@ rose_inputCode_OutlineLoop2.c: outline$(EXEEXT) \
 rose_inputCode_OutlineLoop2b.c: outline$(EXEEXT) \
 		$(srcdir)/inputCode_OutlineLoop.cc
 	./outline$(EXEEXT) -rose:outline:enable_classic -rose:outline:enable_debug -rose:outline:abstract_handle "FunctionDeclaration<name,initialize>::ForStatement<numbering,2>" -c $(srcdir)/inputCode_OutlineLoop2.c -rose:output rose_inputCode_OutlineLoop2b.c
+
+rose_declarations.c:outline$(EXEEXT)
+	./outline$(EXEEXT)  -rose:outline:preproc-only -rose:outline:abstract_handle "Statement<position,5>" -c $(srcdir)/declarations.c
+
+rose_thisExpression.cpp:outline$(EXEEXT)
+	./outline$(EXEEXT) -c $(srcdir)/thisExpression.cpp
 
 
 #==========================================================================
