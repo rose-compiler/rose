@@ -171,8 +171,7 @@ test_testElfSchulz-2.passed: testElfSchulz
 	@touch $@
 
 test_so_file:
-	cp $(srcdir)/libm-2.3.6.so .
-	$(top_builddir)/projects/BinQ/BinQ -a libm-2.3.6.so
+	$(VALGRIND) ./execFormatsTest $(srcdir)/libm-2.3.6.so
 
 test_testElfConstruct.passed: testElfConstruct
 	$(VALGRIND) ./testElfConstruct
