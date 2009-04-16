@@ -1879,13 +1879,13 @@ HEADER_PE_RVA_SIZE_PAIR_START
 			uint32_t    e_size;
 		} __attribute__((packed));
 
-		explicit SgAsmPERVASizePair(const RVASizePair_disk *disk)
+		explicit SgAsmPERVASizePair(const SgAsmPERVASizePair::RVASizePair_disk *disk)
 			: p_e_rva(0), p_e_size(0), p_section(NULL) {
 			ctor(disk);
 		}
-		void *encode(RVASizePair_disk *disk) const;
+		void *encode(SgAsmPERVASizePair::RVASizePair_disk *disk) const;
 	private:
-		void ctor(const RVASizePair_disk*);
+		void ctor(const SgAsmPERVASizePair::RVASizePair_disk*);
 HEADER_PE_RVA_SIZE_PAIR_END
 
 
