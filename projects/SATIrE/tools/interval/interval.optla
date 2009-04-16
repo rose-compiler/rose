@@ -179,6 +179,7 @@ eval(exp, state, context) =
           IntVal(value)     => (duplift(val-astint(value)), state);
           ShortVal(value)   => (duplift(val-astshort(value)), state);
           LongIntVal(value) => (duplift(val-astlong(value)), state);
+          LongLongIntVal(value) => (duplift(val-astllong(value)), state);
 
           CharVal(value)  => (duplift(snum(val-astchar(value))), state);
           // -- FIXME: incorrect type conversions
@@ -186,9 +187,11 @@ eval(exp, state, context) =
           UnsignedIntVal(value)  => (duplift(snum(val-astuint(value))), state);
           UnsignedShortVal(value)=>(duplift(snum(val-astushort(value))), state);
           UnsignedLongVal(value) => (duplift(snum(val-astulong(value))), state);
+          UnsignedLongLongIntVal(value) => (duplift(snum(val-astullong(value))), state);
           // -- NOT IMPLEMENTED
           FloatVal(_) => ((top,top), state);
           DoubleVal(_) => ((top,top), state);
+          StringVal(_) => ((top,top), state);
           _         => println("unsupported value exp: ", exp, ": ",
                                expr_asttext(exp))
                        ((top,top), state);
@@ -389,10 +392,11 @@ updatestate(state, exp, value, context) =
                let syms = location_varsyms(loc);
                in  // -- println("updating vars: ", syms)
                    case syms of
-                // -- no var: error
-                   [!]    => println("*** no varsyms for lhs in updatestate: ",
+                // -- no var: could be an error; could also be harmless, if
+                // -- this updatestate call resulted from an equality check
+                   [!]    => println("warning: no varsyms for lhs in updatestate: ",
                                      exp, " :: ", expr_asttext(exp))
-                             error("dying");
+                             state;
                 // -- singleton var, may be an array name: strong update of
                 // -- scalar variables, weak update of arrays
                    v::[!] => if is_array_location(loc) then
@@ -428,7 +432,9 @@ weak_update_v(s, v, value) =
 // of all variables in vsyms in state s.
 merged_var_values :: itvl_State, *VariableSymbolNT -> itvl_Interval;
 merged_var_values(top, _) = (top, top);
-merged_var_values(_, [!]) = error("merging empty list!");
+merged_var_values(_, [!]) =
+    println("in merged_var_values: merging empty variable list!")
+    (top, top);
 merged_var_values(lift(s), v::[!]) = s{!varsym_varid(v)!};
 merged_var_values(lift(s) as ls, v::vs) =
     let merged = merged_var_values(ls, vs);
@@ -439,6 +445,8 @@ initialize(s, v, ArrayType(BasicType(_)),
                  AggregateInitializer(ExprListExp(exprs)), context) =
  // default value: 0 (missing initializers default to 0)
     initialize_array(s\[v -> duplift(0)], v, exprs, context);
+// ignore unknown initializer
+initialize(s, _, _, _, _) = s;
 
 initialize_array :: itvl_fState, VariableId, *Expression, ContextInfo -> itvl_fState;
 initialize_array(s, _, [!], _) = s;
