@@ -142,10 +142,47 @@ AS_IF([test "x$with_swi_prolog" = xyes],
 
 AM_CONDITIONAL(WITH_SWI_PROLOG, [test "x$with_swi_prolog" = xyes])
 AC_SUBST(have_swi_prolog)
+
+
+# Check for BLAST model checker (optional)
 #-----------------------------------
+BLAST=`which pblast.opt`
+BLASTHOME=`dirname $BLAST`/..
+
+AC_ARG_WITH([blast],
+            [AS_HELP_STRING([--with-blast],
+              [enable BLAST model checker (optional) @<:@default=check@:>@])],
+            [],
+            [with_blast=check])
+          
+AS_IF([test "x$with_blast" != xno],
+      AS_IF([test "x$BLAST" != x],
+            [with_blast=yes],
+            [if test "x$with_blast" != xcheck; then
+             AC_MSG_FAILURE([--with-blast was given, but test for BLAST failed])
+	     else
+	       with_blast=no
+             fi]),
+      [with_blast=no])
+
+AS_IF([test "x$with_blast" = xyes],
+      [AC_SUBST([BLAST], ["$BLAST"])
+       AC_SUBST([BLASTHOME], ["$BLASTHOME"])
+       AC_DEFINE([HAVE_BLAST], [1], [Define if you have BLAST])
+       AC_MSG_RESULT([The BLAST Model Checker will be available to verify analysis results])
+       have_blast=1],
+      [AC_SUBST([BLAST], ["pblast.opt"])
+       AC_SUBST([BLASTHOME], ["."])  # set a safe dummy default path
+       AC_DEFINE([HAVE_BLAST], [0], [Define if you have BLAST])
+       AC_MSG_RESULT([BLAST Model Checker support disabled.])
+       have_blast=0])
+
+AM_CONDITIONAL(WITH_BLAST, [test "x$with_blast" = xyes])
+AC_SUBST(have_blast)
+
 
 # Checks for libraries.
-
+#-----------------------------------
 AS_IF([test "x$with_pag" != xno],
       [AC_CHECK_LIB([pag], [pag_version],
                     [AC_MSG_RESULT([found PAG])
@@ -209,9 +246,15 @@ if [[ x$with_pag = xyes ]]; then
     PAG_STATUS="enabled"
 fi
 
+BLAST_STATUS="disabled"
+if [[ x$with_blast = xyes ]]; then
+    BLAST_STATUS="enabled"
+fi
+
 echo
 echo "------------------------------------------------------------------------"
 echo "  SATIrE configuration summary:"
 echo "    PAG .................." $PAG_STATUS
 echo "    SWI-Prolog............" $SWI_STATUS
+echo "    BLAST ................" $BLAST_STATUS
 echo "------------------------------------------------------------------------"

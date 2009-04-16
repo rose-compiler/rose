@@ -212,6 +212,13 @@ pointsto_live_variables: init.token
    "echo 'executing with 3sec timeout...' && ulimit -t 3 && ./intvlassert" \
 	 && echo "... success") \
 	|| (echo "** FAILED: $<" && echo && true)
+if WITH_BLAST
+	@echo "Performing model checking on" $<
+	@cd $(testdir)/interval; \
+	($(CC) -std=c99 -E -I$(BLASTHOME)/test/headers intvlassert.c > intvlassert.i; \
+	pblast.opt -clp intvlassert.i -main main) \
+	|| (echo "** FAILED: $<" && echo && true)
+endif
 
 interval: init.token
 	@echo
@@ -233,7 +240,7 @@ endif
 	@echo "Analyzing loops in" $<
 	@cp $< $(testdir)/loopbounds/looptest.c
 	@chmod u+w $(testdir)/loopbounds/looptest.c
-# still work in progress... cd $(testdir)/loopbounds ; sh lb.sh looptest.c
+	cd $(testdir)/loopbounds ; sh lb.sh looptest.c
 
 loopbounds: interval
 	@echo
@@ -241,7 +248,7 @@ loopbounds: interval
 	@echo "====================="
 	cp -ur $(top_srcdir)/tools/loopbounds $(testdir)
 	chmod u+rwx -R $(testdir)/loopbounds
-	$(MAKE) -j1 $(patsubst %.c,%.loop.term,$(wildcard $(top_srcdir)/examples/*/tests/*.c))
+	$(MAKE) -j1 $(patsubst %.c,%.loop.term,$(wildcard $(top_srcdir)/testsuite/mtrc/success/*.c))
 
 satire_driver: init.token
 	@echo
