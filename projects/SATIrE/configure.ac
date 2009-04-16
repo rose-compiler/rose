@@ -124,7 +124,7 @@ AS_IF([test "x$with_swi_prolog" != xno],
 		       with_swi_prolog=no
                      fi],
                     [-L$PLLIB])],
-      [with_swi_prolog=false])
+      [with_swi_prolog=no])
 
 AS_IF([test "x$with_swi_prolog" = xyes],
       [AC_SUBST([SWI_PL], ["$PL"])

@@ -245,8 +245,9 @@ statement_info_string(DFI_STORE store, SgStatement *stmt, std::string attrName)
                         << carrierPrintFunction(info) << " ";
                 }
                 str << "Merged:"
-                    << carrierPrintFunction(
-                            dfi_get_post_info_all(store, block->id));
+                    << carrierPrintFunction(dfi_get_post_info_all(store,
+								  block->id))
+		    << " ";;
             }
         }
     }

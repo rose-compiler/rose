@@ -1,11 +1,12 @@
 #!/usr/bin/pl -t testrun -f
-% -*- prolog -*-
+% -*- mode: prolog; truncate-lines: true; -*-
 
 :- module(ast_transform,
 	  [simple_form_of/2,
            ast_node/6,
 	   transformed_with/5,
 	   transformed_with/6,
+	   unparse_to_atom/2,
 	   unparse/1,
 	   unparse_storage_modifier/1,
 	   indent/1,
@@ -221,215 +222,227 @@ transform_children([C|Cs], Transformation, Order, Info0, InfoT, [CT|CTs]) :-
 
 %-----------------------------------------------------------------------
 
+%% unparse_to_atom(+Term, -Atom) is det.
+% Unparse the program Term and put the output in the atom Atom
+unparse_to_atom(Term, Atom) :- with_output_to(Atom, unparse(Term)).
+
+%unp(assign_op(E1, E2)) --> unp(E1), ['='], unp(E2).
+%unp(var(X)) --> [X].
+%unp(int(X)) --> [X].
+%:- unparse(assign_op(var(x), int(42)), S, []).
+
 %% unparse(+Term) is det.
 % This is a debugging function that prints a textual representation
 % of a program that is given in simple form.
+unparse(Node) :- unparse(fi(0, 0, []), Node).
+
+% FIXME implement replacement write/1 that uses col/line
+
+unparse(fi(Line, Col, ParentPPIs), Node) :- 
+  % process the parent preprocessing info
+  unparse_ppi(inside, ParentPPIs),
+  % extract mine
+  get_preprocessing_infos(Node, PPIs),
+  % unparse the node
+  unparse_ppi(before, PPIs),
+  unparse1(fi(Line, Col, PPIs), Node),
+  unparse_ppi(after, PPIs).
+
 
 % OPERATORS
-unparse(assign_op(E1, E2, _, _, _))       :- !, unparse_par(E1), write(' = '), unparse_par(E2).
-unparse(plus_assign_op(E1, E2, _, _, _))  :- !, unparse_par(E1), write(' += '), unparse_par(E2).
-unparse(minus_assign_op(E1, E2, _, _, _)) :- !, unparse_par(E1), write(' -= '), unparse_par(E2).
-unparse(mult_assign_op(E1, E2, _, _, _))  :- !, unparse_par(E1), write(' *= '), unparse_par(E2).
-unparse(div_assign_op(E1, E2, _, _, _))   :- !, unparse_par(E1), write(' /= '), unparse_par(E2).
-unparse(lshift_assign_op(E1, E2, _, _, _)):- !, unparse_par(E1), write(' <<= '), unparse_par(E2).
-unparse(rshift_assign_op(E1, E2, _, _, _)):- !, unparse_par(E1), write(' >>= '), unparse_par(E2).
-unparse(and_assign_op(E1, E2, _, _, _))   :- !, unparse_par(E1), write(' &= '), unparse_par(E2).
-unparse(or_assign_op(E1, E2, _, _, _))    :- !, unparse_par(E1), write(' |= '), unparse_par(E2).
-unparse(ior_assign_op(E1, E2, _, _, _))    :- !, unparse_par(E1), write(' |= '), unparse_par(E2).
-unparse(xor_assign_op(E1, E2, _, _, _))   :- !, unparse_par(E1), write(' ^= '), unparse_par(E2).
+unparse1(UI, assign_op(E1, E2, _, _, _))       :- !, unparse_par(UI, E1), write(' = '), unparse_par(UI, E2).
+unparse1(UI, plus_assign_op(E1, E2, _, _, _))  :- !, unparse_par(UI, E1), write(' += '), unparse_par(UI, E2).
+unparse1(UI, minus_assign_op(E1, E2, _, _, _)) :- !, unparse_par(UI, E1), write(' -= '), unparse_par(UI, E2).
+unparse1(UI, mult_assign_op(E1, E2, _, _, _))  :- !, unparse_par(UI, E1), write(' *= '), unparse_par(UI, E2).
+unparse1(UI, div_assign_op(E1, E2, _, _, _))   :- !, unparse_par(UI, E1), write(' /= '), unparse_par(UI, E2).
+unparse1(UI, lshift_assign_op(E1, E2, _, _, _)):- !, unparse_par(UI, E1), write(' <<= '), unparse_par(UI, E2).
+unparse1(UI, rshift_assign_op(E1, E2, _, _, _)):- !, unparse_par(UI, E1), write(' >>= '), unparse_par(UI, E2).
+unparse1(UI, and_assign_op(E1, E2, _, _, _))   :- !, unparse_par(UI, E1), write(' &= '), unparse_par(UI, E2).
+unparse1(UI, or_assign_op(E1, E2, _, _, _))    :- !, unparse_par(UI, E1), write(' |= '), unparse_par(UI, E2).
+unparse1(UI, ior_assign_op(E1, E2, _, _, _))   :- !, unparse_par(UI, E1), write(' |= '), unparse_par(UI, E2).
+unparse1(UI, xor_assign_op(E1, E2, _, _, _))   :- !, unparse_par(UI, E1), write(' ^= '), unparse_par(UI, E2).
 
-unparse(add_op(E1, E2, _, _, _))      :- !, unparse_par(E1), write('+'), unparse_par(E2).
-unparse(bit_and_op(E1, E2, _, _, _))  :- !, unparse_par(E1), write('&'), unparse_par(E2).
-unparse(and_op(E1, E2, _, _, _))      :- !, unparse_par(E1), write('&&'), unparse_par(E2).
-unparse(bit_or_op(E1, E2, _, _, _))   :- !, unparse_par(E1), write('|'), unparse_par(E2).
-unparse(or_op(E1, E2, _, _, _))       :- !, unparse_par(E1), write('||'), unparse_par(E2).
-unparse(bit_xor_op(E1, E2, _, _, _))  :- !, unparse_par(E1), write('^'), unparse_par(E2).
-unparse(mod_op(E1, E2, _, _, _))      :- !, unparse_par(E1), write('%'), unparse_par(E2).
-unparse(divide_op(E1, E2, _, _, _))   :- !, unparse_par(E1), write('/'), unparse_par(E2).
-unparse(lshift_op(E1, E2, _, _, _))   :- !, unparse_par(E1), write('<<'), unparse_par(E2).
-unparse(rshift_op(E1, E2, _, _, _))   :- !, unparse_par(E1), write('>>'), unparse_par(E2).
-unparse(plus_plus_op(E1, _, _, _))    :- !, unparse_par(E1), write('++').
-unparse(minus_minus_op(E1, _, _, _))  :- !, unparse_par(E1), write('--').
-unparse(subtract_op(E1, E2, _, _, _)) :- !, unparse_par(E1), write('-'), unparse_par(E2).
-unparse(multiply_op(E1, E2, _, _, _)) :- !, unparse_par(E1), write('*'), unparse_par(E2).
+unparse1(UI, add_op(E1, E2, _, _, _))      :- !, unparse_par(UI, E1), write('+'), unparse_par(UI, E2).
+unparse1(UI, bit_and_op(E1, E2, _, _, _))  :- !, unparse_par(UI, E1), write('&'), unparse_par(UI, E2).
+unparse1(UI, and_op(E1, E2, _, _, _))      :- !, unparse_par(UI, E1), write('&&'), unparse_par(UI, E2).
+unparse1(UI, bit_or_op(E1, E2, _, _, _))   :- !, unparse_par(UI, E1), write('|'), unparse_par(UI, E2).
+unparse1(UI, or_op(E1, E2, _, _, _))       :- !, unparse_par(UI, E1), write('||'), unparse_par(UI, E2).
+unparse1(UI, bit_xor_op(E1, E2, _, _, _))  :- !, unparse_par(UI, E1), write('^'), unparse_par(UI, E2).
+unparse1(UI, mod_op(E1, E2, _, _, _))      :- !, unparse_par(UI, E1), write('%'), unparse_par(UI, E2).
+unparse1(UI, divide_op(E1, E2, _, _, _))   :- !, unparse_par(UI, E1), write('/'), unparse_par(UI, E2).
+unparse1(UI, lshift_op(E1, E2, _, _, _))   :- !, unparse_par(UI, E1), write('<<'), unparse_par(UI, E2).
+unparse1(UI, rshift_op(E1, E2, _, _, _))   :- !, unparse_par(UI, E1), write('>>'), unparse_par(UI, E2).
+unparse1(UI, plus_plus_op(E1, _, _, _))    :- !, unparse_par(UI, E1), write('++').
+unparse1(UI, minus_minus_op(E1, _, _, _))  :- !, unparse_par(UI, E1), write('--').
+unparse1(UI, subtract_op(E1, E2, _, _, _)) :- !, unparse_par(UI, E1), write('-'), unparse_par(UI, E2).
+unparse1(UI, multiply_op(E1, E2, _, _, _)) :- !, unparse_par(UI, E1), write('*'), unparse_par(UI, E2).
 
-unparse(address_of_op(E, _, _, _)) :- !, write('&'), unparse_par(E).
-unparse(minus_op(E, _, _, _)) :- !, write('-'), unparse_par(E).
-unparse(not_op(E, _, _, _)) :- !, write('!'), unparse_par(E).
-unparse(bit_complement_op(E, _, _, _)) :- !, write('~'), unparse_par(E).
+unparse1(UI, address_of_op(E, _, _, _)) :- !, write('&'), unparse_par(UI, E).
+unparse1(UI, minus_op(E, _, _, _)) :- !, write('-'), unparse_par(UI, E).
+unparse1(UI, not_op(E, _, _, _)) :- !, write('!'), unparse_par(UI, E).
+unparse1(UI, bit_complement_op(E, _, _, _)) :- !, write('~'), unparse_par(UI, E).
 
-unparse(greater_or_equal_op(E1, E2, _, _, _)) :- !, unparse_par(E1), write(' >= '), unparse_par(E2).
-unparse(greater_than_op(E1, E2, _, _, _)) :- !, unparse_par(E1), write(' > '), unparse_par(E2).
-unparse(less_or_equal_op(E1, E2, _, _, _)) :- !, unparse_par(E1), write(' <= '), unparse_par(E2).
-unparse(less_than_op(E1, E2, _, _, _)) :- !, unparse_par(E1), write(' < '), unparse_par(E2).
-unparse(equality_op(E1, E2, _, _, _)) :- !, unparse_par(E1), write(' == '), unparse_par(E2).
-unparse(not_equal_op(E1, E2, _, _, _)) :- !, unparse_par(E1), write(' != '), unparse_par(E2).
+unparse1(UI, greater_or_equal_op(E1, E2, _, _, _)) :- !, unparse_par(UI, E1), write(' >= '), unparse_par(UI, E2).
+unparse1(UI, greater_than_op(E1, E2, _, _, _)) :- !, unparse_par(UI, E1), write(' > '), unparse_par(UI, E2).
+unparse1(UI, less_or_equal_op(E1, E2, _, _, _)) :- !, unparse_par(UI, E1), write(' <= '), unparse_par(UI, E2).
+unparse1(UI, less_than_op(E1, E2, _, _, _)) :- !, unparse_par(UI, E1), write(' < '), unparse_par(UI, E2).
+unparse1(UI, equality_op(E1, E2, _, _, _)) :- !, unparse_par(UI, E1), write(' == '), unparse_par(UI, E2).
+unparse1(UI, not_equal_op(E1, E2, _, _, _)) :- !, unparse_par(UI, E1), write(' != '), unparse_par(UI, E2).
 
-unparse(size_of_op(null, size_of_op_annotation(ClassType,_Type, _), _)) :- !,
-  write('sizeof('), unparse(ClassType), write(')').
+unparse1(UI, size_of_op(null, size_of_op_annotation(ClassType,_Type, _), _)) :- !,
+  write('sizeof('), unparse(UI, ClassType), write(')').
 
 % VALUES
-unparse(Char) :-
-  (Char =          char_val(_,value_annotation(Value,_),_) ;
-   Char = unsigned_char_val(_,value_annotation(Value,_),_)),
-  string(Value), !,
-  string_to_list(Value, [N]), write(N).
+unparse1(_UI,          char_val(_,value_annotation(Value,_),_)) :- string(Value), !, string_to_list(Value, [N]), write(N).
+unparse1(_UI, unsigned_char_val(_,value_annotation(Value,_),_)) :- string(Value), !, string_to_list(Value, [N]), write(N).
 
-unparse(enum_val(_,value_annotation(_,Value,_),_,_)) :- !, write(Value).
-unparse(char_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
-unparse(int_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
-unparse(short_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
-unparse(short_int_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
-unparse(long_int_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
-unparse(long_long_int_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
-unparse(unsigned_char_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
-unparse(unsigned_int_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
-unparse(unsigned_short_int_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
-unparse(unsigned_short_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
-unparse(unsigned_long_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
-unparse(unsigned_long_long_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
-unparse(unsigned_long_long_int_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
-unparse(float_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
-unparse(double_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
-unparse(string_val(_,value_annotation(Value,_),_,_)) :- !, write('"'), write(Value), write('"').
-unparse(bool_val_exp(_, value_annotation(0),_,_)) :- !, write('false').
-unparse(bool_val_exp(_, value_annotation(1),_,_)) :- !, write('true').
-unparse(bool_val_exp(_, value_annotation(Value,_),_, _)) :- !, write(Value).
+unparse1(_UI, enum_val(_,value_annotation(_,Value,_),_,_)) :- !, write(Value).
+unparse1(_UI, char_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse1(_UI, int_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse1(_UI, short_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse1(_UI, short_int_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse1(_UI, long_int_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse1(_UI, long_long_int_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse1(_UI, unsigned_char_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse1(_UI, unsigned_int_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse1(_UI, unsigned_short_int_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse1(_UI, unsigned_short_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse1(_UI, unsigned_long_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse1(_UI, unsigned_long_long_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse1(_UI, unsigned_long_long_int_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse1(_UI, float_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse1(_UI, double_val(_,value_annotation(Value,_),_,_)) :- !, write(Value).
+unparse1(_UI, string_val(_,value_annotation(Value,_),_,_)) :- !, write('"'), write(Value), write('"').
+unparse1(_UI, bool_val_exp(_, value_annotation(0,_),_,_)) :- !, write('false').
+unparse1(_UI, bool_val_exp(_, value_annotation(1,_),_,_)) :- !, write('true').
+unparse1(_UI, bool_val_exp(_, value_annotation(Value,_),_, _)) :- !, write(Value).
 
 % EXPRESSIONS
-unparse(function_call_exp(function_ref_exp(function_ref_exp_annotation(Name, _),
-					   _, _),
-			  ExprList, _, _, _)) :- !,
-  write(Name), write('('), unparse(ExprList), write(')').
+unparse1(UI, function_call_exp(function_ref_exp(function_ref_exp_annotation(Name, _Type, _), _, _), ExprList, _, _, _)) :-
+  !, write(Name), write('('), unparse(UI, ExprList), write(')').
 
-unparse(function_ref_exp(function_ref_exp_annotation(Name, _), _, _)) :- !,
-  write(Name).
+unparse1(_UI, function_ref_exp(function_ref_exp_annotation(Name, _Type, _), _, _)) :- !, write(Name).
 
-unparse(expr_list_exp(_, _, _)) :- !.
-unparse(expr_list_exp([], _, _, _)) :- !.
-unparse(expr_list_exp([E|[]], _, _, _)) :- !, unparse(E).
-unparse(expr_list_exp([E|Es], _, _, _)) :- !,
-  unparse(E), write(', '), unparse(expr_list_exp(Es, _, _, _)).
+unparse1(_UI, expr_list_exp(_, _, _)) :- !.
+unparse1(_UI, expr_list_exp([], _, _, _)) :- !.
+unparse1(UI, expr_list_exp([E|[]], _, _, _)) :- !, unparse(UI, E).
+unparse1(UI, expr_list_exp([E|Es], _, _, _)) :- !,
+  unparse(UI, E), write(', '), unparse(UI, expr_list_exp(Es, _, _, _)).
 
 % bb is the running basic block
-unparse(bb([E|Es], A, Ai, Fi)) :- % no semicolon
+unparse1(UI, bb([E|Es], A, Ai, Fi)) :- % no semicolon
   (E = pragma_declaration(_, _, _, _) ;
    E = default_option_stmt(_, _, _, _) ;
    E = case_option_stmt(_, _, _, _, _, _)), !,
-  unparse(E), nl,
-  unparse(bb(Es, A, Ai, Fi)).
-unparse(bb([E|Es], A, Ai, Fi)) :- % no semicolon
+  unparse(UI, E), nl,
+  unparse(UI, bb(Es, A, Ai, Fi)).
+unparse1(UI, bb([E|Es], A, Ai, Fi)) :- % no semicolon
   scope_statement(E), !, 
   file_info(E, F),
-  indent(F), unparse(E), nl,
-  unparse(bb(Es, A, Ai, Fi)).
-unparse(bb([E|Es], A, Ai, Fi)) :- !,
+  indent(F), unparse(UI, E), nl,
+  unparse(UI, bb(Es, A, Ai, Fi)).
+unparse1(UI, bb([E|Es], A, Ai, Fi)) :- !,
   file_info(E, F),
-  indent(F), unparse(E), writeln(';'), 
-  unparse(bb(Es, A, Ai, Fi)).
-unparse(bb([], _, _, _)) :- !.
+  indent(F), unparse(UI, E), writeln(';'), 
+  unparse(UI, bb(Es, A, Ai, Fi)).
+unparse1(_UI, bb([], _, _, _)) :- !.
 
-unparse([E|Es]) :- !,
-  unparse(E),
+unparse1(UI, [E|Es]) :- !,
+  unparse(UI, E),
   (needs_semicolon(E) -> writeln(';') ; true),
   ((needs_comma(E), Es \== []) -> write(',') ; true),
   !,
-  unparse(Es).
+  unparse(UI, Es).
 
-unparse([]) :- !.
+unparse1(_UI, []) :- !.
 
-unparse(var_ref_exp(var_ref_exp_annotation(_Type, Name, _, _, _), _, _)) :- !,
+unparse1(_UI, var_ref_exp(var_ref_exp_annotation(_Type, Name, _, _, _), _, _)) :- !,
   write(Name).
 
-unparse(pntr_arr_ref_exp(Base, Offset, _, _, _)) :- !, 
-  unparse_par(Base), write('['), unparse_par(Offset), write(']').
+unparse1(UI, pntr_arr_ref_exp(Base, Offset, _, _, _)) :- !, 
+  unparse_par(UI, Base), write('['), unparse_par(UI, Offset), write(']').
 
-unparse(dot_exp(pointer_deref_exp(E1, _, _, _), E2, _, _, _)) :- !,
-  unparse(E1), write('->'), unparse_par(E2).
+unparse1(UI, dot_exp(pointer_deref_exp(E1, _, _, _), E2, _, _, _)) :- !,
+  unparse(UI, E1), write('->'), unparse_par(UI, E2).
 
-%unparse(pointer_deref_exp(var_ref_exp(var_ref_exp_annotation(pointer_type(array_type(), _), _, ) _), _, _)) :- !, gtrace,
-%  write('*'), unparse_par(E1).
+%unparse1(UI, pointer_deref_exp(var_ref_exp(var_ref_exp_annotation(pointer_type(array_type(), _), _) _), _, _)) :- !, gtrace,
+%  write('*'), unparse_par(UI, E1).
 
-unparse(pointer_deref_exp(E1, _, _, _)) :- !, 
-  write('*'), unparse_par(E1).
-unparse(cast_exp(E, _, unary_op_annotation(_, Type, _, _), _, _)) :- !,
+unparse1(UI, pointer_deref_exp(E1, _, _, _)) :- !, 
+  write('*'), unparse_par(UI, E1).
+unparse1(UI, cast_exp(E, _, unary_op_annotation(_, Type, _, _, _), _, _)) :- !,
   (  ( Type \= array_type(_, _),
        Type \= pointer_type(array_type(_, _)))
-  -> (write('('), unparse(Type), write(')'))
+  -> (write('('), unparse(UI, Type), write(')'))
   ;  true),
-  unparse_par(E).
-unparse(conditional_exp(E1, E2, E3, _, _, _)) :- !,
-  unparse_par(E1), write(' ? '), unparse_par(E2), write(':'), unparse_par(E3).
-unparse(comma_op_exp(E1, E2, _, _, _)) :- !,
-  unparse_par(E1), write(', '), unparse_par(E2).
-unparse(dot_exp(E1, E2, _, _, _)) :- !,
-  unparse_par(E1), write('.'), unparse_par(E2).
-unparse(arrow_exp(E1, E2, _, _, _)) :- !,
-  unparse_par(E1), write('->'), unparse_par(E2).
-unparse(null_expression(_, _, _)) :- !, write('/*NULL*/').
+  unparse_par(UI, E).
+unparse1(UI, conditional_exp(E1, E2, E3, _, _, _)) :- !,
+  unparse_par(UI, E1), write(' ? '), unparse_par(UI, E2), write(':'), unparse_par(UI, E3).
+unparse1(UI, comma_op_exp(E1, E2, _, _, _)) :- !,
+  unparse_par(UI, E1), write(', '), unparse_par(UI, E2).
+unparse1(UI, dot_exp(E1, E2, _, _, _)) :- !,
+  unparse_par(UI, E1), write('.'), unparse_par(UI, E2).
+unparse1(UI, arrow_exp(E1, E2, _, _, _)) :- !,
+  unparse_par(UI, E1), write('->'), unparse_par(UI, E2).
+unparse1(_UI, null_expression(_, _, _)) :- !, write('/*NULL*/').
 
 % STATEMENTS       
-unparse(expression_root(E, _, _, _)) :- !, unparse(E).
-unparse(expr_statement(E, _, _, _)) :- !, unparse(E).
-unparse(for_init_statement(E, _, _, _)) :- !, unparse(E).
-unparse(for_init_statement(_, _, _)) :- !.
+unparse1(UI, expression_root(E, _, _, _)) :- !, unparse(UI, E).
+unparse1(UI, expr_statement(E, _, _, _)) :- !, unparse(UI, E).
+unparse1(UI, for_init_statement(E, _, _, _)) :- !, unparse(UI, E).
+unparse1(_UI, for_init_statement(_, _, _)) :- !.
 
-unparse(for_statement(E1, E2, E3, E4, _, _, _)) :- !,
+unparse1(UI, for_statement(E1, E2, E3, E4, _, _, _)) :- !,
   write('for ('),
-  unparse(E1), write('; '),
-  unparse(E2), write('; '),
-  unparse(E3), write(') '),
-  unparse_sem(E4).
+  unparse(UI, E1), write('; '),
+  unparse(UI, E2), write('; '),
+  unparse(UI, E3), write(') '),
+  unparse_sem(UI, E4).
 
-unparse(while_stmt(E1, E2, _, _, _)) :- !, 
-  write('while ('), unparse(E1), write(') '),
-  unparse_sem(E2).
+unparse1(UI, while_stmt(E1, E2, _, _, _)) :- !, 
+  write('while ('), unparse(UI, E1), write(') '),
+  unparse_sem(UI, E2).
 
-unparse(do_while_stmt(E1, E2, _, _, _)) :- !, 
+unparse1(UI, do_while_stmt(E1, E2, _, _, _)) :- !, 
   write('do '),
-  unparse(E1), 
-  write('while ('), unparse(E2), writeln(');').
+  unparse(UI, E1), 
+  write('while ('), unparse(UI, E2), writeln(');').
 
-unparse(if_stmt(E1, E2, E3, _, _, _)) :- !, 
-  write('if ('), unparse(E1), write(') '),
-  unparse_sem(E2),
+unparse1(UI, if_stmt(E1, E2, E3, _, _, _)) :- !, 
+  write('if ('), unparse(UI, E1), write(') '),
+  unparse_sem(UI, E2),
   (E3 = null/*basic_block(_,_)*/
   -> true
-  ; (write('else '), unparse_sem(E3))
+  ; (write('else '), unparse_sem(UI, E3))
   ).
 
-unparse(switch_statement(E1, E2, _, _, _)) :- !,
-  write('switch ('), unparse(E1), write(') '),
-  unparse_sem(E2).
-unparse(case_option_stmt(E1, E2, null, _, _, _)) :- !,
-  write('case '), unparse(E1), write(': '),
-  unparse_sem(E2).
-unparse(default_option_stmt(E1, _, _, _)) :- !,
-  writeln('default: '), unparse_sem(E1).
+unparse1(UI, switch_statement(E1, E2, _, _, _)) :- !, write('switch ('), unparse(UI, E1), write(') '), unparse_sem(UI, E2).
+unparse1(UI, case_option_stmt(E1, E2, null, _, _, _)) :- !, write('case '), unparse(UI, E1), write(': '), unparse_sem(UI, E2).
+unparse1(UI, default_option_stmt(E1, _, _, _)) :- !, writeln('default: '), unparse_sem(UI, E1).
 
-unparse(return_stmt(E1, _, _, _)) :- !, write('return '), unparse(E1).
-unparse(break_stmt(_, _, _)) :- !, write('break ').
-unparse(continue_stmt(_, _, _)) :- !, write('continue ').
-unparse(goto_statement(label_annotation(Label), _, _)) :- !, write('goto '), write(Label).
-unparse(label_statement(label_annotation(Label), _, _)) :- !, write(Label), write(': ').
-unparse(basic_block(E1, An, Ai, Fi)) :- !,
+unparse1(UI, return_stmt(E1, _, _, _)) :- !, write('return '), unparse(UI, E1).
+unparse1(_UI, break_stmt(_, _, _)) :- !, write('break ').
+unparse1(_UI, continue_stmt(_, _, _)) :- !, write('continue ').
+unparse1(_UI, goto_statement(label_annotation(Label, _), _, _)) :- !, write('goto '), write(Label).
+unparse1(_UI, label_statement(label_annotation(Label, _), _, _)) :- !, write(Label), write(': ').
+unparse1(UI, basic_block(E1, An, Ai, Fi)) :- !,
   writeln(' {'),
-  unparse(bb(E1, An, Ai, Fi)),
+  unparse(UI, bb(E1, An, Ai, Fi)),
   indent(Fi), writeln('}').
-unparse(basic_block(_, _, _)) :- !, write(' {} ').
-unparse(global(E1, _, _, _)) :- !, unparse(E1).
-unparse(file(E1, _, _An, _Ai, file_info(Name, _, _))) :- !,
-  write('/* '), write(Name), writeln(': */'), unparse(E1).
-unparse(project(E1, _, _, _)) :- !, unparse(E1).
+unparse1(_UI, basic_block(_, _, _)) :- !, write(' {} ').
+unparse1(UI, global(E1, _, _, _)) :- !, unparse(UI, E1).
+unparse1(UI, file(E1, _, _An, _Ai, file_info(Name, _, _))) :- !,
+  write('/* '), write(Name), writeln(': */'), unparse(UI, E1).
+unparse1(UI, project(E1, _, _, _)) :- !, unparse(UI, E1).
 
-unparse(function_declaration(Params, Definition,
-             function_declaration_annotation(Type, Name, Mod), _, _)) :- !,
+unparse1(UI, function_declaration(Params, Definition,
+             function_declaration_annotation(Type, Name, Mod, _), _, _)) :- !,
   unparse_modifier(Mod),
-  unparse(Type), write(' '), write(Name),
+  unparse(UI, Type), write(' '), write(Name),
   write('('),
   (Params = function_parameter_list(Ps, _, _, _) ->
    (replace_types(Ps, Type, Ps1),
-    unparse(Ps1))
+    unparse(UI, Ps1))
   ;
    true),
   write(')'),
@@ -437,107 +450,109 @@ unparse(function_declaration(Params, Definition,
     -> writeln(';') ;
     (
      Definition = function_definition(Bb, _, _, _),
-     unparse(Bb)
+     unparse(UI, Bb)
     ).
 
 
-unparse(function_type(Type, _NumParams, _ParamTypes)) :- !, unparse(Type).
-unparse(function_parameter_list(_, _, _)) :- !.
-unparse(function_parameter_list(List, _, _, _)) :- !, unparse(List).
+unparse1(UI, function_type(Type, _NumParams, _ParamTypes)) :- !, unparse(UI, Type).
+unparse1(_UI, function_parameter_list(_, _, _)) :- !.
+unparse1(UI, function_parameter_list(List, _, _, _)) :- !, unparse(UI, List).
 
 % TYPES
-unparse(T) :-
+unparse1(UI, T) :-
   (T = pointer_type(T1) ; T = T1),
   T1 = modifier_type(Type,
 		     type_modifier([0|[1|[Restrict|[0|_]]]],
 				   1, ConstVolatile, 1)), !,
-  (ConstVolatile = 2 -> write('const ') ; true),
+  gtrace,(ConstVolatile = 2 -> write('const ') ; true),
   (ConstVolatile = 3 -> write('volatile ') ; true),
-  unparse(Type),
+  unparse(UI, Type),
   (T = pointer_type(_) -> write('* ') ; true),
   (Restrict = 0 -> write(' /*__restrict__*/ ') ; true).
-unparse(modifier_type(Type, type_modifier(A, UPC, ConstVolatile, Elaborate))) :- !,
-  write('#modifier# '), writeln(A), writeln(UPC), writeln(ConstVolatile), writeln(Elaborate),
-  unparse(Type).
-unparse(type_void) :- !, write('void').
-unparse(type_int) :- !, write('int').
-unparse(type_char) :- !, write('char').
-unparse(type_signed_char) :- !, write('char').
-unparse(type_short) :- !, write('short').
-unparse(type_long) :- !, write('long').
-unparse(type_long_long) :- !, write('long long').
-unparse(type_unsigned_char) :- !, write('unsigned char').
-unparse(type_unsigned_int) :- !, write('unsigned int').
-unparse(type_unsigned_short) :- !, write('unsigned short').
-unparse(type_unsigned_long) :- !, write('unsigned long').
-unparse(type_unsigned_long_long) :- !, write('unsigned long long').
-unparse(type_bool) :- !, write('bool').
-unparse(type_float) :- !, write('float').
-unparse(type_double) :- !, write('double').
-unparse(type_long_double) :- !, write('long double').
-unparse(type_ellipse) :- !, write('...').
+unparse1(UI, modifier_type(Type, type_modifier(_A, UPC, ConstVolatile, Elaborate))) :- !,
+  (UPC = default -> true ; write(UPC), write(' ')),
+  (ConstVolatile = default -> true ; write(ConstVolatile), write(' ')),
+  (Elaborate = default -> true ; write(Elaborate), write(' ')),
+  unparse(UI, Type).
+unparse1(_UI, type_void) :- !, write('void').
+unparse1(_UI, type_int) :- !, write('int').
+unparse1(_UI, type_char) :- !, write('char').
+unparse1(_UI, type_signed_char) :- !, write('char').
+unparse1(_UI, type_short) :- !, write('short').
+unparse1(_UI, type_long) :- !, write('long').
+unparse1(_UI, type_long_long) :- !, write('long long').
+unparse1(_UI, type_unsigned_char) :- !, write('unsigned char').
+unparse1(_UI, type_unsigned_int) :- !, write('unsigned int').
+unparse1(_UI, type_unsigned_short) :- !, write('unsigned short').
+unparse1(_UI, type_unsigned_long) :- !, write('unsigned long').
+unparse1(_UI, type_unsigned_long_long) :- !, write('unsigned long long').
+unparse1(_UI, type_bool) :- !, write('bool').
+unparse1(_UI, type_float) :- !, write('float').
+unparse1(_UI, type_double) :- !, write('double').
+unparse1(_UI, type_long_double) :- !, write('long double').
+unparse1(_UI, type_ellipse) :- !, write('...').
 
-unparse(array_type(Type, Val)) :- !,
-  unparse_type('', array_type(Type, Val)).
-  %unparse(Type), write('['), unparse(Val), write(']').
-unparse(typedef_type(Type, _)) :- !, write(Type).
-unparse(class_type(Name,ClassType,_Scope)) :- !,
-  unparse_class_type(ClassType), write(' '), write(Name).
-unparse(enum_type(Type)) :- !, unparse(Type).
+unparse1(UI, array_type(Type, Val)) :- !,
+  unparse_type(UI, '', array_type(Type, Val)).
+  %unparse(UI, Type), write('['), unparse(UI, Val), write(']').
+unparse1(_UI, typedef_type(Type, _)) :- !, write(Type).
+unparse1(_UI, class_type(Name,ClassType,_Scope)) :- !,
+  write(ClassType), write(' '), write(Name).
+unparse1(UI, enum_type(Type)) :- !, unparse(UI, Type).
 
-%unparse(pointer_type(array_type(T, V))) :- !, 
-%  write('('), unparse(array_type(T, V)), write(')*').
-unparse(pointer_type(T)) :- !, unparse(T), write('*').
-unparse(function_type(T)) :- !, unparse(T), write('()').
+%unparse1(UI, pointer_type(array_type(T, V))) :- !, 
+%  write('('), unparse(UI, array_type(T, V)), write(')*').
+unparse1(UI, pointer_type(T)) :- !, unparse(UI, T), write('*').
+unparse1(UI, function_type(T)) :- !, unparse(UI, T), write('()').
 
 % DEFINITIONS/DECLARATIONS
 
-unparse(typedef_declaration(_, typedef_annotation(
+unparse1(UI, typedef_declaration(_, typedef_annotation(
           Name,
           pointer_type(Type),
-          class_declaration(class_definition(Definitions, _, _), _, _)),
-	  _Ai, _Fi)) :- !,
+          class_declaration(class_definition(Definitions, _, _), _, _), _),
+	  _Ai, _Fi)) :- !, 
   write('typedef '), 
   with_output_to(atom(X),
-		 (write('{'), unparse(Definitions), write('} *'), write(Name))),
-  unparse_type(X, Type).
+		 (write('{'), unparse(UI, Definitions), write('} *'), write(Name))),
+  unparse_type(UI, X, Type).
 
-unparse(typedef_declaration(_, typedef_annotation(
+unparse1(UI, typedef_declaration(_, typedef_annotation(
           Name,
           Type,
-          class_declaration(class_definition(Definitions, _, _), _, _)),
-	  _Ai, _Fi)) :- !,
+          class_declaration(class_definition(Definitions, _, _), _, _), _),
+	  _Ai, _Fi)) :- !, 
   write('typedef '), 
   with_output_to(atom(X),
-		 (write('{'), unparse(Definitions), write('} '), write(Name))),
-  unparse_type(X, Type).
+		 (write('{'), unparse(UI, Definitions), write('} '), write(Name))),
+  unparse_type(UI, X, Type).
 
-unparse(typedef_declaration(_, typedef_annotation(Name,Type,_), _Ai, _Fi)) :- !,
-  write('typedef '), unparse_type(Name, Type).
+unparse1(UI, typedef_declaration(_, typedef_annotation(Name,Type,_,_), _Ai, _Fi)) :- !,
+  write('typedef '), unparse_type(UI, Name, Type).
 
-unparse(function_definition(BB, _, _, _)) :- !, unparse(BB).
+unparse1(UI, function_definition(BB, _, _, _)) :- !, unparse(UI, BB).
 
 
 % VARIABLES
 % typedef structs
-unparse(class_declaration(class_definition(Definitions, _, _, _),
-			  class_declaration_annotation(Name, _,
-               class_type(_InitializedName,ClassType, _Scope)), _, _)) :- !,
-	unparse_class_type(ClassType), write(' '), write(Name),
-	write(' {'),  unparse(Definitions), write('} ').
-unparse(class_declaration(null,
-			  class_declaration_annotation(Name, _,
-	       class_type(_InitializedName,ClassType, _Scope)), _, _)) :- !,
-	unparse_class_type(ClassType), write(' '), write(Name).
+unparse1(UI, class_declaration(class_definition(Definitions, _, _, _),
+			  class_declaration_annotation(Name, _Struct,
+               class_type(_InitializedName,ClassType, _Scope), _), _, _)) :- !,
+	write(ClassType), write(' '), write(Name),
+	write(' {'),  unparse(UI, Definitions), write('} ').
+unparse1(_UI, class_declaration(null,
+			  class_declaration_annotation(Name, _Struct,
+	       class_type(_InitializedName,ClassType, _Scope), _), _, _)) :- !,
+	write(ClassType), write(' '), write(Name).
 
-unparse(enum_declaration(InitializedNames,
-	enum_declaration_annotation(Name, _, _), _, _)) :- !,
+unparse1(UI, enum_declaration(InitializedNames,
+	enum_declaration_annotation(Name, _Attributes, _, _), _, _)) :- !,
 	write('enum '), write(Name),
-	write(' {'),  unparse_enum(InitializedNames), write(' } ').
+	write(' {'),  unparse_enum(UI, InitializedNames), write(' } ').
 
 
 % on-the-fly structs
-unparse(variable_declaration([ClassDeclaration|[InitializedName|INs]],
+unparse1(UI, variable_declaration([ClassDeclaration|[InitializedName|INs]],
 			     Spec, Ai, Fi)) :-
   ( Spec = variable_declaration_specific(Mod)
   ; Spec = variable_declaration_specific(Mod, _)),
@@ -545,119 +560,114 @@ unparse(variable_declaration([ClassDeclaration|[InitializedName|INs]],
   ClassDeclaration = class_declaration(_, _, _, _), !,
   InitializedName = initialized_name(_,
 	initialized_name_annotation(_, Name, _, _), _, _),
-  unparse(ClassDeclaration),
+  unparse(UI, ClassDeclaration),
   write(Name), % eat the modifier
-  unparse(variable_declaration(INs, variable_declaration_specific(null), Ai, Fi)).
+  unparse(UI, variable_declaration(INs, variable_declaration_specific(null), Ai, Fi)).
 
-unparse(variable_declaration([InitializedName|INs], Spec, Ai, Fi)) :- !,
+unparse1(UI, variable_declaration([InitializedName|INs], Spec, Ai, Fi)) :- !,
   ( Spec = variable_declaration_specific(Mod)
   ; Spec = variable_declaration_specific(Mod, _)),
   unparse_modifier(Mod),
-  unparse(InitializedName), !,
-  unparse(variable_declaration(INs, variable_declaration_specific(null), Ai, Fi)).
+  unparse(UI, InitializedName), !,
+  unparse(UI, variable_declaration(INs, variable_declaration_specific(null), Ai, Fi)).
 
-unparse(initialized_name(Initializer,
+unparse1(UI, initialized_name(Initializer,
 			 initialized_name_annotation(Type, Name, _,_),_, _)) :-
   !,
-  unparse_type(Name, Type),
+  unparse_type(UI, Name, Type),
   (Initializer = null -> true ; write(' = ')),
-  unparse(Initializer).
-unparse(variable_declaration([], _, _, _)) :- !.
+  unparse(UI, Initializer).
+unparse1(_UI, variable_declaration([], _, _, _)) :- !.
 
-unparse(aggregate_initializer(Es, _, _, _)) :- !,
-  write('{'), unparse(Es), write(' }').
-unparse(assign_initializer(E, _, _, _)) :- !,
-  write(''), unparse(E).
+unparse1(UI, aggregate_initializer(Es, _, _, _)) :- !,
+  write('{'), unparse(UI, Es), write(' }').
+unparse1(UI, assign_initializer(E, _, _, _)) :- !,
+  write(''), unparse(UI, E).
 
-unparse(pragma_declaration(pragma(pragma_annotation(Text),_, _), _, _, _)) :- !,
+unparse1(_UI, pragma_declaration(pragma(pragma_annotation(Text,_),_, _), _, _, _)) :- !,
   write('#pragma '), write(Text).
-unparse(null) :- !.
+unparse1(_UI, null) :- !.
 
 % ARTIFICIAL NODES
 
 % This one is artificial and only used for the CFG
-unparse(function_end(_, function_declaration_annotation(_, Name, _), _)) :- !, 
+unparse1(_UI, function_end(_, function_declaration_annotation(_, Name, _, _), _)) :- !, 
   write('END '), write(Name), write(';').
 
 % artificial and only used by simplify
-unparse(interval(Min, Max)) :- !, write(interval(Min, Max)).
+unparse1(_UI, interval(Min, Max)) :- !, write(interval(Min, Max)).
 
 % ERRORS
 
-unparse(X) :- var(X), !, writeln('UNBOUND!'), trace.
-unparse(X) :- write(X), trace, unparse(X).
+unparse1(_UI, X) :- var(X), !, writeln('UNBOUND!'), gtrace.
+unparse1(UI, X) :- write(X), gtrace, unparse(UI, X).
 
-unparse_sem(X) :-
+unparse_sem(UI, X) :-
   functor(X, basic_block, _), !,
-  unparse(X).
-unparse_sem(X) :-
-  unparse(X), writeln(';').
+  unparse(UI, X).
+unparse_sem(UI, X) :-
+  unparse(UI, X), writeln(';').
 
 
 % Helper functions for types (esp. arrays)
-unparse_type(Name, Type) :-
+unparse_type(UI, Name, Type) :-
   ( Type = array_type(_,_)
   ;(Type = pointer_type(array_type(Type,_)),
     Type \= array_type(_,_))
   ), !,
   inner_type(InnerType, Type),
-  unparse(InnerType), write(' '), write(Name),
-  unparse_array_type(Type).
+  unparse(UI, InnerType), write(' '), write(Name),
+  unparse_array_type(UI, Type).
 
 % FIXME
-unparse_type(Name, pointer_type(Type)) :-
+unparse_type(UI, Name, pointer_type(Type)) :-
   Type = array_type(array_type(_,_),_), !,
   inner_type(InnerType, Type),
-  unparse(InnerType), write(' (*'), write(Name), write(')'),
-  unparse_array_type(Type).
+  unparse(UI, InnerType), write(' (*'), write(Name), write(')'),
+  unparse_array_type(UI, Type).
 
-unparse_type(Name, Type) :- !,
-  unparse(Type), write(' '), write(Name).
+unparse_type(UI, Name, Type) :- !,
+  unparse(UI, Type), write(' '), write(Name).
 
 inner_type(DataType, array_type(Type, _)) :- !, inner_type(DataType, Type).
 inner_type(DataType, pointer_type(array_type(Type,_))) :- !,
   inner_type(DataType, Type).
 inner_type(DataType, DataType).
 
-unparse_array_type(array_type(Type, Val1)) :- !,
-  write('['), unparse(Val1), write(']'),
-  unparse_array_type(Type).
-unparse_array_type(pointer_type(array_type(Type,Val))) :-
+unparse_array_type(UI, array_type(Type, Val1)) :- !, 
+  write('['), unparse(UI, Val1), write(']'),
+  unparse_array_type(UI, Type).
+unparse_array_type(UI, pointer_type(array_type(Type,Val))) :-
   write('[]'),
-  unparse_array_type(array_type(Type,Val)).
-unparse_array_type(_).
+  unparse_array_type(UI, array_type(Type,Val)).
+unparse_array_type(_UI, _).
 
-unparse_class_type(0) :- write('class').
-unparse_class_type(1) :- write('struct').
-unparse_class_type(2) :- write('union').
-unparse_class_type(3) :- write('<template parameter>'), trace.
-
-unparse_enum([]) :- !.
-unparse_enum([N|Ns]) :- !,
+unparse_enum(_UI, []) :- !.
+unparse_enum(UI, [N|Ns]) :- !,
   N = initialized_name(Initializer,
 		       initialized_name_annotation(_Type, Name, _, _), _, _),
   write(Name),
   (Initializer = null
   -> true
-  ;  (write(' = '), unparse(Initializer))),
+  ;  (write(' = '), unparse(UI, Initializer))),
   (Ns = []
   -> true
   ; writeln(',')),
-  unparse_enum(Ns).
+  unparse_enum(UI, Ns).
 
 % Put parentheses around E if necessary
-unparse_par(E) :- unparse_par1(E), !.
-unparse_par1(E) :-
+unparse_par(UI, E) :- unparse_par1(UI, E), !.
+unparse_par1(UI, E) :-
   functor(E, function_call_exp, _),
-  unparse(E).
-unparse_par1(E) :-
+  unparse(UI, E).
+unparse_par1(UI, E) :-
   functor(E, pointer_deref_exp, _),
-  write('('), unparse(E), write(')').
-unparse_par1(E) :-
+  write('('), unparse(UI, E), write(')').
+unparse_par1(UI, E) :-
   functor(E, _, N), N < 4, !,
-  unparse(E).
-unparse_par1(E) :-
-  write('('), unparse(E), write(')').
+  unparse(UI, E).
+unparse_par1(UI, E) :-
+  write('('), unparse(UI, E), write(')').
 
 unparse_modifier(Mod) :-
   Mod = declaration_modifier(_,_TypeModifier,_,StorageModifier)
@@ -697,3 +707,13 @@ replace_types(_,_,_) :- trace.
 % Output indentation
 indent(file_info(_,0,0)) :- !, write('    '). % dummy
 indent(file_info(_Filename,_Line,Col)) :- tab(Col).
+
+%% unparse_ppi(+Location, +PPIs) is det.
+% Print all PPIs at Location (before, after, inside)
+unparse_ppi(_, []).
+unparse_ppi(Location, [PPI|PPIs]) :-
+  PPI =.. [_Type, Text, Location, _Fi], !,
+  write(Text), /*FIXME use file info instead!*/ nl,
+  unparse_ppi(Location, PPIs).
+
+unparse_ppi(Location, [_|PPIs]) :- !, unparse_ppi(Location, PPIs).

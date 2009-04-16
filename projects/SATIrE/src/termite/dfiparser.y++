@@ -192,10 +192,10 @@ extern const char* dfi_input_start;
 void dfierror(const char* msg) 
 {
   cerr << std::string(msg) 
-       << " near token \"" << dfitext << "\"" 
-       << " (token " << (int)dfitext[0] << ")" 
-       << " before """ << dfi_input << """" << endl;
-  cerr << "in DFI string """ << dfi_input_start << """." << endl;
+       << " near token \"" << dfitext << "\""
+       << " (Ch#" << (int)dfitext[0] << ")"
+       << " before \"" << dfi_input << "\"" << endl;
+  cerr << "in DFI string \"" << dfi_input_start << "\"." << endl;
   dfiterm = new PrologCompTerm(dfi_name);
   dfiterm->addSubterm(new PrologAtom("parse error"));
   dfiterm->addSubterm(new PrologAtom(dfitext));

@@ -104,9 +104,8 @@ RoseToProlog::addSpecific(SgNode* astNode, PrologCompTerm* t) {
 PrologCompTerm*
 RoseToProlog::getPreprocessingInfo(AttachedPreprocessingInfoType* inf) {
   PrologCompTerm* pi = new PrologCompTerm("preprocessing_info");
+  PrologList* l = new PrologList();
   if (inf != NULL) {
-    PrologList* l = new PrologList();
-  
     for (AttachedPreprocessingInfoType::reverse_iterator it = inf->rbegin();
 	 it != inf->rend(); ++it) {
       PrologCompTerm* ppd = new PrologCompTerm(
@@ -119,9 +118,8 @@ RoseToProlog::getPreprocessingInfo(AttachedPreprocessingInfoType* inf) {
       ppd->addSubterm(getFileInfo((*it)->get_file_info()));
       l->addFirstElement(ppd);
     }
-    pi->addSubterm(l);
   }
-  else pi->addSubterm(new PrologAtom("null"));
+  pi->addSubterm(l);
   return pi;
 }
 

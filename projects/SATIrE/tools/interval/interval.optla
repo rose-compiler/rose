@@ -191,10 +191,9 @@ eval(exp, state, context) =
           // -- NOT IMPLEMENTED
           FloatVal(_) => ((top,top), state);
           DoubleVal(_) => ((top,top), state);
-          StringVal(_) => ((top,top), state);
-          _         => println("unsupported value exp: ", exp, ": ",
-                               expr_asttext(exp))
-                       ((top,top), state);
+          _         => print("unsupported value exp: ")
+                       print(exp) print("\n") 
+                                  ((top,top), state);
         endcase
     else case exp of
       VarRefExp(name)       =>  // --print("###is_VARREF") 

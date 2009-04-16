@@ -32,8 +32,10 @@
 	   function_body/2,
 	   
 	   pragma_text/2,
-	   get_annot/3]).
+	   
+	   get_preprocessing_infos/2]).
 
+% This one is meant to be user-supplied
 :- use_module(library(types)).
 
 %-----------------------------------------------------------------------
@@ -237,12 +239,13 @@ var_stripped(Term, Term).
 
 %% var_interval(+AnalysisInfo, +VarRefExp, -Interval)
 % employ the analysis result/type info to yield an interval for the VarRefExp
-var_interval(AnalysisInfo,
+var_interval(analysis_info(AnalysisInfo),
 	     var_ref_exp(var_ref_exp_annotation(Type, Name, _Val, _, _),
 			 _Ai, _Fi),
 	     interval(Min,Max)) :-
-  AnalysisInfo = analysis_info(pre_info([top,top],I),_),
-  member(Name->[Min1,Max1],I),
+  member(pre_info(Contexts), AnalysisInfo),
+  member(merged:map([top,top],Intvls),Contexts),
+  member(Name->[Min1,Max1],Intvls),
   (  number(Min1)
   -> Min = Min1
   ;  type_interval(Type, interval(Min, _))),
@@ -316,7 +319,7 @@ var_typemod(VarRefExp, ConstVolatile) :-
 %% isBinNode(+Node, -Name, -E1, -E2, -Annot, -Ai, -Fi) is semidet.
 %% isBinNode(-Node, +Name, +E1, +E2, +Annot, +Ai, +Fi) is det.
 isBinNode(N, Name, E1, E2, Annot, Ai, Fi) :-
-  functor(N, Name, 4),
+  functor(N, Name, 5),
   arg(1, N, E1),
   arg(2, N, E2),
   arg(3, N, Annot),
@@ -397,8 +400,9 @@ function_body(function_declaration(_, function_definition(Body, _, _,_),
 pragma_text(Pragma, Text) :-
   var(Pragma), !,
   Pragma = pragma_declaration(
-               pragma(pragma_annotation(Text, _), analysis_result(null), null),
-	       default_annotation(null, preprocessor_info(null)),
+               pragma(pragma_annotation(Text, preprocessor_info([])),
+		      analysis_result(null), null),
+			      default_annotation(null, preprocessor_info([])),
 			      analysis_result(null, null), null).
 
 % +Pragma -Text
@@ -406,12 +410,16 @@ pragma_text(pragma_declaration(pragma(pragma_annotation(String, _), _, _),
 			       _, _, _),
 	    String).
 
-%% get_annot(+Stmts, -Annotterm, -Pragma) is nondet.
+%% get_preprocessing_infos(+Node, -PPIs) det.
 % FIXME  move to annot.pl!
-get_annot(Stmts, AnnotTerm, Pragma) :-
-  member(Pragma, Stmts),
-  pragma_text(Pragma, Text),
-  (atom(Text)
-  -> atom_to_term(Text, AnnotTerm, _)
-  ;  AnnotTerm = Text).
+
+get_preprocessing_infos(Node, PPIs) :- 
+  functor(Node, _, Arity1), Arity1 > 2,
+  N2 is Arity1-2, arg(N2, Node, Annot),
+  (var(Annot)
+  -> PPIs = []
+  ; functor(Annot, _, Arity2),
+   arg(Arity2, Annot, preprocessing_info(PPIs))
+  ), !.
+get_preprocessing_infos(_, []).
 

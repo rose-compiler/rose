@@ -1,3 +1,4 @@
+// -*- mode: C++; truncate-lines: true; -*-
 #include "RoseEnums.h"
 
 /* This is needed for the SgBitVector translation

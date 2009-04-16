@@ -4,18 +4,19 @@
 %-----------------------------------------------------------------------
 % loopbounds.pl
 %
-% This program analyzes loop bounds of C (and some C++) programs.  The
-% code was extraced from the TuBound WCET analysis tool and is now
-% distributed with SATIrE to serve as an example of what you can do
-% with TERMITE.
+% This program analyzes loop bounds of C (and some C++) programs.
+% This source code was extraced from the TuBound WCET analysis tool
+% [1] and is now distributed with SATIrE to serve as an example of
+% what you can do with TERMITE.
 %
 % A detailed description of the algorithm can be found in the appendix
-% of [1].
+% of [2].
 %
 %
 % References
+% [1] http://www.complang.tuwien.ac.at/adrian/
 %
-% [1] A. Prantl, J. Knoop, M. Schordan and M. Triska.
+% [2] A. Prantl, J. Knoop, M. Schordan and M. Triska.
 %     Constraint solving for high-level WCET analysis.
 %     The 18th Workshop on Logic-based methods in Programming
 %     Environments (WLPE 2008). Udine, Italy, December 12, 2008.
@@ -39,11 +40,14 @@
 % GNU General Public License for more details.
 %
 %-----------------------------------------------------------------------
-:- prolog_load_context(directory, CurDir),
+
+:- getenv('PWD', CurDir),
    asserta(library_directory(CurDir)),
-   getenv('TERMITE_LIB', TermitePath),
-   ( atom(TermitePath)
-   ; writeln('**ERROR: Please set then environment variable $TERMITE_LIB')
+   prolog_load_context(directory, SrcDir),
+   asserta(library_directory(SrcDir)),
+   (getenv('TERMITE_LIB', TermitePath)
+   ; (print_message(error, 'Please set then environment variable $TERMITE_LIB'),
+      halt(1))
    ),
    asserta(library_directory(TermitePath)).
 
@@ -54,8 +58,13 @@
    use_module(library(utils)),
    use_module(while2for),
    use_module(library(assoc)),
+   use_module(library(clpfd)),
    use_module(library(apply_macros)),
    use_module(library(swi/pce_profile)).
+
+%-----------------------------------------------------------------------
+% Symbolic & Numeric Loop bounds
+%-----------------------------------------------------------------------
 
 %-----------------------------------------------------------------------
 % merge_info/3
@@ -64,36 +73,19 @@
 % FIXME: Rewrite this more efficiently using assoc
 %
 
-merge_info(equiv(_,Var), _, _) :- var(Var), gtrace, fail.
-
-merge_info(Info, [X|Xs], Merged) :-
-  merge_info(Info, X, M1),
-  merge_info(M1, Xs, Merged).
-
-merge_info([], Info, [Info]) :- !.
-merge_info(Info, [], Info) :- !.
-merge_info([has(Var,_)|Xs], has(Var,Interval), Merged) :-
-  append([has(Var,Interval)], Xs, Merged), !.
-merge_info([equiv(Var,_)|Xs], equiv(Var,Term), Merged) :-
-  append([equiv(Var,Term)], Xs, Merged), !.
-merge_info([X|Xs], Info, [X|Ms]) :-
-  merge_info(Xs, Info, Ms), !.
-merge_info(A, B, C) :- write('ERROR: merge_info '), writeln(A), writeln(B),writeln(C),nl,gtrace.
+merge_info(Info, Var-Interval, Merged) :-
+  put_assoc(Var, Info, Interval, Merged).
+merge_info(Info1, Info2, Merged) :- 
+  assoc_to_list(Info2, List), 
+  foldl(List, merge_info, Info1, Merged).
 
 interval_of(AI-_, Var, Interval) :-
   term_interval(AI, Var, Interval).
 
 interval_of(_-Info, Var, Interval) :-
-  (   memberchk(has(Var,Interval), Info)
+  (   get_assoc(Var, Info, Interval)
   ;
       %write('INFO: Could not analyze interval_of('), unparse(Var), writeln(')'),
-      fail
-  ), !.
-
-equiv_with(Info, Var, Val) :-
-  (   memberchk(equiv(Var,Val), Info)
-  ;
-      %write('INFO: Could not eval equiv_with('), unparse(Var), writeln(')'),
       fail
   ), !.
 
@@ -194,7 +186,7 @@ simplify(E, Et) :-
   %(E \= Et -> write('>simplifyed1 '), unparse(E), write(' INTO '), unparse(Et), nl).
 simplify(E, Et) :-
   simplification_fixpoint(E, Ewk),
-  isBinNode(Ewk, F, E1, E2, A, Ai, Fi),
+  isBinNode(Ewk, F, E1, E2, A, Ai, Fi), 
   simplify(E1, E1t),
   simplify(E2, E2t),
   isBinNode(Ewk2, F, E1t, E2t, A, Ai, Fi),
@@ -217,8 +209,8 @@ simplify(E, E).
 %         Ideally, simplifications should shrink the expression
 
 % Strip Vars
-simplification(var_ref_exp(var_ref_exp_annotation(Type1,Name,T,S), Ai, Fi),
-	       var_ref_exp(var_ref_exp_annotation(Type1,Name,T,S), Ai, _)) :-
+simplification(var_ref_exp(var_ref_exp_annotation(Type1,Name,T,S,PPI), Ai, Fi),
+	       var_ref_exp(var_ref_exp_annotation(Type1,Name,T,S,PPI), Ai, _)):-
   compound(Fi).
 
 % Basic Arithmetic
@@ -240,18 +232,18 @@ simplification(or_op(E1, E2, _, _, _), E3) :-
 simplification(xor_op(E1, E2, _, _, _), E3) :-
   isIntVal(E1, X), isIntVal(E2, Y), Z is X xor Y, isIntVal(E3, Z).
 
-simplification(arrow_exp(_,interval(_,_),binary_op_annotation(Type), _, _), I):-
+simplification(arrow_exp(_,interval(_,_),binary_op_annotation(Type,_), _, _), I):-
   type_interval(Type, I). % Fallback, we don't know anything
 
 % Type Casting
 simplification(assign_op(E1,
-         cast_exp(E2, _, unary_op_annotation(_, Type, _, _), _, _),
-			 binary_op_annotation(Type), _, _),
+         cast_exp(E2, _, unary_op_annotation(_, Type, _, _, _), _, _),
+			 binary_op_annotation(Type, _), _, _),
 	       assign_op(E1, E2, _, _, _)).
 
-simplification(cast_exp(var_ref_exp(var_ref_exp_annotation(Type1,Name,T,S),A,_),
+simplification(cast_exp(var_ref_exp(var_ref_exp_annotation(Type1,Name,T,S,PPI),A,_),
 		        _, unary_op_annotation(_, Type2, _, _), _, _),
-	       var_ref_exp(var_ref_exp_annotation(Type1,Name,T,S),A,_)) :-
+	       var_ref_exp(var_ref_exp_annotation(Type1,Name,T,S,PPI),A,_)) :-
   type_info(Type1, Signed1, Size1),
   type_info(Type2, Signed2, Size2),
   Size1 =< Size2,
@@ -260,7 +252,7 @@ simplification(cast_exp(var_ref_exp(var_ref_exp_annotation(Type1,Name,T,S),A,_),
      Signed2 = signed)).
   
 simplification(CastExp, and_op(E1, Mask, _, _, _)) :- 
-  CastExp = cast_exp(E1, _, unary_op_annotation(_, Type, _, _), _, _),
+  CastExp = cast_exp(E1, _, unary_op_annotation(_, Type, _, _, _), _, _),
   type_info(Type, _, Size),
   M is (2**Size) -1,
   isIntVal(Mask, M).
@@ -361,7 +353,8 @@ is_real_for_loop(for_statement(ForInit,
 		 Info, Ai, Body, IterationVar,
 		 interval(Min, Max),
 		 Step) :-
-  %unparse(for_statement(ForInit,ForTest,ForStep,[], _, _, _)),nl,gtrace,
+  write('% '), unparse(for_statement(ForInit,ForTest,ForStep,[], _, _, _)), nl,
+  %gtrace,
   (isSimpleForInit(ForInit, IterationVar, B1v)
   -> (
       term_interval(Ai, B1v, B1),
@@ -382,7 +375,7 @@ is_real_for_loop(for_statement(ForInit,
     %unparse(B1v), write('->'), unparse(B1), nl,
     %writeln(B2v),
     %unparse(B2v), write('->'), unparse(B2), nl,
-%gtrace,
+
   % Assure we only have one induction variable
   isBinOpLhs(TestOp, I2),   var_stripped(I2, IterationVar),
   simplify(ForStep, SimpleForStep),
@@ -410,8 +403,8 @@ is_real_for_loop(for_statement(ForInit,
   ), 
 
   guarantee(Body, is_transp(IterationVar, local)),
-  write('**WARNING: Assuming that '), unparse(IterationVar),
-  writeln(' is local').
+  write('% **WARNING: Assuming that '), unparse(IterationVar),
+  writeln(' is local'), write('% ').
   %write('is transp: '), writeln(I),
 
 
@@ -423,16 +416,16 @@ find_iv_interval(Info, InfoInner, PostCondition, I, Base, End) :-
   %unparse(for_statement(ForInit,ForTest,ForStep, [], _, _, _)), nl,
   StartR = interval(StartMin,_),          % write('StartR='), writeln(StartR),
   StopR = interval(StopMin,StopMax),      %  write('StopR='), writeln(StopR),
-  IVinterval2 = interval(StartMin, StopMax), write('IVinterval='), writeln(IVinterval2),
-  merge_info(Info,has(I, IVinterval2), InfoInner), %write('inner '), writeln(InfoInner),
+  IVinterval2 = interval(StartMin, StopMax), write('% IVinterval='), writeln(IVinterval2),
+  merge_info(Info, I-IVinterval2, InfoInner), %write('inner '), writeln(InfoInner),
 
   PCmin is StopMin /*+Increment*/,
   PCmax is StopMax /*+Increment*/,
-  merge_info(Info,has(I, interval(PCmin, PCmax)), PostCond1),
+  merge_info(Info, I-interval(PCmin, PCmax), PostCondition).
   %write('post '), writeln(PostCondition)
-  merge_info(PostCond1, equiv(I, End),
-    %add_op(End, int_val(_, value_annotation(Increment), _, _), _)),
-	     PostCondition).%,   write('post '), writeln(PostCondition).
+  %merge_info(PostCond1, equiv(I, End),
+    %add_op(End, int_val(_, value_annotation(Increment, _), _, _), _)),
+ %	     PostCondition).%,   write('post '), writeln(PostCondition).
 
 %-----------------------------------------------------------------------
 % get_loopbound/6:
@@ -444,13 +437,10 @@ find_iv_interval(Info, InfoInner, PostCondition, I, Base, End) :-
 %                 or at least a Interval(min, max)
 %
 
-get_loopbound(Fs, Bound, I, Info, InfoInner, PostCondition) :- 
+get_loopbound(Fs, Bound, I, Info, InfoInner, PostCondition) :-
   is_real_for_loop(Fs, Info, AnInfo, _, I,
 		   interval(Base, End),
 		   Increment),
-
-  replace_loopbody(Fs, [], FsPrint),
-  unparse(FsPrint), write(' --> '),
 
   % Find out the iteration space
   %unparse(subtract_op(EndExpr, BaseExpr, _, _, _)), nl,
@@ -460,7 +450,7 @@ get_loopbound(Fs, Bound, I, Info, InfoInner, PostCondition) :-
 
 				% Find the loop bound
   Bound is ceil((IVinterval1 + 1 /*LE*/) / abs(Increment)),
-  write('Bound= '), writeln(Bound),
+  write(' --> '), write('Bound= '), writeln(Bound),
 
   % Try to find the Induction Variable interval
   (find_iv_interval(Info, InfoInner, PostCondition, I, Base, End) -> true
@@ -486,7 +476,7 @@ get_loopbound(ShiftLoop, Bound, _, Info, Info, Info) :-
   isIntVal(Amount, AmountVal),
   var_stripped(Var1, Var),
   var_stripped(Var2, Var),
-  Var = var_ref_exp(var_ref_exp_annotation(Type, _, _, _), _, _),
+  Var = var_ref_exp(var_ref_exp_annotation(Type, _, _, _, _), _, _),
   type_info(Type, _, Size),
   Bound is ceil(Size/AmountVal).
 
@@ -511,29 +501,289 @@ insert_annot(while_stmt(Expr,basic_block(XS, A1, Fi1), A2, Fi2),
 	     while_stmt(Expr,basic_block(XS1, A1, Fi1), A2, Fi2)) :-
   append(XS, [Annot], XS1).
 
+% get_annot_term/3:
+% Example: get_annot(+Stmts, ?Annotterm, ?Pragma)
+% quicker version of get_annot/3 without string conversion
+get_annot_term(Stmts, AnnotTerm, Pragma) :-
+  pragma_text(Pragma, AnnotTerm),
+  member(Pragma, Stmts).
+
+%% get_annot(+Stmts, -Annotterm, -Pragma) is nondet.
+get_annot(Stmts, AnnotTerm, Pragma) :-
+  member(Pragma, Stmts),
+  pragma_text(Pragma, Text),
+  (atom(Text)
+  -> atom_to_term(Text, AnnotTerm, _)
+  ;  AnnotTerm = Text).
+
+replace_loopbody(for_statement(Init, Test, Incr,
+			       _, A, Ai, Fi),
+		 Body,
+		 for_statement(Init, Test, Incr,
+			       basic_block(Body, A, Ai, Fi), A, Ai, Fi)).
 
 %-----------------------------------------------------------------------
 % Annotate the easy loop bounds
 
-loop_bounds(Info, InfoInner, [], Fs, Fs_Annot) :- 
-  is_list(Info),
+loop_bounds(Info, InfoInner, InfoPost, Fs, Fs_Annot) :- 
   get_loopbound(Fs, Bound, /*InductionVar*/_, Info, InfoIn, _InfoPo), !,
-%  term_to_string(wcet_loopbound(Bound), A),
-  A = wcet_loopbound(Bound),
-  pragma_text(Annot, A), writeln(A),
+  A = wcet_loopbound(Bound), write('% '), pragma_text(Annot, A), writeln(A),
 
   ((Fs = for_statement(_,_,_,basic_block(Stmts, _, _, _), _, _, _),
    get_annot(Stmts, wcet_loopbound(_), _),
    Fs = Fs_Annot)
   ; % only insert new loop bounds - don't overwrite manual annotations
   insert_annot(Fs, Annot, Fs_Annot)),
-  
+
+  empty_assoc(InfoPost),
   merge_info(Info, InfoIn, InfoInner).
 %  merge_info(Info, InfoPo, InfoPost).
   %writeln(InfoIn),
   %writeln(InfoInner),
   %writeln(InfoPost),nl.
 loop_bounds(I, I, I, Term, Term).
+
+
+
+
+%-----------------------------------------------------------------------
+% Constraints ...
+%-----------------------------------------------------------------------
+
+%-----------------------------------------------------------------------
+% FIXME use Inner and next instead of counter()
+markers(Stem, StemInner, StemInner,
+	basic_block(List, Annot, Ai, Fi),
+	basic_block(ListPrime, Annot, Ai, Fi)) :-
+  
+  retract(counter(X)), Y is X+1, assert(counter(Y)),
+  concat_atom([Stem, '_', Y], StemInner), 
+  %term_to_string(wcet_marker(StemInner), Text),
+  Text = wcet_marker(StemInner), 
+  pragma_text(Marker, Text),
+  append(List, [Marker], ListPrime).
+markers(I, I, I, Term, Term).
+
+
+
+expr_constr(add_op(E1, E2, _, _, _), Map, Expr) :-
+  expr_constr(E1, Map, Expr1),
+  expr_constr(E2, Map, Expr2),
+  Expr #= Expr1 + Expr2. % FIXME  mod type (Expression)
+
+expr_constr(subtract_op(E1, E2, _, _, _), Map, Expr) :-
+  expr_constr(E1, Map, Expr1),
+  expr_constr(E2, Map, Expr2),
+  Expr #= Expr1 - Expr2.    
+
+expr_constr(and_op(E1, E2, _, _, _), Map, Expr) :-
+  expr_constr(E1, Map, Expr1),
+  expr_constr(E2, Map, Expr2),
+  Expr is Expr1 /\ Expr2.
+
+expr_constr(or_op(E1, E2, _, _, _), Map, Expr) :-
+  expr_constr(E1, Map, Expr1),
+  expr_constr(E2, Map, Expr2),
+  Expr is Expr1 \/ Expr2.
+
+expr_constr(Min2Func, Map, Expr) :-
+  isMin2Func(Min2Func, E1, E2),
+  expr_constr(E1, Map, Expr1),
+  expr_constr(E2, Map, Expr2),
+  Expr #= min(Expr1, Expr2).
+
+expr_constr(IntVal, _Map, Expr) :-
+  is_const_val(IntVal, Val),
+  Expr #= Val.
+
+expr_constr(Var, Map, Expr) :-
+  lookup(Var, Map, Expr1),
+  Expr #= Expr1.
+
+expr_constr(Term, AR-_Map, Expr) :-
+  term_interval(AR, Term, interval(Min, Max)),
+  Expr #>= Min,
+  Max < 2**24,
+  Expr #=< Max.
+
+expr_constr(Term, AR-Map, Expr) :- 
+  simplification(Term, SimpleTerm),
+  expr_constr(SimpleTerm, AR-Map, Expr).
+
+%expr_constr(_Term, _AR-_Map, _Expr) :- trace.
+
+step_constr(comma_op_exp(Step1, Step2, _, _, _), Map, Dir) :-
+  step_constr(Step1, Map, Dir),
+  step_constr(Step2, Map, Dir).
+  
+step_constr(ForStep, Map, Dir) :-
+  isStepsize(ForStep, InductionVar, Step),
+  (  Step > 0
+  -> Dir = up
+  ;  Dir = down),
+  lookup(InductionVar, Map, IV),
+  IV mod abs(Step) #= 0.
+
+%step_constr(_Term, _AR-_Map, _Dir) :- trace.
+
+init_constr(ForInit, Map, Dir) :-
+  isSimpleForInit(ForInit, InductionVar, InitVal),
+  lookup(InductionVar, Map, IV),
+  (  Dir = up
+  -> IV #>= Expr
+  ;  IV #=< Expr),
+  expr_constr(InitVal, Map, Expr).
+
+%init_constr(_Term, _AR-_Map, _Dir) :- trace.
+
+init_constr2(Map, AR, Var) :-
+  get_assoc(Var, Map, CLP_Var),
+  ( term_interval(AR, Var, interval(Min, Max)),
+    CLP_Var #>= Min,
+    CLP_Var #=< Max
+  ; true).
+  %fd_dom(CLP_Var, Dom), unparse(Var), write(' -> '), writeln(Dom).
+
+test_constr(expr_statement(E1, _, _, _), Map) :-
+  test_constr(E1, Map).
+
+test_constr(and_op(E1, E2, _, _, _), Map) :-
+  test_constr(E1, Map),
+  test_constr(E2, Map).
+  
+test_constr(ForTest, Map) :-
+  isForTestLE(ForTest, less_or_equal_op(InductionVar, Than, _, _, _)),
+  lookup(InductionVar, Map, IV),
+  IV #=< Expr,
+  expr_constr(Than, Map, Expr).
+
+test_constr(ForTest, Map) :-
+  isForTestGE(ForTest, greater_or_equal_op(InductionVar, Than, _, _, _)),
+  lookup(InductionVar, Map, IV),
+  IV #>= Expr,
+  expr_constr(Than, Map, Expr).
+
+%test_constr(_Term, _AR-_Map, _Dir) :- trace.
+
+lookup(Var, _AR-Map, Constraint) :-
+  var_stripped(Var, V),
+  get_assoc(V, Map, Constraint).
+
+
+is_for_loop(Fs, InductionVars, ForInit, ForTest, ForStep, Body) :-
+  is_simple_for_loop(Fs, _, ForInit, ForTest, ForStep, Body),
+  iv(ForTest, Body, InductionVars).
+
+iv(expr_statement(E1, _, _, _), Body, IVs) :-
+  iv(E1, Body, IVs).
+
+iv(and_op(E1, E2, _, _, _), Body, IVs) :-
+  iv(E1, Body, IVs1),
+  iv(E2, Body, IVs2),
+  append(IVs1, IVs2, IVs).
+
+iv(Op, Body, [IV]) :-
+  ( isForTestLE(Op, less_or_equal_op(ItV, _, _, _, _))
+  ; isForTestGE(Op, greater_or_equal_op(ItV, _, _, _, _))),
+  var_stripped(ItV, IV),
+  guarantee(Body, is_transp(IV, local)).
+
+gen_varmap([], Map, Map).
+gen_varmap([InductionVar|IVs], Map, Map2) :-
+  put_assoc(InductionVar, Map, _Var, Map1),
+  gen_varmap(IVs, Map1, Map2).
+
+loop_constraints(Fs, Fs_Annot, RootMarker, Map) :-
+  Fs = for_statement(_, _, _, _, _An, Aipre, _Fi),
+
+  is_for_loop(Fs, InductionVars, ForInit, ForTest, ForStep,
+	      basic_block(Stmts, _An1, Aibody0, _Fi1)),
+  (Stmts = [Stmt|_]
+  -> analysis_info(Stmt, Aibody)
+  ;  Aibody = Aibody0),
+
+  %replace_loopbody(Fs, [], FsPrint),
+  %unparse(FsPrint), writeln('...'), 
+
+  !,
+  
+  gen_varmap(InductionVars, Map, Map1),
+  %trace,
+  step_constr(ForStep, Aibody/*FIXME!!! body*/-Map1, Dir),
+  init_constr(ForInit, Aipre-Map1, Dir),
+  test_constr(ForTest, Aibody/*FIXME!!! body*/-Map1),
+
+  % additional init constraints
+  maplist(init_constr2(Map1, Aipre), InductionVars),
+
+  assoc_to_values(Map1, Vars),
+  %Vars=[I,J,K], findall((I,J,K), (indomain(I),indomain(J)), Is),writeln(Is),
+  findall(C, labeling([upto_in(C)], Vars), Cs),
+  %length(Ns, IterationCount),
+  sum(Cs, #=, IterationCount),
+  %writeln(Ns),
+  
+  get_annot_term(Stmts, wcet_marker(ThisMarker), _),
+  
+  % Add constraint
+  pragma_text(Annot, wcet_constraint(ThisMarker=<RootMarker*IterationCount)),
+  append(Stmts,[Annot],Stmts1), !,
+
+  % foster Children
+  iter_children(Stmts1, Stmts2, RootMarker, Map1),
+  replace_loopbody(Fs, Stmts2, Fs_Annot).
+
+
+iter_children([Stmt|Stmts], [Stmt1|Stmts1], RM, Map) :-
+  ( loop_constraints(Stmt, Stmt1, RM, Map)
+  ; Stmt = Stmt1),
+  iter_children(Stmts, Stmts1, RM, Map).
+iter_children([], [], _, _).
+
+%-----------------------------------------------------------------------
+% Annotate Constraints
+constraints(I, I, I, Fs, [/*Scope,*/ Fs_Annot]) :-
+  % We need to guarantee that Fs is an induction-variable-
+  % based loop, and that the induction variable I is transp().
+  %term_stripped(Fsc, Fs),
+  is_simple_for_loop(Fs, _, _, _, _, _), 
+  Fs = for_statement(_,_,_, basic_block(Stmts, _, _, _), _, _, _),
+
+  % We employ our own "interpretation traversal", so don't traverse this
+  % subtree if we already visited it from a parent scope
+  \+ get_annot_term(Stmts, wcet_constraint(_), _), 
+
+  %write('constraints('), unparse(Fs), writeln(')'),
+  empty_assoc(Map),
+  I = parentMarker:RootMarker,
+  loop_constraints(Fs, Fs_Annot, RootMarker, Map),
+
+  % Generate a sope for the markers that are used by the constraints
+  % FIXME: collect all markers used inside.
+  %term_to_string(wcet_scope(ThisMarker), Text),
+  %pragma_text(Scope, Text),
+  !.
+  %ground(Fs_Annot).
+
+% save the parent marker
+constraints(I, parentMarker:Marker, I, Term, Term) :-
+  Term = basic_block(Stmts, _, _, _), 
+  get_annot_term(Stmts, wcet_marker(Marker), _).
+
+constraints(I, I, I, Fs, Fs).
+
+
+% translate Term -> String in the pragmas
+pragma_fixup(I, I, I, Pragma, Pragma) :-
+  pragma_text(Pragma, Atom),
+  atom(Atom).
+
+pragma_fixup(I, I, I, Pragma, FixedPragma) :-
+  pragma_text(Pragma, Term),
+  term_to_atom(Term, Atom),
+  pragma_text(FixedPragma, Atom).
+
+pragma_fixup(I, I, I, T, T).
 
 %-----------------------------------------------------------------------
 % MAIN
@@ -543,41 +793,46 @@ annot(Input, Output) :-
   X = Input,
 
   % WHILE -> FOR conversion
-  writeln('while() to for() conversion...'),
+  writeln('% while() to for() conversion...'),
   transformed_with(X, while_to_for, [], _, X1), !,
 
   % Loop Bounds
-  writeln('Loop Bounds...'),
-  time(transformed_with(X1, loop_bounds, [], _, X2)), !,
+  writeln('% Loop Bounds...'),
+  empty_assoc(Info),
+  transformed_with(X1, loop_bounds, Info, _, X2), !,
 
-  X2 = Output.
+  % Markers
+  writeln('% Markers...'),
+  assert(counter(0)),
+  transformed_with(X2, markers, 'm', _, X3), !,
+
+  % Constraints
+  writeln('% Constraints...'), 
+  transformed_with(X3, constraints, [], _, X4), !,
+
+  % Pragma Terms->Atoms
+  transformed_with(X4, pragma_fixup, _, _, X5), !,
+  
+  X5 = Output.
 
 main :-
-  current_prolog_flag(argv, Argv), 
-  append(_, [--|Args], Argv),
-  Args = [A1, A2], 
-
   catch((
-
-    % Read input file
-    open(A1, read, _, [alias(rstrm)]),
-    read_term(rstrm, Input, []),
-    close(rstrm), 
+    prompt(_,''),
+    % Read input
+    read_term(Input, []),
     compound(Input),
 
     %profile(annot(Input, Output)),gtrace,
     annot(Input, Output),
-   
-    % Write output file
-    open(A2, write, _, [alias(wstrm)]),
-    write_term(wstrm, Output, [quoted(true)]),
-    write(wstrm, '.\n'),
-    close(wstrm)
+
+    % Write output
+    write_term(Output, [quoted(true)]),
+    writeln('.')
 
   ), E, (print_message(error, E), fail)),
 
   halt.
 
 main :-
-  writeln('Usage: loopbounds.pl Input Output'),
+  writeln('% Usage: loopbounds.pl <Input >Output'),
   halt(1).
