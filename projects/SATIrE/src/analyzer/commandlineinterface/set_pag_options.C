@@ -149,7 +149,15 @@ void setPagOptions(AnalyzerOptions opt) {
   }
 }
 
+#include "satire_file_utils.h"
+
 void setOutputGdlAnimDirName(char *animDirName)
 {
     animation = animDirName;
+ // Make sure the animation directory exists.
+    if (animDirName != NULL)
+    {
+        std::vector<std::string> dir = SATIrE::pathNameComponents(animDirName);
+        SATIrE::createDirectoryHierarchy(dir);
+    }
 }

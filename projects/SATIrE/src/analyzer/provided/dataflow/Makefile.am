@@ -53,7 +53,8 @@ do_local_subst = \
 # to our needs here; also, we copy all the SATIrE headers, and some other
 # files to include, to a local directory here. Analyzer objects are built
 # with -fPIC so we can put them into a shared library.
-local_newanalysis_script:
+local_newanalysis_script: $(top_srcdir)/src/analyzer/skeletons/*
+	rm -rf local_satire_skeletons
 	cp -r $(top_srcdir)/src/analyzer/skeletons/ local_satire_skeletons
 	chmod -R +w local_satire_skeletons
 	$(do_local_subst) < local_satire_skeletons/newanalysis.in \
@@ -77,7 +78,7 @@ local_newanalysis_script:
 
 # Build an analyzer directory for each analysis and initialize it using the
 # newanalysis script.
-$(X_ANALYZERS): local_newanalysis_script
+$(X_ANALYZERS): local_newanalysis_script $(top_srcdir)/examples/*/* $(top_srcdir)/tools/*/*
 	@echo "----- making $@ -----"
 	if [ -d $(top_srcdir)/examples/$@ ]; then \
 		cp -r $(top_srcdir)/examples/$@ . ; \

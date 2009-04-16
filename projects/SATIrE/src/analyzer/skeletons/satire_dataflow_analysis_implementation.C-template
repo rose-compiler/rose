@@ -374,9 +374,17 @@ Implementation::outputAnnotatedProgram(Program *program, bool prefixFiles)
                 tp.traverseInputFiles(program->astRoot);
 
             ofstream termfile;
-            string filename = (prefixFiles ? identifier() + "_" : "")
-                             + program->options->getOutputTermFileName();
-            termfile.open(filename.c_str());
+            string prefix = (prefixFiles ? identifier() : "");
+            string filename
+                = prefixedFileName(program->options->getOutputTermFileName(),
+                                   prefix);
+            if (!openFileForWriting(termfile, filename))
+            {
+                std::cerr
+                    << "*** error: could not open term file " << filename
+                    << std::endl;
+                std::exit(EXIT_FAILURE);
+            }
             termfile << "% Termite term representation" << endl;
             termfile << tp.getTerm()->getRepresentation() << "." << endl;
             termfile.close();
@@ -394,15 +402,18 @@ Implementation::outputAnalysisVisualization(Program *program, bool prefixFiles)
     /* Handle command line options --output-gdl and --output-gdlanim. */
     std::string outputGdlFile;
     std::string outputGdlAnimDir;
+    std::string prefix = (prefixFiles ? identifier() : "");
     if (options->outputGdl())
     {
-        outputGdlFile = (prefixFiles ? identifier() + "_" : "")
-                       + options->getOutputGdlFileName();
+        outputGdlFile
+            = prefixedFileName(program->options->getOutputGdlFileName(),
+                               prefix);
     }
     else if (options->outputGdlAnim())
     {
-        outputGdlAnimDir = (prefixFiles ? identifier() + "_" : "")
-                          + options->getOutputGdlAnimDirName();
+        outputGdlAnimDir
+            = prefixedFileName(program->options->getOutputGdlAnimDirName(),
+                               prefix);
         setOutputGdlAnimDirName(Ir::getCharPtr(outputGdlAnimDir));
         outputGdlFile = outputGdlAnimDir + "/result.gdl";
     }
@@ -431,15 +442,3 @@ Implementation::outputAnalysisVisualization(Program *program, bool prefixFiles)
 } // namespace ANALYSIS
 
 } // namespace SATIrE
-
-#if 0
-// GB (2009-03-10): This used to be in pag_support.C. However, when we moved
-// to libtool and dynamic linking, it started segfaulting mysteriously. It
-// seems to work here.
-extern "C"
-const char *Expression_print(void *e)
-{
-    std::cout << expr_to_string(isSgExpression((SgNode *) e));
-    return "";
-}
-#endif

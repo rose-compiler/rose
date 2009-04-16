@@ -11,6 +11,8 @@
 #include "satire_rose.h"
 #include "termite.h"
 
+#include "satire_file_utils.h"
+
 #include "AnalyzerOptions.h"
 #include "CommandLineParser.h"
 #include "set_pag_options.h"

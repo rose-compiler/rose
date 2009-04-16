@@ -28,10 +28,11 @@ nobase_include_HEADERS = \
     satire/satire_analysis_driver.h     satire/satire.h \
 	satire/satire_analysis.h            satire/satire_program_representation.h\
 	satire/satire_analysis_scheduler.h  satire/satire_utils.h \
-	satire/satire_dataflow_analysis.h \
+	satire/satire_dataflow_analysis.h 	satire/satire_file_utils.h \
 	satire/PagDfiTextPrinter.h          satire/PagDfiCommentAnnotator.h
 
 libAnalysisSupport_la_SOURCES = \
     satire_analysis.C            satire_dataflow_analysis.C \
 	satire_analysis_driver.C     satire_program_representation.C \
-	satire_analysis_scheduler.C  satire_utils.C
+	satire_analysis_scheduler.C  satire_utils.C \
+	satire_file_utils.C

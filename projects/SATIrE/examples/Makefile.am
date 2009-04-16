@@ -251,8 +251,14 @@ satire_driver: init.token
 	cp -ur $(top_srcdir)/tools/interval/tests $(testdir)/driver_tests
 	cd $(testdir)
 	for f in $(testdir)/driver_tests/*; do \
-		$(bindir)/satire_driver --analysis=interval --run-pointsto-analysis --callstringlength=1 $$f; echo; \
+		rm -rf driver_out; \
+		$(bindir)/satire_driver --analysis=interval --run-pointsto-analysis --callstringlength=1 --output-term=driver_out/interval/`basename $$f .c`.term $$f; \
+		echo "testing existence of term file driver_out/interval/interval_`basename $$f .c`.term ..."; \
+		test -s driver_out/interval/interval_`basename $$f .c`.term || exit 1; \
+		wc driver_out/interval/interval_`basename $$f .c`.term; \
+		echo; \
 	done
+	rm -rf driver_out
 
 testsuite: init.token
 	@echo
