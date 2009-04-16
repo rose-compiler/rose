@@ -921,7 +921,6 @@ Grammar::setUpBinaryInstructions ()
 
 
 
-  // addr_t e_rva, e_size;
      AsmPERVASizePair.setFunctionPrototype ( "HEADER_PE_RVA_SIZE_PAIR", "../Grammar/BinaryInstruction.code");
      AsmPERVASizePair.setDataPrototype("rose_rva_t","e_rva","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -930,16 +929,20 @@ Grammar::setUpBinaryInstructions ()
      AsmPERVASizePair.setDataPrototype("SgAsmGenericSection*", "section", "= NULL", 
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+
+
      AsmPERVASizePairList.setFunctionPrototype ( "HEADER_PE_RVA_SIZE_PAIR_LIST", "../Grammar/BinaryInstruction.code");
      AsmPERVASizePairList.setDataPrototype("SgAsmPERVASizePairPtrList","pairs","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-  // PESectionTableEntry *st_entry;
+
+
      AsmPESection.setFunctionPrototype ( "HEADER_PE_SECTION", "../Grammar/BinaryInstruction.code");
      AsmPESection.setDataPrototype("SgAsmPESectionTableEntry*","section_entry","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-  // No data members
+
+
      AsmPESectionTable.setFunctionPrototype ( "HEADER_PE_SECTION_TABLE", "../Grammar/BinaryInstruction.code");
 
 
@@ -1944,11 +1947,21 @@ Grammar::setUpBinaryInstructions ()
      AsmMemoryReferenceExpression.setDataPrototype("SgAsmType*","type","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     AsmRegisterReferenceExpression.setFunctionPrototype ( "HEADER_BINARY_REGISTER_REFERENCE_EXPRESSION", "../Grammar/BinaryInstruction.code");
-     Asmx86RegisterReferenceExpression.setFunctionPrototype ( "HEADER_BINARY_X86_REGISTER_REFERENCE_EXPRESSION", "../Grammar/BinaryInstruction.code");
-     AsmArmRegisterReferenceExpression.setFunctionPrototype ( "HEADER_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION", "../Grammar/BinaryInstruction.code");
-     AsmPowerpcRegisterReferenceExpression.setFunctionPrototype ( "HEADER_BINARY_POWERPC_REGISTER_REFERENCE_EXPRESSION", "../Grammar/BinaryInstruction.code");
 
+
+     AsmRegisterReferenceExpression.setFunctionPrototype("HEADER_BINARY_REGISTER_REFERENCE_EXPRESSION",
+                                                         "../Grammar/BinaryInstruction.code");
+     // added by tps on 3Apr07 and removed on 16Jan08
+     //AsmRegisterReferenceExpression.setDataPrototype("SgAsmExpression*","offset","= NULL",
+     //                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     // Added by JJW on 2-12-2008
+     AsmRegisterReferenceExpression.setDataPrototype("SgAsmType*","type","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+
+     Asmx86RegisterReferenceExpression.setFunctionPrototype("HEADER_BINARY_X86_REGISTER_REFERENCE_EXPRESSION",
+                                                            "../Grammar/BinaryInstruction.code");
      Asmx86RegisterReferenceExpression.setDataPrototype("X86RegisterClass","register_class","= x86_regclass_unknown",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Asmx86RegisterReferenceExpression.setDataPrototype("int","register_number","= 0",
@@ -1956,23 +1969,28 @@ Grammar::setUpBinaryInstructions ()
      Asmx86RegisterReferenceExpression.setDataPrototype("X86PositionInRegister","position_in_register","= x86_regpos_unknown",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      
-     AsmArmRegisterReferenceExpression.setDataPrototype("SgAsmArmRegisterReferenceExpression::arm_register_enum","arm_register_code","= SgAsmArmRegisterReferenceExpression::undefined_arm_register",
+
+
+     AsmArmRegisterReferenceExpression.setFunctionPrototype("HEADER_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION",
+                                                            "../Grammar/BinaryInstruction.code");
+     AsmArmRegisterReferenceExpression.setDataPrototype("SgAsmArmRegisterReferenceExpression::arm_register_enum",
+                                                        "arm_register_code", 
+                                                        "= SgAsmArmRegisterReferenceExpression::undefined_arm_register",
                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+
+
+     AsmPowerpcRegisterReferenceExpression.setFunctionPrototype("HEADER_BINARY_POWERPC_REGISTER_REFERENCE_EXPRESSION",
+                                                                "../Grammar/BinaryInstruction.code");
      AsmPowerpcRegisterReferenceExpression.setDataPrototype("PowerpcRegisterClass","register_class","= powerpc_regclass_unknown",
                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     // GPR, FPR, SPR, TBR, etc. number, or condition register field or bit number
      AsmPowerpcRegisterReferenceExpression.setDataPrototype("int","register_number","= 0",
-                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE); // GPR, FPR, SPR, TBR, etc. number, or condition register field or bit number
-     AsmPowerpcRegisterReferenceExpression.setDataPrototype("PowerpcConditionRegisterAccessGranularity","conditionRegisterGranularity","= powerpc_condreggranularity_whole",
+                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmPowerpcRegisterReferenceExpression.setDataPrototype("PowerpcConditionRegisterAccessGranularity",
+                                                            "conditionRegisterGranularity", "= powerpc_condreggranularity_whole",
                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      
-  // added by tps on 3Apr07 and removed on 16Jan08
-     //     AsmRegisterReferenceExpression.setDataPrototype("SgAsmExpression*","offset","= NULL",
-     //                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-  // Added by JJW on 2-12-2008
-     AsmRegisterReferenceExpression.setDataPrototype("SgAsmType*","type","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
 
 
   // This might better be an STL std::vector<bool> type.
