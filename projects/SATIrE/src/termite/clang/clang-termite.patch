@@ -179,7 +179,7 @@ Index: Driver/TermDumper.cpp
 ===================================================================
 --- Driver/TermDumper.cpp	(revision 0)
 +++ Driver/TermDumper.cpp	(revision 0)
-@@ -0,0 +1,2195 @@
+@@ -0,0 +1,2198 @@
 +//===--- StmtTermDumper.cpp - TermDumping implementation for Stmt ASTs ----===//
 +//
 +//                     The LLVM Compiler Infrastructure
@@ -386,7 +386,10 @@ Index: Driver/TermDumper.cpp
 +    }
 +
 +    ~ASTTermDumper() {
-+
++      //semantically close the current file declaration
++      Out << "], "; closeDecl(Out); // global
++      Out << ", ";  closeDecl(Out); // file
++      
 +      PP->setPPCallbacks(NULL);
 +      
 +      // free the output stream
@@ -403,8 +406,6 @@ Index: Driver/TermDumper.cpp
 +
 +      //finish the declaration for the last file
 +      if (!first) {
-+        Out << "], "; closeDecl(Out); // global
-+        Out << ", ";  closeDecl(Out); // file
 +        Out << ", ";
 +      }
 +
@@ -451,6 +452,7 @@ Index: Driver/TermDumper.cpp
 +     **************************************************************************/
 +
 +    void closeDecl(std::ostream &O) {
++      assert(current_source_file.length() > 0 && "no current source file");
 +      O << DA ", "
 +        << "file_info(" << quote(current_source_file) << ", 1, 1)"
 +        << ")";      
@@ -464,7 +466,7 @@ Index: Driver/TermDumper.cpp
 +      }
 +      else {
 +        PresumedLoc PLoc = SM->getPresumedLoc(SpellingLoc);
-+
++        assert(PLoc.isValid() && "encountered invalid presumed location");
 +        O << "file_info('" << PLoc.getFilename() << "', " << PLoc.getLine()
 +          << ", " << PLoc.getColumn() << ")";
 +      }
@@ -489,6 +491,7 @@ Index: Driver/TermDumper.cpp
 +    }
 +
 +    void fileInfo(std::ostream &O, const std::string &file_name) {
++      assert(file_name.size() > 0 && "invalid file name");      
 +      O << "file_info('" << file_name << "', 0, 0)";
 +    }
 +    
@@ -1431,15 +1434,15 @@ Index: Driver/TermDumper.cpp
 +          case BuiltinType::UShort:    O << "unsigned_short"; break;
 +          case BuiltinType::UInt:      O << "unsigned_int"; break;
 +          case BuiltinType::ULong:     O << "unsigned_long"; break;
-+          case BuiltinType::ULongLong: O << "unsigned_longlong"; break;
++          case BuiltinType::ULongLong: O << "unsigned_long_long"; break;
 +
 +          case BuiltinType::Char_S:    O << "char"; break;
 +          case BuiltinType::SChar:     O << "char"; break;
 +          case BuiltinType::WChar:     O << "wchar"; break;
 +          case BuiltinType::Short:     O << "short"; break;
 +          case BuiltinType::Int:       O << "int"; break;
-+          case BuiltinType::Long:      O << "long"; break;
-+          case BuiltinType::LongLong:  O << "longlong"; break;
++          case BuiltinType::Long:      O << "long_int"; break;
++          case BuiltinType::LongLong:  O << "long_long_int"; break;
 +          default:
 +            assert(false);
 +          }
@@ -1860,7 +1863,7 @@ Index: Driver/TermDumper.cpp
 +    case BinaryOperator::MulAssign: O <<      "mult_assign_op"; break;
 +    case BinaryOperator::DivAssign: O <<       "div_assign_op"; break;
 +    case BinaryOperator::RemAssign: O <<       "mod_assign_op"; break;
-+    case BinaryOperator::AddAssign: O <<       "add_assign_op"; break;
++    case BinaryOperator::AddAssign: O <<       "plus_assign_op"; break;
 +    case BinaryOperator::SubAssign: O <<     "minus_assign_op"; break;
 +    case BinaryOperator::ShlAssign: O <<     "lshift_assign_op"; break;
 +    case BinaryOperator::ShrAssign: O <<     "rshift_assign_op"; break;
