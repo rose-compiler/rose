@@ -9,9 +9,10 @@
 // -- TOP: Variable is not analyzABLE
 // -- (min,max): Variable has the interval min =< v =< max
 // -- BOT: Variable is not yet analyzED
+// -- Please note that, however, the values min and max are again _lifted_
+// -- integers, where bot = -inf and top = +inf.// -- 
 // -- 
 // -- remaining problems:
-// -- * pointer aliasing is ignored -- not anymore!
 // -- * type casts are ignored
 // -- * interval arithmetic needs to be checked for correctness (esp. | and &)
 // -- * wraparound is untestet
@@ -38,7 +39,7 @@ PROBLEM Interval_Analysis
   direction:  forward
   carrier:    itvl_State
   init:       bot
-  init_start: lift([->(top, top)])
+  init_start: lift([->(bot, top)])
   combine:    comb
   retfunc:    ret
   widening:   wide
@@ -189,11 +190,11 @@ eval(exp, state, context) =
           UnsignedLongVal(value) => (duplift(snum(val-astulong(value))), state);
           UnsignedLongLongIntVal(value) => (duplift(snum(val-astullong(value))), state);
           // -- NOT IMPLEMENTED
-          FloatVal(_) => ((top,top), state);
-          DoubleVal(_) => ((top,top), state);
+          FloatVal(_) => ((bot,top), state);
+          DoubleVal(_) => ((bot,top), state);
           _         => print("unsupported value exp: ")
                        print(exp) print("\n") 
-                                  ((top,top), state);
+                                  ((bot,top), state);
         endcase
     else case exp of
       VarRefExp(name)       =>  // --print("###is_VARREF") 
@@ -223,7 +224,7 @@ binary(left, right, exp, state, context) =
   // -- pair assigned to r and rs, respectively.
   // --print("BINARY(") print(exp) print(")\n")
   let rr = eval(right, state, context);
-      dontknow = ((top,top), state);
+      dontknow = ((bot,top), state);
   in case exp of
     // -- If this is an assignment operation, update the state.
     // -- We do not evaluate the left-hand side as this might
@@ -338,7 +339,7 @@ unary(child, exp, state, context) =
     // -- otherwise, see if this is some arithmetic node
       _ =>
     // -- if child node is not analyzable, bail out
-    if bad(er) then ((top,top), state) else // BUG!
+    if bad(er) then ((bot,top), state) else // BUG!
        let e1 <= er!1!2; e2 <= er!2!2; in
       case exp of
         MinusOp(_)    => (ltup(-e2, -e1), es);
@@ -352,7 +353,7 @@ unary(child, exp, state, context) =
         // -- here, the pointer analysis knows how to handle it; however, we
         // -- use state es to reflect possible side effects of evaluating
         // -- the operand
-        AddressOfOp(_)  => ((top,top), es);
+        AddressOfOp(_)  => ((bot,top), es);
   
         _ => print("unsupported unary: ") print(exp) print("\n") 
              (top, lift([-> top]));
@@ -375,7 +376,7 @@ int_bool(0) = false;
 int_bool(_) = true;
 								    
 updatestate :: itvl_State, Expression, itvl_Interval, ContextInfo -> itvl_IntervalStatePair;
-updatestate(bot, _, _, _) = ((top,top),bot);
+updatestate(bot, _, _, _) = ((bot,top),bot);
 // -- Update state state by assigning the value value to the variable
 // -- referenced by expression exp (if any). Yields a pair of the value
 // -- and the new state.
@@ -430,10 +431,10 @@ weak_update_v(s, v, value) =
 // merged_var_values(s, vsyms): Look up an interval that covers the values
 // of all variables in vsyms in state s.
 merged_var_values :: itvl_State, *VariableSymbolNT -> itvl_Interval;
-merged_var_values(top, _) = (top, top);
+merged_var_values(top, _) = (bot,top);
 merged_var_values(_, [!]) =
     println("in merged_var_values: merging empty variable list!")
-    (top, top);
+    (bot,top);
 merged_var_values(lift(s), v::[!]) = s{!varsym_varid(v)!};
 merged_var_values(lift(s) as ls, v::vs) =
     let merged = merged_var_values(ls, vs);
@@ -537,7 +538,7 @@ eval_branch_condition(exp, state, newstate, edge, isLoopBody, context) =
       _ => newstate;
     endcase
   else 
-    lift([-> (top,top)])
+    lift([-> (bot,top)])
     //newstate
   ;
 
@@ -625,13 +626,14 @@ second_if_present(a, b) =
  // -- should this also check for b != bot?
     if b != top then b else a;
 
-min(_, top) = top;
-min(top, _) = top;
-min(a, bot) = a;
-min(bot, b) = b;
+// -- for lifted integers, we use top as +infty and bot as -infty
+min(a, top) = a;
+min(top, a) = a;
+min(a, bot) = bot;
+min(bot, b) = bot;
 min(a, b) = if drop(a) < drop(b) then a else b ;
 
-// -- all glory to polymorphism
+// -- all glory to polymorphism (... and the hypnotoad!)
 mini(a, b) = if a < b then a else b ;
 
 max(_, top) = top;
