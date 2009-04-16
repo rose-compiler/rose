@@ -10,6 +10,19 @@
 // PE File Header
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void
+SgAsmPERVASizePair::ctor(const RVASizePair_disk *disk) {
+    p_e_rva  = le_to_host(disk->e_rva);
+    p_e_size = le_to_host(disk->e_size);
+}
+
+void*
+SgAsmPERVASizePair::encode(RVASizePair_disk *disk) const {
+    host_to_le(p_e_rva,  &(disk->e_rva));
+    host_to_le(p_e_size, &(disk->e_size));
+    return disk;
+}
+
 /* Construct a new PE File Header with default values. */
 void
 SgAsmPEFileHeader::ctor()
