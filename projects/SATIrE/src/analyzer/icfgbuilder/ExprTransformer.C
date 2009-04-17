@@ -350,7 +350,21 @@ void ExprTransformer::visit(SgNode *node)
             ext_return_block->partner = ext_call_block;
 
             /* set links */
-            add_link(ext_call_block, ext_return_block, LOCAL);
+         // GB (2009-04-17): Usually, we add an edge from the external call
+         // to the return. However, for some functions, we (think we) know
+         // that they never return. This can be modeled by simply omitting
+         // the edge in these cases.
+            bool functionMayReturn = true;
+            if (name != NULL && (*name == "exit"
+                              || *name == "abort"
+                              || *name == "__assert_fail"))
+            {
+                functionMayReturn = false;
+            }
+
+            if (functionMayReturn)
+                add_link(ext_call_block, ext_return_block, LOCAL);
+
             if (last_arg_block != NULL)
                 add_link(last_arg_block, ext_call_block, NORMAL_EDGE);
             if (retval_block != NULL)
