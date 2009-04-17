@@ -45,6 +45,9 @@ public:
 };
 
 #if HAVE_PAG
+// Support function for making up new variables during the analysis.
+unsigned long addVariableIdForSymbol(void *sym);
+
 #include "str.h"
 
 extern "C" FLO_BOOL o_VariableId_eq(void *p, void *q);
@@ -52,6 +55,7 @@ extern "C" FLO_BOOL o_VariableId_neq(void *p, void *q);
 extern "C" void *o_varsym_varid(void *p);
 extern "C" void *o_varref_varid(void *p);
 extern "C" FLO_BOOL o_is_tmpvarid(void *p);
+extern "C" FLO_BOOL o_is_heapvarid(void *p);
 extern "C" str o_varid_str(void *p);
 extern "C" void *o_varid_exprid(void *p);
 extern "C" void *o_add_tmpvarid(void *p_type);

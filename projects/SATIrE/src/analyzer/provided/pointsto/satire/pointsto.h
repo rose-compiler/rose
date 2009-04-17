@@ -134,7 +134,7 @@ public:
     const std::vector<Location *> &get_locations() const;
  // The representative of the given location's equivalence class. For
  // internal use only, as users always get representatives anyway.
-    Location *location_representative(Location *loc);
+    Location *location_representative(Location *loc) const;
 
 private:
  // Forbid copying.

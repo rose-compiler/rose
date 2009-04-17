@@ -180,6 +180,16 @@ extern "C" FLO_BOOL o_is_tmpvarid(void *p)
     return (*str == '$' ? FLO_TRUE : FLO_FALSE);
 }
 
+// determine whether the variable is a heap abstraction variable
+extern "C" FLO_BOOL o_is_heapvarid(void *p)
+{
+    VariableId *v = (VariableId *) p;
+    SgVariableSymbol *symbol = get_global_cfg()->ids_varsyms[v->id];
+    const char *str = symbol->get_name().str();
+    return (std::strncmp(str, "<allocation site", 16) == 0
+            ? FLO_TRUE : FLO_FALSE);
+}
+
 // return a PAG string with the variable's name
 extern "C" str o_varid_str(void *p)
 {
@@ -213,26 +223,41 @@ extern "C" void *o_add_tmpvarid(void *p_type)
     SgType *type = get_global_cfg()->numbers_types[t->id];
     std::stringstream varname;
     varname << "$tmpvar$" << add_tmpvarid_counter++;
-
- // Determine the new id value.
-    unsigned long i = get_global_cfg()->numbers_exprs.size();
-
- // Add the value to the variable symbol and expression maps, and to the
- // list of variable ids.
     SgVariableSymbol *sym = Ir::createVariableSymbol(varname.str(), type);
-    get_global_cfg()->varsyms_ids[sym] = i;
-    get_global_cfg()->ids_varsyms[i] = sym;
 
-    SgVarRefExp *exp = Ir::createVarRefExp(sym);
-    get_global_cfg()->exprs_numbers[exp] = i;
-    get_global_cfg()->numbers_exprs.push_back(exp);
-
-    globalVariableIdPool.push_back(i);
+    unsigned long i = addVariableIdForSymbol(sym);
 
     VariableId *v = (VariableId *) GC_alloc(VariableId::type_id);
     v->id = i;
 
     return v;
+}
+
+// For a given variable symbol, create variable and expression IDs and put
+// them in all the right places. This is factored out from o_add_tmpvarid;
+// it is also used by the points-to analysis.
+unsigned long addVariableIdForSymbol(void *s)
+{
+    SgVariableSymbol *sym = (SgVariableSymbol *) s;
+    SgVarRefExp *exp = Ir::createVarRefExp(sym);
+
+ // Save expression, determining new ID value.
+    unsigned long i = addExpressionIdForExpression(exp);
+
+ // Add the value to the variable symbol and expression maps, and to the
+ // list of variable ids.
+    get_global_cfg()->varsyms_ids[sym] = i;
+    get_global_cfg()->ids_varsyms[i] = sym;
+
+    if (VariableId::type_id != -1)
+    {
+     // If the VariableId type has been initialized already, add this new
+     // ID. If it has not been initialized yet, initialization will add it.
+        globalVariableIdPool.push_back(i);
+        o_VariableId_power = globalVariableIdPool.size();
+    }
+
+    return i;
 }
 
 

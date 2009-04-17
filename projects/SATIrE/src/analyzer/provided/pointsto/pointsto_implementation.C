@@ -583,6 +583,12 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
          // it gets
             result = a;
         }
+#if VERBOSE_DEBUG
+        std::cout
+            << "result of dereference: " << result->id
+            << " [" << names(result->symbols) << "]"
+            << std::endl;
+#endif
         break;
 
     case V_SgPntrArrRefExp:
@@ -1081,7 +1087,8 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
     case V_SgDoubleVal:
     case V_SgLongDoubleVal:
      // I refuse to believe that anyone would cast a floating-point constant
-     // to a pointer.
+     // to a pointer; same goes for bools.
+    case V_SgBoolValExp:
         result = NULL;
         break;
 
@@ -2700,6 +2707,10 @@ PointsToAnalysis::Implementation::newAllocationSite()
         = new SgInitializedName(symfinfo, symname, mainInfo->ptr_to_void_type,
                                 NULL, NULL, NULL, NULL);
     SgVariableSymbol *sym = new SgVariableSymbol(initname);
+#if HAVE_PAG
+    addVariableIdForSymbol(sym);
+#endif
+
 #if VERBOSE_DEBUG
     std::cout
         << "created allocation variable " << name.str() << " with type "
@@ -4264,7 +4275,7 @@ PointsToAnalysis::Implementation::location_id(
 
 PointsToAnalysis::Location *
 PointsToAnalysis::Implementation::location_representative(
-        PointsToAnalysis::Location *loc)
+        PointsToAnalysis::Location *loc) const
 {
 #if VERBOSE_DEBUG
     std::cout
@@ -4284,6 +4295,15 @@ PointsToAnalysis::Implementation::location_representative(
             << std::endl;
         std::abort();
     }
+
+#if VERBOSE_DEBUG
+    if (loc != NULL)
+    {
+        std::cout
+            << "representative: " << loc->id << " => " << r->id
+            << std::endl;
+    }
+#endif
 
     return r;
 }
@@ -4596,6 +4616,7 @@ PointsToAnalysis::Implementation::expressionLocation(SgExpression *expr)
 
 #if VERBOSE_DEBUG
     std::cout
+        << "+-----" << std::endl
         << "result = " << (void *) result
         << ", baseLocation = "
         << (void *) (result != NULL ? result->baseLocation() : NULL)
@@ -4605,6 +4626,8 @@ PointsToAnalysis::Implementation::expressionLocation(SgExpression *expr)
         << Ir::fragmentToString(expr)
         << " (" << expr->class_name() << ")"
         << " type: " << expr->get_type()->class_name()
+        << std::endl
+        << "+-----"
         << std::endl;
 #endif
 

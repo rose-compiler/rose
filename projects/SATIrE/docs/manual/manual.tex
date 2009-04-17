@@ -683,6 +683,11 @@ automatically included in any analyzer created with SATIrE.
     variable introduced by SATIrE (for logical values, function return
     values, etc.)
 
+\ttitem{is\_heapvarid :: VariableId -> bool;}
+    determines whether the variable identifier refers to a heap variable
+    introduced by SATIrE's points-to analysis (to name heap allocation
+    sites)
+
 \ttitem{varid\_str :: VariableId -> str;}
     gives the name of the variable with the given identifier
 

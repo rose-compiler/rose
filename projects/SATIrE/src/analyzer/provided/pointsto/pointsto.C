@@ -157,7 +157,7 @@ PointsToAnalysis::location_id(PointsToAnalysis::Location *loc) const
 }
 
 PointsToAnalysis::Location *
-PointsToAnalysis::location_representative(PointsToAnalysis::Location *loc)
+PointsToAnalysis::location_representative(PointsToAnalysis::Location *loc) const
 {
     return p_impl->location_representative(loc);
 }
@@ -171,6 +171,18 @@ PointsToAnalysis::base_location(PointsToAnalysis::Location *loc)
 bool
 PointsToAnalysis::valid_location(Location *loc) const
 {
+#if VERBOSE_DEBUG
+    if (loc != NULL)
+    {
+        std::cout
+            << "loc " << loc->id
+            << " dummy: " << (loc->dummy ? "true" : "false")
+            << " repr: " << location_representative(loc)->id
+            ;
+    }
+    else
+        std::cout << "loc 0!";
+#endif
     return (loc != NULL && !loc->dummy);
 }
 

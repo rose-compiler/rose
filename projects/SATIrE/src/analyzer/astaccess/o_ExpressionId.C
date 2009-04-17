@@ -167,6 +167,25 @@ extern "C" void *o_exprid_expr(void *p)
     return exp;
 }
 
+unsigned long addExpressionIdForExpression(void *e)
+{
+    SgExpression *exp = (SgExpression *) e;
+
+    unsigned long i = get_global_cfg()->numbers_exprs.size();
+    get_global_cfg()->exprs_numbers[exp] = i;
+    get_global_cfg()->numbers_exprs.push_back(exp);
+
+    if (ExpressionId::type_id != -1)
+    {
+     // If ExpressionId has been initialized before, we need to adjust these
+     // counters.
+        numberOfExpressions++;
+        o_ExpressionId_power++;
+    }
+
+    return i;
+}
+
 // return a PAG string with the expression's representation
 extern "C" str o_exprid_str(void *p)
 {

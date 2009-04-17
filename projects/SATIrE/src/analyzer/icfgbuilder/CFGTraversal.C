@@ -178,6 +178,8 @@ CFGTraversal::atTraversalEnd() {
         delete traversalTimer;
     traversalTimer = NULL;
 
+    global_cfg = cfg;
+
  // GB (2008-03-27): Moved this section of code from getCFG(). Logically,
  // this is where it belongs. (The comment is preserved for historical
  // reasons.)
@@ -832,7 +834,11 @@ CFGTraversal::number_exprs()
  // Now get all expressions from the traversal and put them into our maps.
     std::vector<EqualityId> ids;
     cfg->equalityTraversal.get_all_exprs(ids);
-    unsigned long i = 0;
+ // Start numbering expressions with the current size of numbers_exprs. We
+ // do this because numbers_exprs might already contain some expressions
+ // that are put there by the points-to analysis (var refs for fake
+ // allocation site variables).
+    unsigned long i = cfg->numbers_exprs.size();
     std::vector<SgNode *>::const_iterator expr;
     std::vector<EqualityId>::const_iterator id;
     cfg->numbers_exprs.reserve(ids.size());

@@ -39,6 +39,8 @@ public:
 };
 
 #if HAVE_PAG
+unsigned long addExpressionIdForExpression(void *e);
+
 #include "str.h"
 extern "C" void *o_expr_exprid(void *p);
 extern "C" void *o_exprid_expr(void *p);

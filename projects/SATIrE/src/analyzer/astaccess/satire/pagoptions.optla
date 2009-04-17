@@ -54,6 +54,7 @@ extern noprefix   varref_varid             :: Expression -> VariableId;
 extern noprefix   expr_exprid              :: Expression -> ExpressionId;
 extern noprefix   exprid_expr              :: ExpressionId -> Expression;
 extern noprefix   is_tmpvarid              :: VariableId -> bool;
+extern noprefix   is_heapvarid             :: VariableId -> bool;
 extern noprefix   varid_str                :: VariableId -> str;
 extern noprefix   exprid_str               :: ExpressionId -> str;
 extern noprefix   varid_exprid             :: VariableId -> ExpressionId;
