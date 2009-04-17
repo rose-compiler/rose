@@ -4217,6 +4217,10 @@ PointsToAnalysis::Implementation::createDummyLocation(Location *base)
 void
 PointsToAnalysis::Implementation::freeDummyLocation(Location *t)
 {
+ // GB (2009-04-17): All this manual garbage collection business does not
+ // work very well (double frees). So let's not do it anymore, and maybe
+ // debug it at some point using valgrind.
+#if 0
     int id = t->id;
     if (!t->dummy)
     {
@@ -4237,6 +4241,7 @@ PointsToAnalysis::Implementation::freeDummyLocation(Location *t)
     }
     delete t;
     mainInfo->locations[id-1] = NULL;
+#endif
 }
 
 const std::vector<PointsToAnalysis::Location *> &
