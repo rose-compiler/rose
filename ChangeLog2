@@ -1,3 +1,50 @@
+2009-04-16 23:56  panas2
+
+	* [r5375] /trunk/ROSE/projects/RTED/DataStructures.h,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedSymbols.cpp,
+	  /trunk/ROSE/projects/RTED/RtedSymbols.h,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_prolog.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_support.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: RTED work on arrays
+
+2009-04-16 22:59  liao6
+
+	* [r5374] /trunk/ROSE/src/ROSETTA/Grammar/Expression.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Statement.code,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilder.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/midend/abstractHandle/abstract_handle.cpp,
+	  /trunk/ROSE/src/midend/astOutlining/Check.cc,
+	  /trunk/ROSE/src/midend/astOutlining/GenerateFunc.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Outliner.cc,
+	  /trunk/ROSE/src/midend/astOutlining/PragmaInterface.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Preprocess.cc,
+	  /trunk/ROSE/src/midend/astOutlining/StmtRewrite.cc,
+	  /trunk/ROSE/tutorial/outliner/Makefile.am,
+	  /trunk/ROSE/tutorial/outliner/declarations.c,
+	  /trunk/ROSE/tutorial/outliner/thisExpression.cpp: Various fixes
+	  related to outliner
+	  
+	  * added member function replace_expression() to SgVarArgOp and
+	  SgSgVarArgEndOp() so outliner can handle code within functions
+	  using variable number of arguments.
+	  * fixed SgFunctionDefinition's constructor to support bottom-up
+	  AST building
+	  * abstract handle: fixed the case when a null file info is used
+	  for matching
+	  * skip some outlining transformation code when
+	  -rose:outline:preproc-only is used
+
+2009-04-16 21:46  matzke
+
+	* [r5371] /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code:
+	  Reverted some changes for swig's sake
+
 2009-04-16 16:12  matzke
 
 	* [r5368] /trunk/ROSE/scripts/rosegit/bin/rosegit-functions.sh,
