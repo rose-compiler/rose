@@ -209,34 +209,48 @@ eval(exp, state, context) =
                                 else
                                     (s{!id!}, state);
       AssignInitializer(e1) => eval(e1, state, context);
-      NewExp(_,_,_)         => ((bot,bot), state);
+      NewExp(_,_,_)         => ((bot,top), state);
       _                     => println("**WARNING: ignoring unknown exp: ",
                                        exp, ": ", expr_asttext(exp))
-                               ((top,top), state); 
-                                      // --((top,top), lift([-> top]));
+                               ((bot,top), state); 
+                                      // --((bot,top), lift([-> top]));
     endcase   ;
   endcase;
-          
+
 
 binary :: Expression, Expression, Expression, itvl_State, ContextInfo -> itvl_IntervalStatePair;
 binary(left, right, exp, state, context) =
   // -- Evaluate the right child expression, yielding a (value, state)
   // -- pair assigned to r and rs, respectively.
-  // --print("BINARY(") print(exp) print(")\n")
+  // --println("BINARY(", exp, " :: ", expr_asttext(exp), ") in state ", state)
   let rr = eval(right, state, context);
       dontknow = ((bot,top), state);
   in case exp of
     // -- If this is an assignment operation, update the state.
     // -- We do not evaluate the left-hand side as this might
     // -- yield top or bot, causing trouble.
-    AssignOp(_, _) => // --print("ASSIGNOP: ") print(left) print("=") print(rr!1!2) print(" ...\n")
+    AssignOp(_, _) => // --println("ASSIGNOP: ", left, "=", rr!1!2, " in state ", rr!2!2, " ...")
       if bad(rr!1!2) then
         //(top, rr!2!2)
-        updatestate(rr!2!2, left, top, context)
+        updatestate(rr!2!2, left, (bot,top), context)
       else
         let r = rr!1!2; rs = rr!2!2; in
         updatestate(rs, left, r, context)
       ;
+    // -- PntrArrRefExp is special in that we can also derive some
+    // -- information if not all operands have known interval values.
+    PntrArrRefExp(_, _) =>
+      // -- println("ARRAY: ", exp, " :: ", expr_asttext(exp), ")")
+      let rlifted = rr!1!2; rs = rr!2!2;
+      in let ll = eval(left, rs, context);
+      in let llifted = ll!1!2; ls = ll!2!2;
+      in let id = expr_exprid(exp); in
+         let l = exprid_location_cs(id, context); in
+         let syms = location_varsyms(l); in
+         let s2 = constrain_array_index(ls, expr_type(left), right);
+         in  let result = (merged_var_values(s2, syms), s2);
+         in  // println("arr ", exp, " result: ", result)
+             result;
     // -- If this is not an assignment, we may safely evaluate
     // -- the left-hand side as well (in the "new" state after
     // -- evaluation of the rhs) and perform the operation.
@@ -313,10 +327,6 @@ binary(left, right, exp, state, context) =
                                    ltup(l1<<unum(r1), l2<<unum(r2)), context);
           RshiftAssignOp(_, _)=> updatestate(ls, left, 
                                    ltup(l1>>unum(r2), l2>>unum(r1)), context);
-          PntrArrRefExp(_, _) => let id = expr_exprid(exp); in
-                                 let l = exprid_location_cs(id, context); in
-                                 let syms = location_varsyms(l);
-                                 in  (merged_var_values(ls, syms), ls);
           _ => print("**WARNING: unsupported binary: ") print(exp) print("\n") 
                (top, lift([-> top]));
         endcase
@@ -339,13 +349,13 @@ unary(child, exp, state, context) =
     // -- otherwise, see if this is some arithmetic node
       _ =>
     // -- if child node is not analyzable, bail out
-    if bad(er) then ((bot,top), state) else // BUG!
+    if bad(er) then ((bot,top), es) else // BUG!
        let e1 <= er!1!2; e2 <= er!2!2; in
       case exp of
         MinusOp(_)    => (ltup(-e2, -e1), es);
         UnaryAddOp(_) => (ltup( e1,  e2), es);
         NotOp(_)      => (ltup(bool_int(e2 = 0), bool_int(e1 = 0)), es);
-        CastExp(_, _) => eval(child, state, context);
+        CastExp(_, _) => eval(child, es, context);
         // -- the following are only correct for prefix -- and ++
         MinusMinusOp(_) => updatestate(es, child, ltup(e1-1, e2-1), context);
         PlusPlusOp(_)   => updatestate(es, child, ltup(e1+1, e2+1), context);
@@ -374,7 +384,7 @@ bool_int(b) =
 int_bool :: snum -> bool;
 int_bool(0) = false;
 int_bool(_) = true;
-								    
+
 updatestate :: itvl_State, Expression, itvl_Interval, ContextInfo -> itvl_IntervalStatePair;
 updatestate(bot, _, _, _) = ((bot,top),bot);
 // -- Update state state by assigning the value value to the variable
@@ -441,7 +451,7 @@ merged_var_values(lift(s) as ls, v::vs) =
     in  combi(s{!varsym_varid(v)!}, merged);
 
 initialize :: itvl_fState, VariableId, Type, Expression, ContextInfo -> itvl_fState;
-initialize(s, v, ArrayType(BasicType(_)),
+initialize(s, v, ArrayType(BasicType(_), _), // -- TODO: use array size
                  AggregateInitializer(ExprListExp(exprs)), context) =
  // default value: 0 (missing initializers default to 0)
     initialize_array(s\[v -> duplift(0)], v, exprs, context);
@@ -453,6 +463,24 @@ initialize_array(s, _, [!], _) = s;
 initialize_array(s, var, expr::exprs, ctx) =
     let value = eval(expr, lift(s), ctx)!1!2; // -- FIXME: assumes pure exprs
     in  initialize_array(weak_update_v(s, var, value), var, exprs, ctx);
+
+// -- constrain_array_index: If an array with a known size is indexed with a
+// -- varref expression, force the variable's interval to be at most the
+// -- array's valid index range (0..size-1).
+constrain_array_index :: itvl_State, Type, Expression -> itvl_State;
+constrain_array_index(s, ArrayType(_, size), VarRefExp(_) as varref) =
+    let state <= s; in
+    if val-astint(size) > 0 then  // size is -1 if unknown
+        let var = varref_varid(varref); in
+        let index_range = ltup(0, val-astint(size) - 1);
+            known_range = state{!var!}; in
+        let constrained_range = intersect_itvls(known_range, index_range);
+        in  // -- println("constrained ", var, " from ", known_range,
+            // --         ", with ", index_range, ", to ", constrained_range)
+            lift(state\[var -> constrained_range])
+    else
+        s;
+constrain_array_index(s, _, _) = s;
 
 branch :: Expression, itvl_State, bool, bool, ContextInfo -> itvl_State;
 branch(exp, state, edge, isLoopBody, context) =
@@ -600,6 +628,25 @@ comb(a, b) =
 
 combi((a1, a2), (b1, b2)) = 
   (min(a1, b1), max(a2, b2));
+
+// -- intersect_itvls: compute *intersection* of two intervals, e.g. if we
+// -- know that both are valid
+intersect_itvls((a1, a2), (b1, b2)) =
+    (intersect_max(a1, b1), intersect_min(a2, b2));
+
+// -- intersect_max, intersect_min: like max and min, but a number always
+// -- wins against top or bot
+intersect_max(a, top) = a;
+intersect_max(a, bot) = a;
+intersect_max(top, b) = b;
+intersect_max(bot, b) = b;
+intersect_max(a, b) = if drop(a) > drop(b) then a else b;
+
+intersect_min(a, top) = a;
+intersect_min(a, bot) = a;
+intersect_min(top, b) = b;
+intersect_min(bot, b) = b;
+intersect_min(a, b) = if drop(a) < drop(b) then a else b;
 
 ret(a, bot) = a;
 ret(bot, b) = b;

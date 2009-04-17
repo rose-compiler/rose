@@ -182,7 +182,7 @@ ExprListExpNT : ExprListExp ( expressions:Expression* )
 ConstructorInitializerNT : ConstructorInitializer ( args:ExprListExpNT )
  ;
 
-Type : ArrayType ( base_type:Type )
+Type : ArrayType ( base_type:Type, size:astint )  // size: -1 if unknown!
  | BasicType ( typename:aststring )
  | FunctionType ( return_type:Type, arguments:Type* )
  | NamedType ( name:aststring )

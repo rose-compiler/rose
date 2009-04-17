@@ -119,6 +119,15 @@ get:body(NODE, _, "VariableSymbol", _, "name", _, _)
         return Ir::getCharPtr(var->get_declaration()->get_name());
 %}
 
+get:body(NODE, _, "ArrayType", _, "size", _, _)
+%{
+    SgExpression *index = isSgArrayType((SgNode *) NODE)->get_index();
+    if (SgUnsignedLongVal *v = isSgUnsignedLongVal(index))
+        return v->get_value();
+    else
+        return -1;
+%}
+
 get:body(NODE, _, "BasicType", _, "typename", _, _)
 %{
     return basic_type_name(NODE);
