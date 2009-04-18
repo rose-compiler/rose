@@ -179,7 +179,7 @@ Index: Driver/TermDumper.cpp
 ===================================================================
 --- Driver/TermDumper.cpp	(revision 0)
 +++ Driver/TermDumper.cpp	(revision 0)
-@@ -0,0 +1,2198 @@
+@@ -0,0 +1,2240 @@
 +//===--- StmtTermDumper.cpp - TermDumping implementation for Stmt ASTs ----===//
 +//
 +//                     The LLVM Compiler Infrastructure
@@ -211,9 +211,13 @@ Index: Driver/TermDumper.cpp
 +#include "llvm/Support/Compiler.h"
 +#include <cstdio>
 +#include <iostream>
++#include <iomanip>
 +#include <fstream>
 +#include <sstream>
 +#include <queue>
++#include <string>
++#include <memory>
++
 +
 +using namespace clang;
 +
@@ -459,13 +463,13 @@ Index: Driver/TermDumper.cpp
 +    }
 +
 +    void fileInfo(std::ostream &O, const SourceLocation Loc) {
-+      SourceLocation SpellingLoc = SM->getSpellingLoc(Loc);
++      SourceLocation L = SM->getInstantiationLoc(Loc);
 +
-+      if (SpellingLoc.isInvalid()) {
++      if (L.isInvalid()) {
 +        O << "file_info('NULL_FILE', 0, 0)";
 +      }
 +      else {
-+        PresumedLoc PLoc = SM->getPresumedLoc(SpellingLoc);
++        PresumedLoc PLoc = SM->getPresumedLoc(L);
 +        assert(PLoc.isValid() && "encountered invalid presumed location");
 +        O << "file_info('" << PLoc.getFilename() << "', " << PLoc.getLine()
 +          << ", " << PLoc.getColumn() << ")";
@@ -604,6 +608,78 @@ Index: Driver/TermDumper.cpp
 +      }
 +      return atom;
 +    }
++
++    static std::string escape_double(std::string s) {
++      std::string r;
++      for (unsigned int i = 0; i < s.length(); ++i) {
++        unsigned char c = s[i];
++        switch (c) {
++        case '\\': r += "\\\\"; break; // Literal backslash
++        case '\"': r += "\\\\\""; break; // Double quote
++        case '\'': r += "\\\\'"; break;  // Single quote
++        case '\n': r += "\\\\n"; break;  // Newline (line feed)
++        case '\r': r += "\\\\r"; break;  // Carriage return
++        case '\b': r += "\\\\b"; break;  // Backspace
++        case '\t': r += "\\\\t"; break;  // Horizontal tab
++        case '\f': r += "\\\\f"; break;  // Form feed
++        case '\a': r += "\\\\a"; break;  // Alert (bell)
++        case '\v': r += "\\\\v"; break;  // Vertical tab
++        default:
++          if (c < 32 || c > 127) {
++            std::stringstream strm;
++            strm << "\\\\" 
++                 << std::oct 
++                 << std::setfill('0') 
++                 << std::setw(3) 
++                 << (unsigned int)c // \nnn Character with octal value nnn
++                 << "\\\\"; // Prolog expects this weird syntax with a
++            // trailing backslash
++            r += strm.str();
++          } else {
++            r += c;
++          }
++        }
++      }
++      //cerr<<"escape_double("<<s<<") = "<< r <<endl;
++      return r;
++    }
++
++
++    static std::string escape(std::string s) {
++      std::string r;
++      for (unsigned int i = 0; i < s.length(); ++i) {
++        unsigned char c = s[i];
++        switch (c) {
++        case '\\': r += "\\\\"; break; // Literal backslash
++        case '\"': r += "\\\""; break; // Double quote
++        case '\'': r += "\\'"; break;  // Single quote
++        case '\n': r += "\\n"; break;  // Newline (line feed)
++        case '\r': r += "\\r"; break;  // Carriage return
++        case '\b': r += "\\b"; break;  // Backspace
++        case '\t': r += "\\t"; break;  // Horizontal tab
++        case '\f': r += "\\f"; break;  // Form feed
++        case '\a': r += "\\a"; break;  // Alert (bell)
++        case '\v': r += "\\v"; break;  // Vertical tab
++        default:
++          if (c < 32 || c > 127) {
++            std::stringstream strm;
++            strm << '\\' 
++                 << std::oct 
++                 << std::setfill('0') 
++                 << std::setw(3) 
++                 << (unsigned int)c // \nnn Character with octal value nnn
++                 << '\\'; // Prolog expects this weird syntax with a
++            // trailing backslash
++            r += strm.str();
++          } else {
++            r += c;
++          }
++        }
++      }
++      //cerr<<"escape("<<s<<") = "<< r <<endl;
++      return r;
++    }
++    
 +    
 +    /** get lower case of upper case letter */
 +    char toLower(const char c) {
@@ -1278,10 +1354,10 @@ Index: Driver/TermDumper.cpp
 +          O << "if_stmt(";
 +          termStmtWrapped(O, IFS->getCond());
 +          O << ", ";
-+          termStmt(O, IFS->getThen());
++          termStmtWrapped(O, IFS->getThen());
 +          if (IFS->getElse()) {
 +            O << ", ";
-+            termStmt(O, IFS->getElse());
++            termStmtWrapped(O, IFS->getElse());
 +          }
 +          else
 +            O << ", null";
@@ -1312,7 +1388,7 @@ Index: Driver/TermDumper.cpp
 +          O << "while_stmt(";
 +          termStmtWrapped(O, WS->getCond());
 +          O << ", ";
-+          termStmt(O, WS->getBody());
++          termStmtWrapped(O, WS->getBody());
 +          O << ", " DAB ", ";
 +          fileInfo(O, WS);
 +          O << ")";
@@ -1324,7 +1400,7 @@ Index: Driver/TermDumper.cpp
 +          const DoStmt *DS = cast<DoStmt>(S);
 +
 +          O << "do_while_stmt(";
-+          termStmt(O, DS->getBody());
++          termStmtWrapped(O, DS->getBody());
 +          O << ", ";
 +          termStmtWrapped(O, DS->getCond());
 +          O << ", " DAB ", ";
@@ -1474,27 +1550,9 @@ Index: Driver/TermDumper.cpp
 +        {
 +          const StringLiteral *SL = cast<StringLiteral>(S);
 +          O << "string_val(null, value_annotation('"
-+            << (SL->isWide() ? "L" : "");
-+
-+          for (unsigned i = 0, e = SL->getByteLength(); i != e; ++i) {
-+            switch (char C = SL->getStrData()[i]) {
-+              // Handle some common ones to make dumps prettier.
-+            case '\\': O << "\\\\"; break;
-+            case '"':  O << "\\\\\""; break;
-+            case '\n': O << "\\\\n"; break;
-+            case '\t': O << "\\\\t"; break;
-+            case '\a': O << "\\\\a"; break;
-+            case '\b': O << "\\\\b"; break;
-+            default:
-+              if (isprint(C))
-+                O << C;
-+              else
-+                O << "\\" << std::oct << C;
-+              break;
-+            }
-+          }
-+
-+          O << "', ";
++            << (SL->isWide() ? "L" : "")
++            << escape_double(std::string(SL->getStrData(), SL->getByteLength()))
++            << "', ";
 +          preprocessingInfo(O);          
 +          O << "), " AIB ",";
 +          fileInfo(O, S);
@@ -1504,25 +1562,9 @@ Index: Driver/TermDumper.cpp
 +      case Stmt::CharacterLiteralClass:
 +        {
 +          const CharacterLiteral *CL = cast<CharacterLiteral>(S);
-+          O << "char_val(null, value_annotation('";
-+
-+          switch (char C = CL->getValue()) {
-+            // Handle some common ones to make dumps prettier.
-+          case '\\': O << "\\\\"; break;
-+          case '"':  O << "\\\""; break;
-+          case '\n': O << "\\n"; break;
-+          case '\t': O << "\\t"; break;
-+          case '\a': O << "\\a"; break;
-+          case '\b': O << "\\b"; break;
-+          default:
-+            if (isprint(C))
-+              O << C;
-+            else
-+              O << "\\" << std::oct << C;
-+            break;
-+          }
-+
-+          O << "'";
++          O << "char_val(null, value_annotation('"
++            << escape(std::string(1, CL->getValue()))
++            << "', ";
 +          preprocessingInfo(O);
 +          O << "), " AIB ",",
 +            fileInfo(O, S);
@@ -1869,8 +1911,8 @@ Index: Driver/TermDumper.cpp
 +    case BinaryOperator::ShrAssign: O <<     "rshift_assign_op"; break;
 +    case BinaryOperator::AndAssign: O <<        "and_assign_op"; break;
 +    case BinaryOperator::XorAssign: O <<        "xor_assign_op"; break;
-+    case BinaryOperator::OrAssign:  O <<         "or_assign_op"; break;
-+    case BinaryOperator::Comma:     O <<             "comma_op"; break;
++    case BinaryOperator::OrAssign:  O <<        "ior_assign_op"; break;
++    case BinaryOperator::Comma:     O <<         "comma_op_exp"; break;
 +    }
 +    O << "(";
 +    termStmt(O, BO->getLHS());
