@@ -179,7 +179,7 @@ Index: Driver/TermDumper.cpp
 ===================================================================
 --- Driver/TermDumper.cpp	(revision 0)
 +++ Driver/TermDumper.cpp	(revision 0)
-@@ -0,0 +1,2240 @@
+@@ -0,0 +1,2265 @@
 +//===--- StmtTermDumper.cpp - TermDumping implementation for Stmt ASTs ----===//
 +//
 +//                     The LLVM Compiler Infrastructure
@@ -501,12 +501,16 @@ Index: Driver/TermDumper.cpp
 +    
 +    void preprocessingInfo(std::ostream &O) {
 +      O << PPI;
-+    }  
++    }    
 +
 +    //dequeue and emit all the preprocessing info until loc
 +    void preprocessingInfo(std::ostream &O, SourceLocation loc) {
 +      std::list<PPTracker::PPDirective> L;
 +      tracker->dequeueDirectives(loc, L);
++      preprocessingInfo(O, L);
++    }
++    
++    void preprocessingInfo(std::ostream &O, std::list<PPTracker::PPDirective> &L) {
 +      bool first = true;
 +      while(!L.empty()) {
 +        PPTracker::PPDirective &d = L.front();
@@ -609,6 +613,18 @@ Index: Driver/TermDumper.cpp
 +      return atom;
 +    }
 +
++    static std::string filter_string(std::string s) {
++      std::stringstream S;
++      for (unsigned int i = 0; i < s.length(); ++i) {
++        unsigned char c = s[i];
++        if(isalnum(c) || c == '_')
++          S << c;
++        else if (c == '.')
++          S << "_dot_";
++      }      
++      return S.str();
++    }
++    
 +    static std::string escape_double(std::string s) {
 +      std::string r;
 +      for (unsigned int i = 0; i < s.length(); ++i) {
@@ -808,7 +824,10 @@ Index: Driver/TermDumper.cpp
 +      O << "], variable_declaration_specific(";
 +      termModifier(O, D);
 +      O << ", ";
-+      preprocessingInfo(O);      
++      if(D->getKind() == Decl::Var)
++        preprocessingInfo(O, D->getLocation());
++      else
++        preprocessingInfo(O);
 +      O << "), " AIB ", ";
 +      fileInfo(O, D);
 +      O << ")";
@@ -933,6 +952,10 @@ Index: Driver/TermDumper.cpp
 +    fileInfo(O, FD); // close parameter list
 +    O << ")";
 +
++    //collect all preprocessor declarations _before_ handling the function body
++    std::list<PPTracker::PPDirective> PPD;
++    tracker->dequeueDirectives(FD->getLocation(), PPD);
++    
 +    if (FD->getBody()) {
 +      O << ", function_definition(";
 +      termStmt(O, FD->getBody());
@@ -953,7 +976,7 @@ Index: Driver/TermDumper.cpp
 +    
 +    termModifier(O, D);
 +    O << ", ";
-+    preprocessingInfo(O, FD->getLocation());
++    preprocessingInfo(O, PPD);
 +    O << "), " AIB ",";
 +    fileInfo(Out, FD); // declaration
 +    O << ")";
@@ -1734,6 +1757,8 @@ Index: Driver/TermDumper.cpp
 +          termStmt(O, CO->getFalseExpr());
 +          O << ", conditional_exp_annotation(";
 +          termType(O, CO->getType());
++          O<< ",";
++          preprocessingInfo(O);          
 +          O << ")"
 +            ", " AIB ", ";
 +          fileInfo(O, CO);
@@ -2052,7 +2077,7 @@ Index: Driver/TermDumper.cpp
 +        std::string file(std::string("/") +  PLoc.getFilename());
 +        file = file.substr(file.rfind("/") + 1);
 +        std::transform(file.begin(), file.end(), file.begin(), tolower);
-+        O << "_" << file << "_" << PLoc.getLine() << "_" << PLoc.getColumn();
++        O << "_" << filter_string(file) << "_" << PLoc.getLine() << "_" << PLoc.getColumn();
 +      }
 +      O << "_" << D;
 +      s+= O.str();
