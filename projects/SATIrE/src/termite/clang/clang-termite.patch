@@ -68,7 +68,7 @@ Index: include/clang/Lex/PPCallbacks.h
 ===================================================================
 --- include/clang/Lex/PPCallbacks.h	(revision 63505)
 +++ include/clang/Lex/PPCallbacks.h	(working copy)
-@@ -53,6 +53,12 @@
+@@ -53,6 +53,18 @@
    virtual void PragmaComment(SourceLocation Loc, const IdentifierInfo *Kind, 
                               const std::string &Str) {
    }
@@ -77,6 +77,12 @@ Index: include/clang/Lex/PPCallbacks.h
 +  /// is read.
 +  ///
 +  virtual void IncludeDirective(SourceLocation Loc, const std::string &file) {
++  }
++
++  /// DefineDirective - This callback is invoked when a #undef directive
++  /// is read.
++  ///
++  virtual void UndefDirective(SourceLocation Loc, const std::string &name) {
 +  }
    
  };
@@ -179,7 +185,7 @@ Index: Driver/TermDumper.cpp
 ===================================================================
 --- Driver/TermDumper.cpp	(revision 0)
 +++ Driver/TermDumper.cpp	(revision 0)
-@@ -0,0 +1,2265 @@
+@@ -0,0 +1,2283 @@
 +//===--- StmtTermDumper.cpp - TermDumping implementation for Stmt ASTs ----===//
 +//
 +//                     The LLVM Compiler Infrastructure
@@ -269,6 +275,7 @@ Index: Driver/TermDumper.cpp
 +  public:    
 +    typedef enum {
 +      ppd_include,
++      ppd_undef,
 +      ppd_define
 +    } pp_directive_t;
 +   
@@ -288,20 +295,28 @@ Index: Driver/TermDumper.cpp
 +  public:    
 +    PPTracker(Preprocessor &pp) : PP(pp), SM(pp.getSourceManager()) { }
 +
-+    virtual void IncludeDirective(SourceLocation Loc, const std::string &file) {
-+      if(!SM.isInSystemHeader(Loc)) {
++    void EnqueueDirective(SourceLocation loc, std::string directive, pp_directive_t type) {
++      if(!SM.isInSystemHeader(loc)) {
 +        PPDirective d;
 +
-+        d.loc = Loc;
-+        d.code = std::string("#include ") + file;
-+        d.type = ppd_include;
++        d.loc = loc;
++        d.code = directive;
++        d.type = type;
 +        
-+        assert(!Loc.isInvalid() && "expecting valid source location");
-+        FileID fid = SM.getFileID(Loc);
++        assert(!loc.isInvalid() && "expecting valid source location");
++        FileID fid = SM.getFileID(loc);
 +        PPDs[fid].push(d);
 +      }
 +    }
++    
++    virtual void IncludeDirective(SourceLocation Loc, const std::string &file) {
++      EnqueueDirective(Loc, std::string("#include ") + file, ppd_include);
++    }
 +
++    virtual void UndefDirective(SourceLocation Loc, const std::string &name) {
++      EnqueueDirective(Loc, std::string("#undef ") + name, ppd_undef);
++    }
++    
 +    bool location_lt(SourceLocation l1, SourceLocation l2) {
 +      assert(l1.isValid() && l2.isValid() && "expecting valid source locations");
 +      PresumedLoc p1 = SM.getPresumedLoc(l1);
@@ -328,6 +343,7 @@ Index: Driver/TermDumper.cpp
 +        Q.pop();
 +      }
 +    }
++
 +  };
 +  
 +  
@@ -514,8 +530,7 @@ Index: Driver/TermDumper.cpp
 +      bool first = true;
 +      while(!L.empty()) {
 +        PPTracker::PPDirective &d = L.front();
-+        assert(d.type == PPTracker::ppd_include && "only #includes are implemented so far");
-+        
++
 +        if(first) {
 +          O << "preprocessing_info([";
 +          first = false;
@@ -524,11 +539,20 @@ Index: Driver/TermDumper.cpp
 +          O << ", ";
 +        }
 +
-+        O << "cpreprocessorIncludeDeclaration('"
-+          << d.code << "\\n', before,";
++        switch(d.type) {
++        case PPTracker::ppd_include:
++          O << "cpreprocessorIncludeDeclaration";
++          break;
++        case PPTracker::ppd_undef:
++          O << "cpreprocessorUndefDeclaration";
++          break;
++        default:
++          assert(0 && "not yet supported");          
++        }
++        
++        O << "('" << d.code << "\\n', before,";
 +        fileInfo(O, d.loc);
 +        O << ")";
-+        
 +        L.pop_front();
 +      }
 +
@@ -1563,8 +1587,8 @@ Index: Driver/TermDumper.cpp
 +          default:
 +            assert(false);
 +          }
-+          O << "_val(null, value_annotation("
-+            << FL->getValueAsApproximateDouble() << ", " << PPI << "), " AIB ",";
++          O << "_val(null, value_annotation('"
++            << FL->getValueAsApproximateDouble() << "', " << PPI << "), " AIB ",";
 +          fileInfo(O, S);
 +          O << ")";
 +          break;
@@ -2559,3 +2583,14 @@ Index: lib/Lex/PPDirectives.cpp
    
    bool isAngled = GetIncludeFilenameSpelling(FilenameTok.getLocation(),
                                               FilenameStart, FilenameEnd);
+@@ -1320,6 +1324,10 @@
+   // If the macro is not defined, this is a noop undef, just return.
+   if (MI == 0) return;
+ 
++  if (Callbacks)
++    Callbacks->UndefDirective(UndefTok.getLocation(),
++                              std::string(MacroNameTok.getIdentifierInfo()->getName()));
++  
+   if (!MI->isUsed())
+     Diag(MI->getDefinitionLoc(), diag::pp_macro_not_used);
+   
