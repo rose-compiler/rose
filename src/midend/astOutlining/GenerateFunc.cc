@@ -592,6 +592,7 @@ void
 appendParams (const ASTtools::VarSymSet_t& syms,
               const ASTtools::VarSymSet_t& pdSyms,
               std::set<SgInitializedName*> & readOnlyVars,
+              std::set<SgInitializedName*> & liveOutVars,
               SgFunctionDeclaration* func,
               VarSymRemap_t& sym_remap)
 {
@@ -710,10 +711,17 @@ appendParams (const ASTtools::VarSymSet_t& syms,
     {
       if(!isPointerDeref)
       {
-        // skip read only variables, must compare to the original init name (i_name), 
-        // not the local copy (local_var_init)
-        if (readOnlyVars.find(const_cast<SgInitializedName*> (i_name))==readOnlyVars.end())  // variables not in read-only set have to be restored
-        {
+        //conservatively consider them as all live out if no liveness analysis is enabled,
+        bool isLiveOut = true;
+       if (Outliner::enable_liveness)
+         if (liveOutVars.find(const_cast<SgInitializedName*> (i_name))==liveOutVars.end())
+            isLiveOut = false;
+
+        // generate restoring statements for written and liveOut variables:
+        //  isWritten && isLiveOut --> !isRead && isLiveOut --> (findRead==NULL && findLiveOut!=NULL)
+        // must compare to the original init name (i_name), not the local copy (local_var_init)
+        if (readOnlyVars.find(const_cast<SgInitializedName*> (i_name))==readOnlyVars.end() && isLiveOut)   // variables not in read-only set have to be restored
+       {
           if (Outliner::enable_debug)
             cout<<"Generating restoring statement for non-read-only variable:"<<local_var_init->unparseToString()<<endl;
 
@@ -813,17 +821,28 @@ Outliner::Transform::generateFunction ( SgBasicBlock* s,
 {
   ROSE_ASSERT (s&&scope);
   ROSE_ASSERT(isSgGlobal(scope));
-
+  std::set< SgInitializedName *> liveIns, liveOuts;
    // Collect read only variables of the outlining target
     std::set<SgInitializedName*> readOnlyVars;
     if (Outliner::temp_variable||Outliner::enable_classic)
     {
+      SgStatement* firstStmt = (s->get_statements())[0];
+      if (isSgForStatement(firstStmt)&& enable_liveness)
+      {
+        LivenessAnalysis * liv = SageInterface::call_liveness_analysis (SageInterface::getProject());
+        SageInterface::getLiveVariables(liv, isSgForStatement(firstStmt), liveIns, liveOuts);
+      }
       SageInterface::collectReadOnlyVariables(s,readOnlyVars);
       if (Outliner::enable_debug)
       {
         cout<<"Outliner::Transform::generateFunction() -----Found "<<readOnlyVars.size()<<" read only variables..:";
         for (std::set<SgInitializedName*>::const_iterator iter = readOnlyVars.begin();
             iter!=readOnlyVars.end(); iter++)
+          cout<<" "<<(*iter)->get_name().getString()<<" ";
+        cout<<endl;
+        cout<<"Outliner::Transform::generateFunction() -----Found "<<liveOuts.size()<<" live out variables..:";
+        for (std::set<SgInitializedName*>::const_iterator iter = liveOuts.begin();
+            iter!=liveOuts.end(); iter++)
           cout<<" "<<(*iter)->get_name().getString()<<" ";
         cout<<endl;
       }
@@ -920,7 +939,7 @@ Outliner::Transform::generateFunction ( SgBasicBlock* s,
 
   // Create parameters for outlined vars, and fix-up symbol refs in
   // the body.
-  appendParams (syms, pdSyms,readOnlyVars, func, vsym_remap);
+  appendParams (syms, pdSyms,readOnlyVars, liveOuts,func, vsym_remap);
   remapVarSyms (vsym_remap, pdSyms, func_body);
 
      ROSE_ASSERT (func != NULL);

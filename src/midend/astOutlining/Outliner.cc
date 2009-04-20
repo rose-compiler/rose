@@ -27,6 +27,7 @@ namespace Outliner {
   bool preproc_only_;  // preprocessing only
   bool useNewFile; // generate the outlined function into a new source file
   bool temp_variable; // use temporary variables to reduce pointer dereferencing
+  bool enable_liveness =false;
   bool enable_debug; // 
   bool exclude_headers;
   std::vector<std::string> handles; //  abstract handles of outlining targets, given by command line option -rose:outline:abstract_handle for each
@@ -196,6 +197,11 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
 
   if (CommandlineProcessing::isOption (argvList,"-rose:outline:","temp_variable",true))
   {
+     if (CommandlineProcessing::isOption (argvList,"-rose:outline:","enable_liveness",true))
+       enable_liveness = true;
+      else
+        enable_liveness = false;
+
     if (enable_debug)
       cout<<"Enabling using temp variables to reduce pointer dereferencing for outlined functions..."<<endl;
     temp_variable = true;
@@ -228,6 +234,7 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
     cout<<"\t-rose:outline:parameter_wrapper                use an array of pointers for the variables to be passed"<<endl;
     cout<<"\t-rose:outline:enable_classic                   use parameters directly in the outlined function body without transferring statement, C only"<<endl;
     cout<<"\t-rose:outline:temp_variable                    use temp variables to reduce pointer dereferencing for the variables to be passed"<<endl;
+    cout<<"\t-rose:outline:enable_liveness                  use liveness analysis to reduce restoring statements if temp_variable is turned on"<<endl;
     cout<<"\t-rose:outline:new_file                         use a new source file for the generated outlined function"<<endl;
     cout<<"\t-rose:outline:enable_debug                     run outliner in a debugging mode"<<endl;
     cout <<"---------------------------------------------------------------"<<endl;

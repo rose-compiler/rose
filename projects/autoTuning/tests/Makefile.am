@@ -10,7 +10,7 @@ ROSE_FLAGS+=-rose:hpct:eqpath .=`cd $(srcdir) && pwd`
 #ROSE_FLAGS+=-rose:hpct:enable_debug 
 
 # test command line options for outliner
-ROSE_FLAGS+= -rose:outline:parameter_wrapper -rose:outline:new_file -rose:outline:temp_variable -rose:outline:exclude_headers 
+ROSE_FLAGS+= -rose:outline:parameter_wrapper -rose:outline:new_file -rose:outline:temp_variable -rose:outline:enable_liveness -rose:outline:exclude_headers  
 
 # experimental flags. not well sorted out for the interaction between OpenMP and outlining
 # TODO reduction clause with omp for  should ignored if all reduction variables are no longer shared

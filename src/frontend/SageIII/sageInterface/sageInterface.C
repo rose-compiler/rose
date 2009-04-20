@@ -8978,7 +8978,11 @@ void SageInterface::collectReadOnlySymbols(SgStatement* stmt, std::set<SgVariabl
 //!Call liveness analysis on an entire project
 LivenessAnalysis * SageInterface::call_liveness_analysis(SgProject* project, bool debug)
 {
-  LivenessAnalysis* liv = NULL;
+  // We expect this function to be called multiple times but always return the result generated from the first execution.
+  static LivenessAnalysis* liv = NULL; // one instance
+  if (liv!=NULL)
+    return liv;
+
   static DFAnalysis * defuse = NULL; // only one instance
   // Prepare def-use analysis
   if (defuse==NULL)

@@ -256,8 +256,8 @@ Outliner::Transform::outlineBlock (SgBasicBlock* s, const string& func_name_str)
  * generate the following statements before the call of the outlined function
  * used when useParameterWrapper is set to true
    	 void * __out_argv[2];
- 	*(__out_argv +0)=(void*)(&var1);
-  	*(__out_argv +1)=(void*)(&var2);
+ 	*(__out_argv +0)=(void*)(&var1);// better form: __out_argv[0]=(void*)(&var1);
+  	*(__out_argv +1)=(void*)(&var2); //__out_argv[1]=(void*)(&var2);
  */
 std::string Outliner::Transform::generatePackingStatements(SgStatement* target, ASTtools::VarSymSet_t & syms)
 {
@@ -285,8 +285,9 @@ std::string Outliner::Transform::generatePackingStatements(SgStatement* target, 
   for (ASTtools::VarSymSet_t::reverse_iterator i = syms.rbegin ();
       i != syms.rend (); ++i)
   {
-    SgAddOp * addop = buildAddOp(buildVarRefExp(wrapper_symbol),buildIntVal(counter));
-    SgPointerDerefExp *lhs = buildPointerDerefExp(addop);
+//    SgAddOp * addop = buildAddOp(buildVarRefExp(wrapper_symbol),buildIntVal(counter));
+//    SgPointerDerefExp *lhs = buildPointerDerefExp(addop);
+    SgPntrArrRefExp *lhs = buildPntrArrRefExp(buildVarRefExp(wrapper_symbol),buildIntVal(counter));
 
     SgVarRefExp* rhsvar = buildVarRefExp((*i)->get_declaration(),cur_scope);
     SgCastExp * rhs = buildCastExp( \
