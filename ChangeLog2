@@ -1,3 +1,14 @@
+2009-04-20 16:29  liao6
+
+	* [r5413] /trunk/ROSE/projects/autoTuning/tests/Makefile.am,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/midend/astOutlining/GenerateFunc.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Outliner.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Outliner.hh,
+	  /trunk/ROSE/src/midend/astOutlining/Transform.cc: Added a new
+	  option -rose:outline:enable_liveness to use liveness analysis
+	  results in outliner
+
 2009-04-16 23:56  panas2
 
 	* [r5375] /trunk/ROSE/projects/RTED/DataStructures.h,
