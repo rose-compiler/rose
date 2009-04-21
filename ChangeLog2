@@ -1,3 +1,38 @@
+2009-04-21 19:32  dquinlan
+
+	* [r5428] /trunk/ROSE/src/frontend/SageIII/sage3.h: Changed #error
+	  to #warning since EDG requires sys/stat.h before the rest of
+	  ROSE.
+	  
+	  Detailed changes in this commit:
+	  1) This fixes an error. But I am reviewing the fix.
+	  2) This may still cause and ODR violation in the way that EDG
+	  uses
+	  stat.h and the way that ROSE uses stat.h.
+
+2009-04-21 19:03  dquinlan
+
+	* [r5427] /trunk/ROSE/developersScratchSpace/Dan/Makefile.am,
+	  /trunk/ROSE/projects/binCompass/binCompassMain.cpp,
+	  /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Common.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Node.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/grammarNewDeleteOperatorMacros.macro,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecGeneric.C,
+	  /trunk/ROSE/src/frontend/SageIII/sage3.h, /trunk/ROSE/src/rose.h,
+	  /trunk/ROSE/src/util/rose_paths.h: Fixed 32-bit ODR violation in
+	  use of data structures defined in sys/stat.h.
+	  
+	  1) This fix moves the setting of the macro _FILE_OFFSET_BITS to
+	  be as early
+	  as possible before any other include files can be included in
+	  sage3.h.
+	  
+	  2) Tests are implemented to verify that _FILE_OFFSET_BITS is set
+	  correctly
+	  so that we don't have to debug this ODR problem again. This
+	  was only a problem on 32-bit systems.
+
 2009-04-21 00:37  panas2
 
 	* [r5418] /trunk/ROSE/projects/RTED/DataStructures.h,
