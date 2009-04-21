@@ -57,6 +57,12 @@ BinQ_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
 
 INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I. -Winvalid-pch 
 
+# DQ (4/20/2009): Added valgrind support...
+VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --suppressions=$(top_srcdir)/scripts/rose-suppressions-for-valgrind
+
+# VALGRIND = valgrind $(VALGRIND_OPTIONS)
+VALGRIND =
+
 
 # DQ (1/15/2009): Added demo rule to support ROSE reviews.
 
@@ -67,12 +73,12 @@ demo_show_source_code:
 # This demo runs a predefined (hard coded) collection of analysis algorithms as part of the startup
 demo_withAnalysisRunInBatchMode:
 	cat $(srcdir)/buffer2.c
-	./BinQ -a $(srcdir)/buffer2.bin --batch
+	$(VALGRIND) ./BinQ -a $(srcdir)/buffer2.bin --batch
 
 # This demo will show the represntation of the binary before any analysis has been done.
 demo_withoutAnalysisRunInBatchMode:
 	cat $(srcdir)/buffer2.c
-	./BinQ -a $(srcdir)/buffer2.bin
+	$(VALGRIND) ./BinQ -a $(srcdir)/buffer2.bin
 
 # Show the source code used to build the binary used for the more complex buffer overflow (below).
 demo_show_rted_example_source_code:
@@ -81,54 +87,54 @@ demo_show_rted_example_source_code:
 # This demo is of the buffer overflow that we can not detect (partial word length overlow).
 demo_rted_example:
 	cat  $(srcdir)/bufftest.c
-	./BinQ -a $(srcdir)/bufftest.bin --batch
+	$(VALGRIND) ./BinQ -a $(srcdir)/bufftest.bin --batch
 
 demo_rose_vs_IDAPro:
 #	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2-tsv  
-	./BinQ -a $(srcdir)/buffer2.bin.32bit -b $(srcdir)/buffer2-tsv  
+	$(VALGRIND) ./BinQ -a $(srcdir)/buffer2.bin.32bit -b $(srcdir)/buffer2-tsv  
 
 demo_diff:
-	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2b.bin  
+	$(VALGRIND) ./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2b.bin  
 
 
 demo2:
 	cat $(srcdir)/buffer2.c
-	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2.c --batch
+	$(VALGRIND) ./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2.c --batch
 
 demo3:
-	./BinQ -a $(srcdir)/linux-ls --batch
+	$(VALGRIND) ./BinQ -a $(srcdir)/linux-ls --batch
 
 test_1:
-	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2b.bin  
+	$(VALGRIND) ./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2b.bin  
 
 test_2:
-	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2-tsv  
+	$(VALGRIND) ./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2-tsv  
 
 test_3:
-	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2.c  
+	$(VALGRIND) ./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2.c  
 
 test_4:
-	./BinQ -a $(srcdir)/linux-ls
+	$(VALGRIND) ./BinQ -a $(srcdir)/linux-ls
 
 test_fileASTFile:
-	./BinQ -a $(srcdir)/buffer2.bin -save test.ast --batch
+	$(VALGRIND) ./BinQ -a $(srcdir)/buffer2.bin -save test.ast --batch
 
 
 check-local:
-	./BinQ -a $(srcdir)/win_buffer.exe --test --batch
-	./BinQ -a $(srcdir)/win_buffer.exe-tsv --test --batch
-	./BinQ -a $(srcdir)/buffer2.bin --test
-	./BinQ -a $(srcdir)/buffer2.bin $(srcdir)/buffer2b.bin --test
-	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2b.bin --test
-	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2-tsv --test 
-	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2.c --test 
-	./BinQ -a $(srcdir)/buffer2.bin --test --batch
-	./BinQ -a $(srcdir)/buffer2.bin $(srcdir)/buffer2b.bin --test --batch
-	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2b.bin --test --batch
-	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2-tsv --test --batch
-	./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2.c --test --batch
-	./BinQ -a $(srcdir)/linux-ls --test
-	./BinQ -a $(srcdir)/linux-ls --test --batch
+	$(VALGRIND) ./BinQ -a $(srcdir)/win_buffer.exe --test --batch
+	$(VALGRIND) ./BinQ -a $(srcdir)/win_buffer.exe-tsv --test --batch
+	$(VALGRIND) ./BinQ -a $(srcdir)/buffer2.bin --test
+	$(VALGRIND) ./BinQ -a $(srcdir)/buffer2.bin $(srcdir)/buffer2b.bin --test
+	$(VALGRIND) ./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2b.bin --test
+	$(VALGRIND) ./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2-tsv --test 
+	$(VALGRIND) ./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2.c --test 
+	$(VALGRIND) ./BinQ -a $(srcdir)/buffer2.bin --test --batch
+	$(VALGRIND) ./BinQ -a $(srcdir)/buffer2.bin $(srcdir)/buffer2b.bin --test --batch
+	$(VALGRIND) ./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2b.bin --test --batch
+	$(VALGRIND) ./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2-tsv --test --batch
+	$(VALGRIND) ./BinQ -a $(srcdir)/buffer2.bin -b $(srcdir)/buffer2.c --test --batch
+	$(VALGRIND) ./BinQ -a $(srcdir)/linux-ls --test
+	$(VALGRIND) ./BinQ -a $(srcdir)/linux-ls --test --batch
 	@echo "************************************************************************************"
 	@echo "*** ROSE/projects/AstEquivalence: make check rule complete (terminated normally) ***"
 	@echo "************************************************************************************"

@@ -12,28 +12,34 @@ LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -ldl $(LIBLTDL)
 
 binCompassMain_SOURCES = binCompassMain.cpp  
 
+# DQ (4/20/2009): Added valgrind support...
+VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --suppressions=$(top_srcdir)/scripts/rose-suppressions-for-valgrind
+
+# VALGRIND = valgrind $(VALGRIND_OPTIONS)
+VALGRIND =
+
 check-local: binCompassMain$(EXEEXT)
 	@echo " "
 	@echo " *** 	./binCompassMain buffer2.bin -printTree -cfa ****************************************************"
-	./binCompassMain$(EXEEXT) $(srcdir)/buffer2.bin -cfa >output
+	$(VALGRIND) ./binCompassMain$(EXEEXT) $(srcdir)/buffer2.bin -cfa >output
 	@echo " "
 	@echo " *** 	./binCompassMain buffer2.bin -callgraph  ****************************************************"
-	./binCompassMain$(EXEEXT) $(srcdir)/buffer2.bin -cfa >output
+	$(VALGRIND) ./binCompassMain$(EXEEXT) $(srcdir)/buffer2.bin -cfa >output
 	@echo " "
 	@echo " *** 	./binCompassMain buffer2.bin -dfa -inter ****************************************************"
-	./binCompassMain$(EXEEXT) $(srcdir)/buffer2.bin -dfa -inter >output
+	$(VALGRIND) ./binCompassMain$(EXEEXT) $(srcdir)/buffer2.bin -dfa -inter >output
 	@echo " "
 	@echo " *** 	./binCompassMain buffer2.bin -dfa -inter -gml****************************************************"
-	./binCompassMain$(EXEEXT) $(srcdir)/buffer2.bin -dfa -inter -gml >output
+	$(VALGRIND) ./binCompassMain$(EXEEXT) $(srcdir)/buffer2.bin -dfa -inter -gml >output
 	@echo " "
 	@echo " *** 	./binCompassMain buffer2.bin -dfa ****************************************************"
-	./binCompassMain$(EXEEXT) $(srcdir)/buffer2.bin -dfa >output
+	$(VALGRIND) ./binCompassMain$(EXEEXT) $(srcdir)/buffer2.bin -dfa >output
 	@echo " "
 	@echo " *** 	./binCompassMain buffer2.bin -checkAST -inter ****************************************************"
-	./binCompassMain$(EXEEXT) $(srcdir)/buffer2.bin -checkAST -inter >output
+	$(VALGRIND) ./binCompassMain$(EXEEXT) $(srcdir)/buffer2.bin -checkAST -inter >output
 	@echo " "
 	@echo " *** 	./binCompassMain buffer2.bin -checkGraph -inter ****************************************************"
-	./binCompassMain$(EXEEXT) $(srcdir)/buffer2.bin -checkGraph -inter > output
+	$(VALGRIND) ./binCompassMain$(EXEEXT) $(srcdir)/buffer2.bin -checkGraph -inter > output
 	@echo "*********************************************************************************************************************"
 	@echo "*** ROSE/tests/roseTests/programAnalysisTests/defUseAnalysisTests: make check rule complete (terminated normally) ***"
 	@echo "*********************************************************************************************************************"

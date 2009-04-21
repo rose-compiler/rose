@@ -143,12 +143,22 @@ $(TEST_F03_Objects)
 # Include makefile rules specific to QMTest
 include $(top_srcdir)/config/QMTest_makefile.inc
 
+if ROSE_USE_SSL_SUPPORT
+# DQ and Liao (4/20/2009): When using SSL library we can't use Fortran support in ROSE
+# (this is disabled in the frontend, but we also have to skip these tests).
+check-local: ../outline ../outlineSelection
+	@echo "Disabled tests for outlining Fortran when using libssl."
+	@echo "***************************************************************************************************"
+	@echo "****** ROSE/tests/roseTests/astOutliningTests/fortranTests check rule disabled (can't run this test whenusing libssl) ******"
+	@echo "***************************************************************************************************"
+else
 check-local: ../outline ../outlineSelection
 	@echo "Tests for outlining Fortran."
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "***************************************************************************************************"
 	@echo "****** ROSE/tests/roseTests/astOutliningTests/fortranTests check rule complete (terminated normally) ******"
 	@echo "***************************************************************************************************"
+endif
 
 else
 
@@ -158,7 +168,8 @@ check-local:
 	@echo "****** ROSE/tests/roseTests/astOutliningTests/fortranTests: FORTRAN NOT CONFIGURED IN ROSE ******"
 	@echo "***********************************************************************************"
 endif
- # This will output the example testcodes that are failing
+
+# This will output the example testcodes that are failing
 listProblemFiles: $(F77_TESTCODES_CURRENTLY_FAILING) $(F90_TESTCODES_CURRENTLY_FAILING) $(F03_TESTCODES_CURRENTLY_FAILING) 
 	egrep -n "*"  $(srcdir)/$(?)
 
