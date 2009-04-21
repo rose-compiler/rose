@@ -1454,7 +1454,10 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
      printf ("i = %d positionofHashCharacter = %d \n",i,positionofHashCharacter);
 #endif
      bool hasLineContinuation = false;
-     char lastCharacter = line[lineLength-1];
+
+  // DQ (4/21/2009): Fixed possible buffer underflow...
+  // char lastCharacter = line[lineLength-1];
+     char lastCharacter = (lineLength > 0) ? line[lineLength-1] : '\0';
      if (lastCharacter == '\\')
         {
           hasLineContinuation = true;
