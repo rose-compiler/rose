@@ -4,11 +4,12 @@ HEADER_NODE_PREDECLARATION_START
 #include <semaphore.h>
 #include "sage3.h"
 
+// DQ (4/21/2009): This is not handled uniformally in sage3.h.
 // DQ (8/8/2008): This is required to process the "stat64 struct in SgAsmGenericFile
 // JJW (8/26/2008): Changed to struct stat with _FILE_OFFSET_BITS == 64 (see
 // http://www.gnu.org/software/libc/manual/html_node/Reading-Attributes.html)
-#define _FILE_OFFSET_BITS 64 // Use 64-bit offsets on 32-bit machines when available
-#include <sys/stat.h>
+// #define _FILE_OFFSET_BITS 64 // Use 64-bit offsets on 32-bit machines when available
+// #include <sys/stat.h>
 
 // DQ (6/14/2008): Include the Exec format support.
 // #include "ExecGeneric.h"

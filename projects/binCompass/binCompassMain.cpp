@@ -1,16 +1,24 @@
-#include <rose.h>
+#define _FILE_OFFSET_BITS 64
+
+#include "rose.h"
 #include "binCompassAnalysisInterface.h"
 #include "GraphAnalysisInterface.h"
-#include <sys/types.h>
+
 #include <dirent.h>
 #include <errno.h>
+#include "ltdl.h"
+
+#if 0
+// DQ (4/21/2009): These are not required.
+#include <sys/types.h>
 #include <vector>
 #include <string>
 #include <iostream>
-#include "ltdl.h"
 
 #include <sys/stat.h>
 #include <sys/types.h>
+#endif
+
 using namespace std;
 
 bool containsArgument(int argc, char** argv, string pattern) {

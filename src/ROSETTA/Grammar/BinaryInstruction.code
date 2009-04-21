@@ -931,9 +931,9 @@ HEADER_GENERIC_HEADER_END
 
 HEADER_GENERIC_FILE_START
 	public:
-		SgAsmGenericFile()					/* Non-parsing constructor */
-			: p_fd(-1), p_headers(NULL), p_holes(NULL), p_truncate_zeros(false)
-			{ctor();}
+   // DQ (4/20/2009): Moved this to the generated source code file (out of the generated header file).
+		SgAsmGenericFile(); /* Non-parsing constructor */
+
 		virtual ~SgAsmGenericFile();				/* Destructor deletes children and unmaps/closes file */
 		SgAsmGenericFile* parse(std::string file_name);		/* Attach an existing file for parsing */
 		void reallocate();					/* Make consistent before calling unparse */
@@ -4096,6 +4096,22 @@ SgAsmGenericHeader::get_word_size() const
 SOURCE_GENERIC_HEADER_END
 
 SOURCE_GENERIC_FILE_START
+
+// DQ (4/21/2009): This function was moved to the source file to support debugging.
+SgAsmGenericFile::SgAsmGenericFile() /* Non-parsing constructor */
+   : p_fd(-1), p_headers(NULL), p_holes(NULL), p_truncate_zeros(false)
+   {
+     ROSE_ASSERT(p_fd == -1);
+     ROSE_ASSERT(p_holes == NULL);
+     ROSE_ASSERT(p_truncate_zeros == false);
+
+  // DQ (4/20/2009): This used to fail even though it has just be set in the preinitialization list.
+  // The problem was and ODR violation and was fixed by setting _FILE_OFFSET_BITS earlier in the compilation.
+     ROSE_ASSERT(p_headers == NULL);
+
+     this->ctor();
+   }
+
 SOURCE_GENERIC_FILE_END
 
 SOURCE_GENERIC_FORMAT_START

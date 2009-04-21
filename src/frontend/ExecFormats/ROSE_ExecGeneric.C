@@ -1,9 +1,11 @@
 /* Copyright 2008 Lawrence Livermore National Security, LLC */
 
-#define _FILE_OFFSET_BITS 64
+// DQ (4/21/2009): This is now set uniformally in sage3.h (included by rose.h).
+// #define _FILE_OFFSET_BITS 64
 #include "rose.h"
-#include <sys/stat.h>
 
+// DQ (4/21/2009): This is now included uniformally in sage3.h (included by rose.h).
+// #include <sys/stat.h>
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
@@ -682,14 +684,18 @@ SgAsmGenericFormat::dump(FILE *f, const char *prefix, ssize_t idx) const
 /** Non-parsing constructor. If you're creating an executable from scratch then call this function and you're done. But if
  *  you're parsing an existing file then call parse() in order to map the file's contents into memory for parsing. */
 void
-SgAsmGenericFile::ctor() 
+SgAsmGenericFile::ctor()
 {
-    ROSE_ASSERT(p_headers  == NULL);
+    ROSE_ASSERT(this != NULL);
+
+    ROSE_ASSERT(p_headers == NULL);
     p_headers  = new SgAsmGenericHeaderList();
+    ROSE_ASSERT(p_headers != NULL);
     p_headers->set_parent(this);
 
-    ROSE_ASSERT(p_holes  == NULL);
+    ROSE_ASSERT(p_holes == NULL);
     p_holes  = new SgAsmGenericSectionList();
+    ROSE_ASSERT(p_holes != NULL);
     p_holes->set_parent(this);
 }
 
@@ -697,7 +703,7 @@ SgAsmGenericFile::ctor()
 SgAsmGenericFile *
 SgAsmGenericFile::parse(std::string fileName)
 {
-    ROSE_ASSERT(p_fd<0); /*can call parse() only once per object*/
+    ROSE_ASSERT(p_fd < 0); /*can call parse() only once per object*/
 
     p_fd = open(fileName.c_str(), O_RDONLY);
     if (p_fd<0 || fstat(p_fd, &p_sb)<0) {
@@ -3862,15 +3868,21 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const std::string &name, SgAsmFile 
     ef->set_parent(asmFile);
     asmFile->set_genericFile(ef);
 }
+
 SgAsmGenericFile *
 SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
 {
-    SgAsmGenericFile *ef = (new SgAsmGenericFile)->parse(name);
-    ROSE_ASSERT(ef!=NULL);
+    SgAsmGenericFile *ef = (new SgAsmGenericFile())->parse(name);
+    ROSE_ASSERT(ef != NULL);
 
-    if (SgAsmElfFileHeader::is_ELF(ef)) {
-        (new SgAsmElfFileHeader(ef))->parse();
-    } else if (SgAsmDOSFileHeader::is_DOS(ef)) {
+    if (SgAsmElfFileHeader::is_ELF(ef))
+       {
+         (new SgAsmElfFileHeader(ef))->parse();
+       }
+      else
+       {
+         if (SgAsmDOSFileHeader::is_DOS(ef))
+            {
         SgAsmDOSFileHeader *dos_hdr = new SgAsmDOSFileHeader(ef);
         dos_hdr->parse(false); /*delay parsing the DOS Real Mode Section*/
         
@@ -3928,6 +3940,8 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
             throw FormatError("unrecognized file format");
         }
     }
+    }
+
     ef->congeal();
 
     /* Is the file large enough to hold all sections?  If any section extends past the EOF then set truncate_zeros, which will
