@@ -26,7 +26,7 @@
 
 // DQ (4/21/2009): Error checking to avoid difficult to debug ORD violations on 32-bit systems.
 #if defined(_SYS_STAT_H)
-#error "sys/stat.h should not have been included before the _FILE_OFFSET_BITS macro is set! (use rose.h first...)"
+#warning "sys/stat.h should not have been included before the _FILE_OFFSET_BITS macro is set! (use rose.h first...)"
 #endif
 
 // DQ (4/21/2009): This must be included before rose_paths.h since that 
