@@ -4,6 +4,8 @@
 #include <string>
 #include <fstream>
 #include <vector>
+#include <sstream>
+
 
 class RuntimeVariables {
  public:
@@ -98,7 +100,25 @@ class RuntimeSystem  {
   // check if array is out of bounds
   void roseArrayAccess(std::string name, int posA, int posB, std::string filename, int line);
   
-  void roseFunctionCall(std::string name, std::string mangl_name, bool before);
+  void  roseFunctionCall(int count, ...);
+  //void roseFunctionCall(std::string name, std::string mangl_name, bool before);
+
+
+  template<typename T> std::string roseConvertToString(T t) {
+    std::ostringstream myStream; //creates an ostringstream object
+    myStream << t << std::flush;
+    return myStream.str(); //returns the string form of the stringstream object
+  };
+
+  char* roseConvertIntToString(int t) {
+    std::string conv = roseConvertToString(t);
+    std::cerr << "String converted from int : " << t << " " << conv << std::endl;
+    int size = conv.size();
+    char* text = (char*)malloc(size);
+    if (text)
+      strcpy(text,conv.c_str());
+    return text;
+  }
 };
 
 static RuntimeSystem *runtimeSystem = RuntimeSystem::Instance();

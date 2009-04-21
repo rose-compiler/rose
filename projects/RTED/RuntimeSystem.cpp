@@ -7,6 +7,10 @@
 #include <map>
 #include <string>
 #include <fstream>
+#include <stdio.h>
+#include <stdarg.h> 
+
+
 #include "RuntimeSystem.h"
 
 
@@ -179,6 +183,7 @@ RuntimeSystem::roseArrayAccess(std::string name, int posA, int posB, std::string
 
 }
 
+#if 0
 void 
 RuntimeSystem::roseFunctionCall(std::string name, std::string mangl_name, bool before) {
   // if before ==true
@@ -195,6 +200,63 @@ RuntimeSystem::roseFunctionCall(std::string name, std::string mangl_name, bool b
   }
   cerr << "roseFunctionCall :: " << name << " " << mangl_name << " " << before << endl;
 }
+#endif
+
+void 
+RuntimeSystem::roseFunctionCall(int count, ...) {
+  cerr << "Runtimesystem :: functionCall" << endl;
+  //printf("returning : %s\n",test); 
+  va_list vl;
+  va_start(vl,count);
+  std::vector<std::string> args;
+  string name = "";
+  string mangl_name = "";
+  string beforeStr = "";
+  string scope_name = "";
+  bool before=false;
+  cerr << "arguments : " <<  count << endl;
+  for (int i=0;i<count;i++)    {
+    string val= (string) va_arg(vl,char*);
+    cerr << " ... " << val << endl;
+    if (i==0) name = val;
+    else if (i==1) mangl_name = val;
+    else if (i==2) scope_name = val;
+    else if (i==3) {
+      beforeStr = val;
+      if (beforeStr=="true")
+	before=true;
+    } else {
+      args.push_back(val);
+    }
+  }
+  va_end(vl); 
+
+  if (name=="memcpy") {
+    cerr << "Runtimesystem :: found memcopy" << endl;
+    string mem1 = args[0];
+    string mem2 = args[1];
+    int size = strtol(args[2].c_str(),NULL,10);
+    cerr << " Checking <" << mem1 << ">  and <" << mem2 << ">    size: " << size << "  " << args[2]<< endl;
+    cerr << "No buffer overflow" << endl;
+//    callExit();
+  } else {
+
+  // if before ==true
+  // add the current varRef (name) on stack
+  // else remove from stack
+    if (before) {
+      RuntimeVariables* var = new RuntimeVariables(name,mangl_name);
+      runtimeVariablesOnStack.push_back(var);
+    }
+    else {
+      RuntimeVariables* var = runtimeVariablesOnStack.back();
+      runtimeVariablesOnStack.pop_back();
+      delete var;
+    }
+  }
+
+  cerr << "roseFunctionCall :: " << name << " " << mangl_name << " " << before << endl;
+}
 
 std::string
 RuntimeSystem::findVariablesOnStack(std::string name) {
@@ -209,3 +271,6 @@ RuntimeSystem::findVariablesOnStack(std::string name) {
   }
   return mang_name;
 }
+
+
+

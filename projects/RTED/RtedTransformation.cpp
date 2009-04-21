@@ -20,36 +20,89 @@ RtedTransformation::parse(int argc, char** argv) {
 }
 
 
-
 void 
-RtedTransformation::insertFunctionCall(RTedFunctionCall* funcCall) {
-  insertFunctionCall(funcCall, true);
-  insertFunctionCall(funcCall, false);
+RtedTransformation::insertFuncCall(RtedArguments* args  ) {
+  insertFuncCall(args,true);
+  insertFuncCall(args,false);
 }
 
+
 void 
-RtedTransformation::insertFunctionCall(RTedFunctionCall* funcCall, 
-				       bool before) {
-  SgStatement* stmt = getSurroundingStatement(funcCall->varRefExp);
+RtedTransformation::insertFuncCall(RtedArguments* args, bool before  ) {
+  SgStatement* stmt = getSurroundingStatement(args->varRefExp);
   ROSE_ASSERT(stmt);
   if (isSgStatement(stmt)) {
     SgScopeStatement* scope = stmt->get_scope();
     ROSE_ASSERT(scope);
-    string name = funcCall->name;
-    SgStringVal* callNameExp = buildStringVal(name);
-    SgStringVal* callNameExp2 = buildStringVal(funcCall->mangled_name);
-    SgBoolValExp* boolVal = buildBoolValExp(before);
-
-    SgExprListExp* arg_list = buildExprListExp();
-    appendExpression(arg_list, callNameExp);
-    appendExpression(arg_list, callNameExp2);
-    appendExpression(arg_list, boolVal);
+    int size = 4+args->arguments.size();
+    SgIntVal* sizeExp = buildIntVal(size);
+    SgStringVal* callNameExp = buildStringVal(args->name);
+    SgStringVal* callNameExp2 = buildStringVal(args->mangled_name);
+    SgStringVal* callNameExp3 = buildStringVal(RoseBin_support::ToString(scope));
+    SgStringVal* boolVal = buildStringVal("true");
+    if (before==false) {
+      delete boolVal;
+      boolVal = buildStringVal("false");
+    }
 
     SgVarRefExp* varRef_l = buildVarRefExp("runtimeSystem", globalScope);
     string symbolName = varRef_l->get_symbol()->get_name().str();
     //cerr << " >>>>>>>> Symbol VarRef: " << symbolName << endl;
-
     ROSE_ASSERT(roseFunctionCall);
+
+    SgExprListExp* arg_list = buildExprListExp();
+    appendExpression(arg_list, sizeExp);
+    appendExpression(arg_list, callNameExp);
+    appendExpression(arg_list, callNameExp2);
+    appendExpression(arg_list, callNameExp3);
+    appendExpression(arg_list, boolVal);
+
+    std::vector<SgExpression*>::const_iterator it = args->arguments.begin();
+    for (;it!=args->arguments.end();++it) {
+      SgExpression* exp = *it;
+      if (isSgUnaryOp(exp))
+	exp = isSgUnaryOp(exp)->get_operand();
+      //cerr << " exp = " << exp->class_name() << endl;
+      if (isSgVarRefExp(exp)) {
+	SgVarRefExp* var = isSgVarRefExp(exp);
+	SgType* type = var->get_type();
+	SgType* base_type = NULL;
+	cerr << " type : " << type->class_name() << endl;
+	if (isSgArrayType(type) )
+	  base_type= isSgArrayType(type)->get_base_type();
+	if ( isSgPointerType(type))
+	  base_type= isSgPointerType(type)->get_base_type();
+	if (isSgTypeChar(type) || isSgTypeChar(base_type))
+	  appendExpression(arg_list, var);
+	else {
+	  ROSE_ASSERT(roseConvertIntToString);
+	  SgMemberFunctionRefExp* memRef_r2 = NULL;
+	  if (isSgTypeInt(type))
+	    memRef_r2 = buildMemberFunctionRefExp( roseConvertIntToString, false, true);
+	  else {
+	    cerr << "RtedTransformation - unknown type : " << type->class_name() << endl;
+	    exit(1);
+	  }
+	  ROSE_ASSERT(memRef_r2);
+	  string symbolName3 = roseConvertIntToString->get_name().str();
+	  cerr << " >>>>>>>> Symbol Member::: " << symbolName3 << endl;
+	  SgArrowExp* sgArrowExp2 = buildArrowExp(varRef_l, memRef_r2);
+
+	  SgExprListExp* arg_list2 = buildExprListExp();
+	  appendExpression(arg_list2, var);
+	  SgFunctionCallExp* funcCallExp2 = buildFunctionCallExp(sgArrowExp2,
+								arg_list2);
+	  ROSE_ASSERT(funcCallExp2);
+	  //	  SgCastExp* point= buildCastExp(funcCallExp2,buildPointerType(buildCharType()));
+	  appendExpression(arg_list, funcCallExp2);
+	  cerr << " Created Function call  convertToString" << endl;
+	}
+      } else {
+	SgStringVal* stringExp = buildStringVal(exp->unparseToString());
+	appendExpression(arg_list, stringExp);
+      }
+    }
+
     string symbolName2 = roseFunctionCall->get_name().str();
     //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
     SgMemberFunctionRefExp* memRef_r = buildMemberFunctionRefExp(
@@ -93,8 +146,11 @@ void RtedTransformation::transform(SgProject* project) {
   roseArrayAccess = symbols->roseArrayAccess;
   roseFunctionCall = symbols->roseFunctionCall;
   roseRtedClose = symbols->roseRtedClose;
+  roseConvertIntToString=symbols->roseConvertIntToString;
   ROSE_ASSERT(roseCreateArray);
   ROSE_ASSERT(roseArrayAccess);
+  ROSE_ASSERT(roseConvertIntToString);
+  ROSE_ASSERT(roseRtedClose);
 
   traverseInputFiles(project,preorder);
   //  ROSE_ASSERT(rememberTopNode);
@@ -144,13 +200,13 @@ void RtedTransformation::transform(SgProject* project) {
     insertArrayAccessCall(array_node, array_size);
   }
 
-  cerr << "\n Number of Elements in create_function_call  : "
-       << create_function_call.size() << endl;
-  std::vector<RTedFunctionCall*>::const_iterator itf =
-    create_function_call.begin();
-  for (; itf != create_function_call.end(); itf++) {
-    RTedFunctionCall* funcs = *itf;
-    insertFunctionCall(funcs);
+  cerr << "\n Number of Elements in memcopy_call  : "
+       << memcopy_call.size() << endl;
+  std::vector<RtedArguments*>::const_iterator it4 =
+    memcopy_call.begin();
+  for (; it4 != memcopy_call.end(); it4++) {
+    RtedArguments* funcs = *it4;
+    insertFuncCall(funcs);
   }
 
   // insert main call to ->close();
@@ -195,6 +251,12 @@ void RtedTransformation::visit(SgNode* n) {
     // handles calls to functions that contain array varRefExp
     // and puts the varRefExp on stack to be used by RuntimeSystem
     visit_isArrayExprListExp(n);
+  }
+  // *********************** DETECT ALL array accesses ***************
+
+  else if (isSgFunctionCallExp(n)) {
+    // call to a specific function that needs to be checked
+    visit_isFunctionCall(n);
   }
 
   // ******************** DETECT functions in input program  *********************************************************************

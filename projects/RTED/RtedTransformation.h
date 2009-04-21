@@ -11,16 +11,17 @@
 class RtedTransformation : public AstSimpleProcessing {
  private:
   // VARIABLES ------------------------------------------------------------
-  // list of input files (all RTED files)
-  //std::vector<std::string> inputFiles;
-  // the globalScope = SgProject
   SgGlobal* globalScope;
+  // ------------------------ array ------------------------------------
   // The array of callArray calls that need to be inserted
   std::map<SgVarRefExp*, RTedArray*> create_array_define_varRef_multiArray;
   std::map<SgInitializedName*, RTedArray*> create_array_define_varRef_multiArray_stack;
   std::map<SgVarRefExp*, RTedArray*> create_array_access_call;
   // remember variables that were used to create an array. These cant be reused for array usage calls
   std::vector<SgVarRefExp*> createVariables;
+  // ------------------------ string -----------------------------------
+  // handle call to memcopy
+  std::vector<RtedArguments*> memcopy_call;
 
 
   // The following are vars that are needed for transformations
@@ -28,6 +29,7 @@ class RtedTransformation : public AstSimpleProcessing {
   SgMemberFunctionSymbol* roseCreateArray;
   SgMemberFunctionSymbol* roseArrayAccess;
   SgMemberFunctionSymbol* roseFunctionCall;
+  SgMemberFunctionSymbol* roseConvertIntToString;
   SgClassSymbol* runtimeClassSymbol;
   SgScopeStatement* rememberTopNode;
   SgStatement* mainLast;
@@ -73,11 +75,13 @@ class RtedTransformation : public AstSimpleProcessing {
   SgVarRefExp* resolveToVarRefLeft(SgExpression* expr);
   RtedSymbols* symbols;
 
-  std::vector<RTedFunctionCall*> create_function_call;
+  //  std::vector<RTedFunctionCall*> create_function_call;
   bool isVarRefInCreateArray(SgInitializedName* search);
-  void insertFunctionCall(RTedFunctionCall* funcCall);
-  void insertFunctionCall(RTedFunctionCall* funcCall, 
-			  bool before);
+  void insertFuncCall(RtedArguments* args);
+  //void insertFunctionCall(RTedFunctionCall* funcCall, 
+  //			  bool before);
+  void insertFuncCall(RtedArguments* args, bool before);
+  void visit_isFunctionCall(SgNode* n);
 
  public:
   RtedTransformation() {
@@ -86,13 +90,14 @@ class RtedTransformation : public AstSimpleProcessing {
     roseCreateArray=NULL;
     roseArrayAccess=NULL;
     roseFunctionCall=NULL;
+    roseConvertIntToString=NULL;
     symbols = new RtedSymbols();
     mainFirst=NULL;
     mainLast=NULL;
     insertMainBeforeLast=false;
   };
   virtual ~RtedTransformation(){
-  //  inputFiles.clear();
+
 
   };
 

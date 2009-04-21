@@ -13,11 +13,13 @@ public:
 	SgMemberFunctionSymbol* roseArrayAccess;
 	SgMemberFunctionSymbol* roseRtedClose;
 	SgMemberFunctionSymbol* roseFunctionCall;
+	SgMemberFunctionSymbol* roseConvertIntToString;
 
 	RtedSymbols() {
 		roseCreateArray = NULL;
 		roseArrayAccess = NULL;
 		roseRtedClose = NULL;
+		roseConvertIntToString=NULL;
 	};
 	
 	virtual ~RtedSymbols() {

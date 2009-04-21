@@ -53,4 +53,30 @@ class RTedFunctionCall {
 
 };
 
+class RtedArguments {
+ public:
+  std::string name;
+  std::string mangled_name;
+  SgInitializedName* initName;
+  SgExpression* varRefExp;
+  std::vector<SgExpression*> arguments;
+  RtedArguments(std::string funcn, 
+		std::string mangl,
+		SgExpression* var,
+		std::vector<SgExpression*> args) {
+    name=funcn;
+    mangled_name=mangl;
+    //initName=init;
+    varRefExp=var;
+    arguments = args;
+    ROSE_ASSERT(var);
+    if (isSgVarRefExp(var)) {
+      initName = isSgVarRefExp(var)->get_symbol()->get_declaration();
+      ROSE_ASSERT(initName);
+    }
+ }
+  virtual ~RtedArguments() {}
+};
+
+
 #endif

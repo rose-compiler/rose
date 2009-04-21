@@ -628,16 +628,63 @@ void RtedTransformation::visit_isArrayExprListExp(SgNode* n) {
     // check if parameter is array - then check function name
     // call func(array_name) to runtime system for runtime inspection 
     SgInitializedName* initName =
-      isSgVarRefExp(n)->get_symbol()->get_declaration();
+     isSgVarRefExp(n)->get_symbol()->get_declaration();
     bool found = isVarRefInCreateArray(initName);
     if (found) {
+#if 0
       RTedFunctionCall* funcCall = new RTedFunctionCall(initName,
 							isSgVarRefExp(n),
 							initName->get_name(),
 							initName->get_mangled_name().str());
+#endif
+      vector<SgExpression*> args;
+      RtedArguments* funcCall = new RtedArguments(initName->get_name(),
+						  initName->get_mangled_name().str(),
+						  //initName,
+						  isSgVarRefExp(n),
+						  args
+						  );
       ROSE_ASSERT(funcCall);
-      create_function_call.push_back(funcCall);
+      //      create_function_call.push_back(funcCall);
+      memcopy_call.push_back(funcCall);
     }
   }
+}
 
+void RtedTransformation::visit_isFunctionCall(SgNode* n) {
+  SgFunctionCallExp* fcexp = isSgFunctionCallExp(n);
+  if (fcexp) {
+    cerr <<"Found a function call " << endl;
+    SgExprListExp* exprlist = isSgExprListExp(fcexp->get_args());
+    SgFunctionRefExp* refExp = isSgFunctionRefExp(fcexp->get_function());
+    ROSE_ASSERT(refExp);
+    SgFunctionDeclaration* decl = isSgFunctionDeclaration(refExp->getAssociatedFunctionDeclaration ());
+    cerr << " fcexp->get_function() : " << fcexp->get_function()->class_name() << endl;
+    ROSE_ASSERT(decl);
+    string name = decl->get_name();
+    string mangled_name = decl->get_mangled_name().str();
+    bool handle=false;
+    if (name=="memcpy")
+      handle=true;
+    if (handle) {
+      vector<SgExpression*> args;
+      Rose_STL_Container<SgExpression*> expr = exprlist->get_expressions();
+      Rose_STL_Container<SgExpression*>::const_iterator it = expr.begin();
+      for (;it!=expr.end();++it) {
+	SgExpression* ex = *it;
+	//string unparse = ex->unparseToString();
+	args.push_back(ex);
+      }
+      RtedArguments* funcCall = new RtedArguments(name,
+						  mangled_name,
+						  refExp,
+						  //NULL,
+						  args
+						  );
+      ROSE_ASSERT(funcCall);
+      //      create_function_call.push_back(funcCall);
+      memcopy_call.push_back(funcCall);
+    }
+  }
+  
 }

@@ -12,6 +12,7 @@ void RtedSymbols::visit(SgNode* n) {
   // ******************** DETECT Member functions in RuntimeSystem.h *************************************************************
 
   if (isSgScopeStatement(n)) {
+
     SgFunctionSymbol* func = isSgScopeStatement(n)->lookup_function_symbol("roseCreateArray");
     if (isSgMemberFunctionSymbol(func)) {
       roseCreateArray = isSgMemberFunctionSymbol(func);
@@ -31,6 +32,16 @@ void RtedSymbols::visit(SgNode* n) {
     if (isSgMemberFunctionSymbol(func4)) {
       roseFunctionCall = isSgMemberFunctionSymbol(func4);
       cerr << ">>>>>>>>>>>>> Found MemberName : roseFunctionCall" <<  endl;
+    }
+
+    SgFunctionSymbol* func5 = isSgScopeStatement(n)->lookup_function_symbol("roseConvertIntToString");
+    if (isSgMemberFunctionSymbol(func5)) {
+      //      cerr << " unparse : " << isSgScopeStatement(n)->unparseToString() << endl;
+      //      SgSymbolTable * s = isSgScopeStatement(n)->get_symbol_table () ;
+      //s->print("debug");
+      roseConvertIntToString = isSgMemberFunctionSymbol(func5);
+      string symbolName3 = roseConvertIntToString->get_name().str();
+      cerr << " >>>>>>>> Symbol Member: " << symbolName3 << endl;
     }
   }
 
