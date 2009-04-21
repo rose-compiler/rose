@@ -119,7 +119,7 @@ $(PASSING_CXX_TEST_Objects): %.o: $(srcdir)/%.cpp outline
 
 # This rule currently only tests outlining to the original file (not a separate file also).
 $(EXTERNAL_PASSING_CXX_TEST_Objects): %.o: $(top_srcdir)/tests/CompileTests/Cxx_tests/%.C outline
-	./outlineSelection$(EXEEXT) -rose:outline:seq 7 ${OUTLINE_FLAG} -I$(top_srcdir)/tests/CompileTests/Cxx_tests -c $<
+	./outlineSelection$(EXEEXT) -rose:outline:seq 7 ${OUTLINE_FLAG} $(TEST_INCLUDES) -c $<
 
 test_class_ODR_violation: $(srcdir)/test_class_ODR_violation_main.C $(srcdir)/test_class_ODR_violation_outlined.C
 	g++ -c $(srcdir)/test_class_ODR_violation_main.C
