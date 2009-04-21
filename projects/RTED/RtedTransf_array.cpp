@@ -56,6 +56,27 @@ void RtedTransformation::insertArrayCreateCall(SgInitializedName* initName,
 
 void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
 					       SgInitializedName* initName, RTedArray* array) {
+  // make sure there is no extern in front of stmt
+#if 1
+  SgDeclarationStatement* declstmt = isSgDeclarationStatement(stmt);
+  SgFunctionParameterList* funcparam = isSgFunctionParameterList(stmt);
+  bool externQual =false;
+  if (funcparam) {
+    SgFunctionDeclaration* funcdeclstmt = isSgFunctionDeclaration(funcparam->get_parent());
+    ROSE_ASSERT(funcdeclstmt);
+    externQual = funcdeclstmt->get_declarationModifier().get_storageModifier().isExtern();
+    cerr << ">>>>>>>>>>>>>>>> stmt-param : " << funcdeclstmt->unparseToString() << "  " << funcdeclstmt->class_name() << 
+      "  " << externQual << endl;
+  } else if (declstmt) {
+    externQual = declstmt->get_declarationModifier().get_storageModifier().isExtern();
+  }  
+  cerr << ">>>>>>>>>>>>>>>> stmt : " << stmt->unparseToString() << "  " << stmt->class_name() << endl;
+  if (externQual) {
+    cerr << "Skipping this insertArrayCreate because it probably occurs multiple times (with and without extern)." << endl;
+    return;
+  }
+#endif
+
   std::vector<SgExpression*> value;
   array->getIndices(value);
   int dimension = array->dimension;
@@ -419,7 +440,19 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
     SgFunctionCallExp* funcc = isSgFunctionCallExp(*it);
     if (funcc) {
       // MALLOC : function call
-      SgExprListExp* size = funcc->get_args();
+      SgTreeCopy treeCopy;
+      SgExprListExp* size = isSgExprListExp(funcc->get_args()->copy(treeCopy));
+      ROSE_ASSERT(size);
+      // find if sizeof present in size operator
+      vector<SgNode*> results = NodeQuery::querySubTree(size,V_SgSizeOfOp);
+      SgSizeOfOp* sizeofOp = NULL;
+      if (results.size()==1) {
+	sizeofOp = isSgSizeOfOp(*(results.begin()));
+	ROSE_ASSERT(sizeofOp);
+      } else if (results.size()>1) {
+	cerr << "More than 1 sizeof operand. Abort." << endl;
+	exit(1);
+      }
       SgExpression* func = funcc->get_function();
       if (func && size) {
 	bool ismalloc = false;
@@ -463,48 +496,29 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
 	       << dimension << "  indx1 : " << idx1_s
 	       << "  indx2 : " << idx2_s << endl;
 	  ROSE_ASSERT(dimension>0);
-#if 1
-	  // because we got malloc (20 * sizeof(int)) we need to divide the allocation by int
-	  SgType* varRef_type = varRef->get_type();
-	  // multiplier : if arr** then we have sizeof (*int) = 8
-	  int mult=0;
-	  while( (isSgPointerType(varRef_type))) {
-	    varRef_type= isSgPointerType(varRef_type)->get_base_type();
-	    // if we dereference 2 times, then mult=2
-	    mult++;
-	  }
-	  // divider is necessary because malloc (20 * sizeof(int)), we dont know sizeof(int)
-	  // so we determine the type of the varRef on left of assign and divide the allocation
-	  // e.g. (20 * sizeof(int) / 4) for arr[i]=  or (20 * sizeof(*int) /8) for arr[i][j]= 
-	  int divider =0;
-	  if (indx1 != NULL && indx2 == NULL) {
-	    // array : pntr[i] = malloc (size)
-	    // if we access pntr[i] of a 2 dim field, we make sure to decrease the multiplier
-	    mult=mult/2;
-	  }
-	  if (isSgTypeInt(varRef_type))
-	    divider=sizeof(int)*mult;
-	  if (isSgTypeFloat(varRef_type))
-	    divider=sizeof(float)*mult;
-	  if (isSgTypeDouble(varRef_type))
-	    divider=sizeof(double)*mult;
-	  if (divider>0) {
-	    // Change ExpressionList : size  to   (size) /divider
-	    Rose_STL_Container<SgExpression*> express = size->get_expressions();
-	    SgExpression* topNode = *(express.begin());
-	    SgValueExp* topNodeVal = isSgValueExp(topNode);
-	    // fixme : Thomas
-	    if (topNodeVal) {
-	      SgValueExp* deepCopyTop = deepCopy(topNodeVal);
-	      SgExpression* div = buildDivideOp();
-	      SgExpression* divVal = buildIntVal(divider);
-	      setLhsOperand(div,deepCopyTop);
-	      setRhsOperand(div,divVal);
-	      replaceExpression(topNodeVal,div);
+	  // remove the sizeof allocation
+	  SgNode* parentOfSizeof = sizeofOp->get_parent();
+	  ROSE_ASSERT(parentOfSizeof);
+	  // the parent of sizeof is usally A Value, and thereafter Mul or Div
+	  parentOfSizeof = parentOfSizeof->get_parent();
+	  ROSE_ASSERT(parentOfSizeof);
+	  if (isSgBinaryOp(parentOfSizeof)) {
+	    SgBinaryOp* bin = isSgBinaryOp(parentOfSizeof);
+	    if (!(isSgDivideOp(bin) || isSgMultiplyOp(bin))) {
+	      cerr << "The operand above sizeof is not of type multiply or divide. Not handled" << endl;
+	      exit (1);
 	    }
+	    SgExpression* val = buildIntVal(1);
+	    if (bin->get_rhs_operand()==sizeofOp->get_parent()) {
+	      bin->set_rhs_operand(val);
+	    } else {
+	      bin->set_lhs_operand(val);
+	    }
+	    delete sizeofOp->get_parent();
+	  } else {
+	    cerr << "Unhandled Operand for sizeof parent. " << parentOfSizeof->class_name() << endl;
+	    exit(1);
 	  }
-	  cerr <<" >>>>>>>>>>>>>>>>> array should be divided by : " << divider << "  type :" <<varRef_type->class_name() << endl;
-#endif
 	  if (indx1 == NULL && indx2 == NULL) {
 	    // array initialized to pointer: pntr = malloc (size)
 	    indx1 = size; // / divider;

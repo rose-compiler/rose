@@ -36,8 +36,6 @@ class Array2D {
 };
 
 
-// static RuntimeSystem that is accessible by all source files
-//static RuntimeSystem* runtimeSystem = new RuntimeSystem();
 
 /* -----------------------------------------------------------
  * tps : 6th March 2009: RTED
@@ -73,52 +71,18 @@ class RuntimeSystem  {
     arrays1D.clear();
   };
 
-  std::string resBool(bool val) {                                               
-    if (val)                                                                      
-      return "true";                                                           
-    return "false";                                                          
-  }
-
-  void roseRtedClose() {
-    if (myfile)
-      myfile->close();
-    std::cerr << " RtedClose :: Violation : " << resBool(violation) << std::endl;
-    if (violationNr>3) {
-      std::cerr << "RtedClose:: Nr of violations : " << violationNr << " is suspicious. " << std::endl;
-      exit(1);
-    }
-    if (violation==false)  {
-      std::cerr << "RtedClose:: No violation found!! " << filename << std::endl;
-      exit(1);
-    } else
-      std::cerr <<"RtedClose:: Violation found. Good! " << filename << std::endl;
-  }
-
+  std::string resBool(bool val);
+  void roseRtedClose();
 
   // create array and store its size
-  void roseCreateArray(std::string name, int dimension, bool stack, long int sizeA, long int sizeB, std::string filename, int line);
+  void roseCreateArray(std::string name, int dimension, bool stack, 
+		       long int sizeA, long int sizeB, std::string filename, int line);
   // check if array is out of bounds
   void roseArrayAccess(std::string name, int posA, int posB, std::string filename, int line);
   
   void  roseFunctionCall(int count, ...);
-  //void roseFunctionCall(std::string name, std::string mangl_name, bool before);
-
-
-  template<typename T> std::string roseConvertToString(T t) {
-    std::ostringstream myStream; //creates an ostringstream object
-    myStream << t << std::flush;
-    return myStream.str(); //returns the string form of the stringstream object
-  };
-
-  char* roseConvertIntToString(int t) {
-    std::string conv = roseConvertToString(t);
-    std::cerr << "String converted from int : " << t << " " << conv << std::endl;
-    int size = conv.size();
-    char* text = (char*)malloc(size);
-    if (text)
-      strcpy(text,conv.c_str());
-    return text;
-  }
+  template<typename T> std::string roseConvertToString(T t);
+  char* roseConvertIntToString(int t);
 };
 
 static RuntimeSystem *runtimeSystem = RuntimeSystem::Instance();

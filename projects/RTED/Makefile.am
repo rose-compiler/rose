@@ -81,10 +81,94 @@ build_file1: modifyTestCode
 # created a new file called rose_c_E_1_1_a.c and rose_rose_E_1_1_a.c	
 	cp $(srcdir)/index_array.txt .
 
-check-C-array:
+check-C-array-parallel:
 	COUNTER=0 ; \
+	BASE=0; \
 	if [ -f "result-array.txt" ]; then rm result-array.txt; fi ; \
-	cp $(srcdir)/index_array.txt .
+	cp $(srcdir)/index_array.txt . ; \
+	dir=$(rted_path)/C/array_index_out_of_bound/ ; \
+	echo "Dir : $$dir " ; \
+	for file in $$(find $$dir -name "*.c" | sort); do \
+	  echo "Found file : $$file" ; \
+	done ; \
+	echo "Found files : `find $$dir -name "*.c" | wc` " ; \
+	for file in $$(find $$dir -name "*.c"| sort); do \
+	COUNTER=$$(($$COUNTER+1)) ; \
+	{ \
+	if !  [[ "$$file" =~ "_s.c" ]]  ; then \
+	  file2=$$(echo $$file | sed -e 's/..$$//'  ); \
+	  file2=$$(echo "$$file2"_s.c); \
+	  binfile=$$(echo "$$file".bin); \
+	echo "Filename 2 : $$file2" ; \
+	if ! [ -f $$binfile ]; then \
+	echo "inserting #define EXITCODE_OK 0 in $$file" ; \
+	if [ `grep "#define EXITCODE_OK 0" $$file | wc | awk '{print $$1}' ` -eq 0 ] ; then \
+	  sed -i '1i\#define EXITCODE_OK 0' $$file ; \
+	fi ; \
+	  if [ -f $$file2 ]; then \
+	  echo "inserting #define EXITCODE_OK 0 in $$file2" ; \
+	  if [ `grep "#define EXITCODE_OK 0" $$file2 | wc | awk '{print $$1}' ` -eq 0 ] ; then \
+	    sed -i '1i\#define EXITCODE_OK 0' $$file2 ; \
+	  fi ; \
+	  echo "Script : Running Transformation ... $$file $$file2 -I$(srcdir) " ; \
+	  ./runtimeCheck 2 $$file $$file2 -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$$dir  ; \
+	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
+	  echo "deleting #define EXITCODE_OK 0 in $$file2" ; \
+	  if [ `grep "#define EXITCODE_OK 0" $$file2 | wc | awk '{print $$1}' ` -eq 1 ] ; then \
+	    sed -i '1d' $$file2 ; \
+	  fi ; \
+	  file_rose=rose_rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
+	  file2_rose=rose_rose_$$(echo $$file2 | sed -e 's/^\(.*\/\)*//'  ); \
+	  file_rose_bin=$$(echo "$$file_rose".bin); \
+	  echo "Compiling 2f:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose" ;\
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	  echo "Executing created file $$file_rose_bin" ; \
+	  ./$$file_rose_bin ; \
+	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
+	  file_bin=$$(echo "$$file".bin); \
+	  $(CXX) -g -o $$file_bin $$file $$file2 $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	else \
+	  echo "Script : Running Transformation ... $$file -I$(srcdir)" ; \
+	  ./runtimeCheck 1 $$file -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$$dir ; \
+	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
+	  echo "removing #define EXITCODE_OK 0 in $$file" ; \
+	  if [ `grep "#define EXITCODE_OK 0" $$file | wc | awk '{print $$1}' ` -eq 1 ] ; then \
+	    sed -i '1d' $$file ; \
+	  fi ; \
+	  file_rose=rose_rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
+	  file_rose_bin=$$(echo "$$file_rose".bin); \
+	  echo "Compiling 1f:  $(CXX) -g -o $$file_rose_bin $$file_rose" ;\
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	  echo "Executing created file $$file_rose_bin" ; \
+	  ./$$file_rose_bin ; \
+	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
+	  file_bin=$$(echo "$$file".bin); \
+	  $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	fi; \
+	else \
+	  echo "$$binfile exists." ; \
+	fi; \
+	fi; \
+	} &  \
+	pid[$$COUNTER]=$$! ; \
+	echo "Adding PID $!  $${pid[$$COUNTER]}" ; \
+	if [ $$(( $$COUNTER - $$BASE)) -eq 16 ]; then  \
+		for (( i=$$BASE ; i < $$COUNTER ; i++)); do  \
+	    	     p=$${pid[i]} ; \
+	     	     wait $$p ; \
+		     status=$$? ; \
+		     echo "job $$i, pid $$p: exit $$status" ; \
+		     if [ $$status -ne 127 ]; then  \
+	     		if [ $$status -ne 0 ]; then exit 1; fi ;  \
+	    	     fi ; \
+	  	done ; \
+	 BASE=$$(($$COUNTER)) ; \
+         fi ; \
+	done 
+
+check-C-array:
+	if [ -f "result-array.txt" ]; then rm result-array.txt; fi ; \
+	cp $(srcdir)/index_array.txt . ; \
 	dir=$(rted_path)/C/array_index_out_of_bound/ ; \
 	echo "Dir : $$dir " ; \
 	for file in $$(find $$dir -name "*.c" | sort); do \
@@ -148,16 +232,91 @@ check-C-array:
 	fi; \
 	done 
 
-remember:
-	{ \
-	job ;
-	} & \
+
+check-C-string-parallel:
+	COUNTER=0 ; \
+	BASE=0; \
+	if [ -f "result-string.txt" ]; then rm result-string.txt; fi ; \
+	cp $(srcdir)/index_array.txt .
+	dir=$(rted_path)/C/string_errors/ ; \
+	echo "Dir : $$dir " ; \
+	for file in $$(find $$dir -name "*.c" | sort); do \
+	  echo "Found file : $$file" ; \
+	done ; \
+	echo "Found files : `find $$dir -name "*.c" | wc` " ; \
+	for file in $$(find $$dir -name "*.c"| sort); do \
 	COUNTER=$$(($$COUNTER+1)) ; \
-	if [ "$$COUNTER" -ge 1 ] ; then \
-	    echo "Running ... " ; \
-	    wait ; \
-	    COUNTER=0 ; \
-	fi ; 
+	{ \
+	if !  [[ "$$file" =~ "_s.c" ]]  ; then \
+	  file2=$$(echo $$file | sed -e 's/..$$//'  ); \
+	  file2=$$(echo "$$file2"_s.c); \
+	  binfile=$$(echo "$$file".bin); \
+	echo "Filename 2 : $$file2" ; \
+	if ! [ -f $$binfile ]; then \
+	echo "inserting #define EXITCODE_OK 0 in $$file" ; \
+	if [ `grep "#define EXITCODE_OK 0" $$file | wc | awk '{print $$1}' ` -eq 0 ] ; then \
+	  sed -i '1i\#define EXITCODE_OK 0' $$file ; \
+	fi ; \
+	if [ -f $$file2 ]; then \
+	  echo "inserting #define EXITCODE_OK 0 in $$file2" ; \
+	  if [ `grep "#define EXITCODE_OK 0" $$file2 | wc | awk '{print $$1}' ` -eq 0 ] ; then \
+	    sed -i '1i\#define EXITCODE_OK 0' $$file2 ; \
+	  fi ; \
+	  echo "Script : Running Transformation ... $$file $$file2 -I$(srcdir) " ; \
+	  ./runtimeCheck 2 $$file $$file2 -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$(dir)   ; \
+	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
+	  echo "deleting #define EXITCODE_OK 0 in $$file2" ; \
+	  if [ `grep "#define EXITCODE_OK 0" $$file2 | wc | awk '{print $$1}' ` -eq 1 ] ; then \
+	    sed -i '1d' $$file2 ; \
+	  fi ; \
+	  file_rose=rose_rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
+	  file2_rose=rose_rose_$$(echo $$file2 | sed -e 's/^\(.*\/\)*//'  ); \
+	  file_rose_bin=$$(echo "$$file_rose".bin); \
+	  echo "Compiling 2f:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose" ;\
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	  echo "Executing created file $$file_rose_bin" ; \
+	  ./$$file_rose_bin ; \
+	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
+	  file_bin=$$(echo "$$file".bin); \
+	  $(CXX) -g -o $$file_bin $$file $$file2 $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	else \
+	  echo "Script : Running Transformation ... $$file -I$(srcdir)" ; \
+	  ./runtimeCheck 1 $$file -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$$dir ; \
+	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
+	  echo "removing #define EXITCODE_OK 0 in $$file" ; \
+	  if [ `grep "#define EXITCODE_OK 0" $$file | wc | awk '{print $$1}' ` -eq 1 ] ; then \
+	    sed -i '1d' $$file ; \
+	  fi ; \
+	  file_rose=rose_rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
+	  file_rose_bin=$$(echo "$$file_rose".bin); \
+	  echo "Compiling 1f:  $(CXX) -g -o $$file_rose_bin $$file_rose" ;\
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	  echo "Executing created file $$file_rose_bin" ; \
+	  ./$$file_rose_bin ; \
+	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
+	  file_bin=$$(echo "$$file".bin); \
+	  $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	fi; \
+	else \
+	  echo "$$binfile exists." ; \
+	fi; \
+	fi; \
+	} &  \
+	pid[$$COUNTER]=$$! ; \
+	echo "Adding PID $!  $${pid[$$COUNTER]}" ; \
+	if [ $$(( $$COUNTER - $$BASE)) -eq 16 ]; then  \
+		for (( i=$$BASE ; i < $$COUNTER ; i++)); do  \
+	    	     p=$${pid[i]} ; \
+	     	     wait $$p ; \
+		     status=$$? ; \
+		     echo "job $$i, pid $$p: exit $$status" ; \
+		     if [ $$status -ne 127 ]; then  \
+	     		if [ $$status -ne 0 ]; then exit 1; fi ;  \
+	    	     fi ; \
+	  	done ; \
+	 BASE=$$(($$COUNTER)) ; \
+         fi ; \
+	done 
 
 check-C-string:
 	if [ -f "result-string.txt" ]; then rm result-string.txt; fi ; \
@@ -231,7 +390,7 @@ check-C-array-onefile: compile_gcc_file1
 	./rose_rose_test_c_E_1_1_a
 
 # DQ (7/25/2005): The current changes to the AST break these test programs:
-check-local: runtimeCheck $(TESTCODES) check-C-array-onefile check-C-array check-C-string
+check-local: runtimeCheck $(TESTCODES) check-C-array-onefile check-C-array-parallel 
 	@echo "***************************************************************************************"
 	@echo "*** ROSE/projects/runtimeErrorCheck: make check rule complete (terminated normally) ***"
 	@echo "***************************************************************************************"

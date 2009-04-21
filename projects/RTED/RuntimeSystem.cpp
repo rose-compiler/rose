@@ -38,8 +38,6 @@ RuntimeSystem::RuntimeSystem()
     std::cerr << "Cannot open output file." << std::endl;
     exit(1);
   }
-  //myfile->close();
-  //myfile = new std::ofstream("result-array.txt",std::ios::app);
   violation=false;
   violationNr=0;
   filename="";
@@ -47,6 +45,13 @@ RuntimeSystem::RuntimeSystem()
   fileNr=0;
 
 }
+
+  std::string 
+  RuntimeSystem::resBool(bool val) {                                               
+    if (val)                                                                      
+      return "true";                                                           
+    return "false";                                                          
+  }
 
 
 std::string
@@ -66,25 +71,48 @@ RuntimeSystem::callExit() {
   exit(0);
 }
 
+
+template<typename T> std::string 
+RuntimeSystem::roseConvertToString(T t) {
+  std::ostringstream myStream; //creates an ostringstream object
+  myStream << t << std::flush;
+  return myStream.str(); //returns the string form of the stringstream object
+};
+
+char* 
+RuntimeSystem::roseConvertIntToString(int t) {
+  std::string conv = roseConvertToString(t);
+  std::cerr << "String converted from int : " << t << " " << conv << std::endl;
+  int size = conv.size();
+  char* text = (char*)malloc(size);
+  if (text)
+    strcpy(text,conv.c_str());
+  return text;
+}
+
+
+void 
+RuntimeSystem::roseRtedClose() {
+  if (myfile)
+    myfile->close();
+  std::cerr << " RtedClose :: Violation : " << resBool(violation) << std::endl;
+  if (violationNr>3) {
+    std::cerr << "RtedClose:: Nr of violations : " << violationNr << " is suspicious. " << std::endl;
+    exit(1);
+  }
+  if (violation==false)  {
+    std::cerr << "RtedClose:: No violation found!! " << filename << std::endl;
+    exit(1);
+  } else
+    std::cerr <<"RtedClose:: Violation found. Good! " << filename << std::endl;
+}
+
+
 /* -----------------------------------------------------------
  * create array and store its size
  * -----------------------------------------------------------*/
 void
 RuntimeSystem::roseCreateArray(std::string name, int dimension, bool stack, long int sizeA, long int sizeB, std::string filename, int line ){
-#if 0
-  if (oldFilename!=filename) {
-    fileNr++;
-    *myfile << fileNr << ": >>> Checking : " << findLastUnderscore(name) << " dim"<< dimension <<
-      " - [" << sizeA << "][" << sizeB << "]  file : " << filename <<  " line : " << line << endl;
-    if (oldFilename!="" && violation==false) {
-      cerr << "roseCreateArray :: No violation in this file found. Check this! " << endl;
-      exit(1);
-    }
-    cerr << " Setting violation to false ! " << endl;
-    violation=false;
-    violationNr=0;
-  }
-#endif
   cout << fileNr << ": >>> Called : roseCreateArray : " << findLastUnderscore(name) << " dim"<< dimension <<
     " - [" << sizeA << "][" << sizeB << "] file : " << filename << " line : " << line  << endl;
   oldFilename=filename;
@@ -105,7 +133,9 @@ RuntimeSystem::roseCreateArray(std::string name, int dimension, bool stack, long
 	cerr << " Violation detected :  Array too small to allocate more memory " << endl;
 	violation=true;
 	violationNr++;
-	callExit();
+	// this is a weird error, lets stop here for now.
+	exit(1);
+	//	callExit();
       } else {
 	cerr << " >>> CREATING Array : arr ["<<totalsize<<"]["<<sizeB<<"]"<< "  alloc : ["<<sizeA<<"]="<<sizeB<<endl;
 	array->allocate(sizeA,sizeB); //arr[sizeA][sizeB]
@@ -158,6 +188,7 @@ RuntimeSystem::roseArrayAccess(std::string name, int posA, int posB, std::string
     }
   }
 
+  //  cerr << " Done with 1Dim array" << endl;
   std::map<std::string, Array2D*>::const_iterator it2 = arrays2D.find(name);
   if (it2!=arrays2D.end()) {
     Array2D* array = it2->second;
@@ -175,6 +206,7 @@ RuntimeSystem::roseArrayAccess(std::string name, int posA, int posB, std::string
       callExit();
     }
   } 
+  //  cerr << " Done with 2Dim array" << endl;
   if (it==arrays1D.end() && it2==arrays2D.end()) {
     std::cout << endl;
     std::cerr << " >>> No such array was created. Can't access it. " << filename << "  l: " << line << endl;
@@ -238,12 +270,12 @@ RuntimeSystem::roseFunctionCall(int count, ...) {
     int size = strtol(args[2].c_str(),NULL,10);
     cerr << " Checking <" << mem1 << ">  and <" << mem2 << ">    size: " << size << "  " << args[2]<< endl;
     cerr << "No buffer overflow" << endl;
-//    callExit();
+    //    callExit();
   } else {
 
-  // if before ==true
-  // add the current varRef (name) on stack
-  // else remove from stack
+    // if before ==true
+    // add the current varRef (name) on stack
+    // else remove from stack
     if (before) {
       RuntimeVariables* var = new RuntimeVariables(name,mangl_name);
       runtimeVariablesOnStack.push_back(var);
