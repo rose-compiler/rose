@@ -2,6 +2,8 @@
 
 #ifndef ROSE_H
 #define ROSE_H
+
+// DQ (4/21/2009): Andreas needs to add a comment about what this is for...
 #define BOOST_WAVE_PREPROCESS_PRAGMA_BODY 1
 
 #if 0
@@ -14,7 +16,7 @@ namespace ELF{
 }
 #endif
 
-
+// DQ (4/21/2009): This header file contains the definitions of the IR nodes.
 #include "sage3.h"
 
 // DQ (3/22/2009): This is already included in sage3.h"
@@ -157,6 +159,8 @@ namespace ELF{
 #include "IntelPinSupport.h"
 #endif
 
+// DQ (4/20/2009): Added support to optionally get more information out about new delete operators.
+// #define COMPILE_DEBUG_STATEMENTS 1
 
 // ifndef ROSE_H
 #endif

@@ -35,7 +35,15 @@ HEADER_START
           void operator delete (void* pointer, size_t size);
 
        // DQ (4/5/2007): This is not the correct operator that we want, but appears to be required to compile ROSE with ROSE.
-          void operator delete (void* pointer) { $CLASSNAME::operator delete (pointer,sizeof($CLASSNAME)); };
+          void operator delete (void* pointer)
+             {
+            // DQ (4/20/2009): Added comment and assertion to make sure this is not executed!
+            // printf ("This is not the correct operator that we want, but appears to be required to compile ROSE with ROSE \n");
+            // ROSE_ASSERT(false);
+
+            // This is the generated delete operator...
+               $CLASSNAME::operator delete (pointer,sizeof($CLASSNAME));
+             }
 
        // DQ (1/2/2006): Compute the amount of memory allocated for this type within the AST.
       /*! \brief Returns the total number of IR nodes of this type */

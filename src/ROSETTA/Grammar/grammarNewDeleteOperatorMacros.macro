@@ -45,11 +45,17 @@ void *$CLASSNAME::operator new ( size_t Size )
 
 #if COMPILE_DEBUG_STATEMENTS
      if (ROSE_DEBUG > 1)
-          printf ("Call $CLASSNAME::operator new! Memory_Block_Index = %d \n",Memory_Block_Index);
+          printf ("Call $CLASSNAME::operator new! $CLASSNAME_Memory_Block_List.size() = %zu  Size(%zu) != sizeof($CLASSNAME)(%zu) \n",$CLASSNAME_Memory_Block_List.size(),Size,sizeof($CLASSNAME));
 #endif
 
 #if USE_CPP_NEW_DELETE_OPERATORS
      $CLASSNAME_allocation_mutex.unlock();
+
+#if COMPILE_DEBUG_STATEMENTS
+     if (ROSE_DEBUG > 1)
+          printf ("Calling ROSE_MALLOC(Size = %zu) \n",Size);
+#endif
+
      return ROSE_MALLOC(Size);
 #else
   // Because of the way the size of the memory blocks doubles in size
@@ -76,7 +82,16 @@ void *$CLASSNAME::operator new ( size_t Size )
        // It would have to be done within the context of the derived objects
        // operator new!  So we just return the following!
 
-       // printf ("In $CLASSNAME::operator new: Calling ROSE_MALLOC because Size(%d) != sizeof($CLASSNAME)(%d) \n",Size,sizeof($CLASSNAME));
+#if COMPILE_DEBUG_STATEMENTS
+          if (ROSE_DEBUG > 1)
+               printf ("In $CLASSNAME::operator new: Calling ROSE_MALLOC because Size(%zu) != sizeof($CLASSNAME)(%zu) \n",Size,sizeof($CLASSNAME));
+
+          printf ("Inside of $CLASSNAME::operator new: sizeof(int)(%zu) \n",sizeof(int));
+          printf ("Inside of $CLASSNAME::operator new: sizeof(bool)(%zu) \n",sizeof(bool));
+          printf ("Inside of $CLASSNAME::operator new: sizeof(SgSharedVector<unsigned char>)(%zu) \n",sizeof(SgSharedVector<unsigned char>));
+          printf ("Inside of $CLASSNAME::operator new: sizeof(SgFileContentList)(%zu) \n",sizeof(SgFileContentList));
+          printf ("Inside of $CLASSNAME::operator new: sizeof(SgAsmGenericFormat::fileDetails)(%zu) \n",sizeof(SgAsmGenericFormat::fileDetails));
+#endif
 
           $CLASSNAME_allocation_mutex.unlock();
           return ROSE_MALLOC(Size);
@@ -90,7 +105,7 @@ void *$CLASSNAME::operator new ( size_t Size )
             // CLASS_ALLOCATION_POOL_SIZE *= 2;
 #if COMPILE_DEBUG_STATEMENTS
                if (ROSE_DEBUG > 1)
-                    printf ("Call ROSE_MALLOC for Array Memory_Block_Index = %d \n",Memory_Block_Index);
+                    printf ("Call ROSE_MALLOC for Array $CLASSNAME_Memory_Block_List.size() = %zu \n",$CLASSNAME_Memory_Block_List.size());
 #endif
 
             // Use new operator instead of ROSE_MALLOC to avoid Purify FMM warning
@@ -103,7 +118,7 @@ void *$CLASSNAME::operator new ( size_t Size )
 
 #if COMPILE_DEBUG_STATEMENTS
                if (ROSE_DEBUG > 1)
-                    printf ("Called ROSE_MALLOC for Array Memory_Block_Index = %d \n",Memory_Block_Index);
+                    printf ("Called ROSE_MALLOC for Array $CLASSNAME_Memory_Block_List.size() = %zu \n",$CLASSNAME_Memory_Block_List.size());
 #endif
 
 #if EXTRA_ERROR_CHECKING
