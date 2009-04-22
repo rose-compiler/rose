@@ -1,3 +1,44 @@
+2009-04-21 23:40  panas2
+
+	* [r5437] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: work on RTED
+
+2009-04-21 22:05  dquinlan
+
+	* [r5435]
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/Makefile.am: Added
+	  path to A++ directory for outlining tests.
+
+2009-04-21 21:40  dquinlan
+
+	* [r5434]
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/Makefile.am:
+	  Commented out use of valgrind in another directory (from testing
+	  of 32-bit ODR violation).
+
+2009-04-21 20:26  dquinlan
+
+	* [r5431] /trunk/ROSE/src/frontend/SageIII/rose_attributes_list.C:
+	  Fixed buffer underflow (as reported by valgrind).
+
+2009-04-21 20:15  dquinlan
+
+	* [r5430]
+	  /trunk/ROSE/developersScratchSpace/Dan/Cxx_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/Makefile.am,
+	  /trunk/ROSE/projects/BinQ/Makefile.am,
+	  /trunk/ROSE/projects/binCompass/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/fortranTests/Makefile.am:
+	  Commented out use of valgrind (left over from debugging 32-bit
+	  ODR violation).
+	  
+	  Detailed changes in this commit:
+	  1) This fixes the incompatability between Fortran (via the JVM)
+	  and the SSL library in
+	  the outlining tests.
+
 2009-04-21 19:32  dquinlan
 
 	* [r5428] /trunk/ROSE/src/frontend/SageIII/sage3.h: Changed #error
