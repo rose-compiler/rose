@@ -1,3 +1,16 @@
+2009-04-22 18:45  liao6
+
+	* [r5448]
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/npb2.3-omp-c/bin/bt.S,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/npb2.3-omp-c/bin/cg.S,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/npb2.3-omp-c/bin/ep.S,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/npb2.3-omp-c/bin/ft.S,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/npb2.3-omp-c/bin/is.S,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/npb2.3-omp-c/bin/lu.S,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/npb2.3-omp-c/bin/mg.S,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/npb2.3-omp-c/bin/sp.S:
+	  removed some generated executable files
+
 2009-04-21 23:40  panas2
 
 	* [r5437] /trunk/ROSE/projects/RTED/Makefile.am,
