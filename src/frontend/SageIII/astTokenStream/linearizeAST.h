@@ -10,11 +10,7 @@
 class LinearizeInheritedAttribute
    {
      public:
-          int loopNestDepth;
-
-          bool inExpressionSubTree;
-
-          bool mustBeInherited;
+       bool mustBeInherited;
           LinearizeInheritedAttribute ();
           LinearizeInheritedAttribute ( const LinearizeInheritedAttribute & X );
    };
