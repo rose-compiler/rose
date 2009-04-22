@@ -9,9 +9,10 @@ ComparisonLinearizationAttribute::ComparisonLinearizationAttribute()
 
 
 
-ComparisonLinearization::ComparisonLinearization(std::vector<SgNode*> argNodes, Sg_File_Info* argFileInfo){
+ComparisonLinearization::ComparisonLinearization(std::vector<SgNode*> argNodes, std::vector<SgNode*> defNodes, Sg_File_Info* argFileInfo){
 ROSE_ASSERT(argFileInfo!=NULL);
 nodeToFilter = argNodes;
+nodeToKeep  = defNodes;
 posOfMacroCall = argFileInfo;
 //constFoldTraverse = TraverseBoth;
 for(int i =0; i < argNodes.size() ; i++){
@@ -184,10 +185,13 @@ ComparisonLinearizationAttribute ComparisonLinearization::evaluateSynthesizedAtt
     }else
       synAttrib.nodes.push_back(astNode);
 
-  }else if( find(nodeToFilter.begin(),nodeToFilter.end(),astNode) == nodeToFilter.end() &&
-      nodeFromMacroDef == true )
+  }else if( 
+      find(nodeToFilter.begin(), nodeToFilter.end(), astNode) == nodeToFilter.end() &&
+      
+      find(nodeToKeep.begin(),nodeToKeep.end(),astNode) != nodeToKeep.end() )
   {
     synAttrib.nodes.push_back(astNode);
+    std::cout << "Pushing back " << astNode->class_name() << " "<< astNode->unparseToString() << std::endl;
   }
 
 
@@ -325,7 +329,9 @@ std::vector<SgNode*> queryForLine(SgNode* node, Sg_File_Info* compareFileInfo){
 
 	  int line = fileInfo->get_line();
 	  int col  = fileInfo->get_col();
-          std::cout << " construct: " << node->class_name() <<  "line " << line << " col " << col << std::endl;
+          std::cout << " construct: " << node->class_name() /*<<  " filename: " << fileInfo->get_filenameString() */
+                    << "line " << line << " col " << col 
+                    << /*"c-filename" << compareFilename <<*/ " c-line " << compareLine << " c-col " << compareCol << std::endl;
 
      if( isSgIfStmt(node) != NULL ){
 	  SgIfStmt* ifStmt         = isSgIfStmt(node);
@@ -376,13 +382,16 @@ std::vector<SgNode*> queryForLine(SgNode* node, Sg_File_Info* compareFileInfo){
 
 
 	  std::string filename = fileInfo->get_filenameString();
-//std::cout << "Construct was found at node position:" << node << " " << node->class_name() << " Compiler generated: "<< (fileInfo->isCompilerGenerated() ? "true" : "false") << " filename: " << filename << " l" << line << " c" << col << std::endl;
+std::cout << "Construct was found at node position:" << node << " " << node->class_name() << " Compiler generated: "<< (fileInfo->isCompilerGenerated() ? "true" : "false") << " filename: " << filename << " l" << line << " c" << col << std::endl;
+
+//          if(fileInfo->isCompilerGenerated() == true)
+//            return returnList;
 
 	  if( (line == compareLine) && ( col == compareCol ) && (filename == compareFilename) ){
 
 
             
-  //             std::cout << "Construct was found at node position:" << node->class_name() << " filename: " << filename << " l" << line << " c" << col << std::endl;
+ //              std::cout << "Construct was found at node position:" << node->class_name() << " filename: " << filename << " l" << line << " c" << col << std::endl;
                returnList.push_back(node);
 
 	  }else if(isSgVarRefExp(node) != NULL){

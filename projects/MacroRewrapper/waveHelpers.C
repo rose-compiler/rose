@@ -478,7 +478,7 @@ checkIfNodeMaps(token_type tok, SgNode* node)
 				nodeMaps = true;
 			break;
 		case T_ASSIGN:
-			if ( isSgAssignOp(node) != NULL )
+			if ( isSgAssignOp(node) != NULL | isSgAssignInitializer(node) != NULL )
 				nodeMaps = true;
 			break;
 		case T_ANDASSIGN:

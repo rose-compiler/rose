@@ -28,6 +28,8 @@ class ComparisonLinearization : public SgBottomUpProcessing<ComparisonLinearizat
      private:
        std::vector<SgNode*> nodes;
        std::vector<SgNode*> nodeToFilter;
+       std::vector<SgNode*> nodeToKeep;
+
        Sg_File_Info* posOfMacroCall;
 
 
@@ -37,9 +39,8 @@ class ComparisonLinearization : public SgBottomUpProcessing<ComparisonLinearizat
 
 //       bool skipNode(SgNode* node);
 
-
      public:
-       ComparisonLinearization(std::vector<SgNode*> argNodes, Sg_File_Info* argFileInfo);
+       ComparisonLinearization(std::vector<SgNode*> argNodes, std::vector<SgNode*> defNodes, Sg_File_Info* argFileInfo);
 
 
 

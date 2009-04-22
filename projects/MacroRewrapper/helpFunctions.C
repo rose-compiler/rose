@@ -680,7 +680,7 @@ findClassDeclarationFromType (SgNodePtrVector nodeVector, SgType * sageType)
        vector<SgType*> typeVectorFromType(SgType* sageType){
 	           vector<SgType*> typeVector;
 			
-			ROSE_ASSERT (sageType != NULL);
+		   if(sageType == NULL) return typeVector;
 			SgType* baseType = sageType; 
 		    SgType* previousBaseType = NULL;
            
@@ -706,4 +706,21 @@ findClassDeclarationFromType (SgNodePtrVector nodeVector, SgType * sageType)
 		   return typeVector;
 
        };
-		
+	
+std::vector<SgType*>
+getTypesFromNode(SgNode* node)
+{
+
+  switch(node->variantT())
+  {
+      case V_SgInitializedName:
+           return typeVectorFromType(isSgInitializedName(node)->get_type());
+      case V_SgCastExp:
+           return typeVectorFromType(isSgCastExp(node)->get_type() );
+      case V_SgSizeOfOp:
+           return typeVectorFromType(isSgSizeOfOp(node)->get_operand_type() );
+      default:
+           return std::vector<SgType*>();
+
+  };
+}

@@ -20,6 +20,9 @@ vector<SgType*> typeVectorFromType(SgType* sageType);
 
 string typeStringFromType(SgType* sageType);
 
+std::vector<SgType*>
+getTypesFromNode(SgNode* node);
+
 class typeInterpreter {
 	public: 
 		//operator<<;
