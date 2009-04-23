@@ -1,3 +1,25 @@
+2009-04-22 22:53  saebjornsen1
+
+	* [r5453] /trunk/ROSE/projects/MacroRewrapper/Makefile.am,
+	  /trunk/ROSE/projects/MacroRewrapper/argumentFilterer.C,
+	  /trunk/ROSE/projects/MacroRewrapper/argumentFilterer.h,
+	  /trunk/ROSE/projects/MacroRewrapper/helpFunctions.C,
+	  /trunk/ROSE/projects/MacroRewrapper/helpFunctions.h,
+	  /trunk/ROSE/projects/MacroRewrapper/macroRewrapper.C,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test10.c,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test10.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test6.c.linearization.out,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test7.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test8.c,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test8.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test9.c,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test9.c.mapping.out,
+	  /trunk/ROSE/projects/MacroRewrapper/tests/test9.c.out,
+	  /trunk/ROSE/projects/MacroRewrapper/waveHelpers.C,
+	  /trunk/ROSE/src/frontend/SageIII/astTokenStream/linearizeAST.C,
+	  /trunk/ROSE/src/frontend/SageIII/astTokenStream/linearizeAST.h:
+	  Improvements to the macro rewrapper and the AST linearization
+
 2009-04-22 18:45  liao6
 
 	* [r5448]
