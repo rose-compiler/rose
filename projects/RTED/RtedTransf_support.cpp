@@ -23,6 +23,11 @@ RtedTransformation::getStatement(SgExpression* exp) {
   return stmt;
 }
 
+SgExpression*
+RtedTransformation::buildString(std::string name) {
+  SgExpression* exp = buildCastExp(buildStringVal(name),buildPointerType(buildCharType()));
+  return exp;
+}
 
 
 /****************************************

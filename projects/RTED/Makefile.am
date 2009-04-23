@@ -28,7 +28,7 @@ runtimeCheck_SOURCES = runtimeCheck.cpp \
                        RuntimeSystem.cpp \
                        RtedSymbols.cpp \
                        RtedTransf_array.cpp RtedTransf_prolog.cpp \
-                       RtedTransf_support.cpp
+                       RtedTransf_support.cpp RtedTransf_funccall.cpp
 
 runtimeCheck_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS) 
 
@@ -389,8 +389,27 @@ check-C-array-onefile: compile_gcc_file1
 	./rose_test_c_E_1_1_a
 	./rose_rose_test_c_E_1_1_a
 
+deleteAllbinfiles:
+	@echo "Deleting all generated bin files in RTED directory"
+	dir=$(rted_path)/C/array_index_out_of_bound/ ; \
+	if [ "" == "`find $$dir -name "*.bin"`" ]; then \
+	   echo "No bin files exist in $$dir" ; \
+	else \
+	   echo "Deleting bin files in $$dir" ; \
+	   echo "rm $${dir}*.bin" ; \
+	   rm $${dir}*.bin ; \
+	fi; \
+	dir=$(rted_path)/C/string_errors/ ; \
+	if [ "" == "`find $$dir -name "*.bin"`" ]; then \
+	   echo "No bin files exist in $$dir" ; \
+	else \
+	   echo "Deleting bin files in $$dir" ; \
+	   echo "rm $${dir}*.bin" ; \
+	   rm $${dir}*.bin ; \
+	fi;
+
 # DQ (7/25/2005): The current changes to the AST break these test programs:
-check-local: runtimeCheck $(TESTCODES) check-C-array-onefile check-C-array-parallel 
+check-local: runtimeCheck $(TESTCODES) check-C-array-onefile deleteAllbinfiles check-C-array-parallel 
 	@echo "***************************************************************************************"
 	@echo "*** ROSE/projects/runtimeErrorCheck: make check rule complete (terminated normally) ***"
 	@echo "***************************************************************************************"

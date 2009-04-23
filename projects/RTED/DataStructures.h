@@ -2,6 +2,7 @@
 #define RTED_DS_H
 #include <string>
 
+
 class RTedArray {
  public:
   bool stack;
@@ -55,6 +56,7 @@ class RTedFunctionCall {
 
 class RtedArguments {
  public:
+  SgStatement* stmt;
   std::string name;
   std::string mangled_name;
   SgInitializedName* initName;
@@ -63,18 +65,25 @@ class RtedArguments {
   RtedArguments(std::string funcn, 
 		std::string mangl,
 		SgExpression* var,
+		SgStatement* stm,
 		std::vector<SgExpression*> args) {
+    ROSE_ASSERT(var);
+    stmt = stm;
     name=funcn;
     mangled_name=mangl;
     //initName=init;
     varRefExp=var;
     arguments = args;
-    ROSE_ASSERT(var);
     if (isSgVarRefExp(var)) {
       initName = isSgVarRefExp(var)->get_symbol()->get_declaration();
       ROSE_ASSERT(initName);
     }
  }
+  std::string toString() {
+    return "name: " + name + "  mangl_name: " +mangled_name +  " varRefExp : " + 
+      varRefExp->unparseToString() + " at addr: " + RoseBin_support::ToString(varRefExp)+
+      "  stmt: "+stmt->unparseToString() + " at addr: " + RoseBin_support::ToString(stmt);
+  }
   virtual ~RtedArguments() {}
 };
 

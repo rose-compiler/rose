@@ -9,7 +9,7 @@
 #include <fstream>
 #include <stdio.h>
 #include <stdarg.h> 
-
+#include <assert.h>
 
 #include "RuntimeSystem.h"
 
@@ -43,31 +43,35 @@ RuntimeSystem::RuntimeSystem()
   filename="";
   oldFilename="";
   fileNr=0;
-
+  arrayDebug=false;
 }
 
-  std::string 
-  RuntimeSystem::resBool(bool val) {                                               
-    if (val)                                                                      
-      return "true";                                                           
-    return "false";                                                          
-  }
 
 
-std::string
-RuntimeSystem::findLastUnderscore(std::string& s) {
+// ***************************************** HELPER FUNCTIONS *************************************
+std::string 
+RuntimeSystem::resBool(bool val) {                                               
+  if (val)                                                                      
+    return "true";                                                           
+  return "false";                                                          
+}
+
+
+char*
+RuntimeSystem::findLastUnderscore(char* s) {
+  string ss = roseConvertToString(s);
   string name = "";
-  int pos = s.rfind("_");
+  int pos = ss.rfind("_");
   if (pos!=(int)std::string::npos) {
-    name = s.substr(pos,s.length());
+    name = ss.substr(pos,ss.length());
   }
-  return name;
+  return (char*) name.c_str();
 }
 
 void
-RuntimeSystem::callExit() {
+RuntimeSystem::callExit(char* filename, char* line, char* reason) {
   // violation Found ... dont execute it - exit normally
-  cerr << "violation found. exit program." << endl;
+  cerr << "Violation found: " << reason << "    in file : " << filename << " at line: " << line << endl;
   exit(0);
 }
 
@@ -82,11 +86,11 @@ RuntimeSystem::roseConvertToString(T t) {
 char* 
 RuntimeSystem::roseConvertIntToString(int t) {
   std::string conv = roseConvertToString(t);
-  std::cerr << "String converted from int : " << t << " " << conv << std::endl;
   int size = conv.size();
   char* text = (char*)malloc(size);
   if (text)
     strcpy(text,conv.c_str());
+  std::cerr << "String converted from int : " <<  text << std::endl;
   return text;
 }
 
@@ -107,18 +111,47 @@ RuntimeSystem::roseRtedClose() {
     std::cerr <<"RtedClose:: Violation found. Good! " << filename << std::endl;
 }
 
+// ***************************************** HELPER FUNCTIONS *************************************
+
+
+
+
+
+
+
+
+// ***************************************** ARRAY FUNCTIONS *************************************
+
+char*
+RuntimeSystem::findVariablesOnStack(char* name) {
+  char* mang_name = NULL;
+  std::vector<RuntimeVariables*>::const_reverse_iterator stack = 
+    runtimeVariablesOnStack.rbegin();
+  for (;stack!=runtimeVariablesOnStack.rend();++stack) {
+    RuntimeVariables* rv = *stack;
+    if (strcmp(name,rv->name)==0) {
+      mang_name=rv->mangled_name;
+    }
+  }
+  return mang_name;
+}
+
+
 
 /* -----------------------------------------------------------
  * create array and store its size
  * -----------------------------------------------------------*/
 void
-RuntimeSystem::roseCreateArray(std::string name, int dimension, bool stack, long int sizeA, long int sizeB, std::string filename, int line ){
-  cout << fileNr << ": >>> Called : roseCreateArray : " << findLastUnderscore(name) << " dim"<< dimension <<
-    " - [" << sizeA << "][" << sizeB << "] file : " << filename << " line : " << line  << endl;
+RuntimeSystem::roseCreateArray(char* name, int dimension, bool stack, long int sizeA, long int sizeB, 
+			       char* filename, char* line ){
+  if (arrayDebug)
+    cout << fileNr << ": >>> Called : roseCreateArray : " << findLastUnderscore(name) << " dim"<< dimension <<
+      " - [" << sizeA << "][" << sizeB << "] file : " << filename << " line : " << line  << endl;
   oldFilename=filename;
   if (dimension==1) {
     arrays1D[name]=sizeA;
-    cerr << ".. Creating 1Dim array - size : " << sizeA << endl;
+    if (arrayDebug)
+      cerr << ".. Creating 1Dim array - size : " << sizeA << endl;
   }
   else if (dimension==2) {
     // check if exist
@@ -128,28 +161,30 @@ RuntimeSystem::roseCreateArray(std::string name, int dimension, bool stack, long
       // array exists
       array = it->second;
       long int totalsize = array->size1;
-      cerr << "..    Expanding 2nd-run 2Dim array - sizeA : " << sizeA << "  sizeB : " << sizeB << endl;
+      if (arrayDebug)
+	cerr << "..    Expanding 2nd-run 2Dim array - sizeA : " << sizeA << "  sizeB : " << sizeB << endl;
       if (sizeA<0 || sizeA>=totalsize) {
-	cerr << " Violation detected :  Array too small to allocate more memory " << endl;
+	  cerr << " Violation detected :  Array too small to allocate more memory " << endl;
 	violation=true;
 	violationNr++;
 	// this is a weird error, lets stop here for now.
 	exit(1);
-	//	callExit();
       } else {
-	cerr << " >>> CREATING Array : arr ["<<totalsize<<"]["<<sizeB<<"]"<< "  alloc : ["<<sizeA<<"]="<<sizeB<<endl;
+	if (arrayDebug)
+	  cerr << " >>> CREATING Array : arr ["<<totalsize<<"]["<<sizeB<<"]"<< "  alloc : ["<<sizeA<<"]="<<sizeB<<endl;
 	array->allocate(sizeA,sizeB); //arr[sizeA][sizeB]
       }
     } else {
-
       // new array
       array = new Array2D(sizeA);// ptr [][] = malloc (20)   20 == totalsize
       arrays2D[name]=array;
-      cerr << ".. Creating 2Dim array - size : " << sizeA << endl;
+      if (arrayDebug)
+	cerr << ".. Creating 2Dim array - size : " << sizeA << endl;
       if (sizeB!=-1) {
 	// expand this stack array
 	for (int i=0;i<sizeA;++i)
 	  array->allocate(i,sizeB); //arr[i][sizeB]
+      if (arrayDebug)
 	cerr << "..    Expanding 2Dim array - sizeA : " << sizeA << "  sizeB : " << sizeB << endl;
       }
     }
@@ -160,13 +195,14 @@ RuntimeSystem::roseCreateArray(std::string name, int dimension, bool stack, long
  * check if array is out of bounds
  * -----------------------------------------------------------*/
 void
-RuntimeSystem::roseArrayAccess(std::string name, int posA, int posB, std::string filename, int line){
+RuntimeSystem::roseArrayAccess(char* name, int posA, int posB, char* filename, char* line){
   filename=filename;
-  cout << "    Called : roseArrayAccess : " << findLastUnderscore(name) << " ... ";
+  if (arrayDebug) 
+    cout << "    Called : roseArrayAccess : " << findLastUnderscore(name) << " ... ";
 
   // check the stack if the variable is part of a function call
-  std::string mangl_name=findVariablesOnStack(name);  
-  if (mangl_name!="not found")
+  char* mangl_name=findVariablesOnStack(name);  
+  if (mangl_name)
     name=mangl_name;
 
   map<string,int>::const_iterator it = arrays1D.find(name);
@@ -178,13 +214,15 @@ RuntimeSystem::roseArrayAccess(std::string name, int posA, int posB, std::string
       exit(1);
     }
     if (posA>=size || posA<0) {
-      cout << "  >>>>>> Violation detected : Array size: " << size << " accessing: " << posA <<
-	"  in : " << filename << "  line: " << line << endl;
-      *myfile << "  >>>>>> Violation detected : Array size: " << size << " accessing: " << posA <<
-	"  in : " << filename << "  line: " << line << endl;
+      if (arrayDebug) {
+	cout << "  >>>>>> Violation detected : Array size: " << size << " accessing: " << posA <<
+	  "  in : " << filename << "  line: " << line << endl;
+	*myfile << "  >>>>>> Violation detected : Array size: " << size << " accessing: " << posA <<
+	  "  in : " << filename << "  line: " << line << endl;
+      }
       violation=true;
       violationNr++;
-      callExit();
+      callExit(filename, line, (char*)"1Dim: Accessing array out of bounds");
     }
   }
 
@@ -194,16 +232,19 @@ RuntimeSystem::roseArrayAccess(std::string name, int posA, int posB, std::string
     Array2D* array = it2->second;
     int sizeA = array->size1;
     int sizeB = array->getSize(posA);
-    cout << "  Found 2Dim array :  size: [" << sizeA << "][" << sizeB << "]  pos: [" << posA << "][" << posB << "]" <<endl;
+    if (arrayDebug) 
+      cout << "  Found 2Dim array :  size: [" << sizeA << "][" << sizeB << "]  pos: [" << posA << "][" << posB << "]" <<endl;
     // allow arr[posA][posB] && arr[posA]  both 2Dim!
     if ((posA>=sizeA || posA<0) || posB>=sizeB || posB<0) {
-      cout << "  >>>>>> Violation detected : Array size: [" << sizeA << "]["<<sizeB<<"] accessing: ["  << posA <<
-        "][" << posB << "]  in : " << filename << "  line: " << line << endl;
-      *myfile << "  >>>>>> Violation detected : Array size: [" << sizeA << "]["<<sizeB<<"] accessing: ["  << posA <<
-        "][" << posB << "]  in : " << filename << "  line: " << line << endl;
+      if (arrayDebug) {
+	cout << "  >>>>>> Violation detected : Array size: [" << sizeA << "]["<<sizeB<<"] accessing: ["  << posA <<
+	  "][" << posB << "]  in : " << filename << "  line: " << line << endl;
+	*myfile << "  >>>>>> Violation detected : Array size: [" << sizeA << "]["<<sizeB<<"] accessing: ["  << posA <<
+	  "][" << posB << "]  in : " << filename << "  line: " << line << endl;
+      }
       violation=true;
       violationNr++;
-      callExit();
+      callExit(filename, line, (char*)"2Dim: Accessing array out of bounds");
     }
   } 
   //  cerr << " Done with 2Dim array" << endl;
@@ -215,64 +256,119 @@ RuntimeSystem::roseArrayAccess(std::string name, int posA, int posB, std::string
 
 }
 
-#if 0
+// ***************************************** ARRAY FUNCTIONS *************************************
+
+
+
+
+
+
+
+
+// ***************************************** FUNCTION CALL *************************************
+
 void 
-RuntimeSystem::roseFunctionCall(std::string name, std::string mangl_name, bool before) {
-  // if before ==true
-  // add the current varRef (name) on stack
-  // else remove from stack
-  if (before) {
-    RuntimeVariables* var = new RuntimeVariables(name,mangl_name);
-    runtimeVariablesOnStack.push_back(var);
+RuntimeSystem::handleNormalFunctionCalls(std::vector<char*>& args, char* filename, char* line) {
+  cerr << "Runtimesystem :: normalFunctionCall" << endl;
+  assert(args.size()>=2);
+  char* mem1 = args[0];
+  char* mem2 = args[1];
+ assert(mem1);
+ assert(mem2);
+  int size = 0;
+  if (args.size()>2)
+    size = strtol(args[2],NULL,10);
+  char* end1 = NULL;
+  char* end2 = NULL;
+  for (char *iter = mem1; *iter != '\0'; ++iter) {
+    end1 = iter;
   }
-  else {
-    RuntimeVariables* var = runtimeVariablesOnStack.back();
-    runtimeVariablesOnStack.pop_back();
-    delete var;
+  for (char *iter2 = mem2; *iter2 != '\0'; ++iter2) {
+    end2 = iter2;
   }
-  cerr << "roseFunctionCall :: " << name << " " << mangl_name << " " << before << endl;
+ assert(end1);
+ assert(end2);
+    
+  // check if string1 and string2 overlap. Dont allow memcopy on such
+  int sizeMem1 = (end1-mem1)+1;
+  int sizeMem2 = (end2-mem2)+1;
+  cerr << " >>> FunctionCall : Checking mem1=<" << mem1 << "> (" << 
+    sizeMem1 << ")  and  mem2=<" << mem2 << "> ("<< sizeMem2 <<  
+    ")   sizeOp: " << size << "  " << endl;
+  if (end1 >= mem2 && mem1<=end2) {
+    cerr << " >>>> Error : Memory regions overlap!   Size1: " << sizeMem1 << "  Size2: " << sizeMem2 << endl;
+    callExit(filename, line, (char*)"Memory regions overlap");  
+  } else if (size>0 && (size>sizeMem1 || size>sizeMem2)) {
+    // make sure that if the strings do not overlap, they are both smaller than the amount of chars to copy
+    cerr << " >>>> Error : Memcopy is invalid : size = " << size << "   Size1: " << sizeMem1 << "  Size2: " << sizeMem2 << endl;
+    char* res1 = ((char*)"Invalid Operation,  operand1 size=");
+    char* res2 = ((char*)"  operand2 size=");
+    int sizeInt = 2*sizeof(int);
+    char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ 1);
+    sprintf(res,"%s%d%s%d",res1,sizeMem1,res2,sizeMem2);
+    callExit(filename, line, res);
+  } else if (size==0) {
+    // strcpy (mem1, mem2)
+    // make sure that size of mem2 is <= mem1
+    if (sizeMem1<sizeMem2) {
+      cerr << " >>>> Error : Memcopy is invalid : size = " << size << "   Size1: " << sizeMem1 << "  Size2: " << sizeMem2 << endl;
+      char* res1 = ((char*)"Invalid Operation,  operand1 size=");
+      char* res2 = ((char*)"  operand2 size=");
+      char* res3 = ((char*)"  operand3 =");
+      int sizeInt = 3*sizeof(int);
+      char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ strlen(res3)+ 1);
+      sprintf(res,"%s%d%s%d%s%d",res1,sizeMem1,res2,sizeMem2,res3,size);
+      callExit(filename, line, res);
+    }
+  }
+  cerr << "No problem found!" << endl;
 }
-#endif
 
 void 
 RuntimeSystem::roseFunctionCall(int count, ...) {
   cerr << "Runtimesystem :: functionCall" << endl;
-  //printf("returning : %s\n",test); 
+  // handle the parameters within this call
   va_list vl;
   va_start(vl,count);
-  std::vector<std::string> args;
-  string name = "";
-  string mangl_name = "";
-  string beforeStr = "";
-  string scope_name = "";
+  std::vector<char*> args;
+  char* name = NULL;
+  char* mangl_name = NULL;
+  char* beforeStr = NULL;
+  char* scope_name = NULL;
+  char* filename = NULL;
+  char* line=NULL;
   bool before=false;
-  cerr << "arguments : " <<  count << endl;
+  //cerr << "arguments : " <<  count << endl;
   for (int i=0;i<count;i++)    {
-    string val= (string) va_arg(vl,char*);
-    cerr << " ... " << val << endl;
+    char* val=  va_arg(vl,char*);
+    //cerr << " ... " << val << endl;
     if (i==0) name = val;
-    else if (i==1) mangl_name = val;
-    else if (i==2) scope_name = val;
+    else if (i==1) mangl_name =  val;
+    else if (i==2) scope_name =  val;
     else if (i==3) {
       beforeStr = val;
-      if (beforeStr=="true")
+      if (strcmp(beforeStr,"true")==0)
 	before=true;
-    } else {
+    }
+    else if (i==4) filename =  val;
+    else if (i==5) line = val;
+    else {
       args.push_back(val);
     }
   }
   va_end(vl); 
 
-  if (name=="memcpy") {
-    cerr << "Runtimesystem :: found memcopy" << endl;
-    string mem1 = args[0];
-    string mem2 = args[1];
-    int size = strtol(args[2].c_str(),NULL,10);
-    cerr << " Checking <" << mem1 << ">  and <" << mem2 << ">    size: " << size << "  " << args[2]<< endl;
-    cerr << "No buffer overflow" << endl;
-    //    callExit();
-  } else {
 
+  cerr << "roseFunctionCall :: " << name << " " << mangl_name << " " << before << endl;
+  if (before && ( strcmp(name,"memcpy")==0 || 
+		  strcmp(name ,"memmove")==0 || 
+		  strcmp(name ,"strcpy")==0 ||
+		  strcmp(name ,"strncpy")==0 ||
+		  strcmp(name ,"strcat")==0
+		  )) {
+    handleNormalFunctionCalls(args, filename, line);
+  } else {
+    // we want to remember the varRefs that are passed via function calls to functions
     // if before ==true
     // add the current varRef (name) on stack
     // else remove from stack
@@ -286,23 +382,10 @@ RuntimeSystem::roseFunctionCall(int count, ...) {
       delete var;
     }
   }
-
-  cerr << "roseFunctionCall :: " << name << " " << mangl_name << " " << before << endl;
 }
 
-std::string
-RuntimeSystem::findVariablesOnStack(std::string name) {
-  std::string mang_name = "not found";
-  std::vector<RuntimeVariables*>::const_reverse_iterator stack = 
-    runtimeVariablesOnStack.rbegin();
-  for (;stack!=runtimeVariablesOnStack.rend();++stack) {
-    RuntimeVariables* rv = *stack;
-    if (name==rv->name) {
-      mang_name=rv->mangled_name;
-    }
-  }
-  return mang_name;
-}
+
+// ***************************************** FUNCTION CALL *************************************
 
 
 

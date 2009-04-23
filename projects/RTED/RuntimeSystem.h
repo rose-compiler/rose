@@ -7,17 +7,26 @@
 #include <sstream>
 
 
+/* -----------------------------------------------------------
+ * tps : 6th April 2009: RTED
+ * Contains variable names for variables that are passed via functions
+ * -----------------------------------------------------------*/
 class RuntimeVariables {
  public:
-  std::string name;
-  std::string mangled_name;
-  RuntimeVariables(std::string n, std::string m_n) {
+  char* name;
+  char* mangled_name;
+  RuntimeVariables(char* n, char* m_n) {
     name = n;
     mangled_name=m_n;
   };
   virtual ~RuntimeVariables(){}
 };
 
+
+/* -----------------------------------------------------------
+ * tps : 6th April 2009: RTED
+ * Store information about arrays and their sizes
+ * -----------------------------------------------------------*/
 class Array2D {
  public:
   int size1;
@@ -50,13 +59,16 @@ class RuntimeSystem  {
   RuntimeSystem& operator= (const RuntimeSystem&);
  private:
   static RuntimeSystem* pinstance;
+  bool arrayDebug;
+
+  void handleNormalFunctionCalls(std::vector<char*>& args, char* filename, char* line);
 
   std::vector<RuntimeVariables*> runtimeVariablesOnStack;
-  std::string findVariablesOnStack(std::string name);
+  char* findVariablesOnStack(char* name);
 
-  void callExit();
+  void callExit(char* filename, char* line, char* reason);
   
-  std::string findLastUnderscore(std::string& s);
+  char* findLastUnderscore(char* s);
   // a map of all arrays that were created
   std::map<std::string, int> arrays1D;
   std::map<std::string, Array2D*> arrays2D;
@@ -75,10 +87,10 @@ class RuntimeSystem  {
   void roseRtedClose();
 
   // create array and store its size
-  void roseCreateArray(std::string name, int dimension, bool stack, 
-		       long int sizeA, long int sizeB, std::string filename, int line);
+  void roseCreateArray(char* name, int dimension, bool stack, 
+		       long int sizeA, long int sizeB, char* filename, char* line);
   // check if array is out of bounds
-  void roseArrayAccess(std::string name, int posA, int posB, std::string filename, int line);
+  void roseArrayAccess(char* name, int posA, int posB, char* filename, char* line);
   
   void  roseFunctionCall(int count, ...);
   template<typename T> std::string roseConvertToString(T t);

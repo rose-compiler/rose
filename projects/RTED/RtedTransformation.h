@@ -20,8 +20,8 @@ class RtedTransformation : public AstSimpleProcessing {
   // remember variables that were used to create an array. These cant be reused for array usage calls
   std::vector<SgVarRefExp*> createVariables;
   // ------------------------ string -----------------------------------
-  // handle call to memcopy
-  std::vector<RtedArguments*> memcopy_call;
+  // handle call to functioncall
+  std::vector<RtedArguments*> function_call;
 
 
   // The following are vars that are needed for transformations
@@ -44,6 +44,9 @@ class RtedTransformation : public AstSimpleProcessing {
   SgStatement* getSurroundingStatement(SgNode* n);
   // insert: RuntimeSystem* runtimeSystem = new RuntimeSystem();
   void insertRuntimeSystemClass();
+  SgExpression* buildString(std::string name);
+
+
 
   // Traverse all nodes and check properties
   virtual void visit(SgNode* n);
@@ -82,6 +85,7 @@ class RtedTransformation : public AstSimpleProcessing {
   //			  bool before);
   void insertFuncCall(RtedArguments* args, bool before);
   void visit_isFunctionCall(SgNode* n);
+  bool isInterestingFunctionCall(std::string name);
 
  public:
   RtedTransformation() {

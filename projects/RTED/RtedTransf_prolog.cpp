@@ -114,26 +114,29 @@ void RtedTransformation::insertRuntimeSystemClass() {
 
 
 void RtedTransformation::visit_checkIsMain(SgNode* n) {
-    SgFunctionDefinition* mainFunc = isSgFunctionDefinition(n);
-    ROSE_ASSERT(mainFunc);
-    string funcname = mainFunc->get_declaration()->get_name().str();
-    if (funcname == "main") {
-      // find the last statement
-      SgBasicBlock* block = mainFunc->get_body();
-      ROSE_ASSERT(block);
-      Rose_STL_Container<SgStatement*> stmts = block->get_statements();
-      SgStatement* first = stmts.front();
-      SgStatement* last = stmts.back();
-      if (isSgReturnStmt(last)) 
-	insertMainBeforeLast = true;
-      else
-	insertMainBeforeLast=false;
-      //cerr << " Last statement in main : " << last->class_name() << "  insertBefore : " << 
-      //	RoseBin_support::resBool(insertMainBeforeLast) << endl;
-      ROSE_ASSERT(last);
-      // insert call to close before last statement (could be return)
-      mainLast = last;
-      mainFirst = first;
-    }
+  SgFunctionDefinition* mainFunc = isSgFunctionDefinition(n);
+  ROSE_ASSERT(mainFunc);
+  string funcname = mainFunc->get_declaration()->get_name().str();
+  if (funcname == "main") {
+    // find the last statement
+    SgBasicBlock* block = mainFunc->get_body();
+    ROSE_ASSERT(block);
+    Rose_STL_Container<SgStatement*> stmts = block->get_statements();
+    SgStatement* first = stmts.front();
+    SgStatement* last = stmts.back();
+    if (isSgReturnStmt(last)) 
+      insertMainBeforeLast = true;
+    else
+      insertMainBeforeLast=false;
+    //cerr << " Last statement in main : " << last->class_name() << "  insertBefore : " << 
+    //	RoseBin_support::resBool(insertMainBeforeLast) << endl;
+    ROSE_ASSERT(last);
+    // insert call to close before last statement (could be return)
+    mainLast = last;
+    mainFirst = first;
+  }
 
 }
+
+
+
