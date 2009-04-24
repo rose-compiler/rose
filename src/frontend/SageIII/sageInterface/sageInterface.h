@@ -646,6 +646,9 @@ std::string mangleType(SgType* type);
 //! Calculate the number of elements of an array type: dim1* dim2*... , assume element count is 1 for int a[]; Strip off THREADS if it is a UPC array. 
 size_t getArrayElementCount(SgArrayType* t);
 
+//! Get the number of dimensions of an array type
+int getDimensionCount(SgArrayType* t);
+
 //! Get the element type of an array
 SgType* getArrayElementType(SgArrayType* t);
 
