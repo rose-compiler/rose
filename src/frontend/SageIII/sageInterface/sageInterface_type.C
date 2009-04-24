@@ -295,6 +295,19 @@ namespace SageInterface
     return current_type;  
   }
 
+  //! Get the number of dimensions of an array type
+  int getDimensionCount(SgArrayType* mytype)
+  {
+    ROSE_ASSERT(mytype != NULL);
+    int dimension = 1;
+    SgType* basetype= mytype->get_base_type();
+    while (isSgArrayType(basetype))
+    {
+      dimension++;
+      basetype= isSgArrayType(basetype)->get_base_type();
+    }
+    return dimension;
+  }                              
   // Returns true if args is a valid argument type list for decl
   // Requires the exact argument list given -- conversions not handled
   // Good enough for default and copy constructors, but not other functions

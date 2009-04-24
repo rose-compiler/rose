@@ -30,8 +30,12 @@ inputOrphanedFor.c \
 inputParallelFor.c \
 inputSingle.c \
 inputSection.c \
-inputVariables.c 
-
+inputVariables.c \
+pointer2Array.c \
+pointer2Array2.c \
+pointer2Array3.c \
+pointer2ArrayRegular.c \
+logics.c
 
 # DQ: Need to get C++ codes into tests but this is a bit of a problem for our simple make rule
 CXX_TESTCODES_REQUIRED_TO_PASS = \

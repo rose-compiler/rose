@@ -178,8 +178,11 @@ isBaseTypePrimitive (const SgType* type)
  */
 static
 OutlinedFuncParam_t
-createParam (const string& init_name, const SgType* init_type, bool readOnly=false)
+createParam (const SgInitializedName* i_name, bool readOnly=false)
+//createParam (const string& init_name, const SgType* init_type, bool readOnly=false)
 {
+  ROSE_ASSERT (i_name);
+  SgType* init_type = i_name->get_type();
   ROSE_ASSERT (init_type);
   SgType* param_base_type = 0;
   if (isBaseTypePrimitive (init_type)||Outliner::enable_classic)
@@ -188,7 +191,14 @@ createParam (const string& init_name, const SgType* init_type, bool readOnly=fal
     // So we don't convert the type to void* here
   {
     // Duplicate the initial type.
-    param_base_type = const_cast<SgType *> (init_type); //!< \todo Is shallow copy here OK?
+    param_base_type = init_type; //!< \todo Is shallow copy here OK?
+    //param_base_type = const_cast<SgType *> (init_type); //!< \todo Is shallow copy here OK?
+    // convert the first dimension of an array type function parameter to a pointer type, Liao
+    // 4/24/2009
+    if (isSgArrayType(param_base_type)) 
+      if (isSgFunctionDefinition(i_name->get_scope()))
+        param_base_type= SageBuilder::buildPointerType(isSgArrayType(param_base_type)->get_base_type());
+     
     ROSE_ASSERT (param_base_type);
   }
   else
@@ -206,6 +216,7 @@ createParam (const string& init_name, const SgType* init_type, bool readOnly=fal
   }
 
   // Stores the new parameter.
+   string init_name = i_name->get_name ().str (); 
   string new_param_name = init_name;
   SgType* new_param_type = NULL;
   // For classic behavior, read only variables are passed by values for C/C++
@@ -266,10 +277,21 @@ static
 SgVariableDeclaration *
 createUnpackDecl (SgInitializedName* param, int index,
                   bool isPointerDeref, 
-                  const string& local_var_name,
-                  SgType* local_var_type, SgScopeStatement* scope)
+                  const SgInitializedName* i_name, // original variable to be passed as parameter
+                 // const string& local_var_name,
+                 // SgType* local_var_type, 
+                  SgScopeStatement* scope)
 {
-  ROSE_ASSERT(param&&scope);
+  ROSE_ASSERT(param&&scope && i_name);
+  const string local_var_name = i_name->get_name().str();
+  SgType* local_var_type = i_name ->get_type();
+
+  // Convert an array type parameter's first dimension to a pointer type
+  // Liao, 4/24/2009
+  if (isSgArrayType(local_var_type)) 
+    if (isSgFunctionDefinition(i_name->get_scope()))
+      local_var_type = SageBuilder::buildPointerType(isSgArrayType(local_var_type)->get_base_type());
+
   // Create an expression that "unpacks" (dereferences) the parameter.
   // SgVarRefExp* 
   SgExpression* param_ref = buildVarRefExp(param,scope);
@@ -621,8 +643,7 @@ appendParams (const ASTtools::VarSymSet_t& syms,
     ROSE_ASSERT (i_name);
     string name_str = i_name->get_name ().str ();
     SgName p_sg_name (name_str);
-    SgType* i_type = i_name->get_type ();
-
+    //SgType* i_type = i_name->get_type ();
     bool readOnly = false;
     if (readOnlyVars.find(const_cast<SgInitializedName*> (i_name)) != readOnlyVars.end())
       readOnly = true;
@@ -645,7 +666,10 @@ appendParams (const ASTtools::VarSymSet_t& syms,
     else // case 2: use a parameter for each variable
     {
       // It handles language-specific details internally, like pass-by-value, pass-by-reference
-      OutlinedFuncParam_t param = createParam (name_str, i_type,readOnly);
+      // name and type is not enough, need the SgInitializedName also for tell 
+      // if an array comes from a parameter list
+      OutlinedFuncParam_t param = createParam (i_name,readOnly);
+      //OutlinedFuncParam_t param = createParam (name_str, i_type,readOnly);
       SgName p_sg_name (param.first.c_str ());
       // name, type, declaration, scope, 
       // TODO function definition's declaration should not be passed to createInitName()
@@ -687,7 +711,8 @@ appendParams (const ASTtools::VarSymSet_t& syms,
     } else 
     {
       local_var_decl  = 
-             createUnpackDecl (p_init_name, counter, isPointerDeref, name_str, i_type,body);
+             createUnpackDecl (p_init_name, counter, isPointerDeref, i_name ,body);
+             //createUnpackDecl (p_init_name, counter, isPointerDeref, name_str, i_type,body);
       ROSE_ASSERT (local_var_decl);
       prependStatement (local_var_decl,body);
       if (SageInterface::is_Fortran_language())

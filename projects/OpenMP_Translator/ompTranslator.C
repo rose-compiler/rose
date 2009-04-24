@@ -8,13 +8,16 @@ OpenMP translator
 Major classes:
 * ASTtools:    generic AST manipulate toolkit
 
-* OmpAttribute: persistent attribute for OpenMP pragma node
+* OmpAttributeOld: persistent attribute for OpenMP pragma node
+                   We have a new OmpAttribute to support OpenMP 3.0,
+                   so we add This one with Old suffix to avoid conflict.
+                  4/22/2009, Liao
 
 * OmpFrontend: recognize/process pragma strings, make variables and their scope explicit
-               top down traversal to build up OmpAttribute
+               top down traversal to build up OmpAttributeOld
 
 * OmpMidend:   a set of translators for different OpenMP constructs
-	       bottom up traversal and tree restructure using OmpAttribute
+	       bottom up traversal and tree restructure using OmpAttributeOld
 
 * OmpProcessor: the driver(not in use)
 
@@ -206,7 +209,7 @@ public:
 //    'omp for' needs scheduling type , chunk size etc. 
 //------------------------------------------------------------------
 //------------------------------------------------------------------
-class OmpAttribute : public AstAttribute 
+class OmpAttributeOld : public AstAttribute 
 {
 private:
   void init() 
@@ -225,7 +228,7 @@ private:
     }
 
  public:
-   OmpAttribute * parent; //upper-level OMP pragma's attribute
+   OmpAttributeOld * parent; //upper-level OMP pragma's attribute
    SgPragmaDeclaration *pragma;
    SgPragmaDeclaration *parentPragma;
    omp_construct_enum  omp_type; //pragma type
@@ -246,11 +249,11 @@ private:
    bool ordered;
    bool isOrphaned; //true if parent omp parallel is not in the static lexical scope
   //constructor
-   OmpAttribute()
+   OmpAttributeOld()
     {
 	init();
     }
-   OmpAttribute(enum omp_construct_enum omptye):omp_type(omptye){
+   OmpAttributeOld(enum omp_construct_enum omptye):omp_type(omptye){
         init();
    }
 
@@ -262,7 +265,7 @@ private:
      cout<<"Parent pragma is:";
      if(parentPragma != NULL) cout<<parentPragma->get_pragma()->get_pragma()<<endl;
      else cout<<"none"<<endl;
-     cout<<"OmpAttribute: pragma type: "<<omp_type<<endl;
+     cout<<"OmpAttributeOld: pragma type: "<<omp_type<<endl;
      cout<<"isOrphaned: "<<isOrphaned<<endl;
      cout<<"Number of shared variables needing wrapping:"<<wrapperCount<<endl;
      cout<<"Variable list :"<<endl;
@@ -306,7 +309,7 @@ public:
   static char *trim_leading_trailing_spaces(char*);
   static enum omp_construct_enum recognizePragma(SgPragmaDeclaration*);
   static void removePreprocessingInfo(SgProject * project); 
-  int createOmpAttribute(SgNode *);
+  int createOmpAttributeOld(SgNode *);
   static int removeIfdefOmp(SgProject* project);  
 //TODO (low priority) remove #ifdef _OPENMP #endif ,
 //current workaround is to pass -D_OPENMP to backend compilers
@@ -352,23 +355,23 @@ public:
 private:
   // variable handling routines
   static int addGlobalOmpDeclarations(OmpFrontend*, SgGlobal*, bool hasMain);
-  static int addThreadprivateDeclarations(SgPragmaDeclaration *,OmpAttribute *, SgBasicBlock *);
-  static int addReductionCalls(SgPragmaDeclaration *, OmpAttribute *, SgBasicBlock *);
-  static int addLastprivateStmts(SgPragmaDeclaration *, OmpAttribute *, SgBasicBlock *);
-  static int addPrivateVarDeclarations(SgPragmaDeclaration *, OmpAttribute *, SgBasicBlock *);
+  static int addThreadprivateDeclarations(SgPragmaDeclaration *,OmpAttributeOld *, SgBasicBlock *);
+  static int addReductionCalls(SgPragmaDeclaration *, OmpAttributeOld *, SgBasicBlock *);
+  static int addLastprivateStmts(SgPragmaDeclaration *, OmpAttributeOld *, SgBasicBlock *);
+  static int addPrivateVarDeclarations(SgPragmaDeclaration *, OmpAttributeOld *, SgBasicBlock *);
   static int addSharedVarDeclarations(SgPragmaDeclaration *, SgFunctionDeclaration*, \
-		OmpAttribute *, SgBasicBlock *);
-  static int variableSubstituting(SgPragmaDeclaration *,OmpAttribute*, SgNode*);
+		OmpAttributeOld *, SgBasicBlock *);
+  static int variableSubstituting(SgPragmaDeclaration *,OmpAttributeOld*, SgNode*);
 
   static int splitCombinedParallelForSections(SgPragmaDeclaration* decl);
   static SgFunctionDeclaration* generateOutlinedFunction(SgPragmaDeclaration* decl);
   static void generateOutlinedFunctionDefinition(SgPragmaDeclaration* decl,\
-				SgFunctionDeclaration * func, OmpAttribute *ompattribute);
+				SgFunctionDeclaration * func, OmpAttributeOld *ompattribute);
   static void insertOutlinedFunction(SgPragmaDeclaration* pragDecl, \
 				SgFunctionDeclaration *outlinedFunc);
   static void replacePragmaBlock(SgPragmaDeclaration* pragDecl, SgBasicBlock *bb1);
 
-  static SgBasicBlock* generateParallelRTLcall(SgPragmaDeclaration* pragDecl, SgFunctionDeclaration * outlinedFunc, OmpAttribute *ompattribute);
+  static SgBasicBlock* generateParallelRTLcall(SgPragmaDeclaration* pragDecl, SgFunctionDeclaration * outlinedFunc, OmpAttributeOld *ompattribute);
   static int convertTypeId(SgType* sgtype);
   static int getSectionCount(SgPragmaDeclaration *decl);
   // C++ outlined member function's wrapper generation
@@ -385,7 +388,7 @@ int OmpMidend::labelCounter=0;
 // and this function only returns the first one
 // only used to check if a name is in the OmpSymobl list or not currently!
 //-------------------
- enum omp_construct_enum OmpAttribute::get_clause(SgInitializedName *initname)
+ enum omp_construct_enum OmpAttributeOld::get_clause(SgInitializedName *initname)
 {
   enum omp_construct_enum rttype=e_not_omp;
   for (Rose_STL_Container<OmpSymbol*>::iterator i= var_list.begin(); i!= var_list.end();i++)
@@ -401,7 +404,7 @@ int OmpMidend::labelCounter=0;
 
 //--------------------------
 //Judge if a name is in a clause's variable list: like private(), copyin(), etc.
-bool OmpAttribute::isInClause(SgInitializedName* initname, enum omp_construct_enum omptype)
+bool OmpAttributeOld::isInClause(SgInitializedName* initname, enum omp_construct_enum omptype)
 {
   bool rt=false;
   ROSE_ASSERT(initname != NULL);
@@ -572,7 +575,7 @@ Rose_STL_Container<string>* OmpFrontend::parsePragmaString ( enum omp_construct_
 // For  parallel region etc : clause is one of the following:
 //       private(list), firstprivate(list),default(shared|none), shared(list),copyin(list)
 //       if (scalar-expression), num_threads(integer-expression)
-//Major task: make data scope attribute explicit and store them into OmpAttribute
+//Major task: make data scope attribute explicit and store them into OmpAttributeOld
 //For all used variable in the parallel region, only those with the same (or higher) scope
 //as( or than) the pragma matter in order to build up private and shared variable lists
 // e.g. Assume the default(shared) case, all variables of interest which are not in 
@@ -583,7 +586,7 @@ Rose_STL_Container<string>* OmpFrontend::parsePragmaString ( enum omp_construct_
 // TODO consider default(private)
 // TODO split into several smaller functions
 // TODO handle other constructs with attributes: omp critical,etc
-int OmpFrontend::createOmpAttribute(SgNode* node)
+int OmpFrontend::createOmpAttributeOld(SgNode* node)
    {
      SgPragmaDeclaration* pragDecl = isSgPragmaDeclaration(node);
      ROSE_ASSERT(pragDecl != NULL);
@@ -594,38 +597,38 @@ int OmpFrontend::createOmpAttribute(SgNode* node)
          (recognizePragma(pragDecl)==e_parallel_sections)|| (recognizePragma(pragDecl)==e_sections)||
          (recognizePragma(pragDecl)==e_for) )
         {
-          ompattribute = new OmpAttribute(recognizePragma(pragDecl));
-          dynamic_cast<OmpAttribute*> (ompattribute)->pragma = pragDecl;
+          ompattribute = new OmpAttributeOld(recognizePragma(pragDecl));
+          dynamic_cast<OmpAttributeOld*> (ompattribute)->pragma = pragDecl;
        // cout<<"L553, .... test constructor.."<<endl;
-       // dynamic_cast<OmpAttribute*> (ompattribute)->print();
+       // dynamic_cast<OmpAttributeOld*> (ompattribute)->print();
 
       // 0. assume top down processing, using the static parentPragma to store the most recent
       //    'omp parallel', which should be the parent parallel region for 'omp for' etc.
       //    TODO a more robust way to set parent pragma
           if ((recognizePragma(pragDecl)==e_parallel)|| (recognizePragma(pragDecl)==e_parallel_for))
              {
-               dynamic_cast<OmpAttribute*> (ompattribute)->parentPragma = NULL;
+               dynamic_cast<OmpAttributeOld*> (ompattribute)->parentPragma = NULL;
                parentPragma =  pragDecl;
              }
             else  
-               dynamic_cast<OmpAttribute*> (ompattribute)->parentPragma = parentPragma;
+               dynamic_cast<OmpAttributeOld*> (ompattribute)->parentPragma = parentPragma;
 
        // set isOrphaned for "omp for" and others?
           if (recognizePragma(pragDecl)==e_for)
              {
                if (parentPragma == NULL) 
-                    dynamic_cast<OmpAttribute*>(ompattribute)->isOrphaned = true;// no parentPragma, must be orphaned
+                    dynamic_cast<OmpAttributeOld*>(ompattribute)->isOrphaned = true;// no parentPragma, must be orphaned
                  else
                     if ((getEnclosingFunctionDeclaration(parentPragma) == getEnclosingFunctionDeclaration(node))&& (recognizePragma(parentPragma)==e_parallel))
-                         dynamic_cast<OmpAttribute*>(ompattribute)->isOrphaned = false; // has parent omp parallel in the same scope
+                         dynamic_cast<OmpAttributeOld*>(ompattribute)->isOrphaned = false; // has parent omp parallel in the same scope
                       else 
-                         dynamic_cast<OmpAttribute*>(ompattribute)->isOrphaned = true; // must be orphaned otherwise
+                         dynamic_cast<OmpAttributeOld*>(ompattribute)->isOrphaned = true; // must be orphaned otherwise
              }
 
        // set nowait
           string pragmaString = pragDecl->get_pragma()->get_pragma();
           if (pragmaString.find("nowait")!=string::npos) // TODO change this to formal one
-               dynamic_cast<OmpAttribute*> (ompattribute)->nowait = true;
+               dynamic_cast<OmpAttributeOld*> (ompattribute)->nowait = true;
           ROSE_ASSERT(ompattribute !=NULL );
 
        // 1. Find all reference variables of interest from outer or same scope
@@ -660,7 +663,7 @@ int OmpFrontend::createOmpAttribute(SgNode* node)
           reduction_plus_name_listptr = parsePragmaString(e_reduction_plus, pragmachars);
 
       // 3. Get scheduling kind and chunksize
-          if ((dynamic_cast<OmpAttribute*> (ompattribute)->omp_type == e_parallel_for)|| (dynamic_cast<OmpAttribute*> (ompattribute)->omp_type == e_for) )
+          if ((dynamic_cast<OmpAttributeOld*> (ompattribute)->omp_type == e_parallel_for)|| (dynamic_cast<OmpAttributeOld*> (ompattribute)->omp_type == e_for) )
              {
             // printf ("Calling parsePragmaString which appear to be a problem! e_sched_none = %d pragmachars = %s \n",e_sched_none,pragmachars);
 
@@ -672,8 +675,8 @@ int OmpFrontend::createOmpAttribute(SgNode* node)
             // 3.1 handle scheduling kind
                if ( sched_info_listptr->size() == 0)
                   {
-                    dynamic_cast<OmpAttribute*> (ompattribute)->sched_type = e_sched_none;
-                    dynamic_cast<OmpAttribute*> (ompattribute)->chunk_size = NULL;
+                    dynamic_cast<OmpAttributeOld*> (ompattribute)->sched_type = e_sched_none;
+                    dynamic_cast<OmpAttributeOld*> (ompattribute)->chunk_size = NULL;
                   }
 
             // DQ (1/3/2007): Added assertion that list is non-empty before defererence of first element.
@@ -688,24 +691,24 @@ int OmpFrontend::createOmpAttribute(SgNode* node)
                   {
                     if ( *(sched_info_listptr->begin())==*(new string("static")))
                        {
-                         dynamic_cast<OmpAttribute*> (ompattribute)->sched_type = e_sched_static;
-                         dynamic_cast<OmpAttribute*> (ompattribute)->chunk_size = NULL;
+                         dynamic_cast<OmpAttributeOld*> (ompattribute)->sched_type = e_sched_static;
+                         dynamic_cast<OmpAttributeOld*> (ompattribute)->chunk_size = NULL;
                        }
 
                     if ( *(sched_info_listptr->begin())==*(new string("dynamic")))
                        {
                       // default chunk size is 1
-                         dynamic_cast<OmpAttribute*> (ompattribute)->sched_type = e_sched_dynamic;
-                         dynamic_cast<OmpAttribute*> (ompattribute)->chunk_size = buildIntVal(1);
+                         dynamic_cast<OmpAttributeOld*> (ompattribute)->sched_type = e_sched_dynamic;
+                         dynamic_cast<OmpAttributeOld*> (ompattribute)->chunk_size = buildIntVal(1);
                        }
 
                     if ( *(sched_info_listptr->begin())==*(new string("guided")))
                        {
-                         dynamic_cast<OmpAttribute*> (ompattribute)->sched_type = e_sched_guided;
-                         dynamic_cast<OmpAttribute*> (ompattribute)->chunk_size = buildIntVal(1);
+                         dynamic_cast<OmpAttributeOld*> (ompattribute)->sched_type = e_sched_guided;
+                         dynamic_cast<OmpAttributeOld*> (ompattribute)->chunk_size = buildIntVal(1);
                        }
                     if ( *(sched_info_listptr->begin())==*(new string("runtime")))
-                         dynamic_cast<OmpAttribute*> (ompattribute)->sched_type = e_sched_runtime;
+                         dynamic_cast<OmpAttributeOld*> (ompattribute)->sched_type = e_sched_runtime;
                   }
 
             // int list_size = sched_info_listptr->size();
@@ -729,7 +732,7 @@ int OmpFrontend::createOmpAttribute(SgNode* node)
                          SgInitializedName* initname = symbol->get_declaration();
                          ROSE_ASSERT(initname != NULL);
                       // fatal error if not found or it is an expression
-                         dynamic_cast<OmpAttribute*> (ompattribute)->chunk_size = initname;
+                         dynamic_cast<OmpAttributeOld*> (ompattribute)->chunk_size = initname;
 
                       // special handling of chunksize variable's scope
                       // propagate the variable used in chunksize to parent 'omp for' pragma since
@@ -741,15 +744,15 @@ int OmpFrontend::createOmpAttribute(SgNode* node)
                       // chunksize variable must be shared
                       // two cases: omp_parallel_for , add into var_list
                       //            omp_for,  add into parent's ompsymbol list
-                         if (dynamic_cast<OmpAttribute*> (ompattribute)->omp_type == e_parallel_for)
+                         if (dynamic_cast<OmpAttributeOld*> (ompattribute)->omp_type == e_parallel_for)
                               all_var_list.push_back(initname);
                            else
                             {
                            // orphaned omp for, add into parent pragma's ompattribute
-                              SgPragmaDeclaration *parentpragma = dynamic_cast<OmpAttribute*> (ompattribute)->parentPragma;
+                              SgPragmaDeclaration *parentpragma = dynamic_cast<OmpAttributeOld*> (ompattribute)->parentPragma;
                               ROSE_ASSERT(parentpragma != NULL);
-                              AstAttribute* astattribute2 = parentpragma->getAttribute("OmpAttribute");
-                              OmpAttribute *  ompattribute2= dynamic_cast<OmpAttribute* > (astattribute2);
+                              AstAttribute* astattribute2 = parentpragma->getAttribute("OmpAttributeOld");
+                              OmpAttributeOld *  ompattribute2= dynamic_cast<OmpAttributeOld* > (astattribute2);
                            // insert it only if not exist
                               if (ompattribute2->get_clause(initname)==e_not_omp)
                                  {
@@ -761,11 +764,11 @@ int OmpFrontend::createOmpAttribute(SgNode* node)
                             } // end if omp_parallel_for
                        } // end variable case of chunksize
                       else 
-                         dynamic_cast<OmpAttribute*> (ompattribute)->chunk_size = buildIntVal(ichunksize);
+                         dynamic_cast<OmpAttributeOld*> (ompattribute)->chunk_size = buildIntVal(ichunksize);
                   } // end if list_size==2
              } // end of 3. schedule clause handling
 
-    //4.  Insert variable list into OmpAttribute with the correct scope info.
+    //4.  Insert variable list into OmpAttributeOld with the correct scope info.
         // also set the counter for shared variables needing wrapping. 
         // TODO consider all possible combination cases: 
 
@@ -779,7 +782,7 @@ int OmpFrontend::createOmpAttribute(SgNode* node)
 
     //  printf ("Commented out sort() and unique() member function calls because they don't exist for std::vector \n");
 
-      dynamic_cast<OmpAttribute*> (ompattribute)->wrapperCount=0;
+      dynamic_cast<OmpAttributeOld*> (ompattribute)->wrapperCount=0;
 
       for (Rose_STL_Container<SgNode*>::iterator i=all_var_list.begin();i!=all_var_list.end();i++)
         { 
@@ -789,17 +792,17 @@ int OmpFrontend::createOmpAttribute(SgNode* node)
 	   //insert copyin variables
           if ( isInStringList(copyin_name_listptr, &varName) ) {
             ompsymbol=new OmpSymbol((*i),e_copyin);
-           dynamic_cast<OmpAttribute*> (ompattribute)->var_list.push_back(ompsymbol);
+           dynamic_cast<OmpAttributeOld*> (ompattribute)->var_list.push_back(ompsymbol);
            }  
 	    //insert threadprivate variables
           if ( isInStringList(&threadprivatelist, &varName) ) {
             ompsymbol=new OmpSymbol((*i),e_threadprivate);
-           dynamic_cast<OmpAttribute*> (ompattribute)->var_list.push_back(ompsymbol);
+           dynamic_cast<OmpAttributeOld*> (ompattribute)->var_list.push_back(ompsymbol);
            } else 
             // insert private variables
           if ( isInStringList(private_name_listptr, &varName) ) {
             ompsymbol=new OmpSymbol((*i),e_private);
-           dynamic_cast<OmpAttribute*> (ompattribute)->var_list.push_back(ompsymbol);
+           dynamic_cast<OmpAttributeOld*> (ompattribute)->var_list.push_back(ompsymbol);
            }
           else if ( isInStringList(firstprivate_name_listptr, &varName)||\
 		  isInStringList(lastprivate_name_listptr, &varName) )
@@ -810,27 +813,27 @@ int OmpFrontend::createOmpAttribute(SgNode* node)
 	     // firstprivate
             if ( isInStringList(firstprivate_name_listptr, &varName) ){
               if (currentscope==isSgScopeStatement(ASTtools::get_scope(*i)))
-                 dynamic_cast<OmpAttribute*> (ompattribute)->wrapperCount++;
+                 dynamic_cast<OmpAttributeOld*> (ompattribute)->wrapperCount++;
               ompsymbol=new OmpSymbol((*i),e_firstprivate);
-              dynamic_cast<OmpAttribute*> (ompattribute)->var_list.push_back(ompsymbol);
-	      dynamic_cast<OmpAttribute*> (ompattribute)->hasFirstprivate = true;
+              dynamic_cast<OmpAttributeOld*> (ompattribute)->var_list.push_back(ompsymbol);
+	      dynamic_cast<OmpAttributeOld*> (ompattribute)->hasFirstprivate = true;
             }
             if ( isInStringList(lastprivate_name_listptr, &varName) )
             { // lastprivate
               if (currentscope==isSgScopeStatement(ASTtools::get_scope(*i)))
-                 dynamic_cast<OmpAttribute*> (ompattribute)->wrapperCount++;
+                 dynamic_cast<OmpAttributeOld*> (ompattribute)->wrapperCount++;
               ompsymbol=new OmpSymbol((*i),e_lastprivate);
-              dynamic_cast<OmpAttribute*> (ompattribute)->var_list.push_back(ompsymbol);
-	      dynamic_cast<OmpAttribute*> (ompattribute)->hasLastprivate = true;
+              dynamic_cast<OmpAttributeOld*> (ompattribute)->var_list.push_back(ompsymbol);
+	      dynamic_cast<OmpAttributeOld*> (ompattribute)->hasLastprivate = true;
             }
            }
          else if ( isInStringList(reduction_plus_name_listptr, &varName) )
             {// for reduction variables from the scope, also need wrapper
             if (currentscope==isSgScopeStatement(ASTtools::get_scope(*i)))
-              dynamic_cast<OmpAttribute*> (ompattribute)->wrapperCount++;
+              dynamic_cast<OmpAttributeOld*> (ompattribute)->wrapperCount++;
               ompsymbol=new OmpSymbol((*i),e_reduction_plus);
-              dynamic_cast<OmpAttribute*> (ompattribute)->var_list.push_back(ompsymbol);
-	      dynamic_cast<OmpAttribute*> (ompattribute)->hasReduction = true;
+              dynamic_cast<OmpAttributeOld*> (ompattribute)->var_list.push_back(ompsymbol);
+	      dynamic_cast<OmpAttributeOld*> (ompattribute)->hasReduction = true;
             }
            else { // TODO: consider default(private) case
            // store the rest as the shared variables,
@@ -839,15 +842,15 @@ int OmpFrontend::createOmpAttribute(SgNode* node)
 	// the scope of a function parameter has some problem(bug?)
             if (currentscope==varscope ||
 	 isSgFunctionParameterList(isSgInitializedName(*i)->get_parent()))
-               dynamic_cast<OmpAttribute*> (ompattribute)->wrapperCount++;
+               dynamic_cast<OmpAttributeOld*> (ompattribute)->wrapperCount++;
             ompsymbol=new OmpSymbol((*i),e_shared);
-           dynamic_cast<OmpAttribute*> (ompattribute)->var_list.push_back(ompsymbol);
+           dynamic_cast<OmpAttributeOld*> (ompattribute)->var_list.push_back(ompsymbol);
             }
 
        }//end for
-        node->addNewAttribute("OmpAttribute",ompattribute);
+        node->addNewAttribute("OmpAttributeOld",ompattribute);
      	//cout<<"L827,debug "<<endl;
-        //dynamic_cast<OmpAttribute*>(ompattribute)->print();
+        //dynamic_cast<OmpAttributeOld*>(ompattribute)->print();
    } // end if 
   else
 //---------------------------------------------------------
@@ -855,13 +858,13 @@ int OmpFrontend::createOmpAttribute(SgNode* node)
 // TODO consider orphaned omp single
   if (recognizePragma(pragDecl)==e_single)
   {
-     ompattribute = new OmpAttribute(recognizePragma(pragDecl));
-     dynamic_cast<OmpAttribute*> (ompattribute)->pragma = pragDecl;
+     ompattribute = new OmpAttributeOld(recognizePragma(pragDecl));
+     dynamic_cast<OmpAttributeOld*> (ompattribute)->pragma = pragDecl;
 
-    dynamic_cast<OmpAttribute*> (ompattribute)->parentPragma = parentPragma;
+    dynamic_cast<OmpAttributeOld*> (ompattribute)->parentPragma = parentPragma;
      string pragmaString = pragDecl->get_pragma()->get_pragma();
      if (pragmaString.find("nowait")!=string::npos) // TODO change this to formal one
-     dynamic_cast<OmpAttribute*> (ompattribute)->nowait = true;
+     dynamic_cast<OmpAttributeOld*> (ompattribute)->nowait = true;
       ROSE_ASSERT(ompattribute !=NULL );
      //1. find all reference variables of interest from outer or same scope
       Rose_STL_Container<SgNode*> all_var_list; //unique declaration list for referenced variables
@@ -898,7 +901,7 @@ int OmpFrontend::createOmpAttribute(SgNode* node)
        const char *pragmachars=pragDecl->get_pragma()->get_pragma().c_str();
        private_name_listptr= parsePragmaString(e_private, pragmachars);
        firstprivate_name_listptr= parsePragmaString(e_firstprivate, pragmachars);
-        // insert variable list into OmpAttribute with the correct scope info.
+        // insert variable list into OmpAttributeOld with the correct scope info.
        for (Rose_STL_Container<SgNode*>::iterator i=all_var_list.begin();i!=all_var_list.end();i++)
         {
          OmpSymbol * ompsymbol;
@@ -906,37 +909,37 @@ int OmpFrontend::createOmpAttribute(SgNode* node)
            // insert private variables
           if ( isInStringList(private_name_listptr, &varName) ) {
             ompsymbol=new OmpSymbol((*i),e_private);
-           dynamic_cast<OmpAttribute*> (ompattribute)->var_list.push_back(ompsymbol);
+           dynamic_cast<OmpAttributeOld*> (ompattribute)->var_list.push_back(ompsymbol);
            }
           else if ( isInStringList(firstprivate_name_listptr, &varName))
            {
               if (currentscope==isSgScopeStatement(ASTtools::get_scope(*i)))
-                 dynamic_cast<OmpAttribute*> (ompattribute)->wrapperCount++;
+                 dynamic_cast<OmpAttributeOld*> (ompattribute)->wrapperCount++;
               ompsymbol=new OmpSymbol((*i),e_firstprivate);
-              dynamic_cast<OmpAttribute*> (ompattribute)->var_list.push_back(ompsymbol);
-              dynamic_cast<OmpAttribute*> (ompattribute)->hasFirstprivate = true;
+              dynamic_cast<OmpAttributeOld*> (ompattribute)->var_list.push_back(ompsymbol);
+              dynamic_cast<OmpAttributeOld*> (ompattribute)->hasFirstprivate = true;
           }
        }//end for
-        node->addNewAttribute("OmpAttribute",ompattribute);
+        node->addNewAttribute("OmpAttributeOld",ompattribute);
 	
    } // end if single
    
    // Handle omp flush(x,y,z,...)
   if (recognizePragma(pragDecl)==e_flush)
   {
-    ompattribute = new OmpAttribute(recognizePragma(pragDecl));
+    ompattribute = new OmpAttributeOld(recognizePragma(pragDecl));
     ROSE_ASSERT(ompattribute !=NULL );
 
-    dynamic_cast<OmpAttribute*> (ompattribute)->pragma = pragDecl;
-    dynamic_cast<OmpAttribute*> (ompattribute)->parentPragma = parentPragma;
-    dynamic_cast<OmpAttribute*> (ompattribute)->wrapperCount = 0;
+    dynamic_cast<OmpAttributeOld*> (ompattribute)->pragma = pragDecl;
+    dynamic_cast<OmpAttributeOld*> (ompattribute)->parentPragma = parentPragma;
+    dynamic_cast<OmpAttributeOld*> (ompattribute)->wrapperCount = 0;
 
     //parse the optional variable list associated with omp flush
     const char *pragmachars=pragDecl->get_pragma()->get_pragma().c_str();
     Rose_STL_Container<string>* flush_name_listptr;
     flush_name_listptr= parsePragmaString(e_flush, pragmachars);
 
-     // insert variable list into OmpAttribute
+     // insert variable list into OmpAttributeOld
     for (Rose_STL_Container<string>::iterator i=flush_name_listptr->begin();
                       i!=flush_name_listptr->end();i++)
      {
@@ -948,26 +951,26 @@ int OmpFrontend::createOmpAttribute(SgNode* node)
 
         // insert flush variables
        OmpSymbol* ompsymbol=new OmpSymbol(initName,e_flush);
-       dynamic_cast<OmpAttribute*> (ompattribute)->var_list.push_back(ompsymbol);
+       dynamic_cast<OmpAttributeOld*> (ompattribute)->var_list.push_back(ompsymbol);
     }//end for
-    node->addNewAttribute("OmpAttribute",ompattribute);
+    node->addNewAttribute("OmpAttributeOld",ompattribute);
   }
 
 //  cout<<"---------L1029 debug "<<endl;
-//  if (ompattribute != NULL ) dynamic_cast<OmpAttribute*>(ompattribute)->print();
+//  if (ompattribute != NULL ) dynamic_cast<OmpAttributeOld*>(ompattribute)->print();
   return 0;
 }
 
 //----------------------------
 // tasks:
-//     build OmpAttribute for OMP pragma node
+//     build OmpAttributeOld for OMP pragma node
 void OmpFrontend::visit(SgNode * node)
 {
   if (isSgPragmaDeclaration(node) != NULL)
   {
     SgPragmaDeclaration * pragDecl = isSgPragmaDeclaration(node);
     // handle omp parallel, omp for, omp single, ..etc.
-    createOmpAttribute(node);
+    createOmpAttributeOld(node);
 
     // handle threadprivate()
     //TODO consider threadprivate variables not from file scope in the transformation
@@ -1635,7 +1638,7 @@ int OmpMidend::generateWrapperFunction(SgClassDefinition* classdef, \
 //----------------------------
 // return the number of 'omp section' in 'omp sections'
 // Also make the 1st implicit pragma explict. 
-//TODO move this to OmpFrontend as another OmpAttribute's field
+//TODO move this to OmpFrontend as another OmpAttributeOld's field
 inline int OmpMidend::getSectionCount(SgPragmaDeclaration * decl)
 {
   int counter=0;
@@ -1687,7 +1690,7 @@ inline int OmpMidend::getSectionCount(SgPragmaDeclaration * decl)
 //  Ignore variables generated from previous viariable substituting, _p_XX, _pp_XX
 // bBlock2 is a BB containing a loop.
 int OmpMidend::variableSubstituting(SgPragmaDeclaration * decl, \
-	OmpAttribute* ompattribute, SgNode* bBlock2)
+	OmpAttributeOld* ompattribute, SgNode* bBlock2)
 {
   ROSE_ASSERT(bBlock2 != NULL);
   ROSE_ASSERT(ompattribute != NULL);
@@ -1787,7 +1790,7 @@ int OmpMidend::variableSubstituting(SgPragmaDeclaration * decl, \
 //          ......  
 //        }
 
-int OmpMidend::addLastprivateStmts(SgPragmaDeclaration *decl, OmpAttribute *ompattribute,\
+int OmpMidend::addLastprivateStmts(SgPragmaDeclaration *decl, OmpAttributeOld *ompattribute,\
 	 SgBasicBlock *bBlock1)
 {
 
@@ -1883,7 +1886,7 @@ int OmpMidend::addLastprivateStmts(SgPragmaDeclaration *decl, OmpAttribute *ompa
 // from its parent 'omp parallel', still use 
 // _ompc_reduction(&localcopy,&gi,datatype,operator); //
 
-int OmpMidend::addReductionCalls(SgPragmaDeclaration *decl, OmpAttribute *ompattribute,\
+int OmpMidend::addReductionCalls(SgPragmaDeclaration *decl, OmpAttributeOld *ompattribute,\
 		 SgBasicBlock *bBlock1)
 {
   ROSE_ASSERT(decl != NULL);
@@ -1965,7 +1968,7 @@ int OmpMidend::addReductionCalls(SgPragmaDeclaration *decl, OmpAttribute *ompatt
 //       _ompc_copyin_thdprv (_ppthd_mm, &mm, 4);
 
 int OmpMidend::addThreadprivateDeclarations(SgPragmaDeclaration *decl, \
-        OmpAttribute *ompattribute, SgBasicBlock *bBlock1)
+        OmpAttributeOld *ompattribute, SgBasicBlock *bBlock1)
 {
   ROSE_ASSERT(bBlock1 != NULL);
   ROSE_ASSERT(decl != NULL);
@@ -2079,7 +2082,7 @@ int OmpMidend::addThreadprivateDeclarations(SgPragmaDeclaration *decl, \
 //
 // Also handle the declaration reduction variables from the same scope
 int OmpMidend::addSharedVarDeclarations(SgPragmaDeclaration *decl, SgFunctionDeclaration* func,\
-	OmpAttribute *ompattribute, SgBasicBlock *bBlock1)
+	OmpAttributeOld *ompattribute, SgBasicBlock *bBlock1)
 {
   ROSE_ASSERT(bBlock1 != NULL);
   ROSE_ASSERT(decl != NULL);
@@ -2100,7 +2103,7 @@ int OmpMidend::addSharedVarDeclarations(SgPragmaDeclaration *decl, SgFunctionDec
      SgInitializedName *initname = isSgInitializedName((*i)->origVar);
      SgType * mytype= initname->get_type();
      SgName myname = initname->get_name();
-    //varscope is the orignal scope for the shared variables
+    //varscope is the original scope for the shared variables
      SgScopeStatement* varscope=isSgScopeStatement(\
    		ASTtools::get_scope(isSgNode((*i)->origVar)));                     // function parameters have strange scope, special handling
     if ( ((currentscope==varscope) ||
@@ -2108,9 +2111,24 @@ int OmpMidend::addSharedVarDeclarations(SgPragmaDeclaration *decl, SgFunctionDec
          (((*i)->ompType==e_shared)||((*i)->ompType==e_reduction_plus)
 	   || ((*i)->ompType==e_firstprivate)||((*i)->ompType==e_lastprivate)) )
      { // add local declaration for shared pointers
-   	// firstprivate, lastprivate also need transfering value between local and master thread 
+   	// firstprivate, lastprivate also need transferring value between local and master thread 
         //int *_pp_X
-        SgType * pointertype = new SgPointerType(mytype);
+      
+        SgType* finalType=mytype; 
+#if 1        
+        //Liao, 4/23/2009. 
+        // for an array type variable used a function parameter, must convert its first dimension to a pointer type
+        // for example int a[], is converted to int* a; int a[][] -> int *a[],
+        // This change will allow all npb 2.3 C benchmarks to pass 
+        if (isSgArrayType(mytype))
+          //if (isSgGlobal(varscope)) ASTtools::get_scope() will get a global scope for function parameter, which is a bug
+          if (isSgFunctionDefinition(initname->get_scope()))
+          { 
+            finalType = SageBuilder::buildPointerType(isSgArrayType(mytype)->get_base_type());
+          }
+#endif
+        SgType * pointertype = new SgPointerType(finalType);
+        //SgType * pointertype = new SgPointerType(mytype);
         SgName varname_1 = SgName( "_pp_"+myname.getString());
 
        SgVariableDeclaration * sharedvar = buildVariableDeclaration(varname_1,pointertype,NULL);
@@ -2218,7 +2236,7 @@ int OmpMidend::addGlobalOmpDeclarations(OmpFrontend* ompfrontend, SgGlobal* mysc
 //
 // Also handle the declaration and initialization of reduction variables
 int OmpMidend::addPrivateVarDeclarations(SgPragmaDeclaration *decl, \
-	OmpAttribute *ompattribute, SgBasicBlock *bBlock1)
+	OmpAttributeOld *ompattribute, SgBasicBlock *bBlock1)
 {
   ROSE_ASSERT(bBlock1 != NULL);
   ROSE_ASSERT(decl != NULL);
@@ -2422,13 +2440,13 @@ int OmpMidend::splitCombinedParallelForSections(SgPragmaDeclaration* decl)
    else 
     stromp="omp sections";
   SgPragmaDeclaration *pragmadecl2 =  buildPragmaDeclaration(stromp);
-  // generate OmpAttribute for 'omp for' 
-  AstAttribute * ompattribute = new OmpAttribute(e_for);
+  // generate OmpAttributeOld for 'omp for' 
+  AstAttribute * ompattribute = new OmpAttributeOld(e_for);
   ROSE_ASSERT(ompattribute !=NULL );
-  dynamic_cast<OmpAttribute*>(ompattribute)->pragma = pragmadecl2;
-  dynamic_cast<OmpAttribute*>(ompattribute)->omp_type = e_for;
-  dynamic_cast<OmpAttribute*> (ompattribute)->parentPragma=decl;
-  dynamic_cast<OmpAttribute*> (ompattribute)->wrapperCount=0;
+  dynamic_cast<OmpAttributeOld*>(ompattribute)->pragma = pragmadecl2;
+  dynamic_cast<OmpAttributeOld*>(ompattribute)->omp_type = e_for;
+  dynamic_cast<OmpAttributeOld*> (ompattribute)->parentPragma=decl;
+  dynamic_cast<OmpAttributeOld*> (ompattribute)->wrapperCount=0;
 
 //move lastprivate() and firstprivate() from 'omp parallel for' to 'omp for'
 // Don't keep firstprivate on 'omp parallel' 
@@ -2436,10 +2454,10 @@ int OmpMidend::splitCombinedParallelForSections(SgPragmaDeclaration* decl)
 //TODO scheduling clause
 
 // TODO: move the clause string also, bug not very necessary since OmpMidend only
-// works on OmpAttribute ,not on the pragma string
-  AstAttribute* astattribute=decl->getAttribute("OmpAttribute");
+// works on OmpAttributeOld ,not on the pragma string
+  AstAttribute* astattribute=decl->getAttribute("OmpAttributeOld");
   ROSE_ASSERT(astattribute != NULL);// Do we really need this assert?
-  OmpAttribute *  srcattribute= dynamic_cast<OmpAttribute* > (astattribute);
+  OmpAttributeOld *  srcattribute= dynamic_cast<OmpAttributeOld* > (astattribute);
   ROSE_ASSERT(srcattribute != NULL);
 
   for (Rose_STL_Container<OmpSymbol*>::iterator i=srcattribute->var_list.begin();\
@@ -2448,23 +2466,23 @@ int OmpMidend::splitCombinedParallelForSections(SgPragmaDeclaration* decl)
     if(( (*i)->ompType == e_lastprivate ) ||((*i)->ompType == e_firstprivate ))
     {
       OmpSymbol * ompsymbol = new OmpSymbol((*i)->origVar, (*i)->ompType);
-      dynamic_cast<OmpAttribute*>(ompattribute)->var_list.push_back(ompsymbol);
+      dynamic_cast<OmpAttributeOld*>(ompattribute)->var_list.push_back(ompsymbol);
       if( (*i)->ompType == e_firstprivate ) 
-         dynamic_cast<OmpAttribute*>(ompattribute)->hasFirstprivate = true;
+         dynamic_cast<OmpAttributeOld*>(ompattribute)->hasFirstprivate = true;
       if( (*i)->ompType == e_lastprivate ) 
-        dynamic_cast<OmpAttribute*>(ompattribute)->hasLastprivate = true;
+        dynamic_cast<OmpAttributeOld*>(ompattribute)->hasLastprivate = true;
       (*i)->ompType = e_shared; // tricky method. lastprivate need wrapping at omp parallel
     }
   }
 
  // srcattribute->print();
- // dynamic_cast<OmpAttribute*>(ompattribute)->print();
+ // dynamic_cast<OmpAttributeOld*>(ompattribute)->print();
 
 // also move the scheduling attributes to 'omp for'
-  dynamic_cast<OmpAttribute*>(ompattribute)->sched_type = srcattribute->sched_type;
-  dynamic_cast<OmpAttribute*>(ompattribute)->chunk_size = srcattribute->chunk_size;
+  dynamic_cast<OmpAttributeOld*>(ompattribute)->sched_type = srcattribute->sched_type;
+  dynamic_cast<OmpAttributeOld*>(ompattribute)->chunk_size = srcattribute->chunk_size;
 
-  pragmadecl2->addNewAttribute("OmpAttribute",ompattribute);
+  pragmadecl2->addNewAttribute("OmpAttributeOld",ompattribute);
 
   // modify the orignal one from 'omp parallel for' to 'omp parallel'
   string *strnew;
@@ -2675,8 +2693,8 @@ We get what we want then:
 int OmpMidend::transSections(SgPragmaDeclaration *decl)
 {
   ROSE_ASSERT(decl != NULL);
-  AstAttribute* astattribute=decl->getAttribute("OmpAttribute");
-  OmpAttribute *  ompattribute= dynamic_cast<OmpAttribute* > (astattribute);
+  AstAttribute* astattribute=decl->getAttribute("OmpAttributeOld");
+  OmpAttributeOld *  ompattribute= dynamic_cast<OmpAttributeOld* > (astattribute);
 
   SgBasicBlock *bb1 = buildBasicBlock();
 
@@ -2808,8 +2826,8 @@ int OmpMidend::transOmpFor(SgPragmaDeclaration *decl)
 
   SgStatement* forstmt = getNextStatement(decl);
   ROSE_ASSERT(isSgForStatement(forstmt) != NULL);
-  AstAttribute* astattribute=decl->getAttribute("OmpAttribute");
-  OmpAttribute *  ompattribute= dynamic_cast<OmpAttribute* > (astattribute);
+  AstAttribute* astattribute=decl->getAttribute("OmpAttributeOld");
+  OmpAttributeOld *  ompattribute= dynamic_cast<OmpAttributeOld* > (astattribute);
   //handling shared/private/reduction variables specified with 'omp for'
   if (ompattribute != NULL)
   {
@@ -3182,8 +3200,8 @@ int OmpMidend::transMaster(SgPragmaDeclaration * decl)
 int OmpMidend::transSingle(SgPragmaDeclaration * decl)
 {
 
-  AstAttribute* astattribute=decl->getAttribute("OmpAttribute");
-  OmpAttribute *  ompattribute= dynamic_cast<OmpAttribute* > (astattribute);
+  AstAttribute* astattribute=decl->getAttribute("OmpAttributeOld");
+  OmpAttributeOld *  ompattribute= dynamic_cast<OmpAttributeOld* > (astattribute);
 
 // _ompc_do_single () conditional statement for if statement
   SgScopeStatement * globalscope = isSgScopeStatement(SageInterface::getGlobalScope(decl));
@@ -3265,8 +3283,8 @@ int OmpMidend::transFlush(SgPragmaDeclaration * decl)
   SgStatement* last_statement=decl;
 
   // retrieve the var_list after omp flush
-  AstAttribute* astattribute=decl->getAttribute("OmpAttribute");
-  OmpAttribute *  ompattribute= dynamic_cast<OmpAttribute* > (astattribute); 
+  AstAttribute* astattribute=decl->getAttribute("OmpAttributeOld");
+  OmpAttributeOld *  ompattribute= dynamic_cast<OmpAttributeOld* > (astattribute); 
   int var_count = ompattribute->var_list.size();
 
   SgType* return_type = buildVoidType(); 
@@ -3566,7 +3584,7 @@ int OmpMidend::insertRTLinitAndCleanCode(SgProject* project, OmpFrontend *ompfro
 //  	_ompc_do_parallel(__ompc_func_x, __ompc_argv);
 //
 // return:  a basic block with several statements
-SgBasicBlock* OmpMidend::generateParallelRTLcall(SgPragmaDeclaration* pragDecl, SgFunctionDeclaration *outlinedFunc, OmpAttribute * ompattribute)
+SgBasicBlock* OmpMidend::generateParallelRTLcall(SgPragmaDeclaration* pragDecl, SgFunctionDeclaration *outlinedFunc, OmpAttributeOld * ompattribute)
 {
 
   ROSE_ASSERT(outlinedFunc!=NULL);
@@ -3772,7 +3790,7 @@ void OmpMidend::replacePragmaBlock(SgPragmaDeclaration* pragDecl, SgBasicBlock *
 //    variable handling (dereferences for shared variables, replace private variables
 //         using local copies, reduction statement ,etc
 void OmpMidend::generateOutlinedFunctionDefinition(SgPragmaDeclaration* decl,\
-		SgFunctionDeclaration * func, OmpAttribute *ompattribute)
+		SgFunctionDeclaration * func, OmpAttributeOld *ompattribute)
 {
 
    ROSE_ASSERT(decl); 
@@ -3830,9 +3848,9 @@ SgFunctionDeclaration* OmpMidend::generateOutlinedFunction(SgPragmaDeclaration* 
 // DQ (1/4/2007): Initialized these pointer to NULL.
   SgClassDefinition * classdef        = NULL;
 
-  AstAttribute* astattribute=decl->getAttribute("OmpAttribute");
+  AstAttribute* astattribute=decl->getAttribute("OmpAttributeOld");
   ROSE_ASSERT(astattribute != NULL);// Do we really need this assert?
-  OmpAttribute *  ompattribute= dynamic_cast<OmpAttribute* > (astattribute);
+  OmpAttributeOld *  ompattribute= dynamic_cast<OmpAttributeOld* > (astattribute);
   ROSE_ASSERT(ompattribute != NULL);
 
   classdef = getEnclosingClassDefinition(isSgNode(decl));
@@ -3921,10 +3939,10 @@ SgFunctionDeclaration* OmpMidend::generateOutlinedFunction(SgPragmaDeclaration* 
 // *. add runtime system init() and cleanup() code into main function
 int OmpMidend::transParallelRegion(SgPragmaDeclaration * decl)
 {
-  // cout<<"getting OmpAttribute..."<<endl;
-  AstAttribute* astattribute=decl->getAttribute("OmpAttribute");
+  // cout<<"getting OmpAttributeOld..."<<endl;
+  AstAttribute* astattribute=decl->getAttribute("OmpAttributeOld");
   ROSE_ASSERT(astattribute != NULL);// Do we really need this?
-  OmpAttribute *  ompattribute= dynamic_cast<OmpAttribute* > (astattribute);
+  OmpAttributeOld *  ompattribute= dynamic_cast<OmpAttributeOld* > (astattribute);
   ROSE_ASSERT(ompattribute != NULL);
 
   SgFunctionDeclaration *outFuncDecl= generateOutlinedFunction(decl);
@@ -3967,7 +3985,7 @@ int main(int argc, char* argv[])
   SgProject* project = frontend(argc, argv);
   ROSE_ASSERT(project !=NULL);
 
-  //topdown traversal to build persistent OmpAttribute for OpenMP pragma nodes
+  //topdown traversal to build persistent OmpAttributeOld for OpenMP pragma nodes
   //ompfrontend.traverseInputFiles(project,preorder);
   ompfrontend.traverse(project,preorder);
 
