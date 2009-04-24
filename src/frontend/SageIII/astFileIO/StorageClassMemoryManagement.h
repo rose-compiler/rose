@@ -327,7 +327,9 @@ class EasyStorage <rose_hash_multimap*> :
      static void readFromFile (std::istream& in);
    };
 
-#if !OLD_GRAPH_NODES
+// #if !OLD_GRAPH_NODES
+#ifdef ROSE_USE_NEW_GRAPH_NODES
+
 // DQ (8/19/2008): Added support for new graph IR nodes. 
 // EasyStorage for storing the rose_hash_multimap  
 // * it has overloaded methods for arrangeMemoryPoolInOneBlock and deleteMemoryPool

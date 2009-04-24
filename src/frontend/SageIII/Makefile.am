@@ -69,6 +69,10 @@ GENERATED_SOURCE = \
 	Cxx_GrammarNewConstructors.C \
 	Cxx_GrammarGetChildIndex.C
 
+
+# DQ (4/23/2009): This file depends upon other files
+StorageClasses.lo: $(srcdir)/astFileIO/StorageClassMemoryManagement.C astFileIO/SourcesOfIRNodesAstFileIOSupport.C
+
 haveRosettaGeneratedSource:
 	cd $(top_builddir)/src/ROSETTA/src; $(MAKE)
 	touch haveRosettaGeneratedSource

@@ -133,8 +133,10 @@ Grammar::setUpSupport ()
   // DQ (4/25/2004): Must be placed before the modifiers (since it includes one as a data member)
      NEW_TERMINAL_MACRO (BaseClass, "BaseClass", "BaseClassTag" );
 
-#define OLD_GRAPH_NODES 1
-#if OLD_GRAPH_NODES
+// #define OLD_GRAPH_NODES 0
+// #define OLD_GRAPH_NODES !ROSE_USE_NEW_GRAPH_NODES
+// #if OLD_GRAPH_NODES
+#ifndef ROSE_USE_NEW_GRAPH_NODES
    // tps (08/08/07): Added the graph, graph nodes and graph edges 
      NEW_TERMINAL_MACRO (DirectedGraph,     "DirectedGraph",     "DirectedGraphTag" );
      NEW_TERMINAL_MACRO (DirectedGraphNode, "DirectedGraphNode", "DirectedGraphNodeTag" );
@@ -213,6 +215,7 @@ Grammar::setUpSupport ()
   // NEW_TERMINAL_MACRO (InterfaceBody,  "InterfaceBody",  "TEMP_Interface_Body" );
 #endif
 
+#if 0
   // tps (08/08/07): Added the graph, graph nodes and graph edges 
      NEW_NONTERMINAL_MACRO (Support,
           Modifier              | Name                      | SymbolTable         | InitializedName      |
@@ -225,13 +228,38 @@ Grammar::setUpSupport ()
           NameGroup             | CommonBlockObject         | DimensionObject     | FormatItem           |
           FormatItemList        | DataStatementGroup        | DataStatementObject | DataStatementValue,
           "Support", "SupportTag", false);
+#endif
 
 #if !ROSE_MICROSOFT_OS
 // DQ (3/30/2009): This is the moved because "#if !0" is a problem for MSVS.
 // Note that OLD_GRAPH_NODES is set to "1" above...
-#if 0
-// !OLD_GRAPH_NODES == 0
-  /* (now derived from GraphNode) DirectedGraphNode | */ GraphNodeList | GraphEdgeList |
+// #if 0 // !OLD_GRAPH_NODES == 0
+// /* (now derived from GraphNode) DirectedGraphNode | */ GraphNodeList | GraphEdgeList |
+// #if OLD_GRAPH_NODES == 1
+#ifndef ROSE_USE_NEW_GRAPH_NODES
+     NEW_NONTERMINAL_MACRO (Support,
+          Modifier              | Name                      | SymbolTable         | InitializedName      |
+          Attribute             | File_Info                 | File                | Project              |
+          Options               | Unparse_Info              | BaseClass           | TypedefSeq           |
+          TemplateParameter     | TemplateArgument          | Directory           | FileList             | 
+          DirectoryList         | FunctionParameterTypeList | QualifiedName       | TemplateArgumentList |
+          TemplateParameterList | /* RenamePair                | InterfaceBody       |*/
+          Graph                 | GraphNode                 | GraphEdge           | 
+          NameGroup             | CommonBlockObject         | DimensionObject     | FormatItem           |
+          FormatItemList        | DataStatementGroup        | DataStatementObject | DataStatementValue,
+          "Support", "SupportTag", false);
+#else
+     NEW_NONTERMINAL_MACRO (Support,
+          Modifier              | Name                      | SymbolTable         | InitializedName      |
+          Attribute             | File_Info                 | File                | Project              |
+          Options               | Unparse_Info              | BaseClass           | TypedefSeq           |
+          TemplateParameter     | TemplateArgument          | Directory           | FileList             | 
+          DirectoryList         | FunctionParameterTypeList | QualifiedName       | TemplateArgumentList |
+          TemplateParameterList | /* RenamePair                | InterfaceBody       |*/
+          Graph                 | GraphNode                 | GraphEdge           | GraphNodeList | GraphEdgeList |
+          NameGroup             | CommonBlockObject         | DimensionObject     | FormatItem           |
+          FormatItemList        | DataStatementGroup        | DataStatementObject | DataStatementValue,
+          "Support", "SupportTag", false);
 #endif
 #endif
 
@@ -1141,7 +1169,8 @@ Grammar::setUpSupport ()
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
-#if OLD_GRAPH_NODES
+// #if OLD_GRAPH_NODES
+#ifndef ROSE_USE_NEW_GRAPH_NODES
    // tps (08/08/07): Added the graph, graph nodes and graph edges 
    // note - todo: Properties should be a map <string, string> (doesnt work yet)
    // note - todo: A graph should have a set of nodes and edges
@@ -1957,7 +1986,8 @@ Specifiers that can have only one value (implemented with a protected enum varia
      GraphEdge.setFunctionSource  ( "SOURCE_GRAPHEDGE" , "../Grammar/Support.code");     
 
 
-#if !OLD_GRAPH_NODES
+// #if !OLD_GRAPH_NODES
+#ifdef ROSE_USE_NEW_GRAPH_NODES
   // DQ (8/18/2008): This should be removed in the final version; added for backward compatability!
      DirectedGraph.setFunctionSource ( "SOURCE_DIRECTED_GRAPH", "../Grammar/Support.code");
 

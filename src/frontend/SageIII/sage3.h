@@ -169,17 +169,39 @@
 // for that.
 #include <ext/hash_map>
 
+#if 0
 // See above the <ext/hash_map> section.
 // using namespace __gnu_cxx;
-namespace rose_hash {
+namespace rose_hash 
+   {
   // The condition here is not needed for GCC 4.2, but is needed (and does not completely work) for earlier versions
 // #ifdef _GLIBCXX_DEBUG
 // using namespace __gnu_debug;
 // using __gnu_cxx::hash;
 // #else
-using namespace __gnu_cxx;
+
+     using namespace __gnu_cxx;
+
+  // DQ (4/23/2009): These should be put into this namespace so that we don't contaminate the global scope.
+  // DQ (8/19/2008): This is already defined in src/frontend/SageIII/astMerge/buildMangledNameMap.h
+     struct eqstr_string
+        {
+          bool operator()(const std::string & s1, const std::string & s2) const;    
+        };
+
+/*! \brief Hash name support for symbol tables within ROSE.
+ */
+     struct hash_string
+        {
+          rose_hash::hash<const char*> hasher;
+
+          public:
+               size_t operator()(const std::string & name) const;
+        };
+
 // #endif
-}
+   }
+#endif
 
 // Support for preprocessors declarations and comments
 #include "rose_attributes_list.h"
