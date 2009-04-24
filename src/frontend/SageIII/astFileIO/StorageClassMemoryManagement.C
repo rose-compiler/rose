@@ -1046,7 +1046,7 @@ void EasyStorage <Rose_STL_Container<std::string> > :: deleteMemoryPool()
 void EasyStorage <Rose_STL_Container<std::string> > :: writeToFile(std::ostream& outputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::writeMarker("|02|",outputFileStream);
+     AST_FILE_IO_MARKER::writeMarker("|03|",outputFileStream);
 #endif
     // calling the base class 
      StorageClassMemoryManagement<EasyStorage<std::string> > :: writeToFile(outputFileStream);
@@ -1057,7 +1057,7 @@ void EasyStorage <Rose_STL_Container<std::string> > :: writeToFile(std::ostream&
 void EasyStorage <Rose_STL_Container<std::string> > :: readFromFile (std::istream& inputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::readMarker("|02|",inputFileStream);
+     AST_FILE_IO_MARKER::readMarker("|03|",inputFileStream);
 #endif
     // calling the base class 
      StorageClassMemoryManagement<EasyStorage<std::string> > :: readFromFile (inputFileStream);
@@ -1106,7 +1106,7 @@ void EasyStorage <SgName> :: deleteMemoryPool()
 void EasyStorage <SgName> :: writeToFile(std::ostream& outputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::writeMarker("|03|",outputFileStream);
+     AST_FILE_IO_MARKER::writeMarker("|04|",outputFileStream);
 #endif
     // calling the method on the data member
       EasyStorage <std::string> :: writeToFile(outputFileStream);
@@ -1116,7 +1116,7 @@ void EasyStorage <SgName> :: writeToFile(std::ostream& outputFileStream)
 void EasyStorage <SgName> :: readFromFile (std::istream& inputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::readMarker("|03|",inputFileStream);
+     AST_FILE_IO_MARKER::readMarker("|04|",inputFileStream);
 #endif
     // calling the method on the data member
      EasyStorage <std::string> :: readFromFile (inputFileStream);
@@ -1166,7 +1166,7 @@ template <class T>
 void EasyStorageMapEntry <SgName,T> :: writeToFile(std::ostream& outputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::writeMarker("|04|",outputFileStream);
+     AST_FILE_IO_MARKER::writeMarker("|05|",outputFileStream);
 #endif
     // calling the method on the data member
       EasyStorage <SgName> :: writeToFile(outputFileStream);
@@ -1176,7 +1176,7 @@ template <class T>
 void EasyStorageMapEntry <SgName,T> :: readFromFile (std::istream& inputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::readMarker("|04|",inputFileStream);
+     AST_FILE_IO_MARKER::readMarker("|05|",inputFileStream);
 #endif
   // calling the method on the data member
      EasyStorage <SgName> :: readFromFile (inputFileStream);
@@ -1280,7 +1280,7 @@ void EasyStorage <rose_hash_multimap*> :: deleteMemoryPool()
 void EasyStorage <rose_hash_multimap*> :: writeToFile(std::ostream& outputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::writeMarker("|05|",outputFileStream);
+     AST_FILE_IO_MARKER::writeMarker("|06|",outputFileStream);
 #endif
    // call suitable methods of parent and member
       StorageClassMemoryManagement <EasyStorageMapEntry<SgName,SgSymbol*> > :: writeToFile(outputFileStream);
@@ -1291,7 +1291,7 @@ void EasyStorage <rose_hash_multimap*> :: writeToFile(std::ostream& outputFileSt
 void EasyStorage <rose_hash_multimap*> :: readFromFile (std::istream& inputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::readMarker("|05|",inputFileStream);
+     AST_FILE_IO_MARKER::readMarker("|06|",inputFileStream);
 #endif
    // call suitable methods of parent and member
      StorageClassMemoryManagement <EasyStorageMapEntry<SgName,SgSymbol*> > :: readFromFile (inputFileStream);
@@ -1361,7 +1361,7 @@ void EasyStorageMapEntry <std::string,AstAttribute*> :: deleteMemoryPool()
 void EasyStorageMapEntry <std::string,AstAttribute*> :: writeToFile(std::ostream& outputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::writeMarker("|06|",outputFileStream);
+     AST_FILE_IO_MARKER::writeMarker("|07|",outputFileStream);
 #endif
   // EasyStorage <std::string> occurs twice, but is only called once!!!!!!!!
      EasyStorage <std::string>  :: writeToFile(outputFileStream);
@@ -1373,7 +1373,7 @@ void EasyStorageMapEntry <std::string,AstAttribute*> :: writeToFile(std::ostream
 void EasyStorageMapEntry <std::string,AstAttribute*> :: readFromFile (std::istream& inputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::readMarker("|06|",inputFileStream);
+     AST_FILE_IO_MARKER::readMarker("|07|",inputFileStream);
 #endif
   // EasyStorage <std::string> occurs twice, but is only called once!!!!!!!!
      EasyStorage <std::string>  :: readFromFile (inputFileStream);
@@ -1484,7 +1484,7 @@ void EasyStorage <AstAttributeMechanism*> :: deleteMemoryPool()
 void EasyStorage <AstAttributeMechanism*> :: writeToFile(std::ostream& outputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::writeMarker("|07|",outputFileStream);
+     AST_FILE_IO_MARKER::writeMarker("|08|",outputFileStream);
 #endif
   // call suitable methods of parent and members
      StorageClassMemoryManagement < EasyStorageMapEntry<std::string,AstAttribute*> > :: writeToFile(outputFileStream);
@@ -1495,7 +1495,7 @@ void EasyStorage <AstAttributeMechanism*> :: writeToFile(std::ostream& outputFil
 void EasyStorage <AstAttributeMechanism*> :: readFromFile (std::istream& inputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::readMarker("|07|",inputFileStream);
+     AST_FILE_IO_MARKER::readMarker("|08|",inputFileStream);
 #endif
   // call suitable methods of parent and members
      StorageClassMemoryManagement < EasyStorageMapEntry<std::string,AstAttribute*> > :: readFromFile (inputFileStream);
@@ -1604,7 +1604,7 @@ void EasyStorage <PreprocessingInfo*> :: deleteMemoryPool()
 void EasyStorage <PreprocessingInfo*> :: writeToFile(std::ostream& outputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::writeMarker("|17|",outputFileStream);
+     AST_FILE_IO_MARKER::writeMarker("|09|",outputFileStream);
 #endif
   // call suitable methods of parent and members
      StorageClassMemoryManagement < char > :: writeToFile(outputFileStream);
@@ -1614,7 +1614,7 @@ void EasyStorage <PreprocessingInfo*> :: writeToFile(std::ostream& outputFileStr
 void EasyStorage <PreprocessingInfo*> :: readFromFile (std::istream& inputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::readMarker("|17|",inputFileStream);
+     AST_FILE_IO_MARKER::readMarker("|09|",inputFileStream);
 #endif
   // call suitable methods of parent and members
      StorageClassMemoryManagement < char > :: readFromFile (inputFileStream);
@@ -1709,7 +1709,7 @@ template <template <class A> class CONTAINER >
 void EasyStorage <CONTAINER<PreprocessingInfo*> > :: writeToFile(std::ostream& outputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::writeMarker("|08|",outputFileStream);
+     AST_FILE_IO_MARKER::writeMarker("|10|",outputFileStream);
 #endif
     // calling the base class method
      StorageClassMemoryManagement<EasyStorage<PreprocessingInfo*> > :: writeToFile(outputFileStream);
@@ -1721,7 +1721,7 @@ template <template <class A> class CONTAINER >
 void EasyStorage <CONTAINER<PreprocessingInfo*> > :: readFromFile (std::istream& inputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::readMarker("|08|",inputFileStream);
+     AST_FILE_IO_MARKER::readMarker("|10|",inputFileStream);
 #endif
     // calling the base class method
      StorageClassMemoryManagement<EasyStorage<PreprocessingInfo*> > :: readFromFile (inputFileStream);
@@ -1807,7 +1807,7 @@ void EasyStorage <std::vector<PreprocessingInfo*> > :: deleteMemoryPool()
 void EasyStorage <std::vector<PreprocessingInfo*> > :: writeToFile(std::ostream& outputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::writeMarker("|08|",outputFileStream);
+     AST_FILE_IO_MARKER::writeMarker("|11|",outputFileStream);
 #endif
     // calling the base class method
      StorageClassMemoryManagement<EasyStorage<PreprocessingInfo*> > :: writeToFile(outputFileStream);
@@ -1818,7 +1818,7 @@ void EasyStorage <std::vector<PreprocessingInfo*> > :: writeToFile(std::ostream&
 void EasyStorage <std::vector<PreprocessingInfo*> > :: readFromFile (std::istream& inputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::readMarker("|08|",inputFileStream);
+     AST_FILE_IO_MARKER::readMarker("|11|",inputFileStream);
 #endif
     // calling the base class method
      StorageClassMemoryManagement<EasyStorage<PreprocessingInfo*> > :: readFromFile (inputFileStream);
@@ -1919,7 +1919,7 @@ void EasyStorage <AttachedPreprocessingInfoType*> :: deleteMemoryPool()
 void EasyStorage <AttachedPreprocessingInfoType*> :: writeToFile(std::ostream& outputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::writeMarker("|08|",outputFileStream);
+     AST_FILE_IO_MARKER::writeMarker("|12|",outputFileStream);
 #endif
     // calling the base class method
      StorageClassMemoryManagement<EasyStorage<PreprocessingInfo*> > :: writeToFile(outputFileStream);
@@ -1930,7 +1930,7 @@ void EasyStorage <AttachedPreprocessingInfoType*> :: writeToFile(std::ostream& o
 void EasyStorage <AttachedPreprocessingInfoType*> :: readFromFile (std::istream& inputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::readMarker("|08|",inputFileStream);
+     AST_FILE_IO_MARKER::readMarker("|12|",inputFileStream);
 #endif
     // calling the base class method
      StorageClassMemoryManagement<EasyStorage<PreprocessingInfo*> > :: readFromFile (inputFileStream);
@@ -1982,7 +1982,7 @@ void EasyStorage<ROSEAttributesList> :: deleteMemoryPool()
 void EasyStorage<ROSEAttributesList> :: writeToFile(std::ostream& outputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::writeMarker("|09|",outputFileStream);
+     AST_FILE_IO_MARKER::writeMarker("|13|",outputFileStream);
 #endif
   // call suitable methods on members
       EasyStorage < std::vector<PreprocessingInfo*> > :: writeToFile(outputFileStream);
@@ -1993,7 +1993,7 @@ void EasyStorage<ROSEAttributesList> :: writeToFile(std::ostream& outputFileStre
 void EasyStorage<ROSEAttributesList> :: readFromFile (std::istream& inputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::readMarker("|09|",inputFileStream);
+     AST_FILE_IO_MARKER::readMarker("|13|",inputFileStream);
 #endif
   // call suitable methods on members
      EasyStorage < std::vector<PreprocessingInfo*> > :: readFromFile (inputFileStream);
@@ -2099,7 +2099,7 @@ void EasyStorage <ROSEAttributesListContainerPtr> :: deleteMemoryPool()
 void EasyStorage <ROSEAttributesListContainerPtr> :: writeToFile(std::ostream& outputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::writeMarker("|10|",outputFileStream);
+     AST_FILE_IO_MARKER::writeMarker("|14|",outputFileStream);
 #endif
   // call suitable methods on members and base class
       StorageClassMemoryManagement< EasyStorage<ROSEAttributesList> >:: writeToFile(outputFileStream);
@@ -2110,7 +2110,7 @@ void EasyStorage <ROSEAttributesListContainerPtr> :: writeToFile(std::ostream& o
 void EasyStorage <ROSEAttributesListContainerPtr> :: readFromFile (std::istream& inputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::readMarker("|10|",inputFileStream);
+     AST_FILE_IO_MARKER::readMarker("|14|",inputFileStream);
 #endif
   // call suitable methods on members and base class
      StorageClassMemoryManagement< EasyStorage<ROSEAttributesList> > :: readFromFile (inputFileStream);
@@ -2153,7 +2153,7 @@ void EasyStorageMapEntry <std::string,ROSEAttributesList> :: deleteMemoryPool()
 void EasyStorageMapEntry <std::string,ROSEAttributesList> :: writeToFile(std::ostream& outputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::writeMarker("|21|",outputFileStream);
+     AST_FILE_IO_MARKER::writeMarker("|15|",outputFileStream);
 #endif
      EasyStorage <std::string> :: writeToFile(outputFileStream);
      EasyStorage <ROSEAttributesList> :: writeToFile(outputFileStream);
@@ -2162,7 +2162,7 @@ void EasyStorageMapEntry <std::string,ROSEAttributesList> :: writeToFile(std::os
 void EasyStorageMapEntry <std::string,ROSEAttributesList> :: readFromFile (std::istream& inputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::readMarker("|21|",inputFileStream);
+     AST_FILE_IO_MARKER::readMarker("|15|",inputFileStream);
 #endif
      EasyStorage <std::string> :: readFromFile (inputFileStream);
      EasyStorage <ROSEAttributesList> :: readFromFile (inputFileStream);
@@ -2268,7 +2268,7 @@ void EasyStorage <ROSEAttributesListContainerPtr> :: deleteMemoryPool()
 void EasyStorage <ROSEAttributesListContainerPtr> :: writeToFile(std::ostream& outputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::writeMarker("|20|",outputFileStream);
+     AST_FILE_IO_MARKER::writeMarker("|16|",outputFileStream);
 #endif
   // call suitable methods on members and base class
       StorageClassMemoryManagement< EasyStorageMapEntry<std::string,ROSEAttributesList> >:: writeToFile(outputFileStream);
@@ -2279,7 +2279,7 @@ void EasyStorage <ROSEAttributesListContainerPtr> :: writeToFile(std::ostream& o
 void EasyStorage <ROSEAttributesListContainerPtr> :: readFromFile (std::istream& inputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::readMarker("|20|",inputFileStream);
+     AST_FILE_IO_MARKER::readMarker("|16|",inputFileStream);
 #endif
   // call suitable methods on members and base class
      StorageClassMemoryManagement< EasyStorageMapEntry<std::string,ROSEAttributesList> > :: readFromFile (inputFileStream);
@@ -2320,7 +2320,7 @@ void EasyStorageMapEntry <std::string,int> :: deleteMemoryPool()
 void EasyStorageMapEntry <std::string,int> :: writeToFile(std::ostream& outputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::writeMarker("|11|",outputFileStream);
+     AST_FILE_IO_MARKER::writeMarker("|17|",outputFileStream);
 #endif
      EasyStorage <std::string> :: writeToFile(outputFileStream);
    }
@@ -2328,7 +2328,7 @@ void EasyStorageMapEntry <std::string,int> :: writeToFile(std::ostream& outputFi
 void EasyStorageMapEntry <std::string,int> :: readFromFile (std::istream& inputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::readMarker("|11|",inputFileStream);
+     AST_FILE_IO_MARKER::readMarker("|17|",inputFileStream);
 #endif
      EasyStorage <std::string> :: readFromFile (inputFileStream);
    }
@@ -2367,7 +2367,7 @@ void EasyStorageMapEntry <int, std::string> :: deleteMemoryPool()
 void EasyStorageMapEntry <int,std::string> :: writeToFile(std::ostream& outputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::writeMarker("|12|",outputFileStream);
+     AST_FILE_IO_MARKER::writeMarker("|18|",outputFileStream);
 #endif
      EasyStorage <std::string> :: writeToFile(outputFileStream);
    }
@@ -2375,7 +2375,7 @@ void EasyStorageMapEntry <int,std::string> :: writeToFile(std::ostream& outputFi
 void EasyStorageMapEntry <int,std::string> :: readFromFile (std::istream& inputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::readMarker("|12|",inputFileStream);
+     AST_FILE_IO_MARKER::readMarker("|18|",inputFileStream);
 #endif
      EasyStorage <std::string> :: readFromFile (inputFileStream);
    }
@@ -2416,7 +2416,7 @@ void EasyStorageMapEntry <SgNode*,int> :: deleteMemoryPool()
 void EasyStorageMapEntry <SgNode*,int> :: writeToFile(std::ostream& outputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::writeMarker("|11|",outputFileStream);
+     AST_FILE_IO_MARKER::writeMarker("|19|",outputFileStream);
 #endif
   // EasyStorage <SgNode*> :: writeToFile(outputFileStream);
    }
@@ -2424,7 +2424,7 @@ void EasyStorageMapEntry <SgNode*,int> :: writeToFile(std::ostream& outputFileSt
 void EasyStorageMapEntry <SgNode*,int> :: readFromFile (std::istream& inputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::readMarker("|11|",inputFileStream);
+     AST_FILE_IO_MARKER::readMarker("|19|",inputFileStream);
 #endif
   // EasyStorage <SgNode*> :: readFromFile (inputFileStream);
    }
@@ -2512,7 +2512,7 @@ void EasyStorage < std::map<int,std::string> > :: deleteMemoryPool()
 void EasyStorage < std::map<int,std::string> > :: writeToFile(std::ostream& outputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::writeMarker("|13|",outputFileStream);
+     AST_FILE_IO_MARKER::writeMarker("|20|",outputFileStream);
 #endif
      StorageClassMemoryManagement< EasyStorageMapEntry<int, std::string> > :: writeToFile(outputFileStream);
      EasyStorageMapEntry<int, std::string> :: writeToFile(outputFileStream);
@@ -2521,7 +2521,7 @@ void EasyStorage < std::map<int,std::string> > :: writeToFile(std::ostream& outp
 void EasyStorage < std::map<int,std::string> > :: readFromFile (std::istream& inputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::readMarker("|13|",inputFileStream);
+     AST_FILE_IO_MARKER::readMarker("|20|",inputFileStream);
 #endif
      StorageClassMemoryManagement< EasyStorageMapEntry<int, std::string> > :: readFromFile (inputFileStream);
      EasyStorageMapEntry<int, std::string> :: readFromFile (inputFileStream);
@@ -2609,7 +2609,7 @@ void EasyStorage < std::map<std::string,int> > :: deleteMemoryPool()
 void EasyStorage < std::map<std::string,int> > :: writeToFile(std::ostream& outputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::writeMarker("|14|",outputFileStream);
+     AST_FILE_IO_MARKER::writeMarker("|21|",outputFileStream);
 #endif
      StorageClassMemoryManagement< EasyStorageMapEntry<std::string, int> >:: writeToFile(outputFileStream);
      EasyStorageMapEntry<std::string,int> :: writeToFile(outputFileStream);
@@ -2618,7 +2618,7 @@ void EasyStorage < std::map<std::string,int> > :: writeToFile(std::ostream& outp
 void EasyStorage < std::map<std::string,int> > :: readFromFile (std::istream& inputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::readMarker("|14|",inputFileStream);
+     AST_FILE_IO_MARKER::readMarker("|21|",inputFileStream);
 #endif
      StorageClassMemoryManagement< EasyStorageMapEntry<std::string, int> > :: readFromFile (inputFileStream);
      EasyStorageMapEntry<std::string,int> :: readFromFile (inputFileStream);
@@ -2717,7 +2717,7 @@ void EasyStorage < std::map<SgNode*,int> > :: deleteMemoryPool()
 void EasyStorage < std::map<SgNode*,int> > :: writeToFile(std::ostream& outputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::writeMarker("|15|",outputFileStream);
+     AST_FILE_IO_MARKER::writeMarker("|22|",outputFileStream);
 #endif
      StorageClassMemoryManagement< EasyStorageMapEntry<SgNode*, int> >:: writeToFile(outputFileStream);
      EasyStorageMapEntry<SgNode*,int> :: writeToFile(outputFileStream);
@@ -2726,7 +2726,7 @@ void EasyStorage < std::map<SgNode*,int> > :: writeToFile(std::ostream& outputFi
 void EasyStorage < std::map<SgNode*,int> > :: readFromFile (std::istream& inputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::readMarker("|15|",inputFileStream);
+     AST_FILE_IO_MARKER::readMarker("|22|",inputFileStream);
 #endif
      StorageClassMemoryManagement< EasyStorageMapEntry<SgNode*, int> > :: readFromFile (inputFileStream);
      EasyStorageMapEntry<SgNode*,int> :: readFromFile (inputFileStream);
@@ -2827,7 +2827,7 @@ void EasyStorage < std::map<SgNode*,std::string> > :: deleteMemoryPool()
 void EasyStorage < std::map<SgNode*,std::string> > :: writeToFile(std::ostream& outputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::writeMarker("|16|",outputFileStream);
+     AST_FILE_IO_MARKER::writeMarker("|23|",outputFileStream);
 #endif
 
   // DQ (10/6/2006): Comment out so that we can debug the linking issues
@@ -2840,7 +2840,7 @@ void EasyStorage < std::map<SgNode*,std::string> > :: writeToFile(std::ostream& 
 void EasyStorage < std::map<SgNode*,std::string> > :: readFromFile (std::istream& inputFileStream)
    {
 #if FILE_IO_MARKER
-     AST_FILE_IO_MARKER::readMarker("|16|",inputFileStream);
+     AST_FILE_IO_MARKER::readMarker("|23|",inputFileStream);
 #endif
 
   // DQ (10/6/2006): Comment out so that we can debug the linking issues
@@ -2850,5 +2850,394 @@ void EasyStorage < std::map<SgNode*,std::string> > :: readFromFile (std::istream
 #endif
    }
 
+
+
+#ifdef ROSE_USE_NEW_GRAPH_NODES
+
+// ****************************************************************************************
+// **      Implementations for EasyStorage < rose_graph_hash_multimap* >                 **
+// ****************************************************************************************
+
+void EasyStorage <rose_graph_hash_multimap*> ::storeDataInEasyStorageClass(rose_graph_hash_multimap* data_)
+   {
+     if ( data_ == NULL )
+        { 
+          Base::sizeOfData = -1;
+        }
+     else 
+        {
+#if 0
+       // store the parent pointer as unsigned long (this should better be AddrType). FixMe, also in the class declaration ! 
+          parent = AST_FILE_IO :: getGlobalIndexFromSgClassPointer( data_->parent );
+       // get staring iterator
+          rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator copy_ = data_->begin();
+          long offset = Base::setPositionAndSizeAndReturnOffset ( data_->size() ) ;
+       // if the new data does not fit in the actual block
+          if (0 < offset)
+             {
+            // if there is still space in the actual block
+               if ( offset < Base::getSizeOfData() && Base::actual != NULL )
+                  {
+                    for (; (unsigned long) (Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize; ++Base::actual, ++copy_)
+                       {
+                         Base::actual->storeDataInEasyStorageClass(*copy_);
+                       }
+                  }
+            // the data does not fit in one block
+               while (Base::blockSize < (unsigned long)(offset))
+                 {
+                  Base::actual = Base::getNewMemoryBlock();
+                  for (; (unsigned long)(Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize; ++Base::actual, ++copy_)
+                     {
+                      Base::actual->storeDataInEasyStorageClass(*copy_);
+                     }
+                  offset -= Base::blockSize;
+                 };
+            // get new memory block, since the old one is full
+               Base::actual = Base::getNewMemoryBlock();
+             }
+       // store the (rest of the ) data 
+          for ( ; copy_ != data_->end(); ++copy_, ++Base::actual )
+             {
+              Base::actual->storeDataInEasyStorageClass(*copy_);
+             }
+#else
+       // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
+          printf ("Error: support for file IO on graph nodes not implemented! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+   }
+
+
+rose_graph_hash_multimap* 
+EasyStorage <rose_graph_hash_multimap*> :: rebuildDataStoredInEasyStorageClass() const
+   {
+#if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
+      assert ( Base::actualBlock <= 1 );
+      assert ( (0 < Base::getSizeOfData() && Base::actual!= NULL) || ( Base::getSizeOfData() <= 0 ) );
+#endif
+
+     rose_graph_hash_multimap* return_map = NULL;
+
+#if 0
+     if ( 0 <= Base::getSizeOfData() )
+        {
+          return_map = new rose_hash_multimap();
+       // set the parent
+          return_map->parent = AST_FILE_IO :: getSgClassPointerFromGlobalIndex(parent);
+       // if the memory pool is valid 
+          if ( Base::actual != NULL  && 0 < Base::getSizeOfData() )
+             {
+               EasyStorageMapEntry<SgName,SgSymbol*> *pointer = Base::getBeginningOfDataBlock();
+               for (int i = 0; i < Base::getSizeOfData(); ++i)
+                  {
+                    return_map->insert((pointer+i)->rebuildDataStoredInEasyStorageClass()) ;
+                  }
+             }
+        }
+#else
+  // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
+     printf ("Error: support for file IO on graph nodes not implemented! \n");
+     ROSE_ASSERT(false);
+#endif
+     return return_map;
+   }
+
+
+void EasyStorage <rose_graph_hash_multimap*> :: arrangeMemoryPoolInOneBlock()
+   {
+   // call suitable methods of parent and member
+      StorageClassMemoryManagement <EasyStorageMapEntry<SgName,SgSymbol*> > :: arrangeMemoryPoolInOneBlock();
+      EasyStorageMapEntry <SgName,SgSymbol*> :: arrangeMemoryPoolInOneBlock();
+   }
+
+
+void EasyStorage <rose_graph_hash_multimap*> :: deleteMemoryPool()
+   {
+   // call suitable methods of parent and member
+     StorageClassMemoryManagement <EasyStorageMapEntry<SgName,SgSymbol*> > :: deleteMemoryPool();
+     EasyStorageMapEntry <SgName,SgSymbol*> :: deleteMemoryPool();
+   }
+
+
+void EasyStorage <rose_graph_hash_multimap*>::writeToFile(std::ostream& outputFileStream)
+   {
+#if FILE_IO_MARKER
+     AST_FILE_IO_MARKER::writeMarker("|24|",outputFileStream);
+#endif
+   // call suitable methods of parent and member
+      StorageClassMemoryManagement <EasyStorageMapEntry<SgName,SgSymbol*> > :: writeToFile(outputFileStream);
+      EasyStorageMapEntry <SgName,SgSymbol*> :: writeToFile( outputFileStream);
+   }
+
+
+void EasyStorage <rose_graph_hash_multimap*> :: readFromFile (std::istream& inputFileStream)
+   {
+#if FILE_IO_MARKER
+     AST_FILE_IO_MARKER::readMarker("|24|",inputFileStream);
+#endif
+   // call suitable methods of parent and member
+     StorageClassMemoryManagement <EasyStorageMapEntry<SgName,SgSymbol*> > :: readFromFile (inputFileStream);
+     EasyStorageMapEntry <SgName,SgSymbol*> :: readFromFile (inputFileStream);
+   }
+
+
+// ****************************************************************************************
+// **      Implementations for EasyStorage < rose_undirected_graph_hash_multimap* >                 **
+// ****************************************************************************************
+
+void EasyStorage <rose_undirected_graph_hash_multimap*> ::storeDataInEasyStorageClass(rose_undirected_graph_hash_multimap* data_)
+   {
+     if ( data_ == NULL )
+        { 
+          Base::sizeOfData = -1;
+        }
+     else 
+        {
+#if 0
+       // store the parent pointer as unsigned long (this should better be AddrType). FixMe, also in the class declaration ! 
+          parent = AST_FILE_IO :: getGlobalIndexFromSgClassPointer( data_->parent );
+       // get staring iterator
+          rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator copy_ = data_->begin();
+          long offset = Base::setPositionAndSizeAndReturnOffset ( data_->size() ) ;
+       // if the new data does not fit in the actual block
+          if (0 < offset)
+             {
+            // if there is still space in the actual block
+               if ( offset < Base::getSizeOfData() && Base::actual != NULL )
+                  {
+                    for (; (unsigned long) (Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize; ++Base::actual, ++copy_)
+                       {
+                         Base::actual->storeDataInEasyStorageClass(*copy_);
+                       }
+                  }
+            // the data does not fit in one block
+               while (Base::blockSize < (unsigned long)(offset))
+                 {
+                  Base::actual = Base::getNewMemoryBlock();
+                  for (; (unsigned long)(Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize; ++Base::actual, ++copy_)
+                     {
+                      Base::actual->storeDataInEasyStorageClass(*copy_);
+                     }
+                  offset -= Base::blockSize;
+                 };
+            // get new memory block, since the old one is full
+               Base::actual = Base::getNewMemoryBlock();
+             }
+       // store the (rest of the ) data 
+          for ( ; copy_ != data_->end(); ++copy_, ++Base::actual )
+             {
+              Base::actual->storeDataInEasyStorageClass(*copy_);
+             }
+#else
+       // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
+          printf ("Error: support for file IO on graph nodes not implemented! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+   }
+
+
+rose_undirected_graph_hash_multimap* 
+EasyStorage <rose_undirected_graph_hash_multimap*> :: rebuildDataStoredInEasyStorageClass() const
+   {
+#if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
+      assert ( Base::actualBlock <= 1 );
+      assert ( (0 < Base::getSizeOfData() && Base::actual!= NULL) || ( Base::getSizeOfData() <= 0 ) );
+#endif
+
+     rose_undirected_graph_hash_multimap* return_map = NULL;
+
+#if 0
+     if ( 0 <= Base::getSizeOfData() )
+        {
+          return_map = new rose_hash_multimap();
+       // set the parent
+          return_map->parent = AST_FILE_IO :: getSgClassPointerFromGlobalIndex(parent);
+       // if the memory pool is valid 
+          if ( Base::actual != NULL  && 0 < Base::getSizeOfData() )
+             {
+               EasyStorageMapEntry<SgName,SgSymbol*> *pointer = Base::getBeginningOfDataBlock();
+               for (int i = 0; i < Base::getSizeOfData(); ++i)
+                  {
+                    return_map->insert((pointer+i)->rebuildDataStoredInEasyStorageClass()) ;
+                  }
+             }
+        }
+#else
+  // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
+     printf ("Error: support for file IO on graph nodes not implemented! \n");
+     ROSE_ASSERT(false);
+#endif
+     return return_map;
+   }
+
+
+void EasyStorage <rose_undirected_graph_hash_multimap*> :: arrangeMemoryPoolInOneBlock()
+   {
+   // call suitable methods of parent and member
+      StorageClassMemoryManagement <EasyStorageMapEntry<SgName,SgSymbol*> > :: arrangeMemoryPoolInOneBlock();
+      EasyStorageMapEntry <SgName,SgSymbol*> :: arrangeMemoryPoolInOneBlock();
+   }
+
+
+void EasyStorage <rose_undirected_graph_hash_multimap*> :: deleteMemoryPool()
+   {
+   // call suitable methods of parent and member
+     StorageClassMemoryManagement <EasyStorageMapEntry<SgName,SgSymbol*> > :: deleteMemoryPool();
+     EasyStorageMapEntry <SgName,SgSymbol*> :: deleteMemoryPool();
+   }
+
+void EasyStorage <rose_undirected_graph_hash_multimap*>::writeToFile(std::ostream& outputFileStream)
+   {
+#if FILE_IO_MARKER
+     AST_FILE_IO_MARKER::writeMarker("|25|",outputFileStream);
+#endif
+   // call suitable methods of parent and member
+      StorageClassMemoryManagement <EasyStorageMapEntry<SgName,SgSymbol*> > :: writeToFile(outputFileStream);
+      EasyStorageMapEntry <SgName,SgSymbol*> :: writeToFile( outputFileStream);
+   }
+
+
+void EasyStorage <rose_undirected_graph_hash_multimap*> :: readFromFile (std::istream& inputFileStream)
+   {
+#if FILE_IO_MARKER
+     AST_FILE_IO_MARKER::readMarker("|25|",inputFileStream);
+#endif
+   // call suitable methods of parent and member
+     StorageClassMemoryManagement <EasyStorageMapEntry<SgName,SgSymbol*> > :: readFromFile (inputFileStream);
+     EasyStorageMapEntry <SgName,SgSymbol*> :: readFromFile (inputFileStream);
+   }
+
+
+// ****************************************************************************************
+// **      Implementations for EasyStorage < rose_directed_graph_hash_multimap* >                 **
+// ****************************************************************************************
+
+void EasyStorage <rose_directed_graph_hash_multimap*> ::storeDataInEasyStorageClass(rose_directed_graph_hash_multimap* data_)
+   {
+     if ( data_ == NULL )
+        { 
+          Base::sizeOfData = -1;
+        }
+     else 
+        {
+#if 0
+       // store the parent pointer as unsigned long (this should better be AddrType). FixMe, also in the class declaration ! 
+          parent = AST_FILE_IO :: getGlobalIndexFromSgClassPointer( data_->parent );
+       // get staring iterator
+          rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>::iterator copy_ = data_->begin();
+          long offset = Base::setPositionAndSizeAndReturnOffset ( data_->size() ) ;
+       // if the new data does not fit in the actual block
+          if (0 < offset)
+             {
+            // if there is still space in the actual block
+               if ( offset < Base::getSizeOfData() && Base::actual != NULL )
+                  {
+                    for (; (unsigned long) (Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize; ++Base::actual, ++copy_)
+                       {
+                         Base::actual->storeDataInEasyStorageClass(*copy_);
+                       }
+                  }
+            // the data does not fit in one block
+               while (Base::blockSize < (unsigned long)(offset))
+                 {
+                  Base::actual = Base::getNewMemoryBlock();
+                  for (; (unsigned long)(Base::actual - Base::getBeginningOfActualBlock()) < Base::blockSize; ++Base::actual, ++copy_)
+                     {
+                      Base::actual->storeDataInEasyStorageClass(*copy_);
+                     }
+                  offset -= Base::blockSize;
+                 };
+            // get new memory block, since the old one is full
+               Base::actual = Base::getNewMemoryBlock();
+             }
+       // store the (rest of the ) data 
+          for ( ; copy_ != data_->end(); ++copy_, ++Base::actual )
+             {
+              Base::actual->storeDataInEasyStorageClass(*copy_);
+             }
+#else
+       // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
+          printf ("Error: support for file IO on graph nodes not implemented! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+   }
+
+
+rose_directed_graph_hash_multimap* 
+EasyStorage <rose_directed_graph_hash_multimap*> :: rebuildDataStoredInEasyStorageClass() const
+   {
+#if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
+      assert ( Base::actualBlock <= 1 );
+      assert ( (0 < Base::getSizeOfData() && Base::actual!= NULL) || ( Base::getSizeOfData() <= 0 ) );
+#endif
+
+     rose_directed_graph_hash_multimap* return_map = NULL;
+
+#if 0
+     if ( 0 <= Base::getSizeOfData() )
+        {
+          return_map = new rose_hash_multimap();
+       // set the parent
+          return_map->parent = AST_FILE_IO :: getSgClassPointerFromGlobalIndex(parent);
+       // if the memory pool is valid 
+          if ( Base::actual != NULL  && 0 < Base::getSizeOfData() )
+             {
+               EasyStorageMapEntry<SgName,SgSymbol*> *pointer = Base::getBeginningOfDataBlock();
+               for (int i = 0; i < Base::getSizeOfData(); ++i)
+                  {
+                    return_map->insert((pointer+i)->rebuildDataStoredInEasyStorageClass()) ;
+                  }
+             }
+        }
+#else
+  // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
+     printf ("Error: support for file IO on graph nodes not implemented! \n");
+     ROSE_ASSERT(false);
+#endif
+     return return_map;
+   }
+
+
+void EasyStorage <rose_directed_graph_hash_multimap*> :: arrangeMemoryPoolInOneBlock()
+   {
+   // call suitable methods of parent and member
+      StorageClassMemoryManagement <EasyStorageMapEntry<SgName,SgSymbol*> > :: arrangeMemoryPoolInOneBlock();
+      EasyStorageMapEntry <SgName,SgSymbol*> :: arrangeMemoryPoolInOneBlock();
+   }
+
+
+void EasyStorage <rose_directed_graph_hash_multimap*> :: deleteMemoryPool()
+   {
+   // call suitable methods of parent and member
+     StorageClassMemoryManagement <EasyStorageMapEntry<SgName,SgSymbol*> > :: deleteMemoryPool();
+     EasyStorageMapEntry <SgName,SgSymbol*> :: deleteMemoryPool();
+   }
+
+void EasyStorage <rose_directed_graph_hash_multimap*>::writeToFile(std::ostream& outputFileStream)
+   {
+#if FILE_IO_MARKER
+     AST_FILE_IO_MARKER::writeMarker("|26|",outputFileStream);
+#endif
+   // call suitable methods of parent and member
+      StorageClassMemoryManagement <EasyStorageMapEntry<SgName,SgSymbol*> > :: writeToFile(outputFileStream);
+      EasyStorageMapEntry <SgName,SgSymbol*> :: writeToFile( outputFileStream);
+   }
+
+
+void EasyStorage <rose_directed_graph_hash_multimap*> :: readFromFile (std::istream& inputFileStream)
+   {
+#if FILE_IO_MARKER
+     AST_FILE_IO_MARKER::readMarker("|26|",inputFileStream);
+#endif
+   // call suitable methods of parent and member
+     StorageClassMemoryManagement <EasyStorageMapEntry<SgName,SgSymbol*> > :: readFromFile (inputFileStream);
+     EasyStorageMapEntry <SgName,SgSymbol*> :: readFromFile (inputFileStream);
+   }
+
+#endif
 
 

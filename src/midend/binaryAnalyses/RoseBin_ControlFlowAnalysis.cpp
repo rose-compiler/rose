@@ -64,11 +64,12 @@ void RoseBin_ControlFlowAnalysis::printGraph(std::string fileName, std::set<std:
     std::cerr << "CFG -- contains filter: ." << *it << "." << endl;
   }
 
-  typedef rose_hash::hash_map <std::string, SgDirectedGraphNode*> nodeType;
+// typedef rose_hash::hash_map <std::string, SgDirectedGraphNode*> nodeType;
+// typedef rose_hash::hash_map <string, SgDirectedGraphNode*,hash_stringptr> nodeType;
   nodeType result;
   nodeType nodes = vizzGraph->nodes;
   nodeType::iterator itn2 = nodes.begin();
-  for (; itn2!=nodes.end();++itn2) {
+  for (; itn2 != nodes.end();++itn2) {
     string hex_address = itn2->first;
 
     SgDirectedGraphNode* node = itn2->second;

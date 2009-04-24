@@ -498,7 +498,10 @@ RoseBin_FlowAnalysis::getAddressForNode(SgDirectedGraphNode* node) {
 void 
 RoseBin_FlowAnalysis::createInstToNodeTable() {
   //  tabletype::const_iterator it = deftable.begin();
-  typedef rose_hash::hash_map <std::string, SgDirectedGraphNode*> nodeType;
+
+// DQ (4/23/2009): We want the type defined in the base class.
+// typedef rose_hash::hash_map <std::string, SgDirectedGraphNode*> nodeType;
+
   nodeType nodes = vizzGraph->nodes;
   nodeType::iterator it = nodes.begin();
   for (;it!=nodes.end();++it) {
@@ -777,7 +780,11 @@ RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
 	  trg = vizzGraph->checkIfGraphNodeExists(hexStr);
       
 	bool target_visited = false;
-        rose_hash::hash_map <string, SgAsmInstruction*>::iterator vis = local_visited.find(hexStr);
+
+// DQ (4/23/2009): We want the type defined in the base class.
+// rose_hash::hash_map <string, SgAsmInstruction*>::iterator vis = local_visited.find(hexStr);
+   rose_hash::hash_map <string, SgAsmInstruction*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator vis = local_visited.find(hexStr);
+
 	if (vis!=local_visited.end())
 	  target_visited=true;
       

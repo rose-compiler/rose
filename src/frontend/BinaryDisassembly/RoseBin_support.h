@@ -95,7 +95,9 @@ namespace RoseBin_DataTypes {
 #include <ext/hash_map>
 #include <ext/hash_set>
 
-#if OLD_GRAPH_NODES
+// DQ (4/23/2009): ROSE_USE_NEW_GRAPH_NODES is not set on the configure commandline.
+// #if OLD_GRAPH_NODES
+#ifndef ROSE_USE_NEW_GRAPH_NODES
 // DQ (8/18/2008): Commented out as part of support for new Graph IR nodes!
 namespace __gnu_cxx {
   template <> struct hash<std::string> {

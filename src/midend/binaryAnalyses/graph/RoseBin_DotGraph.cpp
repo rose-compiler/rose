@@ -29,7 +29,12 @@ RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) {
   //cerr << " Preparing graph - Nr of Nodes : " << nodes.size() << endl;
 
   int counter=nodes.size();
-  rose_hash::hash_set <std::string> funcNames;
+
+// DQ (4/23/2009): Added a typedef to refactor the specification of the type (and add the explicit reference to the hash function).
+// rose_hash::hash_set <std::string> funcNames;
+  typedef rose_hash::hash_set <std::string,rose_hash::hash_string> funcNamesType;
+  funcNamesType funcNames;
+
   nodeType resultSet;
 
   typedef std::multimap < std::string, 
@@ -51,7 +56,10 @@ RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) {
     if (pos<=0) pos=funcName.length();
     funcName=funcName.substr(0,pos);
     bool found = true;
-    rose_hash::hash_set <std::string>::iterator funcNames_it=funcNames.find(funcName);
+
+ // rose_hash::hash_set <std::string>::iterator funcNames_it=funcNames.find(funcName);
+    funcNamesType::iterator funcNames_it=funcNames.find(funcName);
+
     if (funcNames_it==funcNames.end()) {
       funcNames.insert(funcName);
       found =false;

@@ -46,13 +46,13 @@ class CallGraphNode: public MultiGraphElem
 #ifdef SOLVE_FUNCTION_CALLS_IN_DB
    public:
          std::string label;
-         //SgFunctionDeclaration* functionDeclaration;
-	 FunctionProperties *properties;
-	 bool hasDefinition;
+      // SgFunctionDeclaration* functionDeclaration;
+         FunctionProperties *properties;
+         bool hasDefinition;
 
          CallGraphNode ( std::string label, SgFunctionDeclaration* fctDeclaration, SgType *ty,
-			 bool hasDef, bool isPtr, bool isPoly, SgClassDefinition *invokedCls );
-	 CallGraphNode ( std::string label, FunctionProperties *fctProps, bool hasDef );
+         bool hasDef, bool isPtr, bool isPoly, SgClassDefinition *invokedCls );
+         CallGraphNode ( std::string label, FunctionProperties *fctProps, bool hasDef );
          bool isDefined ();
          void Dump() const;
          virtual std::string toString() const;

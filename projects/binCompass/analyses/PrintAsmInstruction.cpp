@@ -12,7 +12,7 @@ PrintAsmInstruction::init(SgNode* n) {
 
 void
 PrintAsmInstruction::finish(SgNode* n) {
-  rose_hash::hash_map<std::string, int>::const_iterator it = instMap.begin();
+  rose_hash::hash_map<std::string, int,rose_hash::hash_string,rose_hash::eqstr_string>::const_iterator it = instMap.begin();
   multimap<int, string> s;
   for (;it!=instMap.end();it++) {
     string instType = it->first;
@@ -36,7 +36,7 @@ PrintAsmInstruction::visit(SgNode* n) {
 
   string className = binInst->class_name();
   int nr = 1;
-  rose_hash::hash_map<std::string, int>::const_iterator it = instMap.find(className);
+  rose_hash::hash_map<std::string, int,rose_hash::hash_string,rose_hash::eqstr_string>::const_iterator it = instMap.find(className);
   if (it!=instMap.end()) {
     nr = it->second;
     nr++;

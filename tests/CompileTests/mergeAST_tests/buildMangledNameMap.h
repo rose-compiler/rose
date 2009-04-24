@@ -1,4 +1,6 @@
 
+#if 0
+// DQ (4/23/2009): These are already defined in Cxx_Grammar.h
 struct eqstr_string
    {
      bool operator()(const std::string & s1, const std::string & s2) const
@@ -17,6 +19,7 @@ struct hash_string
                return hasher(name.c_str());
              }
    };
+#endif
 
 // This class builds a map of unique names and associated IR nodes.
 // It uses the memory pool traversal so that ALL IR nodes will be visited.
@@ -27,7 +30,7 @@ class MangledNameMapTraversal : public ROSE_VisitTraversal
        // Would it make a different to make the first template argument a "const std::string" instead of a "std::string"?
        // typedef std::map<std::string,SgNode*> MangledNameMapType;
        // typedef hash_multimap<const std::string, SgNode*, hash_string, eqstr_string> MangledNameMapType;
-          typedef rose_hash::hash_map<const std::string, SgNode*, hash_string, eqstr_string> MangledNameMapType;
+          typedef rose_hash::hash_map<const std::string, SgNode*, rose_hash::hash_string, rose_hash::eqstr_string> MangledNameMapType;
 
        // The delete list is just a set
           typedef std::set<SgNode*> SetOfNodesType;

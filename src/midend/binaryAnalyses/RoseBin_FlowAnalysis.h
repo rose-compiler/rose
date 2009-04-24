@@ -104,9 +104,6 @@ class FindNodeVisitor: public std::binary_function<SgNode*, std::vector<SgLocate
 
 // ************************************************************************************
 
-
-
-
 class RoseBin_FlowAnalysis : public AstSimpleProcessing {
  protected:
    rose_hash::hash_map <uint64_t, SgAsmInstruction* > rememberInstructions; // Insn address -> ROSE insn
@@ -118,9 +115,16 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
 
   int nrOfFunctions;
 
-  typedef rose_hash::hash_map <std::string, SgDirectedGraphNode*> nodeType;
-  typedef rose_hash::hash_map < std::string, SgDirectedGraphEdge*> edgeType;
+// '__gnu_cxx::hash_map<std::basic_string<char >, SgDirectedGraphNode*, __gnu_cxx::hash<std::basic_string<char > >, std::equal_to<std::basic_string<char > > >' 
+// to non-scalar type 
+// '__gnu_cxx::hash_map<std::basic_string<char >, SgDirectedGraphNode*, hash_string, eqstr_string, std::allocator<SgDirectedGraphNode*> >'
 
+// typedef rose_hash::hash_map <std::string, SgDirectedGraphNode*> nodeType;
+// typedef rose_hash::hash_map <std::string, SgDirectedGraphEdge*> edgeType;
+// typedef rose_hash::hash_map <std::string, SgDirectedGraphNode*,hash_string,eqstr_string> nodeType;
+
+   typedef RoseBin_Graph::nodeType nodeType;
+   typedef rose_hash::hash_map < std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string> edgeType;
 
   SgAsmNode* globalBin;
   int func_nr;
@@ -143,8 +147,11 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
   
   // worklist to build the CFG graph
   std::stack <SgAsmInstruction*> worklist_forthisfunction;
+
   // visited map for the CFG graph
-  rose_hash::hash_map <std::string, SgAsmInstruction*> local_visited;
+// DQ (4/23/2009): We need to specify the default template parameters explicitly.
+// rose_hash::hash_map <std::string, SgAsmInstruction*> local_visited;
+  rose_hash::hash_map <std::string, SgAsmInstruction*,rose_hash::hash_string,rose_hash::eqstr_string> local_visited;
 
   typedef std::map<std::string, SgAsmFunctionDeclaration*> bin_funcs_type;
   bin_funcs_type bin_funcs;

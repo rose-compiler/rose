@@ -8,56 +8,27 @@ HEADER_START
           $CLASSNAME & operator= ( const $CLASSNAME & X );
 HEADER_END
 
-
-
-
 HEADER_GRAPH_PREDECLARATION_START
-
-#if 1
-// DQ (8/19/2008): This is already defined in src/frontend/SageIII/astMerge/buildMangledNameMap.h
-struct eqstr_string
-   {
-     bool operator()(const std::string & s1, const std::string & s2) const
-        {
-          return s1 == s2;
-        }
-   };
-#endif
-
-#if 1
-/*! \brief Hash name support for symbol tables within ROSE.
- */
-struct hash_string
-   {
-     rose_hash::hash<const char*> hasher;
-
-     public:
-          size_t operator()(const std::string & name) const
-             {
-               return hasher(name.c_str());
-             }
-   };
-#endif
 
 /*! \brief Hash table support for graph IR nodes within ROSE.
  */
 
 // DQ (8/19/2008): Note that "rose_hash" is a namespace defined in "sage3.h"
 // class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>
-class rose_graph_hash_multimap : public rose_hash::hash_multimap<std::string, SgGraphNode*,hash_string,eqstr_string>
+class rose_graph_hash_multimap : public rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>
    {
      protected:
           SgNode * parent;
 
      public:
           rose_graph_hash_multimap()
-             : rose_hash::hash_multimap<std::string, SgGraphNode*,hash_string,eqstr_string>(), parent(NULL)
+             : rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>(), parent(NULL)
              {}
           rose_graph_hash_multimap(int sz) 
-             : rose_hash::hash_multimap<std::string, SgGraphNode*,hash_string,eqstr_string>(sz), parent(NULL)
+             : rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>(sz), parent(NULL)
              {}
           rose_graph_hash_multimap(const rose_graph_hash_multimap& rhs) 
-             : rose_hash::hash_multimap<std::string, SgGraphNode*,hash_string,eqstr_string>((rose_graph_hash_multimap)rhs),parent(rhs.parent)
+             : rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>((rose_graph_hash_multimap)rhs),parent(rhs.parent)
              {}
 
           void set_parent(SgNode * new_parent) 
@@ -73,7 +44,7 @@ class rose_graph_hash_multimap : public rose_hash::hash_multimap<std::string, Sg
              {
 #if 0
             // DQ (2/19/2007): I am not sure why this is commented out (has been since it was introduced summer of 2005)
-               hash_multimap<std::string, SgGraphNode*,hash_string,eqstr_string>::iterator it;
+               hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it;
                for (it = begin(); it != end(); ++it)
                   {
                     delete (*it).second;
@@ -102,20 +73,20 @@ std::ostream & operator<< ( std::ostream & os, const rose_graph_hash_multimap::i
 
 // DQ (8/19/2008): Note that "rose_hash" is a namespace defined in "sage3.h"
 // class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>
-class rose_directed_graph_hash_multimap : public rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,hash_string,eqstr_string>
+class rose_directed_graph_hash_multimap : public rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>
    {
      protected:
           SgNode * parent;
 
      public:
           rose_directed_graph_hash_multimap()
-             : rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,hash_string,eqstr_string>(), parent(NULL)
+             : rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>(), parent(NULL)
              {}
           rose_directed_graph_hash_multimap(int sz) 
-             : rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,hash_string,eqstr_string>(sz), parent(NULL)
+             : rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>(sz), parent(NULL)
              {}
           rose_directed_graph_hash_multimap(const rose_directed_graph_hash_multimap& rhs) 
-             : rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,hash_string,eqstr_string>((rose_directed_graph_hash_multimap)rhs),parent(rhs.parent)
+             : rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>((rose_directed_graph_hash_multimap)rhs),parent(rhs.parent)
              {}
 
           void set_parent(SgNode * new_parent) 
@@ -131,7 +102,7 @@ class rose_directed_graph_hash_multimap : public rose_hash::hash_multimap<std::s
              {
 #if 0
             // DQ (2/19/2007): I am not sure why this is commented out (has been since it was introduced summer of 2005)
-               hash_multimap<std::string, SgDirectedGraphEdge*,hash_string,eqstr_string>::iterator it;
+               hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it;
                for (it = begin(); it != end(); ++it)
                   {
                     delete (*it).second;
@@ -159,20 +130,20 @@ std::ostream & operator<< ( std::ostream & os, const rose_directed_graph_hash_mu
 
 // DQ (8/19/2008): Note that "rose_hash" is a namespace defined in "sage3.h"
 // class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>
-class rose_undirected_graph_hash_multimap : public rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,hash_string,eqstr_string>
+class rose_undirected_graph_hash_multimap : public rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>
    {
      protected:
           SgNode * parent;
 
      public:
           rose_undirected_graph_hash_multimap()
-             : rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,hash_string,eqstr_string>(), parent(NULL)
+             : rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>(), parent(NULL)
              {}
           rose_undirected_graph_hash_multimap(int sz) 
-             : rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,hash_string,eqstr_string>(sz), parent(NULL)
+             : rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>(sz), parent(NULL)
              {}
           rose_undirected_graph_hash_multimap(const rose_undirected_graph_hash_multimap& rhs)
-             : rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,hash_string,eqstr_string>((rose_undirected_graph_hash_multimap)rhs),parent(rhs.parent)
+             : rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>((rose_undirected_graph_hash_multimap)rhs),parent(rhs.parent)
              {}
 
           void set_parent(SgNode * new_parent) 
@@ -188,7 +159,7 @@ class rose_undirected_graph_hash_multimap : public rose_hash::hash_multimap<std:
              {
 #if 0
             // DQ (2/19/2007): I am not sure why this is commented out (has been since it was introduced summer of 2005)
-               hash_multimap<std::string, SgUndirectedGraphEdge*,hash_string,eqstr_string>::iterator it;
+               hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it;
                for (it = begin(); it != end(); ++it)
                   {
                     delete (*it).second;
@@ -246,8 +217,11 @@ HEADER_DIRECTED_GRAPH_NODE_START
      public:
 
        // DQ (8/18/2008): This is part of the OLD interface introduced for backward compatability!
-
           SgDirectedGraphNode(std::string, std::string, int n);
+
+       // DQ (4/23/2009): Added to debug use of new Graph node interfaces.
+          SgDirectedGraphNode(std::string);
+          SgDirectedGraphNode();
 
 HEADER_DIRECTED_GRAPH_NODE_END
 
@@ -13099,7 +13073,8 @@ SOURCE_GRAPHNODE_START
    // tps (08/08/07): Added the graph, graph nodes and graph edges 
 int 
 SgGraphNode::get_graph_id() const {
-#if OLD_GRAPH_NODES
+// #if OLD_GRAPH_NODES
+#ifndef ROSE_USE_NEW_GRAPH_NODES
     return p_graph_id;
 #else
  // DQ (8/18/2008): We have added the new support for graph IR nodes with a bit fo the redundant support
@@ -13125,7 +13100,8 @@ SOURCE_GRAPHEDGE_START
    // tps (08/08/07): Added the graph, graph nodes and graph edges 
 int 
 SgGraphEdge::get_graph_id() const {
-#if OLD_GRAPH_NODES
+// #if OLD_GRAPH_NODES
+#ifndef ROSE_USE_NEW_GRAPH_NODES
     return p_graph_id;
 #else
  // DQ (8/18/2008): We have added the new support for graph IR nodes with a bit fo the redundant support
@@ -13168,7 +13144,8 @@ SgGraph::hashCode( char* p, int len) // hash a character array
 
 int 
 SgGraph::get_graph_id()  {
-#if OLD_GRAPH_NODES
+// #if OLD_GRAPH_NODES
+#ifndef ROSE_USE_NEW_GRAPH_NODES
     string name = p_name+p_type;
     int len = sizeof(name);
      char* pointer = reinterpret_cast< char *>(&name);
@@ -13194,9 +13171,13 @@ SgDirectedGraphEdge::SgDirectedGraphEdge(std::string, std::string, int n, SgGrap
 SOURCE_DIRECTED_GRAPH_EDGE_END
 
 SOURCE_DIRECTED_GRAPH_NODE_START
+
+// DQ (4/23/2009): Removed to debug use of new Graph node interfaces.
+#if 1
 SgDirectedGraphNode::SgDirectedGraphNode(std::string, std::string, int n)
 {
 }
+#endif
 
 SOURCE_DIRECTED_GRAPH_NODE_END
 

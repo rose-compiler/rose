@@ -138,7 +138,8 @@ class mutex
 
 // DQ (8/18/2008): Added support for new IR graph nodes
 // This is the use of this macro in ROSE, there is another macro with the same name in ROSETTA!
-#define OLD_GRAPH_NODES 1
+// #define OLD_GRAPH_NODES 0
+// #define OLD_GRAPH_NODES !ROSE_USE_NEW_GRAPH_NODES
 
 //! declaration of variable to control internal output of debugging information (default = 0)
 extern int SAGE_DEBUG;
@@ -710,7 +711,69 @@ typedef SgAsmElfSegmentTableEntryPtrList SgAsmElfSegmentTableEntryPtrListPtr;
 typedef Rose_STL_Container<SgAsmPERVASizePair*> SgAsmPERVASizePairPtrList;
 typedef SgAsmPERVASizePairPtrList* SgAsmPERVASizePairPtrListPtr;
 
-#if !OLD_GRAPH_NODES
+
+#if 0
+struct rose_hash::eqstr_string
+   {
+     bool operator()(const std::string & s1, const std::string & s2) const
+        {
+          return s1 == s2;
+        }
+   };
+
+/*! \brief Hash name support for symbol tables within ROSE.
+ */
+struct rose_hash::hash_string
+   {
+     rose_hash::hash<const char*> hasher;
+
+     public:
+          size_t operator()(const std::string & name) const
+             {
+               return hasher(name.c_str());
+             }
+   };
+#else
+
+// DQ (4/23/2009): See comments in sage3.h about the <ext/hash_map> section.
+// using namespace __gnu_cxx;
+namespace rose_hash 
+   {
+  // The condition here is not needed for GCC 4.2, but is needed (and does not completely work) for earlier versions
+  // #ifdef _GLIBCXX_DEBUG
+  // using namespace __gnu_debug;
+  // using __gnu_cxx::hash;
+  // #else
+
+     using namespace __gnu_cxx;
+
+  // DQ (4/23/2009): These should be put into this namespace so that we don't contaminate the global scope.
+  // DQ (8/19/2008): This is already defined in src/frontend/SageIII/astMerge/buildMangledNameMap.h
+     struct eqstr_string
+        {
+          bool operator()(const std::string & s1, const std::string & s2) const
+             {
+               return s1 == s2;
+             }
+        };
+
+/*! \brief Hash name support for symbol tables within ROSE.
+ */
+     struct hash_string
+        {
+          rose_hash::hash<const char*> hasher;
+          size_t operator()(const std::string & name) const
+             {
+               return hasher(name.c_str());
+             }
+        };
+   }
+#endif
+
+
+
+// #if !OLD_GRAPH_NODES
+#ifdef ROSE_USE_NEW_GRAPH_NODES
 // DQ (8/18/2008): Added support for new Graph IR nodes.
 typedef Rose_STL_Container<SgGraphNode*> SgGraphNodePtrList;
 typedef SgGraphNodePtrList* SgGraphNodePtrListPtr;

@@ -129,7 +129,9 @@ void
 RoseBin_CallGraphAnalysis::getConnectedComponents(std::map<int,std::set<SgAsmFunctionDeclaration*> >& ret) {
   std::map<SgAsmFunctionDeclaration*,int> visited;
 
-  typedef rose_hash::hash_map <std::string, SgDirectedGraphNode*> nodeType;
+// DQ (4/23/2009): We want the type defined in the base class.
+// typedef rose_hash::hash_map <std::string, SgDirectedGraphNode*> nodeType;
+
   nodeType result;
   nodeType nodes = vizzGraph->nodes;
   nodeType::iterator itn2 = nodes.begin();

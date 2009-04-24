@@ -37,7 +37,7 @@ namespace CompassAnalyses
 	       SgBinaryFile* file;
                public:
                     Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
-		    rose_hash::hash_map<std::string, int> instMap;
+                    rose_hash::hash_map<std::string, int,rose_hash::hash_string,rose_hash::eqstr_string> instMap;
 
                  // Change the implementation of this function if you are using inherited attributes.
                     void *initialInheritedAttribute() const { return NULL; }
@@ -97,7 +97,7 @@ CheckerOutput::CheckerOutput ( SgNode* node, std::string output )
 void
 CompassAnalyses::BinPrintAsmInstruction::Traversal::
 finish(SgNode* n) {
-  rose_hash::hash_map<std::string, int>::const_iterator it = instMap.begin();
+  rose_hash::hash_map<std::string, int,rose_hash::hash_string,rose_hash::eqstr_string>::const_iterator it = instMap.begin();
   multimap<int, string> s;
   for (;it!=instMap.end();it++) {
     string instType = it->first;
@@ -141,7 +141,10 @@ visit(SgNode* n)
 
   string className = toString(binInst->get_kind());
   int nr = 1;
-  rose_hash::hash_map<std::string, int>::const_iterator it = instMap.find(className);
+
+//rose_hash::hash_map<std::string, int>::const_iterator it = instMap.find(className);
+  rose_hash::hash_map<std::string, int,rose_hash::hash_string,rose_hash::eqstr_string>::const_iterator it = instMap.find(className);
+
   if (it!=instMap.end()) {
     nr = it->second;
     nr++;

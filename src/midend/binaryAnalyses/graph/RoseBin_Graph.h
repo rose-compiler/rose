@@ -83,7 +83,10 @@ class RoseBin_Graph {
 
   VirtualBinCFG::AuxiliaryInformation* info;
 
-  typedef rose_hash::hash_map <std::string, SgDirectedGraphNode*> nodeType;
+// DQ (4/23/2009): Modify the hash_map template type to explicitly include default parameters.
+// typedef rose_hash::hash_map <std::string, SgDirectedGraphNode*> nodeType;
+  typedef rose_hash::hash_map <std::string, SgDirectedGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string> nodeType;
+
   nodeType nodes;
 
   typedef rose_hash::hash_multimap < SgDirectedGraphNode*, SgDirectedGraphEdge*> edgeType;
@@ -143,8 +146,7 @@ class RoseBin_Graph {
   //			       SgDirectedGraphNode* to, int to_addr);
 
   bool isValidCFGEdge(SgDirectedGraphNode* sgNode, SgDirectedGraphNode* sgNodeBefore);
-  bool isDirectCFGEdge(SgDirectedGraphNode* sgNode,
-		     SgDirectedGraphNode* sgNodeBefore);
+  bool isDirectCFGEdge(SgDirectedGraphNode* sgNode,SgDirectedGraphNode* sgNodeBefore);
 
 };
 

@@ -975,7 +975,7 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
                            break;
 
                          case ROSE_GRAPH_HASH_MULTIMAP:
-                           s += "     rose_hash::hash_multimap<std::string, SgGraphNode*,hash_string,eqstr_string>::iterator it; \n" ;
+                           s += "     rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n" ;
                            s += "     unsigned int tempListCount" + varNameString + " = 0; \n" ;
                            s += "     SgGraphNode** tempList" + varNameString + " = new SgGraphNode* [ source->p_" + varNameString + "->size() ]; \n" ;
                            s += "     for (it = source->p_" + varNameString + "->begin(); it != source->p_" + varNameString + "->end(); ++it)\n" ;
@@ -996,7 +996,7 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
 
                          case ROSE_GRAPH_DIRECTED_EDGE_HASH_MULTIMAP:
                            s += "   {\n";
-                           s += "     rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,hash_string,eqstr_string>::iterator it_1; \n" ;
+                           s += "     rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it_1; \n" ;
                            s += "     unsigned int tempListCount" + varNameString + " = 0; \n" ;
                            s += "     SgDirectedGraphEdge** tempList" + varNameString + " = new SgDirectedGraphEdge* [ source->p_" + varNameString + "->size() ]; \n" ;
                            s += "     for (it_1 = source->p_" + varNameString + "->begin(); it_1 != source->p_" + varNameString + "->end(); ++it_1)\n" ;
@@ -1017,7 +1017,7 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
                            break;
 
                          case ROSE_GRAPH_UNDIRECTED_EDGE_HASH_MULTIMAP:
-                           s += "     rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,hash_string,eqstr_string>::iterator it_2; \n" ;
+                           s += "     rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it_2; \n" ;
                            s += "     unsigned int tempListCount" + varNameString + " = 0; \n" ;
                            s += "     SgUndirectedGraphEdge** tempList" + varNameString + " = new SgUndirectedGraphEdge* [ source->p_" + varNameString + "->size() ]; \n" ;
                            s += "     for (it_2 = source->p_" + varNameString + "->begin(); it_2 != source->p_" + varNameString + "->end(); ++it_2)\n" ;
@@ -1331,7 +1331,7 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
                  // DQ (8/19/2008): Added new case to support IR nodes for arbitrary graphs
                     case ROSE_GRAPH_HASH_MULTIMAP:
                       s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
-                      s += "     rose_hash::hash_multimap<std::string, SgGraphNode*,hash_string,eqstr_string>::iterator it; \n " ;
+                      s += "     rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
                       s += "     for (it = p_" + varNameString + "->begin(); it != p_" + varNameString + "->end(); ++it)\n " ;
                       s += "        {\n";
                       s += "          it->second = (SgGraphNode*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex( (unsigned long)(it->second) ) ); \n";
@@ -1340,7 +1340,7 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
 
                     case ROSE_GRAPH_DIRECTED_EDGE_HASH_MULTIMAP:
                       s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
-                      s += "     rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,hash_string,eqstr_string>::iterator it; \n " ;
+                      s += "     rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
                       s += "     for (it = p_" + varNameString + "->begin(); it != p_" + varNameString + "->end(); ++it)\n " ;
                       s += "        {\n";
                       s += "          it->second = (SgDirectedGraphEdge*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex( (unsigned long)(it->second) ) ); \n";
@@ -1349,7 +1349,7 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
 
                     case ROSE_GRAPH_UNDIRECTED_EDGE_HASH_MULTIMAP:
                       s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
-                      s += "     rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,hash_string,eqstr_string>::iterator it; \n " ;
+                      s += "     rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
                       s += "     for (it = p_" + varNameString + "->begin(); it != p_" + varNameString + "->end(); ++it)\n " ;
                       s += "        {\n";
                       s += "          it->second = (SgUndirectedGraphEdge*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex( (unsigned long)(it->second) ) ); \n";

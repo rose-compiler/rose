@@ -135,7 +135,8 @@ static std::string toStringForRTI(const std::map<uint64_t ,std::pair<int,std::pa
 #endif
 
 #if 0
-#if !OLD_GRAPH_NODES
+// #if !OLD_GRAPH_NODES
+#ifdef ROSE_USE_NEW_GRAPH_NODES
 // DQ (8/18/2008): Added support for new Graph IR node.
 static std::string toStringForRTI(const SgGraphNodeDirectedGraphEdgeMultimapPtrList & x)
 {

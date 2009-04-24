@@ -62,7 +62,10 @@ class RoseBin_Variable  {
 class RoseBin_DataFlowAbstract {
  protected:
    rose_hash::hash_map <uint64_t, RoseBin_Variable*> variables;
-   rose_hash::hash_map <std::string, uint64_t> variablesReverse;
+
+   typedef rose_hash::hash_map <std::string, uint64_t,rose_hash::hash_string,rose_hash::eqstr_string> variablesReverseType;
+// rose_hash::hash_map <std::string, uint64_t> variablesReverse;
+   variablesReverseType variablesReverse;
 
    rose_hash::hash_map <uint64_t, RoseBin_Variable*> memory;
 

@@ -925,7 +925,11 @@ RoseBin_DataFlowAbstract::createVariable(uint64_t position,
 RoseBin_Variable*
 RoseBin_DataFlowAbstract::getVariable(std::string var) {
   uint64_t val = 0;
-  rose_hash::hash_map <std::string,uint64_t>::iterator it = variablesReverse.find(var);
+
+// DQ (4/23/2009): Made a typedef for the type used here since it is sensative to the template default parameters.
+// rose_hash::hash_map <std::string,uint64_t>::iterator it = variablesReverse.find(var);
+  variablesReverseType::iterator it = variablesReverse.find(var);
+
   if (it!=variablesReverse.end()) {
     val = it->second;
   }

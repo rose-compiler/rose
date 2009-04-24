@@ -135,6 +135,15 @@ fi
 AC_SUBST(ROSE_SUPPORT_MICROSOFT_EXTENSIONS)
 
 
+# DQ (4/23/2009): Added support for commandline specification of using new graph IR nodes.
+AC_ARG_ENABLE(newGraphNodes, AS_HELP_STRING([--enable-newGraphNodes], [Enable new (experimental) graph IR nodes]))
+AM_CONDITIONAL(ROSE_USE_NEW_GRAPH_NODES, [test "x$enable_newGraphNodes" = xyes])
+if test "x$enable_newGraphNodes" = "xyes"; then
+  AC_MSG_WARN([Using the new graph IR nodes in ROSE (experimental)!])
+  AC_DEFINE([ROSE_USE_NEW_GRAPH_NODES], [], [Whether to use the new graph IR nodes])
+fi
+
+
 #AM_CONDITIONAL(ROSE_USE_QROSE,test "$with_qrose" = true)
 
 # Set up for use of bison to build dot2gml tool in directory
