@@ -1,3 +1,51 @@
+2009-04-24 03:22  dquinlan
+
+	* [r5466] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/developersScratchSpace/Dan/mergeAST_tests/buildMangledNameMap.h,
+	  /trunk/ROSE/developersScratchSpace/Dan/translator_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/translator_tests/feasiblePaths.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/translator_tests/inputFeasiblePaths.C,
+	  /trunk/ROSE/projects/binCompass/analyses/PrintAsmInstruction.cpp,
+	  /trunk/ROSE/projects/binCompass/analyses/PrintAsmInstruction.h,
+	  /trunk/ROSE/projects/compass/extensions/checkers/binPrintAsmInstruction/binPrintAsmInstruction.C,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Node.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Support.code,
+	  /trunk/ROSE/src/ROSETTA/src/buildStorageClasses.C,
+	  /trunk/ROSE/src/ROSETTA/src/support.C,
+	  /trunk/ROSE/src/frontend/BinaryDisassembly/RoseBin_support.h,
+	  /trunk/ROSE/src/frontend/SageIII/Makefile.am,
+	  /trunk/ROSE/src/frontend/SageIII/astFileIO/StorageClassMemoryManagement.C,
+	  /trunk/ROSE/src/frontend/SageIII/astFileIO/StorageClassMemoryManagement.h,
+	  /trunk/ROSE/src/frontend/SageIII/astMerge/buildMangledNameMap.h,
+	  /trunk/ROSE/src/frontend/SageIII/rtiHelpers.h,
+	  /trunk/ROSE/src/frontend/SageIII/sage3.h,
+	  /trunk/ROSE/src/midend/binaryAnalyses/RoseBin_CallGraphAnalysis.cpp,
+	  /trunk/ROSE/src/midend/binaryAnalyses/RoseBin_ControlFlowAnalysis.cpp,
+	  /trunk/ROSE/src/midend/binaryAnalyses/RoseBin_FlowAnalysis.cpp,
+	  /trunk/ROSE/src/midend/binaryAnalyses/RoseBin_FlowAnalysis.h,
+	  /trunk/ROSE/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_DataFlowAbstract.cpp,
+	  /trunk/ROSE/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_DataFlowAbstract.h,
+	  /trunk/ROSE/src/midend/binaryAnalyses/graph/RoseBin_DotGraph.cpp,
+	  /trunk/ROSE/src/midend/binaryAnalyses/graph/RoseBin_Graph.h,
+	  /trunk/ROSE/src/midend/programAnalysis/CallGraphAnalysis/CallGraph.h,
+	  /trunk/ROSE/tests/CompileTests/mergeAST_tests/buildMangledNameMap.h:
+	  Added new graph IR nodes and new API (for more efficient use).
+	  
+	  Detailed changes in this commit:
+	  1) this is part of the long term (or long in getting implemented)
+	  effort to get and efficent graph IR node design in place so that
+	  all graphs in ROSE can use a common interface and the graph IR
+	  nodes can be handled as efficnetly as regular IR nodes (including
+	  being saved
+	  via the file I/O support and merged via the ast merge support).
+	  These later step are not yet implemented.
+	  2) As part of this support, the template default parameter are
+	  not explicitly specified for the rose_hash::hash_map template
+	  and the hash_string and equiv_string classes are moved from
+	  global
+	  scope to the rose_hash namespace. Everywhere they were referenced
+	  the ROSE source code has been fixed up.
+
 2009-04-23 18:47  panas2
 
 	* [r5463] /trunk/ROSE/projects/RTED/DataStructures.h,
