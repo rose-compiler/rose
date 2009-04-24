@@ -189,6 +189,28 @@ get_statement_post_info_string(DFI_STORE store, SgStatement* stmt)
         return "<undefined dfi>";
 }
 #else
+
+static
+std::string
+contextString(CFG *icfg, int procnum, int pos)
+{
+    std::stringstream str;
+
+    if (icfg->analyzerOptions->outputCallStrings())
+    {
+     // If --output-context-strings is given, output the context as a list
+     // of most recent callers: [foo, bar, baz]
+        ContextInformation::Context context(procnum, pos, icfg);
+        ContextInformation::CallString callstring
+            = icfg->contextInformation->contextCallString(context);
+        str << callstring.toDotString();
+    }
+    else
+        str << "Context(" << procnum << "," << pos << ")";
+
+    return str.str();
+}
+
 std::string
 statement_info_string(DFI_STORE store, SgStatement *stmt, std::string attrName)
 {
@@ -218,7 +240,7 @@ statement_info_string(DFI_STORE store, SgStatement *stmt, std::string attrName)
         for (int ctx = 0; ctx < arity; ctx++)
         {
             info = dfi_get_pre(store, block->id, ctx);
-            str << "Context(" << procnum << "," << ctx << "):"
+            str << contextString(icfg, procnum, ctx) << ":"
                 << carrierPrintFunction(info) << " ";
         }
         str << "Merged:"
@@ -241,7 +263,7 @@ statement_info_string(DFI_STORE store, SgStatement *stmt, std::string attrName)
                     info = dfi_get_post(store, block->id, ctx,
                                         (KFG_EDGE_TYPE) edge);
                     str << "Edge(" << edgetypenames[edge] << "):"
-                        << "Context(" << procnum << "," << ctx << "):"
+                        << contextString(icfg, procnum, ctx) << ":"
                         << carrierPrintFunction(info) << " ";
                 }
                 str << "Merged:"
