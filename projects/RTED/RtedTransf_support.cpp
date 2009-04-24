@@ -29,6 +29,17 @@ RtedTransformation::buildString(std::string name) {
   return exp;
 }
 
+std::string
+RtedTransformation::removeSpecialChar(std::string str) {
+  string searchString="\"";
+  string replaceString="!";
+  string::size_type pos = 0;
+  while ( (pos = str.find(searchString, pos)) != string::npos ) {
+    str.replace( pos, searchString.size(), replaceString );
+    pos++;
+  }
+  return str;
+}
 
 /****************************************
  * This function returns InitializedName

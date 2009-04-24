@@ -130,19 +130,20 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
       SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
       appendExpression(arg_list, filename);
       appendExpression(arg_list, linenr);
+      //      appendExpression(arg_list, buildString(stmt->unparseToString()));
+#if 0
       SgVarRefExp* varRef_l =
 	buildVarRefExp("runtimeSystem", globalScope);
       string symbolName = varRef_l->get_symbol()->get_name().str();
       //cerr << " >>>>>>>> Symbol VarRef: " << symbolName << endl;
-
+#endif
       ROSE_ASSERT(roseCreateArray);
       string symbolName2 = roseCreateArray->get_name().str();
       //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
-      SgMemberFunctionRefExp* memRef_r = buildMemberFunctionRefExp(
-								   roseCreateArray, false, true);
-      SgArrowExp* sgArrowExp = buildArrowExp(varRef_l, memRef_r);
+      SgFunctionRefExp* memRef_r = buildFunctionRefExp(  roseCreateArray);
+      //SgArrowExp* sgArrowExp = buildArrowExp(varRef_l, memRef_r);
 
-      SgFunctionCallExp* funcCallExp = buildFunctionCallExp(sgArrowExp,
+      SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
 							    arg_list);
       SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
       // insert new stmt (exprStmt) before (old) stmt
@@ -217,21 +218,23 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt,
     SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
     appendExpression(arg_list, filename);
     appendExpression(arg_list, linenr);
+    appendExpression(arg_list, buildString(removeSpecialChar(stmt->unparseToString())));
 
     //cerr << "Adding runtime ---------------- " << endl;
 
+#if 0
     SgVarRefExp* varRef_l = buildVarRefExp("runtimeSystem", globalScope);
     string symbolName = varRef_l->get_symbol()->get_name().str();
     //cerr << " >>>>>>>> Symbol VarRef: " << symbolName << endl;
-
+#endif
     ROSE_ASSERT(roseArrayAccess);
     string symbolName2 = roseArrayAccess->get_name().str();
     //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
-    SgMemberFunctionRefExp* memRef_r = buildMemberFunctionRefExp(
-								 roseArrayAccess, false, true);
-    SgArrowExp* sgArrowExp = buildArrowExp(varRef_l, memRef_r);
+    SgFunctionRefExp* memRef_r = buildFunctionRefExp(
+								 roseArrayAccess);
+    //SgArrowExp* sgArrowExp = buildArrowExp(varRef_l, memRef_r);
 
-    SgFunctionCallExp* funcCallExp = buildFunctionCallExp(sgArrowExp,
+    SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
 							  arg_list);
     SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
     insertStatementBefore(isSgStatement(stmt), exprStmt);

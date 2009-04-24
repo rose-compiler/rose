@@ -26,15 +26,15 @@ class RtedTransformation : public AstSimpleProcessing {
 
   // The following are vars that are needed for transformations
   // and retrieved through the visit function
-  SgMemberFunctionSymbol* roseCreateArray;
-  SgMemberFunctionSymbol* roseArrayAccess;
-  SgMemberFunctionSymbol* roseFunctionCall;
-  SgMemberFunctionSymbol* roseConvertIntToString;
+  SgFunctionSymbol* roseCreateArray;
+  SgFunctionSymbol* roseArrayAccess;
+  SgFunctionSymbol* roseFunctionCall;
+  SgFunctionSymbol* roseConvertIntToString;
   SgClassSymbol* runtimeClassSymbol;
   SgScopeStatement* rememberTopNode;
   SgStatement* mainLast;
   SgStatement* mainFirst;
-  SgMemberFunctionSymbol* roseRtedClose;
+  SgFunctionSymbol* roseRtedClose;
   bool insertMainBeforeLast;
 
   // FUNCTIONS ------------------------------------------------------------
@@ -45,6 +45,7 @@ class RtedTransformation : public AstSimpleProcessing {
   // insert: RuntimeSystem* runtimeSystem = new RuntimeSystem();
   void insertRuntimeSystemClass();
   SgExpression* buildString(std::string name);
+
 
 
 
@@ -86,6 +87,8 @@ class RtedTransformation : public AstSimpleProcessing {
   void insertFuncCall(RtedArguments* args, bool before);
   void visit_isFunctionCall(SgNode* n);
   bool isInterestingFunctionCall(std::string name);
+
+  std::string removeSpecialChar(std::string str);
 
  public:
   RtedTransformation() {

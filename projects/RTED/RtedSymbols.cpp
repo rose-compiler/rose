@@ -13,33 +13,33 @@ void RtedSymbols::visit(SgNode* n) {
 
   if (isSgScopeStatement(n)) {
 
-    SgFunctionSymbol* func = isSgScopeStatement(n)->lookup_function_symbol("roseCreateArray");
-    if (isSgMemberFunctionSymbol(func)) {
-      roseCreateArray = isSgMemberFunctionSymbol(func);
+    SgFunctionSymbol* func = isSgScopeStatement(n)->lookup_function_symbol("RuntimeSystem_roseCreateArray");
+    if (isSgFunctionSymbol(func)) {
+      roseCreateArray = isSgFunctionSymbol(func);
       cerr << ">>>>>>>>>>>>> Found MemberName : roseCreateArray" <<  endl;
     }
-    SgFunctionSymbol* func2 = isSgScopeStatement(n)->lookup_function_symbol("roseArrayAccess");
-    if (isSgMemberFunctionSymbol(func2)) {
-      roseArrayAccess = isSgMemberFunctionSymbol(func2);
+    SgFunctionSymbol* func2 = isSgScopeStatement(n)->lookup_function_symbol("RuntimeSystem_roseArrayAccess");
+    if (isSgFunctionSymbol(func2)) {
+      roseArrayAccess = isSgFunctionSymbol(func2);
       cerr << ">>>>>>>>>>>>> Found MemberName : roseArrayAccess" <<  endl;
     }
-    SgFunctionSymbol* func3 = isSgScopeStatement(n)->lookup_function_symbol("roseRtedClose");
-    if (isSgMemberFunctionSymbol(func3)) {
-      roseRtedClose = isSgMemberFunctionSymbol(func3);
+    SgFunctionSymbol* func3 = isSgScopeStatement(n)->lookup_function_symbol("RuntimeSystem_roseRtedClose");
+    if (isSgFunctionSymbol(func3)) {
+      roseRtedClose = isSgFunctionSymbol(func3);
       cerr << ">>>>>>>>>>>>> Found MemberName : roseRtedClose" <<  endl;
     }
-    SgFunctionSymbol* func4 = isSgScopeStatement(n)->lookup_function_symbol("roseFunctionCall");
-    if (isSgMemberFunctionSymbol(func4)) {
-      roseFunctionCall = isSgMemberFunctionSymbol(func4);
+    SgFunctionSymbol* func4 = isSgScopeStatement(n)->lookup_function_symbol("RuntimeSystem_roseFunctionCall");
+    if (isSgFunctionSymbol(func4)) {
+      roseFunctionCall = isSgFunctionSymbol(func4);
       cerr << ">>>>>>>>>>>>> Found MemberName : roseFunctionCall" <<  endl;
     }
 
-    SgFunctionSymbol* func5 = isSgScopeStatement(n)->lookup_function_symbol("roseConvertIntToString");
-    if (isSgMemberFunctionSymbol(func5)) {
+    SgFunctionSymbol* func5 = isSgScopeStatement(n)->lookup_function_symbol("RuntimeSystem_roseConvertIntToString");
+    if (isSgFunctionSymbol(func5)) {
       //      cerr << " unparse : " << isSgScopeStatement(n)->unparseToString() << endl;
       //      SgSymbolTable * s = isSgScopeStatement(n)->get_symbol_table () ;
       //s->print("debug");
-      roseConvertIntToString = isSgMemberFunctionSymbol(func5);
+      roseConvertIntToString = isSgFunctionSymbol(func5);
       string symbolName3 = roseConvertIntToString->get_name().str();
       cerr << " >>>>>>>> Symbol Member: " << symbolName3 << endl;
     }

@@ -25,10 +25,11 @@ LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -ldl
 
 runtimeCheck_SOURCES = runtimeCheck.cpp \
                        RtedTransformation.cpp \
-                       RuntimeSystem.cpp \
+                       RuntimeSystem.c \
                        RtedSymbols.cpp \
                        RtedTransf_array.cpp RtedTransf_prolog.cpp \
-                       RtedTransf_support.cpp RtedTransf_funccall.cpp
+                       RtedTransf_support.cpp RtedTransf_funccall.cpp 
+
 
 runtimeCheck_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS) 
 
@@ -63,8 +64,8 @@ CLEANFILES = *.out *.ti *.pdf test_runtime* *.txt rose_test_c_E_1_1_a
 compile_gcc_file1: build_file1
 	@echo "Compiling new program with g++"
 # make sure rose_c_E_1_1_a.c and rose_rose_E_1_1_a.c compile
-	$(CXX) $(INCLUDES) -I$(rted_path)/C/array_index_out_of_bound/ -I$(top_builddir) -I$(srcdir) rose_c_E_1_1_a.c $(srcdir)/RuntimeSystem.cpp -o rose_test_c_E_1_1_a 
-	$(CXX) $(INCLUDES) -I$(rted_path)/C/array_index_out_of_bound/ -I$(top_builddir) -I$(srcdir) rose_rose_c_E_1_1_a.c $(srcdir)/RuntimeSystem.cpp  -o rose_rose_test_c_E_1_1_a 
+	$(CXX) $(INCLUDES) -I$(rted_path)/C/array_index_out_of_bound/ -I$(top_builddir) -I$(srcdir) rose_c_E_1_1_a.c $(srcdir)/RuntimeSystem.c -o rose_test_c_E_1_1_a 
+	$(CXX) $(INCLUDES) -I$(rted_path)/C/array_index_out_of_bound/ -I$(top_builddir) -I$(srcdir) rose_rose_c_E_1_1_a.c $(srcdir)/RuntimeSystem.c  -o rose_rose_test_c_E_1_1_a 
 
 modifyTestCode:
 	@echo "inserting #define EXITCODE_OK 0 in test code"
@@ -76,7 +77,7 @@ build_file1: modifyTestCode
 	@echo "RTED is configured in dir : $(rted_path)"
 	@echo "Transforming original test program ... "
 # This breaks right now because of the backend!
-	./runtimeCheck 1 $(rted_path)/C/array_index_out_of_bound/c_E_1_1_a.c -rose:Cxx -c $(INCLUDES) -I$(rted_path)/C/array_index_out_of_bound/ -I$(top_builddir) -I$(srcdir) # $(srcdir)/RuntimeSystem.cpp ; \
+	./runtimeCheck 1 $(rted_path)/C/array_index_out_of_bound/c_E_1_1_a.c -rose:Cxx -c $(INCLUDES) -I$(rted_path)/C/array_index_out_of_bound/ -I$(top_builddir) -I$(srcdir) # $(srcdir)/RuntimeSystem.c ; \
         if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi 
 # created a new file called rose_c_E_1_1_a.c and rose_rose_E_1_1_a.c	
 	cp $(srcdir)/index_array.txt .
@@ -84,7 +85,6 @@ build_file1: modifyTestCode
 check-C-array-parallel:
 	COUNTER=0 ; \
 	BASE=0; \
-	if [ -f "result-array.txt" ]; then rm result-array.txt; fi ; \
 	cp $(srcdir)/index_array.txt . ; \
 	dir=$(rted_path)/C/array_index_out_of_bound/ ; \
 	echo "Dir : $$dir " ; \
@@ -121,12 +121,12 @@ check-C-array-parallel:
 	  file2_rose=rose_rose_$$(echo $$file2 | sed -e 's/^\(.*\/\)*//'  ); \
 	  file_rose_bin=$$(echo "$$file_rose".bin); \
 	  echo "Compiling 2f:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose" ;\
-	  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
 	  file_bin=$$(echo "$$file".bin); \
-	  $(CXX) -g -o $$file_bin $$file $$file2 $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	  $(CXX) -g -o $$file_bin $$file $$file2 $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	else \
 	  echo "Script : Running Transformation ... $$file -I$(srcdir)" ; \
 	  ./runtimeCheck 1 $$file -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$$dir ; \
@@ -138,12 +138,12 @@ check-C-array-parallel:
 	  file_rose=rose_rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
 	  file_rose_bin=$$(echo "$$file_rose".bin); \
 	  echo "Compiling 1f:  $(CXX) -g -o $$file_rose_bin $$file_rose" ;\
-	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
 	  file_bin=$$(echo "$$file".bin); \
-	  $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	  $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	fi; \
 	else \
 	  echo "$$binfile exists." ; \
@@ -167,7 +167,7 @@ check-C-array-parallel:
 	done 
 
 check-C-array:
-	if [ -f "result-array.txt" ]; then rm result-array.txt; fi ; \
+	if [ -f "result.txt" ]; then rm result.txt; fi ; \
 	cp $(srcdir)/index_array.txt . ; \
 	dir=$(rted_path)/C/array_index_out_of_bound/ ; \
 	echo "Dir : $$dir " ; \
@@ -202,12 +202,12 @@ check-C-array:
 	  file2_rose=rose_rose_$$(echo $$file2 | sed -e 's/^\(.*\/\)*//'  ); \
 	  file_rose_bin=$$(echo "$$file_rose".bin); \
 	  echo "Compiling 2f:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose" ;\
-	  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
 	  file_bin=$$(echo "$$file".bin); \
-	  $(CXX) -g -o $$file_bin $$file $$file2 $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	  $(CXX) -g -o $$file_bin $$file $$file2 $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	else \
 	  echo "Script : Running Transformation ... $$file -I$(srcdir)" ; \
 	  ./runtimeCheck 1 $$file -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$$dir ; \
@@ -219,12 +219,12 @@ check-C-array:
 	  file_rose=rose_rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
 	  file_rose_bin=$$(echo "$$file_rose".bin); \
 	  echo "Compiling 1f:  $(CXX) -g -o $$file_rose_bin $$file_rose" ;\
-	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
 	  file_bin=$$(echo "$$file".bin); \
-	  $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	  $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	fi; \
 	else \
 	  echo "$$binfile exists." ; \
@@ -236,7 +236,6 @@ check-C-array:
 check-C-string-parallel:
 	COUNTER=0 ; \
 	BASE=0; \
-	if [ -f "result-string.txt" ]; then rm result-string.txt; fi ; \
 	cp $(srcdir)/index_array.txt .
 	dir=$(rted_path)/C/string_errors/ ; \
 	echo "Dir : $$dir " ; \
@@ -273,12 +272,12 @@ check-C-string-parallel:
 	  file2_rose=rose_rose_$$(echo $$file2 | sed -e 's/^\(.*\/\)*//'  ); \
 	  file_rose_bin=$$(echo "$$file_rose".bin); \
 	  echo "Compiling 2f:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose" ;\
-	  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
 	  file_bin=$$(echo "$$file".bin); \
-	  $(CXX) -g -o $$file_bin $$file $$file2 $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	  $(CXX) -g -o $$file_bin $$file $$file2 $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	else \
 	  echo "Script : Running Transformation ... $$file -I$(srcdir)" ; \
 	  ./runtimeCheck 1 $$file -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$$dir ; \
@@ -290,12 +289,12 @@ check-C-string-parallel:
 	  file_rose=rose_rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
 	  file_rose_bin=$$(echo "$$file_rose".bin); \
 	  echo "Compiling 1f:  $(CXX) -g -o $$file_rose_bin $$file_rose" ;\
-	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
 	  file_bin=$$(echo "$$file".bin); \
-	  $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	  $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	fi; \
 	else \
 	  echo "$$binfile exists." ; \
@@ -319,7 +318,7 @@ check-C-string-parallel:
 	done 
 
 check-C-string:
-	if [ -f "result-string.txt" ]; then rm result-string.txt; fi ; \
+	if [ -f "result.txt" ]; then rm result.txt; fi ; \
 	cp $(srcdir)/index_array.txt .
 	dir=$(rted_path)/C/string_errors/ ; \
 	echo "Dir : $$dir " ; \
@@ -354,12 +353,12 @@ check-C-string:
 	  file2_rose=rose_rose_$$(echo $$file2 | sed -e 's/^\(.*\/\)*//'  ); \
 	  file_rose_bin=$$(echo "$$file_rose".bin); \
 	  echo "Compiling 2f:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose" ;\
-	  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
 	  file_bin=$$(echo "$$file".bin); \
-	  $(CXX) -g -o $$file_bin $$file $$file2 $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	  $(CXX) -g -o $$file_bin $$file $$file2 $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	else \
 	  echo "Script : Running Transformation ... $$file -I$(srcdir)" ; \
 	  ./runtimeCheck 1 $$file -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$$dir ; \
@@ -371,12 +370,12 @@ check-C-string:
 	  file_rose=rose_rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
 	  file_rose_bin=$$(echo "$$file_rose".bin); \
 	  echo "Compiling 1f:  $(CXX) -g -o $$file_rose_bin $$file_rose" ;\
-	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
 	  file_bin=$$(echo "$$file".bin); \
-	  $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.cpp $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	  $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	fi; \
 	else \
 	  echo "$$binfile exists." ; \
@@ -391,6 +390,7 @@ check-C-array-onefile: compile_gcc_file1
 
 deleteAllbinfiles:
 	@echo "Deleting all generated bin files in RTED directory"
+	if [ -f "result.txt" ]; then rm result.txt; fi ; \
 	dir=$(rted_path)/C/array_index_out_of_bound/ ; \
 	if [ "" == "`find $$dir -name "*.bin"`" ]; then \
 	   echo "No bin files exist in $$dir" ; \
@@ -408,8 +408,13 @@ deleteAllbinfiles:
 	   rm $${dir}*.bin ; \
 	fi;
 
+c-compile-runtimesystem:
+	@echo "Make sure that RuntimeSystem compiles with C"
+	$(CC) -Wall -g -I$(srcdir) $(srcdir)/test_runtime.c $(srcdir)/RuntimeSystem.c -o runtime_test.bin
+
+
 # DQ (7/25/2005): The current changes to the AST break these test programs:
-check-local: runtimeCheck $(TESTCODES) check-C-array-onefile deleteAllbinfiles check-C-array-parallel 
+check-local: runtimeCheck $(TESTCODES) c-compile-runtimesystem check-C-array-onefile deleteAllbinfiles check-C-array-parallel 
 	@echo "***************************************************************************************"
 	@echo "*** ROSE/projects/runtimeErrorCheck: make check rule complete (terminated normally) ***"
 	@echo "***************************************************************************************"

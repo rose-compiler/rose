@@ -16,16 +16,18 @@ RtedTransformation::insertMainCloseCall(SgStatement* stmt) {
     SgScopeStatement* scope = stmt->get_scope();
     ROSE_ASSERT(scope);
     if (isSgBasicBlock(scope)) {
+#if 0
       SgVarRefExp* varRef_l =
 	buildVarRefExp("runtimeSystem", globalScope);
       string symbolName = varRef_l->get_symbol()->get_name().str();
+#endif
       ROSE_ASSERT(roseRtedClose);
       string symbolName2 = roseRtedClose->get_name().str();
       //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
-      SgMemberFunctionRefExp* memRef_r = buildMemberFunctionRefExp(
-								   roseRtedClose, false, true);
-      SgArrowExp* sgArrowExp = buildArrowExp(varRef_l, memRef_r);
-      SgFunctionCallExp* funcCallExp = buildFunctionCallExp(sgArrowExp,
+      SgFunctionRefExp* memRef_r = buildFunctionRefExp(
+								   roseRtedClose);
+      //      SgArrowExp* sgArrowExp = buildArrowExp(varRef_l, memRef_r);
+      SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
 							    NULL);
       SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
       //cerr << " Last statement in main : " << stmt->class_name() << "  insertBefore : " << insertMainBeforeLast << endl;
@@ -71,9 +73,9 @@ void RtedTransformation::insertProlog(SgProject* proj) {
     insertHeader("rose.h",PreprocessingInfo::before,false,globalScope);
 #else
     insertHeader("RuntimeSystem.h",PreprocessingInfo::before,false,globalScope);
-    insertHeader("iostream",PreprocessingInfo::before,true,globalScope);
-    insertHeader("map",PreprocessingInfo::before,true,globalScope);
-    insertHeader("string",PreprocessingInfo::before,true,globalScope);
+    //insertHeader("iostream",PreprocessingInfo::before,true,globalScope);
+    //insertHeader("map",PreprocessingInfo::before,true,globalScope);
+    //insertHeader("string",PreprocessingInfo::before,true,globalScope);
 #endif
 
     popScopeStack ();

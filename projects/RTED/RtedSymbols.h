@@ -9,11 +9,11 @@ class RtedSymbols: public AstSimpleProcessing {
 private:
 
 public:
-	SgMemberFunctionSymbol* roseCreateArray;
-	SgMemberFunctionSymbol* roseArrayAccess;
-	SgMemberFunctionSymbol* roseRtedClose;
-	SgMemberFunctionSymbol* roseFunctionCall;
-	SgMemberFunctionSymbol* roseConvertIntToString;
+	SgFunctionSymbol* roseCreateArray;
+	SgFunctionSymbol* roseArrayAccess;
+	SgFunctionSymbol* roseRtedClose;
+	SgFunctionSymbol* roseFunctionCall;
+	SgFunctionSymbol* roseConvertIntToString;
 
 	RtedSymbols() {
 		roseCreateArray = NULL;
