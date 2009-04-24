@@ -1,3 +1,10 @@
+2009-04-24 14:46  dquinlan
+
+	* [r5469]
+	  /trunk/ROSE/developersScratchSpace/Dan/translator_tests/Makefile.am:
+	  Fixed typo in Makefile for feasiblePaths (unfinished work) test
+	  code.
+
 2009-04-24 03:22  dquinlan
 
 	* [r5466] /trunk/ROSE/configure.in,
