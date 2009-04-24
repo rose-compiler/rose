@@ -65,7 +65,6 @@ operator<(const ContextInformation::Context &a,
           const ContextInformation::Context &b);
 
 class ContextInformation::CallSite
-
 {
 public:
     int procnum;    // the number of the calling procedure
@@ -87,6 +86,7 @@ public:
 
     CallString(int procnum, int position, CFG *icfg);
     std::string toString() const;
+    std::string toDotString() const;
     PrologTerm *toPrologTerm() const;
 };
 

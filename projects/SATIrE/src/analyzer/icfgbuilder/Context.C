@@ -125,6 +125,12 @@ ContextInformation::printContextGraph(std::ostream &stream) const
     std::vector<Context>::const_iterator c, p;
     for (c = contexts.begin(); c != contexts.end(); ++c)
     {
+        stream
+            << '"' << c->toString() << "\" [label=\""
+            << c->toString() << ": "
+            << contextCallString(*c).toDotString()
+            << "\"];" << std::endl;
+
         const std::vector<Context> &parents = parentContexts(*c);
         for (p = parents.begin(); p != parents.end(); ++p)
         {
@@ -304,6 +310,30 @@ ContextInformation::CallString::toString() const
      // callstring is non-empty). The last procedure is printed specially.
         str << prev->targetName;
     }
+
+    return str.str();
+}
+
+std::string
+ContextInformation::CallString::toDotString() const
+{
+    std::stringstream str;
+
+    str << "[";
+
+    if (!callstring.empty())
+    {
+        std::vector<CallSite>::const_iterator i = callstring.begin();
+        while (i != callstring.end())
+        {
+            str << i->callerName;
+            ++i;
+            if (i != callstring.end())
+                str << ", ";
+        }
+    }
+
+    str << "]";
 
     return str.str();
 }
