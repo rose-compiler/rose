@@ -1,3 +1,47 @@
+2009-04-24 23:30  panas2
+
+	* [r5474] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedSymbols.cpp,
+	  /trunk/ROSE/projects/RTED/RtedSymbols.h,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_funccall.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_prolog.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_support.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.c,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/test_runtime.c: converted RTED
+	  RuntimeSystem into C code
+
+2009-04-24 20:38  liao6
+
+	* [r5473] /trunk/ROSE/projects/OpenMP_Translator/ompTranslator.C,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/developmentTests/Makefile.am,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/developmentTests/logics.c,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/developmentTests/pointer2Array.c,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/developmentTests/pointer2Array2.c,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/developmentTests/pointer2Array3.c,
+	  /trunk/ROSE/projects/OpenMP_Translator/tests/developmentTests/pointer2ArrayRegular.c,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface_type.C,
+	  /trunk/ROSE/src/midend/astOutlining/GenerateFunc.cc,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/arrayParameter.c:
+	  Fixed a bug related to outlining arrays coming from function
+	  parameters
+	  in both outliner and OpenMP translator.
+	  
+	  Variables of array types can come from at least two cases:
+	  1)regular array declaration statements, and 2) function parameter
+	  list.
+	  For arrays used as function parameters, the type is tricky:
+	  the first dimension is implicitly treated as pointer type by
+	  compilers.
+	  So outlining have to do it right to get compatible pointer types
+	  and avoid
+	  segmentation fault.
+
 2009-04-24 14:46  dquinlan
 
 	* [r5469]
