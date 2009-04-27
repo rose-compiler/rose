@@ -1041,7 +1041,7 @@ INCLUDE_FILE_PATTERNS  =
 # omitted =1 is assumed.
 
 PREDEFINED             = HAVE_EXPLICIT_TEMPLATE_INSTANTIATION \
-                         __EXTERN_C__
+                         __EXTERN_C__ ROSE_USE_NEW_GRAPH_NODES
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then 
 # this tag can be used to specify a list of macro names that should be expanded. 

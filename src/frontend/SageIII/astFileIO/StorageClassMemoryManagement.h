@@ -333,6 +333,7 @@ class EasyStorage <rose_hash_multimap*> :
 // DQ (8/19/2008): Added support for new graph IR nodes. 
 // EasyStorage for storing the rose_hash_multimap  
 // * it has overloaded methods for arrangeMemoryPoolInOneBlock and deleteMemoryPool
+#if 0
 template < >
 class EasyStorage <rose_graph_hash_multimap*> : 
     public StorageClassMemoryManagement <EasyStorageMapEntry<std::string,SgGraphNode*> > 
@@ -350,10 +351,30 @@ class EasyStorage <rose_graph_hash_multimap*> :
      static void writeToFile(std::ostream& out);
      static void readFromFile (std::istream& in);
    };
+#else
+template < >
+class EasyStorage <rose_graph_hash_multimap> : 
+    public StorageClassMemoryManagement <EasyStorageMapEntry<std::string,SgGraphNode*> > 
+   {
+     typedef StorageClassMemoryManagement <EasyStorageMapEntry<std::string,SgGraphNode*> > Base;
+    private:
+     unsigned long parent;
+    public: 
+     EasyStorage() {parent = 0;}
+     void storeDataInEasyStorageClass(const rose_graph_hash_multimap& data_);
+     rose_graph_hash_multimap rebuildDataStoredInEasyStorageClass() const;
+     static void arrangeMemoryPoolInOneBlock() ;
+     static void deleteMemoryPool() ;
+
+     static void writeToFile(std::ostream& out);
+     static void readFromFile (std::istream& in);
+   };
+#endif
  
 // DQ (8/19/2008): Added support for new graph IR nodes. 
 // EasyStorage for storing the rose_hash_multimap  
 // * it has overloaded methods for arrangeMemoryPoolInOneBlock and deleteMemoryPool
+#if 0
 template < >
 class EasyStorage <rose_directed_graph_hash_multimap*> : 
     public StorageClassMemoryManagement <EasyStorageMapEntry<std::string,SgDirectedGraphEdge*> > 
@@ -371,10 +392,30 @@ class EasyStorage <rose_directed_graph_hash_multimap*> :
      static void writeToFile(std::ostream& out);
      static void readFromFile (std::istream& in);
    };
- 
+#else
+template < >
+class EasyStorage <rose_directed_graph_hash_multimap> : 
+    public StorageClassMemoryManagement <EasyStorageMapEntry<std::string,SgDirectedGraphEdge*> > 
+   {
+     typedef StorageClassMemoryManagement <EasyStorageMapEntry<std::string,SgDirectedGraphEdge*> > Base;
+    private:
+     unsigned long parent;
+    public: 
+     EasyStorage() {parent = 0;}
+     void storeDataInEasyStorageClass(const rose_directed_graph_hash_multimap& data_);
+     rose_directed_graph_hash_multimap rebuildDataStoredInEasyStorageClass() const;
+     static void arrangeMemoryPoolInOneBlock() ;
+     static void deleteMemoryPool() ;
+
+     static void writeToFile(std::ostream& out);
+     static void readFromFile (std::istream& in);
+   };
+#endif
+
 // DQ (8/19/2008): Added support for new graph IR nodes. 
 // EasyStorage for storing the rose_hash_multimap  
 // * it has overloaded methods for arrangeMemoryPoolInOneBlock and deleteMemoryPool
+#if 0
 template < >
 class EasyStorage <rose_undirected_graph_hash_multimap*> : 
     public StorageClassMemoryManagement <EasyStorageMapEntry<std::string,SgUndirectedGraphEdge*> > 
@@ -392,6 +433,27 @@ class EasyStorage <rose_undirected_graph_hash_multimap*> :
      static void writeToFile(std::ostream& out);
      static void readFromFile (std::istream& in);
    };
+#else
+// DQ (4/25/2009): Remove the pointer to improve the interface...
+template < >
+class EasyStorage <rose_undirected_graph_hash_multimap> : 
+    public StorageClassMemoryManagement <EasyStorageMapEntry<std::string,SgUndirectedGraphEdge*> > 
+   {
+     typedef StorageClassMemoryManagement <EasyStorageMapEntry<std::string,SgUndirectedGraphEdge*> > Base;
+    private:
+     unsigned long parent;
+    public: 
+     EasyStorage() {parent = 0;}
+     void storeDataInEasyStorageClass(const rose_undirected_graph_hash_multimap& data_);
+     rose_undirected_graph_hash_multimap rebuildDataStoredInEasyStorageClass() const;
+     static void arrangeMemoryPoolInOneBlock() ;
+     static void deleteMemoryPool() ;
+
+     static void writeToFile(std::ostream& out);
+     static void readFromFile (std::istream& in);
+   };
+#endif
+
 #endif
 
 /* EasyStorageMapEntry concerning an std::string and an AstAttribut

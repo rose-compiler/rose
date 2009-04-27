@@ -8,237 +8,115 @@ HEADER_START
           $CLASSNAME & operator= ( const $CLASSNAME & X );
 HEADER_END
 
+
+// ****************************************************
+// ************ Support for Graph IR nodes ************ 
+// ****************************************************
 HEADER_GRAPH_PREDECLARATION_START
-
-/*! \brief Hash table support for graph IR nodes within ROSE.
- */
-
-// DQ (8/19/2008): Note that "rose_hash" is a namespace defined in "sage3.h"
-// class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>
-class rose_graph_hash_multimap : public rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>
-   {
-     protected:
-          SgNode * parent;
-
-     public:
-          rose_graph_hash_multimap()
-             : rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>(), parent(NULL)
-             {}
-          rose_graph_hash_multimap(int sz) 
-             : rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>(sz), parent(NULL)
-             {}
-          rose_graph_hash_multimap(const rose_graph_hash_multimap& rhs) 
-             : rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>((rose_graph_hash_multimap)rhs),parent(rhs.parent)
-             {}
-
-          void set_parent(SgNode * new_parent) 
-             {
-               parent = new_parent;
-             }
-          SgNode * get_parent()
-             {
-               return parent;
-             }
-
-          void delete_elements()
-             {
-#if 0
-            // DQ (2/19/2007): I am not sure why this is commented out (has been since it was introduced summer of 2005)
-               hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it;
-               for (it = begin(); it != end(); ++it)
-                  {
-                    delete (*it).second;
-                    (*it).second = NULL;
-                  }
-#endif
-             }
-
-         ~rose_graph_hash_multimap()
-             {
-               delete_elements();
-
-               parent = NULL;
-             }
-
-        friend class AST_FILE_IO;
-        friend class SgSymbolTableStorageClass;
-        friend class EasyStorage<rose_graph_hash_multimap*>;
-   };
-
-std::ostream & operator<< ( std::ostream & os, const rose_graph_hash_multimap::iterator & rhm_it );
+/*!
+    Doxygen documentation for graph class (should maybe be put with the rest of the
+doxygen documentation in docs/testDoxygen directory instead).
 
 
-/*! \brief Hash table support for graph IR nodes within ROSE.
- */
-
-// DQ (8/19/2008): Note that "rose_hash" is a namespace defined in "sage3.h"
-// class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>
-class rose_directed_graph_hash_multimap : public rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>
-   {
-     protected:
-          SgNode * parent;
-
-     public:
-          rose_directed_graph_hash_multimap()
-             : rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>(), parent(NULL)
-             {}
-          rose_directed_graph_hash_multimap(int sz) 
-             : rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>(sz), parent(NULL)
-             {}
-          rose_directed_graph_hash_multimap(const rose_directed_graph_hash_multimap& rhs) 
-             : rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>((rose_directed_graph_hash_multimap)rhs),parent(rhs.parent)
-             {}
-
-          void set_parent(SgNode * new_parent) 
-             {
-               parent = new_parent;
-             }
-          SgNode * get_parent()
-             {
-               return parent;
-             }
-
-          void delete_elements()
-             {
-#if 0
-            // DQ (2/19/2007): I am not sure why this is commented out (has been since it was introduced summer of 2005)
-               hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it;
-               for (it = begin(); it != end(); ++it)
-                  {
-                    delete (*it).second;
-                    (*it).second = NULL;
-                  }
-#endif
-             }
-
-         ~rose_directed_graph_hash_multimap()
-             {
-               delete_elements();
-
-               parent = NULL;
-             }
-
-        friend class AST_FILE_IO;
-        friend class SgSymbolTableStorageClass;
-        friend class EasyStorage<rose_directed_graph_hash_multimap*>;
-   };
-
-std::ostream & operator<< ( std::ostream & os, const rose_directed_graph_hash_multimap::iterator & rhm_it );
-
-/*! \brief Hash table support for graph IR nodes within ROSE.
- */
-
-// DQ (8/19/2008): Note that "rose_hash" is a namespace defined in "sage3.h"
-// class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>
-class rose_undirected_graph_hash_multimap : public rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>
-   {
-     protected:
-          SgNode * parent;
-
-     public:
-          rose_undirected_graph_hash_multimap()
-             : rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>(), parent(NULL)
-             {}
-          rose_undirected_graph_hash_multimap(int sz) 
-             : rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>(sz), parent(NULL)
-             {}
-          rose_undirected_graph_hash_multimap(const rose_undirected_graph_hash_multimap& rhs)
-             : rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>((rose_undirected_graph_hash_multimap)rhs),parent(rhs.parent)
-             {}
-
-          void set_parent(SgNode * new_parent) 
-             {
-               parent = new_parent;
-             }
-          SgNode * get_parent()
-             {
-               return parent;
-             }
-
-          void delete_elements()
-             {
-#if 0
-            // DQ (2/19/2007): I am not sure why this is commented out (has been since it was introduced summer of 2005)
-               hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it;
-               for (it = begin(); it != end(); ++it)
-                  {
-                    delete (*it).second;
-                    (*it).second = NULL;
-                  }
-#endif
-             }
-
-         ~rose_undirected_graph_hash_multimap()
-             {
-               delete_elements();
-
-               parent = NULL;
-             }
-
-        friend class AST_FILE_IO;
-        friend class SgSymbolTableStorageClass;
-        friend class EasyStorage<rose_undirected_graph_hash_multimap*>;
-   };
-
-std::ostream & operator<< ( std::ostream & os, const rose_undirected_graph_hash_multimap::iterator & rhm_it );
-
+*/
 HEADER_GRAPH_PREDECLARATION_END
 
 
 HEADER_GRAPH_START
+#ifdef ROSE_USE_NEW_GRAPH_NODES
+  // DQ (4/26/2009): Added iterator types
+     typedef SgGraphNodePtrList::iterator node_iterator;
+     typedef SgGraphEdgePtrList::iterator edge_iterator;
+#endif
 
-  int hashCode( char* p, int len); // hash a character array
-  int get_graph_id() ;
-  void append_properties( int addr, std::string prop );
-
+     int hashCode( char* p, int len); // hash a character array
+     int get_graph_id() ;
+     void append_properties( int addr, std::string prop );
 HEADER_GRAPH_END
 
+
 HEADER_GRAPHNODE_START
-  int get_graph_id() const;	
-  void append_properties( int addr, std::string prop );	
+     int get_graph_id() const;	
+     void append_properties( int addr, std::string prop );	
 HEADER_GRAPHNODE_END
 
+
 HEADER_GRAPHEDGE_START
-  int get_graph_id() const;		
-  void append_properties( int addr, std::string prop );	
+     int get_graph_id() const;		
+     void append_properties( int addr, std::string prop );	
 HEADER_GRAPHEDGE_END
 
 
 HEADER_DIRECTED_GRAPH_EDGE_START
      public:
-
        // DQ (8/18/2008): This is part of the OLD interface introduced for backward compatability!
-
           SgDirectedGraphEdge(std::string, std::string, int n, SgGraphNode*, SgGraphNode*);
 
 HEADER_DIRECTED_GRAPH_EDGE_END
 
+
 HEADER_DIRECTED_GRAPH_NODE_START
      public:
-
        // DQ (8/18/2008): This is part of the OLD interface introduced for backward compatability!
           SgDirectedGraphNode(std::string, std::string, int n);
 
        // DQ (4/23/2009): Added to debug use of new Graph node interfaces.
           SgDirectedGraphNode(std::string);
           SgDirectedGraphNode();
-
 HEADER_DIRECTED_GRAPH_NODE_END
+
 
 HEADER_DIRECTED_GRAPH_START
      public:
-
        // DQ (8/18/2008): This is part of the OLD interface introduced for backward compatability!
-
           SgDirectedGraph(std::string, std::string);
-
 HEADER_DIRECTED_GRAPH_END
+
 
 HEADER_GRAPH_NODE_START
 HEADER_GRAPH_NODE_END
 
 
+HEADER_GRAPH_NODE_LIST_START
+HEADER_GRAPH_NODE_LIST_END
 
+
+HEADER_GRAPH_EDGE_LIST_START
+HEADER_GRAPH_EDGE_LIST_END
+
+
+HEADER_UNDIRECTED_GRAPH_EDGE_START
+HEADER_UNDIRECTED_GRAPH_EDGE_END
+
+
+HEADER_DIRECTED_GRAPH_EDGE_START
+HEADER_DIRECTED_GRAPH_EDGE_END
+
+
+HEADER_INCIDENCE_UNDIRECTED_GRAPH_START
+HEADER_INCIDENCE_UNDIRECTED_GRAPH_END
+
+
+HEADER_INCIDENCE_DIRECTED_GRAPH_START
+HEADER_INCIDENCE_DIRECTED_GRAPH_END
+
+
+HEADER_BIDIRECTIONAL_GRAPH_START
+HEADER_BIDIRECTIONAL_GRAPH_END
+
+
+HEADER_STRING_KEYED_BIDIRECTIONAL_GRAPH_START
+HEADER_STRING_KEYED_BIDIRECTIONAL_GRAPH_END
+
+
+HEADER_INTEGER_KEYED_BIDIRECTIONAL_GRAPH_START
+HEADER_INTEGER_KEYED_BIDIRECTIONAL_GRAPH_END
+
+
+
+// *********************************************************
+// ************ Support for Type Modifier nodes ************
+// *********************************************************
 HEADER_MODIFIER_START
           SgModifier ( const SgModifier & X );
           SgModifier & operator= ( const SgModifier & X );
@@ -13065,135 +12943,136 @@ SOURCE_TEMPLATE_ARGUMENT_END
 SOURCE_TEMPLATE_PARAMETER_LIST_START
 SOURCE_TEMPLATE_PARAMETER_LIST_END
 
+
 SOURCE_TEMPLATE_ARGUMENT_LIST_START
 SOURCE_TEMPLATE_ARGUMENT_LIST_END
 
 
 SOURCE_GRAPHNODE_START
-   // tps (08/08/07): Added the graph, graph nodes and graph edges 
-int 
-SgGraphNode::get_graph_id() const {
-// #if OLD_GRAPH_NODES
+// tps (08/08/07): Added the graph, graph nodes and graph edges
+int
+SgGraphNode::get_graph_id() const
+   {
 #ifndef ROSE_USE_NEW_GRAPH_NODES
-    return p_graph_id;
+     return p_graph_id;
 #else
- // DQ (8/18/2008): We have added the new support for graph IR nodes with a bit fo the redundant support
- // for the older IR nodes so that ROSE will compile, but these old IR nodes should not be used!
+  // DQ (8/18/2008): We have added the new support for graph IR nodes with a bit fo the redundant support
+  // for the older IR nodes so that ROSE will compile, but these old IR nodes should not be used!
 
-    printf ("Error: OLD GRAPH IR NODES ARE NOT SUPPORTED! \n");
-    ROSE_ASSERT(false);
+     printf ("Error: OLD GRAPH IR NODES ARE NOT SUPPORTED! \n");
+     ROSE_ASSERT(false);
 
-    return 0;
+     return 0;
 #endif
-  }
+   }
 
 void
 SgGraphNode::append_properties( int addr, std::string prop )
    {
   /* implemented directly until we can fix how the statementList is built */
-     p_properties[addr]=prop;
+     p_properties[addr] = prop;
    }
-
 SOURCE_GRAPHNODE_END
 
+
 SOURCE_GRAPHEDGE_START
-   // tps (08/08/07): Added the graph, graph nodes and graph edges 
+// tps (08/08/07): Added the graph, graph nodes and graph edges 
 int 
-SgGraphEdge::get_graph_id() const {
-// #if OLD_GRAPH_NODES
+SgGraphEdge::get_graph_id() const
+   {
 #ifndef ROSE_USE_NEW_GRAPH_NODES
-    return p_graph_id;
+     return p_graph_id;
 #else
- // DQ (8/18/2008): We have added the new support for graph IR nodes with a bit fo the redundant support
- // for the older IR nodes so that ROSE will compile, but these old IR nodes should not be used!
+  // DQ (8/18/2008): We have added the new support for graph IR nodes with a bit fo the redundant support
+  // for the older IR nodes so that ROSE will compile, but these old IR nodes should not be used!
 
-    printf ("Error: OLD GRAPH IR NODES ARE NOT SUPPORTED! \n");
-    ROSE_ASSERT(false);
+     printf ("Error: OLD GRAPH IR NODES ARE NOT SUPPORTED! \n");
+     ROSE_ASSERT(false);
 
-    return 0;
+     return 0;
 #endif
-  }	
+   }
+
 void
 SgGraphEdge::append_properties( int addr, std::string prop )
    {
   /* implemented directly until we can fix how the statementList is built */
-     p_properties[addr]=prop;
+     p_properties[addr] = prop;
    }
-
 SOURCE_GRAPHEDGE_END
 
+
 SOURCE_GRAPH_START
-   // tps (08/08/07): Added the graph, graph nodes and graph edges 
+// tps (08/08/07): Added the graph, graph nodes and graph edges 
 void
 SgGraph::append_properties( int addr, std::string prop )
    {
   /* implemented directly until we can fix how the statementList is built */
-     p_properties[addr]=prop;
+     p_properties[addr] = prop;
    }
 
 int 
 SgGraph::hashCode( char* p, int len) // hash a character array
-  { 
-    unsigned int h = 0;
-    for (int i=0; i<len; i++)
-    { h = (h<<5)|(h>>27);               // 5-bit cyclic shift
-      h += (unsigned int)p[i];         // add in next character
-    }
-    return (int)h; 
-  }
+   {
+     unsigned int h = 0;
+     for (int i=0; i<len; i++)
+        {
+          h = (h<<5) | (h>>27);    // 5-bit cyclic shift
+          h += (unsigned int)p[i]; // add in next character
+        }
+     return (int)h; 
+   }
 
 int 
-SgGraph::get_graph_id()  {
-// #if OLD_GRAPH_NODES
+SgGraph::get_graph_id()
+   {
 #ifndef ROSE_USE_NEW_GRAPH_NODES
-    string name = p_name+p_type;
-    int len = sizeof(name);
-     char* pointer = reinterpret_cast< char *>(&name);
-    return hashCode(pointer, len);
+     string name = p_name+p_type;
+     int len = sizeof(name);
+     char* pointer = reinterpret_cast<char*>(&name);
+     return hashCode(pointer, len);
 #else
- // DQ (8/18/2008): We have added the new support for graph IR nodes with a bit fo the redundant support
- // for the older IR nodes so that ROSE will compile, but these old IR nodes should not be used!
+  // DQ (8/18/2008): We have added the new support for graph IR nodes with a bit fo the redundant support
+  // for the older IR nodes so that ROSE will compile, but these old IR nodes should not be used!
 
-    printf ("Error: OLD GRAPH IR NODES ARE NOT SUPPORTED! \n");
-    ROSE_ASSERT(false);
+     printf ("Error: OLD GRAPH IR NODES ARE NOT SUPPORTED! \n");
+     ROSE_ASSERT(false);
 
-    return 0;
+     return 0;
 #endif
-  }	
+   }
 SOURCE_GRAPH_END
 
 
 SOURCE_DIRECTED_GRAPH_EDGE_START
 SgDirectedGraphEdge::SgDirectedGraphEdge(std::string, std::string, int n, SgGraphNode*, SgGraphNode*)
-{
-}
-
+   {
+   }
 SOURCE_DIRECTED_GRAPH_EDGE_END
 
-SOURCE_DIRECTED_GRAPH_NODE_START
 
+SOURCE_DIRECTED_GRAPH_NODE_START
 // DQ (4/23/2009): Removed to debug use of new Graph node interfaces.
 #if 1
 SgDirectedGraphNode::SgDirectedGraphNode(std::string, std::string, int n)
-{
-}
+   {
+   }
 #endif
-
 SOURCE_DIRECTED_GRAPH_NODE_END
+
 
 SOURCE_DIRECTED_GRAPH_START
 SgDirectedGraph::SgDirectedGraph(std::string, std::string)
-{
-}
-
+   {
+   }
 SOURCE_DIRECTED_GRAPH_END
+
 
 SOURCE_GRAPH_NODE_START
 SOURCE_GRAPH_NODE_END
 
 
 SOURCE_NAME_GROUP_START
-
 const SgStringList &
 SgNameGroup::get_name_list() const
    {
@@ -13205,7 +13084,6 @@ SgNameGroup::get_name_list()
    {
      return p_name_list;
    }
-
 SOURCE_NAME_GROUP_END
 
 
