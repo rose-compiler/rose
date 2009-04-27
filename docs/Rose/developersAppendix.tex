@@ -954,26 +954,49 @@ Details: \\
 % commented out
 }
 
-\section{How To Build a Binary Distribution}
+\section{How To Build a ROSE Distribution with EDG Binaries}
 
-\fixme{I think this is out of date now.}
+%Updated by Liao on 4/27/2009
 
    The construction of a binary distribution is done as part of making
 ROSE available externally on the web to users who do not have an EDG
-licence.  We make only the EDG part of ROSE available as a binary (library) 
+license.  We make only the EDG part of ROSE available as a binary (library) 
 and the rest is left as source code (just as in an all source distribution).
 
-There are a few steps:
+This step is automated in our daily regression test script in {\tt
+rose/script/roseFreshTest} and is turned on by a flag
+{\tt ENABLE\_BUILD\_BINARY\_EDG}. A simplified excerpt of the script is shown below:
+\begin{verbatim}
+if [ 0$ENABLE_BUILD_BINARY_EDG -ne 0 ]; then
+  cd ${ROSE_TOP}/build
+  make binary_edg_tarball || exit 1
+  ${ROSE_TOP}/sourcetree/scripts/copy_binary_edg_tarball_to_source_tree_svn 
+  ${ROSE_TOP}/sourcetree/scripts/copy_binary_edg_tarball_to_source_tree ${ROSE_TOP}/sourcetree 
+make $MAKEFLAGS source_with_binary_edg_dist DOT_SVNREV=-${svnversion}
+echo "############ make source_with_binary_edg_dist done"
+fi
+\end{verbatim}
+
+As shown in the script above, the steps to build a binary distribution of ROSE are:
 \begin{enumerate}
    \item Configure and build ROSE normally, using configure (use all options that you
     require in the binary distribution).  
-   \item (optional) Run {\tt make dist}, this will build an {\em all source distribution} of ROSE.
-   \item Rerun configure without the {\tt --with-edg\_source\_code=true} option.
-   \item Run {\tt make dist}, this will build a binary distribution using the 
-    binary libraries build in step one.
-
+    \item Run {\tt make binary\_edg\_tarball}. This will make a binary tar
+    ball from EDG and EDG-SAGE connection source files. 
+    \item Copy the binary to the svn repository: {\tt copy\_binary\_edg\_tarball\_to\_source\_tree\_svn} 
+    \item Copy the binary to your local copy: {\tt copy\_binary\_edg\_tarball\_to\_source\_tree}
+     \item Make the ROSE distribution with EDG binaries: {\tt make source\_with\_binary\_edg\_dist}
+%   \item (optional) Run {\tt make dist}, this will build an {\em all source distribution} of ROSE.
+%   \item Rerun configure without the {\tt --with-edg\_source\_code=true} option.
+%   \item Run {\tt make dist}, this will build a binary distribution using the 
+%    binary libraries build in step one.
 \end{enumerate}
-
+To make sure the binaries are up to date for different platforms, 
+we generate a hash number from the source files within the EDG and EDG-SAGE connection source tree and 
+treat the number as a signature for the binary package. 
+Please see the makefile target {\tt rose\_binary\_compatibility\_signature} in {\tt rose/Makefile.am} for details.
+Our regression test script will check for the availability and consistency of the binaries for all supported platforms 
+before making an external ROSE release with EDG binaries.
 
 \section{Avoiding Nightly Backups of Unrequired ROSE Files at LLNL}
 
