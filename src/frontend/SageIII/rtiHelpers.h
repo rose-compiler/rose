@@ -134,11 +134,21 @@ static std::string toStringForRTI(const std::map<uint64_t ,std::pair<int,std::pa
 }
 #endif
 
-#if 0
+#if 1
 // #if !OLD_GRAPH_NODES
 #ifdef ROSE_USE_NEW_GRAPH_NODES
 // DQ (8/18/2008): Added support for new Graph IR node.
-static std::string toStringForRTI(const SgGraphNodeDirectedGraphEdgeMultimapPtrList & x)
+// static std::string toStringForRTI(const SgGraphNodeDirectedGraphEdgeMultimapPtrList & x)
+static std::string toStringForRTI(const rose_undirected_graph_hash_multimap & x)
+{
+  std::ostringstream ss;
+  ss << "[";
+// for (SgGraphNodeUndirectedGraphEdgeMultimapPtrList::const_iterator i = x.begin(); i != x.end(); ++i) {if (i != x.begin()) ss << ", "; ss << i->first << "->" << i->second;}
+  ss << "]";
+  return ss.str();
+}
+
+static std::string toStringForRTI(const rose_directed_graph_hash_multimap & x)
 {
   std::ostringstream ss;
   ss << "[";
@@ -148,7 +158,8 @@ static std::string toStringForRTI(const SgGraphNodeDirectedGraphEdgeMultimapPtrL
 }
 
 // DQ (8/18/2008): Added support for new Graph IR node.
-static std::string toStringForRTI(const SgStringGraphNodeMapPtrList & x)
+// static std::string toStringForRTI(const SgStringGraphNodeMapPtrList & x)
+static std::string toStringForRTI(const rose_graph_hash_multimap & x)
 {
   std::ostringstream ss;
   ss << "[";
@@ -159,17 +170,22 @@ static std::string toStringForRTI(const SgStringGraphNodeMapPtrList & x)
 
 
 // DQ (8/18/2008): Added support for new Graph IR node.
-static std::string toStringForRTI(const SgIntegerGraphNodeMapPtrList & x)
+// static std::string toStringForRTI(const SgIntegerGraphNodeMapPtrList & x)
+static std::string toStringForRTI(const std::map<int, SgGraphNode*> & x)
 {
   std::ostringstream ss;
   ss << "[";
-  for (SgIntegerGraphNodeMapPtrList::const_iterator i = x.begin(); i != x.end(); ++i) {if (i != x.begin()) ss << ", "; ss << i->first << "->" << i->second;}
+// for (SgIntegerGraphNodeMapPtrList::const_iterator i = x.begin(); i != x.end(); ++i) {if (i != x.begin()) ss << ", "; ss << i->first << "->" << i->second;}
+  for (std::map<int, SgGraphNode*>::const_iterator i = x.begin(); i != x.end(); ++i) {if (i != x.begin()) ss << ", "; ss << i->first << "->" << i->second;}
   ss << "]";
   return ss.str();
 }
 
+#if 0
+// DQ (4/25/2009): This is now redundant...
 // DQ (8/18/2008): Added support for new Graph IR node.
-static std::string toStringForRTI(const SgGraphNodeUndirectedGraphEdgeMultimapPtrList & x)
+// static std::string toStringForRTI(const SgGraphNodeUndirectedGraphEdgeMultimapPtrList & x)
+static std::string toStringForRTI(const rose_undirected_graph_hash_multimap & x)
 {
   std::ostringstream ss;
   ss << "[";
@@ -177,6 +193,7 @@ static std::string toStringForRTI(const SgGraphNodeUndirectedGraphEdgeMultimapPt
   ss << "]";
   return ss.str();
 }
+#endif
 #endif
 #endif
 

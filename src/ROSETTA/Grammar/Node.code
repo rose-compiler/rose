@@ -712,29 +712,6 @@ typedef Rose_STL_Container<SgAsmPERVASizePair*> SgAsmPERVASizePairPtrList;
 typedef SgAsmPERVASizePairPtrList* SgAsmPERVASizePairPtrListPtr;
 
 
-#if 0
-struct rose_hash::eqstr_string
-   {
-     bool operator()(const std::string & s1, const std::string & s2) const
-        {
-          return s1 == s2;
-        }
-   };
-
-/*! \brief Hash name support for symbol tables within ROSE.
- */
-struct rose_hash::hash_string
-   {
-     rose_hash::hash<const char*> hasher;
-
-     public:
-          size_t operator()(const std::string & name) const
-             {
-               return hasher(name.c_str());
-             }
-   };
-#else
-
 // DQ (4/23/2009): See comments in sage3.h about the <ext/hash_map> section.
 // using namespace __gnu_cxx;
 namespace rose_hash 
@@ -768,12 +745,191 @@ namespace rose_hash
              }
         };
    }
-#endif
 
 
-
-// #if !OLD_GRAPH_NODES
 #ifdef ROSE_USE_NEW_GRAPH_NODES
+
+/*! \brief Hash table support for graph IR nodes within ROSE.
+ */
+
+// DQ (8/19/2008): Note that "rose_hash" is a namespace defined above.
+// class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>
+class rose_graph_hash_multimap : public rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>
+   {
+  // Need to document why we are using hash_multimap type here.  Why a hash (obvious), then why a multimap? 
+  // I think a multimap is used to support having no names on the nodes if they are unlabeled.  If the
+  // nodes are labled then operations on the labled edges are possible using the multimap.  But is there
+  // a performance trade-off for these choices?
+
+     protected:
+
+       // DQ (4/25/2009): We need to change this name since I think we just want the 
+       // associated IR node in the AST, and not any concept of parent in the graph.
+          SgNode* parent;
+
+     public:
+          rose_graph_hash_multimap()
+             : rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>(), parent(NULL)
+             {}
+          rose_graph_hash_multimap(int sz) 
+             : rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>(sz), parent(NULL)
+             {}
+          rose_graph_hash_multimap(const rose_graph_hash_multimap& rhs) 
+             : rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>((rose_graph_hash_multimap)rhs),parent(rhs.parent)
+             {}
+
+       // See note (above) about name change to the associated data member for these access functions.
+          void set_parent(SgNode * new_parent) 
+             {
+               parent = new_parent;
+             }
+          SgNode * get_parent()
+             {
+               return parent;
+             }
+
+          void delete_elements()
+             {
+#if 0
+            // DQ (2/19/2007): I am not sure why this is commented out (has been since it was introduced summer of 2005)
+               hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it;
+               for (it = begin(); it != end(); ++it)
+                  {
+                    delete (*it).second;
+                    (*it).second = NULL;
+                  }
+#endif
+             }
+
+         ~rose_graph_hash_multimap()
+             {
+               delete_elements();
+
+               parent = NULL;
+             }
+
+        friend class AST_FILE_IO;
+        friend class SgSymbolTableStorageClass;
+        friend class EasyStorage<rose_graph_hash_multimap*>;
+   };
+
+std::ostream & operator<< ( std::ostream & os, const rose_graph_hash_multimap::iterator & rhm_it );
+
+
+/*! \brief Hash table support for graph IR nodes within ROSE.
+ */
+
+// DQ (8/19/2008): Note that "rose_hash" is a namespace defined in "sage3.h"
+// class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>
+class rose_directed_graph_hash_multimap : public rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>
+   {
+     protected:
+          SgNode * parent;
+
+     public:
+          rose_directed_graph_hash_multimap()
+             : rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>(), parent(NULL)
+             {}
+          rose_directed_graph_hash_multimap(int sz) 
+             : rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>(sz), parent(NULL)
+             {}
+          rose_directed_graph_hash_multimap(const rose_directed_graph_hash_multimap& rhs) 
+             : rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>((rose_directed_graph_hash_multimap)rhs),parent(rhs.parent)
+             {}
+
+          void set_parent(SgNode * new_parent) 
+             {
+               parent = new_parent;
+             }
+          SgNode * get_parent()
+             {
+               return parent;
+             }
+
+          void delete_elements()
+             {
+#if 0
+            // DQ (2/19/2007): I am not sure why this is commented out (has been since it was introduced summer of 2005)
+               hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it;
+               for (it = begin(); it != end(); ++it)
+                  {
+                    delete (*it).second;
+                    (*it).second = NULL;
+                  }
+#endif
+             }
+
+         ~rose_directed_graph_hash_multimap()
+             {
+               delete_elements();
+
+               parent = NULL;
+             }
+
+        friend class AST_FILE_IO;
+        friend class SgSymbolTableStorageClass;
+        friend class EasyStorage<rose_directed_graph_hash_multimap*>;
+   };
+
+std::ostream & operator<< ( std::ostream & os, const rose_directed_graph_hash_multimap::iterator & rhm_it );
+
+/*! \brief Hash table support for graph IR nodes within ROSE.
+ */
+
+// DQ (8/19/2008): Note that "rose_hash" is a namespace defined in "sage3.h"
+// class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>
+class rose_undirected_graph_hash_multimap : public rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>
+   {
+     protected:
+          SgNode * parent;
+
+     public:
+          rose_undirected_graph_hash_multimap()
+             : rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>(), parent(NULL)
+             {}
+          rose_undirected_graph_hash_multimap(int sz) 
+             : rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>(sz), parent(NULL)
+             {}
+          rose_undirected_graph_hash_multimap(const rose_undirected_graph_hash_multimap& rhs)
+             : rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>((rose_undirected_graph_hash_multimap)rhs),parent(rhs.parent)
+             {}
+
+          void set_parent(SgNode * new_parent) 
+             {
+               parent = new_parent;
+             }
+          SgNode * get_parent()
+             {
+               return parent;
+             }
+
+          void delete_elements()
+             {
+#if 0
+            // DQ (2/19/2007): I am not sure why this is commented out (has been since it was introduced summer of 2005)
+               hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it;
+               for (it = begin(); it != end(); ++it)
+                  {
+                    delete (*it).second;
+                    (*it).second = NULL;
+                  }
+#endif
+             }
+
+         ~rose_undirected_graph_hash_multimap()
+             {
+               delete_elements();
+
+               parent = NULL;
+             }
+
+        friend class AST_FILE_IO;
+        friend class SgSymbolTableStorageClass;
+        friend class EasyStorage<rose_undirected_graph_hash_multimap*>;
+   };
+
+std::ostream & operator<< ( std::ostream & os, const rose_undirected_graph_hash_multimap::iterator & rhm_it );
+
 // DQ (8/18/2008): Added support for new Graph IR nodes.
 typedef Rose_STL_Container<SgGraphNode*> SgGraphNodePtrList;
 typedef SgGraphNodePtrList* SgGraphNodePtrListPtr;
@@ -782,10 +938,17 @@ typedef SgGraphNodePtrList* SgGraphNodePtrListPtr;
 typedef Rose_STL_Container<SgGraphEdge*> SgGraphEdgePtrList;
 typedef SgGraphEdgePtrList* SgGraphEdgePtrListPtr;
 
+#if 0
+// DQ (4/25/2009): Note that these types have the suffix "PtrList" so that ROSETTA will 
+// generate the code using iterators on the STL object similarly to SgGraphEdgePtrList 
+// (above).  It is not a list of pointers to multimaps as the sufix might otherwise imply.
 typedef rose_hash::hash_multimap < SgGraphNode*, SgDirectedGraphEdge*> SgGraphNodeDirectedGraphEdgeMultimapPtrList;
 typedef SgGraphNodeDirectedGraphEdgeMultimapPtrList* SgGraphNodeDirectedGraphEdgeMultimapPtrListPtr;
 
-typedef rose_hash::hash_multimap < SgGraphNode*, SgUndirectedGraphEdge*> SgGraphNodeUndirectedGraphEdgeMultimapPtrList;
+
+// DQ (4/25/2009): Unclear on how these specific types should be represented in the AST...
+// typedef rose_undirected_graph_hash_multimap SgGraphNodeUndirectedGraphEdgeMultimapPtrList;
+// typedef rose_hash::hash_multimap < SgGraphNode*, SgUndirectedGraphEdge*> SgGraphNodeUndirectedGraphEdgeMultimapPtrList;
 typedef SgGraphNodeUndirectedGraphEdgeMultimapPtrList* SgGraphNodeUndirectedGraphEdgeMultimapPtrListPtr;
 
 typedef rose_hash::hash_map < std::string, SgGraphNode*> SgStringGraphNodeMapPtrList;
@@ -796,6 +959,8 @@ typedef SgIntegerGraphNodeMapPtrList* SgIntegerGraphNodeMapPtrListPtr;
 
 typedef std::map<int, std::string> SgIntegerStringMapPtrList;
 typedef SgIntegerStringMapPtrList* SgIntegerStringMapPtrListPtr;
+#endif
+
 #endif
 
 // DQ (11/6/2008): This is the support for mapping instructions to source code and back.

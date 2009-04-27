@@ -539,12 +539,12 @@ Terminal::evaluateType(std::string& varTypeString)
         }
      else if ( varTypeString == "char*" )
         {
-             returnType = CHAR_POINTER;
+          returnType = CHAR_POINTER;
         }
   // DQ (6/14/2008): Added support for "unsigned char*"
      else if ( varTypeString == "unsigned char*" )
         {
-             returnType = CHAR_POINTER;
+          returnType = CHAR_POINTER;
         }
      else if ( varTypeString == "AttachedPreprocessingInfoType*" )
         {
@@ -556,15 +556,21 @@ Terminal::evaluateType(std::string& varTypeString)
         {
           returnType = ROSE_HASH_MULTIMAP;
         }
-     else if ( varTypeString == "rose_graph_hash_multimap*" )
+  // DQ (4/25/2009): Removed pointer type to this type.
+  // else if ( varTypeString == "rose_graph_hash_multimap*" )
+     else if ( varTypeString == "rose_graph_hash_multimap" )
         {
           returnType = ROSE_GRAPH_HASH_MULTIMAP;
         }
-     else if ( varTypeString == "rose_directed_graph_hash_multimap*" )
+  // DQ (4/25/2009): Removed pointer type to this type.
+  // else if ( varTypeString == "rose_directed_graph_hash_multimap*" )
+     else if ( varTypeString == "rose_directed_graph_hash_multimap" )
         {
           returnType = ROSE_GRAPH_DIRECTED_EDGE_HASH_MULTIMAP;
         }
-     else if ( varTypeString == "rose_undirected_graph_hash_multimap*" )
+  // DQ (4/25/2009): Removed pointer type to this type.
+  // else if ( varTypeString == "rose_undirected_graph_hash_multimap*" )
+     else if ( varTypeString == "rose_undirected_graph_hash_multimap" )
         {
           returnType = ROSE_GRAPH_UNDIRECTED_EDGE_HASH_MULTIMAP;
         }
@@ -975,6 +981,7 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
                            break;
 
                          case ROSE_GRAPH_HASH_MULTIMAP:
+#if 0
                            s += "     rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n" ;
                            s += "     unsigned int tempListCount" + varNameString + " = 0; \n" ;
                            s += "     SgGraphNode** tempList" + varNameString + " = new SgGraphNode* [ source->p_" + varNameString + "->size() ]; \n" ;
@@ -992,9 +999,29 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
                            s += "          tempListCount" + varNameString + "++; \n";
                            s += "        }\n";
                            s += "      delete [] tempList" + varNameString + "; \n";
+#else
+                           s += "     rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n" ;
+                           s += "     unsigned int tempListCount" + varNameString + " = 0; \n" ;
+                           s += "     SgGraphNode** tempList" + varNameString + " = new SgGraphNode* [ source->p_" + varNameString + ".size() ]; \n" ;
+                           s += "     for (it = source->p_" + varNameString + ".begin(); it != source->p_" + varNameString + ".end(); ++it)\n" ;
+                           s += "        {\n";
+                           s += "          tempList" + varNameString + "[tempListCount" + varNameString + "] = it->second;\n";
+                           s += "          tempListCount" + varNameString + "++; \n";
+                           s += "          it->second = (SgGraphNode*)(AST_FILE_IO::getGlobalIndexFromSgClassPointer(it->second) ); \n";
+                           s += "        }\n";
+                           s += "     " + varStorageNameString + ".storeDataInEasyStorageClass(source->p_" + varNameString + ");\n" ;
+                           s += "     tempListCount" + varNameString + " = 0; \n" ;
+                           s += "     for (it = source->p_" + varNameString + ".begin(); it != source->p_" + varNameString + ".end(); ++it) \n";
+                           s += "        {\n";
+                           s += "          it->second = tempList" + varNameString + " [ tempListCount" + varNameString + " ]; \n";
+                           s += "          tempListCount" + varNameString + "++; \n";
+                           s += "        }\n";
+                           s += "      delete [] tempList" + varNameString + "; \n";
+#endif
                            break;
 
                          case ROSE_GRAPH_DIRECTED_EDGE_HASH_MULTIMAP:
+#if 0
                            s += "   {\n";
                            s += "     rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it_1; \n" ;
                            s += "     unsigned int tempListCount" + varNameString + " = 0; \n" ;
@@ -1014,9 +1041,32 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
                            s += "        }\n";
                            s += "      delete [] tempList" + varNameString + "; \n";
                            s += "    }\n";
+#else
+                        // DQ (4/25/2009): Removing pointer to type for data member to improve the interface...
+                           s += "   {\n";
+                           s += "     rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it_1; \n" ;
+                           s += "     unsigned int tempListCount" + varNameString + " = 0; \n" ;
+                           s += "     SgDirectedGraphEdge** tempList" + varNameString + " = new SgDirectedGraphEdge* [ source->p_" + varNameString + ".size() ]; \n" ;
+                           s += "     for (it_1 = source->p_" + varNameString + ".begin(); it_1 != source->p_" + varNameString + ".end(); ++it_1)\n" ;
+                           s += "        {\n";
+                           s += "          tempList" + varNameString + "[tempListCount" + varNameString + "] = it_1->second;\n";
+                           s += "          tempListCount" + varNameString + "++; \n";
+                           s += "          it_1->second = (SgDirectedGraphEdge*)(AST_FILE_IO::getGlobalIndexFromSgClassPointer(it_1->second) ); \n";
+                           s += "        }\n";
+                           s += "     " + varStorageNameString + ".storeDataInEasyStorageClass(source->p_" + varNameString + ");\n" ;
+                           s += "     tempListCount" + varNameString + " = 0; \n" ;
+                           s += "     for (it_1 = source->p_" + varNameString + ".begin(); it_1 != source->p_" + varNameString + ".end(); ++it_1) \n";
+                           s += "        {\n";
+                           s += "          it_1->second = tempList" + varNameString + " [ tempListCount" + varNameString + " ]; \n";
+                           s += "          tempListCount" + varNameString + "++; \n";
+                           s += "        }\n";
+                           s += "      delete [] tempList" + varNameString + "; \n";
+                           s += "    }\n";
+#endif
                            break;
 
                          case ROSE_GRAPH_UNDIRECTED_EDGE_HASH_MULTIMAP:
+#if 0
                            s += "     rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it_2; \n" ;
                            s += "     unsigned int tempListCount" + varNameString + " = 0; \n" ;
                            s += "     SgUndirectedGraphEdge** tempList" + varNameString + " = new SgUndirectedGraphEdge* [ source->p_" + varNameString + "->size() ]; \n" ;
@@ -1034,6 +1084,26 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
                            s += "          tempListCount" + varNameString + "++; \n";
                            s += "        }\n";
                            s += "      delete [] tempList" + varNameString + "; \n";
+#else
+                        // DQ (4/25/2009): Removing pointer to type for data member to improve the interface...
+                           s += "     rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it_2; \n" ;
+                           s += "     unsigned int tempListCount" + varNameString + " = 0; \n" ;
+                           s += "     SgUndirectedGraphEdge** tempList" + varNameString + " = new SgUndirectedGraphEdge* [ source->p_" + varNameString + ".size() ]; \n" ;
+                           s += "     for (it_2 = source->p_" + varNameString + ".begin(); it_2 != source->p_" + varNameString + ".end(); ++it_2)\n" ;
+                           s += "        {\n";
+                           s += "          tempList" + varNameString + "[tempListCount" + varNameString + "] = it_2->second;\n";
+                           s += "          tempListCount" + varNameString + "++; \n";
+                           s += "          it_2->second = (SgUndirectedGraphEdge*)(AST_FILE_IO::getGlobalIndexFromSgClassPointer(it_2->second) ); \n";
+                           s += "        }\n";
+                           s += "     " + varStorageNameString + ".storeDataInEasyStorageClass(source->p_" + varNameString + ");\n" ;
+                           s += "     tempListCount" + varNameString + " = 0; \n" ;
+                           s += "     for (it_2 = source->p_" + varNameString + ".begin(); it_2 != source->p_" + varNameString + ".end(); ++it_2) \n";
+                           s += "        {\n";
+                           s += "          it_2->second = tempList" + varNameString + " [ tempListCount" + varNameString + " ]; \n";
+                           s += "          tempListCount" + varNameString + "++; \n";
+                           s += "        }\n";
+                           s += "      delete [] tempList" + varNameString + "; \n";
+#endif
                            break;
 
                         case SGCLASS_POINTER_VECTOR:
@@ -1310,7 +1380,7 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
                sg_string = varTypeString;
                switch (evaluateType(varTypeString) )
                   {
-                   case SGCLASS_POINTER:
+                    case SGCLASS_POINTER:
                       s += "     p_" + varNameString+" =  (" + varTypeString +
                            ")( AST_FILE_IO::getSgClassPointerFromGlobalIndex ( storageSource."+varStorageNameString+") );\n" ;
                       break;
@@ -1330,30 +1400,60 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
 
                  // DQ (8/19/2008): Added new case to support IR nodes for arbitrary graphs
                     case ROSE_GRAPH_HASH_MULTIMAP:
+#if 0
                       s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
                       s += "     rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
                       s += "     for (it = p_" + varNameString + "->begin(); it != p_" + varNameString + "->end(); ++it)\n " ;
                       s += "        {\n";
                       s += "          it->second = (SgGraphNode*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex( (unsigned long)(it->second) ) ); \n";
                       s += "        }\n";
+#else
+                   // DQ (4/25/2009): Removing pointer to type for data member to improve the interface...
+                      s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
+                      s += "     rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
+                      s += "     for (it = p_" + varNameString + ".begin(); it != p_" + varNameString + ".end(); ++it)\n " ;
+                      s += "        {\n";
+                      s += "          it->second = (SgGraphNode*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex( (unsigned long)(it->second) ) ); \n";
+                      s += "        }\n";
+#endif
                       break;
 
                     case ROSE_GRAPH_DIRECTED_EDGE_HASH_MULTIMAP:
+#if 0
                       s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
                       s += "     rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
                       s += "     for (it = p_" + varNameString + "->begin(); it != p_" + varNameString + "->end(); ++it)\n " ;
                       s += "        {\n";
                       s += "          it->second = (SgDirectedGraphEdge*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex( (unsigned long)(it->second) ) ); \n";
                       s += "        }\n";
+#else
+                   // DQ (4/25/2009): Removing pointer to type for data member to improve the interface...
+                      s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
+                      s += "     rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
+                      s += "     for (it = p_" + varNameString + ".begin(); it != p_" + varNameString + ".end(); ++it)\n " ;
+                      s += "        {\n";
+                      s += "          it->second = (SgDirectedGraphEdge*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex( (unsigned long)(it->second) ) ); \n";
+                      s += "        }\n";
+#endif
                       break;
 
                     case ROSE_GRAPH_UNDIRECTED_EDGE_HASH_MULTIMAP:
+#if 0
                       s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
                       s += "     rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
                       s += "     for (it = p_" + varNameString + "->begin(); it != p_" + varNameString + "->end(); ++it)\n " ;
                       s += "        {\n";
                       s += "          it->second = (SgUndirectedGraphEdge*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex( (unsigned long)(it->second) ) ); \n";
                       s += "        }\n";
+#else
+                   // DQ (4/25/2009): Removing pointer to type for data member to improve the interface...
+                      s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
+                      s += "     rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it; \n " ;
+                      s += "     for (it = p_" + varNameString + ".begin(); it != p_" + varNameString + ".end(); ++it)\n " ;
+                      s += "        {\n";
+                      s += "          it->second = (SgUndirectedGraphEdge*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex( (unsigned long)(it->second) ) ); \n";
+                      s += "        }\n";
+#endif
                       break;
 
                     case SGCLASS_POINTER_VECTOR:
@@ -1368,6 +1468,7 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
                             "* )(AST_FILE_IO::getSgClassPointerFromGlobalIndex ( (unsigned long)(*i_" + varNameString + ") ) );\n";
                       s += "        }\n";
                       break;
+
                     case SGCLASS_POINTER_LIST_POINTER:
                       sg_string = varTypeString.substr(0,varTypeString.size()-7) ;
                       s += "     p_" + varNameString + " = new " + varTypeString + " ( storageSource." + 
@@ -1379,6 +1480,7 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
                             "(AST_FILE_IO::getSgClassPointerFromGlobalIndex ( (unsigned long)(*i_" + varNameString + ") ) );\n";
                       s += "        }\n";
                       break;
+
                     case ASTATTRIBUTEMECHANISM:
                     case ATTACHEDPREPROCESSINGINFOTYPE:
                     case BIT_VECTOR:
@@ -1402,8 +1504,6 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
                     case OSTREAM:
                     case SKIP_TYPE:
                       break;
-
-
 
                     case TO_HANDLE:
                     default:
