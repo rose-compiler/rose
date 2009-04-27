@@ -1,3 +1,39 @@
+2009-04-27 16:33  liao6
+
+	* [r5502] /trunk/ROSE/docs/Rose/developersAppendix.tex: Updated
+	  developer's instruction about how to make a ROSE distribution
+	  with EDG binaries.
+
+2009-04-27 15:53  dquinlan
+
+	* [r5501] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/developersScratchSpace/Dan/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/graph_tests,
+	  /trunk/ROSE/developersScratchSpace/Dan/graph_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/graph_tests/graph_test_1.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/graph_tests/inputCode_main.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/translator_tests/feasiblePaths.C,
+	  /trunk/ROSE/docs/Rose/rose.cfg.in,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Node.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Support.code,
+	  /trunk/ROSE/src/ROSETTA/src/buildStorageClasses.C,
+	  /trunk/ROSE/src/ROSETTA/src/support.C,
+	  /trunk/ROSE/src/frontend/SageIII/astFileIO/StorageClassMemoryManagement.C,
+	  /trunk/ROSE/src/frontend/SageIII/astFileIO/StorageClassMemoryManagement.h,
+	  /trunk/ROSE/src/frontend/SageIII/rtiHelpers.h: Added more support
+	  for new graph IR nodes and new API.
+	  
+	  Detailed changes in this commit:
+	  1) Added directory for tests of graph API (examples unfinished).
+	  2) Fixed data members to be values instead of pointers to
+	  rose_directed_graph_hash_multimap,
+	  rose_undirected_graph_hash_multimap, and
+	  rose_graph_hash_multimap. Mostly work inside ROSETTA to support
+	  this.
+	  3) Fixed soem elements of the design of the IR nodes as well
+	  (need to work
+	  on this with Thomas).
+
 2009-04-24 23:30  panas2
 
 	* [r5474] /trunk/ROSE/projects/RTED/Makefile.am,
