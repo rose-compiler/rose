@@ -54,8 +54,12 @@ class SB_Graph {
 
 class SB_DirectedGraph : public SB_Graph {
 public:
-	typedef rose_hash::hash_map <std::string, SgDirectedGraphNode*> nodeType;
-	nodeType nodes;
+	// DQ (4/23/2009): Modify the hash_map template type to explicitly include default parameters.
+	// typedef rose_hash::hash_map <std::string, SgDirectedGraphNode*> nodeType;
+    typedef rose_hash::hash_map <std::string, SgDirectedGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string> nodeType;
+
+    nodeType nodes;
+//	SgIncidenceGraphNode* nodes;
 
 	typedef rose_hash::hash_multimap < SgDirectedGraphNode*, SgDirectedGraphEdge*> edgeType;
 	edgeType edges;
