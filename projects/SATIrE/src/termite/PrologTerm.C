@@ -66,10 +66,11 @@ bool init_termite(int argc, char **argv, bool interactive)
   av[ac++] = argv[0];
   av[ac++] = strdup("-q");
   av[ac++] = strdup("-O");
-  av[ac++] = strdup("-L65536k");  // Local stack
-  av[ac++] = strdup("-G8192M");  // Global stack
-  av[ac++] = strdup("-A1024M");  // Argument stack
-  av[ac++] = strdup("-T8192k");  // Trail stack
+  // Sizes of "0" mean the largest possible limits.
+  av[ac++] = strdup("-L0");  // Local stack
+  av[ac++] = strdup("-G0");  // Global stack
+  av[ac++] = strdup("-A0");  // Argument stack
+  av[ac++] = strdup("-T0");  // Trail stack
 
   if (interactive == false) {
     // At runtime, it is advised to pass the flag -nosignals, which
