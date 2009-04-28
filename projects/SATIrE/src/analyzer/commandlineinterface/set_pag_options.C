@@ -153,6 +153,7 @@ void setPagOptions(AnalyzerOptions opt) {
 
 void setOutputGdlAnimDirName(char *animDirName)
 {
+#if HAVE_PAG
     animation = animDirName;
  // Make sure the animation directory exists.
     if (animDirName != NULL)
@@ -160,4 +161,5 @@ void setOutputGdlAnimDirName(char *animDirName)
         std::vector<std::string> dir = SATIrE::pathNameComponents(animDirName);
         SATIrE::createDirectoryHierarchy(dir);
     }
+#endif
 }

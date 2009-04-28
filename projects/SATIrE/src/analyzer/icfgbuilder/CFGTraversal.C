@@ -214,11 +214,13 @@ CFGTraversal::atTraversalEnd() {
         {
             cfg->pointsToAnalysis = new SATIrE::Analyses::PointsToAnalysis();
             cfg->pointsToAnalysis->run(cfg);
+#if HAVE_PAG
          // GB (2009-03-13): Added context-sensitive points-to analysis. The
          // analyzer object is initialized here, but it is not run until
          // later (because PAG must have computed its mappings before).
             cfg->contextSensitivePointsToAnalysis
                 = new SATIrE::Analyses::PointsToAnalysis(/* ctxsens = */ true);
+#endif
         }
         else
             cfg->pointsToAnalysis = NULL;

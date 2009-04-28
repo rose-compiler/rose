@@ -160,7 +160,9 @@ private:
     unsigned int auxctr;
 
  // context-sensitive stuff
+#if HAVE_PAG
     ContextInformation::Context *context;
+#endif
     Location *procedureLocation;
     std::string prefix;
 };
@@ -181,8 +183,10 @@ public:
     void doDot(std::string filename);
 
     Location *expressionLocation(SgExpression *expr);
+#if HAVE_PAG
     Location *expressionLocation(SgExpression *expr,
                                  const ContextInformation::Context &context);
+#endif
     std::string locationAttributeString(Location *location);
 
     const std::vector<Location *> &get_locations() const;
@@ -218,13 +222,17 @@ private:
 
  // Support for context sensitivity
     bool contextSensitive;
+#if HAVE_PAG
     std::map<ContextInformation::Context,
              PointsToAnalysis::PointsToInformation *> allInfos;
+#endif
     PointsToInformation::PointsToInformation *mainInfo;
 
     Location *symbol_location(SgSymbol *sym);
+#if HAVE_PAG
     Location *symbol_location(SgSymbol *sym,
                               const ContextInformation::Context &context);
+#endif
     Location *function_location(SgFunctionDeclaration *fd,
                                 Location *argDummy = NULL);
     Location *functionSymbol_location(SgFunctionSymbol *fsym);

@@ -21,8 +21,10 @@ const char * const edgetypenames[] =
 CFG::CFG()
   : global_return_variable_symbol(NULL), global_this_variable_symbol(NULL),
     global_unknown_type(NULL), analyzerOptions(NULL),
-    pointsToAnalysis(NULL), contextSensitivePointsToAnalysis(NULL),
-    contextInformation(NULL)
+    pointsToAnalysis(NULL), contextSensitivePointsToAnalysis(NULL)
+#if HAVE_PAG
+    , contextInformation(NULL)
+#endif
 {
 }
 

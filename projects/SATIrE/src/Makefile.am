@@ -53,11 +53,16 @@ satire_driver_LDADD = \
 	analyzer/astaccess/satire/libsyntree.la \
 	termite/libtermsupport.la \
 	analyzer/astaccess/libpagdatatypes.la \
-	-lrose -lpag
+	-lrose
+if WITH_PAG
+satire_driver_LDADD += -lpag
+endif
 if WITH_SWI_PROLOG
 satire_driver_LDADD += $(SWI_PROLOG_LDADD)
 endif
 satire_driver_LDFLAGS = \
     -L$(ROSE_LIB_DIR) -Wl,-rpath $(ROSE_LIB_DIR) \
-    -L$(PAG_LIB_DIR) -Wl,-rpath $(PAG_LIB_DIR) \
     -L$(BOOST_LIB_DIR) -Wl,-rpath $(BOOST_LIB_DIR)
+if WITH_PAG
+satire_driver_LDFLAGS += -L$(PAG_LIB_DIR) -Wl,-rpath $(PAG_LIB_DIR)
+endif

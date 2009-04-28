@@ -273,7 +273,7 @@ TermPrinter<DFI_STORE_TYPE>::evaluateSynthesizedAttribute(SgNode* astNode, Synth
 #endif
 
       /* call strings, if appropriate */
-#if HAVE_SATIRE_ICFG
+#if HAVE_SATIRE_ICFG && HAVE_PAG
       if (isSgProject(astNode)) {
         CFG *icfg = get_global_cfg();
         if (icfg != NULL && icfg->contextInformation != NULL) {

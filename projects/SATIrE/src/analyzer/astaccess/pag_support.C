@@ -18,6 +18,38 @@ CFG *get_global_cfg()
     return global_cfg;
 }
 
+PIG_EXTERN_C
+const char *basic_type_name(const void *p)
+{
+    const SgNode *node = (SgNode *) p;
+
+    switch (node->variantT())
+    {
+    case V_SgTypeBool: return "bool"; break;
+    case V_SgTypeChar: return "char"; break;
+    case V_SgTypeDouble: return "double"; break;
+    case V_SgTypeFloat: return "float"; break;
+    case V_SgTypeInt: return "int"; break;
+    case V_SgTypeLong: return "long"; break;
+    case V_SgTypeLongDouble: return "long double"; break;
+    case V_SgTypeLongLong: return "long long"; break;
+    case V_SgTypeShort: return "short"; break;
+    case V_SgTypeSignedChar: return "signed char"; break;
+    case V_SgTypeSignedInt: return "signed int"; break;
+    case V_SgTypeSignedLong: return "signed long"; break;
+    case V_SgTypeSignedShort: return "signed short"; break;
+    case V_SgTypeString: return "string"; break;
+    case V_SgTypeUnsignedChar: return "unsigned char"; break;
+    case V_SgTypeUnsignedInt: return "unsinged int"; break;
+    case V_SgTypeUnsignedLong: return "unsigned long"; break;
+    case V_SgTypeUnsignedLongLong: return "unsigned long long"; break;
+    case V_SgTypeUnsignedShort: return "unsigned short"; break;
+    case V_SgTypeVoid: return "void"; break;
+    case V_SgTypeWchar: return "wchar"; break;
+    default: return NULL;
+    }
+}
+
 
 #if HAVE_PAG
 
@@ -102,38 +134,6 @@ void *LIST_VariableSymbolNT_tl(void *l)
     return ((PigNodeList *) l)->tail();
 }
 #endif
-
-PIG_EXTERN_C
-const char *basic_type_name(const void *p)
-{
-    const SgNode *node = (SgNode *) p;
-
-    switch (node->variantT())
-    {
-    case V_SgTypeBool: return "bool"; break;
-    case V_SgTypeChar: return "char"; break;
-    case V_SgTypeDouble: return "double"; break;
-    case V_SgTypeFloat: return "float"; break;
-    case V_SgTypeInt: return "int"; break;
-    case V_SgTypeLong: return "long"; break;
-    case V_SgTypeLongDouble: return "long double"; break;
-    case V_SgTypeLongLong: return "long long"; break;
-    case V_SgTypeShort: return "short"; break;
-    case V_SgTypeSignedChar: return "signed char"; break;
-    case V_SgTypeSignedInt: return "signed int"; break;
-    case V_SgTypeSignedLong: return "signed long"; break;
-    case V_SgTypeSignedShort: return "signed short"; break;
-    case V_SgTypeString: return "string"; break;
-    case V_SgTypeUnsignedChar: return "unsigned char"; break;
-    case V_SgTypeUnsignedInt: return "unsinged int"; break;
-    case V_SgTypeUnsignedLong: return "unsigned long"; break;
-    case V_SgTypeUnsignedLongLong: return "unsigned long long"; break;
-    case V_SgTypeUnsignedShort: return "unsigned short"; break;
-    case V_SgTypeVoid: return "void"; break;
-    case V_SgTypeWchar: return "wchar"; break;
-    default: return NULL;
-    }
-}
 
 #include "genkfg.h"
 

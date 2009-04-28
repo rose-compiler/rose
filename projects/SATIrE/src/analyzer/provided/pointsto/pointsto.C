@@ -94,12 +94,14 @@ PointsToAnalysis::expressionLocation(SgExpression *expr)
     return location_representative(p_impl->expressionLocation(expr));
 }
 
+#if HAVE_PAG
 PointsToAnalysis::Location *
 PointsToAnalysis::expressionLocation(
         SgExpression *expr, const ContextInformation::Context &context)
 {
     return location_representative(p_impl->expressionLocation(expr, context));
 }
+#endif
 
 std::string
 PointsToAnalysis::locationAttributeString(PointsToAnalysis::Location *location)
@@ -125,12 +127,14 @@ PointsToAnalysis::symbol_location(SgSymbol *sym)
     return location_representative(p_impl->symbol_location(sym));
 }
 
+#if HAVE_PAG
 PointsToAnalysis::Location *
 PointsToAnalysis::symbol_location(
         SgSymbol *sym, const ContextInformation::Context &context)
 {
     return location_representative(p_impl->symbol_location(sym, context));
 }
+#endif
 
 bool
 PointsToAnalysis::mayBeAliased(PointsToAnalysis::Location *loc) const

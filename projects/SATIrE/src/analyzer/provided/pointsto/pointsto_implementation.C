@@ -148,6 +148,7 @@ PointsToAnalysis::Implementation::atIcfgTraversalStart()
             = function_location(procedures[l]->decl, argDummy);
      // freeDummyLocation(argDummy);
 
+#if HAVE_PAG
      // Then, decorate each info with its very own copy of its function.
         if (contextSensitive)
         {
@@ -164,6 +165,7 @@ PointsToAnalysis::Implementation::atIcfgTraversalStart()
              // freeDummyLocation(argDummy);
             }
         }
+#endif
     }
 }
 
@@ -182,6 +184,7 @@ PointsToAnalysis::Implementation::icfgVisit(SgNode *node)
     {
         int id = get_node_id();
         int procnum = get_node_procnum();
+#if HAVE_PAG
         int arity = kfg_arity_id(id);
         for (int position = 0; position < arity; position++)
         {
@@ -189,6 +192,7 @@ PointsToAnalysis::Implementation::icfgVisit(SgNode *node)
                 ContextInformation::Context(procnum, position, get_icfg())];
             AstBottomUpProcessing<Location *>::traverse(node);
         }
+#endif
     }
  // Yet otherwise, this is some global stuff; traverse in the main context.
     else
@@ -276,6 +280,7 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
                 }
                 else
                 {
+#if HAVE_PAG
                  // node->isReturnStmt
                  // In the very special case that this is a
                  // context-sensitive analysis and we are in the middle of
@@ -295,6 +300,7 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
                  // Otherwise, this must be a ReturnAssignment statement if
                  // it refers to the global retvar. We don't care about this
                  // case, as we don't care about ReturnAssignment at all.
+#endif
                 }
             }
             else if (varRef->attributeExists("SATIrE: call target"))
@@ -316,6 +322,7 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
                 }
                 else
                 {
+#if HAVE_PAG
                  // In the context-sensitive case, we need to find all
                  // possible called contexts and look at their return
                  // locations. If there is more than one candidate, we need
@@ -360,6 +367,7 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
                             << std::endl;
 #endif
                     }
+#endif
                 }
             }
             else
@@ -1610,8 +1618,10 @@ PointsToAnalysis::Implementation::handleIcfgStatement(
      // the target expression; otherwise, use the call string info to locate
      // all possible callee contexts, and use their procedureLocation.
         {
+#if HAVE_PAG
             std::vector<ContextInformation::Context>::const_iterator beg;
             std::vector<ContextInformation::Context>::const_iterator end;
+#endif
             BasicBlock *call_block
                 = icfg->call_target_call_block[icfgNode->call_target];
             bool resolved
@@ -1620,6 +1630,7 @@ PointsToAnalysis::Implementation::handleIcfgStatement(
                 a = expressionLocation(icfgNode->call_target);
             else
             {
+#if HAVE_PAG
              // Context-sensitive call which is resolved in the ICFG.
                 int call_id = call_block->id;
 #if VERBOSE_DEBUG
@@ -1635,13 +1646,17 @@ PointsToAnalysis::Implementation::handleIcfgStatement(
                         call_id, *info->context).begin();
                 end = icfg->contextInformation->childContexts(
                         call_id, *info->context).end();
+#endif
             }
 
+#if HAVE_PAG
             do // loop over all called contexts
             {
+#endif
              // First, compute the location for the call target...
                 if (contextSensitive && resolved)
                 {
+#if HAVE_PAG
                     ContextInformation::Context c = *beg;
                     a = allInfos[c]->procedureLocation;
 #if VERBOSE_DEBUG
@@ -1663,6 +1678,7 @@ PointsToAnalysis::Implementation::handleIcfgStatement(
                             << (void *) a->baseLocation()->arg_locations[0]
                             << ")"
                         << std::endl;
+#endif
 #endif
                 }
              // ... dereference it, since it's a pointer to function ...
@@ -1730,7 +1746,9 @@ PointsToAnalysis::Implementation::handleIcfgStatement(
 #endif
                 if (b != NULL && b->dummy)
                     freeDummyLocation(b);
+#if HAVE_PAG
             } while (contextSensitive && resolved && ++beg != end);
+#endif
         }
         break;
 
@@ -3654,6 +3672,7 @@ PointsToAnalysis::Implementation::run(CFG *icfg)
 {
     if (contextSensitive)
     {
+#if HAVE_PAG
         TimingPerformance t("Context-sensitive points-to analysis setup:");
      // Make sure the ICFG has context information
         if (icfg->contextInformation == NULL)
@@ -3672,6 +3691,7 @@ PointsToAnalysis::Implementation::run(CFG *icfg)
             info->context = new ContextInformation::Context(*c);
             allInfos[*c] = info;
         }
+#endif
     }
 
     TimingPerformance *timer
@@ -3828,6 +3848,7 @@ PointsToAnalysis::Implementation::doDot(std::string filename)
     }
     else
     {
+#if HAVE_PAG
         info = mainInfo;
         print(dotfile, "\"", "\"", ";");
         const std::vector<ContextInformation::Context> &contexts
@@ -3844,6 +3865,7 @@ PointsToAnalysis::Implementation::doDot(std::string filename)
             print(dotfile, "\"", "\"", ";");
             dotfile << "}" << std::endl;
         }
+#endif
     }
 
     dotfile << "}" << std::endl;
@@ -3950,6 +3972,7 @@ PointsToAnalysis::Implementation::symbol_location(SgSymbol *sym)
     }
 }
 
+#if HAVE_PAG
 PointsToAnalysis::Location *
 PointsToAnalysis::Implementation::symbol_location(
         SgSymbol *sym, const ContextInformation::Context &ctx)
@@ -3960,6 +3983,7 @@ PointsToAnalysis::Implementation::symbol_location(
     info = old_info;
     return result;
 }
+#endif
 
 PointsToAnalysis::Location *
 PointsToAnalysis::Implementation::function_location(
@@ -4639,6 +4663,7 @@ PointsToAnalysis::Implementation::expressionLocation(SgExpression *expr)
     return result;
 }
 
+#if HAVE_PAG
 PointsToAnalysis::Location *
 PointsToAnalysis::Implementation::expressionLocation(
         SgExpression *expr, const ContextInformation::Context &ctx)
@@ -4649,6 +4674,7 @@ PointsToAnalysis::Implementation::expressionLocation(
     info = old_info;
     return result;
 }
+#endif
 
 std::string
 PointsToAnalysis::Implementation::locationAttributeString(
@@ -5011,8 +5037,10 @@ PointsToAnalysis::PointsToInformation::PointsToInformation()
     integerConstantLocation(NULL),
     stringConstantLocation(NULL),
     functionSummaryNode(NULL),
-    auxctr(1),
-    context(NULL)
+    auxctr(1)
+#if HAVE_PAG
+    , context(NULL)
+#endif
 {
     specialFunctionNames.insert("__assert_fail");
     specialFunctionNames.insert("__ctype_b_loc");

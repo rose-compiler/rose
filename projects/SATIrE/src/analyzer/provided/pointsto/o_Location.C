@@ -80,15 +80,17 @@ int o_Location_is_power_unendl = 0;
 
 #include <cstdlib>
 
+#if HAVE_PAG
 static
 PointsToAnalysis::PointsToAnalysis *
 get_icfgContextSensitivePointsToAnalysis(void);
+#endif
 
 static
 PointsToAnalysis::PointsToAnalysis *
 get_icfgPointsToAnalysis(void)
 {
-#if 0
+#if !HAVE_PAG
     CFG *global_cfg = get_global_cfg();
     if (global_cfg == NULL)
     {
@@ -114,6 +116,7 @@ get_icfgPointsToAnalysis(void)
 #endif
 }
 
+#if HAVE_PAG
 static
 PointsToAnalysis::PointsToAnalysis *
 get_icfgContextSensitivePointsToAnalysis(void)
@@ -149,6 +152,7 @@ get_icfgContextSensitivePointsToAnalysis(void)
     }
     return cspta;
 }
+#endif
 
 #if !HAVE_PAG
 static LocationWrapper *
