@@ -574,6 +574,11 @@ Terminal::evaluateType(std::string& varTypeString)
         {
           returnType = ROSE_GRAPH_UNDIRECTED_EDGE_HASH_MULTIMAP;
         }
+  // DQ (4/27/2009): Added new type...
+     else if ( varTypeString == "rose_graph_node_edge_hash_multimap" )
+        {
+          returnType = ROSE_GRAPH_NODE_EDGE_HASH_MULTIMAP;
+        }
      else if (
                (varTypeString == "SgFunctionTypeTable*" ) ||
                (varTypeString == "$CLASSNAME*" ) || 
@@ -874,6 +879,7 @@ std::string Terminal::buildStorageClassHeader ()
                     case ROSE_GRAPH_HASH_MULTIMAP:
                     case ROSE_GRAPH_DIRECTED_EDGE_HASH_MULTIMAP:
                     case ROSE_GRAPH_UNDIRECTED_EDGE_HASH_MULTIMAP:
+                    case ROSE_GRAPH_NODE_EDGE_HASH_MULTIMAP:
                     case ROSEATTRUBUTESLISTCONTAINER:
                     case SGCLASS_POINTER_LIST:
                     case SGCLASS_POINTER_LIST_POINTER:
@@ -1106,6 +1112,26 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
 #endif
                            break;
 
+                         case ROSE_GRAPH_NODE_EDGE_HASH_MULTIMAP:
+                           s += "     SgGraphEdgeList::local_hash_multimap_type::iterator it; \n" ;
+                           s += "     unsigned int tempListCount" + varNameString + " = 0; \n" ;
+                           s += "     SgGraphEdge** tempList" + varNameString + " = new SgGraphEdge* [ source->p_" + varNameString + ".size() ]; \n" ;
+                           s += "     for (it = source->p_" + varNameString + ".begin(); it != source->p_" + varNameString + ".end(); ++it)\n" ;
+                           s += "        {\n";
+                           s += "          tempList" + varNameString + "[tempListCount" + varNameString + "] = it->second;\n";
+                           s += "          tempListCount" + varNameString + "++; \n";
+                           s += "          it->second = (SgGraphEdge*)(AST_FILE_IO::getGlobalIndexFromSgClassPointer(it->second) ); \n";
+                           s += "        }\n";
+                           s += "     " + varStorageNameString + ".storeDataInEasyStorageClass(source->p_" + varNameString + ");\n" ;
+                           s += "     tempListCount" + varNameString + " = 0; \n" ;
+                           s += "     for (it = source->p_" + varNameString + ".begin(); it != source->p_" + varNameString + ".end(); ++it) \n";
+                           s += "        {\n";
+                           s += "          it->second = tempList" + varNameString + " [ tempListCount" + varNameString + " ]; \n";
+                           s += "          tempListCount" + varNameString + "++; \n";
+                           s += "        }\n";
+                           s += "      delete [] tempList" + varNameString + "; \n";
+                           break;
+
                         case SGCLASS_POINTER_VECTOR:
                            sg_string = sg_string.substr(0,sg_string.size()-2) ;
                         case SGCLASS_POINTER_LIST:
@@ -1230,6 +1256,7 @@ string Terminal::buildStorageClassDeleteStaticDataSource ()
                          case ROSE_GRAPH_HASH_MULTIMAP:
                          case ROSE_GRAPH_DIRECTED_EDGE_HASH_MULTIMAP:
                          case ROSE_GRAPH_UNDIRECTED_EDGE_HASH_MULTIMAP:
+                         case ROSE_GRAPH_NODE_EDGE_HASH_MULTIMAP:
                          case ROSEATTRUBUTESLISTCONTAINER:
                          case SGCLASS_POINTER_LIST:
                          case SGCLASS_POINTER_LIST_POINTER:
@@ -1305,6 +1332,7 @@ string Terminal::buildStorageClassArrangeStaticDataInOneBlockSource ()
                          case ROSE_GRAPH_HASH_MULTIMAP:
                          case ROSE_GRAPH_DIRECTED_EDGE_HASH_MULTIMAP:
                          case ROSE_GRAPH_UNDIRECTED_EDGE_HASH_MULTIMAP:
+                         case ROSE_GRAPH_NODE_EDGE_HASH_MULTIMAP:
                          case ROSEATTRUBUTESLISTCONTAINER:
                          case SGCLASS_POINTER_LIST:
                          case SGCLASS_POINTER_LIST_POINTER:
@@ -1456,6 +1484,17 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
 #endif
                       break;
 
+                 // DQ (4/27/2009): Added case for new type
+                    case ROSE_GRAPH_NODE_EDGE_HASH_MULTIMAP:
+                      s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
+                      s += "     local_hash_multimap_type::iterator it; \n " ;
+                      s += "     for (it = p_" + varNameString + ".begin(); it != p_" + varNameString + ".end(); ++it)\n " ;
+                      s += "        {\n";
+                      s += "          it->second = (SgGraphEdge*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex( (unsigned long)(it->second) ) ); \n";
+                      s += "        }\n";
+                      break;
+
+
                     case SGCLASS_POINTER_VECTOR:
                       sg_string = sg_string.substr(0,sg_string.size()-2) ;
                     case SGCLASS_POINTER_LIST:
@@ -1551,6 +1590,7 @@ string Terminal::buildStorageClassWriteStaticDataToFileSource ()
                          case ROSE_GRAPH_HASH_MULTIMAP:
                          case ROSE_GRAPH_DIRECTED_EDGE_HASH_MULTIMAP:
                          case ROSE_GRAPH_UNDIRECTED_EDGE_HASH_MULTIMAP:
+                         case ROSE_GRAPH_NODE_EDGE_HASH_MULTIMAP:
                          case ROSEATTRUBUTESLISTCONTAINER:
                          case SGCLASS_POINTER_LIST:
                          case SGCLASS_POINTER_LIST_POINTER:
@@ -1626,6 +1666,7 @@ string Terminal::buildStorageClassReadStaticDataFromFileSource()
                          case ROSE_GRAPH_HASH_MULTIMAP:
                          case ROSE_GRAPH_DIRECTED_EDGE_HASH_MULTIMAP:
                          case ROSE_GRAPH_UNDIRECTED_EDGE_HASH_MULTIMAP:
+                         case ROSE_GRAPH_NODE_EDGE_HASH_MULTIMAP:
                          case SGCLASS_POINTER_LIST:
                          case SGCLASS_POINTER_LIST_POINTER:
                          case SGCLASS_POINTER_VECTOR:
@@ -1702,6 +1743,7 @@ bool Terminal::hasMembersThatAreStoredInEasyStorageClass()
 
                          case ROSE_GRAPH_DIRECTED_EDGE_HASH_MULTIMAP:
                          case ROSE_GRAPH_UNDIRECTED_EDGE_HASH_MULTIMAP:
+                         case ROSE_GRAPH_NODE_EDGE_HASH_MULTIMAP:
 
                          case ROSEATTRUBUTESLISTCONTAINER:
                          case SGCLASS_POINTER_LIST:
@@ -1882,6 +1924,8 @@ std::string Terminal::buildStaticDataMemberListOfStorageClass()
                          case ROSE_GRAPH_HASH_MULTIMAP:
                          case ROSE_GRAPH_DIRECTED_EDGE_HASH_MULTIMAP:
                          case ROSE_GRAPH_UNDIRECTED_EDGE_HASH_MULTIMAP:
+                         case ROSE_GRAPH_NODE_EDGE_HASH_MULTIMAP:
+
                          case ROSEATTRUBUTESLISTCONTAINER:
                          case SGCLASS_POINTER_LIST:
                          case SGCLASS_POINTER_LIST_POINTER:

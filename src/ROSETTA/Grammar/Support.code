@@ -50,7 +50,7 @@ HEADER_GRAPHEDGE_END
 HEADER_DIRECTED_GRAPH_EDGE_START
      public:
        // DQ (8/18/2008): This is part of the OLD interface introduced for backward compatability!
-          SgDirectedGraphEdge(std::string, std::string, int n, SgGraphNode*, SgGraphNode*);
+          SgDirectedGraphEdge(std::string name, std::string type, int n, SgGraphNode* from, SgGraphNode* to);
 
 HEADER_DIRECTED_GRAPH_EDGE_END
 
@@ -58,7 +58,7 @@ HEADER_DIRECTED_GRAPH_EDGE_END
 HEADER_DIRECTED_GRAPH_NODE_START
      public:
        // DQ (8/18/2008): This is part of the OLD interface introduced for backward compatability!
-          SgDirectedGraphNode(std::string, std::string, int n);
+          SgDirectedGraphNode(std::string name, std::string type, int n);
 
        // DQ (4/23/2009): Added to debug use of new Graph node interfaces.
           SgDirectedGraphNode(std::string);
@@ -82,6 +82,8 @@ HEADER_GRAPH_NODE_LIST_END
 
 
 HEADER_GRAPH_EDGE_LIST_START
+     public:
+          typedef rose_hash::hash_multimap<SgGraphNode*,SgGraphEdge*, rose_hash::hash_graph_node, rose_hash::eqstr_graph_node> local_hash_multimap_type;
 HEADER_GRAPH_EDGE_LIST_END
 
 

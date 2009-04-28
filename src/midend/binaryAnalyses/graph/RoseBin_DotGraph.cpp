@@ -37,8 +37,7 @@ RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) {
 
   nodeType resultSet;
 
-  typedef std::multimap < std::string, 
-    std::pair <std::string, SgDirectedGraphNode*> > callNodeType;
+  typedef std::multimap < std::string, std::pair <std::string, SgDirectedGraphNode*> > callNodeType;
   callNodeType callMap;
   callMap.clear();
 

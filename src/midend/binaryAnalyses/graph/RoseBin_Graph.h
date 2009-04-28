@@ -93,6 +93,7 @@ class RoseBin_Graph {
   edgeType edges;
   edgeType edgesR;
 
+// DQ (4/27/2009): If this is a unique edge, then why are we using a multimap (just use a map)?
   typedef rose_hash::hash_multimap < SgDirectedGraphNode*, SgDirectedGraphEdge*> edgeTypeUnique;
   edgeTypeUnique unique_edges;
 

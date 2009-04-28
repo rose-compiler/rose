@@ -330,6 +330,7 @@ class Terminal
                        ROSE_GRAPH_HASH_MULTIMAP,
                        ROSE_GRAPH_DIRECTED_EDGE_HASH_MULTIMAP,
                        ROSE_GRAPH_UNDIRECTED_EDGE_HASH_MULTIMAP,
+                       ROSE_GRAPH_NODE_EDGE_HASH_MULTIMAP,
                        SGCLASS_POINTER,
                        ROSEATTRUBUTESLISTCONTAINER,
                        SGCLASS_POINTER_LIST,

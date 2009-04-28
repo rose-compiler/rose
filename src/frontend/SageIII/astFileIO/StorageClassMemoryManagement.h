@@ -454,6 +454,25 @@ class EasyStorage <rose_undirected_graph_hash_multimap> :
    };
 #endif
 
+// DQ (4/27/2009): Added type to support maps from nodes to edges...
+template < >
+class EasyStorage <rose_graph_node_edge_hash_multimap> : 
+    public StorageClassMemoryManagement <EasyStorageMapEntry<SgGraphNode*,SgGraphEdge*> > 
+   {
+     typedef StorageClassMemoryManagement <EasyStorageMapEntry<SgGraphNode*,SgGraphEdge*> > Base;
+    private:
+     unsigned long parent;
+    public: 
+     EasyStorage() {parent = 0;}
+     void storeDataInEasyStorageClass(const rose_graph_node_edge_hash_multimap& data_);
+     rose_graph_node_edge_hash_multimap rebuildDataStoredInEasyStorageClass() const;
+     static void arrangeMemoryPoolInOneBlock() ;
+     static void deleteMemoryPool() ;
+
+     static void writeToFile(std::ostream& out);
+     static void readFromFile (std::istream& in);
+   };
+
 #endif
 
 /* EasyStorageMapEntry concerning an std::string and an AstAttribut

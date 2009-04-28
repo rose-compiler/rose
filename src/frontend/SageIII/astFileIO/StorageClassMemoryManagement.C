@@ -3372,6 +3372,7 @@ void EasyStorage <rose_directed_graph_hash_multimap*> :: readFromFile (std::istr
    }
 #else
 
+
 void EasyStorage <rose_directed_graph_hash_multimap> ::storeDataInEasyStorageClass(const rose_directed_graph_hash_multimap& data_)
    {
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
@@ -3435,6 +3436,73 @@ void EasyStorage <rose_directed_graph_hash_multimap> :: readFromFile (std::istre
    }
 #endif
 
+
+
+
+// *****************************************************************************************
+// **      Implementations for EasyStorage < rose_graph_node_edge_hash_multimap* >        **
+// *****************************************************************************************
+
+void EasyStorage <rose_graph_node_edge_hash_multimap> ::storeDataInEasyStorageClass(const rose_graph_node_edge_hash_multimap& data_)
+   {
+  // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
+     printf ("Error: support for file IO on graph nodes not implemented! \n");
+     ROSE_ASSERT(false);
+   }
+
+
+rose_graph_node_edge_hash_multimap
+EasyStorage <rose_graph_node_edge_hash_multimap> :: rebuildDataStoredInEasyStorageClass() const
+   {
+#if STORAGE_CLASS_MEMORY_MANAGEMENT_CHECK
+      assert ( Base::actualBlock <= 1 );
+      assert ( (0 < Base::getSizeOfData() && Base::actual!= NULL) || ( Base::getSizeOfData() <= 0 ) );
 #endif
 
+     rose_graph_node_edge_hash_multimap return_map;
 
+  // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
+     printf ("Error: support for file IO on graph nodes not implemented! \n");
+     ROSE_ASSERT(false);
+
+     return return_map;
+   }
+
+
+void EasyStorage <rose_graph_node_edge_hash_multimap> :: arrangeMemoryPoolInOneBlock()
+   {
+   // call suitable methods of parent and member
+      StorageClassMemoryManagement <EasyStorageMapEntry<SgName,SgSymbol*> > :: arrangeMemoryPoolInOneBlock();
+      EasyStorageMapEntry <SgName,SgSymbol*> :: arrangeMemoryPoolInOneBlock();
+   }
+
+
+void EasyStorage <rose_graph_node_edge_hash_multimap> :: deleteMemoryPool()
+   {
+   // call suitable methods of parent and member
+     StorageClassMemoryManagement <EasyStorageMapEntry<SgName,SgSymbol*> > :: deleteMemoryPool();
+     EasyStorageMapEntry <SgName,SgSymbol*> :: deleteMemoryPool();
+   }
+
+void EasyStorage <rose_graph_node_edge_hash_multimap>::writeToFile(std::ostream& outputFileStream)
+   {
+#if FILE_IO_MARKER
+     AST_FILE_IO_MARKER::writeMarker("|27|",outputFileStream);
+#endif
+   // call suitable methods of parent and member
+      StorageClassMemoryManagement <EasyStorageMapEntry<SgName,SgSymbol*> > :: writeToFile(outputFileStream);
+      EasyStorageMapEntry <SgName,SgSymbol*> :: writeToFile( outputFileStream);
+   }
+
+
+void EasyStorage <rose_graph_node_edge_hash_multimap> :: readFromFile (std::istream& inputFileStream)
+   {
+#if FILE_IO_MARKER
+     AST_FILE_IO_MARKER::readMarker("|27|",inputFileStream);
+#endif
+   // call suitable methods of parent and member
+     StorageClassMemoryManagement <EasyStorageMapEntry<SgName,SgSymbol*> > :: readFromFile (inputFileStream);
+     EasyStorageMapEntry <SgName,SgSymbol*> :: readFromFile (inputFileStream);
+   }
+
+#endif

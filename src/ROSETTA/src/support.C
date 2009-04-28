@@ -1196,9 +1196,9 @@ Grammar::setUpSupport ()
 // #if OLD_GRAPH_NODES
 #ifndef ROSE_USE_NEW_GRAPH_NODES
    // tps (08/08/07): Added the graph, graph nodes and graph edges 
-   // note - todo: Properties should be a map <string, string> (doesnt work yet)
+   // note - todo: Properties should be a map <string, string> (doesn't work yet)
    // note - todo: A graph should have a set of nodes and edges
-   // note - todo: An edge from and to should be of type "GraphNode" and "GraphEdge"
+   // note - todo: An edge from and to should be of type "GraphNode" and "GraphNode"
    // note - todo: in graph: nodes and edges should be of type multimap<string name, GraphNode(Edge)>
      GraphNode.setFunctionPrototype ( "HEADER_GRAPHNODE", "../Grammar/Support.code");
      GraphNode.setDataPrototype("std::string","name","= \"\"",
@@ -1317,8 +1317,18 @@ Grammar::setUpSupport ()
                            CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      GraphEdgeList.setFunctionPrototype ( "HEADER_GRAPH_EDGE_LIST", "../Grammar/Support.code");
+
+  // DQ (4/27/2009): Thomas and I think that we need the list of edges to be a multimap of nodes to edges.
+#if 0
      GraphEdgeList.setDataPrototype("SgGraphEdgePtrList","edges","",
                            CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#else
+  // GraphEdgeList.setDataPrototype("SgGraphNodeDirectedGraphEdgeMultimapPtrList","edges","",
+  //                       CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     GraphEdgeList.setDataPrototype("rose_graph_node_edge_hash_multimap","edges","",
+                           CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+#endif
 
   // Graph.setPredeclarationString ("HEADER_GRAPH_PREDECLARATION" , "../Grammar/Support.code");
      Graph.setFunctionPrototype ( "HEADER_GRAPH", "../Grammar/Support.code");
@@ -1423,10 +1433,10 @@ Grammar::setUpSupport ()
   //                       NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #if 1
   // DQ (4/25/2009): For now leave this as a map<int,string> but we want it to be a map<int,SgGraphNode*> later...
-     IntKeyedBidirectionalGraph.setDataPrototype("std::map<int, std::string>","nodesMap","",
+     IntKeyedBidirectionalGraph.setDataPrototype("std::map<int, std::string>","edgeMap","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #else
-     IntKeyedBidirectionalGraph.setDataPrototype("std::map<int, SgGraphNode*>","nodesMap","",
+     IntKeyedBidirectionalGraph.setDataPrototype("std::map<int, SgGraphNode*>","edgesMap","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
