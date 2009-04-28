@@ -9,11 +9,10 @@
 debug_is_active::str->bool;
 debug_is_active("tassign")         = false;
 debug_is_active("materialisation") = false;
-debug_is_active("lowlevel")        = false;
 debug_is_active("assign")          = false;
 debug_is_active("conversion")      = false;
-debug_is_active("always")          = true;
-debug_is_active(level) = print(level."\n") false;
+debug_is_active("lowlevel")        = false;
+debug_is_active(level) = println("please set debug_is_active(", level, ")!") false;
 
 debug_print_str::str,str->snum;
 debug_print_str(level,s) = if debug_is_active(level) then print(s) 0 else 0 endif;

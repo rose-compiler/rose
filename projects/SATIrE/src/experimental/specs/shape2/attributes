@@ -17,5 +17,4 @@ BOOL_ATTR(gdlShowIndividualGraphs, Off)
 BOOL_ATTR(convertToNNH, Off)
 BOOL_ATTR(convertToSRW, Off)
 
-STRING_ATTR(graphStatisticsFile, "")
-
+STRING_ATTR(aliasStatisticsFile, "")

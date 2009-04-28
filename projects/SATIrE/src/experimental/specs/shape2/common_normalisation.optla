@@ -126,7 +126,7 @@ normalisation_ops(Side_RHS, e, 0, tmpvars) = // create fragment as last opcode
                       in all other cases. then the analysis won't
                       quit every time an new expression is encountered
 
-                      see analyzer/astaccess/sastire/syn
+                      see analyzer/astaccess/satire/syn
                       to identify "relevant" expressions
     */
     ex                                                      => print(expr_asttext(ex)) print(": ") error("unhandled rhs expression");

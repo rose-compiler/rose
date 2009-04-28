@@ -4,6 +4,7 @@
  **/
 
 extern ShapeAnalyzerOptions *opt;
+extern AliasStatistics *stats;
 
 // dfi_write_ creates the gdl visualisation for every basic block.
 // PAG creates the visualisation layout and calls this function
@@ -46,16 +47,17 @@ void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_{DFI} info,int id,
         o_SrwNnhPair gpair = o_extract_graphs(o_{DFI}_drop(info));
         
         if (opt->gdlShowSummaryGraph()) {
-			      //gstats.addGraphs(1);
             fprintf(fp, "  graph: { /*summary graph*/\n");
             fprintf(fp, "    color: lightgrey\n");
             fprintf(fp, "    label: \"\"\n");
             n_graphs++;
             n_nodes += dfi_write_ShapeGraph_fp(fp, name, n_graphs, attrib, o_SrwNnhPair_select_1(gpair));
         }
+        
+        o_ShapeGraphList graphs = o_SrwNnhPair_select_2(gpair);
+        //stats->addGraphCountICFG(o_ShapeGraphList_length(graphs));
 
         if (opt->gdlShowIndividualGraphs()) {
-            o_ShapeGraphList graphs = o_SrwNnhPair_select_2(gpair);
             while (!o_ShapeGraphList_is_empty(graphs)) {
                 o_ShapeGraph sg = o_ShapeGraphList_head(graphs);
                 graphs = o_ShapeGraphList_tail(graphs);
@@ -67,6 +69,7 @@ void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_{DFI} info,int id,
                 n_nodes += dfi_write_ShapeGraph_fp(fp, name, n_graphs, attrib, sg);
             }
         }
+
     }
 
     if (!n_nodes) {
@@ -105,7 +108,6 @@ int dfi_write_ShapeGraph_fp(FILE *fp, char *name, int n_graphs,  char *attrib, o
     while (!o_NodeList_is_empty(nodes)) {
         o_Node node = o_NodeList_head(nodes);
         nodes = o_NodeList_tail(nodes);
-		    //gstats.addHeapNode();
         n_nodes++;
         
         fprintf(fp, "    node: { /*heap node*/ \n");
@@ -133,7 +135,6 @@ int dfi_write_ShapeGraph_fp(FILE *fp, char *name, int n_graphs,  char *attrib, o
     // all var nodes
     while (!o_VarList_is_empty(vars)) {
         o_VariableId node = o_VarList_head(vars);
-		    //gstats.addStackNode();
 
         vars = o_VarList_tail(vars);
         fprintf(fp, "    node: { /*var node*/ \n");

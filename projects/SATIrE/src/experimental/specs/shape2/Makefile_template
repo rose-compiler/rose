@@ -1,0 +1,115 @@
+#
+# Makefile_template
+# Author: Viktor Pavlu, 2009
+#
+
+ANALYSIS='please set ANALYSIS and call from Makefile'
+CARRIER='please set CARRIER and call from Makefile'
+
+ANALYSIS_MARKUP={ANALYSIS}
+CARRIER_MARKUP={DFI}
+
+define FUNC_EXPAND
+	sed "$(1)" -e "s/$(CARRIER_MARKUP)/$(CARRIER)/g" \
+             -e "s/$(ANALYSIS_MARKUP)/$(ANALYSIS)/g" > "$(2)"
+endef
+
+
+.PHONY: shape clean info
+
+info:
+	@echo
+	@echo "  This is the Makefile template only. Please"
+	@echo "  do not call this directly but let the main"
+	@echo "  Makefile include the template"
+	@echo
+
+temporary_builddir=/localtmp/vpavlu/build
+
+build/:
+	mkdir -p $(temporary_builddir)
+	ln -s $(temporary_builddir) build
+	
+build/$(ANALYSIS)/: build/
+	mkdir -p build/$(ANALYSIS)
+
+
+
+# -- common files need to be copied to builddir --
+FILES_COMMON=attributes \
+             ShapeAnalyzerOptions.h \
+						 ShapeCommandLineParser.h \
+             ShapeAnalysisDriver.h \
+						 PagAttributes.C \
+						 satire_legacy.h \
+						 AliasStatistics.C
+
+
+define TEMPLATE_COMMON
+build/$(ANALYSIS)/$(1): $(1)
+	cp $(1) build/$(ANALYSIS)/
+	touch -c build/$(ANALYSIS)/main.C
+endef
+
+$(foreach file,$(FILES_COMMON),$(eval $(call TEMPLATE_COMMON,$(file))))
+
+
+# -- per-analysis custom files need to be copied to builddir --
+
+FILES_CUSTOM=Makefile.custom
+
+define TEMPLATE_CUSTOM
+build/$(ANALYSIS)/$(1): $(ANALYSIS)/$(1)
+	cp $(ANALYSIS)/$(1) build/$(ANALYSIS)/
+endef
+
+$(foreach file,$(FILES_CUSTOM),$(eval $(call TEMPLATE_CUSTOM,$(file))))
+
+
+# -- in substitution files {CARRIER_MARKUP} and {ANALYSIS_MARKUP} are expanded --
+
+FILES_SUBST=visualisation.c visualisation.h ShapeImplementation.C
+
+define TEMPLATE_SUBST
+build/$(ANALYSIS)/$(1): $(1)
+	$(call FUNC_EXPAND,$$<,$$@)
+	touch -c build/$(ANALYSIS)/main.C
+endef
+
+$(foreach file,$(FILES_SUBST),$(eval $(call TEMPLATE_SUBST,$(file))))
+
+
+
+
+# -- .optla is generated from .code file and all .optla--
+
+build/$(ANALYSIS)/$(ANALYSIS).optla: $(ANALYSIS)/$(ANALYSIS).code \
+              common.set \
+              common_debug.optla \
+							common_tassign.optla \
+							common_normalisation.optla \
+							common_support.optla \
+							common_transfer.optla 
+	cpp -C -P $< | \
+  sed -e "s/$(CARRIER_MARKUP)/$(CARRIER)/g" \
+      -e "s/$(ANALYSIS_MARKUP)/$(ANALYSIS)/g" | \
+  grep -v "prefix *: *$(ANALYSIS)" > $@
+
+# -- Makefile indicates wether newanalysis has already been run --
+build/$(ANALYSIS)/Makefile: build/$(ANALYSIS)/$(ANALYSIS).optla
+	pushd .; cd build/; newanalysis "$(ANALYSIS)"; popd
+	$(call FUNC_EXPAND,nnh99_main.C,build/$(ANALYSIS)/main.C)
+
+
+shape: build/$(ANALYSIS)/ \
+       $(addprefix build/$(ANALYSIS)/,$(FILES_COMMON) $(FILES_CUSTOM) $(FILES_SUBST)) \
+			 build/$(ANALYSIS)/$(ANALYSIS).optla \
+			 build/$(ANALYSIS)/Makefile
+	make -C build/$(ANALYSIS)
+
+clean:
+	[ ! -e "build/$(ANALYSIS)/" ] || make clean -C build/$(ANALYSIS)/
+
+
+
+# vim: noexpandtab:

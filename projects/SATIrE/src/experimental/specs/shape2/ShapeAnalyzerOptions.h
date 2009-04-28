@@ -63,6 +63,7 @@ public:
              "   --annotate-aliases   annotate alias pairs in AST\n"
              "   --output-alias-text  annotate alias pairs in AST and print them\n"
 //             "   --output-alias-source=<FILENAME> generate soure with annotated alias pairs\n"
+             "   --alias-statistics=FILE write alias statistics fo FILE\n"
              "\n"
              " Shape Graph GDL output options:\n"
 #ifdef ANALYSIS_nnh99

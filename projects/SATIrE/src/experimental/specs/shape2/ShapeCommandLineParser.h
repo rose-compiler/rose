@@ -41,19 +41,24 @@ public:
       } else if (optionMatch(argv[i], "--no-foldgraphs")) {
           scl->gdlFoldGraphsOff();
       } else if (optionMatch(argv[i], "--annotate-aliases")) {
-          scl->convertToNNHOn();
           scl->aliasesAnnotateOn();
       } else if (optionMatch(argv[i], "--output-alias-text")) {
-          scl->convertToNNHOn();
           scl->aliasesAnnotateOn();
           scl->aliasesOutputTextOn();
       } else if (optionMatchPrefix(argv[i], "--output-alias-source=")) {
           if (strlen(argv[i]+prefixLength) == 0) {
-              scl->setOptionsErrorMessage("empty alias output file name");
+              scl->setOptionsErrorMessage("empty alias output filename");
               return 1;
           }
           scl->aliasesAnnotateOn();
           scl->setaliasesOutputSource(strdup(argv[i]+prefixLength));
+      } else if (optionMatchPrefix(argv[i], "--alias-statistics=")) {
+          if (strlen(argv[i]+prefixLength) == 0) {
+              scl->setOptionsErrorMessage("empty alias statistics filename");
+              return 1;
+          }
+          scl->aliasesAnnotateOn();
+          scl->setaliasStatisticsFile(strdup(argv[i]+prefixLength));
       } else {
           // pass argument to parent for parsing
           return CommandLineParser::handleOption(cl, i, argc, argv);

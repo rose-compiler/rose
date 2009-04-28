@@ -1,15 +1,29 @@
+#
+# shape analysis experimentation makefile
+# Viktor Pavlu, 2008
+#
 
-.PHONY: clean nnh99 srw98 all
+.PHONY: all clean clean_
+.PHONY: nnh99shape nnh99clean
+.PHONY: srw98shape srw98clean
 
-all: srw98 nnh99
+all: nnh99shape srw98shape
+clean: nnh99clean srw98clean clean_
 
-nnh99:
-	sh compile.sh
+# include Makefile_template for srw98 and nnh99
+nnh99shape:
+	@$(MAKE) -f Makefile_template shape ANALYSIS='nnh99' CARRIER='ShapeGraphSetLifted'
+nnh99clean:
+	@$(MAKE) -f Makefile_template clean ANALYSIS='nnh99' CARRIER='ShapeGraphSetLifted'
 
-srw98:
-	sh compile_srw.sh
+srw98shape:
+	@$(MAKE) -f Makefile_template shape ANALYSIS='srw98' CARRIER='ShapeGraphLifted'
+srw98clean:
+	@$(MAKE) -f Makefile_template clean ANALYSIS='srw98' CARRIER='ShapeGraphLifted'
 
-clean:
-	rm -rf build
-	rm -f *.gdl
+clean_:
+	-rm -rf build/* build tmp_alias-stats tmp_output
+
+# vim: noexpandtab:
+
 

@@ -68,17 +68,51 @@ rec_join_shapegraphs(((S0,H0),is0), ((S1,H1),is1):cdr) =
 // nnh: set of graphs, each selector points to one node
 // srw: single graph, each selector can point to many nodes
 
-srwSG_to_nnhSG::ShapeGraph->ShapeGraphSet;
-srwSG_to_nnhSG(SG) =
-  //let r_old = old_srwSG_to_nnhSG(SG); in
-  let r_new = new_srwSG_to_nnhSG(SG); in
-  //let dummy = debug_print_bool("conversion", "old conv = new conv", r_old = r_new); in
-  //let dummy = debug_print_ShapeGraphSet("conversion", "old nnh", r_old); in
-  //let dummy = debug_print_ShapeGraphSet("conversion", "new nnh", r_new); in
-  r_new;
+// ----- begin simplified version for alias checks -----
 
-new_srwSG_to_nnhSG::ShapeGraph->ShapeGraphSet;
-new_srwSG_to_nnhSG(((S1,H1),IS1) as SG1) =
+// generating the full set of all represented shape graphs is not feasible
+// in acceptable time. for the computation of alias sets it is also not
+// absolutely necessary:
+//   every edge could be NULL in an SRW graph -> there are no must aliases.
+//   it is therefore sufficient, to check for may_aliases/no_aliases
+//
+// instead of generating the full set of shape graphs we only eliminate the
+// indeterminism from the graph, ie. all src,sel pairs that have more than
+// one target.
+// then one additional graph, the empty shape graph, is added to the set
+// of graphs on which alias testing is performed. this ensures that no must_aliases
+// are detected.
+
+// alias_performance_hack_1
+srwSG_to_nnhSG_simplified::ShapeGraph->ShapeGraphSet;
+srwSG_to_nnhSG_simplified(((S1,H1),IS1) as SG1) =
+  let vars         = vars_by_stackedges(S1);
+      heap_sources = extract_src_sel(SG1); in
+  let S2_sgs  = gen_stack_edges_simplified(vars, S1);
+      H2_sgs  = gen_heap_edges_simplified(heap_sources, H1);
+      IS2_sgs = {Sharing2G(IS1)}; in
+  let SG2_sgs = map_cartesian([S2_sgs, H2_sgs, IS2_sgs]); in
+  let nnh_sgs = {sg !! sg <-- SG2_sgs, if is_compatible(sg)}; in
+  nnh_sgs;
+
+gen_stack_edges_simplified::VarList,StackEdgeSet->ShapeGraphSet; 
+gen_stack_edges_simplified(    [],     _) = {};
+gen_stack_edges_simplified(var:Vs, edges) = 
+  let outedges_of_var = stackedges_by_var(var,edges); in
+  let outedge_sgs     = {State2G({outedge}) !! outedge <-- outedges_of_var}; in
+  cartesian(outedge_sgs, gen_stack_edges_simplified(Vs,edges));
+
+gen_heap_edges_simplified::NodeSelList,HeapEdgeSet->ShapeGraphSet;
+gen_heap_edges_simplified(            [],         _) = {};
+gen_heap_edges_simplified((src,sel):Rest,heap_edges) = 
+  let outedges    = heapedges_by_src_sel(src,sel,heap_edges); in
+  let outedge_sgs = {Heap2G({e}) !! e <-- outedges}; in
+  cartesian(outedge_sgs, gen_heap_edges_simplified(Rest,heap_edges));
+// ----- end -----
+
+
+srwSG_to_nnhSG::ShapeGraph->ShapeGraphSet;
+srwSG_to_nnhSG(((S1,H1),IS1) as SG1) =
   let vars         = vars_by_stackedges(S1);
       heap_sources = extract_src_sel(SG1); in
   let S2_sgs  = gen_stack_edges(vars, S1);
@@ -86,7 +120,7 @@ new_srwSG_to_nnhSG(((S1,H1),IS1) as SG1) =
       IS2_sgs = gen_powerset([sharing !! sharing <-- IS1]); in
   let SG2_sgs = map_cartesian([S2_sgs, H2_sgs, IS2_sgs]); in
   let nnh_sgs = {sg !! sg <-- SG2_sgs, if is_compatible(sg)}; in
-  let dummy   = assert("srw0->nnh->srw == srw0", nnhSG_to_srwSG(nnh_sgs) = SG1); in
+  //let dummy   = assert("srw0->nnh->srw == srw0", nnhSG_to_srwSG(nnh_sgs) = SG1); in
   nnh_sgs;
 
 gen_stack_edges::VarList,StackEdgeSet->ShapeGraphSet; 
@@ -307,6 +341,13 @@ rec_flatten_heapedge_set::HeapEdgeSetList,HeapEdgeSet->HeapEdgeSet;
 rec_flatten_heapedge_set(    [],set) = set;
 rec_flatten_heapedge_set(s:sets,set) = rec_flatten_heapedge_set(sets, union(set,s));
 
+is_pointer_expression::Expression->bool;
+is_pointer_expression(VarRefExp(_) as ref_x) = !is_tmpvarid(varref_varid(ref_x));
+is_pointer_expression(ArrowExp(_,_)) = true;
+is_pointer_expression(DotExp(_,_)) = true;
+//is_pointer_expression(e) = let dummy = print("non-pointer expr:") print(expr_asttext(e)) false; in false;
+is_pointer_expression(_) = false;
+
 // ----------------------------
 // is_may_alias / is_must_alias
 // ----------------------------
@@ -317,31 +358,43 @@ is_no_alias(a,b,sgs) = !is_may_alias(a,b,sgs);
 // a,b are may aliases
 // if there EXISTS one graph in which a and b refer to the same node
 is_may_alias::Expression,Expression,ShapeGraphSet->bool;
-is_may_alias(a,b,sgs) = {g !! g <-- sgs, if is_same_node(Alias_May,a,b,g)} != {};
+//is_may_alias(a,b,sgs) = {g !! g <-- sgs, if is_same_node(Alias_May,a,b,g)} != {};
+// alias_performance_hack_2
+is_may_alias(a,b,sgs) = is_may_alias_lazy(a,b,[sg !! sg <-- sgs]);
+
+is_may_alias_lazy::Expression,Expression,ShapeGraphList->bool;
+is_may_alias_lazy(a,b,[])      = false;
+is_may_alias_lazy(a,b,g:grest) = if is_same_node(Alias_May,a,b,g) then true else is_may_alias_lazy(a,b,grest) endif;
 
 // a,b are must aliases
 // if there exists no graph in which a and b refer NOT to the same node (ie they do refer in all nodes)
 is_must_alias::Expression,Expression,ShapeGraphSet->bool;
-is_must_alias(a,b,sgs) = {g !! g <-- sgs, if !is_same_node(Alias_Must,a,b,g)} = {};
+//is_must_alias(a,b,sgs) = {g !! g <-- sgs, if !is_same_node(Alias_Must,a,b,g)} = {};
+// alias_performance_hack_2
+is_must_alias(a,b,sgs) = is_must_alias_lazy(a,b,[sg !! sg <-- sgs]);
+
+is_must_alias_lazy::Expression,Expression,ShapeGraphList->bool;
+is_must_alias_lazy(a,b,[])      = false;
+is_must_alias_lazy(a,b,g:grest) = if is_same_node(Alias_Must,a,b,g) then is_must_alias_lazy(a,b,grest) else false endif;
 
 // returns true if both expressions refer to the same node
 is_same_node::EnumAlias,Expression,Expression,ShapeGraph->bool;
 is_same_node(alias_type,expr_a,expr_b,(_,is0) as sg) =
-  print(alias_type) print(":\n")
-    print("  ")print(expr_asttext(expr_a)) print("\n")
-    print("  ")print(expr_asttext(expr_b)) print("\n")
-    print("in ")print(sg)
-    print("\n")
 
   let null = {add_tmpvarid_like_expr(expr_a)}; in  // will be used to indicate "node not found" case
   let a_nodes      = nodes_visited_by_expr(expr_a,sg,null);
       b_nodes      = nodes_visited_by_expr(expr_b,sg,null);
       a_sels       = selectors_visited_by_expr(expr_a);
       b_sels       = selectors_visited_by_expr(expr_b); in
-  let dummy = print("invalid=")print(null)print("\n") false;in
-  let dummy = print(a_nodes) print("\n") false; in
-  let dummy = print(b_nodes) print("\n") false; in
-  rec_is_same_node(alias_type, {} ? is0, a_sels, a_nodes, b_sels, b_nodes, null);
+  let res = rec_is_same_node(alias_type, {} ? is0, a_sels, a_nodes, b_sels, b_nodes, null); in
+  //let dummy = if res then
+  //  print(alias_type) print(":\n")
+  //  print("  ")print(expr_asttext(expr_a)) print("\n")
+  //  print("  ")print(expr_asttext(expr_b)) print("\n")
+  //  print("in ")print(sg)
+  //  print("\n")
+  //  println("result = ", res) false else false endif; in
+  res;
 
 rec_is_same_node::EnumAlias,bool, VarList,NodeList, VarList,NodeList, Node->bool;
 rec_is_same_node(_, _, _, [], _,  _, _) = false;
@@ -399,7 +452,7 @@ nodes_visited_by_expr::Expression,ShapeGraph,Node->NodeList;
 nodes_visited_by_expr(e,g,null) = rec_nodes_visited_by_expr(e, expr_depth(e),g,[],null);
 
 rec_nodes_visited_by_expr::Expression,snum,ShapeGraph,NodeList,Node->NodeList;
-rec_nodes_visited_by_expr(_,       -1, _, trail,    _) = trail; // intentionally -1, topmost case in iteration
+rec_nodes_visited_by_expr(_,       -1, _, trail,    _) = trail; // intentionally -1, beyond topmost case in iteration
 rec_nodes_visited_by_expr(e, e_cursor, g, trail, null) =
   let inner_e  = expr_at(e,e_cursor); in
   let new_list = case inner_e of
@@ -408,19 +461,15 @@ rec_nodes_visited_by_expr(e, e_cursor, g, trail, null) =
       let x   = varref_varid(ref_x); in
       if var_exists(x,g) then [node_by_var(x,g)] else [] endif;
 
-    ArrowExp(VarRefExp(_) as ref_x,VarRefExp(_) as ref_sel) as ref_expr =>
+    ArrowExp(VarRefExp(_) as ref_x,VarRefExp(_) as ref_sel) =>
       let x   = varref_varid(ref_x);
-          eid = expr_exprid(ref_expr);
           sel = varref_varid(ref_sel); in
-      print("++")print(expr_asttext(ref_expr))print("\n")
-      print("--")print(exprid_str(eid))print("\n")
-      print("--ArrowExp(")print(varid_str(x))print(",")print(varid_str(sel))print(")\n")
-      print("var_exists(")print(varid_str(x))print(")=")
       if var_exists(x,g) then
-        print("true\n")
         let src = node_by_var(x,g); in
         if src_sel_exists(src,sel,g) then [node_by_src_sel(src,sel,g), src] else [] endif
-      else print("false\n") [] endif; 
+      else
+        []
+      endif; 
 
     DotExp(PointerDerefExp(_),VarRefExp(_) as ref_sel) =>
       let x   = hd(trail);
@@ -429,7 +478,6 @@ rec_nodes_visited_by_expr(e, e_cursor, g, trail, null) =
 
     _ => print(inner_e) print(": ") error("unhandled expression.");
   endcase; in
-  let dummy = print("search ") print(expr_asttext(inner_e)) print(": ") print(new_list) print("\n") false; in
   if [] = new_list then
     [null] ++ trail
   else
@@ -457,11 +505,11 @@ is_compatible(((S0,H0),is0) as g) =
     && check_inv3(H0)
     && check_inv4([x !! x <-- is0],H0)
     && check_inv5(vars,H0,is0) then true else false endif; in
-  let dummy = debug_print_bool("materialisation", "inv1", check_inv1(vars)); in
-  let dummy = debug_print_bool("materialisation", "inv2", check_inv2(S0)); in
-  let dummy = debug_print_bool("materialisation", "inv3", check_inv3(H0)); in
-  let dummy = debug_print_bool("materialisation", "inv4", check_inv4([x !! x <-- is0],H0)); in
-  let dummy = debug_print_bool("materialisation", "inv5", check_inv5(vars,H0,is0)); in
+  //let dummy = debug_print_bool("materialisation", "inv1", check_inv1(vars)); in
+  //let dummy = debug_print_bool("materialisation", "inv2", check_inv2(S0)); in
+  //let dummy = debug_print_bool("materialisation", "inv3", check_inv3(H0)); in
+  //let dummy = debug_print_bool("materialisation", "inv4", check_inv4([x !! x <-- is0],H0)); in
+  //let dummy = debug_print_bool("materialisation", "inv5", check_inv5(vars,H0,is0)); in
   res;
 
 // Inv1: two nodes a,b are either the same or have no common variables

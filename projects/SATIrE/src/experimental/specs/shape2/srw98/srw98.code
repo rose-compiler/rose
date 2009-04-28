@@ -67,9 +67,9 @@ extract_graphs(sg) =
     (sg,sgSet_to_sgList(srwSG_to_nnhSG(sg)))
   endif;
 
-// FIXME still required for alias computation:
 shape_carrier_to_shapegraphset::ShapeGraphLifted->ShapeGraphSet;
-shape_carrier_to_shapegraphset(lifted_sg) = srwSG_to_nnhSG(drop(lifted_sg));
+//shape_carrier_to_shapegraphset(lifted_sg) = srwSG_to_nnhSG(drop(lifted_sg));
+shape_carrier_to_shapegraphset(lifted_sg) = srwSG_to_nnhSG_simplified(drop(lifted_sg));
 
 // ----------------------------------------
 // Analysis Entry Point: Transfer Functions
