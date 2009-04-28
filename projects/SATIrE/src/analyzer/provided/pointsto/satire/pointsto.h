@@ -28,6 +28,7 @@
 #define H_POINTSTO
 
 #include "cfg_support.h"
+#include <memory>
 #include <satire.h>
 
 namespace SATIrE {

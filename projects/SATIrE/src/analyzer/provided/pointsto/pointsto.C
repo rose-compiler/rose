@@ -16,6 +16,7 @@
 //   the function complain if some expression is not as expected.
 // - Implement a usable "dereference" function.
 
+#include <memory>
 #include <boost/pending/disjoint_sets.hpp>
 // Relevant functions provided by Boost's disjoint sets data structure:
 // make_set, find_set, union_set, link; link is on class representatives,

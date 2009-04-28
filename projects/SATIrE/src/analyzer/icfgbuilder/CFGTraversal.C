@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string.h>
+#include <memory>
 
 #include <satire_rose.h>
 #include "patternRewrite.h"

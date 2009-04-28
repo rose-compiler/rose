@@ -29,6 +29,8 @@
 // might not really hurt, as every variable should still belong to exactly
 // one unique location.)
 
+#include <cstring>
+
 #if HAVE_PAG
 #include "gc_mem.h"
 #include "unum.h"

@@ -1,6 +1,8 @@
 #ifndef H_SATIRE_ANALYSIS_SCHEDULER
 #define H_SATIRE_ANALYSIS_SCHEDULER
 
+#include <memory>
+
 namespace SATIrE
 {
 
