@@ -1314,7 +1314,7 @@ Grammar::setUpSupport ()
   //                       CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // Use rose_hash::hash_map < std::string, SgGraphNode*> or rose_graph_hash_multimap
      GraphNodeList.setDataPrototype("rose_graph_hash_multimap","nodes","",
-                           CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      GraphEdgeList.setFunctionPrototype ( "HEADER_GRAPH_EDGE_LIST", "../Grammar/Support.code");
 
@@ -1326,7 +1326,7 @@ Grammar::setUpSupport ()
   // GraphEdgeList.setDataPrototype("SgGraphNodeDirectedGraphEdgeMultimapPtrList","edges","",
   //                       CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      GraphEdgeList.setDataPrototype("rose_graph_node_edge_hash_multimap","edges","",
-                           CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 #endif
 

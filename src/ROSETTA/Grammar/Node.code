@@ -994,6 +994,7 @@ class rose_graph_node_edge_hash_multimap : public rose_hash::hash_multimap<SgGra
 std::ostream & operator<< ( std::ostream & os, const rose_graph_node_edge_hash_multimap::iterator & rhm_it );
 
 
+#if 0
 // DQ (8/18/2008): Added support for new Graph IR nodes.
 typedef Rose_STL_Container<SgGraphNode*> SgGraphNodePtrList;
 typedef SgGraphNodePtrList* SgGraphNodePtrListPtr;
@@ -1002,6 +1003,7 @@ typedef SgGraphNodePtrList* SgGraphNodePtrListPtr;
 // DQ (8/18/2008): Added support for new Graph IR node.
 typedef Rose_STL_Container<SgGraphEdge*> SgGraphEdgePtrList;
 typedef SgGraphEdgePtrList* SgGraphEdgePtrListPtr;
+#endif
 
 #if 0
 // DQ (4/25/2009): Note that these types have the suffix "PtrList" so that ROSETTA will 

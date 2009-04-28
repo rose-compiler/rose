@@ -25,13 +25,19 @@ HEADER_GRAPH_PREDECLARATION_END
 HEADER_GRAPH_START
 #ifdef ROSE_USE_NEW_GRAPH_NODES
   // DQ (4/26/2009): Added iterator types
-     typedef SgGraphNodePtrList::iterator node_iterator;
-     typedef SgGraphEdgePtrList::iterator edge_iterator;
+  // typedef SgGraphNodePtrList::iterator node_iterator;
+  // typedef SgGraphEdgePtrList::iterator edge_iterator;
+
+  // typedef SgGraphNodeList::iterator node_iterator;
+  // typedef SgGraphEdgeList::iterator edge_iterator;
 #endif
 
      int hashCode( char* p, int len); // hash a character array
      int get_graph_id() ;
      void append_properties( int addr, std::string prop );
+
+     virtual void post_construction_initialization();
+
 HEADER_GRAPH_END
 
 
@@ -78,12 +84,16 @@ HEADER_GRAPH_NODE_END
 
 
 HEADER_GRAPH_NODE_LIST_START
+     public:
+          typedef rose_hash::hash_multimap<std::string,SgGraphNode*, rose_hash::hash_string, rose_hash::eqstr_string> local_hash_multimap_type;
+          typedef local_hash_multimap_type::iterator iterator;
 HEADER_GRAPH_NODE_LIST_END
 
 
 HEADER_GRAPH_EDGE_LIST_START
      public:
           typedef rose_hash::hash_multimap<SgGraphNode*,SgGraphEdge*, rose_hash::hash_graph_node, rose_hash::eqstr_graph_node> local_hash_multimap_type;
+          typedef local_hash_multimap_type::iterator iterator;
 HEADER_GRAPH_EDGE_LIST_END
 
 
@@ -12955,6 +12965,7 @@ SOURCE_GRAPHNODE_START
 int
 SgGraphNode::get_graph_id() const
    {
+     ROSE_ASSERT(this != NULL);
 #ifndef ROSE_USE_NEW_GRAPH_NODES
      return p_graph_id;
 #else
@@ -12971,9 +12982,12 @@ SgGraphNode::get_graph_id() const
 void
 SgGraphNode::append_properties( int addr, std::string prop )
    {
+     ROSE_ASSERT(this != NULL);
   /* implemented directly until we can fix how the statementList is built */
      p_properties[addr] = prop;
    }
+
+
 SOURCE_GRAPHNODE_END
 
 
@@ -12982,6 +12996,7 @@ SOURCE_GRAPHEDGE_START
 int 
 SgGraphEdge::get_graph_id() const
    {
+     ROSE_ASSERT(this != NULL);
 #ifndef ROSE_USE_NEW_GRAPH_NODES
      return p_graph_id;
 #else
@@ -13005,10 +13020,33 @@ SOURCE_GRAPHEDGE_END
 
 
 SOURCE_GRAPH_START
+void
+SgGraph::post_construction_initialization()
+   {
+     ROSE_ASSERT(this != NULL);
+
+#ifdef ROSE_USE_NEW_GRAPH_NODES
+  // Build the graph node list IR node
+     if (get_nodes() == NULL)
+        {
+          set_nodes(new SgGraphNodeList());
+        }
+     ROSE_ASSERT(get_nodes() != NULL);
+
+  // Build the graph edge list IR node
+     if (get_edges() == NULL)
+        {
+          set_edges(new SgGraphEdgeList());
+        }
+     ROSE_ASSERT(get_edges() != NULL);
+#endif
+   }
+
 // tps (08/08/07): Added the graph, graph nodes and graph edges 
 void
 SgGraph::append_properties( int addr, std::string prop )
    {
+     ROSE_ASSERT(this != NULL);
   /* implemented directly until we can fix how the statementList is built */
      p_properties[addr] = prop;
    }
@@ -13016,6 +13054,7 @@ SgGraph::append_properties( int addr, std::string prop )
 int 
 SgGraph::hashCode( char* p, int len) // hash a character array
    {
+     ROSE_ASSERT(this != NULL);
      unsigned int h = 0;
      for (int i=0; i<len; i++)
         {
@@ -13028,6 +13067,8 @@ SgGraph::hashCode( char* p, int len) // hash a character array
 int 
 SgGraph::get_graph_id()
    {
+     ROSE_ASSERT(this != NULL);
+
 #ifndef ROSE_USE_NEW_GRAPH_NODES
      string name = p_name+p_type;
      int len = sizeof(name);
