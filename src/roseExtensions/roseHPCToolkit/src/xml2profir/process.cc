@@ -8,10 +8,11 @@
  *
  *  $Id: process.cc,v 1.1 2008/01/08 02:56:43 dquinlan Exp $
  */
-
-#include "rosehpct/xml2profir/xml2profir.hh"
+#include "rose.h"
+//#include "rosehpct/xml2profir/xml2profir.hh"
 #include "sla.h"
-#include "rosehpct/util/general.hh"
+//#include "rosehpct/util/general.hh"
+#include "rosehpct/rosehpct.hh"
 
 using namespace RoseHPCT;
 
@@ -106,7 +107,9 @@ RoseHPCT::loadXMLTrees (const FilenameList_t& filenames)
 
 /*!
  *  \brief Class to translate paths in filenames embedded in an
- *  RoseHPCTIR tree.
+ *  RoseHPCT-IR tree.It also fixes up the File Node pointer for each located node
+ *
+ *  Pre-order traversal, isConst = false
  */
 class PathTranslator : public Trees::PreTraversal<IRTree_t, false>
 {
@@ -123,13 +126,16 @@ private:
   virtual void visit (TreeParamPtr_t tree);
 
   /*! \brief File-node specific translation */
-  void visitFile (File* node) const;
+  void visitFile (File* node) ;
 
   /*! \brief Associative map of paths and their translations */
   EquivPathMap_t eqpaths_;
 
   /*! \brief True <==> any paths were changed during traversal */
   bool did_change_;
+
+  /*! \brief The current file node's value */
+  File* file_;
 };
 
 PathTranslator::PathTranslator (const EquivPathMap_t& eqpaths)
@@ -150,25 +156,76 @@ PathTranslator::didChange (void) const
 void
 PathTranslator::visit (TreeParamPtr_t tree)
 {
-  File* node = dynamic_cast<File *> (tree->value);
-  if (node != NULL)
-    visitFile (node);
+  File* filenode = dynamic_cast<File *> (tree->value);
+  if (filenode != NULL)
+  {
+    // Save file nodes for later use
+    RoseHPCT::profFileNodes_.insert(filenode);
+    visitFile (filenode);
+  }
+  else
+  {  // for other located nodes, fix up file node pointer if necessary
+     Located * locatedNode=  dynamic_cast<Located*> (tree->value);
+     if (locatedNode)
+     {
+       Statement* s = dynamic_cast<Statement*> (tree->value);
+       // Save non-scope statement nodes for later use
+       if (s)
+         RoseHPCT::profStmtNodes_.insert(s);
+       if (locatedNode->getFileNode()==NULL)
+       {
+         ROSE_ASSERT(file_ != NULL);
+         locatedNode->setFileNode(file_);
+       }
+       else
+       {// if it has a file node pointer, double check it here
+         ROSE_ASSERT(file_== locatedNode->getFileNode());
+       }
+     }
+  }
 }
 
 void
-PathTranslator::visitFile (File* node) const
+PathTranslator::visitFile (File* node) 
 {
+  file_ = node; // save this node
   string filename = node->getName ();
-  string dirname = getDirname (filename);
   // find a matching entry for the eqpaths
+#if 1 
+  // Liao, 4/28/2009 we extend this function to replace a root dir of a source tree to aonther
+  // for example: /root1/smg2000/file1 --> /root2/smg2000/file1
+  // The original function only deals with full path replacement, not a portion of it(root path),
+  // which is less useful in practice.
+   EquivPathMap_t::const_iterator iter = eqpaths_.begin(); 
+   for (;iter!=eqpaths_.end(); iter++)
+   {
+     string oldpath = iter->first;
+     string newpath = iter->second;
+     //replace the matching old root path of a file with the new root path
+     size_t pos1= filename.find(oldpath);
+     if (pos1==0) // ensure it is the root path
+     {
+       if (enable_debug)
+         cout<<"Replacing a file path from:"<<filename;
+       filename.replace(pos1,oldpath.size(), newpath);
+       if (enable_debug)
+       {
+         cout<<" to: "<<filename<<endl;
+       }
+       node->setName (filename);  
+     }
+   }
+#else  
+  string dirname = getDirname (filename);
   EquivPathMap_t::const_iterator ep = eqpaths_.find (dirname);
   if (ep != eqpaths_.end ())
-    {
-      // replace the file path with the second path of the entry
-      string basename = getBaseFilename (filename);
-      string new_filename = ep->second + "/" + basename;
-      node->setName (new_filename);
-    }
+  {
+    // replace the file path with the second path of the entry
+    string basename = getBaseFilename (filename);
+    string new_filename = ep->second + "/" + basename;
+    node->setName (new_filename);
+  }
+#endif  
 }
 
 bool

@@ -4,8 +4,13 @@ ROSE_FLAGS=-rose:verbose 0 -g3
 
 ROSE_PROF1 =-rose:hpct:prof $(srcdir)/jacobi-raw.xml 
 ROSE_PROF2 =-rose:hpct:prof $(srcdir)/jacobi-raw-omp.xml 
+
+ROSE_PROF3 =-rose:gprof:linebyline $(srcdir)/jacobi.gprof.txt
 # the eqpath has to be the absolute path 
-ROSE_FLAGS+=-rose:hpct:eqpath .=`cd $(srcdir) && pwd`
+EQUAL_PATH1=-rose:hpct:eqpath .=`cd $(srcdir) && pwd`
+# gprof result's equavilent path
+# The performance data can be collected from another machine with different paths
+EQUAL_PATH3=-rose:hpct:eqpath "/home/liao6/temp"=`cd $(srcdir) && pwd`
 # source file annotation with performance metrics
 #ROSE_FLAGS+=-rose:hpct:enable_debug 
 
@@ -19,16 +24,22 @@ ROSE_FLAGS+= -rose:outline:parameter_wrapper -rose:outline:new_file -rose:outlin
 #
 ROSE_FLAGS2 = -rose:autotuning:aggressive_triage -rose:openmp
 
+# basic code triage based on inner-most consecutive loops
 rose_jacobi.c:../autoTuning
-	../autoTuning -c  $(ROSE_FLAGS) $(ROSE_PROF1) $(srcdir)/jacobi.c
+	../autoTuning -c  $(ROSE_FLAGS) $(EQUAL_PATH1) $(ROSE_PROF1) $(srcdir)/jacobi.c
 
+# aggressive code triage based on outer most OpenMP for loop
 rose_jacobi-omp.c:../autoTuning
-	../autoTuning -c  $(ROSE_FLAGS) $(ROSE_PROF2) $(ROSE_FLAGS2) $(srcdir)/jacobi-omp.c
+	../autoTuning -c  $(ROSE_FLAGS)  $(EQUAL_PATH1) $(ROSE_PROF2) $(ROSE_FLAGS2) $(srcdir)/jacobi-omp.c
+
+# alternative performance information collected by GNU gprof -L -l, line-by-line profiling results
+rose_jacobi2.c:../autoTuning
+	../autoTuning  -c -rose:output rose_jacobi2.c $(ROSE_FLAGS) -rose:hpct:enable_debug $(EQUAL_PATH3) $(ROSE_PROF3) $(srcdir)/jacobi.c
 
 ../autoTuning:
 	make -C ../.
 
-EXTRA_DIST = jacobi-raw.xml jacobi.c
+EXTRA_DIST = jacobi-raw.xml jacobi.c jacobi.gprof.txt
 
 clean-local:
 	rm -f *.o rose_*.[cC] *.dot  OUT_*
@@ -38,6 +49,7 @@ if ROSE_BUILD_ROSEHPCT
 check-local:
 	@echo "Test for auto tuning... "
 	@$(MAKE) rose_jacobi.c
+	@$(MAKE) rose_jacobi2.c
 	@echo "Test for auto tuning terminated normally"
 else
 #-------------------------------

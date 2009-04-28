@@ -1106,6 +1106,8 @@ src/roseExtensions/roseHPCToolkit/src/xml-xercesc/Makefile
 src/roseExtensions/roseHPCToolkit/include/rosehpct/xml-xercesc/Makefile
 src/roseExtensions/roseHPCToolkit/src/profir/Makefile
 src/roseExtensions/roseHPCToolkit/include/rosehpct/profir/Makefile
+src/roseExtensions/roseHPCToolkit/src/gprof/Makefile
+src/roseExtensions/roseHPCToolkit/include/rosehpct/gprof/Makefile
 src/roseExtensions/roseHPCToolkit/src/xml2profir/Makefile
 src/roseExtensions/roseHPCToolkit/include/rosehpct/xml2profir/Makefile
 src/roseExtensions/roseHPCToolkit/src/sage/Makefile

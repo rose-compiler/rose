@@ -34,17 +34,30 @@ int main(int argc, char * argv[])
 
   // Prepare AST with performance metrics attached.
   // -------------------------------------------------
-  // Read into the XML files
-  RoseHPCT::ProgramTreeList_t profiles = RoseHPCT::loadHPCTProfiles (argvList);
+  // Read into the profiling result files
+  RoseHPCT::ProgramTreeList_t profiles = RoseHPCT::loadProfilingFiles(argvList);
   // Create the AST tree
   SgProject * project = frontend(argvList);
   //Attach metrics to AST , last parameter is for verbose
   RoseHPCT::attachMetrics(profiles, project,project->get_verbose()>0);
 
+#if 0
+  //test file and stmt node collection
+   cout<<"Prof IR File node:count="<<RoseHPCT::profFileNodes_.size()<<endl;
+   cout<<"Prof IR stmt node:count="<<RoseHPCT::profStmtNodes_.size()<<endl;
+   std::set<const RoseHPCT::IRNode *>:: const_iterator piter= RoseHPCT::profStmtNodes_.begin(); 
+   for (;piter!=RoseHPCT::profStmtNodes_.end();piter++)
+   {
+     const RoseHPCT::IRNode * node = *piter;
+     cout<<"Non_scope statement node:"<<node->toString()<<endl;
+   }
+#endif  
+
   // Code triage: 
   // -----------------------------------------------------
   // This step is better done after the file level performance metrics 
   // are generated, either by ROSE's propagation or by HPCToolKit's correlation command.
+  // Alternative: bottom-up method: find hot statements, back track to their file names
   //
   // find the hottest file name
   std::map<string, std::map< std::string, double > > 
@@ -66,6 +79,7 @@ int main(int argc, char * argv[])
     SgFile* file= *file_iter;
     if (!isSgSourceFile(file)) 
       continue;
+    // Does the current file math the file containing the target hot statement?   
     if (hasOrigFileMetrics&&
         file->get_file_info()->get_filenameString() != hot_file)
       continue;

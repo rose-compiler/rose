@@ -20,10 +20,10 @@
 
 
 // rose-hpct headers 
-#include "rosehpct/util/general.hh"
-#include "rosehpct/xml2profir/xml2profir.hh"
-#include "rosehpct/sage/sage.hh"
-#include "rosehpct/profir2sage/profir2sage.hh"
+//#include "rosehpct/util/general.hh"
+//#include "rosehpct/xml2profir/xml2profir.hh"
+//#include "rosehpct/sage/sage.hh"
+//#include "rosehpct/profir2sage/profir2sage.hh"
 #include "rosehpct/rosehpct.hh"
 
 // Outliner headers

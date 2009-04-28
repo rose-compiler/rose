@@ -16,7 +16,7 @@
 #include <string>
 #include <vector>
 
-// #include "rose.h"
+//#include "rose.h"
 #include "rosehpct/util/general.hh"
 
 namespace RoseHPCT

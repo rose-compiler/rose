@@ -26,9 +26,12 @@ $Id: rosehpct.hh,v 1.1 2008/01/08 02:56:43 dquinlan Exp $
 #include <iostream>
 #include <string>
 #include <vector>
-
+#include "util/general.hh"
+#include "sage/sage.hh"
 #include "xml2profir/xml2profir.hh"
+#include "profir/profir.hh"
 #include "profir2sage/profir2sage.hh"
+#include "gprof/gprof_info.hh"
 
 class SgProject;
 
@@ -39,9 +42,11 @@ namespace RoseHPCT
   //@{
 
   extern bool enable_debug; // output debug information
+  extern bool gprof_only; // if users are using gprof result as an alternative
+  extern std::string gprof_file_name; // We expect only on gprof input file
 
-  //! Loads HPCToolkit XML profiling data given on the command-line.
-  ProgramTreeList_t loadHPCTProfiles (std::vector<std::string>& argvList);
+  //! Loads HPCToolkit XML or GNU gprof text profiling data given on the command-line.
+  ProgramTreeList_t loadProfilingFiles(std::vector<std::string>& argvList);
 
   //! Attach HPCToolkit metrics to the tree.
   void attachMetrics (const ProgramTreeList_t& profiles,
