@@ -1,3 +1,28 @@
+2009-04-28 15:20  dquinlan
+
+	* [r5516]
+	  /trunk/ROSE/developersScratchSpace/Dan/graph_tests/graph_test_1.C,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Node.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Support.code,
+	  /trunk/ROSE/src/ROSETTA/src/buildStorageClasses.C,
+	  /trunk/ROSE/src/ROSETTA/src/support.C: Added more support for new
+	  Graph IR nodes.
+
+2009-04-28 13:21  dquinlan
+
+	* [r5514] /trunk/ROSE/src/ROSETTA/Grammar/Node.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Support.code,
+	  /trunk/ROSE/src/ROSETTA/astNodeList,
+	  /trunk/ROSE/src/ROSETTA/src/buildStorageClasses.C,
+	  /trunk/ROSE/src/ROSETTA/src/support.C,
+	  /trunk/ROSE/src/ROSETTA/src/terminal.h,
+	  /trunk/ROSE/src/frontend/SageIII/astFileIO/StorageClassMemoryManagement.C,
+	  /trunk/ROSE/src/frontend/SageIII/astFileIO/StorageClassMemoryManagement.h,
+	  /trunk/ROSE/src/frontend/SageIII/rtiHelpers.h,
+	  /trunk/ROSE/src/midend/binaryAnalyses/graph/RoseBin_DotGraph.cpp,
+	  /trunk/ROSE/src/midend/binaryAnalyses/graph/RoseBin_Graph.h:
+	  Added more support for new Graph IR nodes.
+
 2009-04-27 16:33  liao6
 
 	* [r5502] /trunk/ROSE/docs/Rose/developersAppendix.tex: Updated
