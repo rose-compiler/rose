@@ -491,7 +491,6 @@ SgAsmDOSFileHeader
 SgAsmExecutableFileFormat
 SgStringKeyedBidirectionalGraph
 SgIntKeyedBidirectionalGraph
-SgDummyGraph
 SgBidirectionalGraph
 SgIncidenceDirectedGraph
 SgIncidenceUndirectedGraph
