@@ -1,7 +1,7 @@
 # ROSE-HPCT sources
 
 SUBDIRS = util xml profir xml2profir sage profir2sage \
-          xml-xercesc
+          xml-xercesc gprof
 
 include ../Make.inc
 
@@ -18,6 +18,7 @@ librosehpct_la_LIBADD = \
 	profir/libprofir.la \
 	xml2profir/libxml2profir.la \
 	sage/libsage.la \
+	gprof/libgprof.la \
 	profir2sage/libprofir2sage.la
 
 clean-local:

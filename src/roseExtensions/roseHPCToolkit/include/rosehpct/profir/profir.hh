@@ -129,6 +129,8 @@ namespace RoseHPCT
     std::vector<Metric> metrics_; //!< Contains child metrics.
   };
 
+  //forward declaration
+  class File;
   /*!
    *  \brief A class derived from Located has a source file position
    *  associated with it.
@@ -138,8 +140,11 @@ namespace RoseHPCT
   public:
     Located (void);
     Located (const Located& l);
-    Located (size_t b, size_t e);
+    Located (size_t b, size_t e, File* f=NULL);
     ~Located (void);
+
+    File* getFileNode(void) const;
+    void setFileNode(File* filenode);
 
     size_t getFirstLine (void) const;
     void setFirstLine (size_t l);
@@ -153,6 +158,7 @@ namespace RoseHPCT
   private:
     size_t begin_;
     size_t end_;
+    File * filenode_; // file location info is not complete unless a file name is specified! Liao, 4/27/2009
   };
   /*@}*/
 

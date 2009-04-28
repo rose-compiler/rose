@@ -1,7 +1,7 @@
 # ROSE-HPCT header files
 
 SUBDIRS = util xml profir xml2profir sage profir2sage \
-          xml-xercesc
+          xml-xercesc gprof
 
 include ../../Make.inc
 

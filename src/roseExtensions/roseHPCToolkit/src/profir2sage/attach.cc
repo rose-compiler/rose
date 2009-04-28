@@ -14,16 +14,18 @@
 #include <map>
 #include <list>
 #include <set>
-#include "rosehpct/profir2sage/profir2sage.hh"
 #include <iostream>
 #include <sstream>
 #include <string>
-
+#include "rosehpct/rosehpct.hh"
+//#include "rosehpct/profir2sage/profir2sage.hh"
 /* ---------------------------------------------------------------- */
 namespace RoseHPCT
 {
-  //! A quick reference to all file nodes of Profile IR
+  //! A quick reference to all file and non-stmt nodes of the original Profile IR trees
+  // This gives a global view of where to find hot portions
   std::set<const RoseHPCT::IRNode *> profFileNodes_;	
+  std::set<const RoseHPCT::IRNode *> profStmtNodes_;	
 }
 
 //! Tell if a Sage node's file info. matches a given filename
@@ -43,19 +45,29 @@ doFilenamesMatch (const SgLocatedNode* node, const std::string& filename)
   return sg_dir == target_dir && sg_file == target_file;
 }
 
-//! Check if the code portions specified by Sage Node and [b-start, b_end]
+//! Check if the code portions specified by Sage Node and PROF ir'S located node [b-start, b_end]
 // have any kind of overlap 
 static
 bool
 doLinesOverlap (const SgLocatedNode* node,
-                size_t b_start, size_t b_end)
+                const RoseHPCT::Located * plnode)
+ //                size_t b_start, size_t b_end)
 {
+  ROSE_ASSERT(plnode);
   if (node == NULL)
     return false;
+  size_t b_start = plnode->getFirstLine ();
+  size_t b_end = plnode->getLastLine ();
 
   Sg_File_Info* info_start = node->get_startOfConstruct ();
   ROSE_ASSERT (info_start != NULL);
-
+  // check file name first if possible
+  if (plnode->getFileNode())    
+  {
+    if (plnode->getFileNode()->getName()!= info_start->get_filename())
+      return false;
+  }
+  // Then check for line numbers  
   size_t a_start = (size_t)info_start->get_line ();
   Sg_File_Info* info_end = node->get_endOfConstruct ();
   size_t a_end = (info_end == NULL) ? a_start : info_end->get_line ();
@@ -113,8 +125,6 @@ public:
   /*! \brief Returns a set of matching nodes. */
   const MatchSet_t& getMatches (void) const;
 
-  /*! \brief Returns a set of file nodes, regardless matching status */
-  const MatchSet_t& getFiles (void) const;
 protected:
 
   MetricFinder (void);
@@ -130,7 +140,8 @@ protected:
   /*! \brief Handles Statement nodes. */
   virtual void visit (const RoseHPCT::Statement* node);
 
-  bool doLinesOverlap (size_t a, size_t b) const;
+  bool doLinesOverlap (const RoseHPCT::Located* l) const;
+  //bool doLinesOverlap (size_t a, size_t b) const;
 
   /*! \brief Check if the target node is a shadow node of 
    * the previously matched nodes to a profile node */
@@ -139,7 +150,6 @@ protected:
 private:
   const SgLocatedNode* target_; //!< Node to find
   MatchSet_t matches_; //!< All matching ProfIR nodes
-  MatchSet_t files_; //!< All file nodes in profIR, used to find hottest file later on
   bool verbose_; //!< True <==> verbose messaging desired by caller
   bool prune_branch_; //!< Indicates a tree branch may be pruned from search
 protected:
@@ -180,7 +190,10 @@ public:
   //note that a profile IR node may corresponding multiple AST nodes(a code range)
   typedef std::map<const RoseHPCT::IRNode *, SgLocNodeSet_t> AttachedNodes_t;
   AttachedNodes_t& getAttachedNodes (void);
+#if 0  
   std::set<const RoseHPCT::IRNode *>& getProfFileNodes (void);
+  std::set<const RoseHPCT::IRNode *>& getProfStmtNodes (void);
+#endif  
   //! Insert the metrics info. into source as comments, mostly for debugging
   void annotateSourceCode(void);
 protected:
@@ -190,7 +203,10 @@ protected:
 private:
   const RoseHPCT::IRTree_t* hpc_root_; //!< Root of profiling data tree
   AttachedNodes_t attached_; //!< Lists of attached nodes
+#if 0  
   std::set<const RoseHPCT::IRNode *> files_; //!< set of all profir file nodes
+  std::set<const RoseHPCT::IRNode *> stmts_; //!< set of all profir statement nodes
+#endif  
   bool verbose_; //!< Enable verbose messaging
 };
 
@@ -268,12 +284,18 @@ MetricFinder::getMatches (void) const
 {
   return matches_;
 }
-
+#if 0
 const MetricFinder::MatchSet_t&
 MetricFinder::getFiles(void) const
 {
   return files_;
 }
+const MetricFinder::MatchSet_t&
+MetricFinder::getStmts(void) const
+{
+  return stmts_;
+}
+#endif
 bool
 MetricFinder::isTargetSgGlobal (void) const
 {
@@ -309,9 +331,10 @@ MetricFinder::isTargetSgStatementNonScope (void) const
 }
 
 bool
-MetricFinder::doLinesOverlap (size_t a, size_t b) const
+MetricFinder::doLinesOverlap (const RoseHPCT::Located * l) const
 {
-  return ::doLinesOverlap (target_, a, b);
+  return ::doLinesOverlap (target_, l);
+  //return ::doLinesOverlap (target_, a, b);
 }
 
 //! Check if the target SgNode is a shadow node of a previously  matched 
@@ -378,7 +401,10 @@ MetricFinder::visit (const File* f)
 {
   if (f)
   {
-    files_.insert(f);
+#if 0  // moved to pathFinder traversal   
+    //take advantage of this traversal to accumulate file nodes
+    RoseHPCT::profFileNodes_.insert(f);
+#endif    
     if (!doFilenamesMatch (target_, f->getName ()))
       prune_branch_ = true;
     else  // match file name
@@ -397,7 +423,8 @@ void
 MetricFinder::visit (const Procedure* p)
 {
   if (p && isTargetSgProcedure ()
-      && doLinesOverlap (p->getFirstLine (), p->getLastLine ()))
+      && doLinesOverlap (p))
+      //&& doLinesOverlap (p->getFirstLine (), p->getLastLine ()))
     {
       matches_.insert (p);
       prune_branch_ = true;
@@ -408,7 +435,8 @@ void
 MetricFinder::visit (const Loop* l)
 {
   if (l && isTargetSgLoop ()
-      && doLinesOverlap (l->getFirstLine (), l->getLastLine ()))
+      && doLinesOverlap (l))
+      //&& doLinesOverlap (l->getFirstLine (), l->getLastLine ()))
     {
       matches_.insert (l);
       prune_branch_ = true;
@@ -418,13 +446,29 @@ MetricFinder::visit (const Loop* l)
 void
 MetricFinder::visit (const Statement* s)
 {
-  if (s && isTargetSgStatementNonScope ()
-      && doLinesOverlap (s->getFirstLine (), s->getLastLine ())
-      && !isShadowNode(s)) // We only consider shadow SgNodes for statement profile results for now
-    {
-      matches_.insert (s);
-      prune_branch_ = true;
+  if (s)
+  {
+#if 0    
+    //cout<<"found a statement prof IR node:"<<s->toString()<<endl;
+    //  take advantage of this traversal to accumulate statement nodes   
+    //  This traversal can abort once a match is found so one execution will not collect all stmt nodes.
+    RoseHPCT::profStmtNodes_.insert(s);
+#endif    
+    if (isTargetSgStatementNonScope ())
+    { 
+      if (doLinesOverlap (s))
+      //if (doLinesOverlap (s->getFirstLine (), s->getLastLine ()))
+      {
+        if (!isShadowNode(s))
+          // We only consider shadow SgNodes for statement profile results for now
+        {
+          matches_.insert (s);
+          prune_branch_ = true;
+
+        }
+      }
     }
+  }
 }
 
 /* ---------------------------------------------------------------- */
@@ -591,12 +635,18 @@ MetricAttachTraversal::getAttachedNodes (void)
 {
   return attached_;
 }
-
+#if 0
 std::set<const RoseHPCT::IRNode *>&
 MetricAttachTraversal::getProfFileNodes(void)
 {
   return files_;
 }
+std::set<const RoseHPCT::IRNode *>&
+MetricAttachTraversal::getProfStmtNodes(void)
+{
+  return stmts_;
+}
+#endif
 void
 MetricAttachTraversal::visit (SgNode* n)
 {
@@ -610,11 +660,15 @@ MetricAttachTraversal::visit (SgNode* n)
       finder.traverse (hpc_root_);
       // for collecting File nodes of profile IR
       exe_counter++;
+#if 0         
       if (exe_counter==1) 
        {
          // store them into MetricAttachTraversal::files
          files_ = finder.getFiles();
+         stmts_ = finder.getStmts();
+         cout<<"MetricAttachTraversal::visit() obtained stmts from MetricFinder:count="<<stmts_.size()<<endl;
        } 
+#endif         
       if (finder.found ())
         {
           MetricFinder::MatchSet_t matches = finder.getMatches ();
@@ -864,22 +918,25 @@ RoseHPCT::attachMetrics (const IRTree_t* hpc_root, SgProject* sage_root,
   MetricAttachTraversal attacher (hpc_root);
   attacher.setVerbose (verbose);
   attacher.traverse (sage_root, preorder);
-  if (verbose)
+  if (enable_debug)
   {  
     attacher.annotateSourceCode();
-#if 0    
-    std::set<const RoseHPCT::IRNode *>&files = attacher.getProfFileNodes();
-    std::set<const RoseHPCT::IRNode *>::iterator iter= files.begin();
-    for (;iter!=files.end(); iter++)
-      cout<<"debug:"<< (*iter)->toString()<<endl;
-#endif       
   }
+#if 0 // We use namespace level variables to accumulate them now
   // Accumulate file metrics, used to find hot files later on
   std::set<const RoseHPCT::IRNode *>&files = attacher.getProfFileNodes();
   std::set<const RoseHPCT::IRNode *>::iterator iter= files.begin();
   for (;iter!=files.end(); iter++)
    profFileNodes_.insert(*iter); 
-
+  // Accumulate non-scope stmt metrics, used to find hot stmts later on
+  std::set<const RoseHPCT::IRNode *>&stmts= attacher.getProfStmtNodes();
+  std::set<const RoseHPCT::IRNode *>::iterator iter2= stmts.begin();
+  cout<<"Store stmt prof IR nodes of count="<<stmts.size()<<endl;
+  for (;iter2!=stmts.end(); iter2++)
+  {
+   profStmtNodes_.insert(*iter2); 
+  }
+#endif
   MetricAttachTraversal::AttachedNodes_t& attached
     = attacher.getAttachedNodes ();
   normalizeMetrics (sage_root, attached, verbose);

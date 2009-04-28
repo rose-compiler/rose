@@ -179,20 +179,31 @@ std::string Observable::toString() const
 Located::Located (void)
 {
   setLines (0, 0);
+  setFileNode(0);
 }
 
 Located::Located (const Located& l)
 {
   setLines (l.getFirstLine (), l.getLastLine ());
+  setFileNode(l.getFileNode());
 }
 
-Located::Located (size_t b, size_t e)
-  : begin_(b), end_(e)
+Located::Located (size_t b, size_t e, File* f/*=NULL*/)
+  : begin_(b), end_(e), filenode_(f)
 {
 }
 
 Located::~Located (void)
 {
+}
+
+File* Located::getFileNode(void) const
+{
+  return filenode_;
+}
+void Located::setFileNode(File* filenode)
+{
+  filenode_= filenode;
 }
 
 size_t
@@ -233,6 +244,10 @@ std::string Located::toString() const
   o1<<begin_;
   o2<<end_;
   result = o1.str()+"-"+o2.str();
+  if (filenode_)
+    result= filenode_->toString()+" "+ result;
+  else
+    result = " no_filenode "+result;
   return result;
 }
 /* ---------------------------------------------------------------- */

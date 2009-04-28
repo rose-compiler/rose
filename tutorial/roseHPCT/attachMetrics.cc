@@ -46,9 +46,9 @@ static void printFlopRate (const SgNode* n)
 int main (int argc, char* argv[])
 {
   vector<string> argvList(argv, argv+argc);
-  cerr << "[Loading HPCToolkit profiling data...]" << endl;
+  cerr << "[Loading HPCToolkit or Gprof profiling data...]" << endl;
   RoseHPCT::ProgramTreeList_t profiles
-    = RoseHPCT::loadHPCTProfiles (argvList);
+    = RoseHPCT::loadProfilingFiles(argvList);
 
   cerr << "[Building the ROSE AST...]" << endl;
   SgProject* proj = frontend (argvList);
