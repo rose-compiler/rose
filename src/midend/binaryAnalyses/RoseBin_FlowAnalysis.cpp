@@ -18,7 +18,7 @@ void
 RoseBin_FlowAnalysis::getRootNodes(vector <SgDirectedGraphNode*>& rootNodes) {
   nrOfFunctions=0;
   ROSE_ASSERT(vizzGraph);
-  rose_hash::hash_map <std::string, SgDirectedGraphNode*>::const_iterator itn = vizzGraph->nodes.begin();
+  nodeType::const_iterator itn = vizzGraph->nodes.begin();
   for (; itn!=vizzGraph->nodes.end();++itn) {
     string hex_address = itn->first;
     SgDirectedGraphNode* node = isSgDirectedGraphNode(itn->second);

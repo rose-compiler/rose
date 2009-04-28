@@ -116,16 +116,8 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
 
   int nrOfFunctions;
 
-// '__gnu_cxx::hash_map<std::basic_string<char >, SgDirectedGraphNode*, __gnu_cxx::hash<std::basic_string<char > >, std::equal_to<std::basic_string<char > > >'
-// to non-scalar type
-// '__gnu_cxx::hash_map<std::basic_string<char >, SgDirectedGraphNode*, hash_string, eqstr_string, std::allocator<SgDirectedGraphNode*> >'
-
-// typedef rose_hash::hash_map <std::string, SgDirectedGraphNode*> nodeType;
-// typedef rose_hash::hash_map <std::string, SgDirectedGraphEdge*> edgeType;
-// typedef rose_hash::hash_map <std::string, SgDirectedGraphNode*,hash_string,eqstr_string> nodeType;
-
-  typedef rose_hash::hash_map <std::string, SgDirectedGraphNode*> nodeType;
-   typedef rose_hash::hash_map < std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string> edgeType;
+  typedef SB_DirectedGraph::nodeType nodeType;
+  typedef rose_hash::hash_map < std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string> edgeType;
 
   SgAsmNode* globalBin;
   int func_nr;
