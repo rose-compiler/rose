@@ -69,7 +69,7 @@ class RoseBin_DataFlowAbstract {
 
    rose_hash::hash_map <uint64_t, RoseBin_Variable*> memory;
 
-  RoseBin_Graph* vizzGraph;
+
 
   // definition of def-use data-structures. 
   // will need those for other analyses
@@ -89,7 +89,7 @@ class RoseBin_DataFlowAbstract {
  public:
   tabletype deftable;
   tabletype usetable;
-
+  RoseBin_Graph* vizzGraph;
 
   RoseBin_DataFlowAbstract() {}
   virtual ~RoseBin_DataFlowAbstract() {}

@@ -487,9 +487,9 @@ RoseBin_VariableAnalysis::run(string& name, SgDirectedGraphNode* node,
 	}
 
 	cerr << " DataFlow::VariableAnalysis . Ambigious INT call: " <<
-	  vizzGraph->getProperty(RoseBin_Def::name, node) << " - " << value << endl;
+	  vizzGraph->getProperty(SB_Graph_Def::name, node) << " - " << value << endl;
 	value = "PROBLEM: " + value; 
-	node->append_properties(RoseBin_Def::dfa_unresolved_func,value);
+	node->append_properties(SB_Graph_Def::dfa_unresolved_func,value);
 
       } else {
 	// we know what INT instruction it is
@@ -500,7 +500,7 @@ RoseBin_VariableAnalysis::run(string& name, SgDirectedGraphNode* node,
 	int_name += " ("+t_ebx+","+t_ecx+","+t_edx+")";
 	//if (RoseBin_support::DEBUG_MODE()) 
 	// cout << " found INT call : " << value << " .. " << int_name << endl;
-	node->append_properties(RoseBin_Def::dfa_variable,int_name);
+	node->append_properties(SB_Graph_Def::dfa_variable,int_name);
       }
     } else
 
@@ -592,7 +592,7 @@ RoseBin_VariableAnalysis::run(string& name, SgDirectedGraphNode* node,
 		    //RoseBin_Variable* var = 
 		    createVariable(pos, pos_v, functionName+"_malloc", d_array, "Memory allocation", value, val_v,true); 		  
 		    //string varStr = var->toString();
-		    //aft->append_properties(RoseBin_Def::dfa_variable,varStr);		  
+		    //aft->append_properties(SB_Graph_Def::dfa_variable,varStr);		  
 		  }
 		} else 
 		  cerr << " Error :: foud a mov after a call that is not rax." << endl;
@@ -670,7 +670,7 @@ RoseBin_VariableAnalysis::run(string& name, SgDirectedGraphNode* node,
 			if (RoseBin_support::DEBUG_MODE() && asmAft->get_kind() == x86_mov) {
 			  cerr << "  WARNING:: MALLOC - Buffer Overflow at : " << unparseInstruction(asmAft) 
 			       <<  "  Length of array is " << length << "  but access at : " << arrayLength << endl;
-			  aft->append_properties(RoseBin_Def::dfa_bufferoverflow,varName);		  
+			  aft->append_properties(SB_Graph_Def::dfa_bufferoverflow,varName);		  
 			}
 		      }
 		    }

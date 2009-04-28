@@ -656,10 +656,10 @@ CompassAnalyses::BinaryInterruptAnalysis::Traversal::run(string& name, SgDirecte
 	  //	  createVariable(fpos_rax, pos_rax, "rax", data_ebx, "rax", 0, val_rax,false); 
 	}
 
-	cerr << " DataFlow::VariableAnalysis . Ambigious INT call: " <<
-	  vizzGraph->getProperty(RoseBin_Def::name, node) << " - " << value << endl;
+	//cerr << " DataFlow::VariableAnalysis . Ambigious INT call: " <<
+	//  vizzGraph->getProperty(SB_Graph_Def::name, node) << " - " << value << endl;
 	value = "PROBLEM: " + value; 
-	node->append_properties(RoseBin_Def::dfa_unresolved_func,value);
+	node->append_properties(SB_Graph_Def::dfa_unresolved_func,value);
 
       } else {
 	// we know what INT instruction it is
@@ -670,7 +670,7 @@ CompassAnalyses::BinaryInterruptAnalysis::Traversal::run(string& name, SgDirecte
 	int_name += " ("+t_ebx+","+t_ecx+","+t_edx+")";
 	//if (RoseBin_support::DEBUG_MODE()) 
 	// cout << " found INT call : " << value << " .. " << int_name << endl;
-	node->append_properties(RoseBin_Def::dfa_variable,int_name);
+	node->append_properties(SB_Graph_Def::dfa_variable,int_name);
       }
     }
   }

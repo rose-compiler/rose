@@ -140,7 +140,7 @@ void RoseBin_ControlFlowAnalysis::printGraph(std::string fileName, std::set<std:
 
 
 #if 1  
-  RoseBin_Graph* gr = new RoseBin_DotGraph(vizzGraph->info);
+  RoseBin_Graph* gr = new RoseBin_DotGraph(vizzGraph->get_bininfo());
   gr->graph = new SgDirectedGraph("test","test");
   gr->nodes=nodesResult;
 

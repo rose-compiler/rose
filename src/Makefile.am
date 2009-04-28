@@ -65,6 +65,7 @@ libroseLibraries = \
    $(top_builddir)/src/midend/programAnalysis/valuePropagation/libvaluePropagation.la \
    $(top_builddir)/src/midend/programAnalysis/defUseAnalysis/libDefUseAnalysis.la \
    $(top_builddir)/src/midend/programAnalysis/staticInterproceduralSlicing/libStaticSlicing.la \
+   $(top_builddir)/src/midend/programAnalysis/graphAnalysis/libSB_GraphAnalysis.la \
    $(top_builddir)/src/midend/programTransformation/partialRedundancyElimination/libpre.la \
    $(top_builddir)/src/midend/programTransformation/finiteDifferencing/libfiniteDifferencing.la \
    $(top_builddir)/src/midend/programTransformation/functionCallNormalization/libfunctionCallNormalization.la \

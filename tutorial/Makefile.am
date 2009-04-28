@@ -36,6 +36,7 @@ TUTORIAL_EXAMPLES = \
    bin_example \
    binaryAnalysis \
    binaryAnalysis_symbolTable \
+   sb_callgraphAnalysis \
    buildCFG \
    buildCG \
    callGraphAnalysis \
@@ -204,6 +205,8 @@ defuseAnalysis_SOURCES = defuseAnalysis.C
 runtimeCheck_SOURCES = runtimeCheck.cpp
 
 binaryAnalysis_SOURCES = binaryAnalysis.C
+
+sb_callgraphAnalysis_SOURCES = callGraphSourceBinaryExample.C 
 
 binaryAnalysis_symbolTable_SOURCES = binaryAnalysis_symbolTable.C
 

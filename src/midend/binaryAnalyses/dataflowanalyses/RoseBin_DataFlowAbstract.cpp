@@ -799,7 +799,7 @@ RoseBin_DataFlowAbstract::trackValueForRegister(
 	// found one predecessor
 	SgDirectedGraphNode* previous = vec.back();
 	ROSE_ASSERT(previous);
-	string name = vizzGraph->getProperty(RoseBin_Def::name, previous);
+	string name = vizzGraph->getProperty(SB_Graph_Def::name, previous);
 	if (RoseBin_support::DEBUG_MODE()) 
 	  cout << "    tracking recursive var " << name << endl;
 
@@ -851,7 +851,7 @@ RoseBin_DataFlowAbstract::getPredecessor(SgDirectedGraphNode* node){
     // found one predecessor
     previous = vec.back();
     ROSE_ASSERT(previous);
-    string name = vizzGraph->getProperty(RoseBin_Def::name, previous);
+    string name = vizzGraph->getProperty(SB_Graph_Def::name, previous);
     if (RoseBin_support::DEBUG_MODE()) 
       cout << "    tracking recursive var " << name << endl;
     
@@ -871,7 +871,7 @@ RoseBin_DataFlowAbstract::getSuccessor(SgDirectedGraphNode* node){
     // found one predecessor
     after = vec.back();
     ROSE_ASSERT(after);
-    string name = vizzGraph->getProperty(RoseBin_Def::name, after);
+    string name = vizzGraph->getProperty(SB_Graph_Def::name, after);
     if (RoseBin_support::DEBUG_MODE()) 
       cout << "    tracking recursive var " << name << endl;
     

@@ -779,21 +779,21 @@ RoseBin_Emulate::run(string& name, SgDirectedGraphNode* node,
     //string unp_name = unparser->unparseInstruction(inst);
     if (RoseBin_support::DEBUG_MODE()) {
       string regs = evaluateRegisters();
-      string unp_name = vizzGraph->getProperty(RoseBin_Def::name, node);
+      string unp_name = vizzGraph->getProperty(SB_Graph_Def::name, node);
       cout << "EMULATE BEFORE::  name: " << unp_name << " \n regs: " << regs << endl;
     }
     string eval = "";
     bool success=evaluateInstruction(isSgAsmx86Instruction(inst), eval);
-    //node->append_properties(RoseBin_Def::name,unp_name);
-    node->append_properties(RoseBin_Def::eval,eval);
+    //node->append_properties(SB_Graph_Def::name,unp_name);
+    node->append_properties(SB_Graph_Def::eval,eval);
     string regs = evaluateRegisters();
     if (RoseBin_support::DEBUG_MODE()) {
-      string unp_name = vizzGraph->getProperty(RoseBin_Def::name, node);
+      string unp_name = vizzGraph->getProperty(SB_Graph_Def::name, node);
       cout << "EMULATE AFTER ::  name: " << unp_name << " \n regs: " << regs << endl;
     }
-    node->append_properties(RoseBin_Def::regs,regs);
+    node->append_properties(SB_Graph_Def::regs,regs);
     if (success)
-      node->append_properties(RoseBin_Def::done,RoseBin_support::ToString("done"));
+      node->append_properties(SB_Graph_Def::done,RoseBin_support::ToString("done"));
   // ----------------------------------------------------------------------------
   }
   return false;

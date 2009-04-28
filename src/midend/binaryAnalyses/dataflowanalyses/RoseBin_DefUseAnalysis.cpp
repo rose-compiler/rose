@@ -322,15 +322,15 @@ RoseBin_DefUseAnalysis::runEdge(SgDirectedGraphNode* node,
   for (;it!=edges.end();++it) {
     SgDirectedGraphEdge* edge = *it;
     if (edge) {
-      string type_n = vizzGraph->getProperty(RoseBin_Def::type, edge);
+      string type_n = vizzGraph->getProperty(SB_Graph_Def::type, edge);
       string label = "";
-      if (type_n==RoseBin_support::ToString(RoseBin_Edgetype::usage))
+      if (type_n==RoseBin_support::ToString(SB_Edgetype::usage))
 	label = getElementsAsStringForNode(false,next);
-      else if (type_n==RoseBin_support::ToString(RoseBin_Edgetype::cfg)) {
+      else if (type_n==RoseBin_support::ToString(SB_Edgetype::cfg)) {
 	label = getElementsAsStringForNode(true,node);
 	//label += getElementsAsStringForNode(false,node);
       }
-      vizzGraph->setProperty(RoseBin_Def::edgeLabel, edge, label);
+      vizzGraph->setProperty(SB_Graph_Def::edgeLabel, edge, label);
       //cerr << " setting property to edge : " << label << endl;
     }
   }
@@ -450,7 +450,7 @@ RoseBin_DefUseAnalysis::run(string& name, SgDirectedGraphNode* node,
 	// we have found a write to a memory location
 	if (RoseBin_support::DEBUG_MODE()) 
 	  cout << "    Instruction does alter memory . " <<  endl;
-	node->append_properties(RoseBin_Def::dfa_unresolved_func,"");
+	node->append_properties(SB_Graph_Def::dfa_unresolved_func,"");
 	nrOfMemoryWrites++;
       } else 
 	if (code.first != x86_regclass_unknown) {
@@ -490,7 +490,7 @@ RoseBin_DefUseAnalysis::run(string& name, SgDirectedGraphNode* node,
 	}
 
 	// color the node as definition (green)
-	node->append_properties(RoseBin_Def::dfa_resolved_func,"");
+	node->append_properties(SB_Graph_Def::dfa_resolved_func,"");
     
 	if (isRegisterContained==false) {
 	  nrOfRegisterWrites++;
@@ -513,7 +513,7 @@ RoseBin_DefUseAnalysis::run(string& name, SgDirectedGraphNode* node,
 		"   regName " << regName << "   exactnode contained : " << RoseBin_support::resBool(isExactNodeContained) << endl;
 	    }
 	    addDefElement(node, code, node);
-	    node->append_properties(RoseBin_Def::dfa_conditional_def,"");
+	    node->append_properties(SB_Graph_Def::dfa_conditional_def,"");
 	  }
 	  else
 	    replaceElement(node, code);
@@ -558,16 +558,16 @@ RoseBin_DefUseAnalysis::run(string& name, SgDirectedGraphNode* node,
 	    for (;ed!=edges.end();++ed){
 	      SgDirectedGraphEdge* edge = *ed;
 	      if (edge)
-		type_n = vizzGraph->getProperty(RoseBin_Def::type, edge);
-		if (type_n==RoseBin_support::ToString(RoseBin_Edgetype::usage))
+		type_n = vizzGraph->getProperty(SB_Graph_Def::type, edge);
+		if (type_n==RoseBin_support::ToString(SB_Edgetype::usage))
 		usageEdge=true;
 	    }
 	    // if there is no usage edge, we want to create one...
 	    if (usageEdge==false) {
 	      SgDirectedGraphEdge* edge = 
 		vizzGraph->createEdge(type_n, 0, nodeTarget, addr_t, node, asmNode->get_address() );
-		vizzGraph->setProperty(RoseBin_Def::name, edge, name);
-		vizzGraph->setProperty(RoseBin_Def::type, edge, RoseBin_support::ToString(RoseBin_Edgetype::usage));
+		vizzGraph->setProperty(SB_Graph_Def::name, edge, name);
+		vizzGraph->setProperty(SB_Graph_Def::type, edge, RoseBin_support::ToString(SB_Edgetype::usage));
 	    }
 	  }
 	} // if nodetarget

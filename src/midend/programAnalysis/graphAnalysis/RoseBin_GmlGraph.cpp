@@ -13,22 +13,22 @@ using namespace VirtualBinCFG;
 
 #include "../RoseBin_FlowAnalysis.h"
 
-void 
+void
 RoseBin_GMLGraph::printProlog(  std::ofstream& myfile, string& fileType) {
   myfile << "graph  [\n" << endl;
 }
 
-void 
+void
 RoseBin_GMLGraph::printEpilog(  std::ofstream& myfile) {
   myfile << "]\n" << endl;
 }
 
-void 
+void
 RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forward_analysis,
 				 std::ofstream& myfile, string& recursiveFunctionName) {
   //bool firstFunc = true;
   // traverse nodes and visualize results of graph
-  
+
   funcMap.clear();
   nodesMap.clear();
   //cerr << " Preparing graph - Nr of Nodes : " << nodes.size() << "  edges : " << edges.size() << endl;
@@ -47,12 +47,12 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
       vector<SgNode*> list;
       FindInstructionsVisitorx86 vis;
       AstQueryNamespace::querySubTree(func, std::bind2nd( vis, &list ));
-      
+
       int validInstructions = func->nrOfValidInstructions(list);
       funcMap[func]=counter;
       nodesMap[func]=count;
       string name = func->get_name();
-      string text = "node [\n   id " + RoseBin_support::ToString(counter) + "\n  id_ " + 
+      string text = "node [\n   id " + RoseBin_support::ToString(counter) + "\n  id_ " +
 	RoseBin_support::ToString(counter) + "\n  label \"" + name + "\"\n  ";
       text +="   nrinstr_ "+RoseBin_support::ToString(validInstructions)+" \n";
       text+= " isGroup 1\n isGroup_ 1\n ]\n";
@@ -75,11 +75,11 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
 
       if (grouping)
 	myfile << text;
-    } 
+    }
     SgAsmInstruction* bin_inst = isSgAsmInstruction(internal);
     if (bin_inst)
       nodesMap[bin_inst]=count;
-      
+
   }
 
   //cerr << " Writing graph to GML - Nr of Nodes : " << nodes.size() << endl;
@@ -112,19 +112,19 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
 	for (; prop!=node_p.end(); ++prop) {
 	  int addr = prop->first;
 	  //cerr << " gml : property for addr : " << addr << endl;
-	  if (addr==RoseBin_Def::nodest_jmp)
+	  if (addr==SB_Graph_Def::nodest_jmp)
 	    nodest_jmp = true;
-	  else if (addr==RoseBin_Def::itself_call)
+	  else if (addr==SB_Graph_Def::itself_call)
 	    error = true;
-	  else if (addr==RoseBin_Def::nodest_call)
+	  else if (addr==SB_Graph_Def::nodest_call)
 	    nodest_call = true;
-	  else if (addr==RoseBin_Def::interrupt)
+	  else if (addr==SB_Graph_Def::interrupt)
 	    interrupt = true;
 	  //	  else
 	  //  name = prop->second;
 	}
       }
-      
+
       int parent = funcMap[func];
       RoseBin_support::checkText(name);
       int length = name.length();
@@ -164,7 +164,7 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
 	cerr << " ERROR : printNodes preparation . No parent found for node : " << bin_inst->class_name() <<
 	  "  " << hex_address << endl;
 	continue;
-      } 
+      }
       if ((pos % 10000)==0)
 	cout << " GMLGraph:: printing GML Nodes : " << pos << endl;
       string name = getInternalNodes(node, forward_analysis,bin_inst);
@@ -189,19 +189,19 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
 	text +="   gid "+RoseBin_support::ToString(parent)+" ]\n";
       }
     }
-    
+
     myfile << text;
     //    cerr << " this node : " << text << endl;
-  } 
+  }
   funcMap.clear();
 }
-  
+
 
 
 std::string
 RoseBin_GMLGraph::getInternalNodes(  SgDirectedGraphNode* node,
 				     bool forward_analysis, SgAsmNode* internal) {
-  
+
   SgAsmInstruction* bin_inst = isSgAsmInstruction(internal);
   SgAsmx86Instruction* control = isSgAsmx86Instruction(internal);
   // get the unparser string!
@@ -233,39 +233,39 @@ RoseBin_GMLGraph::getInternalNodes(  SgDirectedGraphNode* node,
   for (; prop!=node_p.end(); ++prop) {
     int addr = prop->first;
     // cerr << " dot : property for addr : " << addr << " and node " << hex_address << endl;
-    if (addr==RoseBin_Def::name)
+    if (addr==SB_Graph_Def::name)
       name = prop->second;
-    else if (addr==RoseBin_Def::eval)
+    else if (addr==SB_Graph_Def::eval)
       eval = prop->second;
-    else if (addr==RoseBin_Def::regs)
+    else if (addr==SB_Graph_Def::regs)
       regs = prop->second;
-    else if (addr==RoseBin_Def::nodest_jmp)
+    else if (addr==SB_Graph_Def::nodest_jmp)
       nodest_jmp = true;
-    else if (addr==RoseBin_Def::itself_call)
+    else if (addr==SB_Graph_Def::itself_call)
       error = true;
-    else if (addr==RoseBin_Def::nodest_call)
+    else if (addr==SB_Graph_Def::nodest_call)
       nodest_call = true;
-    else if (addr==RoseBin_Def::interrupt)
+    else if (addr==SB_Graph_Def::interrupt)
       interrupt = true;
-    else if (addr==RoseBin_Def::done)
+    else if (addr==SB_Graph_Def::done)
       checked = true;
-    else if (addr==RoseBin_Def::dfa_standard)
+    else if (addr==SB_Graph_Def::dfa_standard)
       dfa_standard = true;
-    else if (addr==RoseBin_Def::dfa_resolved_func) {
+    else if (addr==SB_Graph_Def::dfa_resolved_func) {
       dfa_resolved_func = true;
       dfa_info = prop->second;
-    } else if (addr==RoseBin_Def::dfa_unresolved_func) {
+    } else if (addr==SB_Graph_Def::dfa_unresolved_func) {
       dfa_unresolved_func = true;
       dfa_info = prop->second;
-    } else if (addr==RoseBin_Def::dfa_variable) {
+    } else if (addr==SB_Graph_Def::dfa_variable) {
       dfa_variable = prop->second;
-    } else if (addr==RoseBin_Def::visitedCounter) {
+    } else if (addr==SB_Graph_Def::visitedCounter) {
       visitedCounter = prop->second;
     } else {
       cerr << " *************** dotgraph: unknown property found :: " << addr << endl;
     }
   }
-  
+
   if (bin_inst) {
     type += " " + bin_inst->class_name();
   }
@@ -323,8 +323,8 @@ RoseBin_GMLGraph::getInternalNodes(  SgDirectedGraphNode* node,
   } else {
     if (pre->get_kind() == x86_ret || pre->get_kind() == x86_hlt) {
       // this instruction must be suspicious
-      add =" 0000FF ";	  
-    } 
+      add =" 0000FF ";
+    }
   }
   nodeStr += "  Node_Color_ " + add + "  \n";
   nodeStr += "  graphics [ h 30.0 w " + RoseBin_support::ToString(length*7) + " type \"rectangle\" fill \"#" + add +  "\"  ]\n";
@@ -389,7 +389,7 @@ void RoseBin_GMLGraph::printEdges( bool forward_analysis, std::ofstream& myfile,
     for (; prop!=edge_p.end(); ++prop) {
       int addr = prop->first;
       // cerr << " dot : property for addr : " << addr << " and node " << hex_address << endl;
-      if (addr==RoseBin_Def::edgeLabel)
+      if (addr==SB_Graph_Def::edgeLabel)
 	edgeLabel = prop->second;
       if (edgeLabel.length()>1)
 	if (edgeLabel[0]!='U')
@@ -409,12 +409,12 @@ void RoseBin_GMLGraph::printEdges( bool forward_analysis, std::ofstream& myfile,
 	pos_s = it_s->second;
       if (it_t!=nodesMap.end())
 	pos_t = it_t->second;
-      
+
       if (pos_s==0 || pos_t==0)
 	cerr << " GMLGraph edge, node == 0 " << endl;
-      
-      string output = "edge [\n  label \""+edgeLabel+"\"\n source " + RoseBin_support::ToString(pos_s) + 
-	"\n   target " + RoseBin_support::ToString(pos_t) + "\n"; 
+
+      string output = "edge [\n  label \""+edgeLabel+"\"\n source " + RoseBin_support::ToString(pos_s) +
+	"\n   target " + RoseBin_support::ToString(pos_t) + "\n";
 
       // ------------------
       SgAsmx86Instruction* contrl = isSgAsmx86Instruction(source->get_SgNode());
@@ -441,22 +441,22 @@ void RoseBin_GMLGraph::printEdges( bool forward_analysis, std::ofstream& myfile,
 	      add += "   graphics [ type \"line\" style \"dashed\" arrow \"last\" fill \"#FF0000\" ]  ]\n";
 	    } else if (contrl->get_kind() == x86_jmp) {
 	      add += "   graphics [ type \"line\" style \"dashed\" arrow \"last\" fill \"#FF0000\" ]  ]\n";
-	    } else 
+	    } else
 	      add += "   graphics [ type \"line\" style \"dashed\" arrow \"last\" fill \"#00FF00\" ]  ]\n";
-	  } else 
-	    if (forward_analysis && 
+	  } else
+	    if (forward_analysis &&
 		(contrl->get_kind() == x86_call || contrl->get_kind() == x86_jmp)) {
 	      add += "   graphics [ type \"line\" arrow \"last\" fill \"#FFFF00\" ]  ]\n";
 	    }
-	} else 
+	} else
 	  if (contrl->get_kind() == x86_ret ) { //&& dest_list_empty) {
 	    // in case of a multiple return
 	    add += "   graphics [ type \"line\" style \"dashed\" arrow \"last\" fill \"#3399FF\" ]  ]\n";
-	  } 
+	  }
       }
 
-      string type_n = getProperty(RoseBin_Def::type, edge);
-      if (type_n==RoseBin_support::ToString(RoseBin_Edgetype::usage)) {
+      string type_n = getProperty(SB_Graph_Def::type, edge);
+      if (type_n==RoseBin_support::ToString(SB_Edgetype::usage)) {
 	add = "   graphics [ type \"line\" style \"dashed\" arrow \"last\" fill \"#000000\" ]  ]\n";
       }
 

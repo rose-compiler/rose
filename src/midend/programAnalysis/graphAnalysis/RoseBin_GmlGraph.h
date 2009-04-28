@@ -29,6 +29,7 @@ class RoseBin_GMLGraph : public RoseBin_Graph {
 
  public:
   RoseBin_GMLGraph(VirtualBinCFG::AuxiliaryInformation* info): RoseBin_Graph(info) {
+	  ROSE_ASSERT(info);
     //added this for vizz3d visualization
     skipFunctions=false;
     skipInternalEdges=true;
@@ -36,7 +37,7 @@ class RoseBin_GMLGraph : public RoseBin_Graph {
   }
   virtual ~RoseBin_GMLGraph() {}
 
-  void printNodes( bool dfg, RoseBin_FlowAnalysis* flow,  bool forward_analysis, 
+  void printNodes( bool dfg, RoseBin_FlowAnalysis* flow,  bool forward_analysis,
 		     std::ofstream &myfile, std::string& recursiveFunctionName);
 
   void printEdges( bool forward_analysis, std::ofstream& myfile, bool mergedEdges);

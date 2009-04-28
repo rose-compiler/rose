@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <iostream>
 
+
 //#include "RoseBin_support.h"
 #include "MyAstAttribute.h"
 //#include "RoseBin_unparse_visitor.h"
@@ -84,7 +85,7 @@ class FindStatementsVisitor: public std::binary_function<SgNode*, std::vector<Sg
 {
  public:
   void* operator()(first_argument_type node, std::vector<SgStatement*>* insns ) const{
-    if (isSgStatement(node)) 
+    if (isSgStatement(node))
       //      if (!isSgStatement(node)->get_file_info()->isCompilerGenerated())
 	insns->push_back(isSgStatement(node));
 	//}
@@ -96,7 +97,7 @@ class FindNodeVisitor: public std::binary_function<SgNode*, std::vector<SgLocate
 {
  public:
   void* operator()(first_argument_type node, std::vector<SgLocatedNode*>* insns ) const{
-    if (isSgNode(node)) 
+    if (isSgNode(node))
       insns->push_back(isSgLocatedNode(node));
     return NULL;
   }
@@ -115,15 +116,15 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
 
   int nrOfFunctions;
 
-// '__gnu_cxx::hash_map<std::basic_string<char >, SgDirectedGraphNode*, __gnu_cxx::hash<std::basic_string<char > >, std::equal_to<std::basic_string<char > > >' 
-// to non-scalar type 
+// '__gnu_cxx::hash_map<std::basic_string<char >, SgDirectedGraphNode*, __gnu_cxx::hash<std::basic_string<char > >, std::equal_to<std::basic_string<char > > >'
+// to non-scalar type
 // '__gnu_cxx::hash_map<std::basic_string<char >, SgDirectedGraphNode*, hash_string, eqstr_string, std::allocator<SgDirectedGraphNode*> >'
 
 // typedef rose_hash::hash_map <std::string, SgDirectedGraphNode*> nodeType;
 // typedef rose_hash::hash_map <std::string, SgDirectedGraphEdge*> edgeType;
 // typedef rose_hash::hash_map <std::string, SgDirectedGraphNode*,hash_string,eqstr_string> nodeType;
 
-   typedef RoseBin_Graph::nodeType nodeType;
+  typedef rose_hash::hash_map <std::string, SgDirectedGraphNode*> nodeType;
    typedef rose_hash::hash_map < std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string> edgeType;
 
   SgAsmNode* globalBin;
@@ -140,11 +141,11 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
   std::string typeEdge;
 
   // needed for CallGraphAnalysis
-  SgAsmFunctionDeclaration* funcDecl; 
+  SgAsmFunctionDeclaration* funcDecl;
   SgDirectedGraphNode* funcDeclNode;
 
 
-  
+
   // worklist to build the CFG graph
   std::stack <SgAsmInstruction*> worklist_forthisfunction;
 
@@ -185,20 +186,20 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
     nrNodes=0;
     nrEdges=0;
     db = RoseBin_support::getDataBaseSupport();
-    RoseBin_support::setDebugMode(false);    
-    RoseBin_support::setDebugModeMin(false);    
+    RoseBin_support::setDebugMode(false);
+    RoseBin_support::setDebugModeMin(false);
     func_nr=0;
     globalBin = global;
     // todo: optimize later
     if (initialized==false) {
 #if 0
-      // (tps 2Jun08) : Jeremiah implemented functions in his disassembler, 
+      // (tps 2Jun08) : Jeremiah implemented functions in his disassembler,
       // so we do not need to perform a conversion from block to function anymore.
       // However, for now we want to pertain the flat hierarchy of function-instruction
       // instead of function-block-instruction and hence have to convert this.
       if (!db)
 	flattenBlocks(globalBin);
-#endif 
+#endif
 #if 0
       if (!db)
 	convertBlocksToFunctions(globalBin);
@@ -221,6 +222,7 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
   void setInitializedFalse() {
     initialized=false;
   }
+  RoseBin_Graph* getGraph() {return vizzGraph;}
 
   bool forward_analysis;
   void printAST(SgAsmNode* globalNode);
@@ -234,7 +236,7 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
 			 int functionSize, int countDown,
 			 std::string& currentFunctionName, int func_nr);
 
-  SgDirectedGraphNode* 
+  SgDirectedGraphNode*
     getNodeFor(uint64_t inst) { return deftable_instr[inst];}
 
 
@@ -243,8 +245,8 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
 
   // converts string to hex
   template <class T>
-    bool from_string(T& t, 
-		     const std::string& s, 
+    bool from_string(T& t,
+		     const std::string& s,
 		     std::ios_base& (*f)(std::ios_base&))
     {
       std::istringstream iss(s);

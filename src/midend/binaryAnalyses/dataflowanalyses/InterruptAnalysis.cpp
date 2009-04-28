@@ -486,9 +486,9 @@ InterruptAnalysis::run(string& name, SgDirectedGraphNode* node,
 	}
 
 	cerr << " DataFlow::VariableAnalysis . Ambigious INT call: " <<
-	  vizzGraph->getProperty(RoseBin_Def::name, node) << " - " << value << endl;
+	  vizzGraph->getProperty(SB_Graph_Def::name, node) << " - " << value << endl;
 	value = "PROBLEM: " + value; 
-	node->append_properties(RoseBin_Def::dfa_unresolved_func,value);
+	node->append_properties(SB_Graph_Def::dfa_unresolved_func,value);
 
       } else {
 	// we know what INT instruction it is
@@ -499,7 +499,7 @@ InterruptAnalysis::run(string& name, SgDirectedGraphNode* node,
 	int_name += " ("+t_ebx+","+t_ecx+","+t_edx+")";
 	if (RoseBin_support::DEBUG_MODE()) 
 	 cerr << " found INT call : "  << int_name << endl;
-	node->append_properties(RoseBin_Def::dfa_variable,int_name);
+	node->append_properties(SB_Graph_Def::dfa_variable,int_name);
       }
     }
   }

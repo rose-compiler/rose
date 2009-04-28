@@ -1062,6 +1062,7 @@ src/midend/programAnalysis/staticInterproceduralSlicing/Makefile
 src/midend/programAnalysis/annotationLanguageParser/Makefile
 src/midend/programAnalysis/sideEffectAnalysis/Makefile
 src/midend/programAnalysis/distributedMemoryAnalysis/Makefile
+src/midend/programAnalysis/graphAnalysis/Makefile
 src/midend/programTransformation/Makefile
 src/midend/programTransformation/partialRedundancyElimination/Makefile
 src/midend/programTransformation/finiteDifferencing/Makefile

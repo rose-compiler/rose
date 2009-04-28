@@ -333,7 +333,7 @@ CompassAnalyses::BinaryBufferOverflow::Traversal::run(string& name, SgDirectedGr
 			if (RoseBin_support::DEBUG_MODE() && asmAft->get_kind() == x86_mov) {
 			  cerr << "  WARNING:: MALLOC - Buffer Overflow at : " << unparseInstruction(asmAft) 
 			       <<  "  Length of array is " << length << "  but access at : " << arrayLength << endl;
-			  aft->append_properties(RoseBin_Def::dfa_bufferoverflow,varName);		  
+			  aft->append_properties(SB_Graph_Def::dfa_bufferoverflow,varName);		  
 			}
 		      }
 		    }

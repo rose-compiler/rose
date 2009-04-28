@@ -250,6 +250,7 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/midend/programAnalysis/dominanceAnalysis \
      -I$(top_srcdir)/src/midend/programAnalysis/staticInterproceduralSlicing \
      -I$(top_srcdir)/src/midend/programAnalysis/distributedMemoryAnalysis \
+     -I$(top_srcdir)/src/midend/programAnalysis/graphAnalysis \
      -I$(top_srcdir)/src/midend/astInlining \
      -I$(top_srcdir)/src/midend/astOutlining  \
      -I$(top_srcdir)/src/midend/astQuery \
