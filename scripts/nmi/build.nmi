@@ -1,0 +1,4 @@
+method = nmi
+input_runids = $(RID)
+block_until_exists = true
+ignore_missing_platforms = true

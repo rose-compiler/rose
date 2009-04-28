@@ -1,0 +1,3 @@
+#svn checkout https://outreach.scidac.gov/svn/rose/trunk
+method = svn
+url = https://outreach.scidac.gov/svn/rose/trunk

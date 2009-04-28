@@ -1,0 +1,30 @@
+project = rose compiler
+project_version = svn
+component = ROSE - $(TITLE)
+component_version = revision $(REVISION)
+description = $(DESCRIPTION)
+
+run_type = test
+
+inputs = $(SUBMITDIR)/build.nmi, $(SUBMITDIR)/glue.scp
+
+remote_declare = glue.pl
+remote_declare_args = -taskhook=remote_declare
+
+# Declare macros for glue.pl
+TASKLIST = platform_info, check
+SRCDIR = trunk
+ROSE_VERSION = svn
+
+#prereqs = gcc-4.2.4, boost-1.35.0
+prereqs = $(PREREQS)
+
+remote_task = glue.pl
+remote_task_args = -taskhook=remote_task
+
+remote_post = glue.pl
+remote_post_args = -taskhook=remote_post
+
+platforms = x86_deb_5.0
+
+notify = heller9@llnl.gov

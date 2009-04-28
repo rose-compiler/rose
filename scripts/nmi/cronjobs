@@ -1,0 +1,11 @@
+# DO NOT REMOVE
+CWD=/home/heller/rose_nmi
+# update the scripts every day at midnight
+# update.sh updates the scripts via svn and loads the new, updated cronjob file
+* 0 * * * ${CWD}/update.sh >>& ${CWD}/update.log 
+###############################################################################
+# Contribute here:
+###############################################################################
+
+# run the minimal_default test every other day at 1 am
+* 1 */2 * * cd ${CWD}; ./submit.sh build_configs/minimal_default
