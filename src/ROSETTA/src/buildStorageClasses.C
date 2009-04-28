@@ -1487,7 +1487,7 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
                  // DQ (4/27/2009): Added case for new type
                     case ROSE_GRAPH_NODE_EDGE_HASH_MULTIMAP:
                       s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
-                      s += "     local_hash_multimap_type::iterator it; \n " ;
+                      s += "     iterator it; \n " ;
                       s += "     for (it = p_" + varNameString + ".begin(); it != p_" + varNameString + ".end(); ++it)\n " ;
                       s += "        {\n";
                       s += "          it->second = (SgGraphEdge*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex( (unsigned long)(it->second) ) ); \n";
