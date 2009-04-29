@@ -1274,6 +1274,10 @@ Grammar::setUpSupport ()
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      GraphEdge.setFunctionPrototype ( "HEADER_GRAPHEDGE", "../Grammar/Support.code");
+     GraphEdge.setDataPrototype("SgGraphNode*","node_A","= NULL",
+                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     GraphEdge.setDataPrototype("SgGraphNode*","node_B","= NULL",
+                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      GraphEdge.setDataPrototype("std::string","name","= \"\"",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -1298,16 +1302,16 @@ Grammar::setUpSupport ()
      DirectedGraphNode.setFunctionPrototype ( "HEADER_DIRECTED_GRAPH_NODE", "../Grammar/Support.code");
 
      DirectedGraphEdge.setFunctionPrototype ( "HEADER_DIRECTED_GRAPH_EDGE", "../Grammar/Support.code");
-     DirectedGraphEdge.setDataPrototype("SgGraphNode*","from","= NULL",
-                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     DirectedGraphEdge.setDataPrototype("SgGraphNode*","to","= NULL",
-                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DirectedGraphEdge.setDataPrototype("SgGraphNode*","from","= NULL",
+  //                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DirectedGraphEdge.setDataPrototype("SgGraphNode*","to","= NULL",
+  //                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      UndirectedGraphEdge.setFunctionPrototype ( "HEADER_UNDIRECTED_GRAPH_EDGE", "../Grammar/Support.code");
   // UndirectedGraphEdge.setDataPrototype("std::vector<SgGraphNode*>","nodes","",
   //                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     UndirectedGraphEdge.setDataPrototype("SgGraphNodeList*","nodes","= NULL",
-                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // UndirectedGraphEdge.setDataPrototype("SgGraphNodeList*","nodes","= NULL",
+  //                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      GraphNodeList.setFunctionPrototype ( "HEADER_GRAPH_NODE_LIST", "../Grammar/Support.code");
   // GraphNodeList.setDataPrototype("SgGraphNodePtrList","nodes","",
