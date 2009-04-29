@@ -109,6 +109,7 @@ namespace RoseHPCT
       {
         if (this == &info)
           return *this;
+
         time_percent_= info.time_percent_;
         cumulative_seconds_ = info.cumulative_seconds_;
         self_seconds_ = info.self_seconds_;
@@ -224,7 +225,7 @@ namespace RoseHPCT
         catch (...) {}
       }
     }
-   ProgramTreeList_t loadGprofVec(std::vector< gprof_info > vec);
+   ProgramTreeList_t loadGprofVec( const std::vector< gprof_info >& vec);
 
 } //end of namespace
 #endif
