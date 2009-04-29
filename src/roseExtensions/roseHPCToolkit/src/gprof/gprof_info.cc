@@ -7,7 +7,7 @@
 // and a change of namespace
 // introduced with boost 1.38
 #include <boost/version.hpp>
-#if BOOST_VERSION >= 103800
+#if BOOST_VERSION >= 103600
  #include <boost/spirit/include/classic_core.hpp>
  namespace boost_spirit = BOOST_SPIRIT_CLASSIC_NS;
 #else
