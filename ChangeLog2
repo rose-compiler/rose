@@ -1,3 +1,29 @@
+2009-04-29 02:37  dquinlan
+
+	* [r5532]
+	  /trunk/ROSE/developersScratchSpace/Dan/graph_tests/graph_test_3.C:
+	  Added initial work on connection of ROSE Graph IR Node to Boost
+	  Graph Library.
+
+2009-04-29 01:30  dquinlan
+
+	* [r5531]
+	  /trunk/ROSE/developersScratchSpace/Dan/graph_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/graph_tests/graph_test_1.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/graph_tests/graph_test_2.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/graph_tests/graph_test_3.C,
+	  /trunk/ROSE/projects/palette/rose.P,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Support.code,
+	  /trunk/ROSE/src/ROSETTA/src/support.C: Added more support for new
+	  Graph IR nodes.
+
+2009-04-29 01:21  liao6
+
+	* [r5530] /trunk/ROSE/docs/Rose/Tutorial/roseHPCT.tex,
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/src/rosehpct.cc,
+	  /trunk/ROSE/tutorial/roseHPCT/attachMetrics.cc: Updated tutorial
+	  to include the new support of gprof in ROSE-HPCT
+
 2009-04-28 23:14  liao6
 
 	* [r5527] /trunk/ROSE/configure.in,
