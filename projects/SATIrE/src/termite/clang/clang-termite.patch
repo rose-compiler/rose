@@ -185,7 +185,7 @@ Index: Driver/TermDumper.cpp
 ===================================================================
 --- Driver/TermDumper.cpp	(revision 0)
 +++ Driver/TermDumper.cpp	(revision 0)
-@@ -0,0 +1,2281 @@
+@@ -0,0 +1,2291 @@
 +//===--- StmtTermDumper.cpp - TermDumping implementation for Stmt ASTs ----===//
 +//
 +//                     The LLVM Compiler Infrastructure
@@ -731,6 +731,26 @@ Index: Driver/TermDumper.cpp
 +      return (('A' <= c) && ('Z' >= c));
 +    }
 +
++    std::string getBuiltinTypeName(const BuiltinType &T) {
++      switch (T.getKind()) {
++      case BuiltinType::Char_U:    return "unsigned_char";
++      case BuiltinType::UChar:     return "unsigned_char";
++      case BuiltinType::UShort:    return "unsigned_short";
++      case BuiltinType::UInt:      return "unsigned_int";
++      case BuiltinType::ULong:     return "unsigned_long";
++      case BuiltinType::ULongLong: return "unsigned_long_long";
++      case BuiltinType::Char_S:    return "char";
++      case BuiltinType::SChar:     return "char";
++      case BuiltinType::WChar:     return "wchar";
++      case BuiltinType::Short:     return "short";
++      case BuiltinType::Int:       return "int";
++      case BuiltinType::Long:      return "long_int";
++      case BuiltinType::LongLong:  return "long_long_int";
++      default:
++        assert(0 && "cannot handle given builtin type");
++      }
++    }
++    
 +    /***************************************************************************
 +     * Declarations                                                            *
 +     **************************************************************************/
@@ -1134,6 +1154,7 @@ Index: Driver/TermDumper.cpp
 +          termStmt(O, cast<VariableArrayType>(T)->getSizeExpr());
 +          break;
 +        case Type::IncompleteArray:
++          O << ", null";
 +          break;
 +        case Type::DependentSizedArray:
 +          termStmt(O, cast<DependentSizedArrayType>(T)->getSizeExpr());
@@ -1141,17 +1162,7 @@ Index: Driver/TermDumper.cpp
 +        default:
 +          assert(false);
 +        }
-+
-+        // TODO: check how to dump for ROSE
-+        // switch (AT->getSizeModifier()) {
-+        //   case ArrayType::Normal: O << ", Normal"; break;
-+        //   case ArrayType::Static: O << ", Static"; break;
-+        //   case ArrayType::Star:   O << ", Star"; break;
-+        // }
-+
-+        // TODO: Don't know what this is exactly.
-+        // O << ", " << AT->getIndexTypeQualifier();
-+        O << ", null)";
++        O << ")";
 +        break;
 +      }
 +
@@ -1551,28 +1562,43 @@ Index: Driver/TermDumper.cpp
 +          const BuiltinType *ILT = cast<BuiltinType>(IL->getType());
 +          bool isSigned = ILT->isSignedIntegerType();
 +
-+          switch (ILT->getKind()) {
-+          case BuiltinType::Char_U:    O << "unsigned_char"; break;
-+          case BuiltinType::UChar:     O << "unsigned_char"; break;
-+          case BuiltinType::UShort:    O << "unsigned_short"; break;
-+          case BuiltinType::UInt:      O << "unsigned_int"; break;
-+          case BuiltinType::ULong:     O << "unsigned_long"; break;
-+          case BuiltinType::ULongLong: O << "unsigned_long_long"; break;
-+
-+          case BuiltinType::Char_S:    O << "char"; break;
-+          case BuiltinType::SChar:     O << "char"; break;
-+          case BuiltinType::WChar:     O << "wchar"; break;
-+          case BuiltinType::Short:     O << "short"; break;
-+          case BuiltinType::Int:       O << "int"; break;
-+          case BuiltinType::Long:      O << "long_int"; break;
-+          case BuiltinType::LongLong:  O << "long_long_int"; break;
-+          default:
-+            assert(false);
-+          }
-+
-+          O << "_val(null, value_annotation("
++          O << getBuiltinTypeName(*ILT) << "_val(null, value_annotation("
 +            << IL->getValue().toString(10, isSigned) << "," << PPI << "), " AIB ",";
 +          fileInfo(O, S);
++          O << ")";
++          break;
++        }
++      case Stmt::CharacterLiteralClass:
++        {
++          const CharacterLiteral *CL = cast<CharacterLiteral>(S);
++
++          //if the type of the expression is an integer type, emit character
++          //literals as integers
++          bool done = false;
++          const Expr *E = dyn_cast<Expr>(S);
++          const QualType &T = E->getType();
++          if(T->getTypeClass() == Type::Builtin) {
++            BuiltinType *BT = cast<BuiltinType>(T);
++            
++            if(BT->getKind() != BuiltinType::Char_U &&
++               BT->getKind() != BuiltinType::UChar &&
++               BT->getKind() != BuiltinType::Char_S &&
++               BT->getKind() != BuiltinType::SChar ) {
++              O << getBuiltinTypeName(*BT) << "_val(null, value_annotation("
++                << CL->getValue() << ",";
++              done = true;
++            }
++          }
++
++          if(!done) {
++            O << "char_val(null, value_annotation('"
++              << escape(std::string(1, CL->getValue()))
++              << "', ";
++          }
++          
++          preprocessingInfo(O);
++          O << "), " AIB ",",
++            fileInfo(O, S);
 +          O << ")";
 +          break;
 +        }
@@ -1606,21 +1632,6 @@ Index: Driver/TermDumper.cpp
 +          O << ")";
 +          break;
 +        }
-+      case Stmt::CharacterLiteralClass:
-+        {
-+          const CharacterLiteral *CL = cast<CharacterLiteral>(S);
-+          O << "char_val(null, value_annotation('"
-+            << escape(std::string(1, CL->getValue()))
-+            << "', ";
-+          preprocessingInfo(O);
-+          O << "), " AIB ",",
-+            fileInfo(O, S);
-+          O << ")";
-+          break;
-+        }
-+
-+        //       case Stmt::ImaginaryLiteralClass: // "imag_val"
-+        // 
 +      case Stmt::ParenExprClass:
 +        {
 +          // TODO: represent in ROSE
@@ -1628,7 +1639,6 @@ Index: Driver/TermDumper.cpp
 +          termStmt(O, PE->getSubExpr());
 +          break;
 +        }
-+
 +      case Stmt::UnaryOperatorClass:
 +        termUnaryOperator(O, S);
 +        break;
