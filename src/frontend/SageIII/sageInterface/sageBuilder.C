@@ -592,9 +592,13 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & name, SgType*
   // TODO double check if there are exceptions
      func->set_scope(scope);
 
-  // DQ (1/5/2009): This is not always true (should likely use SageBuilder::topScopeStack() instead)
-     if (scope != SageBuilder::topScopeStack())
-          printf ("Warning: function parent may not be the same as the function scope (e.g. for member functions) \n");
+     // DQ (1/5/2009): This is not always true (should likely use SageBuilder::topScopeStack() instead)
+     if (SageBuilder::topScopeStack()!= NULL) // This comparison only makes sense when topScopeStack() returns non-NULL value
+       // since  stack scope is totally optional in SageBuilder.
+       if (scope != SageBuilder::topScopeStack())
+       {
+         printf ("Warning: SageBuilder::buildNondefiningFunctionDeclaration_T(): scope parameter may not be the same as the topScopeStack() (e.g. for member functions) \n");
+       }
 
      func->set_parent(scope);
 

@@ -130,7 +130,8 @@ Outliner::outline (SgStatement* s, const std::string& func_name)
 // Why is there a deep copy on "s_post"?
    SageInterface::deleteAST(s_post);
 #else
-   printf ("############ Skipped deletion of AST subtree at s_post = %p = %s \n",s_post,s_post->class_name().c_str());
+   if (enable_debug)
+     printf ("############ Skipped deletion of AST subtree at s_post = %p = %s \n",s_post,s_post->class_name().c_str());
 #endif
 
    return returnResult;

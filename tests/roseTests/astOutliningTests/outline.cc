@@ -69,10 +69,9 @@ main (int argc, char* argv[])
 
 #if 1
      const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 3000;
-  // printf ("Generate whole AST graph if small enough (size = %d) \n",SgNode::numberOfNodesInSubtree());
-     printf ("Generate whole AST graph if small enough (size = %d) \n",numberOfNodes());
+    // printf ("Generate whole AST graph if small enough (size = %d) \n",numberOfNodes());
      generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);
-     printf ("DONE: Generate whole AST graph if small enough \n");
+    // printf ("DONE: Generate whole AST graph if small enough \n");
 #endif
 
 #if 1

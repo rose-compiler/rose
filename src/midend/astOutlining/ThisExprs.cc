@@ -54,7 +54,8 @@ static
 SgVariableDeclaration *
 createThisShadowDecl (const string& name,
                       SgClassSymbol* sym,
-                      const SgFunctionDefinition* func_def)
+                      const SgFunctionDefinition* func_def,
+                      SgScopeStatement* scope)
 {
   ROSE_ASSERT (sym && func_def);
 
@@ -72,7 +73,7 @@ createThisShadowDecl (const string& name,
   SgType* var_type = 0;
   if (ASTtools::isConstMemFunc (func_decl))
     {
-      SgModifierType* mod_type = new SgModifierType (class_type);
+      SgModifierType* mod_type = SageBuilder::buildModifierType (class_type);
       ROSE_ASSERT (mod_type);
       mod_type->get_typeModifier ().get_constVolatileModifier ().setConst ();
       var_type = SgPointerType::createType (mod_type);
@@ -82,22 +83,21 @@ createThisShadowDecl (const string& name,
   ROSE_ASSERT (var_type);
 
   // Build initial value
-  SgThisExp* this_expr = new SgThisExp (ASTtools::newFileInfo (), sym);
+  SgThisExp* this_expr = SageBuilder::buildThisExp (sym);
   ROSE_ASSERT (this_expr);
   SgAssignInitializer* init =
-    new SgAssignInitializer (ASTtools::newFileInfo (), this_expr, var_type);
+    SageBuilder::buildAssignInitializer (this_expr);
 
   // Build final declaration.
   SgVariableDeclaration* decl =
-    new SgVariableDeclaration (ASTtools::newFileInfo (),
-                               var_name, var_type, init);
+    SageBuilder::buildVariableDeclaration (var_name, var_type, init, scope);
   ROSE_ASSERT(decl->get_variableDeclarationContainsBaseTypeDefiningDeclaration ()==false);
   ROSE_ASSERT (decl);
   //! \todo Should constructor do this?
-  decl->set_firstNondefiningDeclaration (decl);
+  //decl->set_firstNondefiningDeclaration (decl);
   return decl;
 }
-
+#if 0
 // TODO: Move to ASTtools?
 //! Inserts a variable declaration into a scope, with symbol insertion.
 /*!
@@ -125,6 +125,7 @@ prependVarDecl (SgVariableDeclaration* decl,
       block->insert_symbol ((*i)->get_name (), sym);
     }
 }
+#endif
 
 static
 void
@@ -140,7 +141,7 @@ replaceThisExprs (ASTtools::ThisExprSet_t& this_exprs,
       SgThisExp* e_this = const_cast<SgThisExp *> (*i);
       ROSE_ASSERT (e_this);
 
-      SgVarRefExp* e_repl = new SgVarRefExp (ASTtools::newFileInfo (), sym);
+      SgVarRefExp* e_repl = SageBuilder::buildVarRefExp (sym);
       ROSE_ASSERT (e_repl);
 
       SgNode* e_par = e_this->get_parent ();
@@ -234,9 +235,10 @@ Outliner::Preprocess::transformThisExprs (SgBasicBlock* b)
   //SgName shadow_name ("this__ptr__");
   SgVariableDeclaration* decl =
     createThisShadowDecl (string("this__ptr__"), sym,
-                          ASTtools::findFirstFuncDef (b));
+                          ASTtools::findFirstFuncDef (b),b);
   ROSE_ASSERT (decl);
-  prependVarDecl (decl, b);
+//  prependVarDecl (decl, b);
+   SageInterface::prependStatement(decl,b);  
 
   // Replace instances of SgThisExp with the shadow variable.
   replaceThisExprs (this_exprs, decl);

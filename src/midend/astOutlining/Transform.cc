@@ -103,17 +103,7 @@ Outliner::Transform::outlineBlock (SgBasicBlock* s, const string& func_name_str)
      ROSE_ASSERT(glob_scope->lookup_function_symbol(func->get_name()));
      insert (func, glob_scope, func_orig, s); //Outliner::Transform::insert() 
      ROSE_ASSERT(glob_scope->lookup_function_symbol(func->get_name()));
-  // DQ (9/7/2007): Need to add function symbol to global scope!
-  // printf ("Fixing up the symbol table in scope = %p = %s for function = %p = %s \n",glob_scope,glob_scope->class_name().c_str(),func,func->get_name().str());
-#if 0
-  // if (glob_scope->lookup_function_symbol(func->get_name()) == NULL)
-        {
-          SgFunctionSymbol* functionSymbol = new SgFunctionSymbol(func);
-          glob_scope->insert_symbol(func->get_name(),functionSymbol);
-          ROSE_ASSERT(glob_scope->lookup_function_symbol(func->get_name()) != NULL);
-        }
-#endif
-
+  //
   // Retest this...
      ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
     // reproduce the lost OpenMP pragma attached to a outlining target loop 
@@ -226,9 +216,9 @@ Outliner::Transform::outlineBlock (SgBasicBlock* s, const string& func_name_str)
   // This fails for moreTest3.cpp
   // Run the AST fixup on the AST for the source file.
      SgSourceFile* originalSourceFile = TransformationSupport::getSourceFile(src_scope);
-     printf ("##### Calling AstPostProcessing() on SgFile = %s \n",originalSourceFile->getFileName().c_str());
+//     printf ("##### Calling AstPostProcessing() on SgFile = %s \n",originalSourceFile->getFileName().c_str());
      AstPostProcessing (originalSourceFile);
-     printf ("##### DONE: Calling AstPostProcessing() on SgFile = %s \n",originalSourceFile->getFileName().c_str());
+//     printf ("##### DONE: Calling AstPostProcessing() on SgFile = %s \n",originalSourceFile->getFileName().c_str());
 #else
      printf ("Skipping call to AstPostProcessing (originalSourceFile); \n");
 #endif
@@ -241,9 +231,9 @@ Outliner::Transform::outlineBlock (SgBasicBlock* s, const string& func_name_str)
        // This fails for moreTest3.cpp
        // Run the AST fixup on the AST for the separate file of outlined code.
           SgSourceFile* separateOutlinedSourceFile = TransformationSupport::getSourceFile(glob_scope);
-          printf ("##### Calling AstPostProcessing() on SgFile = %s \n",separateOutlinedSourceFile->getFileName().c_str());
+//          printf ("##### Calling AstPostProcessing() on SgFile = %s \n",separateOutlinedSourceFile->getFileName().c_str());
           AstPostProcessing (separateOutlinedSourceFile);
-          printf ("##### DONE: Calling AstPostProcessing() on SgFile = %s \n",separateOutlinedSourceFile->getFileName().c_str());
+//          printf ("##### DONE: Calling AstPostProcessing() on SgFile = %s \n",separateOutlinedSourceFile->getFileName().c_str());
 #else
           printf ("Skipping call to AstPostProcessing (separateOutlinedSourceFile); \n");
 #endif

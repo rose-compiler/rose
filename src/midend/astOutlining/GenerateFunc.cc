@@ -42,55 +42,20 @@ createFuncSkeleton (const string& name, SgType* ret_type,
    {
      ROSE_ASSERT(scope != NULL);
      ROSE_ASSERT(isSgGlobal(scope)!=NULL);
-#if 0     
-     SgFunctionType *func_type = new SgFunctionType (ret_type, false);
-     ROSE_ASSERT (func_type);
-#endif
      SgFunctionDeclaration* func;
      SgProcedureHeaderStatement* fortranRoutine;
   // Liao 12/13/2007, generate SgProcedureHeaderStatement for Fortran code
      if (SageInterface::is_Fortran_language()) 
         {
-#if 0
-          fortranRoutine = new SgProcedureHeaderStatement(ASTtools::newFileInfo (), name, func_type);
-          fortranRoutine->set_subprogram_kind(SgProcedureHeaderStatement::e_subroutine_subprogram_kind);
-
-          func = isSgFunctionDeclaration(fortranRoutine);   
-#endif
           fortranRoutine = SageBuilder::buildProcedureHeaderStatement(name.c_str(),ret_type, params, SgProcedureHeaderStatement::e_subroutine_subprogram_kind,scope);
           func = isSgFunctionDeclaration(fortranRoutine);  
         }
        else
         {
-       // DQ (2/24/2009): Modified to use SageBuild functions with Liao.
-       // func = new SgFunctionDeclaration (ASTtools::newFileInfo (), name, func_type);
           func = SageBuilder::buildDefiningFunctionDeclaration(name,ret_type,params,scope);
         }
 
      ROSE_ASSERT (func != NULL);
-
-#if 0
-  // This code is placed in a conditional because the Fortran case (above) does not use the SagBuilder 
-  // functions.  Once it does then this should not be required.  I will debug the Fortran case with 
-  // Liao after we get the C/C++ case finished.
-     if (SageInterface::is_Fortran_language()) 
-        {
-       // DQ (9/7/2007): Fixup the defining and non-defining declarations
-          ROSE_ASSERT(func->get_definingDeclaration() == NULL);
-          func->set_definingDeclaration(func);
-          ROSE_ASSERT(func->get_firstNondefiningDeclaration() != func);
-
-          SgFunctionDefinition *func_def = new SgFunctionDefinition (ASTtools::newFileInfo (), func);
-          func_def->set_parent (func);  //necessary or not?
-
-          SgBasicBlock *func_body = new SgBasicBlock (ASTtools::newFileInfo ());
-          func_def->set_body (func_body);
-          func_body->set_parent (func_def);
-
-          func->set_parameterList (params);
-          params->set_parent (func);
-        }
-#endif        
 
    SgFunctionSymbol* func_symbol = scope->lookup_function_symbol(func->get_name());
    ROSE_ASSERT(func_symbol != NULL);
@@ -208,7 +173,7 @@ createParam (const SgInitializedName* i_name, bool readOnly=false)
     //Take advantage of the const modifier
     if (ASTtools::isConstObj (init_type))
     {
-      SgModifierType* mod = new SgModifierType (param_base_type);
+      SgModifierType* mod = SageBuilder::buildModifierType (param_base_type);
       ROSE_ASSERT (mod);
       mod->get_typeModifier ().get_constVolatileModifier ().setConst ();
       param_base_type = mod;
@@ -493,13 +458,11 @@ createPackExpr (SgInitializedName* local_unpack_def)
       SgVariableSymbol* local_var_sym =
         scope->lookup_var_symbol (local_var_name);
       ROSE_ASSERT (local_var_sym);
-      SgVarRefExp* local_var_ref = new SgVarRefExp (ASTtools::newFileInfo (),
-                                                    local_var_sym);
+      SgVarRefExp* local_var_ref = SageBuilder::buildVarRefExp (local_var_sym);
       ROSE_ASSERT (local_var_ref);
 
       // Assemble the final assignment expression.
-      return new SgAssignOp (ASTtools::newFileInfo (),
-                             param_deref_pack, local_var_ref);
+      return SageBuilder::buildAssignOp (param_deref_pack, local_var_ref);
     }
   return 0;
 }
@@ -532,7 +495,7 @@ createPackStmt (SgInitializedName* local_unpack_def)
     return NULL;
   SgAssignOp* pack_expr = createPackExpr (local_unpack_def);
   if (pack_expr)
-    return new SgExprStatement (ASTtools::newFileInfo (), pack_expr);
+    return SageBuilder::buildExprStatement (pack_expr);
   else
     return 0;
 }
@@ -879,14 +842,6 @@ Outliner::Transform::generateFunction ( SgBasicBlock* s,
 
      SgFunctionDeclaration* func = createFuncSkeleton (func_name,SgTypeVoid::createType (),parameterList, scope);
      ROSE_ASSERT (func);
-
-#if 0
-  // DQ (2/24/2009): This is already built by the SageBuilder  functions called in createFuncSkeleton().
-  // Liao 10/30/2007 maintain the symbol table
-     SgFunctionSymbol * func_symbol = new SgFunctionSymbol(func);
-     printf ("In Outliner::Transform::generateFunction(): func_symbol = %p \n",func_symbol);
-     const_cast<SgBasicBlock *>(s)->insert_symbol(func->get_name(), func_symbol);
-#endif
 
 #if 1 // Liao, 4/15/2009 , enable C code to call this outlined function
   // Only apply to C++ , pure C has trouble in recognizing extern "C"

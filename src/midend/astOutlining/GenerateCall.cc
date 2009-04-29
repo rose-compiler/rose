@@ -47,8 +47,7 @@ appendArgs (const ASTtools::VarSymSet_t& syms,  std::set<SgInitializedName*> rea
           readOnly = true;
 
       // Create variable reference to pass to the function.
-      SgVarRefExp* v_ref = new SgVarRefExp (ASTtools::newFileInfo (),
-          const_cast<SgVariableSymbol *> (*i));
+      SgVarRefExp* v_ref = SageBuilder::buildVarRefExp (const_cast<SgVariableSymbol *> (*i));
       ROSE_ASSERT (v_ref);
       // Liao, 12/14/2007  Pass by reference is default behavior for Fortran
       if (SageInterface::is_Fortran_language())
@@ -65,8 +64,7 @@ appendArgs (const ASTtools::VarSymSet_t& syms,  std::set<SgInitializedName*> rea
         {
           SgType* i_arg_type = SgPointerType::createType (v_ref->get_type ());
           ROSE_ASSERT (i_arg_type);
-          i_arg =  new SgAddressOfOp (ASTtools::newFileInfo (),
-              v_ref, i_arg_type);
+          i_arg =  SageBuilder::buildAddressOfOp (v_ref);// % i_arg_type);
         }
         ROSE_ASSERT (i_arg);
 
@@ -86,9 +84,6 @@ Outliner::Transform::generateCall (SgFunctionDeclaration* out_func,
                                       std::string wrapper_name, SgScopeStatement* scope)
 {
   // Create a reference to the function.
-#if 0
-  SgFunctionSymbol* func_symbol = new SgFunctionSymbol (out_func);
-#else
   SgGlobal* glob_scope = TransformationSupport::getGlobalScope(scope);
   ROSE_ASSERT(glob_scope != NULL);
   SgFunctionSymbol* func_symbol = glob_scope->lookup_function_symbol(out_func->get_name());
@@ -97,28 +92,26 @@ Outliner::Transform::generateCall (SgFunctionDeclaration* out_func,
     printf("Failed to find a function symbol in %p for function %s\n", glob_scope, out_func->get_name().getString().c_str());
     ROSE_ASSERT(func_symbol != NULL);
   }
-#endif
-
   ROSE_ASSERT (func_symbol);
-  SgFunctionRefExp* func_ref_exp =
-    new SgFunctionRefExp (ASTtools::newFileInfo (),
-        func_symbol, out_func->get_type ());
-  ROSE_ASSERT (func_ref_exp);
+//  SgFunctionRefExp* func_ref_exp = SageBuilder::buildFunctionRefExp(func_symbol);
+//    new SgFunctionRefExp (ASTtools::newFileInfo (),
+//        func_symbol, out_func->get_type ());
+//  ROSE_ASSERT (func_ref_exp);
 
   // Create an argument list.
-  SgExprListExp* exp_list_exp = new SgExprListExp (ASTtools::newFileInfo ());
+  SgExprListExp* exp_list_exp = SageBuilder::buildExprListExp();
   ROSE_ASSERT (exp_list_exp);
   appendArgs (syms, readOnlyVars, wrapper_name, exp_list_exp,scope);
 
   // Generate the actual call.
-  SgFunctionCallExp* func_call_expr =
-    new SgFunctionCallExp (ASTtools::newFileInfo (),
-        func_ref_exp,
-        exp_list_exp,
-        out_func->get_type ());
+  SgFunctionCallExp* func_call_expr = SageBuilder::buildFunctionCallExp(func_symbol,exp_list_exp);
+//    new SgFunctionCallExp (ASTtools::newFileInfo (),
+//        func_ref_exp,
+//        exp_list_exp,
+//        out_func->get_type ());
   ROSE_ASSERT (func_call_expr);
 
-  SgExprStatement *func_call_stmt = new SgExprStatement (ASTtools::newFileInfo (), func_call_expr);
+  SgExprStatement *func_call_stmt = SageBuilder::buildExprStatement (func_call_expr);
 
   ROSE_ASSERT (func_call_stmt);
 

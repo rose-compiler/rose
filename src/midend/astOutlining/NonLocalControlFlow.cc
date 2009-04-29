@@ -48,20 +48,19 @@ createIntDecl (const string& name, int val = 0, SgScopeStatement* scope = 0)
   SgType* var_type = SgTypeInt::createType ();
   ROSE_ASSERT (var_type);
 
-  SgIntVal* init_val = new SgIntVal (ASTtools::newFileInfo (), val);
+  SgIntVal* init_val = SageBuilder::buildIntVal (val);
   ROSE_ASSERT (init_val);
 
   SgAssignInitializer* init =
-    new SgAssignInitializer (ASTtools::newFileInfo (), init_val, var_type);
+    SageBuilder::buildAssignInitializer (init_val);
 
   ROSE_ASSERT (init);
 
   SgName var_name (name);
   SgVariableDeclaration* var_decl =
-    new SgVariableDeclaration (ASTtools::newFileInfo (),
-                               var_name, var_type, init);
+    SageBuilder::buildVariableDeclaration (var_name, var_type, init,scope);
   ROSE_ASSERT (var_decl);
-  //! \todo Should constructor do this?
+#if 0  
   var_decl->set_firstNondefiningDeclaration (var_decl);
 
   if (scope)
@@ -73,7 +72,7 @@ createIntDecl (const string& name, int val = 0, SgScopeStatement* scope = 0)
       scope->insert_symbol (var_name, var_sym);
       init_name->set_scope (scope);
     }
-
+#endif
   return var_decl;
 }
 
@@ -104,20 +103,18 @@ createJumpTable (SgVariableSymbol* jump_var,
   int jump_val = (int)i->second;
 
   // Build 'if' condition
-  SgVarRefExp* jump_var_ref = new SgVarRefExp (ASTtools::newFileInfo (),
-                                               jump_var);
+  SgVarRefExp* jump_var_ref = SageBuilder::buildVarRefExp (jump_var);
   ROSE_ASSERT (jump_var_ref);
-  SgIntVal* val = new SgIntVal (ASTtools::newFileInfo (), jump_val);
+  SgIntVal* val = SageBuilder::buildIntVal (jump_val);
   ROSE_ASSERT (val);
-  SgEqualityOp* cond = new SgEqualityOp (ASTtools::newFileInfo (),
-                                         jump_var_ref, val);
+  SgEqualityOp* cond = SageBuilder::buildEqualityOp (jump_var_ref, val);
   ROSE_ASSERT (cond);
   SgExprStatement* cond_stmt =
-    new SgExprStatement (ASTtools::newFileInfo (), cond);
+    SageBuilder::buildExprStatement (cond);
   ROSE_ASSERT (cond_stmt);
 
   // The 'true' branch executes the original jump statement.
-  SgBasicBlock* true_body = new SgBasicBlock (ASTtools::newFileInfo ());
+  SgBasicBlock* true_body = SageBuilder::buildBasicBlock ();
   ROSE_ASSERT (true_body);
   SgStatement* true_stmt =
     const_cast<SgStatement *> (isSgStatement (ASTtools::deepCopy (jump_stmt)));
@@ -125,16 +122,13 @@ createJumpTable (SgVariableSymbol* jump_var,
   true_body->append_statement (true_stmt);
 
   // The 'false' branch executes any other jump statements.
-  SgBasicBlock* false_body = new SgBasicBlock (ASTtools::newFileInfo ());
+  SgBasicBlock* false_body = SageBuilder::buildBasicBlock ();
   SgStatement* false_stmt = createJumpTable (jump_var, ++i, end);
   if (false_stmt)
     false_body->append_statement (false_stmt);
 
   // Assemble final 'if'
-  SgIfStmt* new_jump = new SgIfStmt (ASTtools::newFileInfo (),
-                                     cond_stmt,
-                                     true_body,
-                                     false_body);
+  SgIfStmt* new_jump = SageBuilder::buildIfStmt (cond_stmt, true_body, false_body);
   ROSE_ASSERT (new_jump);
   return new_jump;
 }
@@ -159,28 +153,24 @@ createJumpReplacementGoto (SgVariableSymbol* jump_var,
   ROSE_ASSERT (jump_var && target);
 
   // Block to return.
-  SgBasicBlock* b = new SgBasicBlock (ASTtools::newFileInfo ());
+  SgBasicBlock* b = SageBuilder::buildBasicBlock ();
   ROSE_ASSERT (b);
 
   // Create assignment, 'v = id'
-  SgVarRefExp* v = new SgVarRefExp (ASTtools::newFileInfo (), jump_var);
+  SgVarRefExp* v = SageBuilder::buildVarRefExp ( jump_var);
   ROSE_ASSERT (v);
 
-  SgIntVal* id = new SgIntVal (ASTtools::newFileInfo (), jump_id);
+  SgIntVal* id = SageBuilder::buildIntVal (jump_id);
   ROSE_ASSERT (id);
 
-  SgAssignOp* assign = new SgAssignOp (ASTtools::newFileInfo (), v, id);
+  SgAssignOp* assign = SageBuilder::buildAssignOp (v, id);
   ROSE_ASSERT (assign);
-  v->set_parent (assign);
-  id->set_parent (assign);
 
-  SgExprStatement* assign_stmt =
-    new SgExprStatement (ASTtools::newFileInfo (), assign);
+  SgExprStatement* assign_stmt =  SageBuilder::buildExprStatement (assign);
   ROSE_ASSERT (assign_stmt);
 
   // Create 'goto target' statement.
-  SgGotoStatement* goto_stmt = new SgGotoStatement (ASTtools::newFileInfo (),
-                                                    target);
+  SgGotoStatement* goto_stmt = SageBuilder::buildGotoStatement (target);
   ROSE_ASSERT (goto_stmt);
 
   // Construct and return block.
@@ -269,14 +259,14 @@ Outliner::Preprocess::transformNonLocalControlFlow (SgBasicBlock* b_orig)
   // Create a non-local exit label.
   SgName label_exit_name ("NON_LOCAL_EXIT__");
   SgLabelStatement* label_exit =
-    new SgLabelStatement (ASTtools::newFileInfo (), label_exit_name);
+    SageBuilder::buildLabelStatement (label_exit_name, NULL,b_gotos);
   ROSE_ASSERT (label_exit);
   b_gotos->append_statement (label_exit);
   label_exit->set_parent (b_gotos);
   label_exit->set_scope (b_gotos); // seg fault if missing, Liao
   // add SgLabelSymbol,liao, 10/30,2007
-  SgLabelSymbol *lsymbol= new SgLabelSymbol(label_exit);
-  b_gotos->insert_symbol(label_exit_name,lsymbol);
+//  SgLabelSymbol *lsymbol= new SgLabelSymbol(label_exit);
+//  b_gotos->insert_symbol(label_exit_name,lsymbol);
 
   // Convert all non-local jumps to local gotos to 'label_exit'
   convertJumpsToGotos (jump_var, jumps, label_exit);

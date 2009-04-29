@@ -69,23 +69,15 @@ createAssignment (const SgInitializedName* name, const SgScopeStatement* scope)
   SgVariableSymbol* v_sym =
     const_cast<SgScopeStatement *> (scope)->lookup_var_symbol (name->get_name ());
   ROSE_ASSERT (v_sym);
-  SgVarRefExp* v = new SgVarRefExp (ASTtools::newFileInfo (), v_sym);
+  SgVarRefExp* v = SageBuilder::buildVarRefExp (v_sym);
   ROSE_ASSERT (v);
 
   // Build assignment expression
-  SgAssignOp* assign_op =
-    new SgAssignOp (ASTtools::newFileInfo (), v, rhs_op);
+  SgAssignOp* assign_op =  SageBuilder::buildAssignOp (v, rhs_op);
   ROSE_ASSERT (assign_op);
 
   // Build expression statement
-#if 0
-  SgExpressionRoot* expr_root =
-    new SgExpressionRoot (ASTtools::newFileInfo (),
-                          assign_op, v_sym->get_type ());
-  ROSE_ASSERT (expr_root);
-#endif
-  SgExprStatement* expr_stmt =
-    new SgExprStatement (ASTtools::newFileInfo (), assign_op);
+  SgExprStatement* expr_stmt = SageBuilder::buildExprStatement (assign_op);
   ROSE_ASSERT (expr_stmt);
 
   // Done
@@ -131,7 +123,7 @@ Outliner::Preprocess::normalizeVarDecl (SgVariableDeclaration* s)
   ROSE_ASSERT (i != vars_orig.end ());
 
   // Prepare new basic block to contain initializers.
-  SgBasicBlock* assigns_new = new SgBasicBlock (ASTtools::newFileInfo ());
+  SgBasicBlock* assigns_new = SageBuilder::buildBasicBlock ();
   SgScopeStatement* s_scope = s->get_scope ();
   ROSE_ASSERT (s_scope);
 
@@ -159,7 +151,7 @@ Outliner::Preprocess::createBlock (SgStatement* s)
   SgStatement* s_outline = s;
   if (!isSgBasicBlock (s))
     {
-      SgBasicBlock* b_new = new SgBasicBlock (ASTtools::newFileInfo ());
+      SgBasicBlock* b_new = SageBuilder::buildBasicBlock ();
       ROSE_ASSERT (b_new);
       SgStatement * parent = isSgStatement(s->get_parent ());
       ROSE_ASSERT(parent); 

@@ -89,12 +89,6 @@ generatePrototype (const SgFunctionDeclaration* full_decl, SgScopeStatement* sco
      ROSE_ASSERT(TransformationSupport::getSourceFile(proto) != NULL);
      ROSE_ASSERT(TransformationSupport::getSourceFile(scope) != NULL);
 
-#if 0
-     if (TransformationSupport::getSourceFile(proto) != NULL)
-          printf ("TransformationSupport::getSourceFile(proto)->getFileName()                                    = %s \n",TransformationSupport::getSourceFile(proto)->getFileName().c_str());
-     printf ("TransformationSupport::getSourceFile(scope)->getFileName()                                    = %s \n",TransformationSupport::getSourceFile(scope)->getFileName().c_str());
-#endif
-
      ROSE_ASSERT(TransformationSupport::getSourceFile(proto->get_firstNondefiningDeclaration()) != NULL);
   // printf ("TransformationSupport::getSourceFile(proto->get_firstNondefiningDeclaration())->getFileName() = %s \n",TransformationSupport::getSourceFile(proto->get_firstNondefiningDeclaration())->getFileName().c_str());
 
@@ -696,47 +690,11 @@ Outliner::Transform::insert (SgFunctionDeclaration* func,
        // ROSE_ASSERT(sourceFileFunctionPrototype->get_definingDeclaration() != NULL);
         }
 
-#if 0 // handled by SageBuilder automatically, Liao, 3/11/2009
-     if (SageInterface::is_Fortran_language() == true)
-        {
-       // This needs to be re-thought when we debug the Fortran cases
-
-          func->set_firstNondefiningDeclaration(func);
-       // func->set_definingDeclaration (def);
-
-          printf ("Fortran outlining support not yet fixed up! \n");
-          ROSE_ASSERT(false);
-        }
-#endif        
-
      ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
      // No forward declaration is needed for Fortran functions, Liao, 3/11/2009
      if (SageInterface::is_Fortran_language() != true)
        ROSE_ASSERT(func->get_firstNondefiningDeclaration() != NULL);
    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 #if 0
@@ -983,67 +941,6 @@ Outliner::Transform::insert (SgFunctionDeclaration* func,
 
      ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
      ROSE_ASSERT(func->get_firstNondefiningDeclaration() != NULL);
-
-#if 0
-  // DQ (2/22/2009): Ask Liao when we can remove this!
-
-  // Should be removed once SageBuilder is used
-  // DQ (9/7/2007): Need to add function symbol to global scope!
-  //   printf ("Fixing up the symbol table in scope = %p = %s for function = %p = %s \n",glob_scope,glob_scope->class_name().c_str(),func,func->get_name().str());
-     if (src_global->lookup_function_symbol(func->get_name()) == NULL)  
-        {
-          printf ("Adding the SgFunctionSymbol for func->get_name() = %s to the original source file's symbol table \n",func->get_name().str());
-          SgFunctionSymbol* functionSymbol = new SgFunctionSymbol(func);
-          src_global->insert_symbol(func->get_name(),functionSymbol);
-          ROSE_ASSERT(src_global->lookup_function_symbol(func->get_name()) != NULL);
-        }
-
-     ROSE_ASSERT(func->get_firstNondefiningDeclaration() != NULL);
-     ROSE_ASSERT(TransformationSupport::getSourceFile(func) == TransformationSupport::getSourceFile(func->get_firstNondefiningDeclaration()));
-     ROSE_ASSERT(TransformationSupport::getSourceFile(func->get_scope()) == TransformationSupport::getSourceFile(func->get_firstNondefiningDeclaration()));
-
-  // Fixup the symbol in the newly generated file for the inserted function definition
-     if (Outliner::useNewFile && (scope->lookup_function_symbol(func->get_name()) == NULL) ) 
-        {
-          printf ("Adding the SgFunctionSymbol for func->get_name() = %s to the separate file's symbol table \n",func->get_name().str());
-          SgFunctionSymbol* functionSymbol = new SgFunctionSymbol(func);
-          scope->insert_symbol(func->get_name(),functionSymbol);
-          ROSE_ASSERT(scope->lookup_function_symbol(func->get_name()) != NULL);
-
-          printf ("Added the SgFunctionSymbol for func->get_name() = %s to the separate file's symbol table \n",func->get_name().str());
-          ROSE_ASSERT(false);
-        }
-       else
-        {
-          printf ("No need to add the SgFunctionSymbol for func->get_name() = %s to the separate file's symbol table (scope = %p) \n",func->get_name().str(),scope);
-
-          printf ("Outliner::useNewFile = %s \n",Outliner::useNewFile ? "true" : "false");
-          if (Outliner::useNewFile == true)
-             {
-               ROSE_ASSERT(scope->lookup_function_symbol(func->get_name()) != NULL);
-             }
-#if 0
-          printf ("Exiting as a test \n");
-          ROSE_ASSERT(false);
-#endif
-        }
-
-  // Check that they associated symbols are in the symbol tables for each scope (where they are different).
-     ROSE_ASSERT(src_global->lookup_function_symbol(func->get_name()) != NULL);
-     ROSE_ASSERT(scope->lookup_function_symbol(func->get_name()) != NULL);
-
-  // Check that there is a vaild type!
-     SgFunctionType* functionType = func->get_type();
-     ROSE_ASSERT(functionType != NULL);
-     if (SgNode::get_globalFunctionTypeTable()->get_function_type_table()->find_function_type(functionType->get_mangled_type()) == NULL)
-        {
-       // We need to add a SgFunctionType symbol to the function type table.
-          printf ("Adding the function type to the global function type table. \n");
-       // SgNode::get_globalFunctionTypeTable()->get_function_type_table()->insert_function_type(functionType->get_mangled_type(),functionType);
-          SgNode::get_globalFunctionTypeTable()->insert_function_type(functionType->get_mangled_type(),functionType);
-        }
-     ROSE_ASSERT(SgNode::get_globalFunctionTypeTable()->get_function_type_table()->find_function_type(functionType->get_mangled_type()) != NULL);
-#endif
 
 #error "DEAD CODE!"
 

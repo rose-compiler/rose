@@ -189,7 +189,7 @@ SgBasicBlock *
 ASTtools::transformToBlockShell (SgBasicBlock* b_orig)
 {
   // Create new block to store 'T', and move statements to it.
-  SgBasicBlock* b_shell = new SgBasicBlock (ASTtools::newFileInfo ());
+  SgBasicBlock* b_shell = SageBuilder::buildBasicBlock ();
   ROSE_ASSERT (b_shell);
   ASTtools::moveStatements (b_orig, b_shell);
   b_orig->append_statement (b_shell);

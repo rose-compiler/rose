@@ -44,15 +44,10 @@ copyNonLocalFuncDecls (SgBasicBlock* b)
           ROSE_ASSERT (!proto_copy->get_definition ());
           b->prepend_statement (proto_copy);
           proto_copy->set_parent (b);
-          //Liao, 11/5/2007, maitain symbol table
+          //Liao, 11/5/2007, maintain symbol table
           //it shares the same function symbol, bug 104
           // just some clue obtained from AST graph, don't quite understand why. 
           proto_copy->set_firstNondefiningDeclaration(decl);
-#if 0
-          // it has no separated function symbol, but share one with previous declaration.
-          SgFunctionSymbol * symbol_1 = new SgFunctionSymbol(proto_copy);
-          b->insert_symbol(proto_copy->get_name(), symbol_1);
-#endif
         }
     }
 }

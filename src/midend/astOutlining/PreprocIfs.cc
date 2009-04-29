@@ -332,7 +332,7 @@ prependAtFirstStatement (PreprocInfoList_t& D, SgBasicBlock* b)
        * return statement (represented explicitly in the tree but
        * unparsed) was being outlined.
        */
-      SgStatement* s_blank = new SgNullStatement (ASTtools::newFileInfo ());
+      SgStatement* s_blank = SageBuilder::buildNullStatement ();
       ROSE_ASSERT (s_blank);
 
    // DQ (9/26/2007): Moved from std::list to std::vector uniformly in ROSE.
