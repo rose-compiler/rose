@@ -185,7 +185,7 @@ Index: Driver/TermDumper.cpp
 ===================================================================
 --- Driver/TermDumper.cpp	(revision 0)
 +++ Driver/TermDumper.cpp	(revision 0)
-@@ -0,0 +1,2283 @@
+@@ -0,0 +1,2281 @@
 +//===--- StmtTermDumper.cpp - TermDumping implementation for Stmt ASTs ----===//
 +//
 +//                     The LLVM Compiler Infrastructure
@@ -1722,19 +1722,17 @@ Index: Driver/TermDumper.cpp
 +      case Stmt::CastExprClass:
 +        {
 +          const CastExpr *CE = cast<CastExpr>(S);
-+
++          
 +          // avoid cast on declaration references
 +          if (CE->getSubExpr()->getStmtClass() == Stmt::DeclRefExprClass && 
-+              CE->getType()->isPointerLikeType() ) {
++              CE->getType()->isPointerLikeType()) {
 +            const DeclRefExpr *DRE = cast<DeclRefExpr>(CE->getSubExpr());
 +
 +            if (const ValueDecl *VD = cast<ValueDecl>(DRE->getDecl())) {
 +              const PointerLikeType *PT = cast<PointerLikeType>(CE->getType());
 +
 +              if (VD->getType() == PT->getPointeeType() ||
-+                  (VD->getType()->isArrayType() &&
-+                   cast<ArrayType>(VD->getType())->getElementType() ==
-+                   PT->getPointeeType())) {
++                  (isa<ArrayType>(VD->getType()) && cast<ArrayType>(VD->getType())->getElementType() == PT->getPointeeType())) {
 +                termStmt(O, CE->getSubExpr());
 +                return; // exit here!!
 +              }
