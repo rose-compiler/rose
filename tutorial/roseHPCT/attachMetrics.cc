@@ -2,7 +2,6 @@
 // HPCToolkit data to the ROSE AST.
 
 #include "rose.h"
-
 #include <iostream>
 #include <list>
 #include <rosehpct/rosehpct.hh>
@@ -53,12 +52,10 @@ int main (int argc, char* argv[])
   cerr << "[Building the ROSE AST...]" << endl;
   SgProject* proj = frontend (argvList);
 
-  cerr << "[Attaching HPCToolkit metrics to the AST...]" << endl;
+  cerr << "[Attaching metrics to the AST...]" << endl;
   RoseHPCT::attachMetrics (profiles, proj, proj->get_verbose () > 0);
 
   cerr << "[Estimating flop execution rates...]" << endl;
-  //typedef list<SgNode *> NodeList_t;
-  //Liao (10/1/2007): Commented out as part of move from std::list to std::vector
   typedef Rose_STL_Container<SgNode *> NodeList_t; 
 
   NodeList_t estmts = NodeQuery::querySubTree (proj, V_SgExprStatement);
@@ -77,6 +74,5 @@ int main (int argc, char* argv[])
 // the output to allow -j32 to work. Since I can't debug the problem further for 
 // now I will leave it.
   cerr << "[Calling backend...]" << endl;
-
   return backend (proj);
 }
