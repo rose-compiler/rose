@@ -1,11 +1,23 @@
 //! read gprof line-by-line performance profiling result text files
 #include "rose.h"
 #include <sstream>
-#include <boost/spirit.hpp>
+
+// include the right header for spirit classic
+// need to check for the version, because there was a directory restructuring
+// and a change of namespace
+// introduced with boost 1.38
+#include <boost/version.hpp>
+#if BOOST_VERSION >= 103800
+ #include <boost/spirit/include/classic_core.hpp>
+ namespace boost_spirit = BOOST_SPIRIT_CLASSIC_NS;
+#else
+ #include <boost/spirit.hpp>
+ namespace boost_spirit = boost::spirit;
+#endif
+
 #include "rosehpct/gprof/gprof_info.hh"
 
-//using namespace BOOST_SPIRIT_CLASSIC_NS;
-using namespace boost::spirit;
+using namespace boost_spirit;
 using namespace std;
 
 #include <vector>
@@ -105,7 +117,7 @@ namespace RoseHPCT
 
   // 4 fixed levels of IR for gprof resutls: program, file, function, and statements
   // Convert gprof line-by-line profiling information to a tree-like Profile IR used in rosehpct
-  ProgramTreeList_t loadGprofVec(std::vector< gprof_info > vec)
+  ProgramTreeList_t loadGprofVec( const std::vector< gprof_info >& vec)
   {
     ProgramTreeList_t treelist;
     // root node, 
