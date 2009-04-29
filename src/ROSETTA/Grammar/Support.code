@@ -32,9 +32,15 @@ HEADER_GRAPH_START
   // typedef SgGraphEdgeList::iterator edge_iterator;
 #endif
 
-     int hashCode( char* p, int len); // hash a character array
-     int get_graph_id() ;
+     int hashCode( const char* p, int len) const; // hash a character array
+     int get_graph_id() const;
      void append_properties( int addr, std::string prop );
+
+ //! Support for adding SgGraphNode to SgGraph.
+     SgGraphNode* addNode( const std::string & name = "");
+
+ //! Support for adding SgGraphEdge to SgGraph.
+     SgGraphEdge* addEdge( SgGraphNode* a, SgGraphNode* b, const std::string & name = "");
 
      virtual void post_construction_initialization();
 
@@ -42,14 +48,15 @@ HEADER_GRAPH_END
 
 
 HEADER_GRAPHNODE_START
-     int get_graph_id() const;	
+  // DQ (4/28/2009): This should be const, but I can't get it to compile as a const function (fixme).
+     int get_graph_id() const;
      void append_properties( int addr, std::string prop );	
 HEADER_GRAPHNODE_END
 
 
 HEADER_GRAPHEDGE_START
      int get_graph_id() const;		
-     void append_properties( int addr, std::string prop );	
+     void append_properties( int addr, std::string prop );
 HEADER_GRAPHEDGE_END
 
 
@@ -58,6 +65,8 @@ HEADER_DIRECTED_GRAPH_EDGE_START
        // DQ (8/18/2008): This is part of the OLD interface introduced for backward compatability!
           SgDirectedGraphEdge(std::string name, std::string type, int n, SgGraphNode* from, SgGraphNode* to);
 
+          SgGraphNode* get_from() { return p_node_A; }
+          SgGraphNode* get_to()   { return p_node_B; }
 HEADER_DIRECTED_GRAPH_EDGE_END
 
 
@@ -98,6 +107,8 @@ HEADER_GRAPH_EDGE_LIST_END
 
 
 HEADER_UNDIRECTED_GRAPH_EDGE_START
+          SgGraphNode* get_node1() { return p_node_A; }
+          SgGraphNode* get_node2() { return p_node_B; }
 HEADER_UNDIRECTED_GRAPH_EDGE_END
 
 
@@ -13020,6 +13031,138 @@ SOURCE_GRAPHEDGE_END
 
 
 SOURCE_GRAPH_START
+// tps (08/08/07): Added the graph, graph nodes and graph edges 
+void
+SgGraph::append_properties( int addr, std::string prop )
+   {
+     ROSE_ASSERT(this != NULL);
+  /* implemented directly until we can fix how the statementList is built */
+     p_properties[addr] = prop;
+   }
+
+int 
+SgGraph::hashCode( const char* p, int len) const // hash a character array
+   {
+     ROSE_ASSERT(this != NULL);
+     unsigned int h = 0;
+     for (int i=0; i < len; i++)
+        {
+          h = (h<<5) | (h>>27);    // 5-bit cyclic shift
+          h += (unsigned int)p[i]; // add in next character
+        }
+     return (int)h; 
+   }
+
+int 
+SgGraph::get_graph_id() const
+   {
+     ROSE_ASSERT(this != NULL);
+
+#ifndef ROSE_USE_NEW_GRAPH_NODES
+     const string name = p_name+p_type;
+  // int len = sizeof(name);
+  // char* pointer = reinterpret_cast<char*>(&name);
+     int len = name.size();
+     const char* pointer = name.c_str();
+
+     return hashCode(pointer, len);
+#else
+  // DQ (8/18/2008): We have added the new support for graph IR nodes with a bit fo the redundant support
+  // for the older IR nodes so that ROSE will compile, but these old IR nodes should not be used!
+
+     printf ("Error: OLD GRAPH IR NODES ARE NOT SUPPORTED! \n");
+     ROSE_ASSERT(false);
+
+     return 0;
+#endif
+   }
+
+// DQ (4/28/2009): Added support to build node (automaticly added to SgGraph).
+SgGraphNode*
+SgGraph::addNode( const std::string & name )
+   {
+     ROSE_ASSERT(this != NULL);
+
+     SgGraphNode* node = new SgGraphNode(name);
+     ROSE_ASSERT(node != NULL);
+
+#ifdef ROSE_USE_NEW_GRAPH_NODES
+     typedef SgGraphNodeList::iterator node_iterator;
+     node_iterator name_iterator = get_nodes()->get_nodes().find(name);
+     bool matchingNameIsNew = name_iterator == get_nodes()->get_nodes().end();
+
+     if (matchingNameIsNew == true)
+        {
+       // Build a new entry in the map!
+       // printf ("Adding unique node to graph = %s for node = %p = %s (name = %s) \n",p_name.c_str(),node,node->class_name().c_str(),name.c_str());
+
+       // Need the more uniform syntax when using hash_map
+       // graph[name] = node;
+          get_nodes()->get_nodes().insert(pair<string,SgGraphNode*>(node->get_name(),node));
+        }
+       else
+        {
+       // This name already exists in the graph.
+          printf ("Error: This node = %p has a name = %s that already exists in the graph -- node = %p = %s \n",node,name.c_str(),node,node->class_name().c_str());
+          ROSE_ASSERT(false);
+        }
+#endif
+
+     return node;
+   }
+
+SgGraphEdge*
+SgGraph::addEdge( SgGraphNode* a, SgGraphNode* b, const std::string & name )
+   {
+     ROSE_ASSERT(this != NULL);
+
+     SgGraphEdge* edge = NULL;
+
+#ifdef ROSE_USE_NEW_GRAPH_NODES
+     edge = new SgGraphEdge(a,b,name);
+     ROSE_ASSERT(edge != NULL);
+
+     typedef SgGraphEdgeList::iterator edge_iterator;
+
+     edge_iterator edgeIt = get_edges()->get_edges().find(a);
+  // bool matchingEdgeIsNew = ( (edgeIt == get_edges()->get_edges().end()) && ( edgeIt->second->get_node_B() != b) );
+     bool matchingEdgeIsNew = (edgeIt == get_edges()->get_edges().end());
+     if (matchingEdgeIsNew == false)
+        {
+       // printf ("The node has a valid edge, now check the edge's other end \n");
+          matchingEdgeIsNew = ( edgeIt->second->get_node_B() != b);
+        }
+
+  // printf ("matchingEdgeIsNew = %s \n",matchingEdgeIsNew ? "true" : "false");
+     if (matchingEdgeIsNew == true)
+        {
+       // Build a new entry in the map!
+       // printf ("Adding unique edge to graph = %s for edge = %p = %s (name = %s) \n",p_name.c_str(),edge,edge->class_name().c_str(),name.c_str());
+
+       // Need the more uniform syntax when using hash_map
+       // graph[name] = edge;
+          get_edges()->get_edges().insert(pair<SgGraphNode*,SgGraphEdge*>(a,edge));
+        }
+       else
+        {
+       // This is something that we can test.
+          ROSE_ASSERT(edgeIt->first == a || edgeIt->first == b );
+
+       // This name already exists in the graph.
+#if 1
+          printf ("Warning: This edge = %p has a name = %s that already exists in the graph -- edge = %p = %s \n",edge,name.c_str(),edge,edge->class_name().c_str());
+#else
+          printf ("Error: This edge = %p has a name = %s that already exists in the graph -- edge = %p = %s \n",edge,name.c_str(),edge,edge->class_name().c_str());
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
+
+     return edge;
+   }
+
+
+// DQ (4/28/2009): Added support to have internal list nodes built automatically in the SgGraph constructor.
 void
 SgGraph::post_construction_initialization()
    {
@@ -13042,48 +13185,6 @@ SgGraph::post_construction_initialization()
 #endif
    }
 
-// tps (08/08/07): Added the graph, graph nodes and graph edges 
-void
-SgGraph::append_properties( int addr, std::string prop )
-   {
-     ROSE_ASSERT(this != NULL);
-  /* implemented directly until we can fix how the statementList is built */
-     p_properties[addr] = prop;
-   }
-
-int 
-SgGraph::hashCode( char* p, int len) // hash a character array
-   {
-     ROSE_ASSERT(this != NULL);
-     unsigned int h = 0;
-     for (int i=0; i<len; i++)
-        {
-          h = (h<<5) | (h>>27);    // 5-bit cyclic shift
-          h += (unsigned int)p[i]; // add in next character
-        }
-     return (int)h; 
-   }
-
-int 
-SgGraph::get_graph_id()
-   {
-     ROSE_ASSERT(this != NULL);
-
-#ifndef ROSE_USE_NEW_GRAPH_NODES
-     string name = p_name+p_type;
-     int len = sizeof(name);
-     char* pointer = reinterpret_cast<char*>(&name);
-     return hashCode(pointer, len);
-#else
-  // DQ (8/18/2008): We have added the new support for graph IR nodes with a bit fo the redundant support
-  // for the older IR nodes so that ROSE will compile, but these old IR nodes should not be used!
-
-     printf ("Error: OLD GRAPH IR NODES ARE NOT SUPPORTED! \n");
-     ROSE_ASSERT(false);
-
-     return 0;
-#endif
-   }
 SOURCE_GRAPH_END
 
 
