@@ -1,3 +1,39 @@
+2009-04-29 18:35  liao6
+
+	* [r5541]
+	  /trunk/ROSE/src/frontend/SageIII/astPostProcessing/astPostProcessing.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilder.C,
+	  /trunk/ROSE/src/midend/astOutlining/Block.cc,
+	  /trunk/ROSE/src/midend/astOutlining/GenerateCall.cc,
+	  /trunk/ROSE/src/midend/astOutlining/GenerateFunc.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Insert.cc,
+	  /trunk/ROSE/src/midend/astOutlining/NonLocalControlFlow.cc,
+	  /trunk/ROSE/src/midend/astOutlining/NonLocalDecls.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Outliner.cc,
+	  /trunk/ROSE/src/midend/astOutlining/PreprocIfs.cc,
+	  /trunk/ROSE/src/midend/astOutlining/StmtRewrite.cc,
+	  /trunk/ROSE/src/midend/astOutlining/ThisExprs.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Transform.cc,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/outline.cc:
+	  Eliminated most runtime warning messages of the outliner
+	  
+	  * Changed most "new SgXXX" statements to
+	  "SageBuilder::buildXXX()"
+
+2009-04-29 18:04  liao6
+
+	* [r5539]
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/src/gprof/gprof_info.cc:
+	  The right version number is 1.36 for boost spirit change
+
+2009-04-29 17:50  heller9
+
+	* [r5538]
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/include/rosehpct/gprof/gprof_info.hh,
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/src/gprof/gprof_info.cc:
+	  Changed gprof_info in roseHPCToolkit to compile with every boost
+	  version >= 1.35
+
 2009-04-29 02:37  dquinlan
 
 	* [r5532]
