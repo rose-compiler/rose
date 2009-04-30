@@ -795,6 +795,14 @@ class rose_graph_hash_multimap : public rose_hash::hash_multimap<std::string, Sg
              : rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>((rose_graph_hash_multimap)rhs),parent(rhs.parent)
              {}
 
+       // DQ (4/30/2009): Added operator= to fix problem pointed out by Thomas.
+          rose_graph_hash_multimap & operator=(const rose_graph_hash_multimap& rhs) 
+             {
+               rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>::operator=(rhs);
+               parent = rhs.parent;
+               return *this;
+             }
+
        // See note (above) about name change to the associated data member for these access functions.
           void set_parent(SgNode * new_parent) 
              {
@@ -824,6 +832,7 @@ class rose_graph_hash_multimap : public rose_hash::hash_multimap<std::string, Sg
 
                parent = NULL;
              }
+
 
         friend class AST_FILE_IO;
         friend class SgSymbolTableStorageClass;

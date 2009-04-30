@@ -98,6 +98,11 @@ HEADER_GRAPH_START
 #endif
 #endif
 
+#ifdef ROSE_USE_NEW_GRAPH_NODES
+  // Supporting graph type required by Boost Graph Library.
+  // typedef boost::graph_traits < BoostGraphType >::edge_descriptor BoostEdgeDescriptor;
+#endif
+
  //! Simple edge type used to input data to Boost algorithms
      typedef std::pair<int, int> BoostEdgeType;
 
@@ -124,10 +129,14 @@ HEADER_GRAPH_START
  //! Support for adding SgGraphEdge to SgGraph.
      SgGraphEdge* addEdge( SgGraphNode* a, SgGraphNode* b, const std::string & name = "");
 
+ //! Add support for externally build SgGraphNode objects
+     SgGraphEdge* addEdge( SgGraphEdge* edge );
+
      void post_construction_initialization();
 
  //! Support for Boost Minimum Spanning Tree.
-     void generateSpanningTree();
+  // std::vector <BoostEdgeDescriptor> generateSpanningTree();
+     std::vector <SgGraphEdge*> generateSpanningTree();
 
   // DQ (4/29/2009): Added as interface function (just calls the get_index() member function).
      int get_graph_id() const;
@@ -146,6 +155,12 @@ typedef SgBoostEdgeList* SgBoostEdgeListPtr;
 // DQ (4/29/2009): Added support for boost edges to be used in boost graph library algorithms.
 typedef SgGraph::SgBoostEdgeWeightList SgBoostEdgeWeightList;
 typedef SgBoostEdgeWeightList* SgBoostEdgeWeightListPtr;
+
+#ifdef ROSE_USE_NEW_GRAPH_NODES
+// Supporting graph type required by Boost Graph Library.
+// typedef boost::graph_traits < SgGraph::BoostGraphType >::edge_descriptor BoostEdgeDescriptor;
+#endif
+
 #endif
 
 HEADER_GRAPH_POSTDECLARATION_END
@@ -13242,6 +13257,15 @@ SgGraph::addEdge( SgGraphNode* a, SgGraphNode* b, const std::string & name )
      edge = new SgGraphEdge(a,b,name);
      ROSE_ASSERT(edge != NULL);
 
+     return addEdge(edge);
+   }
+
+// DQ (4/28/2009): Added support to build node (automaticly added to SgGraph).
+SgGraphEdge*
+SgGraph::addEdge( SgGraphEdge* edge )
+   {
+     ROSE_ASSERT(this != NULL);
+
      edge->set_parent(this);
 
   // Set this to aunique value for the associated SgGraph object.
@@ -13249,13 +13273,13 @@ SgGraph::addEdge( SgGraphNode* a, SgGraphNode* b, const std::string & name )
 
      typedef SgGraphEdgeList::iterator edge_iterator;
 
-     edge_iterator edgeIt = get_edges()->get_edges().find(a);
+     edge_iterator edgeIt = get_edges()->get_edges().find(edge->get_node_A());
   // bool matchingEdgeIsNew = ( (edgeIt == get_edges()->get_edges().end()) && ( edgeIt->second->get_node_B() != b) );
      bool matchingEdgeIsNew = (edgeIt == get_edges()->get_edges().end());
      if (matchingEdgeIsNew == false)
         {
        // printf ("The node has a valid edge, now check the edge's other end \n");
-          matchingEdgeIsNew = ( edgeIt->second->get_node_B() != b);
+          matchingEdgeIsNew = ( edgeIt->second->get_node_B() != edge->get_node_B());
         }
 
   // printf ("matchingEdgeIsNew = %s \n",matchingEdgeIsNew ? "true" : "false");
@@ -13266,18 +13290,18 @@ SgGraph::addEdge( SgGraphNode* a, SgGraphNode* b, const std::string & name )
 
        // Need the more uniform syntax when using hash_map
        // graph[name] = edge;
-          get_edges()->get_edges().insert(pair<SgGraphNode*,SgGraphEdge*>(a,edge));
+          get_edges()->get_edges().insert(pair<SgGraphNode*,SgGraphEdge*>(edge->get_node_A(),edge));
         }
        else
         {
        // This is something that we can test.
-          ROSE_ASSERT(edgeIt->first == a || edgeIt->first == b );
+          ROSE_ASSERT(edgeIt->first == edge->get_node_A() || edgeIt->first == edge->get_node_B() );
 
        // This name already exists in the graph.
 #if 1
-          printf ("Warning: This edge = %p has a name = %s that already exists in the graph -- edge = %p = %s \n",edge,name.c_str(),edge,edge->class_name().c_str());
+          printf ("Warning: This edge = %p has a name = %s that already exists in the graph -- edge = %p = %s \n",edge,edge->get_name().c_str(),edge,edge->class_name().c_str());
 #else
-          printf ("Error: This edge = %p has a name = %s that already exists in the graph -- edge = %p = %s \n",edge,name.c_str(),edge,edge->class_name().c_str());
+          printf ("Error: This edge = %p has a name = %s that already exists in the graph -- edge = %p = %s \n",edge,edge->get_name().c_str(),edge,edge->class_name().c_str());
           ROSE_ASSERT(false);
 #endif
         }
@@ -13293,7 +13317,8 @@ SgGraph::addEdge( SgGraphNode* a, SgGraphNode* b, const std::string & name )
 #include <boost/graph/kruskal_min_spanning_tree.hpp>
 #endif
 
-void
+// std::vector <SgGraph::BoostEdgeDescriptor>
+std::vector <SgGraphEdge*>
 SgGraph::generateSpanningTree()
    {
      ROSE_ASSERT(this != NULL);
@@ -13340,7 +13365,36 @@ SgGraph::generateSpanningTree()
 
      printf ("rose_spanning_tree.size() = %zu \n",rose_spanning_tree.size());
 #endif
+
+  // return rose_spanning_tree;
+     std::vector <SgGraphEdge*> returnEdgeList;
+
+#if 0
+     std::cout << "Print the edges in the MST:" << std::endl;
+     for (std::vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei)
+        {
+          cout << source(*ei, g) << " <--> " << target(*ei, g)
+               << " with weight of " << weight[*ei]
+               << endl;
+
+          int s = source(*ei, g);
+          int t = target(*ei, g);
+          SgGraphNode* nodeA = get_nodes()->get_nodes()[s];
+          SgGraphNode* nodeB = get_nodes()->get_nodes()[t];
+
+       // Now to we find the edge?
+       // SgGraphEdge* edge = nodeA->get_edges()[s];
+
+       // How to I get the edge that ends at t?
+
+          returnEdgeList.push_back(*ei);
+        }
 #endif
+#else
+     std::vector <SgGraphEdge*> returnEdgeList;
+#endif
+
+     return returnEdgeList;
    }
 
 
@@ -13397,8 +13451,14 @@ SgDirectedGraph::SgDirectedGraph(std::string, std::string)
 SOURCE_DIRECTED_GRAPH_END
 
 
-SOURCE_GRAPH_NODE_START
-SOURCE_GRAPH_NODE_END
+SOURCE_INCIDENCE_UNDIRECTED_GRAPH_START
+SOURCE_INCIDENCE_UNDIRECTED_GRAPH_END
+
+
+SOURCE_INCIDENCE_DIRECTED_GRAPH_START
+SOURCE_INCIDENCE_DIRECTED_GRAPH_END
+
+
 
 
 SOURCE_NAME_GROUP_START

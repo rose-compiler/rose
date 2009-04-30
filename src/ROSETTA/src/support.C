@@ -1386,10 +1386,12 @@ Grammar::setUpSupport ()
      Graph.setFunctionSource    ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
 
      IncidenceUndirectedGraph.setFunctionPrototype ( "HEADER_INCIDENCE_UNDIRECTED_GRAPH", "../Grammar/Support.code");
+     IncidenceUndirectedGraph.setFunctionSource    ( "SOURCE_INCIDENCE_UNDIRECTED_GRAPH", "../Grammar/Support.code");
      IncidenceUndirectedGraph.setDataPrototype("rose_undirected_graph_hash_multimap","undirected_edges","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      IncidenceDirectedGraph.setFunctionPrototype ( "HEADER_INCIDENCE_DIRECTED_GRAPH", "../Grammar/Support.code");
+     IncidenceDirectedGraph.setFunctionSource    ( "SOURCE_INCIDENCE_DIRECTED_GRAPH", "../Grammar/Support.code");
      IncidenceDirectedGraph.setDataPrototype("rose_directed_graph_hash_multimap","edgesOut","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
