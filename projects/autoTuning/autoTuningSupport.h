@@ -45,6 +45,9 @@ namespace autoTuning{
   //! autoTuning specific command line processing
   void autotuning_command_processing(std::vector<std::string>&argvList);
 
+  //! code triage based on performance annotations
+  void code_triage(std::set<SgForStatement*>& candidateSgLoops);
+
   //! Check if a node has a performance metric matching a given metric name
   RoseHPCT::MetricAttr * checkMetricAttribute (SgNode* node, const std::string& metric_name);
 
