@@ -25,19 +25,8 @@ void visitorTraversalSetAttribute::visit(SgNode* n)
        // Build an attribute (on the heap)
           AstAttribute* newAttribute = new persistantAttribute(5);
           ROSE_ASSERT(newAttribute != NULL);
-#if 0
-       // DQ (1/2/2006): Added support for new attribute interface.
-       // printf ("visitorTraversalSetAttribute::visit(): using new attribute interface \n");
-          if (n->get_attribute() == NULL)
-             {
-               AstAttributeMechanism* attributePtr = new AstAttributeMechanism();
-               ROSE_ASSERT(attributePtr != NULL);
-               n->set_attribute(attributePtr);
-             }
-#endif
+
        // Add it to the AST (so it can be found later in another pass over the AST)
-       // n->attribute.add("MyNewAttribute",newAttribute);
-       // n->attribute().add("MyNewAttribute",newAttribute);
           n->addNewAttribute("MyNewAttribute",newAttribute);
         }
    }
