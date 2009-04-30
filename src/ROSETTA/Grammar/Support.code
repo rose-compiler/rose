@@ -121,7 +121,7 @@ HEADER_GRAPH_START
      void append_properties( int addr, const std::string & prop );
 
  //! Support for adding SgGraphNode to SgGraph.
-     SgGraphNode* addNode( const std::string & name = "");
+     SgGraphNode* addNode( const std::string & name = "", SgNode* sg_node = NULL);
 
  //! Add support for externally build SgGraphNode objects
      SgGraphNode* addNode( SgGraphNode* node );
@@ -13194,12 +13194,15 @@ SgGraph::get_graph_id() const
 
 // DQ (4/28/2009): Added support to build node (automaticly added to SgGraph).
 SgGraphNode*
-SgGraph::addNode( const std::string & name )
+SgGraph::addNode( const std::string & name, SgNode* internal_node )
    {
      ROSE_ASSERT(this != NULL);
 
      SgGraphNode* node = new SgGraphNode(name);
      ROSE_ASSERT(node != NULL);
+
+  // Set the reference to the associated AST node
+     node->set_SgNode(internal_node);
 
      return addNode(node);
    }
