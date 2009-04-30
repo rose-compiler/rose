@@ -56,7 +56,7 @@ namespace RoseHPCT
     Named (const std::string& name);
     //! Copy another name.
     Named (const Named& n);
-    ~Named (void);
+    virtual ~Named (void);
 
     const std::string& getName (void) const;
     virtual std::string toString(void) const;
@@ -76,7 +76,7 @@ namespace RoseHPCT
     Metric (const Metric& m);
     //! Initialize to a given name and value.
     Metric (const std::string& name, double value);
-    ~Metric (void);
+    virtual ~Metric (void);
 
     virtual std::string toString() const;  
     double getValue (void) const;
@@ -95,7 +95,7 @@ namespace RoseHPCT
   public:
     Observable (void);
     Observable (const Observable& o);
-    ~Observable (void);
+    virtual ~Observable (void);
 
     //! \name Provide iterator-like semantics over child metrics.
     /*@{*/
@@ -114,6 +114,8 @@ namespace RoseHPCT
     const Metric& getMetric (size_t i) const;
     Metric& getMetric (size_t i);
     double getMetricValue (size_t i) const;
+    //Get a metric's value by its name
+    double getMetricValue (const std::string& metric_name) const;
     std::string getMetricName (size_t i) const;
     /*@}*/
 
@@ -141,7 +143,7 @@ namespace RoseHPCT
     Located (void);
     Located (const Located& l);
     Located (size_t b, size_t e, File* f=NULL);
-    ~Located (void);
+    virtual ~Located (void);
 
     File* getFileNode(void) const;
     void setFileNode(File* filenode);
@@ -252,9 +254,12 @@ namespace RoseHPCT
 
   //! IR tree representation
   typedef Trees::Tree<IRNode *> IRTree_t;
+
   /*@}*/
 
   //@}
+  
+  
 }
 
 #endif

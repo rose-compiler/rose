@@ -15,7 +15,8 @@ EQUAL_PATH3=-rose:hpct:eqpath "/home/liao6/temp"=`cd $(srcdir) && pwd`
 #ROSE_FLAGS+=-rose:hpct:enable_debug 
 
 # test command line options for outliner
-ROSE_FLAGS+= -rose:outline:parameter_wrapper -rose:outline:new_file -rose:outline:temp_variable -rose:outline:enable_liveness -rose:outline:exclude_headers  
+ROSE_FLAGS+= -rose:outline:parameter_wrapper -rose:outline:new_file -rose:outline:temp_variable -rose:outline:enable_liveness -rose:outline:exclude_headers -rose:hpct:enable_debug -rose:autotuning:enable_debug 
+#ROSE_FLAGS+=-rose:autotuning:triage_threshold 0.75
 
 # experimental flags. not well sorted out for the interaction between OpenMP and outlining
 # TODO reduction clause with omp for  should ignored if all reduction variables are no longer shared
@@ -34,7 +35,7 @@ rose_jacobi-omp.c:../autoTuning
 
 # alternative performance information collected by GNU gprof -L -l, line-by-line profiling results
 rose_jacobi2.c:../autoTuning
-	../autoTuning  -c -rose:output rose_jacobi2.c $(ROSE_FLAGS) -rose:hpct:enable_debug $(EQUAL_PATH3) $(ROSE_PROF3) $(srcdir)/jacobi.c
+	../autoTuning  -c -rose:output rose_jacobi2.c $(ROSE_FLAGS) $(EQUAL_PATH3) $(ROSE_PROF3) $(srcdir)/jacobi.c
 
 ../autoTuning:
 	make -C ../.

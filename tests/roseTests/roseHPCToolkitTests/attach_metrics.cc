@@ -51,7 +51,7 @@ main (int argc, char* argv[])
        hpctree != profiles.end ();
        ++hpctree)
     {
-      RoseHPCT::translateFilePaths (*hpctree, eqpaths);
+      RoseHPCT::postProcessingProfIR(*hpctree, eqpaths);
       RoseHPCT::attachMetrics (*hpctree, proj, true);
     }
 

@@ -40,6 +40,7 @@ namespace autoTuning{
   //! Some internal flags controlled by command line options
   extern bool aggressive_triage;
   extern bool enable_debug;
+  extern float triage_threshold; // threshold for sum of top statements' execution percentage numbers
 
   //! autoTuning specific command line processing
   void autotuning_command_processing(std::vector<std::string>&argvList);

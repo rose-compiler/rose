@@ -14,6 +14,7 @@ using namespace RoseHPCT;
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <cassert> 
 
 /* ---------------------------------------------------------------- */
 
@@ -122,6 +123,16 @@ Observable::getMetric (size_t i) const
 void
 Observable::addMetric (const Metric& m)
 {
+  for (ConstMetricIterator iter =beginMetric(); iter!=endMetric(); iter++)
+  {
+    Metric current = *iter;
+    if (current.getName() == m.getName())
+    {
+      cerr<<"Fatal error: Observable::addMetric() tries to add the same type of metric twice."<<endl;
+      assert(false);
+    }
+  }
+
   metrics_.push_back (m);
 }
 
@@ -129,6 +140,22 @@ double
 Observable::getMetricValue (size_t i) const
 {
   return getMetric (i).getValue ();
+}
+
+double
+Observable::getMetricValue (const string& mname) const
+{
+  double result =0.0;
+  for (ConstMetricIterator iter =beginMetric(); iter!=endMetric(); iter++)
+  {
+    Metric m = *iter;
+    if (m.getName() == mname)
+    {
+      result = m.getValue();
+      break;
+    }
+  }
+  return result;  
 }
 
 std::string

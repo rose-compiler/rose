@@ -12,6 +12,7 @@ namespace autoTuning
 {
   bool aggressive_triage;
   bool enable_debug;
+  float triage_threshold = 0.8; // default value, can be changed by a command option
 
  void autotuning_command_processing(vector<string>&argvList)
   {
@@ -23,9 +24,16 @@ namespace autoTuning
     else
       enable_debug= false;
 
+    if (CommandlineProcessing::isOptionWithParameter(argvList,"-rose:autotuning:","triage_threshold",triage_threshold, true))
+    {
+      if (autoTuning::enable_debug)
+        cout<<"Setting custom triage threshold to ..."<<triage_threshold<<endl;
+    }
+
     if (CommandlineProcessing::isOption (argvList,"-rose:autotuning:","aggressive_triage",true))
     {
-      cout<<"Enabling aggressive code triage for auto tuning..."<<endl;
+      if (autoTuning::enable_debug)
+        cout<<"Enabling aggressive code triage for auto tuning..."<<endl;
       aggressive_triage= true;
     }
     else
@@ -37,8 +45,9 @@ namespace autoTuning
         (CommandlineProcessing::isOption (argvList,"-help","",false)))
     {       
       cout<<"Autotuning-specific options"<<endl;
-      cout<<"\t-rose:autotuning:enable_debug           run autotuing in debugging mode"<<endl;
-      cout<<"\t-rose:autotuning:aggressive_triage      enable aggressive code triage"<<endl;
+      cout<<"\t-rose:autotuning:enable_debug               run autotuing in debugging mode"<<endl;
+      cout<<"\t-rose:autotuning:triage_threshold  val      set triage threshold, val can be 0.6, 0.9,etc."<<endl;
+      cout<<"\t-rose:autotuning:aggressive_triage          enable aggressive code triage"<<endl;
       cout <<"---------------------------------------------------------------"<<endl;     
     }
 

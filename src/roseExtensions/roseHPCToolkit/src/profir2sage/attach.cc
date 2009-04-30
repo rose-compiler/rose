@@ -17,6 +17,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <algorithm>
 #include "rosehpct/rosehpct.hh"
 //#include "rosehpct/profir2sage/profir2sage.hh"
 /* ---------------------------------------------------------------- */
@@ -26,6 +27,9 @@ namespace RoseHPCT
   // This gives a global view of where to find hot portions
   std::set<const RoseHPCT::IRNode *> profFileNodes_;	
   std::set<const RoseHPCT::IRNode *> profStmtNodes_;	
+  // a map of all profile tree's nodes to matched ROSE AST tree of the current SgProject
+  // Ideally, the profile trees of different metric set should be merged into one single tree
+  std::map<const RoseHPCT::IRNode *, std::set<SgLocatedNode *> > profSageMap_;
 }
 
 //! Tell if a Sage node's file info. matches a given filename
@@ -653,48 +657,51 @@ MetricAttachTraversal::visit (SgNode* n)
   static int exe_counter=0; // used to collect file nodes of profir only once
   SgLocatedNode* n_loc = isSgLocatedNode (n);
   if (n_loc)
+  {
+    MetricFinder finder (n_loc,&attached_);
+    finder.setVerbose (verbose_);
+    // for current SgNode, find matching prof ir nodes
+    finder.traverse (hpc_root_);
+    // for collecting File nodes of profile IR
+    exe_counter++;
+    if (finder.found ())
     {
-      MetricFinder finder (n_loc,&attached_);
-      finder.setVerbose (verbose_);
-      // for current SgNode, find matching prof ir nodes
-      finder.traverse (hpc_root_);
-      // for collecting File nodes of profile IR
-      exe_counter++;
-#if 0         
-      if (exe_counter==1) 
-       {
-         // store them into MetricAttachTraversal::files
-         files_ = finder.getFiles();
-         stmts_ = finder.getStmts();
-         cout<<"MetricAttachTraversal::visit() obtained stmts from MetricFinder:count="<<stmts_.size()<<endl;
-       } 
-#endif         
-      if (finder.found ())
-        {
-          MetricFinder::MatchSet_t matches = finder.getMatches ();
-          for (MetricFinder::MatchSet_t::const_iterator hpc_match = matches.begin ();
-               hpc_match != matches.end (); ++hpc_match)
-            {
-              ROSE_ASSERT (*hpc_match);
-              attached_[*hpc_match].insert (n_loc);
-              for (Observable::ConstMetricIterator m = (*hpc_match)->beginMetric ();
-                   m != (*hpc_match)->endMetric (); ++m)
-                {
-                  string attr_name = m->getName ();
-                  double attr_value = m->getValue ();
-                  MetricAttr* attr_sage = new MetricAttr (attr_name, attr_value);
-                  attachOne (n_loc, attr_name, attr_sage, verbose_);
+      if (enable_debug)
+      {
+        cout<<"MetricAttachTraversal::visit() found metrics match for SgNode: \n"<<n_loc->unparseToString()
+        <<"\n at line:"<<n_loc->get_file_info()->get_line() <<endl;
+      }
+      MetricFinder::MatchSet_t matches = finder.getMatches ();
+      for (MetricFinder::MatchSet_t::const_iterator hpc_match = matches.begin ();
+          hpc_match != matches.end (); ++hpc_match)
+      {
+        ROSE_ASSERT (*hpc_match);
+        attached_[*hpc_match].insert (n_loc);
+        // Also save to a namescope copy for all profile IR trees
+        profSageMap_[*hpc_match].insert(n_loc); 
 
-                  if (dynamic_cast<const Loop *> (*hpc_match))
-                    attachPostScopeStatement (isSgScopeStatement (n_loc),
-                                              attr_sage, verbose_);
-                  if (dynamic_cast<const Statement *> (*hpc_match))
-                    attachPostFunctionDefinition (isSgFunctionDefinition (n_loc),
-                                                  attr_sage, verbose_);
-                }
-            }
+        if (enable_debug)
+        {
+          cout<<"      metric:"<<(*hpc_match)->toString()<<endl;
         }
+        for (Observable::ConstMetricIterator m = (*hpc_match)->beginMetric ();
+            m != (*hpc_match)->endMetric (); ++m)
+        {
+          string attr_name = m->getName ();
+          double attr_value = m->getValue ();
+          MetricAttr* attr_sage = new MetricAttr (attr_name, attr_value);
+          attachOne (n_loc, attr_name, attr_sage, verbose_);
+
+          if (dynamic_cast<const Loop *> (*hpc_match))
+            attachPostScopeStatement (isSgScopeStatement (n_loc),
+                attr_sage, verbose_);
+          if (dynamic_cast<const Statement *> (*hpc_match))
+            attachPostFunctionDefinition (isSgFunctionDefinition (n_loc),
+                attr_sage, verbose_);
+        }
+      }
     }
+  }
 }
 //! 
 void MetricAttachTraversal::annotateSourceCode(void)
@@ -911,6 +918,7 @@ MetricFixupTraversal::visit (SgNode* n)
 
 /* ---------------------------------------------------------------- */
 // attach a profile ir tree to a sage project
+// There might be multiple profile tree
 void
 RoseHPCT::attachMetrics (const IRTree_t* hpc_root, SgProject* sage_root,
 			bool verbose)
@@ -939,6 +947,7 @@ RoseHPCT::attachMetrics (const IRTree_t* hpc_root, SgProject* sage_root,
 #endif
   MetricAttachTraversal::AttachedNodes_t& attached
     = attacher.getAttachedNodes ();
+  // divide shared metrics up for each AST nodes: 100/2=500 for two nodes matching the same profile ir node  
   normalizeMetrics (sage_root, attached, verbose);
 
   MetricNames_t metrics;

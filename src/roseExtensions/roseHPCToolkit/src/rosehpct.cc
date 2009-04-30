@@ -210,7 +210,7 @@ RoseHPCT::loadProfilingFiles (vector<string>& argvList)
        hpctree != profiles.end ();
        ++hpctree)
     {
-      translateFilePaths (*hpctree, eqpaths);
+      postProcessingProfIR(*hpctree, eqpaths);
     }
   return profiles;
 }
