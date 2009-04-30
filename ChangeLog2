@@ -1,3 +1,12 @@
+2009-04-30 18:29  dquinlan
+
+	* [r5557]
+	  /trunk/ROSE/developersScratchSpace/Dan/graph_tests/graph_test_4.C,
+	  /trunk/ROSE/projects/palette/rose.P,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Node.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Support.code,
+	  /trunk/ROSE/src/ROSETTA/src/support.C: Added more graph support.
+
 2009-04-30 01:41  dquinlan
 
 	* [r5546]
