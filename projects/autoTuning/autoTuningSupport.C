@@ -13,7 +13,7 @@ namespace autoTuning
 {
   bool aggressive_triage;
   bool enable_debug;
-  float triage_threshold = 0.8; // default value, can be changed by a command option
+  float triage_threshold = DEFAULT_THRESHOLD; // default value, can be changed by a command option
 
   void autotuning_command_processing(vector<string>&argvList)
   {
