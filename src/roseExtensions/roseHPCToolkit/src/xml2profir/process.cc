@@ -120,7 +120,7 @@ public:
 
   /*! \brief Returns 'true' if any paths have been translated. */
   bool didChange (void) const;
-
+  static double wallclk_sum;
 private:
   /*! \brief Only translates paths for File nodes */
   virtual void visit (TreeParamPtr_t tree);
@@ -137,6 +137,8 @@ private:
   /*! \brief The current file node's value */
   File* file_;
 };
+
+double PathTranslator::wallclk_sum=0.0;
 
 PathTranslator::PathTranslator (const EquivPathMap_t& eqpaths)
   : eqpaths_ (eqpaths), did_change_ (false)
@@ -171,7 +173,12 @@ PathTranslator::visit (TreeParamPtr_t tree)
        Statement* s = dynamic_cast<Statement*> (tree->value);
        // Save non-scope statement nodes for later use
        if (s)
+       {
          RoseHPCT::profStmtNodes_.insert(s);
+         //Accumulate wall clock metrics so it can be used later on to calculate percentage
+         if (!gprof_only) // gprof provides the percentage so no need to calculate here.
+           wallclk_sum += s->getMetricValue(m_wallclock); 
+       }
        if (locatedNode->getFileNode()==NULL)
        {
          ROSE_ASSERT(file_ != NULL);
@@ -228,11 +235,44 @@ PathTranslator::visitFile (File* node)
 #endif  
 }
 
+/* ---------------------------------------------------------------- */
+// A class to calculate wall clock percentage for each statement Profile IR node with a wallclock metric
+class PercentageCalculator: public Trees::PreTraversal <IRTree_t, false> 
+{
+public:
+  PercentageCalculator(double sum):wallclock_sum(sum){};
+  virtual ~PercentageCalculator(void){};
+
+private:
+  virtual void visit (TreeParamPtr_t tree);
+   double wallclock_sum;
+};
+
+void PercentageCalculator::visit(TreeParamPtr_t tree)
+{
+  Statement* s = dynamic_cast<Statement*> (tree->value);
+  if (s)
+  {
+    double w = s->getMetricValue(m_wallclock);
+    s->addMetric(Metric(m_percentage,w/wallclock_sum));
+  }
+
+}
+
 bool
-RoseHPCT::translateFilePaths (IRTree_t* root, const EquivPathMap_t& eqpaths)
+RoseHPCT::postProcessingProfIR(IRTree_t* root, const EquivPathMap_t& eqpaths)
 {
   PathTranslator xlator (eqpaths);
   xlator.traverse (root);
+  if (!gprof_only) // gprof already provides such information
+  {
+    if (enable_debug )
+    {
+      cout<<"RoseHPCT::PostProcessingProfIR() accumulated wallclock is:"<<PathTranslator::wallclk_sum<<endl;
+    }
+    PercentageCalculator clator(PathTranslator::wallclk_sum);
+    clator.traverse(root);
+  }
   return xlator.didChange ();
 }
 

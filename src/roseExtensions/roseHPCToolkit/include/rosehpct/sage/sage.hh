@@ -85,6 +85,7 @@ namespace RoseHPCT
         size+=2; 
       return size;
     };
+    
     virtual char* packed_data()
     {
       std::string result;

@@ -421,6 +421,16 @@ CommandlineProcessing::isOptionWithParameter ( vector<string> & argv, string opt
           optionParameter = localOptionParameter;
      return (optionCount > 0);
    }
+bool
+CommandlineProcessing::isOptionWithParameter ( vector<string> & argv, string optionPrefix, string option, float & optionParameter, bool removeOption )
+   {
+     float localOptionParameter = 0;
+     int optionCount = sla(argv, optionPrefix, "($)^", option, &localOptionParameter, removeOption ? 1 : -1);
+     if (optionCount > 0)
+          optionParameter = localOptionParameter;
+     return (optionCount > 0);
+   }
+
 
 #if 0
 bool

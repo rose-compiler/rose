@@ -124,8 +124,10 @@ namespace RoseHPCT
     static IRTree_t* prog_root=NULL;
     // a file and file node map
     static std::map<std::string , IRTree_t* > file_node_map;
-    // TODO how about duplicated function name? 
-    static std::map<std::string, IRTree_t* > func_node_map;
+    //TODO: can have the same name for several functions 
+    // Should look further for file and line information
+    //static std::map<std::string, std::set<IRTree_t*> > func_node_map;
+    static std::map<std::string, IRTree_t*> func_node_map;
 
     if (vec.size()==0)
       return treelist;
@@ -139,54 +141,82 @@ namespace RoseHPCT
     for (;iter != vec.end(); iter++)
     {
       gprof_info info = *iter;
-      // create file node if not done
+      // file level---------------
+      // We don't attach any metrics here and let propagation phase to do it
+      // create file node if it does not exists 
       string file_name = info.file_name();
-      string func_name = info.function_name();
-
       IRTree_t* file_node = file_node_map[file_name];
-      // TODO how about duplicated function name? 
-      IRTree_t* func_node = func_node_map[file_name];
-       // file level
       if (file_node == NULL)
       {
-        File * value = new File(file_name);
-        ROSE_ASSERT(value !=NULL);
+        File * f= new File(file_name);
+        ROSE_ASSERT(f!=NULL);
         // insert it under prog_root
         size_t num_kids = prog_root->getNumChildren();
-        file_node = prog_root->setChildValue(num_kids+1, value);
+        file_node = prog_root->setChildValue(num_kids+1, f);
         ROSE_ASSERT(file_node != NULL);
         file_node_map[file_name] = file_node;
       }
-      // function level
+      // function level---------------
+      // We don't attach any metrics here and let propagation phase to do it
+      //  Deal with functions with same names
+      string func_name = info.function_name();
+      IRTree_t* func_node = NULL;
+      func_node =  func_node_map[func_name];
+#if 0  // gprof does not provide function's line number, info.line_number() is for the statement     
+      std::set<IRTree_t*> nodeset = func_node_map[func_name];
+      for( std::set<IRTree_t*>::const_iterator iter = nodeset.begin();
+          iter != nodeset.end(); iter ++)
+      {
+        File * existing_file = dynamic_cast<File*>((*iter)->value); 
+        // match file node and line number
+        if ((existing_file->getFileNode() ==file_node)&&
+            (existing_file->getFirstLine() == info.line_number()))
+        {
+          func_node = exsting_file;
+          break;
+        }
+      }
+#endif      
       if (func_node == NULL)
       { // assume the end line is equal to the beginning line
-        Procedure * value = new Procedure(func_name,info.line_number(),info.line_number());
-        ROSE_ASSERT(value!=NULL);
+        Procedure * p= new Procedure(func_name,info.line_number(),info.line_number());
+        ROSE_ASSERT(p!=NULL);
+        p->setFileNode(dynamic_cast<File*>(file_node->value));
         //insert it under a corresponding file node
         size_t num_kids= file_node->getNumChildren();
-        func_node = file_node->setChildValue(num_kids+1,value);
-        dynamic_cast<Located*>(func_node->value)->setFileNode(dynamic_cast<File*>(file_node->value));
-        func_node_map[func_name]= func_node;
+        func_node = file_node->setChildValue(num_kids+1,p);
+        func_node_map[func_name]=func_node;
+        //func_node_map[func_name].insert(func_node);
       } 
-      // statement level
+      // statement level-------------------
+      // Where the line-by-line metrics should be attached.
       if (info.calls()>0)  
         // this line is about an entire function , we ignore them for now
         // since a later metric propagation phase will generate function metrics from statement level ones.
-       {
-         
-       } 
-      else  // this line is about a single statement only
-       {
-         Statement* s = new Statement ("",info.line_number(),0);
-         // We treat the self-seconds as wall clock time
-         Metric *m = new Metric("WALLCLK",info.self_seconds());
-         ROSE_ASSERT(m!=NULL);
-         s->addMetric(*m);
-         // insert into a procedure node
-         size_t num_kids = func_node->getNumChildren();
-         //IRTree_t* stmt_node = 
-         func_node->setChildValue(num_kids+1,s); 
-       } 
+      {
+
+      } 
+      else  // this line is about a single statement only, 
+        // no chance to have multiple lines of information for a single statement
+      {
+        // Build the Profile IR node
+        Statement* s = new Statement ("",info.line_number(),0);
+        s->setFileNode(dynamic_cast<File*>(file_node->value));
+        // insert into a procedure node
+        size_t num_kids = func_node->getNumChildren();
+        func_node->setChildValue(num_kids+1,s); 
+
+        //Attach metrics
+        // Metric 1: We treat the self-seconds as wall clock time, 
+        // even the original WALLCLK of hpctoolkit is an integer cycle count
+        Metric *m = new Metric(m_wallclock,info.self_seconds());
+        ROSE_ASSERT(m!=NULL);
+        s->addMetric(*m);
+        // Metric 2:  For line-by-line gprof results, the percentage is exclusive , not inclusive
+        m = new Metric(m_percentage, info.time_percent()/100.0); // must divided by 100 here!!
+        ROSE_ASSERT(m!=NULL);
+        s->addMetric(*m);
+      } 
     }
     treelist.push_back(prog_root);
     return treelist;

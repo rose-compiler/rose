@@ -39,6 +39,9 @@ namespace CommandlineProcessing
        //! Available value types are: str, float, double, int, short, long, unsigned int, unsigned short, unsigned long, char, etc.
           bool isOptionWithParameter ( std::vector<std::string> & argv, std::string optionPrefix, std::string option, int & optionParameter, bool removeOption );
 
+       //! Search 'argv' for 'optionPrefix:option value',  store the float value into 'optionParameter'. Remove the original option if 'removeOption' is true.
+          bool isOptionWithParameter ( std::vector<std::string> & argv, std::string optionPrefix, std::string option, float & optionParameter, bool removeOption );
+
        //! Search 'argv' for 'optionPrefix:option value',  store the string type value into 'optionParameter'. Remove the original option if 'removeOption' is true.
           bool isOptionWithParameter ( std::vector<std::string> & argv, std::string optionPrefix, std::string option, std::string & optionParameter, bool removeOption );
 

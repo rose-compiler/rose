@@ -40,7 +40,22 @@ namespace RoseHPCT
 {
   //! \addtogroup ROSEHPCT_HL
   //@{
+  //! A set of predefined metric names, 
+  //  please use them instead of hard coded values in the code
+  //  All other PAPI event names are standardized. 
+  const std::string m_wallclock="WALLCLK";
+  const std::string m_percentage="WALLCLK_EXCLUSIVE_PERCENTAGE";
+  const std::string m_totalcycle="PAPI_TOT_CYC";
 
+  //! A quick reference to all file and non-stmt nodes of the original Profile IR trees
+  // This gives a global view of where to find hot portions
+  extern std::set<const RoseHPCT::IRNode *> profFileNodes_;
+  extern std::set<const RoseHPCT::IRNode *> profStmtNodes_;
+  // a map of all profile tree's nodes to matched ROSE AST tree of the current SgProject
+  // Ideally, the profile trees of different metric set should be merged into one single tree
+  extern std::map<const RoseHPCT::IRNode *, std::set<SgLocatedNode *> > profSageMap_;
+
+  //! flags to accept command line option
   extern bool enable_debug; // output debug information
   extern bool gprof_only; // if users are using gprof result as an alternative
   extern std::string gprof_file_name; // We expect only on gprof input file

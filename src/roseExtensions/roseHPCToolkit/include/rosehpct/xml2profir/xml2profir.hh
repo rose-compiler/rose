@@ -72,8 +72,8 @@ namespace RoseHPCT
   //! Equivalent paths mapping
   typedef std::map<std::string, std::string> EquivPathMap_t;
 
-  //! Replace path names using the translation map.
-  bool translateFilePaths (IRTree_t* root, const EquivPathMap_t& eqpaths);
+  //! Fixup file pointer, calculate percentage, replace path names using the translation map.
+  bool postProcessingProfIR(IRTree_t* root, const EquivPathMap_t& eqpaths);
 
   //! Replace short-hand metric names with full names.
   bool translateMetricNames (IRTree_t* root,
