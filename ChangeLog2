@@ -1,3 +1,49 @@
+2009-04-30 20:45  liao6
+
+	* [r5564] /trunk/ROSE/projects/autoTuning/autoTuning.C,
+	  /trunk/ROSE/projects/autoTuning/autoTuningSupport.C,
+	  /trunk/ROSE/projects/autoTuning/autoTuningSupport.h: Updated some
+	  minor source comments for autotuning
+
+2009-04-30 20:37  liao6
+
+	* [r5563] /trunk/ROSE/projects/autoTuning/autoTuning.C,
+	  /trunk/ROSE/projects/autoTuning/autoTuningSupport.C,
+	  /trunk/ROSE/projects/autoTuning/autoTuningSupport.h: Autotuning:
+	  refactored the code triage portion into a separated function
+
+2009-04-30 20:08  liao6
+
+	* [r5561] /trunk/ROSE/projects/autoTuning/autoTuning.C,
+	  /trunk/ROSE/projects/autoTuning/autoTuningSupport.C,
+	  /trunk/ROSE/projects/autoTuning/autoTuningSupport.h,
+	  /trunk/ROSE/projects/autoTuning/tests/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/include/rosehpct/profir/profir.hh,
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/include/rosehpct/rosehpct.hh,
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/include/rosehpct/sage/sage.hh,
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/include/rosehpct/xml2profir/xml2profir.hh,
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/src/gprof/gprof_info.cc,
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/src/profir/profir.cc,
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/src/profir2sage/attach.cc,
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/src/rosehpct.cc,
+	  /trunk/ROSE/src/roseExtensions/roseHPCToolkit/src/xml2profir/process.cc,
+	  /trunk/ROSE/src/util/commandlineProcessing/commandline_processing.C,
+	  /trunk/ROSE/src/util/commandlineProcessing/commandline_processing.h,
+	  /trunk/ROSE/tests/roseTests/roseHPCToolkitTests/attach_metrics.cc,
+	  /trunk/ROSE/tests/roseTests/roseHPCToolkitTests/dump_ast.cc,
+	  /trunk/ROSE/tests/roseTests/roseHPCToolkitTests/propagate_metrics.cc:
+	  Implemented a new code triage algorithm in autotuning using a
+	  configurable execution percentage threshold.
+	  
+	  * added a new option: -rose:autotuning:triage_threshold xx
+	  * added support for attaching and computing execution percentage
+	  metrics from both hpctoolkit and gprof results
+
+2009-04-30 19:05  dquinlan
+
+	* [r5560] /trunk/ROSE/src/ROSETTA/Grammar/Support.code: Added more
+	  graph support.
+
 2009-04-30 18:29  dquinlan
 
 	* [r5557]
