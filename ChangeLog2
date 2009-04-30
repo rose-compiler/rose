@@ -1,3 +1,32 @@
+2009-04-30 01:41  dquinlan
+
+	* [r5546]
+	  /trunk/ROSE/developersScratchSpace/Dan/graph_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/graph_tests/graph_test_1.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/graph_tests/graph_test_5.C,
+	  /trunk/ROSE/tutorial/persistantAttributes.C: Added example test
+	  code to demonstrate graph AstAttributeMechanism on SgGraph,
+	  SgGraphNode, and SgGraphEdge.
+
+2009-04-30 01:23  dquinlan
+
+	* [r5545] /trunk/ROSE/src/ROSETTA/src/support.C: Added member
+	  function support for AstAttributeMechanism on SgGraph,
+	  SgGraphNode, and SgGraphEdge.
+
+2009-04-30 01:10  dquinlan
+
+	* [r5544]
+	  /trunk/ROSE/developersScratchSpace/Dan/graph_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/graph_tests/graph_test_2.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/graph_tests/graph_test_3.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/graph_tests/graph_test_4.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/graph_tests/inputCode_main.C,
+	  /trunk/ROSE/proposals/StudentWork.txt,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Support.code,
+	  /trunk/ROSE/src/ROSETTA/src/support.C: Added more work on
+	  connection of ROSE Graph IR Node to Boost Graph Library.
+
 2009-04-29 18:35  liao6
 
 	* [r5541]
