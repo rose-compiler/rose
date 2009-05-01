@@ -50,7 +50,7 @@ $(TEST_Objects): testWave $(srcdir)/$(@:.o=.C)
 
 $(TEST_Objects2): testWave2 $(srcdir)/$(@:.o=.C)
 	rm -f $(@:.o=.c).out  
-	./testWave2 -c $(srcdir)/out/$(@:.o=.c) -o $(@:.c=.o)
+	./testWave2 -c $(srcdir)/out/$(@:.o=.c) -o $(@:.c=.o)  -DHYPRE_SEQUENTIAL -DHYPRE_TIMING -DHYPRE_USING_OPENMP
 	if [ "`diff $(srcdir)/out/$(@:.o=.c).test2.out $(@:.o=.c).test2.out | wc -l`" != "0" ]; then exit 1; fi
 	rm -f $(@:.c=.o)
 
