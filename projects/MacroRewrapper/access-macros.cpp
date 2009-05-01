@@ -48,7 +48,8 @@ createCommand("CREATE UNIQUE INDEX IF NOT EXISTS  mdefIndx ON macrodefs(filename
 createCommand("CREATE UNIQUE INDEX IF NOT EXISTS  mcallIndx ON macrocalls(filename, lineno, colno);");
 createCommand("CREATE INDEX IF NOT EXISTS  mcallDefidIndx ON macrocalls(macrodef);");
 createCommand("CREATE INDEX IF NOT EXISTS tokenCallidIndx ON tokenlist(macrocall);");
-
+createCommand("create table IF NOT EXISTS timing(property_name TEXT, total_wallclock FLOAT, total_usertime FLOAT, total_systime FLOAT, wallclock FLOAT, usertime FLOAT, systime FLOAT )");
+createCommand("create table IF NOT EXISTS tokenlist_generator_timing(file TEXT, total_wallclock FLOAT, total_usertime FLOAT, total_systime FLOAT, tokengen_wallclock FLOAT, tokengen_usertime FLOAT, tokengen_systime FLOAT )");
 
 }
   
