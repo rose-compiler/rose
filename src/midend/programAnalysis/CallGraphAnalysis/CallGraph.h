@@ -21,7 +21,10 @@
 #include <functional>
 #include <queue>
 
-#ifdef SOLVE_FUNCTION_CALLS_IN_DB
+
+extern bool var_SOLVE_FUNCTION_CALLS_IN_DB;
+
+//Only used when SOLVE_FUNCTION_CALLS_IN_DB is defined
 struct Properties
 {
   bool isPointer, isPolymorphic;
@@ -33,7 +36,6 @@ struct Properties
 };
 
 typedef struct Properties FunctionProperties;
-#endif
 
 typedef Rose_STL_Container<SgFunctionDeclaration *> SgFunctionDeclarationPtrList;
 typedef Rose_STL_Container<SgClassDefinition *> SgClassDefinitionPtrList;
@@ -43,58 +45,45 @@ typedef Rose_STL_Container<SgClassDefinition *> SgClassDefinitionPtrList;
 
 class CallGraphNode: public MultiGraphElem
    {
-#ifdef SOLVE_FUNCTION_CALLS_IN_DB
+     private:
+       bool hasDefinition;
+
+     public:
+       std::string label;
+
+       virtual std::string toString() const;
+       bool isDefined ();
+       void Dump() const;
+
    public:
-         std::string label;
+
+       //@{
+      //Interfaces only used when using DB
       // SgFunctionDeclaration* functionDeclaration;
+
          FunctionProperties *properties;
-         bool hasDefinition;
 
          CallGraphNode ( std::string label, SgFunctionDeclaration* fctDeclaration, SgType *ty,
          bool hasDef, bool isPtr, bool isPoly, SgClassDefinition *invokedCls );
          CallGraphNode ( std::string label, FunctionProperties *fctProps, bool hasDef );
-         bool isDefined ();
-         void Dump() const;
-         virtual std::string toString() const;
-#else
-   public:
-         std::string label;
+         //@}
+         //@{
+      //Interfaces only used when not using database
          SgFunctionDeclaration* functionDeclaration;
-	 
          CallGraphNode ( std::string label, SgFunctionDeclaration* fctDeclaration, bool hasDef );
-	 
-         bool isDefined (); 
-         void Dump() const;
-         virtual std::string toString() const;
-	 
-   private:
-         bool hasDefinition;
-
-#endif
+         //@}
    };
 
 class CallGraphEdge : public MultiGraphElem
    {
-#ifdef SOLVE_FUNCTION_CALLS_IN_DB
      public:
-         std::string label;
+       //Properties variable only used when DB is defined
 	 FunctionProperties *properties;
 
-         CallGraphEdge ( std::string label = "default edge" );
-
-         void Dump() const;
-         virtual std::string toString() const;
-#else
-
-   public:
          std::string label;
-	 
-         CallGraphEdge ( std::string label = "default edge" ); 
-	 
+         CallGraphEdge ( std::string label = "default edge" );
          void Dump() const;
          virtual std::string toString() const;
-
-#endif
    };
 
 
@@ -186,31 +175,6 @@ DAGCreate<Node, Edge>::edgeExist ( Node *src, Node *snk)
    }
 
 
-#if 0
-// DQ (9/12/2007): Redundant declaration, I think.
-template <class Node, class Edge> bool
-DAGCreate<Node, Edge>::edgeExist ( Node *src, Node *snk)
-   { 
-     bool edge_exist = false;     
-     for (typename DAGCreate<Node, Edge>::EdgeIterator i = this->GetNodeEdgeIterator(src,GraphAccess::EdgeOut); !i.ReachEnd(); ++i) 
-        {
-	      Edge* currentEdge = i.Current();
-              Node* endPoint= GetEdgeEndPoint(currentEdge, GraphAccess::EdgeIn);
-	      
-	      if(snk == endPoint){
-		   std::cout << "NODE EXISTS" << std::endl;
-		   edge_exist = true;
-		   break;
-	      }else
-                   std::cout << "NODE DO NOT EXIST" << std::endl;
-        }
-
-     
-     
-     return edge_exist; 
-   }
-#endif
-
 template <class Node, class Edge> int
 DAGCreate<Node, Edge>::size()
    {
@@ -232,30 +196,6 @@ DAGCreate<Node, Edge>::getSubGraphMap()
 
 typedef DAGCreate<CallGraphNode, CallGraphEdge> CallGraphCreate;
 
-//AS(090707) These member functions are now part of the CallTargetSet namespace. It does not make sence
-//to use static member functions of a class when a namespace can be used.
-
-
-#if 0 
-class CallGraphFunctionSolver
-   {
-     publc:
-       //AS(090707) This member function is now part of the CallTargetSet namespace
-       // returns the list of declarations of all functions that may get called via the specified pointer
-       //static SgFunctionDeclarationPtrList solveFunctionPointerCall ( SgPointerDerefExp *, SgProject * );
-
-       //       static FunctionProperties solveMemberFunctionPointerProperties ( SgExpression *functionExp );
-
-       // returns the list of declarations of all functions that may get called via a member function pointer
-       static SgFunctionDeclarationPtrList solveMemberFunctionPointerCall ( SgExpression *,
-									    ClassHierarchyWrapper * );
-
-       // returns the list of declarations of all functions that may get called via a
-       // member function (non/polymorphic) call
-       static SgFunctionDeclarationPtrList solveMemberFunctionCall ( SgClassType *, ClassHierarchyWrapper *,
-								     SgMemberFunctionDeclaration *, bool );
-   };
-#endif
 
 //AS(090707) Added the CallTargetSet namespace to replace the CallGraphFunctionSolver class
 namespace CallTargetSet
@@ -278,32 +218,35 @@ namespace CallTargetSet
 
 class FunctionData
    {
-#ifdef SOLVE_FUNCTION_CALLS_IN_DB
+     public:
+
+       bool hasDefinition;
+
+          bool isDefined (); 
+
+    //@{
+    //Interfaces only used when DB is defined
      public:
           FunctionData ( SgFunctionDeclaration* functionDeclaration, SgProject *project,
 			 ClassHierarchyWrapper * );
-          bool isDefined ();
 	  FunctionProperties *properties;
-	  bool hasDefinition;
-
+	  
 	  // Relevant data for call graph
           //SgFunctionDeclaration* functionDeclaration;
-          Rose_STL_Container<FunctionProperties *> functionList;
-#else
+          Rose_STL_Container<FunctionProperties *> functionListDB;
+     //@}
+    //@{
+    //Interfaces only defined when DB is NOT defined
      public:
           FunctionData ( SgFunctionDeclaration* functionDeclaration, bool hasDef,
 			 SgProject *project, ClassHierarchyWrapper * );
-          bool isDefined (); 
 	  
 	  // Relevant data for call graph
           SgFunctionDeclaration* functionDeclaration;
           Rose_STL_Container<SgFunctionDeclaration*> functionList;
 	  Rose_STL_Container<SgMemberFunctionDeclaration*> *findPointsToVirtualFunctions ( SgMemberFunctionDeclaration * );
 	  bool compareFunctionDeclarations( SgFunctionDeclaration *f1, SgFunctionDeclaration *f2 );
-
-     private:
-          bool hasDefinition;
-#endif
+   //@}
    };
 
 
@@ -336,10 +279,8 @@ void GenerateDotGraph ( CallGraphCreate *graph, std::string fileName );
 CallGraphNode* 
 findNode ( Rose_STL_Container<CallGraphNode*> & nodeList, SgFunctionDeclaration* functionDeclaration );
 
-#ifdef SOLVE_FUNCTION_CALLS_IN_DB
 CallGraphNode* 
 findNode ( Rose_STL_Container<CallGraphNode*> & nodeList, FunctionProperties* functionProperties );
-#endif
 
 CallGraphNode* 
 findNode ( Rose_STL_Container<CallGraphNode*> & nodeList, std::string name );
@@ -366,7 +307,6 @@ class CallGraphDotOutput : public GraphDotOutput <CallGraphCreate>
 #ifdef HAVE_MYSQL
 // TPS (01Dec2008): Enabled mysql and this fails.
 // seems like it is not supposed to be included
-#if 0
        void createCallGraphSchema ( GlobalDatabaseConnection **gDB, std::string dbName );
        int writeToDB ( int i = 0, std::string dbName = "" );
        void writeSubgraphToDB ( GlobalDatabaseConnection *gDB );
@@ -379,7 +319,6 @@ class CallGraphDotOutput : public GraphDotOutput <CallGraphCreate>
 #ifdef SOLVE_FUNCTION_CALLS_IN_DB
        void solveFunctionPointers ( std::string dbName );
        void solveVirtualFunctions ( std::string dbName, std::string dbHierarchy );
-#endif
 #endif
 #endif
    };
