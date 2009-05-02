@@ -1,3 +1,14 @@
+2009-05-01 22:29  saebjornsen1
+
+	* [r5578]
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/Makefile.am:
+	  Modified call to Wave test
+
+2009-05-01 22:28  saebjornsen1
+
+	* [r5577] /trunk/ROSE/projects/MacroRewrapper/access-macros.cpp:
+	  Added tables for timing for macrorewrapper
+
 2009-04-30 20:45  liao6
 
 	* [r5564] /trunk/ROSE/projects/autoTuning/autoTuning.C,
