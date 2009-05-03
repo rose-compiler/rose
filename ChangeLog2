@@ -1,3 +1,10 @@
+2009-05-02 19:06  saebjornsen1
+
+	* [r5589]
+	  /trunk/ROSE/src/midend/programAnalysis/CallGraphAnalysis/CallGraph.C,
+	  /trunk/ROSE/src/midend/programAnalysis/CallGraphAnalysis/CallGraph.h:
+	  Refactoring of call graph code
+
 2009-05-01 22:29  saebjornsen1
 
 	* [r5578]
