@@ -4,6 +4,11 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # before the subdirectories.
 SUBDIRS = astFileIO astMerge astFixup astPostProcessing sageInterface virtualCFG astTokenStream astHiddenTypeAndDeclarationLists astVisualization
 
+# DQ (5/2/2009): This supports the optimization of the new 
+# Graph IR nodes (makes about 25% improvement, I think).
+# ROSE_OPTIMIZATION_LEVEL = -O3
+ROSE_OPTIMIZATION_LEVEL =
+
 # Liao, 3/31/2009, moved the OpenMP parser here
 #Liao, 10/27/2008. I decide to parse OpenMP pragma string here
 # Bison flags
@@ -11,7 +16,7 @@ AM_YFLAGS = -d
 # Flex flags
 AM_LFLAGS =
 # avoid unused Flex functions which are automatically generated
-CXXFLAGS+= -DYY_NO_TOP_STATE -DYY_NO_POP_STATE
+CXXFLAGS+= -DYY_NO_TOP_STATE -DYY_NO_POP_STATE $(ROSE_OPTIMIZATION_LEVEL)
 # omplexer.cc needs a header generaetd from ompparser.yy
 omplexer.lo: ompparser.h omplexer.cc
 ompparser.h: ompparser.cc
@@ -95,7 +100,8 @@ libsage3Sources = \
    fixupCopy_references.C \
    rtiHelpers.C \
    OmpAttribute.C \
-   dwarfSupport.C
+   dwarfSupport.C \
+   rose_graph_support.C
 
 # $(GENERATED_SOURCE) is handled separately
 

@@ -42,5 +42,16 @@ extern const std::string ROSE_AUTOMAKE_BUILD_CPU;
 /* the numeric value is x * 1000000 + y * 10000 + z * 100 + (L - 'a') */
 extern const int ROSE_NUMERIC_VERSION;
 
+
+// DQ (5/2/2009): This is temporary while we work out the details of the new Graph IR nodes.
+// #define USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY 0
+
+#ifdef ROSE_USE_NEW_GRAPH_NODES
+#ifndef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
+#warning "ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY IS NOT SET"
+#endif
+#endif
+
+
 #endif /* ROSE_PATHS_H */
 
