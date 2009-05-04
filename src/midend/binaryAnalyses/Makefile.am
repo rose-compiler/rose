@@ -7,27 +7,37 @@ noinst_LTLIBRARIES = libbinaryMidend.la
 # Isolated part of library that is independent of the mysql database
 libbinaryMidend_la_DEPENDENCIES =
 
-if ROSE_USE_SQLITE_DATABASE
-libbinaryMidend_la_SOURCES =  RoseBin_CompareAnalysis.cpp RoseBin_ControlFlowAnalysis.cpp \
+sourse_files = \
+     RoseBin_CompareAnalysis.cpp RoseBin_ControlFlowAnalysis.cpp \
      RoseBin_printInstructions.cpp RoseBin_DataFlowAnalysis.cpp \
      RoseBin_CallGraphAnalysis.cpp RoseBin_FlowAnalysis.cpp \
      dataflowanalyses/RoseBin_DefUseAnalysis.cpp \
      dataflowanalyses/RoseBin_VariableAnalysis.cpp \
      dataflowanalyses/InterruptAnalysis.cpp \
      dataflowanalyses/RoseBin_Emulate.cpp \
-     dataflowanalyses/RoseBin_DataFlowAbstract.cpp \
+     dataflowanalyses/RoseBin_DataFlowAbstract.cpp
+
+if ROSE_USE_SQLITE_DATABASE
+database_sourse_files = \
      libraryIdentification/libraryIdentification_reader.C \
      libraryIdentification/libraryIdentification_writer.C \
      libraryIdentification/functionIdentification.C 
 else
-libbinaryMidend_la_SOURCES =  RoseBin_CompareAnalysis.cpp RoseBin_ControlFlowAnalysis.cpp \
-     RoseBin_printInstructions.cpp RoseBin_DataFlowAnalysis.cpp \
-     RoseBin_CallGraphAnalysis.cpp RoseBin_FlowAnalysis.cpp \
-     dataflowanalyses/RoseBin_DefUseAnalysis.cpp \
-     dataflowanalyses/RoseBin_VariableAnalysis.cpp \
-     dataflowanalyses/InterruptAnalysis.cpp \
-     dataflowanalyses/RoseBin_Emulate.cpp \
-     dataflowanalyses/RoseBin_DataFlowAbstract.cpp 
+database_sourse_files =
+endif
+
+# DQ (5/2/2009): Added support for configure options
+if ROSE_USE_NEW_GRAPH_NODES
+if ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
+# Using the new Graph IR nodes and the optional backward compatability API.
+libbinaryMidend_la_SOURCES = $(sourse_files) $(database_sourse_files)
+else
+# The current code will not compile with the new Graph IR node interface.
+libbinaryMidend_la_SOURCES =
+endif
+else
+# This is the original case (not using the new Graph IR nodes)
+libbinaryMidend_la_SOURCES = $(sourse_files) $(database_sourse_files)
 endif
 
 BUILT_SOURCES = 
@@ -55,3 +65,6 @@ EXTRA_DIST =
 
 
 clean-local:
+
+print:
+	echo "libbinaryMidend_la_SOURCES = $(libbinaryMidend_la_SOURCES)"

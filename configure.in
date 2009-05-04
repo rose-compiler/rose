@@ -143,6 +143,15 @@ if test "x$enable_newGraphNodes" = "xyes"; then
   AC_DEFINE([ROSE_USE_NEW_GRAPH_NODES], [], [Whether to use the new graph IR nodes])
 fi
 
+# DQ (5/2/2009): Added support for backward compatability of new IR nodes with older API.
+AC_ARG_ENABLE(use_new_graph_node_backward_compatability,
+    AS_HELP_STRING([--enable-use_new_graph_node_backward_compatability], [Enable new (experimental) graph IR nodes backward compatability API]))
+AM_CONDITIONAL(ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY, [test "x$enable_use_new_graph_node_backward_compatability" = xyes])
+if test "x$enable_use_new_graph_node_backward_compatability" = "xyes"; then
+  AC_MSG_WARN([Using the new graph IR nodes in ROSE (experimental)!])
+  AC_DEFINE([ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY], [], [Whether to use the new graph IR nodes compatability option with older API])
+fi
+
 
 #AM_CONDITIONAL(ROSE_USE_QROSE,test "$with_qrose" = true)
 

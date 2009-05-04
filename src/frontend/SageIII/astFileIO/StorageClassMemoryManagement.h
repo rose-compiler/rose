@@ -370,29 +370,112 @@ class EasyStorage <rose_graph_hash_multimap> :
      static void readFromFile (std::istream& in);
    };
 #endif
- 
-// DQ (8/19/2008): Added support for new graph IR nodes. 
-// EasyStorage for storing the rose_hash_multimap  
-// * it has overloaded methods for arrangeMemoryPoolInOneBlock and deleteMemoryPool
-#if 0
+
+// DQ (5/1/2009): Added support for rose_graph_integer_node_hash_map
 template < >
-class EasyStorage <rose_directed_graph_hash_multimap*> : 
-    public StorageClassMemoryManagement <EasyStorageMapEntry<std::string,SgDirectedGraphEdge*> > 
+class EasyStorage <rose_graph_integer_node_hash_map> : 
+    public StorageClassMemoryManagement <EasyStorageMapEntry<int,SgGraphNode*> > 
    {
-     typedef StorageClassMemoryManagement <EasyStorageMapEntry<std::string,SgDirectedGraphEdge*> > Base;
+     typedef StorageClassMemoryManagement <EasyStorageMapEntry<int,SgGraphNode*> > Base;
     private:
+     int value;
      unsigned long parent;
     public: 
      EasyStorage() {parent = 0;}
-     void storeDataInEasyStorageClass(rose_directed_graph_hash_multimap* data_);
-     rose_directed_graph_hash_multimap* rebuildDataStoredInEasyStorageClass() const;
+     void storeDataInEasyStorageClass(const rose_graph_integer_node_hash_map& data_);
+     rose_graph_integer_node_hash_map rebuildDataStoredInEasyStorageClass() const;
      static void arrangeMemoryPoolInOneBlock() ;
      static void deleteMemoryPool() ;
 
      static void writeToFile(std::ostream& out);
      static void readFromFile (std::istream& in);
    };
-#else
+
+// DQ (5/1/2009): Added support for rose_graph_integer_edge_hash_map
+template < >
+class EasyStorage <rose_graph_integer_edge_hash_map> : 
+    public StorageClassMemoryManagement <EasyStorageMapEntry<int,SgGraphEdge*> > 
+   {
+     typedef StorageClassMemoryManagement <EasyStorageMapEntry<int,SgGraphEdge*> > Base;
+    private:
+     int value;
+     unsigned long parent;
+    public: 
+     EasyStorage() {parent = 0;}
+     void storeDataInEasyStorageClass(const rose_graph_integer_edge_hash_map& data_);
+     rose_graph_integer_edge_hash_map rebuildDataStoredInEasyStorageClass() const;
+     static void arrangeMemoryPoolInOneBlock() ;
+     static void deleteMemoryPool() ;
+
+     static void writeToFile(std::ostream& out);
+     static void readFromFile (std::istream& in);
+   };
+ 
+// DQ (5/2/2009): Added support for rose_graph_integer_edge_hash_multimap
+template < >
+class EasyStorage <rose_graph_integer_edge_hash_multimap> : 
+    public StorageClassMemoryManagement <EasyStorageMapEntry<int,SgGraphEdge*> > 
+   {
+     typedef StorageClassMemoryManagement <EasyStorageMapEntry<int,SgGraphEdge*> > Base;
+    private:
+     int value;
+     unsigned long parent;
+    public: 
+     EasyStorage() {parent = 0;}
+     void storeDataInEasyStorageClass(const rose_graph_integer_edge_hash_multimap& data_);
+     rose_graph_integer_edge_hash_multimap rebuildDataStoredInEasyStorageClass() const;
+     static void arrangeMemoryPoolInOneBlock() ;
+     static void deleteMemoryPool() ;
+
+     static void writeToFile(std::ostream& out);
+     static void readFromFile (std::istream& in);
+   };
+ 
+// DQ (5/1/2009): Added support for rose_graph_string_integer_hash_multimap
+template < >
+class EasyStorage <rose_graph_string_integer_hash_multimap> : 
+    public StorageClassMemoryManagement <EasyStorageMapEntry<std::string,int> > 
+   {
+     typedef StorageClassMemoryManagement <EasyStorageMapEntry<std::string,int> > Base;
+    private:
+     EasyStorage <std::string> name_data; 
+     int value;
+    public: 
+     EasyStorage() {}
+     void storeDataInEasyStorageClass(const rose_graph_string_integer_hash_multimap& data_);
+     rose_graph_string_integer_hash_multimap rebuildDataStoredInEasyStorageClass() const;
+     static void arrangeMemoryPoolInOneBlock() ;
+     static void deleteMemoryPool() ;
+
+     static void writeToFile(std::ostream& out);
+     static void readFromFile (std::istream& in);
+   };
+ 
+// DQ (5/1/2009): Added support for rose_graph_integerpair_edge_hash_multimap
+template < >
+class EasyStorage <rose_graph_integerpair_edge_hash_multimap> : 
+    public StorageClassMemoryManagement <EasyStorageMapEntry<EasyStorageMapEntry<int,int>,SgGraphEdge*> > 
+   {
+     typedef StorageClassMemoryManagement <EasyStorageMapEntry<EasyStorageMapEntry<int,int>,SgGraphEdge*> > Base;
+    private:
+  // EasyStorage <std::string> name_data; 
+     int value;
+    public: 
+     EasyStorage() {}
+     void storeDataInEasyStorageClass(const rose_graph_integerpair_edge_hash_multimap & data_);
+     rose_graph_integerpair_edge_hash_multimap rebuildDataStoredInEasyStorageClass() const;
+     static void arrangeMemoryPoolInOneBlock();
+     static void deleteMemoryPool();
+
+     static void writeToFile(std::ostream& out);
+     static void readFromFile (std::istream& in);
+   };
+ 
+// DQ (8/19/2008): Added support for new graph IR nodes. 
+// EasyStorage for storing the rose_hash_multimap  
+// * it has overloaded methods for arrangeMemoryPoolInOneBlock and deleteMemoryPool
+#if 0
+// DQ (4/30/2009): Removed these in favor of the hash_multimap using the SgGraphEdge class.
 template < >
 class EasyStorage <rose_directed_graph_hash_multimap> : 
     public StorageClassMemoryManagement <EasyStorageMapEntry<std::string,SgDirectedGraphEdge*> > 
@@ -416,24 +499,7 @@ class EasyStorage <rose_directed_graph_hash_multimap> :
 // EasyStorage for storing the rose_hash_multimap  
 // * it has overloaded methods for arrangeMemoryPoolInOneBlock and deleteMemoryPool
 #if 0
-template < >
-class EasyStorage <rose_undirected_graph_hash_multimap*> : 
-    public StorageClassMemoryManagement <EasyStorageMapEntry<std::string,SgUndirectedGraphEdge*> > 
-   {
-     typedef StorageClassMemoryManagement <EasyStorageMapEntry<std::string,SgUndirectedGraphEdge*> > Base;
-    private:
-     unsigned long parent;
-    public: 
-     EasyStorage() {parent = 0;}
-     void storeDataInEasyStorageClass(rose_undirected_graph_hash_multimap* data_);
-     rose_undirected_graph_hash_multimap* rebuildDataStoredInEasyStorageClass() const;
-     static void arrangeMemoryPoolInOneBlock() ;
-     static void deleteMemoryPool() ;
-
-     static void writeToFile(std::ostream& out);
-     static void readFromFile (std::istream& in);
-   };
-#else
+// DQ (4/30/2009): Removed these in favor of the hash_multimap using the SgGraphEdge class.
 // DQ (4/25/2009): Remove the pointer to improve the interface...
 template < >
 class EasyStorage <rose_undirected_graph_hash_multimap> : 
@@ -732,6 +798,87 @@ class EasyStorage < std::map<int,std::string> >
      static void readFromFile (std::istream& in);
    };
 
+#if 1
+// DQ (5/1/2009): Added support to this as required for support of rose_graph_integer_node_hash_map
+// DQ (4/30/2009): Added support for std::map<int,SgGraphNode*>
+template < >
+class EasyStorageMapEntry <int, SgGraphNode*> 
+   {
+    private:
+     int index; 
+     int global_id; // this is the global id for the SgGraphNode*
+    public: 
+     EasyStorageMapEntry () { index = 0 ; }
+     void storeDataInEasyStorageClass(const std::pair<const int, SgGraphNode*>& iter);
+     std::pair<int, SgGraphNode*>  rebuildDataStoredInEasyStorageClass() const;
+     static void arrangeMemoryPoolInOneBlock() ;
+     static void deleteMemoryPool() ;
+
+     static void writeToFile(std::ostream& out);
+     static void readFromFile (std::istream& in);
+   };
+#endif
+
+#if 0
+// DQ (4/30/2009): Added support for std::map<int,SgGraphNode*>
+// EasyStorage for ROSEAttributesListContainerPtr (PreprocessingInfo*)
+// * it has overloaded methods for arrangeMemoryPoolInOneBlock and deleteMemoryPool
+template <>
+class EasyStorage < std::map<int,SgGraphNode*> > 
+   : public StorageClassMemoryManagement< EasyStorageMapEntry<int, SgGraphNode*> >
+   {
+     typedef StorageClassMemoryManagement< EasyStorageMapEntry<int, SgGraphNode*> > Base;
+    public:
+     void storeDataInEasyStorageClass(const std::map<int,SgGraphNode*>& data_);
+     std::map<int,SgGraphNode*> rebuildDataStoredInEasyStorageClass() const;
+     static void arrangeMemoryPoolInOneBlock();
+     static void deleteMemoryPool();
+
+     static void writeToFile(std::ostream& out);
+     static void readFromFile (std::istream& in);
+   };
+#endif
+
+#if 1
+// DQ (5/1/2009): Added support to this as required for support of rose_graph_integer_node_hash_map
+// DQ (4/30/2009): Added support for std::map<int,SgGraphEdge*>
+template < >
+class EasyStorageMapEntry <int, SgGraphEdge*> 
+   {
+    private:
+     int index; 
+     int global_id; // this is the global id for the SgGraphEdge*
+    public: 
+     EasyStorageMapEntry () { index = 0 ; }
+     void storeDataInEasyStorageClass(const std::pair<const int, SgGraphEdge*>& iter);
+     std::pair<int, SgGraphEdge*>  rebuildDataStoredInEasyStorageClass() const;
+     static void arrangeMemoryPoolInOneBlock() ;
+     static void deleteMemoryPool() ;
+
+     static void writeToFile(std::ostream& out);
+     static void readFromFile (std::istream& in);
+   };
+#endif
+
+#if 0
+// DQ (4/30/2009): Added support for std::map<int,SgGraphEdge*>
+// EasyStorage for ROSEAttributesListContainerPtr (PreprocessingInfo*)
+// * it has overloaded methods for arrangeMemoryPoolInOneBlock and deleteMemoryPool
+template <>
+class EasyStorage < std::map<int,SgGraphEdge*> > 
+   : public StorageClassMemoryManagement< EasyStorageMapEntry<int, SgGraphEdge*> >
+   {
+     typedef StorageClassMemoryManagement< EasyStorageMapEntry<int, SgGraphEdge*> > Base;
+    public:
+     void storeDataInEasyStorageClass(const std::map<int,SgGraphEdge*>& data_);
+     std::map<int,SgGraphEdge*> rebuildDataStoredInEasyStorageClass() const;
+     static void arrangeMemoryPoolInOneBlock();
+     static void deleteMemoryPool();
+
+     static void writeToFile(std::ostream& out);
+     static void readFromFile (std::istream& in);
+   };
+#endif
 
 
 // EasyStorage for ROSEAttributesListContainerPtr (PreprocessingInfo*)
@@ -750,6 +897,26 @@ class EasyStorage < std::map<std::string, int> >
      static void writeToFile(std::ostream& out);
      static void readFromFile (std::istream& in);
    };
+
+#if 0
+// DQ (4/30/2009): Added std::multimap<std::string, int> type to ROSETTA (expressed using EasyStorageMapEntry). 
+// EasyStorage for ROSEAttributesListContainerPtr (PreprocessingInfo*)
+// * it has overloaded methods for arrangeMemoryPoolInOneBlock and deleteMemoryPool
+template <>
+class EasyStorage < std::multimap<std::string, int> > 
+   : public StorageClassMemoryManagement< EasyStorageMapEntry<std::string, int> >
+   {
+     typedef StorageClassMemoryManagement< EasyStorageMapEntry<std::string, int> > Base;
+    public:
+     void storeDataInEasyStorageClass(const std::multimap<std::string,int>& data_);
+     std::multimap<std::string,int> rebuildDataStoredInEasyStorageClass() const;
+     static void arrangeMemoryPoolInOneBlock();
+     static void deleteMemoryPool();
+
+     static void writeToFile(std::ostream& out);
+     static void readFromFile (std::istream& in);
+   };
+#endif
 
 // DQ (10/4/2006): Added to support maping of SgNode* to integers for name namgling support
 // EasyStorageMapEntry concerning an SgName and a Type T

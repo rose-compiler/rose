@@ -6,15 +6,27 @@ INCLUDES =  $(ROSE_INCLUDES)
 ## The grammar generator (ROSETTA) should use its own template repository
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
-
 noinst_LTLIBRARIES = libSB_GraphAnalysis.la
 
-# DQ (11/8/2007): The runTest.cpp file was moved to tests/roseTests/programAnalysisTests/defUseAnalysisTests/runTest.C by Thomas.
-# libDefUseAnalysis_la_SOURCES = $(srcdir)/GlobalVarAnalysis.cpp $(srcdir)/DefUseAnalysis.cpp $(srcdir)/DefUseAnalysis_perFunction.cpp $(srcdir)/dfaToDot.cpp $(srcdir)/runTest.cpp
-libSB_GraphAnalysis_la_SOURCES = $(srcdir)/CallGraphAnalysis.C $(srcdir)/RoseBin_DotGraph.cpp \
-	$(srcdir)/RoseBin_Graph.cpp $(srcdir)/RoseBin_GmlGraph.cpp $(srcdir)/SB_Graph.C $(srcdir)/RoseSrc_CallGraphAnalysis.C 
+sourse_files = \
+   $(srcdir)/CallGraphAnalysis.C \
+   $(srcdir)/RoseBin_DotGraph.cpp \
+   $(srcdir)/RoseBin_Graph.cpp \
+   $(srcdir)/RoseBin_GmlGraph.cpp \
+   $(srcdir)/SB_Graph.C \
+   $(srcdir)/RoseSrc_CallGraphAnalysis.C 
 
-
+# DQ (5/2/2009): I wonder why we can't form predicates this way (does not work in Automake).
+#if ROSE_USE_NEW_GRAPH_NODES && ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
+if ROSE_USE_NEW_GRAPH_NODES
+if ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
+libSB_GraphAnalysis_la_SOURCES = $(sourse_files)
+else
+libSB_GraphAnalysis_la_SOURCES = 
+endif
+else
+libSB_GraphAnalysis_la_SOURCES = $(sourse_files)
+endif
 
 
 clean-local:

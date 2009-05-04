@@ -1193,6 +1193,12 @@ Grammar::setUpSupport ()
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
+  // ******************************************************************************
+  // ******************************************************************************
+  //                             ROSE Graph IR Nodes
+  // ******************************************************************************
+  // ******************************************************************************
+
 // #if OLD_GRAPH_NODES
 #ifndef ROSE_USE_NEW_GRAPH_NODES
    // tps (08/08/07): Added the graph, graph nodes and graph edges 
@@ -1250,38 +1256,70 @@ Grammar::setUpSupport ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #else
 
-#define USING_IR_NODES_FOR_BACKWARD_COMPATABILITY 1
+// DQ (4/30/2009): Redesigned the Graph IR node support in ROSE.
 
-  // tps (08/08/07): Added the graph, graph nodes and graph edges
+// Todo: Turn off the suport backward compatability
+// Todo: Remove the AstAttributeMechanism* from SgGraphNode and SgGraphEdge 
+//       in favor of the same API, but implemented using a map of maps at 
+//       the SgGraph indexed by integer values.
+
+// DQ (5/2/2009): This is put into rose_paths.h
+#ifndef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
+#warning "ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY not set"
+#endif
+
+  // ******************************************************************************
+  //                                SgGraphNode
+  // ******************************************************************************
+
+  // A node contains an index, name, and a pointer to an associated IR node in the 
+  // AST (approximately 8 words; 4 from SgNode).
+
      GraphNode.setFunctionPrototype ( "HEADER_GRAPHNODE", "../Grammar/Support.code");
+
+  // An alternative might be to keep a hash_map<int,string> in the SgGraph (to keep the size small).
      GraphNode.setDataPrototype("std::string","name","= \"\"",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     GraphNode.setDataPrototype("std::map<int, std::string>","properties", "",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // This provides a link between graph nodes and AST nodes.
   // DQ (4/25/2009): The variable name should not also be the name of a type (allowed in C++ but bad style).
      GraphNode.setDataPrototype("SgNode*","SgNode","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-#if USING_IR_NODES_FOR_BACKWARD_COMPATABILITY
+  // DQ (4/29/2009): Added storage of index as explicit value to enumerate the nodes.
+     GraphNode.setDataPrototype("int","index","= -1",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // Internal static counter used to initialize the index value in each node.
+     GraphNode.setDataPrototype("static int","index_counter","",
+                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // This could be defined using a map of node attributes in the SgGraph class.
+     GraphNode.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
+     GraphNode.setFunctionPrototype ( "HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
+     GraphNode.setFunctionSource    ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
+
+#ifdef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
+  // DQ (4/29/2009): This is the unique integer for the associated SgGraph object (it is redundant with the parent pointer).
+     GraphNode.setDataPrototype("int","graph_id", "= -1",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // This will be eliminated because it is redundant with the AstAttributeMechanism.
+     GraphNode.setDataPrototype("std::map<int, std::string>","properties", "",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (8/18/2008): This should be removed in the final version; added for backward compatability!
      GraphNode.setDataPrototype("std::string","type","= \"\"",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
-  // DQ (4/29/2009): Added storage of index as explicit value to enumerate the nodes.
-     GraphNode.setDataPrototype("int","index","= -1",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     GraphNode.setDataPrototype("static int","index_counter","",
-                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // ******************************************************************************
+  //                                SgGraphEdge
+  // ******************************************************************************
 
-  // DQ (4/29/2009): This is the unique integer for the associated SgGraph object.
-     GraphNode.setDataPrototype("int","graph_id", "= -1",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     GraphNode.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-     GraphNode.setFunctionPrototype ( "HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
-     GraphNode.setFunctionSource    ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
+  // An edge contains an index, a name, and two SgGraphNode pointers (approximately 
+  // 9 words; 4 from SgNode).
 
      GraphEdge.setFunctionPrototype ( "HEADER_GRAPHEDGE", "../Grammar/Support.code");
      GraphEdge.setDataPrototype("SgGraphNode*","node_A","= NULL",
@@ -1290,6 +1328,16 @@ Grammar::setUpSupport ()
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      GraphEdge.setDataPrototype("std::string","name","= \"\"",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/29/2009): Added storage of index as explicit value to enumerate the edges.
+     GraphEdge.setDataPrototype("int","index","= -1",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // Internal static counter used to initialize the index value in each node.
+     GraphEdge.setDataPrototype("static int","index_counter","",
+                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // This could be defined using a map of edge attributes in the SgGraph class.
      GraphEdge.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      GraphEdge.setFunctionPrototype ( "HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
@@ -1297,7 +1345,6 @@ Grammar::setUpSupport ()
 
   // DQ (8/18/2008): NOTE: "SgIntegerStringMapPtrList" does not cause ROSETTA to generate the 
   // correct code, where as "std::map<int, std::string>" appears to work better.
-
   // GraphEdge.setDataPrototype("std::string","type","= \"\"",
   //                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // GraphEdge.setDataPrototype("int","graph_id", "= 0",
@@ -1307,30 +1354,36 @@ Grammar::setUpSupport ()
   // GraphEdge.setDataPrototype("SgIntegerStringMapPtrList","properties", "",
   //                       NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+#ifdef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
+  // DQ (4/29/2009): This is the unique integer for the associated SgGraph object (it is redundant with the parent pointer).
+     GraphEdge.setDataPrototype("int","graph_id", "= -1",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (4/29/2009): Note that "properties" will be replaced by the more uniform ROSE AstAttributeMechanism mechanism.
   // DQ (4/29/2009): I think that property maps for edges should be external to theIR nodes, need to discuss this.
      GraphEdge.setDataPrototype("std::map<int, std::string>","properties", "",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
-  // DQ (4/29/2009): This is the unique integer for the associated SgGraph object.
-     GraphEdge.setDataPrototype("int","graph_id", "= -1",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // ******************************************************************************
+  //                      Edge Types derived from SgGraphEdge
+  // ******************************************************************************
 
-  // DQ (4/29/2009): Added storage of index as explicit value to enumerate the edges.
-     GraphEdge.setDataPrototype("int","index","= -1",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     GraphEdge.setDataPrototype("static int","index_counter","",
-                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     DirectedGraphEdge.setFunctionPrototype   ( "HEADER_DIRECTED_GRAPH_EDGE"  , "../Grammar/Support.code");
+     UndirectedGraphEdge.setFunctionPrototype ( "HEADER_UNDIRECTED_GRAPH_EDGE", "../Grammar/Support.code");
 
-#if USING_IR_NODES_FOR_BACKWARD_COMPATABILITY
+#ifdef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
   // DQ (8/18/2008): This should be removed in the final version; added for backward compatability!
      DirectedGraph.setFunctionPrototype ( "HEADER_DIRECTED_GRAPH", "../Grammar/Support.code");
   // DQ (8/18/2008): This should be removed in the final version; added for backward compatability!
      DirectedGraphNode.setFunctionPrototype ( "HEADER_DIRECTED_GRAPH_NODE", "../Grammar/Support.code");
 #endif
 
-     DirectedGraphEdge.setFunctionPrototype   ( "HEADER_DIRECTED_GRAPH_EDGE"  , "../Grammar/Support.code");
-     UndirectedGraphEdge.setFunctionPrototype ( "HEADER_UNDIRECTED_GRAPH_EDGE", "../Grammar/Support.code");
+  // ******************************************************************************
+  //                       SgGraphNodeList and SgGraphEdgeList
+  // ******************************************************************************
+
+  // These IR nodes might be eliminated in favor of just a function to generate the same level 
+  // of support using a combination of two maps in SgGraph.
 
      GraphNodeList.setFunctionPrototype ( "HEADER_GRAPH_NODE_LIST", "../Grammar/Support.code");
      GraphNodeList.setDataPrototype("rose_graph_hash_multimap","nodes","",
@@ -1340,75 +1393,182 @@ Grammar::setUpSupport ()
      GraphEdgeList.setDataPrototype("rose_graph_node_edge_hash_multimap","edges","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     Graph.setPredeclarationString ("HEADER_GRAPH_PREDECLARATION" , "../Grammar/Support.code");
-     Graph.setPostdeclarationString ("HEADER_GRAPH_POSTDECLARATION" , "../Grammar/Support.code");
+
+  // ******************************************************************************
+  //                                  SgGraph
+  // ******************************************************************************
+
+     Graph.setPredeclarationString ("HEADER_GRAPH_PREDECLARATION"  , "../Grammar/Support.code");
+     Graph.setPostdeclarationString ("HEADER_GRAPH_POSTDECLARATION", "../Grammar/Support.code");
 
      Graph.setFunctionPrototype ( "HEADER_GRAPH", "../Grammar/Support.code");
      Graph.setDataPrototype("std::string","name","= \"\"",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // Graph.setDataPrototype("std::string","type","= \"\"",
   //                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     Graph.setDataPrototype("SgGraphNodeList*","nodes","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (4/29/2009): From the node on the ("from") side of an edge, find the edge.
-     Graph.setDataPrototype("SgGraphEdgeList*","edges","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (4/29/2009): From the node on the other side ("to") side of an edge, find the edge.
-     Graph.setDataPrototype("SgGraphEdgeList*","reverse_edges","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#if 0
-  // DQ (4/29/2009): This will not compile, I think it should be handled as an attribute.
-     Graph.setDataPrototype("VirtualBinCFG::AuxiliaryInformation*","info","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
+     Graph.setDataPrototype("rose_graph_integer_node_hash_map","node_index_to_node_map","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     Graph.setDataPrototype("rose_graph_integer_edge_hash_map","edge_index_to_edge_map","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     Graph.setDataPrototype("rose_graph_integerpair_edge_hash_multimap","node_index_pair_to_edge_multimap","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     Graph.setDataPrototype("rose_graph_string_integer_hash_multimap","string_to_node_index_multimap","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     Graph.setDataPrototype("rose_graph_string_integer_hash_multimap","string_to_edge_index_multimap","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/3/2009): Added support for multimap access to edges using a specific map (index --> SgGraphEdge*).
+     Graph.setDataPrototype("rose_graph_integer_edge_hash_multimap","node_index_to_edge_multimap","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (4/29/2009): Added storage of index as explicit value to enumerate the graph objects.
   // Graph.setDataPrototype("int","graph_id", "= -1",
   //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Graph.setDataPrototype("int","index","= -1",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // Internal static counter used to initialize the index value in each node.
      Graph.setDataPrototype("static int","index_counter","",
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // These are Boost specific data members used to return results from Boost Graph Library algorithms.
+  // These will likely be removed since they can and should be put into the API for the graph algorithms.
   // DQ (4/29/2009): Added boost specific data structures required by many boost graph algorithms.
      Graph.setDataPrototype("SgBoostEdgeList","boost_edges","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Graph.setDataPrototype("SgBoostEdgeWeightList","boost_edge_weights","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // Attribute support for SgGraph
+     Graph.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
+#ifdef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
+  // DQ (5/2/2009): These are redundent and should be eliminated (provided for backward combatability).
+     Graph.setDataPrototype("SgGraphNodeList*","nodes","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/29/2009): From the node on the ("from") side of an edge, find the edge.
+     Graph.setDataPrototype("SgGraphEdgeList*","edges","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#if 0
+  // DQ (5/1/2009): Use this in the future instead of the AstAttributeMechanism* on the nodes and edge classes.
+  // Use a map of integer index values to AstAttributeMechanism* so that we can avoid putting an std::map 
+  // onto each SgGraphNode and SgGraphEdge (this reduces the size of the SgGraphNode and SgGraphEdge class; 
+  // making it more space efficent for large graphs).
+     Graph.setDataPrototype("std::map<int,AstAttributeMechanism*>","nodeAttributeMechanism","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     Graph.setDataPrototype("std::map<int,AstAttributeMechanism*>","edgeAttributeMechanism","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+#endif
+
+#ifdef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
   // DQ (4/29/2009): Note that "properties" will be replaced by the more uniform ROSE AstAttributeMechanism mechanism.
      Graph.setDataPrototype("std::map<int, std::string>","properties", "",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     Graph.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+#endif
+
+#if 0
+  // Don't use these, we want to use hash_maps instead (this code can be eliminated).
+  // DQ (4/30/2009): Added support for "std::multimap<std::string,int>"
+     Graph.setDataPrototype("std::multimap<std::string,int>","labels", "",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     Graph.setDataPrototype("std::map<int, SgGraphNode*>","integer_nodes_map","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     Graph.setDataPrototype("std::map<int, SgGraphEdge*>","integer_edges_map","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#if 0
+  // DQ (4/30/2009): Don't use this!
+  // This is specific to binary analysis and should be an attribute on the SgGraph (so this data member is not required).
+  // DQ (4/29/2009): This will not compile, I think it should be handled as an attribute.
+     Graph.setDataPrototype("VirtualBinCFG::AuxiliaryInformation*","info","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
      Graph.setFunctionPrototype ( "HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
      Graph.setFunctionSource    ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
 
+
+  // ******************************************************************************
+  //                          Graphs derived from SgGraph
+  // ******************************************************************************
+
      IncidenceUndirectedGraph.setFunctionPrototype ( "HEADER_INCIDENCE_UNDIRECTED_GRAPH", "../Grammar/Support.code");
      IncidenceUndirectedGraph.setFunctionSource    ( "SOURCE_INCIDENCE_UNDIRECTED_GRAPH", "../Grammar/Support.code");
+
+#if 0
+  // DQ (4/30/2009): Removed these in favor of the hash_multimap using the SgGraphEdge class.
      IncidenceUndirectedGraph.setDataPrototype("rose_undirected_graph_hash_multimap","undirected_edges","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
+#endif
      IncidenceDirectedGraph.setFunctionPrototype ( "HEADER_INCIDENCE_DIRECTED_GRAPH", "../Grammar/Support.code");
      IncidenceDirectedGraph.setFunctionSource    ( "SOURCE_INCIDENCE_DIRECTED_GRAPH", "../Grammar/Support.code");
-     IncidenceDirectedGraph.setDataPrototype("rose_directed_graph_hash_multimap","edgesOut","",
+
+#ifdef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
+  // These are the out_edges (use the rose_graph_integer_edge_hash_multimap instead).
+     IncidenceDirectedGraph.setDataPrototype("rose_graph_node_edge_hash_multimap","edgesOut","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+  // This is the more uniform integer to SgGraphEdge version of rose_graph_node_edge_hash_multimap.
+     IncidenceDirectedGraph.setDataPrototype("rose_graph_integer_edge_hash_multimap","node_index_to_edge_multimap_edgesOut","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+#ifdef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
+  // These are the reverse_edges (edgesIn)
+  // DQ (5/1/2009): Moved this from SgGraph since it only applies to directed edges.
+  // We want an interface function to allow SgGraphNode to be specified and the SgGraphNode::index to get used in the multimap
+  // IncidenceDirectedGraph.setDataPrototype("rose_graph_integer_edge_hash_multimap","integer_to_reverse_edge_index_multimap","",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (4/29/2009): From the node on the other side ("to") side of an edge, find the edge.
+     IncidenceDirectedGraph.setDataPrototype("rose_graph_node_edge_hash_multimap", "edgesIn", "",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+  // This is the more uniform integer to SgGraphEdge version of rose_graph_node_edge_hash_multimap.
+  // The derived class "BidirectionalGraph" might use this map differently (with different semantics).
+     IncidenceDirectedGraph.setDataPrototype("rose_graph_integer_edge_hash_multimap","node_index_to_edge_multimap_edgesIn","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+#if 0
+  // DQ (4/30/2009): Removed these in favor of the hash_multimap using the SgGraphEdge class.
+     IncidenceDirectedGraph.setDataPrototype("rose_directed_graph_hash_multimap","edgesOut","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+  // DQ (5/3/2009): Not clear if this should add a new hash_multimap or if it just chages the 
+  // semantics of the hash_multimaps in the dirived class (IncidenceDirectedGraph). This class
+  // should have a different API that make is specific to bidirectional incidence graph use.
      BidirectionalGraph.setFunctionPrototype ( "HEADER_BIDIRECTIONAL_GRAPH", "../Grammar/Support.code");
+
+#if 0
+  // DQ (5/3/2009): Base class IncidenceDirectedGraph should use rose_graph_integer_edge_hash_multimap 
+  // but perhaps in a different way (with different semantics).
+  // DQ (4/30/2009): Removed these in favor of the hash_multimap using the SgGraphEdge class.
      BidirectionalGraph.setDataPrototype("rose_directed_graph_hash_multimap","edgesIn","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
+  // ******************************************************************************
+  //                Tenatively Proposed Graphs derived from SgGraph
+  // ******************************************************************************
 
   // KeyedBidirectionalGraph.setDataPrototype(" __gnu_cxx::hash_multimap < SgDirectedGraphNode*, SgDirectedGraphEdge*>","edgesOut","= \"\"",
   //                       NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // KeyedBidirectionalGraph.setDataPrototype(" __gnu_cxx::hash_multimap < SgDirectedGraphNode*, SgDirectedGraphEdge*>","edgesIn","= \"\"",
   //                       NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (5/3/2009): I don't think that we really need these two types of graphs (or their 
+  // functionality can be represented using just an API, and not an new hash_maps).
      StringKeyedBidirectionalGraph.setFunctionPrototype ( "HEADER_STRING_KEYED_BIDIRECTIONAL_GRAPH", "../Grammar/Support.code");
      StringKeyedBidirectionalGraph.setDataPrototype("rose_graph_hash_multimap","edgeMap","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-
 
   // DQ (4/26/2009): Shouldn't this be an edge map since the nodes are already stored in the SgGraph (base class)!
      IntKeyedBidirectionalGraph.setFunctionPrototype ( "HEADER_INTEGER_KEYED_BIDIRECTIONAL_GRAPH", "../Grammar/Support.code");
@@ -1418,6 +1578,7 @@ Grammar::setUpSupport ()
   // std::map<int, std::string>
   // IntKeyedBidirectionalGraph.setDataPrototype("SgIntegerGraphNodeMapPtrList","nodesMap","",
   //                       NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if 0
 #if 1
   // DQ (4/25/2009): For now leave this as a map<int,string> but we want it to be a map<int,SgGraphNode*> later...
      IntKeyedBidirectionalGraph.setDataPrototype("std::map<int, std::string>","edgeMap","",
@@ -1426,8 +1587,14 @@ Grammar::setUpSupport ()
      IntKeyedBidirectionalGraph.setDataPrototype("std::map<int, SgGraphNode*>","edgesMap","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #endif
+
+// endif for ifdef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
+#endif
+
+// endif for ifdef ROSE_USE_NEW_GRAPH_NODES
+#endif
+
 
 
   // ******************************************************************
@@ -1580,6 +1747,10 @@ Grammar::setUpSupport ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+  // DQ (5/1/2009): Requested feature by Andreas (controls use of SQLite database for analysis).
+  // This permits multiple files to be handled separately in that program analysis which supports it.
+     Project.setDataPrototype("std::string","dataBaseFilename", "= \"\"",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      Attribute.setDataPrototype    ( "std::string"  , "name", "= \"\"",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -2062,11 +2233,13 @@ Specifiers that can have only one value (implemented with a protected enum varia
 
 // #if !OLD_GRAPH_NODES
 #ifdef ROSE_USE_NEW_GRAPH_NODES
+#ifdef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
   // DQ (8/18/2008): This should be removed in the final version; added for backward compatability!
      DirectedGraph.setFunctionSource ( "SOURCE_DIRECTED_GRAPH", "../Grammar/Support.code");
 
   // DQ (8/18/2008): This should be removed in the final version; added for backward compatability!
      DirectedGraphNode.setFunctionSource ( "SOURCE_DIRECTED_GRAPH_NODE", "../Grammar/Support.code");
+#endif
 
      DirectedGraphEdge.setFunctionSource ( "SOURCE_DIRECTED_GRAPH_EDGE", "../Grammar/Support.code");
 #endif

@@ -745,7 +745,43 @@ namespace rose_hash
              }
         };
 
+     struct hash_integer
+        {
+          size_t operator()(const int n) const
+             {
+               return n;
+             }
+        };
+
+     struct hash_integer_pair
+        {
+          size_t operator()(const std::pair<int,int> & p) const
+             {
+            // DQ (4/30/2009): This subject should be reviewed!
+            // Since this is a hash function, it might not a problem if we have 
+            // overflow (also the values should not be so large as to be a problem).
+               return p.first+p.second;
+             }
+        };
+
+  // DQ (4/30/2009): This might already exist for std::pair<>
+     struct eqstr_integer_pair
+        {
+          bool operator()(const std::pair<int,int> & p1, const std::pair<int,int> & p2) const
+             {
+               return (p1.first == p2.first) && (p1.second == p2.second);
+             }
+        };
+
      struct eqstr_graph_node
+        {
+          bool operator()(const SgGraphNode* p1, const SgGraphNode* p2) const
+             {
+               return p1 == p2;
+             }
+        };
+
+     struct eqstr_graph_edge
         {
           bool operator()(const SgGraphNode* p1, const SgGraphNode* p2) const
              {
@@ -766,12 +802,13 @@ namespace rose_hash
 
 #ifdef ROSE_USE_NEW_GRAPH_NODES
 
-/*! \brief Hash table support for graph IR nodes within ROSE.
+/*! \brief Hash table support for graph IR nodes within ROSE (uses strings to lookup nodes).
  */
 
 // DQ (8/19/2008): Note that "rose_hash" is a namespace defined above.
 // class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>
-class rose_graph_hash_multimap : public rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>
+typedef rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string> rose_graph_string_node_hash_multimap_base_type;
+class rose_graph_string_node_hash_multimap : public rose_graph_string_node_hash_multimap_base_type
    {
   // Need to document why we are using hash_multimap type here.  Why a hash (obvious), then why a multimap? 
   // I think a multimap is used to support having no names on the nodes if they are unlabeled.  If the
@@ -785,24 +822,26 @@ class rose_graph_hash_multimap : public rose_hash::hash_multimap<std::string, Sg
           SgNode* parent;
 
      public:
-          rose_graph_hash_multimap()
-             : rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>(), parent(NULL)
+          rose_graph_string_node_hash_multimap()
+             : rose_graph_string_node_hash_multimap_base_type(), parent(NULL)
              {}
-          rose_graph_hash_multimap(int sz) 
-             : rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>(sz), parent(NULL)
+          rose_graph_string_node_hash_multimap(int sz) 
+             : rose_graph_string_node_hash_multimap_base_type(sz), parent(NULL)
              {}
-          rose_graph_hash_multimap(const rose_graph_hash_multimap& rhs) 
-             : rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>((rose_graph_hash_multimap)rhs),parent(rhs.parent)
+          rose_graph_string_node_hash_multimap(const rose_graph_string_node_hash_multimap & rhs)
+          // DQ (4/30/2009): This fixed a problem reported by Thomas Panas relative to seg-faults when using the copy constructor (forced his code to use references).
+          // : rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>((rose_graph_string_node_hash_multimap)rhs),parent(rhs.parent)
+             : rose_graph_string_node_hash_multimap_base_type(rhs),parent(rhs.parent)
              {}
-
+#if 0
        // DQ (4/30/2009): Added operator= to fix problem pointed out by Thomas.
-          rose_graph_hash_multimap & operator=(const rose_graph_hash_multimap& rhs) 
+          rose_graph_string_node_hash_multimap & operator=(const rose_graph_string_node_hash_multimap& rhs) 
              {
-               rose_hash::hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>::operator=(rhs);
+               rose_graph_string_node_hash_multimap_base_type::operator=(rhs);
                parent = rhs.parent;
                return *this;
              }
-
+#endif
        // See note (above) about name change to the associated data member for these access functions.
           void set_parent(SgNode * new_parent) 
              {
@@ -817,7 +856,7 @@ class rose_graph_hash_multimap : public rose_hash::hash_multimap<std::string, Sg
              {
 #if 0
             // DQ (2/19/2007): I am not sure why this is commented out (has been since it was introduced summer of 2005)
-               hash_multimap<std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it;
+               rose_graph_string_node_hash_multimap_base_type::iterator it;
                for (it = begin(); it != end(); ++it)
                   {
                     delete (*it).second;
@@ -826,7 +865,7 @@ class rose_graph_hash_multimap : public rose_hash::hash_multimap<std::string, Sg
 #endif
              }
 
-         ~rose_graph_hash_multimap()
+         ~rose_graph_string_node_hash_multimap()
              {
                delete_elements();
 
@@ -836,31 +875,38 @@ class rose_graph_hash_multimap : public rose_hash::hash_multimap<std::string, Sg
 
         friend class AST_FILE_IO;
         friend class SgSymbolTableStorageClass;
-        friend class EasyStorage<rose_graph_hash_multimap*>;
+        friend class EasyStorage<rose_graph_string_node_hash_multimap*>;
    };
 
-std::ostream & operator<< ( std::ostream & os, const rose_graph_hash_multimap::iterator & rhm_it );
+std::ostream & operator<< ( std::ostream & os, const rose_graph_string_node_hash_multimap::iterator & rhm_it );
 
+// DQ (5/1/2009): Temporary typedef to use older name for compatability.
+typedef rose_graph_string_node_hash_multimap rose_graph_hash_multimap;
 
+#if 0
+// DQ (4/30/2009): We want to use the hash_multimap to SgGraphEdge instead of SgDirectedGraphEdge
 /*! \brief Hash table support for graph IR nodes within ROSE.
  */
 
 // DQ (8/19/2008): Note that "rose_hash" is a namespace defined in "sage3.h"
 // class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>
-class rose_directed_graph_hash_multimap : public rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>
+typedef rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string> rose_directed_graph_hash_multimap_base_type;
+class rose_directed_graph_hash_multimap : public rose_directed_graph_hash_multimap_base_type
    {
      protected:
           SgNode * parent;
 
      public:
           rose_directed_graph_hash_multimap()
-             : rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>(), parent(NULL)
+             : rose_directed_graph_hash_multimap_base_type(), parent(NULL)
              {}
           rose_directed_graph_hash_multimap(int sz) 
-             : rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>(sz), parent(NULL)
+             : rose_directed_graph_hash_multimap_base_type(sz), parent(NULL)
              {}
-          rose_directed_graph_hash_multimap(const rose_directed_graph_hash_multimap& rhs) 
-             : rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>((rose_directed_graph_hash_multimap)rhs),parent(rhs.parent)
+          rose_directed_graph_hash_multimap(const rose_directed_graph_hash_multimap & rhs) 
+          // DQ (4/30/2009): This fixed a problem reported by Thomas Panas relative to seg-faults when using the copy constructor (forced his code to use references).
+          // : rose_hash::hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>((rose_directed_graph_hash_multimap)rhs),parent(rhs.parent)
+             : rose_directed_graph_hash_multimap_base_type(rhs),parent(rhs.parent)
              {}
 
           void set_parent(SgNode * new_parent) 
@@ -876,7 +922,7 @@ class rose_directed_graph_hash_multimap : public rose_hash::hash_multimap<std::s
              {
 #if 0
             // DQ (2/19/2007): I am not sure why this is commented out (has been since it was introduced summer of 2005)
-               hash_multimap<std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it;
+               rose_directed_graph_hash_multimap_base_type::iterator it;
                for (it = begin(); it != end(); ++it)
                   {
                     delete (*it).second;
@@ -898,26 +944,32 @@ class rose_directed_graph_hash_multimap : public rose_hash::hash_multimap<std::s
    };
 
 std::ostream & operator<< ( std::ostream & os, const rose_directed_graph_hash_multimap::iterator & rhm_it );
+#endif
 
+#if 0
+// DQ (4/30/2009): We want to use the hash_multimap to SgGraphEdge instead of SgUndirectedGraphEdge
 /*! \brief Hash table support for graph IR nodes within ROSE.
  */
 
 // DQ (8/19/2008): Note that "rose_hash" is a namespace defined in "sage3.h"
 // class rose_hash_multimap : public rose_hash::hash_multimap<SgName, SgSymbol*, hash_Name, eqstr>
-class rose_undirected_graph_hash_multimap : public rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>
+typedef rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string> rose_undirected_graph_hash_multimap_base_type;
+class rose_undirected_graph_hash_multimap : public rose_undirected_graph_hash_multimap_base_type
    {
      protected:
           SgNode * parent;
 
      public:
           rose_undirected_graph_hash_multimap()
-             : rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>(), parent(NULL)
+             : rose_undirected_graph_hash_multimap_base_type(), parent(NULL)
              {}
           rose_undirected_graph_hash_multimap(int sz) 
-             : rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>(sz), parent(NULL)
+             : rose_undirected_graph_hash_multimap_base_type(sz), parent(NULL)
              {}
           rose_undirected_graph_hash_multimap(const rose_undirected_graph_hash_multimap& rhs)
-             : rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>((rose_undirected_graph_hash_multimap)rhs),parent(rhs.parent)
+          // DQ (4/30/2009): This fixed a problem reported by Thomas Panas relative to seg-faults when using the copy constructor (forced his code to use references).
+          // : rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>((rose_undirected_graph_hash_multimap)rhs),parent(rhs.parent)
+             : rose_undirected_graph_hash_multimap_base_type(rhs),parent(rhs.parent)
              {}
 
           void set_parent(SgNode * new_parent) 
@@ -933,7 +985,7 @@ class rose_undirected_graph_hash_multimap : public rose_hash::hash_multimap<std:
              {
 #if 0
             // DQ (2/19/2007): I am not sure why this is commented out (has been since it was introduced summer of 2005)
-               hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it;
+               rose_undirected_graph_hash_multimap_base_type::iterator it;
                for (it = begin(); it != end(); ++it)
                   {
                     delete (*it).second;
@@ -955,9 +1007,16 @@ class rose_undirected_graph_hash_multimap : public rose_hash::hash_multimap<std:
    };
 
 std::ostream & operator<< ( std::ostream & os, const rose_undirected_graph_hash_multimap::iterator & rhm_it );
+#endif
 
+/*! \brief Hash table support for graph IR nodes within ROSE (used to lookup edges using nodes).
 
-class rose_graph_node_edge_hash_multimap : public rose_hash::hash_multimap<SgGraphNode*, SgGraphEdge*, rose_hash::hash_graph_node, rose_hash::eqstr_graph_node>
+    \internal This class is depricated and it's functionality will be produced using two other hash maps.
+ */
+
+// DQ (4/29/2009): Added to support ROSE Graph IR nodes
+typedef rose_hash::hash_multimap<SgGraphNode*, SgGraphEdge*, rose_hash::hash_graph_node, rose_hash::eqstr_graph_node> rose_graph_node_edge_hash_multimap_base_type;
+class rose_graph_node_edge_hash_multimap : public rose_graph_node_edge_hash_multimap_base_type
    {
   // This class is used to map nodes to edges in the highest level graph class.
   // Different graph classes derived from the SgGraph class contain additional 
@@ -968,13 +1027,15 @@ class rose_graph_node_edge_hash_multimap : public rose_hash::hash_multimap<SgGra
 
      public:
           rose_graph_node_edge_hash_multimap()
-             : rose_hash::hash_multimap<SgGraphNode*, SgGraphEdge*, rose_hash::hash_graph_node, rose_hash::eqstr_graph_node>()
+             : rose_graph_node_edge_hash_multimap_base_type()
              {}
           rose_graph_node_edge_hash_multimap(int sz) 
-             : rose_hash::hash_multimap<SgGraphNode*, SgGraphEdge*, rose_hash::hash_graph_node, rose_hash::eqstr_graph_node>(sz)
+             : rose_graph_node_edge_hash_multimap_base_type(sz)
              {}
           rose_graph_node_edge_hash_multimap(const rose_graph_node_edge_hash_multimap& rhs) 
-             : rose_hash::hash_multimap<SgGraphNode*, SgGraphEdge*, rose_hash::hash_graph_node, rose_hash::eqstr_graph_node>((rose_graph_node_edge_hash_multimap)rhs)
+          // DQ (4/30/2009): This fixed a problem reported by Thomas Panas relative to seg-faults when using the copy constructor (forced his code to use references).
+          // : rose_hash::hash_multimap<SgGraphNode*, SgGraphEdge*, rose_hash::hash_graph_node, rose_hash::eqstr_graph_node>((rose_graph_node_edge_hash_multimap)rhs)
+             : rose_graph_node_edge_hash_multimap_base_type(rhs),parent(rhs.parent)
              {}
 
           void set_parent(SgNode * new_parent) 
@@ -1001,6 +1062,271 @@ class rose_graph_node_edge_hash_multimap : public rose_hash::hash_multimap<SgGra
    };
 
 std::ostream & operator<< ( std::ostream & os, const rose_graph_node_edge_hash_multimap::iterator & rhm_it );
+
+#if 1
+/*! \brief Hash table support for graph IR nodes within ROSE (used to lookup nodes using node index values).
+ */
+
+// DQ (4/30/2009): Added to support more of the Graph functionality in new ROSE IR nodes
+// typedef rose_hash::hash_map<int,SgGraphNode*, rose_hash::hash_integer, rose_hash::eqstr_graph_node> rose_graph_integer_node_hash_map_base_type;
+typedef rose_hash::hash_map<int,SgGraphNode*, rose_hash::hash_integer> rose_graph_integer_node_hash_map_base_type;
+class rose_graph_integer_node_hash_map : public rose_graph_integer_node_hash_map_base_type
+   {
+     protected:
+       // I think this is required by the AST file I/O support.
+          SgNode * parent;
+
+     public:
+          rose_graph_integer_node_hash_map()
+             : rose_graph_integer_node_hash_map_base_type()
+             {}
+          rose_graph_integer_node_hash_map(int sz) 
+             : rose_graph_integer_node_hash_map_base_type(sz)
+             {}
+          rose_graph_integer_node_hash_map(const rose_graph_integer_node_hash_map& rhs) 
+             : rose_graph_integer_node_hash_map_base_type(rhs),parent(rhs.parent)
+             {}
+
+          void set_parent(SgNode * new_parent) 
+             {
+               parent = new_parent;
+             }
+          SgNode * get_parent()
+             {
+               return parent;
+             }
+
+          void delete_elements()
+             {
+             }
+
+         ~rose_graph_integer_node_hash_map()
+             {
+               delete_elements();
+             }
+
+        friend class AST_FILE_IO;
+        friend class SgSymbolTableStorageClass;
+        friend class EasyStorage<rose_graph_integer_node_hash_map*>;
+   };
+
+std::ostream & operator<< ( std::ostream & os, const rose_graph_integer_node_hash_map::iterator & rhm_it );
+#endif
+
+#if 1
+/*! \brief Hash table support for graph IR nodes within ROSE (used to lookup edges using edge index values).
+ */
+
+// DQ (4/30/2009): Added to support more of the Graph functionality in new ROSE IR nodes
+// typedef rose_hash::hash_map<int,SgGraphEdge*, rose_hash::hash_integer, rose_hash::eqstr_graph_edge> rose_graph_integer_edge_hash_map_base_type;
+typedef rose_hash::hash_map<int,SgGraphEdge*, rose_hash::hash_integer> rose_graph_integer_edge_hash_map_base_type;
+class rose_graph_integer_edge_hash_map : public rose_graph_integer_edge_hash_map_base_type
+   {
+  // This class is used to map nodes to edges in the highest level graph class.
+  // Different graph classes derived from the SgGraph class contain additional 
+  // maps that contain specific types of edges.
+
+     protected:
+       // I think this is required by the AST file I/O support.
+          SgNode * parent;
+
+     public:
+          rose_graph_integer_edge_hash_map()
+             : rose_graph_integer_edge_hash_map_base_type()
+             {}
+          rose_graph_integer_edge_hash_map(int sz) 
+             : rose_graph_integer_edge_hash_map_base_type(sz)
+             {}
+          rose_graph_integer_edge_hash_map(const rose_graph_integer_edge_hash_map& rhs) 
+             : rose_graph_integer_edge_hash_map_base_type(rhs),parent(rhs.parent)
+             {}
+
+          void set_parent(SgNode * new_parent) 
+             {
+               parent = new_parent;
+             }
+          SgNode * get_parent()
+             {
+               return parent;
+             }
+
+          void delete_elements()
+             {
+             }
+
+         ~rose_graph_integer_edge_hash_map()
+             {
+               delete_elements();
+             }
+
+        friend class AST_FILE_IO;
+        friend class SgSymbolTableStorageClass;
+        friend class EasyStorage<rose_graph_integer_edge_hash_map*>;
+   };
+
+std::ostream & operator<< ( std::ostream & os, const rose_graph_integer_edge_hash_map::iterator & rhm_it );
+#endif
+
+#if 1
+/*! \brief Hash table support for graph IR nodes within ROSE (used to lookup edges using edge index values).
+ */
+
+// DQ (4/30/2009): Added to support more of the Graph functionality in new ROSE IR nodes
+// typedef rose_hash::hash_map<int,SgGraphEdge*, rose_hash::hash_integer, rose_hash::eqstr_graph_edge> rose_graph_integer_edge_hash_multimap_base_type;
+typedef rose_hash::hash_map<int,SgGraphEdge*> rose_graph_integer_edge_hash_multimap_base_type;
+class rose_graph_integer_edge_hash_multimap : public rose_graph_integer_edge_hash_multimap_base_type
+   {
+  // This class is used to map nodes to edges in the highest level graph class.
+  // Different graph classes derived from the SgGraph class contain additional 
+  // maps that contain specific types of edges.
+
+     protected:
+       // I think this is required by the AST file I/O support.
+          SgNode * parent;
+
+     public:
+          rose_graph_integer_edge_hash_multimap()
+             : rose_graph_integer_edge_hash_multimap_base_type()
+             {}
+          rose_graph_integer_edge_hash_multimap(int sz) 
+             : rose_graph_integer_edge_hash_multimap_base_type(sz)
+             {}
+          rose_graph_integer_edge_hash_multimap(const rose_graph_integer_edge_hash_multimap& rhs) 
+             : rose_graph_integer_edge_hash_multimap_base_type(rhs),parent(rhs.parent)
+             {}
+
+          void set_parent(SgNode * new_parent) 
+             {
+               parent = new_parent;
+             }
+          SgNode * get_parent()
+             {
+               return parent;
+             }
+
+          void delete_elements()
+             {
+             }
+
+         ~rose_graph_integer_edge_hash_multimap()
+             {
+               delete_elements();
+             }
+
+        friend class AST_FILE_IO;
+        friend class SgSymbolTableStorageClass;
+        friend class EasyStorage<rose_graph_integer_edge_hash_multimap*>;
+   };
+
+std::ostream & operator<< ( std::ostream & os, const rose_graph_integer_edge_hash_multimap::iterator & rhm_it );
+#endif
+
+#if 1
+/*! \brief Hash table support for graph IR nodes within ROSE (used to lookup edges using node index pairs).
+ */
+
+// DQ (4/30/2009): Added to support more of the Graph functionality in new ROSE IR nodes
+// typedef rose_hash::hash_multimap<std::pair<int,int>,SgGraphEdge*, rose_hash::hash_integer_pair, rose_hash::eqstr_integer_pair> rose_graph_integerpair_edge_hash_multimap_base_type;
+typedef rose_hash::hash_multimap<std::pair<int,int>,SgGraphEdge*, rose_hash::hash_integer_pair> rose_graph_integerpair_edge_hash_multimap_base_type;
+class rose_graph_integerpair_edge_hash_multimap : public rose_graph_integerpair_edge_hash_multimap_base_type
+   {
+  // This class is used to map nodes to edges in the highest level graph class.
+  // Different graph classes derived from the SgGraph class contain additional 
+  // maps that contain specific types of edges.
+
+     protected:
+       // I think this is required by the AST file I/O support.
+          SgNode * parent;
+
+     public:
+          rose_graph_integerpair_edge_hash_multimap()
+             : rose_graph_integerpair_edge_hash_multimap_base_type()
+             {}
+          rose_graph_integerpair_edge_hash_multimap(int sz) 
+             : rose_graph_integerpair_edge_hash_multimap_base_type(sz)
+             {}
+          rose_graph_integerpair_edge_hash_multimap(const rose_graph_integerpair_edge_hash_multimap& rhs) 
+             : rose_graph_integerpair_edge_hash_multimap_base_type(rhs),parent(rhs.parent)
+             {}
+
+          void set_parent(SgNode * new_parent) 
+             {
+               parent = new_parent;
+             }
+          SgNode * get_parent()
+             {
+               return parent;
+             }
+
+          void delete_elements()
+             {
+             }
+
+         ~rose_graph_integerpair_edge_hash_multimap()
+             {
+               delete_elements();
+             }
+
+        friend class AST_FILE_IO;
+        friend class SgSymbolTableStorageClass;
+        friend class EasyStorage<rose_graph_integerpair_edge_hash_multimap*>;
+   };
+
+std::ostream & operator<< ( std::ostream & os, const rose_graph_integerpair_edge_hash_multimap::iterator & rhm_it );
+#endif
+
+#if 1
+/*! \brief Hash table support for graph IR nodes within ROSE (used to lookup nodes and edges index values from lables).
+ */
+
+// DQ (5/1/2009): This is added to support lookup of indexes based on labels (can be used for nodes or edges).
+typedef rose_hash::hash_multimap<std::string, int,rose_hash::hash_string,rose_hash::eqstr_string> rose_graph_string_integer_hash_multimap_base_type;
+class rose_graph_string_integer_hash_multimap : public rose_graph_string_integer_hash_multimap_base_type
+   {
+     protected:
+       // DQ (4/25/2009): We need to change this name since I think we just want the 
+       // associated IR node in the AST, and not any concept of parent in the graph.
+          SgNode* parent;
+
+     public:
+          rose_graph_string_integer_hash_multimap()
+             : rose_graph_string_integer_hash_multimap_base_type(), parent(NULL)
+             {}
+          rose_graph_string_integer_hash_multimap(int sz) 
+             : rose_graph_string_integer_hash_multimap_base_type(sz), parent(NULL)
+             {}
+          rose_graph_string_integer_hash_multimap(const rose_graph_string_integer_hash_multimap & rhs)
+             : rose_graph_string_integer_hash_multimap_base_type(rhs),parent(rhs.parent)
+             {}
+
+       // See note (above) about name change to the associated data member for these access functions.
+          void set_parent(SgNode * new_parent) 
+             {
+               parent = new_parent;
+             }
+          SgNode * get_parent()
+             {
+               return parent;
+             }
+
+          void delete_elements()
+             {
+             }
+
+         ~rose_graph_string_integer_hash_multimap()
+             {
+               delete_elements();
+
+               parent = NULL;
+             }
+
+        friend class AST_FILE_IO;
+        friend class SgSymbolTableStorageClass;
+        friend class EasyStorage<rose_graph_string_integer_hash_multimap*>;
+   };
+
+std::ostream & operator<< ( std::ostream & os, const rose_graph_string_integer_hash_multimap::iterator & rhm_it );
+#endif
 
 
 #if 0

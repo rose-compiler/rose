@@ -114,6 +114,16 @@ static std::string toStringForRTI(const std::map<K, V>& x) {
   return ss.str();
 }
 
+// DQ (4/30/2009): Added new support for std::multimap.
+template <typename K, typename V>
+static std::string toStringForRTI(const std::multimap<K, V>& x) {
+  std::ostringstream ss;
+  ss << "[";
+  for (typename std::multimap<K, V>::const_iterator i = x.begin(); i != x.end(); ++i) {if (i != x.begin()) ss << ", "; ss << i->first << "->" << i->second;}
+  ss << "]";
+  return ss.str();
+}
+
 #if 0
 static std::string toStringForRTI(const std::map<std::pair<int,std::pair<int,int> >, uint64_t > & x) {
   std::ostringstream ss;
@@ -148,7 +158,7 @@ static std::string toStringForRTI(const rose_graph_node_edge_hash_multimap & x)
   return ss.str();
 }
 
-static std::string toStringForRTI(const rose_undirected_graph_hash_multimap & x)
+static std::string toStringForRTI(const rose_graph_integer_node_hash_map & x)
 {
   std::ostringstream ss;
   ss << "[";
@@ -157,6 +167,56 @@ static std::string toStringForRTI(const rose_undirected_graph_hash_multimap & x)
   return ss.str();
 }
 
+static std::string toStringForRTI(const rose_graph_integer_edge_hash_map & x)
+{
+  std::ostringstream ss;
+  ss << "[";
+// for (SgGraphNodeUndirectedGraphEdgeMultimapPtrList::const_iterator i = x.begin(); i != x.end(); ++i) {if (i != x.begin()) ss << ", "; ss << i->first << "->" << i->second;}
+  ss << "]";
+  return ss.str();
+}
+
+static std::string toStringForRTI(const rose_graph_integer_edge_hash_multimap & x)
+{
+  std::ostringstream ss;
+  ss << "[";
+// for (SgGraphNodeUndirectedGraphEdgeMultimapPtrList::const_iterator i = x.begin(); i != x.end(); ++i) {if (i != x.begin()) ss << ", "; ss << i->first << "->" << i->second;}
+  ss << "]";
+  return ss.str();
+}
+
+static std::string toStringForRTI(const rose_graph_string_integer_hash_multimap & x)
+{
+  std::ostringstream ss;
+  ss << "[";
+// for (rose_graph_string_integer_hash_multimap::const_iterator i = x.begin(); i != x.end(); ++i) {if (i != x.begin()) ss << ", "; ss << i->first << "->" << i->second;}
+  ss << "]";
+  return ss.str();
+}
+
+static std::string toStringForRTI(const rose_graph_integerpair_edge_hash_multimap & x)
+{
+  std::ostringstream ss;
+  ss << "[";
+// for (rose_graph_string_integer_hash_multimap::const_iterator i = x.begin(); i != x.end(); ++i) {if (i != x.begin()) ss << ", "; ss << i->first << "->" << i->second;}
+  ss << "]";
+  return ss.str();
+}
+
+#if 0
+// DQ (4/30/2009): Removed these in favor of the hash_multimap using the SgGraphEdge class.
+static std::string toStringForRTI(const rose_undirected_graph_hash_multimap & x)
+{
+  std::ostringstream ss;
+  ss << "[";
+// for (SgGraphNodeUndirectedGraphEdgeMultimapPtrList::const_iterator i = x.begin(); i != x.end(); ++i) {if (i != x.begin()) ss << ", "; ss << i->first << "->" << i->second;}
+  ss << "]";
+  return ss.str();
+}
+#endif
+
+#if 0
+// DQ (4/30/2009): Removed these in favor of the hash_multimap using the SgGraphEdge class.
 static std::string toStringForRTI(const rose_directed_graph_hash_multimap & x)
 {
   std::ostringstream ss;
@@ -165,6 +225,7 @@ static std::string toStringForRTI(const rose_directed_graph_hash_multimap & x)
   ss << "]";
   return ss.str();
 }
+#endif
 
 // DQ (8/18/2008): Added support for new Graph IR node.
 // static std::string toStringForRTI(const SgStringGraphNodeMapPtrList & x)
@@ -177,7 +238,8 @@ static std::string toStringForRTI(const rose_graph_hash_multimap & x)
   return ss.str();
 }
 
-
+#if 0
+// DQ (5/1/2009): This is no longer used and is replaced by an implementation using a hash_map.
 // DQ (8/18/2008): Added support for new Graph IR node.
 // static std::string toStringForRTI(const SgIntegerGraphNodeMapPtrList & x)
 static std::string toStringForRTI(const std::map<int, SgGraphNode*> & x)
@@ -189,6 +251,7 @@ static std::string toStringForRTI(const std::map<int, SgGraphNode*> & x)
   ss << "]";
   return ss.str();
 }
+#endif
 
 #if 0
 // DQ (4/25/2009): This is now redundant...

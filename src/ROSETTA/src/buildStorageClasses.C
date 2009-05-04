@@ -579,6 +579,31 @@ Terminal::evaluateType(std::string& varTypeString)
         {
           returnType = ROSE_GRAPH_NODE_EDGE_HASH_MULTIMAP;
         }
+  // DQ (5/1/2009): Added integer to node map
+     else if ( varTypeString == "rose_graph_integer_node_hash_map" )
+        {
+          returnType = ROSE_GRAPH_INTEGER_NODE_HASH_MAP;
+        }
+  // DQ (5/1/2009): Added integer to edge map
+     else if ( varTypeString == "rose_graph_integer_edge_hash_map" )
+        {
+          returnType = ROSE_GRAPH_INTEGER_EDGE_HASH_MAP;
+        }
+  // DQ (5/1/2009): Added string to integer map
+     else if ( varTypeString == "rose_graph_string_integer_hash_multimap" )
+        {
+          returnType = ROSE_GRAPH_STRING_INTEGER_HASH_MULTIMAP;
+        }
+  // DQ (5/1/2009): Added integer pair to edge map
+     else if ( varTypeString == "rose_graph_integerpair_edge_hash_multimap" )
+        {
+          returnType = ROSE_GRAPH_INTEGER_PAIR_EDGE_HASH_MULTIMAP;
+        }
+  // DQ (5/1/2009): Added integer to edge map
+     else if ( varTypeString == "rose_graph_integer_edge_hash_multimap" )
+        {
+          returnType = ROSE_GRAPH_INTEGER_EDGE_HASH_MULTIMAP;
+        }
      else if (
                (varTypeString == "SgFunctionTypeTable*" ) ||
                (varTypeString == "$CLASSNAME*" ) || 
@@ -647,6 +672,10 @@ Terminal::evaluateType(std::string& varTypeString)
      else if ( 10 < length && varTypeString.substr(0,9) == "std::map<" && varTypeString.rfind(">" ) == length-1 )
         {
           returnType = STL_MAP;
+        }
+     else if ( 15 < length && varTypeString.substr(0,14) == "std::multimap<" && varTypeString.rfind(">" ) == length-1 )
+        {
+          returnType = STL_MULTIMAP;
         }
      else if ( varTypeString == "string" )
         {
@@ -880,6 +909,18 @@ std::string Terminal::buildStorageClassHeader ()
                     case ROSE_GRAPH_DIRECTED_EDGE_HASH_MULTIMAP:
                     case ROSE_GRAPH_UNDIRECTED_EDGE_HASH_MULTIMAP:
                     case ROSE_GRAPH_NODE_EDGE_HASH_MULTIMAP:
+
+                 // DQ (5/1/2009): Added support for rose_graph_integer_node_hash_map and rose_graph_integer_edge_hash_map
+                    case ROSE_GRAPH_INTEGER_NODE_HASH_MAP:
+                    case ROSE_GRAPH_INTEGER_EDGE_HASH_MAP:
+                    case ROSE_GRAPH_INTEGER_EDGE_HASH_MULTIMAP:
+
+                 // DQ (5/1/2009): Added support for rose_graph_string_integer_hash_multimap
+                    case ROSE_GRAPH_STRING_INTEGER_HASH_MULTIMAP:
+
+                 // DQ (5/1/2009): Added support for rose_graph_integerpair_edge_hash_multimap
+                    case ROSE_GRAPH_INTEGER_PAIR_EDGE_HASH_MULTIMAP:
+
                     case ROSEATTRUBUTESLISTCONTAINER:
                     case SGCLASS_POINTER_LIST:
                     case SGCLASS_POINTER_LIST_POINTER:
@@ -887,6 +928,7 @@ std::string Terminal::buildStorageClassHeader ()
                     case STL_CONTAINER:
                     case STL_SET:
                     case STL_MAP:
+                    case STL_MULTIMAP:
                     case STRING:
                       s += "       EasyStorage < " + varTypeString + " > " + varStorageNameString +";\n" ;
                       break;
@@ -1026,6 +1068,8 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
 #endif
                            break;
 
+#if 0
+                      // DQ (5/2/2009): These are no longer used
                          case ROSE_GRAPH_DIRECTED_EDGE_HASH_MULTIMAP:
 #if 0
                            s += "   {\n";
@@ -1070,7 +1114,10 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
                            s += "    }\n";
 #endif
                            break;
+#endif
 
+#if 0
+                      // DQ (5/2/2009): These are no longer used
                          case ROSE_GRAPH_UNDIRECTED_EDGE_HASH_MULTIMAP:
 #if 0
                            s += "     rose_hash::hash_multimap<std::string, SgUndirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string>::iterator it_2; \n" ;
@@ -1111,8 +1158,9 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
                            s += "      delete [] tempList" + varNameString + "; \n";
 #endif
                            break;
-
+#endif
                          case ROSE_GRAPH_NODE_EDGE_HASH_MULTIMAP:
+                           s += "   {\n";
                            s += "     SgGraphEdgeList::local_hash_multimap_type::iterator it; \n" ;
                            s += "     unsigned int tempListCount" + varNameString + " = 0; \n" ;
                            s += "     SgGraphEdge** tempList" + varNameString + " = new SgGraphEdge* [ source->p_" + varNameString + ".size() ]; \n" ;
@@ -1130,11 +1178,121 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
                            s += "          tempListCount" + varNameString + "++; \n";
                            s += "        }\n";
                            s += "      delete [] tempList" + varNameString + "; \n";
+                           s += "    }\n";
                            break;
 
-                        case SGCLASS_POINTER_VECTOR:
+                      // DQ (5/1/2009): Added support for rose_graph_string_integer_hash_multimap
+                         case ROSE_GRAPH_STRING_INTEGER_HASH_MULTIMAP:
+                           s += "   {\n";
+                           s += "     rose_graph_string_integer_hash_multimap::iterator string_integer_it; \n" ;
+                           s += "     unsigned int tempListCount" + varNameString + " = 0; \n" ;
+                           s += "     int* tempList" + varNameString + " = new int [ source->p_" + varNameString + ".size() ]; \n" ;
+                           s += "     for (string_integer_it = source->p_" + varNameString + ".begin(); string_integer_it != source->p_" + varNameString + ".end(); ++string_integer_it)\n" ;
+                           s += "        {\n";
+                           s += "          tempList" + varNameString + "[tempListCount" + varNameString + "] = string_integer_it->second;\n";
+                           s += "          tempListCount" + varNameString + "++; \n";
+                           s += "          string_integer_it->second = 0; printf (\"Unimplemented support for rose_graph_string_integer_hash_multimap: Fixme! \\n\"); ROSE_ASSERT(false); \n";
+                           s += "        }\n";
+                           s += "     " + varStorageNameString + ".storeDataInEasyStorageClass(source->p_" + varNameString + ");\n" ;
+                           s += "     tempListCount" + varNameString + " = 0; \n" ;
+                           s += "     for (string_integer_it = source->p_" + varNameString + ".begin(); string_integer_it != source->p_" + varNameString + ".end(); ++string_integer_it) \n";
+                           s += "        {\n";
+                           s += "          string_integer_it->second = tempList" + varNameString + " [ tempListCount" + varNameString + " ]; \n";
+                           s += "          tempListCount" + varNameString + "++; \n";
+                           s += "        }\n";
+                           s += "      delete [] tempList" + varNameString + "; \n";
+                           s += "    }\n";
+                           break;
+
+                      // DQ (5/1/2009): Added support for rose_graph_integer_node_hash_map and rose_graph_integer_edge_hash_map
+                         case ROSE_GRAPH_INTEGER_NODE_HASH_MAP:
+                           s += "     rose_graph_integer_node_hash_map::iterator integer_node_it; \n" ;
+                           s += "     unsigned int tempListCount" + varNameString + " = 0; \n" ;
+                           s += "     SgGraphNode** tempList" + varNameString + " = new SgGraphNode* [ source->p_" + varNameString + ".size() ]; \n" ;
+                           s += "     for (integer_node_it = source->p_" + varNameString + ".begin(); integer_node_it != source->p_" + varNameString + ".end(); ++integer_node_it)\n" ;
+                           s += "        {\n";
+                           s += "          tempList" + varNameString + "[tempListCount" + varNameString + "] = integer_node_it->second;\n";
+                           s += "          tempListCount" + varNameString + "++; \n";
+                           s += "          integer_node_it->second = (SgGraphNode*)(AST_FILE_IO::getGlobalIndexFromSgClassPointer(integer_node_it->second) ); \n";
+                           s += "        }\n";
+                           s += "     " + varStorageNameString + ".storeDataInEasyStorageClass(source->p_" + varNameString + ");\n" ;
+                           s += "     tempListCount" + varNameString + " = 0; \n" ;
+                           s += "     for (integer_node_it = source->p_" + varNameString + ".begin(); integer_node_it != source->p_" + varNameString + ".end(); ++integer_node_it) \n";
+                           s += "        {\n";
+                           s += "          integer_node_it->second = tempList" + varNameString + " [ tempListCount" + varNameString + " ]; \n";
+                           s += "          tempListCount" + varNameString + "++; \n";
+                           s += "        }\n";
+                           s += "      delete [] tempList" + varNameString + "; \n";
+                           break;
+
+                      // DQ (5/1/2009): Added support for rose_graph_integer_node_hash_map and rose_graph_integer_edge_hash_map
+                         case ROSE_GRAPH_INTEGER_EDGE_HASH_MAP:
+                           s += "     rose_graph_integer_edge_hash_map::iterator integer_edge_it; \n" ;
+                           s += "     unsigned int tempListCount" + varNameString + " = 0; \n" ;
+                           s += "     SgGraphEdge** tempList" + varNameString + " = new SgGraphEdge* [ source->p_" + varNameString + ".size() ]; \n" ;
+                           s += "     for (integer_edge_it = source->p_" + varNameString + ".begin(); integer_edge_it != source->p_" + varNameString + ".end(); ++integer_edge_it)\n" ;
+                           s += "        {\n";
+                           s += "          tempList" + varNameString + "[tempListCount" + varNameString + "] = integer_edge_it->second;\n";
+                           s += "          tempListCount" + varNameString + "++; \n";
+                           s += "          integer_edge_it->second = (SgGraphEdge*)(AST_FILE_IO::getGlobalIndexFromSgClassPointer(integer_edge_it->second) ); \n";
+                           s += "        }\n";
+                           s += "     " + varStorageNameString + ".storeDataInEasyStorageClass(source->p_" + varNameString + ");\n" ;
+                           s += "     tempListCount" + varNameString + " = 0; \n" ;
+                           s += "     for (integer_edge_it = source->p_" + varNameString + ".begin(); integer_edge_it != source->p_" + varNameString + ".end(); ++integer_edge_it) \n";
+                           s += "        {\n";
+                           s += "          integer_edge_it->second = tempList" + varNameString + " [ tempListCount" + varNameString + " ]; \n";
+                           s += "          tempListCount" + varNameString + "++; \n";
+                           s += "        }\n";
+                           s += "      delete [] tempList" + varNameString + "; \n";
+                           break;
+
+                      // DQ (5/1/2009): Added support for rose_graph_integer_edge_hash_multimap
+                         case ROSE_GRAPH_INTEGER_EDGE_HASH_MULTIMAP:
+                           s += "   {\n";
+                           s += "     rose_graph_integer_edge_hash_multimap::iterator integer_edge_it2; \n" ;
+                           s += "     unsigned int tempListCount" + varNameString + " = 0; \n" ;
+                           s += "     SgGraphEdge** tempList" + varNameString + " = new SgGraphEdge* [ source->p_" + varNameString + ".size() ]; \n" ;
+                           s += "     for (integer_edge_it2 = source->p_" + varNameString + ".begin(); integer_edge_it2 != source->p_" + varNameString + ".end(); ++integer_edge_it2)\n" ;
+                           s += "        {\n";
+                           s += "          tempList" + varNameString + "[tempListCount" + varNameString + "] = integer_edge_it2->second;\n";
+                           s += "          tempListCount" + varNameString + "++; \n";
+                           s += "          integer_edge_it2->second = (SgGraphEdge*)(AST_FILE_IO::getGlobalIndexFromSgClassPointer(integer_edge_it2->second) ); \n";
+                           s += "        }\n";
+                           s += "     " + varStorageNameString + ".storeDataInEasyStorageClass(source->p_" + varNameString + ");\n" ;
+                           s += "     tempListCount" + varNameString + " = 0; \n" ;
+                           s += "     for (integer_edge_it2 = source->p_" + varNameString + ".begin(); integer_edge_it2 != source->p_" + varNameString + ".end(); ++integer_edge_it2) \n";
+                           s += "        {\n";
+                           s += "          integer_edge_it2->second = tempList" + varNameString + " [ tempListCount" + varNameString + " ]; \n";
+                           s += "          tempListCount" + varNameString + "++; \n";
+                           s += "        }\n";
+                           s += "      delete [] tempList" + varNameString + "; \n";
+                           s += "    }\n";
+                           break;
+
+                      // DQ (5/1/2009): Added support for rose_graph_integerpair_edge_hash_multimap
+                         case ROSE_GRAPH_INTEGER_PAIR_EDGE_HASH_MULTIMAP:
+                           s += "     rose_graph_integerpair_edge_hash_multimap::iterator integerpair_edge_it; \n" ;
+                           s += "     unsigned int tempListCount" + varNameString + " = 0; \n" ;
+                           s += "     SgGraphEdge** tempList" + varNameString + " = new SgGraphEdge* [ source->p_" + varNameString + ".size() ]; \n" ;
+                           s += "     for (integerpair_edge_it = source->p_" + varNameString + ".begin(); integerpair_edge_it != source->p_" + varNameString + ".end(); ++integerpair_edge_it)\n" ;
+                           s += "        {\n";
+                           s += "          tempList" + varNameString + "[tempListCount" + varNameString + "] = integerpair_edge_it->second;\n";
+                           s += "          tempListCount" + varNameString + "++; \n";
+                           s += "          integerpair_edge_it->second = (SgGraphEdge*)(AST_FILE_IO::getGlobalIndexFromSgClassPointer(integerpair_edge_it->second) ); \n";
+                           s += "        }\n";
+                           s += "     " + varStorageNameString + ".storeDataInEasyStorageClass(source->p_" + varNameString + ");\n" ;
+                           s += "     tempListCount" + varNameString + " = 0; \n" ;
+                           s += "     for (integerpair_edge_it = source->p_" + varNameString + ".begin(); integerpair_edge_it != source->p_" + varNameString + ".end(); ++integerpair_edge_it) \n";
+                           s += "        {\n";
+                           s += "          integerpair_edge_it->second = tempList" + varNameString + " [ tempListCount" + varNameString + " ]; \n";
+                           s += "          tempListCount" + varNameString + "++; \n";
+                           s += "        }\n";
+                           s += "      delete [] tempList" + varNameString + "; \n";
+                           break;
+
+                         case SGCLASS_POINTER_VECTOR:
                            sg_string = sg_string.substr(0,sg_string.size()-2) ;
-                        case SGCLASS_POINTER_LIST:
+                         case SGCLASS_POINTER_LIST:
                            sg_string = sg_string.substr(0,sg_string.size()-7) ;
                            s += "     " + varTypeString + "::iterator i_" + varNameString + " = source->p_" + varNameString + ".begin() ; \n" ;
                            s += "     unsigned int tempListCount" + varNameString + " = 0; \n" ;
@@ -1156,7 +1314,7 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
                            s += "        }\n";
                            s += "      delete [] tempList" + varNameString + "; \n";
                            break;
-                        case SGCLASS_POINTER_LIST_POINTER:
+                         case SGCLASS_POINTER_LIST_POINTER:
                            sg_string = varTypeString.substr(0,varTypeString.size()-7) ;
                            s += "     if ( source->p_" + varNameString + " != NULL ) \n" ;
                            s += "        { \n" ;
@@ -1192,6 +1350,8 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
                          case STL_SET:
                       // DQ (10/4/2006): Added case of STL_MAP
                          case STL_MAP:
+                      // DQ (4/30/2009): Added case of STL_MULTIMAP
+                         case STL_MULTIMAP:
                          case STRING:
                            s += "     " + varStorageNameString + ".storeDataInEasyStorageClass(source->p_" + varNameString + ");\n" ;
                            break;
@@ -1257,6 +1417,18 @@ string Terminal::buildStorageClassDeleteStaticDataSource ()
                          case ROSE_GRAPH_DIRECTED_EDGE_HASH_MULTIMAP:
                          case ROSE_GRAPH_UNDIRECTED_EDGE_HASH_MULTIMAP:
                          case ROSE_GRAPH_NODE_EDGE_HASH_MULTIMAP:
+
+                      // DQ (5/1/2009): Added support for rose_graph_integer_node_hash_map and rose_graph_integer_edge_hash_map
+                         case ROSE_GRAPH_INTEGER_NODE_HASH_MAP:
+                         case ROSE_GRAPH_INTEGER_EDGE_HASH_MAP:
+                         case ROSE_GRAPH_INTEGER_EDGE_HASH_MULTIMAP:
+
+                      // DQ (5/1/2009): Added support for rose_graph_string_integer_hash_multimap
+                         case ROSE_GRAPH_STRING_INTEGER_HASH_MULTIMAP:
+
+                      // DQ (5/1/2009): Added support for rose_graph_integerpair_edge_hash_multimap
+                         case ROSE_GRAPH_INTEGER_PAIR_EDGE_HASH_MULTIMAP:
+
                          case ROSEATTRUBUTESLISTCONTAINER:
                          case SGCLASS_POINTER_LIST:
                          case SGCLASS_POINTER_LIST_POINTER:
@@ -1264,6 +1436,8 @@ string Terminal::buildStorageClassDeleteStaticDataSource ()
                          case STL_CONTAINER:
                          case STL_SET:
                          case STL_MAP:
+                      // DQ (4/30/2009): Added case of STL_MULTIMAP
+                         case STL_MULTIMAP:
                          case STRING:
                            addString += "     EasyStorage < " + varTypeString + " > :: deleteMemoryPool() ;\n" ;
                            break;
@@ -1333,6 +1507,18 @@ string Terminal::buildStorageClassArrangeStaticDataInOneBlockSource ()
                          case ROSE_GRAPH_DIRECTED_EDGE_HASH_MULTIMAP:
                          case ROSE_GRAPH_UNDIRECTED_EDGE_HASH_MULTIMAP:
                          case ROSE_GRAPH_NODE_EDGE_HASH_MULTIMAP:
+
+                      // DQ (5/1/2009): Added support for rose_graph_integer_node_hash_map and rose_graph_integer_edge_hash_map
+                         case ROSE_GRAPH_INTEGER_NODE_HASH_MAP:
+                         case ROSE_GRAPH_INTEGER_EDGE_HASH_MAP:
+                         case ROSE_GRAPH_INTEGER_EDGE_HASH_MULTIMAP:
+
+                      // DQ (5/1/2009): Added support for rose_graph_string_integer_hash_multimap
+                         case ROSE_GRAPH_STRING_INTEGER_HASH_MULTIMAP:
+
+                      // DQ (5/1/2009): Added support for rose_graph_integerpair_edge_hash_multimap
+                         case ROSE_GRAPH_INTEGER_PAIR_EDGE_HASH_MULTIMAP:
+
                          case ROSEATTRUBUTESLISTCONTAINER:
                          case SGCLASS_POINTER_LIST:
                          case SGCLASS_POINTER_LIST_POINTER:
@@ -1340,6 +1526,8 @@ string Terminal::buildStorageClassArrangeStaticDataInOneBlockSource ()
                          case STL_CONTAINER:
                          case STL_SET:
                          case STL_MAP:
+                      // DQ (4/30/2009): Added case of STL_MULTIMAP
+                         case STL_MULTIMAP:
                          case STRING:
                            addString += "     EasyStorage < " + varTypeString + " > :: arrangeMemoryPoolInOneBlock() ;\n" ;
                            break;
@@ -1446,6 +1634,7 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
 #endif
                       break;
 
+                 // DQ (5/2/2009): This is not used!
                     case ROSE_GRAPH_DIRECTED_EDGE_HASH_MULTIMAP:
 #if 0
                       s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
@@ -1465,6 +1654,7 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
 #endif
                       break;
 
+                 // DQ (5/2/2009): This is not used!
                     case ROSE_GRAPH_UNDIRECTED_EDGE_HASH_MULTIMAP:
 #if 0
                       s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
@@ -1487,18 +1677,72 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
                  // DQ (4/27/2009): Added case for new type
                     case ROSE_GRAPH_NODE_EDGE_HASH_MULTIMAP:
                       s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
-                      s += "     iterator it; \n " ;
+                      s += "   { rose_graph_node_edge_hash_multimap::iterator it; \n " ;
                       s += "     for (it = p_" + varNameString + ".begin(); it != p_" + varNameString + ".end(); ++it)\n " ;
                       s += "        {\n";
                       s += "          it->second = (SgGraphEdge*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex( (unsigned long)(it->second) ) ); \n";
                       s += "        }\n";
+                      s += "   }\n";
                       break;
 
+                 // DQ (5/1/2009): Added support for rose_graph_string_integer_hash_multimap
+                    case ROSE_GRAPH_STRING_INTEGER_HASH_MULTIMAP:
+                      s += "   {\n";
+                      s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
+                      s += "     rose_graph_string_integer_hash_multimap::iterator string_integer_it; \n " ;
+                      s += "     for (string_integer_it = p_" + varNameString + ".begin(); string_integer_it != p_" + varNameString + ".end(); ++string_integer_it)\n " ;
+                      s += "        {\n";
+                      s += "          string_integer_it->second = 0; printf (\"Unimplemented support for rose_graph_string_integer_hash_multimap: Fixme! \\n\"); ROSE_ASSERT(false); \n";
+                      s += "        }\n";
+                      s += "   }\n";
+                      break;
+
+                 // DQ (5/1/2009): Added support for rose_graph_integer_node_hash_map
+                    case ROSE_GRAPH_INTEGER_NODE_HASH_MAP:
+                      s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
+                      s += "     rose_graph_integer_node_hash_map::iterator integer_node_it; \n " ;
+                      s += "     for (integer_node_it = p_" + varNameString + ".begin(); integer_node_it != p_" + varNameString + ".end(); ++integer_node_it)\n " ;
+                      s += "        {\n";
+                      s += "          integer_node_it->second = (SgGraphNode*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex( (unsigned long)(integer_node_it->second) ) ); \n";
+                      s += "        }\n";
+                      break;
+
+                 // DQ (5/1/2009): Added support for rose_graph_integer_edge_hash_map
+                    case ROSE_GRAPH_INTEGER_EDGE_HASH_MAP:
+                      s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
+                      s += "     rose_graph_integer_edge_hash_map::iterator integer_edge_it; \n " ;
+                      s += "     for (integer_edge_it = p_" + varNameString + ".begin(); integer_edge_it != p_" + varNameString + ".end(); ++integer_edge_it)\n " ;
+                      s += "        {\n";
+                      s += "          integer_edge_it->second = (SgGraphEdge*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex( (unsigned long)(integer_edge_it->second) ) ); \n";
+                      s += "        }\n";
+                      break;
+
+                 // DQ (5/1/2009): Added support for rose_graph_integer_edge_hash_multimap
+                    case ROSE_GRAPH_INTEGER_EDGE_HASH_MULTIMAP:
+                      s += "   {\n";
+                      s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
+                      s += "     rose_graph_integer_edge_hash_multimap::iterator integer_edge_it2; \n " ;
+                      s += "     for (integer_edge_it2 = p_" + varNameString + ".begin(); integer_edge_it2 != p_" + varNameString + ".end(); ++integer_edge_it2)\n " ;
+                      s += "        {\n";
+                      s += "          integer_edge_it2->second = (SgGraphEdge*)(AST_FILE_IO::getSgClassPointerFromGlobalIndex( (unsigned long)(integer_edge_it2->second) ) ); \n";
+                      s += "        }\n";
+                      s += "   }\n";
+                      break;
+
+                 // DQ (5/1/2009): Added support for rose_graph_integerpair_edge_hash_multimap
+                    case ROSE_GRAPH_INTEGER_PAIR_EDGE_HASH_MULTIMAP:
+                      s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
+                      s += "     rose_graph_integerpair_edge_hash_multimap::iterator integerpair_edge_it; \n " ;
+                      s += "     for (integerpair_edge_it = p_" + varNameString + ".begin(); integerpair_edge_it != p_" + varNameString + ".end(); ++integerpair_edge_it)\n " ;
+                      s += "        {\n";
+                      s += "          integerpair_edge_it->second = NULL; printf (\"Error: not implemented support for rose_graph_integerpair_edge_hash_multimap \\n\"); ROSE_ASSERT(false); \n";
+                      s += "        }\n";
+                      break;
 
                     case SGCLASS_POINTER_VECTOR:
-                      sg_string = sg_string.substr(0,sg_string.size()-2) ;
+                      sg_string = sg_string.substr(0,sg_string.size()-2);
                     case SGCLASS_POINTER_LIST:
-                      sg_string = sg_string.substr(0,sg_string.size()-7) ;
+                      sg_string = sg_string.substr(0,sg_string.size()-7);
                       s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
                       s += "     " + varTypeString + "::iterator i_" + varNameString + " = p_" + varNameString + ".begin() ; \n" ;
                       s += "     for ( ; i_" + varNameString + " != p_" + varNameString + ".end(); ++i_" + varNameString + " ) \n";
@@ -1528,6 +1772,8 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
                     case STL_SET:
                  // DQ (10/4/2006): Added case of STL_MAP
                     case STL_MAP:
+                 // DQ (4/30/2009): Added case of STL_MULTIMAP
+                    case STL_MULTIMAP:
                     case STRING:
                       s += "     p_" + varNameString + " = storageSource." + varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ;\n" ;
                       break;
@@ -1591,6 +1837,18 @@ string Terminal::buildStorageClassWriteStaticDataToFileSource ()
                          case ROSE_GRAPH_DIRECTED_EDGE_HASH_MULTIMAP:
                          case ROSE_GRAPH_UNDIRECTED_EDGE_HASH_MULTIMAP:
                          case ROSE_GRAPH_NODE_EDGE_HASH_MULTIMAP:
+
+                      // DQ (5/1/2009): Added support for rose_graph_integer_node_hash_map and rose_graph_integer_edge_hash_map
+                         case ROSE_GRAPH_INTEGER_NODE_HASH_MAP:
+                         case ROSE_GRAPH_INTEGER_EDGE_HASH_MAP:
+                         case ROSE_GRAPH_INTEGER_EDGE_HASH_MULTIMAP:
+
+                      // DQ (5/1/2009): Added support for rose_graph_string_integer_hash_multimap
+                         case ROSE_GRAPH_STRING_INTEGER_HASH_MULTIMAP:
+
+                      // DQ (5/1/2009): Added support for rose_graph_integerpair_edge_hash_multimap
+                         case ROSE_GRAPH_INTEGER_PAIR_EDGE_HASH_MULTIMAP:
+
                          case ROSEATTRUBUTESLISTCONTAINER:
                          case SGCLASS_POINTER_LIST:
                          case SGCLASS_POINTER_LIST_POINTER:
@@ -1598,6 +1856,8 @@ string Terminal::buildStorageClassWriteStaticDataToFileSource ()
                          case STL_CONTAINER:
                          case STL_SET:
                          case STL_MAP:
+                      // DQ (4/30/2009): Added case of STL_MULTIMAP
+                         case STL_MULTIMAP:
                          case BIT_VECTOR:
                            addString += "     EasyStorage < " + varTypeString + " > :: writeToFile(out) ;\n" ;
                            break;
@@ -1667,12 +1927,26 @@ string Terminal::buildStorageClassReadStaticDataFromFileSource()
                          case ROSE_GRAPH_DIRECTED_EDGE_HASH_MULTIMAP:
                          case ROSE_GRAPH_UNDIRECTED_EDGE_HASH_MULTIMAP:
                          case ROSE_GRAPH_NODE_EDGE_HASH_MULTIMAP:
+
+                      // DQ (5/1/2009): Added support for rose_graph_integer_node_hash_map and rose_graph_integer_edge_hash_map
+                         case ROSE_GRAPH_INTEGER_NODE_HASH_MAP:
+                         case ROSE_GRAPH_INTEGER_EDGE_HASH_MAP:
+                         case ROSE_GRAPH_INTEGER_EDGE_HASH_MULTIMAP:
+
+                      // DQ (5/1/2009): Added support for rose_graph_string_integer_hash_multimap
+                         case ROSE_GRAPH_STRING_INTEGER_HASH_MULTIMAP:
+
+                      // DQ (5/1/2009): Added support for rose_graph_integerpair_edge_hash_multimap
+                         case ROSE_GRAPH_INTEGER_PAIR_EDGE_HASH_MULTIMAP:
+
                          case SGCLASS_POINTER_LIST:
                          case SGCLASS_POINTER_LIST_POINTER:
                          case SGCLASS_POINTER_VECTOR:
                          case STL_CONTAINER:
                          case STL_SET:
                          case STL_MAP:
+                      // DQ (4/30/2009): Added case of STL_MULTIMAP
+                         case STL_MULTIMAP:
                          case STRING:
                            addString += "     EasyStorage < " + varTypeString + " > :: readFromFile(in) ;\n" ;
                            break;
@@ -1738,12 +2012,23 @@ bool Terminal::hasMembersThatAreStoredInEasyStorageClass()
                          case MODIFIERCLASS_WITHOUTEASYSTORAGE:
                          case ROSE_HASH_MULTIMAP:
 
+                      // DQ (5/1/2009): Added support for rose_graph_integer_node_hash_map and rose_graph_integer_edge_hash_map
+                         case ROSE_GRAPH_INTEGER_NODE_HASH_MAP:
+                         case ROSE_GRAPH_INTEGER_EDGE_HASH_MAP:
+                         case ROSE_GRAPH_INTEGER_EDGE_HASH_MULTIMAP:
+
                       // DQ (8/19/2008): Added new case to support IR nodes for arbitrary graphs
                          case ROSE_GRAPH_HASH_MULTIMAP:
 
                          case ROSE_GRAPH_DIRECTED_EDGE_HASH_MULTIMAP:
                          case ROSE_GRAPH_UNDIRECTED_EDGE_HASH_MULTIMAP:
                          case ROSE_GRAPH_NODE_EDGE_HASH_MULTIMAP:
+
+                      // DQ (5/1/2009): Added support for rose_graph_string_integer_hash_multimap
+                         case ROSE_GRAPH_STRING_INTEGER_HASH_MULTIMAP:
+
+                      // DQ (5/1/2009): Added support for rose_graph_integerpair_edge_hash_multimap
+                         case ROSE_GRAPH_INTEGER_PAIR_EDGE_HASH_MULTIMAP:
 
                          case ROSEATTRUBUTESLISTCONTAINER:
                          case SGCLASS_POINTER_LIST:
@@ -1753,6 +2038,8 @@ bool Terminal::hasMembersThatAreStoredInEasyStorageClass()
                          case STL_CONTAINER:
                          case STL_SET:
                          case STL_MAP:
+                      // DQ (4/30/2009): Added case of STL_MULTIMAP
+                         case STL_MULTIMAP:
                          case STRING:
                            hasMembersThatWillBeStoredInEasyStorage = true;
                            break;
@@ -1932,6 +2219,8 @@ std::string Terminal::buildStaticDataMemberListOfStorageClass()
                          case SGCLASS_POINTER_VECTOR:
                          case STL_CONTAINER:
                          case STL_MAP:
+                      // DQ (4/30/2009): Added case of STL_MULTIMAP
+                         case STL_MULTIMAP:
                          case STL_SET:
                          case STRING:
                            s += "     EasyStorage < " + varTypeString + " > " + varStorageNameString +";\n" ;
@@ -2070,6 +2359,8 @@ string Terminal::buildSourceForStoringStaticMembers ()
                            s += "        }\n";
                            s += "      delete [] tempList" + classNameString + "; \n";
                       break;
+                 // DQ (4/30/2009): Added case of STL_MULTIMAP
+                    case STL_MULTIMAP:
                     case STL_MAP:
                       s += "     " + varStorageNameString + ".storeDataInEasyStorageClass( source->" + classNameString + "_" + varNameString + ");\n" ;
                       break;
@@ -2131,6 +2422,8 @@ string Terminal::buildStaticDataConstructorSource ()
                            "(" + sg_string + "* )(AST_FILE_IO::getSgClassPointerFromGlobalIndex ( (unsigned long) (*i_" + classNameString + " )  ) );\n";
                       s += "        }\n";
                       break;
+                 // DQ (4/30/2009): Added case of STL_MULTIMAP
+                    case STL_MULTIMAP:
                     case STL_MAP:
                       s += "     " + classNameString + "_" + varNameString + " = " + varStorageNameString + ".rebuildDataStoredInEasyStorageClass();\n" ;
                       break;
@@ -2182,6 +2475,8 @@ string Terminal::buildStaticDataWriteEasyStorageDataToFileSource()
                            addString += "     EasyStorage<" + varTypeString + "> :: writeToFile(out) ;\n";
                            break;
                          case SGCLASS_POINTER_LIST:
+                      // DQ (4/30/2009): Added case of STL_MULTIMAP
+                         case STL_MULTIMAP:
                          case STL_MAP:
                            addString += "     EasyStorage<" + varTypeString + " > :: writeToFile(out);\n";
                            break;
@@ -2241,6 +2536,8 @@ string Terminal::buildStaticDataReadEasyStorageDataFromFileSource()
                            addString += "     EasyStorage<" + varTypeString + "> :: readFromFile(in) ;\n";
                            break;
                          case SGCLASS_POINTER_LIST:
+                      // DQ (4/30/2009): Added case of STL_MULTIMAP
+                         case STL_MULTIMAP:
                          case STL_MAP:
                            addString += "     EasyStorage<" + varTypeString + " > :: readFromFile(in) ;\n";
                            break;
@@ -2296,6 +2593,8 @@ string Terminal::buildStaticDataArrangeEasyStorageInOnePoolSource()
                          case CHAR_POINTER:
                          case STRING:
                          case SGCLASS_POINTER_LIST:
+                      // DQ (4/30/2009): Added case of STL_MULTIMAP
+                         case STL_MULTIMAP:
                          case STL_MAP:
                            addString += "     EasyStorage<" + varTypeString + " > :: arrangeMemoryPoolInOneBlock();\n";
                            break;
@@ -2351,6 +2650,8 @@ string Terminal::buildStaticDataDeleteEasyStorageMemoryPoolSource()
                          case CHAR_POINTER:
                          case STRING:
                          case SGCLASS_POINTER_LIST:
+                      // DQ (4/30/2009): Added case of STL_MULTIMAP
+                         case STL_MULTIMAP:
                          case STL_MAP:
                            addString += "     EasyStorage<" + varTypeString + " > :: deleteMemoryPool();\n";
                            break;

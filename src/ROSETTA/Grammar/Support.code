@@ -140,6 +140,25 @@ HEADER_GRAPH_START
 
   // DQ (4/29/2009): Added as interface function (just calls the get_index() member function).
      int get_graph_id() const;
+
+ //! Check if the node is present in the graph.
+     bool exists( SgGraphNode* node );
+
+ //! Check if the edge is present in the graph.
+     bool exists( SgGraphEdge* edge );
+
+ //! Builds a set of edges that are associated with a specific node.
+     std::set<SgGraphEdge*> computeEdgeSet( SgGraphNode* node );
+
+  //! Integer index version of "std::set<SgGraphEdge*> computeEdgeSet( SgGraphNode* node );"
+     std::set<int> computeEdgeSet( int node_index );
+
+ //! Builds a set of node index values associated with a label.
+     std::set<SgGraphNode*> computeNodeSet( const std::string & label );
+
+  //! Integer index version of "std::set<SgGraphNode*> computeNodeSet( const std::string & label );"
+     std::set<int> computeNodeIndexSet( const std::string & label );
+
 HEADER_GRAPH_END
 
 
@@ -13098,6 +13117,7 @@ SOURCE_GRAPHNODE_START
 int SgGraphNode::p_index_counter = 0;
 #endif
 
+#if !defined(ROSE_USE_NEW_GRAPH_NODES) || defined(ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY)
 void
 SgGraphNode::append_properties( int addr, const std::string & prop )
    {
@@ -13105,6 +13125,7 @@ SgGraphNode::append_properties( int addr, const std::string & prop )
   /* implemented directly until we can fix how the statementList is built */
      p_properties[addr] = prop;
    }
+#endif
 
 void
 SgGraphNode::post_construction_initialization()
@@ -13127,6 +13148,7 @@ SOURCE_GRAPHEDGE_START
 int SgGraphEdge::p_index_counter = 0;
 #endif
 
+#if !defined(ROSE_USE_NEW_GRAPH_NODES) || defined(ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY)
 void
 SgGraphEdge::append_properties( int addr, const std::string & prop )
    {
@@ -13134,6 +13156,7 @@ SgGraphEdge::append_properties( int addr, const std::string & prop )
   // implemented directly until we can fix how the statementList is built
      p_properties[addr] = prop;
    }
+#endif
 
 void
 SgGraphEdge::post_construction_initialization()
@@ -13151,11 +13174,16 @@ SOURCE_GRAPHEDGE_END
 
 SOURCE_GRAPH_START
 
+#if defined(ROSE_USE_NEW_GRAPH_NODES) && !defined(ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY)
+#warning "ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY not set"
+#endif
+
 #ifdef ROSE_USE_NEW_GRAPH_NODES
 // DQ (4/29/2009): Declaration of space for static data member.
 int SgGraph::p_index_counter = 0;
 #endif
 
+#ifdef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
 // tps (08/08/07): Added the graph, graph nodes and graph edges 
 void
 SgGraph::append_properties( int addr, const std::string & prop )
@@ -13177,229 +13205,24 @@ SgGraph::hashCode( const char* p, int len) const // hash a character array
         }
      return (int)h; 
    }
+#endif
 
+#if !defined(ROSE_USE_NEW_GRAPH_NODES) || defined(ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY)
 int
 SgGraph::get_graph_id() const
    {
   // This function returns a unique id for each graph object
   // (interface function provided to support older interface).
+     ROSE_ASSERT(this != NULL);
 
 #ifdef ROSE_USE_NEW_GRAPH_NODES
-     ROSE_ASSERT(this != NULL);
      return get_index();
 #else
+  // The old IR nodes implementation can just require a constant (I think).
      return 0;
 #endif
    }
-
-// DQ (4/28/2009): Added support to build node (automaticly added to SgGraph).
-SgGraphNode*
-SgGraph::addNode( const std::string & name, SgNode* internal_node )
-   {
-     ROSE_ASSERT(this != NULL);
-
-     SgGraphNode* node = new SgGraphNode(name);
-     ROSE_ASSERT(node != NULL);
-
-  // Set the reference to the associated AST node
-     node->set_SgNode(internal_node);
-
-     return addNode(node);
-   }
-
-SgGraphNode*
-SgGraph::addNode( SgGraphNode* node )
-   {
-     ROSE_ASSERT(this != NULL);
-     ROSE_ASSERT(node != NULL);
-
-#ifdef ROSE_USE_NEW_GRAPH_NODES
-
-     node->set_parent(this);
-
-  // Set this to aunique value for the associated SgGraph object.
-     node->set_graph_id(get_index());
-
-     typedef SgGraphNodeList::iterator node_iterator;
-     node_iterator name_iterator = get_nodes()->get_nodes().find(node->get_name());
-     bool matchingNameIsNew = name_iterator == get_nodes()->get_nodes().end();
-
-     if (matchingNameIsNew == false)
-        {
-          matchingNameIsNew = (name_iterator->second->get_index() != node->get_index());
-        }
-
-     if (matchingNameIsNew == true)
-        {
-       // Build a new entry in the map!
-       // printf ("Adding unique node to graph = %s for node = %p = %s (name = %s) \n",p_name.c_str(),node,node->class_name().c_str(),name.c_str());
-
-       // Need the more uniform syntax when using hash_map
-       // graph[name] = node;
-          get_nodes()->get_nodes().insert(pair<string,SgGraphNode*>(node->get_name(),node));
-        }
-       else
-        {
-       // This name already exists in the graph.
-          printf ("Error: This node = %p has a name = %s that already exists in the graph -- node = %p = %s \n",node,node->get_name().c_str(),node,node->class_name().c_str());
-          ROSE_ASSERT(false);
-        }
 #endif
-
-     return node;
-   }
-
-SgGraphEdge*
-SgGraph::addEdge( SgGraphNode* a, SgGraphNode* b, const std::string & name )
-   {
-     ROSE_ASSERT(this != NULL);
-
-     SgGraphEdge* edge = NULL;
-
-#ifdef ROSE_USE_NEW_GRAPH_NODES
-     edge = new SgGraphEdge(a,b,name);
-     ROSE_ASSERT(edge != NULL);
-
-     return addEdge(edge);
-   }
-
-// DQ (4/28/2009): Added support to build node (automaticly added to SgGraph).
-SgGraphEdge*
-SgGraph::addEdge( SgGraphEdge* edge )
-   {
-     ROSE_ASSERT(this != NULL);
-
-     edge->set_parent(this);
-
-  // Set this to aunique value for the associated SgGraph object.
-     edge->set_graph_id(get_index());
-
-     typedef SgGraphEdgeList::iterator edge_iterator;
-
-     edge_iterator edgeIt = get_edges()->get_edges().find(edge->get_node_A());
-  // bool matchingEdgeIsNew = ( (edgeIt == get_edges()->get_edges().end()) && ( edgeIt->second->get_node_B() != b) );
-     bool matchingEdgeIsNew = (edgeIt == get_edges()->get_edges().end());
-     if (matchingEdgeIsNew == false)
-        {
-       // printf ("The node has a valid edge, now check the edge's other end \n");
-          matchingEdgeIsNew = ( edgeIt->second->get_node_B() != edge->get_node_B());
-        }
-
-  // printf ("matchingEdgeIsNew = %s \n",matchingEdgeIsNew ? "true" : "false");
-     if (matchingEdgeIsNew == true)
-        {
-       // Build a new entry in the map!
-       // printf ("Adding unique edge to graph = %s for edge = %p = %s (name = %s) \n",p_name.c_str(),edge,edge->class_name().c_str(),name.c_str());
-
-       // Need the more uniform syntax when using hash_map
-       // graph[name] = edge;
-          get_edges()->get_edges().insert(pair<SgGraphNode*,SgGraphEdge*>(edge->get_node_A(),edge));
-        }
-       else
-        {
-       // This is something that we can test.
-          ROSE_ASSERT(edgeIt->first == edge->get_node_A() || edgeIt->first == edge->get_node_B() );
-
-       // This name already exists in the graph.
-#if 1
-          printf ("Warning: This edge = %p has a name = %s that already exists in the graph -- edge = %p = %s \n",edge,edge->get_name().c_str(),edge,edge->class_name().c_str());
-#else
-          printf ("Error: This edge = %p has a name = %s that already exists in the graph -- edge = %p = %s \n",edge,edge->get_name().c_str(),edge,edge->class_name().c_str());
-          ROSE_ASSERT(false);
-#endif
-        }
-#endif
-
-     return edge;
-   }
-
-
-#ifdef ROSE_USE_NEW_GRAPH_NODES
-// Required for Boost Spanning Tree support.
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/kruskal_min_spanning_tree.hpp>
-#endif
-
-// std::vector <SgGraph::BoostEdgeDescriptor>
-std::vector <SgGraphEdge*>
-SgGraph::generateSpanningTree()
-   {
-     ROSE_ASSERT(this != NULL);
-#ifdef ROSE_USE_NEW_GRAPH_NODES
-     ROSE_ASSERT(get_edges() != NULL);
-
-  // Assemble the representation of the edges for Boost.
-     SgGraphEdgeList::iterator edgeIt = get_edges()->get_edges().begin();
-     while(edgeIt != get_edges()->get_edges().end())
-        {
-       // We want the edges to have an index ordering (could be computed or saved, for now we will save it explicitly).
-          int i = edgeIt->second->get_node_A()->get_index();
-          int j = edgeIt->second->get_node_B()->get_index();
-
-       // Generate the edge vector for MST (required for many BGL algorithms)
-          p_boost_edges.push_back(BoostEdgeType(i,j));
-
-       // Use constant edge weight for now (I think that the edge weights are required by the MST algorithm)
-          p_boost_edge_weights.push_back(1);
-
-          edgeIt++;
-        }
-
-     ROSE_ASSERT(get_nodes() != NULL);
-
-  // DQ (4/29/2009): Boost Graph Type used to represent ROSE graphs within Boost Graph Algorithms.
-     typedef boost::adjacency_list < boost::vecS, boost::vecS, boost::undirectedS, boost::no_property, boost::property < boost::edge_weight_t, int > > BoostGraphType;
-
-  // Supporting graph type required by Boost Graph Library.
-     typedef boost::graph_traits < BoostGraphType >::edge_descriptor   BoostEdgeDescriptor;
-
-     BoostGraphType rose_BGL_graph(p_boost_edges.begin(), p_boost_edges.end(), p_boost_edge_weights.begin(), get_nodes()->get_nodes().size());
-
-  // If we want to add edge weights then this is now we have to do it.
-  // property_map < Graph, edge_weight_t >::type weight = get(edge_weight, g);
-
-  // Result
-     std::vector < BoostEdgeDescriptor > rose_spanning_tree;
-
-#if 1
-     printf ("Computing the kruskal_minimum_spanning_tree() \n");
-     boost::kruskal_minimum_spanning_tree(rose_BGL_graph, std::back_inserter(rose_spanning_tree));
-     printf ("DONE: Computing the kruskal_minimum_spanning_tree() \n");
-
-     printf ("rose_spanning_tree.size() = %zu \n",rose_spanning_tree.size());
-#endif
-
-  // return rose_spanning_tree;
-     std::vector <SgGraphEdge*> returnEdgeList;
-
-#if 0
-     std::cout << "Print the edges in the MST:" << std::endl;
-     for (std::vector < Edge >::iterator ei = spanning_tree.begin(); ei != spanning_tree.end(); ++ei)
-        {
-          cout << source(*ei, g) << " <--> " << target(*ei, g)
-               << " with weight of " << weight[*ei]
-               << endl;
-
-          int s = source(*ei, g);
-          int t = target(*ei, g);
-          SgGraphNode* nodeA = get_nodes()->get_nodes()[s];
-          SgGraphNode* nodeB = get_nodes()->get_nodes()[t];
-
-       // Now to we find the edge?
-       // SgGraphEdge* edge = nodeA->get_edges()[s];
-
-       // How to I get the edge that ends at t?
-
-          returnEdgeList.push_back(*ei);
-        }
-#endif
-#else
-     std::vector <SgGraphEdge*> returnEdgeList;
-#endif
-
-     return returnEdgeList;
-   }
-
 
 // DQ (4/28/2009): Added support to have internal list nodes built automatically in the SgGraph constructor.
 void
@@ -13408,6 +13231,8 @@ SgGraph::post_construction_initialization()
      ROSE_ASSERT(this != NULL);
 
 #ifdef ROSE_USE_NEW_GRAPH_NODES
+
+#ifdef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
   // Build the graph node list IR node
      if (get_nodes() == NULL)
         {
@@ -13421,6 +13246,7 @@ SgGraph::post_construction_initialization()
           set_edges(new SgGraphEdgeList());
         }
      ROSE_ASSERT(get_edges() != NULL);
+#endif
 
   // Setup an internal graph_id
      p_index = p_index_counter++;
