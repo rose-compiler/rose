@@ -3,28 +3,72 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-using namespace std;
+/** Returns the string representation of an assembly instruction, sans address. */
+std::string unparseInstruction(SgAsmInstruction* insn) {
+    /* Mnemonic */
+    if (!insn) return "BOGUS:NULL";
+    std::string result = unparseMnemonic(insn);
+    result += std::string((result.size() >= 7 ? 1 : 7-result.size()), ' ');
 
-string unparseInstruction(SgAsmInstruction* insn) {
-  switch (insn->variantT()) {
-    case V_SgAsmx86Instruction: return unparseX86Instruction(isSgAsmx86Instruction(insn));
-    case V_SgAsmArmInstruction: return unparseArmInstruction(isSgAsmArmInstruction(insn));
-    case V_SgAsmPowerpcInstruction: return unparseX86Instruction(isSgAsmx86Instruction(insn));
-    default: cerr << "Unhandled variant " << insn->class_name() << " in unparseInstruction" << endl; abort();
-  }
+    /* Operands */
+    SgAsmOperandList* opList = insn->get_operandList();
+    const SgAsmExpressionPtrList& operands = opList->get_operands();
+    for (size_t i = 0; i < operands.size(); ++i) {
+        if (i != 0) result += ", ";
+        result += unparseExpression(operands[i]);
+    }
+
+    /* Comment */
+    if (insn->get_comment()!="")
+        result += " <" + insn->get_comment() + ">";
+    return result;
 }
 
-string unparseInstructionWithAddress(SgAsmInstruction* insn) {
-  switch (insn->variantT()) {
-    case V_SgAsmx86Instruction: return unparseX86InstructionWithAddress(isSgAsmx86Instruction(insn));
-    case V_SgAsmArmInstruction: return unparseArmInstructionWithAddress(isSgAsmArmInstruction(insn));
-    case V_SgAsmPowerpcInstruction: return unparsePowerpcInstructionWithAddress(isSgAsmPowerpcInstruction(insn));
-    default: cerr << "Unhandled variant " << insn->class_name() << " in unparseInstructionWithAddress" << endl; abort();
-  }
+/** Returns the string representation of an assembly instruction with address. */
+std::string unparseInstructionWithAddress(SgAsmInstruction* insn) {
+    if (!insn) return "BOGUS:NULL";
+    return StringUtility::intToHex(insn->get_address()) + ":" + unparseInstruction(insn);
+}
+
+/** Returns a string representing the part of the assembly instruction before the first operand. */
+std::string unparseMnemonic(SgAsmInstruction *insn) {
+    switch (insn->variantT()) {
+        case V_SgAsmx86Instruction:
+            return unparseX86Mnemonic(isSgAsmx86Instruction(insn));
+        case V_SgAsmArmInstruction:
+            return unparseArmMnemonic(isSgAsmArmInstruction(insn));
+        case V_SgAsmPowerpcInstruction:
+            return unparsePowerpcMnemonic(isSgAsmPowerpcInstruction(insn));
+        default:
+            std::cerr <<"Unhandled variant " <<insn->class_name() <<" in " <<__func__ <<std::endl;
+            abort();
+    }
+}
+
+/** Returns the string representation of an instruction operand (SgAsmExpression), the format of which might depend on the
+ *  instruction with which it's associated. */
+std::string unparseExpression(SgAsmExpression *expr) {
+    /* Find the instruction with which this expression is associated. */
+    SgAsmInstruction *insn = NULL;
+    for (SgNode *node=expr; !insn && node; node=node->get_parent()) {
+        insn = isSgAsmInstruction(node);
+    }
+
+    switch (insn->variantT()) {
+        case V_SgAsmx86Instruction:
+            return unparseX86Expression(expr);
+        case V_SgAsmArmInstruction:
+            return unparseArmExpression(expr);
+        case V_SgAsmPowerpcInstruction:
+            return unparsePowerpcExpression(expr);
+        default:
+            cerr <<"Unhandled variant " <<insn->class_name() <<" in " <<__func__ <<endl;
+            abort();
+    }
 }
 
 // This is adapted from Robb's code: Works like hexdump -C to display N bytes of DATA
-string
+std::string
 hexdump ( rose_addr_t base_addr, const char *prefix, const SgUnsignedCharList & data, size_t maxLength )
    {
   // This function is used to prepend a string representing the memory contents of the instruction.
@@ -34,7 +78,7 @@ hexdump ( rose_addr_t base_addr, const char *prefix, const SgUnsignedCharList & 
 
   // Note that the "prefix" can be used for whitespace to intent the output.
 
-     string returnString;
+     std::string returnString;
 
      char buffer[1024];
      size_t n = data.size();
@@ -129,7 +173,7 @@ get_asmFile(SgAsmStatement* stmt)
 
 // DQ (8/23/2008): I think this should take an SgAsmStatement
 // string unparseAsmStatement(SgAsmNode* stmt)
-string
+std::string
 unparseAsmStatement(SgAsmStatement* stmt)
    {
   // This function should use the same mechanism as the source code
@@ -139,7 +183,7 @@ unparseAsmStatement(SgAsmStatement* stmt)
 
   // printf ("In unparseAsmStatement(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
 
-     string result;
+     std::string result;
      if (stmt->get_comment().empty() == false)
           result = "/* " + stmt->get_comment() + " */\n";
 
@@ -212,7 +256,7 @@ unparseAsmStatement(SgAsmStatement* stmt)
         }
    }
 
-string
+std::string
 unparseAsmInterpretation(SgAsmInterpretation* interp)
    {
      return "/* Interpretation " + std::string(interp->get_header()->format_name()) + " */\n" + (interp->get_global_block() ? unparseAsmStatement(interp->get_global_block()) : "/* No global block */");
@@ -220,7 +264,7 @@ unparseAsmInterpretation(SgAsmInterpretation* interp)
 
 // void unparseAsmStatementToFile(const string& filename, SgAsmNode* stmt) {
 void
-unparseAsmStatementToFile(const string& filename, SgAsmStatement* stmt)
+unparseAsmStatementToFile(const std::string& filename, SgAsmStatement* stmt)
    {
      ROSE_ASSERT (stmt != NULL);
      ofstream of(filename.c_str());
@@ -228,7 +272,7 @@ unparseAsmStatementToFile(const string& filename, SgAsmStatement* stmt)
    }
 
 void
-unparseAsmFileToFile(const string& filename, SgAsmFile* file)
+unparseAsmFileToFile(const std::string& filename, SgAsmFile* file)
    {
      ROSE_ASSERT (file != NULL);
      ofstream of(filename.c_str());

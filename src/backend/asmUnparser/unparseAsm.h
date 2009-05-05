@@ -1,38 +1,40 @@
 #ifndef ROSE_UNPARSEASM_H
 #define ROSE_UNPARSEASM_H
 
-std::string unparseX86Register(
-         X86RegisterClass cl,
-         int num,
-         X86PositionInRegister pos);
+/*-------------------------------------------------------------------------------------------------------------------------------
+ * X86
+ *-------------------------------------------------------------------------------------------------------------------------------*/
 
-std::string unparseX86Expression(SgAsmExpression* expr, bool leaMode = false);
-std::string unparseX86Instruction(SgAsmx86Instruction* insn);
-std::string unparseX86InstructionWithAddress(SgAsmx86Instruction* insn);
+std::string unparseX86Mnemonic(SgAsmx86Instruction*);
+std::string unparseX86Expression(SgAsmExpression*);
 
+/*-------------------------------------------------------------------------------------------------------------------------------
+ * ARM
+ *-------------------------------------------------------------------------------------------------------------------------------*/
 enum ArmSignForExpressionUnparsing {
   arm_sign_none,
   arm_sign_plus,
   arm_sign_minus
 };
 
-std::string unparseArmRegister(
-         SgAsmArmRegisterReferenceExpression::arm_register_enum code);
-std::string unparseArmCondition(ArmInstructionCondition cond);
-std::string unparseArmExpression(SgAsmExpression* expr, ArmSignForExpressionUnparsing sign = arm_sign_none);
-std::string unparseArmInstruction(SgAsmArmInstruction* insn);
-std::string unparseArmInstructionWithAddress(SgAsmArmInstruction* insn);
+std::string unparseArmMnemonic(SgAsmArmInstruction*);
+std::string unparseArmExpression(SgAsmExpression*);
+std::string unparseX86Register(X86RegisterClass, int reg, X86PositionInRegister);
 
-std::string unparsePowerpcRegister(
-         PowerpcRegisterClass cl,
-         int num,
-         PowerpcConditionRegisterAccessGranularity gr);
-std::string unparsePowerpcExpression(SgAsmExpression* expr, bool useHex = false);
-std::string unparsePowerpcInstruction(SgAsmPowerpcInstruction* insn);
-std::string unparsePowerpcInstructionWithAddress(SgAsmPowerpcInstruction* insn);
+/*-------------------------------------------------------------------------------------------------------------------------------
+ * PowerPC
+ *-------------------------------------------------------------------------------------------------------------------------------*/
 
+std::string unparsePowerpcMnemonic(SgAsmPowerpcInstruction*);
+std::string unparsePowerpcExpression(SgAsmExpression*);
+
+/*-------------------------------------------------------------------------------------------------------------------------------
+ * Generic unparsing declarations
+ *-------------------------------------------------------------------------------------------------------------------------------*/
 std::string unparseInstruction(SgAsmInstruction* insn);
 std::string unparseInstructionWithAddress(SgAsmInstruction* insn);
+std::string unparseMnemonic(SgAsmInstruction *insn);
+std::string unparseExpression(SgAsmExpression *expr);
 
 // Fixed to take a SgAsmStatement and added support for comments.
 std::string unparseAsmStatement(SgAsmStatement* stmt);

@@ -227,7 +227,7 @@ RoseBin_FlowAnalysis::resolveFunction(SgAsmInstruction* instx, bool hasStopCondi
   } else {
     if (RoseBin_support::DEBUG_MODE())
       if (!(inst->get_kind() == x86_nop || inst->get_kind() == x86_ret))
-	cerr << " WARNING: function resolution::  cant resolve :  " << inst->class_name() << "(" << unparseX86Instruction(inst) << ")" << endl;
+	cerr << " WARNING: function resolution::  cant resolve :  " << inst->class_name() << "(" << unparseInstruction(inst) << ")" << endl;
   }
 
   return nextFlow;
