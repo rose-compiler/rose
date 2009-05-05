@@ -63,7 +63,7 @@ for commit in $(cd $repo && git rev-list --reverse HEAD ^$trunk); do
     subject=$(cd $repo && git log --pretty=oneline $commit^..$commit |cut -c42-255)
     svnid=$(cd $repo && git log $commit^..$commit |grep 'git-svn-id')
     if [ -n "$svnid" ]; then
-	subject="rev $(echo $svnid |sed -r 's/.*@([0-9]+).*/\1'): $subject"
+	subject="rev $(echo $svnid |sed -r 's/.*@([0-9]+).*/\1/'): $subject"
     else
 	subject="rev $(echo $commit |cut -c1-8): $subject"
     fi
