@@ -121,7 +121,7 @@ DynamicInfo::visit(SgNode* node) {
       SgAsmExpressionPtrList::iterator itOP = opsList.begin();
       for (;itOP!=opsList.end();++itOP) {
 	SgAsmExpression* exp = *itOP;
-	string address = unparseX86Expression(exp,false);
+	string address = unparseExpression(exp);
 	addrDest = RoseBin_support::HexToDec(address);
       }
       // get the target
