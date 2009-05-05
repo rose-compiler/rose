@@ -6,7 +6,7 @@
 #include <string>
 
 #include "abstract_handle.h"
-
+namespace AbstractHandle{
 class roseNode: public AbstractHandle::abstract_node 
 {
  public:
@@ -30,5 +30,7 @@ class roseNode: public AbstractHandle::abstract_node
 protected:
     SgNode* mNode;
 };
+
+}
 
 #endif

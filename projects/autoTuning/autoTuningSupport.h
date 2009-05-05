@@ -33,6 +33,7 @@ namespace autoTuning
   //! Some internal flags controlled by command line options
   extern bool aggressive_triage;
   extern bool enable_debug;
+  extern bool triage_only; // stop right after the code triage phase, do not proceed to outline them
   extern float triage_threshold; // threshold for sum of top statements' execution percentage numbers
   const float DEFAULT_THRESHOLD = 0.8; 
 
@@ -40,7 +41,7 @@ namespace autoTuning
   void autotuning_command_processing(std::vector<std::string>&argvList);
 
   //! Code triage based on performance annotations
-  void code_triage(std::set<SgForStatement*>& candidateSgLoops);
+  void code_triage(std::set<SgLocatedNode*>& candidateStmts, std::set<SgForStatement*>& candidateSgLoops);
 
   //! Check if a node has a performance metric matching a given metric name
   RoseHPCT::MetricAttr * checkMetricAttribute (SgNode* node, const std::string& metric_name);

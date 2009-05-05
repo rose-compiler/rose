@@ -14,6 +14,10 @@
 #include "ArrayAnnot.h"
 #include "ArrayInterface.h"
 
+
+#include "abstract_handle.h"
+#include "roseAdapter.h"
+
 #include <sstream>
 #include <iostream>
 #include <algorithm> //for set operations
@@ -8812,6 +8816,30 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current)
   }
   ROSE_ASSERT(name != NULL);
   return name;
+}
+
+//! Obtain a matching SgNode from an abstract handle string
+SgNode* SageInterface::getSgNodeFromAbstractHandleString(const std::string& input_string)
+{
+  AbstractHandle::abstract_handle * project_handle = buildAbstractHandle(getProject());
+
+  // trim off the possible leading handle for project: "Project<numbering,1>::"
+  size_t pos = input_string.find("SourceFile<");
+  ROSE_ASSERT (pos != string::npos);
+  string trimed_string = input_string.substr(pos);
+  AbstractHandle::abstract_handle * handle = new AbstractHandle::abstract_handle(project_handle, trimed_string);
+  if (handle)
+  {
+    if (handle->getNode()!=NULL)
+    {
+      SgNode* result = (SgNode*)(handle->getNode()->getNode());
+      // deallocate memory
+      delete handle->getNode();
+      delete handle;
+      return result;
+    }
+  }
+  return NULL;
 }
 
 //! Collect all read and write references within stmt, which can be a function, a scope statement, or a single statement. Note that a reference can be both read and written, like i++

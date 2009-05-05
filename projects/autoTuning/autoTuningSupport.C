@@ -13,6 +13,7 @@ namespace autoTuning
 {
   bool aggressive_triage;
   bool enable_debug;
+  bool triage_only=false;
   float triage_threshold = DEFAULT_THRESHOLD; // default value, can be changed by a command option
 
   void autotuning_command_processing(vector<string>&argvList)
@@ -40,6 +41,16 @@ namespace autoTuning
     else
       aggressive_triage= false;
 
+    if (CommandlineProcessing::isOption (argvList,"-rose:autotuning:","triage_only",true))
+    {
+      if (autoTuning::triage_only)
+        cout<<"Stop immediately after code triage..."<<endl;
+      triage_only= true;
+    }
+    else
+      triage_only= false;
+
+
 
     // keep --help option after processing, let other modules respond also
     if ((CommandlineProcessing::isOption (argvList,"--help","",false)) ||
@@ -49,6 +60,7 @@ namespace autoTuning
       cout<<"\t-rose:autotuning:enable_debug               run autotuing in debugging mode"<<endl;
       cout<<"\t-rose:autotuning:triage_threshold  val      set triage threshold, val can be 0.6, 0.9,etc."<<endl;
       cout<<"\t-rose:autotuning:aggressive_triage          enable aggressive code triage"<<endl;
+      cout<<"\t-rose:autotuning:triage_only                stop once code triage is done, don't outline them"<<endl;
       cout <<"---------------------------------------------------------------"<<endl;     
     }
 
@@ -301,7 +313,7 @@ namespace autoTuning
  * It is possible two hot statements are enclosed within one target loop.
  *
  */
-  void code_triage(std::set<SgForStatement*>& candidateSgLoops)
+  void code_triage(std::set<SgLocatedNode*>& candidateStmts, std::set<SgForStatement*>& candidateSgLoops)
   {
     // -------------------------------------------------
     // Find enough profile IR statement nodes exceeding a threshold for execution percentage
@@ -333,14 +345,19 @@ namespace autoTuning
     }
     // Find relevant SgNode matching the candidate profile statement IR nodes
     // -------------------------------------------------
+      if (triage_only)
+      {
+        cout<<"-----------------------------------------------------------------"<<endl;
+        cout<<"The abstract handles for hot statements exceeding the threshold are:"<<endl;
+      }
     std::vector <SgNode* > candidateSgNodes;
     for ( std::vector <const RoseHPCT::IRNode *>::const_iterator iter = candidateVec.begin(); iter!=candidateVec.end(); iter++)
     {
-      std::set<SgLocatedNode *> matched_set =  RoseHPCT::profSageMap_[*iter];
+      std::set<SgLocatedNode *> candidateStmts =  RoseHPCT::profSageMap_[*iter];
       RoseHPCT::IRNode * irnode = const_cast<RoseHPCT::IRNode *> (*iter);
       // each candidate Profile IR node should have at least one matching ROSE AST node
       // if the SgProject has a SgSourceFile matching the profile node's file information
-      if (matched_set.size()==0)
+      if (candidateStmts.size()==0)
       {
         RoseHPCT::Located * l = dynamic_cast<RoseHPCT::Located *> (irnode);
         ROSE_ASSERT(l);
@@ -360,12 +377,20 @@ namespace autoTuning
           }
         }
       }
-      //std::copy(matched_set.begin(), matched_set.end(), back_inserter(candidateSgNodes));
-      for (std::set<SgLocatedNode *>::const_iterator src=matched_set.begin(); src!=matched_set.end(); src++)
+      //std::copy(candidateStmts.begin(), candidateStmts.end(), back_inserter(candidateSgNodes));
+      for (std::set<SgLocatedNode *>::const_iterator src=candidateStmts.begin(); src!=candidateStmts.end(); src++)
       {
         //          cout<<"Found a match SgNode:"<<(*src)->unparseToString()<<
         //          "\n for prof Node:\n"<<(*iter)->toString()<<endl;
         candidateSgNodes.push_back(*src);
+        if (triage_only)
+        {
+          AbstractHandle::abstract_handle *ahandle = SageBuilder::buildAbstractHandle(*src);
+          cout<<ahandle->toString()<<endl;
+          MetricAttr* m = getMetric(m_percentage,*src);
+          ROSE_ASSERT(m!=NULL);
+          cout<<m->getValue()<<endl;
+        }
       }
     }
     // Find auto tuning targets based on candidate Sage statement nodes
@@ -400,6 +425,22 @@ namespace autoTuning
       }
     }
 
+   if (triage_only)
+   {
+     cout<<"-----------------------------------------------------------------"<<endl;
+     cout<<"The abstract handles for enclosing loops for hot statements exceeding the threshold are:"<<endl;
+     for (std::set<SgForStatement*>::const_iterator iter = candidateSgLoops.begin();
+         iter !=candidateSgLoops.end(); iter++)
+     {
+       AbstractHandle::abstract_handle *ahandle = SageBuilder::buildAbstractHandle(*iter);
+       cout<<ahandle->toString()<<endl;
+       MetricAttr* m = getMetric(m_percentage,*iter);
+       ROSE_ASSERT(m!=NULL);
+       cout<<m->getValue()<<endl;
+
+
+     }
+   }
 #if 0
     // Old Code triage:
     // -----------------------------------------------------

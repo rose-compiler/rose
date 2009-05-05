@@ -14,6 +14,7 @@ SgFile* determineFileType ( std::vector<std::string> argv, int nextErrorCode, Sg
 #include <set>
 
 #include "LivenessAnalysis.h"
+#include "abstract_handle.h"
 
 // DQ (8/19/2004): Moved from ROSE/src/midend/astRewriteMechanism/rewrite.h
 //! A global function for getting the string associated with an enum (which is defined in global scope)
@@ -443,6 +444,9 @@ class StatementGenerator {
 
 //! Variable references can be introduced by SgVarRef, SgPntrArrRefExp, SgInitializedName, SgMemberFunctionRef etc. This function will convert them all to  a top level SgInitializedName.
 SgInitializedName* convertRefToInitializedName(SgNode* current);
+
+//! Obtain a matching SgNode from an abstract handle string
+SgNode* getSgNodeFromAbstractHandleString(const std::string& input_string);
 //@}
 
 //------------------------------------------------------------------------

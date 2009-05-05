@@ -37,6 +37,8 @@ rose_jacobi-omp.c:../autoTuning
 rose_jacobi2.c:../autoTuning
 	../autoTuning  -c -rose:output rose_jacobi2.c $(ROSE_FLAGS) $(EQUAL_PATH3) $(ROSE_PROF3) $(srcdir)/jacobi.c
 
+rose_jacobi3.c:../autoTuning
+	../autoTuning  -c -rose:output rose_jacobi3.c -rose:autotuning:triage_only $(ROSE_FLAGS) $(EQUAL_PATH3) $(ROSE_PROF3) $(srcdir)/jacobi.c
 ../autoTuning:
 	make -C ../.
 
@@ -51,6 +53,7 @@ check-local:
 	@echo "Test for auto tuning... "
 	@$(MAKE) rose_jacobi.c
 	@$(MAKE) rose_jacobi2.c
+	@$(MAKE) rose_jacobi3.c
 	@echo "Test for auto tuning terminated normally"
 else
 #-------------------------------

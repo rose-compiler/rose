@@ -755,6 +755,9 @@ PreprocessingInfo* buildComment(SgLocatedNode* target, const std::string & conte
 PreprocessingInfo* buildCpreprocessorDefineDeclaration(SgLocatedNode* target, 
                 const std::string & content,
                PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before);
+
+//! Build an abstract handle from a SgNode
+AbstractHandle::abstract_handle * buildAbstractHandle(SgNode* n);
 //@}
 
 } // end of namespace

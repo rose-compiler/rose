@@ -43,20 +43,22 @@ int main(int argc, char * argv[])
 
   // Performance code triage based on annotated AST
   // -------------------------------------------------
+  std::set<SgLocatedNode*> candidateSgStmts;
   std::set<SgForStatement*> candidateSgLoops;
-  code_triage (candidateSgLoops);
-
-  // Finally outline the target loops one by one
-  // -------------------------------------------------
-  // What if the loops are nested together?
-  // We rank candidates in descending order so the most costly (inner most loops) will be outlined first.
-  // It is an implicit way to do bottom up traversal.
-  // TODO: A safer way is to do a bottom up traversal and outline matched loops one by one
-  for (std::set <SgForStatement*>::iterator iter = candidateSgLoops.begin(); iter!=candidateSgLoops.end(); iter++)
+  code_triage (candidateSgStmts, candidateSgLoops);
+  if (!triage_only)
   {
-    outline(*iter);
+    // Finally outline the target loops one by one
+    // -------------------------------------------------
+    // What if the loops are nested together?
+    // We rank candidates in descending order so the most costly (inner most loops) will be outlined first.
+    // It is an implicit way to do bottom up traversal.
+    // TODO: A safer way is to do a bottom up traversal and outline matched loops one by one
+    for (std::set <SgForStatement*>::iterator iter = candidateSgLoops.begin(); iter!=candidateSgLoops.end(); iter++)
+    {
+      outline(*iter);
+    }
   }
-
   // -------------------------------------------------------
   AstTests::runAllTests(project);
   project->unparse();
