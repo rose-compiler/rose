@@ -696,6 +696,9 @@ typedef SgFileContentList*                        SgFileContentListPtr;
 typedef Rose_STL_Container<SgAsmElfRelocEntry*>   SgAsmElfRelocEntryPtrList;
 typedef SgAsmElfRelocEntryPtrList*                SgAsmElfRelocEntryPtrListPtr;
 
+typedef Rose_STL_Container<SgAsmElfNoteEntry*>    SgAsmElfNoteEntryPtrList;
+typedef SgAsmElfNoteEntryPtrList*                 SgAsmElfNoteEntryPtrListPtr;
+
 typedef Rose_STL_Container<SgAsmElfDynamicEntry*> SgAsmElfDynamicEntryPtrList;
 typedef SgAsmElfDynamicEntryPtrList*              SgAsmElfDynamicEntryPtrListPtr;
 

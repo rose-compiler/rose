@@ -166,6 +166,7 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO(AsmElfSymbolSection,  "AsmElfSymbolSection",  "AsmElfSymbolSectionTag");
      NEW_TERMINAL_MACRO(AsmElfStringSection,  "AsmElfStringSection",  "AsmElfStringSectionTag");
      NEW_TERMINAL_MACRO(AsmElfEHFrameSection, "AsmElfEHFrameSection", "AsmElfEHFrameSection");
+     NEW_TERMINAL_MACRO(AsmElfNoteSection,    "AsmElfNoteSection",    "AsmElfNoteSection");
 
   // DQ (9/9/2008): Added support for String Table (part of Robb's work)
      NEW_TERMINAL_MACRO ( AsmElfStrtab,          "AsmElfStrtab",          "AsmElfStrtabTag"          );
@@ -174,7 +175,7 @@ Grammar::setUpBinaryInstructions ()
 
      NEW_NONTERMINAL_MACRO ( AsmElfSection,
                              AsmElfSymbolSection | AsmElfRelocSection | AsmElfDynamicSection | AsmElfStringSection |
-                             AsmElfEHFrameSection,
+                             AsmElfNoteSection   | AsmElfEHFrameSection,
                              "AsmElfSection", "AsmElfSectionTag", true /* canHaveInstances = true */ );
 
      NEW_TERMINAL_MACRO    ( AsmElfSectionTable,  "AsmElfSectionTable",  "AsmElfSectionTableTag"  );
@@ -231,6 +232,8 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO    ( AsmElfEHFrameEntryCIList,    "AsmElfEHFrameEntryCIList",    "AsmElfEHFrameEntryCIListTag"    );
      NEW_TERMINAL_MACRO    ( AsmElfEHFrameEntryFD,        "AsmElfEHFrameEntryFD",        "AsmElfEHFrameEntryFDTag"        );
      NEW_TERMINAL_MACRO    ( AsmElfEHFrameEntryFDList,    "AsmElfEHFrameEntryFDList",    "AsmElfEHFrameEntryFDListTag"    );
+     NEW_TERMINAL_MACRO    ( AsmElfNoteEntry,             "AsmElfNoteEntry",             "AsmElfNoteEntryTag"             );
+     NEW_TERMINAL_MACRO    ( AsmElfNoteEntryList,         "AsmElfNoteEntryList",         "AsmElfNoteEntryListTag"         );
 
      NEW_TERMINAL_MACRO    ( AsmPERVASizePair,       "AsmPERVASizePair",       "AsmPERVASizePairTag"       );
      NEW_TERMINAL_MACRO    ( AsmPEExportDirectory,   "AsmPEExportDirectory",   "AsmPEExportDirectoryTag"   );
@@ -394,6 +397,7 @@ Grammar::setUpBinaryInstructions ()
                AsmElfSectionTableEntry | AsmElfSegmentTableEntry | AsmElfSymbolList            | AsmPEImportILTEntry      |
                AsmElfRelocEntry        | AsmElfRelocEntryList    | AsmPEExportEntry            | AsmPEExportEntryList     |
                AsmElfDynamicEntry      | AsmElfDynamicEntryList  | AsmElfSegmentTableEntryList | AsmStringStorage         |
+               AsmElfNoteEntry         | AsmElfNoteEntryList     | 
                AsmPEImportDirectory    | AsmPEImportHNTEntry     | AsmPESectionTableEntry      | AsmPEExportDirectory     |
                AsmPERVASizePair        | AsmCoffSymbolList       | AsmPERVASizePairList        | AsmElfEHFrameEntryCI     |
                AsmPEImportHNTEntryList | AsmPEImportILTEntryList | AsmPEImportLookupTable      | AsmPEImportDirectoryList |
@@ -704,6 +708,28 @@ Grammar::setUpBinaryInstructions ()
 
 
      AsmElfDynamicEntryList.setDataPrototype("SgAsmElfDynamicEntryPtrList","entries","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+
+     /* ELF Notes */
+     AsmElfNoteSection.setFunctionPrototype("HEADER_ELF_NOTE_SECTION", "../Grammar/BinaryInstruction.code");
+     AsmElfNoteSection.setDataPrototype("SgAsmElfNoteEntryList*", "entries", "= NULL", 
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+
+
+     AsmElfNoteEntry.setFunctionPrototype("HEADER_ELF_NOTE_ENTRY", "../Grammar/BinaryInstruction.code");
+     AsmElfNoteEntry.setDataPrototype("unsigned", "type", "= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfNoteEntry.setDataPrototype("SgAsmGenericString*", "name", "= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfNoteEntry.setDataPrototype("SgUnsignedCharList","payload","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+
+     AsmElfNoteEntryList.setDataPrototype("SgAsmElfNoteEntryPtrList","entries","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 

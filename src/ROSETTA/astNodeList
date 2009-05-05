@@ -427,6 +427,9 @@ SgAsmElfDynamicEntryList
 SgAsmElfRelocSection
 SgAsmElfRelocEntry
 SgAsmElfRelocEntryList
+SgAsmElfNoteSection
+SgAsmElfNoteEntry
+SgAsmElfNoteEntryList
 SgAsmElfEHFrameSection
 SgAsmElfEHFrameEntryCI
 SgAsmElfEHFrameEntryCIList
