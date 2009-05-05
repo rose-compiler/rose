@@ -1636,6 +1636,37 @@ HEADER_ELF_DYNAMIC_ENTRY_END
 
 
 
+HEADER_ELF_NOTE_SECTION_START
+	public:
+		explicit SgAsmElfNoteSection(SgAsmElfFileHeader *fhdr)
+			: SgAsmElfSection(fhdr)
+			{ctor();}
+		virtual SgAsmElfNoteSection *parse();
+		virtual bool reallocate();
+		virtual void unparse(std::ostream&) const;
+		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+	private:
+		void ctor();
+HEADER_ELF_NOTE_SECTION_END
+
+
+
+HEADER_ELF_NOTE_ENTRY_START
+	public:
+		SgAsmElfNoteEntry(SgAsmElfNoteSection *section)
+			: p_type(0)
+			{ctor(section);}
+		rose_addr_t parse(rose_addr_t starting_offset);
+		rose_addr_t unparse(std::ostream &f, rose_addr_t starting_offset);
+		virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+		void set_name(SgAsmGenericString *name);
+		rose_addr_t calculate_size() const;
+	private:
+		void ctor(SgAsmElfNoteSection *section);
+HEADER_ELF_NOTE_ENTRY_END
+
+
+
 HEADER_ELF_EH_FRAME_SECTION_START
 	public:
 		explicit SgAsmElfEHFrameSection(SgAsmElfFileHeader *fhdr)

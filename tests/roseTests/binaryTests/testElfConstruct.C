@@ -268,8 +268,23 @@ main()
     relent->set_r_addend(0xaa);                                 /* Arbitrary value to add to relocation address */
     relent->set_sym(symtab->index_of(symbol));                  /* Index of symbol in its symbol table */
     relent->set_type(0x7);                                      /* See <elf.h> for now */
-#endif
 
+    /* We can add notes to an executable */
+    SgAsmElfNoteSection *notes = new SgAsmElfNoteSection(fhdr);
+    notes->set_name(new SgAsmBasicString("ELF Notes"));
+    notes->set_mapped_rva(0x900000);                          /* RVA where loader will map section */
+    notes->set_mapped_size(dynamic->get_size());              /* Make mapped size same as file size */
+    notes->set_mapped_rperm(true);                            /* Readable */
+    notes->set_mapped_wperm(true);                            /* Writable */
+    notes->set_mapped_xperm(false);                           /* Not executable */
+    SgAsmElfNoteEntry *note = new SgAsmElfNoteEntry(notes);
+    note->set_name(new SgAsmBasicString("ROSE"));
+    const char *payload = "This is a test note.";
+    for (size_t i=0; payload[i]; i++) {
+        note->get_payload().push_back(payload[i]);
+    }
+    segtab->add_section(notes);
+#endif
 
     /* Some of the sections we created above have default sizes of one byte because there's no way to determine their true
      * size until we're all done creating sections.  The SgAsmGenericFile::reallocate() traverses the AST and allocates the
