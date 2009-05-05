@@ -1,3 +1,176 @@
+2009-05-05 18:09  matzke
+
+	* [r5635]
+	  /trunk/ROSE/developersScratchSpace/Robb/BinaryTools/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Robb/BinaryTools/expandCoreDump.C:
+	  Tool to expand core dumps
+	  
+	  Linux core dumps don't contain data for their read-only segments.
+	  This
+	  tool attempts to expand a core file by augmenting it with data
+	  from the
+	  corresponding executable.
+	  
+	  Also, a core dump ELF Header has a null entry address. We grab
+	  the entry
+	  address from the executable.
+	  
+	  Finally, we copy ELF Sections from the executable into the new
+	  core
+	  file. The previous behavior was to use the executable file
+	  sections to
+	  initialize the contents of the core file segments. This change
+	  causes an ELF
+	  Section Table and corresponding string table to be added to the
+	  core
+	  file and the sections whose data was copied are also defined as
+	  ELF
+	  Sections in the core file.
+
+2009-05-05 18:08  matzke
+
+	* [r5634] /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Node.code,
+	  /trunk/ROSE/src/ROSETTA/astNodeList,
+	  /trunk/ROSE/src/ROSETTA/src/binaryInstruction.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/ROSE_ExecELF.C,
+	  /trunk/ROSE/tests/roseTests/binaryTests/testElfConstruct.C: Added
+	  support for ELF Notes
+	  
+	  These are sections that often contain compiler- or architecture-
+	  specific information. For instance, ELF core dumps use notes to
+	  hold
+	  process information in an OS-specific format.
+
+2009-05-05 18:08  matzke
+
+	* [r5633]
+	  /trunk/ROSE/src/frontend/Disassemblers/disassemblerCommon.C,
+	  /trunk/ROSE/src/frontend/ExecFormats/OLD_ExecDOS.h,
+	  /trunk/ROSE/src/frontend/ExecFormats/OLD_ExecELF.h,
+	  /trunk/ROSE/src/frontend/ExecFormats/OLD_ExecGeneric.h,
+	  /trunk/ROSE/src/frontend/ExecFormats/OLD_ExecLE.h,
+	  /trunk/ROSE/src/frontend/ExecFormats/OLD_ExecNE.h,
+	  /trunk/ROSE/src/frontend/ExecFormats/OLD_ExecPE.h: Removed old
+	  files and debugging code
+	  
+	  These were leftovers from the initial non-rose implementation of
+	  the binary
+	  file format reader. They were kept because of the documentation,
+	  but
+	  that documentation has been moved into other files by now.
+
+2009-05-05 16:21  matzke
+
+	* [r5632] /trunk/ROSE/projects/BinQ/BinDynamicInfo.C,
+	  /trunk/ROSE/projects/BinQ/BinQAbstract.C,
+	  /trunk/ROSE/projects/BinQ/BinQGui.C: Fixed calls to
+	  unparseX86Expression() in BinQ
+	  
+	  We now have a generic unparseExpress() that does the same thing
+	  but for
+	  any kind of instruction. BinQ calls that instead now. The
+	  architecture-specific versions should no longer be called.
+
+2009-05-05 16:21  matzke
+
+	* [r5631] /trunk/ROSE/scripts/rosegit/bin/rosegit-functions.sh:
+	  Changed e-mail line length limit
+	  
+	  Changed for long lines but stay under the RFC 2821 and 5321
+	  mandated
+	  limits.
+
+2009-05-05 16:21  matzke
+
+	* [r5630] /trunk/ROSE/scripts/rosegit/bin/rosegit-svncommit: Fixed
+	  sed command in rosegit script
+
+2009-05-05 15:28  matzke
+
+	* [r5629] /trunk/ROSE/scripts/rosegit/bin/rosegit-svncommit,
+	  /trunk/ROSE/scripts/rosegit/config/defaults.conf: New rosegit
+	  script for commiting to subversion
+
+2009-05-05 15:28  matzke
+
+	* [r5628] /trunk/ROSE/src/backend/asmUnparser/unparseArmAsm.C,
+	  /trunk/ROSE/src/backend/asmUnparser/unparseAsm.C,
+	  /trunk/ROSE/src/backend/asmUnparser/unparsePowerpcAsm.C,
+	  /trunk/ROSE/src/backend/asmUnparser/unparseX86Asm.C: Added
+	  "std::" to some symbols
+	  
+	  This fixes r5625
+
+2009-05-05 13:56  matzke
+
+	* [r5627] /trunk/ROSE/scripts/rosegit/bin/rosegit-env: Minor
+	  adjustment to prompt in rosegit scripts
+
+2009-05-05 13:56  matzke
+
+	* [r5626]
+	  /trunk/ROSE/src/frontend/SageIII/virtualCFG/virtualBinCFG.C,
+	  /trunk/ROSE/src/frontend/SageIII/virtualCFG/virtualBinCFG.h:
+	  Minor reformatting
+	  
+	  I replaced some commented-out code with "#if 0" rather than C
+	  comments
+	  because it was rather extensive, and doing it this way allows C
+	  tools
+	  to still process the code as code. It's questionable whether the
+	  inactive code should even be there -- perhaps we should replace
+	  it with
+	  a comment saying that it was removed in such-n-such a revision.
+
+2009-05-05 13:56  matzke
+
+	* [r5625] /trunk/ROSE/src/backend/asmUnparser/unparseArmAsm.C,
+	  /trunk/ROSE/src/backend/asmUnparser/unparseAsm.C,
+	  /trunk/ROSE/src/backend/asmUnparser/unparseAsm.h,
+	  /trunk/ROSE/src/backend/asmUnparser/unparsePowerpcAsm.C,
+	  /trunk/ROSE/src/backend/asmUnparser/unparseX86Asm.C,
+	  /trunk/ROSE/src/midend/binaryAnalyses/RoseBin_FlowAnalysis.cpp:
+	  Reorgnized the instruction unparsing code
+	  
+	  I decided it would be useful to be able to unparse the mnemonic
+	  (actually, everything before the first operand) and the operands
+	  seperately so that tools can have more control over how such
+	  things are
+	  formatted into columns. To that end, I created new functions:
+	  
+	  std::string unparseMnemonic(SgAsmInstruction*);
+	  std::string unparseExpression(SgAsmExpression*);
+	  
+	  and rewrote unparseInstruction in terms of those two. I also made
+	  all
+	  the architecture-specific unparsers private.
+	  
+	  This change also fixes some bugs where the architecture-specific
+	  functions made calls to one of the other architecture-specific
+	  functions
+	  instead of its own functions.
+	  
+	  In the future, time permitting, I may move these functions into
+	  the
+	  SgAsmInstruction and SgAsmExpression classes and make the
+	  architecture-specific helpers virtual so as to eliminate the
+	  "switch"
+	  statements that are used to decide what class we're unparsing.
+
+2009-05-05 13:56  matzke
+
+	* [r5624] /trunk/ROSE/scripts/rosegit/config/defaults.conf:
+	  Reverted part of r5259
+	  
+	  The rat.trunk test has been failing when using Dwarf and Pin
+	  together due
+	  to incompatibilities between the versions of Dwarf expected by
+	  Rose and
+	  Pin. So I'm disabling Dwarf in that test until I have more time
+	  to look
+	  at it.
+
 2009-05-04 16:56  dquinlan
 
 	* [r5611] /trunk/ROSE/configure.in,
