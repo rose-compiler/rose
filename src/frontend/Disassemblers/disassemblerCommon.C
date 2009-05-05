@@ -356,51 +356,40 @@ Disassembler::disassembleFile(SgAsmFile* f)
    }
 
 void
-Disassembler::disassembleInterpretation(SgAsmInterpretation* interp)
-   {
-  // DQ (8/26/2008): Set the agressive mode in the disassembler based on the SgFile (evaluated from the command line).
-     SgAsmFile* asmFile = isSgAsmFile(interp->get_parent());
-     ROSE_ASSERT (asmFile);
-     SgBinaryFile* fileNode = isSgBinaryFile(asmFile->get_parent());
-     ROSE_ASSERT(fileNode != NULL);
+Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
+    // DQ (8/26/2008): Set the agressive mode in the disassembler based on the SgFile (evaluated from the command line).
+    SgAsmFile* asmFile = isSgAsmFile(interp->get_parent());
+    ROSE_ASSERT (asmFile);
+    SgBinaryFile* fileNode = isSgBinaryFile(asmFile->get_parent());
+    ROSE_ASSERT(fileNode != NULL);
 
-  // Evaluate what mode of analysis is requested from the command line.
-     aggressive_mode = fileNode->get_aggressive();
+    // Evaluate what mode of analysis is requested from the command line.
+    aggressive_mode = fileNode->get_aggressive();
 
-     DisassemblerCommon::AsmFileWithData  file(interp);
-     map<uint64_t, SgAsmInstruction*>     insns;
-     DisassemblerCommon::BasicBlockStarts basicBlockStarts;
-     DisassemblerCommon::FunctionStarts   functionStarts;
+    DisassemblerCommon::AsmFileWithData  file(interp);
+    map<uint64_t, SgAsmInstruction*>     insns;
+    DisassemblerCommon::BasicBlockStarts basicBlockStarts;
+    DisassemblerCommon::FunctionStarts   functionStarts;
 
-     SgAsmGenericHeader* header = interp->get_header();
-     ROSE_ASSERT (header != NULL);
+    SgAsmGenericHeader* header = interp->get_header();
+    ROSE_ASSERT (header != NULL);
 
-  /* Seed the disassembly with the entry point(s) stored in the file header. */
-     SgRVAList entry_rvalist = header->get_entry_rvas();
+    /* Seed the disassembly with the entry point(s) stored in the file header. */
+    SgRVAList entry_rvalist = header->get_entry_rvas();
 
-  // printf ("entry_rvalist.size() = %zu \n",entry_rvalist.size());
-     for (size_t i = 0; i < entry_rvalist.size(); i++)
-        {
-       // DQ (2/5/2009): ELF files only have a single entry in the RVA list.  For object files we have added 
-       // the start of each section that contains code (as an address) to the header->get_entry_rvas(). So 
-       // that we can traverse all the sections that have code and disassemble those sections.
-          uint64_t entryPoint = entry_rvalist[i].get_rva() + header->get_base_va();
-#if 0
-          printf ("entry_rvalist[i].get_rva()             = 0x%"PRIx64" \n",entry_rvalist[i].get_rva());
-          printf ("header->get_base_va()                  = 0x%"PRIx64" \n",header->get_base_va());
-          printf ("Computed entryPoint                    = 0x%"PRIx64" \n",entryPoint);
-#endif
-       // DQ (2/5/2009): Added comment: If the entryPoint is not in the list of block statrts then add it as a mapped_type...
-          if (basicBlockStarts.find(entryPoint) == basicBlockStarts.end())
-             {
-            // printf ("Adding this entryPoint = %zu to the basicBlockStarts list \n",entryPoint);
-               basicBlockStarts[entryPoint] = DisassemblerCommon::BasicBlockStarts::mapped_type();
-             }
+    for (size_t i = 0; i < entry_rvalist.size(); i++) {
+        // DQ (2/5/2009): ELF files only have a single entry in the RVA list.  For object files we have added 
+        // the start of each section that contains code (as an address) to the header->get_entry_rvas(). So 
+        // that we can traverse all the sections that have code and disassemble those sections.
+        uint64_t entryPoint = entry_rvalist[i].get_rva() + header->get_base_va();
 
-       // printf ("In Disassembler::disassembleInterpretation(): calling disassembleRecursively() for entry_rvalist[%zu] \n",i);
-          file.disassembleRecursively(entryPoint, insns, basicBlockStarts);
-       // printf ("DONE: In Disassembler::disassembleInterpretation(): calling disassembleRecursively() for entry_rvalist[%zu] \n",i);
+        // DQ (2/5/2009): Added comment: If the entryPoint is not in the list of block statrts then add it as a mapped_type...
+        if (basicBlockStarts.find(entryPoint) == basicBlockStarts.end()) {
+            basicBlockStarts[entryPoint] = DisassemblerCommon::BasicBlockStarts::mapped_type();
         }
+
+        file.disassembleRecursively(entryPoint, insns, basicBlockStarts);
+    }
 
 #if 0
     // This is a test that attempts to detect executable code in the sections of the binary
@@ -456,19 +445,19 @@ Disassembler::disassembleInterpretation(SgAsmInterpretation* interp)
     /* Adjust basicBlockStarts and functionStarts to indicate the starting (lowest) address of all known functions. This must
      * be done before we assign instructions to basic blocks since any newly detected function starts must necessarily also be
      * the beginning of a basic block. */
-     detectFunctionStarts(interp, insns, basicBlockStarts, functionStarts);
+    detectFunctionStarts(interp, insns, basicBlockStarts, functionStarts);
 
-  /* Assign instructions to basic blocks based on the addresses in the basicBlockStarts map. */
-     map<uint64_t, SgAsmBlock*> basicBlocks;
-     for (DisassemblerCommon::BasicBlockStarts::const_iterator i = basicBlockStarts.begin(); i != basicBlockStarts.end(); ++i) {
-          uint64_t addr = i->first;
-          SgAsmBlock* b = new SgAsmBlock();
-          b->set_address(addr);
-          b->set_id(addr);
-          basicBlocks[addr] = b;
-        }
+    /* Assign instructions to basic blocks based on the addresses in the basicBlockStarts map. */
+    map<uint64_t, SgAsmBlock*> basicBlocks;
+    for (DisassemblerCommon::BasicBlockStarts::const_iterator i = basicBlockStarts.begin(); i != basicBlockStarts.end(); ++i) {
+        uint64_t addr = i->first;
+        SgAsmBlock* b = new SgAsmBlock();
+        b->set_address(addr);
+        b->set_id(addr);
+        basicBlocks[addr] = b;
+    }
 
-     SgAsmBlock *blk = PutInstructionsIntoBasicBlocks::putInstructionsIntoBasicBlocks(basicBlocks, insns);
+    SgAsmBlock *blk = PutInstructionsIntoBasicBlocks::putInstructionsIntoBasicBlocks(basicBlocks, insns);
 
     /* Look for basic blocks that have instruction patterns that indicate they could be the start of a function. */
     if (heuristicFunctionDetection) {
