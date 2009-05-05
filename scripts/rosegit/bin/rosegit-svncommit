@@ -1,0 +1,97 @@
+#!/bin/bash
+#
+# Purpose: This is a wrapper around "git svn dcommit". The only extra thing it does is send e-mail to the addresses mentioned
+# in the ROSEGIT_MAIL_COMMIT_TO configuration variable.
+#
+# Usage: rosegit-svncommit [SWITCHES] LOCALREPO
+#        --config=FILE
+#            Read the specified file as the last, most specific configuration file. If FILE is in fact a directory then use that
+#            directory when searching for any of the configuration files.
+#        --dry-run
+#            Don't make any changes to the local or subversion repositories and don't send email. Instead, do the usual error
+#            checking and emit the email messages on stdout.
+#        --namespace=NS
+#            Use the specified three-letter namespace (lower case) to find configuration files.
+#
+
+mydir=${0%/*}
+source $mydir/rosegit-functions.sh || exit 1
+
+# Command-line switches
+config= dry_run=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+	--config=*)    config="${1#--config=}"; shift ;;
+	--dry-run)     dry_run=yes; shift ;;
+	--namespace=*) ROSEGIT_NAMESPACE="${1#--namespace=}"; shift ;;
+	--)            shift; break ;;
+	-*)            rosegit_die "unknown switch: $1" ;;
+	*)             break ;;
+    esac
+done
+[ "$#" -gt 0 ] || rosegit_die "no repository specified"
+[ "$#" -gt 1 ] && rosegit_die "to many arguments for command"
+repo="$1"; shift
+
+# Sanity checks and other initializations
+[ -d "$repo/.git" ] || rosegit_die "not a repository: $repo/.git"
+repo=$(cd $repo && pwd)
+namespace=$(rosegit_namespace)
+trunk=$(cd $repo && git rev-parse trunk)
+[ -n "$trunk" ] || rosegit_die "no 'trunk' branch found"
+branch=$(rosegit_branch_of $repo HEAD)
+rosegit_load_config $repo $namespace $branch $config
+
+# Make sure we're in a subversion repository and that the current branch contains the "trunk" branch but is not equal to it.
+# We will commit everything from trunk to checked out revision.
+if (cd $repo && git rev-list HEAD |grep $trunk >/dev/null 2>&1); then
+    : ok
+else
+    rosegit_die "current branch does not contain 'trunk'"
+fi
+
+# Commit to subversion
+if [ -z "$dry_run" ]; then
+    (cd $repo && git svn dcommit) || rosegit_die "git svn dcommit failed"
+fi
+
+# Send e-mail for each commit. Note that the "git svn dcommit" made some changes:
+#    1. The commits from the old trunk to the old HEAD have been rewritten and the old HEAD has been removed.
+#    2. The trunk has been fast forwarded to the new HEAD, but our $trunk still points to the original
+for commit in $(cd $repo && git rev-list --reverse HEAD ^$trunk); do
+    # Subject contains revision number and commit title (i.e., first line of commit message)
+    subject=$(cd $repo && git log --pretty=oneline $commit^..$commit |cut -c42-255)
+    svnid=$(cd $repo && git log $commit^..$commit |grep 'git-svn-id')
+    if [ -n "$svnid" ]; then
+	subject="rev $(echo $svnid |sed -r 's/.*@([0-9]+).*/\1'): $subject"
+    else
+	subject="rev $(echo $commit |cut -c1-8): $subject"
+    fi
+
+    # Body contains commit header and diff stats. If the diff is small then it will be included also.
+    bodyfile=/tmp/rosegit.$$
+    (cd $repo && git log --stat=100 $commit^..$commit) >$bodyfile
+    nchanges=$(cd $repo && git diff $commit^..$commit |wc -l)
+    if [ $nchanges -lt 100 ]; then
+	echo >>$bodyfile
+	(cd $repo && git diff $commit^..$commit) >> $bodyfile
+    else
+	echo >>$bodyfile
+	echo "Large patch. See repository if you're interested." >>$bodyfile
+    fi
+
+    # Show the message or e-mail it.
+    if [ -n "$dry_run" ]; then
+	echo "Subject: $subject"
+	cat $bodyfile
+	echo; echo
+    else
+	echo "mailing $subject"
+	rosegit_mail COMMIT "$subject" $bodyfile
+    fi
+    rm -f $bodyfile
+done
+exit 0
+
+
+
