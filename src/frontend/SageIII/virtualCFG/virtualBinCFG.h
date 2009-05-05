@@ -30,6 +30,7 @@ namespace VirtualBinCFG {
         AuxiliaryInformation() {}
         AuxiliaryInformation(SgNode* top);
 
+        /** Returns the instruction (if any) disassembled at the specified address. */
         SgAsmInstruction *getInstructionAtAddress(rose_addr_t addr) const {
             AddressToInstructionMap::const_iterator i = addressToInstructionMap.find(addr);
             if (i == addressToInstructionMap.end()) return NULL;
