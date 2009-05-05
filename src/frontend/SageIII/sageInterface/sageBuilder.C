@@ -3581,3 +3581,21 @@ PreprocessingInfo* SageBuilder::buildCpreprocessorDefineDeclaration(SgLocatedNod
   
   }
 
+//! Build an abstract handle from a SgNode
+AbstractHandle::abstract_handle * SageBuilder::buildAbstractHandle(SgNode* n)
+{
+  // avoid duplicated creation
+  static std::map<SgNode*, AbstractHandle::abstract_handle *> handleMap;
+
+  ROSE_ASSERT(n != NULL);
+  AbstractHandle::abstract_handle * ahandle =handleMap[n];
+  if (ahandle==NULL)
+  {
+    AbstractHandle::abstract_node* anode = new AbstractHandle::roseNode(n);
+    ROSE_ASSERT(anode !=NULL );
+    ahandle = new AbstractHandle::abstract_handle(anode);
+    //TODO do we allow NULL handle to be returned?
+    ROSE_ASSERT(ahandle != NULL);
+  }
+  return ahandle;
+}
