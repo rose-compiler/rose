@@ -140,7 +140,7 @@ static std::string unparseX86Expression(SgAsmExpression *expr, bool leaMode) {
             result = StringUtility::intToHex(SageInterface::getAsmConstant(isSgAsmValueExpression(expr)));
             break;
         default: {
-            cerr << "Unhandled expression kind " << expr->class_name() << endl;
+            std::cerr << "Unhandled expression kind " << expr->class_name() << std::endl;
             ROSE_ASSERT (false);
         }
     }

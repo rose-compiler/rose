@@ -102,7 +102,7 @@ static std::string unparseArmExpression(SgAsmExpression* expr, ArmSignForExpress
             break;
         case V_SgAsmExprListExp: {
             SgAsmExprListExp* el = isSgAsmExprListExp(expr);
-            const vector<SgAsmExpression*>& exprs = el->get_expressions();
+            const std::vector<SgAsmExpression*>& exprs = el->get_expressions();
             result += "{";
             for (size_t i = 0; i < exprs.size(); ++i) {
                 if (i != 0) result += ", ";
@@ -168,7 +168,7 @@ static std::string unparseArmExpression(SgAsmExpression* expr, ArmSignForExpress
                       StringUtility::numberToString(SageInterface::getAsmConstant(isSgAsmValueExpression(expr)));
             break;
         default: {
-            cerr << "Unhandled expression kind " << expr->class_name() << endl;
+            std::cerr << "Unhandled expression kind " << expr->class_name() << std::endl;
             ROSE_ASSERT (false);
         }
     }

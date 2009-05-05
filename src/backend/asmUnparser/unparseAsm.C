@@ -62,7 +62,7 @@ std::string unparseExpression(SgAsmExpression *expr) {
         case V_SgAsmPowerpcInstruction:
             return unparsePowerpcExpression(expr);
         default:
-            cerr <<"Unhandled variant " <<insn->class_name() <<" in " <<__func__ <<endl;
+            std::cerr <<"Unhandled variant " <<insn->class_name() <<" in " <<__func__ <<std::endl;
             abort();
     }
 }
@@ -250,7 +250,7 @@ unparseAsmStatement(SgAsmStatement* stmt)
 
           default:
              {
-               cerr << "Unhandled variant " << stmt->class_name() << " in unparseX86Statement" << endl;
+               std::cerr << "Unhandled variant " << stmt->class_name() << " in unparseX86Statement" << std::endl;
                ROSE_ASSERT (false);
              }
         }
@@ -267,7 +267,7 @@ void
 unparseAsmStatementToFile(const std::string& filename, SgAsmStatement* stmt)
    {
      ROSE_ASSERT (stmt != NULL);
-     ofstream of(filename.c_str());
+     std::ofstream of(filename.c_str());
      of << unparseAsmStatement(stmt);
    }
 
@@ -275,7 +275,7 @@ void
 unparseAsmFileToFile(const std::string& filename, SgAsmFile* file)
    {
      ROSE_ASSERT (file != NULL);
-     ofstream of(filename.c_str());
+     std::ofstream of(filename.c_str());
      const SgAsmInterpretationPtrList& interps = file->get_interpretations();
 
      for (size_t i = 0; i < interps.size(); ++i)

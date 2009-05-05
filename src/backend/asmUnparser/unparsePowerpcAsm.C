@@ -114,7 +114,7 @@ static std::string unparsePowerpcExpression(SgAsmExpression* expr, bool useHex) 
             break;
         }
         default: {
-            cerr << "Unhandled expression kind " << expr->class_name() << endl;
+            std::cerr << "Unhandled expression kind " << expr->class_name() << std::endl;
             ROSE_ASSERT (false);
         }
     }
