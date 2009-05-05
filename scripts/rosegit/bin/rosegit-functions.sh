@@ -248,7 +248,7 @@ rosegit_mail () {
     [ -z "$x" -o "$x" = "no" -o "$x" = "false" ] && return 0
     local to="$(rosegit_mail_var $mf TO)"
     #rosegit_checkargs "$to"; exit 0
-    (echo "Subject: $subj"; echo "To: $to"; echo; fold $file) |sendmail "$to"
+    (echo "Subject: $subj"; echo "To: $to"; echo; fold --width=990 $file) |sendmail "$to"
 }
 
 # Helper that returns the value of an email variable
