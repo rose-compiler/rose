@@ -9,7 +9,7 @@ V0.?.? ? AP,...
 * Build system [AP,GB]
   - Using libtool to create dynamic libraries.
 
-* Termite [AP,GB]
+* Termite [AP,GB,DE,FB]
   - New (optional) dependency: SWI-Prolog >= 5.6
     (auto-detected by ./configure, or use --with-swi-prolog=[yes,no])
 	* When enabled, all Term I/O will be handled by libpl, bringing
@@ -20,6 +20,9 @@ V0.?.? ? AP,...
     descriptive atoms.
   - Correct generation of container nodes even when the list of successors
     is empty (arity used to be broken).
+  - Added preprocessing info nodes.
+  - Integration of clang frontend from LLVM project.
+  - New termite_lint utility checks for sanity of Termite terms.
 
 * Building SATIrE without PAG [GB]
   - SATIrE can now be built without requiring PAG; use --without-pag

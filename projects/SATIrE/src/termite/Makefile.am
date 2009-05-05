@@ -39,6 +39,15 @@ ROSELDFLAGS=-L$(ROSE_LIB_DIR) -Wl,-rpath $(ROSE_LIB_DIR) -L$(BOOST_LIB_DIR) -Wl,
 
 bin_PROGRAMS = termpretty c2term term2c
 
+if WITH_SWI_PROLOG
+bin_PROGRAMS += termite_lint
+
+termite_lint_SOURCES =
+
+termite_lint: term_lint.pl termite_spec.pl
+	$(SWI_PL) -q -t main -o termite_lint -c $(srcdir)/term_lint.pl
+endif
+
 AM_YFLAGS = -d
 
 lib_LTLIBRARIES = libtermsupport.la
@@ -109,5 +118,6 @@ EXTRA_DIST = \
   \
   term2c \
   dfiparser.y++ dfiscanner.l++ \
+  term_lint.pl termite_spec.pl \
   clang/README clang/INSTALL clang/BUILD-clang.sh clang/clang-termite.patch
 
