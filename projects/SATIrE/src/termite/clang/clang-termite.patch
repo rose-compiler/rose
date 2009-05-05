@@ -227,7 +227,7 @@ Index: Driver/TermDumper.cpp
 +
 +using namespace clang;
 +
-+#define PPI "preprocessing_info(null)"
++#define PPI "preprocessing_info([])"
 +#define AIB "analysis_info([])"
 +//#define AI "analysis_info(null,null)"
 +#define DA "default_annotation(null, " PPI "), " AIB
