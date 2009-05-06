@@ -240,7 +240,7 @@ CommandlineProcessing::removeArgsWithParameters ( vector<string> & argv, string 
      printf ("In removeArgs (at base): argv = \n%s \n",StringUtility::listToString(l).c_str());
 #endif
    }
-
+//! Remove file names specified in filenameList from argv, except for 'exceptFilename'
 void
 CommandlineProcessing::removeAllFileNamesExcept ( vector<string> & argv, Rose_STL_Container<std::string> filenameList, std::string exceptFilename )
    {

@@ -470,7 +470,7 @@ SgFunctionCallExp* buildFunctionCallExp(SgFunctionSymbol* sym, SgExprListExp* pa
 SgFunctionCallExp* buildFunctionCallExp_nfi(SgExpression* f, SgExprListExp* parameters);
 SgFunctionCallExp* buildFunctionCallExp(SgExpression* f, SgExprListExp* parameters);
 
-//! Build a function call expression,it will automatically search for function symbols internally to build a right function reference etc.
+//! Build a function call expression,it will automatically search for function symbols internally to build a right function reference etc. It tolerates the lack of the function symbol to support generating calls to library functions whose headers have not yet been inserted.
 SgFunctionCallExp* 
 buildFunctionCallExp(const SgName& name, SgType* return_type, \
                 SgExprListExp* parameters, SgScopeStatement* scope=NULL);
@@ -521,6 +521,11 @@ buildFunctionParameterTypeList(SgFunctionParameterList * paralist);
 //! Build SgFunctionParameterTypeList from an expression list, useful when building a function call
 SgFunctionParameterTypeList *
 buildFunctionParameterTypeList(SgExprListExp * expList);
+
+//! Build an empty SgFunctionParameterTypeList 
+SgFunctionParameterTypeList *
+buildFunctionParameterTypeList();
+
 
 //--------------------------------------------------------------
 //@{
@@ -609,9 +614,14 @@ buildDefiningFunctionDeclaration (const char* name, SgType* return_type, SgFunct
 SgProcedureHeaderStatement* 
 buildProcedureHeaderStatement(const char* name, SgType* return_type, SgFunctionParameterList * parlist, SgProcedureHeaderStatement::subprogram_kind_enum, SgScopeStatement* scope=NULL);
 
-//! Build a function call statement
+//! Build a regular function call statement
 SgExprStatement*
 buildFunctionCallStmt(const SgName& name, SgType* return_type, SgExprListExp* parameters, SgScopeStatement* scope=NULL);
+
+//! Build a function call statement using function expression and argument list only, like (*funcPtr)(args);
+SgExprStatement*
+buildFunctionCallStmt(SgExpression* function, SgExprListExp* parameters);
+
 
 //! Build a label statement, handling label symbol and scope internally.
 

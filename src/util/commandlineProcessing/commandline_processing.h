@@ -51,7 +51,7 @@ namespace CommandlineProcessing
           void removeArgs ( std::vector<std::string> & argv, std::string prefix );
       //! Remove all options matching a specified prefix 'prefix' from the argument list 'argv', as well as the option values following them
           void removeArgsWithParameters ( std::vector<std::string> & argv, std::string prefix );
-
+       //! Remove file names specified in filenameList from argv, except for 'exceptFilename'
           void removeAllFileNamesExcept ( std::vector<std::string> & argv, Rose_STL_Container<std::string> filenameList, std::string exceptFilename );
 
       //! Build a string from the argList

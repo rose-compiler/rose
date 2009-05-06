@@ -8148,7 +8148,7 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
 
   // DQ (2/6/2009): I need to write this function to support the
   // insertion of the function into the specified scope.  If the
-  // file associated with the scope is maked as compiler generated 
+  // file associated with the scope is marked as compiler generated 
   // (or as a transformation) then the declarations referneced in the 
   // function must be copied as well (those not in include files)
   // and the include files must be copies also. If the SgFile
@@ -9004,7 +9004,7 @@ void SageInterface::collectReadOnlySymbols(SgStatement* stmt, std::set<SgVariabl
 }
 
 //!Call liveness analysis on an entire project
-LivenessAnalysis * SageInterface::call_liveness_analysis(SgProject* project, bool debug)
+LivenessAnalysis * SageInterface::call_liveness_analysis(SgProject* project, bool debug/*=false*/)
 {
   // We expect this function to be called multiple times but always return the result generated from the first execution.
   static LivenessAnalysis* liv = NULL; // one instance
