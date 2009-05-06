@@ -1372,6 +1372,7 @@ developersScratchSpace/Dan/graph_tests/Makefile
 developersScratchSpace/Robb/Makefile
 developersScratchSpace/Robb/BinaryTools/Makefile
 developersScratchSpace/Robb/DynamicLinking/Makefile
+developersScratchSpace/Robb/SemanticVerification/Makefile
 developersScratchSpace/Robb/extras/Makefile
 ])
 
