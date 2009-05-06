@@ -1,3 +1,70 @@
+2009-05-06 01:39  liao6
+
+	* [r5642] /trunk/ROSE/docs/Rose/developersAppendix.tex: Added some
+	  instructions about how to compile ROSE using ROSE.
+
+2009-05-06 00:56  liao6
+
+	* [r5641] /trunk/ROSE/projects/autoTuning/Makefile.am,
+	  /trunk/ROSE/projects/autoTuning/autoTuning.C,
+	  /trunk/ROSE/projects/autoTuning/autoTuningSupport.C,
+	  /trunk/ROSE/projects/autoTuning/autotuning_lib.c,
+	  /trunk/ROSE/projects/autoTuning/autotuning_lib.h,
+	  /trunk/ROSE/projects/autoTuning/tests/Makefile.am,
+	  /trunk/ROSE/projects/autoTuning/tests/makelib,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilder.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilder.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/midend/astOutlining/Insert.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Makefile.am,
+	  /trunk/ROSE/src/midend/astOutlining/Outliner.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Outliner.hh,
+	  /trunk/ROSE/src/midend/astOutlining/Preprocess.cc,
+	  /trunk/ROSE/src/midend/astOutlining/Transform.cc,
+	  /trunk/ROSE/src/midend/programAnalysis/defUseAnalysis/BottomUpTraversalLiveness.h,
+	  /trunk/ROSE/src/util/commandlineProcessing/commandline_processing.C,
+	  /trunk/ROSE/src/util/commandlineProcessing/commandline_processing.h,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/array1.c: Added
+	  transformation suporting dlopen() for outliner
+	  
+	  * -rose:outline:use_dlopen to turn on this new feature
+	  * -rose:outline:output_path to specify where to save new files
+	  for outlined function
+	  * better function name for outlined function:
+	  OUT_x_fileName_lineNum ()
+	  * supporting SageBuilder::buildFunctionCallStmt() to build a call
+	  using a function pointer
+	  * prepend the new SgSourceFile to SgProject's file list to avoid
+	  override object file generarated by the original SgSourceFile
+	  * handled correlations among some outliner flags
+	  * a new static library (autotuning_lib.c) to provide a simple
+	  interface to use dlopen(), etc
+
+2009-05-05 22:49  liao6
+
+	* [r5640] /trunk/ROSE/projects/autoTuning/autoTuning.C,
+	  /trunk/ROSE/projects/autoTuning/autoTuningSupport.C,
+	  /trunk/ROSE/projects/autoTuning/autoTuningSupport.h,
+	  /trunk/ROSE/projects/autoTuning/tests/Makefile.am,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilder.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilder.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.h,
+	  /trunk/ROSE/src/midend/abstractHandle/roseAdapter.cpp,
+	  /trunk/ROSE/src/midend/abstractHandle/roseAdapter.h,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/buildAbstractHandle.C,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/inputbuildAbstractHandle.C:
+	  Enabled autotuning to run code triage only and ouptut found
+	  targets using abstract handles
+	  
+	  * a new option for projects/autoTuning:
+	  -rose:autotuning:triage_only
+	  * new supporting functions:
+	  SageInterface::getSgNodeFromAbstractHandleString(const string& s)
+	  SageBuilder::buildAbstractHandle(SgNode*)
+
 2009-05-05 18:09  matzke
 
 	* [r5635]
