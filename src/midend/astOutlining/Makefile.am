@@ -48,8 +48,8 @@ include_HEADERS = \
 	IfDirectiveContextFinder.hh \
 	IfDirectiveExtractor.hh \
 	If.hh \
-   Preprocess.hh \
-   Transform.hh
+        Preprocess.hh \
+        Transform.hh
 
 clean-local:
 	rm -rf Templates.DB ii_files ti_files core

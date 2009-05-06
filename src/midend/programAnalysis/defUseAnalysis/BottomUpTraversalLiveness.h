@@ -20,15 +20,15 @@ class BottomUpTraversalLivenessIN: public AstBottomUpProcessing<std::vector<SgIn
 						      SynthesizedAttributesList synAttributes)  {
     std::vector<SgInitializedName*> current_in = (live->getIn(node));
 
-    std::cout << ">>> visiting node : " << node->class_name() << "  elements IN[]: " << current_in.size() 
-	      <<"  merging with nodes: " << synAttributes.size() << std::endl;
+//    std::cout << ">>> visiting node : " << node->class_name() << "  elements IN[]: " << current_in.size() 
+//	      <<"  merging with nodes: " << synAttributes.size() << std::endl;
     std::vector<SgInitializedName*>* newVec = defaultSynthesizedAttribute();
 
     std::vector<  std::vector<SgInitializedName*>* >::const_iterator s;
     for (s = synAttributes.begin(); s != synAttributes.end(); ++s)   {
       std::vector<SgInitializedName*>* vec = *s;
       // merge vec and in
-      std::cout << "    >>> Merging *vec and newVec    --- *vec size :" << (*vec).size() << std::endl;
+     // std::cout << "    >>> Merging *vec and newVec    --- *vec size :" << (*vec).size() << std::endl;
       if ((*vec).size()>0) {
 	*newVec = live->merge_no_dups(*vec,*newVec);
       }
@@ -39,7 +39,7 @@ class BottomUpTraversalLivenessIN: public AstBottomUpProcessing<std::vector<SgIn
     if (isSgStatement(node)) {
       // replace the current in[SgNode] map
       live->setIn(node,*newVec);
-      std::cout << "  --- replacing stmt : newVecElements : " << (*newVec).size() << std::endl;
+      //std::cout << "  --- replacing stmt : newVecElements : " << (*newVec).size() << std::endl;
     }
     return newVec;
   }
@@ -63,8 +63,8 @@ class BottomUpTraversalLivenessOUT: public AstBottomUpProcessing<std::vector<SgI
 						      SynthesizedAttributesList synAttributes)  {
     std::vector<SgInitializedName*> current_out = (live->getOut(node));
 
-    std::cout << ">>> visiting node : " << node->class_name() << "  elements OUT[]: " << current_out.size() 
-	      <<"  merging with nodes: " << synAttributes.size() << std::endl;
+//    std::cout << ">>> visiting node : " << node->class_name() << "  elements OUT[]: " << current_out.size() 
+//	      <<"  merging with nodes: " << synAttributes.size() << std::endl;
     std::vector<SgInitializedName*>* newVec = defaultSynthesizedAttribute();
 
     std::vector<  std::vector<SgInitializedName*>* >::const_iterator s;

@@ -6,5 +6,11 @@ void foo()
   {
     sum[i] =i*2+j;
   }
+
+#pragma rose_outline
+  for (i=0;i<100;i++)
+  {
+    sum[i] =i*2+j;
+  }
   
 }

@@ -47,6 +47,15 @@ namespace Outliner
   extern bool enable_debug; // output debug information for outliner
   extern bool exclude_headers; // exclude headers from the new file containing outlined functions
   extern bool enable_liveness; // enable liveness analysis to reduce restoring statements when temp variables are used
+  extern bool use_dlopen; // Outlining the target to a separated file and calling it using a dlopen() scheme. It turns on useNewFile.
+  extern std::string output_path; // where to save the new file containing the outlined function
+
+  //! Constants used during translation
+  // A support lib's header name
+  const std::string AUTOTUNING_LIB_HEADER="autotuning_lib.h";
+  // the lib function call to find a specified function pointer
+  const std::string FIND_FUNCP_DLOPEN="findFunctionUsingDlopen";
+  const std::string DEFAULT_OUTPUT_PATH="/tmp";
 
   //! Accept a set of command line options to adjust internal behaviors
   // Please use this function before calling the frontend() to set the internal flags

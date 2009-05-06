@@ -1,0 +1,15 @@
+#accept command line option: filename=xxxx
+filename=OUT__2__8072__
+
+all:clean $(filename).so
+
+CFLAGS= -g -fpic
+LDFLAGS=  -shared -lc
+
+$(filename).o:$(filename).c
+	gcc -c $(CFLAGS) $< -o $(filename).o
+$(filename).so:$(filename).o
+	gcc $(LDFLAGS) -o $(filename).so $<
+clean:
+	rm -rf $(filename).so $(filename).o
+

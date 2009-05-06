@@ -11,11 +11,12 @@ EQUAL_PATH1=-rose:hpct:eqpath .=`cd $(srcdir) && pwd`
 # gprof result's equavilent path
 # The performance data can be collected from another machine with different paths
 EQUAL_PATH3=-rose:hpct:eqpath "/home/liao6/temp"=`cd $(srcdir) && pwd`
-# source file annotation with performance metrics
-#ROSE_FLAGS+=-rose:hpct:enable_debug 
 
-# test command line options for outliner
-ROSE_FLAGS+= -rose:outline:parameter_wrapper -rose:outline:new_file -rose:outline:temp_variable -rose:outline:enable_liveness -rose:outline:exclude_headers -rose:hpct:enable_debug -rose:autotuning:enable_debug 
+# test command line options for outliner, They are set automatically by the translator now
+#ROSE_FLAGS+= -rose:outline:parameter_wrapper -rose:outline:new_file -rose:outline:temp_variable -rose:outline:exclude_headers 
+ROSE_FLAGS+=-rose:outline:enable_liveness -I$(top_srcdir)/projects/autoTuning
+# source file annotation with performance metrics
+# -rose:hpct:enable_debug -rose:autotuning:enable_debug 
 #ROSE_FLAGS+=-rose:autotuning:triage_threshold 0.75
 
 # experimental flags. not well sorted out for the interaction between OpenMP and outlining
@@ -23,7 +24,7 @@ ROSE_FLAGS+= -rose:outline:parameter_wrapper -rose:outline:new_file -rose:outlin
 # this should be fixed in outliner's Transform.cc: 
 # OmpSupport::generatePragmaFromOmpAttribute(firstloop);
 #
-ROSE_FLAGS2 = -rose:autotuning:aggressive_triage -rose:openmp
+ROSE_FLAGS2 = -rose:autotuning:aggressive_triage -rose:openmp 
 
 # basic code triage based on inner-most consecutive loops
 rose_jacobi.c:../autoTuning
@@ -37,12 +38,18 @@ rose_jacobi-omp.c:../autoTuning
 rose_jacobi2.c:../autoTuning
 	../autoTuning  -c -rose:output rose_jacobi2.c $(ROSE_FLAGS) $(EQUAL_PATH3) $(ROSE_PROF3) $(srcdir)/jacobi.c
 
+# And using outlining support dlopen(): this is not necessary now since autoTuning will turn on -rose:outline:use_dlopen transparently
 rose_jacobi3.c:../autoTuning
-	../autoTuning  -c -rose:output rose_jacobi3.c -rose:autotuning:triage_only $(ROSE_FLAGS) $(EQUAL_PATH3) $(ROSE_PROF3) $(srcdir)/jacobi.c
+	../autoTuning  -c -rose:outline:use_dlopen -rose:outline:output_path "/tmp" -rose:output $@ $(ROSE_FLAGS) $(EQUAL_PATH3) $(ROSE_PROF3) $(srcdir)/jacobi.c 
+
+# test code triage only
+rose_jacobi4.c:../autoTuning
+	../autoTuning  -c -rose:output rose_jacobi4.c -rose:autotuning:triage_only $(ROSE_FLAGS) $(EQUAL_PATH3) $(ROSE_PROF3) $(srcdir)/jacobi.c
+
 ../autoTuning:
 	make -C ../.
 
-EXTRA_DIST = jacobi-raw.xml jacobi.c jacobi.gprof.txt
+EXTRA_DIST = jacobi-raw.xml jacobi.c jacobi.gprof.txt makelib
 
 clean-local:
 	rm -f *.o rose_*.[cC] *.dot  OUT_*
@@ -54,6 +61,7 @@ check-local:
 	@$(MAKE) rose_jacobi.c
 	@$(MAKE) rose_jacobi2.c
 	@$(MAKE) rose_jacobi3.c
+	@$(MAKE) rose_jacobi4.c
 	@echo "Test for auto tuning terminated normally"
 else
 #-------------------------------

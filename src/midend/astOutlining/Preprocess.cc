@@ -13,16 +13,28 @@
 
 
 #include "Preprocess.hh"
+#include "Outliner.hh"
 
 // =====================================================================
 
 using namespace std;
 
-// =====================================================================
+// a lookup table to avoid inserting headers more than once for a file
+static std::map<std::string, bool> fileHeaderMap; 
 
 SgBasicBlock *
 Outliner::Preprocess::preprocessOutlineTarget (SgStatement* s)
 {
+  // insert a header to support outlining for auto tuning
+  if (use_dlopen)
+  {
+    const string file_name = s->get_file_info()->get_filename();
+    if (fileHeaderMap[file_name]!=true)
+    {
+      SageInterface::insertHeader(AUTOTUNING_LIB_HEADER,PreprocessingInfo::after, false, s->get_scope());
+      fileHeaderMap[file_name]=true;
+    }
+  }  
   // Step 1: Make sure we outline an SgBasicBlock.
   SgBasicBlock* s_post = 0;
   ROSE_ASSERT (s);

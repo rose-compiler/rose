@@ -4,6 +4,7 @@
 #include "sageBuilder.h"
 #include <fstream>
 #include <boost/algorithm/string/trim.hpp>
+#include "Outliner.hh"
 using namespace std;
 using namespace SageInterface;
 //---------------------------------------------
@@ -331,6 +332,14 @@ SageBuilder::buildFunctionParameterTypeList (SgExprListExp * expList)
   setSourcePositionForTransformation(typePtrList);
   return typePtrList;
 
+}
+
+SgFunctionParameterTypeList * 
+SageBuilder::buildFunctionParameterTypeList()
+{
+  SgFunctionParameterTypeList* typePtrList = new SgFunctionParameterTypeList;
+  ROSE_ASSERT(typePtrList);
+  return typePtrList;
 }
 
 //-----------------------------------------------
@@ -2018,39 +2027,39 @@ SageBuilder::buildFunctionRefExp(const SgName& name,const SgType* funcType, SgSc
   ROSE_ASSERT(func_type);
 
   if (scope == NULL)
-     scope = SageBuilder::topScopeStack();
+    scope = SageBuilder::topScopeStack();
   ROSE_ASSERT(scope != NULL);
   SgFunctionSymbol* symbol = lookupFunctionSymbolInParentScopes(name,func_type,scope);
   if (symbol==NULL) 
-// in rare cases when function calls are inserted before any prototypes exist
+    // in rare cases when function calls are inserted before any prototypes exist
   {
 #if 0
-// MiddleLevelRewrite::insert() does not merge content of headers into current AST
+    // MiddleLevelRewrite::insert() does not merge content of headers into current AST
     symbol = lookupFunctionSymbolInParentScopes(name,scope); //TODO relax the matching
-   if (symbol==NULL) {
-// we require the declaration must exist before building a reference to it, or 
-// at least user should insert the header containing the prototype information first
-// using MiddleLevelRewrite::insert()
+    if (symbol==NULL) {
+      // we require the declaration must exist before building a reference to it, or 
+      // at least user should insert the header containing the prototype information first
+      // using MiddleLevelRewrite::insert()
       cout<<"Error! building a reference to function: "<<name.getString()<<" before it is being declared before!"<<endl;
       ROSE_ASSERT(false);
     }
 #else 
-// MiddleLevelRewrite::insert() might conflict this part by generating a dangling function symbol 
+    // MiddleLevelRewrite::insert() might conflict this part by generating a dangling function symbol 
     SgType* return_type = func_type->get_return_type();
     SgFunctionParameterTypeList * paraTypeList = func_type->get_argument_list();
     SgFunctionParameterList *parList = buildFunctionParameterList(paraTypeList);
 
     SgGlobal* globalscope = getGlobalScope(scope);
     SgFunctionDeclaration * funcDecl= buildNondefiningFunctionDeclaration(name,return_type,parList,globalscope);
-     funcDecl->get_declarationModifier().get_storageModifier().setExtern();
+    funcDecl->get_declarationModifier().get_storageModifier().setExtern();
 
     // This will conflict with prototype in a header
-   // prepend_statement(globalscope,funcDecl);
-   // Prepend a function prototype declaration in current scope, hide it from the unparser
-   // prependStatement(funcDecl,scope);
-   // Sg_File_Info* file_info = funcDecl->get_file_info();
-   // file_info->unsetOutputInCodeGeneration ();
-    
+    // prepend_statement(globalscope,funcDecl);
+    // Prepend a function prototype declaration in current scope, hide it from the unparser
+    // prependStatement(funcDecl,scope);
+    // Sg_File_Info* file_info = funcDecl->get_file_info();
+    // file_info->unsetOutputInCodeGeneration ();
+
     symbol = lookupFunctionSymbolInParentScopes(name,func_type,scope);
     ROSE_ASSERT(symbol);
 #endif
@@ -2261,6 +2270,14 @@ SageBuilder::buildFunctionCallStmt(const SgName& name,
   return expStmt;
 }
 
+//! Build a function call statement using function expression and argument list only, like (*funcPtr)(args);
+SgExprStatement*
+SageBuilder::buildFunctionCallStmt(SgExpression* function_exp, SgExprListExp* parameters)
+{
+  SgFunctionCallExp* func_call_expr = buildFunctionCallExp(function_exp, parameters);
+  SgExprStatement * expStmt = buildExprStatement(func_call_expr);
+  return expStmt;
+}
 
 SgExprStatement*
 SageBuilder::buildAssignStatement(SgExpression* lhs,SgExpression* rhs)
@@ -3494,6 +3511,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 
        // DQ (2/6/2009): Avoid closing this file twice (so put this here, instead of below).
           testfile.close();
+          // should remove the old one here, Liao, 5/1/2009
         }
 
   // DQ (2/6/2009): Avoid closing this file twice (moved to false branch above).
@@ -3515,6 +3533,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 
 #if 1
   // DQ (2/6/2009): Modified.
+  // There is output file name specified for rose translators
      if (outputFileName.empty() == false)
         {
           arglist.push_back("-rose:o");
@@ -3540,7 +3559,25 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 #endif
 
      result->set_parent(project);
-     project->set_file(*result); 
+    if (!Outliner::use_dlopen)     
+       project->set_file(*result);  // equal to push_back()
+    else
+    {
+      // Liao, 5/1/2009, 
+      // if the original command line is: gcc -c -o my.o my.c and we want to  
+      // add a new file(mynew.c), the command line for the new file would become "gcc -c -o my.o mynew.c "
+      // which overwrites the object file my.o from my.c and causes linking error.
+      // To avoid this problem, I insert the file at the beginning and let the right object file to be the last generated one
+      //
+      // TODO This is not an elegant fix and it causes some strange assertion failure in addAssociatedNodes(): default case node 
+      // So we only turn this on if Outliner:: use_dlopen is used for now
+      // The semantics of adding a new source file can cause changes to linking phase (new object files etc.)
+      // But ROSE has a long-time bug in handling combined compiling and linking command like "translator -o a.out a.c b.c"
+      // It will generated two command line: "translator -o a.out a.c" and "translator -o a.out b.c", which are totally wrong.
+      // This problem is very relevant to the bug.
+      SgFilePtrList& flist = project->get_fileList();
+      flist.insert(flist.begin(),result);
+    }
      project->set_frontendErrorCode(max(project->get_frontendErrorCode(), nextErrorCode));
 
   // Not sure why a warning shows up from astPostProcessing.C

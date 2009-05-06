@@ -130,19 +130,38 @@ Outliner::Transform::outlineBlock (SgBasicBlock* s, const string& func_name_str)
   // Retest this...
      ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
 
-     SgStatement *func_call = generateCall (func, syms, readOnlyVars, wrapper_name,p_scope);
+     SgStatement *func_call = NULL;
+    if (use_dlopen) 
+   // if dlopen() is used, insert a lib call to find the function pointer from a shared lib file
+   // e.g. OUT__2__8072__p = findFunctionUsingDlopen("OUT__2__8072__", "OUT__2__8072__.so");
+    {
+      // build the return type of the lib call 
+      SgFunctionParameterTypeList * tlist = buildFunctionParameterTypeList();
+      (tlist->get_arguments()).push_back(buildPointerType(buildPointerType(buildVoidType())));
+
+      SgFunctionType *ftype_return = buildFunctionType(buildVoidType(), tlist);
+      // build the argument list
+      string lib_name = output_path+"/"+func_name_str+".so"; 
+      SgExprListExp* arg_list = buildExprListExp(buildStringVal(func_name_str), buildStringVal(lib_name)); 
+      SgFunctionCallExp* dlopen_call = buildFunctionCallExp(SgName(FIND_FUNCP_DLOPEN),ftype_return,arg_list, p_scope);
+      SgExprStatement * assign_stmt = buildAssignStatement(buildVarRefExp(func_name_str+"p",p_scope),dlopen_call);
+      SageInterface::insertStatementBefore(s, assign_stmt);
+      // Generate a function call using the func pointer
+      // e.g. (*OUT__2__8888__p)(__out_argv2__1527__);
+        SgExprListExp* exp_list_exp = SageBuilder::buildExprListExp();
+        appendExpression(exp_list_exp, buildVarRefExp(wrapper_name,p_scope));
+      func_call = buildFunctionCallStmt(buildPointerDerefExp(buildVarRefExp(func_name_str+"p",p_scope)), exp_list_exp);   
+    }
+    else  // regular function call for other cases
+     func_call = generateCall (func, syms, readOnlyVars, wrapper_name,p_scope);
+
      ROSE_ASSERT (func_call != NULL);
   
   // Retest this...
      ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
 
   // What is this doing (what happens to "s")
-#if 0
-     ASTtools::replaceStatement (s, func_call);
-#else
      SageInterface::replaceStatement(s,func_call);
-#endif     
-
      ROSE_ASSERT(s != NULL);
      ROSE_ASSERT(s->get_statements().empty() == true);
 
@@ -306,6 +325,11 @@ Outliner::Transform::generateNewSourceFile(SgBasicBlock* s, const string& file_n
   std::string file_suffix = StringUtility::fileNameSuffix(orig_file_name);
   ROSE_ASSERT(file_suffix !="");
   std::string new_file_name = file_name+"."+file_suffix;
+  if (!output_path.empty())
+  { // save the outlined function into a specified path
+    new_file_name = StringUtility::stripPathFromFileName(new_file_name);
+    new_file_name= output_path+"/"+new_file_name;
+  }
   // remove pre-existing file with the same name
   remove (new_file_name.c_str());
   new_file = isSgSourceFile(buildFile(new_file_name, new_file_name,project));

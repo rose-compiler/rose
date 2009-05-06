@@ -15,8 +15,14 @@ ROSEHPCT_LIBS = $(ROSEHPCT_BUILD_ROOT)/src/librosehpct.la \
 
 # ROSEHPCT_DEP_LIBS: for libxml2 		
 LDADD = $(ROSEHPCT_DEP_LIBS)
-		
 
+# this lib contains supporting functions for dlopen(), checkpointing, etc
+# the transformation will generated calls to them and insert their header.
+lib_LIBRARIES = libautoTuning.a
+libautoTuning_a_SOURCES = autotuning_lib.c
+include_HEADERS = autotuning_lib.h
+
+EXTRA_DIST =  README makefile-external autoTuningSupport.h autotuning_lib.h
 #--------------------------------------
 if ROSE_BUILD_ROSEHPCT
 
@@ -27,21 +33,16 @@ autoTuning_LDFLAGS = $(ROSEHPCT_LIBS)
 
 #noinst_HEADERS = autoTuningSupport.h
 
-
-EXTRA_DIST = README makefile-external autoTuningSupport.h
-
 clean-local:
 	rm -rf autoTuning
 clean-local:
 	rm -rf Templates.DB ii_files ti_files *.bin
 	rm -f *.pdf
-
-#--------------------------------------
 else #  !ROSE_BUILD_ROSEHPCT
 
-EXTRA_DIST = README makefile-external autoTuningSupport.h \
-	autoTuning.C autoTuningSupport.C 
+EXTRA_DIST +=autoTuning.C autoTuningSupport.C 
 
 endif # ROSE_BUILD_ROSEHPCT
+
 
 

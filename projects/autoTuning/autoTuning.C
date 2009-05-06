@@ -29,9 +29,6 @@ int main(int argc, char * argv[])
   vector<string> argvList (argv, argv+argc);
   // recognize options for autotuning
   autotuning_command_processing(argvList);
-  // options for outliner
-  Outliner::commandLineProcessing(argvList);
-
   // Prepare AST with performance metrics attached.
   // -------------------------------------------------
   // Read into the profiling result files
@@ -61,6 +58,6 @@ int main(int argc, char * argv[])
   }
   // -------------------------------------------------------
   AstTests::runAllTests(project);
-  project->unparse();
-  return 0;
+  //project->unparse();
+  return backend (project);
 }

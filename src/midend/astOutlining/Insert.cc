@@ -24,6 +24,8 @@ typedef std::list<SgFunctionDeclaration *> FuncDeclList_t;
 // =====================================================================
 
 using namespace std;
+using namespace SageBuilder;
+using namespace SageInterface;
 
 // =====================================================================
 
@@ -605,23 +607,38 @@ Outliner::Transform::insert (SgFunctionDeclaration* func,
           printf ("Skipping the insertion of friend function declarations (testing only) \n");
 #endif
 //        }
+   SgFunctionDeclaration* sourceFileFunctionPrototype = NULL;
+   // insert a pointer to function declaration if use_dlopen is true
+   // insert it into the original global scope
+   if (use_dlopen) 
+   {
+    // void (*OUT_xxx__p) (void**);
+     SgFunctionParameterTypeList * tlist = buildFunctionParameterTypeList();
+     (tlist->get_arguments()).push_back(buildPointerType(buildPointerType(buildVoidType())));
 
-  // This is done in the original file (does not effect the separate file if we outline the function there)
-  // Insert a single, global prototype (i.e., a first non-defining
-  // declaration), which specifies the linkage property of 'func'.
-  // insertGlobalPrototype (func, protos, src_global, target_func);
-     SgFunctionDeclaration* sourceFileFunctionPrototype = insertGlobalPrototype (func, friendFunctionPrototypeList, src_global, target_func);
+     SgFunctionType *ftype = buildFunctionType(buildVoidType(), tlist);//func->get_type();
+     string var_name = func->get_name().getString()+"p";
+     SgVariableDeclaration * ptofunc = buildVariableDeclaration(var_name,buildPointerType(ftype), NULL, src_global);
+     prependStatement(ptofunc,src_global);
+   }
+//   else 
+//   Liao, 5/1/2009
+//   We still generate the prototype even they are not needed if dlopen() is used. 
+//   since SageInterface::appendStatementWithDependentDeclaration() depends on it
+   {
+     // This is done in the original file (does not effect the separate file if we outline the function there)
+     // Insert a single, global prototype (i.e., a first non-defining
+     // declaration), which specifies the linkage property of 'func'.
+     // insertGlobalPrototype (func, protos, src_global, target_func);
+     sourceFileFunctionPrototype = insertGlobalPrototype (func, friendFunctionPrototypeList, src_global, target_func);
 
      SgFunctionSymbol* sourceFileFunctionPrototypeSymbol = isSgFunctionSymbol(src_global->lookup_symbol(func->get_name()));
      ROSE_ASSERT(sourceFileFunctionPrototypeSymbol != NULL);
      ROSE_ASSERT(sourceFileFunctionPrototypeSymbol->get_declaration() == sourceFileFunctionPrototype);
-
      ROSE_ASSERT(sourceFileFunctionPrototype->get_firstNondefiningDeclaration() == sourceFileFunctionPrototype);
-  // sourceFileFunctionPrototype->set_firstNondefiningDeclaration(sourceFileFunctionPrototype);
-
-  // DQ (2/27/2009): Assert this as a test!
+     // DQ (2/27/2009): Assert this as a test!
      ROSE_ASSERT(sourceFileFunctionPrototype->get_definingDeclaration() == NULL);
-
+   }
   // This is the outlined function prototype that is put into the separate file (when outlining is done to a separate file).
      SgFunctionDeclaration* outlinedFileFunctionPrototype = NULL;
      if (Outliner::useNewFile == true)
@@ -668,6 +685,7 @@ Outliner::Transform::insert (SgFunctionDeclaration* func,
           ROSE_ASSERT(outlinedFileFunctionPrototype->get_definingDeclaration() != NULL);
 
        // Since the outlined function has been moved to a new file we can't have a pointer to the defining declaration.
+      //  if (!use_dlopen) // no source function prototype if dlopen is used
           ROSE_ASSERT(sourceFileFunctionPrototype->get_definingDeclaration() == NULL);
 
        // Add a message to the top of the outlined function that has been added
@@ -679,16 +697,14 @@ Outliner::Transform::insert (SgFunctionDeclaration* func,
           ROSE_ASSERT(TransformationSupport::getSourceFile(func->get_scope()) == TransformationSupport::getSourceFile(func->get_firstNondefiningDeclaration()));
         }
        else
-        {
-       // Since the outlined function has been kept in the same file we can have a pointer to the defining declaration.
-          sourceFileFunctionPrototype->set_definingDeclaration(func);
-          ROSE_ASSERT(sourceFileFunctionPrototype->get_definingDeclaration() != NULL);
-
-       // DQ (2/23/2009): If this is outlined into the same file then set the pointer to 
-       // the defining declaration, else avoid pointers acorss files.
-       // sourceFileFunctionPrototype->set_definingDeclaration(func);
-       // ROSE_ASSERT(sourceFileFunctionPrototype->get_definingDeclaration() != NULL);
-        }
+       {
+         //if (!use_dlopen)
+         {
+           // Since the outlined function has been kept in the same file we can have a pointer to the defining declaration.
+           sourceFileFunctionPrototype->set_definingDeclaration(func);
+           ROSE_ASSERT(sourceFileFunctionPrototype->get_definingDeclaration() != NULL);
+         }
+       }
 
      ROSE_ASSERT(func->get_definition()->get_body()->get_parent() == func->get_definition());
      // No forward declaration is needed for Fortran functions, Liao, 3/11/2009

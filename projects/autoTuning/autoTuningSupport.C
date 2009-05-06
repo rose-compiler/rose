@@ -18,6 +18,10 @@ namespace autoTuning
 
   void autotuning_command_processing(vector<string>&argvList)
   {
+    // let outliner get a chance
+    Outliner::use_dlopen= true;
+    Outliner::commandLineProcessing(argvList);
+
     if (CommandlineProcessing::isOption (argvList,"-rose:autotuning:","enable_debug",true))
     {
       cout<<"Enabling debugging mode for auto tuning..."<<endl;
@@ -338,7 +342,7 @@ namespace autoTuning
       if (autoTuning::enable_debug)
         cout<<"Candidate statement node:"<<(*iter)->toString()<<" "<<"sum="<<sum<<endl;
       // save stmt nodes until threshold is reached.
-      ROSE_ASSERT(autoTuning::triage_threshold>0.5);
+      //ROSE_ASSERT(autoTuning::triage_threshold>0.5);
       candidateVec.push_back(*iter);
       if (sum>autoTuning::triage_threshold)
         break;
