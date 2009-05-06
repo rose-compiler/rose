@@ -2,7 +2,7 @@
 
 BOOL_ATTR(aliasesAnnotate, Off)
 BOOL_ATTR(aliasesOutputText, Off)
-STRING_ATTR(aliasesOutputSource, "")
+BOOL_ATTR(aliasesOutputSource, Off)
 
 BOOL_ATTR(gdlFoldGraphs, Off)
 
@@ -18,3 +18,7 @@ BOOL_ATTR(convertToNNH, Off)
 BOOL_ATTR(convertToSRW, Off)
 
 STRING_ATTR(aliasStatisticsFile, "")
+
+
+BOOL_ATTR(variantAliasesFromGraphSet, On)
+BOOL_ATTR(variantAliasesFromSummaryGraph, Off)

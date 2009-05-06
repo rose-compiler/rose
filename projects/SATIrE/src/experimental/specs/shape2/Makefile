@@ -6,6 +6,7 @@
 .PHONY: all clean clean_
 .PHONY: nnh99shape nnh99clean
 .PHONY: srw98shape srw98clean
+.PHONY: diagrams
 
 all: nnh99shape srw98shape
 clean: nnh99clean srw98clean clean_
@@ -21,8 +22,19 @@ srw98shape:
 srw98clean:
 	@$(MAKE) -f Makefile_template clean ANALYSIS='srw98' CARRIER='ShapeGraphLifted'
 
+
+report.txt: srw98shape nnh99shape
+	./measurements
+
+diagrams: report.txt
+	/usr/local/mstools/bin/gnuplot < diagrams.gp
+
+
+
 clean_:
-	-rm -rf build/* build tmp_alias-stats tmp_output
+	-rm -rf build/* build
+	-rm -rf tmp_*
+	-rm -rf srw98.gdl nnh99.gdl
 
 # vim: noexpandtab:
 

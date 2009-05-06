@@ -2,6 +2,8 @@
 
 #include "AliasStatistics.C"
 extern AliasStatistics *stats;
+#include "ShapeAnalyzerOptions.h"
+extern ShapeAnalyzerOptions *opt;
 
 typedef std::set<std::pair<SgExpression*,SgExpression*>*> ExprPairSet;
 
@@ -97,12 +99,22 @@ protected:
     ExprPairSet *aliases = new ExprPairSet();
     ExprPairSet::iterator i;
     std::pair<SgExpression*,SgExpression*> *pair;
-    for (i=candidate_pairs->begin(); i!=candidate_pairs->end(); i++) {
-      pair = *i;
-      if (o_is_must_alias(pair->first, pair->second, o_shape_carrier_to_shapegraphset(sg))) {
-        aliases->insert(pair);
+
+    if (opt->variantAliasesFromGraphSet()) {
+      for (i=candidate_pairs->begin(); i!=candidate_pairs->end(); i++) {
+        pair = *i;
+        if (o_is_must_alias_graphset(pair->first, pair->second, o_carrier_to_graphset(sg))) {
+          aliases->insert(pair);
+        }
       }
+    } else if (opt->variantAliasesFromSummaryGraph()) {
+      // leave set empty, there are no must_aliases in
+      // srw-style summary graphs
+    } else {
+      std::cout << "not variant for alias computation selected." << std::endl;
+      assert(0);
     }
+
     return aliases;
   }
   
@@ -112,11 +124,25 @@ protected:
     ExprPairSet *aliases = new ExprPairSet();
     ExprPairSet::iterator i;
     std::pair<SgExpression*,SgExpression*> *pair;
-    for (i=candidate_pairs->begin(); i!=candidate_pairs->end(); i++) {
-      pair = *i;
-      if (o_is_may_alias(pair->first, pair->second, o_shape_carrier_to_shapegraphset(sg))) {
-        aliases->insert(pair);
+
+    if (opt->variantAliasesFromGraphSet()) {
+      for (i=candidate_pairs->begin(); i!=candidate_pairs->end(); i++) {
+        pair = *i;
+        if (o_is_may_alias_graphset(pair->first, pair->second, o_carrier_to_graphset(sg))) {
+          aliases->insert(pair);
+        }
       }
+    } else if (opt->variantAliasesFromSummaryGraph()) {
+      for (i=candidate_pairs->begin(); i!=candidate_pairs->end(); i++) {
+        pair = *i;
+        if (o_is_may_alias_summarygraph(pair->first, pair->second, o_carrier_to_summarygraph(sg))) {
+          aliases->insert(pair);
+        }
+      }
+
+    } else {
+      std::cout << "not variant for alias computation selected." << std::endl;
+      assert(0);
     }
     return aliases;
   }
@@ -247,17 +273,16 @@ namespace SATIrE {
                     p.traverseInputFiles(program->astRoot, preorder);
                 }
                 
-                if (opt->getaliasesOutputSource().length() > 0) {
-                //    AliasPairsCommentAnnotator<DFI_STORE> ca((DFI_STORE)analysisInfo, pointerExpressionPairs);
-		            //    ca.traverseInputFiles(program->astRoot, preorder);
-		            //    ast_root->unparse();
+                if (opt->aliasesOutputSource()) {
+                    AliasPairsCommentAnnotator<DFI_STORE> ca((DFI_STORE)analysisInfo, pointerExpressionPairs);
+		                ca.traverseInputFiles(program->astRoot, preorder);
+		                program->astRoot->unparse();
                 }
 
                 if (opt->getaliasStatisticsFile().length() > 0) {
                     cout << "writing alias statistics to " << opt->getaliasStatisticsFile() << std::endl;
                     stats->writeFile(opt->getaliasStatisticsFile().c_str());
                 }
-                
 
                 // pass on to parent
                 Implementation::outputAnnotatedProgram(program);

@@ -45,13 +45,9 @@ public:
       } else if (optionMatch(argv[i], "--output-alias-text")) {
           scl->aliasesAnnotateOn();
           scl->aliasesOutputTextOn();
-      } else if (optionMatchPrefix(argv[i], "--output-alias-source=")) {
-          if (strlen(argv[i]+prefixLength) == 0) {
-              scl->setOptionsErrorMessage("empty alias output filename");
-              return 1;
-          }
+      } else if (optionMatch(argv[i], "--output-alias-source")) {
           scl->aliasesAnnotateOn();
-          scl->setaliasesOutputSource(strdup(argv[i]+prefixLength));
+          scl->aliasesOutputSourceOn();
       } else if (optionMatchPrefix(argv[i], "--alias-statistics=")) {
           if (strlen(argv[i]+prefixLength) == 0) {
               scl->setOptionsErrorMessage("empty alias statistics filename");
@@ -59,6 +55,18 @@ public:
           }
           scl->aliasesAnnotateOn();
           scl->setaliasStatisticsFile(strdup(argv[i]+prefixLength));
+
+
+      // Variants for Precision/Runtime tradeoff evaluation
+
+      } else if (optionMatch(argv[i], "--var-alias-from-graphset")) {
+          scl->variantAliasesFromGraphSetOn();
+          scl->variantAliasesFromSummaryGraphOff();
+      } else if (optionMatch(argv[i], "--var-alias-from-summary-graph")) {
+          scl->variantAliasesFromSummaryGraphOn();
+          scl->variantAliasesFromGraphSetOff();
+
+
       } else {
           // pass argument to parent for parsing
           return CommandLineParser::handleOption(cl, i, argc, argv);

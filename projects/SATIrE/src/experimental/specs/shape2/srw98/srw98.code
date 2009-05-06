@@ -67,9 +67,56 @@ extract_graphs(sg) =
     (sg,sgSet_to_sgList(srwSG_to_nnhSG(sg)))
   endif;
 
-shape_carrier_to_shapegraphset::ShapeGraphLifted->ShapeGraphSet;
-//shape_carrier_to_shapegraphset(lifted_sg) = srwSG_to_nnhSG(drop(lifted_sg));
-shape_carrier_to_shapegraphset(lifted_sg) = srwSG_to_nnhSG_simplified(drop(lifted_sg));
+
+carrier_to_summarygraph::ShapeGraphLifted->ShapeGraph;
+carrier_to_summarygraph(lifted_sg) = drop(lifted_sg);
+
+carrier_to_graphset::ShapeGraphLifted->ShapeGraphSet;
+carrier_to_graphset(lifted_sg) = srwSG_to_nnhSG_simplified(drop(lifted_sg));
+
+// ----- begin simplified version for alias checks -----
+// generating the full set of all represented shape graphs is not feasible
+// in acceptable time. for the computation of alias sets it is also not
+// absolutely necessary:
+//   every edge could be NULL in an SRW graph -> there are no must aliases.
+//   it is therefore sufficient, to check for may_aliases/no_aliases
+//
+// instead of generating the full set of shape graphs we only eliminate the
+// indeterminism from the graph, ie. all src,sel pairs that have more than
+// one target.
+// then one additional graph, the empty shape graph, is added to the set
+// of graphs on which alias testing is performed. this ensures that no must_aliases
+// are detected.
+
+// alias_performance_hack_1
+// 2009-04-29: lazy alias checking (alias_performance_hack_2)
+srwSG_to_nnhSG_simplified::ShapeGraph->ShapeGraphSet;
+srwSG_to_nnhSG_simplified(((S1,H1),IS1) as SG1) =
+  let vars         = vars_by_stackedges(S1);
+      heap_sources = extract_src_sel(SG1); in
+  let S2_sgs  = gen_stack_edges_simplified(vars, S1);
+      H2_sgs  = gen_heap_edges_simplified(heap_sources, H1);
+      IS2_sgs = {Sharing2G(IS1)}; in
+  let SG2_sgs = map_cartesian([S2_sgs, H2_sgs, IS2_sgs]); in
+  let nnh_sgs = {sg !! sg <-- SG2_sgs, if is_compatible(sg)}; in
+  nnh_sgs;
+
+gen_stack_edges_simplified::VarList,StackEdgeSet->ShapeGraphSet; 
+gen_stack_edges_simplified(    [],     _) = {};
+gen_stack_edges_simplified(var:Vs, edges) = 
+  let outedges_of_var = stackedges_by_var(var,edges); in
+  let outedge_sgs     = {State2G({outedge}) !! outedge <-- outedges_of_var}; in
+  cartesian(outedge_sgs, gen_stack_edges_simplified(Vs,edges));
+
+gen_heap_edges_simplified::NodeSelList,HeapEdgeSet->ShapeGraphSet;
+gen_heap_edges_simplified(            [],         _) = {};
+gen_heap_edges_simplified((src,sel):Rest,heap_edges) = 
+  let outedges    = heapedges_by_src_sel(src,sel,heap_edges); in
+  let outedge_sgs = {Heap2G({e}) !! e <-- outedges}; in
+  cartesian(outedge_sgs, gen_heap_edges_simplified(Rest,heap_edges));
+// ----- end -----
+
+
 
 // ----------------------------------------
 // Analysis Entry Point: Transfer Functions

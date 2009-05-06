@@ -21,7 +21,7 @@ void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_{DFI} info,int id,
         return;
     }
 
-    fprintf(fp, "graph: { /*carrier box*/\n");
+    fprintf(fp, "graph: { /* box that contains the graphs */\n");
     fprintf(fp, "  title: \"%s\"\n", name);
     fprintf(fp, "  label: \"\"\n");
     
@@ -47,7 +47,7 @@ void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_{DFI} info,int id,
         o_SrwNnhPair gpair = o_extract_graphs(o_{DFI}_drop(info));
         
         if (opt->gdlShowSummaryGraph()) {
-            fprintf(fp, "  graph: { /*summary graph*/\n");
+            fprintf(fp, "  graph: { /* srw shape graph box */\n");
             fprintf(fp, "    color: lightgrey\n");
             fprintf(fp, "    label: \"\"\n");
             n_graphs++;
@@ -62,7 +62,7 @@ void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_{DFI} info,int id,
                 o_ShapeGraph sg = o_ShapeGraphList_head(graphs);
                 graphs = o_ShapeGraphList_tail(graphs);
                 
-                fprintf(fp, "  graph: { /*shape graph*/\n");
+                fprintf(fp, "  graph: { /* nnh shape graph box */\n");
                 fprintf(fp, "    color: white\n");
                 fprintf(fp, "    label: \"\"\n");
                 n_graphs++;
@@ -72,14 +72,14 @@ void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_{DFI} info,int id,
 
     }
 
-    if (!n_nodes) {
-        fprintf(fp, "  node: { /*no nodes*/ \n");
-        fprintf(fp, "    title: \"%s_dummy\"\n", name);
-        fprintf(fp, "    label: \"\"\n");
-        fprintf(fp, "    width : 0\n");
-        fprintf(fp, "    height: 0\n");
-        fprintf(fp, "  }\n");
-    }
+//    if (!n_nodes) {
+//        fprintf(fp, "  node: { /*no nodes*/ \n");
+//        fprintf(fp, "    title: \"%s_dummy\"\n", name);
+//        fprintf(fp, "    label: \"no nodes\"\n");
+//        fprintf(fp, "    width : 0\n");
+//        fprintf(fp, "    height: 0\n");
+//        fprintf(fp, "  }\n");
+//    }
 
     fprintf(fp, "}\n\n\n\n");
     return;

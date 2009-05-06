@@ -67,50 +67,6 @@ rec_join_shapegraphs(((S0,H0),is0), ((S1,H1),is1):cdr) =
 // convert srw to nnh graph
 // nnh: set of graphs, each selector points to one node
 // srw: single graph, each selector can point to many nodes
-
-// ----- begin simplified version for alias checks -----
-
-// generating the full set of all represented shape graphs is not feasible
-// in acceptable time. for the computation of alias sets it is also not
-// absolutely necessary:
-//   every edge could be NULL in an SRW graph -> there are no must aliases.
-//   it is therefore sufficient, to check for may_aliases/no_aliases
-//
-// instead of generating the full set of shape graphs we only eliminate the
-// indeterminism from the graph, ie. all src,sel pairs that have more than
-// one target.
-// then one additional graph, the empty shape graph, is added to the set
-// of graphs on which alias testing is performed. this ensures that no must_aliases
-// are detected.
-
-// alias_performance_hack_1
-srwSG_to_nnhSG_simplified::ShapeGraph->ShapeGraphSet;
-srwSG_to_nnhSG_simplified(((S1,H1),IS1) as SG1) =
-  let vars         = vars_by_stackedges(S1);
-      heap_sources = extract_src_sel(SG1); in
-  let S2_sgs  = gen_stack_edges_simplified(vars, S1);
-      H2_sgs  = gen_heap_edges_simplified(heap_sources, H1);
-      IS2_sgs = {Sharing2G(IS1)}; in
-  let SG2_sgs = map_cartesian([S2_sgs, H2_sgs, IS2_sgs]); in
-  let nnh_sgs = {sg !! sg <-- SG2_sgs, if is_compatible(sg)}; in
-  nnh_sgs;
-
-gen_stack_edges_simplified::VarList,StackEdgeSet->ShapeGraphSet; 
-gen_stack_edges_simplified(    [],     _) = {};
-gen_stack_edges_simplified(var:Vs, edges) = 
-  let outedges_of_var = stackedges_by_var(var,edges); in
-  let outedge_sgs     = {State2G({outedge}) !! outedge <-- outedges_of_var}; in
-  cartesian(outedge_sgs, gen_stack_edges_simplified(Vs,edges));
-
-gen_heap_edges_simplified::NodeSelList,HeapEdgeSet->ShapeGraphSet;
-gen_heap_edges_simplified(            [],         _) = {};
-gen_heap_edges_simplified((src,sel):Rest,heap_edges) = 
-  let outedges    = heapedges_by_src_sel(src,sel,heap_edges); in
-  let outedge_sgs = {Heap2G({e}) !! e <-- outedges}; in
-  cartesian(outedge_sgs, gen_heap_edges_simplified(Rest,heap_edges));
-// ----- end -----
-
-
 srwSG_to_nnhSG::ShapeGraph->ShapeGraphSet;
 srwSG_to_nnhSG(((S1,H1),IS1) as SG1) =
   let vars         = vars_by_stackedges(S1);
@@ -280,6 +236,10 @@ mk_unique_shapeGraph_list([])  = [];
 stackedges_by_var::VariableId,StackEdgeSet->StackEdgeSet;
 stackedges_by_var(var,edges) = {e !! (v,_) as e <-- edges, if v = var};
 
+// all stackedges that originiate from <var>, as list
+stackedgelist_by_var::VariableId,StackEdgeSet->StackEdgeList;
+stackedgelist_by_var(var,edges) = [e !! (v,_) as e <-- edges, if v = var];
+
 // all stackedges that originate from any of <vars>
 stackedges_by_vars::Node,StackEdgeSet->StackEdgeSet;
 stackedges_by_vars(vars,edges) = {e !! (_,n) as e <-- edges, if !(intersect(vars,n) = {})};
@@ -316,6 +276,9 @@ heapedges_by_dest(dest,edges) = {e !! (_,_,d) as e <-- edges, if d = dest};
 heapedges_by_src_sel::Node,VariableId,HeapEdgeSet->HeapEdgeSet;
 heapedges_by_src_sel(src,sel,edges) = {e !! (srcx,selx,_) as e <-- edges, if srcx = src && selx = sel};
 
+heapedgelist_by_src_sel::Node,VariableId,HeapEdgeSet->HeapEdgeList;
+heapedgelist_by_src_sel(src,sel,edges) = [e !! (srcx,selx,_) as e <-- edges, if srcx = src && selx = sel];
+
 src_of_heapedge::HeapEdge->Node;
 src_of_heapedge((src,_,_)) = src;
 
@@ -324,6 +287,9 @@ sel_of_heapedge((_,sel,_)) = sel;
 
 dest_of_heapedge::HeapEdge->Node;
 dest_of_heapedge((_,_,dest)) = dest;
+
+dest_of_stackedge::StackEdge->Node;
+dest_of_stackedge((_,dest)) = dest;
 
 reachable_heapedges::NodeSet,HeapEdgeSet->HeapEdgeSet;
 reachable_heapedges(nodes, es) =
@@ -348,34 +314,48 @@ is_pointer_expression(DotExp(_,_)) = true;
 //is_pointer_expression(e) = let dummy = print("non-pointer expr:") print(expr_asttext(e)) false; in false;
 is_pointer_expression(_) = false;
 
-// ----------------------------
-// is_may_alias / is_must_alias
-// ----------------------------
+// ------------------------------------------------
+// is_may_alias / is_must_alias (on shapegraphsets)
+// ------------------------------------------------
 
-is_no_alias::Expression,Expression,ShapeGraphSet->bool;
-is_no_alias(a,b,sgs) = !is_may_alias(a,b,sgs);
+is_no_alias_graphset::Expression,Expression,ShapeGraphSet->bool;
+is_no_alias_graphset(a,b,sgs) = !is_may_alias_graphset(a,b,sgs);
 
 // a,b are may aliases
 // if there EXISTS one graph in which a and b refer to the same node
-is_may_alias::Expression,Expression,ShapeGraphSet->bool;
-//is_may_alias(a,b,sgs) = {g !! g <-- sgs, if is_same_node(Alias_May,a,b,g)} != {};
-// alias_performance_hack_2
-is_may_alias(a,b,sgs) = is_may_alias_lazy(a,b,[sg !! sg <-- sgs]);
+//
+// is_may_alias_graphset(a,b,sgs) = {g !! g <-- sgs, if is_same_node(Alias_May,a,b,g)} != {};
+// 2009-04-29: lazy alias checking (alias_performance_hack_2)
+is_may_alias_graphset::Expression,Expression,ShapeGraphSet->bool;
+is_may_alias_graphset(a,b,sgs) = is_may_alias_graphset_lazy(a,b,[sg !! sg <-- sgs]);
 
-is_may_alias_lazy::Expression,Expression,ShapeGraphList->bool;
-is_may_alias_lazy(a,b,[])      = false;
-is_may_alias_lazy(a,b,g:grest) = if is_same_node(Alias_May,a,b,g) then true else is_may_alias_lazy(a,b,grest) endif;
+is_may_alias_graphset_lazy::Expression,Expression,ShapeGraphList->bool;
+is_may_alias_graphset_lazy(a,b,[])      = false;
+is_may_alias_graphset_lazy(a,b,g:grest) = if is_same_node(Alias_May,a,b,g) then true else is_may_alias_graphset_lazy(a,b,grest) endif;
 
 // a,b are must aliases
 // if there exists no graph in which a and b refer NOT to the same node (ie they do refer in all nodes)
-is_must_alias::Expression,Expression,ShapeGraphSet->bool;
-//is_must_alias(a,b,sgs) = {g !! g <-- sgs, if !is_same_node(Alias_Must,a,b,g)} = {};
-// alias_performance_hack_2
-is_must_alias(a,b,sgs) = is_must_alias_lazy(a,b,[sg !! sg <-- sgs]);
+//
+// is_must_alias(a,b,sgs) = {g !! g <-- sgs, if !is_same_node(Alias_Must,a,b,g)} = {};
+// 2009-04-29: lazy alias checking (alias_performance_hack_2)
+is_must_alias_graphset::Expression,Expression,ShapeGraphSet->bool;
+is_must_alias_graphset(a,b,sgs) =
+  if "{ANALYSIS}" = "nnh99" then
+    // in nnh analysis: do the check
+    is_must_alias_graphset_lazy(a,b,[sg !! sg <-- sgs])
+  else
+    // in srw analysis: skip the check, there are no must_aliases in srw graphs
+    false
+  endif;
 
-is_must_alias_lazy::Expression,Expression,ShapeGraphList->bool;
-is_must_alias_lazy(a,b,[])      = false;
-is_must_alias_lazy(a,b,g:grest) = if is_same_node(Alias_Must,a,b,g) then is_must_alias_lazy(a,b,grest) else false endif;
+is_must_alias_graphset_lazy::Expression,Expression,ShapeGraphList->bool;
+is_must_alias_graphset_lazy(a,b,[])      = false;
+is_must_alias_graphset_lazy(a,b,g:grest) =
+  if is_same_node(Alias_Must,a,b,g) then
+    if [] = grest then true else is_must_alias_graphset_lazy(a,b,grest) endif
+  else
+    false
+  endif;
 
 // returns true if both expressions refer to the same node
 is_same_node::EnumAlias,Expression,Expression,ShapeGraph->bool;
@@ -384,8 +364,8 @@ is_same_node(alias_type,expr_a,expr_b,(_,is0) as sg) =
   let null = {add_tmpvarid_like_expr(expr_a)}; in  // will be used to indicate "node not found" case
   let a_nodes      = nodes_visited_by_expr(expr_a,sg,null);
       b_nodes      = nodes_visited_by_expr(expr_b,sg,null);
-      a_sels       = selectors_visited_by_expr(expr_a);
-      b_sels       = selectors_visited_by_expr(expr_b); in
+      a_sels       = reverse(selectors_visited_by_expr(expr_a));
+      b_sels       = reverse(selectors_visited_by_expr(expr_b)); in
   let res = rec_is_same_node(alias_type, {} ? is0, a_sels, a_nodes, b_sels, b_nodes, null); in
   //let dummy = if res then
   //  print(alias_type) print(":\n")
@@ -415,6 +395,7 @@ rec_is_same_node(alias_type, summary_is_shared, a_sels, a:a_rest, b_sels, b:b_re
         // to the summary node POSSIBLY end at the same summary node
         true
       else
+        // FIXME! logic??
         // a and b can still be aliases if the paths minus the
         // last selector ended at the same node if the same
         // selector was used on both paths
@@ -430,9 +411,9 @@ rec_is_same_node(alias_type, summary_is_shared, a_sels, a:a_rest, b_sels, b:b_re
 
 // returns list of names where expressions like
 // (*(a->b)).c->d yield
-// [d,c,b,a]
+// [a,b,c,d]
 selectors_visited_by_expr::Expression->VarList;
-selectors_visited_by_expr(e) = reverse(rec_selectors_visited_by_expr(e, expr_depth(e)));
+selectors_visited_by_expr(e) = rec_selectors_visited_by_expr(e, expr_depth(e));
 
 rec_selectors_visited_by_expr::Expression,snum->VarList;
 rec_selectors_visited_by_expr(_, -1) = []; // intentionally -1, topmost case in iteration
@@ -484,11 +465,141 @@ rec_nodes_visited_by_expr(e, e_cursor, g, trail, null) =
     rec_nodes_visited_by_expr(e, e_cursor - 1, g, new_list ++ trail, null)
   endif;
 
+
+// ----------------------------------------------
+// is_may_alias / is_must_alias (on summarygraph)
+// ----------------------------------------------
+
+is_may_alias_summarygraph::Expression,Expression,ShapeGraph -> bool;
+is_may_alias_summarygraph(a,b,((S,H),IS) as g) =
+  //let dummy = println("graph=", g) false; in
+  //let dummy = println("is_may: ", expr_asttext(a), ",", expr_asttext(b)) false; in
+  let res =
+  let sels_a = selectors_visited_by_expr(a);
+      sels_b = selectors_visited_by_expr(b); in
+  let var_a  = hd(sels_a); 
+      var_b  = hd(sels_b);
+      rest_a = tl(sels_a);
+      rest_b = tl(sels_b); in
+  if var_exists(var_a,g) && var_exists(var_b,g) then
+    //let dummy = println("0: found vars ", var_a, " , ", var_b) false; in
+    hcd_foreach_lhs_stackedge(stackedgelist_by_var(var_a,S), rest_a, stackedgelist_by_var(var_b,S), rest_b, g)
+  else
+    //let dummy = println("0: not found vars ", var_a, " , ", var_b) false; in
+    false
+  endif;
+  //in let dummy = println("result = ", res,"\n\n") false; 
+  in res;
+
+pointerexp_varid::Expression->VariableId;
+pointerexp_varid(VarRefExp(_) as ref) = varref_varid(ref);
+pointerexp_varid(ArrowExp(ref,_)) = varref_varid(ref);
+pointerexp_varid(DotExp(ref,_)) = varref_varid(ref);
+pointerexp_varid(e) = print(expr_asttext(e)) print(": ") error("unhandled expression");
+
+// calls hcd_rhs_stackedge for each of the edges in edges_a, depth first
+hcd_foreach_lhs_stackedge::StackEdgeList,VarList,StackEdgeList,VarList,ShapeGraph -> bool;
+hcd_foreach_lhs_stackedge(           [],      _,       _,      _, _) = error("stackedge not found");
+hcd_foreach_lhs_stackedge(edge_a:rest_a, sels_a, edges_b, sels_b, ((S,H),IS) as g) =
+  if hcd_foreach_rhs_stackedge(dest_of_stackedge(edge_a), sels_a, edges_b, sels_b, g) then
+    //let dummy = println("1: rhs_stackedge yes") false; in
+    true
+  else
+    if rest_a != [] then
+      //let dummy = println("1: trying next lhs_stackedge") false; in
+      hcd_foreach_lhs_stackedge(rest_a, sels_a, edges_b, sels_b, g)
+    else
+      //let dummy = println("1: all lhs_stackedges tried") false; in
+      false
+    endif
+  endif;
+
+// calls has_common_destination for each of the edges in edges_b, depth first
+hcd_foreach_rhs_stackedge::Node,VarList,StackEdgeList,VarList,ShapeGraph -> bool;
+hcd_foreach_rhs_stackedge(_,      _,            [],      _,               _) = error("stackedge not found");
+hcd_foreach_rhs_stackedge(a, sels_a, edge_b:rest_b, sels_b, ((S,H),IS) as g) =
+  if has_common_destination(a, sels_a, dest_of_stackedge(edge_b), sels_b, g) then
+    //let dummy = println("2: has_common_dest yes") false; in
+    true
+  else
+    if rest_b != [] then
+      //let dummy = println("2: trying next rhs_stackedge") false; in
+      hcd_foreach_rhs_stackedge(a, sels_a, rest_b, sels_b, g)
+    else
+      //let dummy = println("2: all rhs_stackedges tried") false; in
+      false
+    endif
+  endif;
+
+// depth-first search on lhs, then rhs
+// then checks wether destinations on lhs and rhs are the same node
+has_common_destination::Node,VarList,Node,VarList,ShapeGraph -> bool;
+has_common_destination(a,           [], b,           [],               _) =
+  //let dummy = println("x: a = b : ", a, " = ", b, " -> ", a=b) false; in
+  a = b;
+
+has_common_destination(a,           [], b, sel_b:rest_b, ((S,H),IS) as g) =
+  //let dummy = println("x: has_common_dest(", a, ", [],", b, ",", sel_b, ":", rest_b, ",g)") false; in
+  if src_sel_exists(b,sel_b,g) then
+    //let dummy = println("x:   rhs ", b,"->",sel_b," found, going further") false; in
+    hcd_foreach_rhs_heapedge(a, [], heapedgelist_by_src_sel(b,sel_b,H), rest_b, g)
+  else
+    //let dummy = println("x:   rhs ", b,"->",sel_b," not found, backtracking") false; in
+    false
+  endif;
+  
+has_common_destination(a, sel_a:rest_a, b, sels_b, ((S,H),IS) as g) = 
+  //let dummy = println("3: has_common_dest(", a, ",",sel_a,":",rest_a,",",b,",",sels_b,",g)") false; in
+  if src_sel_exists(a,sel_a,g) then
+    //let dummy = println("x:   lhs ", a,"->",sel_a," found, going further") false; in
+    hcd_foreach_lhs_heapedge(heapedgelist_by_src_sel(a,sel_a,H), rest_a, b, sels_b, g)
+  else
+    //let dummy = println("x:   lhs ", a,"->",sel_a," not found, backtracking") false; in
+    false
+  endif;
+
+hcd_foreach_lhs_heapedge::HeapEdgeList,VarList,Node,VarList,ShapeGraph -> bool;
+hcd_foreach_lhs_heapedge(              [],      _, _,      _,               _) = error("heapedge not found");
+hcd_foreach_lhs_heapedge(edge:restedges_a, sels_a, b, sels_b, ((S,H),IS) as g) =
+  if has_common_destination(dest_of_heapedge(edge), sels_a, b, sels_b, g) then
+    //let dummy = println("3: has_common_dest yes") false; in
+    true
+  else
+    if [] != restedges_a then
+      //let dummy = println("3: trying next lhs_heapedge") false; in
+      hcd_foreach_lhs_heapedge(restedges_a, sels_a, b, sels_b, g)
+    else
+      //let dummy = println("3: all lhs_heapedges tried") false; in
+      false
+    endif
+  endif;
+
+
+hcd_foreach_rhs_heapedge::Node,VarList,HeapEdgeList,VarList,ShapeGraph -> bool;
+hcd_foreach_rhs_heapedge(_,      _,               [],      _,               _) = error("heapedge not found");
+hcd_foreach_rhs_heapedge(a, sels_a, edge:restedges_b, sels_b, ((S,H),IS) as g) = 
+  if has_common_destination(a, sels_a, dest_of_heapedge(edge), sels_b, g) then
+    //let dummy = println("4: has_common_dest yes") false; in
+    true
+  else
+    if [] != restedges_b then
+      //let dummy = println("4: trying next rhs_heapedge") false; in
+      hcd_foreach_rhs_heapedge(a, sels_a, restedges_b, sels_b, g)
+    else
+      //let dummy = println("4: all rhs_heapedges tried") false; in
+      false
+    endif
+  endif;
+
+
 var_exists::VariableId,ShapeGraph->bool;
 var_exists(x,((S0,_),_)) =  {e !! (y,ny) as e <-- S0, if (x=y)} != {};
 
 node_by_var::VariableId,ShapeGraph->Node;
-node_by_var(x,((S0,_),_) as g) = hd([nk !! (k,nk) <-- S0, if (k=x)]);
+node_by_var(x, g) = hd(nodelist_by_var(x,g));
+
+nodelist_by_var::VariableId,ShapeGraph->NodeList;
+nodelist_by_var(x,((S0,_),_) as g) = [nk !! (k,nk) <-- S0, if (k=x)];
 
 node_by_src_sel::Node,VariableId,ShapeGraph->Node;
 node_by_src_sel(x,sel,((_,H0),_)) = hd([nk !! (x1,sel1,nk) <-- H0, if x1 = x && sel1 = sel]);
@@ -568,3 +679,5 @@ in
   ((v_new,e_new),s_new);
 */
 
+
+// vim: nowrap syn=haskell:

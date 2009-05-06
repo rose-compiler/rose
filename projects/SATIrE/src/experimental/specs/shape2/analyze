@@ -22,12 +22,15 @@ function analyse {
   label=srw98
   echo "$binary" | grep nnh99 > /dev/null 2>&1 && label=nnh99
 
+  annotated_file=rose_`basename $INPUT`
+
   if [ -e "$binary" ]; then
     echo 
     echo "**** $label *********************************************************************"
-    cmd="$binary --output-gdl=$gdlfile $OPTIONS $INPUT"
+    cmd="$binary --output-gdl=$gdlfile --output-alias-source $OPTIONS $INPUT"
     echo $cmd
     $cmd || echo "-- ABORT --"
+    [ -e $annotated_file ] && mv $annotated_file ${label}_$annotated_file
     echo '********************************************************************************'
   else
     echo
@@ -42,7 +45,7 @@ INPUT=$1
 shift
 OPTIONS="$* --callstringlength=42"
 
-analyse "$srw98" "srw98.gdl"
 analyse "$nnh99" "nnh99.gdl"
+analyse "$srw98" "srw98.gdl"
 echo
 
