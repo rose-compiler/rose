@@ -77,6 +77,7 @@ namespace AbstractHandle{
 
  //----------------Abstract AST/IR node---------------
  //Users  should provide a concrete node implementation
+ // especially a constructor/builder to avoid duplicated creation of abstract_node.
  // We try not to use pure virtual functions here to allow 
  // users to reuse the default implementation as much as possible
  class abstract_node

@@ -10,7 +10,6 @@ namespace AbstractHandle{
 class roseNode: public AbstractHandle::abstract_node 
 {
  public:
-   roseNode(SgNode* snode):mNode(snode){};
    virtual ~roseNode(){};
    void* getNode() const {return (void*) mNode; }
    virtual std::string getConstructTypeName() const;
@@ -27,10 +26,16 @@ class roseNode: public AbstractHandle::abstract_node
   virtual size_t getNumbering (const AbstractHandle::abstract_node* another_node) const;
   virtual std::string toString() const;
   virtual bool operator == (const abstract_node & x) const;
+  friend roseNode* buildroseNode(SgNode* snode);
 protected:
+   // hide constructors to enforce using the builder function instead
+    roseNode(){mNode =NULL;};
+    roseNode(SgNode* snode);
     SgNode* mNode;
 };
 
+  // Use a build function to avoid duplicated building
+   roseNode* buildroseNode(SgNode* snode);
 }
 
 #endif

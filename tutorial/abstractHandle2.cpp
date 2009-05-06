@@ -19,7 +19,7 @@ int main(int argc, char * argv[])
   SgProject *project = frontend (argc, argv);
 
   // Generate a file handle from the first file of the project
-  abstract_node* file_node= new roseNode((project->get_fileList())[0]);
+  abstract_node* file_node= buildroseNode((project->get_fileList())[0]);
   abstract_handle* handle0 = new abstract_handle(file_node);
   cout<<"Created a file handle:\n"<<handle0->toString()<<endl<<endl;;
 

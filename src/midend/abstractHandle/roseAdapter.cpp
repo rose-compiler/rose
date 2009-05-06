@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <map>
 
 #include "abstract_handle.h"
 #include "roseAdapter.h"
@@ -24,6 +25,30 @@ namespace AbstractHandle{
       i++;
     return (VariantT)i;  
   }
+
+  roseNode* buildroseNode(SgNode* snode)
+  {
+    static std::map<SgNode*, roseNode*> sgNodeMap;
+    assert (snode !=NULL);
+    roseNode* result = sgNodeMap[snode];
+    if (result == NULL)
+    {
+      // this should be the only place to call the constructor
+      result = new roseNode(snode);
+      assert (result != NULL);
+      assert (result->getNode()!=NULL);
+      sgNodeMap[snode] = result;
+    }
+    assert (result->getNode()!=NULL);
+    return result;
+  }
+
+  // the major constructor
+   roseNode::roseNode(SgNode* snode)
+   {
+     assert(snode != NULL);
+     mNode=snode;
+   }
 
   /* Remove 'Sg' prefix will get a construct type name for now.
    * More serious implementation will have a conversion from 
@@ -140,7 +165,7 @@ namespace AbstractHandle{
     //if (mNode==NULL) return NULL;
     abstract_node* result = NULL;
     if (mNode->get_parent()!=NULL)
-      result = new roseNode(mNode->get_parent());
+      result = buildroseNode(mNode->get_parent());
     return result;
   }
 
@@ -154,7 +179,7 @@ namespace AbstractHandle{
       return NULL;
     SgFile* filenode = getEnclosingFileNode(mNode);
 
-    abstract_node* result = new roseNode(filenode);
+    abstract_node* result = buildroseNode(filenode);
     return result;
   }
 
@@ -236,7 +261,7 @@ namespace AbstractHandle{
 
     for (Rose_STL_Container<SgNode *>::iterator i=nodelist.begin();i!=nodelist.end();i++)
     {
-      abstract_node* cnode = new roseNode(*i);
+      abstract_node* cnode = buildroseNode(*i);
       if (mspecifier.get_type()==e_position)
       {
         if (isEqual(mspecifier.get_value().positions, cnode->getSourcePos()))
