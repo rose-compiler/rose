@@ -3628,7 +3628,7 @@ AbstractHandle::abstract_handle * SageBuilder::buildAbstractHandle(SgNode* n)
   AbstractHandle::abstract_handle * ahandle =handleMap[n];
   if (ahandle==NULL)
   {
-    AbstractHandle::abstract_node* anode = new AbstractHandle::roseNode(n);
+    AbstractHandle::abstract_node* anode = AbstractHandle::buildroseNode(n);
     ROSE_ASSERT(anode !=NULL );
     ahandle = new AbstractHandle::abstract_handle(anode);
     //TODO do we allow NULL handle to be returned?

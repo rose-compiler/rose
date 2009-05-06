@@ -8833,9 +8833,10 @@ SgNode* SageInterface::getSgNodeFromAbstractHandleString(const std::string& inpu
     if (handle->getNode()!=NULL)
     {
       SgNode* result = (SgNode*)(handle->getNode()->getNode());
-      // deallocate memory
-      delete handle->getNode();
-      delete handle;
+      // deallocate memory, should not do this!!
+      // May corrupt the internal std maps used in abstract handle namespace
+      //delete handle->getNode();
+      //delete handle;
       return result;
     }
   }

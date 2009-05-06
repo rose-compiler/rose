@@ -268,7 +268,7 @@ collectAbstractHandles(SgProject* proj,  TargetList_t& targets)
     if (sfile != NULL)
     {
       // prepare a file handle first
-      abstract_node * file_node = new roseNode(sfile);
+      abstract_node * file_node = buildroseNode(sfile);
       ROSE_ASSERT (file_node);
       abstract_handle* fhandle = new abstract_handle(file_node);
       ROSE_ASSERT (fhandle);

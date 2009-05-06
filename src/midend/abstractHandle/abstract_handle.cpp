@@ -73,6 +73,7 @@ namespace AbstractHandle{
   }
 
   //Create a handle using the source position as the specifier by default
+  // Set parent handle to the file's handle.
   //If source position is not available,then use name or numbering when possible. 
   //TODO add label specifiers
   abstract_handle::abstract_handle(abstract_node* node)
@@ -112,7 +113,10 @@ namespace AbstractHandle{
      {
        abstract_handle* p_handle = handle_map[p_node];
        if (p_handle==NULL)
+       {
          p_handle = new abstract_handle(p_node);
+         handle_map[p_node] = p_handle;
+       }
        parent_handle = p_handle;  
      }
   }
@@ -134,7 +138,10 @@ namespace AbstractHandle{
        { 
          p_handle = handle_map[p_node];
          if (p_handle==NULL)
+         {
            p_handle = new abstract_handle(p_node,stype);
+           handle_map[p_node] = p_handle;
+         }
        }
      } // end if p_handle
       parent_handle = p_handle;
@@ -175,7 +182,10 @@ namespace AbstractHandle{
        { 
          p_handle = handle_map[p_node];
          if (p_handle==NULL)
+         {
            p_handle = new abstract_handle(p_node,stype);
+           handle_map[p_node] = p_handle;
+         }
        }
      }
      parent_handle = p_handle;
@@ -532,20 +542,24 @@ namespace AbstractHandle{
       {
         //cout<<handle_str_vec[i]<<endl;
         abstract_node* node = root->findNode(handle_str_vec[i]);
+        assert (node != NULL);
         if (handle_map[node]==NULL)
         { 
           abstract_handle* phandle = new abstract_handle();
+          handle_map[node] = phandle;
           phandle->fromStringSelf(root_handle,handle_str_vec[i]);
           parent_handle = phandle;
         }
-         else
-           parent_handle= handle_map[node];
-       if (i==0)  // connect the link between the root and the top parent of the string 
-       {
-        if (parent_handle->get_parent_handle() == NULL)   
-           parent_handle->set_parent_handle(root_handle);
+        else
+          parent_handle= handle_map[node];
+
+        if (i==0)  // connect the link between the root and the top parent of the string 
+        {
+          if (parent_handle->get_parent_handle() == NULL)   
+            parent_handle->set_parent_handle(root_handle);
         }   
       } // end for
+
       // patch up parent handle, if not yet set
       if (parent_handle == NULL)
         parent_handle=root_handle;

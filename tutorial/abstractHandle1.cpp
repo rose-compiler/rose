@@ -29,7 +29,7 @@ void visitorTraversal::visit(SgNode* n)
   { 
     cout<<"Creating handles for a loop construct..."<<endl;
     //Create an abstract node
-    abstract_node* anode= new roseNode(forloop);
+    abstract_node* anode= buildroseNode(forloop);
 
     //Create an abstract handle from the abstract node
     //Using source position specifiers by default
@@ -47,7 +47,7 @@ int main(int argc, char * argv[])
   SgProject *project = frontend (argc, argv);
 
   //Generate a file handle
-  abstract_node * file_node = new roseNode((project->get_fileList())[0]);
+  abstract_node * file_node = buildroseNode((project->get_fileList())[0]);
   file_handle = new abstract_handle(file_node);
 
   //Generate handles for language constructs
