@@ -1,3 +1,61 @@
+2009-05-06 18:56  liao6
+
+	* [r5652]
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilder.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/midend/abstractHandle/abstract_handle.cpp,
+	  /trunk/ROSE/src/midend/abstractHandle/abstract_handle.h,
+	  /trunk/ROSE/src/midend/abstractHandle/roseAdapter.cpp,
+	  /trunk/ROSE/src/midend/abstractHandle/roseAdapter.h,
+	  /trunk/ROSE/src/midend/astOutlining/PragmaInterface.cc,
+	  /trunk/ROSE/tutorial/abstractHandle1.cpp,
+	  /trunk/ROSE/tutorial/abstractHandle2.cpp: Fixed some bugs in
+	  abstract handle code
+	  
+	  * used an internal map to avoid duplicated creation of abstract
+	  node
+
+2009-05-06 17:01  matzke
+
+	* [r5651]
+	  /trunk/ROSE/developersScratchSpace/Robb/SemanticVerification/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Robb/SemanticVerification/verifySemantics.C:
+	  Bug fixes for semantic verification
+
+2009-05-06 14:54  matzke
+
+	* [r5650] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/developersScratchSpace/Robb/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Robb/SemanticVerification/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Robb/SemanticVerification/verifySemantics.C:
+	  Added instruction semantics verifier.
+	  
+	  This is a checker that runs in conjunction with the debugger
+	  recently
+	  checked in. See the README for a full description.
+
+2009-05-06 14:53  matzke
+
+	* [r5649]
+	  /trunk/ROSE/developersScratchSpace/Robb/SemanticVerification/Debugger.h,
+	  /trunk/ROSE/developersScratchSpace/Robb/SemanticVerification/DebuggerPtrace.c:
+	  Added simple debugger for semantic verification
+	  
+	  This ptrace-based debugger will allow ROSE's instruction
+	  semantics
+	  module to verify that the semantics are correct. The debugger can
+	  run on
+	  a different machine than ROSE since it uses sockets. This will
+	  allow us
+	  to use a 64-bit ROSE to analyze a 32-bit program, for example.
+
+2009-05-06 14:53  matzke
+
+	* [r5648]
+	  /trunk/ROSE/developersScratchSpace/Robb/SemanticVerification,
+	  /trunk/ROSE/developersScratchSpace/Robb/SemanticVerification/README:
+	  Added README for semantic verification
+
 2009-05-06 01:39  liao6
 
 	* [r5642] /trunk/ROSE/docs/Rose/developersAppendix.tex: Added some
