@@ -1132,7 +1132,7 @@ have an active account with https://outreach.scidac.gov to do this!\\
 \textit{rose/scripts/importRoseDistributionToSVN ROSE\_TOP\_TEST\_DIR}
 
 It conducts a set of sanity checks and postprocessing before the actual importing. e.g. No EDG copyrighted files in the package, remove .svn and other undesired directories or files, make sure all EDG binaries for supported platforms are available.
-
+%------------------------------------------------------------
 \section{Generating ChangeLog2}
 You can generate a GNU-style ChangeLog from ROSE's subversion commit logs using a program named \textit{svn2cl}. 
 Download it from \url{http://ch.tudelft.nl/~arthur/svn2cl/}
@@ -1147,6 +1147,38 @@ svn log --xml --verbose \
 \end{verbatim}
 The command above will include revision numbers into the change log and
 filter out the automatically generated commits updating EDG binary files.
+
+%------------------------------------------------------------
+\section{Compiling ROSE using ROSE Translators}
+It is possible to use a ROSE-based translator to compile the ROSE source
+tree.
+The motivation could be using Compass checkers to check for bugs or
+violations in ROSE's source files. 
+However, there are some pending bugs preventing the process from being fully successful.  
+
+Here are some instructions:
+\begin{itemize}
+\item rename or copy your translator (such as identityTranslator) executable file to a file named
+\textit{roseTranslator}, which is the only name that can be recognized by
+ROSE's configure script to set up necessary flags and system headers etc. 
+\item define \textit{CXX=roseTranslator} to specify the
+compiler(translator) to compile ROSE during configuration.
+\item define \textit{-DNDEBUG} as a workaround for a bug related to assert
+statements.
+\item define \textit{CXXLD=g++} as a workaround for rose translator's
+limitations as a linker.
+\end{itemize}
+In summary, you have to set the necessary search path and shared library
+path for your translator and rename it to textit{roseTranslator}.
+Then a configuration line likes like the following:
+
+\begin{verbatim}
+../sourcetree/configure --with-boost=/home/liao6/opt/boost_1_35_0 \
+--with-CXX_DEBUG="-g -DNDEBUG" --with-C_DEBUG="-g -DNDEBUG" \
+--prefix=/home/liao6/daily-test-rose/compass/install \ 
+CXX=roseTranslator CXXLD=g++
+\end{verbatim}
+%------------------------------------------------------------
 \section{Enabling PHP Support}
 
 \begin{enumerate}
