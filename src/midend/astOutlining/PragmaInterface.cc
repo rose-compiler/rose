@@ -292,7 +292,7 @@ collectAbstractHandles(SgProject* proj,  TargetList_t& targets)
           else
           {
             if (Outliner::enable_debug)
-              cout<<"Found a matching target from a handle:"<<cur_handle<<endl;
+              cout<<"Cannot find a matching target from a handle:"<<cur_handle<<endl;
           }
         }
 

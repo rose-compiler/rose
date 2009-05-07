@@ -21,8 +21,10 @@ bool LoopUnrolling:: cmdline_configure()
 {
         opt = DEFAULT;
         vector<string>& opts = CmdOptions::GetInstance()->opts;
+        // Must use -unroll to turn this on
         vector<string>::const_iterator i = std::find(opts.begin(), opts.end(), "-unroll");
-        if (i == opts.end()) return false;
+        if (i == opts.end()) 
+          return false;
         size_t idx = i - opts.begin();
         opts.erase(opts.begin() + idx);
         if (idx != opts.size() && opts[idx] == "locond") {
@@ -50,7 +52,9 @@ bool LoopUnrolling:: cmdline_configure()
 bool LoopUnrolling::operator() ( AstInterface& fa, const AstNodePtr& s, AstNodePtr& r)
 {
    bool isLoop = false;
-   if (enclosingloop == s || (enclosingloop == AST_NULL && (isLoop = fa.IsLoop(s)))) {
+   if (enclosingloop == s || (enclosingloop == AST_NULL && (isLoop = fa.IsLoop(s)))) 
+   {
+       // find the outer most enclosing loop of s 
        for (enclosingloop = fa.GetParent(s); 
             enclosingloop != AST_NULL && !fa.IsLoop(enclosingloop); 
             enclosingloop = fa.GetParent(enclosingloop));
@@ -62,6 +66,7 @@ bool LoopUnrolling::operator() ( AstInterface& fa, const AstNodePtr& s, AstNodeP
    AstNodePtr body;
    SymbolicVal stepval, ubval, lbval;
    SymbolicVar ivar;
+   // is Canonical loop?
    if (la->IsFortranLoop(s, &ivar, &lbval, &ubval, &stepval, &body)) { 
           AstNodePtr r = s;
           SymbolicVal nstepval = stepval * unrollsize;
@@ -75,9 +80,11 @@ bool LoopUnrolling::operator() ( AstInterface& fa, const AstNodePtr& s, AstNodeP
           SymbolicVal loopval = ubval - lbval + 1;
           if (stepval.isConstInt(stepnum) && loopval.isConstInt(loopnum) 
                && !(loopnum % stepnum)) {
+            // Check if there are leftover iterations if loop step is not 1
              hasleft = false; 
           }
           else {
+          // Create a loop for leftover  iterations when loopnum % stepnum !=0 
              nubval = ubval - SymbolicVal(unrollsize - 1);
              if (opt & COND_LEFTOVER) {
                  leftbody = fa.CreateBlock();
@@ -108,6 +115,7 @@ bool LoopUnrolling::operator() ( AstInterface& fa, const AstNodePtr& s, AstNodeP
                nvar = SymbolicVar(nvarname,body);
           }
           bodylist.push_back(body);
+          // Generate unrolled loop's body
           for (int i = 1; i < unrollsize; ++i) {
               AstNodePtr bodycopy = fa.CopyAstTree(origbody);
               if (opt & USE_NEWVAR) {
@@ -132,6 +140,7 @@ bool LoopUnrolling::operator() ( AstInterface& fa, const AstNodePtr& s, AstNodeP
                  leftbody = body1;
               }
           }
+          // Insert the loop for leftover iterations when iterationCount%step !=0
           if (hasleft) {
               fa.InsertStmt( r, lefthead, false, true);
           }
