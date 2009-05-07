@@ -263,6 +263,7 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/midend/loopProcessing/driver \
      -I$(top_srcdir)/src/midend/loopProcessing/computation \
      -I$(top_srcdir)/src/midend/loopProcessing/outsideInterface \
+     -I$(top_srcdir)/src/midend/loopProcessing/prepostTransformation \
      -I$(top_srcdir)/src/midend/loopProcessing/depGraph \
      -I$(top_srcdir)/src/midend/loopProcessing/depInfo \
       $(ROSE_SIDEEFFECTS_INCLUDE) \

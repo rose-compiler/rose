@@ -745,16 +745,22 @@ void setLoopCondition(SgScopeStatement* loop, SgStatement* cond);
 //! A canonical form is defined as : one initialization statement, a test expression, and an increment expression , loop index variable should be of an integer type.
 bool isCanonicalForLoop(SgNode* loop, SgInitializedName** ivar=NULL, SgExpression** lb=NULL, SgExpression** ub=NULL, SgExpression** step=NULL, SgStatement** body=NULL);
 
+//! Normalize loop init stmt by promoting the single variable declaration statement outside of the for loop header's init statement, e.g. for (int i=0;) becomes int i_x; for (i_x=0;..) and rewrite the loop with the new index variable, if necessary
+bool normalizeForLoopInitDeclaration(SgForStatement* loop);
+
 //! Normalize a for loop, return true if successful
 //!
-//! Translations are 
-//!    * test expression:
-//!           i<x is normalized to i<= (x-1)
+//! Translations are : 
+//!    For test expression:
+//!           i<x is normalized to i<= (x-1) and
 //!           i>x is normalized to i>= (x+1)
-//!    * increment expression:
-//!           i++ is normalized to i+=1
+//!    For increment expression:
+//!           i++ is normalized to i+=1 and 
 //!           i-- is normalized to i+=-1
 bool forLoopNormalization(SgForStatement* loop);
+
+//! Internal Test Only! Unroll an innermost loop with a specified unrolling factor. A wrapper on top of Qing's loop processor's loopUnroll class. This transformation cannot pass AstTests::runAllTests().
+bool loopUnrolling(SgForStatement* loop, size_t unrolling_factor);
 
 //@}
 

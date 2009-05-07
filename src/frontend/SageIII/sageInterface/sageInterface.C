@@ -14,6 +14,7 @@
 #include "ArrayAnnot.h"
 #include "ArrayInterface.h"
 
+#include "LoopUnroll.h"
 
 #include "abstract_handle.h"
 #include "roseAdapter.h"
@@ -5378,16 +5379,74 @@ static SgExpression* SkipCasting (SgExpression* exp)
     return exp;
 }
 
+//! Promote the single variable declaration statement outside of the for loop header's init statement, e.g. for (int i=0;) becomes int i_x; for (i_x=0;..) and rewrite the loop with the new index variable
+bool SageInterface::normalizeForLoopInitDeclaration(SgForStatement* loop)
+{
+  ROSE_ASSERT(loop!=NULL);
+
+  SgStatementPtrList &init = loop ->get_init_stmt();
+  if (init.size() !=1) // We only handle one statement case
+    return false;
+  else
+  {
+    SgStatement* init1 = init.front();
+    SgVariableDeclaration* decl = isSgVariableDeclaration(init1);
+    if (decl)
+    {
+      SgVariableSymbol* osymbol = getFirstVarSym(decl);
+      SgInitializedName* ivarname = decl->get_variables().front();
+      SgExpression* lbast = NULL; // the lower bound, initial state
+      ROSE_ASSERT(ivarname != NULL);
+      SgInitializer * initor = ivarname->get_initializer();
+      if (isSgAssignInitializer(initor))
+      {
+        lbast = isSgAssignInitializer(initor)->get_operand();
+      }
+      // add a new statement like int i; and insert it to the enclosing function
+      // There are multiple choices about where to insert this statement: 
+      //  global scope: max name pollution, 
+      //  right before the loop: mess up perfectly nested loops
+      //  So we prepend the statement to the enclosing function's body
+      SgFunctionDefinition* funcDef =  getEnclosingFunctionDefinition(loop);
+      ROSE_ASSERT(funcDef!=NULL);
+      SgBasicBlock* funcBody = funcDef->get_body();
+      ROSE_ASSERT(funcBody!=NULL);
+      //TODO a better name
+      std::ostringstream os;
+      os<<ivarname->get_name().getString();
+      os<<"_nom_";
+      os<<++gensym_counter;
+      SgVariableDeclaration* ndecl = buildVariableDeclaration(os.str(),ivarname->get_type(), NULL, funcBody);
+      prependStatement(ndecl, funcBody);
+      SgVariableSymbol* nsymbol = getFirstVarSym(ndecl);
+
+      // replace variable ref to the new symbol 
+      Rose_STL_Container<SgNode*> varRefs = NodeQuery::querySubTree(loop,V_SgVarRefExp);
+      for (Rose_STL_Container<SgNode *>::iterator i = varRefs.begin(); i != varRefs.end(); i++)
+      {
+        SgVarRefExp *vRef = isSgVarRefExp((*i));
+        if (vRef->get_symbol()==osymbol) 
+          vRef->set_symbol(nsymbol);
+      }
+      // replace for (int i=0;) with for (i=0;)
+      SgExprStatement* ninit = buildAssignStatement(buildVarRefExp(nsymbol),deepCopy(lbast)); 
+      removeStatement(decl); //any side effect to the symbol? put after symbol replacement anyway
+      init.push_back(ninit);
+      ninit->set_parent(loop);
+    }  
+  } 
+  return true;
+}
 //! Normalize a for loop, part of migrating Qing's loop handling into SageInterface
 // Her loop translation does not pass AST consistency tests so we rewrite some of them here
 // NormalizeCPP.C  NormalizeLoopTraverse::ProcessLoop()
 bool SageInterface::forLoopNormalization(SgForStatement* loop)
 {
   ROSE_ASSERT(loop != NULL);
-  // Must only have one initialization statement
+  // Normalize initialization statement of the for loop
+  // for (int i=0;... ) becomes int i; for (i=0;..)
   // Only roughly check here, isCanonicalForLoop() should be called to have a stricter check
-  SgStatementPtrList &init = loop ->get_init_stmt();
-  if (init.size() !=1)
+  if (!normalizeForLoopInitDeclaration(loop))
     return false;
 
   // Normalized the test expressions
@@ -5406,7 +5465,7 @@ bool SageInterface::forLoopNormalization(SgForStatement* loop)
   if (testlhs_var == NULL )
     return false;
   SgVariableSymbol * var_symbol = testlhs_var->get_symbol();
-   if (var_symbol==NULL)
+  if (var_symbol==NULL)
     return false;
 
   switch (test->variantT()) {
@@ -5431,27 +5490,27 @@ bool SageInterface::forLoopNormalization(SgForStatement* loop)
   ROSE_ASSERT(incr != NULL);
   switch (incr->variantT()) {
     case V_SgPlusPlusOp: //i++ is normalized to i+=1
-     {
-      // check if the variables match
-      SgVarRefExp* incr_var = isSgVarRefExp(SkipCasting(isSgPlusPlusOp(incr)->get_operand())); 
-      if (incr_var == NULL) return false;
-      if ( incr_var->get_symbol() != var_symbol) 
-       return false; 
-      replaceExpression(incr,
-         buildPlusAssignOp(isSgExpression(deepCopy(incr_var)),buildIntVal(1)));
-      break;
-    }
+      {
+        // check if the variables match
+        SgVarRefExp* incr_var = isSgVarRefExp(SkipCasting(isSgPlusPlusOp(incr)->get_operand())); 
+        if (incr_var == NULL) return false;
+        if ( incr_var->get_symbol() != var_symbol) 
+          return false; 
+        replaceExpression(incr,
+            buildPlusAssignOp(isSgExpression(deepCopy(incr_var)),buildIntVal(1)));
+        break;
+      }
     case V_SgMinusMinusOp: //i-- is normalized to i+=-1
-    {
-       // check if the variables match
-      SgVarRefExp* incr_var = isSgVarRefExp(SkipCasting(isSgMinusMinusOp(incr)->get_operand())); 
-      if (incr_var == NULL) return false;
-      if ( incr_var->get_symbol() != var_symbol) 
-       return false; 
-      replaceExpression(incr,
-          buildPlusAssignOp(isSgExpression(deepCopy(incr_var)), buildIntVal(-1)));
-      break;
-    } 
+      {
+        // check if the variables match
+        SgVarRefExp* incr_var = isSgVarRefExp(SkipCasting(isSgMinusMinusOp(incr)->get_operand())); 
+        if (incr_var == NULL) return false;
+        if ( incr_var->get_symbol() != var_symbol) 
+          return false; 
+        replaceExpression(incr,
+            buildPlusAssignOp(isSgExpression(deepCopy(incr_var)), buildIntVal(-1)));
+        break;
+      } 
     case V_SgAssignOp:
     case V_SgPlusAssignOp:
     case V_SgMinusAssignOp:
@@ -5460,6 +5519,37 @@ bool SageInterface::forLoopNormalization(SgForStatement* loop)
       return false;
   }
 
+  // Normalize the loop body: ensure there is a basic block
+  SgBasicBlock* body = ensureBasicBlockAsBodyOfFor(loop); 
+  ROSE_ASSERT(body!=NULL); 
+
+  return true;
+}
+
+bool SageInterface::loopUnrolling(SgForStatement* loop, size_t unrolling_factor)
+{
+  // normalize the loop first
+  if (!forLoopNormalization(loop))
+    return false; // input loop cannot be normalized to a canonical form
+  // prepare Loop transformation environment
+  SgFunctionDeclaration* func = getEnclosingFunctionDeclaration(loop);  
+  ROSE_ASSERT(func!=NULL);
+  AstInterfaceImpl faImpl(func->get_definition()->get_body());
+  AstInterface fa(&faImpl);
+  ArrayAnnotation* annot = ArrayAnnotation::get_inst();
+  ArrayInterface array_interface (*annot);
+  array_interface.initialize(fa, AstNodePtrImpl(func->get_definition()));
+  array_interface.observe(fa);
+  LoopTransformInterface lpTrans(fa, array_interface);
+
+  // invoke the unrolling defined in Qing's code
+  // the traversal will skip the input node ptr, so we pass loop's parent ptr instead
+  AstNodePtr result = AstNodePtrImpl(loop->get_parent()) ;
+
+  LoopUnrolling lu(unrolling_factor);
+  //LoopUnrolling lu(unrolling_factor,LoopUnrolling::COND_LEFTOVER);//works but not a good choice
+  //if (lu.cmdline_configure()) // this will cause unrolling to be skipped if no -unroll is used in command line
+  result = lu(lpTrans, result);
   return true;
 }
 
