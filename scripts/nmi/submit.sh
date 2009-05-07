@@ -22,11 +22,11 @@ then
 	exit 1
 fi
 
-if [[ "$PLATFORMS" == "" ]]
-then
-	echo "please set PLATFORMS in yout option file"
-	exit 1
-fi
+#if [[ "$PLATFORMS" == "" ]]
+#then
+#	echo "please set PLATFORMS in yout option file"
+#	exit 1
+#fi
 
 # optional options, however most likely these need to be set
 # a warning is emitted
@@ -42,6 +42,7 @@ fi
 
 # Determine HEAD revision number
 REVISION=`svn -r HEAD log https://outreach.scidac.gov/svn/rose/trunk/ | grep '^Load rose' | cut -d'-' -f 3 | cut -d' ' -f 1`
+PLATFORMS=`arr=($(echo "build_configs/x86_deb_3.1/minimal_default" | awk -F"/" '{$1=$1; print}')); echo ${arr[1]}`
 
 # exporting options, to be recognized in the submit and input scripts
 export _NMI_TITLE=${TITLE}

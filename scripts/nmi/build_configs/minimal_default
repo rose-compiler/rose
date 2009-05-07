@@ -1,5 +1,0 @@
-TITLE="testing default on all linux platforms"
-DESCRIPTION="minimal configuration options, gcc 4.2.4, without java"
-PREREQS="gcc-4.2.4, boost-1.35.0"
-CONFIGURE_OPTIONS="--with-boost=/prereq/boost-1.35.0 --with-CXX_WARNINGS=-Wall --without-java"
-PLATFORMS="x86_64_deb_4.0, x86_64_deb_5.0, x86_64_fc_4, x86_64_fc_5, x86_64_fc_8, x86_64_fc_9, x86_64_rhap_5, x86_64_rhap_5.2, x86_64_rhas_3, x86_64_rhas_4, x86_64_sles_8, x86_64_sles_9, x86_cent_4.2, x86_deb_3.1, x86_deb_4.0, x86_deb_5.0, x86_fc_5, x86_rhap_5, x86_rhas_3, x86_rhas_4, x86_sl_4.4, x86_sles_8, x86_sles_9, x86_slf_3, x86_suse_10.0, x86_suse_10.2"
