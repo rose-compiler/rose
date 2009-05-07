@@ -712,7 +712,8 @@ indent(file_info(_Filename,_Line,Col)) :- tab(Col).
 % Print all PPIs at Location (before, after, inside)
 unparse_ppi(_, []).
 unparse_ppi(Location, [PPI|PPIs]) :-
-  PPI =.. [_Type, Text, Location, _Fi], !,
+  PPI =.. [_Type, Text, Location, Fi], !,
+  (Fi = file_info(_, _, 1) -> nl; true),
   write(Text), /*FIXME use file info instead!*/ nl,
   unparse_ppi(Location, PPIs).
 

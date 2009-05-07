@@ -39,7 +39,7 @@ PROBLEM Interval_Analysis
   direction:  forward
   carrier:    itvl_State
   init:       bot
-  init_start: lift([->(bot, top)])
+  init_start: lift([->top])
   combine:    comb
   retfunc:    ret
   widening:   wide
@@ -190,11 +190,11 @@ eval(exp, state, context) =
           UnsignedLongVal(value) => (duplift(snum(val-astulong(value))), state);
           UnsignedLongLongIntVal(value) => (duplift(snum(val-astullong(value))), state);
           // -- NOT IMPLEMENTED
-          FloatVal(_) => ((bot,top), state);
-          DoubleVal(_) => ((bot,top), state);
+          FloatVal(_) => (top, state);
+          DoubleVal(_) => (top, state);
           _         => print("unsupported value exp: ")
                        print(exp) print("\n") 
-                                  ((bot,top), state);
+                                  (top, state);
         endcase
     else case exp of
       VarRefExp(name)       =>  // --print("###is_VARREF") 
@@ -209,11 +209,11 @@ eval(exp, state, context) =
                                 else
                                     (s{!id!}, state);
       AssignInitializer(e1) => eval(e1, state, context);
-      NewExp(_,_,_)         => ((bot,top), state);
+      NewExp(_,_,_)         => (top, state);
       _                     => println("**WARNING: ignoring unknown exp: ",
                                        exp, ": ", expr_asttext(exp))
-                               ((bot,top), state); 
-                                      // --((bot,top), lift([-> top]));
+                               (top, state); 
+                                      // --(top, lift([-> top]));
     endcase   ;
   endcase;
 
@@ -224,7 +224,7 @@ binary(left, right, exp, state, context) =
   // -- pair assigned to r and rs, respectively.
   // --println("BINARY(", exp, " :: ", expr_asttext(exp), ") in state ", state)
   let rr = eval(right, state, context);
-      dontknow = ((bot,top), state);
+      dontknow = (top, state);
   in case exp of
     // -- If this is an assignment operation, update the state.
     // -- We do not evaluate the left-hand side as this might
@@ -232,7 +232,7 @@ binary(left, right, exp, state, context) =
     AssignOp(_, _) => // --println("ASSIGNOP: ", left, "=", rr!1!2, " in state ", rr!2!2, " ...")
       if bad(rr!1!2) then
         //(top, rr!2!2)
-        updatestate(rr!2!2, left, (bot,top), context)
+        updatestate(rr!2!2, left, top, context)
       else
         let r = rr!1!2; rs = rr!2!2; in
         updatestate(rs, left, r, context)
@@ -349,7 +349,7 @@ unary(child, exp, state, context) =
     // -- otherwise, see if this is some arithmetic node
       _ =>
     // -- if child node is not analyzable, bail out
-    if bad(er) then ((bot,top), es) else // BUG!
+    if bad(er) then (top, es) else // BUG!
        let e1 <= er!1!2; e2 <= er!2!2; in
       case exp of
         MinusOp(_)    => (ltup(-e2, -e1), es);
@@ -363,7 +363,7 @@ unary(child, exp, state, context) =
         // -- here, the pointer analysis knows how to handle it; however, we
         // -- use state es to reflect possible side effects of evaluating
         // -- the operand
-        AddressOfOp(_)  => ((bot,top), es);
+        AddressOfOp(_)  => (top, es);
   
         _ => print("unsupported unary: ") print(exp) print("\n") 
              (top, lift([-> top]));
@@ -386,7 +386,7 @@ int_bool(0) = false;
 int_bool(_) = true;
 
 updatestate :: itvl_State, Expression, itvl_Interval, ContextInfo -> itvl_IntervalStatePair;
-updatestate(bot, _, _, _) = ((bot,top),bot);
+updatestate(bot, _, _, _) = (top,bot);
 // -- Update state state by assigning the value value to the variable
 // -- referenced by expression exp (if any). Yields a pair of the value
 // -- and the new state.
@@ -441,10 +441,10 @@ weak_update_v(s, v, value) =
 // merged_var_values(s, vsyms): Look up an interval that covers the values
 // of all variables in vsyms in state s.
 merged_var_values :: itvl_State, *VariableSymbolNT -> itvl_Interval;
-merged_var_values(top, _) = (bot,top);
+merged_var_values(top, _) = top;
 merged_var_values(_, [!]) =
     println("in merged_var_values: merging empty variable list!")
-    (bot,top);
+    top;
 merged_var_values(lift(s), v::[!]) = s{!varsym_varid(v)!};
 merged_var_values(lift(s) as ls, v::vs) =
     let merged = merged_var_values(ls, vs);
@@ -484,10 +484,10 @@ constrain_array_index(s, _, _) = s;
 
 branch :: Expression, itvl_State, bool, bool, ContextInfo -> itvl_State;
 branch(exp, state, edge, isLoopBody, context) =
-  // --print("\nbranching...\nexp: ") print(exp) 
-  // --print("\nstate: ") print(state) 
-  // --print("\nedge: ") print(edge)  
-  // --print("\n")
+  print("\nbranching...\nexp: ") print(exp) 
+  print("\nstate: ") print(state) 
+  print("\nedge: ") print(edge)  
+  print("\n")
 
   let pair = eval(exp, state, context); in
   let c = interval_to_bool(pair!1!2); 
@@ -515,14 +515,15 @@ branch(exp, state, edge, isLoopBody, context) =
 
 eval_branch_condition :: Expression, itvl_State, itvl_State, bool, bool, ContextInfo -> itvl_State;
 eval_branch_condition(exp, state, newstate, edge, isLoopBody, context) =
+  println("eval_branch_condition ", exp)
   if is_binary(exp) then
     let lhs = eval(binary_get_left_child(exp), state, context)!1!2;
         rhs = eval(binary_get_right_child(exp), state, context)!1!2; in
 
     case exp of 
-      AndOp(exp1, exp2) =>
+      AndOp(exp1, exp2) => println("AND: ", state)
         let state1 = 
-          eval_branch_condition(exp1, state, newstate, edge, isLoopBody, context); in
+          eval_branch_condition(exp1, state, newstate, edge, isLoopBody, context); in println(state1)
           eval_branch_condition(exp2, state1, newstate, edge, isLoopBody, context);
   
       LessThanOp(var, _) =>
@@ -566,7 +567,7 @@ eval_branch_condition(exp, state, newstate, edge, isLoopBody, context) =
       _ => newstate;
     endcase
   else 
-    lift([-> (bot,top)])
+    lift([-> top])
     //newstate
   ;
 

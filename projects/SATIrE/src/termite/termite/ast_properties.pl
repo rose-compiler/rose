@@ -244,7 +244,7 @@ var_interval(analysis_info(AnalysisInfo),
 			 _Ai, _Fi),
 	     interval(Min,Max)) :-
   member(pre_info(Contexts), AnalysisInfo),
-  member(merged:map([top,top],Intvls),Contexts),
+  member(merged:map(_,Intvls),Contexts),
   member(Name->[Min1,Max1],Intvls),
   (  number(Min1)
   -> Min = Min1
