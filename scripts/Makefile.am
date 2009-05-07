@@ -7,7 +7,8 @@ distributedScripts = \
      dotgen2                       lsdot                  \
      check-dist-file dotgenLetter  generateDirectoryGraph \
      libtoolcp     \
-     dotgenLetterPDF dotgenLetterPNG
+     dotgenLetterPDF dotgenLetterPNG \
+     nmi
 
 # scripts put into the distribution
 EXTRA_DIST = README $(distributedScripts)
