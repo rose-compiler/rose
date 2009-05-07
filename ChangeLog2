@@ -1,3 +1,23 @@
+2009-05-07 16:57  liao6
+
+	* [r5662] /trunk/ROSE/config/Makefile.for.ROSE.includes.and.libs,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.h,
+	  /trunk/ROSE/src/midend/astOutlining/PragmaInterface.cc,
+	  /trunk/ROSE/src/midend/loopProcessing/prepostTransformation/LoopUnroll.C,
+	  /trunk/ROSE/src/midend/loopProcessing/prepostTransformation/LoopUnroll.h,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/inputloopUnrolling.C,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/loopUnrolling.C:
+	  Created an interface to Qing's loop unrolling
+	  
+	  * a new function: bool
+	  SageInterface::loopUnrolling(SgForStatement* loop, size_t
+	  unrolling_factor)
+	  * extended loop normalization to promote C99 style loop init
+	  statement using declaration out of a loop header
+	  * a test program using abstract handle to call loop unrolling
+
 2009-05-06 18:56  liao6
 
 	* [r5652]
