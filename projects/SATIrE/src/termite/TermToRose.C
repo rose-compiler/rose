@@ -1046,7 +1046,7 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
     PrologCompTerm* annot = retrieveAnnotation(t);
     ROSE_ASSERT(annot != NULL);
     /* get value and name, create a dummy declaration*/
-    assert_arity(annot, 3);
+    assert_arity(annot, 4);
     int value = toInt(annot->at(0));
     SgName v_name = *toStringP(annot->at(1));
     SgEnumDeclaration* decdummy = dynamic_cast<SgEnumDeclaration*>(toRose(annot->at(2)));
