@@ -328,7 +328,7 @@ class EasyStorage <rose_hash_multimap*> :
    };
 
 // #if !OLD_GRAPH_NODES
-#ifdef ROSE_USE_NEW_GRAPH_NODES
+
 
 // DQ (8/19/2008): Added support for new graph IR nodes. 
 // EasyStorage for storing the rose_hash_multimap  
@@ -539,7 +539,7 @@ class EasyStorage <rose_graph_node_edge_hash_multimap> :
      static void readFromFile (std::istream& in);
    };
 
-#endif
+
 
 /* EasyStorageMapEntry concerning an std::string and an AstAttribut
   Remarks: 

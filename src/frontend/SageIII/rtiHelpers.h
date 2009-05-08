@@ -146,7 +146,7 @@ static std::string toStringForRTI(const std::map<uint64_t ,std::pair<int,std::pa
 
 #if 1
 // #if !OLD_GRAPH_NODES
-#ifdef ROSE_USE_NEW_GRAPH_NODES
+//#ifdef ROSE_USE_NEW_GRAPH_NODES
 // DQ (8/18/2008): Added support for new Graph IR node.
 
 #ifdef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
@@ -272,8 +272,8 @@ static std::string toStringForRTI(const rose_undirected_graph_hash_multimap & x)
 }
 #endif
 #endif
-#endif
-
+//#endif
+// end condition new_graph
 
 static std::string toStringForRTI(const SgAccessModifier& m) {
   return m.displayString();

@@ -15,11 +15,9 @@ HEADER_END
 HEADER_GRAPH_PREDECLARATION_START
 
 #if 0
-#ifdef ROSE_USE_NEW_GRAPH_NODES
 // Required for Boost Spanning Tree support.
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/kruskal_min_spanning_tree.hpp>
-#endif
 #endif
 /*!
     Doxygen documentation for graph class (should maybe be put with the rest of the
@@ -31,13 +29,6 @@ HEADER_GRAPH_PREDECLARATION_END
 
 
 HEADER_GRAPH_START
-#ifdef ROSE_USE_NEW_GRAPH_NODES
-  // DQ (4/26/2009): Added iterator types
-  // typedef SgGraphNodePtrList::iterator node_iterator;
-  // typedef SgGraphEdgePtrList::iterator edge_iterator;
-
-  // typedef SgGraphNodeList::iterator node_iterator;
-  // typedef SgGraphEdgeList::iterator edge_iterator;
 
       /*! \brief Edge Type 
 
@@ -82,10 +73,10 @@ HEADER_GRAPH_START
                e_last_property      /*!< last value (unused, serves as upper bound on values) */
              };
 
-#endif
+
 
 #if 0
-#ifdef ROSE_USE_NEW_GRAPH_NODES
+
   // DQ (4/29/2009): Boost graph Type
  //! Boost Graph Type used to represent ROSE graphs within Boost Graph Algorithms.
      typedef boost::adjacency_list < boost::vecS, boost::vecS, boost::undirectedS, boost::no_property, boost::property < boost::edge_weight_t, int > > BoostGraphType;
@@ -95,13 +86,9 @@ HEADER_GRAPH_START
 
   // DQ (4/29/2009): We might need this in the future, but not now!
   // typedef boost::graph_traits < BoostGraphType >::vertex_descriptor BoostVertexDescriptor;
-#endif
+
 #endif
 
-#ifdef ROSE_USE_NEW_GRAPH_NODES
-  // Supporting graph type required by Boost Graph Library.
-  // typedef boost::graph_traits < BoostGraphType >::edge_descriptor BoostEdgeDescriptor;
-#endif
 
  //! Simple edge type used to input data to Boost algorithms
      typedef std::pair<int, int> BoostEdgeType;
@@ -141,11 +128,28 @@ HEADER_GRAPH_START
   // DQ (4/29/2009): Added as interface function (just calls the get_index() member function).
      int get_graph_id() const;
 
+     
+     // tps (4/30/2009): Added properties for nodes and edges
+     // todo: this will be replaced with AstAttributes once the graph conversion is done.
+   	  std::string getProperty(SgGraph::GraphProperties property, SgGraphNode* node);
+	  std::string getProperty(SgGraph::GraphProperties property, SgGraphEdge* edge);
+	  void setProperty(SgGraph::GraphProperties property, SgGraphNode* node, std::string value);
+	  void setProperty(SgGraph::GraphProperties property, SgGraphEdge* edge, std::string value);
+
+ 	// tps (4/30/2009): The following are functions on the graph that were used before 
+ 	// in the old graph implementation
+  	//std::set<SgGraphEdge*> getEdge(SgGraphNode* src, SgGraphNode* trg);
+        void checkIfGraphNodeExists(std::string& trg_mnemonic, std::vector<SgGraphNode*>& nodes);
+//SgGraphNode* checkIfGraphNodeExists(std::string& trg_mnemonic);
+        
+
+
  //! Check if the node is present in the graph.
      bool exists( SgGraphNode* node );
 
  //! Check if the edge is present in the graph.
      bool exists( SgGraphEdge* edge );
+
 
  //! Builds a set of edges that are associated with a specific node.
      std::set<SgGraphEdge*> computeEdgeSet( SgGraphNode* node );
@@ -191,7 +195,7 @@ HEADER_GRAPH_END
 
 HEADER_GRAPH_POSTDECLARATION_START
 
-#ifdef ROSE_USE_NEW_GRAPH_NODES
+
 // DQ (4/29/2009): Added support for boost edges to be used in boost graph library algorithms.
 // We need this global type so that the member access functions (defined outside the class)
 // for data members of this type can be resolved.
@@ -202,12 +206,10 @@ typedef SgBoostEdgeList* SgBoostEdgeListPtr;
 typedef SgGraph::SgBoostEdgeWeightList SgBoostEdgeWeightList;
 typedef SgBoostEdgeWeightList* SgBoostEdgeWeightListPtr;
 
-#ifdef ROSE_USE_NEW_GRAPH_NODES
+
 // Supporting graph type required by Boost Graph Library.
 // typedef boost::graph_traits < SgGraph::BoostGraphType >::edge_descriptor BoostEdgeDescriptor;
-#endif
 
-#endif
 
 HEADER_GRAPH_POSTDECLARATION_END
 
@@ -287,6 +289,26 @@ HEADER_INCIDENCE_UNDIRECTED_GRAPH_END
 
 
 HEADER_INCIDENCE_DIRECTED_GRAPH_START
+ 	// tps (4/30/2009): The following are functions on the graph that were used before 
+ 	// in the old graph implementation
+  	std::set<SgGraphEdge*> getEdge(SgGraphNode* src);
+  	bool checkIfGraphEdgeExists(SgGraphNode* src);
+
+     void post_construction_initialization();
+
+ //! Support for adding SgGraphEdge to SgGraph.
+     SgDirectedGraphEdge* addDirectedEdge( SgGraphNode* a, SgGraphNode* b, const std::string & name = "");
+
+ //! Add support for externally build SgGraphNode objects
+SgDirectedGraphEdge* addDirectedEdge( SgDirectedGraphEdge* edge  );
+
+
+
+	// tps (4/30/2009): Added to support functionality for DirectedGraphs		   
+    void getSuccessors(SgGraphNode* node, std::vector <SgGraphNode*>& vec );
+    void getPredecessors(SgGraphNode* node, std::vector <SgGraphNode*>& vec );
+    std::set<SgDirectedGraphEdge*> getDirectedEdge(SgGraphNode* src, SgGraphNode* trg);
+    bool checkIfDirectedGraphEdgeExists(SgGraphNode* src, SgGraphNode* trg);
 HEADER_INCIDENCE_DIRECTED_GRAPH_END
 
 
@@ -13139,12 +13161,12 @@ SOURCE_TEMPLATE_ARGUMENT_LIST_END
 
 SOURCE_GRAPHNODE_START
 
-#ifdef ROSE_USE_NEW_GRAPH_NODES
+
 // DQ (4/29/2009): Declaration of space for static data member.
 int SgGraphNode::p_index_counter = 0;
-#endif
 
-#if !defined(ROSE_USE_NEW_GRAPH_NODES) || defined(ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY)
+
+// tps : todo : remove this soon
 void
 SgGraphNode::append_properties( int addr, const std::string & prop )
    {
@@ -13152,17 +13174,17 @@ SgGraphNode::append_properties( int addr, const std::string & prop )
   /* implemented directly until we can fix how the statementList is built */
      p_properties[addr] = prop;
    }
-#endif
+
 
 void
 SgGraphNode::post_construction_initialization()
    {
-#ifdef ROSE_USE_NEW_GRAPH_NODES
+
   // DQ (4/29/2009): This function could be inlined for better performance.
      p_index = p_index_counter++;
 
   // printf ("In SgGraphNode::post_construction_initialization(): p_index = %u p_index_counter = %u \n",p_index,p_index_counter);
-#endif
+
    }
 
 SOURCE_GRAPHNODE_END
@@ -13170,12 +13192,12 @@ SOURCE_GRAPHNODE_END
 
 SOURCE_GRAPHEDGE_START
 
-#ifdef ROSE_USE_NEW_GRAPH_NODES
+
 // DQ (4/29/2009): Declaration of space for static data member.
 int SgGraphEdge::p_index_counter = 0;
-#endif
 
-#if !defined(ROSE_USE_NEW_GRAPH_NODES) || defined(ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY)
+
+// tps : todo : remove me
 void
 SgGraphEdge::append_properties( int addr, const std::string & prop )
    {
@@ -13183,17 +13205,17 @@ SgGraphEdge::append_properties( int addr, const std::string & prop )
   // implemented directly until we can fix how the statementList is built
      p_properties[addr] = prop;
    }
-#endif
+
 
 void
 SgGraphEdge::post_construction_initialization()
    {
-#ifdef ROSE_USE_NEW_GRAPH_NODES
+
   // DQ (4/29/2009): This function could be inlined for better performance.
      p_index = p_index_counter++;
 
   // printf ("In SgGraphEdge::post_construction_initialization(): p_index = %u p_index_counter = %u \n",p_index,p_index_counter);
-#endif
+
    }
 
 SOURCE_GRAPHEDGE_END
@@ -13201,17 +13223,17 @@ SOURCE_GRAPHEDGE_END
 
 SOURCE_GRAPH_START
 
-#if defined(ROSE_USE_NEW_GRAPH_NODES) && !defined(ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY)
-#warning "ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY not set"
-#endif
+//#if defined(ROSE_USE_NEW_GRAPH_NODES) && !defined(ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY)
+//#warning "ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY not set"
+//#endif
 
-#ifdef ROSE_USE_NEW_GRAPH_NODES
+
 // DQ (4/29/2009): Declaration of space for static data member.
 int SgGraph::p_index_counter = 0;
-#endif
 
-#ifdef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
-// tps (08/08/07): Added the graph, graph nodes and graph edges 
+
+
+// tps : todo : remove me -----------------------------------------
 void
 SgGraph::append_properties( int addr, const std::string & prop )
    {
@@ -13232,24 +13254,9 @@ SgGraph::hashCode( const char* p, int len) const // hash a character array
         }
      return (int)h; 
    }
-#endif
+// -----------------------------------------------------
 
-#if !defined(ROSE_USE_NEW_GRAPH_NODES) || defined(ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY)
-int
-SgGraph::get_graph_id() const
-   {
-  // This function returns a unique id for each graph object
-  // (interface function provided to support older interface).
-     ROSE_ASSERT(this != NULL);
 
-#ifdef ROSE_USE_NEW_GRAPH_NODES
-     return get_index();
-#else
-  // The old IR nodes implementation can just require a constant (I think).
-     return 0;
-#endif
-   }
-#endif
 
 // DQ (4/28/2009): Added support to have internal list nodes built automatically in the SgGraph constructor.
 void
@@ -13257,55 +13264,131 @@ SgGraph::post_construction_initialization()
    {
      ROSE_ASSERT(this != NULL);
 
-#ifdef ROSE_USE_NEW_GRAPH_NODES
-
-#ifdef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
-  // Build the graph node list IR node
-     if (get_nodes() == NULL)
-        {
-          set_nodes(new SgGraphNodeList());
-        }
-     ROSE_ASSERT(get_nodes() != NULL);
-
-  // Build the graph edge list IR node
-     if (get_edges() == NULL)
-        {
-          set_edges(new SgGraphEdgeList());
-        }
-     ROSE_ASSERT(get_edges() != NULL);
-#endif
 
   // Setup an internal graph_id
      p_index = p_index_counter++;
 
+   }
+
+
+
+std::string
+SgGraph::getProperty(SgGraph::GraphProperties property, SgGraphNode* node) {
+  string value="";
+  map < int , string> node_p = node->get_properties();
+  map < int , string>::iterator prop = node_p.find(property);
+  if (prop!=node_p.end()) {
+    value = prop->second;
+  }
+  return value;
+}
+
+std::string
+SgGraph::getProperty(SgGraph::GraphProperties property, SgGraphEdge* edge) {
+  string value="";
+  map < int , string> node_p = edge->get_properties();
+  map < int , string>::iterator prop = node_p.find(property);
+  if (prop!=node_p.end()) {
+    value = prop->second;
+  }
+  return value;
+}
+
+
+void
+SgGraph::setProperty(SgGraph::GraphProperties property, SgGraphNode* node,
+			   std::string value) {
+  node->append_properties(property, value);
+}
+
+void
+SgGraph::setProperty(SgGraph::GraphProperties property, SgGraphEdge* edge,
+			   std::string value) {
+  edge->append_properties(property, value);
+}
+
+
+
+
+void
+SgGraph::checkIfGraphNodeExists(string& trg_mnemonic, std::vector<SgGraphNode*>& nodes) {
+  rose_graph_string_integer_hash_multimap::const_iterator it1, it2;
+  pair <rose_graph_string_integer_hash_multimap::const_iterator, rose_graph_string_integer_hash_multimap::const_iterator> 
+    iter = p_string_to_node_index_multimap.equal_range(trg_mnemonic);
+  it1 = iter.first;
+  it2 = iter.second;
+  SgGraphNode* node = NULL;
+  for (;it1!=it2; ++it1) {
+    //
+    //rose_graph_string_integer_hash_multimap::iterator it = p_string_to_node_index_multimap.find(trg_mnemonic);
+    //if (it!=p_string_to_node_index_multimap.end()) {
+    int index =  it1->second;
+    node = p_node_index_to_node_map.find(index)->second;
+    nodes.push_back(node);
+  }
+  //  return nodes;
+
+  //  return NULL;
+}
+
+#if 0
+// old interface
+SgGraphNode*
+SgGraph::checkIfGraphNodeExists(string& trg_mnemonic) {
+#if 1
+  SgGraphNode* node = NULL;
+  SgGraphNodeList* gnodes = get_nodes();
+  rose_graph_hash_multimap nodes = gnodes->get_nodes();
+  rose_graph_hash_multimap::iterator it = nodes.find(trg_mnemonic);
+  if (it!=nodes.end()) {
+    node =  it->second;
+    return node;
+  }
+#endif
+
+  return NULL;
+}
+
   // Increase the size of the hash_map
      resize_hash_maps( 1000 );
 #endif
-   }
+
 
 SOURCE_GRAPH_END
 
 
 SOURCE_DIRECTED_GRAPH_EDGE_START
+
+
 SgDirectedGraphEdge::SgDirectedGraphEdge(std::string label, std::string type, int n, SgGraphNode* from, SgGraphNode* to)
+
    {
+   	p_name = label;
+//   	p_type=t;
+   	p_node_A = from;
+   	p_node_B=to;
    }
+
 SOURCE_DIRECTED_GRAPH_EDGE_END
 
 
 SOURCE_DIRECTED_GRAPH_NODE_START
 // DQ (4/23/2009): Removed to debug use of new Graph node interfaces.
-#if 1
-SgDirectedGraphNode::SgDirectedGraphNode(std::string, std::string, int n)
+
+SgDirectedGraphNode::SgDirectedGraphNode(std::string name , std::string t , int n)
    {
+   	p_name = name;
+//   	p_type=t;
+   //	p_node_A = n1;
    }
-#endif
+
 SOURCE_DIRECTED_GRAPH_NODE_END
 
 
 SOURCE_DIRECTED_GRAPH_START
-SgDirectedGraph::SgDirectedGraph(std::string, std::string)
+SgDirectedGraph::SgDirectedGraph(std::string name, std::string t)
    {
+   p_name=name;
    }
 SOURCE_DIRECTED_GRAPH_END
 
@@ -13315,6 +13398,158 @@ SOURCE_INCIDENCE_UNDIRECTED_GRAPH_END
 
 
 SOURCE_INCIDENCE_DIRECTED_GRAPH_START
+
+
+void
+SgIncidenceDirectedGraph::post_construction_initialization()
+   {
+     ROSE_ASSERT(this != NULL);
+
+   }
+
+
+bool
+SgIncidenceDirectedGraph::checkIfGraphEdgeExists(SgGraphNode* src) {
+  //SgGraphEdgeList* gedges = get_edgesOut();
+  rose_graph_integer_edge_hash_multimap edges = get_node_index_to_edge_multimap_edgesOut();
+  bool exists = false;
+  rose_graph_integer_edge_hash_multimap::iterator it = edges.find(src->get_index());
+  if (it!=edges.end()) {
+    exists=true;
+  }
+  return exists;
+}
+
+std::set <SgGraphEdge*>
+SgIncidenceDirectedGraph::getEdge(SgGraphNode* src) {
+  //SgGraphEdgeList* gedges = get_edgesOut();
+  rose_graph_integer_edge_hash_multimap edges = get_node_index_to_edge_multimap_edgesOut();
+  set<SgGraphEdge*> medges;
+  rose_graph_integer_edge_hash_multimap::iterator it1, it2;
+  pair <rose_graph_integer_edge_hash_multimap::iterator, rose_graph_integer_edge_hash_multimap::iterator> iter =
+    edges.equal_range(src->get_index());
+  it1 = iter.first;
+  it2 = iter.second;
+  for (;it1!=it2; ++it1) {
+    //    SgGraphNode* source = it1->first;
+    SgGraphEdge* edge = isSgGraphEdge(it1->second);
+    medges.insert(edge);
+  }
+  return medges;
+}
+
+
+
+
+
+
+void
+SgIncidenceDirectedGraph::getSuccessors(SgGraphNode* node, std::vector <SgGraphNode*>& vec ) {
+  //SgGraphEdgeList* gedges = get_edgesOut();
+  rose_graph_integer_edge_hash_multimap edges = get_node_index_to_edge_multimap_edgesOut();
+  rose_graph_integer_edge_hash_multimap::iterator it1, it2;
+  pair <rose_graph_integer_edge_hash_multimap::iterator, rose_graph_integer_edge_hash_multimap::iterator> iter =
+    edges.equal_range(node->get_index());
+  it1 = iter.first;
+  it2 = iter.second;
+  //  cerr << " >>>>>>>>>>>>>>> Outedges for node " << node->get_index() << endl;
+  ROSE_ASSERT(node);
+  for (;it1!=it2; ++it1) {
+    SgDirectedGraphEdge* edge = isSgDirectedGraphEdge(it1->second);
+    //    cerr << "            are : " << edge->get_index() << endl;
+    ROSE_ASSERT(edge);
+    if (edge) {
+      SgGraphNode* target = isSgGraphNode(edge->get_to());
+      ROSE_ASSERT(target);
+      if (target) {
+	    string type_n = getProperty(SgGraph::type, edge);
+	    if (type_n==RoseBin_support::ToString(SgGraph::cfg))
+	       vec.push_back(target);
+	    else 
+	       printf("Different edge type \n");
+      }
+    } else {
+      printf("This is not a DirectedGraphEdge.\n");
+      ROSE_ASSERT(edge);
+    }
+  }
+}
+
+void
+SgIncidenceDirectedGraph::getPredecessors(SgGraphNode* node, std::vector <SgGraphNode*>& vec ) {
+  //SgGraphEdgeList* gredges = get_edgesIn();
+  rose_graph_integer_edge_hash_multimap edges = get_node_index_to_edge_multimap_edgesIn();
+  rose_graph_integer_edge_hash_multimap::iterator it1, it2;
+  pair <rose_graph_integer_edge_hash_multimap::iterator, rose_graph_integer_edge_hash_multimap::iterator> iter =
+    //fails
+    //	  get_edgesIn()->get_edges().equal_range(node);
+    edges.equal_range(node->get_index());
+  it1 = iter.first;
+  it2 = iter.second;
+  for (;it1!=it2; ++it1) {
+    SgDirectedGraphEdge* edge = isSgDirectedGraphEdge(it1->second);
+    if (edge) {
+      SgGraphNode* source = isSgGraphNode(edge->get_from());
+      if (source) {
+	string type_n = getProperty(SgGraph::type, edge);
+	if (type_n==RoseBin_support::ToString(SgGraph::cfg))
+	  vec.push_back(source);
+      }
+    }
+  }
+}
+
+
+
+set<SgDirectedGraphEdge*>
+SgIncidenceDirectedGraph::getDirectedEdge(SgGraphNode* src, SgGraphNode* trg) {
+  //SgGraphEdgeList* gedges = get_edgesOut();
+  rose_graph_integer_edge_hash_multimap edges = get_node_index_to_edge_multimap_edgesOut();
+  set<SgDirectedGraphEdge*> medges;
+  rose_graph_integer_edge_hash_multimap::iterator it1, it2;
+  pair <rose_graph_integer_edge_hash_multimap::iterator, rose_graph_integer_edge_hash_multimap::iterator> iter =
+    edges.equal_range(src->get_index());
+  it1 = iter.first;
+  it2 = iter.second;
+  for (;it1!=it2; ++it1) {
+    //    SgGraphNode* source = it1->first;
+    SgDirectedGraphEdge* edge = isSgDirectedGraphEdge(it1->second);
+    SgGraphNode* target = isSgGraphNode(edge->get_to());
+    if (target==trg)
+      medges.insert(edge);
+  }
+  return medges;
+}
+
+
+bool
+SgIncidenceDirectedGraph::checkIfDirectedGraphEdgeExists(SgGraphNode* src, SgGraphNode* trg) {
+  if (src==NULL)
+    return false;
+  if (trg==NULL)
+    return false;
+  //  ROSE_ASSERT(src);
+  //ROSE_ASSERT(src->get_index());
+    
+  //  SgGraphEdgeList* gedges = get_edgesOut();
+  rose_graph_integer_edge_hash_multimap edges = get_node_index_to_edge_multimap_edgesOut();
+  bool exists = false;
+  rose_graph_integer_edge_hash_multimap::iterator it1, it2;
+  pair <rose_graph_integer_edge_hash_multimap::iterator, rose_graph_integer_edge_hash_multimap::iterator> iter = 
+    edges.equal_range(src->get_index());
+  it1 = iter.first;
+  it2 = iter.second;
+  for (;it1!=it2; ++it1) {
+    SgDirectedGraphEdge* edge = isSgDirectedGraphEdge(it1->second);
+    SgGraphNode* target = isSgGraphNode(edge->get_to());
+    if (target==trg)
+      exists=true;
+  }
+  return exists;
+}
+
+
+
 SOURCE_INCIDENCE_DIRECTED_GRAPH_END
 
 
