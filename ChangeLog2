@@ -1,3 +1,35 @@
+2009-05-08 17:21  matzke
+
+	* [r5679]
+	  /trunk/ROSE/developersScratchSpace/Robb/SemanticVerification/SummaryDescription.odp,
+	  /trunk/ROSE/developersScratchSpace/Robb/SemanticVerification/SummaryDescription.pdf,
+	  /trunk/ROSE/developersScratchSpace/Robb/SemanticVerification/SummaryDescriptionP2.odg:
+	  Added more documentation for insn semantic verification
+	  
+	  These are OpenOffice documents, from which the PDF is generated.
+
+2009-05-08 15:23  matzke
+
+	* [r5678]
+	  /trunk/ROSE/developersScratchSpace/Robb/SemanticVerification/Makefile.am:
+	  Removed extraneous semicolon
+
+2009-05-08 14:01  matzke
+
+	* [r5677]
+	  /trunk/ROSE/developersScratchSpace/Robb/SemanticVerification/verifySemantics.C:
+	  Replaced open_memstream() with std::ostringstream
+
+2009-05-08 14:01  matzke
+
+	* [r5676]
+	  /trunk/ROSE/developersScratchSpace/Robb/SemanticVerification/Makefile.am:
+	  Temporarily removed DebuggerPtrace.c from the Makefile.am
+	  
+	  This is failing on OSX and is so simple to build by hand anyway
+	  that I'm
+	  removing it for now.
+
 2009-05-08 03:06  dquinlan
 
 	* [r5667]
