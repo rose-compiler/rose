@@ -153,11 +153,38 @@ HEADER_GRAPH_START
   //! Integer index version of "std::set<SgGraphEdge*> computeEdgeSet( SgGraphNode* node );"
      std::set<int> computeEdgeSet( int node_index );
 
+ //! Build set of node index pairs associated with node index (one of the value of the pair will be equal to the input node_index).
+     std::set< std::pair<int,int> > computeNodeIndexPairSet( int node_index );
+
  //! Builds a set of node index values associated with a label.
      std::set<SgGraphNode*> computeNodeSet( const std::string & label );
 
   //! Integer index version of "std::set<SgGraphNode*> computeNodeSet( const std::string & label );"
      std::set<int> computeNodeIndexSet( const std::string & label );
+
+  // Number of nodes in graph.
+     size_t numberOfGraphNodes() const;
+
+  // Number of edges in graph.
+     size_t numberOfGraphEdges() const;
+
+     void display_node_index_to_edge_multimap() const;
+     void display_node_index_to_node_map() const;
+     void display_edge_index_to_edge_map() const;
+     void display_node_index_pair_to_edge_multimap() const;
+     void display_string_to_node_index_multimap() const;
+     void display_string_to_edge_index_multimap() const;
+
+#ifdef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
+     void display_nodes() const;
+     void display_edges() const;
+#endif
+
+//! Resize the internal hash tables based on the number of nodes (hash_maps and hash_multimaps for edges are made larger by multiplying by the value "numberOfEdges" ).
+     void resize_hash_maps( size_t numberOfNodes, size_t numberOfEdges = 10 );
+
+  //! Report the size in bytes of the graph (includes all edges and ndes from all hash_maps and hash_multimaps).
+     size_t memory_usage();
 
 HEADER_GRAPH_END
 
@@ -13250,6 +13277,9 @@ SgGraph::post_construction_initialization()
 
   // Setup an internal graph_id
      p_index = p_index_counter++;
+
+  // Increase the size of the hash_map
+     resize_hash_maps( 1000 );
 #endif
    }
 
@@ -13257,7 +13287,7 @@ SOURCE_GRAPH_END
 
 
 SOURCE_DIRECTED_GRAPH_EDGE_START
-SgDirectedGraphEdge::SgDirectedGraphEdge(std::string, std::string, int n, SgGraphNode*, SgGraphNode*)
+SgDirectedGraphEdge::SgDirectedGraphEdge(std::string label, std::string type, int n, SgGraphNode* from, SgGraphNode* to)
    {
    }
 SOURCE_DIRECTED_GRAPH_EDGE_END

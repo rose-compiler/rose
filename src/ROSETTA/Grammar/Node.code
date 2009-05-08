@@ -1176,7 +1176,7 @@ std::ostream & operator<< ( std::ostream & os, const rose_graph_integer_edge_has
 
 // DQ (4/30/2009): Added to support more of the Graph functionality in new ROSE IR nodes
 // typedef rose_hash::hash_map<int,SgGraphEdge*, rose_hash::hash_integer, rose_hash::eqstr_graph_edge> rose_graph_integer_edge_hash_multimap_base_type;
-typedef rose_hash::hash_map<int,SgGraphEdge*> rose_graph_integer_edge_hash_multimap_base_type;
+typedef rose_hash::hash_multimap<int,SgGraphEdge*> rose_graph_integer_edge_hash_multimap_base_type;
 class rose_graph_integer_edge_hash_multimap : public rose_graph_integer_edge_hash_multimap_base_type
    {
   // This class is used to map nodes to edges in the highest level graph class.
