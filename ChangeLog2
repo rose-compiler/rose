@@ -1,3 +1,84 @@
+2009-05-08 03:06  dquinlan
+
+	* [r5667]
+	  /trunk/ROSE/developersScratchSpace/Dan/graph_tests/Makefile.am,
+	  /trunk/ROSE/developersScratchSpace/Dan/graph_tests/graph_test_1.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/graph_tests/graph_test_3.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/graph_tests/graph_test_4.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/graph_tests/graph_test_5.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/graph_tests/graph_test_6.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/graph_tests/hash_multimap.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/graph_tests/inputCode_main.C,
+	  /trunk/ROSE/projects/palette/rose.P,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Node.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Support.code,
+	  /trunk/ROSE/src/ROSETTA/src/support.C,
+	  /trunk/ROSE/src/frontend/SageIII/astVisualization/Makefile.am,
+	  /trunk/ROSE/src/frontend/SageIII/astVisualization/walrus.C,
+	  /trunk/ROSE/src/frontend/SageIII/astVisualization/walrus.h,
+	  /trunk/ROSE/src/frontend/SageIII/rose_graph_support.C,
+	  /trunk/ROSE/src/frontend/SageIII/rtiHelpers.h: Latest minor bug
+	  fixes to new Graph IR nodes.
+
+2009-05-07 23:01  heller9
+
+	* [r5666] /trunk/ROSE/scripts/Makefile.am,
+	  /trunk/ROSE/scripts/nmi/build_configs/minimal_default,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_64_deb_4.0,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_64_deb_4.0/minimal_default,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_64_deb_5.0,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_64_deb_5.0/minimal_default,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_64_fc_4,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_64_fc_4/minimal_default,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_64_fc_5,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_64_fc_5/minimal_default,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_64_fc_8,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_64_fc_8/minimal_default,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_64_fc_9,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_64_fc_9/minimal_default,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_64_rhap_5,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_64_rhap_5.2,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_64_rhap_5.2/minimal_default,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_64_rhap_5/minimal_default,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_64_rhas_4,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_64_rhas_4/minimal_default,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_64_sles_9,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_64_sles_9/minimal_default,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_cent_4.2,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_cent_4.2/minimal_default,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_deb_3.1,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_deb_3.1/minimal_default,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_deb_4.0,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_deb_4.0/minimal_default,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_deb_5.0,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_deb_5.0/minimal_default,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_fc_5,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_fc_5/minimal_default,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_rhap_5,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_rhap_5/minimal_default,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_rhas_3,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_rhas_3/minimal_default,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_rhas_4,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_rhas_4/minimal_default,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_sl_4.4,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_sl_4.4/minimal_default,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_sles_8,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_sles_8/minimal_default,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_sles_9,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_sles_9/minimal_default,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_slf_3,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_slf_3/minimal_default,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_suse_10.0,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_suse_10.0/minimal_default,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_suse_10.2,
+	  /trunk/ROSE/scripts/nmi/build_configs/x86_suse_10.2/minimal_default,
+	  /trunk/ROSE/scripts/nmi/cronjobs,
+	  /trunk/ROSE/scripts/nmi/submit.sh: Edited NMI build and test
+	  scripts
+	  
+	  - Added nmi scripts for distribution
+	  - every platform got its own directory inside build_configs
+
 2009-05-07 16:57  liao6
 
 	* [r5662] /trunk/ROSE/config/Makefile.for.ROSE.includes.and.libs,
