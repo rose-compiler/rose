@@ -148,6 +148,8 @@ static std::string toStringForRTI(const std::map<uint64_t ,std::pair<int,std::pa
 // #if !OLD_GRAPH_NODES
 #ifdef ROSE_USE_NEW_GRAPH_NODES
 // DQ (8/18/2008): Added support for new Graph IR node.
+
+#ifdef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
 // static std::string toStringForRTI(const SgGraphNodeDirectedGraphEdgeMultimapPtrList & x)
 static std::string toStringForRTI(const rose_graph_node_edge_hash_multimap & x)
 {
@@ -157,6 +159,7 @@ static std::string toStringForRTI(const rose_graph_node_edge_hash_multimap & x)
   ss << "]";
   return ss.str();
 }
+#endif
 
 static std::string toStringForRTI(const rose_graph_integer_node_hash_map & x)
 {
@@ -227,6 +230,7 @@ static std::string toStringForRTI(const rose_directed_graph_hash_multimap & x)
 }
 #endif
 
+#ifdef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
 // DQ (8/18/2008): Added support for new Graph IR node.
 // static std::string toStringForRTI(const SgStringGraphNodeMapPtrList & x)
 static std::string toStringForRTI(const rose_graph_hash_multimap & x)
@@ -237,6 +241,7 @@ static std::string toStringForRTI(const rose_graph_hash_multimap & x)
   ss << "]";
   return ss.str();
 }
+#endif
 
 #if 0
 // DQ (5/1/2009): This is no longer used and is replaced by an implementation using a hash_map.

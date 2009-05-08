@@ -1385,6 +1385,7 @@ Grammar::setUpSupport ()
   // These IR nodes might be eliminated in favor of just a function to generate the same level 
   // of support using a combination of two maps in SgGraph.
 
+#ifdef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
      GraphNodeList.setFunctionPrototype ( "HEADER_GRAPH_NODE_LIST", "../Grammar/Support.code");
      GraphNodeList.setDataPrototype("rose_graph_hash_multimap","nodes","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1392,7 +1393,7 @@ Grammar::setUpSupport ()
      GraphEdgeList.setFunctionPrototype ( "HEADER_GRAPH_EDGE_LIST", "../Grammar/Support.code");
      GraphEdgeList.setDataPrototype("rose_graph_node_edge_hash_multimap","edges","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
+#endif
 
   // ******************************************************************************
   //                                  SgGraph
