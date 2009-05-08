@@ -20,7 +20,9 @@
 //#include "../graph/RoseBin_GmlGraph.h"
 
 #include <cstdlib>
+#include "GraphAlgorithms.h"
 
+//typedef rose_graph_node_edge_hash_multimap edgeType;
 
 
 // **************** AS DEFINED BY ANDREAS *****************************************
@@ -105,19 +107,24 @@ class FindNodeVisitor: public std::binary_function<SgNode*, std::vector<SgLocate
 
 // ************************************************************************************
 
-class RoseBin_FlowAnalysis : public AstSimpleProcessing {
+class RoseBin_FlowAnalysis : public AstSimpleProcessing {//, public GraphAlgorithms {
+ public:
+  //remove later!
+   //typedef rose_hash::hash_map <std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string> nodeType;
+
+
  protected:
    rose_hash::hash_map <uint64_t, SgAsmInstruction* > rememberInstructions; // Insn address -> ROSE insn
 
-  typedef rose_hash::hash_map< uint64_t, SgDirectedGraphNode*> tabletype_inv;
+  typedef rose_hash::hash_map< uint64_t, SgGraphNode*> tabletype_inv;
 
   //tabletype_inv usetable_instr;
   tabletype_inv deftable_instr;
 
   int nrOfFunctions;
 
-  typedef SB_DirectedGraph::nodeType nodeType;
-  typedef rose_hash::hash_map < std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string> edgeType;
+  //typedef SB_DirectedGraph::nodeType nodeType;
+  //typedef rose_hash::hash_map < std::string, SgDirectedGraphEdge*,rose_hash::hash_string,rose_hash::eqstr_string> edgeType;
 
   SgAsmNode* globalBin;
   int func_nr;
@@ -134,7 +141,7 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
 
   // needed for CallGraphAnalysis
   SgAsmFunctionDeclaration* funcDecl;
-  SgDirectedGraphNode* funcDeclNode;
+  SgGraphNode* funcDeclNode;
 
 
 
@@ -154,7 +161,7 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
 
   static bool initialized;
 
-  VirtualBinCFG::AuxiliaryInformation* info;
+  //VirtualBinCFG::AuxiliaryInformation* info;
 
   void initFunctionList(SgAsmNode* global);
   void process_jumps();
@@ -169,12 +176,12 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
   int nrNodes;
   int nrEdges;
 
-
+  GraphAlgorithms* g_algo;
  public:
   //  RoseBin* roseBin;
 
-  RoseBin_FlowAnalysis(SgAsmNode* global, VirtualBinCFG::AuxiliaryInformation* cfgInfo) {
-    info = cfgInfo;
+  RoseBin_FlowAnalysis(SgAsmNode* global, GraphAlgorithms* algo) {
+    g_algo=algo;
     nrNodes=0;
     nrEdges=0;
     db = RoseBin_support::getDataBaseSupport();
@@ -206,8 +213,7 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
       process_jumps();
       initialized = true;
     }
-    //    deftable_instr.clear();
-    //usetable_instr.clear();
+
   }
   virtual ~RoseBin_FlowAnalysis() {}
 
@@ -228,12 +234,12 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
 			 int functionSize, int countDown,
 			 std::string& currentFunctionName, int func_nr);
 
-  SgDirectedGraphNode*
+  SgGraphNode*
     getNodeFor(uint64_t inst) { return deftable_instr[inst];}
 
 
   void createInstToNodeTable();
-  uint64_t getAddressForNode(SgDirectedGraphNode* node);
+  uint64_t getAddressForNode(SgGraphNode* node);
 
   // converts string to hex
   template <class T>
@@ -253,9 +259,13 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
     return nrEdges;
   }
 
-  bool sameParents(SgDirectedGraphNode* node, SgDirectedGraphNode* next);
-  void getRootNodes(std::vector <SgDirectedGraphNode*>& rootNodes);
+  bool sameParents(SgGraphNode* node, SgGraphNode* next);
+  void getRootNodes(std::vector <SgGraphNode*>& rootNodes);
 
+
+  SgGraphNode* addCFNode(std::string& name, std::string& type, int address, bool isFunction, SgNode* int_node);
+
+  void clearMaps();
 
 };
 

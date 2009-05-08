@@ -294,8 +294,8 @@ namespace Compass {
   class GraphProcessingWithRunFunction : public RoseBin_DataFlowAbstract {
   public:
     const Checker* checker;
-    GraphProcessingWithRunFunction():checker(NULL) {}
-    GraphProcessingWithRunFunction(Checker* mychecker):checker(mychecker) {}
+  GraphProcessingWithRunFunction():RoseBin_DataFlowAbstract(NULL),checker(NULL) {}
+  GraphProcessingWithRunFunction(Checker* mychecker):RoseBin_DataFlowAbstract(NULL),checker(mychecker) {}
     virtual ~GraphProcessingWithRunFunction() {}
     virtual void run(SgNode*)=0;
     //virtual void run(std::string, SgDirectedGraphNode*, SgDirectedGraphNode*)=0;

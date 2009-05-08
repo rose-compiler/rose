@@ -16,7 +16,7 @@ class RoseBin_VariableAnalysis : public RoseBin_DataFlowAbstract{
  private:
  public:
 
-  RoseBin_VariableAnalysis(RoseBin_DefUseAnalysis* defuse) {
+ RoseBin_VariableAnalysis(RoseBin_DefUseAnalysis* defuse, GraphAlgorithms* algo):RoseBin_DataFlowAbstract(algo) {
     deftable = (defuse->deftable);
   }
   ~RoseBin_VariableAnalysis() {}
@@ -26,8 +26,8 @@ class RoseBin_VariableAnalysis : public RoseBin_DataFlowAbstract{
   std::string getIntCallName_Linux32bit(uint64_t rax,RoseBin_DataTypes::DataTypes& data_ebx,
 					RoseBin_DataTypes::DataTypes& data_ecx,
 					RoseBin_DataTypes::DataTypes& data_edx,
-					std::vector<uint64_t>& val_rbx, 
-					std::vector<uint64_t>& val_rcx, 
+					std::vector<uint64_t>& val_rbx,
+					std::vector<uint64_t>& val_rcx,
 					std::vector<uint64_t>& val_rdx,
 					std::vector<uint64_t>& pos_ebx,
 					std::vector<uint64_t>& pos_ecx,
@@ -36,8 +36,8 @@ class RoseBin_VariableAnalysis : public RoseBin_DataFlowAbstract{
   std::string getIntCallName_Linux64bit(uint64_t rax,RoseBin_DataTypes::DataTypes& data_ebx,
 					RoseBin_DataTypes::DataTypes& data_ecx,
 					RoseBin_DataTypes::DataTypes& data_edx,
-					std::vector<uint64_t>& val_rbx, 
-					std::vector<uint64_t>& val_rcx, 
+					std::vector<uint64_t>& val_rbx,
+					std::vector<uint64_t>& val_rcx,
 					std::vector<uint64_t>& val_rdx,
 					std::vector<uint64_t>& pos_ebx,
 					std::vector<uint64_t>& pos_ecx,
@@ -46,17 +46,17 @@ class RoseBin_VariableAnalysis : public RoseBin_DataFlowAbstract{
   std::string getIntCallName(uint64_t rax,RoseBin_DataTypes::DataTypes& data_ebx,
 			     RoseBin_DataTypes::DataTypes& data_ecx,
 			     RoseBin_DataTypes::DataTypes& data_edx,
-			    std::vector<uint64_t>& val_rbx, 
-			    std::vector<uint64_t>& val_rcx, 
+			    std::vector<uint64_t>& val_rbx,
+			    std::vector<uint64_t>& val_rcx,
 			    std::vector<uint64_t>& val_rdx,
 			     std::vector<uint64_t>& pos_ebx,
 			     std::vector<uint64_t>& pos_ecx,
 			     std::vector<uint64_t>& pos_edx,
 			     uint64_t fpos_rbx, uint64_t fpos_rcx, uint64_t fpos_rdx);
 
-  bool run(std::string& name, SgDirectedGraphNode* node,SgDirectedGraphNode* previous);
+  bool run(std::string& name, SgGraphNode* node,SgGraphNode* previous);
 
-  bool runEdge(SgDirectedGraphNode* node, SgDirectedGraphNode* next) {
+  bool runEdge(SgGraphNode* node, SgGraphNode* next) {
     return false;
   }
 
@@ -67,7 +67,7 @@ class RoseBin_VariableAnalysis : public RoseBin_DataFlowAbstract{
   void getValueForDefinition(std::vector<uint64_t>& vec,
 			     std::vector<uint64_t>& positions,
 			     uint64_t& fpos,
-			     SgDirectedGraphNode* node,
+			     SgGraphNode* node,
 			     std::pair<X86RegisterClass, int> reg );
 
 };

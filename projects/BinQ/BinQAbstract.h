@@ -31,8 +31,10 @@ class BinQSupport;
 class BinQAbstract //: public QWidget
 {
   public:
+  VirtualBinCFG::AuxiliaryInformation* info;
+  GraphAlgorithms* algo;
 
-  BinQAbstract() {};
+  BinQAbstract() {info=NULL;};
   virtual ~BinQAbstract(){};
 
     // internal data that stores information of each table entry

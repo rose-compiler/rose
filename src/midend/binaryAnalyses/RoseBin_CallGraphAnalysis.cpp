@@ -13,8 +13,8 @@ using namespace std;
 static bool debug = false;
 
 void
-RoseBin_CallGraphAnalysis::findClusterOfNode(SgDirectedGraphNode* next_n, 
-					     int& currentCluster, 
+RoseBin_CallGraphAnalysis::findClusterOfNode(SgGraphNode* next_n,
+					     int& currentCluster,
 					     std::map<SgAsmFunctionDeclaration*,int>& visited) {
   int resultsCluster=0;
   std::map<SgAsmFunctionDeclaration*,int>::const_iterator t = visited.begin();
@@ -23,10 +23,10 @@ RoseBin_CallGraphAnalysis::findClusterOfNode(SgDirectedGraphNode* next_n,
     int cluster = t->second;
     ROSE_ASSERT(func);
     if (debug)
-    cerr << "  ..... contains : " << cluster << "  node : ." << RoseBin_support::HexToString(func->get_address()) << ".  " << endl; 
+    cerr << "  ..... contains : " << cluster << "  node : ." << RoseBin_support::HexToString(func->get_address()) << ".  " << endl;
   }
 
-  std::set<SgDirectedGraphNode*> curr_cluster;
+  std::set<SgGraphNode*> curr_cluster;
   // check if this node has been visited before
   SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(next_n->get_SgNode());
   ROSE_ASSERT(func);
@@ -45,30 +45,30 @@ RoseBin_CallGraphAnalysis::findClusterOfNode(SgDirectedGraphNode* next_n,
   // if it has not been seen before, we remember it in visited_f and traverse the call graph
 
   // traverse the graph from next to node
-  std::vector<SgDirectedGraphNode*> successors_f;
-  std::set<SgDirectedGraphNode*> visited_f;
+  std::vector<SgGraphNode*> successors_f;
+  std::set<SgGraphNode*> visited_f;
 
-  vector<SgDirectedGraphNode*> worklist;
+  vector<SgGraphNode*> worklist;
   worklist.push_back(next_n);
   visited_f.insert(next_n);
 
   while (!worklist.empty()) {
-    SgDirectedGraphNode* current = worklist.back();
+    SgGraphNode* current = worklist.back();
     worklist.pop_back();
     successors_f.clear();
-    vizzGraph->getSuccessors(current, successors_f);    
+    vizzGraph->getSuccessors(current, successors_f);
 
     if (debug)
     cerr << "    >>>> RoseBin_CallGraph: successor size of  : ." <<
       RoseBin_support::HexToString(isSgAsmFunctionDeclaration(current->get_SgNode())->get_address()) <<
       " == " << successors_f.size() << endl;
-    vector<SgDirectedGraphNode*>::iterator succ = successors_f.begin();
+    vector<SgGraphNode*>::iterator succ = successors_f.begin();
     for (;succ!=successors_f.end();++succ) {
-      SgDirectedGraphNode* next = *succ;      
+      SgGraphNode* next = *succ;
       SgAsmFunctionDeclaration* func_next = isSgAsmFunctionDeclaration(next->get_SgNode());
       ROSE_ASSERT(func_next);
 
-	std::set<SgDirectedGraphNode*>::iterator 
+	std::set<SgGraphNode*>::iterator
 	  it =visited_f.find(next);
 	if (it==visited_f.end()) {
 	  visited_f.insert(next);
@@ -78,8 +78,8 @@ RoseBin_CallGraphAnalysis::findClusterOfNode(SgDirectedGraphNode* next_n,
 	    // found it in clusters
 	    resultsCluster=clust->second;
     if (debug)
-	    cerr << "   >>>> RoseBin_CallGraph: node previously iterated : ." << 
-	      RoseBin_support::HexToString(isSgAsmFunctionDeclaration(func_next)->get_address()) << 
+	    cerr << "   >>>> RoseBin_CallGraph: node previously iterated : ." <<
+	      RoseBin_support::HexToString(isSgAsmFunctionDeclaration(func_next)->get_address()) <<
 	      "  in cluster : " << resultsCluster << endl;
 	  } else {
 	    // if it is not in a cluster, remember it for now.
@@ -87,12 +87,12 @@ RoseBin_CallGraphAnalysis::findClusterOfNode(SgDirectedGraphNode* next_n,
 	    // add to worklist only if this node was not visited on a prior run
 	    worklist.push_back(next);
 	    if (debug)
-	    cerr << "    >>>> RoseBin_CallGraph: iterating currently : ." << 
-	      RoseBin_support::HexToString(isSgAsmFunctionDeclaration(func_next)->get_address()) << 
+	    cerr << "    >>>> RoseBin_CallGraph: iterating currently : ." <<
+	      RoseBin_support::HexToString(isSgAsmFunctionDeclaration(func_next)->get_address()) <<
 	      "  cluster found so far is : " << resultsCluster << endl;
 	  }
 	}
-  
+
     } // for
   } // while
 
@@ -111,12 +111,12 @@ RoseBin_CallGraphAnalysis::findClusterOfNode(SgDirectedGraphNode* next_n,
     resultsCluster=currentCluster;
   }
 
-  std::set<SgDirectedGraphNode*>::const_iterator it = curr_cluster.begin();
+  std::set<SgGraphNode*>::const_iterator it = curr_cluster.begin();
   for (;it!=curr_cluster.end();++it) {
-    SgDirectedGraphNode* node = *it;
+    SgGraphNode* node = *it;
     SgAsmFunctionDeclaration* func_next = isSgAsmFunctionDeclaration(node->get_SgNode());
     ROSE_ASSERT(func_next);
-    visited[func_next]=resultsCluster;    
+    visited[func_next]=resultsCluster;
     if (debug)
     cerr << "    >>>> RoseBin_CallGraph: adding to visited : ." <<
       RoseBin_support::HexToString(isSgAsmFunctionDeclaration(func_next)->get_address()) <<
@@ -125,21 +125,24 @@ RoseBin_CallGraphAnalysis::findClusterOfNode(SgDirectedGraphNode* next_n,
 
 }
 
-void 
+void
 RoseBin_CallGraphAnalysis::getConnectedComponents(std::map<int,std::set<SgAsmFunctionDeclaration*> >& ret) {
   std::map<SgAsmFunctionDeclaration*,int> visited;
 
 // DQ (4/23/2009): We want the type defined in the base class.
-// typedef rose_hash::hash_map <std::string, SgDirectedGraphNode*> nodeType;
+// typedef rose_hash::hash_map <std::string, SgGraphNode*> nodeType;
 
-  nodeType result;
-  nodeType nodes = vizzGraph->nodes;
-  nodeType::iterator itn2 = nodes.begin();
+  rose_graph_integer_node_hash_map result;
+  rose_graph_integer_node_hash_map nodes = vizzGraph->get_node_index_to_node_map();
+  rose_graph_integer_node_hash_map::iterator itn2 = nodes.begin();
   int currentCluster=0;
   for (; itn2!=nodes.end();++itn2) {
-    string hex_address = itn2->first;
+    //    string hex_address = itn2->first;
 
-    SgDirectedGraphNode* node = itn2->second;
+    SgGraphNode* node = itn2->second;
+    string hex_address = node->get_name();
+    //ROSE_ASSERT(hex_address==hex_addr_tmp);
+
     SgNode* internal = node->get_SgNode();
     SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(internal);
     if (func) {
@@ -178,7 +181,7 @@ RoseBin_CallGraphAnalysis::getConnectedComponents(std::map<int,std::set<SgAsmFun
 	SgAsmFunctionDeclaration* function = *it;
 	string name = function->get_name();
 	name.append("_f");
-	cerr << "   CALLGRAPH :  function : " << name << endl; 
+	cerr << "   CALLGRAPH :  function : " << name << endl;
       }
   }
 }
@@ -191,19 +194,20 @@ void RoseBin_CallGraphAnalysis::run(RoseBin_Graph* vg, string fileN, bool multie
   fileName = fileN;
   double start=0;
   double ends=0;
-  vizzGraph->nodes.clear();
-  vizzGraph->edges.clear();
+  clearMaps();
 
   func_nr=0;
   //  ROSE_ASSERT(roseBin);
-  if (RoseBin_support::DEBUG_MODE_MIN()) 
+  if (RoseBin_support::DEBUG_MODE_MIN())
     cerr << "\n ********************** running CallGraphAnalysis ... " << fileName << endl;
 
-  vizzGraph->graph   = new SgDirectedGraph(analysisName,analysisName);
+  vizzGraph->graph   = new SgIncidenceDirectedGraph(analysisName);
+  //SgDirectedGraph(analysisName,analysisName);
   vizzGraph->setGrouping(false);
 
+  ROSE_ASSERT(vizzGraph->graph);
   nr_target_missed=0;
-  if (RoseBin_support::DEBUG_MODE_MIN()) 
+  if (RoseBin_support::DEBUG_MODE_MIN())
     cerr << " running CallGraphAnalysis ... " << endl;
   cout << "\n\n\n -------------------- running CallGraphAnalysis ... " << RoseBin_support::ToString(fileName) << endl;
   start = RoseBin_support::getTime();
@@ -217,12 +221,10 @@ void RoseBin_CallGraphAnalysis::run(RoseBin_Graph* vg, string fileN, bool multie
   //  }
 
 
-  //graph->set_nodes(nodes);
-  //graph->set_edges(edges);
-  if (RoseBin_support::DEBUG_MODE_MIN()) {
+  //  if (RoseBin_support::DEBUG_MODE_MIN()) {
     cerr << " ********************** done running CallGraphAnalysis ... " << endl;
     cerr << " ********************** saving to file ... " << endl;
-  }
+    // }
   // create file
   std::ofstream myfile;
   myfile.open(fileName.c_str());
@@ -233,18 +235,19 @@ void RoseBin_CallGraphAnalysis::run(RoseBin_Graph* vg, string fileN, bool multie
   string funcName="";
   start = RoseBin_support::getTime();
   vizzGraph->printNodes(false,this, forward_analysis, myfile,funcName);
-  nrNodes=vizzGraph->nodes.size();
+  nrNodes=vizzGraph->get_node_index_to_node_map().size();
   //vizzGraph->nodes.clear();
 
-  vizzGraph->printEdges(this,myfile, multiedge);
-  nrEdges=vizzGraph->edges.size();
-  //  vizzGraph->edges.clear();
+  ROSE_ASSERT(g_algo->info);
+  vizzGraph->printEdges(g_algo->info, this,myfile, multiedge);
+  nrEdges=vizzGraph->get_node_index_to_edge_multimap_edgesOut().size();
+  //  vizzGraph->get_edges()->get_edges().clear();
 
   ends = RoseBin_support::getTime();
-  if (RoseBin_support::DEBUG_MODE_MIN()) 
+  if (RoseBin_support::DEBUG_MODE_MIN())
     cerr << " CFG runtime : " << (double) (ends - start)   << " sec" << endl;
 
   vizzGraph->printEpilog(myfile);
-  myfile.close();  
+  myfile.close();
 }
 

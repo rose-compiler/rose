@@ -8,6 +8,10 @@
 #ifndef __SB_Graph__
 #define __SB_Graph__
 
+
+
+
+#if 0
 namespace SB_Edgetype {
  enum Edgetype {
     none,
@@ -17,6 +21,7 @@ namespace SB_Edgetype {
 
  extern Edgetype GraphEdgetype;
 }
+
 
 namespace SB_Graph_Def {
 
@@ -44,80 +49,131 @@ namespace SB_Graph_Def {
   extern GraphProperties RoseProperties;
 }
 
+#endif
 
 
+#if 0
+class SgGraphNode;
+namespace __gnu_cxx {
+  template <> struct hash <SgGraphNode*> {
+    size_t operator()(SgGraphNode* const & n) const {
+      return (size_t) n;
+    }
+  };
+}
+#endif
+#if 0
+class GraphNodeList {
+ public:
+   	typedef rose_graph_hash_multimap nodeType;
+   //typedef rose_hash::hash_map <std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string> nodeType;
 
-class SB_Graph {
-
+ nodeType nodes;
+ nodeType get_nodes() {return nodes;}
 
 };
+class GraphEdgeList {
+ public:
+	typedef rose_graph_node_edge_hash_multimap edgeType;
+	rose_graph_node_edge_hash_multimap edges;
+	rose_graph_node_edge_hash_multimap redges;
 
-class SB_DirectedGraph : public SB_Graph {
+	//typedef rose_hash::hash_multimap < SgGraphNode*, SgDirectedGraphEdge*> edgeType;
+        //typedef rose_hash::hash_multimap <SgGraphNode*, SgGraphEdge*, rose_hash::hash_graph_node,
+	//	rose_hash::eqstr_graph_node> edgeType;
+
+
+	edgeType get_edges() {return edges;}
+	edgeType get_reverse_edges() { return redges;}
+
+};
+#endif
+class SB_DirectedGraph : public SgIncidenceDirectedGraph {
 public:
-	// DQ (4/23/2009): Modify the hash_map template type to explicitly include default parameters.
-	// typedef rose_hash::hash_map <std::string, SgDirectedGraphNode*> nodeType;
-    typedef rose_hash::hash_map <std::string, SgDirectedGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string> nodeType;
 
-    nodeType nodes;
-//	SgIncidenceGraphNode* nodes;
 
-	typedef rose_hash::hash_multimap < SgDirectedGraphNode*, SgDirectedGraphEdge*> edgeType;
+#if 0
+	typedef rose_hash::hash_map <std::string, SgDirectedGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string> nodeType;
+        nodeType nodes;
+
+	typedef rose_hash::hash_multimap < SgGraphNode*, SgDirectedGraphEdge*> edgeType;
 	edgeType edges;
-	edgeType edgesR;
+	edgeType redges;
 
-	typedef rose_hash::hash_multimap < SgDirectedGraphNode*, SgDirectedGraphEdge*> edgeTypeUnique;
+	typedef rose_hash::hash_multimap < SgGraphNode*, SgDirectedGraphEdge*> edgeTypeUnique;
 	edgeTypeUnique unique_edges;
 
-	  VirtualBinCFG::AuxiliaryInformation* info;
+	//	typedef rose_graph_node_edge_hash_multimap edgeTypeUnique;
+	//rose_graph_node_edge_hash_multimap unique_edges;
 
+	GraphNodeList* nodes;
+	GraphEdgeList* edges;
+	GraphEdgeList* redges;
+//	  VirtualBinCFG::AuxiliaryInformation* info;
+#endif
 public:
-	SB_DirectedGraph() { }
-	SB_DirectedGraph(VirtualBinCFG::AuxiliaryInformation* info): info(info) {}
+#if 0
+	GraphNodeList* get_nodes() {return nodes;}
+	GraphEdgeList* get_edges() {return edges;}
+	GraphEdgeList* get_reverse_edges() { return redges;}
+	SB_DirectedGraph() {
+	  nodes = new GraphNodeList();
+	  edges = new GraphEdgeList();
+	  redges = new GraphEdgeList();
+	  ROSE_ASSERT(nodes);
+	  ROSE_ASSERT(edges);
+	  ROSE_ASSERT(redges);
+	  ROSE_ASSERT(get_edges());
+	}
+#endif
+//	SB_DirectedGraph(VirtualBinCFG::AuxiliaryInformation* info): info(info) {}
 	virtual ~SB_DirectedGraph() {}
-	VirtualBinCFG::AuxiliaryInformation* get_bininfo() {return info;}
-
-	void getSuccessors(SgDirectedGraphNode* node, std::vector <SgDirectedGraphNode*>& vec );
-	void getPredecessors(SgDirectedGraphNode* node, std::vector <SgDirectedGraphNode*>& vec );
-
-	//nodeType get_nodes() {return nodes;}
-	//edgeType get_edges() {return edges;}
-
-  std::string getProperty(SB_Graph_Def::GraphProperties property, SgDirectedGraphNode* node);
-  std::string getProperty(SB_Graph_Def::GraphProperties property, SgDirectedGraphEdge* edge);
-  void setProperty(SB_Graph_Def::GraphProperties property, SgDirectedGraphNode* node,
-		   std::string value);
-  void setProperty(SB_Graph_Def::GraphProperties property, SgDirectedGraphEdge* edge,
-		   std::string value);
-
-  bool checkIfGraphEdgeExists(SgDirectedGraphNode* src);
-  bool checkIfGraphEdgeExists(SgDirectedGraphNode* src, SgDirectedGraphNode* trg);
-
-  std::set<SgDirectedGraphEdge*> getEdge(SgDirectedGraphNode* src);
-  std::set<SgDirectedGraphEdge*> getEdge(SgDirectedGraphNode* src, SgDirectedGraphNode* trg);
-
-  SgDirectedGraphEdge* createSBEdge(std::string& type, int graph_id,
-  				  SgDirectedGraphNode* from,
-  				  SgDirectedGraphNode* to);
-  SgDirectedGraphNode* createSBNode(std::string& name, std::string& type, int graph_id,
-  					 SgNode* int_node);
-  SgDirectedGraphNode* getDefinitionForUsage(SgDirectedGraphNode* def);
-
-  void createUniqueEdges();
-  SgDirectedGraphNode* checkIfGraphNodeExists(std::string& trg_mnemonic);
+//	VirtualBinCFG::AuxiliaryInformation* get_bininfo() {return info;}
 
 
-  void getDirectCFGSuccessors(SgDirectedGraphNode* node, std::vector <SgDirectedGraphNode*>& vec );
-   void getDirectCFGPredecessors(SgDirectedGraphNode* node, std::vector <SgDirectedGraphNode*>& vec );
-   bool isValidCFGEdge(SgDirectedGraphNode* sgNode, SgDirectedGraphNode* sgNodeBefore);
-   bool isDirectCFGEdge(SgDirectedGraphNode* sgNode,
- 		     SgDirectedGraphNode* sgNodeBefore);
+  // add to SgGraph
+#if 0
+	  std::string getProperty(SgGraph::GraphProperties property, SgGraphNode* node);
+	  std::string getProperty(SgGraph::GraphProperties property, SgGraphEdge* edge);
+	  void setProperty(SgGraph::GraphProperties property, SgGraphNode* node,
+			   std::string value);
+	  void setProperty(SgGraph::GraphProperties property, SgGraphEdge* edge,
+			   std::string value);
+  std::set<SgDirectedGraphEdge*> getEdge(SgGraphNode* src);
+  SgGraphNode* checkIfGraphNodeExists(std::string& trg_mnemonic);
+  bool checkIfGraphEdgeExists(SgGraphNode* src);
+  // add to SgIncidenceDirectedGraph
+  std::set<SgDirectedGraphEdge*> getDirectedEdge(SgGraphNode* src, SgGraphNode* trg);
+  bool checkIfDirectedGraphEdgeExists(SgGraphNode* src, SgGraphNode* trg);
+  // void createUniqueEdges();
+  void getSuccessors(SgGraphNode* node, std::vector <SgGraphNode*>& vec );
+  void getPredecessors(SgGraphNode* node, std::vector <SgGraphNode*>& vec );
+
+  SgDirectedGraphEdge* addDirectedEdge(SgGraphNode* from, SgGraphNode* to, std::string& type) {
+	   SgDirectedGraphEdge* edge = new SgDirectedGraphEdge(from,to,type);
+	   edges->get_edges().insert(std::pair<SgGraphNode*,SgDirectedGraphEdge*>( from, edge)) ;
+	   redges->get_edges().insert(std::pair<SgGraphNode*,SgDirectedGraphEdge*>( to, edge)) ;
+	   return edge;
+  }
+  //   SgDirectedGraphEdge* createSBEdge(std::string& type, int graph_id,
+  //				  SgGraphNode* from,
+  //   				  SgGraphNode* to);
+     SgGraphNode* addNode( const std::string & name = "", SgNode* sg_node = NULL);
+#endif
 
 
 
-   virtual SgDirectedGraphNode* createNode(std::string& name, std::string& type, int address, int graph_id,
- 					  bool isFunction, SgNode* int_node) ;
-   SgDirectedGraphEdge* createEdge(std::string& type, int graph_id,
- 		  SgDirectedGraphNode* from,  int from_addr, SgDirectedGraphNode* to, int to_addr);
+#if 0
+  SgGraphNode* getDefinitionForUsage(SgGraphNode* def);
+
+  void getDirectCFGSuccessors(SgGraphNode* node, std::vector <SgGraphNode*>& vec );
+   void getDirectCFGPredecessors(SgGraphNode* node, std::vector <SgGraphNode*>& vec );
+   bool isValidCFGEdge(SgGraphNode* sgNode, SgGraphNode* sgNodeBefore);
+   bool isDirectCFGEdge(SgGraphNode* sgNode,
+ 		     SgGraphNode* sgNodeBefore);
+#endif
+
+
 
 };
 

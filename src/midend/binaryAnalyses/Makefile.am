@@ -15,7 +15,7 @@ sourse_files = \
      dataflowanalyses/RoseBin_VariableAnalysis.cpp \
      dataflowanalyses/InterruptAnalysis.cpp \
      dataflowanalyses/RoseBin_Emulate.cpp \
-     dataflowanalyses/RoseBin_DataFlowAbstract.cpp
+     dataflowanalyses/RoseBin_DataFlowAbstract.cpp GraphAlgorithms.C
 
 if ROSE_USE_SQLITE_DATABASE
 database_sourse_files = \
@@ -28,13 +28,13 @@ endif
 
 # DQ (5/2/2009): Added support for configure options
 if ROSE_USE_NEW_GRAPH_NODES
-if ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
+#if ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
 # Using the new Graph IR nodes and the optional backward compatability API.
 libbinaryMidend_la_SOURCES = $(sourse_files) $(database_sourse_files)
-else
+#else
 # The current code will not compile with the new Graph IR node interface.
-libbinaryMidend_la_SOURCES =
-endif
+#libbinaryMidend_la_SOURCES =
+#endif
 else
 # This is the original case (not using the new Graph IR nodes)
 libbinaryMidend_la_SOURCES = $(sourse_files) $(database_sourse_files)
@@ -56,7 +56,7 @@ BINARY_DISASSEMBLY_HEADER_FILES = \
    libraryIdentification/libraryIdentification.h \
    libraryIdentification/functionIdentification.h \
    instructionSemantics/semanticsModule.h \
-   instructionSemantics/x86InstructionSemantics.h
+   instructionSemantics/x86InstructionSemantics.h GraphAlgorithms.h
 
 
 include_HEADERS = $(BINARY_DISASSEMBLY_HEADER_FILES)

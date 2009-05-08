@@ -32,15 +32,20 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
   funcMap.clear();
   nodesMap.clear();
   //cerr << " Preparing graph - Nr of Nodes : " << nodes.size() << "  edges : " << edges.size() << endl;
+  //SgGraphNodeList* gnodes = get_nodes();
+
+  //  rose_graph_hash_multimap& nodes = get_nodes()->get_nodes();
+  rose_graph_integer_node_hash_map nodes = get_node_index_to_node_map();
   int counter=nodes.size();
   int count=0;
-  nodeType::iterator itn2 = nodes.begin();
+  rose_graph_integer_node_hash_map::iterator itn2 = nodes.begin();
   for (; itn2!=nodes.end();++itn2) {
     counter++;
     count++;
-    pair<string, SgDirectedGraphNode*> nt = *itn2;
-    string hex_address = itn2->first;
-    SgDirectedGraphNode* node = isSgDirectedGraphNode(itn2->second);
+    pair<int, SgGraphNode*> nt = *itn2;
+    //    string hex_address = itn2->first;
+    SgGraphNode* node = isSgGraphNode(itn2->second);
+    string hex_address =node->get_name();
     SgNode* internal = node->get_SgNode();
     SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(internal);
     if (func) {
@@ -84,11 +89,12 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
 
   //cerr << " Writing graph to GML - Nr of Nodes : " << nodes.size() << endl;
   int pos=0;
-  nodeType::iterator itn = nodes.begin();
+  rose_graph_integer_node_hash_map::iterator itn = nodes.begin();
   for (; itn!=nodes.end();++itn) {
     pos++;
-    string hex_address = itn->first;
-    SgDirectedGraphNode* node = isSgDirectedGraphNode(itn->second);
+    //    string hex_address = itn->first;
+    SgGraphNode* node = isSgGraphNode(itn->second);
+    string hex_address = node->get_name();
     SgNode* internal = node->get_SgNode();
     SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(internal);
     string text="";
@@ -108,17 +114,17 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
 	map < int , string> node_p = node->get_properties();
 	map < int , string>::iterator prop = node_p.begin();
 	string name = "noname";
-	string type = node->get_type();
+	string type = "removed";//node->get_type();
 	for (; prop!=node_p.end(); ++prop) {
 	  int addr = prop->first;
 	  //cerr << " gml : property for addr : " << addr << endl;
-	  if (addr==SB_Graph_Def::nodest_jmp)
+	  if (addr==SgGraph::nodest_jmp)
 	    nodest_jmp = true;
-	  else if (addr==SB_Graph_Def::itself_call)
+	  else if (addr==SgGraph::itself_call)
 	    error = true;
-	  else if (addr==SB_Graph_Def::nodest_call)
+	  else if (addr==SgGraph::nodest_call)
 	    nodest_call = true;
-	  else if (addr==SB_Graph_Def::interrupt)
+	  else if (addr==SgGraph::interrupt)
 	    interrupt = true;
 	  //	  else
 	  //  name = prop->second;
@@ -199,7 +205,7 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
 
 
 std::string
-RoseBin_GMLGraph::getInternalNodes(  SgDirectedGraphNode* node,
+RoseBin_GMLGraph::getInternalNodes(  SgGraphNode* node,
 				     bool forward_analysis, SgAsmNode* internal) {
 
   SgAsmInstruction* bin_inst = isSgAsmInstruction(internal);
@@ -229,37 +235,37 @@ RoseBin_GMLGraph::getInternalNodes(  SgDirectedGraphNode* node,
 
   map < int , string> node_p = node->get_properties();
   map < int , string>::iterator prop = node_p.begin();
-  string type = node->get_type();
+  string type = "removed";//node->get_type();
   for (; prop!=node_p.end(); ++prop) {
     int addr = prop->first;
     // cerr << " dot : property for addr : " << addr << " and node " << hex_address << endl;
-    if (addr==SB_Graph_Def::name)
+    if (addr==SgGraph::name)
       name = prop->second;
-    else if (addr==SB_Graph_Def::eval)
+    else if (addr==SgGraph::eval)
       eval = prop->second;
-    else if (addr==SB_Graph_Def::regs)
+    else if (addr==SgGraph::regs)
       regs = prop->second;
-    else if (addr==SB_Graph_Def::nodest_jmp)
+    else if (addr==SgGraph::nodest_jmp)
       nodest_jmp = true;
-    else if (addr==SB_Graph_Def::itself_call)
+    else if (addr==SgGraph::itself_call)
       error = true;
-    else if (addr==SB_Graph_Def::nodest_call)
+    else if (addr==SgGraph::nodest_call)
       nodest_call = true;
-    else if (addr==SB_Graph_Def::interrupt)
+    else if (addr==SgGraph::interrupt)
       interrupt = true;
-    else if (addr==SB_Graph_Def::done)
+    else if (addr==SgGraph::done)
       checked = true;
-    else if (addr==SB_Graph_Def::dfa_standard)
+    else if (addr==SgGraph::dfa_standard)
       dfa_standard = true;
-    else if (addr==SB_Graph_Def::dfa_resolved_func) {
+    else if (addr==SgGraph::dfa_resolved_func) {
       dfa_resolved_func = true;
       dfa_info = prop->second;
-    } else if (addr==SB_Graph_Def::dfa_unresolved_func) {
+    } else if (addr==SgGraph::dfa_unresolved_func) {
       dfa_unresolved_func = true;
       dfa_info = prop->second;
-    } else if (addr==SB_Graph_Def::dfa_variable) {
+    } else if (addr==SgGraph::dfa_variable) {
       dfa_variable = prop->second;
-    } else if (addr==SB_Graph_Def::visitedCounter) {
+    } else if (addr==SgGraph::visitedCounter) {
       visitedCounter = prop->second;
     } else {
       cerr << " *************** dotgraph: unknown property found :: " << addr << endl;
@@ -334,51 +340,58 @@ RoseBin_GMLGraph::getInternalNodes(  SgDirectedGraphNode* node,
   return nodeStr;
 }
 
-void RoseBin_GMLGraph::printEdges( bool forward_analysis, std::ofstream& myfile, bool mergedEdges) {
+void RoseBin_GMLGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info,
+			bool forward_analysis, std::ofstream& myfile, bool mergedEdges) {
   if (mergedEdges) {
     createUniqueEdges();
-    printEdges_single(forward_analysis, myfile);
+    printEdges_single(info, forward_analysis, myfile);
   } else
-    printEdges_multiple(forward_analysis, myfile);
+    printEdges_multiple(info, forward_analysis, myfile);
 }
 
-void RoseBin_GMLGraph::printEdges_single( bool forward_analysis, std::ofstream& myfile) {
+void RoseBin_GMLGraph::printEdges_single( VirtualBinCFG::AuxiliaryInformation* info,
+			bool forward_analysis, std::ofstream& myfile) {
   // traverse edges and visualize results of graph
+  //SgGraphEdgeList* gedges = get_edges();
+	rose_graph_integer_edge_hash_multimap edges =get_node_index_to_edge_multimap_edgesOut();
   cerr << " Writing singleEdge graph to GML - Nr of unique Edges : " << unique_edges.size() << " compare to edges: " <<
     edges.size() << endl;
   int edgeNr=0;
-  edgeTypeUnique::iterator it = unique_edges.begin();
+  rose_graph_integer_edge_hash_multimap::iterator it = unique_edges.begin();
   for (; it!=unique_edges.end();++it) {
     edgeNr++;
     if ((edgeNr % 5000) == 0)
       cout << " Writing graph to GML - Nr of Edges : " << edges.size() << "/" << edgeNr << endl;
-    SgDirectedGraphEdge* edge = it->second;
-    printEdges(forward_analysis, myfile, edge);
+    SgDirectedGraphEdge* edge = isSgDirectedGraphEdge(it->second);
+    printEdges(info, forward_analysis, myfile, edge);
   }
   nodesMap.clear();
 }
 
-void RoseBin_GMLGraph::printEdges_multiple( bool forward_analysis, std::ofstream& myfile) {
+void RoseBin_GMLGraph::printEdges_multiple( VirtualBinCFG::AuxiliaryInformation* info,
+			bool forward_analysis, std::ofstream& myfile) {
   // traverse edges and visualize results of graph
+  //  SgGraphEdgeList* gedges = get_edges();
+  rose_graph_integer_edge_hash_multimap edges =get_node_index_to_edge_multimap_edgesOut();
   cerr << " Writing multiEdge graph to GML - Nr of unique Edges : " << unique_edges.size() << " compare to edges: " <<
     edges.size() << endl;
   int edgeNr=0;
-  edgeType::iterator it = edges.begin();
+  rose_graph_integer_edge_hash_multimap::iterator it = edges.begin();
   for (; it!=edges.end();++it) {
     edgeNr++;
     if ((edgeNr % 5000) == 0)
       cout << " Writing graph to GML - Nr of Edges : " << edges.size() << "/" << edgeNr << endl;
-    SgDirectedGraphEdge* edge = it->second;
-    printEdges(forward_analysis, myfile, edge);
+    SgDirectedGraphEdge* edge = isSgDirectedGraphEdge(it->second);
+    printEdges(info, forward_analysis, myfile, edge);
   }
   nodesMap.clear();
 }
 
 
-void RoseBin_GMLGraph::printEdges( bool forward_analysis, std::ofstream& myfile, SgDirectedGraphEdge* edge) {
+void RoseBin_GMLGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info, bool forward_analysis, std::ofstream& myfile, SgDirectedGraphEdge* edge) {
   // traverse edges and visualize results of graph
-    SgDirectedGraphNode* source = isSgDirectedGraphNode(edge->get_from());
-    SgDirectedGraphNode* target = isSgDirectedGraphNode(edge->get_to());
+    SgGraphNode* source = isSgGraphNode(edge->get_from());
+    SgGraphNode* target = isSgGraphNode(edge->get_to());
     ROSE_ASSERT(source);
     ROSE_ASSERT(target);
 
@@ -389,7 +402,7 @@ void RoseBin_GMLGraph::printEdges( bool forward_analysis, std::ofstream& myfile,
     for (; prop!=edge_p.end(); ++prop) {
       int addr = prop->first;
       // cerr << " dot : property for addr : " << addr << " and node " << hex_address << endl;
-      if (addr==SB_Graph_Def::edgeLabel)
+      if (addr==SgGraph::edgeLabel)
 	edgeLabel = prop->second;
       if (edgeLabel.length()>1)
 	if (edgeLabel[0]!='U')
@@ -455,8 +468,8 @@ void RoseBin_GMLGraph::printEdges( bool forward_analysis, std::ofstream& myfile,
 	  }
       }
 
-      string type_n = getProperty(SB_Graph_Def::type, edge);
-      if (type_n==RoseBin_support::ToString(SB_Edgetype::usage)) {
+      string type_n = getProperty(SgGraph::type, edge);
+      if (type_n==RoseBin_support::ToString(SgGraph::usage)) {
 	add = "   graphics [ type \"line\" style \"dashed\" arrow \"last\" fill \"#000000\" ]  ]\n";
       }
 

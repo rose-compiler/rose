@@ -27,11 +27,12 @@
       VirtualBinCFG::AuxiliaryInformation* info = auxiliaryInfoPrerequisite.getAuxiliaryInfo();
 
       std::string dfgFileName = "dfg.dot";
-      graph = new RoseBin_DotGraph(info);
+      graph = new RoseBin_DotGraph();
       ROSE_ASSERT(graph);
 
+      GraphAlgorithms* algo = new GraphAlgorithms(info);
       SgAsmInterpretation* interp = SageInterface::getMainInterpretation(file);
-      dfanalysis = new RoseBin_DataFlowAnalysis(interp->get_global_block(), forward, new RoseObj(), info);
+      dfanalysis = new RoseBin_DataFlowAnalysis(interp->get_global_block(), forward, new RoseObj(), algo);
       dfanalysis->init(interprocedural, edges);
       dfanalysis->run(graph, dfgFileName, mergedEdges);
 

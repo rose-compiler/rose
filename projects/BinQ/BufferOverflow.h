@@ -11,7 +11,8 @@
 
 class BufferOverflow : public BinAnalyses,  RoseBin_DataFlowAbstract {
  public:
-  BufferOverflow(){testFlag=false;debug=false;};
+ BufferOverflow(GraphAlgorithms* algo):RoseBin_DataFlowAbstract(algo)
+  {testFlag=false;debug=false;};
   virtual ~BufferOverflow(){};
   bool testFlag;
   void run(SgNode* f1, SgNode* f2);
@@ -19,19 +20,19 @@ class BufferOverflow : public BinAnalyses,  RoseBin_DataFlowAbstract {
   std::string name();
   std::string getDescription();
 
-  bool run(std::string& name, SgDirectedGraphNode* node,
-	   SgDirectedGraphNode* previous);
+  bool run(std::string& name, SgGraphNode* node,
+	   SgGraphNode* previous);
 
   bool twoFiles() {return false;}
   std::map<SgNode*,std::string> getResult(){return result;}
  private:
   std::map<SgNode*,std::string> result;
   bool debug;
-  VirtualBinCFG::AuxiliaryInformation* info;  
+  VirtualBinCFG::AuxiliaryInformation* info;
   void init(RoseBin_Graph* vg) {
     vizzGraph = vg;
   }
-  bool runEdge(SgDirectedGraphNode* node, SgDirectedGraphNode* next) {
+  bool runEdge(SgGraphNode* node, SgGraphNode* next) {
     return false;
   }
 

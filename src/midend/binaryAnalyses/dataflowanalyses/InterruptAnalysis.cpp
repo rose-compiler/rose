@@ -14,8 +14,8 @@ InterruptAnalysis::getIntCallName(uint64_t rax,
 					 DataTypes& data_ebx,
 					 DataTypes& data_ecx,
 					 DataTypes& data_edx,
-					 vector<uint64_t>& val_rbx, 
-					 vector<uint64_t>& val_rcx, 
+					 vector<uint64_t>& val_rbx,
+					 vector<uint64_t>& val_rcx,
 					 vector<uint64_t>& val_rdx,
 					 std::vector<uint64_t>& pos_rbx,
 					 std::vector<uint64_t>& pos_rcx,
@@ -27,7 +27,7 @@ InterruptAnalysis::getIntCallName(uint64_t rax,
   data_edx = d_none;
 
   if ((os_ver==linux_22 ||
-      os_ver==linux_24 || 
+      os_ver==linux_24 ||
       os_ver==linux_26 ||
       os_ver==linux_27) && arch==bit32)
     int_name = getIntCallName_Linux32bit(rax, data_ebx, data_ecx, data_edx,
@@ -35,7 +35,7 @@ InterruptAnalysis::getIntCallName(uint64_t rax,
 					 pos_rbx, pos_rcx, pos_rdx,
 					 fpos_rbx, fpos_rcx, fpos_rdx);
   if ((os_ver==linux_22 ||
-      os_ver==linux_24 || 
+      os_ver==linux_24 ||
       os_ver==linux_26 ||
       os_ver==linux_27) && arch==bit64)
     int_name = getIntCallName_Linux64bit(rax, data_ebx, data_ecx, data_edx,
@@ -51,8 +51,8 @@ InterruptAnalysis::getIntCallName_Linux32bit(uint64_t rax,
 						    DataTypes& data_ebx,
 						    DataTypes& data_ecx,
 						    DataTypes& data_edx,
-						    vector<uint64_t>& val_rbx, 
-						    vector<uint64_t>& val_rcx, 
+						    vector<uint64_t>& val_rbx,
+						    vector<uint64_t>& val_rcx,
 						    vector<uint64_t>& val_rdx,
 						    std::vector<uint64_t>& pos_rbx,
 						    std::vector<uint64_t>& pos_rcx,
@@ -62,85 +62,85 @@ InterruptAnalysis::getIntCallName_Linux32bit(uint64_t rax,
   // linux system calls for kernel 2.2 - 32bit
 	switch (rax) {
 	case 1: {
-	  int_name="sys_exit"; 
-	  data_ebx = d_int; 
-	  createVariable(fpos_rbx, pos_rbx, "error_code", data_ebx, int_name, 0, val_rbx,false); 
+	  int_name="sys_exit";
+	  data_ebx = d_int;
+	  createVariable(fpos_rbx, pos_rbx, "error_code", data_ebx, int_name, 0, val_rbx,false);
 	  break;
 	}
 	case 2: {
-	  int_name="sys_fork"; 
-	  data_ebx = d_struct; 
-	  createVariable(fpos_rbx, pos_rbx, "fork", data_ebx, int_name, 0, val_rbx,false); 
+	  int_name="sys_fork";
+	  data_ebx = d_struct;
+	  createVariable(fpos_rbx, pos_rbx, "fork", data_ebx, int_name, 0, val_rbx,false);
 	  break;
 	}
 	case 3: {
-	  int_name="sys_read"; 
-	  data_ebx = d_uint; 
-	  data_ecx = d_char_p; 
-	  data_edx = d_size_t; 
-	  createVariable(fpos_rbx, pos_rbx, "fd", data_ebx, int_name, 0, val_rbx,false); 
-	  createVariable(fpos_rcx, pos_rcx, "buf", data_ecx, int_name, *(val_rdx.begin()), val_rcx,true); 
-	  createVariable(fpos_rdx, pos_rdx, "count", data_edx, int_name, 0, val_rdx,false); 
+	  int_name="sys_read";
+	  data_ebx = d_uint;
+	  data_ecx = d_char_p;
+	  data_edx = d_size_t;
+	  createVariable(fpos_rbx, pos_rbx, "fd", data_ebx, int_name, 0, val_rbx,false);
+	  createVariable(fpos_rcx, pos_rcx, "buf", data_ecx, int_name, *(val_rdx.begin()), val_rcx,true);
+	  createVariable(fpos_rdx, pos_rdx, "count", data_edx, int_name, 0, val_rdx,false);
 	  break;
 	}
 	case 4: {
-	  int_name="sys_write"; 
-	  data_ebx = d_uint; 
-	  data_ecx = d_const_char_p; 
-	  data_edx = d_size_t; 
-	  createVariable(fpos_rbx, pos_rbx, "fd", data_ebx, int_name, 0, val_rbx,false); 
-	  createVariable(fpos_rcx, pos_rcx, "buf", data_ecx, int_name, *(val_rdx.begin()), val_rcx,true); 
-	  createVariable(fpos_rdx, pos_rdx, "count", data_edx, int_name, 0, val_rdx,false); 
+	  int_name="sys_write";
+	  data_ebx = d_uint;
+	  data_ecx = d_const_char_p;
+	  data_edx = d_size_t;
+	  createVariable(fpos_rbx, pos_rbx, "fd", data_ebx, int_name, 0, val_rbx,false);
+	  createVariable(fpos_rcx, pos_rcx, "buf", data_ecx, int_name, *(val_rdx.begin()), val_rcx,true);
+	  createVariable(fpos_rdx, pos_rdx, "count", data_edx, int_name, 0, val_rdx,false);
 	  break;
 	}
 	case 5: {
-	  int_name="sys_open"; 
-	  data_ebx = d_const_char_p; 
+	  int_name="sys_open";
+	  data_ebx = d_const_char_p;
 	  data_ecx = d_int;
-	  data_edx = d_int; 
+	  data_edx = d_int;
 	  break;
 	}
 	case 6: {
-	  int_name="sys_close"; 
-	  data_ebx = d_uint; 
+	  int_name="sys_close";
+	  data_ebx = d_uint;
 	  break;
 	}
 	case 7: {
-	  int_name="sys_waitpid"; 
-	  data_ebx = d_pid_t; 
+	  int_name="sys_waitpid";
+	  data_ebx = d_pid_t;
 	  data_ecx = d_uint_p;
-	  data_edx = d_int; 
+	  data_edx = d_int;
 	  break;
 	}
 	case 8: {
-	  int_name="sys_creat"; 
-	  data_ebx = d_const_char_p; 
+	  int_name="sys_creat";
+	  data_ebx = d_const_char_p;
 	  data_ecx = d_int;
 	  break;
 	}
 	case 9: {
-	  int_name="sys_link"; 
-	  data_ebx = d_const_char_p; 
-	  data_ecx = d_const_char_p; 
+	  int_name="sys_link";
+	  data_ebx = d_const_char_p;
+	  data_ecx = d_const_char_p;
 	  break;
 	}
 	case 10: {
 	  int_name="sys_unlink";
-	  data_ebx = d_const_char_p; 
+	  data_ebx = d_const_char_p;
 	  break;
 	}
 	case 11: {
-	  int_name="sys_execve"; 
-	  data_ebx = d_struct; 
+	  int_name="sys_execve";
+	  data_ebx = d_struct;
 	  break;
 	}
 	case 12: {
-	  int_name="sys_chdir"; 
-	  data_ebx = d_const_char_p; 
+	  int_name="sys_chdir";
+	  data_ebx = d_const_char_p;
 	  break;
 	}
 	case 13: {
-	  int_name="sys_time"; 
+	  int_name="sys_time";
 	  data_ebx = d_int;
 	  break;
 	}
@@ -308,8 +308,8 @@ InterruptAnalysis::getIntCallName_Linux64bit(uint64_t rax,
 						    DataTypes& data_ebx,
 						    DataTypes& data_ecx,
 						    DataTypes& data_edx,
-						    vector<uint64_t>& val_rbx, 
-						    vector<uint64_t>& val_rcx, 
+						    vector<uint64_t>& val_rbx,
+						    vector<uint64_t>& val_rcx,
 						    vector<uint64_t>& val_rdx,
 						    std::vector<uint64_t>& pos_rbx,
 						    std::vector<uint64_t>& pos_rcx,
@@ -320,49 +320,49 @@ InterruptAnalysis::getIntCallName_Linux64bit(uint64_t rax,
   // check in linux src : uinstd.h and syscalls.h
 	switch (rax) {
 	case 0: {
-	  int_name="sys_read"; 
-	  data_ebx = d_uint; 
-	  data_ecx = d_char_p; 
-	  data_edx = d_size_t; 
+	  int_name="sys_read";
+	  data_ebx = d_uint;
+	  data_ecx = d_char_p;
+	  data_edx = d_size_t;
 	  break;
 	}
 	case 1: {
-	  int_name="sys_write"; 
-	  data_ebx = d_uint; 
-	  data_ecx = d_const_char_p; 
-	  data_edx = d_size_t; 
+	  int_name="sys_write";
+	  data_ebx = d_uint;
+	  data_ecx = d_const_char_p;
+	  data_edx = d_size_t;
 	  break;
 	}
 	case 2: {
-	  int_name="sys_open"; 
-	  data_ebx = d_const_char_p; 
+	  int_name="sys_open";
+	  data_ebx = d_const_char_p;
 	  data_ecx = d_int;
-	  data_edx = d_int; 
+	  data_edx = d_int;
 	  break;
 	}
 	case 3: {
-	  int_name="sys_close"; 
-	  data_ebx = d_uint; 
+	  int_name="sys_close";
+	  data_ebx = d_uint;
 	  break;
 	}
 	case 4: {
 	  int_name="sys_newstat"; break;
-	  data_ebx = d_const_char_p; 
+	  data_ebx = d_const_char_p;
 	  data_ecx = d_struct;
 	}
 	case 5: {
 	  int_name="sys_newfstat"; break;
-	  data_ebx = d_uint; 
+	  data_ebx = d_uint;
 	  data_ecx = d_struct;
 	}
 	case 6: {
 	  int_name="sys_newlstat"; break;
-	  data_ebx = d_const_char_p; 
+	  data_ebx = d_const_char_p;
 	  data_ecx = d_struct;
 	}
 	case 7: {
 	  int_name="sys_poll"; break;
-	  data_ebx = d_struct; 
+	  data_ebx = d_struct;
 	  data_ecx = d_uint;
 	  data_edx = d_long;
 	}
@@ -377,15 +377,15 @@ void
 InterruptAnalysis::getValueForDefinition(std::vector<uint64_t>& vec,
 						std::vector<uint64_t>& positions,
 						uint64_t& fpos,
-						SgDirectedGraphNode* node,
+						SgGraphNode* node,
                                                 std::pair<X86RegisterClass, int> reg ) {
-  set <SgDirectedGraphNode*> defNodeSet = getDefFor(node, reg);
-  if (RoseBin_support::DEBUG_MODE()) 
+  set <SgGraphNode*> defNodeSet = getDefFor(node, reg);
+  if (RoseBin_support::DEBUG_MODE())
     cout << "    size of found NodeSet = " << defNodeSet.size() <<endl;
-  set <SgDirectedGraphNode*>::const_iterator it = defNodeSet.begin();
+  set <SgGraphNode*>::const_iterator it = defNodeSet.begin();
   for (;it!=defNodeSet.end();++it) {
-    SgDirectedGraphNode* defNode = *it;
-    if (RoseBin_support::DEBUG_MODE() && defNode) 
+    SgGraphNode* defNode = *it;
+    if (RoseBin_support::DEBUG_MODE() && defNode)
       cout << "    investigating ... " << defNode->get_name() <<endl;
     ROSE_ASSERT(defNode);
     SgAsmx86Instruction* inst = isSgAsmx86Instruction(defNode->get_SgNode());
@@ -408,15 +408,15 @@ InterruptAnalysis::getValueForDefinition(std::vector<uint64_t>& vec,
 	uint64_t val = getValueOfInstr(inst, true);
 	vec.push_back(val);
 	fpos = inst->get_address();
-	if (RoseBin_support::DEBUG_MODE()) 
+	if (RoseBin_support::DEBUG_MODE())
       	  cout << "    found  valueOfInst = " << RoseBin_support::ToString(val) <<endl;
       }
     } else {
-      // it is a register reference. I.e we need to follow the usage edge to find the 
+      // it is a register reference. I.e we need to follow the usage edge to find the
       // definition of that node
-      SgDirectedGraphNode* usageNode = vizzGraph->getDefinitionForUsage(defNode);
+      SgGraphNode* usageNode = g_algo->getDefinitionForUsage(vizzGraph,defNode);
       if (usageNode && usageNode!=node) {
-	if (RoseBin_support::DEBUG_MODE() && usageNode) 
+	if (RoseBin_support::DEBUG_MODE() && usageNode)
       	  cout << "    following up usage for " << usageNode->get_name() <<endl;
 	getValueForDefinition(vec, positions, fpos, usageNode, regRight);
       } else {
@@ -428,9 +428,9 @@ InterruptAnalysis::getValueForDefinition(std::vector<uint64_t>& vec,
 }
 
 
-bool 
-InterruptAnalysis::run(string& name, SgDirectedGraphNode* node,
-			      SgDirectedGraphNode* previous){
+bool
+InterruptAnalysis::run(string& name, SgGraphNode* node,
+			      SgGraphNode* previous){
   // check known function calls and resolve variables
   ROSE_ASSERT(node);
   vector<uint64_t> val_rax, val_rbx, val_rcx, val_rdx ;
@@ -445,7 +445,7 @@ InterruptAnalysis::run(string& name, SgDirectedGraphNode* node,
 
     // verify all interrupts and make sure they do what one expects them to do.
     if (asmNode->get_kind() == x86_int) {
-      if (RoseBin_support::DEBUG_MODE()) 
+      if (RoseBin_support::DEBUG_MODE())
 	cerr << "    " << name << " : found int call " << endl;
       // need to resolve rax, rbx, rcx, rdx
       // therefore get the definition for each
@@ -467,28 +467,28 @@ InterruptAnalysis::run(string& name, SgDirectedGraphNode* node,
       if (val_rax.size()==1) {
 	uint64_t rax = *(val_rax.begin());
 	int_name = getIntCallName(rax, data_ebx, data_ecx, data_edx,
-				  val_rbx, val_rcx, val_rdx, 
+				  val_rbx, val_rcx, val_rdx,
 				  pos_rbx, pos_rcx, pos_rdx,
 				  fpos_rbx, fpos_rcx, fpos_rdx);
 	ambigious_inst = false;
       }
 
-      if (ambigious_inst) {      
+      if (ambigious_inst) {
 	string value = "";
 	vector<uint64_t>::iterator it = val_rax.begin();
 	for (;it!=val_rax.end();++it) {
 	  string i_name = getIntCallName(*it, data_ebx, data_ecx, data_edx,
-					 val_rbx, val_rcx, val_rdx, 
+					 val_rbx, val_rcx, val_rdx,
 					 pos_rbx, pos_rcx, pos_rdx,
 					 fpos_rbx, fpos_rcx, fpos_rdx);
 	  value +="rAX:"+RoseBin_support::HexToString(*it)+" "+i_name+" ";
-	  //	  createVariable(fpos_rax, pos_rax, "rax", data_ebx, "rax", 0, val_rax,false); 
+	  //	  createVariable(fpos_rax, pos_rax, "rax", data_ebx, "rax", 0, val_rax,false);
 	}
 
 	cerr << " DataFlow::VariableAnalysis . Ambigious INT call: " <<
-	  vizzGraph->getProperty(SB_Graph_Def::name, node) << " - " << value << endl;
-	value = "PROBLEM: " + value; 
-	node->append_properties(SB_Graph_Def::dfa_unresolved_func,value);
+	  vizzGraph->getProperty(SgGraph::name, node) << " - " << value << endl;
+	value = "PROBLEM: " + value;
+	node->append_properties(SgGraph::dfa_unresolved_func,value);
 
       } else {
 	// we know what INT instruction it is
@@ -497,9 +497,9 @@ InterruptAnalysis::run(string& name, SgDirectedGraphNode* node,
 	string t_edx = RoseBin_support::getTypeName(data_edx);
 
 	int_name += " ("+t_ebx+","+t_ecx+","+t_edx+")";
-	if (RoseBin_support::DEBUG_MODE()) 
+	if (RoseBin_support::DEBUG_MODE())
 	 cerr << " found INT call : "  << int_name << endl;
-	node->append_properties(SB_Graph_Def::dfa_variable,int_name);
+	node->append_properties(SgGraph::dfa_variable,int_name);
       }
     }
   }

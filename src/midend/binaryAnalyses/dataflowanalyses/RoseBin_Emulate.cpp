@@ -13,7 +13,7 @@ using namespace std;
 
 
 
-void 
+void
 RoseBin_Emulate::getRegister_val(std::pair<X86RegisterClass, int>  code,
 					 X86PositionInRegister pos,
 					 uint64_t &val) {
@@ -23,7 +23,7 @@ RoseBin_Emulate::getRegister_val(std::pair<X86RegisterClass, int>  code,
   uint64_t qw_val=0xFFFFFFFF;
 
   getRegister_val(code, pos, b_val, w_val, dw_val, qw_val);
-  
+
   val =0xFFFFFFFF;
   if (b_val!=0xF)
     val = uint64_t(b_val);
@@ -36,7 +36,7 @@ RoseBin_Emulate::getRegister_val(std::pair<X86RegisterClass, int>  code,
 
 }
 
-void 
+void
 RoseBin_Emulate::getRegister_val(std::pair<X86RegisterClass, int>  code,
 					 X86PositionInRegister pos,
 					 uint8_t &b_val,
@@ -48,7 +48,7 @@ RoseBin_Emulate::getRegister_val(std::pair<X86RegisterClass, int>  code,
   uint8_t b8,b7=0xF;
   uint16_t b78=0xFF;
   uint32_t b5678=0xFFFF;
-  
+
   string res="";
   ROSE_ASSERT (!RoseBin_support::bigEndian());
   switch (code.first) {
@@ -98,35 +98,35 @@ RoseBin_Emulate::getRegister_val(std::pair<X86RegisterClass, int>  code,
         case 8: {
           res="r8";
           break;
-        } 
+        }
         case 9: {
           res="r9";
           break;
-        } 
+        }
         case 10: {
           res="r10";
           break;
-        } 
+        }
         case 11: {
           res="r11";
           break;
-        } 
+        }
         case 12: {
           res="r12";
           break;
-        } 
+        }
         case 13: {
           res="r13";
           break;
-        } 
+        }
         case 14: {
           res="r14";
           break;
-        } 
+        }
         case 15: {
           res="r15";
           break;
-        } 
+        }
         default: ROSE_ASSERT (false);
       }
       break;
@@ -137,27 +137,27 @@ RoseBin_Emulate::getRegister_val(std::pair<X86RegisterClass, int>  code,
         case x86_segreg_cs: {
           res="cs";
           break;
-        } 
+        }
         case x86_segreg_ds: {
           res="ds";
           break;
-        } 
+        }
         case x86_segreg_ss: {
           res="ss";
           break;
-        } 
+        }
         case x86_segreg_es: {
           res="es";
           break;
-        } 
+        }
         case x86_segreg_fs: {
           res="fs";
           break;
-        } 
+        }
         case x86_segreg_gs: {
           res="gs";
           break;
-        } 
+        }
         default:
           ROSE_ASSERT (false);
       }
@@ -201,7 +201,7 @@ RoseBin_Emulate::evaluateInstruction( SgAsmx86Instruction* binInst, string& oper
     getRegister_val(std::make_pair(x86_regclass_gpr, x86_gpr_ax), x86_regpos_qword, rax);
     // should get the values from memory!
     string values = "";
-    rose_hash::hash_map <uint64_t, uint64_t>::iterator it = memory.begin();                                      
+    rose_hash::hash_map <uint64_t, uint64_t>::iterator it = memory.begin();
     for (;it!=memory.end();++it) {
       uint64_t loc = it->first;
       uint64_t val = it->second;
@@ -224,7 +224,7 @@ RoseBin_Emulate::evaluateInstruction( SgAsmx86Instruction* binInst, string& oper
     }
     return success;
   }
-  // handle call to rdtsc  
+  // handle call to rdtsc
   else if (binInst->get_kind() == x86_rdtsc) {
     // simulate timer function
     operands += " :: specialOp rdtsc";
@@ -233,7 +233,7 @@ RoseBin_Emulate::evaluateInstruction( SgAsmx86Instruction* binInst, string& oper
     return success;
   }
   // **************************************************************
-  
+
 
   int counter=0;
   SgAsmx86RegisterReferenceExpression* refExpr =NULL;
@@ -251,7 +251,7 @@ RoseBin_Emulate::evaluateInstruction( SgAsmx86Instruction* binInst, string& oper
     if (counter==0) {
       // left hand side *************************************************************
       refExpr =	isSgAsmx86RegisterReferenceExpression(expr);
-      
+
       // check what it could be
       // ******** 1. its a RegisterReferenceExpression on the left side
       if (refExpr) {
@@ -263,13 +263,13 @@ RoseBin_Emulate::evaluateInstruction( SgAsmx86Instruction* binInst, string& oper
 	//if (memRef)
 	//  operands += " :: memoryRefExp ";
 	operands += "\\n";
-      } 
+      }
 
       // ******** 2. Its a BitAndByteInstruction
       else  {
         switch (binInst->get_kind()) {
           case x86_sete: {
-            // if the instruction is a sete, then we want to check ZF and set the 
+            // if the instruction is a sete, then we want to check ZF and set the
             // proper register to 1
             if (ZF) {
               uint64_t qw_val=1;
@@ -279,8 +279,8 @@ RoseBin_Emulate::evaluateInstruction( SgAsmx86Instruction* binInst, string& oper
             break;
           }
           case x86_dec: {
-            uint64_t left = getRegister(code);	    
-            assignRegister(code, --left);	    
+            uint64_t left = getRegister(code);
+            assignRegister(code, --left);
             break;
           }
           default: {
@@ -350,9 +350,9 @@ RoseBin_Emulate::evaluateInstruction( SgAsmx86Instruction* binInst, string& oper
 
             case x86_add: {
 	      operands += " :: Arithm :: Add";
-	      uint64_t left = getRegister(code);	    
+	      uint64_t left = getRegister(code);
 	      uint64_t sum = left+val;
-	      assignRegister(code, sum);	    
+	      assignRegister(code, sum);
               break;
 	    }
 
@@ -370,9 +370,9 @@ RoseBin_Emulate::evaluateInstruction( SgAsmx86Instruction* binInst, string& oper
 	X86PositionInRegister posR ;
 	codeR = refExprR->get_identifier();
 	posR = refExprR->get_position_in_register();
-	
+
 	operands += "right ::  refExpr ";
-	
+
         switch (binInst->get_kind()) {
           case x86_mov: {
 	    operands += " :: DataTrans :: Mov";
@@ -397,10 +397,10 @@ RoseBin_Emulate::evaluateInstruction( SgAsmx86Instruction* binInst, string& oper
 	    }
             break;
 	  } //mov instruction
-	
+
           case x86_cmp: {
 	    operands += " :: Arith :: Cmp";
-	    uint64_t left = getRegister(code);	    
+	    uint64_t left = getRegister(code);
 	    uint64_t right = getRegister(codeR);
 	    if (left==right)
 	      ZF=true;
@@ -422,21 +422,21 @@ RoseBin_Emulate::evaluateInstruction( SgAsmx86Instruction* binInst, string& oper
 }
 
 
-std::string 
+std::string
 RoseBin_Emulate::printRegister(std::string text, uint64_t reg) {
   string ret = "\\n"+text + " : " +   RoseBin_support::HexToString(reg) ;
   return ret;
 }
 
 
-uint64_t 
+uint64_t
 RoseBin_Emulate::getRegister(std::pair<X86RegisterClass, int>  code) {
   uint64_t reg=0;
   ROSE_ASSERT (code.first == x86_regclass_gpr);
  switch (code.second) {
   case x86_gpr_ax: {
     reg = rax;
-    break; 
+    break;
   }
   case x86_gpr_bx: {
     reg = rbx;
@@ -445,7 +445,7 @@ RoseBin_Emulate::getRegister(std::pair<X86RegisterClass, int>  code) {
   case x86_gpr_cx: {
     reg = rcx;
     break;
-  } 
+  }
   case x86_gpr_dx: {
     reg = rdx;
     break;
@@ -457,7 +457,7 @@ RoseBin_Emulate::getRegister(std::pair<X86RegisterClass, int>  code) {
   case x86_gpr_si: {
     reg = rsi;
     break;
-  } 
+  }
   case x86_gpr_sp: {
     reg = rsp;
     break;
@@ -465,19 +465,19 @@ RoseBin_Emulate::getRegister(std::pair<X86RegisterClass, int>  code) {
   case x86_gpr_bp: {
     reg = rbp;
     break;
-  } 
+  }
   default:
     break;
   }
  return reg;
 }
 
-void 
+void
 RoseBin_Emulate::assignMemory(uint64_t position, uint64_t value) {
   memory[position] = value;
 }
 
-uint64_t 
+uint64_t
 RoseBin_Emulate::getMemory(uint64_t position) {
   rose_hash::hash_map <uint64_t, uint64_t>::iterator it = memory.find(position);
   uint64_t value = 0xFFFFFFFF;
@@ -491,7 +491,7 @@ RoseBin_Emulate::getMemory(uint64_t position) {
 /****************************************************
  * resolve expression
  ****************************************************/
-void 
+void
 RoseBin_Emulate::assignRegister(std::pair<X86RegisterClass, int>  code,
 					 X86PositionInRegister pos,
 					 uint8_t &b_val,
@@ -505,41 +505,41 @@ RoseBin_Emulate::assignRegister(std::pair<X86RegisterClass, int>  code,
           if (pos==x86_regpos_low_byte) {
             rax &=~0xFFULL;
             rax |= uint64_t(b_val);
-          } else 
+          } else
             if (pos==x86_regpos_high_byte) {
               rax &=~0xFF00ULL;
               rax |= uint64_t(b_val)<<8;
-            }else 
+            }else
               if (pos==x86_regpos_word) {
                 rax &=~0xFFFFULL;
                 rax |= uint64_t(w_val);
-              }else 
+              }else
                 if (pos==x86_regpos_dword) {
                   rax &=~0xFFFFFFFFULL;
                   rax |= uint64_t(dw_val);
-                } else 
+                } else
                   if (pos==x86_regpos_qword) {
                     rax = qw_val;
                   }
-                break; 
+                break;
         }
         case x86_gpr_bx: {
           if (pos==x86_regpos_low_byte) {
             rbx &=~0xFFULL;
             rbx |= uint64_t(b_val);
-          }else 
+          }else
             if (pos==x86_regpos_high_byte) {
               rbx &=~0xFF00ULL;
               rbx |= uint64_t(b_val)<<8;
-            }else 
+            }else
               if (pos==x86_regpos_word) {
                 rbx &=~0xFFFFULL;
                 rbx |= uint64_t(w_val);
-              }else 
+              }else
                 if (pos==x86_regpos_dword) {
                   rbx &=~0xFFFFFFFFULL;
                   rbx |= uint64_t(dw_val);
-                }else 
+                }else
                   if (pos==x86_regpos_qword)
                     rbx = qw_val;
                 break;
@@ -548,40 +548,40 @@ RoseBin_Emulate::assignRegister(std::pair<X86RegisterClass, int>  code,
           if (pos==x86_regpos_low_byte) {
             rcx &=~0xFFULL;
             rcx |= uint64_t(b_val);
-          }else 
+          }else
             if (pos==x86_regpos_high_byte) {
               rcx &=~0xFF00ULL;
               rcx |= uint64_t(b_val)<<8;
-            }else 
+            }else
               if (pos==x86_regpos_word) {
                 rcx &=~0xFFFFULL;
                 rcx |= uint64_t(w_val);
-              }else 
+              }else
                 if (pos==x86_regpos_dword) {
                   rcx &=~0xFFFFFFFFULL;
                   rcx |= uint64_t(dw_val);
-                }else 
+                }else
                   if (pos==x86_regpos_qword)
                     rcx = qw_val;
                 break;
-        } 
+        }
         case x86_gpr_dx: {
           if (pos==x86_regpos_low_byte) {
             rdx &=~0xFFULL;
             rdx |= uint64_t(b_val);
-          }else 
+          }else
             if (pos==x86_regpos_high_byte) {
               rdx &=~0xFF00ULL;
               rdx |= uint64_t(b_val)<<8;
-            }else 
+            }else
               if (pos==x86_regpos_word) {
                 rdx &=~0xFFFFULL;
                 rdx |= uint64_t(w_val);
-              }else 
+              }else
                 if (pos==x86_regpos_dword) {
                   rdx &=~0xFFFFFFFFULL;
                   rdx |= uint64_t(dw_val);
-                }else 
+                }else
                   if (pos==x86_regpos_qword)
                     rdx = qw_val;
                 break;
@@ -590,11 +590,11 @@ RoseBin_Emulate::assignRegister(std::pair<X86RegisterClass, int>  code,
           if (pos==x86_regpos_word) {
             rdi &=~0xFFFFULL;
             rdi |= uint64_t(w_val);
-          } else 
+          } else
             if (pos==x86_regpos_dword) {
               rdi &=~0xFFFFFFFFULL;
               rdi |= uint64_t(dw_val);
-            } else 
+            } else
               if (pos==x86_regpos_qword)
                 rdi = qw_val;
             break;
@@ -603,24 +603,24 @@ RoseBin_Emulate::assignRegister(std::pair<X86RegisterClass, int>  code,
           if (pos==x86_regpos_word) {
             rsi &=~0xFFFFULL;
             rsi |= uint64_t(w_val);
-          } else 
+          } else
             if (pos==x86_regpos_dword) {
               rsi &=~0xFFFFFFFFULL;
               rsi |= uint64_t(dw_val);
-            } else 
+            } else
               if (pos==x86_regpos_qword)
                 rsi = qw_val;
             break;
-        } 
+        }
         case x86_gpr_sp: {
           if (pos==x86_regpos_word) {
             rsp &=~0xFFFFULL;
             rsp |= uint64_t(w_val);
-          } else 
+          } else
             if (pos==x86_regpos_dword) {
               rsp &=~0xFFFFFFFFULL;
               rsp |= uint64_t(dw_val);
-            } else 
+            } else
               if (pos==x86_regpos_qword)
                 rsp = qw_val;
             break;
@@ -629,39 +629,39 @@ RoseBin_Emulate::assignRegister(std::pair<X86RegisterClass, int>  code,
           if (pos==x86_regpos_word) {
             rbp &=~0xFFFFULL;
             rbp |= uint64_t(w_val);
-          } else 
+          } else
             if (pos==x86_regpos_dword) {
               rbp &=~0xFFFFFFFFULL;
               rbp |= uint64_t(dw_val);
-            } else 
+            } else
               if (pos==x86_regpos_qword)
                 rbp = qw_val;
             break;
-        } 
+        }
         case 8: {
           break;
-        } 
+        }
         case 9: {
           break;
-        } 
+        }
         case 10: {
           break;
-        } 
+        }
         case 11: {
           break;
-        } 
+        }
         case 12: {
           break;
-        } 
+        }
         case 13: {
           break;
-        } 
+        }
         case 14: {
           break;
-        } 
+        }
         case 15: {
           break;
-        } 
+        }
         default: ROSE_ASSERT (false);
       }
       break;
@@ -672,14 +672,14 @@ RoseBin_Emulate::assignRegister(std::pair<X86RegisterClass, int>  code,
 }
 
 
-void 
+void
 RoseBin_Emulate::assignRegister(std::pair<X86RegisterClass, int>  code,
 					 uint64_t &qw_val) {
   if (code.first != x86_regclass_gpr) return;
   switch (code.second) {
     case x86_gpr_ax: {
       rax = qw_val;
-      break; 
+      break;
     }
     case x86_gpr_bx: {
       rbx = qw_val;
@@ -688,7 +688,7 @@ RoseBin_Emulate::assignRegister(std::pair<X86RegisterClass, int>  code,
     case x86_gpr_cx: {
       rcx = qw_val;
       break;
-    } 
+    }
     case x86_gpr_dx: {
       rdx = qw_val;
       break;
@@ -700,7 +700,7 @@ RoseBin_Emulate::assignRegister(std::pair<X86RegisterClass, int>  code,
     case x86_gpr_si: {
       rsi = qw_val;
       break;
-    } 
+    }
     case x86_gpr_sp: {
       rsp = qw_val;
       break;
@@ -708,7 +708,7 @@ RoseBin_Emulate::assignRegister(std::pair<X86RegisterClass, int>  code,
     case x86_gpr_bp: {
       rbp = qw_val;
       break;
-    } 
+    }
     default:
       break;
   }
@@ -767,9 +767,9 @@ std::string RoseBin_Emulate::evaluateRegisters() {
       return regs;
 }
 
-bool 
-RoseBin_Emulate::run(string& name, SgDirectedGraphNode* node,
-		     SgDirectedGraphNode* pervious) {
+bool
+RoseBin_Emulate::run(string& name, SgGraphNode* node,
+		     SgGraphNode* pervious) {
 
   // check known function calls and resolve variables
   ROSE_ASSERT(node);
@@ -779,21 +779,21 @@ RoseBin_Emulate::run(string& name, SgDirectedGraphNode* node,
     //string unp_name = unparser->unparseInstruction(inst);
     if (RoseBin_support::DEBUG_MODE()) {
       string regs = evaluateRegisters();
-      string unp_name = vizzGraph->getProperty(SB_Graph_Def::name, node);
+      string unp_name = vizzGraph->getProperty(SgGraph::name, node);
       cout << "EMULATE BEFORE::  name: " << unp_name << " \n regs: " << regs << endl;
     }
     string eval = "";
     bool success=evaluateInstruction(isSgAsmx86Instruction(inst), eval);
-    //node->append_properties(SB_Graph_Def::name,unp_name);
-    node->append_properties(SB_Graph_Def::eval,eval);
+    //node->append_properties(SgGraph::name,unp_name);
+    node->append_properties(SgGraph::eval,eval);
     string regs = evaluateRegisters();
     if (RoseBin_support::DEBUG_MODE()) {
-      string unp_name = vizzGraph->getProperty(SB_Graph_Def::name, node);
+      string unp_name = vizzGraph->getProperty(SgGraph::name, node);
       cout << "EMULATE AFTER ::  name: " << unp_name << " \n regs: " << regs << endl;
     }
-    node->append_properties(SB_Graph_Def::regs,regs);
+    node->append_properties(SgGraph::regs,regs);
     if (success)
-      node->append_properties(SB_Graph_Def::done,RoseBin_support::ToString("done"));
+      node->append_properties(SgGraph::done,RoseBin_support::ToString("done"));
   // ----------------------------------------------------------------------------
   }
   return false;

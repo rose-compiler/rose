@@ -36,8 +36,10 @@ BinQinteractive::BinQinteractive(std::string fA, std::string fB, std::vector<std
   currentAnalysis=NULL;
   sourceFile=false;
   
+  // switsched order of theses two!
+  init();   // create fileA and AuxInfo
   initAnalyses();
-  init();
+
   currentSelectedFile=fileA;
   if (test==false) {
     createGUI();
@@ -51,7 +53,7 @@ BinQinteractive::BinQinteractive(std::string fA, std::string fB, std::vector<std
 void BinQinteractive::initAnalyses() {
   cerr << "Checking for analyses ... " << endl;
   analyses.clear();
-  analyses.push_back(new DwarfFileInfo());
+  analyses.push_back(new DwarfFileInfo(algo));
   analyses.push_back(new DynamicInfo());
   analyses.push_back(new ForbiddenFunctionCall());
   analyses.push_back(new NullAfterFree());
@@ -64,8 +66,8 @@ void BinQinteractive::initAnalyses() {
   analyses.push_back(new BinCallGraph());
   analyses.push_back(new BinControlFlowAnalysis());
   analyses.push_back(new BinDataFlowAnalysis());
-  analyses.push_back(new BufferOverflow());
-  analyses.push_back(new InterruptAnalysis());
+  analyses.push_back(new BufferOverflow(algo));
+  analyses.push_back(new InterruptAnalysis(algo));
 }
 
 

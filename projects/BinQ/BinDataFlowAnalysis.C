@@ -57,15 +57,15 @@ BinDataFlowAnalysis::run(SgNode* fileA, SgNode* fileB) {
   bool mergedEdges=true;
   bool interprocedural=false;
   string dfgFileName = "dfg.dot";
-  graph= new RoseBin_DotGraph(info);
+  graph= new RoseBin_DotGraph();
   if (dot==false) {
     dfgFileName = "dfg.gml";
-    graph= new RoseBin_GMLGraph(info);
+    graph= new RoseBin_GMLGraph();
   }
-
+  GraphAlgorithms* algo = new GraphAlgorithms(info);
   SgAsmInterpretation* interp = SageInterface::getMainInterpretation(file);
   dfanalysis = 
-    new RoseBin_DataFlowAnalysis(interp->get_global_block(), forward, new RoseObj(), info);
+    new RoseBin_DataFlowAnalysis(interp->get_global_block(), forward, new RoseObj(), algo);
   ROSE_ASSERT(dfanalysis);
   dfanalysis->init(interprocedural, edges);
   dfanalysis->run(graph, dfgFileName, mergedEdges);
@@ -99,15 +99,15 @@ BinDataFlowAnalysis::test(SgNode* fileA, SgNode* fileB) {
   bool mergedEdges=true;
   bool interprocedural=false;
   string dfgFileName = "dfg.dot";
-  graph= new RoseBin_DotGraph(info);
+  graph= new RoseBin_DotGraph();
   if (dot==false) {
     dfgFileName = "dfg.gml";
-    graph= new RoseBin_GMLGraph(info);
+    graph= new RoseBin_GMLGraph();
   }
-
+  GraphAlgorithms* algo = new GraphAlgorithms(info);
   SgAsmInterpretation* interp = SageInterface::getMainInterpretation(file);
   dfanalysis = 
-    new RoseBin_DataFlowAnalysis(interp->get_global_block(), forward, new RoseObj(), info);
+    new RoseBin_DataFlowAnalysis(interp->get_global_block(), forward, new RoseObj(), algo);
   ROSE_ASSERT(dfanalysis);
   dfanalysis->init(interprocedural, edges);
   dfanalysis->run(graph, dfgFileName, mergedEdges);

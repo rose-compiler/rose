@@ -46,7 +46,7 @@ class RoseBin_Emulate : public RoseBin_DataFlowAbstract{
 
 
   /*
-  int64_t trackValueForRegister(SgDirectedGraphNode* node,
+  int64_t trackValueForRegister(SgGraphNode* node,
 				std::pair<X86RegisterClass, int>  codeSearch,
 				bool& cantTrack,
 				SgAsmRegisterReferenceExpression* refExpr_rightHand);
@@ -75,14 +75,14 @@ class RoseBin_Emulate : public RoseBin_DataFlowAbstract{
 
  public:
 
-  RoseBin_Emulate() {}
+  RoseBin_Emulate(GraphAlgorithms* algo):RoseBin_DataFlowAbstract(algo) {}
   ~RoseBin_Emulate() {}
 
-  bool run(std::string& name, SgDirectedGraphNode* node, SgDirectedGraphNode* before);
+  bool run(std::string& name, SgGraphNode* node, SgGraphNode* before);
   std::string evaluateRegisters();
   bool evaluateInstruction( SgAsmx86Instruction* inst, std::string& operands) ;
 
-  bool runEdge( SgDirectedGraphNode* node, SgDirectedGraphNode* next) {
+  bool runEdge( SgGraphNode* node, SgGraphNode* next) {
     return false;
   }
 

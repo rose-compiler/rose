@@ -17,15 +17,15 @@ void
 RoseBin_VariableAnalysis::getValueForDefinition(std::vector<uint64_t>& vec,
 						std::vector<uint64_t>& positions,
 						uint64_t& fpos,
-						SgDirectedGraphNode* node,
+						SgGraphNode* node,
 						std::pair<X86RegisterClass, int>  reg ) {
-  set <SgDirectedGraphNode*> defNodeSet = getDefFor(node, reg);
-  if (RoseBin_support::DEBUG_MODE()) 
+  set <SgGraphNode*> defNodeSet = getDefFor(node, reg);
+  if (RoseBin_support::DEBUG_MODE())
     cout << "    size of found NodeSet = " << defNodeSet.size() <<endl;
-  set <SgDirectedGraphNode*>::const_iterator it = defNodeSet.begin();
+  set <SgGraphNode*>::const_iterator it = defNodeSet.begin();
   for (;it!=defNodeSet.end();++it) {
-    SgDirectedGraphNode* defNode = *it;
-    if (RoseBin_support::DEBUG_MODE() && defNode) 
+    SgGraphNode* defNode = *it;
+    if (RoseBin_support::DEBUG_MODE() && defNode)
       cout << "    investigating ... " << defNode->get_name() <<endl;
     ROSE_ASSERT(defNode);
     SgAsmx86Instruction* inst = isSgAsmx86Instruction(defNode->get_SgNode());
@@ -48,15 +48,15 @@ RoseBin_VariableAnalysis::getValueForDefinition(std::vector<uint64_t>& vec,
 	uint64_t val = getValueOfInstr(inst, true);
 	vec.push_back(val);
 	fpos = inst->get_address();
-	if (RoseBin_support::DEBUG_MODE()) 
+	if (RoseBin_support::DEBUG_MODE())
       	  cout << "    found  valueOfInst = " << RoseBin_support::ToString(val) <<endl;
       }
     } else {
-      // it is a register reference. I.e we need to follow the usage edge to find the 
+      // it is a register reference. I.e we need to follow the usage edge to find the
       // definition of that node
-      SgDirectedGraphNode* usageNode = vizzGraph->getDefinitionForUsage(defNode);
+      SgGraphNode* usageNode = g_algo->getDefinitionForUsage(vizzGraph,defNode);
       if (usageNode && usageNode!=node) {
-	if (RoseBin_support::DEBUG_MODE() && usageNode) 
+	if (RoseBin_support::DEBUG_MODE() && usageNode)
       	  cout << "    following up usage for " << usageNode->get_name() <<endl;
 	getValueForDefinition(vec, positions, fpos, usageNode, regRight);
       } else {
@@ -72,8 +72,8 @@ RoseBin_VariableAnalysis::getIntCallName(uint64_t rax,
 					 DataTypes& data_ebx,
 					 DataTypes& data_ecx,
 					 DataTypes& data_edx,
-					 vector<uint64_t>& val_rbx, 
-					 vector<uint64_t>& val_rcx, 
+					 vector<uint64_t>& val_rbx,
+					 vector<uint64_t>& val_rcx,
 					 vector<uint64_t>& val_rdx,
 					 std::vector<uint64_t>& pos_rbx,
 					 std::vector<uint64_t>& pos_rcx,
@@ -85,7 +85,7 @@ RoseBin_VariableAnalysis::getIntCallName(uint64_t rax,
   data_edx = d_none;
 
   if ((os_ver==linux_22 ||
-      os_ver==linux_24 || 
+      os_ver==linux_24 ||
       os_ver==linux_26 ||
       os_ver==linux_27) && arch==bit32)
     int_name = getIntCallName_Linux32bit(rax, data_ebx, data_ecx, data_edx,
@@ -93,7 +93,7 @@ RoseBin_VariableAnalysis::getIntCallName(uint64_t rax,
 					 pos_rbx, pos_rcx, pos_rdx,
 					 fpos_rbx, fpos_rcx, fpos_rdx);
   if ((os_ver==linux_22 ||
-      os_ver==linux_24 || 
+      os_ver==linux_24 ||
       os_ver==linux_26 ||
       os_ver==linux_27) && arch==bit64)
     int_name = getIntCallName_Linux64bit(rax, data_ebx, data_ecx, data_edx,
@@ -109,8 +109,8 @@ RoseBin_VariableAnalysis::getIntCallName_Linux32bit(uint64_t rax,
 						    DataTypes& data_ebx,
 						    DataTypes& data_ecx,
 						    DataTypes& data_edx,
-						    vector<uint64_t>& val_rbx, 
-						    vector<uint64_t>& val_rcx, 
+						    vector<uint64_t>& val_rbx,
+						    vector<uint64_t>& val_rcx,
 						    vector<uint64_t>& val_rdx,
 						    std::vector<uint64_t>& pos_rbx,
 						    std::vector<uint64_t>& pos_rcx,
@@ -120,85 +120,85 @@ RoseBin_VariableAnalysis::getIntCallName_Linux32bit(uint64_t rax,
   // linux system calls for kernel 2.2 - 32bit
 	switch (rax) {
 	case 1: {
-	  int_name="sys_exit"; 
-	  data_ebx = d_int; 
-	  createVariable(fpos_rbx, pos_rbx, "error_code", data_ebx, int_name, 0, val_rbx,false); 
+	  int_name="sys_exit";
+	  data_ebx = d_int;
+	  createVariable(fpos_rbx, pos_rbx, "error_code", data_ebx, int_name, 0, val_rbx,false);
 	  break;
 	}
 	case 2: {
-	  int_name="sys_fork"; 
-	  data_ebx = d_struct; 
-	  createVariable(fpos_rbx, pos_rbx, "fork", data_ebx, int_name, 0, val_rbx,false); 
+	  int_name="sys_fork";
+	  data_ebx = d_struct;
+	  createVariable(fpos_rbx, pos_rbx, "fork", data_ebx, int_name, 0, val_rbx,false);
 	  break;
 	}
 	case 3: {
-	  int_name="sys_read"; 
-	  data_ebx = d_uint; 
-	  data_ecx = d_char_p; 
-	  data_edx = d_size_t; 
-	  createVariable(fpos_rbx, pos_rbx, "fd", data_ebx, int_name, 0, val_rbx,false); 
-	  createVariable(fpos_rcx, pos_rcx, "buf", data_ecx, int_name, *(val_rdx.begin()), val_rcx,true); 
-	  createVariable(fpos_rdx, pos_rdx, "count", data_edx, int_name, 0, val_rdx,false); 
+	  int_name="sys_read";
+	  data_ebx = d_uint;
+	  data_ecx = d_char_p;
+	  data_edx = d_size_t;
+	  createVariable(fpos_rbx, pos_rbx, "fd", data_ebx, int_name, 0, val_rbx,false);
+	  createVariable(fpos_rcx, pos_rcx, "buf", data_ecx, int_name, *(val_rdx.begin()), val_rcx,true);
+	  createVariable(fpos_rdx, pos_rdx, "count", data_edx, int_name, 0, val_rdx,false);
 	  break;
 	}
 	case 4: {
-	  int_name="sys_write"; 
-	  data_ebx = d_uint; 
-	  data_ecx = d_const_char_p; 
-	  data_edx = d_size_t; 
-	  createVariable(fpos_rbx, pos_rbx, "fd", data_ebx, int_name, 0, val_rbx,false); 
-	  createVariable(fpos_rcx, pos_rcx, "buf", data_ecx, int_name, *(val_rdx.begin()), val_rcx,true); 
-	  createVariable(fpos_rdx, pos_rdx, "count", data_edx, int_name, 0, val_rdx,false); 
+	  int_name="sys_write";
+	  data_ebx = d_uint;
+	  data_ecx = d_const_char_p;
+	  data_edx = d_size_t;
+	  createVariable(fpos_rbx, pos_rbx, "fd", data_ebx, int_name, 0, val_rbx,false);
+	  createVariable(fpos_rcx, pos_rcx, "buf", data_ecx, int_name, *(val_rdx.begin()), val_rcx,true);
+	  createVariable(fpos_rdx, pos_rdx, "count", data_edx, int_name, 0, val_rdx,false);
 	  break;
 	}
 	case 5: {
-	  int_name="sys_open"; 
-	  data_ebx = d_const_char_p; 
+	  int_name="sys_open";
+	  data_ebx = d_const_char_p;
 	  data_ecx = d_int;
-	  data_edx = d_int; 
+	  data_edx = d_int;
 	  break;
 	}
 	case 6: {
-	  int_name="sys_close"; 
-	  data_ebx = d_uint; 
+	  int_name="sys_close";
+	  data_ebx = d_uint;
 	  break;
 	}
 	case 7: {
-	  int_name="sys_waitpid"; 
-	  data_ebx = d_pid_t; 
+	  int_name="sys_waitpid";
+	  data_ebx = d_pid_t;
 	  data_ecx = d_uint_p;
-	  data_edx = d_int; 
+	  data_edx = d_int;
 	  break;
 	}
 	case 8: {
-	  int_name="sys_creat"; 
-	  data_ebx = d_const_char_p; 
+	  int_name="sys_creat";
+	  data_ebx = d_const_char_p;
 	  data_ecx = d_int;
 	  break;
 	}
 	case 9: {
-	  int_name="sys_link"; 
-	  data_ebx = d_const_char_p; 
-	  data_ecx = d_const_char_p; 
+	  int_name="sys_link";
+	  data_ebx = d_const_char_p;
+	  data_ecx = d_const_char_p;
 	  break;
 	}
 	case 10: {
 	  int_name="sys_unlink";
-	  data_ebx = d_const_char_p; 
+	  data_ebx = d_const_char_p;
 	  break;
 	}
 	case 11: {
-	  int_name="sys_execve"; 
-	  data_ebx = d_struct; 
+	  int_name="sys_execve";
+	  data_ebx = d_struct;
 	  break;
 	}
 	case 12: {
-	  int_name="sys_chdir"; 
-	  data_ebx = d_const_char_p; 
+	  int_name="sys_chdir";
+	  data_ebx = d_const_char_p;
 	  break;
 	}
 	case 13: {
-	  int_name="sys_time"; 
+	  int_name="sys_time";
 	  data_ebx = d_int;
 	  break;
 	}
@@ -366,8 +366,8 @@ RoseBin_VariableAnalysis::getIntCallName_Linux64bit(uint64_t rax,
 						    DataTypes& data_ebx,
 						    DataTypes& data_ecx,
 						    DataTypes& data_edx,
-						    vector<uint64_t>& val_rbx, 
-						    vector<uint64_t>& val_rcx, 
+						    vector<uint64_t>& val_rbx,
+						    vector<uint64_t>& val_rcx,
 						    vector<uint64_t>& val_rdx,
 						    std::vector<uint64_t>& pos_rbx,
 						    std::vector<uint64_t>& pos_rcx,
@@ -378,49 +378,49 @@ RoseBin_VariableAnalysis::getIntCallName_Linux64bit(uint64_t rax,
   // check in linux src : uinstd.h and syscalls.h
 	switch (rax) {
 	case 0: {
-	  int_name="sys_read"; 
-	  data_ebx = d_uint; 
-	  data_ecx = d_char_p; 
-	  data_edx = d_size_t; 
+	  int_name="sys_read";
+	  data_ebx = d_uint;
+	  data_ecx = d_char_p;
+	  data_edx = d_size_t;
 	  break;
 	}
 	case 1: {
-	  int_name="sys_write"; 
-	  data_ebx = d_uint; 
-	  data_ecx = d_const_char_p; 
-	  data_edx = d_size_t; 
+	  int_name="sys_write";
+	  data_ebx = d_uint;
+	  data_ecx = d_const_char_p;
+	  data_edx = d_size_t;
 	  break;
 	}
 	case 2: {
-	  int_name="sys_open"; 
-	  data_ebx = d_const_char_p; 
+	  int_name="sys_open";
+	  data_ebx = d_const_char_p;
 	  data_ecx = d_int;
-	  data_edx = d_int; 
+	  data_edx = d_int;
 	  break;
 	}
 	case 3: {
-	  int_name="sys_close"; 
-	  data_ebx = d_uint; 
+	  int_name="sys_close";
+	  data_ebx = d_uint;
 	  break;
 	}
 	case 4: {
 	  int_name="sys_newstat"; break;
-	  data_ebx = d_const_char_p; 
+	  data_ebx = d_const_char_p;
 	  data_ecx = d_struct;
 	}
 	case 5: {
 	  int_name="sys_newfstat"; break;
-	  data_ebx = d_uint; 
+	  data_ebx = d_uint;
 	  data_ecx = d_struct;
 	}
 	case 6: {
 	  int_name="sys_newlstat"; break;
-	  data_ebx = d_const_char_p; 
+	  data_ebx = d_const_char_p;
 	  data_ecx = d_struct;
 	}
 	case 7: {
 	  int_name="sys_poll"; break;
-	  data_ebx = d_struct; 
+	  data_ebx = d_struct;
 	  data_ecx = d_uint;
 	  data_edx = d_long;
 	}
@@ -430,9 +430,9 @@ RoseBin_VariableAnalysis::getIntCallName_Linux64bit(uint64_t rax,
 	return int_name;
 }
 
-bool 
-RoseBin_VariableAnalysis::run(string& name, SgDirectedGraphNode* node,
-			      SgDirectedGraphNode* previous){
+bool
+RoseBin_VariableAnalysis::run(string& name, SgGraphNode* node,
+			      SgGraphNode* previous){
 
   // check known function calls and resolve variables
   ROSE_ASSERT(node);
@@ -446,7 +446,7 @@ RoseBin_VariableAnalysis::run(string& name, SgDirectedGraphNode* node,
 
     // verify all interrupts and make sure they do what one expects them to do.
     if (asmNode->get_kind() == x86_int) {
-      if (RoseBin_support::DEBUG_MODE()) 
+      if (RoseBin_support::DEBUG_MODE())
 	cout << "    " << name << " : found int call " << endl;
       // need to resolve rax, rbx, rcx, rdx
       // therefore get the definition for each
@@ -468,28 +468,28 @@ RoseBin_VariableAnalysis::run(string& name, SgDirectedGraphNode* node,
       if (val_rax.size()==1) {
 	uint64_t rax = *(val_rax.begin());
 	int_name = getIntCallName(rax, data_ebx, data_ecx, data_edx,
-				  val_rbx, val_rcx, val_rdx, 
+				  val_rbx, val_rcx, val_rdx,
 				  pos_rbx, pos_rcx, pos_rdx,
 				  fpos_rbx, fpos_rcx, fpos_rdx);
 	ambigious_inst = false;
       }
 
-      if (ambigious_inst) {      
+      if (ambigious_inst) {
 	string value = "";
 	vector<uint64_t>::iterator it = val_rax.begin();
 	for (;it!=val_rax.end();++it) {
 	  string i_name = getIntCallName(*it, data_ebx, data_ecx, data_edx,
-					 val_rbx, val_rcx, val_rdx, 
+					 val_rbx, val_rcx, val_rdx,
 					 pos_rbx, pos_rcx, pos_rdx,
 					 fpos_rbx, fpos_rcx, fpos_rdx);
 	  value +="rAX:"+RoseBin_support::HexToString(*it)+" "+i_name+" ";
-	  //	  createVariable(fpos_rax, pos_rax, "rax", data_ebx, "rax", 0, val_rax,false); 
+	  //	  createVariable(fpos_rax, pos_rax, "rax", data_ebx, "rax", 0, val_rax,false);
 	}
 
 	cerr << " DataFlow::VariableAnalysis . Ambigious INT call: " <<
-	  vizzGraph->getProperty(SB_Graph_Def::name, node) << " - " << value << endl;
-	value = "PROBLEM: " + value; 
-	node->append_properties(SB_Graph_Def::dfa_unresolved_func,value);
+	  vizzGraph->getProperty(SgGraph::name, node) << " - " << value << endl;
+	value = "PROBLEM: " + value;
+	node->append_properties(SgGraph::dfa_unresolved_func,value);
 
       } else {
 	// we know what INT instruction it is
@@ -498,9 +498,9 @@ RoseBin_VariableAnalysis::run(string& name, SgDirectedGraphNode* node,
 	string t_edx = RoseBin_support::getTypeName(data_edx);
 
 	int_name += " ("+t_ebx+","+t_ecx+","+t_edx+")";
-	//if (RoseBin_support::DEBUG_MODE()) 
+	//if (RoseBin_support::DEBUG_MODE())
 	// cout << " found INT call : " << value << " .. " << int_name << endl;
-	node->append_properties(SB_Graph_Def::dfa_variable,int_name);
+	node->append_properties(SgGraph::dfa_variable,int_name);
       }
     } else
 
@@ -511,7 +511,7 @@ RoseBin_VariableAnalysis::run(string& name, SgDirectedGraphNode* node,
 	SgAsmOperandList* opList = asmNode->get_operandList();
 	ROSE_ASSERT(opList);
 	SgAsmExpressionPtrList ptrList = opList->get_operands();
-	// get the first (and only) element 
+	// get the first (and only) element
 	if (ptrList.size()!=0) {
 	SgAsmExpression* expr = *(ptrList.begin());
 	string replace = expr->get_replacement();
@@ -519,12 +519,12 @@ RoseBin_VariableAnalysis::run(string& name, SgDirectedGraphNode* node,
 
 	// we can detect malloc with the help of ida.
 	if (replace=="_malloc" || replace=="malloc@plt") {
-	  if (RoseBin_support::DEBUG_MODE()) 
+	  if (RoseBin_support::DEBUG_MODE())
 	    cerr << "    " << name << " : found malloc function call " << endl;
-	  
+
 	  // find the size of the malloc, = backward search within this function
 	  bool foundMov=false;
-	  SgDirectedGraphNode* pre = node;
+	  SgGraphNode* pre = node;
 	  uint64_t value=0;
 	  while (foundMov!=true && sameParents(node, pre)) {
 	    pre = getPredecessor(pre);
@@ -539,13 +539,13 @@ RoseBin_VariableAnalysis::run(string& name, SgDirectedGraphNode* node,
 		string codeStr = unparseX86Register(code.first, code.second, x86_regpos_qword);
 		if (codeStr=="rsp")
 		  value = getValueOfInstr(asmPre, true);
-		else 
+		else
 		  cerr << " Error :: foud a mov before a call that does not point to rsp but ::: " << codeStr << endl;
-		if (RoseBin_support::DEBUG_MODE() && asmPre->get_kind() == x86_mov) 
+		if (RoseBin_support::DEBUG_MODE() && asmPre->get_kind() == x86_mov)
 		  cerr << "   malloc: found mov size of " << codeStr << " in " << value << " for malloc call : " << unparseInstruction(asmPre) <<endl;
 	      } else if (asmPre->get_kind() == x86_push) {
 		value = getValueOfInstr(asmPre, false);
-		if (RoseBin_support::DEBUG_MODE() && asmPre->get_kind() == x86_push) 
+		if (RoseBin_support::DEBUG_MODE() && asmPre->get_kind() == x86_push)
 		  cerr << "   malloc: found push size " << value << " for malloc call : " << unparseInstruction(asmPre) <<endl;
 	      }
 	    }
@@ -555,7 +555,7 @@ RoseBin_VariableAnalysis::run(string& name, SgDirectedGraphNode* node,
 	  // result of malloc (variable) is in eax, we need to see what the variable is and store it
 	  // forward search in the same function
 	  foundMov=false;
-	  SgDirectedGraphNode* aft = node;
+	  SgGraphNode* aft = node;
 	  while (foundMov!=true && sameParents(node, aft)) {
 	    aft = getSuccessor(aft);
 	    SgAsmx86Instruction* asmAft = isSgAsmx86Instruction(aft->get_SgNode());
@@ -566,18 +566,18 @@ RoseBin_VariableAnalysis::run(string& name, SgDirectedGraphNode* node,
 		std::pair<X86RegisterClass, int>  code;
 		code = check_isRegister(aft, asmAft, true, memRef);
 		if (code.first == x86_regclass_gpr && code.second == x86_gpr_ax) {
-		  if (RoseBin_support::DEBUG_MODE() && asmAft->get_kind() == x86_mov) 
+		  if (RoseBin_support::DEBUG_MODE() && asmAft->get_kind() == x86_mov)
 		    cerr << "    found mov of eax of malloc call : " << unparseInstruction(asmAft) <<endl;
-		  SgAsmMemoryReferenceExpression* memExpr = 
+		  SgAsmMemoryReferenceExpression* memExpr =
 		    isSgAsmMemoryReferenceExpression(getOperand(asmAft,false));
 		  if (memExpr) {
 		    //SgAsmx86RegisterReferenceExpression* refLeft = getRegister(memref->get_segment(),false);
-		    
-		    //SgAsmMemoryReferenceExpression* memExpr = 
+
+		    //SgAsmMemoryReferenceExpression* memExpr =
 		    //  isSgAsmMemoryReferenceExpression(refLeft->get_offset());
 		    //if (memExpr)
 		      address_of_var = getValueInMemoryRefExp( memExpr->get_address());
-		    if (RoseBin_support::DEBUG_MODE()) 
+		    if (RoseBin_support::DEBUG_MODE())
 		    cerr << " The address of the malloc variable is : " << RoseBin_support::HexToString(address_of_var) << endl;
 		    string functionName = "func";
 		    //SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(asmAft->get_parent());
@@ -589,16 +589,16 @@ RoseBin_VariableAnalysis::run(string& name, SgDirectedGraphNode* node,
 		    val_v.push_back(address_of_var);
 		    vector<uint64_t> pos_v ;
 		    pos_v.push_back(address_of_var);
-		    //RoseBin_Variable* var = 
-		    createVariable(pos, pos_v, functionName+"_malloc", d_array, "Memory allocation", value, val_v,true); 		  
+		    //RoseBin_Variable* var =
+		    createVariable(pos, pos_v, functionName+"_malloc", d_array, "Memory allocation", value, val_v,true);
 		    //string varStr = var->toString();
-		    //aft->append_properties(SB_Graph_Def::dfa_variable,varStr);		  
+		    //aft->append_properties(SgGraph::dfa_variable,varStr);
 		  }
-		} else 
+		} else
 		  cerr << " Error :: foud a mov after a call that is not rax." << endl;
 	    } // mov
 	  } // while
-	}	  
+	}
 	}
       }
 
@@ -618,7 +618,7 @@ RoseBin_VariableAnalysis::run(string& name, SgDirectedGraphNode* node,
 	  // right hand side is Register Reg / MemoryRef
 	  //	  SgAsmx86RegisterReferenceExpression* refRight = getRegister(asmNode,true);
 	  //if (refRight) {
-	    SgAsmMemoryReferenceExpression* memExpr = 
+	    SgAsmMemoryReferenceExpression* memExpr =
 	      isSgAsmMemoryReferenceExpression(getOperand(asmNode,true));
 	    if (memExpr) {
 	      address_of_var = getValueInMemoryRefExp( memExpr->get_address());
@@ -633,17 +633,17 @@ RoseBin_VariableAnalysis::run(string& name, SgDirectedGraphNode* node,
 	      bool array = false;
 	      if (type==d_array)
 		array = true;
-	      if (RoseBin_support::DEBUG_MODE() ) 
-		cerr << "  malloc:  variable found :  " << varName << " array? " << RoseBin_support::resBool(array) 
+	      if (RoseBin_support::DEBUG_MODE() )
+		cerr << "  malloc:  variable found :  " << varName << " array? " << RoseBin_support::resBool(array)
 	             << "    instr : " << unparseInstruction(asmNode) <<endl;
-	      // now that we have found the usage of an array, we check 
+	      // now that we have found the usage of an array, we check
 	      // in a forward analysis, whether we access a value that is greater than
 	      // the length of the array
 	      if (array) {
 		int length = var->getLength();
 		int arrayLength = 0;
 		bool foundMov=false;
-		SgDirectedGraphNode* aft = node;
+		SgGraphNode* aft = node;
 		while (foundMov!=true && sameParents(node, aft)) {
 		  aft = getSuccessor(aft);
 		  SgAsmx86Instruction* asmAft = isSgAsmx86Instruction(aft->get_SgNode());
@@ -655,7 +655,7 @@ RoseBin_VariableAnalysis::run(string& name, SgDirectedGraphNode* node,
 		      uint64_t val = getValueOfInstr(asmAft, true);
 		      arrayLength += val;
 		    }
-		  }		  
+		  }
 		  if (asmAft->get_kind() == x86_mov) {
 		    foundMov = true;
 		    bool memRef = false;
@@ -663,20 +663,20 @@ RoseBin_VariableAnalysis::run(string& name, SgDirectedGraphNode* node,
 		    code = check_isRegister(aft, asmAft, true, memRef);
 		    if (code.first == x86_regclass_gpr && code.second == x86_gpr_ax) {
 		      if (RoseBin_support::DEBUG_MODE() && asmAft->get_kind() == x86_mov) {
-			cout << "   malloc - access to eax : " << unparseInstruction(asmAft) 
+			cout << "   malloc - access to eax : " << unparseInstruction(asmAft)
 			     << "   length array (var) " << length << "  access array point: " << arrayLength  <<endl;
 		      }
 		      if (arrayLength> array) {
 			if (RoseBin_support::DEBUG_MODE() && asmAft->get_kind() == x86_mov) {
-			  cerr << "  WARNING:: MALLOC - Buffer Overflow at : " << unparseInstruction(asmAft) 
+			  cerr << "  WARNING:: MALLOC - Buffer Overflow at : " << unparseInstruction(asmAft)
 			       <<  "  Length of array is " << length << "  but access at : " << arrayLength << endl;
-			  aft->append_properties(SB_Graph_Def::dfa_bufferoverflow,varName);		  
+			  aft->append_properties(SgGraph::dfa_bufferoverflow,varName);
 			}
 		      }
 		    }
-		  } 
+		  }
 		} // while
-		
+
 	      }
 	    }
 	  } // refRight

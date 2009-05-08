@@ -14,27 +14,27 @@
 //class RoseFile;
 
 class RoseBin_ControlFlowAnalysis : public RoseBin_FlowAnalysis {
-  void getCFGNodesForFunction(std::set<SgDirectedGraphNode*>& visited_f,
+  void getCFGNodesForFunction(std::set<SgGraphNode*>& visited_f,
 			      std::set<std::string>& visited_names,
-			      SgDirectedGraphNode* next_n, std::string nodeName);
+			      SgGraphNode* next_n, std::string nodeName);
 
  public:
 
-  RoseBin_ControlFlowAnalysis(SgAsmNode* global, bool forward, RoseBin_abstract* , 
-			      bool printedges, VirtualBinCFG::AuxiliaryInformation* info):
-      RoseBin_FlowAnalysis(global, info) {
+  RoseBin_ControlFlowAnalysis(SgAsmNode* global, bool forward, RoseBin_abstract* ,
+			      bool printedges,GraphAlgorithms* algo):
+  RoseBin_FlowAnalysis(global,algo) {
     typeNode="CFG";
-    typeEdge="CFG-E";  
+    typeEdge="CFG-E";
     analysisName="cfa";
     printEdges = printedges;
     forward_analysis=forward;
   }
   /*
-  RoseBin_ControlFlowAnalysis(SgAsmNode* global, bool forward, RoseFile* , 
-			      bool printedges, VirtualBinCFG::AuxiliaryInformation* info):
-      RoseBin_FlowAnalysis(global, info) {
+  RoseBin_ControlFlowAnalysis(SgAsmNode* global, bool forward, RoseFile* ,
+			      bool printedges, GraphAlgorithms* algo):
+      RoseBin_FlowAnalysis(global, algo) {
     typeNode="CFG";
-    typeEdge="CFG-E";  
+    typeEdge="CFG-E";
     analysisName="cfa";
     printEdges = printedges;
     forward_analysis=forward;
@@ -47,7 +47,7 @@ class RoseBin_ControlFlowAnalysis : public RoseBin_FlowAnalysis {
     delete vizzGraph;
 
     std::map <std::string, SgAsmFunctionDeclaration* >::iterator it;
-    for (it = bin_funcs.begin(); 
+    for (it = bin_funcs.begin();
 	 it!= bin_funcs.end(); it++) {
       delete it->second;
     }

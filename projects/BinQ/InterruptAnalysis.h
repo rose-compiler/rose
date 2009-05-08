@@ -11,7 +11,8 @@
 
 class InterruptAnalysis : public BinAnalyses,  RoseBin_DataFlowAbstract {
  public:
-  InterruptAnalysis(){testFlag=false;};
+  InterruptAnalysis(GraphAlgorithms* algo):RoseBin_DataFlowAbstract(algo)
+  {testFlag=false;};
   virtual ~InterruptAnalysis(){};
   bool testFlag;
   void run(SgNode* f1, SgNode* f2);
@@ -19,19 +20,19 @@ class InterruptAnalysis : public BinAnalyses,  RoseBin_DataFlowAbstract {
   std::string name();
   std::string getDescription();
 
-  bool run(std::string& name, SgDirectedGraphNode* node,
-	   SgDirectedGraphNode* previous);
+  bool run(std::string& name, SgGraphNode* node,
+	   SgGraphNode* previous);
 
   bool twoFiles() {return false;}
   std::map<SgNode*,std::string> getResult(){return result;}
  private:
   std::map<SgNode*,std::string> result;
 
-  
+
   void init(RoseBin_Graph* vg) {
     vizzGraph = vg;
   }
-  bool runEdge(SgDirectedGraphNode* node, SgDirectedGraphNode* next) {
+  bool runEdge(SgGraphNode* node, SgGraphNode* next) {
     return false;
   }
 
@@ -39,14 +40,14 @@ class InterruptAnalysis : public BinAnalyses,  RoseBin_DataFlowAbstract {
   void getValueForDefinition(std::vector<uint64_t>& vec,
 			     std::vector<uint64_t>& positions,
 			     uint64_t& fpos,
-			     SgDirectedGraphNode* node,
+			     SgGraphNode* node,
                              std::pair<X86RegisterClass, int> reg );
 
   std::string getIntCallName_Linux32bit(uint64_t rax,RoseBin_DataTypes::DataTypes& data_ebx,
 					RoseBin_DataTypes::DataTypes& data_ecx,
 					RoseBin_DataTypes::DataTypes& data_edx,
-					std::vector<uint64_t>& val_rbx, 
-					std::vector<uint64_t>& val_rcx, 
+					std::vector<uint64_t>& val_rbx,
+					std::vector<uint64_t>& val_rcx,
 					std::vector<uint64_t>& val_rdx,
 					std::vector<uint64_t>& pos_ebx,
 					std::vector<uint64_t>& pos_ecx,
@@ -55,8 +56,8 @@ class InterruptAnalysis : public BinAnalyses,  RoseBin_DataFlowAbstract {
   std::string getIntCallName_Linux64bit(uint64_t rax,RoseBin_DataTypes::DataTypes& data_ebx,
 					RoseBin_DataTypes::DataTypes& data_ecx,
 					RoseBin_DataTypes::DataTypes& data_edx,
-					std::vector<uint64_t>& val_rbx, 
-					std::vector<uint64_t>& val_rcx, 
+					std::vector<uint64_t>& val_rbx,
+					std::vector<uint64_t>& val_rcx,
 					std::vector<uint64_t>& val_rdx,
 					std::vector<uint64_t>& pos_ebx,
 					std::vector<uint64_t>& pos_ecx,
@@ -65,8 +66,8 @@ class InterruptAnalysis : public BinAnalyses,  RoseBin_DataFlowAbstract {
   std::string getIntCallName(uint64_t rax,RoseBin_DataTypes::DataTypes& data_ebx,
 			     RoseBin_DataTypes::DataTypes& data_ecx,
 			     RoseBin_DataTypes::DataTypes& data_edx,
-			    std::vector<uint64_t>& val_rbx, 
-			    std::vector<uint64_t>& val_rcx, 
+			    std::vector<uint64_t>& val_rbx,
+			    std::vector<uint64_t>& val_rcx,
 			    std::vector<uint64_t>& val_rdx,
 			     std::vector<uint64_t>& pos_ebx,
 			     std::vector<uint64_t>& pos_ecx,

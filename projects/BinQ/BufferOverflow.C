@@ -27,11 +27,11 @@ std::string BufferOverflow::getDescription() {
 
 
 bool 
-BufferOverflow::run(string& name, SgDirectedGraphNode* node,
-		    SgDirectedGraphNode* previous){
+BufferOverflow::run(string& name, SgGraphNode* node,
+		    SgGraphNode* previous){
   // check known function calls and resolve variables
   ROSE_ASSERT(node);
-
+  ROSE_ASSERT(node->get_SgNode());
   //cerr << " bufferoverflow->run " << node->get_name() << endl;
   SgAsmx86Instruction* asmNode = isSgAsmx86Instruction(node->get_SgNode());
   if (asmNode==NULL)
@@ -46,7 +46,7 @@ BufferOverflow::run(string& name, SgDirectedGraphNode* node,
       cerr << "    " << name << " : found malloc function call " << endl;
     // find the size of the malloc, = backward search within this function
     bool foundMov=false;
-    SgDirectedGraphNode* pre = node;
+    SgGraphNode* pre = node;
     uint64_t value=0;
     while (foundMov!=true && sameParents(node, pre)) {
       pre = getPredecessor(pre);
@@ -81,9 +81,14 @@ BufferOverflow::run(string& name, SgDirectedGraphNode* node,
 
     // result of malloc (variable) is in eax, we need to see what the variable is and store it
     // forward search in the same function
-    SgDirectedGraphNode* aft = node;
+    SgGraphNode* aft = node;
+    ROSE_ASSERT(aft);
+    ROSE_ASSERT(aft->get_SgNode());
     while (foundMov==true && sameParents(node, aft)) {
+      ROSE_ASSERT(aft);
+      cerr << " ----------- Getting successor for " << aft->get_name() << endl;
       aft = getSuccessor(aft);
+      ROSE_ASSERT(aft);
       SgAsmx86Instruction* asmAft = isSgAsmx86Instruction(aft->get_SgNode());
       if (asmAft->get_kind() == x86_mov) {
 	foundMov = true;
@@ -163,7 +168,7 @@ BufferOverflow::run(string& name, SgDirectedGraphNode* node,
 	    int length = var->getLength();
 	    int arrayLength = 0;
 	    bool foundMov=false;
-	    SgDirectedGraphNode* aft = node;
+	    SgGraphNode* aft = node;
 	    while (foundMov!=true && sameParents(node, aft)) {
 	      aft = getSuccessor(aft);
 	      SgAsmx86Instruction* asmAft = isSgAsmx86Instruction(aft->get_SgNode());
@@ -240,7 +245,7 @@ BufferOverflow::run(SgNode* fileA, SgNode* fileB) {
   SgAsmFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
   ROSE_ASSERT(file);
 
-  VirtualBinCFG::AuxiliaryInformation* info = new VirtualBinCFG::AuxiliaryInformation(file);
+  //  VirtualBinCFG::AuxiliaryInformation* info = new VirtualBinCFG::AuxiliaryInformation(file);
 
   // call graph analysis  *******************************************************
   QString res = QString("Creating dataflow graph ");
@@ -259,18 +264,21 @@ BufferOverflow::run(SgNode* fileA, SgNode* fileB) {
   string dfgFileName = "dfg.dot";
   if (graph==NULL) {
     cerr << "No graph found yet .. creating graph " << endl;
-    graph= new RoseBin_DotGraph(info);
+    graph= new RoseBin_DotGraph();
     if (dot==false) {
       dfgFileName = "dfg.gml";
-      graph= new RoseBin_GMLGraph(info);
+      graph= new RoseBin_GMLGraph();
     }
   } 
 
+
+  VirtualBinCFG::AuxiliaryInformation* info = new VirtualBinCFG::AuxiliaryInformation(file);
+  GraphAlgorithms* algo = new GraphAlgorithms(info);
   SgAsmInterpretation* interp = SageInterface::getMainInterpretation(file);
   if (dfanalysis==NULL) {
     cerr << "No dataflow analysis run yet ... running ... " << endl;
     dfanalysis = 
-      new RoseBin_DataFlowAnalysis(interp->get_global_block(), forward, new RoseObj(), info);
+      new RoseBin_DataFlowAnalysis(interp->get_global_block(), forward, new RoseObj(), algo);
     ROSE_ASSERT(dfanalysis);
     dfanalysis->writeToFile(false);
     dfanalysis->init(interprocedural, edges);
@@ -289,7 +297,7 @@ BufferOverflow::run(SgNode* fileA, SgNode* fileB) {
     instance->analysisResult->append(res);  
   }
 
-  vector<SgDirectedGraphNode*> rootNodes;
+  vector<SgGraphNode*> rootNodes;
   dfanalysis->getRootNodes(rootNodes);
 
   if (instance) {

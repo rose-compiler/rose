@@ -11,22 +11,22 @@ class CycleDetection: public BC_GraphAnalysisInterface {
 
  private:
   bool debug;
-  std::vector<SgDirectedGraphNode*> successors;
-  std::set<SgDirectedGraphNode*> visited;
-  std::map<SgDirectedGraphNode*,SgDirectedGraphNode*> cycleFound;
+  std::vector<SgGraphNode*> successors;
+  std::set<SgGraphNode*> visited;
+  std::map<SgGraphNode*,SgGraphNode*> cycleFound;
 
  public:
-  CycleDetection() {debug=false;}
+  CycleDetection(GraphAlgorithms* algo):BC_GraphAnalysisInterface(algo) {debug=false;}
   ~CycleDetection() {}
 
-  bool run(std::string& name, SgDirectedGraphNode* node,
-	   SgDirectedGraphNode* previous);
+  bool run(std::string& name, SgGraphNode* node,
+	   SgGraphNode* previous);
 
-  bool runEdge(SgDirectedGraphNode* node, SgDirectedGraphNode* next) {
+  bool runEdge(SgGraphNode* node, SgGraphNode* next) {
     return false;
   }
-  bool checkIfValidCycle(SgDirectedGraphNode* node,
-			 SgDirectedGraphNode* next);
+  bool checkIfValidCycle(SgGraphNode* node,
+			 SgGraphNode* next);
 
   void init(RoseBin_Graph* vg) {
     vizzGraph = vg;

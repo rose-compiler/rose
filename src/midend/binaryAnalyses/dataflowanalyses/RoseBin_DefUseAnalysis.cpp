@@ -12,7 +12,7 @@ using namespace std;
 /**********************************************************
  *  Replace an element in the table
  *********************************************************/
-void RoseBin_DefUseAnalysis::replaceElement(SgDirectedGraphNode* sgNode,
+void RoseBin_DefUseAnalysis::replaceElement(SgGraphNode* sgNode,
 					    std::pair<X86RegisterClass, int> initName) {
   // if the node is contained but not identical, then we overwrite it
   // otherwise, we do nothing
@@ -39,18 +39,18 @@ bool RoseBin_DefUseAnalysis::searchMulti(const multitype* multi, std::pair<X86Re
 /**********************************************************
  *  Search for the value for a certain key in the multimap
  *********************************************************/
-bool 
-RoseBin_DefUseAnalysis::searchMulti(const multitype* multi, 
+bool
+RoseBin_DefUseAnalysis::searchMulti(const multitype* multi,
 				    std::pair<X86RegisterClass, int> initName,
-					 SgDirectedGraphNode* val) {
+					 SgGraphNode* val) {
   multitype::const_iterator it1, it2;
   pair <multitype::const_iterator, multitype::const_iterator> iter = multi->equal_range(initName);
   it1 = iter.first;
   it2 = iter.second;
   for (;it1!=it2; ++it1) {
-    SgDirectedGraphNode* node = it1->second;
+    SgGraphNode* node = it1->second;
     //exact match ?
-    //node && val && 
+    //node && val &&
     if (node==val)
       return true;
   }
@@ -79,13 +79,13 @@ void RoseBin_DefUseAnalysis::printAnyMap(tabletype* tabl) {
   cout << "\n **************** MAP ************************** " << endl;
   for (tabletype::const_iterator i = tabl->begin(); i != tabl->end(); ++i) {
     pos++;
-    SgDirectedGraphNode* sgNode = (*i).first;
+    SgGraphNode* sgNode = (*i).first;
     string label="NULL";
     multitype multi = (*i).second;
     if (sgNode && isSgAsmInstruction(sgNode->get_SgNode())) {
       string name = sgNode->get_name();
       int theNode = isSgAsmInstruction(sgNode->get_SgNode())->get_address();
-      label = ""+RoseBin_support::HexToString(theNode) + " var: " + name; 
+      label = ""+RoseBin_support::HexToString(theNode) + " var: " + name;
       cout << pos << ": " << label << endl;
       printMultiMap(&multi);
     } else
@@ -100,15 +100,15 @@ void RoseBin_DefUseAnalysis::printAnyMap(tabletype* tabl) {
 void RoseBin_DefUseAnalysis::printMultiMap(const multitype* multi) {
   for (multitype::const_iterator j = multi->begin(); j != multi->end(); ++j) {
     std::pair<X86RegisterClass, int> sgInitMM = (*j).first;
-    SgDirectedGraphNode* sgNodeMM = (*j).second;
+    SgGraphNode* sgNodeMM = (*j).second;
 
-    string registerName = unparseX86Register(sgInitMM.first, 
+    string registerName = unparseX86Register(sgInitMM.first,
                                              sgInitMM.second,
                                              x86_regpos_qword);
 
     ROSE_ASSERT(sgNodeMM);
-    cout << "  ..  initName:" << registerName << " ( " <<  
-      // RoseBin_support::ToString(isSgAsmInstruction(sgInitMM->get_SgNode())->get_address()) << 
+    cout << "  ..  initName:" << registerName << " ( " <<
+      // RoseBin_support::ToString(isSgAsmInstruction(sgInitMM->get_SgNode())->get_address()) <<
       " ) " << " - SgNode " <<
       RoseBin_support::HexToString(isSgAsmInstruction(sgNodeMM->get_SgNode())->get_address()) << endl;
   }
@@ -120,15 +120,15 @@ void RoseBin_DefUseAnalysis::printMultiMap(const multitype* multi) {
  *  For a CFG Node, follow the two incoming edges and get
  *  the other node (than theNodeBefore)
  *********************************************************/
-void 
-RoseBin_DefUseAnalysis::getOtherInNode(vector <SgDirectedGraphNode*>& otherNodes,
-				       SgDirectedGraphNode* cfgNode, 
-				       SgDirectedGraphNode* oneNode){
-  vector <SgDirectedGraphNode*> in_edges;
+void
+RoseBin_DefUseAnalysis::getOtherInNode(vector <SgGraphNode*>& otherNodes,
+				       SgGraphNode* cfgNode,
+				       SgGraphNode* oneNode){
+  vector <SgGraphNode*> in_edges;
   vizzGraph->getPredecessors(cfgNode, in_edges);
-  vector<SgDirectedGraphNode* >::const_iterator i = in_edges.begin();
+  vector<SgGraphNode* >::const_iterator i = in_edges.begin();
   for (; i != in_edges.end(); ++i) {
-    SgDirectedGraphNode* inNode= *i;
+    SgGraphNode* inNode= *i;
     if (inNode!=oneNode) {
       //otherNode = inNode;
       otherNodes.push_back(inNode);
@@ -147,7 +147,7 @@ RoseBin_DefUseAnalysis::getOtherInNode(vector <SgDirectedGraphNode*>& otherNodes
 bool RoseBin_DefUseAnalysis::checkElementsForEquality(const multitype* t1, const multitype* t2) {
   // if every element of t2 is contained in t1, then no change
   // occured in the map
-  typedef set<pair<std::pair<X86RegisterClass, int>, SgDirectedGraphNode*> > st;
+  typedef set<pair<std::pair<X86RegisterClass, int>, SgGraphNode*> > st;
   st s1(t1->begin(), t1->end());
   st s2(t2->begin(), t2->end());
   assert (s1.size() == t1->size());
@@ -162,25 +162,25 @@ bool RoseBin_DefUseAnalysis::checkElementsForEquality(const multitype* t1, const
 /**********************************************************
  *  Union of two maps
  *********************************************************/
-void RoseBin_DefUseAnalysis::mapDefUnion(SgDirectedGraphNode* before, SgDirectedGraphNode* other, SgDirectedGraphNode* sgNode) {
+void RoseBin_DefUseAnalysis::mapDefUnion(SgGraphNode* before, SgGraphNode* other, SgGraphNode* sgNode) {
   mapAnyUnion(&deftable, before, other, sgNode);
 }
 
 /**********************************************************
  *  Union of two maps
  *********************************************************/
-void RoseBin_DefUseAnalysis::mapUseUnion(SgDirectedGraphNode* before, SgDirectedGraphNode* other, SgDirectedGraphNode* sgNode) {
+void RoseBin_DefUseAnalysis::mapUseUnion(SgGraphNode* before, SgGraphNode* other, SgGraphNode* sgNode) {
   mapAnyUnion(&usetable, before, other, sgNode);
 }
 
 /**********************************************************
  *  Union of two maps
  *********************************************************/
-void RoseBin_DefUseAnalysis::mapAnyUnion(tabletype* tabl, SgDirectedGraphNode* before, 
-					 SgDirectedGraphNode* other, SgDirectedGraphNode* sgNode) {
+void RoseBin_DefUseAnalysis::mapAnyUnion(tabletype* tabl, SgGraphNode* before,
+					 SgGraphNode* other, SgGraphNode* sgNode) {
 
-  
-  
+
+
   bool beforeFound = true;
   if ((*tabl).find(before)==(*tabl).end())
     beforeFound = false;
@@ -191,45 +191,45 @@ void RoseBin_DefUseAnalysis::mapAnyUnion(tabletype* tabl, SgDirectedGraphNode* b
   if (!beforeFound) {
     if (!otherFound)
       (*tabl)[sgNode].clear();
-    else 
+    else
       (*tabl)[sgNode]=(*tabl)[other];
   } else {
-    if (!otherFound) 
+    if (!otherFound)
       (*tabl)[sgNode]=(*tabl)[before];
     else {
 
       const multitype& multiA  = (*tabl)[before];
       const multitype& multiB  = (*tabl)[other];
-      std::set<std::pair<std::pair<X86RegisterClass, int>, SgDirectedGraphNode*> > s_before(multiA.begin(), multiA.end());
+      std::set<std::pair<std::pair<X86RegisterClass, int>, SgGraphNode*> > s_before(multiA.begin(), multiA.end());
       // ROSE_ASSERT (s_before.size() == (*tabl)[before].size());
 #if 0
-      std::set<std::pair<std::pair<X86RegisterClass, int>, SgDirectedGraphNode*> > s_other((*tabl)[other].begin(), (*tabl)[other].end());
+      std::set<std::pair<std::pair<X86RegisterClass, int>, SgGraphNode*> > s_other((*tabl)[other].begin(), (*tabl)[other].end());
       ROSE_ASSERT (s_other.size() == (*tabl)[other].size());
 #endif
-      
+
       if (RoseBin_support::DEBUG_MODE())
 	cout << sgNode->get_name() <<"  Elements before union  a (before) : " << multiA.size() << "  b (other) : " << multiB.size() << endl;
-      
+
       s_before.insert(multiB.begin(), multiB.end());
       multitype multiC(s_before.begin(), s_before.end());
 #if 0
       set_union(multiA.begin(), multiA.end(), multiB.begin(), multiB.end(),
 		inserter(multiC, multiC.end()),
-		std::less<std::pair<std::pair<X86RegisterClass, int>, SgDirectedGraphNode*> >() );
+		std::less<std::pair<std::pair<X86RegisterClass, int>, SgGraphNode*> >() );
 #endif
       (*tabl)[sgNode].swap(multiC);
       //(*tabl)[sgNode]=multiC;
-	  
+
       if (RoseBin_support::DEBUG_MODE()) {
 	cout << sgNode->get_name() << "  Elements after union  c: " << multiC.size()  << endl;
 	//      printDefMap();
       }
-      
+
           }
       }
 
 #if 0
-  std::set<std::pair<std::pair<X86RegisterClass, int>, SgDirectedGraphNode*> > s((*tabl)[sgNode].begin(), (*tabl)[sgNode].end());
+  std::set<std::pair<std::pair<X86RegisterClass, int>, SgGraphNode*> > s((*tabl)[sgNode].begin(), (*tabl)[sgNode].end());
   ROSE_ASSERT (s.size() == (*tabl)[sgNode].size());
 #endif
 
@@ -239,14 +239,14 @@ void RoseBin_DefUseAnalysis::mapAnyUnion(tabletype* tabl, SgDirectedGraphNode* b
 /**********************************************************
  *  Search for the value for a certain key in the map
  *********************************************************/
-bool RoseBin_DefUseAnalysis::searchDefMap(SgDirectedGraphNode* node) {
+bool RoseBin_DefUseAnalysis::searchDefMap(SgGraphNode* node) {
   return searchMap(&deftable, node);
 }
 
 /**********************************************************
  *  Search for the value for a certain key in the map
  *********************************************************/
-bool RoseBin_DefUseAnalysis::searchMap(const tabletype* ltable, SgDirectedGraphNode* node) {
+bool RoseBin_DefUseAnalysis::searchMap(const tabletype* ltable, SgGraphNode* node) {
   bool isCurrentValueContained=false;
   tabletype::const_iterator i =ltable->find(node);
   if (i!=ltable->end())
@@ -258,35 +258,35 @@ bool RoseBin_DefUseAnalysis::searchMap(const tabletype* ltable, SgDirectedGraphN
 /**********************************************************
  *  Add an element to the table
  *********************************************************/
-void RoseBin_DefUseAnalysis::addDefElement(SgDirectedGraphNode* sgNode,
+void RoseBin_DefUseAnalysis::addDefElement(SgGraphNode* sgNode,
 					   std::pair<X86RegisterClass, int> initName,
-					   SgDirectedGraphNode* defNode) {
+					   SgGraphNode* defNode) {
   addAnyElement(&deftable, sgNode, initName, defNode);
 }
 
 /**********************************************************
  *  Add an element to the table
  *********************************************************/
-void RoseBin_DefUseAnalysis::addUseElement(SgDirectedGraphNode* sgNode,
+void RoseBin_DefUseAnalysis::addUseElement(SgGraphNode* sgNode,
 					   std::pair<X86RegisterClass, int> initName,
-					   SgDirectedGraphNode* defNode) {
+					   SgGraphNode* defNode) {
   addAnyElement( &usetable, sgNode, initName, defNode);
 }
 
 /**********************************************************
  *  Add an element to the table
  *********************************************************/
-void RoseBin_DefUseAnalysis::addAnyElement(tabletype* tabl, SgDirectedGraphNode* sgNode,
+void RoseBin_DefUseAnalysis::addAnyElement(tabletype* tabl, SgGraphNode* sgNode,
 					   std::pair<X86RegisterClass, int> initName,
-					   SgDirectedGraphNode* defNode) {
+					   SgGraphNode* defNode) {
   bool contained = searchMulti(&(*tabl)[sgNode], initName, defNode);
   if (!contained)
     (*tabl)[sgNode].insert(make_pair(initName, defNode));
 }
 
 
-string 
-RoseBin_DefUseAnalysis::getElementsAsStringForNode(bool def,SgDirectedGraphNode* node) {
+string
+RoseBin_DefUseAnalysis::getElementsAsStringForNode(bool def,SgGraphNode* node) {
   string label="";
   multitype mm;
   if (def)
@@ -297,7 +297,7 @@ RoseBin_DefUseAnalysis::getElementsAsStringForNode(bool def,SgDirectedGraphNode*
   for (it=mm.begin(); it!=mm.end();++it) {
     string registerName = unparseX86Register(it->first.first, it->first.second,
                                              x86_regpos_qword);
-    SgDirectedGraphNode* n = it->second;
+    SgGraphNode* n = it->second;
     ROSE_ASSERT(n);
     SgAsmInstruction* inst = isSgAsmInstruction(n->get_SgNode());
     ROSE_ASSERT(inst);
@@ -312,25 +312,26 @@ RoseBin_DefUseAnalysis::getElementsAsStringForNode(bool def,SgDirectedGraphNode*
 }
 
 bool
-RoseBin_DefUseAnalysis::runEdge(SgDirectedGraphNode* node, 
-			    SgDirectedGraphNode* next) {
+RoseBin_DefUseAnalysis::runEdge(SgGraphNode* node,
+			    SgGraphNode* next) {
   // follow control flow through all nodes
   // and assign for each edge the defMap
 
-  set<SgDirectedGraphEdge*> edges = vizzGraph->getEdge(node,next);
+  set<SgDirectedGraphEdge*> edges = vizzGraph->getDirectedEdge(node,next);
   set<SgDirectedGraphEdge*>::iterator it = edges.begin();
   for (;it!=edges.end();++it) {
-    SgDirectedGraphEdge* edge = *it;
+    SgDirectedGraphEdge* edge = isSgDirectedGraphEdge(*it);
+    ROSE_ASSERT(edge);
     if (edge) {
-      string type_n = vizzGraph->getProperty(SB_Graph_Def::type, edge);
+      string type_n = vizzGraph->getProperty(SgGraph::type, edge);
       string label = "";
-      if (type_n==RoseBin_support::ToString(SB_Edgetype::usage))
+      if (type_n==RoseBin_support::ToString(SgGraph::usage))
 	label = getElementsAsStringForNode(false,next);
-      else if (type_n==RoseBin_support::ToString(SB_Edgetype::cfg)) {
+      else if (type_n==RoseBin_support::ToString(SgGraph::cfg)) {
 	label = getElementsAsStringForNode(true,node);
 	//label += getElementsAsStringForNode(false,node);
       }
-      vizzGraph->setProperty(SB_Graph_Def::edgeLabel, edge, label);
+      vizzGraph->setProperty(SgGraph::edgeLabel, edge, label);
       //cerr << " setting property to edge : " << label << endl;
     }
   }
@@ -342,14 +343,14 @@ RoseBin_DefUseAnalysis::runEdge(SgDirectedGraphNode* node,
 /**********************************************************
  * plain copy of the table
  *********************************************************/
-void 
-RoseBin_DefUseAnalysis::handleCopy(bool def,SgDirectedGraphNode* sgNode,
-				      SgDirectedGraphNode* sgNodeBefore) {
+void
+RoseBin_DefUseAnalysis::handleCopy(bool def,SgGraphNode* sgNode,
+				      SgGraphNode* sgNodeBefore) {
   ROSE_ASSERT(sgNode);
-  vector <SgDirectedGraphNode*> pre;
+  vector <SgGraphNode*> pre;
   vizzGraph->getPredecessors(sgNode, pre);
   int nrOfInEdges = pre.size();
-  if (sgNodeBefore==NULL) 
+  if (sgNodeBefore==NULL)
     sgNodeBefore = pre.back();
   ROSE_ASSERT(sgNodeBefore);
 
@@ -359,7 +360,7 @@ RoseBin_DefUseAnalysis::handleCopy(bool def,SgDirectedGraphNode* sgNode,
     if (RoseBin_support::DEBUG_MODE())
       cout << " DefCopy :: nrOfElements in oldTable : " << oldTable.size() << endl;
     // ---- */
-    if (vizzGraph->isValidCFGEdge(sgNode,sgNodeBefore))
+    if (g_algo->isValidCFGEdge(sgNode,sgNodeBefore))
       if (def)
 	mapDefUnion(sgNodeBefore, NULL, sgNode);
       else
@@ -373,19 +374,19 @@ RoseBin_DefUseAnalysis::handleCopy(bool def,SgDirectedGraphNode* sgNode,
     // otherwise, it we have more than one in-edge, we union the maps
     //if (RoseBin_support::DEBUG_MODE())
     //  cout << " DefCopy :: inEdges > 1 : union of sgNodeBefore and sgNode. "  << endl;
-    if (vizzGraph->isValidCFGEdge(sgNode, sgNodeBefore))
+    if (g_algo->isValidCFGEdge(sgNode, sgNodeBefore))
       if (def)
 	mapDefUnion(sgNodeBefore, NULL, sgNode);
       else
 	mapUseUnion(sgNodeBefore, NULL, sgNode);
 
-    vector <SgDirectedGraphNode*> inNodes;
+    vector <SgGraphNode*> inNodes;
     getOtherInNode(inNodes, sgNode, sgNodeBefore);
-    vector <SgDirectedGraphNode*>::iterator it = inNodes.begin();
+    vector <SgGraphNode*>::iterator it = inNodes.begin();
     for (;it!=inNodes.end();++it) {
-      SgDirectedGraphNode* otherInNode = *it;
+      SgGraphNode* otherInNode = *it;
       if (otherInNode!=NULL) {
-	if (vizzGraph->isValidCFGEdge(sgNode, otherInNode))
+	if (g_algo->isValidCFGEdge(sgNode, otherInNode))
 	  if (def)
 	    mapDefUnion(sgNode, otherInNode, sgNode);
 	  else
@@ -398,7 +399,7 @@ RoseBin_DefUseAnalysis::handleCopy(bool def,SgDirectedGraphNode* sgNode,
 }
 
 
-void 
+void
 RoseBin_DefUseAnalysis::clearRegisters() {
   deftable.clear();
   //deftable_instr.clear();
@@ -406,16 +407,16 @@ RoseBin_DefUseAnalysis::clearRegisters() {
   //usetable_instr.clear();
 }
 
-bool 
-RoseBin_DefUseAnalysis::run(string& name, SgDirectedGraphNode* node,
-			    SgDirectedGraphNode* nodeBefore ) {
+bool
+RoseBin_DefUseAnalysis::run(string& name, SgGraphNode* node,
+			    SgGraphNode* nodeBefore ) {
   // check known function calls and resolve variables
   ROSE_ASSERT(node);
   bool hasChanged=false;
 
   multitype oldMul = getDefMultiMapFor(node);
 
-  if (RoseBin_support::DEBUG_MODE()) 
+  if (RoseBin_support::DEBUG_MODE())
     cout << " .. running DefUseAnalysis on Node : " << name << endl;
   SgAsmx86Instruction* asmNode = isSgAsmx86Instruction(node->get_SgNode());
   if (asmNode) {
@@ -428,9 +429,9 @@ RoseBin_DefUseAnalysis::run(string& name, SgDirectedGraphNode* node,
 
     // check if right hand side has use of register
     bool isMemoryReferenceR = false;
-    std::pair<X86RegisterClass, int> codeR = 
+    std::pair<X86RegisterClass, int> codeR =
       check_isRegister(node, asmNode, true, isMemoryReferenceR); // true == right hand side
-    if (!isMemoryReferenceR && 
+    if (!isMemoryReferenceR &&
 	codeR.first != x86_regclass_unknown) {
       use = true;
     }
@@ -442,31 +443,31 @@ RoseBin_DefUseAnalysis::run(string& name, SgDirectedGraphNode* node,
 
     if (alteringInstruction) {
       bool isMemoryReference = false;
-      std::pair<X86RegisterClass, int> code = 
+      std::pair<X86RegisterClass, int> code =
 	check_isRegister(node, asmNode, false, isMemoryReference); // false == left hand side
-      
+
       // make sure that there is a register on the left hand side
       if (isMemoryReference) {
 	// we have found a write to a memory location
-	if (RoseBin_support::DEBUG_MODE()) 
+	if (RoseBin_support::DEBUG_MODE())
 	  cout << "    Instruction does alter memory . " <<  endl;
-	node->append_properties(SB_Graph_Def::dfa_unresolved_func,"");
+	node->append_properties(SgGraph::dfa_unresolved_func,"");
 	nrOfMemoryWrites++;
-      } else 
+      } else
 	if (code.first != x86_regclass_unknown) {
 	  // we have found a write to a register
 	  // find out the registerName
-	  string registerName = unparseX86Register(code.first, code.second, 
+	  string registerName = unparseX86Register(code.first, code.second,
 						   x86_regpos_qword);
 	  // for visualization add property that this
 	  // node is accessing and changing a register
-	  if (RoseBin_support::DEBUG_MODE()) 
+	  if (RoseBin_support::DEBUG_MODE())
 	    cout << "    Instruction does alter register . " << registerName << endl;
 	  codes.push_back(code);
 	  definition=true;
 	}
     } else {
-      if (RoseBin_support::DEBUG_MODE()) 
+      if (RoseBin_support::DEBUG_MODE())
 	cout << "    Instruction does not alter register or memory. " << endl;
     }
 
@@ -490,18 +491,18 @@ RoseBin_DefUseAnalysis::run(string& name, SgDirectedGraphNode* node,
 	}
 
 	// color the node as definition (green)
-	node->append_properties(SB_Graph_Def::dfa_resolved_func,"");
-    
+	node->append_properties(SgGraph::dfa_resolved_func,"");
+
 	if (isRegisterContained==false) {
 	  nrOfRegisterWrites++;
 	  // current value is not contained, merge it to the map
-	  if (RoseBin_support::DEBUG_MODE()) 
+	  if (RoseBin_support::DEBUG_MODE())
 	    cout << " current Value is not contained . " << endl;
 	  // add this register to the def table
 	  addDefElement(node, code, node);
 	} else {
 	  // current value is contained
-	  if (RoseBin_support::DEBUG_MODE()) 
+	  if (RoseBin_support::DEBUG_MODE())
 	    cout << " current Value is contained . " <<  endl;
 	  //multitype oldTable = getDefMultiMapFor(node);
 	  // add a new element if it is a conditional definition
@@ -509,11 +510,11 @@ RoseBin_DefUseAnalysis::run(string& name, SgDirectedGraphNode* node,
 	  if (condInst) {
 	    if (RoseBin_support::DEBUG_MODE()) {
 	      string regName = unparseX86Register(code.first, code.second, x86_regpos_qword);
-	      cout << " conditional isnt : " << unparseInstruction(asmNode)<<
-		"   regName " << regName << "   exactnode contained : " << RoseBin_support::resBool(isExactNodeContained) << endl;
+	      cout << " conditional isn't : " << unparseInstruction(asmNode)<<
+		"   regName " << regName << "   exact node contained : " << RoseBin_support::resBool(isExactNodeContained) << endl;
 	    }
 	    addDefElement(node, code, node);
-	    node->append_properties(SB_Graph_Def::dfa_conditional_def,"");
+	    node->append_properties(SgGraph::dfa_conditional_def,"");
 	  }
 	  else
 	    replaceElement(node, code);
@@ -521,53 +522,55 @@ RoseBin_DefUseAnalysis::run(string& name, SgDirectedGraphNode* node,
       }
     } // if definition
     else {
-      if (RoseBin_support::DEBUG_MODE()) 
+      if (RoseBin_support::DEBUG_MODE())
 	cout << " >> current node is not a definition. COPYING !!! "  << endl;
       handleCopy(true,node, nodeBefore);
     }
 
     if (use) {
       // we have a usage of a register
-      string registerNameR = unparseX86Register(codeR.first, codeR.second, 
+      string registerNameR = unparseX86Register(codeR.first, codeR.second,
 						x86_regpos_qword);
-      if (RoseBin_support::DEBUG_MODE()) 
+      if (RoseBin_support::DEBUG_MODE())
 	cout << ",,,Found usage of register: " << registerNameR << endl;
 
       bool isRegisterContained = false;
       multitype mul = getUseMultiMapFor(node);
-      if (mul.size()>0) 
+      if (mul.size()>0)
 	isRegisterContained = searchMulti(&mul, codeR);
-      if (!isRegisterContained) 
+      if (!isRegisterContained)
 	addUseElement(node, codeR, node);
 
       // we add an edge to the graph (for usage)
       string name = "";
-      set<SgDirectedGraphNode*> nodeTargetset = getDefFor(node, codeR);
-      set<SgDirectedGraphNode*>::iterator it_t = nodeTargetset.begin();
+      set<SgGraphNode*> nodeTargetset = getDefFor(node, codeR);
+      set<SgGraphNode*>::iterator it_t = nodeTargetset.begin();
       for (;it_t!=nodeTargetset.end();++it_t) {
-	SgDirectedGraphNode* nodeTarget = *it_t;
+	SgGraphNode* nodeTarget = *it_t;
 	if (nodeTarget) {
 	  SgAsmInstruction* inst_t = isSgAsmInstruction(nodeTarget->get_SgNode());
 	  if (inst_t) {
 	    int addr_t = inst_t->get_address();
 	    name = RoseBin_support::HexToString(addr_t)+" use : " +registerNameR+"\\n";
-	    set<SgDirectedGraphEdge*> edges = vizzGraph->getEdge(nodeTarget, node);
+	    set<SgDirectedGraphEdge*> edges = vizzGraph->getDirectedEdge(nodeTarget, node);
 	    set<SgDirectedGraphEdge*>::iterator ed = edges.begin();
 	    bool usageEdge=false;
 	    string type_n="not";
 	    for (;ed!=edges.end();++ed){
-	      SgDirectedGraphEdge* edge = *ed;
+	      SgDirectedGraphEdge* edge = isSgDirectedGraphEdge(*ed);
+	     ROSE_ASSERT(edge);
 	      if (edge)
-		type_n = vizzGraph->getProperty(SB_Graph_Def::type, edge);
-		if (type_n==RoseBin_support::ToString(SB_Edgetype::usage))
+		type_n = vizzGraph->getProperty(SgGraph::type, edge);
+		if (type_n==RoseBin_support::ToString(SgGraph::usage))
 		usageEdge=true;
 	    }
 	    // if there is no usage edge, we want to create one...
 	    if (usageEdge==false) {
-	      SgDirectedGraphEdge* edge = 
-		vizzGraph->createEdge(type_n, 0, nodeTarget, addr_t, node, asmNode->get_address() );
-		vizzGraph->setProperty(SB_Graph_Def::name, edge, name);
-		vizzGraph->setProperty(SB_Graph_Def::type, edge, RoseBin_support::ToString(SB_Edgetype::usage));
+	      SgDirectedGraphEdge* edge =vizzGraph->addDirectedEdge( nodeTarget, node, type_n);
+//	      SgDirectedGraphEdge* edge =
+//		vizzGraph->createEdge(type_n, 0, nodeTarget, addr_t, node, asmNode->get_address() );
+		vizzGraph->setProperty(SgGraph::name, edge, name);
+		vizzGraph->setProperty(SgGraph::type, edge, RoseBin_support::ToString(SgGraph::usage));
 	    }
 	  }
 	} // if nodetarget
@@ -577,7 +580,7 @@ RoseBin_DefUseAnalysis::run(string& name, SgDirectedGraphNode* node,
   } // is an instruction
   //  nodeBefore = node;
 
-  multitype newMul = getDefMultiMapFor(node);  
+  multitype newMul = getDefMultiMapFor(node);
   hasChanged =  checkElementsForEquality(&oldMul, &newMul);
   if (hasChanged)
     ROSE_ASSERT(oldMul.size()< newMul.size());

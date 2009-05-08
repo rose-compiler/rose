@@ -13,23 +13,26 @@
 
 class RoseBin_GMLGraph : public RoseBin_Graph {
  private:
-  std::string getInternalNodes(SgDirectedGraphNode* node,
+  std::string getInternalNodes(SgGraphNode* node,
 			       bool forward_analysis, SgAsmNode* internal);
 
   std::map < SgAsmStatement*, int > nodesMap;
   std::map < SgAsmFunctionDeclaration*, int > funcMap;
 
-  void printEdges_single( bool forward_analysis, std::ofstream& myfile);
-  void printEdges_multiple( bool forward_analysis, std::ofstream& myfile);
-  void printEdges( bool forward_analysis, std::ofstream& myfile, SgDirectedGraphEdge* edge);
+  void printEdges_single( VirtualBinCFG::AuxiliaryInformation* info,
+			  bool forward_analysis, std::ofstream& myfile);
+  void printEdges_multiple( VirtualBinCFG::AuxiliaryInformation* info,
+			  bool forward_analysis, std::ofstream& myfile);
+  void printEdges( VirtualBinCFG::AuxiliaryInformation* info,
+			  bool forward_analysis, std::ofstream& myfile, SgDirectedGraphEdge* edge);
 
   bool skipFunctions;
   bool skipInternalEdges;
   bool onlyControlStructure;
 
  public:
-  RoseBin_GMLGraph(VirtualBinCFG::AuxiliaryInformation* info): RoseBin_Graph(info) {
-	  ROSE_ASSERT(info);
+  RoseBin_GMLGraph() {
+
     //added this for vizz3d visualization
     skipFunctions=false;
     skipInternalEdges=true;
@@ -40,7 +43,8 @@ class RoseBin_GMLGraph : public RoseBin_Graph {
   void printNodes( bool dfg, RoseBin_FlowAnalysis* flow,  bool forward_analysis,
 		     std::ofstream &myfile, std::string& recursiveFunctionName);
 
-  void printEdges( bool forward_analysis, std::ofstream& myfile, bool mergedEdges);
+  void printEdges( VirtualBinCFG::AuxiliaryInformation* info,
+		  bool forward_analysis, std::ofstream& myfile, bool mergedEdges);
 
   void printProlog(  std::ofstream& myfile, std::string& fileType);
   void printEpilog(  std::ofstream& myfile);

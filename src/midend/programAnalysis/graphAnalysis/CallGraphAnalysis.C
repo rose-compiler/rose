@@ -24,10 +24,11 @@ SB_CallGraph::createCallGraph(SgProject* project) {
     SgAsmBlock* global_block = interp->get_global_block();
     ROSE_ASSERT (global_block != NULL);
     VirtualBinCFG::AuxiliaryInformation* info= new VirtualBinCFG::AuxiliaryInformation(project);
-    RoseBin_DotGraph* dotGraph = new RoseBin_DotGraph(info);
-    RoseBin_GMLGraph* gmlGraph = new RoseBin_GMLGraph(info);
+    RoseBin_DotGraph* dotGraph = new RoseBin_DotGraph();
+    RoseBin_GMLGraph* gmlGraph = new RoseBin_GMLGraph();
     cout << " creating call graph ... " << endl;
-    bin_callanalysis = new RoseBin_CallGraphAnalysis(global_block, new RoseObj(), info);
+    GraphAlgorithms* algo = new GraphAlgorithms(info);
+    bin_callanalysis = new RoseBin_CallGraphAnalysis(global_block, new RoseObj(), algo);
     // Building a GML file for the call graph
     bin_callanalysis->run(gmlGraph, callFileNameGML, !mergedEdges);
     // Building a DOT file for the call graph

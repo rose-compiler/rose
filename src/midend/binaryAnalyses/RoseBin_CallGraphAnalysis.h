@@ -14,15 +14,16 @@
 //class RoseFile;
 
 class RoseBin_CallGraphAnalysis : public RoseBin_FlowAnalysis {
-  void findClusterOfNode(SgDirectedGraphNode* next_n, 
-			 int& currentCluster, 
+  void findClusterOfNode(SgGraphNode* next_n,
+			 int& currentCluster,
 			 std::map<SgAsmFunctionDeclaration*,int>& visited);
 
  public:
 
-  RoseBin_CallGraphAnalysis(SgAsmNode* global, RoseBin_abstract*, VirtualBinCFG::AuxiliaryInformation* info ):RoseBin_FlowAnalysis(global, info) {
+ RoseBin_CallGraphAnalysis(SgAsmNode* global, RoseBin_abstract* ,
+			   GraphAlgorithms* algo):RoseBin_FlowAnalysis(global,algo) {
     typeNode="function";
-    typeEdge="CG-E";  
+    typeEdge="CG-E";
     analysisName="callgraph";
     forward_analysis=true;
   }
@@ -33,7 +34,7 @@ class RoseBin_CallGraphAnalysis : public RoseBin_FlowAnalysis {
     delete vizzGraph;
 
     std::map <std::string, SgAsmFunctionDeclaration* >::iterator it;
-    for (it = bin_funcs.begin(); 
+    for (it = bin_funcs.begin();
 	 it!= bin_funcs.end(); it++) {
       delete it->second;
     }

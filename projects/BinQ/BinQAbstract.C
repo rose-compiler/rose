@@ -26,6 +26,14 @@ void BinQAbstract::init(){
   fileA = binqsupport->disassembleFile(fileNameA, sourceFileS);
   ROSE_ASSERT(fileA);
 
+  if (isSgProject(fileA)) {
+    SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
+    SgAsmFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
+    ROSE_ASSERT(file);
+    info = new VirtualBinCFG::AuxiliaryInformation(file);
+    algo = new GraphAlgorithms(info);
+  }
+
   if (saveAST!="") {
     std::cerr << "ROSE saving FILE.... " << saveAST << std::endl;
     LoadSaveAST::saveAST(saveAST, isSgProject(fileA)); 

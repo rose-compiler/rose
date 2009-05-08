@@ -39,7 +39,7 @@ DwarfFileInfo::run(SgNode* fileA, SgNode* fileB) {
   SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
   SgAsmFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
   ROSE_ASSERT(file);
-  info = new VirtualBinCFG::AuxiliaryInformation(file);
+  //info = new VirtualBinCFG::AuxiliaryInformation(file);
 
   if (!testFlag) {
     ROSE_ASSERT(instance);

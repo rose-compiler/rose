@@ -2852,7 +2852,7 @@ void EasyStorage < std::map<SgNode*,std::string> > :: readFromFile (std::istream
 
 
 
-#ifdef ROSE_USE_NEW_GRAPH_NODES
+//#ifdef ROSE_USE_NEW_GRAPH_NODES
 
 // ****************************************************************************************
 // **      Implementations for EasyStorage < rose_graph_hash_multimap* >                 **
@@ -2903,6 +2903,7 @@ void EasyStorage <rose_graph_hash_multimap*> ::storeDataInEasyStorageClass(rose_
               Base::actual->storeDataInEasyStorageClass(*copy_);
              }
 #else
+	  // local else
        // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
           printf ("Error: support for file IO on graph nodes not implemented! \n");
           ROSE_ASSERT(false);
@@ -2938,6 +2939,7 @@ EasyStorage <rose_graph_hash_multimap*> :: rebuildDataStoredInEasyStorageClass()
              }
         }
 #else
+     // local else
   // DQ (4/23/2009): Incrementally adding support for new graph IR nodes in ROSE.
      printf ("Error: support for file IO on graph nodes not implemented! \n");
      ROSE_ASSERT(false);
@@ -2983,6 +2985,7 @@ void EasyStorage <rose_graph_hash_multimap*> :: readFromFile (std::istream& inpu
      EasyStorageMapEntry <SgName,SgSymbol*> :: readFromFile (inputFileStream);
    }
 #else
+// else belongs to #if0 
 
 void EasyStorage <rose_graph_hash_multimap> ::storeDataInEasyStorageClass(const rose_graph_hash_multimap& data_)
    {
@@ -3046,7 +3049,8 @@ void EasyStorage <rose_graph_hash_multimap> :: readFromFile (std::istream& input
      StorageClassMemoryManagement <EasyStorageMapEntry<SgName,SgSymbol*> > :: readFromFile (inputFileStream);
      EasyStorageMapEntry <SgName,SgSymbol*> :: readFromFile (inputFileStream);
    }
-#endif
+#endif 
+// endif of #if0
 
 
 
@@ -3121,6 +3125,7 @@ void EasyStorage <rose_undirected_graph_hash_multimap> :: readFromFile (std::ist
      EasyStorageMapEntry <SgName,SgSymbol*> :: readFromFile (inputFileStream);
    }
 #endif
+// end if #if 0
 
 #if 0
 // DQ (4/30/2009): Removed these in favor of the hash_multimap using the SgGraphEdge class.
@@ -3190,7 +3195,7 @@ void EasyStorage <rose_directed_graph_hash_multimap> :: readFromFile (std::istre
      EasyStorageMapEntry <SgName,SgSymbol*> :: readFromFile (inputFileStream);
    }
 #endif
-
+// end of #if0
 
 
 
@@ -3260,7 +3265,8 @@ void EasyStorage <rose_graph_node_edge_hash_multimap> :: readFromFile (std::istr
      EasyStorageMapEntry <SgName,SgSymbol*> :: readFromFile (inputFileStream);
    }
 
-#endif
+//#endif
+// endif of condition NEW_GRAPH
 
 #if 0
 /*
@@ -3364,7 +3370,7 @@ void EasyStorage < std::multimap<std::string,int> > :: readFromFile (std::istrea
    }
 #endif
 
-#ifdef ROSE_USE_NEW_GRAPH_NODES
+//#ifdef ROSE_USE_NEW_GRAPH_NODES
 // DQ (5/1/2009): Added support
 // ****************************************************************************************
 // **      Implementations for EasyStorage < rose_graph_integer_node_hash_map >          **
@@ -3431,10 +3437,10 @@ void EasyStorage <rose_graph_integer_node_hash_map> :: readFromFile (std::istrea
      StorageClassMemoryManagement <EasyStorageMapEntry<int,SgGraphNode*> > :: readFromFile (inputFileStream);
      EasyStorageMapEntry <int,SgGraphNode*> :: readFromFile (inputFileStream);
    }
-#endif
+//#endif
+// end of condition new_graph
 
-
-#ifdef ROSE_USE_NEW_GRAPH_NODES
+//#ifdef ROSE_USE_NEW_GRAPH_NODES
 // DQ (5/1/2009): Added support
 // ****************************************************************************************
 // **      Implementations for EasyStorage < rose_graph_integer_edge_hash_map >          **
@@ -3502,10 +3508,10 @@ void EasyStorage <rose_graph_integer_edge_hash_map> :: readFromFile (std::istrea
      StorageClassMemoryManagement <EasyStorageMapEntry<int,SgGraphEdge*> > :: readFromFile (inputFileStream);
      EasyStorageMapEntry <int,SgGraphEdge*> :: readFromFile (inputFileStream);
    }
-#endif
+//#endif
+//end of condition new_graph
 
-
-#ifdef ROSE_USE_NEW_GRAPH_NODES
+//#ifdef ROSE_USE_NEW_GRAPH_NODES
 // DQ (5/1/2009): Added support
 // ****************************************************************************************
 // **      Implementations for EasyStorage < rose_graph_integer_edge_hash_multimap >          **
@@ -3573,8 +3579,8 @@ void EasyStorage <rose_graph_integer_edge_hash_multimap> :: readFromFile (std::i
      StorageClassMemoryManagement <EasyStorageMapEntry<int,SgGraphEdge*> > :: readFromFile (inputFileStream);
      EasyStorageMapEntry <int,SgGraphEdge*> :: readFromFile (inputFileStream);
    }
-#endif
-
+//#endif
+// end of condition new_graph
 
 /*
    ****************************************************************************************
@@ -3673,7 +3679,7 @@ void EasyStorageMapEntry <int,SgGraphEdge*> :: readFromFile (std::istream& input
    }
 
 
-#ifdef ROSE_USE_NEW_GRAPH_NODES
+//#ifdef ROSE_USE_NEW_GRAPH_NODES
 // DQ (5/1/2009): Added support
 // ****************************************************************************************
 // **      Implementations for EasyStorage < rose_graph_string_integer_hash_multimap >          **
@@ -3740,9 +3746,10 @@ void EasyStorage <rose_graph_string_integer_hash_multimap> :: readFromFile (std:
      StorageClassMemoryManagement <EasyStorageMapEntry<std::string,int> > :: readFromFile (inputFileStream);
      EasyStorageMapEntry <std::string,int> :: readFromFile (inputFileStream);
    }
-#endif
+//#endif
+//end of condition new_graph
 
-#ifdef ROSE_USE_NEW_GRAPH_NODES
+//#ifdef ROSE_USE_NEW_GRAPH_NODES
 // DQ (5/1/2009): Added support
 // ********************************************************************************************
 // **      Implementations for EasyStorage < rose_graph_integerpair_edge_hash_multimap >     **
@@ -3809,7 +3816,7 @@ void EasyStorage <rose_graph_integerpair_edge_hash_multimap> :: readFromFile (st
      StorageClassMemoryManagement <EasyStorageMapEntry<std::string,int> > :: readFromFile (inputFileStream);
      EasyStorageMapEntry <std::string,int> :: readFromFile (inputFileStream);
    }
-#endif
-
+//#endif
+//end of condition new_graph
 
 

@@ -95,21 +95,9 @@ namespace RoseBin_DataTypes {
 #include <ext/hash_map>
 #include <ext/hash_set>
 
-// DQ (4/23/2009): ROSE_USE_NEW_GRAPH_NODES is not set on the configure commandline.
-// #if OLD_GRAPH_NODES
-#ifndef ROSE_USE_NEW_GRAPH_NODES
-// DQ (8/18/2008): Commented out as part of support for new Graph IR nodes!
-namespace __gnu_cxx {
-  template <> struct hash<std::string> {
-    unsigned long operator()( const std::string &s) const {
-      return __gnu_cxx::hash< const char*> () (s.c_str());
-    }
-  };
-}
-#endif
 
 class SgDirectedGraphNode;
-namespace __gnu_cxx { 
+namespace __gnu_cxx {
   template <> struct hash <SgDirectedGraphNode*> {
     size_t operator()(SgDirectedGraphNode* const & n) const {
       return (size_t) n;
@@ -117,7 +105,8 @@ namespace __gnu_cxx {
   };
 }
 
-namespace __gnu_cxx { 
+
+namespace __gnu_cxx {
   template <> struct hash <X86RegisterClass> {
     size_t operator()(X86RegisterClass const & n) const {
       return (size_t) n;
@@ -160,24 +149,24 @@ class RoseBin_support {
    ****************************************************/
   static void printExprNode(exprTreeType expt);
 
-  /**********************************************************                          
+  /**********************************************************
    *  check if a function needs to be filtered away
-   *********************************************************/                   
+   *********************************************************/
   static bool filterName(std::string name);
 
-  /**********************************************************                          
+  /**********************************************************
    *  convert a string to uppercase
-   *********************************************************/                   
+   *********************************************************/
   static std::string str_to_upper(std::string str);
 
-  /**********************************************************                          
-   *  Resolve Boolean Value to String                                                 
-   *********************************************************/                   
+  /**********************************************************
+   *  Resolve Boolean Value to String
+   *********************************************************/
   static std::string resBool(bool val);
 
-  /**********************************************************                          
+  /**********************************************************
    *  Convert to string
-   *********************************************************/                   
+   *********************************************************/
   template<typename T>
   static  std::string ToString(T t){
     std::ostringstream myStream; //creates an ostringstream object
@@ -197,15 +186,15 @@ class RoseBin_support {
   }
 
   template <class T>
-    static bool from_string(T& t, 
-		     const std::string& s, 
+    static bool from_string(T& t,
+		     const std::string& s,
 		     std::ios_base& (*f)(std::ios_base&)) {
       std::istringstream iss(s);
       return !(iss >> f >> t).fail();
     }
 
-  static std::string 
-    resolveValue(SgAsmValueExpression* expr, 
+  static std::string
+    resolveValue(SgAsmValueExpression* expr,
 		 bool is_mnemonic_call,
 		 uint8_t &b_val,
 		 uint16_t &w_val,
@@ -251,7 +240,7 @@ class RoseBin_support {
   }
 
 #if 0
-  static bool 
+  static bool
     isConditionalInstruction(SgAsmInstruction*inst) {
     bool condInst = false;
     if (RoseBin_Def::RoseAssemblyLanguage==RoseBin_Def::x86) {
@@ -262,7 +251,7 @@ class RoseBin_support {
     return condInst;
   }
 
-  static bool 
+  static bool
     isConditionalFlagInstruction(SgAsmInstruction*inst) {
     bool condInst = false;
     if (RoseBin_Def::RoseAssemblyLanguage==RoseBin_Def::x86) {
@@ -275,7 +264,7 @@ class RoseBin_support {
   return condInst;
   }
 #endif
-  
+
 
   static RoseBin_Def::RoseLanguage getAssemblyLanguage() {
     return assemblyLanguage;
@@ -313,9 +302,9 @@ class RoseBin_support {
     gettimeofday(&tv, NULL);
     return tv.tv_sec + tv.tv_usec * 1.e-6;
   }
-  
 
-  
+
+
 };
 
 // From instructionDispatch.cpp (generated but checked into SVN):

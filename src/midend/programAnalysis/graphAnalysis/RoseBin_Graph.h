@@ -46,27 +46,27 @@ class RoseBin_Graph : public SB_DirectedGraph {
   bool dfa_unresolved_func;
   bool dfa_conditional;
 
+  //rose_graph_node_edge_hash_multimap unique_edges;
+  rose_graph_integer_edge_hash_multimap unique_edges;
  public:
 
 
-  RoseBin_Graph(VirtualBinCFG::AuxiliaryInformation* info):SB_DirectedGraph(info) {grouping = true;}
-  virtual ~RoseBin_Graph() {}
+  //RoseBin_Graph(VirtualBinCFG::AuxiliaryInformation* info):SB_DirectedGraph(info) {grouping = true;}
+   RoseBin_Graph() {grouping = true;}
+   virtual ~RoseBin_Graph() {}
   //RoseBin_unparse_visitor* unparser;
-  SgDirectedGraph* graph;
+  SgIncidenceDirectedGraph* graph;
   void setGrouping(bool val) {grouping = val;}
 
-  virtual void printEdges( bool forward_analysis, std::ofstream& myfile, bool mergedEdges) =0;
+  virtual void printEdges( VirtualBinCFG::AuxiliaryInformation* info,
+			  bool forward_analysis, std::ofstream& myfile, bool mergedEdges) =0;
   virtual void printNodes( bool dfg, RoseBin_FlowAnalysis* flow, bool forward_analysis,
 			   std::ofstream &myfile, std::string& recursiveFunctionName) =0;
-
-
-
 
   virtual void printProlog(  std::ofstream& myfile, std::string& fileType) =0;
   virtual void printEpilog(  std::ofstream& myfile) =0;
 
-
-
+  void createUniqueEdges();
 
 };
 

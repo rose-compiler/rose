@@ -10,16 +10,16 @@
 class BufferOverflow: public BC_GraphAnalysisInterface {
 
  public:
-  BufferOverflow() {}
+  BufferOverflow(GraphAlgorithms* algo):BC_GraphAnalysisInterface(algo) {}
   ~BufferOverflow() {}
 
-  bool run(std::string& name, SgDirectedGraphNode* node,
-	   SgDirectedGraphNode* previous);
+  bool run(std::string& name, SgGraphNode* node,
+	   SgGraphNode* previous);
 
   void getValueForDefinition(std::vector<uint64_t>& vec,
 			     std::vector<uint64_t>& positions,
 			     uint64_t& fpos,
-			     SgDirectedGraphNode* node,
+			     SgGraphNode* node,
 			     std::pair<X86RegisterClass, int> reg );
 
   std::string getIntCallName_Linux32bit(uint64_t rax,RoseBin_DataTypes::DataTypes& data_ebx,
@@ -53,7 +53,7 @@ class BufferOverflow: public BC_GraphAnalysisInterface {
 			     std::vector<uint64_t>& pos_edx,
 			     uint64_t fpos_rbx, uint64_t fpos_rcx, uint64_t fpos_rdx);
 
-  bool runEdge(SgDirectedGraphNode* node, SgDirectedGraphNode* next) {
+  bool runEdge(SgGraphNode* node, SgGraphNode* next) {
     return false;
   }
 

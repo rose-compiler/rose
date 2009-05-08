@@ -24,14 +24,14 @@ int main(int argc, char** argv)
     callgraph->createCallGraph(project);
     RoseBin_Graph* graph = callgraph->getBinaryCallGraph()->getGraph();
     if (graph) {
-    	SB_DirectedGraph::nodeType nodes = graph->nodes;
-    	rose_hash::hash_multimap < SgDirectedGraphNode*, SgDirectedGraphEdge*> edges = graph->edges;
+      rose_graph_integer_node_hash_map nodes = graph->get_node_index_to_node_map();//get_nodes()->get_nodes();
+      rose_graph_integer_edge_hash_multimap edges = graph->get_node_index_to_edge_multimap_edgesOut();//get_edgesOut()->get_edges();
     	cerr << " Binary call graph found nodes : " << nodes.size() << "  found edges : " << edges.size() << endl;
     }
     SB_DirectedGraph* srcgraph = callgraph->getSourceCallGraph()->getGraph();
 	if (srcgraph) {
-		SB_DirectedGraph::nodeType nodes = srcgraph->nodes;
-		rose_hash::hash_multimap < SgDirectedGraphNode*, SgDirectedGraphEdge*> edges = srcgraph->edges;
+	  rose_graph_integer_node_hash_map nodes = srcgraph->get_node_index_to_node_map();//get_nodes()->get_nodes();
+	  rose_graph_integer_edge_hash_multimap edges = srcgraph->get_node_index_to_edge_multimap_edgesOut();//get_edgesOut()->get_edges();
 		cerr << " Source call graph found nodes : " << nodes.size() << "  found edges : " << edges.size() << endl;
 	}
   }

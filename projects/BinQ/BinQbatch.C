@@ -38,9 +38,11 @@ BinQbatch::BinQbatch(std::string fA, std::string fB, std::vector<std::string> dl
   dllB=dllBB;
   currentAnalysis=NULL;
   sourceFile=false;
-  
+
+  // switsched order of theses two!
+  init();   // create fileA and AuxInfo
   initAnalyses();
-  init();
+
   currentSelectedFile=fileA;
   if (test==false)
     createGUI();
@@ -79,13 +81,13 @@ int BinQbatch::addRemainingAnalyses() {
     analyses.push_back(*it);    
   }
 
-  analyses.push_back(new DwarfFileInfo());
+  analyses.push_back(new DwarfFileInfo(algo));
   analyses.push_back(new BinCallGraph());
   analyses.push_back(new DiffAlgo());
   analyses.push_back(new FunctionDiffAlgo());
   analyses.push_back(new AlignFunction());
   analyses.push_back(new BinControlFlowAnalysis());
-  analyses.push_back(new InterruptAnalysis());
+  analyses.push_back(new InterruptAnalysis(algo));
   return before;
 }
 

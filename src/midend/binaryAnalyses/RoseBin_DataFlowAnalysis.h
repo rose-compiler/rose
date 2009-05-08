@@ -20,6 +20,8 @@
 //class RoseBin;
 //class RoseFile;
 
+
+
 class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
  private:
   bool writeFile;
@@ -27,23 +29,24 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
   bool interprocedural;
   RoseBin_DataFlowAbstract* variableAnalysis;
 
-  rose_hash::hash_set < SgDirectedGraphNode*> visited;
 
-  std::map < SgDirectedGraphNode*,int> visitedCounter;
+  std::map < SgGraphNode*,int> visitedCounter;
 
-  rose_hash::hash_map <SgDirectedGraphNode*, SgDirectedGraphNode*> nodeBeforeMap;
-
+  typedef rose_hash::hash_map <SgGraphNode*, SgGraphNode*,rose_hash::hash_graph_node,rose_hash::eqstr_graph_node> BeforeMapType;
+  BeforeMapType nodeBeforeMap;
+  typedef rose_hash::hash_set < SgGraphNode*,rose_hash::hash_graph_node,rose_hash::eqstr_graph_node> nodeHashSetType;
+  nodeHashSetType visited;
 
   void traverseEdges(RoseBin_DataFlowAbstract* analysis);
 
 
 
 
-  bool existsPath(SgDirectedGraphNode* start, SgDirectedGraphNode* end);
+  bool existsPath(SgGraphNode* start, SgGraphNode* end);
 
 
-  bool containsHash( rose_hash::hash_set < SgDirectedGraphNode*>& vec, 
-		     SgDirectedGraphNode* node);
+  bool containsHash( nodeHashSetType& vec,
+		     SgGraphNode* node);
 
 
   RoseBin_DefUseAnalysis* defuse;
@@ -56,15 +59,18 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
 
  public:
 
-  RoseBin_DataFlowAnalysis(SgAsmNode* global, bool forward, RoseBin_abstract*, VirtualBinCFG::AuxiliaryInformation* info ):RoseBin_FlowAnalysis(global, info) {
+  RoseBin_DataFlowAnalysis(SgAsmNode* global, bool forward, RoseBin_abstract*
+			   ,GraphAlgorithms* algo):RoseBin_FlowAnalysis(global,algo) {
+    ROSE_ASSERT(algo);
     typeNode="DFG";
-    typeEdge="DFG-E";  
+    typeEdge="DFG-E";
     interprocedural = false;
     writeFile=true;
     printEdges = false;
     analysisName = "dfa";
     forward_analysis=forward;
-    defuse = new RoseBin_DefUseAnalysis();
+    defuse = new RoseBin_DefUseAnalysis(algo);
+    ROSE_ASSERT(defuse);
   }
   ~RoseBin_DataFlowAnalysis() {
     delete globalBin;
@@ -72,7 +78,7 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
     delete vizzGraph;
 
     std::map <std::string, SgAsmFunctionDeclaration* >::iterator it;
-    for (it = bin_funcs.begin(); 
+    for (it = bin_funcs.begin();
 	 it!= bin_funcs.end(); it++) {
       delete it->second;
     }
@@ -84,17 +90,17 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
 
   void init();
 
-  void traverseGraph(std::vector <SgDirectedGraphNode*>& rootNodes,
-		     RoseBin_DataFlowAbstract* defuse, 
+  void traverseGraph(std::vector <SgGraphNode*>& rootNodes,
+		     RoseBin_DataFlowAbstract* defuse,
 		     bool interprocedural);
 
 
-  void init(bool interp, bool pedges) { 
+  void init(bool interp, bool pedges) {
     interprocedural = interp;
     printEdges = pedges;
   }
 
-  void init(bool interp, bool pedges, RoseBin_Graph* g) { 
+  void init(bool interp, bool pedges, RoseBin_Graph* g) {
     interprocedural = interp;
     printEdges = pedges;
     vizzGraph = g;
@@ -124,12 +130,12 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
 
   void run(RoseBin_Graph* vg, std::string fileN, bool multiedge) ;
 
-  std::set < SgDirectedGraphNode* > 
-    getDefFor(SgDirectedGraphNode* node, std::pair<X86RegisterClass, int> initName);
-  std::set < SgDirectedGraphNode* > 
+  std::set < SgGraphNode* >
+    getDefFor(SgGraphNode* node, std::pair<X86RegisterClass, int> initName);
+  std::set < SgGraphNode* >
     getDefFor( uint64_t inst, std::pair<X86RegisterClass, int> initName);
 
-  std::set < uint64_t > 
+  std::set < uint64_t >
     getDefForInst( uint64_t inst, std::pair<X86RegisterClass, int> initName);
 
   RoseBin_DataFlowAbstract* getVariableAnalysis() {return variableAnalysis;}

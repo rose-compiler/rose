@@ -37,7 +37,7 @@ Grammar::setUpSupport ()
   // special_function specifiers (constructor, destructor, conversion, operator)
   // declaration specifiers (storage specifiers, type specifiers, function specifiers,
   //           friend, typedef, export, exception-specifier)
-  // type specifier (simple-type-specifier (not in SAGE III, char, bool, int, float, etc.), 
+  // type specifier (simple-type-specifier (not in SAGE III, char, bool, int, float, etc.),
   //           class specifier, enum specifier, elaborated-type-specifier, cv-qualifier, restrict)
   // elaborated-type-specifier (class, struct, union, enum, typename, typename template)
   // linkage-specification (extern, extern "C", extern "C++")
@@ -51,7 +51,7 @@ Grammar::setUpSupport ()
 
   // DQ (4/19/2004): New modifiers (C++ grammar calls them specifiers)
   // ConstVolatileModifier, StorageModifier, AccessModifier, FunctionModifier,
-  // UPC_AccessModifier, SpecialFunctionModifier, DeclarationModifier, TypeModifier, 
+  // UPC_AccessModifier, SpecialFunctionModifier, DeclarationModifier, TypeModifier,
   // ElaboratedTypeModifier, LinkageModifier, BaseClassModifier
      NEW_TERMINAL_MACRO (ConstVolatileModifier  ,"ConstVolatileModifier"  , "ConstVolatileModifierTag" );
      NEW_TERMINAL_MACRO (StorageModifier        ,"StorageModifier"        , "StorageModifierTag" );
@@ -70,11 +70,11 @@ Grammar::setUpSupport ()
 
   // DQ (4/7/2004): Added support for modifiers (organized with a base class)
   // DQ (4/19/2004): Added new modifiers (C++ grammar calls them specifiers)
-  // DQ (4/21/2004): Order is important here since the objects are included in 
+  // DQ (4/21/2004): Order is important here since the objects are included in
   //                 other objects and the size must be known.
      NEW_NONTERMINAL_MACRO (Modifier,
-          ModifierNodes           | ConstVolatileModifier  | StorageModifier    | 
-          AccessModifier          | FunctionModifier       | UPC_AccessModifier | 
+          ModifierNodes           | ConstVolatileModifier  | StorageModifier    |
+          AccessModifier          | FunctionModifier       | UPC_AccessModifier |
           SpecialFunctionModifier | ElaboratedTypeModifier | LinkageModifier    |
           BaseClassModifier       | TypeModifier           | DeclarationModifier, "Modifier", "ModifierTag", false);
 
@@ -84,7 +84,7 @@ Grammar::setUpSupport ()
      NEW_TERMINAL_MACRO (File, "File", "FileTag" );
 #else
   // DQ (9/2/2008): Separate out the handling of source files from binary files.
-  // Note that we may at a later point distinguish source file into: ScriptFile, 
+  // Note that we may at a later point distinguish source file into: ScriptFile,
   // FortranFile, CppFile, CFile, etc. It is not clear if that is useful. For now
   // we seperate out BinaryFile since it should not be a pointer from SgFile and
   // shared with a source file because there are so many ways that a binary file
@@ -112,8 +112,8 @@ Grammar::setUpSupport ()
      NEW_TERMINAL_MACRO (FunctionParameterTypeList, "FunctionParameterTypeList", "T_FUNCTION_PARAMETER_TYPE_LIST" );
 
   // DQ (3/12/2004): Added support for template parameters and template arguments
-  // Parameters are defined in the template declaration (formal parameters attached 
-  // to the SgTemplateDeclaration). Arguments are the values specified to build a 
+  // Parameters are defined in the template declaration (formal parameters attached
+  // to the SgTemplateDeclaration). Arguments are the values specified to build a
   // template instantiation (actual parameters attached to the SgTemplateInstantiationDecl).
      NEW_TERMINAL_MACRO (TemplateParameter, "TemplateParameter", "TemplateParameterTag" );
      NEW_TERMINAL_MACRO (TemplateArgument, "TemplateArgument", "TemplateArgumentTag" );
@@ -134,20 +134,9 @@ Grammar::setUpSupport ()
      NEW_TERMINAL_MACRO (BaseClass, "BaseClass", "BaseClassTag" );
 
 // #define OLD_GRAPH_NODES 0
-// #define OLD_GRAPH_NODES !ROSE_USE_NEW_GRAPH_NODES
 // #if OLD_GRAPH_NODES
-#ifndef ROSE_USE_NEW_GRAPH_NODES
-  // tps (08/08/07): Added the graph, graph nodes and graph edges 
-     NEW_TERMINAL_MACRO (DirectedGraph,     "DirectedGraph",     "DirectedGraphTag" );
-     NEW_TERMINAL_MACRO (DirectedGraphNode, "DirectedGraphNode", "DirectedGraphNodeTag" );
-     NEW_TERMINAL_MACRO (DirectedGraphEdge, "DirectedGraphEdge", "DirectedGraphEdgeTag" );
 
-     NEW_NONTERMINAL_MACRO (GraphNode, DirectedGraphNode, "GraphNode", "GraphNodeTag", false);
-     NEW_NONTERMINAL_MACRO (GraphEdge, DirectedGraphEdge, "GraphEdge", "GraphEdgeTag", false);
-     NEW_NONTERMINAL_MACRO (Graph, DirectedGraph, "Graph", "GraphTag", false);
-#else
 
-#if 1
   // Type for graph node:
   // DQ (8/18/2008): This should be removed in the final version; added for backward compatability!
      NEW_TERMINAL_MACRO (DirectedGraphNode, "DirectedGraphNode", "DirectedGraphNodeTag" );
@@ -178,42 +167,7 @@ Grammar::setUpSupport ()
   // DQ (8/18/2008): Added support for container so that we don't mix data member and list elements as children.
      NEW_TERMINAL_MACRO (GraphNodeList, "GraphNodeList", "GraphNodeListTag");
      NEW_TERMINAL_MACRO (GraphEdgeList, "GraphEdgeList", "GraphEdgeListTag");
-#else
-  // DQ (8/18/2008): This should be removed in the final version; added for backward compatability!
-     NEW_TERMINAL_MACRO (DirectedGraphNode, "DirectedGraphNode", "DirectedGraphNodeTag" );
 
-  // DQ (8/18/2008): Added support for compatability with older IR nodes (will be removed later!)
-     NEW_TERMINAL_MACRO (DirectedGraph,     "DirectedGraph",     "DirectedGraphTag" );
-
-  // tps (08/08/07): Added the graph, graph nodes and graph edges 
-  // tps (10/24/07): extended the set of graphs
-     NEW_TERMINAL_MACRO (StringKeyedBidirectionalGraph,  "StringKeyedBidirectionalGraph",  "StringKeyedBidirectionalGraphTag" );
-     NEW_TERMINAL_MACRO (IntKeyedBidirectionalGraph,     "IntKeyedBidirectionalGraph",     "IntKeyedBidirectionalGraphTag" );
-  // NEW_TERMINAL_MACRO (DummyGraph,     "DummyGraph",     "DummyGraphTag" );
-
-     NEW_NONTERMINAL_MACRO (BidirectionalGraph,  StringKeyedBidirectionalGraph | IntKeyedBidirectionalGraph,  "BidirectionalGraph",     "BidirectionalGraphTag" , false);
-  // NEW_NONTERMINAL_MACRO (IncidenceDirectedGraph, BidirectionalGraph | DummyGraph,    "IncidenceDirectedGraph",     "IncidenceDirectedGraphTag" , false);
-     NEW_NONTERMINAL_MACRO (IncidenceDirectedGraph, BidirectionalGraph,    "IncidenceDirectedGraph",     "IncidenceDirectedGraphTag" , false);
-
-     NEW_TERMINAL_MACRO (IncidenceUndirectedGraph,     "IncidenceUndirectedGraph",     "IncidenceUndirectedGraphTag" );
-
-  // NEW_TERMINAL_MACRO (KeyedBidirectionalGraph, StringKeyedBidirectionalGraph | IntKeyedBidirectionalGraph,  "KeyedBidirectionalGraph",  "KeyedBidirectionalGraphTag" );
-
-     NEW_TERMINAL_MACRO (UndirectedGraphEdge, "UndirectedGraphEdge", "UndirectedGraphEdgeTag" );
-     NEW_TERMINAL_MACRO (DirectedGraphEdge,   "DirectedGraphEdge",   "DirectedGraphEdgeTag" );
-
-  // DQ (8/19/2008): To support the older interface make this a non-terminal so that we can derive DirectedGraphNode from it (also makr last boolean as true).
-  // NEW_TERMINAL_MACRO (GraphNode, "GraphNode", "GraphNodeTag");
-     NEW_NONTERMINAL_MACRO (GraphNode, DirectedGraphNode, "GraphNode", "GraphNodeTag", true);
-
-     NEW_NONTERMINAL_MACRO (GraphEdge, DirectedGraphEdge | UndirectedGraphEdge, "GraphEdge", "GraphEdgeTag", false);
-     NEW_NONTERMINAL_MACRO (Graph, IncidenceDirectedGraph | IncidenceUndirectedGraph | DirectedGraph ,"Graph", "GraphTag", false);
-
-  // DQ (8/18/2008): Added support for container so that we don't mix data member and list elements as children.
-     NEW_TERMINAL_MACRO (GraphNodeList, "GraphNodeList", "GraphNodeListTag");
-     NEW_TERMINAL_MACRO (GraphEdgeList, "GraphEdgeList", "GraphEdgeListTag");
-#endif
-#endif
 
   // DQ (12/19/2005): Support for explicit qualified names in the source code (currently we generate them
   // if they are required, but this causes the generated source to be a bit verbose for some applications).
@@ -250,15 +204,15 @@ Grammar::setUpSupport ()
 #endif
 
 #if 0
-  // tps (08/08/07): Added the graph, graph nodes and graph edges 
+  // tps (08/08/07): Added the graph, graph nodes and graph edges
      NEW_NONTERMINAL_MACRO (Support,
           Modifier              | Name                      | SymbolTable         | InitializedName      |
           Attribute             | File_Info                 | File                | Project              |
           Options               | Unparse_Info              | BaseClass           | TypedefSeq           |
-          TemplateParameter     | TemplateArgument          | Directory           | FileList             | 
+          TemplateParameter     | TemplateArgument          | Directory           | FileList             |
           DirectoryList         | FunctionParameterTypeList | QualifiedName       | TemplateArgumentList |
           TemplateParameterList | /* RenamePair                | InterfaceBody       |*/
-          Graph                 | GraphNode                 | GraphEdge           | 
+          Graph                 | GraphNode                 | GraphEdge           |
           NameGroup             | CommonBlockObject         | DimensionObject     | FormatItem           |
           FormatItemList        | DataStatementGroup        | DataStatementObject | DataStatementValue,
           "Support", "SupportTag", false);
@@ -274,25 +228,18 @@ Grammar::setUpSupport ()
           Modifier              | Name                      | SymbolTable         | InitializedName      |
           Attribute             | File_Info                 | File                | Project              |
           Options               | Unparse_Info              | BaseClass           | TypedefSeq           |
-          TemplateParameter     | TemplateArgument          | Directory           | FileList             | 
+          TemplateParameter     | TemplateArgument          | Directory           | FileList             |
           DirectoryList         | FunctionParameterTypeList | QualifiedName       | TemplateArgumentList |
           TemplateParameterList | /* RenamePair                | InterfaceBody       |*/
           Graph                 | GraphNode                 | GraphEdge           |
-#ifdef ROSE_USE_NEW_GRAPH_NODES
+
           GraphNodeList         | GraphEdgeList             |
-#endif
+
           NameGroup             | CommonBlockObject         | DimensionObject     | FormatItem           |
           FormatItemList        | DataStatementGroup        | DataStatementObject | DataStatementValue,
           "Support", "SupportTag", false);
 #endif
 
-#if 0
-  // Debugging code
-     for (int i=0; i < nonTerminalList.getLength(); i++)
-        {
-          nonTerminalList[i].display("NonTerminals in nonTerminalList in buildTree");
-        }
-#endif
 
   // ***********************************************************************
   // ***********************************************************************
@@ -306,7 +253,7 @@ Grammar::setUpSupport ()
 
      SymbolTable.setFunctionPrototype         ( "HEADER_SYMBOL_TABLE", "../Grammar/Support.code");
 #if 1
-  // DQ (5/22/2006): I think we really do need this since this is required state for 
+  // DQ (5/22/2006): I think we really do need this since this is required state for
   // iteration through all symbols (except that I had expected them to be unique).
 
   // AJ (10/21/2004): Modified Sage III to use STL based hash table implementation.
@@ -334,7 +281,7 @@ Grammar::setUpSupport ()
      SymbolTable.setDataPrototype(" rose_hash_multimap*","table", "= NULL",
               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
 
-  // DQ (6/12/2007): Fixed use of std::set<SgNode*> to use SgNodeSet so taht ROSETTA's test for 
+  // DQ (6/12/2007): Fixed use of std::set<SgNode*> to use SgNodeSet so taht ROSETTA's test for
   // pointer to IR node can just look for "*" in the type.  This is a internal detail of ROSETTA.
   // DQ (3/10/2007): Adding set for symbols so that we can support fast tests for existance.
   // SymbolTable.setDataPrototype("SgNodeSetPtr","symbolSet", "= NULL",
@@ -347,10 +294,10 @@ Grammar::setUpSupport ()
 
      InitializedName.setFunctionPrototype     ( "HEADER_INITIALIZED_NAME", "../Grammar/Support.code");
 
-  // DQ (1/18/2006): renames this to be consistant and to allow the generated functions to map to 
-  // the virtual SgNode::get_file_info(). This then meens that we need to remove the use of 
+  // DQ (1/18/2006): renames this to be consistant and to allow the generated functions to map to
+  // the virtual SgNode::get_file_info(). This then meens that we need to remove the use of
   // SgInitializedName::get_fileInfo() where it is used.
-  // DQ (8/2/2004): Added fileInfo object to SgInitializedName object (to help with debugging and 
+  // DQ (8/2/2004): Added fileInfo object to SgInitializedName object (to help with debugging and
   // to generally provide source position information on those IR nodes which are traversed).
   // InitializedName.setDataPrototype ( "Sg_File_Info*", "fileInfo", "= NULL",
   //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
@@ -359,8 +306,8 @@ Grammar::setUpSupport ()
      InitializedName.setDataPrototype ( "Sg_File_Info*", "startOfConstruct", "= NULL",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
 
-  // DQ (12/9/2004): Modified to make the access functions for this data member be automatically 
-  // generated.  As part of this change Alin's set_name() member function was moved to 
+  // DQ (12/9/2004): Modified to make the access functions for this data member be automatically
+  // generated.  As part of this change Alin's set_name() member function was moved to
   // ROSE/src/frontend/SageIII/sageSupport.[hC] since it has very specific semantics that does not
   // apply to all cases of where the set_name() access function should be called within a SgInitializedName
   // object (since SgInitializedName objects are used for both VariableDeclaration, preinitialization lists, etc.)
@@ -397,8 +344,8 @@ Grammar::setUpSupport ()
      InitializedName.setDataPrototype("SgDeclarationStatement*","declptr", "= NULL",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (3/4/2007): We want to force the copy mechanism to skip building a new SgStorageModifier 
-  // when making a copy (use NO_COPY_DATA to do this).  The p_storageModifier is handled internally 
+  // DQ (3/4/2007): We want to force the copy mechanism to skip building a new SgStorageModifier
+  // when making a copy (use NO_COPY_DATA to do this).  The p_storageModifier is handled internally
   // in SageIII.
   // DQ (4/28/2004): Use new modifier classes instead of older interface
   // InitializedName.setDataPrototype("int","storage_class_attributes", "= e_unknown_storage_class",
@@ -411,20 +358,20 @@ Grammar::setUpSupport ()
      InitializedName.setDataPrototype("SgX_DeclarationStatement*","X_declptr", "= NULL",
                                       NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-  // DQ (11/15/2004): class declarations for nested classes can appear outside the scope of the class to which 
-  // they belong, thus the parent information is not sufficent to define the relationship of nested classes 
+  // DQ (11/15/2004): class declarations for nested classes can appear outside the scope of the class to which
+  // they belong, thus the parent information is not sufficent to define the relationship of nested classes
   // (and typedefs within the classes, as well, which is the current bug in Kull).  So we need an additional
-  // data member to explicitly represent the scope of a class (consistant with the design of the member 
+  // data member to explicitly represent the scope of a class (consistant with the design of the member
   // function declaration).
      InitializedName.setDataPrototype ( "SgScopeStatement*", "scope", "= NULL",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (12/11/2004): Extra information when used as an entry within a preinitialization list!
-  // There is perhaps a better design possible (adding an new IR node and deriving it from the InitializedName).  
-  // But that is a bit more complex than  think is justified at present while I experiment with this fix.  
-  // I need to save information about if an entry in the preinitialization list is associated with the 
-  // initialization of a base class or a data member.  This information (if a base class) is used to know 
-  // what names in the preinitialization list need to be reset (when they are template names (to replace 
+  // There is perhaps a better design possible (adding an new IR node and deriving it from the InitializedName).
+  // But that is a bit more complex than  think is justified at present while I experiment with this fix.
+  // I need to save information about if an entry in the preinitialization list is associated with the
+  // initialization of a base class or a data member.  This information (if a base class) is used to know
+  // what names in the preinitialization list need to be reset (when they are template names (to replace
   // names such as "A___L9" with "A<int>").  See testcode2004_160.C.
      InitializedName.setDataPrototype("SgInitializedName::preinitialization_enum","preinitialization", "= e_unknown_preinitialization",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -455,27 +402,27 @@ Grammar::setUpSupport ()
      InitializedName.setDataPrototype ( "std::string", "register_name_string", "= \"\"",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (12/20/2006): Record if global name qualification is required on the type. 
-  // See test2003_01.C for an example of where this is required. Note that for a 
+  // DQ (12/20/2006): Record if global name qualification is required on the type.
+  // See test2003_01.C for an example of where this is required. Note that for a
   // variable declaration (SgVariableDeclaration) this information is recorded directly
   // on the SgVariableDeclaration node.  This use on the InitializedName is reserved for
   // function parameters, and I am not sure if it is useful anyhwere else.
      InitializedName.setDataPrototype("bool", "requiresGlobalNameQualificationOnType", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (11/20/2007): FORTRAN SUPPORT -- The shape of this variable (if it is an array) was not specified in the 
+  // DQ (11/20/2007): FORTRAN SUPPORT -- The shape of this variable (if it is an array) was not specified in the
   // declaration.  This is typically the result of a subsequent "allocatable statement" after the declaration.
   // The allocatable statement specifies the shape of an array and that it is appropriate for use with pointers (I think).
      InitializedName.setDataPrototype("bool", "shapeDeferred", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (11/20/2007): FORTRAN SUPPORT -- The initializer may be defined directly in the variable declaration or 
+  // DQ (11/20/2007): FORTRAN SUPPORT -- The initializer may be defined directly in the variable declaration or
   // in a separate "data statement".  This flag records if the initializer was defered (e.g. to a data statement).
      InitializedName.setDataPrototype("bool", "initializationDeferred", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (1/3/2009): Added support for gnu variable attributes.  Note that these can be specified on a per variable 
-  // basis and because a variable declaration can contain many variables, the attributs must live with the 
+  // DQ (1/3/2009): Added support for gnu variable attributes.  Note that these can be specified on a per variable
+  // basis and because a variable declaration can contain many variables, the attributs must live with the
   // SgInitializedName (in the future we might define aSgVariableModifier and refactor this code there).
   // Note that more than one value can be set, so this implements a bit vector of flags to be used.
      InitializedName.setDataPrototype("SgBitVector", "gnu_attribute_modifierVector", "",
@@ -541,7 +488,7 @@ Grammar::setUpSupport ()
   // DQ (4/6/2004): Depricated ModifierNodes node and new separate TypeModifier and StorageModifier nodes
   // DQ (4/19/2004): New modifiers (C++ grammar calls them specifiers)
   //    ConstVolatileModifier, StorageModifier, AccessModifier, FunctionModifier,
-  //    UPC_AccessModifier, SpecialFunctionModifier, DeclarationModifier, TypeModifier, 
+  //    UPC_AccessModifier, SpecialFunctionModifier, DeclarationModifier, TypeModifier,
   //    ElaboratedTypeModifier, LinkageModifier, BaseClassModifier
      Modifier.setFunctionPrototype                ( "HEADER_MODIFIER"                 , "../Grammar/Support.code");
      ModifierNodes.setFunctionPrototype           ( "HEADER_MODIFIER_NODES"           , "../Grammar/Support.code");
@@ -573,7 +520,7 @@ Grammar::setUpSupport ()
 
      UnknownFile.setFunctionPrototype          ( "HEADER_APPLICATION_UNKNOWN_FILE", "../Grammar/Support.code");
 
-     
+
 
      File.setFunctionPrototype                ( "HEADER_APPLICATION_FILE", "../Grammar/Support.code");
   // File.setAutomaticGenerationOfConstructor(false);
@@ -604,10 +551,10 @@ Grammar::setUpSupport ()
   // MK: I have moved the following data member declarations from ../Grammar/Support.code to this place
   // Space for unparse_type_num tag
 
-  // DQ (11/4/2003): Previous type was "unsigned int" added support 
-  // for longer unparse_type_num but had to specify type of 
+  // DQ (11/4/2003): Previous type was "unsigned int" added support
+  // for longer unparse_type_num but had to specify type of
   // p_unparse_attribute as "long long int" instead of unparse_type_num
-  // since it seems that all enum types are considered in compatable with 
+  // since it seems that all enum types are considered in compatable with
   // long long int within bitwise operations (using g++ 2.96).
   // Unparse_Info.setDataPrototype("long long int", "unparse_attribute", "= b_enum_defaultValue",
   //           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -624,10 +571,10 @@ Grammar::setUpSupport ()
                                    NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Unparse_Info.setDataPrototype("SgName", "var_name", "= \"\"",
                                    NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // Keep ptr to the declaration statement 
+  // Keep ptr to the declaration statement
      Unparse_Info.setDataPrototype("SgDeclarationStatement*", "declstatement_ptr", "= NULL",
                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // Keep current scope's type, set in SgClassDefinition's unparser 
+  // Keep current scope's type, set in SgClassDefinition's unparser
      Unparse_Info.setDataPrototype("SgNamedType*", "current_context", "= NULL",
                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // Keep track of previous array type's index string -- this is because
@@ -676,9 +623,9 @@ Grammar::setUpSupport ()
      Unparse_Info.setDataPrototype ( "SgQualifiedNamePtrList", "qualifiedNameList", "= SgQualifiedNamePtrList()",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (10/20/2006): Added support for output of function calls.  We need to know if we are 
-  // unparsing a function call so that we can add the name qualification properly.  The function 
-  // call expression (SgFunctionCallExp) is used to query the AST as ot the relative position of 
+  // DQ (10/20/2006): Added support for output of function calls.  We need to know if we are
+  // unparsing a function call so that we can add the name qualification properly.  The function
+  // call expression (SgFunctionCallExp) is used to query the AST as ot the relative position of
   // any defining or nondefining function declarations that would define the scope of the function.
      Unparse_Info.setDataPrototype("SgFunctionCallExp*","current_function_call","= NULL",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -704,7 +651,7 @@ Grammar::setUpSupport ()
 
   // DQ (11/7/2007): This should not be shared when a copy is make (see copytest_2007_26.C).
   // DQ (4/25/2004): New interfce for modifiers (forced to make this a pointer to a SgBaseClassModifier
-  //                 because it could not be specified before the declaration of BaseClass, limitations 
+  //                 because it could not be specified before the declaration of BaseClass, limitations
   //                 in ROSETTA).
   // BaseClass.setDataPrototype               ( "SgBaseClassModifier*", "baseClassModifier", "= NULL",
   //              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
@@ -716,8 +663,8 @@ Grammar::setUpSupport ()
   // TemplateInstDecl_attr.setFunctionPrototype( "HEADER_TEMPLATE_INSTANTIATION_DECLARATION_ATTRIBUTE", "../Grammar/Support.code");
 
 
-  // DQ (1/18/2006): renames this to be consistant and to allow the generated functions to map to 
-  // the virtual SgNode::get_file_info(). This then meens that we need to remove the use of 
+  // DQ (1/18/2006): renames this to be consistant and to allow the generated functions to map to
+  // the virtual SgNode::get_file_info(). This then meens that we need to remove the use of
   // SgPragma::get_fileInfo() where it is used.
   // Added to SAGE 3 (not present in SAGE 2) to support PragmaStatement (unbound pragmas)
   // Pragma.setDataPrototype  ( "Sg_File_Info*", "fileInfo", "= NULL",
@@ -769,17 +716,17 @@ Grammar::setUpSupport ()
   // Header declarations for Node
   // File.setPredeclarationString     ("HEADER_APPLICATION_FILE_PREDECLARATION" , "../Grammar/Support.code");
 
-  // DQ (1/18/2006): Rename this to be consistant and to allow the generated functions to map to 
-  // the virtual SgNode::get_file_info(). This then meens that we need to remove the use of 
+  // DQ (1/18/2006): Rename this to be consistant and to allow the generated functions to map to
+  // the virtual SgNode::get_file_info(). This then meens that we need to remove the use of
   // SgFile::get_fileInfo() where it is used.
-  // DQ (8/17/2005): Added to make it simple to both hold the filename of the current file AND 
-  // support the map mechanism required to permit string comparisions of filenames to be done 
+  // DQ (8/17/2005): Added to make it simple to both hold the filename of the current file AND
+  // support the map mechanism required to permit string comparisions of filenames to be done
   // using integer (key) comparision.  This removes a huge number of string comparisons from the
   // processing of IR nodes (e.g. in the unparser, and in the traverseInFile() AST traversal mechanism).
   // Use of this veraible will be added incrementally in the next releases.  We could have alternativel
-  // just stored the map key integer value, but that would expose the details of the implementation.  
-  // As it is we have a full Sg_File_Info object and the line number and column number, and perhaps the 
-  // IR node classification flags as well, are largely meaningless.  A slightly better factorization 
+  // just stored the map key integer value, but that would expose the details of the implementation.
+  // As it is we have a full Sg_File_Info object and the line number and column number, and perhaps the
+  // IR node classification flags as well, are largely meaningless.  A slightly better factorization
   // might be possible in the future.
   // RPM (12/2/2008): Data members that appear to control ROSE behavior rather than represent some
   //                  property of the parsed source code have accessors generated via
@@ -869,15 +816,15 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "PHP_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (5/18/2008): Added flag to specify that CPP preprocessing is required (default true for C and C++, and 
+  // DQ (5/18/2008): Added flag to specify that CPP preprocessing is required (default true for C and C++, and
   // Fortran with *.F?? extension an explicitly set to false for fortran with *.f?? extension and binaries).
      File.setDataPrototype         ( "bool", "requires_C_preprocessor", "= true",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #if 1
   // DQ (2/5/2009): I think we need to make each file as binary or not and also record the setting on the command line.
   // DQ (2/4/2009): Moved this to the SgProject since it applies to the command line and all files.
-  // DQ (1/9/2008): This permits a file to be marked explicitly as a binary file and avoids 
-  // confusion when processing object files within linking (where no source file is present 
+  // DQ (1/9/2008): This permits a file to be marked explicitly as a binary file and avoids
+  // confusion when processing object files within linking (where no source file is present
   // and the object file could be interpreted as being provided for binary analysis).
      File.setDataPrototype         ( "bool", "binary_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -902,7 +849,7 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "cray_pointer_support", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (12/11/2007): Adds support for parser to output the parser rules to be called. For Fortran 
+  // DQ (12/11/2007): Adds support for parser to output the parser rules to be called. For Fortran
   // support in ROSE this corresponds to the "--dump" option in the Open Fortran Parser (OFP).
   // There is no corresponding action with EDG for the C and C++ support in ROSE, so for C/C++
   // this option has no effect.
@@ -928,7 +875,7 @@ Grammar::setUpSupport ()
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (12/4/2007): Added command-line support for unparsing #line directives (previously removed feature)
-  // The use of #line directives permits the debugger to reference the original source code instead of 
+  // The use of #line directives permits the debugger to reference the original source code instead of
   // ROSE generated source code.
      File.setDataPrototype         ( "bool", "unparse_line_directives", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -942,7 +889,7 @@ Grammar::setUpSupport ()
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (8/27/2007): Added support for simple translation using separately specified language unparser.
-  // this is supported for testing alternative language code generation, not for a faithful translation 
+  // this is supported for testing alternative language code generation, not for a faithful translation
   // between languages (which would require translation of the AST to support langauge constructs not
   // shared between C/C++ and Fortran (for example).  This is also how the Promela support should be
   // provided, though this work only handles C (not C++, or Fortran) and only a subset of C, plus
@@ -981,9 +928,9 @@ Grammar::setUpSupport ()
      File.setDataPrototype("std::string","savedEdgCommandLine", "= \"\"",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (6/21/2005): Backend specific template option.  This might at a later date be abstracted out as a 
-  // separate class with  backend independent interface to hide the detils of backend specific (if this is 
-  // possible).  for th moment we include these options directly since g++ is the development platform for 
+  // DQ (6/21/2005): Backend specific template option.  This might at a later date be abstracted out as a
+  // separate class with  backend independent interface to hide the detils of backend specific (if this is
+  // possible).  for th moment we include these options directly since g++ is the development platform for
   // ROSE.  Options supported in ROSE from g++ include:
   // -fno-implicit-templates        (suppress output of any but explicitly instantiated templates)
   // -fno-implicit-inline-templates (suppress output of any but explicitly instantiated inline templates)
@@ -1007,11 +954,11 @@ Grammar::setUpSupport ()
      File.setDataPrototype("bool","collectAllCommentsAndDirectives", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (4/7/2001) Added support for multiple files (save the preprocessor 
+  // DQ (4/7/2001) Added support for multiple files (save the preprocessor
   //               directives and comments into the SgFile)
-  //               the ROSEAttributesListContainer represents all preprocessor 
-  //               declarations and comments from each source file (and its 
-  //               corresponding include files) (thus a list of lists of lists 
+  //               the ROSEAttributesListContainer represents all preprocessor
+  //               declarations and comments from each source file (and its
+  //               corresponding include files) (thus a list of lists of lists
   //               of cpp directives and comments!!!)
      File.setDataPrototype         ( "ROSEAttributesListContainerPtr" , "preprocessorDirectivesAndCommentsList", "= NULL",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
@@ -1076,16 +1023,16 @@ Grammar::setUpSupport ()
 
 
 
-     
+
   // DQ (10/31/2006): Support for embedded color codes in the generated code from ROSE.
-  // Different values trigger embedded codes for different types of internal data 
+  // Different values trigger embedded codes for different types of internal data
   // (missing information, compiler generated code, etc.).
      File.setDataPrototype         ( "int", "embedColorCodesInGeneratedCode", "= 0",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (10/31/2006): Support for output of source position information for visualization
   // of source position information (debugging support). different values report source
-  // position information about different sorts of languge constructs, statements, 
+  // position information about different sorts of languge constructs, statements,
   // expressions, types, etc.
      File.setDataPrototype         ( "int", "generateSourcePositionCodes", "= 0",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1133,37 +1080,37 @@ Grammar::setUpSupport ()
      BinaryFile.setDataPrototype         ( "SgAsmFilePtrList", "binaryFileList", "",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-  // DQ (11/5/2008): This should maybe be added to the SgAsmFile instead of the SgBinaryFile, if so 
-  // we will move it.  For now we can't add it to SgAsmFile becuase we could not traverse both a 
+  // DQ (11/5/2008): This should maybe be added to the SgAsmFile instead of the SgBinaryFile, if so
+  // we will move it.  For now we can't add it to SgAsmFile becuase we could not traverse both a
   // list and a data member in the definition of an AST traversal.
   // BinaryFile.setDataPrototype("SgAsmDwarfCompilationUnit*","dwarf_info","= NULL",
   //             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-  // DQ (8/16/2008): parse binary executable file format only (some uses of ROSE may only do analysis of 
+  // DQ (8/16/2008): parse binary executable file format only (some uses of ROSE may only do analysis of
   // the binary executable file format and not the instructions).  This is also useful for testing.
      File.setDataPrototype         ( "bool", "read_executable_file_format_only", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (11/9/2008): parse binary executable file format only (but skip the representation of 
+  // DQ (11/9/2008): parse binary executable file format only (but skip the representation of
   // symbols since there can be thousands of them and they make the dot graphs impossible to manage).
      File.setDataPrototype         ( "bool", "visualize_executable_file_format_skip_symbols", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (11/9/2008): parse binary executable file format only (but skip the representation of 
+  // DQ (11/9/2008): parse binary executable file format only (but skip the representation of
   // symbols since there can be thousands of them and they make the dot graphs impossible to manage).
      File.setDataPrototype         ( "bool", "visualize_dwarf_only", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (8/26/2008): Adds support for only disassembling the instructions, skips use of information 
-  // gathered from the data structures built from the binary executable file format (symbols, 
+  // DQ (8/26/2008): Adds support for only disassembling the instructions, skips use of information
+  // gathered from the data structures built from the binary executable file format (symbols,
   // section permisions, etc.).
      File.setDataPrototype         ( "bool", "read_instructions_only", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (1/10/2009): The C language ASM statements are providing significant trouble, they are
-  // frequently machine specific and we are compiling then on architectures for which they were 
+  // frequently machine specific and we are compiling then on architectures for which they were
   // not designed.  This option allows then to be read, constructed in the AST to support analysis
-  // but not unparsed in the code given to the backend compiler, since this can fail. (See 
+  // but not unparsed in the code given to the backend compiler, since this can fail. (See
   // test2007_20.C from Linux Kernel for an example).
      File.setDataPrototype         ( "bool", "skip_unparse_asm_commands", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1181,9 +1128,9 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "isObjectFile", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (8/26/2008): Adds support for more agressive disassembly of sections that are in 
+  // DQ (8/26/2008): Adds support for more agressive disassembly of sections that are in
   // executable segments but may be in non-executable segments.  Segments are sets of sections
-  // and the OS marks pages based on segment settings, not sections settings, so sections 
+  // and the OS marks pages based on segment settings, not sections settings, so sections
   // settings can be ignored.  This setting follows the segments setting it selecting executable
   // sets of sections (segments), instead of section settings which could be ignored. Binaries
   // built using compilers and intended for debugging follow more rules than arbitrary binaries.
@@ -1199,68 +1146,12 @@ Grammar::setUpSupport ()
   // ******************************************************************************
   // ******************************************************************************
 
-// #if OLD_GRAPH_NODES
-#ifndef ROSE_USE_NEW_GRAPH_NODES
-   // tps (08/08/07): Added the graph, graph nodes and graph edges 
-   // note - todo: Properties should be a map <string, string> (doesn't work yet)
-   // note - todo: A graph should have a set of nodes and edges
-   // note - todo: An edge from and to should be of type "GraphNode" and "GraphNode"
-   // note - todo: in graph: nodes and edges should be of type multimap<string name, GraphNode(Edge)>
-     GraphNode.setFunctionPrototype ( "HEADER_GRAPHNODE", "../Grammar/Support.code");
-     GraphNode.setDataPrototype("std::string","name","= \"\"",
-                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     GraphNode.setDataPrototype("std::string","type","= \"\"",
-                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (4/25/2009): Is "0" the correct default value (shouldn't it be "-1").
-     GraphNode.setDataPrototype("int","graph_id", "= 0",
-                           CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (4/25/2009): Fixed properties data member to build list access functions.
-     GraphNode.setDataPrototype("std::map<int, std::string>","properties", "",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (4/25/2009): The variable name should not also be the name of a type (allowed in C++ but bad style).
-     GraphNode.setDataPrototype("SgNode*","SgNode","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-     GraphEdge.setFunctionPrototype ( "HEADER_GRAPHEDGE", "../Grammar/Support.code");
-     GraphEdge.setDataPrototype("std::string","name","= \"\"",
-                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     GraphEdge.setDataPrototype("std::string","type","= \"\"",
-                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     GraphEdge.setDataPrototype("int","graph_id", "= 0",
-                           CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (4/25/2009): Fixed properties data member to build list access functions.
-     GraphEdge.setDataPrototype("std::map<int, std::string>","properties", "",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-     DirectedGraphEdge.setDataPrototype("SgGraphNode*","from","= NULL",
-                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     DirectedGraphEdge.setDataPrototype("SgGraphNode*","to","= NULL",
-                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-     Graph.setFunctionPrototype ( "HEADER_GRAPH", "../Grammar/Support.code");
-     Graph.setDataPrototype("std::string","name","= \"\"",
-                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     Graph.setDataPrototype("std::string","type","= \"\"",
-                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // Graph.setDataPrototype("std::map<int, std::string>","nodes","",
-  //                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // Graph.setDataPrototype("std::map<int, std::string>","edges","",
-  //                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (4/25/2009): Fixed properties data member to build list access functions.
-     Graph.setDataPrototype("std::map<int, std::string>","properties", "",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#else
 
 // DQ (4/30/2009): Redesigned the Graph IR node support in ROSE.
 
 // Todo: Turn off the suport backward compatability
-// Todo: Remove the AstAttributeMechanism* from SgGraphNode and SgGraphEdge 
-//       in favor of the same API, but implemented using a map of maps at 
+// Todo: Remove the AstAttributeMechanism* from SgGraphNode and SgGraphEdge
+//       in favor of the same API, but implemented using a map of maps at
 //       the SgGraph indexed by integer values.
 
 // DQ (5/2/2009): This is put into rose_paths.h
@@ -1272,7 +1163,7 @@ Grammar::setUpSupport ()
   //                                SgGraphNode
   // ******************************************************************************
 
-  // A node contains an index, name, and a pointer to an associated IR node in the 
+  // A node contains an index, name, and a pointer to an associated IR node in the
   // AST (approximately 8 words; 4 from SgNode).
 
      GraphNode.setFunctionPrototype ( "HEADER_GRAPHNODE", "../Grammar/Support.code");
@@ -1300,25 +1191,17 @@ Grammar::setUpSupport ()
      GraphNode.setFunctionPrototype ( "HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
      GraphNode.setFunctionSource    ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
 
-#ifdef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
-  // DQ (4/29/2009): This is the unique integer for the associated SgGraph object (it is redundant with the parent pointer).
-     GraphNode.setDataPrototype("int","graph_id", "= -1",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // This will be eliminated because it is redundant with the AstAttributeMechanism.
+  // tps : TODO : This will be eliminated because it is redundant with the AstAttributeMechanism.
      GraphNode.setDataPrototype("std::map<int, std::string>","properties", "",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (8/18/2008): This should be removed in the final version; added for backward compatability!
-     GraphNode.setDataPrototype("std::string","type","= \"\"",
-                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
 
   // ******************************************************************************
   //                                SgGraphEdge
   // ******************************************************************************
 
-  // An edge contains an index, a name, and two SgGraphNode pointers (approximately 
+  // An edge contains an index, a name, and two SgGraphNode pointers (approximately
   // 9 words; 4 from SgNode).
 
      GraphEdge.setFunctionPrototype ( "HEADER_GRAPHEDGE", "../Grammar/Support.code");
@@ -1343,7 +1226,7 @@ Grammar::setUpSupport ()
      GraphEdge.setFunctionPrototype ( "HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
      GraphEdge.setFunctionSource    ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
 
-  // DQ (8/18/2008): NOTE: "SgIntegerStringMapPtrList" does not cause ROSETTA to generate the 
+  // DQ (8/18/2008): NOTE: "SgIntegerStringMapPtrList" does not cause ROSETTA to generate the
   // correct code, where as "std::map<int, std::string>" appears to work better.
   // GraphEdge.setDataPrototype("std::string","type","= \"\"",
   //                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1354,15 +1237,11 @@ Grammar::setUpSupport ()
   // GraphEdge.setDataPrototype("SgIntegerStringMapPtrList","properties", "",
   //                       NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-#ifdef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
-  // DQ (4/29/2009): This is the unique integer for the associated SgGraph object (it is redundant with the parent pointer).
-     GraphEdge.setDataPrototype("int","graph_id", "= -1",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (4/29/2009): Note that "properties" will be replaced by the more uniform ROSE AstAttributeMechanism mechanism.
-  // DQ (4/29/2009): I think that property maps for edges should be external to theIR nodes, need to discuss this.
+
+     // tps : todo : remove me
      GraphEdge.setDataPrototype("std::map<int, std::string>","properties", "",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
+
 
   // ******************************************************************************
   //                      Edge Types derived from SgGraphEdge
@@ -1371,16 +1250,7 @@ Grammar::setUpSupport ()
      DirectedGraphEdge.setFunctionPrototype   ( "HEADER_DIRECTED_GRAPH_EDGE"  , "../Grammar/Support.code");
      UndirectedGraphEdge.setFunctionPrototype ( "HEADER_UNDIRECTED_GRAPH_EDGE", "../Grammar/Support.code");
 
-#ifdef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
-  // DQ (8/18/2008): This should be removed in the final version; added for backward compatability!
-     DirectedGraph.setFunctionPrototype ( "HEADER_DIRECTED_GRAPH", "../Grammar/Support.code");
-  // DQ (8/18/2008): This should be removed in the final version; added for backward compatability!
-     DirectedGraphNode.setFunctionPrototype ( "HEADER_DIRECTED_GRAPH_NODE", "../Grammar/Support.code");
-#endif
 
-  // ******************************************************************************
-  //                       SgGraphNodeList and SgGraphEdgeList
-  // ******************************************************************************
 
   // These IR nodes might be eliminated in favor of just a function to generate the same level 
   // of support using a combination of two maps in SgGraph.
@@ -1395,6 +1265,7 @@ Grammar::setUpSupport ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+
   // ******************************************************************************
   //                                  SgGraph
   // ******************************************************************************
@@ -1405,8 +1276,6 @@ Grammar::setUpSupport ()
      Graph.setFunctionPrototype ( "HEADER_GRAPH", "../Grammar/Support.code");
      Graph.setDataPrototype("std::string","name","= \"\"",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // Graph.setDataPrototype("std::string","type","= \"\"",
-  //                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      Graph.setDataPrototype("rose_graph_integer_node_hash_map","node_index_to_node_map","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1444,20 +1313,11 @@ Grammar::setUpSupport ()
      Graph.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
-#ifdef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
-  // DQ (5/2/2009): These are redundent and should be eliminated (provided for backward combatability).
-     Graph.setDataPrototype("SgGraphNodeList*","nodes","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (4/29/2009): From the node on the ("from") side of an edge, find the edge.
-     Graph.setDataPrototype("SgGraphEdgeList*","edges","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
 
 #if 0
   // DQ (5/1/2009): Use this in the future instead of the AstAttributeMechanism* on the nodes and edge classes.
-  // Use a map of integer index values to AstAttributeMechanism* so that we can avoid putting an std::map 
-  // onto each SgGraphNode and SgGraphEdge (this reduces the size of the SgGraphNode and SgGraphEdge class; 
+  // Use a map of integer index values to AstAttributeMechanism* so that we can avoid putting an std::map
+  // onto each SgGraphNode and SgGraphEdge (this reduces the size of the SgGraphNode and SgGraphEdge class;
   // making it more space efficent for large graphs).
      Graph.setDataPrototype("std::map<int,AstAttributeMechanism*>","nodeAttributeMechanism","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
@@ -1465,30 +1325,11 @@ Grammar::setUpSupport ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 #endif
 
-#ifdef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
-  // DQ (4/29/2009): Note that "properties" will be replaced by the more uniform ROSE AstAttributeMechanism mechanism.
+     // tps : todo : remove me
      Graph.setDataPrototype("std::map<int, std::string>","properties", "",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
 
-#if 0
-  // Don't use these, we want to use hash_maps instead (this code can be eliminated).
-  // DQ (4/30/2009): Added support for "std::multimap<std::string,int>"
-     Graph.setDataPrototype("std::multimap<std::string,int>","labels", "",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     Graph.setDataPrototype("std::map<int, SgGraphNode*>","integer_nodes_map","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     Graph.setDataPrototype("std::map<int, SgGraphEdge*>","integer_edges_map","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
 
-#if 0
-  // DQ (4/30/2009): Don't use this!
-  // This is specific to binary analysis and should be an attribute on the SgGraph (so this data member is not required).
-  // DQ (4/29/2009): This will not compile, I think it should be handled as an attribute.
-     Graph.setDataPrototype("VirtualBinCFG::AuxiliaryInformation*","info","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
 
      Graph.setFunctionPrototype ( "HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
      Graph.setFunctionSource    ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
@@ -1501,53 +1342,28 @@ Grammar::setUpSupport ()
      IncidenceUndirectedGraph.setFunctionPrototype ( "HEADER_INCIDENCE_UNDIRECTED_GRAPH", "../Grammar/Support.code");
      IncidenceUndirectedGraph.setFunctionSource    ( "SOURCE_INCIDENCE_UNDIRECTED_GRAPH", "../Grammar/Support.code");
 
-#if 0
-  // DQ (4/30/2009): Removed these in favor of the hash_multimap using the SgGraphEdge class.
-     IncidenceUndirectedGraph.setDataPrototype("rose_undirected_graph_hash_multimap","undirected_edges","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
      IncidenceDirectedGraph.setFunctionPrototype ( "HEADER_INCIDENCE_DIRECTED_GRAPH", "../Grammar/Support.code");
      IncidenceDirectedGraph.setFunctionSource    ( "SOURCE_INCIDENCE_DIRECTED_GRAPH", "../Grammar/Support.code");
 
-#ifdef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
-  // These are the out_edges (use the rose_graph_integer_edge_hash_multimap instead).
-     IncidenceDirectedGraph.setDataPrototype("rose_graph_node_edge_hash_multimap","edgesOut","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
 
   // This is the more uniform integer to SgGraphEdge version of rose_graph_node_edge_hash_multimap.
      IncidenceDirectedGraph.setDataPrototype("rose_graph_integer_edge_hash_multimap","node_index_to_edge_multimap_edgesOut","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-#ifdef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
-  // These are the reverse_edges (edgesIn)
-  // DQ (5/1/2009): Moved this from SgGraph since it only applies to directed edges.
-  // We want an interface function to allow SgGraphNode to be specified and the SgGraphNode::index to get used in the multimap
-  // IncidenceDirectedGraph.setDataPrototype("rose_graph_integer_edge_hash_multimap","integer_to_reverse_edge_index_multimap","",
-  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (4/29/2009): From the node on the other side ("to") side of an edge, find the edge.
-     IncidenceDirectedGraph.setDataPrototype("rose_graph_node_edge_hash_multimap", "edgesIn", "",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
 
   // This is the more uniform integer to SgGraphEdge version of rose_graph_node_edge_hash_multimap.
   // The derived class "BidirectionalGraph" might use this map differently (with different semantics).
      IncidenceDirectedGraph.setDataPrototype("rose_graph_integer_edge_hash_multimap","node_index_to_edge_multimap_edgesIn","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-#if 0
-  // DQ (4/30/2009): Removed these in favor of the hash_multimap using the SgGraphEdge class.
-     IncidenceDirectedGraph.setDataPrototype("rose_directed_graph_hash_multimap","edgesOut","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
 
-  // DQ (5/3/2009): Not clear if this should add a new hash_multimap or if it just chages the 
+  // DQ (5/3/2009): Not clear if this should add a new hash_multimap or if it just chages the
   // semantics of the hash_multimaps in the dirived class (IncidenceDirectedGraph). This class
   // should have a different API that make is specific to bidirectional incidence graph use.
      BidirectionalGraph.setFunctionPrototype ( "HEADER_BIDIRECTIONAL_GRAPH", "../Grammar/Support.code");
 
 #if 0
-  // DQ (5/3/2009): Base class IncidenceDirectedGraph should use rose_graph_integer_edge_hash_multimap 
+  // DQ (5/3/2009): Base class IncidenceDirectedGraph should use rose_graph_integer_edge_hash_multimap
   // but perhaps in a different way (with different semantics).
   // DQ (4/30/2009): Removed these in favor of the hash_multimap using the SgGraphEdge class.
      BidirectionalGraph.setDataPrototype("rose_directed_graph_hash_multimap","edgesIn","",
@@ -1555,30 +1371,6 @@ Grammar::setUpSupport ()
 #endif
 
 
-#ifdef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
-  // ******************************************************************************
-  //                Tenatively Proposed Graphs derived from SgGraph
-  // ******************************************************************************
-
-  // KeyedBidirectionalGraph.setDataPrototype(" __gnu_cxx::hash_multimap < SgDirectedGraphNode*, SgDirectedGraphEdge*>","edgesOut","= \"\"",
-  //                       NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // KeyedBidirectionalGraph.setDataPrototype(" __gnu_cxx::hash_multimap < SgDirectedGraphNode*, SgDirectedGraphEdge*>","edgesIn","= \"\"",
-  //                       NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (5/3/2009): I don't think that we really need these two types of graphs (or their 
-  // functionality can be represented using just an API, and not an new hash_maps).
-     StringKeyedBidirectionalGraph.setFunctionPrototype ( "HEADER_STRING_KEYED_BIDIRECTIONAL_GRAPH", "../Grammar/Support.code");
-     StringKeyedBidirectionalGraph.setDataPrototype("rose_graph_hash_multimap","edgeMap","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (4/26/2009): Shouldn't this be an edge map since the nodes are already stored in the SgGraph (base class)!
-     IntKeyedBidirectionalGraph.setFunctionPrototype ( "HEADER_INTEGER_KEYED_BIDIRECTIONAL_GRAPH", "../Grammar/Support.code");
-  // IntKeyedBidirectionalGraph.setDataPrototype("rose_hash::hash_map < int, SgGraphNode*>","nodesMap","= \"\"",
-  //                       NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // Note that we should be using BUILD_LIST_ACCESS_FUNCTIONS instead of BUILD_ACCESS_FUNCTIONS
-  // std::map<int, std::string>
-  // IntKeyedBidirectionalGraph.setDataPrototype("SgIntegerGraphNodeMapPtrList","nodesMap","",
-  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #if 0
 #if 1
   // DQ (4/25/2009): For now leave this as a map<int,string> but we want it to be a map<int,SgGraphNode*> later...
@@ -1590,11 +1382,7 @@ Grammar::setUpSupport ()
 #endif
 #endif
 
-// endif for ifdef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
-#endif
 
-// endif for ifdef ROSE_USE_NEW_GRAPH_NODES
-#endif
 
 
 
@@ -1666,7 +1454,7 @@ Grammar::setUpSupport ()
      Project.setDataPrototype("SgStringList","includeDirectorySpecifierList", "",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (1/13/2009): Added support for GNU -include (for pre inclusion of files) and -isystem 
+  // DQ (1/13/2009): Added support for GNU -include (for pre inclusion of files) and -isystem
   // (for preinclusion of directories to be searched) options.
      Project.setDataPrototype("SgStringList","preincludeFileList", "",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1682,7 +1470,7 @@ Grammar::setUpSupport ()
      Project.setDataPrototype("bool","wave", "= false",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  
+
   // Project.setDataPrototype("bool","linkOnly", "= false",
   //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -1723,9 +1511,9 @@ Grammar::setUpSupport ()
 
   // DQ (1/16/2008): Added include/exclude path lists for use internally by translators.
   // For example in Compass this is the basis of a mechanism to exclude processing of
-  // header files from specific directorys (where messages about the properties of the 
+  // header files from specific directorys (where messages about the properties of the
   // code there are not meaningful since they cannot be changed by the user). These
-  // are ment to be used by ROSE translators and as a result have unspecificed semantics 
+  // are ment to be used by ROSE translators and as a result have unspecificed semantics
   // in ROSE, it is just a common requirement of many uses of ROSE.
   // Project.setDataPrototype("bool","lookForIncludePaths", "= false",
   //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1741,8 +1529,8 @@ Grammar::setUpSupport ()
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #if 1
   // DQ (2/4/2009): Moved this to the SgProject since it applies to the command line and all files.
-  // DQ (1/9/2008): This permits a file to be marked explicitly as a binary file and avoids 
-  // confusion when processing object files within linking (where no source file is present 
+  // DQ (1/9/2008): This permits a file to be marked explicitly as a binary file and avoids
+  // confusion when processing object files within linking (where no source file is present
   // and the object file could be interpreted as being provided for binary analysis).
      Project.setDataPrototype ( "bool", "binary_only", "= false",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1793,7 +1581,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
   //                use "modifier" if only one value can be set).
   // DQ (4/19/2004): New modifiers (C++ grammar calls them specifiers)
   //    ConstVolatileModifier, StorageModifier, AccessModifier, FunctionModifier,
-  //    UPC_AccessModifier, SpecialFunctionModifier, DeclarationModifier, TypeModifier, 
+  //    UPC_AccessModifier, SpecialFunctionModifier, DeclarationModifier, TypeModifier,
   //    ElaboratedTypeModifier, LinkageModifier, BaseClassModifier
   // DQ (4/19/2004): Commented out override of construction of constructors
   // xxxModifier.setAutomaticGenerationOfConstructor(false);
@@ -1830,7 +1618,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
      UPC_AccessModifier.setDataPrototype("bool", "isShared","= false",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // Note that layout == 0 means allocate all to one thread (what EDG calls "INDEFINITE") (also same as "[]"),
-  //           layout == -1 means no layout was specified (what EDG calls "NONE"), 
+  //           layout == -1 means no layout was specified (what EDG calls "NONE"),
   //           layout == -2 means layout == "*" (what EDG calls "BLOCK")
   // any non-zero positive value is the block size,
   // the default is block size == 1 (cyclic distribution).
@@ -1867,8 +1655,8 @@ Specifiers that can have only one value (implemented with a protected enum varia
      TypeModifier.setDataPrototype("unsigned long int", "gnu_attribute_alignment", "= 0",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (1/3/2009): This is used for funtion types only. I reserve values less than zero (-1 implies that 
-  // this was not set, default value). Note that the standard might require this to be unsigned, but I 
+  // DQ (1/3/2009): This is used for funtion types only. I reserve values less than zero (-1 implies that
+  // this was not set, default value). Note that the standard might require this to be unsigned, but I
   // would like to avoid the EDG tick of shifting the value by one to reserve zero to be the default.
      TypeModifier.setDataPrototype("long", "gnu_attribute_sentinel", "= -1",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1904,7 +1692,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
 
   // We need a way to classify statements as being from a transformation, or a if from a
   // transformation either representing the transformation, declarations required by the
-  // transformation, or intializations associated with a transformation. Indidual bits 
+  // transformation, or intializations associated with a transformation. Indidual bits
   // within the integer are used to classify File_Info objects. Bits 0-15 are presently
   // reserved.
      File_Info.setDataPrototype("unsigned int","classificationBitField","= 0",
@@ -1935,7 +1723,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
   // File_Info.setDataPrototype("static int","max_file_id","",
   //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // Note that using this feature can make the compilation for the header 
+  // Note that using this feature can make the compilation for the header
   // file sensitive to the ordering of the classes within the output file
      Name.setPostdeclarationString ("HEADER_NAME_POSTDECLARATION", "../Grammar/Support.code");
      Name.setAutomaticGenerationOfConstructor(false);
@@ -1999,14 +1787,14 @@ Specifiers that can have only one value (implemented with a protected enum varia
      TemplateArgument.setDataPrototype     ( "SgExpression*", "expression", "= NULL",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-  // DQ: Case of a template specialization (and partial specialization) not handled 
+  // DQ: Case of a template specialization (and partial specialization) not handled
   // here (not clear on how to do this)
   // TemplateArgument.setDataPrototype     ( "SgTemplateInstantiationDecl*", "templateInstantiation", "= NULL",
   //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      TemplateArgument.setDataPrototype     ( "SgTemplateDeclaration*", "templateDeclaration", "= NULL",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-  // DQ (2/27/2005): Support for recognition of default template arguments 
+  // DQ (2/27/2005): Support for recognition of default template arguments
   // (required to fix bug demonstrated in test2005_12.C)
      TemplateArgument.setDataPrototype     ( "bool", "explicitlySpecified", "= true",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -2031,7 +1819,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
      NameGroup.setFunctionPrototype ( "HEADER_NAME_GROUP", "../Grammar/Support.code");
      NameGroup.setDataPrototype     ( "std::string", "group_name", "=\"\"",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (11/30/2007): Later make this a SgExpression* so that we can use it for the associate 
+  // DQ (11/30/2007): Later make this a SgExpression* so that we can use it for the associate
   // list and so that it more accurately reflects the namelist semantics.
   // NameGroup.setDataPrototype     ( "SgStringList", "name_list", "",
   //              NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -2072,8 +1860,8 @@ Specifiers that can have only one value (implemented with a protected enum varia
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // Support for Fortran format statement.  I have provided a separate object because
-  // I think the grammar for this construct is sufficently complex that we might want a 
-  // more sophisticated implementation in the IR later.  for now I just capture the 
+  // I think the grammar for this construct is sufficently complex that we might want a
+  // more sophisticated implementation in the IR later.  for now I just capture the
   // information as a string literal in an expression.
      FormatItem.setFunctionPrototype ( "HEADER_FORMAT_ITEM", "../Grammar/Support.code");
      FormatItem.setDataPrototype     ( "int", "repeat_specification", "= -1",
@@ -2099,15 +1887,15 @@ Specifiers that can have only one value (implemented with a protected enum varia
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
 
   // DQ (10/6/2008): Moved to SgLocatedNodeSupport.
-  // DQ (10/6/2008): Added support for interface bodies so that we could capture the information 
+  // DQ (10/6/2008): Added support for interface bodies so that we could capture the information
   // used to specify function declaration ro function names in interface statements.
      InterfaceBody.setFunctionPrototype ( "HEADER_INTERFACE_BODY", "../Grammar/Support.code");
 
   // Record whether the function declaration or the function name was used in the interface body (F90 permits either one).
      InterfaceBody.setDataPrototype     ( "SgName", "function_name", "= \"\"",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // We can't traverse this since it may be the same as a declaration in a contains statement. 
-  // However, if we can properly support the defining vs. non defining declaration then maybe 
+  // We can't traverse this since it may be the same as a declaration in a contains statement.
+  // However, if we can properly support the defining vs. non defining declaration then maybe
   // we can.  Work on this later.
      InterfaceBody.setDataPrototype     ( "SgFunctionDeclaration*", "functionDeclaration", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -2148,7 +1936,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
   // DQ (4/6/2004): Depricated ModifierNodes node and new separate TypeModifier and StorageModifier nodes
   // DQ (4/19/2004): New modifiers (C++ grammar calls them specifiers)
   //    ConstVolatileModifier, StorageModifier, AccessModifier, FunctionModifier,
-  //    UPC_AccessModifier, SpecialFunctionModifier, DeclarationModifier, TypeModifier, 
+  //    UPC_AccessModifier, SpecialFunctionModifier, DeclarationModifier, TypeModifier,
   //    ElaboratedTypeModifier, LinkageModifier, BaseClassModifier
      Modifier.setFunctionSource                ( "SOURCE_MODIFIER"                 , "../Grammar/Support.code");
      ModifierNodes.setFunctionSource           ( "SOURCE_MODIFIER_NODES"           , "../Grammar/Support.code");
@@ -2210,9 +1998,9 @@ Specifiers that can have only one value (implemented with a protected enum varia
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
 
 #if 0
-  // DQ (12/21/2005): Global qualification and qualified name handling are now represented explicitly 
-  // in the AST. Here we have a list of qualified names a global qualification is represented by 
-  // a SgQualifiedName that contains a pointer to the SgGlobal scope. This is so variables such as 
+  // DQ (12/21/2005): Global qualification and qualified name handling are now represented explicitly
+  // in the AST. Here we have a list of qualified names a global qualification is represented by
+  // a SgQualifiedName that contains a pointer to the SgGlobal scope. This is so variables such as
   // "::X::Y::Z::variable" can be represented properly.
      FunctionParameterTypeList.setDataPrototype ( "SgQualifiedNamePtrList", "returnTypeQualifiedNameList", "",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -2229,21 +2017,12 @@ Specifiers that can have only one value (implemented with a protected enum varia
   // tps (08/13/2007): Added specific code to graph entities
      Graph.setFunctionSource ( "SOURCE_GRAPH" , "../Grammar/Support.code");
      GraphNode.setFunctionSource  ( "SOURCE_GRAPHNODE" , "../Grammar/Support.code");
-     GraphEdge.setFunctionSource  ( "SOURCE_GRAPHEDGE" , "../Grammar/Support.code");     
+     GraphEdge.setFunctionSource  ( "SOURCE_GRAPHEDGE" , "../Grammar/Support.code");
 
 
-// #if !OLD_GRAPH_NODES
-#ifdef ROSE_USE_NEW_GRAPH_NODES
-#ifdef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
-  // DQ (8/18/2008): This should be removed in the final version; added for backward compatability!
-     DirectedGraph.setFunctionSource ( "SOURCE_DIRECTED_GRAPH", "../Grammar/Support.code");
-
-  // DQ (8/18/2008): This should be removed in the final version; added for backward compatability!
-     DirectedGraphNode.setFunctionSource ( "SOURCE_DIRECTED_GRAPH_NODE", "../Grammar/Support.code");
-#endif
 
      DirectedGraphEdge.setFunctionSource ( "SOURCE_DIRECTED_GRAPH_EDGE", "../Grammar/Support.code");
-#endif
+
 
   // DQ (11/19/2007): Added support for Fortran namelist statement
      NameGroup.setFunctionSource         ( "SOURCE_NAME_GROUP", "../Grammar/Support.code");
@@ -2264,8 +2043,8 @@ Specifiers that can have only one value (implemented with a protected enum varia
   // ROSE_ASSERT(InitializedName.associatedGrammar->getParentGrammar() != NULL);
   // ROSE_ASSERT(InitializedName.associatedGrammar->getParentGrammar()->getGrammarName() != NULL);
      printf ("### InitializedName.associatedGrammar->getParentGrammar()->getGrammarName() = %s \n",
-          (InitializedName.associatedGrammar->getParentGrammar() == NULL) ? 
-               "ROOT GRAMMAR" : 
+          (InitializedName.associatedGrammar->getParentGrammar() == NULL) ?
+               "ROOT GRAMMAR" :
                InitializedName.associatedGrammar->getParentGrammar()->getGrammarName().c_str());
 #if 0
      if (InitializedName.associatedGrammar->isRootGrammar() == false)

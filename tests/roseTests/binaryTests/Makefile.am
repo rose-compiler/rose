@@ -233,7 +233,7 @@ runTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 # Build the list of object files
 #TEST_Objects = ${TESTCODES:.C=.o}
 
-ROSE_FLAGS = -rose:verbose 0
+ROSE_FLAGS = -g -rose:verbose 0
 # ROSE_FLAGS = 
 
 TEST_TRANSLATOR = ./runTest all $(ROSE_FLAGS)

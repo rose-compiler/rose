@@ -41,14 +41,14 @@ namespace CompassAnalyses
       void *initialInheritedAttribute() const { return NULL; }
 
       // The implementation of the run function has to match the traversal being called.
-      bool run(string& name, SgDirectedGraphNode* node, SgDirectedGraphNode* previous);
+      bool run(string& name, SgGraphNode* node, SgGraphNode* previous);
 
       void run(SgNode*);
 
-      bool runEdge(SgDirectedGraphNode* node, SgDirectedGraphNode* next) {
+      bool runEdge(SgGraphNode* node, SgGraphNode* next) {
         return false;
       }
-      bool checkIfValidCycle(SgDirectedGraphNode* node, SgDirectedGraphNode* next);
+      bool checkIfValidCycle(SgGraphNode* node, SgGraphNode* next);
                
       void init(RoseBin_Graph* vg) {
         vizzGraph = vg;
@@ -57,7 +57,7 @@ namespace CompassAnalyses
       void getValueForDefinition(std::vector<uint64_t>& vec,
                                  std::vector<uint64_t>& positions,
                                  uint64_t& fpos,
-                                 SgDirectedGraphNode* node,
+                                 SgGraphNode* node,
                                  std::pair<X86RegisterClass, int> reg );
 
       std::string getIntCallName_Linux32bit(uint64_t rax,RoseBin_DataTypes::DataTypes& data_ebx,
@@ -141,7 +141,7 @@ static void run(Compass::Parameters params, Compass::OutputObject* output) {
 
   bool interprocedural = false;
   RoseBin_DataFlowAnalysis* dfanalysis = Compass::binDataFlowPrerequisite.getBinDataFlowInfo();
-  vector<SgDirectedGraphNode*> rootNodes;
+  vector<SgGraphNode*> rootNodes;
   dfanalysis->getRootNodes(rootNodes);
   dfanalysis->init();
   
@@ -547,14 +547,14 @@ void
 CompassAnalyses::BinaryInterruptAnalysis::Traversal::getValueForDefinition(std::vector<uint64_t>& vec,
                                                                 std::vector<uint64_t>& positions,
                                                                 uint64_t& fpos,
-                                                                SgDirectedGraphNode* node,
+                                                                SgGraphNode* node,
                                                                 std::pair<X86RegisterClass, int> reg ) {
-  set <SgDirectedGraphNode*> defNodeSet = getDefFor(node, reg);
+  set <SgGraphNode*> defNodeSet = getDefFor(node, reg);
   if (RoseBin_support::DEBUG_MODE()) 
     cout << "    size of found NodeSet = " << defNodeSet.size() <<endl;
-  set <SgDirectedGraphNode*>::const_iterator it = defNodeSet.begin();
+  set <SgGraphNode*>::const_iterator it = defNodeSet.begin();
   for (;it!=defNodeSet.end();++it) {
-    SgDirectedGraphNode* defNode = *it;
+    SgGraphNode* defNode = *it;
     if (RoseBin_support::DEBUG_MODE() && defNode) 
       cout << "    investigating ... " << defNode->get_name() <<endl;
     ROSE_ASSERT(defNode);
@@ -584,7 +584,7 @@ CompassAnalyses::BinaryInterruptAnalysis::Traversal::getValueForDefinition(std::
     } else {
       // it is a register reference. I.e we need to follow the usage edge to find the 
       // definition of that node
-      SgDirectedGraphNode* usageNode = vizzGraph->getDefinitionForUsage(defNode);
+      SgGraphNode* usageNode = g_algo->getDefinitionForUsage(vizzGraph,defNode);
       if (usageNode && usageNode!=node) {
 	if (RoseBin_support::DEBUG_MODE() && usageNode) 
       	  cout << "    following up usage for " << usageNode->get_name() <<endl;
@@ -600,8 +600,8 @@ CompassAnalyses::BinaryInterruptAnalysis::Traversal::getValueForDefinition(std::
 
 
 bool 
-CompassAnalyses::BinaryInterruptAnalysis::Traversal::run(string& name, SgDirectedGraphNode* node,
-                                              SgDirectedGraphNode* previous){
+CompassAnalyses::BinaryInterruptAnalysis::Traversal::run(string& name, SgGraphNode* node,
+                                              SgGraphNode* previous){
   // check known function calls and resolve variables
   ROSE_ASSERT(node);
   vector<uint64_t> val_rax, val_rbx, val_rcx, val_rdx ;
@@ -657,9 +657,9 @@ CompassAnalyses::BinaryInterruptAnalysis::Traversal::run(string& name, SgDirecte
 	}
 
 	//cerr << " DataFlow::VariableAnalysis . Ambigious INT call: " <<
-	//  vizzGraph->getProperty(SB_Graph_Def::name, node) << " - " << value << endl;
+	//  vizzGraph->getProperty(SgGraph::name, node) << " - " << value << endl;
 	value = "PROBLEM: " + value; 
-	node->append_properties(SB_Graph_Def::dfa_unresolved_func,value);
+	node->append_properties(SgGraph::dfa_unresolved_func,value);
 
       } else {
 	// we know what INT instruction it is
@@ -670,7 +670,7 @@ CompassAnalyses::BinaryInterruptAnalysis::Traversal::run(string& name, SgDirecte
 	int_name += " ("+t_ebx+","+t_ecx+","+t_edx+")";
 	//if (RoseBin_support::DEBUG_MODE()) 
 	// cout << " found INT call : " << value << " .. " << int_name << endl;
-	node->append_properties(SB_Graph_Def::dfa_variable,int_name);
+	node->append_properties(SgGraph::dfa_variable,int_name);
       }
     }
   }

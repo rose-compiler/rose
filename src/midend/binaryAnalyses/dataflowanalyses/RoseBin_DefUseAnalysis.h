@@ -13,41 +13,41 @@
 class RoseBin_DefUseAnalysis  : public RoseBin_DataFlowAbstract {
  private:
 
-  SgDirectedGraphNode* nodeBefore;
+  SgGraphNode* nodeBefore;
 
 
-  void addDefElement(SgDirectedGraphNode* sgNode,
+  void addDefElement(SgGraphNode* sgNode,
 		     std::pair<X86RegisterClass, int>  initName,
-		     SgDirectedGraphNode* defNode);
+		     SgGraphNode* defNode);
 
-  void addUseElement(SgDirectedGraphNode* sgNode,
+  void addUseElement(SgGraphNode* sgNode,
 		     std::pair<X86RegisterClass, int>  initName,
-		     SgDirectedGraphNode* defNode);
- 
-  void addAnyElement(tabletype* tabl, SgDirectedGraphNode* sgNode,
+		     SgGraphNode* defNode);
+
+  void addAnyElement(tabletype* tabl, SgGraphNode* sgNode,
 		     std::pair<X86RegisterClass, int>  initName,
-		     SgDirectedGraphNode* defNode);
+		     SgGraphNode* defNode);
 
 
 
 
 
-  bool searchDefMap(SgDirectedGraphNode* node);
-  bool searchMap(const tabletype* ltable, SgDirectedGraphNode* node);
+  bool searchDefMap(SgGraphNode* node);
+  bool searchMap(const tabletype* ltable, SgGraphNode* node);
 
 
-  //void handleDefCopy(SgDirectedGraphNode* sgNode, 
+  //void handleDefCopy(SgGraphNode* sgNode,
   //		     int nrOfInEdges,
-  //	     SgDirectedGraphNode* sgNodeBefore);
+  //	     SgGraphNode* sgNodeBefore);
 
 
-  void mapDefUnion(SgDirectedGraphNode* before, SgDirectedGraphNode* other, SgDirectedGraphNode* sgNode);
-  void mapUseUnion(SgDirectedGraphNode* before, SgDirectedGraphNode* other, SgDirectedGraphNode* sgNode);
-  void mapAnyUnion(tabletype* tabl, SgDirectedGraphNode* before, SgDirectedGraphNode* other, SgDirectedGraphNode* sgNode); 
+  void mapDefUnion(SgGraphNode* before, SgGraphNode* other, SgGraphNode* sgNode);
+  void mapUseUnion(SgGraphNode* before, SgGraphNode* other, SgGraphNode* sgNode);
+  void mapAnyUnion(tabletype* tabl, SgGraphNode* before, SgGraphNode* other, SgGraphNode* sgNode);
 
   bool checkElementsForEquality(const multitype* t1, const multitype* t2);
-  void getOtherInNode(std::vector<SgDirectedGraphNode*>& vec,
-		      SgDirectedGraphNode* cfgNode, SgDirectedGraphNode* oneNode);
+  void getOtherInNode(std::vector<SgGraphNode*>& vec,
+		      SgGraphNode* cfgNode, SgGraphNode* oneNode);
 
   void printDefMap();
   void printUseMap();
@@ -56,23 +56,24 @@ class RoseBin_DefUseAnalysis  : public RoseBin_DataFlowAbstract {
 
   bool searchMulti(const multitype* multi, std::pair<X86RegisterClass, int>  initName);
   bool searchMulti(const multitype* multi, std::pair<X86RegisterClass, int>  initName,
-				    SgDirectedGraphNode* val);
+				    SgGraphNode* val);
 
-  void replaceElement(SgDirectedGraphNode* sgNode,
+  void replaceElement(SgGraphNode* sgNode,
 		      std::pair<X86RegisterClass, int>  initName);
   void clearRegisters();
 
-  void handleCopy(bool def,SgDirectedGraphNode* sgNode, SgDirectedGraphNode* sgNodeBefore);
+  void handleCopy(bool def,SgGraphNode* sgNode, SgGraphNode* sgNodeBefore);
 
 
  public:
 
-  RoseBin_DefUseAnalysis() {
+ RoseBin_DefUseAnalysis(GraphAlgorithms* algo):RoseBin_DataFlowAbstract(algo) {
+    ROSE_ASSERT(algo);
   }
   ~RoseBin_DefUseAnalysis() {}
 
-  bool run(std::string& name, SgDirectedGraphNode* node,SgDirectedGraphNode* nodeBefore);
-	  
+  bool run(std::string& name, SgGraphNode* node,SgGraphNode* nodeBefore);
+
 
   int getNrOfMemoryWrites() {return nrOfMemoryWrites;}
   int getNrOfRegisterWrites() {return nrOfRegisterWrites;}
@@ -86,10 +87,10 @@ class RoseBin_DefUseAnalysis  : public RoseBin_DataFlowAbstract {
     deftable.clear();
     //    usetable.clear();
   }
- 
-  std::string getElementsAsStringForNode(bool def,SgDirectedGraphNode* node);
 
-  bool runEdge( SgDirectedGraphNode* node, SgDirectedGraphNode* next);
+  std::string getElementsAsStringForNode(bool def,SgGraphNode* node);
+
+  bool runEdge( SgGraphNode* node, SgGraphNode* next);
 
 
 

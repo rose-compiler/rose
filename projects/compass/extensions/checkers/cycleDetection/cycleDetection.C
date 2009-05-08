@@ -39,9 +39,9 @@ namespace CompassAnalyses
       Compass::OutputObject* output;
       // Checker specific parameters should be allocated here.
       bool debug;
-      std::vector<SgDirectedGraphNode*> successors;
-      std::set<SgDirectedGraphNode*> visited;
-      std::map<SgDirectedGraphNode*,SgDirectedGraphNode*> cycleFound;
+      std::vector<SgGraphNode*> successors;
+      std::set<SgGraphNode*> visited;
+      std::map<SgGraphNode*,SgGraphNode*> cycleFound;
 
     public:
       Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
@@ -50,14 +50,14 @@ namespace CompassAnalyses
       void *initialInheritedAttribute() const { return NULL; }
 
       // The implementation of the run function has to match the traversal being called.
-      bool run(string& name, SgDirectedGraphNode* node, SgDirectedGraphNode* previous);
+      bool run(string& name, SgGraphNode* node, SgGraphNode* previous);
 
       void run(SgNode*);
 
-      bool runEdge(SgDirectedGraphNode* node, SgDirectedGraphNode* next) {
+      bool runEdge(SgGraphNode* node, SgGraphNode* next) {
         return false;
       }
-      bool checkIfValidCycle(SgDirectedGraphNode* node, SgDirectedGraphNode* next);
+      bool checkIfValidCycle(SgGraphNode* node, SgGraphNode* next);
                
       void init(RoseBin_Graph* vg) {
         vizzGraph = vg;
@@ -107,7 +107,7 @@ static void run(Compass::Parameters params, Compass::OutputObject* output) {
 
   bool interprocedural = false;
   RoseBin_DataFlowAnalysis* dfanalysis = Compass::binDataFlowPrerequisite.getBinDataFlowInfo();
-  vector<SgDirectedGraphNode*> rootNodes;
+  vector<SgGraphNode*> rootNodes;
   dfanalysis->getRootNodes(rootNodes);
   dfanalysis->init();
   
@@ -149,17 +149,17 @@ extern const Compass::CheckerUsingGraphProcessing* const cycleDetectionChecker =
  * and check if such a path exists.
  **************************************************************************/
 bool 
-CompassAnalyses::CycleDetection::Traversal::checkIfValidCycle(SgDirectedGraphNode* node_n,
-                                                              SgDirectedGraphNode* next_n){
+CompassAnalyses::CycleDetection::Traversal::checkIfValidCycle(SgGraphNode* node_n,
+                                                              SgGraphNode* next_n){
   // traverse the graph from next to node
   bool foundCycle=false;
-  std::vector<SgDirectedGraphNode*> successors_f;
-  std::set<SgDirectedGraphNode*> visited_f;
-  vector<SgDirectedGraphNode*> worklist;
+  std::vector<SgGraphNode*> successors_f;
+  std::set<SgGraphNode*> visited_f;
+  vector<SgGraphNode*> worklist;
   worklist.push_back(next_n);
   visited_f.insert(next_n);
   while (!worklist.empty()) {
-    SgDirectedGraphNode* current = worklist.back();
+    SgGraphNode* current = worklist.back();
     worklist.pop_back();
     successors_f.clear();
     if (debug)
@@ -167,9 +167,9 @@ CompassAnalyses::CycleDetection::Traversal::checkIfValidCycle(SgDirectedGraphNod
 	worklist.size() << "  visited size : " << visited_f.size() << std::endl;
 
     vizzGraph->getSuccessors(current, successors_f);    
-    vector<SgDirectedGraphNode*>::iterator succ = successors_f.begin();
+    vector<SgGraphNode*>::iterator succ = successors_f.begin();
     for (;succ!=successors_f.end();++succ) {
-      SgDirectedGraphNode* next = *succ;      
+      SgGraphNode* next = *succ;      
       if (debug)
 	std::cerr << "worklist:  next node " << next << std::endl;
       if (sameParents(current,next)) { 
@@ -184,7 +184,7 @@ CompassAnalyses::CycleDetection::Traversal::checkIfValidCycle(SgDirectedGraphNod
 	  // cycle not found. If this node is in the same function
 	  // and it has not been visited before, then we put it in 
 	  // the worklist
-	  std::set<SgDirectedGraphNode*>::iterator 
+	  std::set<SgGraphNode*>::iterator 
 	    it =visited_f.find(next);
 	  if (it==visited_f.end()) {
 	    worklist.push_back(next);
@@ -212,8 +212,8 @@ CompassAnalyses::CycleDetection::Traversal::checkIfValidCycle(SgDirectedGraphNod
  * if those have been previously seen. If yes, a cycle may exist.
  **************************************************************************/
 bool 
-CompassAnalyses::CycleDetection::Traversal::run(string& name, SgDirectedGraphNode* node,
-                                                SgDirectedGraphNode* previous){
+CompassAnalyses::CycleDetection::Traversal::run(string& name, SgGraphNode* node,
+                                                SgGraphNode* previous){
   // check known function calls and resolve variables
   ROSE_ASSERT(node);
 
@@ -228,13 +228,13 @@ CompassAnalyses::CycleDetection::Traversal::run(string& name, SgDirectedGraphNod
   successors.clear();
   ROSE_ASSERT(vizzGraph);
   vizzGraph->getSuccessors(node, successors);    
-  vector<SgDirectedGraphNode*>::iterator succ = successors.begin();
+  vector<SgGraphNode*>::iterator succ = successors.begin();
   for (;succ!=successors.end();++succ) {
     // for each successor do...
-    SgDirectedGraphNode* next = *succ;
+    SgGraphNode* next = *succ;
     // if the node is an instruction, we check if it was visited
     // if not, we add it to the visited set, otherwise a cycle is present
-    std::set<SgDirectedGraphNode*>::iterator it =visited.find(next);
+    std::set<SgGraphNode*>::iterator it =visited.find(next);
     if (it!=visited.end()) {
       // found this node in visited list
       SgAsmx86Instruction* nodeSg = isSgAsmx86Instruction(node->get_SgNode());

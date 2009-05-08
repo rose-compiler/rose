@@ -10,17 +10,17 @@ using namespace RoseBin_OS_VER;
 using namespace RoseBin_Arch;
 
 bool 
-CycleDetection::checkIfValidCycle(SgDirectedGraphNode* node_n,
-			      SgDirectedGraphNode* next_n){
+CycleDetection::checkIfValidCycle(SgGraphNode* node_n,
+			      SgGraphNode* next_n){
   // traverse the graph from next to node
   bool foundCycle=false;
-  std::vector<SgDirectedGraphNode*> successors_f;
-  std::set<SgDirectedGraphNode*> visited_f;
-  vector<SgDirectedGraphNode*> worklist;
+  std::vector<SgGraphNode*> successors_f;
+  std::set<SgGraphNode*> visited_f;
+  vector<SgGraphNode*> worklist;
   worklist.push_back(next_n);
   visited_f.insert(next_n);
   while (!worklist.empty()) {
-    SgDirectedGraphNode* current = worklist.back();
+    SgGraphNode* current = worklist.back();
     worklist.pop_back();
     successors_f.clear();
     if (debug)
@@ -28,9 +28,9 @@ CycleDetection::checkIfValidCycle(SgDirectedGraphNode* node_n,
 	worklist.size() << "  visited size : " << visited_f.size() << std::endl;
 
     vizzGraph->getSuccessors(current, successors_f);    
-    vector<SgDirectedGraphNode*>::iterator succ = successors_f.begin();
+    vector<SgGraphNode*>::iterator succ = successors_f.begin();
     for (;succ!=successors_f.end();++succ) {
-      SgDirectedGraphNode* next = *succ;      
+      SgGraphNode* next = *succ;      
       if (debug)
 	std::cerr << "worklist:  next node " << next << std::endl;
       if (sameParents(current,next)) { 
@@ -45,7 +45,7 @@ CycleDetection::checkIfValidCycle(SgDirectedGraphNode* node_n,
 	  // cycle not found. If this node is in the same function
 	  // and it has not been visited before, then we put it in 
 	  // the worklist
-	  std::set<SgDirectedGraphNode*>::iterator 
+	  std::set<SgGraphNode*>::iterator 
 	    it =visited_f.find(next);
 	  if (it==visited_f.end()) {
 	    worklist.push_back(next);
@@ -68,8 +68,8 @@ CycleDetection::checkIfValidCycle(SgDirectedGraphNode* node_n,
 }
 
 bool 
-CycleDetection::run(string& name, SgDirectedGraphNode* node,
-			      SgDirectedGraphNode* previous){
+CycleDetection::run(string& name, SgGraphNode* node,
+			      SgGraphNode* previous){
   // check known function calls and resolve variables
   ROSE_ASSERT(node);
 
@@ -84,13 +84,13 @@ CycleDetection::run(string& name, SgDirectedGraphNode* node,
   successors.clear();
   ROSE_ASSERT(vizzGraph);
   vizzGraph->getSuccessors(node, successors);    
-  vector<SgDirectedGraphNode*>::iterator succ = successors.begin();
+  vector<SgGraphNode*>::iterator succ = successors.begin();
   for (;succ!=successors.end();++succ) {
     // for each successor do...
-    SgDirectedGraphNode* next = *succ;
+    SgGraphNode* next = *succ;
     // if the node is an instruction, we check if it was visited
     // if not, we add it to the visited set, otherwise a cycle is present
-    std::set<SgDirectedGraphNode*>::iterator it =visited.find(next);
+    std::set<SgGraphNode*>::iterator it =visited.find(next);
     if (it!=visited.end()) {
       // found this node in visited list
       SgAsmx86Instruction* nodeSg = isSgAsmx86Instruction(node->get_SgNode());
@@ -116,7 +116,7 @@ CycleDetection::run(string& name, SgDirectedGraphNode* node,
 }
 
 
-extern "C" BC_GraphAnalysisInterface* create() {
-  return new CycleDetection();
+extern "C" BC_GraphAnalysisInterface* create(GraphAlgorithms* algo) {
+  return new CycleDetection(algo);
 }
 

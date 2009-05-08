@@ -41,12 +41,12 @@ namespace CompassAnalyses
       void *initialInheritedAttribute() const { return NULL; }
 
       // The implementation of the run function has to match the traversal being called.
-      bool run(string& name, SgDirectedGraphNode* node, SgDirectedGraphNode* previous);
+      bool run(string& name, SgGraphNode* node, SgGraphNode* previous);
 
-      bool runEdge(SgDirectedGraphNode* node, SgDirectedGraphNode* next) {
+      bool runEdge(SgGraphNode* node, SgGraphNode* next) {
         return false;
       }
-      bool checkIfValidCycle(SgDirectedGraphNode* node, SgDirectedGraphNode* next);
+      bool checkIfValidCycle(SgGraphNode* node, SgGraphNode* next);
                
       void init(RoseBin_Graph* vg) {
         vizzGraph = vg;
@@ -86,7 +86,7 @@ Traversal::run ( SgNode* node )
 
   bool interprocedural = false;
   RoseBin_DataFlowAnalysis* dfanalysis = Compass::binDataFlowPrerequisite.getBinDataFlowInfo();
-  vector<SgDirectedGraphNode*> rootNodes;
+  vector<SgGraphNode*> rootNodes;
   dfanalysis->getRootNodes(rootNodes);
   dfanalysis->init();
   
@@ -111,7 +111,7 @@ static void run(Compass::Parameters params, Compass::OutputObject* output) {
 
   bool interprocedural = false;
   RoseBin_DataFlowAnalysis* dfanalysis = Compass::binDataFlowPrerequisite.getBinDataFlowInfo();
-  vector<SgDirectedGraphNode*> rootNodes;
+  vector<SgGraphNode*> rootNodes;
   dfanalysis->getRootNodes(rootNodes);
   dfanalysis->init();
   
@@ -156,8 +156,8 @@ using namespace RoseBin_Arch;
 
 
 bool 
-CompassAnalyses::BinaryBufferOverflow::Traversal::run(string& name, SgDirectedGraphNode* node,
-                                                      SgDirectedGraphNode* previous){
+CompassAnalyses::BinaryBufferOverflow::Traversal::run(string& name, SgGraphNode* node,
+                                                      SgGraphNode* previous){
   // check known function calls and resolve variables
   ROSE_ASSERT(node);
 
@@ -185,7 +185,7 @@ CompassAnalyses::BinaryBufferOverflow::Traversal::run(string& name, SgDirectedGr
 	  
 	  // find the size of the malloc, = backward search within this function
 	  bool foundMov=false;
-	  SgDirectedGraphNode* pre = node;
+	  SgGraphNode* pre = node;
 	  uint64_t value=0;
 	  while (foundMov!=true && sameParents(node, pre)) {
 	    pre = getPredecessor(pre);
@@ -216,7 +216,7 @@ CompassAnalyses::BinaryBufferOverflow::Traversal::run(string& name, SgDirectedGr
 	  // result of malloc (variable) is in eax, we need to see what the variable is and store it
 	  // forward search in the same function
 	  foundMov=false;
-	  SgDirectedGraphNode* aft = node;
+	  SgGraphNode* aft = node;
 	  while (foundMov!=true && sameParents(node, aft)) {
 	    aft = getSuccessor(aft);
 	    SgAsmx86Instruction* asmAft = isSgAsmx86Instruction(aft->get_SgNode());
@@ -306,7 +306,7 @@ CompassAnalyses::BinaryBufferOverflow::Traversal::run(string& name, SgDirectedGr
 		int length = var->getLength();
 		int arrayLength = 0;
 		bool foundMov=false;
-		SgDirectedGraphNode* aft = node;
+		SgGraphNode* aft = node;
 		while (foundMov!=true && sameParents(node, aft)) {
 		  aft = getSuccessor(aft);
 		  SgAsmx86Instruction* asmAft = isSgAsmx86Instruction(aft->get_SgNode());
@@ -333,7 +333,7 @@ CompassAnalyses::BinaryBufferOverflow::Traversal::run(string& name, SgDirectedGr
 			if (RoseBin_support::DEBUG_MODE() && asmAft->get_kind() == x86_mov) {
 			  cerr << "  WARNING:: MALLOC - Buffer Overflow at : " << unparseInstruction(asmAft) 
 			       <<  "  Length of array is " << length << "  but access at : " << arrayLength << endl;
-			  aft->append_properties(SB_Graph_Def::dfa_bufferoverflow,varName);		  
+			  aft->append_properties(SgGraph::dfa_bufferoverflow,varName);		  
 			}
 		      }
 		    }

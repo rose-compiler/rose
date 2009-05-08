@@ -8,7 +8,7 @@
 
 class DwarfFileInfo : public BinAnalyses {
  public:
-  DwarfFileInfo(){testFlag=false; debug=false;};
+  DwarfFileInfo(GraphAlgorithms* algo) {info =algo->info;}
   virtual ~DwarfFileInfo(){};
   bool testFlag;
   void run(SgNode* f1, SgNode* f2);

@@ -316,8 +316,8 @@ RoseBin_DataFlowAbstract::altersMultipleRegisters(vector<std::pair<X86RegisterCl
  * return vector to user
  * for any given node and initName, return all definitions
  *****************************************/
-std::set < SgDirectedGraphNode* > 
-RoseBin_DataFlowAbstract::getDefFor(SgDirectedGraphNode* node, std::pair<X86RegisterClass, int>  initName) {
+std::set < SgGraphNode* >
+RoseBin_DataFlowAbstract::getDefFor(SgGraphNode* node, std::pair<X86RegisterClass, int>  initName) {
   multitype multi = getDefMultiMapFor(node);
   return getAnyFor( &multi, initName);
 }
@@ -326,8 +326,8 @@ RoseBin_DataFlowAbstract::getDefFor(SgDirectedGraphNode* node, std::pair<X86Regi
  * return vector to user
  * for any given node and initName, return all definitions
  *****************************************/
-std::set < SgDirectedGraphNode* > 
-RoseBin_DataFlowAbstract::getUseFor(SgDirectedGraphNode* node, std::pair<X86RegisterClass, int>  initName) {
+std::set < SgGraphNode* >
+RoseBin_DataFlowAbstract::getUseFor(SgGraphNode* node, std::pair<X86RegisterClass, int>  initName) {
   multitype multi = getUseMultiMapFor(node);
   return getAnyFor(&multi, initName);
 }
@@ -336,16 +336,16 @@ RoseBin_DataFlowAbstract::getUseFor(SgDirectedGraphNode* node, std::pair<X86Regi
  * return vector to user
  * for any given node and initName, return all definitions
  *****************************************/
-std::set < SgDirectedGraphNode* > 
+std::set < SgGraphNode* >
 RoseBin_DataFlowAbstract::getAnyFor(const multitype* multi, std::pair<X86RegisterClass, int>  initName) {
-  set < SgDirectedGraphNode*> defNodes;
+  set < SgGraphNode*> defNodes;
   defNodes.clear();
   //multitype multi = getDefUseFor(node);
   if (multi->size()>0) {
     multitype::const_iterator i = multi->begin();
     for (; i!=multi->end();++i) {
       std::pair<X86RegisterClass, int>  initNameMM = i->first;
-      SgDirectedGraphNode* thenode = i->second;
+      SgGraphNode* thenode = i->second;
       if (initName==initNameMM) {
         // we have found the right node and right initName
         //defNodes.push_back(thenode);
@@ -360,53 +360,53 @@ RoseBin_DataFlowAbstract::getAnyFor(const multitype* multi, std::pair<X86Registe
  * return multimap to user
  * for any given node, return all definitions
  *****************************************/
-//__gnu_cxx::hash_multimap 
-const std::multimap< std::pair<X86RegisterClass, int>  , SgDirectedGraphNode* >& 
-RoseBin_DataFlowAbstract::getDefMultiMapFor(SgDirectedGraphNode* node) {
-  static std::multimap< std::pair<X86RegisterClass, int>  , SgDirectedGraphNode* >
+//__gnu_cxx::hash_multimap
+const std::multimap< std::pair<X86RegisterClass, int>  , SgGraphNode* >&
+RoseBin_DataFlowAbstract::getDefMultiMapFor(SgGraphNode* node) {
+  static std::multimap< std::pair<X86RegisterClass, int>  , SgGraphNode* >
     mymap;
   if (deftable.find(node)!=deftable.end())
     return deftable[node];
-  else 
+  else
     return mymap;
 }
- 
+
 /******************************************
  * return multimap to user
  * for any given node, return all definitions
  *****************************************/
-//__gnu_cxx::hash_multimap 
-const std::multimap< std::pair<X86RegisterClass, int>  , SgDirectedGraphNode* >& 
-RoseBin_DataFlowAbstract::getUseMultiMapFor(SgDirectedGraphNode* node) {
-  static std::multimap< std::pair<X86RegisterClass, int>  , SgDirectedGraphNode* >
+//__gnu_cxx::hash_multimap
+const std::multimap< std::pair<X86RegisterClass, int>  , SgGraphNode* >&
+RoseBin_DataFlowAbstract::getUseMultiMapFor(SgGraphNode* node) {
+  static std::multimap< std::pair<X86RegisterClass, int>  , SgGraphNode* >
     mymap;
   if (usetable.find(node)!=usetable.end())
     return usetable[node];
-  else 
+  else
     return mymap;
 }
 
 
-void 
+void
 RoseBin_DataFlowAbstract::printDefTableToFile(
 					      std::string fileName) {
   std::ofstream myfile;
   myfile.open(fileName.c_str());
 
-  vector<SgDirectedGraphNode*> sorted;
+  vector<SgGraphNode*> sorted;
   tabletype::iterator it2 = deftable.begin();
   for (;it2!=deftable.end();++it2) {
-    SgDirectedGraphNode* node = it2->first;
+    SgGraphNode* node = it2->first;
     sorted.push_back(node);
   }
   std::sort(sorted.begin(), sorted.end());
-  
+
   //  tabletype::iterator it = deftable.begin();
   //for (;it!=deftable.end();++it) {
-  vector<SgDirectedGraphNode*>::iterator it = sorted.begin();
+  vector<SgGraphNode*>::iterator it = sorted.begin();
   for (;it!=sorted.end();++it) {
-    //    SgDirectedGraphNode* node = it->first;
-    SgDirectedGraphNode* node = *it;
+    //    SgGraphNode* node = it->first;
+    SgGraphNode* node = *it;
     //    const multitype& type = getDefinitionsFor(node);
     const multitype& type = getDefMultiMapFor(node);
     multitype::const_iterator itm = type.begin();
@@ -414,22 +414,22 @@ RoseBin_DataFlowAbstract::printDefTableToFile(
       string line = ""+node->get_name()+" : \n";
       for (;itm!=type.end();++itm) {
 	std::pair<X86RegisterClass, int>  code = itm->first;
-	SgDirectedGraphNode* nodeDef = itm->second;
-	string registerName = unparseX86Register(code.first, code.second, 
+	SgGraphNode* nodeDef = itm->second;
+	string registerName = unparseX86Register(code.first, code.second,
                                                  x86_regpos_qword);
-	
+
 	string def = registerName+" - "+nodeDef->get_name();
 	line+="   "+def+"\n";
       }
       myfile << line ;
     }
   }
-  
-  myfile.close();  
+
+  myfile.close();
 }
 
-bool 
-RoseBin_DataFlowAbstract::sameParents(SgDirectedGraphNode* node, SgDirectedGraphNode* next) {
+bool
+RoseBin_DataFlowAbstract::sameParents(SgGraphNode* node, SgGraphNode* next) {
   bool same=false;
   if (isSgAsmFunctionDeclaration(node->get_SgNode())) {
     return true;
@@ -446,14 +446,14 @@ RoseBin_DataFlowAbstract::sameParents(SgDirectedGraphNode* node, SgDirectedGraph
   return same;
 }
 
-uint64_t 
+uint64_t
 RoseBin_DataFlowAbstract::getValueInExpression(SgAsmValueExpression* valExp) {
 
   uint8_t b_val=0xF;
   uint16_t w_val=0xFF;
   uint32_t dw_val=0xFFFF;
   uint64_t qw_val=0xFFFFFFFF;
-  
+
   RoseBin_support::resolveValue(valExp, false,
 				b_val,
 				w_val,
@@ -468,7 +468,7 @@ RoseBin_DataFlowAbstract::getValueInExpression(SgAsmValueExpression* valExp) {
     val = uint64_t(dw_val);
   else if (qw_val!=0xFFFFFFFF)
     val = uint64_t(qw_val);
-  
+
   return val;
 }
 
@@ -478,14 +478,14 @@ RoseBin_DataFlowAbstract::getValueInExpression(SgAsmValueExpression* valExp) {
  * right (bool) or left side
  ***********************************************************/
 int64_t
-RoseBin_DataFlowAbstract::check_isRegister(SgDirectedGraphNode* node,
+RoseBin_DataFlowAbstract::check_isRegister(SgGraphNode* node,
 					   SgAsmx86Instruction* inst,
 					   std::pair<X86RegisterClass, int>  codeSearch,
 					   bool rightSide,
 					   vector<std::pair<X86RegisterClass, int> >& regsOfInterest,
 					   bool& cantTrack
 					   ) {
-  // bool rightSide specifies 
+  // bool rightSide specifies
   // true = checking the right side (of instruction operands) for a registerReference
   // false = checking the left side (of instruction operands) for a registerReference
   int64_t res = 0xFFFFFFFF;
@@ -497,7 +497,7 @@ RoseBin_DataFlowAbstract::check_isRegister(SgDirectedGraphNode* node,
   //SgAsmx86RegisterReferenceExpression::x86_position_in_register_enum pos ;
   //SgAsmMemoryReferenceExpression* memRef = NULL;
   int counter=0;
-  if (rightSide) 
+  if (rightSide)
     counter =-1;
   else
     counter = 2;
@@ -512,7 +512,7 @@ RoseBin_DataFlowAbstract::check_isRegister(SgDirectedGraphNode* node,
     ROSE_ASSERT(expr);
     if (rightSide)
       counter++;
-    else 
+    else
       counter--;
     if (counter==0) {
       // left hand side if rightSide=true *************************************************************
@@ -525,7 +525,7 @@ RoseBin_DataFlowAbstract::check_isRegister(SgDirectedGraphNode* node,
 	// value expr
 	newVal = getValueInExpression(valExp);
 	operands += " <<left :: value " +RoseBin_support::HexToString(newVal)+">>";
-      } 
+      }
 
       // ****** 2. referenceExpression
       else if (refExpr) {
@@ -567,9 +567,9 @@ RoseBin_DataFlowAbstract::check_isRegister(SgDirectedGraphNode* node,
   if (foundECX)
     res = newVal;
   /*
-  if (RoseBin_support::DEBUG_MODE()) 
-    cout << "   >> checkRegister : " << RoseBin_support::HexToString(res) << 
-      " -- " << operands << "  foundReg: " << RoseBin_support::resBool(foundECX) << endl; 
+  if (RoseBin_support::DEBUG_MODE())
+    cout << "   >> checkRegister : " << RoseBin_support::HexToString(res) <<
+      " -- " << operands << "  foundReg: " << RoseBin_support::resBool(foundECX) << endl;
   */
   return res;
 }
@@ -578,11 +578,11 @@ RoseBin_DataFlowAbstract::check_isRegister(SgDirectedGraphNode* node,
  * checks if an instruction has a RegisterReference on the
  * right (bool) or left side
  ***********************************************************/
-std::pair<X86RegisterClass, int>  
-RoseBin_DataFlowAbstract::check_isRegister(SgDirectedGraphNode* node,
+std::pair<X86RegisterClass, int>
+RoseBin_DataFlowAbstract::check_isRegister(SgGraphNode* node,
 					   SgAsmx86Instruction* inst,
 					   bool rightSide, bool& memoryReference ) {
-  // bool rightSide specifies 
+  // bool rightSide specifies
   // true = checking the right side (of instruction operands) for a registerReference
   // false = checking the left side (of instruction operands) for a registerReference
   SgAsmOperandList* opList = inst->get_operandList();
@@ -660,7 +660,7 @@ SgAsmExpression*
 RoseBin_DataFlowAbstract::getOperand(
 				      SgAsmx86Instruction* inst,
 				      bool rightSide ) {
-  // bool rightSide specifies 
+  // bool rightSide specifies
   // true = checking the right side (of instruction operands) for a registerReference
   // false = checking the left side (of instruction operands) for a registerReference
   SgAsmOperandList* opList = inst->get_operandList();
@@ -693,7 +693,7 @@ RoseBin_DataFlowAbstract::getOperand(
   return refExpr;
 }
 
-uint64_t 
+uint64_t
 RoseBin_DataFlowAbstract::getValueInMemoryRefExp(SgAsmExpression* expr) {
   uint64_t res = 0;
   if (isSgAsmValueExpression(expr)) {
@@ -702,7 +702,7 @@ RoseBin_DataFlowAbstract::getValueInMemoryRefExp(SgAsmExpression* expr) {
     SgAsmx86RegisterReferenceExpression* refexp = isSgAsmx86RegisterReferenceExpression(expr);
     std::pair<X86RegisterClass, int>  code;
     if (refexp) {
-      code = refexp->get_identifier();    
+      code = refexp->get_identifier();
       // we have to add up this value, currently we assign 5000 to the register
       // fixme later
       if (code.first == x86_regclass_gpr && code.second == x86_gpr_bp)
@@ -723,20 +723,20 @@ RoseBin_DataFlowAbstract::getValueInMemoryRefExp(SgAsmExpression* expr) {
     SgAsmExpression* right = binadd->get_rhs();
     res = getValueInMemoryRefExp(left) * getValueInMemoryRefExp(right);
   } else {
-    cerr << " ERROR :: getValueInMemoryRefExp - no such condition specified" 
+    cerr << " ERROR :: getValueInMemoryRefExp - no such condition specified"
 	 << expr->class_name() << endl;
   }
   return res;
 }
 
 /************************************************************
- * gets the value of the right (bool=true) hand side 
+ * gets the value of the right (bool=true) hand side
  * or left hand side of the instruction
  ***********************************************************/
 uint64_t
 RoseBin_DataFlowAbstract::getValueOfInstr( SgAsmx86Instruction* inst,
 					   bool rightSide ) {
-  // bool rightSide specifies 
+  // bool rightSide specifies
   // true = checking the right side (of instruction operands) for a registerReference
   // false = checking the left side (of instruction operands) for a registerReference
   SgAsmOperandList* opList = inst->get_operandList();
@@ -760,7 +760,7 @@ RoseBin_DataFlowAbstract::getValueOfInstr( SgAsmx86Instruction* inst,
       continue;
     } else
       counter++;
-    
+
     SgAsmValueExpression* valExpr = isSgAsmValueExpression(expr);
     if (valExpr) {
       val = getValueInExpression(valExpr);
@@ -769,9 +769,9 @@ RoseBin_DataFlowAbstract::getValueOfInstr( SgAsmx86Instruction* inst,
   return val;
 }
 
-int64_t 
+int64_t
 RoseBin_DataFlowAbstract::trackValueForRegister(
-					       SgDirectedGraphNode* node,
+					       SgGraphNode* node,
 					       std::pair<X86RegisterClass, int>  codeSearch,
 					       bool& cantTrack,
 					       SgAsmx86RegisterReferenceExpression* refExpr_rightHand) {
@@ -791,16 +791,16 @@ RoseBin_DataFlowAbstract::trackValueForRegister(
     if (condInst==false) {
       // the instruction is not dependent on a value in one of its operands
       // easiest track
-      SgDirectedGraphNode* previous = getPredecessor(node);
+      SgGraphNode* previous = getPredecessor(node);
 	/*
-      vector <SgDirectedGraphNode*> vec;
+      vector <SgGraphNode*> vec;
       vizzGraph->getPredecessors(node, vec);
       if (vec.size()==1) {
 	// found one predecessor
-	SgDirectedGraphNode* previous = vec.back();
+	SgGraphNode* previous = vec.back();
 	ROSE_ASSERT(previous);
-	string name = vizzGraph->getProperty(SB_Graph_Def::name, previous);
-	if (RoseBin_support::DEBUG_MODE()) 
+	string name = vizzGraph->getProperty(SgGraph::name, previous);
+	if (RoseBin_support::DEBUG_MODE())
 	  cout << "    tracking recursive var " << name << endl;
 
 	value = trackValueForRegister(previous, code, cantTrack, refExpr_rightHand);
@@ -818,21 +818,21 @@ RoseBin_DataFlowAbstract::trackValueForRegister(
       int addr = inst->get_address();
       if (RoseBin_support::DEBUG_MODE()) {
 	cout << " ERROR ------------------------------------------ " << endl;
-	      cout << RoseBin_support::HexToString(addr) << "  " << inst->class_name() << 
-		" -- CANT resolve the value of the register because it depends on CONDITION -- code " << 
+	      cout << RoseBin_support::HexToString(addr) << "  " << inst->class_name() <<
+		" -- CANT resolve the value of the register because it depends on CONDITION -- code " <<
 		code.first << "." << code.second << endl;
       }
       cantTrack =true;
 	  }
-    
+
   } else {
     // the instruction is dependent on a flag
-    
+
     int addr = inst->get_address();
     if (RoseBin_support::DEBUG_MODE()) {
       cout << " ERROR ------------------------------------------ " << endl;
-      cout << RoseBin_support::HexToString(addr) << "  " << inst->class_name() << 
-	" -- CANT resolve the value of the register because it depends on FLAGS -- code " << 
+      cout << RoseBin_support::HexToString(addr) << "  " << inst->class_name() <<
+	" -- CANT resolve the value of the register because it depends on FLAGS -- code " <<
 	code.first << "." << code.second << endl;
     }
     cantTrack =true;
@@ -842,19 +842,19 @@ RoseBin_DataFlowAbstract::trackValueForRegister(
   return value;
 }
 
-SgDirectedGraphNode*  
-RoseBin_DataFlowAbstract::getPredecessor(SgDirectedGraphNode* node){
-  vector <SgDirectedGraphNode*> vec;
-  vizzGraph->getDirectCFGPredecessors(node, vec);
-  SgDirectedGraphNode* previous = NULL;
+SgGraphNode*
+RoseBin_DataFlowAbstract::getPredecessor(SgGraphNode* node){
+  vector <SgGraphNode*> vec;
+  g_algo->getDirectCFGPredecessors(vizzGraph,node, vec);
+  SgGraphNode* previous = NULL;
   if (vec.size()==1) {
     // found one predecessor
     previous = vec.back();
     ROSE_ASSERT(previous);
-    string name = vizzGraph->getProperty(SB_Graph_Def::name, previous);
-    if (RoseBin_support::DEBUG_MODE()) 
+    string name = vizzGraph->getProperty(SgGraph::name, previous);
+    if (RoseBin_support::DEBUG_MODE())
       cout << "    tracking recursive var " << name << endl;
-    
+
   } else if (vec.size()>1) {
     cerr << " Tracking:: Problem, we have more than one predecessor for a node... cant track this " << endl;
     exit(0);
@@ -862,19 +862,24 @@ RoseBin_DataFlowAbstract::getPredecessor(SgDirectedGraphNode* node){
   return previous;
 }
 
-SgDirectedGraphNode*  
-RoseBin_DataFlowAbstract::getSuccessor(SgDirectedGraphNode* node){
-  vector <SgDirectedGraphNode*> vec;
-  vizzGraph->getDirectCFGSuccessors(node, vec);
-  SgDirectedGraphNode* after = NULL;
+SgGraphNode*
+RoseBin_DataFlowAbstract::getSuccessor(SgGraphNode* node){
+  vector <SgGraphNode*> vec;
+  cerr << endl << " START ++++++++++++ getSuccessor : call getDirectCFGSucc " << endl;
+  g_algo->getDirectCFGSuccessors(vizzGraph,node, vec);
+  SgGraphNode* after = NULL;
+  cerr << " END +++++++++++ getSuccessor : >>>>>>>>>>>>>>> Outedges for node " << 
+    node->get_index() << " " << node->get_name() << " " <<
+    node->get_SgNode()->class_name() << 
+     "   size: " <<  vec.size() << endl;
   if (vec.size()==1) {
     // found one predecessor
     after = vec.back();
     ROSE_ASSERT(after);
-    string name = vizzGraph->getProperty(SB_Graph_Def::name, after);
-    if (RoseBin_support::DEBUG_MODE()) 
+    string name = vizzGraph->getProperty(SgGraph::name, after);
+    if (RoseBin_support::DEBUG_MODE())
       cout << "    tracking recursive var " << name << endl;
-    
+    //cerr << " ............ DFA " << node->get_name() << "    succ : " << after->get_name() << endl;
   } else if (vec.size()>1) {
     cerr << " Tracking:: Problem, we have more than one successor for a node... cant track this " << endl;
     exit(0);
@@ -885,12 +890,12 @@ RoseBin_DataFlowAbstract::getSuccessor(SgDirectedGraphNode* node){
 
 
 
-RoseBin_Variable* 
+RoseBin_Variable*
 RoseBin_DataFlowAbstract::createVariable(uint64_t position,
-					 vector<uint64_t> pos, 
-					 string name,  
+					 vector<uint64_t> pos,
+					 string name,
 					 DataTypes type, string description,
-					 int length, 
+					 int length,
 					 vector<uint64_t> value,
 					 bool memoryRef) {
   RoseBin_Variable* var_hashed =NULL;
@@ -915,7 +920,7 @@ RoseBin_DataFlowAbstract::createVariable(uint64_t position,
     variablesReverse[var_name] = position;
   } else {
     var_hashed = it->second;
-    cout << " Variable already exists. " << name << " - " << 
+    cout << " Variable already exists. " << name << " - " <<
       RoseBin_support::HexToString(position) << " - " << description << endl;
   }
   ROSE_ASSERT(var_hashed);
@@ -933,7 +938,7 @@ RoseBin_DataFlowAbstract::getVariable(std::string var) {
   if (it!=variablesReverse.end()) {
     val = it->second;
   }
-  
+
   return getVariable(val);
 }
 

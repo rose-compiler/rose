@@ -660,7 +660,9 @@ string unparseX86InstructionToHTMLWithAddress(SgAsmx86Instruction* insn) {
   const SgAsmExpressionPtrList& operands = opList->get_operands();
   for (size_t i = 0; i < operands.size(); ++i) {
     if (i != 0) result += ", ";
-    result += "<font color=\"blue\">" + htmlEscape(unparseX86Expression(operands[i], (insn->get_kind() == x86_lea))) + "</font>";
+    //tps (6 May 2009) : This line doesnt compile. It is broken in the svn. I need to comment this out
+    // to run make check in order to convert the graph structure to its new form
+    //result += "<font color=\"blue\">" + htmlEscape(unparseX86Expression(operands[i], (insn->get_kind() == x86_lea))) + "</font>";
   }
   return result;
 }

@@ -12,8 +12,15 @@
 #include <iostream>
 #include "RoseBin_Graph.h"
 //#include "RoseBin.h"
+#include "GraphAlgorithms.h"
 
 class RoseBin_Variable  {
+ public:
+  //remove later!
+  //  typedef rose_hash::hash_map <std::string, SgGraphNode*,rose_hash::hash_string,rose_hash::eqstr_string> nodeType;
+  //typedef rose_graph_node_edge_hash_multimap edgeType;
+  //  typedef rose_graph_hash_multimap nodeType;
+
  private:
   uint64_t position;
   std::string name;
@@ -23,7 +30,7 @@ class RoseBin_Variable  {
   std::vector<uint64_t> value;
  public:
   RoseBin_Variable(uint64_t pos,
-		   std::string n, 
+		   std::string n,
 		   RoseBin_DataTypes::DataTypes t, std::string d, int l,
 		   std::vector<uint64_t> v) {
     position=pos;
@@ -52,17 +59,17 @@ class RoseBin_Variable  {
     std::string val = "("+RoseBin_support::HexToString(position)+") "+name+"("
       +description+ ") ["+
       RoseBin_support::getTypeName(type)+" "+
-      RoseBin_support::ToString(length)+" Values: ("+values+")] "; 
+      RoseBin_support::ToString(length)+" Values: ("+values+")] ";
     return val;
   }
 };
 
 
 
-class RoseBin_DataFlowAbstract {
+class RoseBin_DataFlowAbstract { //: public GraphAlgorithms {
  protected:
    rose_hash::hash_map <uint64_t, RoseBin_Variable*> variables;
-
+   GraphAlgorithms* g_algo;
    typedef rose_hash::hash_map <std::string, uint64_t,rose_hash::hash_string,rose_hash::eqstr_string> variablesReverseType;
 // rose_hash::hash_map <std::string, uint64_t> variablesReverse;
    variablesReverseType variablesReverse;
@@ -71,19 +78,19 @@ class RoseBin_DataFlowAbstract {
 
 
 
-  // definition of def-use data-structures. 
+  // definition of def-use data-structures.
   // will need those for other analyses
-  typedef std::multimap< std::pair<X86RegisterClass, int>, SgDirectedGraphNode*> multitype;
-  //typedef std::map< SgDirectedGraphNode*, multitype> tabletype;
-  //typedef __gnu_cxx::hash_multimap< std::pair<X86RegisterClass, int> , SgDirectedGraphNode*> multitype;
-  typedef rose_hash::hash_map< SgDirectedGraphNode*, multitype> tabletype;
+  typedef std::multimap< std::pair<X86RegisterClass, int>, SgGraphNode*> multitype;
+  //typedef std::map< SgGraphNode*, multitype> tabletype;
+  //typedef __gnu_cxx::hash_multimap< std::pair<X86RegisterClass, int> , SgGraphNode*> multitype;
+  typedef rose_hash::hash_map< SgGraphNode*, multitype,rose_hash::hash_graph_node,rose_hash::eqstr_graph_node> tabletype;
 
 
   // statistics
   int nrOfMemoryWrites;
   int nrOfRegisterWrites;
 
-  std::set < SgDirectedGraphNode* > 
+  std::set < SgGraphNode* >
     getAnyFor(const multitype* multi, std::pair<X86RegisterClass, int> initName);
 
  public:
@@ -91,22 +98,22 @@ class RoseBin_DataFlowAbstract {
   tabletype usetable;
   RoseBin_Graph* vizzGraph;
 
-  RoseBin_DataFlowAbstract() {}
+ RoseBin_DataFlowAbstract(GraphAlgorithms* algo) {g_algo=algo;}
   virtual ~RoseBin_DataFlowAbstract() {}
 
-  virtual bool run(std::string& name, SgDirectedGraphNode* node,SgDirectedGraphNode* before  ) =0;
-  virtual bool runEdge(SgDirectedGraphNode* node, SgDirectedGraphNode* next)=0;
+  virtual bool run(std::string& name, SgGraphNode* node,SgGraphNode* before  ) =0;
+  virtual bool runEdge(SgGraphNode* node, SgGraphNode* next)=0;
   virtual void init(RoseBin_Graph* vg)=0;
 
-  SgDirectedGraphNode* getPredecessor(SgDirectedGraphNode* node);
-  SgDirectedGraphNode* getSuccessor(SgDirectedGraphNode* node);
+  SgGraphNode* getPredecessor(SgGraphNode* node);
+  SgGraphNode* getSuccessor(SgGraphNode* node);
 
   int getDefinitionSize() {
     return deftable.size();
   }
   int getUsageSize() { return usetable.size();}
 
-  int64_t check_isRegister(SgDirectedGraphNode* node,
+  int64_t check_isRegister(SgGraphNode* node,
 			   SgAsmx86Instruction* inst,
 			   std::pair<X86RegisterClass, int> codeSearch,
 			   bool rightSide,
@@ -127,14 +134,14 @@ class RoseBin_DataFlowAbstract {
 		       uint64_t &qw_val) {};
 
   int64_t trackValueForRegister(
-				SgDirectedGraphNode* node,
+				SgGraphNode* node,
 				std::pair<X86RegisterClass, int>  codeSearch,
 				bool& cantTrack,
 				SgAsmx86RegisterReferenceExpression* refExpr_rightHand);
-  
 
-  std::pair<X86RegisterClass, int>  
-    check_isRegister(SgDirectedGraphNode* node, SgAsmx86Instruction* inst, 
+
+  std::pair<X86RegisterClass, int>
+    check_isRegister(SgGraphNode* node, SgAsmx86Instruction* inst,
 		     bool rightSide, bool& memoryReference );
 
   SgAsmExpression* getOperand(SgAsmx86Instruction* inst,
@@ -146,30 +153,30 @@ class RoseBin_DataFlowAbstract {
   bool altersMultipleRegisters(std::vector<std::pair<X86RegisterClass, int> >& codes,
 			      SgAsmx86Instruction* inst);
 
-  bool sameParents(SgDirectedGraphNode* node, SgDirectedGraphNode* next);
+  bool sameParents(SgGraphNode* node, SgGraphNode* next);
 
   void printDefTableToFile(std::string file);
 
-  std::set < SgDirectedGraphNode* > 
-    getDefFor(SgDirectedGraphNode* node, std::pair<X86RegisterClass, int>  initName) ;
+  std::set < SgGraphNode* >
+    getDefFor(SgGraphNode* node, std::pair<X86RegisterClass, int>  initName) ;
 
-  std::set < SgDirectedGraphNode* > 
-    getUseFor(SgDirectedGraphNode* node, std::pair<X86RegisterClass, int>  initName);
+  std::set < SgGraphNode* >
+    getUseFor(SgGraphNode* node, std::pair<X86RegisterClass, int>  initName);
 
 
-    const std::multimap < std::pair<X86RegisterClass, int>  , SgDirectedGraphNode* >& 
-    getDefMultiMapFor(SgDirectedGraphNode* node);
+    const std::multimap < std::pair<X86RegisterClass, int>  , SgGraphNode* >&
+    getDefMultiMapFor(SgGraphNode* node);
 
-    const std::multimap< std::pair<X86RegisterClass, int>  , SgDirectedGraphNode* > &
-    getUseMultiMapFor(SgDirectedGraphNode* node);
+    const std::multimap< std::pair<X86RegisterClass, int>  , SgGraphNode* > &
+    getUseMultiMapFor(SgGraphNode* node);
 
     uint64_t getValueOfInstr( SgAsmx86Instruction* inst,  bool rightSide );
 
 
   RoseBin_Variable* createVariable(uint64_t position,
-				   std::vector<uint64_t> pos, 
+				   std::vector<uint64_t> pos,
 				   std::string name, RoseBin_DataTypes::DataTypes type, std::string description,
-				   int length, 
+				   int length,
 				   std::vector<uint64_t> value,
 				   bool memoryRef);
 

@@ -13,14 +13,14 @@
 using namespace std;
 #include <cstdlib>
 
-std::set < SgDirectedGraphNode* >
-RoseBin_DataFlowAnalysis::getDefFor(SgDirectedGraphNode* node, std::pair<X86RegisterClass, int> initName) {
+std::set < SgGraphNode* >
+RoseBin_DataFlowAnalysis::getDefFor(SgGraphNode* node, std::pair<X86RegisterClass, int> initName) {
   return defuse->getDefFor(node, initName);
 }
 
-std::set < SgDirectedGraphNode* >
+std::set < SgGraphNode* >
 RoseBin_DataFlowAnalysis::getDefFor( uint64_t inst, std::pair<X86RegisterClass, int> initName) {
-  SgDirectedGraphNode* node = getNodeFor(inst);
+  SgGraphNode* node = getNodeFor(inst);
   return defuse->getDefFor(node, initName);
 }
 
@@ -28,14 +28,14 @@ RoseBin_DataFlowAnalysis::getDefFor( uint64_t inst, std::pair<X86RegisterClass, 
 std::set < uint64_t >
 RoseBin_DataFlowAnalysis::getDefForInst( uint64_t inst, std::pair<X86RegisterClass, int> initName) {
   std::set <uint64_t> hexSet;
-  SgDirectedGraphNode* node = getNodeFor(inst);
+  SgGraphNode* node = getNodeFor(inst);
   if (node==NULL)
     cerr << "ERROR: getDefForInst " << RoseBin_support::HexToString(inst) << "  does not exist! " << endl;
 
-  set<SgDirectedGraphNode*> nodes = defuse->getDefFor(node, initName);
-  set<SgDirectedGraphNode*>::iterator it = nodes.begin();
+  set<SgGraphNode*> nodes = defuse->getDefFor(node, initName);
+  set<SgGraphNode*>::iterator it = nodes.begin();
   for (;it!=nodes.end();++it) {
-    SgDirectedGraphNode* n = *it;
+    SgGraphNode* n = *it;
     if (n) {
       SgAsmInstruction* instNode = isSgAsmInstruction(n->get_SgNode());
       if (instNode) {
@@ -52,9 +52,9 @@ RoseBin_DataFlowAnalysis::getDefForInst( uint64_t inst, std::pair<X86RegisterCla
 
 
 bool
-RoseBin_DataFlowAnalysis::containsHash( rose_hash::hash_set < SgDirectedGraphNode*>& vec,
-					SgDirectedGraphNode* node) {
-  rose_hash::hash_set < SgDirectedGraphNode*>:: iterator it = vec.find(node);
+RoseBin_DataFlowAnalysis::containsHash( nodeHashSetType& vec,
+					SgGraphNode* node) {
+   nodeHashSetType:: const_iterator it = vec.find(node);
   if (it!=vec.end())
     return true;
   return false;
@@ -73,16 +73,22 @@ void
 RoseBin_DataFlowAnalysis::traverseEdges(RoseBin_DataFlowAbstract* analysis) {
   if (RoseBin_support::DEBUG_MODE_MIN())
     cerr << " >> Traversing over all edges and adding label ... " << endl;
-  typedef rose_hash::hash_multimap < SgDirectedGraphNode*, SgDirectedGraphEdge*> edgesM;
-  const edgesM& edges = vizzGraph->edges;
-  edgesM::const_iterator it = edges.begin();
+  //typedef rose_graph_integer_edge_hash_multimap edgesM;
+  rose_graph_integer_edge_hash_multimap edges = vizzGraph->get_node_index_to_edge_multimap_edgesOut();
+  rose_graph_integer_edge_hash_multimap::const_iterator it = edges.begin();
   for (;it!=edges.end();++it) {
-    SgDirectedGraphNode* src = it->first;
-    SgDirectedGraphEdge* edge = it->second;
-    SgDirectedGraphNode* trg = NULL;
+     int index  = it->first;
+    SgGraphNode* src = NULL;
+    rose_graph_integer_node_hash_map::iterator nIT = vizzGraph->get_node_index_to_node_map().find(index);
+    if (nIT!=vizzGraph->get_node_index_to_node_map().end())
+      src=nIT->second;
+    ROSE_ASSERT(src);
+    //   SgGraphNode* src = it->first;
+    SgDirectedGraphEdge* edge = isSgDirectedGraphEdge(it->second);
+    SgGraphNode* trg = NULL;
     if (edge)
-      trg = isSgDirectedGraphNode(edge->get_to());
-    if (vizzGraph->isValidCFGEdge(trg, src))
+      trg = isSgGraphNode(edge->get_to());
+    if (g_algo->isValidCFGEdge(trg, src))
       analysis->runEdge(src,trg);
   }
 }
@@ -91,9 +97,9 @@ void
 RoseBin_DataFlowAnalysis::traverseNodes(RoseBin_DataFlowAbstract* analysis) {
   if (RoseBin_support::DEBUG_MODE_MIN())
     cerr << " >> Traversing over all nodes and adding label ... " << endl;
-  nodeType::iterator itn = vizzGraph->nodes.begin();
-  for (; itn!=vizzGraph->nodes.end();++itn) {
-    SgDirectedGraphNode* node = isSgDirectedGraphNode(itn->second);
+  rose_graph_integer_node_hash_map::iterator itn = vizzGraph->get_node_index_to_node_map().begin();
+  for (; itn!=vizzGraph->get_node_index_to_node_map().end();++itn) {
+    SgGraphNode* node = isSgGraphNode(itn->second);
     ROSE_ASSERT(node);
     SgNode* internal = node->get_SgNode();
     ROSE_ASSERT(internal);
@@ -103,15 +109,16 @@ RoseBin_DataFlowAnalysis::traverseNodes(RoseBin_DataFlowAbstract* analysis) {
       RoseBin_Variable* var = analysis->getVariable(address);
       if (var) {
 	std::string var_str = var->toString();
-	node->append_properties(SB_Graph_Def::variable,var_str);
+	node->append_properties(SgGraph::variable,var_str);
       }
     }
   }
 }
 
 bool
-RoseBin_DataFlowAnalysis::existsPath(SgDirectedGraphNode* start, SgDirectedGraphNode* end) {
+RoseBin_DataFlowAnalysis::existsPath(SgGraphNode* start, SgGraphNode* end) {
   // make sure its not a SgAsmCall and the next node is a DirectedControlFlowEdge
+  ROSE_ASSERT(g_algo->info);
   bool exists = false;
   ROSE_ASSERT(start);
   ROSE_ASSERT(end);
@@ -119,7 +126,7 @@ RoseBin_DataFlowAnalysis::existsPath(SgDirectedGraphNode* start, SgDirectedGraph
   SgAsmx86Instruction* endAsm = isSgAsmx86Instruction(end);
   if (next && endAsm) {
     while (next!=endAsm) {
-      next = isSgAsmx86Instruction(next->cfgBinFlowOutEdge(info));
+      next = isSgAsmx86Instruction(next->cfgBinFlowOutEdge(g_algo->info));
       if (next==NULL)
 	break;
       if ((next->get_kind() == x86_call || next->get_kind() == x86_ret) && next!=endAsm)
@@ -168,7 +175,7 @@ RoseBin_DataFlowAnalysis::exceptionCall(SgAsmx86Instruction* call) {
  * comes to a fixpoint
  ***********************************************************************/
 void
-RoseBin_DataFlowAnalysis::traverseGraph(vector <SgDirectedGraphNode*>& rootNodes,
+RoseBin_DataFlowAnalysis::traverseGraph(vector <SgGraphNode*>& rootNodes,
 					RoseBin_DataFlowAbstract* analysis,
 					bool interprocedural){
   if (RoseBin_support::DEBUG_MODE_MIN())
@@ -178,21 +185,21 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgDirectedGraphNode*>& rootNodes
   int funcNr =0;
   // ---------------------------------------------------------------------
   // stores the nodes that still needs to be visited
-  //  vector<SgDirectedGraphNode*> worklist;
-  deque<SgDirectedGraphNode*> worklist;
-  rose_hash::hash_set < SgDirectedGraphNode*> worklist_hash;
+  //  vector<SgGraphNode*> worklist;
+  deque<SgGraphNode*> worklist;
+  nodeHashSetType worklist_hash;
   // a vector of successors of the current node
-  vector<SgDirectedGraphNode*> successors;
+  vector<SgGraphNode*> successors;
   // ---------------------------------------------------------------------
 
 
   // iterate through all functions
-  vector<SgDirectedGraphNode*>::iterator it = rootNodes.begin();
+  vector<SgGraphNode*>::iterator it = rootNodes.begin();
   for (; it!=rootNodes.end();++it) {
     // current node
-    SgDirectedGraphNode* node = *it;
+    SgGraphNode* node = *it;
 
-    string func_name = vizzGraph->getProperty(SB_Graph_Def::name, node);
+    string func_name = vizzGraph->getProperty(SgGraph::name, node);
     RoseBin_support::checkText(func_name);
     funcNr++;
     if (RoseBin_support::DEBUG_MODE()) {
@@ -217,7 +224,7 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgDirectedGraphNode*>& rootNodes
     worklist_hash.insert(node);
     visited.insert(node);
     visitedCounter[node] = 1;
-    vector <SgDirectedGraphNode*> pre;
+    vector <SgGraphNode*> pre;
     // while there are still graph nodes in the worklist do
 
     while (worklist.size()>0) {
@@ -230,7 +237,7 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgDirectedGraphNode*>& rootNodes
 
       worklist_hash.erase(node);
       // get the successors of the current node and store in successors vector
-      string name = vizzGraph->getProperty(SB_Graph_Def::name, node);
+      string name = vizzGraph->getProperty(SgGraph::name, node);
 
       //if (RoseBin_support::DEBUG_MODE_MIN() && node)
       //	if (node->get_SgNode())
@@ -254,30 +261,33 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgDirectedGraphNode*>& rootNodes
 	cout << "\n evaluating: " << name << endl;
       // do something with the current node
       // e.g. checkVariables(name, node);
-      SgDirectedGraphNode* nodeBefore= NULL;
-      rose_hash::hash_map <SgDirectedGraphNode*, SgDirectedGraphNode*>::iterator it =
+      SgGraphNode* nodeBefore= NULL;
+      BeforeMapType::const_iterator it =
 	nodeBeforeMap.find(node);
       if (it!=nodeBeforeMap.end())
 	nodeBefore = it->second;
       // successor vector is empty on each new node
       successors.clear();
-      vizzGraph->getSuccessors(node, successors);
+      ROSE_ASSERT(isSgIncidenceDirectedGraph(vizzGraph));
+      isSgIncidenceDirectedGraph(vizzGraph)->getSuccessors(node, successors);
 
       hasChanged = analysis->run(name, node, nodeBefore);
 
       // append the successors to the worklist
       if (RoseBin_support::DEBUG_MODE())
 	cout << ">> getting successors  (" << successors.size() << ") for : " << name << endl;
-      vector<SgDirectedGraphNode*>::iterator succ = successors.begin();
+      //	if (successors.size()==0)
+      //	  cout << "PROBLEM ..................................................... : " << endl;
+      vector<SgGraphNode*>::iterator succ = successors.begin();
       for (;succ!=successors.end();++succ) {
 	// for each successor do...
-	SgDirectedGraphNode* next = *succ;
+	SgGraphNode* next = *succ;
         SgAsmx86Instruction* nodeN = isSgAsmx86Instruction(node->get_SgNode());
         //if (!nodeN) continue;
         SgAsmx86Instruction* nextN = isSgAsmx86Instruction(next->get_SgNode());
         //if (!nextN) continue;
 
-	string name_n = vizzGraph->getProperty(SB_Graph_Def::name, next);
+	string name_n = vizzGraph->getProperty(SgGraph::name, next);
 
 
 
@@ -301,7 +311,7 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgDirectedGraphNode*>& rootNodes
 	//bool sameParent = analysis->sameParents(node, next);
 
 	bool validNode=false;
-	if (vizzGraph->isValidCFGEdge(next, node) || exceptionCallNode)
+	if (g_algo->isValidCFGEdge(next, node) || exceptionCallNode)
 	  validNode = true;
 
 	// debug ------------------------
@@ -329,7 +339,7 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgDirectedGraphNode*>& rootNodes
 	    visited.insert(next);
 	    nodeBeforeMap[next]=node;
 	    visitedCounter[next]=1;
-	    vizzGraph->setProperty(SB_Graph_Def::visitedCounter, next, RoseBin_support::ToString(1));
+	    vizzGraph->setProperty(SgGraph::visitedCounter, next, RoseBin_support::ToString(1));
 	    if (!containsHash(worklist_hash,next)) {
 	      // add next node only if the next node
 	      if (RoseBin_support::DEBUG_MODE())
@@ -347,7 +357,7 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgDirectedGraphNode*>& rootNodes
 
 	    if (hasChanged) {
 	      visitedCounter[next]=++nr;
-	      vizzGraph->setProperty(SB_Graph_Def::visitedCounter, next, RoseBin_support::ToString(nr));
+	      vizzGraph->setProperty(SgGraph::visitedCounter, next, RoseBin_support::ToString(nr));
 	      if (RoseBin_support::DEBUG_MODE())
 		cout << " has changed : " << RoseBin_support::resBool(hasChanged) <<
 		  "  -- interprocedural : " << RoseBin_support::resBool(interprocedural) <<
@@ -391,8 +401,7 @@ void RoseBin_DataFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multied
   fileName=fileN;
   double start=0;
   double ends=0;
-  vizzGraph->nodes.clear();
-  vizzGraph->edges.clear();
+  clearMaps();
 
   func_nr=0;
   //  ROSE_ASSERT(roseBin);
@@ -401,7 +410,7 @@ void RoseBin_DataFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multied
     cerr << "\n ********************** running DataFlowAnalysis ... " << fileName << endl;
 
   // create a new Dataflow Graph
-  vizzGraph->graph   = new SgDirectedGraph(analysisName,analysisName);
+  vizzGraph->graph   = new SgIncidenceDirectedGraph(analysisName);
   nr_target_missed=0;
   if (RoseBin_support::DEBUG_MODE_MIN())
     cerr << " running CFG in DataFlowAnalysis ... " << endl;
@@ -417,7 +426,7 @@ void RoseBin_DataFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multied
   createInstToNodeTable();
 
   // get the rootnodes
-  vector<SgDirectedGraphNode*> rootNodes;
+  vector<SgGraphNode*> rootNodes;
   getRootNodes(rootNodes);
   if (RoseBin_support::DEBUG_MODE_MIN()) {
     cerr << " collecting root nodes for dfa ... " ;
@@ -467,8 +476,9 @@ void RoseBin_DataFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multied
   }
   cerr << " defuse defsize " << defuse->getDefinitionSize() << endl;
 
+  ROSE_ASSERT(g_algo->info);
   // variable analysis --------------------------------------------------
-  variableAnalysis = new RoseBin_VariableAnalysis(defuse);
+  variableAnalysis = new RoseBin_VariableAnalysis(defuse,g_algo);
   cerr << " variableAnalysis defsize " << variableAnalysis->getDefinitionSize() << endl;
   variableAnalysis->init(vizzGraph);
   init();
@@ -486,14 +496,15 @@ void RoseBin_DataFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multied
   if (RoseBin_support::DEBUG_MODE_MIN())
     cerr << " ... Staring Emulation Analysis " << endl;
   // emulation analysis
-  RoseBin_DataFlowAbstract* emulate = new RoseBin_Emulate();
+  ROSE_ASSERT(g_algo->info);
+  RoseBin_DataFlowAbstract* emulate = new RoseBin_Emulate(g_algo);
   emulate->init(vizzGraph);
   init();
   //traverseGraph(rootNodes, emulate, interprocedural);
 
 
   int nrOfFunc = rootNodes.size();
-  int nrOfInst = vizzGraph->nodes.size() - nrOfFunc;
+  int nrOfInst = vizzGraph->get_node_index_to_node_map().size() - nrOfFunc;
   if (RoseBin_support::DEBUG_MODE_MIN()) {
     cerr << " ***** STATISTICS : " << endl;
     cerr << " Nr of Nodes Visited during DFA : " << nrOfNodesVisited << endl;
@@ -513,8 +524,8 @@ void RoseBin_DataFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multied
     cerr << " ********************** saving to file ... " << endl;
   }
 
-    nrNodes=vizzGraph->nodes.size();
-    nrEdges=vizzGraph->edges.size();
+    nrNodes=vizzGraph->get_node_index_to_node_map().size();
+    nrEdges=vizzGraph->get_node_index_to_edge_multimap_edgesOut().size();
     ends = RoseBin_support::getTime();
     if (RoseBin_support::DEBUG_MODE_MIN())
       cerr << " DFG runtime : " << (double) (ends - start)   << " sec" << endl;
@@ -534,9 +545,10 @@ void RoseBin_DataFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multied
 
     //  vizzGraph->get_nodes().clear();
 
-    vizzGraph->printEdges(this,myfile, multiedge);
+    ROSE_ASSERT(g_algo->info);
+    vizzGraph->printEdges(g_algo->info, this,myfile, multiedge);
 
-    //vizzGraph->edges.clear();
+    //vizzGraph->get_edges()->get_edges().clear();
 
 
     vizzGraph->printEpilog(myfile);

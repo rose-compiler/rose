@@ -28,7 +28,9 @@ void
 RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) {
   //cerr << " Preparing graph - Nr of Nodes : " << nodes.size() << endl;
 
-
+  //  rose_graph_integer_node_hash_map node_index_to_node_map;
+  //rose_graph_hash_multimap& nodes = get_nodes()->get_nodes();
+	rose_graph_integer_node_hash_map nodes = get_node_index_to_node_map();
   int counter=nodes.size();
 
   // DQ (4/23/2009): Added a typedef to refactor the specification of the type (and add the explicit reference to the hash function).
@@ -36,21 +38,27 @@ RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) {
     typedef rose_hash::hash_set <std::string,rose_hash::hash_string> funcNamesType;
     funcNamesType funcNames;
 
-    nodeType resultSet;
+    rose_graph_integer_node_hash_map resultSet;
 
   typedef std::multimap < std::string,
-    std::pair <std::string, SgDirectedGraphNode*> > callNodeType;
+    std::pair <int, SgGraphNode*> > callNodeType;
   callNodeType callMap;
   callMap.clear();
 
-  nodeType::iterator itn2 = nodes.begin();
+  // rose_graph_hash_multimap::iterator itn2 = nodes.begin();
+  rose_graph_integer_node_hash_map::iterator itn2 = nodes.begin();
   for (; itn2!=nodes.end();++itn2) {
     counter--;
-    pair<string, SgDirectedGraphNode*> nt = *itn2;
-    string hex_address = itn2->first;
-    SgDirectedGraphNode* node = isSgDirectedGraphNode(itn2->second);
+    pair<int, SgGraphNode*> nt = *itn2;
+    //string hex_address = itn2->first;
+    int node_nr = itn2->first;
+    SgGraphNode* node = isSgGraphNode(itn2->second);
+    string hex_address = node->get_name();
+    //ROSE_ASSERT(hex_address==hex_addr_tmp);
+
     SgNode* internal = node->get_SgNode();
     SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(internal);
+    ROSE_ASSERT(func);
     string funcName = func->get_name();
     int pos = funcName.find("+");
     if (pos<=0) pos=funcName.find("-");
@@ -68,7 +76,8 @@ RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) {
       if ((counter % 10000)==0)
 	cout << " preparing function " << counter << endl;
     if (!found)
-      resultSet[itn2->first]=itn2->second;
+//      resultSet[node_nr]=node;
+	resultSet.insert(make_pair(node_nr,node));
     else
       callMap.insert(make_pair ( funcName, nt )) ;
   }
@@ -78,10 +87,13 @@ RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) {
 
   //cerr << " Writing graph to DOT - Nr of Nodes : " << nodes.size() << endl;
   int funcNr=0;
-  nodeType::iterator itn = resultSet.begin();
+  rose_graph_integer_node_hash_map::iterator itn = resultSet.begin();
   for (; itn!=resultSet.end();++itn) {
-    string hex_address = itn->first;
-    SgDirectedGraphNode* node = isSgDirectedGraphNode(itn->second);
+    //string hex_address = itn->first;
+    SgGraphNode* node = isSgGraphNode(itn->second);
+    string hex_address = node->get_name();
+    //ROSE_ASSERT(hex_address==hex_addr_tmp);
+
     SgNode* internal = node->get_SgNode();
     SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(internal);
     ROSE_ASSERT(node);
@@ -97,19 +109,19 @@ RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) {
       map < int , string> node_p = node->get_properties();
       map < int , string>::iterator prop = node_p.begin();
       string name = "noname";
-      string type = node->get_type();
+      string type = "removed";//node->get_type();
       for (; prop!=node_p.end(); ++prop) {
 	int addr = prop->first;
 	// cerr << " dot : property for addr : " << addr << " and node " << hex_address << endl;
-	if (addr==SB_Graph_Def::nodest_jmp)
+	if (addr==SgGraph::nodest_jmp)
 	  nodest_jmp = true;
-	else if (addr==SB_Graph_Def::itself_call)
+	else if (addr==SgGraph::itself_call)
 	  error = true;
-	else if (addr==SB_Graph_Def::nodest_call)
+	else if (addr==SgGraph::nodest_call)
 	  nodest_call = true;
-	else if (addr==SB_Graph_Def::interrupt)
+	else if (addr==SgGraph::interrupt)
 	  interrupt = true;
-	else if (addr==SB_Graph_Def::name)
+	else if (addr==SgGraph::name)
 	  name = prop->second;
       }
 
@@ -150,23 +162,24 @@ RoseBin_DotGraph::printNodesCallGraph(std::ofstream& myfile) {
 
       callNodeType::iterator inv = callMap.lower_bound(funcName);
       for (;inv!=callMap.upper_bound(funcName);++inv) {
-	pair <std::string, SgDirectedGraphNode*>  itn = inv->second;
-	string hex_address_n = itn.first;
-	SgDirectedGraphNode* node = isSgDirectedGraphNode(itn.second);
+	pair <int, SgGraphNode*>  itn = inv->second;
+	//	string hex_address_n = itn.first;
+	SgGraphNode* node = isSgGraphNode(itn.second);
+	string hex_address_n = node->get_name();
 	SgNode* internal = node->get_SgNode();
 	SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(internal);
 	string name_n="noname";
 	if (func)
 	  name_n=func->get_name();
 
-	string type_n = node->get_type();
+	string type_n = "removed";//node->get_type();
 	map < int , string> node_p = node->get_properties();
 	map < int , string>::iterator prop = node_p.begin();
 	/*
 	for (; prop!=node_p.end(); ++prop) {
 	  int addr = prop->first;
 	  // cerr << " dot : property for addr : " << addr << " and node " << hex_address << endl;
-	  	  if (addr==SB_Graph_Def::name)
+	  	  if (addr==SgGraph::name)
 	  name_n = prop->second;
 	}
 	*/
@@ -197,14 +210,23 @@ RoseBin_DotGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow, bool forw
     return;
   }
   //cerr << " Preparing graph - Nr of Nodes : " << nodes.size() << "  forward analysis : " << forward_analysis << endl;
+  //  SgGraphNodeList* gnodes = get_nodes();
+
+  //  rose_graph_hash_multimap& nodes = get_nodes()->get_nodes();
+  rose_graph_integer_node_hash_map nodes = get_node_index_to_node_map();
+
   int counter=nodes.size();
   inverse_nodesMap.clear();
-  nodeType::iterator itn2 = nodes.begin();
+  //rose_graph_hash_multimap::iterator itn2 = nodes.begin();
+  rose_graph_integer_node_hash_map::iterator itn2 = nodes.begin();
   for (; itn2!=nodes.end();++itn2) {
     counter--;
-    pair<string, SgDirectedGraphNode*> nt = *itn2;
-    string hex_address = itn2->first;
-    SgDirectedGraphNode* node = isSgDirectedGraphNode(itn2->second);
+    pair<int, SgGraphNode*> nt = *itn2;
+    //string hex_address = itn2->first;
+    SgGraphNode* node = itn2->second;
+    string hex_address = node->get_name();
+    //ROSE_ASSERT(hex_address==hex_addr_tmp);
+
     SgNode* internal = node->get_SgNode();
     SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(internal);
     if (func)
@@ -230,10 +252,13 @@ RoseBin_DotGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow, bool forw
 
   //cerr << " Writing graph to DOT - Nr of Nodes : " << nodes.size() << endl;
   int funcNr=0;
-  nodeType::iterator itn = nodes.begin();
+
+  //  rose_graph_hash_multimap::iterator itn = nodes.begin();
+  rose_graph_integer_node_hash_map::iterator itn = nodes.begin();
   for (; itn!=nodes.end();++itn) {
-    string hex_address = itn->first;
-    SgDirectedGraphNode* node = isSgDirectedGraphNode(itn->second);
+    //    string hex_address = itn->first;
+    SgGraphNode* node = isSgGraphNode(itn->second);
+    string hex_address = node->get_name();
     SgNode* internal = node->get_SgNode();
     SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(internal);
     ROSE_ASSERT(node);
@@ -249,19 +274,19 @@ RoseBin_DotGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow, bool forw
       map < int , string> node_p = node->get_properties();
       map < int , string>::iterator prop = node_p.begin();
       string name = "noname";
-      string type = node->get_type();
+      string type = "removed";//node->get_type();
       for (; prop!=node_p.end(); ++prop) {
 	int addr = prop->first;
 	// cerr << " dot : property for addr : " << addr << " and node " << hex_address << endl;
-	if (addr==SB_Graph_Def::nodest_jmp)
+	if (addr==SgGraph::nodest_jmp)
 	  nodest_jmp = true;
-	else if (addr==SB_Graph_Def::itself_call)
+	else if (addr==SgGraph::itself_call)
 	  error = true;
-	else if (addr==SB_Graph_Def::nodest_call)
+	else if (addr==SgGraph::nodest_call)
 	  nodest_call = true;
-	else if (addr==SB_Graph_Def::interrupt)
+	else if (addr==SgGraph::interrupt)
 	  interrupt = true;
-	else if (addr==SB_Graph_Def::name)
+	else if (addr==SgGraph::name)
 	  name = prop->second;
       }
 
@@ -308,11 +333,12 @@ RoseBin_DotGraph::printInternalNodes(    bool dfg, bool forward_analysis,
 
   inverseNodeType::iterator inv = inverse_nodesMap.lower_bound(p_binFunc);
   for (;inv!=inverse_nodesMap.upper_bound(p_binFunc);++inv) {
-    pair <std::string, SgDirectedGraphNode*>  itn = inv->second;
+    pair <int, SgGraphNode*>  itn = inv->second;
 
-    string hex_address = itn.first;
-    SgDirectedGraphNode* node = isSgDirectedGraphNode(itn.second);
-    string type = node->get_type();
+    //    string hex_address = itn.first;
+    SgGraphNode* node = isSgGraphNode(itn.second);
+    string hex_address = node->get_name();
+    string type = "removed";//node->get_type();
 
 
     string name = "noname";
@@ -346,41 +372,41 @@ RoseBin_DotGraph::printInternalNodes(    bool dfg, bool forward_analysis,
     for (; prop!=node_p.end(); ++prop) {
       int addr = prop->first;
       //      cerr << " dot : property for addr : " << addr << " and node " << hex_address << " is " << prop->second << endl;
-      if (addr==SB_Graph_Def::name)
+      if (addr==SgGraph::name)
 	name = prop->second;
-      else if (addr==SB_Graph_Def::eval)
+      else if (addr==SgGraph::eval)
 	eval = prop->second;
-      else if (addr==SB_Graph_Def::regs)
+      else if (addr==SgGraph::regs)
 	regs = prop->second;
-      else if (addr==SB_Graph_Def::variable)
+      else if (addr==SgGraph::variable)
 	variable = prop->second;
-      else if (addr==SB_Graph_Def::nodest_jmp)
+      else if (addr==SgGraph::nodest_jmp)
 	nodest_jmp = true;
-      else if (addr==SB_Graph_Def::itself_call)
+      else if (addr==SgGraph::itself_call)
 	error = true;
-      else if (addr==SB_Graph_Def::dfa_bufferoverflow) {
+      else if (addr==SgGraph::dfa_bufferoverflow) {
 	bufferoverflow = true;
 	dfa_variable = prop->second;
-      } else if (addr==SB_Graph_Def::nodest_call)
+      } else if (addr==SgGraph::nodest_call)
 	nodest_call = true;
-      else if (addr==SB_Graph_Def::interrupt)
+      else if (addr==SgGraph::interrupt)
 	interrupt = true;
-      else if (addr==SB_Graph_Def::done)
+      else if (addr==SgGraph::done)
 	checked = true;
-      else if (addr==SB_Graph_Def::dfa_standard)
+      else if (addr==SgGraph::dfa_standard)
 	dfa_standard = true;
-      else if (addr==SB_Graph_Def::dfa_resolved_func) {
+      else if (addr==SgGraph::dfa_resolved_func) {
 	dfa_resolved_func = true;
 	dfa_info = prop->second;
-      } else if (addr==SB_Graph_Def::dfa_unresolved_func) {
+      } else if (addr==SgGraph::dfa_unresolved_func) {
 	dfa_unresolved_func = true;
 	dfa_info = prop->second;
-      } else if (addr==SB_Graph_Def::dfa_variable) {
+      } else if (addr==SgGraph::dfa_variable) {
 	dfa_variable = prop->second;
 	dfa_variable_found = true;
-      } else if (addr==SB_Graph_Def::dfa_conditional_def) {
+      } else if (addr==SgGraph::dfa_conditional_def) {
 	dfa_conditional = true;
-      } else if (addr==SB_Graph_Def::visitedCounter) {
+      } else if (addr==SgGraph::visitedCounter) {
 	visitedCounter = prop->second;
       } else {
 	cerr << " *************** dotgraph: unknown property found :: " << addr << endl;
@@ -476,7 +502,7 @@ RoseBin_DotGraph::printInternalNodes(    bool dfg, bool forward_analysis,
       	cerr << " WARNING ................... SOMETHING IN DOT GENERATION WENT WRONG. ALLOWING THIS FOR NOW . " << endl;
       	error=true;
       }
-      //ROSE_ASSERT(hex_name==nameL);
+      ROSE_ASSERT(hex_name==nameL);
     }
 	if (!error)
     myfile << "\"" << hex_address << "\"[label=\""  << name << "\\n" << dfa_info << dfa_variable <<
@@ -487,53 +513,62 @@ RoseBin_DotGraph::printInternalNodes(    bool dfg, bool forward_analysis,
 }
 
 
-void RoseBin_DotGraph::printEdges( bool forward_analysis, std::ofstream& myfile, bool mergedEdges) {
+void RoseBin_DotGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info,
+		bool forward_analysis, std::ofstream& myfile, bool mergedEdges) {
+  ROSE_ASSERT(info);
   if (mergedEdges) {
     createUniqueEdges();
-    printEdges_single(forward_analysis, myfile);
+    printEdges_single(info, forward_analysis, myfile);
   } else
-    printEdges_multiple(forward_analysis, myfile);
+    printEdges_multiple(info, forward_analysis, myfile);
 }
 
-void RoseBin_DotGraph::printEdges_single( bool forward_analysis, std::ofstream& myfile) {
+void RoseBin_DotGraph::printEdges_single( VirtualBinCFG::AuxiliaryInformation* info,
+		bool forward_analysis, std::ofstream& myfile) {
   // traverse edges and visualize results of graph
+  //  SgGraphEdgeList* gedges = get_edges();
+  rose_graph_integer_edge_hash_multimap edges =get_node_index_to_edge_multimap_edgesOut();
   cerr << " Writing singleEdge graph to DOT - Nr of unique Edges : " << unique_edges.size() << " compare to edges: " <<
     edges.size() << endl;
   int edgeNr=0;
-  edgeTypeUnique::iterator it = unique_edges.begin();
+  rose_graph_integer_edge_hash_multimap::iterator it = unique_edges.begin();
   for (; it!=unique_edges.end();++it) {
     edgeNr++;
     if ((edgeNr % 20000) == 0)
       cout << " Writing graph to DOT - Nr of Edges : " << edges.size() << "/" << edgeNr << endl;
-    SgDirectedGraphEdge* edge = it->second;
-    printEdges(forward_analysis, myfile, edge);
+    SgDirectedGraphEdge* edge = isSgDirectedGraphEdge(it->second);
+    printEdges(info, forward_analysis, myfile, edge);
   }
   //  nodesMap.clear();
 }
 
-void RoseBin_DotGraph::printEdges_multiple( bool forward_analysis, std::ofstream& myfile) {
+void RoseBin_DotGraph::printEdges_multiple( VirtualBinCFG::AuxiliaryInformation* info,
+		bool forward_analysis, std::ofstream& myfile) {
   // traverse edges and visualize results of graph
+  //  SgGraphEdgeList* gedges = get_edges();
+	rose_graph_integer_edge_hash_multimap edges =get_node_index_to_edge_multimap_edgesOut();
   cerr << " Writing multiEdge graph to DOT - Nr of unique Edges : " << unique_edges.size() << " compare to edges: " <<
     edges.size() << endl;
   int edgeNr=0;
-  edgeType::iterator it = edges.begin();
+  rose_graph_integer_edge_hash_multimap::iterator it = edges.begin();
   for (; it!=edges.end();++it) {
     edgeNr++;
     if ((edgeNr % 20000) == 0)
       cout << " Writing graph to DOT - Nr of Edges : " << edges.size() << "/" << edgeNr << endl;
-    SgDirectedGraphEdge* edge = it->second;
-    printEdges(forward_analysis, myfile, edge);
+    SgDirectedGraphEdge* edge = isSgDirectedGraphEdge(it->second);
+    printEdges(info, forward_analysis, myfile, edge);
   }
   //nodesMap.clear();
 }
 
 
-void RoseBin_DotGraph::printEdges( bool forward_analysis, std::ofstream& myfile, SgDirectedGraphEdge* edge ) {
+void RoseBin_DotGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info,
+		bool forward_analysis, std::ofstream& myfile, SgDirectedGraphEdge* edge ) {
   // traverse edges and visualize results of graph
   /*
     cerr << " Writing graph to DOT - Nr of Edges : " << edges.size() << endl;
     int edgeNr=0;
-    edgeType::iterator it = edges.begin();
+    rose_graph_integer_edge_hash_multimap::iterator it = edges.begin();
     for (; it!=edges.end();++it) {
     edgeNr++;
     if ((edgeNr % 5000) == 0)
@@ -541,16 +576,16 @@ void RoseBin_DotGraph::printEdges( bool forward_analysis, std::ofstream& myfile,
     //    string name = it->first;
     SgDirectedGraphEdge* edge = it->second;
   */
-  SgDirectedGraphNode* source = isSgDirectedGraphNode(edge->get_from());
-  SgDirectedGraphNode* target = isSgDirectedGraphNode(edge->get_to());
+  SgGraphNode* source = isSgGraphNode(edge->get_from());
+  SgGraphNode* target = isSgGraphNode(edge->get_to());
 
 #if 0
   // extra check to ensure that nodes exist. If not, skip
-  nodeType::iterator itn2 = nodes.begin();
+  rose_graph_integer_node_hash_map::iterator itn2 = nodes.begin();
   bool foundS=false;
   bool foundT=false;
   for (; itn2!=nodes.end();++itn2) {
-    SgDirectedGraphNode* n = itn2->second;
+    SgGraphNode* n = itn2->second;
     if (n==source) foundS=true;
     if (n==target) foundT=true;
   }
@@ -584,10 +619,12 @@ void RoseBin_DotGraph::printEdges( bool forward_analysis, std::ofstream& myfile,
   // fix the problem that instructions and functions may have the same address (key)
   if (grouping) {
     // fix this only if we use groups (clusters)
+#if 0
     if (isSgAsmFunctionDeclaration(source->get_SgNode()))
       from_hex+="_f";
     if (isSgAsmFunctionDeclaration(target->get_SgNode()))
       to_hex+="_f";
+#endif
   }
 
 
@@ -598,7 +635,7 @@ void RoseBin_DotGraph::printEdges( bool forward_analysis, std::ofstream& myfile,
   for (; prop!=edge_p.end(); ++prop) {
     int addr = prop->first;
     // cerr << " dot : property for addr : " << addr << " and node " << hex_address << endl;
-    if (addr==SB_Graph_Def::edgeLabel)
+    if (addr==SgGraph::edgeLabel)
       edgeLabel = prop->second;
   }
 
@@ -656,8 +693,8 @@ void RoseBin_DotGraph::printEdges( bool forward_analysis, std::ofstream& myfile,
       }
   }
 
-  string type_n = getProperty(SB_Graph_Def::type, edge);
-  if (type_n==RoseBin_support::ToString(SB_Edgetype::usage)) {
+  string type_n = getProperty(SgGraph::type, edge);
+  if (type_n==RoseBin_support::ToString(SgGraph::usage)) {
     string add= ",color=\"Black\",  style=\"dashed\"";
     output =  "\"" + from_hex + "\" -> \"" + to_hex + "\"[label=\""+ edgeLabel+"\""  + add +  "];\n";
   }

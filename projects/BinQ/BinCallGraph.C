@@ -32,7 +32,7 @@ BinCallGraph::run(SgNode* fileA, SgNode* fileB) {
     cerr << "This is not a valid file for this analysis!" << endl;
     if (!testFlag) {
       QString res = QString("This is not a valid file for this analysis");
-      instance->analysisResult->append(res);  
+      instance->analysisResult->append(res);
     }
     return;
   }
@@ -52,23 +52,24 @@ BinCallGraph::run(SgNode* fileA, SgNode* fileB) {
   ROSE_ASSERT(instance->analysisTab);
   QString res = QString("Creating call graph ");
   instance->analysisTab->setCurrentIndex(1);
-   instance->analysisResult->append(res);  
+   instance->analysisResult->append(res);
   }
-  
-  graph= new RoseBin_DotGraph(info);
+
+  graph= new RoseBin_DotGraph();
   ROSE_ASSERT(graph);
   string callFileName = "callgraph.dot";
   bool dot=true;
   bool mergedEdges=true;
   if (dot==false) {
     callFileName = "callgraph.gml";
-    graph= new RoseBin_GMLGraph(info);
+    graph= new RoseBin_GMLGraph();
   }
 
+  GraphAlgorithms* algo = new GraphAlgorithms(info);
   SgAsmInterpretation* interp = SageInterface::getMainInterpretation(file);
-  RoseBin_CallGraphAnalysis* callanalysis = 
-    //    new RoseBin_CallGraphAnalysis(isSgAsmNode(instance->fileA), new RoseObj(), info);
-   new RoseBin_CallGraphAnalysis(interp->get_global_block(), new RoseObj(), info);
+  RoseBin_CallGraphAnalysis* callanalysis =
+    //    new RoseBin_CallGraphAnalysis(isSgAsmNode(instance->fileA), new RoseObj(), algo);
+   new RoseBin_CallGraphAnalysis(interp->get_global_block(), new RoseObj(), algo);
 
   ROSE_ASSERT(callanalysis);
   callanalysis->run(graph, callFileName, mergedEdges);
@@ -78,12 +79,12 @@ BinCallGraph::run(SgNode* fileA, SgNode* fileB) {
     .arg(callanalysis->nodesVisited())
     .arg(callanalysis->edgesVisited());
 
-    instance->analysisResult->append(res);  
+    instance->analysisResult->append(res);
   }
 
   cerr << " nr of nodes visited in callanalysis : " << callanalysis->nodesVisited() << endl;
   cerr << " nr of edges visited in callanalysis : " << callanalysis->edgesVisited() << endl;
-  
+
 }
 
 void
@@ -92,5 +93,5 @@ BinCallGraph::test(SgNode* fileA, SgNode* fileB) {
   run(fileA,fileB);
   testFlag=false;
 
-  
+
 }
