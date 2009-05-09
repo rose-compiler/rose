@@ -8120,9 +8120,10 @@ getDependentDeclarations ( SgStatement* stmt )
 #endif
    }
 
-
+//! Generate copies for a list of declarations and insert them into a different targetScope.
 vector<SgDeclarationStatement*>
-generateCopiesOfDependentDeclarations ( SgStatement* stmt, SgScopeStatement* targetScope )
+generateCopiesOfDependentDeclarations (const  vector<SgDeclarationStatement*>& dependentDeclarations, SgScopeStatement* targetScope)
+//generateCopiesOfDependentDeclarations ( SgStatement* stmt, SgScopeStatement* targetScope )
    {
   // Liao suggests adding the target scope to the parameter list so that the constructed function
   // built using SageBuilder::buildNondefiningFunctionDeclaration() can be built to be in the 
@@ -8138,7 +8139,8 @@ generateCopiesOfDependentDeclarations ( SgStatement* stmt, SgScopeStatement* tar
 #endif
 
      vector<SgDeclarationStatement*> copiesOfDependentDeclarations;
-     vector<SgDeclarationStatement*> dependentDeclarations = getDependentDeclarations(stmt);
+     // avoiding call getDependentDeclarations() twice
+//     vector<SgDeclarationStatement*> dependentDeclarations = getDependentDeclarations(stmt);
 
 #if 0
      printf ("Output the dependentDeclarations: dependentDeclarations.size() = %zu \n",dependentDeclarations.size());
@@ -8156,7 +8158,7 @@ generateCopiesOfDependentDeclarations ( SgStatement* stmt, SgScopeStatement* tar
   // DQ (2/25/2009): Initially this is always global scope so test this for now, at least.
      ROSE_ASSERT(isSgGlobal(targetScope) != NULL);
 
-     for (vector<SgDeclarationStatement*>::iterator i = dependentDeclarations.begin(); i != dependentDeclarations.end(); i++)
+     for (vector<SgDeclarationStatement*>::const_iterator i = dependentDeclarations.begin(); i != dependentDeclarations.end(); i++)
         {
 #if 0
           printf ("Copying declaration = %p = %s = %s \n",*i,(*i)->class_name().c_str(),SageInterface::get_name(*i).c_str());
@@ -8521,8 +8523,9 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
     dependentDeclarationList_inOriginalFile = getDependentDeclarations(decl);
 
   // Generate the copies of all the dependent statements
-     printf ("Fixme: this currently causes the getDependentDeclarations(decl) function to be called twice \n");
-     vector<SgDeclarationStatement*> dependentDeclarationList = generateCopiesOfDependentDeclarations(decl,scope);
+//     printf ("Fixme: this currently causes the getDependentDeclarations(decl) function to be called twice \n");
+//     vector<SgDeclarationStatement*> dependentDeclarationList = generateCopiesOfDependentDeclarations(decl,scope);
+     vector<SgDeclarationStatement*> dependentDeclarationList = generateCopiesOfDependentDeclarations(dependentDeclarationList_inOriginalFile,scope);
      ROSE_ASSERT(dependentDeclarationList.size() <= dependentDeclarationList_inOriginalFile.size());
       
   // Make sure that the input declaration (decl" is consistent in it's representation across more 
