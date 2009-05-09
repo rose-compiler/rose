@@ -1,3 +1,10 @@
+2009-05-09 00:41  liao6
+
+	* [r5688]
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C:
+	  minor fix in generateCopiesOfDependentDeclarations() to avoid
+	  redundant function calls.
+
 2009-05-09 00:10  liao6
 
 	* [r5686]
