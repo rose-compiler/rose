@@ -98,15 +98,18 @@ class RoseBin_DataFlowAbstract { //: public GraphAlgorithms {
   tabletype usetable;
   RoseBin_Graph* vizzGraph;
 
- RoseBin_DataFlowAbstract(GraphAlgorithms* algo) {g_algo=algo;}
+// DQ (5/9/2009): Move a (two) non-pure-virtual out-of-line virtual member functions to be 
+// defined first in the class so that the vtable will be put into the translation unit where
+// these are defined (this avoid the error: undefined reference to `vtable for RoseBin_DefUseAnalysis'. 
+  SgGraphNode* getPredecessor(SgGraphNode* node);
+  SgGraphNode* getSuccessor(SgGraphNode* node);
+
+  RoseBin_DataFlowAbstract(GraphAlgorithms* algo) {g_algo=algo;}
   virtual ~RoseBin_DataFlowAbstract() {}
 
   virtual bool run(std::string& name, SgGraphNode* node,SgGraphNode* before  ) =0;
   virtual bool runEdge(SgGraphNode* node, SgGraphNode* next)=0;
   virtual void init(RoseBin_Graph* vg)=0;
-
-  SgGraphNode* getPredecessor(SgGraphNode* node);
-  SgGraphNode* getSuccessor(SgGraphNode* node);
 
   int getDefinitionSize() {
     return deftable.size();
