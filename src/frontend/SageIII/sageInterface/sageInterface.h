@@ -985,7 +985,7 @@ void appendStatement(SgStatement *stmt, SgScopeStatement* scope=NULL);
 void appendStatementList(const std::vector<SgStatement*>& stmt, SgScopeStatement* scope=NULL);
 
 // DQ (2/6/2009): Added function to support outlining into separate file.
-//! Append statement and include any referenced declarations required if inserted into a compiler generated file.
+//! Append a copy ('decl') of a function ('original_statement') into a 'scope', include any referenced declarations required if the scope is within a compiler generated file. All referenced declarations, including those from headers, are inserted if excludeHeaderFiles is set to true (the new file will not have any headers). 
 void appendStatementWithDependentDeclaration( SgDeclarationStatement* decl, SgGlobal* scope, SgStatement* original_statement, bool excludeHeaderFiles );
 
 //! Prepend a statement to the beginning of the current scope, handling side

@@ -7633,7 +7633,7 @@ class CollectDependentDeclarationsTraversal : public SgSimpleProcessing
    {
      public:
        // Accumulate a list of copies of associated declarations referenced in the AST subtree 
-       // (usually of the outlined functions) to insert in the seperate file to support outlining.
+       // (usually of the outlined functions) to insert in the separate file to support outlining.
           vector<SgDeclarationStatement*> declarationList;
 
        // Save the list of associated symbols of dependent declarations identified so that we can
@@ -7645,8 +7645,9 @@ class CollectDependentDeclarationsTraversal : public SgSimpleProcessing
 
        // Required visit function for the AST traversal
           void visit(SgNode *astNode);
+     private:
+       void addDeclaration(SgDeclarationStatement* decl);
    };
-
 
 SgDeclarationStatement*
 getGlobalScopeDeclaration( SgDeclarationStatement* inputDeclaration )
@@ -7704,7 +7705,127 @@ outputDeclarationList ( const vector<SgDeclarationStatement*> & l )
         }
    }
 
+void CollectDependentDeclarationsTraversal::addDeclaration(SgDeclarationStatement* declaration)
+{
+  // If there was a declaration found then handle it.
+     if (declaration != NULL)
+        {
+       // Reset the defining declaration in case there is an outer declaration that is more important
+       // to consider the dependent declaration (e.g. a class in a namespace).  In general this will
+       // find the associated outer declaration in the global scope.
+          SgDeclarationStatement* dependentDeclaration = getGlobalScopeDeclaration(declaration);
 
+       // This declaration is in global scope so we just copy the declaration
+          if (alreadySavedDeclarations.find(dependentDeclaration) == alreadySavedDeclarations.end())
+             {
+#if 0
+               printf ("In CollectDependentDeclarationsTraversal::visit(): selected dependentDeclaration = %p = %s = %s \n",
+                    dependentDeclaration,dependentDeclaration->class_name().c_str(),SageInterface::get_name(dependentDeclaration).c_str());
+#endif
+            // DQ (2/22/2009): Semantics change for this function, just save the original declaration, not a copy of it.
+               declarationList.push_back(dependentDeclaration);
+
+            // Record this as a copied declaration
+               alreadySavedDeclarations.insert(dependentDeclaration);
+#if 0
+               printf ("In CollectDependentDeclarationsTraversal::visit(): astNode = %p = %s = %s \n",astNode,astNode->class_name().c_str(),SageInterface::get_name(astNode).c_str());
+               printf ("############### ADDING dependentDeclaration = %p = %s to alreadySavedDeclarations set (size = %zu) \n",
+                    dependentDeclaration,dependentDeclaration->class_name().c_str(),alreadySavedDeclarations.size());
+#endif
+            // DQ (2/21/2009): Added assertions (will be inforced in SageInterface::appendStatementWithDependentDeclaration()).
+            // ROSE_ASSERT(copy_definingDeclaration->get_firstNondefiningDeclaration() != NULL);
+             }
+            else
+             {
+#if 0
+               printf ("In CollectDependentDeclarationsTraversal::visit(): astNode = %p = %s = %s \n",astNode,astNode->class_name().c_str(),SageInterface::get_name(astNode).c_str());
+               printf ("############### EXISTING dependentDeclaration = %p = %s found in alreadySavedDeclarations set (size = %zu) \n",
+                    dependentDeclaration,dependentDeclaration->class_name().c_str(),alreadySavedDeclarations.size());
+#endif
+             }
+        }   
+}
+
+//! Collect all typedef declarations used by an input type and its base types
+static std::vector<SgTypedefDeclaration*> collectTypedefDeclarations(SgType* type)
+{
+  ROSE_ASSERT(type != NULL);
+  std::vector<SgTypedefDeclaration*> result;
+  SgType* currentType = type;
+
+  SgModifierType*  modType     = NULL;
+  SgPointerType*   pointType   = NULL;      
+  SgReferenceType* refType     = NULL;
+  SgArrayType*     arrayType   = NULL;
+  SgTypedefType*   typedefType = NULL;
+
+  while (true)
+  {
+    modType = isSgModifierType(currentType);
+    if(modType) 
+    {
+      currentType = modType->get_base_type();
+    }
+    else
+    {
+      refType = isSgReferenceType(currentType);
+      if(refType) 
+      {
+        currentType = refType->get_base_type();
+      }
+      else
+      {
+         pointType = isSgPointerType(currentType);
+        if ( pointType)
+        {
+          currentType = pointType->get_base_type();
+        }
+        else
+        {
+          arrayType = isSgArrayType(currentType);
+          if  (arrayType)
+          {
+            currentType = arrayType->get_base_type();
+          }
+          else
+          {
+            typedefType = isSgTypedefType(currentType);
+            if (typedefType)
+            {
+              currentType = typedefType->get_base_type();
+              SgTypedefDeclaration* tdecl = isSgTypedefDeclaration(typedefType->get_declaration());
+              // have to try to get the defining declaration for a defining typedef declaration
+              // otherwise AST traversal will not visit the non-defining one for a defining typedef declaration
+              // sortSgNodeListBasedOnAppearanceOrderInSource() won't work properly
+              SgTypedefDeclaration* decl = isSgTypedefDeclaration(tdecl->get_definingDeclaration());
+              if (decl ==NULL)
+                decl = tdecl;
+              result.push_back(decl);
+            }
+            else
+            {
+              // Exit the while(true){} loop!
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+#if 0  
+  // debug here
+  if (result.size()>0)
+  {
+    cout<<"------------Found a chain of typedef decls: count="<<result.size()<<endl;
+    for (vector <SgTypedefDeclaration*>::const_iterator iter = result.begin();
+          iter!=result.end(); iter ++)
+      cout<<(*iter)->unparseToString()<<endl;
+  }
+#endif  
+  return result;
+}
+
+//! visitor function for each node to collect non-builtin types' declarations
 void
 CollectDependentDeclarationsTraversal::visit(SgNode *astNode)
    {
@@ -7739,73 +7860,89 @@ CollectDependentDeclarationsTraversal::visit(SgNode *astNode)
   // The following conditionals set this variable
      SgDeclarationStatement* declaration = NULL;
 
+  // 1) ------------------------------------------------------------------
   // Collect the declarations associated with referenced types in variable declarations (or any types associated with SgInitializedName IR nodes)
      SgInitializedName* initializedname = isSgInitializedName(astNode);
      if (initializedname != NULL)
-        {
-          SgType* type         = initializedname->get_type();
-          SgType* strippedType = type;
+     {
+       SgType* type         = initializedname->get_type();
 
-          if (isSgNamedType(type) == NULL)
-             {
-            // We might want to not strip typedefs
-               strippedType = type->stripType();
-             } else  if (isSgTypedefType(type))   
-          {// Liao, 3/24/2009: We have to strip typedefs, otherwise get_declaration() will return non-class declaration
-            strippedType = type->stripType();
-          }
+       // handle all dependent typedef declarations
+       std::vector <SgTypedefDeclaration*> typedefVec = collectTypedefDeclarations(type);
+        for (std::vector <SgTypedefDeclaration*>::const_iterator iter =typedefVec.begin();
+                iter != typedefVec.end(); iter++)
+       {
+         SgTypedefDeclaration* typedef_decl = *iter;
+         addDeclaration(typedef_decl);
+         symbolList.push_back(typedef_decl->get_symbol_from_symbol_table());
+       }
 
-          SgNamedType* namedType = isSgNamedType(strippedType);
-          if (namedType != NULL)
-             {
-            // Note that since this was obtained via the types and types are shared, this is the non-defining 
-            // declaration in original program (not the separate file is this is to support outlining into a 
-            // separate file.
-            // SgDeclarationStatement* declaration = namedType->get_declaration();
-               SgClassDeclaration* classDeclaration = isSgClassDeclaration(namedType->get_declaration());
-               if (classDeclaration == NULL)
-               {
-#if 0                 
-                 cout<<"namedType:"<<strippedType->unparseToString() <<" has non-class declaration:"<<namedType->get_declaration()->class_name()<<endl;
+      // handle base type:
+       SgType* strippedType = type;
+       // We now can to strip typedefs since they are already handled by collectTypedefDeclarations()
+       // this also reach to the defining body of a defining typedef declaration
+       // and treat it as an independent declarations, 
+       // the assumption here is that a defining typedef declaration will only has its
+       // nondefining declaration copied to avoid redefining of the struct.  
+       // This is also a workaround for an AST copy bug: defining body gets lost after copying 
+       // a defining typedef declaration.
+       // Liao, 5/8/2009
+       //
+       // e.g. typedef struct hypre_BoxArray_struct //5
+       // {
+       //          int alloc_size;
+       // } hypre_BoxArray;
+       //
+       // struct hypre_BoxArray_struct will be treated as a strippedType and its declaration
+       // will be inserted. 
+       //
+       strippedType = type->stripType();
+       SgNamedType* namedType = isSgNamedType(strippedType);
+       if (namedType != NULL)
+       {
+         // Note that since this was obtained via the types and types are shared, this is the non-defining 
+         // declaration in original program (not the separate file is this is to support outlining into a 
+         // separate file.
+         SgDeclarationStatement* named_decl = namedType->get_declaration(); 
+         // the case of class declaration, including struct
+         SgClassDeclaration* classDeclaration = isSgClassDeclaration(named_decl);
+         if (classDeclaration != NULL)
+         { 
 
-                 SgDeclarationStatement* base_decl = namedType->get_declaration();
-                 while (isSgTypedefDeclaration(base_decl))
-                   base_decl = isSgTypedefDeclaration(base_decl)->get_declaration ();
-                 cout<<"namedType has base declaration:"<<base_decl->class_name()<<endl;
-#endif                 
-                 ROSE_ASSERT(classDeclaration != NULL);
-               }
+           // printf ("Found class declaration: classDeclaration = %p \n",classDeclaration);
 
-            // printf ("Found class declaration: classDeclaration = %p \n",classDeclaration);
+           declaration = classDeclaration->get_definingDeclaration();
+           ROSE_ASSERT(declaration != NULL);
+           addDeclaration(declaration);
 
-               declaration = classDeclaration->get_definingDeclaration();
-               ROSE_ASSERT(declaration != NULL);
+           // Note that since types are shared in the AST, the declaration for a named type may be (is) 
+           // associated with the class declaration in the original file. However, we want to associated
+           // class declaration in the current file, but since the AST copy mechanism work top-down, this
+           // mapping form the declaration in the original file to the new declaration in the copied AST
+           // is available in the SgCopyHelp map of copied IR nodes.
+           // DQ (3/3/2009): Added support for symbol references to be saved (symbols in the original file).
+           // these symbols will be mapped to their new symbols.
+           ROSE_ASSERT(classDeclaration->hasAssociatedSymbol() == true);
+           SgSymbol* classSymbol = classDeclaration->get_symbol_from_symbol_table();
+           ROSE_ASSERT(classSymbol != NULL);
 
-            // Note that since types are shared in the AST, the declaration for a named type may be (is) 
-            // associated with the class declaration in the original file. However, we want to associated
-            // class declaration in the current file, but since the AST copy mechanism work top-down, this
-            // mapping form the declaration in the original file to the new declaration in the copied AST
-            // is available in the SgCopyHelp map of copied IR nodes.
-            // DQ (3/3/2009): Added support for symbol references to be saved (symbols in the original file).
-            // these symbols will be mapped to their new symbols.
-               ROSE_ASSERT(classDeclaration->hasAssociatedSymbol() == true);
-               SgSymbol* classSymbol = classDeclaration->get_symbol_from_symbol_table();
-               ROSE_ASSERT(classSymbol != NULL);
-
-            // printf ("Saving classSymbol = %p \n",classSymbol);
-               symbolList.push_back(classSymbol);
-             }
+           // printf ("Saving classSymbol = %p \n",classSymbol);
+           symbolList.push_back(classSymbol);
+         }
+       }
 #if 0
-          printf ("Found reference to type = %p = %s strippedType = %p = %s \n",type,type->class_name().c_str(),strippedType,strippedType->class_name().c_str());
+       printf ("Found reference to type = %p = %s strippedType = %p = %s \n",type,type->class_name().c_str(),strippedType,strippedType->class_name().c_str());
 #endif
-        }
+     }
 
+  // 2) ------------------------------------------------------------------
   // Collect declarations associated with function calls.
      SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(astNode);
      if (functionCallExp != NULL)
         {
           declaration = functionCallExp->getAssociatedFunctionDeclaration();
           ROSE_ASSERT(declaration != NULL);
+          addDeclaration(declaration);
 
        // DQ (3/2/2009): Added support for symbol references to be saved (this can be a SgFunctionSymbol or a SgMemberFunctionSymbol).
           SgSymbol* functionSymbol = functionCallExp->getAssociatedFunctionSymbol();
@@ -7815,46 +7952,134 @@ CollectDependentDeclarationsTraversal::visit(SgNode *astNode)
           symbolList.push_back(functionSymbol);
         }
 
-  // If there was a declaration found then handle it.
-     if (declaration != NULL)
-        {
-       // Reset the defining declaration in case there is an outer declaration that is more important 
-       // to consider the dependent declaration (e.g. a class in a namespace).  In general this will 
-       // find the associated outer declaration in the global scope.
-          SgDeclarationStatement* dependentDeclaration = getGlobalScopeDeclaration(declaration);
-
-       // This declaration is in global scope so we just copy the declaration
-          if (alreadySavedDeclarations.find(dependentDeclaration) == alreadySavedDeclarations.end())
-             {
-#if 0
-               printf ("In CollectDependentDeclarationsTraversal::visit(): selected dependentDeclaration = %p = %s = %s \n",
-                    dependentDeclaration,dependentDeclaration->class_name().c_str(),SageInterface::get_name(dependentDeclaration).c_str());
-#endif
-            // DQ (2/22/2009): Semantics change for this function, just save the original declaration, not a copy of it.
-               declarationList.push_back(dependentDeclaration);
-
-            // Record this as a copied declaration
-               alreadySavedDeclarations.insert(dependentDeclaration);
-#if 0
-               printf ("In CollectDependentDeclarationsTraversal::visit(): astNode = %p = %s = %s \n",astNode,astNode->class_name().c_str(),SageInterface::get_name(astNode).c_str());
-               printf ("############### ADDING dependentDeclaration = %p = %s to alreadySavedDeclarations set (size = %zu) \n",
-                    dependentDeclaration,dependentDeclaration->class_name().c_str(),alreadySavedDeclarations.size());
-#endif
-            // DQ (2/21/2009): Added assertions (will be inforced in SageInterface::appendStatementWithDependentDeclaration()).
-            // ROSE_ASSERT(copy_definingDeclaration->get_firstNondefiningDeclaration() != NULL);
-             }
-            else
-             {
-#if 0
-               printf ("In CollectDependentDeclarationsTraversal::visit(): astNode = %p = %s = %s \n",astNode,astNode->class_name().c_str(),SageInterface::get_name(astNode).c_str());
-               printf ("############### EXISTING dependentDeclaration = %p = %s found in alreadySavedDeclarations set (size = %zu) \n",
-                    dependentDeclaration,dependentDeclaration->class_name().c_str(),alreadySavedDeclarations.size());
-#endif
-             }
-        }
+//       addDeclaration(declaration); // do it in different cases individually 
    }
 
+static std::map<SgStatement*, bool> visitedDeclMap; // avoid infinite recursion
 
+
+//! Collect dependent type declarations and corresponding symbols used by a declaration statement with defining body.
+// Used to separate a function to a new source file and add necessary type declarations into the new file.
+// NOTICE: each call to this function has to have call visitedDeclMap.clear() first!!
+void
+getDependentDeclarations ( SgStatement* stmt, vector<SgDeclarationStatement*> & declarationList, vector<SgSymbol*> & symbolList )
+{
+  // This function returns a list of the dependent declaration for any input statement.
+  // Dependent declaration are functions called, types referenced in variable declarations, etc.
+#if 0
+  printf ("\n\n********************************************************** \n");
+  printf (" Inside of getDependentDeclarations(stmt = %p = %s) \n",stmt,stmt->class_name().c_str());
+  printf ("********************************************************** \n");
+#endif
+ visitedDeclMap[stmt]= true;
+  CollectDependentDeclarationsTraversal t;
+  t.traverse(stmt,preorder);
+#if 0
+     declarationList = t.declarationList;
+     symbolList      = t.symbolList;
+#else  
+  // Merge to the parent level list
+  copy(t.declarationList.begin(),t.declarationList.end(), back_inserter(declarationList));
+  copy(t.symbolList.begin(),t.symbolList.end(), back_inserter(symbolList));
+    // make their elements unique
+  sort (declarationList.begin(), declarationList.end());
+  vector<SgDeclarationStatement*>::iterator new_end = unique(declarationList.begin(), declarationList.end());
+  declarationList.erase(new_end, declarationList.end());
+
+  sort (symbolList.begin(), symbolList.end());
+  vector<SgSymbol*>::iterator end2 = unique(symbolList.begin(), symbolList.end());
+  symbolList.erase(end2, symbolList.end());
+
+
+  // Liao, 5/7/2009 recursively call itself to get dependent declarations' dependent declarations
+  for (vector<SgDeclarationStatement*>::const_iterator iter = t.declarationList.begin();
+      iter !=t.declarationList.end(); iter++) 
+  {
+    SgDeclarationStatement* decl = *iter;
+    SgType* base_type = NULL;
+    SgStatement* body_stmt= NULL;
+
+    // grab base type for a declaration
+    // For class declaration: grab their 
+    if (isSgClassDeclaration(decl))
+    {
+      base_type =  isSgClassDeclaration(decl)->get_type();
+    } else 
+    if (isSgTypedefDeclaration(decl))
+    {
+
+      // we don't want to strip of nested typedef declarations
+      base_type = isSgTypedefDeclaration(decl)->get_base_type()->stripType(SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_MODIFIER_TYPE);
+    } 
+
+    //TODO variable declaration, function declaration: parameter list types, 
+    // multiple base_type then
+
+    // is the base type associated with a defining body?
+    // TODO enum type
+      if (isSgClassType(base_type))
+      {
+        SgClassDeclaration* class_decl = isSgClassDeclaration(isSgClassType(base_type)->get_declaration()->get_definingDeclaration());
+        if (class_decl!=NULL)
+        {
+          body_stmt = class_decl->get_definition();
+        }
+      }
+    // recursively collect dependent declarations for the body stmt 
+    if ((body_stmt!=NULL) &&(!visitedDeclMap[body_stmt]))  
+      { // avoid infinite recursion
+        getDependentDeclarations(body_stmt, declarationList, symbolList);
+      }
+    }
+#endif  
+} // end void getDependentDeclarations()
+
+
+// Reorder a list of declaration statements based on their appearance order in source files
+// This is essential to insert their copies into a new file in a right order
+// Liao, 5/7/2009 
+static vector<SgDeclarationStatement*>
+sortSgNodeListBasedOnAppearanceOrderInSource(const vector<SgDeclarationStatement*>& nodevec)
+{
+  vector<SgDeclarationStatement*> sortedNode;
+
+  if (nodevec.size()==0)
+    return sortedNode;
+  SgProject* project = SageInterface::getProject();
+  Rose_STL_Container<SgNode*> queryResult = NodeQuery::querySubTree(project,V_SgDeclarationStatement);
+  for (Rose_STL_Container<SgNode*>::const_iterator iter = queryResult.begin();
+      iter!= queryResult.end(); iter++)
+  {
+//    cerr<<"Trying to match:"<<(*iter)<<(*iter)->class_name() <<" "<<(*iter)->unparseToString()<<endl;
+    SgNode* cur_node = *iter;
+    SgDeclarationStatement* cur_stmt =  isSgDeclarationStatement(cur_node);
+    ROSE_ASSERT(cur_stmt!=NULL);
+    vector<SgDeclarationStatement*>::const_iterator i = find (nodevec.begin(), nodevec.end(), cur_stmt);     
+   if (i!=nodevec.end())
+      sortedNode.push_back(*i);
+  }
+
+  if (nodevec.size() != sortedNode.size())
+  {
+    cerr<<"Fatal error in sortSgNodeListBasedOnAppearanceOrderInSource(): nodevec.size() != sortedNode.size()"<<endl;
+    cerr<<"nodevec() elements are:"<<endl;
+    for (vector<SgDeclarationStatement*>::const_iterator iter = nodevec.begin(); iter != nodevec.end(); iter++) 
+    {
+      cerr<<(*iter)<<(*iter)->class_name() <<" "<<(*iter)->unparseToString()<<endl;
+    }
+    cerr<<"sortedNode() elements are:"<<endl;
+    for (vector<SgDeclarationStatement*>::const_iterator iter = sortedNode.begin(); iter != sortedNode.end(); iter++) 
+    {
+      cerr<<(*iter)<<(*iter)->class_name() <<" "<<(*iter)->unparseToString()<<endl;
+    }
+
+    ROSE_ASSERT(nodevec.size() == sortedNode.size());
+  }
+  return sortedNode;
+}
+
+//! Please call this instead of calling getDependentDeclarations ( SgStatement* stmt, vector<SgDeclarationStatement*> & declarationList, vector<SgSymbol*> & symbolList )
+// This function clears a history map transparently and return a sorted list of dependent declaration
 vector<SgDeclarationStatement*>
 getDependentDeclarations ( SgStatement* stmt )
    {
@@ -7864,31 +8089,35 @@ getDependentDeclarations ( SgStatement* stmt )
      printf ("\n\n********************************************************** \n");
      printf (" Inside of getDependentDeclarations(stmt = %p = %s) \n",stmt,stmt->class_name().c_str());
      printf ("********************************************************** \n");
-#endif
 
      CollectDependentDeclarationsTraversal t;
      t.traverse(stmt,preorder);
 
      return t.declarationList;
-   }
-
-
-void
-getDependentDeclarations ( SgStatement* stmt, vector<SgDeclarationStatement*> & declarationList, vector<SgSymbol*> & symbolList )
-   {
-  // This function returns a list of the dependent declaration for any input statement.
-  // Dependent declaration are functions called, types referenced in variable declarations, etc.
+#else 
+     // share a single implementation for recursive lookup for dependent declaration
+   visitedDeclMap.clear();
+   vector<SgDeclarationStatement*> declarationList;
+   vector<SgSymbol*> symbolList;
+   getDependentDeclarations(stmt, declarationList, symbolList);
+   declarationList = sortSgNodeListBasedOnAppearanceOrderInSource(declarationList);
 #if 0
-     printf ("\n\n********************************************************** \n");
-     printf (" Inside of getDependentDeclarations(stmt = %p = %s) \n",stmt,stmt->class_name().c_str());
-     printf ("********************************************************** \n");
+     printf ("\n\n ********************************************************** \n");
+     cout<<"Found dependent decl: count="<<declarationList.size()<<endl;
+     for ( vector<SgDeclarationStatement*>::const_iterator iter = declarationList.begin();
+          iter != declarationList.end(); iter++)
+     {
+       cout<<"\t"<<(*iter)->class_name()<<" at line "<<(*iter)->get_file_info()->get_line()<<endl;
+       if ((*iter)->variantT()== V_SgFunctionDeclaration)
+         cout<<"func name is:"<<isSgFunctionDeclaration(*iter)->get_name().getString()<<endl;
+       //<<(*iter)->unparseToString()<<endl;  // unparseToString() won't work on outlined function
+     }
+     printf ("\n ********************************************************** \n");
+#endif 
+
+   return declarationList;
+
 #endif
-
-     CollectDependentDeclarationsTraversal t;
-     t.traverse(stmt,preorder);
-
-     declarationList = t.declarationList;
-     symbolList      = t.symbolList;
    }
 
 
@@ -7941,6 +8170,15 @@ generateCopiesOfDependentDeclarations ( SgStatement* stmt, SgScopeStatement* tar
        // since that would violate the One-time Definition Rule (ODR).
           if (functionDeclaration != NULL)
              {
+#if 1   
+               // the target scope may already have a declaration for this function. 
+               // This happens since SageInterface::appendStatementWithDependentDeclaration() is called in the end of outlining
+               // and the original enclosing class of the outlined target has been changed already (replaced target with a call to OUT_xxx())
+               // Also, getDependentDeclarations() recursively searches for declarations within the dependent class and hits OUT_xxx()
+               // Liao, 5/8/2009
+               if (targetScope->lookup_symbol(functionDeclaration->get_name()) !=NULL) 
+                 continue;
+#endif                 
 #if 0
                printf ("In generateCopiesOfDependentDeclarations(): Copy mechanism appied to SgFunctionDeclaration functionDeclaration->get_firstNondefiningDeclaration() = %p \n",functionDeclaration->get_firstNondefiningDeclaration());
 
@@ -7957,7 +8195,7 @@ generateCopiesOfDependentDeclarations ( SgStatement* stmt, SgScopeStatement* tar
             // if (functionDeclaration->get_firstNondefiningDeclaration() != NULL)
             // if (functionDeclaration->get_firstNondefiningDeclaration() != NULL && functionDeclaration->get_definingDeclaration() != functionDeclaration)
                if (functionDeclaration->get_definingDeclaration() != functionDeclaration)
-                  {
+                  { //functionDeclaration is a non-defining declaration
                     ROSE_ASSERT(functionDeclaration->get_firstNondefiningDeclaration() != NULL);
 
                  // Make a copy of the non-defining declaration
@@ -7977,7 +8215,7 @@ generateCopiesOfDependentDeclarations ( SgStatement* stmt, SgScopeStatement* tar
                  // Need to fixup the symbol table to have a symbol for the copied function (this is fixed up later).
                  // ROSE_ASSERT(copy_nondefiningDeclaration->get_symbol_from_symbol_table() != NULL);
                   }
-                 else
+                 else  // functionDeclaration is a defining declaration
                   {
                  // Build a function prototype, but what scope should be used?
                     ROSE_ASSERT(functionDeclaration->get_scope() != NULL);
@@ -8051,7 +8289,23 @@ generateCopiesOfDependentDeclarations ( SgStatement* stmt, SgScopeStatement* tar
              }
             else
              {
-               copy_node = (*i)->copy(collectDependentDeclarationsCopyType);
+#if 1     // We only copy the non-defining declaration of a defining typedef declaration
+          // since its defining body will be treated as a separate declaration and inserted to the new file. 
+          // This is also a workaround for an AST copy bug: losing defining body of a defining typedef declaration after copying.
+                 SgTypedefDeclaration* tdecl = isSgTypedefDeclaration(*i);
+                 if (tdecl)
+                 {
+#if 0
+                   if (tdecl->get_definingDeclaration() == tdecl)
+                     cout<<"Copying a defining typedef declaration:"<<tdecl->unparseToString()<<endl;
+                   else
+                     cout<<"Copying a non-defining typedef declaration:"<<tdecl->unparseToString()<<endl;
+#endif                     
+                   copy_node = SageInterface::deepCopy(tdecl->get_firstNondefiningDeclaration());
+                 }
+                  else
+#endif                    
+                   copy_node = (*i)->copy(collectDependentDeclarationsCopyType);
 
             // Set the scope now that we know it (might be the same as the parent which will be set when the copy is inserted into the AST).
                SgDeclarationStatement* copy_declaration = isSgDeclarationStatement(copy_node);
@@ -8136,7 +8390,9 @@ generateCopiesOfDependentDeclarations ( SgStatement* stmt, SgScopeStatement* tar
 #endif
 
   // The mapping of copies to original declarations should be 1-to-1.
-     ROSE_ASSERT(copiesOfDependentDeclarations.size() == dependentDeclarations.size());
+  // Liao, not true anymore for getDependentDeclarations() using recursion: a depending class's body is searched for dependents also.
+  // The class body  might have a call to an outlined function, which already has a prototype in the target scope and needs no redundant copy
+     ROSE_ASSERT(copiesOfDependentDeclarations.size() <= dependentDeclarations.size());
 
      return copiesOfDependentDeclarations;
    }
@@ -8186,7 +8442,6 @@ declarationContainsDependentDeclarations( SgDeclarationStatement* decl, vector<S
      return returnValue;
    }
 
-
 void
 SageInterface::addMessageStatement( SgStatement* stmt, string message )
    {
@@ -8201,6 +8456,7 @@ SageInterface::addMessageStatement( SgStatement* stmt, string message )
 
 
 // DQ (2/6/2009): Added function to support outlining into separate file.
+// Append a function 'decl' into a 'scope', including any referenced declarations required if the scope is within a compiler generated file. All referenced declarations, including those from headers, are inserted if excludeHeaderFiles is set to true (the new file will not have any headers)
 void
 SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* decl, SgGlobal* scope, SgStatement* original_statement, bool excludeHeaderFiles)
    {
@@ -8229,8 +8485,8 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
      decl->set_parent (scope);
 #endif
 
-  // Make sure that the input declaration (decl" is consistant in it's representation across more 
-  // than one file (only a significant test when outlining to a seperate file; which is what this 
+  // Make sure that the input declaration (decl" is consistent in it's representation across more 
+  // than one file (only a significant test when outlining to a separate file; which is what this 
   // function supports).
      ROSE_ASSERT(decl->get_firstNondefiningDeclaration() != NULL);
      ROSE_ASSERT(TransformationSupport::getSourceFile(decl) == TransformationSupport::getSourceFile(decl->get_firstNondefiningDeclaration()));
@@ -8239,7 +8495,7 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
   // DQ (2/6/2009): I need to write this function to support the
   // insertion of the function into the specified scope.  If the
   // file associated with the scope is marked as compiler generated 
-  // (or as a transformation) then the declarations referneced in the 
+  // (or as a transformation) then the declarations referenced in the 
   // function must be copied as well (those not in include files)
   // and the include files must be copies also. If the SgFile
   // is not compiler generated (or a transformation) then we just
@@ -8255,23 +8511,22 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
 
   // SgSourceFile* separateSourceFile = TransformationSupport::getSourceFile(scope);
 
-  // DQ (3/2/2009): This now calls the a newer function which returns a list of declarations and a list of symbols.
-  // The declarations are sometimes outter declarations of nested references to dependent declaration in inner 
+  // DQ (3/2/2009): This now calls a newer function which returns a list of declarations and a list of symbols.
+  // The declarations are sometimes outer declarations of nested references to dependent declaration in inner 
   // scopes (see moreTest3.cpp).  The Symbol list are the symbols in the old AST that will be mapped to newer 
   // symbols generated in the copied AST.
   // Collect the declaration that the input declaration depends upon.
-  // vector<SgDeclarationStatement*> dependentDeclarationList_inOriginalFile = getDependentDeclarations(decl);
-     vector<SgDeclarationStatement*> dependentDeclarationList_inOriginalFile;
-     vector<SgSymbol*>               dependentSymbolList_inOriginalFile;
-     getDependentDeclarations(decl,dependentDeclarationList_inOriginalFile,dependentSymbolList_inOriginalFile);
+    vector<SgDeclarationStatement*> dependentDeclarationList_inOriginalFile;
+
+    dependentDeclarationList_inOriginalFile = getDependentDeclarations(decl);
 
   // Generate the copies of all the dependent statements
      printf ("Fixme: this currently causes the getDependentDeclarations(decl) function to be called twice \n");
      vector<SgDeclarationStatement*> dependentDeclarationList = generateCopiesOfDependentDeclarations(decl,scope);
-     ROSE_ASSERT(dependentDeclarationList.size() == dependentDeclarationList_inOriginalFile.size());
-
-  // Make sure that the input declaration (decl" is consistant in it's representation across more 
-  // than one file (only a significant test when outlining to a seperate file; which is what this 
+     ROSE_ASSERT(dependentDeclarationList.size() <= dependentDeclarationList_inOriginalFile.size());
+      
+  // Make sure that the input declaration (decl" is consistent in it's representation across more 
+  // than one file (only a significant test when outlining to a separate file; which is what this 
   // function supports).
      ROSE_ASSERT(decl->get_firstNondefiningDeclaration() != NULL);
      ROSE_ASSERT(TransformationSupport::getSourceFile(decl) == TransformationSupport::getSourceFile(decl->get_firstNondefiningDeclaration()));
@@ -8360,9 +8615,12 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
   // list<SgDeclarationStatement>::iterator i = declarationList.begin();
   // while (i != declarationList.end())
   // for (list<SgDeclarationStatement>::iterator i = declarationList.begin(); i != declarationList.end(); i++)
+  
+//      cout<<"\n*******************************************\n"<<endl;
+//      cout<<"Inserting dependent decls: count="<<dependentDeclarationList.size()<<endl;
      for (size_t i = 0; i < dependentDeclarationList.size(); i++)
         {
-          SgDeclarationStatement* d                   = dependentDeclarationList[i];
+          SgDeclarationStatement* d                   = dependentDeclarationList[i]; // copies of dependent declarations
           SgDeclarationStatement* originalDeclaration = dependentDeclarationList_inOriginalFile[i];
 #if 0
           printf ("declarationList[%zu] = %p = %s = %s \n",i,d,d->class_name().c_str(),SageInterface::get_name(d).c_str());
@@ -8384,9 +8642,10 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
           ROSE_ASSERT(decl->get_scope() == scope);
           ROSE_ASSERT(find(scope->getDeclarationList().begin(),scope->getDeclarationList().end(),decl) != scope->getDeclarationList().end());
           scope->insert_statement (decl, d, /* bool inFront= */ true);
-
           d->set_parent (scope);
 
+//debug here          
+//     cout<<d->class_name()<<endl;
        // "d" appears to loose the fact that it is a SgNamespaceDeclarationStatement (because it is not explicitly stored for this case!).
        // d->set_scope (scope);
           if (d->hasExplicitScope() == true)
@@ -8417,7 +8676,7 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
                   }
              }
 
-       // Make sure that internal referneces are to the same file (else the symbol table information will not be consistant).
+       // Make sure that internal references are to the same file (else the symbol table information will not be consistent).
           ROSE_ASSERT(d->get_firstNondefiningDeclaration() != NULL);
           ROSE_ASSERT(TransformationSupport::getSourceFile(d) == TransformationSupport::getSourceFile(d->get_firstNondefiningDeclaration()));
           ROSE_ASSERT(TransformationSupport::getSourceFile(d->get_scope()) == TransformationSupport::getSourceFile(d->get_firstNondefiningDeclaration()));
@@ -8488,6 +8747,7 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
                     printf ("functionDeclaration->get_firstNondefiningDeclaration() = %p \n",copiedFunctionDeclaration->get_firstNondefiningDeclaration());
                     printf ("lokup symbol in scope =                                = %p \n",scope);
 #endif
+
                     if (scope->lookup_symbol(copiedFunctionDeclaration->get_name()) == NULL)
                        {
                          SgFunctionSymbol* functionSymbol = new SgFunctionSymbol(copiedFunctionDeclaration);
@@ -8497,6 +8757,7 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
                          ROSE_ASSERT(scope->lookup_symbol(copiedFunctionDeclaration->get_name()) == functionSymbol);
 
                          ROSE_ASSERT(copiedFunctionDeclaration->get_symbol_from_symbol_table() != NULL);
+                         copiedFunctionDeclaration->set_scope(scope);
                        }
                     ROSE_ASSERT(copiedFunctionDeclaration->get_symbol_from_symbol_table() != NULL);
 
@@ -8594,7 +8855,27 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
 
                     break;
                   }
+                // Liao, 5/7/2009 handle typedef declarations
+                case V_SgTypedefDeclaration:
+                  {
+                    // symbol is associated with the first non-defining declaration
+                    SgTypedefDeclaration* typedef_decl = isSgTypedefDeclaration(isSgTypedefDeclaration(d)->get_firstNondefiningDeclaration());
+                    ROSE_ASSERT(typedef_decl);
+                    SgTypedefSymbol * tsymbol = new SgTypedefSymbol(typedef_decl);
+                    scope->insert_symbol(typedef_decl->get_name(), tsymbol);
 
+                    SgSymbol* symbolInOutlinedFile = typedef_decl->get_symbol_from_symbol_table();
+                    ROSE_ASSERT(symbolInOutlinedFile != NULL);
+
+                    ROSE_ASSERT(originalDeclaration != NULL);
+                    // symbol is associated with the first non-defining declaration
+                    SgSymbol* symbolInOriginalFile = originalDeclaration->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table();
+                    ROSE_ASSERT(symbolInOriginalFile != NULL);
+
+                    ROSE_ASSERT(symbolInOriginalFile != symbolInOutlinedFile);
+                    replacementMap.insert(pair<SgNode*,SgNode*>(symbolInOutlinedFile,symbolInOriginalFile));
+                    break;
+                  }
                default:
                   {
                     printf ("default case in SageInterface::appendStatementWithDependentDeclaration() (handling dependentDeclarationList) d = %p = %s \n",d,d->class_name().c_str());
@@ -8707,7 +8988,7 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
 #endif
 
   // Repeated test from above
-     ROSE_ASSERT(dependentDeclarationList.size() == dependentDeclarationList_inOriginalFile.size());
+     ROSE_ASSERT(dependentDeclarationList.size() <= dependentDeclarationList_inOriginalFile.size());
 
 #if 0
   // The replacementMap should include the symbols associated with the dependentDeclarationList 
