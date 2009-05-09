@@ -1,3 +1,123 @@
+2009-05-09 00:10  liao6
+
+	* [r5686]
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.h,
+	  /trunk/ROSE/src/midend/astOutlining/Transform.cc,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/complexStruct.c:
+	  Extended outliner to recursively find dependent declarations used
+	  within a target
+	  
+	  * SageInterface::getDependentDeclarations() is changed to be a
+	  recursion function to collect a dependent class type's class body
+	  (same to a struct)
+	  * dependent declarations are inserted into a new file in the same
+	  order as the order they show up in the original source code:
+	  sortSgNodeListBasedOnAppearanceOrderInSource()
+	  * major work to support dependent typedef declarations
+	  ** handle chain of typedef declarations:
+	  vector<SgTypedefDeclaration*> collectTypedefDeclarations(SgType*
+	  type)
+	  * use a workaround for an AST copy's bug of losing embedded
+	  struct's defining body of a typedef declaration
+	  ** copy a non-defining typedef declaration of a defining typedef
+	  declaration instead of the oringal defining one.
+	  ** collect the embedded struct's declaration of a typedef
+	  declaration as an independent declaration
+	  * avoid redundant copy of an outlined function to a target scope,
+	  a side effect of recursive collecting of dependent declarations
+	  on an outlined function, not on the original outlined target.
+	  * added a brutal test case extracted from a smg2000's kernel
+	  rewritten by Rich.
+
+2009-05-08 21:53  panas2
+
+	* [r5685] /trunk/ROSE/projects/RTED/Makefile.am: Changed Makefile
+	  for RTED work
+
+2009-05-08 20:54  panas2
+
+	* [r5684]
+	  /trunk/ROSE/developersScratchSpace/Dan/Disassembler_tests/recognizeGlobalVariables.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/graph_tests/graph_test_3.C,
+	  /trunk/ROSE/developersScratchSpace/Dan/graph_tests/graph_test_4.C,
+	  /trunk/ROSE/projects/AstEquivalence/astEquivalenceGui.C,
+	  /trunk/ROSE/projects/AstEquivalence/gui/compilerFlagsGui.C,
+	  /trunk/ROSE/projects/BinQ/BinCallGraph.C,
+	  /trunk/ROSE/projects/BinQ/BinControlFlowAnalysis.C,
+	  /trunk/ROSE/projects/BinQ/BinDataFlowAnalysis.C,
+	  /trunk/ROSE/projects/BinQ/BinQAbstract.C,
+	  /trunk/ROSE/projects/BinQ/BinQAbstract.h,
+	  /trunk/ROSE/projects/BinQ/BinQbatch.C,
+	  /trunk/ROSE/projects/BinQ/BinQinteractive.C,
+	  /trunk/ROSE/projects/BinQ/BufferOverflow.C,
+	  /trunk/ROSE/projects/BinQ/BufferOverflow.h,
+	  /trunk/ROSE/projects/BinQ/DwarfFileInfo.C,
+	  /trunk/ROSE/projects/BinQ/DwarfFileInfo.h,
+	  /trunk/ROSE/projects/BinQ/InterruptAnalysis.C,
+	  /trunk/ROSE/projects/BinQ/InterruptAnalysis.h,
+	  /trunk/ROSE/projects/BinaryCloneDetection/gui/binaryCloneGui.C,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/binCompass/GraphAnalysisInterface.h,
+	  /trunk/ROSE/projects/binCompass/binCompassMain.cpp,
+	  /trunk/ROSE/projects/binCompass/graphanalyses/BufferOverflow.cpp,
+	  /trunk/ROSE/projects/binCompass/graphanalyses/BufferOverflow.h,
+	  /trunk/ROSE/projects/binCompass/graphanalyses/CycleDetection.cpp,
+	  /trunk/ROSE/projects/binCompass/graphanalyses/CycleDetection.h,
+	  /trunk/ROSE/projects/binCompass/graphanalyses/InterruptAnalysis.cpp,
+	  /trunk/ROSE/projects/binCompass/graphanalyses/InterruptAnalysis.h,
+	  /trunk/ROSE/projects/compass/extensions/checkers/binaryBufferOverflow/binaryBufferOverflow.C,
+	  /trunk/ROSE/projects/compass/extensions/checkers/binaryInterruptAnalysis/binaryInterruptAnalysis.C,
+	  /trunk/ROSE/projects/compass/extensions/checkers/cycleDetection/cycleDetection.C,
+	  /trunk/ROSE/projects/compass/extensions/prerequisites/BinDataFlowPrerequisite.h,
+	  /trunk/ROSE/projects/compass/src/compassSupport/compass.h,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Node.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Support.code,
+	  /trunk/ROSE/src/ROSETTA/src/support.C,
+	  /trunk/ROSE/src/frontend/BinaryDisassembly/RoseBin_support.h,
+	  /trunk/ROSE/src/frontend/SageIII/astFileIO/StorageClassMemoryManagement.C,
+	  /trunk/ROSE/src/frontend/SageIII/astFileIO/StorageClassMemoryManagement.h,
+	  /trunk/ROSE/src/frontend/SageIII/rose_graph_support.C,
+	  /trunk/ROSE/src/frontend/SageIII/rtiHelpers.h,
+	  /trunk/ROSE/src/midend/binaryAnalyses/GraphAlgorithms.C,
+	  /trunk/ROSE/src/midend/binaryAnalyses/GraphAlgorithms.h,
+	  /trunk/ROSE/src/midend/binaryAnalyses/Makefile.am,
+	  /trunk/ROSE/src/midend/binaryAnalyses/RoseBin_CallGraphAnalysis.cpp,
+	  /trunk/ROSE/src/midend/binaryAnalyses/RoseBin_CallGraphAnalysis.h,
+	  /trunk/ROSE/src/midend/binaryAnalyses/RoseBin_ControlFlowAnalysis.cpp,
+	  /trunk/ROSE/src/midend/binaryAnalyses/RoseBin_ControlFlowAnalysis.h,
+	  /trunk/ROSE/src/midend/binaryAnalyses/RoseBin_DataFlowAnalysis.cpp,
+	  /trunk/ROSE/src/midend/binaryAnalyses/RoseBin_DataFlowAnalysis.h,
+	  /trunk/ROSE/src/midend/binaryAnalyses/RoseBin_FlowAnalysis.cpp,
+	  /trunk/ROSE/src/midend/binaryAnalyses/RoseBin_FlowAnalysis.h,
+	  /trunk/ROSE/src/midend/binaryAnalyses/dataflowanalyses/InterruptAnalysis.cpp,
+	  /trunk/ROSE/src/midend/binaryAnalyses/dataflowanalyses/InterruptAnalysis.h,
+	  /trunk/ROSE/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_DataFlowAbstract.cpp,
+	  /trunk/ROSE/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_DataFlowAbstract.h,
+	  /trunk/ROSE/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_DefUseAnalysis.cpp,
+	  /trunk/ROSE/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_DefUseAnalysis.h,
+	  /trunk/ROSE/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_Emulate.cpp,
+	  /trunk/ROSE/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_Emulate.h,
+	  /trunk/ROSE/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_VariableAnalysis.cpp,
+	  /trunk/ROSE/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_VariableAnalysis.h,
+	  /trunk/ROSE/src/midend/programAnalysis/graphAnalysis/CallGraphAnalysis.C,
+	  /trunk/ROSE/src/midend/programAnalysis/graphAnalysis/Makefile.am,
+	  /trunk/ROSE/src/midend/programAnalysis/graphAnalysis/RoseBin_DotGraph.cpp,
+	  /trunk/ROSE/src/midend/programAnalysis/graphAnalysis/RoseBin_DotGraph.h,
+	  /trunk/ROSE/src/midend/programAnalysis/graphAnalysis/RoseBin_GmlGraph.cpp,
+	  /trunk/ROSE/src/midend/programAnalysis/graphAnalysis/RoseBin_GmlGraph.h,
+	  /trunk/ROSE/src/midend/programAnalysis/graphAnalysis/RoseBin_Graph.cpp,
+	  /trunk/ROSE/src/midend/programAnalysis/graphAnalysis/RoseBin_Graph.h,
+	  /trunk/ROSE/src/midend/programAnalysis/graphAnalysis/SB_Graph.C,
+	  /trunk/ROSE/src/midend/programAnalysis/graphAnalysis/SB_Graph.h,
+	  /trunk/ROSE/src/util/rose_paths.h,
+	  /trunk/ROSE/tests/roseTests/binaryTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/binaryTests/runTest.C,
+	  /trunk/ROSE/tutorial/binaryAnalysis.C,
+	  /trunk/ROSE/tutorial/callGraphSourceBinaryExample.C: Refactoring
+	  of old graph implementation to use new interfaces
+
 2009-05-08 17:21  matzke
 
 	* [r5679]
