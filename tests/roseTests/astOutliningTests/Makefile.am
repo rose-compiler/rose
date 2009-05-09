@@ -130,11 +130,15 @@ test_class_ODR_violation: $(srcdir)/test_class_ODR_violation_main.C $(srcdir)/te
 #	Order does not appear to matter in the linking.
 	g++ test_class_ODR_violation_main.o test_class_ODR_violation_outlined.o -o test_class_ODR_violation
 
+# additional misc tests: complex transitional dependent declarations: outlined the first for loop
+rose_complexStruct.c: outline
+	./outline -rose:outline:new_file -rose:outline:temp_variable -rose:outline:exclude_headers -rose:outline:abstract_handle "ForStatement<numbering,1>" -c $(srcdir)/complexStruct.c
+
 # DQ (3/5/2009): Removed use of script to generate the test code cases.
 # EXTRA_DIST = build_tests-1pass.sh RandomStmtSelector.hh $(ALL_EXTRA_TESTCODE)
 # CLEANFILES = Makefile-1pass LIST.dat
 
-EXTRA_DIST = RandomStmtSelector.hh $(ALL_EXTRA_TESTCODE)
+EXTRA_DIST = RandomStmtSelector.hh $(ALL_EXTRA_TESTCODE) complexStruct.c
 CLEANFILES = 
 
 # DQ (8/29/2008): Added dependences
@@ -142,6 +146,7 @@ check-local: outline$(EXEEXT) injectOutlinePragmas outlineRandom outlineSelectio
 	@echo "Test for ROSE outliner."
 	@echo "***************** Testing C specific outlining *******************"
 	$(MAKE) $(PASSING_C_TEST_Objects)
+	$(MAKE) rose_complexStruct.c
 	@echo "***************** Testing C++ specific outlining ******************"
 	$(MAKE) $(PASSING_CXX_TEST_Objects)
 	$(MAKE) $(EXTERNAL_PASSING_CXX_TEST_Objects)

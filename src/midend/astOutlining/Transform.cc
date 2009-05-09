@@ -197,8 +197,8 @@ Outliner::Transform::outlineBlock (SgBasicBlock* s, const string& func_name_str)
         {
        // DQ (2/6/2009): I need to write this function to support the
        // insertion of the function into the specified scope.  If the
-       // file associated with the scope is maked as compiler generated 
-       // (or as a transformation) then the declarations referneced in the 
+       // file associated with the scope is marked as compiler generated 
+       // (or as a transformation) then the declarations referenced in the 
        // function must be copied as well (those not in include files)
        // and the include files must be copies also. If the SgFile
        // is not compiler generated (or a transformation) then we just
@@ -208,9 +208,9 @@ Outliner::Transform::outlineBlock (SgBasicBlock* s, const string& func_name_str)
        // in the file from which we want to generate a matching context.
        // It would be better if this were the location of the new function call
        // to the outlined function (since dependent declaration in the function
-       // contianing the outlined code (loop nest, for example) might contain
-       // relavant typedefs which have to be created in the new file (or the 
-       // outlined function as a specia case).
+       // containing the outlined code (loop nest, for example) might contain
+       // relevant typedefs which have to be created in the new file (or the 
+       // outlined function as a special case).
 
 #if 1
           ROSE_ASSERT(func->get_firstNondefiningDeclaration() != NULL);
