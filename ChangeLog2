@@ -1,3 +1,9 @@
+2009-05-09 21:08  dquinlan
+
+	* [r5703]
+	  /trunk/ROSE/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_DataFlowAbstract.h:
+	  Fixed vtable problem for at least some versions of GNU compilers.
+
 2009-05-09 00:41  liao6
 
 	* [r5688]
