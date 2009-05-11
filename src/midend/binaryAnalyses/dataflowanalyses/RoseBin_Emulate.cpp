@@ -379,7 +379,7 @@ RoseBin_Emulate::evaluateInstruction( SgAsmx86Instruction* binInst, string& oper
 	    if (memRef) {
 	      operands += " :: MemRef ";
 	      SgAsmExpression* mem_loc = memRef->get_address();
-	      string res = unparseX86Expression(mem_loc);
+	      string res = unparseExpression(mem_loc);
 	      uint64_t pos = 0;
 	      RoseBin_support::from_string<uint64_t>(pos, res, std::hex);
 	      uint64_t value = getRegister(codeR);

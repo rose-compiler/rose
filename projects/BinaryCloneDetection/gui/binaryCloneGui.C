@@ -578,7 +578,7 @@ static map<SgAsmExpression*, void*> unparseAndInternTable;
 inline void* unparseAndIntern(SgAsmExpression* e) {
   map<SgAsmExpression*, void*>::const_iterator i = unparseAndInternTable.find(e);
   if (i == unparseAndInternTable.end()) {
-    void* sPtr = intern(unparseX86Expression(e));
+    void* sPtr = intern(unparseExpression(e));
     unparseAndInternTable.insert(std::make_pair(e, sPtr));
     return sPtr;
   } else {
@@ -660,9 +660,7 @@ string unparseX86InstructionToHTMLWithAddress(SgAsmx86Instruction* insn) {
   const SgAsmExpressionPtrList& operands = opList->get_operands();
   for (size_t i = 0; i < operands.size(); ++i) {
     if (i != 0) result += ", ";
-    //tps (6 May 2009) : This line doesnt compile. It is broken in the svn. I need to comment this out
-    // to run make check in order to convert the graph structure to its new form
-    //result += "<font color=\"blue\">" + htmlEscape(unparseX86Expression(operands[i], (insn->get_kind() == x86_lea))) + "</font>";
+    result += "<font color=\"blue\">" + htmlEscape(unparseExpression(operands[i])) + "</font>";
   }
   return result;
 }

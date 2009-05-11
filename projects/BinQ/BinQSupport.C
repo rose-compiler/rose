@@ -67,7 +67,7 @@ static map<SgAsmExpression*, void*> unparseAndInternTable;
 inline void* unparseAndIntern(SgAsmExpression* e) {
   map<SgAsmExpression*, void*>::const_iterator i = unparseAndInternTable.find(e);
   if (i == unparseAndInternTable.end()) {
-    void* sPtr = intern(unparseX86Expression(e));
+    void* sPtr = intern(unparseExpression(e));
     unparseAndInternTable.insert(std::make_pair(e, sPtr));
     return sPtr;
   } else {
@@ -233,7 +233,7 @@ BinQSupport::evaluateMemoryExpression(SgAsmx86Instruction* destInst,
   }
   //SgAsmType* type = mem->get_type();
   //adr+="resolved: " +RoseBin_support::HexToString(resolveAddr)+" - orig:";
-  //adr += unparseX86Expression(exprOffset,false);
+  //adr += unparseExpression(exprOffset,false);
   return resolveAddr;
 }
 

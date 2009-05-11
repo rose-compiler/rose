@@ -176,7 +176,7 @@ CompassAnalyses::BinaryBufferOverflow::Traversal::run(string& name, SgGraphNode*
       if (ptrList.size()!=0) {
 	SgAsmExpression* expr = *(ptrList.begin());
 	string replace = expr->get_replacement();
-	string op = unparseX86Expression(expr);
+	string op = unparseExpression(expr);
 
 	// we can detect malloc with the help of ida.
 	if (replace=="_malloc" || replace=="malloc@plt") {
