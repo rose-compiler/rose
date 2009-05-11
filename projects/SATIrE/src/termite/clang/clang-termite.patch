@@ -1734,20 +1734,20 @@ Index: Driver/TermDumper.cpp
 +          const CastExpr *CE = cast<CastExpr>(S);
 +          
 +          // avoid cast on declaration references
-+          if (CE->getSubExpr()->getStmtClass() == Stmt::DeclRefExprClass && 
-+              CE->getType()->isPointerLikeType()) {
-+            const DeclRefExpr *DRE = cast<DeclRefExpr>(CE->getSubExpr());
++//           if (CE->getSubExpr()->getStmtClass() == Stmt::DeclRefExprClass && 
++//               CE->getType()->isPointerLikeType()) {
++//             const DeclRefExpr *DRE = cast<DeclRefExpr>(CE->getSubExpr());
 +
-+            if (const ValueDecl *VD = cast<ValueDecl>(DRE->getDecl())) {
-+              const PointerLikeType *PT = cast<PointerLikeType>(CE->getType());
++//             if (const ValueDecl *VD = cast<ValueDecl>(DRE->getDecl())) {
++//               const PointerLikeType *PT = cast<PointerLikeType>(CE->getType());
 +
-+              if (VD->getType() == PT->getPointeeType() ||
-+                  (isa<ArrayType>(VD->getType()) && cast<ArrayType>(VD->getType())->getElementType() == PT->getPointeeType())) {
-+                termStmt(O, CE->getSubExpr());
-+                return; // exit here!!
-+              }
-+            }
-+          }
++//               if (VD->getType() == PT->getPointeeType() ||
++//                   (isa<ArrayType>(VD->getType()) && cast<ArrayType>(VD->getType())->getElementType() == PT->getPointeeType())) {
++//                 termStmt(O, CE->getSubExpr());
++//                 return; // exit here!!
++//               }
++//             }
++//           }
 +
 +          O << "cast_exp(";
 +          termStmt(O, CE->getSubExpr());
