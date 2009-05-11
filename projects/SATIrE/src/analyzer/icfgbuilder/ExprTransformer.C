@@ -9,6 +9,41 @@
 #include "ExprTransformer.h"
 #include "IrCreation.h"
 
+bool
+ExprInfo::isPure() const
+{
+    return (entry == NULL && exit == NULL);
+}
+
+ExprInfo::ExprInfo(SgExpression *value)
+  : value(value), entry(NULL), exit(NULL)
+{
+}
+
+ExprInfo merge(ExprInfo a, ExprInfo b, SgExpression *newValue)
+{
+    ExprInfo result(newValue);
+
+    if (!a.isPure() && !b.isPure())
+    {
+        add_link(a.exit, b.entry, NORMAL_EDGE);
+        result.entry = a.entry;
+        result.exit = b.exit;
+    }
+    else if (a.isPure() && !b.isPure())
+    {
+        result.entry = b.entry;
+        result.exit = b.exit;
+    }
+    else if (!a.isPure() && b.isPure())
+    {
+        result.entry = a.entry;
+        result.exit = a.exit;
+    }
+
+    return result;
+}
+
 #if 0
 ExprTransformer::ExprTransformer(int node_id_, int procnum_, int expnum_,
                  CFG *cfg_, BasicBlock *after_)
@@ -25,12 +60,564 @@ ExprTransformer::ExprTransformer(int node_id_, int procnum_, int expnum_,
 ExprTransformer::ExprTransformer(int node_id, int procnum, int expnum,
         CFG *cfg, BasicBlock *after, SgStatement *stmt)
   : node_id(node_id), procnum(procnum), expnum(expnum), cfg(cfg),
-    after(after), retval(after), root_var(NULL), stmt(stmt),
+    after(after), retval(after), stmt(stmt),
     el(expnum, cfg, (*cfg->procedures)[procnum]),
     stmt_start(NULL),
-    stmt_end(new StatementAttribute(after, POS_PRE))
+    stmt_end(new StatementAttribute(after, POS_POST))
 {
 }
+
+SgExpression *
+ExprTransformer::transformExpression(SgExpression *expr,
+                                     SgExpression *original_expr)
+{
+    ExprInfo result = traverse(expr);
+
+    if (!result.isPure())
+    {
+        add_link(result.exit, after, NORMAL_EDGE);
+        after = result.entry;
+        last = result.exit;
+    }
+    else
+    {
+        last = after;
+    }
+
+    if (stmt != NULL)
+    {
+        stmt_start = new StatementAttribute(after, POS_PRE);
+     // stmt_end was initialized in the constructor
+        if (!stmt->attributeExists("PAG statement start"))
+            stmt->addNewAttribute("PAG statement start", stmt_start);
+        if (!stmt->attributeExists("PAG statement end"))
+            stmt->addNewAttribute("PAG statement end", stmt_end);
+    }
+
+    CallSiteAnnotator callSiteAnnotator(callSites);
+    callSiteAnnotator.traverse(original_expr, preorder);
+
+    if (result.value == NULL)
+    {
+        std::cout
+            << "oops! NULL result expr for expr "
+            << Ir::fragmentToString(expr)
+            << " (original: " << Ir::fragmentToString(original_expr) << ")"
+            << std::endl;
+    }
+
+    return result.value;
+}
+
+ExprInfo
+ExprTransformer::defaultSynthesizedAttribute()
+{
+    return ExprInfo(NULL);
+}
+
+BasicBlock *
+ExprTransformer::newBasicBlock()
+{
+    cfg->registerStatementLabel(node_id, stmt);
+    BasicBlock *b = new BasicBlock(node_id++, INNER, procnum);
+    cfg->nodes.push_back(b);
+    return b;
+}
+
+CallBlock *
+ExprTransformer::newCallBlock()
+{
+    cfg->registerStatementLabel(node_id, stmt);
+    CallBlock *b = new CallBlock(node_id++, CALL, procnum,
+                                 new std::vector<SgVariableSymbol *>(),
+                                 "<unknown function>",
+                                 /* add call stmt = */ false);
+    cfg->nodes.push_back(b);
+    cfg->calls.push_back(b);
+    callSites.push_back(b);
+    return b;
+}
+
+CallBlock *
+ExprTransformer::newReturnBlock()
+{
+    cfg->registerStatementLabel(node_id, stmt);
+    CallBlock *b = new CallBlock(node_id++, RETURN, procnum,
+                                 new std::vector<SgVariableSymbol *>(),
+                                 "<unknown function>",
+                                 /* add call stmt = */ false);
+    cfg->nodes.push_back(b);
+    cfg->returns.push_back(b);
+    return b;
+}
+
+SgVariableSymbol *
+ExprTransformer::newReturnVariable(std::string funcname)
+{
+    std::stringstream varname;
+    varname << "$tmpvar$" << funcname << "$return_" << expnum++;
+    return Ir::createVariableSymbol(varname.str(), cfg->global_unknown_type);
+}
+
+SgVariableSymbol *
+ExprTransformer::newLogicalVariable()
+{
+    std::stringstream varname;
+    varname << "$tmpvar$logical_" << expnum++;
+    return Ir::createVariableSymbol(varname.str(), cfg->global_unknown_type);
+}
+
+SgVariableSymbol *
+ExprTransformer::icfgArgumentVarSym(unsigned int i)
+{
+    unsigned int n = i;
+    while (i >= cfg->global_argument_variable_symbols.size())
+    {
+        std::stringstream varname;
+        varname << "$tmpvar$arg_" << n++;
+        SgVariableSymbol *varsym
+            = Ir::createVariableSymbol(varname.str(),
+                                       cfg->global_unknown_type);
+        cfg->global_argument_variable_symbols.push_back(varsym);
+    }
+
+    SgVariableSymbol *varsym = cfg->global_argument_variable_symbols[i];
+    return varsym;
+}
+
+SgVarRefExp *
+ExprTransformer::icfgArgumentVarRef(unsigned int i)
+{
+    return Ir::createVarRefExp(icfgArgumentVarSym(i));
+}
+
+BasicBlock *
+ExprTransformer::newAssignBlock(SgExpression *lhs, SgExpression *rhs)
+{
+    BasicBlock *b = newBasicBlock();
+    b->statements.push_back(
+            Ir::createExprStatement(Ir::createAssignOp(lhs, rhs)));
+    return b;
+}
+
+BasicBlock *
+ExprTransformer::newArgumentAssignmentBlock(unsigned int i, SgExpression *e)
+{
+    SgVarRefExp *arg_var = icfgArgumentVarRef(i);
+    BasicBlock *b = newBasicBlock();
+    b->statements.push_back(Ir::createArgumentAssignment(arg_var, e));
+    return b;
+}
+
+std::vector<SgVariableSymbol *> *
+ExprTransformer::newArgumentSymbolList(SgFunctionCallExp *call)
+{
+    unsigned int n = call->get_args()->get_expressions().size();
+    std::vector<SgVariableSymbol *> *args
+        = new std::vector<SgVariableSymbol *>();
+    for (int i = 0; i < n; i++)
+        args->push_back(icfgArgumentVarSym(i));
+    return args;
+}
+
+ExprInfo
+ExprTransformer::evaluateSynthesizedAttribute(
+        SgNode *node,
+        ExprTransformer::SynthesizedAttributesList synList)
+{
+    ExprInfo result(NULL);
+
+    if (SgThisExp *thisExp = isSgThisExp(node))
+    {
+     // TODO later
+        result.value = isSgExpression(node);
+    }
+    else if (SgFunctionCallExp *call = isSgFunctionCallExp(node))
+    {
+     // This ExprInfo encapsulates all the stuff needed to evaluate the
+     // function expression and assign the values of the argument
+     // expressions to the argument tmpvars.
+        ExprInfo prelude = merge(synList[SgFunctionCallExp_function],
+                                 synList[SgFunctionCallExp_args]);
+
+     // Set up basic structure.
+        CallBlock *callBlock = newCallBlock();
+        CallBlock *returnBlock = newReturnBlock();
+        callBlock->partner = returnBlock;
+        returnBlock->partner = callBlock;
+
+        SgExpression *call_target_expr = call->get_function();
+        callBlock->call_target = call_target_expr;
+        cfg->call_target_call_block[call_target_expr] = callBlock;
+        returnBlock->call_target = call_target_expr;
+
+        if (!prelude.isPure())
+        {
+            result.entry = prelude.entry;
+            add_link(prelude.exit, callBlock, NORMAL_EDGE);
+        }
+        else
+            result.entry = callBlock;
+
+        std::string *name = find_func_name(call);
+        bool functionMayReturn = true;
+        if (name != NULL && (*name == "exit"
+                          || *name == "abort"
+                          || *name == "__assert_fail"))
+        {
+            functionMayReturn = false;
+        }
+        if (functionMayReturn)
+            add_link(callBlock, returnBlock, LOCAL);
+
+     // Set call and return edges, put the appropriate call/return
+     // statements into the call/return blocks.
+        const std::vector<CallBlock *> *entries = find_entries(call);
+        if (entries != NULL && !entries->empty())
+        {
+            std::vector<CallBlock *>::const_iterator e;
+            for (e = entries->begin(); e != entries->end(); ++e)
+            {
+                CallBlock *funcEntry = *e;
+                CallBlock *funcExit = funcEntry->partner;
+                add_link(callBlock, funcEntry, CALL_EDGE);
+                add_link(funcExit, returnBlock, RETURN_EDGE);
+            }
+            callBlock->statements.push_back(
+                    Ir::createFunctionCall(CALL, *name, callBlock));
+            returnBlock->statements.push_back(
+                    Ir::createFunctionReturn(RETURN, *name, returnBlock));
+        }
+        else
+        {
+            callBlock->statements.push_back(
+                    Ir::createExternalCall(call->get_function(),
+                                           newArgumentSymbolList(call),
+                                           call->get_type()));
+            returnBlock->statements.push_back(
+                    Ir::createExternalReturn(call->get_function(),
+                                             newArgumentSymbolList(call),
+                                             call->get_type()));
+        }
+
+     // Make a new return variable and a ReturnAssignment.
+        SgVariableSymbol *var
+            = newReturnVariable(name != NULL ? *name : "unknown_func");
+        SgVariableSymbol *retvar = cfg->global_return_variable_symbol;
+        ReturnAssignment *ra = Ir::createReturnAssignment(var, retvar);
+
+        BasicBlock *retAssign = newBasicBlock();
+        retAssign->statements.push_back(ra);
+        retAssign->call_target = call_target_expr;
+        add_link(returnBlock, retAssign, NORMAL_EDGE);
+        result.exit = retAssign;
+
+        SgVarRefExp *retvarref = Ir::createVarRefExp(var);
+        result.value = retvarref;
+
+     // Annotate the return variable (both the symbol and the expression),
+     // and the specific global retvar expression, with the function call's
+     // target.
+        var->addNewAttribute("SATIrE: call target",
+                             new CallAttribute(call_target_expr));
+        retvarref->addNewAttribute("SATIrE: call target",
+                                   new CallAttribute(call_target_expr));
+        SgVarRefExp *glob_retvar_expr = ra->get_rhsVarRefExp();
+        glob_retvar_expr->addNewAttribute("SATIrE: call target",
+                                          new CallAttribute(call_target_expr));
+    }
+    else if (SgExprListExp *args = isSgExprListExp(node))
+    {
+        if (SgFunctionCallExp *call = isSgFunctionCallExp(args->get_parent()))
+        {
+            SgExpression *call_target_expr = call->get_function();
+            SynthesizedAttributesList::iterator syn;
+            BasicBlock *prev = NULL;
+            unsigned int i = 0;
+         // TODO later: handle 'this' pointer
+            for (syn = synList.begin(); syn != synList.end(); ++syn)
+            {
+                ExprInfo info = *syn;
+
+                BasicBlock *arg_block
+                    = newArgumentAssignmentBlock(i++, info.value);
+                arg_block->call_target = call_target_expr;
+                if (!info.isPure())
+                {
+                    if (prev == NULL)
+                        result.entry = prev = info.entry;
+                    else
+                        add_link(prev, info.entry, NORMAL_EDGE);
+                    add_link(info.exit, arg_block, NORMAL_EDGE);
+                }
+                else
+                {
+                    if (prev == NULL)
+                        result.entry = prev = arg_block;
+                    else
+                        add_link(prev, arg_block, NORMAL_EDGE);
+                }
+
+                prev = arg_block;
+            }
+         // If the list is empty, this assigns NULL, which is fine.
+            result.exit = prev;
+         // This is NULL anyway, but just to make really really explicit
+         // that this ExprListExp is evaluated only for side-effects and not
+         // for a value...
+            result.value = NULL;
+        }
+        else
+        {
+#if 0
+            std::cout
+                << "* in new ExprTransformer: "
+                << "SgExprListExp not in function call? parent is: "
+                << args->get_parent()->class_name()
+                << std::endl;
+#endif
+         // TODO: If the expressions in the list are impure, they should be
+         // merged, preserving effects!
+            result.value = isSgExpression(node);
+        }
+    }
+    else if (SgConstructorInitializer *ci = isSgConstructorInitializer(node))
+    {
+     // TODO later
+        result.value = isSgExpression(node);
+    }
+    else if (isSgNewExp(node) || isSgDeleteExp(node)
+          || isSgMemberFunctionRefExp(node))
+    {
+     // TODO later
+        result.value = isSgExpression(node);
+    }
+    else if (SgAndOp *conj = isSgAndOp(node))
+    {
+        ExprInfo lhsInfo = synList[SgBinaryOp_lhs_operand_i];
+        ExprInfo rhsInfo = synList[SgBinaryOp_rhs_operand_i];
+
+        if (lhsInfo.isPure() && rhsInfo.isPure())
+        {
+            result.value = conj;
+        }
+        else
+        {
+            BasicBlock *ifBlock = newBasicBlock();
+            BasicBlock *joinBlock = newBasicBlock();
+            joinBlock->statements.push_back(Ir::createIfJoin());
+            SgVariableSymbol *logical = newLogicalVariable();
+            SgVarRefExp *logical_varref = Ir::createVarRefExp(logical);
+
+            BasicBlock *lhsAssign
+                = newAssignBlock(logical_varref, Ir::createBoolValExp(false));
+            add_link(ifBlock, lhsAssign, FALSE_EDGE);
+            add_link(lhsAssign, joinBlock, NORMAL_EDGE);
+            if (!lhsInfo.isPure())
+            {
+                result.entry = lhsInfo.entry;
+                add_link(lhsInfo.exit, ifBlock, NORMAL_EDGE);
+            }
+            else
+            {
+                result.entry = ifBlock;
+            }
+            ifBlock->statements.push_back(Ir::createLogicalIf(lhsInfo.value));
+
+            BasicBlock *rhsAssign
+                = newAssignBlock(logical_varref, rhsInfo.value);
+            if (!rhsInfo.isPure())
+            {
+                add_link(ifBlock, rhsInfo.entry, TRUE_EDGE);
+                add_link(rhsInfo.exit, rhsAssign, NORMAL_EDGE);
+            }
+            else
+            {
+                add_link(ifBlock, rhsAssign, TRUE_EDGE);
+            }
+            add_link(rhsAssign, joinBlock, NORMAL_EDGE);
+
+            result.value = logical_varref;
+            result.exit = joinBlock;
+        }
+    }
+    else if (SgOrOp *disj = isSgOrOp(node))
+    {
+        ExprInfo lhsInfo = synList[SgBinaryOp_lhs_operand_i];
+        ExprInfo rhsInfo = synList[SgBinaryOp_rhs_operand_i];
+
+        if (lhsInfo.isPure() && rhsInfo.isPure())
+        {
+            result.value = disj;
+        }
+        else
+        {
+            BasicBlock *ifBlock = newBasicBlock();
+            BasicBlock *joinBlock = newBasicBlock();
+            joinBlock->statements.push_back(Ir::createIfJoin());
+            SgVariableSymbol *logical = newLogicalVariable();
+            SgVarRefExp *logical_varref = Ir::createVarRefExp(logical);
+
+            BasicBlock *lhsAssign
+                = newAssignBlock(logical_varref, Ir::createBoolValExp(true));
+            add_link(ifBlock, lhsAssign, TRUE_EDGE);
+            add_link(lhsAssign, joinBlock, NORMAL_EDGE);
+            if (!lhsInfo.isPure())
+            {
+                result.entry = lhsInfo.entry;
+                add_link(lhsInfo.exit, ifBlock, NORMAL_EDGE);
+            }
+            else
+            {
+                result.entry = ifBlock;
+            }
+            ifBlock->statements.push_back(Ir::createLogicalIf(lhsInfo.value));
+
+            BasicBlock *rhsAssign
+                = newAssignBlock(logical_varref, rhsInfo.value);
+            if (!rhsInfo.isPure())
+            {
+                add_link(ifBlock, rhsInfo.entry, FALSE_EDGE);
+                add_link(rhsInfo.exit, rhsAssign, NORMAL_EDGE);
+            }
+            else
+            {
+                add_link(ifBlock, rhsAssign, FALSE_EDGE);
+            }
+            add_link(rhsAssign, joinBlock, NORMAL_EDGE);
+
+            result.value = logical_varref;
+            result.exit = joinBlock;
+        }
+    }
+    else if (SgConditionalExp *cond = isSgConditionalExp(node))
+    {
+        ExprInfo condInfo = synList[SgConditionalExp_conditional_exp];
+        ExprInfo trueInfo = synList[SgConditionalExp_true_exp];
+        ExprInfo falseInfo = synList[SgConditionalExp_false_exp];
+
+        if (condInfo.isPure() && trueInfo.isPure() && falseInfo.isPure())
+        {
+            result.value = cond;
+        }
+        else if (!condInfo.isPure() && trueInfo.isPure() && falseInfo.isPure())
+        {
+         // If the condition is impure, but both result expressions are
+         // pure, we can generate code like this:
+         //     ...evaluate cond...
+         //     ($cond$value ? trueExp : falseExp)
+         // by simply replacing the condition expression by condInfo's value
+         // expression.
+            result.entry = condInfo.entry;
+            result.exit = condInfo.exit;
+            if (cond->get_conditional_exp() != condInfo.value)
+            {
+                satireReplaceChild(cond, cond->get_conditional_exp(),
+                                   condInfo.value);
+            }
+            result.value = cond;
+        }
+        else
+        {
+            BasicBlock *ifBlock = newBasicBlock();
+            ifBlock->statements.push_back(Ir::createLogicalIf(condInfo.value));
+            if (!condInfo.isPure())
+            {
+                result.entry = condInfo.entry;
+                add_link(condInfo.exit, ifBlock, NORMAL_EDGE);
+            }
+            else
+            {
+                result.entry = ifBlock;
+            }
+
+            BasicBlock *joinBlock = newBasicBlock();
+            joinBlock->statements.push_back(Ir::createIfJoin());
+            result.exit = joinBlock;
+
+            SgVariableSymbol *resvalsym = newLogicalVariable();
+            SgVarRefExp *resval = Ir::createVarRefExp(resvalsym);
+
+            BasicBlock *trueAssign
+                = newAssignBlock(resval, trueInfo.value);
+            BasicBlock *falseAssign
+                = newAssignBlock(resval, falseInfo.value);
+
+            if (!trueInfo.isPure())
+            {
+                add_link(ifBlock, trueInfo.entry, TRUE_EDGE);
+                add_link(trueInfo.exit, trueAssign, NORMAL_EDGE);
+            }
+            else
+            {
+                add_link(ifBlock, trueAssign, TRUE_EDGE);
+            }
+            add_link(trueAssign, joinBlock, NORMAL_EDGE);
+
+            if (!falseInfo.isPure())
+            {
+                add_link(ifBlock, falseInfo.entry, FALSE_EDGE);
+                add_link(falseInfo.exit, falseAssign, NORMAL_EDGE);
+            }
+            else
+            {
+                add_link(ifBlock, falseAssign, FALSE_EDGE);
+            }
+            add_link(falseAssign, joinBlock, NORMAL_EDGE);
+
+            result.value = resval;
+        }
+    }
+    else if (SgBinaryOp *binOp = isSgBinaryOp(node))
+    {
+     // replace impure children, merge
+        ExprInfo lhsInfo = synList[SgBinaryOp_lhs_operand_i];
+        ExprInfo rhsInfo = synList[SgBinaryOp_rhs_operand_i];
+        if (!lhsInfo.isPure() && binOp->get_lhs_operand() != lhsInfo.value)
+            satireReplaceChild(binOp, binOp->get_lhs_operand(), lhsInfo.value);
+        if (!rhsInfo.isPure() && binOp->get_rhs_operand() != rhsInfo.value)
+            satireReplaceChild(binOp, binOp->get_rhs_operand(), rhsInfo.value);
+        result = merge(lhsInfo, rhsInfo, binOp);
+    }
+    else if (SgUnaryOp *unOp = isSgUnaryOp(node))
+    {
+        ExprInfo childInfo = synList[SgUnaryOp_operand_i];
+        if (!childInfo.isPure() && unOp->get_operand() != childInfo.value)
+        {
+            result = childInfo;
+            satireReplaceChild(unOp, unOp->get_operand(), childInfo.value);
+        }
+        result.value = unOp;
+    }
+    else if (isSgAssignInitializer(node))
+    {
+        result = synList[SgAssignInitializer_operand_i];
+    }
+    else if (isSgAggregateInitializer(node))
+    {
+        result = synList[SgAggregateInitializer_initializers];
+    }
+    else if (isSgVarRefExp(node) || isSgValueExp(node)
+          || isSgFunctionRefExp(node) || isSgNullExpression(node))
+    {
+        result.value = isSgExpression(node);
+    }
+    else
+    {
+#if 0
+        std::cout
+            << "* in new ExprTransformer: unhandled expression "
+            << node->class_name()
+            << std::endl;
+        std::abort();
+#endif
+        result.value = isSgExpression(node);
+    }
+
+    return result;
+}
+
+#if OLD_AND_UNUSED
 
 SgExpression *
 ExprTransformer::labelAndTransformExpression(SgExpression *expr,
@@ -91,6 +678,8 @@ ExprTransformer::labelAndTransformExpression(SgExpression *expr,
     return expr;
 }
 
+#endif
+
 int 
 ExprTransformer::get_node_id() const {
   return node_id;
@@ -103,6 +692,13 @@ ExprTransformer::get_expnum() const {
 
 BasicBlock*
 ExprTransformer::get_after() const {
+#if 0
+    std::cout
+        << "ExprTransformer returning after = "
+        << (after != NULL ? after->id : -1)
+        << " for stmt " << Ir::fragmentToString(stmt)
+        << std::endl;
+#endif
     return after;
 }
 
@@ -116,10 +712,7 @@ ExprTransformer::get_retval() const {
     return retval;
 }
 
-SgVariableSymbol*
-ExprTransformer::get_root_var() const {
-    return root_var;
-}
+#if OLD_AND_UNUSED
 
 void ExprTransformer::visit(SgNode *node)
 {
@@ -357,7 +950,7 @@ void ExprTransformer::visit(SgNode *node)
             bool functionMayReturn = true;
             if (name != NULL && (*name == "exit"
                               || *name == "abort"
-                              || *name == "__assert_fail"))
+                              /*|| *name == "__assert_fail"*/))
             {
                 functionMayReturn = false;
             }
@@ -626,8 +1219,6 @@ void ExprTransformer::visit(SgNode *node)
           if (isSgExpression(newExp0->get_parent())) {
             SgVarRefExp* varRefExp=Ir::createVarRefExp(var);
             satireReplaceChild(newExp0->get_parent(),newExp0,varRefExp);
-          } else if (root_var == NULL) {
-              root_var = var;
           }
         } else {
           RetvalAttribute* ra = (RetvalAttribute *) ci->getAttribute("anonymous variable");
@@ -1044,9 +1635,6 @@ void ExprTransformer::visit(SgNode *node)
         satireReplaceChild(logical_op->get_parent(), logical_op,
                            Ir::createVarRefExp(var));
       }
-      else if (root_var == NULL) {
-        root_var = var;
-      }
    // GB (2008-05-05): ExprTransformer should never modify expnum; it
    // doesn't even use it! Everything is done via attributes.
    // expnum++;
@@ -1061,6 +1649,9 @@ void ExprTransformer::visit(SgNode *node)
       cfg->nodes.push_back(if_block);
       if_block->statements.push_front(Ir::createLogicalIf(
                   cond->get_conditional_exp()));
+
+   // Create ICFG nodes for assignment of appropriate values to the logical
+   // variable in the "true" and "false" branches.
       BasicBlock *t_block = new BasicBlock(node_id++, INNER, procnum);
       cfg->nodes.push_back(t_block);
       t_block->statements.push_front(Ir::createExprStatement(
@@ -1070,8 +1661,11 @@ void ExprTransformer::visit(SgNode *node)
       f_block->statements.push_front(Ir::createExprStatement(
         Ir::createAssignOp(Ir::createVarRefExp(var),cond->get_false_exp())));
       
+   // Generate code for the "true" and "false" branches, ending with the
+   // respective logical variable assignment block.
       add_link(if_block, t_block, TRUE_EDGE);
       add_link(if_block, f_block, FALSE_EDGE);
+
       add_link(t_block, after, NORMAL_EDGE);
       add_link(f_block, after, NORMAL_EDGE);
       after = if_block;
@@ -1079,14 +1673,13 @@ void ExprTransformer::visit(SgNode *node)
       if (isSgExpression(cond->get_parent())) {
         satireReplaceChild(cond->get_parent(), cond, Ir::createVarRefExp(var));
       }
-      else if (root_var == NULL) {
-        root_var = var;
-      }
    // GB (2008-05-05): ExprTransformer should never modify expnum; it
    // doesn't even use it! Everything is done via attributes.
    // expnum++;
     }
 }
+
+#endif
 
 std::string
 ExprTransformer::find_mangled_func_name(SgFunctionRefExp *fr) const {
@@ -1457,10 +2050,6 @@ void ExprTransformer::assign_retval(
         replacementExpression->addNewAttribute(
                 "SATIrE: call target", new CallAttribute(call_target_expr));
         satireReplaceChild(call->get_parent(), call, replacementExpression);
-    }
-    else if (root_var == NULL)
-    {
-        root_var = var;
     }
 }
 
