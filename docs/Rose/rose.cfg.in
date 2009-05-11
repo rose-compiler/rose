@@ -425,10 +425,22 @@ INPUT                  = \
                          @top_srcdir@/src/frontend/frontend.docs \
                          @top_srcdir@/docs/testDoxygen \
                          @top_srcdir@/src/frontend/CxxFrontend/EDG_3.3/documentation.docs \
+			 @top_srcdir@/src/frontend/Disassemblers/putInstructionsIntoBasicBlocks.C \
+			 @top_srcdir@/src/frontend/Disassemblers/detectFunctionsStarts.C \
+			 @top_srcdir@/src/frontend/Disassemblers/disassemblerCommon.C \
+			 @top_srcdir@/src/frontend/ExecFormats/ROSE_ExecGeneric.C \
+			 @top_srcdir@/src/frontend/ExecFormats/ROSE_ExecELF.C \
+			 @top_srcdir@/src/frontend/ExecFormats/ROSE_ExecNE.C \
+			 @top_srcdir@/src/frontend/ExecFormats/ROSE_ExecLE.C \
+			 @top_srcdir@/src/frontend/ExecFormats/ROSE_ExecDOS.C \
+			 @top_srcdir@/src/frontend/ExecFormats/ROSE_ExecPE.C \
                          @top_srcdir@/src/frontend/Open64/documentation.docs \
                          @top_srcdir@/src/frontend/SageIII/docs \
+			 @top_srcdir@/src/frontend/SageIII/astPostProcessing/checkIsModifiedFlag.C \
                          @top_srcdir@/src/frontend/SageIII/sageInterface \
                          @top_srcdir@/src/frontend/SageIII/virtualCFG \
+			 @top_srcdir@/src/frontend/SageIII/virtualCFG/virtualBinCFG.C \
+			 @top_srcdir@/src/frontend/ExecFormats \
                          @top_srcdir@/src/midend/midend.docs \
                          @top_srcdir@/src/midend/astDiagnostics/AstDiagnostics.docs \
                          @top_srcdir@/src/midend/astInlining/documentation.docs \
@@ -440,6 +452,10 @@ INPUT                  = \
                          @top_srcdir@/src/midend/astProcessing/AstProcessing.docs \
                          @top_srcdir@/src/midend/astQuery/QueryLib.docs \
                          @top_srcdir@/src/backend/backend.docs \
+			 @top_srcdir@/src/backend/asmUnparser/unparseX86Asm.C \
+			 @top_srcdir@/src/backend/asmUnparser/unparseArmAsm.C \
+			 @top_srcdir@/src/backend/asmUnparser/unparsePowerpcAsm.C \
+			 @top_srcdir@/src/backend/asmUnparser/unparseAsm.C \
                          @top_srcdir@/src/backend/unparser/unparser.docs \
                          @top_srcdir@/src/backend/unparser/languageIndependenceSupport/documentation.docs \
                          @top_srcdir@/src/backend/unparser/CxxCodeGeneration/documentation.docs \
