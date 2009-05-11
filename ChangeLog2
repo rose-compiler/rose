@@ -1,3 +1,22 @@
+2009-05-11 15:49  matzke
+
+	* [r5726] /trunk/ROSE/projects/AstEquivalence/astEquivalenceGui.C,
+	  /trunk/ROSE/projects/AstEquivalence/createTextFiles.C,
+	  /trunk/ROSE/projects/AstEquivalence/evaluateAllBinaries.C,
+	  /trunk/ROSE/projects/AstEquivalence/gui/compilerFlagsGui.C,
+	  /trunk/ROSE/projects/BinQ/BinQSupport.C,
+	  /trunk/ROSE/projects/BinaryCloneDetection/gui/binaryCloneGui.C,
+	  /trunk/ROSE/projects/compass/extensions/checkers/binaryBufferOverflow/binaryBufferOverflow.C,
+	  /trunk/ROSE/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_Emulate.cpp,
+	  /trunk/ROSE/src/midend/binaryAnalyses/dataflowanalyses/RoseBin_VariableAnalysis.cpp:
+	  Replaced unparseX86Expression with unparseExpression
+	  
+	  There's no need to ever call unparseX86Expression (or the Arm or
+	  PowerPC
+	  versions). There's a new unparseExpress() that works generically
+	  for
+	  any kind of expression.
+
 2009-05-09 21:08  dquinlan
 
 	* [r5703]
