@@ -47,6 +47,7 @@ do_local_subst = \
         -e 's|[@]plldadd[@]|$(SWI_PROLOG_LDADD)|g' \
         -e 's,[@]satireinclude[@],$(realpath .)/local_include_dir,g' \
         -e 's,[@]satirelib[@],$(realpath $(top_builddir))/src/analyzer/astaccess/satire/.libs,g' \
+        -e 's,[@]cc[@],$(CC),g' \
         -e 's,[@]cxx[@],$(CXX),g'
 
 # We manually instantiate newanalysis.in and Makefile-template.in according

@@ -24,6 +24,7 @@ do_subst= sed -e 's,[@]pkgdatadir[@],$(pkgdatadir),g' \
               -e 's|[@]plldadd[@]|$(SWI_PROLOG_LDADD)|g' \
               -e 's,[@]satireinclude[@],$(pkgincludedir),g' \
               -e 's,[@]satirelib[@],$(libdir),g' \
+              -e 's,[@]cc[@],$(CC),g' \
               -e 's,[@]cxx[@],$(CXX),g'
 
 newanalysis: newanalysis.in Makefile

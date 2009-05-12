@@ -9,6 +9,7 @@ PL_INCLUDE=@plinclude@
 SATIRE_LIB=@satirelib@
 SATIRE_INCLUDE=@satireinclude@
 SATIRE_DATA=@pkgdatadir@
+CC=@cc@
 CXX=@cxx@
 
 # variable CUSTOM_CFLAGS can be in separate file; so can options from
@@ -57,7 +58,7 @@ $(ANALYSIS).a: $(ANALYSIS).optla Makefile
 	# customize prefixed_support_funcs.h with the analysis prefix
 	sed -e 's/[@]PREFIX[@]/$(PREFIX)/g' < $(SATIRE_DATA)/prefixed_support_funcs.h-template > $(ANALYSIS)-out/src/prefixed_support_funcs.h
 	# make the analyzer library; suppress warnings with -w; do not recompile our files
-	$(MAKE) -j1 CFLAGS="$(CUSTOM_CFLAGS) $(D_FLAGS) -w" -C $(ANALYSIS)-out/src/
+	$(MAKE) -j1 CC=$(CC) CFLAGS="$(CUSTOM_CFLAGS) $(D_FLAGS) -w" -C $(ANALYSIS)-out/src/
 	cp $(ANALYSIS)-out/src/$(ANALYSIS).a .
 
 main.o: main.C main.h $(ANALYSIS).a Makefile
