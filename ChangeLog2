@@ -1,3 +1,24 @@
+2009-05-11 21:24  matzke
+
+	* [r5732] /trunk/ROSE/docs/Rose/rose.cfg.in: Added additional *.C
+	  files to doxygen
+	  
+	  I added individual *.C files that have doxygen documentation. I
+	  did this
+	  in such a way that most *.C files are not processed. It would
+	  have been
+	  easier to change FILE_PATTERS to include '*.C' and change
+	  RECURSIVE to
+	  true, but that makes doxygen run much, much longer and produce a
+	  whole
+	  lot more documentation.
+
+2009-05-11 21:24  matzke
+
+	* [r5731]
+	  /trunk/ROSE/developersScratchSpace/Robb/SemanticVerification/verifySemantics.C:
+	  Fixed bug in semantic verification arg parsing
+
 2009-05-11 15:49  matzke
 
 	* [r5726] /trunk/ROSE/projects/AstEquivalence/astEquivalenceGui.C,
