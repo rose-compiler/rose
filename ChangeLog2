@@ -1,3 +1,25 @@
+2009-05-12 22:10  liao6
+
+	* [r5742]
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/Makefile.am: Minor
+	  fix
+
+2009-05-12 22:06  liao6
+
+	* [r5741]
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/getDependentDecls.C,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/inputgetDependentDecls.C,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/complexStruct.c:
+	  More work in outliner
+	  
+	  * made getDependentDeclarations() an SageInterface function
+	  * added support for enumeration types
+	  * preliminary support for template instantiation definition
+
 2009-05-12 13:20  matzke
 
 	* [r5736] /trunk/ROSE/docs/Rose/rose.cfg.in: Fixed spelling mistake
