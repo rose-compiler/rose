@@ -33,7 +33,11 @@ static const char* e_function_modifier[] = {
  "gnu_attribute__malloc__", // = 17,/*!< GNU specific attribute for (GNU extension) */
  "gnu_attribute__naked__",  // = 18,/*!< GNU specific attribute for (GNU extension) */
  "gnu_attribute__no_instrument_function__", // = 19,/*!< GNU specific attribute for (GNU extension) */
- "gnu_attribute__no_check_memory_usage__"   // = 20,/*!< GNU specific attribute for (GNU extension) */
+ "gnu_attribute__no_check_memory_usage__",   // = 20,/*!< GNU specific attribute for (GNU extension) */
+ "gnu_attribute__noinline__", //              = 21,/*!< GNU specific attribute for (GNU extension) */
+ "gnu_attribute__always_inline__", //         = 22,/*!< GNU specific attribute for (GNU extension) */
+ "gnu_attribute__nothrow__", //               = 23,/*!< GNU specific attribute for (GNU extension) */
+ "gnu_attribute__weakref__", //               = 24,/*!< GNU specific attribute for (GNU extension) */
  //"last_modifier"  /*!< last value (upper bound on range of values, used in error checking) */
 };
 static const char* e_special_function_modifier[] = {
@@ -87,7 +91,10 @@ static const char* e_type_modifier[] = {
   "gnu_attribute__noreturn__",          // = 20,/*!< GNU specific attribute for function type (GNU extension) */
   "gnu_attribute__const__",             // = 21,/*!< GNU specific attribute for function type (GNU extension) */
   "gnu_attribute__cdecl__",             // = 22,/*!< GNU specific attribute for function type (GNU extension) */
-  "gnu_attribute__stdcall__"            // = 23,/*!< GNU specific attribute for function type (GNU extension) */
+  "gnu_attribute__stdcall__",           // = 23,/*!< GNU specific attribute for function type (GNU extension) */
+ "gnu_attribute__warn_unused_result__", //= 24,/*!< GNU specific attribute for function type (GNU extension) */
+ "gnu_attribute__nonnull__", //           = 25,/*!< GNU specific attribute for function type (GNU extension) */
+ "gnu_attribute__sentinel__", //          = 26,/*!< GNU specific attribute for function type (GNU extension) */
   //"last_modifier" /*!< last value (upper bound on range of values, used in error checking) */
 };
 

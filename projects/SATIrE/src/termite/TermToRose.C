@@ -192,7 +192,7 @@ PrologToRose::toRose(PrologTerm* t) {
   }
 
   if ((node == NULL) && (t->getRepresentation() != "null")
-      && (t->getName() != "file")) {
+      && (t->getName() != "source_file")) {
     cerr << "**WARNING: could not translate the term '" 
 	 << t->getRepresentation() << "'" 
          << " of arity " << t->getArity() << "." << endl;
@@ -301,7 +301,7 @@ PrologToRose::unaryToRose(PrologCompTerm* t,string tname) {
     s = createValueExp(fi,child1,t);
   } else if(isUnaryOp(tname)) {
     s = createUnaryOp(fi,child1,t);
-  } else if(tname == SG_PREFIX "file") {
+  } else if(tname == SG_PREFIX "source_file") {
     s = createFile(fi,child1,t);
   } else if(tname == SG_PREFIX "return_stmt") {
     s = createReturnStmt(fi,child1,t);
@@ -391,7 +391,7 @@ PrologToRose::binaryToRose(PrologCompTerm* t,string tname) {
     s = createTryStmt(fi,child1,child2,t);	
   } else if(tname == SG_PREFIX "catch_option_stmt") {
     s = createCatchOptionStmt(fi,child1,child2,t);	
-  } else if (tname == SG_PREFIX "file") {
+  } else if (tname == SG_PREFIX "source_file") {
     s = createFile(fi,child1,t);
   } else cerr<<"**WARNING: unhandled Binary Node: "<<tname<<endl;
 
