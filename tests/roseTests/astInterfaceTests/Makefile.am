@@ -100,10 +100,8 @@ generatedCodeExamples = \
   rose_inputbuildProcedureHeaderStatement.f \
   rose_inputreplaceMacroCalls.C \
   rose_inputbuildAbstractHandle.C \
-  rose_inputloopUnrolling.C 
-# disabled since SgDotExp is not handled yet in SgFunctionCallExp::getAssociatedSymbol()  
-# in src/frontend/SageIII/sageSupport.C:7236
-#  rose_inputgetDependentDecls.C
+  rose_inputloopUnrolling.C \
+  rose_inputgetDependentDecls.C
 
 
 # turn off edg warnings such as "variable x declared but never referenced" for test input files
