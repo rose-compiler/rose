@@ -2,6 +2,7 @@
 // for recursive copy dependent declarations and typedef used in an outlining target
 // to a new file.
 // Liao, 5/8/2009
+enum MyEnumType { ALPHA, BETA, GAMMA }; 
 typedef int MYINT;
 typedef MYINT hypre_MPI_Comm; // test chain of typedef here
 
@@ -155,6 +156,24 @@ typedef struct hypre_StructMatrix_struct //14
 
 } hypre_StructMatrix;
 
+enum    special_function_modifier_enum {
+  e_unknown = 0,
+  e_default = 1,
+  e_none = e_default,
+  e_constructor = 2,
+  e_destructor = 3,
+  e_conversion = 4,
+  e_operator = 5,
+  e_last_modifier
+};
+
+union item
+{
+  int m;
+  float p;
+  char c;
+} code;
+
 void OUT__1__6119__(void **__out_argv)
 {
   hypre_StructMatrix *A =  *((hypre_StructMatrix **)(__out_argv[20]));
@@ -183,6 +202,12 @@ void OUT__1__6119__(void **__out_argv)
     for (kk = 0; kk < hypre__mz; kk++) 
       for (jj = 0; jj < hypre__my; jj++) 
         for (ii = 0; ii < hypre__mx; ii++) 
+        {
           rp[(ri + ii) + (jj * hypre__sy3) + (kk * hypre__sz3)] -= Ap_0[ii + (jj * hypre__sy1) + (kk * hypre__sz1) + A -> data_indices[i][si]] * xp_0[ii + (jj * hypre__sy2) + (kk * hypre__sz2) + ( *dxp_s)[si]];
+          // add more interesting stuff just for testing
+          enum special_function_modifier_enum e1; 
+          if (ii== ALPHA) ;
+          code.m =1;
+        }
 }
 

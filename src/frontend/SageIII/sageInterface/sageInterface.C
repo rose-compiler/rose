@@ -7596,7 +7596,7 @@ outputPreprocessingInfoList ( const vector<PreprocessingInfo*> & l )
 SgDeclarationStatement* 
 getAssociatedDeclaration( SgScopeStatement* scope )
    {
-  // This should become a member of SgScopeStatement
+  //TODO This should become a member of SgScopeStatement
 
      SgDeclarationStatement* declaration = NULL;
      switch(scope->variantT())
@@ -7609,6 +7609,7 @@ getAssociatedDeclaration( SgScopeStatement* scope )
              }
 
           case V_SgClassDefinition:
+          case V_SgTemplateInstantiationDefn: // Liao, 5/12/2009
              {
                SgClassDefinition* classDefinition = isSgClassDefinition(scope);
                declaration = classDefinition->get_declaration();
@@ -7716,6 +7717,7 @@ void CollectDependentDeclarationsTraversal::addDeclaration(SgDeclarationStatemen
           SgDeclarationStatement* dependentDeclaration = getGlobalScopeDeclaration(declaration);
 
        // This declaration is in global scope so we just copy the declaration
+       // For namespace declarations: they may have the save name but they have to be saved separated. 
           if (alreadySavedDeclarations.find(dependentDeclaration) == alreadySavedDeclarations.end())
              {
 #if 0
@@ -7865,9 +7867,9 @@ CollectDependentDeclarationsTraversal::visit(SgNode *astNode)
      SgInitializedName* initializedname = isSgInitializedName(astNode);
      if (initializedname != NULL)
      {
-       SgType* type         = initializedname->get_type();
+       SgType* type = initializedname->get_type();
 
-       // handle all dependent typedef declarations
+       // handle all dependent typedef declarations, if any
        std::vector <SgTypedefDeclaration*> typedefVec = collectTypedefDeclarations(type);
         for (std::vector <SgTypedefDeclaration*>::const_iterator iter =typedefVec.begin();
                 iter != typedefVec.end(); iter++)
@@ -7888,7 +7890,7 @@ CollectDependentDeclarationsTraversal::visit(SgNode *astNode)
        // a defining typedef declaration.
        // Liao, 5/8/2009
        //
-       // e.g. typedef struct hypre_BoxArray_struct //5
+       // e.g. typedef struct hypre_BoxArray_struct
        // {
        //          int alloc_size;
        // } hypre_BoxArray;
@@ -7904,13 +7906,11 @@ CollectDependentDeclarationsTraversal::visit(SgNode *astNode)
          // declaration in original program (not the separate file is this is to support outlining into a 
          // separate file.
          SgDeclarationStatement* named_decl = namedType->get_declaration(); 
-         // the case of class declaration, including struct
+         // the case of class declaration, including struct, union
          SgClassDeclaration* classDeclaration = isSgClassDeclaration(named_decl);
          if (classDeclaration != NULL)
          { 
-
            // printf ("Found class declaration: classDeclaration = %p \n",classDeclaration);
-
            declaration = classDeclaration->get_definingDeclaration();
            ROSE_ASSERT(declaration != NULL);
            addDeclaration(declaration);
@@ -7929,11 +7929,24 @@ CollectDependentDeclarationsTraversal::visit(SgNode *astNode)
            // printf ("Saving classSymbol = %p \n",classSymbol);
            symbolList.push_back(classSymbol);
          }
-       }
+
+         // handle Enum types
+         SgEnumDeclaration* enum_decl = isSgEnumDeclaration(named_decl); 
+         if (enum_decl != NULL)
+         {
+           declaration = enum_decl->get_definingDeclaration();
+           ROSE_ASSERT(declaration != NULL);
+           addDeclaration(declaration);
+           ROSE_ASSERT(enum_decl->hasAssociatedSymbol() == true);
+           SgSymbol* esymbol = enum_decl->get_symbol_from_symbol_table();
+           ROSE_ASSERT(esymbol!= NULL);
+           symbolList.push_back(esymbol);
+         }
+       } // end if namedType
 #if 0
        printf ("Found reference to type = %p = %s strippedType = %p = %s \n",type,type->class_name().c_str(),strippedType,strippedType->class_name().c_str());
 #endif
-     }
+     }// end if (initializedname)
 
   // 2) ------------------------------------------------------------------
   // Collect declarations associated with function calls.
@@ -7952,17 +7965,29 @@ CollectDependentDeclarationsTraversal::visit(SgNode *astNode)
           symbolList.push_back(functionSymbol);
         }
 
+    // 3) ------------------------------------------------------------------
+    // Collect enumerate declarations associated with SgEnumVal
+    SgEnumVal * eval = isSgEnumVal(astNode);
+    if (eval != NULL)
+    {
+      declaration = eval->get_declaration();
+      ROSE_ASSERT(declaration != NULL);
+      addDeclaration(declaration);
+      SgSymbol* symbol = declaration->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table();
+      ROSE_ASSERT(symbol != NULL);
+      symbolList.push_back(symbol);
+    }
 //       addDeclaration(declaration); // do it in different cases individually 
    }
 
-static std::map<SgStatement*, bool> visitedDeclMap; // avoid infinite recursion
+static std::map<const SgStatement*, bool> visitedDeclMap; // avoid infinite recursion
 
 
 //! Collect dependent type declarations and corresponding symbols used by a declaration statement with defining body.
 // Used to separate a function to a new source file and add necessary type declarations into the new file.
 // NOTICE: each call to this function has to have call visitedDeclMap.clear() first!!
-void
-getDependentDeclarations ( SgStatement* stmt, vector<SgDeclarationStatement*> & declarationList, vector<SgSymbol*> & symbolList )
+static void
+getDependentDeclarations (SgStatement* stmt, vector<SgDeclarationStatement*> & declarationList, vector<SgSymbol*> & symbolList )
 {
   // This function returns a list of the dependent declaration for any input statement.
   // Dependent declaration are functions called, types referenced in variable declarations, etc.
@@ -8079,9 +8104,9 @@ sortSgNodeListBasedOnAppearanceOrderInSource(const vector<SgDeclarationStatement
 }
 
 //! Please call this instead of calling getDependentDeclarations ( SgStatement* stmt, vector<SgDeclarationStatement*> & declarationList, vector<SgSymbol*> & symbolList )
-// This function clears a history map transparently and return a sorted list of dependent declaration
-vector<SgDeclarationStatement*>
-getDependentDeclarations ( SgStatement* stmt )
+// This function clears a history map transparently and return a sorted list of dependent declarations
+std::vector<SgDeclarationStatement*>
+SageInterface::getDependentDeclarations ( SgStatement* stmt )
    {
   // This function returns a list of the dependent declaration for any input statement.
   // Dependent declaration are functions called, types referenced in variable declarations, etc.
@@ -8412,7 +8437,7 @@ declarationContainsDependentDeclarations( SgDeclarationStatement* decl, vector<S
      printf ("********************************************************** \n");
 #endif
 
-     vector<SgDeclarationStatement*> locallyDependentDeclarationList = getDependentDeclarations(decl);
+     vector<SgDeclarationStatement*> locallyDependentDeclarationList = SageInterface::getDependentDeclarations(decl);
 
   // printf ("In declarationContainsDependentDeclarations(): locallyDependentDeclarationList: \n");
   // outputPreprocessingInfoList(locallyDependentDeclarationList);
@@ -8858,23 +8883,41 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
 
                     break;
                   }
-                // Liao, 5/7/2009 handle typedef declarations
+                // Liao, 5/7/2009 handle more types of declarations
                 case V_SgTypedefDeclaration:
                   {
                     // symbol is associated with the first non-defining declaration
                     SgTypedefDeclaration* typedef_decl = isSgTypedefDeclaration(isSgTypedefDeclaration(d)->get_firstNondefiningDeclaration());
                     ROSE_ASSERT(typedef_decl);
+                    // 1 make a symbol in the target scope
                     SgTypedefSymbol * tsymbol = new SgTypedefSymbol(typedef_decl);
                     scope->insert_symbol(typedef_decl->get_name(), tsymbol);
 
                     SgSymbol* symbolInOutlinedFile = typedef_decl->get_symbol_from_symbol_table();
                     ROSE_ASSERT(symbolInOutlinedFile != NULL);
-
+                    // 2 build a map between old and new symbol
                     ROSE_ASSERT(originalDeclaration != NULL);
                     // symbol is associated with the first non-defining declaration
                     SgSymbol* symbolInOriginalFile = originalDeclaration->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table();
                     ROSE_ASSERT(symbolInOriginalFile != NULL);
 
+                    ROSE_ASSERT(symbolInOriginalFile != symbolInOutlinedFile);
+                    replacementMap.insert(pair<SgNode*,SgNode*>(symbolInOutlinedFile,symbolInOriginalFile));
+                    break;
+                  }
+               case V_SgEnumDeclaration:
+                  {
+                    SgEnumDeclaration * decl = isSgEnumDeclaration(isSgEnumDeclaration(d)->get_firstNondefiningDeclaration());
+                    ROSE_ASSERT(decl);
+                    SgEnumSymbol * symbol = new SgEnumSymbol(decl);
+                    ROSE_ASSERT(symbol);
+                    scope->insert_symbol(decl->get_name(), symbol);
+                    SgSymbol* symbolInOutlinedFile = decl->get_symbol_from_symbol_table();
+                    ROSE_ASSERT(symbolInOutlinedFile != NULL);
+
+                    ROSE_ASSERT(originalDeclaration != NULL);
+                    SgSymbol* symbolInOriginalFile = originalDeclaration->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table(); 
+                    ROSE_ASSERT(symbolInOriginalFile != NULL);
                     ROSE_ASSERT(symbolInOriginalFile != symbolInOutlinedFile);
                     replacementMap.insert(pair<SgNode*,SgNode*>(symbolInOutlinedFile,symbolInOriginalFile));
                     break;

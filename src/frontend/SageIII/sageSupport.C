@@ -7218,11 +7218,22 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
              }
 
           case V_SgDotExp:
-          case V_SgDotStarOp:
+          {
+            SgDotExp * dotExp = isSgDotExp(functionExp);
+            ROSE_ASSERT(dotExp != NULL);
+            SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(dotExp->get_rhs_operand());
+            ROSE_ASSERT(memberFunctionRefExp != NULL);
+            returnSymbol = memberFunctionRefExp->get_symbol();
+
+            // DQ (2/8/2009): Can we assert this! What about pointers to functions?
+            ROSE_ASSERT(returnSymbol != NULL);
+
+            break;
+          }
           case V_SgArrowStarOp:
           case V_SgPointerDerefExp:
              {
-               printf ("ERROR: Sorry, cases of SgDotExp,SgDotStarOp, SgArrowExp,SgArrowStarOp, SgPointerDerefExp not implemented yet in SgFunctionCallExp::getAssociatedSymbol() functionExp = %p = %s \n",functionExp,functionExp->class_name().c_str());
+               printf ("ERROR: Sorry, cases of SgDotStarOp, SgArrowStarOp, SgPointerDerefExp not implemented yet in SgFunctionCallExp::getAssociatedSymbol() functionExp = %p = %s \n",functionExp,functionExp->class_name().c_str());
                break;
              }
 

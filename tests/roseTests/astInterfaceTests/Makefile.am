@@ -19,7 +19,7 @@ noinst_PROGRAMS = \
     buildSizeOfOp abiStuffTest abiStuffTestUPC buildNullStatement \
     buildForStmt canonicalLoop loopNormalization collectReadWriteVariables \
     typeTraits livenessAnalysis buildProcedureHeaderStatement replaceMacroCalls \
-    buildAbstractHandle loopUnrolling
+    buildAbstractHandle loopUnrolling getDependentDecls
 
 # list of test SAGE AST builders 
 buildFunctionDeclaration_SOURCES = buildFunctionDeclaration.C
@@ -56,6 +56,7 @@ buildProcedureHeaderStatement_SOURCES = buildProcedureHeaderStatement.C
 replaceMacroCalls_SOURCES             = replaceMacroCalls.C
 buildAbstractHandle_SOURCES         = buildAbstractHandle.C
 loopUnrolling_SOURCES               = loopUnrolling.C
+getDependentDecls_SOURCES           = getDependentDecls.C
 
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
@@ -99,7 +100,10 @@ generatedCodeExamples = \
   rose_inputbuildProcedureHeaderStatement.f \
   rose_inputreplaceMacroCalls.C \
   rose_inputbuildAbstractHandle.C \
-  rose_inputloopUnrolling.C
+  rose_inputloopUnrolling.C 
+# disabled since SgDotExp is not handled yet in SgFunctionCallExp::getAssociatedSymbol()  
+# in src/frontend/SageIII/sageSupport.C:7236
+#  rose_inputgetDependentDecls.C
 
 
 # turn off edg warnings such as "variable x declared but never referenced" for test input files
@@ -191,6 +195,9 @@ endif
 rose_inputbuildAbstractHandle.C:buildAbstractHandle
 	./buildAbstractHandle$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildAbstractHandle.C
 
+rose_inputgetDependentDecls.C:getDependentDecls
+	./getDependentDecls$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputgetDependentDecls.C
+
 rose_inputloopUnrolling.C:loopUnrolling
 	./loopUnrolling$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopUnrolling.C -rose:loopunroll:abstract_handle "Statement<position,6>" -rose:loopunroll:factor 5
 
@@ -210,7 +217,7 @@ EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDecla
        inputbuildNullStatement.C inputbuildForStmt.C inputcanonicalLoop.C \
        inputloopNormalization.C inputcollectReadWriteVariables.C inputtypeTraits.C \
        inputlivenessAnalysis.C inputbuildProcedureHeaderStatement.f inputreplaceMacroCalls.C \
-       inputbuildAbstractHandle.C inputloopUnrolling.C
+       inputbuildAbstractHandle.C inputloopUnrolling.C inputgetDependentDecls.C
 
 check-local:
 	@echo "Test for ROSE SAGE Interfaces."
