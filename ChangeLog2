@@ -1,3 +1,8 @@
+2009-05-12 13:20  matzke
+
+	* [r5736] /trunk/ROSE/docs/Rose/rose.cfg.in: Fixed spelling mistake
+	  for doxygen
+
 2009-05-11 21:24  matzke
 
 	* [r5732] /trunk/ROSE/docs/Rose/rose.cfg.in: Added additional *.C
