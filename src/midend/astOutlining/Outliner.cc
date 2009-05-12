@@ -73,7 +73,14 @@ Outliner::generateFuncName (const SgStatement* stmt)
   {
     const string file_name = info->get_raw_filename ();
     const string file_name2 = StringUtility::stripPathFromFileName(file_name);
-    const string base_name = StringUtility::stripFileSuffixFromFileName(file_name2);
+    string base_name = StringUtility::stripFileSuffixFromFileName(file_name2);
+    // base name may contain '-', replace it with '_' to get legal identifier
+    for (int i=0; i<base_name.size(); i++) 
+    {
+      //cout<<"file base name:"<<base_name[i]<<endl;
+      if (base_name[i]=='-')
+        base_name[i]='_';
+    }
 
     s<<"_"<<base_name<<"_"<<info->get_line();
   }
