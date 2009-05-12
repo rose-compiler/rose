@@ -193,17 +193,17 @@ AS_IF([test "x$with_pag" != xno],
       [AC_MSG_RESULT([skipping check for PAG])])
 AM_CONDITIONAL(WITH_PAG, [test "x$with_pag" = xyes])
 
-AC_CHECK_LIB([rose], [ROSE_DEBUG], AC_MSG_RESULT([found ROSE]), 
-             [echo "Could not find '-lrose' in '-L${ROSE_LIB_DIR}'."
-              echo "Please consider using one of the --with-rose* options."
-              exit -1 ], 
-             [-L${ROSE_LIB_DIR}])
-
 AC_CHECK_FILE(${BOOST_LIB_DIR}/libboost_filesystem-${BOOST_COMPILER_STRING}-mt.so,
              AC_MSG_RESULT([found Boost (hopefully)]),
              [echo "Could not find 'libboost_filesystem-${BOOST_COMPILER_STRING}-mt.so' in '${BOOST_LIB_DIR}'."
               echo "Please consider using one of the --with-boost* options."
               exit -1 ])
+
+AC_CHECK_LIB([rose], [ROSE_NUMERIC_VERSION], AC_MSG_RESULT([found ROSE]),
+             [echo "Could not find '-lrose' in '-L${ROSE_LIB_DIR}'."
+              echo "Please consider using one of the --with-rose* options."
+              exit -1 ],
+             [-Wl,--rpath -Wl,${BOOST_LIB_DIR} -L${ROSE_LIB_DIR}])
 
 AC_CONFIG_FILES([
 Makefile

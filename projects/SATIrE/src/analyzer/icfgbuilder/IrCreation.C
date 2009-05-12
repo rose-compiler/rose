@@ -74,7 +74,7 @@ std::string Ir::fragmentToString(const SgNode* node) {
   }
 
   /* create a temporary AST root with SgFile and SgGlobal to allow ROSE function unparseToString to trace back */
-  SgFile* file = new SgFile();
+  SgSourceFile* file = new SgSourceFile();
   file->set_file_info(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
 // GB (2008-03-31): It looks like ROSE 0.9.1a does not free this SgGlobal's
 // File_Info when the AST is destructed. This is not our problem (and it's a
@@ -83,7 +83,7 @@ std::string Ir::fragmentToString(const SgNode* node) {
   glob->set_parent(file);
   // GB (2008-10-20): The set_root call appears necessary for ROSE
   // 0.9.3a-1593, it's not necessary with ROSE 0.9.3a-2261.
-  file->set_root(glob); // do we need this one?
+  file->set_globalScope(glob); // do we need this one?
 
   // store and restore original parent pointer of 'node'
   SgNode* origParent=node->get_parent();

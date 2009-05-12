@@ -26,7 +26,7 @@ using namespace boost;
  * Unparse to a file
  */
 
-void PrologToRose::unparseFile(SgFile& f, string prefix, string suffix, 
+void PrologToRose::unparseFile(SgSourceFile& f, string prefix, string suffix, 
 			       SgUnparse_Info* ui) 
 {
   const char* fn = regex_replace(
@@ -61,18 +61,22 @@ void PrologToRose::unparse(string filename, string dir, string suffix,
     ofstream ofile(filename.c_str());
     if (SgProject* project = dynamic_cast<SgProject*>(node))
       for (int i = 0; i < project->numberOfFiles(); ++i) {
-	SgFile &sageFile = project->get_file(i);
-	ofile << globalUnparseToString(sageFile.get_globalScope(), unparseInfo);
+	SgSourceFile *sageFile = isSgSourceFile((*project)[i]);
+    if (sageFile != NULL)
+	    ofile << globalUnparseToString(sageFile->get_globalScope(), unparseInfo);
       }
-    else if (SgFile* file = dynamic_cast<SgFile*>(node))
+    else if (SgSourceFile* file = dynamic_cast<SgSourceFile*>(node))
       ofile << globalUnparseToString(file->get_globalScope(), unparseInfo);
     else ofile << node->unparseToString();
   } else {
     // seperate files
     if (SgProject* project = dynamic_cast<SgProject*>(node))
-      for (int i = 0; i < project->numberOfFiles(); ++i)
-	unparseFile(project->get_file(i), dir, suffix, unparseInfo);
-    else if (SgFile* file = dynamic_cast<SgFile*>(node))
+      for (int i = 0; i < project->numberOfFiles(); ++i) {
+        SgSourceFile *file = isSgSourceFile((*project)[i]);
+        if (file != NULL)
+          unparseFile(*file, dir, suffix, unparseInfo);
+      }
+    else if (SgSourceFile* file = dynamic_cast<SgSourceFile*>(node))
       unparseFile(*file, dir, suffix, unparseInfo);
     else cout << node->unparseToString();
   }
@@ -1306,38 +1310,34 @@ PrologToRose::createUnaryOp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
 SgProject*
 PrologToRose::createProject(Sg_File_Info* fi,deque<SgNode*>* succs) {
   SgProject* project = new SgProject();
-  SgFilePtrList *fl = new SgFilePtrList;
+  SgFilePtrList &fl = project->get_fileList();
   
   for (deque<SgNode*>::iterator it = succs->begin();
        it != succs->end(); ++it) {
-    SgFile* file = dynamic_cast<SgFile*>(*it);
-    ROSE_ASSERT(file);
-    fl->push_back(file);
+    SgSourceFile* file = dynamic_cast<SgSourceFile*>(*it);
+    if (file != NULL)  // otherwise, it's a binary file, which shouldn't happen
+      fl.push_back(file);
   }
-  project->set_fileList(fl);
+  // project->set_fileList(fl);
   return project;
 }
 
 
 /**
- * create SgFile
+ * create SgSourceFile
  */
-SgFile*
+SgSourceFile*
 PrologToRose::createFile(Sg_File_Info* fi,SgNode* child1,PrologCompTerm*) {
   // GB (2008-10-20): It looks like there is a new SgSourceFile class in
   // ROSE 0.9.3a-2261, and that it is an instance of that class that we
   // need.
-  SgFile* file = new SgFile();
-  // SgFile* file = new SgSourceFile();
+  SgSourceFile* file = new SgSourceFile();
   file->set_file_info(fi);
-  // GB (2008-10-20): The set_root call seems to be necessary for ROSE
-  // 0.9.3a-1593, but not needed, and not even possible (at least on SgFile,
-  // maybe it's possible on SgSourceFile) with ROSE 0.9.3a-2261.
 
   SgGlobal* glob = isSgGlobal(child1);
   ROSE_ASSERT(glob);
 
-  file->set_root(glob);
+  file->set_globalScope(glob);
   glob->set_parent(file);
   return file;
 }

@@ -38,7 +38,7 @@ private:
   SgNode* quaternaryToRose(PrologCompTerm*, std::string);
   SgNode* listToRose(PrologCompTerm*, std::string);
   /*helpers*/
-  void unparseFile(SgFile&, std::string, std::string, SgUnparse_Info*);
+  void unparseFile(SgSourceFile&, std::string, std::string, SgUnparse_Info*);
   void warn_msg(std::string);
   Sg_File_Info* createFileInfo(PrologTerm*);
   SgType* createType(PrologTerm*);
@@ -98,7 +98,7 @@ private:
   /*unary nodes*/
   SgExpression* createValueExp(Sg_File_Info*, SgNode*, PrologCompTerm*);
   SgUnaryOp* createUnaryOp(Sg_File_Info*, SgNode*, PrologCompTerm*);
-  SgFile* createFile(Sg_File_Info*, SgNode*, PrologCompTerm*);
+  SgSourceFile* createFile(Sg_File_Info*, SgNode*, PrologCompTerm*);
   SgReturnStmt* createReturnStmt(Sg_File_Info*, SgNode*, PrologCompTerm*);
   SgFunctionDefinition* createFunctionDefinition(Sg_File_Info*, SgNode*, PrologCompTerm*);
   SgInitializedName* createInitializedName(Sg_File_Info*, SgNode*, PrologCompTerm*);
