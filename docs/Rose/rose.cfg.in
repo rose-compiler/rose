@@ -426,7 +426,7 @@ INPUT                  = \
                          @top_srcdir@/docs/testDoxygen \
                          @top_srcdir@/src/frontend/CxxFrontend/EDG_3.3/documentation.docs \
 			 @top_srcdir@/src/frontend/Disassemblers/putInstructionsIntoBasicBlocks.C \
-			 @top_srcdir@/src/frontend/Disassemblers/detectFunctionsStarts.C \
+			 @top_srcdir@/src/frontend/Disassemblers/detectFunctionStarts.C \
 			 @top_srcdir@/src/frontend/Disassemblers/disassemblerCommon.C \
 			 @top_srcdir@/src/frontend/ExecFormats/ROSE_ExecGeneric.C \
 			 @top_srcdir@/src/frontend/ExecFormats/ROSE_ExecELF.C \
