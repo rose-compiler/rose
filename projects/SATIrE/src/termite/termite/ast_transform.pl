@@ -226,11 +226,6 @@ transform_children([C|Cs], Transformation, Order, Info0, InfoT, [CT|CTs]) :-
 % Unparse the program Term and put the output in the atom Atom
 unparse_to_atom(Term, Atom) :- with_output_to(Atom, unparse(Term)).
 
-%unp(assign_op(E1, E2)) --> unp(E1), ['='], unp(E2).
-%unp(var(X)) --> [X].
-%unp(int(X)) --> [X].
-%:- unparse(assign_op(var(x), int(42)), S, []).
-
 %% unparse(+Term) is det.
 % This is a debugging function that prints a textual representation
 % of a program that is given in simple form.

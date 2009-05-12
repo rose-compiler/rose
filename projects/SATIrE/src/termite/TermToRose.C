@@ -266,6 +266,8 @@ PrologToRose::toRose(PrologTerm* t) {
     }
     declarationStatementsWithoutScope.clear();
 
+    // rebuild the symbol table
+    SageInterface::rebuildSymbolTable(scope);
   }
   	
   return node;
@@ -1440,6 +1442,7 @@ PrologToRose::createInitializedName(Sg_File_Info* fi, SgNode* succ, PrologCompTe
   siname->set_file_info(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
 
   initializedNamesWithoutScope.push_back(siname);
+
   return siname;
 }
 
@@ -1702,6 +1705,7 @@ PrologToRose::createGlobal(Sg_File_Info* fi,deque<SgNode*>* succs) {
      * we return NULL ptrs*/
     if((*it) != NULL) {
       curdec = dynamic_cast<SgDeclarationStatement*>(*it);
+      ROSE_ASSERT(curdec != NULL);
       glob->append_declaration(curdec);
       /* set scope if there is none yet
        * as this is essential for unparsing */
@@ -1964,27 +1968,47 @@ PrologToRose::createVariableDeclaration(Sg_File_Info* fi,deque<SgNode*>* succs,P
   SgVariableDeclaration* dec = new SgVariableDeclaration(fi);
   ROSE_ASSERT(fi != NULL);
   debug("created variable declaration");
+
   /* add initialized names*/
+  SgInitializer* ini_initializer;
+  SgClassDeclaration* class_decl = 0;
+
   deque<SgNode*>::iterator it = succs->begin();
   ROSE_ASSERT(it != succs->end());
+  for (; it != succs->end(); ++it) {
+    if (SgClassDeclaration* cdecl = isSgClassDeclaration(*it)) {
+      // This thing happens when we encounter an anonymous struct
+      ROSE_ASSERT(class_decl == NULL);
+      class_decl = cdecl;
+      debug("added class/struct");
+      fakeParentScope(class_decl);
+      // default to self for now...
+      class_decl->unsetForward();
+      class_decl->set_definingDeclaration(class_decl);
+      // register with vardecl
+      dec->set_baseTypeDefiningDeclaration(class_decl);
+    }
+  }
 
-  SgInitializer* ini_initializer;
-
-  while(it != succs->end()) {
-    if (SgInitializedName* ini_name = dynamic_cast<SgInitializedName*>(*it)) {
+  for (it = succs->begin(); it != succs->end(); ++it) {
+    if (SgInitializedName* ini_name = isSgInitializedName(*it)) {
       debug("added variable");
       ini_name->set_declptr(dec);
       ini_initializer = ini_name->get_initializer();
+
+      if (class_decl) {
+	SgClassType* ct = isSgClassType( ini_name->get_typeptr());
+	ROSE_ASSERT(ct);
+	ct->set_declaration(class_decl);
+      }
+
       dec->append_variable(ini_name,ini_initializer);
-    } else if (SgClassDeclaration* class_decl = dynamic_cast<SgClassDeclaration*>(*it)) {
-      debug("added class");
-      fakeParentScope(class_decl);
-      cerr<<"**WARNING: don't know how to handle " << t->getRepresentation() << endl;
+    } else if (dynamic_cast<SgClassDeclaration*>(*it)) {
+      /* see above */
     } else {
       cerr << (*it)->class_name() << "???" << endl; 
       ROSE_ASSERT(false);
     }
-    it++;
   }
   /* set declaration modifier*/
   setDeclarationModifier(annot->at(0),&(dec->get_declarationModifier()));
