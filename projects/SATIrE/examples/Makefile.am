@@ -247,6 +247,7 @@ loopbounds: interval
 	@echo "Testing loopbounds"
 	@echo "====================="
 	cp -ur $(top_srcdir)/tools/loopbounds $(testdir)
+	cp $(top_builddir)/tools/loopbounds/lb.sh $(testdir)/loopbounds
 	chmod u+rwx -R $(testdir)/loopbounds
 	$(MAKE) -j1 $(patsubst %.c,%.loop.term,$(wildcard $(top_srcdir)/testsuite/mtrc/success/*.c))
 

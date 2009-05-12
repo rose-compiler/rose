@@ -87,6 +87,8 @@ STRING_ATTR(OutputBinaryAstFileName, "")
 
 BOOL_ATTR(runPointsToAnalysis, Off)
 BOOL_ATTR(resolveFuncPtrCalls, Off)
+BOOL_ATTR(outputPointsToGraph, Off)
+STRING_ATTR(PointsToGraphName, "")
 
 #if HAVE_PAG
 BOOL_ATTR(computeCallStrings, On)

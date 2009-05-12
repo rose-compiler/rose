@@ -236,6 +236,10 @@ exprid_location_cs :: :: ExpressionId, ContextInfo -> Location;
 location_varsyms :: Location -> *VariableSymbolNT;
     returns the list of program variables stored in the given location
 
+location_funcsyms :: Location -> *FunctionSymbolNT;
+    returns the list of function symbols associated with the given function
+    location
+
 may_be_aliased :: Location -> bool;
     determines whether the given location may be "aliased", i.e., whether
     some other location may hold a pointer to it

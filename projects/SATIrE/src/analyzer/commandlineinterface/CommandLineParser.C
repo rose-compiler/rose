@@ -283,6 +283,9 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     cl->resolveFuncPtrCallsOn();
   } else if (optionMatch(argv[i], "--no-resolve-funcptr-calls")) {
     cl->resolveFuncPtrCallsOff();
+  } else if (optionMatchPrefix(argv[i], "--output-pointsto-graph=")) {
+    cl->outputPointsToGraphOn();
+    cl->setPointsToGraphName(argv[i]+prefixLength);
 #if HAVE_PAG
   } else if (optionMatch(argv[i], "--compute-call-strings")) {
     cl->computeCallStringsOn();

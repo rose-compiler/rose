@@ -55,6 +55,8 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo(""),_n
     "   --no-number-expressions  do not number expressions and types in the ICFG\n"
     "   --run-pointsto-analysis  run a points-to analysis on the ICFG\n"
     "   --resolve-funcptr-calls  resolve indirect calls using pointer analysis\n"
+    "   --output-pointsto-graph=<name>  create <name>.dot and <name>.eps files\n"
+    "                            showing points-to analysis results (requires DOT)\n"
     "   --analysis=<identifier>  run SATIrE's analysis <identifier> on the ICFG\n"
     "\n"
 #if HAVE_PAG

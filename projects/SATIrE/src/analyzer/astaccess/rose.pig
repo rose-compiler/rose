@@ -119,6 +119,12 @@ get:body(NODE, _, "VariableSymbol", _, "name", _, _)
         return Ir::getCharPtr(var->get_declaration()->get_name());
 %}
 
+get:body(NODE, _, "FunctionSymbol", _, "name", _, _)
+%{
+    SgFunctionSymbol *fun = isSgFunctionSymbol((SgNode *) NODE);
+    return Ir::getCharPtr(fun->get_name().str());
+%}
+
 get:body(NODE, _, "ArrayType", _, "size", _, _)
 %{
     SgExpression *index = isSgArrayType((SgNode *) NODE)->get_index();
@@ -188,6 +194,12 @@ get:body(NODE, _, "AsmStmt", _, "operands", _, FTYPE)
         isSg##CONSTR((SgNode *) NODE)->get_##FIELD());
 %}
 
+/* dummy implementation, is never called! */
+get:body(NODE, _, "FunctionSymbolNTList", _, "fs", _, _)
+%{
+    return NULL;
+%}
+
 get:body(NODE, _, "StringVal", _, "value", _, _)
 %{
     return Ir::getCharPtr(isSg##CONSTR((SgNode *) NODE)->get_value());
@@ -240,6 +252,12 @@ is:body(NODE, _, "ArgumentAssignment" | "ParamAssignment" | "ReturnAssignment" |
 is:body(NODE, _, "BasicType", _, _, _, _)
 %{
     return basic_type_name(NODE) != NULL;
+%}
+
+/* dummy implementation, is never called! */
+is:body(NODE, _, "FunctionSymbolNTList", _, _, _, _)
+%{
+    return 42;
 %}
 
 is:body(NODE, _, CONSTR, _, _, _, _)

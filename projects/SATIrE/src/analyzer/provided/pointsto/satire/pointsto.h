@@ -117,6 +117,8 @@ public:
  // location. Any expression referencing this location may access (only) one
  // of these objects.
     const std::list<SgSymbol *> &location_symbols(Location *loc) const;
+    const std::list<SgFunctionSymbol *>
+        &location_funcsymbols(Location *loc) const;
  // A unique numerical identifier for the given location. Not strictly
  // necessary, as pointers are just as unique.
     unsigned long location_id(Location *loc) const;

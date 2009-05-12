@@ -145,7 +145,8 @@ get_icfgContextSensitivePointsToAnalysis(void)
     if (once)
     {
         cspta->run(icfg);
-        cspta->doDot("cs_pointsto");
+        if (icfg->analyzerOptions->outputPointsToGraph())
+            cspta->doDot(icfg->analyzerOptions->getPointsToGraphName());
 
         o_Location_power = cspta->get_locations().size();
         numberOfLocations = cspta->get_locations().size();
@@ -414,6 +415,20 @@ extern "C" void *o_location_varsyms(void *lp)
         << " symbols, result = " << (void *) result
         << std::endl;
 #endif
+    return result;
+}
+
+extern "C" void *o_location_funcsyms(void *lp)
+{
+    LocationWrapper *wrapper = (LocationWrapper *) lp;
+    PointsToAnalysis::Location *loc = wrapper->loc;
+    const std::list<SgFunctionSymbol *> &syms
+        = get_icfgPointsToAnalysis()->location_funcsymbols(loc);
+    std::list<SgFunctionSymbol *>::const_iterator s;
+    std::vector<SgFunctionSymbol *> funcsyms;
+    for (s = syms.begin(); s != syms.end(); ++s)
+        funcsyms.push_back(*s);
+    void **result = Ir::createNodeList(funcsyms);
     return result;
 }
 

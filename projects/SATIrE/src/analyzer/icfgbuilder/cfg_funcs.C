@@ -602,8 +602,12 @@ extern "C" int kfg_which_in_edges(KFG_NODE node)
 
  // GB (2008-05-26): Once this bitmask has been computed, cache the result
  // inside the node.
+ // GB (2009-05-12): Don't cache in this primitive way, since we may modify
+ // the ICFG later on (resolve function pointer calls, for instance).
+#if 0
     if (block->in_edge_mask != -1)
         return block->in_edge_mask;
+#endif
 
     int mask = 0;
     std::vector<Edge>::const_iterator i;
@@ -623,8 +627,12 @@ extern "C" int kfg_which_out_edges(KFG_NODE node)
 
  // GB (2008-05-26): Once this bitmask has been computed, cache the result
  // inside the node.
+ // GB (2009-05-12): Don't cache in this primitive way, since we may modify
+ // the ICFG later on (resolve function pointer calls, for instance).
+#if 0
     if (block->out_edge_mask != -1)
         return block->out_edge_mask;
+#endif
 
     int mask = 0;
     std::vector<Edge>::const_iterator i;

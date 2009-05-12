@@ -176,6 +176,15 @@ VariableDeclarationNT : VariableDeclaration ( variables:InitializedNameNT* )
 VariableSymbolNT : VariableSymbol ( name:aststring )
  ;
 
+FunctionSymbolNT : FunctionSymbol ( name:aststring )
+ ;
+
+// GB (2009-05-12): There is no node like this, but the location_funcsyms
+// support function returns a list of function symbols; this rule makes sure
+// that PIG generates code for this type.
+FunctionSymbolNTListNT : FunctionSymbolNTList ( fs:FunctionSymbolNT* )
+ ;
+
 ExprListExpNT : ExprListExp ( expressions:Expression* )
  ;
 

@@ -72,6 +72,7 @@ extern noprefix   exprid_has_location      :: ExpressionId -> bool;
 extern noprefix   exprid_location          :: ExpressionId -> Location;
 extern noprefix   exprid_location_cs :: ExpressionId, ContextInfo -> Location;
 extern noprefix   location_varsyms         :: Location -> *VariableSymbolNT;
+extern noprefix   location_funcsyms        :: Location -> *FunctionSymbolNT;
 extern noprefix   may_be_aliased           :: Location -> bool;
 extern noprefix   is_array_location        :: Location -> bool;
 extern noprefix   is_ptr_location          :: Location -> bool;
@@ -85,3 +86,5 @@ satire_dummy_wide :: ExpressionId, ExpressionId -> ExpressionId;
 satire_dummy_wide(a, b) = b;
 satire_dummy_eq :: ExpressionId, ExpressionId -> bool;
 satire_dummy_eq(a, b) = (a = b);
+
+// vim: syntax=fula

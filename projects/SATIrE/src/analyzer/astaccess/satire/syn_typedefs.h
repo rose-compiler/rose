@@ -19,6 +19,8 @@ typedef void *PragmaNT;
 typedef void *ForInitStatementNT;
 typedef void *VariableDeclarationNT;
 typedef void *VariableSymbolNT;
+typedef void *FunctionSymbolNT;
+typedef void *FunctionSymbolNTListNT;
 typedef void *ExprListExpNT;
 typedef void *ConstructorInitializerNT;
 typedef void *Type;
@@ -44,5 +46,6 @@ typedef void *LIST_InitializedNameNT;
 typedef void *LIST_Statement;
 typedef void *LIST_Type;
 typedef void *LIST_VariableSymbolNT;
+typedef void *LIST_FunctionSymbolNT;
 
 #endif

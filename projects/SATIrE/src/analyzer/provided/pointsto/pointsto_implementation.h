@@ -193,6 +193,7 @@ public:
     bool mayBeAliased(Location *loc) const;
     bool isArrayLocation(Location *loc) const;
     const std::list<SgSymbol *> &location_symbols(Location *) const;
+    const std::list<SgFunctionSymbol *> &location_funcsymbols(Location *) const;
     unsigned long location_id(Location *loc) const;
     Location *location_representative(Location *loc) const;
 

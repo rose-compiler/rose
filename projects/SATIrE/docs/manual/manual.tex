@@ -746,11 +746,15 @@ automatically included in any analyzer created with SATIrE.
 \ttitem{location\_varsyms :: Location -> *VariableSymbolNT;}
     returns the list of program variables stored in the given location
 
+\ttitem{location\_funcsyms :: Location -> *FunctionSymbolNT;}
+    returns the list of function symbols associated with the given function
+    location
+
 \ttitem{may\_be\_aliased :: Location -> bool;}
     determines whether the given location may be "aliased", i.e., whether
     some other location may hold a pointer to it
 
-\ttitem{is_array_location :: Location -> bool;}
+\ttitem{is\_array\_location :: Location -> bool;}
     determines whether the given location is an array
 
 \ttitem{is\_ptr\_location :: Location -> bool;}
@@ -1113,6 +1117,8 @@ steps should be performed by SATIrE.
 --no-number-expressions  do not number expressions and types in the ICFG
 --run-pointsto-analysis  run a points-to analysis on the ICFG
 --resolve-funcptr-calls  resolve indirect calls using pointer analysis
+--output-pointsto-graph=<name>  create <name>.dot and <name>.eps files
+                         showing points-to analysis results (requires DOT)
 --analysis=<identifier>  run SATIrE's analysis <identifier> on the ICFG
 \end{verbatim}
 }

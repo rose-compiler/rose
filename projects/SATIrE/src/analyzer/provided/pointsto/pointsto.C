@@ -155,6 +155,12 @@ PointsToAnalysis::location_symbols(PointsToAnalysis::Location *loc) const
     return p_impl->location_symbols(loc);
 }
 
+const std::list<SgFunctionSymbol *> &
+PointsToAnalysis::location_funcsymbols(PointsToAnalysis::Location *loc) const
+{
+    return p_impl->location_funcsymbols(loc);
+}
+
 unsigned long
 PointsToAnalysis::location_id(PointsToAnalysis::Location *loc) const
 {
