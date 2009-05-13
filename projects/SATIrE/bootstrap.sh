@@ -41,7 +41,7 @@ if [ "$DISABLE_SATIRE" == "0" ] ; then
     echo "building satire"
     libtoolize && \
     autoreconf -i && \
-        ./configure --prefix=$PREFIX --with-rosedir=/usr/local/mstools/rose --with-pagdir=/usr/local/mstools/pag --with-boostdir=/usr/local/mstools/boost CXXFLAGS="-O2 -ggdb -Werror" $CCARGS && \
+        ./configure --prefix=$PREFIX --with-rosedir=/usr/local/mstools/rose --with-pagdir=/usr/local/mstools/pag --with-boostdir=/usr/local/mstools/boost CXXFLAGS="-O2 -ggdb" $CCARGS && \
         make $JOBS && \
         make $JOBS distcheck && \
         make install && \
