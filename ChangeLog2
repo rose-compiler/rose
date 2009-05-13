@@ -1,3 +1,11 @@
+2009-05-12 23:55  liao6
+
+	* [r5745] /trunk/ROSE/src/midend/astOutlining/Outliner.cc: Fixed a
+	  bug in outliner's function name generator
+	  
+	  * a file name may contain '-', which is illegal for a function
+	  name identifier: replace it with '_'
+
 2009-05-12 22:10  liao6
 
 	* [r5742]
