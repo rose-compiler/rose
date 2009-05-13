@@ -1907,7 +1907,21 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
                          printf ("remainingLineLength = %d remainingLine = %s \n",remainingLineLength,remainingLine.c_str());
 #endif
                          size_t positionOfFirstQuote = remainingLine.find('"');
+
+                         // Liao, 5/13/2009
+                         // "#  1 2 3" can show up in a comment block /* */, 
+                         // In this case it is not a CPP generated linemarker at all.
+                         // We should allow to skip this line as tested in tests/CompileTests/C_tests/test2009_02.c
+#if 0                     
                          ROSE_ASSERT(positionOfFirstQuote != string::npos);
+#else                         
+                         if (positionOfFirstQuote == string::npos ) 
+                         {
+                           //rollback and skip to the next line
+                           delete cppDirective;
+                           continue;
+                         }
+#endif                           
 
                          size_t positionOfLastQuote = remainingLine.rfind('"');
                          ROSE_ASSERT(positionOfLastQuote != string::npos);
