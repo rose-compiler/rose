@@ -22,6 +22,8 @@ extern PrologTerm* prote;
 using namespace std;
 using namespace boost;
 
+#define FI Sg_File_Info::generateDefaultFileInfoForTransformationNode()
+
 /**
  * Unparse to a file
  */
@@ -198,21 +200,21 @@ PrologToRose::toRose(PrologTerm* t) {
          << " of arity " << t->getArity() << "." << endl;
   }
 
+  SgLocatedNode* ln = isSgLocatedNode(node);
+
   // Set the CompilerGenerated Flag
-  if (SgLocatedNode* ln = isSgLocatedNode(node)) {
-    Sg_File_Info* fi = ln->get_file_info();
+  if (ln != NULL) {
+    //Sg_File_Info* fi = ln->get_file_info();
     //fi->set_classificationBitField(fi->get_classificationBitField() 
     //				   | Sg_File_Info::e_compiler_generated 
 			   /*| Sg_File_Info::e_output_in_code_generation*/
     //);
 	  
     // Set EndOfConstruct
-    ln->set_endOfConstruct( 
-      Sg_File_Info::generateDefaultFileInfoForTransformationNode());
+    ln->set_endOfConstruct(FI);
   }
 
   // Create the attached PreprocessingInfo
-  SgLocatedNode* ln = dynamic_cast<SgLocatedNode*>(node);
   PrologCompTerm* ct = dynamic_cast<PrologCompTerm*>(t);
   if (ln != NULL && ct != NULL) {
     PrologCompTerm* annot = 
@@ -628,7 +630,7 @@ PrologToRose::createFileInfo(PrologTerm* t) {
     /*node new or file info removed during transformation*/
     /*=> only possible atom: null*/
     assert(a->getName() == "null");
-    fi = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
+    fi = FI;
   } else {
     /*file info was preserved*/
     /*=> the file info term should be named file_info and have an arity of 3*/
@@ -752,11 +754,10 @@ PrologToRose::createTypedefType(PrologTerm* t) {
   /*extract name*/
   SgName n = *(toStringP(annot->at(0)));
   /*create default file info*/
-  Sg_File_Info* fi = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
   /*we don't want to keep the base type empty, use int (irrelevant form unparsing*/
   SgTypeInt* i = new SgTypeInt();
   /*create SgTypedefDeclaration*/
-  SgTypedefDeclaration* decl = new SgTypedefDeclaration(fi,n,i,NULL,NULL,NULL);
+  SgTypedefDeclaration* decl = new SgTypedefDeclaration(FI,n,i,NULL,NULL,NULL);
   ROSE_ASSERT(decl != NULL);
   /*fake parent scope*/
   fakeParentScope(decl);
@@ -1342,7 +1343,7 @@ PrologToRose::createFile(Sg_File_Info* fi,SgNode* child1,PrologCompTerm*) {
 
   file->set_globalScope(glob);
   glob->set_parent(file);
-  
+
   // Call all kinds of fixups
   AstPostProcessing(file);
   return file;
@@ -1443,7 +1444,7 @@ PrologToRose::createInitializedName(Sg_File_Info* fi, SgNode* succ, PrologCompTe
   SgInitializedName* siname = new SgInitializedName(sgnm,tpe,sgini,NULL);
   ROSE_ASSERT(siname != NULL);
 
-  siname->set_file_info(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
+  siname->set_file_info(FI);
 
   initializedNamesWithoutScope.push_back(siname);
 
@@ -1462,11 +1463,11 @@ PrologToRose::inameFromAnnot(PrologCompTerm* annot) {
   PrologAtom *nstring = dynamic_cast<PrologAtom*>(annot->at(1));
   SgName sgnm = nstring->getName().c_str();
   /* create a dummy varialbe declaration, only for the unparser to get the scope */
-  SgVariableDeclaration* vdec = new SgVariableDeclaration(
-     Sg_File_Info::generateDefaultFileInfoForTransformationNode(),
-     sgnm, tpe,  NULL);
-  ROSE_ASSERT(vdec != NULL);
-  SgInitializedName* siname = new SgInitializedName(sgnm,tpe,NULL,vdec,NULL);
+  //SgVariableDeclaration* vdec = new SgVariableDeclaration(
+  //   FI,
+  //   sgnm, tpe,  NULL);
+  //ROSE_ASSERT(vdec != NULL);
+  SgInitializedName* siname = new SgInitializedName(sgnm,tpe,NULL);//,vdec,NULL);
   ROSE_ASSERT(siname != NULL);
   /* the result of get_declaration() in a
    * SgInitializedName node is the first ancestor that is a SgDeclarationStatement.
@@ -1475,7 +1476,7 @@ PrologToRose::inameFromAnnot(PrologCompTerm* annot) {
   siname->set_parent(vdec);
   ROSE_ASSERT(siname->get_declaration() == vdec);
 
-  siname->set_file_info(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
+  siname->set_file_info(FI);
 
   /* static?*/
   int stat = (int) createEnum(annot->at(2), re.static_flag);
@@ -1699,6 +1700,7 @@ SgGlobal*
 PrologToRose::createGlobal(Sg_File_Info* fi,deque<SgNode*>* succs) {
   /*simple constructor*/
   SgGlobal* glob = new SgGlobal(fi);
+  glob->set_endOfConstruct(FI);
   debug("in SgGlobal:");
   testFileInfo(fi);
   /*add successors*/
@@ -2022,6 +2024,7 @@ PrologToRose::createVariableDeclaration(Sg_File_Info* fi,deque<SgNode*>* succs,P
   }
   /* set declaration modifier*/
   setDeclarationModifier(annot->at(0),&(dec->get_declarationModifier()));
+
   return dec;
 }
 
@@ -2234,7 +2237,7 @@ PrologToRose::createGotoStatement(Sg_File_Info* fi,PrologCompTerm* t) {
   PrologAtom* s = dynamic_cast<PrologAtom*>(u->at(0));
   ROSE_ASSERT(s != NULL);
   /* create dummy SgLabelStatement with helper function*/
-  Sg_File_Info* fi2 = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
+  Sg_File_Info* fi2 = FI;
   SgLabelStatement* l = makeLabel(fi2,s->getName());
   /*makeLabel asserts a non-NULL return value*/
   /* create goto using dummy label*/
@@ -2304,17 +2307,18 @@ PrologToRose::createClassDeclaration(Sg_File_Info* fi,SgNode* child1 ,PrologComp
   /* get the type*/
   PrologCompTerm* type_s = dynamic_cast<PrologCompTerm*>(annot->at(2));
   ROSE_ASSERT(type_s != NULL);
+  SgClassDeclaration::class_types e_classtype = 
+    (SgClassDeclaration::class_types)createEnum(class_type, re.class_type);
   //SgClassType* sg_class_type = createClassType(type_s);
   SgName class_name = class_name_s->getName();
   SgClassDeclaration* d = 
-    new SgClassDeclaration(fi, 
-			   class_name,
-			   (SgClassDeclaration::class_types)
-			   createEnum(class_type, re.class_type),
-			   NULL /*sg_class_type */,
+    new SgClassDeclaration(fi, class_name, e_classtype, NULL /*sg_class_type */,
 			   class_def);
   ROSE_ASSERT(d != NULL);
-  d->set_type(SgClassType::createType(d));
+  SgClassType* sg_class_type = SgClassType::createType(d);
+  d->set_type(sg_class_type);
+  classTypeMap[type_s->getRepresentation()] = sg_class_type;
+
   /* set declaration or the forward flag*/
   if(class_def != NULL) {
     d->set_definingDeclaration(d);
@@ -2331,10 +2335,11 @@ PrologToRose::createClassDeclaration(Sg_File_Info* fi,SgNode* child1 ,PrologComp
 /** create dummy class scope and add a declaration*/
 void
 PrologToRose::fakeClassScope(string s, int c_type,SgDeclarationStatement* stat) {
+  ROSE_ASSERT(false);
   /*create a dummy class declaration*/
   SgClassDeclaration* d = createDummyClassDeclaration(s,c_type);
   SgClassDefinition* def = new SgClassDefinition(
-    Sg_File_Info::generateDefaultFileInfoForTransformationNode(), d);
+    FI, d);
   d->set_parent(def);
   // FIXME
   def->set_parent(d);
@@ -2352,10 +2357,11 @@ PrologToRose::fakeClassScope(string s, int c_type,SgDeclarationStatement* stat) 
 /** create dummy namespace scope*/
 void
 PrologToRose::fakeNamespaceScope(string s, int unnamed, SgDeclarationStatement* stat) {
-  Sg_File_Info* dfi = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
+  ROSE_ASSERT(false);
   SgName n = s;
   bool u_b = (bool) unnamed;
-  SgNamespaceDefinitionStatement* def = new SgNamespaceDefinitionStatement(dfi,NULL);
+  SgNamespaceDefinitionStatement* def =
+    new SgNamespaceDefinitionStatement(FI,0);
   /* set scope*/
   def->append_declaration(stat);
   if (SgVariableDeclaration* vd = isSgVariableDeclaration(stat)) {
@@ -2365,7 +2371,8 @@ PrologToRose::fakeNamespaceScope(string s, int unnamed, SgDeclarationStatement* 
     stat->set_scope(def);
   }
   /* create namespace*/
-  SgNamespaceDeclarationStatement* dec = new SgNamespaceDeclarationStatement(dfi,n,def,u_b);
+  SgNamespaceDeclarationStatement* dec = 
+    new SgNamespaceDeclarationStatement(FI,n,def,u_b);
   def->set_namespaceDeclaration(dec); // AP 4.2.2008 
   if(def != NULL) {
     def->set_namespaceDeclaration(dec);
@@ -2374,7 +2381,7 @@ PrologToRose::fakeNamespaceScope(string s, int unnamed, SgDeclarationStatement* 
   }
   ROSE_ASSERT(dec != NULL);
   //fakeParentScope(dec); //Adrian 1.2.2008 remove a ROSE 0.9.0b warning 
-  SgGlobal* dummy = new SgGlobal(dfi);
+  SgGlobal* dummy = new SgGlobal(FI);
   ROSE_ASSERT(dummy != NULL);
   dec->set_parent(dummy);
 }
@@ -2383,6 +2390,8 @@ PrologToRose::fakeNamespaceScope(string s, int unnamed, SgDeclarationStatement* 
 /** create dummy class declaration from name*/
 SgClassDeclaration*
 PrologToRose::createDummyClassDeclaration(string s,int c_type) {
+  ROSE_ASSERT(false);
+
   Sg_File_Info* fi = Sg_File_Info::generateDefaultFileInfo();
   SgName class_name = s;
   SgClassDeclaration* d = new SgClassDeclaration(fi,class_name,(SgClassDeclaration::class_types)c_type,NULL,NULL);
@@ -2395,6 +2404,7 @@ PrologToRose::createDummyClassDeclaration(string s,int c_type) {
 /** create dummy member function declaration class from name*/
 SgMemberFunctionDeclaration*
 PrologToRose::createDummyMemberFunctionDeclaration(string s,int c_type) {
+  ROSE_ASSERT(false);
   /*    TODO
 	Sg_File_Info* fi = Sg_File_Info::generateDefaultFileInfo();
 	SgName class_name = s;
@@ -2409,26 +2419,31 @@ PrologToRose::createDummyMemberFunctionDeclaration(string s,int c_type) {
 /** create SgClassType from annotation */
 SgClassType*
 PrologToRose::createClassType(PrologTerm* p) {
-  /* must be a composite term*/
-  PrologCompTerm* t = isPrologCompTerm(p);
-  ROSE_ASSERT(t != NULL);
-  /* first term is class name*/
-  string s = *toStringP(t->at(0));
-  /* create dummy declaration*/
-  SgClassDeclaration* d = 
-    createDummyClassDeclaration(s, createEnum(t->at(1), re.class_type));
-  ROSE_ASSERT(d != NULL);
-  string scopename = *(toStringP(t->at(2)));
-  if(scopename != "::") {
-    fakeNamespaceScope(scopename,0,d);
-  } else {
-    //fakeParentScope(d);
-    declarationStatementsWithoutScope.push_back(d);
-  }
-  /* the unparser wants this*/
-  /*SgClassDefinition* classdef = new SgClassDefinition();
-    d->set_definition(classdef);*/
-  d->set_definingDeclaration(d);
+  SgClassType* ct;
+  if (classTypeMap.find(p->getRepresentation()) != classTypeMap.end())
+    // Lookup the canonical class type
+    ct = classTypeMap[p->getRepresentation()];
+  else {
+    // /* must be a composite term*/
+    // PrologCompTerm* t = isPrologCompTerm(p);
+    // ROSE_ASSERT(t != NULL);
+    // /* first term is class name*/
+    // string s = *toStringP(t->at(0));
+    // /* create dummy declaration*/
+    // SgClassDeclaration* d = 
+    //   createDummyClassDeclaration(s, createEnum(t->at(1), re.class_type));
+    // ROSE_ASSERT(d != NULL);
+    // string scopename = *(toStringP(t->at(2)));
+    // if(scopename != "::") {
+    //   fakeNamespaceScope(scopename,0,d);
+    // } else {
+    //   //fakeParentScope(d);
+    //   declarationStatementsWithoutScope.push_back(d);
+    // }
+    // /* the unparser wants this*/
+    // /*SgClassDefinition* classdef = new SgClassDefinition();
+    //   d->set_definition(classdef);*/
+    // d->set_definingDeclaration(d);
 	
   d->set_forward(true);
   SgClassType* ct = SgClassType::createType(d);
@@ -2608,12 +2623,12 @@ PrologToRose::fakeParentScope(SgDeclarationStatement* s) {
   //nothing to do if there is already a parent scope
   if(s->get_parent()) return;
   debug("faking scope");	
-  Sg_File_Info* fi = Sg_File_Info::generateDefaultFileInfo();
-  SgGlobal* dummy = new SgGlobal(fi);
+  SgGlobal* dummy = new SgGlobal(FI);
   ROSE_ASSERT(dummy != NULL);
-
+  dummy->set_endOfConstruct(FI);
   // 7.2.2008 ROSE 0.9.0b (Adrian)
   addSymbol(dummy, s);
+  
 
   s->set_parent(dummy);
   s->set_scope(dummy);
@@ -3067,8 +3082,7 @@ PrologToRose::createDummyFunctionDeclaration(string* namestr, PrologTerm* type_t
   SgFunctionType* tpe = dynamic_cast<SgFunctionType*>(createType(type_term));
   ROSE_ASSERT(tpe != NULL);
   /* create SgFunctionDeclaration*/
-  Sg_File_Info* fi = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
-  SgFunctionDeclaration* d = new SgFunctionDeclaration(fi,n,tpe);
+  SgFunctionDeclaration* d = new SgFunctionDeclaration(FI,n,tpe);
   ROSE_ASSERT(d != NULL);
   /* postprocessing to satisfy unparser*/
   d->setForward();
