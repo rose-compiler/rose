@@ -30,6 +30,13 @@ private:
   /* fixups */
   std::vector<SgInitializedName*> initializedNamesWithoutScope;
   std::vector<SgDeclarationStatement*> declarationStatementsWithoutScope;
+  /* our own little symbol tables */
+  std::map<std::string,SgClassType*> classTypeMap;
+  std::vector<SgClassDefinition*> classDefinitions;
+#if 0
+  std::map<std::string,SgClassDeclaration*> definingClassDecls;
+  std::multimap<std::string,SgClassDeclaration*> nondefiningClassDecls;
+#endif
   /* arity specific node generation*/
   SgNode* leafToRose(PrologCompTerm*, std::string);
   SgNode* unaryToRose(PrologCompTerm*, std::string);
