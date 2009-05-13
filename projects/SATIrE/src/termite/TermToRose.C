@@ -265,9 +265,6 @@ PrologToRose::toRose(PrologTerm* t) {
       (*it)->set_scope(scope);
     }
     declarationStatementsWithoutScope.clear();
-
-    // rebuild the symbol table
-    SageInterface::rebuildSymbolTable(scope);
   }
   	
   return node;
@@ -512,7 +509,7 @@ PrologToRose::listToRose(PrologCompTerm* t,string tname) {
       succs->push_back(cur);
       debug("added successor of type " + dynamic_cast<PrologCompTerm*>(*it)->at(0)->getName());
     } else {
-      debug("did not add successor");
+      debug("did not add NULL successor");
     }
     it++;
   }
@@ -546,6 +543,7 @@ PrologToRose::listToRose(PrologCompTerm* t,string tname) {
   /* note that for the list nodes the set_parent operation takes place
    * inside the methods when necessary since they always require
    * an iteration over the list anyway. */
+
   return s;
 }
 
@@ -1338,9 +1336,15 @@ PrologToRose::createFile(Sg_File_Info* fi,SgNode* child1,PrologCompTerm*) {
 
   SgGlobal* glob = isSgGlobal(child1);
   ROSE_ASSERT(glob);
+  
+  // rebuild the symbol table
+  //SageInterface::rebuildSymbolTable(glob);
 
   file->set_globalScope(glob);
   glob->set_parent(file);
+  
+  // Call all kinds of fixups
+  AstPostProcessing(file);
   return file;
 }
 
@@ -1975,21 +1979,25 @@ PrologToRose::createVariableDeclaration(Sg_File_Info* fi,deque<SgNode*>* succs,P
 
   deque<SgNode*>::iterator it = succs->begin();
   ROSE_ASSERT(it != succs->end());
+
+  // Struct declaration and definition in one?
   for (; it != succs->end(); ++it) {
+    // first extract the definition
     if (SgClassDeclaration* cdecl = isSgClassDeclaration(*it)) {
-      // This thing happens when we encounter an anonymous struct
       ROSE_ASSERT(class_decl == NULL);
       class_decl = cdecl;
       debug("added class/struct");
-      fakeParentScope(class_decl);
+      //fakeParentScope(class_decl);
       // default to self for now...
       class_decl->unsetForward();
       class_decl->set_definingDeclaration(class_decl);
       // register with vardecl
+      class_decl->set_parent(dec);
       dec->set_baseTypeDefiningDeclaration(class_decl);
     }
   }
 
+  // now add the initialized names
   for (it = succs->begin(); it != succs->end(); ++it) {
     if (SgInitializedName* ini_name = isSgInitializedName(*it)) {
       debug("added variable");
@@ -1997,7 +2005,9 @@ PrologToRose::createVariableDeclaration(Sg_File_Info* fi,deque<SgNode*>* succs,P
       ini_initializer = ini_name->get_initializer();
 
       if (class_decl) {
-	SgClassType* ct = isSgClassType( ini_name->get_typeptr());
+	// If this is a Definition as well, insert the pointer to the
+	// declaration
+	SgClassType* ct = isSgClassType(ini_name->get_typeptr());
 	ROSE_ASSERT(ct);
 	ct->set_declaration(class_decl);
       }
@@ -2294,16 +2304,17 @@ PrologToRose::createClassDeclaration(Sg_File_Info* fi,SgNode* child1 ,PrologComp
   /* get the type*/
   PrologCompTerm* type_s = dynamic_cast<PrologCompTerm*>(annot->at(2));
   ROSE_ASSERT(type_s != NULL);
-  SgClassType* sg_class_type = createClassType(type_s);
+  //SgClassType* sg_class_type = createClassType(type_s);
   SgName class_name = class_name_s->getName();
   SgClassDeclaration* d = 
     new SgClassDeclaration(fi, 
 			   class_name,
 			   (SgClassDeclaration::class_types)
 			   createEnum(class_type, re.class_type),
-			   sg_class_type,
+			   NULL /*sg_class_type */,
 			   class_def);
   ROSE_ASSERT(d != NULL);
+  d->set_type(SgClassType::createType(d));
   /* set declaration or the forward flag*/
   if(class_def != NULL) {
     d->set_definingDeclaration(d);
@@ -2324,6 +2335,9 @@ PrologToRose::fakeClassScope(string s, int c_type,SgDeclarationStatement* stat) 
   SgClassDeclaration* d = createDummyClassDeclaration(s,c_type);
   SgClassDefinition* def = new SgClassDefinition(
     Sg_File_Info::generateDefaultFileInfoForTransformationNode(), d);
+  d->set_parent(def);
+  // FIXME
+  def->set_parent(d);
   ROSE_ASSERT(def != NULL);
   /* scope is changed here as a side effect!*/
   def->append_member(stat);
@@ -2353,6 +2367,11 @@ PrologToRose::fakeNamespaceScope(string s, int unnamed, SgDeclarationStatement* 
   /* create namespace*/
   SgNamespaceDeclarationStatement* dec = new SgNamespaceDeclarationStatement(dfi,n,def,u_b);
   def->set_namespaceDeclaration(dec); // AP 4.2.2008 
+  if(def != NULL) {
+    def->set_namespaceDeclaration(dec);
+    dec->set_forward(false);
+    dec->set_definingDeclaration(dec);
+  }
   ROSE_ASSERT(dec != NULL);
   //fakeParentScope(dec); //Adrian 1.2.2008 remove a ROSE 0.9.0b warning 
   SgGlobal* dummy = new SgGlobal(dfi);
@@ -2400,19 +2419,21 @@ PrologToRose::createClassType(PrologTerm* p) {
     createDummyClassDeclaration(s, createEnum(t->at(1), re.class_type));
   ROSE_ASSERT(d != NULL);
   string scopename = *(toStringP(t->at(2)));
-  if(scopename != "") {
+  if(scopename != "::") {
     fakeNamespaceScope(scopename,0,d);
   } else {
     //fakeParentScope(d);
     declarationStatementsWithoutScope.push_back(d);
   }
   /* the unparser wants this*/
-  d->set_definition(new SgClassDefinition());
+  /*SgClassDefinition* classdef = new SgClassDefinition();
+    d->set_definition(classdef);*/
   d->set_definingDeclaration(d);
 	
   d->set_forward(true);
   SgClassType* ct = SgClassType::createType(d);
   ROSE_ASSERT(ct != NULL);
+  d->set_parent(ct);
   return ct;
 }
 
