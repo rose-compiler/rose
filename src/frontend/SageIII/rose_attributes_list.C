@@ -1672,10 +1672,18 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
             else
              {
             // This case should be an error...
+            // Liao, 5/13/2009
+            // This should not be an error. Any weird string can show up in a block of /* */
+            // Check the test input: tests/CompileTests/C_tests/test2009_01.c
+#if 0             
                printf ("Error: Unknown cppIndentifier = %s \n",cppIndentifier.c_str());
                ROSE_ASSERT(false);
-
                cppDeclarationKind = PreprocessingInfo::CpreprocessorUnknownDeclaration;
+#else
+               printf ("Warning: ROSEAttributesList::isCppDirective() found unknown cppIndentifier = %s\n Extracted from a line: =%s\n",
+                        cppIndentifier.c_str(), line.c_str());
+               cppDeclarationKind = PreprocessingInfo::CpreprocessorUnknownDeclaration;
+#endif               
              }
 
        // Collect the rest of the line: (line length - next character position) + 1.
