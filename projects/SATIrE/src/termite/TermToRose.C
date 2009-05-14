@@ -785,6 +785,7 @@ PrologToRose::createTypedefType(PrologTerm* t) {
   if (typedefDeclMap.find(id) != typedefDeclMap.end()) {
     decl = typedefDeclMap[id];
   } else {
+    //cerr<<id<<endl;
     ROSE_ASSERT(false);
     /*create SgTypedefDeclaration*/
     decl = new SgTypedefDeclaration(FI,n,i,NULL,NULL,NULL);
@@ -2738,9 +2739,11 @@ PrologToRose::createTypedefDeclaration(Sg_File_Info* fi, PrologCompTerm* t) {
   }
 
   // Symbol table
-  string id = "typedef_type("+n+", "+annot->at(1)->getRepresentation()+")";
+  string id = "typedef_type("+annot->at(0)->getRepresentation()+", "
+    +annot->at(1)->getRepresentation()+")";
   if (typedefDeclMap.find(id) == typedefDeclMap.end())
     typedefDeclMap[id] = d;
+  //cerr<<id<<endl;
 
   return d;
 }
