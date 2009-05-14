@@ -23,6 +23,10 @@ using namespace std;
 using namespace boost;
 
 #define FI Sg_File_Info::generateDefaultFileInfoForTransformationNode()
+static inline string makeFunctionID(const string& func_name, 
+				    const string& func_type) {
+  return func_name+'-'+func_type;
+}
 
 /**
  * Unparse to a file
@@ -211,7 +215,7 @@ PrologToRose::toRose(PrologTerm* t) {
     //);
 	  
     // Set EndOfConstruct
-    ln->set_endOfConstruct(FI);
+    ln->set_endOfConstruct(ln->get_startOfConstruct());
   }
 
   // Create the attached PreprocessingInfo
@@ -1619,7 +1623,6 @@ PrologToRose::createFunctionParameterList(Sg_File_Info* fi,deque<SgNode*>* succs
   return l;
 }
 
-
 /**
  * create SgFunctionDeclaration
  */
@@ -1627,28 +1630,30 @@ SgFunctionDeclaration*
 PrologToRose::createFunctionDeclaration(Sg_File_Info* fi, SgNode* par_list_u,SgNode* func_def_u, PrologCompTerm* t) {
   debug("function declaration:");
   /* cast parameter list and function definition (if exists)*/
-  SgFunctionParameterList* par_list = dynamic_cast<SgFunctionParameterList*>(par_list_u);
-  SgFunctionDefinition* func_def = dynamic_cast<SgFunctionDefinition*>(func_def_u);
+  SgFunctionParameterList* par_list = isSgFunctionParameterList(par_list_u);
+  SgFunctionDefinition* func_def = isSgFunctionDefinition(func_def_u);
   /* param list must exist*/
   ROSE_ASSERT(par_list != NULL);
   /* get annotation*/
   PrologCompTerm* annot = retrieveAnnotation(t);
   /* create type*/
-  SgFunctionType* func_type = dynamic_cast<SgFunctionType*>(createType(annot->at(0)));
+  SgFunctionType* func_type = isSgFunctionType(createType(annot->at(0)));
   ROSE_ASSERT(func_type != NULL);
   /* get functioon name*/
   PrologAtom* func_name_term = dynamic_cast<PrologAtom*>(annot->at(1));
   ROSE_ASSERT(func_name_term != NULL);
   SgName func_name = func_name_term->getName();
   /* create declaration*/
-  SgFunctionDeclaration* func_decl = new SgFunctionDeclaration(fi,func_name,func_type,func_def);
+  SgFunctionDeclaration* func_decl =
+    new SgFunctionDeclaration(fi,func_name,func_type,func_def);
   ROSE_ASSERT(func_decl != NULL); 
   func_decl->set_forward(func_def == NULL);
   func_decl->set_parameterList(par_list);
   setDeclarationModifier(annot->at(2),&(func_decl->get_declarationModifier()));
 
   // Fake the scope for function declaration statements
-  fakeParentScope(func_decl);
+  //fakeParentScope(func_decl);
+  declarationStatementsWithoutScope.push_back(func_decl);
 
   /*post processing*/
   /*important: otherwise unparsing fails*/
@@ -1656,8 +1661,26 @@ PrologToRose::createFunctionDeclaration(Sg_File_Info* fi, SgNode* par_list_u,SgN
     func_def->set_declaration(func_decl);
     /* set defining declaration ROSE 0.9.0b */
     func_decl->set_definingDeclaration(func_decl);
-    //func_decl->set_firstNondefiningDeclaration(func_decl);
+    // func_decl->set_firstNondefiningDeclaration(func_decl);
+
+    //SgFunctionDeclaration* nondef_decl = 
+      //  new SgFunctionDeclaration(FI,func_name,func_type,NULL);
+    //nondef_decl->set_endOfConstruct(FI);
+
+    // Set the internal reference to the non-defining declaration
+    //nondef_decl->set_firstNondefiningDeclaration(nondef_decl);
+    //nondef_decl->set_definingDeclaration(func_decl);
+    //nondef_decl->setForward();
+    //fakeParentScope(nondef_decl);
+    //cerr<<endl<<func_decl<<" -- "<<nondef_decl<<endl;
+    //func_decl->set_firstNondefiningDeclaration(nondef_decl);
   } else {
+  }
+
+  /* register the function declaration with our own symbol table */
+  string id = makeFunctionID(func_name, annot->at(0)->getRepresentation());
+  if (funcDeclMap.find(id) == funcDeclMap.end()) {
+    funcDeclMap[id] = func_decl;
   }
   return func_decl;
 }
@@ -3211,10 +3234,20 @@ PrologToRose::createFunctionRefExp(Sg_File_Info* fi, PrologCompTerm* ct) {
   ROSE_ASSERT(annot->getArity() == 3);
   string* s = toStringP(annot->at(0));
   ROSE_ASSERT(s != NULL);
-  /* create function symbol*/
-  debug("symbol");
-  SgFunctionSymbol* sym = createDummyFunctionSymbol(s,annot->at(1));
+
+  SgFunctionSymbol* sym;
+  string id = makeFunctionID(*s, annot->at(1)->getRepresentation());
+  if (funcDeclMap.find(id) != funcDeclMap.end()) {
+    /* get the real symbol */
+    sym = new SgFunctionSymbol(funcDeclMap[id]);
+  } else {
+    ROSE_ASSERT(false);
+    /* create function symbol*/
+    debug("symbol");
+    sym = createDummyFunctionSymbol(s,annot->at(1));
+  }
   ROSE_ASSERT(sym != NULL);
+
   /* get type from function symbol*/
   SgFunctionType* ft = isSgFunctionType(sym->get_type());
   ROSE_ASSERT(ft != NULL);

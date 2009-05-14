@@ -33,6 +33,7 @@ private:
   /* our own little symbol tables */
   std::map<std::string,SgClassType*> classTypeMap;
   std::vector<SgClassDefinition*> classDefinitions;
+  std::map<std::string,SgFunctionDeclaration*> funcDeclMap;
 #if 0
   std::map<std::string,SgClassDeclaration*> definingClassDecls;
   std::multimap<std::string,SgClassDeclaration*> nondefiningClassDecls;
