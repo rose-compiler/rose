@@ -257,7 +257,7 @@ PrologToRose::toRose(PrologTerm* t) {
   }
 
   // Set Scope of children
-  SgScopeStatement* scope = dynamic_cast<SgScopeStatement*>(node);
+  SgScopeStatement* scope = isSgScopeStatement(node);
   if (scope != NULL) {
     for (vector<SgInitializedName*>::iterator it = 
 	       initializedNamesWithoutScope.begin();
@@ -285,7 +285,14 @@ PrologToRose::toRose(PrologTerm* t) {
     scope->set_symbol_table(NULL);
     SageInterface::rebuildSymbolTable(scope);
   }
-  	
+
+  // Fixup the last labelStatement
+  //if (isSgStatement(node) && !labelStatementsWithoutScope.empty()) {
+  //  SgLabelStatement* ls = labelStatementsWithoutScope.back();
+  //  if (ls->get_statement() == NULL) {
+  //    ls->set_statement(isSgStatement(node));
+  //  }
+  //}
   return node;
 }
 
@@ -1467,12 +1474,23 @@ PrologToRose::createFunctionDefinition(Sg_File_Info* fi,SgNode* succ,PrologCompT
   ROSE_ASSERT(b != NULL);
   SgFunctionDefinition* fd = new SgFunctionDefinition(fi,b);
 
-  for (vector<SgLabelStatement*>::iterator it = 
+  // Various Label fixups
+  for (vector<SgLabelStatement*>::iterator label = 
 	       labelStatementsWithoutScope.begin();
-	 it != labelStatementsWithoutScope.end(); it++) {
-      (*it)->set_scope(fd);
+	 label != labelStatementsWithoutScope.end(); label++) {
+      (*label)->set_scope(fd);
+
+      string l = (*label)->get_label().getString();
+      for (multimap<string,SgGotoStatement*>::iterator goto_ =
+	     gotoStatementsWithoutLabel.find(l);
+	   goto_ != gotoStatementsWithoutLabel.end(); ++goto_) {
+	goto_->second->set_label(*label);
+      }
+
+      //cerr<<endl<<(*label)->unparseToString()<<endl<<b->unparseToString()<<endl;
   }
   labelStatementsWithoutScope.clear();
+
   return fd;
 }
 
@@ -2309,12 +2327,12 @@ PrologToRose::createGotoStatement(Sg_File_Info* fi,PrologCompTerm* t) {
   PrologAtom* s = dynamic_cast<PrologAtom*>(u->at(0));
   ROSE_ASSERT(s != NULL);
   /* create dummy SgLabelStatement with helper function*/
-  Sg_File_Info* fi2 = FI;
-  SgLabelStatement* l = makeLabel(fi2,s->getName());
+  SgLabelStatement* l = NULL; //makeLabel(FI,s->getName());
   /*makeLabel asserts a non-NULL return value*/
   /* create goto using dummy label*/
   SgGotoStatement* sgoto = new SgGotoStatement(fi,l);
   ROSE_ASSERT(sgoto != NULL);
+  gotoStatementsWithoutLabel.insert(pair<string,SgGotoStatement*>(s->getName(), sgoto));
   return sgoto;
 }
 
@@ -2323,6 +2341,10 @@ SgLabelStatement*
 PrologToRose::makeLabel(Sg_File_Info* fi,string s) {
   /* we need a SgName*/
   SgName n = s;
+  // FIXME: This is apparently necessary to convince the unparser..
+  fi->set_classificationBitField(fi->get_classificationBitField() 
+				 | Sg_File_Info::e_compiler_generated 
+				 | Sg_File_Info::e_output_in_code_generation);
   SgLabelStatement* l = new SgLabelStatement(fi,n);
   ROSE_ASSERT(l != NULL);
   labelStatementsWithoutScope.push_back(l);
