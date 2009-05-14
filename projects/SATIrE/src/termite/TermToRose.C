@@ -136,6 +136,7 @@ PrologToRose::toRose(const char* filename) {
   SgNode* root = toRose(prote);
   ROSE_ASSERT(initializedNamesWithoutScope.empty());
   ROSE_ASSERT(declarationStatementsWithoutScope.empty());
+  ROSE_ASSERT(labelStatementsWithoutScope.empty());
   return root;
 }
 
@@ -1464,7 +1465,15 @@ PrologToRose::createFunctionDefinition(Sg_File_Info* fi,SgNode* succ,PrologCompT
   /* create a basic block*/
   SgBasicBlock* b = dynamic_cast<SgBasicBlock*>(succ);
   ROSE_ASSERT(b != NULL);
-  return new SgFunctionDefinition(fi,b);
+  SgFunctionDefinition* fd = new SgFunctionDefinition(fi,b);
+
+  for (vector<SgLabelStatement*>::iterator it = 
+	       labelStatementsWithoutScope.begin();
+	 it != labelStatementsWithoutScope.end(); it++) {
+      (*it)->set_scope(fd);
+  }
+  labelStatementsWithoutScope.clear();
+  return fd;
 }
 
 
@@ -2316,6 +2325,7 @@ PrologToRose::makeLabel(Sg_File_Info* fi,string s) {
   SgName n = s;
   SgLabelStatement* l = new SgLabelStatement(fi,n);
   ROSE_ASSERT(l != NULL);
+  labelStatementsWithoutScope.push_back(l);
   return l;
 }
 

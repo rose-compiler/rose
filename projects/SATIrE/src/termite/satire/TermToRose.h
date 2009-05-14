@@ -30,6 +30,7 @@ private:
   /* fixups */
   std::vector<SgInitializedName*> initializedNamesWithoutScope;
   std::vector<SgDeclarationStatement*> declarationStatementsWithoutScope;
+  std::vector<SgLabelStatement*> labelStatementsWithoutScope;
   /* our own little symbol tables */
   std::map<std::string,SgClassType*> classTypeMap;
   std::vector<SgClassDefinition*> classDefinitions;
