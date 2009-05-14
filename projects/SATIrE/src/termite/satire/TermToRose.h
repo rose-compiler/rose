@@ -36,6 +36,7 @@ private:
   std::map<std::string,SgClassType*> classTypeMap;
   std::vector<SgClassDefinition*> classDefinitions;
   std::map<std::string,SgFunctionDeclaration*> funcDeclMap;
+  std::map<std::string,SgTypedefDeclaration*> typedefDeclMap;
 #if 0
   std::map<std::string,SgClassDeclaration*> definingClassDecls;
   std::multimap<std::string,SgClassDeclaration*> nondefiningClassDecls;

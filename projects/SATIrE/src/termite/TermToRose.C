@@ -780,8 +780,15 @@ PrologToRose::createTypedefType(PrologTerm* t) {
   /*create default file info*/
   /*we don't want to keep the base type empty, use int (irrelevant form unparsing*/
   SgTypeInt* i = new SgTypeInt();
-  /*create SgTypedefDeclaration*/
-  SgTypedefDeclaration* decl = new SgTypedefDeclaration(FI,n,i,NULL,NULL,NULL);
+  SgTypedefDeclaration* decl;
+  string id = t->getRepresentation();
+  if (typedefDeclMap.find(id) != typedefDeclMap.end()) {
+    decl = typedefDeclMap[id];
+  } else {
+    ROSE_ASSERT(false);
+    /*create SgTypedefDeclaration*/
+    decl = new SgTypedefDeclaration(FI,n,i,NULL,NULL,NULL);
+  }
   ROSE_ASSERT(decl != NULL);
   /*fake parent scope*/
   fakeParentScope(decl);
@@ -1395,6 +1402,12 @@ PrologToRose::createFile(Sg_File_Info* fi,SgNode* child1,PrologCompTerm*) {
 
   // Call all kinds of fixups
   AstPostProcessing(file);
+
+  // Reset local symbol tables
+  classDefinitions.clear();
+  classTypeMap.clear();
+  funcDeclMap.clear();
+  typedefDeclMap.clear();
   return file;
 }
 
@@ -2437,7 +2450,7 @@ PrologToRose::createClassDeclaration(Sg_File_Info* fi,SgNode* child1 ,PrologComp
 #endif
     declarationStatementsWithoutScope.push_back(ndcd);
   } else {
-    d->set_forward(1);
+    d->setForward();
 #if 0
     nondefiningClassDecls.insert(pair<string, SgClassDeclaration*>(annot->getRepresentation(), d));
 #endif
@@ -2680,18 +2693,37 @@ PrologToRose::createTypedefDeclaration(Sg_File_Info* fi, PrologCompTerm* t) {
     //note that the unparser seems to skip it!
   }
   /*create typedef declaration*/
-	
   SgTypedefType* tdt = NULL;
   SgSymbol* smb = NULL;
-  SgTypedefDeclaration* tdec = new SgTypedefDeclaration(fi,n,tpe,NULL,decs,NULL);
-  ROSE_ASSERT(tdec != NULL);
+  SgTypedefDeclaration* d = new SgTypedefDeclaration(fi,n,tpe,NULL,decs);
+  ROSE_ASSERT(d != NULL);
   /* if there is a declaration, set flag and make sure it is set*/
   if(decs != NULL) {
-    tdec->set_typedefBaseTypeContainsDefiningDeclaration(true);	
+    d->set_typedefBaseTypeContainsDefiningDeclaration(true);	
 
-  };
+    d->set_forward(0);
+    d->set_definingDeclaration(d);
+    //decs->set_declaration(d);
 
-  return tdec;
+    SgTypedefDeclaration* ndcd = new SgTypedefDeclaration(FI,n,tpe);
+    ndcd->set_endOfConstruct(FI);
+
+    // Set the internal reference to the non-defining declaration
+    ndcd->set_firstNondefiningDeclaration(ndcd);
+    ndcd->set_definingDeclaration(d);
+    ndcd->setForward();
+    d->set_firstNondefiningDeclaration(ndcd);
+
+  } else {
+    d->setForward();
+  }
+
+  // Symbol table
+  string id = "typedef_type("+n+", "+annot->at(1)->getRepresentation()+")";
+  if (typedefDeclMap.find(id) == typedefDeclMap.end())
+    typedefDeclMap[id] = d;
+
+  return d;
 }
 
 /**
