@@ -2081,6 +2081,7 @@ PrologToRose::createVariableDeclaration(Sg_File_Info* fi,deque<SgNode*>* succs,P
   /* add initialized names*/
   SgInitializer* ini_initializer;
   SgClassDeclaration* class_decl = 0;
+  SgEnumDeclaration* enum_decl = 0;
 
   deque<SgNode*>::iterator it = succs->begin();
   ROSE_ASSERT(it != succs->end());
@@ -2091,14 +2092,22 @@ PrologToRose::createVariableDeclaration(Sg_File_Info* fi,deque<SgNode*>* succs,P
     if (SgClassDeclaration* cdecl = isSgClassDeclaration(*it)) {
       ROSE_ASSERT(class_decl == NULL);
       class_decl = cdecl;
-      debug("added class/struct");
-      //fakeParentScope(class_decl);
       // default to self for now...
       class_decl->unsetForward();
       class_decl->set_definingDeclaration(class_decl);
       // register with vardecl
       class_decl->set_parent(dec);
       dec->set_baseTypeDefiningDeclaration(class_decl);
+    }
+    if (SgEnumDeclaration* edecl = isSgEnumDeclaration(*it)) {
+      ROSE_ASSERT(enum_decl == NULL);
+      enum_decl = edecl;
+      // default to self for now...
+      enum_decl->unsetForward();
+      enum_decl->set_definingDeclaration(enum_decl);
+      // register with vardecl
+      enum_decl->set_parent(dec);
+      dec->set_baseTypeDefiningDeclaration(enum_decl);
     }
   }
 
@@ -2116,10 +2125,20 @@ PrologToRose::createVariableDeclaration(Sg_File_Info* fi,deque<SgNode*>* succs,P
 	ROSE_ASSERT(ct);
 	ct->set_declaration(class_decl);
       }
+      if (enum_decl) {
+	// If this is a Definition as well, insert the pointer to the
+	// declaration
+	SgEnumType* et = isSgEnumType(ini_name->get_typeptr());
+	ROSE_ASSERT(et);
+	et->set_declaration(enum_decl);
+      }
 
       dec->append_variable(ini_name,ini_initializer);
-    } else if (dynamic_cast<SgClassDeclaration*>(*it)) {
-      /* see above */
+    } else if (isSgClassDeclaration(*it)) {
+      debug("added class/struct");
+      /* already handled, see above */
+    } else if (isSgEnumDeclaration(*it)) {
+      debug("added enum");
     } else {
       cerr << (*it)->class_name() << "???" << endl; 
       ROSE_ASSERT(false);
