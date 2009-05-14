@@ -6,6 +6,7 @@ Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
 #define PROLOGCOMPTERM_H_
 #include "PrologTerm.h"
 #include <assert.h>
+#include <stdarg.h>
 
 #if !HAVE_SWI_PROLOG
 
@@ -16,6 +17,17 @@ public:
   /// Creates a compound term with the given name. no subterms added yet.
   
   PrologCompTerm(std::string name) : mName(name) {};
+
+  PrologCompTerm(std::string name, size_t n, ...) : mName(name) {
+    if(n > 0) {
+      va_list params;
+      va_start(params, n);
+      for (size_t i=0; i < n; i++)
+        addSubterm(va_arg(params, PrologTerm *));
+      va_end(params);
+    }
+  }
+  
   int getArity() { return mSubterms.size(); };
   bool isGround() {
     bool ground = true;
