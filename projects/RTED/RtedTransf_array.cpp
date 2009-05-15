@@ -148,6 +148,10 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
       SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
       // insert new stmt (exprStmt) before (old) stmt
       insertStatementBefore(isSgStatement(stmt), exprStmt);
+      string empty_comment = "";
+      attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
+      string comment = "RS : Create Array Variable, paramaters : (name, dimension, stack or heap, size dim 1, size dim 2, filename, linenr)";
+      attachComment(exprStmt,comment,PreprocessingInfo::before);
     } 
     else if (isSgNamespaceDefinitionStatement(scope)) {
       cerr <<"RuntimeInstrumentation :: WARNING - Scope not handled!!! : " << name << " : " << scope->class_name() << endl;
@@ -238,6 +242,11 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt,
 							  arg_list);
     SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
     insertStatementBefore(isSgStatement(stmt), exprStmt);
+    string empty_comment = "";
+    attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
+    string comment = "RS : Access Array Variable, paramaters : (name, dim 1 location, dim 2 location, filename, linenr, part of error message)";
+    attachComment(exprStmt,comment,PreprocessingInfo::before);
+
     //    }
 
   } else {

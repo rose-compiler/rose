@@ -104,6 +104,7 @@ void RtedTransformation::transform(SgProject* project) {
   }
 
   // insert main call to ->close();
+  ROSE_ASSERT(mainLast);
   insertMainCloseCall(mainLast);
 }
 

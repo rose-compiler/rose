@@ -14,7 +14,7 @@
 
 //struct RuntimeSystem* rt_pi;
 struct RuntimeSystem* rtsi() {
-static struct RuntimeSystem* rt_pi=0;
+  static struct RuntimeSystem* rt_pi=0;
   if ( rt_pi == 0)  {
     printf("Creating Instance for RUNTIMESYSTEM ------------------------------------\n");
     //pinstance = new RuntimeSystem(); // create sole instance
@@ -36,10 +36,15 @@ RuntimeSystem_Const_RuntimeSystem() {
   //... perform necessary instance initializations 
   // initialze arrays with 10 elements and later increase by 50 if too small
   int initElementSize=0;
+#if 0
   rtsi()->maxRuntimeVariablesEndIndex = rtsi()->maxArrays1DEndIndex = rtsi()->maxArrays2DEndIndex = initElementSize;
   rtsi()->arrays1DEndIndex=  rtsi()->arrays2DEndIndex=  rtsi()->runtimeVariablesEndIndex=0;
   rtsi()->arrays1D = (struct arrays1DType*)malloc(sizeof(struct arrays1DType)*initElementSize);
   rtsi()->arrays2D = (struct arrays2DType*)malloc(sizeof(struct arrays2DType)*initElementSize);
+#endif
+  rtsi()->maxRuntimeVariablesEndIndex = rtsi()->maxArraysEndIndex = initElementSize;
+  rtsi()->arraysEndIndex=  rtsi()->runtimeVariablesEndIndex=0;
+  rtsi()->arrays = (struct arraysType*)malloc(sizeof(struct arraysType)*initElementSize);
   rtsi()->runtimeVariablesOnStack = (struct RuntimeVariablesType*)malloc(sizeof(struct RuntimeVariablesType)*initElementSize);
   rtsi()->myfile = fopen("result.txt","at");
   //myfile = new std::ofstream("result.txt",std::ios::app);
@@ -55,7 +60,7 @@ RuntimeSystem_Const_RuntimeSystem() {
 
 
 // ***************************************** HELPER FUNCTIONS *************************************
-
+#if 0
 int
 RuntimeSystem_findArrayName1D(char* n) {
   int i=0;
@@ -77,7 +82,22 @@ RuntimeSystem_findArrayName2D(char* n) {
   }
   return -1;
 }
+#endif
 
+int
+RuntimeSystem_findArrayName(char* n) {
+  // search by mangled name
+  int i=0;
+  for (i=0;i<rtsi()->arraysEndIndex;i++) {
+    char* name =rtsi()->arrays[i].name;
+    //printf(".............findArrayName comparing : %s and %s\n",n,name);
+    if (strcmp(name,n)==0)
+      return i;
+  }
+  return -1;
+}
+
+#if 0
 void
 RuntimeSystem_increaseSizeArray1() {   
   rtsi()->maxArrays1DEndIndex+=50;
@@ -86,13 +106,13 @@ RuntimeSystem_increaseSizeArray1() {
     int i=0;
     for (i=0;i<rtsi()->maxArrays1DEndIndex;i++) {
       //printf(" %d rtsi()->arrays1D_tmp[i].name = MEM\n",i);
-	arrays1D_tmp[i].name=(char*)malloc(sizeof(char*));
-	arrays1D_tmp[i].size1 =0;
+      arrays1D_tmp[i].name=(char*)malloc(sizeof(char*));
+      arrays1D_tmp[i].size1 =0;
     }
     for ( i=0;i<rtsi()->arrays1DEndIndex;i++) {
       //printf(" %d rtsi()->arrays1D_tmp[i].name = %s\n",i,rtsi()->arrays1D[i].name);
-	arrays1D_tmp[i].name=rtsi()->arrays1D[i].name;
-	arrays1D_tmp[i].size1 =rtsi()->arrays1D[i].size1;
+      arrays1D_tmp[i].name=rtsi()->arrays1D[i].name;
+      arrays1D_tmp[i].size1 =rtsi()->arrays1D[i].size1;
     }
     free (rtsi()->arrays1D);
     rtsi()->arrays1D=arrays1D_tmp;
@@ -109,20 +129,47 @@ RuntimeSystem_increaseSizeArray2() {
     int i=0;
     for ( i=0;i<rtsi()->maxArrays2DEndIndex;i++) {
       //printf(" %d rtsi()->arrays2D_tmp[i].name = MEM\n",i);
-	arrays2D_tmp[i].name=(char*)malloc(sizeof(char*));
-	arrays2D_tmp[i].size1 =0;
-	arrays2D_tmp[i].size2 =0;
+      arrays2D_tmp[i].name=(char*)malloc(sizeof(char*));
+      arrays2D_tmp[i].size1 =0;
+      arrays2D_tmp[i].size2 =0;
     }
     for ( i=0;i<rtsi()->arrays2DEndIndex;i++) {
       //printf(" %d rtsi()->arrays2D_tmp[i].name = %s\n",i,rtsi()->arrays2D[i].name);
-	arrays2D_tmp[i].name=rtsi()->arrays2D[i].name;
-	arrays2D_tmp[i].size1 =rtsi()->arrays2D[i].size1;
-	arrays2D_tmp[i].size2 =rtsi()->arrays2D[i].size2;
+      arrays2D_tmp[i].name=rtsi()->arrays2D[i].name;
+      arrays2D_tmp[i].size1 =rtsi()->arrays2D[i].size1;
+      arrays2D_tmp[i].size2 =rtsi()->arrays2D[i].size2;
     }
     free (rtsi()->arrays2D);
     rtsi()->arrays2D=arrays2D_tmp;
   }
   printf( " Increased Array2 to %d  -- current index %d\n", rtsi()->maxArrays2DEndIndex, rtsi()->arrays2DEndIndex );
+}
+#endif
+
+void
+RuntimeSystem_increaseSizeArray() {                                               
+  rtsi()->maxArraysEndIndex+=50;
+  struct arraysType* arrays2D_tmp = (struct arraysType*)malloc(sizeof(struct  arraysType)*(rtsi()->maxArraysEndIndex));
+  if (arrays2D_tmp) {
+    int i=0;
+    for ( i=0;i<rtsi()->maxArraysEndIndex;i++) {
+      //printf(" %d rtsi()->arrays2D_tmp[i].name = MEM\n",i);
+      arrays2D_tmp[i].name=(char*)malloc(sizeof(char*));
+      arrays2D_tmp[i].dim =0;
+      arrays2D_tmp[i].size1 =0;
+      arrays2D_tmp[i].size2 =0;
+    }
+    for ( i=0;i<rtsi()->arraysEndIndex;i++) {
+      //printf(" %d rtsi()->arrays2D_tmp[i].name = %s\n",i,rtsi()->arrays[i].name);
+      arrays2D_tmp[i].name=rtsi()->arrays[i].name;
+      arrays2D_tmp[i].dim=rtsi()->arrays[i].dim;
+      arrays2D_tmp[i].size1 =rtsi()->arrays[i].size1;
+      arrays2D_tmp[i].size2 =rtsi()->arrays[i].size2;
+    }
+    free (rtsi()->arrays);
+    rtsi()->arrays=arrays2D_tmp;
+  }
+  printf( " Increased Array to %d  -- current index %d\n", rtsi()->maxArraysEndIndex, rtsi()->arraysEndIndex );
 }
 
 void
@@ -256,38 +303,31 @@ RuntimeSystem_findVariablesOnStack(char* name) {
  * -----------------------------------------------------------*/
 void
 RuntimeSystem_roseCreateArray(char* name, int dimension, int stack, long int sizeA, long int sizeB, 
-			       char* filename, char* line ){
+			      char* filename, char* line ){
   if (rtsi()->arrayDebug)
     printf( " >>> Called : roseCreateArray : %s dim %d - [%ld][%ld] file : %s line: %s\n",  
 	    RuntimeSystem_findLastUnderscore(name),dimension,sizeA, sizeB, filename, line);
 
   if (dimension==1) {
-    //rtsi()->arrays1D[name]=sizeA;
-    printf("rtsi()->arrays1DEndIndex : %d rtsi()->maxArrays1DEndIndex: %d  \n",rtsi()->arrays1DEndIndex,rtsi()->maxArrays1DEndIndex);
-    if (rtsi()->arrays1DEndIndex>=rtsi()->maxArrays1DEndIndex) {
+    printf("rtsi()->arrays1DEndIndex : %d rtsi()->maxArrays1DEndIndex: %d  \n",rtsi()->arraysEndIndex,rtsi()->maxArraysEndIndex);
+    if (rtsi()->arraysEndIndex>=rtsi()->maxArraysEndIndex) {
       //increase the size of the array
-      RuntimeSystem_increaseSizeArray1();
+      RuntimeSystem_increaseSizeArray();
     }
-    rtsi()->arrays1D[rtsi()->arrays1DEndIndex].name=name;
-    rtsi()->arrays1D[rtsi()->arrays1DEndIndex].size1=sizeA;
-    rtsi()->arrays1DEndIndex++;
+    rtsi()->arrays[rtsi()->arraysEndIndex].name=name;
+    rtsi()->arrays[rtsi()->arraysEndIndex].dim=1;
+    rtsi()->arrays[rtsi()->arraysEndIndex].size1=sizeA;
+    rtsi()->arrays[rtsi()->arraysEndIndex].size2=-1;
+    rtsi()->arraysEndIndex++;
 
       
     if (rtsi()->arrayDebug)
       printf( ".. Creating 1Dim array - size : %ld \n", sizeA);
   }
   else if (dimension==2) {
-    // check if exist
-    //std::map<char*, Array2D*>::const_iterator it = rtsi()->arrays2D.find(name);
-    int pos = RuntimeSystem_findArrayName2D(name);
-    //Array2D* array =NULL;
-    //    if (it!=rtsi()->arrays2D.end()) {
+    int pos = RuntimeSystem_findArrayName(name);
     if (pos!=-1) {
-      // array exists
-      //array = it->second;
-      //array = rtsi()->arrays2D[pos].array2d;
-      //long int totalsize = array->size1;
-      long int totalsize = rtsi()->arrays2D[pos].size1;
+      long int totalsize = rtsi()->arrays[pos].size1;
       if (rtsi()->arrayDebug)
 	printf( "..    Expanding 2nd-run 2Dim array - sizeA : %ld  sizeB: %ld \n", sizeA , sizeB );
       if (sizeA<0 || sizeA>=totalsize) {
@@ -299,30 +339,26 @@ RuntimeSystem_roseCreateArray(char* name, int dimension, int stack, long int siz
 	if (rtsi()->arrayDebug)
 	  printf( " >>> CREATING Array : arr [%ld][%ld]  alloc:[%ld]=%ld \n",totalsize,sizeB,sizeA,sizeB);
 	//	array->allocate(sizeA,sizeB); //arr[sizeA][sizeB]
-	rtsi()->arrays2D[pos].size2=sizeB;
+	rtsi()->arrays[pos].size2=sizeB;
       }
     } else {
       // new array
-      //array = new Array2D(sizeA);// ptr [][] = malloc (20)   20 == totalsize
-      //rtsi()->arrays2D[name]=array;
-      if (rtsi()->arrays2DEndIndex>=rtsi()->maxArrays2DEndIndex) {
+      if (rtsi()->arraysEndIndex>=rtsi()->maxArraysEndIndex) {
 	//increase the size of the array
-	RuntimeSystem_increaseSizeArray2();
+	RuntimeSystem_increaseSizeArray();
       }
-      rtsi()->arrays2D[rtsi()->arrays2DEndIndex].name=name;
-      rtsi()->arrays2D[rtsi()->arrays2DEndIndex].size1=sizeA;
-      rtsi()->arrays2D[rtsi()->arrays2DEndIndex].size2=0;
-      //rtsi()->arrays2D[rtsi()->arrays2DEndIndex].array2d=array;
-      rtsi()->arrays2DEndIndex++;
+      rtsi()->arrays[rtsi()->arraysEndIndex].name=name;
+      rtsi()->arrays[rtsi()->arraysEndIndex].dim=2;
+      rtsi()->arrays[rtsi()->arraysEndIndex].size1=sizeA;
+      rtsi()->arrays[rtsi()->arraysEndIndex].size2=0;
+      rtsi()->arraysEndIndex++;
       
 
       if (rtsi()->arrayDebug)
 	printf( ".. Creating 2Dim array - size : %ld \n", sizeA);
       if (sizeB!=-1) {
 	// expand this stack array
-	//for (int i=0;i<sizeA;++i)
-	//  array->allocate(i,sizeB); //arr[i][sizeB]
-	rtsi()->arrays2D[rtsi()->arrays2DEndIndex].size2=sizeB;
+	rtsi()->arrays[rtsi()->arraysEndIndex].size2=sizeB;
 	if (rtsi()->arrayDebug)
 	  printf( "..    Expanding 2Dim array - sizeA : %ld   sizeB: %ld \n", sizeA, sizeB);
       }
@@ -343,12 +379,9 @@ RuntimeSystem_roseArrayAccess(char* name, int posA, int posB, char* filename, ch
   if (mangl_name)
     name=mangl_name;
 
-  //map<char*,int>::const_iterator it = rtsi()->arrays1D.find(name);
-  int pos = RuntimeSystem_findArrayName1D(name);
-  //  if (it!=rtsi()->arrays1D.end()) {
-  if (pos!=-1) {
-    //    int size = it->second;
-    int size = rtsi()->arrays1D[pos].size1;
+  int pos = RuntimeSystem_findArrayName(name);
+  if (pos!=-1 && rtsi()->arrays[pos].dim==1) {
+    int size = rtsi()->arrays[pos].size1;
     if (rtsi()->arrayDebug)
       printf( "       Found 1Dim array :  size: %d , access [%d] \n", size, posA);
     if (posB!=-1) {
@@ -366,17 +399,10 @@ RuntimeSystem_roseArrayAccess(char* name, int posA, int posB, char* filename, ch
     }
   }
 
-  //  cerr << " Done with 1Dim array" << endl;
-  //std::map<char*, Array2D*>::const_iterator it2 = rtsi()->arrays2D.find(name);
-  int pos2 = RuntimeSystem_findArrayName2D(name);
-  //if (it2!=rtsi()->arrays2D.end()) {
-  if (pos2!=-1) {
-    //    Array2D* array = it2->second;
-    //Array2D* array = rtsi()->arrays2D[pos2].array2d;
-    //int sizeA = array->size1;
-    //int sizeB = array->getSize(posA);
-    int sizeA = rtsi()->arrays2D[pos2].size1;
-    int sizeB = rtsi()->arrays2D[pos2].size2;
+  int pos2 = RuntimeSystem_findArrayName(name);
+  if (pos2!=-1 && rtsi()->arrays[pos2].dim==2) {
+    int sizeA = rtsi()->arrays[pos2].size1;
+    int sizeB = rtsi()->arrays[pos2].size2;
     if (rtsi()->arrayDebug) 
       printf( "  Found 2Dim array :  size: [%d][%d]  pos: [%d][%d] \n",
 	      sizeA, sizeB,  posA , posB);
@@ -394,8 +420,6 @@ RuntimeSystem_roseArrayAccess(char* name, int posA, int posB, char* filename, ch
       RuntimeSystem_callExit(filename, line, res,stmtStr);
     }
   } 
-  //  cerr << " Done with 2Dim array" << endl;
-  //  if (it==rtsi()->arrays1D.end() && it2==rtsi()->arrays2D.end()) {
   if (pos==-1 && pos2==-1) {
     printf("\n");
     printf( " >>> No such array was created. Can't access it. %s  line : %s \n" , filename, line);
@@ -416,69 +440,128 @@ RuntimeSystem_roseArrayAccess(char* name, int posA, int posB, char* filename, ch
 // ***************************************** FUNCTION CALL *************************************
 
 void 
-handleNormalFunctionCalls(char** args, int argsSize, char* filename, char* line, char* stmtStr) {
+RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize, char* filename, char* line, char* stmtStr) {
+  assert(argsSize>=4);
+  char* param1StringVal = args[0];
+  char* param1ManglName = args[1];
+  char* param2StringVal = args[2];
+  char* param2ManglName = args[3];
+  assert(param1StringVal);
+  assert(param2StringVal);
+  //assert(param1ManglName);
+  //assert(param2ManglName);
+  int param3Size = 0;
+  if (argsSize>4)
+    param3Size = strtol(args[4],NULL,10);
   if (rtsi()->funccallDebug)
-    printf( "Runtimesystem :: normalFunctionCall \n");
-  assert(argsSize>=2);
-  char* mem1 = args[0];
-  char* mem2 = args[1];
-  assert(mem1);
-  assert(mem2);
-  int size = 0;
-  if (argsSize>2)
-    size = strtol(args[2],NULL,10);
+    printf( "  >>Runtimesystem :: normalFunctionCall  -  param1StringVal : \"%s\"   param2StringVal : \"%s\"   param3Size: %d \n",param1StringVal,param2StringVal,param3Size);
+  // check if a variable with that name exists!!
+  //  char* mangl_name =RuntimeSystem_findVariablesOnStack(param1StringVal);  
+  int pos = -1;
+  if (strcmp(param1StringVal,"")==0) {
+    printf("    param1StringVal==NULL \n");
+    pos = RuntimeSystem_findArrayName(param1ManglName);
+  }
+  int sizeString1 = -1;
   char* end1 = NULL;
+  if (pos!=-1) {
+    int size = rtsi()->arrays[pos].size1;
+    printf("Found variable, pos : %d  size : %d \n",pos,size);
+    sizeString1 = size;
+    // the pointer to the end of the memory block
+    end1 = param1ManglName+sizeString1;
+  } else {
+    printf("Variable not found!! , pos : %d  size : %d \n",pos,sizeString1);
+    char *iter=NULL;
+    for ( iter = param1StringVal; *iter != '\0'; ++iter) {
+      end1 = iter;
+    }
+    assert(end1);
+    sizeString1 = (end1-param1StringVal)+1;
+  }
+
+  pos = -1;
+  if (strcmp(param2StringVal,"")==0) {
+    printf("    param2StringVal==NULL \n");
+    pos = RuntimeSystem_findArrayName(param2ManglName);
+  }
+  int sizeString2 = -1;
   char* end2 = NULL;
-  char *iter=NULL;
-  char *iter2=NULL;
-  for ( iter = mem1; *iter != '\0'; ++iter) {
-    end1 = iter;
+  if (pos!=-1) {
+    int sizeA = rtsi()->arrays[pos].size1;
+    // if the copy size==0 then we copy the entire string
+    if (param3Size==0)
+      param3Size = sizeA;
+    printf("Found variable 2, pos : %d  size : %d \n",pos,sizeA);
+    sizeString2 = sizeA;
+    // the pointer to the end of the memory block
+    end2 = param2ManglName+sizeString2;
+  } else {
+    printf("Variable 2 not found!! , pos : %d  size : %d \n",pos,sizeString1);
+    char *iter2=NULL;
+    for ( iter2 = param2StringVal; *iter2 != '\0'; ++iter2) {
+      end2 = iter2;
+    }
+    assert(end2);
+    sizeString2 = (end2-param2StringVal)+1;
+    if (param3Size==0)
+      param3Size = sizeString2;
   }
-  for (iter2 = mem2; *iter2 != '\0'; ++iter2) {
-    end2 = iter2;
-  }
-  assert(end1);
-  assert(end2);
-    
+  assert(sizeString1>-1);
+  assert(sizeString2>-1);
+  assert(param3Size>0);
+
   // check if string1 and string2 overlap. Dont allow memcopy on such
-  int sizeMem1 = (end1-mem1)+1;
-  int sizeMem2 = (end2-mem2)+1;
   if (rtsi()->funccallDebug)
-    printf( " >>> FunctionCall : Checking mem1=<%s> (%d)  and mem2=<%s> (%d)  sizeOp: %d \n", 
-	    mem1, sizeMem1, mem2 , sizeMem2 , size );
-  if (end1 >= mem2 && mem1<=end2) {
+    printf( " >>> FunctionCall : Checking param1StringVal=<%s> (%d)  and param2StringVal=<%s> (%d)  sizeOp: %d \n", 
+	    param1StringVal, sizeString1, param2StringVal , sizeString2 , param3Size );
+  if (end1 >= param2StringVal && param1StringVal<=end2) {
+    // overlapping memory regions
     if (rtsi()->funccallDebug)
-      printf( " >>>> Error : Memory regions overlap!   Size1: %d  Size2: %d\n",sizeMem1 , sizeMem2);
+      printf( " >>>> Error : Memory regions overlap!   Size1: %d  Size2: %d\n",sizeString1 , sizeString2);
     RuntimeSystem_callExit(filename, line, (char*)"Memory regions overlap", stmtStr);  
-  } else if (size>0 && (size>sizeMem1 || size>sizeMem2)) {
+  } else if (param3Size>0 && (param3Size>sizeString1 || param3Size>sizeString2)) {
     // make sure that if the strings do not overlap, they are both smaller than the amount of chars to copy
     char* res1 = ((char*)"Invalid Operation,  operand1 size=");
     char* res2 = ((char*)"  operand2 size=");
     int sizeInt = 2*sizeof(int);
     char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ 1);
-    sprintf(res,"%s%d%s%d",res1,sizeMem1,res2,sizeMem2);
+    sprintf(res,"%s%d%s%d",res1,sizeString1,res2,sizeString2);
     RuntimeSystem_callExit(filename, line, res, stmtStr);
-  } else if (size==0) {
-    // strcpy (mem1, mem2)
-    // make sure that size of mem2 is <= mem1
-    if (sizeMem1<sizeMem2) {
+  } 
+#if 0
+  else if (param3Size==0) {
+    // strcpy (mem1, param2StringVal)
+    // make sure that size of param2StringVal is <= mem1
+    if (sizeString1<sizeString2) {
       char* res1 = ((char*)"Invalid Operation,  operand1 size=");
       char* res2 = ((char*)"  operand2 size=");
       char* res3 = ((char*)"  operand3 =");
       int sizeInt = 3*sizeof(int);
       char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ strlen(res3)+ 1);
-      sprintf(res,"%s%d%s%d%s%d",res1,sizeMem1,res2,sizeMem2,res3,size);
+      sprintf(res,"%s%d%s%d%s%d",res1,sizeString1,res2,sizeString2,res3,size);
       RuntimeSystem_callExit(filename, line, res, stmtStr);
     }
   }
+#endif
   printf("No problem found!\n");
+
+  if (
+      strcmp(fname ,"strcat")==0 ||
+      strcmp(fname ,"strncat")==0) {
+
+    // not handled yet. Need to check if this operation is leagal
+    printf("Checking special op : %s\n",fname);
+    assert(1==0);
+  }
+ 
 }
 
 
 void 
 RuntimeSystem_roseFunctionCall(int count, ...) {
-  if (rtsi()->funccallDebug)
-    printf( "Runtimesystem :: functionCall\n");
+  //if (rtsi()->funccallDebug)
+  //  printf( "Runtimesystem :: functionCall\n");
   // handle the parameters within this call
   va_list vl;
   va_start(vl,count);
@@ -491,13 +574,18 @@ RuntimeSystem_roseFunctionCall(int count, ...) {
   char* scope_name = NULL;
   char* filename = NULL;
   char* line=NULL;
+  // if before then we put it on the stack
+  // after we remove the variable from the stack
   int before=0; //false
   char* stmtStr=NULL;
   //cerr << "arguments : " <<  count << endl;
   int i=0;
   for ( i=0;i<count;i++)    {
     char* val=  va_arg(vl,char*);
-    //cerr << " ... " << val << endl;
+    //if (val)
+    //  printf(" ... val %s \n",val);
+    //else 
+    //  printf(" ... val unknown \n",val);
     if (i==0) name = val;
     else if (i==1) mangl_name =  val;
     else if (i==2) scope_name =  val;
@@ -522,9 +610,11 @@ RuntimeSystem_roseFunctionCall(int count, ...) {
 		  strcmp(name ,"memmove")==0 || 
 		  strcmp(name ,"strcpy")==0 ||
 		  strcmp(name ,"strncpy")==0 ||
-		  strcmp(name ,"strcat")==0
+		  strcmp(name ,"strcat")==0 ||
+		  strcmp(name ,"strncat")==0
 		  )) {
-    handleNormalFunctionCalls(args, posArgs, filename, line, stmtStr);
+    // if the string name is one of the above, we handle it specially
+    RuntimeSystem_handleSpecialFunctionCalls(name, args, posArgs, filename, line, stmtStr);
   } else {
     // we want to remember the varRefs that are passed via function calls to functions
     // if before ==true
@@ -539,8 +629,6 @@ RuntimeSystem_roseFunctionCall(int count, ...) {
       rtsi()->runtimeVariablesOnStack[rtsi()->runtimeVariablesEndIndex].mangled_name=mangl_name;
       rtsi()->runtimeVariablesEndIndex++;
 
-      //RuntimeVariables* var = new RuntimeVariables(name,mangl_name);
-      //rtsi()->runtimeVariablesOnStack.push_back(var);
     }
     else {
       rtsi()->runtimeVariablesEndIndex--;
