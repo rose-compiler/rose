@@ -36,6 +36,7 @@ class RtedTransformation : public AstSimpleProcessing {
   SgStatement* mainFirst;
   SgFunctionSymbol* roseRtedClose;
   bool insertMainBeforeLast;
+  SgFunctionSymbol* roseCallStack;
 
   // FUNCTIONS ------------------------------------------------------------
   // Helper function
@@ -82,9 +83,11 @@ class RtedTransformation : public AstSimpleProcessing {
   //  std::vector<RTedFunctionCall*> create_function_call;
   bool isVarRefInCreateArray(SgInitializedName* search);
   void insertFuncCall(RtedArguments* args);
+  void insertStackCall(RtedArguments* args);
+  void insertStackCall(RtedArguments* args, bool before);
   //void insertFunctionCall(RTedFunctionCall* funcCall, 
   //			  bool before);
-  void insertFuncCall(RtedArguments* args, bool before);
+  //void insertFuncCall(RtedArguments* args, bool before);
   void visit_isFunctionCall(SgNode* n);
   bool isInterestingFunctionCall(std::string name);
 
@@ -98,6 +101,7 @@ class RtedTransformation : public AstSimpleProcessing {
     roseArrayAccess=NULL;
     roseFunctionCall=NULL;
     roseConvertIntToString=NULL;
+    roseCallStack=NULL;
     symbols = new RtedSymbols();
     mainFirst=NULL;
     mainLast=NULL;

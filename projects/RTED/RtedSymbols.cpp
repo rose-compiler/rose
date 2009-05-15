@@ -33,16 +33,19 @@ void RtedSymbols::visit(SgNode* n) {
       roseFunctionCall = isSgFunctionSymbol(func4);
       cerr << ">>>>>>>>>>>>> Found MemberName : roseFunctionCall" <<  endl;
     }
-
     SgFunctionSymbol* func5 = isSgScopeStatement(n)->lookup_function_symbol("RuntimeSystem_roseConvertIntToString");
     if (isSgFunctionSymbol(func5)) {
-      //      cerr << " unparse : " << isSgScopeStatement(n)->unparseToString() << endl;
-      //      SgSymbolTable * s = isSgScopeStatement(n)->get_symbol_table () ;
-      //s->print("debug");
       roseConvertIntToString = isSgFunctionSymbol(func5);
       string symbolName3 = roseConvertIntToString->get_name().str();
       cerr << " >>>>>>>> Symbol Member: " << symbolName3 << endl;
     }
+    SgFunctionSymbol* func6 = isSgScopeStatement(n)->lookup_function_symbol("RuntimeSystem_roseCallStack");
+    if (isSgFunctionSymbol(func6)) {
+      roseCallStack = isSgFunctionSymbol(func6);
+      cerr << ">>>>>>>>>>>>> Found MemberName : roseCallStack" <<  endl;
+    }
+
+
   }
 
 

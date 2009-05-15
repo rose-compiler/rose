@@ -61,6 +61,7 @@ void RuntimeSystem_roseRtedClose();
 char* RuntimeSystem_findLastUnderscore(char* s);
 char* RuntimeSystem_resBool(int val);
 char* RuntimeSystem_roseConvertIntToString(int t);
+int RuntimeSystem_isInterestingFunctionCall(char* name);
 
 // array functions
 int RuntimeSystem_findArrayName(char* n);
@@ -73,6 +74,8 @@ void RuntimeSystem_roseArrayAccess(char* name, int posA, int posB, char* filenam
 // function calls 
 char* RuntimeSystem_findVariablesOnStack(char* name);
 void RuntimeSystem_increaseSizeRuntimeVariablesOnStack();                                               
+void RuntimeSystem_roseCallStack(char* name, char* mangl_name, char* beforeStr);
+
 void RuntimeSystem_handleSpecialFunctionCalls(char* funcname,char** args, int argsSize, char* filename, char* line, char* stmtStr);
 void RuntimeSystem_roseFunctionCall(int count, ...);
 

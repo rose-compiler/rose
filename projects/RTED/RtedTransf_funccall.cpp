@@ -3,6 +3,7 @@
 #include "RtedSymbols.h"
 #include "DataStructures.h"
 #include "RtedTransformation.h"
+//#include "RuntimeSystem.h"
 
 using namespace std;
 using namespace SageInterface;
@@ -10,14 +11,64 @@ using namespace SageBuilder;
 
 
 void 
-RtedTransformation::insertFuncCall(RtedArguments* args  ) {
-  insertFuncCall(args,true);
-  insertFuncCall(args,false);
+RtedTransformation::insertStackCall(RtedArguments* args  ) {
+  insertStackCall(args,true);
+  insertFuncCall(args);
+  insertStackCall(args,false);
 }
 
+void 
+RtedTransformation::insertStackCall(RtedArguments* args, bool before  ) {
+  //  SgStatement* stmt = getSurroundingStatement(args->varRefExp);
+  SgStatement* stmt = args->stmt;
+  ROSE_ASSERT(stmt);
+  if (isSgStatement(stmt)) {
+    SgScopeStatement* scope = stmt->get_scope();
+    ROSE_ASSERT(scope);
+
+    SgExpression* callNameExp = buildString(args->name);
+    SgExpression* callNameExp2 = buildString(args->mangled_name);
+    SgExpression* boolVal = buildString("true");
+    if (before==false) {
+      delete boolVal;
+      boolVal = buildString("false");
+    }
+    //cerr << " >>>>>>>> Symbol VarRef: " << symbolName << endl;
+    ROSE_ASSERT(roseCallStack);
+
+    SgExprListExp* arg_list = buildExprListExp();
+    appendExpression(arg_list, callNameExp);
+    appendExpression(arg_list, callNameExp2);
+    appendExpression(arg_list, boolVal);
+
+    string symbolName2 = roseCallStack->get_name().str();
+    //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
+    SgFunctionRefExp* memRef_r = buildFunctionRefExp(
+						     roseCallStack);
+    SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
+							  arg_list);
+    SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
+    if (before)
+      insertStatementBefore(isSgStatement(stmt), exprStmt);
+    else
+      insertStatementAfter(isSgStatement(stmt), exprStmt);
+    string empty_comment = "";
+    attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
+    string comment = "RS : Putting variables on stack)";
+    if (!before)
+      comment = "RS : Popping variables from stack)";
+    attachComment(exprStmt,comment,PreprocessingInfo::before);
+  } else {
+    cerr
+      << "RuntimeInstrumentation :: Stack : Surrounding Statement could not be found! "
+      << endl;
+    exit(0);
+  }
+
+}
 
 void 
-RtedTransformation::insertFuncCall(RtedArguments* args, bool before  ) {
+RtedTransformation::insertFuncCall(RtedArguments* args  ) {
   //  SgStatement* stmt = getSurroundingStatement(args->varRefExp);
   SgStatement* stmt = args->stmt;
   ROSE_ASSERT(stmt);
@@ -25,40 +76,24 @@ RtedTransformation::insertFuncCall(RtedArguments* args, bool before  ) {
     SgScopeStatement* scope = stmt->get_scope();
 
     ROSE_ASSERT(scope);
-    // 7 fixed arguments
+    // 4 fixed arguments
     // 1 = name
-    // 2 = mangled_name
-    // 3 = scope
-    // 4 = insertBefore
-    // 5 = filename
-    // 6 = lineNr
-    // 7 = unparsedStmt for Error message
+    // 2 = filename
+    // 3 = lineNr
+    // 4 = unparsedStmt for Error message
 
-    int extra_params = 9;
+    int extra_params = 6;
+    // nr of args + 2 (for sepcialFunctions) + 4 =  args+6;
     int size = extra_params+args->arguments.size();
     SgIntVal* sizeExp = buildIntVal(size);
     SgExpression* callNameExp = buildString(args->name);
-    SgExpression* callNameExp2 = buildString(args->mangled_name);
-    SgExpression* callNameExp3 = buildString(RoseBin_support::ToString(scope));
-    SgExpression* boolVal = buildString("true");
-    if (before==false) {
-      delete boolVal;
-      boolVal = buildString("false");
-    }
 
-#if 0
-    SgVarRefExp* varRef_l = buildVarRefExp("runtimeSystem", globalScope);
-    string symbolName = varRef_l->get_symbol()->get_name().str();
-#endif
     //cerr << " >>>>>>>> Symbol VarRef: " << symbolName << endl;
     ROSE_ASSERT(roseFunctionCall);
 
     SgExprListExp* arg_list = buildExprListExp();
     appendExpression(arg_list, sizeExp);
     appendExpression(arg_list, callNameExp);
-    appendExpression(arg_list, callNameExp2);
-    appendExpression(arg_list, callNameExp3);
-    appendExpression(arg_list, boolVal);
     SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
     SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
     appendExpression(arg_list, filename);
@@ -129,23 +164,14 @@ RtedTransformation::insertFuncCall(RtedArguments* args, bool before  ) {
 
     string symbolName2 = roseFunctionCall->get_name().str();
     //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
-    SgFunctionRefExp* memRef_r = buildFunctionRefExp(
-						     roseFunctionCall);
-    //  SgArrowExp* sgArrowExp = buildArrowExp(varRef_l, memRef_r);
-
-    SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
-							  arg_list);
+    SgFunctionRefExp* memRef_r = buildFunctionRefExp(roseFunctionCall);
+    SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r, arg_list);
     SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
-    if (before)
-      insertStatementBefore(isSgStatement(stmt), exprStmt);
-    else
-      insertStatementAfter(isSgStatement(stmt), exprStmt);
+    insertStatementBefore(isSgStatement(stmt), exprStmt);
     string empty_comment = "";
     attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
-    string comment = "RS : Calling Function, parameters : (number of fixed arguments, function or variable name, mangled name, scope, push/pop to/from stack, filename, linenr, unparser error message, any number of additional parameters needed for call)";
+    string comment = "RS : Calling Function, parameters: (#args, function name, filename, linenr, error message, other parameters)";
     attachComment(exprStmt,comment,PreprocessingInfo::before);
-
-    //    }
 
   } else {
     cerr
@@ -170,28 +196,29 @@ RtedTransformation::isInterestingFunctionCall(std::string name) {
   return interesting;
 }
 
+
 /***************************************************************
  * Check if the current node is a "interesting" function call
  **************************************************************/
 void RtedTransformation::visit_isFunctionCall(SgNode* n) {
   SgFunctionCallExp* fcexp = isSgFunctionCallExp(n);
   if (fcexp) {
-    cerr <<"Found a function call " << endl;
     SgExprListExp* exprlist = isSgExprListExp(fcexp->get_args());
     SgFunctionRefExp* refExp = isSgFunctionRefExp(fcexp->get_function());
     ROSE_ASSERT(refExp);
     SgFunctionDeclaration* decl = isSgFunctionDeclaration(refExp->getAssociatedFunctionDeclaration ());
-    cerr << " fcexp->get_function() : " << fcexp->get_function()->class_name() << endl;
     ROSE_ASSERT(decl);
     string name = decl->get_name();
     string mangled_name = decl->get_mangled_name().str();
+    cerr <<"Found a function call " << name;
+    cerr << "   : fcexp->get_function() : " << fcexp->get_function()->class_name() << endl;
     if (isInterestingFunctionCall(name)) {
+    //if (RuntimeSystem_isInterestingFunctionCall((char*)name.c_str())==1) {
       vector<SgExpression*> args;
       Rose_STL_Container<SgExpression*> expr = exprlist->get_expressions();
       Rose_STL_Container<SgExpression*>::const_iterator it = expr.begin();
       for (;it!=expr.end();++it) {
 	SgExpression* ex = *it;
-	//string unparse = ex->unparseToString();
 	args.push_back(ex);
       }
       SgStatement* stmt = getSurroundingStatement(refExp);
@@ -199,11 +226,11 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
       RtedArguments* funcCall = new RtedArguments(name,
 						  mangled_name,
 						  refExp,
-						  //NULL,
 						  stmt,
 						  args						  
 						  );
       ROSE_ASSERT(funcCall);
+      cerr << " Is a interesting function" << endl;
       function_call.push_back(funcCall);
     }
   }

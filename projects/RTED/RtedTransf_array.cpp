@@ -260,6 +260,7 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt,
 
 void RtedTransformation::visit_isArraySgInitializedName(SgNode* n) {
   SgInitializedName* initName = isSgInitializedName(n);
+  ROSE_ASSERT(initName);
   int dimension = 0;
   dimension = getDimension(initName);
   // STACK ARRAY : lets see if we assign an array here
@@ -270,19 +271,21 @@ void RtedTransformation::visit_isArraySgInitializedName(SgNode* n) {
     SgExpression * expr2 = NULL;
     SgType* basetype = array->get_base_type();
     SgArrayType* array2 = isSgArrayType(basetype);
-    //SgExprListExp* dim_info = array->get_dim_info();
-    cerr << " unparse : " << array->unparseToString() << endl;
+    cerr << " unparse : " << array->unparseToString() << "   " << n->unparseToString() << endl;
     if (array2) {
       dimension++;
       expr2=array2->get_index();
-      cerr << " array2 : "<<array2->class_name()<<" expr2 : " << expr2->unparseToString() << endl;
+      cerr << " --------------------- Two dimensional Array array2 : "<<array2->class_name()<<" expr2 : " << expr2->unparseToString() << endl;
       ROSE_ASSERT(expr2);
     } else {
       cerr << " file : " << initName->get_file_info()->get_filename() << "  line  : " << initName->get_file_info()->get_line()<<endl;
-      cerr << " ---------------------PROBLEM :  Dim_info == NULL  Type : " << type->class_name() <<endl;
+      cerr << " --------------------- One Dimensional Array  Type : " << type->class_name() <<endl;
     }
+
+    if (expr)
+      cerr << " Found expression -- expr : " << expr->class_name() << endl;
     if (expr != NULL) {
-      cerr << "Found stack array: " << initName->unparseToString()
+      cerr << "... Found stack array: " << initName->unparseToString()
 	   << " " << type->class_name() << " array expr: "
 	   << expr->unparseToString() << "  dim: " << dimension
 	   << endl;
@@ -292,6 +295,30 @@ void RtedTransformation::visit_isArraySgInitializedName(SgNode* n) {
       RTedArray* array = new RTedArray(true, dimension, initName,
 				       expr, expr2);
       create_array_define_varRef_multiArray_stack[initName] = array;
+    } else if (isSgAssignInitializer(initName->get_initptr())) {
+      cerr << "... Found Array AssignInitializer ... " << endl;
+      SgExpression* operand = isSgAssignInitializer(initName->get_initptr())->get_operand();
+      ROSE_ASSERT(operand);
+      cerr << "... Found operand : " << operand->class_name() << endl;
+      string arrayValue ="";
+      int length=0;
+      if (isSgStringVal(operand)) {
+	arrayValue=isSgStringVal(operand)->get_value();
+	length=arrayValue.size()+1;
+      } else {
+	cerr << "...Unknown type of operand :   arr[] = ...unknown... " << endl;
+	ROSE_ASSERT(false);
+      }
+      // now that we know what the array is initialized with and the length,
+      // create the array variable
+      ROSE_ASSERT(dimension>0);
+      SgIntVal* sizeExp = buildIntVal(length);
+      RTedArray* array = new RTedArray(true, dimension, initName,
+				       sizeExp, expr2);
+      create_array_define_varRef_multiArray_stack[initName] = array;
+    } else {
+      cerr << "... There is a problem detecting this array ... " << initName->get_initptr()->class_name() << endl;
+      ROSE_ASSERT(false);
     }
   }
 
@@ -650,25 +677,35 @@ void RtedTransformation::visit_isArrayExprListExp(SgNode* n) {
   // check if this is a function call with array as parameter
   SgFunctionCallExp* fcexp = isSgFunctionCallExp(exprlist->get_parent());
   if (fcexp) {
-    cerr <<"Found a function call with varRef as parameter" << endl;
+    cerr <<"Found a function call with varRef as parameter: " << endl;
     // check if parameter is array - then check function name
     // call func(array_name) to runtime system for runtime inspection 
     SgInitializedName* initName =
       isSgVarRefExp(n)->get_symbol()->get_declaration();
     bool found = isVarRefInCreateArray(initName);
     if (found) {
-      vector<SgExpression*> args;
-      SgStatement* stmt = getSurroundingStatement(isSgVarRefExp(n));
-      ROSE_ASSERT(stmt);
-      RtedArguments* funcCall = new RtedArguments(initName->get_name(),
-						  initName->get_mangled_name().str(),
-						  //initName,
-						  isSgVarRefExp(n),
-						  stmt,
+      // create this function call only, if it is not one of the 
+      // interesting function calls, such as strcpy, strcmp ...
+      // because for those we do not need the parameters and do not 
+      // need to put them on the stack
+      SgFunctionRefExp* refExp = isSgFunctionRefExp(fcexp->get_function());
+      ROSE_ASSERT(refExp);
+      SgFunctionDeclaration* decl = isSgFunctionDeclaration(refExp->getAssociatedFunctionDeclaration ());
+      ROSE_ASSERT(decl);
+      string name = decl->get_name();
+      if (isInterestingFunctionCall(name)==false) {
+	vector<SgExpression*> args;
+	SgStatement* stmt = getSurroundingStatement(isSgVarRefExp(n));
+	ROSE_ASSERT(stmt);
+	RtedArguments* funcCall = new RtedArguments(initName->get_name(),
+						    initName->get_mangled_name().str(),
+						    isSgVarRefExp(n),
+						    stmt,
 						  args
-						  );
-      ROSE_ASSERT(funcCall);
-      function_call.push_back(funcCall);
+						    );
+	ROSE_ASSERT(funcCall);
+	function_call.push_back(funcCall);
+      }
     }
   }
 }

@@ -16,8 +16,6 @@ class RTedArray {
 	  initName = init;
 	  indx1=idx1;
 	  indx2=idx2;
-	  //ROSE_ASSERT(indx1);
-	  //ROSE_ASSERT(indx2);
   }
   virtual ~RTedArray() {}
 
@@ -71,7 +69,6 @@ class RtedArguments {
     stmt = stm;
     name=funcn;
     mangled_name=mangl;
-    //initName=init;
     varRefExp=var;
     arguments = args;
     if (isSgVarRefExp(var)) {

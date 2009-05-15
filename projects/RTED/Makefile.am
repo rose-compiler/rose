@@ -9,14 +9,11 @@ INCLUDES2 = $(ROSE_INCLUDES) -I../../
 # This test program does not require the rest of ROSE so it can be handled locally
 bin_PROGRAMS  = runtimeCheck
 
-noinst_PROGRAMS = \
-	test
-
+noinst_PROGRAMS = test
 test_SOURCES = test.C
 test_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
 
 TEST_CXXFLAGS = -rose:verbose 0 --edg:no_warnings -g3
-
 run_test:test
 	./test$(EXEEXT) $(TEST_CXXFLAGS) $(srcdir)/buffer2.c 
 

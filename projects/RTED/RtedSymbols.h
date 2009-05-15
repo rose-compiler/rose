@@ -14,12 +14,14 @@ public:
 	SgFunctionSymbol* roseRtedClose;
 	SgFunctionSymbol* roseFunctionCall;
 	SgFunctionSymbol* roseConvertIntToString;
+	SgFunctionSymbol* roseCallStack;
 
 	RtedSymbols() {
 		roseCreateArray = NULL;
 		roseArrayAccess = NULL;
 		roseRtedClose = NULL;
 		roseConvertIntToString=NULL;
+		roseCallStack = NULL;
 	};
 	
 	virtual ~RtedSymbols() {

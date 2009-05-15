@@ -3,6 +3,7 @@
 #include "RtedSymbols.h"
 #include "DataStructures.h"
 #include "RtedTransformation.h"
+//#include "RuntimeSystem.h"
 
 using namespace std;
 using namespace SageInterface;
@@ -29,23 +30,21 @@ void RtedTransformation::transform(SgProject* project) {
   globalScope = getFirstGlobalScope(isSgProject(project));
 
   // traverse the AST and find locations that need to be transformed
-
   symbols->traverse(project, preorder);
   roseCreateArray = symbols->roseCreateArray;
   roseArrayAccess = symbols->roseArrayAccess;
   roseFunctionCall = symbols->roseFunctionCall;
   roseRtedClose = symbols->roseRtedClose;
   roseConvertIntToString=symbols->roseConvertIntToString;
+  roseCallStack = symbols->roseCallStack;
   ROSE_ASSERT(roseCreateArray);
   ROSE_ASSERT(roseArrayAccess);
   ROSE_ASSERT(roseConvertIntToString);
   ROSE_ASSERT(roseRtedClose);
+  ROSE_ASSERT(roseCallStack);
 
   traverseInputFiles(project,preorder);
-  //  ROSE_ASSERT(rememberTopNode);
 
-  // insert: RuntimeSystem* runtimeSystem = new RuntimeSystem();
-  //insertRuntimeSystemClass();
 
   // ---------------------------------------
   // Perform all transformations...
@@ -97,10 +96,15 @@ void RtedTransformation::transform(SgProject* project) {
     RtedArguments* funcs = *it4;
     string name = funcs->name;
     if (isInterestingFunctionCall(name)) {
-      insertFuncCall(funcs,true);
-    } else
-      // add other internal function alls, such as push variable on stack
+    //if (RuntimeSystem_isInterestingFunctionCall((char*)name.c_str())) {
+      //cerr << " .... Inserting Function Call : " << name << endl;
       insertFuncCall(funcs);
+    } else {
+      // add other internal function calls, such as push variable on stack
+      //cerr << " .... Inserting Stack Call :  " << name << endl;
+      insertStackCall(funcs);
+    //insertFuncCall(funcs);
+    }
   }
 
   // insert main call to ->close();
@@ -137,6 +141,8 @@ void RtedTransformation::visit(SgNode* n) {
   // *********************** DETECT ALL array creations ***************
 
 
+
+
   // *********************** DETECT ALL array accesses ***************
   else if (isSgPntrArrRefExp(n)) {
     // checks for array access
@@ -149,10 +155,16 @@ void RtedTransformation::visit(SgNode* n) {
   }
   // *********************** DETECT ALL array accesses ***************
 
+
+
+
+  // *********************** DETECT ALL function calls ***************
   else if (isSgFunctionCallExp(n)) {
     // call to a specific function that needs to be checked
     visit_isFunctionCall(n);
   }
+  // *********************** DETECT ALL function calls ***************
+
 
   // ******************** DETECT functions in input program  *********************************************************************
 

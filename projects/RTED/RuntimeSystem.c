@@ -389,6 +389,26 @@ RuntimeSystem_roseArrayAccess(char* name, int posA, int posB, char* filename, ch
 
 // ***************************************** FUNCTION CALL *************************************
 /*********************************************************
+ * Check if a function call is interesting, i.e. contains a 
+ * call to a function that we need to check the parameters of
+ ********************************************************/
+int 
+RuntimeSystem_isInterestingFunctionCall(char* name) {
+  int interesting=0;//false;
+  if ( ( strcmp(name,"memcpy")==0 || 
+	 strcmp(name ,"memmove")==0 || 
+	 strcmp(name ,"strcpy")==0 ||
+	 strcmp(name ,"strncpy")==0 ||
+	 strcmp(name ,"strcat")==0 ||
+	 strcmp(name ,"strncat")==0
+	 )) {
+    interesting=1;
+  }
+  return interesting;
+}
+
+
+/*********************************************************
  * This function is called when one of the following functions in the code is called:
  * memcpy, memmove, strcpy, strncpy, strcat, strncat
  * fname     : function name that is being called
@@ -523,35 +543,25 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize, 
 void 
 RuntimeSystem_roseFunctionCall(int count, ...) {
   // handle the parameters within this call
+  printf("RTED - Function Call\n");
   va_list vl;
   va_start(vl,count);
   char** args = (char**)malloc(sizeof(char*)*count+1);
   int posArgs=0;
   char* name = NULL;
-  char* mangl_name = NULL;
-  char* beforeStr = NULL;
-  char* scope_name = NULL;
   char* filename = NULL;
   char* line=NULL;
-  // if before then we put it on the stack
-  // after we remove the variable from the stack
-  int before=0; //false
   char* stmtStr=NULL;
   //cerr << "arguments : " <<  count << endl;
   int i=0;
   for ( i=0;i<count;i++)    {
     char* val=  va_arg(vl,char*);
+    if (val && i<4)
+      printf("  %d  val : %s \n",i,val);
     if (i==0) name = val;
-    else if (i==1) mangl_name =  val;
-    else if (i==2) scope_name =  val;
-    else if (i==3) {
-      beforeStr = val;
-      if (strcmp(beforeStr,"true")==0)
-	before=1;
-    }
-    else if (i==4) filename =  val;
-    else if (i==5) line = val;
-    else if (i==6) stmtStr = val;
+    else if (i==1) filename =  val;
+    else if (i==2) line = val;
+    else if (i==3) stmtStr = val;
     else {
       args[posArgs++]=val;
     }
@@ -560,22 +570,42 @@ RuntimeSystem_roseFunctionCall(int count, ...) {
 
 
   if (rtsi()->funccallDebug)
-    printf( "roseFunctionCall :: %s %s %s\n", name , mangl_name, beforeStr);
-  if (before && ( strcmp(name,"memcpy")==0 || 
+    printf( "roseFunctionCall :: %s \n", name );
+  if (RuntimeSystem_isInterestingFunctionCall(name)==1) {
+#if 0
+  if ( ( strcmp(name,"memcpy")==0 || 
 		  strcmp(name ,"memmove")==0 || 
 		  strcmp(name ,"strcpy")==0 ||
 		  strcmp(name ,"strncpy")==0 ||
 		  strcmp(name ,"strcat")==0 ||
 		  strcmp(name ,"strncat")==0
 		  )) {
+#endif
     // if the string name is one of the above, we handle it specially
     RuntimeSystem_handleSpecialFunctionCalls(name, args, posArgs, filename, line, stmtStr);
-  } else {
+  } 
+}
+
+
+/*********************************************************
+ * This function is called when a variable is put or dropped from stack
+ * stack variables are used to keep track of what variables are passed
+ * to functions. Their mangled_names help to identify the real definitions.
+ * name         : variable name if it is a variable to be put on the stack
+ * mangled_name : mangled name of the above
+ * insertBefore : Indicates whether to push or pop a variable form the stack
+ ********************************************************/
+void 
+RuntimeSystem_roseCallStack(char* name, char* mangl_name, char* beforeStr) {
     // we want to remember the varRefs that are passed via function calls to functions
     // if before ==true
     // add the current varRef (name) on stack
     // else remove from stack
-    if (before) {
+  int before =0; // false
+  if (strcmp(beforeStr,"true")==0)
+    before=1;
+
+  if (before) {
       if (rtsi()->runtimeVariablesEndIndex>=rtsi()->maxRuntimeVariablesEndIndex) {
 	//increase the size of the array
 	RuntimeSystem_increaseSizeRuntimeVariablesOnStack();
@@ -594,10 +624,8 @@ RuntimeSystem_roseFunctionCall(int count, ...) {
       //rtsi()->runtimeVariablesOnStack.pop_back();
       //delete var;
     }
-  }
+
 }
-
-
 // ***************************************** FUNCTION CALL *************************************
 
 
