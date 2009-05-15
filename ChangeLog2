@@ -1,3 +1,10 @@
+2009-05-15 18:20  panas2
+
+	* [r5787] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.c,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: RTED - added comments
+	  and refactored code
+
 2009-05-15 01:22  panas2
 
 	* [r5775] /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
