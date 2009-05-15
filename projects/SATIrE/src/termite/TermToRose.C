@@ -2437,12 +2437,12 @@ PrologToRose::createClassDeclaration(Sg_File_Info* fi,SgNode* child1 ,PrologComp
   /* get the type*/
   PrologCompTerm* type_s = dynamic_cast<PrologCompTerm*>(annot->at(2));
   ROSE_ASSERT(type_s != NULL);
-  SgClassDeclaration::class_types e_classtype = 
+  SgClassDeclaration::class_types e_class_type = 
     (SgClassDeclaration::class_types)createEnum(class_type, re.class_type);
   //SgClassType* sg_class_type = createClassType(type_s);
   SgName class_name = class_name_s->getName();
   SgClassDeclaration* d = 
-    new SgClassDeclaration(fi, class_name, e_classtype, NULL /*sg_class_type */,
+    new SgClassDeclaration(fi, class_name, e_class_type, NULL/*sg_class_type */,
 			   class_def);
   ROSE_ASSERT(d != NULL);
   SgClassType* sg_class_type = SgClassType::createType(d);
@@ -2451,24 +2451,12 @@ PrologToRose::createClassDeclaration(Sg_File_Info* fi,SgNode* child1 ,PrologComp
 
   /* set declaration or the forward flag*/
   if(class_def != NULL) {
-    d->set_forward(0);
-    d->set_definingDeclaration(d);
     class_def->set_declaration(d);
-
-    SgClassDeclaration* ndcd = 
-      new SgClassDeclaration(FI, class_name,e_classtype, NULL, class_def);
-    ndcd->set_endOfConstruct(FI);
-
-    // Set the internal reference to the non-defining declaration
-    ndcd->set_firstNondefiningDeclaration(ndcd);
-    ndcd->set_definingDeclaration(d);
-    ndcd->setForward();
-    d->set_firstNondefiningDeclaration(ndcd);
+    createDummyNondefDecl(d, FI, class_name, e_class_type, (SgClassType*)NULL);
 
 #if 0
     definingClassDecls[annot->getRepresentation()] = d;
 #endif
-    declarationStatementsWithoutScope.push_back(ndcd);
   } else {
     d->setForward();
 #if 0
@@ -2720,23 +2708,13 @@ PrologToRose::createTypedefDeclaration(Sg_File_Info* fi, PrologCompTerm* t) {
   /* if there is a declaration, set flag and make sure it is set*/
   if(decs != NULL) {
     d->set_typedefBaseTypeContainsDefiningDeclaration(true);	
-
-    d->set_forward(0);
-    d->set_definingDeclaration(d);
     //decs->set_declaration(d);
-
-    SgTypedefDeclaration* ndcd = new SgTypedefDeclaration(FI,n,tpe);
-    ndcd->set_endOfConstruct(FI);
-
-    // Set the internal reference to the non-defining declaration
-    ndcd->set_firstNondefiningDeclaration(ndcd);
-    ndcd->set_definingDeclaration(d);
-    ndcd->setForward();
-    d->set_firstNondefiningDeclaration(ndcd);
-
+    createDummyNondefDecl(d, FI, n, tpe, (SgTypedefType*)NULL);
   } else {
     d->setForward();
   }
+
+  declarationStatementsWithoutScope.push_back(d);
 
   // Symbol table
   string id = "typedef_type("+annot->at(0)->getRepresentation()+", "
@@ -3408,8 +3386,8 @@ PrologToRose::createNamespaceDeclarationStatement(Sg_File_Info* fi, SgNode* chil
   ROSE_ASSERT(dec != NULL);
   if(def != NULL) {
     def->set_namespaceDeclaration(dec);
-    dec->set_forward(false);
-    dec->set_definingDeclaration(dec);
+    createDummyNondefDecl(dec, FI, n, (SgNamespaceDefinitionStatement*)NULL, 
+			  unnamed);
   }
   /* Unparser has problems if this isn't set*/
   dec->set_firstNondefiningDeclaration(dec);

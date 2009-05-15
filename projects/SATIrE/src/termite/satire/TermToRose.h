@@ -172,5 +172,28 @@ private:
   SgTypedefDeclaration* createTypedefDeclaration(Sg_File_Info*, PrologCompTerm*);
   SgPragma* createPragma(Sg_File_Info*, PrologCompTerm*);
   char unescape_char(std::string s);
+
+  // This is a helper function to create the necessary unique first
+  // nondefining definition
+  template< class DeclType, typename A, typename B, typename C >
+  void createDummyNondefDecl(DeclType* decl, Sg_File_Info* fi, 
+			     A a, B b, C c) 
+  {						
+    decl->set_forward(0);			
+    decl->set_definingDeclaration(decl);				     
+    
+    DeclType* ndd = new DeclType(fi,a,b,c);
+    ndd->set_endOfConstruct(fi);				     
+    
+    /* Set the internal reference to the non-defining declaration */  
+    ndd->set_firstNondefiningDeclaration(ndd);	
+    ndd->set_definingDeclaration(decl);		
+    ndd->setForward();					
+    decl->set_firstNondefiningDeclaration(ndd);
+    //if (!isSgVariableDeclaration(ndd)) {
+      declarationStatementsWithoutScope.push_back(ndd);	
+      //}
+  }
+
 };
 #endif
