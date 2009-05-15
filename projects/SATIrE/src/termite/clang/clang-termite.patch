@@ -35,7 +35,7 @@ Index: include/clang/AST/ASTConsumer.h
 +  virtual void OnFirstFile(const char*) { }; //called by the driver for the very first file
 +  virtual void OnNewFile(const char*)   { }; //called by the driver for every file but the very first one
 +  virtual void OnLastFile()  { };            //called by the driver for the very last file
-+
++  virtual void OnFileEnd()  { };             //called by the driver after a file has been processed
 +};  
 +  
  } // end namespace clang.
@@ -87,105 +87,12 @@ Index: include/clang/Lex/PPCallbacks.h
    
  };
  
-Index: Driver/clang.cpp
-===================================================================
---- Driver/clang.cpp	(revision 63505)
-+++ Driver/clang.cpp	(working copy)
-@@ -83,6 +83,7 @@
-   EmitHTML,                     // Translate input source into HTML.
-   ASTPrint,                     // Parse ASTs and print them.
-   ASTDump,                      // Parse ASTs and dump them.
-+  ASTTermDump,                  // Parse ASTs and dump them in TERMITE format.
-   ASTView,                      // Parse ASTs and view them in Graphviz.
-   PrintDeclContext,             // Print DeclContext and their Decls.
-   TestSerialization,            // Run experimental serialization code.
-@@ -124,6 +125,8 @@
-                         "Build ASTs and then pretty-print them"),
-              clEnumValN(ASTDump, "ast-dump",
-                         "Build ASTs and then debug dump them"),
-+			 clEnumValN(ASTTermDump, "emit-term",
-+                        "Build ASTs and then export them in the TERMITE format"),
-              clEnumValN(ASTView, "ast-view",
-                         "Build ASTs and view them with GraphViz"),
-              clEnumValN(PrintDeclContext, "print-decl-contexts",
-@@ -490,12 +493,12 @@
-                        llvm::cl::desc("Disallow implicit conversions between "
-                                       "vectors with a different number of "
-                                       "elements or different element types"));
-+
- static llvm::cl::opt<bool>
--EnableBlocks("fblocks", llvm::cl::desc("enable the 'blocks' language feature"), llvm::cl::ValueDisallowed);
-+EnableBlocks("fblocks", llvm::cl::desc("enable the 'blocks' language feature"),
-+             llvm::cl::ValueDisallowed, llvm::cl::AllowInverse,
-+             llvm::cl::ZeroOrMore);
- 
--static llvm::cl::inverse_opt
--DisableBlocks("fno-blocks", llvm::cl::opposite_of(EnableBlocks), llvm::cl::ValueDisallowed);
--
- static llvm::cl::opt<bool>
- ObjCNonFragileABI("fobjc-nonfragile-abi", llvm::cl::desc("enable objective-c's nonfragile abi"));
- 
-@@ -623,7 +626,7 @@
-   if (NoLaxVectorConversions.getPosition())
-       Options.LaxVectorConversions = 0;
-   Options.Exceptions = Exceptions;
--  if (EnableBlocks.getPosition() || DisableBlocks.getPosition())
-+  if (EnableBlocks.getPosition())
-     Options.Blocks = EnableBlocks;
- 
-   // Override the default runtime if the user requested it.
-@@ -1272,6 +1275,9 @@
-     case ASTDump:
-       return CreateASTDumper();
-       
-+    case ASTTermDump:
-+      return CreateASTTermDumper(InFile, OutputFile, PP);
-+      
-     case ASTView:
-       return CreateASTViewer();   
- 
-@@ -1329,7 +1335,8 @@
- /// ProcessInputFile - Process a single input file with the specified state.
- ///
- static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
--                             const std::string &InFile, ProgActions PA) {
-+                             const std::string &InFile, ProgActions PA,
-+                             bool IsFirstFile, bool IsLastFile) {
-   llvm::OwningPtr<ASTConsumer> Consumer;
-   bool ClearSourceMgr = false;
-   
-@@ -1433,7 +1440,17 @@
-                                            /* FreeMemory = */ false);
-       TU = new TranslationUnit(*Context);
-     }
-+
-+    //this allows to dump prolog and epilog for a whole program representation
-+    if(IsFirstFile)
-+      Consumer->OnFirstFile(InFile.c_str());    
-+    else
-+      Consumer->OnNewFile(InFile.c_str());
-+    
-     ParseAST(PP, Consumer.get(), TU, Stats);
-+
-+    if(IsLastFile)
-+      Consumer->OnLastFile();
-   }
- 
-   if (VerifyDiagnostics)
-@@ -1629,7 +1646,7 @@
-         Diags.setClient(TextDiagClient);
- 
-       // Process the source file.
--      ProcessInputFile(*PP, PPFactory, InFile, PCH ? GeneratePCH : ProgAction);
-+      ProcessInputFile(*PP, PPFactory, InFile, PCH ? GeneratePCH : ProgAction, i == 0, i == e - 1);
-       
-       HeaderInfo.ClearFileInfo();      
-     }
 Index: Driver/TermDumper.cpp
 ===================================================================
 --- Driver/TermDumper.cpp	(revision 0)
 +++ Driver/TermDumper.cpp	(revision 0)
-@@ -0,0 +1,2291 @@
+@@ -0,0 +1,1853 @@
++
 +//===--- StmtTermDumper.cpp - TermDumping implementation for Stmt ASTs ----===//
 +//
 +//                     The LLVM Compiler Infrastructure
@@ -224,6 +131,7 @@ Index: Driver/TermDumper.cpp
 +#include <string>
 +#include <memory>
 +
++#include "termite/termite.h"
 +
 +using namespace clang;
 +
@@ -237,39 +145,6 @@ Index: Driver/TermDumper.cpp
 +/// ASTTermDumper - TERMITE dump of ASTs
 +
 +namespace {
-+  class AtomSetStream {
-+    std::ostream &O;
-+    const char *Def;
-+    bool isFirst;
-+
-+  public:
-+    AtomSetStream(std::ostream &o, const char *def = "")
-+      : O(o), Def(def), isFirst(true) {
-+    }
-+
-+    std::ostream &operator <<(const std::string &s) {
-+      if (!isFirst)
-+        O << ", ";
-+      else
-+        O << "[";
-+
-+      O << s;
-+
-+      isFirst = false;
-+
-+      return O;
-+    }
-+
-+    void close() {
-+      if (isFirst)
-+        O << "[" << Def;
-+
-+      O << "]";
-+
-+      isFirst = true;
-+    }
-+  };
-+
 +  class PPTracker : public PPCallbacks {
 +
 +  public:    
@@ -360,19 +235,6 @@ Index: Driver/TermDumper.cpp
 +     */
 +    const std::string &outfile;
 +
-+    /** output stream for term
-+     */
-+    std::ostream &Out;
-+
-+    /** true, if the next top-level declaration is the first in the
-+        current compilation unit
-+    */
-+    bool first_decl;
-+
-+    /** name of the current source file
-+     */
-+    std::string current_source_file;
-+
 +    /** this is the current preprocessor object
 +     */
 +    Preprocessor *PP;
@@ -380,189 +242,70 @@ Index: Driver/TermDumper.cpp
 +    /** a preprocessor callback tracking #include and #define directives
 +     */
 +    PPTracker *tracker;
-+    
-+    /** return a outputstream for the given output-filename. If the name is "-"
-+     *  std::cout is returned.
++
++    /** a _static_ list of file declarations
 +     */
-+    static std::ostream& getOutputStream(const std::string &outfilename) {
-+      if (outfilename.empty())
-+        return std::cout;
-+      else
-+        return *new std::ofstream(outfilename.c_str(), std::ofstream::app);
-+    }
++    static PrologList file_list;
++
++    /** name of the current source file
++     */
++    std::string current_source_file;
++    
++    /** a list of top-level declarations for the current file
++     */
++    PrologList *current_declaration_list;
++    
 +  public:
 +    ASTTermDumper(const std::string &infilename,
 +                  const std::string &outfilename,
 +                  Preprocessor *pp)
-+      : infile(infilename), outfile(outfilename),
-+        Out(getOutputStream(outfilename)), first_decl(true), PP(pp), tracker(NULL) {
-+
++      : infile(infilename),
++        outfile(outfilename),
++        PP(pp),
++        tracker(NULL),
++        current_declaration_list(NULL) {
++      
 +      //create and register a new PPTracker Object
 +      assert(PP && "expecting a preprocessor object");
 +      tracker = new PPTracker(*PP);
-+
++     
 +      //configure the preprocessor
 +      PP->setPPCallbacks(tracker);
 +    }
 +
 +    ~ASTTermDumper() {
-+      //semantically close the current file declaration
-+      Out << "], "; closeDecl(Out); // global
-+      Out << ", ";  closeDecl(Out); // file
-+      
 +      PP->setPPCallbacks(NULL);
-+      
-+      // free the output stream
-+      if (&Out != &std::cout && &Out != &std::cerr) {
-+        delete &Out;
-+      }
 +    }
 +
 +    void Initialize(ASTContext &Context) {
 +      SM = &Context.getSourceManager();
 +    }
 +
-+    void HandleNewFile(const std::string &fileName, bool first) {
-+
-+      //finish the declaration for the last file
-+      if (!first) {
-+        Out << ", ";
-+      }
-+
-+      current_source_file = fileName;
-+      
-+      //start a new file 
-+      Out << "file(\n  global([\n    ";
-+    }
-+    
-+    //called by the driver for the very first file
-+    virtual void OnFirstFile(const char* fileName) {
-+      first_decl = true;      
-+      Out << "project([\n";
-+      HandleNewFile(fileName, true);
-+    }
-+
-+    //called by the driver for every file but the very first one
-+    virtual void OnNewFile(const char *fileName) {
-+      first_decl = true;      
-+      HandleNewFile(fileName, false);
-+    }
-+
-+    //called by the driver for the very last file
-+    virtual void OnLastFile() {
-+      Out <<  "], " DAB ", ";
-+      fileInfo(Out, current_source_file); // global
-+      Out <<  "), null,"; closeDecl(Out); // file
-+      Out <<  "], ";     closeDecl(Out); // project
-+      Out <<  ".\n";
-+    }
-+    
-+    virtual void HandleTopLevelDecl(Decl *D) {      
-+      if(!first_decl)
-+        Out << ", ";
-+      termDecl(Out, D);
-+      first_decl=false;        
-+      if (D->getNextDeclarator())
-+        HandleTopLevelDecl(D->getNextDeclarator());
-+    }
-+
 +  private:
-+    /***************************************************************************
-+     * Helper                                                                  *
-+     **************************************************************************/
 +
-+    void closeDecl(std::ostream &O) {
-+      assert(current_source_file.length() > 0 && "no current source file");
-+      O << DA ", "
-+        << "file_info(" << quote(current_source_file) << ", 1, 1)"
-+        << ")";      
-+    }
-+
-+    void fileInfo(std::ostream &O, const SourceLocation Loc) {
-+      SourceLocation L = SM->getInstantiationLoc(Loc);
-+
-+      if (L.isInvalid()) {
-+        O << "file_info('NULL_FILE', 0, 0)";
-+      }
-+      else {
-+        PresumedLoc PLoc = SM->getPresumedLoc(L);
-+        assert(PLoc.isValid() && "encountered invalid presumed location");
-+        O << "file_info('" << PLoc.getFilename() << "', " << PLoc.getLine()
-+          << ", " << PLoc.getColumn() << ")";
-+      }
-+    }
-+
-+    void fileInfo(std::ostream &O, const Decl *D) {
-+      if (!D) {
-+        O << "file_info('NULL_FILE', 0, 0)";
-+      }
-+      else {
-+        fileInfo(O, D->getLocation());
-+      }
-+    }
-+
-+    void fileInfo(std::ostream &O, const Stmt *S = NULL) {
-+      if (!S) {
-+        O << "file_info('NULL_FILE', 0, 0)";
-+      }
-+      else {
-+        fileInfo(O, S->getSourceRange().getBegin());
-+      }
-+    }
-+
-+    void fileInfo(std::ostream &O, const std::string &file_name) {
-+      assert(file_name.size() > 0 && "invalid file name");      
-+      O << "file_info('" << file_name << "', 0, 0)";
-+    }
++//     ////////////////////////////////////////////////////////
++//     // helper functions
 +    
-+    void preprocessingInfo(std::ostream &O) {
-+      O << PPI;
-+    }    
-+
-+    //dequeue and emit all the preprocessing info until loc
-+    void preprocessingInfo(std::ostream &O, SourceLocation loc) {
-+      std::list<PPTracker::PPDirective> L;
-+      tracker->dequeueDirectives(loc, L);
-+      preprocessingInfo(O, L);
-+    }
-+    
-+    void preprocessingInfo(std::ostream &O, std::list<PPTracker::PPDirective> &L) {
-+      bool first = true;
-+      while(!L.empty()) {
-+        PPTracker::PPDirective &d = L.front();
-+
-+        if(first) {
-+          O << "preprocessing_info([";
-+          first = false;
-+        }
-+        else {
-+          O << ", ";
-+        }
-+
-+        switch(d.type) {
-+        case PPTracker::ppd_include:
-+          O << "cpreprocessorIncludeDeclaration";
-+          break;
-+        case PPTracker::ppd_undef:
-+          O << "cpreprocessorUndefDeclaration";
-+          break;
-+        default:
-+          assert(0 && "not yet supported");          
-+        }
-+        
-+        O << "('" << d.code << "\\n', before,";
-+        fileInfo(O, d.loc);
-+        O << ")";
-+        L.pop_front();
-+      }
-+
-+      if(first)
-+        O << PPI;
++    std::ostream&
++    get_output_stream() {
++      if (outfile.empty())
++        return std::cout;
 +      else
-+        O << "])";
++        return *new std::ofstream(outfile.c_str(), std::ofstream::app);
++    }
++
++    char
++    toLower(const char c) {
++      return (c - ('A'-'a'));
++    };
++
++    bool
++    isUpper(const char c) {
++      return (('A' <= c) && ('Z' >= c));
 +    }
 +    
-+    std::string prologize(std::string s) {
++    std::string
++    prologize(std::string s) {
 +      std::string t;
 +      std::string::iterator it;
 +      it = s.begin();
@@ -596,94 +339,6 @@ Index: Driver/TermDumper.cpp
 +      }
 +      return t;
 +    }
-+
-+    //the following three functions are borrowed from PrologTerm.h
-+    static bool needs_quotes(const std::string s) {
-+      if (s.length() == 0) 
-+        return true;
-+
-+      bool alldigits = isdigit(s[0]);
-+      for (std::string::const_iterator c = s.begin();
-+           c != s.end(); ++c) {
-+
-+        if (alldigits) {
-+          if (!isdigit(*c))
-+            return true;
-+          else continue;
-+        }
-+
-+        if (!islower(*c) && !isupper(*c) && 
-+            !(*c == '_'))
-+          return true;
-+      }
-+      return false;
-+    }
-+
-+    static bool is_reserved_operator(const std::string s) {
-+      return s == "volatile";
-+    }
-+
-+    static std::string quote(const std::string atom) {
-+      std::string s;
-+      if (atom.length() == 0) return "''";
-+      if (((atom.length() > 0) && (!islower(atom[0])) && (!isdigit(atom[0])))
-+          || needs_quotes(atom)) {
-+        s = "'" + atom + "'";
-+        return s;
-+      } else if (is_reserved_operator(atom)) {
-+        s = "(" + atom + ")";
-+        return s;
-+      }
-+      return atom;
-+    }
-+
-+    static std::string filter_string(std::string s) {
-+      std::stringstream S;
-+      for (unsigned int i = 0; i < s.length(); ++i) {
-+        unsigned char c = s[i];
-+        if(isalnum(c) || c == '_')
-+          S << c;
-+        else if (c == '.')
-+          S << "_dot_";
-+      }      
-+      return S.str();
-+    }
-+    
-+    static std::string escape_double(std::string s) {
-+      std::string r;
-+      for (unsigned int i = 0; i < s.length(); ++i) {
-+        unsigned char c = s[i];
-+        switch (c) {
-+        case '\\': r += "\\\\"; break; // Literal backslash
-+        case '\"': r += "\\\\\""; break; // Double quote
-+        case '\'': r += "\\\\'"; break;  // Single quote
-+        case '\n': r += "\\\\n"; break;  // Newline (line feed)
-+        case '\r': r += "\\\\r"; break;  // Carriage return
-+        case '\b': r += "\\\\b"; break;  // Backspace
-+        case '\t': r += "\\\\t"; break;  // Horizontal tab
-+        case '\f': r += "\\\\f"; break;  // Form feed
-+        case '\a': r += "\\\\a"; break;  // Alert (bell)
-+        case '\v': r += "\\\\v"; break;  // Vertical tab
-+        default:
-+          if (c < 32 || c > 127) {
-+            std::stringstream strm;
-+            strm << "\\\\" 
-+                 << std::oct 
-+                 << std::setfill('0') 
-+                 << std::setw(3) 
-+                 << (unsigned int)c // \nnn Character with octal value nnn
-+                 << "\\\\"; // Prolog expects this weird syntax with a
-+            // trailing backslash
-+            r += strm.str();
-+          } else {
-+            r += c;
-+          }
-+        }
-+      }
-+      //cerr<<"escape_double("<<s<<") = "<< r <<endl;
-+      return r;
-+    }
-+
 +
 +    static std::string escape(std::string s) {
 +      std::string r;
@@ -720,18 +375,125 @@ Index: Driver/TermDumper.cpp
 +      return r;
 +    }
 +    
-+    
-+    /** get lower case of upper case letter */
-+    char toLower(const char c) {
-+      return (c - ('A'-'a'));
-+    };
 +
-+    /** is a letter upper case? */
-+    bool isUpper(const char c) {
-+      return (('A' <= c) && ('Z' >= c));
++    static std::string escape_double(std::string s) {
++      std::string r;
++      for (unsigned int i = 0; i < s.length(); ++i) {
++        unsigned char c = s[i];
++        switch (c) {
++        case '\\': r += "\\\\"; break; // Literal backslash
++        case '\"': r += "\\\\\""; break; // Double quote
++        case '\'': r += "\\\\'"; break;  // Single quote
++        case '\n': r += "\\\\n"; break;  // Newline (line feed)
++        case '\r': r += "\\\\r"; break;  // Carriage return
++        case '\b': r += "\\\\b"; break;  // Backspace
++        case '\t': r += "\\\\t"; break;  // Horizontal tab
++        case '\f': r += "\\\\f"; break;  // Form feed
++        case '\a': r += "\\\\a"; break;  // Alert (bell)
++        case '\v': r += "\\\\v"; break;  // Vertical tab
++        default:
++          if (c < 32 || c > 127) {
++            std::stringstream strm;
++            strm << "\\\\" 
++                 << std::oct 
++                 << std::setfill('0') 
++                 << std::setw(3) 
++                 << (unsigned int)c // \nnn Character with octal value nnn
++                 << "\\\\"; // Prolog expects this weird syntax with a
++            // trailing backslash
++            r += strm.str();
++          } else {
++            r += c;
++          }
++        }
++      }
++      //cerr<<"escape_double("<<s<<") = "<< r <<endl;
++      return r;
 +    }
 +
-+    std::string getBuiltinTypeName(const BuiltinType &T) {
++    static std::string
++    filter_string(std::string s) {
++      std::stringstream S;
++      for (unsigned int i = 0; i < s.length(); ++i) {
++        unsigned char c = s[i];
++        if(isalnum(c) || c == '_')
++          S << c;
++        else if (c == '.')
++          S << "_dot_";
++      }      
++      return S.str();
++    }
++
++    
++    PrologTerm *
++    make_identifier_atom(const Decl *D, const char* prefix = "") {
++      const NamedDecl *V;
++      const IdentifierInfo *I;    
++      assert(D && "identifier information expected");
++      std::string s(prefix);
++
++      if((V = cast<NamedDecl>(D)) != NULL && (I = V->getIdentifier()) != NULL){
++        s += I->getName();
++      }
++      else {
++        std::ostringstream O;
++        std::string kind(D->getDeclKindName());
++        std::transform(kind.begin(), kind.end(), kind.begin(), tolower);      
++        O << "__anonymous_" << kind << "_decl";
++
++        //do we have source information?
++        const SourceLocation Loc = D->getLocation();
++        SourceLocation SpellingLoc = SM->getSpellingLoc(Loc);
++        if(!SpellingLoc.isInvalid()) {
++          PresumedLoc PLoc = SM->getPresumedLoc(SpellingLoc);
++          std::string file(std::string("/") +  PLoc.getFilename());
++          file = file.substr(file.rfind("/") + 1);
++          std::transform(file.begin(), file.end(), file.begin(), tolower);
++          O << "_" << filter_string(file) << "_" << PLoc.getLine() << "_" << PLoc.getColumn();
++        }
++        O << "_" << D;
++        s+= O.str();
++      }
++      return make_atom(s);
++    }
++
++    const Decl *
++    get_type_decl(const Type *T) const {
++      switch (T->getTypeClass()) {
++      case Type::Tagged: 
++        if (const RecordType *RT = dyn_cast<RecordType>(T)) {
++          return  RT->getDecl();
++        }
++        else if (const EnumType *ET = dyn_cast<EnumType>(T)) {
++          return ET->getDecl();
++        }
++        else assert(0 && "Unknown Tagged Type");
++      default:
++        return NULL;
++      }
++    }
++
++    const QualType
++    get_qualified_type(const Decl *D) const {
++      QualType type(NULL, 0);
++
++      if (const VarDecl *V = dyn_cast<VarDecl>(D))
++        type = V->getType();
++      else if (const EnumConstantDecl *E = dyn_cast<EnumConstantDecl>(D))
++        type = E->getType();
++      else if (const FunctionDecl *F = dyn_cast<FunctionDecl>(D))
++        type = F->getType();
++      else if (const FieldDecl *F = dyn_cast<FieldDecl>(D))
++        type = F->getType();
++      else
++        assert(0 && "Unknown decl type!");
++
++      return type;
++    }
++
++    
++    std::string
++    get_builtin_type_name(const BuiltinType &T) {
 +      switch (T.getKind()) {
 +      case BuiltinType::Char_U:    return "unsigned_char";
 +      case BuiltinType::UChar:     return "unsigned_char";
@@ -750,810 +512,1072 @@ Index: Driver/TermDumper.cpp
 +        assert(0 && "cannot handle given builtin type");
 +      }
 +    }
++
 +    
-+    /***************************************************************************
-+     * Declarations                                                            *
-+     **************************************************************************/
++    PrologAtom *
++    make_atom(std::string s) {
++      return new PrologAtom(s);
++    }
 +
-+    /** Print the termite representation of a some declaration.
-+     */
-+    void termDecl(std::ostream &O, const Decl *D);
++    
++    PrologAtom *
++    make_null_atom() {
++      return make_atom("null");
++    }
 +
-+    void termTypedef(std::ostream &O, const Decl *D);
-+    void termFunctionDecl(std::ostream &O, const Decl *D);
-+    void termEnum(std::ostream &O, const Decl *D);
-+    void termRecord(std::ostream &O, const Decl *D);
-+    void termField(std::ostream &O, const Decl *D);
++    
++    PrologAtom *
++    make_default_atom() {
++      return make_atom("default");
++    }
 +
-+    /***************************************************************************
-+     * Types                                                                   *
-+     **************************************************************************/
++    
++    PrologInt *
++    make_int(int v) {
++      return new PrologInt(v);
++    }
 +
-+    /** Print the termite representation of a type.
-+     */
-+    void termType(std::ostream &O, const QualType &T);
++    
++    PrologList *
++    make_list(size_t n, ...) {
++      PrologList *L = new PrologList();
++      va_list params;
++      va_start(params, n);
++      for (size_t i=0; i < n; i++)
++        L->addElement(va_arg(params, PrologTerm *));
++      va_end(params);
++      return L;
++    }
 +
-+    const Decl *getTypeDecl(const Type *T) const;
-+    const QualType getQualType(const Decl *D) const;
++    PrologTerm *
++    make_file_info() {
++      return new PrologCompTerm("file_info", 3,
++                                make_atom("NULL_FILE"),
++                                make_int(0),
++                                make_int(0));
++    }
 +
-+    /***************************************************************************
-+     * Expression                                                              *
-+     **************************************************************************/
++    PrologTerm *
++    make_file_info(const SourceLocation Loc) {
++      SourceLocation L = SM->getInstantiationLoc(Loc);
++      if (L.isInvalid()) {
++        return make_file_info();
++      }
++      else {
++        PresumedLoc PLoc = SM->getPresumedLoc(L);
++        assert(PLoc.isValid() && "encountered invalid presumed location");
++        return new PrologCompTerm("file_info", 3,
++                                  make_atom(PLoc.getFilename()),
++                                  make_int(PLoc.getLine()),
++                                  make_int(PLoc.getColumn()));
++      }
++    }
 +
-+    /** print the termite representation of an expression.
-+     */
-+    void termStmt(std::ostream &O, const Stmt *S);
-+    void termStmtWrapped(std::ostream &O, const Stmt *S);
++    PrologTerm *
++    make_file_info(const std::string &file_name) {
++      assert(file_name.size() > 0 && "invalid file name");
++      return new PrologCompTerm("file_info", 3,
++                                make_atom(file_name),
++                                make_int(0),
++                                make_int(0));
++    }
 +
-+    void termUnaryOperator(std::ostream &O, const Stmt *S);
-+    void termBinaryOperator(std::ostream &O, const Stmt *S);
-+    void termDeclStmt(std::ostream &O, const Stmt *S);
-+    void termCallExpr(std::ostream &O, const Stmt *S);
-+    void termDeclRefExpr(std::ostream &O, const Stmt *S);
-+    void termVarRefExpr(std::ostream &O, const Decl *D, const QualType &T,
-+                        const Stmt *SL);
-+
-+    /***************************************************************************
-+     * Misc                                                                    *
-+     **************************************************************************/
-+
-+    /** Print an Identifier, if NULL print <anonymous>.
-+     */
-+    std::string declIdentifier(const Decl *D, const char* prefix="");
-+
-+    /** print the initialized name tag for a named variable
-+     */
-+    void termInitializedName(std::ostream &O, const Decl *D);
-+
-+    /** print an initializer
-+     */
-+    void termInitializer(std::ostream &O, const Stmt *S);
-+
-+    /** print if the declaration is static storage. queries variable and
-+     *  function declarations, and assumes non static for all others.
-+     */
-+    void termStaticStorage(std::ostream &O, const Decl *D);
-+
-+    /** print access modifier information for a declaration
-+     */
-+    void termAccessModifier(std::ostream &O, const Decl *D);
-+
-+    /** print storage modifier information for a declaration
-+     */
-+    void termStorageModifier(std::ostream &O, const Decl *D);
-+
-+    /** print modifier information for a declaration
-+     */
-+    void termModifier(std::ostream &O, const Decl *D);
-+
-+    /** print modifier information for the type of a declaration
-+     */
-+    void termTypeModifier(std::ostream &O, const Decl *D);
-+    void termTypeModifier(std::ostream &O, const QualType T);
-+
-+    /** print declaration attributes
-+     */
-+    void termDeclAttributes(std::ostream &O, const Decl *D);
-+
-+    /** print the context/scope of a declaration
-+     */
-+    void termDeclContext(std::ostream &O, const DeclContext *C);
-+  };
-+
-+  void ASTTermDumper::termDecl(std::ostream &O, const Decl *D) {
-+    switch (D->getKind()) {
-+    case Decl::Typedef:
-+      termTypedef(O, D);
-+      break;
-+
-+    case Decl::Enum:
-+      termEnum(O, D);
-+      break;
-+
-+    case Decl::Record:
-+      termRecord(O, D);
-+      break;
-+
-+    case Decl::Function:
-+      termFunctionDecl(O, D);
-+      break;
-+
-+      // Variables/Parameters/Values ---------------
-+    case Decl::EnumConstant:
-+    case Decl::Var:
-+    case Decl::OriginalParmVar: // original type for implicit promotes missing
-+    case Decl::ImplicitParam:
-+      O << "variable_declaration([";
-+      termInitializedName(O, D);
-+      O << "], variable_declaration_specific(";
-+      termModifier(O, D);
-+      O << ", ";
-+      if(D->getKind() == Decl::Var)
-+        preprocessingInfo(O, D->getLocation());
++    PrologTerm *
++    make_file_info(const Stmt *S) {
++      if (!S)
++        return make_file_info();
 +      else
-+        preprocessingInfo(O);
-+      O << "), " AIB ", ";
-+      fileInfo(O, D);
-+      O << ")";
-+      break;
-+
-+    case Decl::ParmVar: // TODO: ObjC-in/out + C++-default-value missing
-+      termInitializedName(O, D);
-+      break;
-+
-+    case Decl::Field:
-+      termField(O, D);
-+      break;
-+
-+    case Decl::LinkageSpec:
-+
-+      // C++/ObjC-C++ ---------------
-+    case Decl::OverloadedFunction:
-+    case Decl::ObjCIvar:
-+    case Decl::ObjCAtDefsField:
-+    case Decl::Namespace:
-+    case Decl::CXXRecord:
-+    case Decl::CXXMethod:
-+    case Decl::CXXConstructor:
-+    case Decl::CXXDestructor:
-+    case Decl::CXXConversion:
-+    case Decl::CXXClassVar: // is a VarDecl -- see termInitializedName
-+    case Decl::NonTypeTemplateParm: // is a VarDecl -- see termInitializedName
-+    case Decl::TemplateTypeParm: 
-+    case Decl::ObjCMethod:
-+      //         if (ObjCMethodDecl* MD = dyn_cast<ObjCMethodDecl>(D)) {
-+      //           Out << "Read objc method decl: '" << MD->getSelector().getAsString()
-+      //               << "'\n";
-+      //           if (MD->getBody()) {
-+      // //             FIXME: convert dumper to use std::ostream?
-+      //             MD->getBody()->dumpAll(*SM);
-+      //             Out << '\n';
-+      //           }
-+    case Decl::ObjCContainer:
-+    case Decl::ObjCCategory:
-+    case Decl::ObjCProtocol:
-+    case Decl::ObjCInterface:
-+    case Decl::ObjCCategoryImpl:
-+    case Decl::ObjCProperty:
-+    case Decl::ObjCCompatibleAlias:
-+    case Decl::ObjCPropertyImpl:
-+    case Decl::ObjCImplementation:
-+    case Decl::ObjCForwardProtocol:
-+    case Decl::ObjCClass:
-+
-+      // Misc ---------------
-+    case Decl::TranslationUnit:
-+    case Decl::FileScopeAsm:
-+    case Decl::Block:
-+    default:
-+      O << "unknown_decl(" << D->getDeclKindName() << ")";
-+    }
-+  }
-+
-+  void ASTTermDumper::termTypedef(std::ostream &O, const Decl *D) {
-+    const TypedefDecl *TD = cast<TypedefDecl>(D);
-+
-+    O << "typedef_declaration(";
-+
-+    const Decl* UD = getTypeDecl(TD->getUnderlyingType().getTypePtr());
-+    if (UD)
-+      termDecl(O, UD);
-+    else
-+      O << "null";
-+    // TODO: check what to do here
-+    //       termType(O, TD->getUnderlyingType());
-+
-+    O << ", typedef_annotation("
-+      << declIdentifier(D)
-+      << ", ";
-+    
-+    termType(O, TD->getUnderlyingType());
-+    O << ", ";
-+    if (UD)
-+      termDecl(O, UD);
-+    else
-+      O << "null";
-+    
-+    O << ", ";
-+    preprocessingInfo(O, TD->getLocation());
-+    
-+    O << "), " AIB ", ";
-+    fileInfo(O, TD);
-+    O << ")";    
-+  }
-+
-+  void ASTTermDumper::termFunctionDecl(std::ostream &O, const Decl *D) {
-+    const FunctionDecl *FD = cast<FunctionDecl>(D);
-+
-+    O << "function_declaration("
-+      << "function_parameter_list([";
-+
-+    // TODO: Qualifier e.g. FD->isInline(), isVirtual, isPure, ...
-+    //       Storage Class
-+
-+    // print parameter list
-+    const FunctionType *AFT = FD->getType()->getAsFunctionType();
-+    if (const FunctionTypeProto *FT = dyn_cast<FunctionTypeProto>(AFT)) {
-+      bool first = true;
-+      for (unsigned i = 0, e = FD->getNumParams(); i != e; ++i) {
-+        if (!first)
-+          O << ", ";
-+
-+        termDecl(O, FD->getParamDecl(i));
-+        first = false;
-+      }
-+
-+      if (FT->isVariadic()) {
-+        // TODO: replace by ellipse_expr ?? - from Adrian's original patch
-+        O << ",initialized_name(null, "
-+          "initialized_name_annotation(type_ellipse, '', default, null), " AIB
-+          ", ";
-+        fileInfo(O, FD);
-+        O << ")";
-+      }
-+    }
-+    O << "], " DAB ", ";
-+    fileInfo(O, FD); // close parameter list
-+    O << ")";
-+
-+    //collect all preprocessor declarations _before_ handling the function body
-+    std::list<PPTracker::PPDirective> PPD;
-+    tracker->dequeueDirectives(FD->getLocation(), PPD);
-+    
-+    if (FD->getBody()) {
-+      O << ", function_definition(";
-+      termStmt(O, FD->getBody());
-+      O << ", " DAB ", ";
-+      fileInfo(O, FD);
-+      O << "), ";
-+    } else
-+      O << ", null, ";
-+
-+    O << "function_declaration_annotation(";
-+    // TODO: check if we should dump the complete function type here?
-+    // Alternatively rename the tag to result_type?
-+    termType(O, FD->getType());
-+
-+    O << ", "
-+      << declIdentifier(FD)
-+      << ", ";
-+    
-+    termModifier(O, D);
-+    O << ", ";
-+    preprocessingInfo(O, PPD);
-+    O << "), " AIB ",";
-+    fileInfo(Out, FD); // declaration
-+    O << ")";
-+  }
-+
-+  void ASTTermDumper::termEnum(std::ostream &O, const Decl *D) {
-+    const EnumDecl *E = cast<EnumDecl>(D);
-+
-+    O << "enum_declaration([";
-+
-+    bool first = true;
-+    for(EnumDecl::enumerator_iterator i = E->enumerator_begin(),
-+          ie = E->enumerator_end(); i != ie; i++) {
-+      if (!first)
-+        O << ", ";
-+      termInitializedName(O, *i);
-+      first = false;
++        return make_file_info(S->getSourceRange().getBegin());
 +    }
 +
-+    O << "], enum_declaration_annotation("
-+      << declIdentifier(E)
-+      << ", ";
 +    
-+    termDeclAttributes(O, D);
-+    
-+    O << ", 1"  // TODO: d->get_embedded() from rose??
-+      "), " AIB ", ";
-+
-+    fileInfo(O, D);
-+    O << ")";
-+  }
-+
-+  void ASTTermDumper::termRecord(std::ostream &O, const Decl *D) {
-+    const RecordDecl *R = cast<RecordDecl>(D);
-+
-+    O << "class_declaration(class_definition([";
-+
-+    // print fields
-+    bool first = true;
-+    for(RecordDecl::field_iterator i = R->field_begin(), ie = R->field_end();
-+        i != ie; i++) {
-+      if (!first)
-+        O << ", ";
-+
-+      termField(O, *i);
-+      first = false;
++    PrologTerm *
++    make_file_info(const Decl *D) {
++      if (!D)
++        return make_file_info();
++      else
++        return make_file_info(D->getLocation());
 +    }
-+    O << "], class_definition_annotation(";
-+    fileInfo(O, D);
-+    O << ", ";
-+    preprocessingInfo(O);
-+    O << ")";
-+
-+    O << ", " AIB ", ";
-+    fileInfo(O, D);
-+
-+    O << "), class_declaration_annotation("
-+      << declIdentifier(R)
-+      << ", " << R->getKindName()
-+      << ", class_type("
-+      << declIdentifier(R)
-+      << ", " << R->getKindName() << ", "
-+      << "::),";
 +    
-+    preprocessingInfo(O, D->getLocation());
-+    O << "), " AIB ", ";
-+    fileInfo(O, D);
-+    O << ")";
-+    //preprocessingInfo(O);    
-+  }
-+
-+  void ASTTermDumper::termField(std::ostream &O, const Decl *D) {
-+
-+    // TODO: isMutable, isBitField
-+    // const FieldDecl *F = cast<FieldDecl>(D);
-+
-+    O << "variable_declaration([";
-+    termInitializedName(O, D);
-+    O << "], variable_declaration_specific(";
-+    termModifier(O, D);
-+
-+    O << ", ";
-+    preprocessingInfo(O);
-+    
-+    O << "), " AIB ", ";
-+    fileInfo(O, D);
-+    O << ")";
-+  }
-+
-+  /***************************************************************************
-+   * Types                                                                   *
-+   **************************************************************************/
-+
-+  void ASTTermDumper::termType(std::ostream &O, const QualType &T) {
-+    if (T.getCVRQualifiers()) {
-+      O << "modifier_type(";
++    PrologTerm *
++    make_preprocessing_info() {
++      return new PrologCompTerm("preprocessing_info", 1,
++                                new PrologList());
 +    }
 +
-+    switch (T->getTypeClass()) {
-+    case Type::Builtin:
-+      O << "type_" << prologize(cast<BuiltinType>(T)->getName());
-+      break;
++    
++    PrologTerm *
++    make_preprocessing_info(SourceLocation loc) {
++      std::list<PPTracker::PPDirective> L;
++      tracker->dequeueDirectives(loc, L);
++      return make_preprocessing_info(L);
++    }
 +
-+      // Pointer ------------
-+    case Type::Pointer:
-+      O << "pointer_type(";
-+      termType(O, cast<PointerLikeType>(T)->getPointeeType());
-+      O << ")";
-+      break;
++    
++    PrologTerm *
++    make_preprocessing_info(std::list<PPTracker::PPDirective> &L) {
++      PrologList *ppi_list = new PrologList();
 +
-+      // Arrays ------------
-+    case Type::ConstantArray: // fallthrough
-+    case Type::VariableArray: // fallthrough
-+    case Type::IncompleteArray: // fallthrough
-+    case Type::DependentSizedArray:
-+      {
-+        ArrayType *AT = cast<ArrayType>(T);
-+
-+        O << "array_type(";
-+        termType(O, AT->getElementType());
-+
-+        switch (T->getTypeClass()) {
-+        case Type::ConstantArray:
-+          O << ", unsigned_long_val(null,"
-+            "value_annotation("
-+            << cast<ConstantArrayType>(T)->getSize().toString(10, false) <<
-+            ", " << PPI << 
-+            "), " AIB ", file_info('<invalid>', '<invalid>', '<invalid>'))";
++      while(!L.empty()) {
++        PPTracker::PPDirective &d = L.front();
++        std::string term_name;
++        switch(d.type) {
++        case PPTracker::ppd_include:
++          term_name = "cpreprocessorIncludeDeclaration";
 +          break;
-+        case Type::VariableArray:
-+          termStmt(O, cast<VariableArrayType>(T)->getSizeExpr());
-+          break;
-+        case Type::IncompleteArray:
-+          O << ", null";
-+          break;
-+        case Type::DependentSizedArray:
-+          termStmt(O, cast<DependentSizedArrayType>(T)->getSizeExpr());
++        case PPTracker::ppd_undef:
++          term_name = "cpreprocessorUndefDeclaration";
 +          break;
 +        default:
-+          assert(false);
++          assert(0 && "not yet supported");          
 +        }
-+        O << ")";
-+        break;
++
++        ppi_list->addElement(new PrologCompTerm(term_name, 3,
++                                               make_atom(d.code + "\\n"),
++                                               make_atom("before"),
++                                               make_file_info(d.loc)));
++        L.pop_front();
 +      }
++      
++      return new PrologCompTerm("preprocessing_info", 1, ppi_list);
++    }
 +
-+      // Function ------------
-+    case Type::FunctionNoProto:
-+      O << "function_type(";
-+      termType(O, cast<FunctionTypeNoProto>(T)->getResultType());
-+      O << ", default, [])";
-+      break;
-+    case Type::FunctionProto:
-+      {
-+        // TODO: print qualifier
-+        // << FT->getTypeQuals()
++    
++    PrologTerm *
++    make_default_analysis_info() {
++      return new PrologCompTerm("analysis_info", 1, new PrologList());
++    }
 +
-+        FunctionTypeProto *FT = cast<FunctionTypeProto>(T);
-+        O << "function_type(";
-+        termType(O, FT->getResultType());
-+        O << ", " << (FT->isVariadic() ? "ellipses" : "default")
-+          << ", [";
++    
++    PrologTerm *
++    make_default_annotation() {
++      return new PrologCompTerm("default_annotation", 2,
++                                make_null_atom(),
++                                make_preprocessing_info());
++    }
 +
-+        bool first = true;
-+        for(FunctionTypeProto::arg_type_iterator i = FT->arg_type_begin(),
-+              ie = FT->arg_type_end(); i != ie; i++) {
-+          if (!first)
-+            O << ", ";
-+          termType(O, *i);
-+          first = false;
++    
++    PrologTerm *
++    make_static_attribute(const Decl *D) {
++      const VarDecl *V = dyn_cast<VarDecl>(D);
++      const FunctionDecl *F = dyn_cast<FunctionDecl>(D);
++      bool isStatic = (V && V->getStorageClass() == VarDecl::Static) ||
++        (F && F->getStorageClass() == FunctionDecl::Static);
++      if(isStatic)
++        return make_atom("static");
++      else
++        return make_atom("default");
++    }
++    
++
++    PrologTerm *
++    make_file_term() {
++      assert(current_declaration_list && !current_source_file.empty() && "expecting current file");
++
++      return new PrologCompTerm("source_file", 4,
++                                new PrologCompTerm("global", 4,
++                                                   current_declaration_list,
++                                                   make_default_annotation(),
++                                                   make_default_analysis_info(),
++                                                   make_file_info(current_source_file)),
++                                new PrologCompTerm("default_annotation", 1,
++                                                   make_null_atom()),
++                                make_default_analysis_info(),
++                                make_file_info(current_source_file));
++    }
++    
++    
++    PrologTerm *
++    make_project_term() {
++      return new PrologCompTerm("project", 4,
++                                &file_list,
++                                new PrologCompTerm("default_annotation", 1,
++                                                   make_null_atom()),
++                                make_default_analysis_info(),
++                                make_file_info());
++    }
++    
++    ////////////////////////////////////////////////////////
++    // modifier
++
++    PrologTerm *
++    make_access_modifier(const Decl *D) {
++      switch (D->getAccess()) {
++      case AS_none:      return make_atom("default");
++      case AS_public:    return make_atom("public");
++      case AS_protected: return make_atom("protected");
++      case AS_private:   return make_atom("private");
++      }
++      assert(0 && "should be never reached");
++    }
++
++
++    PrologTerm *
++    make_storage_modifier(const Decl *D) {
++      if (const VarDecl *V = dyn_cast<VarDecl>(D)) {
++        switch (V->getStorageClass()) {
++        case VarDecl::None:          return make_atom("unspecified");
++        case VarDecl::Extern:        return make_atom("extern");
++        case VarDecl::Static:        return make_atom("static");
++        case VarDecl::Auto:          return make_atom("auto");
++        case VarDecl::Register:      return make_atom("register");
++        case VarDecl::PrivateExtern: return make_atom("privateExtern");
 +        }
++      }
++      else if (const FunctionDecl *F = dyn_cast<FunctionDecl>(D)) {
++        switch (F->getStorageClass()) {
++        case FunctionDecl::None:          return make_atom("unspecified");
++        case FunctionDecl::Extern:        return make_atom("extern");
++        case FunctionDecl::Static:        return make_atom("static");
++        case FunctionDecl::PrivateExtern: return make_atom("privateExtern");
++        }
++      }
++      else if (dyn_cast<FieldDecl>(D)) {
++        return make_atom("default");
++      }
++      assert(0 && "should be never reached");
++    }
++
++
++    PrologTerm *
++    make_type_modifier(const Decl *D) {
++      QualType type(get_qualified_type(D));
++      assert(!type.isNull());
++      return make_type_modifier(type);
++    }
++
++
++    PrologTerm *
++    make_type_modifier(const QualType &T) {
++      PrologList *arg0 = make_list(1, make_atom("default"));
++      if (T.isRestrictQualified())
++        arg0->addElement(make_atom("restrict"));
++
++      PrologAtom *arg1 = NULL, *arg2 = NULL, *arg3 = NULL;
++
++      arg1 = make_default_atom();
++
++      if(T.isConstQualified())
++        arg2 = make_atom("const");
++      else if (T.isVolatileQualified())
++        arg2 = make_atom("volatile");
++      else
++        arg2 = make_default_atom();
++
++      if (T->isClassType())
++        arg3 = make_atom("class");
++      else if (T->isStructureType())
++        arg3 = make_atom("struct");
++      else if (T->isUnionType())
++        arg3 = make_atom("union");
++      else if (T->isEnumeralType())
++        arg3 = make_atom("enum");
++      else if (T->isTemplateTypeParmType())
++        arg3 = make_atom("typename");
++      else
++        arg3 = make_default_atom();
++
++      return new PrologCompTerm("type_modifier", 4, arg0, arg1, arg2, arg3);
++    }
++
++
++    PrologTerm *
++    make_declaration_modifier(const Decl *D) {
++      return new PrologCompTerm("declaration_modifier", 4,
++                                make_list(1, make_default_atom()),
++                                make_type_modifier(D),
++                                make_access_modifier(D),
++                                make_storage_modifier(D));
++    }
++
++    
++    ////////////////////////////////////////////////////////
++    // declarations
++
++    PrologTerm *
++    make_declaration_context(const DeclContext *C) {
++      switch (C->getDeclKind()) {
++      case Decl::Namespace:
++        return make_identifier_atom(cast<NamespaceDecl>(C));
++      case Decl::Record:
++        if (const RecordDecl *RD = dyn_cast<RecordDecl>(C)) {
++          if(RD->getKind() == Decl::Enum && !RD->getIdentifier()) {
++            //mimic the bahaviour of the ROSE implementation here
++            return make_atom("::");
++          }
++          else {
++            return new PrologCompTerm("class_scope", 2,
++                                      make_identifier_atom(RD, "::"),
++                                      make_atom(RD->getKindName()));
++          }
++        }
++        break;
++      default:
++        return make_null_atom();
++      }
++      assert(0 && "should be never reached");
++    }
++    
++    PrologTerm *
++    make_declaration_attributes(const Decl *D) {
++      //TODO: check what goes here
++      return new PrologCompTerm("decl_attributes", 5,
++                                make_int(0),
++                                make_int(0),
++                                make_int(0),
++                                make_int(0),
++                                make_int(0));
++    }
++
++    
++    PrologTerm *
++    make_typedef_declaration_term(const Decl *D) {
++      const TypedefDecl *TD = cast<TypedefDecl>(D);
++
++      const Decl* UD = get_type_decl(TD->getUnderlyingType().getTypePtr());
++      
++      return new PrologCompTerm("typedef_declaration", 4,
++                                (UD ? make_declaration_term(UD) : make_null_atom()),
++                                new PrologCompTerm("typedef_annotation", 4,
++                                                   make_identifier_atom(D),
++                                                   make_type_term(TD->getUnderlyingType()),
++                                                   (UD ? make_declaration_term(UD) : make_null_atom()),
++                                                   make_preprocessing_info(TD->getLocation())),
++                                make_default_analysis_info(),
++                                make_file_info(TD));
++    }
++
++    
++    PrologTerm *
++    make_enum_declaration_term(const Decl *D) {
++      const EnumDecl *E = cast<EnumDecl>(D);
++
++      PrologList *fields = new PrologList();
++      EnumDecl::enumerator_iterator i, ie;
++      for(i = E->enumerator_begin(), ie = E->enumerator_end(); i != ie; i++)
++        fields->addElement(make_initialized_name_declaration_term(*i));
++
++      return new PrologCompTerm("enum_declaration", 4,
++                                fields,
++                                new PrologCompTerm("enum_declaration_annotation", 3,
++                                                   make_identifier_atom(E),
++                                                   make_declaration_attributes(D),
++                                                   make_int(1)),
++                                make_default_analysis_info(),
++                                make_file_info(D));
++    }
++
++
++    PrologTerm *
++    make_record_declaration_term(const Decl *D) {
++      const RecordDecl *R = cast<RecordDecl>(D);
++
++      PrologList *fields = new PrologList();
++      RecordDecl::field_iterator i, ie;
++      for(i=R->field_begin(), ie = R->field_end(); i != ie; i++)
++        fields->addElement(make_field_declaration_term(*i));
++
++      return new PrologCompTerm("class_declaration", 4,
++                                new PrologCompTerm("class_definition", 4,
++                                                   fields,
++                                                   new PrologCompTerm("class_definition_annotation", 2,
++                                                                      make_file_info(D),
++                                                                      make_preprocessing_info()),
++                                                   make_default_analysis_info(),
++                                                   make_file_info(D)),
++                                new PrologCompTerm("class_declaration_annotation", 4,
++                                                   make_identifier_atom(R),
++                                                   make_atom(R->getKindName()),
++                                                   new PrologCompTerm("class_type", 3,
++                                                                      make_identifier_atom(R),
++                                                                      make_atom(R->getKindName()),
++                                                                      make_atom("::")),
++                                                   make_preprocessing_info(D->getLocation())),
++                                make_default_analysis_info(),
++                                make_file_info(D));
++    }
++
++    
++    PrologTerm *
++    make_function_declaration_term(const Decl *D) {
++      const FunctionDecl *FD = cast<FunctionDecl>(D);
++      const FunctionType *AFT = FD->getType()->getAsFunctionType();
++
++      //parameter list
++      PrologList *parms = new PrologList();
++      if (const FunctionTypeProto *FT = dyn_cast<FunctionTypeProto>(AFT)) {
++        for (unsigned i = 0, e = FD->getNumParams(); i != e; ++i)
++          parms->addElement(make_declaration_term(FD->getParamDecl(i)));
 +
 +        if (FT->isVariadic()) {
-+          if (!first)
-+            O << ", ";
-+
-+          O << "type_ellipse";
++          parms->addElement(new PrologCompTerm("initialized_name", 4,
++                                               make_null_atom(),
++                                               new PrologCompTerm("initialized_name_annotation", 4,
++                                                                  make_atom("type_ellipse"),
++                                                                  make_atom(""),
++                                                                  make_atom("default"),
++                                                                  make_null_atom()),
++                                               make_default_analysis_info(),
++                                               make_file_info(D)));
 +        }
++      }
++      
++      PrologTerm *parameter_list = new PrologCompTerm("function_parameter_list", 4,
++                                                      parms,
++                                                      make_default_annotation(),
++                                                      make_default_analysis_info(),
++                                                      make_file_info(FD));
++      
++      //collect all preprocessor declarations _before_ handling the function body
++      std::list<PPTracker::PPDirective> PPD;
++      tracker->dequeueDirectives(FD->getLocation(), PPD);
 +
-+        O << "])";
++      //create body
++      PrologTerm *body;
++      if (FD->getBody()) {
++        body = new PrologCompTerm("function_definition", 4,
++                                  make_statement_term(FD->getBody()),
++                                  make_default_annotation(),
++                                  make_default_analysis_info(),
++                                  make_file_info(FD));
++      } else {
++        body = make_null_atom();
++      }
++
++      //create annotation
++      PrologTerm *annotation;
++      annotation = new PrologCompTerm("function_declaration_annotation", 4,
++                                      make_type_term(FD->getType()),
++                                      make_identifier_atom(FD),
++                                      make_declaration_modifier(D),
++                                      make_preprocessing_info(PPD));
++      
++      return new PrologCompTerm("function_declaration", 5,
++                                parameter_list,
++                                body,
++                                annotation,
++                                make_default_analysis_info(),
++                                make_file_info(FD));
++    }
++
++    
++    PrologTerm *
++    make_initializer_term(const Stmt *S) {
++      const Expr *E = dyn_cast<Expr>(S);
++      bool is_aggregate = E && (E->getType()->isRecordType() ||
++                                E->getType()->isArrayType());
++      if(is_aggregate) {
++        return new PrologCompTerm("aggregate_initializer", 4,
++                                  make_statement_term(S),
++                                  make_default_annotation(),
++                                  make_default_analysis_info(),
++                                  make_file_info(S));
++      }
++      else {
++        PrologTerm *type_term = E ? make_type_term(E->getType()) : make_null_atom();
++        
++        return new PrologCompTerm("assign_initializer", 4,
++                                  make_statement_term(S),
++                                  new PrologCompTerm("assign_initializer_annotation", 2,
++                                                     type_term,
++                                                     make_preprocessing_info()),
++                                  make_default_analysis_info(),
++                                  make_file_info(S));
++      }
++    }
++
++    
++    PrologTerm *
++    make_initialized_name_declaration_term(const Decl *D) {
++      const NamedDecl *V = cast<NamedDecl>(D);
++      const Expr* init = NULL;
++      QualType type(get_qualified_type(V));
++      if (VarDecl::classof(V)) {
++        const VarDecl *VD = cast<VarDecl>(V);
++        init = VD->getInit();
++      }
++      else if (EnumConstantDecl::classof(V)) {
++        const EnumConstantDecl *ED = cast<EnumConstantDecl>(V);
++        init = ED->getInitExpr();
++      }
++
++      PrologTerm *initializer_term;
++      if (init)
++        initializer_term = make_initializer_term(init);
++      else
++        initializer_term = make_null_atom();
++
++      PrologTerm *type_term;
++      if (type.isNull())
++        type_term = make_null_atom();
++      else
++        type_term = make_type_term(type);
++      
++      return new PrologCompTerm("initialized_name", 4,
++                                initializer_term,
++                                new PrologCompTerm("initialized_name_annotation", 4,
++                                                   type_term,
++                                                   make_identifier_atom(D),
++                                                   make_static_attribute(V),
++                                                   make_declaration_context(V->getDeclContext())),
++                                make_default_analysis_info(),
++                                make_file_info(D));
++    }
++
++    PrologTerm * make_variable_declaration_term(const Decl *D) {
++      PrologCompTerm *specifics = new PrologCompTerm("variable_declaration_specific");
++      specifics->addSubterm(make_declaration_modifier(D));
++      if(D->getKind() == Decl::Var)
++        specifics->addSubterm(make_preprocessing_info(D->getLocation()));
++      else
++        specifics->addSubterm(make_preprocessing_info());
++      
++      return new PrologCompTerm("variable_declaration", 4,
++                                make_list(1, make_initialized_name_declaration_term(D)),
++                                specifics,
++                                make_default_analysis_info(),
++                                make_file_info(D));
++    }
++
++    
++    PrologTerm *
++    make_field_declaration_term(const Decl *D) {
++      return make_variable_declaration_term(D);
++    }
++
++    
++    PrologTerm *
++    make_declaration_term(const Decl *D) {
++      switch (D->getKind()) {
++      case Decl::Typedef:
++        return make_typedef_declaration_term(D);
 +        break;
++      case Decl::Enum:
++        return make_enum_declaration_term(D);
++        break;
++      case Decl::Record:
++        return make_record_declaration_term(D);
++        break;
++      case Decl::Function:
++        return make_function_declaration_term(D);
++        break;
++      case Decl::ParmVar:
++        return make_initialized_name_declaration_term(D);
++        break;
++      case Decl::Field:
++        return make_field_declaration_term(D);
++        break;
++      case Decl::EnumConstant:
++      case Decl::Var:
++      case Decl::OriginalParmVar:
++      case Decl::ImplicitParam:
++        return make_variable_declaration_term(D);
++      default:
++        assert(0 && "not yet implemented");
 +      }
 +
-+      // TypeOf ------------
-+    case Type::TypeOfExp:
-+      O << "type_of_expr(";
-+      termStmt(O, cast<TypeOfExpr>(T)->getUnderlyingExpr());
-+      O << ")";
-+      break;
-+    case Type::TypeOfTyp:
-+      O << "type_of_type(";
-+      termType(O, cast<TypeOfType>(T)->getUnderlyingType());
-+      O << ")";
-+      break;
-+
-+      // Typedefs ------------
-+    case Type::TypeName: {
-+      TypedefType *TDT = cast<TypedefType>(T);
-+      QualType Simplified = TDT->LookThroughTypedefs();
-+      O << "typedef_type("
-+        << declIdentifier(TDT->getDecl())
-+        << ", ";
-+      termType(O, Simplified);
-+      O << ")";
-+      break;
-+    }
-+
-+      // Tagged ------------
-+    case Type::Tagged:
-+      if (RecordType *RT = dyn_cast<RecordType>(T)) {
-+        O << "class_type("
-+          << declIdentifier(RT->getDecl())
-+          << ", " << RT->getDecl()->getKindName() << ", ";
-+//         termDeclContext(O, RT->getDecl()->getDeclContext());
-+        O << "::)";
-+      }
-+      else if (EnumType *ET = dyn_cast<EnumType>(T)) {
-+        O << "enum_type(";
-+        termDecl(O, ET->getDecl());
-+        O << ")";
-+      }
-+      else assert(0 && "Unknown Tagged Type");
-+      break;
-+
-+      // C-C++/ObjC-C++/Embedded-C ------------
-+    case Type::Reference:
-+    case Type::MemberPointer:
-+    case Type::ASQual:
-+    case Type::TemplateTypeParm:
-+    case Type::ObjCInterface:
-+    case Type::ObjCQualifiedInterface:
-+    case Type::ObjCQualifiedId:
-+
-+      // Misc ------------
-+    case Type::Vector:
-+    case Type::ExtVector:
-+    case Type::Complex:
-+    case Type::BlockPointer:
-+    default:
-+      O << "some_type, ";
-+    }
-+
-+    if (T.getCVRQualifiers()) {
-+      O << ", ";
-+      termTypeModifier(O, T);
-+      O << ")";
-+    }
-+  }
-+
-+  const Decl *ASTTermDumper::getTypeDecl(const Type *T) const {
-+    switch (T->getTypeClass()) {
-+    case Type::Tagged: 
-+      if (const RecordType *RT = dyn_cast<RecordType>(T)) {
-+        return  RT->getDecl();
-+      }
-+      else if (const EnumType *ET = dyn_cast<EnumType>(T)) {
-+        return ET->getDecl();
-+      }
-+      else assert(0 && "Unknown Tagged Type");
-+    default:
++      assert(0 && "should be never reached");
 +      return NULL;
 +    }
-+  }
 +
-+  const QualType ASTTermDumper::getQualType(const Decl *D) const {
-+    QualType type(NULL, 0);
++    ////////////////////////////////////////////////////////
++    // types
++    PrologTerm *
++    make_type_term(const QualType &T) {
++      PrologTerm *t = NULL;
++      
++      switch (T->getTypeClass()) {
++      case Type::Builtin:
++        t = make_atom(std::string("type_") + prologize(cast<BuiltinType>(T)->getName()));
++        break;
 +
-+    // Translate type modifier
-+    if (const VarDecl *V = dyn_cast<VarDecl>(D)) {
-+      type = V->getType();
++      case Type::Reference:
++      case Type::Pointer:
++        t = new PrologCompTerm("pointer_type", 1,
++                               make_type_term(cast<PointerLikeType>(T)->getPointeeType()));
++        break;
++
++      case Type::ConstantArray:
++      case Type::VariableArray:
++      case Type::IncompleteArray:
++      case Type::DependentSizedArray:
++        {
++          ArrayType *AT = cast<ArrayType>(T);
++          PrologTerm *arg2 = NULL;
++          switch (T->getTypeClass()) {
++          case Type::ConstantArray:
++            arg2 = new PrologCompTerm("unsigned_long_val", 4,
++                                      make_null_atom(),
++                                      new PrologCompTerm("value_annotation", 2,
++                                                         make_atom(cast<ConstantArrayType>(T)->getSize().toString(10, false)),
++                                                         make_preprocessing_info()),
++                                      make_default_analysis_info(),
++                                      make_file_info());
++            break;
++          case Type::VariableArray:
++            arg2 = make_statement_term(cast<VariableArrayType>(T)->getSizeExpr());
++            break;
++          case Type::DependentSizedArray:
++            arg2 = make_statement_term(cast<DependentSizedArrayType>(T)->getSizeExpr());
++            break;
++          case Type::IncompleteArray:
++            arg2 = make_null_atom();
++            break;
++          default:
++            assert(0 && "not yet implemented");
++          }
++
++          t = new PrologCompTerm("array_type", 2,
++                                 make_type_term(AT->getElementType()),
++                                 arg2);
++          break;
++        }
++
++      case Type::FunctionNoProto:
++        t = new PrologCompTerm("function_type", 3,
++                               make_type_term(cast<FunctionTypeNoProto>(T)->getResultType()),
++                               make_default_atom(),
++                               new PrologList());
++        break;
++        
++      case Type::FunctionProto:
++        { 
++          FunctionTypeProto *FT = cast<FunctionTypeProto>(T);
++          PrologList *args = new PrologList();
++          FunctionTypeProto::arg_type_iterator i, ie;
++          for(i = FT->arg_type_begin(), ie = FT->arg_type_end(); i != ie; i++)
++            args->addElement(make_type_term(*i));
++
++          if (FT->isVariadic())
++            args->addElement(make_atom("type_ellipse"));
++          
++          t  = new PrologCompTerm("function_type", 3,
++                                  make_type_term(FT->getResultType()),
++                                  make_atom(FT->isVariadic() ? "ellipses" : "default"),
++                                  args);
++          break;
++        }
++
++      case Type::TypeOfExp:
++        t = new PrologCompTerm("type_of_expr", 1,
++                               make_statement_term(cast<TypeOfExpr>(T)->getUnderlyingExpr()));
++        break;
++        
++      case Type::TypeOfTyp:
++        t = new PrologCompTerm("type_of_expr", 1,
++                               make_type_term(cast<TypeOfType>(T)->getUnderlyingType()));
++        break;
++                               
++      case Type::TypeName:
++        {
++          
++          TypedefType *TDT = cast<TypedefType>(T);
++          QualType Simplified = TDT->LookThroughTypedefs();
++          t = new PrologCompTerm("typedef_type", 2,
++                                 make_identifier_atom(TDT->getDecl()),
++                                 make_type_term(Simplified));
++          break;
++        }
++
++      case Type::Tagged:
++        if (RecordType *RT = dyn_cast<RecordType>(T))
++          t = new PrologCompTerm("class_type", 3,
++                                 make_identifier_atom(RT->getDecl()),
++                                 make_atom(RT->getDecl()->getKindName()),
++                                 make_atom("::"));
++        else if (EnumType *ET = dyn_cast<EnumType>(T))
++          t = new PrologCompTerm("enum_type", 1,
++                                 make_declaration_term(ET->getDecl()));
++        else
++          assert(0 && "not yet implemented");
++        break;
++
++      default:
++        assert(0 && "should be never reached");
++      }
++
++      if (T.getCVRQualifiers())
++        t = new PrologCompTerm("modifier_type", 2,
++                               t,
++                               make_type_modifier(T));
++      return t;
 +    }
-+    else if (const EnumConstantDecl *E = dyn_cast<EnumConstantDecl>(D)) {
-+      type = E->getType();
-+    }
-+    else if (const FunctionDecl *F = dyn_cast<FunctionDecl>(D)) {
-+      type = F->getType();
-+    }
-+    else if (const FieldDecl *F = dyn_cast<FieldDecl>(D)) {
-+      type = F->getType();
-+    }
-+    else
-+      assert(0 && "Unknown decl type!");
++    
++    
++    ////////////////////////////////////////////////////////
++    // statements and expressions
 +
-+    return type;
-+  }
++    PrologTerm *
++    make_unary_operator_expr(const Stmt *S) {
++      const UnaryOperator* UO = cast<UnaryOperator>(S);
++      
++      std::string op;
++      switch (UO->getOpcode()) {
++      case UnaryOperator::PostInc:   op = "plus_plus_op";      break;
++      case UnaryOperator::PostDec:   op = "minus_minus_op";    break;
++      case UnaryOperator::PreInc:    op = "plus_plus_op";      break;
++      case UnaryOperator::PreDec:    op = "minus_minus_op";    break;
++      case UnaryOperator::AddrOf:    op = "address_of_op";     break;
++      case UnaryOperator::Deref:     op = "pointer_deref_exp"; break;
++      case UnaryOperator::Plus:      op = "plus_op";           break;
++      case UnaryOperator::Minus:     op = "minus_op";          break;
++      case UnaryOperator::Not:       op = "bit_complement_op"; break;
++      case UnaryOperator::LNot:      op = "not_op";            break;
++      case UnaryOperator::Real:      op = "real_op";           break;
++      case UnaryOperator::Imag:      op = "imag_op";           break;
++      case UnaryOperator::Extension: op = "extension_op";      break;
++      case UnaryOperator::OffsetOf:  op = "offset_op";         break;
++      default:
++        assert(0 && "should be never reached");
++      }
 +
-+  /***************************************************************************
-+   * Expression                                                              *
-+   **************************************************************************/
-+
-+  void ASTTermDumper::termStmt(std::ostream &O, const Stmt *S) {
-+    enum cast_kind_t {
-+      ck_undef,
-+      ck_implicit,
-+      ck_c_style,
-+      ck_const,
-+      ck_static,
-+      ck_dynamic,
-+      ck_reinterpret
-+    };
-+    cast_kind_t castKind = ck_undef;
-+
-+    if(!S) {
-+      O << "null_expression(" DAB ", ";
-+      fileInfo(O, S);
-+      O << ")";      
++      return new PrologCompTerm(op, 4,
++                                make_statement_term(UO->getSubExpr()),
++                                new PrologCompTerm("unary_op_annotation", 5,
++                                                   make_atom(UO->isPostfix() ? "postfix" : "prefix"),
++                                                   make_type_term(UO->getType()),
++                                                   make_null_atom(),
++                                                   make_null_atom(),
++                                                   make_preprocessing_info()),
++                                make_default_analysis_info(),
++                                make_file_info(UO));
 +    }
-+    else {
++
++    
++    PrologTerm *    
++    make_binary_operator_expr(const Stmt *S) {
++      const BinaryOperator* BO = cast<BinaryOperator>(S);
++
++      std::string op;
++      switch (BO->getOpcode()) {
++      case BinaryOperator::Mul:       op =         "multiply_op"; break;
++      case BinaryOperator::Div:       op =           "divide_op"; break;
++      case BinaryOperator::Rem:       op =              "mod_op"; break;
++      case BinaryOperator::Add:       op =              "add_op"; break;
++      case BinaryOperator::Sub:       op =         "subtract_op"; break;
++      case BinaryOperator::Shl:       op =           "lshift_op"; break;
++      case BinaryOperator::Shr:       op =           "rshift_op"; break;
++      case BinaryOperator::LT:        op =        "less_than_op"; break;
++      case BinaryOperator::GT:        op =     "greater_than_op"; break;
++      case BinaryOperator::LE:        op =    "less_or_equal_op"; break;
++      case BinaryOperator::GE:        op = "greater_or_equal_op"; break;
++      case BinaryOperator::EQ:        op =         "equality_op"; break;
++      case BinaryOperator::NE:        op =        "not_equal_op"; break;
++      case BinaryOperator::And:       op =          "bit_and_op"; break;
++      case BinaryOperator::Xor:       op =          "bit_xor_op"; break;
++      case BinaryOperator::Or:        op =           "bit_or_op"; break;
++      case BinaryOperator::LAnd:      op =              "and_op"; break;
++      case BinaryOperator::LOr:       op =               "or_op"; break;
++      case BinaryOperator::Assign:    op =           "assign_op"; break;
++      case BinaryOperator::MulAssign: op =      "mult_assign_op"; break;
++      case BinaryOperator::DivAssign: op =       "div_assign_op"; break;
++      case BinaryOperator::RemAssign: op =       "mod_assign_op"; break;
++      case BinaryOperator::AddAssign: op =      "plus_assign_op"; break;
++      case BinaryOperator::SubAssign: op =     "minus_assign_op"; break;
++      case BinaryOperator::ShlAssign: op =    "lshift_assign_op"; break;
++      case BinaryOperator::ShrAssign: op =    "rshift_assign_op"; break;
++      case BinaryOperator::AndAssign: op =       "and_assign_op"; break;
++      case BinaryOperator::XorAssign: op =       "xor_assign_op"; break;
++      case BinaryOperator::OrAssign:  op =       "ior_assign_op"; break;
++      case BinaryOperator::Comma:     op =        "comma_op_exp"; break;
++      default:
++        assert(0 && "should be never reached");
++      }
++
++      return new PrologCompTerm(op, 5,
++                                make_statement_term(BO->getLHS()),
++                                make_statement_term(BO->getRHS()),
++                                new PrologCompTerm("binary_op_annotation", 2,
++                                                   make_type_term(BO->getType()),
++                                                   make_preprocessing_info()),
++                                make_default_analysis_info(),
++                                make_file_info(BO));
++    }
++
++    
++    PrologTerm *    
++    make_var_ref_expr(const Decl *D, const QualType &T, const Stmt *SL) {
++      return new PrologCompTerm("var_ref_exp", 3,
++                                new PrologCompTerm("var_ref_exp_annotation", 5,
++                                                   make_type_term(T),
++                                                   make_identifier_atom(D),
++                                                   make_static_attribute(D),
++                                                   make_declaration_context(D->getDeclContext()),
++                                                   make_preprocessing_info()),
++                                make_default_analysis_info(),
++                                make_file_info(SL));
++    }
++    
++    
++    PrologTerm *
++    make_statement_term(const Stmt *S) {
++      
++      enum cast_kind_t {
++        ck_undef,
++        ck_implicit,
++        ck_c_style,
++        ck_const,
++        ck_static,
++        ck_dynamic,
++        ck_reinterpret
++      };
++      cast_kind_t castKind = ck_undef;
++
++      if(!S)
++        return new PrologCompTerm("null_expression", 3,
++                                  make_default_annotation(),
++                                  make_default_analysis_info(),
++                                  make_file_info(S));
 +      
 +      switch (S->getStmtClass()) {
 +      case Stmt::NullStmtClass:
-+        O << "null_expr";
-+        break;
++        {
++          return make_atom("null_expr");
++        }
 +
 +      case Stmt::CompoundStmtClass:
 +        {
 +          const CompoundStmt *CS = cast<CompoundStmt>(S);
-+          O << "basic_block([";
-+
-+          bool first = true;
-+          for(CompoundStmt::const_body_iterator i = CS->body_begin(),
-+                ie = CS->body_end(); i != ie; i++) {
-+            if (!first)
-+              O << ", ";
-+
-+            termStmtWrapped(O, *i);
-+            first = false;
++          PrologList *stmts = new PrologList();
++          CompoundStmt::const_body_iterator i, ie;
++          for(i = CS->body_begin(), ie = CS->body_end(); i != ie; i++) {
++            const Stmt *S = *i;
++            //if this is a DeclStmt, emit all declarations separately
++            if(S->getStmtClass() == Stmt::DeclStmtClass) {
++              const DeclStmt *DS = cast<DeclStmt>(S);
++              for(DeclStmt::const_decl_iterator d = DS->decl_begin(), de = DS->decl_end(); d != de; ++d)
++                stmts->addElement(make_declaration_term(*d));
++            }
++            //a LabelStmt might have a sub-statement
++            else if(S->getStmtClass() == Stmt::LabelStmtClass) {
++              stmts->addElement(make_statement_term_wrapped(S));
++              const Stmt *sub = cast<LabelStmt>(S)->getSubStmt();
++              if(sub->getStmtClass() != Stmt::NullStmtClass)
++                stmts->addElement(make_statement_term_wrapped(sub));
++            }
++            else {
++              stmts->addElement(make_statement_term_wrapped(S));
++            }
 +          }
-+
-+          O << "], " DAB ", ";
-+          fileInfo(O, S);
-+          O << ")";
-+          break;
++          return new PrologCompTerm("basic_block",4,
++                                    stmts,
++                                    make_default_annotation(),
++                                    make_default_analysis_info(),
++                                    make_file_info(S));
 +        }
-+
-+      case Stmt::SwitchCaseClass:
-+        assert(false && "Should never be found.");
-+        break;
 +
 +      case Stmt::CaseStmtClass:
 +        {
 +          const CaseStmt *CS = cast<CaseStmt>(S);
-+
 +          assert(!CS->getRHS() && "GNU extension for case not supported.\n");
 +
-+          O << "case_option_stmt(";
-+          termStmt(O, CS->getLHS());
-+          O << ", ";
-+          termStmtWrapped(O, CS->getSubStmt());
-+          // TODO: find what this is for.
-+          O << ", null"
-+            ", " DAB ", ";
-+          fileInfo(O, CS);
-+          O << ")";          
-+          break;
++          return new PrologCompTerm("case_option_stmt", 6,
++                                    make_statement_term(CS->getLHS()),
++                                    make_statement_term_wrapped(CS->getSubStmt()),
++                                    make_null_atom(),
++                                    make_default_annotation(),
++                                    make_default_analysis_info(),
++                                    make_file_info(CS));
 +        }
 +
 +      case Stmt::DefaultStmtClass:
 +        {
 +          const DefaultStmt *DS = cast<DefaultStmt>(S);
-+
-+          O << "default_option_stmt(";
-+          termStmtWrapped(O, DS->getSubStmt());
-+          O << ", " DAB ", ";
-+          fileInfo(O, DS);
-+          O << ")";
-+          break;
++          return new PrologCompTerm("default_option_stmt", 4,
++                                    make_statement_term_wrapped(DS->getSubStmt()),
++                                    make_default_annotation(),
++                                    make_default_analysis_info(),
++                                    make_file_info(DS));
 +        }
 +
 +      case Stmt::LabelStmtClass:
 +        {
 +          const LabelStmt *L = cast<LabelStmt>(S);
-+          O << "label_statement(label_annotation("
-+            << quote(L->getName()) << ", ";
-+          preprocessingInfo(O);
-+          O <<"), " AIB ", ";
-+          fileInfo(O, S);
-+          O << ")";
-+
-+          if (L->getSubStmt()->getStmtClass() != Stmt::NullStmtClass) {
-+            O << ", ";
-+            termStmt(O, L->getSubStmt());
-+          }
-+          break;
++          //The caller is responsible to dump a sub-statement if there is one
++          return new PrologCompTerm("label_statement", 4,
++                                    new PrologCompTerm("label_annotation", 2,
++                                                       make_atom(L->getName()),
++                                                       make_preprocessing_info()),
++                                    make_default_annotation(),
++                                    make_default_analysis_info(),
++                                    make_file_info(S));
 +        }
 +
 +      case Stmt::IfStmtClass:
 +        {
 +          const IfStmt *IFS = cast<IfStmt>(S);
-+          O << "if_stmt(";
-+          termStmtWrapped(O, IFS->getCond());
-+          O << ", ";
-+          termStmtWrapped(O, IFS->getThen());
-+          if (IFS->getElse()) {
-+            O << ", ";
-+            termStmtWrapped(O, IFS->getElse());
-+          }
++
++          PrologTerm *else_term;
++          if(IFS->getElse())
++            else_term = make_statement_term_wrapped(IFS->getElse());
 +          else
-+            O << ", null";
-+          O << ", " DAB ", ";
-+          fileInfo(O, S);
-+          O << ")";
-+          break;
++            else_term = make_null_atom();
++          
++          return new PrologCompTerm("if_stmt", 6,
++                                    make_statement_term_wrapped(IFS->getCond()),
++                                    make_statement_term_wrapped(IFS->getThen()),
++                                    else_term,
++                                    make_default_annotation(),
++                                    make_default_analysis_info(),
++                                    make_file_info(IFS));
 +        }
 +
 +      case Stmt::SwitchStmtClass:
 +        {
 +          const SwitchStmt *SS = cast<SwitchStmt>(S);
 +
-+          O << "switch_statement(";
-+          termStmtWrapped(O, SS->getCond());
-+          O << ", ";
-+          termStmt(O, SS->getBody());
-+          O << ", " DAB ", ";
-+          fileInfo(O, SS);
-+          O << ")";
-+          break;
++          return new PrologCompTerm("switch_statement", 5,
++                                    make_statement_term_wrapped(SS->getCond()),
++                                    make_statement_term(SS->getBody()),
++                                    make_default_annotation(),
++                                    make_default_analysis_info(),
++                                    make_file_info(SS));
 +        }
 +
 +      case Stmt::WhileStmtClass:
 +        {
 +          const WhileStmt *WS = cast<WhileStmt>(S);
-+
-+          O << "while_stmt(";
-+          termStmtWrapped(O, WS->getCond());
-+          O << ", ";
-+          termStmtWrapped(O, WS->getBody());
-+          O << ", " DAB ", ";
-+          fileInfo(O, WS);
-+          O << ")";
-+          break;
++          return new PrologCompTerm("while_stmt", 5,
++                                    make_statement_term_wrapped(WS->getCond()),
++                                    make_statement_term_wrapped(WS->getBody()),
++                                    make_default_annotation(),
++                                    make_default_analysis_info(),
++                                    make_file_info(WS));
 +        }
 +
 +      case Stmt::DoStmtClass:
 +        {
 +          const DoStmt *DS = cast<DoStmt>(S);
-+
-+          O << "do_while_stmt(";
-+          termStmtWrapped(O, DS->getBody());
-+          O << ", ";
-+          termStmtWrapped(O, DS->getCond());
-+          O << ", " DAB ", ";
-+          fileInfo(O, DS);
-+          O << ")";
-+          break;
++          return new PrologCompTerm("do_while_stmt", 5,
++                                    make_statement_term_wrapped(DS->getBody()),
++                                    make_statement_term_wrapped(DS->getCond()),
++                                    make_default_annotation(),
++                                    make_default_analysis_info(),
++                                    make_file_info(DS));
 +        }
 +
 +      case Stmt::ForStmtClass:
 +        {
 +          const ForStmt *FS = cast<ForStmt>(S);
 +
-+          O << "for_statement("
-+            "for_init_statement([";
-+          if(FS->getInit()) termStmtWrapped(O, FS->getInit());
-+          O << "], " DAB ", "; // for_init_statement
-+          fileInfo(O, FS);
-+          O << "), ";
-+          termStmtWrapped(O, FS->getCond());
-+          O << ", ";
-+          termStmt(O, FS->getInc());
-+          O << ", ";
-+          termStmtWrapped(O, FS->getBody());          
-+          O << ", " DAB ", "; // for_stmt
-+          fileInfo(O, FS);
-+          O << ")";
-+          break;
++          PrologList *init_stmt = new PrologList();
++          if(const Stmt *S = FS->getInit()) {
++            //if this is a DeclStmt, emit all declarations separately
++            if(S->getStmtClass() == Stmt::DeclStmtClass) {
++              const DeclStmt *DS = cast<DeclStmt>(S);
++              for(DeclStmt::const_decl_iterator d = DS->decl_begin(), de = DS->decl_end(); d != de; ++d)
++                init_stmt->addElement(make_declaration_term(*d));
++            }
++            //a LabelStmt might have a sub-statement
++            else if(S->getStmtClass() == Stmt::LabelStmtClass) {
++              init_stmt->addElement(make_statement_term_wrapped(S));
++              const Stmt *sub = cast<LabelStmt>(S)->getSubStmt();
++              if(sub->getStmtClass() != Stmt::NullStmtClass)
++                init_stmt->addElement(make_statement_term_wrapped(sub));
++            }
++            else {
++              init_stmt->addElement(make_statement_term_wrapped(S));
++            }
++          }
++          
++          return new PrologCompTerm("for_statement", 7,
++                                    new PrologCompTerm("for_init_statement", 4,
++                                                       init_stmt,
++                                                       make_default_annotation(),
++                                                       make_default_analysis_info(),
++                                                       make_file_info(FS)),
++                                    make_statement_term_wrapped(FS->getCond()),
++                                    make_statement_term(FS->getInc()),
++                                    make_statement_term_wrapped(FS->getBody()),
++                                    make_default_annotation(),
++                                    make_default_analysis_info(),
++                                    make_file_info(FS));
 +        }
 +
 +      case Stmt::GotoStmtClass:
-+        O << "goto_statement(label_annotation("
-+          << quote(cast<GotoStmt>(S)->getLabel()->getName()) <<  ", ";
-+        preprocessingInfo(O);        
-+        O << "), " AIB ", ";
-+        fileInfo(O, S);
-+        O << ")";
-+        break;
++        {
++          return new PrologCompTerm("goto_statement", 4,
++                                    new PrologCompTerm("label_annotation", 2,
++                                                       make_atom(cast<GotoStmt>(S)->getLabel()->getName()),
++                                                       make_preprocessing_info()),
++                                    make_default_annotation(),
++                                    make_default_analysis_info(),
++                                    make_file_info(S));
++        }
 +
-+        //       case Stmt::IndirectGotoStmtClass:
 +      case Stmt::ContinueStmtClass:
-+        O << "continue_stmt(" DAB ", ";
-+        fileInfo(O, S);
-+        O << ")";
-+        break;
-+
++        {
++          return new PrologCompTerm("continue_stmt", 3,
++                                    make_default_annotation(),
++                                    make_default_analysis_info(),
++                                    make_file_info(S));
++        }
++        
 +      case Stmt::BreakStmtClass:
-+        O << "break_stmt(" DAB ", ";
-+        fileInfo(O, S);
-+        O << ")";
-+        break;
++        {
++          return new PrologCompTerm("break_stmt", 3,
++                                    make_default_annotation(),
++                                    make_default_analysis_info(),
++                                    make_file_info(S));
++        }
 +
 +      case Stmt::ReturnStmtClass:
 +        {
 +          const ReturnStmt *RS = cast<ReturnStmt>(S);
-+          O << "return_stmt(";
-+          termStmt(O, RS->getRetValue());
-+          O << ", " DAB ", ";
-+          fileInfo(O, S);
-+          O << ")";
-+          break;
++          
++          return new PrologCompTerm("return_stmt", 4,
++                                    make_statement_term(RS->getRetValue()),
++                                    make_default_annotation(),
++                                    make_default_analysis_info(),
++                                    make_file_info(RS));
 +        }
 +
 +      case Stmt::DeclStmtClass:
-+        termDeclStmt(O, S);
-+        break;
-+
-+        // GNU Stmt Extensions
-+        //       case Stmt::AsmStmtClass:
-+
-+        // Obj-C statements
-+        //       case Stmt::ObjCAtTryStmtClass:
-+        //       case Stmt::ObjCAtCatchStmtClass:
-+        //       case Stmt::ObjCAtFinallyStmtClass:
-+        //       case Stmt::ObjCAtThrowStmtClass:
-+        //       case Stmt::ObjCAtSynchronizedStmtClass:
-+        // Obj-C2 statements
-+        //       case Stmt::ObjCForCollectionStmtClass:
-+
-+        // C++ statements
-+        //       case Stmt::CXXCatchStmtClass:
-+        //       case Stmt::CXXTryStmtClass:
-+
-+        // Expressions.
-+        //       case Stmt::ExprClass:
-+        //       case Stmt::PredefinedExprClass:
-+        //           TermDumpExpr(Node);
-+        //           switch (Node->getIdentType()) {
-+        //           default: assert(0 && "unknown case");
-+        //           case PredefinedExpr::Func:           fprintf(F, " __func__"); break;
-+        //           case PredefinedExpr::Function:       fprintf(F, " __FUNCTION__"); break;
-+        //           case PredefinedExpr::PrettyFunction: fprintf(F, " __PRETTY_FUNCTION__");break;
-+        //           }
-+
++        assert(0 && "this should be handled elsewhere");
++        
 +      case Stmt::DeclRefExprClass:
-+        termDeclRefExpr(O, S);
++        {
++          const DeclRefExpr *DRE = cast<DeclRefExpr>(S);
++          const Decl *D = DRE->getDecl();
++
++          switch (D->getKind()) {
++          case Decl::Function:
++            {
++              return new PrologCompTerm("function_ref_exp", 4,
++                                        new PrologCompTerm("function_ref_annotation", 3,
++                                                           make_identifier_atom(D),
++                                                           make_type_term(cast<FunctionDecl>(D)->getType()),
++                                                           make_preprocessing_info()),
++                                        make_default_annotation(),
++                                        make_default_analysis_info(),
++                                        make_file_info(S));
++            }
++          case Decl::EnumConstant:
++            {
++              const EnumConstantDecl *ED = cast<EnumConstantDecl>(D);
++              const llvm::APSInt &val = ED->getInitVal();
++              return new PrologCompTerm("int_val", 4,
++                                        make_null_atom(),
++                                        new PrologCompTerm("value_annotation", 2,
++                                                           make_atom(val.toString(10)),
++                                                           make_preprocessing_info()),
++                                        make_default_analysis_info(),
++                                        make_file_info(S));
++            }
++
++          case Decl::Var:
++          case Decl::OriginalParmVar:
++          case Decl::ImplicitParam:
++          case Decl::ParmVar:
++            {
++              return make_var_ref_expr(D, DRE->getType(), DRE);
++            }
++            
++          default:
++            assert(0 && "cannot handle declaration in DeclRefExpr");
++          }
++        }
++          
 +        break;
 +
 +      case Stmt::IntegerLiteralClass:
@@ -1562,19 +1586,21 @@ Index: Driver/TermDumper.cpp
 +          const BuiltinType *ILT = cast<BuiltinType>(IL->getType());
 +          bool isSigned = ILT->isSignedIntegerType();
 +
-+          O << getBuiltinTypeName(*ILT) << "_val(null, value_annotation("
-+            << IL->getValue().toString(10, isSigned) << "," << PPI << "), " AIB ",";
-+          fileInfo(O, S);
-+          O << ")";
-+          break;
++          return new PrologCompTerm(get_builtin_type_name(*ILT) + std::string("_val"), 4,
++                                    make_null_atom(),
++                                    new PrologCompTerm("value_annotation", 2,
++                                                       make_atom(IL->getValue().toString(10, isSigned)),
++                                                       make_preprocessing_info()),
++                                    make_default_analysis_info(),
++                                    make_file_info(S));
 +        }
++
 +      case Stmt::CharacterLiteralClass:
 +        {
 +          const CharacterLiteral *CL = cast<CharacterLiteral>(S);
 +
 +          //if the type of the expression is an integer type, emit character
 +          //literals as integers
-+          bool done = false;
 +          const Expr *E = dyn_cast<Expr>(S);
 +          const QualType &T = E->getType();
 +          if(T->getTypeClass() == Type::Builtin) {
@@ -1584,136 +1610,165 @@ Index: Driver/TermDumper.cpp
 +               BT->getKind() != BuiltinType::UChar &&
 +               BT->getKind() != BuiltinType::Char_S &&
 +               BT->getKind() != BuiltinType::SChar ) {
-+              O << getBuiltinTypeName(*BT) << "_val(null, value_annotation("
-+                << CL->getValue() << ",";
-+              done = true;
++
++              return new PrologCompTerm(get_builtin_type_name(*BT) + std::string("_val"), 4,
++                                        make_null_atom(),
++                                        new PrologCompTerm("value_annotation", 2,
++                                                           make_int(CL->getValue()),
++                                                           make_preprocessing_info()),
++                                        make_default_analysis_info(),
++                                        make_file_info(S));
 +            }
 +          }
 +
-+          if(!done) {
-+            O << "char_val(null, value_annotation('"
-+              << escape(std::string(1, CL->getValue()))
-+              << "', ";
-+          }
-+          
-+          preprocessingInfo(O);
-+          O << "), " AIB ",",
-+            fileInfo(O, S);
-+          O << ")";
-+          break;
++          return new PrologCompTerm("char_val", 4,
++                                    make_null_atom(),
++                                    new PrologCompTerm("value_annotation", 2,
++                                                       make_atom(std::string(1, CL->getValue())),
++                                                       make_preprocessing_info()),
++                                    make_default_analysis_info(),
++                                    make_file_info(S));
 +        }
++        
 +      case Stmt::FloatingLiteralClass:
 +        {
 +          const FloatingLiteral *FL = cast<FloatingLiteral>(S);
 +          const BuiltinType *FLT = cast<BuiltinType>(FL->getType());
++          std::string type;
++          
 +          switch (FLT->getKind()) {
-+          case BuiltinType::Float:      O << "float"; break;
-+          case BuiltinType::Double:     O << "double"; break;
-+          case BuiltinType::LongDouble: O << "long_double"; break;
++          case BuiltinType::Float:      type = "float"; break;
++          case BuiltinType::Double:     type = "double"; break;
++          case BuiltinType::LongDouble: type = "long_double"; break;
 +          default:
 +            assert(false);
 +          }
-+          O << "_val(null, value_annotation('"
-+            << FL->getValueAsApproximateDouble() << "', " << PPI << "), " AIB ",";
-+          fileInfo(O, S);
-+          O << ")";
-+          break;
++
++
++          std::stringstream ss;
++          ss << FL->getValueAsApproximateDouble();
++          
++          return new PrologCompTerm(type + "_val", 4,
++                                    make_null_atom(),
++                                    new PrologCompTerm("value_annotation", 2,
++                                                       make_atom(ss.str()),
++                                                       make_preprocessing_info()),
++                                    make_default_analysis_info(),
++                                    make_file_info(S));
 +        }
++        
 +      case Stmt::StringLiteralClass:
 +        {
 +          const StringLiteral *SL = cast<StringLiteral>(S);
-+          O << "string_val(null, value_annotation('"
-+            << (SL->isWide() ? "L" : "")
-+            << escape_double(std::string(SL->getStrData(), SL->getByteLength()))
-+            << "', ";
-+          preprocessingInfo(O);          
-+          O << "), " AIB ",";
-+          fileInfo(O, S);
-+          O << ")";
-+          break;
++
++          std::stringstream ss;
++          ss  << (SL->isWide() ? "L" : "")
++              << escape(std::string(SL->getStrData(), SL->getByteLength()));
++          
++          return new PrologCompTerm("string_val", 4,
++                                    make_null_atom(),
++                                    new PrologCompTerm("value_annotation", 2,
++                                                       make_atom(ss.str()),
++                                                       make_preprocessing_info()),
++                                    make_default_analysis_info(),
++                                    make_file_info(S));
 +        }
++
 +      case Stmt::ParenExprClass:
 +        {
-+          // TODO: represent in ROSE
 +          const ParenExpr *PE = cast<ParenExpr>(S);
-+          termStmt(O, PE->getSubExpr());
-+          break;
++          return make_statement_term(PE->getSubExpr());
 +        }
++        
 +      case Stmt::UnaryOperatorClass:
-+        termUnaryOperator(O, S);
-+        break;
++        {
++          return make_unary_operator_expr(S);
++          
++        }
 +
 +      case Stmt::SizeOfAlignOfExprClass:
 +        {
 +          const SizeOfAlignOfExpr *SoP = cast<SizeOfAlignOfExpr>(S);
 +
-+          if (SoP->isSizeOf())
-+            O << "size_of_op(";
-+          else
-+            // TODO: check if align of is available in ROSE
-+            O << "align_of_op(";
-+
++          PrologTerm *t;
 +          if (SoP->isArgumentType())
-+            O << "null";
++            t = make_null_atom();
 +          else
-+            termStmt(O, SoP->getArgumentExpr());
-+
-+          if (SoP->isSizeOf()) {
-+            O << ", size_of_op_annotation(";
-+            termType(O, SoP->getTypeOfArgument());
-+            O << ", ";
-+            termType(O, SoP->getType());
-+            O << ")";
++            t = make_statement_term(SoP->getArgumentExpr());
++          
++          if(SoP->isSizeOf()) {
++            return new PrologCompTerm("size_of_op", 5,
++                                      t,
++                                      new PrologCompTerm("size_of_op_annotation", 3,
++                                                         make_type_term(SoP->getTypeOfArgument()),
++                                                         make_type_term(SoP->getType()),
++                                                         make_preprocessing_info()),
++                                      make_default_annotation(),
++                                      make_default_analysis_info(),
++                                      make_file_info(SoP));
 +          }
-+
-+          O << ", " AIB ", ";
-+          fileInfo(O, SoP);
-+          O << ")";
-+          break;
++          else {
++            return new PrologCompTerm("align_of_op", 4,
++                                      t,
++                                      make_default_annotation(),
++                                      make_default_analysis_info(),
++                                      make_file_info(SoP));
++            
++          }
 +        }
 +
 +      case Stmt::ArraySubscriptExprClass:
 +        {
 +          const ArraySubscriptExpr *ASE = cast<ArraySubscriptExpr>(S);
-+
-+          O << "pntr_arr_ref_exp(";
-+          termStmt(O, ASE->getBase());
-+          O << ", ";
-+          termStmt(O, ASE->getIdx());
-+          O << ", binary_op_annotation(";
-+          termType(O, ASE->getType());
-+          O << ", ";
-+          preprocessingInfo(O);
-+          O << "), " AIB ", ";
-+          fileInfo(O, ASE);
-+          O << ")";
-+          break;
++          return new PrologCompTerm("pntr_arr_ref_exp", 6,
++                                    make_statement_term(ASE->getBase()),
++                                    make_statement_term(ASE->getIdx()),
++                                    new PrologCompTerm("binary_op_annotation", 2,
++                                                       make_type_term(ASE->getType()),
++                                                       make_preprocessing_info()),
++                                    make_default_annotation(),
++                                    make_default_analysis_info(),
++                                    make_file_info(ASE));
 +        }
 +
 +      case Stmt::CallExprClass:
-+        termCallExpr(O, S);
-+        break;
++        {
++          const CallExpr *CE = cast<CallExpr>(S);
++
++          PrologList *exprs = new PrologList();
++          CallExpr::const_arg_iterator i, ie;
++          for(i = CE->arg_begin(), ie = CE->arg_end();i != ie; ++i)
++            exprs->addElement(make_statement_term(*i));
++          
++          return new PrologCompTerm("function_call_exp", 6,
++                                    make_statement_term(CE->getCallee()),
++                                    new PrologCompTerm("expr_list_exp", 4,
++                                                       exprs,
++                                                       make_default_annotation(),
++                                                       make_default_analysis_info(),
++                                                       make_file_info(S)),
++                                    new PrologCompTerm("function_call_exp_annotation", 2,
++                                                       make_type_term(CE->getType()),
++                                                       make_preprocessing_info()),
++                                    make_default_annotation(),
++                                    make_default_analysis_info(),
++                                    make_file_info(S));
++        }
 +
 +      case Stmt::MemberExprClass:
 +        {
 +          const MemberExpr *ME = cast<MemberExpr>(S);
++          std::string name(ME->isArrow() ? "arrow_exp" : "dot_exp");
 +
-+          if (ME->isArrow())
-+            O << "arrow_exp(";
-+          else
-+            O << "dot_exp(";
-+
-+          termStmt(O, ME->getBase());
-+          O << ", ";
-+          termVarRefExpr(O, ME->getMemberDecl(), ME->getType(), ME);
-+          O << ", binary_op_annotation(";
-+          termType(O, ME->getType());
-+          O << ",";
-+          preprocessingInfo(O);
-+          O << "), " AIB ", ";
-+          fileInfo(O, ME);
-+          O << ")";
-+          break;
++          return new PrologCompTerm(name, 6,
++                                    make_statement_term(ME->getBase()),
++                                    make_var_ref_expr(ME->getMemberDecl(), ME->getType(), ME),
++                                    new PrologCompTerm("binary_op_annotation", 2,
++                                                       make_type_term(ME->getType()),
++                                                       make_preprocessing_info()),
++                                    make_default_annotation(),
++                                    make_default_analysis_info(),
++                                    make_file_info(S));
 +        }
 +
 +      case Stmt::ImplicitCastExprClass:
@@ -1724,751 +1779,164 @@ Index: Driver/TermDumper.cpp
 +          castKind = ck_c_style;
 +      case Stmt::ExplicitCastExprClass:
 +        if (castKind == ck_undef) {
-+          assert(false);
 +          // TODO: add support when clang is able to handle const, reinterpret
 +          // and dynamic casts
++          assert(0 && "not yet implemented");
 +          castKind = ck_undef;
 +        }
 +      case Stmt::CastExprClass:
 +        {
 +          const CastExpr *CE = cast<CastExpr>(S);
-+          
-+          // avoid cast on declaration references
-+//           if (CE->getSubExpr()->getStmtClass() == Stmt::DeclRefExprClass && 
-+//               CE->getType()->isPointerLikeType()) {
-+//             const DeclRefExpr *DRE = cast<DeclRefExpr>(CE->getSubExpr());
-+
-+//             if (const ValueDecl *VD = cast<ValueDecl>(DRE->getDecl())) {
-+//               const PointerLikeType *PT = cast<PointerLikeType>(CE->getType());
-+
-+//               if (VD->getType() == PT->getPointeeType() ||
-+//                   (isa<ArrayType>(VD->getType()) && cast<ArrayType>(VD->getType())->getElementType() == PT->getPointeeType())) {
-+//                 termStmt(O, CE->getSubExpr());
-+//                 return; // exit here!!
-+//               }
-+//             }
-+//           }
-+
-+          O << "cast_exp(";
-+          termStmt(O, CE->getSubExpr());
-+          O << ", null, unary_op_annotation(prefix, ";
-+          termType(O, CE->getType());
-+          O << ",";
++          std::string cast_type;
 +          switch (castKind) {
-+          case ck_implicit: O << "implicit"; break;
-+          case ck_c_style: O << "c_style"; break;
-+          case ck_const: O << "const"; break;
-+          case ck_static: O << "static"; break;
-+          case ck_dynamic: O << "dynamic"; break;
-+          case ck_reinterpret: O << "reinterpret"; break;
++          case ck_implicit:    cast_type = "implicit"; break;
++          case ck_c_style:     cast_type = "c_style"; break;
++          case ck_const:       cast_type = "const"; break;
++          case ck_static:      cast_type = "static"; break;
++          case ck_dynamic:     cast_type = "dynamic"; break;
++          case ck_reinterpret: cast_type = "reinterpret"; break;
 +          case ck_undef:
-+            assert(false);
++            assert(0 && "should be never reached");
 +          }
-+          O << ", null, ";
-+          preprocessingInfo(O);          
-+          O << "), " AIB ", ";
-+          fileInfo(O, CE);
-+          O << ")";
-+          break;
++          
++          return new PrologCompTerm("cast_exp", 6,
++                                    make_statement_term(CE->getSubExpr()),
++                                    make_null_atom(),
++                                    new PrologCompTerm("unary_op_annotation", 5,
++                                                       make_atom("prefix"),
++                                                       make_type_term(CE->getType()),
++                                                       make_atom(cast_type),
++                                                       make_null_atom(),
++                                                       make_preprocessing_info()),
++                                    make_default_annotation(),
++                                    make_default_analysis_info(),
++                                    make_file_info(CE));
 +        }
 +
 +      case Stmt::BinaryOperatorClass:
 +      case Stmt::CompoundAssignOperatorClass:
-+        termBinaryOperator(O, S);
-+        break;
++        {
++          return make_binary_operator_expr(S);
++        }
 +
 +      case Stmt::ConditionalOperatorClass:
 +        {
 +          const ConditionalOperator *CO = cast<ConditionalOperator>(S);
-+
-+          O << "conditional_exp(";
-+          termStmt(O, CO->getCond());
-+          O << ", ";
-+          termStmt(O, CO->getTrueExpr());
-+          O << ", ";
-+          termStmt(O, CO->getFalseExpr());
-+          O << ", conditional_exp_annotation(";
-+          termType(O, CO->getType());
-+          O<< ",";
-+          preprocessingInfo(O);          
-+          O << ")"
-+            ", " AIB ", ";
-+          fileInfo(O, CO);
-+          O << ")";
-+          break;
++          return new PrologCompTerm("conditional_exp", 7,
++                                    make_statement_term(CO->getCond()),
++                                    make_statement_term(CO->getTrueExpr()),
++                                    make_statement_term(CO->getFalseExpr()),
++                                    new PrologCompTerm("conditional_exp_annotation", 2,
++                                                       make_type_term(CO->getType()),
++                                                       make_preprocessing_info()),
++                                    make_default_annotation(),
++                                    make_default_analysis_info(),
++                                    make_file_info(CO));
 +        }
 +
-+        //       case Stmt::CompoundLiteralExprClass:
-+        //       case Stmt::ExtVectorElementExprClass:
 +      case Stmt::InitListExprClass:
-+        {
++        {          
 +          const InitListExpr *ILE = cast<InitListExpr>(S);
 +
-+          O << "expr_list_exp([";
-+
-+          bool first = true;
-+          for(InitListExpr::const_iterator i = ILE->begin(), ie = ILE->end();
-+              i != ie; i++) {
-+            if (!first)
-+              O << ", ";
-+
-+            termInitializer(O, *i);
-+            first = false;
-+          }
-+
-+          O << "], " DA ", ";
-+          // TODO: file info seems to be invalid for ILE??
-+          fileInfo(O, ILE);
-+          O << ")";
-+          break;
++          PrologList *items = new PrologList();
++          InitListExpr::const_iterator i, ie;
++          for(i = ILE->begin(), ie = ILE->end(); i != ie; i++)
++            items->addElement(make_initializer_term(*i));
++          
++          return new PrologCompTerm("expr_list_exp", 4,
++                                    items,
++                                    make_default_annotation(),
++                                    make_default_analysis_info(),
++                                    make_file_info(ILE));
 +        }
 +
-+        //       case Stmt::DesignatedInitExprClass:
-+        //       case Stmt::ImplicitValueInitExprClass:
-+        //       case Stmt::VAArgExprClass:
++      case Stmt::VAArgExprClass:
++        {
++          //TODO: this does not work yet
++          const VAArgExpr *VAE = cast<VAArgExpr>(S);
++          return new PrologCompTerm("var_arg_expr", 4,
++                                    make_statement_term(VAE->getSubExpr()),
++                                    new PrologCompTerm("vararg_annotation", 2,
++                                                       make_type_term(VAE->getType()),
++                                                       make_preprocessing_info()),
++                                    make_default_analysis_info(),
++                                    make_file_info(VAE));
++        }
++        
++      case Stmt::SwitchCaseClass:
++        assert(0 && "should be never reached");
 +
-+        // GNU Extensions.
-+        //       case Stmt::AddrLabelExprClass:
-+        //         TermDumpExpr(Node);
-+        //         fprintf(F, " %s %p", Node->getLabel()->getName(), (void*)Node->getLabel());
-+
-+        //       case Stmt::StmtExprClass:
-+        //       case Stmt::TypesCompatibleExprClass:
-+        //           TermDumpExpr(Node);
-+        //           fprintf(F, " ");
-+        //           TermDumpType(Node->getArgType1());
-+        //           fprintf(F, " ");
-+        //           TermDumpType(Node->getArgType2());
-+
-+        //       case Stmt::ChooseExprClass:
-+        //       case Stmt::GNUNullExprClass:
-+
-+        // C++ Expressions.
-+        //       case Stmt::CXXOperatorCallExprClass:
-+        //       case Stmt::CXXMemberCallExprClass:
-+        //       case Stmt::CXXNamedCastExprClass:
-+        //       case Stmt::CXXStaticCastExprClass:
-+        //       case Stmt::CXXDynamicCastExprClass:
-+        //       case Stmt::CXXReinterpretCastExprClass:
-+        //       case Stmt::CXXConstCastExprClass:
-+        //       case Stmt::CXXFunctionalCastExprClass:
-+        //       case Stmt::CXXTemporaryObjectExprClass:
-+        //       case Stmt::CXXTypeidExprClass:
-+        //       case Stmt::CXXBoolLiteralExprClass:
-+        //       case Stmt::CXXThisExprClass:
-+        //       case Stmt::CXXThrowExprClass:
-+        //       case Stmt::CXXDefaultArgExprClass:
-+        //       case Stmt::CXXZeroInitValueExprClass:
-+        //       case Stmt::CXXConditionDeclExprClass:
-+        //       case Stmt::CXXNewExprClass:
-+        //       case Stmt::CXXDeleteExprClass:
-+        //       case Stmt::CXXDependentNameExprClass:
-+        //       case Stmt::UnaryTypeTraitExprClass:
-+        //       case Stmt::QualifiedDeclRefExprClass:
-+
-+        // Obj-C Expressions.
-+        //       case Stmt::ObjCStringLiteralClass:
-+        //       case Stmt::ObjCEncodeExprClass:
-+        //       case Stmt::ObjCMessageExprClass:
-+        //       case Stmt::ObjCSelectorExprClass:
-+        //       case Stmt::ObjCProtocolExprClass:
-+        //       case Stmt::ObjCIvarRefExprClass:
-+        //       case Stmt::ObjCPropertyRefExprClass:
-+        //       case Stmt::ObjCKVCRefExprClass:
-+        //       case Stmt::ObjCSuperExprClass:
-+
-+        // Clang Extensions.
-+        //       case Stmt::OverloadExprClass:
-+        //       case Stmt::ShuffleVectorExprClass:
-+        //       case Stmt::BlockExprClass:
-+        //       case Stmt::BlockDeclRefExprClass:
 +      default:
-+        O << "some_expression(" << S->getStmtClassName() << ")";
++        assert(0 && "not yet implemented");
 +      }
 +    }
++
 +    
-+    // NOTE: Controll does not allways reach this point here for all statements
-+    // and expressions.
-+  }
++    PrologTerm *
++    make_statement_term_wrapped(const Stmt *S) {
++      PrologTerm *t = make_statement_term(S);
 +
-+  void ASTTermDumper::termStmtWrapped(std::ostream &O, const Stmt *S) {
-+    if (!S || dyn_cast<Expr>(S))
-+      O << "expr_statement(";
-+    
-+    termStmt(O, S);
-+    
-+    if (!S || dyn_cast<Expr>(S)) {
-+      O << ", " DAB ", ";
-+      fileInfo(O, S);
-+      O << ")";      
-+    }
-+  }
-+
-+  void ASTTermDumper::termUnaryOperator(std::ostream &O, const Stmt *S) {
-+    const UnaryOperator* UO = cast<UnaryOperator>(S);
-+
-+    switch (UO->getOpcode()) {
-+    case UnaryOperator::PostInc:   O << "plus_plus_op";      break;
-+    case UnaryOperator::PostDec:   O << "minus_minus_op";    break;
-+    case UnaryOperator::PreInc:    O << "plus_plus_op";      break;
-+    case UnaryOperator::PreDec:    O << "minus_minus_op";    break;
-+    case UnaryOperator::AddrOf:    O << "address_of_op";     break;
-+    case UnaryOperator::Deref:     O << "pointer_deref_exp"; break;
-+    case UnaryOperator::Plus:      O << "plus_op";           break;
-+    case UnaryOperator::Minus:     O << "minus_op";          break;
-+    case UnaryOperator::Not:       O << "bit_complement_op"; break;
-+    case UnaryOperator::LNot:      O << "not_op";            break;
-+    case UnaryOperator::Real:      O << "real_op";           break;
-+    case UnaryOperator::Imag:      O << "imag_op";           break;
-+    case UnaryOperator::Extension: O << "extension_op";      break;
-+    case UnaryOperator::OffsetOf:  O << "offset_op";         break;
-+    }
-+
-+    O << "(";
-+    termStmt(O, UO->getSubExpr());
-+    O << ", unary_op_annotation("
-+      << (UO->isPostfix() ? "postfix, " : "prefix, ");
-+    termType(O, UO->getType());
-+    O << ", null, null,";
-+    preprocessingInfo(O);
-+    O<< "), " AIB ", ";
-+    fileInfo(O, S);
-+    O << ")";
-+  }
-+
-+  void ASTTermDumper::termBinaryOperator(std::ostream &O, const Stmt *S) {
-+    const BinaryOperator* BO = cast<BinaryOperator>(S);
-+
-+    switch (BO->getOpcode()) {
-+    case BinaryOperator::Mul:       O <<         "multiply_op"; break;
-+    case BinaryOperator::Div:       O <<           "divide_op"; break;
-+    case BinaryOperator::Rem:       O <<              "mod_op"; break;
-+    case BinaryOperator::Add:       O <<               "add_op"; break;
-+    case BinaryOperator::Sub:       O <<          "subtract_op"; break;
-+    case BinaryOperator::Shl:       O <<            "lshift_op"; break;
-+    case BinaryOperator::Shr:       O <<            "rshift_op"; break;
-+    case BinaryOperator::LT:        O <<        "less_than_op"; break;
-+    case BinaryOperator::GT:        O <<     "greater_than_op"; break;
-+    case BinaryOperator::LE:        O <<    "less_or_equal_op"; break;
-+    case BinaryOperator::GE:        O << "greater_or_equal_op"; break;
-+    case BinaryOperator::EQ:        O <<         "equality_op"; break;
-+    case BinaryOperator::NE:        O <<        "not_equal_op"; break;
-+    case BinaryOperator::And:       O <<          "bit_and_op"; break;
-+    case BinaryOperator::Xor:       O <<          "bit_xor_op"; break;
-+    case BinaryOperator::Or:        O <<           "bit_or_op"; break;
-+    case BinaryOperator::LAnd:      O <<              "and_op"; break;
-+    case BinaryOperator::LOr:       O <<               "or_op"; break;
-+    case BinaryOperator::Assign:    O <<           "assign_op"; break;
-+    case BinaryOperator::MulAssign: O <<      "mult_assign_op"; break;
-+    case BinaryOperator::DivAssign: O <<       "div_assign_op"; break;
-+    case BinaryOperator::RemAssign: O <<       "mod_assign_op"; break;
-+    case BinaryOperator::AddAssign: O <<       "plus_assign_op"; break;
-+    case BinaryOperator::SubAssign: O <<     "minus_assign_op"; break;
-+    case BinaryOperator::ShlAssign: O <<     "lshift_assign_op"; break;
-+    case BinaryOperator::ShrAssign: O <<     "rshift_assign_op"; break;
-+    case BinaryOperator::AndAssign: O <<        "and_assign_op"; break;
-+    case BinaryOperator::XorAssign: O <<        "xor_assign_op"; break;
-+    case BinaryOperator::OrAssign:  O <<        "ior_assign_op"; break;
-+    case BinaryOperator::Comma:     O <<         "comma_op_exp"; break;
-+    }
-+    O << "(";
-+    termStmt(O, BO->getLHS());
-+    O << ", ";
-+    termStmt(O, BO->getRHS());
-+    O << ", binary_op_annotation(";
-+    termType(O, BO->getType());
-+    O << ",";
-+    preprocessingInfo(O);    
-+    O << "), " AIB ", ";
-+    fileInfo(O, BO);
-+    O << ")";
-+  }
-+
-+  void ASTTermDumper::termDeclStmt(std::ostream &O, const Stmt *S) {
-+    const DeclStmt *DS = cast<DeclStmt>(S);
-+
-+    bool first = true;
-+    for(DeclStmt::const_decl_iterator d = DS->decl_begin(),
-+          de = DS->decl_end(); d != de; ++d) {
-+      if (!first)
-+        O << ", ";
-+
-+      termDecl(O, *d);
-+      first = false;
-+    }
-+  }
-+
-+  void ASTTermDumper::termCallExpr(std::ostream &O, const Stmt *S) {
-+    const CallExpr *CE = cast<CallExpr>(S);
-+
-+    O << "function_call_exp(";
-+    termStmt(O,CE->getCallee());
-+    O << ", expr_list_exp([";
-+
-+    bool first = true;
-+    for(CallExpr::const_arg_iterator i = CE->arg_begin(), ie = CE->arg_end();
-+        i != ie; ++i) {
-+      if (!first)
-+        O << ", ";
-+
-+      termStmt(O, *i);
-+      first = false;
-+    }
-+    O << "], " DA ", ";
-+    fileInfo(O, S);
-+    O << "), function_call_exp_annotation(";
-+    termType(O, CE->getType());
-+    O <<", ";
-+    preprocessingInfo(O);
-+    O << "), " AIB ", ";
-+    fileInfo(O, S);
-+    O << ")";
-+  }
-+
-+  void ASTTermDumper::termDeclRefExpr(std::ostream &O, const Stmt *S) {
-+    const DeclRefExpr *DRE = cast<DeclRefExpr>(S);
-+    const Decl *D = DRE->getDecl();
-+
-+    std::string ref_type("");
-+    switch (D->getKind()) {
-+    case Decl::Function:
-+      O << "function_ref_exp("
-+        << "function_ref_exp_annotation("
-+        << declIdentifier(D)
-+        << ", ";
-+      termType(O, cast<FunctionDecl>(D)->getType());
-+      O << ",";
-+      preprocessingInfo(O);
-+      O << "), " AIB ", ";
-+      fileInfo(O, S);
-+      O << ")";      
-+      break;
-+      
-+    case Decl::Var:
-+    case Decl::OriginalParmVar:
-+    case Decl::ImplicitParam:
-+    case Decl::ParmVar:
-+      termVarRefExpr(O, D, DRE->getType(), DRE);
-+      break;
-+    case Decl::EnumConstant:
-+      {
-+        const EnumConstantDecl *ED = cast<EnumConstantDecl>(D);
-+        const llvm::APSInt &val = ED->getInitVal();
-+        O << "int_val(null, value_annotation(" << val.toString(10) << ", " << PPI << "), " AIB ",";
-+        fileInfo(O, S);
-+        O << ")";
-+        break;
++      if (!S || dyn_cast<Expr>(S)) {
++        t =  new PrologCompTerm("expr_statement", 4,
++                                t,
++                                make_default_annotation(),
++                                make_default_analysis_info(),
++                                make_file_info(S));
++        
 +      }
-+    default:
-+      assert(false && "Cannot handle declaration in DeclRefExpr.\n");
++
++      return t;
 +    }
-+  }
-+
-+  void ASTTermDumper::termVarRefExpr(std::ostream &O, const Decl *D,
-+                                     const QualType &T,
-+                                     const Stmt *SL) {
-+    O << "var_ref_exp("
-+      "var_ref_exp_annotation(";
-+    termType(O, T);
-+    O << ", "
-+      << declIdentifier(D)
-+      << ", ";
-+    termStaticStorage(O, D);
-+    O << ", ";
-+    termDeclContext(O, D->getDeclContext());
-+    O << ", ";
-+    preprocessingInfo(O);    
-+    O << "), " AIB ", ";
-+    fileInfo(O, SL);
-+    O << ")";
-+  }
-+
-+  /***************************************************************************
-+   * Misc                                                                    *
-+   **************************************************************************/
-+  std::string ASTTermDumper::declIdentifier(const Decl *D, const char* prefix /*=""*/) {
-+    const NamedDecl *V;
-+    const IdentifierInfo *I;    
-+    assert(D && "identifier information expected");
-+    std::string s(prefix);
-+
-+    if((V = cast<NamedDecl>(D)) != NULL && (I = V->getIdentifier()) != NULL){
-+      s += I->getName();
++    
++    ////////////////////////////////////////////////////////
++    // global file handling
++    
++    void
++    HandleNewFile(const std::string &fileName, bool first) {
++      //start a new file 
++      current_source_file = fileName;
++      current_declaration_list = new PrologList();
 +    }
-+    else {
-+      std::ostringstream O;
-+      std::string kind(D->getDeclKindName());
-+      std::transform(kind.begin(), kind.end(), kind.begin(), tolower);      
-+      O << "__anonymous_" << kind << "_decl";
 +
-+      //do we have source information?
-+      const SourceLocation Loc = D->getLocation();
-+      SourceLocation SpellingLoc = SM->getSpellingLoc(Loc);
-+      if(!SpellingLoc.isInvalid()) {
-+        PresumedLoc PLoc = SM->getPresumedLoc(SpellingLoc);
-+        std::string file(std::string("/") +  PLoc.getFilename());
-+        file = file.substr(file.rfind("/") + 1);
-+        std::transform(file.begin(), file.end(), file.begin(), tolower);
-+        O << "_" << filter_string(file) << "_" << PLoc.getLine() << "_" << PLoc.getColumn();
-+      }
-+      O << "_" << D;
-+      s+= O.str();
++    //called by the driver after a file has been processed
++    virtual void OnFileEnd() {
++      file_list.addElement(make_file_term());
 +    }
-+    return quote(s);
-+  }
++    
++    //called by the driver for the very first file
++    virtual void
++    OnFirstFile(const char* fileName) {
++      HandleNewFile(fileName, true);
++    }
++    
++    //called by the driver for every file but the very first one
++    virtual void
++    OnNewFile(const char *fileName) {
++      HandleNewFile(fileName, false);
++    }
++    
++    //called by the driver for the very last file
++    virtual void
++    OnLastFile() {
++      PrologTerm *project = make_project_term();
++      static std::ostream& out = get_output_stream();
++      out << project->getRepresentation() << ".";
++      if (&out != &std::cout && &out != &std::cerr)
++        delete &out;
++    }
++    
++    virtual void
++    HandleTopLevelDecl(Decl *D) {
++      current_declaration_list->addElement(make_declaration_term(D));
++      if (D->getNextDeclarator())
++        HandleTopLevelDecl(D->getNextDeclarator());
++    }
++
++  };
++
++  PrologList ASTTermDumper::file_list;
 +  
-+  void ASTTermDumper::termInitializedName(std::ostream &O, const Decl *D) {
-+    const NamedDecl *V = cast<NamedDecl>(D);
-+
-+    const Expr* init = NULL;
-+    QualType type(getQualType(V));
-+    if (VarDecl::classof(V)) {
-+      const VarDecl *VD = cast<VarDecl>(V);
-+      init = VD->getInit();
-+    }
-+    else if (EnumConstantDecl::classof(V)) {
-+      const EnumConstantDecl *ED = cast<EnumConstantDecl>(V);
-+      init = ED->getInitExpr();
-+    }
-+
-+    // If this is a vardecl with an initializer, emit it.
-+    O << "initialized_name(";
-+    if (init) {
-+      termInitializer(O , init);
-+    }
-+    else
-+      O << "null";
-+
-+    O << ", initialized_name_annotation(";
-+    if (type.isNull())
-+      O << "null";
-+    else
-+      termType(O, type);
-+
-+    O << ", " << declIdentifier(D) << ", ";
-+    termStaticStorage(O, V);
-+    O << ", ";
-+    termDeclContext(O, V->getDeclContext());
-+    O << "), " AIB ", ";
-+    fileInfo(O, D);
-+    O << ")";
-+  }
-+
-+  void ASTTermDumper::termInitializer(std::ostream &O, const Stmt *S) {
-+    const Expr *E = dyn_cast<Expr>(S);
-+
-+    bool is_aggregate = E && (E->getType()->isRecordType() ||
-+                              E->getType()->isArrayType());
-+
-+    if (is_aggregate)
-+      O << "aggregate_initializer(";
-+    else
-+      O << "assign_initializer(";
-+
-+    termStmt(O, S);
-+
-+    if (!is_aggregate) {
-+      O << ", assign_initializer_annotation(";
-+      if (E)
-+        termType(O, E->getType());
-+      else
-+        O << "null";
-+
-+      O << ", ";
-+      preprocessingInfo(O);
-+      
-+      O << "), " AIB ", ";
-+    }
-+    else {
-+      O << ", " DA ", ";
-+    }
-+    fileInfo(O, S);
-+    O << ")";
-+  }
-+
-+  void ASTTermDumper::termStaticStorage(std::ostream &O, const Decl *D) {
-+    const VarDecl *V = dyn_cast<VarDecl>(D);
-+    const FunctionDecl *F = dyn_cast<FunctionDecl>(D);
-+    bool isStatic = (V && V->getStorageClass() == VarDecl::Static) ||
-+      (F && F->getStorageClass() == FunctionDecl::Static);
-+
-+    O << (isStatic ? "static" : "default");
-+  }
-+
-+
-+  void ASTTermDumper::termAccessModifier(std::ostream &O, const Decl *D) {
-+    switch (D->getAccess()) {
-+    case AS_none:      O << "default"; break;
-+    case AS_public:    O << "public"; break;
-+    case AS_protected: O << "protected"; break;
-+    case AS_private:   O << "private"; break;
-+    }
-+  }
-+
-+  void ASTTermDumper::termStorageModifier(std::ostream &O, const Decl *D) {
-+    // Translate Storage classes
-+    if (const VarDecl *V = dyn_cast<VarDecl>(D)) {
-+      switch (V->getStorageClass()) {
-+      case VarDecl::None:     O << "default"; break;
-+      case VarDecl::Extern:   O << "extern"; break;
-+      case VarDecl::Static:   O << "static"; break;
-+      case VarDecl::Auto:     O << "auto"; break;
-+      case VarDecl::Register: O << "register"; break;
-+      case VarDecl::PrivateExtern:   O << "privateExtern"; break;
-+        // TODO: will never be used for clang?
-+        //unparse_storage_modifier(7) :- !, write('mutable ').
-+        //unparse_storage_modifier(8) :- !, write('typedef ').
-+        //unparse_storage_modifier(9) :- !, write('asm ').
-+      }
-+    }
-+    else if (const FunctionDecl *F = dyn_cast<FunctionDecl>(D)) {
-+      switch (F->getStorageClass()) {
-+      case FunctionDecl::None:     O << "default"; break;
-+      case FunctionDecl::Extern:   O << "extern"; break;
-+      case FunctionDecl::Static:   O << "static"; break;
-+      case FunctionDecl::PrivateExtern:   O << "privateExtern"; break;
-+        // TODO: will never be used for clang?
-+        //unparse_storage_modifier(7) :- !, write('mutable ').
-+        //unparse_storage_modifier(8) :- !, write('typedef ').
-+        //unparse_storage_modifier(9) :- !, write('asm ').
-+      }
-+    }
-+    else if (dyn_cast<FieldDecl>(D)) {
-+      O << "default";
-+    }
-+    else
-+      assert(0 && "Unknown decl type!");
-+  }
-+
-+  void ASTTermDumper::termModifier(std::ostream &O, const Decl *D) {
-+    // TODO: dump real values here - text version prefered
-+    O << "declaration_modifier("
-+      // TODO: find these modifiers in clang.
-+      // e_unknown    Unknown value (error)
-+      // e_default    Default value
-+      // e_friend    Friend qualifier
-+      // e_typedef    Typedef qualifier (not clear if this is used, I don't think typedef is a modifier)
-+      // e_export    Export qualifier
-+      // e_throw    Exception handling support (throw)
-+      // e_bind    Fortran bind attribute for declarations (functions, variable, and classes)
-+      // e_final    PHP support for specification to not be extended (should be useful for Java, if required in the future)
-+      "[default],";
-+    termTypeModifier(O, D);
-+    O << ", ";
-+    termAccessModifier(O, D);
-+    O << ", ";
-+    termStorageModifier(O, D);
-+    O << ")";
-+  }
-+
-+  void ASTTermDumper::termTypeModifier(std::ostream &O, const Decl *D) {
-+    QualType type(getQualType(D));
-+    assert(!type.isNull());
-+
-+    O << "type_modifier(";
-+
-+    // -------------------------
-+    AtomSetStream Q(O);
-+    Q << "default";
-+
-+    if (type.isRestrictQualified())
-+      Q << "restrict";
-+
-+    // TODO: fortran specific
-+    //     // Fortran specific modifiers (in Fortran these are called attribute specifiers)
-+    //     // Note that public and private access attributes are mapped to the C/C++ access modifiers in SgDeclarationModifier
-+    //     "public_access",  // = 3, /*!< public qualifier (for Fortran 90) */
-+    //     "private_access", // = 4, /*!< private qualifier (for Fortran 90) */
-+    //     "allocatable",    // = 3, /*!< allocatable attribute specifier (for Fortran 90) */
-+    //     "asynchronous",   // = 4, /*!< asynchronous attribute specifier (for Fortran 2003) */
-+    //     "bind", // = 5, /*!< bind attribute specifier (for Fortran 2003, this is closely related to the SgLinkageModifier) */
-+    //     "data", // = 6, /*!< data attribute specifier (for Fortran 77) */
-+    //     "dimension", // = 7, /*!< dimension attribute specifier (for Fortran 77) */
-+    //     // This should map to the C/C++ extern modifier in SgStorageModifier
-+    //     //"external       ", // = x, /*!< external attribute specifier (for Fortran 77, this is less related to the SgLinkageModifier than the SgStorageModifier) */
-+    //     "intent_in",    // = 8, /*!< intent(in) attribute specifier (for Fortran 90) */
-+    //     "intent_out",   // = 9, /*!< intent(out) attribute specifier (for Fortran 90) */
-+    //     "intent_inout", // = 10,/*!< intent(inout) attribute specifier (for Fortran 90) */
-+    //     "intrinsic",    // = 11,/*!< intrinsic attribute specifier (for Fortran 90) */
-+    //     "optional",     // = 12,/*!< optional attribute specifier (for Fortran 90) */
-+    //     // This should map to const in the SgConstVolatileModifier
-+    //     //"parameter      ", // = xx,/*!< parameter attribute specifier (for Fortran 77) */
-+    // 
-+    //     // This should be mapped to the SgPointerType in C/C++
-+    //     //"pointer        ", // = xx,/*!< pointer attribute specifier (for Fortran 90) */
-+    //     // Note that protected access attribute is mapped to the C/C++ protected access modifiers in SgDeclarationModifier
-+    //     //"protected      ", // = xx,/*!< protected attribute specifier (for Fortran 2003) */
-+    //     "save",   // = 13,/*!< save attribute specifier (for Fortran 77) */
-+    //     "target", // = 14,/*!< target attribute specifier (for Fortran 90) */
-+    //     "value",  // = 15,/*!< value attribute specifier (for Fortran 2003) */
-+    //     // This should map to volatile in the SgConstVolatileModifier
-+    //     //"volatile       ", // = xx,/*!< volatile attribute specifier (for Fortran 2003) */
-+
-+    // DQ (12/4/2007): Added support for GNU specific attributes
-+    if (D->getAttr<UnusedAttr>())
-+      Q << "gnu_attribute__unused__";
-+
-+    if (D->getAttr<PackedAttr>())
-+      Q << "gnu_attribute__packed__";
-+
-+    if (D->getAttr<DeprecatedAttr>())
-+      Q << "gnu_attribute__deprecated__";
-+
-+    if (D->getAttr<TransparentUnionAttr>())
-+      Q << "gnu_attribute__transparent_union__";
-+
-+    if (D->getAttr<NoReturnAttr>())
-+      Q << "gnu_attribute__noreturn__";
-+
-+    if (D->getAttr<ConstAttr>())
-+      Q << "gnu_attribute__const__";
-+
-+    if (D->getAttr<PackedAttr>())
-+      Q << "gnu_attribute__cdecl__";
-+
-+    if (D->getAttr<StdCallAttr>())
-+      Q << "gnu_attribute__stdcall__";
-+
-+    // TODO: lots of other attributes in clang available
-+
-+    Q.close();
-+
-+    // -------------------------
-+    // TODO: find equivalent in clang
-+    //  e_default    default value
-+    //  e_upc_strict    UPC strict
-+    //  e_upc_relaxed    UPC relaxed
-+    //  e_last_modifier    last value (upper bound on range of values, used in error checking)
-+    O << ", default, ";
-+
-+    // -------------------------
-+    if (type.isConstQualified())
-+      O << "const, ";
-+    else if (type.isVolatileQualified())
-+      O << "volatile, ";
-+    else
-+      O << "default, ";
-+
-+    // -------------------------
-+    if (type->isClassType())
-+      O << "class";
-+    else if (type->isStructureType())
-+      O << "struct";
-+    else if (type->isUnionType())
-+      O << "union";
-+    else if (type->isEnumeralType())
-+      O << "enum";
-+    else if (type->isTemplateTypeParmType())
-+      O << "typename";
-+    else
-+      O << "default";
-+
-+    O << ")";
-+  }
-+
-+  void ASTTermDumper::termTypeModifier(std::ostream &O, const QualType T) {
-+    O << "type_modifier(";
-+
-+    // -------------------------
-+    AtomSetStream Q(O);
-+    Q << "default";
-+    
-+    if (T.isRestrictQualified())
-+      Q << "restrict";
-+
-+    // TODO: fortran specific
-+    //     // Fortran specific modifiers (in Fortran these are called attribute specifiers)
-+    //     // Note that public and private access attributes are mapped to the C/C++ access modifiers in SgDeclarationModifier
-+    //     "public_access",  // = 3, /*!< public qualifier (for Fortran 90) */
-+    //     "private_access", // = 4, /*!< private qualifier (for Fortran 90) */
-+    //     "allocatable",    // = 3, /*!< allocatable attribute specifier (for Fortran 90) */
-+    //     "asynchronous",   // = 4, /*!< asynchronous attribute specifier (for Fortran 2003) */
-+    //     "bind", // = 5, /*!< bind attribute specifier (for Fortran 2003, this is closely related to the SgLinkageModifier) */
-+    //     "data", // = 6, /*!< data attribute specifier (for Fortran 77) */
-+    //     "dimension", // = 7, /*!< dimension attribute specifier (for Fortran 77) */
-+    //     // This should map to the C/C++ extern modifier in SgStorageModifier
-+    //     //"external       ", // = x, /*!< external attribute specifier (for Fortran 77, this is less related to the SgLinkageModifier than the SgStorageModifier) */
-+    //     "intent_in",    // = 8, /*!< intent(in) attribute specifier (for Fortran 90) */
-+    //     "intent_out",   // = 9, /*!< intent(out) attribute specifier (for Fortran 90) */
-+    //     "intent_inout", // = 10,/*!< intent(inout) attribute specifier (for Fortran 90) */
-+    //     "intrinsic",    // = 11,/*!< intrinsic attribute specifier (for Fortran 90) */
-+    //     "optional",     // = 12,/*!< optional attribute specifier (for Fortran 90) */
-+    //     // This should map to const in the SgConstVolatileModifier
-+    //     //"parameter      ", // = xx,/*!< parameter attribute specifier (for Fortran 77) */
-+    // 
-+    //     // This should be mapped to the SgPointerType in C/C++
-+    //     //"pointer        ", // = xx,/*!< pointer attribute specifier (for Fortran 90) */
-+    //     // Note that protected access attribute is mapped to the C/C++ protected access modifiers in SgDeclarationModifier
-+    //     //"protected      ", // = xx,/*!< protected attribute specifier (for Fortran 2003) */
-+    //     "save",   // = 13,/*!< save attribute specifier (for Fortran 77) */
-+    //     "target", // = 14,/*!< target attribute specifier (for Fortran 90) */
-+    //     "value",  // = 15,/*!< value attribute specifier (for Fortran 2003) */
-+    //     // This should map to volatile in the SgConstVolatileModifier
-+    //     //"volatile       ", // = xx,/*!< volatile attribute specifier (for Fortran 2003) */
-+
-+    Q.close();
-+
-+    // -------------------------
-+    // TODO: find equivalent in clang
-+    //  e_default    default value
-+    //  e_upc_strict    UPC strict
-+    //  e_upc_relaxed    UPC relaxed
-+    //  e_last_modifier    last value (upper bound on range of values, used in error checking)
-+    O << ", default, ";
-+
-+    // -------------------------
-+    if (T.isConstQualified())
-+      O << "const, ";
-+    else if (T.isVolatileQualified())
-+      O << "volatile, ";
-+    else
-+      O << "default, ";
-+
-+    // -------------------------
-+    if (T->isClassType())
-+      O << "class";
-+    else if (T->isStructureType())
-+      O << "struct";
-+    else if (T->isUnionType())
-+      O << "union";
-+    else if (T->isEnumeralType())
-+      O << "enum";
-+    else if (T->isTemplateTypeParmType())
-+      O << "typename";
-+    else
-+      O << "default";
-+
-+    O << ")";
-+  }
-+
-+  void ASTTermDumper::termDeclAttributes(std::ostream &O, const Decl *D) {
-+    // TODO: real values here
-+    O << "decl_attributes(0, 0, 0, 0, 0)";
-+  }
-+
-+  void ASTTermDumper::termDeclContext(std::ostream &O, const DeclContext *C) {
-+    switch (C->getDeclKind()) {
-+    case Decl::Namespace:
-+      O << declIdentifier(cast<NamespaceDecl>(C));
-+      break;
-+    case Decl::Record:
-+      if (const RecordDecl *RD = dyn_cast<RecordDecl>(C)) {
-+        if(RD->getKind() == Decl::Enum && !RD->getIdentifier()) {
-+          //mimic the bahaviour of the ROSE implementation here
-+          O << "::";
-+        }
-+        else {
-+          O << "class_scope("
-+            << declIdentifier(RD, "::")
-+            << ", " << RD->getKindName() << ")";          
-+        }
-+        break;
-+      }
-+    default:
-+      O << "null";
-+    }
-+  }
-+}
++} //end of anonymous namespace
 +
 +ASTConsumer *clang::CreateASTTermDumper(const std::string &infile,
 +                                        const std::string &outfile,
@@ -2477,6 +1945,1056 @@ Index: Driver/TermDumper.cpp
 +  return new ASTTermDumper(infile, outfile, PP);
 +}
 +
+Index: Driver/clang.cpp
+===================================================================
+--- Driver/clang.cpp	(revision 63505)
++++ Driver/clang.cpp	(working copy)
+@@ -83,6 +83,7 @@
+   EmitHTML,                     // Translate input source into HTML.
+   ASTPrint,                     // Parse ASTs and print them.
+   ASTDump,                      // Parse ASTs and dump them.
++  ASTTermDump,                  // Parse ASTs and dump them in TERMITE format.
+   ASTView,                      // Parse ASTs and view them in Graphviz.
+   PrintDeclContext,             // Print DeclContext and their Decls.
+   TestSerialization,            // Run experimental serialization code.
+@@ -124,6 +125,8 @@
+                         "Build ASTs and then pretty-print them"),
+              clEnumValN(ASTDump, "ast-dump",
+                         "Build ASTs and then debug dump them"),
++			 clEnumValN(ASTTermDump, "emit-term",
++                        "Build ASTs and then export them in the TERMITE format"),
+              clEnumValN(ASTView, "ast-view",
+                         "Build ASTs and view them with GraphViz"),
+              clEnumValN(PrintDeclContext, "print-decl-contexts",
+@@ -490,12 +493,12 @@
+                        llvm::cl::desc("Disallow implicit conversions between "
+                                       "vectors with a different number of "
+                                       "elements or different element types"));
++
+ static llvm::cl::opt<bool>
+-EnableBlocks("fblocks", llvm::cl::desc("enable the 'blocks' language feature"), llvm::cl::ValueDisallowed);
++EnableBlocks("fblocks", llvm::cl::desc("enable the 'blocks' language feature"),
++             llvm::cl::ValueDisallowed, llvm::cl::AllowInverse,
++             llvm::cl::ZeroOrMore);
+ 
+-static llvm::cl::inverse_opt
+-DisableBlocks("fno-blocks", llvm::cl::opposite_of(EnableBlocks), llvm::cl::ValueDisallowed);
+-
+ static llvm::cl::opt<bool>
+ ObjCNonFragileABI("fobjc-nonfragile-abi", llvm::cl::desc("enable objective-c's nonfragile abi"));
+ 
+@@ -623,7 +626,7 @@
+   if (NoLaxVectorConversions.getPosition())
+       Options.LaxVectorConversions = 0;
+   Options.Exceptions = Exceptions;
+-  if (EnableBlocks.getPosition() || DisableBlocks.getPosition())
++  if (EnableBlocks.getPosition())
+     Options.Blocks = EnableBlocks;
+ 
+   // Override the default runtime if the user requested it.
+@@ -1272,6 +1275,9 @@
+     case ASTDump:
+       return CreateASTDumper();
+       
++    case ASTTermDump:
++      return CreateASTTermDumper(InFile, OutputFile, PP);
++      
+     case ASTView:
+       return CreateASTViewer();   
+ 
+@@ -1329,7 +1335,8 @@
+ /// ProcessInputFile - Process a single input file with the specified state.
+ ///
+ static void ProcessInputFile(Preprocessor &PP, PreprocessorFactory &PPF,
+-                             const std::string &InFile, ProgActions PA) {
++                             const std::string &InFile, ProgActions PA,
++                             bool IsFirstFile, bool IsLastFile) {
+   llvm::OwningPtr<ASTConsumer> Consumer;
+   bool ClearSourceMgr = false;
+   
+@@ -1433,7 +1440,19 @@
+                                            /* FreeMemory = */ false);
+       TU = new TranslationUnit(*Context);
+     }
++
++    //this allows to dump prolog and epilog for a whole program representation
++    if(IsFirstFile)
++      Consumer->OnFirstFile(InFile.c_str());    
++    else
++      Consumer->OnNewFile(InFile.c_str());
++    
+     ParseAST(PP, Consumer.get(), TU, Stats);
++
++    Consumer->OnFileEnd();
++    
++    if(IsLastFile)
++      Consumer->OnLastFile();
+   }
+ 
+   if (VerifyDiagnostics)
+@@ -1629,7 +1648,7 @@
+         Diags.setClient(TextDiagClient);
+ 
+       // Process the source file.
+-      ProcessInputFile(*PP, PPFactory, InFile, PCH ? GeneratePCH : ProgAction);
++      ProcessInputFile(*PP, PPFactory, InFile, PCH ? GeneratePCH : ProgAction, i == 0, i == e - 1);
+       
+       HeaderInfo.ClearFileInfo();      
+     }
+Index: Driver/termite/termite.h
+===================================================================
+--- Driver/termite/termite.h	(revision 0)
++++ Driver/termite/termite.h	(revision 0)
+@@ -0,0 +1,30 @@
++/* -*- C++ -*-
++ * Copyright 2008 Adrian Prantl <adrian@complang.tuwien.ac.at>
++ *
++ * Configures the TERMITE term representation.
++ */
++
++#ifndef __TERMITE_H__
++#define __TERMITE_H__
++
++// #ifndef HAVE_SWI_PROLOG
++// #define HAVE_SWI_PROLOG 1
++// #endif
++
++#define DEBUG_TERMITE 0
++
++#include "PrologTerm.h"
++#include "PrologCompTerm.h"
++#include "PrologList.h"
++#include "PrologAtom.h"
++#include "PrologInt.h"
++#include "PrologVariable.h"
++
++// Defines wether Terms start with "Sg"
++#define SG_PREFIX ""
++//#define SG_PREFIX "Sg"
++
++// if enabled, use int_val(...) instead of unary_node(intval, ...)
++#define COMPACT_TERM_NOTATION
++
++#endif
+Index: Driver/termite/PrologCompTerm.h
+===================================================================
+--- Driver/termite/PrologCompTerm.h	(revision 0)
++++ Driver/termite/PrologCompTerm.h	(revision 0)
+@@ -0,0 +1,203 @@
++/* -*- C++ -*-
++Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
++     2007-2008 Adrian Prantl <adrian@complang.tuwien.ac.at>
++*/
++#ifndef PROLOGCOMPTERM_H_
++#define PROLOGCOMPTERM_H_
++#include "PrologTerm.h"
++#include <assert.h>
++#include <stdarg.h>
++
++#if !HAVE_SWI_PROLOG
++
++/// Representation of a compound prolog term .
++class PrologCompTerm : public PrologTerm {
++public:
++  ~PrologCompTerm() {};
++  /// Creates a compound term with the given name. no subterms added yet.
++  
++  PrologCompTerm(std::string name) : mName(name) {};
++
++  PrologCompTerm(std::string name, size_t n, ...) : mName(name) {
++    if(n > 0) {
++      va_list params;
++      va_start(params, n);
++      for (size_t i=0; i < n; i++)
++        addSubterm(va_arg(params, PrologTerm *));
++      va_end(params);
++    }
++  }
++  
++  int getArity() { return mSubterms.size(); };
++  bool isGround() {
++    bool ground = true;
++    std::vector<PrologTerm*>::iterator it;
++    it = mSubterms.begin();
++    while (it != mSubterms.end()) {
++      ground = ground && (*it)->isGround();
++      it++;
++    }
++    return ground;
++  };
++
++  /// Get the Functor
++  std::string getName() { return mName; };
++  std::string getRepresentation() {
++    /*Pattern: name(...all subterms separated by commas..) */
++    std::string rep = getName();
++    rep += "(";
++    std::vector<PrologTerm*>::iterator it;
++    it = mSubterms.begin();
++    // append the representation of all subterms
++    while (it != mSubterms.end()) {
++      rep = rep + (*it)->getRepresentation();
++      // all but the last subterm are followed by a comma
++      if(++it != mSubterms.end()) rep += ",";
++    }
++    rep += ")";
++    return rep;
++  };
++
++  std::vector<PrologTerm *> getSubTerms() { return mSubterms; };
++
++
++  /// Add a subterm at the first position
++  void addFirstSubTerm(PrologTerm* t) {mSubterms.insert(mSubterms.begin(),t);};
++
++  /// Add a subterm at the last position
++  void addSubterm(PrologTerm* t) {mSubterms.push_back(t);};
++
++  /// the i-th subterm
++  PrologTerm* at(int i) {return mSubterms.at(i);};
++protected:
++  /// the name of the terms
++  std::string mName;
++  /// list of the subterms
++  std::vector<PrologTerm *> mSubterms;
++};
++
++class PrologInfixOperator : public PrologCompTerm {
++public:
++  ~PrologInfixOperator() {};
++  /// Creates a compound term with the given name. no subterms added yet.
++  PrologInfixOperator(std::string name) : PrologCompTerm(name) {};
++  std::string getRepresentation() {
++    assert(mSubterms.size() == 2);
++    return mSubterms[0]->getRepresentation() + getName() + mSubterms[1]->getRepresentation();
++  }
++};
++
++#else
++
++// The SWI Prolog implementation generates the term_t delayed, on the
++// first read. Afterwards addSubTerms will fail!
++class PrologCompTerm : public PrologTerm {
++public:
++  ~PrologCompTerm() {
++    //PL_unregister_atom(term);
++  }
++
++  PrologCompTerm(term_t t) : PrologTerm(t) {
++  };
++
++  /// Creates a compound term with the given name. no subterms added yet.
++  PrologCompTerm(std::string functor) {
++    term = PL_new_term_ref();
++    PL_put_atom_chars(term, functor.c_str());
++#   if DEBUG_TERMITE
++      std::cerr<<"CompTerm: PL_new_atom('"<<functor<<"') ="<<term<<std::endl;
++#   endif
++  }
++
++  /// return a list of successors
++  std::vector<PrologTerm*> getSubTerms()  {
++    std::vector<PrologTerm *> mSubterms;
++    int arity = getArity();
++    for(int n = 1; n <= arity; n++) { 
++      term_t arg = PL_new_term_ref();
++      PL_get_arg(n, term, arg);
++      mSubterms.push_back(newPrologTerm(arg));
++    }
++    return mSubterms;
++  }
++
++  /// Add a subterm at the first position
++  void addFirstSubTerm(PrologTerm* t) {
++#   if DEBUG_TERMITE
++      std::cerr<<display(term)<<" . addFirstSubTerm("
++	       <<t->getRepresentation()<<");"<<std::endl;
++#   endif
++
++    term_t old_term = term;
++    int arity;
++    atom_t name;
++    if (PL_get_atom(old_term, &name)) { // still arity 0
++      arity = 0;
++    } else {
++	PL_get_name_arity(old_term, &name, &arity);
++    }
++
++    // Construct a new, bigger term
++    term_t args = PL_new_term_refs(arity+1);
++    PL_put_variable(args);
++    for(int n = 1; n <= arity; n++)
++      assert(PL_get_arg(n, old_term, args+n));
++
++    term = PL_new_term_ref();
++    PL_cons_functor_v(term, PL_new_functor(name, arity+1), args); 
++    assert(PL_unify_arg(1, term, t->getTerm()));
++
++#   if DEBUG_TERMITE
++      std::cerr<<" --> "<<display(term)<<" !"<<std::endl;
++#   endif
++  }
++
++  /// Add a subterm at the last position
++  void addSubterm(PrologTerm* t) {
++#   if DEBUG_TERMITE
++      std::cerr<<display(term)<<"  addSubterm("<<t->getRepresentation()<<");"
++	       <<std::endl;
++#   endif
++
++    term_t old_term = term;
++    int arity;
++    term_t name;
++    if (PL_get_atom(old_term, &name)) { // still arity 0
++      arity = 0;
++    } else {
++      PL_get_name_arity(old_term, &name, &arity);
++    }
++
++    // Construct a new, bigger term
++    term_t args = PL_new_term_refs(arity+1);
++    for(int n = 0; n < arity; n++)
++      assert(PL_get_arg(n+1, old_term, args+n));
++    PL_put_variable(args+arity);
++
++    term = PL_new_term_ref();
++    PL_cons_functor_v(term, PL_new_functor(name, arity+1), args); 
++
++    assert(PL_unify_arg(arity+1, term, t->getTerm()));
++
++#   if DEBUG_TERMITE
++      std::cerr<<" --> "<<display(term)<<" !"<<std::endl;
++#   endif
++  }
++
++  /// the i-th subterm
++  PrologTerm* at(int i) {      
++    term_t arg = PL_new_term_ref();
++    PL_get_arg(i+1, term, arg);
++    return newPrologTerm(arg);
++  }
++};
++
++class PrologInfixOperator : public PrologCompTerm {
++public:
++  PrologInfixOperator(std::string name) : PrologCompTerm(name) {};
++};
++
++
++#endif
++
++#endif
+Index: Driver/termite/PrologTerm.h
+===================================================================
+--- Driver/termite/PrologTerm.h	(revision 0)
++++ Driver/termite/PrologTerm.h	(revision 0)
+@@ -0,0 +1,259 @@
++/* -*- C++ -*-
++Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
++          2008 Adrian Prantl <adrian@complang.tuwien.ac.at>
++*/
++#ifndef PROLOGTERM_H_
++#define PROLOGTERM_H_
++#include <vector>
++#include <string>
++#include <memory>
++#include <iostream>
++#include <ctype.h>
++#include <assert.h>
++
++#ifndef __TERMITE_H__
++#  error "Please do not include this file directly. Use termite.h instead."
++#endif
++
++bool init_termite(int argc, char **argv, bool interactive=false);
++
++#if !HAVE_SWI_PROLOG
++
++#include <iomanip>
++#include <string>
++#include <sstream>
++
++/// Representation of a prolog term
++class PrologTerm {
++ public:
++  virtual ~PrologTerm() {};
++  /// returns the arity of the term
++  virtual int getArity() = 0;
++  /// returns whether or not the term is a ground term, i.e. contains
++  /// no variables.
++  /** Note that this is the case iff all the subterms are ground. */
++  virtual bool isGround() = 0;
++  /// Gets the name (functor/variable/constant) of the term. 
++  /* numbers are represented as strings and therefore returned as such */
++  virtual std::string getName() = 0;
++  /// the actual prolog term that is represented by this object
++  virtual std::string getRepresentation() = 0;
++
++  /// Properly quote and escape an atom if necessary
++  static std::string quote(const std::string atom) {
++    std::string s = escape(atom);
++    if (atom.length() == 0) return "''";
++    if (((atom.length() > 0) && (!islower(atom[0])) && (!isdigit(atom[0])))
++	|| needs_quotes(atom)) {
++      s = "'" + s + "'";
++      return s;
++    } else if (is_reserved_operator(atom)) {
++      s = "(" + s + ")";
++      return s;
++    }
++    return s;
++  }
++
++protected:
++
++  static bool is_reserved_operator(const std::string s) {
++    return s == "volatile";
++  }
++
++  static bool needs_quotes(const std::string s) {
++    if (s.length() == 0) 
++      return true;
++
++    bool alldigits = isdigit(s[0]);
++    for (std::string::const_iterator c = s.begin();
++	 c != s.end(); ++c) {
++
++      if (alldigits) {
++	if (!isdigit(*c))
++	  return true;
++	else continue;
++      }
++
++      if (!islower(*c) && !isupper(*c) && 
++	  !(*c == '_'))
++	return true;
++    }
++    return false;
++  }
++
++  // Escape non-printable characters
++  static std::string escape(std::string s) {
++    std::string r;
++    for (unsigned int i = 0; i < s.length(); ++i) {
++      unsigned char c = s[i];
++      switch (c) {
++      case '\\': r += "\\\\"; break; // Literal backslash
++      case '\"': r += "\\\""; break; // Double quote
++      case '\'': r += "\\'"; break;  // Single quote
++      case '\n': r += "\\n"; break;  // Newline (line feed)
++      case '\r': r += "\\r"; break;  // Carriage return
++      case '\b': r += "\\b"; break;  // Backspace
++      case '\t': r += "\\t"; break;  // Horizontal tab
++      case '\f': r += "\\f"; break;  // Form feed
++      case '\a': r += "\\a"; break;  // Alert (bell)
++      case '\v': r += "\\v"; break;  // Vertical tab
++      default:
++	if (c < 32 || c > 127) {
++	  std::stringstream strm;
++	  strm << '\\' 
++	       << std::oct 
++	       << std::setfill('0') 
++	       << std::setw(3) 
++	       << (unsigned int)c // \nnn Character with octal value nnn
++	       << '\\'; // Prolog expects this weird syntax with a
++			// trailing backslash
++	  r += strm.str();
++	} else {
++	  r += c;
++	}
++      }
++    }
++    //cerr<<"escape("<<s<<") = "<< r <<endl;
++    return r;
++  }
++
++
++};
++
++#else
++
++# include <SWI-Prolog.h>
++# ifdef NORETURN
++#   undef NORETURN // incompatability with the PAG headers
++# endif
++# ifdef TRUE
++#   undef TRUE // incompatability with the ROSE headers
++# endif
++# ifdef FALSE
++#   undef FALSE // incompatability with the ROSE headers
++# endif
++
++# include <deque>
++# include <sstream>
++
++
++/// Representation of a prolog term
++class PrologTerm {
++ public:
++  PrologTerm() :term(PL_new_term_ref()) {
++#   if DEBUG_TERMITE
++      std::cerr<<"UNINIT"<<std::endl;
++#   endif
++  }
++  PrologTerm(term_t t) : term(PL_copy_term_ref(t)) { 
++#   if DEBUG_TERMITE
++      std::cerr<<"new PrologTerm("<<display(t)<<")"<<std::endl;
++#   endif
++  }
++
++  virtual ~PrologTerm() {
++    // Free all children that were generated on-the-fly
++    // TODO: replace this with some sorrt of smart pointer
++    for (std::deque<PrologTerm*>::iterator p = garbage_bin.begin(); 
++	 p != garbage_bin.end(); ++p)
++      delete *p;
++  }
++  /// returns the arity of the term
++  virtual int getArity() { 
++    int arity = 0;
++    if (PL_term_type(term) == PL_TERM) {
++      term_t name;
++      PL_get_name_arity(term, &name, &arity);
++    }
++    return arity;
++  }
++  /// returns whether or not the term is a ground term, i.e. contains
++  /// no variables.
++  virtual bool isGround() { return PL_is_ground(term); }
++
++  /// Gets the name (functor/variable/constant) of the term. 
++  /* numbers are represented as strings and therefore returned as such */
++  virtual std::string getName() {
++    char *s;
++    if (PL_get_atom_chars(term, &s))
++      return std::string(s);
++
++    int arity;
++    atom_t name;
++    PL_get_name_arity(term, &name, &arity);
++    return std::string(PL_atom_chars(name));
++  }
++  /// the actual prolog term that is represented by this object
++  virtual std::string getRepresentation() { return display(term); }
++
++  /// Properly quote an atom if necessary
++  static std::string quote(const char* s) {
++    return std::string(PL_quote('\'', s));
++  }
++
++  /// return the SWI-Prolog term
++  term_t getTerm() { return term; }
++
++  // Create a new PrologTerm from a real Prolog Atom
++  static PrologTerm *wrap_PL_Term(term_t t);
++
++protected:
++
++  term_t term; // The "real" prolog term
++
++  static std::string display(term_t t)
++  { 
++    // this should be more efficient than 
++    // chars_to_term("with_output_to(string(S),write_term(T,[quoted(true)]))",X)
++    fid_t fid = PL_open_foreign_frame();
++    term_t T		  = PL_copy_term_ref(t);
++    term_t a0 = PL_new_term_refs(7);
++    term_t S		  = a0 + 0;
++    term_t True		  = a0 + 1;
++    term_t quoted	  = a0 + 2;
++    term_t list           = a0 + 3;
++    term_t write_term	  = a0 + 4;
++    term_t string	  = a0 + 5;
++    term_t with_output_to = a0 + 6;
++
++    PL_put_variable(S);
++    PL_cons_functor(string, PL_new_functor(PL_new_atom("string"), 1), S);
++
++    PL_put_atom_chars(True, "true");
++    PL_cons_functor(quoted, PL_new_functor(PL_new_atom("quoted"), 1), True);
++
++    PL_put_nil(list);
++    PL_cons_list(list, quoted, list);
++    
++    PL_cons_functor(write_term, 
++		    PL_new_functor(PL_new_atom("write_term"), 2), 
++		    T, list);
++    PL_cons_functor(with_output_to, 
++		    PL_new_functor(PL_new_atom("with_output_to"), 2), 
++		    string, write_term);
++    assert(PL_call(with_output_to, NULL));
++    
++    char *s;
++    size_t len;
++    assert(PL_get_string_chars(S, &s, &len));
++
++    std::string r = std::string(s);
++    PL_discard_foreign_frame(fid);
++    return r;
++  }
++
++  std::deque<PrologTerm*> garbage_bin;
++
++  // Create a new PrologTerm from a real Prolog Atom
++  // it will automatically be freed at the end of this object's lifetime
++  // calls wrap_PL_Term internally
++  PrologTerm *newPrologTerm(term_t t);
++
++  // Create a real Prolog term from a PrologTerm
++  // it will be garbage-collected by SWI-Prolog
++  term_t newTerm_t(PrologTerm* pt);
++};
++
++#endif // SWI
++
++#endif
+Index: Driver/termite/PrologInt.h
+===================================================================
+--- Driver/termite/PrologInt.h	(revision 0)
++++ Driver/termite/PrologInt.h	(revision 0)
+@@ -0,0 +1,151 @@
++/* -*- C++ -*-
++Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
++          2008 Adrian Prantl <adrian@complang.tuwien.ac.at>
++*/
++#ifndef PROLOGINT_H_
++#define PROLOGINT_H_
++#include "PrologTerm.h"
++
++#include <sstream>
++
++#if !HAVE_SWI_PROLOG
++
++///class representing a prolog integer
++class PrologInt : public PrologTerm {
++public:
++  /// constructor sets the value
++  PrologInt(int value) : mValue(value) {}
++  ///the arity is 0
++  int getArity() {return 0;}
++  /// an integer is always ground
++  bool isGround() {return true;}
++  /// return "Integer"
++  std::string getName() {return "Integer";}
++
++  /// return string representation of integer
++  std::string getRepresentation() {
++    std::stringstream ss;
++    std::string s;
++    ss << mValue;
++    ss >> s;
++    return s;
++  }
++
++  /// return value
++  int getValue() {return mValue;}
++ private:
++  /// the value
++  int mValue;
++};
++
++///class representing a prolog integer
++class PrologFloat : public PrologTerm {
++public:
++  /// constructor sets the value
++  PrologFloat(double value) : mValue(value) {}
++  ///the arity is 0
++  int getArity() {return 0;}
++  /// an integer is always ground
++  bool isGround() {return true;}
++  /// return "Integer"
++  std::string getName() {return "Float";}
++
++  /// return string representation of integer
++  std::string getRepresentation() {
++    std::stringstream ss;
++    std::string s;
++    ss << mValue;
++    ss >> s;
++    return s;
++  }
++
++  /// return value
++  double getValue() {return mValue;}
++ private:
++  /// the value
++  double mValue;
++};
++
++#else
++
++///class representing a prolog integer
++class PrologInt : public PrologTerm {
++public:
++  // CAREFUL: we can't use the default "copy constructor" 
++  // because term_t and int64_t are equivalent
++  PrologInt() : PrologTerm() {};
++  void createFromTerm(term_t t) { term = PL_copy_term_ref(t); }
++
++  /// constructor sets the value
++  PrologInt(int64_t value) { 
++    //std::stringstream s;
++    //s << value;
++    //PL_put_atom_chars(term, s.str().c_str());
++    //#   if DEBUG_TERMITE
++    //  std::cerr<<"PrologInt: PL_new_atom("<<s.str()<<") = "<<term<<std::endl;
++    //#   endif
++
++    term = PL_new_term_ref();
++    PL_put_int64(term, value);
++
++#   if DEBUG_TERMITE
++      std::cerr<<"PrologInt: "<<value<<") = "<<term<<std::endl;
++#   endif
++  }
++  ///the arity is 0
++  int getArity() { return 0; }
++  /// an integer is always ground
++  bool isGround() { return true; }
++  /// return "Integer"
++  std::string getName() { return "Integer"; }
++
++  /// return value
++  int64_t getValue() {
++    int64_t i;
++    assert(PL_get_int64(term, &i));
++    return i;
++  }
++};
++
++///class representing a prolog float
++class PrologFloat : public PrologTerm {
++public:
++  // CAREFUL: we can't use the default "copy constructor" 
++  // because term_t and int64_t are equivalent
++  PrologFloat() : PrologTerm() {};
++  void createFromTerm(term_t t) { term = PL_copy_term_ref(t); }
++
++  /// constructor sets the value
++  PrologFloat(double value) { 
++    //std::stringstream s;
++    //s << value;
++    //PL_put_atom_chars(term, s.str().c_str());
++    //#   if DEBUG_TERMITE
++    //  std::cerr<<"PrologInt: PL_new_atom("<<s.str()<<") = "<<term<<std::endl;
++    //#   endif
++
++    term = PL_new_term_ref();
++    PL_put_float(term, value);
++
++#   if DEBUG_TERMITE
++      std::cerr<<"PrologFloat: "<<value<<") = "<<term<<std::endl;
++#   endif
++  }
++  ///the arity is 0
++  int getArity() { return 0; }
++  /// an integer is always ground
++  bool isGround() { return true; }
++  /// return "Integer"
++  std::string getName() { return "Float"; }
++
++  /// return value
++  double getValue() {
++    double i;
++    assert(PL_get_float(term, &i));
++    return i;
++  }
++};
++
++#endif
++
++#endif
+Index: Driver/termite/PrologList.h
+===================================================================
+--- Driver/termite/PrologList.h	(revision 0)
++++ Driver/termite/PrologList.h	(revision 0)
+@@ -0,0 +1,189 @@
++/* -*- C++ -*-
++Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
++          2008 Adrian Prantl <adrian@complang.tuwien.ac.at>
++*/
++#ifndef PROLOGLIST_H_
++#define PROLOGLIST_H_
++#include "PrologTerm.h"
++#include <deque>
++
++#if !HAVE_SWI_PROLOG
++
++/**
++ * class representing a prolog list*/
++class PrologList : public PrologTerm {
++ public:
++  /**default constructor*/
++  PrologList() {}
++  /** construct from vector*/
++  PrologList(std::deque<PrologTerm*> v) : mTerms(v) {}
++  PrologList(std::vector<PrologTerm*> v) :mTerms(v.begin(), v.end()) {}
++  
++  /// return size of the list
++  int getArity() {return mTerms.size();}
++  /// are all the members ground?
++  bool isGround() {
++    bool ground = true;
++    //List is ground if all elements are.
++    std::deque<PrologTerm*>::iterator it = mTerms.begin();
++    while(it != mTerms.end()) {
++      ground = ground && (*it)->isGround();
++      it++;
++    }
++    return ground;
++  }
++
++  /// the predicate name of a list in prolog is .
++  std::string getName() {return ".";}
++  /// output the representation
++  std::string getRepresentation() {
++    /*Pattern: name(...all subterms separated by commas..) */
++    std::string rep = "[";
++    std::deque<PrologTerm*>::iterator it;
++    it = mTerms.begin();
++    // append the representation of all subterms
++    while (it != mTerms.end()) {
++      rep = rep + (*it)->getRepresentation();
++      // all but the last subterm are followed by a comma
++      if(++it != mTerms.end()) rep += ",";
++    }
++    rep += "]";
++    return rep;
++  }
++
++  /// add a list element
++  void addElement(PrologTerm* t) {mTerms.push_back(t);}
++
++  /// add a list element at the beginning
++  void addFirstElement(PrologTerm* t) {mTerms.push_front(t);}
++
++  /// get the i-th element
++  PrologTerm* at(int i) {return mTerms.at(i);}
++  /// return a list of successors
++  std::deque<PrologTerm*>* getSuccs() {return &mTerms;}
++ private:
++  /// the successors
++  std::deque<PrologTerm*> mTerms;
++};
++
++# else
++
++
++/**
++ * class representing a prolog list*/
++class PrologList : public PrologTerm {
++ public:
++  /** empty list */
++  PrologList() {
++    term = PL_new_term_ref();
++    PL_put_nil(term);
++#   if DEBUG_TERMITE
++      std::cerr<<"new PrologList: "<<display(term)<<std::endl;
++#   endif
++  }
++
++  PrologList(term_t t) : PrologTerm(t) {}
++
++  /** construct from vector*/
++  PrologList(std::vector<PrologTerm*> v) {
++    term = PL_new_term_ref();
++    PL_put_nil(term);
++    for (std::vector<PrologTerm*>::reverse_iterator i = v.rbegin();
++	 i != v.rend(); ++i) { 
++      PL_cons_list(term, (*i)->getTerm(), term);
++    }
++#   if DEBUG_TERMITE
++      std::cerr<<"new PrologList: "<<display(term)<<std::endl;
++#   endif
++  }
++
++  PrologList(std::deque<PrologTerm*> v) {
++    term = PL_new_term_ref();
++    PL_put_nil(term);
++    for (std::deque<PrologTerm*>::reverse_iterator i = v.rbegin();
++	 i != v.rend(); ++i) { 
++      PL_cons_list(term, (*i)->getTerm(), term);
++    }
++#   if DEBUG_TERMITE
++      std::cerr<<"new PrologList: "<<display(term)<<std::endl;
++#   endif
++  }
++  
++  /// return size of the list
++  int getArity() { 
++    int l = 0;
++    fid_t fid = PL_open_foreign_frame();
++    // FIXME: cache predicate
++    term_t a0 = PL_new_term_refs(2);
++    assert(PL_unify(a0, term));
++    PL_put_variable(a0+2);
++    qid_t qid = PL_open_query(NULL, PL_Q_NORMAL, 
++			      PL_predicate("length", 2, ""), a0);
++    assert(PL_next_solution(qid) && 
++	   PL_get_integer(a0+1, &l));
++    //PL_close_query(qid);
++    PL_cut_query(qid);
++    PL_discard_foreign_frame(fid);
++    return l;
++  }
++
++  /// add a list element
++  void addElement(PrologTerm* t) {
++#   if DEBUG_TERMITE
++      std::cerr<<"  addElement("<<display(term)<<" + " 
++	       <<t->getRepresentation()<<")"<<std::endl;
++#   endif
++
++    term_t a0 = PL_new_term_refs(3);
++    assert(PL_unify(a0, term));
++    PL_put_nil(a0+1);
++    PL_cons_list(a0+1, t->getTerm(), a0+1);
++    PL_put_variable(a0+2);
++    // TODO: cache the predicates
++    assert(PL_call_predicate(NULL, PL_Q_NORMAL, 
++			     PL_predicate("append", 3, "library(lists)"), a0));
++    term = a0 + 2;
++
++#   if DEBUG_TERMITE
++      for (int i = 0; i < 3; ++i)
++	std::cerr<<display(a0+i)<<std::endl;
++      std::cerr<<"-> "<<display(term)<<std::endl;
++#   endif
++  }
++
++  /// add the first list element
++  void addFirstElement(PrologTerm* t) {
++    PL_cons_list(term, t->getTerm(), term);
++  }
++
++  /// get the i-th element
++  PrologTerm* at(int i) {
++    term_t t = PL_copy_term_ref(term);
++
++    for (int c = 0; c < i; c++)
++      assert(PL_get_tail(t, t));
++    PL_get_head(t, t);
++    return newPrologTerm(t);
++  }
++
++  /// return a list of successors
++  std::deque<PrologTerm*>* getSuccs()  {
++    if (mTerms.size() == 0) {
++      term_t tail = PL_copy_term_ref(term);
++      term_t head = PL_new_term_ref();
++      while (PL_get_list(tail, head, tail))
++	mTerms.push_back(newPrologTerm(head));
++    }
++
++    return &mTerms;
++  }
++
++ private:
++  /// the successors
++  std::deque<PrologTerm*> mTerms;
++};
++
++
++#endif
++
++#endif
+Index: Driver/termite/PrologAtom.h
+===================================================================
+--- Driver/termite/PrologAtom.h	(revision 0)
++++ Driver/termite/PrologAtom.h	(revision 0)
+@@ -0,0 +1,59 @@
++/* -*- C++ -*-
++Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
++          2008 Adrian Prantl <adrian@complang.tuwien.ac.at>
++*/
++#ifndef PROLOGATOM_H_
++#define PROLOGATOM_H_
++#include "PrologTerm.h"
++
++/**class representing a prolog atom*/
++
++#if !HAVE_SWI_PROLOG
++
++class PrologAtom : public PrologTerm {
++public:
++  ///the destructor
++  ~PrologAtom() {};	
++  ///constructor setting the string
++  PrologAtom(std::string name) {
++      mName = name;
++  };
++  ///the arity is always 0
++  int getArity() {return 0;};
++  ///an atom is always ground
++  bool isGround() {return true;};
++  ///return the string
++  std::string getName() {return mName;};
++  /// return the string
++  std::string getRepresentation() { return quote(mName); };
++private:
++  /// the string
++  std::string mName;
++};
++
++
++#else
++
++
++class PrologAtom : public PrologTerm {
++public:
++  PrologAtom(term_t t) : PrologTerm(t) {};
++
++  ///the destructor
++  ~PrologAtom() {
++    // Decrement the reference count of the atom.
++    //PL_unregister(term);
++  }
++  ///constructor setting the string
++  PrologAtom(std::string name) {
++    term = PL_new_term_ref();
++    PL_put_atom_chars(term, name.c_str());
++#   if DEBUG_TERMITE
++      std::cerr<<"PL_new_atom("<<getRepresentation()<<") = "<<term<<std::endl;
++#   endif
++  }
++};
++
++#endif
++
++#endif
+Index: Driver/termite/PrologVariable.h
+===================================================================
+--- Driver/termite/PrologVariable.h	(revision 0)
++++ Driver/termite/PrologVariable.h	(revision 0)
+@@ -0,0 +1,28 @@
++/* -*- C++ -*-
++Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
++          2008 Adrian Prantl <adrian@complang.tuwien.ac.at>
++*/
++#ifndef PROLOGVARIABLE_H_
++#define PROLOGVARIABLE_H_
++#include "PrologTerm.h"
++
++///class representing a prolog variable
++class PrologVariable : public PrologTerm {
++	public:
++		///constructor setting the name
++  PrologVariable(std::string name) : mName(name) { assert(false); };
++		/// arity is always zero
++		int getArity() {return 0;};
++		/// a variable isn't ground
++		bool isGround() {return false;};
++		/// return the name
++		std::string getName() {return mName;};
++		/// output the name
++		std::string getRepresentation() {return mName;};
++		
++	private:
++		/// the name
++		std::string mName;
++};
++
++#endif
 Index: Driver/ASTConsumers.h
 ===================================================================
 --- Driver/ASTConsumers.h	(revision 63505)
