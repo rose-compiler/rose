@@ -32,6 +32,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2009_03.c \
      test2009_04.c \
      test2009_05.c \
+     test2009_07.c \
      math.c \
      complex_01.c \
      constants.c
@@ -42,6 +43,7 @@ TESTCODE_CURRENTLY_FAILING = \
      test2006_100.c \
      test2006_134.c \
      test2006_136.c \
+     test2009_06.c \
      Yarden_client.c
 
 noinst_headers = test2006_134.h

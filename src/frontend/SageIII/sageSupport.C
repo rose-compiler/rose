@@ -3013,7 +3013,23 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
  
             // AS: Did changes to get absolute path
                std::string includeDirectorySpecifier =  argv[i].substr(2);
+               // Liao, 5/14/2009
+               // I don't see the need to change to an absolute path here.
+                // Besides, the absolute path depends on the leading path of the source code
+                // Assume in /path1, we have two files
+                // case 1. -I.  engine/code1.c
+                // case 2 -I. code2.c
+                // They have different absolute include paths  even the same -I. is used.
+                //case  1: -I. -> -I/path1/engine
+                //case  2: -I. --> -I/path1
+                // This problem will cause rose to fail in compiling 445.gobmk of spec cpu 2006.
+                // It has two headers with the same name but with conflicting function prototypes.
+                // The wrong absolute path will cause rose to include a wrong header
+#if 0
                includeDirectorySpecifier = "-I"+StringUtility::getAbsolutePathFromRelativePath(includeDirectorySpecifier );
+#else               
+               includeDirectorySpecifier = "-I"+includeDirectorySpecifier;
+#endif               
                includePaths.push_back(includeDirectorySpecifier);
              }
         }
@@ -3231,11 +3247,19 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      Rose_STL_Container<string> fileList;
      std::string sourceFile = get_sourceFileNameWithPath();
      std::string sourceFilePath = StringUtility::getPathFromFileName(sourceFile);
+     //Liao, 5/14/2009
+     //It is a bad idea to change file name before passing it to a backend compiler.
+     // the interpretation of -I. depends on the leading path of an input file like path/input.c
+#if 0     
      sourceFile = StringUtility::stripPathFromFileName(sourceFile);
      if(sourceFilePath == "" )
         sourceFilePath = "./";
      sourceFilePath = StringUtility::getAbsolutePathFromRelativePath(sourceFilePath);
+
      fileList.push_back(sourceFilePath+"/"+sourceFile);
+#else
+     fileList.push_back(sourceFile);
+#endif     
      
      CommandlineProcessing::addListToCommandLine(inputCommandLine,"",fileList);
 
@@ -3243,6 +3267,25 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // CommandlineProcessing::addListToCommandLine(inputCommandLine,"--preinclude ",listOfPreincludes);
 
   // ROSE_ASSERT (saveSkipfinalCompileStep == p_skipfinalCompileStep);
+      //Liao, 5/15/2009
+      // macro -D__GNUG__ should not be defined  for C only code, 
+      // some code relies on this macro to tell if bool type is allowed
+      // vector<string> & inputCommandLine 
+       if (get_C_only()  || get_C99_only()) 
+       {
+          vector<string>::iterator iter;  
+          for (iter = inputCommandLine.begin(); iter!=inputCommandLine.end(); iter++) 
+          {
+            string cur_str = *iter;
+            string::size_type pos = cur_str.find("-D__GNUG__=",0);
+            if (pos != string::npos)
+              break;
+          }
+          if (iter != inputCommandLine.end())
+          {
+            inputCommandLine.erase(iter);
+          }
+       }
 
   // Debugging (verbose) output
      if ( (get_verbose() > 1) )
@@ -3259,8 +3302,8 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      printf ("Exiting at base of build_EDG_CommandLine() \n");
      ROSE_ABORT();
 #endif
+      // display("at base of build_EDG_CommandLine()");
 
-  // display("at base of build_EDG_CommandLine()");
    }
 
 
