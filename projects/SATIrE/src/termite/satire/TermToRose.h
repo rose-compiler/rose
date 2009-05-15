@@ -64,7 +64,7 @@ private:
   void abort_unless(bool, std::string);
   void debug(std::string);
   bool isValueExp(std::string);
-  bool isUnaryOp(std::string);	
+  bool isUnaryOp(std::string);
   bool isBinaryOp(std::string);
   SgInitializedName* inameFromAnnot(PrologCompTerm*);
   void testFileInfo(Sg_File_Info*);
@@ -126,7 +126,7 @@ private:
   SgSizeOfOp* createSizeOfOp(Sg_File_Info*, SgNode*, PrologCompTerm*);
   SgConstructorInitializer* createConstructorInitializer(Sg_File_Info*, SgNode*, PrologCompTerm*);
   SgPragmaDeclaration* createPragmaDeclaration(Sg_File_Info*, SgNode*, PrologCompTerm*);
-	
+
   /*binary nodes*/
   SgFunctionDeclaration* createFunctionDeclaration(Sg_File_Info*, SgNode*, SgNode*, PrologCompTerm*);
   SgBinaryOp* createBinaryOp(Sg_File_Info*, SgNode*, SgNode*, PrologCompTerm*);
@@ -178,21 +178,20 @@ private:
   template< class DeclType, typename A, typename B, typename C >
   void createDummyNondefDecl(DeclType* decl, Sg_File_Info* fi, 
 			     A a, B b, C c) 
-  {						
-    decl->set_forward(0);			
-    decl->set_definingDeclaration(decl);				     
+  {
+    decl->set_forward(0);
+    decl->set_definingDeclaration(decl);
     
     DeclType* ndd = new DeclType(fi,a,b,c);
-    ndd->set_endOfConstruct(fi);				     
+    ndd->set_endOfConstruct(fi);
+    ndd->set_parent(NULL);
     
     /* Set the internal reference to the non-defining declaration */  
-    ndd->set_firstNondefiningDeclaration(ndd);	
-    ndd->set_definingDeclaration(decl);		
-    ndd->setForward();					
+    ndd->set_firstNondefiningDeclaration(ndd);
+    ndd->set_definingDeclaration(decl);
+    ndd->setForward();
     decl->set_firstNondefiningDeclaration(ndd);
-    //if (!isSgVariableDeclaration(ndd)) {
-      declarationStatementsWithoutScope.push_back(ndd);	
-      //}
+    declarationStatementsWithoutScope.push_back(ndd);
   }
 
 };

@@ -270,14 +270,23 @@ PrologToRose::toRose(PrologTerm* t) {
 	       declarationStatementsWithoutScope.begin();
 	 it != declarationStatementsWithoutScope.end(); it++) {
       (*it)->set_scope(scope);
-      SgClassDeclaration* cd = isSgClassDeclaration(*it);
-      if ((cd != NULL) && cd->isForward()) {
+      if ((*it)->get_parent() == NULL) {
+	// Insert it into parent scope, too
+	// Sadly this is buggy.. scope->insertStatementInScope(*it,true);
+	if (scope->containsOnlyDeclarations())
+	  scope->getDeclarationList().push_back(*it);
+	else scope->getStatementList().push_back(*it);
+	(*it)->set_parent(scope);
+      }
+      //cerr<<"("<<(*it)->class_name()<<")->set_scope("<<scope->class_name()<<");"<<endl;
+      //SgClassDeclaration* cd = isSgClassDeclaration(*it);
+      //if ((cd != NULL) && cd->isForward()) {
 	// The first nondefining declaration is used to identify and
 	// compare symbols:
 	// Generate Symbol for the first nondef. class declaration
 	//SgClassSymbol* symbol = new SgClassSymbol(cd);
 	//scope->insert_symbol(name, symbol);
-      }
+      //}
     }
     declarationStatementsWithoutScope.clear();
 
@@ -286,13 +295,6 @@ PrologToRose::toRose(PrologTerm* t) {
     SageInterface::rebuildSymbolTable(scope);
   }
 
-  // Fixup the last labelStatement
-  //if (isSgStatement(node) && !labelStatementsWithoutScope.empty()) {
-  //  SgLabelStatement* ls = labelStatementsWithoutScope.back();
-  //  if (ls->get_statement() == NULL) {
-  //    ls->set_statement(isSgStatement(node));
-  //  }
-  //}
   return node;
 }
 
@@ -786,13 +788,13 @@ PrologToRose::createTypedefType(PrologTerm* t) {
     decl = typedefDeclMap[id];
   } else {
     //cerr<<id<<endl;
-    ROSE_ASSERT(false);
+    ROSE_ASSERT(false && "FIXME");
     /*create SgTypedefDeclaration*/
     decl = new SgTypedefDeclaration(FI,n,i,NULL,NULL,NULL);
   }
   ROSE_ASSERT(decl != NULL);
   /*fake parent scope*/
-  fakeParentScope(decl);
+  //fakeParentScope(decl);
   declarationStatementsWithoutScope.push_back(decl);
   SgTypedefType* tpe = SgTypedefType::createType(decl);
   ROSE_ASSERT(tpe != NULL);
@@ -1125,9 +1127,8 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
     } else if (PrologInt* val = dynamic_cast<PrologInt*>(annot->at(0))) {
       f = val->getValue();
     } else {
-      // Must be either a string or an int
+      ROSE_ASSERT(false && "Must be either a string or an int");
       // FIXME: or a float?
-      ROSE_ASSERT(false);
     }		
     ve = new SgDoubleVal(fi,f);
     ROSE_ASSERT(ve != NULL);
@@ -1142,9 +1143,8 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
     } else if (PrologInt* val = dynamic_cast<PrologInt*>(annot->at(0))) {
       f = val->getValue();
     } else {
-      // Must be either a string or an int
+      ROSE_ASSERT(false && "Must be either a string or an int");
       // FIXME: or a float?
-      ROSE_ASSERT(false);
     }		
     ve = new SgLongDoubleVal(fi,f);
     ROSE_ASSERT(ve != NULL);
@@ -1161,8 +1161,7 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
     } else if (PrologInt* val = dynamic_cast<PrologInt*>(annot->at(0))) {
       number = val->getValue();
     } else {
-      // Must be either a string or an int
-      ROSE_ASSERT(false);
+      ROSE_ASSERT(false && "Must be either a string or an int");
     }		
     SgCharVal* valnode = new SgCharVal(fi,number);
     ve = valnode;
@@ -1179,8 +1178,7 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
     } else if (PrologInt* val = dynamic_cast<PrologInt*>(annot->at(0))) {
       number = val->getValue();
     } else {
-      // Must be either a string or an int
-      ROSE_ASSERT(false);
+      ROSE_ASSERT(false && "Must be either a string or an int");
     }
     SgUnsignedCharVal* valnode = new SgUnsignedCharVal(fi,number);
     ve = valnode;
@@ -1697,24 +1695,10 @@ PrologToRose::createFunctionDeclaration(Sg_File_Info* fi, SgNode* par_list_u,SgN
   declarationStatementsWithoutScope.push_back(func_decl);
 
   /*post processing*/
-  /*important: otherwise unparsing fails*/
-  if (func_def != NULL) {
+  if (func_def != NULL) { /*important: otherwise unparsing fails*/
     func_def->set_declaration(func_decl);
     /* set defining declaration ROSE 0.9.0b */
     func_decl->set_definingDeclaration(func_decl);
-    // func_decl->set_firstNondefiningDeclaration(func_decl);
-
-    //SgFunctionDeclaration* nondef_decl = 
-      //  new SgFunctionDeclaration(FI,func_name,func_type,NULL);
-    //nondef_decl->set_endOfConstruct(FI);
-
-    // Set the internal reference to the non-defining declaration
-    //nondef_decl->set_firstNondefiningDeclaration(nondef_decl);
-    //nondef_decl->set_definingDeclaration(func_decl);
-    //nondef_decl->setForward();
-    //fakeParentScope(nondef_decl);
-    //cerr<<endl<<func_decl<<" -- "<<nondef_decl<<endl;
-    //func_decl->set_firstNondefiningDeclaration(nondef_decl);
   } else {
   }
 
@@ -2125,13 +2109,18 @@ PrologToRose::createVariableDeclaration(Sg_File_Info* fi,deque<SgNode*>* succs,P
 	SgClassType* ct = isSgClassType(ini_name->get_typeptr());
 	ROSE_ASSERT(ct);
 	ct->set_declaration(class_decl);
-      }
-      if (enum_decl) {
+      } else if (enum_decl) {
 	// If this is a Definition as well, insert the pointer to the
 	// declaration
 	SgEnumType* et = isSgEnumType(ini_name->get_typeptr());
 	ROSE_ASSERT(et);
 	et->set_declaration(enum_decl);
+      } else {
+	//dec->set_definingDeclaration(dec);
+	//createDummyNondefDecl(dec, FI, "", 
+			      //		      ini_name->get_typeptr(), ini_initializer);
+	//declarationStatementsWithoutScope.back()->set_parent(dec);
+	//declarationStatementsWithoutScope.pop_back();
       }
 
       dec->append_variable(ini_name,ini_initializer);
@@ -2147,6 +2136,20 @@ PrologToRose::createVariableDeclaration(Sg_File_Info* fi,deque<SgNode*>* succs,P
   }
   /* set declaration modifier*/
   setDeclarationModifier(annot->at(0),&(dec->get_declarationModifier()));
+
+  if (dec->isForward())
+    dec->set_firstNondefiningDeclaration(dec);
+  else {
+    dec->set_definingDeclaration(dec);
+    dec->set_firstNondefiningDeclaration(NULL);
+  }
+
+  if ((!class_decl) && (!enum_decl) && !dec->isForward()) {
+    //dec->set_firstNondefiningDeclaration(dec);
+    //dec->set_definingDeclaration(dec);
+    //createDummyNondefDecl(dec, FI, "", dec->gettype(SgType*)NULL, (SgInitializer*)NULL);
+  }
+  //declarationStatementsWithoutScope.pop_back();
 
   return dec;
 }
@@ -2403,8 +2406,7 @@ PrologToRose::createClassDefinition(Sg_File_Info* fi, deque<SgNode*>* succs,Prol
   /* append declarations*/
   deque<SgNode*>::iterator it = succs->begin();
   while(it != succs->end()) {
-    SgDeclarationStatement* s = NULL;
-    s = isSgDeclarationStatement(*it);
+    SgDeclarationStatement* s = isSgDeclarationStatement(*it);
     ROSE_ASSERT(s != NULL);
     d->append_member(s);
     s->set_parent(d);
@@ -2471,7 +2473,7 @@ PrologToRose::createClassDeclaration(Sg_File_Info* fi,SgNode* child1 ,PrologComp
 /** create dummy class scope and add a declaration*/
 void
 PrologToRose::fakeClassScope(string s, int c_type,SgDeclarationStatement* stat) {
-  ROSE_ASSERT(false);
+  ROSE_ASSERT(false && "deprecated function");
   /*create a dummy class declaration*/
   SgClassDeclaration* d = createDummyClassDeclaration(s,c_type);
   SgClassDefinition* def = new SgClassDefinition(
@@ -2493,7 +2495,7 @@ PrologToRose::fakeClassScope(string s, int c_type,SgDeclarationStatement* stat) 
 /** create dummy namespace scope*/
 void
 PrologToRose::fakeNamespaceScope(string s, int unnamed, SgDeclarationStatement* stat) {
-  ROSE_ASSERT(false);
+  ROSE_ASSERT(false && "deprecated function");
   SgName n = s;
   bool u_b = (bool) unnamed;
   SgNamespaceDefinitionStatement* def =
@@ -2526,7 +2528,7 @@ PrologToRose::fakeNamespaceScope(string s, int unnamed, SgDeclarationStatement* 
 /** create dummy class declaration from name*/
 SgClassDeclaration*
 PrologToRose::createDummyClassDeclaration(string s,int c_type) {
-  ROSE_ASSERT(false);
+  ROSE_ASSERT(false && "deprecated function");
 
   Sg_File_Info* fi = Sg_File_Info::generateDefaultFileInfo();
   SgName class_name = s;
@@ -2540,7 +2542,7 @@ PrologToRose::createDummyClassDeclaration(string s,int c_type) {
 /** create dummy member function declaration class from name*/
 SgMemberFunctionDeclaration*
 PrologToRose::createDummyMemberFunctionDeclaration(string s,int c_type) {
-  ROSE_ASSERT(false);
+  ROSE_ASSERT(false && "deprecated function");
   /*    TODO
 	Sg_File_Info* fi = Sg_File_Info::generateDefaultFileInfo();
 	SgName class_name = s;
@@ -2771,7 +2773,9 @@ PrologToRose::pciDeclarationStatement(SgDeclarationStatement* s,PrologTerm* t) {
 void
 PrologToRose::fakeParentScope(SgDeclarationStatement* s) {
   //nothing to do if there is already a parent scope
+  ROSE_ASSERT(false && "deprecated function");
   if(s->get_parent()) return;
+
   debug("faking scope");	
   SgGlobal* dummy = new SgGlobal(FI);
   ROSE_ASSERT(dummy != NULL);
@@ -3225,6 +3229,7 @@ PrologToRose::createAggregateInitializer(Sg_File_Info* fi,SgNode* child1,PrologC
  */
 SgFunctionDeclaration*
 PrologToRose::createDummyFunctionDeclaration(string* namestr, PrologTerm* type_term) {
+  ROSE_ASSERT(false && "deprecated function");
   ROSE_ASSERT(namestr != NULL);
   ROSE_ASSERT(type_term != NULL);
   /* create SgName and SgFunctionType from arguments*/
@@ -3246,6 +3251,7 @@ PrologToRose::createDummyFunctionDeclaration(string* namestr, PrologTerm* type_t
  */
 SgFunctionSymbol*
 PrologToRose::createDummyFunctionSymbol(string* namestr, PrologTerm* type_term) {
+  ROSE_ASSERT(false && "deprecated function");
   ROSE_ASSERT(namestr != NULL);
   ROSE_ASSERT(type_term != NULL);
   /* create dummy declaration*/
