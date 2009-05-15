@@ -447,6 +447,10 @@ SgInitializedName* convertRefToInitializedName(SgNode* current);
 
 //! Obtain a matching SgNode from an abstract handle string
 SgNode* getSgNodeFromAbstractHandleString(const std::string& input_string);
+
+//! Dump information about a SgNode for debugging
+void dumpInfo(SgNode* node, std::string desc="");
+
 //@}
 
 //------------------------------------------------------------------------

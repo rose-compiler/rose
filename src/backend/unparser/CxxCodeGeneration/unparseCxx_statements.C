@@ -4373,37 +4373,76 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           ninfo.set_inEnumDecl();
           SgInitializer *tmp_init=NULL;
           SgName tmp_name;
-
+#if 1
+          bool insertingFirstElement = true;
           SgInitializedNamePtrList::iterator p = enum_stmt->get_enumerators().begin();
-  
+          for (; p!=enum_stmt->get_enumerators().end(); p++)
+          {
+            // Liao, 5/14/2009
+            // enumerators may come from another included file
+            // have to tell if it matches the current declaration's file before unparsing it!!
+            // See test case: tests/CompileTests/C_test/test2009_05.c
+            // TODO: still need work on mixed cases: part of elements are in the original file and others are from a header
+            SgInitializedName* field = *p;
+            ROSE_ASSERT(field !=NULL);
+            bool isInSameFile = (field->get_file_info()->get_filename()==enum_stmt->get_file_info()->get_filename());
+            if (isInSameFile)
+            {
+              // For the second and after elements, add "," 
+              if (insertingFirstElement)
+              {
+                insertingFirstElement= false;
+              }
+              else
+                curprint ( string(","));
+
+              // unparse the element   
+              ROSE_ASSERT((*p) != NULL);
+              tmp_name=(*p)->get_name();
+              tmp_init=(*p)->get_initializer();
+              curprint ( tmp_name.str());
+              if (tmp_init != NULL)
+              {
+                curprint ( string("="));
+                unparseExpression(tmp_init, ninfo);
+              }
+            } // end same file
+          } // end for
+
+          if  (enum_stmt->get_enumerators().size()!=0)
+            // DQ (3/17/2005): This helps handle cases such as void foo () { #include "constant_code.h" }
+            unparseAttachedPreprocessingInfo(enum_stmt, info, PreprocessingInfo::inside);
+#else
           if (p != enum_stmt->get_enumerators().end())
-             {
+          {
             // curprint ( string("{"; 
-               while (true)
-                  {
-                    ROSE_ASSERT((*p) != NULL);
-                    tmp_name=(*p)->get_name();
-                    tmp_init=(*p)->get_initializer();
-                    curprint ( tmp_name.str());
-                    if (tmp_init != NULL)
-                       {
-                         curprint ( string("="));
-                         unparseExpression(tmp_init, ninfo);
-                       }
-                    p++;
-                    if (p != enum_stmt->get_enumerators().end())
-                       {
-                         curprint ( string(","));
-                       }
-                      else
-                         break; 
-                  }
+            while (true)
+            {
+              ROSE_ASSERT((*p) != NULL);
+              tmp_name=(*p)->get_name();
+              tmp_init=(*p)->get_initializer();
+              curprint ( tmp_name.str());
+              if (tmp_init != NULL)
+              {
+                curprint ( string("="));
+                unparseExpression(tmp_init, ninfo);
+              }
+              p++;
+              if (p != enum_stmt->get_enumerators().end())
+              {
+                curprint ( string(","));
+              }
+              else
+                break; 
+
+            } //end while
 
             // DQ (3/17/2005): This helps handle cases such as void foo () { #include "constant_code.h" }
-               unparseAttachedPreprocessingInfo(enum_stmt, info, PreprocessingInfo::inside);
+            unparseAttachedPreprocessingInfo(enum_stmt, info, PreprocessingInfo::inside);
 
             // curprint ( string("}";
-             }
+          }
+#endif          
 
 #if 0
           if (!info.SkipSemiColon())
