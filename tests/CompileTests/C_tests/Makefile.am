@@ -29,6 +29,9 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2008_02.c \
      test2009_01.c \
      test2009_02.c \
+     test2009_03.c \
+     test2009_04.c \
+     test2009_05.c \
      math.c \
      complex_01.c \
      constants.c
@@ -93,7 +96,7 @@ test2008_02.o: $(srcdir)/test2008_02.c
 # Include makefile rules specific to QMTest
 #include $(top_srcdir)/config/QMTest_makefile.inc
 
-EXTRA_DIST = $(ALL_TESTCODES)
+EXTRA_DIST = $(ALL_TESTCODES) builtin-types.def
 
 copyFiles:
 	cp $(srcdir)/*.h $(top_srcdir)/tests/CompileTests/C_tests

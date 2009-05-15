@@ -1,0 +1,4 @@
+/*
+asdfsdf
+*/
+DEF_PRIMITIVE_TYPE (BT_VOID, void_type_node)

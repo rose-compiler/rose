@@ -9260,6 +9260,23 @@ SgNode* SageInterface::getSgNodeFromAbstractHandleString(const std::string& inpu
   return NULL;
 }
 
+
+//! Dump information about a SgNode for debugging
+void SageInterface::dumpInfo(SgNode* node, std::string desc/*=""*/)
+{
+  ROSE_ASSERT(node != NULL);
+  cout<<desc<<endl;
+  cout<<node<<" "<<node->class_name();
+  SgLocatedNode* snode = isSgLocatedNode(node);
+  if (snode)
+  {
+    cout<<"\nat file:"<< snode->get_file_info()->get_filename()
+    << ":"<<snode->get_file_info()->get_line()<<"-"
+    << snode->get_file_info()->get_col();
+  }
+  cout<<endl;
+}
+
 //! Collect all read and write references within stmt, which can be a function, a scope statement, or a single statement. Note that a reference can be both read and written, like i++
 //! This is a wrapper function to Qing's side effect analysis from loop optimization
 //! Liao, 2/26/2009

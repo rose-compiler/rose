@@ -1922,8 +1922,11 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
                             }
                        }
 
-                 // DQ (6/20/2006): Commented out temporarily for debugging use of STL!
+                  if (locatedNode->get_parent()==NULL) 
+                  {
+                    SageInterface::dumpInfo(locatedNode,"ResetParentPointersInMemoryPool::visit() error: found a func dec without defining declaration and its non-defining declaration has no scope info. ");
 		    ROSE_ASSERT(locatedNode->get_parent() != NULL);
+                  }
                     break;
                   }
 #if 0
