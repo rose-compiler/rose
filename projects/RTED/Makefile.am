@@ -414,7 +414,7 @@ c-compile-runtimesystem:
 
 
 # DQ (7/25/2005): The current changes to the AST break these test programs:
-check-local: runtimeCheck $(TESTCODES) c-compile-runtimesystem check-C-array-onefile deleteAllbinfiles check-C-array 
+check-local: runtimeCheck $(TESTCODES) c-compile-runtimesystem check-C-array-onefile deleteAllbinfiles check-C-array-parallel 
 	@echo "***************************************************************************************"
 	@echo "*** ROSE/projects/runtimeErrorCheck: make check rule complete (terminated normally) ***"
 	@echo "***************************************************************************************"
