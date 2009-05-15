@@ -279,6 +279,8 @@ PrologToRose::toRose(PrologTerm* t) {
 	(*it)->set_parent(scope);
       }
       //cerr<<"("<<(*it)->class_name()<<")->set_scope("<<scope->class_name()<<");"<<endl;
+
+      //cerr<<(*it)->get_mangled_name().str()<<endl;
       //SgClassDeclaration* cd = isSgClassDeclaration(*it);
       //if ((cd != NULL) && cd->isForward()) {
 	// The first nondefining declaration is used to identify and
@@ -779,24 +781,27 @@ PrologToRose::createTypedefType(PrologTerm* t) {
 
   /*extract name*/
   SgName n = *(toStringP(annot->at(0)));
-  /*create default file info*/
-  /*we don't want to keep the base type empty, use int (irrelevant form unparsing*/
-  SgTypeInt* i = new SgTypeInt();
   SgTypedefDeclaration* decl;
+  SgTypedefType* tpe;
   string id = t->getRepresentation();
   if (typedefDeclMap.find(id) != typedefDeclMap.end()) {
-    decl = typedefDeclMap[id];
+    //SgTreeCopy copy;
+    decl = typedefDeclMap[id]/*->copy(copy)*/;
+    // We have a problem since we only use the first definition as a reference
+    tpe = new SgTypedefType(decl);
+    declarationStatementsWithoutScope.push_back(decl);
   } else {
     //cerr<<id<<endl;
     ROSE_ASSERT(false && "FIXME");
+    /*we don't want to keep the base type empty, use int (irrelevant
+      for unparsing*/
+    SgTypeInt* i = new SgTypeInt();
     /*create SgTypedefDeclaration*/
     decl = new SgTypedefDeclaration(FI,n,i,NULL,NULL,NULL);
+    //ROSE_ASSERT(decl != NULL);
+    //fakeParentScope(decl);
+    tpe = SgTypedefType::createType(decl);
   }
-  ROSE_ASSERT(decl != NULL);
-  /*fake parent scope*/
-  //fakeParentScope(decl);
-  declarationStatementsWithoutScope.push_back(decl);
-  SgTypedefType* tpe = SgTypedefType::createType(decl);
   ROSE_ASSERT(tpe != NULL);
 	
   return tpe;
@@ -1349,7 +1354,6 @@ PrologToRose::createProject(Sg_File_Info* fi,deque<SgNode*>* succs) {
     if (file != NULL)  // otherwise, it's a binary file, which shouldn't happen
       fl.push_back(file);
   }
-  // project->set_fileList(fl);
   return project;
 }
 
@@ -1367,6 +1371,10 @@ PrologToRose::createFile(Sg_File_Info* fi,SgNode* child1,PrologCompTerm*) {
 
   SgGlobal* glob = isSgGlobal(child1);
   ROSE_ASSERT(glob);
+
+  ROSE_ASSERT(initializedNamesWithoutScope.empty());
+  ROSE_ASSERT(declarationStatementsWithoutScope.empty());
+  ROSE_ASSERT(labelStatementsWithoutScope.empty());
 
 #if 0
   // Fixup the nondefining class decls
@@ -2710,7 +2718,6 @@ PrologToRose::createTypedefDeclaration(Sg_File_Info* fi, PrologCompTerm* t) {
   /* if there is a declaration, set flag and make sure it is set*/
   if(decs != NULL) {
     d->set_typedefBaseTypeContainsDefiningDeclaration(true);	
-    //decs->set_declaration(d);
     createDummyNondefDecl(d, FI, n, tpe, (SgTypedefType*)NULL);
   } else {
     d->setForward();
@@ -2721,10 +2728,10 @@ PrologToRose::createTypedefDeclaration(Sg_File_Info* fi, PrologCompTerm* t) {
   // Symbol table
   string id = "typedef_type("+annot->at(0)->getRepresentation()+", "
     +annot->at(1)->getRepresentation()+")";
-  if (typedefDeclMap.find(id) == typedefDeclMap.end())
+  if (typedefDeclMap.find(id) == typedefDeclMap.end()) {
     typedefDeclMap[id] = d;
-  //cerr<<id<<endl;
-
+    //cerr<<id<<endl;
+  }
   return d;
 }
 
