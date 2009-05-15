@@ -1,3 +1,45 @@
+2009-05-15 01:22  panas2
+
+	* [r5775] /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_funccall.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_prolog.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.c,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: work on RTED
+
+2009-05-15 00:32  liao6
+
+	* [r5774] /trunk/ROSE/docs/Rose/installRose.tex,
+	  /trunk/ROSE/src/backend/unparser/CxxCodeGeneration/unparseCxx.h,
+	  /trunk/ROSE/src/backend/unparser/CxxCodeGeneration/unparseCxx_statements.C,
+	  /trunk/ROSE/src/backend/unparser/PHPCodeGeneration/unparsePHP.h,
+	  /trunk/ROSE/src/backend/unparser/languageIndependenceSupport/Makefile.am,
+	  /trunk/ROSE/src/backend/unparser/languageIndependenceSupport/unparseLanguageIndependentConstructs.C,
+	  /trunk/ROSE/src/backend/unparser/languageIndependenceSupport/unparseLanguageIndependentConstructs.h,
+	  /trunk/ROSE/src/backend/unparser/languageIndependenceSupport/unparseLanugageIndependentConstructs.C,
+	  /trunk/ROSE/src/backend/unparser/languageIndependenceSupport/unparseLanugageIndependentConstructs.h,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/Makefile.am,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/expr.c,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/sageSupport.C,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/sage_gen_be.C,
+	  /trunk/ROSE/src/frontend/SageIII/astPostProcessing/resetParentPointers.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.h,
+	  /trunk/ROSE/tests/CompileTests/C_tests/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/C_tests/builtin-types.def,
+	  /trunk/ROSE/tests/CompileTests/C_tests/test2009_03.c,
+	  /trunk/ROSE/tests/CompileTests/C_tests/test2009_04.c,
+	  /trunk/ROSE/tests/CompileTests/C_tests/test2009_05.c: Various
+	  fixes to enable ROSE to handle more spec cpu2006 C benchmarks
+	  
+	  * added support for implicit C function declaration: relaxed edg
+	  3.3's error check in c99 mode
+	  * initial support for an enumeration declaration with enumerators
+	  coming from an external header
+	  * fixed a file name typo
+	  * enabled debugging mode for EDG_3.3: C_DEBUG is not supported by
+	  configure, sharing CXX_DEBUG instead
+
 2009-05-13 23:56  liao6
 
 	* [r5760] /trunk/ROSE/src/frontend/SageIII/rose_attributes_list.C,
