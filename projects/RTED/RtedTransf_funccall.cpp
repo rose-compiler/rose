@@ -82,9 +82,11 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
     // 3 = lineNr
     // 4 = unparsedStmt for Error message
 
-    int extra_params = 6;
+    int extra_params = 4;
     // nr of args + 2 (for sepcialFunctions) + 4 =  args+6;
     int size = extra_params+args->arguments.size();
+    if (args->arguments.size()>=2)
+      size+=2;
     SgIntVal* sizeExp = buildIntVal(size);
     SgExpression* callNameExp = buildString(args->name);
 
@@ -121,13 +123,40 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
 	if (base_type)
 	  cerr <<"     base_type: " << base_type->class_name() << endl;
 	if (isSgTypeChar(type) || isSgTypeChar(base_type)) {
-	  // this is a char* variable that we use
-	  // we should represent it by its mangled name of the declaration!
-	  // we add variable first and then mangled name
+	  // this is the variable that we pass
 	  appendExpression(arg_list, var);
-	  SgExpression* manglName = buildString(var->get_symbol()->get_declaration()->get_mangled_name().str());
-	  appendExpression(arg_list, manglName);
+	  //SgExpression* manglName = buildString(var->get_symbol()->get_declaration()->get_mangled_name().str());
+	  string name = var->get_symbol()->get_declaration()->get_name().str();
+	  //appendExpression(arg_list, manglName);
+	  // in addition we want the allocated size for this variable
+	  SgInitializedName* initName = var->get_symbol()->get_declaration();
+	  ROSE_ASSERT(initName);
+	  SgType* type = initName->get_typeptr();
+	  ROSE_ASSERT(type);
+	  SgArrayType* array = isSgArrayType(type);
+	  if (array) {
+	    SgExpression * expr = array->get_index();
+	    string valueStr = "";
+	    if (expr==NULL)
+	      expr = buildString("0");
+	    else
+	      expr->unparseToString();
+	      
+	    SgExpression* numberToString = buildString(valueStr);
+	    appendExpression(arg_list, numberToString);
+	    cerr << ">>> Found variable : " << name << "  with size : " << 
+	      expr->unparseToString() << "  and val : " << var << endl;
+	  } 
+	  else {
+	    cerr << "Cant determine the size of the following object : " << 
+	      var->class_name() << "  with type : " << type->class_name() << endl;
+	    SgExpression* numberToString = buildString("0");
+	    appendExpression(arg_list, numberToString);
+	    //ROSE_ASSERT(false);
+	  }
+	  
       	} else {
+	  // handle integers
 	  SgFunctionRefExp* memRef_r2 = NULL;
 	  if (isSgTypeInt(type)) {
 	    ROSE_ASSERT(roseConvertIntToString);
@@ -152,12 +181,20 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
       } else {
 	// if it is already a string, dont add extra quates
 	cerr << " isNotSgVarRefExp exp : " << exp->class_name() << "   " << exp->unparseToString() << endl;
-	if (isSgStringVal(exp))
-	  appendExpression(arg_list, buildString(isSgStringVal(exp)->get_value()));
-	else {
+	if (isSgStringVal(exp)) {
+	  string theString = isSgStringVal(exp)->get_value();
+	  appendExpression(arg_list, buildString(theString));
+	  int sizeString = theString.size();
+	  SgExpression* numberToString = buildString(RoseBin_support::ToString(sizeString));
+	  appendExpression(arg_list, numberToString);
+	} else {
 	  // default create a string
-	  SgExpression* stringExp = buildString(exp->unparseToString());
+	  string theString = exp->unparseToString();
+	  SgExpression* stringExp = buildString(theString);
 	  appendExpression(arg_list, stringExp);
+	  int sizeString = theString.size();
+	  SgExpression* numberToString = buildString(RoseBin_support::ToString(sizeString));
+	  appendExpression(arg_list, numberToString);
 	}
       }
     }

@@ -425,91 +425,78 @@ void
 RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize, char* filename, char* line, char* stmtStr) {
   assert(argsSize>=4);
   char* param1StringVal = args[0];
-  char* param1ManglName = args[1];
+  int param1ActualLength =-1;
+  int param1AllocLength = atoi(args[1]);
   char* param2StringVal = args[2];
-  char* param2ManglName = args[3];
+  int param2ActualLength =-1;
+  int param2AllocLength = atoi(args[3]);
   assert(param1StringVal);
   assert(param2StringVal);
+  if (rtsi()->funccallDebug)
+    printf("Special Function call   p1: %s act1: %d alloc1: %d     p2: %s act2: %d alloc2: %d\n",
+	   param1StringVal, param1ActualLength, param1AllocLength,
+	   param2StringVal, param2ActualLength, param2AllocLength);
+  if (param1AllocLength==0)
+    param1AllocLength=param1ActualLength;
+  if (param2AllocLength==0)
+    param2AllocLength=param2ActualLength;
+
   //assert(param1ManglName);
   //assert(param2ManglName);
-
+#if 1
+  // determine the 3rd parameter if present, e.g. strcpy(p1,p2,size);
   int param3Size = 0;
   if (argsSize>4)
     param3Size = strtol(args[4],NULL,10);
-  if (rtsi()->funccallDebug)
-    printf( "  >>Runtimesystem :: normalFunctionCall  -  param1StringVal : \"%s\"   param2StringVal : \"%s\"   param3Size: %d \n",param1StringVal,param2StringVal,param3Size);
-  // check if a variable with that name exists!!
-  //  char* mangl_name =RuntimeSystem_findVariablesOnStack(param1StringVal);  
-  int pos = -1;
-  if (strcmp(param1StringVal,"")==0) {
-    printf("    param1StringVal==NULL \n");
-    pos = RuntimeSystem_findArrayName(param1ManglName);
-  }
-  int sizeString1 = -1;
-  char* end1 = NULL;
-  if (pos!=-1) {
-    int size = rtsi()->arrays[pos].size1;
-    printf("Found variable, pos : %d  size : %d \n",pos,size);
-    sizeString1 = size;
-    // the pointer to the end of the memory block
-    end1 = param1ManglName+sizeString1;
-  } else {
-    printf("Variable not found!! , pos : %d  size : %d \n",pos,sizeString1);
-    char *iter=NULL;
-    for ( iter = param1StringVal; *iter != '\0'; ++iter) {
-      end1 = iter;
-    }
-    assert(end1);
-    sizeString1 = (end1-param1StringVal)+1;
-  }
 
-  pos = -1;
-  if (strcmp(param2StringVal,"")==0) {
-    printf("    param2StringVal==NULL \n");
-    pos = RuntimeSystem_findArrayName(param2ManglName);
+
+  // determine the actual size of each of the strings
+  char* end1 = NULL;
+  char *iter=NULL;
+  for ( iter = param1StringVal; *iter != '\0'; ++iter) {
+    end1 = iter;
   }
-  int sizeString2 = -1;
+  if (end1==NULL)
+    end1= param1StringVal;
+  assert(end1);
+  param1ActualLength = (end1-param1StringVal)+1;
+
   char* end2 = NULL;
-  if (pos!=-1) {
-    int sizeA = rtsi()->arrays[pos].size1;
-    // if the copy size==0 then we copy the entire string
-    if (param3Size==0)
-      param3Size = sizeA;
-    printf("Found variable 2, pos : %d  size : %d \n",pos,sizeA);
-    sizeString2 = sizeA;
-    // the pointer to the end of the memory block
-    end2 = param2ManglName+sizeString2;
-  } else {
-    printf("Variable 2 not found!! , pos : %d  size : %d \n",pos,sizeString1);
-    char *iter2=NULL;
-    for ( iter2 = param2StringVal; *iter2 != '\0'; ++iter2) {
-      end2 = iter2;
-    }
-    assert(end2);
-    sizeString2 = (end2-param2StringVal)+1;
-    if (param3Size==0)
-      param3Size = sizeString2;
+  char *iter2=NULL;
+  for ( iter2 = param2StringVal; *iter2 != '\0'; ++iter2) {
+    end2 = iter2;
   }
-  assert(sizeString1>-1);
-  assert(sizeString2>-1);
-  assert(param3Size>0);
+  if (end2==NULL)
+    end2= param2StringVal;
+  assert(end2);
+  param2ActualLength = (end2-param2StringVal)+1;
+  if (param3Size==0)
+    param3Size = param2ActualLength;
 
   // check if string1 and string2 overlap. Dont allow memcopy on such
   if (rtsi()->funccallDebug)
-    printf( " >>> FunctionCall : Checking param1StringVal=<%s> (%d)  and param2StringVal=<%s> (%d)  sizeOp: %d \n", 
-	    param1StringVal, sizeString1, param2StringVal , sizeString2 , param3Size );
-  if (end1 >= param2StringVal && param1StringVal<=end2) {
+    printf("Special Function call   p1: %s act1: %d alloc1: %d     p2: %s act2: %d alloc2: %d   param3Size: %d\n",
+	   param1StringVal, param1ActualLength, param1AllocLength,
+	   param2StringVal, param2ActualLength, param2AllocLength, param3Size);
+  
+  assert(param1ActualLength>-1);
+  assert(param2ActualLength>-1);
+  assert(param3Size>0);
+
+
+  if ( ((param1StringVal+param3Size) >= param2StringVal) && (param1StringVal<param2StringVal) ||
+       ((param2StringVal+param3Size) >= param1StringVal) && (param2StringVal<param1StringVal)) {
     // overlapping memory regions
     if (rtsi()->funccallDebug)
-      printf( " >>>> Error : Memory regions overlap!   Size1: %d  Size2: %d\n",sizeString1 , sizeString2);
+      printf( " >>>> Error : Memory regions overlap!   Size1: %d  Size2: %d\n",param1ActualLength , param2ActualLength);
     RuntimeSystem_callExit(filename, line, (char*)"Memory regions overlap", stmtStr);  
-  } else if (param3Size>0 && (param3Size>sizeString1 || param3Size>sizeString2)) {
+  } else if ((param3Size>param1AllocLength || param3Size>param2AllocLength)) {
     // make sure that if the strings do not overlap, they are both smaller than the amount of chars to copy
     char* res1 = ((char*)"Invalid Operation,  operand1 size=");
     char* res2 = ((char*)"  operand2 size=");
     int sizeInt = 2*sizeof(int);
     char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ 1);
-    sprintf(res,"%s%d%s%d",res1,sizeString1,res2,sizeString2);
+    sprintf(res,"%s%d%s%d",res1,param1ActualLength,res2,param2ActualLength);
     RuntimeSystem_callExit(filename, line, res, stmtStr);
   } 
   printf("No problem found!\n");
@@ -522,7 +509,7 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize, 
     printf("Checking special op : %s\n",fname);
     assert(1==0);
   }
- 
+#endif 
 }
 
 
@@ -556,7 +543,7 @@ RuntimeSystem_roseFunctionCall(int count, ...) {
   int i=0;
   for ( i=0;i<count;i++)    {
     char* val=  va_arg(vl,char*);
-    if (val && i<4)
+    if (val) // && i<4)
       printf("  %d  val : %s \n",i,val);
     if (i==0) name = val;
     else if (i==1) filename =  val;
@@ -572,15 +559,6 @@ RuntimeSystem_roseFunctionCall(int count, ...) {
   if (rtsi()->funccallDebug)
     printf( "roseFunctionCall :: %s \n", name );
   if (RuntimeSystem_isInterestingFunctionCall(name)==1) {
-#if 0
-  if ( ( strcmp(name,"memcpy")==0 || 
-		  strcmp(name ,"memmove")==0 || 
-		  strcmp(name ,"strcpy")==0 ||
-		  strcmp(name ,"strncpy")==0 ||
-		  strcmp(name ,"strcat")==0 ||
-		  strcmp(name ,"strncat")==0
-		  )) {
-#endif
     // if the string name is one of the above, we handle it specially
     RuntimeSystem_handleSpecialFunctionCalls(name, args, posArgs, filename, line, stmtStr);
   } 
