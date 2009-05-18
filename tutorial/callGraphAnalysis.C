@@ -29,6 +29,9 @@ int
 main( int argc, char * argv[] )
    {
      SgProject* project = new SgProject(argc, argv); //test.getSgProject();
+#ifdef HAVE_SQLITE3
+     var_SOLVE_FUNCTION_CALLS_IN_DB = true;
+#endif
 
      CallGraphBuilder CGBuilder( project );
      CGBuilder.buildCallGraph();
@@ -44,8 +47,7 @@ main( int argc, char * argv[] )
 // graphs can be generated even if SQLite is not installed with ROSE.
 // TPS (01Dec2008): Enabled mysql and this fails.
 // seems like it is not supposed to be included
-#if 0
-     //#ifdef HAVE_MYSQL
+#ifdef HAVE_SQLITE3
      CallGraphDotOutput output( *(CGBuilder.getGraph()) );
 
      output.writeToDB( 1, "DATABASE" );

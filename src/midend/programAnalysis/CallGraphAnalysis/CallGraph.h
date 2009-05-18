@@ -21,6 +21,9 @@
 #include <functional>
 #include <queue>
 
+#ifdef HAVE_SQLITE3
+#include "sqlite3x.h"
+#endif
 
 extern bool var_SOLVE_FUNCTION_CALLS_IN_DB;
 
@@ -304,22 +307,21 @@ class CallGraphDotOutput : public GraphDotOutput <CallGraphCreate>
        virtual int getVertexSubgraphId ( GraphNode & v );
 
 // DQ (7/28/2005): Don't include the data base
-#ifdef HAVE_MYSQL
-// TPS (01Dec2008): Enabled mysql and this fails.
-// seems like it is not supposed to be included
-       void createCallGraphSchema ( GlobalDatabaseConnection **gDB, std::string dbName );
+#ifdef HAVE_SQLITE3
+
        int writeToDB ( int i = 0, std::string dbName = "" );
-       void writeSubgraphToDB ( GlobalDatabaseConnection *gDB );
+       void writeSubgraphToDB ( sqlite3x::sqlite3_connection& gDB );
        CallGraphCreate *loadGraphFromDB ( std::string dbName );
-       int GetCurrentMaxSubgraph ( GlobalDatabaseConnection *gDB );
+       int GetCurrentMaxSubgraph ( sqlite3x::sqlite3_connection& gDB );
        void filterNodesByDB ( std::string dbName, std::string fiterDB = "__filter.db" );
        void filterNodesByFilename ( std::string dbName, std::string filterFile );
        void filterNodesByFunction ( std::string dbName, SgFunctionDeclaration *function );
        void filterNodesByDirectory ( std::string dbName, std::string directory );
-#ifdef SOLVE_FUNCTION_CALLS_IN_DB
        void solveFunctionPointers ( std::string dbName );
        void solveVirtualFunctions ( std::string dbName, std::string dbHierarchy );
-#endif
+     private:
+       void createCallGraphSchema ( sqlite3x::sqlite3_connection& gDB, std::string dbName );
+
 #endif
    };
 

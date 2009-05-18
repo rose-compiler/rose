@@ -1,7 +1,9 @@
 
 #include <rose.h>
-
+#include <boost/lexical_cast.hpp>
 #include "CallGraph.h"
+
+using namespace sqlite3x;
 
 bool var_SOLVE_FUNCTION_CALLS_IN_DB = false;
 
@@ -1529,47 +1531,36 @@ GenerateDotGraph ( CallGraphCreate *graph, string fileName )
 
 
 
-#ifdef HAVE_MYSQL
+#ifdef HAVE_SQLITE3
 // creates a db and tables for storage of graphs
 void
-CallGraphDotOutput::createCallGraphSchema ( GlobalDatabaseConnection **gDB, string dbName )
+CallGraphDotOutput::createCallGraphSchema ( sqlite3x::sqlite3_connection& gDB, string dbName )
 {
-  *gDB = new GlobalDatabaseConnection(dbName.c_str());
-  assert(*gDB);
   
-  // drop previous database and create a new one
-  (*gDB)->initialize( 1 );
-
   //Query query = (*gDB)->getQuery();
-  const char *c = "CREATE TABLE Graph (gid, pgid, filename TEXT);\
-	CREATE TABLE Nodes (nid TEXT, gid INTEGER, label TEXT, def INTEGER, type TEXT, scope TEXT, PRIMARY KEY (nid, scope));\
-        CREATE TABLE Edges  (nid1 TEXT, nid2 TEXT, label TEXT, type TEXT, objClass TEXT, PRIMARY KEY (nid1, nid2, type));";
+  gDB.executenonquery("CREATE TABLE IF NOT EXISTS Graph (gid, pgid, filename TEXT);");
+  gDB.executenonquery("CREATE TABLE  IF NOT EXISTS Nodes (nid TEXT, gid INTEGER, label TEXT, def INTEGER, type TEXT, scope TEXT, PRIMARY KEY (nid, scope)););");
+  gDB.executenonquery("CREATE TABLE  IF NOT EXISTS Edges  (nid1 TEXT, nid2 TEXT, label TEXT, type TEXT, objClass TEXT, PRIMARY KEY (nid1, nid2, type));");
 
-  (*gDB)->execute(c);
   cout << "Tables created\n";
 }
 
 // DQ (7/28/2005): Don't include the data base
 // reads from DB the current maximal index of a subgraph
 int
-CallGraphDotOutput::GetCurrentMaxSubgraph ( GlobalDatabaseConnection *gDB )
+CallGraphDotOutput::GetCurrentMaxSubgraph ( sqlite3x::sqlite3_connection&  gDB )
 {
-  Query *q = gDB->getQuery();
-  q->set("SELECT MAX(gid) FROM Graph;");
-  Result *res = gDB->select();
-  assert(res->rows() >= 0);
+  int rows = sqlite3x::sqlite3_command(gDB, "SELECT MAX(gid) FROM Graph;").executeint();
+  assert(rows >= 0);
 
-  if (res->rows() == 0)
-    return 0;
-  int i = (*res)[0][0];
-  return i;
+  return rows;
 }
 // DQ (7/28/2005): Don't include the data base
 
 // DQ (7/28/2005): Don't include the data base
 // writes the subgraph, edge, and node info to DB
 void
-CallGraphDotOutput::writeSubgraphToDB( GlobalDatabaseConnection *gDB )
+CallGraphDotOutput::writeSubgraphToDB( sqlite3x::sqlite3_connection& gDB )
 {
   // writing the Graph table
   cout << "Writing graph...\n";
@@ -1594,7 +1585,7 @@ CallGraphDotOutput::writeSubgraphToDB( GlobalDatabaseConnection *gDB )
       // TODO: define a hierarchical structure, don't use -1 as a default parent
       st << "INSERT INTO Graph VALUES (" << i + crtSubgraph << ", " << -1 << ", " << "\"" << filename << "\");";
       string sts = st.str();
-      gDB->execute(sts.c_str());
+      gDB.executenonquery( sts.c_str() );
     }
 
   cout << "Writing nodes and edges...\n";
@@ -1617,9 +1608,8 @@ CallGraphDotOutput::writeSubgraphToDB( GlobalDatabaseConnection *gDB )
 	}
 
       ostringstream st;
-      SgUnparse_Info ui;
       ROSE_ASSERT ( node->properties->functionType );
-      string mnglType = node->properties->functionType->get_mangled( ui ).getString();
+      string mnglType = node->properties->functionType->get_mangled().getString();
       /*
       clsName = isSgClasssDefinition( node->functionDeclaration->get_scope() );
       if ( clsDef )
@@ -1634,30 +1624,41 @@ CallGraphDotOutput::writeSubgraphToDB( GlobalDatabaseConnection *gDB )
       if ( node->properties->functionDeclaration )
 	lbl = node->properties->functionDeclaration->get_mangled_name().getString();
 
-      string command;
+      string command = "INSERT INTO Nodes VALUES (?,?,?,?,?,?);";
+  
+
+      sqlite3_command cmd(gDB, command.c_str());
 
       if ( isDef )
 	{
 	  command = "DELETE FROM Nodes WHERE nid = \"" + mnglName + "\";";
-	  Query *q = gDB->getQuery();
-	  q->set(command.c_str());
-	  gDB->execute();
+//          gDB.executenonquery(command.c_str());
 
-	  st << "INSERT INTO Nodes VALUES (\"" << mnglName  << "\", " << nV << ", \""
-	     << lbl << "\", " << 1 << ", \"" << mnglType << "\", \"" << scope << "\");";
-	  command = st.str();
+          cmd.bind(1, mnglName);
+          cmd.bind(2, nV);
+          cmd.bind(3, lbl);
+          cmd.bind(4, 1);
+          cmd.bind(5, mnglType);
+          cmd.bind(6, scope);
+
 	}
       else
 	{
-	  st << "INSERT INTO Nodes VALUES (\"" << mnglName  << "\", " << nV << ", \""
-	     << lbl << "\", " << 0 << ", \"" << mnglType << "\", \"" << scope << "\");";
-	  command = st.str();
+
+          cmd.bind(1, mnglName);
+          cmd.bind(2, nV);
+          cmd.bind(3, lbl);
+          cmd.bind(4, 0);
+          cmd.bind(5, mnglType);
+          cmd.bind(6, scope);
+
 	}
 
-      Query *q = gDB->getQuery();
-      q->set(command.c_str());
+
+
+      cmd.executenonquery();
+
       cout << command << "\n";
-      gDB->execute();
 
       CallGraphCreate::EdgeIterator ei;
       CallGraphCreate::EdgeDirection dir = CallGraphCreate::EdgeOut;
@@ -1667,10 +1668,12 @@ CallGraphDotOutput::writeSubgraphToDB( GlobalDatabaseConnection *gDB )
 	  CallGraphEdge *edge = ei.Current();
 	  CallGraphNode *end;
 	  ostringstream st;
-	  end = dynamic_cast<CallGraphNode *>( getTargetVertex(*edge) );
+//	  end = dynamic_cast<CallGraphNode *>( getTargetVertex(*edge) );
+	  end = dynamic_cast<CallGraphNode *>(callGraph.GetEdgeEndPoint( edge, GraphAccess::EdgeOut) );
+
 	  ROSE_ASSERT ( end );
 	  string n2mnglName = "POINTER";
-
+ 
 	  string typeF = "", cls = "", nid2 = "NULL";
 	  if ( edge->properties->isPolymorphic )
 	    {
@@ -1679,7 +1682,7 @@ CallGraphDotOutput::writeSubgraphToDB( GlobalDatabaseConnection *gDB )
 	    }
 
 	  ROSE_ASSERT ( end->properties->functionType );
-	  typeF = edge->properties->functionType->get_mangled( ui ).getString();
+	  typeF = edge->properties->functionType->get_mangled().getString();
 	  if ( !( edge->properties->isPointer ) )
 	    {
 	      ROSE_ASSERT ( end->properties->functionDeclaration &&
@@ -1688,9 +1691,9 @@ CallGraphDotOutput::writeSubgraphToDB( GlobalDatabaseConnection *gDB )
 		edge->properties->functionDeclaration->get_mangled_name().getString();
 	    }
 	  st << "INSERT INTO Edges VALUES (\"" << mnglName << "\", \"" << n2mnglName << "\", \"" << edge->label
-	     << "\", \"" << edge->properties->functionType->get_mangled( ui ).getString() << "\", \"" << cls << "\");";
+	     << "\", \"" << edge->properties->functionType->get_mangled( ).getString() << "\", \"" << cls << "\");";
 	  cout << st.str() << "\n";
-	  gDB->execute(st.str().c_str());
+	  gDB.executenonquery(st.str().c_str());
 
 	  /*
        	  st << "INSERT INTO EdgesOld VALUES (\"" << mnglName << "\", \"" <<
@@ -1711,31 +1714,24 @@ void
 CallGraphDotOutput::filterNodesByDB ( string dbName, string filterDB )
 {
   cout << "Filtering system calls...\n";
-  GlobalDatabaseConnection *gDB = new GlobalDatabaseConnection(dbName.c_str());
-  gDB->initialize();
+  sqlite3x::sqlite3_connection gDB(dbName.c_str());
 
   string command = "ATTACH DATABASE \"" + filterDB + "\" AS filter;";
-  Query *q = gDB->getQuery();
-  q->set(command);
-  gDB->execute();
+  gDB.executenonquery(command.c_str());
 
   command = "CREATE TEMP TABLE gb AS SELECT g.gid as gid FROM Graph g, filter.files f WHERE f.filename = g.filename;";
-  q->set(command);
-  gDB->execute();
-  cout << "Error 1: " << q->error() << "\n";
+  gDB.executenonquery(command.c_str());
 
   command = "CREATE TEMP TABLE nb AS SELECT nid FROM Nodes n, gb WHERE n.gid = gb.gid;";
-  q->set(command);
-  gDB->execute();
-  cout << "Error 2: " << q->error() << "\n";
+  gDB.executenonquery(command.c_str());
 
-  command = "DELETE FROM Nodes WHERE nid IN (SELECT nb.nid FROM nb);\
-    DELETE FROM Edges WHERE nid1 in (SELECT nb.nid FROM nb) OR nid2 in (SELECT nb.nid FROM nb);";
-  q->set(command);
-  gDB->execute();
-  cout << "Error 3: " << q->error() << "\n";
+  command = "DELETE FROM Nodes WHERE nid IN (SELECT nb.nid FROM nb);";
+  gDB.executenonquery(command.c_str());
 
-  gDB->shutdown();
+  command = "DELETE FROM Edges WHERE nid1 in (SELECT nb.nid FROM nb) OR nid2 in (SELECT nb.nid FROM nb);";
+  gDB.executenonquery(command.c_str());
+
+  gDB.close();
   cout << "Done filtering\n";
 }
 // DQ (7/28/2005): Don't include the data base
@@ -1746,28 +1742,22 @@ void
 CallGraphDotOutput::filterNodesByFilename ( string dbName, string filterFile )
 {
   cout << "Filtering system calls...\n";
-  GlobalDatabaseConnection *gDB = new GlobalDatabaseConnection(dbName.c_str());
-  gDB->initialize();
+  sqlite3x::sqlite3_connection gDB(dbName.c_str());
   string command;
-  Query *q = gDB->getQuery();
 
   command = "CREATE TEMP TABLE gb AS SELECT g.gid as gid FROM Graph g WHERE g.filename = " + filterFile + ";";
-  q->set(command);
-  gDB->execute();
-  cout << "Error 1: " << q->error() << "\n";
+  gDB.executenonquery(command.c_str());
 
   command = "CREATE TEMP TABLE nb AS SELECT nid FROM Nodes n, gb WHERE n.gid = gb.gid;";
-  q->set(command);
-  gDB->execute();
-  cout << "Error 2: " << q->error() << "\n";
+  gDB.executenonquery(command.c_str());
 
-  command = "DELETE FROM Nodes WHERE nid IN (SELECT nb.nid FROM nb);\
-    DELETE FROM Edges WHERE nid1 in (SELECT nb.nid FROM nb) OR nid2 in (SELECT nb.nid FROM nb);";
-  q->set(command);
-  gDB->execute();
-  cout << "Error 3: " << q->error() << "\n";
+  command = "DELETE FROM Nodes WHERE nid IN (SELECT nb.nid FROM nb);";
+  gDB.executenonquery(command.c_str());
 
-  gDB->shutdown();
+  command = "DELETE FROM Edges WHERE nid1 in (SELECT nb.nid FROM nb) OR nid2 in (SELECT nb.nid FROM nb);";
+  gDB.executenonquery(command.c_str());
+
+  gDB.close();
   cout << "Done filtering\n";
 }
 // DQ (7/28/2005): Don't include the data base
@@ -1780,18 +1770,18 @@ CallGraphDotOutput::filterNodesByFunction ( string dbName, SgFunctionDeclaration
   ROSE_ASSERT ( function );
   cout << "Filtering system calls...\n";
   string functionName = function->get_qualified_name().getString() + function->get_mangled_name().getString();
-  GlobalDatabaseConnection *gDB = new GlobalDatabaseConnection(dbName.c_str());
-  gDB->initialize();
+
+  sqlite3x::sqlite3_connection gDB(dbName.c_str());
 
   string command;
-  Query *q = gDB->getQuery();
 
-  command = "DELETE FROM Nodes WHERE nid = " + functionName + ";\
-    DELETE FROM Edges WHERE nid1 = " + functionName + "  OR nid2 = " + functionName + ";";
-  q->set(command);
-  gDB->execute();
+  command = "DELETE FROM Nodes WHERE nid = " + functionName + ";";
+  gDB.executenonquery(command.c_str());
 
-  gDB->shutdown();
+  command =  "DELETE FROM Edges WHERE nid1 = " + functionName + "  OR nid2 = " + functionName + ";";
+  gDB.executenonquery(command.c_str());
+
+  gDB.close();
   cout << "Done filtering\n";
 }
 // DQ (7/28/2005): Don't include the data base
@@ -1803,27 +1793,20 @@ void
 CallGraphDotOutput::solveFunctionPointers( string dbName )
 {
   cout << "Solving function pointers...\n";
-  GlobalDatabaseConnection *gDB = new GlobalDatabaseConnection( dbName.c_str() );
-  gDB->initialize();
+
+  sqlite3x::sqlite3_connection gDB(dbName.c_str());
 
   string command = "";
-  Query *q = gDB->getQuery();
-  command = command + "INSERT INTO Edges SELECT e.nid1, nid, n1.label, e.type, e.objClass from Nodes n1, Edges e WHERE " +
+  command = "INSERT INTO Edges SELECT e.nid1, nid, n1.label, e.type, e.objClass from Nodes n1, Edges e WHERE "
     "e.nid2 = \"POINTER\" AND e.type = n1.type;";// AND e.objClass = n1.scope;";
-  q->set( command );
-  gDB->execute();
-  if ( q->success() != 0 )
-    cout << "Error (if any): " << q->error() << "\n";
-  else
-    {
-      command = "DELETE FROM Edges WHERE nid2 = \"POINTER\" AND objClass = \"\";";
-      cout << command << "\t" << "CLEANUP\n";
-      q->set( command );
-      gDB->execute();
-      if ( q->success() != 0 )
-	cout << "Error (if any): " << q->error() << "\n";
-    }
-  gDB->shutdown();
+  gDB.executenonquery(command.c_str());
+ 
+  command = "DELETE FROM Edges WHERE nid2 = \"POINTER\" AND objClass = \"\";";
+  gDB.executenonquery(command.c_str());
+
+  cout << command << "\t" << "CLEANUP\n";
+
+  gDB.close();
   cout << "Done with function pointers\n";
 }
 
@@ -1833,82 +1816,91 @@ void
 CallGraphDotOutput::solveVirtualFunctions( string dbName, string dbHierarchy )
 {
   cout << "Solving virtual function calls...\n";
-  GlobalDatabaseConnection *gDB = new GlobalDatabaseConnection( dbName.c_str() );
-  gDB->initialize();
+  sqlite3x::sqlite3_connection gDB(dbName.c_str());
 
   string command = "";
-  Query *q = gDB->getQuery();
   // determine descendants of edges.objClass
-  command += "SELECT * from Edges WHERE objClass <> \"\";"; // AND nid2 <> \"POINTER\";";
-  q->set( command );
-  Result *rows = gDB->select();
-  if ( !rows )
+  {
+   
+
+    cout << "Classes with virtual functions called:\n";
+
+    //rows->showResult();
+
+    std::vector<std::vector<std::string> > objClassEdges;
+  
     {
-      cout << q->error();
-      exit ( -1 );
+      command = "SELECT * from Edges WHERE objClass <> \"\";"; // AND nid2 <> \"POINTER\";";
+      sqlite3_command cmd(gDB, command.c_str());
+
+      sqlite3x::sqlite3_reader r = cmd.executereader();
+
+      while( r.read() )
+      {
+        std::vector<std::string> objClassEdgesElem;
+        string nid1     = r.getstring(0); objClassEdgesElem.push_back(nid1);
+        string nid2     = r.getstring(1); objClassEdgesElem.push_back(nid2);
+        string lbl2     = r.getstring(2); objClassEdgesElem.push_back(lbl2);
+        string fType    = r.getstring(3); objClassEdgesElem.push_back(fType);
+        string objClass = r.getstring(4); objClassEdgesElem.push_back(objClass);
+
+        objClassEdges.push_back(objClassEdgesElem);
+      }
     }
 
-  command = "DELETE FROM Edges WHERE objClass <> \"\";";// AND nid2 <> \"POINTER\";";
-  q->set( command );
-  gDB->execute();
-  command = "DELETE FROM Nodes WHERE nid = \"DUMMY\";";
-  q->set( command );
-  gDB->execute();
+    command = "DELETE FROM Edges WHERE objClass <> \"\";";// AND nid2 <> \"POINTER\";";
+    gDB.executenonquery( command.c_str() );
 
-  cout << "Classes with virtual functions called:\n";
+    command = "DELETE FROM Nodes WHERE nid = \"DUMMY\";";
+    gDB.executenonquery( command.c_str() );
 
-  rows->showResult();
 
-  for ( Result::iterator i = rows->begin(); i != rows->end(); i++ )
+    for(unsigned int i = 0 ; i < objClassEdges.size(); i++)
     {
-      string nid1 = (*i)[0].get_string();
-      string nid2 = (*i)[1].get_string();
-      string lbl2 = (*i)[2].get_string();
-      string fType = (*i)[3].get_string();
-      string objClass = (*i)[4].get_string();
+
+      string nid1     = objClassEdges[i][0];
+      string nid2     = objClassEdges[i][1];
+      string lbl2     = objClassEdges[i][2];
+      string fType    = objClassEdges[i][3];
+      string objClass = objClassEdges[i][4];
 
       ClassHierarchyWrapper clsHierarchy ( "ClassHierarchy" );
-      Rose_STL_Container<string> subclasses = clsHierarchy.getSubclasses( objClass );
+      std::list<string> subclasses = clsHierarchy.getSubclasses( objClass );
       subclasses.push_back( objClass );
-      for ( Rose_STL_Container<string>::iterator it = subclasses.begin(); it != subclasses.end(); it++ )
-	{
-	  if ( nid2 == "POINTER" )
-	    command = "SELECT * FROM Nodes WHERE scope = \"" + *it + "\" AND type = \"" + fType + "\";";
-	  else
-	    command = "SELECT * FROM Nodes WHERE scope = \"" + *it + "\" AND label = \"" + lbl2 + "\";";// AND def = 1;";
-	  q->set( command );
-	  cout << "Now executing: " << q->preview();
-	  Result *virtualCalls = gDB->select();
-	  if ( !virtualCalls )
-	    {
-	      cout << q->error();
-	      exit ( -1 );
-	    }
-	  else
-	    virtualCalls->showResult();
+      for ( std::list<string>::iterator it = subclasses.begin(); it != subclasses.end(); it++ )
+      {
+        if ( nid2 == "POINTER" )
+          command = "SELECT * FROM Nodes WHERE scope = \"" + *it + "\" AND type = \"" + fType + "\";";
+        else
+          command = "SELECT * FROM Nodes WHERE scope = \"" + *it + "\" AND label = \"" + lbl2 + "\";";// AND def = 1;";
 
-	  for ( Result::iterator itr = virtualCalls->begin(); itr != virtualCalls->end(); itr++ )
-	    {
-	      string nnid = (*itr)[0];
-	      //	      int gid = (*itr)[1];
-	      string lbl = (*itr)[2].get_string();
-	      //	      int is_def = (*itr)[3];
-	      string fType = (*itr)[4].get_string();
-	      string scope = (*itr)[3].get_string();
-	      command = "INSERT INTO Edges VALUES ( \"" + nid1 + "\", \"" + nnid + "\", \"" + lbl + "\", \"" + fType +
-		"\", \"\" );";
-	      q->set( command );
-	      cout << command << "\n";
-	      gDB->execute();
-	      if ( q->success() != 0 )
-		cout << "Error: " << q->error() << "\n";
-	    }
-	  delete virtualCalls;
-	}
+        sqlite3_command cmd(gDB, command.c_str());
+
+        sqlite3x::sqlite3_reader r = cmd.executereader();
+
+        cout << "Now executing: " << command;
+
+        std::vector<string> inserts;
+        while( r.read() )
+        {
+          string nnid  = r.getstring(0);
+          //	      int gid = (*itr)[1];
+          string lbl   = r.getstring(2);
+          //	      int is_def = (*itr)[3];
+          string fType = r.getstring(4) ;
+          string scope = r.getstring(3);
+          command = "INSERT INTO Edges VALUES ( \"" + nid1 + "\", \"" + nnid + "\", \"" + lbl + "\", \"" + fType +
+            "\", \"\" );";
+          inserts.push_back(command);
+        }
+
+        for(unsigned int i = 0 ; i < inserts.size() ; i++)
+          gDB.executenonquery(inserts[i].c_str());
+      }
     }
+  }
 
-  delete rows;
-  gDB->shutdown();
+
   cout << "Done with virtual functions\n";
 }
 
@@ -1918,26 +1910,23 @@ void
 CallGraphDotOutput::filterNodesByDirectory ( string dbName, string directory )
 {
   cout << "Filtering system calls...\n";
-  GlobalDatabaseConnection *gDB = new GlobalDatabaseConnection(dbName.c_str());
-  gDB->initialize();
+  sqlite3x::sqlite3_connection gDB(dbName.c_str());
 
   string command;
-  Query *q = gDB->getQuery();
 
   command = "CREATE TEMP TABLE gb AS SELECT g.gid as gid FROM Graph g WHERE g.filename LIKE \"" + directory + "%\";";
-  q->set(command);
-  gDB->execute();
+  gDB.executenonquery(command.c_str());
 
   command = "CREATE TEMP TABLE nb AS SELECT nid FROM Nodes n, gb WHERE n.gid = gb.gid;";
-  q->set(command);
-  gDB->execute();
+  gDB.executenonquery(command.c_str());
 
-  command = "DELETE FROM Nodes WHERE nid IN (SELECT nb.nid FROM nb);\
-    DELETE FROM Edges WHERE nid1 in (SELECT nb.nid FROM nb) OR nid2 in (SELECT nb.nid FROM nb);";
-  q->set(command);
-  gDB->execute();
+  command = "DELETE FROM Nodes WHERE nid IN (SELECT nb.nid FROM nb);";
+  gDB.executenonquery(command.c_str());
 
-  gDB->shutdown();
+  command = "DELETE FROM Edges WHERE nid1 in (SELECT nb.nid FROM nb) OR nid2 in (SELECT nb.nid FROM nb);";
+  gDB.executenonquery(command.c_str());
+
+  gDB.close();
   cout << "Done filtering\n";
 }
 // DQ (7/28/2005): Don't include the data base
@@ -1951,45 +1940,44 @@ CallGraphDotOutput::loadGraphFromDB ( string dbName )
   cout << "Loading...\n";
   CallGraphCreate *graph = new CallGraphCreate();
 
-  GlobalDatabaseConnection *gDB = new GlobalDatabaseConnection(dbName.c_str());
-  gDB->initialize();
+  sqlite3x::sqlite3_connection gDB(dbName.c_str());
 
   string loadNodes = "SELECT * FROM Nodes;",
-    loadGraph = "SELECT * FROM Graph;",
+//    loadGraph = "SELECT * FROM Graph;",
     loadEdges = "SELECT * FROM Edges;";
 
-  Query *q = gDB->getQuery();
-
-  // reading nodes
-  q->set(loadNodes);
-  Result *nodes = gDB->select();
-
-  // reading edges
-  q->set(loadEdges);
-  Result *result_query = gDB->select();
-  result_query->showResult();
   Rose_STL_Container<CallGraphNode *> nodeList;
 
-  for (Result::iterator i = nodes->begin(); i != nodes->end(); i++)
+  {
+    sqlite3_command cmd(gDB, loadNodes.c_str());
+    sqlite3x::sqlite3_reader r = cmd.executereader();
+
+
+  
+    while(r.read()) 
     {
-      string nid = (*i)[0].get_string();
-      string label = (*i)[2].get_string();
-      int is_def = (*i)[3];
-      string typeF = (*i)[4].get_string();
-      string scope = (*i)[5].get_string();
+      string nid   = r.getstring(0);
+      string label = r.getstring(2);
+      int is_def   = boost::lexical_cast<int>(r.getstring(3));
+      string typeF = r.getstring(4);
+      string scope = r.getstring(5);
 
       CallGraphNode *n = new CallGraphNode( nid, NULL, NULL, is_def, false, false, NULL );
-      
+
       graph->addNode(n);
       //     cout << "Node pushed: " << nid << "\t" << n << "\n";
       nodeList.push_back(n);
     }
+  }
 
-  for (Result::iterator i = result_query->begin(); i != result_query->end(); i++)
+  sqlite3_command cmd(gDB, loadNodes.c_str());
+  sqlite3x::sqlite3_reader r = cmd.executereader();
+
+  while(r.read())
     {
-      string nid1 = (*i)[0].get_string(),
-	nid2 = (*i)[1].get_string(),
-	label = (*i)[2].get_string();
+      string nid1 = r.getstring(0),
+	nid2  = r.getstring(1),
+	label = r.getstring(2);
 
       // find end points of edges, by their name
       CallGraphNode* startingNode = findNode(nodeList, nid1);
@@ -2001,15 +1989,12 @@ CallGraphDotOutput::loadGraphFromDB ( string dbName )
 	  //cout << "Nodes retrieved: " << nid1 << "\t" << startingNode << "\t"
 	  //   << nid2 << "\t" << endNode << "\n";
 	  CallGraphEdge *e = new CallGraphEdge(label);
-          if(returnGraph->edgeExists(startingNode,endNode)==false)
+          if(graph->edgeExist(startingNode,endNode)==false)
 	     graph->addEdge(startingNode, endNode, e);
 	}
     }
 
   cout << "After recreating the graph\n";
-  delete nodes;
-  delete result_query;
-  gDB->shutdown();
   return graph;
 }
 
@@ -2017,20 +2002,9 @@ CallGraphDotOutput::loadGraphFromDB ( string dbName )
 int
 CallGraphDotOutput::writeToDB ( int i, string dbName )
 {
-  GlobalDatabaseConnection *gDB = NULL;
-  if (i)
-    createCallGraphSchema(&gDB, dbName);
-  else
-    {
-      gDB = new GlobalDatabaseConnection(dbName.c_str());
-#if DEBUG_SQLITE
-      assert(gDB);
-#endif
-      gDB->initialize();
-    }
+  sqlite3x::sqlite3_connection gDB(dbName.c_str());
+  createCallGraphSchema(gDB, dbName);
   writeSubgraphToDB(gDB);
-  gDB->shutdown();
-  //  delete gDB;
   return 0;
 }
 

@@ -26,10 +26,7 @@ ClassHierarchyWrapper::setAST( SgNode *proj )
   root = proj;
  }
 
-// TPS (01Dec2008): Enabled mysql and this fails.
-// seems like it is not supposed to be included
-#if 0
-//#ifdef HAVE_MYSQL
+#ifdef HAVE_SQLITE3
 
 ClassHierarchyWrapper::ClassHierarchyWrapper( std::string db ) 
  { 
@@ -42,14 +39,14 @@ ClassHierarchyWrapper::setDBName( std::string db )
   dbName = db; 
  }
 
-#else
+
+
+#endif
 
 ClassHierarchy* ClassHierarchyWrapper::getClassHierarchyGraph(){
             return &classGraph;
 
 };
-
-#endif
 
 ClassHierarchyNode*
 ClassHierarchyWrapper::findNode(SgNode* nodeToFind){
@@ -102,10 +99,7 @@ ClassHierarchyWrapper::ClassHierarchyWrapper( SgNode *node )
   ROSE_ASSERT ( isSgProject( node ) );
   root = node;
 
-// TPS (01Dec2008): Enabled mysql and this fails.
-// seems like it is not supposed to be included
-#if 0
-  //#ifdef HAVE_MYSQL
+#ifdef HAVE_SQLITE3
   dbName = "__defaultClassHierarchy";
 #endif
 
@@ -235,82 +229,56 @@ ClassHierarchyWrapper::getDirectSubclasses ( SgClassDefinition * cls )
 }
 
 
-// TPS (01Dec2008): Enabled mysql and this fails.
-// seems like it is not supposed to be included
-#if 0
-//#ifdef HAVE_MYSQL
+#ifdef HAVE_SQLITE3
 // generates the class hierarchy shema ( not the classes themselves )
 void
 ClassHierarchyWrapper::createHierarchySchema ()
 {
-  GlobalDatabaseConnection *gDB;
-  gDB = new GlobalDatabaseConnection( dbName.c_str() );
-  gDB->initialize();
-  string command = "";
-  command = command + "CREATE TABLE Hierarchy ( Class TEXT, Subclass TEXT, ClassFile TEXT, SubclassFile TEXT, "
-    + "PRIMARY KEY ( Class, Subclass ) );";
-  Query *q = gDB->getQuery();
-  q->set( command );
-  q->execute();
-  if ( q->success() != 0 )
-    cout << "Error creating schema: " << q->error() << "\n";
-  gDB->shutdown();
-}
-#endif
+  sqlite3x::sqlite3_connection gDB(dbName.c_str());
 
-// TPS (01Dec2008): Enabled mysql and this fails.
-// seems like it is not supposed to be included
-#if 0
-//#ifdef HAVE_MYSQL
-Rose_STL_Container<string>
+  string command = "";
+  command = "CREATE TABLE Hierarchy ( Class TEXT, Subclass TEXT, ClassFile TEXT, SubclassFile TEXT, "
+    "PRIMARY KEY ( Class, Subclass ) );";
+  gDB.executenonquery(command.c_str());
+}
+
+std::list<string>
 ClassHierarchyWrapper::getDirectSubclasses( string className )
 {
-  Rose_STL_Container<string> retList;
-  GlobalDatabaseConnection *gDB;
-  gDB = new GlobalDatabaseConnection( dbName.c_str() );
-  gDB->initialize();
-  string command;
-  Query *q = gDB->getQuery();
-  
-  command = "SELECT subclass from Hierarchy WHERE class = \"" + className + "\";";
-  q->set( command );
-  cout << "Executing: " << q->preview() << "\n";
-  Result *res = gDB->select();
-  if ( q->success() != 0 )
-    cout << "Error reading values: " << q->error() << "\n";
-  else
-    res->showResult();
+  std::list<string> retList;
 
-  for ( Result::iterator i = res->begin(); i != res->end(); i++ )
+  sqlite3x::sqlite3_connection gDB(dbName.c_str());
+
+  string command = "SELECT subclass from Hierarchy WHERE class = \"" + className + "\";";
+
+  sqlite3x::sqlite3_command cmd(gDB,command.c_str());
+  sqlite3x::sqlite3_reader r = cmd.executereader();
+
+
+  while( r.read() )
     {
-      string cls = (*i)[0].get_string();
+      string cls = r.getstring(0);
       retList.push_back( cls );
     }
-  gDB->shutdown();
   return retList;
 }
-#endif
 
-// TPS (01Dec2008): Enabled mysql and this fails.
-// seems like it is not supposed to be included
-#if 0
-//#ifdef HAVE_MYSQL
-Rose_STL_Container<string>
+std::list<string>
 ClassHierarchyWrapper::getSubclasses( string className )
 {
-  Rose_STL_Container<string> retList;
-  Rose_STL_Container<string> toVisit;
+  std::list<string> retList;
+  std::list<string> toVisit;
   toVisit.push_back( className );
 
   while ( !toVisit.empty() )
     {
       string crt = toVisit.front();
       toVisit.pop_front();
-      Rose_STL_Container<string> temp = getDirectSubclasses( crt );
-      for ( Rose_STL_Container<string>::iterator i = temp.begin(); i != temp.end(); i++ )
+      std::list<string> temp = getDirectSubclasses( crt );
+      for ( std::list<string>::iterator i = temp.begin(); i != temp.end(); i++ )
 	{
 	  bool alreadyExists = false;
-	  for ( Rose_STL_Container<string>::iterator j = retList.begin(); j != retList.end(); j++ )
+	  for ( std::list<string>::iterator j = retList.begin(); j != retList.end(); j++ )
 	    if ( *j == *i )
 	      {
 		alreadyExists = true;
@@ -325,21 +293,15 @@ ClassHierarchyWrapper::getSubclasses( string className )
     }
   return retList;
 }
-#endif
 
-// TPS (01Dec2008): Enabled mysql and this fails.
-// seems like it is not supposed to be included
-#if 0
-//#ifdef HAVE_MYSQL
 // writes the class hierarchy to the specified database
 void
 ClassHierarchyWrapper::writeHierarchyToDB ()
 {
-  GlobalDatabaseConnection *gDB;
-  gDB = new GlobalDatabaseConnection( dbName.c_str() );
-  gDB->initialize();
+
+  sqlite3x::sqlite3_connection gDB(dbName.c_str());
+  
   string command;
-  Query *q = gDB->getQuery();
   
   ClassHierarchy::EdgeIterator edgeIterator;
   ClassHierarchy::NodeIterator nodeIterator;
@@ -361,13 +323,10 @@ ClassHierarchyWrapper::writeHierarchyToDB ()
 	  command = "INSERT INTO Hierarchy VALUES (\"" + cC->get_qualified_name().getString() + "\", \""
 	    + dC->get_qualified_name().getString() + "\", \"" + cC->get_file_info()->get_filename() + "\", \""
 	    + dC->get_file_info()->get_filename() + "\");";
-	  q->set( command );
-	  cout << "Executing: " << q->preview() << "\n";
-	  q->execute();
-	  if ( q->success() != 0 )
-	    cout << "Error inserting values: " << q->error() << "\n";  
+	  //cout << "Executing: " << q->preview() << "\n";
+	  //q->execute();
+          gDB.executenonquery(command.c_str());
 	}
     }
-  gDB->shutdown();
 }
 #endif
