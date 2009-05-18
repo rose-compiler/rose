@@ -35,10 +35,10 @@ termite ::=
     project.
 
 project ::=
-    project([file], default_annotation, analysis_info, file_info).
+    project([source_file], default_annotation, analysis_info, file_info).
 
-file ::=
-    file(global, {null}, default_annotation, analysis_info, file_info).
+source_file ::=
+    source_file(global, default_annotation, analysis_info, file_info).
 
 initialized_name ::=
     initialized_name(initializer?, initialized_name_annotation,
