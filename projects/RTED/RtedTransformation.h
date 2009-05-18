@@ -90,6 +90,7 @@ class RtedTransformation : public AstSimpleProcessing {
   //void insertFuncCall(RtedArguments* args, bool before);
   void visit_isFunctionCall(SgNode* n);
   bool isInterestingFunctionCall(std::string name);
+  int getDimensionForFuncCall(std::string name);
 
   std::string removeSpecialChar(std::string str);
 

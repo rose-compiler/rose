@@ -282,8 +282,13 @@ void RtedTransformation::visit_isArraySgInitializedName(SgNode* n) {
       cerr << " --------------------- One Dimensional Array  Type : " << type->class_name() <<endl;
     }
 
-    if (expr)
-      cerr << " Found expression -- expr : " << expr->class_name() << endl;
+    if (expr) {
+      cerr << " >>> Found expression -- expr : " << expr->class_name() << 
+	"   initName : " << initName << "  array : " << array << endl;
+    } else {
+      cerr << " >>> Found expression -- expr : NULL "  << 
+	"   initName : " << initName << "  array : " << array << endl;
+    }
     if (expr != NULL) {
       cerr << "... Found stack array: " << initName->unparseToString()
 	   << " " << type->class_name() << " array expr: "
@@ -292,9 +297,9 @@ void RtedTransformation::visit_isArraySgInitializedName(SgNode* n) {
       if (expr2)
 	cerr << "   Expr2 : " << expr2->unparseToString() << endl;
       ROSE_ASSERT(dimension>0);
-      RTedArray* array = new RTedArray(true, dimension, initName,
+      RTedArray* arrayRted = new RTedArray(true, dimension, initName,
 				       expr, expr2);
-      create_array_define_varRef_multiArray_stack[initName] = array;
+      create_array_define_varRef_multiArray_stack[initName] = arrayRted;
     } else if (isSgAssignInitializer(initName->get_initptr())) {
       cerr << "... Found Array AssignInitializer ... " << endl;
       SgExpression* operand = isSgAssignInitializer(initName->get_initptr())->get_operand();
@@ -313,9 +318,12 @@ void RtedTransformation::visit_isArraySgInitializedName(SgNode* n) {
       // create the array variable
       ROSE_ASSERT(dimension>0);
       SgIntVal* sizeExp = buildIntVal(length);
-      RTedArray* array = new RTedArray(true, dimension, initName,
+      RTedArray* arrayRted = new RTedArray(true, dimension, initName,
 				       sizeExp, expr2);
-      create_array_define_varRef_multiArray_stack[initName] = array;
+      create_array_define_varRef_multiArray_stack[initName] = arrayRted;
+
+      array->set_index(buildIntVal(length));
+
     } else {
       cerr << "... There is a problem detecting this array ... " << initName->get_initptr()->class_name() << endl;
       ROSE_ASSERT(false);

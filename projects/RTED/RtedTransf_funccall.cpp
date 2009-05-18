@@ -85,8 +85,9 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
     int extra_params = 4;
     // nr of args + 2 (for sepcialFunctions) + 4 =  args+6;
     int size = extra_params+args->arguments.size();
-    if (args->arguments.size()>=2)
-      size+=2;
+    int dimFuncCall = getDimensionForFuncCall(args->name);
+    //if (args->arguments.size()>=2)
+    size+=dimFuncCall;
     SgIntVal* sizeExp = buildIntVal(size);
     SgExpression* callNameExp = buildString(args->name);
 
@@ -136,14 +137,15 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
 	  SgArrayType* array = isSgArrayType(type);
 	  if (array) {
 	    SgExpression * expr = array->get_index();
-	    string valueStr = "";
-	    if (expr==NULL)
-	      expr = buildString("0");
-	    else
-	      expr->unparseToString();
-	      
-	    SgExpression* numberToString = buildString(valueStr);
-	    appendExpression(arg_list, numberToString);
+	    cerr << " Found 00 - btype : " << array->get_base_type()->class_name() << 
+	      "  index type: " << expr << endl;
+	    if (expr==NULL) {
+	      // assert for now
+	      ROSE_ASSERT(expr);
+	      expr = buildString("00");
+	    } else
+	      expr = buildString(expr->unparseToString());
+	    appendExpression(arg_list, expr);
 	    cerr << ">>> Found variable : " << name << "  with size : " << 
 	      expr->unparseToString() << "  and val : " << var << endl;
 	  } 
@@ -171,10 +173,8 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
 
 	  SgExprListExp* arg_list2 = buildExprListExp();
 	  appendExpression(arg_list2, var);
-	  SgFunctionCallExp* funcCallExp2 = buildFunctionCallExp(memRef_r2,
-								 arg_list2);
+	  SgFunctionCallExp* funcCallExp2 = buildFunctionCallExp(memRef_r2, arg_list2);
 	  ROSE_ASSERT(funcCallExp2);
-	  //	  SgCastExp* point= buildCastExp(funcCallExp2,buildPointerType(buildCharType()));
 	  appendExpression(arg_list, funcCallExp2);
 	  cerr << " Created Function call  convertToString" << endl;
 	}
@@ -185,7 +185,9 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
 	  string theString = isSgStringVal(exp)->get_value();
 	  appendExpression(arg_list, buildString(theString));
 	  int sizeString = theString.size();
-	  SgExpression* numberToString = buildString(RoseBin_support::ToString(sizeString));
+	  string sizeStringStr = RoseBin_support::ToString(sizeString);
+	  ROSE_ASSERT(sizeStringStr!="");
+	  SgExpression* numberToString = buildString(sizeStringStr);
 	  appendExpression(arg_list, numberToString);
 	} else {
 	  // default create a string
@@ -193,7 +195,9 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
 	  SgExpression* stringExp = buildString(theString);
 	  appendExpression(arg_list, stringExp);
 	  int sizeString = theString.size();
-	  SgExpression* numberToString = buildString(RoseBin_support::ToString(sizeString));
+	  string sizeStringStr = RoseBin_support::ToString(sizeString);
+	  ROSE_ASSERT(sizeStringStr!="");
+	  SgExpression* numberToString = buildString(sizeStringStr);
 	  appendExpression(arg_list, numberToString);
 	}
       }
@@ -227,10 +231,30 @@ RtedTransformation::isInterestingFunctionCall(std::string name) {
       name=="strcpy" || 
       name=="strncpy" ||
       name=="strcat" ||
-      name=="strncat"
+      name=="strncat" ||
+      name=="strlen"
       )
     interesting=true;
   return interesting;
+}
+
+int 
+RtedTransformation::getDimensionForFuncCall(std::string name) {
+  int dim=0;
+  if (name=="memcpy" || 
+      name=="memmove" || 
+      name=="strcpy" || 
+      name=="strncpy" ||
+      name=="strcat" ||
+      name=="strncat"
+      ) {
+    dim=2;
+  }
+  else if (name=="strlen"
+	   ) {
+    dim=1;
+  }
+  return dim;
 }
 
 

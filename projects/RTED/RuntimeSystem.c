@@ -400,7 +400,8 @@ RuntimeSystem_isInterestingFunctionCall(char* name) {
 	 strcmp(name ,"strcpy")==0 ||
 	 strcmp(name ,"strncpy")==0 ||
 	 strcmp(name ,"strcat")==0 ||
-	 strcmp(name ,"strncat")==0
+	 strcmp(name ,"strncat")==0 ||
+	 strcmp(name ,"strlen")==0
 	 )) {
     interesting=1;
   }
@@ -423,31 +424,69 @@ RuntimeSystem_isInterestingFunctionCall(char* name) {
  ********************************************************/
 void 
 RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize, char* filename, char* line, char* stmtStr) {
-  assert(argsSize>=4);
+  assert(argsSize>=1);
+  // parameter 1
+  assert(args[0]);
+  assert(args[1]);
   char* param1StringVal = args[0];
   int param1ActualLength =-1;
   int param1AllocLength = atoi(args[1]);
-  char* param2StringVal = args[2];
-  int param2ActualLength =-1;
-  int param2AllocLength = atoi(args[3]);
   assert(param1StringVal);
-  assert(param2StringVal);
-  if (rtsi()->funccallDebug)
-    printf("Special Function call   p1: %s act1: %d alloc1: %d     p2: %s act2: %d alloc2: %d\n",
-	   param1StringVal, param1ActualLength, param1AllocLength,
-	   param2StringVal, param2ActualLength, param2AllocLength);
   if (param1AllocLength==0)
     param1AllocLength=param1ActualLength;
-  if (param2AllocLength==0)
-    param2AllocLength=param2ActualLength;
-
-  //assert(param1ManglName);
-  //assert(param2ManglName);
-#if 1
-  // determine the 3rd parameter if present, e.g. strcpy(p1,p2,size);
+  
+  // parameter 2
+  char* param2StringVal = (char*)"";
+  int param2ActualLength =-1;
+  int param2AllocLength = -1;
+  // parameter 3
   int param3Size = 0;
-  if (argsSize>4)
-    param3Size = strtol(args[4],NULL,10);
+
+  int parameters=1;
+  if ( ( strcmp(fname,"strlen")==0 // 1 param
+	 )) {
+    if (rtsi()->funccallDebug)
+      printf("Special Function call %s  p1: %s act1: %d alloc1: %d   \n", fname,
+	     param1StringVal, param1ActualLength, param1AllocLength);
+  } else 
+    if ( ( strcmp(fname ,"strcpy")==0  || // 2 param
+	   strcmp(fname ,"strcat")==0   // 2 param
+	   )) {
+      assert(argsSize>=4);
+      if (rtsi()->funccallDebug)
+	printf("Special Function call - %s  p1: %s act1: %d alloc1: %d     p2: %s act2: %d alloc2: %d\n", fname,
+	       param1StringVal, param1ActualLength, param1AllocLength,
+	       param2StringVal, param2ActualLength, param2AllocLength);
+      parameters=2;
+    } else
+      if ( ( strcmp(fname,"memcpy")==0   || // 3 param
+	     strcmp(fname ,"memmove")==0 || // 3 param
+	     strcmp(fname ,"strncpy")==0 || // 3 param
+	     strcmp(fname ,"strncat")==0  // 3 param
+	     )) {
+	// check if string1 and string2 overlap. Dont allow memcopy on such
+	assert(argsSize>=5);
+	if (rtsi()->funccallDebug)
+	  printf("Special Function call - %s  p1: %s act1: %d alloc1: %d     p2: %s act2: %d alloc2: %d   param3Size: %d\n",fname,
+		 param1StringVal, param1ActualLength, param1AllocLength,
+		 param2StringVal, param2ActualLength, param2AllocLength, param3Size);
+	parameters=3;
+      }
+  
+  if (parameters>=2) {
+    param2StringVal = args[2];
+    param2ActualLength =-1;
+    param2AllocLength = atoi(args[3]);
+    assert(param2StringVal);
+    if (param2AllocLength==0)
+      param2AllocLength=param2ActualLength;
+  }
+  if (parameters==3) {
+    // determine the 3rd parameter if present, e.g. strcpy(p1,p2,size);
+    if (argsSize>4)
+      param3Size = strtol(args[4],NULL,10);
+  }
+
 
 
   // determine the actual size of each of the strings
@@ -460,57 +499,81 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize, 
     end1= param1StringVal;
   assert(end1);
   param1ActualLength = (end1-param1StringVal)+1;
-
-  char* end2 = NULL;
-  char *iter2=NULL;
-  for ( iter2 = param2StringVal; *iter2 != '\0'; ++iter2) {
-    end2 = iter2;
-  }
-  if (end2==NULL)
-    end2= param2StringVal;
-  assert(end2);
-  param2ActualLength = (end2-param2StringVal)+1;
-  if (param3Size==0)
-    param3Size = param2ActualLength;
-
-  // check if string1 and string2 overlap. Dont allow memcopy on such
-  if (rtsi()->funccallDebug)
-    printf("Special Function call   p1: %s act1: %d alloc1: %d     p2: %s act2: %d alloc2: %d   param3Size: %d\n",
-	   param1StringVal, param1ActualLength, param1AllocLength,
-	   param2StringVal, param2ActualLength, param2AllocLength, param3Size);
-  
   assert(param1ActualLength>-1);
-  assert(param2ActualLength>-1);
-  assert(param3Size>0);
 
-
-  if ( ((param1StringVal+param3Size) >= param2StringVal) && (param1StringVal<param2StringVal) ||
-       ((param2StringVal+param3Size) >= param1StringVal) && (param2StringVal<param1StringVal)) {
-    // overlapping memory regions
-    if (rtsi()->funccallDebug)
-      printf( " >>>> Error : Memory regions overlap!   Size1: %d  Size2: %d\n",param1ActualLength , param2ActualLength);
-    RuntimeSystem_callExit(filename, line, (char*)"Memory regions overlap", stmtStr);  
-  } else if ((param3Size>param1AllocLength || param3Size>param2AllocLength)) {
-    // make sure that if the strings do not overlap, they are both smaller than the amount of chars to copy
-    char* res1 = ((char*)"Invalid Operation,  operand1 size=");
-    char* res2 = ((char*)"  operand2 size=");
-    int sizeInt = 2*sizeof(int);
-    char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ 1);
-    sprintf(res,"%s%d%s%d",res1,param1ActualLength,res2,param2ActualLength);
-    RuntimeSystem_callExit(filename, line, res, stmtStr);
-  } 
-  printf("No problem found!\n");
-
-  if (
-      strcmp(fname ,"strcat")==0 ||
-      strcmp(fname ,"strncat")==0) {
-
-    // not handled yet. Need to check if this operation is leagal
-    printf("Checking special op : %s\n",fname);
-    assert(1==0);
+  if (parameters>=2) {
+    char* end2 = NULL;
+    char *iter2=NULL;
+    for ( iter2 = param2StringVal; *iter2 != '\0'; ++iter2) {
+      end2 = iter2;
+    }
+    if (end2==NULL)
+      end2= param2StringVal;
+    assert(end2);
+    param2ActualLength = (end2-param2StringVal)+1;
+    if (param3Size==0)
+      param3Size = param2ActualLength;
+    assert(param2ActualLength>-1);
+    assert(param3Size>0);
   }
-#endif 
+
+  if ( ( strcmp(fname,"strlen")==0 // 1 param
+	 )) {
+    // checking one parameter for strlen(char* without \0)
+    if (rtsi()->funccallDebug)
+      printf("CHECK: Special Function call %s  p1: %s act1: %d alloc1: %d   \n", fname,
+	     param1StringVal, param1ActualLength, param1AllocLength);
+    // check if the actual size is larger than the allocated size
+    if (param1ActualLength>=param1AllocLength)
+      RuntimeSystem_callExit(filename, line, (char*)"Writing outside allocated memory. String possible not NULL terminated.", stmtStr);  
+  }
+  else 
+    if ( ( strcmp(fname ,"strcat")==0  || // 2 param
+	   strcmp(fname ,"strncat")==0   // 3 param
+	   )) {
+      if (rtsi()->funccallDebug)
+	printf("CHECK: Special Function call - %s  p1: %s act1: %d alloc1: %d     p2: %s act2: %d alloc2: %d\n", fname,
+	       param1StringVal, param1ActualLength, param1AllocLength,
+	       param2StringVal, param2ActualLength, param2AllocLength);
+      // not handled yet
+      assert(0==1);
+    }
+    else 
+      if ( ( strcmp(fname,"memcpy")==0   || // 3 param
+	     strcmp(fname ,"memmove")==0 || // 3 param
+	     strcmp(fname ,"strcpy")==0 || // 3 param
+	     strcmp(fname ,"strncpy")==0  // 3 param
+	     )) {
+	if (rtsi()->funccallDebug)
+	  printf("CHECK: Special Function call - %s  p1: %s act1: %d alloc1: %d     p2: %s act2: %d alloc2: %d   param3Size: %d\n",fname,
+		 param1StringVal, param1ActualLength, param1AllocLength,
+		 param2StringVal, param2ActualLength, param2AllocLength, param3Size);
+	if ( ((param1StringVal+param3Size) >= param2StringVal) && (param1StringVal<param2StringVal) ||
+	     ((param2StringVal+param3Size) >= param1StringVal) && (param2StringVal<param1StringVal)) {
+	  // overlapping memory regions
+	  if (rtsi()->funccallDebug)
+	    printf( " >>>> Error : Memory regions overlap!   Size1: %d  Size2: %d\n",param1ActualLength , param2ActualLength);
+	  RuntimeSystem_callExit(filename, line, (char*)"Memory regions overlap", stmtStr);  
+	} else if ((param3Size>param1AllocLength || param3Size>param2AllocLength)) {
+	  // make sure that if the strings do not overlap, they are both smaller than the amount of chars to copy
+	  char* res1 = ((char*)"Invalid Operation,  operand1 size=");
+	  char* res2 = ((char*)"  operand2 size=");
+	  int sizeInt = 2*sizeof(int);
+	  char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ 1);
+	  sprintf(res,"%s%d%s%d",res1,param1ActualLength,res2,param2ActualLength);
+	  RuntimeSystem_callExit(filename, line, res, stmtStr);
+	} 
+	printf("No problem found!\n");
+      }
+      else {
+	// not handled yet. Need to check if this operation is leagal
+	printf("Unhandled special function: Checking special op : %s\n",fname);
+	assert(1==0);
+      }
+
 }
+
+
 
 
 /*********************************************************
@@ -575,33 +638,33 @@ RuntimeSystem_roseFunctionCall(int count, ...) {
  ********************************************************/
 void 
 RuntimeSystem_roseCallStack(char* name, char* mangl_name, char* beforeStr) {
-    // we want to remember the varRefs that are passed via function calls to functions
-    // if before ==true
-    // add the current varRef (name) on stack
-    // else remove from stack
+  // we want to remember the varRefs that are passed via function calls to functions
+  // if before ==true
+  // add the current varRef (name) on stack
+  // else remove from stack
   int before =0; // false
   if (strcmp(beforeStr,"true")==0)
     before=1;
 
   if (before) {
-      if (rtsi()->runtimeVariablesEndIndex>=rtsi()->maxRuntimeVariablesEndIndex) {
-	//increase the size of the array
-	RuntimeSystem_increaseSizeRuntimeVariablesOnStack();
-      }
-      rtsi()->runtimeVariablesOnStack[rtsi()->runtimeVariablesEndIndex].name=name;
-      rtsi()->runtimeVariablesOnStack[rtsi()->runtimeVariablesEndIndex].mangled_name=mangl_name;
-      rtsi()->runtimeVariablesEndIndex++;
-
+    if (rtsi()->runtimeVariablesEndIndex>=rtsi()->maxRuntimeVariablesEndIndex) {
+      //increase the size of the array
+      RuntimeSystem_increaseSizeRuntimeVariablesOnStack();
     }
-    else {
-      rtsi()->runtimeVariablesEndIndex--;
-      //      rtsi()->runtimeVariablesOnStack[rtsi()->runtimeVariablesEndIndex].name=NULL;
-      //rtsi()->runtimeVariablesOnStack[rtsi()->runtimeVariablesEndIndex].mangled_name=NULL;
+    rtsi()->runtimeVariablesOnStack[rtsi()->runtimeVariablesEndIndex].name=name;
+    rtsi()->runtimeVariablesOnStack[rtsi()->runtimeVariablesEndIndex].mangled_name=mangl_name;
+    rtsi()->runtimeVariablesEndIndex++;
 
-      //RuntimeVariables* var = rtsi()->runtimeVariablesOnStack.back();
-      //rtsi()->runtimeVariablesOnStack.pop_back();
-      //delete var;
-    }
+  }
+  else {
+    rtsi()->runtimeVariablesEndIndex--;
+    //      rtsi()->runtimeVariablesOnStack[rtsi()->runtimeVariablesEndIndex].name=NULL;
+    //rtsi()->runtimeVariablesOnStack[rtsi()->runtimeVariablesEndIndex].mangled_name=NULL;
+
+    //RuntimeVariables* var = rtsi()->runtimeVariablesOnStack.back();
+    //rtsi()->runtimeVariablesOnStack.pop_back();
+    //delete var;
+  }
 
 }
 // ***************************************** FUNCTION CALL *************************************
