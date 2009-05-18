@@ -6,6 +6,7 @@ Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
 #include <satire_rose.h>
 #include "termite.h"
 #include "TermToRose.h"
+#include "AstJanitor.h"
 #include <iostream>
 #include <sstream>
 #include <string>

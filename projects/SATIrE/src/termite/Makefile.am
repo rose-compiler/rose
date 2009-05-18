@@ -17,6 +17,7 @@ INCLUDES = -I$(top_srcdir)/src/satire \
 	   -I$(BOOST_INCLUDE_DIR)
 
 nobase_include_HEADERS = \
+	satire/AstJanitor.h \
 	satire/termite.h \
 	satire/TermPrinter.h \
 	\
