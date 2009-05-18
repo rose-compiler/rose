@@ -38,10 +38,7 @@ class ClassHierarchyWrapper
    
     void setAST( SgNode *proj );
 
-// TPS (01Dec2008): Enabled mysql and this fails.
-// seems like it is not supposed to be included
-#if 0
-    //#ifdef HAVE_MYSQL
+#ifdef HAVE_SQLITE3
     std::string dbName;
     ClassHierarchyWrapper( std::string db = "__defaultClassHierarch" );
     void setDBName( std::string db ); 
@@ -49,7 +46,6 @@ class ClassHierarchyWrapper
     void writeHierarchyToDB();
     std::list<std::string> getDirectSubclasses( std::string className );
     std::list<std::string> getSubclasses( std::string className );
-    //#else
 #endif
 
     ClassHierarchy* getClassHierarchyGraph();
