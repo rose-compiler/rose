@@ -62,6 +62,7 @@ char* RuntimeSystem_findLastUnderscore(char* s);
 char* RuntimeSystem_resBool(int val);
 char* RuntimeSystem_roseConvertIntToString(int t);
 int RuntimeSystem_isInterestingFunctionCall(char* name);
+int RuntimeSystem_getParamtersForFuncCall(char* name);
 
 // array functions
 int RuntimeSystem_findArrayName(char* n);

@@ -460,7 +460,13 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
       initName = mypair.first;
       varRef = mypair.second;
       ROSE_ASSERT(varRef);
-    } else {
+    } 
+    else if (isSgVarRefExp(exp)) {
+      initName = isSgVarRefExp(exp)->get_symbol()->get_declaration();
+      varRef = isSgVarRefExp(exp);
+      ROSE_ASSERT(varRef);
+    }
+    else {
       cerr << "RtedTransformation : PointerDerefExp - Unknown : "
 	   << exp->class_name() << "  line:"
 	   << pointerDeref->unparseToString() << endl;

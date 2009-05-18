@@ -124,8 +124,6 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
 	if (base_type)
 	  cerr <<"     base_type: " << base_type->class_name() << endl;
 	if (isSgTypeChar(type) || isSgTypeChar(base_type)) {
-	  // this is the variable that we pass
-	  appendExpression(arg_list, var);
 	  //SgExpression* manglName = buildString(var->get_symbol()->get_declaration()->get_mangled_name().str());
 	  string name = var->get_symbol()->get_declaration()->get_name().str();
 	  //appendExpression(arg_list, manglName);
@@ -145,6 +143,8 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
 	      expr = buildString("00");
 	    } else
 	      expr = buildString(expr->unparseToString());
+	    // this is the variable that we pass
+	    appendExpression(arg_list, var);
 	    appendExpression(arg_list, expr);
 	    cerr << ">>> Found variable : " << name << "  with size : " << 
 	      expr->unparseToString() << "  and val : " << var << endl;
@@ -152,7 +152,12 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
 	  else {
 	    cerr << "Cant determine the size of the following object : " << 
 	      var->class_name() << "  with type : " << type->class_name() << endl;
-	    SgExpression* numberToString = buildString("0");
+	    // this is most likely a single char, the size of it is 1
+	    SgExpression* andSign = buildAddressOfOp(var);	   
+	    SgExpression* charCast = buildCastExp(andSign,buildPointerType(buildCharType()));
+	    appendExpression(arg_list, charCast);
+	    
+	    SgExpression* numberToString = buildString("001");
 	    appendExpression(arg_list, numberToString);
 	    //ROSE_ASSERT(false);
 	  }
@@ -232,7 +237,8 @@ RtedTransformation::isInterestingFunctionCall(std::string name) {
       name=="strncpy" ||
       name=="strcat" ||
       name=="strncat" ||
-      name=="strlen"
+      name=="strlen" ||
+      name=="strchr"
       )
     interesting=true;
   return interesting;
@@ -246,7 +252,8 @@ RtedTransformation::getDimensionForFuncCall(std::string name) {
       name=="strcpy" || 
       name=="strncpy" ||
       name=="strcat" ||
-      name=="strncat"
+      name=="strncat" ||
+      name=="strchr"
       ) {
     dim=2;
   }
