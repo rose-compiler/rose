@@ -4374,7 +4374,6 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           SgInitializer *tmp_init=NULL;
           SgName tmp_name;
 #if 1
-          bool insertingFirstElement = true;
           SgInitializedNamePtrList::iterator p = enum_stmt->get_enumerators().begin();
           for (; p!=enum_stmt->get_enumerators().end(); p++)
           {
@@ -4388,14 +4387,6 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             bool isInSameFile = (field->get_file_info()->get_filename()==enum_stmt->get_file_info()->get_filename());
             if (isInSameFile)
             {
-              // For the second and after elements, add "," 
-              if (insertingFirstElement)
-              {
-                insertingFirstElement= false;
-              }
-              else
-                curprint ( string(","));
-
               // unparse the element   
               ROSE_ASSERT((*p) != NULL);
               tmp_name=(*p)->get_name();
@@ -4406,6 +4397,12 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                 curprint ( string("="));
                 unparseExpression(tmp_init, ninfo);
               }
+
+              if (p != enum_stmt->get_enumerators().end())
+              {
+                curprint ( string(","));
+              }
+ 
             } // end same file
           } // end for
 
