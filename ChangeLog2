@@ -1,3 +1,28 @@
+2009-05-18 18:05  liao6
+
+	* [r5829] /trunk/ROSE/tests/CompileTests/C_tests/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/C_tests/test2009_08.c: Added a
+	  test case for directly using of enumerators from a enum
+	  declaration
+
+2009-05-18 16:51  liao6
+
+	* [r5828]
+	  /trunk/ROSE/src/backend/unparser/CxxCodeGeneration/unparseCxx_statements.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C,
+	  /trunk/ROSE/tests/CompileTests/C_tests/test2009_05.c,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testHeaderFileOutput/Makefile.am,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testHeaderFileOutput/myinclude,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testHeaderFileOutput/myinclude/test2009_515.h,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testHeaderFileOutput/test2009_515.c,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testHeaderFileOutput/test2009_515.h:
+	  Fixed a compiler search path order bug so gobmk of SPEC CPU 2006
+	  can be handled correctly.
+	  
+	  * the source file's current path has to be search the very first
+	  for headers
+	  * added a test case for this tricky problem
+
 2009-05-16 01:14  panas2
 
 	* [r5793] /trunk/ROSE/projects/RTED/RtedTransf_funccall.cpp,
