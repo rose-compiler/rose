@@ -57,6 +57,19 @@ UnparseFormat::~UnparseFormat()
 //  void Unparser::insert_newline
 //
 //  inserts num newlines into the unparsed file
+//
+// Liao, 5/16/2009: some comments:
+//   the resetting of chars_on_line can help remove redundant insertion of two consecutive empty lines.
+//   In most cases, this is a desired behavior. 
+//    But sometimes , an extra empty line (line 2)
+//    must be preserved after an empty line (line 1) ending with '\' preceeding it.
+//    e.g.
+// #define BZ_ITER(nn) \   
+//    int nn;\       
+//
+//    BZ_ITER(i);
+//    For the example above, caller to this function has to pass num>1 to ensure an insertion 
+//    always happen for the second '\n' character.
 //-----------------------------------------------------------------------------------
 void
 UnparseFormat::insert_newline(int num, int indent)
@@ -64,7 +77,6 @@ UnparseFormat::insert_newline(int num, int indent)
      if (chars_on_line == 0) {
         --num;
      }
-
      for (int i = 0 ; i < num; i++)
              (*os) << endl;
      if (num > 0) {
@@ -105,6 +117,7 @@ UnparseFormat::insert_space(int num)
 UnparseFormat& UnparseFormat::operator << ( string out)
    {
      const char* p  = out.c_str();
+     const char* const head= out.c_str();
 
   // DQ (7/20/2008): Better to fix it here then use the code "++p2;" (below)
   // const char* p2 = p + strlen(p)-1;
@@ -145,9 +158,36 @@ UnparseFormat& UnparseFormat::operator << ( string out)
           ROSE_ASSERT(p != NULL);
        // printf ("p = %p p2 = %p *p = %c \n",p,p2,*p);
 
+     // Liao, 5/16/2009
+     // insert_newline() has a semantic to skip the second and after new line for a sequence of 
+     // '\n'. It is very useful to remove excessive newlines in the unparased file.
+     //
+     // BUT:	  
+     // two consecutive '\n' might be essential for the correctness of a program
+     // e.g. 
+     //       # define BZ_ITER(nn) \ 
+     //         int nn; \
+     //
+     //      BZ_ITER(I);
+     // In the example above, the extra new line after int nn; \ must be preserved!
+     // Otherwise, the following statement will be treated as a continuation line of int nn;\
+     // 
+     // So the code below is changed to lookback two characters to decide if the line continuation
+     // case is encountered and call a special version of insert_newline() to always insert a line. 	  
           if ( *p == '\n') 
              {
-               insert_newline();
+	       bool mustInsert=false;
+	       if ((p-head)>1)
+	       {
+		 char ahead1 = *(p-2);
+		 char ahead2 = *(p-1);
+		 if ((ahead1=='\\') && (ahead2=='\n'))
+		   mustInsert = true;
+	       }
+	       if (mustInsert)
+                insert_newline(2,-1);
+	       else
+                insert_newline();
              }
             else
              {
