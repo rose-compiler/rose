@@ -1,3 +1,38 @@
+2009-05-18 21:31  liao6
+
+	* [r5836] /trunk/ROSE/scripts/testOnExternalBenchmarks.sh: A script
+	  to test an installed copy of ROSE
+	  using external benchmarks, such as SPEC CPU 2006, etc.
+
+2009-05-18 21:06  panas2
+
+	* [r5835] /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_funccall.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.c: Work on RTED
+
+2009-05-18 20:15  liao6
+
+	* [r5833]
+	  /trunk/ROSE/src/backend/unparser/formatSupport/unparse_format.C,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3/src/macro.c,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_4.0/src/macro.c,
+	  /trunk/ROSE/tests/CompileTests/C_tests/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/C_tests/test2009_16.c,
+	  /trunk/ROSE/tests/CompileTests/C_tests/test2009_17.c: Fixed two
+	  bugs of ROSE so bzip2 and sphinx3 of SPEC CPU2006 can have
+	  verified execution results.
+	  I have found that Valgrind is very helpful to debug execution
+	  verification failure problems.
+	  
+	  * bzip2's execution verification failure was caused by unparser's
+	  skipping inserting empty line after line continuation character
+	  '\'.
+	  * sphinx3's failure was caused by mishandling of macro exansion
+	  for __FILE__ in EDG.
+	  * added test cases, especially a new test list in
+	  CompileTest/C_test for self-verification test files with main().
+
 2009-05-18 18:05  liao6
 
 	* [r5829] /trunk/ROSE/tests/CompileTests/C_tests/Makefile.am,
