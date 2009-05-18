@@ -2419,7 +2419,9 @@ PointsToAnalysis::Implementation::unify(
             }
             if (bm->second == NULL)
                 bm->second = createLocation();
-            join(a_member_location, bm->second);
+         // Try to avoid infinite recursion on cyclic data structures.
+            if (bm->second != a && a_member_location != b)
+                join(a_member_location, bm->second);
         }
     }
 }
