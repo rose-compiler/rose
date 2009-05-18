@@ -580,7 +580,9 @@ SgProject::processCommandLine(const vector<string>& input_argv)
        // look only for -I include directories (directories where #include<filename> will be found)
           if ( (length > 2) && (argv[i][0] == '-') && (argv[i][1] == 'I') )
              {
-            // AS Changed source code to support absolute paths
+            // AS Changed source code to support absolute paths 
+            // replaceRelativePath 
+            
                std::string includeDirectorySpecifier =  argv[i].substr(2);
                includeDirectorySpecifier = StringUtility::getAbsolutePathFromRelativePath(includeDirectorySpecifier );
                p_preincludeDirectoryList.insert(p_preincludeDirectoryList.begin(),includeDirectorySpecifier);
@@ -3013,21 +3015,10 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
  
             // AS: Did changes to get absolute path
                std::string includeDirectorySpecifier =  argv[i].substr(2);
-               // Liao, 5/14/2009
-               // I don't see the need to change to an absolute path here.
-                // Besides, the absolute path depends on the leading path of the source code
-                // Assume in /path1, we have two files
-                // case 1. -I.  engine/code1.c
-                // case 2 -I. code2.c
-                // They have different absolute include paths  even the same -I. is used.
-                //case  1: -I. -> -I/path1/engine
-                //case  2: -I. --> -I/path1
-                // This problem will cause rose to fail in compiling 445.gobmk of spec cpu 2006.
-                // It has two headers with the same name but with conflicting function prototypes.
-                // The wrong absolute path will cause rose to include a wrong header
-#if 0
+#if 1
                includeDirectorySpecifier = "-I"+StringUtility::getAbsolutePathFromRelativePath(includeDirectorySpecifier );
 #else               
+
                includeDirectorySpecifier = "-I"+includeDirectorySpecifier;
 #endif               
                includePaths.push_back(includeDirectorySpecifier);
@@ -3247,26 +3238,35 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      Rose_STL_Container<string> fileList;
      std::string sourceFile = get_sourceFileNameWithPath();
      std::string sourceFilePath = StringUtility::getPathFromFileName(sourceFile);
-     //Liao, 5/14/2009
-     //It is a bad idea to change file name before passing it to a backend compiler.
-     // the interpretation of -I. depends on the leading path of an input file like path/input.c
-#if 0     
+     //Liao, 5/15/2009
+     //the file name already has absolute path, the following code may be redundant. 
      sourceFile = StringUtility::stripPathFromFileName(sourceFile);
      if(sourceFilePath == "" )
         sourceFilePath = "./";
      sourceFilePath = StringUtility::getAbsolutePathFromRelativePath(sourceFilePath);
 
      fileList.push_back(sourceFilePath+"/"+sourceFile);
-#else
-     fileList.push_back(sourceFile);
-#endif     
-     
+    
      CommandlineProcessing::addListToCommandLine(inputCommandLine,"",fileList);
 
-  // AS Add Support for g++ style preincludes
-  // CommandlineProcessing::addListToCommandLine(inputCommandLine,"--preinclude ",listOfPreincludes);
+   // Liao, replaceRelativePath
+#if 0   
+  for (size_t i = 0; i< inputCommandLine.size(); i++)
+  {
+    string cur_string = inputCommandLine[i];
+    string::size_type pos = cur_string.find("-I..",0);
+    string::size_type pos2 = cur_string.find("-I.",0);
+    // replace -I.. -I../path  to -I/absolutepath/.. and -I/absolutepath/../path
+    // replace -I. -I./path  to -I/absolutepath/. and -I/absolutepath/./path
+    if ((pos ==0) || (pos2 ==0 ))
+    {
+      string orig_path = cur_string.substr(2); // get ..  ../path  .  ./path
+      cur_string = "-I"+sourceFilePath+"/"+orig_path;
+    }
 
-  // ROSE_ASSERT (saveSkipfinalCompileStep == p_skipfinalCompileStep);
+   inputCommandLine[i] = cur_string;
+  } 
+#endif
       //Liao, 5/15/2009
       // macro -D__GNUG__ should not be defined  for C only code, 
       // some code relies on this macro to tell if bool type is allowed
@@ -5868,7 +5868,26 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // is in the current directory (likely a generated file itself; e.g. swig or ROSE applied recursively, etc.)).
   // printf ("oldFileNamePathOnly.length() = %d \n",oldFileNamePathOnly.length());
      if (oldFileNamePathOnly.empty() == false)
-          compilerNameString.push_back(std::string("-I") + oldFileNamePathOnly);
+     {
+#if 1       
+// Liao, 5/15/2009
+// the input source file's path has to be the first one to be searched for header!
+// This is required since one of the SPEC CPU 2006 benchmarks: gobmk relies on this to be compiled.
+        vector<string>::iterator iter; 
+        // find the very first -Ixxx option's position
+        for (iter = compilerNameString.begin();iter!=compilerNameString.end(); iter++) 
+        {
+          string cur_string =*iter;
+          string::size_type pos = cur_string.find("-I",0);
+          if (pos==0)
+            break;
+        }
+        // insert before the position
+        compilerNameString.insert(iter, std::string("-I") + oldFileNamePathOnly); 
+#else        
+        compilerNameString.push_back(std::string("-I") + oldFileNamePathOnly);
+#endif
+     }
 
   // DQ (4/20/2006): This allows the ROSE translator to be just a wrapper for the backend (vendor) compiler.
   // compilerNameString += get_unparse_output_filename();
@@ -6023,7 +6042,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& c
                printf ("Number of command line arguments: %zu\n", compilerNameString.size());
                for (size_t i = 0; i < compilerNameString.size(); ++i)
                   {
-                    printf ("Compiler arg %zu: %s\n", i, compilerNameString[i].c_str());
+                    printf ("Backend compiler arg[%zu]: = %s\n", i, compilerNameString[i].c_str());
                   }
                printf("End of command line for backend compiler\n");
 
