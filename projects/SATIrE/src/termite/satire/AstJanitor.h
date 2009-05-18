@@ -46,23 +46,29 @@ public:
     // Scope
     SgScopeStatement* scope = isSgScopeStatement(n);
     if (scope == NULL) scope = attr.scope;
+    //    else {
+      // rebuild the symbol table
+      /// scope->set_symbol_table(NULL);
+      //  SageInterface::rebuildSymbolTable(scope);
+      //}
 
     if (SgDeclarationStatement* decl = isSgDeclarationStatement(n)) {
       // These nodes don't have a scope associated
       if (!isSgVariableDeclaration(decl) 
 	  && !isSgFunctionParameterList(decl)
-	  )
+	  ) {
+	ROSE_ASSERT(scope != NULL);
 	decl->set_scope(scope);
+      } 
+      PrologToRose::addSymbol(scope, decl);
     }
 
     // Parent
-    if (isSgInitializedName(n)) {
-      //std::cerr<<"XXXXX:"<<attr.parent->class_name()<<std::endl;
-      if (isSgEnumDeclaration(attr.parent) 
-	  || isSgClassDeclaration(attr.parent))
-	  n->set_parent(attr.parent->get_parent());
-    } else 
-    {
+    if ((isSgInitializedName(n) && isSgEnumDeclaration(attr.parent))
+	|| (isSgVariableDeclaration(n) && isSgForInitStatement(attr.parent))
+	){
+      n->set_parent(attr.parent->get_parent());
+    } else {
       ROSE_ASSERT(n->get_parent() == attr.parent);
       //n->set_parent(attr.parent);
     }

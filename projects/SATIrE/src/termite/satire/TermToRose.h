@@ -24,6 +24,7 @@ public:
   SgNode* toRose(PrologTerm*);
   SgNode* toRose(const char* filename);
 
+  static void addSymbol(SgScopeStatement*, SgDeclarationStatement*);
 private:
   /* enum <-> atom conversion */
   RoseEnums re;
@@ -35,6 +36,9 @@ private:
   /* our own little symbol tables */
   std::map<std::string,SgClassType*> classTypeMap;
   std::vector<SgClassDefinition*> classDefinitions;
+  std::map<std::string,SgDeclarationStatement*> declarationMap;
+  std::map<std::string,SgInitializedName*> initializedNameMap;
+  std::map<std::string,SgEnumType*> enumTypeMap;
   std::map<std::string,SgFunctionDeclaration*> funcDeclMap;
   std::map<std::string,SgTypedefDeclaration*> typedefDeclMap;
 #if 0
@@ -83,7 +87,6 @@ private:
   int toInt(PrologTerm*);
   void pciDeclarationStatement(SgDeclarationStatement*,PrologTerm*);
   void fakeParentScope(SgDeclarationStatement*);
-  void addSymbol(SgGlobal*,  SgDeclarationStatement*);
   void fakeClassScope(std::string, int, SgDeclarationStatement*);
   SgAccessModifier* createAccessModifier(PrologTerm*);
   SgBaseClassModifier* createBaseClassModifier(PrologTerm*);
