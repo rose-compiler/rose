@@ -91,7 +91,7 @@ Index: Driver/TermDumper.cpp
 ===================================================================
 --- Driver/TermDumper.cpp	(revision 0)
 +++ Driver/TermDumper.cpp	(revision 0)
-@@ -0,0 +1,1853 @@
+@@ -0,0 +1,1921 @@
 +
 +//===--- StmtTermDumper.cpp - TermDumping implementation for Stmt ASTs ----===//
 +//
@@ -1091,7 +1091,6 @@ Index: Driver/TermDumper.cpp
 +        t = make_atom(std::string("type_") + prologize(cast<BuiltinType>(T)->getName()));
 +        break;
 +
-+      case Type::Reference:
 +      case Type::Pointer:
 +        t = new PrologCompTerm("pointer_type", 1,
 +                               make_type_term(cast<PointerLikeType>(T)->getPointeeType()));
@@ -1192,6 +1191,9 @@ Index: Driver/TermDumper.cpp
 +          assert(0 && "not yet implemented");
 +        break;
 +
++      case Type::Reference:
++        assert(0 && "not yet implemented");
++        
 +      default:
 +        assert(0 && "should be never reached");
 +      }
@@ -1307,7 +1309,66 @@ Index: Driver/TermDumper.cpp
 +                                make_default_analysis_info(),
 +                                make_file_info(SL));
 +    }
++
++
++    PrologTerm *
++    make_va_start_expr(const CallExpr *CE) {
++      assert(CE->getNumArgs() == 2 && "unexpected va_start call");
++      const Expr *ap_arg = CE->getArg(0);
++      const Expr *last_arg = CE->getArg(1);
++      return new PrologCompTerm("var_arg_start_op", 5,
++                                make_statement_term(ap_arg),
++                                make_statement_term(last_arg),
++                                new PrologCompTerm("vararg_annotation", 2,
++                                                   make_atom("type_default"),
++                                                   make_preprocessing_info()),
++                                make_default_analysis_info(),
++                                make_file_info(CE));
++    }
++
++
++    PrologTerm *
++    make_va_arg_expr(const Stmt *S) {
++      const VAArgExpr *VAE = cast<VAArgExpr>(S);
++      return new PrologCompTerm("var_arg_op", 4,
++                                make_statement_term(VAE->getSubExpr()),
++                                new PrologCompTerm("vararg_annotation", 2,
++                                                   make_type_term(VAE->getType()),
++                                                   make_preprocessing_info()),
++                                make_default_analysis_info(),
++                                make_file_info(VAE));
++    }
++
 +    
++    PrologTerm *
++    make_va_end_expr(const CallExpr *CE) {
++      assert(CE->getNumArgs() == 1 && "unexpected va_end call");
++      const Expr *ap_arg = CE->getArg(0);
++      return new PrologCompTerm("var_arg_end_op", 4,
++                                make_statement_term(ap_arg),
++                                new PrologCompTerm("vararg_annotation", 2,
++                                                   make_atom("type_default"),
++                                                   make_preprocessing_info()),
++                                make_default_analysis_info(),
++                                make_file_info(CE));
++    }
++
++
++    PrologTerm *
++    make_va_copy_expr(const CallExpr *CE) {
++      assert(CE->getNumArgs() == 2 && "unexpected va_copy call");
++      const Expr *dest_arg = CE->getArg(0);
++      const Expr *src_arg = CE->getArg(1);
++      return new PrologCompTerm("var_arg_copy_op", 5,
++                                make_statement_term(dest_arg),
++                                make_statement_term(src_arg),
++                                new PrologCompTerm("vararg_annotation", 2,
++                                                   make_atom("type_default"),
++                                                   make_preprocessing_info()),
++                                make_default_analysis_info(),
++                                make_file_info(CE));
++    }
++
 +    
 +    PrologTerm *
 +    make_statement_term(const Stmt *S) {
@@ -1731,10 +1792,30 @@ Index: Driver/TermDumper.cpp
 +                                    make_file_info(ASE));
 +        }
 +
++      case Stmt::VAArgExprClass:
++        {
++          return make_va_arg_expr(S);
++        }
++        
 +      case Stmt::CallExprClass:
 +        {
 +          const CallExpr *CE = cast<CallExpr>(S);
 +
++          //we have to mimic ROSE's behaviour for variadic functions here
++          unsigned builtin = CE->isBuiltinCall();
++          switch(builtin) {
++          case 0: /*nothing to do here */
++            break;
++          case Builtin::BI__builtin_va_start:
++            return make_va_start_expr(CE);
++          case Builtin::BI__builtin_va_end:
++            return make_va_end_expr(CE);
++          case Builtin::BI__builtin_va_copy:
++            return make_va_copy_expr(CE);
++          default:
++            assert(0 && "builtin not yet handled");
++          }
++          
 +          PrologList *exprs = new PrologList();
 +          CallExpr::const_arg_iterator i, ie;
 +          for(i = CE->arg_begin(), ie = CE->arg_end();i != ie; ++i)
@@ -1850,19 +1931,6 @@ Index: Driver/TermDumper.cpp
 +                                    make_file_info(ILE));
 +        }
 +
-+      case Stmt::VAArgExprClass:
-+        {
-+          //TODO: this does not work yet
-+          const VAArgExpr *VAE = cast<VAArgExpr>(S);
-+          return new PrologCompTerm("var_arg_expr", 4,
-+                                    make_statement_term(VAE->getSubExpr()),
-+                                    new PrologCompTerm("vararg_annotation", 2,
-+                                                       make_type_term(VAE->getType()),
-+                                                       make_preprocessing_info()),
-+                                    make_default_analysis_info(),
-+                                    make_file_info(VAE));
-+        }
-+        
 +      case Stmt::SwitchCaseClass:
 +        assert(0 && "should be never reached");
 +
