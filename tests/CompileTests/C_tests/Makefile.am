@@ -34,9 +34,15 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2009_05.c \
      test2009_07.c \
      test2009_08.c \
+     test2009_16.c \
      math.c \
      complex_01.c \
      constants.c
+
+#Liao, 5/16/2009 add a set of self-verifiable test code with main() 
+# and let them run during make check
+TESTCODES_REQUIRED_TO_RUN = \
+     test2009_17.c
 
 TESTCODE_CURRENTLY_FAILING = \
      test2004_126.c \
@@ -57,6 +63,7 @@ $(TESTCODES_REQUIRED_TO_PASS)
 # QMTest allows both passing and failing tests.
 ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS) \
+$(TESTCODES_REQUIRED_TO_RUN) \
 $(TESTCODE_CURRENTLY_FAILING)
 
 # File option to accumulate performance information about the compilation
@@ -66,10 +73,13 @@ ROSE_FLAGS = -rose:C --edg:no_warnings --edg:restrict -w
 
 PASSING_TEST_Objects = ${TESTCODES:.c=.o}
 TEST_Objects = ${ALL_TESTCODES:.c=.o}
+TEST_Exe_Objects = ${TESTCODES_REQUIRED_TO_RUN:.c=.o}
 
+PASSING_TEST_Executables =  ${TEST_Exe_Objects:.o=.out}
+check_PROGRAMS = $(PASSING_TEST_Executables)
+TESTS= $(check_PROGRAMS)  
 
 testTranslator=../../testTranslator
-
 
 # Add the dependence upon the source file to trigger recompilation each time the makefile is run!
 # $(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.c)
