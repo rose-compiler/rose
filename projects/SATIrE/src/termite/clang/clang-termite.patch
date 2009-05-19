@@ -91,7 +91,7 @@ Index: Driver/TermDumper.cpp
 ===================================================================
 --- Driver/TermDumper.cpp	(revision 0)
 +++ Driver/TermDumper.cpp	(revision 0)
-@@ -0,0 +1,1921 @@
+@@ -0,0 +1,1957 @@
 +
 +//===--- StmtTermDumper.cpp - TermDumping implementation for Stmt ASTs ----===//
 +//
@@ -1369,6 +1369,21 @@ Index: Driver/TermDumper.cpp
 +                                make_file_info(CE));
 +    }
 +
++
++    PrologTerm *    
++    make_builtin_callee_term(const Expr *CE) {
++      // All simple function calls (e.g. func()) are implicitly cast to pointer to
++      // function. As a result, we try and obtain the DeclRefExpr from the 
++      // ImplicitCastExpr.
++      const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(CE);
++      assert(ICE && "expecting dyn_cast here");
++      const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(ICE->getSubExpr());
++      assert(DRE && "can't find DeclRefExpr");
++      const FunctionDecl *FDecl = dyn_cast<FunctionDecl>(DRE->getDecl());
++      assert(FDecl && FDecl->getIdentifier() && "can't find FunctionDecl");
++      return make_atom(FDecl->getIdentifier()->getName());
++    }
++
 +    
 +    PrologTerm *
 +    make_statement_term(const Stmt *S) {
@@ -1801,6 +1816,8 @@ Index: Driver/TermDumper.cpp
 +        {
 +          const CallExpr *CE = cast<CallExpr>(S);
 +
++          PrologTerm *callee = NULL;
++          
 +          //we have to mimic ROSE's behaviour for variadic functions here
 +          unsigned builtin = CE->isBuiltinCall();
 +          switch(builtin) {
@@ -1813,16 +1830,18 @@ Index: Driver/TermDumper.cpp
 +          case Builtin::BI__builtin_va_copy:
 +            return make_va_copy_expr(CE);
 +          default:
-+            assert(0 && "builtin not yet handled");
++            callee = make_builtin_callee_term(CE->getCallee());
 +          }
 +          
 +          PrologList *exprs = new PrologList();
 +          CallExpr::const_arg_iterator i, ie;
 +          for(i = CE->arg_begin(), ie = CE->arg_end();i != ie; ++i)
 +            exprs->addElement(make_statement_term(*i));
++
++          if(!callee) callee = make_statement_term(CE->getCallee());
 +          
 +          return new PrologCompTerm("function_call_exp", 6,
-+                                    make_statement_term(CE->getCallee()),
++                                    callee,
 +                                    new PrologCompTerm("expr_list_exp", 4,
 +                                                       exprs,
 +                                                       make_default_annotation(),
@@ -1934,6 +1953,23 @@ Index: Driver/TermDumper.cpp
 +      case Stmt::SwitchCaseClass:
 +        assert(0 && "should be never reached");
 +
++      case Stmt::PredefinedExprClass:
++        {
++          const PredefinedExpr *PE = cast<PredefinedExpr>(S);
++          switch (PE->getIdentType()) {
++          case PredefinedExpr::Func:           return make_atom(" __func__");
++          case PredefinedExpr::Function:       return make_atom(" __FUNCTION__");
++          case PredefinedExpr::PrettyFunction: return make_atom(" __PRETTY_FUNCTION__");
++          default:
++            assert(0 && "should be never reached");
++          }
++        }
++
++      case Stmt::StmtExprClass:
++        {
++          assert(0 && "not yet implemented");
++        }
++        
 +      default:
 +        assert(0 && "not yet implemented");
 +      }
