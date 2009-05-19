@@ -1,3 +1,21 @@
+2009-05-18 22:52  panas2
+
+	* [r5839] /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_funccall.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.c,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: work on RTED
+
+2009-05-18 22:24  saebjornsen1
+
+	* [r5838]
+	  /trunk/ROSE/src/midend/programAnalysis/CallGraphAnalysis/CallGraph.C,
+	  /trunk/ROSE/src/midend/programAnalysis/CallGraphAnalysis/CallGraph.h,
+	  /trunk/ROSE/src/midend/programAnalysis/CallGraphAnalysis/ClassHierarchyGraph.C,
+	  /trunk/ROSE/src/midend/programAnalysis/CallGraphAnalysis/ClassHierarchyGraph.h,
+	  /trunk/ROSE/src/midend/programAnalysis/CallGraphAnalysis/Makefile.am,
+	  /trunk/ROSE/tutorial/callGraphAnalysis.C: Improvements to Call
+	  Graph analysis
+
 2009-05-18 21:31  liao6
 
 	* [r5836] /trunk/ROSE/scripts/testOnExternalBenchmarks.sh: A script
