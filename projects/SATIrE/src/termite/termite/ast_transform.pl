@@ -426,7 +426,7 @@ unparse1(UI, basic_block(E1, An, Ai, Fi)) :- !,
   indent(Fi), writeln('}').
 unparse1(_UI, basic_block(_, _, _)) :- !, write(' {} ').
 unparse1(UI, global(E1, _, _, _)) :- !, unparse(UI, E1).
-unparse1(UI, file(E1, _, _An, _Ai, file_info(Name, _, _))) :- !,
+unparse1(UI, source_file(E1, _, _An, _Ai, file_info(Name, _, _))) :- !,
   write('/* '), write(Name), writeln(': */'), unparse(UI, E1).
 unparse1(UI, project(E1, _, _, _)) :- !, unparse(UI, E1).
 
