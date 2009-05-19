@@ -4,23 +4,28 @@
 #ifndef _AST_JANITOR_H
 #define _AST_JANITOR_H
 #include "satire_rose.h"
+#include "TermToRose.h"
 
 /**
  * Perform various tasks to generate a valid AST
  * including the setting of parent scopes an pointers
  */
+#define FI Sg_File_Info::generateDefaultFileInfoForTransformationNode()
+
 class InheritedAttribute
 {
 public:
+  PrologToRose* ptr;
   SgScopeStatement* scope;
   SgNode* parent;
-  InheritedAttribute() : scope(NULL), parent(NULL) {};
   // Specific constructors are required
-  InheritedAttribute(SgScopeStatement* s,  SgNode* p)
-    :scope(s), parent(p) 
+  InheritedAttribute(PrologToRose* conv, 
+		     SgScopeStatement* s = NULL, 
+		     SgNode* p = NULL)
+    : ptr(conv), scope(s), parent(p) 
   {};
   InheritedAttribute(const InheritedAttribute& X)
-    :scope(X.scope), parent(X.parent) 
+    : ptr(X.ptr), scope(X.scope), parent(X.parent) 
   {};
 };
 
@@ -64,16 +69,37 @@ public:
     }
 
     // Parent
-    if ((isSgInitializedName(n) && isSgEnumDeclaration(attr.parent))
-	|| (isSgVariableDeclaration(n) && isSgForInitStatement(attr.parent))
-	){
-      n->set_parent(attr.parent->get_parent());
-    } else {
-      ROSE_ASSERT(n->get_parent() == attr.parent);
-      //n->set_parent(attr.parent);
-    }
+    //ROSE_ASSERT(n->get_parent() == attr.parent);
+    for (SgNode* n1 = n; 
+	 isSgInitializedName(n) && 
+	   (!isSgFunctionParameterList(   n->get_parent()) &&
+	    !isSgVariableDeclaration(	  n->get_parent()) &&
+	    !isSgCtorInitializerList(	  n->get_parent()) &&
+	    !isSgProcedureHeaderStatement(n->get_parent())
+	    ) ;  n1 = n1->get_parent()) {
+      // Walk upwards until we reach a suitable node
+      n->set_parent(n1->get_parent());
+      SgGlobal* glob = isSgGlobal(n1->get_parent());
+      if (glob || n1->get_parent() == NULL) {
+	// Enum Decl inside of a typedef, for example
+	SgInitializedName* iname = isSgInitializedName(n);
+	SgVariableDeclaration* vdec = new SgVariableDeclaration(FI);
+	vdec->append_variable(iname, iname->get_initializer());
+	vdec->set_parent(glob);
+	//vdec->setForward();
+	vdec->set_definingDeclaration(vdec);
+	n->set_parent(attr.ptr->createDummyNondefDecl(vdec, FI, "", 
+					      iname->get_typeptr(), 
+					      iname->get_initializer()));
+      }
+      //std::cerr<<"Setting parent of "<<n->class_name()
+      //         <<" to "<<n->get_parent()->class_name()<<std::endl;
+    } 
 
-    return InheritedAttribute(scope, n);
+    if (isSgVariableDeclaration(n) && isSgForInitStatement(attr.parent))
+      n->set_parent(attr.parent->get_parent());
+
+    return InheritedAttribute(attr.ptr, scope, n);
   };
 };
 

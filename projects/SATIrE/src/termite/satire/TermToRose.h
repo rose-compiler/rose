@@ -29,7 +29,6 @@ private:
   /* enum <-> atom conversion */
   RoseEnums re;
   /* fixups */
-  std::vector<SgInitializedName*> initializedNamesWithoutScope;
   std::vector<SgDeclarationStatement*> declarationStatementsWithoutScope;
   std::vector<SgLabelStatement*> labelStatementsWithoutScope;
   std::multimap<std::string,SgGotoStatement*> gotoStatementsWithoutLabel;
@@ -41,10 +40,6 @@ private:
   std::map<std::string,SgEnumType*> enumTypeMap;
   std::map<std::string,SgFunctionDeclaration*> funcDeclMap;
   std::map<std::string,SgTypedefDeclaration*> typedefDeclMap;
-#if 0
-  std::map<std::string,SgClassDeclaration*> definingClassDecls;
-  std::multimap<std::string,SgClassDeclaration*> nondefiningClassDecls;
-#endif
   /* arity specific node generation*/
   SgNode* leafToRose(PrologCompTerm*, std::string);
   SgNode* unaryToRose(PrologCompTerm*, std::string);
@@ -176,10 +171,11 @@ private:
   SgPragma* createPragma(Sg_File_Info*, PrologCompTerm*);
   char unescape_char(std::string s);
 
+public:
   // This is a helper function to create the necessary unique first
   // nondefining definition
   template< class DeclType, typename A, typename B, typename C >
-  void createDummyNondefDecl(DeclType* decl, Sg_File_Info* fi, 
+  DeclType* createDummyNondefDecl(DeclType* decl, Sg_File_Info* fi, 
 			     A a, B b, C c) 
   {
     decl->set_forward(0);
@@ -195,6 +191,7 @@ private:
     ndd->setForward();
     decl->set_firstNondefiningDeclaration(ndd);
     declarationStatementsWithoutScope.push_back(ndd);
+    return ndd;
   }
 
 };
