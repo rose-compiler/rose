@@ -1,3 +1,15 @@
+2009-05-20 22:06  liao6
+
+	* [r5850] /trunk/ROSE/scripts/roseFreshTest,
+	  /trunk/ROSE/scripts/testOnExternalBenchmarks.sh: minor fixes to
+	  script running external benchmarks.
+
+2009-05-20 21:30  liao6
+
+	* [r5849] /trunk/ROSE/docs/Rose/developersAppendix.tex: Added
+	  instructions into developer's guide about how to enable automatic
+	  testing on SPEC CPU2006 during regression tests
+
 2009-05-20 20:58  liao6
 
 	* [r5847] /trunk/ROSE/scripts/roseFreshTest,
