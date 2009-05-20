@@ -32,14 +32,12 @@ private:
   std::vector<SgDeclarationStatement*> declarationStatementsWithoutScope;
   std::vector<SgLabelStatement*> labelStatementsWithoutScope;
   std::multimap<std::string,SgGotoStatement*> gotoStatementsWithoutLabel;
-  /* our own little symbol tables */
-  std::map<std::string,SgClassType*> classTypeMap;
   std::vector<SgClassDefinition*> classDefinitions;
+  /* our own little symbol tables */
+  std::map<std::string,SgType*> typeMap;
   std::map<std::string,SgDeclarationStatement*> declarationMap;
   std::map<std::string,SgInitializedName*> initializedNameMap;
-  std::map<std::string,SgEnumType*> enumTypeMap;
-  std::map<std::string,SgFunctionDeclaration*> funcDeclMap;
-  std::map<std::string,SgTypedefDeclaration*> typedefDeclMap;
+
   /* arity specific node generation*/
   SgNode* leafToRose(PrologCompTerm*, std::string);
   SgNode* unaryToRose(PrologCompTerm*, std::string);
@@ -192,6 +190,34 @@ public:
     decl->set_firstNondefiningDeclaration(ndd);
     declarationStatementsWithoutScope.push_back(ndd);
     return ndd;
+  }
+
+  template< class DeclType >
+  DeclType* lookupDecl(DeclType** decl, std::string id) 
+  {
+    if (declarationMap.find(id) != declarationMap.end())
+      *decl = (DeclType*)declarationMap[id];
+    else {
+      std::cerr<<"Symbol lookup failed: ("
+	/*<<decl->class_name()<<"*)*/<<id<<std::endl;
+      ROSE_ASSERT(false);
+      *decl = NULL;
+    }
+    return *decl;
+  }
+
+  template< class TypeType >
+  TypeType* lookupType(TypeType** type, std::string id) 
+  {   
+    if (typeMap.find(id) != typeMap.end())
+      *type = (TypeType*)typeMap[id];
+    else {
+      std::cerr<<"Symbol lookup failed: ("
+	/*<<type->class_name()<<"*)*/<<id<<std::endl;
+      ROSE_ASSERT(false);
+      *type = NULL;
+    }
+    return *type;
   }
 
 };

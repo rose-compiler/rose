@@ -484,10 +484,10 @@ constrain_array_index(s, _, _) = s;
 
 branch :: Expression, itvl_State, bool, bool, ContextInfo -> itvl_State;
 branch(exp, state, edge, isLoopBody, context) =
-  print("\nbranching...\nexp: ") print(exp) 
-  print("\nstate: ") print(state) 
-  print("\nedge: ") print(edge)  
-  print("\n")
+  // -- print("\nbranching...\nexp: ") print(exp) 
+  // -- print("\nstate: ") print(state) 
+  // -- print("\nedge: ") print(edge)  
+  // -- print("\n")
 
   let pair = eval(exp, state, context); in
   let c = interval_to_bool(pair!1!2); 
@@ -515,7 +515,7 @@ branch(exp, state, edge, isLoopBody, context) =
 
 eval_branch_condition :: Expression, itvl_State, itvl_State, bool, bool, ContextInfo -> itvl_State;
 eval_branch_condition(exp, state, newstate, edge, isLoopBody, context) =
-  println("eval_branch_condition ", exp)
+  // -- println("eval_branch_condition ", exp)
   if is_binary(exp) then
     let lhs = eval(binary_get_left_child(exp), state, context)!1!2;
         rhs = eval(binary_get_right_child(exp), state, context)!1!2; in

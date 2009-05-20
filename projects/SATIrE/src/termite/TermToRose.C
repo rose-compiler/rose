@@ -623,9 +623,10 @@ PrologToRose::createEnumType(PrologTerm* t) {
   ROSE_ASSERT(annot->getName() == "enum_type");
   /*create dummy declaration*/
   string id = annot->at(0)->getRepresentation();
-  if (enumTypeMap.find(id) != enumTypeMap.end()) {
+  SgEnumType* type;
+  if (lookupType(&type, id)) {
     // We have a problem since we only use the first definition as a reference
-    return enumTypeMap[id];
+    return type;
   } else {
     cerr<<id<<endl;
     ROSE_ASSERT(false);
@@ -712,10 +713,7 @@ PrologToRose::createTypedefType(PrologTerm* t) {
   SgTypedefDeclaration* decl;
   SgTypedefType* tpe;
   string id = t->getRepresentation();
-  if (typedefDeclMap.find(id) != typedefDeclMap.end()) {
-    //SgTreeCopy copy;
-    decl = typedefDeclMap[id]/*->copy(copy)*/;
-    // We have a problem since we only use the first definition as a reference
+  if (lookupDecl(&decl, id)) {
     tpe = new SgTypedefType(decl);
   } else {
     cerr<<id<<endl;
@@ -725,7 +723,6 @@ PrologToRose::createTypedefType(PrologTerm* t) {
     SgTypeInt* i = new SgTypeInt();
     decl = new SgTypedefDeclaration(FI,n,i,NULL,NULL,NULL);
     ROSE_ASSERT(decl != NULL);
-    //fakeParentScope(decl);
     tpe = SgTypedefType::createType(decl);
   }
   ROSE_ASSERT(tpe != NULL);
@@ -1328,10 +1325,8 @@ PrologToRose::createFile(Sg_File_Info* fi,SgNode* child1,PrologCompTerm*) {
 
   // Reset local symbol tables
   classDefinitions.clear();
-  classTypeMap.clear();
+  typeMap.clear();
   declarationMap.clear();
-  funcDeclMap.clear();
-  typedefDeclMap.clear();
   return file;
 }
 
@@ -1625,8 +1620,8 @@ PrologToRose::createFunctionDeclaration(Sg_File_Info* fi, SgNode* par_list_u,SgN
 
   /* register the function declaration with our own symbol table */
   string id = makeFunctionID(func_name, annot->at(0)->getRepresentation());
-  if (funcDeclMap.find(id) == funcDeclMap.end()) {
-    funcDeclMap[id] = func_decl;
+  if (declarationMap.find(id) == declarationMap.end()) {
+    declarationMap[id] = func_decl;
   }
   return func_decl;
 }
@@ -2368,7 +2363,7 @@ PrologToRose::createClassDeclaration(Sg_File_Info* fi,SgNode* child1 ,PrologComp
   ROSE_ASSERT(d != NULL);
   SgClassType* sg_class_type = SgClassType::createType(d);
   d->set_type(sg_class_type);
-  classTypeMap[type_s->getRepresentation()] = sg_class_type;
+  typeMap[type_s->getRepresentation()] = sg_class_type;
 
   /* set declaration or the forward flag*/
   if(class_def != NULL) {
@@ -2432,7 +2427,6 @@ PrologToRose::fakeNamespaceScope(string s, int unnamed, SgDeclarationStatement* 
     dec->set_definingDeclaration(dec);
   }
   ROSE_ASSERT(dec != NULL);
-  //fakeParentScope(dec); //Adrian 1.2.2008 remove a ROSE 0.9.0b warning 
   SgGlobal* dummy = new SgGlobal(FI);
   ROSE_ASSERT(dummy != NULL);
   dec->set_parent(dummy);
@@ -2448,7 +2442,6 @@ PrologToRose::createDummyClassDeclaration(string s,int c_type) {
   SgName class_name = s;
   SgClassDeclaration* d = new SgClassDeclaration(fi,class_name,(SgClassDeclaration::class_types)c_type,NULL,NULL);
   ROSE_ASSERT(d != NULL);
-  //fakeParentScope(d);
   declarationStatementsWithoutScope.push_back(d);
   return d;
 }
@@ -2471,11 +2464,8 @@ PrologToRose::createDummyMemberFunctionDeclaration(string s,int c_type) {
 /** create SgClassType from annotation */
 SgClassType*
 PrologToRose::createClassType(PrologTerm* p) {
-  SgClassType* ct;
-  if (classTypeMap.find(p->getRepresentation()) != classTypeMap.end())
-    // Lookup the canonical class type
-    ct = classTypeMap[p->getRepresentation()];
-  else {
+  SgClassType* ct = NULL;
+  if (!lookupType(&ct, p->getRepresentation())) {
     // /* must be a composite term*/
     // PrologCompTerm* t = isPrologCompTerm(p);
     // ROSE_ASSERT(t != NULL);
@@ -2489,7 +2479,6 @@ PrologToRose::createClassType(PrologTerm* p) {
     // if(scopename != "::") {
     //   fakeNamespaceScope(scopename,0,d);
     // } else {
-    //   //fakeParentScope(d);
     //   declarationStatementsWithoutScope.push_back(d);
     // }
     // /* the unparser wants this*/
@@ -2502,8 +2491,8 @@ PrologToRose::createClassType(PrologTerm* p) {
     // ROSE_ASSERT(ct != NULL);
     // d->set_parent(ct);
     ct = NULL;
-    ROSE_ASSERT(ct != NULL);
   }
+  ROSE_ASSERT(ct != NULL);
   return ct;
 }
 
@@ -2591,7 +2580,7 @@ PrologToRose::createEnumDeclaration(Sg_File_Info* fi, deque<SgNode*>* succs, Pro
   dec->set_definingDeclaration(dec);
 
   //cerr<<t->getRepresentation()<<endl;
-  enumTypeMap[t->getRepresentation()] = dec->get_type();
+  typeMap[t->getRepresentation()] = dec->get_type();
   declarationMap[t->getRepresentation()] = dec;
 
   return dec;
@@ -2622,11 +2611,7 @@ PrologToRose::createTypedefDeclaration(Sg_File_Info* fi, PrologCompTerm* t) {
     if (ct->getName() == "class_declaration")
      id = ct->at(1)->getRepresentation();
     else id = ct->getRepresentation();
-    if (declarationMap.find(id) != declarationMap.end())
-      decl = declarationMap[id];
-    else {
-      cerr<<id<<endl;
-      ROSE_ASSERT(false);
+    if (!lookupDecl(&decl, id)) {
       decl = isSgDeclarationStatement(toRose(annot->at(2)));
     }
     ROSE_ASSERT(decl != NULL);
@@ -2648,7 +2633,7 @@ PrologToRose::createTypedefDeclaration(Sg_File_Info* fi, PrologCompTerm* t) {
   // Symbol table
   string id = "typedef_type("+annot->at(0)->getRepresentation()+", "
     +annot->at(1)->getRepresentation()+")";
-  typedefDeclMap[id] = d;
+  declarationMap[id] = d;
   //cerr<<id<<endl;
   return d;
 }
@@ -2684,10 +2669,7 @@ PrologToRose::pciDeclarationStatement(SgDeclarationStatement* s,PrologTerm* t) {
   s->set_forward(toInt(atts->at(1)));
   s->set_externBrace(toInt(atts->at(2)));
   s->set_skipElaborateType(toInt(atts->at(3)));
-  //	s->set_need_name_qualifier(toInt(atts->at(4)));
-  if (s->get_scope() == NULL) {
-    //fakeParentScope(s);
-  }
+  //s->set_need_name_qualifier(toInt(atts->at(4)));
 }
 
 /**
@@ -3231,10 +3213,12 @@ PrologToRose::createFunctionRefExp(Sg_File_Info* fi, PrologCompTerm* ct) {
 
   SgFunctionSymbol* sym;
   string id = makeFunctionID(*s, annot->at(1)->getRepresentation());
-  if (funcDeclMap.find(id) != funcDeclMap.end()) {
+  SgFunctionDeclaration* decl;
+  if (lookupDecl(&decl, id)) {
     /* get the real symbol */
-    sym = new SgFunctionSymbol(funcDeclMap[id]);
+    sym = new SgFunctionSymbol(decl);
   } else {
+    cerr<<id<<endl;
     ROSE_ASSERT(false);
     /* create function symbol*/
     debug("symbol");
