@@ -51,16 +51,12 @@ public:
     // Scope
     SgScopeStatement* scope = isSgScopeStatement(n);
     if (scope == NULL) scope = attr.scope;
-    //    else {
-      // rebuild the symbol table
-      /// scope->set_symbol_table(NULL);
-      //  SageInterface::rebuildSymbolTable(scope);
-      //}
 
+    // These nodes don't have a scope associated
     if (SgDeclarationStatement* decl = isSgDeclarationStatement(n)) {
-      // These nodes don't have a scope associated
       if (!isSgVariableDeclaration(decl) 
 	  && !isSgFunctionParameterList(decl)
+	  && !isSgPragmaDeclaration(decl)
 	  ) {
 	ROSE_ASSERT(scope != NULL);
 	decl->set_scope(scope);

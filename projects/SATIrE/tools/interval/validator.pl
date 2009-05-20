@@ -75,7 +75,7 @@ interval_assert1(Var->[Min,Max], AssertionExpr) :-
 		      function_call_exp_annotation(type_void,PPI), AI, FI),
   FRefExp = function_ref_exp(function_ref_exp_annotation(assert, Ftp, PPI),
 			     AI, FI),
-  Ftp = function_type(type_void,ellipses,[VarType]),
+  Ftp = function_type(type_void,ellipses,[type_int]),
 
   % skip temp vars
   ( atom_concat('$', _, Var)

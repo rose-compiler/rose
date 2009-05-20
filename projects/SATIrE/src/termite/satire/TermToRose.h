@@ -198,7 +198,7 @@ public:
     if (declarationMap.find(id) != declarationMap.end())
       *decl = (DeclType*)declarationMap[id];
     else {
-      std::cerr<<"Symbol lookup failed: ("
+      std::cerr<<"**ERROR: Symbol lookup failed: ("
 	/*<<decl->class_name()<<"*)*/<<id<<std::endl;
       ROSE_ASSERT(false);
       *decl = NULL;
@@ -212,7 +212,7 @@ public:
     if (typeMap.find(id) != typeMap.end())
       *type = (TypeType*)typeMap[id];
     else {
-      std::cerr<<"Symbol lookup failed: ("
+      std::cerr<<"**ERROR: Symbol lookup failed: ("
 	/*<<type->class_name()<<"*)*/<<id<<std::endl;
       ROSE_ASSERT(false);
       *type = NULL;
