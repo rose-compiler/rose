@@ -1,3 +1,10 @@
+2009-05-20 20:58  liao6
+
+	* [r5847] /trunk/ROSE/scripts/roseFreshTest,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Leo-head.sh,
+	  /trunk/ROSE/scripts/testOnExternalBenchmarks.sh: Refined test
+	  script supporting using external SPEC benchmarks
+
 2009-05-20 18:11  panas2
 
 	* [r5843] /trunk/ROSE/projects/RTED/RtedTransf_funccall.cpp,
