@@ -91,7 +91,7 @@ Index: Driver/TermDumper.cpp
 ===================================================================
 --- Driver/TermDumper.cpp	(revision 0)
 +++ Driver/TermDumper.cpp	(revision 0)
-@@ -0,0 +1,1957 @@
+@@ -0,0 +1,1962 @@
 +
 +//===--- StmtTermDumper.cpp - TermDumping implementation for Stmt ASTs ----===//
 +//
@@ -1967,7 +1967,12 @@ Index: Driver/TermDumper.cpp
 +
 +      case Stmt::StmtExprClass:
 +        {
-+          assert(0 && "not yet implemented");
++          const StmtExpr *SE = cast<StmtExpr>(S);
++          return new PrologCompTerm("statement_expression", 4,
++                                    make_statement_term(SE->getSubStmt()),
++                                    make_default_annotation(),
++                                    make_default_analysis_info(),
++                                    make_file_info(S));
 +        }
 +        
 +      default:
