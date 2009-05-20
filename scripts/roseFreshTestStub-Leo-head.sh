@@ -46,6 +46,11 @@ KEEP_TEST_DIR=1
 ENABLE_UPLOAD_SVN=1
 ENABLE_UPLOAD_CHANGELOG2=1
 ENABLE_UPLOAD_WEB=1
+# using external benchmarks
+ENABLE_EXTERNAL_TEST=1
+# installation path of spec cpu and the config file for using rose
+SPEC_CPU2006_INS=/home/liao6/opt/spec_cpu2006
+SPEC_CPU2006_CONFIG=tux268-rose-gcc42.cfg
 
 #KEEP_TEST_DIR=1
 NORMAL_INSTALL_DIR=1 # no chmod 000 for 'install'

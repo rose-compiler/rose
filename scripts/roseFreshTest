@@ -24,7 +24,7 @@
 #   30 2 * * * /home/liao6/rose/scripts/roseFreshTest /path/to/yourconfigStub.sh
 #
 # Liao, Jeremiah, 2/7/2008
-# Last modified 8/6/2008
+# Last modified 5/18/2009
 #------------------------------------------------------
 if [ $# -lt 1 ]
 then
@@ -158,6 +158,10 @@ fi
 
 # Prevent writing to the install tree
   mkdir install
+  # Save ROSE's installation path
+  cd install
+  ROSE_INS=`pwd`
+  cd ..
 if [ 0$NORMAL_INSTALL_DIR -ne 0 ] ; then
   echo "Normal file permission for the installation directory"
 else  
@@ -180,6 +184,12 @@ fi
   echo "############ make install done"
   make $MAKEFLAGS installcheck || exit 1
   echo "############ make installcheck done"
+
+  # test the installed ROSE on external benchmarks, such as SPEC CPU 2006 etc.
+  if  [ 0$ENABLE_EXTERNAL_TEST -ne 0 ] ; then
+    echo "----------- start testing using external benchmarks------------"
+    ${ROSE_TOP}/sourcetree/scripts/testOnExternalBenchmarks.sh ${ROSE_INS} ||exit 1
+  fi
 
   # skip the rest if we are testing the head of the SciDAC repository of ROSE
   if [ 0$SKIP_DIST_TEST -ne 0 ] ; then
