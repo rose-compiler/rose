@@ -402,7 +402,10 @@ RuntimeSystem_isInterestingFunctionCall(char* name) {
 	 strcmp(name ,"strcat")==0 ||
 	 strcmp(name ,"strncat")==0 ||
 	 strcmp(name ,"strlen")==0 ||
-	 strcmp(name ,"strchr")==0
+	 strcmp(name ,"strchr")==0 ||
+	 strcmp(name ,"strpbrk")==0 ||
+	 strcmp(name ,"strspn")==0  ||
+	 strcmp(name ,"strstr")==0  
 	 )) {
     interesting=1;
   }
@@ -423,6 +426,9 @@ RuntimeSystem_getParamtersForFuncCall(char* name) {
 	 strcmp(name ,"strncpy")==0 ||
 	 strcmp(name ,"strcpy")==0 ||
 	 strcmp(name ,"strchr")==0 ||
+	 strcmp(name ,"strpbrk")==0 ||
+	 strcmp(name ,"strspn")==0  ||
+	 strcmp(name ,"strstr")==0  ||
 	 strcmp(name ,"strcat")==0 )) {
     dim=2;
   } else if ((
@@ -433,6 +439,22 @@ RuntimeSystem_getParamtersForFuncCall(char* name) {
   return dim;
 }
 
+/*********************************************************
+ * Return the number of parameters for a specific function call
+ ********************************************************/
+int 
+RuntimeSystem_isSizeOfVariableKnown(char* mangled_name) {
+  int size=-1;
+  int pos = RuntimeSystem_findArrayName(mangled_name);
+  if (pos!=-1) {
+    if (rtsi()->arrays[pos].dim==1)
+      size = rtsi()->arrays[pos].size1;
+    else
+      // the two dim case is not handled
+      assert(0==1);
+  }
+  return size;
+}
 
 /*********************************************************
  * This function is called when one of the following functions in the code is called:
@@ -453,28 +475,76 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize, 
   // parameter 1
   assert(args[0]);
   assert(args[1]);
-  char* param1StringVal = args[0];
-  int param1ActualLength =-1;
-  int param1AllocLength = atoi(args[1]);
-  assert(param1StringVal);
-  
-  // parameter 2
-  char* param2StringVal = (char*)"";
-  int param2ActualLength =-1;
-  int param2AllocLength = -1;
-  // parameter 3
-  int param3Size = 0;
-
   int parameters=RuntimeSystem_getParamtersForFuncCall(fname);
   if (parameters==2)
     assert(argsSize>=4);
   if (parameters==3)
     assert(argsSize>=5);
 
+  char* param1StringVal = args[0];
+  int param1ActualLength =-1;
+  int sizeKnown = RuntimeSystem_isSizeOfVariableKnown(args[1]);
+  if (rtsi()->funccallDebug)
+    printf("Handling param1 - Size of second paramter is dynamic ? size = %d\n",sizeKnown);
+  int param1AllocLength = -2;
+  if (sizeKnown!=-1) { // unknown size meaning that variable not found 
+    param1AllocLength = sizeKnown;
+    //param1ActualLength = 0;//sizeKnown-1;
+  } else
+    param1AllocLength = atoi(args[1]);
+  assert(param1StringVal);
+
+  if (rtsi()->funccallDebug)
+    printf("Handling param1-1 - dynamic ? size = %d   param1AllocLength = %d, param1ActualLength = %d\n",sizeKnown,param1AllocLength,param1ActualLength);
+
+  // determine the actual size of each of the strings
+  char* end1 = NULL;
+  char *iter=NULL;
+  int count=0;
+  printf("............ Printing : %d  \n",count);
+  for ( iter = param1StringVal; *iter != '\0'; ++iter) {
+    printf("............ Printing : %d : '%s' \n",count++,iter);
+    end1 = iter;
+  }
+  if (end1==NULL)
+    end1= param1StringVal;
+  assert(end1);
+  int length1 =  (end1-param1StringVal)+1;
+  param1ActualLength = length1;
+
+  if (rtsi()->funccallDebug)
+    printf("Handling param1-2 - dynamic ? size = %d   param1AllocLength = %d, param1ActualLength = %d\n",sizeKnown,param1AllocLength,param1ActualLength);
+  
+  assert(param1ActualLength>-1);
+  if (rtsi()->funccallDebug)
+    printf("1: Number of parameters : %d -- param1AllocLength : %d %s  -- param1ActualLength %d\n",parameters, param1AllocLength, args[1], param1ActualLength);
+  if (param1AllocLength==0) {
+    // adjust the size of the allocation to the actual size +1
+    param1AllocLength=param1ActualLength+1;
+    if (rtsi()->funccallDebug)
+      printf("1: Expanding : Number of parameters : %d -- param1AllocLength : %d %s  -- param1ActualLength %d\n",parameters, param1AllocLength, args[1], param1ActualLength);
+  }
+
+
+  // parameter 2
+  char* param2StringVal = (char*)"";
+  int param2ActualLength =-1;
+  int param2AllocLength = -2;
+  // parameter 3
+  int param3Size = 0;
+
+  int sizeKnown2 =-1;
   if (parameters>=2) {
     param2StringVal = args[2];
     param2ActualLength =-1;
-    param2AllocLength = atoi(args[3]);
+    sizeKnown2= RuntimeSystem_isSizeOfVariableKnown(args[3]);
+    if (rtsi()->funccallDebug)
+      printf("\nHandling param2 - Size of second paramter is dynamic ? size = %d\n",sizeKnown2);
+    if (sizeKnown2!=-1) {
+      param2AllocLength = sizeKnown2;
+      //      param2ActualLength = 0;//sizeKnown2-1;
+    } else
+      param2AllocLength = atoi(args[3]);
     assert(param2StringVal);
   }
   if (parameters==3) {
@@ -483,42 +553,47 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize, 
       param3Size = strtol(args[4],NULL,10);
   }
 
-
-
-  // determine the actual size of each of the strings
-  char* end1 = NULL;
-  char *iter=NULL;
-  for ( iter = param1StringVal; *iter != '\0'; ++iter) {
-    end1 = iter;
-  }
-  if (end1==NULL)
-    end1= param1StringVal;
-  assert(end1);
-  param1ActualLength = (end1-param1StringVal)+1;
-  assert(param1ActualLength>-1);
   if (rtsi()->funccallDebug)
-    printf("Number of parameters : %d -- param1AllocLength : %d %s\n",parameters, param1AllocLength, args[1]);
-  if (param1AllocLength==0)
-    param1AllocLength=param1ActualLength+1;
+    printf("Handling param2-1 - dynamic ? size = %d   param2AllocLength = %d, param2ActualLength = %d\n",sizeKnown2,param2AllocLength,param2ActualLength);
 
   if (parameters>=2) {
-    char* end2 = NULL;
-    char *iter2=NULL;
-    for ( iter2 = param2StringVal; *iter2 != '\0'; ++iter2) {
-      end2 = iter2;
-    }
-    if (end2==NULL)
-      end2= param2StringVal;
-    assert(end2);
-    param2ActualLength = (end2-param2StringVal)+1;
+
+      char* end2 = NULL;
+      char *iter2=NULL;
+      for ( iter2 = param2StringVal; *iter2 != '\0'; ++iter2) {
+	end2 = iter2;
+      }
+      if (end2==NULL)
+	end2= param2StringVal;
+      assert(end2);
+      int length2 =  (end2-param2StringVal)+1;
+      param2ActualLength = length2;
+      
+
     if (param3Size==0)
       param3Size = param2ActualLength;
     assert(param2ActualLength>-1);
     assert(param3Size>0);
-    if (param2AllocLength==0)
+    if (rtsi()->funccallDebug)
+      printf("2: Number of parameters : %d -- param2AllocLength : %d %s  -- param2ActualLength %d\n",parameters, param2AllocLength, args[3], param2ActualLength);
+    if (param2AllocLength==0) {
       param2AllocLength=param2ActualLength+1;
+      if (rtsi()->funccallDebug)
+	printf("2: Expanding : Number of parameters : %d -- param2AllocLength : %d %s  -- param2ActualLength %d\n",parameters, param2AllocLength, args[3], param2ActualLength);
+    }
   }
+  if (rtsi()->funccallDebug)
+    printf("Handling param2-2 - dynamic ? size = %d   param2AllocLength = %d, param2ActualLength = %d\n",sizeKnown2,param2AllocLength,param2ActualLength);
 
+
+
+  printf("\nChecking if memory overlaps ... \n");
+  printf("(param2StringVal <= param1StringVal) && (param2StringVal+param2ActualLength >= param1StringVal)\n");
+  printf("(             %d <= %d             ) && (                                %d >= %d)\n",
+	 param2StringVal, param1StringVal, (param2StringVal+param2ActualLength), param1StringVal);
+  printf("(param1StringVal <= param2StringVal) && (param1StringVal+param1ActualLength >= param2StringVal)\n");
+  printf("(             %d <= %d             ) && (                                %d >= %d)\n",
+	 param1StringVal, param2StringVal, (param1StringVal+param1ActualLength), param2StringVal);
   // check for overlapping memory regions
   if (parameters>=2 && 
       (param2StringVal <= param1StringVal) && (param2StringVal+param2ActualLength>=param1StringVal) ||
@@ -528,13 +603,52 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize, 
 	RuntimeSystem_callExit(filename, line, (char*)"Memory regions overlap", stmtStr);  
       } 
 
+  printf("\nChecking if String NULL terminated ... \n");
+  char *iter4=NULL;
+  int zero1pos=0;
+  for ( iter4 = param1StringVal; *iter4 != '\0'; ++iter4) {
+    printf("%c",*iter4); zero1pos++;
+  } printf("---1 !!!!!!! Found 0 at pos : %d    param1ActualLength %d \n",zero1pos,param1ActualLength);
   // check if the actual size is larger than the allocated size
-  if (param1ActualLength>=param1AllocLength)
-    RuntimeSystem_callExit(filename, line, (char*)"Writing outside allocated memory. String possible not NULL terminated.", stmtStr);  
+  if (param1ActualLength>=param1AllocLength) {
+    char* res1 = ((char*)"Param1 : Writing outside allocated memory. String possible not NULL terminated. ActualLength = ");
+    char* res2 = ((char*)"  AllocLength = ");
+    int sizeInt = 2*sizeof(int);
+    char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ 1);
+    sprintf(res,"%s%d%s%d",res1,param1ActualLength,res2,param1AllocLength);
+    RuntimeSystem_callExit(filename, line, res, stmtStr);  
+  } else if ( zero1pos>param1ActualLength) {
+    char* res1 = ((char*)"Param1 : String not NULL terminated. ActualLength = ");
+    char* res2 = ((char*)"  AllocLength = ");
+    int sizeInt = 2*sizeof(int);
+    char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ 1);
+    sprintf(res,"%s%d%s%d",res1,param1ActualLength,res2,param1AllocLength);
+    RuntimeSystem_callExit(filename, line, res, stmtStr);  
+  }
+
   if (parameters>=2) {
+      char *iter3=NULL;
+      int zero2pos =0;
+      for ( iter3 = param2StringVal; *iter3 != '\0'; ++iter3) {
+	printf("%c",*iter3); zero2pos++;
+      } printf("---2 !!!!!!! Found 0 at pos : %d     param2ActualLength %d \n",zero2pos,param2ActualLength);
+
     // check if the actual size is larger than the allocated size
-    if (param2ActualLength>=param2AllocLength)
-      RuntimeSystem_callExit(filename, line, (char*)"Writing outside allocated memory. String possible not NULL terminated.", stmtStr);  
+    if (param2ActualLength>=param2AllocLength) {
+      char* res1 = ((char*)"Param2 : Writing outside allocated memory. String possible not NULL terminated. ActualLength = ");
+      char* res2 = ((char*)"  AllocLength = ");
+      int sizeInt = 2*sizeof(int);
+      char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ 1);
+      sprintf(res,"%s%d%s%d",res1,param2ActualLength,res2,param2AllocLength);
+      RuntimeSystem_callExit(filename, line, res, stmtStr);  
+    } else if ( zero2pos>param2ActualLength) {
+      char* res1 = ((char*)"Param2 : String not NULL terminated. ActualLength = ");
+      char* res2 = ((char*)"  AllocLength = ");
+      int sizeInt = 2*sizeof(int);
+      char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ 1);
+      sprintf(res,"%s%d%s%d",res1,param2ActualLength,res2,param2AllocLength);
+      RuntimeSystem_callExit(filename, line, res, stmtStr);  
+    }
   }
 
   if ( ( strcmp(fname,"strlen")==0 ||  // 1 param
@@ -550,25 +664,40 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize, 
 	   strcmp(fname ,"strncat")==0   // 3 param
 	   )) {
       if (rtsi()->funccallDebug)
-	printf("CHECK: Special Function call - %s  p1: %s act1: %d alloc1: %d     p2: %s act2: %d alloc2: %d\n", fname,
+	printf("CHECK: Special Function call - %s  p1: %s act1: %d alloc1: %d     p2: %s act2: %d alloc2: %d     p3: %d\n", fname,
 	       param1StringVal, param1ActualLength, param1AllocLength,
-	       param2StringVal, param2ActualLength, param2AllocLength);
+	       param2StringVal, param2ActualLength, param2AllocLength, param3Size);
       // not handled yet
-      assert(0==1);
+      if (parameters==2) {
+	if ((param1ActualLength+param2AllocLength)>=param1AllocLength) {
+	  // concatenation above the size of param1AllocLength
+	  RuntimeSystem_callExit(filename, line, "Writing beyond memory allocation for 1st parameter", stmtStr);	  
+	}
+      } else
+      if (parameters==3) {
+	if ((param1ActualLength+param3Size)>=param1AllocLength) {
+	  // concatenation above the size of param1AllocLength
+	  RuntimeSystem_callExit(filename, line, "Writing beyond memory allocation for 1st parameter", stmtStr);	  
+	}
+      }
+
     }
     else 
       if ( ( strcmp(fname,"memcpy")==0   || // 3 param
 	     strcmp(fname ,"memmove")==0 || // 3 param
-	     strcmp(fname ,"strcpy")==0 || // 2 param
-	     strcmp(fname ,"strncpy")==0  // 3 param
+	     strcmp(fname ,"strcpy")==0  || // 2 param
+	     strcmp(fname ,"strncpy")==0 || // 3 param
+	     strcmp(fname ,"strpbrk")==0 || // 2 param
+	     strcmp(fname ,"strspn")==0  || // 2 param
+	     strcmp(fname ,"strstr")==0  // 2 param
 	     )) {
 	if (rtsi()->funccallDebug)
 	  printf("CHECK: Special Function call - %s  p1: %s act1: %d alloc1: %d     p2: %s act2: %d alloc2: %d   param3Size: %d\n",fname,
 		 param1StringVal, param1ActualLength, param1AllocLength,
 		 param2StringVal, param2ActualLength, param2AllocLength, param3Size);
 	if (parameters==2) {
-	  if ((param2ActualLength>param1ActualLength)) {
-	    char* res1 = ((char*)"Invalid Operation,  operand1 size=");
+	  if ((param2AllocLength>param1AllocLength)) {
+	    char* res1 = ((char*)"p2 Invalid Operation,  operand1 size=");
 	    char* res2 = ((char*)"  operand2 size=");
 	    int sizeInt = 2*sizeof(int);
 	    char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ 1);
@@ -578,7 +707,7 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize, 
 	} else if (parameters==3) {
 	  if ((param3Size>param1ActualLength || param3Size>param2ActualLength)) {
 	    // make sure that if the strings do not overlap, they are both smaller than the amount of chars to copy
-	    char* res1 = ((char*)"Invalid Operation,  operand1 size=");
+	    char* res1 = ((char*)"p3 Invalid Operation,  operand1 size=");
 	    char* res2 = ((char*)"  operand2 size=");
 	    int sizeInt = 2*sizeof(int);
 	    char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ 1);
@@ -629,7 +758,13 @@ RuntimeSystem_roseFunctionCall(int count, ...) {
   for ( i=0;i<count;i++)    {
     char* val=  va_arg(vl,char*);
     if (val) // && i<4)
-      printf("  %d  val : %s \n",i,val);
+      printf("  %d      val : '%s' ---",i,val);
+    char *iter2=NULL;
+    int size =0;
+    for ( iter2 = val; *iter2 != '\0'; ++iter2) {
+      printf("%c",*iter2); size++;
+    } printf("--- size : %d \n",size);
+    
     if (i==0) name = val;
     else if (i==1) filename =  val;
     else if (i==2) line = val;

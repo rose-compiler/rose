@@ -65,7 +65,7 @@ int RuntimeSystem_isInterestingFunctionCall(char* name);
 int RuntimeSystem_getParamtersForFuncCall(char* name);
 
 // array functions
-int RuntimeSystem_findArrayName(char* n);
+int RuntimeSystem_findArrayName(char* mangled_name);
 void RuntimeSystem_increaseSizeArray();                                               
 void RuntimeSystem_roseCreateArray(char* name, int dimension, int stack, 
 				   long int sizeA, long int sizeB, char* filename, char* line);
@@ -79,6 +79,7 @@ void RuntimeSystem_roseCallStack(char* name, char* mangl_name, char* beforeStr);
 
 void RuntimeSystem_handleSpecialFunctionCalls(char* funcname,char** args, int argsSize, char* filename, char* line, char* stmtStr);
 void RuntimeSystem_roseFunctionCall(int count, ...);
+int  RuntimeSystem_isSizeOfVariableKnown(char* name);
 
 // function used to indicate error
 void RuntimeSystem_callExit(char* filename, char* line, char* reason, char* stmtStr);

@@ -124,7 +124,6 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
 	if (base_type)
 	  cerr <<"     base_type: " << base_type->class_name() << endl;
 	if (isSgTypeChar(type) || isSgTypeChar(base_type)) {
-	  //SgExpression* manglName = buildString(var->get_symbol()->get_declaration()->get_mangled_name().str());
 	  string name = var->get_symbol()->get_declaration()->get_name().str();
 	  //appendExpression(arg_list, manglName);
 	  // in addition we want the allocated size for this variable
@@ -142,7 +141,7 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
 	      ROSE_ASSERT(expr);
 	      expr = buildString("00");
 	    } else
-	      expr = buildString(expr->unparseToString());
+	      expr = buildString(expr->unparseToString()+"\0");
 	    // this is the variable that we pass
 	    appendExpression(arg_list, var);
 	    appendExpression(arg_list, expr);
@@ -152,13 +151,28 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
 	  else {
 	    cerr << "Cant determine the size of the following object : " << 
 	      var->class_name() << "  with type : " << type->class_name() << endl;
-	    // this is most likely a single char, the size of it is 1
-	    SgExpression* andSign = buildAddressOfOp(var);	   
-	    SgExpression* charCast = buildCastExp(andSign,buildPointerType(buildCharType()));
-	    appendExpression(arg_list, charCast);
-	    
-	    SgExpression* numberToString = buildString("001");
-	    appendExpression(arg_list, numberToString);
+	    if (base_type)
+	      cerr<<"   and base type : " << base_type->class_name() << endl;
+	    if (isSgPointerType(type)) {
+	      // this is a pointer to char* but not an array allocation yet
+	      // We have to pass var so we can check whether the memories overlap!
+	      //SgExpression* emptyString = buildString("");
+	      appendExpression(arg_list, var);
+	      // if this is a pointer to e.g. malloc we cant statically determine the
+	      // size of the allocated address. We need to pass the variable
+	      // and check in the runtime system if the size for the variable is known!
+	      //	      SgExpression* numberToString = buildString("000");
+	      SgExpression* manglName = buildString(var->get_symbol()->get_declaration()->get_mangled_name().str());
+	      appendExpression(arg_list, manglName);
+	    } else {
+	      // this is most likely a single char, the size of it is 1
+	      SgExpression* andSign = buildAddressOfOp(var);	   
+	      SgExpression* charCast = buildCastExp(andSign,buildPointerType(buildCharType()));
+	      appendExpression(arg_list, charCast);
+	      SgExpression* numberToString = buildString("001");
+	      appendExpression(arg_list, numberToString);
+
+	    }
 	    //ROSE_ASSERT(false);
 	  }
 	  
@@ -188,8 +202,8 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
 	cerr << " isNotSgVarRefExp exp : " << exp->class_name() << "   " << exp->unparseToString() << endl;
 	if (isSgStringVal(exp)) {
 	  string theString = isSgStringVal(exp)->get_value();
-	  appendExpression(arg_list, buildString(theString));
-	  int sizeString = theString.size();
+	  appendExpression(arg_list, buildString(theString+"\0"));
+	  int sizeString = theString.size()+1; // add the '\0' to it
 	  string sizeStringStr = RoseBin_support::ToString(sizeString);
 	  ROSE_ASSERT(sizeStringStr!="");
 	  SgExpression* numberToString = buildString(sizeStringStr);
@@ -197,7 +211,7 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
 	} else {
 	  // default create a string
 	  string theString = exp->unparseToString();
-	  SgExpression* stringExp = buildString(theString);
+	  SgExpression* stringExp = buildString(theString+"\0");
 	  appendExpression(arg_list, stringExp);
 	  int sizeString = theString.size();
 	  string sizeStringStr = RoseBin_support::ToString(sizeString);
@@ -228,6 +242,10 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
   
 }
 
+/*********************************************************
+ * Check if a function call is interesting, i.e. contains a 
+ * call to a function that we need to check the parameters of
+ ********************************************************/
 bool 
 RtedTransformation::isInterestingFunctionCall(std::string name) {
   bool interesting=false;
@@ -238,12 +256,21 @@ RtedTransformation::isInterestingFunctionCall(std::string name) {
       name=="strcat" ||
       name=="strncat" ||
       name=="strlen" ||
-      name=="strchr"
+      name=="strchr" ||
+      name=="strpbrk" ||
+      name=="strspn" ||
+      name=="strstr"
       )
     interesting=true;
   return interesting;
 }
 
+/***************************************************************
+ * This dimension is used to calculate additional parameters
+ * necessary for the function call, e.g.
+ * if dim = 1 then the parameter is followed by one more
+ * element wich is its size
+ **************************************************************/
 int 
 RtedTransformation::getDimensionForFuncCall(std::string name) {
   int dim=0;
@@ -253,7 +280,10 @@ RtedTransformation::getDimensionForFuncCall(std::string name) {
       name=="strncpy" ||
       name=="strcat" ||
       name=="strncat" ||
-      name=="strchr"
+      name=="strchr" ||
+      name=="strpbrk" ||
+      name=="strspn" ||
+      name=="strstr"
       ) {
     dim=2;
   }
