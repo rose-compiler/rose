@@ -1,3 +1,15 @@
+2009-05-20 18:11  panas2
+
+	* [r5843] /trunk/ROSE/projects/RTED/RtedTransf_funccall.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.c,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: RTED work
+
+2009-05-20 16:08  saebjornsen1
+
+	* [r5842]
+	  /trunk/ROSE/src/midend/programAnalysis/CallGraphAnalysis/CallGraph.C:
+	  Fixed missing ifdef
+
 2009-05-18 22:52  panas2
 
 	* [r5839] /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
