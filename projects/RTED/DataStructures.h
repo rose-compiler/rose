@@ -10,12 +10,15 @@ class RTedArray {
   SgInitializedName* initName;
   SgExpression* indx1;
   SgExpression* indx2;
-  RTedArray(bool s, int dim, SgInitializedName* init, SgExpression* idx1, SgExpression* idx2) {
+  bool ismalloc;
+  RTedArray(bool s, int dim, SgInitializedName* init, SgExpression* idx1, 
+	    SgExpression* idx2, bool mal) {
 	  stack = s;
 	  dimension = dim;
 	  initName = init;
 	  indx1=idx1;
 	  indx2=idx2;
+	  ismalloc=mal;
   }
   virtual ~RTedArray() {}
 

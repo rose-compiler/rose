@@ -300,7 +300,7 @@ check-C-string-parallel:
 	} &  \
 	pid[$$COUNTER]=$$! ; \
 	echo "Adding PID $!  $${pid[$$COUNTER]}" ; \
-	if [ $$(( $$COUNTER - $$BASE)) -eq 4 ]; then  \
+	if [ $$(( $$COUNTER - $$BASE)) -eq 1 ]; then  \
 		for (( i=$$BASE ; i < $$COUNTER ; i++)); do  \
 	    	     p=$${pid[i]} ; \
 	     	     wait $$p ; \
@@ -411,7 +411,7 @@ c-compile-runtimesystem:
 
 
 # DQ (7/25/2005): The current changes to the AST break these test programs:
-check-local: runtimeCheck $(TESTCODES) c-compile-runtimesystem check-C-array-onefile deleteAllbinfiles check-C-array-parallel 
+check-local: runtimeCheck $(TESTCODES) c-compile-runtimesystem check-C-array-onefile deleteAllbinfiles check-C-array-parallel check-C-string
 	@echo "***************************************************************************************"
 	@echo "*** ROSE/projects/runtimeErrorCheck: make check rule complete (terminated normally) ***"
 	@echo "***************************************************************************************"

@@ -77,6 +77,7 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
   }
 #endif
 
+
   std::vector<SgExpression*> value;
   array->getIndices(value);
   int dimension = array->dimension;
@@ -167,6 +168,15 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
       << stmt->class_name() << endl;
     ROSE_ASSERT(false);
   }
+
+  bool ismalloc = array->ismalloc;
+  // unfortunately the arrays are filled with '\0' which is a problem
+  // for detecting other bugs such as not null terminated strings
+  // therefore we call a function that appends code to the 
+  // original program to add padding different from '\0'
+  if (ismalloc)
+    addPaddingToAllocatedMemory(stmt, array);
+
 }
 
 /* -----------------------------------------------------------
@@ -235,7 +245,7 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt,
     string symbolName2 = roseArrayAccess->get_name().str();
     //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
     SgFunctionRefExp* memRef_r = buildFunctionRefExp(
-								 roseArrayAccess);
+						     roseArrayAccess);
     //SgArrowExp* sgArrowExp = buildArrowExp(varRef_l, memRef_r);
 
     SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
@@ -298,7 +308,7 @@ void RtedTransformation::visit_isArraySgInitializedName(SgNode* n) {
 	cerr << "   Expr2 : " << expr2->unparseToString() << endl;
       ROSE_ASSERT(dimension>0);
       RTedArray* arrayRted = new RTedArray(true, dimension, initName,
-				       expr, expr2);
+					   expr, expr2,false);
       create_array_define_varRef_multiArray_stack[initName] = arrayRted;
     } else if (isSgAssignInitializer(initName->get_initptr())) {
       cerr << "... Found Array AssignInitializer ... " << endl;
@@ -319,7 +329,7 @@ void RtedTransformation::visit_isArraySgInitializedName(SgNode* n) {
       ROSE_ASSERT(dimension>0);
       SgIntVal* sizeExp = buildIntVal(length);
       RTedArray* arrayRted = new RTedArray(true, dimension, initName,
-				       sizeExp, expr2);
+					   sizeExp, expr2,false);
       create_array_define_varRef_multiArray_stack[initName] = arrayRted;
 
       array->set_index(buildIntVal(length));
@@ -588,8 +598,11 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
 	  } else {
 	    ROSE_ASSERT(false);
 	  }
+
+	  // we are creating a new array variable based on the malloc call
 	  RTedArray* array = new RTedArray(false, dimension,
-					   initName, indx1, indx2);
+					   initName, indx1, indx2,
+					   ismalloc);
 	  // varRef can not be a array access, its only an array Create
 	  createVariables.push_back(varRef);
 	  create_array_define_varRef_multiArray[varRef] = array;
@@ -599,6 +612,65 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
   }
 }
 
+void RtedTransformation::addPaddingToAllocatedMemory(SgStatement* stmt,  RTedArray* array) {
+  printf(">>> Padding allocated memory with blank space\n");
+  //SgStatement* stmt = getSurroundingStatement(varRef);
+  ROSE_ASSERT(stmt);
+  // if you find this:
+  //   str1 = ((char *)(malloc(((((4 * n)) * (sizeof(char )))))));
+  // add the following lines:
+  //   int i;
+  //   for (i = 0; (i) < malloc(((((4 * n)) * (sizeof(char )); i++)
+  //     str1[i] = ' ';
+
+  // we do this only for char*
+  bool cont=false;
+  SgInitializedName* initName = array->initName;
+  SgType* type = initName->get_type();
+  cerr << " Padding type : " << type->class_name() << endl;
+  if (isSgPointerType(type)) {
+    SgType* basetype = isSgPointerType(type)->get_base_type();
+    cerr << " Base type : " << basetype->class_name() << endl;
+    if (basetype && isSgTypeChar(basetype))
+      cont=true;
+  }
+  
+  // since this is mainly to handle char* correctly, we only deal with one dim array for now
+  if (cont && array->dimension==1) {
+    // allocated size
+    SgScopeStatement* scope = stmt->get_scope();
+    SgExpression* size = array->indx1;
+    pushScopeStack (scope);
+    // int i;
+    SgVariableDeclaration* stmt1 = buildVariableDeclaration("i",buildIntType(),NULL); 
+    //for(i=0;..)
+    SgStatement* init_stmt= buildAssignStatement(buildVarRefExp("i"),buildIntVal(0));
+
+    // for(..,i<size,...) It is an expression, not a statement!
+    SgExprStatement* cond_stmt=NULL;
+    cond_stmt= buildExprStatement(buildLessThanOp(buildVarRefExp("i"),size)); 
+ 
+    // for (..,;...;i++); not ++i;
+    SgExpression* incr_exp = NULL;
+    incr_exp=buildPlusPlusOp(buildVarRefExp("i"),SgUnaryOp::postfix);
+    // loop body statement
+    SgStatement* loop_body= NULL; 
+    SgExpression* lhs = buildPntrArrRefExp(buildVarRefExp(array->initName->get_name()),buildVarRefExp("i"));
+    SgExpression* rhs = buildCharVal(' ');
+    loop_body = buildAssignStatement(lhs,rhs);
+    //loop_body = buildExprStatement(stmt2); 
+
+
+    SgForStatement* forloop = buildForStatement (init_stmt,cond_stmt,incr_exp,loop_body);
+
+    SgBasicBlock* bb = buildBasicBlock(stmt1,
+				       forloop);
+    insertStatementAfter(isSgStatement(stmt), bb);
+    string comment = "RS: Padding this newly generated array with empty space.";
+    attachComment(bb,comment,PreprocessingInfo::before);
+    popScopeStack();
+  } 
+}
 
 
 void RtedTransformation::visit_isArrayPntrArrRefExp(SgNode* n) {
@@ -669,10 +741,10 @@ void RtedTransformation::visit_isArrayPntrArrRefExp(SgNode* n) {
       RTedArray* array = NULL;
       if (right2 == NULL) {
 	array = new RTedArray(false, dimension, initName, right1,
-			      NULL);
+			      NULL, false);
       } else {
 	array = new RTedArray(false, dimension, initName, right2,
-			      right1);
+			      right1, false);
       }
       cerr << "!! CALL : " << varRef << " - "
 	   << varRef->unparseToString() << "    size : "
@@ -715,7 +787,7 @@ void RtedTransformation::visit_isArrayExprListExp(SgNode* n) {
 						    initName->get_mangled_name().str(),
 						    isSgVarRefExp(n),
 						    stmt,
-						  args
+						    args
 						    );
 	ROSE_ASSERT(funcCall);
 	function_call.push_back(funcCall);

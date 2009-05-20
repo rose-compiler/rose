@@ -60,6 +60,8 @@ class RtedTransformation : public AstSimpleProcessing {
   void visit_isArrayPntrArrRefExp(SgNode* n);
   void visit_isArrayExprListExp(SgNode* n);
 
+  void addPaddingToAllocatedMemory(SgStatement* stmt,  RTedArray* array);
+
   // Function that inserts call to array : runtimeSystem->callArray
   void insertArrayCreateCall(SgVarRefExp* n, RTedArray* value);
   void insertArrayCreateCall(SgInitializedName* initName,  RTedArray* value);

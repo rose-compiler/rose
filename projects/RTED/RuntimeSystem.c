@@ -413,6 +413,28 @@ RuntimeSystem_isInterestingFunctionCall(char* name) {
 }
 
 /*********************************************************
+ * Check if the function that is called is modifying
+ * i.e. whether it changes memory or just accesses it.
+ * If it accesses memory, we need to ensure that the
+ * memory is NULL terminated if char*
+ * we assume that parameter 2 than has the \0 token
+ ********************************************************/
+int 
+RuntimeSystem_isModifyingOp(char* name) {
+  int modifying=0;//false;
+  // we do not need the actualLength of the
+  // first parameter for the following
+  if ( ( strcmp(name,"memcpy")==0 || 
+	 strcmp(name ,"memmove")==0 || 
+	 strcmp(name ,"strcpy")==0 ||
+	 strcmp(name ,"strncpy")==0 
+	 )) {
+    modifying=1;
+  }
+  return modifying;
+}
+
+/*********************************************************
  * Return the number of parameters for a specific function call
  ********************************************************/
 int 
@@ -498,19 +520,29 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize, 
     printf("Handling param1-1 - dynamic ? size = %d   param1AllocLength = %d, param1ActualLength = %d\n",sizeKnown,param1AllocLength,param1ActualLength);
 
   // determine the actual size of each of the strings
-  char* end1 = NULL;
-  char *iter=NULL;
-  int count=0;
-  printf("............ Printing : %d  \n",count);
-  for ( iter = param1StringVal; *iter != '\0'; ++iter) {
-    printf("............ Printing : %d : '%s' \n",count++,iter);
-    end1 = iter;
+  // we need to do this only for certain functions!
+  // This is important because otherwise e.g. strcpy
+  // will show null terminated string also this is not relevant
+  // for str1=malloc(5);  strcpy(str1,"la")
+  int modifyingCall = RuntimeSystem_isModifyingOp(fname);
+  if (modifyingCall==0) {
+    char* end1 = NULL;
+    char *iter=NULL;
+    int count=0;
+    printf("............ Printing : %d  \n",count);
+    for ( iter = param1StringVal; *iter != '\0'; ++iter) {
+      printf("............ Printing : %d : '%s' \n",count++,iter);
+      end1 = iter;
+    }
+    if (end1==NULL)
+      end1= param1StringVal;
+    assert(end1);
+    int length1 =  (end1-param1StringVal)+1;
+    param1ActualLength = length1;
+  } else {
+    // if the operation is modifying, e.g. memcpy, we want the actual size to be 0
+    param1ActualLength=0;
   }
-  if (end1==NULL)
-    end1= param1StringVal;
-  assert(end1);
-  int length1 =  (end1-param1StringVal)+1;
-  param1ActualLength = length1;
 
   if (rtsi()->funccallDebug)
     printf("Handling param1-2 - dynamic ? size = %d   param1AllocLength = %d, param1ActualLength = %d\n",sizeKnown,param1AllocLength,param1ActualLength);
@@ -588,16 +620,16 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize, 
 
 
   printf("\nChecking if memory overlaps ... \n");
-  printf("(param2StringVal <= param1StringVal) && (param2StringVal+param2ActualLength >= param1StringVal)\n");
+  printf("(param2StringVal <= param1StringVal) && (param2StringVal+param2AllocLength >= param1StringVal)\n");
   printf("(             %d <= %d             ) && (                                %d >= %d)\n",
 	 param2StringVal, param1StringVal, (param2StringVal+param2ActualLength), param1StringVal);
-  printf("(param1StringVal <= param2StringVal) && (param1StringVal+param1ActualLength >= param2StringVal)\n");
+  printf("(param1StringVal <= param2StringVal) && (param1StringVal+param1AllocLength >= param2StringVal)\n");
   printf("(             %d <= %d             ) && (                                %d >= %d)\n",
 	 param1StringVal, param2StringVal, (param1StringVal+param1ActualLength), param2StringVal);
   // check for overlapping memory regions
   if (parameters>=2 && 
-      (param2StringVal <= param1StringVal) && (param2StringVal+param2ActualLength>=param1StringVal) ||
-      (param1StringVal <= param2StringVal) && (param1StringVal+param1ActualLength>=param2StringVal)) {
+      (param2StringVal <= param1StringVal) && (param2StringVal+param2AllocLength>=param1StringVal) ||
+      (param1StringVal <= param2StringVal) && (param1StringVal+param1AllocLength>=param2StringVal)) {
 	if (rtsi()->funccallDebug)
 	  printf( " >>>> Error : Memory regions overlap!   Size1: %d  Size2: %d\n",param1ActualLength , param2ActualLength);
 	RuntimeSystem_callExit(filename, line, (char*)"Memory regions overlap", stmtStr);  
@@ -606,25 +638,28 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize, 
   printf("\nChecking if String NULL terminated ... \n");
   char *iter4=NULL;
   int zero1pos=0;
-  for ( iter4 = param1StringVal; *iter4 != '\0'; ++iter4) {
-    printf("%c",*iter4); zero1pos++;
-  } printf("---1 !!!!!!! Found 0 at pos : %d    param1ActualLength %d \n",zero1pos,param1ActualLength);
+  if (modifyingCall==0) {
+    // do not check for the end character of first operator if this is a modifying call, e.g. strcpy
+    for ( iter4 = param1StringVal; *iter4 != '\0'; ++iter4) {
+      printf("%c",*iter4); zero1pos++;
+    } printf("---1 !!!!!!! Found 0 at pos : %d    param1ActualLength %d \n",zero1pos,param1ActualLength);
+  }
   // check if the actual size is larger than the allocated size
-  if (param1ActualLength>=param1AllocLength) {
-    char* res1 = ((char*)"Param1 : Writing outside allocated memory. String possible not NULL terminated. ActualLength = ");
-    char* res2 = ((char*)"  AllocLength = ");
-    int sizeInt = 2*sizeof(int);
-    char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ 1);
-    sprintf(res,"%s%d%s%d",res1,param1ActualLength,res2,param1AllocLength);
-    RuntimeSystem_callExit(filename, line, res, stmtStr);  
-  } else if ( zero1pos>param1ActualLength) {
+  if ( zero1pos>param1ActualLength) {
     char* res1 = ((char*)"Param1 : String not NULL terminated. ActualLength = ");
     char* res2 = ((char*)"  AllocLength = ");
     int sizeInt = 2*sizeof(int);
     char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ 1);
     sprintf(res,"%s%d%s%d",res1,param1ActualLength,res2,param1AllocLength);
     RuntimeSystem_callExit(filename, line, res, stmtStr);  
-  }
+  } else if (param1ActualLength>=param1AllocLength) {
+    char* res1 = ((char*)"Param1 : Writing outside allocated memory.  ActualLength = ");
+    char* res2 = ((char*)" >= AllocLength = ");
+    int sizeInt = 2*sizeof(int);
+    char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ 1);
+    sprintf(res,"%s%d%s%d",res1,param1ActualLength,res2,param1AllocLength);
+    RuntimeSystem_callExit(filename, line, res, stmtStr);  
+  } 
 
   if (parameters>=2) {
       char *iter3=NULL;
@@ -634,21 +669,21 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize, 
       } printf("---2 !!!!!!! Found 0 at pos : %d     param2ActualLength %d \n",zero2pos,param2ActualLength);
 
     // check if the actual size is larger than the allocated size
-    if (param2ActualLength>=param2AllocLength) {
-      char* res1 = ((char*)"Param2 : Writing outside allocated memory. String possible not NULL terminated. ActualLength = ");
-      char* res2 = ((char*)"  AllocLength = ");
-      int sizeInt = 2*sizeof(int);
-      char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ 1);
-      sprintf(res,"%s%d%s%d",res1,param2ActualLength,res2,param2AllocLength);
-      RuntimeSystem_callExit(filename, line, res, stmtStr);  
-    } else if ( zero2pos>param2ActualLength) {
+    if ( zero2pos>param2ActualLength) {
       char* res1 = ((char*)"Param2 : String not NULL terminated. ActualLength = ");
       char* res2 = ((char*)"  AllocLength = ");
       int sizeInt = 2*sizeof(int);
       char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ 1);
       sprintf(res,"%s%d%s%d",res1,param2ActualLength,res2,param2AllocLength);
       RuntimeSystem_callExit(filename, line, res, stmtStr);  
-    }
+    } else if (param2ActualLength>=param2AllocLength) {
+      char* res1 = ((char*)"Param2 : Writing outside allocated memory. ActualLength = ");
+      char* res2 = ((char*)" >= AllocLength = ");
+      int sizeInt = 2*sizeof(int);
+      char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ 1);
+      sprintf(res,"%s%d%s%d",res1,param2ActualLength,res2,param2AllocLength);
+      RuntimeSystem_callExit(filename, line, res, stmtStr);  
+    } 
   }
 
   if ( ( strcmp(fname,"strlen")==0 ||  // 1 param
@@ -671,13 +706,13 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize, 
       if (parameters==2) {
 	if ((param1ActualLength+param2AllocLength)>=param1AllocLength) {
 	  // concatenation above the size of param1AllocLength
-	  RuntimeSystem_callExit(filename, line, "Writing beyond memory allocation for 1st parameter", stmtStr);	  
+	  RuntimeSystem_callExit(filename, line, (char*)"Writing beyond memory allocation for 1st parameter", stmtStr);	  
 	}
       } else
       if (parameters==3) {
 	if ((param1ActualLength+param3Size)>=param1AllocLength) {
 	  // concatenation above the size of param1AllocLength
-	  RuntimeSystem_callExit(filename, line, "Writing beyond memory allocation for 1st parameter", stmtStr);	  
+	  RuntimeSystem_callExit(filename, line, (char*)"Writing beyond memory allocation for 1st parameter", stmtStr);	  
 	}
       }
 
