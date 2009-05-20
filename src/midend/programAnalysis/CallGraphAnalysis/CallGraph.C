@@ -3,7 +3,9 @@
 #include <boost/lexical_cast.hpp>
 #include "CallGraph.h"
 
+#ifdef HAVE_SQLITE3
 using namespace sqlite3x;
+#endif
 
 bool var_SOLVE_FUNCTION_CALLS_IN_DB = false;
 
