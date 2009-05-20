@@ -5,16 +5,19 @@
 #
 # Liao, 5/18/2009
 
-if [ $# -lt 1 ]
+if [ $# -lt 3 ]
 then
-  echo This script needs one argument
-  echo Usage:$0 ROSE_INSTALL_PATH
-  echo Exampe:$0 /home/liao6/opt/roseLatest
+  echo This script needs three arguments
+  echo Usage:$0 ROSE_INSTALL_PATH SPEC_INSTALL_PATH SPEC_CONFIG_FILE_NAME
+  echo Exampe:$0 /home/liao6/opt/roseLatest /home/liao6/opt/spec_cpu2006 rose.cfg
   exit
 fi
 
 # retrieve the argument as rose's installation path
 ROSE_INS=$1
+SPEC_CPU2006_INS=$2
+SPEC_CPU2006_CONFIG=$3
+
 # provided in stub scripts
 #SPEC_CPU2006_INS=/home/liao6/opt/spec_cpu2006
 

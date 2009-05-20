@@ -188,7 +188,7 @@ fi
   # test the installed ROSE on external benchmarks, such as SPEC CPU 2006 etc.
   if  [ 0$ENABLE_EXTERNAL_TEST -ne 0 ] ; then
     echo "----------- start testing using external benchmarks------------"
-    ${ROSE_TOP}/sourcetree/scripts/testOnExternalBenchmarks.sh ${ROSE_INS} ||exit 1
+    ${ROSE_TOP}/sourcetree/scripts/testOnExternalBenchmarks.sh ${ROSE_INS} ${SPEC_CPU2006_INS} ${SPEC_CPU2006_CONFIG} ||exit 1
   fi
 
   # skip the rest if we are testing the head of the SciDAC repository of ROSE
