@@ -505,28 +505,34 @@ unparse1(UI, function_type(T)) :- !, unparse(UI, T), write('()').
 
 % DEFINITIONS/DECLARATIONS
 
-unparse1(UI, typedef_declaration(_, typedef_annotation(
-          Name,
-          pointer_type(Type),
-          class_declaration(class_definition(Definitions, _, _), _, _), _),
-	  _Ai, _Fi)) :- !, 
-  write('typedef '), 
-  with_output_to(atom(X),
-		 (write('{'), unparse(UI, Definitions), write('} *'), write(Name))),
-  unparse_type(UI, X, Type).
+%unparse1(UI, typedef_declaration(_, typedef_annotation(
+%          Name,
+%          pointer_type(Type),
+%          class_declaration(class_definition(Definitions, _, _), _, _), _),
+%	  _Ai, _Fi)) :- !, 
+%  write('typedef '), 
+%  with_output_to(atom(X),
+%		 (write('{'), unparse(UI, Definitions), write('} *'), write(Name))),
+%  unparse_type(UI, X, Type).
 
-unparse1(UI, typedef_declaration(_, typedef_annotation(
-          Name,
-          Type,
-          class_declaration(class_definition(Definitions, _, _), _, _), _),
-	  _Ai, _Fi)) :- !, 
-  write('typedef '), 
-  with_output_to(atom(X),
-		 (write('{'), unparse(UI, Definitions), write('} '), write(Name))),
-  unparse_type(UI, X, Type).
-
-unparse1(UI, typedef_declaration(_, typedef_annotation(Name,Type,_,_), _Ai, _Fi)) :- !,
+unparse1(UI, typedef_declaration(null, typedef_annotation(Name,Type,_,_), _Ai, _Fi)) :- !,
   write('typedef '), unparse_type(UI, Name, Type).
+
+unparse1(UI, typedef_declaration(Definition, typedef_annotation(
+          Name,
+          _Type, _Decl, _PPI), _Ai, _Fi)) :- !, 
+  write('typedef '), 
+  unparse(UI, Definition), write(' '), write(Name).
+
+%unparse1(UI, typedef_declaration(_, typedef_annotation(
+%          Name,
+%          Type,
+%          class_declaration(class_definition(Definitions, _, _), _, _), _),
+%	  _Ai, _Fi)) :- !, 
+%  write('typedef '), 
+%  with_output_to(atom(X),
+%		 (write('{'), unparse(UI, Definitions), write('} '), write(Name))),
+%  unparse_type(UI, X, Type).
 
 unparse1(UI, function_definition(BB, _, _, _)) :- !, unparse(UI, BB).
 
