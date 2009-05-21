@@ -79,9 +79,11 @@ AttachPreprocessingInfoTreeTrav::AttachPreprocessingInfoTreeTrav( SgSourceFile* 
 
      //Wave will get all Preprocessor Diretives by default and it is therefore reasonable
      //that it will attach all
+#if 0
      if(use_Wave)
        processAllIncludeFiles = true;
      else
+#endif
        processAllIncludeFiles        = includeDirectivesAndCommentsFromAllFiles;
 
 
