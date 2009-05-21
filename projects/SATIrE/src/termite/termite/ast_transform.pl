@@ -11,7 +11,6 @@
 	   unparse/2,
 	   unparse_storage_modifier/1,
 	   unparse_ppi/2,
-	   get_preprocessing_infos/2,
 	   indent/1,
 	   needs_semicolon/1,
 	   needs_comma/1,
@@ -237,13 +236,13 @@ unparse(Node) :- unparse(fi(0, 0, []), Node).
 % FIXME implement replacement write/1 that uses col/line
 
 unparse(fi(Line, Col, ParentPPIs), Node) :- 
-  % process the parent preprocessing info
-  unparse_ppi(inside, ParentPPIs),
   % extract mine
   get_preprocessing_infos(Node, PPIs),
   % unparse the node
   unparse_ppi(before, PPIs),
   unparse1(fi(Line, Col, PPIs), Node),
+  % process the parent preprocessing info
+  unparse_ppi(inside, ParentPPIs),
   unparse_ppi(after, PPIs).
 
 
@@ -333,16 +332,17 @@ unparse1(UI, bb([E|Es], A, Ai, Fi)) :- % no semicolon
    E = default_option_stmt(_, _, _, _) ;
    E = case_option_stmt(_, _, _, _, _, _)), !,
   unparse(UI, E), nl,
-  unparse(UI, bb(Es, A, Ai, Fi)).
+  % in this case we did the PPI stuff already
+  unparse1(UI, bb(Es, A, Ai, Fi)).
 unparse1(UI, bb([E|Es], A, Ai, Fi)) :- % no semicolon
   scope_statement(E), !, 
   file_info(E, F),
   indent(F), unparse(UI, E), nl,
-  unparse(UI, bb(Es, A, Ai, Fi)).
+  unparse1(UI, bb(Es, A, Ai, Fi)).
 unparse1(UI, bb([E|Es], A, Ai, Fi)) :- !,
   file_info(E, F),
   indent(F), unparse(UI, E), writeln(';'), 
-  unparse(UI, bb(Es, A, Ai, Fi)).
+  unparse1(UI, bb(Es, A, Ai, Fi)).
 unparse1(_UI, bb([], _, _, _)) :- !.
 
 unparse1(UI, [E|Es]) :- !,
@@ -423,9 +423,10 @@ unparse1(_UI, break_stmt(_, _, _)) :- !, write('break ').
 unparse1(_UI, continue_stmt(_, _, _)) :- !, write('continue ').
 unparse1(_UI, goto_statement(label_annotation(Label, _), _, _)) :- !, write('goto '), write(Label).
 unparse1(_UI, label_statement(label_annotation(Label, _), _, _)) :- !, write(Label), write(': ').
-unparse1(UI, basic_block(E1, An, Ai, Fi)) :- !,
+unparse1(UI, basic_block(E1, An, Ai, Fi)) :- !, 
   writeln(' {'),
-  unparse(UI, bb(E1, An, Ai, Fi)),
+  % We did the PPI stuff already
+  unparse1(UI, bb(E1, An, Ai, Fi)),
   indent(Fi), writeln('}').
 unparse1(_UI, basic_block(_, _, _)) :- !, write(' {} ').
 unparse1(UI, global(E1, _, _, _)) :- !, unparse(UI, E1).
