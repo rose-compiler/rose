@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 # This script does a fresh checkout of ROSE and conducts series tests
 # Please provide your customized configurations in a .sh file before using this script:
 #
@@ -188,7 +188,18 @@ fi
   # test the installed ROSE on external benchmarks, such as SPEC CPU 2006 etc.
   if  [ 0$ENABLE_EXTERNAL_TEST -ne 0 ] ; then
     echo "----------- start testing using external benchmarks------------"
-    ${ROSE_TOP}/sourcetree/scripts/testOnExternalBenchmarks.sh ${ROSE_INS} ${SPEC_CPU2006_INS} ${SPEC_CPU2006_CONFIG} ||exit 1
+
+    if [ "x$SPEC_CPU2006_INS" = "x" ]; then
+    echo "ERROR: SPEC CPU2006's install path is not given!"
+    exit 1
+    fi
+
+    if [ "x$SPEC_CPU2006_CONFIG" = "x" ]; then
+    echo "ERROR: SPEC CPU2006's config file name is not given!"
+    exit 1
+    fi
+
+    ${ROSE_TOP}/sourcetree/scripts/testOnExternalBenchmarks.sh ${ROSE_INS} $SPEC_CPU2006_INS $SPEC_CPU2006_CONFIG ||exit 1
   fi
 
   # skip the rest if we are testing the head of the SciDAC repository of ROSE

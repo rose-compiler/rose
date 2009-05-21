@@ -10,7 +10,7 @@ then
   echo This script needs three arguments
   echo Usage:$0 ROSE_INSTALL_PATH SPEC_INSTALL_PATH SPEC_CONFIG_FILE_NAME
   echo Exampe:$0 /home/liao6/opt/roseLatest /home/liao6/opt/spec_cpu2006 rose.cfg
-  exit
+  exit 1
 fi
 
 # retrieve the argument as rose's installation path

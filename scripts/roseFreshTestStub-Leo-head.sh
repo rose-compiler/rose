@@ -19,6 +19,7 @@ export PATH="$JAVA_HOME/bin:/usr/apps/automake/1.9.6/bin:$PATH"
 
 # using a time stamp to avoid overwriting previous tests
 TIMESTAMP=$(date +%Y%m%d_%H%M%S) 
+#ROSE_TOP="/home/liao6/daily-test-rose/20090520_150650"
 ROSE_TOP=/home/liao6/daily-test-rose/${TIMESTAMP}
 
 # for regular build and tests
@@ -49,8 +50,8 @@ ENABLE_UPLOAD_WEB=1
 # using external benchmarks
 ENABLE_EXTERNAL_TEST=1
 # installation path of spec cpu and the config file for using rose
-SPEC_CPU2006_INS=/home/liao6/opt/spec_cpu2006
-SPEC_CPU2006_CONFIG=tux268-rose-gcc42.cfg
+SPEC_CPU2006_INS="/home/liao6/opt/spec_cpu2006"
+SPEC_CPU2006_CONFIG="tux268-rose-gcc42.cfg"
 
 #KEEP_TEST_DIR=1
 NORMAL_INSTALL_DIR=1 # no chmod 000 for 'install'
