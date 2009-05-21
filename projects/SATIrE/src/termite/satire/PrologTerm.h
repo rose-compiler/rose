@@ -54,6 +54,9 @@ class PrologTerm {
     return s;
   }
 
+  // true if the pattern can be unified with the term
+  bool matches(std::string pattern) { assert(false && "not implemented"); }
+
 protected:
 
   static bool is_reserved_operator(const std::string s) {
@@ -190,6 +193,9 @@ class PrologTerm {
   static std::string quote(const char* s) {
     return std::string(PL_quote('\'', s));
   }
+
+  // true if the pattern can be unified with the term
+  bool matches(std::string pattern);
 
   /// return the SWI-Prolog term
   term_t getTerm() { return term; }

@@ -435,7 +435,6 @@ PrologToRose::quaternaryToRose(PrologCompTerm* t,string tname) {
 /** create ROSE-IR for list node*/
 SgNode*
 PrologToRose::listToRose(PrologCompTerm* t,string tname) {
-	
   debug("unparsing list node");
   PrologList* l = dynamic_cast<PrologList*>(t->at(0));
   assert(l != (PrologList*) 0);
@@ -448,6 +447,11 @@ PrologToRose::listToRose(PrologCompTerm* t,string tname) {
   SgNode* cur = NULL;
   /* recursively, create ROSE-IR for list-members*/
   deque<PrologTerm*>* succterms = l->getSuccs();
+
+  /* lookahead hack */
+  if (tname == SG_PREFIX "global") 
+    globalDecls = succterms;
+
   deque<SgNode*>* succs = new deque<SgNode*>();
   deque<PrologTerm*>::iterator it = succterms->begin();
   while (it != succterms->end()) {
@@ -623,7 +627,7 @@ PrologToRose::createEnumType(PrologTerm* t) {
   ROSE_ASSERT(annot->getName() == "enum_type");
   /*create dummy declaration*/
   string id = annot->at(0)->getRepresentation();
-  SgEnumType* type;
+  SgEnumType* type = NULL;
   if (lookupType(&type, id)) {
     // We have a problem since we only use the first definition as a reference
     return type;
@@ -710,20 +714,39 @@ PrologToRose::createTypedefType(PrologTerm* t) {
 
   /*extract name*/
   SgName n = *(toStringP(annot->at(0)));
-  SgTypedefDeclaration* decl;
-  SgTypedefType* tpe;
+  SgTypedefDeclaration* decl = NULL;
+  SgTypedefType* tpe = NULL;
   string id = t->getRepresentation();
   if (lookupDecl(&decl, id, false)) {
-    tpe = new SgTypedefType(decl);
+    tpe = decl->get_type(); //new SgTypedefType(decl);
+  } else if (lookaheadDecl(&decl, 
+			   "typedef_declaration(_,typedef_annotation("
+			   +annot->at(0)->getRepresentation()+",_,_),_,_)")) {
+    tpe = decl->get_type();
   } else {
-    //cerr<<id<<endl;
-    //ROSE_ASSERT(false && "FIXME");
-    /*we don't want to keep the base type empty, use int (irrelevant
-      for unparsing*/
-    SgTypeInt* i = new SgTypeInt();
-    decl = new SgTypedefDeclaration(FI,n,i,NULL,NULL,NULL);
+    SgType* basetype = NULL;
+    if (annot->at(1)->getName() != "typedef_type") {
+      basetype = PrologToRose::createType(annot->at(1));
+    } else {
+      cerr<<id<<endl;
+      ROSE_ASSERT(false && "FIXME");
+      /*we don't want to keep the base type empty, use int (irrelevant
+	for unparsing*/
+      basetype = new SgTypeInt();
+      //decl = new SgTypedefDeclaration(FI,n,basetype,NULL,NULL,NULL);
+    }
+    decl = createTypedefDeclaration(FI,
+        new PrologCompTerm("typedef_declaration", 4,
+			   new PrologAtom("null"),
+			   new PrologCompTerm("typedef_annotation", 3,
+					      annot->at(0), annot->at(1), 
+					      new PrologAtom("null"),
+					      new PrologAtom("null")),
+			   new PrologAtom("null"),
+			   new PrologAtom("null")));
     ROSE_ASSERT(decl != NULL);
     tpe = SgTypedefType::createType(decl);
+    declarationStatementsWithoutScope.push_back(decl);
   }
   ROSE_ASSERT(tpe != NULL);
 	
@@ -1330,6 +1353,7 @@ PrologToRose::createFile(Sg_File_Info* fi,SgNode* child1,PrologCompTerm*) {
   classDefinitions.clear();
   typeMap.clear();
   declarationMap.clear();
+  globalDecls = NULL;
   return file;
 }
 
@@ -2379,7 +2403,7 @@ PrologToRose::createClassDeclaration(Sg_File_Info* fi,SgNode* child1 ,PrologComp
     class_def->set_declaration(d);
     createDummyNondefDecl(d, FI, class_name, e_class_type, (SgClassType*)NULL);
     
-    cerr<<"XX1>>>"<<type_s->getRepresentation()<<endl<<endl;
+    //cerr<<"XX1>>>"<<type_s->getRepresentation()<<endl<<endl;
     declarationMap[type_s->getRepresentation()] = d;
   } else {
     d->setForward();
@@ -2506,9 +2530,6 @@ PrologToRose::createClassType(PrologTerm* p) {
   d->set_forward(true);
   ct = SgClassType::createType(d);
   ROSE_ASSERT(ct != NULL);
-  d->set_parent(ct);
-
-  ROSE_ASSERT(ct != NULL);
   return ct;
 }
 
@@ -2627,7 +2648,7 @@ PrologToRose::createTypedefDeclaration(Sg_File_Info* fi, PrologCompTerm* t) {
       id = dynamic_cast<PrologCompTerm*>(ct->at(1))->at(2)->getRepresentation();
       //id = ct->at(1)->getRepresentation();
     else id = ct->getRepresentation();
-    cerr<<"TDDECKL>>>>"<<id<<endl;
+    //cerr<<"TDDECKL>>>>"<<id<<endl;
     // Try to look it up
     if (!lookupDecl(&decl, id, false)) {
       // Create it otherwise
@@ -2645,11 +2666,15 @@ PrologToRose::createTypedefDeclaration(Sg_File_Info* fi, PrologCompTerm* t) {
   /*create typedef declaration*/
   SgSymbol* smb = NULL;
   SgTypedefDeclaration* d = new SgTypedefDeclaration(fi,n,tpe,NULL,decl);
+  SgTypedefType* tdtpe = SgTypedefType::createType(d);
+  string tid = "typedef_type("+annot->at(0)->getRepresentation()+", "
+    +annot->at(1)->getRepresentation()+")";
+  typeMap[tid] = tdtpe;
   ROSE_ASSERT(d != NULL);
   /* if there is a declaration, set flag and make sure it is set*/
   if(decl != NULL) {
     d->set_typedefBaseTypeContainsDefiningDeclaration(true);
-    createDummyNondefDecl(d, FI, n, tpe, (SgTypedefType*)NULL);
+    createDummyNondefDecl(d, FI, n, tpe, tdtpe);
   } else {
     d->setForward();
   }
@@ -3242,7 +3267,7 @@ PrologToRose::createFunctionRefExp(Sg_File_Info* fi, PrologCompTerm* ct) {
 
   SgFunctionSymbol* sym;
   string id = makeFunctionID(*s, annot->at(1)->getRepresentation());
-  SgFunctionDeclaration* decl;
+  SgFunctionDeclaration* decl = NULL;
   if (lookupDecl(&decl, id)) {
     /* get the real symbol */
     sym = new SgFunctionSymbol(decl);

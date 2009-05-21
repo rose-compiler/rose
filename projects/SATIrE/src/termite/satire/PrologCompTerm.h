@@ -100,6 +100,19 @@ public:
   PrologCompTerm(term_t t) : PrologTerm(t) {
   };
 
+  PrologCompTerm(std::string name, size_t n, ...) {
+    // FIXME.. this should be done directly!!
+    term = PL_new_term_ref();
+    PL_put_atom_chars(term, name.c_str());
+    if(n > 0) {
+      va_list params;
+      va_start(params, n);
+      for (size_t i=0; i < n; i++)
+        addSubterm(va_arg(params, PrologTerm *));
+      va_end(params);
+    }
+  }
+
   /// Creates a compound term with the given name. no subterms added yet.
   PrologCompTerm(std::string functor) {
     term = PL_new_term_ref();

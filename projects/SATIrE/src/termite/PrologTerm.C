@@ -4,6 +4,25 @@ using namespace std;
 
 #if HAVE_SWI_PROLOG
 
+
+// true if the pattern can be unified with the term
+bool PrologTerm::matches(std::string pattern) {
+  fid_t fid = PL_open_foreign_frame();
+  // FIXME: cache predicate
+  term_t a0 = PL_new_term_refs(2);
+  assert(PL_unify(a0, term));
+  PL_put_variable(a0+1);
+  PL_chars_to_term(pattern.c_str(), a0);
+  PrologTerm t(a0);
+  //cerr<<t.getRepresentation()<<endl;
+  //cerr<<getRepresentation()<<endl;
+  bool b = PL_call_predicate(NULL, PL_Q_NORMAL,
+			     PL_predicate("=@=", 2, ""), a0);
+  //cerr<<b<<endl;
+  PL_discard_foreign_frame(fid);
+  return b;
+}
+
 // Create a new PrologTerm from a real Prolog Atom
 PrologTerm *PrologTerm::wrap_PL_Term(term_t t)
 {

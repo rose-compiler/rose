@@ -7,7 +7,9 @@ Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
 #include <satire_rose.h>
 #include "termite.h"
 #include "RoseEnums.h"
+#include "RoseToTerm.h"
 #include <iostream>
+#include <deque>
 #include <string>
 #include <map>
 #include <vector>
@@ -28,12 +30,14 @@ public:
 private:
   /* enum <-> atom conversion */
   RoseEnums re;
+  
   /* fixups */
   std::vector<SgDeclarationStatement*> declarationStatementsWithoutScope;
   std::vector<SgLabelStatement*> labelStatementsWithoutScope;
   std::multimap<std::string,SgGotoStatement*> gotoStatementsWithoutLabel;
   std::vector<SgClassDefinition*> classDefinitions;
   /* our own little symbol tables */
+  std::deque<PrologTerm*>* globalDecls;
   std::map<std::string,SgType*> typeMap;
   std::map<std::string,SgDeclarationStatement*> declarationMap;
   std::map<std::string,SgInitializedName*> initializedNameMap;
@@ -212,7 +216,6 @@ public:
   {   
     if (typeMap.find(id) != typeMap.end()) {
       *type = dynamic_cast<TypeType*>(typeMap[id]);
-      std::cerr<<typeMap[id]->class_name()<<std::endl;
       ROSE_ASSERT(*type != NULL);
     } else if (fail) {
       std::cerr<<"**ERROR: Symbol lookup failed: ("
@@ -221,6 +224,19 @@ public:
       *type = NULL;
     }
     return *type;
+  }
+
+  template< class DeclType >
+  DeclType* lookaheadDecl(DeclType** decl, std::string pattern) 
+  {
+    if (globalDecls) {
+      for (std::deque<PrologTerm*>::iterator it = globalDecls->begin();
+	   it != globalDecls->end(); ++it) {
+	if ((*it)->matches(pattern)) {
+	  return (DeclType*)toRose(*it);
+	}
+      }
+    }
   }
 
 };

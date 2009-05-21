@@ -114,7 +114,7 @@ class PrologList : public PrologTerm {
     int l = 0;
     fid_t fid = PL_open_foreign_frame();
     // FIXME: cache predicate
-    term_t a0 = PL_new_term_refs(2);
+    term_t a0 = PL_new_term_refs(3);
     assert(PL_unify(a0, term));
     PL_put_variable(a0+2);
     qid_t qid = PL_open_query(NULL, PL_Q_NORMAL, 
