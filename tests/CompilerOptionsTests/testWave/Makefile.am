@@ -1,6 +1,10 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-bin_PROGRAMS = testWave testWave2 
+bin_PROGRAMS = testWave testWave2 testRewrapping 
+
+testRewrapping_SOURCES = \
+          testRewrapping.C	
+testRewrapping_LDADD = $(ROSE_LIBS)
 
 testWave_SOURCES = \
 	testWave.C
@@ -25,7 +29,9 @@ TESTCODES_REQUIRED_TO_PASS = \
      test8.c \
      test9.c \
      test10.c \
-     test11.C
+     test11.C \
+     testR1.C
+
 
 TESTCODE_CURRENTLY_FAILING = 
 
@@ -53,6 +59,14 @@ $(TEST_Objects2): testWave2 $(srcdir)/$(@:.o=.C)
 	./testWave2 -c $(srcdir)/out/$(@:.o=.c) -o $(@:.c=.o)  -DHYPRE_SEQUENTIAL -DHYPRE_TIMING -DHYPRE_USING_OPENMP
 	if [ "`diff $(srcdir)/out/$(@:.o=.c).test2.out $(@:.o=.c).test2.out | wc -l`" != "0" ]; then exit 1; fi
 	rm -f $(@:.c=.o)
+
+$(TEST_Rewrap): testRewrapping $(srcdir)/$(@:.o=.C)
+	rm -f $(@:.o=.c).out
+	./testWave -c $(srcdir)/out/$(@:.o=.c) -o $(@:.c=.o)
+	if [ "`diff $(srcdir)/out/$(@:.o=.c).out $(@:.o=.c).out | wc -l`" != "0" ]; then exit 1; fi
+	if [ "`diff $(srcdir)/out/rose_$(@:.o=.c) rose_$(@:.o=.c) | wc -l`" != "0" ]; then exit 1; fi
+	rm -f $(@:.c=.o)
+
 
 test:
 	@echo "************************************************************************************************"

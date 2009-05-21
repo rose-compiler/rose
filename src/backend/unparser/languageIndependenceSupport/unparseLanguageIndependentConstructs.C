@@ -438,7 +438,13 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
           return;
         }
 
+
+     if( unparseLineReplacement(stmt,info) )
+       return;
+
   // Markus Kowarschik: This is the new code to unparse directives before the current statement
+     //AS(05/20/09): LineReplacement should replace a statement with a line. Override unparsing
+     //of subtree.
      unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::before);
 
      outputCompilerGeneratedStatements(info);
@@ -729,6 +735,9 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
           printColorCodes ( expr, true, stateVector );
         }
 #endif
+
+     if( unparseLineReplacement(expr,info) )
+       return;
 
   // DQ (7/19/2008): This is the new code to unparse directives before the current expression
      unparseAttachedPreprocessingInfo(expr, info, PreprocessingInfo::before);
@@ -1046,6 +1055,91 @@ UnparseLanguageIndependentConstructs::num_stmt_in_block(SgBasicBlock* basic_stmt
      return num_stmt;
    }
 
+bool UnparseLanguageIndependentConstructs::unparseLineReplacement(
+   SgLocatedNode* stmt,
+   SgUnparse_Info& info
+    )
+{
+  int replacedLines = 0;
+  // Get atached preprocessing info
+  AttachedPreprocessingInfoType *prepInfoPtr= stmt->getAttachedPreprocessingInfo();
+  if (prepInfoPtr == NULL)
+  {
+    // There's no preprocessing info attached to the current statement
+    // printf ("No comments or CPP directives associated with this statement ... \n");
+    return replacedLines;
+  }
+
+  // If we are skiping BOTH comments and CPP directives then there is nothing to do
+  if ( info.SkipComments() && info.SkipCPPDirectives() )
+  {
+    // There's no preprocessing info attached to the current statement
+    // printf ("Skipping output or comments and CPP directives \n");
+    return replacedLines;
+  }
+
+#if 0
+  info.display("In Unparse_ExprStmt::unparseAttachedPreprocessingInfo()");
+#endif
+
+  // Traverse the container of PreprocessingInfo objects
+  AttachedPreprocessingInfoType::iterator i;
+  for(i = prepInfoPtr->begin(); i != prepInfoPtr->end(); ++i)
+  {
+    // i ist a pointer to the current prepInfo object, print current preprocessing info
+    // Assert that i points to a valid preprocssingInfo object
+    ROSE_ASSERT ((*i) != NULL);
+    ROSE_ASSERT ((*i)->getTypeOfDirective()  != PreprocessingInfo::CpreprocessorUnknownDeclaration);
+    ROSE_ASSERT ((*i)->getRelativePosition() == PreprocessingInfo::before || 
+        (*i)->getRelativePosition() == PreprocessingInfo::after  ||
+        (*i)->getRelativePosition() == PreprocessingInfo::inside);
+
+#if 0
+    printf ("Stored comment: (*i)->getRelativePosition() = %s (*i)->getString() = %s \n",
+        ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
+        (*i)->getString().c_str());
+#endif
+
+    // Check and see if the info object would indicate that the statement would 
+    // be printed, if not then don't print the comments associated with it.
+    // These might have to be handled on a case by case basis.
+    // bool infoSaysGoAhead = !info.SkipDefinition();
+    bool infoSaysGoAhead = !info.SkipEnumDefinition()  &&
+      !info.SkipClassDefinition() &&
+      !info.SkipFunctionDefinition();
+
+    // DQ (7/19/2008): Allow expressions to have there associated comments unparsed.
+    infoSaysGoAhead = (infoSaysGoAhead == true) || (isSgExpression(stmt) != NULL);
+
+#if 0
+    printf ("(*i)->getRelativePosition() == whereToUnparse (matches == %s) \n",(*i)->getRelativePosition() == whereToUnparse ? "true" : "false");
+    printf ("unp->opt.get_unparse_includes_opt() == %s \n",(unp->opt.get_unparse_includes_opt() == true) ? "true" : "false");
+#endif
+
+
+    switch ( (*i)->getTypeOfDirective() )
+    {
+      case PreprocessingInfo::LineReplacement:
+
+        if(isSgExpression(stmt) == NULL ) //Do this when line replacement matches a whole statement
+          unp->cur.format(stmt, info, FORMAT_BEFORE_DIRECTIVE);
+
+        curprint ( (*i)->getString());
+  //      unp->cur.format(stmt, info, FORMAT_AFTER_DIRECTIVE);
+
+        replacedLines++;
+        break;
+      default:
+        break;
+    }
+
+  }
+
+  //there should only be one linereplacement directive for a statement
+  ROSE_ASSERT(replacedLines <= 1);
+  return replacedLines;
+};
+
 
 void
 UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
@@ -1293,9 +1387,6 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                          break;
 
                     case PreprocessingInfo::LineReplacement:
-                      // AS(12/07/05) Do nothing. This is a helper case in order to allow unparsing of the
-                      // unexpanded macro calls instead of the exapnded macro calls found in the AST. This can
-                      // be considered as part of a general mechanism to replace lines in the process of unparsing.
                          break;
 
                     case PreprocessingInfo::CpreprocessorIdentDeclaration:

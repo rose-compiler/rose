@@ -101,6 +101,8 @@ class UnparseLanguageIndependentConstructs
       // virtual void unparseAttachedPreprocessingInfo(SgStatement* stmt, SgUnparse_Info& info, PreprocessingInfo::RelativePositionType whereToUnparse);
       //! This function unparses any attached comments or CPP directives.
           virtual void unparseAttachedPreprocessingInfo(SgLocatedNode* stmt, SgUnparse_Info& info, PreprocessingInfo::RelativePositionType whereToUnparse);
+          virtual bool unparseLineReplacement(SgLocatedNode* stmt, SgUnparse_Info& info);
+
 #endif
   
           bool RemoveArgs(SgExpression* expr);
