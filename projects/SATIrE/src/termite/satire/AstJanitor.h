@@ -60,7 +60,7 @@ public:
 	  ) {
 	ROSE_ASSERT(scope != NULL);
 	decl->set_scope(scope);
-      } 
+      }
       PrologToRose::addSymbol(scope, decl);
     }
 

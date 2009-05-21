@@ -193,11 +193,12 @@ public:
   }
 
   template< class DeclType >
-  DeclType* lookupDecl(DeclType** decl, std::string id) 
+  DeclType* lookupDecl(DeclType** decl, std::string id, bool fail=true) 
   {
-    if (declarationMap.find(id) != declarationMap.end())
-      *decl = (DeclType*)declarationMap[id];
-    else {
+    if (declarationMap.find(id) != declarationMap.end()) {
+      *decl = dynamic_cast<DeclType*>(declarationMap[id]);
+      ROSE_ASSERT(*decl != NULL);
+    } else if (fail) {
       std::cerr<<"**ERROR: Symbol lookup failed: ("
 	/*<<decl->class_name()<<"*)*/<<id<<std::endl;
       ROSE_ASSERT(false);
@@ -207,11 +208,13 @@ public:
   }
 
   template< class TypeType >
-  TypeType* lookupType(TypeType** type, std::string id) 
+  TypeType* lookupType(TypeType** type, std::string id, bool fail=true) 
   {   
-    if (typeMap.find(id) != typeMap.end())
-      *type = (TypeType*)typeMap[id];
-    else {
+    if (typeMap.find(id) != typeMap.end()) {
+      *type = dynamic_cast<TypeType*>(typeMap[id]);
+      std::cerr<<typeMap[id]->class_name()<<std::endl;
+      ROSE_ASSERT(*type != NULL);
+    } else if (fail) {
       std::cerr<<"**ERROR: Symbol lookup failed: ("
 	/*<<type->class_name()<<"*)*/<<id<<std::endl;
       ROSE_ASSERT(false);

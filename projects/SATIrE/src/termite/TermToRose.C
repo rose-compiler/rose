@@ -713,11 +713,11 @@ PrologToRose::createTypedefType(PrologTerm* t) {
   SgTypedefDeclaration* decl;
   SgTypedefType* tpe;
   string id = t->getRepresentation();
-  if (lookupDecl(&decl, id)) {
+  if (lookupDecl(&decl, id, false)) {
     tpe = new SgTypedefType(decl);
   } else {
-    cerr<<id<<endl;
-    ROSE_ASSERT(false && "FIXME");
+    //cerr<<id<<endl;
+    //ROSE_ASSERT(false && "FIXME");
     /*we don't want to keep the base type empty, use int (irrelevant
       for unparsing*/
     SgTypeInt* i = new SgTypeInt();
@@ -736,66 +736,69 @@ PrologToRose::createTypedefType(PrologTerm* t) {
  */
 SgType* 
 PrologToRose::createType(PrologTerm* t) {
+  SgType* type = NULL;
+  string id = t->getRepresentation();
+  if (lookupType(&type, id, false)) {
+    return type;
+  }
+
   if (PrologCompTerm* c = isPrologCompTerm(t)) {
     string tname = t->getName();
     if (tname == "enum_type") {
-      return createEnumType(t);
+      type = createEnumType(t);
     } else if (tname == "pointer_type") {
-      return createPointerType(t);
+      type = createPointerType(t);
     } else if (tname == "reference_type") {
-      return createReferenceType(t);
+      type = createReferenceType(t);
     } else if (tname == "class_type") {
-      return createClassType(t);
+      type = createClassType(t);
     } else if (tname == "function_type") {
-      return createFunctionType(t);
+      type = createFunctionType(t);
     } else if (tname == "member_function_type") {
-      return createMemberFunctionType(t);
+      type = createMemberFunctionType(t);
     } else if (tname == "array_type") {
-      return createArrayType(t);
+      type = createArrayType(t);
     } else if (tname == "modifier_type") {
-      return createModifierType(t);
+      type = createModifierType(t);
     } else if (tname == "typedef_type") {
-      return createTypedefType(t);
-    }
-    /*unknown type*/
-    ROSE_ASSERT(false);
+      type = createTypedefType(t);
+    } else ROSE_ASSERT(false && "Unknown type enountered");
   }
   if (PrologAtom* a = dynamic_cast<PrologAtom*>(t)) {
     string tname = a->getName();
     if (tname == "null") {
       warn_msg("warning: no type created");
-      return NULL;
-    }
-    if (tname==SG_PREFIX "type_bool") return new SgTypeBool();
-    else if (tname==SG_PREFIX "type_char") return new SgTypeChar();
-    else if (tname==SG_PREFIX "type_default") return new SgTypeDefault();
-    else if (tname==SG_PREFIX "type_double") return new SgTypeDouble();
-    else if (tname==SG_PREFIX "type_float") return new SgTypeFloat();
-    else if (tname==SG_PREFIX "type_global_void") return new SgTypeGlobalVoid(); 
-    else if (tname==SG_PREFIX "type_ellipse") {return new SgTypeEllipse();}
-    else if (tname==SG_PREFIX "type_int") {return new SgTypeInt();}
-    else if (tname==SG_PREFIX "type_long") return new SgTypeLong();
-    else if (tname==SG_PREFIX "type_long_double") return new SgTypeLongDouble();
-    else if (tname==SG_PREFIX "type_long_long") return new SgTypeLongLong();
-    else if (tname==SG_PREFIX "type_short") return new SgTypeShort();
-    else if (tname==SG_PREFIX "type_signed_char") return new SgTypeSignedChar();
-    else if (tname==SG_PREFIX "type_signed_int") return new SgTypeSignedInt();
-    else if (tname==SG_PREFIX "type_signed_long") return new SgTypeSignedLong();
-    else if (tname==SG_PREFIX "type_signed_short") return new SgTypeSignedShort();
-    else if (tname==SG_PREFIX "type_string") return new SgTypeString();
-    else if (tname==SG_PREFIX "type_unknown") return new SgTypeUnknown();
-    else if (tname==SG_PREFIX "type_unsigned_char") return new SgTypeUnsignedChar();
-    else if (tname==SG_PREFIX "type_unsigned_int") return new SgTypeUnsignedInt();
-    else if (tname==SG_PREFIX "type_unsigned_long") return new SgTypeUnsignedLong();
-    else if (tname==SG_PREFIX "type_unsigned_long_long") return new SgTypeUnsignedLongLong();
-    else if (tname==SG_PREFIX "type_unsigned_short") return new SgTypeUnsignedShort(); 
-    else if (tname==SG_PREFIX "type_void") return new SgTypeVoid();
-    else if (tname==SG_PREFIX "type_wchar") return new SgTypeWchar();
-
+      type = NULL;
+    } else
+    if (tname==SG_PREFIX "type_bool") type = new SgTypeBool();
+    else if (tname==SG_PREFIX "type_char") type = new SgTypeChar();
+    else if (tname==SG_PREFIX "type_default") type = new SgTypeDefault();
+    else if (tname==SG_PREFIX "type_double") type = new SgTypeDouble();
+    else if (tname==SG_PREFIX "type_float") type = new SgTypeFloat();
+    else if (tname==SG_PREFIX "type_global_void") type = new SgTypeGlobalVoid(); 
+    else if (tname==SG_PREFIX "type_ellipse") {type = new SgTypeEllipse();}
+    else if (tname==SG_PREFIX "type_int") {type = new SgTypeInt();}
+    else if (tname==SG_PREFIX "type_long") type = new SgTypeLong();
+    else if (tname==SG_PREFIX "type_long_double") type = new SgTypeLongDouble();
+    else if (tname==SG_PREFIX "type_long_long") type = new SgTypeLongLong();
+    else if (tname==SG_PREFIX "type_short") type = new SgTypeShort();
+    else if (tname==SG_PREFIX "type_signed_char") type = new SgTypeSignedChar();
+    else if (tname==SG_PREFIX "type_signed_int") type = new SgTypeSignedInt();
+    else if (tname==SG_PREFIX "type_signed_long") type = new SgTypeSignedLong();
+    else if (tname==SG_PREFIX "type_signed_short") type = new SgTypeSignedShort();
+    else if (tname==SG_PREFIX "type_string") type = new SgTypeString();
+    else if (tname==SG_PREFIX "type_unknown") type = new SgTypeUnknown();
+    else if (tname==SG_PREFIX "type_unsigned_char") type = new SgTypeUnsignedChar();
+    else if (tname==SG_PREFIX "type_unsigned_int") type = new SgTypeUnsignedInt();
+    else if (tname==SG_PREFIX "type_unsigned_long") type = new SgTypeUnsignedLong();
+    else if (tname==SG_PREFIX "type_unsigned_long_long") type = new SgTypeUnsignedLongLong();
+    else if (tname==SG_PREFIX "type_unsigned_short") type = new SgTypeUnsignedShort(); 
+    else if (tname==SG_PREFIX "type_void") type = new SgTypeVoid();
+    else if (tname==SG_PREFIX "type_wchar") type = new SgTypeWchar();
+    else ROSE_ASSERT(false && "Unknown type enountered");
   }
-  /* should never happen*/
-  ROSE_ASSERT(false);
-  return (SgType*) 0;
+  typeMap[id] = type;
+  return type;
 	
 }
 
@@ -2339,6 +2342,7 @@ PrologToRose::createClassDefinition(Sg_File_Info* fi, deque<SgNode*>* succs,Prol
  */
 SgClassDeclaration*
 PrologToRose::createClassDeclaration(Sg_File_Info* fi,SgNode* child1 ,PrologCompTerm* t) {
+  //cerr<<t->getRepresentation()<<endl;
   /* retrieve annotation*/
   PrologCompTerm* annot = retrieveAnnotation(t);
   ROSE_ASSERT(annot != NULL);
@@ -2348,32 +2352,41 @@ PrologToRose::createClassDeclaration(Sg_File_Info* fi,SgNode* child1 ,PrologComp
   PrologAtom* class_name_s = dynamic_cast<PrologAtom*>(annot->at(0));
   ROSE_ASSERT(class_name_s != NULL);
   /* get the class_type-enum (struct,class) -- not the type */
-  PrologAtom* class_type = dynamic_cast<PrologAtom*>(annot->at(1));
-  ROSE_ASSERT(class_type != NULL);
+  PrologAtom* p_class_type = dynamic_cast<PrologAtom*>(annot->at(1));
+  ROSE_ASSERT(p_class_type != NULL);
   /* get the type*/
   PrologCompTerm* type_s = dynamic_cast<PrologCompTerm*>(annot->at(2));
   ROSE_ASSERT(type_s != NULL);
   SgClassDeclaration::class_types e_class_type = 
-    (SgClassDeclaration::class_types)createEnum(class_type, re.class_type);
+    (SgClassDeclaration::class_types)createEnum(p_class_type, re.class_type);
   //SgClassType* sg_class_type = createClassType(type_s);
   SgName class_name = class_name_s->getName();
   SgClassDeclaration* d = 
     new SgClassDeclaration(fi, class_name, e_class_type, NULL/*sg_class_type */,
 			   class_def);
+
+  // Set the type
   ROSE_ASSERT(d != NULL);
-  SgClassType* sg_class_type = SgClassType::createType(d);
+  SgClassType* sg_class_type = NULL;
+  if (!lookupType(&sg_class_type, type_s->getRepresentation(), false)) {
+    sg_class_type = SgClassType::createType(d);
+    typeMap[type_s->getRepresentation()] = sg_class_type;
+  }
   d->set_type(sg_class_type);
-  typeMap[type_s->getRepresentation()] = sg_class_type;
 
   /* set declaration or the forward flag*/
   if(class_def != NULL) {
     class_def->set_declaration(d);
     createDummyNondefDecl(d, FI, class_name, e_class_type, (SgClassType*)NULL);
     
-    //cerr<<annot->getRepresentation()<<endl<<endl;
-    declarationMap[annot->getRepresentation()] = d;
+    cerr<<"XX1>>>"<<type_s->getRepresentation()<<endl<<endl;
+    declarationMap[type_s->getRepresentation()] = d;
   } else {
     d->setForward();
+
+    SgClassDeclaration* ndd = d;
+    lookupDecl(&ndd, type_s->getRepresentation(), false);
+    d->set_firstNondefiningDeclaration(ndd);
   }
 
   return d;
@@ -2436,11 +2449,13 @@ PrologToRose::fakeNamespaceScope(string s, int unnamed, SgDeclarationStatement* 
 /** create dummy class declaration from name*/
 SgClassDeclaration*
 PrologToRose::createDummyClassDeclaration(string s,int c_type) {
-  ROSE_ASSERT(false && "deprecated function");
+  //ROSE_ASSERT(false && "deprecated function");
 
-  Sg_File_Info* fi = Sg_File_Info::generateDefaultFileInfo();
+  //Sg_File_Info* fi = Sg_File_Info::generateDefaultFileInfo();
   SgName class_name = s;
-  SgClassDeclaration* d = new SgClassDeclaration(fi,class_name,(SgClassDeclaration::class_types)c_type,NULL,NULL);
+  SgClassDeclaration* d = 
+    new SgClassDeclaration(FI,class_name,
+			   (SgClassDeclaration::class_types)c_type,NULL,NULL);
   ROSE_ASSERT(d != NULL);
   declarationStatementsWithoutScope.push_back(d);
   return d;
@@ -2465,33 +2480,34 @@ PrologToRose::createDummyMemberFunctionDeclaration(string s,int c_type) {
 SgClassType*
 PrologToRose::createClassType(PrologTerm* p) {
   SgClassType* ct = NULL;
-  if (!lookupType(&ct, p->getRepresentation())) {
-    // /* must be a composite term*/
-    // PrologCompTerm* t = isPrologCompTerm(p);
-    // ROSE_ASSERT(t != NULL);
-    // /* first term is class name*/
-    // string s = *toStringP(t->at(0));
-    // /* create dummy declaration*/
-    // SgClassDeclaration* d = 
-    //   createDummyClassDeclaration(s, createEnum(t->at(1), re.class_type));
-    // ROSE_ASSERT(d != NULL);
-    // string scopename = *(toStringP(t->at(2)));
-    // if(scopename != "::") {
-    //   fakeNamespaceScope(scopename,0,d);
-    // } else {
-    //   declarationStatementsWithoutScope.push_back(d);
-    // }
-    // /* the unparser wants this*/
-    // /*SgClassDefinition* classdef = new SgClassDefinition();
-    //   d->set_definition(classdef);*/
-    // d->set_definingDeclaration(d);
-	
-    // d->set_forward(true);
-    // ct = SgClassType::createType(d);
-    // ROSE_ASSERT(ct != NULL);
-    // d->set_parent(ct);
-    ct = NULL;
+  /* must be a composite term*/
+  PrologCompTerm* t = isPrologCompTerm(p);
+  ROSE_ASSERT(t != NULL);
+  /* first term is class name*/
+  string s = *toStringP(t->at(0));
+  /* create dummy declaration*/
+  SgClassDeclaration* d = 
+    createDummyClassDeclaration(s, createEnum(t->at(1), re.class_type));
+  //cerr<<d<<" - "<<t->getRepresentation()<<endl;
+  ROSE_ASSERT(d != NULL);
+  string scopename = *(toStringP(t->at(2)));
+  if(scopename != "::") {
+    fakeNamespaceScope(scopename,0,d);
+  } else {
+    declarationStatementsWithoutScope.push_back(d);
   }
+  /* the unparser wants this*/
+  /*SgClassDefinition* classdef = new SgClassDefinition();
+    d->set_definition(classdef);*/
+  d->set_definingDeclaration(NULL);
+  d->set_firstNondefiningDeclaration(d);
+  declarationMap[t->getRepresentation()] = d;
+	
+  d->set_forward(true);
+  ct = SgClassType::createType(d);
+  ROSE_ASSERT(ct != NULL);
+  d->set_parent(ct);
+
   ROSE_ASSERT(ct != NULL);
   return ct;
 }
@@ -2591,15 +2607,14 @@ PrologToRose::createEnumDeclaration(Sg_File_Info* fi, deque<SgNode*>* succs, Pro
  */
 SgTypedefDeclaration*
 PrologToRose::createTypedefDeclaration(Sg_File_Info* fi, PrologCompTerm* t) {
+  ROSE_ASSERT(t != NULL);
   debug("typedef declaration");
   /*get annotation*/
   PrologCompTerm* annot = retrieveAnnotation(t);
   ROSE_ASSERT(annot != NULL);
   /*create name*/
   SgName n = *(toStringP(annot->at(0)));
-  /*create nested type*/
-  SgType* tpe = createType(annot->at(1));
-  ROSE_ASSERT(t != NULL);
+  SgType* tpe = NULL;
   /*create definition, if there is one*/
   SgDeclarationStatement* decl = NULL;
   /* condition is true when a declaration is at this position*/
@@ -2608,17 +2623,26 @@ PrologToRose::createTypedefDeclaration(Sg_File_Info* fi, PrologCompTerm* t) {
     debug("...with declaration");
 
     string id;
-    if (ct->getName() == "class_declaration")
-     id = ct->at(1)->getRepresentation();
+    if (ct->getName() == "class_declaration") 
+      id = dynamic_cast<PrologCompTerm*>(ct->at(1))->at(2)->getRepresentation();
+      //id = ct->at(1)->getRepresentation();
     else id = ct->getRepresentation();
-    if (!lookupDecl(&decl, id)) {
+    cerr<<"TDDECKL>>>>"<<id<<endl;
+    // Try to look it up
+    if (!lookupDecl(&decl, id, false)) {
+      // Create it otherwise
       decl = isSgDeclarationStatement(toRose(annot->at(2)));
     }
+
+
     ROSE_ASSERT(decl != NULL);
     //note that the unparser seems to skip it!
   }
+
+  /*create nested type*/
+  tpe = createType(annot->at(1));
+
   /*create typedef declaration*/
-  SgTypedefType* tdt = NULL;
   SgSymbol* smb = NULL;
   SgTypedefDeclaration* d = new SgTypedefDeclaration(fi,n,tpe,NULL,decl);
   ROSE_ASSERT(d != NULL);
@@ -2629,6 +2653,11 @@ PrologToRose::createTypedefDeclaration(Sg_File_Info* fi, PrologCompTerm* t) {
   } else {
     d->setForward();
   }
+
+  // Fixup the decl in the type if necessary
+  //SgNamedType* nt = isSgNamedType(tpe);
+  //if (nt && nt->get_declaration() == NULL) 
+  //  nt->set_declaration(d);
 
   // Symbol table
   string id = "typedef_type("+annot->at(0)->getRepresentation()+", "
