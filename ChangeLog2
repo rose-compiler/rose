@@ -1,3 +1,10 @@
+2009-05-21 00:51  liao6
+
+	* [r5855] /trunk/ROSE/scripts/roseFreshTest,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Leo-head.sh,
+	  /trunk/ROSE/scripts/testOnExternalBenchmarks.sh: minor fix to
+	  scripts
+
 2009-05-20 23:45  panas2
 
 	* [r5852] /trunk/ROSE/projects/RTED/DataStructures.h,
