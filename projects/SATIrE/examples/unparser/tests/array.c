@@ -1,0 +1,1 @@
+int meinarray[3];
