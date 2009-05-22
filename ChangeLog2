@@ -1,3 +1,59 @@
+2009-05-22 00:51  liao6
+
+	* [r5869] /trunk/ROSE/projects/autoTuning/Makefile.am,
+	  /trunk/ROSE/projects/autoTuning/autotuning_lib.c,
+	  /trunk/ROSE/projects/autoTuning/uthash.h,
+	  /trunk/ROSE/scripts/testOnExternalBenchmarks.sh,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C,
+	  /trunk/ROSE/src/midend/astOutlining/Insert.cc,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/LogicalPath.cpp,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/Makefile-fail.inc,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_21.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_22.C,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/polygon.cpp,
+	  /trunk/ROSE/tests/roseTests/astOutliningTests/triangle.cpp: Misc
+	  fixes.
+	  
+	  * outliner: fixed the position to insert a function prototype:
+	  insert it to right before the earliest class with a friend
+	  declaration to the outlined function. avoid conflict to extern
+	  "C"
+	  * SgFunctionCallExp::getAssociatedFunctionSymbol() : allow no
+	  function symbol is found for function call via a function pointer
+	  * generateCopiesOfDependentDeclarations(): patch up
+	  endOfConstruct for SgFunctionParameterList
+	  * made sortSgNodeListBasedOnAppearanceOrderInSource() a
+	  SageInterface function
+	  * testOnExternalBenchmarks.sh: add passing C++ SPEC benchmarks
+	  into regression test set
+	  * added a few more test code extracted from failing SPEC
+	  benchmarks
+	  * added a hash table to experiment buffering/lookup dlopen()
+	  results.
+
+2009-05-21 21:26  saebjornsen1
+
+	* [r5868]
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/testRewrapping.C:
+	  Added macro rewrapper
+
+2009-05-21 21:24  saebjornsen1
+
+	* [r5867]
+	  /trunk/ROSE/src/backend/unparser/languageIndependenceSupport/unparseLanguageIndependentConstructs.C,
+	  /trunk/ROSE/src/backend/unparser/languageIndependenceSupport/unparseLanguageIndependentConstructs.h,
+	  /trunk/ROSE/src/frontend/SageIII/astTokenStream/Makefile.am,
+	  /trunk/ROSE/src/frontend/SageIII/astTokenStream/unparseMacro.C,
+	  /trunk/ROSE/src/frontend/SageIII/astTokenStream/unparseMacro.h,
+	  /trunk/ROSE/src/frontend/SageIII/attachPreprocessingInfoTraversal.C,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/Makefile.am,
+	  /trunk/ROSE/tests/CompilerOptionsTests/testWave/testR1.C: Added
+	  macro rewrapper
+
 2009-05-21 00:51  liao6
 
 	* [r5855] /trunk/ROSE/scripts/roseFreshTest,
