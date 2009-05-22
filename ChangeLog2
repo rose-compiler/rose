@@ -1,3 +1,19 @@
+2009-05-22 17:43  heller9
+
+	* [r5881] /trunk/ROSE/scripts/Makefile.am: Added directory
+	  nmiBuildAndTestFarm to distributed scripts
+	  
+	  fixes make error
+
+2009-05-22 16:10  heller9
+
+	* [r5880] /trunk/ROSE/scripts/nmi,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/README: renamed
+	  scripts/nmi directory to be more descriptive
+	  
+	  added a README with more explanation
+
 2009-05-22 00:51  liao6
 
 	* [r5869] /trunk/ROSE/projects/autoTuning/Makefile.am,
