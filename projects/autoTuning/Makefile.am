@@ -18,11 +18,12 @@ LDADD = $(ROSEHPCT_DEP_LIBS)
 
 # this lib contains supporting functions for dlopen(), checkpointing, etc
 # the transformation will generated calls to them and insert their header.
+AM_CFLAGS=$(CXX_DEBUG)  #we share CXXs debug flags for C compiler 
 lib_LIBRARIES = libautoTuning.a
 libautoTuning_a_SOURCES = autotuning_lib.c
-include_HEADERS = autotuning_lib.h
+include_HEADERS = autotuning_lib.h uthash.h
 
-EXTRA_DIST =  README makefile-external autoTuningSupport.h autotuning_lib.h
+EXTRA_DIST =  README makefile-external autoTuningSupport.h autotuning_lib.h uthash.h
 #--------------------------------------
 if ROSE_BUILD_ROSEHPCT
 

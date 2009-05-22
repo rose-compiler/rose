@@ -7954,15 +7954,18 @@ CollectDependentDeclarationsTraversal::visit(SgNode *astNode)
      if (functionCallExp != NULL)
         {
           declaration = functionCallExp->getAssociatedFunctionDeclaration();
-          ROSE_ASSERT(declaration != NULL);
-          addDeclaration(declaration);
+          //ROSE_ASSERT(declaration != NULL);
+          // We allow a function pointer to have no specific declaration associated. 
+          if (declaration != NULL) 
+            addDeclaration(declaration);
 
        // DQ (3/2/2009): Added support for symbol references to be saved (this can be a SgFunctionSymbol or a SgMemberFunctionSymbol).
           SgSymbol* functionSymbol = functionCallExp->getAssociatedFunctionSymbol();
-          ROSE_ASSERT(functionSymbol != NULL);
+          //ROSE_ASSERT(functionSymbol != NULL);
 
        // printf ("Saving functionSymbol = %p \n",functionSymbol);
-          symbolList.push_back(functionSymbol);
+          if (functionSymbol) 
+            symbolList.push_back(functionSymbol);
         }
 
     // 3) ------------------------------------------------------------------
@@ -8063,8 +8066,8 @@ getDependentDeclarations (SgStatement* stmt, vector<SgDeclarationStatement*> & d
 // Reorder a list of declaration statements based on their appearance order in source files
 // This is essential to insert their copies into a new file in a right order
 // Liao, 5/7/2009 
-static vector<SgDeclarationStatement*>
-sortSgNodeListBasedOnAppearanceOrderInSource(const vector<SgDeclarationStatement*>& nodevec)
+vector<SgDeclarationStatement*> 
+SageInterface::sortSgNodeListBasedOnAppearanceOrderInSource(const vector<SgDeclarationStatement*>& nodevec)
 {
   vector<SgDeclarationStatement*> sortedNode;
 
@@ -8278,6 +8281,12 @@ generateCopiesOfDependentDeclarations (const  vector<SgDeclarationStatement*>& d
 
                SgFunctionDeclaration* copy_functionDeclaration = isSgFunctionDeclaration(copy_node);
                ROSE_ASSERT(copy_functionDeclaration != NULL);
+               //Liao, 5/19/2009
+               //FixupTemplateDeclarations::visit() has this assertion
+               //patch up endOfConstruct: TODO should do this in copy()
+               SgFunctionParameterList * functionParameterList = copy_functionDeclaration->get_parameterList();
+               functionParameterList->set_endOfConstruct(functionParameterList->get_startOfConstruct());
+               ROSE_ASSERT(functionParameterList->get_startOfConstruct()->isSameFile(functionParameterList->get_endOfConstruct()) == true);
 
             // Set the scope to NULL, since it AST copy just preserves the scope to be that of functionDeclaration->get_scope()
             // copy_functionDeclaration->set_scope(NULL);
@@ -9273,6 +9282,9 @@ void SageInterface::dumpInfo(SgNode* node, std::string desc/*=""*/)
     cout<<"\nat file:"<< snode->get_file_info()->get_filename()
     << ":"<<snode->get_file_info()->get_line()<<"-"
     << snode->get_file_info()->get_col();
+    SgFunctionDeclaration * decl = isSgFunctionDeclaration(snode);
+    if (decl)
+      cout<<"\tqualified name="<<decl->get_qualified_name().getString()<<endl;
   }
   cout<<endl;
 }

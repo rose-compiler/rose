@@ -82,7 +82,11 @@ CXX_TESTCODES_REQUIRED_TO_PASS = \
 	moreTest6.cpp \
 	moreTest7.cpp
 
+# triangle.cpp: TODO AST copy does not support class member across files.
+# polygon.cpp: TODO recursively find super classes for a dependent class
 TESTCODE_CURRENTLY_FAILING =  	
+	triangle.cpp \
+	polygon.cpp 
 
 ALL_EXTRA_TESTCODE = \
 $(C_TESTCODES_REQUIRED_TO_PASS) \
@@ -98,7 +102,7 @@ OUTLINE_FLAG= --edg:no_warnings -rose:verbose 0 -rose:outline:parameter_wrapper
 
 PASSING_C_TEST_Objects = $(C_TESTCODES_REQUIRED_TO_PASS:.c=.o)
 PASSING_CXX_TEST_Objects = $(CXX_TESTCODES_REQUIRED_TO_PASS:.cpp=.o)
-PASSING_CXX_SEPARATE_FILE_TEST_Objects = $(CXX_TESTCODES_REQUIRED_TO_PASS:.cpp=.o)
+#PASSING_CXX_SEPARATE_FILE_TEST_Objects = $(CXX_TESTCODES_REQUIRED_TO_PASS:.cpp=.o)
 
 EXTERNAL_PASSING_CXX_TEST_Objects = $(TESTCODES_REQUIRED_TO_PASS:.C=.o)
 
@@ -119,6 +123,8 @@ $(PASSING_CXX_TEST_Objects): %.o: $(srcdir)/%.cpp outline
 	./outline$(EXEEXT) ${OUTLINE_FLAG} -c $<
 	@echo "***************** Testing C++ specific outlining...(to a separate file) *****************"
 	./outline$(EXEEXT) ${OUTLINE_FLAG} -rose:outline:new_file -rose:outline:temp_variable -c $<
+#	@echo "***************** Testing C++ specific outlining...(use dlopen()) *****************"
+#	./outline$(EXEEXT) ${OUTLINE_FLAG} -rose:outline:use_dlopen -c $<
 
 # This rule currently only tests outlining to the original file (not a separate file also).
 $(EXTERNAL_PASSING_CXX_TEST_Objects): %.o: $(top_srcdir)/tests/CompileTests/Cxx_tests/%.C outline

@@ -451,6 +451,10 @@ SgNode* getSgNodeFromAbstractHandleString(const std::string& input_string);
 //! Dump information about a SgNode for debugging
 void dumpInfo(SgNode* node, std::string desc="");
 
+//! Reorder a list of declaration statements based on their appearance order in source files
+std::vector<SgDeclarationStatement*>
+sortSgNodeListBasedOnAppearanceOrderInSource(const std::vector<SgDeclarationStatement*>& nodevec);
+
 //@}
 
 //------------------------------------------------------------------------

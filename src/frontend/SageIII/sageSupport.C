@@ -7127,98 +7127,16 @@ SgFunctionCallExp::getAssociatedFunctionDeclaration() const
   // This is helpful in chasing down the associated declaration to this function reference.
      SgFunctionDeclaration* returnFunctionDeclaration = NULL;
 
-#if 0
-  // Note that as I recall there are a number of different types of IR nodes that 
-  // the functionCallExp->get_function() can return (this is the complete list, 
-  // as tested in astConsistancyTests.C):
-  //   - SgDotExp
-  //   - SgDotStarOp
-  //   - SgArrowExp
-  //   - SgArrowStarOp
-  //   - SgPointerDerefExp
-  //   - SgFunctionRefExp
-  //   - SgMemberFunctionRefExp
-
-     SgExpression* functionExp = this->get_function();
-     switch(functionExp->variantT())
-        {
-          case V_SgFunctionRefExp:
-             {
-               SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(functionExp);
-               ROSE_ASSERT(functionRefExp != NULL);
-               SgFunctionSymbol* functionSymbol = functionRefExp->get_symbol();
-
-            // DQ (2/8/2009): Can we assert this! What about pointers to functions?
-               ROSE_ASSERT(functionSymbol != NULL);
-
-            // It might be that a pointer to a function would not have a symbol.
-               if (functionSymbol != NULL)
-                    returnFunctionDeclaration = functionSymbol->get_declaration();
-               break;
-             }
-
-          case V_SgMemberFunctionRefExp:
-             {
-               SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(functionExp);
-               ROSE_ASSERT(memberFunctionRefExp != NULL);
-               SgMemberFunctionSymbol* memberFunctionSymbol = memberFunctionRefExp->get_symbol();
-
-            // DQ (2/8/2009): Can we assert this! What about pointers to functions?
-               ROSE_ASSERT(memberFunctionSymbol != NULL);
-
-            // It might be that a pointer to a function would not have a symbol.
-               if (memberFunctionSymbol != NULL)
-                    returnFunctionDeclaration = memberFunctionSymbol->get_declaration();
-               break;
-             }
-
-          case V_SgArrowExp:
-             {
-            // The lhs is the this pointer (SgThisExp) and the rhs is the member function.
-               SgArrowExp* arrayExp = isSgArrowExp(functionExp);
-               ROSE_ASSERT(arrayExp != NULL);
-
-               SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(arrayExp->get_rhs_operand());
-               ROSE_ASSERT(memberFunctionRefExp != NULL);
-               SgMemberFunctionSymbol* memberFunctionSymbol = memberFunctionRefExp->get_symbol();
-
-            // DQ (2/8/2009): Can we assert this! What about pointers to functions?
-               ROSE_ASSERT(memberFunctionSymbol != NULL);
-
-            // It might be that a pointer to a function would not have a symbol.
-               if (memberFunctionSymbol != NULL)
-                    returnFunctionDeclaration = memberFunctionSymbol->get_declaration();
-               break;
-             }
-
-          case V_SgDotExp:
-          case V_SgDotStarOp:
-          case V_SgArrowStarOp:
-          case V_SgPointerDerefExp:
-             {
-               printf ("ERROR: Sorry, cases of SgDotExp,SgDotStarOp, SgArrowExp,SgArrowStarOp, SgPointerDerefExp not implemented yet in SgFunctionCallExp::getAssociatedFunctionDeclaration() functionExp = %p = %s \n",functionExp,functionExp->class_name().c_str());
-               break;
-             }
-
-          default:
-             {
-               printf ("Error: There should be no other cases functionExp = %p = %s \n",functionExp,functionExp->class_name().c_str());
-               ROSE_ASSERT(false);
-             }
-        }
-#else
-  // Refactored code separates out the generation of the SgFunctionSymbol from the SgFunctionCallExp
      SgFunctionSymbol* associatedFunctionSymbol = getAssociatedFunctionSymbol();
-     ROSE_ASSERT(associatedFunctionSymbol != NULL);
-     returnFunctionDeclaration = associatedFunctionSymbol->get_declaration();
-#endif
+     // It can be NULL for a function pointer
+     //ROSE_ASSERT(associatedFunctionSymbol != NULL);
+     if (associatedFunctionSymbol != NULL)
+       returnFunctionDeclaration = associatedFunctionSymbol->get_declaration();
 
-     ROSE_ASSERT(returnFunctionDeclaration != NULL);
+    // ROSE_ASSERT(returnFunctionDeclaration != NULL);
 
      return returnFunctionDeclaration;
    }
-
-
 
 SgFunctionSymbol*
 SgFunctionCallExp::getAssociatedFunctionSymbol() const
@@ -7292,10 +7210,18 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
 
             break;
           }
-          case V_SgArrowStarOp:
+          //Liao, 5/19/2009
+          //A pointer to function can be associated to any functions with a matching function type
+          //There is no single function declaration which is associated with it.
+          //In this case return NULL should be allowed and the caller has to handle it accordingly
           case V_SgPointerDerefExp:
+          {
+            break;
+          }
+          case V_SgArrowStarOp:
              {
-               printf ("ERROR: Sorry, cases of SgDotStarOp, SgArrowStarOp, SgPointerDerefExp not implemented yet in SgFunctionCallExp::getAssociatedSymbol() functionExp = %p = %s \n",functionExp,functionExp->class_name().c_str());
+               printf ("ERROR: Sorry, cases of SgDotStarOp and SgArrowStarOp not implemented yet in SgFunctionCallExp::getAssociatedSymbol() functionExp = %p = %s \n",functionExp,functionExp->class_name().c_str());
+              ROSE_ASSERT(returnSymbol != NULL);
                break;
              }
 
@@ -7305,8 +7231,8 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
                ROSE_ASSERT(false);
              }
         }
-
-     ROSE_ASSERT(returnSymbol != NULL);
+// We allow it to be NULL for a pointer to function
+//     ROSE_ASSERT(returnSymbol != NULL);
 
      return returnSymbol;
    }

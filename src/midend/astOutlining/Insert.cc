@@ -19,7 +19,7 @@
 
 // =====================================================================
 
-typedef std::list<SgFunctionDeclaration *> FuncDeclList_t;
+typedef std::vector<SgFunctionDeclaration *> FuncDeclList_t;
 
 // =====================================================================
 
@@ -120,7 +120,7 @@ generateFriendPrototype (const SgFunctionDeclaration* full_decl, SgScopeStatemen
   // and at this point we need to remove it.  Friend function don't have symbols
   // in the class scope where they may appear as a declaration.  The SageBuilder
   // function could be provided a parameter to indicate that a friend function is
-  // required, this would then supress the construction of the symbol in the scope's
+  // required, this would then suppress the construction of the symbol in the scope's
   // symbol table (and the scope of the function is not the same as the class scope 
   // in this case as well.
      SgFunctionSymbol* friendFunctionSymbol = isSgFunctionSymbol(scope->lookup_symbol(full_decl->get_name()));
@@ -248,7 +248,7 @@ SgFunctionDeclaration *
 insertGlobalPrototype (SgFunctionDeclaration* def,
                        FuncDeclList_t & friendFunctionPrototypeList,
                        SgGlobal* scope,
-                       SgDeclarationStatement* default_target)
+                       SgDeclarationStatement* default_target) // The enclosing function for the outlining target
 {
   SgFunctionDeclaration* prototype = NULL;
 
@@ -266,6 +266,24 @@ insertGlobalPrototype (SgFunctionDeclaration* def,
 
     if (!prototype && default_target) // No declaration found
        {
+
+      //Liao, 5/19/2009
+      //The prototype has to be inserted to the very first class having a friend declaration to the outlined function
+      //to avoid conflicting type info. for extern "C" functions.
+      //The reason is that there is no way to use friend and extern "C" together within a class.
+      if (friendFunctionPrototypeList.size()!=0)
+      {
+        vector<SgDeclarationStatement*> origFriends;
+        for (FuncDeclList_t::iterator i=friendFunctionPrototypeList.begin(); i!=friendFunctionPrototypeList.end(); i++) 
+        {
+          SgDeclarationStatement* decl = isSgDeclarationStatement(*i);
+          ROSE_ASSERT(decl!=NULL);
+          origFriends.push_back(decl);
+        }
+        vector<SgDeclarationStatement*> sortedFriends = SageInterface::sortSgNodeListBasedOnAppearanceOrderInSource(origFriends); 
+         prototype = GlobalProtoInserter::insertManually (def,scope,sortedFriends[0]);
+      }
+      else
          prototype = GlobalProtoInserter::insertManually (def,scope,default_target);
       // printf ("In insertGlobalPrototype(): Calling GlobalProtoInserter::insertManually(): prototype = %p = %s \n",prototype,prototype->class_name().c_str());
          if (Outliner::useNewFile == true)
@@ -450,6 +468,7 @@ isProtPrivMember (SgMemberFunctionRefExp* f)
  *  \brief Inserts all necessary friend declarations.
  *
  *  \returns A list, 'friends', of all generated friend declarations.
+ *  func: the generated outlined function
  */
 static
 void
@@ -462,6 +481,7 @@ insertFriendDecls (SgFunctionDeclaration* func,
    // printf ("In insertFriendDecls(): friends list size = %zu \n",friends.size());
 
    // Collect a list of all classes that need a 'friend' decl.
+   // The outlining target has accesses to those classes' private/protected members 
       typedef set<SgClassDefinition *> ClassDefSet_t;
       ClassDefSet_t classes;
       
@@ -506,7 +526,7 @@ insertFriendDecls (SgFunctionDeclaration* func,
 
        // DQ (2/27/2009): If we are outlining to a separate file, then we don't want to attach
        // a reference to the defining declaration which will be moved to the different file 
-       // (violates file consistancy rules that are not well enforced).
+       // (violates file consistency rules that are not well enforced).
           ROSE_ASSERT(friend_decl->get_definingDeclaration() == NULL);
        // printf ("friend_decl = %p friend_decl->get_definingDeclaration() = %p \n",friend_decl,friend_decl->get_definingDeclaration());
 
