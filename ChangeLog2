@@ -1,3 +1,8 @@
+2009-05-22 21:26  liao6
+
+	* [r5884] /trunk/ROSE/docs/Rose/footer.html.in: experiment a web
+	  traffic analyzer into rosecompiler.org
+
 2009-05-22 17:43  heller9
 
 	* [r5881] /trunk/ROSE/scripts/Makefile.am: Added directory
