@@ -2677,6 +2677,7 @@ PrologToRose::createTypedefDeclaration(Sg_File_Info* fi, PrologCompTerm* t) {
     createDummyNondefDecl(d, FI, n, tpe, tdtpe);
   } else {
     d->setForward();
+    d->set_firstNondefiningDeclaration(d);
   }
 
   // Fixup the decl in the type if necessary
