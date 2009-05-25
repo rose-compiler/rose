@@ -91,7 +91,7 @@ Index: Driver/TermDumper.cpp
 ===================================================================
 --- Driver/TermDumper.cpp	(revision 0)
 +++ Driver/TermDumper.cpp	(revision 0)
-@@ -0,0 +1,1962 @@
+@@ -0,0 +1,1954 @@
 +
 +//===--- StmtTermDumper.cpp - TermDumping implementation for Stmt ASTs ----===//
 +//
@@ -1572,11 +1572,10 @@ Index: Driver/TermDumper.cpp
 +
 +      case Stmt::GotoStmtClass:
 +        {
-+          return new PrologCompTerm("goto_statement", 4,
++          return new PrologCompTerm("goto_statement", 3,
 +                                    new PrologCompTerm("label_annotation", 2,
 +                                                       make_atom(cast<GotoStmt>(S)->getLabel()->getName()),
 +                                                       make_preprocessing_info()),
-+                                    make_default_annotation(),
 +                                    make_default_analysis_info(),
 +                                    make_file_info(S));
 +        }
@@ -1619,12 +1618,11 @@ Index: Driver/TermDumper.cpp
 +          switch (D->getKind()) {
 +          case Decl::Function:
 +            {
-+              return new PrologCompTerm("function_ref_exp", 4,
++              return new PrologCompTerm("function_ref_exp", 3,
 +                                        new PrologCompTerm("function_ref_annotation", 3,
 +                                                           make_identifier_atom(D),
 +                                                           make_type_term(cast<FunctionDecl>(D)->getType()),
 +                                                           make_preprocessing_info()),
-+                                        make_default_annotation(),
 +                                        make_default_analysis_info(),
 +                                        make_file_info(S));
 +            }
@@ -1773,13 +1771,12 @@ Index: Driver/TermDumper.cpp
 +            t = make_statement_term(SoP->getArgumentExpr());
 +          
 +          if(SoP->isSizeOf()) {
-+            return new PrologCompTerm("size_of_op", 5,
++            return new PrologCompTerm("size_of_op", 4,
 +                                      t,
 +                                      new PrologCompTerm("size_of_op_annotation", 3,
 +                                                         make_type_term(SoP->getTypeOfArgument()),
 +                                                         make_type_term(SoP->getType()),
 +                                                         make_preprocessing_info()),
-+                                      make_default_annotation(),
 +                                      make_default_analysis_info(),
 +                                      make_file_info(SoP));
 +          }
@@ -1796,13 +1793,12 @@ Index: Driver/TermDumper.cpp
 +      case Stmt::ArraySubscriptExprClass:
 +        {
 +          const ArraySubscriptExpr *ASE = cast<ArraySubscriptExpr>(S);
-+          return new PrologCompTerm("pntr_arr_ref_exp", 6,
++          return new PrologCompTerm("pntr_arr_ref_exp", 5,
 +                                    make_statement_term(ASE->getBase()),
 +                                    make_statement_term(ASE->getIdx()),
 +                                    new PrologCompTerm("binary_op_annotation", 2,
 +                                                       make_type_term(ASE->getType()),
 +                                                       make_preprocessing_info()),
-+                                    make_default_annotation(),
 +                                    make_default_analysis_info(),
 +                                    make_file_info(ASE));
 +        }
@@ -1840,7 +1836,7 @@ Index: Driver/TermDumper.cpp
 +
 +          if(!callee) callee = make_statement_term(CE->getCallee());
 +          
-+          return new PrologCompTerm("function_call_exp", 6,
++          return new PrologCompTerm("function_call_exp", 5,
 +                                    callee,
 +                                    new PrologCompTerm("expr_list_exp", 4,
 +                                                       exprs,
@@ -1850,7 +1846,6 @@ Index: Driver/TermDumper.cpp
 +                                    new PrologCompTerm("function_call_exp_annotation", 2,
 +                                                       make_type_term(CE->getType()),
 +                                                       make_preprocessing_info()),
-+                                    make_default_annotation(),
 +                                    make_default_analysis_info(),
 +                                    make_file_info(S));
 +        }
@@ -1860,13 +1855,12 @@ Index: Driver/TermDumper.cpp
 +          const MemberExpr *ME = cast<MemberExpr>(S);
 +          std::string name(ME->isArrow() ? "arrow_exp" : "dot_exp");
 +
-+          return new PrologCompTerm(name, 6,
++          return new PrologCompTerm(name, 5,
 +                                    make_statement_term(ME->getBase()),
 +                                    make_var_ref_expr(ME->getMemberDecl(), ME->getType(), ME),
 +                                    new PrologCompTerm("binary_op_annotation", 2,
 +                                                       make_type_term(ME->getType()),
 +                                                       make_preprocessing_info()),
-+                                    make_default_annotation(),
 +                                    make_default_analysis_info(),
 +                                    make_file_info(S));
 +        }
@@ -1890,7 +1884,7 @@ Index: Driver/TermDumper.cpp
 +          std::string cast_type;
 +          switch (castKind) {
 +          case ck_implicit:    cast_type = "implicit"; break;
-+          case ck_c_style:     cast_type = "c_style"; break;
++          case ck_c_style:     cast_type = "C_style_cast"; break;
 +          case ck_const:       cast_type = "const"; break;
 +          case ck_static:      cast_type = "static"; break;
 +          case ck_dynamic:     cast_type = "dynamic"; break;
@@ -1899,7 +1893,7 @@ Index: Driver/TermDumper.cpp
 +            assert(0 && "should be never reached");
 +          }
 +          
-+          return new PrologCompTerm("cast_exp", 6,
++          return new PrologCompTerm("cast_exp", 5,
 +                                    make_statement_term(CE->getSubExpr()),
 +                                    make_null_atom(),
 +                                    new PrologCompTerm("unary_op_annotation", 5,
@@ -1908,7 +1902,6 @@ Index: Driver/TermDumper.cpp
 +                                                       make_atom(cast_type),
 +                                                       make_null_atom(),
 +                                                       make_preprocessing_info()),
-+                                    make_default_annotation(),
 +                                    make_default_analysis_info(),
 +                                    make_file_info(CE));
 +        }
@@ -1922,14 +1915,13 @@ Index: Driver/TermDumper.cpp
 +      case Stmt::ConditionalOperatorClass:
 +        {
 +          const ConditionalOperator *CO = cast<ConditionalOperator>(S);
-+          return new PrologCompTerm("conditional_exp", 7,
++          return new PrologCompTerm("conditional_exp", 6,
 +                                    make_statement_term(CO->getCond()),
 +                                    make_statement_term(CO->getTrueExpr()),
 +                                    make_statement_term(CO->getFalseExpr()),
 +                                    new PrologCompTerm("conditional_exp_annotation", 2,
 +                                                       make_type_term(CO->getType()),
 +                                                       make_preprocessing_info()),
-+                                    make_default_annotation(),
 +                                    make_default_analysis_info(),
 +                                    make_file_info(CO));
 +        }
