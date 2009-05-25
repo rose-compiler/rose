@@ -13,6 +13,13 @@ Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
 #include <assert.h>
 #include <boost/regex.hpp>
 
+/* some single-word type names */
+#include <sys/types.h>
+typedef long double               longdouble;
+typedef long int                     longint;
+typedef long long int            longlongint;
+typedef unsigned long long int  ulonglongint;
+
 #if !HAVE_SWI_PROLOG
 #  include "termparser.tab.h++"
 extern int yyparse();
@@ -925,112 +932,48 @@ PrologToRose::unescape_char(std::string s) {
   }
 }
 
+
+#define createValue(SGTYPE, TYPE, fi, fromTerm) \
+  do { \
+    debug("unparsing " + fromTerm->getName()); \
+    PrologCompTerm* annot = retrieveAnnotation(fromTerm); \
+    ROSE_ASSERT(annot != NULL); \
+    PrologAtom* a = dynamic_cast<PrologAtom*>(annot->at(0)); \
+    PrologInt* i = dynamic_cast<PrologInt*>(annot->at(0)); \
+    ROSE_ASSERT((a != 0) || (i != 0)); \
+    TYPE value; \
+    if (a) { \
+      istringstream instr(a->getName()); \
+      instr >> value; \
+    } else value = i->getValue(); \
+    ve = new SGTYPE(fi, value); \
+  } while (false)
+
 /** create a SgValueExp*/
 SgExpression* 
 PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
   string vtype = t->getName();
   SgValueExp* ve = NULL;
   /*integer types */
-  if(vtype == SG_PREFIX "int_val") {
-    /*Integer*/
-    debug("unparsing int");
-    PrologCompTerm* annot = retrieveAnnotation(t);
-    ROSE_ASSERT(annot != NULL);
-    PrologInt* i = dynamic_cast<PrologInt*>(annot->at(0));
-    ROSE_ASSERT(i != NULL);
-    SgIntVal* in = new SgIntVal(fi,i->getValue());
-    ve = in;
-  } else if (vtype == SG_PREFIX "unsigned_int_val") {
-    /*unsigned int*/
-    debug("unparsing unsigned int");
-    PrologCompTerm* annot = retrieveAnnotation(t);
-    ROSE_ASSERT(annot != NULL);
-    PrologInt* i = dynamic_cast<PrologInt*>(annot->at(0));
-    ROSE_ASSERT(i != NULL);
-    SgUnsignedIntVal* in = new SgUnsignedIntVal(fi,(unsigned int) i->getValue());
-    ve = in;
-  } else if (vtype == SG_PREFIX "short_val") {
-    /*short*/
-    debug("unparsing short");
-    PrologCompTerm* annot = retrieveAnnotation(t);
-    ROSE_ASSERT(annot != NULL);
-    PrologInt* i = dynamic_cast<PrologInt*>(annot->at(0));
-    ROSE_ASSERT(i != NULL);
-    SgShortVal* in = new SgShortVal(fi,(short) i->getValue());
-    ve = in;
-  } else if (vtype == SG_PREFIX "unsigned_short_val") {
-    /*unsigned short*/
-    debug("unparsing unsigned short");
-    PrologCompTerm* annot = retrieveAnnotation(t);
-    ROSE_ASSERT(annot != NULL);
-    PrologInt* i = dynamic_cast<PrologInt*>(annot->at(0));
-    ROSE_ASSERT(i != NULL);
-    SgUnsignedShortVal* in = new SgUnsignedShortVal(fi,(unsigned short) i->getValue());
-    ve = in;
-    /*now some integer types where i used
-     * istringstreams/ostringstreams as a way to convert
-     * the values from/to a std::string in the annotation */
-  } else if (vtype == SG_PREFIX "long_int_val") {
-    /*long int*/
-    debug("unparsing long int");
-    PrologCompTerm* annot = retrieveAnnotation(t);
-    ROSE_ASSERT(annot != NULL);
-    PrologAtom* s = dynamic_cast<PrologAtom*>(annot->at(0));
-    PrologInt* i = dynamic_cast<PrologInt*>(annot->at(0));
-    ROSE_ASSERT((s != 0) || (i != 0));
-    long int number;
-    if (s) {
-      istringstream instr(s->getName());
-      instr >> number;
-    } else number = i->getValue();
-    SgLongIntVal* valnode = new SgLongIntVal(fi,number);
-    ve = valnode;
-  } else if (vtype == SG_PREFIX "unsigned_long_val") {
-    /*unsigned long int*/
-    debug("unparsing unsigned long int");
-    PrologCompTerm* annot = retrieveAnnotation(t);
-    ROSE_ASSERT(annot != NULL);
-    PrologAtom* s = dynamic_cast<PrologAtom*>(annot->at(0));
-    PrologInt* i = dynamic_cast<PrologInt*>(annot->at(0));
-    ROSE_ASSERT((s != 0) || (i != 0));
-    unsigned long int number;
-    if (s) {
-      istringstream instr(s->getName());
-      instr >> number;
-    } else number = i->getValue();
-    SgUnsignedLongVal* valnode = new SgUnsignedLongVal(fi,number);
-    ve = valnode;
-  } else if (vtype == SG_PREFIX "long_long_int_val") {
-    /*long long  int*/
-    debug("unparsing long long int");
-    PrologCompTerm* annot = retrieveAnnotation(t);
-    ROSE_ASSERT(annot != NULL);
-    PrologAtom* s = dynamic_cast<PrologAtom*>(annot->at(0));
-    PrologInt* i = dynamic_cast<PrologInt*>(annot->at(0));
-    ROSE_ASSERT((s != 0) || (i != 0));
-    long long int number;
-    if (s) {
-      istringstream instr(s->getName());
-      instr >> number;
-    } else number = i->getValue();
-    SgLongLongIntVal* valnode = new SgLongLongIntVal(fi,number);
-    ve = valnode;
-  } else if (vtype == SG_PREFIX "unsigned_long_long_int_val") {
-    /*unsigned long long  int*/
-    debug("unparsing unsigned long long int");
-    PrologCompTerm* annot = retrieveAnnotation(t);
-    ROSE_ASSERT(annot != NULL);
-    PrologAtom* s = dynamic_cast<PrologAtom*>(annot->at(0));
-    PrologInt* i = dynamic_cast<PrologInt*>(annot->at(0));
-    ROSE_ASSERT((s != 0) || (i != 0));
-    unsigned long long int number;
-    if (s) {
-      istringstream instr(s->getName());
-      instr >> number;
-    } else number = i->getValue();
-    SgUnsignedLongLongIntVal* valnode = new SgUnsignedLongLongIntVal(fi,number);
-    ve = valnode;
-  } else if (vtype == SG_PREFIX "enum_val") {
+  if(vtype == SG_PREFIX "int_val") 
+    createValue(SgIntVal, int, fi, t);
+  else if (vtype == SG_PREFIX "unsigned_int_val")
+    createValue(SgUnsignedIntVal, uint, fi, t);
+  else if (vtype == SG_PREFIX "short_val") 
+    createValue(SgShortVal, short, fi,t);
+  else if (vtype == SG_PREFIX "unsigned_short_val")
+    createValue(SgUnsignedShortVal, ushort, fi, t);
+  else if (vtype == SG_PREFIX "long_int_val")
+    createValue(SgLongIntVal, longint, fi, t);
+  else if (vtype == SG_PREFIX "unsigned_long_val") 
+    createValue(SgUnsignedLongVal, ulong, fi, t);
+  else if (vtype == SG_PREFIX "long_long_int_val")
+    createValue(SgLongLongIntVal, longlongint, fi, t);
+  else if (vtype == SG_PREFIX "unsigned_long_long_int_val")
+    createValue(SgUnsignedLongLongIntVal, ulonglongint, fi, t);
+
+
+  else if (vtype == SG_PREFIX "enum_val") {
     debug("unparsing enum value");
     PrologCompTerm* annot = retrieveAnnotation(t);
     ROSE_ASSERT(annot != NULL);
@@ -1047,64 +990,18 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
     ROSE_ASSERT(valnode->get_declaration() == decdummy);
     debug("declaration faked");
     ve = valnode;
-
-    /* floating point types*/
-  } else if (vtype == SG_PREFIX "float_val") {
-    // FIXME 
-    //} else if (PrologFloat* val = dynamic_cast<PrologFloat*>(annot->at(0))) {
-    //  f = val->getValue();
-    debug("unparsing float");
-    PrologCompTerm* annot = retrieveAnnotation(t);
-    ROSE_ASSERT(annot != NULL);
-
-    float f;
-    if (PrologAtom* s = dynamic_cast<PrologAtom*>(annot->at(0))) {
-      istringstream i(s->getName());
-      i >> f;
-    } else if (PrologInt* val = dynamic_cast<PrologInt*>(annot->at(0))) {
-      f = val->getValue();
-    } else {
-      // Must be either a string or an int
-      // FIXME: or a float?
-      ROSE_ASSERT(false);
-    }		
-    ve = new SgFloatVal(fi,f);
-    ROSE_ASSERT(ve != NULL);
-  } else if (vtype == SG_PREFIX "double_val") {
-    debug("unparsing double");
-    PrologCompTerm* annot = retrieveAnnotation(t);
-    ROSE_ASSERT(annot != NULL);
-    double f;
-    if (PrologAtom* s = dynamic_cast<PrologAtom*>(annot->at(0))) {
-      istringstream i(s->getName());
-      i >> f;
-    } else if (PrologInt* val = dynamic_cast<PrologInt*>(annot->at(0))) {
-      f = val->getValue();
-    } else {
-      ROSE_ASSERT(false && "Must be either a string or an int");
-      // FIXME: or a float?
-    }		
-    ve = new SgDoubleVal(fi,f);
-    ROSE_ASSERT(ve != NULL);
-  } else if (vtype == SG_PREFIX "long_double_val") {
-    debug("unparsing long double");
-    PrologCompTerm* annot = retrieveAnnotation(t);
-    ROSE_ASSERT(annot != NULL);
-    long double f;
-    if (PrologAtom* s = dynamic_cast<PrologAtom*>(annot->at(0))) {
-      istringstream i(s->getName());
-      i >> f;
-    } else if (PrologInt* val = dynamic_cast<PrologInt*>(annot->at(0))) {
-      f = val->getValue();
-    } else {
-      ROSE_ASSERT(false && "Must be either a string or an int");
-      // FIXME: or a float?
-    }		
-    ve = new SgLongDoubleVal(fi,f);
-    ROSE_ASSERT(ve != NULL);
-	
-    /* characters */
-  } else if (vtype == SG_PREFIX "char_val") {
+  }
+  
+  /* floating point types*/
+  else if (vtype == SG_PREFIX "float_val")
+    createValue(SgFloatVal, float, fi, t);
+  else if (vtype == SG_PREFIX "double_val")
+    createValue(SgDoubleVal, double, fi, t);
+  else if (vtype == SG_PREFIX "long_double_val")
+    createValue(SgLongDoubleVal, longdouble, fi, t);
+    
+  /* characters */
+  else if (vtype == SG_PREFIX "char_val") {
     //char
     debug("unparsing char");
     PrologCompTerm* annot = retrieveAnnotation(t);
@@ -1126,8 +1023,6 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
     ROSE_ASSERT(annot != NULL);
     unsigned char number;
     if (PrologAtom* s = dynamic_cast<PrologAtom*>(annot->at(0))) {
-      /*istringstream instr(s->getName());
-	instr >> number;*/
       number = unescape_char(s->getName());
     } else if (PrologInt* val = dynamic_cast<PrologInt*>(annot->at(0))) {
       number = val->getValue();
@@ -1136,35 +1031,18 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
     }
     SgUnsignedCharVal* valnode = new SgUnsignedCharVal(fi,number);
     ve = valnode;
-  } else if (vtype == SG_PREFIX "wchar_val") {
-    //wchar
-    debug("unparsing wchar");
-    PrologCompTerm* annot = retrieveAnnotation(t);
-    ROSE_ASSERT(annot != NULL);
-    PrologAtom* s = dynamic_cast<PrologAtom*>(annot->at(0));
-    ROSE_ASSERT(s != NULL);
-    unsigned long number;
-    istringstream instr(s->getName());
-    instr >> number;
-    SgWcharVal* valnode = new SgWcharVal(fi,number);
-    ve = valnode;
-		
+  } 
+  else if (vtype == SG_PREFIX "wchar_val")
+    createValue(SgWcharVal, ulong, fi, t);
     /* boolean*/
-  } else if (vtype == SG_PREFIX "bool_val_exp") {
-    PrologCompTerm* annot = retrieveAnnotation(t);
-    ROSE_ASSERT(annot != NULL);
-    PrologAtom* s = dynamic_cast<PrologAtom*>(annot->at(0));
-    int i;
-    istringstream str(s->getName());
-    str >> i;
-    ve = new SgBoolValExp(fi,i);
-  } else if (vtype == SG_PREFIX "string_val") {
+  else if (vtype == SG_PREFIX "bool_val_exp")
+    createValue(SgBoolValExp, int, fi, t);
+  else if (vtype == SG_PREFIX "string_val") {
     PrologCompTerm* annot = retrieveAnnotation(t);
     ROSE_ASSERT(annot != NULL);
     PrologAtom* s = dynamic_cast<PrologAtom*>(annot->at(0));
     ve = new SgStringVal(fi,s->getName());
   }
-	
 	
   if(ve != NULL) {
     /* post construction */
@@ -1179,6 +1057,7 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
       ROSE_ASSERT(ex != NULL);
       ve->set_originalExpressionTree(ex);
     }
+    ve->set_endOfConstruct(fi);
   } else {
     debug("Value Type " + vtype + " not implemented yet. Returning null pointer for value expression");
   }
@@ -1490,19 +1369,8 @@ PrologToRose::inameFromAnnot(PrologCompTerm* annot) {
   /* create name*/
   PrologAtom *nstring = dynamic_cast<PrologAtom*>(annot->at(1));
   SgName sgnm = nstring->getName().c_str();
-  /* create a dummy varialbe declaration, only for the unparser to get the scope */
-  //SgVariableDeclaration* vdec = new SgVariableDeclaration(
-  //   FI,
-  //   sgnm, tpe,  NULL);
-  //ROSE_ASSERT(vdec != NULL);
-  SgInitializedName* siname = new SgInitializedName(sgnm,tpe,NULL);//,vdec,NULL);
+  SgInitializedName* siname = new SgInitializedName(sgnm,tpe,NULL);
   ROSE_ASSERT(siname != NULL);
-  /* the result of get_declaration() in a
-   * SgInitializedName node is the first ancestor that is a SgDeclarationStatement.
-   * since set_declaration() does not exist, this is the way to go
-   */
-  //siname->set_parent(vdec);
-  //ROSE_ASSERT(siname->get_declaration() == vdec);
 
   siname->set_file_info(FI);
 
@@ -1510,28 +1378,8 @@ PrologToRose::inameFromAnnot(PrologCompTerm* annot) {
   int stat = (int) createEnum(annot->at(2), re.static_flag);
   if(stat != 0) {
     debug("setting static");
-    //vdec->get_declarationModifier().get_storageModifier().setStatic();
+    siname->get_storageModifier().setStatic();
   }
-  /* create scope*/
-  // PrologCompTerm* scope = isPrologCompTerm(annot->at(3));
-  // if(scope != NULL) {
-  //   string scope_type = scope->getName();
-  //   if (scope_type == "class_scope") {
-  //     debug("var ref exp class scope");
-  //     string scope_name = *(toStringP(scope->at(0)));
-  //     SgClassDeclaration::class_types class_type = 
-  //         (SgClassDeclaration::class_types) 
-  //           createEnum(scope->at(1), re.class_type);
-  //     fakeClassScope(scope_name,class_type,vdec);
-  //     ROSE_ASSERT(isSgClassDefinition(siname->get_declaration()->get_parent()) != NULL);
-  //   } else if (scope_type == "namespace_scope") {
-  //     debug("var ref exp namespace scope");
-  //     string scope_name = *(toStringP(scope->at(0)));
-  //     int scope_int = (toInt(scope->at(1)));
-  //     fakeNamespaceScope(scope_name,scope_int,vdec);
-  //     ROSE_ASSERT(isSgNamespaceDefinitionStatement(siname->get_declaration()->get_parent()) != NULL);
-  //   }
-  // }
   return siname;
 }
 
@@ -2072,6 +1920,9 @@ PrologToRose::createVariableDeclaration(Sg_File_Info* fi,deque<SgNode*>* succs,P
       }
 
       dec->append_variable(ini_name,ini_initializer);
+      /* fixup for ROSE 0.9.4 */
+      SgVariableDefinition* def = dec->get_definition(ini_name);
+      if (def != NULL) def->set_endOfConstruct(fi);  
     } else if (isSgClassDeclaration(*it)) {
       debug("added class/struct");
       /* already handled, see above */
@@ -2091,6 +1942,10 @@ PrologToRose::createVariableDeclaration(Sg_File_Info* fi,deque<SgNode*>* succs,P
     dec->set_definingDeclaration(dec);
     dec->set_firstNondefiningDeclaration(NULL);
   }
+
+  /* fixup for ROSE 0.9.4 */
+  SgVariableDefinition* def = dec->get_definition();
+  if (def != NULL) def->set_endOfConstruct(fi);  
 
   return dec;
 }
@@ -2161,6 +2016,7 @@ PrologToRose::createForInitStatement(Sg_File_Info* fi,deque<SgNode*>* succs) {
     stmt->set_parent(ini);
     it++;
   }
+  ini->set_endOfConstruct(fi);
   return ini;
 }
 
@@ -2351,6 +2207,7 @@ PrologToRose::createClassDefinition(Sg_File_Info* fi, deque<SgNode*>* succs,Prol
     ROSE_ASSERT(s != NULL);
     d->append_member(s);
     s->set_parent(d);
+    //s->set_scope(d);
     it++;
   }
   /* set the end of construct*/
@@ -2402,15 +2259,13 @@ PrologToRose::createClassDeclaration(Sg_File_Info* fi,SgNode* child1 ,PrologComp
   if(class_def != NULL) {
     class_def->set_declaration(d);
     createDummyNondefDecl(d, FI, class_name, e_class_type, (SgClassType*)NULL);
-    
-    //cerr<<"XX1>>>"<<type_s->getRepresentation()<<endl<<endl;
     declarationMap[type_s->getRepresentation()] = d;
   } else {
     d->setForward();
 
-    SgClassDeclaration* ndd = d;
-    lookupDecl(&ndd, type_s->getRepresentation(), false);
-    d->set_firstNondefiningDeclaration(ndd);
+    // SgClassDeclaration* ndd = d;
+    // lookupDecl(&ndd, type_s->getRepresentation(), false);
+    d->set_firstNondefiningDeclaration(d);
   }
 
   return d;
@@ -2420,53 +2275,53 @@ PrologToRose::createClassDeclaration(Sg_File_Info* fi,SgNode* child1 ,PrologComp
 void
 PrologToRose::fakeClassScope(string s, int c_type,SgDeclarationStatement* stat) {
   ROSE_ASSERT(false && "deprecated function");
-  /*create a dummy class declaration*/
-  SgClassDeclaration* d = createDummyClassDeclaration(s,c_type);
-  SgClassDefinition* def = new SgClassDefinition(
-    FI, d);
-  d->set_parent(def);
-  // FIXME
-  def->set_parent(d);
-  ROSE_ASSERT(def != NULL);
-  /* scope is changed here as a side effect!*/
-  def->append_member(stat);
-  if (SgVariableDeclaration* vd = isSgVariableDeclaration(stat)) {
-    debug("var ref exp class scope added");
-    vd->set_parent(def);
-  } else {
-    stat->set_scope(def);
-  }
+  // /*create a dummy class declaration*/
+  // SgClassDeclaration* d = createDummyClassDeclaration(s,c_type);
+  // SgClassDefinition* def = new SgClassDefinition(
+  //   FI, d);
+  // d->set_parent(def);
+  // // FIXME
+  // def->set_parent(d);
+  // ROSE_ASSERT(def != NULL);
+  // /* scope is changed here as a side effect!*/
+  // def->append_member(stat);
+  // if (SgVariableDeclaration* vd = isSgVariableDeclaration(stat)) {
+  //   debug("var ref exp class scope added");
+  //   vd->set_parent(def);
+  // } else {
+  //   stat->set_scope(def);
+  // }
 }
 
 /** create dummy namespace scope*/
 void
 PrologToRose::fakeNamespaceScope(string s, int unnamed, SgDeclarationStatement* stat) {
   ROSE_ASSERT(false && "deprecated function");
-  SgName n = s;
-  bool u_b = (bool) unnamed;
-  SgNamespaceDefinitionStatement* def =
-    new SgNamespaceDefinitionStatement(FI,0);
-  /* set scope*/
-  def->append_declaration(stat);
-  if (SgVariableDeclaration* vd = isSgVariableDeclaration(stat)) {
-    debug("var ref exp namespace scope added");
-    vd->set_parent(def);
-  } else {
-    stat->set_scope(def);
-  }
-  /* create namespace*/
-  SgNamespaceDeclarationStatement* dec = 
-    new SgNamespaceDeclarationStatement(FI,n,def,u_b);
-  def->set_namespaceDeclaration(dec); // AP 4.2.2008 
-  if(def != NULL) {
-    def->set_namespaceDeclaration(dec);
-    dec->set_forward(false);
-    dec->set_definingDeclaration(dec);
-  }
-  ROSE_ASSERT(dec != NULL);
-  SgGlobal* dummy = new SgGlobal(FI);
-  ROSE_ASSERT(dummy != NULL);
-  dec->set_parent(dummy);
+  // SgName n = s;
+  // bool u_b = (bool) unnamed;
+  // SgNamespaceDefinitionStatement* def =
+  //   new SgNamespaceDefinitionStatement(FI,0);
+  // /* set scope*/
+  // def->append_declaration(stat);
+  // if (SgVariableDeclaration* vd = isSgVariableDeclaration(stat)) {
+  //   debug("var ref exp namespace scope added");
+  //   vd->set_parent(def);
+  // } else {
+  //   stat->set_scope(def);
+  // }
+  // /* create namespace*/
+  // SgNamespaceDeclarationStatement* dec = 
+  //   new SgNamespaceDeclarationStatement(FI,n,def,u_b);
+  // def->set_namespaceDeclaration(dec); // AP 4.2.2008 
+  // if(def != NULL) {
+  //   def->set_namespaceDeclaration(dec);
+  //   dec->set_forward(false);
+  //   dec->set_definingDeclaration(dec);
+  // }
+  // ROSE_ASSERT(dec != NULL);
+  // SgGlobal* dummy = new SgGlobal(FI);
+  // ROSE_ASSERT(dummy != NULL);
+  // dec->set_parent(dummy);
 }
 	
 
@@ -2735,20 +2590,20 @@ void
 PrologToRose::fakeParentScope(SgDeclarationStatement* s) {
   //nothing to do if there is already a parent scope
   ROSE_ASSERT(false && "deprecated function");
-  if(s->get_parent()) return;
+  // if(s->get_parent()) return;
 
-  debug("faking scope");	
-  SgGlobal* dummy = new SgGlobal(FI);
-  ROSE_ASSERT(dummy != NULL);
-  dummy->set_endOfConstruct(FI);
-  // 7.2.2008 ROSE 0.9.0b (Adrian)
-  addSymbol(dummy, s);
+  // debug("faking scope");	
+  // SgGlobal* dummy = new SgGlobal(FI);
+  // ROSE_ASSERT(dummy != NULL);
+  // dummy->set_endOfConstruct(FI);
+  // // 7.2.2008 ROSE 0.9.0b (Adrian)
+  // addSymbol(dummy, s);
   
 
-  s->set_parent(dummy);
-  s->set_scope(dummy);
-  ROSE_ASSERT(s->get_parent());
-  ROSE_ASSERT(s->get_scope());
+  // s->set_parent(dummy);
+  // s->set_scope(dummy);
+  // ROSE_ASSERT(s->get_parent());
+  // ROSE_ASSERT(s->get_scope());
 }
 
 /**
@@ -3357,9 +3212,10 @@ PrologToRose::createNamespaceDeclarationStatement(Sg_File_Info* fi, SgNode* chil
     def->set_namespaceDeclaration(dec);
     createDummyNondefDecl(dec, FI, n, (SgNamespaceDefinitionStatement*)NULL, 
 			  unnamed);
+  } else {
+    dec->setForward();
+    dec->set_firstNondefiningDeclaration(dec);
   }
-  /* Unparser has problems if this isn't set*/
-  dec->set_firstNondefiningDeclaration(dec);
   return dec;
 }
 

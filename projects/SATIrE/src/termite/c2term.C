@@ -22,7 +22,7 @@ int main ( int argc, char ** argv ) {
   //frontend processing
   if (argc < 3) {
     cerr << "Usage: " << argv[0] 
-	 << " [frontend options] [--strip-headers] src1.c src2... termfile.pl"
+	 << " [frontend options] "/*[--strip-headers]*/" src1.c src2... termfile.pl"
          << endl
          << "       [frontend options] will be passed to the C/C++ frontend. " 
 	 << endl
@@ -31,13 +31,15 @@ int main ( int argc, char ** argv ) {
     return 1;
   }
 
-  bool strip_headers = false;
+  /* This option was ill-conceived to begin with: we would be missing
+     important declarations */
+  /*bool strip_headers = false;
   for (int i = 0; i < argc; ++i)
     if (string(argv[i]) == "--strip-headers") {
       char empty[] = "";
       argv[i] = empty;
       strip_headers = true;
-    }
+      }*/
 
   char *outputFileName = argv[argc-1];
   // GB (2008-11-04): Now that this argument is unused, we can use it
@@ -61,9 +63,9 @@ int main ( int argc, char ** argv ) {
   
   //create prolog term
   BasicTermPrinter tp;
-  if (strip_headers) 
-    tp.traverseInputFiles(project); // Without headers
-  else
+  //if (strip_headers) 
+  //  tp.traverseInputFiles(project); // Without headers
+  //else
     tp.traverse(project); // With headers
 
   PrologTerm* genTerm = tp.getTerm();
