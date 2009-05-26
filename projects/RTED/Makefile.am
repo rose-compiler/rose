@@ -164,7 +164,7 @@ check-C-array-parallel:
 	done 
 
 check-C-array:
-	if [ -f "result.txt" ]; then rm result.txt; fi ; \
+	if [ -f "result1.txt" ]; then rm result1.txt; fi ; \
 	cp $(srcdir)/index_array.txt . ; \
 	dir=$(rted_path)/C/array_index_out_of_bound/ ; \
 	echo "Dir : $$dir " ; \
@@ -315,7 +315,7 @@ check-C-string-parallel:
 	done 
 
 check-C-string:
-	if [ -f "result.txt" ]; then rm result.txt; fi ; \
+	if [ -f "result2.txt" ]; then rm result2.txt; fi ; \
 	cp $(srcdir)/index_array.txt .
 	dir=$(rted_path)/C/string_errors/ ; \
 	echo "Dir : $$dir " ; \
@@ -380,6 +380,138 @@ check-C-string:
 	fi; \
 	done 
 
+check-C-subprogram:
+	if [ -f "result3.txt" ]; then rm result3.txt; fi ; \
+	cp $(srcdir)/index_array.txt .
+	dir=$(rted_path)/C/subprogram_call_errors/ ; \
+	echo "Dir : $$dir " ; \
+	for file in $$(find $$dir -name "*.c" | sort); do \
+	  echo "Found file : $$file" ; \
+	done ; \
+	echo "Found files : `find $$dir -name "*.c" | wc` " ; \
+	for file in $$(find $$dir -name "*.c"| sort); do \
+	if !  [[ "$$file" =~ "_s.c" ]]  ; then \
+	  file2=$$(echo $$file | sed -e 's/..$$//'  ); \
+	  file2=$$(echo "$$file2"_s.c); \
+	  binfile=$$(echo "$$file".bin); \
+	echo "Filename 2 : $$file2" ; \
+	if ! [ -f $$binfile ]; then \
+	echo "inserting #define EXITCODE_OK 0 in $$file" ; \
+	if [ `grep "#define EXITCODE_OK 0" $$file | wc | awk '{print $$1}' ` -eq 0 ] ; then \
+	  sed -i '1i\#define EXITCODE_OK 0' $$file ; \
+	fi ; \
+	if [ -f $$file2 ]; then \
+	  echo "inserting #define EXITCODE_OK 0 in $$file2" ; \
+	  if [ `grep "#define EXITCODE_OK 0" $$file2 | wc | awk '{print $$1}' ` -eq 0 ] ; then \
+	    sed -i '1i\#define EXITCODE_OK 0' $$file2 ; \
+	  fi ; \
+	  echo "Script : Running Transformation ... $$file $$file2 -I$(srcdir) " ; \
+	  ./runtimeCheck 2 $$file $$file2 -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$(dir)   ; \
+	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
+	  echo "deleting #define EXITCODE_OK 0 in $$file2" ; \
+	  if [ `grep "#define EXITCODE_OK 0" $$file2 | wc | awk '{print $$1}' ` -eq 1 ] ; then \
+	    sed -i '1d' $$file2 ; \
+	  fi ; \
+	  file_rose=rose_rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
+	  file2_rose=rose_rose_$$(echo $$file2 | sed -e 's/^\(.*\/\)*//'  ); \
+	  file_rose_bin=$$(echo "$$file_rose".bin); \
+	  echo "Compiling 2f:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose" ;\
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	  echo "Executing created file $$file_rose_bin" ; \
+	  ./$$file_rose_bin ; \
+	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
+	  file_bin=$$(echo "$$file".bin); \
+	  $(CXX) -g -o $$file_bin $$file $$file2 $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	else \
+	  echo "Script : Running Transformation ... $$file -I$(srcdir)" ; \
+	  ./runtimeCheck 1 $$file -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$$dir ; \
+	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
+	  echo "removing #define EXITCODE_OK 0 in $$file" ; \
+	  if [ `grep "#define EXITCODE_OK 0" $$file | wc | awk '{print $$1}' ` -eq 1 ] ; then \
+	    sed -i '1d' $$file ; \
+	  fi ; \
+	  file_rose=rose_rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
+	  file_rose_bin=$$(echo "$$file_rose".bin); \
+	  echo "Compiling 1f:  $(CXX) -g -o $$file_rose_bin $$file_rose  $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)" ;\
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	  echo "Executing created file $$file_rose_bin" ; \
+	  ./$$file_rose_bin ; \
+	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
+	  file_bin=$$(echo "$$file".bin); \
+	  $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	fi; \
+	else \
+	  echo "$$binfile exists." ; \
+	fi; \
+	fi; \
+	done 
+
+check-C-allocation:
+	if [ -f "result4.txt" ]; then rm result4.txt; fi ; \
+	cp $(srcdir)/index_array.txt .
+	dir=$(rted_path)/C/allocation_deallocation_errors/ ; \
+	echo "Dir : $$dir " ; \
+	for file in $$(find $$dir -name "*.c" | sort); do \
+	  echo "Found file : $$file" ; \
+	done ; \
+	echo "Found files : `find $$dir -name "*.c" | wc` " ; \
+	for file in $$(find $$dir -name "*.c"| sort); do \
+	if !  [[ "$$file" =~ "_s.c" ]]  ; then \
+	  file2=$$(echo $$file | sed -e 's/..$$//'  ); \
+	  file2=$$(echo "$$file2"_s.c); \
+	  binfile=$$(echo "$$file".bin); \
+	echo "Filename 2 : $$file2" ; \
+	if ! [ -f $$binfile ]; then \
+	echo "inserting #define EXITCODE_OK 0 in $$file" ; \
+	if [ `grep "#define EXITCODE_OK 0" $$file | wc | awk '{print $$1}' ` -eq 0 ] ; then \
+	  sed -i '1i\#define EXITCODE_OK 0' $$file ; \
+	fi ; \
+	if [ -f $$file2 ]; then \
+	  echo "inserting #define EXITCODE_OK 0 in $$file2" ; \
+	  if [ `grep "#define EXITCODE_OK 0" $$file2 | wc | awk '{print $$1}' ` -eq 0 ] ; then \
+	    sed -i '1i\#define EXITCODE_OK 0' $$file2 ; \
+	  fi ; \
+	  echo "Script : Running Transformation ... $$file $$file2 -I$(srcdir) " ; \
+	  ./runtimeCheck 2 $$file $$file2 -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$(dir)   ; \
+	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
+	  echo "deleting #define EXITCODE_OK 0 in $$file2" ; \
+	  if [ `grep "#define EXITCODE_OK 0" $$file2 | wc | awk '{print $$1}' ` -eq 1 ] ; then \
+	    sed -i '1d' $$file2 ; \
+	  fi ; \
+	  file_rose=rose_rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
+	  file2_rose=rose_rose_$$(echo $$file2 | sed -e 's/^\(.*\/\)*//'  ); \
+	  file_rose_bin=$$(echo "$$file_rose".bin); \
+	  echo "Compiling 2f:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose" ;\
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	  echo "Executing created file $$file_rose_bin" ; \
+	  ./$$file_rose_bin ; \
+	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
+	  file_bin=$$(echo "$$file".bin); \
+	  $(CXX) -g -o $$file_bin $$file $$file2 $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	else \
+	  echo "Script : Running Transformation ... $$file -I$(srcdir)" ; \
+	  ./runtimeCheck 1 $$file -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$$dir ; \
+	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
+	  echo "removing #define EXITCODE_OK 0 in $$file" ; \
+	  if [ `grep "#define EXITCODE_OK 0" $$file | wc | awk '{print $$1}' ` -eq 1 ] ; then \
+	    sed -i '1d' $$file ; \
+	  fi ; \
+	  file_rose=rose_rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
+	  file_rose_bin=$$(echo "$$file_rose".bin); \
+	  echo "Compiling 1f:  $(CXX) -g -o $$file_rose_bin $$file_rose  $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)" ;\
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	  echo "Executing created file $$file_rose_bin" ; \
+	  ./$$file_rose_bin ; \
+	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
+	  file_bin=$$(echo "$$file".bin); \
+	  $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	fi; \
+	else \
+	  echo "$$binfile exists." ; \
+	fi; \
+	fi; \
+	done 
+
 check-C-array-onefile: compile_gcc_file1
 	@echo "Running the new program"
 	./rose_test_c_E_1_1_a
@@ -387,7 +519,10 @@ check-C-array-onefile: compile_gcc_file1
 
 deleteAllbinfiles:
 	@echo "Deleting all generated bin files in RTED directory"
-	if [ -f "result.txt" ]; then rm result.txt; fi ; \
+	if [ -f "result1.txt" ]; then rm result1.txt; fi ; \
+	if [ -f "result2.txt" ]; then rm result2.txt; fi ; \
+	if [ -f "result3.txt" ]; then rm result3.txt; fi ; \
+	if [ -f "result4.txt" ]; then rm result4.txt; fi ; \
 	dir=$(rted_path)/C/array_index_out_of_bound/ ; \
 	if [ "" == "`find $$dir -name "*.bin"`" ]; then \
 	   echo "No bin files exist in $$dir" ; \
@@ -397,6 +532,22 @@ deleteAllbinfiles:
 	   rm $${dir}*.bin ; \
 	fi; \
 	dir=$(rted_path)/C/string_errors/ ; \
+	if [ "" == "`find $$dir -name "*.bin"`" ]; then \
+	   echo "No bin files exist in $$dir" ; \
+	else \
+	   echo "Deleting bin files in $$dir" ; \
+	   echo "rm $${dir}*.bin" ; \
+	   rm $${dir}*.bin ; \
+	fi;
+	dir=$(rted_path)/C/subprogram_call_errors/ ; \
+	if [ "" == "`find $$dir -name "*.bin"`" ]; then \
+	   echo "No bin files exist in $$dir" ; \
+	else \
+	   echo "Deleting bin files in $$dir" ; \
+	   echo "rm $${dir}*.bin" ; \
+	   rm $${dir}*.bin ; \
+	fi;
+	dir=$(rted_path)/C/allocation_deallocation_errors/ ; \
 	if [ "" == "`find $$dir -name "*.bin"`" ]; then \
 	   echo "No bin files exist in $$dir" ; \
 	else \

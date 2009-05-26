@@ -545,7 +545,7 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize, 
   }
 
   if (rtsi()->funccallDebug)
-    printf("Handling param1-2 - dynamic ? size = %d   param1AllocLength = %d, param1ActualLength = %d\n",sizeKnown,param1AllocLength,param1ActualLength);
+    printf("Handling param1-2 - dynamic ? size = %d   param1AllocLength = %d, param1ActualLength = %d     isModifyingCall : %d \n",sizeKnown,param1AllocLength,param1ActualLength, modifyingCall);
   
   assert(param1ActualLength>-1);
   if (rtsi()->funccallDebug)
@@ -646,14 +646,14 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize, 
   }
   // check if the actual size is larger than the allocated size
   if ( zero1pos>param1ActualLength) {
-    char* res1 = ((char*)"Param1 : String not NULL terminated. ActualLength = ");
-    char* res2 = ((char*)"  AllocLength = ");
+    char* res1 = ((char*)"Param1 : String not NULL terminated. zero1pos: ");
+    char* res2 = ((char*)"  > ActualLength:");
     int sizeInt = 2*sizeof(int);
     char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ 1);
-    sprintf(res,"%s%d%s%d",res1,param1ActualLength,res2,param1AllocLength);
+    sprintf(res,"%s%d%s%d",res1,zero1pos,res2,param1ActualLength);
     RuntimeSystem_callExit(filename, line, res, stmtStr);  
   } else if (param1ActualLength>=param1AllocLength) {
-    char* res1 = ((char*)"Param1 : Writing outside allocated memory.  ActualLength = ");
+    char* res1 = ((char*)"Param1 : Writing/Reading outside allocated memory.  ActualLength = ");
     char* res2 = ((char*)" >= AllocLength = ");
     int sizeInt = 2*sizeof(int);
     char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ 1);
@@ -670,15 +670,15 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize, 
 
     // check if the actual size is larger than the allocated size
     if ( zero2pos>param2ActualLength) {
-      char* res1 = ((char*)"Param2 : String not NULL terminated. ActualLength = ");
-      char* res2 = ((char*)"  AllocLength = ");
+      char* res1 = ((char*)"Param2 : String not NULL terminated. zero2pos: ");
+      char* res2 = ((char*)"  > ActualLength:");
       int sizeInt = 2*sizeof(int);
       char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ 1);
-      sprintf(res,"%s%d%s%d",res1,param2ActualLength,res2,param2AllocLength);
+      sprintf(res,"%s%d%s%d",res1,zero2pos,res2,param2ActualLength);
       RuntimeSystem_callExit(filename, line, res, stmtStr);  
     } else if (param2ActualLength>=param2AllocLength) {
-      char* res1 = ((char*)"Param2 : Writing outside allocated memory. ActualLength = ");
-      char* res2 = ((char*)" >= AllocLength = ");
+      char* res1 = ((char*)"Param2 : Writing/Reading outside allocated memory. ActualLength:");
+      char* res2 = ((char*)" >= AllocLength:");
       int sizeInt = 2*sizeof(int);
       char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ 1);
       sprintf(res,"%s%d%s%d",res1,param2ActualLength,res2,param2AllocLength);
@@ -732,21 +732,24 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize, 
 		 param2StringVal, param2ActualLength, param2AllocLength, param3Size);
 	if (parameters==2) {
 	  if ((param2AllocLength>param1AllocLength)) {
-	    char* res1 = ((char*)"p2 Invalid Operation,  operand1 size=");
-	    char* res2 = ((char*)"  operand2 size=");
+	    char* res1 = ((char*)"p2 Invalid Operation,  operand2:");
+	    char* res2 = ((char*)"  >  operand1:");
 	    int sizeInt = 2*sizeof(int);
 	    char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ 1);
-	    sprintf(res,"%s%d%s%d",res1,param1ActualLength,res2,param2ActualLength);
+	    sprintf(res,"%s%d%s%d",res1,param2AllocLength,res2,param1AllocLength);
 	    RuntimeSystem_callExit(filename, line, res, stmtStr);
 	  }
 	} else if (parameters==3) {
-	  if ((param3Size>param1ActualLength || param3Size>param2ActualLength)) {
+	  if ((param3Size>param1AllocLength || param3Size>param2AllocLength)) {
 	    // make sure that if the strings do not overlap, they are both smaller than the amount of chars to copy
-	    char* res1 = ((char*)"p3 Invalid Operation,  operand1 size=");
-	    char* res2 = ((char*)"  operand2 size=");
-	    int sizeInt = 2*sizeof(int);
-	    char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ 1);
-	    sprintf(res,"%s%d%s%d",res1,param1ActualLength,res2,param2ActualLength);
+	    char* res1 = ((char*)"p3 Invalid Operation,  operand3:");
+	    char* res2 = ((char*)"  >  operand1:");
+	    char* res3 = ((char*)"  or   operand3:");
+	    char* res4 = ((char*)"  >  operand2:");
+	    int sizeInt = 4*sizeof(int);
+	    char *res = (char*)malloc(strlen(res1) + strlen(res2) +strlen(res3) + strlen(res4)+sizeInt+ 1);
+	    sprintf(res,"%s%d%s%d%s%d%s%d",res1,param3Size,res2,param1AllocLength,res3,
+		    param3Size,res4,param2AllocLength);
 	    RuntimeSystem_callExit(filename, line, res, stmtStr);
 	  } 
 	} else assert(1==0);
