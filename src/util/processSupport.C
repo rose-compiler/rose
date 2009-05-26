@@ -12,7 +12,7 @@
 #include <unistd.h>
 #include <cassert>
 #endif
-
+#include <cstdio>
 #include <stdlib.h>
 #include <string.h>
 

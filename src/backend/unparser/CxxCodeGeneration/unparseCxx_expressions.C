@@ -3821,9 +3821,17 @@ Unparse_ExprStmt::unparseThrowOp(SgExpression* expr, SgUnparse_Info& info)
                        }
                       else
                        {
+			 //Liao, 5/23/2009
+			 // This is not necessarily true.
+			 // A derived class's constructor initializer list acutally 
+			 // can call its base class's constructor, even there is no
+			 // user-defined default constructor for the base class.
+			 // In this case, the parenthesis of the superclass is still needed.
+			 // e.g: baseclass::baselcass( ):superclass() {};
+			 // See bug 351
                       // DQ (8/5/2005): Now we force the get_args() pointer to always be a valid pointer and explicitly store a
                       // bool value to control when we output the "()" after the class name.
-                         ROSE_ASSERT(constructorInitializer->get_need_parenthesis_after_name() == false);
+                         //ROSE_ASSERT(constructorInitializer->get_need_parenthesis_after_name() == false);
                       // DQ (4/1/2005) This is now fixed by forcing the unparsing of the constructor initializer to output the "()"
                       // DQ (12/3/2004): If there is no member function then the constructor is not explicit within the class.
                       // In this case we need to output the "()" after the constructor explicitly since it will not be done as 
