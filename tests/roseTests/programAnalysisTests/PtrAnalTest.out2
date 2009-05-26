@@ -41,26 +41,26 @@ ctrl: 13->14 always
 ctrl: 14->15 always
 
  Mapping 
-SgBasicBlock:{if(end ==((0))) {head =(end =(::new ::List ));}else {( *end).::List::next =(::new ::List );end =(( *end).::List::next);}( *end).::List::val = val;( *end).::List::next =((0));}:5->15
-SgIfStmt:if(end ==((0))) {head =(end =(::new ::List ));}else {( *end).::List::next =(::new ::List );end =(( *end).::List::next);}:5->12
+SgBasicBlock:{if(end ==((0))) {head =(end =(::new ::List()));}else {( *end).::List::next =(::new ::List());end =(( *end).::List::next);}( *end).::List::val = val;( *end).::List::next =((0));}:5->15
+SgIfStmt:if(end ==((0))) {head =(end =(::new ::List()));}else {( *end).::List::next =(::new ::List());end =(( *end).::List::next);}:5->12
 SgExprStatement:end ==((0));:5->6
 SgEqualityOp:end ==((0)):6v:appendList-2-3
 SgVarRefExp:end:6v:appendList-2-end
 SgCastExp:((0)):6v:appendList-2-4
 SgIntVal:(0):5c:(0)
-SgBasicBlock:{head =(end =(::new ::List ));}:7->8
-SgExprStatement:head =(end =(::new List ));:7->8
-SgAssignOp:head =(end =(::new List )):8v:appendList-2-head
+SgBasicBlock:{head =(end =(::new ::List()));}:7->8
+SgExprStatement:head =(end =(::new List()));:7->8
+SgAssignOp:head =(end =(::new List())):8v:appendList-2-head
 SgVarRefExp:head:8v:appendList-2-head
-SgAssignOp:(end =(::new List )):8v:appendList-2-end
+SgAssignOp:(end =(::new List())):8v:appendList-2-end
 SgVarRefExp:end:7v:appendList-2-end
-SgBasicBlock:{( *end).::List::next =(::new ::List );end =(( *end).::List::next);}:9->12
-SgExprStatement:( *end).List::next =(::new List );:9->10
-SgAssignOp:( *end).List::next =(::new List ):10v:appendList-2-5
+SgBasicBlock:{( *end).::List::next =(::new ::List());end =(( *end).::List::next);}:9->12
+SgExprStatement:( *end).List::next =(::new List());:9->10
+SgAssignOp:( *end).List::next =(::new List()):10v:appendList-2-5
 SgDotExp:( *end).List::next:10v:appendList-2-5
 SgPointerDerefExp:( *end):10v:appendList-2-5
 SgVarRefExp:end:10v:appendList-2-end
-SgNewExp:(::new List ):10v:appendList-2-5
+SgNewExp:(::new List()):10v:appendList-2-5
 SgExprStatement:end =(( *end).List::next);:11->12
 SgAssignOp:end =(( *end).List::next):12v:appendList-2-end
 SgVarRefExp:end:12v:appendList-2-end

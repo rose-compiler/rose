@@ -19,9 +19,9 @@ void visitorTraversal::visit(SgNode* node)
 {
   // Some OmpAttribute may be attached redundantly,
   // e.g., omp for is attached to both the pragma and the loop. 
-  OmpAttribute* attribute = getOmpAttribute(node);
-  if (attribute)
-    attribute->print();//debug only for now
+  OmpAttributeList* attributelist = getOmpAttributeList(node);
+  if (attributelist)
+    attributelist->print();//debug only for now
 }
 
 // must have argc and argv here!!

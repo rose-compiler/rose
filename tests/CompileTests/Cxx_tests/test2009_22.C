@@ -12,10 +12,12 @@ public:
 
 IdxSet& IdxSet::operator=(const IdxSet& rhs)
 {
+#if 0  
    if (this != &rhs)
    {
          i = rhs.i;
    }
+#endif   
    return *this;
 }
 
@@ -31,7 +33,8 @@ class DIdxSet: public IdxSet
 DIdxSet::DIdxSet(const DIdxSet& old)
    : IdxSet()
 {
-   j = old.j;
+//   j = old.j;
+// EDG output is:  this->IdxSet::operator= ( old );
    IdxSet::operator= ( old );
 }
 

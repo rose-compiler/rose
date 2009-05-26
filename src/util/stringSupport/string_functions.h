@@ -6,7 +6,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
-
+#include <stdint.h>
 #if ROSE_MICROSOFT_OS
 // This is the boost solution for lack of support for stdint.h (e.g. types such as "uint64_t")
 #include <msvc_stdint.h>

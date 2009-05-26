@@ -1006,6 +1006,7 @@ namespace AutoParallelization
     } // end of iterate dependence graph 
   }// end DependenceElimination()
 
+#if 0 // refactored into the OmpSupport namespace
 
   //Generate and insert #pragma omp parallel for based on OmpAttribute
   //This phase is deliberately separated from building and attaching OmpAttribute
@@ -1043,7 +1044,7 @@ namespace AutoParallelization
       SageInterface::insertStatementBefore(cur_stmt, pragma);
     } // if (att)
   }
-
+#endif
   bool ParallelizeOutermostLoop(SgNode* loop, ArrayInterface* array_interface, ArrayAnnotation* annot)
   {
     ROSE_ASSERT(loop&& array_interface && annot);
@@ -1090,7 +1091,8 @@ namespace AutoParallelization
       omp_attribute->setOmpDirectiveType(OmpSupport::e_parallel_for);
       OmpSupport::addOmpAttribute(omp_attribute,sg_node);
       // 6. Generate and insert #pragma omp parallel for 
-      generatedOpenMPPragmas(sg_node);
+     // generatedOpenMPPragmas(sg_node);
+      OmpSupport::generatePragmaFromOmpAttribute(sg_node);
     }
     else
     {

@@ -246,19 +246,24 @@ namespace autoTuning
       std::vector<SgForStatement*>::reverse_iterator iter;
       for (iter = forLoopVec.rbegin(); iter != forLoopVec.rend(); iter ++)
       {
-        OmpSupport::OmpAttribute* attribute = OmpSupport::getOmpAttribute(*iter);
-        if (attribute)
-        {  // Could be either #pragma omp for or #pragma omp parallel for
-          if ((attribute->getOmpDirectiveType()==OmpSupport::e_for)||
-              (attribute->getOmpDirectiveType()==OmpSupport::e_parallel_for))
-          {
-            if (enable_debug)
-              cout<<"Found OMP attribute attached on loop at line:"<<(*iter)->get_file_info()->get_line()<<endl;
-            outermost_loop = *iter;
-            break;
-          }
-        }
-      } 
+        OmpSupport::OmpAttributeList* attributelist = OmpSupport::getOmpAttributeList(*iter);
+        if (attributelist)
+	{
+	  std::vector<OmpSupport::OmpAttribute*>::iterator iter2;
+	  for (iter2 = attributelist->ompAttriList.begin(); iter2!=attributelist->ompAttriList.end(); iter2++)
+	  {  // Could be either #pragma omp for or #pragma omp parallel for
+	    OmpSupport::OmpAttribute* attribute = *iter2;
+	    if ((attribute->getOmpDirectiveType()==OmpSupport::e_for)||
+		(attribute->getOmpDirectiveType()==OmpSupport::e_parallel_for))
+	    {
+	      if (enable_debug)
+		cout<<"Found OMP attribute attached on loop at line:"<<(*iter)->get_file_info()->get_line()<<endl;
+	      outermost_loop = *iter;
+	      break;
+	    }
+	  }
+	}
+      }// end for (loop vector) 
 #if 0      
       SgForStatement* forloop = isSgForStatement(SageInterface::getEnclosingNode<SgForStatement>(outermost_loop));
       if (forloop != NULL )

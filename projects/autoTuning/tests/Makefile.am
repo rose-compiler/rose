@@ -49,7 +49,7 @@ rose_jacobi4.c:../autoTuning
 ../autoTuning:
 	make -C ../.
 
-EXTRA_DIST = jacobi-raw.xml jacobi.c jacobi.gprof.txt makelib
+EXTRA_DIST = jacobi-raw.xml jacobi.c jacobi.gprof.txt makelib jacobi-omp.c
 
 clean-local:
 	rm -f *.o rose_*.[cC] *.dot  OUT_*
@@ -59,6 +59,7 @@ if ROSE_BUILD_ROSEHPCT
 check-local:
 	@echo "Test for auto tuning... "
 	@$(MAKE) rose_jacobi.c
+	@$(MAKE) rose_jacobi-omp.c
 	@$(MAKE) rose_jacobi2.c
 	@$(MAKE) rose_jacobi3.c
 	@$(MAKE) rose_jacobi4.c

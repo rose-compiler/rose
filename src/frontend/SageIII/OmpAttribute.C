@@ -45,17 +45,24 @@ namespace OmpSupport{
         getNextStatement(isSgStatement(node))->addNewAttribute("OmpAttribute",ompattribute);
       }
     }
-#endif    
-    node->addNewAttribute("OmpAttribute",ompattribute);
+#endif 
+    OmpAttributeList* cur_list =  getOmpAttributeList(node);
+    if (!cur_list)
+    {
+      cur_list = new OmpAttributeList();
+      node->addNewAttribute("OmpAttributeList",cur_list);
+    }
+    //TODO avoid duplicated ompattributes for the same OpenMP directive
+    cur_list->ompAttriList.push_back(ompattribute);
   }
 
   //! Get OmpAttribute from a SgNode
-  OmpAttribute* getOmpAttribute(SgNode* node)
+  OmpAttributeList* getOmpAttributeList(SgNode* node)
   {
-    OmpAttribute* result = NULL;
-    AstAttribute* astattribute=node->getAttribute("OmpAttribute");
+    OmpAttributeList* result = NULL;
+    AstAttribute* astattribute=node->getAttribute("OmpAttributeList");
     if (astattribute)
-      result = dynamic_cast<OmpAttribute* > (astattribute);
+      result = dynamic_cast<OmpAttributeList* > (astattribute);
     return result;  
   }
 
@@ -74,7 +81,7 @@ namespace OmpSupport{
     }
     else
     {
-      cerr<<"OmpAttribute::addClause(): Unrecognized clause type:"<<clause_type<<endl;
+      cerr<<"OmpAttribute::addClause(): Unrecognized clause type:"<<OmpSupport::toString(clause_type)<<endl;
       ROSE_ASSERT(false);
     }
   }
@@ -260,6 +267,8 @@ namespace OmpSupport{
       case e_unknown: result ="unknown" ; break;
       case e_parallel: result = "parallel" ; break;
       case e_for: result = "for"; break;
+      case e_do: result = "do"; break;
+      case e_workshare: result = "workshare"; break;
       case e_sections: result = "sections"; break;
       case e_section: result = "section"; break;
       case e_single: result = "single"; break;
@@ -273,12 +282,28 @@ namespace OmpSupport{
 
       case e_threadprivate: result = "threadprivate"; break;
       case e_parallel_for: result = "parallel for"; break;
+      case e_parallel_do: result = "parallel do"; break;
       case e_parallel_sections: result = "parallel sections"; break;
+      case e_parallel_workshare: result = "parallel workshare"; break;
       case e_task: result = "task"; break;
       case e_taskwait: result = "taskwait"; break;
       case e_ordered_directive: result = "ordered"; break;
 
-                                // clauses
+      // Fortran only end directives
+      case e_end_critical: result = "end critical"; break;
+      case e_end_do: result = "end do"; break;
+      case e_end_master: result = "end master"; break;
+      case e_end_ordered:result = "end ordered"; break;
+      case e_end_parallel_do:result = "end parallel do"; break;
+      case e_end_parallel_sections:result = "end parallel sections"; break;
+      case e_end_parallel_workshare:result = "end parallel workshare"; break;
+      case e_end_parallel:result = "end parallel"; break;
+      case e_end_sections:result = "end sections"; break;
+      case e_end_single:result = "end single"; break;
+      case e_end_task:result = "end task"; break;
+      case e_end_workshare:result = "end workshare"; break;
+
+      // clauses
       case e_default: result = "default"; break;
       case e_shared: result = "shared"; break;
       case e_private: result = "private"; break;
@@ -316,6 +341,17 @@ namespace OmpSupport{
       case e_reduction_min: result = "min"; break;
       case e_reduction_max: result = "max"; break;
 
+      case e_reduction_and: result = ".and."; break;
+      case e_reduction_or: result = ".or."; break;
+      case e_reduction_eqv: result = ".eqv."; break;
+
+      case e_reduction_neqv: result = ".neqv."; break;
+      case e_reduction_iand: result = "iand"; break;
+
+      case e_reduction_ior: result = "ior"; break;
+      case e_reduction_ieor: result = "ieor"; break;
+
+
       case e_schedule_none: result = "not-specified"; break;
       case e_schedule_static: result = "static"; break;
       case e_schedule_dynamic: result = "dynamic"; break;
@@ -326,8 +362,9 @@ namespace OmpSupport{
       case e_not_omp: result = "not_omp"; break;
     }
 
-    if (isDirective(omp_type))
-      result= "omp " + result;
+// Not true for Fortran!!
+//    if (isDirective(omp_type))
+//      result= "omp " + result;
     return result;
   }
   bool isDirective(omp_construct_enum omp_type)
@@ -335,8 +372,11 @@ namespace OmpSupport{
     bool result = false;
     switch (omp_type)
     { // 16 directives as OpenMP 3.0
+      //+2 for Fortran
       case e_parallel:
       case e_for:
+      case e_do:
+      case e_workshare:
       case e_sections:
       case e_section:
       case e_single:
@@ -349,11 +389,28 @@ namespace OmpSupport{
 
       case e_threadprivate:
       case e_parallel_for:
+      case e_parallel_do: //fortran
       case e_parallel_sections:
+      case e_parallel_workshare://fortran
       case e_task:
       case e_taskwait:
 
       case e_ordered_directive:
+
+      // Fortran only end directives
+      case e_end_critical:
+      case e_end_do:
+      case e_end_master:
+      case e_end_ordered:
+      case e_end_parallel_do:
+      case e_end_parallel_sections:
+      case e_end_parallel_workshare:
+      case e_end_parallel:
+      case e_end_sections:
+      case e_end_single:
+      case e_end_task:
+      case e_end_workshare:
+	
         result = true;
         break;
       default:
@@ -475,6 +532,15 @@ namespace OmpSupport{
           result+=" (" + varListString + ")"; 
         }
       }// end of flush(), threadprivate()
+      // optional nowait for fortran: end do, end sections, end workshare, end single
+      else if ((omp_type == e_end_do)
+	     ||(omp_type == e_end_sections)
+	     ||(omp_type == e_end_workshare
+	     ||(omp_type == e_end_single)))
+      {
+        if (hasClause(e_nowait)) 
+	  result += " "+ OmpSupport::toString(e_nowait);
+      }
     } // end if directives
     //Clauses ------------------
     else if (isClause(omp_type))
@@ -619,19 +685,52 @@ namespace OmpSupport{
     return result;
   }
 
+  std::string OmpAttributeList::toOpenMPString()
+  {
+    string result;
+    std::vector<OmpAttribute*>::const_iterator citer;
+    for (citer= ompAttriList.begin(); citer != ompAttriList.end(); citer++)
+    {
+      OmpAttribute* attribute = *citer;
+      result += attribute->toOpenMPString();
+    }
+    return result;
+  }
+
   //! pretty print of OmpAttribute, ideally should reproduce a legal OpenMP pragma
   void OmpAttribute::print()
   { 
-    std::cout<<"----------------------"<<std::endl;
+    std::cout<<"----------OmpAttribute::print()------------:\n"<<this<<std::endl;
     SgPragmaDeclaration* pragma = getPragmaDeclaration();
+    PreprocessingInfo* info = getPreprocessingInfo();
+    // directive can come from only one of two sources, not both. 
+    ROSE_ASSERT(pragma == NULL || info == NULL); 
     if (pragma)
-      std::cout<<"Original OpenMP pragma is:\n\t\t#pragma "<<pragma->get_pragma()->get_pragma()<<std::endl;
-    std::cout<<"Reproduced OpenMP pragma is:\n";
+      std::cout<<"Original  :\t#pragma "<<pragma->get_pragma()->get_pragma()<<std::endl;
+    else if (info)
+      std::cout<<"Original  :\t"<<info->getString()<<std::endl;
+    else 
+      std::cout<<"Warning: Cannot find an associated AST piece to get the original OpenMP directive text." <<std::endl;
+
+      std::cout<<"Reproduced:\t";
     // Generate OpenMP pragma from OmpAttribute
-    cout<<"\t\t#pragma "<<toOpenMPString();
+    if (pragma)
+      cout<<"#pragma omp "<<toOpenMPString();
+    else
+      cout<<"!$omp "<<toOpenMPString();
     cout<<std::endl;
 
   }//end print
+
+  void OmpAttributeList::print()
+  {
+    std::vector<OmpAttribute*>::const_iterator citer;
+    for (citer= ompAttriList.begin(); citer != ompAttriList.end(); citer++)
+    {
+      OmpAttribute* attribute = *citer;
+      attribute->print();
+    }
+  }
 
   //! It does not set omp_type and pragma, leaving constructors to do it
   void OmpAttribute::init()
@@ -641,6 +740,7 @@ namespace OmpSupport{
 
     isOrphaned = false;
     hasName = false;
+    pinfo = NULL;
 
     schedule_kind = e_schedule_none;
     wrapperCount=0;
@@ -650,34 +750,44 @@ namespace OmpSupport{
   {
     SgStatement* cur_stmt = isSgStatement(sg_node);
     ROSE_ASSERT(cur_stmt != NULL);
-    OmpAttribute* att = getOmpAttribute(sg_node);
-    if(att)
+    // For C/C++, only one OmpAttribute could be attached to each SgNOde
+    // since C/C++ have scopes for each of them
+    // They cannot be used together in one scope?
+    // But we prepare the worst: it may be allowed?
+    OmpAttributeList* attlist = getOmpAttributeList(sg_node);
+    if(attlist)
     {
       // No need to duplicate a pragma for an existing OpenMP pragma
       if (isSgPragmaDeclaration(cur_stmt))
-        return;
+	return;
       // Should only insert the pragma statement
       // if there is no existing OpenMP pragma with the same attribute
       SgStatement* prev_stmt = SageInterface::getPreviousStatement(cur_stmt);
       if (prev_stmt)
       {
-        SgPragmaDeclaration * prev_pragma = isSgPragmaDeclaration(prev_stmt);
-        if (prev_pragma)
-        {
-          OmpAttribute* prev_att= getOmpAttribute(prev_pragma);
-          if (att == prev_att)
-            return;
-        }
+	SgPragmaDeclaration * prev_pragma = isSgPragmaDeclaration(prev_stmt);
+	if (prev_pragma)
+	{
+	  OmpAttributeList* prev_attlist= getOmpAttributeList(prev_pragma);
+	  if (attlist == prev_attlist)
+	    return;
+	}
       }
-      // Now we are safe to append the pragma
-      if (att->getOmpDirectiveType() ==e_for ||att->getOmpDirectiveType() ==e_parallel_for)
-        ROSE_ASSERT(isSgForStatement(cur_stmt) != NULL);
 
-      string pragma_str= att->toOpenMPString();
-      SgPragmaDeclaration * pragma = SageBuilder::buildPragmaDeclaration(pragma_str);
-      SageInterface::insertStatementBefore(cur_stmt, pragma);
-    } // if (att)
-  }
+      // Now we are safe to append the pragma
+      std::vector<OmpAttribute*>::reverse_iterator riter;
+      for (riter=attlist->ompAttriList.rbegin(); riter !=attlist->ompAttriList.rend();riter++)
+      {
+	OmpAttribute* att = *riter; //getOmpAttribute(sg_node);
+	if (att->getOmpDirectiveType() ==e_for ||att->getOmpDirectiveType() ==e_parallel_for)
+	  ROSE_ASSERT(isSgForStatement(cur_stmt) != NULL);
+
+	string pragma_str= att->toOpenMPString();
+	SgPragmaDeclaration * pragma = SageBuilder::buildPragmaDeclaration("omp "+ pragma_str);
+	SageInterface::insertStatementBefore(cur_stmt, pragma);
+      }
+    } // if (attlist)
+ }
 
 
 } //end namespace OmpSupport

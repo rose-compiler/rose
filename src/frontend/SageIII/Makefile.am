@@ -100,6 +100,7 @@ libsage3Sources = \
    fixupCopy_references.C \
    rtiHelpers.C \
    OmpAttribute.C \
+   ompFortranParser.C \
    dwarfSupport.C \
    rose_graph_support.C
 

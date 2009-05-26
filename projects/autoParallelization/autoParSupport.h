@@ -76,9 +76,10 @@ namespace AutoParallelization
   // Save the remaining dependencies which prevent parallelization
   void DependenceElimination(SgNode* sg_node, LoopTreeDepGraph* depgraph, std::vector<DepInfo>&remain, OmpSupport::OmpAttribute* attribute, ArrayInterface* array_interface=0, ArrayAnnotation* annot=0);
 
+#if 0 // refactored into the OmpSupport namespace
   //Generate and insert OpenMP pragmas according to OmpAttribute
   void generatedOpenMPPragmas(SgNode* node);
-
+#endif
   //Parallelize an input loop at its outermost loop level, return true if successful
   bool ParallelizeOutermostLoop(SgNode* loop, ArrayInterface* array_interface, ArrayAnnotation* annot);
 

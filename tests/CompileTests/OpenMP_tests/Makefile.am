@@ -3,6 +3,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 noinst_PROGRAMS = parseOmp
 parseOmp_SOURCES = parseOmp.C
 
+SUBDIRS= fortran
 INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
@@ -42,6 +43,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	orphaned-directives.c \
 	parallel.c \
 	parallelfor.c \
+	parallelfor2.c \
 	private.c \
 	privatej.c \
 	recursive.c \

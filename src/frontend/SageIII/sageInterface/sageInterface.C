@@ -9271,22 +9271,45 @@ SgNode* SageInterface::getSgNodeFromAbstractHandleString(const std::string& inpu
 
 
 //! Dump information about a SgNode for debugging
+// unparseToString() is too strict for debugging purpose
+//  we provide this instead.
 void SageInterface::dumpInfo(SgNode* node, std::string desc/*=""*/)
 {
   ROSE_ASSERT(node != NULL);
   cout<<desc<<endl;
-  cout<<node<<" "<<node->class_name();
+  // base information for all SgNode:
+  cout<<"///////////// begin of SageInterface::dumpInfo() ///////////////"<<endl;
+  cout<<"--------------base info. for SgNode---------------"<<endl;
+  cout<<node<<" "<<node->class_name()<<endl;
   SgLocatedNode* snode = isSgLocatedNode(node);
   if (snode)
   {
-    cout<<"\nat file:"<< snode->get_file_info()->get_filename()
-    << ":"<<snode->get_file_info()->get_line()<<"-"
-    << snode->get_file_info()->get_col();
+    // source file info. dump
+    cout<<"--------------source location info. for SgNode---------------"<<endl;
+    cout<<snode->get_file_info()->get_filename()
+      << ":"<<snode->get_file_info()->get_line()<<"-"
+      << snode->get_file_info()->get_col()<<endl;
+    // preprocessing info dump
+    AttachedPreprocessingInfoType *comments = snode->getAttachedPreprocessingInfo ();
+    if (comments)
+    {
+      cout<<"--------------preprocessing info. for SgNode---------------"<<endl;
+      AttachedPreprocessingInfoType::iterator i;
+      cout<<"Total attached preprocessingInfo count="<<comments->size()<<endl;
+      for (i = comments->begin (); i != comments->end (); i++)
+      {
+	PreprocessingInfo * pinfo = *i;
+	pinfo->display("");
+      }
+    }
+    cout<<"--------------name info. for SgNode---------------"<<endl;
+    // print out namea for named nodes
     SgFunctionDeclaration * decl = isSgFunctionDeclaration(snode);
     if (decl)
       cout<<"\tqualified name="<<decl->get_qualified_name().getString()<<endl;
   }
   cout<<endl;
+  cout<<"///////////// end of SageInterface::dumpInfo() ///////////////"<<endl;
 }
 
 //! Collect all read and write references within stmt, which can be a function, a scope statement, or a single statement. Note that a reference can be both read and written, like i++

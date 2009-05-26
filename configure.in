@@ -1246,6 +1246,7 @@ tests/CompileTests/ExpressionTemplateExample_tests/Makefile
 tests/CompileTests/PythonExample_tests/Makefile
 tests/CompileTests/UPC_tests/Makefile
 tests/CompileTests/OpenMP_tests/Makefile
+tests/CompileTests/OpenMP_tests/fortran/Makefile
 tests/CompileTests/copyAST_tests/Makefile
 tests/CompileTests/colorAST_tests/Makefile
 tests/CompileTests/mergeAST_tests/Makefile
