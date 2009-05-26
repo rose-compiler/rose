@@ -1,3 +1,58 @@
+2009-05-26 19:50  liao6
+
+	* [r5934] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/projects/autoParallelization/autoParSupport.C,
+	  /trunk/ROSE/projects/autoParallelization/autoParSupport.h,
+	  /trunk/ROSE/projects/autoTuning/autoTuningSupport.C,
+	  /trunk/ROSE/projects/autoTuning/tests/Makefile.am,
+	  /trunk/ROSE/src/backend/unparser/CxxCodeGeneration/unparseCxx_expressions.C,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/sage_gen_be.C,
+	  /trunk/ROSE/src/frontend/SageIII/Makefile.am,
+	  /trunk/ROSE/src/frontend/SageIII/OmpAttribute.C,
+	  /trunk/ROSE/src/frontend/SageIII/OmpAttribute.h,
+	  /trunk/ROSE/src/frontend/SageIII/ompFortranParser.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C,
+	  /trunk/ROSE/src/util/processSupport.C,
+	  /trunk/ROSE/src/util/stringSupport/string_functions.h,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/Makefile-pass.inc,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_19.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_20.C,
+	  /trunk/ROSE/tests/CompileTests/Cxx_tests/test2009_22.C,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/fortran,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/fortran/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/fortran/helloworld.f,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/fortran/helloworld0.f,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/fortran/helloworld2.f,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/fortran/jacobi.f,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/fortran/paralledo.f90,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/parallelfor2.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/parseOmp.C,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/PtrAnalTest.out2:
+	  Added an OpenMP 3.0 Fortran parser and others
+	  
+	  * the Fortran OpenMP parser is hand-coded to handle strange
+	  syntax in Fortran
+	  ** handle usual separated keywords like "end parallel do" and
+	  concatenated keywords "endparalleldo"
+	  ** handle all OpenMP 3.0 directive types
+	  ** handle all clause types for clause(varlist),
+	  reduction(op:list), and simple clauses
+	  ** Attach OmpAttributeList instead of OmpAttribute to a SgNode to
+	  support multiple OpenMP style comments allowed for a single
+	  Fortran statement
+	  * fixed part of bug 351: restored lost '()' for some class
+	  constructor calls, added test case Cxx_tests/test2009_19.C
+	  * SageInterface::dumpInfo(): dump preprocessing information for a
+	  node
+	  * added a few headers to allow GCC 4.4 to compile some files
+
+2009-05-26 18:33  panas2
+
+	* [r5933] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.c: work on RTED
+
 2009-05-22 21:26  liao6
 
 	* [r5884] /trunk/ROSE/docs/Rose/footer.html.in: experiment a web
