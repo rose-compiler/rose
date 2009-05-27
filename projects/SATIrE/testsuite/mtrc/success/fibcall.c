@@ -1,4 +1,4 @@
-/* $Id: fibcall.c,v 1.1 2008-04-25 10:33:55 adrian Exp $ */
+/* MDH WCET BENCHMARK SUITE. File version $Id: fibcall.c,v 1.3 2005/11/11 10:30:19 ael01 Exp $ */
 
 /*************************************************************************/
 /*                                                                       */
@@ -42,33 +42,37 @@
 /*                                                                       */
 /*************************************************************************/
 
+ /*
+  * Changes: JG 2005/12/21: Inserted prototypes.
+  *                         Indented program.
+  */
 
+int             fib(int n);
 
-int fib(int n)
+int 
+fib(int n)
 {
-  int  i, Fnew, Fold, temp,ans;
+	int             i, Fnew, Fold, temp, ans;
 
-    Fnew = 1;  Fold = 0;
-    for ( i = 2;
-	  i <= 30 && i <= n;          /* apsim_loop 1 0 */
-	  i++ )
-    {
-      temp = Fnew;
-      Fnew = Fnew + Fold;
-      Fold = temp;
-    }
-    ans = Fnew;
-  return ans;
+	Fnew = 1;
+	Fold = 0;
+	for (i = 2;
+	     i <= 30 && i <= n;	/* apsim_loop 1 0 */
+	     i++) {
+		temp = Fnew;
+		Fnew = Fnew + Fold;
+		Fold = temp;
+	}
+	ans = Fnew;
+	return ans;
 }
 
-int main()
+int 
+main()
 {
-  int a;
+	int             a;
 
-  a = 30;
-  fib(a);
-  return a;
+	a = 30;
+	fib(a);
+	return a;
 }
-
-
-

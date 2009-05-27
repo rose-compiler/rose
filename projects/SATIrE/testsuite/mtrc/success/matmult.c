@@ -1,4 +1,4 @@
-/* $Id: matmult.c,v 1.1 2008-04-25 10:33:55 adrian Exp $ */
+/* MDH WCET BENCHMARK SUITE. File version $Id: matmult.c,v 1.3 2005/11/11 10:31:26 ael01 Exp $ */
 
 /* matmult.c */
 /* was mm.c! */
@@ -16,6 +16,12 @@
  * This is a program that was developed from mm.c to matmult.c by
  * Thomas Lundqvist at Chalmers.
  *----------------------------------------------------------------------*/
+
+
+/* Changes:
+ * JG 2005/12/12: Indented program.
+ */
+ 
 #define UPPSALAWCET 1
 
 
@@ -35,128 +41,136 @@
 
 #define UPPERLIMIT 20
 
-typedef int matrix [UPPERLIMIT][UPPERLIMIT];
+typedef int     matrix[UPPERLIMIT][UPPERLIMIT];
 
-int Seed;
-matrix ArrayA, ArrayB, ResultArray;
+int             Seed;
+matrix          ArrayA, ArrayB, ResultArray;
 
 #ifdef UPPSALAWCET
 /* Our picky compiler wants prototypes! */
-void Multiply(matrix A, matrix B, matrix Res);
-void InitSeed(void);
-void Test(matrix A, matrix B, matrix Res);
-void Initialize(matrix Array);
-int RandomInteger(void);
+void            Multiply(matrix A, matrix B, matrix Res);
+void            InitSeed(void);
+void            Test(matrix A, matrix B, matrix Res);
+void            Initialize(matrix Array);
+int             RandomInteger(void);
 #endif
 
-void main()
+int 
+main(void)
 {
-   InitSeed();
+	InitSeed();
 /* ***UPPSALA WCET***:
    no printing please! */
 #ifndef UPPSALAWCET
-   printf("\n   *** MATRIX MULTIPLICATION BENCHMARK TEST ***\n\n");
-   printf("RESULTS OF THE TEST:\n");
+	printf("\n   *** MATRIX MULTIPLICATION BENCHMARK TEST ***\n\n");
+	printf("RESULTS OF THE TEST:\n");
 #endif
-   Test(ArrayA, ArrayB, ResultArray);
+	Test(ArrayA, ArrayB, ResultArray);
+	return 0;
 }
 
 
-void InitSeed(void)
+void 
+InitSeed(void)
 /*
  * Initializes the seed used in the random number generator.
  */
 {
-  /* ***UPPSALA WCET***:
-     changed Thomas Ls code to something simpler.
-   Seed = KNOWN_VALUE - 1; */
-  Seed = 0;
+	/*
+	 * ***UPPSALA WCET***: changed Thomas Ls code to something simpler.
+	 * Seed = KNOWN_VALUE - 1;
+	 */
+	Seed = 0;
 }
 
 
-void Test(matrix A, matrix B, matrix Res)
+void 
+Test(matrix A, matrix B, matrix Res)
 /*
  * Runs a multiplication test on an array.  Calculates and prints the
  * time it takes to multiply the matrices.
  */
 {
 #ifndef UPPSALAWCET
-   long StartTime, StopTime;
-   float TotalTime;
+	long            StartTime, StopTime;
+	float           TotalTime;
 #endif
 
-   Initialize(A);
-   Initialize(B);
+	Initialize(A);
+	Initialize(B);
 
-   /* ***UPPSALA WCET***: don't print or time */
+	/* ***UPPSALA WCET***: don't print or time */
 #ifndef UPPSALAWCET
-   StartTime = ttime ();
+	StartTime = ttime();
 #endif
 
-   Multiply(A, B, Res);
+	Multiply(A, B, Res);
 
-   /* ***UPPSALA WCET***: don't print or time */
+	/* ***UPPSALA WCET***: don't print or time */
 #ifndef UPPSALAWCET
-   StopTime = ttime();
-   TotalTime = (StopTime - StartTime) / 1000.0;
-   printf("    - Size of array is %d\n", UPPERLIMIT);
-   printf("    - Total multiplication time is %3.3f seconds\n\n", TotalTime);
+	StopTime = ttime();
+	TotalTime = (StopTime - StartTime) / 1000.0;
+	printf("    - Size of array is %d\n", UPPERLIMIT);
+	printf("    - Total multiplication time is %3.3f seconds\n\n", TotalTime);
 #endif
 }
 
 
-void Initialize(matrix Array)
+void 
+Initialize(matrix Array)
 /*
  * Intializes the given array with random integers.
  */
 {
-   int OuterIndex, InnerIndex;
+	int             OuterIndex, InnerIndex;
 
-   for (OuterIndex = 0; OuterIndex < UPPERLIMIT; OuterIndex++)
-      for (InnerIndex = 0; InnerIndex < UPPERLIMIT; InnerIndex++)
-         Array[OuterIndex][InnerIndex] = RandomInteger();
+	for (OuterIndex = 0; OuterIndex < UPPERLIMIT; OuterIndex++)
+		for (InnerIndex = 0; InnerIndex < UPPERLIMIT; InnerIndex++)
+			Array[OuterIndex][InnerIndex] = RandomInteger();
 }
 
 
-int RandomInteger(void)
+int 
+RandomInteger(void)
 /*
  * Generates random integers between 0 and 8095
  */
 {
-   Seed = ((Seed * 133) + 81) % 8095;
-   return (Seed);
+	Seed = ((Seed * 133) + 81) % 8095;
+	return (Seed);
 }
 
 
 #ifndef UPPSALAWCET
-int ttime()
+int 
+ttime()
 /*
  * This function returns in milliseconds the amount of compiler time
  * used prior to it being called.
  */
 {
-   struct tms buffer;
-   int utime;
+	struct tms      buffer;
+	int             utime;
 
-   /*   times(&buffer);   times not implemented */
-   utime = (buffer.tms_utime / 60.0) * 1000.0;
-   return (utime);
+	/* times(&buffer);   times not implemented */
+	utime = (buffer.tms_utime / 60.0) * 1000.0;
+	return (utime);
 }
 #endif
 
-void Multiply(matrix A, matrix B, matrix Res)
+void 
+Multiply(matrix A, matrix B, matrix Res)
 /*
  * Multiplies arrays A and B and stores the result in ResultArray.
  */
 {
-   register int Outer, Inner, Index;
+	register int    Outer, Inner, Index;
 
-   for (Outer = 0; Outer < UPPERLIMIT; Outer++)
-      for (Inner = 0; Inner < UPPERLIMIT; Inner++)
-      {
-         Res [Outer][Inner] = 0;
-         for (Index = 0; Index < UPPERLIMIT; Index++)
-            Res[Outer][Inner]  +=
-               A[Outer][Index] * B[Index][Inner];
-       }
+	for (Outer = 0; Outer < UPPERLIMIT; Outer++)
+		for (Inner = 0; Inner < UPPERLIMIT; Inner++) {
+			Res[Outer][Inner] = 0;
+			for (Index = 0; Index < UPPERLIMIT; Index++)
+				Res[Outer][Inner] +=
+					A[Outer][Index] * B[Index][Inner];
+		}
 }

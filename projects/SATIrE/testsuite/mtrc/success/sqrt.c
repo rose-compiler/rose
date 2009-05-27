@@ -1,4 +1,4 @@
-/* MDH WCET BENCHMARK SUITE. File version $Id: crc.c,v 1.4 2006/01/27 13:15:05 jgn Exp $ */
+/* MDH WCET BENCHMARK SUITE. File version $Id: my_sqrt.c,v 1.2 2005/12/06 16:12:58 csg Exp $ */
 
 /*************************************************************************/
 /*                                                                       */
@@ -28,17 +28,12 @@
 /*                                                                       */
 /*************************************************************************/
 /*                                                                       */
-/*  FILE: crc.c                                                          */
-/*  SOURCE : Numerical Recipes in C - The Second Edition                 */
+/*  FILE: my_sqrt.c                                                         */
+/*  SOURCE : Public Domain Code                                          */
 /*                                                                       */
 /*  DESCRIPTION :                                                        */
 /*                                                                       */
-/*     A demonstration for CRC (Cyclic Redundancy Check) operation.      */
-/*     The CRC is manipulated as two functions, icrc1 and icrc.          */
-/*     icrc1 is for one character and icrc uses icrc1 for a string.      */
-/*     The input string is stored in array lin[].                        */
-/*     icrc is called two times, one for X-Modem string CRC and the      */
-/*     other for X-Modem packet CRC.                                     */
+/*     Square root function implemented by Taylor series.                */
 /*                                                                       */
 /*  REMARK :                                                             */
 /*                                                                       */
@@ -46,89 +41,56 @@
 /*                                                                       */
 /*                                                                       */
 /*************************************************************************/
-/* Changes:
- * JG 2005/12/12: Indented program.
+
+/* Changes: Indented program. Added a main program. Changed fabs and my_sqrt to fabs and my_sqrt.
  */
 
-typedef unsigned char uchar;
-#define LOBYTE(x) ((uchar)((x) & 0xFF))
-#define HIBYTE(x) ((uchar)((x) >> 8))
 
-unsigned char   lin[256] = "asdffeagewaHAFEFaeDsFEawFdsFaefaeerdjgp";
+float           my_fabs(float x);
+float           my_sqrt(float val);
 
-unsigned short  icrc1(unsigned short crc, unsigned char onech);
-unsigned short 
-icrc(unsigned short crc, unsigned long len,
-     short jinit, int jrev);
-
-unsigned short 
-icrc1(unsigned short crc, unsigned char onech)
+float 
+my_fabs(float x)
 {
-	int             i;
-	unsigned short  ans = (crc ^ onech << 8);
-
-	for (i = 0; i < 8; i++) {
-		if (ans & 0x8000)
-			ans = (ans <<= 1) ^ 4129;
-		else
-			ans <<= 1;
-	}
-	return ans;
+	if (x < 0)
+		return -x;
+	else
+		return x;
 }
 
-unsigned short 
-icrc(unsigned short crc, unsigned long len,
-     short jinit, int jrev)
+float 
+my_sqrt(float val)
 {
-	unsigned short  icrc1(unsigned short crc, unsigned char onech);
-	static unsigned short icrctb[256], init = 0;
-	static uchar    rchr[256];
-	unsigned short  tmp1, tmp2, j, cword = crc;
-	static uchar    it[16] = {0, 8, 4, 12, 2, 10, 6, 14, 1, 9, 5, 13, 3, 11, 7, 15};
+	float           x = val / 10;
 
-	if (!init) {
-		init = 1;
-		for (j = 0; j <= 255; j++) {
-			icrctb[j] = icrc1(j << 8, (uchar) 0);
-			rchr[j] = (uchar) (it[j & 0xF] << 4 | it[j >> 4]);
+	float           dx;
+
+	double          diff;
+	double          min_tol = 0.00001;
+
+	int             i, flag;
+
+	flag = 0;
+	if (val == 0)
+		x = 0;
+	else {
+		for (i = 1; i < 20; i++) {
+			if (!flag) {
+				dx = (val - (x * x)) / (2.0 * x);
+				x = x + dx;
+				diff = val - (x * x);
+				if (my_fabs(diff) <= min_tol)
+					flag = 1;
+			} else
+				x = x;
 		}
 	}
-	if (jinit >= 0)
-		cword = ((uchar) jinit) | (((uchar) jinit) << 8);
-	else if (jrev < 0)
-		cword = rchr[HIBYTE(cword)] | rchr[LOBYTE(cword)] << 8;
-#ifdef DEBUG
-	printf("len = %d\n", len);
-#endif
-	for (j = 1; j <= len; j++) {
-		if (jrev < 0) {
-			tmp1 = rchr[lin[j]] ^ HIBYTE(cword);
-		} else {
-			tmp1 = lin[j] ^ HIBYTE(cword);
-		}
-		cword = icrctb[tmp1] ^ LOBYTE(cword) << 8;
-	}
-	if (jrev >= 0) {
-		tmp2 = cword;
-	} else {
-		tmp2 = rchr[HIBYTE(cword)] | rchr[LOBYTE(cword)] << 8;
-	}
-	return (tmp2);
+	return (x);
 }
-
 
 int 
 main(void)
 {
-
-	unsigned short  i1, i2;
-	unsigned long   n;
-
-	n = 40;
-	lin[n + 1] = 0;
-	i1 = icrc(0, n, (short) 0, 1);
-	lin[n + 1] = HIBYTE(i1);
-	lin[n + 2] = LOBYTE(i1);
-	i2 = icrc(i1, n + 2, (short) 0, 1);
+	my_sqrt(19.5);
 	return 0;
 }

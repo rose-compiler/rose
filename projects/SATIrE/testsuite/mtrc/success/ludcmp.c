@@ -1,4 +1,4 @@
-/* MDH WCET BENCHMARK SUITE. File version $Id: ludcmp.c,v 1.1 2008-04-25 10:33:55 adrian Exp $ */
+/* MDH WCET BENCHMARK SUITE. File version $Id: ludcmp.c,v 1.2 2006/01/27 13:15:28 jgn Exp $ */
 
 /*************************************************************************/
 /*                                                                       */
