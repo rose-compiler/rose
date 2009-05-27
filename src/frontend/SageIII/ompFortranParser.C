@@ -7,9 +7,10 @@
 #include "rose.h"
 #include "OmpAttribute.h"
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 
-// maximum length for a buffer for a variable or OpenMP construct name
+// maximum length for a buffer for a variable, constant, or OpenMP construct name
 #define OFS_MAX_LEN 256
 using namespace OmpSupport;
 // Parse a SgNode's OpenMP style comments (str) into OmpAttribute
@@ -20,6 +21,7 @@ static const char* c_char = NULL; // current characters being scanned
 static SgNode* c_sgnode = NULL; // current SgNode associated with the OpenMP directive
 static OmpSupport::OmpAttribute* ompattribute = NULL; // the current attribute (directive) being built
 static omp_construct_enum omptype= e_unknown; // the current clause (or reduction operation type) being filled out
+static SgExpression * current_exp = NULL; // the current expression AST tree being built
 //--------------omp fortran scanner (ofs) functions------------------
 //
 // note: ofs_skip_xxx() optional skip 0 or more patterns
@@ -201,6 +203,47 @@ static bool ofs_is_identifier_char()
   return (ofs_is_letter()||ofs_is_digit()||(*c_char =='_')||(*c_char =='$'));
 }
 
+//Scan input c str to match an integer constant, 
+//return true if successful and save the value in result
+// return false otherwise, and undo side effects. 
+// TODO handle sign, binary, hex format?
+static bool ofs_match_integer_const(int * result)
+{
+  char buffer[OFS_MAX_LEN];
+  const char* old_char = c_char; 
+  ofs_skip_whitespace();
+  // return false if the first char is not a digit
+  if (!ofs_is_digit())
+  {
+    c_char = old_char;
+    return false; 
+  }
+
+  // Now we may have digits
+  int i=0; 
+  do 
+  {
+    buffer[i]= *c_char;
+    i++;
+    c_char++;
+
+  } while (ofs_is_digit()); 
+  buffer[i]='\0';
+ 
+  // check tail to ensure digit sequence is independent (not part of another identifier)
+  // but it can be followed by space ',' '[' '{' etc.
+  // TODO other cases??
+  if (ofs_is_letter()) 
+  {
+    c_char = old_char;
+    return false;
+  }
+  // convert buffer to an integer value and return
+ // printf("int buffer is %s\n",buffer);
+  *result = atoi(buffer);
+  return true; 
+}
+
 // Try to retrieve a possible name identifier from the head
 // store the result in buffer
 // for example: it can be used to match a variable in a list.
@@ -226,6 +269,115 @@ static bool ofs_match_anyname(char* buffer)
 
   buffer[i]= '\0';
   return true;
+}
+
+//It creates the current expression AST subtree if successful.
+static bool ofs_match_expression()
+{
+  int resulti;
+  char varRef[OFS_MAX_LEN];
+  const char * old_char = c_char;
+
+  // Integer constant value
+  if (ofs_match_integer_const(&resulti))
+  {
+    current_exp= SageBuilder::buildIntVal(resulti);
+  }
+  // Variable reference 
+  else if (ofs_match_anyname(varRef))
+  {
+    current_exp = SageBuilder::buildVarRefExp(varRef, SageInterface::getScope(c_sgnode));
+  }
+  else 
+  {
+    //TODO handle more expression types as needed
+    printf("Unable to match an expression for %s\n", old_char);
+    c_char = old_char;
+    return false;
+  }
+
+  return true;
+}
+
+//!Match schedule(kind, [, chunk_size])
+// static, dynamic, guided can have optional chunk_size
+// auto and runtime don't have chunk_size
+static bool ofs_match_clause_schedule()
+{
+  const char* old_char = c_char;
+  omp_construct_enum matched_kind = e_unknown; 
+
+  if  (ofs_match_substr("schedule",false))// no space is required after the match
+  {
+    ompattribute->addClause(e_schedule);
+    omptype = e_schedule;
+
+    if (!ofs_match_char('('))
+    {
+      printf("error in schedule(xx) match: no starting '(' is found for %s.\n",old_char);
+      assert(false);
+    }
+    // match kind first
+    if  (ofs_match_substr("static",false))// no space is required after the match 
+    {
+      matched_kind= e_schedule_static;
+    } 
+    else if  (ofs_match_substr("dynamic",false))// no space is required after the match 
+    {
+      matched_kind= e_schedule_dynamic;
+    } 
+    else if  (ofs_match_substr("guided",false))// no space is required after the match 
+    {
+      matched_kind= e_schedule_guided;
+    } 
+    else if  (ofs_match_substr("auto",false))// no space is required after the match 
+    {
+      matched_kind= e_schedule_auto;
+    } 
+    else if  (ofs_match_substr("runtime",false))// no space is required after the match 
+    {
+      matched_kind= e_schedule_runtime;
+    } 
+    else
+    { 
+      printf("error in schedule clause match: no legal kind is found for %s\n",old_char);
+      assert(false);
+    }
+    //  set schedule kind matched
+    ompattribute->setScheduleKind(matched_kind);
+
+    // match optional ",chunk_size"
+    if (matched_kind == e_schedule_static || matched_kind == e_schedule_dynamic
+        || matched_kind == e_schedule_guided ) 
+    {
+      if (ofs_match_char(','))
+      {
+        if (ofs_match_expression())
+        {
+          assert (current_exp != NULL);
+          ompattribute->addExpression(omptype, "", current_exp);
+        }
+        else
+        {
+          printf("error in schedule(kind,chunk) match: no chunk is found after , for %s\n",old_char);
+        }
+      }
+    } // end match for ",chunkzise"
+
+    // match end ')'
+       if (!ofs_match_char(')'))
+    {
+      printf("error in schedule() match: no end ')' is found for %s.\n",old_char);
+      assert(false);
+    }
+
+    // it is successful now
+    return true; 
+  }
+
+  // no match, undo side effect and return false;
+  c_char = old_char;
+  return false;
 }
 
 //! Match a variable list like  "x,y,z)"
@@ -323,6 +475,113 @@ static bool ofs_match_clause_varlist(omp_construct_enum clausetype)
   return false;
 }
 
+//! Match anyname within parenthesis, used for named "critical" and "end critical" 
+static bool ofs_match_name_in_parenthesis(char name[])
+{
+  const char* old_char = c_char;
+//  char buffer[OFS_MAX_LEN];
+  if (ofs_match_char('('))
+  {
+    if (ofs_match_anyname(name))
+    {
+      if (!ofs_match_char(')'))
+      {
+        printf("error in (name) match: no end ')' is found for %s.\n",old_char);
+        assert(false);
+      }
+      // successful if reach to this point
+      return true;
+    }
+    else
+    {
+      printf("error in (name) match: no name is found for %s.\n",old_char);
+      assert(false);
+    }
+  }
+  c_char= old_char;
+  return false;
+}
+
+//! Match clauses with expression, like 
+//    collapse (expression) 
+//    if(scalar-logical-expression)
+//    num_threads (expression)
+static bool ofs_match_clause_expression (omp_construct_enum clausetype)
+{
+  const char* old_char = c_char;
+  char clause_name[OFS_MAX_LEN];
+  // verify and convert clause type to clause name string
+  switch (clausetype)
+  {
+    case e_collapse:
+    case e_if:
+    case e_num_threads:
+      {
+        strcpy (clause_name, OmpSupport::toString(clausetype).c_str());
+        break;
+      }
+    default:
+      {
+        printf("Unaccepted clause type :%s for clause(expr) match!\n",OmpSupport::toString(clausetype).c_str());
+        assert(false);
+      }
+  } //end switch
+
+  if (ofs_match_substr(clause_name,false)) // We don't check for trail here, they are handled later on
+  {
+    assert (ompattribute != NULL);
+    ompattribute->addClause(clausetype);
+    omptype = clausetype;
+    ofs_skip_whitespace();
+    if (ofs_match_char('('))
+    {
+      if(ofs_match_expression())
+      {
+        assert(current_exp != NULL);
+        ompattribute->addExpression(omptype,"", current_exp);
+      }
+      else
+      {
+        printf("error in clause(expression) match:no expression is found for %s.\n",old_char);
+        assert(false);
+      }
+    } // end if '(expression'
+    else
+    {
+      printf("error in clause(expression) match: no starting '(' is found for %s.\n",old_char);
+      assert(false);
+    }
+
+    // match end ')'
+    if (!ofs_match_char(')'))
+    {
+      printf("error in clause(expression) match: no end ')' is found for %s.\n",old_char);
+      assert(false);
+    }
+
+    return true;
+  }
+  else
+    c_char= old_char;
+
+  return false;
+}
+
+static bool ofs_match_clause_collapse()
+{
+  return ofs_match_clause_expression(e_collapse);
+}
+
+static bool ofs_match_clause_if()
+{
+  return ofs_match_clause_expression(e_if);
+}
+
+static bool ofs_match_clause_num_threads()
+{
+  return ofs_match_clause_expression(e_num_threads);
+}
+
 //! Match 'naked' clauses: such as ordered_clause, nowait, and untied
 // should be side effect free if fails
 static bool ofs_match_clause_naked (omp_construct_enum clausetype)
@@ -359,6 +618,45 @@ static bool ofs_match_clause_naked (omp_construct_enum clausetype)
   return false;
 }
 
+//! Match default (private|firstprivate|shared|none)
+static bool ofs_match_clause_default()
+{
+  const char* old_char = c_char;
+  if  (ofs_match_substr("default",false))// no space is required after the match
+  {
+    ompattribute->addClause(e_default);
+    if (!ofs_match_char('('))
+    {
+      printf("error in default(xx) match: no starting '(' is found for %s.\n",old_char);
+      assert(false);
+    }
+    // match values
+    if (ofs_match_substr("private",false))
+      ompattribute->setDefaultValue(e_default_private);
+    else if (ofs_match_substr("firstprivate",false))
+      ompattribute->setDefaultValue(e_default_firstprivate);
+    else if (ofs_match_substr("shared",false))
+      ompattribute->setDefaultValue(e_default_shared);
+    else if  (ofs_match_substr("none",false))
+      ompattribute->setDefaultValue(e_default_none);
+    else
+    {
+      printf("error in matching default(value):no legal value is found for %s\n", old_char);
+      assert("false");
+    }
+    // match end ')'
+    if (!ofs_match_char(')'))
+    {
+      printf("error in default() match: no end ')' is found for %s.\n",old_char);  
+      assert(false); 
+    }
+    return true;
+  }
+  // undo side effect if no match has been found so far
+  c_char = old_char;
+  return false;
+}
+
 //! Match a Fortran reduction clause
 // reduction({operator|intrinsic_procedure_name}:varlist)
 static bool ofs_match_clause_reduction()
@@ -381,87 +679,87 @@ static bool ofs_match_clause_reduction()
     {
       ompattribute->setReductionOperator(e_reduction_plus);
       omptype = e_reduction_plus; /*variables are stored for each kind of operators*/
+    } 
+    else if (ofs_match_char('*'))
+    {
+      ompattribute->setReductionOperator(e_reduction_mul);
+      omptype = e_reduction_mul;
+    } 
+    else if (ofs_match_char('-'))
+    {
+      ompattribute->setReductionOperator(e_reduction_minus);
+      omptype = e_reduction_minus; 
+    } 
+    // match multi-char operator/intrinsics 
+    // 9 of them in total
+    // we tend to not share the enumerate types between C/C++ and Fortran operators
+    else if (ofs_match_substr(".and.",false)) 
+    {
+      ompattribute->setReductionOperator(e_reduction_and);
+      omptype = e_reduction_and; 
+    } 
+    else if (ofs_match_substr(".or.",false)) 
+    {
+      ompattribute->setReductionOperator(e_reduction_or);
+      omptype = e_reduction_or; 
+    } 
+    else if (ofs_match_substr(".eqv.",false)) 
+    {
+      ompattribute->setReductionOperator(e_reduction_eqv);
+      omptype = e_reduction_eqv; 
+    } 
+    else if (ofs_match_substr(".neqv.",false)) 
+    {
+      ompattribute->setReductionOperator(e_reduction_neqv);
+      omptype = e_reduction_neqv; 
+    } 
+    else if (ofs_match_substr("max",false)) 
+    {
+      ompattribute->setReductionOperator(e_reduction_max);
+      omptype = e_reduction_max; 
+    } 
+    else if (ofs_match_substr("min",false)) 
+    {
+      ompattribute->setReductionOperator(e_reduction_min);
+      omptype = e_reduction_min; 
+    } 
+    else if (ofs_match_substr("iand",false)) 
+    {
+      ompattribute->setReductionOperator(e_reduction_iand);
+      omptype = e_reduction_iand; 
+    } 
+    else if (ofs_match_substr("ior",false)) 
+    {
+      ompattribute->setReductionOperator(e_reduction_ior);
+      omptype = e_reduction_ior; 
+    }
+    else  if (ofs_match_substr("ieor",false)) 
+    {
+      ompattribute->setReductionOperator(e_reduction_ieor);
+      omptype = e_reduction_ieor; 
     } else
-      if (ofs_match_char('*'))
-      {
-        ompattribute->setReductionOperator(e_reduction_mul);
-        omptype = e_reduction_mul;
-      } else
-        if (ofs_match_char('-'))
-        {
-          ompattribute->setReductionOperator(e_reduction_minus);
-          omptype = e_reduction_minus; 
-        } else 
-          // match multi-char operator/intrinsics 
-          // 9 of them in total
-          // we tend to not share the enumerate types between C/C++ and Fortran operators
-          if (ofs_match_substr(".and.",false)) 
-          {
-            ompattribute->setReductionOperator(e_reduction_and);
-            omptype = e_reduction_and; 
-          } else
-            if (ofs_match_substr(".or.",false)) 
-            {
-              ompattribute->setReductionOperator(e_reduction_or);
-              omptype = e_reduction_or; 
-            } else
-              if (ofs_match_substr(".eqv.",false)) 
-              {
-                ompattribute->setReductionOperator(e_reduction_eqv);
-                omptype = e_reduction_eqv; 
-              } else
-                if (ofs_match_substr(".neqv.",false)) 
-                {
-                  ompattribute->setReductionOperator(e_reduction_neqv);
-                  omptype = e_reduction_neqv; 
-                } else
-                  if (ofs_match_substr("max",false)) 
-                  {
-                    ompattribute->setReductionOperator(e_reduction_max);
-                    omptype = e_reduction_max; 
-                  } else
-                    if (ofs_match_substr("min",false)) 
-                    {
-                      ompattribute->setReductionOperator(e_reduction_min);
-                      omptype = e_reduction_min; 
-                    } else
-                      if (ofs_match_substr("iand",false)) 
-                      {
-                        ompattribute->setReductionOperator(e_reduction_iand);
-                        omptype = e_reduction_iand; 
-                      } else
-                        if (ofs_match_substr("ior",false)) 
-                        {
-                          ompattribute->setReductionOperator(e_reduction_ior);
-                          omptype = e_reduction_ior; 
-                        } else
-                          if (ofs_match_substr("ieor",false)) 
-                          {
-                            ompattribute->setReductionOperator(e_reduction_ieor);
-                            omptype = e_reduction_ieor; 
-                          } else
-                          {
-                            printf("error: cannot find a legal reduction operator for %s\n",old_char);
-                            assert(false);
-                          }
+    {
+      printf("error: cannot find a legal reduction operator for %s\n",old_char);
+      assert(false);
+    }
 
-        // match ':' in between
-        if (!ofs_match_char(':'))
-        {
-          printf("error in reduction(op:varlist) match: no ':' is found for %s\n",old_char);
-          assert(false);
-        }	
-        // match the rest "varlist)"
-        if (!ofs_match_varlist())
-        {
-          printf("error in reduction(op:valist) match during varlist for %s \n",old_char);
-          assert(false);
-        }
-        else
-        {
-          omptype = e_unknown; // restore it to unknown
-          return true; // all pass! return here!
-        }
+    // match ':' in between
+    if (!ofs_match_char(':'))
+    {
+      printf("error in reduction(op:varlist) match: no ':' is found for %s\n",old_char);
+      assert(false);
+    }	
+    // match the rest "varlist)"
+    if (!ofs_match_varlist())
+    {
+      printf("error in reduction(op:valist) match during varlist for %s \n",old_char);
+      assert(false);
+    }
+    else
+    {
+      omptype = e_unknown; // restore it to unknown
+      return true; // all pass! return here!
+    }
 
   } // end if (reduction)
 
@@ -497,6 +795,7 @@ static bool ofs_match_omp_directive_end()
   }
   else
   { // undo sideeffect 
+    printf("warning: unacceptable end char for an OpenMP directive:%d-%c\n",*c_char, *c_char);
     c_char = old_char;
     return false;
   }
@@ -609,11 +908,26 @@ static bool ofs_match_omp_clauses(int bitvector)
       continue;
     if((bitvector&BV_CLAUSE_LASTPRIVATE)&&(ofs_match_clause_varlist(e_lastprivate)))
       continue;
-    // special reduction clause 
+
+    // reduction clause 
     if((bitvector&BV_CLAUSE_REDUCTION)&& (ofs_match_clause_reduction()))
       continue;
 
-    //TODO clauses with expressions, default, and schedule
+    //match clauses with expressions, 
+    if((bitvector&BV_CLAUSE_COLLAPSE)&& (ofs_match_clause_collapse()))
+      continue;
+    if((bitvector&BV_CLAUSE_IF)&& (ofs_match_clause_if()))
+      continue;
+    if((bitvector&BV_CLAUSE_NUM_THREADS)&& (ofs_match_clause_num_threads()))
+      continue;
+    
+    //match default () 
+    if((bitvector&BV_CLAUSE_DEFAULT)&& (ofs_match_clause_default()))
+      continue;
+
+    //match schedule(kind[, chunk_size])
+    if((bitvector&BV_CLAUSE_SCHEDULE)&& (ofs_match_clause_schedule()))
+      continue;
     
     // allow no clauses matched at all  
     break;
@@ -638,6 +952,7 @@ OmpSupport::OmpAttribute* omp_fortran_parse(SgNode* locNode, const char* str)
   c_char = ofs_copy_lower(str);
   c_sgnode = locNode;
   ompattribute = NULL;
+  current_exp = NULL;
   omptype = e_unknown;
 
   //Ready and go
@@ -653,16 +968,23 @@ OmpSupport::OmpAttribute* omp_fortran_parse(SgNode* locNode, const char* str)
     if (ofs_match_substr("atomic"))
     {
       ompattribute = buildOmpAttribute(e_atomic, c_sgnode);
+      // nothing further
     }
     // !$omp barrier 
     else if (ofs_match_substr("barrier"))
     {
       ompattribute = buildOmpAttribute(e_barrier, c_sgnode);
+      // nothing further
     }
     // !$omp critical
-    else if (ofs_match_substr("critical"))
+    else if (ofs_match_substr("critical",false))
     {
       ompattribute = buildOmpAttribute(e_critical, c_sgnode);
+      char namebuffer[OFS_MAX_LEN];
+      if (ofs_match_name_in_parenthesis(namebuffer))
+      {
+        ompattribute->setCriticalName(namebuffer);
+      }
     }
     // !$omp do
     else if (ofs_match_substr("do"))
@@ -678,89 +1000,108 @@ OmpSupport::OmpAttribute* omp_fortran_parse(SgNode* locNode, const char* str)
     {
       ofs_skip_whitespace();// additional space etc.
       //$$omp end critical 
-      if (ofs_match_substr("critical"))
+      if (ofs_match_substr("critical",false))
       {
         ompattribute = buildOmpAttribute(e_end_critical, c_sgnode);
-      }else
-        //!$omp end do
-        if (ofs_match_substr("do")) 
+        char namebuffer[OFS_MAX_LEN];
+        if (ofs_match_name_in_parenthesis(namebuffer))
         {
-          ompattribute = buildOmpAttribute(e_end_do, c_sgnode);
-          ofs_match_omp_clauses(BV_CLAUSE_NOWAIT);
-        } else 
-          //!$omp end master
-          if (ofs_match_substr("master"))
-          {
-            ompattribute = buildOmpAttribute(e_end_master, c_sgnode);
-          } else
-            //!$omp end ordered
-            if (ofs_match_substr("ordered"))
-            {
-              ompattribute = buildOmpAttribute(e_end_ordered, c_sgnode);
-            } else
-              if (ofs_match_substr("parallel", false))
-              {
-                //!$omp end parallel do
-                ofs_skip_whitespace();// additional space etc.
-                if (ofs_match_substr("do"))
-                {
-                  ompattribute = buildOmpAttribute(e_end_parallel_do, c_sgnode);
-                } else
-                  //!$omp end parallel sections
-                  if (ofs_match_substr("sections"))
-                  {
-                    ompattribute = buildOmpAttribute(e_end_parallel_sections, c_sgnode);
-                  } else
-                    //!$omp end parallel workshare
-                    if (ofs_match_substr("workshare"))
-                    {
-                      ompattribute = buildOmpAttribute(e_end_parallel_workshare, c_sgnode);
-                    } else
-                      //!$omp end parallel
-                    {
-                      ompattribute = buildOmpAttribute(e_end_parallel, c_sgnode);
-                    }
-              }
-            //!$omp end sections
-              else if (ofs_match_substr("sections"))
-              {
-                ompattribute = buildOmpAttribute(e_end_sections, c_sgnode);
-              }
-            //!$omp end single 
-              else if (ofs_match_substr("single"))
-              {
-                ompattribute = buildOmpAttribute(e_end_single, c_sgnode);
-              }
-            //!$omp end task
-              else if (ofs_match_substr("task"))
-              {
-                ompattribute = buildOmpAttribute(e_end_task, c_sgnode);
-              }
-            //!$omp end workshare
-              else if (ofs_match_substr("workshare"))
-              {
-                ompattribute = buildOmpAttribute(e_end_workshare, c_sgnode);
-              }
-              else
-              {
-                printf("error: $omp end must be followed by some other keywords! orig is:\n%s\n",str);
-                assert(false);
-              }
+          ompattribute->setCriticalName(namebuffer);
+        }
+      }
+      //!$omp end do
+      else if (ofs_match_substr("do")) 
+      {
+        ompattribute = buildOmpAttribute(e_end_do, c_sgnode);
+        ofs_match_omp_clauses(BV_CLAUSE_NOWAIT);
+      }  
+      //!$omp end master
+      else if (ofs_match_substr("master"))
+      {
+        ompattribute = buildOmpAttribute(e_end_master, c_sgnode);
+        // nothing further
+      } 
+      //!$omp end ordered
+      else  if (ofs_match_substr("ordered"))
+      {
+        ompattribute = buildOmpAttribute(e_end_ordered, c_sgnode);
+        // nothing further
+      } 
+      else  if (ofs_match_substr("parallel", false))
+      {
+        //!$omp end parallel do
+        ofs_skip_whitespace();// additional space etc.
+        if (ofs_match_substr("do"))
+        {
+          ompattribute = buildOmpAttribute(e_end_parallel_do, c_sgnode);
+          // nothing further, nowait cannot be used with end parallel 
+        } 
+        //!$omp end parallel sections
+        else  if (ofs_match_substr("sections"))
+        {
+          ompattribute = buildOmpAttribute(e_end_parallel_sections, c_sgnode);
+          // nothing further, nowait cannot be used with end parallel 
+        } 
+        //!$omp end parallel workshare
+        else  if (ofs_match_substr("workshare"))
+        {
+          ompattribute = buildOmpAttribute(e_end_parallel_workshare, c_sgnode);
+          // nothing further, nowait cannot be used with end parallel 
+        } 
+        else
+          //!$omp end parallel
+        {
+          ompattribute = buildOmpAttribute(e_end_parallel, c_sgnode);
+          // nothing further
+        }
+      }
+      //!$omp end sections
+      else if (ofs_match_substr("sections"))
+      {
+        ompattribute = buildOmpAttribute(e_end_sections, c_sgnode);
+        ofs_match_omp_clauses(BV_CLAUSE_NOWAIT);
+      }
+      //!$omp end single 
+      else if (ofs_match_substr("single"))
+      {
+        ompattribute = buildOmpAttribute(e_end_single, c_sgnode);
+        ofs_match_omp_clauses(BV_CLAUSE_NOWAIT|BV_CLAUSE_COPYPRIVATE);
+      }
+      //!$omp end task
+      else if (ofs_match_substr("task"))
+      {
+        ompattribute = buildOmpAttribute(e_end_task, c_sgnode);
+        // nothing further
+      }
+      //!$omp end workshare
+      else if (ofs_match_substr("workshare"))
+      {
+        ompattribute = buildOmpAttribute(e_end_workshare, c_sgnode);
+        ofs_match_omp_clauses(BV_CLAUSE_NOWAIT);
+      }
+      else
+      {
+        printf("error: !$omp end must be followed by some other keywords! orig is:\n%s\n",str);
+        assert(false);
+      }
     } // finished handling of "!$omp end ...."
     // !$omp flush 
     else if (ofs_match_substr("flush"))
     {
       ompattribute = buildOmpAttribute(e_flush, c_sgnode);
+      //TODO optional (varlist)
     }
     // !$omp master
     else if (ofs_match_substr("master"))
     {
       ompattribute = buildOmpAttribute(e_master, c_sgnode);
+      // nothing further
     }
     // !$omp ordered
     else if (ofs_match_substr("ordered"))
     { // note the difference between ordered directive and ordered clause here
       ompattribute = buildOmpAttribute(e_ordered_directive, c_sgnode);
+      // nothing further
     }
     else
       if (ofs_match_substr("parallel",false)) //don't have to have a space after it
@@ -776,56 +1117,66 @@ OmpSupport::OmpAttribute* omp_fortran_parse(SgNode* locNode, const char* str)
         else if (ofs_match_substr("sections"))
         {
           ompattribute = buildOmpAttribute(e_parallel_sections,c_sgnode);
+          ofs_match_omp_clauses(BV_OMP_PARALLEL_CLAUSES|BV_OMP_SECTIONS_CLAUSES);
         }
         //!$omp parallel workshare
         else if (ofs_match_substr("workshare")) 
         {
           ompattribute = buildOmpAttribute(e_parallel_workshare,c_sgnode);
+          ofs_match_omp_clauses(BV_OMP_PARALLEL_CLAUSES);
         }
         else  
           //!$omp parallel , must be the last to be checked.
         {
           ompattribute = buildOmpAttribute(e_parallel,c_sgnode);
+          ofs_match_omp_clauses(BV_OMP_PARALLEL_CLAUSES);
         }
       } // end if parallel ..
     // !$omp sections
       else if (ofs_match_substr("sections"))
       {
         ompattribute = buildOmpAttribute(e_sections, c_sgnode);
+        ofs_match_omp_clauses(BV_OMP_SECTIONS_CLAUSES);
       }
     //!$omp section
       else if (ofs_match_substr("section"))
       {
         ompattribute = buildOmpAttribute(e_section, c_sgnode);
+        //nothing further
       }
     //!$omp single
       else if (ofs_match_substr("single"))
       {
         ompattribute = buildOmpAttribute(e_single, c_sgnode);
+        ofs_match_omp_clauses(BV_CLAUSE_PRIVATE|BV_CLAUSE_FIRSTPRIVATE);
       }
     //!$omp task
       else if (ofs_match_substr("task"))
       {
         ompattribute = buildOmpAttribute(e_task, c_sgnode);
+        ofs_match_omp_clauses(BV_OMP_TASK_CLAUSES);
       }
     //!$omp taskwait
       else if (ofs_match_substr("taskwait"))
       {
         ompattribute = buildOmpAttribute(e_taskwait, c_sgnode);
+        //nothing further
       }
     //!$omp threadprivate
-      else if (ofs_match_substr("threadprivate"))
+      else if (ofs_match_substr("threadprivate",false))
       {
         ompattribute = buildOmpAttribute(e_threadprivate, c_sgnode);
+        //TODO (list) variables, or common blocks
       }
     //!$omp workshare
       else if (ofs_match_substr("workshare"))
       {
         ompattribute = buildOmpAttribute(e_workshare, c_sgnode);
+        //nothing further
       }
       else
       {
-        printf("error: found an OpenMP sentinel without any legal OpenMP directive followed\n");
+        printf("error: found an OpenMP sentinel without any legal OpenMP directive followed for \n%s\n",str);
         assert(false);
       }
   }

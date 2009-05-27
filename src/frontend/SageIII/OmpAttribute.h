@@ -93,7 +93,6 @@ namespace OmpSupport
     e_default_private,
     e_default_firstprivate,
 
-
     // reduction operations
     //8 operand for C/C++
      //  shared 3 common operators for both C and Fortran
