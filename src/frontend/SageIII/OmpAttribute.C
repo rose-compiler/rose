@@ -541,6 +541,10 @@ namespace OmpSupport{
         if (hasClause(e_nowait)) 
 	  result += " "+ OmpSupport::toString(e_nowait);
       }
+      else if (omp_type == e_end_critical)
+      {
+        result += " " + getCriticalName(); 
+      }
     } // end if directives
     //Clauses ------------------
     else if (isClause(omp_type))

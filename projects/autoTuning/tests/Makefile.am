@@ -19,6 +19,7 @@ ROSE_FLAGS+=-rose:outline:enable_liveness -I$(top_srcdir)/projects/autoTuning
 # -rose:hpct:enable_debug -rose:autotuning:enable_debug 
 #ROSE_FLAGS+=-rose:autotuning:triage_threshold 0.75
 
+ROSE_INCLUDES=-I$(top_srcdir)/src/frontend/SageIII
 # experimental flags. not well sorted out for the interaction between OpenMP and outlining
 # TODO reduction clause with omp for  should ignored if all reduction variables are no longer shared
 # this should be fixed in outliner's Transform.cc: 
@@ -32,7 +33,7 @@ rose_jacobi.c:../autoTuning
 
 # aggressive code triage based on outer most OpenMP for loop
 rose_jacobi-omp.c:../autoTuning
-	../autoTuning -c  $(ROSE_FLAGS)  $(EQUAL_PATH1) $(ROSE_PROF2) $(ROSE_FLAGS2) $(srcdir)/jacobi-omp.c
+	../autoTuning -c  $(ROSE_FLAGS) $(ROSE_INCLUDES) $(EQUAL_PATH1) $(ROSE_PROF2) $(ROSE_FLAGS2) $(srcdir)/jacobi-omp.c
 
 # alternative performance information collected by GNU gprof -L -l, line-by-line profiling results
 rose_jacobi2.c:../autoTuning
