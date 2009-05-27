@@ -44,9 +44,11 @@ RuntimeSystem_Const_RuntimeSystem() {
   // initialze arrays with 10 elements and later increase by 50 if too small
   int initElementSize=0;
   rtsi()->maxRuntimeVariablesOnStackEndIndex = rtsi()->maxArraysEndIndex = initElementSize;
+  rtsi()->maxRuntimeVariablesEndIndex = rtsi()->runtimeVariablesEndIndex = initElementSize;
   rtsi()->arraysEndIndex=  rtsi()->runtimeVariablesOnStackEndIndex=0;
   rtsi()->arrays = (struct arraysType*)malloc(sizeof(struct arraysType)*initElementSize);
   rtsi()->runtimeVariablesOnStack = (struct RuntimeVariablesType*)malloc(sizeof(struct RuntimeVariablesType)*initElementSize);
+  rtsi()->runtimeVariables = (struct RuntimeVariablesType*)malloc(sizeof(struct RuntimeVariablesType)*initElementSize);
   rtsi()->myfile = fopen("result.txt","at");
   if (!rtsi()->myfile) {
     printf("Cannot open output file!\n");
@@ -217,6 +219,30 @@ RuntimeSystem_increaseSizeRuntimeVariablesOnStack() {
 }
 
 /*********************************************************
+ * Increase the size of all variables stored for runtime
+ * evaluation
+ ********************************************************/
+void
+RuntimeSystem_increaseSizeRuntimeVariables() {                                        
+  rtsi()->maxRuntimeVariablesEndIndex+=50;
+  struct RuntimeVariablesType* run_tmp = (struct RuntimeVariablesType*)malloc(sizeof(struct RuntimeVariablesType)*(rtsi()->maxRuntimeVariablesEndIndex));
+  if (run_tmp) {
+    int i=0;
+    for ( i=0;i<rtsi()->maxRuntimeVariablesEndIndex;i++) {
+      run_tmp[i].name=(char*)malloc(sizeof(char*));
+      run_tmp[i].mangled_name =(char*)malloc(sizeof(char*));
+    }
+    for ( i=0;i<rtsi()->runtimeVariablesEndIndex;i++) {
+      run_tmp[i].name=rtsi()->runtimeVariables[i].name;
+      run_tmp[i].mangled_name =rtsi()->runtimeVariables[i].mangled_name;
+    }
+    free( rtsi()->runtimeVariables);
+    rtsi()->runtimeVariables=run_tmp;
+  }
+  printf( " Increased rtsi()->runtimeVariables to %d  -- current index %d\n",rtsi()->maxRuntimeVariablesEndIndex ,rtsi()->runtimeVariablesEndIndex  );
+}
+
+/*********************************************************
  * For a given variable name, check if it is present
  * on the stack and return the mangled_name
  ********************************************************/
@@ -228,6 +254,24 @@ RuntimeSystem_findVariablesOnStack(char* name) {
     char* n =rtsi()->runtimeVariablesOnStack[i].name;
     if (*name==*n) {
       mang_name=rtsi()->runtimeVariablesOnStack[i].mangled_name;
+      break;
+    }
+  }
+  return mang_name;
+}
+
+/*********************************************************
+ * For a given variable name, check if it is present
+ * in the pool of variables created and return mangled_name
+ ********************************************************/
+char*
+RuntimeSystem_findVariables(char* name) {
+  char* mang_name = NULL;
+  int i=0;
+  for ( i=0;i<rtsi()->runtimeVariablesEndIndex;i++) {
+    char* n =rtsi()->runtimeVariables[i].name;
+    if (*name==*n) {
+      mang_name=rtsi()->runtimeVariables[i].mangled_name;
       break;
     }
   }
@@ -877,6 +921,14 @@ void RuntimeSystem_roseCreateVariable(char* name,
 				      char* mangled_name,
 				      char* type, 
 				      char* init) {
+  if (rtsi()->runtimeVariablesEndIndex>=rtsi()->maxRuntimeVariablesEndIndex) {
+    //increase the size of the array
+    RuntimeSystem_increaseSizeRuntimeVariables();
+  }
+  rtsi()->runtimeVariables[rtsi()->runtimeVariablesEndIndex].name=name;
+  rtsi()->runtimeVariables[rtsi()->runtimeVariablesEndIndex].mangled_name=mangled_name;
+  rtsi()->runtimeVariables[rtsi()->runtimeVariablesEndIndex].type=type;
+  rtsi()->runtimeVariablesEndIndex++;
   printf("You have just created a run-time variable\n");
 
 }

@@ -93,6 +93,8 @@ void RuntimeSystem_callExit(char* filename, char* line, char* reason, char* stmt
 
 // functions dealing with variables
 void RuntimeSystem_roseCreateVariable(char* name, char* mangled_name, char* type, char* init);
+void RuntimeSystem_increaseSizeRuntimeVariables();
+char* RuntimeSystem_findVariables(char* name);
 
 
 #endif

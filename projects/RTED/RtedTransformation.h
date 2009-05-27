@@ -91,12 +91,14 @@ class RtedTransformation : public AstSimpleProcessing {
   void insertStackCall(RtedArguments* args);
   void insertStackCall(RtedArguments* args, bool before);
   void visit_isFunctionCall(SgNode* n);
-  bool isInterestingFunctionCall(std::string name);
+  bool isStringModifyingFunctionCall(std::string name);
   int getDimensionForFuncCall(std::string name);
+  bool isFunctionCallOnIgnoreList(std::string name);
 
   // is it a variable?
   void visit_isSgVariableDeclaration(SgNode* n);
   void insertVariableCreateCall(SgInitializedName* initName);
+  bool isVarInCreatedVariables(SgInitializedName* n);
 
   std::string removeSpecialChar(std::string str);
 

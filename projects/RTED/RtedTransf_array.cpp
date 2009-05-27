@@ -783,8 +783,8 @@ void RtedTransformation::visit_isArrayExprListExp(SgNode* n) {
     // call func(array_name) to runtime system for runtime inspection 
     SgInitializedName* initName =
       isSgVarRefExp(n)->get_symbol()->get_declaration();
-    bool found = isVarRefInCreateArray(initName);
-    if (found) {
+    if (isVarRefInCreateArray(initName) ||
+	isVarInCreatedVariables(initName)) {
       // create this function call only, if it is not one of the 
       // interesting function calls, such as strcpy, strcmp ...
       // because for those we do not need the parameters and do not 
@@ -794,11 +794,16 @@ void RtedTransformation::visit_isArrayExprListExp(SgNode* n) {
       SgFunctionDeclaration* decl = isSgFunctionDeclaration(refExp->getAssociatedFunctionDeclaration ());
       ROSE_ASSERT(decl);
       string name = decl->get_name();
-      if (isInterestingFunctionCall(name)==false) {
+      string mangled_name = decl->get_mangled_name().str();
+      cerr <<"Found a function call " << name;
+      if (isStringModifyingFunctionCall(name)==false) {
 	vector<SgExpression*> args;
 	SgStatement* stmt = getSurroundingStatement(isSgVarRefExp(n));
 	ROSE_ASSERT(stmt);
-	RtedArguments* funcCall = new RtedArguments(initName->get_name(),
+	RtedArguments* funcCall = new RtedArguments(name, // function name
+						    mangled_name,
+						    // we need this for the function as well
+						    initName->get_name(), // variable
 						    initName->get_mangled_name().str(),
 						    isSgVarRefExp(n),
 						    stmt,
@@ -826,6 +831,19 @@ void RtedTransformation::visit_isArrayExprListExp(SgNode* n) {
 // ------------------------ VARIABLE SPECIFIC CODE --------------------------
 // SHOULD BE MOVED TO SEPARATE FILE LATER
 
+bool RtedTransformation::isVarInCreatedVariables(SgInitializedName* n) {
+  bool ret=false;
+  ROSE_ASSERT(n);
+  Rose_STL_Container<SgInitializedName*>::const_iterator it=variable_declarations.begin();
+  for (;it!=variable_declarations.end();++it) {
+    SgInitializedName* initName = *it;
+    if (initName==n) {
+      ret=true;
+      break;
+    }
+  }  
+  return ret;
+}
 
 void RtedTransformation::visit_isSgVariableDeclaration(SgNode* n) {
   SgVariableDeclaration* varDecl = isSgVariableDeclaration(n);
@@ -923,7 +941,7 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName
       insertStatementBefore(isSgStatement(stmt), exprStmt);
       string empty_comment = "";
       attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
-      string comment = "RS : Create Variable, paramaters : (name, type, initialized, filename, linenr)";
+      string comment = "RS : Create Variable, paramaters : (name, type, initialized)";
       attachComment(exprStmt,comment,PreprocessingInfo::before);
     } 
     else if (isSgNamespaceDefinitionStatement(scope)) {

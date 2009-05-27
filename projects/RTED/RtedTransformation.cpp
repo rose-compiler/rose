@@ -103,16 +103,14 @@ void RtedTransformation::transform(SgProject* project) {
     function_call.begin();
   for (; it4 != function_call.end(); it4++) {
     RtedArguments* funcs = *it4;
-    string name = funcs->name;
-    if (isInterestingFunctionCall(name)) {
-    //if (RuntimeSystem_isInterestingFunctionCall((char*)name.c_str())) {
+    if (isStringModifyingFunctionCall(funcs->f_name)) {
       //cerr << " .... Inserting Function Call : " << name << endl;
       insertFuncCall(funcs);
+    } else if (isFunctionCallOnIgnoreList(funcs->f_name)) {
+      // dont do anything.
     } else {
       // add other internal function calls, such as push variable on stack
-      //cerr << " .... Inserting Stack Call :  " << name << endl;
       insertStackCall(funcs);
-    //insertFuncCall(funcs);
     }
   }
 

@@ -15,7 +15,7 @@ using namespace SageBuilder;
  * call to a function that we need to check the parameters of
  ********************************************************/
 bool 
-RtedTransformation::isInterestingFunctionCall(std::string name) {
+RtedTransformation::isStringModifyingFunctionCall(std::string name) {
   bool interesting=false;
   if (name=="memcpy" || 
       name=="memmove" || 
@@ -28,6 +28,23 @@ RtedTransformation::isInterestingFunctionCall(std::string name) {
       name=="strpbrk" ||
       name=="strspn" ||
       name=="strstr"
+      )
+    interesting=true;
+  return interesting;
+}
+
+/*********************************************************
+ * Check if a function call is a call to a function
+ * on our ignore list. We do not want to check those 
+ * functions right now.
+ * This check makes sure that we dont push variables
+ * on the stack for functions that we dont check
+ * and hence the generated code is cleaner
+ ********************************************************/
+bool 
+RtedTransformation::isFunctionCallOnIgnoreList(std::string name) {
+  bool interesting=false;
+  if (name=="printf" 
       )
     interesting=true;
   return interesting;
@@ -75,7 +92,7 @@ RtedTransformation::getDimensionForFuncCall(std::string name) {
 void 
 RtedTransformation::insertStackCall(RtedArguments* args  ) {
   insertStackCall(args,true);
-  insertFuncCall(args);
+  //insertFuncCall(args);
   insertStackCall(args,false);
 }
 
@@ -91,8 +108,8 @@ RtedTransformation::insertStackCall(RtedArguments* args, bool before  ) {
     SgScopeStatement* scope = stmt->get_scope();
     ROSE_ASSERT(scope);
 
-    SgExpression* callNameExp = buildString(args->name);
-    SgExpression* callNameExp2 = buildString(args->mangled_name);
+    SgExpression* callNameExp = buildString(args->d_name);
+    SgExpression* callNameExp2 = buildString(args->d_mangled_name);
     SgExpression* boolVal = buildString("true");
     if (before==false) {
       delete boolVal;
@@ -150,11 +167,11 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
     int extra_params = 4;
     // nr of args + 2 (for sepcialFunctions) + 4 =  args+6;
     int size = extra_params+args->arguments.size();
-    int dimFuncCall = getDimensionForFuncCall(args->name);
+    int dimFuncCall = getDimensionForFuncCall(args->f_name);
     //if (args->arguments.size()>=2)
     size+=dimFuncCall;
     SgIntVal* sizeExp = buildIntVal(size);
-    SgExpression* callNameExp = buildString(args->name);
+    SgExpression* callNameExp = buildString(args->f_name);
 
     //cerr << " >>>>>>>> Symbol VarRef: " << symbolName << endl;
     ROSE_ASSERT(roseFunctionCall);
@@ -344,7 +361,7 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
     string mangled_name = decl->get_mangled_name().str();
     cerr <<"Found a function call " << name;
     cerr << "   : fcexp->get_function() : " << fcexp->get_function()->class_name() << endl;
-    if (isInterestingFunctionCall(name)) {
+    if (isStringModifyingFunctionCall(name)) {
       vector<SgExpression*> args;
       Rose_STL_Container<SgExpression*> expr = exprlist->get_expressions();
       Rose_STL_Container<SgExpression*>::const_iterator it = expr.begin();
@@ -354,8 +371,10 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
       }
       SgStatement* stmt = getSurroundingStatement(refExp);
       ROSE_ASSERT(stmt);
-      RtedArguments* funcCall = new RtedArguments(name,
-						  mangled_name,
+      RtedArguments* funcCall = new RtedArguments(name, //func_name
+						  mangled_name, 
+						  "",
+						  "",
 						  refExp,
 						  stmt,
 						  args						  

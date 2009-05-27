@@ -78,20 +78,33 @@ class RTedArray {
 class RtedArguments {
  public:
   SgStatement* stmt;
-  std::string name;
-  std::string mangled_name;
+  // The arguments hold either a FunctionCall
+  // or a stackcall, if it is a function call
+  // we need f_name, if it is a stack call
+  // we use d_name for the variable that is put on stack
+  // but we also use the func name to avoid certain functions
+  // for being checked
+  std::string f_name;
+  std::string f_mangled_name;
+  std::string d_name;
+  std::string d_mangled_name;
   SgInitializedName* initName;
   SgExpression* varRefExp;
   std::vector<SgExpression*> arguments;
-  RtedArguments(std::string funcn, 
+  RtedArguments(
+		std::string ffuncn, 
+		std::string fmangl,
+		std::string funcn, 
 		std::string mangl,
 		SgExpression* var,
 		SgStatement* stm,
 		std::vector<SgExpression*> args) {
     ROSE_ASSERT(var);
     stmt = stm;
-    name=funcn;
-    mangled_name=mangl;
+    f_name=ffuncn;
+    f_mangled_name=fmangl;
+    d_name=funcn;
+    d_mangled_name=mangl;
     varRefExp=var;
     arguments = args;
     if (isSgVarRefExp(var)) {
@@ -100,7 +113,8 @@ class RtedArguments {
     }
  }
   std::string toString() {
-    return "name: " + name + "  mangl_name: " +mangled_name +  " varRefExp : " + 
+    return "func name: " + f_name + "  func mangl_name: " +f_mangled_name +
+      "data name: " + d_name + "  data mangl_name: " +d_mangled_name +  " varRefExp : " + 
       varRefExp->unparseToString() + " at addr: " + RoseBin_support::ToString(varRefExp)+
       "  stmt: "+stmt->unparseToString() + " at addr: " + RoseBin_support::ToString(stmt);
   }
