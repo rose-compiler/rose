@@ -45,18 +45,25 @@ BUILT_SOURCES =
 CLEANFILES = $(BUILT_SOURCES)
 
 BINARY_DISASSEMBLY_HEADER_FILES = \
-   RoseBin_CompareAnalysis.h RoseBin_ControlFlowAnalysis.h RoseBin_printInstructions.h \
+   GraphAlgorithms.h \
+   RoseBin_CallGraphAnalysis.h \
+   RoseBin_CompareAnalysis.h \
+   RoseBin_ControlFlowAnalysis.h \
    RoseBin_DataFlowAnalysis.h \
-   RoseBin_FlowAnalysis.h RoseBin_CallGraphAnalysis.h \
-   dataflowanalyses/RoseBin_DefUseAnalysis.h \
-   dataflowanalyses/RoseBin_VariableAnalysis.h \
+   RoseBin_FlowAnalysis.h \
+   RoseBin_printInstructions.h \
    dataflowanalyses/InterruptAnalysis.h \
-   dataflowanalyses/RoseBin_Emulate.h \
    dataflowanalyses/RoseBin_DataFlowAbstract.h \
-   libraryIdentification/libraryIdentification.h \
-   libraryIdentification/functionIdentification.h \
+   dataflowanalyses/RoseBin_DefUseAnalysis.h \
+   dataflowanalyses/RoseBin_Emulate.h \
+   dataflowanalyses/RoseBin_VariableAnalysis.h \
+   instructionSemantics/findConstants.h \
+   instructionSemantics/flowEquations.h \
    instructionSemantics/semanticsModule.h \
-   instructionSemantics/x86InstructionSemantics.h GraphAlgorithms.h
+   instructionSemantics/x86InstructionSemantics.h \
+   libraryIdentification/functionIdentification.h \
+   libraryIdentification/libraryIdentification.h
+
 
 
 include_HEADERS = $(BINARY_DISASSEMBLY_HEADER_FILES)
