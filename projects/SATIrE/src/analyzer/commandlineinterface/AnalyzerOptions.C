@@ -11,7 +11,7 @@ AnalyzerOptions::~AnalyzerOptions() {}
 AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo(""),_numberOfInputFiles(0) {
   
   // set default values
-  setLanguage(Language_CPP);
+  setLanguage(Language_C89);
   #define STRING_ATTR(attrname,defaultval) \
   set##attrname(defaultval);
   #define INT_ATTR(attrname,defaultval) \
@@ -31,7 +31,7 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo(""),_n
 
   std::string s=
     " Frond End options:\n"
-    "   --language=c++|c99|c89   select input language [default=c++]\n"
+    "   --language=c++|c99|c89   select input language [default=c89]\n"
     "   --frontend-warnings      show Front End warnings when parsing file(s)\n"
     "   --no-frontend-warnings   do not show Front End warnings when parsing\n"
     "                            file(s) [default]\n"
