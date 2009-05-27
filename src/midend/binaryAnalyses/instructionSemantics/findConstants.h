@@ -721,7 +721,7 @@ UNARY_COMPUTATION_SPECIAL(extendByMSB, Len, Len2, {
 template <size_t From, size_t To, size_t Len>
 UNARY_COMPUTATION_SPECIAL(extract, Len, To - From, {
         if (From == 0) {
-            result->set(LatticeElement<To - From>(le1.name, le1.def, le1.negate, le1.offset));
+            result->set(LatticeElement<To - From>(le1.name, le1.definingInstruction, le1.negate, le1.offset));
             return;
         }
         if (le1.name != 0) {

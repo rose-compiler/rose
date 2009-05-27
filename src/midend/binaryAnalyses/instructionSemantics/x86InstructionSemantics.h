@@ -35,6 +35,7 @@ struct X86InstructionSemantics {
     X86InstructionSemantics(Policy& policy)
         : policy(policy)
         {}
+    virtual ~X86InstructionSemantics() {}
 
     /* If the counter (cx register) is non-zero then decrement it. The return value is a flag indicating whether cx was
      * originally non-zero. */
@@ -47,44 +48,33 @@ struct X86InstructionSemantics {
     }
 
     /* Instruction semantics for rep_stosN where N is 1(b), 2(w), or 4(d).
+     * This method handles semantics for one iteration of stosN.
      * See https://siyobik.info/index.php?module=x86&id=279 */
     template<size_t N>
     void rep_stos_semantics(SgAsmx86Instruction *insn) {
-        const SgAsmExpressionPtrList& operands = insn->get_operandList()->get_operands();
-        ROSE_ASSERT(operands.size() == 0);
-        ROSE_ASSERT(insn->get_addressSize() == x86_insnsize_32);
+        Word(1) ecxNotZero = policy.invert(policy.equalToZero(policy.readGPR(x86_gpr_cx)));
 
-        int shift_amt;
-        switch (N) {
-            case 1: shift_amt = 0; break;
-            case 2: shift_amt = 1; break;
-            case 4: shift_amt = 2; break;
-            default: abort();
-        }
-
-        /* If we are going backward (DF is set) in memory then set DI to the starting address. */
-        policy.writeGPR(x86_gpr_di,
-                        policy.add(policy.readGPR(x86_gpr_di),
-                                   policy.ite(policy.readFlag(x86_flag_df),
-                                              policy.negate(policy.shiftLeft(policy.readGPR(x86_gpr_cx), number<32>(shift_amt))),
-                                              number<32>(0))));
-
-        /* Fill memory pointed to by ES:[DI] with contents of AX register, repeating CX times. */
+        /* Fill memory pointed to by ES:[DI] with contents of AX register if counter was not zero. */
         policy.writeMemory(x86_segreg_es,
                            policy.readGPR(x86_gpr_di),
                            extract<0, 8*N>(policy.readGPR(x86_gpr_ax)),
-                           policy.readGPR(x86_gpr_cx),
-                           policy.true_());
+                           ecxNotZero);
 
-        /* If we are going forward in memory (DF is clear) then set DI to the ending address. */
+        /* Update DI by incrementing or decrementing by number of bytes copied (only if counter is nonzero) */
         policy.writeGPR(x86_gpr_di,
                         policy.add(policy.readGPR(x86_gpr_di),
-                                   policy.ite(policy.readFlag(x86_flag_df),
-                                              number<32>(0),
-                                              policy.shiftLeft(policy.readGPR(x86_gpr_cx), number<32>(shift_amt)))));
+                                   policy.ite(ecxNotZero,
+                                              policy.ite(policy.readFlag(x86_flag_df), number<32>(-N), number<32>(N)),
+                                              number<32>(0))));
 
-        /* Set counter to zero */
-        policy.writeGPR(x86_gpr_cx, number<32>(0));
+        /* Decrement the counter if not already zero. */
+        policy.writeGPR(x86_gpr_cx,
+                        policy.add(policy.readGPR(x86_gpr_cx),
+                                   policy.ite(ecxNotZero, number<32>(-1), number<32>(0))));
+
+        /* If counter is now nonzero then repeat this instruction, otherwise go to the next one. */
+        ecxNotZero = policy.invert(policy.equalToZero(policy.readGPR(x86_gpr_cx)));
+        policy.writeIP(policy.ite(ecxNotZero, number<32>((uint32_t)(insn->get_address())), policy.readIP()));
     }
 
     /* Instruction semantics for stosN where N is 1(b), 2(w), or 4(d) */
@@ -530,7 +520,9 @@ struct X86InstructionSemantics {
         return result;
     }
 
-    void translate(SgAsmx86Instruction* insn) {
+    /* Virtual so that we can subclass X86InstructionSemantics and have an opportunity to override the translation of any
+     * instruction. */
+    virtual void translate(SgAsmx86Instruction* insn) {
         policy.writeIP(number<32>((unsigned int)(insn->get_address() + insn->get_raw_bytes().size())));
         X86InstructionKind kind = insn->get_kind();
         const SgAsmExpressionPtrList& operands = insn->get_operandList()->get_operands();
