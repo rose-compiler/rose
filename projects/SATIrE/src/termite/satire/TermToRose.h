@@ -230,14 +230,19 @@ public:
   template< class DeclType >
   DeclType* lookaheadDecl(DeclType** decl, std::string pattern) 
   {
+    *decl = NULL;
     if (globalDecls) {
       for (std::deque<PrologTerm*>::iterator it = globalDecls->begin();
 	   it != globalDecls->end(); ++it) {
 	if ((*it)->matches(pattern)) {
-	  return (DeclType*)toRose(*it);
+	  //std::cerr<<pattern<<std::endl;
+	  *decl = dynamic_cast<DeclType*>(toRose(*it));
+	  //std::cerr<<d->class_name()<<std::endl;
+	  ROSE_ASSERT(*decl != NULL);
 	}
       }
     }
+    return *decl;
   }
 
 };
