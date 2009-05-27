@@ -183,7 +183,8 @@ namespace X86Disassembler {
     bool branchPredictionEnabled;
     bool rexPresent, rexW, rexR, rexX, rexB;
     bool sizeMustBe64Bit;
-    bool addressSizeOverride, operandSizeOverride;
+    bool operandSizeOverride;           /* set only when we see the 0x66 instruction prefix */
+    bool addressSizeOverride;           /* set only when we see the 0x67 instruction prefix */
     bool lock;
     RepeatPrefix repeatPrefix;
     bool modregrmByteSet;
@@ -223,6 +224,8 @@ namespace X86Disassembler {
       isUnconditionalJump(false)
     {}
 
+    /* The effective address size is normally based on the default instruction size. However, if the disassembler encounters
+     * the 0x67 instruction prefix ("Address-size Override Prefix") then other sizes are used. See pattent 6571330. */  
     X86InstructionSize effectiveAddressSize() const {
       if (addressSizeOverride) {
         switch (p.insnSize) {
@@ -236,6 +239,8 @@ namespace X86Disassembler {
       }
     }
 
+    /* The operand size is normally based on the default instruction size. However, if the disassembler encounters the 0x66
+     * instruction prefix ("Precision-size Override Prefix") then other sizes are used. See pattent 6571330. */
     X86InstructionSize effectiveOperandSize() const {
       if (operandSizeOverride) {
         switch (p.insnSize) {
