@@ -18,7 +18,10 @@ class RtedTransformation : public AstSimpleProcessing {
   std::map<SgInitializedName*, RTedArray*> create_array_define_varRef_multiArray_stack;
   std::map<SgVarRefExp*, RTedArray*> create_array_access_call;
   // remember variables that were used to create an array. These cant be reused for array usage calls
-  std::vector<SgVarRefExp*> createVariables;
+  std::vector<SgVarRefExp*> variablesUsedForArray;
+  // the following stores all variables that are created (and used e.g. in functions)
+  // We need to store the name, type and intialized value
+  std::vector<SgInitializedName*> variable_declarations;
   // ------------------------ string -----------------------------------
   // handle call to functioncall
   std::vector<RtedArguments*> function_call;
@@ -37,6 +40,7 @@ class RtedTransformation : public AstSimpleProcessing {
   SgFunctionSymbol* roseRtedClose;
   bool insertMainBeforeLast;
   SgFunctionSymbol* roseCallStack;
+  SgFunctionSymbol* roseCreateVariable;
 
   // FUNCTIONS ------------------------------------------------------------
   // Helper function
@@ -82,17 +86,17 @@ class RtedTransformation : public AstSimpleProcessing {
   SgVarRefExp* resolveToVarRefLeft(SgExpression* expr);
   RtedSymbols* symbols;
 
-  //  std::vector<RTedFunctionCall*> create_function_call;
   bool isVarRefInCreateArray(SgInitializedName* search);
   void insertFuncCall(RtedArguments* args);
   void insertStackCall(RtedArguments* args);
   void insertStackCall(RtedArguments* args, bool before);
-  //void insertFunctionCall(RTedFunctionCall* funcCall, 
-  //			  bool before);
-  //void insertFuncCall(RtedArguments* args, bool before);
   void visit_isFunctionCall(SgNode* n);
   bool isInterestingFunctionCall(std::string name);
   int getDimensionForFuncCall(std::string name);
+
+  // is it a variable?
+  void visit_isSgVariableDeclaration(SgNode* n);
+  void insertVariableCreateCall(SgInitializedName* initName);
 
   std::string removeSpecialChar(std::string str);
 

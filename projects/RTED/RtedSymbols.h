@@ -15,6 +15,7 @@ public:
 	SgFunctionSymbol* roseFunctionCall;
 	SgFunctionSymbol* roseConvertIntToString;
 	SgFunctionSymbol* roseCallStack;
+	SgFunctionSymbol* roseCreateVariable;
 
 	RtedSymbols() {
 		roseCreateArray = NULL;
@@ -22,6 +23,7 @@ public:
 		roseRtedClose = NULL;
 		roseConvertIntToString=NULL;
 		roseCallStack = NULL;
+		roseCreateVariable = NULL;
 	};
 	
 	virtual ~RtedSymbols() {

@@ -11,6 +11,7 @@
 struct RuntimeVariablesType {
   char* name; // stack variable name
   char* mangled_name; // mangled name
+  char* type;
 };
 
 
@@ -35,9 +36,14 @@ struct RuntimeSystem  {
 
   // variables that are pushed and poped on/from stack
   // used to determine the real variable passed to a function
+  int maxRuntimeVariablesOnStackEndIndex;
+  int runtimeVariablesOnStackEndIndex;
+  struct RuntimeVariablesType* runtimeVariablesOnStack; 
+
+  // variables used
   int maxRuntimeVariablesEndIndex;
   int runtimeVariablesEndIndex;
-  struct RuntimeVariablesType* runtimeVariablesOnStack; 
+  struct RuntimeVariablesType* runtimeVariables; 
 
   // a map of all arrays that were created
   int arraysEndIndex;
@@ -84,6 +90,9 @@ int  RuntimeSystem_isModifyingOp(char* name);
 
 // function used to indicate error
 void RuntimeSystem_callExit(char* filename, char* line, char* reason, char* stmtStr);
+
+// functions dealing with variables
+void RuntimeSystem_roseCreateVariable(char* name, char* mangled_name, char* type, char* init);
 
 
 #endif

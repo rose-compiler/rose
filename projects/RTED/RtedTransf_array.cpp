@@ -9,6 +9,9 @@ using namespace SageInterface;
 using namespace SageBuilder;
 
 
+/* -----------------------------------------------------------
+ * Is the Initialized Name already known as an array element ?
+ * -----------------------------------------------------------*/
 bool
 RtedTransformation::isVarRefInCreateArray(SgInitializedName* search) {
   bool found=false;
@@ -604,7 +607,7 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
 					   initName, indx1, indx2,
 					   ismalloc);
 	  // varRef can not be a array access, its only an array Create
-	  createVariables.push_back(varRef);
+	  variablesUsedForArray.push_back(varRef);
 	  create_array_define_varRef_multiArray[varRef] = array;
 	}
       }
@@ -723,8 +726,8 @@ void RtedTransformation::visit_isArrayPntrArrRefExp(SgNode* n) {
     }
     ROSE_ASSERT(varRef);
     bool create_access_call=true;
-    vector<SgVarRefExp*>::const_iterator cv = createVariables.begin();
-    for (;cv!=createVariables.end();++cv) {
+    vector<SgVarRefExp*>::const_iterator cv = variablesUsedForArray.begin();
+    for (;cv!=variablesUsedForArray.end();++cv) {
       SgVarRefExp* stored = *cv;
       if (stored == varRef)
 	create_access_call=false;
@@ -759,11 +762,23 @@ void RtedTransformation::visit_isArrayPntrArrRefExp(SgNode* n) {
 
 
 void RtedTransformation::visit_isArrayExprListExp(SgNode* n) {
+  // there could be a cast between SgExprListExp and SgVarRefExp
   SgExprListExp* exprlist = isSgExprListExp(isSgVarRefExp(n)->get_parent());
+#if 0
+  cerr << " >> checking node : " << n->class_name() << endl;
+  if (isSgVarRefExp(n)) {
+    cerr << ">>>>>>>>>>> checkign func : " << isSgVarRefExp(n)->unparseToString() <<
+      "    parent : " <<  isSgVarRefExp(n)->get_parent()->class_name() <<
+      "    parent : " <<  isSgVarRefExp(n)->get_parent()->get_parent()->class_name() << endl;
+  }
+#endif
+  if (isSgCastExp(isSgVarRefExp(n)->get_parent()))
+    exprlist = isSgExprListExp(isSgVarRefExp(n)->get_parent()->get_parent());
   // check if this is a function call with array as parameter
+  if (exprlist) {
   SgFunctionCallExp* fcexp = isSgFunctionCallExp(exprlist->get_parent());
   if (fcexp) {
-    cerr <<"Found a function call with varRef as parameter: " << endl;
+    cerr <<"Found a function call with varRef as parameter: " << fcexp->unparseToString() <<endl;
     // check if parameter is array - then check function name
     // call func(array_name) to runtime system for runtime inspection 
     SgInitializedName* initName =
@@ -792,8 +807,140 @@ void RtedTransformation::visit_isArrayExprListExp(SgNode* n) {
 	ROSE_ASSERT(funcCall);
 	function_call.push_back(funcCall);
       }
+    } else {
+      cerr << " This is a function call but its not passing an array element " << endl;
     }
+  }
   }
 }
 
+
+
+
+
+
+
+
+
+
+// ------------------------ VARIABLE SPECIFIC CODE --------------------------
+// SHOULD BE MOVED TO SEPARATE FILE LATER
+
+
+void RtedTransformation::visit_isSgVariableDeclaration(SgNode* n) {
+  SgVariableDeclaration* varDecl = isSgVariableDeclaration(n);
+  Rose_STL_Container<SgInitializedName*> vars = varDecl->get_variables();
+  Rose_STL_Container<SgInitializedName*>::const_iterator it = vars.begin();
+  cerr << " ...... CHECKING Variable Declaration " << endl;
+  for (;it!=vars.end();++it) {
+    SgInitializedName* initName = *it;
+    ROSE_ASSERT(initName);
+    // need to get the type and the possible value that it is initialized with
+    cerr << "      Detected initName : " << initName->unparseToString() ;
+    cerr <<"  type : " << initName->get_type()->unparseToString() << endl;
+    variable_declarations.push_back(initName);
+  }
+}
+
+
+void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName 
+						  ) {
+  SgStatement* stmt = getSurroundingStatement(initName);
+  // make sure there is no extern in front of stmt
+#if 1
+  SgDeclarationStatement* declstmt = isSgDeclarationStatement(stmt);
+  SgFunctionParameterList* funcparam = isSgFunctionParameterList(stmt);
+  bool externQual =false;
+  if (funcparam) {
+    SgFunctionDeclaration* funcdeclstmt = isSgFunctionDeclaration(funcparam->get_parent());
+    ROSE_ASSERT(funcdeclstmt);
+    externQual = funcdeclstmt->get_declarationModifier().get_storageModifier().isExtern();
+    cerr << ">>>>>>>>>>>>>>>> stmt-param : " << funcdeclstmt->unparseToString() << "  " << funcdeclstmt->class_name() << 
+      "  " << externQual << endl;
+  } else if (declstmt) {
+    externQual = declstmt->get_declarationModifier().get_storageModifier().isExtern();
+  }  
+  cerr << ">>>>>>>>>>>>>>>> stmt : " << stmt->unparseToString() << "  " << stmt->class_name() << endl;
+  if (externQual) {
+    cerr << "Skipping this insertVariableCreateCall because it probably occurs multiple times (with and without extern)." << endl;
+    return;
+  }
+#endif
+
+
+  if (isSgStatement(stmt)) {
+    SgScopeStatement* scope = stmt->get_scope();
+    string name = initName->get_mangled_name().str();
+
+    ROSE_ASSERT(scope);
+    // what if there is an array creation within a ClassDefinition
+    if ( isSgClassDefinition(scope)) {
+      // new stmt = the classdef scope
+      SgClassDeclaration* decl = isSgClassDeclaration(scope->get_parent());
+      ROSE_ASSERT(decl);
+      stmt = isSgVariableDeclaration(decl->get_parent());
+      if (!stmt) {
+	cerr << " Error . stmt is unknown : " << decl->get_parent()->class_name() << endl;
+	exit(1);
+      } 
+      scope = scope->get_scope();
+      // We want to insert the stmt before this classdefinition, if its still in a valid block
+      cerr <<" ....... Found ClassDefinition Scope. New Scope is : " << scope->class_name() << "  stmt:" << stmt->class_name() <<endl;
+    }
+    // what is there is an array creation in a global scope
+    else if (isSgGlobal(scope)) {
+      cerr <<"RuntimeInstrumentation :: WARNING - Scope not handled!!! : " << name << " : " << scope->class_name() << endl;
+      // We need to add this new statement to the beginning of main
+      // get the first statement in main as stmt
+      stmt = mainFirst;
+      scope=stmt->get_scope();
+    }
+    if (isSgBasicBlock(scope)) {
+      // build the function call : runtimeSystem-->createArray(params); ---------------------------
+      SgExprListExp* arg_list = buildExprListExp();
+      SgExpression* callName = buildString(initName->get_name().str());
+      SgExpression* callNameExp = buildString(name);
+      SgExpression* typeName = buildString(initName->get_type()->unparseToString());
+      SgInitializer* initializer = initName->get_initializer();
+      bool initb = false;
+      if (initializer) initb=true;
+      SgExpression* initBool = buildString("false");
+      if (initb)
+	initBool = buildString("true");
+      appendExpression(arg_list, callName);
+      appendExpression(arg_list, callNameExp);
+      appendExpression(arg_list, typeName);
+      appendExpression(arg_list, initBool);
+
+      ROSE_ASSERT(roseCreateVariable);
+      string symbolName2 = roseCreateVariable->get_name().str();
+      //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
+      SgFunctionRefExp* memRef_r = buildFunctionRefExp(  roseCreateVariable);
+      SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
+							    arg_list);
+      SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
+      // insert new stmt (exprStmt) before (old) stmt
+      insertStatementBefore(isSgStatement(stmt), exprStmt);
+      string empty_comment = "";
+      attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
+      string comment = "RS : Create Variable, paramaters : (name, type, initialized, filename, linenr)";
+      attachComment(exprStmt,comment,PreprocessingInfo::before);
+    } 
+    else if (isSgNamespaceDefinitionStatement(scope)) {
+      cerr <<"RuntimeInstrumentation :: WARNING - Scope not handled!!! : " << name << " : " << scope->class_name() << endl;
+    } else {
+      cerr
+	<< "RuntimeInstrumentation :: Surrounding Block is not Block! : "
+	<< name << " : " << scope->class_name() << endl;
+      ROSE_ASSERT(false);
+    }
+  } else {
+    cerr
+      << "RuntimeInstrumentation :: Surrounding Statement could not be found! "
+      << stmt->class_name() << endl;
+    ROSE_ASSERT(false);
+  }
+
+
+}
 

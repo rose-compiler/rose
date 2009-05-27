@@ -44,6 +44,11 @@ void RtedSymbols::visit(SgNode* n) {
       roseCallStack = isSgFunctionSymbol(func6);
       cerr << ">>>>>>>>>>>>> Found MemberName : roseCallStack" <<  endl;
     }
+    SgFunctionSymbol* func7 = isSgScopeStatement(n)->lookup_function_symbol("RuntimeSystem_roseCreateVariable");
+    if (isSgFunctionSymbol(func7)) {
+      roseCreateVariable = isSgFunctionSymbol(func7);
+      cerr << ">>>>>>>>>>>>> Found MemberName : roseCreateVariable" <<  endl;
+    }
 
 
   }

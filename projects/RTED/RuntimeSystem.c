@@ -43,8 +43,8 @@ RuntimeSystem_Const_RuntimeSystem() {
   //... perform necessary instance initializations 
   // initialze arrays with 10 elements and later increase by 50 if too small
   int initElementSize=0;
-  rtsi()->maxRuntimeVariablesEndIndex = rtsi()->maxArraysEndIndex = initElementSize;
-  rtsi()->arraysEndIndex=  rtsi()->runtimeVariablesEndIndex=0;
+  rtsi()->maxRuntimeVariablesOnStackEndIndex = rtsi()->maxArraysEndIndex = initElementSize;
+  rtsi()->arraysEndIndex=  rtsi()->runtimeVariablesOnStackEndIndex=0;
   rtsi()->arrays = (struct arraysType*)malloc(sizeof(struct arraysType)*initElementSize);
   rtsi()->runtimeVariablesOnStack = (struct RuntimeVariablesType*)malloc(sizeof(struct RuntimeVariablesType)*initElementSize);
   rtsi()->myfile = fopen("result.txt","at");
@@ -198,22 +198,22 @@ RuntimeSystem_increaseSizeArray() {
  ********************************************************/
 void
 RuntimeSystem_increaseSizeRuntimeVariablesOnStack() {                                        
-  rtsi()->maxRuntimeVariablesEndIndex+=50;
-  struct RuntimeVariablesType* run_tmp = (struct RuntimeVariablesType*)malloc(sizeof(struct RuntimeVariablesType)*(rtsi()->maxRuntimeVariablesEndIndex));
+  rtsi()->maxRuntimeVariablesOnStackEndIndex+=50;
+  struct RuntimeVariablesType* run_tmp = (struct RuntimeVariablesType*)malloc(sizeof(struct RuntimeVariablesType)*(rtsi()->maxRuntimeVariablesOnStackEndIndex));
   if (run_tmp) {
     int i=0;
-    for ( i=0;i<rtsi()->maxRuntimeVariablesEndIndex;i++) {
+    for ( i=0;i<rtsi()->maxRuntimeVariablesOnStackEndIndex;i++) {
       run_tmp[i].name=(char*)malloc(sizeof(char*));
       run_tmp[i].mangled_name =(char*)malloc(sizeof(char*));
     }
-    for ( i=0;i<rtsi()->runtimeVariablesEndIndex;i++) {
+    for ( i=0;i<rtsi()->runtimeVariablesOnStackEndIndex;i++) {
       run_tmp[i].name=rtsi()->runtimeVariablesOnStack[i].name;
       run_tmp[i].mangled_name =rtsi()->runtimeVariablesOnStack[i].mangled_name;
     }
     free( rtsi()->runtimeVariablesOnStack);
     rtsi()->runtimeVariablesOnStack=run_tmp;
   }
-  printf( " Increased rtsi()->runtimeVariablesOnStack to %d  -- current index %d\n",rtsi()->maxRuntimeVariablesEndIndex ,rtsi()->runtimeVariablesEndIndex  );
+  printf( " Increased rtsi()->runtimeVariablesOnStack to %d  -- current index %d\n",rtsi()->maxRuntimeVariablesOnStackEndIndex ,rtsi()->runtimeVariablesOnStackEndIndex  );
 }
 
 /*********************************************************
@@ -224,7 +224,7 @@ char*
 RuntimeSystem_findVariablesOnStack(char* name) {
   char* mang_name = NULL;
   int i=0;
-  for ( i=0;i<rtsi()->runtimeVariablesEndIndex;i++) {
+  for ( i=0;i<rtsi()->runtimeVariablesOnStackEndIndex;i++) {
     char* n =rtsi()->runtimeVariablesOnStack[i].name;
     if (*name==*n) {
       mang_name=rtsi()->runtimeVariablesOnStack[i].mangled_name;
@@ -842,19 +842,19 @@ RuntimeSystem_roseCallStack(char* name, char* mangl_name, char* beforeStr) {
     before=1;
 
   if (before) {
-    if (rtsi()->runtimeVariablesEndIndex>=rtsi()->maxRuntimeVariablesEndIndex) {
+    if (rtsi()->runtimeVariablesOnStackEndIndex>=rtsi()->maxRuntimeVariablesOnStackEndIndex) {
       //increase the size of the array
       RuntimeSystem_increaseSizeRuntimeVariablesOnStack();
     }
-    rtsi()->runtimeVariablesOnStack[rtsi()->runtimeVariablesEndIndex].name=name;
-    rtsi()->runtimeVariablesOnStack[rtsi()->runtimeVariablesEndIndex].mangled_name=mangl_name;
-    rtsi()->runtimeVariablesEndIndex++;
+    rtsi()->runtimeVariablesOnStack[rtsi()->runtimeVariablesOnStackEndIndex].name=name;
+    rtsi()->runtimeVariablesOnStack[rtsi()->runtimeVariablesOnStackEndIndex].mangled_name=mangl_name;
+    rtsi()->runtimeVariablesOnStackEndIndex++;
 
   }
   else {
-    rtsi()->runtimeVariablesEndIndex--;
-    //      rtsi()->runtimeVariablesOnStack[rtsi()->runtimeVariablesEndIndex].name=NULL;
-    //rtsi()->runtimeVariablesOnStack[rtsi()->runtimeVariablesEndIndex].mangled_name=NULL;
+    rtsi()->runtimeVariablesOnStackEndIndex--;
+    //      rtsi()->runtimeVariablesOnStack[rtsi()->runtimeVariablesOnStackEndIndex].name=NULL;
+    //rtsi()->runtimeVariablesOnStack[rtsi()->runtimeVariablesOnStackEndIndex].mangled_name=NULL;
 
     //RuntimeVariables* var = rtsi()->runtimeVariablesOnStack.back();
     //rtsi()->runtimeVariablesOnStack.pop_back();
@@ -866,3 +866,20 @@ RuntimeSystem_roseCallStack(char* name, char* mangl_name, char* beforeStr) {
 
 
 
+
+
+// ***************************************** VARIABLE DECLARATIONS *************************************
+/*********************************************************
+ * This function tells the runtime system that a variable is created
+ * we store the type of the variable and whether it has been intialized
+ ********************************************************/
+void RuntimeSystem_roseCreateVariable(char* name,
+				      char* mangled_name,
+				      char* type, 
+				      char* init) {
+  printf("You have just created a run-time variable\n");
+
+}
+
+
+// ***************************************** VARIABLE DECLARATIONS *************************************

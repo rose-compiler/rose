@@ -37,12 +37,13 @@ void RtedTransformation::transform(SgProject* project) {
   roseRtedClose = symbols->roseRtedClose;
   roseConvertIntToString=symbols->roseConvertIntToString;
   roseCallStack = symbols->roseCallStack;
+  roseCreateVariable = symbols->roseCreateVariable;
   ROSE_ASSERT(roseCreateArray);
   ROSE_ASSERT(roseArrayAccess);
   ROSE_ASSERT(roseConvertIntToString);
   ROSE_ASSERT(roseRtedClose);
   ROSE_ASSERT(roseCallStack);
-
+  ROSE_ASSERT(roseCreateVariable);
   traverseInputFiles(project,preorder);
 
 
@@ -50,8 +51,16 @@ void RtedTransformation::transform(SgProject* project) {
   // Perform all transformations...
   // ---------------------------------------
 
-  cerr
-    << "\n Number of Elements in create_array_define_varRef_multiArray  : "
+  cerr << "\n Number of Elements in variable_declarations  : "
+    << variable_declarations.size() << endl;
+  std::vector<SgInitializedName*>::const_iterator it1 =
+    variable_declarations.begin();
+  for (; it1 != variable_declarations.end(); it1++) {
+    SgInitializedName* node = *it1;
+    insertVariableCreateCall(node);
+  }
+
+  cerr << "\n Number of Elements in create_array_define_varRef_multiArray  : "
     << create_array_define_varRef_multiArray.size() << endl;
   std::map<SgVarRefExp*, RTedArray*>::const_iterator itm =
     create_array_define_varRef_multiArray.begin();
@@ -129,6 +138,16 @@ void RtedTransformation::visit(SgNode* n) {
 
   // ******************** DETECT functions in input program  *********************************************************************
 
+  // *********************** DETECT ALL variable creations ***************
+  else if (isSgVariableDeclaration(n)) {
+    visit_isSgVariableDeclaration(n);
+  }
+
+  // *********************** DETECT ALL variable creations ***************
+
+
+
+
   // *********************** DETECT ALL array creations ***************
   else if (isSgInitializedName(n)) {
     visit_isArraySgInitializedName(n);
@@ -141,14 +160,14 @@ void RtedTransformation::visit(SgNode* n) {
   // *********************** DETECT ALL array creations ***************
 
 
-
-
   // *********************** DETECT ALL array accesses ***************
   else if (isSgPntrArrRefExp(n)) {
     // checks for array access
     visit_isArrayPntrArrRefExp(n);
   } // pntrarrrefexp
-  else if (isSgVarRefExp(n) && isSgExprListExp(isSgVarRefExp(n)->get_parent())) {
+  else if (isSgVarRefExp(n) && 
+	   (isSgExprListExp(isSgVarRefExp(n)->get_parent()) ||
+	    isSgExprListExp(isSgVarRefExp(n)->get_parent()->get_parent()))  ) {
     // handles calls to functions that contain array varRefExp
     // and puts the varRefExp on stack to be used by RuntimeSystem
     visit_isArrayExprListExp(n);

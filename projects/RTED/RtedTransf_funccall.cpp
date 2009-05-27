@@ -10,6 +10,68 @@ using namespace SageInterface;
 using namespace SageBuilder;
 
 
+/*********************************************************
+ * Check if a function call is interesting, i.e. contains a 
+ * call to a function that we need to check the parameters of
+ ********************************************************/
+bool 
+RtedTransformation::isInterestingFunctionCall(std::string name) {
+  bool interesting=false;
+  if (name=="memcpy" || 
+      name=="memmove" || 
+      name=="strcpy" || 
+      name=="strncpy" ||
+      name=="strcat" ||
+      name=="strncat" ||
+      name=="strlen" ||
+      name=="strchr" ||
+      name=="strpbrk" ||
+      name=="strspn" ||
+      name=="strstr"
+      )
+    interesting=true;
+  return interesting;
+}
+
+/***************************************************************
+ * This dimension is used to calculate additional parameters
+ * necessary for the function call, e.g.
+ * if dim = 1 then the parameter is followed by one more
+ * element wich is its size
+ **************************************************************/
+int 
+RtedTransformation::getDimensionForFuncCall(std::string name) {
+  int dim=0;
+  if (name=="memcpy" || 
+      name=="memmove" || 
+      name=="strcpy" || 
+      name=="strncpy" ||
+      name=="strcat" ||
+      name=="strncat" ||
+      name=="strchr" ||
+      name=="strpbrk" ||
+      name=="strspn" ||
+      name=="strstr"
+      ) {
+    dim=2;
+  }
+  else if (name=="strlen"
+	   ) {
+    dim=1;
+  }
+  return dim;
+}
+
+
+
+
+
+
+
+
+/***************************************************************
+ * When a function is called, all variables are put on stack
+ **************************************************************/
 void 
 RtedTransformation::insertStackCall(RtedArguments* args  ) {
   insertStackCall(args,true);
@@ -17,6 +79,9 @@ RtedTransformation::insertStackCall(RtedArguments* args  ) {
   insertStackCall(args,false);
 }
 
+/***************************************************************
+ * When a function is called, all variables are put on stack
+ **************************************************************/
 void 
 RtedTransformation::insertStackCall(RtedArguments* args, bool before  ) {
   //  SgStatement* stmt = getSurroundingStatement(args->varRefExp);
@@ -107,6 +172,8 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
     std::vector<SgExpression*>::const_iterator it = args->arguments.begin();
     for (;it!=args->arguments.end();++it) {
       SgExpression* exp = deepCopy(*it);
+
+      // ************ unary operation *******************************
       if (isSgUnaryOp(exp))
 	exp = isSgUnaryOp(exp)->get_operand();
       //cerr << " exp = " << exp->class_name() << endl;
@@ -123,6 +190,8 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
 	cerr << " isSgVarRefExp :: type : " << type->class_name() << endl;
 	if (base_type)
 	  cerr <<"     base_type: " << base_type->class_name() << endl;
+	
+	// --------- varRefExp is TypeChar -----------------------
 	if (isSgTypeChar(type) || isSgTypeChar(base_type)) {
 	  string name = var->get_symbol()->get_declaration()->get_name().str();
 	  //appendExpression(arg_list, manglName);
@@ -175,16 +244,28 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
 	    }
 	    //ROSE_ASSERT(false);
 	  }
-	  
-      	} else {
-	  // handle integers
+      	} 
+
+	// --------- varRefExp is PointerType -----------------------	
+	else if (isSgPointerType(type)) {
+	  // handle pointers as parameters
+	  cerr << "RtedTransformation - unknown type : " << type->class_name() << endl;
+	  if (base_type)
+	    cerr<<"   and base type : " << base_type->class_name() << "  var:" <<
+	      var->unparseToString() << "   stmt:" << stmt->unparseToString() << endl;
+	  ROSE_ASSERT(false);
+	} 
+		  
+	// --------- varRefExp is IntegerType -----------------------	
+	else {
+	  // handle integers as parameters
 	  SgFunctionRefExp* memRef_r2 = NULL;
 	  if (isSgTypeInt(type)) {
 	    ROSE_ASSERT(roseConvertIntToString);
 	    memRef_r2 = buildFunctionRefExp( roseConvertIntToString);
 	  } else {
 	    cerr << "RtedTransformation - unknown type : " << type->class_name() << endl;
-	    exit(1);
+	    ROSE_ASSERT(false);
 	  }
 	  ROSE_ASSERT(memRef_r2);
 	  string symbolName3 = roseConvertIntToString->get_name().str();
@@ -197,7 +278,10 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
 	  appendExpression(arg_list, funcCallExp2);
 	  cerr << " Created Function call  convertToString" << endl;
 	}
-      } else {
+      }
+
+      // --------- this is not a varRefExp ----
+      else {
 	// if it is already a string, dont add extra quates
 	cerr << " isNotSgVarRefExp exp : " << exp->class_name() << "   " << exp->unparseToString() << endl;
 	if (isSgStringVal(exp)) {
@@ -227,6 +311,7 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
     SgFunctionRefExp* memRef_r = buildFunctionRefExp(roseFunctionCall);
     SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r, arg_list);
     SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
+    // create the function call and its comment
     insertStatementBefore(isSgStatement(stmt), exprStmt);
     string empty_comment = "";
     attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
@@ -242,57 +327,6 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
   
 }
 
-/*********************************************************
- * Check if a function call is interesting, i.e. contains a 
- * call to a function that we need to check the parameters of
- ********************************************************/
-bool 
-RtedTransformation::isInterestingFunctionCall(std::string name) {
-  bool interesting=false;
-  if (name=="memcpy" || 
-      name=="memmove" || 
-      name=="strcpy" || 
-      name=="strncpy" ||
-      name=="strcat" ||
-      name=="strncat" ||
-      name=="strlen" ||
-      name=="strchr" ||
-      name=="strpbrk" ||
-      name=="strspn" ||
-      name=="strstr"
-      )
-    interesting=true;
-  return interesting;
-}
-
-/***************************************************************
- * This dimension is used to calculate additional parameters
- * necessary for the function call, e.g.
- * if dim = 1 then the parameter is followed by one more
- * element wich is its size
- **************************************************************/
-int 
-RtedTransformation::getDimensionForFuncCall(std::string name) {
-  int dim=0;
-  if (name=="memcpy" || 
-      name=="memmove" || 
-      name=="strcpy" || 
-      name=="strncpy" ||
-      name=="strcat" ||
-      name=="strncat" ||
-      name=="strchr" ||
-      name=="strpbrk" ||
-      name=="strspn" ||
-      name=="strstr"
-      ) {
-    dim=2;
-  }
-  else if (name=="strlen"
-	   ) {
-    dim=1;
-  }
-  return dim;
-}
 
 
 /***************************************************************
@@ -311,7 +345,6 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
     cerr <<"Found a function call " << name;
     cerr << "   : fcexp->get_function() : " << fcexp->get_function()->class_name() << endl;
     if (isInterestingFunctionCall(name)) {
-    //if (RuntimeSystem_isInterestingFunctionCall((char*)name.c_str())==1) {
       vector<SgExpression*> args;
       Rose_STL_Container<SgExpression*> expr = exprlist->get_expressions();
       Rose_STL_Container<SgExpression*>::const_iterator it = expr.begin();

@@ -149,7 +149,7 @@ check-C-array-parallel:
 	} &  \
 	pid[$$COUNTER]=$$! ; \
 	echo "Adding PID $!  $${pid[$$COUNTER]}" ; \
-	if [ $$(( $$COUNTER - $$BASE)) -eq 4 ]; then  \
+	if [ $$(( $$COUNTER - $$BASE)) -eq 8 ]; then  \
 		for (( i=$$BASE ; i < $$COUNTER ; i++)); do  \
 	    	     p=$${pid[i]} ; \
 	     	     wait $$p ; \
@@ -164,7 +164,7 @@ check-C-array-parallel:
 	done 
 
 check-C-array:
-	if [ -f "result1.txt" ]; then rm result1.txt; fi ; \
+	if [ -f "result.txt" ]; then rm result.txt; fi ; \
 	cp $(srcdir)/index_array.txt . ; \
 	dir=$(rted_path)/C/array_index_out_of_bound/ ; \
 	echo "Dir : $$dir " ; \
@@ -300,7 +300,7 @@ check-C-string-parallel:
 	} &  \
 	pid[$$COUNTER]=$$! ; \
 	echo "Adding PID $!  $${pid[$$COUNTER]}" ; \
-	if [ $$(( $$COUNTER - $$BASE)) -eq 1 ]; then  \
+	if [ $$(( $$COUNTER - $$BASE)) -eq 8 ]; then  \
 		for (( i=$$BASE ; i < $$COUNTER ; i++)); do  \
 	    	     p=$${pid[i]} ; \
 	     	     wait $$p ; \
@@ -315,7 +315,7 @@ check-C-string-parallel:
 	done 
 
 check-C-string:
-	if [ -f "result2.txt" ]; then rm result2.txt; fi ; \
+	if [ -f "result.txt" ]; then rm result.txt; fi ; \
 	cp $(srcdir)/index_array.txt .
 	dir=$(rted_path)/C/string_errors/ ; \
 	echo "Dir : $$dir " ; \
@@ -381,7 +381,7 @@ check-C-string:
 	done 
 
 check-C-subprogram:
-	if [ -f "result3.txt" ]; then rm result3.txt; fi ; \
+	if [ -f "result.txt" ]; then rm result.txt; fi ; \
 	cp $(srcdir)/index_array.txt .
 	dir=$(rted_path)/C/subprogram_call_errors/ ; \
 	echo "Dir : $$dir " ; \
@@ -447,7 +447,7 @@ check-C-subprogram:
 	done 
 
 check-C-allocation:
-	if [ -f "result4.txt" ]; then rm result4.txt; fi ; \
+	if [ -f "result.txt" ]; then rm result.txt; fi ; \
 	cp $(srcdir)/index_array.txt .
 	dir=$(rted_path)/C/allocation_deallocation_errors/ ; \
 	echo "Dir : $$dir " ; \
@@ -519,10 +519,7 @@ check-C-array-onefile: compile_gcc_file1
 
 deleteAllbinfiles:
 	@echo "Deleting all generated bin files in RTED directory"
-	if [ -f "result1.txt" ]; then rm result1.txt; fi ; \
-	if [ -f "result2.txt" ]; then rm result2.txt; fi ; \
-	if [ -f "result3.txt" ]; then rm result3.txt; fi ; \
-	if [ -f "result4.txt" ]; then rm result4.txt; fi ; \
+	if [ -f "result.txt" ]; then rm result.txt; fi ; \
 	dir=$(rted_path)/C/array_index_out_of_bound/ ; \
 	if [ "" == "`find $$dir -name "*.bin"`" ]; then \
 	   echo "No bin files exist in $$dir" ; \
