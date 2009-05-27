@@ -2,7 +2,7 @@
 CWD=/home/heller/rose_nmi
 # update the scripts every day at midnight
 # update.sh updates the scripts via svn and loads the new, updated cronjob file
-* 0 * * * ${CWD}/update.sh >>& ${CWD}/update.log 
+* 0 * * * ${CWD}/update.sh >> ${CWD}/update.log 
 ###############################################################################
 # Contribute here:
 ###############################################################################
