@@ -215,8 +215,9 @@ public:
   TypeType* lookupType(TypeType** type, std::string id, bool fail=true) 
   {   
     if (typeMap.find(id) != typeMap.end()) {
-      *type = dynamic_cast<TypeType*>(typeMap[id]);
-      ROSE_ASSERT(*type != NULL);
+      SgType* t = typeMap[id];
+      *type = dynamic_cast<TypeType*>(t);
+      ROSE_ASSERT(*type != NULL || t == NULL); // allow NULL pointer
     } else if (fail) {
       std::cerr<<"**ERROR: Symbol lookup failed: ("
 	/*<<type->class_name()<<"*)*/<<id<<std::endl;
