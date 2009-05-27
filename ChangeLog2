@@ -1,3 +1,138 @@
+2009-05-27 16:14  liao6
+
+	* [r5956]
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/fortran/Makefile.am:
+	  Made Fortran test rules conditional
+
+2009-05-27 16:04  liao6
+
+	* [r5955] /trunk/ROSE/projects/autoTuning/tests/Makefile.am,
+	  /trunk/ROSE/src/frontend/SageIII/Makefile.am,
+	  /trunk/ROSE/src/frontend/SageIII/OmpAttribute.C,
+	  /trunk/ROSE/src/frontend/SageIII/OmpAttribute.h,
+	  /trunk/ROSE/src/frontend/SageIII/ompFortranParser.C,
+	  /trunk/ROSE/src/frontend/SageIII/omp_lib.h,
+	  /trunk/ROSE/src/frontend/SageIII/omp_lib_kinds.h,
+	  /trunk/ROSE/tests/CompileTests/Fortran_tests/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/Fortran_tests/test2009_1.f90,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/fortran/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/fortran/collapse.f90,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/fortran/critical.f90,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/fortran/default.f,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/fortran/exampleA102f.f90,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/fortran/exampleA11f.f,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/fortran/exampleA134f.f90,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/fortran/exampleA161f.f90,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/fortran/exampleA281f.f,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/fortran/schedule.f:
+	  Handling more clauses in OpenMP Fortran parser
+	  
+	  * more examples from the specification's appendix
+	  * added Fortran headers
+
+2009-05-27 15:06  matzke
+
+	* [r5954] /trunk/ROSE/src/frontend/Disassemblers/x86Disassembler.C:
+	  Added a couple of disassembler comments
+
+2009-05-27 15:06  matzke
+
+	* [r5953] /trunk/ROSE/src/midend/binaryAnalyses/Makefile.am: Added
+	  two missing *.h files to a makefile
+	  
+	  Also sorted the list.
+
+2009-05-27 15:06  matzke
+
+	* [r5952]
+	  /trunk/ROSE/src/midend/binaryAnalyses/instructionSemantics/findConstants.h:
+	  Added CdeclFunctionPolicy subclassing FindConstantsPolicy
+
+2009-05-27 15:05  matzke
+
+	* [r5951]
+	  /trunk/ROSE/developersScratchSpace/Robb/SemanticVerification/Debugger.h,
+	  /trunk/ROSE/developersScratchSpace/Robb/SemanticVerification/DebuggerPtrace.c:
+	  More work on "d" command for debugger
+
+2009-05-27 15:05  matzke
+
+	* [r5950]
+	  /trunk/ROSE/developersScratchSpace/Robb/SemanticVerification/DebuggerPtrace.c:
+	  New "d" command for debugger
+
+2009-05-27 15:05  matzke
+
+	* [r5949]
+	  /trunk/ROSE/developersScratchSpace/Robb/SemanticVerification/verifySemantics.C,
+	  /trunk/ROSE/src/midend/binaryAnalyses/instructionSemantics/findConstants.h,
+	  /trunk/ROSE/src/midend/binaryAnalyses/instructionSemantics/x86InstructionSemantics.h:
+	  Partial revert of r4507: fixed instruction semantics for
+	  rep_stosN
+	  
+	  Reverts the x86InstructionSemantics.h from r4507 while preserving
+	  the
+	  new code. The old code semantics were to execute only one
+	  iteration of
+	  the stos command, adjusting %eip so as to loop over the
+	  instruction.
+	  This is how the CPU actually executes "rep" and a ptrace()
+	  single-step
+	  demonstrates this behavior. On the other hand, the new code
+	  (introduced
+	  in r4507) is needed by the asyncSignalSafety checker and executes
+	  the
+	  entire loop in one shot.
+	  
+	  The new and old code co-exist. The old code is in
+	  X86InstructionSemantics while the new code was moved into
+	  asyncSignalSafety.C. Various changes were needed in order be able
+	  to use
+	  X86InstructionSemantics as a superclass.
+	  
+	  This commit also fixes various bugs:
+	  * loop termination condition in pre-r4507 code
+	  * compile error in dead code of X86InstructionSemantics
+	  * inverted logic in equalToZero for verifySemantics.C
+
+2009-05-27 15:05  matzke
+
+	* [r5948]
+	  /trunk/ROSE/developersScratchSpace/Robb/SemanticVerification/verifySemantics.C:
+	  Changes to readMemory() for debugging segments
+	  
+	  The value of the segment register is printed when errors are
+	  detected.
+
+2009-05-27 15:05  matzke
+
+	* [r5947]
+	  /trunk/ROSE/developersScratchSpace/Robb/SemanticVerification/verifySemantics.C:
+	  Actual register values are displayed on error
+	  
+	  If semantic verification detects an error then it will dump the
+	  actual
+	  registers at the point of the error.
+
+2009-05-27 15:05  matzke
+
+	* [r5946]
+	  /trunk/ROSE/developersScratchSpace/Robb/SemanticVerification/verifySemantics.C:
+	  Diagnostics use corred field widths
+	  
+	  The output of a hexadecimal value occupies the appropriate number
+	  of
+	  digits (zero filling if necessary) to represent the value. For
+	  instance,
+	  a 32-bit value will use 8 digits, a 16-bit value uses 4, etc.
+
+2009-05-27 15:05  matzke
+
+	* [r5945]
+	  /trunk/ROSE/developersScratchSpace/Robb/SemanticVerification/Debugger.h,
+	  /trunk/ROSE/developersScratchSpace/Robb/SemanticVerification/DebuggerPtrace.c:
+	  Checkpoint: adding 'd' command to debugger
+
 2009-05-27 01:00  panas2
 
 	* [r5937] /trunk/ROSE/projects/RTED/DataStructures.h,
