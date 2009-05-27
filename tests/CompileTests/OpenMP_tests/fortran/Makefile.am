@@ -43,12 +43,32 @@ ALL_TESTCODES =\
   $(F90_TESTCODES_TO_PASS) \
   $(TESTCODES_CURRENTLY_FAILING) 
 
+# follow the astOutlining test to guide fortran tests  
+# Liao, 5/27/2009
+if ROSE_USE_OPEN_FORTRAN_PARSER
+
+if ROSE_USE_SSL_SUPPORT
+	@echo "Fortran tests for ROSE OpenMP parser"
+	@echo "****** ROSE/tests/CompilTests/OpenMP_tests/fortran: make check rule skipped (SSL support disables this rule)" 
+	@echo "***********************************************************************************************************"
+
+else	
 check-local:
 	@echo "Fortran tests for ROSE OpenMP parser"
 	@$(MAKE) $(PASSING_F77_TEST_OBJECTS)
 	@$(MAKE) $(PASSING_F90_TEST_OBJECTS)
 	@echo "****** ROSE/tests/CompilTests/OpenMP_tests/fortran: make check rule completes (terminated normally)" 
-	@echo "***********************************************************************************************************"        	
+	@echo "***********************************************************************************************************"
+
+endif	
+else
+check-local:
+	@echo "Fortran tests for ROSE OpenMP parser"
+	@echo "****** ROSE/tests/CompilTests/OpenMP_tests/fortran: make check rule skipped (FORTRAN NOT CONFIGURED)" 
+	@echo "***********************************************************************************************************"
+
+endif	
+
 EXTRA_DIST = $(ALL_TESTCODES)
 clean-local:
 	rm -f *.o rose_*.* *.out
