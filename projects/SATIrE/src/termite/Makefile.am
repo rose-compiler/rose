@@ -1,4 +1,3 @@
-
 ## Process this file with automake to create Makefile.in.
 
 INCLUDES = -I$(top_srcdir)/src/satire \

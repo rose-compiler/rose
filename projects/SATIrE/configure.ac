@@ -144,41 +144,41 @@ AM_CONDITIONAL(WITH_SWI_PROLOG, [test "x$with_swi_prolog" = xyes])
 AC_SUBST(have_swi_prolog)
 
 
-# Check for BLAST model checker (optional)
+# Check for CBMC model checker (optional)
 #-----------------------------------
-BLAST=`which pblast.opt`
-BLASTHOME=`dirname $BLAST`/..
+CBMC=`which cbmc-2-9-i686-linux`
+CBMCHOME=`dirname $CBMC`/..
 
-AC_ARG_WITH([blast],
-            [AS_HELP_STRING([--with-blast],
-              [enable BLAST model checker (optional) @<:@default=check@:>@])],
+AC_ARG_WITH([cbmc],
+            [AS_HELP_STRING([--with-cbmc],
+              [enable CBMC model checker (optional) @<:@default=check@:>@])],
             [],
-            [with_blast=check])
+            [with_cbmc=check])
           
-AS_IF([test "x$with_blast" != xno],
-      AS_IF([test "x$BLAST" != x],
-            [with_blast=yes],
-            [if test "x$with_blast" != xcheck; then
-             AC_MSG_FAILURE([--with-blast was given, but test for BLAST failed])
+AS_IF([test "x$with_cbmc" != xno],
+      AS_IF([test "x$CBMC" != x],
+            [with_cbmc=yes],
+            [if test "x$with_cbmc" != xcheck; then
+             AC_MSG_FAILURE([--with-cbmc was given, but test for CBMC failed])
 	     else
-	       with_blast=no
+	       with_cbmc=no
              fi]),
-      [with_blast=no])
+      [with_cbmc=no])
 
-AS_IF([test "x$with_blast" = xyes],
-      [AC_SUBST([BLAST], ["$BLAST"])
-       AC_SUBST([BLASTHOME], ["$BLASTHOME"])
-       AC_DEFINE([HAVE_BLAST], [1], [Define if you have BLAST])
-       AC_MSG_RESULT([The BLAST Model Checker will be available to verify analysis results])
-       have_blast=1],
-      [AC_SUBST([BLAST], ["pblast.opt"])
-       AC_SUBST([BLASTHOME], ["."])  # set a safe dummy default path
-       AC_DEFINE([HAVE_BLAST], [0], [Define if you have BLAST])
-       AC_MSG_RESULT([BLAST Model Checker support disabled.])
-       have_blast=0])
+AS_IF([test "x$with_cbmc" = xyes],
+      [AC_SUBST([CBMC], ["$CBMC"])
+       AC_SUBST([CBMCHOME], ["$CBMCHOME"])
+       AC_DEFINE([HAVE_CBMC], [1], [Define if you have CBMC])
+       AC_MSG_RESULT([The CBMC Model Checker will be available to verify analysis results])
+       have_cbmc=1],
+      [AC_SUBST([CBMC], ["pcbmc.opt"])
+       AC_SUBST([CBMCHOME], ["."])  # set a safe dummy default path
+       AC_DEFINE([HAVE_CBMC], [0], [Define if you have CBMC])
+       AC_MSG_RESULT([CBMC Model Checker support disabled.])
+       have_cbmc=0])
 
-AM_CONDITIONAL(WITH_BLAST, [test "x$with_blast" = xyes])
-AC_SUBST(have_blast)
+AM_CONDITIONAL(WITH_CBMC, [test "x$with_cbmc" = xyes])
+AC_SUBST(have_cbmc)
 
 
 # Checks for libraries.
@@ -247,9 +247,9 @@ if [[ x$with_pag = xyes ]]; then
     PAG_STATUS="enabled"
 fi
 
-BLAST_STATUS="disabled"
-if [[ x$with_blast = xyes ]]; then
-    BLAST_STATUS="enabled"
+CBMC_STATUS="disabled"
+if [[ x$with_cbmc = xyes ]]; then
+    CBMC_STATUS="enabled"
 fi
 
 echo
@@ -257,5 +257,5 @@ echo "------------------------------------------------------------------------"
 echo "  SATIrE configuration summary:"
 echo "    PAG .................." $PAG_STATUS
 echo "    SWI-Prolog............" $SWI_STATUS
-echo "    BLAST ................" $BLAST_STATUS
+echo "    CBMC ................." $CBMC_STATUS
 echo "------------------------------------------------------------------------"

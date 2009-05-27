@@ -204,13 +204,15 @@ pointsto_live_variables: init.token
    "echo 'executing with 3sec timeout...' && ulimit -t 3 && ./intvlassert" \
 	 && echo "... success") \
 	|| (echo "** FAILED: $<" && echo && true)
-if WITH_BLAST
+if WITH_CBMC
 	@echo "Performing model checking on" $<
 	@cd $(testdir)/interval; \
-	($(CC) -std=c99 -E -I$(BLASTHOME)/test/headers intvlassert.c > intvlassert.i; \
-	pblast.opt -clp intvlassert.i -main main) \
+	$(CBMC) intvlassert.c \
 	|| (echo "** FAILED: $<" && echo && true)
 endif
+#($(CC) -std=c99 -E -I$(BLASTHOME)/test/headers intvlassert.c > intvlassert.i;
+#$(BLAST) -clp intvlassert.i -main main)
+
 
 interval: init.token
 	@echo
