@@ -827,7 +827,8 @@ main :-
 
     % Write output
     write_term(Output, [quoted(true)]),
-    writeln('.')
+    writeln('.'),
+    statistics
 
   ), E, (print_message(error, E), fail)),
 
