@@ -1,5 +1,6 @@
 #!/usr/bin/pl -q  -O  -L64M -G64M -t main -f 
 % -*- prolog -*-
+% vim: syntax=prolog
 
 %-----------------------------------------------------------------------
 % validator.pl
@@ -52,9 +53,18 @@ default_values(PPI, DA, AI, FI) :-
 compval(top, V, V, _, _, _) :- !.
 compval(Val, _, int_val(null, value_annotation(Val, PPI), AI, FI), PPI, AI, FI).
 
+% look up type for some variable
+var_withtype(Decls, Var->Intvl, Var:Type->Intvl) :-
+  member(Var:Type, Decls),
+  !.
+var_withtype(_Decls, _V, not_in_scope).
+
+vardecl_vartype(variable_declaration([IN],_,_,_), Var:Type) :-
+  IN = initialized_name(_, initialized_name_annotation(Type,Var,_,_),_,_).
+
 % generate an expression assert(v > Lower && v < Upper)
 
-interval_assert(Stmt, Var->Intvl, AssertionExpr) :-
+interval_assert(Stmt, Var:Type->Intvl, AssertionExpr) :-
   % handle the case where the variable is declared inside a scope stmt
   (member(Op, [for_statement
 	      %, while_stmt, do_while_stmt, if_stmt, switch_statement
@@ -64,12 +74,12 @@ interval_assert(Stmt, Var->Intvl, AssertionExpr) :-
    member(variable_declaration(INs, _, _, _), Decls),
    member(initialized_name(_, initialized_name_annotation(_,Var,_,_),_,_), INs))
   -> AssertionExpr = []
-  ; interval_assert1(Var->Intvl, AssertionExpr).
+  ; interval_assert1(Var:Type->Intvl, AssertionExpr).
 
 
-interval_assert1(Var->[Min,Max], AssertionExpr) :-
+interval_assert1(Var:VarType->[Min,Max], AssertionExpr) :-
   default_values(PPI, DA, AI, FI),
-  VarType = type_int, %null,
+  % VarType = type_int, %null,
   AssertionExpr =
     function_call_exp(FRefExp, expr_list_exp([AndOp], DA, AI, FI),
 		      function_call_exp_annotation(type_void,PPI), AI, FI),
@@ -109,7 +119,11 @@ chain_up(Assertions, DA, AI, FI,  Statement) :-
   ).
   
 % don't generate assertions for branch statements
-assertions(_, y, y, Bb, Bb) :- functor(Bb, basic_block, _).
+assertions(y-Decls0, y-Decls, y-Decls0, Bb, Bb) :-
+  Bb = basic_block(Stmts, _,_,_),
+  include(subsumes_chk(variable_declaration(_,_,_,_)), Stmts, VarDecls),
+  maplist(vardecl_vartype, VarDecls, VarsTypes),
+  append(VarsTypes, Decls0, Decls).
 assertions(_, n, n, Branch, Branch) :-
   functor(Branch, if_stmt, _)
 %  ; functor(Branch, for_statement, _)
@@ -117,7 +131,7 @@ assertions(_, n, n, Branch, Branch) :-
   ; functor(Branch, do_while_stmt, _)
   ; functor(Branch, switch_statement, _).
 
-assertions(y, y, y, Statement, AssertedStatement) :-
+assertions(y-Decls, y-Decls, y-Decls, Statement, AssertedStatement) :-
   functor(Statement, F, Arity),
   ( StmtSuffix = stmt
   ; StmtSuffix = statement
@@ -133,8 +147,14 @@ assertions(y, y, y, Statement, AssertedStatement) :-
   member(merged:map([top,top],PreVars), PreInfo),
   member(merged:map([top,top],PostVars), PostInfo),
 
-  maplist(interval_assert(Statement), PreVars, PreAssertions),
-  maplist(interval_assert(Statement), PostVars, PostAssertions),
+  maplist(var_withtype(Decls), PreVars, PreVarsWithTypes),
+  maplist(var_withtype(Decls), PostVars, PostVarsWithTypes),
+
+  exclude(=(not_in_scope), PreVarsWithTypes, ValidPreVars),
+  exclude(=(not_in_scope), PostVarsWithTypes, ValidPostVars),
+
+  maplist(interval_assert(Statement), ValidPreVars, PreAssertions),
+  maplist(interval_assert(Statement), ValidPostVars, PostAssertions),
 
   chain_up(PreAssertions, DA, AI, FI, PreStmt),
   chain_up(PostAssertions, DA, AI, FI, PostStmt),
@@ -142,8 +162,11 @@ assertions(y, y, y, Statement, AssertedStatement) :-
   flatten([PreStmt, Statement, PostStmt], AssertedStatement),
   !.
 
-assertions(y, y, y, global(Decls, An, Ai, Fi),
+assertions(y-[], y-[], y-VarsTypes, global(Decls, An, Ai, Fi),
 	  global([Assert|Decls1], An, Ai, Fi)) :-
+  include(subsumes_chk(variable_declaration(_,_,_,_)), Decls, VarDecls),
+  maplist(vardecl_vartype, VarDecls, VarsTypes),
+
   default_values(PPI, DA, AI, _),
   Assert = 
   function_declaration(
@@ -163,12 +186,15 @@ assertions(y, y, y, global(Decls, An, Ai, Fi),
 	       PPI), analysis_info([]), AFI),
 
   AFI = file_info('/usr/include/assert.h', 1, 1),
-  Include = cpreprocessorIncludeDeclaration('#include <assert.h>\n', before,Fi),
   Decls = [D|Ds],
   D =.. D_u,     append(Dhead, [Dan, Dai, Dfi], D_u),
   Dan =.. Dan_u, append(Dan_head, [preprocessing_info(PPIs)], Dan_u),
 
-  append(Dan_head, [preprocessing_info([Include|PPIs])], Dan_u1),
+  % Guard the #include because CBMC doesn't like it.
+  Ifdef = cpreprocessorIfdefDeclaration('#ifdef INCLUDE_ASSERT_H', before, Fi),
+  Include = cpreprocessorIncludeDeclaration('#include <assert.h>\n', before,Fi),
+  Endif = cpreprocessorEndifDeclaration('#endif', before, Fi),
+  append(Dan_head, [preprocessing_info([Ifdef,Include,Endif|PPIs])], Dan_u1),
   Dan1 =.. Dan_u1,
   append(Dhead, [Dan1, Dai, Dfi], D_u1),
   D1 =.. D_u1, 
@@ -235,7 +261,7 @@ main :-
 	 compound(Input),
 
          % Generate the assertions...
-	 transformed_with(Input, assertions, preorder, y, _, P1),
+	 transformed_with(Input, assertions, preorder, y-[], _, P1),
 
 	 % Generate a main() if necessary
 	 callgraph(P1, CG),

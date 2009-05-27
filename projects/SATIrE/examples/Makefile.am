@@ -199,7 +199,7 @@ pointsto_live_variables: init.token
 	@cd $(testdir)/interval; export TERMITE_LIB=$(datadir)/termite; $(SWI_PL) -q -O -t main -f validator.pl < intvltest.term > intvltest1.term
 	@cd $(testdir)/interval; $(DESTDIR)/$(bindir)/term2c intvltest1.term -o intvlassert.c
 	@cd $(testdir)/interval; \
-	($(CC) -std=c99 -o intvlassert intvlassert.c \
+	($(CC) -std=c99 -DINCLUDE_ASSERT_H -o intvlassert intvlassert.c \
 	 && bash -c \
    "echo 'executing with 3sec timeout...' && ulimit -t 3 && ./intvlassert" \
 	 && echo "... success") \
@@ -207,7 +207,8 @@ pointsto_live_variables: init.token
 if WITH_CBMC
 	@echo "Performing model checking on" $<
 	@cd $(testdir)/interval; \
-	$(CBMC) intvlassert.c \
+	$(CBMC) --show-claims intvlassert.c; \
+	$(CBMC) --no-bounds-check --unwind 1024 intvlassert.c \
 	|| (echo "** FAILED: $<" && echo && true)
 endif
 #($(CC) -std=c99 -E -I$(BLASTHOME)/test/headers intvlassert.c > intvlassert.i;
