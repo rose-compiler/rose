@@ -1155,4 +1155,107 @@ struct FindConstantsPolicy {
     }
 };
 
+/** Augment the findConstants policy to do some special things for some instructions. */
+class CdeclFunctionPolicy : public FindConstantsPolicy {
+    VirtualBinCFG::AuxiliaryInformation *info;
+public:
+    CdeclFunctionPolicy(VirtualBinCFG::AuxiliaryInformation *info, RegisterSet *rs)
+        : FindConstantsPolicy(rs), info(info) {}
+
+    /** Augments FindConstantsPolicy version. */
+    void startInstruction(SgAsmInstruction* insn) {
+        /* Any instruction that is a branch target should set the registerset to bottom rather than top. This isn't actually
+         * the accurate thing to do, but it turns out that it works better this way for finding the signal handlers. */
+        VirtualBinCFG::InstructionToAddressesMap::iterator found = info->incomingEdges.find(insn);
+        if (found!=info->incomingEdges.end() && found->second.size()>1) {
+            RegisterSet &rs = rsets[insn->get_address()];
+            MemoryWriteSet saved = rs.memoryWrites->get();
+            rs.setToBottom();
+            rs.memoryWrites->set(saved);
+        }
+
+        FindConstantsPolicy::startInstruction(insn);
+
+        /* GCC assumes that the direction flag (df) is zero on function entry. See gcc man page for -mcld switch. */
+        LatticeElement<1> df = rsets[insn->get_address()].flag[x86_flag_df]->get();
+        if (df.name!=0)
+            writeFlag(x86_flag_df, false_());
+
+#if 0   /*DEBUGGING: Show register set at start of instruction */
+        std::cout <<"Initial RSET for [" <<unparseInstructionWithAddress(insn) <<"]\n" <<currentRset;
+#endif
+    }
+
+    /* It is common for a function to align local variables on a particular boundary and this happens near the beginning of a
+     * function by masking off the low-order bits of the stack pointer. For example:
+     *     push ebp                   -- save stack frame
+     *     mov  ebp, esp              -- create new stack frame
+     *     sub  esp, 0xa8             -- allocate stack space for locals
+     *     and  esp, 0xfffffff0       -- align stack on 16-byte boundary
+     * The FindConstantsPolicy, when it encounters such an AND instruction with a named value (non-constant) in %esp, simply
+     * gives %esp a new named value.  What we want to do instead is subtract 16 from the stack pointer, thus introducing some
+     * padding between the top local variable and the bottom of the call frame. The stack after the AND looks like this:
+     *     argN
+     *     ...
+     *     arg0
+     *     return address
+     *     old stack frame from [push ebp]
+     *     padding we inserted from [and esp, 0xfffffff0]
+     *     top local variable
+     *     ...
+     *     bottom local variable          <--- stack pointer points here
+     *     
+     * Note: The policy "and_" method is called for other instructions besides AND, some of which don't have two operands.
+     */
+    template<size_t Len>
+    XVariablePtr<Len> and_(XVariablePtr<Len> a, XVariablePtr<Len> b) {
+        XVariablePtr<Len> result = new XVariable<Len>();
+        struct IC: public BinaryConstraint<Len, Len, Len> {
+            IC(XVariablePtr<Len> result, XVariablePtr<Len> var1, XVariablePtr<Len> var2)
+                : BinaryConstraint<Len, Len, Len>(result, var1, var2)
+                {}
+            virtual void run() const {
+                /* "var1", "var2", and "result" here are initialized from "a", "b", and "result" above */
+                LatticeElement<Len> le1 = BinaryConstraint<Len, Len, Len>::var1->get();
+                LatticeElement<Len> le2 = BinaryConstraint<Len, Len, Len>::var2->get();
+                XVariablePtr<Len> result = BinaryConstraint<Len, Len, Len>::result;
+
+                /* The instruction for which this policy method is being invoked. */
+                SgAsmx86Instruction *insn = isSgAsmx86Instruction(result->def);
+                ROSE_ASSERT(insn);
+                SgAsmExpressionPtrList &opands = insn->get_operandList()->get_operands();
+
+                if (!le1.name && !le2.name) {
+                    /* Operands are known constants, so the result will be a known constant. */
+                    result->set(LatticeElement<Len>::constant(le1.offset & le2.offset, result->def));
+                } else {
+                    /* Is this instruction aligning the stack pointer? */
+                    SgAsmx86RegisterReferenceExpression *op1 = (opands.size()==2 ?
+                                                                isSgAsmx86RegisterReferenceExpression(opands[0]) : NULL);
+                    if (op1 && insn->get_kind()==x86_and &&
+                        op1->get_register_class()==x86_regclass_gpr && op1->get_register_number()==x86_gpr_sp &&
+                        !le2.isTop) {
+                        /* Yes, we're aligning the stack pointer. */
+                        LatticeElement<Len> newval = le1; /* stack pointer */
+                        uint32_t alignment = ~(uint32_t)le2.offset + 1; /*two's complement*/
+                        //std::cout <<"ROBB: aligning stack on "<<std::dec <<alignment <<"-byte boundary"
+                        //          <<" [" <<unparseInstructionWithAddress(insn) <<"]\n";
+                        newval.offset -= alignment;
+                        newval.definingInstruction = insn;
+                        result->set(newval);
+                    } else {
+                        /* No, it is some other use of AND and one or both of the operands are unknown values */
+                        result->set(LatticeElement<Len>());
+                    }
+                }
+            }
+            virtual uint64_t compute(uint64_t, uint64_t) const {
+                abort(); /* handled by run() above */
+            }
+        };
+        (new IC(result, a, b))->activate(); /*invokes the run() method above*/
+        return result;
+    }
+};
+
 #endif /* !findConstants_H */
