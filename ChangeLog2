@@ -1,3 +1,19 @@
+2009-05-28 21:14  liao6
+
+	* [r5979] /trunk/ROSE/src/frontend/SageIII/ompFortranParser.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/fortran/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/fortran/continuation.f90:
+	  Handled one or more line continuations within a single Fortran
+	  OpenMP directive.
+	  
+	  * The basic idea is to delay the handling of the current comment
+	  line if it has a line continuation (&).
+	  The next line will be merged with a previous pending line before
+	  it is being parsed.
+	  The actual parsing is done only if the merged one does not have a
+	  line continuation (&).
+
 2009-05-28 16:25  liao6
 
 	* [r5974] /trunk/ROSE/Makefile.am,
