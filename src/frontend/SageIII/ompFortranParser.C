@@ -1,6 +1,8 @@
-// A hand-crafted OpenMP parser for Fortran comments
-// It only exposes one interface function: 
+// A hand-crafted OpenMP parser for Fortran comments within a SgSourceFile
+// It only exposes a few interface functions: 
 //   omp_fortran_parse()
+// void parse_fortran_openmp(SgSourceFile *sageFilePtr) // preferred
+//
 // All other supporting functions should be declared with "static" (file scope only)
 // Liao, 5/24/2009
 
@@ -9,6 +11,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <string>
+
+using namespace std;
 
 // maximum length for a buffer for a variable, constant, or OpenMP construct name
 #define OFS_MAX_LEN 256
@@ -22,6 +27,7 @@ static SgNode* c_sgnode = NULL; // current SgNode associated with the OpenMP dir
 static OmpSupport::OmpAttribute* ompattribute = NULL; // the current attribute (directive) being built
 static omp_construct_enum omptype= e_unknown; // the current clause (or reduction operation type) being filled out
 static SgExpression * current_exp = NULL; // the current expression AST tree being built
+
 //--------------omp fortran scanner (ofs) functions------------------
 //
 // note: ofs_skip_xxx() optional skip 0 or more patterns
@@ -941,7 +947,113 @@ static bool ofs_match_omp_clauses(int bitvector)
   return true;
 }
 
+//! A helper function to remove Fortran '!comments', but not '!$omp ...' from a string
+// handle complex cases like:
+// ... !... !$omp .. !...
+static void removeFortranComments(string &buffer)
+{
+  size_t pos1 ;
+  size_t pos2;
+  size_t pos3=string::npos;
+
+  pos1= buffer.rfind("!", pos3);
+  while (pos1!=string::npos)
+  {
+    pos2= buffer.rfind("!$omp",pos3);
+    if (pos1!=pos2) // is a real comment if not !$omp
+    {
+      buffer.erase(pos1);
+    }
+    else // find "!$omp", cannot stop here since there might have another '!' before it
+      //limit the search range
+    {
+      if (pos2>=1)
+        pos3= pos2-1;
+      else
+        break;
+    }
+    pos1= buffer.rfind("!", pos3);
+  }
+}
+
+//!  A helper function to tell if a line has an ending '&', followed by optional space , tab , '\n', 
+// "!comments" should be already removed  (call removeFortranComments()) before calling this function
+static bool hasFortranLineContinuation(const string& buffer)
+{
+  // search backwards for '&'
+  size_t pos = buffer.rfind("&");
+  if (pos ==string::npos)
+    return false;
+  else
+  {
+    // make sure the characters after & is legal
+    for (size_t i = ++pos; i<buffer.length(); i++)
+    {
+      char c= buffer[i];
+      if ((c!=' ')&&(c!='\t'))
+      {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+
+//!Assume two Fortran OpenMP comment lines are just merged, remove" & !$omp [&]" within them
+// Be careful about the confusing case 
+//   the 2nd & and  the end & as another continuation character
+static void postProcessingMergedContinuedLine(std::string & buffer)
+{
+  size_t first_pos, second_pos, last_pos, next_cont_pos;
+  removeFortranComments(buffer);
+  // locate the first &
+  first_pos = buffer.find("&");
+  assert(first_pos!=string::npos);
+
+  // locate the !$omp, must have it for OpenMP directive
+  second_pos = buffer.find("$omp",first_pos);
+  assert(second_pos!=string::npos);
+  second_pos +=3; //shift to the end 'p' of "$omp"
+  // search for the optional next '&'
+  last_pos = buffer.find("&",second_pos);
+
+  // locate the possible real cont &
+  // If it is also the found optional next '&'
+  // discard it as the next '&'
+  if (hasFortranLineContinuation(buffer))
+  {
+    next_cont_pos = buffer.rfind("&");
+    if (last_pos == next_cont_pos)
+      last_pos = string::npos;
+  }
+
+  if (last_pos==string::npos)
+    last_pos = second_pos;
+  // we can now remove from first to last pos from the buffer
+  buffer.erase(first_pos, last_pos - first_pos + 1);
+}
+
 //-------------- the implementation for the external interface -------------------
+//! Check if a line is an OpenMP directive, 
+bool  ofs_is_omp_sentinels(const char* str, SgNode* node)
+{
+  bool result; 
+  assert (node&&str);
+  // make sure it is side effect free
+  const char* old_char = c_char;
+  SgNode* old_node = c_sgnode;
+
+  c_char = str;
+  c_sgnode = node;
+  result = ofs_is_omp_sentinels();
+
+  c_char = old_char;
+  c_sgnode = old_node;
+
+  return result;
+} 
+
 // The entry point for the OpenMP Fortran directive parser
 //
 OmpSupport::OmpAttribute* omp_fortran_parse(SgNode* locNode, const char* str)
@@ -950,6 +1062,7 @@ OmpSupport::OmpAttribute* omp_fortran_parse(SgNode* locNode, const char* str)
   //Initialization for each parsing session
   // set the file scope char* all lower case. 
   c_char = ofs_copy_lower(str);
+  //processCombinedContinuedLine(c_char);
   c_sgnode = locNode;
   ompattribute = NULL;
   current_exp = NULL;
@@ -1188,4 +1301,93 @@ OmpSupport::OmpAttribute* omp_fortran_parse(SgNode* locNode, const char* str)
   return ompattribute;
 }
 
+void parse_fortran_openmp(SgSourceFile *sageFilePtr)
+{
+  std::vector <SgNode*> loc_nodes = NodeQuery::querySubTree (sageFilePtr, V_SgLocatedNode);
+  std::vector <SgNode*>::iterator iter;
+  for (iter= loc_nodes.begin(); iter!= loc_nodes.end(); iter++)
+  {
+    SgLocatedNode* locNode= isSgLocatedNode(*iter);
+    ROSE_ASSERT(locNode);
+    AttachedPreprocessingInfoType *comments = locNode->getAttachedPreprocessingInfo ();
+    if (comments)
+    {
+      //      SageInterface::dumpInfo(locNode);
+      AttachedPreprocessingInfoType::iterator iter, previter = comments->end();
 
+      // Handle line continuation among OpenMP directives: 
+      //  Two major cases (each line has two lines with '\n' in between):
+      //
+      //  !$omp ...   & \n !$omp .... 
+      //  !$omp ...   & \n !$omp & ....
+      //
+      //  The handling is complex since : 
+      //  the '&' can be used for two purposes: 
+      //              the regular line continuation at an end of a line
+      //              or the marker for the beginning of a 2nd line.
+      //  Also, source comments can be used after &
+      //  The continuation can be applied to multiple lines
+      //
+      // The basic idea is to delay the handling of the current line if it has a line continuation (&): 
+      //    (save to previter)
+      // The next line will be merged with a previous pending line with & , 
+      //    and remove disposable stuff (postProcessingMergedContinuedLine()).
+      // The actual parsing is done only if the merged one does not have a line continuation (&).
+      //  Otherwise, mark it as pending and go on merging until the last line without a line continuation (&).
+      std::list<std::string> comment_list;
+      for (iter = comments->begin(); iter!=comments->end(); iter++)
+      {
+        PreprocessingInfo * pinfo = *iter;
+        if (pinfo->getTypeOfDirective()==PreprocessingInfo::FortranStyleComment)
+        {
+          string buffer = pinfo->getString();
+          // We are not interested in other comments
+          if (!ofs_is_omp_sentinels(buffer.c_str(),locNode))
+          {
+            if (previter!= comments->end())
+            {
+              printf("error: Found a none-OpenMP comment after a pending OpenMP comment with a line continuation\n");
+              assert(false);
+            }
+            continue;
+          } 
+
+          std::transform(buffer.begin(), buffer.end(), buffer.begin(), ::tolower);
+          // remove possible comments also:
+          removeFortranComments(buffer);
+          //          cout<<"----------------------"<<endl;
+          //          cout<<"current line:"<<buffer<<endl;
+          // merge with possible previous line with &
+          if (previter!= comments->end())
+          {
+            //            cout<<"previous line:"<<(*previter)->getString()<<endl;
+            buffer = (*previter)->getString()+buffer;
+            // remove "& !omp [&]" within the merged line
+            postProcessingMergedContinuedLine(buffer);
+            //            cout<<"merged line:"<<buffer<<endl;
+            (*previter)->setString(""); // erase previous line with & at the end
+          }
+
+          pinfo->setString(buffer); //save the changed buffer back 
+
+          if (hasFortranLineContinuation(buffer))
+          {
+            //delay the handling of the current line to the next line
+            previter = iter;
+          }
+          else
+          { // Now we have a line without line-continuation & , we can proceed to parse it
+            previter = comments->end(); // clear this flag for a pending line with &
+            OmpSupport::OmpAttribute* att= omp_fortran_parse(locNode, pinfo->getString().c_str());
+            if (att)
+            {
+              att->setPreprocessingInfo(pinfo);
+              addOmpAttribute(att, locNode);
+            }
+          }
+        }
+      } //end for all preprocessing info
+
+    }
+  } //end for located nodes
+}
