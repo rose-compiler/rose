@@ -38,12 +38,16 @@ void RtedTransformation::transform(SgProject* project) {
   roseConvertIntToString=symbols->roseConvertIntToString;
   roseCallStack = symbols->roseCallStack;
   roseCreateVariable = symbols->roseCreateVariable;
+  roseInitVariable = symbols->roseInitVariable;
   ROSE_ASSERT(roseCreateArray);
   ROSE_ASSERT(roseArrayAccess);
   ROSE_ASSERT(roseConvertIntToString);
   ROSE_ASSERT(roseRtedClose);
   ROSE_ASSERT(roseCallStack);
   ROSE_ASSERT(roseCreateVariable);
+  ROSE_ASSERT(roseInitVariable);
+
+
   traverseInputFiles(project,preorder);
 
 
@@ -87,6 +91,17 @@ void RtedTransformation::transform(SgProject* project) {
     insertArrayCreateCall(array_node, array_size);
   }
 
+  cerr
+    << "\n Number of Elements in variableIsInitialized  : "
+    << variableIsInitialized.size() << endl;
+  std::map<SgInitializedName*, SgVarRefExp*>::const_iterator it5 =
+    variableIsInitialized.begin();
+  for (; it5 != variableIsInitialized.end(); it5++) {
+    SgInitializedName* array_node = it5->first;
+    SgVarRefExp* array_size = it5->second;
+    insertInitializeVariable(array_node, array_size);
+  }
+
   cerr << "\n Number of Elements in create_array_access_call  : "
        << create_array_access_call.size() << endl;
   std::map<SgVarRefExp*, RTedArray*>::const_iterator ita =
@@ -103,7 +118,7 @@ void RtedTransformation::transform(SgProject* project) {
     function_call.begin();
   for (; it4 != function_call.end(); it4++) {
     RtedArguments* funcs = *it4;
-    if (isStringModifyingFunctionCall(funcs->f_name)) {
+    if (isStringModifyingFunctionCall(funcs->f_name) ) {
       //cerr << " .... Inserting Function Call : " << name << endl;
       insertFuncCall(funcs);
     } else if (isFunctionCallOnIgnoreList(funcs->f_name)) {
@@ -148,11 +163,14 @@ void RtedTransformation::visit(SgNode* n) {
 
   // *********************** DETECT ALL array creations ***************
   else if (isSgInitializedName(n)) {
+    //cerr <<" >> VISITOR :: Found initName : " << n->unparseToString() << endl;
     visit_isArraySgInitializedName(n);
   }
 
-  // look for MALLOC
+  // 1. look for MALLOC 
+  // 2. Look for assignments to variables - i.e. a variable is initialized
   else if (isSgAssignOp(n)) {
+    //cerr <<" >> VISITOR :: Found AssignOp : " << n->unparseToString() << endl;
     visit_isArraySgAssignOp(n);
   }
   // *********************** DETECT ALL array creations ***************

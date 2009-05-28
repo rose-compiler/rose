@@ -498,6 +498,33 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
     ROSE_ASSERT(false);
   }
 
+  // ---------------------------------------------
+  // handle variables ..............................
+  // here we should know the initName of the variable on the left hand side
+  ROSE_ASSERT(initName);
+  ROSE_ASSERT(varRef);
+  if (initName && varRef) {
+    // we now know that this variable must be initialized
+    // if we have not set this variable to be initialized yet,
+    // we do so
+    cerr  << ">> Setting this var to be initialized : " << initName->unparseToString() << endl;
+    std::map<SgInitializedName*,SgVarRefExp*>::const_iterator it = 
+      variableIsInitialized.begin();
+    bool found=false;
+    for (;it!=variableIsInitialized.end();++it) {
+      SgInitializedName* savedInit = it->first;
+      if (savedInit==initName) {
+	found=true; break;
+      }
+    }
+    if (!found) {
+      variableIsInitialized[initName]=varRef;
+    }
+  }
+  // ---------------------------------------------
+
+
+
   // handle MALLOC
   vector<SgNode*> calls = NodeQuery::querySubTree(expr_r,
 						  V_SgFunctionCallExp);
@@ -942,6 +969,79 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName
       string empty_comment = "";
       attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
       string comment = "RS : Create Variable, paramaters : (name, type, initialized)";
+      attachComment(exprStmt,comment,PreprocessingInfo::before);
+    } 
+    else if (isSgNamespaceDefinitionStatement(scope)) {
+      cerr <<"RuntimeInstrumentation :: WARNING - Scope not handled!!! : " << name << " : " << scope->class_name() << endl;
+    } else {
+      cerr
+	<< "RuntimeInstrumentation :: Surrounding Block is not Block! : "
+	<< name << " : " << scope->class_name() << endl;
+      ROSE_ASSERT(false);
+    }
+  } else {
+    cerr
+      << "RuntimeInstrumentation :: Surrounding Statement could not be found! "
+      << stmt->class_name() << endl;
+    ROSE_ASSERT(false);
+  }
+
+
+}
+
+
+
+void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
+						  SgVarRefExp* varRefE 
+						  ) {
+  SgStatement* stmt = getSurroundingStatement(varRefE);
+  // make sure there is no extern in front of stmt
+
+  if (isSgStatement(stmt)) {
+    SgScopeStatement* scope = stmt->get_scope();
+    string name = initName->get_mangled_name().str();
+
+    ROSE_ASSERT(scope);
+    // what if there is an array creation within a ClassDefinition
+    if ( isSgClassDefinition(scope)) {
+      // new stmt = the classdef scope
+      SgClassDeclaration* decl = isSgClassDeclaration(scope->get_parent());
+      ROSE_ASSERT(decl);
+      stmt = isSgVariableDeclaration(decl->get_parent());
+      if (!stmt) {
+	cerr << " Error . stmt is unknown : " << decl->get_parent()->class_name() << endl;
+	exit(1);
+      } 
+      scope = scope->get_scope();
+      // We want to insert the stmt before this classdefinition, if its still in a valid block
+      cerr <<" ....... Found ClassDefinition Scope. New Scope is : " << scope->class_name() << "  stmt:" << stmt->class_name() <<endl;
+    }
+    // what is there is an array creation in a global scope
+    else if (isSgGlobal(scope)) {
+      cerr <<"RuntimeInstrumentation :: WARNING - Scope not handled!!! : " << name << " : " << scope->class_name() << endl;
+      // We need to add this new statement to the beginning of main
+      // get the first statement in main as stmt
+      stmt = mainFirst;
+      scope=stmt->get_scope();
+    }
+    if (isSgBasicBlock(scope)) {
+      // build the function call : runtimeSystem-->createArray(params); ---------------------------
+      SgExprListExp* arg_list = buildExprListExp();
+      SgExpression* callName = buildString(initName->get_mangled_name().str());
+      appendExpression(arg_list, callName);
+
+      ROSE_ASSERT(roseInitVariable);
+      string symbolName2 = roseInitVariable->get_name().str();
+      //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
+      SgFunctionRefExp* memRef_r = buildFunctionRefExp(  roseInitVariable);
+      SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
+							    arg_list);
+      SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
+      // insert new stmt (exprStmt) before (old) stmt
+      insertStatementBefore(isSgStatement(stmt), exprStmt);
+      string empty_comment = "";
+      attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
+      string comment = "RS : Init Variable, paramaters : (name)";
       attachComment(exprStmt,comment,PreprocessingInfo::before);
     } 
     else if (isSgNamespaceDefinitionStatement(scope)) {

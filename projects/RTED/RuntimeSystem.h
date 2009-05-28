@@ -12,6 +12,7 @@ struct RuntimeVariablesType {
   char* name; // stack variable name
   char* mangled_name; // mangled name
   char* type;
+  char* initialized;
 };
 
 
@@ -81,7 +82,7 @@ void RuntimeSystem_roseArrayAccess(char* name, int posA, int posB, char* filenam
 // function calls 
 char* RuntimeSystem_findVariablesOnStack(char* name);
 void RuntimeSystem_increaseSizeRuntimeVariablesOnStack();                                               
-void RuntimeSystem_roseCallStack(char* name, char* mangl_name, char* beforeStr);
+void RuntimeSystem_roseCallStack(char* name, char* mangl_name, char* beforeStr,char* filename, char* line);
 
 void RuntimeSystem_handleSpecialFunctionCalls(char* funcname,char** args, int argsSize, char* filename, char* line, char* stmtStr);
 void RuntimeSystem_roseFunctionCall(int count, ...);
@@ -95,6 +96,7 @@ void RuntimeSystem_callExit(char* filename, char* line, char* reason, char* stmt
 void RuntimeSystem_roseCreateVariable(char* name, char* mangled_name, char* type, char* init);
 void RuntimeSystem_increaseSizeRuntimeVariables();
 char* RuntimeSystem_findVariables(char* name);
+void RuntimeSystem_roseInitVariable(char* mangled_name);
 
 
 #endif

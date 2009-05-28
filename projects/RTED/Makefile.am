@@ -450,7 +450,8 @@ check-C-allocation:
 	if [ -f "result.txt" ]; then rm result.txt; fi ; \
 	cp $(srcdir)/index_array.txt .
 	dir=$(rted_path)/C/allocation_deallocation_errors/ ; \
-	echo "Dir : $$dir " ; \
+	echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> Dir : $$dir " ; \
+	echo " " ; \
 	for file in $$(find $$dir -name "*.c" | sort); do \
 	  echo "Found file : $$file" ; \
 	done ; \
@@ -471,8 +472,9 @@ check-C-allocation:
 	  if [ `grep "#define EXITCODE_OK 0" $$file2 | wc | awk '{print $$1}' ` -eq 0 ] ; then \
 	    sed -i '1i\#define EXITCODE_OK 0' $$file2 ; \
 	  fi ; \
-	  echo "Script : Running Transformation ... $$file $$file2 -I$(srcdir) " ; \
-	  ./runtimeCheck 2 $$file $$file2 -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$(dir)   ; \
+	  echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> Dir : $$dir " ; \	
+	  echo "Script : Running Transformation : ./runtimeCheck 2 $$file $$file2 -rose:Cxx -c  -I$$dir" ; \
+	  ./runtimeCheck 2 $$file $$file2 -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$$dir ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
 	  echo "deleting #define EXITCODE_OK 0 in $$file2" ; \
 	  if [ `grep "#define EXITCODE_OK 0" $$file2 | wc | awk '{print $$1}' ` -eq 1 ] ; then \

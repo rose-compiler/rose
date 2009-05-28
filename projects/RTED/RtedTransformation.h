@@ -19,6 +19,8 @@ class RtedTransformation : public AstSimpleProcessing {
   std::map<SgVarRefExp*, RTedArray*> create_array_access_call;
   // remember variables that were used to create an array. These cant be reused for array usage calls
   std::vector<SgVarRefExp*> variablesUsedForArray;
+  // this vector is used to check which variables have been marked as initialized (through assignment)
+  std::map<SgInitializedName*, SgVarRefExp*> variableIsInitialized;
   // the following stores all variables that are created (and used e.g. in functions)
   // We need to store the name, type and intialized value
   std::vector<SgInitializedName*> variable_declarations;
@@ -41,6 +43,7 @@ class RtedTransformation : public AstSimpleProcessing {
   bool insertMainBeforeLast;
   SgFunctionSymbol* roseCallStack;
   SgFunctionSymbol* roseCreateVariable;
+  SgFunctionSymbol* roseInitVariable;
 
   // FUNCTIONS ------------------------------------------------------------
   // Helper function
@@ -99,6 +102,9 @@ class RtedTransformation : public AstSimpleProcessing {
   void visit_isSgVariableDeclaration(SgNode* n);
   void insertVariableCreateCall(SgInitializedName* initName);
   bool isVarInCreatedVariables(SgInitializedName* n);
+  void insertInitializeVariable(SgInitializedName* initName,
+				SgVarRefExp* varRefE 
+				);
 
   std::string removeSpecialChar(std::string str);
 

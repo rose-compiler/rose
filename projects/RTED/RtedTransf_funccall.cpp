@@ -122,6 +122,10 @@ RtedTransformation::insertStackCall(RtedArguments* args, bool before  ) {
     appendExpression(arg_list, callNameExp);
     appendExpression(arg_list, callNameExp2);
     appendExpression(arg_list, boolVal);
+    SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
+    SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
+    appendExpression(arg_list, filename);
+    appendExpression(arg_list, linenr);
 
     string symbolName2 = roseCallStack->get_name().str();
     //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;

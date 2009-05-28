@@ -207,6 +207,8 @@ RuntimeSystem_increaseSizeRuntimeVariablesOnStack() {
     for ( i=0;i<rtsi()->maxRuntimeVariablesOnStackEndIndex;i++) {
       run_tmp[i].name=(char*)malloc(sizeof(char*));
       run_tmp[i].mangled_name =(char*)malloc(sizeof(char*));
+      run_tmp[i].type =(char*)malloc(sizeof(char*));
+      run_tmp[i].initialized =(char*)malloc(sizeof(char*));
     }
     for ( i=0;i<rtsi()->runtimeVariablesOnStackEndIndex;i++) {
       run_tmp[i].name=rtsi()->runtimeVariablesOnStack[i].name;
@@ -231,10 +233,14 @@ RuntimeSystem_increaseSizeRuntimeVariables() {
     for ( i=0;i<rtsi()->maxRuntimeVariablesEndIndex;i++) {
       run_tmp[i].name=(char*)malloc(sizeof(char*));
       run_tmp[i].mangled_name =(char*)malloc(sizeof(char*));
+      run_tmp[i].type =(char*)malloc(sizeof(char*));
+      run_tmp[i].initialized =(char*)malloc(sizeof(char*));
     }
     for ( i=0;i<rtsi()->runtimeVariablesEndIndex;i++) {
       run_tmp[i].name=rtsi()->runtimeVariables[i].name;
       run_tmp[i].mangled_name =rtsi()->runtimeVariables[i].mangled_name;
+      run_tmp[i].type =rtsi()->runtimeVariables[i].type;
+      run_tmp[i].initialized =rtsi()->runtimeVariables[i].initialized;
     }
     free( rtsi()->runtimeVariables);
     rtsi()->runtimeVariables=run_tmp;
@@ -260,23 +266,6 @@ RuntimeSystem_findVariablesOnStack(char* name) {
   return mang_name;
 }
 
-/*********************************************************
- * For a given variable name, check if it is present
- * in the pool of variables created and return mangled_name
- ********************************************************/
-char*
-RuntimeSystem_findVariables(char* name) {
-  char* mang_name = NULL;
-  int i=0;
-  for ( i=0;i<rtsi()->runtimeVariablesEndIndex;i++) {
-    char* n =rtsi()->runtimeVariables[i].name;
-    if (*name==*n) {
-      mang_name=rtsi()->runtimeVariables[i].mangled_name;
-      break;
-    }
-  }
-  return mang_name;
-}
 
 
 
@@ -876,7 +865,9 @@ RuntimeSystem_roseFunctionCall(int count, ...) {
  * insertBefore : Indicates whether to push or pop a variable form the stack
  ********************************************************/
 void 
-RuntimeSystem_roseCallStack(char* name, char* mangl_name, char* beforeStr) {
+RuntimeSystem_roseCallStack(char* name, char* mangl_name, 
+			    char* beforeStr,
+			    char* filename, char* line) {
   // we want to remember the varRefs that are passed via function calls to functions
   // if before ==true
   // add the current varRef (name) on stack
@@ -885,6 +876,16 @@ RuntimeSystem_roseCallStack(char* name, char* mangl_name, char* beforeStr) {
   if (strcmp(beforeStr,"true")==0)
     before=1;
 
+  // before we add a variable to the stack we want to make sure that all
+  // variables for that function are initialized!
+  // find the variable and make sure it is initialized
+  char* initialized = RuntimeSystem_findVariables(mangl_name);
+  printf("Checking if %s is initialized: %s.\n",name,initialized);
+  if (strcmp(initialized,"false")==0) {
+    RuntimeSystem_callExit(filename, line, (char*)"Variable is not initialized:", name);	  
+  } else 
+    printf("Variable is initialized.\n");
+  
   if (before) {
     if (rtsi()->runtimeVariablesOnStackEndIndex>=rtsi()->maxRuntimeVariablesOnStackEndIndex) {
       //increase the size of the array
@@ -928,10 +929,47 @@ void RuntimeSystem_roseCreateVariable(char* name,
   rtsi()->runtimeVariables[rtsi()->runtimeVariablesEndIndex].name=name;
   rtsi()->runtimeVariables[rtsi()->runtimeVariablesEndIndex].mangled_name=mangled_name;
   rtsi()->runtimeVariables[rtsi()->runtimeVariablesEndIndex].type=type;
+  rtsi()->runtimeVariables[rtsi()->runtimeVariablesEndIndex].initialized=init;
   rtsi()->runtimeVariablesEndIndex++;
   printf("You have just created a run-time variable\n");
 
 }
 
+/*********************************************************
+ * For a given variable name, check if it is present
+ * in the pool of variables created and return mangled_name
+ ********************************************************/
+char*
+RuntimeSystem_findVariables(char* mangled_name) {
+  char* initialized = 0;
+  int i=0;
+  for ( i=0;i<rtsi()->runtimeVariablesEndIndex;i++) {
+    char* n =rtsi()->runtimeVariables[i].mangled_name;
+    if (*mangled_name==*n) {
+      initialized =rtsi()->runtimeVariables[i].initialized;
+      break;
+    }
+  }
+  return initialized;
+}
+
+/*********************************************************
+ * For a given variable name, check if it is present
+ * in the pool of variables created and return mangled_name
+ ********************************************************/
+void
+RuntimeSystem_roseInitVariable(char* mangled_name) {
+  int i=0;
+  for ( i=0;i<rtsi()->runtimeVariablesEndIndex;i++) {
+    char* n =rtsi()->runtimeVariables[i].mangled_name;
+    if (*mangled_name==*n) {
+      // create init on heap
+      char* init = "true";
+      rtsi()->runtimeVariables[i].initialized=init;
+      printf("Marking variable: %s as initialized. \n",mangled_name);
+      break;
+    }
+  }
+}
 
 // ***************************************** VARIABLE DECLARATIONS *************************************
