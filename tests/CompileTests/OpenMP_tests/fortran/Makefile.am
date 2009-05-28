@@ -12,7 +12,8 @@ F90_TESTCODES_TO_PASS = \
   paralledo.f90 \
   exampleA134f.f90 \
   collapse.f90 \
-  critical.f90
+  critical.f90 \
+  continuation.f90
 
 # see bug 350, wrong position for C$OMP END PARALLEL
 # case insensitive in symobl lookup for Fortran

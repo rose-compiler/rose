@@ -33,8 +33,7 @@ extern OmpSupport::OmpAttribute* getParsedDirective();
 extern void omp_parser_init(SgNode* aNode, const char* str);
 void attachOmpAttributeInfo(SgSourceFile* sageFilePtr);
 //Fortran OpenMP parser interface
-extern OmpSupport::OmpAttribute* omp_fortran_parse(SgNode* locNode, const char* str);
-
+void parse_fortran_openmp(SgSourceFile *sageFilePtr);
 using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
@@ -7250,32 +7249,7 @@ void attachOmpAttributeInfo(SgSourceFile *sageFilePtr)
   if (sageFilePtr->get_Fortran_only()||sageFilePtr->get_F77_only()||sageFilePtr->get_F90_only()||
       sageFilePtr->get_F95_only() || sageFilePtr->get_F2003_only())
   {
-    std::vector <SgNode*> loc_nodes = NodeQuery::querySubTree (sageFilePtr, V_SgLocatedNode);
-    std::vector <SgNode*>::iterator iter;
-    for (iter= loc_nodes.begin(); iter!= loc_nodes.end(); iter++)
-    {
-      SgLocatedNode* locNode= isSgLocatedNode(*iter);
-      ROSE_ASSERT(locNode);
-      AttachedPreprocessingInfoType *comments = locNode->getAttachedPreprocessingInfo ();
-      if (comments)
-      {
-//	SageInterface::dumpInfo(locNode);
-	AttachedPreprocessingInfoType::iterator iter;
-	for (iter = comments->begin(); iter!=comments->end(); iter++)
-	{
-	  PreprocessingInfo * pinfo = *iter;
-	  if (pinfo->getTypeOfDirective()==PreprocessingInfo::FortranStyleComment)
-	  {
-	    OmpSupport::OmpAttribute* att= omp_fortran_parse(locNode, pinfo->getString().c_str());
-            if (att)
-	    {
-	      att->setPreprocessingInfo(pinfo);
-	      addOmpAttribute(att, locNode);
-	    }
-	  }
-	}
-      } 
-    } //end for located nodes
+    parse_fortran_openmp(sageFilePtr);
   } //end if (fortran)
   else
   {
