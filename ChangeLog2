@@ -1,3 +1,11 @@
+2009-05-28 16:25  liao6
+
+	* [r5974] /trunk/ROSE/Makefile.am,
+	  /trunk/ROSE/projects/autoTuning/tests/Makefile.am,
+	  /trunk/ROSE/scripts/roseFreshTestStub-Leo-head.sh: Let
+	  projects/assemblyToSourceAst be exported to the external
+	  repository
+
 2009-05-28 02:09  panas2
 
 	* [r5964] /trunk/ROSE/projects/RTED/Makefile.am,
