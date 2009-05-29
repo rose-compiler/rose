@@ -6,17 +6,17 @@
 
 /**
  * Layout of Tree according to Reingold and Tilford
- * Principle:
- * 	- bottom up approach, two subtrees are merged
- *  - for merging subtrees, the right outline of the left subtree
- *    is compared to left outline of right subtree, layerwise, i.e two
- *    subtrees can interleave
- *  - for faster scanning of tree outlines "threads" are added
- *    threads are needed if trees of different height are merged
- *    if for example left subtree is taller, a thread from the rightmost node of the
- *    lowest level of right subtree to next lower level of left subtree is added
- *  - scanning of a tree-outline is simply following right or leftmost children and,
- *    if node is a leaf, follow the thread (if one exists)
+ *
+ *   - bottom up approach: two subtrees are merged
+ *   - for merging subtrees, the right outline of the left subtree \n
+ *     is compared to left outline of right subtree, layerwise, i.e two \n
+ *     subtrees can interleave \n
+ *   - for faster scanning of tree outlines "threads" are added
+ *     threads are needed if trees of different height are merged
+ *     if for example left subtree is taller, a thread from the rightmost node of the
+ *     lowest level of right subtree to next lower level of left subtree is added
+ *   - scanning of a tree-outline is simply following right or leftmost children and,
+ *     if node is a leaf, follow the thread (if one exists)
  */
 class TreeLayoutGenerator
 {

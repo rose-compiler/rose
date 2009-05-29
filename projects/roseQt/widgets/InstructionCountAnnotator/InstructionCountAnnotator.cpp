@@ -69,7 +69,6 @@ void annotate(SgProject * proj,
 
 #else
     cerr<< "Annotating ast with PTracer experimental (not ported to all platforms), use ROSEQT_EXPERIMENTAL flag" << endl;
-
 #endif
 
 
