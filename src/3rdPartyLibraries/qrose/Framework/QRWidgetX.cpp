@@ -5,7 +5,7 @@
  ***************************************************************************/
 
 
-#include <QRWidget.h>
+#include <QRWidgetX.h>
 #include <QRTiledWidget.h>
 #include <iostream>
 

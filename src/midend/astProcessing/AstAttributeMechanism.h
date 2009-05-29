@@ -73,12 +73,12 @@ class AstAttribute
           virtual std::vector<AttributeEdgeInfo> additionalEdgeInfo();
           virtual std::vector<AttributeNodeInfo> additionalNodeInfo();
 
-       // DQ (7/27/2008): The support for deep copies of attributes on AST IR 
+       // DQ (7/27/2008): The support for deep copies of attributes on AST IR
        // node requires a virtual copy function that can be overwritten.
        // This acts just like a virtual constructor (same concept).
           virtual AstAttribute* copy();
 
-       // DQ (7/27/2008): Added support to eliminate IR nodes in DOT graphs 
+       // DQ (7/27/2008): Added support to eliminate IR nodes in DOT graphs
        // (to tailor the presentation of information about ASTs).
           virtual bool commentOutNodeInGraph();
 #else
@@ -107,33 +107,76 @@ class AstAttribute
           virtual std::vector<AttributeEdgeInfo> additionalEdgeInfo() { std::vector<AttributeEdgeInfo> v; return v; }
           virtual std::vector<AttributeNodeInfo> additionalNodeInfo() { std::vector<AttributeNodeInfo> v; return v; }
 
-       // DQ (7/27/2008): The support for deep copies of attributes on AST IR 
+       // DQ (7/27/2008): The support for deep copies of attributes on AST IR
        // node requires a virtual copy function that can be overwritten.
        // This acts just like a virtual constructor (same concept).
           virtual AstAttribute* copy() { return new AstAttribute(*this); }
 
-       // DQ (7/27/2008): Added support to eliminate IR nodes in DOT graphs 
+       // DQ (7/27/2008): Added support to eliminate IR nodes in DOT graphs
        // (to tailor the presentation of information about ASTs).
           virtual bool commentOutNodeInGraph() { return false; }
 #endif
 
    };
 
+
+/*!
+ *  \brief Attribute corresponding to a metric.
+ *
+ *  A metric attribute represents a numeric value obtained by either
+ *  dynamic analysis (gprof or hpct) or static analysis (for example
+ *  number of flop operations in a function)
+ *  It MetricAttribute can be a raw (observed), or a
+ *  propagated (derived) count
+ *  It containes no name-string, because the attribute is stored in an
+ *  AttributeMechanism-map, where the name is the key
+ */
+class MetricAttribute : public AstAttribute
+{
+    public:
+        MetricAttribute();
+        MetricAttribute(double value, bool is_derived=false);
+
+        MetricAttribute& operator+= (const MetricAttribute & other);
+        MetricAttribute& operator-= (const MetricAttribute & other);
+        MetricAttribute& operator*= (const MetricAttribute & other);
+        MetricAttribute& operator/= (const MetricAttribute & other);
+
+        virtual AstAttribute* constructor();
+        virtual AstAttribute* copy();
+
+        virtual std::string attribute_class_name();
+
+        virtual int   packed_size();
+        virtual char* packed_data();
+        virtual void  unpacked_data( int size, char* data );
+
+        virtual bool        isDerived() const;
+        virtual double      getValue()  const;
+        virtual void        setValue(double newVal);
+        virtual std::string toString();
+
+    protected:
+        bool   is_derived_;
+        double value_;
+};
+
+
 // DQ (6/28/2008):
-// Since this is implemented using AttributeMechanism which is derived from 
+// Since this is implemented using AttributeMechanism which is derived from
 // std::map<Key,Value>, "Value" is a template parameter for "AstAttribute*"
-// And so the copy constructor will copy the pointer.  This is OK, but it 
+// And so the copy constructor will copy the pointer.  This is OK, but it
 // means that the AstAttribute objects are shared.  Alternatively, a copy
 // constructor implemented in this class could be implemented to support
 // deep copies.  This might be a good idea.
-class AstAttributeMechanism : public AttributeMechanism<std::string,AstAttribute*> 
+class AstAttributeMechanism : public AttributeMechanism<std::string,AstAttribute*>
    {
      public:
-       // DQ (7/27/2008): Build a copy constructor that will do a deep copy 
+       // DQ (7/27/2008): Build a copy constructor that will do a deep copy
        // instead of calling the default copy constructor.
           AstAttributeMechanism ( const AstAttributeMechanism & X );
 
-       // DQ (7/27/2008): Because we add an explicit copy constructor we 
+       // DQ (7/27/2008): Because we add an explicit copy constructor we
        // now need an explicit default constructor.
           AstAttributeMechanism ();
    };

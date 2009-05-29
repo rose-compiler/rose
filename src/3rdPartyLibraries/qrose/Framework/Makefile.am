@@ -19,6 +19,8 @@ nodist_libqrframework_la_SOURCES = $(MOC_SOURCES)
 
 CLEANFILES = moc_*.C
 
+
+
 if QROSE_USE_WINDOWS
 moc_%.C: $(srcdir)/%.h 
 	$(MOC) -o $@ `cygpath -w $<` -p$(srcdir)
