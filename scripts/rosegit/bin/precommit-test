@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Run this script inside your Git repository in order to do a "make distcheck" prior to committing.
+# This script will make a clone of the repository so as not to interfere with other work you might be doing, but
+# is otherwise the same as running "rat-test".
+
+if [ ! -d .git ]; then
+    echo "$0: must be run in the top of your Git repository" >&2
+    exit 1
+fi
+
+branch=$(git branch |grep '^\*' |cut -d' ' -f2)
+if [ "$branch" = "" ]; then
+    echo "$0: not on any branch" >&2
+    exit 1
+fi
+
+config=/tmp/precommit-$$.conf
+trap "rm -f $config" EXIT
+cat >$config <<EOF
+ROSEGIT_TESTER=rat-test
+ROSEGIT_MAIL_START=
+ROSEGIT_MAIL_FAIL=
+ROSEGIT_MAIL_PASS=
+EOF
+
+./scripts/rosegit/bin/rosegit-ats --config=$config --branch=$branch "$@" .
