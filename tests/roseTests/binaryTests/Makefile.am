@@ -16,7 +16,7 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIde
 ###############################################################################################################################
 
 noinst_PROGRAMS = execFormatsTest testElfStrtab testElfByteOrder testElfWordSize testElfSchulz testElfConstruct \
-	          testPeConstruct shiftResizeSection
+	          testPeConstruct shiftResizeSection findConstants
 
 # Parses an executable to produce a dump file (*.dump), an assembly file (rose_*.s), and a new executable created by unparsing
 # the AST (*.new). The *.new file is typically identical to the original executable.
@@ -57,6 +57,10 @@ testPeConstruct_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS
 # Changes the size and/or location of a section in an executable file.
 shiftResizeSection_SOURCES = shiftResizeSection.C
 shiftResizeSection_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+# Finds constant values and propagates them across instructions
+findConstants_SOURCES = findConstants.C
+findConstants_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 ###############################################################################################################################
 # DEMOS
@@ -104,6 +108,10 @@ demo_testPeConstruct: testPeConstruct demo_testElfConstruct
 demo_shiftResizeSection: shiftResizeSection demo_testPeConstruct
 	@echo; echo; echo "Demo for $<"; echo
 	$(srcdir)/testShiftResizeSection.sh $(srcdir)/arm-ctrlaltdel >arm-ctrlaltdel.ans
+
+demo_findConstants: findConstants demo_shiftResizeSection
+	@echo; echo; echo "Demo for $<"; echo
+	./findConstants $(srcdir)/i686-test1.O3.bin
 
 ###############################################################################################################################
 # TESTS
@@ -186,6 +194,11 @@ test_shiftResizeSection.passed: shiftResizeSection
 	@if diff {$(srcdir),.}/arm-ctrlaltdel.ans; then :; else echo "Answer differs from expected"; exit 1; fi
 	@touch $@
 
+test_findConstants.passed: findConstants
+	$(VALGRIND) ./findConstants $(srcdir)/i686-test1.O3.bin >test_findConstants.ans
+	@if diff {$(srcdir),.}/test_findConstants.ans; then :; else echo "Answer differs from expected"; exit 1; fi
+	@touch $@
+
 ###############################################################################################################################
 # Miscellaneous....
 ###############################################################################################################################
@@ -195,7 +208,7 @@ MOSTLYCLEANFILES = $(TEST_PASSED_TARGETS) test_testElfSchulz-{1,2}.passed \
 	a.out arm-ctrlaltdel.ans arm-ctrlaltdel.dump-{1,2,3} arm-ctrlaltdel.{new,new.new} \
 	arm-poweroff.{dump,new,new.dump,new.new} rose_arm-ctrlaltdel.{s,new.s} rose_arm-poweroff.{s,new.s} \
 	rose_schulz-sample{1,2}-p.so.s rose_schulz-sample{1,2}.so.new.s rose_schulz-sample{1,2}.so.s \
-	schulz-sample{1,2}-p.so.{dump,new} schulz-sample{1,2}.so.{dump,new,new.dump,new.new}
+	schulz-sample{1,2}-p.so.{dump,new} schulz-sample{1,2}.so.{dump,new,new.dump,new.new} test_findConstants.ans
 
 ###############################################################################################################################
 # The older part of this makefile...
