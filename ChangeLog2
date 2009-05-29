@@ -1,3 +1,12 @@
+2009-05-29 23:01  bauer25
+
+	* [r6001]
+	  /trunk/ROSE/projects/compass/tools/compass/gui2/CheckerTableModel.cpp,
+	  /trunk/ROSE/projects/compass/tools/compass/gui2/CompassMainWindow.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/AstGraphWidget/DisplayNode.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/BeautifiedAst/BAstNode.cpp:
+	  roseQtWidgets now usable with Qt-Version > 4.3.0
+
 2009-05-29 20:48  bauer25
 
 	* [r5999]
