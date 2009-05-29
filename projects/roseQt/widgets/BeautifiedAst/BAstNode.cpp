@@ -208,7 +208,7 @@ void BAstNode::mergeNamespaces()
 
             // append(QList) is supported since Qt4.5, so use foreach instead..
             // lastNode->children.append(grandChildList);
-            foreach(const ItemTreeNode* n,grandChildList)
+            foreach(ItemTreeNode* n,grandChildList)
                 lastNode->children.append(n);
         }
         else
