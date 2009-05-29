@@ -1,0 +1,5 @@
+INCLUDES += -I$(srcdir)/widgets  -I$(srcdir)/document -I$(srcdir)/qnfa -Iwidgets
+SUBDIRS = qnfa widgets document
+libQCodeEdit_la_LIBADD   =   document/libdocument.la\
+			     qnfa/libqnfa.la\
+			     widgets/libwidgets.la 

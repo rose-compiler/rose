@@ -1,0 +1,57 @@
+<!DOCTYPE QNFA>
+<QNFA language="(La-)Tex" extensions="tex" defaultLineMark="">
+	<context id="comment/single" format="comment" stayOnLine="true" >
+		<start>%</start>
+		<stop exclusive="false">\n</stop>
+	</context>
+	
+	<context id="mathmode" format="numbers" transparency="true" >
+		<start parenthesis="math:open" fold="true" >$</start>
+		<stop parenthesis="math:close" fold="true" >$</stop>
+		
+		<word id="keywords/math-fallback" format="keyword">\\[a-zA-Z]+</word>
+	</context>
+	
+	<context id="mathmodeNormal" format="numbers" transparency="true">
+		<start parenthesis="math:open" fold="true" format="extra-keyword">\\begin{math}</start>
+		<stop parenthesis="math:close" fold="true" format="extra-keyword">\\end{math}</stop>
+		<start parenthesis="math:open" fold="true" >\\\(</start>
+		<stop parenthesis="math:close" fold="true" >\\\)</stop>
+		
+		<word id="keywords/math-fallback" format="keyword">\\[a-zA-Z]+</word>
+	</context>
+	
+	<context id="mathmodeDisplay" format="numbers" transparency="true">
+		<start parenthesis="math:open" fold="true" format="extra-keyword">\\begin{displaymath}</start>
+		<stop parenthesis="math:close" fold="true" format="extra-keyword">\\end{displaymath}</stop>
+		<start parenthesis="math:open" fold="true" >\\\[</start>
+		<stop parenthesis="math:close" fold="true" >\\\]</stop>
+		<start parenthesis="math:open" fold="true" format="extra-keyword">\\begin{equation}</start>
+		<stop parenthesis="math:close" fold="true" format="extra-keyword">\\end{equation}</stop>
+		
+		<word id="keywords/math-fallback" format="keyword">\\[a-zA-Z]+</word>
+  	</context>
+	
+	<word parenthesis="block:open" fold="true" indent="true" ambiguous="true" format="extra-keyword">\\begin</word>
+	<word parenthesis="block:close" fold="true" indent="true" format="extra-keyword" >\\end</word>
+	
+	<list id="keywords/block" format="extra-keyword">
+		<word parenthesis="part:boundary" fold="true" indent="true" >\\part</word>
+		<word parenthesis="chapter:boundary" fold="true" indent="true" >\\chapter</word>
+		<word parenthesis="section:boundary" fold="true" indent="true" >\\section</word>
+		<word parenthesis="subsection:boundary" fold="true" indent="true" >\\subsection</word>
+		<word parenthesis="paragraph:boundary" fold="true" indent="true" >\\paragraph</word>
+		<word parenthesis="subparagraph:boundary" fold="true" indent="true" >\\subparagraph</word>
+	</list>
+	 
+	<!-- Keep that one near the end or all the other \commands will be matched by this one... -->
+	<word id="keywords/single" ambiguous="true" format="keyword">\\[a-zA-Z]+</word>
+	
+	<sequence parenthesis="round:open">(</sequence>
+	<sequence parenthesis="round:close">)</sequence>
+	<sequence parenthesis="curly:open" indent="true" fold="true">{</sequence>
+	<sequence parenthesis="curly:close" indent="true" fold="true">}</sequence>
+	<sequence parenthesis="square:open">\[</sequence>
+	<sequence parenthesis="square:close">\]</sequence>
+</QNFA>
+

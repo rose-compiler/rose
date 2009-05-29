@@ -978,6 +978,8 @@ echo "with_QRose = $with_QRose"
 
 AC_PATH_QT
 AC_PATH_QT_MOC
+AC_PATH_QT_RCC
+AC_PATH_QT_UIC
 
 # echo "with_qt = $with_qt"
 
@@ -1148,6 +1150,7 @@ projects/compass/tools/Makefile
 projects/compass/tools/compass/Makefile
 projects/compass/tools/compass/doc/compass.tex
 projects/compass/tools/compass/gui/Makefile
+projects/compass/tools/compass/gui2/Makefile
 projects/compass/tools/compass/buildInterpreter/Makefile
 projects/compass/tools/compass/doc/Makefile
 projects/compass/tools/compass/tests/Makefile
@@ -1208,6 +1211,31 @@ projects/bugSeeding/bugSeeding.tex
 projects/UpcTranslation/Makefile
 projects/UpcTranslation/tests/Makefile
 projects/MacroRewrapper/Makefile
+projects/roseQt/Makefile
+projects/roseQt/TextEditPainter/Makefile
+projects/roseQt/demo/Makefile
+projects/roseQt/widgets/Makefile
+projects/roseQt/widgets/AsmInstructionBar/Makefile
+projects/roseQt/widgets/AstBrowserWidget/Makefile
+projects/roseQt/widgets/AstGraphWidget/Makefile
+projects/roseQt/widgets/AstProcessing/Makefile
+projects/roseQt/widgets/BeautifiedAst/Makefile
+projects/roseQt/widgets/FlopCounter/Makefile
+projects/roseQt/widgets/InstructionCountAnnotator/Makefile
+projects/roseQt/widgets/KiviatView/Makefile
+projects/roseQt/widgets/MetricFilter/Makefile
+projects/roseQt/widgets/MetricsConfig/Makefile
+projects/roseQt/widgets/MetricsKiviat/Makefile
+projects/roseQt/widgets/NodeInfoWidget/Makefile
+projects/roseQt/widgets/PropertyTreeWidget/Makefile
+projects/roseQt/widgets/QtDesignerPlugins/Makefile
+projects/roseQt/widgets/RoseCodeEdit/Makefile
+projects/roseQt/widgets/RoseCodeEdit/QCodeEdit/Makefile
+projects/roseQt/widgets/RoseCodeEdit/QCodeEdit/document/Makefile
+projects/roseQt/widgets/RoseCodeEdit/QCodeEdit/widgets/Makefile
+projects/roseQt/widgets/RoseCodeEdit/QCodeEdit/qnfa/Makefile
+projects/roseQt/widgets/RoseFileSelector/Makefile
+projects/roseQt/widgets/util/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile

@@ -1,0 +1,1 @@
+SUBDIRS = widgets demo TextEditPainter 

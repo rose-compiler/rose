@@ -1,0 +1,34 @@
+<RCC>
+  <qresource prefix="Compass" >
+    <file>icons/application-exit.png</file>
+    <file>icons/chronometer.png</file>
+    <file>icons/compass.gif</file>
+    <file>icons/dialog-cancel.png</file>
+    <file>icons/dialog-close.png</file>
+    <file>icons/dialog-ok-apply.png</file>
+    <file>icons/document-properties.png</file>
+    <file>icons/document-save-as.png</file>
+    <file>icons/document-save.png</file>
+    <file>icons/edit-copy.png</file>
+    <file>icons/edit-cut.png</file>
+    <file>icons/edit-delete.png</file>
+    <file>icons/edit-find.png</file>
+    <file>icons/edit-paste.png</file>
+    <file>icons/edit-redo.png</file>
+    <file>icons/edit-select-all.png</file>
+    <file>icons/edit-undo.png</file>
+    <file>icons/error.gif</file>
+    <file>icons/flag-green.png</file>
+    <file>icons/flag-red.png</file>
+    <file>icons/flag-yellow.png</file>
+    <file>icons/gears.gif</file>
+    <file>icons/HelpIcon.gif</file>
+    <file>icons/mail-mark-notjunk.png</file>
+    <file>icons/ok.gif</file>
+    <file>icons/process-stop.png</file>
+    <file>icons/refresh.gif</file>
+    <file>icons/view-refresh.png</file>
+    <file>icons/view-statistics.png</file>
+    <file>icons/window-close.png</file>
+  </qresource>
+</RCC>

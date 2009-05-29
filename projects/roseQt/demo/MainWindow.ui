@@ -1,0 +1,455 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1243</width>
+    <height>815</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <widget class="QMdiArea" name="mdiArea">
+      <widget class="QWidget" name="subwindow">
+       <property name="windowTitle">
+        <string>Graphical Tree View</string>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_3">
+        <item>
+         <widget class="AstGraphWidget" name="astGraphWidget"/>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="swdgEditor">
+       <property name="windowTitle">
+        <string>Editor</string>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_4">
+        <item>
+         <widget class="RoseCodeEdit" name="roseCodeEdit"/>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="swdgMetricsKiviat">
+       <property name="windowTitle">
+        <string>MetricsKiviat</string>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_6">
+        <item>
+         <widget class="MetricsKiviat" name="kvtMetrics" native="true"/>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="subwindow_2">
+       <property name="windowTitle">
+        <string>Subwindow</string>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_7">
+        <item>
+         <widget class="AsmInstructionsBar" name="asmInstructionsBar"/>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1243</width>
+     <height>26</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionQuit"/>
+   </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <addaction name="actionTile"/>
+    <addaction name="actionCascade"/>
+   </widget>
+   <widget class="QMenu" name="menuConfuguration">
+    <property name="title">
+     <string>Configuration</string>
+    </property>
+    <addaction name="actionMetric_Attributes"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuConfuguration"/>
+   <addaction name="menuView"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QDockWidget" name="dockWdgTreeView">
+   <property name="floating">
+    <bool>false</bool>
+   </property>
+   <property name="windowTitle">
+    <string>AstView</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents">
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="RoseFileComboBox" name="roseFileCmbBox"/>
+     </item>
+     <item>
+      <widget class="MetricFilter" name="metricFilter" native="true"/>
+     </item>
+     <item>
+      <widget class="AstBrowserWidget" name="astBrowserWidget"/>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockWdgProp">
+   <property name="windowTitle">
+    <string>Properties</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_2">
+    <layout class="QVBoxLayout" name="verticalLayout_2">
+     <item>
+      <widget class="NodeInfoWidget" name="nodeInfoWidget" native="true"/>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockWdgBeautifiedAst">
+   <property name="windowTitle">
+    <string>Beautified Ast</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_3">
+    <layout class="QVBoxLayout" name="verticalLayout_5">
+     <item>
+      <widget class="BAstView" name="bAstView"/>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockWdgKiviatInfo">
+   <property name="windowTitle">
+    <string>Metrics Kiviat Info</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_4">
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <widget class="KiviatInfo" name="kvtInfo" native="true"/>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <action name="actionQuit">
+   <property name="text">
+    <string>Quit</string>
+   </property>
+  </action>
+  <action name="actionTile">
+   <property name="text">
+    <string>Tile</string>
+   </property>
+  </action>
+  <action name="actionCascade">
+   <property name="text">
+    <string>Cascade</string>
+   </property>
+  </action>
+  <action name="actionMetric_Attributes">
+   <property name="text">
+    <string>Metric Attributes</string>
+   </property>
+  </action>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>AstBrowserWidget</class>
+   <extends>QTreeView</extends>
+   <header>AstBrowserWidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>AstGraphWidget</class>
+   <extends>QGraphicsView</extends>
+   <header>AstGraphWidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>BAstView</class>
+   <extends>QTreeView</extends>
+   <header>BAstView.h</header>
+  </customwidget>
+  <customwidget>
+   <class>RoseCodeEdit</class>
+   <extends>QFrame</extends>
+   <header>RoseCodeEdit.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>RoseFileComboBox</class>
+   <extends>QComboBox</extends>
+   <header>RoseFileComboBox.h</header>
+  </customwidget>
+  <customwidget>
+   <class>KiviatInfo</class>
+   <extends>QWidget</extends>
+   <header>KiviatInfo.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>MetricFilter</class>
+   <extends>QWidget</extends>
+   <header>MetricFilter/MetricFilter.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>NodeInfoWidget</class>
+   <extends>QWidget</extends>
+   <header>NodeInfoWidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>MetricsKiviat</class>
+   <extends>QWidget</extends>
+   <header>MetricsKiviat.h</header>
+  </customwidget>
+  <customwidget>
+   <class>AsmInstructionsBar</class>
+   <extends>QGraphicsView</extends>
+   <header>AsmInstructionsBar.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="../src/BeautifiedAst/BeautifiedAst.qrc"/>
+ </resources>
+ <connections>
+  <connection>
+   <sender>astBrowserWidget</sender>
+   <signal>clicked(SgNode*)</signal>
+   <receiver>astGraphWidget</receiver>
+   <slot>setNode(SgNode*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>136</x>
+     <y>242</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>469</x>
+     <y>169</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>astBrowserWidget</sender>
+   <signal>clicked(SgNode*)</signal>
+   <receiver>nodeInfoWidget</receiver>
+   <slot>setNode(SgNode*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>136</x>
+     <y>242</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1075</x>
+     <y>398</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>astGraphWidget</sender>
+   <signal>clicked(SgNode*)</signal>
+   <receiver>nodeInfoWidget</receiver>
+   <slot>setNode(SgNode*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>469</x>
+     <y>169</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1075</x>
+     <y>398</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>astBrowserWidget</sender>
+   <signal>clicked(SgNode*)</signal>
+   <receiver>roseCodeEdit</receiver>
+   <slot>setNode(SgNode*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>136</x>
+     <y>242</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>725</x>
+     <y>498</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>astGraphWidget</sender>
+   <signal>clicked(SgNode*)</signal>
+   <receiver>roseCodeEdit</receiver>
+   <slot>setNode(SgNode*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>469</x>
+     <y>169</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>725</x>
+     <y>498</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>bAstView</sender>
+   <signal>clicked(SgNode*)</signal>
+   <receiver>roseCodeEdit</receiver>
+   <slot>setNode(SgNode*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>136</x>
+     <y>592</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>574</x>
+     <y>169</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>bAstView</sender>
+   <signal>clicked(SgNode*)</signal>
+   <receiver>nodeInfoWidget</receiver>
+   <slot>setNode(SgNode*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>136</x>
+     <y>592</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1075</x>
+     <y>398</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>astBrowserWidget</sender>
+   <signal>clicked(SgNode*)</signal>
+   <receiver>kvtMetrics</receiver>
+   <slot>updateView(SgNode*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>136</x>
+     <y>254</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>651</x>
+     <y>120</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>astBrowserWidget</sender>
+   <signal>doubleClicked(SgNode*)</signal>
+   <receiver>kvtMetrics</receiver>
+   <slot>addNode(SgNode*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>136</x>
+     <y>254</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>651</x>
+     <y>120</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>bAstView</sender>
+   <signal>clicked(SgNode*)</signal>
+   <receiver>kvtMetrics</receiver>
+   <slot>updateView(SgNode*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>136</x>
+     <y>625</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>651</x>
+     <y>120</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>kvtMetrics</sender>
+   <signal>clicked(SgNode*)</signal>
+   <receiver>roseCodeEdit</receiver>
+   <slot>setNode(SgNode*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>651</x>
+     <y>120</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>506</x>
+     <y>120</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>astBrowserWidget</sender>
+   <signal>clicked(SgNode*)</signal>
+   <receiver>bAstView</receiver>
+   <slot>setNode(SgNode*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>136</x>
+     <y>268</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>136</x>
+     <y>631</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>roseFileCmbBox</sender>
+   <signal>selectedFileChanged(AstFilterInterface*)</signal>
+   <receiver>astGraphWidget</receiver>
+   <slot>setFilter(AstFilterInterface*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>136</x>
+     <y>68</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>361</x>
+     <y>120</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

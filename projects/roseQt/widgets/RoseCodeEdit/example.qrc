@@ -1,0 +1,38 @@
+<RCC>
+  <qresource prefix="/" >
+    <file>error.png</file>
+    <file>warning.png</file>
+    <file>new.png</file>
+    <file>open.png</file>
+    <file>exit.png</file>
+    <file>print.png</file>
+    <file>save.png</file>
+    <file>saveas.png</file>
+    <file>settings.png</file>
+    <file>editor.png</file>
+    <file>formats.png</file>
+    <file>closeall.png</file>
+    <file>reload.png</file>
+    <file>down.png</file>
+    <file>up.png</file>
+    <file>undo.png</file>
+    <file>redo.png</file>
+    <file>cut.png</file>
+    <file>copy.png</file>
+    <file>paste.png</file>
+    <file>indent.png</file>
+    <file>unindent.png</file>
+    <file>comment.png</file>
+    <file>uncomment.png</file>
+    <file>find.png</file>
+    <file>replace.png</file>
+    <file>goto.png</file>
+    <file>bold.png</file>
+    <file>italic.png</file>
+    <file>underline.png</file>
+    <file>strikeout.png</file>
+    <file>textcolor.png</file>
+    <file>fillcolor.png</file>
+    <file>strokecolor.png</file>
+  </qresource>
+</RCC>

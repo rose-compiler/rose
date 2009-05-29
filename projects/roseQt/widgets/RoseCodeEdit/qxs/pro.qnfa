@@ -1,0 +1,84 @@
+<!DOCTYPE QNFA>
+<QNFA language="QMake projects" extensions="pro;pri;prf" defaultLineMark="">
+	
+	<context id="comment/single" format="comment" stayOnLine="true" >
+		<start>#</start>
+		<stop exclusive="false">\n</stop>
+	</context>
+	
+	<context id="data/string" format="text" stayOnLine="true" >
+		<start>&quot;</start>
+		<stop>&quot;</stop>
+		<stop exclusive="false">\n</stop>
+	</context>
+	
+	<context id="reference/qmake" >
+		<start parenthesis="qmakeref:open" format="phpvar">\$\${</start>
+		<stop parenthesis="qmakeref:close" format="phpvar">}</stop>
+	</context>
+	
+	<context id="reference/environment" >
+		<start parenthesis="qenvref:open" format="phpvar">\$\$(</start>
+		<stop parenthesis="qenvref:close" format="phpvar">)</stop>
+	</context>
+	
+	<context id="reference/properties" >
+		<start parenthesis="qmakeprop:open" format="phpvar">\$\$\[</start>
+		<stop parenthesis="qmakeprop:close" format="phpvar">\]</stop>
+	</context>
+	
+	<context id="reference/makefile" >
+		<start parenthesis="makeref:open" format="phpvar">\$(</start>
+		<stop parenthesis="makeref:open" format="phpvar">)</stop>
+	</context>
+	
+	<list id="keywords/functions" format="keyword">
+		<prefix></prefix>
+		<prefix>\$\$</prefix>
+		<word>basename</word>
+		<word>CONFIG</word>
+		<word>contains</word>
+		<word>count</word>
+		<word>dirname</word>
+		<word>else</word>
+		<word>error</word>
+		<word>eval</word>
+		<word>exists</word>
+		<word>find</word>
+		<word>for</word>
+		<word>include</word>
+		<word>infile</word>
+		<word>isEmpty</word>
+		<word>load</word>
+		<word>join</word>
+		<word>member</word>
+		<word>message</word>
+		<word>prompt</word>
+		<word>quote</word>
+		<word>replace</word>
+		<word>sprintf</word>
+		<word>system</word>
+		<word>unique</word>
+		<word>warning</word>
+		<suffix parenthesis="round:open" >(</suffix>
+	</list>
+	
+	<sequence parenthesis="round:open">(</sequence>
+	<sequence parenthesis="round:close">)</sequence>
+	<sequence parenthesis="curly:open" indent="1" fold="1">{</sequence>
+	<sequence parenthesis="curly:close" indent="1" fold="1">}</sequence>
+	<sequence parenthesis="square:open">\[</sequence>
+	<sequence parenthesis="square:close">\]</sequence>
+	
+	<context id="variable" transparency="true" stayOnLine="true" >
+		<start format="keyword">$w+$s*[+-*~]?=</start>
+		<stop exclusive="false">\n</stop>
+		<escape>\\</escape>
+	</context>
+	
+	<list id="keywords/scopes" format="keyword">
+		<word>win32</word>
+		<word>unix</word>
+		<word>macx</word>
+	</list>
+</QNFA>

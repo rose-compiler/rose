@@ -110,7 +110,7 @@ dnl if test "x$with_QRose" != xno && test "$qt_incdir" = NONE; then
         AC_MSG_ERROR([ Qt headers not found,  use --with-qt=DIR or --with-qt-includes=DIR])
      fi
   fi
-  QT_INCLUDES="-I$qt_incdir/QtCore -I$qt_incdir/QtGui -I$qt_incdir"
+  QT_INCLUDES="-I$qt_incdir/QtCore -I$qt_incdir/QtGui -I$qt_incdir/QtXml -I$qt_incdir"
   AC_SUBST(QT_INCLUDES)
 
 dnl ---------------------------[check Qt Libraries]------------
@@ -123,7 +123,7 @@ dnl if test "$with_QRose" != no && test "$qt_libdir" = NONE; then
      fi
   fi
 dnl  LIB_QT="-lQtCore -lQtGui"
-  QT_LDFLAGS="-L$qt_libdir -lQtCore -lQtGui"
+  QT_LDFLAGS="-L$qt_libdir -lQtCore -lQtGui -lQtXml -lQtUiTools"
 dnl  AC_SUBST(LIB_QT)
 
   AM_CONDITIONAL(ROSE_USE_QT,test "$with_qt" != no)
@@ -182,4 +182,112 @@ dnl DQ (9/12/2008): Added to test for use of QRose to prevent error if Qt3 is fo
      AC_SUBST(MOC)
    fi
 ])
+
+
+dnl MB:  05/14/09  copied and adapted MOC finding to find also uic and rcc
+
+dnl ------------------------------------------------------------------------
+dnl Find Qt ui compiler (uic)
+dnl ------------------------------------------------------------------------
+dnl
+AC_DEFUN([AC_PATH_QT_UIC],
+[
+   AC_REQUIRE([AC_CHECK_WINDOWS])
+   AC_REQUIRE([AC_PATH_QT])
+
+   AC_ARG_WITH(qt-bin,
+    [  --with-qt-bin=DIR   where the QT binaries are. ],
+    [  ac_qt_bin="$withval"
+    ])
+
+dnl ------------------------[get binary]-----------------
+
+   uic_dirs="$ac_qt_bin $ac_qt_path/bin `echo $PATH | sed s/:/\ /g`"
+   if test $USING_WINDOWS = 1; then
+      uic_binary="uic.exe"
+   else
+      uic_binary="uic"
+   fi
+
+dnl ------------------------[check if uic exists]-----------------
+   AC_MSG_CHECKING([for Qt uic compiler])
+   AC_FIND_FILE($uic_binary, $uic_dirs, uic_dir)
+dnl if test "$with_QRose" != no && test "$uic_dir" = NONE; then
+   if test "$with_QRose" != no; then
+      if test "$uic_dir" = NONE; then
+         AC_MSG_ERROR([ No Qt ui compiler ($uic_binary) found! (should be found in PATH, or --with-qt=DIR-qt_root, or --with-qt-bin=DIR-qt_bin)])
+      fi
+   fi
+   UIC=$uic_dir/$uic_binary
+   AC_MSG_RESULT([$UIC])
+dnl ------------------------[check if uic is version 4]-----------------
+   AC_MSG_CHECKING([Qt uic compiler version])
+
+dnl DQ (9/12/2008): Added to test for use of QRose to prevent error if Qt3 is found.
+   if test "$with_QRose" != no; then
+      if test "$uic_dir" != NONE; then
+         try=`$UIC -v 2>&1 | grep "Qt 4."`
+         if test -z "$try"; then
+            AC_MSG_ERROR([ invalid version - $UIC must be version 4.x.x])
+         else
+            AC_MSG_RESULT([passed])
+         fi
+     fi
+     AC_SUBST(UIC)
+   fi
+])
+
+
+dnl ------------------------------------------------------------------------
+dnl Find Qt resource resource compiler
+dnl ------------------------------------------------------------------------
+dnl
+AC_DEFUN([AC_PATH_QT_RCC],
+[
+   AC_REQUIRE([AC_CHECK_WINDOWS])
+   AC_REQUIRE([AC_PATH_QT])
+
+   AC_ARG_WITH(qt-bin,
+    [  --with-qt-bin=DIR   where the QT binaries are. ],
+    [  ac_qt_bin="$withval"
+    ])
+
+dnl ------------------------[get binary]-----------------
+
+   rcc_dirs="$ac_qt_bin $ac_qt_path/bin `echo $PATH | sed s/:/\ /g`"
+   if test $USING_WINDOWS = 1; then
+      rcc_binary="rcc.exe"
+   else
+      rcc_binary="rcc"
+   fi
+
+dnl ------------------------[check if rcc exists]-----------------
+   AC_MSG_CHECKING([for Qt rcc compiler])
+   AC_FIND_FILE($rcc_binary, $rcc_dirs, rcc_dir)
+dnl if test "$with_QRose" != no && test "$rcc_dir" = NONE; then
+   if test "$with_QRose" != no; then
+      if test "$rcc_dir" = NONE; then
+         AC_MSG_ERROR([ No Qt rcc compiler ($rcc_binary) found! (should be found in PATH, or --with-qt=DIR-qt_root, or --with-qt-bin=DIR-qt_bin)])
+      fi
+   fi
+   RCC=$rcc_dir/$rcc_binary
+   AC_MSG_RESULT([$RCC])
+dnl ------------------------[check if rcc is version 4]-----------------
+   AC_MSG_CHECKING([Qt resource compiler version])
+
+dnl DQ (9/12/2008): Added to test for use of QRose to prevent error if Qt3 is found.
+   if test "$with_QRose" != no; then
+      if test "$rcc_dir" != NONE; then
+         try=`$RCC -v 2>&1 | grep "Qt 4."`
+         if test -z "$try"; then
+            AC_MSG_ERROR([ invalid version - $RCC must be version 4.x.x])
+         else
+            AC_MSG_RESULT([passed])
+         fi
+     fi
+     AC_SUBST(RCC)
+   fi
+])
+
+
 

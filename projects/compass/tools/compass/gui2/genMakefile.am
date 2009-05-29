@@ -1,0 +1,31 @@
+#------------ gui2 Makefile.am -----------
+include $(top_srcdir)/src/roseExtensions/roseQtWidgets/Make.inc 
+
+if ROSE_USE_QT
+
+noinst_LTLIBRARIES = libgui2.la 
+
+
+
+# End of Makefile.am.pre Content
+
+libgui2_la_SOURCES = compassChecker.cpp\
+                     compassInterface.cpp\
+                     CompassMainWindow.cpp\
+                     compassViolation.cpp\
+                     main.cpp
+
+nodist_libgui2_la_SOURCES = qrc_res.cpp\
+                            ui_MainWindow.h
+
+BUILT_SOURCES = ui_MainWindow.h
+
+# Target for installing header 
+headerTargetdir    =  $(roseQtWidgetsIncPath)
+headerTarget_HEADERS = compassChecker.h\
+                       compassInterface.h\
+                       CompassMainWindow.h\
+                       compassViolation.h
+
+
+endif

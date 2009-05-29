@@ -1,0 +1,79 @@
+<!DOCTYPE QNFA>
+<QNFA language="Python" extensions="py" indentationFold="true" defaultLineMark="breakpoint">
+	<embed target="Doxygen"/>
+	
+	<context id="comment/single" format="comment" stayOnLine="true" >
+		<start>#</start>
+		<stop exclusive="false">\n</stop>
+	</context>
+	
+	<context id="data/longstring1" format="text" >
+		<start>&quot;&quot;&quot;</start>
+		<stop>&quot;&quot;&quot;</stop>
+	</context>
+	
+	<context id="data/longstring2" format="text" >
+		<start>&apos;&apos;&apos;</start>
+		<stop>&apos;&apos;&apos;</stop>
+	</context>
+	
+	<context id="data/shortstring1" format="text" stayOnLine="true" >
+		<start>&quot;</start>
+		<stop>&quot;</stop>
+		<stop exclusive="false">\n</stop>
+		<escape>\\</escape>
+	</context>
+	
+	<context id="data/shortstring2" format="text" stayOnLine="true" >
+		<start>&apos;</start>
+		<stop>&apos;</stop>
+		<stop exclusive="false">\n</stop>
+		<escape>\\</escape>
+	</context>
+	
+	<sequence parenthesis="round:open">(</sequence>
+	<sequence parenthesis="round:close">)</sequence>
+	<sequence parenthesis="curly:open">{</sequence>
+	<sequence parenthesis="curly:close">}</sequence>
+	<sequence parenthesis="square:open">\[</sequence>
+	<sequence parenthesis="square:close">\]</sequence>
+	
+	<list id="keywords" format="keyword">
+		<word>and</word>
+		<word>del</word>
+		<word>from</word>
+		<word>not</word>
+		<word>while</word>
+		<word>as</word>
+		<word>elif</word>
+		<word>global</word>
+		<word>or</word>
+		<word>with</word>
+		<word>assert</word>
+		<word>else</word>
+		<word>if</word>
+		<word>pass</word>
+		<word>yield</word>
+		<word>break</word>
+		<word>except</word>
+		<word>import</word>
+		<word>print</word>
+		<word>class</word>
+		<word>exec</word>
+		<word>in</word>
+		<word>raise</word>
+		<word>continue</word>
+		<word>finally</word>
+		<word>is</word>
+		<word>return</word>
+		<word>def</word>
+		<word>for</word>
+		<word>lambda</word>
+		<word>try</word>
+	</list>
+	
+	<word id="data/float" format="floats">-?[0-9]*.[0-9]+f?</word>
+	<word id="data/hexadecimal" format="numbers">0[xX][0-9a-fA-F]+</word>
+	<word id="data/octal" format="numbers">0[0-7]+</word>
+	<word id="data/decimal" format="numbers">-?[0-9]+</word>
+</QNFA>

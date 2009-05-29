@@ -1,0 +1,12 @@
+<RCC>
+  <qresource prefix="util" >
+    <file>NodeIcons/class.gif</file>
+    <file>NodeIcons/function.gif</file>
+    <file>NodeIcons/include.gif</file>
+    <file>NodeIcons/includes.gif</file>
+    <file>NodeIcons/loop.png</file>
+    <file>NodeIcons/namespace.gif</file>
+    <file>NodeIcons/project.gif</file>
+    <file>NodeIcons/sourcefile.gif</file>
+  </qresource>
+</RCC>

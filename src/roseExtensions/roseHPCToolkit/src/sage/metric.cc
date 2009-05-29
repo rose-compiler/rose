@@ -34,29 +34,16 @@ RoseHPCT::getMetric (const string& metric_name, SgNode* node)
 /* ---------------------------------------------------------------- */
 
 MetricAttr::MetricAttr (void)
-  : name_ (""), value_ (0.0), is_derived_ (false)
+  : name_ ("")
 {
 }
 
 MetricAttr::MetricAttr (const std::string& name, double value,
                         bool is_derived)
-  : name_ (name), value_ (value), is_derived_ (false)
+  : MetricAttribute(value,false), name_ (name)
 {
 }
 
-MetricAttr::MetricAttr (const MetricAttr& m)
-  : name_ (m.name_), value_ (m.value_), is_derived_ (m.is_derived_)
-{
-}
-
-string
-MetricAttr::toString (void)
-{
-  string retval = GenUtil::toString (value_);
-  if (is_derived_)
-    retval += "**";
-  return retval;
-}
 
 MetricAttr *
 MetricAttr::clone (void) const
@@ -64,11 +51,6 @@ MetricAttr::clone (void) const
   return new MetricAttr (*this);
 }
 
-void
-MetricAttr::setValue (double x)
-{
-  value_ = x;
-}
 
 MetricAttr&
 MetricAttr::operator+= (const MetricAttr& b)
@@ -88,22 +70,9 @@ MetricAttr::operator+= (const MetricAttr& b)
   return *this;
 }
 
-string
-MetricAttr::getName (void) const
+std::string MetricAttr::getName () const
 {
-  return name_;
-}
-
-double
-MetricAttr::getValue (void) const
-{
-  return value_;
-}
-
-bool
-MetricAttr::isDerived (void) const
-{
-  return is_derived_;
+    return name_;
 }
 
 /*!

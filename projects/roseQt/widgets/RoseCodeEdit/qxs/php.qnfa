@@ -1,0 +1,122 @@
+<!DOCTYPE QNFA>
+<QNFA language="PHP" extensions="php;php3;php4;php5" defaultLineMark="" >
+	<context id="code" >
+		<embed target="Doxygen"/>
+		
+		<start format="keyword" parenthesis="phpcode:open" indent="1" fold="1">&lt;\?php</start>
+		<stop format="keyword" parenthesis="phpcode:close" indent="1" fold="1">\?&gt;</stop>
+		
+		<context id="comment/multi" format="comment" >
+			<start parenthesis="phpcomment:open" indent="1" fold="1">/\*</start>
+			<stop parenthesis="phpcomment:close" indent="1" fold="1">\*/</stop>
+		</context>
+		
+		<context id="comment/single" format="comment" stayOnLine="true" >
+			<start>//</start>
+			<start>#</start>
+			<stop>\n</stop>
+		</context>
+		
+		<context id="data/weakstring" format="text" >
+			<start>&quot;</start>
+			<stop>&quot;</stop>
+			<stop>\n</stop>
+			<sequence id="variable" format="phpvar" >\$$w+</sequence>
+			<sequence id="escape" format="escapeseq" >\\[nrtvf\\"\n]</sequence>
+		</context>
+		
+		<context id="data/strongstring" format="text" stayOnLine="true" >
+			<start>'</start>
+			<stop>'</stop>
+			<escape>\\</escape>
+		</context>
+		
+		<list id="keywords" format="keyword" >
+			<word>and</word>
+			<word>or</word>
+			<word>xor</word>
+			<word>__FILE__</word>
+			<word>exception</word>
+			<word>__LINE__</word>
+			<word>array</word>
+			<word>as</word>
+			<word>break</word>
+			<word>case</word>
+			<word>class</word>
+			<word>const</word>
+			<word>continue</word>
+			<word>declare</word>
+			<word>default</word>
+			<word>die</word>
+			<word>do</word>
+			<word>echo</word>
+			<word>else</word>
+			<word>elseif</word>
+			<word>empty</word>
+			<word>enddeclare</word>
+			<word>endfor</word>
+			<word>endforeach</word>
+			<word>endif</word>
+			<word>endswitch</word>
+			<word>endwhile</word>
+			<word>eval</word>
+			<word>exit</word>
+			<word>extends</word>
+			<word>for</word>
+			<word>foreach</word>
+			<word>function</word>
+			<word>global</word>
+			<word>if</word>
+			<word>include</word>
+			<word>include_once</word>
+			<word>isset</word>
+			<word>list</word>
+			<word>new</word>
+			<word>print</word>
+			<word>require</word>
+			<word>require_once</word>
+			<word>return</word>
+			<word>static</word>
+			<word>switch</word>
+			<word>unset</word>
+			<word>use</word>
+			<word>var</word>
+			<word>while</word>
+			<word>__FUNCTION__</word>
+			<word>__CLASS__</word>
+			<word>__METHOD__ </word>
+			<word>final</word>
+			<word>php_user_filter</word>
+			<word>interface</word>
+			<word>implements</word>
+			<word>extends</word>
+			<word>public</word>
+			<word>private</word>
+			<word>protected</word>
+			<word>abstract</word>
+			<word>clone</word>
+			<word>try</word>
+			<word>catch</word>
+			<word>throw</word>
+			<word>cfunction</word>
+			<word>old_function</word>
+			<word>true</word>
+			<word>false</word>
+			<word>null</word>
+		</list>
+		
+		<sequence id="variable" format="phpvar" >\$$w+</sequence>
+		
+		<sequence parenthesis="round:open">(</sequence>
+		<sequence parenthesis="round:close">)</sequence>
+		<sequence parenthesis="curly:open" indent="1" fold="1">{</sequence>
+		<sequence parenthesis="curly:close" indent="1" fold="1">}</sequence>
+		<sequence parenthesis="square:open">\[</sequence>
+		<sequence parenthesis="square:close">\]</sequence>
+		
+		<word id="data/float" format="numbers">-?[0-9]*.[0-9]+f?</word>
+		<word id="data/hexadecimal" format="numbers">0[xX][0-9a-fA-F]+</word>
+		<word id="data/octal" format="numbers">0[0-7]+</word>
+		<word id="data/decimal" format="numbers">-?[0-9]+</word>
+	</context>
+</QNFA>

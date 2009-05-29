@@ -115,7 +115,7 @@ $(PASSING_C_TEST_Objects): %.o: $(srcdir)/%.c outline
 	@echo "***************** Testing C specific outlining...(to a separate file) *****************"
 	./outline$(EXEEXT) $(OUTLINE_FLAG) -rose:outline:new_file -rose:outline:temp_variable -c $<
 	@echo "*************Testing C specific outlining...(to use dlopen and in a separate file) *******"
-	./outline$(EXEEXT) $(OUTLINE_FLAG) -rose:outline:use_dlopen -rose:outline:temp_variable -I$(top_srcdir)/projects/autoTuning -rose:outline:exclude_headers -rose:outline:output_path "/tmp" -c $<
+	./outline$(EXEEXT) $(OUTLINE_FLAG) -rose:outline:use_dlopen -rose:outline:temp_variable -I$(top_srcdir)/projects/autoTuning -rose:outline:exclude_headers -rose:outline:output_path `pwd` -c $<
 
 # This rule tests the use of outlining in the original file and to a separate file.
 $(PASSING_CXX_TEST_Objects): %.o: $(srcdir)/%.cpp outline

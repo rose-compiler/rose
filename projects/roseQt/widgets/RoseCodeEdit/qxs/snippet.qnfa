@@ -1,0 +1,12 @@
+<!DOCTYPE QNFA>
+<QNFA language="QCE::Snippet" extensions="snip" defaultLineMark="">
+	<sequence id="placeholder/short" format="extra-keyword" >${[0-9]+}</sequence>
+	
+	<context id="placeholder/long" format="extra-keyword" >
+		<start parenthesis="snippet-placeholder:open" >${</start>
+		<stop parenthesis="snippet-placeholder:close" >}</stop>
+		<sequence format="numbers">[0-9]+</sequence>
+		<sequence parenthesis="snippet-placeholder:boundary">:</sequence>
+	</context>
+</QNFA>
+

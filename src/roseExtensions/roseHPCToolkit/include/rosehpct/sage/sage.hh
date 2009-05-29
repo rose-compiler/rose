@@ -51,46 +51,41 @@ namespace RoseHPCT
    *  metric attribute may be tagged as to whether or not the value is
    *  a 'raw' observed count, or some kind of 'derived' value.
    */
-  class MetricAttr : public AstAttribute
+  class MetricAttr : public MetricAttribute
   {
   public:
     MetricAttr (void);
     MetricAttr (const std::string& name, double value,
                 bool is_derived = false);
-    MetricAttr (const MetricAttr& m);
 
     std::string getName (void) const;
-    double getValue (void) const;
-    bool isDerived (void) const;
-    std::string toString (void);
 
     virtual MetricAttr* clone (void) const;
 
     MetricAttr& operator+= (const MetricAttr& b);
 
-    void setValue (double);
-    
+
     // Liao, 12/3/2007, add support for AST_FILE_IO
      // must provide this, otherwise, base class's unpacked_data() will be used
     MetricAttr * constructor() {return new MetricAttr();}
   //  std::string attribute_class_name() { return "MetricAttr"; }
 
-    virtual int packed_size() 
+    virtual int packed_size()
     {
       int size=0;
       // name + Tab + value + "**"
       size = getName().size()+toString().size()+1;
        // derived value has ** in the rear.
       if (isDerived())
-        size+=2; 
+        size+=2;
       return size;
     };
-    
+
     virtual char* packed_data()
     {
       std::string result;
       //toString() will entail the value string with ** if it is derived.
-      result= name_ + "\t" + toString(); 
+      result= name_ + "\t" + toString();
       return const_cast<char *>(result.c_str());
     } ;
     virtual void unpacked_data(int size, char* data)
@@ -108,8 +103,8 @@ namespace RoseHPCT
        {
          tname+=*head;
          head++;
-       } 
-       name_ = tname; 
+       }
+       name_ = tname;
 
       //3. retrieve value
       // strtod() is smart enough to skip tab and ignore tailing **
@@ -118,9 +113,7 @@ namespace RoseHPCT
     };
 
   private:
-    std::string name_; //!< Name of the metric 
-    double value_;  //!< Observed value of the metric 
-    bool is_derived_;  //!< True if the value was 'derived'. 
+    std::string name_; //!< Name of the metric
   };
 
   //! Computes the sum of two metric attributes.

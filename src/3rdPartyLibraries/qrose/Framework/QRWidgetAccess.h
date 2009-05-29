@@ -20,23 +20,42 @@ class QRWidgetAccess {
    friend class QRTiledWidget;
 
 public:
-   // LHS[x] << widget
+
+    
+    // LHS[x] << widget
    template <class T> T* operator << (T* widget) {
       return (T*) insertWidget(widget);
    }
 
-   template <class T> T& operator << (T& widget) {
+   
+   template <class T> T& operator << ( const T& widget) {
       return (T&) *insertWidget(&widget);
    }
+   
+    /*
+   QWidget* operator << (QWidget* widget) {
+       return  insertWidget(widget);
+   }
 
+   QWidget& operator << (QWidget& widget) {
+       return  *insertWidget(&widget);
+   }  
+    */
+    
+   QWidget * operator<< (const std::string& path) 
+   {
+       return loadWidget(path);
+   }
+  
    // RHS widget = X["name"]
    template <class T> operator T ()  {
       return (T) getWidget();
    }
 
 protected:
+   QWidget* loadWidget(const std::string & pathToUIFile);
    QWidget* insertWidget(QWidget *widget);
-   QWidget *getWidget();
+   QWidget* getWidget();
 
 private:
    // prevent the constructor from being invoked outside QRTiledWidget
