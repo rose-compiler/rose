@@ -374,6 +374,8 @@ our own use on large scale applications.}
 
 \input{binaryConstruction}
 
+\input{instructionSemantics}
+
 \input{howToContribute}
 
 \backmatter
