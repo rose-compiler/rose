@@ -91,7 +91,7 @@ Index: Driver/TermDumper.cpp
 ===================================================================
 --- Driver/TermDumper.cpp	(revision 0)
 +++ Driver/TermDumper.cpp	(revision 0)
-@@ -0,0 +1,1954 @@
+@@ -0,0 +1,1953 @@
 +
 +//===--- StmtTermDumper.cpp - TermDumping implementation for Stmt ASTs ----===//
 +//
@@ -966,7 +966,7 @@ Index: Driver/TermDumper.cpp
 +      const Expr *E = dyn_cast<Expr>(S);
 +      bool is_aggregate = E && (E->getType()->isRecordType() ||
 +                                E->getType()->isArrayType());
-+      if(is_aggregate) {
++      if(is_aggregate && InitListExpr::classof(S)) {
 +        return new PrologCompTerm("aggregate_initializer", 4,
 +                                  make_statement_term(S),
 +                                  make_default_annotation(),
@@ -1408,7 +1408,7 @@ Index: Driver/TermDumper.cpp
 +      switch (S->getStmtClass()) {
 +      case Stmt::NullStmtClass:
 +        {
-+          return make_atom("null_expr");
++          return make_atom("null_statement");
 +        }
 +
 +      case Stmt::CompoundStmtClass:
@@ -1470,11 +1470,10 @@ Index: Driver/TermDumper.cpp
 +        {
 +          const LabelStmt *L = cast<LabelStmt>(S);
 +          //The caller is responsible to dump a sub-statement if there is one
-+          return new PrologCompTerm("label_statement", 4,
++          return new PrologCompTerm("label_statement", 3,
 +                                    new PrologCompTerm("label_annotation", 2,
 +                                                       make_atom(L->getName()),
 +                                                       make_preprocessing_info()),
-+                                    make_default_annotation(),
 +                                    make_default_analysis_info(),
 +                                    make_file_info(S));
 +        }
@@ -1619,7 +1618,7 @@ Index: Driver/TermDumper.cpp
 +          case Decl::Function:
 +            {
 +              return new PrologCompTerm("function_ref_exp", 3,
-+                                        new PrologCompTerm("function_ref_annotation", 3,
++                                        new PrologCompTerm("function_ref_exp_annotation", 3,
 +                                                           make_identifier_atom(D),
 +                                                           make_type_term(cast<FunctionDecl>(D)->getType()),
 +                                                           make_preprocessing_info()),
