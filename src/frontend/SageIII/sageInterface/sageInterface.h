@@ -332,15 +332,6 @@ struct hash_nodeptr
   //! Added mechanism to generate project name from list of file names
     std::string generateProjectName (const SgProject * project, bool supressSuffix = false );
 
-  /*! \brief Returns STL vector of SgFile IR node pointers. 
-
-      Demonstrates use of restrivcted traversal over just SgFile IR nodes.
-   */
-    std::vector < SgFile * >generateFileList ();
-
-  //! Get the current SgProject IR Node
-  SgProject * getProject();
-
   //! Given a SgExpression that represents a named function (or bound member
   //! function), return the mentioned function
   SgFunctionDeclaration* getDeclarationOfNamedFunction(SgExpression* func);
@@ -793,6 +784,41 @@ std::vector<NodeType*> querySubTree(SgNode* top, VariantT variant)
   }
   return result;
 }
+  /*! \brief Returns STL vector of SgFile IR node pointers. 
+
+      Demonstrates use of restricted traversal over just SgFile IR nodes.
+   */
+    std::vector < SgFile * >generateFileList ();
+
+  //! Get the current SgProject IR Node
+  SgProject * getProject();
+
+//! Query memory pools to grab SgNode of a specified type
+template <typename NodeType>
+static std::vector<NodeType*> getSgNodeListFromMemoryPool()
+{
+  // This function uses a memory pool traversal specific to the SgFile IR nodes
+  class MyTraversal : public ROSE_VisitTraversal
+  {
+    public:
+      std::vector<NodeType*> resultlist;
+      void visit ( SgNode* node)
+      {
+        NodeType* result = dynamic_cast<NodeType* > (node);
+        ROSE_ASSERT(result!= NULL);
+        if (result!= NULL)
+        {
+          resultlist.push_back(result);
+        }
+      };
+      virtual ~MyTraversal() {}
+  };
+
+  MyTraversal my_traversal;
+  NodeType::visitRepresentativeNode(my_traversal);
+  return my_traversal.resultlist;
+}
+
 
 /*! \brief top-down traversal from current node to find the main() function declaration
 */
