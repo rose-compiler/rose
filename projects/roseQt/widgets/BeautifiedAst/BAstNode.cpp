@@ -29,8 +29,8 @@ BAstNode::BAstNode(AstDisplayInfo::NodeType t,
     type(t),
     caption(cap),
     tooltip(""),
-    icon(QIcon()),
-    sg(sgNode)
+    sg(sgNode),
+    icon(QIcon())
 {
 }
 

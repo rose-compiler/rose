@@ -13,7 +13,12 @@ DisplayNode::DisplayNode(QGraphicsScene * sc)
 {
 	 setFlag(ItemIsMovable);
 	 setFlag(ItemIsSelectable);
-	 setCacheMode(DeviceCoordinateCache);
+
+#if QT_VERSION >= 0x040400
+     setCacheMode(DeviceCoordinateCache);
+#endif
+
+
 	 setZValue(1);
 
 	 caption="Root";
@@ -66,9 +71,15 @@ void DisplayNode::paint(QPainter * painter,const QStyleOptionGraphicsItem * , QW
 	QBrush brush(color);
 	painter->setBrush(brush);
 
-
+#if QT_VERSION >= 0x040400
 	painter->drawRoundedRect(getRect(),20,20,Qt::RelativeSize);
+#else
+	painter->drawRect(getRect());
+#endif
+
 	painter->drawText(getRect(),Qt::AlignCenter,caption);
+
+
 }
 
 

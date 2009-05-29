@@ -143,7 +143,7 @@ QVariant CheckerTableModel::headerData (int section, Qt::Orientation orientation
 
 int  CheckerTableModel::rowCount(const QModelIndex &) const
 {
-    compInterface->numCheckers();
+    return compInterface->numCheckers();
 }
 
 
