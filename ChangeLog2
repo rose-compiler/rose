@@ -1,3 +1,17 @@
+2009-05-29 20:48  bauer25
+
+	* [r5999]
+	  /trunk/ROSE/projects/roseQt/widgets/BeautifiedAst/BAstNode.cpp:
+	  Bug fixed: didn't compile with Qt version < 4.5
+
+2009-05-29 20:45  bauer25
+
+	* [r5998]
+	  /trunk/ROSE/projects/roseQt/widgets/AstGraphWidget/TreeLayoutGenerator.h,
+	  /trunk/ROSE/projects/roseQt/widgets/BeautifiedAst/BAstNode.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/InstructionCountAnnotator/InstructionCountAnnotator.cpp:
+	  Bug fixed: didn't compile with Qt version < 4.5
+
 2009-05-29 18:18  bauer25
 
 	* [r5996]
