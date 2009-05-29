@@ -1,6 +1,8 @@
 #include "rose.h"
 
-#include "PTracer.h"
+#ifdef ROSEQT_EXPERIMENTAL
+    #include "PTracer.h"
+#endif
 
 namespace InstructionCountAnnotator  {
 
@@ -10,6 +12,8 @@ using namespace std;
 void annotate(SgProject * proj,
               std::vector<std::string> args = std::vector<std::string>() )
 {
+
+#ifdef ROSEQT_EXPERIMENTAL
     PTracer tracer;
 
     // Get path of executable
@@ -62,7 +66,15 @@ void annotate(SgProject * proj,
         //if(info.getHitCount() > 0)
         //    cerr << "Annotating: " << info.getNode()->class_name() << " with " << dec << info.getHitCount()<< endl;
     }
+
+#else
+    cerr<< "Annotating ast with PTracer experimental (not ported to all platforms), use ROSEQT_EXPERIMENTAL flag" << endl;
+
+#endif
+
+
 }
+
 
 
 
