@@ -5,7 +5,10 @@ F77_TESTCODES_TO_PASS = \
     helloworld2.f \
     jacobi.f \
     default.f \
+    flush.f \
     exampleA11f.f \
+    exmpaleA221f.f \
+    exampleA251f.f \
     schedule.f
 
 F90_TESTCODES_TO_PASS = \
@@ -17,12 +20,19 @@ F90_TESTCODES_TO_PASS = \
 
 # see bug 350, wrong position for C$OMP END PARALLEL
 # case insensitive in symobl lookup for Fortran
-# variables used in OpenMP directives before they are used in loop body
+# exampleA281f.f: case insensitive for included header file's name, also bug 354
+# flush2.f : wrong position for flush (scope becomes function, not inner block)
+# conditional.f:  conditional compilation
+# exampleA41f.f90:  test code has error?
 TESTCODES_CURRENTLY_FAILING = \
     helloworld0.f \
+    exampleA211f.f \
     exampleA281f.f \
     exampleA102f.f90 \
-    exampleA161f.f90
+    exampleA161f.f90 \
+    flush2.f \
+    conditional.f \
+    exampleA41f.f90
 
 ROSE_FLAGS = -rose:openmp 
 

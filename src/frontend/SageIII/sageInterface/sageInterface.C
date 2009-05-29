@@ -3033,6 +3033,7 @@ SageInterface::generateFileList()
 SgProject*
 SageInterface::getProject()
 {
+#if 0  
   class ProjectTraversal : public ROSE_VisitTraversal
   {
     public:
@@ -3048,6 +3049,10 @@ SageInterface::getProject()
   ProjectTraversal projectTraversal;
   SgProject::visitRepresentativeNode(projectTraversal);
   return projectTraversal.project;
+#endif
+  std::vector<SgProject* > resultlist = getSgNodeListFromMemoryPool<SgProject>();
+  ROSE_ASSERT(resultlist.size()==1);
+  return resultlist[0];
 }
 
 SgFunctionDeclaration* SageInterface::getDeclarationOfNamedFunction(SgExpression* func) {

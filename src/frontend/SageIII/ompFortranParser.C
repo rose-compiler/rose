@@ -385,8 +385,89 @@ static bool ofs_match_clause_schedule()
   c_char = old_char;
   return false;
 }
+// Match something like / A25_COMMON /, return the block name in the buffer
+static bool ofs_match_common_block(char* buffer)
+{
+  const char* old_char = c_char;
+  if (ofs_match_char('/'))
+  {
+    if (!ofs_match_anyname(buffer))
+    {
+      printf("error in matching a named common block: cannot find block name for %s\n", old_char);
+      assert (false);
+    } 
+
+    if  (!ofs_match_char('/'))
+    {
+      printf("error in matching a named common block: cannot the end '/' for %s\n", old_char);
+      assert (false);
+
+    } 
+    return true;
+  }
+  // Did not make it, revoke side effects
+  c_char= old_char;
+  return false;
+}
+
+// Grab all explicit? variables  declared within a common block and add them into ompattribute
+static void ofs_add_block_variables (char* block_name)
+{
+  std::vector<SgCommonBlock*> block_vec = SageInterface::getSgNodeListFromMemoryPool<SgCommonBlock>();
+  SgCommonBlockObject* found_block_object = NULL;
+  for (std::vector<SgCommonBlock*>::const_iterator i = block_vec.begin();
+       i!= block_vec.end();i++)
+  {
+
+    bool innerbreak = false;
+    SgCommonBlock* c_block = *i;
+    SgCommonBlockObjectPtrList & blockList = c_block->get_block_list();
+    SgCommonBlockObjectPtrList::iterator i2 = blockList.begin();
+    while (i2 != blockList.end())
+    {
+      string name = (*i2)->get_block_name();
+      if (strcmp(block_name, name.c_str())==0)
+      {
+        found_block_object = *i2;
+        innerbreak = true;
+        break;
+      }
+      i2++;
+    }// end while block objects
+
+    if (innerbreak)
+      break;
+  } // end for all blocks
+
+  if (found_block_object == NULL)
+  {
+    printf("error: cannot find a common block with a name of %s\n",block_name);
+    assert(false);
+  }
+
+  // add each variable within the block into ompattribute
+  SgExprListExp * explistexp = found_block_object->get_variable_reference_list ();
+  assert(explistexp != NULL);
+  SgExpressionPtrList& explist = explistexp->get_expressions();
+
+  Rose_STL_Container<SgExpression*>::const_iterator exp_iter = explist.begin();
+  assert (explist.size()>0); // must have variable defined 
+  while (exp_iter !=explist.end())
+  {
+    SgVarRefExp * var_exp = isSgVarRefExp(*exp_iter);
+    assert (var_exp!=NULL);
+    SgVariableSymbol * symbol = isSgVariableSymbol(var_exp->get_symbol());
+    assert (symbol!=NULL);
+//    cout<<"adding variable:"<< symbol->get_name().getString() <<" to "<<OmpSupport::toString(omptype)<<endl;
+    ompattribute->addVariable(omptype,symbol->get_name(), 
+                symbol->get_declaration());
+    exp_iter++;
+  }
+
+}
 
 //! Match a variable list like  "x,y,z)"
+// a common block name can also show up sometimes, like /A25_COMMON/
 // It is used to collect variable list within 
 //  clause(varlist) and reduction(op:varlist)
 //
@@ -402,11 +483,15 @@ static bool ofs_match_varlist()
   while (1)
   {
     char buffer[OFS_MAX_LEN];
-    if (ofs_match_anyname(buffer))
-    {
+    bool isCommonblock =false;
 
-      ompattribute->addVariable(omptype, buffer);
-      // look for the next variable
+    if (ofs_match_anyname(buffer)||(isCommonblock=ofs_match_common_block(buffer)))
+    {
+      if (isCommonblock)
+        ofs_add_block_variables(buffer);
+      else
+        ompattribute->addVariable(omptype, buffer);
+      // look for the next variable/or common block
       if (ofs_match_char(','))
         continue;
       // end of varlist within ()
@@ -876,7 +961,7 @@ static bool ofs_match_omp_clauses(int bitvector)
   const char* old_char = c_char;
   bool firstiter= true;
   //  ofs_match_private_clause();
-  while (1) //TODO handle multiple lines directives
+  while (1) 
   {
 #if 1    
     // for the second and after clause, we need a space or ','
@@ -1036,6 +1121,7 @@ static void postProcessingMergedContinuedLine(std::string & buffer)
 
 //-------------- the implementation for the external interface -------------------
 //! Check if a line is an OpenMP directive, 
+// the associated node is needed to tell the programming language
 bool  ofs_is_omp_sentinels(const char* str, SgNode* node)
 {
   bool result; 
@@ -1054,8 +1140,7 @@ bool  ofs_is_omp_sentinels(const char* str, SgNode* node)
   return result;
 } 
 
-// The entry point for the OpenMP Fortran directive parser
-//
+// Parsing OpenMP directive string associated with a node 
 OmpSupport::OmpAttribute* omp_fortran_parse(SgNode* locNode, const char* str)
 {
   ROSE_ASSERT(locNode != NULL);
@@ -1202,7 +1287,15 @@ OmpSupport::OmpAttribute* omp_fortran_parse(SgNode* locNode, const char* str)
     else if (ofs_match_substr("flush"))
     {
       ompattribute = buildOmpAttribute(e_flush, c_sgnode);
-      //TODO optional (varlist)
+      omptype = e_flush;
+      //optional (varlist)
+      if (ofs_match_char('('))
+      {
+        if (!ofs_match_varlist())
+        {
+          printf("error: cannot find a var list after matching 'flush(' for %s\n",str);
+        }
+      }
     }
     // !$omp master
     else if (ofs_match_substr("master"))
@@ -1280,6 +1373,15 @@ OmpSupport::OmpAttribute* omp_fortran_parse(SgNode* locNode, const char* str)
       {
         ompattribute = buildOmpAttribute(e_threadprivate, c_sgnode);
         //TODO (list) variables, or common blocks
+        omptype = e_threadprivate;
+        //optional (varlist)
+        if (ofs_match_char('('))
+        {
+          if (!ofs_match_varlist())
+          {
+            printf("error: cannot find a var list after matching 'threadprivate(' for %s\n",str);
+          }
+        }
       }
     //!$omp workshare
       else if (ofs_match_substr("workshare"))
@@ -1301,6 +1403,7 @@ OmpSupport::OmpAttribute* omp_fortran_parse(SgNode* locNode, const char* str)
   return ompattribute;
 }
 
+// The entry point for the OpenMP Fortran directive parser
 void parse_fortran_openmp(SgSourceFile *sageFilePtr)
 {
   std::vector <SgNode*> loc_nodes = NodeQuery::querySubTree (sageFilePtr, V_SgLocatedNode);
@@ -1341,6 +1444,8 @@ void parse_fortran_openmp(SgSourceFile *sageFilePtr)
         if (pinfo->getTypeOfDirective()==PreprocessingInfo::FortranStyleComment)
         {
           string buffer = pinfo->getString();
+          // Change to lower case
+          std::transform(buffer.begin(), buffer.end(), buffer.begin(), ::tolower);
           // We are not interested in other comments
           if (!ofs_is_omp_sentinels(buffer.c_str(),locNode))
           {
@@ -1352,7 +1457,6 @@ void parse_fortran_openmp(SgSourceFile *sageFilePtr)
             continue;
           } 
 
-          std::transform(buffer.begin(), buffer.end(), buffer.begin(), ::tolower);
           // remove possible comments also:
           removeFortranComments(buffer);
           //          cout<<"----------------------"<<endl;

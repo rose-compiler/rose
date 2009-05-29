@@ -142,8 +142,7 @@ namespace OmpSupport{
       SgScopeStatement* scope = SageInterface::getScope(mNode);
       ROSE_ASSERT(scope!=NULL);
       //resolve the variable here
-      SgVariableSymbol* symbol = lookupVariableSymbolInParentScopes 
-        (varString, scope);
+      SgVariableSymbol* symbol = lookupVariableSymbolInParentScopes (varString, scope);
       if (symbol == NULL)          
       {
         cerr<<"Error: OmpAttribute::addVariable() cannot find symbol for variable:"<<varString<<endl;
