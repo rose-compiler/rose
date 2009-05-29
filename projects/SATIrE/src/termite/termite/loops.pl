@@ -123,6 +123,7 @@ isSimpleForInit(comma_op_exp(E1, E2, _, _, _), InductionVar, InitVal) :-
 
 %% isEmptyForInit(+InitStatement) is semidet.
 isEmptyForInit(for_init_statement(_, _, _)).
+isEmptyForInit(for_init_statement([], _, _, _)).
 
 %% isForTestLE(+TestOp, -LeOp) is semidet.
 % Any < test will be converted into a =<

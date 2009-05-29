@@ -552,10 +552,9 @@ loop_bounds(I, I, I, Term, Term).
 
 %-----------------------------------------------------------------------
 % FIXME use Inner and next instead of counter()
-markers(Stem, StemInner, StemInner,
+markers(Stem, Stem, Stem,
 	basic_block(List, Annot, Ai, Fi),
 	basic_block(ListPrime, Annot, Ai, Fi)) :-
-  
   retract(counter(X)), Y is X+1, assert(counter(Y)),
   concat_atom([Stem, '_', Y], StemInner), 
   %term_to_string(wcet_marker(StemInner), Text),
