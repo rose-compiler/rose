@@ -1,3 +1,9 @@
+2009-05-30 00:03  bauer25
+
+	* [r6003]
+	  /trunk/ROSE/projects/compass/tools/compass/gui2/CompassMainWindow.cpp:
+	  fixed bug with QMenu::exec in certain Qt-versions
+
 2009-05-29 23:01  bauer25
 
 	* [r6001]
