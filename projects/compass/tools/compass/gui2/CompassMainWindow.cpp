@@ -131,11 +131,8 @@ void CompassMainWindow::on_tblCheckers_customContextMenuRequested (const QPoint 
     QList<QAction*> actions;
     actions << ui->actionSelectAll << ui->actionUnselectAll << ui->actionInvertSelection;
 
-#if QT_VERSION >= 0x040400
-    QMenu::exec(actions,p,NULL,ui->tblCheckers);
-#else
-     QMenu::exec(actions,p,NULL);
-#endif 
+    QMenu::exec(actions,p,NULL);
+
 }
 
 
