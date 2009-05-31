@@ -1,3 +1,11 @@
+2009-05-31 06:24  saebjornsen1
+
+	* [r6005]
+	  /trunk/ROSE/src/midend/programAnalysis/CallGraphAnalysis/CallGraph.C,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/testCallGraph.C:
+	  Improved Call Graph
+
 2009-05-30 00:03  bauer25
 
 	* [r6003]
