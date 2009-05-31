@@ -55,6 +55,11 @@ main( int argc, char * argv[] ) {
    //  r = test.translate(argc,argv); // returns an error if any of the ends fails
    SgProject* project = new SgProject(argc, argv);
 
+//   var_SOLVE_FUNCTION_CALLS_IN_DB = true;
+#ifdef HAVE_SQLITE3
+   var_SOLVE_FUNCTION_CALLS_IN_DB = true;
+#endif
+
    CallGraphBuilder CGBuilder( project );
    CGBuilder.buildCallGraph();
 
@@ -65,14 +70,6 @@ main( int argc, char * argv[] ) {
    //  GenerateDotGraph(CGBuilder.getGraph(),"callgraph.dot");
 
    ClassHierarchyWrapper hier( project );
-// TPS (01Dec2008): Enabled mysql and this fails.
-// seems like it is not supposed to be included
-#if 0
-   //#ifdef HAVE_MYSQL
-   hier.setDBName( "ClassHierarchy" );
-   hier.createHierarchySchema();
-   hier.writeHierarchyToDB();
-#endif
 
    // Use the information in the graph to output a dot file for the call graph
 
@@ -80,31 +77,40 @@ main( int argc, char * argv[] ) {
 
 // TPS (01Dec2008): Enabled mysql and this fails.
 // seems like it is not supposed to be included
-#if 0
-   //#ifdef HAVE_MYSQL
-   output.writeToDB( 1, "DATABASE" );
-   output.filterNodesByDirectory( "DATABASE", "/export" );
-   output.filterNodesByDB( "DATABASE", "__filter.db" );
+   CallGraphCreate *newGraph;
+   if(var_SOLVE_FUNCTION_CALLS_IN_DB == true)
+   {
+     /*
+     hier.setDBName( "ClassHierarchy" );
+     hier.createHierarchySchema();
+     hier.writeHierarchyToDB();
+     */
 
-#ifdef SOLVE_FUNCTION_CALLS_IN_DB
-   output.solveVirtualFunctions( "DATABASE", "ClassHierarchy" );
-   output.solveFunctionPointers( "DATABASE" );
-#endif // SOLVE...
+#ifdef HAVE_SQLITE3
+     output.writeToDB( 1, "DATABASE" );
+     output.filterNodesByDirectory( "DATABASE", "/export" );
+     output.filterNodesByDB( "DATABASE", "__filter.db" );
+     output.solveVirtualFunctions( "DATABASE", "ClassHierarchy" );
+     output.solveFunctionPointers( "DATABASE" );
+     cout << "Loading from DB...\n";
+     newGraph = output.loadGraphFromDB( "DATABASE" );
+     cout << "Loaded\n";
 
-   cout << "Loading from DB...\n";
-   CallGraphCreate *newGraph = output.loadGraphFromDB( "DATABASE" );
-   cout << "Loaded\n";
-#else
-   // Not SQL Database case
-   printf ("Not using the SQLite Database ... \n");
-   CallGraphCreate *newGraph = CGBuilder.getGraph();
-#endif // USE_ROSE...
+#endif
+
+   }else{
+     // Not SQL Database case
+     printf ("Not using the SQLite Database ... \n");
+     newGraph = CGBuilder.getGraph();
+
+     filterGraph(*newGraph,filterNodes());
+
+   }
 
    ostringstream st;
    st << "DATABASE.dot";
    cout << "Generating DOT...\n";
 
-   filterGraph(*newGraph,filterNodes());
 
    generateDOT( *project );
    cout << "Done with DOT\n";

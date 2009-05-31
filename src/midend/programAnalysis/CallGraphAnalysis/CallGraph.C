@@ -82,6 +82,9 @@ CallGraphNode::CallGraphNode ( std::string label, SgFunctionDeclaration* fctDecl
 	        bool hasDef, bool isPtr, bool isPoly, SgClassDefinition *invokedCls )
 	   : MultiGraphElem( NULL ), label( label )
   {
+  //ROSE_ASSERT(invokedCls != NULL);
+ // ROSE_ASSERT(fctDeclaration != NULL);
+
   hasDefinition = hasDef;
   properties = new FunctionProperties();
   properties->isPointer = isPtr;;
@@ -541,8 +544,19 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
 		     if ( !isSgThisExp( left ) ||
 			  isSgPointerDerefExp( left ) && isSgThisExp( isSgPointerDerefExp( left )->get_operand() ))
 		       {
-			 fctProps->invokedClass = isSgClassDeclaration( classType->get_declaration() )->get_definition();
+			 fctProps->invokedClass = isSgClassDeclaration( classType->get_declaration()->get_definingDeclaration() )->get_definition();
+
 			 fctProps->isPolymorphic = true;
+                         if(fctProps->invokedClass==NULL)
+                         {
+                           std::cout << "A " << classType->unparseToString() << " " << classType->class_name() <<
+                             " " <<  classType->get_declaration()->class_name() <<
+                             classType->get_declaration()->unparseToString() << left->unparseToString() << std::endl;
+                         }
+                           ;
+
+                         ROSE_ASSERT(fctProps->invokedClass!=NULL);
+
 		       }
 		     else
 		       {
@@ -590,7 +604,8 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
 		     else
 		       {
 			 fctProps->isPolymorphic = true;
-			 fctProps->invokedClass = isSgClassDeclaration( crtClass->get_declaration() )->get_definition();
+			 fctProps->invokedClass = isSgClassDeclaration( crtClass->get_declaration()->get_definingDeclaration() )->get_definition();
+                         ROSE_ASSERT(fctProps->invokedClass!=NULL);
 			 cout << "SET polymorphic on class " << fctProps->invokedClass->get_qualified_name().getString()
 			      << "\t" << fctProps << "\n";
 		       }
@@ -1041,7 +1056,8 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
      int totEdges = 0;
      while (j != callGraphData.end())
         {
-	  //          printf ("Calling findNode in outer loop (*j)->functionDeclaration->get_name() = %s \n",(*j)->functionDeclaration->get_name().str());
+          std::cout << "Calling findNode in outer loop loc1" << std::endl;
+	  //printf ("Calling findNode in outer loop (*j)->functionDeclaration->get_name() = %s \n",(*j)->properties->functionDeclaration->get_name().str());
           CallGraphNode* startingNode = ( var_SOLVE_FUNCTION_CALLS_IN_DB == true ? findNode( nodeList, (*j)->properties->functionDeclaration ) :
              findNode(nodeList,(*j)->functionDeclaration) );
           ROSE_ASSERT (startingNode != NULL);
@@ -1077,6 +1093,8 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
               }
               else
               {
+                 std::cout << "Calling findNode in outer loop loc5" << std::endl;
+
                 CallGraphNode *endNode = findNode( nodeList, ( *k )->functionDeclaration );
                 ROSE_ASSERT ( endNode );
                 if(returnGraph->edgeExist(startingNode,endNode)==false)
@@ -1091,6 +1109,8 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
 
             while (k != functionList.end())
             {
+              std::cout << "Calling findNode in outer loop loc6" << std::endl;
+
               CallGraphNode* endingNode = findNode( nodeList, *k );
               /*
                  if ( !endingNode )
@@ -1227,7 +1247,9 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
     int totEdges = 0;
     while (j != callGraphData.end())
     {
-      //          printf ("Calling findNode in outer loop (*j)->functionDeclaration->get_name() = %s \n",(*j)->functionDeclaration->get_name().str());
+          std::cout << "Calling findNode in outer loop loc2" << std::endl;
+
+//                printf ("Calling findNode in outer loop (*j)->functionDeclaration->get_name() = %s \n",(*j)->functionDeclaration->get_name().str());
       CallGraphNode* startingNode = findNode( nodeList, (*j)->properties->functionDeclaration );
       ROSE_ASSERT (startingNode != NULL);
 
@@ -1377,7 +1399,9 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
     int totEdges = 0;
     while (j != callGraphData.end())
     {
-      // printf ("Calling findNode in outer loop (*j)->functionDeclaration->get_name() = %s \n",(*j)->functionDeclaration->get_name().str());
+//       printf ("Calling findNode in outer loop (*j)->functionDeclaration->get_name() = %s \n",(*j)->functionDeclaration->get_name().str());
+          std::cout << "Calling findNode in outer loop loc3" << std::endl;
+
       CallGraphNode* startingNode = findNode(nodeList,(*j)->functionDeclaration);
       ROSE_ASSERT (startingNode != NULL);
 
@@ -1541,8 +1565,8 @@ CallGraphDotOutput::createCallGraphSchema ( sqlite3x::sqlite3_connection& gDB, s
   
   //Query query = (*gDB)->getQuery();
   gDB.executenonquery("CREATE TABLE IF NOT EXISTS Graph (gid, pgid, filename TEXT);");
-  gDB.executenonquery("CREATE TABLE  IF NOT EXISTS Nodes (nid TEXT, gid INTEGER, label TEXT, def INTEGER, type TEXT, scope TEXT, PRIMARY KEY (nid, scope)););");
-  gDB.executenonquery("CREATE TABLE  IF NOT EXISTS Edges  (nid1 TEXT, nid2 TEXT, label TEXT, type TEXT, objClass TEXT, PRIMARY KEY (nid1, nid2, type));");
+  gDB.executenonquery("CREATE TABLE  IF NOT EXISTS Nodes (nid TEXT, gid INTEGER, label TEXT, def INTEGER, type TEXT, scope TEXT, PRIMARY KEY (nid)););");
+  gDB.executenonquery("CREATE TABLE  IF NOT EXISTS Edges  (nid1 TEXT, nid2 TEXT, label TEXT, type TEXT, objClass TEXT);");
 
   cout << "Tables created\n";
 }
@@ -1557,9 +1581,7 @@ CallGraphDotOutput::GetCurrentMaxSubgraph ( sqlite3x::sqlite3_connection&  gDB )
 
   return rows;
 }
-// DQ (7/28/2005): Don't include the data base
 
-// DQ (7/28/2005): Don't include the data base
 // writes the subgraph, edge, and node info to DB
 void
 CallGraphDotOutput::writeSubgraphToDB( sqlite3x::sqlite3_connection& gDB )
@@ -1621,6 +1643,13 @@ CallGraphDotOutput::writeSubgraphToDB( sqlite3x::sqlite3_connection& gDB )
 	}      
       */
       int isDef = node->isDefined() ? 1 : 0;
+
+      if ( isDef )
+	{
+          gDB.executenonquery(  "DELETE FROM Nodes WHERE nid = \"" + mnglName + "\";");
+
+        }
+
       string lbl = "POINTER_LABEL";
 
       if ( node->properties->functionDeclaration )
@@ -1628,42 +1657,34 @@ CallGraphDotOutput::writeSubgraphToDB( sqlite3x::sqlite3_connection& gDB )
 
       string command = "INSERT INTO Nodes VALUES (?,?,?,?,?,?);";
   
+      std::ostringstream existQuery;
+      existQuery << "select count(nid) from Nodes where nid=\""<<mnglName<<"\" AND gid="<<nV<<" AND label=\"" << lbl << "\" AND def="
+          << isDef << " AND type=\"" << mnglType << "\" AND scope=\"" << scope << "\" limit 1";
 
-      sqlite3_command cmd(gDB, command.c_str());
+      if( sqlite3_command(gDB, existQuery.str().c_str()).executeint() == 0 )
+      {
+        sqlite3_command cmd(gDB, command.c_str());
 
-      if ( isDef )
-	{
-	  command = "DELETE FROM Nodes WHERE nid = \"" + mnglName + "\";";
-//          gDB.executenonquery(command.c_str());
+        cmd.bind(1, mnglName);
+        cmd.bind(2, nV);
+        cmd.bind(3, lbl);
+        cmd.bind(4, isDef );
+        cmd.bind(5, mnglType);
+        cmd.bind(6, scope);
 
-          cmd.bind(1, mnglName);
-          cmd.bind(2, nV);
-          cmd.bind(3, lbl);
-          cmd.bind(4, 1);
-          cmd.bind(5, mnglType);
-          cmd.bind(6, scope);
+        std::ostringstream ost;
+        ost << "INSERT INTO Nodes VALUES (\""<<mnglName<<"\","<<nV<<",\"" << lbl << "\","
+          << isDef << ",\"" << mnglType << "\",\"" << scope << "\");" << std::endl;
 
-	}
-      else
-	{
+        std::cout << ost.str() << std::endl;
 
-          cmd.bind(1, mnglName);
-          cmd.bind(2, nV);
-          cmd.bind(3, lbl);
-          cmd.bind(4, 0);
-          cmd.bind(5, mnglType);
-          cmd.bind(6, scope);
-
-	}
-
-
-
-      cmd.executenonquery();
+        cmd.executenonquery();
+      }
 
       cout << command << "\n";
 
       CallGraphCreate::EdgeIterator ei;
-      CallGraphCreate::EdgeDirection dir = CallGraphCreate::EdgeOut;
+      CallGraphCreate::EdgeDirection dir = CallGraphCreate::EdgeIn;
 
       for ( ei = callGraph.GetNodeEdgeIterator(node, dir)  ; !ei.ReachEnd(); ++ei )
 	{
@@ -1671,7 +1692,7 @@ CallGraphDotOutput::writeSubgraphToDB( sqlite3x::sqlite3_connection& gDB )
 	  CallGraphNode *end;
 	  ostringstream st;
 //	  end = dynamic_cast<CallGraphNode *>( getTargetVertex(*edge) );
-	  end = dynamic_cast<CallGraphNode *>(callGraph.GetEdgeEndPoint( edge, GraphAccess::EdgeOut) );
+	  end = dynamic_cast<CallGraphNode *>(callGraph.GetEdgeEndPoint( edge, GraphAccess::EdgeIn) );
 
 	  ROSE_ASSERT ( end );
 	  string n2mnglName = "POINTER";
@@ -1718,13 +1739,15 @@ CallGraphDotOutput::filterNodesByDB ( string dbName, string filterDB )
   cout << "Filtering system calls...\n";
   sqlite3x::sqlite3_connection gDB(dbName.c_str());
 
-  string command = "ATTACH DATABASE \"" + filterDB + "\" AS filter;";
+//  string command = "ATTACH DATABASE \"" + filterDB + "\" AS filter;";
+//  gDB.executenonquery(command.c_str());
+
+//  string command = "CREATE TEMP TABLE IF NOT EXISTS gb AS SELECT g.gid as gid FROM Graph g, filter.files f WHERE f.filename = g.filename;";
+  string command = "CREATE TEMP TABLE IF NOT EXISTS gb AS SELECT g.gid as gid FROM Graph g WHERE g.filename = \"\";";
+
   gDB.executenonquery(command.c_str());
 
-  command = "CREATE TEMP TABLE gb AS SELECT g.gid as gid FROM Graph g, filter.files f WHERE f.filename = g.filename;";
-  gDB.executenonquery(command.c_str());
-
-  command = "CREATE TEMP TABLE nb AS SELECT nid FROM Nodes n, gb WHERE n.gid = gb.gid;";
+  command = "CREATE TEMP TABLE IF NOT EXISTS nb AS SELECT nid FROM Nodes n, gb WHERE n.gid = gb.gid;";
   gDB.executenonquery(command.c_str());
 
   command = "DELETE FROM Nodes WHERE nid IN (SELECT nb.nid FROM nb);";
@@ -1747,10 +1770,10 @@ CallGraphDotOutput::filterNodesByFilename ( string dbName, string filterFile )
   sqlite3x::sqlite3_connection gDB(dbName.c_str());
   string command;
 
-  command = "CREATE TEMP TABLE gb AS SELECT g.gid as gid FROM Graph g WHERE g.filename = " + filterFile + ";";
+  command = "CREATE TEMP TABLE IF NOT EXISTS gb AS SELECT g.gid as gid FROM Graph g WHERE g.filename = " + filterFile + ";";
   gDB.executenonquery(command.c_str());
 
-  command = "CREATE TEMP TABLE nb AS SELECT nid FROM Nodes n, gb WHERE n.gid = gb.gid;";
+  command = "CREATE TEMP TABLE IF NOT EXISTS nb AS SELECT nid FROM Nodes n, gb WHERE n.gid = gb.gid;";
   gDB.executenonquery(command.c_str());
 
   command = "DELETE FROM Nodes WHERE nid IN (SELECT nb.nid FROM nb);";
@@ -1944,9 +1967,9 @@ CallGraphDotOutput::loadGraphFromDB ( string dbName )
 
   sqlite3x::sqlite3_connection gDB(dbName.c_str());
 
-  string loadNodes = "SELECT * FROM Nodes;",
+  string loadNodes = "SELECT nid,label,def,type,scope FROM Nodes;",
 //    loadGraph = "SELECT * FROM Graph;",
-    loadEdges = "SELECT * FROM Edges;";
+    loadEdges = "SELECT nid1,nid2,label FROM Edges;";
 
   Rose_STL_Container<CallGraphNode *> nodeList;
 
@@ -1959,10 +1982,10 @@ CallGraphDotOutput::loadGraphFromDB ( string dbName )
     while(r.read()) 
     {
       string nid   = r.getstring(0);
-      string label = r.getstring(2);
-      int is_def   = boost::lexical_cast<int>(r.getstring(3));
-      string typeF = r.getstring(4);
-      string scope = r.getstring(5);
+      string label = r.getstring(1);
+      int is_def   = boost::lexical_cast<int>(r.getstring(2));
+      string typeF = r.getstring(3);
+      string scope = r.getstring(4);
 
       CallGraphNode *n = new CallGraphNode( nid, NULL, NULL, is_def, false, false, NULL );
 
@@ -1972,7 +1995,7 @@ CallGraphDotOutput::loadGraphFromDB ( string dbName )
     }
   }
 
-  sqlite3_command cmd(gDB, loadNodes.c_str());
+  sqlite3_command cmd(gDB, loadEdges.c_str());
   sqlite3x::sqlite3_reader r = cmd.executereader();
 
   while(r.read())
@@ -1982,8 +2005,13 @@ CallGraphDotOutput::loadGraphFromDB ( string dbName )
 	label = r.getstring(2);
 
       // find end points of edges, by their name
+    //      std::cout << "Calling findNode in outer loop loc7 " << nid1 << " " << nid2 << " " 
+     //       << label << std::endl;
+
       CallGraphNode* startingNode = findNode(nodeList, nid1);
+
       CallGraphNode* endNode = findNode(nodeList, nid2);
+
       assert(startingNode);
 
       if (endNode)
@@ -2088,7 +2116,7 @@ CallGraphDotOutput::writeSubgraphToDB( GlobalDatabaseConnection *gDB )
       gDB->execute();
       
       CallGraphCreate::EdgeIterator ei;
-      CallGraphCreate::EdgeDirection dir = CallGraphCreate::EdgeOut;
+      CallGraphCreate::EdgeDirection dir = CallGraphCreate::EdgeIn;
       
       for (ei = callGraph.GetNodeEdgeIterator(node, dir) ; !ei.ReachEnd(); ++ei)
 	{

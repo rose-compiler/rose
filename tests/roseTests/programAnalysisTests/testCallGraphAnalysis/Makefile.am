@@ -49,6 +49,7 @@ TESTCODE_INCLUDES =
 # DQ (7/12/2004): Modified to run with make -j4 options
 $(TEST_Objects): testCallGraph $(TESTCODES) 
 	@echo "Compiling test code using $(TEST_TRANSLATOR) ..."
+	rm -f DATABASE
 	$(TEST_TRANSLATOR) $(INCLUDES) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
 
 EXTRA_DIST = $(TESTCODES) functions.h main.C f1.C f2.C stressTestFactory
