@@ -46,6 +46,9 @@
 // DQ and Liao (6/10/2008): Added IR node support for UPC.
 #define USE_UPC_IR_NODES 1
 
+//Liao 5/29/2009: Add IR node support for OpenMP
+#define USE_OMP_IR_NODES 1
+
 #include <vector>
 
 // using namespace std;

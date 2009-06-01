@@ -2883,7 +2883,14 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(Terminal* grammarnode) {
  // so we need not mention it in this code.)
     std::string nodeName = grammarnode->getName();
     std::cout << "both single and container members in node " << nodeName << std::endl;
-    ROSE_ASSERT(nodeName == "SgVariableDeclaration");
+    ROSE_ASSERT(nodeName == "SgVariableDeclaration"
+	||nodeName == "SgOmpClauseBodyStatement"
+	||nodeName == "SgOmpParallelStatement"
+	||nodeName == "SgOmpSectionsStatement"
+	||nodeName == "SgOmpSingleStatement"
+	||nodeName == "SgOmpTaskStatement"
+	||nodeName == "SgOmpForStatement"
+	||nodeName == "SgOmpDoStatement");
   }
   return info;
 }
@@ -3065,14 +3072,14 @@ Grammar::buildTreeTraversalFunctions(Terminal& node, StringUtility::FileWithLine
                   }
              }
        // start: generate get_traversalSuccessorContainer() method
-          outputFile << "     vector<" << grammarPrefixName << "Node*>\n" 
+          outputFile << "vector<" << grammarPrefixName << "Node*>\n" 
                      << node.getName() << "::get_traversalSuccessorContainer() {\n"
-                     << "vector<" << grammarPrefixName << "Node*> " << successorContainerName << ";\n";
+                     << "  vector<" << grammarPrefixName << "Node*> " << successorContainerName << ";\n";
        // GB (8/1/2007): Preallocating the memory needed for the traversal successors to avoid frequent reallocations on
        // push_back. This makes things a little more efficient.
           if (traverseDataMemberList.size() > 0)
              {
-               outputFile << successorContainerName << ".reserve("
+               outputFile <<"  " <<successorContainerName << ".reserve("
                           << generateNumberOfSuccessorsComputation(traverseDataMemberList, successorContainerName)
                           << ");\n";
              }
@@ -3161,6 +3168,26 @@ Grammar::buildTreeTraversalFunctions(Terminal& node, StringUtility::FileWithLine
                     outputFile << "if (idx == 0) return compute_baseTypeDefiningDeclaration();\n"
                                << "else return p_variables[idx-1];\n";
                   }
+                // Liao, 5/30/2009
+	       // More exceptional cases for SgOmpClauseBodyStatement and its derived classes
+              // We allow them to have mixed members (simple member and contanter member)
+               else if (string(node.getName()) == "SgOmpClauseBodyStatement"
+                 ||string(node.getName()) == "SgOmpParallelStatement"
+                 ||string(node.getName()) == "SgOmpSingleStatement"
+                 ||string(node.getName()) == "SgOmpTaskStatement"
+                 ||string(node.getName()) == "SgOmpForStatement"
+                 ||string(node.getName()) == "SgOmpDoStatement"
+                 )
+                  {
+                    outputFile << "if (idx == 0) return p_body;\n"
+                               << "else return p_clauses[idx-1];\n";
+                  }
+	       // SgOmpSectionsStatement has two containers: p_sections, p_clauses
+               else if (string(node.getName()) == "SgOmpSectionsStatement")
+                  {
+                    outputFile << "if (idx < p_sections.size()) return p_sections[idx];\n"
+                               << "else return p_clauses[idx - p_sections.size()];\n";
+                  }
                else if (isSTLContainerPtr(typeString.c_str()))
                   {
                     outputFile << "ROSE_ASSERT(idx < p_" << gs->getVariableNameString() << "->size());\n";
@@ -3233,6 +3260,35 @@ Grammar::buildTreeTraversalFunctions(Terminal& node, StringUtility::FileWithLine
                                << "else {\n"
                                << "SgInitializedNamePtrList::iterator itr = find(p_variables.begin(), p_variables.end(), child);\n"
                                << "if (itr != p_variables.end()) return (itr - p_variables.begin()) + 1;\n"
+                               << "else return (size_t) -1;\n"
+                               << "}\n";
+                  }
+	       // More exceptional cases for SgOmpClauseBodyStatement and its derived classes
+              // We allow them to have mixed members
+               else if (string(node.getName()) == "SgOmpClauseBodyStatement"
+                 ||string(node.getName()) == "SgOmpParallelStatement"
+                 ||string(node.getName()) == "SgOmpSingleStatement"
+                 ||string(node.getName()) == "SgOmpTaskStatement"
+                 ||string(node.getName()) == "SgOmpForStatement"
+                 ||string(node.getName()) == "SgOmpDoStatement"
+                 )
+                  {
+                     outputFile << "if (child == p_body) return 0;\n"
+                               << "else {\n"
+                               << "SgOmpClausePtrList::iterator itr = find(p_clauses.begin(), p_clauses.end(), child);\n"
+                               << "if (itr != p_clauses.end()) return (itr - p_clauses.begin()) + 1;\n"
+                               << "else return (size_t) -1;\n"
+                               << "}\n";
+                  }
+               // SgOmpSectionsStatement has two containter members: p_sections, p_clauses
+	       else if(string(node.getName()) == "SgOmpSectionsStatement")
+                  {
+                     outputFile<< "SgOmpSectionStatementPtrList::iterator itr1 = find(p_sections.begin(), p_sections.end(), child);\n"
+                               << "if (itr1 != p_sections.end()) return (itr1 - p_sections.begin());\n"
+                               << "else \n "
+                               << "{\n"
+                               << "SgOmpClausePtrList::iterator itr = find(p_clauses.begin(), p_clauses.end(), child);\n"
+                               << "if (itr != p_clauses.end()) return (itr - p_clauses.begin()) + p_sections.size();\n"
                                << "else return (size_t) -1;\n"
                                << "}\n";
                   }
@@ -3403,12 +3459,12 @@ string Grammar::generateNumberOfSuccessorsComputation(
             if (isSTLContainerPtr(typeString))
             {
                 containerSuccessors++;
-                travSuccSource << "p_" << memberVariableName << "->size()";
+                travSuccSource << "p_" << memberVariableName << "->size() + ";
             }
             else if (isSTLContainer(typeString))
             {
                 containerSuccessors++;
-                travSuccSource << "p_" << memberVariableName << ".size()";
+                travSuccSource << "p_" << memberVariableName << ".size() + ";
             }
             else
             {
@@ -3423,19 +3479,23 @@ string Grammar::generateNumberOfSuccessorsComputation(
                     ROSE_ASSERT((singleSuccessors > 0 ? containerSuccessors == 0 : true));
                 }
             }
-            if (containerSuccessors > 1)
+#if 1  // Liao, 5/30/2009, allow multiple container-type members for SgOmpSectionsStatement	 
+
+            if ((containerSuccessors > 1) &&(memberVariableName!="clauses"))
             {
-                cout << "Error: traversal successor " << memberVariableName
-                    << " is a container preceded by another container that is "
+                cout << "Error: traversal successor (" << memberVariableName
+                    << ") is a container preceded by another container that is "
                     << "also traversed; this is not allowed";
                 ROSE_ASSERT(containerSuccessors <= 1);
             }
+#endif 	    
         }
 
         // In general, the result of this function will be something like 'p_foo.size()+42' or '+23'.
         // The + is unary or binary depending on context, no need to worry about it. It is forbidden to have more than
         // one container.
-        travSuccSource << "+" << singleSuccessors;
+        travSuccSource << singleSuccessors;
+        //travSuccSource << "+" << singleSuccessors;
     }
     return travSuccSource.str();
 }
@@ -3571,10 +3631,13 @@ Grammar::buildEnumForNode(Terminal& node, string& allEnumsString) {
 // It also means that we can only allow at most one container per node,
 // since the enums for further containers would not correspond to their
 // first elements.
-  if (info.numContainerMembers > 1) {
-    cout << "Error: grammar node " << node.getName() << " has more than one container member" << endl;
+#if 1  // allow multiple container-style members for SgOmpSectionsStatement: sections, clauses
+  if ((info.numContainerMembers > 1) &&(node.getName()!="SgOmpSectionsStatement"))
+  {
+    cout << "Error: grammar node (" << node.getName() << ") has more than one container member" << endl;
     ROSE_ASSERT(info.numContainerMembers <= 1);
   }
+#endif  
   vector<GrammarString*> includeList=classMemberIncludeList(node);
   vector<GrammarString*>::iterator stringListIterator;
   if (!includeList.empty()) {

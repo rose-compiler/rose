@@ -21,12 +21,72 @@ Grammar::setUpNodes ()
      Terminal & Expression = *lookupTerminal(terminalList, "Expression");
      Terminal & Statement  = *lookupTerminal(terminalList, "Statement");
 
+#if USE_OMP_IR_NODES  // Liao, 5/30/2009 add nodes for OpenMP Clauses, 
+ // they have source position info and should be traversed
+     // add all terminals first, then bottom-up traverse class hierarchy to define non-terminals
+     /*
+         Class hierarchy
+           SgOmpClause  {define all enum types here}
+             // simplest clause
+           * SgOmpOrderedClause
+           * SgOmpNowaitClause
+           * SgOmpUntiedClause
+             // with some value
+           * SgOmpDefaultClause
+             // with kind, chunksize
+           * SgOmpScheduleClause
+              //with expression
+           * SgOmpExpressionClause
+           ** SgOmpCollapseClause
+           ** SgOmpIfClause
+           ** SgOmpNumThreadsClause
+             // with variable list
+           * SgOmpVariablesClause
+           ** SgOmpCopyprivateClause
+           ** SgOmpPrivateClause
+           ** SgOmpFirstprivateClause
+           ** SgOmpSharedClause
+           ** SgOmpCopyInClause
+           ** SgOmpLastprivateClause
+              // reduction, op : list
+           *** SgOmpReductionClause
+        */
+     NEW_TERMINAL_MACRO (OmpOrderedClause, "OmpOrderedClause", "OmpOrderedClauseTag" );
+     NEW_TERMINAL_MACRO (OmpNowaitClause, "OmpNowaitClause", "OmpNowaitClauseTag" );
+     NEW_TERMINAL_MACRO (OmpUntiedClause, "OmpUntiedClause", "OmpUntiedClauseTag" );
+     NEW_TERMINAL_MACRO (OmpDefaultClause, "OmpDefaultClause", "OmpDefaultClauseTag" );
 
+     NEW_TERMINAL_MACRO (OmpCollapseClause, "OmpCollapseClause", "OmpCollapseClauseTag" );
+     NEW_TERMINAL_MACRO (OmpIfClause, "OmpIfClause", "OmpIfClauseTag" );
+     NEW_TERMINAL_MACRO (OmpNumThreadsClause, "OmpNumThreadsClause", "OmpNumThreadsClauseTag" );
+     NEW_NONTERMINAL_MACRO (OmpExpressionClause, OmpCollapseClause | OmpIfClause | OmpNumThreadsClause
+         ,"OmpExpressionClause", "OmpExpressionClauseTag",false );
+
+     NEW_TERMINAL_MACRO (OmpCopyprivateClause, "OmpCopyprivateClause", "OmpCopyprivateClauseTag" );
+     NEW_TERMINAL_MACRO (OmpPrivateClause, "OmpPrivateClause", "OmpPrivateClauseTag" );
+     NEW_TERMINAL_MACRO (OmpFirstprivateClause, "OmpFirstprivateClause", "OmpFirstprivateClauseTag" );
+     NEW_TERMINAL_MACRO (OmpSharedClause, "OmpSharedClause", "OmpSharedClauseTag" );
+     NEW_TERMINAL_MACRO (OmpCopyinClause, "OmpCopyinClause", "OmpCopyinClauseTag" );
+     NEW_TERMINAL_MACRO (OmpLastprivateClause, "OmpLastprivateClause", "OmpLastprivateClauseTag" );
+     NEW_TERMINAL_MACRO (OmpReductionClause, "OmpReductionClause", "OmpReductionClauseTag" );
+
+     NEW_NONTERMINAL_MACRO (OmpVariablesClause, OmpCopyprivateClause| OmpPrivateClause |OmpFirstprivateClause|
+         OmpSharedClause |OmpCopyinClause| OmpLastprivateClause| OmpReductionClause,
+         "OmpVariablesClause", "OmpVariablesClauseTag", false);
+
+     NEW_TERMINAL_MACRO (OmpScheduleClause, "OmpScheduleClause", "OmpScheduleClauseTag" );
+
+     NEW_NONTERMINAL_MACRO (OmpClause, OmpOrderedClause | OmpNowaitClause | OmpUntiedClause |
+         OmpDefaultClause | OmpExpressionClause | OmpVariablesClause | OmpScheduleClause ,
+         "OmpClause", "OmpClauseTag", false);
+#endif
+     
   // DQ (10/3/2008): Support for the Fortran "USE" statement and its rename list option.
      NEW_TERMINAL_MACRO (RenamePair,     "RenamePair",     "TEMP_Rename_Pair" );
 
   // DQ (10/6/2008): Support for the Fortran "USE" statement and its rename list option.
      NEW_TERMINAL_MACRO (InterfaceBody,  "InterfaceBody",  "TEMP_Interface_Body" );
+
 
   // DQ (10/6/2008): Migrate some of the SgSupport derived IR nodes, that truely have a position in the 
   // source code, to SgLocatedNode.  Start with some of the newer IR nodes which are traversed and thus 
@@ -34,7 +94,7 @@ Grammar::setUpNodes ()
   // the SgLocatedNode base class).  Eventually a number of the IR nodes currently derived from SgSupport
   // should be moved to be here (e.g. SgInitializedName, SgTemplateArgument, SgTemplateParameter, and 
   // a number of the new Fortran specific IRnodes, etc.).
-     NEW_NONTERMINAL_MACRO (LocatedNodeSupport, InterfaceBody | RenamePair, "LocatedNodeSupport", "LocatedNodeSupportTag", false );
+     NEW_NONTERMINAL_MACRO (LocatedNodeSupport, InterfaceBody | RenamePair | OmpClause , "LocatedNodeSupport", "LocatedNodeSupportTag", false );
 
   // DQ (3/24/2007): Added support for tokens in the IR (to support threading of the token stream 
   // onto the AST as part of an alternative, and exact, form of code generation within ROSE.
@@ -299,7 +359,45 @@ Grammar::setUpNodes ()
 
   // DQ (10/6/2008): Moved from SgSupport.
      InterfaceBody.setFunctionSource ( "SOURCE_INTERFACE_BODY", "../Grammar/LocatedNode.code");
-   }
+
+  // ***********************************************************************
+  // ***********************************************************************
+  //                       OpenMP Clauses
+  // ***********************************************************************
+  // ***********************************************************************
+
+
+#if USE_OMP_IR_NODES     
+     // supporting clause nodes
+     // declared enum types within SgOmpClause
+     OmpClause.setFunctionPrototype("HEADER_OMP_CLAUSE", "../Grammar/Support.code");
+    
+     // clauses with expressions
+     OmpExpressionClause.setDataPrototype ( "SgExpression*", "expression", "= NULL",
+                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
+     // schedule (kind[, chunksize_exp])
+     OmpScheduleClause.setDataPrototype("SgOmpClause::omp_schedule_kind_enum", "kind", "=e_omp_schedule_unkown",
+                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     OmpScheduleClause.setDataPrototype ( "SgExpression*", "chunk_size", "= NULL",
+                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
+ 
+     // clauses with variable lists 
+     OmpVariablesClause.setDataPrototype ( "SgInitializedNamePtrList", "variables", "",
+                         NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+      // default (private | firstprivate | shared | none)
+     OmpDefaultClause.setDataPrototype("SgOmpClause::omp_default_option_enum", "data_sharing", "=e_omp_default_unkown",
+                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     // reduction(op:variables) 
+     OmpReductionClause.setDataPrototype("SgOmpClause::omp_reduction_operator_enum", "operation", "=e_omp_reduction_unkown",
+                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+
+
+   } // end
 
 
 

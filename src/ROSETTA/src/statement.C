@@ -114,7 +114,6 @@ Grammar::setUpStatements ()
                          "TemplateInstantiationFunctionDecl", "TEMPLATE_INST_FUNCTION_DECL_STMT" );
      NEW_TERMINAL_MACRO (TemplateInstantiationMemberFunctionDecl,
                          "TemplateInstantiationMemberFunctionDecl", "TEMPLATE_INST_MEMBER_FUNCTION_DECL_STMT" );
-
 #if USE_FORTRAN_IR_NODES
   // Fortran language constructs that map directly to C/C++ IR nodes:
   //    Fortran: cycle        --> C: continue
@@ -159,6 +158,7 @@ Grammar::setUpStatements ()
   // DQ (12/18/2007): Added support for Fortran Format statement
      NEW_TERMINAL_MACRO (FormatStatement,           "FormatStatement",           "FORMAT_STATEMENT" );
 
+
   // DQ (11/24/2007): Not sure how this maps to Fortran.
   // NEW_TERMINAL_MACRO (IOFileControlStmt,         "IOFileControlStmt",         "IO_FILE_CONTROL_STMT" );
 
@@ -180,6 +180,7 @@ Grammar::setUpStatements ()
           "IOStatement", "IO_STATEMENT", false);
 #endif
 
+
 #if USE_UPC_IR_NODES
   // DQ and Liao (6/10/2008): Added new IR nodes specific to UPC.
      NEW_TERMINAL_MACRO (UpcNotifyStatement,    "UpcNotifyStatement",    "UPC_NOTIFY_STMT" );
@@ -188,6 +189,43 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (UpcFenceStatement,     "UpcFenceStatement",     "UPC_FENCE_STMT" );
      NEW_TERMINAL_MACRO (UpcForAllStatement,    "UpcForAllStatement",    "UPC_FORALL_STMT" );
 #endif
+
+// Common OpenMP nodes for both C/C++ and Fortran, Liao, 5/29/2009
+#if USE_OMP_IR_NODES
+     // define terminals and non-terminals  and their hierarchy
+     //------------------------------------------------------------
+    // +body+ clauses
+    NEW_TERMINAL_MACRO (OmpParallelStatement,  "OmpParallelStatement",   "OMP_PARALLEL_STMT" );
+    NEW_TERMINAL_MACRO (OmpSingleStatement,    "OmpSingleStatement",     "OMP_SINGLE_STMT" );
+    NEW_TERMINAL_MACRO (OmpTaskStatement,      "OmpTaskStatement",       "OMP_TASK_STMT" );
+    NEW_TERMINAL_MACRO (OmpForStatement,       "OmpForStatement",        "OMP_FOR_STMT" );
+    NEW_TERMINAL_MACRO (OmpDoStatement,        "OmpDoStatement",         "OMP_DO_STMT" );
+
+
+    // A base class for the most commonly formed directives with both clauses and a structured body
+    // We treat OmpSectionsStatement separatedly by move the body to a list of SgOmpSectionStatement
+    // sensitive to 
+    NEW_NONTERMINAL_MACRO (OmpClauseBodyStatement,  OmpParallelStatement | OmpSingleStatement |
+	      OmpTaskStatement| OmpForStatement| OmpDoStatement	,
+	"OmpClauseBodyStatement",   "OMP_CLAUSEBODY_STMT", false );
+
+    // + a statement / block 
+    NEW_TERMINAL_MACRO (OmpAtomicStatement,    "OmpAtomicStatement",    "OMP_ATOMIC_STMT" );
+    NEW_TERMINAL_MACRO (OmpMasterStatement,    "OmpMasterStatement",    "OMP_MASTER_STMT" );
+    NEW_TERMINAL_MACRO (OmpSectionStatement,   "OmpSectionStatement",    "OMP_SECTION_STMT" ); // need this?
+    NEW_TERMINAL_MACRO (OmpOrderedStatement,   "OmpOrderedStatement",   "OMP_ORDERED_STMT" );
+    NEW_TERMINAL_MACRO (OmpWorkshareStatement,    "OmpWorkshareStatement",    "OMP_WORKSHARE_STMT" );
+    // + stmt/block + name
+    NEW_TERMINAL_MACRO (OmpCriticalStatement,  "OmpCriticalStatement",   "OMP_CRITICAL_STMT" );
+
+    // A base class for all directives with a body/statement
+    NEW_NONTERMINAL_MACRO (OmpBodyStatement,  OmpAtomicStatement   | OmpMasterStatement  | OmpOrderedStatement   
+	| OmpCriticalStatement   |  OmpSectionStatement | OmpWorkshareStatement  | OmpClauseBodyStatement , 
+	"OmpBodyStatement",      "OMP_BODY_STMT", false );
+
+
+#endif
+
 
   // DQ (8/21/2007): More IR nodes required for Fortran support
      NEW_TERMINAL_MACRO (BlockDataStatement,        "BlockDataStatement",         "TEMP_Block_Data_Statement" );
@@ -263,7 +301,7 @@ Grammar::setUpStatements ()
           Global                       | BasicBlock         | IfStmt             | ForStatement    | FunctionDefinition |
           ClassDefinition              | WhileStmt          | DoWhileStmt        | SwitchStatement | CatchOptionStmt    |
           NamespaceDefinitionStatement | BlockDataStatement | AssociateStatement | FortranDo       | ForAllStatement    |
-          UpcForAllStatement
+          UpcForAllStatement           
        /* | TemplateInstantiationDefn */,
           "ScopeStatement","SCOPE_STMT", false);
 
@@ -331,20 +369,34 @@ Grammar::setUpStatements ()
           ClinkageStartStatement | ClinkageEndStatement,
           "ClinkageDeclarationStatement", "C_LINKAGE_DECLARATION_STMT", false );
 
+    // + variable list
+    NEW_TERMINAL_MACRO (OmpFlushStatement,     "OmpFlushStatement",      "OMP_FLUSH_STMT" );
+     // simplest directives, just one line 
+    NEW_TERMINAL_MACRO (OmpBarrierStatement,   "OmpBarrierStatement",   "OMP_BARRIER_STMT" );
+    NEW_TERMINAL_MACRO (OmpTaskwaitStatement,  "OmpTaskwaitStatement",  "OMP_TASKWAIT_STMT" );
+
+    // special handling for sections 
+    NEW_TERMINAL_MACRO (OmpSectionsStatement,  "OmpSectionsStatement",   "OMP_SECTIONS_STMT" );
+
+    // + variable list
+    NEW_TERMINAL_MACRO (OmpThreadprivateStatement, "OmpThreadprivateStatement",    "OMP_THREADPRIVATE_STMT" );
+
+
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice)
      NEW_NONTERMINAL_MACRO (DeclarationStatement,
-          FunctionParameterList                   | VariableDeclaration  | VariableDefinition   | 
-          ClinkageDeclarationStatement            | EnumDeclaration      | AsmStmt              |
-          AttributeSpecificationStatement         | FormatStatement      | TemplateDeclaration  | 
-          TemplateInstantiationDirectiveStatement | UseStatement         | ParameterStatement   |
-          NamespaceDeclarationStatement           | EquivalenceStatement | InterfaceStatement   |
-          NamespaceAliasDeclarationStatement      | CommonBlock          | TypedefDeclaration   |
-          StatementFunctionStatement              | CtorInitializerList  | PragmaDeclaration    |
-          UsingDirectiveStatement                 | ClassDeclaration     | ImplicitStatement    | 
-          UsingDeclarationStatement               | NamelistStatement    | ImportStatement      |
-          FunctionDeclaration                  /* | ModuleStatement */   | ContainsStatement    |
-          C_PreprocessorDirectiveStatement        | FortranIncludeLine,
+          FunctionParameterList                   | VariableDeclaration       | VariableDefinition   | 
+          ClinkageDeclarationStatement            | EnumDeclaration           | AsmStmt              |
+          AttributeSpecificationStatement         | FormatStatement           | TemplateDeclaration  | 
+          TemplateInstantiationDirectiveStatement | UseStatement              | ParameterStatement   |
+          NamespaceDeclarationStatement           | EquivalenceStatement      | InterfaceStatement   |
+          NamespaceAliasDeclarationStatement      | CommonBlock               | TypedefDeclaration   |
+          StatementFunctionStatement              | CtorInitializerList       | PragmaDeclaration    |
+          UsingDirectiveStatement                 | ClassDeclaration          | ImplicitStatement    | 
+          UsingDeclarationStatement               | NamelistStatement         | ImportStatement      |
+          FunctionDeclaration                  /* | ModuleStatement */        | ContainsStatement    |
+          C_PreprocessorDirectiveStatement        | OmpThreadprivateStatement | FortranIncludeLine,
           "DeclarationStatement","DECL_STMT", false);
+
 
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice)
      NEW_NONTERMINAL_MACRO (Statement,
@@ -356,7 +408,8 @@ Grammar::setUpStatements ()
              WhereStatement       | ElseWhereStatement     | NullifyStatement                | ArithmeticIfStatement |
              AssignStatement      | ComputedGotoStatement  | AssignedGotoStatement           |
           /* FortranDo            | */ AllocateStatement   | DeallocateStatement             | UpcNotifyStatement    | 
-             UpcWaitStatement     | UpcBarrierStatement    | UpcFenceStatement               | 
+             UpcWaitStatement     | UpcBarrierStatement    | UpcFenceStatement               | OmpSectionsStatement  |
+             OmpBarrierStatement    |  OmpTaskwaitStatement |  OmpFlushStatement             | OmpBodyStatement      |
              SequenceStatement,
 			    "Statement","StatementTag", false);
 
@@ -1096,9 +1149,9 @@ Grammar::setUpStatements ()
   //            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (11/15/2004): class declarations for nested classes can appear outside the scope of the class to which 
-  // they belong, thus the parent information is not sufficent to define the relationship of nested classes 
+  // they belong, thus the parent information is not sufficient to define the relationship of nested classes 
   // (and typedefs within the classes, as well, which is the current bug in Kull).  So we need an additional
-  // data member to explicitly represent the scope of a class (consistant with the design of the member 
+  // data member to explicitly represent the scope of a class (consistent with the design of the member 
   // function declaration).
      ClassDeclaration.setDataPrototype ( "SgScopeStatement*", "scope", "= NULL",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -2911,6 +2964,62 @@ Grammar::setUpStatements ()
 #endif
 
      FortranIncludeLine.setFunctionSource               ( "SOURCE_FORTRAN_INCLUDE_LINE", "../Grammar/Statement.code" );
+
+#if USE_OMP_IR_NODES     
+     // define members for each terminal/non-terminal
+     //------------------------------------------------------------
+    // every statement needs post_construction_initialization(){} but why ???
+
+    OmpDoStatement.setFunctionSource            ("SOURCE_OMP_DO_STATEMENT", "../Grammar/Statement.code" );
+    OmpWorkshareStatement.setFunctionSource            ("SOURCE_OMP_WORKSHARE_STATEMENT", "../Grammar/Statement.code" );
+    OmpClauseBodyStatement.setFunctionSource            ("SOURCE_OMP_CLAUSEBODY_STATEMENT", "../Grammar/Statement.code" );
+    OmpBodyStatement.setFunctionSource            ("SOURCE_OMP_BODY_STATEMENT", "../Grammar/Statement.code" );
+    OmpCriticalStatement.setFunctionSource            ("SOURCE_OMP_CRITICAL_STATEMENT", "../Grammar/Statement.code" );
+    OmpFlushStatement.setFunctionSource            ("SOURCE_OMP_FLUSH_STATEMENT", "../Grammar/Statement.code" );
+
+    OmpParallelStatement.setFunctionSource            ("SOURCE_OMP_PARALLEL_STATEMENT", "../Grammar/Statement.code" );
+    OmpSectionsStatement.setFunctionSource            ("SOURCE_OMP_SECTIONS_STATEMENT", "../Grammar/Statement.code" );
+    OmpSectionStatement.setFunctionSource            ("SOURCE_OMP_SECTION_STATEMENT", "../Grammar/Statement.code" );
+    OmpTaskStatement.setFunctionSource            ("SOURCE_OMP_TASK_STATEMENT", "../Grammar/Statement.code" );
+    OmpSingleStatement.setFunctionSource            ("SOURCE_OMP_SINGLE_STATEMENT", "../Grammar/Statement.code" );
+    OmpThreadprivateStatement.setFunctionSource            ("SOURCE_OMP_THREADPRIVATE_STATEMENT", "../Grammar/Statement.code" );
+    OmpForStatement.setFunctionSource            ("SOURCE_OMP_FOR_STATEMENT", "../Grammar/Statement.code" );
+    OmpAtomicStatement.setFunctionSource            ("SOURCE_OMP_ATOMIC_STATEMENT", "../Grammar/Statement.code" );
+    OmpBarrierStatement.setFunctionSource            ("SOURCE_OMP_BARRIER_STATEMENT", "../Grammar/Statement.code" );
+    OmpMasterStatement.setFunctionSource            ("SOURCE_OMP_MASTER_STATEMENT", "../Grammar/Statement.code" );
+    OmpOrderedStatement.setFunctionSource            ("SOURCE_OMP_ORDERED_STATEMENT", "../Grammar/Statement.code" );
+    OmpTaskwaitStatement.setFunctionSource            ("SOURCE_OMP_TASKWAIT_STATEMENT", "../Grammar/Statement.code" );
+
+   // sections {section, section} // `containerSuccessors >1 is not allowed in ROSETTA's traversal
+   // We hack the code to handle this special case
+    OmpSectionsStatement.setDataPrototype("SgOmpSectionStatementPtrList", "sections", "",
+    	                              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+    OmpSectionsStatement.setDataPrototype("SgOmpClausePtrList", "clauses", "",
+                              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+    // direcitves with variable lists
+	    // omp flush [(var-list)]   
+    OmpFlushStatement.setDataPrototype( "SgInitializedNamePtrList", "variables", "",
+                                                NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+	    // omp threadprivate [(var-list)]   
+    OmpThreadprivateStatement.setDataPrototype( "SgInitializedNamePtrList", "variables", "",
+                                                NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+   // Directives with a statement/ structured body
+    OmpBodyStatement.setDataPrototype ( "SgStatement*", "body",        "= NULL",
+	                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+    // Directive with a body + a name: 
+   	// omp critical [name]  \n structured_block
+    OmpCriticalStatement.setDataPrototype ( "SgName", "name", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+    // omp clause-body : e.g: parallel clause \n  body 
+    // having both 
+    OmpClauseBodyStatement.setDataPrototype("SgOmpClausePtrList", "clauses", "",
+                              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+//    OmpClauseBodyStatement.setAutomaticGenerationOfDestructor(false);
+#endif
+
+
    }
 
 

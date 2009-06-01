@@ -27,7 +27,63 @@ doxygen documentation in docs/testDoxygen directory instead).
 */
 HEADER_GRAPH_PREDECLARATION_END
 
+HEADER_OMP_CLAUSE_START
+	/*!\brief  OpenMP default clause values
+       */
 
+       // Liao (5/30/2009): Added support for reduction clauses within an OpenMP directive
+	enum omp_default_option_enum{
+	  e_omp_default_unkown =0,
+	  //4 values for default clause
+	  //C/C++ default values
+	  e_omp_default_none,
+	  e_omp_default_shared,
+	  //Fortran default values
+	  e_omp_default_private,
+	  e_omp_default_firstprivate,
+	  e_omp_default_last
+	};
+
+        enum omp_schedule_kind_enum{
+          e_omp_schedule_unkown=0,
+          e_omp_schedule_static,
+          e_omp_schedule_dynamic,
+          e_omp_schedule_guided,
+          e_omp_schedule_auto,
+          e_omp_schedule_runtime,
+          e_omp_schedule_last
+        };
+
+        enum omp_reduction_operator_enum
+        {
+            e_omp_reduction_unkown,
+            // reduction operations
+            //8 operand for C/C++
+             //  shared 3 common operators for both C and Fortran
+            e_omp_reduction_plus, //+
+            e_omp_reduction_mul,  //*
+            e_omp_reduction_minus, // -
+        
+            e_omp_reduction_bitand, // &
+            e_omp_reduction_bitor,  // |
+            e_omp_reduction_bitxor,  // ^
+            e_omp_reduction_logand,  // &&
+            e_omp_reduction_logor,   // ||
+        
+            e_omp_reduction_and, // .and.
+            e_omp_reduction_or, // .or.
+            e_omp_reduction_eqv,   // fortran .eqv.
+            e_omp_reduction_neqv,   // fortran .neqv.
+            e_omp_reduction_max,
+            e_omp_reduction_min,
+            e_omp_reduction_iand,
+            e_omp_reduction_ior,
+            e_omp_reduction_ieor,
+            e_omp_reduction_last
+        };
+
+
+HEADER_OMP_CLAUSE_END
 HEADER_GRAPH_START
 
       /*! \brief Edge Type 
@@ -10186,7 +10242,9 @@ SgFile::initialization()
      p_outputFormat            = SgFile::e_unknown_output_format;
      p_backendCompileFormat    = SgFile::e_unknown_output_format;
      p_fortran_implicit_none   = false;
-     p_openmp          = false;
+     p_openmp                  = false;
+     p_openmp_parse_only       = true;
+     p_openmp_ast_only         = false;
 
   // DQ (12/8/2007): Added commandline support for cray pointers.
      p_cray_pointer_support = false;

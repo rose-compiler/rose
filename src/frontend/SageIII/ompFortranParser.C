@@ -20,6 +20,7 @@ using namespace std;
 using namespace OmpSupport;
 // Parse a SgNode's OpenMP style comments (str) into OmpAttribute
 OmpSupport::OmpAttribute* omp_fortran_parse(SgNode* locNode, const char* str);
+void parse_fortran_openmp(SgSourceFile *sageFilePtr);
 
 // A file scope char* to avoid passing and returning target c string for every and each function
 static const char* c_char = NULL; // current characters being scanned

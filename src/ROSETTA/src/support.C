@@ -3,6 +3,7 @@
 
 #include "ROSETTA_macros.h"
 #include "terminal.h"
+//#include "OmpAttribute.h"
 
 // What should be the behavior of the default constructor for Grammar
 
@@ -233,10 +234,11 @@ Grammar::setUpSupport ()
           TemplateParameterList | /* RenamePair                | InterfaceBody       |*/
           Graph                 | GraphNode                 | GraphEdge           |
 
-          GraphNodeList         | GraphEdgeList             |
+          GraphNodeList         | GraphEdgeList             | 
 
           NameGroup             | CommonBlockObject         | DimensionObject     | FormatItem           |
-          FormatItemList        | DataStatementGroup        | DataStatementObject | DataStatementValue,
+          FormatItemList        | DataStatementGroup        | DataStatementObject | 
+          DataStatementValue,
           "Support", "SupportTag", false);
 #endif
 
@@ -846,7 +848,13 @@ Grammar::setUpSupport ()
   //Liao, 10/28/2008: Support for OpenMP 3.0 model for C/C++ pragma, will use it for Fortran later on, changed fortran_openmp to openmp
      File.setDataPrototype         ( "bool", "openmp", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     File.setDataPrototype         ( "bool", "cray_pointer_support", "= false",
+     // Liao, 5/31/2009: Only invoke the OpenMP C/C++ and Fortran directive parsers and generate OmpAttributes
+     File.setDataPrototype         ( "bool", "openmp_parse_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     // Only generate SgOmp* nodes from OmpAttributes in AST, no further actions
+     File.setDataPrototype         ( "bool", "openmp_ast_only", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    File.setDataPrototype         ( "bool", "cray_pointer_support", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (12/11/2007): Adds support for parser to output the parser rules to be called. For Fortran
@@ -1831,7 +1839,6 @@ Specifiers that can have only one value (implemented with a protected enum varia
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      CommonBlockObject.setDataPrototype     ( "SgExprListExp*", "variable_reference_list", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
      DimensionObject.setFunctionPrototype ( "HEADER_DIMENSION_OBJECT", "../Grammar/Support.code");
      DimensionObject.setDataPrototype     ( "SgInitializedName*", "array", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -2068,6 +2075,7 @@ Specifiers that can have only one value (implemented with a protected enum varia
   // DQ (10/6/2008): Moved to SgLocatedNodeSupport.
      InterfaceBody.setFunctionSource ( "SOURCE_INTERFACE_BODY", "../Grammar/Support.code");
 #endif
+
    }
 
 

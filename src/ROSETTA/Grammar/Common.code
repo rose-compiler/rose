@@ -58,18 +58,18 @@ HEADER_START
           \brief Internal functions ... incomplete-documentation
 
           These functions have been made public as part of the design, but they are suggested for internal use 
-          or by particularly knowledgable users for specialized tools or applications.
+          or by particularly knowledgeable users for specialized tools or applications.
 
           \internal We could not make these private because they are required by user for special purposes. And 
               it would be unwieldy to have many of the internal classes in ROSE be explicitly defined as friends.
          
        */
        // MS: 02/12/02 container of pointers to AST successor nodes used in the traversal
-       // overriden in every class by *generated* implementation
+       // overridden in every class by *generated* implementation
           virtual std::vector<SgNode*> get_traversalSuccessorContainer();
        // MS: 06/28/02 container of names of variables or container indices 
        // used used in the traversal to access AST successor nodes
-       // overriden in every class by *generated* implementation
+       // overridden in every class by *generated* implementation
           virtual std::vector<std::string> get_traversalSuccessorNamesContainer();
 
        // GB (09/25/2007): Functions for index-based access to traversal successors; these are hopefully a lot faster
