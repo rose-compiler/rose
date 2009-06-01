@@ -805,7 +805,7 @@ void RtedTransformation::visit_isArrayExprListExp(SgNode* n) {
   if (exprlist) {
   SgFunctionCallExp* fcexp = isSgFunctionCallExp(exprlist->get_parent());
   if (fcexp) {
-    cerr <<"Found a function call with varRef as parameter: " << fcexp->unparseToString() <<endl;
+      cerr <<"Found a function call with varRef as parameter: " << fcexp->unparseToString() <<endl;
     // check if parameter is array - then check function name
     // call func(array_name) to runtime system for runtime inspection 
     SgInitializedName* initName =
@@ -822,9 +822,11 @@ void RtedTransformation::visit_isArrayExprListExp(SgNode* n) {
       ROSE_ASSERT(decl);
       string name = decl->get_name();
       string mangled_name = decl->get_mangled_name().str();
-      cerr <<"Found a function call " << name;
-      if (isStringModifyingFunctionCall(name)==false) {
+      cerr <<"Found a function call " << name << endl;
+      if (isStringModifyingFunctionCall(name)==false &&
+	  isFileIOFunctionCall(name)==false ) {
 	vector<SgExpression*> args;
+	SgExpression* varOnLeft = buildString("NoAssignmentVar2");
 	SgStatement* stmt = getSurroundingStatement(isSgVarRefExp(n));
 	ROSE_ASSERT(stmt);
 	RtedArguments* funcCall = new RtedArguments(name, // function name
@@ -834,9 +836,11 @@ void RtedTransformation::visit_isArrayExprListExp(SgNode* n) {
 						    initName->get_mangled_name().str(),
 						    isSgVarRefExp(n),
 						    stmt,
-						    args
+						    args,
+						    varOnLeft
 						    );
-	ROSE_ASSERT(funcCall);
+	ROSE_ASSERT(funcCall);	
+	cerr << " !!!!!!!!!! Adding function call." << name << endl;
 	function_call.push_back(funcCall);
       }
     } else {
@@ -1024,7 +1028,9 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
       stmt = mainFirst;
       scope=stmt->get_scope();
     }
-    if (isSgBasicBlock(scope)) {
+    if (isSgBasicBlock(scope) || 
+	isSgIfStmt(scope) ||
+	isSgForStatement(scope)) {
       // build the function call : runtimeSystem-->createArray(params); ---------------------------
       SgExprListExp* arg_list = buildExprListExp();
       SgExpression* callName = buildString(initName->get_mangled_name().str());
@@ -1049,13 +1055,13 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
     } else {
       cerr
 	<< "RuntimeInstrumentation :: Surrounding Block is not Block! : "
-	<< name << " : " << scope->class_name() << endl;
+	<< name << " : " << scope->class_name() << "  - " << stmt->unparseToString() << endl;
       ROSE_ASSERT(false);
     }
   } else {
     cerr
       << "RuntimeInstrumentation :: Surrounding Statement could not be found! "
-      << stmt->class_name() << endl;
+      << stmt->class_name() << "  " << stmt->unparseToString() << endl;
     ROSE_ASSERT(false);
   }
 

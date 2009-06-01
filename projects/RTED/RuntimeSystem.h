@@ -84,10 +84,12 @@ char* RuntimeSystem_findVariablesOnStack(char* name);
 void RuntimeSystem_increaseSizeRuntimeVariablesOnStack();                                               
 void RuntimeSystem_roseCallStack(char* name, char* mangl_name, char* beforeStr,char* filename, char* line);
 
-void RuntimeSystem_handleSpecialFunctionCalls(char* funcname,char** args, int argsSize, char* filename, char* line, char* stmtStr);
+void RuntimeSystem_handleSpecialFunctionCalls(char* funcname,char** args, int argsSize, char* filename, char* line, char* stmtStr, char* leftHandSideVar);
+void RuntimeSystem_handleIOFunctionCall(char* funcname,char** args, int argsSize, char* filename, char* line, char* stmtStr, char* leftHandSideVar);
 void RuntimeSystem_roseFunctionCall(int count, ...);
 int  RuntimeSystem_isSizeOfVariableKnown(char* name);
 int  RuntimeSystem_isModifyingOp(char* name);
+int RuntimeSystem_isFileIOFunctionCall(char* name);
 
 // function used to indicate error
 void RuntimeSystem_callExit(char* filename, char* line, char* reason, char* stmtStr);

@@ -97,6 +97,9 @@ class RtedTransformation : public AstSimpleProcessing {
   bool isStringModifyingFunctionCall(std::string name);
   int getDimensionForFuncCall(std::string name);
   bool isFunctionCallOnIgnoreList(std::string name);
+  bool isFileIOFunctionCall(std::string name) ;
+  SgExpression* getVariableLeftOfAssignmentFromChildOnRight(SgNode* n);
+
 
   // is it a variable?
   void visit_isSgVariableDeclaration(SgNode* n);

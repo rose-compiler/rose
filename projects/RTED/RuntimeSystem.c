@@ -495,6 +495,27 @@ RuntimeSystem_getParamtersForFuncCall(char* name) {
 }
 
 /*********************************************************
+ * Check if a function call is a call to a function
+ * on our ignore list. We do not want to check those 
+ * functions right now.
+ * This check makes sure that we dont push variables
+ * on the stack for functions that we dont check
+ * and hence the generated code is cleaner
+ ********************************************************/
+int 
+RuntimeSystem_isFileIOFunctionCall(char* name) {
+  int interesting=0;//false;
+  if ( ( strcmp(name,"fopen")==0 || 
+	 strcmp(name ,"fgetc")==0 
+	 )) {
+    interesting=1;
+  }
+  return interesting;
+}
+
+
+
+/*********************************************************
  * Return the number of parameters for a specific function call
  ********************************************************/
 int 
@@ -525,7 +546,8 @@ RuntimeSystem_isSizeOfVariableKnown(char* mangled_name) {
  * stmtStr   : unparsed version of the line to be used for error message
  ********************************************************/
 void 
-RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize, char* filename, char* line, char* stmtStr) {
+RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize, 
+					 char* filename, char* line, char* stmtStr, char* leftHandSideVar) {
   assert(argsSize>=1);
   // parameter 1
   assert(args[0]);
@@ -798,6 +820,51 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize, 
 
 
 
+
+/*********************************************************
+ * This function is called when one of the following functions in the code is called:
+ * fopen, fgetc
+ * fname     : function name that is being called
+ * args      : arguments to that function
+ *           : format : arg1 as string, arg1 as var name (if applicable),
+ *           :          arg2 as string, arg2 as var name (if applicable), 
+ *           :          number of char to copy (if applicable)
+ * argSzie   : Number of arguments
+ * filename  : file location 
+ * line      : linenumber
+ * stmtStr   : unparsed version of the line to be used for error message
+ ********************************************************/
+void 
+RuntimeSystem_handleIOFunctionCall(char* fname,char** args, 
+				   int argsSize, char* filename, char* line, char* stmtStr, char* leftHandSideVar) {
+  assert(argsSize>=1);
+  // parameter 1
+  int parameters=RuntimeSystem_getParamtersForFuncCall(fname);
+  if  (strcmp(fname,"fopen")==0) { 
+    // need 4 parameters, var, size, var, size
+    assert(argsSize>=5);
+    // we need to mark the variable with fopen that it is open for read/write
+    char* var = args[0];
+    char* param1 = args[1];
+    char* param1Length = args[2];
+    char* param2 = args[3];
+    char* param2Length = args[4];
+  }
+  if  (strcmp(fname,"fgetc")==0) { 
+    // only one parameter
+    assert(argsSize==1);
+    char* var = args[0];
+    //char* param1 = args[1];
+  }
+
+
+
+}
+
+
+
+
+
 /*********************************************************
  * This function is called when a function is called
  * The number of parameters is variable but some of the are fixed:
@@ -824,6 +891,7 @@ RuntimeSystem_roseFunctionCall(int count, ...) {
   char* filename = NULL;
   char* line=NULL;
   char* stmtStr=NULL;
+  char* leftVar=NULL;
   //cerr << "arguments : " <<  count << endl;
   int i=0;
   for ( i=0;i<count;i++)    {
@@ -840,6 +908,7 @@ RuntimeSystem_roseFunctionCall(int count, ...) {
     else if (i==1) filename =  val;
     else if (i==2) line = val;
     else if (i==3) stmtStr = val;
+    else if (i==4) leftVar = val;
     else {
       args[posArgs++]=val;
     }
@@ -851,8 +920,13 @@ RuntimeSystem_roseFunctionCall(int count, ...) {
     printf( "roseFunctionCall :: %s \n", name );
   if (RuntimeSystem_isInterestingFunctionCall(name)==1) {
     // if the string name is one of the above, we handle it specially
-    RuntimeSystem_handleSpecialFunctionCalls(name, args, posArgs, filename, line, stmtStr);
-  } 
+    RuntimeSystem_handleSpecialFunctionCalls(name, args, posArgs, filename, line, stmtStr, leftVar);
+  } else if (RuntimeSystem_isFileIOFunctionCall(name)==1) {
+    RuntimeSystem_handleIOFunctionCall(name, args, posArgs, filename, line, stmtStr, leftVar);
+  } else {
+    printf("Unknown Function call to RuntimeSystem!\n");
+    exit(1);
+  }
 }
 
 
@@ -964,7 +1038,7 @@ RuntimeSystem_roseInitVariable(char* mangled_name) {
     char* n =rtsi()->runtimeVariables[i].mangled_name;
     if (*mangled_name==*n) {
       // create init on heap
-      char* init = "true";
+      char* init = (char*)"true";
       rtsi()->runtimeVariables[i].initialized=init;
       printf("Marking variable: %s as initialized. \n",mangled_name);
       break;

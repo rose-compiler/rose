@@ -33,23 +33,6 @@ RtedTransformation::isStringModifyingFunctionCall(std::string name) {
   return interesting;
 }
 
-/*********************************************************
- * Check if a function call is a call to a function
- * on our ignore list. We do not want to check those 
- * functions right now.
- * This check makes sure that we dont push variables
- * on the stack for functions that we dont check
- * and hence the generated code is cleaner
- ********************************************************/
-bool 
-RtedTransformation::isFunctionCallOnIgnoreList(std::string name) {
-  bool interesting=false;
-  if (name=="printf" 
-      )
-    interesting=true;
-  return interesting;
-}
-
 /***************************************************************
  * This dimension is used to calculate additional parameters
  * necessary for the function call, e.g.
@@ -68,7 +51,8 @@ RtedTransformation::getDimensionForFuncCall(std::string name) {
       name=="strchr" ||
       name=="strpbrk" ||
       name=="strspn" ||
-      name=="strstr"
+      name=="strstr" ||
+      name=="fopen"
       ) {
     dim=2;
   }
@@ -79,9 +63,40 @@ RtedTransformation::getDimensionForFuncCall(std::string name) {
   return dim;
 }
 
+/*********************************************************
+ * Check if a function call is a call to a function
+ * on our ignore list. We do not want to check those 
+ * functions right now.
+ * This check makes sure that we dont push variables
+ * on the stack for functions that we dont check
+ * and hence the generated code is cleaner
+ ********************************************************/
+bool 
+RtedTransformation::isFileIOFunctionCall(std::string name) {
+  bool interesting=false;
+  if (name=="fopen" ||
+      name=="fgetc"
+      )
+    interesting=true;
+  return interesting;
+}
 
-
-
+/*********************************************************
+ * Check if a function call is a call to a function
+ * on our ignore list. We do not want to check those 
+ * functions right now.
+ * This check makes sure that we dont push variables
+ * on the stack for functions that we dont check
+ * and hence the generated code is cleaner
+ ********************************************************/
+bool 
+RtedTransformation::isFunctionCallOnIgnoreList(std::string name) {
+  bool interesting=false;
+  if (name=="printf" 
+      )
+    interesting=true;
+  return interesting;
+}
 
 
 
@@ -167,12 +182,13 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
     // 2 = filename
     // 3 = lineNr
     // 4 = unparsedStmt for Error message
-
-    int extra_params = 4;
-    // nr of args + 2 (for sepcialFunctions) + 4 =  args+6;
+    // 5 = Left Hand side varible, if assignment
+    
+    int extra_params = 5;
+    // nr of args + 2 (for sepcialFunctions) + 5 =  args+6;
     int size = extra_params+args->arguments.size();
+    // how many additional arguments does this function need?
     int dimFuncCall = getDimensionForFuncCall(args->f_name);
-    //if (args->arguments.size()>=2)
     size+=dimFuncCall;
     SgIntVal* sizeExp = buildIntVal(size);
     SgExpression* callNameExp = buildString(args->f_name);
@@ -188,7 +204,14 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
     appendExpression(arg_list, filename);
     appendExpression(arg_list, linenr);
     appendExpression(arg_list, buildString(removeSpecialChar(stmt->unparseToString())));
-    
+    // this one is new, it indicates the variable on the left hand side of the statment,
+    // if available
+    appendExpression(arg_list, args->leftHandSideAssignmentExpr);
+    cerr << " ... Left hand side variable : " <<  args->leftHandSideAssignmentExpr << endl;
+
+    // if we need 2 additional parameters, we need to add them when necessary
+    if (isStringModifyingFunctionCall(args->f_name))
+      dimFuncCall=2;
     // iterate over all arguments of the function call, e.g. strcpy(arg1, arg2);
     std::vector<SgExpression*>::const_iterator it = args->arguments.begin();
     for (;it!=args->arguments.end();++it) {
@@ -234,7 +257,8 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
 	      expr = buildString(expr->unparseToString()+"\0");
 	    // this is the variable that we pass
 	    appendExpression(arg_list, var);
-	    appendExpression(arg_list, expr);
+	    if (dimFuncCall==2)
+	      appendExpression(arg_list, expr);
 	    cerr << ">>> Found variable : " << name << "  with size : " << 
 	      expr->unparseToString() << "  and val : " << var << endl;
 	  } 
@@ -253,14 +277,16 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
 	      // and check in the runtime system if the size for the variable is known!
 	      //	      SgExpression* numberToString = buildString("000");
 	      SgExpression* manglName = buildString(var->get_symbol()->get_declaration()->get_mangled_name().str());
-	      appendExpression(arg_list, manglName);
+	      if (dimFuncCall==2)
+		appendExpression(arg_list, manglName);
 	    } else {
 	      // this is most likely a single char, the size of it is 1
 	      SgExpression* andSign = buildAddressOfOp(var);	   
 	      SgExpression* charCast = buildCastExp(andSign,buildPointerType(buildCharType()));
 	      appendExpression(arg_list, charCast);
 	      SgExpression* numberToString = buildString("001");
-	      appendExpression(arg_list, numberToString);
+	      if (dimFuncCall==2)
+		appendExpression(arg_list, numberToString);
 
 	    }
 	    //ROSE_ASSERT(false);
@@ -274,7 +300,14 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
 	  if (base_type)
 	    cerr<<"   and base type : " << base_type->class_name() << "  var:" <<
 	      var->unparseToString() << "   stmt:" << stmt->unparseToString() << endl;
-	  ROSE_ASSERT(false);
+	  if (var) {
+	    SgInitializedName* initName = var->get_symbol()->get_declaration();
+	    ROSE_ASSERT(initName);
+	    SgExpression* manglName = buildString(initName->get_mangled_name().str());
+	    ROSE_ASSERT(manglName);
+	    appendExpression(arg_list, manglName);
+	  }
+	  //ROSE_ASSERT(false);
 	} 
 		  
 	// --------- varRefExp is IntegerType -----------------------	
@@ -296,7 +329,8 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
 	  appendExpression(arg_list2, var);
 	  SgFunctionCallExp* funcCallExp2 = buildFunctionCallExp(memRef_r2, arg_list2);
 	  ROSE_ASSERT(funcCallExp2);
-	  appendExpression(arg_list, funcCallExp2);
+	  if (dimFuncCall==2)
+	    appendExpression(arg_list, funcCallExp2);
 	  cerr << " Created Function call  convertToString" << endl;
 	}
       }
@@ -312,7 +346,8 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
 	  string sizeStringStr = RoseBin_support::ToString(sizeString);
 	  ROSE_ASSERT(sizeStringStr!="");
 	  SgExpression* numberToString = buildString(sizeStringStr);
-	  appendExpression(arg_list, numberToString);
+	  if (dimFuncCall==2)
+	    appendExpression(arg_list, numberToString);
 	} else {
 	  // default create a string
 	  string theString = exp->unparseToString();
@@ -322,7 +357,8 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
 	  string sizeStringStr = RoseBin_support::ToString(sizeString);
 	  ROSE_ASSERT(sizeStringStr!="");
 	  SgExpression* numberToString = buildString(sizeStringStr);
-	  appendExpression(arg_list, numberToString);
+	  if (dimFuncCall==2)
+	    appendExpression(arg_list, numberToString);
 	}
       }
     }
@@ -336,7 +372,7 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
     insertStatementBefore(isSgStatement(stmt), exprStmt);
     string empty_comment = "";
     attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
-    string comment = "RS : Calling Function, parameters: (#args, function name, filename, linenr, error message, other parameters)";
+    string comment = "RS : Calling Function, parameters: (#args, function name, filename, linenr, error message, left hand var, other parameters)";
     attachComment(exprStmt,comment,PreprocessingInfo::before);
 
   } else {
@@ -348,6 +384,24 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
   
 }
 
+
+/***************************************************************
+ * Get the variable on the left hand side of an assignment
+ * starting on the right hand side below the assignment in the tree
+ **************************************************************/
+SgExpression* 
+RtedTransformation::getVariableLeftOfAssignmentFromChildOnRight(SgNode* n){
+  SgExpression* expr = NULL;
+  SgNode* tempNode = n;
+  while (!isSgAssignOp(tempNode) && !isSgProject(tempNode)) {
+    tempNode=tempNode->get_parent();
+    ROSE_ASSERT(tempNode);
+  }
+  if (isSgAssignOp(tempNode)) {
+    expr = isSgAssignOp(tempNode)->get_lhs_operand();
+  }
+  return expr;
+}
 
 
 /***************************************************************
@@ -365,8 +419,24 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
     string mangled_name = decl->get_mangled_name().str();
     cerr <<"Found a function call " << name;
     cerr << "   : fcexp->get_function() : " << fcexp->get_function()->class_name() << endl;
-    if (isStringModifyingFunctionCall(name)) {
+    if (isStringModifyingFunctionCall(name) ||
+	isFileIOFunctionCall(name)
+	) {
       vector<SgExpression*> args;
+      // if this is a function call that has a variable on the left hand size,
+      // then we want to push that variable first,
+      // this is used, e.g. with  File* fp = fopen("file","r");
+      // Therefore we need to go up and see if there is an AssignmentOperator
+      // and get the var on the left side
+      SgExpression* varOnLeft = getVariableLeftOfAssignmentFromChildOnRight(n);
+      if (varOnLeft) {
+	// need to get the mangled_name of the varRefExp on left hand side
+	// fixme
+	varOnLeft = buildString(varOnLeft->unparseToString());
+      } else {
+	varOnLeft = buildString("NoAssignmentVar");
+      }
+
       Rose_STL_Container<SgExpression*> expr = exprlist->get_expressions();
       Rose_STL_Container<SgExpression*>::const_iterator it = expr.begin();
       for (;it!=expr.end();++it) {
@@ -381,10 +451,11 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
 						  "",
 						  refExp,
 						  stmt,
-						  args						  
+						  args,
+						  varOnLeft
 						  );
       ROSE_ASSERT(funcCall);
-      cerr << " Is a interesting function" << endl;
+      cerr << " Is a interesting function : " << name << endl;
       function_call.push_back(funcCall);
     }
   }

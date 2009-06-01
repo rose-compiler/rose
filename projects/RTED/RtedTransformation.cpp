@@ -121,6 +121,8 @@ void RtedTransformation::transform(SgProject* project) {
     if (isStringModifyingFunctionCall(funcs->f_name) ) {
       //cerr << " .... Inserting Function Call : " << name << endl;
       insertFuncCall(funcs);
+    } else if (isFileIOFunctionCall(funcs->f_name)) {
+      insertFuncCall(funcs);
     } else if (isFunctionCallOnIgnoreList(funcs->f_name)) {
       // dont do anything.
     } else {
