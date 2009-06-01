@@ -667,16 +667,18 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
 #endif
                                                  //        case V_SgNullStatement:                      unparseNullStatement(stmt, info); break;
 
-                                                 //#if USE_UPC_IR_NODES
-                                                 //#if UPC_EXTENSIONS_ALLOWED //TODO turn on by default?
-                                                 // Liao, 6/13/2008: UPC support
-    case V_SgUpcNotifyStatement:             unparseUpcNotifyStatement(stmt, info); break;
-    case V_SgUpcWaitStatement:             unparseUpcWaitStatement(stmt, info); break;
-    case V_SgUpcBarrierStatement:             unparseUpcBarrierStatement(stmt, info); break;
-    case V_SgUpcFenceStatement:             unparseUpcFenceStatement(stmt, info); break;
-    case V_SgUpcForAllStatement:           unparseUpcForAllStatement(stmt, info);    break; 
+//#if USE_UPC_IR_NODES
+//#if UPC_EXTENSIONS_ALLOWED //TODO turn on by default?
+// Liao, 6/13/2008: UPC support
+    case V_SgUpcNotifyStatement:           	  unparseUpcNotifyStatement(stmt, info); break;
+    case V_SgUpcWaitStatement:            	  unparseUpcWaitStatement(stmt, info); break;
+    case V_SgUpcBarrierStatement:                 unparseUpcBarrierStatement(stmt, info); break;
+    case V_SgUpcFenceStatement:                   unparseUpcFenceStatement(stmt, info); break;
+    case V_SgUpcForAllStatement:                  unparseUpcForAllStatement(stmt, info);    break; 
 
-                                           //#endif 
+//#endif 
+// Liao, 5/31/2009, add OpenMP support, TODO refactor some code to language independent part
+    case V_SgOmpParallelStatement:         	  unparseOmpParallelStatement(stmt, info); break;
     default:
                                            {
                                              printf("CxxCodeGeneration_locatedNode::unparseLanguageSpecificStatement: Error: No handler for %s (variant: %d)\n",stmt->sage_class_name(), stmt->variantT());
@@ -5554,8 +5556,91 @@ Unparse_ExprStmt::unparseUpcForAllStatement(SgStatement* stmt, SgUnparse_Info& i
              }
         }
    }
+// OpenMP support 
+void Unparse_ExprStmt::unparseOmpClause(SgOmpClause* clause, SgUnparse_Info& info)
+{
+  ROSE_ASSERT(clause != NULL);
+  switch (clause->variantT())
+  {
+    case V_SgOmpNowaitClause:
+      {
+	curprint(string(" nowait"));
+	break;
+      }
+    case V_SgOmpOrderedClause:
+      {
+	curprint(string(" ordered"));
+	break;
+      }
+    case V_SgOmpUntiedClause:
+      {
+	curprint(string(" untied"));
+	break;
+      }
+    case V_SgOmpCollapseClause:  
+    case V_SgOmpIfClause:  
+    case V_SgOmpNumThreadsClause:  
+    case V_SgOmpExpressionClause:
+      {
+	SgOmpExpressionClause* exp_clause = isSgOmpExpressionClause(clause);
+	ROSE_ASSERT(exp_clause);
+	if (isSgOmpCollapseClause(clause))
+	  curprint(string(" collapse("));
+	else if (isSgOmpIfClause(clause))
+	  curprint(string(" if("));
+	else if (isSgOmpNumThreadsClause(clause))
+	  curprint(string(" num_threads("));
+	else {
+	  cerr<<"Error: unhandled clause type when unparse SgOmpExpressionClause:"<< clause->class_name()<<endl;
+	  ROSE_ASSERT(false);
+	}
+	SgUnparse_Info ninfo(info);
+	if (exp_clause->get_expression())
+	  unparseExpression(exp_clause->get_expression(), ninfo);
 
+        curprint(string(")"));
 
+	break;
+      }   
+    default:
+      {
+	cerr<<"Unhandled OpenMP clause type in Unparse_ExprStmt::unparseOmpClause():"<<clause->class_name()<<endl;
+	ROSE_ASSERT(false);
+	break;  
+      }
+
+  }
+}
+
+void
+Unparse_ExprStmt::unparseOmpParallelStatement(SgStatement* stmt, SgUnparse_Info& info)
+{
+  SgOmpParallelStatement* input = isSgOmpParallelStatement(stmt);
+  ROSE_ASSERT(input != NULL);
+  curprint(string ("#pragma omp parallel "));
+  //TODO refactor to SgOmpClauseBodyStatement
+  const SgOmpClausePtrList& clause_ptr_list = input->get_clauses();
+  SgOmpClausePtrList::const_iterator i;
+  for (i= clause_ptr_list.begin(); i!= clause_ptr_list.end(); i++)
+  {
+    SgOmpClause* c_clause = *i;
+    unparseOmpClause(c_clause, info);
+  }
+  // new line?
+  curprint (string ("\n"));
+  //TODO refactor to SgOmpBodyStatement
+  SgUnparse_Info ninfo(info);
+  if (input->get_body())
+  {
+    unparseStatement(input->get_body(), ninfo);
+  }
+  else
+  {
+    cerr<<"Error: empty body for:"<<stmt->class_name()<<" is not allowed!"<<endl;
+    ROSE_ASSERT(false);
+  }
+
+}
 
 //#endif   
  

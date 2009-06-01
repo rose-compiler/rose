@@ -31,7 +31,7 @@
 extern int omp_parse();
 extern OmpSupport::OmpAttribute* getParsedDirective();
 extern void omp_parser_init(SgNode* aNode, const char* str);
-void attachOmpAttributeInfo(SgSourceFile* sageFilePtr);
+void processOpenMP(SgSourceFile* sageFilePtr);
 //Fortran OpenMP parser interface
 void parse_fortran_openmp(SgSourceFile *sageFilePtr);
 using namespace std;
@@ -1256,6 +1256,11 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   // to be linked in. (Not implemented yet).
      set_openmp(false);
      ROSE_ASSERT (get_openmp() == false);
+     // We parse OpenMP and then stop now since Building OpenMP AST nodes is a work in progress.
+     // so the default behavior is to turn on them all
+     // TODO turn them to false when parsing-> AST creation -> translation are finished
+     ROSE_ASSERT (get_openmp_parse_only() == true);
+     ROSE_ASSERT (get_openmp_ast_only() == false);
      if ( CommandlineProcessing::isOption(argv,"-rose:","(OpenMP|openmp)",true) == true ) 
         {
           if ( SgProject::get_verbose() >= 1 )
@@ -1275,6 +1280,25 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
          //like -fopenmp for GCC, depending on the version of gcc
          //which will define this macro for GCC
           argv.push_back("-D_OPENMP");
+
+	  // Process sub-options for OpenMP handling, Liao 5/31/2009
+	  if ( CommandlineProcessing::isOption(argv,"-rose:OpenMP:","parse_only",true) == true 
+	      ||CommandlineProcessing::isOption(argv,"-rose:openmp:","parse_only",true) == true)
+	  {
+	    if ( SgProject::get_verbose() >= 1 )
+	      printf ("OpenMP sub option for parsing specified \n");
+	    set_openmp_parse_only(true);
+	  }
+	  if ( CommandlineProcessing::isOption(argv,"-rose:OpenMP:","ast_only",true) == true 
+	      ||CommandlineProcessing::isOption(argv,"-rose:openmp:","ast_only",true) == true)
+	  {
+	    if ( SgProject::get_verbose() >= 1 )
+	      printf ("OpenMP sub option for AST construction specified \n");
+	    set_openmp_ast_only(true);
+            // we don't want to stop after parsing  if we want to proceed to ast creation before stopping
+	    set_openmp_parse_only(false);
+	  }
+
         }
 
   //
@@ -1711,6 +1735,8 @@ SgFile::stripRoseCommandLineOptions ( vector<string>& argv )
      optionCount = sla(argv, "-rose:", "($)", "(C|C_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(UPC|UPC_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(OpenMP|openmp)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(openmp:ast_only|OpenMP:ast_only)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(openmp:parse_only|OpenMP:parse_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(C99|C99_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(Cxx|Cxx_only)",1);
 
@@ -4492,9 +4518,6 @@ SgFile::callFrontEnd()
                if (requiresCPP == false)
                   {
                     attachPreprocessingInfo(sourceFile);
-                    // Liao, 3/31/2009 Handle OpenMP pragmas here to see macro calls
-                    attachOmpAttributeInfo(sourceFile);
-
                  // printf ("Exiting as a test (should not be called for Fortran CPP source files) \n");
                  // ROSE_ASSERT(false);
                   }
@@ -4502,6 +4525,10 @@ SgFile::callFrontEnd()
             // Normal path calling attachPreprocessingInfo()
                attachPreprocessingInfo(sourceFile);
 #endif
+
+	       // Liao, 3/31/2009 Handle OpenMP here to see macro calls within directives
+	       processOpenMP(sourceFile);
+
 
             // Reset the saved state (might not really be required at this point).
                if (requiresCPP == true)
@@ -6351,7 +6378,11 @@ SgFile::usage ( int status )
 "     -rose:Cxx_only, -rose:Cxx\n"
 "                             follow C++ 89 standard\n"
 "     -rose:OpenMP, -rose:openmp\n"   
-"                             follow OpenMP 3.0 C/C++ specification\n"
+"                             follow OpenMP 3.0 specification for C/C++ and Fortran\n"
+"     -rose:OpenMP:parse_only, -rose:openmp:parse_only\n"   
+"                             Only parse OpenMP directives to OmpAttributes, no further actions (default behavior now)\n"
+"     -rose:OpenMP:ast_only, -rose:openmp:ast_only\n"   
+"                             Only build OpenMP AST nodes from OmpAttributes, no further actions\n"
 "     -rose:UPC_only, -rose:UPC\n"   
 "                             follow Unified Parallel C 1.2 specification\n"
 "     -rose:upc_threads n     Enable UPC static threads compilation with n threads\n"
@@ -7238,6 +7269,10 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
      return returnSymbol;
    }
 #endif
+// TODO move the following OpenMP processing code into a separated source file
+
+// an internal data structure to avoid redundant AST traversal to find OpenMP pragmas
+static std::list<SgPragmaDeclaration* > omp_pragma_list; 
 
 // find all SgPragmaDeclaration nodes within a file and parse OpenMP pragmas into OmpAttribute info.
 void attachOmpAttributeInfo(SgSourceFile *sageFilePtr)
@@ -7272,6 +7307,9 @@ void attachOmpAttributeInfo(SgSourceFile *sageFilePtr)
 	// after the pragma has been attached OmpAttribute.
 	// We have to skip generating the attribute again in the new file
 	OmpAttributeList* previous = getOmpAttributeList(pragmaDeclaration);
+	// store them into a buffer, reused by build_OpenMP_AST()
+        omp_pragma_list.push_back(pragmaDeclaration);
+
 	if (previous == NULL )
 	{
 	  // Call parser
@@ -7295,3 +7333,188 @@ void attachOmpAttributeInfo(SgSourceFile *sageFilePtr)
     }// end for
   }
 }
+// Clause node builders
+//----------------------------------------------------------
+// Build SgOmpClause from OmpAttribute for type c_clause_type
+SgOmpClause* buildOmpClause(OmpAttribute* att, omp_construct_enum c_clause_type)
+{
+  SgOmpClause* result = NULL;
+  ROSE_ASSERT(att != NULL);
+  ROSE_ASSERT(isClause(c_clause_type));
+  switch (c_clause_type) 
+  {
+    case e_if:
+      {
+	result = new SgOmpIfClause(att->getExpression(c_clause_type).second);
+	ROSE_ASSERT(result != NULL);
+	break;
+      }
+    default:
+      {
+	printf("Warning: buildOmpClause(): unhandled clause type: %s\n", OmpSupport::toString(c_clause_type).c_str());
+//	ROSE_ASSERT(false);
+	break;
+      }
+
+  }
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+//! Get the affected structured block from an OmpAttribute
+SgStatement* getOpenMPBlockFromOmpAttribte (OmpAttribute* att)
+{
+  SgStatement* result = NULL;
+  ROSE_ASSERT(att != NULL);
+  omp_construct_enum c_clause_type = att->getOmpDirectiveType();
+
+  // Some directives have no followed statements/blocks 
+  if (!isDirectiveWithBody(c_clause_type))
+    return NULL;
+
+  SgNode* snode = att-> getNode ();
+  ROSE_ASSERT(snode != NULL); //? not sure for Fortran
+  SgFile * file = getEnclosingFileNode (snode);
+  if (file->get_Fortran_only()||file->get_F77_only()||file->get_F90_only()||
+      file->get_F95_only() || file->get_F2003_only())
+  { //Fortran check setNode()
+    printf("buildOmpParallelStatement() Fortran is not handled yet\n");
+  }
+  else // C/C++ must be pragma declaration statement
+  {
+    SgPragmaDeclaration* pragmadecl = att->getPragmaDeclaration();
+    result = getNextStatement(pragmadecl);
+  }
+
+//  ROSE_ASSERT(result!=NULL);
+// Not all pragma decl has a structured body!!
+  return result;
+}
+
+// Directive statemet builders
+//----------------------------------------------------------
+//! Build a SgOmpParallelStatement node from an OmpAttribute
+SgOmpParallelStatement* buildOmpParallelStatement(OmpAttribute* att)
+{
+  ROSE_ASSERT(att->getOmpDirectiveType() == e_parallel);
+  SgStatement* body = getOpenMPBlockFromOmpAttribte(att);
+  ROSE_ASSERT(body != NULL);
+  SgOmpParallelStatement* result = new SgOmpParallelStatement(NULL, body); 
+  ROSE_ASSERT(result != NULL);
+  setOneSourcePositionForTransformation(result);
+  // TODO build clauses
+    // must copy those clauses here, since they will be deallocated later on
+  vector<omp_construct_enum> clause_vector = att->getClauses();
+  std::vector<omp_construct_enum>::iterator citer;
+  for (citer = clause_vector.begin(); citer != clause_vector.end(); citer++)
+  {
+    omp_construct_enum c_clause = *citer;
+    if (!isClause(c_clause))
+    {
+      printf ("Found a construct which is not a clause:%s\n within attr:%p\n", OmpSupport::toString(c_clause).c_str(), att);
+      //ROSE_ASSERT(isClause(c_clause));
+      continue;
+    }
+    else
+      printf ("Found a clause construct:%s\n", OmpSupport::toString(c_clause).c_str());
+
+    SgOmpClause* sgclause = buildOmpClause(att, c_clause);
+    result->get_clauses().push_back(sgclause);
+  }
+  // insert the statment, move the pragma decl's next statement to the omp stmt's body
+  return result;
+}
+
+//! for C/C++ replace OpenMP pragma declaration with an SgOmpxxStatement
+void replaceOmpPragmaWithOmpStatement(SgPragmaDeclaration* pdecl, SgStatement* ompstmt)
+{
+  ROSE_ASSERT(pdecl != NULL);
+  ROSE_ASSERT(ompstmt!= NULL);
+
+  SgScopeStatement* scope = pdecl ->get_scope();
+  ROSE_ASSERT(scope !=NULL);
+  SgOmpClauseBodyStatement * omp_cb_stmt = isSgOmpClauseBodyStatement(ompstmt);
+  // optionally remove the immediate structured block
+  if (omp_cb_stmt!= NULL)
+  {
+    SgStatement* next_stmt = getNextStatement(pdecl);
+    ROSE_ASSERT(next_stmt == omp_cb_stmt->get_body()); // ompstmt's body is set already
+    removeStatement(next_stmt);
+  }
+  // replace the pragma
+  replaceStatement(pdecl, ompstmt);
+}
+
+// Convert omp_pragma_list to SgOmpxxx nodes
+void convert_OpenMP_pragma_to_AST ()
+{
+  list<SgPragmaDeclaration* >::iterator iter;
+  for (iter = omp_pragma_list.begin(); iter != omp_pragma_list.end(); iter ++)
+  {
+    SgPragmaDeclaration* decl = *iter; 
+    OmpAttributeList* oattlist= getOmpAttributeList(decl);
+    ROSE_ASSERT (oattlist != NULL) ;
+    vector <OmpAttribute* > ompattlist = oattlist->ompAttriList;
+    ROSE_ASSERT (ompattlist.size() != 0) ;
+    vector <OmpAttribute* >::iterator i = ompattlist.begin();
+    for (; i!=ompattlist.end(); i++)
+    {
+      OmpAttribute* oa = *i;
+      omp_construct_enum omp_type = oa->getOmpDirectiveType();
+      ROSE_ASSERT(isDirective(omp_type));
+      SgStatement* omp_stmt = NULL;
+      switch (omp_type)
+      {
+	case e_parallel:
+	  {
+	    omp_stmt = buildOmpParallelStatement(oa);
+	    break;
+	  }
+	default:
+	  {
+            cerr<<"Error: convert_OpenMP_pragma_to_AST(): unhandled OpenMP directive type:"<<OmpSupport::toString(omp_type)<<endl;
+	    assert (false);
+	    break;
+	  }
+      }
+      replaceOmpPragmaWithOmpStatement(decl, omp_stmt);
+
+    } // end for (OmpAttribute)
+  }// end for (omp_pragma_list)
+}
+
+void build_OpenMP_AST(SgSourceFile *sageFilePtr)
+{
+  // build AST for OpenMP directives and clauses 
+  // by converting OmpAttributeList to SgOmpxxx Nodes 
+  if (sageFilePtr->get_Fortran_only()||sageFilePtr->get_F77_only()||sageFilePtr->get_F90_only()||
+      sageFilePtr->get_F95_only() || sageFilePtr->get_F2003_only())
+  {
+   
+    printf("AST construction for Fortran OpenMP is not yet implemented. \n");
+    assert(false);
+  } //end if (fortran)
+  else// for  C/C++ pragma's OmpAttributeList --> SgOmpxxx nodes
+  {
+    convert_OpenMP_pragma_to_AST();
+  }
+}
+// Liao, 5/31/2009 an entry point for OpenMP related processing
+// including parsing, AST construction, and later on tranlation
+void processOpenMP(SgSourceFile *sageFilePtr)
+{
+  ROSE_ASSERT(sageFilePtr != NULL);
+  if (sageFilePtr->get_openmp() == false)
+    return;
+  // parse OpenMP directives and attach OmpAttributeList to relevant SgNode
+  attachOmpAttributeInfo(sageFilePtr);
+
+  // stop here if only OpenMP parsing is requested
+  if (sageFilePtr->get_openmp_parse_only())
+    return;
+
+  //Build OpenMP AST nodes based on parsing results
+  build_OpenMP_AST(sageFilePtr);
+}
+
+

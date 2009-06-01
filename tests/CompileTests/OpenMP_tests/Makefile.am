@@ -9,6 +9,7 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 C_TESTCODES_REQUIRED_TO_PASS = \
 	3loops.c \
+	jacobi.c \
 	atomic.c \
 	collapse.c \
 	copyin.c \
@@ -20,6 +21,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	critical_orphaned.c \
 	dynamicChunk.c \
 	empty.c \
+	nowait.c \
 	expressions.c \
 	falsesharing.c \
 	firstlastprivate.c \

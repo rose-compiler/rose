@@ -1,18 +1,21 @@
 /*!
- * ROSE persistent attribute to represent OpenMP 3.0 C/C++ directives
+ * ROSE persistent attribute to represent OpenMP 3.0 C/C++/Fortran directives
+ * in the OpenMP parser 
+ *  Ideally, this should be transparent to users since we want to them to 
+ *  operate on dedicated OpenMP sage nodes instead.
+ *
  * All things go to the OmpSupport namespace to avoid conflicts 
  */
-// Goal: share it by both OpenMP translation and automatic OpenMP insertion
 //
 // Liao 9/17, 2008
+//
 
-// #include <rose.h>
 #include <iostream>
 #include <string>
 #include <map>
 #include <cassert>
 #include <vector>
-
+class SgNode;
 namespace OmpSupport
 {
   // OpenMP construct name list
@@ -140,6 +143,9 @@ namespace OmpSupport
   //! Check if an OpenMP construct is a directive
   bool isDirective(omp_construct_enum omp_type);
 
+  //! Check if an OpenMP directive has a structured body
+  bool isDirectiveWithBody(omp_construct_enum omp_type);
+
   //! Check if an OpenMP construct is a clause
   bool isClause(omp_construct_enum omp_type);
 
@@ -190,6 +196,7 @@ namespace OmpSupport
       std::string toOpenMPString();
       // Pretty print for debugging purpose
       void print();
+      ~OmpAttributeList();
   };			  
 
   class OmpAttribute

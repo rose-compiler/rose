@@ -25,7 +25,7 @@ AT_INCLUDES=-I$(top_srcdir)/src/frontend/SageIII
 # this should be fixed in outliner's Transform.cc: 
 # OmpSupport::generatePragmaFromOmpAttribute(firstloop);
 #
-ROSE_FLAGS2 = -rose:autotuning:aggressive_triage -rose:openmp 
+ROSE_FLAGS2 = -rose:autotuning:aggressive_triage -rose:openmp
 
 # basic code triage based on inner-most consecutive loops
 rose_jacobi.c:../autoTuning

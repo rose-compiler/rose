@@ -760,6 +760,9 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgDataStatementValue::data_statement_value_enum" ) ||
                  ( varTypeString == "SgFile::outputFormatOption_enum" ) ||
                  ( varTypeString == "SgFile::outputLanguageOption_enum" ) ||
+                 ( varTypeString == "SgOmpClause::omp_default_option_enum" ) ||
+                 ( varTypeString == "SgOmpClause::omp_schedule_kind_enum" ) ||
+                 ( varTypeString == "SgOmpClause::omp_reduction_operator_enum" ) ||
                  ( varTypeString == "SgProcedureHeaderStatement::subprogram_kind_enum" ) ||
                  ( varTypeString == "SgLabelSymbol::label_type_enum" ) ||
                  ( varTypeString == "SgAsmFunctionDeclaration::function_kind_enum" ) ||

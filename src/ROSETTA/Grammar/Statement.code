@@ -13509,3 +13509,131 @@ SOURCE_PREPROCESSOR_DIRECTIVE_STATEMENT_END
 SOURCE_LINEMARKER_PREPROCESSOR_DIRECTIVE_STATEMENT_START
 SOURCE_LINEMARKER_PREPROCESSOR_DIRECTIVE_STATEMENT_END
 
+HEADER_OMP_PARALLEL_STATEMENT_START
+
+HEADER_OMP_PARALLEL_STATEMENT_END
+
+SOURCE_OMP_PARALLEL_STATEMENT_START
+void
+SgOmpParallelStatement::post_construction_initialization()
+   {}
+SOURCE_OMP_PARALLEL_STATEMENT_END
+
+SOURCE_OMP_MASTER_STATEMENT_START
+void
+SgOmpMasterStatement::post_construction_initialization()
+   {}
+SOURCE_OMP_MASTER_STATEMENT_END
+
+
+SOURCE_OMP_FLUSH_STATEMENT_START
+void
+SgOmpFlushStatement::post_construction_initialization()
+   {}
+SOURCE_OMP_FLUSH_STATEMENT_END
+
+
+SOURCE_OMP_DO_STATEMENT_START
+void
+SgOmpDoStatement::post_construction_initialization()
+   {}
+SOURCE_OMP_DO_STATEMENT_END
+
+
+SOURCE_OMP_SINGLE_STATEMENT_START
+void
+SgOmpSingleStatement::post_construction_initialization()
+   {}
+SOURCE_OMP_SINGLE_STATEMENT_END
+
+
+SOURCE_OMP_CRITICAL_STATEMENT_START
+void
+SgOmpCriticalStatement::post_construction_initialization()
+   {}
+SOURCE_OMP_CRITICAL_STATEMENT_END
+
+
+SOURCE_OMP_THREADPRIVATE_STATEMENT_START
+void
+SgOmpThreadprivateStatement::post_construction_initialization()
+   {}
+SOURCE_OMP_THREADPRIVATE_STATEMENT_END
+
+
+SOURCE_OMP_SECTIONS_STATEMENT_START
+void
+SgOmpSectionsStatement::post_construction_initialization()
+   {}
+SOURCE_OMP_SECTIONS_STATEMENT_END
+
+
+SOURCE_OMP_TASKWAIT_STATEMENT_START
+void
+SgOmpTaskwaitStatement::post_construction_initialization()
+   {}
+SOURCE_OMP_TASKWAIT_STATEMENT_END
+
+SOURCE_OMP_ATOMIC_STATEMENT_START
+void
+SgOmpAtomicStatement::post_construction_initialization()
+   {}
+SOURCE_OMP_ATOMIC_STATEMENT_END
+
+
+
+SOURCE_OMP_ORDERED_STATEMENT_START
+void
+SgOmpOrderedStatement::post_construction_initialization()
+   {}
+SOURCE_OMP_ORDERED_STATEMENT_END
+
+
+SOURCE_OMP_WORKSHARE_STATEMENT_START
+void
+SgOmpWorkshareStatement::post_construction_initialization()
+   {}
+SOURCE_OMP_WORKSHARE_STATEMENT_END
+
+
+SOURCE_OMP_FOR_STATEMENT_START
+void
+SgOmpForStatement::post_construction_initialization()
+   {}
+SOURCE_OMP_FOR_STATEMENT_END
+
+
+SOURCE_OMP_SECTION_STATEMENT_START
+void
+SgOmpSectionStatement::post_construction_initialization()
+   {}
+SOURCE_OMP_SECTION_STATEMENT_END
+
+
+SOURCE_OMP_TASK_STATEMENT_START
+void
+SgOmpTaskStatement::post_construction_initialization()
+   {}
+SOURCE_OMP_TASK_STATEMENT_END
+
+SOURCE_OMP_BODY_STATEMENT_START
+void
+SgOmpBodyStatement::post_construction_initialization()
+   {}
+SOURCE_OMP_BODY_STATEMENT_END
+
+
+
+SOURCE_OMP_CLAUSEBODY_STATEMENT_START
+void
+SgOmpClauseBodyStatement::post_construction_initialization()
+   {}
+SOURCE_OMP_CLAUSEBODY_STATEMENT_END
+
+
+SOURCE_OMP_BARRIER_STATEMENT_START
+void
+SgOmpBarrierStatement::post_construction_initialization()
+   {}
+SOURCE_OMP_BARRIER_STATEMENT_END
+

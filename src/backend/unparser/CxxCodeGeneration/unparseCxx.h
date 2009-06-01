@@ -349,6 +349,10 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
        virtual void unparseUpcFenceStatement (SgStatement* stmt, SgUnparse_Info& info);
        virtual void unparseUpcForAllStatement (SgStatement* stmt, SgUnparse_Info& info);
 //#endif       
+       // Liao 5/31/2009, OpenMP nodes
+       virtual void unparseOmpClause(SgOmpClause* clause, SgUnparse_Info& info);
+       virtual void unparseOmpParallelStatement (SgStatement* stmt, SgUnparse_Info& info);
+
        // DQ (8/13/2007): This should go into the Unparser class
       //! begin the unparser (unparser.C)
        // void run_unparser();

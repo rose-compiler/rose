@@ -34,7 +34,7 @@ TESTCODES_CURRENTLY_FAILING = \
     conditional.f \
     exampleA41f.f90
 
-ROSE_FLAGS = -rose:openmp 
+ROSE_FLAGS = -rose:openmp
 
 TESTCODE_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII
 

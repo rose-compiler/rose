@@ -459,6 +459,12 @@ typedef SgAsmFilePtrList*              SgAsmFilePtrListPtr;
 
 // DQ (11/28/2008): Added support for list of integers (used for flag list in SgLinemarkerDirectiveStatement).
 // typedef std::vector<int>                     SgIntegerList;
+// Liao, 5/30/2009 types for OpenMP support
+typedef Rose_STL_Container<SgOmpClause*>   SgOmpClausePtrList;
+typedef SgOmpClausePtrList*                SgOmpClausePtrListPtr;
+
+typedef Rose_STL_Container<SgOmpSectionStatement*>   SgOmpSectionStatementPtrList;
+typedef SgOmpSectionStatementPtrList*                SgOmpSectionStatementPtrListPtr;
 
 
 // FIXME: This might not the the right place for this class. (RPM 2008-08-26)
