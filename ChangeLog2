@@ -1,3 +1,8 @@
+2009-06-01 17:31  liao6
+
+	* [r6007] /trunk/ROSE/docs/Rose/Tutorial/instructionSemantics.tex:
+	  Fixed a LaTeX bug introduced by Robb's r5992.
+
 2009-05-31 06:24  saebjornsen1
 
 	* [r6005]
