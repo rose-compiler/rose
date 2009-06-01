@@ -1,3 +1,74 @@
+2009-06-01 23:15  liao6
+
+	* [r6012] /trunk/ROSE/projects/autoTuning/tests/Makefile.am,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Common.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Node.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Statement.code,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Support.code,
+	  /trunk/ROSE/src/ROSETTA/astNodeList,
+	  /trunk/ROSE/src/ROSETTA/src/buildStorageClasses.C,
+	  /trunk/ROSE/src/ROSETTA/src/grammar.C,
+	  /trunk/ROSE/src/ROSETTA/src/grammar.h,
+	  /trunk/ROSE/src/ROSETTA/src/node.C,
+	  /trunk/ROSE/src/ROSETTA/src/statement.C,
+	  /trunk/ROSE/src/ROSETTA/src/support.C,
+	  /trunk/ROSE/src/backend/unparser/CxxCodeGeneration/unparseCxx.h,
+	  /trunk/ROSE/src/backend/unparser/CxxCodeGeneration/unparseCxx_statements.C,
+	  /trunk/ROSE/src/frontend/SageIII/OmpAttribute.C,
+	  /trunk/ROSE/src/frontend/SageIII/OmpAttribute.h,
+	  /trunk/ROSE/src/frontend/SageIII/ompFortranParser.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/fortran/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/jacobi.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/nowait.c: Added
+	  dedicated Sage nodes for OpenMP directives (and clauses) so they
+	  can be handled uniquely like normal statements during AST
+	  traversal
+	  
+	  * the final workflow for ROSE OpenMP handling should be:
+	  directive parsing -> OpenMP AST creation -> analysis or
+	  transformation
+	  OmpAttribute is intended to be used by parser internally, used as
+	  input for AST creation and then discarded.
+	  the new OpenMP AST nodes are the output of AST creation and is
+	  used for further analyzing and transformation of OpenMP
+	  applications
+	  ** -rose:openmp:parse_only controls ROSE to stop right after
+	  OpenMP parsing (default behavior for now)
+	  ** -rose:openmp:ast_only: stop after parsing directives and AST
+	  creation
+	  * added statement nodes for OpenMP directives and located support
+	  nodes for OpenMP clauses
+	  * hacked into ROSETTA to allow automatically generate traversal
+	  code for mixed simple members and container members for newely
+	  introduced OpenMP nodes.
+	  * initial work to create OpenMP sage nodes from OmpAttribute
+	  created by OpenMP parsers
+	  * initial work to add unparsing support for new OpenMP sage nodes
+
+2009-06-01 23:09  panas2
+
+	* [r6011] /trunk/ROSE/projects/RTED/DataStructures.h,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_funccall.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.c,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: RTED work
+
+2009-06-01 23:01  liao6
+
+	* [r6010] /trunk/ROSE/tests/roseTests/binaryTests/Makefile.am:
+	  Added another file Robb missed so make distcheck can work.
+
+2009-06-01 21:06  liao6
+
+	* [r6009] /trunk/ROSE/tests/roseTests/binaryTests/Makefile.am:
+	  Fixed a bug introduced by Robb in r5991. This caused make
+	  distcheck fail.
+
 2009-06-01 17:31  liao6
 
 	* [r6007] /trunk/ROSE/docs/Rose/Tutorial/instructionSemantics.tex:
