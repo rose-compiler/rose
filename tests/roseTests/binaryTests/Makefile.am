@@ -3,7 +3,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 EXTRA_DIST = buffer2.bin runTest.C \
              arm-poweroff arm-ctrlaltdel arm-ctrlaltdel.ans \
 	     schulz-sample1.so schulz-sample1-p.so schulz-sample2.so schulz-sample2-p.so \
-	     runExecFormatsTest testShiftResizeSection.sh libm-2.3.6.so i686-test1.O3.bin
+	     runExecFormatsTest testShiftResizeSection.sh libm-2.3.6.so i686-test1.O3.bin \
+	     test_findConstants.ans
 
 if USE_BINARY_ANALYSIS_TESTS
 
