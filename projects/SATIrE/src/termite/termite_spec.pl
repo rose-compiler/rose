@@ -84,7 +84,8 @@ class_declaration ::=
                       analysis_info, file_info).
 
 enum_declaration ::=
-    enum_declaration(todo).
+    enum_declaration([initialized_name], enum_declaration_annotation,
+                     analysis_info, file_info).
 
 function_declaration ::=
     function_declaration(function_parameter_list, function_definition?,
@@ -99,7 +100,7 @@ pragma_declaration ::=
     pragma_declaration(todo).
 
 typedef_declaration ::=
-    typedef_declaration(class_declaration?, typedef_annotation,
+    typedef_declaration(declaration_statement?, typedef_annotation,
                         analysis_info, file_info).
 
 variable_declaration ::=
@@ -295,6 +296,9 @@ class_declaration_annotation ::=
     class_declaration_annotation(name, todo /* class kind */, type,
                                  preprocessing_info).
 
+enum_declaration_annotation ::=
+    enum_declaration_annotation(name, todo, todo, preprocessing_info).
+
 class_definition_annotation ::=
     class_definition_annotation(file_info, preprocessing_info).
 
@@ -306,7 +310,8 @@ label_annotation ::=
     label_annotation(name, preprocessing_info).
 
 size_of_op_annotation ::=
-    size_of_op_annotation(type? /* operand */, type /* sizeof expression */).
+    size_of_op_annotation(type? /* operand */, type /* sizeof expression */,
+                          preprocessing_info).
 
 value_annotation ::=
     value_annotation(number_or_string, preprocessing_info).
@@ -323,7 +328,7 @@ var_ref_exp_annotation ::=
                            scope_name?, preprocessing_info).
 
 typedef_annotation ::=
-    typedef_annotation(name, type, class_declaration?, preprocessing_info).
+    typedef_annotation(name, type, declaration_statement?, preprocessing_info).
 
 function_ref_exp_annotation ::=
     function_ref_exp_annotation(name, type, preprocessing_info).

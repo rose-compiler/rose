@@ -197,6 +197,7 @@ pointsto_live_variables: init.token
 	@chmod u+w $(testdir)/interval/intvltest.c
 	@cd $(testdir)/interval; ./interval --run-pointsto-analysis --callstringlength=1 --output-term=intvltest.term intvltest.c
 	@cd $(testdir)/interval; export TERMITE_LIB=$(datadir)/termite; $(SWI_PL) -q -O -t main -f validator.pl < intvltest.term > intvltest1.term
+	@cd $(testdir)/interval; $(DESTDIR)/$(bindir)/termite_lint intvltest1.term; if [ $$? -ne 0 ]; then echo "*** termite_lint was not quite satisfied with that term!"; fi
 	@cd $(testdir)/interval; $(DESTDIR)/$(bindir)/term2c intvltest1.term -o intvlassert.c
 	@cd $(testdir)/interval; \
 	($(CC) -std=c99 -DINCLUDE_ASSERT_H -o intvlassert intvlassert.c \
