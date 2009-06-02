@@ -44,7 +44,7 @@
 %-----------------------------------------------------------------------
 
 default_values(PPI, DA, AI, FI) :-
-  PPI = preprocessing_info(null),
+  PPI = preprocessing_info([]),
   DA = default_annotation(null, PPI),
   AI = analysis_info([]),
   FI = file_info('compilerGenerated', 0, 0).
@@ -59,23 +59,37 @@ var_withtype(Decls, Var->Intvl, Var:Type->Intvl) :-
   !.
 var_withtype(_Decls, _V, not_in_scope).
 
+% get Var:Type pair from a variable declaration
 vardecl_vartype(variable_declaration([IN],_,_,_), Var:Type) :-
   IN = initialized_name(_, initialized_name_annotation(Type,Var,_,_),_,_).
 
+% update declared variables according to a scope's declarations
+decls_stmts_newdecls(Decls0, S, Decls) :-
+  % accept both single statements and statement lists
+  flatten(S, Stmts),
+  include(subsumes_chk(variable_declaration(_,_,_,_)), Stmts, VarDecls),
+  maplist(vardecl_vartype, VarDecls, VarsTypes),
+  append(VarsTypes, Decls0, Decls).
+
+% force the body to be a basic block so we can add assertion statements
+body_wrapped(Body0, Body1) :-
+  ( Body0 = basic_block(_,_,_,_)
+  -> Body1 = Body0
+  ; default_values(_, BDA, BAI, _),
+    % ugly hack: if the wrapping basic block is marked as compiler
+    % generated, the unparser does not emit it! (this is the case for
+    % if_stmt bodies, at least) so we steal the original body's file info
+    Body0 =.. Body0List,
+    last(Body0List, BFI),
+    Body1 = basic_block([Body0], BDA, BAI, BFI)
+  ).
+
 % generate an expression assert(v > Lower && v < Upper)
 
-interval_assert(Stmt, Var:Type->Intvl, AssertionExpr) :-
-  % handle the case where the variable is declared inside a scope stmt
-  (member(Op, [for_statement
-	      %, while_stmt, do_while_stmt, if_stmt, switch_statement
-	      ]),
-   Stmt =.. [Op|[VarDecl|_]],
-   VarDecl = for_init_statement(Decls, _, _, _),
-   member(variable_declaration(INs, _, _, _), Decls),
-   member(initialized_name(_, initialized_name_annotation(_,Var,_,_),_,_), INs))
-  -> AssertionExpr = []
-  ; interval_assert1(Var:Type->Intvl, AssertionExpr).
-
+% this wrapper predicate appears to be useless now since declarations are
+% handled differently; but let's keep it for its more general interface
+interval_assert(_Stmt, Var:Type->Intvl, AssertionExpr) :-
+  interval_assert1(Var:Type->Intvl, AssertionExpr).
 
 interval_assert1(Var:VarType->[Min,Max], AssertionExpr) :-
   default_values(PPI, DA, AI, FI),
@@ -100,13 +114,13 @@ interval_assert1(Var:VarType->[Min,Max], AssertionExpr) :-
   GE = greater_or_equal_op(VarRef, MinVal, TypeAn, AI, FI),
   LE =    less_or_equal_op(VarRef, MaxVal, TypeAn, AI, FI),
 
-  VarRef = var_ref_exp(var_ref_exp_annotation(VarType, Var, default, PPI),
+  VarRef = var_ref_exp(var_ref_exp_annotation(VarType,Var,default,null,PPI),
 		       AI, FI),
   TypeAn = binary_op_annotation(VarType, PPI).
 
 % generate a comma-seperated chain of assertions
 comma_chain(Expr1, Expr2, comma_op_exp(Expr1, Expr2, BA, AI, FI)) :-
-  BA = binary_op_annotation(null, PPI),
+  BA = binary_op_annotation(type_void, PPI),
   default_values(PPI, _, AI, FI).
 
 % generate a comma chain or leave empty
@@ -118,18 +132,46 @@ chain_up(Assertions, DA, AI, FI,  Statement) :-
      Statement = expr_statement(PreExp, DA, AI, FI))
   ).
   
-% don't generate assertions for branch statements
+% transform basic blocks with their variable declarations in effect
 assertions(y-Decls0, y-Decls, y-Decls0, Bb, Bb) :-
   Bb = basic_block(Stmts, _,_,_),
-  include(subsumes_chk(variable_declaration(_,_,_,_)), Stmts, VarDecls),
-  maplist(vardecl_vartype, VarDecls, VarsTypes),
-  append(VarsTypes, Decls0, Decls).
-assertions(_, n, n, Branch, Branch) :-
-  functor(Branch, if_stmt, _)
-%  ; functor(Branch, for_statement, _)
-  ; functor(Branch, while_stmt, _)
-  ; functor(Branch, do_while_stmt, _)
-  ; functor(Branch, switch_statement, _).
+  decls_stmts_newdecls(Decls0, Stmts, Decls).
+
+% don't generate assertions for branch conditions (put guards around these),
+% but do generate assertions inside bodies, with any declarations from the
+% condition in effect inside the body
+assertions(y-Decls0, y-Decls, y-Decls0, For, For1) :-
+  For = for_statement(D, C, I, Body, A, AI, FI),
+  D = for_init_statement(Inits, _,_,_),
+  decls_stmts_newdecls(Decls0, Inits, Decls),
+  body_wrapped(Body, Body1),
+  For1 = for_statement(guard(D), guard(C), guard(I), Body1, A, AI, FI).
+assertions(y-Decls0, y-Decls, y-Decls0, If, If1) :-
+  If = if_stmt(Cond, Body, Else, A, AI, FI),
+  decls_stmts_newdecls(Decls0, Cond, Decls),
+  body_wrapped(Body, Body1),
+  ( Else = null
+  -> Else1 = null
+  ;  body_wrapped(Else, Else1)
+  ),
+  If1 = if_stmt(guard(Cond), Body1, Else1, A, AI, FI).
+assertions(y-Decls0, y-Decls, y-Decls0, While, While1) :-
+  While = while_stmt(Cond, Body, A, AI, FI),
+  decls_stmts_newdecls(Decls0, Cond, Decls),
+  body_wrapped(Body, Body1),
+  While1 = while_stmt(guard(Cond), Body1, A, AI, FI).
+assertions(y-Decls0, y-Decls, y-Decls0, DoWhile, DoWhile1) :-
+  DoWhile = do_while_stmt(Body, Cond, A, AI, FI),
+  % would anyone really declare a variable in a do-while condition? is it
+  % even possible?
+  decls_stmts_newdecls(Decls0, Cond, Decls),
+  body_wrapped(Body, Body1),
+  DoWhile1 = do_while_stmt(Body1, guard(Cond), A, AI, FI).
+assertions(y-Decls0, y-Decls, y-Decls0, Switch, Switch1) :-
+  Switch = switch_statement(Key, Body, A, AI, FI),
+  decls_stmts_newdecls(Decls0, Key, Decls),
+  body_wrapped(Body, Body1),
+  Switch1 = switch_statement(guard(Key), Body1, A, AI, FI).
 
 assertions(y-Decls, y-Decls, y-Decls, Statement, AssertedStatement) :-
   functor(Statement, F, Arity),
@@ -140,7 +182,7 @@ assertions(y-Decls, y-Decls, y-Decls, Statement, AssertedStatement) :-
   N1 is Arity-1, arg(N1, Statement, AI),
   N0 is Arity-0, arg(N0, Statement, FI),
 
-  DA = default_annotation(null, preprocessing_info(null)),
+  DA = default_annotation(null, preprocessing_info([])),
   AI = analysis_info(AIs),
   member(pre_info(PreInfo), AIs),
   member(post_info(PostInfo), AIs),
@@ -200,10 +242,13 @@ assertions(y-[], y-[], y-VarsTypes, global(Decls, An, Ai, Fi),
   D1 =.. D_u1, 
   Decls1 = [D1|Ds].
 
+% do not modify guarded terms
+assertions(I, n, I, guard(Term), Term).
+% leave all other terms alone
 assertions(I, I, I, Term, Term).
 %-----------------------------------------------------------------------  
 
-prettyprint(Func/Type) :- unparse(Type), format(' ~w; ', [Func]).
+prettyprint(Func/Type) :- unparse(Type), format(' ~w(); ', [Func]).
 
 maingen(t(FuncName/FuncType,Closure,Unreachable), [], [],
 	global(Decls, An, Ai, FI),

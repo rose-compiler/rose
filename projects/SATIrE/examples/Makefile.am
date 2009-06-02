@@ -194,11 +194,15 @@ pointsto_live_variables: init.token
 %.interval.run: %.c
 	@echo "Testing the correctness of the interval analysis on" $<
 	@cp $< $(testdir)/interval/intvltest.c
+	find `dirname $<` -name '*.h' -exec cp '{}' $(testdir)/interval ';'
 	@chmod u+w $(testdir)/interval/intvltest.c
 	@cd $(testdir)/interval; ./interval --run-pointsto-analysis --callstringlength=1 --output-term=intvltest.term intvltest.c
 	@cd $(testdir)/interval; export TERMITE_LIB=$(datadir)/termite; $(SWI_PL) -q -O -t main -f validator.pl < intvltest.term > intvltest1.term
 	@cd $(testdir)/interval; $(DESTDIR)/$(bindir)/termite_lint intvltest1.term; if [ $$? -ne 0 ]; then echo "*** termite_lint was not quite satisfied with that term!"; fi
 	@cd $(testdir)/interval; $(DESTDIR)/$(bindir)/term2c intvltest1.term -o intvlassert.c
+	@echo "vvv from $< vvv"
+	@cd $(testdir)/interval; cat intvlassert.c
+	@echo "^^^ from $< ^^^"
 	@cd $(testdir)/interval; \
 	($(CC) -std=c99 -DINCLUDE_ASSERT_H -o intvlassert intvlassert.c \
 	 && bash -c \
@@ -209,7 +213,7 @@ if WITH_CBMC
 	@echo "Performing model checking on" $<
 	@cd $(testdir)/interval; \
 	$(CBMC) --show-claims intvlassert.c; \
-	$(CBMC) --no-bounds-check --unwind 1024 intvlassert.c \
+	ulimit -t 30; $(CBMC) --no-bounds-check --unwind 1024 intvlassert.c \
 	|| (echo "** FAILED: $<" && echo && true)
 endif
 #($(CC) -std=c99 -E -I$(BLASTHOME)/test/headers intvlassert.c > intvlassert.i;
