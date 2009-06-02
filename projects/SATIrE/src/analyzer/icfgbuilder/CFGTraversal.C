@@ -2257,7 +2257,6 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 	  new_block = allocate_new_block(new_block, after);
 	  after = new_block;
 	  new_block->statements.push_front(*i);
-	  new_block = NULL;
                 
 	  /* incoming information is at the incoming edge of
 	   * new_block */
@@ -2265,6 +2264,8 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 	  /* outgoing information is at the outgoing edge of
 	   * new_block */
 	  stmt_end = new StatementAttribute(new_block, POS_POST);
+
+        new_block = NULL;
 	}
 	break;
       }
