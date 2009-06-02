@@ -41,6 +41,28 @@ RtedTransformation::removeSpecialChar(std::string str) {
   return str;
 }
 
+
+std::string
+RtedTransformation::getMangledNameOfExpression(SgExpression* expr) {
+  string manglName="";
+  // look for varRef in the expr and return its mangled name
+  Rose_STL_Container< SgNode * > var_refs = NodeQuery::querySubTree(expr,V_SgVarRefExp);
+  if (var_refs.size()==0) {
+    // there should be at least one var ref
+    cerr << " getMangledNameOfExpression: varRef on left hand side not found : " << expr->unparseToString() << endl;
+  } else if (var_refs.size()==1) {
+    // correct, found on var ref
+    SgVarRefExp* varRef = isSgVarRefExp(*(var_refs.begin()));
+    ROSE_ASSERT(varRef && varRef->get_symbol()->get_declaration());
+    manglName = varRef->get_symbol()->get_declaration()->get_mangled_name();
+    cerr << " getMangledNameOfExpression: found varRef: " << manglName << endl;
+  } else if (var_refs.size()>1) {
+    // error
+    cerr << " getMangledNameOfExpression: Too many varRefs on left hand side : " << var_refs.size() << endl; 
+  }
+  return manglName;
+}
+
 /****************************************
  * This function returns InitializedName
  * for a DotExpr

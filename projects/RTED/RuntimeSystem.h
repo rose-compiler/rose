@@ -12,7 +12,8 @@ struct RuntimeVariablesType {
   char* name; // stack variable name
   char* mangled_name; // mangled name
   char* type;
-  char* initialized;
+  int initialized; // 0 = false
+  char* fileOpen; // r = read, w = write
 };
 
 
@@ -95,9 +96,10 @@ int RuntimeSystem_isFileIOFunctionCall(char* name);
 void RuntimeSystem_callExit(char* filename, char* line, char* reason, char* stmtStr);
 
 // functions dealing with variables
-void RuntimeSystem_roseCreateVariable(char* name, char* mangled_name, char* type, char* init);
+void RuntimeSystem_roseCreateVariable(char* name, char* mangled_name, char* type, int init,
+				      char* fOpen);
 void RuntimeSystem_increaseSizeRuntimeVariables();
-char* RuntimeSystem_findVariables(char* name);
+struct RuntimeVariablesType* RuntimeSystem_findVariables(char* name);
 void RuntimeSystem_roseInitVariable(char* mangled_name);
 
 

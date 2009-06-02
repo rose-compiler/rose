@@ -51,7 +51,7 @@ RuntimeSystem_Const_RuntimeSystem() {
   rtsi()->runtimeVariables = (struct RuntimeVariablesType*)malloc(sizeof(struct RuntimeVariablesType)*initElementSize);
   rtsi()->myfile = fopen("result.txt","at");
   if (!rtsi()->myfile) {
-    printf("Cannot open output file!\n");
+    printf("Rted Error ::: Cannot open output file!\n");
     exit(1);
   }
   rtsi()->violation=0; //false
@@ -204,12 +204,15 @@ RuntimeSystem_increaseSizeRuntimeVariablesOnStack() {
   struct RuntimeVariablesType* run_tmp = (struct RuntimeVariablesType*)malloc(sizeof(struct RuntimeVariablesType)*(rtsi()->maxRuntimeVariablesOnStackEndIndex));
   if (run_tmp) {
     int i=0;
+#if 0
     for ( i=0;i<rtsi()->maxRuntimeVariablesOnStackEndIndex;i++) {
       run_tmp[i].name=(char*)malloc(sizeof(char*));
       run_tmp[i].mangled_name =(char*)malloc(sizeof(char*));
-      run_tmp[i].type =(char*)malloc(sizeof(char*));
-      run_tmp[i].initialized =(char*)malloc(sizeof(char*));
+      //run_tmp[i].type =(char*)malloc(sizeof(char*));
+      //run_tmp[i].initialized =(int)malloc(sizeof(int));
+      //run_tmp[i].fileOpen =(char*)malloc(sizeof(char*));
     }
+#endif
     for ( i=0;i<rtsi()->runtimeVariablesOnStackEndIndex;i++) {
       run_tmp[i].name=rtsi()->runtimeVariablesOnStack[i].name;
       run_tmp[i].mangled_name =rtsi()->runtimeVariablesOnStack[i].mangled_name;
@@ -230,17 +233,21 @@ RuntimeSystem_increaseSizeRuntimeVariables() {
   struct RuntimeVariablesType* run_tmp = (struct RuntimeVariablesType*)malloc(sizeof(struct RuntimeVariablesType)*(rtsi()->maxRuntimeVariablesEndIndex));
   if (run_tmp) {
     int i=0;
+#if 0
     for ( i=0;i<rtsi()->maxRuntimeVariablesEndIndex;i++) {
       run_tmp[i].name=(char*)malloc(sizeof(char*));
       run_tmp[i].mangled_name =(char*)malloc(sizeof(char*));
       run_tmp[i].type =(char*)malloc(sizeof(char*));
-      run_tmp[i].initialized =(char*)malloc(sizeof(char*));
+      run_tmp[i].initialized =(int)malloc(sizeof(int));
+      run_tmp[i].fileOpen =(char*)malloc(sizeof(char*));
     }
+#endif
     for ( i=0;i<rtsi()->runtimeVariablesEndIndex;i++) {
       run_tmp[i].name=rtsi()->runtimeVariables[i].name;
       run_tmp[i].mangled_name =rtsi()->runtimeVariables[i].mangled_name;
       run_tmp[i].type =rtsi()->runtimeVariables[i].type;
       run_tmp[i].initialized =rtsi()->runtimeVariables[i].initialized;
+      run_tmp[i].fileOpen =rtsi()->runtimeVariables[i].fileOpen;
     }
     free( rtsi()->runtimeVariables);
     rtsi()->runtimeVariables=run_tmp;
@@ -506,7 +513,8 @@ int
 RuntimeSystem_isFileIOFunctionCall(char* name) {
   int interesting=0;//false;
   if ( ( strcmp(name,"fopen")==0 || 
-	 strcmp(name ,"fgetc")==0 
+	 strcmp(name ,"fgetc")==0 ||
+	 strcmp(name ,"fputc")==0 
 	 )) {
     interesting=1;
   }
@@ -836,25 +844,59 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize,
  ********************************************************/
 void 
 RuntimeSystem_handleIOFunctionCall(char* fname,char** args, 
-				   int argsSize, char* filename, char* line, char* stmtStr, char* leftHandSideVar) {
+				   int argsSize, char* filename, char* line, 
+				   char* stmtStr, char* leftHandSideVar) {
   assert(argsSize>=1);
   // parameter 1
   int parameters=RuntimeSystem_getParamtersForFuncCall(fname);
   if  (strcmp(fname,"fopen")==0) { 
     // need 4 parameters, var, size, var, size
-    assert(argsSize>=5);
+    assert(argsSize>=4);
     // we need to mark the variable with fopen that it is open for read/write
-    char* var = args[0];
-    char* param1 = args[1];
-    char* param1Length = args[2];
-    char* param2 = args[3];
-    char* param2Length = args[4];
+    char* file = args[0];
+    char* fileLength = args[1];
+    char* readwrite = args[2];
+    char* readwriteLength = args[3];
+    if(!leftHandSideVar) assert(0==1);
+    struct RuntimeVariablesType* rvar = RuntimeSystem_findVariables(leftHandSideVar);
+    if (leftHandSideVar) {
+      printf("Making sure that the var %s is set to %s \n",leftHandSideVar,readwrite);
+      rvar->fileOpen=readwrite;
+    } else {
+      printf("This must be an error, The variable %s in fopen should be available.\n",leftHandSideVar);
+      exit(1);
+    }
   }
-  if  (strcmp(fname,"fgetc")==0) { 
+  else if  (strcmp(fname,"fgetc")==0 ) {
     // only one parameter
     assert(argsSize==1);
     char* var = args[0];
-    //char* param1 = args[1];
+    // check if the variable used : fgetc(var) is a pointer to a file
+    // that has been opened already, i.e. is file open?
+    struct RuntimeVariablesType* rvar = RuntimeSystem_findVariables(var);
+    if (var)
+      printf("RuntimeSystem : RuntimeSystem_handleIOFunctionCall : found Variable %s (%s)  fileOpen? %s \n",
+	     var, rvar->name, rvar->fileOpen);
+    if (strcmp(rvar->fileOpen,"no")==0) {
+      // the file is not open, we cant read/write
+      RuntimeSystem_callExit(filename, line, "File not open. Can't read/write to file.", stmtStr);      
+    }
+  }
+  else if  (strcmp(fname,"fputc")==0 ) {
+    // only one parameter
+    assert(argsSize==2);
+    char* filestream = args[0];
+    char* var = args[1];
+    // check if the variable used : fgetc(var) is a pointer to a file
+    // that has been opened already, i.e. is file open?
+    struct RuntimeVariablesType* rvar = RuntimeSystem_findVariables(var);
+    if (var)
+      printf("RuntimeSystem : RuntimeSystem_handleIOFunctionCall : found Variable %s (%s)  fileOpen? %s \n",
+	     var, rvar->name, rvar->fileOpen);
+    if (strcmp(rvar->fileOpen,"no")==0) {
+      // the file is not open, we cant read/write
+      RuntimeSystem_callExit(filename, line, "File not open. Can't read/write to file.", stmtStr);      
+    }
   }
 
 
@@ -953,10 +995,13 @@ RuntimeSystem_roseCallStack(char* name, char* mangl_name,
   // before we add a variable to the stack we want to make sure that all
   // variables for that function are initialized!
   // find the variable and make sure it is initialized
-  char* initialized = RuntimeSystem_findVariables(mangl_name);
-  printf("Checking if %s is initialized: %s.\n",name,initialized);
-  if (strcmp(initialized,"false")==0) {
-    RuntimeSystem_callExit(filename, line, (char*)"Variable is not initialized:", name);	  
+  struct RuntimeVariablesType* rvar = RuntimeSystem_findVariables(mangl_name);
+  int initialized = rvar->initialized;
+  printf("Checking if %s is initialized: %d.\n",name,initialized);
+  if (initialized==0) {
+    // lets not trigger this error right now
+    // fixme
+    //RuntimeSystem_callExit(filename, line, (char*)"Variable is not initialized:", name);	  
   } else 
     printf("Variable is initialized.\n");
   
@@ -995,7 +1040,8 @@ RuntimeSystem_roseCallStack(char* name, char* mangl_name,
 void RuntimeSystem_roseCreateVariable(char* name,
 				      char* mangled_name,
 				      char* type, 
-				      char* init) {
+				      int init,
+				      char* fOpen) {
   if (rtsi()->runtimeVariablesEndIndex>=rtsi()->maxRuntimeVariablesEndIndex) {
     //increase the size of the array
     RuntimeSystem_increaseSizeRuntimeVariables();
@@ -1004,27 +1050,33 @@ void RuntimeSystem_roseCreateVariable(char* name,
   rtsi()->runtimeVariables[rtsi()->runtimeVariablesEndIndex].mangled_name=mangled_name;
   rtsi()->runtimeVariables[rtsi()->runtimeVariablesEndIndex].type=type;
   rtsi()->runtimeVariables[rtsi()->runtimeVariablesEndIndex].initialized=init;
+  rtsi()->runtimeVariables[rtsi()->runtimeVariablesEndIndex].fileOpen=fOpen;
   rtsi()->runtimeVariablesEndIndex++;
-  printf("You have just created a run-time variable\n");
-
+  printf("You have just created a run-time variable:\n");
+  printf("  name: %s \n", name);
+  printf("  mangl_name: %s \n",mangled_name);
+  printf("  type: %s \n",type);
+  printf("  initialized: %d \n",init);
+  printf("  fileOpen: %s \n",fOpen);
 }
 
 /*********************************************************
  * For a given variable name, check if it is present
- * in the pool of variables created and return mangled_name
+ * in the pool of variables created and return variable
  ********************************************************/
-char*
+struct RuntimeVariablesType*
 RuntimeSystem_findVariables(char* mangled_name) {
-  char* initialized = 0;
+  struct RuntimeVariablesType* var;
   int i=0;
   for ( i=0;i<rtsi()->runtimeVariablesEndIndex;i++) {
     char* n =rtsi()->runtimeVariables[i].mangled_name;
-    if (*mangled_name==*n) {
-      initialized =rtsi()->runtimeVariables[i].initialized;
+    if (strcmp(mangled_name,n)==0) {
+      var =&(rtsi()->runtimeVariables[i]);
+      //printf("var : %s   (%s == %s) \n",var, mangled_name, n );
       break;
     }
   }
-  return initialized;
+  return var;
 }
 
 /*********************************************************
@@ -1038,7 +1090,8 @@ RuntimeSystem_roseInitVariable(char* mangled_name) {
     char* n =rtsi()->runtimeVariables[i].mangled_name;
     if (*mangled_name==*n) {
       // create init on heap
-      char* init = (char*)"true";
+      //char* init = (char*)"true";
+      int init = 1; //true;
       rtsi()->runtimeVariables[i].initialized=init;
       printf("Marking variable: %s as initialized. \n",mangled_name);
       break;

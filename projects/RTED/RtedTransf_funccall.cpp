@@ -75,7 +75,8 @@ bool
 RtedTransformation::isFileIOFunctionCall(std::string name) {
   bool interesting=false;
   if (name=="fopen" ||
-      name=="fgetc"
+      name=="fgetc" ||
+      name=="fputc"
       )
     interesting=true;
   return interesting;
@@ -432,7 +433,7 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
       if (varOnLeft) {
 	// need to get the mangled_name of the varRefExp on left hand side
 	// fixme
-	varOnLeft = buildString(varOnLeft->unparseToString());
+	varOnLeft = buildString(getMangledNameOfExpression(varOnLeft));
       } else {
 	varOnLeft = buildString("NoAssignmentVar");
       }

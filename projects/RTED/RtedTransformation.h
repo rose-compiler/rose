@@ -53,6 +53,7 @@ class RtedTransformation : public AstSimpleProcessing {
   // insert: RuntimeSystem* runtimeSystem = new RuntimeSystem();
   void insertRuntimeSystemClass();
   SgExpression* buildString(std::string name);
+  std::string getMangledNameOfExpression(SgExpression* expr);
 
 
 

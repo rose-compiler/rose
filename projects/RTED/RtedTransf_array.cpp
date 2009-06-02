@@ -951,15 +951,17 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName
       SgExpression* callNameExp = buildString(name);
       SgExpression* typeName = buildString(initName->get_type()->unparseToString());
       SgInitializer* initializer = initName->get_initializer();
+      SgExpression* fileOpen = buildString("no");
       bool initb = false;
       if (initializer) initb=true;
-      SgExpression* initBool = buildString("false");
+      SgExpression* initBool = buildIntVal(0);
       if (initb)
-	initBool = buildString("true");
+	initBool = buildIntVal(1);
       appendExpression(arg_list, callName);
       appendExpression(arg_list, callNameExp);
       appendExpression(arg_list, typeName);
       appendExpression(arg_list, initBool);
+      appendExpression(arg_list, fileOpen);
 
       ROSE_ASSERT(roseCreateVariable);
       string symbolName2 = roseCreateVariable->get_name().str();
