@@ -1,3 +1,60 @@
+2009-06-03 18:17  matzke
+
+	* [r6032] /trunk/ROSE/Makefile.am: Improved testing for <rose.h>
+	  
+	  If your build directory is located somewhere under the source
+	  directory
+	  then the detect_roseh and detect_rosec rules in the top-level
+	  makefile
+	  fail (except on a fresh build) because the process of building
+	  ROSE
+	  creates some source files that violate this very rule.
+	  
+	  A simple fix is to just not search directories that look like
+	  build
+	  directories. This also speeds up the test substantially when you
+	  have
+	  lots build directories under the source tree.
+
+2009-06-03 18:17  matzke
+
+	* [r6031] /trunk/ROSE/src/ROSETTA/Grammar/Support.code: Fixed
+	  another --with-javaport bug
+	  
+	  swig needs definitions for all function prototypes. However, the
+	  definition for get_graph_id() is not part of ROSE. Definitions
+	  are in:
+	  developersScratchSpace/Dan/RoseExample_tests/trial_Cxx_Grammar.C
+	  tests/CompileTests/RoseExample_tests/trial_Cxx_Grammar.C
+	  
+	  This fixes a bug introduced by r5684 on 2009-05-08.
+
+2009-06-03 15:13  matzke
+
+	* [r6029]
+	  /trunk/ROSE/src/frontend/Disassemblers/detectFunctionStarts.C:
+	  Added support for PE symbol tables in fucntion marking
+	  
+	  The mark_func_symbols() uses the PE (COFF) symbol table in
+	  addition to
+	  ELF symbol tables when deciding what instructions are the
+	  beginnings of
+	  functions.
+
+2009-06-03 15:13  matzke
+
+	* [r6028]
+	  /trunk/ROSE/src/frontend/Disassemblers/detectFunctionStarts.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/x86Disassembler.C: Fixed a
+	  couple compiler warnings
+
+2009-06-03 14:38  matzke
+
+	* [r6027] /trunk/ROSE/src/ROSETTA/Grammar/Common.code: Fixed java
+	  bug
+	  
+	  Partial revert of r5427 from 2009-04-21
+
 2009-06-02 22:25  panas2
 
 	* [r6020] /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
