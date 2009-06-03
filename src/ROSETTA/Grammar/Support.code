@@ -181,10 +181,6 @@ HEADER_GRAPH_START
   // std::vector <BoostEdgeDescriptor> generateSpanningTree();
      std::vector <SgGraphEdge*> generateSpanningTree();
 
-  // DQ (4/29/2009): Added as interface function (just calls the get_index() member function).
-     int get_graph_id() const;
-
-     
      // tps (4/30/2009): Added properties for nodes and edges
      // todo: this will be replaced with AstAttributes once the graph conversion is done.
    	  std::string getProperty(SgGraph::GraphProperties property, SgGraphNode* node);
