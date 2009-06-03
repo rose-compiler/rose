@@ -103,11 +103,17 @@ AC_ARG_WITH(boost_compiler_string,
 #-----------------------------------
 if pl --version |grep -q SWI-Prolog; then 
    PL=pl    # Linux
-else 
-   PL=swipl # OS X
+elif xpce --version |grep -q SWI-Prolog; then
+   PL=xpce  # Ubuntu (with GUI support, PCE profiling library)
+elif swipl --version |grep -q SWI-Prolog; then
+   PL=swipl # OS X, Ubuntu (without GUI or PCE)
+elif prolog --version |grep -q SWI-Prolog; then
+   PL=prolog  # Ubuntu (without GUI or PCE)
 fi
 PLBASE=`$PL --dump-runtime-variables |grep PLBASE |sed 's/"/ /g' |awk '{print $2}'`
 PLARCH=`$PL --dump-runtime-variables |grep PLARCH |sed 's/"/ /g' |awk '{print $2}'`
+PLLIBS=`$PL --dump-runtime-variables |grep PLLIBS |sed 's/"/ /g' |awk -F= '{print $2}' |sed 's/;//g'`
+PLCFLAGS=`$PL --dump-runtime-variables |grep PLCFLAGS |sed 's/"/ /g' |awk '{print $2}'`
 PLLIB="$PLBASE/lib/$PLARCH"
 AC_ARG_WITH([swi-prolog],
             [AS_HELP_STRING([--with-swi-prolog],
@@ -123,12 +129,14 @@ AS_IF([test "x$with_swi_prolog" != xno],
                      else
 		       with_swi_prolog=no
                      fi],
-                    [-L$PLLIB])],
+                    [$PLCFLAGS $PLLIBS -L$PLLIB])],
       [with_swi_prolog=no])
 
 AS_IF([test "x$with_swi_prolog" = xyes],
       [AC_SUBST([SWI_PL], ["$PL"])
+       AC_SUBST([SWI_PROLOG_LIBS], ["$PLLIBS"])
        AC_SUBST([SWI_PROLOG_LDADD], ["-Wl,-rpath $PLLIB -L$PLLIB -lpl"])
+       AC_SUBST([SWI_PROLOG_HOME_DIR], ["$PLBASE"])
        AC_SUBST([SWI_PROLOG_INCLUDE_DIR], ["$PLBASE/include"])
        AC_DEFINE([HAVE_SWI_PROLOG], [1], [Define if you have SWI Prolog])
        AC_MSG_RESULT([Termite will be built with SWI-Prolog support.])

@@ -61,8 +61,9 @@ CLEANFILES = termpretty.c++ \
              dfiparser.tab.c++ dfiparser.tab.h++
 
 if WITH_SWI_PROLOG
+CXXFLAGS += -DSWI_HOME_DIR='"$(SWI_PROLOG_HOME_DIR)"'
 INCLUDES += -I$(SWI_PROLOG_INCLUDE_DIR) 
-ROSELDFLAGS += $(SWI_PROLOG_LDADD)
+ROSELDFLAGS += $(SWI_PROLOG_LIBS) $(SWI_PROLOG_LDADD)
 nobase_dist_data_DATA =  termite/ast_properties.pl  termite/loops.pl \
                          termite/ast_transform.pl   termite/utils.pl \
                          termite/ast_walk.pl        termite/callgraph.pl 

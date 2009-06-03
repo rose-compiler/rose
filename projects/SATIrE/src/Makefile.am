@@ -58,7 +58,7 @@ if WITH_PAG
 satire_driver_LDADD += -lpag
 endif
 if WITH_SWI_PROLOG
-satire_driver_LDADD += $(SWI_PROLOG_LDADD)
+satire_driver_LDADD += $(SWI_PROLOG_LIBS) $(SWI_PROLOG_LDADD)
 endif
 satire_driver_LDFLAGS = \
     -L$(ROSE_LIB_DIR) -Wl,-rpath $(ROSE_LIB_DIR) \

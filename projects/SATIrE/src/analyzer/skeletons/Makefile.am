@@ -21,6 +21,7 @@ do_subst= sed -e 's,[@]pkgdatadir[@],$(pkgdatadir),g' \
               -e 's,[@]boostinclude[@],$(BOOST_INCLUDE_DIR),g' \
               -e 's,[@]boostlib[@],$(BOOST_LIB_DIR),g' \
 	      -e 's,[@]plinclude[@],$(SWI_PROLOG_INCLUDE_DIR),g' \
+              -e 's|[@]pllibs[@]|$(SWI_PROLOG_LIBS)|g' \
               -e 's|[@]plldadd[@]|$(SWI_PROLOG_LDADD)|g' \
               -e 's,[@]satireinclude[@],$(pkgincludedir),g' \
               -e 's,[@]satirelib[@],$(libdir),g' \

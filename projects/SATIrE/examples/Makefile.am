@@ -118,6 +118,9 @@ init.token:
 # the freshly copied TEST0.c has the permissions of the original file, which
 # is read-only in distcheck mode
 	chmod u+w $(testdir)/TEST0.c
+# some test cases need header files...
+	find `dirname $<` -name '*.h' -exec cp '{}' $(testdir) ';'
+	find $(testdir) -name '*.h' -exec chmod u+w '{}' ';'
 
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/c2term -I$(shell dirname $<) TEST0.c  TEST1.pl
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2c TEST1.pl -o TEST2.c
