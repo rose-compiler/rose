@@ -144,29 +144,32 @@ mark_func_symbols(SgAsmInterpretation *interp,
                   FunctionStarts &func_starts)
 {
     SgAsmGenericHeader *fhdr = interp->get_header();
-
-    /* FIXME [RPM 2009-01-16] */
-    static bool reported=false;
-    if (!isSgAsmElfFileHeader(fhdr) && !reported) {
-        fprintf(stderr, "%s:%u: we only handle ELF symbol tables at this time.\n", __FILE__, __LINE__);
-        reported = true;
-    }
-
     SgAsmGenericSectionList *sections = fhdr->get_sections();
     for (size_t i=0; i<sections->get_sections().size(); i++) {
-        SgAsmElfSymbolSection *symsec = isSgAsmElfSymbolSection(sections->get_sections()[i]);
-        if (symsec!=NULL) {
-            SgAsmElfSymbolList *symbols = symsec->get_symbols();
-            for (size_t j=0; j<symbols->get_symbols().size(); j++) {
-                SgAsmGenericSymbol *symbol = symbols->get_symbols()[j];
-                if (symbol->get_def_state()==SgAsmGenericSymbol::SYM_DEFINED &&
-                    symbol->get_type()==SgAsmGenericSymbol::SYM_FUNC &&
-                    insns.find(symbol->get_value())!=insns.end()) {
-                    rose_addr_t value = symbol->get_value();
-                    func_starts[value].reason |= SgAsmFunctionDeclaration::FUNC_SYMBOL;
-                    if (func_starts[value].name=="")
-                        func_starts[value].name = symbol->get_name()->get_string();
-                }
+
+        /* If this is a symbol table of some sort, then get the list of symbols. */
+        std::vector<SgAsmGenericSymbol*> symbols;
+        if (isSgAsmElfSymbolSection(sections->get_sections()[i])) {
+            SgAsmElfSymbolList *elf_symbols = isSgAsmElfSymbolSection(sections->get_sections()[i])->get_symbols();
+            for (size_t j=0; j<elf_symbols->get_symbols().size(); j++) {
+                symbols.push_back(elf_symbols->get_symbols()[j]);
+            }
+        } else if (isSgAsmCoffSymbolTable(sections->get_sections()[i])) {
+            SgAsmCoffSymbolList *coff_symbols = isSgAsmCoffSymbolTable(sections->get_sections()[i])->get_symbols();
+            for (size_t j=0; j<coff_symbols->get_symbols().size(); j++) {
+                symbols.push_back(coff_symbols->get_symbols()[j]);
+            }
+        }
+
+        for (size_t j=0; j<symbols.size(); j++) {
+            SgAsmGenericSymbol *symbol = symbols[j];
+            if (symbol->get_def_state()==SgAsmGenericSymbol::SYM_DEFINED &&
+                symbol->get_type()==SgAsmGenericSymbol::SYM_FUNC &&
+                insns.find(symbol->get_value())!=insns.end()) {
+                rose_addr_t value = symbol->get_value();
+                func_starts[value].reason |= SgAsmFunctionDeclaration::FUNC_SYMBOL;
+                if (func_starts[value].name=="")
+                    func_starts[value].name = symbol->get_name()->get_string();
             }
         }
     }
