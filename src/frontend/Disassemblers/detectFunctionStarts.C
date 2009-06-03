@@ -100,7 +100,6 @@ mark_call_targets(SgAsmInterpretation *interp,
         }
 
         if (insn && (x86_call==insn->get_kind() || x86_farcall==insn->get_kind())) {
-            bool needs_reloc=false;             /*does relocation appear to be necessary?*/
             rose_addr_t callee_rva = 0;
             if (x86GetKnownBranchTarget(insn, callee_rva/*out*/) &&
                 insns.find(callee_rva)!=insns.end()) {

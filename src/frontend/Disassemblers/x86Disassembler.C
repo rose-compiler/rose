@@ -183,8 +183,8 @@ namespace X86Disassembler {
     bool branchPredictionEnabled;
     bool rexPresent, rexW, rexR, rexX, rexB;
     bool sizeMustBe64Bit;
-    bool operandSizeOverride;           /* set only when we see the 0x66 instruction prefix */
     bool addressSizeOverride;           /* set only when we see the 0x67 instruction prefix */
+    bool operandSizeOverride;           /* set only when we see the 0x66 instruction prefix */
     bool lock;
     RepeatPrefix repeatPrefix;
     bool modregrmByteSet;
