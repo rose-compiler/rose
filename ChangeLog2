@@ -1,3 +1,23 @@
+2009-06-03 23:40  liao6
+
+	* [r6035] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/src/ROSETTA/src/grammar.C,
+	  /trunk/ROSE/src/ROSETTA/src/statement.C,
+	  /trunk/ROSE/src/backend/unparser/CxxCodeGeneration/unparseCxx.h,
+	  /trunk/ROSE/src/backend/unparser/CxxCodeGeneration/unparseCxx_statements.C,
+	  /trunk/ROSE/src/frontend/SageIII/OmpAttribute.C,
+	  /trunk/ROSE/src/frontend/SageIII/OmpAttribute.h,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/ompfor.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/parallelfor.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/parallelfor2.c,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/parallelsections.c:
+	  Added AST building and unparsing support for OpenMP C/C++ code
+	  using the newly introduced SgOmp* nodes
+	  
+	  * combined directives are split before AST building
+
 2009-06-03 18:17  matzke
 
 	* [r6032] /trunk/ROSE/Makefile.am: Improved testing for <rose.h>
