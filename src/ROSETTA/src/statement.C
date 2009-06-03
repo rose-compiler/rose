@@ -200,13 +200,13 @@ Grammar::setUpStatements ()
     NEW_TERMINAL_MACRO (OmpTaskStatement,      "OmpTaskStatement",       "OMP_TASK_STMT" );
     NEW_TERMINAL_MACRO (OmpForStatement,       "OmpForStatement",        "OMP_FOR_STMT" );
     NEW_TERMINAL_MACRO (OmpDoStatement,        "OmpDoStatement",         "OMP_DO_STMT" );
-
+    NEW_TERMINAL_MACRO (OmpSectionsStatement,  "OmpSectionsStatement",   "OMP_SECTIONS_STMT" );
 
     // A base class for the most commonly formed directives with both clauses and a structured body
     // We treat OmpSectionsStatement separatedly by move the body to a list of SgOmpSectionStatement
     // sensitive to 
     NEW_NONTERMINAL_MACRO (OmpClauseBodyStatement,  OmpParallelStatement | OmpSingleStatement |
-	      OmpTaskStatement| OmpForStatement| OmpDoStatement	,
+	      OmpTaskStatement| OmpForStatement| OmpDoStatement	| OmpSectionsStatement ,
 	"OmpClauseBodyStatement",   "OMP_CLAUSEBODY_STMT", false );
 
     // + a statement / block 
@@ -375,8 +375,6 @@ Grammar::setUpStatements ()
     NEW_TERMINAL_MACRO (OmpBarrierStatement,   "OmpBarrierStatement",   "OMP_BARRIER_STMT" );
     NEW_TERMINAL_MACRO (OmpTaskwaitStatement,  "OmpTaskwaitStatement",  "OMP_TASKWAIT_STMT" );
 
-    // special handling for sections 
-    NEW_TERMINAL_MACRO (OmpSectionsStatement,  "OmpSectionsStatement",   "OMP_SECTIONS_STMT" );
 
     // + variable list
     NEW_TERMINAL_MACRO (OmpThreadprivateStatement, "OmpThreadprivateStatement",    "OMP_THREADPRIVATE_STMT" );
@@ -408,7 +406,7 @@ Grammar::setUpStatements ()
              WhereStatement       | ElseWhereStatement     | NullifyStatement                | ArithmeticIfStatement |
              AssignStatement      | ComputedGotoStatement  | AssignedGotoStatement           |
           /* FortranDo            | */ AllocateStatement   | DeallocateStatement             | UpcNotifyStatement    | 
-             UpcWaitStatement     | UpcBarrierStatement    | UpcFenceStatement               | OmpSectionsStatement  |
+             UpcWaitStatement     | UpcBarrierStatement    | UpcFenceStatement               | 
              OmpBarrierStatement    |  OmpTaskwaitStatement |  OmpFlushStatement             | OmpBodyStatement      |
              SequenceStatement,
 			    "Statement","StatementTag", false);
@@ -2992,10 +2990,10 @@ Grammar::setUpStatements ()
 
    // sections {section, section} // `containerSuccessors >1 is not allowed in ROSETTA's traversal
    // We hack the code to handle this special case
-    OmpSectionsStatement.setDataPrototype("SgOmpSectionStatementPtrList", "sections", "",
-    	                              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-    OmpSectionsStatement.setDataPrototype("SgOmpClausePtrList", "clauses", "",
-                              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+//    OmpSectionsStatement.setDataPrototype("SgOmpSectionStatementPtrList", "sections", "",
+//    	                              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+//    OmpSectionsStatement.setDataPrototype("SgOmpClausePtrList", "clauses", "",
+//         NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
     // direcitves with variable lists
 	    // omp flush [(var-list)]   
     OmpFlushStatement.setDataPrototype( "SgInitializedNamePtrList", "variables", "",

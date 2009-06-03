@@ -7270,6 +7270,8 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
    }
 #endif
 // TODO move the following OpenMP processing code into a separated source file
+// maybe in src/midend/openmpSupport ?
+// -----------------------------------------------------------------------------
 
 // an internal data structure to avoid redundant AST traversal to find OpenMP pragmas
 static std::list<SgPragmaDeclaration* > omp_pragma_list; 
@@ -7335,28 +7337,421 @@ void attachOmpAttributeInfo(SgSourceFile *sageFilePtr)
 }
 // Clause node builders
 //----------------------------------------------------------
-// Build SgOmpClause from OmpAttribute for type c_clause_type
-SgOmpClause* buildOmpClause(OmpAttribute* att, omp_construct_enum c_clause_type)
+
+//! Build SgOmpDefaultClause from OmpAttribute, if any
+SgOmpDefaultClause * buildOmpDefaultClause(OmpAttribute* att)
+{
+   ROSE_ASSERT(att != NULL);
+   if (!att->hasClause(e_default))
+     return NULL;
+   //grab default option  
+   omp_construct_enum dv = att->getDefaultValue();
+   SgOmpClause::omp_default_option_enum sg_dv;
+   switch (dv)
+   {
+     case e_default_none:
+      sg_dv = SgOmpClause::e_omp_default_none;
+      break;
+     case e_default_shared:
+      sg_dv = SgOmpClause::e_omp_default_shared;
+      break;
+     case e_default_private:
+      sg_dv = SgOmpClause::e_omp_default_private;
+      break;
+     case e_default_firstprivate:
+      sg_dv = SgOmpClause::e_omp_default_firstprivate;
+      break;
+    default:
+      {
+        cerr<<"error: buildOmpDefaultClase() Unacceptable default option from OmpAttribute:"
+          <<OmpSupport::toString(dv)<<endl;
+       ROSE_ASSERT(false) ;  
+      }
+   }//end switch
+   SgOmpDefaultClause* result = new SgOmpDefaultClause(sg_dv);
+   setOneSourcePositionForTransformation(result);
+   ROSE_ASSERT(result);
+   return result;
+}
+
+//Build if clause
+SgOmpExpressionClause* buildOmpExpressionClause(OmpAttribute* att, omp_construct_enum clause_type)
+{
+  ROSE_ASSERT(att != NULL);
+  if (!att->hasClause(clause_type)) 
+    return NULL;
+  SgOmpExpressionClause * result = NULL ;   
+  switch (clause_type)
+  {
+    case e_collapse:
+      {
+        ROSE_ASSERT(att->getExpression(e_collapse).second!=NULL);
+
+        result = new SgOmpCollapseClause(att->getExpression(e_collapse).second);
+        break;
+      }
+    case e_if:
+      {
+        ROSE_ASSERT(att->getExpression(e_if).second!=NULL);
+        result = new SgOmpIfClause(att->getExpression(e_if).second);
+        break;
+      }
+    case e_num_threads:
+      {
+        ROSE_ASSERT(att->getExpression(e_num_threads).second!=NULL);
+        result = new SgOmpNumThreadsClause(att->getExpression(e_num_threads).second);
+        break;
+      }
+    default:
+      {
+        printf("error in buildOmpExpressionClause(): unacceptable clause type:%s\n",
+            OmpSupport::toString(clause_type).c_str());
+        ROSE_ASSERT(false);
+      }
+  }
+
+  ROSE_ASSERT(result != NULL);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgOmpNowaitClause * buildOmpNowaitClause(OmpAttribute* att)
+{
+  ROSE_ASSERT(att != NULL);
+  if (!att->hasClause(e_nowait))
+    return NULL;
+  SgOmpNowaitClause* result = new SgOmpNowaitClause();
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+SgOmpOrderedClause * buildOmpOrderedClause(OmpAttribute* att)
+{
+  ROSE_ASSERT(att != NULL);
+  if (!att->hasClause(e_ordered_clause))
+    return NULL;
+  SgOmpOrderedClause* result = new SgOmpOrderedClause();
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgOmpUntiedClause * buildOmpUntiedClause(OmpAttribute* att)
+{
+  ROSE_ASSERT(att != NULL);
+  if (!att->hasClause(e_untied))
+    return NULL;
+  SgOmpUntiedClause* result = new SgOmpUntiedClause();
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+//Build SgOmpScheduleClause from OmpAttribute, if any
+SgOmpScheduleClause* buildOmpScheduleClause(OmpAttribute* att)
+{
+  ROSE_ASSERT(att != NULL);
+  if (!att->hasClause(e_schedule))
+    return NULL;
+  // convert OmpAttribute schedule kind to SgOmpClause schedule kind
+  omp_construct_enum oa_kind = att->getScheduleKind();
+  SgOmpClause::omp_schedule_kind_enum sg_kind;
+  switch (oa_kind)
+  {
+    case   e_schedule_static:
+      sg_kind = SgOmpClause::e_omp_schedule_static;
+      break;
+    case   e_schedule_dynamic:
+      sg_kind = SgOmpClause::e_omp_schedule_dynamic;
+      break;
+    case   e_schedule_guided:
+      sg_kind = SgOmpClause::e_omp_schedule_guided;
+      break;
+    case   e_schedule_auto:
+      sg_kind = SgOmpClause::e_omp_schedule_auto;
+      break;
+    case   e_schedule_runtime:
+      sg_kind = SgOmpClause::e_omp_schedule_runtime;
+      break;
+    default:
+      {
+        cerr<<"error: buildOmpScheduleClause() Unacceptable schedule kind from OmpAttribute:"
+          <<OmpSupport::toString(oa_kind)<<endl;
+        ROSE_ASSERT(false) ;  
+      }
+  }
+  SgExpression* chunksize_exp = att->getExpression(e_schedule).second;
+ // ROSE_ASSERT(chunksize_exp != NULL); // chunk size is optional
+  // finally build the node
+  SgOmpScheduleClause* result = new SgOmpScheduleClause(sg_kind, chunksize_exp);
+//  setOneSourcePositionForTransformation(result);
+  ROSE_ASSERT(result != NULL);
+  return  result;
+}
+
+//! A helper function to convert OmpAttribute reduction operator to SgClause reduction operator
+//TODO move to sageInterface?
+static   SgOmpClause::omp_reduction_operator_enum toSgOmpClauseReductionOperator(omp_construct_enum at_op)
+{
+  SgOmpClause::omp_reduction_operator_enum result = SgOmpClause::e_omp_reduction_unkown;
+  switch (at_op)
+  {
+    case e_reduction_plus: //+
+      {
+        result = SgOmpClause::e_omp_reduction_plus;
+        break;
+      }
+    case e_reduction_mul:  //*
+       {
+        result = SgOmpClause::e_omp_reduction_mul;
+        break;
+      }
+   case e_reduction_minus: // -
+       {
+        result = SgOmpClause::e_omp_reduction_minus;
+        break;
+      }
+     // C/C++ only
+    case e_reduction_bitand: // &
+       {
+        result = SgOmpClause::e_omp_reduction_bitand;
+        break;
+      }
+   case e_reduction_bitor:  // |
+       {
+        result = SgOmpClause::e_omp_reduction_bitor;
+        break;
+      }
+   case e_reduction_bitxor:  // ^
+       {
+        result = SgOmpClause::e_omp_reduction_bitxor;
+        break;
+      }
+   case e_reduction_logand:  // &&
+       {
+        result = SgOmpClause::e_omp_reduction_logand;
+        break;
+      }
+   case e_reduction_logor:   // ||
+      {
+        result = SgOmpClause::e_omp_reduction_logor;
+        break;
+      }
+
+      // fortran operator
+    case e_reduction_and: // .and.
+       {
+        result = SgOmpClause::e_omp_reduction_and;
+        break;
+      }
+   case e_reduction_or: // .or.
+       {
+        result = SgOmpClause::e_omp_reduction_or;
+        break;
+      }
+   case e_reduction_eqv:   // fortran .eqv.
+       {
+        result = SgOmpClause::e_omp_reduction_eqv;
+        break;
+      }
+   case e_reduction_neqv:   // fortran .neqv.
+      // reduction intrinsic procedure name for Fortran
+       {
+        result = SgOmpClause::e_omp_reduction_neqv;
+        break;
+      }
+   case e_reduction_max:
+       {
+        result = SgOmpClause::e_omp_reduction_max;
+        break;
+      }
+   case e_reduction_min:
+       {
+        result = SgOmpClause::e_omp_reduction_min;
+        break;
+      }
+   case e_reduction_iand:
+       {
+        result = SgOmpClause::e_omp_reduction_iand;
+        break;
+      }
+   case e_reduction_ior:
+       {
+        result = SgOmpClause::e_omp_reduction_ior;
+        break;
+      }
+   case e_reduction_ieor:
+      {
+        result = SgOmpClause::e_omp_reduction_ieor;
+        break;
+      }
+    default:
+      {
+        printf("error: unacceptable omp construct enum for reduction operator conversion:%s\n", OmpSupport::toString(at_op).c_str());
+        ROSE_ASSERT(false);
+        break;
+      }
+  }
+  ROSE_ASSERT(result != SgOmpClause::e_omp_reduction_unkown);
+  return result;
+}
+//A helper function to set SgInitializedNamePtrList  from OmpAttribute's construct-varlist map
+static void setClauseVariableList(SgOmpVariablesClause* target, OmpAttribute* att, omp_construct_enum key)
+{
+  ROSE_ASSERT(target&&att);
+  // build variable list
+  std::vector<std::pair<std::string,SgNode* > > varlist = att->getVariableList(key);
+  ROSE_ASSERT(varlist.size()!=0);
+  std::vector<std::pair<std::string,SgNode* > >::iterator iter;
+  for (iter = varlist.begin(); iter!= varlist.end(); iter ++)
+  {
+    SgInitializedName* iname = isSgInitializedName((*iter).second);
+    ROSE_ASSERT(iname !=NULL);
+    target->get_variables().push_back(iname);
+  }
+}
+
+//! Try to build a reduction clause with a given operation type from OmpAttribute
+SgOmpReductionClause* buildOmpReductionClause(OmpAttribute* att, omp_construct_enum reduction_op)
+{
+  ROSE_ASSERT(att !=NULL);
+  if (!att->hasReductionOperator(reduction_op))
+    return NULL;
+  SgOmpClause::omp_reduction_operator_enum  sg_op = toSgOmpClauseReductionOperator(reduction_op); 
+  SgOmpReductionClause* result = new SgOmpReductionClause(sg_op);
+  setOneSourcePositionForTransformation(result);
+  ROSE_ASSERT(result != NULL);
+
+  // build variable list
+  setClauseVariableList(result, att, reduction_op); 
+  return result;
+}
+
+//Build one of the clauses with a variable list
+SgOmpVariablesClause * buildOmpVariableClause(OmpAttribute* att, omp_construct_enum clause_type)
+{
+  ROSE_ASSERT(att != NULL);
+  if (!att->hasClause(clause_type))
+    return NULL;
+  SgOmpVariablesClause* result = NULL;  
+  switch (clause_type) 
+  {
+    case e_copyin:
+      {
+        result = new SgOmpCopyinClause();
+        break;
+      }
+    case e_copyprivate:
+      {
+        result = new SgOmpCopyprivateClause();
+        break;
+      }
+    case e_firstprivate:
+      {
+        result = new SgOmpFirstprivateClause();
+        break;
+      }
+    case e_lastprivate:
+      {
+        result = new SgOmpLastprivateClause();
+        break;
+      }
+    case e_private:
+      {
+        result = new SgOmpPrivateClause();
+        break;
+      }
+    case e_shared:
+      {
+        result = new SgOmpSharedClause();
+        break;
+      }
+    case e_reduction:
+      {
+        printf("error: buildOmpVariableClause() does not handle reduction\n");
+        ROSE_ASSERT(false);
+      }
+    default:
+      {
+        cerr<<"error: buildOmpVariableClause() Unacceptable clause type:"
+          <<OmpSupport::toString(clause_type)<<endl;
+        ROSE_ASSERT(false) ;  
+      }
+  } //end switch
+
+  //build varlist
+  ROSE_ASSERT(result != NULL);
+  setClauseVariableList(result, att, clause_type);
+  return result;
+}
+
+// Build a single SgOmpClause from OmpAttribute for type c_clause_type, excluding reduction clauses
+SgOmpClause* buildOmpNonReductionClause(OmpAttribute* att, omp_construct_enum c_clause_type)
 {
   SgOmpClause* result = NULL;
   ROSE_ASSERT(att != NULL);
   ROSE_ASSERT(isClause(c_clause_type));
+  if (!att->hasClause(c_clause_type))
+    return NULL;
   switch (c_clause_type) 
   {
-    case e_if:
+    case e_default:
       {
-	result = new SgOmpIfClause(att->getExpression(c_clause_type).second);
-	ROSE_ASSERT(result != NULL);
-	break;
+        result = buildOmpDefaultClause(att); 
+        break;
+      }
+    case e_nowait:
+      {
+        result = buildOmpNowaitClause(att); 
+        break;
+      }
+    case e_ordered_clause:
+      {
+        result = buildOmpOrderedClause(att); 
+        break;
+      }
+   case e_schedule:
+      {
+        result = buildOmpScheduleClause(att);
+        break;
+      }
+   case e_untied:
+      {
+        result = buildOmpUntiedClause(att); 
+        break;
+      }
+    case e_if:
+    case e_collapse:
+    case e_num_threads:
+      {
+        result = buildOmpExpressionClause(att, c_clause_type);
+        break;
+      }
+    case e_copyin:  
+    case e_copyprivate:  
+    case e_firstprivate:  
+    case e_lastprivate:
+    case e_private:
+    case e_shared:
+      {
+        result = buildOmpVariableClause(att, c_clause_type);
+        break;
+      }
+    case e_reduction:
+      {
+        printf("error: buildOmpNonReductionClause() does not handle reduction. Please use buildOmpReductionClause().\n");
+        ROSE_ASSERT(false);
+        break;
       }
     default:
       {
-	printf("Warning: buildOmpClause(): unhandled clause type: %s\n", OmpSupport::toString(c_clause_type).c_str());
-//	ROSE_ASSERT(false);
-	break;
+        printf("Warning: buildOmpNoReductionClause(): unhandled clause type: %s\n", OmpSupport::toString(c_clause_type).c_str());
+        ROSE_ASSERT(false);
+        break;
       }
 
   }
+  ROSE_ASSERT(result != NULL);
   setOneSourcePositionForTransformation(result);
   return result;
 }
@@ -7391,19 +7786,190 @@ SgStatement* getOpenMPBlockFromOmpAttribte (OmpAttribute* att)
   return result;
 }
 
-// Directive statemet builders
-//----------------------------------------------------------
-//! Build a SgOmpParallelStatement node from an OmpAttribute
-SgOmpParallelStatement* buildOmpParallelStatement(OmpAttribute* att)
+//add clauses to target based on OmpAttribute
+static void appendOmpClauses(SgOmpClauseBodyStatement* target, OmpAttribute* att)
 {
-  ROSE_ASSERT(att->getOmpDirectiveType() == e_parallel);
+  ROSE_ASSERT(target && att);
+  // for Omp statements with clauses
+  // must copy those clauses here, since they will be deallocated later on
+  vector<omp_construct_enum> clause_vector = att->getClauses();
+  std::vector<omp_construct_enum>::iterator citer;
+  for (citer = clause_vector.begin(); citer != clause_vector.end(); citer++)
+  {
+    omp_construct_enum c_clause = *citer;
+    if (!isClause(c_clause))
+    {
+      //      printf ("Found a construct which is not a clause:%s\n within attr:%p\n", OmpSupport::toString(c_clause).c_str(), att);
+      ROSE_ASSERT(isClause(c_clause));
+      continue;
+    }
+    else
+    {
+      // printf ("Found a clause construct:%s\n", OmpSupport::toString(c_clause).c_str());
+    }
+    // special handling for reduction
+    if (c_clause == e_reduction) 
+    {
+      std::vector<omp_construct_enum> rops  = att->getReductionOperators();
+      ROSE_ASSERT(rops.size()!=0);
+      std::vector<omp_construct_enum>::iterator iter;
+      for (iter=rops.begin(); iter!=rops.end();iter++)
+      {
+        omp_construct_enum rop = *iter;
+        SgOmpClause* sgclause = buildOmpReductionClause(att, rop);
+        target->get_clauses().push_back(sgclause);
+      }
+    }
+    else 
+    {
+      SgOmpClause* sgclause = buildOmpNonReductionClause(att, c_clause);
+      target->get_clauses().push_back(sgclause);
+    }
+  }
+}
+
+// Directive statement builders
+//----------------------------------------------------------
+//! Build a SgOmpBodyStatement
+// handle body and optional clauses for it
+SgOmpBodyStatement * buildOmpBodyStatement(OmpAttribute* att)
+{
   SgStatement* body = getOpenMPBlockFromOmpAttribte(att);
-  ROSE_ASSERT(body != NULL);
-  SgOmpParallelStatement* result = new SgOmpParallelStatement(NULL, body); 
+  if (body==NULL)
+  {
+    cerr<<"error: buildOmpBodyStatement() found empty body for "<<att->toOpenMPString()<<endl;
+    ROSE_ASSERT(body != NULL);
+  }
+  SgOmpBodyStatement* result = NULL;
+  switch (att->getOmpDirectiveType())
+  {
+    case e_atomic:
+      result = new SgOmpAtomicStatement(NULL, body); 
+      break;
+    case e_critical:
+      result = new SgOmpCriticalStatement(NULL, body, SgName(att->getCriticalName())); 
+      break;
+    case e_master:
+      result = new SgOmpMasterStatement(NULL, body); 
+      break;
+    case e_ordered_directive:
+      result = new SgOmpOrderedStatement(NULL, body); 
+      break;
+    case e_section:
+      result = new SgOmpSectionStatement(NULL, body); 
+      break;
+    case e_parallel:
+      result = new SgOmpParallelStatement(NULL, body); 
+      break;
+    case e_for:  
+      result = new SgOmpForStatement(NULL, body); 
+      break;
+    case e_single:
+      result = new SgOmpSingleStatement(NULL, body); 
+      break;
+   case e_sections:
+      result = new SgOmpSectionsStatement(NULL, body); 
+      break;
+   case e_task:
+      result = new SgOmpTaskStatement(NULL, body); 
+      break;
+    default:
+      {
+        cerr<<"error: unacceptable omp construct for buildOmpBodyStatement():"<<OmpSupport::toString(att->getOmpDirectiveType())<<endl;
+        ROSE_ASSERT(false);
+      }
+  }
   ROSE_ASSERT(result != NULL);
   setOneSourcePositionForTransformation(result);
-  // TODO build clauses
-    // must copy those clauses here, since they will be deallocated later on
+
+  // add clauses for those SgOmpClauseBodyStatement
+  if (isSgOmpClauseBodyStatement(result))
+    appendOmpClauses(isSgOmpClauseBodyStatement(result), att);
+  return result;
+}
+
+SgOmpFlushStatement* buildOmpFlushStatement(OmpAttribute* att)
+{
+  ROSE_ASSERT(att != NULL);
+  SgOmpFlushStatement* result = new SgOmpFlushStatement();
+  ROSE_ASSERT(result !=NULL);
+  setOneSourcePositionForTransformation(result);
+  // build variable list
+  std::vector<std::pair<std::string,SgNode* > > varlist = att->getVariableList(e_flush);
+ // ROSE_ASSERT(varlist.size()!=0); // can have empty variable list
+  std::vector<std::pair<std::string,SgNode* > >::iterator iter;
+  for (iter = varlist.begin(); iter!= varlist.end(); iter ++)
+  {
+    SgInitializedName* iname = isSgInitializedName((*iter).second);
+    ROSE_ASSERT(iname !=NULL);
+    result->get_variables().push_back(iname);
+  }
+  return result;
+}
+
+SgOmpThreadprivateStatement* buildOmpThreadprivateStatement(OmpAttribute* att)
+{
+  ROSE_ASSERT(att != NULL);
+  SgOmpThreadprivateStatement* result = new SgOmpThreadprivateStatement();
+  ROSE_ASSERT(result !=NULL);
+  setOneSourcePositionForTransformation(result);
+  // build variable list
+  std::vector<std::pair<std::string,SgNode* > > varlist = att->getVariableList(e_threadprivate);
+  ROSE_ASSERT(varlist.size()!=0);
+  std::vector<std::pair<std::string,SgNode* > >::iterator iter;
+  for (iter = varlist.begin(); iter!= varlist.end(); iter ++)
+  {
+    SgInitializedName* iname = isSgInitializedName((*iter).second);
+    ROSE_ASSERT(iname !=NULL);
+    result->get_variables().push_back(iname);
+  }
+  return result;
+}
+//! Build nodes for combined OpenMP directives:
+//    parallel for
+//    parallel sections
+//    parallel workshare //TODO fortran later on
+// We don't provide dedicated Sage node for combined directives, 
+// so we separate them in the AST as 1st and 2nd directive statement
+// the first is always parallel and we return it from the function
+SgOmpParallelStatement* buildOmpParallelStatementFromCombinedDirectives(OmpAttribute* att)
+{
+  ROSE_ASSERT(att != NULL);
+  SgStatement* body = getOpenMPBlockFromOmpAttribte(att);
+  ROSE_ASSERT(body != NULL);
+
+  // build the 2nd directive node first
+  SgStatement * second_stmt = NULL; 
+  switch (att->getOmpDirectiveType())  
+  {
+    case e_parallel_for:
+      {
+        second_stmt = new SgOmpForStatement(NULL, body);
+        setOneSourcePositionForTransformation(second_stmt);
+        break;
+      }
+    case e_parallel_sections:
+      {
+        second_stmt = new SgOmpSectionsStatement(NULL, body);
+        setOneSourcePositionForTransformation(second_stmt); 
+        break;
+      }
+      //   case e_parallel_workshare: //TODO fortran
+     default:
+      {
+        cerr<<"error: unacceptable directive type in buildOmpParallelStatementFromCombinedDirectives(): "<<OmpSupport::toString(att->getOmpDirectiveType())<<endl;
+        ROSE_ASSERT(false);
+      }
+  } //end switch
+
+  ROSE_ASSERT(second_stmt);
+
+  // build the 1st directive node then
+  SgOmpParallelStatement* first_stmt = new SgOmpParallelStatement(NULL, second_stmt); 
+  setOneSourcePositionForTransformation(first_stmt);
+
+  // allocate clauses to them, let the 2nd one have higher priority 
+  // if a clause can be allocated to either of them
   vector<omp_construct_enum> clause_vector = att->getClauses();
   std::vector<omp_construct_enum>::iterator citer;
   for (citer = clause_vector.begin(); citer != clause_vector.end(); citer++)
@@ -7412,17 +7978,73 @@ SgOmpParallelStatement* buildOmpParallelStatement(OmpAttribute* att)
     if (!isClause(c_clause))
     {
       printf ("Found a construct which is not a clause:%s\n within attr:%p\n", OmpSupport::toString(c_clause).c_str(), att);
-      //ROSE_ASSERT(isClause(c_clause));
+      ROSE_ASSERT(isClause(c_clause));
       continue;
     }
     else
-      printf ("Found a clause construct:%s\n", OmpSupport::toString(c_clause).c_str());
+    {
+      // printf ("Found a clause construct:%s\n", OmpSupport::toString(c_clause).c_str());
+    }
 
-    SgOmpClause* sgclause = buildOmpClause(att, c_clause);
-    result->get_clauses().push_back(sgclause);
-  }
-  // insert the statment, move the pragma decl's next statement to the omp stmt's body
-  return result;
+    switch (c_clause)
+    {
+      // clauses allocated to omp parallel
+      case e_if:
+      case e_num_threads:
+      case e_default:
+      case e_shared:
+      case e_copyin:
+        {
+          SgOmpClause* sgclause = buildOmpNonReductionClause(att, c_clause);
+          ROSE_ASSERT(sgclause != NULL);
+          first_stmt->get_clauses().push_back(sgclause);
+          break;
+        }
+      // unique clauses allocated to omp for
+     case e_schedule:
+      case e_collapse:
+      case e_ordered_clause:
+        {
+          if (!isSgOmpForStatement(second_stmt))
+          {
+            printf("error: unacceptable clauses in parallel for\n");
+            att->print();
+            ROSE_ASSERT(false);
+          }
+        }
+     case e_private:
+      case e_firstprivate:
+      case e_lastprivate:
+        // case e_nowait: // nowait should not appear with combined directives
+        {
+          SgOmpClause* sgclause = buildOmpNonReductionClause(att, c_clause);
+          ROSE_ASSERT(sgclause != NULL);
+          // TODO parallel workshare 
+          isSgOmpClauseBodyStatement(second_stmt)->get_clauses().push_back(sgclause);
+          break;
+        }
+      case e_reduction: //special handling for reduction
+        {
+          std::vector<omp_construct_enum> rops  = att->getReductionOperators();
+          ROSE_ASSERT(rops.size()!=0);
+          std::vector<omp_construct_enum>::iterator iter;
+          for (iter=rops.begin(); iter!=rops.end();iter++)
+          {
+            omp_construct_enum rop = *iter;
+            SgOmpClause* sgclause = buildOmpReductionClause(att, rop);
+            ROSE_ASSERT(sgclause != NULL);
+            isSgOmpClauseBodyStatement(second_stmt)->get_clauses().push_back(sgclause);
+          }
+         break;
+        }
+      default:
+      {
+        cerr<<"error: unacceptable clause for combined parallel for directive:"<<OmpSupport::toString(c_clause)<<endl;
+        ROSE_ASSERT(false);
+      }
+    }
+  } // end clause allocations 
+  return first_stmt;
 }
 
 //! for C/C++ replace OpenMP pragma declaration with an SgOmpxxStatement
@@ -7433,23 +8055,25 @@ void replaceOmpPragmaWithOmpStatement(SgPragmaDeclaration* pdecl, SgStatement* o
 
   SgScopeStatement* scope = pdecl ->get_scope();
   ROSE_ASSERT(scope !=NULL);
-  SgOmpClauseBodyStatement * omp_cb_stmt = isSgOmpClauseBodyStatement(ompstmt);
+  SgOmpBodyStatement * omp_cb_stmt = isSgOmpBodyStatement(ompstmt);
   // optionally remove the immediate structured block
   if (omp_cb_stmt!= NULL)
   {
     SgStatement* next_stmt = getNextStatement(pdecl);
-    ROSE_ASSERT(next_stmt == omp_cb_stmt->get_body()); // ompstmt's body is set already
+    // not true after splitting combined directives, the body becomes the 2nd directive
+   // ROSE_ASSERT(next_stmt == omp_cb_stmt->get_body()); // ompstmt's body is set already
     removeStatement(next_stmt);
   }
   // replace the pragma
+  moveUpPreprocessingInfo(ompstmt, pdecl); // keep #ifdef etc attached to the pragma
   replaceStatement(pdecl, ompstmt);
 }
 
 // Convert omp_pragma_list to SgOmpxxx nodes
 void convert_OpenMP_pragma_to_AST ()
 {
-  list<SgPragmaDeclaration* >::iterator iter;
-  for (iter = omp_pragma_list.begin(); iter != omp_pragma_list.end(); iter ++)
+  list<SgPragmaDeclaration* >::reverse_iterator iter; // bottom up handling for nested cases
+  for (iter = omp_pragma_list.rbegin(); iter != omp_pragma_list.rend(); iter ++)
   {
     SgPragmaDeclaration* decl = *iter; 
     OmpAttributeList* oattlist= getOmpAttributeList(decl);
@@ -7465,18 +8089,59 @@ void convert_OpenMP_pragma_to_AST ()
       SgStatement* omp_stmt = NULL;
       switch (omp_type)
       {
-	case e_parallel:
-	  {
-	    omp_stmt = buildOmpParallelStatement(oa);
-	    break;
-	  }
-	default:
-	  {
+        // simplest OMP directives
+        case e_barrier:
+          {
+            omp_stmt = new SgOmpBarrierStatement();
+            break;
+          }
+        case e_taskwait:
+          {
+            omp_stmt = new SgOmpTaskwaitStatement();
+            break;
+          }
+          // with variable list
+        case e_threadprivate:
+          {
+            omp_stmt = buildOmpThreadprivateStatement(oa);
+            break;
+          }
+        case e_flush:
+        {
+          omp_stmt = buildOmpFlushStatement(oa);
+          break;
+        }
+        // with a structured block/statement followed
+        case e_atomic:
+        case e_master:
+        case e_section:
+        case e_critical:
+        case e_ordered_directive:
+          // case e_workshare;// TODO fortran
+        case e_parallel:
+        case e_for:
+        case e_single:
+        case e_task:
+        case e_sections: 
+          {
+            omp_stmt = buildOmpBodyStatement(oa);
+            break;
+          }
+        case e_parallel_for:
+        case e_parallel_sections:
+          //case e_parallel_workshare://TODO fortran
+          {
+            omp_stmt = buildOmpParallelStatementFromCombinedDirectives(oa);
+            break;
+          }
+        default:
+          {
             cerr<<"Error: convert_OpenMP_pragma_to_AST(): unhandled OpenMP directive type:"<<OmpSupport::toString(omp_type)<<endl;
-	    assert (false);
-	    break;
-	  }
+            assert (false);
+            break;
+          }
       }
+      setOneSourcePositionForTransformation(omp_stmt);
       replaceOmpPragmaWithOmpStatement(decl, omp_stmt);
 
     } // end for (OmpAttribute)

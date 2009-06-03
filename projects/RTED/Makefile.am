@@ -540,7 +540,7 @@ check-C-inputoutput:
 	  if [ `grep "#define EXITCODE_OK 0" $$file2 | wc | awk '{print $$1}' ` -eq 0 ] ; then \
 	    sed -i '1i\#define EXITCODE_OK 0' $$file2 ; \
 	  fi ; \
-	  echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> Dir : $$dir " ; \	
+	  echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> Dir : $$dir " ; \
 	  echo "Script : Running Transformation : ./runtimeCheck 2 $$file $$file2 -rose:Cxx -c  -I$$dir" ; \
 	  ./runtimeCheck 2 $$file $$file2 -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$$dir ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \

@@ -1,4 +1,4 @@
-// I think this should be illegal?
+// A tricky case
 #include <omp.h>
 int main(void)
 {
