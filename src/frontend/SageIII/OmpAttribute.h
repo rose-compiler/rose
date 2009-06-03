@@ -121,7 +121,8 @@ namespace OmpSupport
     e_reduction_ior,
     e_reduction_ieor,
 
-    //5 schedule policies
+    //5 schedule policies for
+    //---------------------
     e_schedule_none,
     e_schedule_static,
     e_schedule_dynamic,
@@ -264,6 +265,7 @@ namespace OmpSupport
 	getExpression(omp_construct_enum targetConstruct);
 
       //!--------values for some clauses ----------
+      //
       // Reduction needs special handling 
       // since multiple ones with different operator types can co-exist within one pragma
       // We categories reduction clauses by their operator type and store variable lists for each of the reduction operator type, not with the reduction clause
@@ -271,6 +273,8 @@ namespace OmpSupport
       void setReductionOperator(omp_construct_enum operatorx);
       //! Get reduction clauses for each operations,  reduction(op:kind)
       std::vector<omp_construct_enum> getReductionOperators();
+      //! Check if a reduction operation exists
+      bool hasReductionOperator(omp_construct_enum operatorx);
 
       // default () value
       void setDefaultValue(omp_construct_enum valuex);
