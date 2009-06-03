@@ -34,6 +34,9 @@ HEADER_START
       /*! \brief deallocated memory for IR node (returns memory to memory pool for reuse) */
           void operator delete (void* pointer, size_t size);
 
+#if 1  /* RPM (2009-06-03): Apparently this must all be on one line for configuration "--with-javaport"; reverting r5427 */
+	  void operator delete (void* pointer) { $CLASSNAME::operator delete (pointer,sizeof($CLASSNAME)); };
+#else
        // DQ (4/5/2007): This is not the correct operator that we want, but appears to be required to compile ROSE with ROSE.
           void operator delete (void* pointer)
              {
@@ -44,6 +47,7 @@ HEADER_START
             // This is the generated delete operator...
                $CLASSNAME::operator delete (pointer,sizeof($CLASSNAME));
              }
+#endif
 
        // DQ (1/2/2006): Compute the amount of memory allocated for this type within the AST.
       /*! \brief Returns the total number of IR nodes of this type */
