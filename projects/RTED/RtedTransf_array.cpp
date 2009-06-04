@@ -134,6 +134,10 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
       SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
       appendExpression(arg_list, filename);
       appendExpression(arg_list, linenr);
+
+      // build address of where this var points to
+      //SgIntVal* address = buildIntVal(initName);
+      //appendExpression(arg_list, address);
       //      appendExpression(arg_list, buildString(stmt->unparseToString()));
 #if 0
       SgVarRefExp* varRef_l =
@@ -154,7 +158,7 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
       insertStatementBefore(isSgStatement(stmt), exprStmt);
       string empty_comment = "";
       attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
-      string comment = "RS : Create Array Variable, paramaters : (name, dimension, stack or heap, size dim 1, size dim 2, filename, linenr)";
+      string comment = "RS : Create Array Variable, paramaters : (name, dimension, stack or heap, size dim 1, size dim 2, filename, linenr, address of pointer)";
       attachComment(exprStmt,comment,PreprocessingInfo::before);
     } 
     else if (isSgNamespaceDefinitionStatement(scope)) {
@@ -608,10 +612,13 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
 	      bin->set_lhs_operand(val);
 	    }
 	    delete sizeofOp->get_parent();
-	  } else {
+	  } 
+#if 0
+	  else {
 	    cerr << "Unhandled Operand for sizeof parent. " << parentOfSizeof->class_name() << endl;
 	    exit(1);
 	  }
+#endif
 	  if (indx1 == NULL && indx2 == NULL) {
 	    // array initialized to pointer: pntr = malloc (size)
 	    indx1 = size; // / divider;
