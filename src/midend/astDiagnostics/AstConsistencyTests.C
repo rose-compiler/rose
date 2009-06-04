@@ -3235,6 +3235,8 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
   // Symbols can be shared within a single file but are not yet shared across files in the AST merge
      if (symbol != NULL)
         {
+          if (symbol->get_parent() == NULL)
+            printf("Error: symbol named %s has no parent set\n",symbol->get_name().getString().c_str());
           ROSE_ASSERT(symbol->get_parent() != NULL);
         }
 
