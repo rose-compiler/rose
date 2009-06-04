@@ -21,6 +21,8 @@ testCallGraph_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 testCG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 
+
+ 
 # this caused a segfault once  
 test01: testCG
 	./testCG -I. -I$(srcdir) $(srcdir)/main.C $(srcdir)/f1.C $(srcdir)/f2.C -o Callgraph
@@ -35,6 +37,10 @@ test02: testCG stressTestFactory
 	./testCG sT100.C -o sT100
 	diff -U5 sT100.cmp.dmp sT100.cg.dmp
 
+
+testMultipleFiles: testCG stressTestFactoryMultipleFiles.pl
+	$(srcdir)/testMultipleFiles.sh $(srcdir) . 20 4
+			
 TESTCODES = test1.C test2.C  test3.C  test4.C  test5.C  test6.C test7.C
 
 # Build the list of object files
@@ -49,7 +55,6 @@ TESTCODE_INCLUDES =
 # DQ (7/12/2004): Modified to run with make -j4 options
 $(TEST_Objects): testCallGraph $(TESTCODES) 
 	@echo "Compiling test code using $(TEST_TRANSLATOR) ..."
-	rm -f DATABASE
 	$(TEST_TRANSLATOR) $(INCLUDES) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
 
 EXTRA_DIST = $(TESTCODES) functions.h main.C f1.C f2.C stressTestFactory
