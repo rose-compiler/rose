@@ -7881,6 +7881,7 @@ SgOmpBodyStatement * buildOmpBodyStatement(OmpAttribute* att)
   }
   ROSE_ASSERT(result != NULL);
   setOneSourcePositionForTransformation(result);
+  body->set_parent(result);
 
   // add clauses for those SgOmpClauseBodyStatement
   if (isSgOmpClauseBodyStatement(result))
@@ -7923,6 +7924,7 @@ SgOmpThreadprivateStatement* buildOmpThreadprivateStatement(OmpAttribute* att)
     ROSE_ASSERT(iname !=NULL);
     result->get_variables().push_back(iname);
   }
+  result->set_definingDeclaration(result);
   return result;
 }
 //! Build nodes for combined OpenMP directives:
@@ -7963,10 +7965,12 @@ SgOmpParallelStatement* buildOmpParallelStatementFromCombinedDirectives(OmpAttri
   } //end switch
 
   ROSE_ASSERT(second_stmt);
+  body->set_parent(second_stmt);
 
   // build the 1st directive node then
   SgOmpParallelStatement* first_stmt = new SgOmpParallelStatement(NULL, second_stmt); 
   setOneSourcePositionForTransformation(first_stmt);
+  second_stmt->set_parent(first_stmt);
 
   // allocate clauses to them, let the 2nd one have higher priority 
   // if a clause can be allocated to either of them

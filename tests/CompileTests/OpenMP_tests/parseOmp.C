@@ -29,8 +29,10 @@ int main(int argc, char * argv[])
 
 {
   SgProject *project = frontend (argc, argv);
+
+  AstTests::runAllTests(project);
   visitorTraversal myvisitor;
   myvisitor.traverseInputFiles(project,preorder);
-
+  
   return backend(project);
 }

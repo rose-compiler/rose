@@ -1275,11 +1275,11 @@ tests/CompileTests/PythonExample_tests/Makefile
 tests/CompileTests/UPC_tests/Makefile
 tests/CompileTests/OpenMP_tests/Makefile
 tests/CompileTests/OpenMP_tests/fortran/Makefile
+tests/CompileTests/OpenMP_tests/cvalidation/Makefile
 tests/CompileTests/copyAST_tests/Makefile
 tests/CompileTests/colorAST_tests/Makefile
 tests/CompileTests/mergeAST_tests/Makefile
 tests/CompileTests/unparseToString_tests/Makefile
-tests/CompileTests/OpenMP_C_tests/Makefile
 tests/CompileTests/boost_tests/Makefile
 tests/CompileTests/virtualCFG_tests/Makefile
 tests/CompileTests/uninitializedField_tests/Makefile

@@ -13553,11 +13553,38 @@ SgOmpCriticalStatement::post_construction_initialization()
    {}
 SOURCE_OMP_CRITICAL_STATEMENT_END
 
+HEADER_OMP_THREADPRIVATE_STATEMENT_START
+  //! Required for any declaration statement
+  virtual SgName get_mangled_name(void) const;
+HEADER_OMP_THREADPRIVATE_STATEMENT_END
 
 SOURCE_OMP_THREADPRIVATE_STATEMENT_START
 void
 SgOmpThreadprivateStatement::post_construction_initialization()
    {}
+
+SgName
+SgOmpThreadprivateStatement::get_mangled_name(void) const
+   {
+     SgName returnName;
+
+  // The semantics of get_scope is that it can never be NULL (SgGlobal returns itself as its scope!)
+     SgScopeStatement* scope = get_scope();
+     ROSE_ASSERT(scope != NULL);
+
+     SgName variableNames;
+     SgInitializedNamePtrList::const_iterator p = get_variables().begin();
+     while ( p != get_variables().end() )
+        {
+          variableNames += SgName("_variable_type_") + (*p)->get_type()->get_mangled() + SgName("_variable_name_") + (*p)->get_mangled_name();
+
+          p++;
+        }
+     returnName = scope->get_mangled_name() + SgName("_omp_threadprivate_declaration_") + variableNames;
+
+     return returnName;
+   }
+   
 SOURCE_OMP_THREADPRIVATE_STATEMENT_END
 
 

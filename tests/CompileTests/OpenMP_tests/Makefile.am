@@ -3,7 +3,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 noinst_PROGRAMS = parseOmp
 parseOmp_SOURCES = parseOmp.C
 
-SUBDIRS= fortran
+SUBDIRS= fortran cvalidation
 INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 

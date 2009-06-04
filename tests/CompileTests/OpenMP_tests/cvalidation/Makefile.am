@@ -68,13 +68,15 @@ ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODE_CURRENTLY_FAILING)
 
-ROSE_FLAGS = -rose:C_only --edg:no_warnings -w -rose:verbose 0 --edg:restrict
+ROSE_FLAGS = -rose:C_only --edg:no_warnings -w -rose:verbose 0 --edg:restrict -rose:openmp -rose:openmp:ast_only
 
 PASSING_TEST_Objects = ${TESTCODES:.c=.o}
 TEST_Objects = ${ALL_TESTCODES:.c=.o}
 
-$(TEST_Objects): ../../testTranslator $(srcdir)/$(@:.o=.C)
-	../../testTranslator $(ROSE_FLAGS) -D_OPENMP -I$(srcdir) -c $(srcdir)/$(@:.o=.c)
+$(TEST_Objects): ../parseOmp $(srcdir)/$(@:.o=.C)
+	../parseOmp $(ROSE_FLAGS) -I$(top_srcdir)/src/frontend/SageIII -c $(srcdir)/$(@:.o=.c)
+../parseOmp:
+	$(MAKE) -C ../. parseOmp
 
 QMTEST_Objects = ${ALL_TESTCODES:.c=.qmt}
 
@@ -82,18 +84,18 @@ QMTEST_Objects = ${ALL_TESTCODES:.c=.qmt}
 CURRENT_DIRECTORY = `pwd`
 $(QMTEST_Objects): ../../testTranslator $(srcdir)/$(@:.qmt=.c)
 	@echo "Calling QMTEST_Objects rule: "
-	qm.sh L rose.RoseTest $(CURRENT_DIRECTORY)/../../testTranslator NULL $(ROSE_FLAGS) -D_OPENMP -I$(srcdir) -c $(srcdir)/$(@:.qmt=.c)
+	qm.sh L rose.RoseTest $(CURRENT_DIRECTORY)/../parseOmp NULL $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.qmt=.c)
 
 # Include makefile rules specific to QMTest
 include $(top_srcdir)/config/QMTest_makefile.inc
 
-EXTRA_DIST = $(ALL_TESTCODES) omp.h  omp_my_sleep.h  omp_testsuite.h
+EXTRA_DIST = $(ALL_TESTCODES) omp_my_sleep.h  omp_testsuite.h
 
 check-local:
-	@echo "Tests for OpenMP C."
+	@echo "Tests for OpenMP C validation suite."
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "****************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/OpenMP_C_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/CompileTests/OpenMP_tests/cvalidation: make check rule complete (terminated normally) ******"
 	@echo "****************************************************************************************************"
 
 clean-local:

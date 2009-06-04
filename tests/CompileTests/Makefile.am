@@ -11,7 +11,7 @@ SUBDIRS = \
      Fortran_tests copyAST_tests RoseExample_tests PythonExample_tests \
      colorAST_tests mergeAST_tests unparseToString_tests \
      sourcePosition_tests OpenMP_tests \
-     OpenMP_C_tests boost_tests virtualCFG_tests uninitializedField_tests \
+     boost_tests virtualCFG_tests uninitializedField_tests \
      A++Tests OvertureCode P++Tests A++Code ElsaTestCases \
      ExpressionTemplateExample_tests hiddenTypeAndDeclarationListTests
 

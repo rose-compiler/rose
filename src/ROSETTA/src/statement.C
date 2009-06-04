@@ -2980,6 +2980,9 @@ Grammar::setUpStatements ()
     OmpSectionStatement.setFunctionSource            ("SOURCE_OMP_SECTION_STATEMENT", "../Grammar/Statement.code" );
     OmpTaskStatement.setFunctionSource            ("SOURCE_OMP_TASK_STATEMENT", "../Grammar/Statement.code" );
     OmpSingleStatement.setFunctionSource            ("SOURCE_OMP_SINGLE_STATEMENT", "../Grammar/Statement.code" );
+
+    OmpThreadprivateStatement.setFunctionPrototype    ( "HEADER_OMP_THREADPRIVATE_STATEMENT", "../Grammar/Statement.code" );
+
     OmpThreadprivateStatement.setFunctionSource            ("SOURCE_OMP_THREADPRIVATE_STATEMENT", "../Grammar/Statement.code" );
     OmpForStatement.setFunctionSource            ("SOURCE_OMP_FOR_STATEMENT", "../Grammar/Statement.code" );
     OmpAtomicStatement.setFunctionSource            ("SOURCE_OMP_ATOMIC_STATEMENT", "../Grammar/Statement.code" );
