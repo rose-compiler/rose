@@ -97,6 +97,7 @@ echo "SVN repository version ${svnversion} as of ${svnmodificationdate}" >> mail
 echo "Configure flags = ${CONFIGURE_FLAGS[@]}" >> mailtext1
 echo "Make flags = ${MAKEFLAGS}" >> mailtext1
 echo "Hostname = `hostname`" >> mailtext1
+echo "System info = `uname -a`" >> $mailtext
 echo "" >> mailtext1
 echo "> Command versions" >> mailtext1
 (automake --version | head -1 || echo "automake not found") >> mailtext1
@@ -327,6 +328,7 @@ else
   echo "Configure flags = ${CONFIGURE_FLAGS[@]}" >> $mailtext
   echo "Make flags = ${MAKEFLAGS}" >> $mailtext
   echo "Hostname = `hostname`" >> $mailtext
+  echo "System info = `uname -a`" >> $mailtext
   echo "" >> $mailtext
   echo "> Environment:" >> $mailtext
   printenv >> $mailtext
