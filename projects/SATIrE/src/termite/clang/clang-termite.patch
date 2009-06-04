@@ -934,7 +934,7 @@ Index: Driver/TermDumper.cpp
 +
 +      //create body
 +      PrologTerm *body;
-+      if (FD->getBody()) {
++      if (FD->isThisDeclarationADefinition()) {
 +        body = new PrologCompTerm("function_definition", 4,
 +                                  make_statement_term(FD->getBody()),
 +                                  make_default_annotation(),
