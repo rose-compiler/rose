@@ -1,3 +1,23 @@
+2009-06-04 15:51  liao6
+
+	* [r6046] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/projects/palette/rose.P,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Statement.code,
+	  /trunk/ROSE/src/ROSETTA/src/statement.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageSupport.C,
+	  /trunk/ROSE/src/midend/astDiagnostics/AstConsistencyTests.C,
+	  /trunk/ROSE/tests/CompileTests/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_C_tests,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/cvalidation,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/cvalidation/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/cvalidation/omp.h,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/fortran/schedule.f,
+	  /trunk/ROSE/tests/CompileTests/OpenMP_tests/parseOmp.C: minor
+	  fixes to buildSgOmp* () so AST consistency test can pass
+	  moved tests/CompileTests/OpenMP_C_tests to
+	  tests/CompileTests/OpenMP_tests/cvalidation
+
 2009-06-03 23:40  liao6
 
 	* [r6035] /trunk/ROSE/projects/RTED/Makefile.am,
