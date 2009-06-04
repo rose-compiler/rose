@@ -517,6 +517,7 @@ check-C-allocation:
 check-C-inputoutput:
 	if [ -f "result.txt" ]; then rm result.txt; fi ; \
 	cp $(srcdir)/index_array.txt .
+	cp $(srcdir)/file_read.txt .	
 	dir=$(rted_path)/C/input_output_errors/ ; \
 	echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> Dir : $$dir " ; \
 	echo " " ; \
@@ -629,7 +630,7 @@ c-compile-runtimesystem:
 
 
 # DQ (7/25/2005): The current changes to the AST break these test programs:
-check-local: runtimeCheck $(TESTCODES) c-compile-runtimesystem check-C-array-onefile deleteAllbinfiles check-C-array-parallel check-C-string
+check-local: runtimeCheck $(TESTCODES) c-compile-runtimesystem check-C-array-onefile deleteAllbinfiles check-C-array-parallel check-C-string check-C-inputoutput
 	@echo "***************************************************************************************"
 	@echo "*** ROSE/projects/runtimeErrorCheck: make check rule complete (terminated normally) ***"
 	@echo "***************************************************************************************"

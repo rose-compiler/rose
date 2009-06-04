@@ -514,7 +514,8 @@ RuntimeSystem_isFileIOFunctionCall(char* name) {
   int interesting=0;//false;
   if ( ( strcmp(name,"fopen")==0 || 
 	 strcmp(name ,"fgetc")==0 ||
-	 strcmp(name ,"fputc")==0 
+	 strcmp(name ,"fputc")==0 ||
+	 strcmp(name ,"fclose")==0 
 	 )) {
     interesting=1;
   }
@@ -860,10 +861,43 @@ RuntimeSystem_handleIOFunctionCall(char* fname,char** args,
     if(!leftHandSideVar) assert(0==1);
     struct RuntimeVariablesType* rvar = RuntimeSystem_findVariables(leftHandSideVar);
     if (leftHandSideVar) {
-      printf("Making sure that the var %s is set to %s \n",leftHandSideVar,readwrite);
+      printf("Making sure that the var %s is set to : %s \n",leftHandSideVar,readwrite);
       rvar->fileOpen=readwrite;
+      // make sure that the file exists
+      FILE* fp = fopen(file,"r");
+      if (fp==0) {
+	// file does not exist
+	RuntimeSystem_callExit(filename, line, (char*)"No such file. Can not open this file.", stmtStr);      
+      }
     } else {
-      printf("This must be an error, The variable %s in fopen should be available.\n",leftHandSideVar);
+      printf("File opend: This must be an error, The variable %s in fopen should be available.\n",leftHandSideVar);
+      exit(1);
+    }
+  }
+  else  if  (strcmp(fname,"fclose")==0) { 
+    // need 4 parameters, var, size, var, size
+    assert(argsSize==1);
+    // we need to mark the variable with fopen that it is open for read/write
+    char* var = args[0];
+    assert(var);
+    struct RuntimeVariablesType* rvar = RuntimeSystem_findVariables(var);
+    if (rvar==NULL) {
+      char* stackvar = RuntimeSystem_findVariablesOnStack(var);
+      if (stackvar) {
+	printf("Found the variable on the stack : %s \n",stackvar);
+	rvar = RuntimeSystem_findVariables(stackvar);
+      }
+    }
+    if (rvar) {
+      if (strcmp(rvar->fileOpen,"no")==0) {
+	// file closed although it never was opend
+	RuntimeSystem_callExit(filename, line, (char*)"Closing a file that never was opened.", stmtStr);      
+      } else {
+	printf("File closed for var: %s \n",rvar->name);
+	rvar->fileOpen=(char*)"no";
+      }
+    } else {
+      printf("File closed : This must be an error, The variable %s in fopen should be available.\n",var);
       exit(1);
     }
   }
@@ -874,12 +908,17 @@ RuntimeSystem_handleIOFunctionCall(char* fname,char** args,
     // check if the variable used : fgetc(var) is a pointer to a file
     // that has been opened already, i.e. is file open?
     struct RuntimeVariablesType* rvar = RuntimeSystem_findVariables(var);
-    if (var)
+    if (rvar) {
       printf("RuntimeSystem : RuntimeSystem_handleIOFunctionCall : found Variable %s (%s)  fileOpen? %s \n",
 	     var, rvar->name, rvar->fileOpen);
-    if (strcmp(rvar->fileOpen,"no")==0) {
-      // the file is not open, we cant read/write
-      RuntimeSystem_callExit(filename, line, "File not open. Can't read/write to file.", stmtStr);      
+      if (strcmp(rvar->fileOpen,"no")==0) {
+	// the file is not open, we cant read/write
+	RuntimeSystem_callExit(filename, line, (char*)"File not open. Can't read/write to file.", stmtStr);      
+      }      
+      if (strstr( rvar->fileOpen, "r" )==0) {
+	// reading a file that is not marked for reading
+	RuntimeSystem_callExit(filename, line, (char*)"Can not read from File. File not opened for reading.", stmtStr);      
+      }
     }
   }
   else if  (strcmp(fname,"fputc")==0 ) {
@@ -890,12 +929,18 @@ RuntimeSystem_handleIOFunctionCall(char* fname,char** args,
     // check if the variable used : fgetc(var) is a pointer to a file
     // that has been opened already, i.e. is file open?
     struct RuntimeVariablesType* rvar = RuntimeSystem_findVariables(var);
-    if (var)
+    if (var) {
       printf("RuntimeSystem : RuntimeSystem_handleIOFunctionCall : found Variable %s (%s)  fileOpen? %s \n",
 	     var, rvar->name, rvar->fileOpen);
-    if (strcmp(rvar->fileOpen,"no")==0) {
-      // the file is not open, we cant read/write
-      RuntimeSystem_callExit(filename, line, "File not open. Can't read/write to file.", stmtStr);      
+      if (strcmp(rvar->fileOpen,"no")==0) {
+	// the file is not open, we cant read/write
+	RuntimeSystem_callExit(filename, line, (char*)"File not open. Can't read/write to file.", stmtStr);      
+      }
+      if (strstr( rvar->fileOpen, "w" )==0) {
+	// reading a file that is not marked for reading
+	RuntimeSystem_callExit(filename, line, (char*)"Can not write to File. File not opened for writing.", stmtStr);      
+      }
+
     }
   }
 
@@ -1066,7 +1111,7 @@ void RuntimeSystem_roseCreateVariable(char* name,
  ********************************************************/
 struct RuntimeVariablesType*
 RuntimeSystem_findVariables(char* mangled_name) {
-  struct RuntimeVariablesType* var;
+  struct RuntimeVariablesType* var=NULL;
   int i=0;
   for ( i=0;i<rtsi()->runtimeVariablesEndIndex;i++) {
     char* n =rtsi()->runtimeVariables[i].mangled_name;

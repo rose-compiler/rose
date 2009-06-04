@@ -52,7 +52,7 @@ RtedTransformation::getDimensionForFuncCall(std::string name) {
       name=="strpbrk" ||
       name=="strspn" ||
       name=="strstr" ||
-      name=="fopen"
+      name=="fopen" 
       ) {
     dim=2;
   }
@@ -76,7 +76,9 @@ RtedTransformation::isFileIOFunctionCall(std::string name) {
   bool interesting=false;
   if (name=="fopen" ||
       name=="fgetc" ||
-      name=="fputc"
+      name=="fputc" ||
+      name=="fclose"
+
       )
     interesting=true;
   return interesting;
@@ -304,7 +306,14 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
 	  if (var) {
 	    SgInitializedName* initName = var->get_symbol()->get_declaration();
 	    ROSE_ASSERT(initName);
+	    // if it is a initName in a parameterlist than we do not want to send it 
+	    // as a mangled name because it will be something like: L22R__ARG1
+	    // instead we send it as a normal name that can be found on the stack
 	    SgExpression* manglName = buildString(initName->get_mangled_name().str());
+	    if (isSgFunctionParameterList(initName->get_parent())) {
+	      //	      cerr << "\n!!!!!!!!!!parent of initName = " << initName->get_parent()->class_name() << endl;
+	      manglName = buildString(initName->get_name().str());
+	    }
 	    ROSE_ASSERT(manglName);
 	    appendExpression(arg_list, manglName);
 	  }
