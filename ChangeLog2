@@ -1,3 +1,8 @@
+2009-06-05 15:57  liao6
+
+	* [r6064] /trunk/ROSE/scripts/roseFreshTest: minor fix for
+	  reporting platform info.
+
 2009-06-04 23:22  panas2
 
 	* [r6054] /trunk/ROSE/projects/RTED/Makefile.am,
