@@ -91,15 +91,26 @@ void RtedTransformation::transform(SgProject* project) {
     insertArrayCreateCall(array_node, array_size);
   }
 
+
+  // before we insert the intitialized variables,
+  // we need to insert the temporary statements that
+  // we found during our traversal
   cerr
     << "\n Number of Elements in variableIsInitialized  : "
     << variableIsInitialized.size() << endl;
-  std::map<SgInitializedName*, SgVarRefExp*>::const_iterator it5 =
+  std::map<SgStatement*,SgStatement*>::const_iterator itStmt =
+    insertThisStatementLater.begin();
+  for (; itStmt != insertThisStatementLater.end(); itStmt++) {
+    SgStatement* newS = itStmt->first;
+    SgStatement* old = itStmt->second;
+    insertStatementAfter(old,newS);
+  }
+  std::map<SgVarRefExp*,SgInitializedName*>::const_iterator it5 =
     variableIsInitialized.begin();
   for (; it5 != variableIsInitialized.end(); it5++) {
-    SgInitializedName* array_node = it5->first;
-    SgVarRefExp* array_size = it5->second;
-    insertInitializeVariable(array_node, array_size);
+    SgInitializedName* init = it5->second;
+    SgVarRefExp* varref = it5->first;
+    insertInitializeVariable(init, varref);
   }
 
   cerr << "\n Number of Elements in create_array_access_call  : "
@@ -154,7 +165,7 @@ void RtedTransformation::visit(SgNode* n) {
   // ******************** DETECT functions in input program  *********************************************************************
 
   // *********************** DETECT ALL variable creations ***************
-  else if (isSgVariableDeclaration(n)) {
+  if (isSgVariableDeclaration(n)) {
     visit_isSgVariableDeclaration(n);
   }
 
@@ -171,9 +182,13 @@ void RtedTransformation::visit(SgNode* n) {
 
   // 1. look for MALLOC 
   // 2. Look for assignments to variables - i.e. a variable is initialized
+  // 3. Assign variables that come from assign initializers (not just assignments
   else if (isSgAssignOp(n)) {
     //cerr <<" >> VISITOR :: Found AssignOp : " << n->unparseToString() << endl;
-    visit_isArraySgAssignOp(n);
+      visit_isArraySgAssignOp(n);
+  }
+  else if (isSgAssignInitializer(n)) {
+    //  visit_isAssignInitializer(n);
   }
   // *********************** DETECT ALL array creations ***************
 

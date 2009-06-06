@@ -159,6 +159,10 @@ SgStatement*
 RtedTransformation::getSurroundingStatement(SgNode* n) {
   SgNode* stat = n;
   while (!isSgStatement(stat) && !isSgProject(stat)) {
+    if (stat->get_parent()==NULL) {
+      cerr << " No parent possible for : " << n->unparseToString()
+	   <<"  :" << stat->unparseToString() << endl;
+    }
     ROSE_ASSERT(stat->get_parent());
     stat = stat->get_parent();
   }

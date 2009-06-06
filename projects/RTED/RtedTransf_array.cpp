@@ -135,9 +135,6 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
       appendExpression(arg_list, filename);
       appendExpression(arg_list, linenr);
 
-      // build address of where this var points to
-      //SgIntVal* address = buildIntVal(initName);
-      //appendExpression(arg_list, address);
       //      appendExpression(arg_list, buildString(stmt->unparseToString()));
 #if 0
       SgVarRefExp* varRef_l =
@@ -158,7 +155,7 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
       insertStatementBefore(isSgStatement(stmt), exprStmt);
       string empty_comment = "";
       attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
-      string comment = "RS : Create Array Variable, paramaters : (name, dimension, stack or heap, size dim 1, size dim 2, filename, linenr, address of pointer)";
+      string comment = "RS : Create Array Variable, paramaters : (name, dimension, stack or heap, size dim 1, size dim 2, filename, linenr)";
       attachComment(exprStmt,comment,PreprocessingInfo::before);
     } 
     else if (isSgNamespaceDefinitionStatement(scope)) {
@@ -354,6 +351,7 @@ void RtedTransformation::visit_isArraySgInitializedName(SgNode* n) {
 
 void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
   SgAssignOp* assign = isSgAssignOp(n);
+  
   SgInitializedName* initName = NULL;
   // left hand side of assign
   SgExpression* expr_l = assign->get_lhs_operand();
@@ -512,6 +510,7 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
     // if we have not set this variable to be initialized yet,
     // we do so
     cerr  << ">> Setting this var to be initialized : " << initName->unparseToString() << endl;
+#if 0
     std::map<SgInitializedName*,SgVarRefExp*>::const_iterator it = 
       variableIsInitialized.begin();
     bool found=false;
@@ -521,9 +520,10 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
 	found=true; break;
       }
     }
-    if (!found) {
-      variableIsInitialized[initName]=varRef;
-    }
+#endif
+    //if (!found) {
+      variableIsInitialized[varRef]=initName;
+      //}
   }
   // ---------------------------------------------
 
@@ -647,6 +647,36 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
       }
     }
   }
+}
+
+
+void RtedTransformation::visit_isAssignInitializer(SgNode* n) {
+  SgAssignInitializer* assign = isSgAssignInitializer(n);
+  ROSE_ASSERT(assign);
+  cerr << "\n\n???????????? Found assign init op : " << n->unparseToString() << endl;
+  SgInitializedName* initName = isSgInitializedName(assign->get_parent());
+  ROSE_ASSERT(initName);
+  // right hand side of assign
+  SgExpression* expr_r = assign->get_operand();
+  ROSE_ASSERT(expr_r);
+  // ---------------------------------------------
+    // we now know that this variable must be initialized
+    // if we have not set this variable to be initialized yet,
+    // we do so
+    //cerr  << ">> Setting this var to be assign initialized : " << initName->unparseToString() 
+  //	  << "  and assignInit: " << assign->unparseToString()  
+  //	  << "  expression : " << expr_r->unparseToString() << endl;
+    SgVarRefExp* varRef = buildVarRefExp(initName, initName->get_scope());
+    ROSE_ASSERT(varRef);
+
+    SgStatement* stmt = getSurroundingStatement(initName);
+    ROSE_ASSERT(stmt);
+    SgExprStatement* exprStmt = buildExprStatement(varRef);
+    insertThisStatementLater[exprStmt]=stmt;
+    //insertStatementAfter(stmt,exprStmt);
+
+    variableIsInitialized[varRef]=initName;
+  // ---------------------------------------------
 }
 
 void RtedTransformation::addPaddingToAllocatedMemory(SgStatement* stmt,  RTedArray* array) {
@@ -1045,6 +1075,58 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
       SgExpression* callName = buildString(initName->get_mangled_name().str());
       appendExpression(arg_list, callName);
 
+      // if the variable assignment : var = ...
+      // is a pointer then we store the memory location
+      // otherwise we store the value
+      SgType* type = initName->get_type();
+      // string typestr = "notype";
+      SgType* basetype = NULL;
+      SgExpression* basetypeStr = buildString("no base");
+      if (isSgPointerType(type)) {
+	//	typestr="pointer";
+	basetype = isSgPointerType(type)->get_base_type();
+	basetypeStr = buildString(basetype->class_name());
+
+      }
+      //SgExpression* ctype = buildString(typestr);
+      //appendExpression(arg_list, ctype);
+      SgExpression* ctypeStr = buildString(type->class_name());
+      appendExpression(arg_list, ctypeStr);
+      appendExpression(arg_list, basetypeStr);
+
+      //appendExpression(arg_list, buildString(varRefE->get_parent()->class_name()));
+      // do not perform this test if the left hand side 
+      // is a variable of a struct or class (for now)
+      if (isSgDotExp(varRefE->get_parent()) ||
+	  isSgClassType(basetype) ||
+	  isSgPointerType(basetype) ||
+	  isSgTypedefType(basetype)
+	  )
+	  return;
+
+      // append address and value
+      if (isSgPointerType(type) && 
+	  isSgPointerType(isSgPointerType(type)->get_parent())==NULL 
+	  ) {
+	//char* res = (char*)malloc(long int);
+	//fprintf(res,"%p",varRefE);
+	appendExpression(arg_list, buildCastExp(varRefE,buildUnsignedLongLongType()));
+	appendExpression(arg_list, buildPointerDerefExp(varRefE));
+      } else if (isSgTypeInt(type)) {
+	appendExpression(arg_list, buildCastExp(buildAddressOfOp(varRefE),buildUnsignedLongLongType())); //buildLongIntVal(-1));
+	appendExpression(arg_list, varRefE);
+      }  else if (isSgTypeChar(type)) {
+	appendExpression(arg_list, buildCastExp(buildAddressOfOp(varRefE),buildUnsignedLongLongType())); //buildLongIntVal(-1));
+	appendExpression(arg_list, varRefE);
+      } 
+      else if (isSgArrayType(type)) {
+	cerr << "Unhandled for variables" << endl;
+	return;
+      } else {
+	cerr << "Variable Init: Condition unknown :" << type->class_name() << endl;
+	exit(1);
+      }
+
       ROSE_ASSERT(roseInitVariable);
       string symbolName2 = roseInitVariable->get_name().str();
       //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
@@ -1053,10 +1135,10 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
 							    arg_list);
       SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
       // insert new stmt (exprStmt) before (old) stmt
-      insertStatementBefore(isSgStatement(stmt), exprStmt);
+      insertStatementAfter(isSgStatement(stmt), exprStmt);
       string empty_comment = "";
       attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
-      string comment = "RS : Init Variable, paramaters : (name)";
+      string comment = "RS : Init Variable, paramaters : (name, address)";
       attachComment(exprStmt,comment,PreprocessingInfo::before);
     } 
     else if (isSgNamespaceDefinitionStatement(scope)) {

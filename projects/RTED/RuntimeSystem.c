@@ -248,6 +248,8 @@ RuntimeSystem_increaseSizeRuntimeVariables() {
       run_tmp[i].type =rtsi()->runtimeVariables[i].type;
       run_tmp[i].initialized =rtsi()->runtimeVariables[i].initialized;
       run_tmp[i].fileOpen =rtsi()->runtimeVariables[i].fileOpen;
+      run_tmp[i].address =rtsi()->runtimeVariables[i].address;
+      run_tmp[i].value =rtsi()->runtimeVariables[i].value;
     }
     free( rtsi()->runtimeVariables);
     rtsi()->runtimeVariables=run_tmp;
@@ -288,7 +290,7 @@ RuntimeSystem_findVariablesOnStack(char* name) {
  ********************************************************/
 void
 RuntimeSystem_roseCreateArray(char* name, int dimension, int stack, long int sizeA, long int sizeB, 
-			      char* filename, char* line ){
+			      char* filename, char* line){
   if (rtsi()->arrayDebug)
     printf( " >>> Called : roseCreateArray : %s dim %d - [%ld][%ld] file : %s line: %s\n",  
 	    RuntimeSystem_findLastUnderscore(name),dimension,sizeA, sizeB, filename, line);
@@ -1042,13 +1044,13 @@ RuntimeSystem_roseCallStack(char* name, char* mangl_name,
   // find the variable and make sure it is initialized
   struct RuntimeVariablesType* rvar = RuntimeSystem_findVariables(mangl_name);
   int initialized = rvar->initialized;
-  printf("Checking if %s is initialized: %d.\n",name,initialized);
+  printf("CallStack: Checking if %s is initialized: %d.\n",name,initialized);
   if (initialized==0) {
     // lets not trigger this error right now
     // fixme
     //RuntimeSystem_callExit(filename, line, (char*)"Variable is not initialized:", name);	  
   } else 
-    printf("Variable is initialized.\n");
+    printf("CallStack: Variable is initialized.\n");
   
   if (before) {
     if (rtsi()->runtimeVariablesOnStackEndIndex>=rtsi()->maxRuntimeVariablesOnStackEndIndex) {
@@ -1096,8 +1098,10 @@ void RuntimeSystem_roseCreateVariable(char* name,
   rtsi()->runtimeVariables[rtsi()->runtimeVariablesEndIndex].type=type;
   rtsi()->runtimeVariables[rtsi()->runtimeVariablesEndIndex].initialized=init;
   rtsi()->runtimeVariables[rtsi()->runtimeVariablesEndIndex].fileOpen=fOpen;
+  rtsi()->runtimeVariables[rtsi()->runtimeVariablesEndIndex].address=-1;
+  rtsi()->runtimeVariables[rtsi()->runtimeVariablesEndIndex].value=-1;
   rtsi()->runtimeVariablesEndIndex++;
-  printf("You have just created a run-time variable:\n");
+  printf("CreateVariable: You have just created a run-time variable:\n");
   printf("  name: %s \n", name);
   printf("  mangl_name: %s \n",mangled_name);
   printf("  type: %s \n",type);
@@ -1129,16 +1133,25 @@ RuntimeSystem_findVariables(char* mangled_name) {
  * in the pool of variables created and return mangled_name
  ********************************************************/
 void
-RuntimeSystem_roseInitVariable(char* mangled_name) {
+RuntimeSystem_roseInitVariable(char* mangled_name,
+			       //char* typeOfVar,
+			       char* typeOfVar2,
+			       char* baseType,
+			       //			       char* baseType2,
+			       unsigned long long address,
+			       unsigned long long value) {
+  //printf("InitVariable: Request for %s.    address: %d   value: %d \n",mangled_name, address, value);
   int i=0;
   for ( i=0;i<rtsi()->runtimeVariablesEndIndex;i++) {
     char* n =rtsi()->runtimeVariables[i].mangled_name;
-    if (*mangled_name==*n) {
+    if (strcmp(mangled_name,n)==0) {
       // create init on heap
       //char* init = (char*)"true";
       int init = 1; //true;
       rtsi()->runtimeVariables[i].initialized=init;
-      printf("Marking variable: %s as initialized. \n",mangled_name);
+      rtsi()->runtimeVariables[i].address=address;
+      rtsi()->runtimeVariables[i].address=value;
+      printf(">> InitVariable: Marking variable: %s as initialized.    address: %lld   value: %lld \n",mangled_name, address, value);
       break;
     }
   }

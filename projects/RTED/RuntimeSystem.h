@@ -14,6 +14,8 @@ struct RuntimeVariablesType {
   char* type;
   int initialized; // 0 = false
   char* fileOpen; // r = read, w = write
+  long int address;
+  long int value;
 };
 
 
@@ -100,7 +102,14 @@ void RuntimeSystem_roseCreateVariable(char* name, char* mangled_name, char* type
 				      char* fOpen);
 void RuntimeSystem_increaseSizeRuntimeVariables();
 struct RuntimeVariablesType* RuntimeSystem_findVariables(char* name);
-void RuntimeSystem_roseInitVariable(char* mangled_name);
+void RuntimeSystem_roseInitVariable(char* mangled_name,
+				    //char* typeOfVar,
+				    char* typeOfVar2,
+				    //				    char* baseType,
+				    char* baseType2,
+				    unsigned long long address,
+				    unsigned long long value);
+
 
 
 #endif

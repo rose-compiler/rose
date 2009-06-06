@@ -20,7 +20,12 @@ class RtedTransformation : public AstSimpleProcessing {
   // remember variables that were used to create an array. These cant be reused for array usage calls
   std::vector<SgVarRefExp*> variablesUsedForArray;
   // this vector is used to check which variables have been marked as initialized (through assignment)
-  std::map<SgInitializedName*, SgVarRefExp*> variableIsInitialized;
+  std::map<SgVarRefExp*,SgInitializedName*> variableIsInitialized;
+  // when traversing variables, we find some that are initialized names
+  // instead of varrefexp, and so we create new varrefexps but we do
+  // add them later and not during the same traversal.
+  std::map<SgStatement*,SgStatement*> insertThisStatementLater;
+
   // the following stores all variables that are created (and used e.g. in functions)
   // We need to store the name, type and intialized value
   std::vector<SgInitializedName*> variable_declarations;
@@ -65,6 +70,8 @@ class RtedTransformation : public AstSimpleProcessing {
   void visit_checkIsMain(SgNode* n);
   void visit_isArraySgInitializedName(SgNode* n);
   void visit_isArraySgAssignOp(SgNode* n);
+  void visit_isAssignInitializer(SgNode* n);
+
   void visit_isArrayPntrArrRefExp(SgNode* n);
   void visit_isArrayExprListExp(SgNode* n);
 
