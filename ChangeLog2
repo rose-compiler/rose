@@ -1,3 +1,12 @@
+2009-06-06 00:32  panas2
+
+	* [r6068] /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_support.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.c,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: RTED work
+
 2009-06-05 15:57  liao6
 
 	* [r6064] /trunk/ROSE/scripts/roseFreshTest: minor fix for
