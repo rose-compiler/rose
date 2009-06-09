@@ -384,7 +384,7 @@ scope_name ::=  % name of a scope
   | name.
 
 number_or_string ::=
-    {It} where ( numberatom(It) ; number(It) ; string(It) ).
+    {It} where ( numberatom(It) ; number(It) ; string(It) ; atom(It) ).
 
 fixity ::=  % fixity of unary operators
     {prefix}
