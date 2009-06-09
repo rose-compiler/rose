@@ -188,7 +188,7 @@ void RtedTransformation::visit(SgNode* n) {
       visit_isArraySgAssignOp(n);
   }
   else if (isSgAssignInitializer(n)) {
-    //  visit_isAssignInitializer(n);
+      visit_isAssignInitializer(n);
   }
   // *********************** DETECT ALL array creations ***************
 

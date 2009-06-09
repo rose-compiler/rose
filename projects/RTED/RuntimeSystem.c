@@ -43,12 +43,13 @@ RuntimeSystem_Const_RuntimeSystem() {
   //... perform necessary instance initializations 
   // initialze arrays with 10 elements and later increase by 50 if too small
   int initElementSize=0;
-  rtsi()->maxRuntimeVariablesOnStackEndIndex = rtsi()->maxArraysEndIndex = initElementSize;
-  rtsi()->maxRuntimeVariablesEndIndex = rtsi()->runtimeVariablesEndIndex = initElementSize;
-  rtsi()->arraysEndIndex=  rtsi()->runtimeVariablesOnStackEndIndex=0;
-  rtsi()->arrays = (struct arraysType*)malloc(sizeof(struct arraysType)*initElementSize);
+  rtsi()->maxRuntimeVariablesOnStackEndIndex =   initElementSize;
+  rtsi()->maxRuntimeVariablesEndIndex =  initElementSize;
+  rtsi()->runtimeVariablesEndIndex=  rtsi()->runtimeVariablesOnStackEndIndex=0;
+  //rtsi()->arrays = (struct arraysType*)malloc(sizeof(struct arraysType)*initElementSize);
   rtsi()->runtimeVariablesOnStack = (struct RuntimeVariablesType*)malloc(sizeof(struct RuntimeVariablesType)*initElementSize);
   rtsi()->runtimeVariables = (struct RuntimeVariablesType*)malloc(sizeof(struct RuntimeVariablesType)*initElementSize);
+
   rtsi()->myfile = fopen("result.txt","at");
   if (!rtsi()->myfile) {
     printf("Rted Error ::: Cannot open output file!\n");
@@ -151,48 +152,58 @@ RuntimeSystem_roseRtedClose() {
 /*********************************************************
  * For a given variable name, find the entry in arrays[]
  ********************************************************/
+#if 0
 int
 RuntimeSystem_findArrayName(char* mangled_name) {
   // search by mangled name
   int i=0;
-  for (i=0;i<rtsi()->arraysEndIndex;i++) {
-    char* name =rtsi()->arrays[i].name;
-    //printf(".............findArrayName comparing : %s and %s\n",mangled_name,name);
-    if (strcmp(name,mangled_name)==0)
-      return i;
+  for (i=0;i<rtsi()->runtimeVariablesEndIndex;i++) {
+    struct ArraysType* array = rtsi()->runtimeVariables[i].arrays;
+    //printf("..........findArrayName : name : %s, array ? %s \n",mangled_name,array);
+    if (array) {
+      char* name =rtsi()->runtimeVariables[i].arrays->name;
+      //printf(".............findArrayName comparing : %s and %s\n",mangled_name,name);
+      if (strcmp(name,mangled_name)==0)
+	return i;
+    }
   }
   return -1;
 }
+#endif
 
 /*********************************************************
  * Increase the size of the array by multiples of 50
  * array stored all array variables that are used 
  ********************************************************/
+#if 0
 void
 RuntimeSystem_increaseSizeArray() {                                               
-  rtsi()->maxArraysEndIndex+=50;
-  struct arraysType* arrays2D_tmp = (struct arraysType*)malloc(sizeof(struct  arraysType)*(rtsi()->maxArraysEndIndex));
+  rtsi()->maxRuntimeVariablesEndIndex+=50;
+  struct arraysType* arrays2D_tmp = (struct arraysType*)malloc(sizeof(struct  arraysType)*(rtsi()->maxRuntimeVariablesEndIndex));
   if (arrays2D_tmp) {
     int i=0;
-    for ( i=0;i<rtsi()->maxArraysEndIndex;i++) {
+    for ( i=0;i<rtsi()->maxRuntimeVariablesEndIndex;i++) {
       //printf(" %d rtsi()->arrays2D_tmp[i].name = MEM\n",i);
       arrays2D_tmp[i].name=(char*)malloc(sizeof(char*));
       arrays2D_tmp[i].dim =0;
       arrays2D_tmp[i].size1 =0;
       arrays2D_tmp[i].size2 =0;
+      arrays2D_tmp[i].ismalloc =0;
     }
-    for ( i=0;i<rtsi()->arraysEndIndex;i++) {
+    for ( i=0;i<rtsi()->runtimeVariablesEndIndex;i++) {
       //printf(" %d rtsi()->arrays2D_tmp[i].name = %s\n",i,rtsi()->arrays[i].name);
       arrays2D_tmp[i].name=rtsi()->arrays[i].name;
       arrays2D_tmp[i].dim=rtsi()->arrays[i].dim;
       arrays2D_tmp[i].size1 =rtsi()->arrays[i].size1;
       arrays2D_tmp[i].size2 =rtsi()->arrays[i].size2;
+      arrays2D_tmp[i].ismalloc =rtsi()->arrays[i].ismalloc;
     }
     free (rtsi()->arrays);
     rtsi()->arrays=arrays2D_tmp;
   }
-  printf( " Increased Array to %d  -- current index %d\n", rtsi()->maxArraysEndIndex, rtsi()->arraysEndIndex );
+  printf( " Increased Array to %d  -- current index %d\n", rtsi()->maxRuntimeVariablesEndIndex, rtsi()->runtimeVariablesEndIndex );
 }
+#endif
 
 /*********************************************************
  * Increase the size of the stack by multiples of 50
@@ -250,9 +261,19 @@ RuntimeSystem_increaseSizeRuntimeVariables() {
       run_tmp[i].fileOpen =rtsi()->runtimeVariables[i].fileOpen;
       run_tmp[i].address =rtsi()->runtimeVariables[i].address;
       run_tmp[i].value =rtsi()->runtimeVariables[i].value;
+      if (run_tmp[i].arrays) {
+	run_tmp[i].arrays->name =rtsi()->runtimeVariables[i].arrays->name;
+	run_tmp[i].arrays->dim =rtsi()->runtimeVariables[i].arrays->dim;
+	run_tmp[i].arrays->size1 =rtsi()->runtimeVariables[i].arrays->size1;
+	run_tmp[i].arrays->size2 =rtsi()->runtimeVariables[i].arrays->size2;
+	run_tmp[i].arrays->ismalloc =rtsi()->runtimeVariables[i].arrays->ismalloc;
+      }
     }
     free( rtsi()->runtimeVariables);
     rtsi()->runtimeVariables=run_tmp;
+  } else {
+    printf("No space for Variables\n");
+    exit(1);
   }
   printf( " Increased rtsi()->runtimeVariables to %d  -- current index %d\n",rtsi()->maxRuntimeVariablesEndIndex ,rtsi()->runtimeVariablesEndIndex  );
 }
@@ -281,43 +302,66 @@ RuntimeSystem_findVariablesOnStack(char* name) {
 /*********************************************************
  * This function is called when an array is created
  * name      : variable name
+ * manglname : variable mangl_name
+ * type      : Sage Type
  * dimension : 1 or 2
  * stack     : 0 = heap and 1 = stack
  * sizeA     : size of dimension 1
  * sizeB     : size of dimension 2
+ * ismalloc  : Allocated through malloc?
  * filename  : file location 
  * line      : linenumber
  ********************************************************/
 void
-RuntimeSystem_roseCreateArray(char* name, int dimension, int stack, long int sizeA, long int sizeB, 
-			      char* filename, char* line){
+RuntimeSystem_roseCreateArray(char* name, char* mangl_name, int dimension, int stack, long int sizeA, long int sizeB, 
+			      int ismalloc, char* filename, char* line){
   if (rtsi()->arrayDebug)
     printf( " >>> Called : roseCreateArray : %s dim %d - [%ld][%ld] file : %s line: %s\n",  
 	    RuntimeSystem_findLastUnderscore(name),dimension,sizeA, sizeB, filename, line);
+  // fixme: Check if this already exists?
+  int isarray=0;
+  int varpos = RuntimeSystem_findVariablesPos(mangl_name,&isarray);
+  int variableFound=0;
+  if (varpos>=0) {
+    // found var : dont increase the array index but use the index found
+    variableFound=1;
+  } else 
+    varpos = rtsi()->runtimeVariablesEndIndex;
 
   if (dimension==1) {
     // We create a one dimentional array
     if (rtsi()->arrayDebug)
-      printf("rtsi()->arrays1DEndIndex : %d rtsi()->maxArrays1DEndIndex: %d  \n",rtsi()->arraysEndIndex,rtsi()->maxArraysEndIndex);
-    if (rtsi()->arraysEndIndex>=rtsi()->maxArraysEndIndex) {
+      printf("rtsi()->arrays1DEndIndex : %d rtsi()->maxArrays1DEndIndex: %d  \n",rtsi()->runtimeVariablesEndIndex,rtsi()->maxRuntimeVariablesEndIndex);
+    if (variableFound==0 && rtsi()->runtimeVariablesEndIndex>=rtsi()->maxRuntimeVariablesEndIndex) {
       //increase the size of the array
-      RuntimeSystem_increaseSizeArray();
+      //RuntimeSystem_increaseSizeArray();
+      RuntimeSystem_increaseSizeRuntimeVariables();
     }
-    rtsi()->arrays[rtsi()->arraysEndIndex].name=name;
-    rtsi()->arrays[rtsi()->arraysEndIndex].dim=1;
-    rtsi()->arrays[rtsi()->arraysEndIndex].size1=sizeA;
-    rtsi()->arrays[rtsi()->arraysEndIndex].size2=-1;
-    rtsi()->arraysEndIndex++;
-      
+    rtsi()->runtimeVariables[varpos].name=name;
+    rtsi()->runtimeVariables[varpos].mangled_name=mangl_name;
+    rtsi()->runtimeVariables[varpos].arrays = 
+      (struct ArraysType*)malloc(sizeof(struct ArraysType)*1);
+    rtsi()->runtimeVariables[varpos].arrays->name=mangl_name;
+    rtsi()->runtimeVariables[varpos].arrays->dim=1;
+    rtsi()->runtimeVariables[varpos].arrays->size1=sizeA;
+    rtsi()->runtimeVariables[varpos].arrays->size2=-1;
+    rtsi()->runtimeVariables[varpos].arrays->ismalloc=ismalloc;
+    if (variableFound==0)
+      rtsi()->runtimeVariablesEndIndex++;
+    
     if (rtsi()->arrayDebug)
       printf( ".. Creating 1Dim array - size : %ld \n", sizeA);
   }
   else if (dimension==2) {
     // We create a two dimentional array
-    int pos = RuntimeSystem_findArrayName(name);
-    if (pos!=-1) {
+    //int pos = RuntimeSystem_findArrayName(mangl_name);
+    //printf("%d == %d   %s == %s   isarray: %d \n",varpos,pos, mangl_name, mangl_name,isarray);
+    //assert(varpos==pos);
+    //    if (pos!=-1) {
+    if (isarray==1) {
+    //if (variableFound==1) {
       // this array already exists and may only have one dimension initialized
-      long int totalsize = rtsi()->arrays[pos].size1;
+      long int totalsize = rtsi()->runtimeVariables[varpos].arrays->size1;
       if (rtsi()->arrayDebug)
 	printf( "..    Expanding 2nd-run 2Dim array - sizeA : %ld  sizeB: %ld \n", sizeA , sizeB );
       if (sizeA<0 || sizeA>=totalsize) {
@@ -328,24 +372,33 @@ RuntimeSystem_roseCreateArray(char* name, int dimension, int stack, long int siz
       } else {
 	if (rtsi()->arrayDebug)
 	  printf( " >>> CREATING Array : arr [%ld][%ld]  alloc:[%ld]=%ld \n",totalsize,sizeB,sizeA,sizeB);
-	rtsi()->arrays[pos].size2=sizeB;
+	rtsi()->runtimeVariables[varpos].arrays->size2=sizeB;
       }
     } else {
       // new array
-      if (rtsi()->arraysEndIndex>=rtsi()->maxArraysEndIndex) {
+      if ( variableFound==0 && rtsi()->runtimeVariablesEndIndex>=rtsi()->maxRuntimeVariablesEndIndex) {
 	//increase the size of the array
-	RuntimeSystem_increaseSizeArray();
+	//RuntimeSystem_increaseSizeArray();
+	RuntimeSystem_increaseSizeRuntimeVariables();
       }
-      rtsi()->arrays[rtsi()->arraysEndIndex].name=name;
-      rtsi()->arrays[rtsi()->arraysEndIndex].dim=2;
-      rtsi()->arrays[rtsi()->arraysEndIndex].size1=sizeA;
-      rtsi()->arrays[rtsi()->arraysEndIndex].size2=0;
-      rtsi()->arraysEndIndex++;
-      
+      printf("Creating 2 dim array: current size : %d  max:%d ",varpos, rtsi()->maxRuntimeVariablesEndIndex);
+      rtsi()->runtimeVariables[varpos].name=name;
+      rtsi()->runtimeVariables[varpos].mangled_name=mangl_name;
+      rtsi()->runtimeVariables[varpos].arrays = 
+	(struct ArraysType*)malloc(sizeof(struct ArraysType)*1);
+      rtsi()->runtimeVariables[varpos].arrays->name=mangl_name;
+      rtsi()->runtimeVariables[varpos].arrays->dim=2;
+      rtsi()->runtimeVariables[varpos].arrays->size1=sizeA;
+      rtsi()->runtimeVariables[varpos].arrays->size2=0;
+      rtsi()->runtimeVariables[varpos].arrays->ismalloc=ismalloc;
+      if (variableFound==0)
+	rtsi()->runtimeVariablesEndIndex++;
+
+
       if (rtsi()->arrayDebug)
 	printf( ".. Creating 2Dim array - size : %ld \n", sizeA);
       if (sizeB!=-1) {
-	rtsi()->arrays[rtsi()->arraysEndIndex].size2=sizeB;
+	rtsi()->runtimeVariables[varpos].arrays->size2=sizeB;
 	if (rtsi()->arrayDebug)
 	  printf( "..    Expanding 2Dim array - sizeA : %ld   sizeB: %ld \n", sizeA, sizeB);
       }
@@ -372,10 +425,14 @@ RuntimeSystem_roseArrayAccess(char* name, int posA, int posB, char* filename, ch
   if (mangl_name)
     name=mangl_name;
 
-  int pos = RuntimeSystem_findArrayName(name);
-  if (pos!=-1) {
-    if (rtsi()->arrays[pos].dim==1) {
-      int size = rtsi()->arrays[pos].size1;
+  //int pos = RuntimeSystem_findArrayName(name);
+  int isarray = 0;
+  int pos = RuntimeSystem_findVariablesPos(name,&isarray);
+  printf("roseArrayAccess: looking for variable %s,  found at pos: %d \n",name,pos);
+  if (pos!=-1 && isarray==1) {
+    if (rtsi()->runtimeVariables[pos].arrays &&
+	rtsi()->runtimeVariables[pos].arrays->dim==1) {
+      int size = rtsi()->runtimeVariables[pos].arrays->size1;
       if (rtsi()->arrayDebug)
 	printf( "       Found 1Dim array :  size: %d , access [%d] \n", size, posA);
       if (posB!=-1) {
@@ -392,9 +449,10 @@ RuntimeSystem_roseArrayAccess(char* name, int posA, int posB, char* filename, ch
 	RuntimeSystem_callExit(filename, line, res, stmtStr);
       }
     }
-    else if (rtsi()->arrays[pos].dim==2) {
-      int sizeA = rtsi()->arrays[pos].size1;
-      int sizeB = rtsi()->arrays[pos].size2;
+    else if (rtsi()->runtimeVariables[pos].arrays &&
+	     rtsi()->runtimeVariables[pos].arrays->dim==2) {
+      int sizeA = rtsi()->runtimeVariables[pos].arrays->size1;
+      int sizeB = rtsi()->runtimeVariables[pos].arrays->size2;
       if (rtsi()->arrayDebug) 
 	printf( "  Found 2Dim array :  size: [%d][%d]  pos: [%d][%d] \n",
 		sizeA, sizeB,  posA , posB);
@@ -532,10 +590,13 @@ RuntimeSystem_isFileIOFunctionCall(char* name) {
 int 
 RuntimeSystem_isSizeOfVariableKnown(char* mangled_name) {
   int size=-1;
-  int pos = RuntimeSystem_findArrayName(mangled_name);
-  if (pos!=-1) {
-    if (rtsi()->arrays[pos].dim==1)
-      size = rtsi()->arrays[pos].size1;
+  //int pos = RuntimeSystem_findArrayName(mangled_name);
+  int isarray = 0;
+  int pos = RuntimeSystem_findVariablesPos(mangled_name,&isarray);
+
+  if (pos!=-1 && isarray==1) {
+    if (rtsi()->runtimeVariables[pos].arrays->dim==1)
+      size = rtsi()->runtimeVariables[pos].arrays->size1;
     else
       // the two dim case is not handled
       assert(0==1);
@@ -1098,8 +1159,9 @@ void RuntimeSystem_roseCreateVariable(char* name,
   rtsi()->runtimeVariables[rtsi()->runtimeVariablesEndIndex].type=type;
   rtsi()->runtimeVariables[rtsi()->runtimeVariablesEndIndex].initialized=init;
   rtsi()->runtimeVariables[rtsi()->runtimeVariablesEndIndex].fileOpen=fOpen;
-  rtsi()->runtimeVariables[rtsi()->runtimeVariablesEndIndex].address=-1;
+  rtsi()->runtimeVariables[rtsi()->runtimeVariablesEndIndex].address=0;
   rtsi()->runtimeVariables[rtsi()->runtimeVariablesEndIndex].value=-1;
+  rtsi()->runtimeVariables[rtsi()->runtimeVariablesEndIndex].arrays=0;
   rtsi()->runtimeVariablesEndIndex++;
   printf("CreateVariable: You have just created a run-time variable:\n");
   printf("  name: %s \n", name);
@@ -1107,6 +1169,7 @@ void RuntimeSystem_roseCreateVariable(char* name,
   printf("  type: %s \n",type);
   printf("  initialized: %d \n",init);
   printf("  fileOpen: %s \n",fOpen);
+  printf("  runtimeVariablesEndIndex: %d \n\n",rtsi()->runtimeVariablesEndIndex);
 }
 
 /*********************************************************
@@ -1126,6 +1189,26 @@ RuntimeSystem_findVariables(char* mangled_name) {
     }
   }
   return var;
+}
+
+/*********************************************************
+ * For a given variable name, check if it is present
+ * in the pool of variables created and return variable
+ ********************************************************/
+int
+RuntimeSystem_findVariablesPos(char* mangled_name, int* isarray) {
+  int i=0;
+  for ( i=0;i<rtsi()->runtimeVariablesEndIndex;i++) {
+    char* n =rtsi()->runtimeVariables[i].mangled_name;
+    if (strcmp(mangled_name,n)==0) {
+      struct ArraysType* array = rtsi()->runtimeVariables[i].arrays;
+      //printf("..........findArrayName : name : %s, array ? %s \n",mangled_name,array);
+      if (array) 
+	*isarray=1;
+      return i;
+    }
+  }
+  return -1;
 }
 
 /*********************************************************
@@ -1150,8 +1233,12 @@ RuntimeSystem_roseInitVariable(char* mangled_name,
       int init = 1; //true;
       rtsi()->runtimeVariables[i].initialized=init;
       rtsi()->runtimeVariables[i].address=address;
-      rtsi()->runtimeVariables[i].address=value;
-      printf(">> InitVariable: Marking variable: %s as initialized.    address: %lld   value: %lld \n",mangled_name, address, value);
+      rtsi()->runtimeVariables[i].value=value;
+      int ismalloc = 0;
+      if (rtsi()->runtimeVariables[i].arrays)
+	ismalloc=rtsi()->runtimeVariables[i].arrays->ismalloc;
+      printf(">> InitVariable: Found variable: %s as initialized.    address: %lld   value: %lld   ismalloc:%d \n",
+	     mangled_name, address, value, ismalloc);
       break;
     }
   }

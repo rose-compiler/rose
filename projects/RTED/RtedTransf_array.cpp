@@ -114,11 +114,13 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
     }
     if (isSgBasicBlock(scope)) {
       // build the function call : runtimeSystem-->createArray(params); ---------------------------
+      SgExpression* plainname = buildString(initName->get_name());
       SgExpression* callNameExp = buildString(name);
       SgIntVal* dimExpr = buildIntVal(dimension);
       SgBoolValExp* stackExpr = buildBoolValExp(stack);
 
       SgExprListExp* arg_list = buildExprListExp();
+      appendExpression(arg_list, plainname);
       appendExpression(arg_list, callNameExp);
       appendExpression(arg_list, dimExpr);
       appendExpression(arg_list, stackExpr);
@@ -130,6 +132,11 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
 	ROSE_ASSERT(expr);
 	appendExpression(arg_list, expr);
       }
+      SgIntVal* ismalloc = buildIntVal(0);
+      if (array->ismalloc)
+	ismalloc = buildIntVal(1);
+      appendExpression(arg_list, ismalloc);
+
       SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
       SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
       appendExpression(arg_list, filename);
@@ -155,7 +162,7 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
       insertStatementBefore(isSgStatement(stmt), exprStmt);
       string empty_comment = "";
       attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
-      string comment = "RS : Create Array Variable, paramaters : (name, dimension, stack or heap, size dim 1, size dim 2, filename, linenr)";
+      string comment = "RS : Create Array Variable, paramaters : (name, manglname, dimension, stack or heap, size dim 1, size dim 2, ismalloc, filename, linenr)";
       attachComment(exprStmt,comment,PreprocessingInfo::before);
     } 
     else if (isSgNamespaceDefinitionStatement(scope)) {
@@ -986,7 +993,7 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName
       SgExprListExp* arg_list = buildExprListExp();
       SgExpression* callName = buildString(initName->get_name().str());
       SgExpression* callNameExp = buildString(name);
-      SgExpression* typeName = buildString(initName->get_type()->unparseToString());
+      SgExpression* typeName = buildString(initName->get_type()->class_name());
       SgInitializer* initializer = initName->get_initializer();
       SgExpression* fileOpen = buildString("no");
       bool initb = false;
@@ -1011,7 +1018,7 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName
       insertStatementBefore(isSgStatement(stmt), exprStmt);
       string empty_comment = "";
       attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
-      string comment = "RS : Create Variable, paramaters : (name, type, initialized)";
+      string comment = "RS : Create Variable, paramaters : (name, mangl_name, type, initialized, fileOpen)";
       attachComment(exprStmt,comment,PreprocessingInfo::before);
     } 
     else if (isSgNamespaceDefinitionStatement(scope)) {

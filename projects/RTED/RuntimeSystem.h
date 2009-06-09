@@ -16,6 +16,7 @@ struct RuntimeVariablesType {
   char* fileOpen; // r = read, w = write
   long int address;
   long int value;
+  struct ArraysType* arrays;
 };
 
 
@@ -23,11 +24,12 @@ struct RuntimeVariablesType {
  * tps : 6th April 2009: RTED
  * Store information about arrays and their sizes
  * -----------------------------------------------------------*/
-struct arraysType {
+struct ArraysType {
   char* name; // this represents the mangled name
   int dim; // the indicates the dimension
   int size1; // size of dimension 1
   int size2; // size of dimension 2
+  int ismalloc;
 };
 
 /* -----------------------------------------------------------
@@ -50,9 +52,9 @@ struct RuntimeSystem  {
   struct RuntimeVariablesType* runtimeVariables; 
 
   // a map of all arrays that were created
-  int arraysEndIndex;
-  int maxArraysEndIndex;
-  struct arraysType* arrays;
+  //int arraysEndIndex;
+  //int maxArraysEndIndex;
+  //struct arraysType* arrays;
 
   // did a violation occur?
   int violation;
@@ -76,9 +78,9 @@ int RuntimeSystem_getParamtersForFuncCall(char* name);
 
 // array functions
 int RuntimeSystem_findArrayName(char* mangled_name);
-void RuntimeSystem_increaseSizeArray();                                               
-void RuntimeSystem_roseCreateArray(char* name, int dimension, int stack, 
-				   long int sizeA, long int sizeB, char* filename, char* line);
+//void RuntimeSystem_increaseSizeArray();                                               
+void RuntimeSystem_roseCreateArray(char* name, char* mangl_name, int dimension, int stack, 
+				   long int sizeA, long int sizeB, int ismalloc, char* filename, char* line);
 
 void RuntimeSystem_roseArrayAccess(char* name, int posA, int posB, char* filename, char* line, char* stmtStr);
 
@@ -102,6 +104,7 @@ void RuntimeSystem_roseCreateVariable(char* name, char* mangled_name, char* type
 				      char* fOpen);
 void RuntimeSystem_increaseSizeRuntimeVariables();
 struct RuntimeVariablesType* RuntimeSystem_findVariables(char* name);
+int RuntimeSystem_findVariablesPos(char* mangled_name, int* isarray);
 void RuntimeSystem_roseInitVariable(char* mangled_name,
 				    //char* typeOfVar,
 				    char* typeOfVar2,
