@@ -91,7 +91,7 @@ Index: Driver/TermDumper.cpp
 ===================================================================
 --- Driver/TermDumper.cpp	(revision 0)
 +++ Driver/TermDumper.cpp	(revision 0)
-@@ -0,0 +1,1953 @@
+@@ -0,0 +1,1956 @@
 +
 +//===--- StmtTermDumper.cpp - TermDumping implementation for Stmt ASTs ----===//
 +//
@@ -1408,7 +1408,10 @@ Index: Driver/TermDumper.cpp
 +      switch (S->getStmtClass()) {
 +      case Stmt::NullStmtClass:
 +        {
-+          return make_atom("null_statement");
++          return new PrologCompTerm("null_statement", 3,
++                                    make_default_annotation(),
++                                    make_default_analysis_info(),
++                                    make_file_info(S));
 +        }
 +
 +      case Stmt::CompoundStmtClass:
