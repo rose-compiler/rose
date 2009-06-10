@@ -57,10 +57,11 @@
    use_module(library(types)),
    use_module(library(utils)),
    use_module(while2for),
+   use_module(comefrom),
    use_module(library(assoc)),
    use_module(library(clpfd)),
-   use_module(library(apply_macros)),
-   use_module(library(swi/pce_profile)).
+   use_module(library(apply_macros)).
+%   use_module(library(swi/pce_profile)).
 
 %-----------------------------------------------------------------------
 % Symbolic & Numeric Loop bounds
@@ -791,28 +792,32 @@ pragma_fixup(I, I, I, T, T).
 annot(Input, Output) :-
   X = Input,
 
+  % GOTO -> WHILE conversion
+  writeln('% goto -> while() conversion...'),
+  transformed_with(X, come_from, [], _, X1), !,
+
   % WHILE -> FOR conversion
   writeln('% while() to for() conversion...'),
-  transformed_with(X, while_to_for, [], _, X1), !,
-
+  transformed_with(X1, while_to_for, [], _, X2), !,
+  
   % Loop Bounds
   writeln('% Loop Bounds...'),
   empty_assoc(Info),
-  transformed_with(X1, loop_bounds, Info, _, X2), !,
+  transformed_with(X2, loop_bounds, Info, _, X3), !,
 
   % Markers
   writeln('% Markers...'),
   assert(counter(0)),
-  transformed_with(X2, markers, 'm', _, X3), !,
+  transformed_with(X3, markers, 'm', _, X4), !,
 
   % Constraints
   writeln('% Constraints...'), 
-  transformed_with(X3, constraints, [], _, X4), !,
+  transformed_with(X4, constraints, [], _, X5), !,
 
   % Pragma Terms->Atoms
-  transformed_with(X4, pragma_fixup, _, _, X5), !,
+  transformed_with(X5, pragma_fixup, _, _, X6), !,
   
-  X5 = Output.
+  X6 = Output.
 
 main :-
   catch((
