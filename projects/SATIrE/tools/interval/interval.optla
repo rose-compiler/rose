@@ -109,7 +109,7 @@ ScopeStatement(WhileStmt(ExprStatement(cond))), true_edge:
   branch(cond, @, true, true, context);
 
 ScopeStatement(WhileStmt(ExprStatement(cond))), false_edge:
-  branch(cond, @, false, false, context);
+  branch(cond, @, false, true, context);
 
 LogicalIf(cond), true_edge:
   branch(cond, @, true, false, context);
@@ -206,6 +206,14 @@ eval(exp, state, context) =
                               // --         ":\n    old state = ", s,
                               // --         ",\n    new state = ", s2)
                                     (s{!id!}, lift(s2))
+                              // -- The interval analysis is easily extended
+                              // -- to pointers ranging over arrays by
+                              // -- simply treating an array's name as (an
+                              // -- offset value of) 0; pointer arithmetic
+                              // -- then automagically maps to offset
+                              // -- interval arithmetic.
+                                else if is_array_varid(id) then
+                                    (duplift(0), state)
                                 else
                                     (s{!id!}, state);
       AssignInitializer(e1) => eval(e1, state, context);
@@ -314,6 +322,7 @@ binary(left, right, exp, state, context) =
                          else dontknow ;
 
           ScopeOp(_, _)       => (ltup(r1, r2), ls);
+       // -- GB: FIXME: This += rule is broken for "s += *p++" at least.
           PlusAssignOp(_, _)  => updatestate(ls, left, ltup(l1 + r1, l2 + r2), context);
           MinusAssignOp(_, _) => updatestate(ls, left, ltup(l1 - r2, l2 - r1), context);
           MultAssignOp(_, _)  => updatestate(ls, left, 
@@ -730,3 +739,10 @@ varmember(v, g::gs) =
     then true 
     else varmember(v, gs);
     
+is_array_varid :: VariableId -> bool;
+is_array_varid(id) =
+    let type = typeid_type(exprid_typeid(varid_exprid(id)));
+    in  case type of
+        ArrayType(_, _) => true;
+        _               => false;
+    endcase;
