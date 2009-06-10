@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <cstdlib>
 
 template <class SContainer>
 std::string parts(const SContainer &ss)

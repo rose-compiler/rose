@@ -1,5 +1,7 @@
 #include "termite.h"
 
+#include <cstring>
+
 using namespace std;
 
 #if HAVE_SWI_PROLOG
