@@ -1,3 +1,10 @@
+2009-06-09 22:52  panas2
+
+	* [r6110] /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.c,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: RTED
+
 2009-06-06 00:32  panas2
 
 	* [r6068] /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
