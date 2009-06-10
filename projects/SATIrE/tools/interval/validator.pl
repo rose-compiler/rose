@@ -63,6 +63,13 @@ var_withtype(_Decls, _V, not_in_scope).
 vardecl_vartype(variable_declaration([IN],_,_,_), Var:Type) :-
   IN = initialized_name(_, initialized_name_annotation(Type,Var,_,_),_,_).
 
+% check for pointer type
+is_pointer_type(pointer_type(_)).
+is_pointer_type(modifier_type(T, _)) :-
+    is_pointer_type(T).
+is_pointer_type(typedef_type(_, T)) :-
+    is_pointer_type(T).
+
 % update declared variables according to a scope's declarations
 decls_stmts_newdecls(Decls0, S, Decls) :-
   % accept both single statements and statement lists
@@ -101,8 +108,8 @@ interval_assert1(Var:VarType->[Min,Max], AssertionExpr) :-
 			     AI, FI),
   Ftp = function_type(type_void,ellipses,[type_int]),
 
-  % skip temp vars
-  ( atom_concat('$', _, Var)
+  % skip temp vars and pointer variables
+  ( ( atom_concat('$', _, Var) ; is_pointer_type(VarType) )
   -> AndOp = int_val(null, value_annotation(1, PPI), AI, FI)
   ;  AndOp = and_op(GE, LE, binary_op_annotation(type_int, PPI), AI, FI)
   ),
