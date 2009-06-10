@@ -117,13 +117,13 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
       SgExpression* plainname = buildString(initName->get_name());
       SgExpression* callNameExp = buildString(name);
       SgIntVal* dimExpr = buildIntVal(dimension);
-      SgBoolValExp* stackExpr = buildBoolValExp(stack);
+      //SgBoolValExp* stackExpr = buildBoolValExp(stack);
 
       SgExprListExp* arg_list = buildExprListExp();
       appendExpression(arg_list, plainname);
       appendExpression(arg_list, callNameExp);
       appendExpression(arg_list, dimExpr);
-      appendExpression(arg_list, stackExpr);
+      //appendExpression(arg_list, stackExpr);
       std::vector<SgExpression*>::const_iterator it = value.begin();
       for (; it != value.end(); ++it) {
 	SgExpression* expr = isSgExpression(*it);
@@ -162,7 +162,7 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
       insertStatementBefore(isSgStatement(stmt), exprStmt);
       string empty_comment = "";
       attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
-      string comment = "RS : Create Array Variable, paramaters : (name, manglname, dimension, stack or heap, size dim 1, size dim 2, ismalloc, filename, linenr)";
+      string comment = "RS : Create Array Variable, paramaters : (name, manglname, dimension, size dim 1, size dim 2, ismalloc, filename, linenr)";
       attachComment(exprStmt,comment,PreprocessingInfo::before);
     } 
     else if (isSgNamespaceDefinitionStatement(scope)) {

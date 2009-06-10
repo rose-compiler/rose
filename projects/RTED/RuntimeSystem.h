@@ -14,9 +14,9 @@ struct RuntimeVariablesType {
   char* type;
   int initialized; // 0 = false
   char* fileOpen; // r = read, w = write
-  long int address;
+  struct MemoryType* address;
   long int value;
-  struct ArraysType* arrays;
+  struct ArraysType* arrays; // exactly one array
 };
 
 
@@ -29,8 +29,29 @@ struct ArraysType {
   int dim; // the indicates the dimension
   int size1; // size of dimension 1
   int size2; // size of dimension 2
-  int ismalloc;
+  int ismalloc; // is it on the stack or heap?
 };
+
+/* -----------------------------------------------------------
+ * tps : 10th June 2009: RTED
+ * Store information about memory allocations
+ * -----------------------------------------------------------*/
+struct MemoryType {
+  long int address; // address of memory
+  int lastVariablePos;
+  int maxNrOfVariables; // lets increase by the factor 2
+  int size; // size of memory allocated
+  struct MemoryVariableType* variables; // variables pointing to this location
+};
+
+/* -----------------------------------------------------------
+ * tps : 10th June 2009: RTED
+ * This is a container for all variables at one memory location
+ * -----------------------------------------------------------*/
+struct MemoryVariableType {
+  struct RuntimeVariablesType* variable; // variables pointing to this location
+};
+
 
 /* -----------------------------------------------------------
  * tps : 6th March 2009: RTED
@@ -50,6 +71,11 @@ struct RuntimeSystem  {
   int maxRuntimeVariablesEndIndex;
   int runtimeVariablesEndIndex;
   struct RuntimeVariablesType* runtimeVariables; 
+
+  // memory used
+  int maxMemoryEndIndex;
+  int runtimeMemoryEndIndex;
+  struct MemoryType* runtimeMemory; 
 
   // a map of all arrays that were created
   //int arraysEndIndex;
@@ -76,10 +102,17 @@ char* RuntimeSystem_roseConvertIntToString(int t);
 int RuntimeSystem_isInterestingFunctionCall(char* name);
 int RuntimeSystem_getParamtersForFuncCall(char* name);
 
+// memory handling
+void RuntimeSystem_increaseSizeMemory();
+struct MemoryVariableType* RuntimeSystem_findMemory(long int address);
+struct MemoryType* RuntimeSystem_AllocateMemory(long int address, int sizeArray, struct RuntimeVariablesType* var);
+void RuntimeSystem_increaseSizeMemoryVariables(  int pos);
+
+
 // array functions
 int RuntimeSystem_findArrayName(char* mangled_name);
 //void RuntimeSystem_increaseSizeArray();                                               
-void RuntimeSystem_roseCreateArray(char* name, char* mangl_name, int dimension, int stack, 
+void RuntimeSystem_roseCreateArray(char* name, char* mangl_name, int dimension,// int stack, 
 				   long int sizeA, long int sizeB, int ismalloc, char* filename, char* line);
 
 void RuntimeSystem_roseArrayAccess(char* name, int posA, int posB, char* filename, char* line, char* stmtStr);
