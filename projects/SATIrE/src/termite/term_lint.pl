@@ -206,6 +206,7 @@ term_nt_bodymatch_(Term, _NT, functors Fs with ArgTuple) :-
     CheckTerm =.. [F | ArgList],
     term_terminalmatch(Term, CheckTerm).
 term_nt_bodymatch_(Term, _NT, T) :-
+    \+ atom(T),
     term_terminalmatch(Term, T).
 
 term_terminalmatch(Term, T) :-
