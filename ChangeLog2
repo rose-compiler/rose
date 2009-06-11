@@ -1,3 +1,15 @@
+2009-06-11 01:11  liao6
+
+	* [r6123] /trunk/ROSE/src/frontend/SageIII/sageSupport.C: Fixed a
+	  bug for two parents point to the same child in OpenMP AST
+	  construction
+
+2009-06-10 19:50  panas2
+
+	* [r6121] /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.c,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: RTED work
+
 2009-06-09 22:52  panas2
 
 	* [r6110] /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
