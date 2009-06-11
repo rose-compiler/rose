@@ -7835,6 +7835,9 @@ static void appendOmpClauses(SgOmpClauseBodyStatement* target, OmpAttribute* att
 SgOmpBodyStatement * buildOmpBodyStatement(OmpAttribute* att)
 {
   SgStatement* body = getOpenMPBlockFromOmpAttribte(att);
+  //Must remove the body from its previous parent
+  removeStatement(body);
+
   if (body==NULL)
   {
     cerr<<"error: buildOmpBodyStatement() found empty body for "<<att->toOpenMPString()<<endl;
@@ -7881,8 +7884,8 @@ SgOmpBodyStatement * buildOmpBodyStatement(OmpAttribute* att)
   }
   ROSE_ASSERT(result != NULL);
   setOneSourcePositionForTransformation(result);
+  //set the current parent
   body->set_parent(result);
-
   // add clauses for those SgOmpClauseBodyStatement
   if (isSgOmpClauseBodyStatement(result))
     appendOmpClauses(isSgOmpClauseBodyStatement(result), att);
@@ -7938,6 +7941,8 @@ SgOmpParallelStatement* buildOmpParallelStatementFromCombinedDirectives(OmpAttri
 {
   ROSE_ASSERT(att != NULL);
   SgStatement* body = getOpenMPBlockFromOmpAttribte(att);
+  //Must remove the body from its previous parent
+   removeStatement(body);
   ROSE_ASSERT(body != NULL);
 
   // build the 2nd directive node first
@@ -8059,7 +8064,10 @@ void replaceOmpPragmaWithOmpStatement(SgPragmaDeclaration* pdecl, SgStatement* o
 
   SgScopeStatement* scope = pdecl ->get_scope();
   ROSE_ASSERT(scope !=NULL);
+#if 0  
   SgOmpBodyStatement * omp_cb_stmt = isSgOmpBodyStatement(ompstmt);
+ // do it within buildOmpBodyStatement()
+ // avoid two parents point to the same structured block
   // optionally remove the immediate structured block
   if (omp_cb_stmt!= NULL)
   {
@@ -8068,6 +8076,7 @@ void replaceOmpPragmaWithOmpStatement(SgPragmaDeclaration* pdecl, SgStatement* o
    // ROSE_ASSERT(next_stmt == omp_cb_stmt->get_body()); // ompstmt's body is set already
     removeStatement(next_stmt);
   }
+#endif  
   // replace the pragma
   moveUpPreprocessingInfo(ompstmt, pdecl); // keep #ifdef etc attached to the pragma
   replaceStatement(pdecl, ompstmt);
