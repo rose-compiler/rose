@@ -19,6 +19,25 @@ struct RuntimeVariablesType {
   struct ArraysType* arrays; // exactly one array
 };
 
+/* -----------------------------------------------------------
+ * tps : 10th June 2009: RTED
+ * Store information about memory allocations
+ * -----------------------------------------------------------*/
+struct MemoryType {
+  long int address; // address of memory
+  int lastVariablePos;
+  int maxNrOfVariables; // lets increase by the factor 2
+  int size; // size of memory allocated in bytes
+  struct MemoryVariableType* variables; // variables pointing to this location
+};
+
+/* -----------------------------------------------------------
+ * tps : 10th June 2009: RTED
+ * This is a container for all variables at one memory location
+ * -----------------------------------------------------------*/
+struct MemoryVariableType {
+  struct RuntimeVariablesType* variable; // variables pointing to this location
+};
 
 /* -----------------------------------------------------------
  * tps : 6th April 2009: RTED
@@ -30,26 +49,6 @@ struct ArraysType {
   int size1; // size of dimension 1
   int size2; // size of dimension 2
   int ismalloc; // is it on the stack or heap?
-};
-
-/* -----------------------------------------------------------
- * tps : 10th June 2009: RTED
- * Store information about memory allocations
- * -----------------------------------------------------------*/
-struct MemoryType {
-  long int address; // address of memory
-  int lastVariablePos;
-  int maxNrOfVariables; // lets increase by the factor 2
-  int size; // size of memory allocated
-  struct MemoryVariableType* variables; // variables pointing to this location
-};
-
-/* -----------------------------------------------------------
- * tps : 10th June 2009: RTED
- * This is a container for all variables at one memory location
- * -----------------------------------------------------------*/
-struct MemoryVariableType {
-  struct RuntimeVariablesType* variable; // variables pointing to this location
 };
 
 
@@ -101,12 +100,15 @@ char* RuntimeSystem_resBool(int val);
 char* RuntimeSystem_roseConvertIntToString(int t);
 int RuntimeSystem_isInterestingFunctionCall(char* name);
 int RuntimeSystem_getParamtersForFuncCall(char* name);
+int getSizeOfSgType(char* type);
 
 // memory handling
 void RuntimeSystem_increaseSizeMemory();
 struct MemoryVariableType* RuntimeSystem_findMemory(long int address);
 struct MemoryType* RuntimeSystem_AllocateMemory(long int address, int sizeArray, struct RuntimeVariablesType* var);
 void RuntimeSystem_increaseSizeMemoryVariables(  int pos);
+void RuntimeSystem_RemoveVariableFromMemory(long int address, struct RuntimeVariablesType* runtimevar);
+int checkMemoryLeakIssues(int pos, int address, char* filename, char* line, char* stmtStr);
 
 
 // array functions
@@ -139,12 +141,13 @@ void RuntimeSystem_increaseSizeRuntimeVariables();
 struct RuntimeVariablesType* RuntimeSystem_findVariables(char* name);
 int RuntimeSystem_findVariablesPos(char* mangled_name, int* isarray);
 void RuntimeSystem_roseInitVariable(char* mangled_name,
-				    //char* typeOfVar,
 				    char* typeOfVar2,
-				    //				    char* baseType,
 				    char* baseType2,
 				    unsigned long long address,
-				    unsigned long long value);
+				    unsigned long long value,
+				    int ismalloc,
+				    char* filename, char* line, 
+				    char* stmtStr);
 
 
 

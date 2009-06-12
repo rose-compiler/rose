@@ -24,6 +24,34 @@ RtedTransformation::getStatement(SgExpression* exp) {
 }
 
 SgExpression*
+RtedTransformation::getExprBelowAssignment(SgExpression* exp) {
+  SgExpression* fillExp = exp;
+  // if the parent is a dot expression (a.ss) then we need to add that one instead
+  // but there could be an array or cast inbetween, therefore we go up until we find a SgAssignOp
+  SgExpression* tmpExp = exp;
+  cerr << " tmpExp : " << tmpExp->unparseToString() << endl;
+  while (!(isSgAssignOp(tmpExp) || isSgAssignInitializer(tmpExp))
+	 && isSgExpression(tmpExp)
+	 ) {
+    fillExp=tmpExp;
+    cerr << "tmpExp : " << tmpExp << "  parent : " << tmpExp->get_parent() << "  expr : " 
+	 << isSgExpression(tmpExp->get_parent()) << 
+      "   assignInit : " << isSgAssignInitializer(tmpExp) << endl;
+    tmpExp=isSgExpression(tmpExp->get_parent());
+    //cerr << " iterate - tmpExp parent : " << tmpExp->unparseToString() << endl;
+    if (isSgPntrArrRefExp(tmpExp)) {
+      // dont handle arrays
+      return NULL;
+    }
+  }
+  if ( !isSgExpression(tmpExp))
+    fillExp=exp;
+  cerr << "returning : " << fillExp << endl;
+  return fillExp;
+}
+
+
+SgExpression*
 RtedTransformation::buildString(std::string name) {
   SgExpression* exp = buildCastExp(buildStringVal(name),buildPointerType(buildCharType()));
   return exp;
@@ -32,7 +60,7 @@ RtedTransformation::buildString(std::string name) {
 std::string
 RtedTransformation::removeSpecialChar(std::string str) {
   string searchString="\"";
-  string replaceString="!";
+  string replaceString="'";
   string::size_type pos = 0;
   while ( (pos = str.find(searchString, pos)) != string::npos ) {
     str.replace( pos, searchString.size(), replaceString );
@@ -73,6 +101,28 @@ RtedTransformation::getRightOfDot(SgDotExp* dot, std::string str,
   varRef=NULL;
   SgInitializedName* initName = NULL;
   SgExpression* rightDot = dot->get_rhs_operand();
+  ROSE_ASSERT(rightDot);
+  varRef = isSgVarRefExp(rightDot);
+  if (varRef) {
+    initName = (varRef)->get_symbol()->get_declaration();
+  } else {
+    cerr << "RtedTransformation : " << str << " - Unknown : "
+	 << rightDot->class_name() << endl;
+    ROSE_ASSERT(false);
+  }
+  return make_pair(initName,varRef);
+}
+
+/****************************************
+ * This function returns InitializedName
+ * for a DotExpr
+ ****************************************/
+std::pair<SgInitializedName*,SgVarRefExp*>
+RtedTransformation::getRightOfPointerDeref(SgPointerDerefExp* dot, std::string str,
+					   SgVarRefExp* varRef) {
+  varRef=NULL;
+  SgInitializedName* initName = NULL;
+  SgExpression* rightDot = dot->get_operand();
   ROSE_ASSERT(rightDot);
   varRef = isSgVarRefExp(rightDot);
   if (varRef) {

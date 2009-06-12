@@ -68,6 +68,25 @@ RuntimeSystem_Const_RuntimeSystem() {
 // ***************************************** HELPER FUNCTIONS *************************************
 
 /*********************************************************
+ * What is the size in bytes of each type ?
+ ********************************************************/
+int getSizeOfSgType(char* type) {
+  int size =1;
+  assert(type!=0);
+  if ( 
+      (strcmp(type,"SgTypeInt")==0) ||
+      (strcmp(type,"SgPointerType")==0) 
+      )
+    size = sizeof(int);
+  else {
+    printf("Unknown Type : %s \n",type);
+    exit(1);
+  }
+
+  return size;
+}
+
+/*********************************************************
  * resolve the meaning of a boolean value in plain text
  ********************************************************/
 char*
@@ -154,6 +173,55 @@ RuntimeSystem_roseRtedClose() {
 // ***************************************** ARRAY FUNCTIONS *************************************
 
 /*********************************************************
+ * Look at the variable at pos and check if it has
+ * already a memory location assigned to it, if yes
+ * then this might be a memory leak (if no other var
+ * is assigned to the old address)
+ ********************************************************/
+int checkMemoryLeakIssues(int pos, int address, 
+			  char* filename, char* line, char* stmtStr) {
+  int problem =0;
+  printf("Checking for Memory Leak ... \n");
+  // we assume that memory at pos exists
+  struct RuntimeVariablesType* runtimevar = &(rtsi()->runtimeVariables[pos]);
+  // get the variables assigned to the old address
+  struct MemoryType* mem = runtimevar->address;
+  assert(mem);
+  // make sure this is not an access or assignment 
+  // within an element of the memory
+  long int addr = mem->address;
+  int size = mem->size;
+  if (address>=addr && address <=(addr+size)) {
+    // the new address is within the old address : ok.
+    return problem;
+  } // else continue
+
+  struct MemoryVariableType* variables = mem->variables;
+  if (variables) {
+    // variables exist. Check each of them.
+    // Actually, if there is more than one we are fine
+    printf("Checking for Memory Leak ... Memory has %d variable entries. \n",(mem->lastVariablePos));
+    if (mem->lastVariablePos>1) {
+      // ok.
+    } else {
+      // only one element at (0)
+      // is it our current element, if yes, we have a memory leak
+      struct RuntimeVariablesType* variable = mem->variables[0].variable;
+      if (variable == runtimevar) {
+	// problem
+	RuntimeSystem_callExit(filename, line, (char*)"Memory Leak: Assigning Pointer to Memory that has not been freed and no other pointer to that memory exists.", stmtStr);  
+      } else {
+	printf("The entry is different from the current var :  %s and %s\n",
+	      variable->name, runtimevar->name);
+      }
+    }
+      
+  }
+
+  return problem;
+}
+
+/*********************************************************
  * Increase the size of the array by multiples of 50
  * array stored all array variables that are used 
  ********************************************************/
@@ -195,6 +263,50 @@ RuntimeSystem_increaseSizeMemoryVariables(  int pos) {
   }
   printf( " Increased VariableMemory to %d  -- current index %d\n",rtsi()->runtimeMemory[pos].maxNrOfVariables , rtsi()->runtimeMemory[pos].lastVariablePos) ;
 }
+
+/*********************************************************
+ * Remove a variable from a memory location
+ * Each memory location can have several variables pointed to
+ ********************************************************/
+void RuntimeSystem_RemoveVariableFromMemory(long int address, 
+					    struct RuntimeVariablesType* var) {
+  int i=0;
+  for ( i=0;i<rtsi()->runtimeMemoryEndIndex;i++) {
+    long int addr = rtsi()->runtimeMemory[i].address;
+    if (addr==address) {
+      printf("Removing Variable from Address %lld .\n",address);
+      int endIndex = rtsi()->runtimeMemory[i].lastVariablePos;
+      int deletePos=-1;
+      int j=0;
+      for ( j=0;j<endIndex;j++) {
+	struct RuntimeVariablesType* variable = rtsi()->runtimeMemory[i].variables[j].variable;
+	if (variable==var) {
+	  // found the variable in the pool
+	  deletePos=j;
+	  break;
+	}
+      }      
+      if (deletePos==-1) {
+	printf("Something went wrong deleting the variable.\n");
+	exit(1);
+      } else {
+	if (endIndex==1) {
+	  // delete only element
+	  endIndex--;
+	} if (deletePos==endIndex-1) {
+	  // delete the last element
+	  endIndex--;
+	} else {
+	  // delete an element inbetween
+	  rtsi()->runtimeMemory[i].variables[deletePos].variable=
+	    rtsi()->runtimeMemory[i].variables[endIndex-1].variable;	  
+	  endIndex--;
+	}
+      }
+    }
+  }
+}
+
 
 /*********************************************************
  * Whenever a variable is created, make sure 
@@ -484,7 +596,8 @@ RuntimeSystem_roseArrayAccess(char* name, int posA, int posB, char* filename, ch
   //int pos = RuntimeSystem_findArrayName(name);
   int isarray = 0;
   int pos = RuntimeSystem_findVariablesPos(name,&isarray);
-  printf("roseArrayAccess: looking for variable %s,  found at pos: %d \n",name,pos);
+  if (rtsi()->arrayDebug) 
+    printf("roseArrayAccess: looking for variable %s,  found at pos: %d \n",name,pos);
   if (pos!=-1 && isarray==1) {
     if (rtsi()->runtimeVariables[pos].arrays &&
 	rtsi()->runtimeVariables[pos].arrays->dim==1) {
@@ -1300,8 +1413,10 @@ RuntimeSystem_roseInitVariable(char* mangled_name,
 			       char* typeOfVar2,
 			       char* baseType,
 			       unsigned long long address,
-			       unsigned long long value) {
-  //printf("InitVariable: Request for %s.    address: %d   value: %d \n",mangled_name, address, value);
+			       unsigned long long value,
+			       int ismalloc,
+			       char* filename, char* line, char* stmtStr) {
+  printf("InitVariable: Request for %s.    address: %d   value: %d   type: %s \n",mangled_name, address, value, typeOfVar2);
   int i=0;
   for ( i=0;i<rtsi()->runtimeVariablesEndIndex;i++) {
     char* n =rtsi()->runtimeVariables[i].mangled_name;
@@ -1311,29 +1426,51 @@ RuntimeSystem_roseInitVariable(char* mangled_name,
       int init = 1; //true;
       rtsi()->runtimeVariables[i].initialized=init;
       rtsi()->runtimeVariables[i].value=value;
-      int ismalloc = 0;
+      rtsi()->runtimeVariables[i].type=typeOfVar2;
+      //int ismalloc = 0;
       int sizeArray =0;
       if (rtsi()->runtimeVariables[i].arrays) {
-	ismalloc=rtsi()->runtimeVariables[i].arrays->ismalloc;
+	//ismalloc=rtsi()->runtimeVariables[i].arrays->ismalloc;
 	sizeArray = rtsi()->runtimeVariables[i].arrays->size1;
 	if (rtsi()->runtimeVariables[i].arrays->dim==2)
 	  sizeArray = sizeArray*rtsi()->runtimeVariables[i].arrays->size2;
+	sizeArray = sizeArray * getSizeOfSgType(rtsi()->runtimeVariables[i].type);
       }
 
       // create memory association only if it is a heap variable
-      if (ismalloc) {
+      if (ismalloc) { // should check if current call is a malloc 
 	if (rtsi()->runtimeVariables[i].address) {
-	  // this variable has an address, so its fine
+	  // this variable has an address, we are re-assigning its
+	  // address or variable ?
+	  printf("\n>>>> >> Already allocated memory at address %lld  and size %d  for  %s\n",
+		 rtsi()->runtimeVariables[i].address->address, rtsi()->runtimeVariables[i].address->size, stmtStr);
+	  // check if this variable is allocating memory through
+	  // a pointer that was not freed before
+	  int result = checkMemoryLeakIssues(i, address, filename, line,stmtStr);
+	  if (result==0) { 
+	    // there are no issues and we should re-assign the
+	    // variable address and size
+	    // we need to remove that variable from that address
+	    struct RuntimeVariablesType* runtimevar = &(rtsi()->runtimeVariables[i]);
+	    RuntimeSystem_RemoveVariableFromMemory(address,runtimevar);
+	    // and add it to another address
+	    struct MemoryType* tmp_memory = RuntimeSystem_AllocateMemory(address,sizeArray,runtimevar);
+	    rtsi()->runtimeVariables[i].address = tmp_memory;
+	    printf("\n>>>> >> Re-Allocated memory at address %lld  and size %d for   %s \n",
+		   rtsi()->runtimeVariables[i].address->address, rtsi()->runtimeVariables[i].address->size, stmtStr);
+	  }
 	} else {
 	  // this variable has no previous address, we need to fix this
 	  struct RuntimeVariablesType* runtimevar = &(rtsi()->runtimeVariables[i]);
 	  struct MemoryType* tmp_memory = RuntimeSystem_AllocateMemory(address,sizeArray,runtimevar);
 	  rtsi()->runtimeVariables[i].address = tmp_memory;
+	  printf("\n>>>> >> Allocated memory at address %lld  and size %d   for   %s \n",
+		 rtsi()->runtimeVariables[i].address->address, rtsi()->runtimeVariables[i].address->size, stmtStr);
 	}
       }
 
-      printf(">> InitVariable: Found variable: %s as initialized.    address: %lld   value: %lld   ismalloc:%d \n",
-	     mangled_name, address, value, ismalloc);
+      //printf(">> InitVariable: Found variable: %s as initialized.    address: %lld   value: %lld   ismalloc:%d \n",
+      //	     mangled_name, address, value, ismalloc);
       break;
     }
   }

@@ -58,7 +58,8 @@ void RtedTransformation::insertArrayCreateCall(SgInitializedName* initName,
 
 
 void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
-					       SgInitializedName* initName, RTedArray* array) {
+					       SgInitializedName* initName, 
+					       RTedArray* array) {
   // make sure there is no extern in front of stmt
 #if 1
   SgDeclarationStatement* declstmt = isSgDeclarationStatement(stmt);
@@ -84,7 +85,7 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
   std::vector<SgExpression*> value;
   array->getIndices(value);
   int dimension = array->dimension;
-  bool stack = array->stack;
+  //bool stack = array->stack;
   if (isSgStatement(stmt)) {
     SgScopeStatement* scope = stmt->get_scope();
     string name = initName->get_mangled_name().str();
@@ -286,6 +287,7 @@ void RtedTransformation::visit_isArraySgInitializedName(SgNode* n) {
   dimension = getDimension(initName);
   // STACK ARRAY : lets see if we assign an array here
   SgType* type = initName->get_typeptr();
+  ROSE_ASSERT(type);
   SgArrayType* array = isSgArrayType(type);
   if (array) {
     SgExpression * expr = array->get_index();
@@ -371,6 +373,8 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
   SgExpression* indx2 = NULL;
   int dimension = 0;
 
+  cerr <<"   ::: Checking assignment : " << n->unparseToString()<<endl;
+
   // left side contains SgInitializedName somewhere ... search
   SgVarRefExp* varRef = isSgVarRefExp(expr_l);
   SgPntrArrRefExp* pntrArr = isSgPntrArrRefExp(expr_l);
@@ -432,7 +436,18 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
       varRef = mypair.second;
       if (initName)
 	ROSE_ASSERT(varRef);
-    } else if (isSgArrowExp(expr_ll)) {
+    } else if (isSgPointerDerefExp(expr_ll)) {
+      cerr << "RtedTransformation : isSgPointerDerefExp : " << endl;
+      
+      std::pair<SgInitializedName*,SgVarRefExp*> mypair = getRightOfPointerDeref(isSgPointerDerefExp(expr_ll),
+										 "Left of pntrArr - Right of PointerDeref  - line: "
+										 + expr_ll->unparseToString() + " ", varRef);
+      initName = mypair.first;
+      varRef = mypair.second;
+      if (initName)
+	ROSE_ASSERT(varRef);
+    }
+    else if (isSgArrowExp(expr_ll)) {
       cerr << "RtedTransformation : isSgArrowExp : " << endl;
       std::pair<SgInitializedName*,SgVarRefExp*> mypair  = getRightOfArrow(isSgArrowExp(expr_ll),
 									   "Left of pntrArr - Right of Arrow  - line: "
@@ -488,6 +503,22 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
       varRef = isSgVarRefExp(exp);
       ROSE_ASSERT(varRef);
     }
+    else if (isSgDotExp(exp)) {
+      std::pair<SgInitializedName*,SgVarRefExp*> mypair = getRightOfDot(isSgDotExp(exp),
+									"Right of Dot  - line: " + exp->unparseToString() + " ", varRef);
+      initName = mypair.first;
+      varRef = mypair.second;
+      if (initName)
+	ROSE_ASSERT(varRef);
+    }// ------------------------------------------------------------
+    else if (isSgPointerDerefExp(exp)) {
+      std::pair<SgInitializedName*,SgVarRefExp*> mypair = getRightOfPointerDeref(isSgPointerDerefExp(exp),
+										 "Right of PointerDeref  - line: " + exp->unparseToString() + " ", varRef);
+      initName = mypair.first;
+      varRef = mypair.second;
+      if (initName)
+	ROSE_ASSERT(varRef);
+    }// ------------------------------------------------------------
     else {
       cerr << "RtedTransformation : PointerDerefExp - Unknown : "
 	   << exp->class_name() << "  line:"
@@ -507,36 +538,10 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
     ROSE_ASSERT(false);
   }
 
-  // ---------------------------------------------
-  // handle variables ..............................
-  // here we should know the initName of the variable on the left hand side
-  ROSE_ASSERT(initName);
-  ROSE_ASSERT(varRef);
-  if (initName && varRef) {
-    // we now know that this variable must be initialized
-    // if we have not set this variable to be initialized yet,
-    // we do so
-    cerr  << ">> Setting this var to be initialized : " << initName->unparseToString() << endl;
-#if 0
-    std::map<SgInitializedName*,SgVarRefExp*>::const_iterator it = 
-      variableIsInitialized.begin();
-    bool found=false;
-    for (;it!=variableIsInitialized.end();++it) {
-      SgInitializedName* savedInit = it->first;
-      if (savedInit==initName) {
-	found=true; break;
-      }
-    }
-#endif
-    //if (!found) {
-      variableIsInitialized[varRef]=initName;
-      //}
-  }
-  // ---------------------------------------------
-
 
 
   // handle MALLOC
+  bool ismalloc=false;
   vector<SgNode*> calls = NodeQuery::querySubTree(expr_r,
 						  V_SgFunctionCallExp);
   vector<SgNode*>::const_iterator it = calls.begin();
@@ -559,7 +564,7 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
       }
       SgExpression* func = funcc->get_function();
       if (func && size) {
-	bool ismalloc = false;
+	ismalloc = false;
 	SgFunctionRefExp* funcr = isSgFunctionRefExp(func);
 	if (funcr) {
 	  SgFunctionDeclaration* funcd =
@@ -654,6 +659,22 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
       }
     }
   }
+
+  // ---------------------------------------------
+  // handle variables ..............................
+  // here we should know the initName of the variable on the left hand side
+  ROSE_ASSERT(initName);
+  ROSE_ASSERT(varRef);
+  if (initName && varRef) {
+    // we now know that this variable must be initialized
+    // if we have not set this variable to be initialized yet,
+    // we do so
+    cerr  << ">> Setting this var to be initialized : " << initName->unparseToString() << endl;
+    variableIsInitialized[varRef]=std::pair<SgInitializedName*,bool>(initName,ismalloc);
+  }
+  // ---------------------------------------------
+
+
 }
 
 
@@ -667,22 +688,34 @@ void RtedTransformation::visit_isAssignInitializer(SgNode* n) {
   SgExpression* expr_r = assign->get_operand();
   ROSE_ASSERT(expr_r);
   // ---------------------------------------------
-    // we now know that this variable must be initialized
-    // if we have not set this variable to be initialized yet,
-    // we do so
-    //cerr  << ">> Setting this var to be assign initialized : " << initName->unparseToString() 
-  //	  << "  and assignInit: " << assign->unparseToString()  
-  //	  << "  expression : " << expr_r->unparseToString() << endl;
-    SgVarRefExp* varRef = buildVarRefExp(initName, initName->get_scope());
-    ROSE_ASSERT(varRef);
+  // we now know that this variable must be initialized
+  // if we have not set this variable to be initialized yet,
+  // we do so
+  cerr  << ">> Setting this var to be assign initialized : " << initName->unparseToString() 
+	<< "  and assignInit: " << assign->unparseToString()  
+	<< "  expression : " << expr_r->unparseToString() << endl;
+  SgVarRefExp* varRef = buildVarRefExp(initName, initName->get_scope());
+  ROSE_ASSERT(varRef);
 
-    SgStatement* stmt = getSurroundingStatement(initName);
-    ROSE_ASSERT(stmt);
-    SgExprStatement* exprStmt = buildExprStatement(varRef);
+  SgStatement* stmt = getSurroundingStatement(initName);
+  ROSE_ASSERT(stmt);
+  SgExprStatement* exprStmt = buildExprStatement(varRef);
+
+
+  // dont do this if the variable is global
+  if (isSgGlobal(initName->get_scope())) {
+
+  } else if (isSgBasicBlock(initName->get_scope())) {
     insertThisStatementLater[exprStmt]=stmt;
-    //insertStatementAfter(stmt,exprStmt);
+    bool ismalloc=false;
+    variableIsInitialized[varRef]=std::pair<SgInitializedName*,bool>(initName,ismalloc);
+    //cerr << "Inserting new statement : " << exprStmt->unparseToString() << endl;
+    //cerr << "    after old statement : " << stmt->unparseToString() << endl;
+  } else {
+    cerr << " Cant determine scope : " << initName->get_scope()->class_name() << endl;
+    exit(1);
+  }
 
-    variableIsInitialized[varRef]=initName;
   // ---------------------------------------------
 }
 
@@ -701,6 +734,7 @@ void RtedTransformation::addPaddingToAllocatedMemory(SgStatement* stmt,  RTedArr
   bool cont=false;
   SgInitializedName* initName = array->initName;
   SgType* type = initName->get_type();
+  ROSE_ASSERT(type);
   cerr << " Padding type : " << type->class_name() << endl;
   if (isSgPointerType(type)) {
     SgType* basetype = isSgPointerType(type)->get_base_type();
@@ -762,12 +796,16 @@ void RtedTransformation::visit_isArrayPntrArrRefExp(SgNode* n) {
     if (varRef == NULL) {
       SgArrowExp* arrow = isSgArrowExp(left);
       SgDotExp* dot = isSgDotExp(left);
+      SgPointerDerefExp* pointerDeref = isSgPointerDerefExp(left);
       SgPntrArrRefExp* arrRefExp2 = isSgPntrArrRefExp(left);
       if (arrow) {
 	varRef = isSgVarRefExp(arrow->get_rhs_operand());
 	ROSE_ASSERT(varRef);
       } else if (dot) {
 	varRef = isSgVarRefExp(dot->get_rhs_operand());
+	ROSE_ASSERT(varRef);
+      } else if (pointerDeref) {
+	varRef = isSgVarRefExp(pointerDeref->get_operand());
 	ROSE_ASSERT(varRef);
       } else if (arrRefExp2) {
 	dimension = 2;
@@ -847,50 +885,50 @@ void RtedTransformation::visit_isArrayExprListExp(SgNode* n) {
     exprlist = isSgExprListExp(isSgVarRefExp(n)->get_parent()->get_parent());
   // check if this is a function call with array as parameter
   if (exprlist) {
-  SgFunctionCallExp* fcexp = isSgFunctionCallExp(exprlist->get_parent());
-  if (fcexp) {
+    SgFunctionCallExp* fcexp = isSgFunctionCallExp(exprlist->get_parent());
+    if (fcexp) {
       cerr <<"Found a function call with varRef as parameter: " << fcexp->unparseToString() <<endl;
-    // check if parameter is array - then check function name
-    // call func(array_name) to runtime system for runtime inspection 
-    SgInitializedName* initName =
-      isSgVarRefExp(n)->get_symbol()->get_declaration();
-    if (isVarRefInCreateArray(initName) ||
-	isVarInCreatedVariables(initName)) {
-      // create this function call only, if it is not one of the 
-      // interesting function calls, such as strcpy, strcmp ...
-      // because for those we do not need the parameters and do not 
-      // need to put them on the stack
-      SgFunctionRefExp* refExp = isSgFunctionRefExp(fcexp->get_function());
-      ROSE_ASSERT(refExp);
-      SgFunctionDeclaration* decl = isSgFunctionDeclaration(refExp->getAssociatedFunctionDeclaration ());
-      ROSE_ASSERT(decl);
-      string name = decl->get_name();
-      string mangled_name = decl->get_mangled_name().str();
-      cerr <<"Found a function call " << name << endl;
-      if (isStringModifyingFunctionCall(name)==false &&
-	  isFileIOFunctionCall(name)==false ) {
-	vector<SgExpression*> args;
-	SgExpression* varOnLeft = buildString("NoAssignmentVar2");
-	SgStatement* stmt = getSurroundingStatement(isSgVarRefExp(n));
-	ROSE_ASSERT(stmt);
-	RtedArguments* funcCall = new RtedArguments(name, // function name
-						    mangled_name,
-						    // we need this for the function as well
-						    initName->get_name(), // variable
-						    initName->get_mangled_name().str(),
-						    isSgVarRefExp(n),
-						    stmt,
-						    args,
-						    varOnLeft
-						    );
-	ROSE_ASSERT(funcCall);	
-	cerr << " !!!!!!!!!! Adding function call." << name << endl;
-	function_call.push_back(funcCall);
+      // check if parameter is array - then check function name
+      // call func(array_name) to runtime system for runtime inspection 
+      SgInitializedName* initName =
+	isSgVarRefExp(n)->get_symbol()->get_declaration();
+      if (isVarRefInCreateArray(initName) ||
+	  isVarInCreatedVariables(initName)) {
+	// create this function call only, if it is not one of the 
+	// interesting function calls, such as strcpy, strcmp ...
+	// because for those we do not need the parameters and do not 
+	// need to put them on the stack
+	SgFunctionRefExp* refExp = isSgFunctionRefExp(fcexp->get_function());
+	ROSE_ASSERT(refExp);
+	SgFunctionDeclaration* decl = isSgFunctionDeclaration(refExp->getAssociatedFunctionDeclaration ());
+	ROSE_ASSERT(decl);
+	string name = decl->get_name();
+	string mangled_name = decl->get_mangled_name().str();
+	cerr <<"Found a function call " << name << endl;
+	if (isStringModifyingFunctionCall(name)==false &&
+	    isFileIOFunctionCall(name)==false ) {
+	  vector<SgExpression*> args;
+	  SgExpression* varOnLeft = buildString("NoAssignmentVar2");
+	  SgStatement* stmt = getSurroundingStatement(isSgVarRefExp(n));
+	  ROSE_ASSERT(stmt);
+	  RtedArguments* funcCall = new RtedArguments(name, // function name
+						      mangled_name,
+						      // we need this for the function as well
+						      initName->get_name(), // variable
+						      initName->get_mangled_name().str(),
+						      isSgVarRefExp(n),
+						      stmt,
+						      args,
+						      varOnLeft
+						      );
+	  ROSE_ASSERT(funcCall);	
+	  cerr << " !!!!!!!!!! Adding function call." << name << endl;
+	  function_call.push_back(funcCall);
+	}
+      } else {
+	cerr << " This is a function call but its not passing an array element " << endl;
       }
-    } else {
-      cerr << " This is a function call but its not passing an array element " << endl;
     }
-  }
   }
 }
 
@@ -1042,7 +1080,8 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName
 
 
 void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
-						  SgVarRefExp* varRefE 
+						  SgVarRefExp* varRefE,
+						  bool ismalloc
 						  ) {
   SgStatement* stmt = getSurroundingStatement(varRefE);
   // make sure there is no extern in front of stmt
@@ -1050,6 +1089,7 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
   if (isSgStatement(stmt)) {
     SgScopeStatement* scope = stmt->get_scope();
     string name = initName->get_mangled_name().str();
+    cerr << "          ... running insertInitializeVariable :  "<<name<< "   scope: " << scope->class_name() << endl;
 
     ROSE_ASSERT(scope);
     // what if there is an array creation within a ClassDefinition
@@ -1064,11 +1104,11 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
       } 
       scope = scope->get_scope();
       // We want to insert the stmt before this classdefinition, if its still in a valid block
-      cerr <<" ....... Found ClassDefinition Scope. New Scope is : " << scope->class_name() << "  stmt:" << stmt->class_name() <<endl;
+      cerr <<" ------->....... Found ClassDefinition Scope. New Scope is : " << scope->class_name() << "  stmt:" << stmt->class_name() <<"\n\n\n\n"<<endl;
     }
     // what is there is an array creation in a global scope
     else if (isSgGlobal(scope)) {
-      cerr <<"RuntimeInstrumentation :: WARNING - Scope not handled!!! : " << name << " : " << scope->class_name() << endl;
+      cerr <<" ------->....... RuntimeInstrumentation :: WARNING - Scope not handled!!! : " << name << " : " << scope->class_name() << "\n\n\n\n" <<endl;
       // We need to add this new statement to the beginning of main
       // get the first statement in main as stmt
       stmt = mainFirst;
@@ -1086,6 +1126,7 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
       // is a pointer then we store the memory location
       // otherwise we store the value
       SgType* type = initName->get_type();
+      ROSE_ASSERT(type);
       // string typestr = "notype";
       SgType* basetype = NULL;
       SgExpression* basetypeStr = buildString("no base");
@@ -1104,35 +1145,139 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
       //appendExpression(arg_list, buildString(varRefE->get_parent()->class_name()));
       // do not perform this test if the left hand side 
       // is a variable of a struct or class (for now)
+#if 0
       if (isSgDotExp(varRefE->get_parent()) ||
 	  isSgClassType(basetype) ||
 	  isSgPointerType(basetype) ||
 	  isSgTypedefType(basetype)
-	  )
-	  return;
-
+	  ) {
+	cerr << "          Detected exeption : varref : " << varRefE->unparseToString() << 
+	  " type: " << basetype->class_name() << "  scope: " << varRefE->get_symbol()->get_name().str() << endl;
+	exit(1);
+	//	  return;
+      }
+#endif
+      cerr << " Checking type : " << type->class_name() << endl;
+      if (basetype)
+	cerr << "  base type : " << basetype->class_name() << endl;
+      if (isSgPointerType(type) && isSgPointerType(type)->get_parent())
+	cerr << "  parent type : " << (isSgPointerType(type)->get_parent())->class_name() << endl;
       // append address and value
       if (isSgPointerType(type) && 
 	  isSgPointerType(isSgPointerType(type)->get_parent())==NULL 
 	  ) {
+
 	//char* res = (char*)malloc(long int);
 	//fprintf(res,"%p",varRefE);
-	appendExpression(arg_list, buildCastExp(varRefE,buildUnsignedLongLongType()));
-	appendExpression(arg_list, buildPointerDerefExp(varRefE));
+	//int derefCounter=getTypeOfPointer(initName);
+	SgExpression* fillExp = getExprBelowAssignment(varRefE);
+	
+	//	ROSE_ASSERT(fillExp);
+#if 0
+	if (varRefE->get_parent() &&
+	    isSgDotExp(varRefE->get_parent())) {
+	  appendExpression(arg_list, buildCastExp(isSgDotExp(varRefE->get_parent()),buildUnsignedLongLongType()));
+	  appendExpression(arg_list, buildPointerDerefExp(isSgDotExp(varRefE->get_parent())));
+	}
+	else if (isSgPointerDerefExp(varRefE->get_parent())) {
+	  appendExpression(arg_list, buildCastExp(isSgPointerDerefExp(varRefE->get_parent()),buildUnsignedLongLongType()));
+	  appendExpression(arg_list, buildPointerDerefExp(isSgPointerDerefExp(varRefE->get_parent())));
+	} else {
+	  appendExpression(arg_list, buildCastExp(varRefE,buildUnsignedLongLongType()));
+	  appendExpression(arg_list, buildPointerDerefExp(varRefE));
+	}
+#endif
+	if (fillExp) {
+#if 1
+	  if (isSgPointerDerefExp(fillExp)) { //varRefE->get_parent())) {
+	    appendExpression(arg_list, buildCastExp(buildAddressOfOp(fillExp),buildUnsignedLongLongType()));
+	    appendExpression(arg_list, fillExp);
+	  } else {
+	    appendExpression(arg_list, buildCastExp(fillExp,buildUnsignedLongLongType()));
+	    // handle Exceptions. dont init value if class or pointer to pointer
+	    if (isSgClassType(basetype) || 
+		isSgPointerType(basetype) ||
+		isSgTypedefType(basetype)
+		
+		)
+	      appendExpression(arg_list, buildIntVal(0));
+	    else
+	      appendExpression(arg_list, buildPointerDerefExp(fillExp));
+	  }
+
+#else
+	  cerr << "Derefcounter = " << derefCounter << "  " << stmt->unparseToString() << endl;
+	    SgExpression* addme = fillExp;
+	    for (int j=0;j<derefCounter;j++) {
+	      addme = buildAddressOfOp(addme);
+	    }
+	    appendExpression(arg_list, buildCastExp(addme,buildUnsignedLongLongType()));
+	    // dont assign the pointer deref as a value if you actually have a pointer
+	    // to a class
+	    if (isSgClassType(basetype))
+	      appendExpression(arg_list, buildIntVal(0));
+	    else
+	      appendExpression(arg_list, buildPointerDerefExp(addme));
+#endif
+	  //appendExpression(arg_list,(fillExp));
+	} else {
+	  cerr << " Pointer that is not handled: " << varRefE->unparseToString() << endl;
+	  // assume its an array - dont handle (PntrArrRefExp)
+	  return;
+	}
+
       } else if (isSgTypeInt(type)) {
-	appendExpression(arg_list, buildCastExp(buildAddressOfOp(varRefE),buildUnsignedLongLongType())); //buildLongIntVal(-1));
-	appendExpression(arg_list, varRefE);
+	SgExpression* fillExp = getExprBelowAssignment(varRefE);
+	if (fillExp) {
+	  //appendExpression(arg_list, buildCastExp(buildAddressOfOp(varRefE),buildUnsignedLongLongType())); //buildLongIntVal(-1));
+	  //appendExpression(arg_list, varRefE);
+	  appendExpression(arg_list, buildCastExp(buildAddressOfOp(fillExp),buildUnsignedLongLongType())); //buildLongIntVal(-1));
+	  appendExpression(arg_list, fillExp);
+	} else {
+	  cerr << "Unhandled for variables : " << varRefE->unparseToString() << endl;
+	  ROSE_ASSERT(fillExp);
+	}
       }  else if (isSgTypeChar(type)) {
-	appendExpression(arg_list, buildCastExp(buildAddressOfOp(varRefE),buildUnsignedLongLongType())); //buildLongIntVal(-1));
-	appendExpression(arg_list, varRefE);
+	SgExpression* fillExp = getExprBelowAssignment(varRefE);
+	if (fillExp) {
+	  //appendExpression(arg_list, buildCastExp(buildAddressOfOp(varRefE),buildUnsignedLongLongType())); //buildLongIntVal(-1));
+	  //appendExpression(arg_list, varRefE);
+	  appendExpression(arg_list, buildCastExp(buildAddressOfOp(fillExp),buildUnsignedLongLongType())); //buildLongIntVal(-1));
+	  appendExpression(arg_list, fillExp);
+	} else {
+	  cerr << "Unhandled for variables : " << varRefE->unparseToString() << endl;
+	  ROSE_ASSERT(fillExp);
+	}
       } 
       else if (isSgArrayType(type)) {
-	cerr << "Unhandled for variables" << endl;
+#if 0
+	SgExpression* fillExp = getExprBelowAssignment(varRefE);
+	if (fillExp) {
+	  appendExpression(arg_list, buildCastExp(fillExp,buildUnsignedLongLongType()));
+	  appendExpression(arg_list, buildPointerDerefExp(fillExp));
+	} else {
+	  cerr << "Unhandled for variables : " << varRefE->unparseToString() << endl;
+	  exit(1);
+	}
+#endif
+	// we don't do this for arrays, because the initialization of each
+	// element is handled at runtime
 	return;
       } else {
 	cerr << "Variable Init: Condition unknown :" << type->class_name() << endl;
 	exit(1);
       }
+
+      SgIntVal* ismallocV = buildIntVal(0);
+      if (ismalloc)
+	ismallocV = buildIntVal(1);
+      appendExpression(arg_list, ismallocV);
+
+      SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
+      SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
+      appendExpression(arg_list, filename);
+      appendExpression(arg_list, linenr);
+      appendExpression(arg_list, buildString(removeSpecialChar(stmt->unparseToString())));
 
       ROSE_ASSERT(roseInitVariable);
       string symbolName2 = roseInitVariable->get_name().str();
@@ -1145,14 +1290,14 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
       insertStatementAfter(isSgStatement(stmt), exprStmt);
       string empty_comment = "";
       attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
-      string comment = "RS : Init Variable, paramaters : (name, address)";
+      string comment = "RS : Init Variable, paramaters : (mangl_name, tpye, basetype, address, value, ismalloc, filename, line, error line)";
       attachComment(exprStmt,comment,PreprocessingInfo::before);
-    } 
+    } // basic block 
     else if (isSgNamespaceDefinitionStatement(scope)) {
-      cerr <<"RuntimeInstrumentation :: WARNING - Scope not handled!!! : " << name << " : " << scope->class_name() << endl;
+      cerr <<" ------------> RuntimeInstrumentation :: WARNING - Scope not handled!!! : " << name << " : " << scope->class_name() << "\n\n\n\n"<<endl;
     } else {
       cerr
-	<< "RuntimeInstrumentation :: Surrounding Block is not Block! : "
+	<< " -----------> RuntimeInstrumentation :: Surrounding Block is not Block! : "
 	<< name << " : " << scope->class_name() << "  - " << stmt->unparseToString() << endl;
       ROSE_ASSERT(false);
     }

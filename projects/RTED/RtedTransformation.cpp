@@ -105,12 +105,17 @@ void RtedTransformation::transform(SgProject* project) {
     SgStatement* old = itStmt->second;
     insertStatementAfter(old,newS);
   }
-  std::map<SgVarRefExp*,SgInitializedName*>::const_iterator it5 =
+  std::map<SgVarRefExp*,std::pair<SgInitializedName*,bool> >::const_iterator it5 =
     variableIsInitialized.begin();
   for (; it5 != variableIsInitialized.end(); it5++) {
-    SgInitializedName* init = it5->second;
     SgVarRefExp* varref = it5->first;
-    insertInitializeVariable(init, varref);
+    std::pair<SgInitializedName*,bool> p = it5->second;
+    SgInitializedName* init = p.first;
+    bool ismalloc = p.second;
+    ROSE_ASSERT(varref);
+    //cerr << "      varInit : " << varref->unparseToString() <<
+    //  "    malloc: " << ismalloc << endl;
+    insertInitializeVariable(init, varref,ismalloc);
   }
 
   cerr << "\n Number of Elements in create_array_access_call  : "

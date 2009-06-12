@@ -20,7 +20,7 @@ class RtedTransformation : public AstSimpleProcessing {
   // remember variables that were used to create an array. These cant be reused for array usage calls
   std::vector<SgVarRefExp*> variablesUsedForArray;
   // this vector is used to check which variables have been marked as initialized (through assignment)
-  std::map<SgVarRefExp*,SgInitializedName*> variableIsInitialized;
+  std::map<SgVarRefExp*,std::pair< SgInitializedName*,bool> > variableIsInitialized;
   // when traversing variables, we find some that are initialized names
   // instead of varrefexp, and so we create new varrefexps but we do
   // add them later and not during the same traversal.
@@ -59,6 +59,8 @@ class RtedTransformation : public AstSimpleProcessing {
   void insertRuntimeSystemClass();
   SgExpression* buildString(std::string name);
   std::string getMangledNameOfExpression(SgExpression* expr);
+  SgExpression* getExprBelowAssignment(SgExpression* exp);
+
 
 
 
@@ -90,7 +92,8 @@ class RtedTransformation : public AstSimpleProcessing {
   std::pair<SgInitializedName*,SgVarRefExp*> getRightOfArrow(SgArrowExp* arrow , std::string str, SgVarRefExp* varRef);
   std::pair<SgInitializedName*,SgVarRefExp*> getPlusPlusOp(SgPlusPlusOp* plus ,std::string str, SgVarRefExp* varRef);
   std::pair<SgInitializedName*,SgVarRefExp*> getMinusMinusOp(SgMinusMinusOp* minus ,std::string str, SgVarRefExp* varRef);
-
+  std::pair<SgInitializedName*,SgVarRefExp*> getRightOfPointerDeref(SgPointerDerefExp* dot, std::string str, SgVarRefExp* varRef);
+ 
   int getDimension(SgInitializedName* initName);
   int getDimension(SgInitializedName* initName,SgVarRefExp* varRef);
   SgVarRefExp* resolveToVarRefRight(SgExpression* expr);
@@ -114,7 +117,7 @@ class RtedTransformation : public AstSimpleProcessing {
   void insertVariableCreateCall(SgInitializedName* initName);
   bool isVarInCreatedVariables(SgInitializedName* n);
   void insertInitializeVariable(SgInitializedName* initName,
-				SgVarRefExp* varRefE 
+				SgVarRefExp* varRefE, bool ismalloc 
 				);
 
   std::string removeSpecialChar(std::string str);
