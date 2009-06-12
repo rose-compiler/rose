@@ -1034,7 +1034,8 @@ struct FindConstantsPolicy {
             XVariablePtr<32> addr;
             virtual void run() const {
                 LatticeElement<Len> resultRaw;
-                memory->get().getValueAtAddress<Len>(addr->get(), resultRaw, result->myName, result->def);
+                const MemoryWriteSet &mws = memory->get();
+                mws.getValueAtAddress<Len>(addr->get(), resultRaw, result->myName, result->def);
                 result->set(resultRaw);
             }
             virtual void markDependencies() {
