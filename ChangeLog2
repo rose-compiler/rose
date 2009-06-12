@@ -1,3 +1,43 @@
+2009-06-12 01:11  panas2
+
+	* [r6136] /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_support.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.c,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: RTED work
+
+2009-06-12 00:55  liao6
+
+	* [r6135] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/docs/Rose/Makefile.am,
+	  /trunk/ROSE/projects/compass/extensions/checkers/allocateAndFreeMemoryInTheSameModule/allocateAndFreeMemoryInTheSameModule.compass.external.makefile,
+	  /trunk/ROSE/projects/compass/extensions/checkers/ompPrivateLock,
+	  /trunk/ROSE/projects/compass/extensions/checkers/ompPrivateLock/compass_parameters,
+	  /trunk/ROSE/projects/compass/extensions/checkers/ompPrivateLock/ompPrivateLock.C,
+	  /trunk/ROSE/projects/compass/extensions/checkers/ompPrivateLock/ompPrivateLock.compass.external.makefile,
+	  /trunk/ROSE/projects/compass/extensions/checkers/ompPrivateLock/ompPrivateLock.inc,
+	  /trunk/ROSE/projects/compass/extensions/checkers/ompPrivateLock/ompPrivateLockDocs.tex,
+	  /trunk/ROSE/projects/compass/extensions/checkers/ompPrivateLock/ompPrivateLockMain.C,
+	  /trunk/ROSE/projects/compass/extensions/checkers/ompPrivateLock/ompPrivateLockTest1.C,
+	  /trunk/ROSE/projects/compass/tools/compass/CHECKER_LIST,
+	  /trunk/ROSE/projects/compass/tools/compass/RULE_SELECTION.in,
+	  /trunk/ROSE/projects/compass/tools/compass/doc/Makefile.am,
+	  /trunk/ROSE/projects/compass/tools/compass/doc/compass_categories.tex,
+	  /trunk/ROSE/projects/compass/tools/compass/tests/Makefile.am,
+	  /trunk/ROSE/projects/compass/tools/compass/tests/OpenMP_tests,
+	  /trunk/ROSE/projects/compass/tools/compass/tests/OpenMP_tests/Makefile.am,
+	  /trunk/ROSE/projects/compass/tools/compass/tests/OpenMP_tests/ompPrivateLockTest1.C,
+	  /trunk/ROSE/projects/palette/Makefile.am,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Statement.code,
+	  /trunk/ROSE/src/ROSETTA/src/statement.C,
+	  /trunk/ROSE/src/frontend/SageIII/virtualCFG/memberFunctions.C:
+	  Added a Compass Checker to find use of private locks within
+	  OpenMP parallel region
+	  
+	  * If a lock is locally declared within a parallel region, it is
+	  private and has no intended protection to data.
+
 2009-06-11 01:11  liao6
 
 	* [r6123] /trunk/ROSE/src/frontend/SageIII/sageSupport.C: Fixed a
