@@ -2970,7 +2970,10 @@ Grammar::setUpStatements ()
 
     OmpDoStatement.setFunctionSource            ("SOURCE_OMP_DO_STATEMENT", "../Grammar/Statement.code" );
     OmpWorkshareStatement.setFunctionSource            ("SOURCE_OMP_WORKSHARE_STATEMENT", "../Grammar/Statement.code" );
+    OmpClauseBodyStatement.setFunctionPrototype         ( "HEADER_OMP_CLAUSEBODY_STATEMENT", "../Grammar/Statement.code" );
     OmpClauseBodyStatement.setFunctionSource            ("SOURCE_OMP_CLAUSEBODY_STATEMENT", "../Grammar/Statement.code" );
+
+    OmpBodyStatement.setFunctionPrototype         ( "HEADER_OMP_BODY_STATEMENT", "../Grammar/Statement.code" );
     OmpBodyStatement.setFunctionSource            ("SOURCE_OMP_BODY_STATEMENT", "../Grammar/Statement.code" );
     OmpCriticalStatement.setFunctionSource            ("SOURCE_OMP_CRITICAL_STATEMENT", "../Grammar/Statement.code" );
     OmpFlushStatement.setFunctionSource            ("SOURCE_OMP_FLUSH_STATEMENT", "../Grammar/Statement.code" );

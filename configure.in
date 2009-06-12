@@ -1156,6 +1156,7 @@ projects/compass/tools/compass/doc/Makefile
 projects/compass/tools/compass/tests/Makefile
 projects/compass/tools/compass/tests/C_tests/Makefile
 projects/compass/tools/compass/tests/Cxx_tests/Makefile
+projects/compass/tools/compass/tests/OpenMP_tests/Makefile
 projects/compass/tools/sampleCompassSubset/Makefile
 projects/compass/tools/compassVerifier/Makefile
 projects/BinaryCloneDetection/Makefile

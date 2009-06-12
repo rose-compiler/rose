@@ -145,7 +145,7 @@ static CFGNode getNodeJustBeforeInContainer(SgNode* n) {
   // Only handles previous-statement control flow
   return findParentNode(n);
 }
-
+//---------------------------------------
 unsigned int
 SgStatement::cfgIndexForEnd() const {
     std::cerr << "Bad statement case " << this->class_name() << " in cfgIndexForEnd()" << std::endl;
@@ -187,6 +187,7 @@ SgStatement::cfgInEdges(unsigned int) {
     return std::vector<CFGEdge>();
   }
 
+//---------------------------------------
 std::vector<CFGEdge> SgGlobal::cfgOutEdges(unsigned int idx) {
   return std::vector<CFGEdge>();
 }
@@ -413,8 +414,7 @@ std::vector<CFGEdge> SgForStatement::cfgInEdges(unsigned int idx) {
   switch (idx) {
     case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
     case 1: makeEdge(this->get_for_init_stmt()->cfgForEnd(), CFGNode(this, idx), result);
-    // makeEdge(this->get_increment_expr_root()->cfgForEnd(), CFGNode(this, idx), result);
-       makeEdge(this->get_increment()->cfgForEnd(), CFGNode(this, idx), result);
+            makeEdge(this->get_increment()->cfgForEnd(), CFGNode(this, idx), result);
 	    break;
     case 2: makeEdge(this->get_test()->cfgForEnd(), CFGNode(this, idx), result); break;
     case 3: {
@@ -3685,4 +3685,59 @@ SgInitializedName::cfgInEdges(unsigned int idx) {
   }
   return result;
 }
+// Liao, 6/11/2009 support for OpenMP nodes
+unsigned int
+SgOmpBodyStatement::cfgIndexForEnd() const {
+  return 1;
+}
 
+std::vector<CFGEdge> SgOmpBodyStatement::cfgOutEdges(unsigned int idx) {
+  std::vector<CFGEdge> result;
+  switch (idx) {
+    case 0: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
+    case 1: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+    default: ROSE_ASSERT (!"Bad index for SgOmpBodyStatement");
+  }
+  return result;
+}
+
+std::vector<CFGEdge> SgOmpBodyStatement::cfgInEdges(unsigned int idx) {
+  std::vector<CFGEdge> result;
+  addIncomingFortranGotos(this, idx, result);
+  switch (idx) {
+    case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
+    case 1: makeEdge(this->get_body()->cfgForEnd(), CFGNode(this, idx), result); break;
+    default: ROSE_ASSERT (!"Bad index for SgOmpBodyStatement");
+  }
+  return result;
+}
+//----------------------------------------
+ unsigned int
+SgOmpClauseBodyStatement::cfgIndexForEnd() const {
+  return 2;
+}
+
+std::vector<CFGEdge> SgOmpClauseBodyStatement::cfgOutEdges(unsigned int idx) {
+  std::vector<CFGEdge> result;
+  switch (idx) {
+    case 0: makeEdge(CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
+    case 1: break; // we don't build edges for OpenMP clause list for now //TODO  not sure if the code is correct
+    case 2: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+    default: ROSE_ASSERT (!"Bad index for SgOmpClauseBodyStatement");
+  }
+  return result;
+}
+
+std::vector<CFGEdge> SgOmpClauseBodyStatement::cfgInEdges(unsigned int idx) {
+  std::vector<CFGEdge> result;
+  addIncomingFortranGotos(this, idx, result);
+  switch (idx) {
+    case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
+    case 1: break; // we don't build edges for OpenMP clause list for now //TODO  not sure if the code is correct here
+    case 2: makeEdge(this->get_body()->cfgForEnd(), CFGNode(this, idx), result); break;
+    default: ROSE_ASSERT (!"Bad index for SgOmpClauseBodyStatement");
+  }
+  return result;
+}
+
+ 

@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = C_tests Cxx_tests
+SUBDIRS = C_tests Cxx_tests OpenMP_tests
 
 # To keep compile commands tidy, please ONLY put required include flags here.
 INCLUDES = $(ROSE_INCLUDES)

@@ -21,7 +21,8 @@ docs: compass.tex compassCheckerDocs.tex
 	@rm -f Makefile.*
 	pdflatex --interaction=batchmode compass.tex 
 	pdflatex --interaction=batchmode compass.tex
-	@mv -f compass.pdf ..
+# pointless file moving	??
+#	@mv -f compass.pdf ..
 
 EXTRA_DIST = acknowledgments.tex \
 	appendix.tex \

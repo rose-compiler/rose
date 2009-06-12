@@ -42,7 +42,8 @@ $(srcdir)/rose.P: $(srcdir)/gen_rose_tables.tcl $(top_srcdir)/src/ROSETTA/src/*.
 	if test \! -e $(srcdir)/rose.P -o -w $(srcdir)/rose.P; then ${SHELL} $(top_srcdir)/config/missing --run tclsh $(srcdir)/gen_rose_tables.tcl $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.h $(srcdir)/rose.P; fi
 
 check-local: switch_without_default null_deref qsolve simple_example sortTest
-	@if [ -e compass_parameters ]; then echo "Please remove compass_parameters before running \"make check\"" 1>&2; exit 1; fi
+#	@if [ -e compass_parameters ]; then echo "Please remove compass_parameters before running \"make check\"" 1>&2; exit 1; fi
+	@rm -rf compass_parameters
 	@touch compass_parameters
 	@./switch_without_default -edg:w $(top_srcdir)/projects/DatalogAnalysis/tests/test.cc 2>current_answers
 	@echo '*****' >> current_answers
@@ -60,3 +61,5 @@ check-local: switch_without_default null_deref qsolve simple_example sortTest
 	@echo "Test passed"
 
 EXTRA_DIST = check_correct_answers gen_rose_tables.tcl rose.P
+clean-local:
+	rm -rf compass_parameters current_answers

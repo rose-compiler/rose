@@ -76,6 +76,7 @@
 +:NonVirtualRedefinition
 +:NonmemberFunctionInterfaceNamespace
 +:NullDeref
++:OmpPrivateLock
 +:OneLinePerDeclaration
 +:OperatorOverloading
 +:OtherArgument

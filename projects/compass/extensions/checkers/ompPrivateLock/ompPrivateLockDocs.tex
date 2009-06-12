@@ -1,0 +1,94 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Omp Private Lock}
+\label{OmpPrivateLock::overview}
+This is a simple checker to detect a common OpenMP programming mistake of
+using a \lstinline{private} lock within a parallel region.
+It was motivated by an example mentioned by a seminar about Intel's
+Thread Checker, which uses a more expensive runtime approach to catch the
+same error.
+
+\subsection{Parameter Requirements}
+
+%Write the Parameter specification here.
+There is no parameter specifications.
+
+\subsection{Implementation}
+
+%Details of the implementation go here.
+The AST must use  dedicated OpenMP nodes
+(such as SgOmpParallelStatement etc.) to represent an input OpenMP program
+(via \textit{-rose:openmp -rose:openmp:ast\_only}).
+The checker traverses the AST to find all OpenMP lock variable references
+(with a type name \lstinline{omp_lock_t})
+within \lstinline{omp_unset_lock()}, \lstinline{omp_set_lock()}, and
+\lstinline{omp_test_lock()}.
+It then compares the scope of the corresponding lock declaration statement
+and the enclosing parallel region of the lock references. 
+If the lock is declared within the parallel region, it is a violation. 
+
+\subsection{Non-Compliant Code Example}
+
+% write your non-compliant code subsection
+
+\begin{verbatim}
+
+void foo()
+{
+#pragma omp parallel private(id)
+  {
+    omp_lock_t lck; // local declared lock variable, wrong!
+    int id = omp_get_thread_num();
+    omp_set_lock(&lck);
+    printf("My thread id is %d.\n", id);
+    omp_unset_lock(&lck);
+  }
+}
+
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+% write your compliant code subsection
+
+\begin{verbatim}
+
+omp_lock_t lck; // a global shared lock, 
+//lock initialization and destroy calls are omitted
+
+void foo()
+{
+#pragma omp parallel private(id)
+  {
+    int id = omp_get_thread_num();
+    omp_set_lock(&lck);
+    printf("My thread id is %d.\n", id);
+    omp_unset_lock(&lck);
+  }
+}
+\end{verbatim}
+
+%\subsection{Mitigation Strategies}
+%\subsubsection{Static Analysis} 
+%
+%Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+%
+%\begin{enumerate}
+%\item Write your checker algorithm
+%\end{enumerate}
+
+\subsection{References}
+None
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''

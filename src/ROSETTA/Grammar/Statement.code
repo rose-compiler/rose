@@ -13643,6 +13643,15 @@ SgOmpTaskStatement::post_construction_initialization()
    {}
 SOURCE_OMP_TASK_STATEMENT_END
 
+HEADER_OMP_BODY_STATEMENT_START
+      public:
+
+      virtual unsigned int cfgIndexForEnd() const;
+      virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+      virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+HEADER_OMP_BODY_STATEMENT_END
+
 SOURCE_OMP_BODY_STATEMENT_START
 void
 SgOmpBodyStatement::post_construction_initialization()
@@ -13650,6 +13659,14 @@ SgOmpBodyStatement::post_construction_initialization()
 SOURCE_OMP_BODY_STATEMENT_END
 
 
+HEADER_OMP_CLAUSEBODY_STATEMENT_START
+      public:
+
+      virtual unsigned int cfgIndexForEnd() const;
+      virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+      virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+HEADER_OMP_CLAUSEBODY_STATEMENT_END
 
 SOURCE_OMP_CLAUSEBODY_STATEMENT_START
 void

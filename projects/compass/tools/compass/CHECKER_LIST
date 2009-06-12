@@ -79,6 +79,7 @@ nonStandardTypeRefReturns
 nonVirtualRedefinition
 nonmemberFunctionInterfaceNamespace
 nullDeref
+ompPrivateLock
 oneLinePerDeclaration
 operatorOverloading
 otherArgument
