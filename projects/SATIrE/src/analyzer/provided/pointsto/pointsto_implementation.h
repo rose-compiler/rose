@@ -129,6 +129,7 @@ private:
     std::map<std::string, Location *> function_locations;
     std::map<std::pair<void *, std::string>, Location *>
         specialFunctionLocations;
+    std::map<std::string, Location *> specialFunctionAuxLocations;
 
  // Location constants
     Location *integerConstantLocation;
@@ -239,6 +240,7 @@ private:
     Location *functionSymbol_location(SgFunctionSymbol *fsym);
     Location *functionLocationForProcnum(int procnum);
     Location *specialFunctionLocation(void *a, std::string name, size_t arity);
+    Location *&specialFunctionAuxLocation(std::string name);
     void determineSpecialFunction(std::string name, Location *func_location);
 
     Location *createLocation(Location *t, Location *return_location = NULL);

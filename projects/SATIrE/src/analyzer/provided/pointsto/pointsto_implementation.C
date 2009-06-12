@@ -2780,14 +2780,12 @@ PointsToAnalysis::Implementation::newSpecialFunctionContext(
     } else if (name == "__ctype_b_loc") {
      // This is apparently a function in glibc that returns a pointer to a
      // static lookup table to support the ctype.h functions.
-        static Location *ctype_b_loc_table = NULL;
-        ensurePointerLocation(ctype_b_loc_table);
-        return_location = ctype_b_loc_table;
+        ensurePointerLocation(specialFunctionAuxLocation("ctype_b_loc_table"));
+        return_location = specialFunctionAuxLocation("ctype_b_loc_table");
     } else if (name == "__errno_location") {
      // The same as for the ctype stuff.
-        static Location *errno_location = NULL;
-        ensurePointerLocation(errno_location);
-        return_location = errno_location;
+        ensurePointerLocation(specialFunctionAuxLocation("errno_location"));
+        return_location = specialFunctionAuxLocation("errno_location");
     } else if (name == "__fxstat") {
      // This is some internal stuff used by fstat. We are not interested in
      // the arguments and return nothing.
@@ -2864,11 +2862,9 @@ PointsToAnalysis::Implementation::newSpecialFunctionContext(
      // several call sites, depending on the contents of the string it is
      // passed. Conservatively, we must assume that it returns the *same*
      // string at all sites, regardless of the argument.
-        static Location *getenv_return_location = NULL;
-     // The first time we get here at run time, ensurePointerLocation will
-     // initialize the static pointer.
-        ensurePointerLocation(getenv_return_location);
-        return_location = getenv_return_location;
+        ensurePointerLocation(
+                specialFunctionAuxLocation("getenv_return_location"));
+        return_location = specialFunctionAuxLocation("getenv_return_location");
     } else if (name == "getpid") {
      // Return nothing.
         return_location = NULL;
@@ -2876,9 +2872,10 @@ PointsToAnalysis::Implementation::newSpecialFunctionContext(
      // The getpwuid function may return a pointer to a statically-allocated
      // structure, so we must assume that it will return the same pointer at
      // several call sites.
-        static Location *getpwuid_return_location = NULL;
-        ensurePointerLocation(getpwuid_return_location);
-        return_location = getpwuid_return_location;
+        ensurePointerLocation(
+                specialFunctionAuxLocation("getpwuid_return_location"));
+        return_location
+            = specialFunctionAuxLocation("getpwuid_return_location");
     } else if (name == "gettimeofday") {
      // Ignore the arguments, return nothing.
         return_location = NULL;
@@ -2890,9 +2887,10 @@ PointsToAnalysis::Implementation::newSpecialFunctionContext(
         return_location = NULL;
     } else if (name == "localtime") {
      // This function returns a pointer to a statically-allocated structure.
-        static Location *localtime_return_location = NULL;
-        ensurePointerLocation(localtime_return_location);
-        return_location = localtime_return_location;
+        ensurePointerLocation(
+                specialFunctionAuxLocation("localtime_return_location"));
+        return_location
+            = specialFunctionAuxLocation("localtime_return_location");
     } else if (name == "lseek") {
      // Ignore the arguments, return nothing.
         return_location = NULL;
@@ -2949,12 +2947,13 @@ PointsToAnalysis::Implementation::newSpecialFunctionContext(
      // returns the previous handler, which means that that handler must be
      // stored inside, and must be aliased to both the second argument and
      // the return value.
-        static Location *sighandler_location = NULL;
-        ensurePointerLocation(sighandler_location);
+        ensurePointerLocation(
+                specialFunctionAuxLocation("sighandler_location"));
         ensureArgumentCount(arg_dummy, 2);
         ensurePointerLocation(arg_dummy->arg_locations[1]);
-        assign(sighandler_location, arg_dummy->arg_locations[1]);
-        return_location = sighandler_location;
+        assign(specialFunctionAuxLocation("sighandler_location"),
+               arg_dummy->arg_locations[1]);
+        return_location = specialFunctionAuxLocation("sighandler_location");
     } else if (name == "sleep") {
      // Ignore the arguments, return nothing.
         return_location = NULL;
@@ -4320,8 +4319,16 @@ PointsToAnalysis::Implementation::location_representative(
     std::cout
         << "finding location " << (loc != NULL ? loc->id : 0)
         << std::endl;
+    if (loc != NULL)
+        std::cout << "syms: " << names(loc->symbols) << std::endl;
 #endif
     Location *r = mainInfo->disjointSets.find_set(loc);
+#if VERBOSE_DEBUG
+    std::cout
+        << " => " << (void *) r << " "
+        << (r != NULL ? r->id : 0)
+        << std::endl;
+#endif
  // if (r == NULL)
  //     r = mainInfo->disjointSets.find_set(loc);
     if (loc != NULL && r == NULL)
@@ -5037,6 +5044,21 @@ PointsToAnalysis::Implementation::specialFunctionLocation(
     }
 
     return result;
+}
+
+PointsToAnalysis::Location * &
+PointsToAnalysis::Implementation::specialFunctionAuxLocation(std::string name)
+{
+    std::map<std::string, Location *>::iterator pos;
+
+    pos = mainInfo->specialFunctionAuxLocations.find(name);
+    if (pos != mainInfo->specialFunctionAuxLocations.end())
+        return pos->second;
+    else
+    {
+        mainInfo->specialFunctionAuxLocations[name] = NULL;
+        return mainInfo->specialFunctionAuxLocations[name];
+    }
 }
 
 
