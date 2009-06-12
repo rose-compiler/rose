@@ -1,4 +1,4 @@
-y#!/usr/bin/pl -t testrun -f
+#!/usr/bin/pl -t testrun -f
 % -*- mode: prolog; truncate-lines: true; -*-
 
 :- module(ast_transform,

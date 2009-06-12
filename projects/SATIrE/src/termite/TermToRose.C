@@ -3402,5 +3402,5 @@ PrologToRose::warn_msg(string msg) {
  * compiled with NDEBUG*/
 void
 PrologToRose::debug(string message) {
-  // cerr << message << "\n";
+  //cerr << message << "\n";
 }

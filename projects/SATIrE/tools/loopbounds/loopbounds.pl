@@ -51,7 +51,8 @@
    ),
    asserta(library_directory(TermitePath)).
 
-:- use_module(library(ast_transform)),
+:- use_module(library(apply_macros)),
+   use_module(library(ast_transform)),
    use_module(library(ast_properties)),
    use_module(library(loops)),
    use_module(library(types)),
@@ -59,8 +60,7 @@
    use_module(while2for),
    use_module(comefrom),
    use_module(library(assoc)),
-   use_module(library(clpfd)),
-   use_module(library(apply_macros)).
+   use_module(library(clpfd)).
 %   use_module(library(swi/pce_profile)).
 
 %-----------------------------------------------------------------------
