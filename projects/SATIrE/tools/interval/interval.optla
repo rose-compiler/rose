@@ -301,9 +301,17 @@ binary(left, right, exp, state, context) =
           AddOp(_, _)     => (ltup(l1 + r1, l2 + r2), ls);
           SubtractOp(_, _)=> (ltup(l1 - r2, l2 - r1), ls);
           MultiplyOp(_, _)=> (ltup(mini(l1*r1, l1*r2), maxi(l2*r1, l2*r2)), ls);
-          DivideOp(_, _)  => (ltup(mini(l1/r1, l1/r2), maxi(l2/r1, l2/r2)), ls);
+          DivideOp(_, _)  => if r1 != 0 && r2 != 0 then
+                                (ltup(mini(l1/r1, l1/r2),
+                                      maxi(l2/r1, l2/r2)), ls)
+                             else
+                                dontknow;
           IntegerDivideOp(_, _) 
-                          => (ltup(mini(l1/r1, l1/r2), maxi(l2/r1, l2/r2)), ls);
+                          => if r1 != 0 && r2 != 0 then
+                                (ltup(mini(l1/r1, l1/r2),
+                                      maxi(l2/r1, l2/r2)), ls)
+                             else
+                                dontknow;
           ModOp(_, _)     => (ltup(0, r2), ls);
           LshiftOp(_, _)  => (ltup(l1<<unum(r1), l2<<unum(r2)), ls);
           RshiftOp(_, _)  => (ltup(l1>>unum(r1), l2>>unum(r2)), ls);
