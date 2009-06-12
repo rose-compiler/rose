@@ -1,3 +1,13 @@
+2009-06-12 12:26  matzke
+
+	* [r6143]
+	  /trunk/ROSE/src/midend/binaryAnalyses/instructionSemantics/findConstants.h:
+	  Bugfix for Mac OSX
+	  
+	  For some unknown reason an expression involving template classes
+	  didn't
+	  compile. Breaking it up into two parts fixed the problem.
+
 2009-06-12 01:11  panas2
 
 	* [r6136] /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
