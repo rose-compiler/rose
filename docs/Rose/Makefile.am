@@ -146,9 +146,10 @@ footer.html: footer.html.in
 leftmenu.html: leftmenu.html.in
 AvailableDocumentation.docs: AvailableDocumentation.docs.in
 # Liao, 6/11/2008. Added a new directory (Projects) for various ROSE projects 
-COMPASS_MANUAL = $(compass_build_tooldir)/compass/compass.pdf
+# compass_build_tooldir=$(top_builddir)/projects/compass/tools
+COMPASS_MANUAL = $(compass_build_tooldir)/compass/doc/compass.pdf
 $(COMPASS_MANUAL):
-	cd $(compass_build_tooldir)/compass && $(MAKE) docs
+	cd $(compass_build_tooldir)/compass/doc && $(MAKE) docs
 
 make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf ROSE_DeveloperInstructions.pdf ROSE_DemoGuide.pdf footer.html leftmenu.html $(COMPASS_MANUAL)
 	cd Tutorial; $(MAKE) make-web-pages
