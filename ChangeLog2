@@ -1,3 +1,10 @@
+2009-06-12 23:06  bauer25
+
+	* [r6149]
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/ClassHierarchyTestGen.cpp,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/Makefile.am:
+	  Testcase Generator for ClassHierarchyGraph added
+
 2009-06-12 12:26  matzke
 
 	* [r6143]
