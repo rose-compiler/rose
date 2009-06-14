@@ -291,7 +291,7 @@ void removeLoops(Graph & g)
     BackEdgeRecorder f ( loop_edges );
     depth_first_search(g,visitor(f));
 
-    for(uint i=0; i<loop_edges.size(); i++)
+    for(unsigned int i=0; i<loop_edges.size(); i++)
         remove_edge(loop_edges[i],g);
 
 }
@@ -410,7 +410,7 @@ int main(int argc, char**argv)
 
     // Generate random graph
     mt19937 rng;
-    rng.seed((uint32_t)time(NULL));
+    rng.seed((unsigned int)time(NULL));
 
     rng.seed(32);
     generate_random_graph(g, classCount,edgeRate*classCount, rng, false, false);
