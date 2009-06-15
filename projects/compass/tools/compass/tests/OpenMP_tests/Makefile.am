@@ -30,7 +30,7 @@ else
 # Since these file reference file in the ../Cxx_tests direcotry we have to 
 # shorten this file list but not more than it is done there, else "make distcheck"
 # will fail.
-TESTCODES_VERIFIED_TO_PASS = \
+TESTCODES_REQUIRED_TO_PASS = \
    ompPrivateLockTest1.C
 
 endif
@@ -72,6 +72,7 @@ $(TEST_Objects): ../../compassMain ../../compass_parameters
 
 ../../compassMain:
 	cd ../..; $(MAKE) compassMain
+EXTRA_DIST = $(ALL_TESTCODES)
 
 check-local:
 	@echo "Tests Compass (and its checkers) using a cross-section of the ROSE OpenMP test codes..."
