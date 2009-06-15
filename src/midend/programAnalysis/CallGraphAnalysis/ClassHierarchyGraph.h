@@ -39,13 +39,11 @@ class ClassHierarchyWrapper
     void setAST( SgNode *proj );
 
 #ifdef HAVE_SQLITE3
-    std::string dbName;
-    ClassHierarchyWrapper( std::string db = "__defaultClassHierarch" );
-    void setDBName( std::string db ); 
-    void createHierarchySchema();
-    void writeHierarchyToDB();
-    std::list<std::string> getDirectSubclasses( std::string className );
-    std::list<std::string> getSubclasses( std::string className );
+    ClassHierarchyWrapper(  );
+
+    void writeHierarchyToDB ( sqlite3x::sqlite3_connection& gDB );
+    std::list<std::string> getDirectSubclasses( std::string className ,  sqlite3x::sqlite3_connection& gDB );
+    std::list<std::string> getSubclasses( std::string className ,  sqlite3x::sqlite3_connection& gDB );
 #endif
 
     ClassHierarchy* getClassHierarchyGraph();

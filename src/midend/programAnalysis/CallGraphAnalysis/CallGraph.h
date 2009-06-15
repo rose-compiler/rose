@@ -35,6 +35,12 @@ struct Properties
   SgFunctionDeclaration *functionDeclaration;
   SgType *functionType;
 
+  std::string type;
+  std::string label;
+  std::string nid;
+  std::string scope;
+  std::string functionName;
+
   Properties();
 };
 
@@ -52,7 +58,7 @@ class CallGraphNode: public MultiGraphElem
        bool hasDefinition;
 
      public:
-       std::string label;
+       const std::string label;
 
        virtual std::string toString() const;
        bool isDefined ();
@@ -68,6 +74,9 @@ class CallGraphNode: public MultiGraphElem
 
          CallGraphNode ( std::string label, SgFunctionDeclaration* fctDeclaration, SgType *ty,
          bool hasDef, bool isPtr, bool isPoly, SgClassDefinition *invokedCls );
+         CallGraphNode ( std::string nid, std::string label, std::string typeF, std::string scope,
+         bool hasDef, bool isPtr, bool isPoly );
+
          CallGraphNode ( std::string label, FunctionProperties *fctProps, bool hasDef );
          //@}
          //@{
@@ -162,7 +171,7 @@ DAGCreate<Node, Edge>::edgeExist ( Node *src, Node *snk)
 	      
 	      if(snk == endPoint)
             {
-           // std::cout << "NODE EXISTS" << std::endl;
+              //std::cout << "NODE EXISTS" << std::endl;
               edge_exist = true;
 		        break;
 	         }
@@ -291,6 +300,19 @@ findNode ( Rose_STL_Container<CallGraphNode*> & nodeList, std::string name );
 CallGraphNode* 
 findNode ( Rose_STL_Container<CallGraphNode*> & nodeList, std::string name, int );
 
+#ifdef HAVE_SQLITE3
+sqlite3x::sqlite3_connection* open_db(std::string gDB  );
+void createSchema ( sqlite3x::sqlite3_connection& gDB, std::string dbName );
+//Will remove all function and their falls declared in a file from paths that are not in the list
+void filterNodesKeepPaths( sqlite3x::sqlite3_connection& gDB, std::vector<std::string> keepDirs );
+//Will remove all references to function in the function list
+void filterNodesByFunctionName( sqlite3x::sqlite3_connection& gDB, std::vector<std::string> removeFunctions );
+
+
+#endif
+
+
+
 class CallGraphDotOutput : public GraphDotOutput <CallGraphCreate>
    {
   // Keep a reference to the current graph
@@ -309,19 +331,15 @@ class CallGraphDotOutput : public GraphDotOutput <CallGraphCreate>
 // DQ (7/28/2005): Don't include the data base
 #ifdef HAVE_SQLITE3
 
-       int writeToDB ( int i = 0, std::string dbName = "" );
        void writeSubgraphToDB ( sqlite3x::sqlite3_connection& gDB );
-       CallGraphCreate *loadGraphFromDB ( std::string dbName );
+       CallGraphCreate *loadGraphFromDB (  sqlite3x::sqlite3_connection& gDB  );
        int GetCurrentMaxSubgraph ( sqlite3x::sqlite3_connection& gDB );
-       void filterNodesByDB ( std::string dbName, std::string fiterDB = "__filter.db" );
-       void filterNodesByFilename ( std::string dbName, std::string filterFile );
-       void filterNodesByFunction ( std::string dbName, SgFunctionDeclaration *function );
-       void filterNodesByDirectory ( std::string dbName, std::string directory );
-       void solveFunctionPointers ( std::string dbName );
-       void solveVirtualFunctions ( std::string dbName, std::string dbHierarchy );
-     private:
-       void createCallGraphSchema ( sqlite3x::sqlite3_connection& gDB, std::string dbName );
-
+       void filterNodesByDB ( sqlite3x::sqlite3_connection& gDB, std::string fiterDB = "__filter.db" );
+       void filterNodesByFilename (  sqlite3x::sqlite3_connection& gDB, std::string filterFile );
+       void filterNodesByFunction (  sqlite3x::sqlite3_connection& gDB, SgFunctionDeclaration *function );
+       void filterNodesByDirectory (  sqlite3x::sqlite3_connection& gDB, std::string directory );
+       void solveFunctionPointers (  sqlite3x::sqlite3_connection& gDB);
+       void solveVirtualFunctions (  sqlite3x::sqlite3_connection& gDB, std::string dbHierarchy );
 #endif
    };
 
