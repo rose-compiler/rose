@@ -48,15 +48,19 @@ main( int argc, char * argv[] )
 // TPS (01Dec2008): Enabled mysql and this fails.
 // seems like it is not supposed to be included
 #ifdef HAVE_SQLITE3
+     sqlite3x::sqlite3_connection* gDB = open_db("DATABASE");
+
      CallGraphDotOutput output( *(CGBuilder.getGraph()) );
 
-     output.writeToDB( 1, "DATABASE" );
+     output.writeSubgraphToDB(*gDB );
 
   // DQ (9/9/2005): Added "" as name for what the filter on
-     output.filterNodesByFilename( "DATABASE","" );
+     output.filterNodesByFilename( *gDB,"" );
 
      cout << "Loading from DB...\n";
-     CallGraphCreate *newGraph = output.loadGraphFromDB( "DATABASE" );
+
+
+     CallGraphCreate *newGraph = output.loadGraphFromDB( *gDB );
      cout << "Loaded\n";
      ostringstream st;
      st << "DATABASE.dot";

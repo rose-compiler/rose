@@ -26,22 +26,6 @@ ClassHierarchyWrapper::setAST( SgNode *proj )
   root = proj;
  }
 
-#ifdef HAVE_SQLITE3
-
-ClassHierarchyWrapper::ClassHierarchyWrapper( std::string db ) 
- { 
-  dbName = db; 
- }
-
-void 
-ClassHierarchyWrapper::setDBName( std::string db ) 
- { 
-  dbName = db; 
- }
-
-
-
-#endif
 
 ClassHierarchy* ClassHierarchyWrapper::getClassHierarchyGraph(){
             return &classGraph;
@@ -98,10 +82,6 @@ ClassHierarchyWrapper::ClassHierarchyWrapper( SgNode *node )
 {
   ROSE_ASSERT ( isSgProject( node ) );
   root = node;
-
-#ifdef HAVE_SQLITE3
-  dbName = "__defaultClassHierarchy";
-#endif
 
   Rose_STL_Container<SgNode *> allCls;
   allCls = NodeQuery::querySubTree ( root, V_SgClassDefinition );
@@ -231,23 +211,14 @@ ClassHierarchyWrapper::getDirectSubclasses ( SgClassDefinition * cls )
 
 #ifdef HAVE_SQLITE3
 // generates the class hierarchy shema ( not the classes themselves )
-void
-ClassHierarchyWrapper::createHierarchySchema ()
-{
-  sqlite3x::sqlite3_connection gDB(dbName.c_str());
 
-  string command = "";
-  command = "CREATE TABLE Hierarchy ( Class TEXT, Subclass TEXT, ClassFile TEXT, SubclassFile TEXT, "
-    "PRIMARY KEY ( Class, Subclass ) );";
-  gDB.executenonquery(command.c_str());
-}
+ClassHierarchyWrapper::ClassHierarchyWrapper(  ){};
 
 std::list<string>
-ClassHierarchyWrapper::getDirectSubclasses( string className )
+ClassHierarchyWrapper::getDirectSubclasses( string className,  sqlite3x::sqlite3_connection& gDB )
 {
   std::list<string> retList;
 
-  sqlite3x::sqlite3_connection gDB(dbName.c_str());
 
   string command = "SELECT subclass from Hierarchy WHERE class = \"" + className + "\";";
 
@@ -264,7 +235,7 @@ ClassHierarchyWrapper::getDirectSubclasses( string className )
 }
 
 std::list<string>
-ClassHierarchyWrapper::getSubclasses( string className )
+ClassHierarchyWrapper::getSubclasses( string className ,  sqlite3x::sqlite3_connection& gDB )
 {
   std::list<string> retList;
   std::list<string> toVisit;
@@ -274,7 +245,7 @@ ClassHierarchyWrapper::getSubclasses( string className )
     {
       string crt = toVisit.front();
       toVisit.pop_front();
-      std::list<string> temp = getDirectSubclasses( crt );
+      std::list<string> temp = getDirectSubclasses( crt,gDB );
       for ( std::list<string>::iterator i = temp.begin(); i != temp.end(); i++ )
 	{
 	  bool alreadyExists = false;
@@ -296,37 +267,44 @@ ClassHierarchyWrapper::getSubclasses( string className )
 
 // writes the class hierarchy to the specified database
 void
-ClassHierarchyWrapper::writeHierarchyToDB ()
+ClassHierarchyWrapper::writeHierarchyToDB ( sqlite3x::sqlite3_connection& gDB )
 {
 
-  sqlite3x::sqlite3_connection gDB(dbName.c_str());
-  
   string command;
-  
+
   ClassHierarchy::EdgeIterator edgeIterator;
   ClassHierarchy::NodeIterator nodeIterator;
 
   // find descendants of class currently visited - BFS
   for ( nodeIterator = classGraph.GetNodeIterator(); !nodeIterator.ReachEnd(); nodeIterator++ )
+  {
+    ClassHierarchyNode *crtNode = nodeIterator.Current();
+    SgClassDefinition *cC = crtNode->classDefinition;
+    for ( edgeIterator = classGraph.GetNodeEdgeIterator( crtNode, ClassHierarchy::EdgeOut );
+        !edgeIterator.ReachEnd(); edgeIterator++ )
     {
-      ClassHierarchyNode *crtNode = nodeIterator.Current();
-      SgClassDefinition *cC = crtNode->classDefinition;
-      for ( edgeIterator = classGraph.GetNodeEdgeIterator( crtNode, ClassHierarchy::EdgeOut );
-	    !edgeIterator.ReachEnd(); edgeIterator++ )
-	{
-	  ClassHierarchyEdge *edge = edgeIterator.Current();
-	  ClassHierarchyNode *end =
-	    dynamic_cast<ClassHierarchyNode *>( classGraph.GetEdgeEndPoint( edge, ClassHierarchy::EdgeIn ) );
-	  ROSE_ASSERT ( end );
-	  SgClassDefinition *dC = end->classDefinition;
-	  //int k;
-	  command = "INSERT INTO Hierarchy VALUES (\"" + cC->get_qualified_name().getString() + "\", \""
-	    + dC->get_qualified_name().getString() + "\", \"" + cC->get_file_info()->get_filename() + "\", \""
-	    + dC->get_file_info()->get_filename() + "\");";
-	  //cout << "Executing: " << q->preview() << "\n";
-	  //q->execute();
-          gDB.executenonquery(command.c_str());
-	}
+      ClassHierarchyEdge *edge = edgeIterator.Current();
+      ClassHierarchyNode *end =
+        dynamic_cast<ClassHierarchyNode *>( classGraph.GetEdgeEndPoint( edge, ClassHierarchy::EdgeIn ) );
+      ROSE_ASSERT ( end );
+      SgClassDefinition *dC = end->classDefinition;
+      //int k;
+
+      std::ostringstream existQuery;
+      existQuery << "select count(Class) from Hierarchy where Class=\""<<cC->get_qualified_name().getString() 
+                 <<"\" AND Subclass=\""<<dC->get_qualified_name().getString()<< "\" limit 1";
+
+      if( sqlite3x::sqlite3_command(gDB, existQuery.str().c_str()).executeint() == 0 )
+      {
+
+        command = "INSERT INTO Hierarchy VALUES (\"" + cC->get_qualified_name().getString() + "\", \""
+          + dC->get_qualified_name().getString() + "\", \"" + cC->get_file_info()->get_filename() + "\", \""
+          + dC->get_file_info()->get_filename() + "\");";
+        cout << "Executing: " << command << "\n";
+        //q->execute();
+        gDB.executenonquery(command.c_str());
+      }
     }
+  }
 }
 #endif

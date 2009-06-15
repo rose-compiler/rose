@@ -58,6 +58,11 @@ main( int argc, char * argv[] ) {
 //   var_SOLVE_FUNCTION_CALLS_IN_DB = true;
 #ifdef HAVE_SQLITE3
    var_SOLVE_FUNCTION_CALLS_IN_DB = true;
+   std::cout << "Analyzing in DATABASE" << std::endl;
+   sqlite3x::sqlite3_connection* gDB = open_db("DATABASE");
+#else
+   std::cout << "Analyzing outside DATABASE" << std::endl;
+
 #endif
 
    CallGraphBuilder CGBuilder( project );
@@ -80,20 +85,27 @@ main( int argc, char * argv[] ) {
    CallGraphCreate *newGraph;
    if(var_SOLVE_FUNCTION_CALLS_IN_DB == true)
    {
-     /*
-     hier.setDBName( "ClassHierarchy" );
-     hier.createHierarchySchema();
-     hier.writeHierarchyToDB();
-     */
 
 #ifdef HAVE_SQLITE3
-     output.writeToDB( 1, "DATABASE" );
-     output.filterNodesByDirectory( "DATABASE", "/export" );
-     output.filterNodesByDB( "DATABASE", "__filter.db" );
-     output.solveVirtualFunctions( "DATABASE", "ClassHierarchy" );
-     output.solveFunctionPointers( "DATABASE" );
+     output.writeSubgraphToDB( *gDB );
+
+     hier.writeHierarchyToDB(*gDB);
+
+     output.filterNodesByDirectory(*gDB, "/export" );
+     output.filterNodesByDB( *gDB, "__filter.db" );
+     output.solveVirtualFunctions(*gDB, "ClassHierarchy" );
+     output.solveFunctionPointers( *gDB );
      cout << "Loading from DB...\n";
-     newGraph = output.loadGraphFromDB( "DATABASE" );
+
+     std::vector<std::string> keepDirs;
+     keepDirs.push_back( ROSE_COMPILE_TREE_PATH+std::string("%") );
+     filterNodesKeepPaths(*gDB, keepDirs);
+
+     std::vector<std::string> removeFunctions;
+     removeFunctions.push_back("::main%" );
+     filterNodesByFunctionName(*gDB,removeFunctions);
+
+     newGraph = output.loadGraphFromDB( *gDB);
      cout << "Loaded\n";
 
 #endif

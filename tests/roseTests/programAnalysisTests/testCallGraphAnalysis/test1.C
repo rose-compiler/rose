@@ -6,7 +6,7 @@
 class A
    {
      public:
-	       int f1() {}
+	       int f1() { return 1; };
           int f2() { pf = &A::f1; return (this->*pf)(); }
           int (A::*pf) ();
    };

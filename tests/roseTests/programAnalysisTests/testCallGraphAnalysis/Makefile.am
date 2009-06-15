@@ -29,15 +29,18 @@ testCG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
  
 # this caused a segfault once  
 test01: testCG
+	rm -f ./DATABASE
 	./testCG -I. -I$(srcdir) $(srcdir)/main.C $(srcdir)/f1.C $(srcdir)/f2.C -o Callgraph
 
 # Test that the call graph generates all the edges it should
 test02: testCG stressTestFactory
 	echo " $(srcdir)/stressTestFactory 10"
 	$(srcdir)/stressTestFactory 10
+	rm -f ./DATABASE
 	./testCG sT10.C -o sT10
 	diff -U5 sT10.cmp.dmp sT10.cg.dmp
 	$(srcdir)/stressTestFactory 100
+	rm -f ./DATABASE
 	./testCG sT100.C -o sT100
 	diff -U5 sT100.cmp.dmp sT100.cg.dmp
 

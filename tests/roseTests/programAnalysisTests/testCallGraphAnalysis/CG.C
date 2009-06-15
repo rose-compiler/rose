@@ -19,9 +19,21 @@ std::string stripGlobalModifer(std::string str){
 
 bool nodeCompare(const CallGraphCreate::Node *a,const CallGraphCreate::Node * b)
 {
-	string aStr=stripGlobalModifer(a->functionDeclaration->get_qualified_name().getString());
+        
+      
+	string aStr;
+        if (var_SOLVE_FUNCTION_CALLS_IN_DB == true)
+        {
+           aStr=stripGlobalModifer(a->properties->functionName);
+        }else
+          aStr=stripGlobalModifer(a->functionDeclaration->get_qualified_name().getString());
 
-	string bStr=stripGlobalModifer(b->functionDeclaration->get_qualified_name().getString());
+	string bStr;
+        if (var_SOLVE_FUNCTION_CALLS_IN_DB == true)
+        {
+          bStr=stripGlobalModifer(b->properties->functionName);
+        }else
+          bStr=stripGlobalModifer(b->functionDeclaration->get_qualified_name().getString());
 
 	// compare length
 	if (aStr.length()<bStr.length()) return true;
@@ -81,11 +93,27 @@ void sortedCallGraphDump(string fileName, CallGraphCreate * cg)
 		// go over the sorted calledNodes list and output to file
 		if (calledNodes.size()==0)
 		{
-			file << stripGlobalModifer((*i)->functionDeclaration->get_qualified_name().getString()) <<" ->";
+                  /*
+                  std::cout << "First node of this type" << std::endl;
+                  if((*i)->functionDeclaration != NULL && (*i) != NULL )
+                  */
+
+                  if (var_SOLVE_FUNCTION_CALLS_IN_DB == true)
+                    file << stripGlobalModifer((*i)->properties->functionName) <<" ->";
+                  else
+                    file << stripGlobalModifer((*i)->functionDeclaration->get_qualified_name().getString()) <<" ->";
+
 		}
 		else
 		{
-			file << stripGlobalModifer((*i)->functionDeclaration->get_qualified_name().getString()) <<" ->";			
+                //  std::cout << "Second First node of this type " << (*i)->properties->nid << " " << (*i)->properties->functionName <<std::endl;
+                  //std::cout << "Second First node of this type " << (*i)->properties->nid << " " <<(*i)->properties->label << " " << (*i)->properties->type << " " << (*i)->properties->scope << " " << (*i)->properties->functionName << std::endl;
+
+
+                        if (var_SOLVE_FUNCTION_CALLS_IN_DB == true)
+                   	   file << stripGlobalModifer((*i)->properties->functionName) <<" ->";
+                        else
+                           file << stripGlobalModifer((*i)->functionDeclaration->get_qualified_name().getString()) <<" ->";			
 			prevCalledNode=NULL;
 			for (list<CallGraphCreate::Node *>::iterator j=calledNodes.begin();j!=calledNodes.end();j++)
 			{
@@ -93,7 +121,12 @@ void sortedCallGraphDump(string fileName, CallGraphCreate * cg)
 				if ((*j)==prevCalledNode) continue;
 				prevCalledNode=(*j);
 				// dup to file
-				file << " " << stripGlobalModifer((*j)->functionDeclaration->get_qualified_name().getString());
+
+                                if (var_SOLVE_FUNCTION_CALLS_IN_DB == true)
+                                  file << " " << stripGlobalModifer((*j)->properties->functionName);
+                                else
+                                  file << " " << stripGlobalModifer((*j)->functionDeclaration->get_qualified_name().getString());
+
 			}		
 		}
 		file << endl;
@@ -104,22 +137,81 @@ void sortedCallGraphDump(string fileName, CallGraphCreate * cg)
 
 int main (int argc, char **argv){
 	string	outFileName;
-	// Build the AST used by ROSE
-	SgProject * project = frontend (argc, argv);
+
+#ifdef HAVE_SQLITE3
+        var_SOLVE_FUNCTION_CALLS_IN_DB = true;
+       sqlite3x::sqlite3_connection* gDB = open_db("DATABASE");
+#endif
+
+        // Build the AST used by ROSE
+
+        std::vector<std::string> argvList(argv, argv+argc);
+	// generate compareisonFile
+
+        std::string graphCompareOutput = "";
+       CommandlineProcessing::isOptionWithParameter(argvList,"-compare:","(graph)",graphCompareOutput,true);
+
+       CommandlineProcessing::removeArgsWithParameters(argvList,"-compare:");
+
+	SgProject * project = frontend (argvList);
 	ROSE_ASSERT (project != NULL);
 	
+        if(graphCompareOutput == "" )
+          graphCompareOutput=((project->get_outputFileName())+".cg.dmp");
+
 	// Build the callgraph according to Anreases example
 	CallGraphBuilder		cgb (project);
 	cgb.buildCallGraph();
 	cgb.classifyCallGraph();
   // write a dotfile vor visualisation
   outFileName=((project->get_outputFileName())+".dot");
+
+
+
+
 	cout << "Writing Callgraph to: "<<outFileName<<endl;
-	GenerateDotGraph (cgb.getGraph (),outFileName.c_str());
+
+        CallGraphDotOutput output( *(cgb.getGraph()) );
+
+        CallGraphCreate *newGraph;
+        if(var_SOLVE_FUNCTION_CALLS_IN_DB == true)
+        {
+#ifdef HAVE_SQLITE3
+          output.writeSubgraphToDB(*gDB );
+          /*
+          output.filterNodesByDirectory( *gDB, "/export" );
+          output.filterNodesByDB( *gDB, "__filter.db" );*/
+
+          output.solveVirtualFunctions( *gDB, "ClassHierarchy" );
+          output.solveFunctionPointers( *gDB );
+          std::vector<std::string> keepDirs;
+          keepDirs.push_back( ROSE_COMPILE_TREE_PATH+std::string("/tests%") );
+
+          filterNodesKeepPaths(*gDB, keepDirs);
+
+          /*
+          std::vector<std::string> removeFunctions;
+          removeFunctions.push_back("::main%" );
+          filterNodesByFunctionName(*gDB,removeFunctions);
+          */
+          cout << "Loading from DB...\n";
+          newGraph = output.loadGraphFromDB( *gDB );
+          cout << "Loaded\n";
+
+#endif
+        }else{
+          // Not SQL Database case
+          printf ("Not using the SQLite Database ... \n");
+          newGraph = cgb.getGraph();
+        }
+
+
+
+	GenerateDotGraph (newGraph,outFileName.c_str());
 	
-	// generate compareisonFile
-	outFileName=((project->get_outputFileName())+".cg.dmp");
-	sortedCallGraphDump(outFileName,cgb.getGraph());	
+
+
+	sortedCallGraphDump(graphCompareOutput,newGraph);	
 
 	return 0;
 }
