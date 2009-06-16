@@ -308,18 +308,26 @@ PrologToRose::binaryToRose(PrologCompTerm* t,string tname) {
   debug("unparsing binary"); debug(t->getRepresentation());
   /* assert correct arity of term*/
   assert_arity(t, 5);
-  /*get child nodes (prefix traversal step)*/
-  SgNode* child1 = toRose(t->at(0));
-  SgNode* child2 = toRose(t->at(1));
   /*create file info and check it*/
   Sg_File_Info* fi = createFileInfo(t->at(4));
   testFileInfo(fi);
   /* node to be created*/
   SgNode* s = NULL;
+  /*get child node 1 (prefix traversal step)*/
+  SgNode* child1 = toRose(t->at(0));
+  if (tname == SG_PREFIX "function_declaration") {
+    /* function declarations are special: we create an incomplete
+     * declaration before traversing the body; this is necessary for
+     * recursive functions */
+    s = createFunctionDeclaration(fi,child1,t);
+  }
+  /*get child node 2 (almost-prefix traversal step)*/
+  SgNode* child2 = toRose(t->at(1));
 	
   /* create node depending on type*/
   if (tname == SG_PREFIX "function_declaration") {
-    s = createFunctionDeclaration(fi,child1,child2,t);
+    /* function declaration: created above, needs a fixup here */
+    s = setFunctionDeclarationBody(s,child2);
   } else if (isBinaryOp(tname)) {
     s = createBinaryOp(fi,child1,child2,t);
   } else if (tname == SG_PREFIX "cast_exp") {
@@ -1461,11 +1469,10 @@ PrologToRose::createFunctionParameterList(Sg_File_Info* fi,deque<SgNode*>* succs
  * create SgFunctionDeclaration
  */
 SgFunctionDeclaration*
-PrologToRose::createFunctionDeclaration(Sg_File_Info* fi, SgNode* par_list_u,SgNode* func_def_u, PrologCompTerm* t) {
+PrologToRose::createFunctionDeclaration(Sg_File_Info* fi, SgNode* par_list_u, PrologCompTerm* t) {
   debug("function declaration:");
-  /* cast parameter list and function definition (if exists)*/
+  /* cast parameter list */
   SgFunctionParameterList* par_list = isSgFunctionParameterList(par_list_u);
-  SgFunctionDefinition* func_def = isSgFunctionDefinition(func_def_u);
   /* param list must exist*/
   ROSE_ASSERT(par_list != NULL);
   /* get annotation*/
@@ -1479,11 +1486,26 @@ PrologToRose::createFunctionDeclaration(Sg_File_Info* fi, SgNode* par_list_u,SgN
   SgName func_name = func_name_term->getName();
   /* create declaration*/
   SgFunctionDeclaration* func_decl =
-    new SgFunctionDeclaration(fi,func_name,func_type,func_def);
+    new SgFunctionDeclaration(fi,func_name,func_type,/*func_def=*/NULL);
   ROSE_ASSERT(func_decl != NULL); 
-  func_decl->set_forward(func_def == NULL);
   func_decl->set_parameterList(par_list);
   setDeclarationModifier(annot->at(2),&(func_decl->get_declarationModifier()));
+
+  /* register the function declaration with our own symbol table */
+  string id = makeFunctionID(func_name, annot->at(0)->getRepresentation());
+  if (declarationMap.find(id) == declarationMap.end()) {
+    declarationMap[id] = func_decl;
+  }
+  return func_decl;
+}
+
+SgFunctionDeclaration*
+PrologToRose::setFunctionDeclarationBody(SgNode* func_decl_u, SgNode* func_def_u) {
+  SgFunctionDeclaration* func_decl = isSgFunctionDeclaration(func_decl_u);
+  ROSE_ASSERT(func_decl != NULL);
+  SgFunctionDefinition* func_def = isSgFunctionDefinition(func_def_u);
+  func_decl->set_forward(func_def == NULL);
+  func_decl->set_definition(func_def);
 
   /*post processing*/
   if (func_def != NULL) { /*important: otherwise unparsing fails*/
@@ -1491,12 +1513,6 @@ PrologToRose::createFunctionDeclaration(Sg_File_Info* fi, SgNode* par_list_u,SgN
     /* set defining declaration ROSE 0.9.0b */
     func_decl->set_definingDeclaration(func_decl);
   } else {
-  }
-
-  /* register the function declaration with our own symbol table */
-  string id = makeFunctionID(func_name, annot->at(0)->getRepresentation());
-  if (declarationMap.find(id) == declarationMap.end()) {
-    declarationMap[id] = func_decl;
   }
   return func_decl;
 }

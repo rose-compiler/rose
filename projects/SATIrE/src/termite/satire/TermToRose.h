@@ -73,6 +73,7 @@ private:
   SgMemberFunctionDeclaration* createDummyMemberFunctionDeclaration(std::string s,int c_type); /* TODO */
   SgBitVector* createBitVector(PrologTerm*, std::map<std::string, int>);
   int createEnum(PrologTerm*, std::map<std::string, int>);
+  SgFunctionDeclaration* setFunctionDeclarationBody(SgNode*, SgNode*);
 
   SgLabelStatement* makeLabel(Sg_File_Info*, std::string);
   PrologInt* isPrologInt(PrologTerm*);
@@ -128,7 +129,7 @@ private:
   SgPragmaDeclaration* createPragmaDeclaration(Sg_File_Info*, SgNode*, PrologCompTerm*);
 
   /*binary nodes*/
-  SgFunctionDeclaration* createFunctionDeclaration(Sg_File_Info*, SgNode*, SgNode*, PrologCompTerm*);
+  SgFunctionDeclaration* createFunctionDeclaration(Sg_File_Info*, SgNode*, PrologCompTerm*);
   SgBinaryOp* createBinaryOp(Sg_File_Info*, SgNode*, SgNode*, PrologCompTerm*);
   SgSwitchStatement* createSwitchStatement(Sg_File_Info*, SgNode*, SgNode*, PrologCompTerm*);
   SgDoWhileStmt* createDoWhileStmt(Sg_File_Info*, SgNode*, SgNode*, PrologCompTerm*);
