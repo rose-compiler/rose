@@ -85,4 +85,4 @@ distclean-local:
 	rm -rf Makefile 
 
 clean-local:
-	rm -rf *.o *.ps *.dot *.c
+	rm -rf *.o *.ps *.dot *.c rose_*.C
