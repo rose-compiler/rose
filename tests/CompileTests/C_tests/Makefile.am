@@ -42,7 +42,8 @@ TESTCODES_REQUIRED_TO_PASS = \
 #Liao, 5/16/2009 add a set of self-verifiable test code with main() 
 # and let them run during make check
 TESTCODES_REQUIRED_TO_RUN = \
-     test2009_17.c
+     test2009_17.c \
+     test2009_18.c
 
 TESTCODE_CURRENTLY_FAILING = \
      test2004_126.c \

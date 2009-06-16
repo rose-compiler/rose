@@ -4,6 +4,7 @@
 # It will
 #  a) make a distribution package off the head of the external repository
 #     Choosing the external repository is safer compared using the internal one with EDG files
+#     run a set of tests 
 #  b) automatically fill out a web form to upload the package and release it.
 # by Liao
 # 10/29/2008

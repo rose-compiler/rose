@@ -1208,6 +1208,11 @@ Grammar::setUpExpressions ()
      AggregateInitializer.editSubstitute       ( "LIST_NAME", "initializer" );
      AggregateInitializer.setDataPrototype     ( "SgExprListExp*", "initializers", "= NULL",
 						 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     // Liao, 6/16/2009, fixing bug 355, for multidimensional array's designated initializer , 
+     // aggregateInitializer should not have braces 
+     AggregateInitializer.setDataPrototype     ( "bool", "need_explicit_braces", "= true",
+						 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
 #if 0
      // AggregateInitializer.editSubstitute       ( "HEADER_EXTRA_LIST_FUNCTIONS", "HEADER_LIST_EXPRESSION_LIST_EXPRESSION", "../Grammar/Expression.code" );

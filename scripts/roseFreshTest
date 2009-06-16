@@ -226,7 +226,10 @@ fi
 ) >buildlog 2>&1 || buildstatus=1
 
 #------------------------------------------------------
-# Report Section
+# Post-test Section
+#------------------------------------------------------
+#------------------------------------------------------
+# if successful
 #------------------------------------------------------
  mailtext=${ROSE_TOP}/mailtext  # using absolute path to work with changing current dir.
 if [ $buildstatus == 0 ]; then  
@@ -248,11 +251,8 @@ if [ $buildstatus == 0 ]; then
   echo "> Environment:" >> $mailtext
   printenv >> $mailtext
   echo "" >> $mailtext
-  #------------------------------------------------------
-  # Optional uploading Section: for successful tests only
-  #------------------------------------------------------
 
-  #
+ #----------- test using plumhall---------- 
   if [ 0$ENABLE_RRQM_PLUMHALL -ne 0 ] ; then
     echo "Running QMtest on Plumhall..." >> $mailtext
     cd ${ROSE_TEST_REGRESSION_ROOT}
@@ -271,6 +271,7 @@ if [ $buildstatus == 0 ]; then
     fi
   fi
 
+ #----------- test using mozilla---------- 
   if [ 0$ENABLE_RRQM_MOZILLA -ne 0 ] ; then
     echo "Running QMtest on Mozilla..." >> $mailtext
     cd ${ROSE_TEST_REGRESSION_ROOT}
@@ -289,7 +290,9 @@ if [ $buildstatus == 0 ]; then
     fi
   fi
 
+ #----------- update the external repository---------- 
  # upload ROSE sources-with-EDG-binary to the SciDAC Outreach repository 
+# relies on the previous results of  make source_with_binary_edg_dist DOT_SVNREV=-${svnversion}
   if [ 0$ENABLE_UPLOAD_SVN -ne 0 ] ; then
  # bypass set -e by using own flag, so the child script can return to its parent    
      failed=no 
@@ -303,6 +306,7 @@ if [ $buildstatus == 0 ]; then
     fi
   fi
 
+ #----------- update the external website---------- 
   # documentations to www.roseCompiler.org
   if [ 0$ENABLE_UPLOAD_WEB -ne 0 ] ; then
     # update the web site
@@ -316,6 +320,9 @@ if [ $buildstatus == 0 ]; then
     fi
   fi
 else
+#------------------------------------------------------
+# if failed
+#------------------------------------------------------
   if [ -n "$TIMESTAMP" ]; then
     echo "Subject: ROSE test $TIMESTAMP on `hostname` 2. end (fail)" > $mailtext
   else
