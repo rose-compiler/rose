@@ -5558,6 +5558,138 @@ bool SageInterface::loopUnrolling(SgForStatement* loop, size_t unrolling_factor)
   return true;
 }
 
+// Liao, 6/15/2009
+//! A helper function to calculate n!
+static size_t myfactorial (size_t n)
+{
+  size_t result=1;
+  for (size_t i=2; i<=n; i++)
+    result*=i;
+  return result;  
+}
+
+//! A helper function to return a permutation order for n elements based on a lexicographical order number
+std::vector<size_t> getPermutationOrder( size_t n, size_t lexicoOrder)
+{
+  size_t k = lexicoOrder;
+  std::vector<size_t> s(n);
+  // initialize the permutation vector
+  for (size_t i=0; i<n; i++)
+    s[i]=i;
+
+  //compute (n- 1)!
+  size_t factorial = myfactorial(n-1);
+  //check if the number is not in the range of [0, n! - 1]
+  if (k/n>=factorial)
+  {
+    printf("Error: in getPermutationOrder(), lexicoOrder is larger than n!-1\n");
+    ROSE_ASSERT(false);
+  }
+  // Algorithm: 
+  //check each element of the array, excluding the right most one.
+  //the goal is to find the right element for each s[j] from 0 to n-2
+  // method: each position is associated a factorial number
+  //    s[0] -> (n-1)!
+  //    s[1] -> (n-2)! ...
+  // the input number k is divided by the factorial at each position (6, 3, 2, 1 for size =4)
+  //   so only big enough k can have non-zero value after division
+  //   0 value means no change to the position for the current iteration
+  // The non-zero value is further modular by the number of the right hand elements of the current element.
+  //     (mode on 4, 3, 2 to get offset 1-2-3, 1-2, 1 from the current position 0, 1, 2)
+  //  choose one of them to be moved to the current position,
+  //  shift elements between the current and the moved element to the right direction for one position
+  for (size_t j=0; j<n-1; j++)
+  {
+    //calculates the next cell from the cells left
+    //(the cells in the range [j, s.length - 1])
+    int tempj = (k/factorial) % (n - j);
+    //Temporarily saves the value of the cell needed
+    // to add to the permutation this time
+    int temps = s[j+tempj];
+    //shift all elements to "cover" the "missing" cell
+    //shift them to the right
+    for (size_t i=j+tempj; i>j; i--)
+    {
+      s[i] = s[i-1]; //shift the chain right
+    }
+    // put the chosen cell in the correct spot
+    s[j]= temps;
+    // updates the factorial
+    factorial = factorial /(n-(j+1));
+  }
+#if 0
+  for (size_t i = 0; i<n; i++)
+    cout<<" "<<s[i];
+  cout<<endl;  
+#endif  
+  return s;
+}
+
+//! Interchange/Permutate a n-level perfectly-nested loop rooted at 'loop' using a lexicographical order number within [0,depth!)
+bool SageInterface::loopInterchange(SgForStatement* loop, size_t depth, size_t lexicoOrder)
+{
+  // parameter verification
+  ROSE_ASSERT(loop != NULL);
+  //must have at least two levels 
+  ROSE_ASSERT (depth >1);
+  ROSE_ASSERT(lexicoOrder<myfactorial(depth));
+  //TODO need to verify the input loop has n perfectly-nested children loops inside
+  // save the loop nest's headers: init, test, and increment
+  std::vector<SgForStatement* > loopNest = SageInterface::querySubTree<SgForStatement>(loop,V_SgForStatement);
+  ROSE_ASSERT(loopNest.size()>=depth); 
+  std::vector<std::vector<SgNode*> > loopHeads;
+  for (std::vector<SgForStatement* > ::iterator i = loopNest.begin(); i!= loopNest.end(); i++) 
+  {
+    SgForStatement* cur_loop = *i; 
+    std::vector<SgNode*> head;
+    head.push_back(cur_loop->get_for_init_stmt());
+    head.push_back(cur_loop->get_test());
+    head.push_back(cur_loop->get_increment());
+    loopHeads.push_back(head);
+  }
+
+  // convert the lexicographical number to a permutation order array permutation[depth]
+  std::vector<size_t> changedOrder = getPermutationOrder (depth, lexicoOrder);
+  // rewrite the loop nest to reflect the permutation 
+  // set the header to the new header based on the permutation array
+  for (size_t i=0; i<depth; i++) 
+  {
+    // only rewrite if necessary
+    if (i != changedOrder[i])
+    {
+      SgForStatement* cur_loop = loopNest[i];
+      std::vector<SgNode*> newhead = loopHeads[changedOrder[i]];
+
+      SgForInitStatement* init = isSgForInitStatement(newhead[0]);
+      //ROSE_ASSERT(init != NULL) // could be NULL?
+      ROSE_ASSERT(init != cur_loop->get_for_init_stmt());
+      cur_loop->set_for_init_stmt(init);
+      if (init)
+      {
+        init->set_parent(cur_loop);
+        setSourcePositionForTransformation(init);
+      }
+
+      SgStatement* test = isSgStatement(newhead[1]);
+      cur_loop->set_test(test);
+      if (test)
+      {
+        test->set_parent(cur_loop);
+        setSourcePositionForTransformation(test);
+      }
+
+      SgExpression* incr = isSgExpression(newhead[2]);
+      cur_loop->set_increment(incr);
+      if (incr)
+      {
+        incr->set_parent(cur_loop);
+        setSourcePositionForTransformation(incr);
+      }
+    }
+  }
+  return true; 
+}
+
 //! Based on AstInterface::IsFortranLoop() and ASTtools::getLoopIndexVar()
 //TODO check the loop index is not being written in the loop body
 bool SageInterface::isCanonicalForLoop(SgNode* loop,SgInitializedName** ivar/*=NULL*/, SgExpression** lb/*=NULL*/, SgExpression** ub/*=NULL*/, SgExpression** step/*=NULL*/, SgStatement** body/*=NULL*/)

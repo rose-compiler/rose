@@ -761,6 +761,9 @@ bool forLoopNormalization(SgForStatement* loop);
 //! Internal Test Only! Unroll an innermost loop with a specified unrolling factor. A wrapper on top of Qing's loop processor's loopUnroll class. This transformation cannot pass AstTests::runAllTests().
 bool loopUnrolling(SgForStatement* loop, size_t unrolling_factor);
 
+//! Interchange/permutate a n-level perfectly-nested loop rooted at 'loop' using a lexicographical order number within (0,depth!). 
+bool loopInterchange(SgForStatement* loop, size_t depth, size_t lexicoOrder);
+
 //@}
 
 //------------------------------------------------------------------------
