@@ -56,16 +56,19 @@ ScopeStatementNT : Global ( declarations:DeclarationStatement* )
  | NamespaceDefinitionStatement ( declarations:DeclarationStatement* )
  ;
 
-// GB (2008-02-14): Removed ExprListExp from here since we have
-// ExprListExpNT elsewhere.
+// GB (2009-06-16): Restored ExprListExp since it can occur inside
+// initializer expressions. ExprListExpNT had to go; in a number of places,
+// there are Expressions that can only be ExprListExps, but PAG's type
+// system is too rigid to express this.
 Expression : VarRefExp ( name:aststring )
+ | ExprListExp ( expressions:Expression* )
  | ClassNameRefExp (  )
  | FunctionRefExp (  )
  | MemberFunctionRefExp (  )
- | FunctionCallExp ( function:Expression, args:ExprListExpNT )
+ | FunctionCallExp ( function:Expression, args:Expression )
  | SizeOfOp ( operand_expr:Expression )
  | ConditionalExp ( conditional_exp:Expression, true_exp:Expression, false_exp:Expression )
- | NewExp ( placement_args:ExprListExpNT, constructor_args:ConstructorInitializerNT, builtin_args:Expression )
+ | NewExp ( placement_args:Expression, constructor_args:ConstructorInitializerNT, builtin_args:Expression )
  | DeleteExp ( variable:Expression )
  | ThisExp ( type:Type ) // unused; we have a variable "this" instead
  | RefExp (  )
@@ -77,10 +80,10 @@ Expression : VarRefExp ( name:aststring )
 // GB (2008-02-14): Replaced this useless production with the stuff it was
 // supposed to expand to.
 // | Initializer (  )
- | AggregateInitializer ( initializers:ExprListExpNT )
+ | AggregateInitializer ( initializers:Expression )
 // GB (2008-02-14): This node will never appear in the ICFG as the
 // constructor call is resolved to a function call.
-// | ConstructorInitializer ( args:ExprListExpNT )
+// | ConstructorInitializer ( args:Expression )
  | AssignInitializer ( operand_i:Expression )
  | BoolValExp ( value:astint )
  | StringVal ( value:aststring )
@@ -185,10 +188,7 @@ FunctionSymbolNT : FunctionSymbol ( name:aststring )
 FunctionSymbolNTListNT : FunctionSymbolNTList ( fs:FunctionSymbolNT* )
  ;
 
-ExprListExpNT : ExprListExp ( expressions:Expression* )
- ;
-
-ConstructorInitializerNT : ConstructorInitializer ( args:ExprListExpNT )
+ConstructorInitializerNT : ConstructorInitializer ( args:Expression )
  ;
 
 Type : ArrayType ( base_type:Type, size:astint )  // size: -1 if unknown!

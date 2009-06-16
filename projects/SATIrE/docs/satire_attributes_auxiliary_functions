@@ -133,6 +133,9 @@ is_value :: Expression -> bool;
 unary_get_child :: Expression -> Expression;
     get the operand expression of a unary expression
 
+unary_is_prefix :: Expression -> bool;
+    determine whether the unary expression is a prefix expression
+
 binary_get_left_child :: Expression -> Expression;
     get left child of a binary expression
 

@@ -166,6 +166,27 @@ eval(exp, state, context) =
                                                      expr_type(var), i,
                                                      context);
                               in  (top, lift(st));
+    AssignOp(VarRefExp(_) as var, ExprListExp(_) as i)
+                           => let st = initialize(s, varref_varid(var),
+                                                     expr_type(var), i,
+                                                     context);
+                              in  (top, lift(st));
+    ConditionalExp(cond, t, f) =>
+        // -- Evaluate the condition twice, once for truth and once for
+        // -- falsity; if only one of these holds, use that state, otherwise
+        // -- use a merged state.
+        let tb = branch(cond, state, true, false, context); in
+        let fb = branch(cond, state, false, false, context); in
+        let cs = (if   tb = bot then fb else
+                  if   fb = bot then tb
+                  else comb(tb, fb)); in
+        // -- Now we have the state after the evaluation of the condition.
+        // -- Evaluate one or both of the "true" and "false" expressions.
+        let tt = eval(t, cs, context);
+            ff = eval(f, cs, context);
+        in  if   tb = bot then ff else
+            if   fb = bot then tt
+            else (combi(tt!1!2, ff!1!2), comb(tt!2!2, ff!2!2));
 
     _ =>
       if is_unary(exp) then
@@ -192,6 +213,7 @@ eval(exp, state, context) =
           // -- NOT IMPLEMENTED
           FloatVal(_) => (top, state);
           DoubleVal(_) => (top, state);
+          StringVal(_) => (top, state);
           _         => print("unsupported value exp: ")
                        print(exp) print("\n") 
                                   (top, state);
@@ -218,6 +240,7 @@ eval(exp, state, context) =
                                     (s{!id!}, state);
       AssignInitializer(e1) => eval(e1, state, context);
       NewExp(_,_,_)         => (top, state);
+      FunctionRefExp()      => (top, state);
       _                     => println("**WARNING: ignoring unknown exp: ",
                                        exp, ": ", expr_asttext(exp))
                                (top, state); 
@@ -315,13 +338,11 @@ binary(left, right, exp, state, context) =
           ModOp(_, _)     => (ltup(0, r2), ls);
           LshiftOp(_, _)  => (ltup(l1<<unum(r1), l2<<unum(r2)), ls);
           RshiftOp(_, _)  => (ltup(l1>>unum(r1), l2>>unum(r2)), ls);
-	  BitAndOp(_, _)  => (ltup(l1 & r1, l2 & r2), ls);
+          BitAndOp(_, _)  => (and(l1, l2, r1, r2), ls);
           BitOrOp(_, _)   => (ltup(l1 | r1, l2 | r2), ls);
-          BitXorOp(_, _)  => if constp then 
-                                 (duplift(bool_int(l1 != r1)), ls)
-                             else dontknow ;
+          BitXorOp(_, _)  => (xor(l1, l2, r1, r2), ls);
 
-	  AndOp(_, _) => if constp then
+          AndOp(_, _) => if constp then
                           (duplift(bool_int((l1 != 0) && (r1 != 0))), ls)
                          else dontknow ;
 
@@ -330,7 +351,6 @@ binary(left, right, exp, state, context) =
                          else dontknow ;
 
           ScopeOp(_, _)       => (ltup(r1, r2), ls);
-       // -- GB: FIXME: This += rule is broken for "s += *p++" at least.
           PlusAssignOp(_, _)  => updatestate(ls, left, ltup(l1 + r1, l2 + r2), context);
           MinusAssignOp(_, _) => updatestate(ls, left, ltup(l1 - r2, l2 - r1), context);
           MultAssignOp(_, _)  => updatestate(ls, left, 
@@ -344,6 +364,12 @@ binary(left, right, exp, state, context) =
                                    ltup(l1<<unum(r1), l2<<unum(r2)), context);
           RshiftAssignOp(_, _)=> updatestate(ls, left, 
                                    ltup(l1>>unum(r2), l2>>unum(r1)), context);
+          IorAssignOp(_, _)   => updatestate(ls, left,
+                                   ltup(l1 | r1, l2 | r2), context);
+          AndAssignOp(_, _)   => updatestate(ls, left,
+                                   and(l1, l2, r1, r2), context);
+          XorAssignOp(_, _)   => updatestate(ls, left,
+                                   xor(l1, l2, r1, r2), context);
           _ => print("**WARNING: unsupported binary: ") print(exp) print("\n") 
                (top, lift([-> top]));
         endcase
@@ -374,13 +400,25 @@ unary(child, exp, state, context) =
         NotOp(_)      => (ltup(bool_int(e2 = 0), bool_int(e1 = 0)), es);
         CastExp(_, _) => eval(child, es, context);
         // -- the following are only correct for prefix -- and ++
-        MinusMinusOp(_) => updatestate(es, child, ltup(e1-1, e2-1), context);
-        PlusPlusOp(_)   => updatestate(es, child, ltup(e1+1, e2+1), context);
+        MinusMinusOp(_) => if unary_is_prefix(exp) then
+                              updatestate(es, child, ltup(e1-1, e2-1), context)
+                           else
+                              let st = updatestate(es, child,
+                                                   ltup(e1-1, e2-1), context);
+                              in  (er, st!2!2);  // -- old value, new state
+        PlusPlusOp(_)   => if unary_is_prefix(exp) then
+                              updatestate(es, child, ltup(e1+1, e2+1), context)
+                           else
+                              let st = updatestate(es, child,
+                                                   ltup(e1+1, e2+1), context);
+                              in  (er, st!2!2);  // -- old value, new state
         // -- an address-of operation does not yield a useful value; ignore it
         // -- here, the pointer analysis knows how to handle it; however, we
         // -- use state es to reflect possible side effects of evaluating
         // -- the operand
         AddressOfOp(_)  => (top, es);
+
+        BitComplementOp(_) => (complement(e1, e2), es);
   
         _ => print("unsupported unary: ") print(exp) print("\n") 
              (top, lift([-> top]));
@@ -468,8 +506,11 @@ merged_var_values(lift(s) as ls, v::vs) =
     in  combi(s{!varsym_varid(v)!}, merged);
 
 initialize :: itvl_fState, VariableId, Type, Expression, ContextInfo -> itvl_fState;
+initialize(s, v, ArrayType(BasicType(_), _) as t, // -- TODO: use array size
+                 AggregateInitializer(initexpr), context) =
+    initialize(s, v, t, initexpr, context);
 initialize(s, v, ArrayType(BasicType(_), _), // -- TODO: use array size
-                 AggregateInitializer(ExprListExp(exprs)), context) =
+                 ExprListExp(exprs), context) =
  // default value: 0 (missing initializers default to 0)
     initialize_array(s\[v -> duplift(0)], v, exprs, context);
 // ignore unknown initializer
@@ -692,8 +733,9 @@ second_if_present(a, b) =
     if b != top then b else a;
 
 // -- for lifted integers, we use top as +infty and bot as -infty
-min(a, top) = a;
-min(top, a) = a;
+// -- GB: this is not true anymore! -infty is top as well.
+min(a, top) = top;
+min(top, a) = top;
 min(a, bot) = bot;
 min(bot, b) = bot;
 min(a, b) = if drop(a) < drop(b) then a else b ;
@@ -708,6 +750,58 @@ max(bot, b) = b;
 max(a, b) = if drop(a) > drop(b) then a else b ;
 
 maxi(a, b) = if a > b then a else b ;
+
+
+// -- Lots of auxiliary bitwise functions.
+xor(a1, a2, b1, b2) =
+ // -- If the sign bit is set on both intervals, the xor's result will be
+ // -- non-negative. Otherwise, the lower limit is -inf.
+    if (a2 & b2) < 0 then
+        ltup(lowest_power_of_2(a1 | b1), next_higher_power_of_2(a2 | b2) - 1)
+    else
+        ltup(1 << unum(31), next_higher_power_of_2(a2 | b2) - 1);
+
+and(a1, a2, b1, b2) =
+ // -- If the sign bit is not set on *both* intervals, the and's result will
+ // -- be non-negative. We make wild guesses regarding the limits.
+ // -- Otherwise, the result is negative, and we don't even try to be clever.
+    if a2 >= 0 || b2 >= 0 then
+        ltup(0, (1 << unum(31)) - 1)
+    else
+        ltup(1 << unum(31), -1);
+
+complement(a1, a2) =
+ // -- If the sign bit is set on the interval, the complement's sign bit is
+ // -- not set. Otherwise, we don't know anything.
+    if a2 < 0 then
+        ltup(0, (1 << unum(31)) - 1)
+    else
+        ltup(1 << unum(31), (1 << unum(31)) - 1);
+
+lowest_bit :: snum -> unum;
+lowest_bit(0) = unum(0);
+lowest_bit(n) =
+    if n = (1 << unum(31)) then unum(32) else  // -- the critical negative case
+    if (n & 1) = 1         then unum(1)
+                           else unum(1) + lowest_bit(n >> unum(1));
+
+highest_bit :: snum -> unum;
+highest_bit(0) = unum(0);
+highest_bit(n) =
+    if n < 0 then unum(32)  // -- sign bit is set
+             else unum(1) + highest_bit(n >> unum(1));
+
+lowest_power_of_2 :: snum -> snum;
+lowest_power_of_2(0) = 0;
+lowest_power_of_2(n) = (1 << (lowest_bit(n) - unum(1)));
+
+highest_power_of_2 :: snum -> snum;
+highest_power_of_2(0) = 0;
+highest_power_of_2(n) = (1 << (highest_bit(n) - unum(1)));
+
+next_higher_power_of_2 :: snum -> snum;
+next_higher_power_of_2(0) = 0;
+next_higher_power_of_2(n) = (1 << highest_bit(n));
 
 // -- default widening operator:
 //wide(_, b) = b;

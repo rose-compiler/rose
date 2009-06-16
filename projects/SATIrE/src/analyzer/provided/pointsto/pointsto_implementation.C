@@ -412,6 +412,23 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
                  // This is the normal case of a variable that occurred in
                  // the original program.
                     result = symbol_location(varSym);
+                 // Need to check whether this is an array symbol, and
+                 // whether it is initialized to point to an array location
+                 // yet.
+                    if (result->baseLocation() == NULL)
+                    {
+                        SgType *t = varSym->get_type();
+                        t = t->stripType(SgType::STRIP_MODIFIER_TYPE
+                                       | SgType::STRIP_REFERENCE_TYPE
+                                       | SgType::STRIP_TYPEDEF_TYPE);
+                        if (isSgArrayType(t))
+                        {
+                            Location *arrayNode = createLocation();
+                            arrayNode->array = true;
+                            arrayNode->symbols = result->symbols;
+                            result->pointTo(arrayNode);
+                        }
+                    }
                 }
             }
         }

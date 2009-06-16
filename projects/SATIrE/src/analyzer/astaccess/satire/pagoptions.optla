@@ -42,6 +42,7 @@ extern noprefix   is_unary                 :: Expression -> bool;
 extern noprefix   is_binary                :: Expression -> bool;
 extern noprefix   is_value                 :: Expression -> bool;
 extern noprefix   unary_get_child          :: Expression -> Expression;
+extern noprefix   unary_is_prefix          :: Expression -> bool;
 extern noprefix   binary_get_left_child    :: Expression -> Expression;
 extern noprefix   binary_get_right_child   :: Expression -> Expression;
 extern noprefix   is_subtype_of            :: Type, Type -> bool;

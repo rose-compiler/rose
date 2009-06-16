@@ -316,6 +316,13 @@ extern "C" void *o_unary_get_child(void *expr)
     return isSgUnaryOp((SgNode *) expr)->get_operand();
 }
 
+extern "C" FLO_BOOL o_unary_is_prefix(void *expr)
+{
+    assert(o_is_unary(expr) == FLO_TRUE);
+    return (isSgUnaryOp((SgNode *) expr)->get_mode() == SgUnaryOp::prefix ?
+            FLO_TRUE : FLO_FALSE);
+}
+
 extern "C" void *o_binary_get_left_child(void *expr)
 {
     assert(o_is_binary(expr) == FLO_TRUE);
