@@ -1,3 +1,9 @@
+2009-06-16 00:39  liao6
+
+	* [r6189]
+	  /trunk/ROSE/projects/compass/tools/compass/tests/OpenMP_tests/Makefile.am:
+	  minor fix
+
 2009-06-15 22:11  liao6
 
 	* [r6187]
