@@ -1,3 +1,16 @@
+2009-06-16 17:43  liao6
+
+	* [r6201]
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.h,
+	  /trunk/ROSE/src/midend/loopProcessing/driver/InterchangeAnal.C,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/inputloopInterchange.C,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/loopInterchange.C:
+	  Added a SageInterface function for loop interchange/permutation
+	  * it relies on root loop node, interchange depth, and
+	  lexicographical order number for permutation
+
 2009-06-16 00:39  liao6
 
 	* [r6189]
