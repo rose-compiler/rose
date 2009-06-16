@@ -1685,6 +1685,7 @@ SgAggregateInitializer * SageBuilder::buildAggregateInitializer(SgExprListExp * 
   {
     initializers->set_parent(result);
   }
+  result->set_need_explicit_braces(true);
   setOneSourcePositionForTransformation(result);
   return result;
 }
@@ -1698,6 +1699,7 @@ SgAggregateInitializer * SageBuilder::buildAggregateInitializer_nfi(SgExprListEx
   {
     initializers->set_parent(result);
   }
+  result->set_need_explicit_braces(true);
   setOneSourcePositionNull(result);
   return result;
 }

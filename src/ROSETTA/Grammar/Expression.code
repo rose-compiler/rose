@@ -5136,7 +5136,8 @@ void
 SgDesignatedInitializer::post_construction_initialization() 
    {
      p_designatorList->set_parent(this);
-     p_memberInit->set_parent(this);
+     if (p_memberInit) // We want to support NULL p_memberInit when building this node
+       p_memberInit->set_parent(this);
    }
 
 SgType*
