@@ -289,7 +289,7 @@ HEADER_DIRECTED_GRAPH_EDGE_START
           SgGraphNode* get_to()   { return p_node_B; }
 HEADER_DIRECTED_GRAPH_EDGE_END
 
-
+#if 0
 HEADER_DIRECTED_GRAPH_NODE_START
      public:
        // DQ (8/18/2008): This is part of the OLD interface introduced for backward compatability!
@@ -306,7 +306,7 @@ HEADER_DIRECTED_GRAPH_START
        // DQ (8/18/2008): This is part of the OLD interface introduced for backward compatability!
           SgDirectedGraph(std::string, std::string);
 HEADER_DIRECTED_GRAPH_END
-
+#endif
 
 HEADER_GRAPH_NODE_START
 HEADER_GRAPH_NODE_END
@@ -13425,7 +13425,7 @@ SgDirectedGraphEdge::SgDirectedGraphEdge(std::string label, std::string type, in
 
 SOURCE_DIRECTED_GRAPH_EDGE_END
 
-
+#if 0
 SOURCE_DIRECTED_GRAPH_NODE_START
 // DQ (4/23/2009): Removed to debug use of new Graph node interfaces.
 
@@ -13445,7 +13445,7 @@ SgDirectedGraph::SgDirectedGraph(std::string name, std::string t)
    p_name=name;
    }
 SOURCE_DIRECTED_GRAPH_END
-
+#endif
 
 SOURCE_INCIDENCE_UNDIRECTED_GRAPH_START
 SOURCE_INCIDENCE_UNDIRECTED_GRAPH_END

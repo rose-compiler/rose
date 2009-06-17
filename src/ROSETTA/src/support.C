@@ -140,14 +140,14 @@ Grammar::setUpSupport ()
 
   // Type for graph node:
   // DQ (8/18/2008): This should be removed in the final version; added for backward compatability!
-     NEW_TERMINAL_MACRO (DirectedGraphNode, "DirectedGraphNode", "DirectedGraphNodeTag" );
+  //   NEW_TERMINAL_MACRO (DirectedGraphNode, "DirectedGraphNode", "DirectedGraphNodeTag" );
 
   // Types of graph edges:
      NEW_TERMINAL_MACRO (UndirectedGraphEdge, "UndirectedGraphEdge", "UndirectedGraphEdgeTag" );
      NEW_TERMINAL_MACRO (DirectedGraphEdge,   "DirectedGraphEdge",   "DirectedGraphEdgeTag" );
 
   // Types of graph nodes and edges:
-     NEW_NONTERMINAL_MACRO (GraphNode, DirectedGraphNode, "GraphNode", "GraphNodeTag", true);
+     NEW_TERMINAL_MACRO (GraphNode,  "GraphNode", "GraphNodeTag");
      NEW_NONTERMINAL_MACRO (GraphEdge, DirectedGraphEdge | UndirectedGraphEdge, "GraphEdge", "GraphEdgeTag", false);
 
   // Types of Bi-directional graphs:
@@ -160,9 +160,9 @@ Grammar::setUpSupport ()
 
   // Types of graphs:
   // DQ (8/18/2008): Added support for compatability with older IR nodes (will be removed later!)
-     NEW_TERMINAL_MACRO (DirectedGraph,     "DirectedGraph",     "DirectedGraphTag" );
+     //NEW_TERMINAL_MACRO (DirectedGraph,     "DirectedGraph",     "DirectedGraphTag" );
      NEW_TERMINAL_MACRO (IncidenceUndirectedGraph,     "IncidenceUndirectedGraph",     "IncidenceUndirectedGraphTag" );
-     NEW_NONTERMINAL_MACRO (Graph, IncidenceDirectedGraph | IncidenceUndirectedGraph | DirectedGraph ,"Graph", "GraphTag", false);
+     NEW_NONTERMINAL_MACRO (Graph, IncidenceDirectedGraph | IncidenceUndirectedGraph  ,"Graph", "GraphTag", false);
 
   // Internal supporting IR nodes for graphs:
   // DQ (8/18/2008): Added support for container so that we don't mix data member and list elements as children.
