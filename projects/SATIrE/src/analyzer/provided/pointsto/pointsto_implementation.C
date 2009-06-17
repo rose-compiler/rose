@@ -826,7 +826,7 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
              && isSgValueExp(cast->get_operand()))
             {
                 if (result == NULL)
-                    result = createLiteralLocation();
+                    result = info->integerConstantLocation;
             }
 
          // Removed this section for now. The new style of handling struct

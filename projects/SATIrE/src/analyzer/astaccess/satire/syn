@@ -149,6 +149,7 @@ Expression : VarRefExp ( name:aststring )
  | BitComplementOp ( operand_i:Expression )
  | CastExp ( operand_i:Expression, type:Type )
  | ThrowOp ( operand_i:Expression )
+ | NullExpression (  )
  ;
 
 //PartialFunctionType : PartialFunctionModifierType ( ref_to:ReferenceType, ptr_to:PointerType, modifiers:ModifierNodesNT, typedefs:TypedefSeq, return_type:Type, orig_return_type:Type )
@@ -197,6 +198,7 @@ Type : ArrayType ( base_type:Type, size:astint )  // size: -1 if unknown!
  | NamedType ( name:aststring )
  | PointerType ( base_type:Type )
  | ReferenceType ( base_type:Type )
+ | ModifierType ( base_type:Type )
  ;
 
 astint     == snum;
