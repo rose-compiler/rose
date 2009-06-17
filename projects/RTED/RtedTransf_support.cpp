@@ -24,7 +24,7 @@ RtedTransformation::getStatement(SgExpression* exp) {
 }
 
 SgExpression*
-RtedTransformation::getExprBelowAssignment(SgExpression* exp) {
+RtedTransformation::getExprBelowAssignment(SgExpression* exp, int& derefCounter) {
   SgExpression* fillExp = exp;
   // if the parent is a dot expression (a.ss) then we need to add that one instead
   // but there could be an array or cast inbetween, therefore we go up until we find a SgAssignOp
@@ -39,6 +39,8 @@ RtedTransformation::getExprBelowAssignment(SgExpression* exp) {
       "   assignInit : " << isSgAssignInitializer(tmpExp) << endl;
     tmpExp=isSgExpression(tmpExp->get_parent());
     //cerr << " iterate - tmpExp parent : " << tmpExp->unparseToString() << endl;
+    if (isSgPointerDerefExp(tmpExp))
+      derefCounter++;
     if (isSgPntrArrRefExp(tmpExp)) {
       // dont handle arrays
       return NULL;

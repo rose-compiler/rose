@@ -1143,20 +1143,6 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
       appendExpression(arg_list, basetypeStr);
 
       //appendExpression(arg_list, buildString(varRefE->get_parent()->class_name()));
-      // do not perform this test if the left hand side 
-      // is a variable of a struct or class (for now)
-#if 0
-      if (isSgDotExp(varRefE->get_parent()) ||
-	  isSgClassType(basetype) ||
-	  isSgPointerType(basetype) ||
-	  isSgTypedefType(basetype)
-	  ) {
-	cerr << "          Detected exeption : varref : " << varRefE->unparseToString() << 
-	  " type: " << basetype->class_name() << "  scope: " << varRefE->get_symbol()->get_name().str() << endl;
-	exit(1);
-	//	  return;
-      }
-#endif
       cerr << " Checking type : " << type->class_name() << endl;
       if (basetype)
 	cerr << "  base type : " << basetype->class_name() << endl;
@@ -1169,37 +1155,65 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
 
 	//char* res = (char*)malloc(long int);
 	//fprintf(res,"%p",varRefE);
-	//int derefCounter=getTypeOfPointer(initName);
-	SgExpression* fillExp = getExprBelowAssignment(varRefE);
+	int derefCounter=0;//getTypeOfPointer(initName);
+	SgExpression* fillExp = getExprBelowAssignment(varRefE, derefCounter);
 	
 	//	ROSE_ASSERT(fillExp);
-#if 0
-	if (varRefE->get_parent() &&
-	    isSgDotExp(varRefE->get_parent())) {
-	  appendExpression(arg_list, buildCastExp(isSgDotExp(varRefE->get_parent()),buildUnsignedLongLongType()));
-	  appendExpression(arg_list, buildPointerDerefExp(isSgDotExp(varRefE->get_parent())));
-	}
-	else if (isSgPointerDerefExp(varRefE->get_parent())) {
-	  appendExpression(arg_list, buildCastExp(isSgPointerDerefExp(varRefE->get_parent()),buildUnsignedLongLongType()));
-	  appendExpression(arg_list, buildPointerDerefExp(isSgPointerDerefExp(varRefE->get_parent())));
-	} else {
-	  appendExpression(arg_list, buildCastExp(varRefE,buildUnsignedLongLongType()));
-	  appendExpression(arg_list, buildPointerDerefExp(varRefE));
-	}
-#endif
 	if (fillExp) {
 #if 1
-	  if (isSgPointerDerefExp(fillExp)) { //varRefE->get_parent())) {
-	    appendExpression(arg_list, buildCastExp(buildAddressOfOp(fillExp),buildUnsignedLongLongType()));
-	    appendExpression(arg_list, fillExp);
+	  bool isDoNotHandleType=false;
+	  // handle Exceptions. dont init value if class or pointer to pointer
+	  if (isSgClassType(basetype) || 
+	      isSgPointerType(basetype) ||
+	      isSgTypedefType(basetype)
+	      ) 	      
+	    isDoNotHandleType=true;
+
+	  if (isSgPointerType(type)) {
+	    //	  if (isSgPointerDerefExp(fillExp)) { //varRefE->get_parent())) {
+	    bool pointer=true;
+	    if (isSgPointerType(basetype)) {
+	      // pointer to pointer
+	      pointer=false; 
+	    } else {
+	      // pointer 
+	    }
+	    if (pointer && derefCounter==0) {
+	      // int *ptr=0; ptr = 0:  pass address : ptr    value: *ptr 
+	      appendExpression(arg_list, buildCastExp(fillExp,buildUnsignedLongLongType()));
+	      if (isDoNotHandleType)
+		appendExpression(arg_list, buildIntVal(0));
+	      else
+		appendExpression(arg_list, buildPointerDerefExp(fillExp));
+	    } else if (pointer && derefCounter==1) {
+	      // if it is a pointer then we should have derefCounter == 1
+	      // int *ptr=0; *ptr = 0:  pass address : &*ptr    value: *ptr 
+	      appendExpression(arg_list, buildCastExp(buildAddressOfOp(fillExp),buildUnsignedLongLongType()));
+	      if (isDoNotHandleType)
+		appendExpression(arg_list, buildIntVal(0));
+	      else
+		appendExpression(arg_list, fillExp);
+	    } else if (!pointer && derefCounter==0) {
+	      // int **ptr=0; ptr = 0:  pass address : ptr    value: **ptr 
+	      appendExpression(arg_list, buildCastExp(fillExp,buildUnsignedLongLongType()));
+	      appendExpression(arg_list, buildIntVal(0)); //buildPointerDerefExp(buildPointerDerefExp(fillExp)));
+	    } else if (!pointer && derefCounter==1) {
+	      // int **ptr=0; *ptr = 0:  pass address : *ptr    value: **ptr 
+	      appendExpression(arg_list, buildCastExp(fillExp,buildUnsignedLongLongType()));
+	      appendExpression(arg_list, buildIntVal(0)); //buildPointerDerefExp(fillExp));
+	    } else if (!pointer && derefCounter==2) {
+	      // int **ptr=0; **ptr = 0:  pass address : &*ptr    value: **ptr 
+	      appendExpression(arg_list, buildCastExp(buildAddressOfOp(fillExp),buildUnsignedLongLongType()));
+	      appendExpression(arg_list, buildIntVal(0)); //fillExp);
+	    } else {
+	      // no such case
+	      cerr << "pointer = " << pointer << "  derefCounter = " << derefCounter << "   " << stmt->unparseToString() << endl;
+	      ROSE_ASSERT(false);
+	    }
+
 	  } else {
 	    appendExpression(arg_list, buildCastExp(fillExp,buildUnsignedLongLongType()));
-	    // handle Exceptions. dont init value if class or pointer to pointer
-	    if (isSgClassType(basetype) || 
-		isSgPointerType(basetype) ||
-		isSgTypedefType(basetype)
-		
-		)
+	    if (isDoNotHandleType)
 	      appendExpression(arg_list, buildIntVal(0));
 	    else
 	      appendExpression(arg_list, buildPointerDerefExp(fillExp));
@@ -1207,17 +1221,17 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
 
 #else
 	  cerr << "Derefcounter = " << derefCounter << "  " << stmt->unparseToString() << endl;
-	    SgExpression* addme = fillExp;
-	    for (int j=0;j<derefCounter;j++) {
-	      addme = buildAddressOfOp(addme);
-	    }
-	    appendExpression(arg_list, buildCastExp(addme,buildUnsignedLongLongType()));
-	    // dont assign the pointer deref as a value if you actually have a pointer
-	    // to a class
-	    if (isSgClassType(basetype))
-	      appendExpression(arg_list, buildIntVal(0));
-	    else
-	      appendExpression(arg_list, buildPointerDerefExp(addme));
+	  SgExpression* addme = fillExp;
+	  for (int j=0;j<derefCounter;j++) {
+	    addme = buildAddressOfOp(addme);
+	  }
+	  appendExpression(arg_list, buildCastExp(addme,buildUnsignedLongLongType()));
+	  // dont assign the pointer deref as a value if you actually have a pointer
+	  // to a class
+	  if (isSgClassType(basetype))
+	    appendExpression(arg_list, buildIntVal(0));
+	  else
+	    appendExpression(arg_list, buildPointerDerefExp(addme));
 #endif
 	  //appendExpression(arg_list,(fillExp));
 	} else {
@@ -1227,7 +1241,8 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
 	}
 
       } else if (isSgTypeInt(type)) {
-	SgExpression* fillExp = getExprBelowAssignment(varRefE);
+	int derefCounter=0;
+	SgExpression* fillExp = getExprBelowAssignment(varRefE, derefCounter);
 	if (fillExp) {
 	  //appendExpression(arg_list, buildCastExp(buildAddressOfOp(varRefE),buildUnsignedLongLongType())); //buildLongIntVal(-1));
 	  //appendExpression(arg_list, varRefE);
@@ -1238,7 +1253,8 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
 	  ROSE_ASSERT(fillExp);
 	}
       }  else if (isSgTypeChar(type)) {
-	SgExpression* fillExp = getExprBelowAssignment(varRefE);
+	int derefCounter=0;
+	SgExpression* fillExp = getExprBelowAssignment(varRefE, derefCounter);
 	if (fillExp) {
 	  //appendExpression(arg_list, buildCastExp(buildAddressOfOp(varRefE),buildUnsignedLongLongType())); //buildLongIntVal(-1));
 	  //appendExpression(arg_list, varRefE);
@@ -1250,16 +1266,6 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
 	}
       } 
       else if (isSgArrayType(type)) {
-#if 0
-	SgExpression* fillExp = getExprBelowAssignment(varRefE);
-	if (fillExp) {
-	  appendExpression(arg_list, buildCastExp(fillExp,buildUnsignedLongLongType()));
-	  appendExpression(arg_list, buildPointerDerefExp(fillExp));
-	} else {
-	  cerr << "Unhandled for variables : " << varRefE->unparseToString() << endl;
-	  exit(1);
-	}
-#endif
 	// we don't do this for arrays, because the initialization of each
 	// element is handled at runtime
 	return;

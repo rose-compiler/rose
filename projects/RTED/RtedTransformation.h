@@ -59,7 +59,7 @@ class RtedTransformation : public AstSimpleProcessing {
   void insertRuntimeSystemClass();
   SgExpression* buildString(std::string name);
   std::string getMangledNameOfExpression(SgExpression* expr);
-  SgExpression* getExprBelowAssignment(SgExpression* exp);
+  SgExpression* getExprBelowAssignment(SgExpression* exp, int& derefCounter);
 
 
 

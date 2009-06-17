@@ -28,6 +28,10 @@ runtimeCheck_SOURCES = runtimeCheck.cpp \
                        RtedTransf_support.cpp RtedTransf_funccall.cpp 
 
 
+#SUBDIRS = \
+#     rted_qt
+
+
 runtimeCheck_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS) 
 
 TESTCODES =  $(srcdir)/example.C 
