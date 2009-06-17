@@ -153,7 +153,7 @@ check-C-array-parallel:
 	} &  \
 	pid[$$COUNTER]=$$! ; \
 	echo "Adding PID $!  $${pid[$$COUNTER]}" ; \
-	if [ $$(( $$COUNTER - $$BASE)) -eq 8 ]; then  \
+	if [ $$(( $$COUNTER - $$BASE)) -eq 4 ]; then  \
 		for (( i=$$BASE ; i < $$COUNTER ; i++)); do  \
 	    	     p=$${pid[i]} ; \
 	     	     wait $$p ; \
@@ -304,7 +304,7 @@ check-C-string-parallel:
 	} &  \
 	pid[$$COUNTER]=$$! ; \
 	echo "Adding PID $!  $${pid[$$COUNTER]}" ; \
-	if [ $$(( $$COUNTER - $$BASE)) -eq 8 ]; then  \
+	if [ $$(( $$COUNTER - $$BASE)) -eq 4 ]; then  \
 		for (( i=$$BASE ; i < $$COUNTER ; i++)); do  \
 	    	     p=$${pid[i]} ; \
 	     	     wait $$p ; \

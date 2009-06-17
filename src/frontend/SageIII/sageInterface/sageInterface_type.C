@@ -274,8 +274,12 @@ namespace SageInterface
     { 
       //Take advantage of the fact that the value expression is always SgUnsignedLongVal in AST
       SgUnsignedLongVal * valExp = isSgUnsignedLongVal(indexExp);
-      ROSE_ASSERT(valExp); // TODO: return -1 is better ?
-      result = valExp->get_value(); 
+      SgIntVal * valExpInt = isSgIntVal(indexExp);
+      ROSE_ASSERT(valExp || valExpInt); // TODO: return -1 is better ?
+      if (valExp)
+	result = valExp->get_value(); 
+      else 
+	result = valExpInt->get_value(); 
     }
 
     // consider multi dimensional case 

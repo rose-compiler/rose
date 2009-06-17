@@ -157,7 +157,7 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {//, public GraphAlgorit
   bin_funcs_type bin_funcs;
 
   // vector of graphs
-  rose_hash::hash_map <std::string, SgDirectedGraph*> graphs;
+  rose_hash::hash_map <std::string, SgIncidenceDirectedGraph*> graphs;
 
   static bool initialized;
 
