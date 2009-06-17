@@ -100,20 +100,42 @@ body_wrapped(Body0, Body1) :-
 
 % generate an expression assert(v > Lower && v < Upper)
 
-% this wrapper predicate appears to be useless now since declarations are
-% handled differently; but let's keep it for its more general interface
-interval_assert(_Stmt, Var:Type->Intvl, AssertionExpr) :-
-  interval_assert1(Var:Type->Intvl, AssertionExpr).
+% factored out general case from assertions/5, added case to generate
+% negative assertions for unreachable program points
+info_decls_assertions(Info, Decls, Assertions) :-
+  member(merged:map([top,top], Vars), Info),
+  maplist(var_withtype(Decls), Vars, VarsWithTypes),
+  exclude(=(not_in_scope), VarsWithTypes, ValidVars),
+  maplist(interval_assert, ValidVars, Assertions).
+info_decls_assertions(Info, _Decls, [AssertCall]) :-
+  member(merged:bot, Info),
+  default_values(PPI, _DA, AI, FI),
+  Zero = int_val(null, value_annotation(0, PPI), AI, FI),
+  ErrorMsg = string_val(null,
+                        value_annotation(
+                            'error: branch should be unreachable!', PPI),
+                        AI, FI),
+  ErrorInt = cast_exp(ErrorMsg, null,
+                      unary_op_annotation(
+                          prefix, type_int, implicit, null, PPI),
+                      AI, FI),
+  And = and_op(Zero, ErrorInt, binary_op_annotation(type_int, PPI), AI, FI),
+  assert_call(And, AssertCall).
 
-interval_assert1(Var:VarType->[Min,Max], AssertionExpr) :-
+% build call expression to assert, given the expression to be asserted
+assert_call(AssertExpression, CallExpression) :-
   default_values(PPI, DA, AI, FI),
-  % VarType = type_int, %null,
-  AssertionExpr =
-    function_call_exp(FRefExp, expr_list_exp([AndOp], DA, AI, FI),
+  CallExpression =
+    function_call_exp(FRefExp, expr_list_exp([AssertExpression], DA, AI, FI),
 		      function_call_exp_annotation(type_void,PPI), AI, FI),
   FRefExp = function_ref_exp(function_ref_exp_annotation(assert, Ftp, PPI),
 			     AI, FI),
-  Ftp = function_type(type_void,ellipses,[type_int]),
+  Ftp = function_type(type_void,ellipses,[type_int]).
+
+interval_assert(Var:VarType->[Min,Max], AssertionExpr) :-
+  default_values(PPI, _DA, AI, FI),
+  % VarType = type_int, %null,
+  assert_call(AndOp, AssertionExpr),
 
   % skip temp vars, pointer and array variables
   ( ( atom_concat('$', _, Var)
@@ -201,17 +223,9 @@ assertions(y-Decls, y-Decls, y-Decls, Statement, AssertedStatement) :-
   AI = analysis_info(AIs),
   member(pre_info(PreInfo), AIs),
   member(post_info(PostInfo), AIs),
-  member(merged:map([top,top],PreVars), PreInfo),
-  member(merged:map([top,top],PostVars), PostInfo),
 
-  maplist(var_withtype(Decls), PreVars, PreVarsWithTypes),
-  maplist(var_withtype(Decls), PostVars, PostVarsWithTypes),
-
-  exclude(=(not_in_scope), PreVarsWithTypes, ValidPreVars),
-  exclude(=(not_in_scope), PostVarsWithTypes, ValidPostVars),
-
-  maplist(interval_assert(Statement), ValidPreVars, PreAssertions),
-  maplist(interval_assert(Statement), ValidPostVars, PostAssertions),
+  info_decls_assertions(PreInfo, Decls, PreAssertions),
+  info_decls_assertions(PostInfo, Decls, PostAssertions),
 
   chain_up(PreAssertions, DA, AI, FI, PreStmt),
   chain_up(PostAssertions, DA, AI, FI, PostStmt),
