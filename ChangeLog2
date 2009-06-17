@@ -1,3 +1,45 @@
+2009-06-17 01:31  panas2
+
+	* [r6208] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_support.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h: Work on RTED
+
+2009-06-17 00:28  bauer25
+
+	* [r6207] /trunk/ROSE/projects/RTED/rted_qt,
+	  /trunk/ROSE/projects/RTED/rted_qt/CustomListModels.cpp,
+	  /trunk/ROSE/projects/RTED/rted_qt/CustomListModels.h,
+	  /trunk/ROSE/projects/RTED/rted_qt/DebugDialog.cpp,
+	  /trunk/ROSE/projects/RTED/rted_qt/DebugDialog.h,
+	  /trunk/ROSE/projects/RTED/rted_qt/DebugDialog.ui,
+	  /trunk/ROSE/projects/RTED/rted_qt/RuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/rted_qt/rted_qt.cpp,
+	  /trunk/ROSE/projects/RTED/rted_qt/rted_qt.h: Debugging Dialog for
+	  RTED written
+
+2009-06-16 21:14  liao6
+
+	* [r6206] /trunk/ROSE/scripts/makeAndReleaseROSE.sh,
+	  /trunk/ROSE/scripts/roseFreshTest,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Expression.code,
+	  /trunk/ROSE/src/ROSETTA/src/expression.C,
+	  /trunk/ROSE/src/backend/unparser/CxxCodeGeneration/unparseCxx_expressions.C,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/sage_gen_be.C,
+	  /trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection/sage_il_to_str.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageBuilder.C,
+	  /trunk/ROSE/tests/CompileTests/C_tests/Makefile.am,
+	  /trunk/ROSE/tests/CompileTests/C_tests/test2009_18.c: Fixed bug
+	  355: designated initializer for specifying multidimensional
+	  array's element values
+	  
+	  * avoid emit '=' for designators which are not the last dimension
+	  for an array element
+	  * added a new member need_explicit_braces for
+	  SgAggregateInitializer to specify if '{}' is needed
+	  * added a self-verifying regression test:
+	  tests/CompileTests/C_tests/test2009_18.c
+
 2009-06-16 17:43  liao6
 
 	* [r6201]
