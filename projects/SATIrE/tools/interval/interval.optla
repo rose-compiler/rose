@@ -234,7 +234,7 @@ eval(exp, state, context) =
                               // -- offset value of) 0; pointer arithmetic
                               // -- then automagically maps to offset
                               // -- interval arithmetic.
-                                else if is_array_varid(id) then
+                                else if is_array_type(expr_type(exp)) then
                                     (duplift(0), state)
                                 else
                                     (s{!id!}, state);
@@ -293,34 +293,42 @@ binary(left, right, exp, state, context) =
          if bad(llifted) then dontknow else
         let r1 <= rlifted!1!2; r2 <= rlifted!2!2;
             l1 <= llifted!1!2; l2 <= llifted!2!2; in
-        let constp = (l1=l2) && (r1=r2); in
+        let constp = (l1=l2) && (r1=r2);
+            pointerp = is_pointer_type(expr_type(left))
+                    || is_pointer_type(expr_type(right)); in
         // --print("evalbin(") print(exp) print(";;; ") print(llifted) print(", ") 
         // --                                           print(rlifted) print(")\n")
         case exp of
-          EqualityOp(_, _) => if constp then (duplift(bool_int(l1=r1)), ls) else
-                              if (l2 < r1) || (l1 > r2) then (duplift(0), ls) else
-                              dontknow  ;
+          EqualityOp(_, _) =>
+            if !pointerp && constp then (duplift(bool_int(l1=r1)), ls) else
+            if !pointerp && (l2 < r1 || l1 > r2) then (duplift(0), ls) else
+            dontknow  ;
 
-          LessThanOp(_, _)  => if (l2 < r1) then (duplift(1), ls) else 
-                               if (l1 >=r2) then (duplift(0), ls) else 
-                               dontknow  ;
+          LessThanOp(_, _)  =>
+            if !pointerp && l2 < r1 then (duplift(1), ls) else
+            if !pointerp && l1 >=r2 then (duplift(0), ls) else
+            dontknow  ;
 
-          GreaterThanOp(_, _) => if (l1 > r2) then (duplift(1), ls) else 
-                                 if (l2 <=r1) then (duplift(0), ls) else 
-                                 dontknow  ;
+          GreaterThanOp(_, _) =>
+            if !pointerp && l1 > r2 then (duplift(1), ls) else
+            if !pointerp && l2 <=r1 then (duplift(0), ls) else
+            dontknow  ;
 
-          NotEqualOp(_, _) => if (l2 < r1) || (l1 > r2) then (duplift(1), ls) else
-                              if (constp)  then (duplift(bool_int(l1!=r1)), ls) else
-                              dontknow ;
+          NotEqualOp(_, _) =>
+            if !pointerp && l2 < r1 || (l1 > r2) then (duplift(1), ls) else
+            if !pointerp && constp  then (duplift(bool_int(l1!=r1)), ls) else
+            dontknow ;
 
-          LessOrEqualOp(_, _) => if (l2 <= r1) then (duplift(1), ls) else 
-                                 if (r2 <  l1) then (duplift(0), ls) else 
-                                 dontknow  ;
+          LessOrEqualOp(_, _) =>
+            if !pointerp && l2 <= r1 then (duplift(1), ls) else
+            if !pointerp && r2 <  l1 then (duplift(0), ls) else
+            dontknow  ;
 
-          GreaterOrEqualOp(_, _) => if (l1 >= r2) then (duplift(1), ls) else 
-                                    if (r1 >  l2) then (duplift(0), ls) else 
-                                    dontknow  ;
-                                             
+          GreaterOrEqualOp(_, _) =>
+            if !pointerp && l1 >= r2 then (duplift(1), ls) else
+            if !pointerp && r1 >  l2 then (duplift(0), ls) else
+            dontknow  ;
+
           AddOp(_, _)     => (ltup(l1 + r1, l2 + r2), ls);
           SubtractOp(_, _)=> (ltup(l1 - r2, l2 - r1), ls);
           MultiplyOp(_, _)=> (ltup(mini(l1*r1, l1*r2), maxi(l2*r1, l2*r2)), ls);
@@ -451,6 +459,9 @@ updatestate(state, exp, value, context) =
   let newstate =
     case exp of
       VarRefExp(var) => lift(s\[varref_varid(exp) -> value]);
+   // -- ignore comparisons against null pointer constants, which due to
+   // -- complex issues have location assigned by the points-to analysis
+      CastExp(IntVal(_), _) => state;
       _ => let exprid = expr_exprid(exp);
            in  if exprid_has_location(exprid) then
                let loc = exprid_location_cs(exprid, context); in
@@ -459,7 +470,7 @@ updatestate(state, exp, value, context) =
                    case syms of
                 // -- no var: could be an error; could also be harmless, if
                 // -- this updatestate call resulted from an equality check
-                   [!]    => println("warning: no varsyms for lhs in updatestate: ",
+                   [!]    => println("warning: no varsyms for exp in updatestate: ",
                                      exp, " :: ", expr_asttext(exp))
                              state;
                 // -- singleton var, may be an array name: strong update of
@@ -550,11 +561,11 @@ branch(exp, state, edge, isLoopBody, context) =
   let pair = eval(exp, state, context); in
   let c = interval_to_bool(pair!1!2); 
           newstate = pair!2!2; in
-  if (c = top || isLoopBody) then 
+  if (c = top /* || isLoopBody */) then  // GB: don't think loops are special
     // -- We don't know for sure which edge will be taken
     // --print("c=top\n") 
     // --print("Maybe\n") 
-    eval_branch_condition(exp, state, newstate, edge, isLoopBody, context)
+    branch_condition_effects(exp, state, newstate, edge, isLoopBody, context)
   else if c = bot then 
     print("FIXME c=bot\n") 
     state
@@ -571,86 +582,148 @@ branch(exp, state, edge, isLoopBody, context) =
     ;
 
 
-eval_branch_condition :: Expression, itvl_State, itvl_State, bool, bool, ContextInfo -> itvl_State;
-eval_branch_condition(exp, state, newstate, edge, isLoopBody, context) =
-  // -- println("eval_branch_condition ", exp)
+branch_condition_effects :: Expression, itvl_State, itvl_State, bool, bool, ContextInfo -> itvl_State;
+branch_condition_effects(exp, state, newstate, edge, isLoopBody, context) =
+  // -- println("branch_condition_effects ", exp)
   if is_binary(exp) then
-    let lhs = eval(binary_get_left_child(exp), state, context)!1!2;
-        rhs = eval(binary_get_right_child(exp), state, context)!1!2; in
-
-    case exp of 
-      AndOp(exp1, exp2) => println("AND: ", state)
-        let state1 = 
-          eval_branch_condition(exp1, state, newstate, edge, isLoopBody, context); in println(state1)
-          eval_branch_condition(exp2, state1, newstate, edge, isLoopBody, context);
-  
-      LessThanOp(var, _) =>
-        if edge = true then 
-            updatestate(state, var, adjust_max_plus(lhs, rhs,-1), context)!2!2
-        else 
-            updatestate(state, var, adjust_min(lhs, rhs), context)!2!2
-        ;
-      LessOrEqualOp(var, _) =>
-        if edge = true then 
-            updatestate(state, var, adjust_max(lhs, rhs), context)!2!2
-        else 
-            updatestate(state, var, adjust_min_plus(lhs, rhs, 1), context)!2!2
-        ;
-      GreaterThanOp(var, _) =>
-        if edge = true then 
-            updatestate(state, var, adjust_min_plus(lhs, rhs, 1), context)!2!2
-        else 
-            updatestate(state, var, adjust_max(lhs, rhs), context)!2!2
-        ;
-      GreaterOrEqualOp(var, _) =>
-        if edge = true then 
-            updatestate(state, var, adjust_min(lhs, rhs), context)!2!2
-        else 
-            updatestate(state, var, adjust_max_plus(lhs, rhs,-1), context)!2!2
-        ;
-
-      EqualityOp(var, _) =>
-        if edge = true then 
-            updatestate(state, var, rhs, context)!2!2
-        else 
-            newstate
-        ;
-      NotEqualOp(var, _) =>
-        if edge = true then 
-            newstate
-        else 
-            updatestate(state, var, rhs, context)!2!2
-        ;
-
-      _ => newstate;
-    endcase
-  else 
+    if is_comparison(exp) then
+      comparison_effects(exp, state, newstate, edge, context)
+    else
+      case exp of
+        AndOp(exp1, exp2) => println("AND: ", state)
+          let state1 =
+            branch_condition_effects(
+                exp1, state, newstate, edge, isLoopBody, context);
+          in println(state1)
+            branch_condition_effects(
+                exp2, state1, newstate, edge, isLoopBody, context);
+        _ => newstate;
+      endcase
+  else
     lift([-> top])
     //newstate
   ;
 
+is_comparison :: Expression -> bool;
+is_comparison(LessThanOp(_,_)) = true;
+is_comparison(LessOrEqualOp(_,_)) = true;
+is_comparison(GreaterThanOp(_,_)) = true;
+is_comparison(GreaterOrEqualOp(_,_)) = true;
+is_comparison(EqualityOp(_,_)) = true;
+is_comparison(NotEqualOp(_,_)) = true;
+// FIXME: ROSE terms always have implicit comparisons against 0 in
+// conditions like "if(p)", but clang terms don't. Thus we will probably
+// need a more general notion of comparison.
+is_comparison(_) = false;
+
+comparison_effects :: Expression, itvl_State, itvl_State, bool, ContextInfo
+                      -> itvl_State;
+comparison_effects(exp, oldstate, state, edge, context) =
+ if !is_binary(exp) || !is_comparison(exp) then
+   println("*** comparison_effects called with non-comparison ", exp,
+           " :: ", expr_asttext(exp))
+   error("*** fatal error")
+ else
+ let lhsexp = binary_get_left_child(exp);
+     rhsexp = binary_get_right_child(exp); in
+ let lhs = eval(lhsexp, oldstate, context)!1!2;
+     rhs = eval(rhsexp, oldstate, context)!2!2; in
+ case exp of
+   LessThanOp(_, _) =>
+     if edge = true then
+       less_effects(state, lhsexp, rhsexp, context)
+     else
+       less_or_equal_effects(state, rhsexp, lhsexp, context)
+     ;
+   LessOrEqualOp(_, _) =>
+     if edge = true then
+       less_or_equal_effects(state, lhsexp, rhsexp, context)
+     else
+       less_effects(state, rhsexp, lhsexp, context)
+     ;
+   GreaterThanOp(_, _) =>
+     if edge = true then
+       less_effects(state, rhsexp, lhsexp, context)
+     else
+       less_or_equal_effects(state, lhsexp, rhsexp, context)
+     ;
+   GreaterOrEqualOp(_, _) =>
+     if edge = true then
+       less_or_equal_effects(state, rhsexp, lhsexp, context)
+     else
+       less_effects(state, lhsexp, rhsexp, context)
+     ;
+   EqualityOp(_, _) =>
+     if edge = true then
+       equal_effects(state, lhsexp, rhsexp, context)
+     else
+       state
+     ;
+   NotEqualOp(_, _) =>
+     if edge = true then
+       state
+     else
+       equal_effects(state, lhsexp, rhsexp, context)
+     ;
+ endcase;
+
+less_effects :: itvl_State, Expression, Expression, ContextInfo -> itvl_State;
+less_effects(state, lhsexp, rhsexp, context) =
+  let lhs = eval(lhsexp, state, context)!1!2;
+      rhs = eval(rhsexp, state, context)!1!2;
+  in  cond_update(
+        cond_update(state, lhsexp, adjust_max_plus(lhs, rhs, -1), context),
+                           rhsexp, adjust_min_plus(rhs, lhs,  1), context);
+
+less_or_equal_effects :: itvl_State, Expression, Expression, ContextInfo
+                         -> itvl_State;
+less_or_equal_effects(state, lhsexp, rhsexp, context) =
+  let lhs = eval(lhsexp, state, context)!1!2;
+      rhs = eval(rhsexp, state, context)!1!2;
+  in  cond_update(
+        cond_update(state, lhsexp, adjust_max(lhs, rhs), context),
+                           rhsexp, adjust_min(rhs, lhs), context);
+
+equal_effects :: itvl_State, Expression, Expression, ContextInfo -> itvl_State;
+equal_effects(state, lhsexp, rhsexp, context) =
+  let lhs = eval(lhsexp, state, context)!1!2;
+      rhs = eval(rhsexp, state, context)!1!2; in
+  let intersection = intersect_itvls(lhs, rhs);
+  in  cond_update(
+        cond_update(state, lhsexp, intersection, context),
+                           rhsexp, intersection, context);
+
+// -- cond_update: Update a state with new value for the object(s)
+// -- represented by the expression, if any; if the expression does not
+// -- refer to any object(s), nothing is changed.
+cond_update :: itvl_State, Expression, itvl_Interval, ContextInfo -> itvl_State;
+cond_update(state, exp, value, context) =
+  if exprid_has_location(expr_exprid(exp)) then
+     updatestate(state, exp, value, context)!2!2
+  else
+     state;
 
 // -- update the min portion of an interval
 adjust_min :: itvl_Interval, itvl_Interval -> itvl_Interval;
-adjust_min((_, a2), (m, _)) = (m, max(m, a2));
+adjust_min((a1, a2), (m, _)) = (intersect_max(a1, m), max(m, a2));
 
 // -- update the max portion of an interval
 adjust_max :: itvl_Interval, itvl_Interval -> itvl_Interval;
-adjust_max((a1, _), (_, m)) = (min(a1, m), m);
+adjust_max((a1, a2), (_, m)) = (min(a1, m), intersect_min(a2, m));
 
 // -- update the min portion of an interval and add c
 adjust_min_plus :: itvl_Interval, itvl_Interval, snum -> itvl_Interval;
-adjust_min_plus((_, a2), (m, _), c) = 
+adjust_min_plus((a1, a2), (m, _), c) =
     let m1 <= m; in
     let m2 = lift(m1+c); in
-      (m2, max(m2, a2));
+      (intersect_max(a1, m2), max(m2, a2));
 
 // -- update the max portion of an interval and add c
 adjust_max_plus :: itvl_Interval, itvl_Interval, snum -> itvl_Interval;
-adjust_max_plus((a1, _), (_, m), c) =
+adjust_max_plus((a1, a2), (_, m), c) =
     let m1 <= m; in
     let m2 = lift(m1+c); in
-      (min(a1, m2), m2);
+      (min(a1, m2), intersect_min(a2, m2));
 
 
 kill_vars :: itvl_State, *VariableSymbolNT -> itvl_State;
@@ -841,10 +914,18 @@ varmember(v, g::gs) =
     then true 
     else varmember(v, gs);
     
-is_array_varid :: VariableId -> bool;
-is_array_varid(id) =
-    let type = typeid_type(exprid_typeid(varid_exprid(id)));
-    in  case type of
+is_array_type :: Type -> bool;
+is_array_type(type) =
+    case type of
         ArrayType(_, _) => true;
+        ModifierType(t) => is_array_type(t);
         _               => false;
     endcase;
+
+is_pointer_type :: Type -> bool;
+is_pointer_type(type) =
+  case type of
+    PointerType(_)  => true;
+    ModifierType(t) => is_pointer_type(t);
+    _               => false;
+  endcase;
