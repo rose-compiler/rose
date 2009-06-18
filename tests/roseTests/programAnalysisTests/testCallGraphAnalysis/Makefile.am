@@ -29,19 +29,23 @@ testCG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
  
 # this caused a segfault once  
 test01: testCG
-	rm -f ./DATABASE
-	./testCG -I. -I$(srcdir) $(srcdir)/main.C $(srcdir)/f1.C $(srcdir)/f2.C -o Callgraph
+	rm -f ./test01.db
+	./testCG -I. -I$(srcdir) $(srcdir)/main.C $(srcdir)/f1.C $(srcdir)/f2.C -o Callgraph -db:name test01.db
+	rm -f ./test01.db
+
 
 # Test that the call graph generates all the edges it should
 test02: testCG stressTestFactory
 	echo " $(srcdir)/stressTestFactory 10"
 	$(srcdir)/stressTestFactory 10
-	rm -f ./DATABASE
-	./testCG sT10.C -o sT10
+	rm -f ./sT10.db
+	./testCG sT10.C -o sT10 -compare:graph sT10.cg.dmp -db:name sT10.db
+	rm -f ./sT10.db
 	diff -U5 sT10.cmp.dmp sT10.cg.dmp
 	$(srcdir)/stressTestFactory 100
-	rm -f ./DATABASE
-	./testCG sT100.C -o sT100
+	rm -f ./sT100.db
+	./testCG sT100.C -o sT100 -compare:graph sT100.cg.dmp -db:name sT10.db
+	rm -f ./sT100.db
 	diff -U5 sT100.cmp.dmp sT100.cg.dmp
 
 
@@ -62,7 +66,10 @@ TESTCODE_INCLUDES =
 # DQ (7/12/2004): Modified to run with make -j4 options
 $(TEST_Objects): testCallGraph $(TESTCODES) 
 	@echo "Compiling test code using $(TEST_TRANSLATOR) ..."
-	$(TEST_TRANSLATOR) $(INCLUDES) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C) -o $(@:.o=)
+	rm -f  $(@:.o=.db)
+	$(TEST_TRANSLATOR) $(INCLUDES) $(TESTCODE_INCLUDES) -c $(srcdir)/$(@:.o=.C) -o $(@:.o=) -db:name $(@:.o=.db)
+	rm -f  $(@:.o=.db)
+
 
 EXTRA_DIST = $(TESTCODES) functions.h main.C f1.C f2.C stressTestFactory
 

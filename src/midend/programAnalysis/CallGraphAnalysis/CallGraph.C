@@ -66,6 +66,84 @@ sqlite3x::sqlite3_connection* open_db(std::string dbName  )
 };
 
 
+// generate a graph from the DB
+SgIncidenceDirectedGraph*
+loadCallGraphFromDB (   sqlite3x::sqlite3_connection& gDB)
+{
+  cout << "Loading...\n";
+  SgIncidenceDirectedGraph* graph = new SgIncidenceDirectedGraph("CallGraph");
+
+  string loadNodes = "SELECT nid,label,def,type,scope FROM Nodes;",
+//    loadGraph = "SELECT * FROM Graph;",
+    loadEdges = "SELECT nid1,nid2,label FROM Edges;";
+
+  Rose_STL_Container<SgGraphNode *> nodeList;
+
+  {
+    sqlite3_command cmd(gDB, loadNodes.c_str());
+    sqlite3x::sqlite3_reader r = cmd.executereader();
+
+
+  
+    while(r.read()) 
+    {
+      string nid   = r.getstring(0); //nid is a unique identifier for a function in the schema
+      string label = r.getstring(1);
+      int is_def   = boost::lexical_cast<int>(r.getstring(2));
+      string typeF = r.getstring(3);
+      string scope = r.getstring(4);
+
+      ROSE_ASSERT(findNode(graph,nid)== NULL);
+
+      SgGraphNode* n = new SgGraphNode(nid);
+      n->addNewAttribute("Properties",new Properties(nid,label,typeF,scope,is_def,false,false) );
+      //CallGraphNode *n = new CallGraphNode( nid, label,typeF,scope,is_def, false, false );
+
+      graph->addNode(n);
+           //cout << "Node pushed: " << nid << "\t" << n << "\n";
+      nodeList.push_back(n);
+    }
+  }
+
+
+
+  //ADDING EDGES
+  sqlite3_command cmd(gDB, loadEdges.c_str());
+  sqlite3x::sqlite3_reader r = cmd.executereader();
+
+
+  while(r.read())
+    {
+      string nid1 = r.getstring(0),
+	nid2  = r.getstring(1),
+	label = r.getstring(2);
+
+      // find end points of edges, by their name
+    //      std::cout << "Calling findNode in outer loop loc7 " << nid1 << " " << nid2 << " " 
+     //       << label << std::endl;
+
+      SgGraphNode* startingNode = findNode(graph, nid1);
+
+      SgGraphNode* endNode      = findNode(graph, nid2);
+
+      assert(startingNode);
+
+      if (endNode)
+	{
+	  //cout << "Nodes retrieved: " << nid1 << "\t" << startingNode << "\t"
+	  //   << nid2 << "\t" << endNode << "\n";
+          if(findEdge(graph,startingNode,endNode)==NULL)
+          {
+	    graph->addDirectedEdge(startingNode, endNode, label);
+          }
+	}
+    }
+
+  cout << "After recreating the graph\n";
+  return graph;
+}
+
+
 
 #endif
 
@@ -131,6 +209,21 @@ Properties::Properties(){
   functionDeclaration = NULL;
   invokedClass = NULL;
   isPolymorphic = isPointer = false;
+  nid=label=type=scope=functionName="not-set";
+};
+
+Properties::Properties(std::string p_nid, std::string p_label, std::string p_type, std::string p_scope,
+     bool p_hasDef, bool p_isPtr, bool p_isPoly)
+        : nid(p_nid), label(p_label), type(p_type), scope(p_scope),hasDef(p_hasDef), isPtr(p_isPtr),
+        isPoly(p_isPoly)
+{
+  functionType = NULL;
+  functionDeclaration = NULL;
+  invokedClass = NULL;
+  isPolymorphic = isPointer = false;
+
+  //Filter out the parameters from the nid to get the function name
+  functionName = nid.substr(0,nid.size()-label.size());
 };
 
 
@@ -950,6 +1043,67 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration, bo
 	}
     }
 }
+
+
+SgGraphNode*
+findNode(SgGraph* graph, std::string nid)
+{
+  const rose_graph_string_integer_hash_multimap& nidToInt =
+    graph->get_string_to_node_index_multimap();
+  const rose_graph_integer_node_hash_map & intToNode =
+    graph->get_node_index_to_node_map ();
+
+  rose_graph_string_integer_hash_multimap::const_iterator iItr = nidToInt.find(nid);
+
+
+  if( iItr != nidToInt.end() )
+  {
+    int n = iItr->second;
+#if 1
+
+    iItr++;
+
+    int i = 2;
+    for(;iItr != nidToInt.end(); ++iItr )
+    {
+          i++;
+    };
+
+    //The nid should match an unique int
+    if( iItr != nidToInt.end() )
+    {
+      std::cout << "Error: nid " << nid << " occurs more than once. " << i << std::endl; 
+    };
+
+    ROSE_ASSERT( iItr == nidToInt.end() );
+#endif
+
+    return intToNode.find(n)->second;
+  }else
+    return NULL;
+};
+
+
+//Iterate over all edges in graph until an edge from->to is found. If not such edge
+//exsists return NULL
+SgGraphEdge*
+findEdge (SgIncidenceDirectedGraph* graph, SgGraphNode* from, SgGraphNode* to)
+{
+  const rose_graph_integer_edge_hash_multimap & outEdges
+    = graph->get_node_index_to_edge_multimap_edgesOut ();
+
+   rose_graph_integer_edge_hash_multimap::const_iterator it = outEdges.find(from->get_index());
+
+   for (;it!=outEdges.end();++it) {
+     SgDirectedGraphEdge* graphEdge = isSgDirectedGraphEdge(it->second);
+     ROSE_ASSERT(graphEdge!=NULL);
+     if(graphEdge->get_from() == from && graphEdge->get_to() == to)
+       return graphEdge;
+   }
+
+  
+   return NULL;
+};
 
 
 CallGraphNode*
@@ -2017,7 +2171,6 @@ CallGraphDotOutput::filterNodesByDirectory (  sqlite3x::sqlite3_connection& gDB,
 }
 
 // generate a graph from the DB
-// TODO: as is now, clustering info is lost
 CallGraphCreate *
 CallGraphDotOutput::loadGraphFromDB (   sqlite3x::sqlite3_connection& gDB)
 {
@@ -2038,13 +2191,12 @@ CallGraphDotOutput::loadGraphFromDB (   sqlite3x::sqlite3_connection& gDB)
   
     while(r.read()) 
     {
-      string nid   = r.getstring(0);
+      string nid   = r.getstring(0); //nid is a unique identifier for a function in the schema
       string label = r.getstring(1);
       int is_def   = boost::lexical_cast<int>(r.getstring(2));
       string typeF = r.getstring(3);
       string scope = r.getstring(4);
 
-//      CallGraphNode *n = new CallGraphNode( nid, NULL, NULL, is_def, false, false, NULL );
       CallGraphNode *n = new CallGraphNode( nid, label,typeF,scope,is_def, false, false );
 
       graph->addNode(n);

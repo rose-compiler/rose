@@ -53,17 +53,28 @@ int
 main( int argc, char * argv[] ) {
    RoseTestTranslator test;
    //  r = test.translate(argc,argv); // returns an error if any of the ends fails
-   SgProject* project = new SgProject(argc, argv);
+   std::vector<std::string> argvList(argv, argv+argc);
+   std::string dbName = "";
+   CommandlineProcessing::isOptionWithParameter(argvList,"-db:","(name)", dbName,true);
 
 //   var_SOLVE_FUNCTION_CALLS_IN_DB = true;
 #ifdef HAVE_SQLITE3
    var_SOLVE_FUNCTION_CALLS_IN_DB = true;
    std::cout << "Analyzing in DATABASE" << std::endl;
-   sqlite3x::sqlite3_connection* gDB = open_db("DATABASE");
+
+   if(dbName == "")
+   {
+     std::cerr << "Error: Please specify a database name with the -db:name option" << std::endl;
+     exit(1);
+   }
+
+   sqlite3x::sqlite3_connection* gDB = open_db(dbName);
 #else
    std::cout << "Analyzing outside DATABASE" << std::endl;
 
 #endif
+
+   SgProject* project = new SgProject(argvList);
 
    CallGraphBuilder CGBuilder( project );
    CGBuilder.buildCallGraph();
@@ -106,6 +117,8 @@ main( int argc, char * argv[] ) {
      filterNodesByFunctionName(*gDB,removeFunctions);
 
      newGraph = output.loadGraphFromDB( *gDB);
+
+     SgIncidenceDirectedGraph* incidenceGraph = loadCallGraphFromDB(*gDB);
      cout << "Loaded\n";
 
 #endif
