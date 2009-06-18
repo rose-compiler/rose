@@ -27,21 +27,31 @@
 
 extern bool var_SOLVE_FUNCTION_CALLS_IN_DB;
 
+
 //Only used when SOLVE_FUNCTION_CALLS_IN_DB is defined
-struct Properties
+class Properties : public AstAttribute
 {
-  bool isPointer, isPolymorphic;
-  SgClassDefinition *invokedClass;
-  SgFunctionDeclaration *functionDeclaration;
-  SgType *functionType;
+  public:
 
-  std::string type;
-  std::string label;
-  std::string nid;
-  std::string scope;
-  std::string functionName;
+    bool isPointer, isPolymorphic;
+    SgClassDefinition *invokedClass;
+    SgFunctionDeclaration *functionDeclaration;
+    SgType *functionType;
 
-  Properties();
+    std::string nid;
+    std::string label;
+    std::string type;
+    std::string scope;
+    std::string functionName;
+
+    bool hasDef;
+    bool isPtr;
+    bool isPoly;
+
+    Properties();
+    Properties(std::string nid, std::string label, std::string type, std::string scope,
+        bool hasDef, bool isPtr, bool isPoly);
+
 };
 
 typedef struct Properties FunctionProperties;
@@ -300,6 +310,14 @@ findNode ( Rose_STL_Container<CallGraphNode*> & nodeList, std::string name );
 CallGraphNode* 
 findNode ( Rose_STL_Container<CallGraphNode*> & nodeList, std::string name, int );
 
+//Iterate over all edges in graph until an edge from->to is found. If not such edge
+//exsists return NULL
+SgGraphEdge*
+findEdge (SgIncidenceDirectedGraph* graph, SgGraphNode* from, SgGraphNode* to);
+
+
+SgGraphNode* findNode(SgGraph* graph, std::string nid);
+
 #ifdef HAVE_SQLITE3
 sqlite3x::sqlite3_connection* open_db(std::string gDB  );
 void createSchema ( sqlite3x::sqlite3_connection& gDB, std::string dbName );
@@ -308,6 +326,8 @@ void filterNodesKeepPaths( sqlite3x::sqlite3_connection& gDB, std::vector<std::s
 //Will remove all references to function in the function list
 void filterNodesByFunctionName( sqlite3x::sqlite3_connection& gDB, std::vector<std::string> removeFunctions );
 
+//Will load all graphs represented in the database into one graph
+SgIncidenceDirectedGraph* loadCallGraphFromDB (sqlite3x::sqlite3_connection& gDB);
 
 #endif
 
