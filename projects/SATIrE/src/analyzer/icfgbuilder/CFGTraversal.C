@@ -1371,7 +1371,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
               cfg->registerStatementLabel(z, current_statement);
 #else
             ExprTransformer et(node_id, proc->procnum, expnum, cfg, init_block,
-                    current_statement);
+                    init_expr);
             et.transformExpression(new_expr, init_expr->get_expression());
 #endif
             node_id = et.get_node_id();
@@ -1418,7 +1418,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
               }
 #else
               ExprTransformer et(node_id, proc->procnum, expnum, cfg,
-                      init_block, current_statement);
+                      init_block, init_decl);
               new_expr = et.transformExpression(new_expr, init);
 #endif
               node_id = et.get_node_id();
@@ -1554,6 +1554,14 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
          * is no break (or goto or some other jump), the two
          * edges are the same anyway. */
         stmt_end = new StatementAttribute(after, POS_PRE);
+        if (fors->attributeExists("PAG statement end"))
+        {
+         // The ExprTransformer might have put a statement end attribute on
+         // the for statement when it traversed the increment expression. If
+         // so, remove that one; the attribute computed here is the one we
+         // really want.
+            fors->removeAttribute("PAG statement end");
+        }
 
         new_block = NULL;
         after = init_block_after;
