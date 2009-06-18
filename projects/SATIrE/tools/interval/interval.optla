@@ -530,7 +530,7 @@ op_assign_effects :: itvl_State, Expression, itvl_Interval, itvl_Interval,
                      ContextInfo -> itvl_IntervalStatePair;
 op_assign_effects(state, exp, llifted, rlifted, context) =
   let left = binary_get_left_child(exp); in
-  if bad(rlifted) || bad(rlifted) then
+  if bad(llifted) || bad(rlifted) then
     updatestate(state, left, top, context)
   else
     let r1 <= rlifted!1!2; r2 <= rlifted!2!2;
@@ -910,7 +910,7 @@ wide(_, top) = top;
 wide(top, _) = top;
 wide(a, b) = lift(crunch(drop(a), drop(b), widen));
 
-widen((top, bot), b) = b;
+widen((top, top), b) = b;
 widen((a1, a2), (b1, b2)) = ( if a1=b1 then a1 else top /*min(a1, b1)*/ ,
                               if a2=b2 then a2 else top /*max(a1, b1)*/  );
 
