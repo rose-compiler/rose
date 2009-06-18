@@ -1547,6 +1547,14 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
         /* incoming information is at the incoming edge of
          * the init block */
         stmt_start = new StatementAttribute(init_block_after, POS_PRE);
+        if (fors->attributeExists("PAG statement start"))
+        {
+         // The ExprTransformer might have put a statement start attribute on
+         // the for statement when it traversed the increment expression. If
+         // so, remove that one; the attribute computed here is the one we
+         // really want.
+            fors->removeAttribute("PAG statement start");
+        }
         /* Outgoing information is at the incoming edge of
          * the after block, *not* at the false edge of the
          * condition block. This is because a break inside
