@@ -1,3 +1,14 @@
+2009-06-17 21:06  panas2
+
+	* [r6223] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/palette/rose.P,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Support.code,
+	  /trunk/ROSE/src/ROSETTA/src/support.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface_type.C,
+	  /trunk/ROSE/src/midend/binaryAnalyses/RoseBin_FlowAnalysis.h,
+	  /trunk/ROSE/src/midend/programAnalysis/graphAnalysis/SB_Graph.h:
+	  Removed SgDirectedGraph and SgDirectedGraphNode
+
 2009-06-17 01:31  panas2
 
 	* [r6208] /trunk/ROSE/projects/RTED/Makefile.am,
