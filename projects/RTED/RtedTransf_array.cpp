@@ -873,7 +873,7 @@ void RtedTransformation::visit_isArrayPntrArrRefExp(SgNode* n) {
 void RtedTransformation::visit_isArrayExprListExp(SgNode* n) {
   // there could be a cast between SgExprListExp and SgVarRefExp
   SgExprListExp* exprlist = isSgExprListExp(isSgVarRefExp(n)->get_parent());
-#if 0
+#if 1
   cerr << " >> checking node : " << n->class_name() << endl;
   if (isSgVarRefExp(n)) {
     cerr << ">>>>>>>>>>> checkign func : " << isSgVarRefExp(n)->unparseToString() <<
@@ -881,13 +881,19 @@ void RtedTransformation::visit_isArrayExprListExp(SgNode* n) {
       "    parent : " <<  isSgVarRefExp(n)->get_parent()->get_parent()->class_name() << endl;
   }
 #endif
-  if (isSgCastExp(isSgVarRefExp(n)->get_parent()))
-    exprlist = isSgExprListExp(isSgVarRefExp(n)->get_parent()->get_parent());
+  SgNode* parent = isSgVarRefExp(n)->get_parent();
+  while (!isSgExprListExp(parent) && !isSgProject(parent)) {
+    parent=parent->get_parent();
+  }
+  if (isSgExprListExp(parent))
+    exprlist = isSgExprListExp(parent);
+  //  if (isSgCastExp(isSgVarRefExp(n)->get_parent()))
+  //  exprlist = isSgExprListExp(isSgVarRefExp(n)->get_parent()->get_parent());
   // check if this is a function call with array as parameter
   if (exprlist) {
     SgFunctionCallExp* fcexp = isSgFunctionCallExp(exprlist->get_parent());
     if (fcexp) {
-      cerr <<"Found a function call with varRef as parameter: " << fcexp->unparseToString() <<endl;
+      cerr <<"      ... Found a function call with varRef as parameter: " << fcexp->unparseToString() <<endl;
       // check if parameter is array - then check function name
       // call func(array_name) to runtime system for runtime inspection 
       SgInitializedName* initName =
@@ -904,7 +910,7 @@ void RtedTransformation::visit_isArrayExprListExp(SgNode* n) {
 	ROSE_ASSERT(decl);
 	string name = decl->get_name();
 	string mangled_name = decl->get_mangled_name().str();
-	cerr <<"Found a function call " << name << endl;
+	cerr <<">>Found a function call " << name << endl;
 	if (isStringModifyingFunctionCall(name)==false &&
 	    isFileIOFunctionCall(name)==false ) {
 	  vector<SgExpression*> args;

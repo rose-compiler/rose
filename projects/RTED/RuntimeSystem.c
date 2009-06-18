@@ -59,7 +59,7 @@ RuntimeSystem_Const_RuntimeSystem() {
     exit(1);
   }
   rtsi()->violation=0; //false
-  rtsi()->arrayDebug=0;//false; 
+  rtsi()->arrayDebug=1;//true; 
   rtsi()->funccallDebug=1;//true;
 }
 
@@ -76,7 +76,7 @@ int getSizeOfSgType(char* type) {
   if ( 
       (strcmp(type,"SgTypeInt")==0) ||
       (strcmp(type,"SgPointerType")==0) 
-      )
+       )
     size = sizeof(int);
   else {
     printf("Unknown Type : %s \n",type);
@@ -111,7 +111,7 @@ RuntimeSystem_findLastUnderscore(char* s) {
     end=iter;
   }
   char* result = NULL;
-  if (end!=pos) {
+  if (end!=pos && pos!=NULL) {
     int size = (end-pos);
     result = (char*) malloc(size+1);
     strcpy(result,pos);
@@ -212,7 +212,7 @@ int checkMemoryLeakIssues(int pos, int address,
 	RuntimeSystem_callExit(filename, line, (char*)"Memory Leak: Assigning Pointer to Memory that has not been freed and no other pointer to that memory exists.", stmtStr);  
       } else {
 	printf("The entry is different from the current var :  %s and %s\n",
-	      variable->name, runtimevar->name);
+	       variable->name, runtimevar->name);
       }
     }
       
@@ -480,14 +480,24 @@ RuntimeSystem_roseCreateArray(char* name, char* mangl_name, int dimension,  long
 
   if (rtsi()->arrayDebug)
     printf( " >>> Called : roseCreateArray : %s dim %d - [%ld][%ld] file : %s line: %s\n",  
-	    RuntimeSystem_findLastUnderscore(name),dimension,sizeA, sizeB, filename, line);
+	    name,dimension,sizeA, sizeB, filename, line);
   // fixme: Check if this already exists?
   int isarray=0;
-  int varpos = RuntimeSystem_findVariablesPos(mangl_name,&isarray);
+  // does this variable exist on the stack?
+  char* stackvar = RuntimeSystem_findVariablesOnStack(name);
   int variableFound=0;
+  if (stackvar) {
+    // it exists
+    printf("This variable exists on the stack: %s\n",stackvar);
+    //exit(1);
+    variableFound=1;
+    mangl_name=stackvar;
+  }
+  int varpos = RuntimeSystem_findVariablesPos(mangl_name,&isarray);
   if (varpos>=0) {
     // found var : dont increase the array index but use the index found
     variableFound=1;
+    printf("Variable found...\n");
   } else 
     varpos = rtsi()->runtimeVariablesEndIndex;
 
@@ -527,7 +537,7 @@ RuntimeSystem_roseCreateArray(char* name, char* mangl_name, int dimension,  long
     //assert(varpos==pos);
     //    if (pos!=-1) {
     if (isarray==1) {
-    //if (variableFound==1) {
+      //if (variableFound==1) {
       // this array already exists and may only have one dimension initialized
       long int totalsize = rtsi()->runtimeVariables[varpos].arrays->size1;
       if (rtsi()->arrayDebug)
@@ -586,7 +596,7 @@ RuntimeSystem_roseCreateArray(char* name, char* mangl_name, int dimension,  long
 void
 RuntimeSystem_roseArrayAccess(char* name, int posA, int posB, char* filename, char* line, char* stmtStr){
   if (rtsi()->arrayDebug) 
-    printf( "    Called : roseArrayAccess : %s ... ", RuntimeSystem_findLastUnderscore(name));
+    printf( "    Called : roseArrayAccess : %s ... ", (name));
 
   // check the stack if the variable is part of a function call
   char* mangl_name=RuntimeSystem_findVariablesOnStack(name);  
@@ -714,17 +724,17 @@ RuntimeSystem_getParamtersForFuncCall(char* name) {
 	 strcmp(name ,"strncat")==0 )) {
     dim=3;
   } else if ((
-	 strcmp(name ,"strncpy")==0 ||
-	 strcmp(name ,"strcpy")==0 ||
-	 strcmp(name ,"strchr")==0 ||
-	 strcmp(name ,"strpbrk")==0 ||
-	 strcmp(name ,"strspn")==0  ||
-	 strcmp(name ,"strstr")==0  ||
-	 strcmp(name ,"strcat")==0 )) {
+	      strcmp(name ,"strncpy")==0 ||
+	      strcmp(name ,"strcpy")==0 ||
+	      strcmp(name ,"strchr")==0 ||
+	      strcmp(name ,"strpbrk")==0 ||
+	      strcmp(name ,"strspn")==0  ||
+	      strcmp(name ,"strstr")==0  ||
+	      strcmp(name ,"strcat")==0 )) {
     dim=2;
   } else if ((
-	 strcmp(name ,"strlen")==0
-	 )) {
+	      strcmp(name ,"strlen")==0
+	      )) {
     dim=1;
   }
   return dim;
@@ -886,16 +896,16 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize,
 
   if (parameters>=2) {
 
-      char* end2 = NULL;
-      char *iter2=NULL;
-      for ( iter2 = param2StringVal; *iter2 != '\0'; ++iter2) {
-	end2 = iter2;
-      }
-      if (end2==NULL)
-	end2= param2StringVal;
-      assert(end2);
-      int length2 =  (end2-param2StringVal)+1;
-      param2ActualLength = length2;
+    char* end2 = NULL;
+    char *iter2=NULL;
+    for ( iter2 = param2StringVal; *iter2 != '\0'; ++iter2) {
+      end2 = iter2;
+    }
+    if (end2==NULL)
+      end2= param2StringVal;
+    assert(end2);
+    int length2 =  (end2-param2StringVal)+1;
+    param2ActualLength = length2;
       
 
     if (param3Size==0)
@@ -926,10 +936,10 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize,
   if (parameters>=2 && 
       (param2StringVal <= param1StringVal) && (param2StringVal+param2AllocLength>=param1StringVal) ||
       (param1StringVal <= param2StringVal) && (param1StringVal+param1AllocLength>=param2StringVal)) {
-	if (rtsi()->funccallDebug)
-	  printf( " >>>> Error : Memory regions overlap!   Size1: %d  Size2: %d\n",param1ActualLength , param2ActualLength);
-	RuntimeSystem_callExit(filename, line, (char*)"Memory regions overlap", stmtStr);  
-      } 
+    if (rtsi()->funccallDebug)
+      printf( " >>>> Error : Memory regions overlap!   Size1: %d  Size2: %d\n",param1ActualLength , param2ActualLength);
+    RuntimeSystem_callExit(filename, line, (char*)"Memory regions overlap", stmtStr);  
+  } 
 
   printf("\nChecking if String NULL terminated ... \n");
   char *iter4=NULL;
@@ -958,11 +968,11 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize,
   } 
 
   if (parameters>=2) {
-      char *iter3=NULL;
-      int zero2pos =0;
-      for ( iter3 = param2StringVal; *iter3 != '\0'; ++iter3) {
-	printf("%c",*iter3); zero2pos++;
-      } printf("---2 !!!!!!! Found 0 at pos : %d     param2ActualLength %d \n",zero2pos,param2ActualLength);
+    char *iter3=NULL;
+    int zero2pos =0;
+    for ( iter3 = param2StringVal; *iter3 != '\0'; ++iter3) {
+      printf("%c",*iter3); zero2pos++;
+    } printf("---2 !!!!!!! Found 0 at pos : %d     param2ActualLength %d \n",zero2pos,param2ActualLength);
 
     // check if the actual size is larger than the allocated size
     if ( zero2pos>param2ActualLength) {
@@ -1005,12 +1015,12 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize,
 	  RuntimeSystem_callExit(filename, line, (char*)"Writing beyond memory allocation for 1st parameter", stmtStr);	  
 	}
       } else
-      if (parameters==3) {
-	if ((param1ActualLength+param3Size)>=param1AllocLength) {
-	  // concatenation above the size of param1AllocLength
-	  RuntimeSystem_callExit(filename, line, (char*)"Writing beyond memory allocation for 1st parameter", stmtStr);	  
+	if (parameters==3) {
+	  if ((param1ActualLength+param3Size)>=param1AllocLength) {
+	    // concatenation above the size of param1AllocLength
+	    RuntimeSystem_callExit(filename, line, (char*)"Writing beyond memory allocation for 1st parameter", stmtStr);	  
+	  }
 	}
-      }
 
     }
     else 
@@ -1371,15 +1381,15 @@ RuntimeSystem_findMemory(long int address) {
     long int addr =rtsi()->runtimeMemory[i].address;
     //    if (addrM) {
     //long int addr = addrM->address;
-      if (addr==address) {
-	if (rtsi()->runtimeMemory[i].variables) {
-	  var =&(rtsi()->runtimeMemory[i].variables);
-	  //printf("var : %s   (%s == %s) \n",var, mangled_name, n );
-	  break;
-	} //else
-	  //break;
-      }
-      //}
+    if (addr==address) {
+      if (rtsi()->runtimeMemory[i].variables) {
+	var =&(rtsi()->runtimeMemory[i].variables);
+	//printf("var : %s   (%s == %s) \n",var, mangled_name, n );
+	break;
+      } //else
+      //break;
+    }
+    //}
   }
   return *var;
 }
@@ -1418,9 +1428,13 @@ RuntimeSystem_roseInitVariable(char* mangled_name,
 			       char* filename, char* line, char* stmtStr) {
   printf("InitVariable: Request for %s.    address: %d   value: %d   type: %s \n",mangled_name, address, value, typeOfVar2);
   int i=0;
+  int varFound=0;
   for ( i=0;i<rtsi()->runtimeVariablesEndIndex;i++) {
     char* n =rtsi()->runtimeVariables[i].mangled_name;
     if (strcmp(mangled_name,n)==0) {
+      varFound=1;
+      printf("Found the variable %s at index %d \n",n, i);
+      // variable exists, lets init it
       // create init on heap
       //char* init = (char*)"true";
       int init = 1; //true;
@@ -1473,6 +1487,9 @@ RuntimeSystem_roseInitVariable(char* mangled_name,
       //	     mangled_name, address, value, ismalloc);
       break;
     }
+  } // for
+  if (varFound==0) {
+    printf("No such variable was found\n");
   }
 }
 

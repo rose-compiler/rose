@@ -56,7 +56,7 @@ void RtedTransformation::transform(SgProject* project) {
   // ---------------------------------------
 
   cerr << "\n Number of Elements in variable_declarations  : "
-    << variable_declarations.size() << endl;
+       << variable_declarations.size() << endl;
   std::vector<SgInitializedName*>::const_iterator it1 =
     variable_declarations.begin();
   for (; it1 != variable_declarations.end(); it1++) {
@@ -65,7 +65,7 @@ void RtedTransformation::transform(SgProject* project) {
   }
 
   cerr << "\n Number of Elements in create_array_define_varRef_multiArray  : "
-    << create_array_define_varRef_multiArray.size() << endl;
+       << create_array_define_varRef_multiArray.size() << endl;
   std::map<SgVarRefExp*, RTedArray*>::const_iterator itm =
     create_array_define_varRef_multiArray.begin();
   for (; itm != create_array_define_varRef_multiArray.end(); itm++) {
@@ -190,10 +190,10 @@ void RtedTransformation::visit(SgNode* n) {
   // 3. Assign variables that come from assign initializers (not just assignments
   else if (isSgAssignOp(n)) {
     //cerr <<" >> VISITOR :: Found AssignOp : " << n->unparseToString() << endl;
-      visit_isArraySgAssignOp(n);
+    visit_isArraySgAssignOp(n);
   }
   else if (isSgAssignInitializer(n)) {
-      visit_isAssignInitializer(n);
+    visit_isAssignInitializer(n);
   }
   // *********************** DETECT ALL array creations ***************
 
