@@ -98,10 +98,27 @@ body_wrapped(Body0, Body1) :-
     Body1 = basic_block([Body0], BDA, BAI, BFI)
   ).
 
+% surround each statement with a guard functor to keep it from being
+% transformed
+statements_guarded([], []).
+statements_guarded([S|Ss], [guard(S)|Gs]) :-
+  statements_guarded(Ss, Gs).
+
 % generate an expression assert(v > Lower && v < Upper)
 
-% factored out general case from assertions/5, added case to generate
-% negative assertions for unreachable program points
+% factored out general case from assertions/5
+stmt_decls_infos_asserted(Statement, Decls, AI, FI, AssertedStatement) :-
+  DA = default_annotation(null, preprocessing_info([])),
+  AI = analysis_info(AIs),
+  member(pre_info(PreInfo), AIs),
+  member(post_info(PostInfo), AIs),
+  info_decls_assertions(PreInfo, Decls, PreAssertions),
+  info_decls_assertions(PostInfo, Decls, PostAssertions),
+  chain_up(PreAssertions, DA, AI, FI, PreStmt),
+  chain_up(PostAssertions, DA, AI, FI, PostStmt),
+  flatten([PreStmt, Statement, PostStmt], AssertedStatement).
+
+% added case to generate negative assertions for unreachable program points
 info_decls_assertions(Info, Decls, Assertions) :-
   member(merged:map([top,top], Vars), Info),
   maplist(var_withtype(Decls), Vars, VarsWithTypes),
@@ -147,7 +164,6 @@ interval_assert(Var:VarType->[Min,Max], AssertionExpr) :-
   % ignore comparison with top
   compval(Min, VarRef, MinVal, PPI, AI, FI),
   compval(Max, VarRef, MaxVal, PPI, AI, FI),
-  MaxVal = int_val(null, value_annotation(Max, PPI), AI, FI),
   GE = greater_or_equal_op(VarRef, MinVal, TypeAn, AI, FI),
   LE =    less_or_equal_op(VarRef, MaxVal, TypeAn, AI, FI),
 
@@ -177,13 +193,16 @@ assertions(y-Decls0, y-Decls, y-Decls0, Bb, Bb) :-
 % don't generate assertions for branch conditions (put guards around these),
 % but do generate assertions inside bodies, with any declarations from the
 % condition in effect inside the body
-assertions(y-Decls0, y-Decls, y-Decls0, For, For1) :-
+assertions(y-Decls0, y-Decls, y-Decls0, For, AssertedFor) :-
   For = for_statement(D, C, I, Body, A, AI, FI),
-  D = for_init_statement(Inits, _,_,_),
+  D = for_init_statement(Inits, IA, IAI, IFI),
+  statements_guarded(Inits, GuardedInits),
+  GuardedD = for_init_statement(GuardedInits, IA, IAI, IFI),
   decls_stmts_newdecls(Decls0, Inits, Decls),
   body_wrapped(Body, Body1),
-  For1 = for_statement(guard(D), guard(C), guard(I), Body1, A, AI, FI).
-assertions(y-Decls0, y-Decls, y-Decls0, If, If1) :-
+  For1 = for_statement(GuardedD, guard(C), guard(I), Body1, A, AI, FI),
+  stmt_decls_infos_asserted(For1, Decls0, AI, FI, AssertedFor).
+assertions(y-Decls0, y-Decls, y-Decls0, If, AssertedIf) :-
   If = if_stmt(Cond, Body, Else, A, AI, FI),
   decls_stmts_newdecls(Decls0, Cond, Decls),
   body_wrapped(Body, Body1),
@@ -191,24 +210,28 @@ assertions(y-Decls0, y-Decls, y-Decls0, If, If1) :-
   -> Else1 = null
   ;  body_wrapped(Else, Else1)
   ),
-  If1 = if_stmt(guard(Cond), Body1, Else1, A, AI, FI).
-assertions(y-Decls0, y-Decls, y-Decls0, While, While1) :-
+  If1 = if_stmt(guard(Cond), Body1, Else1, A, AI, FI),
+  stmt_decls_infos_asserted(If1, Decls0, AI, FI, AssertedIf).
+assertions(y-Decls0, y-Decls, y-Decls0, While, AssertedWhile) :-
   While = while_stmt(Cond, Body, A, AI, FI),
   decls_stmts_newdecls(Decls0, Cond, Decls),
   body_wrapped(Body, Body1),
-  While1 = while_stmt(guard(Cond), Body1, A, AI, FI).
-assertions(y-Decls0, y-Decls, y-Decls0, DoWhile, DoWhile1) :-
+  While1 = while_stmt(guard(Cond), Body1, A, AI, FI),
+  stmt_decls_infos_asserted(While1, Decls0, AI, FI, AssertedWhile).
+assertions(y-Decls0, y-Decls, y-Decls0, DoWhile, AssertedDoWhile) :-
   DoWhile = do_while_stmt(Body, Cond, A, AI, FI),
   % would anyone really declare a variable in a do-while condition? is it
   % even possible?
   decls_stmts_newdecls(Decls0, Cond, Decls),
   body_wrapped(Body, Body1),
-  DoWhile1 = do_while_stmt(Body1, guard(Cond), A, AI, FI).
-assertions(y-Decls0, y-Decls, y-Decls0, Switch, Switch1) :-
+  DoWhile1 = do_while_stmt(Body1, guard(Cond), A, AI, FI),
+  stmt_decls_infos_asserted(DoWhile1, Decls0, AI, FI, AssertedDoWhile).
+assertions(y-Decls0, y-Decls, y-Decls0, Switch, AssertedSwitch) :-
   Switch = switch_statement(Key, Body, A, AI, FI),
   decls_stmts_newdecls(Decls0, Key, Decls),
   body_wrapped(Body, Body1),
-  Switch1 = switch_statement(guard(Key), Body1, A, AI, FI).
+  Switch1 = switch_statement(guard(Key), Body1, A, AI, FI),
+  stmt_decls_infos_asserted(Switch1, Decls0, AI, FI, AssertedSwitch).
 
 assertions(y-Decls, y-Decls, y-Decls, Statement, AssertedStatement) :-
   functor(Statement, F, Arity),
@@ -219,18 +242,7 @@ assertions(y-Decls, y-Decls, y-Decls, Statement, AssertedStatement) :-
   N1 is Arity-1, arg(N1, Statement, AI),
   N0 is Arity-0, arg(N0, Statement, FI),
 
-  DA = default_annotation(null, preprocessing_info([])),
-  AI = analysis_info(AIs),
-  member(pre_info(PreInfo), AIs),
-  member(post_info(PostInfo), AIs),
-
-  info_decls_assertions(PreInfo, Decls, PreAssertions),
-  info_decls_assertions(PostInfo, Decls, PostAssertions),
-
-  chain_up(PreAssertions, DA, AI, FI, PreStmt),
-  chain_up(PostAssertions, DA, AI, FI, PostStmt),
-  
-  flatten([PreStmt, Statement, PostStmt], AssertedStatement),
+  stmt_decls_infos_asserted(Statement, Decls, AI, FI, AssertedStatement),
   !.
 
 assertions(y-[], y-[], y-VarsTypes, global(Decls, An, Ai, Fi),
