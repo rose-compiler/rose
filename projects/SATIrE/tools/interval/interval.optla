@@ -241,6 +241,7 @@ eval(exp, state, context) =
       AssignInitializer(e1) => eval(e1, state, context);
       NewExp(_,_,_)         => (top, state);
       FunctionRefExp()      => (top, state);
+      NullExpression()      => (top, state);
       _                     => println("**WARNING: ignoring unknown exp: ",
                                        exp, ": ", expr_asttext(exp))
                                (top, state); 
@@ -252,136 +253,114 @@ eval(exp, state, context) =
 binary :: Expression, Expression, Expression, itvl_State, ContextInfo -> itvl_IntervalStatePair;
 binary(left, right, exp, state, context) =
   // -- Evaluate the right child expression, yielding a (value, state)
-  // -- pair assigned to r and rs, respectively.
+  // -- pair assigned to rlifted and rs, respectively. Evaluate the left
+  // -- child in state rs and assign to llifted and ls. Note that we may not
+  // -- in all cases drop llifted or rlifted! Even if the lhs has an unknown
+  // -- value, we can evaluate plain assignments. Conversely, if the rhs has
+  // -- an unknown value, we must be careful with op-assign operators.
   // --println("BINARY(", exp, " :: ", expr_asttext(exp), ") in state ", state)
-  let rr = eval(right, state, context);
-      dontknow = (top, state);
-  in case exp of
-    // -- If this is an assignment operation, update the state.
-    // -- We do not evaluate the left-hand side as this might
-    // -- yield top or bot, causing trouble.
+  let rr = eval(right, state, context); in
+  let rlifted = rr!1!2; rs = rr!2!2; in
+  let ll = eval(left, rs, context); in
+  let llifted = ll!1!2; ls = ll!2!2; in
+  let dontknow = (top, state); in
+  // -- Factored out handling of op-assign operators.
+  if is_op_assign(exp) then
+    op_assign_effects(ls, exp, llifted, rlifted, context)
+  else case exp of
+    // -- If this is a plain assignment operation, update the state without
+    // -- regard for the old value of the lhs.
     AssignOp(_, _) => // --println("ASSIGNOP: ", left, "=", rr!1!2, " in state ", rr!2!2, " ...")
-      if bad(rr!1!2) then
-        //(top, rr!2!2)
-        updatestate(rr!2!2, left, top, context)
-      else
-        let r = rr!1!2; rs = rr!2!2; in
-        updatestate(rs, left, r, context)
-      ;
+      updatestate(ls, left, if bad(rlifted) then top else rlifted, context);
+
     // -- PntrArrRefExp is special in that we can also derive some
     // -- information if not all operands have known interval values.
     PntrArrRefExp(_, _) =>
       // -- println("ARRAY: ", exp, " :: ", expr_asttext(exp), ")")
-      let rlifted = rr!1!2; rs = rr!2!2;
-      in let ll = eval(left, rs, context);
-      in let llifted = ll!1!2; ls = ll!2!2;
-      in let id = expr_exprid(exp); in
-         let l = exprid_location_cs(id, context); in
-         let syms = location_varsyms(l); in
-         let s2 = constrain_array_index(ls, expr_type(left), right);
-         in  let result = (merged_var_values(s2, syms), s2);
-         in  // println("arr ", exp, " result: ", result)
-             result;
-    // -- If this is not an assignment, we may safely evaluate
-    // -- the left-hand side as well (in the "new" state after
-    // -- evaluation of the rhs) and perform the operation.
+      let id = expr_exprid(exp); in
+      let l = exprid_location_cs(id, context); in
+      let syms = location_varsyms(l); in
+      let s2 = constrain_array_index(ls, expr_type(left), right);
+      in  let result = (merged_var_values(s2, syms), s2);
+      in  // println("arr ", exp, " result: ", result)
+          result;
+
+    // -- plain arithmetic, logical, comparison operators
     _ => 
-      let rlifted = rr!1!2; rs = rr!2!2;
-      in let ll = eval(left, rs, context);
-      in let llifted = ll!1!2; ls = ll!2!2;
-      in if bad(rlifted) then dontknow else
-         if bad(llifted) then dontknow else
-        let r1 <= rlifted!1!2; r2 <= rlifted!2!2;
-            l1 <= llifted!1!2; l2 <= llifted!2!2; in
-        let constp = (l1=l2) && (r1=r2);
-            pointerp = is_pointer_type(expr_type(left))
-                    || is_pointer_type(expr_type(right)); in
-        // --print("evalbin(") print(exp) print(";;; ") print(llifted) print(", ") 
-        // --                                           print(rlifted) print(")\n")
-        case exp of
-          EqualityOp(_, _) =>
-            if !pointerp && constp then (duplift(bool_int(l1=r1)), ls) else
-            if !pointerp && (l2 < r1 || l1 > r2) then (duplift(0), ls) else
-            dontknow  ;
+      if bad(rlifted) then dontknow else
+      if bad(llifted) then dontknow else
+      let r1 <= rlifted!1!2; r2 <= rlifted!2!2;
+          l1 <= llifted!1!2; l2 <= llifted!2!2; in
+      let constp = (l1=l2) && (r1=r2);
+          pointerp = is_pointer_type(expr_type(left))
+                  || is_pointer_type(expr_type(right)); in
+      // --print("evalbin(") print(exp) print(";;; ") print(llifted) print(", ")
+      // --                                           print(rlifted) print(")\n")
+      case exp of
+        EqualityOp(_, _) =>
+          if !pointerp && constp then (duplift(bool_int(l1=r1)), ls) else
+          if !pointerp && (l2 < r1 || l1 > r2) then (duplift(0), ls) else
+          dontknow  ;
 
-          LessThanOp(_, _)  =>
-            if !pointerp && l2 < r1 then (duplift(1), ls) else
-            if !pointerp && l1 >=r2 then (duplift(0), ls) else
-            dontknow  ;
+        LessThanOp(_, _)  =>
+          if !pointerp && l2 < r1 then (duplift(1), ls) else
+          if !pointerp && l1 >=r2 then (duplift(0), ls) else
+          dontknow  ;
 
-          GreaterThanOp(_, _) =>
-            if !pointerp && l1 > r2 then (duplift(1), ls) else
-            if !pointerp && l2 <=r1 then (duplift(0), ls) else
-            dontknow  ;
+        GreaterThanOp(_, _) =>
+          if !pointerp && l1 > r2 then (duplift(1), ls) else
+          if !pointerp && l2 <=r1 then (duplift(0), ls) else
+          dontknow  ;
 
-          NotEqualOp(_, _) =>
-            if !pointerp && l2 < r1 || (l1 > r2) then (duplift(1), ls) else
-            if !pointerp && constp  then (duplift(bool_int(l1!=r1)), ls) else
-            dontknow ;
+        NotEqualOp(_, _) =>
+          if !pointerp && l2 < r1 || (l1 > r2) then (duplift(1), ls) else
+          if !pointerp && constp  then (duplift(bool_int(l1!=r1)), ls) else
+          dontknow ;
 
-          LessOrEqualOp(_, _) =>
-            if !pointerp && l2 <= r1 then (duplift(1), ls) else
-            if !pointerp && r2 <  l1 then (duplift(0), ls) else
-            dontknow  ;
+        LessOrEqualOp(_, _) =>
+          if !pointerp && l2 <= r1 then (duplift(1), ls) else
+          if !pointerp && r2 <  l1 then (duplift(0), ls) else
+          dontknow  ;
 
-          GreaterOrEqualOp(_, _) =>
-            if !pointerp && l1 >= r2 then (duplift(1), ls) else
-            if !pointerp && r1 >  l2 then (duplift(0), ls) else
-            dontknow  ;
+        GreaterOrEqualOp(_, _) =>
+          if !pointerp && l1 >= r2 then (duplift(1), ls) else
+          if !pointerp && r1 >  l2 then (duplift(0), ls) else
+          dontknow  ;
 
-          AddOp(_, _)     => (ltup(l1 + r1, l2 + r2), ls);
-          SubtractOp(_, _)=> (ltup(l1 - r2, l2 - r1), ls);
-          MultiplyOp(_, _)=> (ltup(mini(l1*r1, l1*r2), maxi(l2*r1, l2*r2)), ls);
-          DivideOp(_, _)  => if r1 != 0 && r2 != 0 then
-                                (ltup(mini(l1/r1, l1/r2),
-                                      maxi(l2/r1, l2/r2)), ls)
-                             else
-                                dontknow;
-          IntegerDivideOp(_, _) 
-                          => if r1 != 0 && r2 != 0 then
-                                (ltup(mini(l1/r1, l1/r2),
-                                      maxi(l2/r1, l2/r2)), ls)
-                             else
-                                dontknow;
-          ModOp(_, _)     => (ltup(0, r2), ls);
-          LshiftOp(_, _)  => (ltup(l1<<unum(r1), l2<<unum(r2)), ls);
-          RshiftOp(_, _)  => (ltup(l1>>unum(r1), l2>>unum(r2)), ls);
-          BitAndOp(_, _)  => (and(l1, l2, r1, r2), ls);
-          BitOrOp(_, _)   => (ltup(l1 | r1, l2 | r2), ls);
-          BitXorOp(_, _)  => (xor(l1, l2, r1, r2), ls);
+        AddOp(_, _)     => (ltup(l1 + r1, l2 + r2), ls);
+        SubtractOp(_, _)=> (ltup(l1 - r2, l2 - r1), ls);
+        MultiplyOp(_, _)=> (ltup(mini(l1*r1, l1*r2), maxi(l2*r1, l2*r2)), ls);
+        DivideOp(_, _)  => if r1 != 0 && r2 != 0 then
+                              (ltup(mini(l1/r1, l1/r2),
+                                    maxi(l2/r1, l2/r2)), ls)
+                           else
+                              dontknow;
+        IntegerDivideOp(_, _)
+                        => if r1 != 0 && r2 != 0 then
+                              (ltup(mini(l1/r1, l1/r2),
+                                    maxi(l2/r1, l2/r2)), ls)
+                           else
+                              dontknow;
+        ModOp(_, _)     => (ltup(0, r2), ls);
+        LshiftOp(_, _)  => (ltup(l1<<unum(r1), l2<<unum(r2)), ls);
+        RshiftOp(_, _)  => (ltup(l1>>unum(r1), l2>>unum(r2)), ls);
+        BitAndOp(_, _)  => (and(l1, l2, r1, r2), ls);
+        BitOrOp(_, _)   => (ltup(l1 | r1, l2 | r2), ls);
+        BitXorOp(_, _)  => (xor(l1, l2, r1, r2), ls);
 
-          AndOp(_, _) => if constp then
-                          (duplift(bool_int((l1 != 0) && (r1 != 0))), ls)
-                         else dontknow ;
+        AndOp(_, _) => if constp then
+                        (duplift(bool_int((l1 != 0) && (r1 != 0))), ls)
+                       else dontknow ;
 
-          OrOp(_, _)  => if constp then 
-                          (duplift(bool_int((l1 != 0) || (r1 != 0))), ls)
-                         else dontknow ;
+        OrOp(_, _)  => if constp then
+                        (duplift(bool_int((l1 != 0) || (r1 != 0))), ls)
+                       else dontknow ;
 
-          ScopeOp(_, _)       => (ltup(r1, r2), ls);
-          PlusAssignOp(_, _)  => updatestate(ls, left, ltup(l1 + r1, l2 + r2), context);
-          MinusAssignOp(_, _) => updatestate(ls, left, ltup(l1 - r2, l2 - r1), context);
-          MultAssignOp(_, _)  => updatestate(ls, left, 
-                                               ltup(mini(l1*r1, l1*r2), 
-                                                    maxi(l2*r1, l2*r2)), context);
-          DivAssignOp(_, _)   => updatestate(ls, left, 
-                                               ltup(mini(l1/r1, l1/r2), 
-                                                    maxi(l2/r1, l2/r2)), context);
-          ModAssignOp(_, _)   => updatestate(ls, left, ltup(0, r2), context);
-          LshiftAssignOp(_, _)=> updatestate(ls, left,
-                                   ltup(l1<<unum(r1), l2<<unum(r2)), context);
-          RshiftAssignOp(_, _)=> updatestate(ls, left, 
-                                   ltup(l1>>unum(r2), l2>>unum(r1)), context);
-          IorAssignOp(_, _)   => updatestate(ls, left,
-                                   ltup(l1 | r1, l2 | r2), context);
-          AndAssignOp(_, _)   => updatestate(ls, left,
-                                   and(l1, l2, r1, r2), context);
-          XorAssignOp(_, _)   => updatestate(ls, left,
-                                   xor(l1, l2, r1, r2), context);
-          _ => print("**WARNING: unsupported binary: ") print(exp) print("\n") 
-               (top, lift([-> top]));
-        endcase
-       ;
+        ScopeOp(_, _)       => (ltup(r1, r2), ls);
+        _ => print("**WARNING: unsupported binary: ") print(exp) print("\n")
+             (top, lift([-> top]));
+      endcase
+     ;
   endcase;
 
 unary :: Expression, Expression, itvl_State, ContextInfo -> itvl_IntervalStatePair;
@@ -533,6 +512,55 @@ initialize_array(s, var, expr::exprs, ctx) =
     let value = eval(expr, lift(s), ctx)!1!2; // -- FIXME: assumes pure exprs
     in  initialize_array(weak_update_v(s, var, value), var, exprs, ctx);
 
+is_op_assign :: Expression -> bool;
+is_op_assign(PlusAssignOp(_,_)) = true;
+is_op_assign(MinusAssignOp(_,_)) = true;
+is_op_assign(MultAssignOp(_,_)) = true;
+is_op_assign(DivAssignOp(_,_)) = true;
+is_op_assign(ModAssignOp(_,_)) = true;
+is_op_assign(LshiftAssignOp(_,_)) = true;
+is_op_assign(RshiftAssignOp(_,_)) = true;
+is_op_assign(IorAssignOp(_,_)) = true;
+is_op_assign(AndAssignOp(_,_)) = true;
+is_op_assign(XorAssignOp(_,_)) = true;
+is_op_assign(_) = false;
+
+// -- Assign-op operators: If either operand is unknown, kill the lhs.
+op_assign_effects :: itvl_State, Expression, itvl_Interval, itvl_Interval,
+                     ContextInfo -> itvl_IntervalStatePair;
+op_assign_effects(state, exp, llifted, rlifted, context) =
+  let left = binary_get_left_child(exp); in
+  if bad(rlifted) || bad(rlifted) then
+    updatestate(state, left, top, context)
+  else
+    let r1 <= rlifted!1!2; r2 <= rlifted!2!2;
+        l1 <= llifted!1!2; l2 <= llifted!2!2;
+    in case exp of
+      PlusAssignOp(_, _)  =>
+          updatestate(state, left, ltup(l1 + r1, l2 + r2), context);
+      MinusAssignOp(_, _) =>
+          updatestate(state, left, ltup(l1 - r2, l2 - r1), context);
+      MultAssignOp(_, _)  =>
+          updatestate(state, left, ltup(mini(l1*r1, l1*r2),
+                                        maxi(l2*r1, l2*r2)), context);
+      DivAssignOp(_, _)   =>
+          updatestate(state, left, ltup(mini(l1/r1, l1/r2),
+                                        maxi(l2/r1, l2/r2)), context);
+      ModAssignOp(_, _)   =>
+          updatestate(state, left, ltup(0, r2), context);
+      LshiftAssignOp(_, _)=>
+          updatestate(state, left, ltup(l1<<unum(r1), l2<<unum(r2)), context);
+      RshiftAssignOp(_, _)=>
+          updatestate(state, left, ltup(l1>>unum(r2), l2>>unum(r1)), context);
+      IorAssignOp(_, _)   =>
+          updatestate(state, left, ltup(l1 | r1, l2 | r2), context);
+      AndAssignOp(_, _)   =>
+          updatestate(state, left, and(l1, l2, r1, r2), context);
+      XorAssignOp(_, _)   =>
+          updatestate(state, left, xor(l1, l2, r1, r2), context);
+      _ => error("unexpected assign-op expression");
+    endcase;
+
 // -- constrain_array_index: If an array with a known size is indexed with a
 // -- varref expression, force the variable's interval to be at most the
 // -- array's valid index range (0..size-1).
@@ -611,9 +639,6 @@ is_comparison(GreaterThanOp(_,_)) = true;
 is_comparison(GreaterOrEqualOp(_,_)) = true;
 is_comparison(EqualityOp(_,_)) = true;
 is_comparison(NotEqualOp(_,_)) = true;
-// FIXME: ROSE terms always have implicit comparisons against 0 in
-// conditions like "if(p)", but clang terms don't. Thus we will probably
-// need a more general notion of comparison.
 is_comparison(_) = false;
 
 comparison_effects :: Expression, itvl_State, itvl_State, bool, ContextInfo
