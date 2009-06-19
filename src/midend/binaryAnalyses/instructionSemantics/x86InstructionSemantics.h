@@ -266,15 +266,23 @@ struct X86InstructionSemantics {
         switch (e->variantT()) {
             case V_SgAsmx86RegisterReferenceExpression: {
                 SgAsmx86RegisterReferenceExpression* rre = isSgAsmx86RegisterReferenceExpression(e);
-                ROSE_ASSERT(rre->get_position_in_register() == x86_regpos_dword ||
-                            rre->get_position_in_register() == x86_regpos_all);
                 switch (rre->get_register_class()) {
                     case x86_regclass_gpr: {
                         X86GeneralPurposeRegister reg = (X86GeneralPurposeRegister)(rre->get_register_number());
                         Word(32) rawValue = policy.readGPR(reg);
-                        return rawValue;
+                        switch (rre->get_position_in_register()) {
+                            case x86_regpos_dword:
+                            case x86_regpos_all:
+                                return rawValue;
+                            case x86_regpos_word:
+                                return policy.concat(extract<0, 16>(rawValue), number<16>(0));
+                            default:
+                                ROSE_ASSERT(!"bad position in register");
+                        }
                     }
                     case x86_regclass_segment: {
+                        ROSE_ASSERT(rre->get_position_in_register() == x86_regpos_dword ||
+                                    rre->get_position_in_register() == x86_regpos_all);
                         X86SegmentRegister sr = (X86SegmentRegister)(rre->get_register_number());
                         Word(16) value = policy.readSegreg(sr);
                         return policy.concat(value, number<16>(0));
