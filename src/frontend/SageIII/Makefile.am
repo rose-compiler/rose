@@ -166,12 +166,11 @@ roseh:
 else
 # DQ (2/11/2009): This is part of the support for Precompiled Headers (PCH) using GNU g++
 roseh:
-	echo "CREATING PREDEFINED HEADER -------------------------------------------------"
-	echo $(CXX) $(CXXFLAGS) $(CFLAGS) $(CPPFLAGS) -g -o rose.h.gch $(top_srcdir)/src/rose.h -I$(top_builddir)/   $(ROSE_INCLUDES) 
 #	DQ (2/10/2009): Rush for the off switch on precompiled header files, comment out to skip use of PCH.
 #       TPS (23 Feb 2009): Hardcoded -fpic and -DPIC for now because 
 #       for some reason it is used by most files although not specified on configure
-	$(CXX)  -fPIC -DPIC $(CXXFLAGS) $(CFLAGS) $(CPPFLAGS) -g -o rose.h.gch $(top_srcdir)/src/rose.h -I$(top_builddir) $(ROSE_INCLUDES) 
+	@echo "  COMPILE rose.h.gch"
+	@$(CXX)  -fPIC -DPIC $(CXXFLAGS) $(CFLAGS) $(CPPFLAGS) -g -o rose.h.gch $(top_srcdir)/src/rose.h -I$(top_builddir) $(ROSE_INCLUDES) 
 endif
 else
 # default, do nothing.
