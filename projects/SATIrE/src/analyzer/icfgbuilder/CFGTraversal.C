@@ -1337,6 +1337,16 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 
       case V_SgForStatement: {
         SgForStatement *fors = isSgForStatement(*i);
+#ifdef REPLACE_FOR_BY_WHILE
+        /* add a "join block" to get more precise access to the loop's post
+         * information */
+        BasicBlock *join_block
+            = new BasicBlock(node_id++, INNER, proc->procnum);
+        cfg->nodes.push_back(join_block);
+        join_block->statements.push_back(Ir::createWhileJoin());
+        add_link(join_block, after, NORMAL_EDGE);
+        after = join_block;
+#endif
         /* create a block for the "real" head of the for
          * statement (where the condition is tested) */
         cfg->registerStatementLabel(node_id, current_statement);
@@ -1585,7 +1595,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 	  = new BasicBlock(node_id++, INNER, proc->procnum);
 	cfg->nodes.push_back(join_block);
 	join_block->statements.push_back(Ir::createWhileJoin());
-	add_link(join_block, after, TRUE_EDGE);
+	add_link(join_block, after, NORMAL_EDGE);
 	after = join_block;
 
 	SgWhileStmt* whiles = isSgWhileStmt(*i);
