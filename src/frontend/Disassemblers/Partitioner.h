@@ -75,14 +75,16 @@ public:
      *  block is returned. */
     SgAsmBlock *buildTree(const Disassembler::InstructionMap &insns, const BasicBlockStarts&, const FunctionStarts&) const;
 
-    /** Sets the set of heuristics used by the partitioner.  The bits are the same as those assigned to the "reason" property
-     *  of the resulting function nodes in the AST. */
-    void set_heuristics(SgAsmFunctionDeclaration::FunctionReason heuristics) {
+    /** Sets the set of heuristics used by the partitioner.  The @p heuristics should be a bit mask containing the
+     *  SgAsmFunctionDeclaration::FunctionReason bits. These same bits are assigned to the "reason" property of the resulting
+     *  function nodes in the AST, depending on which heuristic detected the function. */
+    void set_heuristics(unsigned heuristics) {
         p_func_heuristics = heuristics;
     }
 
-    /** Returns the set of heuristics that would be used by the partitioner. */
-    SgAsmFunctionDeclaration::FunctionReason get_heuristics() const {
+    /** Returns a bit mask of SgAsmFunctionDeclaration::FunctionReason bits indicating which heuristics would be used by the
+     *  partitioner.  */
+    unsigned get_heuristics() const {
         return p_func_heuristics;
     }
 
@@ -162,7 +164,7 @@ private:
      * Data members
      *======================================================================================================================*/
 private:
-    SgAsmFunctionDeclaration::FunctionReason p_func_heuristics;
+    unsigned p_func_heuristics;         /**< Bit mask of SgAsmFunctionDeclaration::FunctionReason bits. */
 };
 
 

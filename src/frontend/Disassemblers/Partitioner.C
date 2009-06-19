@@ -112,7 +112,6 @@ Partitioner::buildTree(const Disassembler::InstructionMap &insns, const BasicBlo
     /* Build the list of functions based on their entry addresses. We'll populate them with basic blocks below. Discard
      * function starts that don't have any basic blocks (we could keep them as empty functions, but various analyses assume
      * that a function always has at least one instruction). */
-    bool displayed=false;
     for (FunctionStarts::const_iterator i = func_starts.begin(); i != func_starts.end(); ++i) {
         if (bbs.find(i->first)!=bbs.end()) {
             SgAsmFunctionDeclaration* f = new SgAsmFunctionDeclaration();
@@ -122,15 +121,8 @@ Partitioner::buildTree(const Disassembler::InstructionMap &insns, const BasicBlo
             funcs.insert(std::make_pair(i->first, f));
             retval->get_statementList().push_back(f);
             f->set_parent(retval);
-        } else {
-            if (!displayed)
-                fprintf(stderr, "%s: notice: discarding empty functions:", __func__);
-            displayed=true;
-            fprintf(stderr, " 0x%"PRIx64, i->first);
         }
     }
-    if (displayed)
-        fputc('\n', stderr);
 
     /* Add basic blocks to functions */
     for (std::map<rose_addr_t, SgAsmBlock*>::iterator bbi=bbs.begin(); bbi!=bbs.end(); ++bbi) {

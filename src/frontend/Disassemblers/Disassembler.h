@@ -66,16 +66,49 @@ public:
         size_t bit;                     /* Index of bit in instruction byte sequence where disassembly failed. */
     };
 
-    /** Heuristics used to find instructions to disassemble; used by the disassemble() and disassembleInterp() methods. */
+    /** Heuristics used to find instructions to disassemble. The set of heuristics to try can be set by calling the
+     *  set_search() method prior to disassembling. Unless noted otherwise, the bit flags affect the disassembleBuffer methods,
+     *  which call the basic block and individual instruction disassembler methods, but which are called by the methods that
+     *  disassemble sections, headers, and entire files. */
     enum SearchHeuristic {
-        SEARCH_FOLLOWING = 0x0001,      /* Disassemble at address following each disassembled instruction */
-        SEARCH_IMMEDIATE = 0x0002,      /* Disassemble at the immediate operands of other instructions. */
-        SEARCH_WORDS     = 0x0004,      /* Like IMMEDIATE, but look at all word-aligned words in the disassembly regions. */
-        SEARCH_ALLBYTES  = 0x0008,      /* Disassemble starting at every possible address. */
-        SEARCH_UNUSED    = 0x0010,      /* Disassemble starting at every address not already part of an instruction. */
-        SEARCH_NONEXE    = 0x0020,      /* Disassemble in sections that are not mapped executable */
-        SEARCH_DEADEND   = 0x0040,      /* Include basic blocks that end with a bad instruction */
-        SEARCH_DEFAULT   = 0x0001       /* Be moderately timid */
+        SEARCH_FOLLOWING = 0x0001,      /**< Disassemble at the address that follows each disassembled instruction, regardless
+                                         *   of whether the following address is a successor. */
+        SEARCH_IMMEDIATE = 0x0002,      /**< Disassemble at the immediate operands of other instructions.  This is a
+                                         *   rudimentary form of constant propagation in order to better detect branch targets
+                                         *   on RISC architectures where the target is first loaded into a register and then
+                                         *   the branch is based on that register. */
+        SEARCH_WORDS     = 0x0004,      /**< Like IMMEDIATE, but look at all word-aligned words in the disassembly regions.
+                                         *   The word size, alignment, and byte order can be set explicitly; defaults are
+                                         *   based on values contained in the executable file header supplied during
+                                         *   construction. */
+        SEARCH_ALLBYTES  = 0x0008,      /**< Disassemble starting at every possible address, even if that address is inside
+                                         *   some other instruction. */
+        SEARCH_UNUSED    = 0x0010,      /**< Disassemble starting at every address not already part of an instruction. The way
+                                         *   this works is that the disassembly progresses as usual, and then this heuristic
+                                         *   kicks in at the end in order to find addresses that haven't been disassembled.
+                                         *   The search progresses from low to high addresses and is influenced by most of the
+                                         *   other search heuristics as it progresses.  For instance, if SEARCH_DEADEND is not
+                                         *   set then disassembly at address V is considered a failure if the basic block at
+                                         *   V leads to an invalid instruction. */
+        SEARCH_NONEXE    = 0x0020,      /**< Disassemble in sections that are not mapped executable. This heuristic only
+                                         *   applies to disassembly methods that choose which sections to disassemble (for
+                                         *   instance, disassembleInterp()).  The normal behavior is to disassemble sections
+                                         *   that are known to contain code or are mapped with execute permission; specifying
+                                         *   this heuristic also includes sections that are mapped but don't have execute
+                                         *   permission.  It is not possible to disassemble non-mapped sections automatically
+                                         *   since they don't have virtual addresses, but it is possible to supply your own
+                                         *   virtual address mapping to one of the lower-level disassembler methods in order
+                                         *   to accomplish this. */
+        SEARCH_DEADEND   = 0x0040,      /**< Include basic blocks that end with a bad instruction. This is used by the methods
+                                         *   that disassemble basic blocks (namely, any disassembly method other than
+                                         *   disassembleOne()).  Normally, if disassembly of a basic block at virtual address
+                                         *   V leads to a bad instruction, the entire basic block is discarded and address V
+                                         *   is added to the bad address list (address V+1 is still available for the other
+                                         *   heuristics). */
+        SEARCH_UNKNOWN   = 0x0080,      /**< Rather than generating exceptions when an instruction cannot be disassembled,
+                                         *   create a pseudo-instruction that occupies one byte. These will generally have
+                                         *   opcodes like x86_unknown_instruction. */
+        SEARCH_DEFAULT   = 0x0001       /**< Default set of heuristics to use. The default is to be moderately timid. */
     };
 
     typedef std::set<rose_addr_t> AddressSet;
@@ -84,22 +117,25 @@ public:
 
     Disassembler()
         : p_partitioner(NULL), p_search(SEARCH_DEFAULT), p_debug(NULL),
-        p_wordsize(4), p_sex(SgAsmExecutableFileFormat::ORDER_LSB), p_alignment(4)
+        p_wordsize(4), p_sex(SgAsmExecutableFileFormat::ORDER_LSB), p_alignment(4), p_ndisassembled(0)
         {ctor();}
     virtual ~Disassembler() {}
+
 
 
 
     /*==========================================================================================================================
      * Factory methods
      *========================================================================================================================== */
-
+public:
     /** Register a disassembler with the factory.  The disassembler should provide a can_disassemble() method (virtual in
      *  Disassembler) which will return a new instance if the class has the capability to disassemble the specified header. The
      *  create() method will try subclasses in the opposite order they are registered (so register the most specific classes
      *  last). */
     static void register_subclass(Disassembler*);
 
+    /*NOTE: Keep this pure virtual. We cannot have Disassembler serving as a real disassembler--only subclasses can actually
+     *      disassemble anything. Keeping at least one pure virtual method will prevent anyone from even trying to do that! */
     /** Method provided by subclasses and used by create().  It should return a new instance of the subclass if the subclass
      *  has the capability to disassemble the specified header. */
     virtual Disassembler *can_disassemble(SgAsmGenericHeader*) const = 0;
@@ -116,7 +152,7 @@ public:
     /*==========================================================================================================================
      * Main public disassembly methods
      *========================================================================================================================== */
-
+public:
     /** This high-level method disassembles instructions belonging to part of a file described by an executable file header as
      *  indicated by the specified interpretation.  The instructions are partitioned into a block (SgAsmBlock) of functions
      *  (SgAsmFunctionDeclaration) containing basic blocks (SgAsmBlock) of instructions (SgAsmInstruction). The top-level
@@ -141,10 +177,12 @@ public:
     static void disassembleFile(SgAsmFile*);
 
 
+
+
     /*==========================================================================================================================
      * Disassembler properties and settings
      *========================================================================================================================== */
-
+public:
     /** Specifies the instruction partitioner to use when partitioning instructions into functions.  If none is specified then
      *  a default partitioner will be constructed when necessary. */
     void set_partitioner(class Partitioner *p) {
@@ -156,13 +194,15 @@ public:
         return p_partitioner;
     }
 
-    /** Specifies the heuristics used when searching for instructions. */
-    void set_search(SearchHeuristic bits) {
+    /** Specifies the heuristics used when searching for instructions. The @p bits argument should be a bit mask of
+     *  SearchHeuristic bits. */
+    void set_search(unsigned bits) {
         p_search = bits;
     }
 
-    /** Returns a bit vector representing which heuristics would be used when searching for instructions. */
-    SearchHeuristic get_search() const {
+    /** Returns a bit mask of SearchHeuristic bits representing which heuristics would be used when searching for
+     *  instructions. */
+    unsigned get_search() const {
         return p_search;
     }
 
@@ -196,17 +236,35 @@ public:
         return p_sex;
     }
 
+    /** Sends disassembler diagnostics to the specified output stream. Null (the default) turns off debugging. */
+    void set_debug(FILE *f) {
+        p_debug = f;
+    }
+
+    /** Returns the file currently used for debugging; null implies no debugging. */
+    FILE *get_debug() const {
+        return p_debug;
+    }
+
+    /** Returns the number of instructions successfully disassembled. The counter is updated by disassembleBlock(), which is
+     *  generally called by all disassembly methods except for disassembleOne(). */
+    size_t get_ndisassembled() const {
+        return p_ndisassembled;
+    }
+
+
 
 
     /*==========================================================================================================================
      * Low-level disassembly functions
      *========================================================================================================================== */
-
+public:
     /** This is the lowest level disassembly function and is implemented in the architecture-specific subclasses. It
      *  disassembles one instruction at the specified virtual address. The @p map is a mapping from virtual addresses to
      *  offsets in the content buffer and enables instructions to span file segments that are mapped contiguously in virtual
      *  memory by the loader but which might not be contiguous in the file.  The instruction's successor virtual addresses are
-     *  added to the optional successor set. If the instruction cannot be disassembled then an exception is thrown and the
+     *  added to the optional successor set (note that successors of an individual instruction can also be obtained via
+     *  SgAsmInstruction::get_successors). If the instruction cannot be disassembled then an exception is thrown and the
      *  successors set is not modified. */
     virtual SgAsmInstruction *disassembleOne(const unsigned char *buf, const RvaFileMap &map, rose_addr_t start_va,
                                              AddressSet *successors=NULL) = 0;
@@ -284,16 +342,69 @@ public:
 
 
 
+
+    /*==========================================================================================================================
+     * Methods for searching for disassembly addresses.
+     *========================================================================================================================== */
 private:
-    static void initclass();                            /* Initialize class (e.g., register built-in disassemblers) */
-    void ctor();                                        /* Called during construction */
-    class Partitioner *p_partitioner;                   /* Partitioner used for placing instructions into blocks and functions */
-    SearchHeuristic p_search;                           /* Heuristics used when searching for instructions */
-    FILE *p_debug;                                      /* Set to non-null to get debugging info */
-    size_t p_wordsize;                                  /* Word size used by SEARCH_WORDS */
-    SgAsmExecutableFileFormat::ByteOrder p_sex;         /* Byte order for SEARCH_WORDS */
-    size_t p_alignment;                                 /* Word alignment constraint for SEARCH_WORDS (0 and 1 imply byte) */
-    static std::vector<Disassembler*> disassemblers;    /* List of disassembler subclasses */
+    /** Adds the address following a basic block to the list of addresses that should be disassembled.  This search method is
+     *  invoked automatically if the SEARCH_FOLLOWING bit is set (see set_search()). */
+    void search_following(AddressSet *worklist, const InstructionMap &bb, const BadMap *bad);
+
+    /** Adds values of immediate operands to the list of addresses that should be disassembled.  Such operands are often used
+     *  in a closely following instruction as a jump target. E.g., "move 0x400600, reg1; ...; jump reg1". This search method
+     *  is invoked automatically if the SEARCH_IMMEDIATE bit is set (see set_search()). */
+    void search_immediate(AddressSet *worklist, const InstructionMap &bb,  const RvaFileMap &map, const BadMap *bad);
+
+    /** Adds all word-aligned values to work list, provided they specify a virtual address in the @p map.  The @p wordsize
+     *  must be a power of two. This search method is invoked automatically if the SEARCH_WORDS bit is set (see set_search()). */
+    void search_words(AddressSet *worklist, const unsigned char *buf, const RvaFileMap &map, const BadMap *bad);
+
+    /** Finds the lowest virtual address, greater than or equal to @p start_va, which does not correspond to a previous
+     *  disassembly attempt as evidenced by its presence in the supplied instructions or bad map.  If @p avoid_overlaps is set
+     *  then do not return an address if an already disassembled instruction's raw bytes include that address.  Only virtual
+     *  addresses contained in the RvaFileMap will be considered.  The address is returned by adding it to the worklist;
+     *  nothing is added if no qualifying address can be found. This method is invoked automatically if the SEARCH_ALLBYTES or
+     *  SEARCH_UNUSED bits are set (see set_search()). */
+    void search_next_address(AddressSet *worklist, rose_addr_t start_va, const RvaFileMap &map, const InstructionMap &insns,
+                             const BadMap *bad, bool avoid_overlaps);
+
+
+
+
+    /*==========================================================================================================================
+     * Miscellaneous methods
+     *========================================================================================================================== */
+public:
+    /** Makes an unknown instruction from an exception. */
+    virtual SgAsmInstruction *make_unknown_instruction(const Exception&) = 0;
+
+private:
+    /** Initialize class (e.g., register built-in disassemblers). */
+    static void initclass();
+
+    /** Called during construction. */
+    void ctor();
+
+    /** Finds the highest-address instruction that contains the byte at the specified virtual address. Returns null if no such
+     *  instruction exists. */
+    static SgAsmInstruction *find_instruction_containing(const InstructionMap &insns, rose_addr_t va);
+
+
+
+
+    /*==========================================================================================================================
+     * Data members
+     *========================================================================================================================== */
+private:
+    class Partitioner *p_partitioner;                   /**< Partitioner used for placing instructions into blocks and functions.*/
+    unsigned p_search;                                  /**< Mask of SearchHeuristic bits specifying instruction searching. */
+    FILE *p_debug;                                      /**< Set to non-null to get debugging info. */
+    size_t p_wordsize;                                  /**< Word size used by SEARCH_WORDS. */
+    SgAsmExecutableFileFormat::ByteOrder p_sex;         /**< Byte order for SEARCH_WORDS. */
+    size_t p_alignment;                                 /**< Word alignment constraint for SEARCH_WORDS (0 and 1 imply byte). */
+    static std::vector<Disassembler*> disassemblers;    /**< List of disassembler subclasses. */
+    size_t p_ndisassembled;                             /**< Total number of instructions disassembled by disassembleBlock() */
 };
 
 #endif
