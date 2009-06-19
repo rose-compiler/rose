@@ -18,7 +18,7 @@ Grammar::setUpBinaryInstructions ()
 
 
      NEW_TERMINAL_MACRO ( AsmArmInstruction, "AsmArmInstruction", "AsmArmInstructionTag" );
-  // AsmArmInstruction.setFunctionPrototype        ( "HEADER_BINARY_ARM_INSTRUCTION", "../Grammar/BinaryInstruction.code");
+     AsmArmInstruction.setFunctionPrototype        ( "HEADER_BINARY_ARM_INSTRUCTION", "../Grammar/BinaryInstruction.code");
      AsmArmInstruction.setDataPrototype            ("ArmInstructionKind","kind","= arm_unknown_instruction",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
      AsmArmInstruction.setDataPrototype            ("ArmInstructionCondition","condition","= arm_cond_unknown",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
      AsmArmInstruction.setDataPrototype            ("int","positionOfConditionInMnemonic","= -1",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
