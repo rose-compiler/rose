@@ -539,6 +539,13 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
   }
 
 
+  // varRef contains variable
+  int derefCounter = 0;
+  // derefCounter counts the number of dereferences within the expression
+  // based on that we decide if it is a one or two dim array
+  // if derefCounter == 1 assume 1dim array otherwise 2dim
+  getExprBelowAssignment(varRef, derefCounter);
+
 
   // handle MALLOC
   bool ismalloc=false;
@@ -593,6 +600,10 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
 	  ROSE_ASSERT(varRef);
 	  // what is the dimension of the array?
 	  dimension = getDimension(initName);
+	  if (dimension!=derefCounter && derefCounter>0) {
+	    cout << ">>>>>>>>> WARNING Dimension changed : " << dimension << " to " << derefCounter << endl;
+	    dimension=derefCounter;
+	  }
 	  string idx1_s = "";
 	  if (indx1)
 	    idx1_s = indx1->unparseToString();
@@ -603,7 +614,8 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
 	       << initName->unparseToString() << "  size:"
 	       << size->unparseToString() << "  dimension : "
 	       << dimension << "  indx1 : " << idx1_s
-	       << "  indx2 : " << idx2_s << endl;
+	       << "  indx2 : " << idx2_s 
+	       << "  dimension based on derefCounter: " << derefCounter << endl;
 	  ROSE_ASSERT(dimension>0);
 	  // remove the sizeof allocation
 	  SgNode* parentOfSizeof = sizeofOp->get_parent();

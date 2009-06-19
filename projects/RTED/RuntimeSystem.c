@@ -646,6 +646,8 @@ RuntimeSystem_roseArrayAccess(char* name, int posA, int posB, char* filename, ch
 	char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ 1);
 	sprintf(res,"%s%d%s%d%s%d%s%d%s",res1,sizeA,res2,sizeB,res3,posA,res4,posB,res5);
 	rtsi()->violation=1;
+	printf("%s %s %s %s\n",filename,line,res,stmtStr);
+	//exit(1);
 	RuntimeSystem_callExit(filename, line, res,stmtStr);
       }
     }
