@@ -100,6 +100,7 @@ namespace ELF{
   #include "RoseBin.h"
 #endif
 
+#include "RvaFileMap.h"
 #include "RoseBin_abstract.h"
 #include "RoseFile.h"
 #include "RoseObj.h"

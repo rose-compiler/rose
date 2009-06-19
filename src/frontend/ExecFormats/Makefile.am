@@ -25,9 +25,10 @@ libroseExecFormats_la_SOURCES = \
    ROSE_ExecELF.C \
    ROSE_ExecPE.C \
    ROSE_ExecNE.C \
-   ROSE_ExecLE.C
+   ROSE_ExecLE.C \
+   RvaFileMap.C
 
-include_HEADERS = IntelPinSupport.h
+include_HEADERS = IntelPinSupport.h RvaFileMap.h
 
 # Make sure that this is distributed even if ROSE was not configured using: -with-IntelPin=<path>
 EXTRA_DIST = IntelPinSupport.C
