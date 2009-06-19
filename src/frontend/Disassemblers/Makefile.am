@@ -7,8 +7,11 @@ noinst_LTLIBRARIES = libroseDisassemblers.la
 
 libroseDisassemblers_la_DEPENDENCIES =
 
-libroseDisassemblers_la_SOURCES = Disassembler.C DisassemblerX86.C Partitioner.C x86Disassembler.C
+libroseDisassemblers_la_SOURCES = \
+	Partitioner.C \
+        Disassembler.C DisassemblerPowerpc.C DisassemblerX86.C \
+	powerpcDisassembler.C x86Disassembler.C
 
-include_HEADERS = Disassembler.h DisassemblerX86.h Partitioner.h
+include_HEADERS = Disassembler.h DisassemblerPowerpc.h DisassemblerX86.h Partitioner.h
 
 dist_include_HEADERS =
