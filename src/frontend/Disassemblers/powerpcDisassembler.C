@@ -167,13 +167,6 @@ PowerpcDisassembler::SingleInstructionDisassembler::makeBranchTarget ( uint64_t 
      return makeQWordValue(targetAddr);
    }
 
-bool
-PowerpcDisassembler::doesBBStartFunction(SgAsmBlock* bb, bool use64bit)
-   {
-  // DQ (10/14/2008): Provide a default implementation for now!
-     return false;
-   }
-
 SgAsmPowerpcInstruction*
 PowerpcDisassembler::makeInstructionWithoutOperands(uint64_t address, const std::string& mnemonic, PowerpcInstructionKind kind, uint32_t insn)
    {

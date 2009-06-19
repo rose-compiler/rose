@@ -36,6 +36,7 @@ Grammar::setUpBinaryInstructions ()
      Asmx86Instruction.setPredeclarationString     ("HEADER_BINARY_X86_INSTRUCTION_PREDECLARATION" , "../Grammar/BinaryInstruction.code");
 
      NEW_TERMINAL_MACRO ( AsmPowerpcInstruction, "AsmPowerpcInstruction", "AsmPowerpcInstructionTag" );
+     AsmPowerpcInstruction.setFunctionPrototype("HEADER_BINARY_POWERPC_INSTRUCTION", "../Grammar/BinaryInstruction.code");
      AsmPowerpcInstruction.setDataPrototype        ("PowerpcInstructionKind","kind","= powerpc_unknown_instruction", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
      AsmPowerpcInstruction.setPredeclarationString ("HEADER_BINARY_POWERPC_INSTRUCTION_PREDECLARATION" , "../Grammar/BinaryInstruction.code");
 

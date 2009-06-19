@@ -3183,9 +3183,17 @@ SOURCE_BINARY_FILE_PROGRAM_HEADER_LIST_END
 
 HEADER_BINARY_X86_INSTRUCTION_START
 	public:
-		virtual bool terminatesBasicBlock();
-		virtual std::set<rose_addr_t> get_successors();
+		virtual bool terminatesBasicBlock();			/* implemented in DisassemblerX86.C */
+		virtual std::set<rose_addr_t> get_successors();		/* implemented in DisassemblerX86.C */
 HEADER_BINARY_X86_INSTRUCTION_END
+
+
+
+HEADER_BINARY_POWERPC_INSTRUCTION_START
+	public:
+		virtual bool terminatesBasicBlock();			/* implemented in DisassemblerPowerpc.C */
+		virtual std::set<rose_addr_t> get_successors();		/* implemented in DisassemblerPowerpc.C */
+HEADER_BINARY_POWERPC_INSTRUCTION_END
 
 
 
