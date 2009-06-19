@@ -34,7 +34,7 @@ RvaFileMap::insert(SgAsmGenericSection *section)
     if (!section->is_mapped() || 0==section->get_size())
         return;
 
-#if 1 /*DEBUGGING*/
+#if 0 /*DEBUGGING*/
     fprintf(stderr, "RvaFileMap::insert(section [%d] \"%s\" at rva 0x%08"PRIx64"-0x%08"PRIx64")\n", 
             section->get_id(), section->get_name()->c_str(), section->get_mapped_rva(),
             section->get_mapped_rva()+section->get_mapped_size());

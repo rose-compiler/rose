@@ -182,7 +182,7 @@ DisassemblerArm::disassembleOne(const unsigned char *buf, const RvaFileMap &map,
     if (successors)
         successors->insert(suc1.begin(), suc1.end());
 
-#if 1 /*DEBUG*/
+#if 0 /*DEBUG*/
     /* Make sure the successors returned by the disassembler match the successors returned by the instruction since they are
      * built two different ways.  The biggest difference is that the old disassembler includes the fall-through instruction as
      * a known successor even for unconditional branches.  When this code is removed, we can optimize the decoding above to
