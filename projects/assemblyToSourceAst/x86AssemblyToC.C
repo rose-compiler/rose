@@ -10,8 +10,6 @@ using namespace std;
 using namespace IntegerOps;
 using namespace SageInterface;
 using namespace SageBuilder;
-using X86Disassembler::sizeToType;
-using X86Disassembler::sizeToPos;
 
 static SgBasicBlock* bb; // Global location to append new statements
 
