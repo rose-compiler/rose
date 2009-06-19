@@ -23,15 +23,20 @@ sub printForwardDeclarations
 # param 1 : filehandle to graph-dump
 # param 2 : all functions which are called in the generated implementation (ref to array!)
 # param 3 : functions for which implementation gets printed (ref to array!)
+# param 4 : <optional>  fill (percentage of printed calls on the average) , default=1 (print all)
 sub printFunctionsToFile
 {
 	my $STRESSTEST 	   = $_[0];
 	my $STRESSTESTCMP   = $_[1];
 	my @call_functions = @{$_[2]};
 	my @def_functions  = @{$_[3]};
-	
+	my $fill           = $_[4];
+       
+        if(!defined  $fill){
+            $fill=1; 
+        } 
 
-	print $STRESSTEST "// Function-implementations: calls every other function\n";
+	print $STRESSTEST "// Function-implementations: calls a (random) subset of funcs\n";
         foreach $function (@def_functions)
         {
             # create a function defintion
@@ -45,6 +50,8 @@ sub printFunctionsToFile
             # make a complete cg by calling every other function but the main
             foreach $call (@call_functions)
             {
+                if(rand() > $fill) { next; }
+                     
                 print $STRESSTEST "\t$call();\n";
                 # add this node to the called list in the cgd
                 print $STRESSTESTCMP " $call";
@@ -56,16 +63,27 @@ sub printFunctionsToFile
         }
 }
 
+
+
+
 # Prints main-function in file and updates the graph-dump representation
 # param 0 : filehandle to source-file
 # param 1 : filehandle to graph-dump
 # param 2 : all functions which are called in the generated implementation (ref to array!)
+# param 3 : <optional>  fill (percentage of printed calls on the average) , default=1 (print all)
 sub printMainFunction
 {
 	my $STRESSTEST 	   = $_[0];
 	my $STRESSTESTCMP   = $_[1];
 	my @call_functions = @{$_[2]};
+        my $fill           = $_[3];
+        
+              
+        if(!defined  $fill){
+            $fill=1; 
+        }    
 
+       
        print $STRESSTEST "int main(int argc, char**argv)\n{\n";
            
        # create a graph-dump-node
@@ -75,6 +93,7 @@ sub printMainFunction
        # make a complete cg by calling every other function but the main
        foreach $call (@call_functions)
        {
+            if(rand() > $fill) { next; } 
             print $STRESSTEST "\t$call();\n";
             # add this node to the called list in the cgd
            print $STRESSTESTCMP " $call";
@@ -87,6 +106,32 @@ sub printMainFunction
 }
 
 
+
+# Removes a random count of elements from an array
+# for each element a random number between 0-1 is generated
+# if this is smaller than threshold (default 0.5) the number is added
+# Parameters
+# - param 0: reference to array
+# - param 1: optional, threshold, default 0.5
+sub removeRandomElementsFromArray
+{
+    my @input = @{$_[0]};
+    my $threshold = $_[1];
+   
+    if(not defined $threshold) {
+        $threshold=0.5;
+    }  
+    #printf("Threshold= $threshold \n");
+    
+    my @output;
+   
+    foreach  $element (@input) {
+        if(rand() <= $threshold) {
+             push(@output, $element);
+}    
+} 
+     return @output;
+}
 
 # Creates files, opens them and puts the filehandles in an array
 # the filenames are filenamePrefix. $fileNr . $filenameEnding
@@ -136,7 +181,10 @@ if ( @ARGV >= 1 )
 {
 	$functionCount= $ARGV[0];
 	$fileCount    = $ARGV[1];
-        $dirName      = $ARGV[2]; 
+        $dirName      = $ARGV[2];
+        # if fill=1 the callgraph is complete, everything between 0 and 1 results in a
+        # random CG where each function calls on the average $fill*functionCount functions
+        $fill         = $ARGV[3]; 
 }
 else
 {
@@ -168,6 +216,10 @@ my $funcsPerFile = int( $functionCount / $fileCount );
 if(!defined($dirName)) {
     $dirName =  "StressTest_Funcs" . $functionCount . "_Files" . $fileCount;
 }
+
+if(!defined($fill)) {
+    $fill=1;
+} 
 
 mkdir ( $dirName );
 
@@ -210,11 +262,12 @@ for( $fileId=0; $fileId <= $#sourceFiles; $fileId++  )
 	
 	#print "Subset Range at file $fileId: $funcNrBegin to $funcNrEnd \n";
 	my @function_subset = @function_list[ ($funcNrBegin .. $funcNrEnd ) ];
-	printFunctionsToFile ( $curSourceFile, *CMP_FILE, \@function_list, \@function_subset);
+       
+	printFunctionsToFile ( $curSourceFile, *CMP_FILE, \@function_list, \@function_subset,$fill);
        
         #print main 
        	if( $fileId == $#sourceFiles ) 	{
-		printMainFunction($curSourceFile, *CMP_FILE,\@function_list );
+		printMainFunction($curSourceFile, *CMP_FILE,\@function_list,$fill );
         }  
 }
 

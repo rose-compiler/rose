@@ -11,7 +11,8 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 bin_PROGRAMS  = \
    testCallGraph \
    testCG \
-   classHierarchyTestGen   
+   classHierarchyTestGen\
+   virtualFctsTester
 
 testCallGraph_SOURCES = testCallGraph.C
 
@@ -19,6 +20,9 @@ testCG_SOURCES = CG.C
 
 classHierarchyTestGen_SOURCES = ClassHierarchyTestGen.cpp
 classHierarchyTestGen_LDADD = $(ROSE_LIBS)
+
+virtualFctsTester_SOURCES = VirtualFctsTester.cpp
+virtualFctsTester_LDADD   = $(ROSE_LIBS)
 
 # testCallGraph_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 testCallGraph_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
