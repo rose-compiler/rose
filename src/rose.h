@@ -123,8 +123,8 @@ namespace ELF{
 
 // Files in src/frontend/Disassemblers
 #include "Disassembler.h"
+#include "DisassemblerX86.h"
 #include "Partitioner.h"
-
 
 // Files in src/backend/asmUnparser
 #include "unparseAsm.h"

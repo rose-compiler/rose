@@ -1,5 +1,4 @@
 #include "rose.h"
-#include "Disassembler.h"
 
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
@@ -23,6 +22,7 @@ Disassembler::initclass()
     static bool initialized=false;
     if (!initialized) {
         initialized = true;
+	register_subclass(new DisassemblerX86);
     }
 }
 

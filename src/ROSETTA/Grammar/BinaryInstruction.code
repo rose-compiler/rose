@@ -3180,10 +3180,13 @@ SgAsmProgramHeaderList::get_program_headers()
 SOURCE_BINARY_FILE_PROGRAM_HEADER_LIST_END
 
 
-HEADER_BINARY_X86_INSTRUCTION_START
-  public:
 
+HEADER_BINARY_X86_INSTRUCTION_START
+	public:
+		virtual bool terminatesBasicBlock();
+		virtual std::set<rose_addr_t> get_successors();
 HEADER_BINARY_X86_INSTRUCTION_END
+
 
 
 HEADER_BINARY_DECLARATION_START
