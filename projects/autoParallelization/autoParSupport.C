@@ -1074,13 +1074,17 @@ namespace AutoParallelization
     if (remainingDependences.size()>0)
     {
       isParallelizable = false;
-      cout<<"\n Unparallelizable loop at line:"<<sg_node->get_file_info()->get_line()<<
+      cout<<"\nUnparallelizable loop at line:"<<sg_node->get_file_info()->get_line()<<
         " due to the following dependencies:"<<endl;
       for (vector<DepInfo>::iterator iter= remainingDependences.begin();     
           iter != remainingDependences.end(); iter ++ )
       {
         cout<<(*iter).toString()<<endl;
       }
+    }
+    else
+    {
+      cout<<"\nAutomatically parallelized a loop at line:"<<sg_node->get_file_info()->get_line()<<endl;
     }
 
     // comp.DetachDepGraph();// TODO release resources here
