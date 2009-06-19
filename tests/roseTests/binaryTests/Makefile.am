@@ -141,8 +141,8 @@ test_testElfByteOrder.passed: testElfByteOrder test_testElfStrtab.passed
 
 # cannot run in parallel with testElfStrtab or testElfByteOrder
 test_testElfWordSize.passed: testElfWordSize test_testElfStrtab.passed test_testElfByteOrder.passed
-	$(VALGRIND) ./testElfWordSize $(srcdir)/arm-poweroff
-	$(VALGRIND) ./execFormatsTest ./arm-poweroff.new
+	$(VALGRIND) ./testElfWordSize -rose:read_executable_file_format_only $(srcdir)/arm-poweroff
+	$(VALGRIND) ./execFormatsTest -rose:read_executable_file_format_only ./arm-poweroff.new
 	@if diff -u ./arm-poweroff.new{,.new}; then								\
 		: ok;												\
 	else													\

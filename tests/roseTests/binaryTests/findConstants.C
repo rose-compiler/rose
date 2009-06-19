@@ -15,6 +15,7 @@ name_or_addr(const SgAsmFunctionDeclaration *f)
         return f->get_name();
 
     char buf[128];
+    ROSE_ASSERT(f->get_statementList().size()>0);
     SgAsmBlock *first_bb = isSgAsmBlock(f->get_statementList().front());
     sprintf(buf, "0x%"PRIx64, first_bb->get_id());
     return buf;
