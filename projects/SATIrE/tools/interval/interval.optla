@@ -39,7 +39,7 @@ PROBLEM Interval_Analysis
   direction:  forward
   carrier:    itvl_State
   init:       bot
-  init_start: lift([->top])
+  init_start: lift(initialize_globals([->top], globals))
   combine:    comb
   retfunc:    ret
   widening:   wide
@@ -194,29 +194,7 @@ eval(exp, state, context) =
         let r = binary(binary_get_left_child(exp), binary_get_right_child(exp),
           exp, state, context); in r // --print("BINARY <----") print(r) print("\n") r
       else if is_value(exp) then
-        case exp of
-          BoolValExp(value) => (duplift(val-astint(value)), state);
-          EnumVal(value)    => (duplift(val-astint(value)), state);
-          IntVal(value)     => (duplift(val-astint(value)), state);
-          ShortVal(value)   => (duplift(val-astshort(value)), state);
-          LongIntVal(value) => (duplift(val-astlong(value)), state);
-          LongLongIntVal(value) => (duplift(val-astllong(value)), state);
-
-          CharVal(value)  => (duplift(snum(val-astchar(value))), state);
-          // -- FIXME: incorrect type conversions
-          UnsignedCharVal(value) => (duplift(snum(val-astuchar(value))), state);
-          UnsignedIntVal(value)  => (duplift(snum(val-astuint(value))), state);
-          UnsignedShortVal(value)=>(duplift(snum(val-astushort(value))), state);
-          UnsignedLongVal(value) => (duplift(snum(val-astulong(value))), state);
-          UnsignedLongLongIntVal(value) => (duplift(snum(val-astullong(value))), state);
-          // -- NOT IMPLEMENTED
-          FloatVal(_) => (top, state);
-          DoubleVal(_) => (top, state);
-          StringVal(_) => (top, state);
-          _         => print("unsupported value exp: ")
-                       print(exp) print("\n") 
-                                  (top, state);
-        endcase
+        (value_interval(exp), state)
     else case exp of
       VarRefExp(name)       =>  // --print("###is_VARREF") 
                                 // --print(val-aststring(name)) print("\n") 
@@ -1028,4 +1006,63 @@ is_pointer_type(type) =
     PointerType(_)  => true;
     ModifierType(t) => is_pointer_type(t);
     _               => false;
+  endcase;
+
+
+// -- initialization of global variables
+initialize_globals :: itvl_fState, *VariableSymbolNT -> itvl_fState;
+initialize_globals(state, [!]) = state;
+initialize_globals(state, g::gs) =
+  let newstate =
+    if global_has_initializer(g) then
+      let variable = varsym_varid(g);
+          initexpr = global_get_initializer(g); in
+      let value = eval_constant_initializer(initexpr);
+      in  state\[variable -> value]
+    else
+      state;
+  in  initialize_globals(newstate, gs);
+
+eval_constant_initializer :: Expression -> itvl_Interval;
+eval_constant_initializer(exp) =
+  if is_value(exp) then
+    value_interval(exp)
+  else case exp of
+    AssignInitializer(ini)  => eval_constant_initializer(ini);
+    AggregateInitializer(e) => eval_constant_initializer(e);
+    ExprListExp(exprs)      => eval_constant_array(exprs);
+    _                       => println("* unknown initializer value for ", exp)
+                               top;
+  endcase;
+
+eval_constant_array :: *Expression -> itvl_Interval;
+eval_constant_array([!]) = duplift(0);
+eval_constant_array(e::es) =
+  let v = eval_constant_initializer(e);
+  in  combi(v, eval_constant_array(es));
+
+value_interval :: Expression -> itvl_Interval;
+value_interval(exp) =
+  case exp of
+    BoolValExp(value) => duplift(val-astint(value));
+    EnumVal(value)    => duplift(val-astint(value));
+    IntVal(value)     => duplift(val-astint(value));
+    ShortVal(value)   => duplift(val-astshort(value));
+    LongIntVal(value) => duplift(val-astlong(value));
+    LongLongIntVal(value) => duplift(val-astllong(value));
+
+    CharVal(value)  => duplift(snum(val-astchar(value)));
+    // -- FIXME: incorrect type conversions
+    UnsignedCharVal(value) => duplift(snum(val-astuchar(value)));
+    UnsignedIntVal(value)  => duplift(snum(val-astuint(value)));
+    UnsignedShortVal(value)=> duplift(snum(val-astushort(value)));
+    UnsignedLongVal(value) => duplift(snum(val-astulong(value)));
+    UnsignedLongLongIntVal(value) => duplift(snum(val-astullong(value)));
+    // -- NOT IMPLEMENTED
+    FloatVal(_) => top;
+    DoubleVal(_) => top;
+    StringVal(_) => top;
+    _         => print("unsupported value exp: ")
+                 print(exp) print("\n")
+                            top;
   endcase;
