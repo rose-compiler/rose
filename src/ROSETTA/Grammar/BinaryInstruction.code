@@ -29,13 +29,17 @@ HEADER_BINARY_START
 HEADER_BINARY_END
 
 
+
 HEADER_BINARY_INSTRUCTION_START
-  public:
-   SgAsmInstruction* cfgBinFlowOutEdge(const VirtualBinCFG::AuxiliaryInformation* info);
-   std::vector<VirtualBinCFG::CFGEdge> cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info);
-   std::vector<VirtualBinCFG::CFGEdge> cfgBinInEdges(const VirtualBinCFG::AuxiliaryInformation* info);
-   void append_sources( SgAsmInstruction* instruction );	
+	public:
+		SgAsmInstruction* cfgBinFlowOutEdge(const VirtualBinCFG::AuxiliaryInformation* info);
+		std::vector<VirtualBinCFG::CFGEdge> cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info);
+		std::vector<VirtualBinCFG::CFGEdge> cfgBinInEdges(const VirtualBinCFG::AuxiliaryInformation* info);
+		void append_sources( SgAsmInstruction* instruction );
+		virtual bool terminatesBasicBlock() {abort();} //subclasses must redefine
+		virtual std::set<rose_addr_t> get_successors() {abort();} //subclasses must redefine
 HEADER_BINARY_INSTRUCTION_END
+
 
 
 HEADER_BINARY_FILE_START
@@ -3216,15 +3220,18 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
 	void append_dest(SgAsmStatement* instruction);
 	void remove_children();
 
-	/* Reasons why an instruction might be considered the beginning of a function. */
+	/** Reasons why an instruction might be considered the beginning of a function. These bit flags are also used by
+	 *  the instruction partitioner (Partitioner class) to determine what heuristics are used when partitioning
+	 *  instructions into functions. */
 	enum FunctionReason {
-		FUNC_NONE	 = 0x00,		/* Used for initialization; not a bit flag */
-		FUNC_ENTRY_POINT = 0x01,		/* An entry point specified in the file header */
-		FUNC_CALL_TARGET = 0x02,		/* Target of a CALL-like instruction */
-		FUNC_EH_FRAME	 = 0x04,		/* Address mentioned in the ELF .eh_frame section */
-		FUNC_SYMBOL	 = 0x08,		/* Address of a function symbol in a symbol table */
-		FUNC_PATTERN	 = 0x10,		/* Appears to be a function based on pattern of instructions */
-		FUNC_GRAPH	 = 0x20,		/* Implied by inter-basicblock branching */
+		FUNC_NONE	 = 0x00,		/**< Used for initialization; not a bit flag */
+		FUNC_ENTRY_POINT = 0x01,		/**< An entry point specified in the file header */
+		FUNC_CALL_TARGET = 0x02,		/**< Target of a CALL-like instruction */
+		FUNC_EH_FRAME	 = 0x04,		/**< Address mentioned in the ELF .eh_frame section */
+		FUNC_SYMBOL	 = 0x08,		/**< Address of a function symbol in a symbol table */
+		FUNC_PATTERN	 = 0x10,		/**< Appears to be a function based on pattern of instructions */
+		FUNC_GRAPH	 = 0x20,		/**< Implied by inter-basicblock branching */
+		FUNC_DEFAULT     = 0x3f			/**< Default value for Partitioner class */
 	};
 
 	//! enum declaration as specified in proposed Sabre database schema
