@@ -91,7 +91,7 @@ Index: Driver/TermDumper.cpp
 ===================================================================
 --- Driver/TermDumper.cpp	(revision 0)
 +++ Driver/TermDumper.cpp	(revision 0)
-@@ -0,0 +1,1956 @@
+@@ -0,0 +1,1960 @@
 +
 +//===--- StmtTermDumper.cpp - TermDumping implementation for Stmt ASTs ----===//
 +//
@@ -519,6 +519,10 @@ Index: Driver/TermDumper.cpp
 +      return new PrologAtom(s);
 +    }
 +
++    PrologAtom *
++    make_quoted_atom(std::string s) {
++      return new PrologAtom(s, true);
++    }
 +    
 +    PrologAtom *
 +    make_null_atom() {
@@ -1738,13 +1742,13 @@ Index: Driver/TermDumper.cpp
 +          const StringLiteral *SL = cast<StringLiteral>(S);
 +
 +          std::stringstream ss;
-+          ss  << (SL->isWide() ? "L" : "")
-+              << escape(std::string(SL->getStrData(), SL->getByteLength()));
++          ss << (SL->isWide() ? "L" : "")
++             << escape(std::string(SL->getStrData(), SL->getByteLength()));
 +          
 +          return new PrologCompTerm("string_val", 4,
 +                                    make_null_atom(),
 +                                    new PrologCompTerm("value_annotation", 2,
-+                                                       make_atom(ss.str()),
++                                                       make_quoted_atom(ss.str()),
 +                                                       make_preprocessing_info()),
 +                                    make_default_analysis_info(),
 +                                    make_file_info(S));
@@ -2434,11 +2438,11 @@ Index: Driver/termite/PrologTerm.h
 +  virtual std::string getRepresentation() = 0;
 +
 +  /// Properly quote and escape an atom if necessary
-+  static std::string quote(const std::string atom) {
++  static std::string quote(const std::string atom, bool force_quote=false) {
 +    std::string s = escape(atom);
 +    if (atom.length() == 0) return "''";
 +    if (((atom.length() > 0) && (!islower(atom[0])) && (!isdigit(atom[0])))
-+	|| needs_quotes(atom)) {
++	|| needs_quotes(atom) || force_quote) {
 +      s = "'" + s + "'";
 +      return s;
 +    } else if (is_reserved_operator(atom)) {
@@ -3005,7 +3009,7 @@ Index: Driver/termite/PrologAtom.h
 ===================================================================
 --- Driver/termite/PrologAtom.h	(revision 0)
 +++ Driver/termite/PrologAtom.h	(revision 0)
-@@ -0,0 +1,59 @@
+@@ -0,0 +1,62 @@
 +/* -*- C++ -*-
 +Copyright 2006 Christoph Bonitz <christoph.bonitz@gmail.com>
 +          2008 Adrian Prantl <adrian@complang.tuwien.ac.at>
@@ -3021,10 +3025,11 @@ Index: Driver/termite/PrologAtom.h
 +class PrologAtom : public PrologTerm {
 +public:
 +  ///the destructor
-+  ~PrologAtom() {};	
++  ~PrologAtom() {};
 +  ///constructor setting the string
-+  PrologAtom(std::string name) {
++  PrologAtom(std::string name, bool _force_quote=false) {
 +      mName = name;
++      force_quote = _force_quote;
 +  };
 +  ///the arity is always 0
 +  int getArity() {return 0;};
@@ -3033,8 +3038,10 @@ Index: Driver/termite/PrologAtom.h
 +  ///return the string
 +  std::string getName() {return mName;};
 +  /// return the string
-+  std::string getRepresentation() { return quote(mName); };
++  std::string getRepresentation() { return quote(mName, force_quote); };
 +private:
++  bool force_quote;
++  
 +  /// the string
 +  std::string mName;
 +};
