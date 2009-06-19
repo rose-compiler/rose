@@ -1,3 +1,28 @@
+2009-06-19 17:41  bauer25
+
+	* [r6264]
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/VirtualFctsTester.cpp,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/stressTestFactoryMultipleFiles.pl:
+	  Testcase Generators for CallGraphAnalysis
+	  
+	  - extended generation of complete cg, can now generate random
+	  graphs
+	  - added virtual function resolution test
+
+2009-06-19 16:46  liao6
+
+	* [r6263]
+	  /trunk/ROSE/projects/autoParallelization/autoParSupport.C:
+	  autoParallelization: enabled report for successfully parallelized
+	  loops by default
+
+2009-06-19 11:28  matzke
+
+	* [r6260]
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerPowerpc.C:
+	  Bugfix for PowerPC conditional branch instructions
+
 2009-06-19 02:51  matzke
 
 	* [r6256] /trunk/ROSE/tests/roseTests/binaryTests/Makefile.am,
