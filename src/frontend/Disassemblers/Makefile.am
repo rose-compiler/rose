@@ -6,8 +6,9 @@ INCLUDES = $(ROSE_INCLUDES)
 noinst_LTLIBRARIES = libroseDisassemblers.la
 
 libroseDisassemblers_la_DEPENDENCIES =
-libroseDisassemblers_la_SOURCES = x86Disassembler.C armDisassembler.C powerpcDisassembler.C putInstructionsIntoBasicBlocks.C disassemblers.h disassemblerCommon.C detectFunctionStarts.C
+
+libroseDisassemblers_la_SOURCES = Disassembler.C Partitioner.C
+
+include_HEADERS = Disassembler.h Partitioner.h
 
 dist_include_HEADERS =
-
-include_HEADERS =  disassemblers.h putInstructionsIntoBasicBlocks.h

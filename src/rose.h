@@ -122,8 +122,9 @@ namespace ELF{
 #include "powerpcInstructionProperties.h"
 
 // Files in src/frontend/Disassemblers
-#include "disassemblers.h"
-#include "putInstructionsIntoBasicBlocks.h"
+#include "Disassembler.h"
+#include "Partitioner.h"
+
 
 // Files in src/backend/asmUnparser
 #include "unparseAsm.h"
