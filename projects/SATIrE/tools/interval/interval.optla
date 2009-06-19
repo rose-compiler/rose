@@ -589,8 +589,12 @@ branch(exp, state, edge, isLoopBody, context) =
   let pair = eval(exp, state, context); in
   let c = interval_to_bool(pair!1!2); 
           newstate = pair!2!2; in
-  if (c = top /* || isLoopBody */) then  // GB: don't think loops are special
-    // -- We don't know for sure which edge will be taken
+  if (c = top || isLoopBody) then
+    // -- We don't know for sure which edge will be taken, or this is a loop
+    // -- condition. Given our widening operator, we must always look at the
+    // -- effects of loop conditions and "pre-widen" information on loop
+    // -- variables. See the comment block above the adjust_* functions for
+    // -- more details.
     // --print("c=top\n") 
     // --print("Maybe\n") 
     branch_condition_effects(exp, state, newstate, edge, isLoopBody, context)
@@ -610,12 +614,13 @@ branch(exp, state, edge, isLoopBody, context) =
     ;
 
 
-branch_condition_effects :: Expression, itvl_State, itvl_State, bool, bool, ContextInfo -> itvl_State;
+branch_condition_effects :: Expression, itvl_State, itvl_State, bool, bool,
+                            ContextInfo -> itvl_State;
 branch_condition_effects(exp, state, newstate, edge, isLoopBody, context) =
   // -- println("branch_condition_effects ", exp)
   if is_binary(exp) then
     if is_comparison(exp) then
-      comparison_effects(exp, state, newstate, edge, context)
+      comparison_effects(exp, state, newstate, edge, isLoopBody, context)
     else
       case exp of
         AndOp(exp1, exp2) => println("AND: ", state)
@@ -641,76 +646,87 @@ is_comparison(EqualityOp(_,_)) = true;
 is_comparison(NotEqualOp(_,_)) = true;
 is_comparison(_) = false;
 
-comparison_effects :: Expression, itvl_State, itvl_State, bool, ContextInfo
-                      -> itvl_State;
-comparison_effects(exp, oldstate, state, edge, context) =
- if !is_binary(exp) || !is_comparison(exp) then
-   println("*** comparison_effects called with non-comparison ", exp,
-           " :: ", expr_asttext(exp))
-   error("*** fatal error")
- else
- let lhsexp = binary_get_left_child(exp);
-     rhsexp = binary_get_right_child(exp); in
- let lhs = eval(lhsexp, oldstate, context)!1!2;
-     rhs = eval(rhsexp, oldstate, context)!2!2; in
- case exp of
-   LessThanOp(_, _) =>
-     if edge = true then
-       less_effects(state, lhsexp, rhsexp, context)
-     else
-       less_or_equal_effects(state, rhsexp, lhsexp, context)
-     ;
-   LessOrEqualOp(_, _) =>
-     if edge = true then
-       less_or_equal_effects(state, lhsexp, rhsexp, context)
-     else
-       less_effects(state, rhsexp, lhsexp, context)
-     ;
-   GreaterThanOp(_, _) =>
-     if edge = true then
-       less_effects(state, rhsexp, lhsexp, context)
-     else
-       less_or_equal_effects(state, lhsexp, rhsexp, context)
-     ;
-   GreaterOrEqualOp(_, _) =>
-     if edge = true then
-       less_or_equal_effects(state, rhsexp, lhsexp, context)
-     else
-       less_effects(state, lhsexp, rhsexp, context)
-     ;
-   EqualityOp(_, _) =>
-     if edge = true then
-       equal_effects(state, lhsexp, rhsexp, context)
-     else
-       state
-     ;
-   NotEqualOp(_, _) =>
-     if edge = true then
-       state
-     else
-       equal_effects(state, lhsexp, rhsexp, context)
-     ;
- endcase;
+comparison_effects :: Expression, itvl_State, itvl_State, bool, bool,
+                      ContextInfo -> itvl_State;
+comparison_effects(exp, oldstate, state, edge, isLoopBody, context) =
+  if !is_binary(exp) || !is_comparison(exp) then
+    println("*** comparison_effects called with non-comparison ", exp,
+            " :: ", expr_asttext(exp))
+    error("*** fatal error")
+  else
+  let lhsexp = binary_get_left_child(exp);
+      rhsexp = binary_get_right_child(exp); in
+  let newstate =
+    case exp of
+      LessThanOp(_, _) =>
+        if edge = true then
+          less_effects(state, lhsexp, rhsexp, isLoopBody, context)
+        else
+          less_or_equal_effects(state, rhsexp, lhsexp, isLoopBody, context)
+        ;
+      LessOrEqualOp(_, _) =>
+        if edge = true then
+          less_or_equal_effects(state, lhsexp, rhsexp, isLoopBody, context)
+        else
+          less_effects(state, rhsexp, lhsexp, isLoopBody, context)
+        ;
+      GreaterThanOp(_, _) =>
+        if edge = true then
+          less_effects(state, rhsexp, lhsexp, isLoopBody, context)
+        else
+          less_or_equal_effects(state, lhsexp, rhsexp, isLoopBody, context)
+        ;
+      GreaterOrEqualOp(_, _) =>
+        if edge = true then
+          less_or_equal_effects(state, rhsexp, lhsexp, isLoopBody, context)
+        else
+        less_effects(state, lhsexp, rhsexp, isLoopBody, context)
+      ;
+      EqualityOp(_, _) =>
+        if edge = true then
+          equal_effects(state, lhsexp, rhsexp, isLoopBody, context)
+        else
+          state
+        ;
+      NotEqualOp(_, _) =>
+        if edge = true then
+          state
+        else
+          equal_effects(state, lhsexp, rhsexp, isLoopBody, context)
+        ;
+    endcase;
+  // -- Now, in newstate, we have the effects of evaluating the comparison
+  // -- operator. We need to look at its operands again to possibly adjust
+  // -- variable values. For example, in  while (10 > i++)  the comparison
+  // -- first restricts i to some range with upper bound 9, but after the
+  // -- increment, the upper bound for i is actually 10!
+  // -- Does this actually make too many updates? newstate comes from state,
+  // -- which itself comes from oldstate. Investigate this if a critical case
+  // -- comes up.
+  in eval(lhsexp, eval(rhsexp, newstate, context)!2!2, context)!2!2;
 
-less_effects :: itvl_State, Expression, Expression, ContextInfo -> itvl_State;
-less_effects(state, lhsexp, rhsexp, context) =
+less_effects :: itvl_State, Expression, Expression, bool, ContextInfo
+                -> itvl_State;
+less_effects(state, lhsexp, rhsexp, isLoopBody, context) =
   let lhs = eval(lhsexp, state, context)!1!2;
       rhs = eval(rhsexp, state, context)!1!2;
   in  cond_update(
-        cond_update(state, lhsexp, adjust_max_plus(lhs, rhs, -1), context),
-                           rhsexp, adjust_min_plus(rhs, lhs,  1), context);
+        cond_update(state,
+            lhsexp, adjust_max_plus(lhs, rhs, -1, isLoopBody), context),
+            rhsexp, adjust_min_plus(rhs, lhs,  1, isLoopBody), context);
 
-less_or_equal_effects :: itvl_State, Expression, Expression, ContextInfo
+less_or_equal_effects :: itvl_State, Expression, Expression, bool, ContextInfo
                          -> itvl_State;
-less_or_equal_effects(state, lhsexp, rhsexp, context) =
+less_or_equal_effects(state, lhsexp, rhsexp, isLoopBody, context) =
   let lhs = eval(lhsexp, state, context)!1!2;
       rhs = eval(rhsexp, state, context)!1!2;
   in  cond_update(
-        cond_update(state, lhsexp, adjust_max(lhs, rhs), context),
-                           rhsexp, adjust_min(rhs, lhs), context);
+        cond_update(state, lhsexp, adjust_max(lhs, rhs, isLoopBody), context),
+                           rhsexp, adjust_min(rhs, lhs, isLoopBody), context);
 
-equal_effects :: itvl_State, Expression, Expression, ContextInfo -> itvl_State;
-equal_effects(state, lhsexp, rhsexp, context) =
+equal_effects :: itvl_State, Expression, Expression, bool, ContextInfo
+                 -> itvl_State;
+equal_effects(state, lhsexp, rhsexp, isLoopBody, context) =
   let lhs = eval(lhsexp, state, context)!1!2;
       rhs = eval(rhsexp, state, context)!1!2; in
   let intersection = intersect_itvls(lhs, rhs);
@@ -721,34 +737,52 @@ equal_effects(state, lhsexp, rhsexp, context) =
 // -- cond_update: Update a state with new value for the object(s)
 // -- represented by the expression, if any; if the expression does not
 // -- refer to any object(s), nothing is changed.
-cond_update :: itvl_State, Expression, itvl_Interval, ContextInfo -> itvl_State;
+cond_update :: itvl_State, Expression, itvl_Interval, ContextInfo
+               -> itvl_State;
 cond_update(state, exp, value, context) =
   if exprid_has_location(expr_exprid(exp)) then
      updatestate(state, exp, value, context)!2!2
   else
      state;
 
+// -- adjust_*: update some portion of some interval, possibly with an
+// -- offset. This family of functions takes the isLoopBody flag because we
+// -- treat "if" conditions differently from loop conditions. The arcane
+// -- reason is the following: Consider a mapping  i->[0,2], j->[1,5]  and a
+// -- branch statement  if (i < j). Here, we want to propagate the
+// -- information  i->[0,2], since that's more exact than extending i's
+// -- upper limit to 5.
+// -- However, given the same mapping and the loop head  while (i < j), we
+// -- want to actually extend the interval to  i->[0,5]  if we want to keep
+// -- our current widening operator; otherwise, if i is incremented in the
+// -- loop,  widen([0,2], [0,3]) = [0,TOP]  would completely destroy our
+// -- information about i's value. Extending it to  [0,5]  right away keeps
+// -- the widening from throwing stuff away. Anyway, this is the reason to
+// -- treat loop conditions more imprecisely than if statements.
+
 // -- update the min portion of an interval
-adjust_min :: itvl_Interval, itvl_Interval -> itvl_Interval;
-adjust_min((a1, a2), (m, _)) = (intersect_max(a1, m), max(m, a2));
+adjust_min :: itvl_Interval, itvl_Interval, bool -> itvl_Interval;
+adjust_min((a1, a2), (m, _), isLoopBody) =
+  if isLoopBody then (m, max(m, a2)) else (intersect_max(a1, m), max(m, a2));
 
 // -- update the max portion of an interval
-adjust_max :: itvl_Interval, itvl_Interval -> itvl_Interval;
-adjust_max((a1, a2), (_, m)) = (min(a1, m), intersect_min(a2, m));
+adjust_max :: itvl_Interval, itvl_Interval, bool -> itvl_Interval;
+adjust_max((a1, a2), (_, m), isLoopBody) =
+  if isLoopBody then (min(a1, m), m) else (min(a1, m), intersect_min(a2, m));
 
 // -- update the min portion of an interval and add c
-adjust_min_plus :: itvl_Interval, itvl_Interval, snum -> itvl_Interval;
-adjust_min_plus((a1, a2), (m, _), c) =
-    let m1 <= m; in
-    let m2 = lift(m1+c); in
-      (intersect_max(a1, m2), max(m2, a2));
+adjust_min_plus :: itvl_Interval, itvl_Interval, snum, bool -> itvl_Interval;
+adjust_min_plus((a1, a2), (m, _), c, isLoopBody) =
+  let m1 <= m; in
+  let n = lift(m1+c); in
+    if isLoopBody then (n, max(n, a2)) else (intersect_max(a1, n), max(n, a2));
 
 // -- update the max portion of an interval and add c
-adjust_max_plus :: itvl_Interval, itvl_Interval, snum -> itvl_Interval;
-adjust_max_plus((a1, a2), (_, m), c) =
-    let m1 <= m; in
-    let m2 = lift(m1+c); in
-      (min(a1, m2), intersect_min(a2, m2));
+adjust_max_plus :: itvl_Interval, itvl_Interval, snum, bool -> itvl_Interval;
+adjust_max_plus((a1, a2), (_, m), c, isLoopBody) =
+  let m1 <= m; in
+  let n = lift(m1+c); in
+    if isLoopBody then (min(a1, n), n) else (min(a1, n), intersect_min(a2, n));
 
 
 kill_vars :: itvl_State, *VariableSymbolNT -> itvl_State;
@@ -911,8 +945,9 @@ wide(top, _) = top;
 wide(a, b) = lift(crunch(drop(a), drop(b), widen));
 
 widen((top, top), b) = b;
-widen((a1, a2), (b1, b2)) = ( if a1=b1 then a1 else top /*min(a1, b1)*/ ,
-                              if a2=b2 then a2 else top /*max(a1, b1)*/  );
+widen((a1, a2), (b1, b2)) =
+  ( if a1=b1 then a1 else top /*min(a1, b1)*/ ,
+    if a2=b2 then a2 else top /*max(a1, b1)*/  );
 
 //widen((a1, a2), (b1, b2)) = let v1 <= b1 ;
 //                                v2 <= b2 ; in 
