@@ -21,14 +21,25 @@ SgAsmPowerpcInstruction::get_successors() {
         case powerpc_bc:
         case powerpc_bca:
         case powerpc_bcl:
-        case powerpc_bcla:
+        case powerpc_bcla: {
+            /* Conditional branches: bcX BO,BI,TARGET */
+            const std::vector<SgAsmExpression*> &exprs = get_operandList()->get_operands();
+            ROSE_ASSERT(exprs.size()==3);
+            ROSE_ASSERT(isSgAsmValueExpression(exprs[2]));
+            rose_addr_t target = SageInterface::getAsmConstant(isSgAsmValueExpression(exprs[2]));
+            retval.insert(target);
+            retval.insert(get_address()+get_raw_bytes().size());
+            break;
+        }
+
         case powerpc_bcctr:
         case powerpc_bcctrl:
         case powerpc_bclr:
         case powerpc_bclrl:
-            /* Conditional branches */
+            /* Conditional branches to count register; target is unknown */
             retval.insert(get_address()+get_raw_bytes().size());
-            /*fall through*/
+            break;
+
         case powerpc_b:
         case powerpc_ba:
         case powerpc_bl:
@@ -37,7 +48,8 @@ SgAsmPowerpcInstruction::get_successors() {
             const std::vector<SgAsmExpression*> &exprs = get_operandList()->get_operands();
             ROSE_ASSERT(exprs.size()==1);
             ROSE_ASSERT(isSgAsmValueExpression(exprs[0]));
-            retval.insert(SageInterface::getAsmConstant(isSgAsmValueExpression(exprs[0])));
+            rose_addr_t target = SageInterface::getAsmConstant(isSgAsmValueExpression(exprs[0]));
+            retval.insert(target);
             break;
         }
 
