@@ -4,7 +4,7 @@ EXTRA_DIST = buffer2.bin runTest.C \
              arm-poweroff arm-ctrlaltdel arm-ctrlaltdel.ans \
 	     schulz-sample1.so schulz-sample1-p.so schulz-sample2.so schulz-sample2-p.so \
 	     runExecFormatsTest testShiftResizeSection.sh libm-2.3.6.so i686-test1.O3.bin \
-	     test_findConstants.ans
+	     test_findConstants.ans test_disassemble.ans i686-test1.O0.bin
 
 if USE_BINARY_ANALYSIS_TESTS
 
@@ -17,7 +17,7 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/binaryAnalyses/libraryIde
 ###############################################################################################################################
 
 noinst_PROGRAMS = execFormatsTest testElfStrtab testElfByteOrder testElfWordSize testElfSchulz testElfConstruct \
-	          testPeConstruct shiftResizeSection findConstants
+	          testPeConstruct shiftResizeSection findConstants disassemble
 
 # Parses an executable to produce a dump file (*.dump), an assembly file (rose_*.s), and a new executable created by unparsing
 # the AST (*.new). The *.new file is typically identical to the original executable.
@@ -62,6 +62,10 @@ shiftResizeSection_LDADD   = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_L
 # Finds constant values and propagates them across instructions
 findConstants_SOURCES = findConstants.C
 findConstants_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
+
+# Disassembles an executable according to various command-line switches.
+disassemble_SOURCES = disassemble.C
+disassemble_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
 ###############################################################################################################################
 # DEMOS
@@ -113,6 +117,11 @@ demo_shiftResizeSection: shiftResizeSection demo_testPeConstruct
 demo_findConstants: findConstants demo_shiftResizeSection
 	@echo; echo; echo "Demo for $<"; echo
 	./findConstants $(srcdir)/i686-test1.O3.bin
+
+demo_disassemble: disassemble demo_findConstants
+	@echo; echo; echo "Demo for $<"; echo
+	./disassemble --search-following --search-immediate --search-words --search-allbytes --search-unused --search-nonexe --search-deadend --search-unknown $(srcdir)/i686-test1.O0.bin
+	@echo "output has been dumped to i686-test1.O0.bin.dump"
 
 ###############################################################################################################################
 # TESTS
@@ -192,12 +201,18 @@ test_testPeConstruct.passed: testPeConstruct
 
 test_shiftResizeSection.passed: shiftResizeSection
 	$(srcdir)/testShiftResizeSection.sh $(srcdir)/arm-ctrlaltdel >arm-ctrlaltdel.ans
-	@if diff {$(srcdir),.}/arm-ctrlaltdel.ans; then :; else echo "Answer differs from expected"; exit 1; fi
+	@if diff -u {$(srcdir),.}/arm-ctrlaltdel.ans; then :; else echo "Answer differs from expected"; exit 1; fi
 	@touch $@
 
 test_findConstants.passed: findConstants
 	$(VALGRIND) ./findConstants $(srcdir)/i686-test1.O3.bin >test_findConstants.ans
-	@if diff {$(srcdir),.}/test_findConstants.ans; then :; else echo "Answer differs from expected"; exit 1; fi
+	@if diff -u {$(srcdir),.}/test_findConstants.ans; then :; else echo "Answer differs from expected"; exit 1; fi
+	@touch $@
+
+test_disassemble.passed: disassemble
+	$(VALGRIND) ./disassemble --search-following --search-immediate --search-words --no-search-allbytes --search-unused --search-nonexe --search-deadend --no-search-unknown $(srcdir)/i686-test1.O0.bin
+	@mv i686-test1.O0.bin.dump test_disassemble.ans
+	@if diff -u {$(srcdir),.}/test_disassemble.ans; then :; else echo "Answer differs from expected"; exit 1; fi
 	@touch $@
 
 ###############################################################################################################################
@@ -209,7 +224,8 @@ MOSTLYCLEANFILES = $(TEST_PASSED_TARGETS) test_testElfSchulz-{1,2}.passed \
 	a.out arm-ctrlaltdel.ans arm-ctrlaltdel.dump-{1,2,3} arm-ctrlaltdel.{new,new.new} \
 	arm-poweroff.{dump,new,new.dump,new.new} rose_arm-ctrlaltdel.{s,new.s} rose_arm-poweroff.{s,new.s} \
 	rose_schulz-sample{1,2}-p.so.s rose_schulz-sample{1,2}.so.new.s rose_schulz-sample{1,2}.so.s \
-	schulz-sample{1,2}-p.so.{dump,new} schulz-sample{1,2}.so.{dump,new,new.dump,new.new} test_findConstants.ans
+	schulz-sample{1,2}-p.so.{dump,new} schulz-sample{1,2}.so.{dump,new,new.dump,new.new} test_findConstants.ans \
+	test_disassemble.ans i686-test1.O0.bin.{dump,new} rose_i686-test1.O0.bin.s
 
 ###############################################################################################################################
 # The older part of this makefile...
