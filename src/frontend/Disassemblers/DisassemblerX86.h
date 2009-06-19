@@ -3,61 +3,416 @@
 #ifndef ROSE_DISASSEMBLER_X86_H
 #define ROSE_DISASSEMBLER_X86_H
 
-/* These namespace declarations copied from the old assemblers.h and should not be used anymore except by the new
- * DisassemblerX86 class.  They will eventually be incorporated into that class as private methods.  The only one that's
- * probably used much is X86Disassembler::disassemble(), which has been replaced by DisassemblerX86::disassembleOne().
- * [RPM 2008-06-08] */
-namespace X86Disassembler {
-    struct Parameters {
-        uint64_t ip;
-        X86InstructionSize insnSize;
-        Parameters(uint64_t ip = 0, X86InstructionSize insnSize = x86_insnsize_32): ip(ip), insnSize(insnSize) {}
-    };
-
-    // Exceptions
-    struct OverflowOfInstructionVector {};
-    struct BadInstruction {};
-
-    SgAsmx86Instruction *disassemble(const Parameters& p, const uint8_t* const insn, const uint64_t insnSize,
-                                     size_t positionInVector, std::set<uint64_t>* knownSuccessorsReturn = 0);
-    void disassembleFile(SgAsmFile* f);
-    bool doesBBStartFunction(SgAsmBlock* bb, bool use64bit);
-
-    inline SgAsmType* sizeToType(X86InstructionSize s) {
-        switch (s) {
-            case x86_insnsize_none: return NULL;
-            case x86_insnsize_16: return SgAsmTypeWord::createType();
-            case x86_insnsize_32: return SgAsmTypeDoubleWord::createType();
-            case x86_insnsize_64: return SgAsmTypeQuadWord::createType();
-            default: abort();;
-        }
-    }
-
-    inline X86PositionInRegister sizeToPos(X86InstructionSize s) {
-        switch (s) {
-            case x86_insnsize_none: return x86_regpos_all;
-            case x86_insnsize_16: return x86_regpos_word;
-            case x86_insnsize_32: return x86_regpos_dword;
-            case x86_insnsize_64: return x86_regpos_qword;
-            default: abort();;
-        }
-    }
-}
-
-
 /** Disassembler for the x86 architecture.  This class is usually instantiated indirectly through Disassembler::create(). Most
- *  of the useful disassembly methods can be found in the superclass. */
+ *  of the useful disassembly methods can be found in the superclass. There's really not much reason to use this class
+ *  directly or to call any of these methods directly. */
 class DisassemblerX86: public Disassembler {
+
+
+    /*========================================================================================================================
+     * Public methods
+     *========================================================================================================================*/
 public:
-    DisassemblerX86() {} /* Such an object can only be used as a factory for Disassembler::register_subclass() */
+
+    /** An object created by the default constructor can only be used as a factory, passed to the
+     *  Disassembler::register_subclass method. */
+    DisassemblerX86() {}
+
+    /** Constructs a disassembler whose instruction size is determined from the supplied file header. End users don't normally
+     *  call this, but rather the Disassembler::create class method. */
     DisassemblerX86(SgAsmGenericHeader *fhdr) {init(fhdr);}
+
     virtual ~DisassemblerX86() {}
+
+    /** See Disassembler::can_disassemble */
     virtual Disassembler *can_disassemble(SgAsmGenericHeader*) const;
+
+    /** See Disassembler::disassembleOne */
     virtual SgAsmInstruction *disassembleOne(const unsigned char *buf, const RvaFileMap &map, rose_addr_t start_va,
                                              AddressSet *successors=NULL);
+
+    /** Make an unknown instruction from an exception. */
+    virtual SgAsmInstruction *make_unknown_instruction(const Exception&);
+
+
+
+
+    /*========================================================================================================================
+     * Data types
+     *========================================================================================================================*/
 private:
-    void init(SgAsmGenericHeader*);             /* initialize instances */
-    X86Disassembler::Parameters params;
+
+    /** Same as Disassembler::Exception except with a different constructor for ease of use in DisassemblerX86. */
+    class ExceptionX86: public Exception {
+    public:
+        ExceptionX86(const std::string &mesg, const DisassemblerX86 *d)
+            :Exception(mesg, d->ip, SgUnsignedCharList(d->insnbuf, d->insnbuf+d->insnbufat), 8*d->insnbufat)
+            {}
+    };
+
+    /** ModR/M settings that create register expressions (or rmReturnNull for no register) */
+    enum RegisterMode {
+        rmLegacyByte, rmRexByte, rmWord, rmDWord, rmQWord, rmSegment, rmST, rmMM, rmXMM, rmControl, rmDebug, rmReturnNull
+    };
+
+    /** Kinds of repeat prefixes; see repeatPrefix data member */
+    enum RepeatPrefix {rpNone, rpRepne, rpRepe};
+
+    /* MMX registers? See mmPrefix method */
+    enum MMPrefix {mmNone, mmF3, mm66, mmF2};
+
+
+
+    /*========================================================================================================================
+     * Methods for reading bytes of the instruction.  These keep track of how much has been read, which in turn is used by
+     * the makeInstruction method.
+     *========================================================================================================================*/
+private:
+
+    /** Returns the next byte of the instruction by looking at the insnbuf, insnbufsz, and insnbufat data members that were
+     *  set by startInstruction(). Throws an exception for short reads or if we've read more than 15 bytes. The longest
+     *  possible x86 instruction is 15 bytes. */
+    uint8_t getByte();
+
+    /** Returns the next two-byte, little endian word of the instruction by looking at the insnbuf, insnbufsz, and insnbufat
+     *  data members that were set by startInstruction(). Throws an exception for short reads or if we've read more than 15
+     *  bytes. The longest possible x86 instruction is 15 bytes. */
+    uint16_t getWord();
+
+    /** Returns the next four-byte, little endian double word of the instruction by looking at the insnbuf, insnbufsz, and
+     *  insnbufat data members that were set by startInstruction(). Throws an exception for short reads or if we've read more
+     *  than 15 bytes. The longest possible x86 instruction is 15 bytes. */
+    uint32_t getDWord();
+
+    /** Returns the next eight-byte, little endian quad word of the instruction by looking at the insnbuf, insnbufsz, and
+     *  insnbufat data members that were set by startInstruction(). Throws an exception for short reads or if we've read more
+     *  than 15 bytes. The longest possible x86 instruction is 15 bytes. */
+    uint64_t getQWord();
+
+
+
+
+    /*========================================================================================================================
+     * Miscellaneous helper methods
+     *========================================================================================================================*/
+private:
+
+    /** Constructs a register reference expression for the current data segment based on whether a segment override prefix has
+     *  been encountered. */
+    SgAsmExpression *currentDataSegment() const;
+
+    /** Returns the size of instruction addresses. The effective address size is normally based on the default instruction
+     *  size. However, if the disassembler encounters the 0x67 instruction prefix ("Address-size Override Prefix") as
+     *  indicated by the addressSizeOverride data member being set, then other sizes are used. See pattent 6571330. */
+    X86InstructionSize effectiveAddressSize() const;
+
+    /** Returns the register mode for the instruction's effective operand size. */
+    RegisterMode effectiveOperandMode() const {
+        return sizeToMode(effectiveOperandSize());
+    }
+
+    /** Returns the size of the operands. The operand size is normally based on the default instruction size; however, if the
+     *  disassembler encounters the 0x66 instruction prefix ("Precision-size Override Prefix") as indicated by the
+     *  operandSizeOverride data member being set, then other sizes are used. See pattent 6571330. */
+    X86InstructionSize effectiveOperandSize() const;
+
+    /** Returns the data type for the instruction's effective operand size. */
+    SgAsmType *effectiveOperandType() const {
+        return sizeToType(effectiveOperandSize());
+    }
+
+    /** Returns true if we're disassembling 64-bit code. */
+    bool longMode() const {
+        return insnSize == x86_insnsize_64;
+    }
+
+    /* FIXME: documentation? */
+    MMPrefix mmPrefix() const;
+
+    /** Throws an exception if the instruction being disassembled is not valid for 64-bit mode. */
+    void not64() const {
+        if (longMode())
+            throw ExceptionX86("not valid for 64-bit code", this);
+    }
+
+    /** Sets the rexPresent flag along with rexW, rexR, rexX, and/or rexB based on the instruction prefix, which should be a
+     *  value between 0x40 and 0x4f, inclusive. */
+    void setRex(uint8_t prefix);
+
+    /** Returns the register mode for the specified instruction size. */
+    static RegisterMode sizeToMode(X86InstructionSize);
+
+    /** Returns a register position for an instruction size.  For instance, x86_regpos_dword is returned for 32-bit
+     *  instructions. */
+    static X86PositionInRegister sizeToPos(X86InstructionSize s);
+
+    /** Returns a data type associated with an instruction size. For instance, a 32-bit instruction returns the type for a
+     *  double word. */
+    static SgAsmType *sizeToType(X86InstructionSize s);
+
+
+
+    /*========================================================================================================================
+     * Methods that construct something. (Their names all start with "make".)
+     *========================================================================================================================*/
+private:
+
+    /** Constructs an expression for the specified address size. */
+    SgAsmExpression *makeAddrSizeValue(int64_t val);
+
+    /** Creates an instruction with optional operands. Many of the instruction attributes come from the current state of this
+     *  disassembler object (see the instruction-related data members below). In order that the new instruction contains the
+     *  correct number of raw instruction bytes (p_raw_bytes) it should be called after all the instruction bytes have been
+     *  read, otherwise remember to call set_raw_bytes() explicitly. */
+    SgAsmx86Instruction *makeInstruction(X86InstructionKind kind, const std::string &mnemonic,
+                                         SgAsmExpression *op1=NULL, SgAsmExpression *op2=NULL,
+                                         SgAsmExpression *op3=NULL, SgAsmExpression *op4=NULL);
+
+    /** Constructs a register reference expression for the instruction pointer register. */
+    SgAsmx86RegisterReferenceExpression *makeIP();
+
+    /* FIXME: documentation? */
+    SgAsmx86RegisterReferenceExpression *makeOperandRegisterByte(bool rexExtension, uint8_t registerNumber);
+
+    /* FIXME: documentation? */
+    SgAsmx86RegisterReferenceExpression *makeOperandRegisterFull(bool rexExtension, uint8_t registerNumber);
+
+    /** Constructs a register reference expression. The @p registerType is only used for vector registers that can have more
+     *  than one type. */
+    static SgAsmx86RegisterReferenceExpression *makeRegister(uint8_t fullRegisterNumber, RegisterMode,
+                                                             SgAsmType *registerType=NULL);
+
+    /* FIXME: documentation? */
+    SgAsmx86RegisterReferenceExpression *makeRegisterEffective(uint8_t fullRegisterNumber) {
+        return makeRegister(fullRegisterNumber, effectiveOperandMode());
+    }
+
+    /* FIXME: documentation? */
+    SgAsmx86RegisterReferenceExpression *makeRegisterEffective(bool rexExtension, uint8_t registerNumber) {
+        return makeRegister(registerNumber + (rexExtension ? 8 : 0), effectiveOperandMode());
+    }
+
+    /** Constructs a register reference expression for a segment register. */
+    static SgAsmExpression *makeSegmentRegister(X86SegmentRegister so, bool insn64);
+
+
+
+    /*========================================================================================================================
+     * Methods for operating on the ModR/M byte.
+     *========================================================================================================================*/
+private:
+
+    /** Decodes the ModR/M byte of an instruction. The ModR/M byte is used to carry operand information when the first byte
+     *  (after prefixes) cannot do so.  It consists of three parts:
+     *
+     *     * Bits 6-7: the "Mod" (i.e., mode) bits. They are saved in the DisassemblerX86::modeField data member.  A mode of
+     *       3 indicates that the "M" bits designate a register; otherwise the M bits are used for memory coding.
+     *
+     *     * Bits 3-5: the "R" (i.e., register) bits, saved in the DisassemblerX86::regField data member.
+     *
+     *     * Bits 0-2: the "M" (i.e., memory) bits, saved in the DisassemblerX86::rmField data member. These are used to
+     *       specify or help specify a memory location except when the mode bits have the value 3.
+     *
+     * The @p regMode is the register kind for the "R" bits and is used when constructing the DisassemblerX86::reg data member.
+     * The @p rmMode is the register kind for the "RM" field when the mode refers to a register. */
+    void getModRegRM(RegisterMode regMode, RegisterMode rmMode, SgAsmType *t, SgAsmType *tForReg = NULL);
+
+    /** Decodes the ModR/M byte to a memory reference expression. See makeModrmNormal(). */
+    SgAsmMemoryReferenceExpression *decodeModrmMemory();
+
+    /** If ModR/M is a memory reference, fill in its type; otherwise, make a register with the appropriate mode and put it
+     *  into the modrm data member. */
+    void fillInModRM(RegisterMode rmMode, SgAsmType *t);
+
+    /** Builds the register or memory reference expression for the ModR/M byte. See getModRegRM(). */
+    SgAsmExpression *makeModrmNormal(RegisterMode, SgAsmType *mrType);
+
+    /** Builds the register reference expression for the ModR/M byte. See getModRegRM(). The @p mrType is only used for vector
+     *  registers. */
+    SgAsmx86RegisterReferenceExpression *makeModrmRegister(RegisterMode, SgAsmType* mrType=NULL);
+
+    /** Throw an exceptions if the instruction requires the "Mod" part of the ModR/M byte to have the value 3. */
+    void requireMemory() const {
+        ROSE_ASSERT(modregrmByteSet);
+        if (modeField == 3)
+            throw ExceptionX86("requires memory", this);
+    }
+
+
+
+    /*========================================================================================================================
+     * Methods that construct an SgAsmExpression for an immediate operand.
+     *========================================================================================================================*/
+private:
+
+    SgAsmExpression *getImmByte() {
+        return SageBuilderAsm::makeByteValue(getByte());
+    }
+
+    SgAsmExpression *getImmWord() {
+        return SageBuilderAsm::makeWordValue(getWord());
+    }
+
+    SgAsmExpression* getImmDWord() {
+        return SageBuilderAsm::makeDWordValue(getDWord());
+    }
+
+    SgAsmExpression* getImmQWord() {
+        return SageBuilderAsm::makeQWordValue(getQWord());
+    }
+
+    SgAsmExpression *getImmForAddr();
+
+    SgAsmExpression *getImmIv();
+
+    SgAsmExpression *getImmJz();
+
+    SgAsmExpression *getImmByteAsIv();
+
+    SgAsmExpression *getImmIzAsIv();
+
+    SgAsmExpression *getImmJb();
+
+
+
+    /*========================================================================================================================
+     * Main disassembly functions, each generally containing a huge "switch" statement based on one of the opcode bytes.
+     *========================================================================================================================*/
+private:
+
+    /** Disassembles an instruction. This is the workhorse: it reads and decodes bytes of the instruction in a huge switch
+     *  statement. */
+    SgAsmx86Instruction *disassemble();
+
+    /** Disassemble an instruction following the 0x0f prefix. */
+    SgAsmx86Instruction *decodeOpcode0F();
+
+    /** Disassemble SSE3 instructions. */
+    SgAsmx86Instruction *decodeOpcode0F38();
+
+    /** Disassembles an instruction with primary opcode 0xd8 */
+    SgAsmx86Instruction *decodeX87InstructionD8();
+
+    /** Disassembles an instruction with primary opcode 0xd9 */
+    SgAsmx86Instruction *decodeX87InstructionD9();
+
+    /** Disassembles an instruction with primary opcode 0xda */
+    SgAsmx86Instruction *decodeX87InstructionDA();
+
+    /** Disassembles an instruction with primary opcode 0xdb */
+    SgAsmx86Instruction *decodeX87InstructionDB();
+
+    /** Disassembles an instruction with primary opcode 0xdc */
+    SgAsmx86Instruction *decodeX87InstructionDC();
+
+    /** Disassembles an instruction with primary opcode 0xdd */
+    SgAsmx86Instruction *decodeX87InstructionDD();
+
+    /** Disassembles an instruction with primary opcode 0xde */
+    SgAsmx86Instruction *decodeX87InstructionDE();
+
+    /** Disassembles an instruction with primary opcode 0xdf */
+    SgAsmx86Instruction *decodeX87InstructionDF();
+
+    /** Disassembles ADD, OR, ADC, SBB, AND, SUB, XOR, CMP. */
+    SgAsmx86Instruction *decodeGroup1(SgAsmExpression *imm);
+
+    /** Disassembles POP */
+    SgAsmx86Instruction *decodeGroup1a();
+
+    /** Disassembles ROL, ROR, RCL, RCR, SHL, SHR, SHL, SAR */
+    SgAsmx86Instruction *decodeGroup2(SgAsmExpression *count);
+
+    /** Disassembles TEST, NOT, NEG, MUL, IMUL, DIV, IDIV */
+    SgAsmx86Instruction *decodeGroup3(SgAsmExpression *immMaybe);
+
+    /** Disassembles INC, DEC */
+    SgAsmx86Instruction *decodeGroup4();
+
+    /** Disassembles INC, DEC, CALL, FARCALL, JMP, FARJMP, PUSH */
+    SgAsmx86Instruction *decodeGroup5();
+
+    /** Disassembles SLDT, STR, LLDT, LTR, VERR, VERW */
+    SgAsmx86Instruction *decodeGroup6();
+
+    /** Disassembles VMCALL, VMLAUNCH, VMRESUME, VMXOFF, SGDT, MONITOR, MWAIT, SIDT, SGDT, XGETBV, XSETBV, LGDT, VMRUN,
+     *  VMMCALL, VMLOAD, VMSAVE, STGI, CLGI, SKINIT, INVLPGA, LIDT, SMSW, LMSW, SWAPGS, RDTSCP, INVLPG */
+    SgAsmx86Instruction *decodeGroup7();
+
+    /** Disassembles BT, BTS, BTR, BTC */
+    SgAsmx86Instruction *decodeGroup8(SgAsmExpression *imm);
+
+    /** Disassembles MOV */
+    SgAsmx86Instruction *decodeGroup11(SgAsmExpression *imm);
+
+    /** Disassembles FXSAVE, FXRSTOR, LDMXCSR, STMXCSR, XSAVE, LFENCE, XRSTOR, MFENCE, SFENCE, CLFLUSH */
+    SgAsmx86Instruction *decodeGroup15();
+
+    /** Disassembles PREFETCHNTA, PREFETCH0, PREFETCH1, PREFETCH2, PREFETCH */
+    SgAsmx86Instruction *decodeGroup16();
+
+    /** Disassembles PREFETCH, PREFETCHW */
+    SgAsmx86Instruction *decodeGroupP();
+
+
+
+    /*========================================================================================================================
+     * Data members and their initialization.
+     *========================================================================================================================*/
+
+    /** Initialize instances of this class. Called by constructor. */
+    void init(SgAsmGenericHeader*);
+
+    /** Resets disassembler state to beginning of an instruction. */
+    void startInstruction(rose_addr_t start_va, const uint8_t *buf, size_t bufsz) {
+        ip = start_va;
+        insnbuf = buf;
+        insnbufsz = bufsz;
+        insnbufat = 0;
+
+        /* Prefix flags */
+        segOverride = x86_segreg_none;
+        branchPrediction = x86_branch_prediction_none;
+        branchPredictionEnabled = false;
+        rexPresent = rexW = rexR = rexX = rexB = false;
+        sizeMustBe64Bit = false;
+        operandSizeOverride = false;
+        addressSizeOverride = false;
+        lock = false;
+        repeatPrefix = rpNone;
+        modregrmByteSet = false;
+        modregrmByte = modeField = regField = rmField = 0; /*arbitrary since modregrmByteSet is false*/
+        modrm = reg = NULL;
+        isUnconditionalJump = false;
+    }
+
+    /* Per-disassembler settings; see init() */
+    X86InstructionSize insnSize;                /* default size of instructions, based on architecture; see init() */
+
+    /* Per-instruction settings; see startInstruction() */
+    uint64_t ip;                                /**< Virtual address for start of instruction */
+    const uint8_t *insnbuf;                     /**< Buffer containing bytes of instruction to be disassembled */
+    size_t insnbufsz;                           /**< Number of bytes pointed to by insnbuf data member */
+    size_t insnbufat;                           /**< Index of next byte to be read from insnbuf */
+
+    /* Temporary flags set by the instruction; initialized by startInstruction() */
+    X86SegmentRegister segOverride;             /**< Set to other than x86_segreg_none by 0x26,0x2e,0x36,0x3e,0x64,0x65 prefixes */
+    X86BranchPrediction branchPrediction;       /*FIXME: this seems to set only to x86_branch_prediction_true [RPM 2009-06-16] */
+    bool branchPredictionEnabled;
+    bool rexPresent, rexW, rexR, rexX, rexB;    /**< Set by 0x40-0x4f prefixes; extended registers present; see setRex() */
+    bool sizeMustBe64Bit;                       /**< Set if effective operand size must be 64 bits. */
+    bool operandSizeOverride;                   /**< Set by the 0x66 prefix; used by effectiveOperandSize() and mmPrefix() */
+    bool addressSizeOverride;                   /**< Set by the 0x67 prefix; used by effectiveAddressSize() */
+    bool lock;                                  /**< Set by the 0xf0 prefix */
+    RepeatPrefix repeatPrefix;                  /**< Set by 0xf2 (repne) and 0xf3 (repe) prefixes */
+    bool modregrmByteSet;                       /**< True if modregrmByte is initialized */
+    uint8_t modregrmByte;                       /**< Set by instructions that use ModR/M when the ModR/M byte is read */
+    uint8_t modeField;                          /**< Value (0-3) of high-order two bits of modregrmByte; see getModRegRM() */
+    uint8_t regField;                           /**< Value (0-7) of bits 3-5 inclusive of modregrmByte; see getModRegRM() */
+    uint8_t rmField;                            /**< Value (0-7) of bits 0-3 inclusive of modregrmByte; see getModRegRM() */
+    SgAsmExpression *modrm;                     /**< Register or memory ref expr built from modregrmByte; see getModRegRM() */
+    SgAsmExpression *reg;                       /**< Register reference expression built from modregrmByte; see getModRegRM() */
+    bool isUnconditionalJump;                   /**< True for jmp, farjmp, ret, retf, iret, and hlt */
 };
 
 #endif
