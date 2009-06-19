@@ -57,7 +57,6 @@ FunctionEntry(_), _:
 
 ExprStatement(exp), _:
   if @ != bot then
-    
     let state = eval(exp, @, context)!2!2 ; in
       // --print("\neval => ") print(state) print("\n") 
       state
@@ -271,7 +270,9 @@ binary(left, right, exp, state, context) =
     // -- If this is a plain assignment operation, update the state without
     // -- regard for the old value of the lhs.
     AssignOp(_, _) => // --println("ASSIGNOP: ", left, "=", rr!1!2, " in state ", rr!2!2, " ...")
-      updatestate(ls, left, if bad(rlifted) then top else rlifted, context);
+      updatestate(ls, left,
+                  if rlifted = top || rlifted = bot then top else rlifted,
+                  context);
 
     // -- PntrArrRefExp is special in that we can also derive some
     // -- information if not all operands have known interval values.
@@ -284,6 +285,12 @@ binary(left, right, exp, state, context) =
       in  let result = (merged_var_values(s2, syms), s2);
       in  // println("arr ", exp, " result: ", result)
           result;
+
+    // -- special handling for additive operators
+    AddOp(_, _)      => ((liftplus(llifted!1!2, rlifted!1!2),
+                          liftplus(llifted!2!2, rlifted!2!2)), ls);
+    SubtractOp(_, _) => ((liftminus(llifted!1!2, rlifted!2!2),
+                          liftminus(llifted!2!2, rlifted!1!2)), ls);
 
     // -- plain arithmetic, logical, comparison operators
     _ => 
@@ -327,8 +334,6 @@ binary(left, right, exp, state, context) =
           if !pointerp && r1 >  l2 then (duplift(0), ls) else
           dontknow  ;
 
-        AddOp(_, _)     => (ltup(l1 + r1, l2 + r2), ls);
-        SubtractOp(_, _)=> (ltup(l1 - r2, l2 - r1), ls);
         MultiplyOp(_, _)=> (ltup(mini(l1*r1, l1*r2), maxi(l2*r1, l2*r2)), ls);
         DivideOp(_, _)  => if r1 != 0 && r2 != 0 then
                               (ltup(mini(l1/r1, l1/r2),
@@ -375,41 +380,50 @@ unary(child, exp, state, context) =
                              let l = exprid_location_cs(id, context); in
                              let syms = location_varsyms(l);
                              in  (merged_var_values(es, syms), es);
-
+      // -- special handling for additive unary operators
+      MinusMinusOp(_) => if unary_is_prefix(exp) then
+                            updatestate(es, child,
+                                        (liftminus(er!1!2, lift(1)),
+                                         liftminus(er!2!2, lift(1))),
+                                        context)
+                         else
+                            let st = updatestate(es, child,
+                                                 (liftminus(er!1!2, lift(1)),
+                                                  liftminus(er!2!2, lift(1))),
+                                                 context);
+                            in  (er, st!2!2);  // -- old value, new state
+      PlusPlusOp(_)   => if unary_is_prefix(exp) then
+                            updatestate(es, child,
+                                        (liftplus(er!1!2, lift(1)),
+                                         liftplus(er!2!2, lift(1))),
+                                        context)
+                         else
+                            let st = updatestate(es, child,
+                                                 (liftplus(er!1!2, lift(1)),
+                                                  liftplus(er!2!2, lift(1))),
+                                                 context);
+                            in  (er, st!2!2);  // -- old value, new state
+      MinusOp(_)    => ((liftminus(lift(0), er!2!2),
+                         liftminus(lift(0), er!1!2)), es);
+      UnaryAddOp(_) => (er, es);
     // -- otherwise, see if this is some arithmetic node
       _ =>
     // -- if child node is not analyzable, bail out
-    if bad(er) then (top, es) else // BUG!
-       let e1 <= er!1!2; e2 <= er!2!2; in
-      case exp of
-        MinusOp(_)    => (ltup(-e2, -e1), es);
-        UnaryAddOp(_) => (ltup( e1,  e2), es);
-        NotOp(_)      => (ltup(bool_int(e2 = 0), bool_int(e1 = 0)), es);
-        CastExp(_, _) => eval(child, es, context);
-        // -- the following are only correct for prefix -- and ++
-        MinusMinusOp(_) => if unary_is_prefix(exp) then
-                              updatestate(es, child, ltup(e1-1, e2-1), context)
-                           else
-                              let st = updatestate(es, child,
-                                                   ltup(e1-1, e2-1), context);
-                              in  (er, st!2!2);  // -- old value, new state
-        PlusPlusOp(_)   => if unary_is_prefix(exp) then
-                              updatestate(es, child, ltup(e1+1, e2+1), context)
-                           else
-                              let st = updatestate(es, child,
-                                                   ltup(e1+1, e2+1), context);
-                              in  (er, st!2!2);  // -- old value, new state
-        // -- an address-of operation does not yield a useful value; ignore it
-        // -- here, the pointer analysis knows how to handle it; however, we
-        // -- use state es to reflect possible side effects of evaluating
-        // -- the operand
-        AddressOfOp(_)  => (top, es);
+      if bad(er) then (top, es) else // BUG!
+      let e1 <= er!1!2; e2 <= er!2!2; in
+        case exp of
+          NotOp(_)      => (ltup(bool_int(e2 = 0), bool_int(e1 = 0)), es);
+          CastExp(_, _) => eval(child, es, context);
+          // -- an address-of operation does not yield a useful value;
+          // -- ignore it here, the pointer analysis knows how to handle it;
+          // -- however, we use state es to reflect possible side effects of
+          // -- evaluating the operand
+          AddressOfOp(_)  => (top, es);
+          BitComplementOp(_) => (complement(e1, e2), es);
 
-        BitComplementOp(_) => (complement(e1, e2), es);
-  
-        _ => print("unsupported unary: ") print(exp) print("\n") 
-             (top, lift([-> top]));
-      endcase;
+          _ => print("unsupported unary: ") print(exp) print("\n")
+               (top, lift([-> top]));
+        endcase;
     endcase
   ;
 
@@ -530,36 +544,48 @@ op_assign_effects :: itvl_State, Expression, itvl_Interval, itvl_Interval,
                      ContextInfo -> itvl_IntervalStatePair;
 op_assign_effects(state, exp, llifted, rlifted, context) =
   let left = binary_get_left_child(exp); in
-  if bad(llifted) || bad(rlifted) then
-    updatestate(state, left, top, context)
-  else
-    let r1 <= rlifted!1!2; r2 <= rlifted!2!2;
-        l1 <= llifted!1!2; l2 <= llifted!2!2;
-    in case exp of
-      PlusAssignOp(_, _)  =>
-          updatestate(state, left, ltup(l1 + r1, l2 + r2), context);
-      MinusAssignOp(_, _) =>
-          updatestate(state, left, ltup(l1 - r2, l2 - r1), context);
-      MultAssignOp(_, _)  =>
-          updatestate(state, left, ltup(mini(l1*r1, l1*r2),
-                                        maxi(l2*r1, l2*r2)), context);
-      DivAssignOp(_, _)   =>
-          updatestate(state, left, ltup(mini(l1/r1, l1/r2),
-                                        maxi(l2/r1, l2/r2)), context);
-      ModAssignOp(_, _)   =>
-          updatestate(state, left, ltup(0, r2), context);
-      LshiftAssignOp(_, _)=>
-          updatestate(state, left, ltup(l1<<unum(r1), l2<<unum(r2)), context);
-      RshiftAssignOp(_, _)=>
-          updatestate(state, left, ltup(l1>>unum(r2), l2>>unum(r1)), context);
-      IorAssignOp(_, _)   =>
-          updatestate(state, left, ltup(l1 | r1, l2 | r2), context);
-      AndAssignOp(_, _)   =>
-          updatestate(state, left, and(l1, l2, r1, r2), context);
-      XorAssignOp(_, _)   =>
-          updatestate(state, left, xor(l1, l2, r1, r2), context);
-      _ => error("unexpected assign-op expression");
-    endcase;
+  case exp of
+  // -- We have special lifted arithmetic for + and -, which means that we
+  // -- can be more precise here than if we required all four involved
+  // -- values to be known.
+    PlusAssignOp(_, _)  =>
+        updatestate(state, left,
+                    (liftplus(llifted!1!2, rlifted!1!2),
+                     liftplus(llifted!2!2, rlifted!2!2)),
+                    context);
+    MinusAssignOp(_, _) =>
+        updatestate(state, left,
+                    (liftminus(llifted!1!2, rlifted!2!2),
+                     liftminus(llifted!2!2, rlifted!1!2)),
+                    context);
+    _ =>
+    if bad(llifted) || bad(rlifted) then
+      updatestate(state, left, top, context)
+    else
+      let r1 <= rlifted!1!2; r2 <= rlifted!2!2;
+          l1 <= llifted!1!2; l2 <= llifted!2!2;
+      in case exp of
+        MultAssignOp(_, _)  =>
+            updatestate(state, left, ltup(mini(l1*r1, l1*r2),
+                                          maxi(l2*r1, l2*r2)), context);
+        DivAssignOp(_, _)   =>
+            updatestate(state, left, ltup(mini(l1/r1, l1/r2),
+                                          maxi(l2/r1, l2/r2)), context);
+        ModAssignOp(_, _)   =>
+            updatestate(state, left, ltup(0, r2), context);
+        LshiftAssignOp(_, _)=>
+            updatestate(state, left, ltup(l1<<unum(r1), l2<<unum(r2)), context);
+        RshiftAssignOp(_, _)=>
+            updatestate(state, left, ltup(l1>>unum(r2), l2>>unum(r1)), context);
+        IorAssignOp(_, _)   =>
+            updatestate(state, left, ltup(l1 | r1, l2 | r2), context);
+        AndAssignOp(_, _)   =>
+            updatestate(state, left, and(l1, l2, r1, r2), context);
+        XorAssignOp(_, _)   =>
+            updatestate(state, left, xor(l1, l2, r1, r2), context);
+        _ => error("unexpected assign-op expression");
+      endcase;
+  endcase;
 
 // -- constrain_array_index: If an array with a known size is indexed with a
 // -- varref expression, force the variable's interval to be at most the
@@ -883,6 +909,20 @@ max(a, b) = if drop(a) > drop(b) then a else b ;
 
 maxi(a, b) = if a > b then a else b ;
 
+// -- liftminus, liftplus: Arithmetic on lifted numbers. The idea is that
+// -- checking  !bad(a) && !bad(b)  before doing arithmetic on intervals a
+// -- and b is too coarse: the bad function will reject intervals where even
+// -- one of the bounds is unknown, although we could still perform some
+// -- meaningful arithmetic, for instance  (TOP,10) + (1,1) = (TOP,11).
+// -- These lifted arithmetic functions can be used to try to add the bounds
+// -- independently. Additive operators are probably the most important
+// -- (partly because of ++ and --), but it might make sense to implement
+// -- liftmult, liftdiv, etc. as well.
+liftminus :: cp_Const, cp_Const -> cp_Const;
+liftminus(a, b) = let aa <= a; bb <= b; in lift(aa - bb);
+
+liftplus :: cp_Const, cp_Const -> cp_Const;
+liftplus(a, b) = let aa <= a; bb <= b; in lift(aa + bb);
 
 // -- Lots of auxiliary bitwise functions.
 xor(a1, a2, b1, b2) =
