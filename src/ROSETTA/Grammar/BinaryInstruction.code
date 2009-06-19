@@ -3197,6 +3197,14 @@ HEADER_BINARY_POWERPC_INSTRUCTION_END
 
 
 
+HEADER_BINARY_ARM_INSTRUCTION_START
+	public:
+		virtual bool terminatesBasicBlock();			/* implemented in DisassemblerArm.C */
+		virtual std::set<rose_addr_t> get_successors();		/* implemented in DisassemblerArm.C */
+HEADER_BINARY_ARM_INSTRUCTION_END
+
+
+
 HEADER_BINARY_DECLARATION_START
 HEADER_BINARY_DECLARATION_END
 

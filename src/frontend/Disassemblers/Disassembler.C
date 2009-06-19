@@ -22,7 +22,9 @@ Disassembler::initclass()
     static bool initialized=false;
     if (!initialized) {
         initialized = true;
-	register_subclass(new DisassemblerX86);
+        register_subclass(new DisassemblerArm);
+        register_subclass(new DisassemblerPowerpc);
+        register_subclass(new DisassemblerX86);
     }
 }
 
