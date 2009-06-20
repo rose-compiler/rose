@@ -1,3 +1,14 @@
+2009-06-20 00:12  panas2
+
+	* [r6270] /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.c,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: RTED work
+
+2009-06-19 23:39  panas2
+
+	* [r6269] /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.c: RTED work
+
 2009-06-19 17:41  bauer25
 
 	* [r6264]
