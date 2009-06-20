@@ -1281,10 +1281,24 @@ RuntimeSystem_roseCallStack(char* name, char* mangl_name,
   if (strcmp(beforeStr,"true")==0)
     before=1;
 
+  // check if this variable is on the stack, if yes, we want to use that mangled_name!
+  char* stackvar = RuntimeSystem_findVariablesOnStack(name);
+  if (stackvar) {
+    // it exists
+    printf("This variable exists on the stack: %s\n",stackvar);
+    //exit(1);
+    mangl_name=stackvar;
+  }
+
   // before we add a variable to the stack we want to make sure that all
   // variables for that function are initialized!
   // find the variable and make sure it is initialized
   struct RuntimeVariablesType* rvar = RuntimeSystem_findVariables(mangl_name);
+  if (rvar==NULL) {
+    printf("Variable not found .... %s\n",mangl_name);
+    // variable not found?!
+    exit(1);
+  }
   int initialized = rvar->initialized;
   printf("CallStack: Checking if %s is initialized: %d.\n",name,initialized);
   if (initialized==0) {
@@ -1421,7 +1435,8 @@ RuntimeSystem_findVariablesPos(char* mangled_name, int* isarray) {
  * in the pool of variables created and return mangled_name
  ********************************************************/
 void
-RuntimeSystem_roseInitVariable(char* mangled_name,
+RuntimeSystem_roseInitVariable(char* name,
+			       char* mangled_name,
 			       char* typeOfVar2,
 			       char* baseType,
 			       unsigned long long address,
@@ -1431,9 +1446,20 @@ RuntimeSystem_roseInitVariable(char* mangled_name,
   printf("InitVariable: Request for %s.    address: %d   value: %d   type: %s \n",mangled_name, address, value, typeOfVar2);
   int i=0;
   int varFound=0;
+
+  char* stackvar = RuntimeSystem_findVariablesOnStack(name);
+  if (stackvar) {
+    // it exists
+    printf("This variable exists on the stack: %s\n",stackvar);
+    //exit(1);
+    varFound=1;
+    mangled_name=stackvar;
+  }
+
+  // go through all variables and check if it is present.
   for ( i=0;i<rtsi()->runtimeVariablesEndIndex;i++) {
     char* n =rtsi()->runtimeVariables[i].mangled_name;
-    if (strcmp(mangled_name,n)==0) {
+    if (strcmp(mangled_name,n)==0){
       varFound=1;
       printf("Found the variable %s at index %d \n",n, i);
       // variable exists, lets init it

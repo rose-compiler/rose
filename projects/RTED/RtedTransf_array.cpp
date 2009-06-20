@@ -1137,6 +1137,8 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
 	isSgForStatement(scope)) {
       // build the function call : runtimeSystem-->createArray(params); ---------------------------
       SgExprListExp* arg_list = buildExprListExp();
+      SgExpression* simplename = buildString(initName->get_name().str());
+      appendExpression(arg_list, simplename);
       SgExpression* callName = buildString(initName->get_mangled_name().str());
       appendExpression(arg_list, callName);
 
@@ -1314,7 +1316,7 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
       insertStatementAfter(isSgStatement(stmt), exprStmt);
       string empty_comment = "";
       attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
-      string comment = "RS : Init Variable, paramaters : (mangl_name, tpye, basetype, address, value, ismalloc, filename, line, error line)";
+      string comment = "RS : Init Variable, paramaters : (name, mangl_name, tpye, basetype, address, value, ismalloc, filename, line, error line)";
       attachComment(exprStmt,comment,PreprocessingInfo::before);
     } // basic block 
     else if (isSgNamespaceDefinitionStatement(scope)) {

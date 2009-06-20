@@ -140,7 +140,8 @@ void RuntimeSystem_roseCreateVariable(char* name, char* mangled_name, char* type
 void RuntimeSystem_increaseSizeRuntimeVariables();
 struct RuntimeVariablesType* RuntimeSystem_findVariables(char* name);
 int RuntimeSystem_findVariablesPos(char* mangled_name, int* isarray);
-void RuntimeSystem_roseInitVariable(char* mangled_name,
+void RuntimeSystem_roseInitVariable(char* name,
+				    char* mangled_name,
 				    char* typeOfVar2,
 				    char* baseType2,
 				    unsigned long long address,
