@@ -80,7 +80,7 @@ TESTS_WITH_PAG = sl1rd sl2rd nnh99_shape srw98_shape pointsto_live_variables tes
 TESTS_WITHOUT_PAG = termite
 
 if WITH_SWI_PROLOG
-TESTS_WITH_PAG += loopbounds
+TESTS_WITH_PAG += itvl_stresstest loopbounds
 endif
 
 
@@ -238,6 +238,23 @@ if WITH_SWI_PROLOG
            $(wildcard $(top_srcdir)/examples/*/tests/*.c \
 		              $(top_srcdir)/tools/interval/pto_tests/*.c))
 endif
+
+itvl_stresstest: interval
+	@echo
+	@echo "Testing interval (the strict way)"
+	@echo "====================="
+	@cp -ur $(top_srcdir)/tools/interval/stresstest/itvl_stresstest.c $(testdir)/interval
+	@cd $(testdir)/interval; ./interval --run-pointsto-analysis --output-term=itvl_stresstest.term itvl_stresstest.c > itvl_stresstest.out 2>&1
+	@cd $(testdir)/interval; if [ "x`tail -1 itvl_stresstest.out`" != x"performing analysis interval ... done" ]; then \
+		cat itvl_stresstest.out; \
+		echo -n "* treating any analyzer messages as errors"; \
+		echo    "(told you this was strict)"; \
+		exit 1; \
+	fi
+	@cd $(testdir)/interval; export TERMITE_LIB=$(datadir)/termite; $(SWI_PL) -q -O -t main -f validator.pl < itvl_stresstest.term > itvl_stresstest_assert.term
+	@cd $(testdir)/interval; $(DESTDIR)/$(bindir)/term2c itvl_stresstest_assert.term -o itvl_stresstest_assert.c
+	@cd $(testdir)/interval; $(CC) -std=c99 -DINCLUDE_ASSERT_H -o itvl_stresstest_assert itvl_stresstest_assert.c
+	@cd $(testdir)/interval; ./itvl_stresstest_assert
 
 %.loop.term: %.c
 	@echo "Analyzing loops in" $<
