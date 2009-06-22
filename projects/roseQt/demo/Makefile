@@ -30,13 +30,13 @@ cmake_force:
 SHELL = /bin/sh
 
 # The CMake executable.
-CMAKE_COMMAND = /export/0/tmp.bauer25/opt/cmake-2.6.3/bin/cmake
+CMAKE_COMMAND = /home/bauer25/opt/cmake-2.6.3/bin/cmake
 
 # The command to remove a file.
-RM = /export/0/tmp.bauer25/opt/cmake-2.6.3/bin/cmake -E remove -f
+RM = /home/bauer25/opt/cmake-2.6.3/bin/cmake -E remove -f
 
 # The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /export/0/tmp.bauer25/opt/cmake-2.6.3/bin/ccmake
+CMAKE_EDIT_COMMAND = /home/bauer25/opt/cmake-2.6.3/bin/ccmake
 
 # The top-level source directory on which CMake was run.
 CMAKE_SOURCE_DIR = /home/bauer25/opt/newRoseTree/ROSE/projects/roseQt

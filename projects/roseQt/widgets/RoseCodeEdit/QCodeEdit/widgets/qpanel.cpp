@@ -36,6 +36,8 @@
 
 #include <QMouseEvent>
 #include <QApplication>
+#include <QDebug>
+
 
 /*!
 	\ingroup widgets
@@ -107,7 +109,7 @@ QEditor* QPanel::editor()
 */
 void QPanel::attach(QEditor *e)
 {
-	if ( m_editor.isNull() )
+	if ( m_editor )
 	{
 		disconnect(	m_editor->document(),
 					SIGNAL( formatsChanged() ),

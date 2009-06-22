@@ -21,7 +21,7 @@
 #include <QHeaderView>
 
 #include <qlinemarksinfocenter.h>
-//#include <qeditconfig.h>
+#include <qeditconfig.h>
 
 
 
@@ -140,8 +140,6 @@ void CompassMainWindow::on_tblCheckers_customContextMenuRequested (const QPoint 
 
 void CompassMainWindow::on_actionEditorSettings_triggered()
 {
-    //TODO problem with include of qeditconfig.h (ui file etc..)
-    /*
     QDialog settingsDlg;
     QEditConfig * ec = new QEditConfig(&settingsDlg);
 
@@ -161,7 +159,7 @@ void CompassMainWindow::on_actionEditorSettings_triggered()
     if( res == QDialog::Accepted)
         ec->apply();
     else
-    ec->cancel();*/
+    ec->cancel();
 
 }
 

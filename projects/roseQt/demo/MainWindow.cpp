@@ -39,6 +39,51 @@ MainWindow::MainWindow( QWidget * p )
     ui.setupUi(this);
     showMaximized();
 
+
+
+    editorWrapper = new QCodeEdit(ui.roseCodeEdit ,this);
+
+    editorWrapper
+        ->addPanel("Line Mark Panel", QCodeEdit::West, true)
+        ->setShortcut(QKeySequence("F6"));
+
+    editorWrapper
+        ->addPanel("Line Number Panel", QCodeEdit::West, true)
+        ->setShortcut(QKeySequence("F11"));
+
+    editorWrapper
+        ->addPanel("Fold Panel", QCodeEdit::West, true)
+        ->setShortcut(QKeySequence("F9"));
+
+    //editorWrapper
+    //    ->addPanel("Line Change Panel", QCodeEdit::West, true);
+
+    editorWrapper
+        ->addPanel("Status Panel", QCodeEdit::South, true);
+
+    editorWrapper
+        ->addPanel("Search Replace Panel", QCodeEdit::South);
+
+    /*
+    ui.editorToolbar->addAction(ui.codeEdit->action("undo"));
+    ui.editorToolbar->addAction(ui.codeEdit->action("redo"));
+    ui.editorToolbar->addSeparator();
+    ui.editorToolbar->addAction(ui.codeEdit->action("cut"));
+    ui.editorToolbar->addAction(ui.codeEdit->action("copy"));
+    ui.editorToolbar->addAction(ui.codeEdit->action("paste"));
+
+    ui.menuEdit->addAction(ui.codeEdit->action("undo"));
+    ui.menuEdit->addAction(ui.codeEdit->action("redo"));
+    ui.menuEdit->addSeparator();
+    ui.menuEdit->addAction(ui.codeEdit->action("cut"));
+    ui.menuEdit->addAction(ui.codeEdit->action("copy"));
+    ui.menuEdit->addAction(ui.codeEdit->action("paste"));
+    */
+
+
+
+
+
     pm->setTaskListWidget(ui.taskList);
     pm->setTaskMsgOutputWidget(ui.wdgTaskOutput);
     pm->loadProjectState();

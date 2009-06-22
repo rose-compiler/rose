@@ -21,6 +21,9 @@ class ProjectManager;
 //#include <QtScript>
 //#include <QtScriptTools/QScriptEngineDebugger>
 
+namespace Ui { class DebugDialog; }
+
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -54,7 +57,6 @@ class MainWindow : public QMainWindow
         ProjectManager *pm;
 
         QCodeEdit * editorWrapper;
-
         //QScriptEngine * scriptEngine;
         //QScriptEngineDebugger * scriptDebugger;
 };

@@ -4,10 +4,12 @@
 
 
 #include <QSettings>
+#include <QFileDialog>
 #include <QDebug>
 #include <QSortFilterProxyModel>
+#include <QDialogButtonBox>
 #include "qcodeedit.h"
-
+#include "qeditconfig.h"
 
 
 DebugDialog::DebugDialog(QWidget * par)
@@ -17,7 +19,7 @@ DebugDialog::DebugDialog(QWidget * par)
     ui->setupUi(this);
 
 
-    /*
+
     editorWrapper = new QCodeEdit(ui->codeEdit ,this);
 
     editorWrapper
@@ -54,7 +56,7 @@ DebugDialog::DebugDialog(QWidget * par)
     ui->menuEdit->addAction(ui->codeEdit->action("cut"));
     ui->menuEdit->addAction(ui->codeEdit->action("copy"));
     ui->menuEdit->addAction(ui->codeEdit->action("paste"));
-    */
+
 
     //restore settings
     QSettings settings;
@@ -68,7 +70,6 @@ DebugDialog::DebugDialog(QWidget * par)
     }
 
     settings.endGroup();
-
 }
 
 
@@ -81,6 +82,51 @@ DebugDialog::~DebugDialog()
 
     qDebug() << "MainWindow settings stored";
     delete ui;
+}
+
+
+void DebugDialog::on_actionSave_triggered()
+{
+    ui->codeEdit->save();
+}
+
+void DebugDialog::on_actionSaveAs_triggered()
+{
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Save File"),
+                               "", tr("C++ files (*.cpp *.C *.h)"));
+
+    ui->codeEdit->save(fileName);
+}
+
+void DebugDialog::on_actionOpen_triggered()
+{
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),
+                               "", tr("C++ files (*.cpp *.C *.h)"));
+    ui->codeEdit->loadCppFile(fileName);
+}
+
+void DebugDialog::on_actionEditorSettings_triggered()
+{
+    QDialog settingsDlg;
+    QEditConfig * ec = new QEditConfig(&settingsDlg);
+
+    QDialogButtonBox * buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
+                                                      | QDialogButtonBox::Cancel,
+                                                      Qt::Horizontal,
+                                                      &settingsDlg);
+
+    connect(buttonBox, SIGNAL(accepted()), &settingsDlg, SLOT(accept()));
+    connect(buttonBox, SIGNAL(rejected()), &settingsDlg, SLOT(reject()));
+
+    QVBoxLayout * layout = new QVBoxLayout(&settingsDlg);
+    layout->addWidget(ec);
+    layout->addWidget(buttonBox);
+
+    int res = settingsDlg.exec();
+    if( res == QDialog::Accepted)
+        ec->apply();
+    else
+    ec->cancel();
 }
 
 

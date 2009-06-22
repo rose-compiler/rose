@@ -50,11 +50,7 @@ headerTarget_HEADERS = qce-config.h\
                        qlanguagefactory.h\
                        qlinemarksinfocenter.h\
                        qpanellayout.h\
-                       qreliablefilewatch.h\
-                       ui_editconfig.h\
-                       ui_formatconfig.h\
-                       ui_gotoline.h\
-                       ui_searchreplace.h
+                       qreliablefilewatch.h
 
 
 endif

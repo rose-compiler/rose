@@ -30,6 +30,7 @@
 
 class QDocumentLine;
 
+
 class QCE_EXPORT QLineMarkPanel : public QPanel
 {
 	Q_OBJECT

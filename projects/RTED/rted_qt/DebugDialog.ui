@@ -43,6 +43,8 @@
     <property name="title">
      <string>Edit</string>
     </property>
+    <addaction name="separator"/>
+    <addaction name="actionEditorSettings"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
@@ -172,6 +174,15 @@
    </property>
    <property name="text">
     <string>Save as...</string>
+   </property>
+  </action>
+  <action name="actionEditorSettings">
+   <property name="icon">
+    <iconset resource="res.qrc">
+     <normaloff>:/icons/document-properties.png</normaloff>:/icons/document-properties.png</iconset>
+   </property>
+   <property name="text">
+    <string>Editor Settings...</string>
    </property>
   </action>
  </widget>
