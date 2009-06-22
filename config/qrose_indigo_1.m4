@@ -93,6 +93,11 @@ AC_ARG_WITH(qt-lib,
     [  --with-qt-lib=DIR where the QT libraries are. ],
     [  ac_qt_libraries="$withval"
     ])
+
+AC_ARG_WITH(roseQt,
+    [  --with-roseQt=Build with roseQt. yes or no. defaults to no. ],
+    [  ],
+    [  with_roseQt=no ])
   
 dnl ---------------------------[check Qt headers]------------
   qt_incdirs="$ac_qt_includes $ac_qt_path/include /usr/include/qt4"
@@ -289,5 +294,56 @@ dnl DQ (9/12/2008): Added to test for use of QRose to prevent error if Qt3 is fo
    fi
 ])
 
+dnl --------------------------------------------------------------------
+dnl check qt version
+dnl --------------------------------------------------------------------
+
+AC_DEFUN([AC_PATH_QT_VERSION],
+[
+    AC_REQUIRE([AC_PATH_QT])
 
 
+    if test $with_qt != no
+    then
+        dnl get complete version string ...
+        QT_VERSION=`grep QT_VERSION_STR $qt_incdir/QtCore/qglobal.h | awk '{print $ 3}' | sed -e 's/\"//g'`
+        dnl get major version number
+        QT_VERSION_MAJOR=`echo $QT_VERSION | awk -F . '{print $ 1}'`
+        QT_VERSION_MINOR=`echo $QT_VERSION | awk -F . '{print $ 2}'`
+
+        dnl test for empty variables
+        if test -z "$QT_VERSION_MAJOR"
+        then
+            QT_VERSION_MAJOR=0
+        fi
+        if test -z "$QT_VERSION_MINOR"
+        then
+            QT_VERSION_MINOR=0
+        fi
+
+        if test x"$with_roseQt" != x"no"
+        then
+            AC_MSG_CHECKING([Qt version compatible with roseQt])
+            if test $QT_VERSION_MAJOR -ge 4 && test $QT_VERSION_MINOR -ge 4
+            then
+                with_roseQt=yes
+                AC_MSG_RESULT([passed])
+            else
+                AC_MSG_ERROR([ invalid version - qt must be at least version 4.4.x in order to build with roseQt])
+            fi
+	dnl Comment the following lines in, to have roseQt automatically enabled if qt>=4.4.0
+        dnl else
+            dnl if test $QT_VERSION_MAJOR -lt 4 && test $QT_VERSION_MINOR -lt 4
+            dnl then
+            dnl    AC_MSG_ERROR([ invalid version - qt must be at least version 4.4.x in order to build with roseQt])
+            dnl else
+            dnl    with_roseQt=yes
+            dnl    AC_MSG_RESULT([passed])
+            dnl fi
+        fi
+        AC_SUBST(QT_VERSION)
+        AC_SUBST(QT_VERSION_MAJOR)
+        AC_SUBST(QT_VERSION_MINOR)
+    fi
+])
+            
