@@ -1,7 +1,7 @@
 #------------ qnfa Makefile.am -----------
 include $(top_srcdir)/projects/roseQt/Make.inc 
 
-if ROSE_USE_QT
+if ROSE_WITH_ROSEQT
 
 noinst_LTLIBRARIES = libqnfa.la 
 
@@ -20,7 +20,7 @@ libqnfa_la_SOURCES = qnfa.cpp\
 
 
 # Target for installing header 
-headerTargetdir    =  $(roseQtWidgetsIncPath)/QCodeEdit/qnfa
+headerTargetdir    =  $(roseQtWidgetsIncPath)/QCodeEdit
 headerTarget_HEADERS = light_vector.h\
                        qnfa.h\
                        qnfadefinition.h

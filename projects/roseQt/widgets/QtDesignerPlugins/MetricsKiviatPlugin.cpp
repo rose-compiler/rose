@@ -1,6 +1,6 @@
 
 #include "MetricsKiviatPlugin.h"
-#include "MetricsKiviat/MetricsKiviat.h"
+#include "MetricsKiviat.h"
 
 #include <QtPlugin>
 

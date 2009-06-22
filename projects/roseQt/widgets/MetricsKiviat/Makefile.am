@@ -1,7 +1,7 @@
 #------------ MetricsKiviat Makefile.am -----------
 include $(top_srcdir)/projects/roseQt/Make.inc 
 
-if ROSE_USE_QT
+if ROSE_WITH_ROSEQT
 
 noinst_LTLIBRARIES = libMetricsKiviat.la 
 
@@ -10,13 +10,18 @@ noinst_LTLIBRARIES = libMetricsKiviat.la
 libMetricsKiviat_la_SOURCES = KiviatInfo.cpp\
                               MetricsKiviat.cpp
 
-nodist_libMetricsKiviat_la_SOURCES = moc_KiviatInfo.cpp\
-                                     moc_MetricsConfig.cpp\
-                                     moc_MetricsKiviat.cpp\
+nodist_libMetricsKiviat_la_SOURCES = moc_KiviatInfo.cxx\
+                                     moc_MetricsKiviat.cxx\
                                      ui_KiviatInfo.h\
                                      ui_MetricsWidget.h
 
 BUILT_SOURCES = ui_KiviatInfo.h\
                 ui_MetricsWidget.h
+
+# Target for installing header 
+headerTargetdir    =  $(roseQtWidgetsIncPath)/
+headerTarget_HEADERS = KiviatInfo.h\
+                       MetricsKiviat.h
+
 
 endif

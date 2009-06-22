@@ -2,13 +2,14 @@
 #define ASTFILTERS_H
 
 #include <QString>
+#include <QObject>
 
-#include "MetricsConfig/MetricsInfo.h"
+#include "MetricsInfo.h"
 
 class SgNode;
 
 
-class AstFilterInterface
+class AstFilterInterface : public QObject
 {
     public:
         virtual                    ~AstFilterInterface() {}

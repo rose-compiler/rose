@@ -1,13 +1,17 @@
 #include "rose.h"
 
 #include "NodeInfoWidget.h"
+#include "SageMimeData.h"
 
-
+#include <QDragEnterEvent>
+#include <QDropEvent>
+#include <QApplication>
 
 NodeInfoWidget::NodeInfoWidget(QWidget * par)
-	: PropertyTreeWidget(par)
+	: PropertyTreeWidget(par),curNode(NULL)
 {
-
+    setAcceptDrops(true);
+    viewport()->setAcceptDrops(true);
 }
 
 NodeInfoWidget::~NodeInfoWidget()
@@ -39,7 +43,7 @@ void NodeInfoWidget::printFuncModifier(const QModelIndex & par,
 }
 
 void NodeInfoWidget::printSpecialFuncModifier(const QModelIndex & par,
-											  const SgSpecialFunctionModifier& funcMod)
+        const SgSpecialFunctionModifier& funcMod)
 {
 	addEntry(par,"isUnknown",funcMod.isUnknown());
 	addEntry(par,"isDefault",funcMod.isDefault());
@@ -75,9 +79,13 @@ QString NodeInfoWidget::getTraversalName(SgNode * node)
 
 void NodeInfoWidget::setNode(SgNode * node)
 {
+    curNode=node;
+
 	clear();
 	if(node==NULL)
 		return;
+
+
 
 	int colorNr=0;
 
@@ -189,6 +197,30 @@ void NodeInfoWidget::setNode(SgNode * node)
 			}
 			continue;
 		}
+                if( propName == "p_address" )
+                {
+                    rose_addr_t address( 0 );
+                    SgAsmStatement *asmStatement( isSgAsmStatement( node ) );
+                    if( asmStatement )
+                    {
+                        address = asmStatement->get_address();
+                    }
+                    SgAsmDwarfLine *dwarfLine( isSgAsmDwarfLine( node ) );
+                    if( dwarfLine )
+                    {
+                        address = dwarfLine->get_address();
+                    }
+
+                    if( address == 0 )
+                    {
+                        addEntryToSection(rtiNodeSec, tr("Adress"), propValue);
+                    }
+                    else
+                    {
+                        addEntryToSection( rtiNodeSec, tr("Address"),
+                                QString("%1").arg(address,0,16) );
+                    }
+                }
 
 		addEntryToSection(rtiNodeSec,propName,propValue);
     }
@@ -220,7 +252,83 @@ void NodeInfoWidget::setNode(SgNode * node)
 				addEntryToSection(attrNodeSec,name,attributeValue);
 			}
 		}
+		expand(metricNodeSection);
     }
     colorNr++;
 
 }
+
+
+
+
+// ------------------------- Drag and Drop Functions --------------------------
+
+
+void NodeInfoWidget::mousePressEvent(QMouseEvent *ev)
+{
+    if (ev->button() == Qt::LeftButton)
+        dragStartPosition = ev->pos();
+
+    QTreeView::mousePressEvent(ev);
+}
+
+void NodeInfoWidget::mouseMoveEvent(QMouseEvent *ev)
+{
+    if (!(ev->buttons() & Qt::LeftButton))
+        return QTreeView::mouseMoveEvent(ev);;
+    if ((ev->pos() - dragStartPosition).manhattanLength() < QApplication::startDragDistance())
+        return QTreeView::mouseMoveEvent(ev);;
+
+    // write node into into QByteArray
+    QByteArray d;
+    QDataStream s(&d, QIODevice::Unbuffered | QIODevice::ReadWrite);
+    s.writeRawData((const char*) & curNode, sizeof(SgNode*));
+
+
+    // create drag object, set pixmap and data
+    QDrag *drag = new QDrag(viewport());
+    QMimeData *mimeData = new QMimeData();
+
+    mimeData->setData(SG_NODE_MIMETYPE, d);
+    drag->setMimeData(mimeData);
+    drag->exec();
+
+
+    QTreeView::mouseMoveEvent(ev);
+}
+
+void NodeInfoWidget::dragEnterEvent(QDragEnterEvent * ev)
+{
+    if (ev->mimeData()->hasFormat(SG_NODE_MIMETYPE))
+    {
+        if(this != ev->source())
+            ev->acceptProposedAction();
+    }
+}
+
+void NodeInfoWidget::dragMoveEvent(QDragMoveEvent * ev)
+{
+    QWidget::dragMoveEvent(ev);
+}
+
+
+void NodeInfoWidget::dropEvent(QDropEvent *ev)
+{
+    if(ev->source()==this)
+        return;
+
+    QByteArray d = ev->mimeData()->data(SG_NODE_MIMETYPE);
+    QDataStream s (d);
+
+    while(! s.atEnd())
+    {
+        SgNode * node = 0;
+
+        int bytesRead = s.readRawData((char*)&node,sizeof(SgNode*));
+        Q_ASSERT(bytesRead == sizeof(SgNode*));
+
+        setNode(node);
+    }
+    ev->acceptProposedAction();
+}
+

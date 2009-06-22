@@ -10,6 +10,15 @@
 
 class QGraphicsPolygonItem;
 
+
+/**
+ * Generic Qt-Widget for displaying kiviats (polar diagrams)
+ *
+ *  <img src="../Kiviat.jpg"  alt="Screenshot">
+ *
+ * This class doesn't depend on rose, the rose specific version for
+ * displaying MetricAttributes is MetricsKiviat
+ */
 class QDESIGNER_WIDGET_EXPORT KiviatView : public QGraphicsView
 {
     Q_OBJECT
@@ -37,13 +46,25 @@ class QDESIGNER_WIDGET_EXPORT KiviatView : public QGraphicsView
         /** Adds a dataset to the diagram
             @param data Float Data (between 0 and 1), size of vector has to be axisCount
 				   std::vectors can be converted with QVector::fromStdVector()
-            @return handle to modify or delete data */
+		    @param color color for displaying this dataset (to distinguish datasets, if more than
+                    one are displayed in one single kiviat)
+            @return handle to modify or delete data
+        */
         int addData(const QVector<float> & data, QColor color=Qt::blue);
 
+
+
         /** Adds Data from an integer-vector,
-         * @param valuetoNormalize the value which represents 100%
-         *                         data is calulated as data[i]/valueToNormalize   */
+         * @param data Float Data (between 0 and 1), size of vector has to be axisCount
+                   std::vectors can be converted with QVector::fromStdVector()
+         * @param valueToNormalize the value which represents 100%
+         *                         data is calulated as data[i]/valueToNormalize
+         *  @param color color for displaying this dataset (to distinguish datasets, if more than
+         *           one are displayed in one single kiviat)
+         *   @return handle to modify or delete data
+         */
         int addData(const QVector<int> & data, int valueToNormalize, QColor color=Qt::blue);
+
 
         /** Removes dataset with given handle */
         void removeData(int dataHandle);

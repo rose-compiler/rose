@@ -1,10 +1,7 @@
 #ifndef DEBUG_DIALOG_H
 #define DEBUG_DIALOG_H
 
-#include <QDialog>
-
-#include "ui_DebugDialog.h"
-
+#include <QMainWindow>
 
 class RuntimeVariablesType;
 class MemoryType;
@@ -16,17 +13,27 @@ class RuntimeVariablesModel;
 class MemoryTypeModel;
 class QSortFilterProxyModel;
 
-class DebugDialog : public QDialog
+class QCodeEdit;
+
+#include "ui_DebugDialog.h"
+
+
+namespace Ui { class DebugDialog; }
+
+class DebugDialog : public QMainWindow
 {
     Q_OBJECT
 
     public:
         DebugDialog(QWidget * parent =0);
+        ~DebugDialog();
 
         void setHeapVars(RuntimeVariablesType * arr, int arrSize);
         void setStackVars(RuntimeVariablesType * arr, int arrSize);
 
         void setMemoryLocations(MemoryType * arr, int arrSize);
+
+        void setEditorMark(const QString & file, int row);
 
     protected slots:
         void on_lstHeap_clicked(const QModelIndex & ind);
@@ -51,7 +58,9 @@ class DebugDialog : public QDialog
         MemoryTypeModel *  memModel;
         QSortFilterProxyModel * memProxyModel;
 
-        Ui::DebugDialog ui;
+        Ui::DebugDialog * ui;
+
+        QCodeEdit * editorWrapper;
 };
 
 #endif

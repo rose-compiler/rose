@@ -41,8 +41,12 @@ namespace AstDisplayInfo
         else if (sgAsmFunctionDecl)    name = sgAsmFunctionDecl->get_name();
         else                           return getShortNodeTypeDesc(node);
 
+        const std::string & s = name.getString();
 
-        return QString(name.getString().c_str());
+        if (sgAsmFunctionDecl)
+            return QString( StringUtility::demangledName(s).c_str());
+        else
+            return QString(s.c_str());
     }
 
     QString getShortNodeTypeDesc(SgNode * node)

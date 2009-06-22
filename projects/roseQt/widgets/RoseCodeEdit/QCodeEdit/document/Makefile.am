@@ -1,7 +1,7 @@
 #------------ document Makefile.am -----------
 include $(top_srcdir)/projects/roseQt/Make.inc 
 
-if ROSE_USE_QT
+if ROSE_WITH_ROSEQT
 
 noinst_LTLIBRARIES = libdocument.la 
 
@@ -18,12 +18,12 @@ libdocument_la_SOURCES = qdocument.cpp\
                          qdocumentline.cpp\
                          qdocumentsearch.cpp
 
-nodist_libdocument_la_SOURCES = moc_qdocument.cpp
+nodist_libdocument_la_SOURCES = moc_qdocument.cxx
 
 
 
 # Target for installing header 
-headerTargetdir    =  $(roseQtWidgetsIncPath)/QCodeEdit/document
+headerTargetdir    =  $(roseQtWidgetsIncPath)/QCodeEdit
 headerTarget_HEADERS = qdocument.h\
                        qdocument_p.h\
                        qdocumentbuffer.h\

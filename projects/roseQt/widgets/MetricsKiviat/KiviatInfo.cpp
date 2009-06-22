@@ -4,7 +4,9 @@
 #include <QColorDialog>
 
 #include "MetricsKiviat.h"
-#include "MetricsConfig/MetricsConfig.h"
+#include "MetricsConfig.h"
+
+#include "Project.h"
 
 #include "KiviatInfo.h"
 #include "ui_KiviatInfo.h"
@@ -34,11 +36,11 @@ void KiviatInfo::setKiviat( MetricsKiviat *metricsKiviat )
     if( metricsKiviat == NULL ) return;
 
     metrics = metricsKiviat;
-    
+
     connect( ui->cmdConfigMetrics, SIGNAL( clicked      ( bool ) )   , metrics, SLOT( configureMetrics() ) );
     connect( metrics             , SIGNAL( clicked      ( SgNode *) ), this   , SLOT( update ( SgNode *) ) );
     connect( metrics             , SIGNAL( nodeAdded    ( SgNode *) ), this   , SLOT( addNode( SgNode *) ) );
-    connect( metrics->metricsConfig, SIGNAL( configChanged() )         , this   , SLOT( configChanged() ) );
+    //connect( metrics->metricsConfig, SIGNAL( configChanged() )         , this   , SLOT( configChanged() ) );
 
     for( MetricsKiviat::nodes_iterator node = metrics->nodesBegin();
          node != metrics->nodesEnd();
@@ -64,7 +66,9 @@ void KiviatInfo::update( SgNode *node )
     ui->treeDataSetInfo->clear();
 
     QList< QTreeWidgetItem *> items;
-    MetricsConfig metricsConfig( "MetricsKiviat" );
+
+    //MetricsConfig globalConfig( "", ProjectManager::instance()->getMetricsConfig( node ) );
+    /*MetricsConfig metricsConfig( "MetricsKiviat" );
 
     for( MetricsConfig::iterator it( metricsConfig.begin() );
          it != metricsConfig.end();
@@ -89,7 +93,7 @@ void KiviatInfo::update( SgNode *node )
 
     ui->treeDataSetInfo->insertTopLevelItems( 0, items );
 
-    ui->lstDataSets->setCurrentRow( id );
+    ui->lstDataSets->setCurrentRow( id );*/
 }
 
 void KiviatInfo::addNode( SgNode *node )
@@ -123,7 +127,7 @@ void KiviatInfo::delNode()
 
         metrics->delNode( id );
         delete ui->lstDataSets->item( id );
-    
+
         ui->lstDataSets->setCurrentRow( 0 );
     }
 }
@@ -136,10 +140,10 @@ void KiviatInfo::changeColor()
     {
         int id = ui->lstDataSets->currentRow();
         if( id == -1 ) id = 0;
-        
+
         QColor oldColor = metrics->getDataColor( id );
         QColor newColor = QColorDialog::getColor( oldColor );
-        
+
         metrics->setDataColor( id, newColor );
         metrics->configureMetrics( false );
     }

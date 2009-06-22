@@ -9,25 +9,24 @@
 #include <QFileInfo>
 
 #include <QDebug>
-
-#include "rose.h"
-
+//commented out -> because always was reintroduced on merge
+//#include "rose.h"
 
 #include "MetricsKiviat.h"
-#include "MetricsConfig/MetricsConfig.h"
+#include "MetricsConfig.h"
 
 
 using namespace std;
 
-MetricsKiviat::MetricsKiviat( QWidget *parent )
-   : KiviatView( parent, 0 ),
-     metricsConfig( new MetricsConfig( "MetricsKiviat" ) )
+MetricsKiviat::MetricsKiviat( QWidget *parent, MetricsConfig *global )
+   : KiviatView( parent, 0 )/*,
+     metricsConfig( new MetricsConfig( "MetricsKiviat", global ) )*/
 {
     connect( this, SIGNAL( clickedOnData( int ) ), SLOT( setActiveItem( int ) ) );
 
     connect( this, SIGNAL( clickedOnData( int ) ), SLOT( updateView( int ) ) );
 
-    connect( metricsConfig, SIGNAL( configChanged() ), this, SLOT( configChanged() ) );
+    //connect( metricsConfig, SIGNAL( configChanged() ), this, SLOT( configChanged() ) );
 
     legend = scene.addRect( QRect()/*, QPen( Qt::NoPen )*/ );
     //legend->setBrush( QBrush( QColor( 255, 255, 255, 180 ) ) );
@@ -37,7 +36,7 @@ MetricsKiviat::MetricsKiviat( QWidget *parent )
 MetricsKiviat::~MetricsKiviat()
 {
     delete legend;
-    delete metricsConfig;
+    //delete metricsConfig;
     //qDeleteAll( legendText );
 }
 
@@ -45,13 +44,11 @@ void MetricsKiviat::init( SgNode *root )
 {
     currentNode = root;
 
-    qDebug() << root << metricsConfig->getMetricsInfoCount();
-
-    setAxisCount( metricsConfig->getMetricsInfoCount() );
+    //setAxisCount( metricsConfig->getMetricsInfoCount() );
 
     addData( QVector<float>(axisCount, 0.0f ) );
 
-    configureMetrics( false );
+    //configureMetrics( false );
 }
 
 /*
@@ -87,7 +84,7 @@ void MetricsKiviat::updateView( SgNode *astNode )
         return;
 
     drawData( astNode );
-    
+
     currentNode = astNode;
 }
 
@@ -143,22 +140,22 @@ void MetricsKiviat::configureMetrics( bool dialog )
             //attributes[idx].kiviatID = i;
         }*/
 
-        metricsConfig->configureMultiple();
+        //metricsConfig->configureMultiple();
 
-        setAxisCount( metricsConfig->getMetricsInfoCount() );
+        //setAxisCount( metricsConfig->getMetricsInfoCount() );
 
         qDebug() << axisCount;
     }
 
     QString maxLabel( "" );
-    for( MetricsConfig::iterator it( metricsConfig->begin() );
+    /*for( MetricsConfig::iterator it( metricsConfig->begin() );
          it != metricsConfig->end();
          ++it )
     {
         setAxisLabel( it->listId, it->caption );
-    }
+    }*/
     resizeEvent( NULL );
-    
+
     drawData( currentNode );
 }
 
@@ -205,6 +202,7 @@ void MetricsKiviat::drawData( SgNode *astNode )
 
     setActiveItem( id );
 
+#if 0
     for( MetricsConfig::iterator it( metricsConfig->begin() );
          it != metricsConfig->end();
          ++it )
@@ -216,7 +214,7 @@ void MetricsKiviat::drawData( SgNode *astNode )
 
         if( it->caption.length() > maxLabel.length() )
             maxLabel = it->caption;
-        
+
         double newValue = it->eval( astNode, metricName );
 
         setDataPoint( id, axisId, (float)newValue );
@@ -249,7 +247,7 @@ void MetricsKiviat::drawData( SgNode *astNode )
     height += 2 * labelFont.pointSize();
 
     QFontMetrics metric( labelFont );
-    
+
     const QPointF newPos( AXIS_LENGTH + metric.width( maxLabel ) + 25.0f,
                           -height/2 );
     legend->setPos( newPos );
@@ -282,7 +280,7 @@ void MetricsKiviat::drawData( SgNode *astNode )
             text = new QGraphicsTextItem( node->class_name().c_str(), legend );
 
         text->setPos( 40.0f, nodeId * ( labelFont.pointSize() + labelFont.pointSize()*0.8 ) + 3 * legendFont.pointSize());
-        
+
         if( nodeId == id )
         {
             //text->setDefaultTextColor( Qt::gray );
@@ -326,13 +324,13 @@ void MetricsKiviat::drawData( SgNode *astNode )
 
         if( text->boundingRect().width() > legendWidth )
             legendWidth = text->boundingRect().width();
-        
+
         QGraphicsRectItem *rect = new QGraphicsRectItem( QRectF( 0.0f, 0.0f, 25.0f, labelFont.pointSize() ), legend );
         rect->setPos( 10.0f, nodeId * ( labelFont.pointSize() + labelFont.pointSize()* 0.8 ) + 3.7 * legendFont.pointSize() );
         rect->setPen( QPen( Qt::NoPen ) );
         rect->setBrush( Qt::blue );
         legendColor.push_back( rect );
-        
+
         legendText.push_back( text );
 
         nodeId++;
@@ -344,4 +342,5 @@ void MetricsKiviat::drawData( SgNode *astNode )
 
     resizeEvent( NULL );
     emit clicked( astNode );
+#endif
 }

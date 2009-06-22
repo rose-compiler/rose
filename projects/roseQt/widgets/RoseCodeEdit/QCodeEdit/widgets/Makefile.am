@@ -1,7 +1,7 @@
 #------------ widgets Makefile.am -----------
 include $(top_srcdir)/projects/roseQt/Make.inc 
 
-if ROSE_USE_QT
+if ROSE_WITH_ROSEQT
 
 noinst_LTLIBRARIES = libwidgets.la 
 
@@ -24,17 +24,17 @@ libwidgets_la_SOURCES = qcalltip.cpp\
                         qsimplecolorpicker.cpp\
                         qstatuspanel.cpp
 
-nodist_libwidgets_la_SOURCES = moc_qeditconfig.cpp\
-                               moc_qfoldpanel.cpp\
-                               moc_qformatconfig.cpp\
-                               moc_qgotolinedialog.cpp\
-                               moc_qlinechangepanel.cpp\
-                               moc_qlinemarkpanel.cpp\
-                               moc_qlinenumberpanel.cpp\
-                               moc_qpanel.cpp\
-                               moc_qsearchreplacepanel.cpp\
-                               moc_qsimplecolorpicker.cpp\
-                               moc_qstatuspanel.cpp\
+nodist_libwidgets_la_SOURCES = moc_qeditconfig.cxx\
+                               moc_qfoldpanel.cxx\
+                               moc_qformatconfig.cxx\
+                               moc_qgotolinedialog.cxx\
+                               moc_qlinechangepanel.cxx\
+                               moc_qlinemarkpanel.cxx\
+                               moc_qlinenumberpanel.cxx\
+                               moc_qpanel.cxx\
+                               moc_qsearchreplacepanel.cxx\
+                               moc_qsimplecolorpicker.cxx\
+                               moc_qstatuspanel.cxx\
                                ui_editconfig.h\
                                ui_formatconfig.h\
                                ui_gotoline.h\
@@ -46,7 +46,7 @@ BUILT_SOURCES = ui_editconfig.h\
                 ui_searchreplace.h
 
 # Target for installing header 
-headerTargetdir    =  $(roseQtWidgetsIncPath)/QCodeEdit/widgets
+headerTargetdir    =  $(roseQtWidgetsIncPath)/QCodeEdit
 headerTarget_HEADERS = qcalltip.h\
                        qeditconfig.h\
                        qfoldpanel.h\

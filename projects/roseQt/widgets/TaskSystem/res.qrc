@@ -1,0 +1,8 @@
+<RCC>
+  <qresource prefix="/" >
+    <file>images/gears.gif</file>
+    <file>images/compile_error.png</file>
+    <file>images/compile_warning.png</file>
+    <file>images/compile_unspecified.png</file>
+  </qresource>
+</RCC>

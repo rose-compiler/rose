@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1243</width>
-    <height>815</height>
+    <width>1058</width>
+    <height>763</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -43,17 +43,17 @@
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_6">
         <item>
-         <widget class="MetricsKiviat" name="kvtMetrics" native="true"/>
+         <widget class="MetricsKiviat" name="kvtMetrics"/>
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="subwindow_2">
+      <widget class="QWidget" name="subWindowAssemblerView">
        <property name="windowTitle">
-        <string>Subwindow</string>
+        <string>Assembler View</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_7">
         <item>
-         <widget class="AsmInstructionsBar" name="asmInstructionsBar"/>
+         <widget class="AsmView" name="asmView"/>
         </item>
        </layout>
       </widget>
@@ -66,7 +66,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1243</width>
+     <width>1058</width>
      <height>26</height>
     </rect>
    </property>
@@ -82,6 +82,10 @@
     </property>
     <addaction name="actionTile"/>
     <addaction name="actionCascade"/>
+    <addaction name="actionTabbed_View"/>
+    <addaction name="separator"/>
+    <addaction name="actionNewAssemblerView"/>
+    <addaction name="actionNewCodeEditor"/>
    </widget>
    <widget class="QMenu" name="menuConfuguration">
     <property name="title">
@@ -107,6 +111,22 @@
    <widget class="QWidget" name="dockWidgetContents">
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
+      <widget class="AsmInstructionsBar" name="asmInstructionsBar">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>20</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="RoseFileComboBox" name="roseFileCmbBox"/>
      </item>
      <item>
@@ -128,7 +148,7 @@
    <widget class="QWidget" name="dockWidgetContents_2">
     <layout class="QVBoxLayout" name="verticalLayout_2">
      <item>
-      <widget class="NodeInfoWidget" name="nodeInfoWidget" native="true"/>
+      <widget class="NodeInfoWidget" name="nodeInfoWidget"/>
      </item>
     </layout>
    </widget>
@@ -163,6 +183,119 @@
     </layout>
    </widget>
   </widget>
+  <widget class="QDockWidget" name="dockWdgProjectView">
+   <property name="windowTitle">
+    <string>Project Manager</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_5">
+    <layout class="QVBoxLayout" name="verticalLayout_8">
+     <item>
+      <widget class="ProjectView" name="projectView"/>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="separator"/>
+  </widget>
+  <widget class="QDockWidget" name="dockWidget_2">
+   <property name="allowedAreas">
+    <set>Qt::BottomDockWidgetArea|Qt::TopDockWidgetArea</set>
+   </property>
+   <property name="windowTitle">
+    <string>Task View</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>8</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_7">
+    <layout class="QVBoxLayout" name="verticalLayout_10">
+     <item>
+      <widget class="QSplitter" name="splitter">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <widget class="QGroupBox" name="groupBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>1</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="title">
+         <string>Tasks:</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_2">
+         <item row="0" column="0">
+          <spacer name="horizontalSpacer_3">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>272</width>
+             <height>23</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item row="0" column="1">
+          <widget class="QToolButton" name="toolButton">
+           <property name="toolTip">
+            <string>Remove successfully completed tasks</string>
+           </property>
+           <property name="text">
+            <string>...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QPushButton" name="cmdSubmitTest">
+           <property name="text">
+            <string>Submit Test-Task</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0" colspan="3">
+          <widget class="TaskList" name="taskList">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QGroupBox" name="wdgTaskOutput">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>1</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="title">
+         <string>Task Output</string>
+        </property>
+       </widget>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
   <action name="actionQuit">
    <property name="text">
     <string>Quit</string>
@@ -183,6 +316,24 @@
     <string>Metric Attributes</string>
    </property>
   </action>
+  <action name="actionNewAssemblerView">
+   <property name="text">
+    <string>New Assembler View</string>
+   </property>
+  </action>
+  <action name="actionNewCodeEditor">
+   <property name="text">
+    <string>New Code Editor</string>
+   </property>
+  </action>
+  <action name="actionTabbed_View">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Tabbed View</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
@@ -196,9 +347,42 @@
    <header>AstGraphWidget.h</header>
   </customwidget>
   <customwidget>
+   <class>AsmView</class>
+   <extends>QTreeView</extends>
+   <header>AsmView.h</header>
+   <slots>
+    <slot>gotoNode(SgNode*)</slot>
+   </slots>
+  </customwidget>
+  <customwidget>
    <class>BAstView</class>
    <extends>QTreeView</extends>
    <header>BAstView.h</header>
+  </customwidget>
+  <customwidget>
+   <class>KiviatView</class>
+   <extends>QGraphicsView</extends>
+   <header>KiviatView.h</header>
+  </customwidget>
+  <customwidget>
+   <class>NodeInfoWidget</class>
+   <extends>PropertyTreeWidget</extends>
+   <header>NodeInfoWidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>MetricsKiviat</class>
+   <extends>KiviatView</extends>
+   <header>MetricsKiviat.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ProjectView</class>
+   <extends>QTreeView</extends>
+   <header>ProjectView.h</header>
+  </customwidget>
+  <customwidget>
+   <class>PropertyTreeWidget</class>
+   <extends>QTreeView</extends>
+   <header>PropertyTreeWidget.h</header>
   </customwidget>
   <customwidget>
    <class>RoseCodeEdit</class>
@@ -220,27 +404,30 @@
   <customwidget>
    <class>MetricFilter</class>
    <extends>QWidget</extends>
-   <header>MetricFilter/MetricFilter.h</header>
+   <header>MetricFilter.h</header>
    <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>NodeInfoWidget</class>
-   <extends>QWidget</extends>
-   <header>NodeInfoWidget.h</header>
-  </customwidget>
-  <customwidget>
-   <class>MetricsKiviat</class>
-   <extends>QWidget</extends>
-   <header>MetricsKiviat.h</header>
   </customwidget>
   <customwidget>
    <class>AsmInstructionsBar</class>
    <extends>QGraphicsView</extends>
    <header>AsmInstructionsBar.h</header>
+   <slots>
+    <signal>clicked(SgNode*)</signal>
+    <signal>clicked(int)</signal>
+    <slot>setNode(SgNode*)</slot>
+    <slot>setNode(int)</slot>
+    <slot>setRoot(SgNode*)</slot>
+   </slots>
+  </customwidget>
+  <customwidget>
+   <class>TaskList</class>
+   <extends>QListWidget</extends>
+   <header>TaskList.h</header>
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../src/BeautifiedAst/BeautifiedAst.qrc"/>
+  <include location="../widgets/util/util.qrc"/>
+  <include location="../widgets/TaskSystem/res.qrc"/>
  </resources>
  <connections>
   <connection>
@@ -260,182 +447,6 @@
    </hints>
   </connection>
   <connection>
-   <sender>astBrowserWidget</sender>
-   <signal>clicked(SgNode*)</signal>
-   <receiver>nodeInfoWidget</receiver>
-   <slot>setNode(SgNode*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>136</x>
-     <y>242</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1075</x>
-     <y>398</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>astGraphWidget</sender>
-   <signal>clicked(SgNode*)</signal>
-   <receiver>nodeInfoWidget</receiver>
-   <slot>setNode(SgNode*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>469</x>
-     <y>169</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1075</x>
-     <y>398</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>astBrowserWidget</sender>
-   <signal>clicked(SgNode*)</signal>
-   <receiver>roseCodeEdit</receiver>
-   <slot>setNode(SgNode*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>136</x>
-     <y>242</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>725</x>
-     <y>498</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>astGraphWidget</sender>
-   <signal>clicked(SgNode*)</signal>
-   <receiver>roseCodeEdit</receiver>
-   <slot>setNode(SgNode*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>469</x>
-     <y>169</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>725</x>
-     <y>498</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>bAstView</sender>
-   <signal>clicked(SgNode*)</signal>
-   <receiver>roseCodeEdit</receiver>
-   <slot>setNode(SgNode*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>136</x>
-     <y>592</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>574</x>
-     <y>169</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>bAstView</sender>
-   <signal>clicked(SgNode*)</signal>
-   <receiver>nodeInfoWidget</receiver>
-   <slot>setNode(SgNode*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>136</x>
-     <y>592</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1075</x>
-     <y>398</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>astBrowserWidget</sender>
-   <signal>clicked(SgNode*)</signal>
-   <receiver>kvtMetrics</receiver>
-   <slot>updateView(SgNode*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>136</x>
-     <y>254</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>651</x>
-     <y>120</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>astBrowserWidget</sender>
-   <signal>doubleClicked(SgNode*)</signal>
-   <receiver>kvtMetrics</receiver>
-   <slot>addNode(SgNode*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>136</x>
-     <y>254</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>651</x>
-     <y>120</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>bAstView</sender>
-   <signal>clicked(SgNode*)</signal>
-   <receiver>kvtMetrics</receiver>
-   <slot>updateView(SgNode*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>136</x>
-     <y>625</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>651</x>
-     <y>120</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>kvtMetrics</sender>
-   <signal>clicked(SgNode*)</signal>
-   <receiver>roseCodeEdit</receiver>
-   <slot>setNode(SgNode*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>651</x>
-     <y>120</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>506</x>
-     <y>120</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>astBrowserWidget</sender>
-   <signal>clicked(SgNode*)</signal>
-   <receiver>bAstView</receiver>
-   <slot>setNode(SgNode*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>136</x>
-     <y>268</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>136</x>
-     <y>631</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>roseFileCmbBox</sender>
    <signal>selectedFileChanged(AstFilterInterface*)</signal>
    <receiver>astGraphWidget</receiver>
@@ -448,6 +459,246 @@
     <hint type="destinationlabel">
      <x>361</x>
      <y>120</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>bAstView</sender>
+   <signal>clicked(SgNode*)</signal>
+   <receiver>nodeInfoWidget</receiver>
+   <slot>setNode(SgNode*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>136</x>
+     <y>631</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1105</x>
+     <y>361</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>bAstView</sender>
+   <signal>clicked(SgNode*)</signal>
+   <receiver>astGraphWidget</receiver>
+   <slot>setNode(SgNode*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>136</x>
+     <y>631</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>361</x>
+     <y>120</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>bAstView</sender>
+   <signal>clicked(SgNode*)</signal>
+   <receiver>roseCodeEdit</receiver>
+   <slot>setNode(SgNode*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>136</x>
+     <y>631</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>574</x>
+     <y>169</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>astGraphWidget</sender>
+   <signal>clicked(SgNode*)</signal>
+   <receiver>nodeInfoWidget</receiver>
+   <slot>setNode(SgNode*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>361</x>
+     <y>120</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1105</x>
+     <y>361</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>astGraphWidget</sender>
+   <signal>clicked(SgNode*)</signal>
+   <receiver>roseCodeEdit</receiver>
+   <slot>setNode(SgNode*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>361</x>
+     <y>120</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>574</x>
+     <y>169</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>bAstView</sender>
+   <signal>clicked(SgNode*)</signal>
+   <receiver>asmView</receiver>
+   <slot>gotoNode(SgNode*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>136</x>
+     <y>631</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>429</x>
+     <y>413</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>astBrowserWidget</sender>
+   <signal>clicked(SgNode*)</signal>
+   <receiver>nodeInfoWidget</receiver>
+   <slot>setNode(SgNode*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>136</x>
+     <y>268</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1105</x>
+     <y>361</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>asmView</sender>
+   <signal>clicked(SgNode*)</signal>
+   <receiver>nodeInfoWidget</receiver>
+   <slot>setNode(SgNode*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>429</x>
+     <y>413</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1105</x>
+     <y>361</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>astBrowserWidget</sender>
+   <signal>clicked(SgNode*)</signal>
+   <receiver>asmInstructionsBar</receiver>
+   <slot>setNode(SgNode*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>136</x>
+     <y>263</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>429</x>
+     <y>413</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>bAstView</sender>
+   <signal>clicked(SgNode*)</signal>
+   <receiver>asmInstructionsBar</receiver>
+   <slot>setNode(SgNode*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>136</x>
+     <y>617</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>429</x>
+     <y>413</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>asmInstructionsBar</sender>
+   <signal>clicked(SgNode*)</signal>
+   <receiver>asmView</receiver>
+   <slot>gotoNode(SgNode*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>429</x>
+     <y>413</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1001</x>
+     <y>169</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>asmInstructionsBar</sender>
+   <signal>clicked(SgNode*)</signal>
+   <receiver>nodeInfoWidget</receiver>
+   <slot>setNode(SgNode*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>429</x>
+     <y>413</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1454</x>
+     <y>500</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>asmView</sender>
+   <signal>clicked(SgNode*)</signal>
+   <receiver>asmInstructionsBar</receiver>
+   <slot>setNode(SgNode*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1001</x>
+     <y>169</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>429</x>
+     <y>413</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>bAstView</sender>
+   <signal>nodeDropped(SgNode*,QPoint)</signal>
+   <receiver>bAstView</receiver>
+   <slot>setNode(SgNode*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>136</x>
+     <y>332</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>136</x>
+     <y>332</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>astBrowserWidget</sender>
+   <signal>nodeDropped(SgNode*,QPoint)</signal>
+   <receiver>astBrowserWidget</receiver>
+   <slot>setNode(SgNode*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>136</x>
+     <y>192</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>136</x>
+     <y>192</y>
     </hint>
    </hints>
   </connection>

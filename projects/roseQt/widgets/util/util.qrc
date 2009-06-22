@@ -1,5 +1,8 @@
 <RCC>
   <qresource prefix="util" >
+    <file>NodeIcons/binaryfile.gif</file>
+    <file>NodeIcons/binaryfiles.gif</file>
+    <file>NodeIcons/sourcefiles.gif</file>
     <file>NodeIcons/class.gif</file>
     <file>NodeIcons/function.gif</file>
     <file>NodeIcons/include.gif</file>

@@ -1,5 +1,5 @@
 #include "KiviatViewPlugin.h"
-#include "KiviatView/KiviatView.h"
+#include "KiviatView.h"
 
 #include <QtPlugin>
 

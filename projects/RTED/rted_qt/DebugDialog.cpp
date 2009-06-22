@@ -1,14 +1,94 @@
+
 #include "DebugDialog.h"
 #include "CustomListModels.h"
 
+
+#include <QSettings>
+#include <QDebug>
 #include <QSortFilterProxyModel>
+#include "qcodeedit.h"
+
+
 
 DebugDialog::DebugDialog(QWidget * par)
-    : QDialog(par), heapModel(0), stackModel(0), memModel(0)
+    : QMainWindow(par), heapModel(0), stackModel(0), memModel(0)
 {
-    ui.setupUi(this);
+    ui = new Ui::DebugDialog();
+    ui->setupUi(this);
+
+
+    /*
+    editorWrapper = new QCodeEdit(ui->codeEdit ,this);
+
+    editorWrapper
+        ->addPanel("Line Mark Panel", QCodeEdit::West, true)
+        ->setShortcut(QKeySequence("F6"));
+
+    editorWrapper
+        ->addPanel("Line Number Panel", QCodeEdit::West, true)
+        ->setShortcut(QKeySequence("F11"));
+
+    editorWrapper
+        ->addPanel("Fold Panel", QCodeEdit::West, true)
+        ->setShortcut(QKeySequence("F9"));
+
+    //editorWrapper
+    //    ->addPanel("Line Change Panel", QCodeEdit::West, true);
+
+    editorWrapper
+        ->addPanel("Status Panel", QCodeEdit::South, true);
+
+    editorWrapper
+        ->addPanel("Search Replace Panel", QCodeEdit::South);
+
+    ui->editorToolbar->addAction(ui->codeEdit->action("undo"));
+    ui->editorToolbar->addAction(ui->codeEdit->action("redo"));
+    ui->editorToolbar->addSeparator();
+    ui->editorToolbar->addAction(ui->codeEdit->action("cut"));
+    ui->editorToolbar->addAction(ui->codeEdit->action("copy"));
+    ui->editorToolbar->addAction(ui->codeEdit->action("paste"));
+
+    ui->menuEdit->addAction(ui->codeEdit->action("undo"));
+    ui->menuEdit->addAction(ui->codeEdit->action("redo"));
+    ui->menuEdit->addSeparator();
+    ui->menuEdit->addAction(ui->codeEdit->action("cut"));
+    ui->menuEdit->addAction(ui->codeEdit->action("copy"));
+    ui->menuEdit->addAction(ui->codeEdit->action("paste"));
+    */
+
+    //restore settings
+    QSettings settings;
+    settings.beginGroup("WindowState");
+
+    QByteArray d = settings.value("mainwindow").toByteArray();
+    if(d.size() > 0)
+    {
+      restoreState(d);
+      qDebug() << "MainWindow settings restored";
+    }
+
+    settings.endGroup();
+
 }
 
+
+DebugDialog::~DebugDialog()
+{
+    QSettings settings;
+    settings.beginGroup("WindowState");
+    settings.setValue("mainwindow",saveState());
+    settings.endGroup();
+
+    qDebug() << "MainWindow settings stored";
+    delete ui;
+}
+
+
+void DebugDialog::setEditorMark(const QString & file, int row)
+{
+    ui->codeEdit->loadCppFile(file);
+    ui->codeEdit->markAsWarning(row);
+}
 
 void DebugDialog::setHeapVars(RuntimeVariablesType * arr, int arrSize)
 {
@@ -20,12 +100,12 @@ void DebugDialog::setHeapVars(RuntimeVariablesType * arr, int arrSize)
 
     heapModel = new RuntimeVariablesModel(arr,arrSize,this);
     heapProxyModel = new QSortFilterProxyModel(this);
-    connect(ui.txtHeapFilter,SIGNAL(textChanged(const QString&)),
+    connect(ui->txtHeapFilter,SIGNAL(textChanged(const QString&)),
             heapProxyModel, SLOT(setFilterWildcard(const QString&)));
 
     heapProxyModel->setSourceModel(heapModel);
 
-    ui.lstHeap->setModel(heapProxyModel);
+    ui->lstHeap->setModel(heapProxyModel);
 
 }
 
@@ -39,12 +119,12 @@ void DebugDialog::setStackVars(RuntimeVariablesType * arr, int arrSize)
 
     stackModel = new RuntimeVariablesModel(arr,arrSize,this);
     stackProxyModel = new QSortFilterProxyModel(this);
-    connect(ui.txtStackFilter,SIGNAL(textChanged(const QString&)),
+    connect(ui->txtStackFilter,SIGNAL(textChanged(const QString&)),
             stackProxyModel, SLOT(setFilterWildcard(const QString&)));
 
     stackProxyModel->setSourceModel(stackModel);
 
-    ui.lstStack->setModel(stackProxyModel);
+    ui->lstStack->setModel(stackProxyModel);
 }
 
 void DebugDialog::setMemoryLocations(MemoryType * arr, int arrSize)
@@ -57,30 +137,30 @@ void DebugDialog::setMemoryLocations(MemoryType * arr, int arrSize)
 
     memModel = new MemoryTypeModel(arr,arrSize,this);
     memProxyModel = new QSortFilterProxyModel(this);
-    connect(ui.txtMemFilter,SIGNAL(textChanged(const QString&)),
+    connect(ui->txtMemFilter,SIGNAL(textChanged(const QString&)),
             memProxyModel, SLOT(setFilterWildcard(const QString&)));
 
 
     memProxyModel->setSourceModel(memModel);
 
-    ui.lstMem->setModel(memProxyModel);
+    ui->lstMem->setModel(memProxyModel);
 }
 
 
 void DebugDialog::on_lstHeap_clicked(const QModelIndex & ind)
 {
-    displayRuntimeVariable(heapModel->getRuntimeVariable(ind),ui.propHeap );
+    displayRuntimeVariable(heapModel->getRuntimeVariable(ind),ui->propHeap );
 }
 
 void DebugDialog::on_lstStack_clicked(const QModelIndex & ind)
 {
-    displayRuntimeVariable(stackModel->getRuntimeVariable(ind),ui.propStack );
+    displayRuntimeVariable(stackModel->getRuntimeVariable(ind),ui->propStack );
 
 }
 
 void DebugDialog::on_lstMem_clicked(const QModelIndex & ind)
 {
-    displayMemoryType(memModel->getMemoryType(ind),ui.propMem);
+    displayMemoryType(memModel->getMemoryType(ind),ui->propMem);
 }
 
 

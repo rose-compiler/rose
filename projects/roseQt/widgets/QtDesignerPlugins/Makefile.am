@@ -1,7 +1,7 @@
 #------------ QtDesignerPlugins Makefile.am -----------
 include $(top_srcdir)/projects/roseQt/Make.inc 
 
-if ROSE_USE_QT
+if ROSE_WITH_ROSEQT
 
 noinst_LTLIBRARIES = libQtDesignerPlugins.la 
 
@@ -11,29 +11,49 @@ INCLUDES += -I$(srcdir)/../RoseCodeEdit/QCodeEdit -I$(srcdir)/../RoseCodeEdit/QC
 
 # End of Makefile.am.pre Content
 
-libQtDesignerPlugins_la_SOURCES = AstBrowserWidgetPlugin.cpp\
+libQtDesignerPlugins_la_SOURCES = AsmViewPlugin.cpp\
+                                  AstBrowserWidgetPlugin.cpp\
                                   AstGraphWidgetPlugin.cpp\
                                   BAstViewPlugin.cpp\
                                   KiviatViewPlugin.cpp\
                                   MetricsKiviatPlugin.cpp\
                                   NodeInfoWidgetPlugin.cpp\
+                                  ProjectViewPlugin.cpp\
                                   PropertyTreeWidgetPlugin.cpp\
                                   RoseCodeEditPlugin.cpp\
                                   RoseFileComboBoxPlugin.cpp\
                                   RoseWidgetsCollection.cpp
 
-nodist_libQtDesignerPlugins_la_SOURCES = moc_AstBrowserWidgetPlugin.cpp\
-                                         moc_AstGraphWidgetPlugin.cpp\
-                                         moc_BAstViewPlugin.cpp\
-                                         moc_KiviatViewPlugin.cpp\
-                                         moc_MetricsKiviatPlugin.cpp\
-                                         moc_NodeInfoWidgetPlugin.cpp\
-                                         moc_PropertyTreeWidgetPlugin.cpp\
-                                         moc_RoseCodeEditPlugin.cpp\
-                                         moc_RoseFileComboBoxPlugin.cpp\
-                                         moc_RoseWidgetsCollection.cpp\
+nodist_libQtDesignerPlugins_la_SOURCES = moc_AsmViewPlugin.cxx\
+                                         moc_AstBrowserWidgetPlugin.cxx\
+                                         moc_AstGraphWidgetPlugin.cxx\
+                                         moc_BAstViewPlugin.cxx\
+                                         moc_KiviatViewPlugin.cxx\
+                                         moc_MetricsKiviatPlugin.cxx\
+                                         moc_NodeInfoWidgetPlugin.cxx\
+                                         moc_ProjectViewPlugin.cxx\
+                                         moc_PropertyTreeWidgetPlugin.cxx\
+                                         moc_RoseCodeEditPlugin.cxx\
+                                         moc_RoseFileComboBoxPlugin.cxx\
+                                         moc_RoseWidgetsCollection.cxx\
                                          qrc_QtDesignerPlugins.cpp
 
+
+
+# Target for installing header 
+headerTargetdir    =  $(roseQtWidgetsIncPath)/
+headerTarget_HEADERS = AsmViewPlugin.h\
+                       AstBrowserWidgetPlugin.h\
+                       AstGraphWidgetPlugin.h\
+                       BAstViewPlugin.h\
+                       KiviatViewPlugin.h\
+                       MetricsKiviatPlugin.h\
+                       NodeInfoWidgetPlugin.h\
+                       ProjectViewPlugin.h\
+                       PropertyTreeWidgetPlugin.h\
+                       RoseCodeEditPlugin.h\
+                       RoseFileComboBoxPlugin.h\
+                       RoseWidgetsCollection.h
 
 
 endif

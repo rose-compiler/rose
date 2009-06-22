@@ -43,7 +43,6 @@ class QtAstModel : public QAbstractItemModel
 
 	protected:
 		ModelNode * treeRoot;
-
 		AstFilterInterface * filter;
 };
 

@@ -91,7 +91,6 @@ KiviatView::KiviatData::~KiviatData()
    // cornerPoints are children of polygon
    // --> are deleted automatically
    delete polygon;
-   qDebug() << "KiviatData deleted";
 }
 
 
@@ -508,10 +507,10 @@ void KiviatView::setActiveItem(int newId)
 }
 
 void KiviatView::setToolTip( int dataHandle, int axisNr, const QString& string )
-{ 
+{
     dataset[dataHandle]->setToolTip( axisNr, string );
 }
 
-   
+
 
 

@@ -1,7 +1,7 @@
 #include "RoseCodeEditPlugin.h"
 
 #include "AstGraphWidgetPlugin.h"
-#include "RoseCodeEdit/RoseCodeEdit.h"
+#include "RoseCodeEdit.h"
 
 
 #include <QtPlugin>

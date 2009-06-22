@@ -1,5 +1,5 @@
 #include "NodeInfoWidgetPlugin.h"
-#include "NodeInfoWidget/NodeInfoWidget.h"
+#include "NodeInfoWidget.h"
 
 
 #include <QtPlugin>

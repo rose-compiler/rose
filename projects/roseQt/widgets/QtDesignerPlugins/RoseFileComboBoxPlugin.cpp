@@ -1,5 +1,5 @@
 #include "RoseFileComboBoxPlugin.h"
-#include "RoseFileSelector/RoseFileComboBox.h"
+#include "RoseFileComboBox.h"
 
 
 #include <QtPlugin>

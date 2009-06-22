@@ -1,7 +1,7 @@
 #------------ KiviatView Makefile.am -----------
 include $(top_srcdir)/projects/roseQt/Make.inc 
 
-if ROSE_USE_QT
+if ROSE_WITH_ROSEQT
 
 noinst_LTLIBRARIES = libKiviatView.la 
 
@@ -9,8 +9,13 @@ noinst_LTLIBRARIES = libKiviatView.la
 
 libKiviatView_la_SOURCES = KiviatView.cpp
 
-nodist_libKiviatView_la_SOURCES = moc_KiviatView.cpp
+nodist_libKiviatView_la_SOURCES = moc_KiviatView.cxx
 
+
+
+# Target for installing header 
+headerTargetdir    =  $(roseQtWidgetsIncPath)/
+headerTarget_HEADERS = KiviatView.h
 
 
 endif

@@ -76,6 +76,8 @@ QModelIndex PropertyTreeWidget::addEntryToSection(int sectionId, const QString &
 {
 	QModelIndex id=  model->addEntryToSection(sectionId,prop,val);
 	header()->adjustSize();
+    ItemTreeModel::setupView(this);
+
 	return id;
 }
 
@@ -83,6 +85,7 @@ QModelIndex PropertyTreeWidget::addEntry (  const QModelIndex & par,
 											const QString & prop,
 											const QVariant & val)
 {
+    ItemTreeModel::setupView(this);
 	return model->addEntry(par,prop,val);
 }
 
@@ -118,3 +121,5 @@ void PropertyTreeWidget::clear()
 	model->clear();
 	colors.clear();
 }
+
+

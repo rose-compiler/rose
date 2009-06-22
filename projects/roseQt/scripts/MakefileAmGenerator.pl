@@ -24,7 +24,7 @@ sub usesQObject {
 sub mocSourceName
 {
     ($name,$path,$suffix) = fileparse($_[0],( ".h" ));
-    "moc_" . $name . ".cpp" 
+    "moc_" . $name . ".cxx" 
 }
 
 sub resSourceName
@@ -133,7 +133,7 @@ print "#------------ $dirName Makefile.am -----------\n" ;
 
 
 print "include \$(top_srcdir)/projects/roseQt/Make.inc \n\n";
-print "if ROSE_USE_QT\n";
+print "if ROSE_WITH_ROSEQT\n";
 
 if($printLibTarget)
 {

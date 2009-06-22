@@ -27,7 +27,7 @@ ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 MACRO(ADD_PRECOMPILED_HEADER _targetName _input )
 
     GET_FILENAME_COMPONENT(_name ${_input} NAME)
-    SET(_source "${CMAKE_CURRENT_SOURCE_DIR}/${_input}")
+    SET(_source "${_input}")
     SET(_outdir "${CMAKE_CURRENT_BINARY_DIR}/${_name}.gch")
     MAKE_DIRECTORY(${_outdir})
     SET(_output "${_outdir}/${CMAKE_BUILD_TYPE}.pch")

@@ -1,5 +1,5 @@
 #include "PropertyTreeWidgetPlugin.h"
-#include "PropertyTreeWidget/PropertyTreeWidget.h"
+#include "PropertyTreeWidget.h"
 
 
 #include <QtPlugin>

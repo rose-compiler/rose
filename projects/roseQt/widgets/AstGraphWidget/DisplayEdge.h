@@ -16,10 +16,6 @@ class DisplayEdge : public QGraphicsItem
 		DisplayNode *sourceNode() const  { return source; }
 	    DisplayNode *destNode()   const  { return dest; }
 
-		void setSourceNode(DisplayNode *node) { source=node; adjust(); }
-	    void setDestNode(DisplayNode *node)   { dest=node;   adjust(); }
-
-
 	    /// Call this function after the position of a node changed
 	    void adjust();
 
@@ -32,9 +28,6 @@ class DisplayEdge : public QGraphicsItem
 		void setColor(const QColor & c)  { color=c; }
 		void setWidth(double width)		 { penWidth=1; }
 
-
-
-
 		enum PaintMode { STRAIGHT, RECTANGULAR, BEZIER_QUAD,BEZIER_CUBIC };
 
 		void setPaintMode(PaintMode m) { paintMode=m; }
@@ -44,6 +37,11 @@ class DisplayEdge : public QGraphicsItem
 		const QString & getEdgeLabel()  const     { return edgeLabel; }
 
 	protected:
+         void setSourceNode(DisplayNode *node) { source=node; adjust(); }
+	     void setDestNode  (DisplayNode *node) { dest=node;   adjust(); }
+
+
+
 	     QRectF boundingRect() const;
 	     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 

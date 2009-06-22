@@ -1,7 +1,7 @@
 #ifndef NODEINFOVIEW_H
 #define NODEINFOVIEW_H
 
-#include "PropertyTreeWidget/PropertyTreeWidget.h"
+#include "PropertyTreeWidget.h"
 
 
 class SgNode;
@@ -9,7 +9,18 @@ class SgFunctionModifier;
 class SgDeclarationModifier;
 class SgSpecialFunctionModifier;
 
-
+/**
+ * Shows information about an SgNode (similar to pdf generator)
+ *
+ * <img src="../NodeInfoWidget.jpg"  alt="Screenshot">
+ *
+ * Shows following information about an SgNode:
+ * - Location Info if node is an SgLocatedNode
+ * - general Rose-RTI
+ * - Annotated (Metric-) Attributes
+ *
+ *  Usage: just call setNode()
+ */
 class NodeInfoWidget : public PropertyTreeWidget
 {
 	Q_OBJECT
@@ -22,6 +33,17 @@ class NodeInfoWidget : public PropertyTreeWidget
 		void setNode(SgNode * node);
 
 	protected:
+	    SgNode * curNode;
+
+        virtual void dragEnterEvent(QDragEnterEvent * ev);
+        virtual void dragMoveEvent(QDragMoveEvent * ev);
+        virtual void dropEvent(QDropEvent * ev);
+        virtual void mousePressEvent(QMouseEvent *event);
+        virtual void mouseMoveEvent(QMouseEvent *event);
+
+        QPoint dragStartPosition;  ///< position of mouseclick, used for d&d functions
+
+
 		void printDeclModifier(const QModelIndex & par,
 							  const SgDeclarationModifier & declMod);
 

@@ -30,12 +30,14 @@ namespace impl {
 
 
 /**
- * declaration of Metrics Config Class for local configurations
- * uses _always_ one instance of the global Configuratio
- * en-/disable is the only thing atm which is unique to each local instance
- * this is managed by the global configuration
+ * Provides configuration dialog for ranges and normalization of metric attributes
  *
- * to create a new local config call the constructor with a unique ID
+ * Declaration of Metrics Config Class for local configurations
+ *  - uses \b always one instance of the global Configuration
+ *  - en-/disable is the only thing atm which is unique to each local instance
+ *    this is managed by the global configuration
+ *
+ * to create a new local config call the constructor with a unique ID\n
  *
  * this class acts as a proxy to the global configuration
  */
@@ -47,16 +49,25 @@ class MetricsConfig
     public:
         typedef impl::MetricsInfoContainer MetricsInfoContainer;
         typedef impl::MetricsInfoIterator  iterator;
-        
+
         // Constructor which register a unique Identification ID to the
         // static Global impl::MetricsConfig Object
         //
         // With this configureId the Global Object is able to distinguish several
-        // configuration modules 
-        explicit MetricsConfig( const QString& configureId, SgNode *root = NULL );
-        
+        // configuration modules
+        explicit MetricsConfig( const QString& configureId,
+                                MetricsConfig *globalConfig,
+                                SgNode *root = NULL );
+
+        MetricsConfig( const MetricsConfig& o )
+            : impl( o.impl ),
+              configureId( o.configureId )
+        {}
+
         // returns the selected Attribute
               int          getMetricsInfoCount();
+
+              bool         hasMetricsInfo( const QString& name ) const;
         const MetricsInfo& getMetricsInfo( const QString& name ) const;
               MetricsInfo& getMetricsInfo( const QString& name );
 
@@ -64,14 +75,14 @@ class MetricsConfig
         //   - bi directional iterators
         //   - only iterate over MetricInfo items which are enabled in the dialog
         //     ( all items are enabled by default )
-        iterator begin();
-        iterator end();
+        iterator begin() const;
+        iterator end() const;
 
         // recollect metrics from root (can be subtree)
         //
         // changes are made to global config!
         void setRoot( SgNode *root );
-        
+
     public slots:
         // create dialog window to configure, and select Metric Attributes
         // sets attributes in MetricsInfo to enabled/disabled
@@ -82,6 +93,10 @@ class MetricsConfig
         void configChanged();
 
     private:
+        /*explicit MetricsConfig( impl::MetricsConfig *global )
+            : impl( global ),
+              configureId( "" )
+        {}*/
         impl::MetricsConfig *impl;
         QString configureId;
 };
@@ -102,24 +117,26 @@ namespace impl {
             {
                 setupEnabled( configureId );
             }
-            
+
             // returns the selected Attribute
             int getMetricsInfoCount          ( const QString& configureId = "" );
+
+            bool               hasMetricsInfo( const QString& name, const QString& configureId = "" ) const;
             const MetricsInfo& getMetricsInfo( const QString& name, const QString& configureId = "" ) const;
             MetricsInfo& getMetricsInfo      ( const QString& name, const QString& configureId = "" );
 
             MetricsInfoIterator begin( const QString& configureId = "" );
             MetricsInfoIterator end  ( const QString& configureId = "" );
 
-            static MetricsConfig *getGlobal( SgNode *root = NULL );
+            //static MetricsConfig *getGlobal( SgNode *root = NULL );
 
             // recollect metrics from root (can be subtree)
             void setRoot( SgNode *root );
-            
+
             // create dialog window to configure, and select Metric Attributes
             // sets attributes in MetricsInfo to enabled/disabled
             void configureMultiple( const QString& configureId = "" );
-            void configureSingle  ( const QString& configureId = "" );
+            const MetricsInfo& configureSingle  ( const QString& configureId = "" );
 
         private slots:
             void itemChanged( int );
@@ -148,7 +165,7 @@ namespace impl {
             QString                             currentMetric;
             Ui::MetricsConfig                  *dialogUi;
 
-            static MetricsConfig *globalConfig;
+            //static MetricsConfig *globalConfig;
 
             friend class MetricsInfoIterator;
     };
@@ -164,7 +181,7 @@ namespace impl {
 
                   MetricsInfoIterator  operator++( int );
                   MetricsInfoIterator  operator--( int );
-                  
+
                   MetricsInfoIterator& operator++( );
                   MetricsInfoIterator& operator--( );
 
@@ -181,7 +198,7 @@ namespace impl {
 
         private:
             typedef MetricsInfoContainer::iterator map_iterator;
-            
+
             MetricsInfoIterator( MetricsConfig& config, const QString& configureId_ );
 
             map_iterator iter;

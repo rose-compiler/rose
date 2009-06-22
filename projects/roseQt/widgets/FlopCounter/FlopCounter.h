@@ -4,10 +4,11 @@
 
 
 
-#include "AstProcessing/AstProcessing.h"
+#include "AstProcessing.h"
+#include "NewAstProcessing.h"
 #include "Flops.h"
 
-#include "AstProcessing.h"
+
 
 class FlopCounter
 {

@@ -9,6 +9,8 @@ using namespace std;
 
 double MetricsInfo::eval( SgNode *node, const QString& metricName ) const
 {
+    if( caption == "" ) return 0.0;
+
     MetricAttribute *metricAttr = NULL;
     if( node != NULL )
         metricAttr = dynamic_cast<MetricAttribute *>( node->getAttribute( metricName.toStdString() ) );

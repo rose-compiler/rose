@@ -30,7 +30,7 @@ class RoseFileComboBox : public QComboBox
 		/// Emitted when user selects a file
 		void selectedFileChanged( int fileId );
 		void selectedFileChanged( const QString & filename );
-                void selectedFileChanged( AstFilterInterface* filter );
+        void selectedFileChanged( AstFilterInterface* filter );
 
 	protected slots:
 		void curIndexChanged (int index);

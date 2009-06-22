@@ -1,26 +1,25 @@
 
 #include "rose.h"
 
-#include "MetricsConfig/MetricsConfig.h"
-#include "util/AstFilters.h"
+#include "MetricsConfig.h"
+#include "AstFilters.h"
 
 #include "MetricFilter.h"
 
 #include "ui_MetricFilter.h"
 
-MetricFilter::MetricFilter( QWidget *parent )
+MetricFilter::MetricFilter( QWidget *parent, MetricsConfig *globalConfig )
     : QWidget( parent ),
       metricFilterUi( new Ui::MetricFilter() ),
-      metricsConfig( new MetricsConfig( "MetricFilter" ) ),
+      //metricsConfig( new MetricsConfig( "MetricFilter", globalConfig ) ),
       currentName( "" ),
       currentThreshold( 0 )
 {
     metricFilterUi->setupUi( this );
 
-    connect( metricFilterUi->cmdConfigureMetrics, SIGNAL( clicked() )                 , metricsConfig, SLOT( configureSingle() ) );
     connect( metricFilterUi->cmbMetric          , SIGNAL( currentIndexChanged( int ) ), this, SLOT( itemChanged( int ) ) );
     connect( metricFilterUi->sldThreshold       , SIGNAL( valueChanged( int ) )       , this, SLOT( thresholdChanged( int ) ) );
-    connect( metricsConfig                      , SIGNAL( configChanged() )           , this, SLOT( updateMetrics() ) );
+    //connect( metricsConfig                      , SIGNAL( configChanged() )           , this, SLOT( updateMetrics() ) );
 
     updateMetrics();
 }
@@ -28,7 +27,7 @@ MetricFilter::MetricFilter( QWidget *parent )
 MetricFilter::~MetricFilter()
 {
     delete metricFilterUi;
-    delete metricsConfig;
+    //delete metricsConfig;
 }
 
 void MetricFilter::itemChanged( int id )
@@ -41,7 +40,7 @@ void MetricFilter::itemChanged( int id )
     {
         metricFilterUi->frmThreshold->setEnabled( true );
     }
-    
+
     currentName = metricFilterUi->cmbMetric->itemData( id ).toString();
     currentId = id;
 
@@ -57,7 +56,7 @@ void MetricFilter::thresholdChanged( int threshold )
 
 void MetricFilter::updateMetrics()
 {
-    for( MetricsConfig::iterator i = metricsConfig->begin();
+    /*for( MetricsConfig::iterator i = metricsConfig->begin();
          i != metricsConfig->end();
          ++i )
     {
@@ -66,7 +65,7 @@ void MetricFilter::updateMetrics()
             metricFilterUi->cmbMetric->insertItem( i->listId+1, i->caption, QVariant( i.name() ) );
         else
             metricFilterUi->cmbMetric->setItemText( id, i->caption );
-    }
+    }*/
 }
 
 void MetricFilter::filterChanged()
@@ -78,8 +77,8 @@ void MetricFilter::filterChanged()
         return;
     }
 
-    MetricsInfo tmp( metricsConfig->getMetricsInfo( currentName ) );
-    
-    AstFilterMetricAttributeByThreshold filter( currentName, tmp, currentThreshold );
-    emit filterChanged( &filter );
+    //MetricsInfo tmp( metricsConfig->getMetricsInfo( currentName ) );
+
+    //AstFilterMetricAttributeByThreshold filter( currentName, tmp, currentThreshold );
+    //emit filterChanged( &filter );
 }

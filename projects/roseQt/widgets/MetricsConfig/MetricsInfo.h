@@ -10,6 +10,14 @@ class MetricsInfo
 {
     public:
         MetricsInfo()
+            : caption( "" ),
+              //isEnabled( isShown_ ),
+              minValue( 0.0 ),
+              maxValue( 0.0 ),
+              minNormalize( 0.0 ),
+              maxNormalize( 0.0 ),
+              normalizeByRange( true ),
+              listId( -1 )
         {}
 
         MetricsInfo( const QString& name_,/* bool isShown_,*/ double minValue_, double maxValue_, bool normalizeByRange_ = true )

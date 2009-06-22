@@ -1,23 +1,28 @@
 #ifndef BASTVIEW_H
 #define BASTVIEW_H
 
-#include <QTreeView>
+#include "RoseTreeView.h"
 #include <QtDesigner/QDesignerExportWidget>
 
 class SgNode;
-class BAstModel;
+class ItemTreeModel;
 
 class AstFilterInterface;
 
 /**
- * Displays a tree of  Classes, Namespaces and Functions
- * There are two modes:
+ * A tree showing namespaces,classes,function,loops (not raw SgNodes)
+ *
+ * <img src="../BeautifiedAst.jpg" alt="Beautified AST Screenshot">
+ *
+ * There are two usage modes:
  *  - project mode (if node is a SgProject)
  *      - view is sorted after include and source files
  *  - if node is no SgProject: all elements of subtree spanned by this SgNode
  *    are displayed
+ *
+ *  Filtering is also possible via the AstFilterInterface
  */
-class QDESIGNER_WIDGET_EXPORT BAstView : public QTreeView
+class QDESIGNER_WIDGET_EXPORT BAstView : public RoseTreeView
 {
     Q_OBJECT
 
@@ -25,21 +30,9 @@ class QDESIGNER_WIDGET_EXPORT BAstView : public QTreeView
         BAstView(QWidget * parent=NULL);
         virtual ~BAstView();
 
-    public slots:
-        void setNode(SgNode * node);
-        void setFilter(AstFilterInterface * filter);
-    signals:
-        void clicked(SgNode * node);
-        void clicked(const QString & file, int startRow, int startCol,
-                                           int endRow, int endCol);
-
-    protected slots:
-        void viewClicked(const QModelIndex & ind);
-
 
     protected:
-        BAstModel * model;
-
+        void updateModel();
 };
 
 #endif

@@ -7,7 +7,7 @@
 #include <QDebug>
 
 AstBrowserWidget::AstBrowserWidget(QWidget*par)
-	: QTreeView(par)
+	: RoseTreeView(par)
 {
 	model=new QtAstModel(NULL);
 	setModel(model);
@@ -17,7 +17,7 @@ AstBrowserWidget::AstBrowserWidget(QWidget*par)
 
 
 AstBrowserWidget::AstBrowserWidget(SgNode * node, QWidget * par)
-	: QTreeView(par)
+	: RoseTreeView(par)
 {
 	model=new QtAstModel(node);
 	setModel(model);
@@ -39,7 +39,7 @@ void AstBrowserWidget::setNode(SgNode * node)
 void AstBrowserWidget::setFilter(AstFilterInterface * newFilter)
 {
     if( newFilter != NULL )
-	model->setFilter( newFilter->copy() );
+        model->setFilter( newFilter->copy() );
     else
         model->setFilter( new AstFilterAll() );
 }
@@ -50,37 +50,4 @@ void AstBrowserWidget::setFileFilter(int id)
         setFilter(NULL);
     else
         setFilter(new AstFilterFileById(id));
-}
-
-void AstBrowserWidget::viewClicked(const QModelIndex & ind)
-{
-	if(! ind.isValid())
-		return;
-
-	SgNode * node= model->getNodeFromIndex(ind);
-	emit clicked(node);
-
-	SgLocatedNode* sgLocNode = isSgLocatedNode(node);
-	if(sgLocNode)
-	{
-		Sg_File_Info* start = sgLocNode->get_startOfConstruct();
-		Sg_File_Info *end   = sgLocNode->get_endOfConstruct();
-
-		emit clicked(QString(start->get_filenameString().c_str()),
-					 start->get_line(),
-					 start->get_col(),
-					 end->get_line(),
-					 end->get_col());
-	}
-	else
-	    emit clicked(QString(),-1,-1,-1,-1);
-}
-
-void AstBrowserWidget::viewDoubleClicked( const QModelIndex & ind )
-{
-    if(! ind.isValid() )
-        return;
-
-    SgNode * node = model->getNodeFromIndex( ind );
-    emit doubleClicked( node );
 }

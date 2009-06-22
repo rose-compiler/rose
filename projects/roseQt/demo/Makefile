@@ -16,9 +16,6 @@ SUFFIXES =
 
 .SUFFIXES: .hpux_make_needs_suffix_list
 
-# Produce verbose output by default.
-VERBOSE = 1
-
 # Suppress display of executed commands.
 $(VERBOSE).SILENT:
 
@@ -42,10 +39,10 @@ RM = /export/0/tmp.bauer25/opt/cmake-2.6.3/bin/cmake -E remove -f
 CMAKE_EDIT_COMMAND = /export/0/tmp.bauer25/opt/cmake-2.6.3/bin/ccmake
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/bauer25/projects/roseQt
+CMAKE_SOURCE_DIR = /home/bauer25/opt/newRoseTree/ROSE/projects/roseQt
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/bauer25/projects/roseQt
+CMAKE_BINARY_DIR = /home/bauer25/opt/newRoseTree/ROSE/projects/roseQt
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -72,14 +69,14 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	cd /home/bauer25/projects/roseQt && $(CMAKE_COMMAND) -E cmake_progress_start /home/bauer25/projects/roseQt/CMakeFiles /home/bauer25/projects/roseQt/demo/CMakeFiles/progress.make
-	cd /home/bauer25/projects/roseQt && $(MAKE) -f CMakeFiles/Makefile2 demo/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/bauer25/projects/roseQt/CMakeFiles 0
+	cd /home/bauer25/opt/newRoseTree/ROSE/projects/roseQt && $(CMAKE_COMMAND) -E cmake_progress_start /home/bauer25/opt/newRoseTree/ROSE/projects/roseQt/CMakeFiles /home/bauer25/opt/newRoseTree/ROSE/projects/roseQt/demo/CMakeFiles/progress.make
+	cd /home/bauer25/opt/newRoseTree/ROSE/projects/roseQt && $(MAKE) -f CMakeFiles/Makefile2 demo/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/bauer25/opt/newRoseTree/ROSE/projects/roseQt/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd /home/bauer25/projects/roseQt && $(MAKE) -f CMakeFiles/Makefile2 demo/clean
+	cd /home/bauer25/opt/newRoseTree/ROSE/projects/roseQt && $(MAKE) -f CMakeFiles/Makefile2 demo/clean
 .PHONY : clean
 
 # The main clean target
@@ -88,22 +85,22 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /home/bauer25/projects/roseQt && $(MAKE) -f CMakeFiles/Makefile2 demo/preinstall
+	cd /home/bauer25/opt/newRoseTree/ROSE/projects/roseQt && $(MAKE) -f CMakeFiles/Makefile2 demo/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /home/bauer25/projects/roseQt && $(MAKE) -f CMakeFiles/Makefile2 demo/preinstall
+	cd /home/bauer25/opt/newRoseTree/ROSE/projects/roseQt && $(MAKE) -f CMakeFiles/Makefile2 demo/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd /home/bauer25/projects/roseQt && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd /home/bauer25/opt/newRoseTree/ROSE/projects/roseQt && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
 # Convenience name for target.
 demo/CMakeFiles/roseQtDemo.dir/rule:
-	cd /home/bauer25/projects/roseQt && $(MAKE) -f CMakeFiles/Makefile2 demo/CMakeFiles/roseQtDemo.dir/rule
+	cd /home/bauer25/opt/newRoseTree/ROSE/projects/roseQt && $(MAKE) -f CMakeFiles/Makefile2 demo/CMakeFiles/roseQtDemo.dir/rule
 .PHONY : demo/CMakeFiles/roseQtDemo.dir/rule
 
 # Convenience name for target.
@@ -112,7 +109,7 @@ roseQtDemo: demo/CMakeFiles/roseQtDemo.dir/rule
 
 # fast build rule for target.
 roseQtDemo/fast:
-	cd /home/bauer25/projects/roseQt && $(MAKE) -f demo/CMakeFiles/roseQtDemo.dir/build.make demo/CMakeFiles/roseQtDemo.dir/build
+	cd /home/bauer25/opt/newRoseTree/ROSE/projects/roseQt && $(MAKE) -f demo/CMakeFiles/roseQtDemo.dir/build.make demo/CMakeFiles/roseQtDemo.dir/build
 .PHONY : roseQtDemo/fast
 
 MainWindow.o: MainWindow.cpp.o
@@ -120,7 +117,7 @@ MainWindow.o: MainWindow.cpp.o
 
 # target to build an object file
 MainWindow.cpp.o:
-	cd /home/bauer25/projects/roseQt && $(MAKE) -f demo/CMakeFiles/roseQtDemo.dir/build.make demo/CMakeFiles/roseQtDemo.dir/MainWindow.cpp.o
+	cd /home/bauer25/opt/newRoseTree/ROSE/projects/roseQt && $(MAKE) -f demo/CMakeFiles/roseQtDemo.dir/build.make demo/CMakeFiles/roseQtDemo.dir/MainWindow.cpp.o
 .PHONY : MainWindow.cpp.o
 
 MainWindow.i: MainWindow.cpp.i
@@ -128,7 +125,7 @@ MainWindow.i: MainWindow.cpp.i
 
 # target to preprocess a source file
 MainWindow.cpp.i:
-	cd /home/bauer25/projects/roseQt && $(MAKE) -f demo/CMakeFiles/roseQtDemo.dir/build.make demo/CMakeFiles/roseQtDemo.dir/MainWindow.cpp.i
+	cd /home/bauer25/opt/newRoseTree/ROSE/projects/roseQt && $(MAKE) -f demo/CMakeFiles/roseQtDemo.dir/build.make demo/CMakeFiles/roseQtDemo.dir/MainWindow.cpp.i
 .PHONY : MainWindow.cpp.i
 
 MainWindow.s: MainWindow.cpp.s
@@ -136,7 +133,7 @@ MainWindow.s: MainWindow.cpp.s
 
 # target to generate assembly for a file
 MainWindow.cpp.s:
-	cd /home/bauer25/projects/roseQt && $(MAKE) -f demo/CMakeFiles/roseQtDemo.dir/build.make demo/CMakeFiles/roseQtDemo.dir/MainWindow.cpp.s
+	cd /home/bauer25/opt/newRoseTree/ROSE/projects/roseQt && $(MAKE) -f demo/CMakeFiles/roseQtDemo.dir/build.make demo/CMakeFiles/roseQtDemo.dir/MainWindow.cpp.s
 .PHONY : MainWindow.cpp.s
 
 main.o: main.cpp.o
@@ -144,7 +141,7 @@ main.o: main.cpp.o
 
 # target to build an object file
 main.cpp.o:
-	cd /home/bauer25/projects/roseQt && $(MAKE) -f demo/CMakeFiles/roseQtDemo.dir/build.make demo/CMakeFiles/roseQtDemo.dir/main.cpp.o
+	cd /home/bauer25/opt/newRoseTree/ROSE/projects/roseQt && $(MAKE) -f demo/CMakeFiles/roseQtDemo.dir/build.make demo/CMakeFiles/roseQtDemo.dir/main.cpp.o
 .PHONY : main.cpp.o
 
 main.i: main.cpp.i
@@ -152,7 +149,7 @@ main.i: main.cpp.i
 
 # target to preprocess a source file
 main.cpp.i:
-	cd /home/bauer25/projects/roseQt && $(MAKE) -f demo/CMakeFiles/roseQtDemo.dir/build.make demo/CMakeFiles/roseQtDemo.dir/main.cpp.i
+	cd /home/bauer25/opt/newRoseTree/ROSE/projects/roseQt && $(MAKE) -f demo/CMakeFiles/roseQtDemo.dir/build.make demo/CMakeFiles/roseQtDemo.dir/main.cpp.i
 .PHONY : main.cpp.i
 
 main.s: main.cpp.s
@@ -160,7 +157,7 @@ main.s: main.cpp.s
 
 # target to generate assembly for a file
 main.cpp.s:
-	cd /home/bauer25/projects/roseQt && $(MAKE) -f demo/CMakeFiles/roseQtDemo.dir/build.make demo/CMakeFiles/roseQtDemo.dir/main.cpp.s
+	cd /home/bauer25/opt/newRoseTree/ROSE/projects/roseQt && $(MAKE) -f demo/CMakeFiles/roseQtDemo.dir/build.make demo/CMakeFiles/roseQtDemo.dir/main.cpp.s
 .PHONY : main.cpp.s
 
 moc_MainWindow.o: moc_MainWindow.cxx.o
@@ -168,7 +165,7 @@ moc_MainWindow.o: moc_MainWindow.cxx.o
 
 # target to build an object file
 moc_MainWindow.cxx.o:
-	cd /home/bauer25/projects/roseQt && $(MAKE) -f demo/CMakeFiles/roseQtDemo.dir/build.make demo/CMakeFiles/roseQtDemo.dir/moc_MainWindow.cxx.o
+	cd /home/bauer25/opt/newRoseTree/ROSE/projects/roseQt && $(MAKE) -f demo/CMakeFiles/roseQtDemo.dir/build.make demo/CMakeFiles/roseQtDemo.dir/moc_MainWindow.cxx.o
 .PHONY : moc_MainWindow.cxx.o
 
 moc_MainWindow.i: moc_MainWindow.cxx.i
@@ -176,7 +173,7 @@ moc_MainWindow.i: moc_MainWindow.cxx.i
 
 # target to preprocess a source file
 moc_MainWindow.cxx.i:
-	cd /home/bauer25/projects/roseQt && $(MAKE) -f demo/CMakeFiles/roseQtDemo.dir/build.make demo/CMakeFiles/roseQtDemo.dir/moc_MainWindow.cxx.i
+	cd /home/bauer25/opt/newRoseTree/ROSE/projects/roseQt && $(MAKE) -f demo/CMakeFiles/roseQtDemo.dir/build.make demo/CMakeFiles/roseQtDemo.dir/moc_MainWindow.cxx.i
 .PHONY : moc_MainWindow.cxx.i
 
 moc_MainWindow.s: moc_MainWindow.cxx.s
@@ -184,7 +181,7 @@ moc_MainWindow.s: moc_MainWindow.cxx.s
 
 # target to generate assembly for a file
 moc_MainWindow.cxx.s:
-	cd /home/bauer25/projects/roseQt && $(MAKE) -f demo/CMakeFiles/roseQtDemo.dir/build.make demo/CMakeFiles/roseQtDemo.dir/moc_MainWindow.cxx.s
+	cd /home/bauer25/opt/newRoseTree/ROSE/projects/roseQt && $(MAKE) -f demo/CMakeFiles/roseQtDemo.dir/build.make demo/CMakeFiles/roseQtDemo.dir/moc_MainWindow.cxx.s
 .PHONY : moc_MainWindow.cxx.s
 
 # Help Target
@@ -216,6 +213,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd /home/bauer25/projects/roseQt && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /home/bauer25/opt/newRoseTree/ROSE/projects/roseQt && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

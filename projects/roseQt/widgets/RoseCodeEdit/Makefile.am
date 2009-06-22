@@ -1,7 +1,7 @@
 #------------ RoseCodeEdit Makefile.am -----------
 include $(top_srcdir)/projects/roseQt/Make.inc 
 
-if ROSE_USE_QT
+if ROSE_WITH_ROSEQT
 
 noinst_LTLIBRARIES = libRoseCodeEdit.la 
 
@@ -14,10 +14,15 @@ libRoseCodeEdit_la_LIBADD   =  QCodeEdit/libQCodeEdit.la
 
 libRoseCodeEdit_la_SOURCES = RoseCodeEdit.cpp
 
-nodist_libRoseCodeEdit_la_SOURCES = moc_RoseCodeEdit.cpp\
+nodist_libRoseCodeEdit_la_SOURCES = moc_RoseCodeEdit.cxx\
                                     qrc_example.cpp\
                                     qrc_QCodeEdit.cpp
 
+
+
+# Target for installing header 
+headerTargetdir    =  $(roseQtWidgetsIncPath)/
+headerTarget_HEADERS = RoseCodeEdit.h
 
 
 endif

@@ -1,5 +1,5 @@
 #include "AstBrowserWidgetPlugin.h"
-#include "AstBrowserWidget/AstBrowserWidget.h"
+#include "AstBrowserWidget.h"
 
 #include <QtPlugin>
 

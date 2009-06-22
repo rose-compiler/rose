@@ -980,10 +980,12 @@ AC_PATH_QT
 AC_PATH_QT_MOC
 AC_PATH_QT_RCC
 AC_PATH_QT_UIC
+AC_PATH_QT_VERSION
 
 # echo "with_qt = $with_qt"
 
-AM_CONDITIONAL(ROSE_USE_QT,test "$with_qt" != no)
+AM_CONDITIONAL(ROSE_USE_QT,test x"$with_qt" != x"no")
+AM_CONDITIONAL(ROSE_WITH_ROSEQT,test x"$with_roseQt" != x"no")
 
 AC_ARG_ENABLE(assembly-semantics, AS_HELP_STRING([--enable-assembly-semantics], [Enable semantics-based analysis of assembly code]))
 AM_CONDITIONAL(ROSE_USE_ASSEMBLY_SEMANTICS, [test "x$enable_assembly_semantics" = xyes])
@@ -1184,6 +1186,7 @@ projects/DistributedMemoryAnalysisCompass/Makefile
 projects/DocumentationGenerator/Makefile
 projects/runtimeErrorCheck/Makefile
 projects/RTED/Makefile
+projects/RTED/rted_qt/Makefile
 projects/taintcheck/Makefile
 projects/C_to_Promela/Makefile
 projects/OpenMP_Translator/Makefile
@@ -1217,6 +1220,8 @@ projects/roseQt/TextEditPainter/Makefile
 projects/roseQt/demo/Makefile
 projects/roseQt/widgets/Makefile
 projects/roseQt/widgets/AsmInstructionBar/Makefile
+projects/roseQt/widgets/AsmSourceMapper/Makefile
+projects/roseQt/widgets/AsmView/Makefile
 projects/roseQt/widgets/AstBrowserWidget/Makefile
 projects/roseQt/widgets/AstGraphWidget/Makefile
 projects/roseQt/widgets/AstProcessing/Makefile
@@ -1228,14 +1233,17 @@ projects/roseQt/widgets/MetricFilter/Makefile
 projects/roseQt/widgets/MetricsConfig/Makefile
 projects/roseQt/widgets/MetricsKiviat/Makefile
 projects/roseQt/widgets/NodeInfoWidget/Makefile
+projects/roseQt/widgets/ProjectManager/Makefile
 projects/roseQt/widgets/PropertyTreeWidget/Makefile
 projects/roseQt/widgets/QtDesignerPlugins/Makefile
+projects/roseQt/widgets/QtGradientEditor/Makefile
 projects/roseQt/widgets/RoseCodeEdit/Makefile
 projects/roseQt/widgets/RoseCodeEdit/QCodeEdit/Makefile
 projects/roseQt/widgets/RoseCodeEdit/QCodeEdit/document/Makefile
 projects/roseQt/widgets/RoseCodeEdit/QCodeEdit/widgets/Makefile
 projects/roseQt/widgets/RoseCodeEdit/QCodeEdit/qnfa/Makefile
 projects/roseQt/widgets/RoseFileSelector/Makefile
+projects/roseQt/widgets/TaskSystem/Makefile
 projects/roseQt/widgets/util/Makefile
 tests/Makefile
 tests/RunTests/Makefile

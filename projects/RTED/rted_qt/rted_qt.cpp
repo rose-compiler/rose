@@ -7,16 +7,27 @@
 
 void showDebugDialog(RuntimeVariablesType * stack, int stackSize,
                      RuntimeVariablesType * heap, int heapSize,
-                     MemoryType * mem, int memSize)
+                     MemoryType * mem, int memSize,
+                     std::string filename, int row)
 {
     QApplication app(0,NULL);
-    DebugDialog dlg;
-    dlg.setHeapVars(heap,heapSize);
-    dlg.setStackVars(stack,stackSize);
-    dlg.setMemoryLocations(mem,memSize);
 
-    dlg.exec();
+
+    QCoreApplication::setOrganizationName("LLNL");
+    QCoreApplication::setOrganizationDomain("ROSE");
+    QCoreApplication::setApplicationName("rted_qt");
+
+
+    DebugDialog * dlg = new DebugDialog();
+    dlg->setHeapVars(heap,heapSize);
+    dlg->setStackVars(stack,stackSize);
+    dlg->setMemoryLocations(mem,memSize);
+
+    dlg->setEditorMark(filename.c_str(),row);
+
+    dlg->show();
     app.exec();
+    delete dlg;
 }
 
 
@@ -74,5 +85,5 @@ int main(int argc, char**argv)
     mem[0].variables = NULL;
     mem[1].variables = NULL;
 
-    showDebugDialog(stack,2,heap,2,mem,2);
+    showDebugDialog(stack,2,heap,2,mem,2,"/home/bauer25/test.cpp",1);
 }

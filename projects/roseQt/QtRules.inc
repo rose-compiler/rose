@@ -1,12 +1,11 @@
 # ------------- MOC ---------------------
 
 if QROSE_USE_WINDOWS
-moc_%.cpp: $(srcdir)/%.h 
+moc_%.cxx: $(srcdir)/%.h 
 	$(MOC) $(INCLUDES) -o  $@ `cygpath -w $<` -p$(srcdir)
 else
-moc_%.cpp: $(srcdir)/%.h 
-	@$(MOC) $(QT_INCLUDES) -o  $@ $<
-	@echo "  Qt-MOC $(notdir  $< )"	
+moc_%.cxx: $(srcdir)/%.h 
+	@echo "  Qt-MOC $(notdir $< )" && $(MOC) $(QT_INCLUDES) -o  $@ $<
 endif 
 
 
@@ -17,8 +16,7 @@ uic_%.h: $(srcdir)/%.ui
 	$(UIC) -o $@ `cygpath -w $<` -p$(srcdir)
 else
 ui_%.h: $(srcdir)/%.ui 
-	@$(UIC) -o $@ $<
-	@echo "  Qt-UIC  $(notdir  $< )"	
+	@echo "  Qt-UIC  $(notdir  $< )" && $(UIC) -o $@ $<
 endif 
 
 
@@ -31,15 +29,14 @@ qrc_%.cpp: $(srcdir)/%.qrc
 	$(RCC) -name $(patsubst %.qrc, %, $(notdir  $< ) ) -o $@ `cygpath -w $<` -p$(srcdir)
 else
 qrc_%.cpp: $(srcdir)/%.qrc
-	@$(RCC) -name $(patsubst %.qrc, %, $(notdir  $< ) ) -o $@ $<
-	@echo "  Qt-RCC $(notdir  $< ) "		
+	@echo "  Qt-RCC $(RCC) $(notdir  $< ) " && $(RCC) -name $(patsubst %.qrc, %, $(notdir  $< ) ) -o $@ $<
 endif 
 
 
 
 # ----- Cleanup of generated files -----
 
-CLEANFILES = moc_*.cpp\
+CLEANFILES = moc_*.cxx\
              ui_*.h\
              qrc_*.cpp 
             

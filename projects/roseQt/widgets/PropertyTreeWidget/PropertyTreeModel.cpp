@@ -7,9 +7,9 @@
 #include <QPalette>
 #include <QDebug>
 
-#include "util/ItemTreeNode.h"
+#include "ItemTreeNode.h"
 
-// ------------------ Helper Classes to build the tree -----------------------
+// ------------------ Header Node  -----------------------------
 
 
 class PropertyTreeModel::ItemTreeHeaderNode : public ItemTreeNode
@@ -22,6 +22,10 @@ class PropertyTreeModel::ItemTreeHeaderNode : public ItemTreeNode
 		virtual QVariant data(int role, int column=0) const;
 
 		int getSectionId() const { return sectionId; }
+
+	    virtual QStringList sectionHeader() const;
+
+	    bool isFirstColumnSpanned () const    { return true;}
 	protected:
 		QString title;
 		int sectionId;
@@ -50,7 +54,21 @@ QVariant PropertyTreeModel::ItemTreeHeaderNode::data(int role,int column) const
 			return QVariant();
 	}
 }
+QStringList PropertyTreeModel::ItemTreeHeaderNode::sectionHeader() const
+{
+    return QStringList() << "Property" << "Value";
+}
 
+
+
+
+
+
+
+
+
+
+// ------------------ PropValue Node  -----------------------------
 
 
 class PropertyTreeModel::ItemTreePropValueNode : public ItemTreeNode
@@ -66,8 +84,6 @@ class PropertyTreeModel::ItemTreePropValueNode : public ItemTreeNode
 		QString prop;
 		QVariant val;
 };
-
-
 
 PropertyTreeModel::ItemTreePropValueNode::ItemTreePropValueNode(const QString & p, const QVariant & v)
 	: prop(p), val(v)
@@ -112,16 +128,17 @@ QVariant PropertyTreeModel::ItemTreePropValueNode::data(int role, int column) co
 
 
 
+
+
+
 // --------------- Implementation of the AbstractItemModel -----------------------
 
 
 PropertyTreeModel::PropertyTreeModel(QObject * p)
 	: ItemTreeModel(p)
 {
-	treeRoot = new ItemTreeNode();
+	treeRoot = new ItemTreeHeaderNode("root",-1);
 	setRoot(treeRoot);
-
-	headerCaptions() << "Property" << "Value";
 }
 
 PropertyTreeModel::~PropertyTreeModel()
@@ -131,7 +148,7 @@ PropertyTreeModel::~PropertyTreeModel()
 
 void PropertyTreeModel::clear()
 {
-	treeRoot=new ItemTreeNode();
+	treeRoot=new ItemTreeHeaderNode("root",-1);
     setRoot(treeRoot);
 }
 
@@ -139,9 +156,7 @@ int PropertyTreeModel::addSection(const QString & sectionName)
 {
 	int curRowCount = rowCount();
 
-	beginInsertRows(QModelIndex(), curRowCount,curRowCount);
 	int id= treeRoot->addChild(new ItemTreeHeaderNode(sectionName,curRowCount));
-	endInsertRows();
 
 	return id;
 }
@@ -154,10 +169,8 @@ QModelIndex PropertyTreeModel::addEntryToSection(int sectionId, const QString & 
 
 	int curRowCount = rowCount(index(sectionId,0));
 
-	beginInsertRows(index(sectionId,0),curRowCount,curRowCount);
 	ItemTreeNode * newNode= new ItemTreePropValueNode(pr,value);
 	treeRoot->child(sectionId)->addChild(newNode);
-	endInsertRows();
 
 	return createIndex(curRowCount,0,newNode);
 }
@@ -168,11 +181,9 @@ QModelIndex PropertyTreeModel::addEntry(const QModelIndex & par,
 {
 	int curRowCount = rowCount(par);
 
-	beginInsertRows(par,curRowCount,curRowCount);
 	ItemTreeNode * parNode = static_cast<ItemTreeNode*>(par.internalPointer());
 	ItemTreeNode * newNode = new ItemTreePropValueNode(prop,val);
 	parNode->addChild(newNode);
-	endInsertRows();
 
 	return createIndex(curRowCount,0,newNode);
 }

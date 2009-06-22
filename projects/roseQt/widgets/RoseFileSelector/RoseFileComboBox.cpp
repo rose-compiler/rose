@@ -5,7 +5,7 @@
 #include <QFileInfo>
 #include <QDebug>
 
-#include "util/AstFilters.h"
+#include "AstFilters.h"
 
 
 RoseFileComboBox::RoseFileComboBox(QWidget * par)

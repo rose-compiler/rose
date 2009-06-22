@@ -8,6 +8,15 @@
 
 class PropertyTreeModel;
 
+/**
+ * Generic Qt Class for displaying Property-Value pairs
+ *
+ * The properties can be grouped, each group is displayed in a different color.
+ * The view was inspired by the property-editor of Qt-Designer (and uses the same colors)
+ *
+ * This class doesn't depend on rose, the rose specific version for displaying info's
+ * about SgNode is NodeInfoWidget.
+ */
 class PropertyTreeWidget : public QTreeView
 {
 	Q_OBJECT

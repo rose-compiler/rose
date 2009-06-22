@@ -6,7 +6,7 @@
 #include <QString>
 
 
-#include "AstProcessing/AstProcessing.h"
+#include "NewAstProcessing.h"
 
 class SgNode;
 

@@ -1,5 +1,5 @@
 #include "AstGraphWidgetPlugin.h"
-#include "AstGraphWidget/AstGraphWidget.h"
+#include "AstGraphWidget.h"
 
 
 #include <QtPlugin>

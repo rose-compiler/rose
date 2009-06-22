@@ -1,7 +1,7 @@
 #ifndef BASTMODEL_H
 #define BASTMODEL_H
 
-#include "util/ItemTreeModel.h"
+#include "ItemTreeModel.h"
 
 class SgNode;
 class AstFilterInterface;

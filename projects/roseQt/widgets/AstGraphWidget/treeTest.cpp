@@ -8,14 +8,14 @@
 
 
 
-DisplayNode * generateLeftBTree(int length, QGraphicsScene * scene)
+DisplayTreeNode * generateLeftBTree(int length, QGraphicsScene * scene)
 {
-	DisplayNode * root=new DisplayNode(scene);
+	DisplayTreeNode * root=new DisplayTreeNode(scene);
 
-	DisplayNode * curNode=root;
+	DisplayTreeNode * curNode=root;
 	for(int i=0; i<length; i++)
 	{
-		DisplayNode  * left=curNode->addChild("left");
+		DisplayTreeNode  * left=curNode->addChild("left");
 		curNode->addChild("longEntry");
 		curNode->addChild("longEntry");
 		curNode->addChild("right");
@@ -25,12 +25,12 @@ DisplayNode * generateLeftBTree(int length, QGraphicsScene * scene)
 	return root;
 }
 
-DisplayNode * generateSmallInterleaving(QGraphicsScene * scene)
+DisplayTreeNode * generateSmallInterleaving(QGraphicsScene * scene)
 {
-	DisplayNode * root=new DisplayNode(scene);
+	DisplayTreeNode * root=new DisplayTreeNode(scene);
 
-	DisplayNode * left= root->addChild("left");
-	DisplayNode * right= root->addChild("right");
+	DisplayTreeNode * left= root->addChild("left");
+	DisplayTreeNode * right= root->addChild("right");
 
 	left->addChild("leftleft");
 	right->addChild("rightright");
@@ -39,12 +39,12 @@ DisplayNode * generateSmallInterleaving(QGraphicsScene * scene)
 }
 
 
-void generateFullTree(DisplayNode *node, int height)
+void generateFullTree(DisplayTreeNode *node, int height)
 {
     if(height==0)
         return;
 
-    DisplayNode * child;
+    DisplayTreeNode * child;
 
     child=node->addChild(QString("Short Entry"));
     generateFullTree(child,height-1);
@@ -66,6 +66,7 @@ void generateFullTree(DisplayNode *node, int height)
     }*/
 }
 
+#if 0
 int main ( int argc, char** argv)
 {
 
@@ -73,15 +74,15 @@ int main ( int argc, char** argv)
 
 	QGraphicsScene * scene = new QGraphicsScene();
 
-	DisplayNode * root=new DisplayNode(NULL);
+	DisplayTreeNode * root=new DisplayTreeNode(NULL);
 
 
-	DisplayNode * left = root->addChild("Left");
-	DisplayNode * mid =  root->addChild("Mid");
-	DisplayNode * right =  root->addChild("Right");
+	DisplayTreeNode * left =   root->addChild("Left");
+	/*DisplayNode * mid =  */  root->addChild("Mid");
+	/*DisplayNode * right = */ root->addChild("Right");
 
 	generateFullTree(left,2);
-    //generateFullTree(right,2);
+	//generateFullTree(right,2);
 
 	/*
 	DisplayNode * l = generateLeftBTree(1,scene);
@@ -108,3 +109,5 @@ int main ( int argc, char** argv)
 
 	return 0;
 }
+
+#endif 

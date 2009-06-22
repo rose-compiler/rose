@@ -1,11 +1,10 @@
+
 #ifndef PTRACER_H
 #define PTRACER_H
-
 
 #include <vector>
 #include <string>
 #include <map>
-
 
 
 typedef long address;
@@ -122,6 +121,4 @@ class PTracer
 
 }//namespace
 
-
 #endif
-

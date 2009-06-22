@@ -18,7 +18,8 @@
 #include <string>
 
 #include "MainWindow.h"
-#include "FlopCounter/FlopCounter.h"
+#include "FlopCounter.h"
+#include "AsmInstructionsBar.h"
 #include "InstructionCountAnnotator.h"
 
 
@@ -57,7 +58,7 @@ QWidget * setupGuiManually(SgProject * project)
     (*window)["CodeEdit"] << codeEdit;
 
     MetricsKiviat * kiviat = new MetricsKiviat();
-    kiviat->setRoot(project);
+    kiviat->init(project);
     (*window)["Kiviat"] << kiviat;
 
     //Connections to NodeInfoWidget
@@ -75,14 +76,10 @@ QWidget * setupGuiManually(SgProject * project)
     return window;
 }
 
-
-
-
 QWidget * setupGuiUiFile(SgProject * project)
 {
     QWidget * window;
     std::string file( "MainWindow.ui" );
-
 
 #if 0
     window = new QRWindow ("MainWindow",QROSE::LeftRight,QROSE::UseSplitter);
@@ -118,54 +115,103 @@ QWidget * setupGuiUiFile(SgProject * project)
 #endif //USE_QROSE
 
 
-QWidget * setupGuiWithCompiledUi(SgProject * project)
+QWidget * setupGuiWithCompiledUi()
 {
     // everything is done by the MainWindow-Class
-    return new MainWindow(project);
+    return new MainWindow();
+}
+
+
+SgFile * addFileToSgProject(const QString & file, SgProject * proj)
+{
+    // Adapted from src/frontend/SageIII/sageBuilder.C  function buildFile
+    // with the change that it should also handle binary files
+
+    proj->get_sourceFileNameList().push_back(file.toStdString());
+
+    Rose_STL_Container<std::string> arglist;
+    arglist = proj->get_originalCommandLineArgumentList();
+    arglist.push_back(file.toStdString());
+
+
+    int nextErrorCode = 0;
+    SgFile* result = isSgFile(determineFileType(arglist, nextErrorCode, proj));
+
+    result->set_parent(proj);
+
+    proj->set_file(*result);
+
+    proj->set_frontendErrorCode(max(proj->get_frontendErrorCode(), nextErrorCode));
+
+    return result;
+}
+
+
+SgProject * buildOwnProject()
+{
+    SgProject * proj = new SgProject();
+    proj->get_fileList().clear();
+
+    //Set command line:
+    //proj->set_originalCommandLineArgumentList();
+
+    Rose_STL_Container<std::string> arglist;
+
+    arglist.push_back("cc");
+    arglist.push_back("-c");
+    proj->set_originalCommandLineArgumentList (arglist);
+
+    addFileToSgProject("inputTest.cpp",proj);
+    addFileToSgProject("inputTest",proj);
+
+
+    return proj;
 }
 
 
 int main(int argc, char** argv)
 {
-    vector<string> argvList(argv, argv + argc);
-    qDebug() << "Loading HPCToolkit or Gprof profiling data..." << endl;
-    RoseHPCT::ProgramTreeList_t profiles =
-    RoseHPCT::loadProfilingFiles(argvList);
+    //vector<string> argvList(argv, argv + argc);
+    //qDebug() << "Loading HPCToolkit or Gprof profiling data..." << endl;
+    //RoseHPCT::ProgramTreeList_t profiles =
+    //RoseHPCT::loadProfilingFiles(argvList);
 
-    qDebug() << "Done";
+    //qDebug() << "Done";
 
-    qDebug() << "Calling ROSE frontend...";
-    SgProject * project = frontend(argvList);
-    qDebug() << "Done";
+    //qDebug() << "Calling ROSE frontend...";
+    //SgProject * project = frontend(argvList);
+    //SgProject * project = 0;
 
-    qDebug() << "Attaching HPCToolkit metrics to Sage IR tree..." << endl;
-    RoseHPCT::attachMetrics(profiles, project, true);
-    qDebug() << "Done";
+    //qDebug() << "Done";
 
-    qDebug() << "Annotate AST with Flop Counts ...";
-    FlopCounterProcessor flops;
-    flops.traverse(project);
-    qDebug() << "Done";
+    //qDebug() << "Attaching HPCToolkit metrics to Sage IR tree..." << endl;
+    //RoseHPCT::attachMetrics(profiles, project, true);
+    //qDebug() << "Done";
 
-    qDebug() << "Annotate AST with ASM-Instruction Exec-Counts ...";
+    //qDebug() << "Annotate AST with Flop Counts ...";
+    //FlopCounterProcessor flops;
+    //flops.traverse(project);
+    //qDebug() << "Done";
+
+    /*qDebug() << "Annotate AST with ASM-Instruction Exec-Counts ...";
     InstructionCountAnnotator::annotate(project,vector<string> ());
-    qDebug() << "Done";
-
+    qDebug() << "Done";*/
 
     QApplication app(argc, argv);
+    QCoreApplication::setOrganizationName("LLNL");
+    QCoreApplication::setOrganizationDomain("ROSE");
+    QCoreApplication::setApplicationName("demo");
+
     QWidget * main=NULL;
 
 
     // Three methods for GUI loading implemented:
     qDebug() << "Setup Gui..";
     //-----------------------------------------
-        //main = setupGuiManually(project);
-        //main = setupGuiUiFile(project);
-        main = setupGuiWithCompiledUi(project);
+    //main = setupGuiManually(project);
+    //main = setupGuiUiFile(project);
+    main = setupGuiWithCompiledUi();
     //-----------------------------------------
-
-
-
 
     main->show();
 

@@ -1,5 +1,5 @@
 #include "BAstViewPlugin.h"
-#include "BeautifiedAst/BAstView.h"
+#include "BAstView.h"
 
 #include <QtPlugin>
 

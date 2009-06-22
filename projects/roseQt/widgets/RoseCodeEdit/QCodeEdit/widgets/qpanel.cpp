@@ -3,7 +3,7 @@
 ** Copyright (C) 2006-2009 fullmetalcoder <fullmetalcoder@hotmail.fr>
 **
 ** This file is part of the Edyuk project <http://edyuk.org>
-** 
+**
 ** This file may be used under the terms of the GNU General Public License
 ** version 3 as published by the Free Software Foundation and appearing in the
 ** file GPL.txt included in the packaging of this file.
@@ -18,7 +18,7 @@
 /*!
 	\file qpanel.cpp
 	\brief Implementation of the QPanel class
-	
+
 	\see QPanel
 */
 
@@ -40,10 +40,10 @@
 /*!
 	\ingroup widgets
 	@{
-	
+
 	\class QPanel
 	\brief Helper class for panels displayed by QCodeEdit
-	
+
 */
 
 QHash<QString, QPanelCreator*>& QPanel::creators()
@@ -56,7 +56,7 @@ QPanel* QPanel::panel(const QString& id, QWidget *p)
 {
 	if ( !creators().contains(id) )
 		return 0;
-	
+
 	return creators().value(id)->panel(p);
 }
 
@@ -69,17 +69,17 @@ static int _panels = 0;
 
 /*!
 	\brief Constructor
-	
+
 	If the parent is a text editor, it is automatically connected to the panel
 */
 QPanel::QPanel(QWidget *p)
  : QWidget(p), m_defaultVisibility(true), m_shownOnce(false)
 {
 	QEditor *e = qobject_cast<QEditor*>(p);
-	
+
 	if ( e )
 		attach(e);
-	
+
 	++_panels;
 }
 
@@ -89,10 +89,10 @@ QPanel::QPanel(QWidget *p)
 QPanel::~QPanel()
 {
 	--_panels;
-	
+
 	//if ( !_panels )
 	//	qDebug("Panels cleared.");
-	
+
 }
 
 /*!
@@ -107,52 +107,52 @@ QEditor* QPanel::editor()
 */
 void QPanel::attach(QEditor *e)
 {
-	if ( m_editor )
+	if ( m_editor.isNull() )
 	{
 		disconnect(	m_editor->document(),
 					SIGNAL( formatsChanged() ),
 					this,
 					SLOT  ( update() ) );
-		
+
 		disconnect(	m_editor->document(),
 					SIGNAL( contentsChanged() ),
 					this,
 					SLOT  ( update() ) );
-		
+
 		disconnect(	m_editor->verticalScrollBar(),
 					SIGNAL( valueChanged(int) ),
 					this,
 					SLOT  ( update() ) );
-		
+
 	}
-	
+
 	editorChange(e);
-	
+
 	m_editor = e;
 	setParent(e);
-	
+
 	if ( m_editor )
 	{
 		connect(m_editor->document(),
 				SIGNAL( formatsChanged() ),
 				this,
 				SLOT  ( update() ) );
-		
+
 		connect(m_editor->document(),
 				SIGNAL( contentsChanged() ),
 				this,
 				SLOT  ( update() ) );
-		
+
 		connect(m_editor->verticalScrollBar(),
 				SIGNAL( valueChanged(int) ),
 				this,
 				SLOT  ( update() ) );
-		
+
 	}
 }
 
 /*!
-	\brief 
+	\brief
 */
 bool QPanel::shallShow() const
 {
@@ -160,7 +160,7 @@ bool QPanel::shallShow() const
 }
 
 /*!
-	\brief 
+	\brief
 */
 bool QPanel::defaultVisibility() const
 {
@@ -168,7 +168,7 @@ bool QPanel::defaultVisibility() const
 }
 
 /*!
-	\brief 
+	\brief
 */
 void QPanel::setDefaultVisibility(bool on)
 {
@@ -177,29 +177,29 @@ void QPanel::setDefaultVisibility(bool on)
 
 /*!
 	\brief Callback
-	
+
 	Each time attach() is called, this function is called as well so that
 	the panel can fine tune its behaviour according to the editor monitored.
-	
+
 	\note the Default implementation does nothing...
 */
 void QPanel::editorChange(QEditor *)
 {
-	
+
 }
 
 bool QPanel::forward(QMouseEvent *e)
 {
 	QPoint pos, globalPos = e->globalPos(), ref = editor()->viewport()->pos();
-	
+
 	if ( editor()->viewport()->parentWidget() )
 		ref = editor()->viewport()->parentWidget()->mapToGlobal(ref);
-	
+
 	globalPos.setX(qBound(ref.x(), globalPos.x(), ref.x() + editor()->width()));
 	globalPos.setY(qBound(ref.y(), globalPos.y(), ref.y() + editor()->height()));
-	
+
 	pos = editor()->viewport()->mapFromGlobal(globalPos);
-	
+
 	QMouseEvent fw(
 					e->type(),
 					pos,
@@ -208,11 +208,11 @@ bool QPanel::forward(QMouseEvent *e)
 					e->buttons(),
 					e->modifiers()
 				);
-	
+
 	bool ok = qApp->sendEvent(editor()->viewport(), &fw) && fw.isAccepted();
-	
+
 	//qDebug("forwarding mouse event : (%i, %i) => %i", pos.x(), pos.y(), ok);
-	
+
 	return ok;
 }
 
@@ -223,7 +223,7 @@ void QPanel::mouseMoveEvent(QMouseEvent *e)
 {
 	if ( !editor() )
 		return;
-	
+
 	if ( forward(e) )
 		e->accept();
 	else
@@ -237,7 +237,7 @@ void QPanel::mousePressEvent(QMouseEvent *e)
 {
 	if ( !editor() )
 		return;
-	
+
 	if ( forward(e) )
 		e->accept();
 	else
@@ -251,7 +251,7 @@ void QPanel::mouseReleaseEvent(QMouseEvent *e)
 {
 	if ( !editor() )
 		return;
-	
+
 	if ( forward(e) )
 		e->accept();
 	else
@@ -264,7 +264,7 @@ void QPanel::mouseReleaseEvent(QMouseEvent *e)
 void QPanel::showEvent(QShowEvent *e)
 {
 	m_shownOnce = true;
-	
+
 	QWidget::showEvent(e);
 }
 
@@ -274,10 +274,10 @@ void QPanel::showEvent(QShowEvent *e)
 void QPanel::hideEvent(QHideEvent *e)
 {
 	QCodeEdit *ce = QCodeEdit::manager(editor());
-	
+
 	if ( ce )
 		ce->panelLayout()->update();
-	
+
 	QWidget::hideEvent(e);
 }
 
@@ -291,9 +291,9 @@ void QPanel::paintEvent(QPaintEvent *e)
 		e->ignore();
 		return;
 	}
-	
+
 	e->accept();
-	
+
 	QPainter p(this);
 	paint(&p, m_editor);
 }

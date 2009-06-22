@@ -2,7 +2,7 @@
 #ifndef PROPERTYTREEMODEL_H
 #define PROPERTYTREEMODEL_H
 
-#include "util/ItemTreeModel.h"
+#include "ItemTreeModel.h"
 
 
 /**

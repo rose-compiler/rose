@@ -8,7 +8,7 @@ endif(COMMAND cmake_policy)
 
 set( CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake )
 
-include( ${CMAKE_MODULE_PATH}/add_widget.cmake )
+include( ${CMAKE_MODULE_PATH}/AddQtFolders.cmake )
 include( ${CMAKE_MODULE_PATH}/PrecompiledHeaders.cmake )
 
 project( roseQt )
@@ -21,6 +21,9 @@ set( CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -DQT_NO_DEBUG_OUTPUT" )
 # Configure and find Rose and Qt
 SET ( ROSE_USE_ROSEHPCT 1 )
 SET ( QT_USE_QTXML  1 )
+SET ( QT_USE_QTSCRIPT 1)
+SET ( QT_USE_QTSCRIPTTOOLS 1 )
+
 
 FIND_PACKAGE ( Rose )
 FIND_PACKAGE ( Qt4 )
@@ -48,7 +51,12 @@ if(UNIX)
 endif (UNIX)
 
 
-INCLUDE_DIRECTORIES( ${ROSE_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/src )
+#INCLUDE_DIRECTORIES( ${ROSE_INCLUDE_DIRS} )
+
+SET (DWARF_DIR ~/opt/libdwarf )
+
+include_directories( ${DWARF_DIR} )
+link_directories( ${DWARF_DIR} )
 LINK_DIRECTORIES( ${ROSE_LIBRARY_DIRS} )
 
 ADD_SUBDIRECTORY ( widgets )

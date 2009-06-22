@@ -6,7 +6,8 @@ class MemoryType;
 
 void showDebugDialog(RuntimeVariablesType * stack, int stackSize,
                      RuntimeVariablesType * heap, int heapSize,
-                     MemoryType * mem, int memSize);
+                     MemoryType * mem, int memSize,
+                     std::string filename, int row);
 
 
 #endif

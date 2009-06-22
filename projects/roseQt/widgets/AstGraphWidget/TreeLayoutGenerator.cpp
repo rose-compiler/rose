@@ -13,7 +13,7 @@ struct TreeLayoutGenerator::AdditionalNodeInfo
         }
 
         /// Pointer to threaded node, or NULL for no thread
-        DisplayNode * threadPointer;
+        DisplayTreeNode * threadPointer;
 
         /// the distance between threadedNode and this node
         double threadOffset;
@@ -27,7 +27,7 @@ struct TreeLayoutGenerator::AdditionalNodeInfo
 class TreeLayoutGenerator::ExtremeInfo
 {
     public:
-        ExtremeInfo(DisplayNode * node_, double offset_, int layer_) :
+        ExtremeInfo(DisplayTreeNode * node_, double offset_, int layer_) :
             node(node_),
             offset(offset_),
             layer(layer_)
@@ -35,7 +35,7 @@ class TreeLayoutGenerator::ExtremeInfo
 
 
 
-        ExtremeInfo(int layer_,DisplayNode * leaf) :
+        ExtremeInfo(int layer_,DisplayTreeNode * leaf) :
             node(leaf),
             offset(0),
             layer(layer_)
@@ -53,7 +53,7 @@ class TreeLayoutGenerator::ExtremeInfo
         void decrOffset(double decr)   { offset -= decr; }
 
         double getOffset()      const   { return offset; }
-        DisplayNode * getNode() const   { return node;}
+        DisplayTreeNode * getNode() const   { return node;}
 
         /// Compares this and other, the result is stored in this
         void merge(const ExtremeInfo & other, bool left)
@@ -83,7 +83,7 @@ class TreeLayoutGenerator::ExtremeInfo
         {}
 
         /// Link to the "extreme" node
-        DisplayNode * node;
+        DisplayTreeNode * node;
 
         /// Offset of the node in current subtree
         double offset;
@@ -102,7 +102,7 @@ TreeLayoutGenerator::TreeLayoutGenerator() :
 {
 }
 
-void TreeLayoutGenerator::layoutTree(DisplayNode * root)
+void TreeLayoutGenerator::layoutTree(DisplayTreeNode * root)
 {
     Q_ASSERT(nodeInfo.size()==0);
     qDebug() << "PosCalc Traversal";
@@ -122,7 +122,7 @@ void TreeLayoutGenerator::layoutTree(DisplayNode * root)
 
 }
 
-TreeLayoutGenerator::ExtInfoPair TreeLayoutGenerator::posCalcTraversal(DisplayNode * node, int layer)
+TreeLayoutGenerator::ExtInfoPair TreeLayoutGenerator::posCalcTraversal(DisplayTreeNode * node, int layer)
 {
     // base case for leafs
     if (node->childrenCount() == 0)
@@ -135,8 +135,11 @@ TreeLayoutGenerator::ExtInfoPair TreeLayoutGenerator::posCalcTraversal(DisplayNo
     // Visit children (postorder traversal)
     QList<ExtremeInfo> extInfoListLeft;
     QList<ExtremeInfo> extInfoListRight;
-    foreach(DisplayNode * subNode, node->getChildren())
+
+
+    for(int i=0; i < node->childrenCount(); i++)
     {
+        DisplayTreeNode * subNode = node->getChild(i);
         ExtInfoPair ret= posCalcTraversal(subNode,layer+1);
         extInfoListLeft.push_back(ret.first);
         extInfoListRight.push_back(ret.second);
@@ -149,7 +152,11 @@ TreeLayoutGenerator::ExtInfoPair TreeLayoutGenerator::posCalcTraversal(DisplayNo
     Q_ASSERT(curNodeInfo!=NULL);
 
     double offsetSum = 0;
-    const QList<DisplayNode*> & childList = node->getChildren();
+
+    //TODO don't copy here, use new interface
+    QList<DisplayTreeNode*> childList;
+    for(int i=0; i< node->childrenCount(); i++)
+        childList.push_back(node->getChild(i));
 
 
     // The first is positioned at relPos=0, the second at previosPos+needeDistance
@@ -196,10 +203,10 @@ TreeLayoutGenerator::ExtInfoPair TreeLayoutGenerator::posCalcTraversal(DisplayNo
     return qMakePair(extInfoListLeft[0],extInfoListRight[0]);
 }
 
-DisplayNode * TreeLayoutGenerator::advanceLeft(DisplayNode * left, double & leftPos,
+DisplayTreeNode * TreeLayoutGenerator::advanceLeft(DisplayTreeNode * left, double & leftPos,
                                                bool & threadUsed)
 {
-    DisplayNode * newLeft;
+    DisplayTreeNode * newLeft;
 
     if (left->childrenCount() == 0)
     {
@@ -213,17 +220,17 @@ DisplayNode * TreeLayoutGenerator::advanceLeft(DisplayNode * left, double & left
     }
     else
     {
-        newLeft = left->getChildren().last();
+        newLeft = left->getLastChild();
         leftPos += nodeInfo[newLeft]->relPosition;
     }
 
     return newLeft;
 }
 
-DisplayNode * TreeLayoutGenerator::advanceRight(DisplayNode * right, double & rightPos,
+DisplayTreeNode * TreeLayoutGenerator::advanceRight(DisplayTreeNode * right, double & rightPos,
                                                 bool & threadUsed)
 {
-    DisplayNode * newRight;
+    DisplayTreeNode * newRight;
 
     if (right->childrenCount() == 0)
     {
@@ -238,13 +245,13 @@ DisplayNode * TreeLayoutGenerator::advanceRight(DisplayNode * right, double & ri
     }
     else
     {
-        newRight = right->getChildren().first();
+        newRight = right->getFirstChild();
         rightPos += nodeInfo[newRight]->relPosition;
     }
     return newRight;
 }
 
-double TreeLayoutGenerator::calcSubtreeDistance(DisplayNode * left, DisplayNode * right,
+double TreeLayoutGenerator::calcSubtreeDistance(DisplayTreeNode * left, DisplayTreeNode * right,
                                                 const ExtremeInfo & extInfoL,
                                                 const ExtremeInfo & extInfoR)
 {
@@ -276,8 +283,8 @@ double TreeLayoutGenerator::calcSubtreeDistance(DisplayNode * left, DisplayNode 
             curOffset += neededDistance - curDist;
 
         //go one layer deeper
-        DisplayNode * newLeft = advanceLeft(left, leftPos, threadUsed);
-        DisplayNode * newRight = advanceRight(right, rightPos, threadUsed);
+        DisplayTreeNode * newLeft = advanceLeft(left, leftPos, threadUsed);
+        DisplayTreeNode * newRight = advanceRight(right, rightPos, threadUsed);
 
 
 #if 1
@@ -299,7 +306,7 @@ double TreeLayoutGenerator::calcSubtreeDistance(DisplayNode * left, DisplayNode 
 #else
         if (newLeft && !newRight)
         {
-            DisplayNode * n = NULL;
+            DisplayTreeNode * n = NULL;
             if (!firstRun)
             {
                 n = right->getParent()->getChildren().last();
@@ -316,7 +323,7 @@ double TreeLayoutGenerator::calcSubtreeDistance(DisplayNode * left, DisplayNode 
         }
         if (!newLeft && newRight)
         {
-            DisplayNode * n = NULL;
+            DisplayTreeNode * n = NULL;
             if (!firstRun)
             {
                 n = left->getParent()->getChildren().first();
@@ -338,9 +345,9 @@ double TreeLayoutGenerator::calcSubtreeDistance(DisplayNode * left, DisplayNode 
     return curOffset;
 }
 
-void TreeLayoutGenerator::layoutTraversal(DisplayNode * node)
+void TreeLayoutGenerator::layoutTraversal(DisplayTreeNode * node)
 {
-    DisplayNode * parent = node->getParent();
+    DisplayTreeNode * parent = node->getParent();
     QPointF parPos = parent ? parent->pos() : QPointF();
 
     // if parent has many children, the layer is made higher (more space for lines)
@@ -350,21 +357,20 @@ void TreeLayoutGenerator::layoutTraversal(DisplayNode * node)
     parPos.setX(parPos.x() + nodeInfo[node]->relPosition);
     node->setPos(parPos);
 
-    const QList<DisplayNode*> & childList = node->getChildren();
-    foreach(DisplayNode * child, childList)
-            layoutTraversal(child);
 
+    for(int i=0; i < node->childrenCount(); i++)
+        layoutTraversal(node->getChild(i));
 }
 
 #include <QPen>
 #include "DisplayEdge.h"
 
-void TreeLayoutGenerator::paintThreadTraversal(DisplayNode * node)
+void TreeLayoutGenerator::paintThreadTraversal(DisplayTreeNode * node)
 {
     //Paint threads for debugging
 
-    DisplayNode * from = node;
-    DisplayNode * to = nodeInfo[node]->threadPointer;
+    DisplayTreeNode * from = node;
+    DisplayTreeNode * to = nodeInfo[node]->threadPointer;
 
     if (to != NULL)
     {
@@ -378,9 +384,7 @@ void TreeLayoutGenerator::paintThreadTraversal(DisplayNode * node)
         to->registerAdditionalEdge(e);
     }
 
-    const QList<DisplayNode*> & childList = node->getChildren();
-    foreach(DisplayNode * child, childList)
-            paintThreadTraversal(child);
-
+    for(int i=0; i < node->childrenCount(); i++)
+        paintThreadTraversal(node->getChild(i));
 }
 

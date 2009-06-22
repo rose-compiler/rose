@@ -8,161 +8,316 @@
 
 #include "DisplayEdge.h"
 
+
+// ---------------------- DisplayNode -------------------------------
+
+
 DisplayNode::DisplayNode(QGraphicsScene * sc)
-	: scene(sc), parentEdge(NULL), parent(NULL),sg(NULL)
+    : scene(sc),caption("Root"),sg(NULL)
 {
-	 setFlag(ItemIsMovable);
-	 setFlag(ItemIsSelectable);
+     setFlag(ItemIsMovable);
+     setFlag(ItemIsSelectable);
+     setZValue(1);
 
 #if QT_VERSION >= 0x040400
      setCacheMode(DeviceCoordinateCache);
 #endif
-
-
-	 setZValue(1);
-
-	 caption="Root";
-
-	 setScene(sc);
-
+     setScene(sc);
 }
 
-DisplayNode::~DisplayNode()
-{
-	//qDebug() << "Destroying" << caption;
 
-	//Only outgoing edges are deleted to prevent double frees
-	foreach(DisplayEdge * e, additionalEdges)
-		if(e->sourceNode()==this)
-			delete e;
-
-
-	qDeleteAll(children);
-	qDeleteAll(edges);
-}
 
 QRectF DisplayNode::boundingRect() const
 {
-	return getRect();
+    static const int MARGIN = 10;
+    QFontMetrics fi (textFont);
+    float width=fi.width(caption)+MARGIN;
+    float height=fi.height()+MARGIN;
+
+    return QRectF(-width/2,-height/2,width,height);
 }
 
 QPainterPath DisplayNode::shape() const
 {
-	QPainterPath path;
-	path.addRect(getRect());
-	return path;
+    QPainterPath path;
+    path.addRect(boundingRect());
+    return path;
 }
+
 
 void DisplayNode::paint(QPainter * painter,const QStyleOptionGraphicsItem * , QWidget*)
 {
-	painter->setRenderHint(QPainter::Antialiasing, true);
+    painter->setRenderHint(QPainter::Antialiasing, true);
 
-	QPen pen(Qt::black);
-	pen.setWidth(2);
-	painter->setPen(pen);
+    QPen pen(Qt::black);
+    pen.setWidth(2);
+    painter->setPen(pen);
 
 
-	QColor color=Qt::blue;
-	if(isSelected())
-		color = Qt::green;
-	else
-		color = color.lighter(150);
+    QColor color=Qt::blue;
+    if(isSelected())
+        color = Qt::green;
+    else
+        color = color.lighter(150);
 
-	QBrush brush(color);
-	painter->setBrush(brush);
+    QBrush brush(color);
+    painter->setBrush(brush);
 
 #if QT_VERSION >= 0x040400
-	painter->drawRoundedRect(getRect(),20,20,Qt::RelativeSize);
+    painter->drawRoundedRect(boundingRect(),20,20,Qt::RelativeSize);
 #else
-	painter->drawRect(getRect());
+    painter->drawRect(boundingRect());
 #endif
 
-	painter->drawText(getRect(),Qt::AlignCenter,caption);
-
-
+    painter->drawText(boundingRect(),Qt::AlignCenter,caption);
 }
 
 
-QRectF DisplayNode::getRect() const
+void DisplayNode::setScene(QGraphicsScene * s)
 {
-	static const int MARGIN = 10;
-	QFontMetrics fi (textFont);
-	float width=fi.width(caption)+MARGIN;
-	float height=fi.height()+MARGIN;
+    if(s==scene)
+        return;
 
-	return QRectF(-width/2,-height/2,width,height);
+    if(s==NULL)
+    {
+        if(scene) scene->removeItem(this);
+        scene=NULL;
+        return;
+    }
+
+    scene=s;
+    scene->addItem(this);
+}
+
+QVariant DisplayNode::itemChange(GraphicsItemChange change, const QVariant &value)
+{
+    if(change == ItemSelectedChange)
+        update();
+
+    return QGraphicsItem::itemChange(change, value);
 }
 
 
-DisplayNode * DisplayNode::addChild(SgNode * sgNode)
+// ---------------------- DisplayGraphNode -------------------------------
+
+DisplayGraphNode::DisplayGraphNode(QGraphicsScene * sc)
+    : DisplayNode(sc)
 {
-	DisplayNode * child = addChild(sgNode->class_name().c_str());
-	child->sg=sgNode;
+}
+
+DisplayGraphNode::~DisplayGraphNode()
+{
+    // every node deletes its outgoing edges
+    qDeleteAll(outEdges);
+}
+
+void DisplayGraphNode::addOutEdge(DisplayNode * to)
+{
+    outEdges.push_back(new DisplayEdge(this,to));
+
+    if(scene)
+        scene->addItem(outEdges.back());
+}
+
+void DisplayGraphNode::addInEdge(DisplayNode * from)
+{
+    inEdges.push_back(new DisplayEdge(from,this));
+
+    if(scene)
+        scene->addItem(outEdges.back());
+}
+
+void DisplayGraphNode::addEdge(DisplayEdge * edge)
+{
+    DisplayGraphNode * from = dynamic_cast<DisplayGraphNode*> (edge->sourceNode());
+    DisplayGraphNode * to   = dynamic_cast<DisplayGraphNode*> (edge->destNode());
+
+    Q_ASSERT(from && to); // there should only be GraphNodes in this Graph
+
+    from->outEdges.push_back(edge);
+    to  ->inEdges.push_back(edge);
+
+    Q_ASSERT(from->scene == to->scene);
+
+    if(from->scene)
+        from->scene->addItem(edge);
+}
+
+
+QVariant DisplayGraphNode::itemChange(GraphicsItemChange change, const QVariant &value)
+{
+    if(change == ItemPositionHasChanged)
+    {
+        foreach(DisplayEdge * edge, inEdges)
+            edge->adjust();
+
+        foreach(DisplayEdge * edge,outEdges)
+            edge->adjust();
+    }
+    return DisplayNode::itemChange(change, value);
+}
+
+void DisplayGraphNode::setScene(QGraphicsScene * sc)
+{
+    if(!sc && scene)
+    {
+        foreach(QGraphicsItem * i, inEdges)
+            scene->removeItem(i);
+
+        foreach(QGraphicsItem * i, outEdges)
+            scene->removeItem(i);
+    }
+
+    if(sc)
+    {
+        foreach(QGraphicsItem * i, inEdges)
+            sc->addItem(i);
+
+        foreach(QGraphicsItem * i, outEdges)
+            sc->addItem(i) ;
+    }
+
+    DisplayNode::setScene(sc);
+}
+
+
+// ---------------------- DisplayTreeNode -------------------------------
+
+
+DisplayTreeNode::DisplayTreeNode(QGraphicsScene * sc)
+	: parentEdge(NULL)
+{
+}
+
+DisplayTreeNode::~DisplayTreeNode()
+{
+    // Deletion of subtree
+	foreach(DisplayEdge * e, childEdges)
+	{
+	    // the child node is deleted (and with it the whole subtree)
+	    delete e->destNode();
+	    // deletes the edge itself
+	    delete e;
+	}
+
+   //Only outgoing edges are deleted to prevent double frees
+    foreach(DisplayEdge * e, additionalEdges)
+        if(e->sourceNode()==this)
+            delete e;
+}
+
+DisplayTreeNode * DisplayTreeNode::addChild(SgNode * sgNode)
+{
+	DisplayTreeNode * child = addChild(sgNode->class_name().c_str());
+	child->setSgNode(sgNode);
 
 	return child;
 }
 
-DisplayNode * DisplayNode::addChild(const QString & dispName)
+DisplayTreeNode * DisplayTreeNode::addChild(const QString & dispName)
 {
-	DisplayNode * child=new DisplayNode(scene);
-	child->caption=dispName;
+	DisplayTreeNode * child = new DisplayTreeNode(scene);
+	child->setDisplayName(dispName);
 
 	addChild(child);
 
 	return child;
 }
 
-void DisplayNode::addChild(DisplayNode * child)
+void DisplayTreeNode::addChild(DisplayTreeNode * child)
 {
-	children.push_back(child);
-	child->parent=this;
-	child->setScene(scene);
+    DisplayEdge * newEdge = new DisplayEdge(this,child);
 
-	// Create and link edge
-	DisplayEdge * edge= new DisplayEdge(this,child);
-	child->parentEdge=edge;
-	if(scene) scene->addItem(edge);
-	edges.push_back(edge);
+    if(scene) scene->addItem(newEdge);
+
+    childEdges.push_back(newEdge);
+
+    child->parentEdge = newEdge;
+	child->setScene(scene);
 }
 
 
-void DisplayNode::registerAdditionalEdge(DisplayEdge *e)
+DisplayTreeNode * DisplayTreeNode::getChild(int id)
 {
-	scene->addItem(e);
+    DisplayTreeNode * res;
+    res = dynamic_cast<DisplayTreeNode*>(childEdges[id]->destNode() );
+
+    Q_ASSERT(res); // the tree should only contain tree-nodes
+    return res;
+}
+
+DisplayTreeNode * DisplayTreeNode::getFirstChild()
+{
+    Q_ASSERT(childrenCount() > 0);
+    return getChild(0);
+}
+
+DisplayTreeNode * DisplayTreeNode::getLastChild()
+{
+    Q_ASSERT(childrenCount() > 0);
+    return getChild(childrenCount()-1);
+}
+
+
+
+
+
+DisplayTreeNode * DisplayTreeNode::getParent()
+{
+    if(!parentEdge)
+        return NULL;
+
+
+    DisplayTreeNode * res;
+    res = dynamic_cast<DisplayTreeNode*>(parentEdge->sourceNode() );
+
+    Q_ASSERT(res); // the tree should only contain tree-nodes
+    return res;
+}
+
+void DisplayTreeNode::registerAdditionalEdge(DisplayEdge *e)
+{
+    if(scene) scene->addItem(e);
+
 	additionalEdges.push_back(e);
 }
 
 
-void DisplayNode::setScene(QGraphicsScene * s)
+void DisplayTreeNode::setScene(QGraphicsScene * sc)
 {
-    foreach(DisplayNode * child,children)
-		child->setScene(s);
+    for(int i=0; i< childrenCount(); i++)
+        getChild(i)->setScene(sc);
 
-    if(s==scene)
+    if(scene && !sc)
+    {
+        foreach(DisplayEdge * e, childEdges)
+            scene->removeItem(e);
+
+        foreach(QGraphicsItem * e,additionalEdges)
+            scene->removeItem(e);
+
         return;
+    }
 
-    scene=s;
+    if(sc)
+    {
+        foreach(DisplayEdge * e, childEdges)
+            sc->addItem(e);
 
-    if(scene==NULL)
-        return;
+        foreach(DisplayEdge * e,additionalEdges)
+            sc->addItem(e);
+    }
 
-	scene->addItem(this);
-
-	foreach(QGraphicsItem * e,edges)
-		scene->addItem(e);
-
-	foreach(QGraphicsItem * e,additionalEdges)
-		scene->addItem(e);
-
+    DisplayNode::setScene(sc);
 }
 
 
-DisplayNode * DisplayNode::mergeTrees(QGraphicsScene * sc,
-									   const QString & name,
-									   DisplayNode * n1,
-									   DisplayNode * n2)
+DisplayTreeNode * DisplayTreeNode::mergeTrees(QGraphicsScene * sc,
+                                              const QString & name,
+                                              DisplayTreeNode * n1,
+                                              DisplayTreeNode * n2)
 {
-	DisplayNode * newNode= new DisplayNode(sc);
+	DisplayTreeNode * newNode= new DisplayTreeNode(sc);
 	newNode->setDisplayName(name);
 
 	n1->setScene(sc);
@@ -174,60 +329,52 @@ DisplayNode * DisplayNode::mergeTrees(QGraphicsScene * sc,
 }
 
 
-QVariant DisplayNode::itemChange(GraphicsItemChange change, const QVariant &value)
+QVariant DisplayTreeNode::itemChange(GraphicsItemChange change, const QVariant &value)
 {
-    switch (change)
+    if(change == ItemPositionHasChanged)
     {
-		case ItemPositionHasChanged:
-				foreach(DisplayEdge * edge, edges)
-					edge->adjust();
+        foreach(DisplayEdge * edge, childEdges)
+            edge->adjust();
 
-				foreach(DisplayEdge * edge,additionalEdges)
-					edge->adjust();
+        foreach(DisplayEdge * edge,additionalEdges)
+            edge->adjust();
 
-				if(parent)
-				{
-					parentEdge->adjust();
+        if(parentEdge)
+        {
+            parentEdge->adjust();
 
-					if(pos().y() < parent->pos().y())
-						setPos( QPointF(pos().x(),parent->pos().y()) );
-				}
-			break;
+            // child can not move above parent
+            //if(pos().y() <  getParent()->pos().y())
+            //    setPos( QPointF(pos().x(),getParent()->pos().y()) );
 
-		case ItemSelectedChange:
-			update();
-			break;
-		default:
-			break;
-    };
+            /*            DisplayTreeNode * par = getParent();
+            if(pos().y() <  par->pos().y())
+                setPos( QPointF(pos().x(),par->pos().y()) );*/
+        }
+    }
 
-    return QGraphicsItem::itemChange(change, value);
+    return DisplayNode::itemChange(change, value);
 }
 
-void DisplayNode::deleteChildren(int from, int to)
+void DisplayTreeNode::deleteChildren(int from, int to)
 {
-	typedef QList<DisplayNode*>::iterator       ChildIter;
-	typedef QList<DisplayEdge*>::iterator EdgeIter;
+	typedef QList<DisplayEdge*>::iterator ChildIter;
 
-	{
-		ChildIter begin = children.begin() + from;
-		ChildIter end   = children.begin() + to;
+    ChildIter begin = childEdges.begin() + from;
+    ChildIter end   = childEdges.begin() + to;
 
-		for(ChildIter remIter=begin; remIter<end; ++remIter )
-			delete *remIter;
-		children.erase(begin,end);
-	}
+    for(ChildIter remIter=begin; remIter<end; ++remIter )
+    {
+        // delete node
+        delete (*remIter)->destNode();
+        // delete edge
+        delete *remIter;
+    }
+    childEdges.erase(begin,end);
 
-	{
-		EdgeIter begin = edges.begin() + from;
-		EdgeIter end   = edges.begin() + to;
-		for(EdgeIter remIter=begin; remIter<end; ++remIter )
-			delete *remIter;
-		edges.erase(begin,end);
-	}
 }
 
-void DisplayNode::simplifyTree(DisplayNode * node)
+void DisplayTreeNode::simplifyTree(DisplayTreeNode * node)
 {
 	// If n successing children have no subchildren and have same caption
 	// delete them, and create node with caption "n x oldcaption"
@@ -239,15 +386,11 @@ void DisplayNode::simplifyTree(DisplayNode * node)
 
 
 
-	typedef QList<DisplayNode *>::iterator ListIter;
+	typedef QList<DisplayTreeNode *>::iterator ListIter;
 
-	QList<DisplayNode*> & children = node->children;
-
-
-
-	for(int i=0; i<children.size(); i++)
+	for(int i=0; i< node->childrenCount(); i++)
 	{
-		DisplayNode * child = children[i];
+		DisplayTreeNode * child = node->getChild(i);
 
 		//End of Sequence
 		if(inSequence && (child->childrenCount() > 0 ||
@@ -255,9 +398,9 @@ void DisplayNode::simplifyTree(DisplayNode * node)
 		{
 			if (i - startIndex > 1)
 			{
-				children[startIndex]->caption=QString("%1 x ").arg(i-startIndex);
-				children[startIndex]->caption.append(curName);
-				Q_ASSERT(children[startIndex]->childrenCount()==0);
+			    node->getChild(startIndex)->caption=QString("%1 x ").arg(i-startIndex);
+			    node->getChild(startIndex)->caption.append(curName);
+				Q_ASSERT(node->getChild(startIndex)->childrenCount()==0);
 
 				// children[startIndex] is not deleted, but overwritten
 				node->deleteChildren(startIndex +1, i);
@@ -277,19 +420,19 @@ void DisplayNode::simplifyTree(DisplayNode * node)
 	}
 
 	// Traverse...
-	foreach(DisplayNode * child, children)
-		simplifyTree(child);
+	for(int i=0; i< node->childrenCount(); i++)
+	    simplifyTree(node->getChild(i));
 }
 
 
 // ---------------- Tree Generator ------------------
 
-DisplayNode * DisplayTreeGenerator::generateTree(SgNode *sgRoot, AstFilterInterface * filter)
+DisplayTreeNode * DisplayTreeGenerator::generateTree(SgNode *sgRoot, AstFilterInterface * filter)
 {
-	treeRoot=new DisplayNode();
+	treeRoot=new DisplayTreeNode();
 	treeRoot->sg=sgRoot;
 	treeRoot->caption = sgRoot->class_name().c_str();
-	treeRoot->parent=NULL;
+	treeRoot->parentEdge=NULL;
 
 	for(unsigned int i=0; i< sgRoot->get_numberOfTraversalSuccessors(); i++)
 		visit(treeRoot,sgRoot->get_traversalSuccessorByIndex(i),filter);
@@ -299,7 +442,7 @@ DisplayNode * DisplayTreeGenerator::generateTree(SgNode *sgRoot, AstFilterInterf
 }
 
 
-void DisplayTreeGenerator::visit(DisplayNode * parent, SgNode * sgNode, AstFilterInterface * filter)
+void DisplayTreeGenerator::visit(DisplayTreeNode * parent, SgNode * sgNode, AstFilterInterface * filter)
 {
 	if(filter && !filter->displayNode(sgNode))
 			return;
@@ -307,7 +450,7 @@ void DisplayTreeGenerator::visit(DisplayNode * parent, SgNode * sgNode, AstFilte
 	if(sgNode==NULL)
 		return;
 
-	DisplayNode * dispNode = parent->addChild(sgNode);
+	DisplayTreeNode * dispNode = parent->addChild(sgNode);
 
 	for(unsigned int i=0; i< sgNode->get_numberOfTraversalSuccessors(); i++)
 		visit(dispNode,sgNode->get_traversalSuccessorByIndex(i),filter);

@@ -1,7 +1,7 @@
 #------------ QCodeEdit Makefile.am -----------
 include $(top_srcdir)/projects/roseQt/Make.inc 
 
-if ROSE_USE_QT
+if ROSE_WITH_ROSEQT
 
 noinst_LTLIBRARIES = libQCodeEdit.la 
 
@@ -25,14 +25,14 @@ libQCodeEdit_la_SOURCES = qcodecompletionengine.cpp\
                           qpanellayout.cpp\
                           qreliablefilewatch.cpp
 
-nodist_libQCodeEdit_la_SOURCES = moc_qcodecompletionengine.cpp\
-                                 moc_qeditor.cpp\
-                                 moc_qeditorfactory.cpp\
-                                 moc_qformatscheme.cpp\
-                                 moc_qlanguagefactory.cpp\
-                                 moc_qlinemarksinfocenter.cpp\
-                                 moc_qpanellayout.cpp\
-                                 moc_qreliablefilewatch.cpp
+nodist_libQCodeEdit_la_SOURCES = moc_qcodecompletionengine.cxx\
+                                 moc_qeditor.cxx\
+                                 moc_qeditorfactory.cxx\
+                                 moc_qformatscheme.cxx\
+                                 moc_qlanguagefactory.cxx\
+                                 moc_qlinemarksinfocenter.cxx\
+                                 moc_qpanellayout.cxx\
+                                 moc_qreliablefilewatch.cxx
 
 
 
@@ -50,7 +50,11 @@ headerTarget_HEADERS = qce-config.h\
                        qlanguagefactory.h\
                        qlinemarksinfocenter.h\
                        qpanellayout.h\
-                       qreliablefilewatch.h
+                       qreliablefilewatch.h\
+                       ui_editconfig.h\
+                       ui_formatconfig.h\
+                       ui_gotoline.h\
+                       ui_searchreplace.h
 
 
 endif

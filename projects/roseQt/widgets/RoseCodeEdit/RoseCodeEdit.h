@@ -10,6 +10,12 @@ class SgNode;
 class QFormatScheme;
 class QLanguageFactory;
 
+/**
+ * C++ Editor Widget, using QCodeEdit ( http://qcodeedit.edyuk.org )
+ *
+ * This is just derived from QEditor, and added some convenience functions
+ * for detailed description look at documentation of QEditor
+ */
 class QDESIGNER_WIDGET_EXPORT RoseCodeEdit : public QEditor
 {
     Q_OBJECT
@@ -25,17 +31,32 @@ class QDESIGNER_WIDGET_EXPORT RoseCodeEdit : public QEditor
 
 
     public slots:
+        /// If the specified sgNode is a SgLocatedNode, the right file is opened
+        /// and the cursor is set to start position of this SgNode
+        /// If node is SgFile the file is opened and cursor is set to beginning of file
         void setNode(SgNode * sgNode);
 
+        /// Loads a file and forces C++ code highlighting (independent from file ending)
+        /// if automatic detection of language is needed (based on filename-ending) use
+        /// QEditor::load()
         void loadCppFile(const QString & filename);
+
+        /// Sets the cursor in specified row and column
         void gotoPosition(int row, int col);
 
+        /// Marks a line as an error (red background and error icon in linemarkpanel)
         void markAsError(int line);
+
+        /// Marks a line as a warning (yellow background and exlamation-mark icon in linemarkpanel)
         void markAsWarning(int line);
 
 
     protected:
         void init();
+
+        virtual void dragEnterEvent(QDragEnterEvent * ev);
+        virtual void dropEvent(QDropEvent * ev);
+
 
        QFormatScheme    * m_formats;
        static QLanguageFactory * m_languages;

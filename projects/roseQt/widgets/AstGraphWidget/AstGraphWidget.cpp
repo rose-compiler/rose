@@ -1,13 +1,18 @@
 #include "rose.h"
 #include "AstGraphWidget.h"
 
+#include "SageMimeData.h"
+
 #include <cmath>
 #include <QWheelEvent>
+#include <QDragEnterEvent>
+#include <QDropEvent>
+
 
 #include <QDebug>
 
 #include "TreeLayoutGenerator.h"
-#include "util/AstFilters.h"
+#include "AstFilters.h"
 
 
 AstGraphWidget::AstGraphWidget(QWidget * par)
@@ -27,6 +32,9 @@ AstGraphWidget::AstGraphWidget(QWidget * par)
 
 AstGraphWidget::~AstGraphWidget()
 {
+    if(curFilter)
+        delete curFilter;
+
 	delete root;
 	delete scene;
 }
@@ -34,12 +42,13 @@ AstGraphWidget::~AstGraphWidget()
 
 void AstGraphWidget::setFilter(AstFilterInterface * filter)
 {
-	/*if(curFilter)
-		delete curFilter;*/
+	if(curFilter)
+		delete curFilter;
 
-        if( filter != NULL )
-            curFilter = filter->copy();
-        else curFilter = NULL;
+    if( filter != NULL )
+        curFilter = filter->copy();
+    else
+        curFilter = NULL;
 
 	setNode(curSgTreeNode);
 }
@@ -60,7 +69,7 @@ void AstGraphWidget::setNode(SgNode * node)
 	root = gen.generateTree(node,curFilter);
 
 	qDebug() << "Simplifying Tree";
-	DisplayNode::simplifyTree(root);
+	DisplayTreeNode::simplifyTree(root);
 	qDebug() << "Done";
 
 	TreeLayoutGenerator layouter;
@@ -82,7 +91,7 @@ void AstGraphWidget::setFileFilter(int id)
 
 void AstGraphWidget::mousePressEvent(QMouseEvent * ev)
 {
-	DisplayNode * node = dynamic_cast<DisplayNode*>(itemAt(ev->pos()));
+	DisplayTreeNode * node = dynamic_cast<DisplayTreeNode*>(itemAt(ev->pos()));
 
 	if(node)
 	{
@@ -117,3 +126,51 @@ void AstGraphWidget::scaleView(qreal scaleFactor)
 
     scale(scaleFactor, scaleFactor);
 }
+
+
+
+
+
+
+// ---------------------- Drop Functionality -----------------------------------
+
+void AstGraphWidget::dragEnterEvent(QDragEnterEvent * ev)
+{
+    if (ev->mimeData()->hasFormat(SG_NODE_MIMETYPE))
+    {
+        if(this != ev->source())
+            ev->acceptProposedAction();
+    }
+}
+
+
+void AstGraphWidget::dropEvent(QDropEvent *ev)
+{
+    if(ev->source()==this)
+        return;
+
+    SgNode * node = getGeneralNode(ev->mimeData());
+
+    if(node)
+    {
+        setNode(node);
+        ev->acceptProposedAction();
+    }
+}
+
+void AstGraphWidget::dragMoveEvent( QDragMoveEvent * ev)
+{
+    QWidget::dragMoveEvent(ev);
+}
+
+
+
+
+
+
+
+
+
+
+
+

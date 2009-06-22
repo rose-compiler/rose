@@ -23,7 +23,7 @@ class TreeLayoutGenerator
 
 	public:
 		TreeLayoutGenerator();
-		void layoutTree(DisplayNode * root);
+		void layoutTree(DisplayTreeNode * root);
 
 	protected:
 		struct AdditionalNodeInfo;
@@ -33,13 +33,13 @@ class TreeLayoutGenerator
 		// First traversal computes relative position for each node (bottom up)
 		// here the main work is done
 		typedef QPair<ExtremeInfo,ExtremeInfo> ExtInfoPair;
-		ExtInfoPair posCalcTraversal(DisplayNode * node, int layer);
+		ExtInfoPair posCalcTraversal(DisplayTreeNode * node, int layer);
 
 		// Second traversal, positions the node according to their stored rel. positions
-		void layoutTraversal(DisplayNode * node);
+		void layoutTraversal(DisplayTreeNode * node);
 
 		// Displays the threads for debugging
-		void paintThreadTraversal(DisplayNode * node);
+		void paintThreadTraversal(DisplayTreeNode * node);
 
 
 		// --------  Helper Functions for posCalcTraversal ----------------
@@ -48,23 +48,23 @@ class TreeLayoutGenerator
 			@param right current node on right outline
 			@param rightPos in-out parameter , updates the relative offset
 			@param threadUsed is set to true when a thread was followed 	*/
-		DisplayNode * advanceRight(DisplayNode * right, double & rightPos, bool & threadUsed);
+		DisplayTreeNode * advanceRight(DisplayTreeNode * right, double & rightPos, bool & threadUsed);
 
 		/// see advanceRight
-		DisplayNode * advanceLeft(DisplayNode * left, double & leftPos, bool & threadUsed);
+		DisplayTreeNode * advanceLeft(DisplayTreeNode * left, double & leftPos, bool & threadUsed);
 
 
 		/// Calculates the Distance between two subtrees (which have already been processed,
 		/// and therefore relPosition is already set, and computes the distance between them
 		/// arguments: extremeInfoR means: on right subtree the rightmost node
-		double calcSubtreeDistance(DisplayNode * left, DisplayNode * right,
+		double calcSubtreeDistance(DisplayTreeNode * left, DisplayTreeNode * right,
                                    const ExtremeInfo & extInfoL,
                                    const ExtremeInfo & extInfoR);
 
 
 		/// For each node additional layout-information is stored
 		/// by using a hash index with nodePointer
-		QHash<DisplayNode *, AdditionalNodeInfo *> nodeInfo;
+		QHash<DisplayTreeNode *, AdditionalNodeInfo *> nodeInfo;
 
 
 		//TODO Write getter and setter for this attributes:

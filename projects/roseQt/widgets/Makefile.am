@@ -3,25 +3,31 @@
 
 INCLUDES = .
 
-SUBDIRS = AstBrowserWidget\
-          AsmInstructionBar\
+SUBDIRS = AsmInstructionBar\
+          AsmSourceMapper\
+          AsmView\
+          AstBrowserWidget\
           AstGraphWidget\
           AstProcessing\
           BeautifiedAst\
           FlopCounter\
+          InstructionCountAnnotator\
           KiviatView\
-          MetricsKiviat\
-          MetricsConfig\
           MetricFilter\
+          MetricsConfig\
+          MetricsKiviat\
           NodeInfoWidget\
+          ProjectManager\
           PropertyTreeWidget\
           QtDesignerPlugins\
+	  QtGradientEditor\
           RoseCodeEdit\
           RoseFileSelector\
-          util\
-          InstructionCountAnnotator           
+          TaskSystem\
+          util
+                    
 
-if ROSE_USE_QT
+if ROSE_WITH_ROSEQT
 
 RoseQtWidgetslibdir = $(libdir)
 RoseQtWidgetslib_LTLIBRARIES = libRoseQtWidgets.la
@@ -35,23 +41,28 @@ libRoseQtWidgets_la_SOURCES  =  DummyForAutotools.cpp
 
 
 libRoseQtWidgets_la_LIBADD   =  $(top_builddir)/src/librose.la\
-                                $(buildDir)/AstBrowserWidget/libAstBrowserWidget.la \
                                 $(buildDir)/AsmInstructionBar/libAsmInstructionBar.la \
+                                $(buildDir)/AsmSourceMapper/libAsmSourceMapper.la \
+                                $(buildDir)/AsmView/libAsmView.la \
+                                $(buildDir)/AstBrowserWidget/libAstBrowserWidget.la \
                                 $(buildDir)/AstGraphWidget/libAstGraphWidget.la \
                                 $(buildDir)/AstProcessing/libAstProcessing.la \
                                 $(buildDir)/BeautifiedAst/libBeautifiedAst.la \
                                 $(buildDir)/FlopCounter/libFlopCounter.la \
+                                $(buildDir)/InstructionCountAnnotator/libInstructionCountAnnotator.la\
                                 $(buildDir)/KiviatView/libKiviatView.la \
-                                $(buildDir)/MetricsKiviat/libMetricsKiviat.la \
-                                $(buildDir)/MetricsConfig/libMetricsConfig.la \
                                 $(buildDir)/MetricFilter/libMetricFilter.la \
+                                $(buildDir)/MetricsConfig/libMetricsConfig.la \
+                                $(buildDir)/MetricsKiviat/libMetricsKiviat.la \
                                 $(buildDir)/NodeInfoWidget/libNodeInfoWidget.la \
+                                $(buildDir)/ProjectManager/libProjectManager.la \
                                 $(buildDir)/PropertyTreeWidget/libPropertyTreeWidget.la \
                                 $(buildDir)/QtDesignerPlugins/libQtDesignerPlugins.la \
+                                $(buildDir)/QtGradientEditor/libQtGradientEditor.la \
                                 $(buildDir)/RoseCodeEdit/libRoseCodeEdit.la \
                                 $(buildDir)/RoseFileSelector/libRoseFileSelector.la \
-                                $(buildDir)/util/libutil.la \
-                                $(buildDir)/InstructionCountAnnotator/libInstructionCountAnnotator.la
-                               
+                                $(buildDir)/TaskSystem/libTaskSystem.la \
+                                $(buildDir)/util/libutil.la
+                         
 
 endif

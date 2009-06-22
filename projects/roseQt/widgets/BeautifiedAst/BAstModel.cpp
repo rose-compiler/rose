@@ -10,7 +10,6 @@
 BAstModel::BAstModel(QObject * par)
     : ItemTreeModel(par),curFilter(NULL),curNode(NULL)
 {
-    headerCaptions() << "Element";
 }
 
 BAstModel::~BAstModel()
@@ -27,7 +26,7 @@ void BAstModel::setNode(SgNode * node)
 
 void BAstModel::setFilter(AstFilterInterface * filter)
 {
-    curFilter = filter;
+    curFilter = filter->copy();
     updateModel();
 }
 
@@ -39,7 +38,7 @@ void BAstModel::updateModel()
         return;
     }
 
-    BAstNode * treeRoot = BAstNode::generate(curNode,curFilter);
+    ItemTreeNode * treeRoot = BAstNode::generate(curNode,curFilter);
     setRoot(treeRoot);
 }
 
@@ -61,17 +60,6 @@ QVariant BAstModel::data (const QModelIndex & ind, int role) const
 
     BAstNode * bNode=dynamic_cast<BAstNode*> (node);
     Q_ASSERT(bNode!=NULL);
-
-    if(role == Qt::DecorationRole)
-    {
-        return bNode->getIcon();
-    }
-    if(role == Qt::ToolTipRole)
-    {
-        return bNode->getTooltip();
-    }
-
-
 
     return ItemTreeModel::data(ind,role);
 }

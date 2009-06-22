@@ -1,21 +1,23 @@
-#not generated!
+#------------ InstructionCountAnnotator Makefile.am -----------
+include $(top_srcdir)/projects/roseQt/Make.inc 
 
-include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+if ROSE_WITH_ROSEQT
 
-if ROSE_USE_QT
-
-INCLUDES = $(ROSE_INCLUDES)
-
-noinst_LTLIBRARIES = libInstructionCountAnnotator.la
+noinst_LTLIBRARIES = libInstructionCountAnnotator.la 
 
 
-libInstructionCountAnnotator_la_SOURCES = InstructionCountAnnotator.cpp
 
-# Uncomment this for using experimental PTracer
-# libInstructionCountAnnotator_la_SOURCES = InstructionCountAnnotator.cpp PTracer.cpp
+libInstructionCountAnnotator_la_SOURCES = InstructionCountAnnotator.cpp\
+                                          PTracer.cpp
 
-headerTargetdir    =  $(includedir)/roseQtWidgets
-headerTarget_HEADERS = InstructionCountAnnotator.h PTracer.h
+
+
+
+
+# Target for installing header 
+headerTargetdir    =  $(roseQtWidgetsIncPath)/
+headerTarget_HEADERS = InstructionCountAnnotator.h\
+                       PTracer.h
 
 
 endif

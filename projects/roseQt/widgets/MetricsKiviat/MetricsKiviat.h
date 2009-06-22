@@ -6,7 +6,7 @@
 #include <QString>
 #include <QList>
 
-#include "KiviatView/KiviatView.h"
+#include "KiviatView.h"
 
 class QMouseEvent;
 class QListWidget;
@@ -17,12 +17,15 @@ class SgNode;
 class MetricsConfig;
 class KiviatInfo;
 
+/**
+ * Extension of KiviatView for showing metric attributes
+ */
 class MetricsKiviat : public KiviatView
 {
    Q_OBJECT
 
    public:
-      MetricsKiviat( QWidget *parent = NULL );
+      MetricsKiviat( QWidget *parent = NULL, MetricsConfig *global = NULL );
 
       virtual ~MetricsKiviat();
 
@@ -56,11 +59,11 @@ class MetricsKiviat : public KiviatView
    public slots:
       void updateView( SgNode *astNode );
       void updateView( int id );
-      
+
       void addNode( SgNode *astNode );
       void delNode( SgNode *astNode );
       void delNode( int nodeId );
-      
+
       void configureMetrics( bool dialog = true );
 
    protected:

@@ -4,7 +4,7 @@ include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 # Include Paths for the roseQt-widgets  and rules for Qt's metacompiler moc,uic,rcc
 include $(top_srcdir)/projects/roseQt/UseQtWidgets.inc
 
-if ROSE_USE_QT
+if ROSE_WITH_ROSEQT
 
 $(compass_build_tooldir)/compass/libCompassCheckers.la:
 	cd .. && $(MAKE) libCompassCheckers.la
@@ -28,21 +28,19 @@ compassMainGui2_SOURCES =  timer.cpp \
                             ViolationsTableModel.cpp \
                             main.cpp
 
-nodist_compassMainGui2_SOURCES =    moc_CompassMainWindow.cpp \
-                                    moc_CheckerTableModel.cpp \
+nodist_compassMainGui2_SOURCES =    moc_CompassMainWindow.cxx \
+                                    moc_CheckerTableModel.cxx \
                                     qrc_res.cpp\
                                     ui_CompassMainWindow.h
 
 
 BUILT_SOURCES = ui_CompassMainWindow.h 
-  
-compassMainGui2_LDADD = -L$(compass_build_tooldir)/compass\
-                        -lCompassCheckers \
+
+compassMainGui2_LDADD = $(compass_build_tooldir)/compass/libCompassCheckers.la \
+                        $(roseQtBuildDir)/widgets/libRoseQtWidgets.la \
                         $(ROSE_LIBS) \
                         $(QT_LDFLAGS) \
-                        $(QROSE_LDFLAGS) \
-                        -lrt \
-                        $(roseQtBuildDir)/widgets/libRoseQtWidgets.la
+                        -lrt
                         
                           
 

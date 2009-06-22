@@ -6,7 +6,7 @@
 #include <QList>
 
 #include "ItemTreeNode.h"
-
+#include "ItemModelHelper.h"
 // ------------------ ModelNode ------------------------
 
 
@@ -22,6 +22,9 @@ class QtAstModel::ModelNode : public ItemTreeNode
 
 
 		QtAstModel::ModelNode * addChild(const QString & name,SgNode * s);
+
+
+		virtual QVariant data(int role, int column=0) const;
 
 
 		bool isBuildUp() const  { return buildUp; }
@@ -61,6 +64,27 @@ void QtAstModel::ModelNode::deleteChildren()
 	buildUp=false;
 	children.clear();
 }
+
+QVariant QtAstModel::ModelNode::data(int role, int column) const
+{
+    if( role== Qt::DisplayRole)
+    {
+        switch(column)
+        {
+            case 0 : return dispName;
+            case 1 : return sg ? sg->class_name().c_str() : QString("NULL");
+            default: return QVariant();
+        }
+    }
+    else if( role==SgNodeRole)
+    {
+        return sg ? QVariant::fromValue<SgNode*>(sg) : QVariant();
+    }
+
+    return QVariant();
+}
+
+
 
 QtAstModel::ModelNode * QtAstModel::ModelNode::addChild(const QString & name,SgNode * s)
 {
@@ -120,6 +144,16 @@ Qt::ItemFlags QtAstModel::flags (const QModelIndex & i) const
 	return Qt::ItemIsEnabled | Qt::ItemIsSelectable;
 }
 
+QVariant QtAstModel::data  (const QModelIndex & ind, int role) const
+{
+    if(!ind.isValid())
+        return QVariant();
+
+    ModelNode * node = static_cast<ModelNode *>(ind.internalPointer());
+    Q_ASSERT(node);
+
+    return node->data(role,ind.column());
+}
 
 QVariant QtAstModel::headerData (int section, Qt::Orientation orientation, int role) const
 {
@@ -139,35 +173,6 @@ int  QtAstModel::columnCount (const QModelIndex & par) const
 {
 	return 2;
 }
-
-
-QVariant QtAstModel::data  (const QModelIndex & ind, int role) const
-{
-	if(!ind.isValid())
-		return QVariant();
-
-	if( role== Qt::DisplayRole)
-	{
-		ModelNode * node = static_cast<ModelNode *>(ind.internalPointer());
-		Q_ASSERT(node != NULL);
-
-
-		if(ind.column()==0)
-			return node->getDispName();
-		else if(ind.column()==1)
-		{
-			if(node->sgNode()!=NULL)
-				return QString(node->sgNode()->class_name().c_str());
-			else
-				return QString("NULL");
-		}
-		else
-			return QVariant();
-	}
-	else
-		return QVariant();
-}
-
 
 int  QtAstModel::rowCount(const QModelIndex & par) const
 {

@@ -1,5 +1,6 @@
 #include "rose.h"
 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -39,6 +40,11 @@ PTracer::PTracer()
 void PTracer::loadProcess(const std::vector<std::string>  & args)
 {
     int wait_val;
+
+    cout << "loadProcess: ";
+    for(size_t i=0; i<args.size(); i++)
+        cout <<args[i] << " ";
+    cout << endl;
 
     switch (curPid = fork())
     {
@@ -95,8 +101,16 @@ void PTracer::run()
 
                 printMem(getInstructionPointer()-8, 16 );
 
-                exit(1);
+                if (ptrace(PTRACE_CONT, curPid, 0, 0) != 0 )
+                {
+                    perror("atBreakpointHit PTRACE_CONT");
+                    errno = 0;
+                    exit(1);
+                }
+
+                continue;
             }
+
             atBreakpointHit();
         }
         else if (WIFEXITED( wait_val ))
@@ -163,7 +177,7 @@ void PTracer::printMem(long startAddr, int byteCount)
         //cerr << hex << i  << "\t " << data.val << endl;
 
 
-        for(int j=0; j< sizeof(long); j++)
+        for(unsigned int j=0; j< sizeof(long); j++)
             cerr << hex << i+j << setw(2) << setfill('0') << "  " << (short) data.chars[j] << endl;
     }
 
@@ -189,7 +203,7 @@ bool PTracer::atBreakpointHit()
 
 
 
-    assert(addr == info.node->get_address() );
+    assert((unsigned long) addr == info.node->get_address() );
 
 
     // disable breakpoint to continue
@@ -204,6 +218,31 @@ bool PTracer::atBreakpointHit()
         perror("atBreakpointHit PTRACE_SINGLESTEP");
         errno = 0;
         return false;
+    }
+
+    int wait_val;
+    while(1)
+    {
+        wait( &wait_val );
+        if( WIFEXITED( wait_val ))
+        {
+            cerr << "Process exited after PTRACE_SINGLESTEP";
+            return false;
+        }
+
+        int sig = WSTOPSIG(wait_val);
+        if(sig != SIGTRAP) //not a sigtrap
+        {
+            cerr << "Unexpected signal " << dec << sig << " after PTRACE_SINGLESTEP";
+            if (ptrace(PTRACE_CONT, curPid, 0, 0) != 0 )
+            {
+                perror("atBreakpointHit PTRACE_CONT");
+                errno = 0;
+                return false;
+            }
+        }
+        else
+            break;
     }
 
 
@@ -358,11 +397,11 @@ int main()
 
     SgAsmStatement bpInLoop(0x0804870e);
 
-    SgAsmStatement beginning(0x8048640);
+    SgAsmStatement beginning(4196680);
     SgAsmStatement notWorking(0x8048656);
 
     vector<string> args;
-    args.push_back("/home/martin/workspace/test/Debug/test");
+    args.push_back("/export/0/tmp.bauer25/opt/newRoseTree/ROSE/projects/roseQt/demo/inputTest");
 
     t.loadProcess(args);
 
@@ -372,6 +411,7 @@ int main()
     t.addStatementForTracing(bp);
     cerr << endl << "After Breakpoint set: " << endl;
     t.printMem(bp->get_address()-5,10);
+
 
     t.run();
 

@@ -9,13 +9,16 @@ class AstFilterInterface;
 class MetricsConfig;
 namespace Ui { class MetricFilter; }
 
+/**
+ *  Widget for filtering according to metric attribute (show "hot regions" of code)
+ */
 class MetricFilter
     : public QWidget
 {
     Q_OBJECT
 
     public:
-        MetricFilter( QWidget *parent = NULL );
+        MetricFilter( QWidget *parent = NULL, MetricsConfig *globalConfig = NULL );
 
         virtual ~MetricFilter();
 

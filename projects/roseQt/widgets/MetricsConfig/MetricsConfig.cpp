@@ -4,6 +4,7 @@
 #include <limits>
 
 #include <QDialog>
+#include <QDebug>
 
 #include "MetricsConfig.h"
 
@@ -12,17 +13,35 @@
 using namespace std;
 
 // definition of the local proxy class
-MetricsConfig::MetricsConfig( const QString& configureId_, SgNode *root )
-    : impl( impl::MetricsConfig::getGlobal( root ) ),
+MetricsConfig::MetricsConfig( const QString& configureId_,
+                              MetricsConfig *globalConfig,
+                              SgNode *root )
+    : /*impl( impl::MetricsConfig::getGlobal( root ) ),*/
       configureId( configureId_ )
 {
-    impl->registerId( configureId );
+    if( globalConfig == NULL )
+    {
+        impl = new impl::MetricsConfig( root );
+        qDebug() << impl << "constructing global config for" << root;
+        globalConfig = this;
+    }
+    else
+    {
+        qDebug() << globalConfig->impl << "constructing local config for" << root;
+        impl = globalConfig->impl;
+        impl->registerId( configureId );
+    }
 }
 
 
 int MetricsConfig::getMetricsInfoCount()
 {
     return impl->getMetricsInfoCount( configureId );
+}
+
+bool MetricsConfig::hasMetricsInfo( const QString& name ) const
+{
+    return impl->hasMetricsInfo( name, configureId );
 }
 
 const MetricsInfo& MetricsConfig::getMetricsInfo( const QString& name ) const
@@ -35,18 +54,19 @@ MetricsInfo& MetricsConfig::getMetricsInfo( const QString& name )
     return impl->getMetricsInfo( name, configureId );
 }
 
-MetricsConfig::iterator MetricsConfig::begin()
+MetricsConfig::iterator MetricsConfig::begin() const
 {
     return impl->begin( configureId );
 }
 
-MetricsConfig::iterator MetricsConfig::end()
+MetricsConfig::iterator MetricsConfig::end() const
 {
     return impl->end( configureId );
 }
 
 void MetricsConfig::setRoot( SgNode *root )
 {
+    assert( isSgProject( root ) );
     impl->setRoot( root );
 }
 
@@ -79,14 +99,19 @@ namespace impl {
     void MetricsConfig::setRoot( SgNode *root )
     {
         if( root == NULL ) return;
+        enabled.clear();
+
+        qDebug() << "MetricsConfig::setRoot()" << this << root;
 
         collectMetricAttributes( root );
+        qDebug() << "MetricsCollected: " << getMetricsInfoCount();
         
         setupEnabled( "" );
 
         int listId( 0 );
         for( MetricsInfoIterator it = begin(); it != end(); ++it, ++listId )
         {
+            qDebug() << it.name();
             it->listId = listId;
         }
     }
@@ -104,7 +129,10 @@ namespace impl {
         {
             QListWidgetItem *metricItem = new QListWidgetItem( it->caption );
            
-            metricItem->setFlags( Qt::ItemIsSelectable | Qt::ItemIsEditable | Qt::ItemIsDragEnabled | Qt::ItemIsEnabled );
+            metricItem->setFlags( Qt::ItemIsSelectable |
+                                  Qt::ItemIsEditable |
+                                  Qt::ItemIsDragEnabled |
+                                  Qt::ItemIsEnabled );
 
             metricItem->setData( Qt::UserRole, QVariant( it.name() ) );
 
@@ -116,16 +144,26 @@ namespace impl {
             dialogUi->cmbNormalize->addItem( it->caption, QVariant( it.name() ) );
         }
         
-        connect( dialogUi->lstEnabledMetrics , SIGNAL( currentRowChanged( int ) )        , this, SLOT( itemChanged( int ) ) );
-        connect( dialogUi->lstDisabledMetrics, SIGNAL( currentRowChanged( int ) )        , this, SLOT( itemChanged( int ) ) );
-        connect( dialogUi->spnMin            , SIGNAL( valueChanged( double ) )          , this, SLOT( minChanged( double ) ) );
-        connect( dialogUi->spnMax            , SIGNAL( valueChanged( double ) )          , this, SLOT( maxChanged( double ) ) );
-        connect( dialogUi->cmbNormalize      , SIGNAL( currentIndexChanged( int ) )      , this, SLOT( normalizeNameChanged( int ) ) );
-        connect( dialogUi->lstEnabledMetrics , SIGNAL( itemChanged( QListWidgetItem * ) ), this, SLOT( captionChanged( QListWidgetItem * ) ) );
-        connect( dialogUi->lstDisabledMetrics, SIGNAL( itemChanged( QListWidgetItem * ) ), this, SLOT( captionChanged( QListWidgetItem * ) ) );
-        connect( dialogUi->rdoNormalizeRange , SIGNAL( toggled( bool ) )                 , this, SLOT( normalizeByRange( bool ) ) );
-        connect( dialogUi->cmdEnable         , SIGNAL( clicked() )                       , this, SLOT( enableItem() ) );
-        connect( dialogUi->cmdDisable        , SIGNAL( clicked() )                       , this, SLOT( disableItem() ) );
+        connect( dialogUi->lstEnabledMetrics , SIGNAL( currentRowChanged( int ) )        ,
+                 this                        , SLOT  ( itemChanged( int ) ) );
+        connect( dialogUi->lstDisabledMetrics, SIGNAL( currentRowChanged( int ) )        ,
+                 this                        , SLOT  ( itemChanged( int ) ) );
+        connect( dialogUi->spnMin            , SIGNAL( valueChanged( double ) )          ,
+                 this                        , SLOT  ( minChanged( double ) ) );
+        connect( dialogUi->spnMax            , SIGNAL( valueChanged( double ) )          ,
+                 this                        , SLOT  ( maxChanged( double ) ) );
+        connect( dialogUi->cmbNormalize      , SIGNAL( currentIndexChanged( int ) )      ,
+                 this                        , SLOT  ( normalizeNameChanged( int ) ) );
+        connect( dialogUi->lstEnabledMetrics , SIGNAL( itemChanged( QListWidgetItem * ) ),
+                 this                        , SLOT( captionChanged( QListWidgetItem * ) ) );
+        connect( dialogUi->lstDisabledMetrics, SIGNAL( itemChanged( QListWidgetItem * ) ),
+                 this                        , SLOT( captionChanged( QListWidgetItem * ) ) );
+        connect( dialogUi->rdoNormalizeRange , SIGNAL( toggled( bool ) )                 ,
+                 this                        , SLOT  ( normalizeByRange( bool ) ) );
+        connect( dialogUi->cmdEnable         , SIGNAL( clicked() )                       ,
+                 this                        , SLOT  ( enableItem() ) );
+        connect( dialogUi->cmdDisable        , SIGNAL( clicked() )                       ,
+                 this                        , SLOT( disableItem() ) );
 
         execDialog( dialog, configureId );
 
@@ -134,7 +172,7 @@ namespace impl {
         delete dialogUi;
     }
 
-    void MetricsConfig::configureSingle( const QString& configureId )
+    const MetricsInfo& MetricsConfig::configureSingle( const QString& configureId )
     {
         QDialog dialog;
         dialogUi = new Ui::MetricsConfig();
@@ -144,30 +182,48 @@ namespace impl {
 
         dialogUi->frmMultiple->hide();
         
+        qDebug() << this << getMetricsInfoCount() << configureId;
 
         for( MetricsInfoIterator it = begin(); it != end(); ++it )
         {
             QListWidgetItem *metricItem = new QListWidgetItem( it->caption );
 
-            metricItem->setFlags( Qt::ItemIsSelectable | Qt::ItemIsEditable | Qt::ItemIsDragEnabled | Qt::ItemIsEnabled );
+            metricItem->setFlags( Qt::ItemIsSelectable |
+                                  Qt::ItemIsEditable |
+                                  Qt::ItemIsDragEnabled |
+                                  Qt::ItemIsEnabled );
             metricItem->setData( Qt::UserRole, QVariant( it.name() ) );    
             dialogUi->lstMetrics->insertItem( it->listId, metricItem );
 
             dialogUi->cmbNormalize->addItem( it->caption, QVariant( it.name() ) );
         }
 
-        connect( dialogUi->lstMetrics       , SIGNAL( currentRowChanged( int ) )             , this, SLOT( itemChanged( int ) ) );
-        connect( dialogUi->spnMin           , SIGNAL( valueChanged( double ) )               , this, SLOT( minChanged( double ) ) );
-        connect( dialogUi->spnMax           , SIGNAL( valueChanged( double ) )               , this, SLOT( maxChanged( double ) ) );
-        connect( dialogUi->cmbNormalize     , SIGNAL( currentIndexChanged( int ) )           , this, SLOT( normalizeNameChanged( int ) ) );
-        connect( dialogUi->lstMetrics       , SIGNAL( itemChanged( QListWidgetItem * ) )     , this, SLOT( captionChanged( QListWidgetItem * ) ) );
-        connect( dialogUi->rdoNormalizeRange, SIGNAL( toggled( bool ) )                      , this, SLOT( normalizeByRange( bool ) ) );
+        connect( dialogUi->lstMetrics       , SIGNAL( currentRowChanged( int ) ),
+                 this                       , SLOT( itemChanged( int ) ) );
+        connect( dialogUi->spnMin           , SIGNAL( valueChanged( double ) ),
+                 this                       , SLOT( minChanged( double ) ) );
+        connect( dialogUi->spnMax           , SIGNAL( valueChanged( double ) ),
+                 this                       , SLOT( maxChanged( double ) ) );
+        connect( dialogUi->cmbNormalize     , SIGNAL( currentIndexChanged( int ) ),
+                 this                       , SLOT( normalizeNameChanged( int ) ) );
+        connect( dialogUi->lstMetrics       , SIGNAL( itemChanged( QListWidgetItem * ) ),
+                 this                       , SLOT( captionChanged( QListWidgetItem * ) ) );
+        connect( dialogUi->rdoNormalizeRange, SIGNAL( toggled( bool ) ),
+                 this                       , SLOT( normalizeByRange( bool ) ) );
 
         execDialog( dialog, configureId );
+        MetricsInfoIterator itrBegin( begin( configureId ) );
+        MetricsInfoIterator itrEnd( end( configureId ) );
+        assert( itrBegin != itrEnd );
+        /*const MetricsInfo& metricsInfo;
+        if( begin != end )
+            metricsInfo = *begin;*/
 
         currentId = "";
 
         delete dialogUi;
+
+        return *itrBegin;
     }
 
     int MetricsConfig::getMetricsInfoCount( const QString& configureId )
@@ -183,8 +239,14 @@ namespace impl {
         return count;
     }
 
+    bool MetricsConfig::hasMetricsInfo( const QString& name, const QString& configureId ) const
+    {
+        return globalInfo.find( name ) != globalInfo.end();
+    }
+
     const MetricsInfo& MetricsConfig::getMetricsInfo( const QString& name, const QString& configureId ) const
     {
+        qDebug() << "MetricsConfig::getMetricsInfo" << this << configureId;
         map_iterator info( globalInfo.find( name ) );
         return *info;
     }
@@ -201,6 +263,8 @@ namespace impl {
 
         MetricsInfoIterator res( *this, configureId );
         res.iter = iter;
+        
+        qDebug() << "MetricsConfig::begin" << this << configureId;
 
         if( iter == globalInfo.end() ) return res;
 
@@ -212,6 +276,8 @@ namespace impl {
     MetricsInfoIterator MetricsConfig::end( const QString& configureId )
     {
         MetricsInfoContainer::iterator iter( globalInfo.end() );
+        
+        qDebug() << "MetricsConfig::end" << this << configureId;
 
         MetricsInfoIterator res( *this, configureId );
         res.iter = iter;
@@ -222,27 +288,39 @@ namespace impl {
     {
         if( astNode == NULL )
             return;
-        if(astNode->get_attributeMechanism() == NULL)
-            return;
-
-        AstAttributeMechanism::AttributeIdentifiers aidents = astNode->get_attributeMechanism()->getAttributeIdentifiers();
-        for( AstAttributeMechanism::AttributeIdentifiers::iterator it = aidents.begin(); it != aidents.end(); ++it )
+        if( astNode->get_attributeMechanism() != NULL)
         {
-            MetricAttribute *metrAttr = dynamic_cast<MetricAttribute *>( astNode->getAttribute( *it ) );
-            if( metrAttr )
+            AstAttributeMechanism *astAttributes = astNode->get_attributeMechanism();
+            for( AstAttributeMechanism::iterator it = astAttributes->begin(); it != astAttributes->end(); ++it )
             {
-                const QString name( (*it).c_str() );
-                const double value( metrAttr->getValue() );
+                MetricAttribute *metrAttr = dynamic_cast<MetricAttribute *>( it->second );
+                if( metrAttr )
+                {
+                    const QString name( it->first.c_str() );
+                    const double value( metrAttr->getValue() );
 
-                map_iterator it = globalInfo.find( name );
-                if( it == globalInfo.end() )
-                {
-                    globalInfo.insert( name, MetricsInfo( name, true, value, value ) );
-                }
-                else
-                {
-                    if( value < it.value().minValue ) it.value().minValue = value; // update min
-                    if( value > it.value().maxValue ) it.value().maxValue = value; // update max
+                    //qDebug() << "MetricAttribute:" <<name;
+
+                    map_iterator i = globalInfo.find( name );
+                    if( i == globalInfo.end() )
+                    {
+                        globalInfo.insert( name, MetricsInfo( name, true, value, value ) );
+                    }
+                    else
+                    {
+                        if( value < i.value().minValue ) 
+                        {
+                            //cout << "New minimum: " << value << " old: " << i.value().minValue << endl;
+                            i.value().minValue = value; // update min
+                            i.value().minNormalize = value; // update min
+                        }
+                        if( value > i.value().maxValue ) 
+                        {
+                            //cout << "New maximum: " << value << i.value().maxValue <<        endl;
+                            i.value().maxValue = value; // update max
+                            i.value().maxNormalize = value; // update max
+                        }
+                    }
                 }
             }
         }
@@ -255,18 +333,25 @@ namespace impl {
 
     void MetricsConfig::setupEnabled( const QString& configureId )
     {
+        qDebug() << "setupEnabled" << configureId << this;
         QMap<QString, QMap<QString, bool> >::iterator it( enabled.find( configureId ) );
 
-        if( it != enabled.end() ) return;
+        if( it != enabled.end() ) 
+        {
+            qDebug() << configureId << " already inserted ...";
+            return;
+        }
 
         QMap<QString, bool> tmp;
         for( map_iterator i = globalInfo.begin(); i != globalInfo.end(); ++i )
         {
+            qDebug() << i.key() << this;
             tmp.insert( i.key(), true );
         }
         enabled.insert( configureId, tmp );
 
         //QMap<QString, bool> test = enabled[""];
+        qDebug() << "done enabling";
     }
 
     void MetricsConfig::execDialog( QDialog& dialog, const QString& configureId )
@@ -281,11 +366,24 @@ namespace impl {
             return;
         }
 
+        if( !dialogUi->frmSingle->isHidden() )
+        {
+            const QString name( dialogUi->lstMetrics->currentItem()->data( Qt::UserRole ).toString() );
+            QMap<QString, bool>& isEnabled( enabled[configureId] );
+
+            if( configureId != "" )
+            {
+                std::fill( isEnabled.begin(), isEnabled.end(), false );
+                isEnabled[name] = true;
+            }
+        }
+
         for( int id( 0 ); id < dialogUi->lstEnabledMetrics->count(); ++id )
         {
             const QString name = dialogUi->lstEnabledMetrics->item( id )->data( Qt::UserRole ).toString();
 
             getMetricsInfo( name, configureId ).listId = id;
+            qDebug() << name << "isEnabled";
         }
     }
 
@@ -394,15 +492,15 @@ namespace impl {
         if( dialogUi->lstEnabledMetrics->count() == 0 ) dialogUi->grpNormalize->setEnabled( false );
     }
 
-    MetricsConfig *MetricsConfig::globalConfig = NULL;
+    //MetricsConfig *MetricsConfig::globalConfig = NULL;
 
-    MetricsConfig *MetricsConfig::getGlobal( SgNode *root )
+    /*MetricsConfig *MetricsConfig::getGlobal( SgNode *root )
     {
         if( globalConfig == NULL )
             globalConfig = new MetricsConfig( root );
 
         return globalConfig;
-    }
+    }*/
 
     MetricsInfoIterator::MetricsInfoIterator( const MetricsInfoIterator& other )
         : iter( other.iter ),
@@ -465,7 +563,10 @@ namespace impl {
         if( iter == globalInfo.end() || enabled[iter.key()] )
             return *this;
         else
+        {
+            qDebug() << iter.key() << "not enabled ... ";
             return ++(*this);
+        }
     }
 
     MetricsInfoIterator MetricsInfoIterator::operator--( int )

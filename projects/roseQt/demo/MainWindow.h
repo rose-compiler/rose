@@ -6,6 +6,7 @@
 
 #include <QMainWindow>
 
+
 class QFormatScheme;
 class QLanguageFactory;
 
@@ -15,28 +16,47 @@ class AstFilterInterface;
 
 class QCodeEdit;
 
+class ProjectManager;
+
+//#include <QtScript>
+//#include <QtScriptTools/QScriptEngineDebugger>
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
     public:
-        MainWindow(SgProject * project, QWidget * parent= 0);
+        MainWindow( QWidget * parent= 0);
         virtual ~MainWindow();
 
     public slots:
         void setFilter1( AstFilterInterface *filter );
         void setFilter2( AstFilterInterface *filter );
 
+        void on_actionNewAssemblerView_triggered();
+        void on_actionNewCodeEditor_triggered();
+
+        //void on_cmdExecScript_clicked();
+        void on_cmdSubmitTest_clicked();
 
     protected:
         Ui::MainWindow ui;
         AstFilterInterface *f1;
         AstFilterInterface *f2;
 
+        virtual void closeEvent( QCloseEvent * e);
+
     private:
         void emitFilterChanged();
+
+        void addMdiSubWidget(QWidget * widget);
+
+        ProjectManager *pm;
+
         QCodeEdit * editorWrapper;
 
+        //QScriptEngine * scriptEngine;
+        //QScriptEngineDebugger * scriptDebugger;
 };
 
 #endif
