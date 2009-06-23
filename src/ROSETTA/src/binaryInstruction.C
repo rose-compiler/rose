@@ -17,31 +17,54 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( AsmOperandList  , "AsmOperandList",  "AsmOperandListTag" );
 
 
-     NEW_TERMINAL_MACRO ( AsmArmInstruction, "AsmArmInstruction", "AsmArmInstructionTag" );
-     AsmArmInstruction.setFunctionPrototype        ( "HEADER_BINARY_ARM_INSTRUCTION", "../Grammar/BinaryInstruction.code");
-     AsmArmInstruction.setDataPrototype            ("ArmInstructionKind","kind","= arm_unknown_instruction",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-     AsmArmInstruction.setDataPrototype            ("ArmInstructionCondition","condition","= arm_cond_unknown",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-     AsmArmInstruction.setDataPrototype            ("int","positionOfConditionInMnemonic","= -1",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-     AsmArmInstruction.setPredeclarationString     ("HEADER_BINARY_ARM_INSTRUCTION_PREDECLARATION" , "../Grammar/BinaryInstruction.code");
+     NEW_TERMINAL_MACRO(AsmArmInstruction, "AsmArmInstruction", "AsmArmInstructionTag");
+     AsmArmInstruction.setFunctionPrototype("HEADER_BINARY_ARM_INSTRUCTION", "../Grammar/BinaryInstruction.code");
+     AsmArmInstruction.setDataPrototype("ArmInstructionKind", "kind", "= arm_unknown_instruction",
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     AsmArmInstruction.setDataPrototype("ArmInstructionCondition", "condition", "= arm_cond_unknown",
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     AsmArmInstruction.setDataPrototype("int", "positionOfConditionInMnemonic", "= -1",
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     AsmArmInstruction.setPredeclarationString("HEADER_BINARY_ARM_INSTRUCTION_PREDECLARATION",
+                                               "../Grammar/BinaryInstruction.code");
 
-     NEW_TERMINAL_MACRO ( Asmx86Instruction, "Asmx86Instruction", "Asmx86InstructionTag" );
-     Asmx86Instruction.setFunctionPrototype        ( "HEADER_BINARY_X86_INSTRUCTION", "../Grammar/BinaryInstruction.code");
-     Asmx86Instruction.setDataPrototype            ("X86InstructionKind","kind","= x86_unknown_instruction",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-     Asmx86Instruction.setDataPrototype            ("X86InstructionSize","baseSize","= x86_insnsize_none",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-     Asmx86Instruction.setDataPrototype            ("X86InstructionSize","operandSize","= x86_insnsize_none",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-     Asmx86Instruction.setDataPrototype            ("X86InstructionSize","addressSize","= x86_insnsize_none",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-     Asmx86Instruction.setDataPrototype            ("bool","lockPrefix","= false",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-     Asmx86Instruction.setDataPrototype            ("X86BranchPrediction","branchPrediction","= x86_branch_prediction_none",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-     Asmx86Instruction.setDataPrototype            ("X86SegmentRegister","segmentOverride","= x86_segreg_none",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-     Asmx86Instruction.setPredeclarationString     ("HEADER_BINARY_X86_INSTRUCTION_PREDECLARATION" , "../Grammar/BinaryInstruction.code");
 
-     NEW_TERMINAL_MACRO ( AsmPowerpcInstruction, "AsmPowerpcInstruction", "AsmPowerpcInstructionTag" );
+
+     NEW_TERMINAL_MACRO(Asmx86Instruction, "Asmx86Instruction", "Asmx86InstructionTag");
+     Asmx86Instruction.setFunctionPrototype("HEADER_BINARY_X86_INSTRUCTION", "../Grammar/BinaryInstruction.code");
+     Asmx86Instruction.setDataPrototype("X86InstructionKind", "kind", "= x86_unknown_instruction",
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     Asmx86Instruction.setDataPrototype("X86InstructionSize", "baseSize", "= x86_insnsize_none",
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     Asmx86Instruction.setDataPrototype("X86InstructionSize", "operandSize", "= x86_insnsize_none",
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     Asmx86Instruction.setDataPrototype("X86InstructionSize", "addressSize", "= x86_insnsize_none",
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     Asmx86Instruction.setDataPrototype("bool", "lockPrefix", "= false",
+                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     Asmx86Instruction.setDataPrototype("X86BranchPrediction", "branchPrediction", "= x86_branch_prediction_none",
+                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     Asmx86Instruction.setDataPrototype("X86SegmentRegister", "segmentOverride", "= x86_segreg_none",
+                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     Asmx86Instruction.setPredeclarationString("HEADER_BINARY_X86_INSTRUCTION_PREDECLARATION",
+                                               "../Grammar/BinaryInstruction.code");
+
+
+
+     NEW_TERMINAL_MACRO(AsmPowerpcInstruction, "AsmPowerpcInstruction", "AsmPowerpcInstructionTag" );
      AsmPowerpcInstruction.setFunctionPrototype("HEADER_BINARY_POWERPC_INSTRUCTION", "../Grammar/BinaryInstruction.code");
-     AsmPowerpcInstruction.setDataPrototype        ("PowerpcInstructionKind","kind","= powerpc_unknown_instruction", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-     AsmPowerpcInstruction.setPredeclarationString ("HEADER_BINARY_POWERPC_INSTRUCTION_PREDECLARATION" , "../Grammar/BinaryInstruction.code");
+     AsmPowerpcInstruction.setDataPrototype("PowerpcInstructionKind", "kind", "= powerpc_unknown_instruction",
+                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     AsmPowerpcInstruction.setPredeclarationString("HEADER_BINARY_POWERPC_INSTRUCTION_PREDECLARATION",
+                                                   "../Grammar/BinaryInstruction.code");
+
+
 
   // This is currently a AsmFunctionCall plus other unspecified uses of Asmx86Instruction, it may be refied later.
-     NEW_NONTERMINAL_MACRO ( AsmInstruction, Asmx86Instruction | AsmArmInstruction | AsmPowerpcInstruction, "AsmInstruction", "AsmInstructionTag", true );
+     NEW_NONTERMINAL_MACRO(AsmInstruction,
+                           Asmx86Instruction | AsmArmInstruction | AsmPowerpcInstruction,
+                           "AsmInstruction", "AsmInstructionTag", true );
+
 
 
      NEW_TERMINAL_MACRO ( AsmDataStructureDeclaration , "AsmDataStructureDeclaration", "AsmDataStructureDeclarationTag" );
@@ -1950,12 +1973,6 @@ Grammar::setUpBinaryInstructions ()
      AsmValueExpression.setDataPrototype("SgAsmValueExpression*","unfolded_expression_tree","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-  // added by tps on 5Apr07
-     AsmExpression.setDataPrototype("std::string","replacement","= \"\"",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     // added by tps 6 Apr 09
-     AsmExpression.setDataPrototype("std::string","comment","= \"\"",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AsmBinaryExpression.setDataPrototype("SgAsmExpression*","lhs","= NULL",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -2042,7 +2059,14 @@ Grammar::setUpBinaryInstructions ()
      AsmTypeVector.setFunctionPrototype      ( "HEADER_BINARY_TYPE_VECTOR", "../Grammar/BinaryInstruction.code");
 
 
-     AsmExpression.setFunctionPrototype      ( "HEADER_BINARY_EXPRESSION", "../Grammar/BinaryInstruction.code");
+
+     AsmExpression.setFunctionPrototype("HEADER_BINARY_EXPRESSION", "../Grammar/BinaryInstruction.code");
+     AsmExpression.setDataPrototype("std::string", "replacement", "= \"\"",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmExpression.setDataPrototype("std::string", "comment", "= \"\"",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
 
      AsmByteValueExpression.setFunctionPrototype( "HEADER_BINARY_BYTE_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
      AsmDoubleFloatValueExpression.setFunctionPrototype( "HEADER_BINARY_DOUBLE_FLOAT_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
