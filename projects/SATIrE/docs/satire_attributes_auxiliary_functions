@@ -158,6 +158,10 @@ global_has_initializer :: VariableSymbolNT -> bool;
 global_get_initializer :: VariableSymbolNT -> Expression;
     get the initializer expression of the global variable
 
+global_has_defining_declaration :: VariableSymbolNT -> bool;
+    determine whether a global variable has a defining declaration in the
+    program, or all declarations are extern
+
 varsym_varid :: VariableSymbolNT -> VariableId;
     maps a variable symbol to its VariableId
 
@@ -207,6 +211,9 @@ exprid_typeid :: ExpressionId -> TypeId;
 add_tmpvarid :: TypeId -> VariableId;
     creates a new, unique temporary variable of the given type; this
     function returns different values for each call
+
+is_integer_type :: Type -> bool;
+    determine whether the given type is some integer type
 
 stmt_asttext :: Statement -> str;
     returns a string representing the structure of the given statement in a

@@ -1073,6 +1073,11 @@ CFGTraversal::processGlobalVariableDeclarations(SgGlobal *global)
                   cfg_names_initializers_end = cfg->names_initializers.end();
               }
           }
+          if (!vardecl->isForward())
+          {
+              cfg->names_definingdecls[name] = vardecl;
+              cfg->globals_definingdecls[varsym] = vardecl;
+          }
       }
   }
 }

@@ -668,6 +668,10 @@ automatically included in any analyzer created with SATIrE.
 \ttitem{global\_get\_initializer :: VariableSymbolNT -> Expression;}
     get the initializer expression of the global variable
 
+\ttitem{global\_has\_defining\_declaration :: VariableSymbolNT -> bool;}
+    determine whether a global variable has a defining declaration in the
+    program, or all declarations are extern
+
 \ttitem{varsym\_varid :: VariableSymbolNT -> VariableId;}
     maps a variable symbol to its VariableId
 
@@ -717,6 +721,9 @@ automatically included in any analyzer created with SATIrE.
 \ttitem{add\_tmpvarid :: TypeId -> VariableId;}
     creates a new, unique temporary variable of the given type; this
     function returns different values for each call
+
+\ttitem{is\_integer\_type :: Type -> bool;}
+    determine whether the given type is some integer type
 
 \ttitem{stmt\_asttext :: Statement -> str;}
     returns a string representing the structure of the given statement in a

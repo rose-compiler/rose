@@ -497,6 +497,26 @@ extern "C" void *o_global_get_initializer(void *symbol)
     return get_global_cfg()->globals_initializers[varsym];
 }
 
+extern "C" FLO_BOOL o_global_has_defining_declaration(void *symbol)
+{
+    SgVariableSymbol *varsym = (SgVariableSymbol *) symbol;
+    std::map<SgVariableSymbol *, const SgVariableDeclaration *>::iterator pos
+        = get_global_cfg()->globals_definingdecls.find(varsym);
+    if (pos != get_global_cfg()->globals_definingdecls.end()
+        && pos->second != NULL)
+    {
+        return FLO_TRUE;
+    }
+    else
+        return FLO_FALSE;
+}
+
+extern "C" FLO_BOOL o_is_integer_type(void *t)
+{
+    SgType *type = (SgType *) t;
+    return (type->isIntegerType() ? FLO_TRUE : FLO_FALSE);
+}
+
 // GB (2008-08-04): Two functions requested by Viktor to make the structure
 // of ASTs explicit when trying to write patterns that match them.
 extern "C" str o_stmt_asttext(void *statement)

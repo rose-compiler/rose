@@ -50,6 +50,8 @@ extern noprefix   expr_type                :: Expression -> Type;
 extern noprefix   global_get_type          :: VariableSymbolNT -> Type;
 extern noprefix   global_has_initializer   :: VariableSymbolNT -> bool;
 extern noprefix   global_get_initializer   :: VariableSymbolNT -> Expression;
+extern noprefix   global_has_defining_declaration
+                                           :: VariableSymbolNT -> bool;
 extern noprefix   varsym_varid             :: VariableSymbolNT -> VariableId;
 extern noprefix   varref_varid             :: Expression -> VariableId;
 extern noprefix   expr_exprid              :: Expression -> ExpressionId;
@@ -64,6 +66,7 @@ extern noprefix   typeid_type              :: TypeId -> Type;
 extern noprefix   typeid_str               :: TypeId -> str;
 extern noprefix   exprid_typeid            :: ExpressionId -> TypeId;
 extern noprefix   add_tmpvarid             :: TypeId -> VariableId;
+extern noprefix   is_integer_type          :: Type -> bool;
 extern noprefix   stmt_asttext             :: Statement -> str;
 extern noprefix   expr_asttext             :: Expression -> str;
 extern noprefix   varid_has_location       :: VariableId -> bool;

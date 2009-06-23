@@ -115,8 +115,11 @@ public:
 
     std::map<std::string, SgVariableSymbol *> names_globals;
     std::map<std::string, SgExpression *> names_initializers;
+    std::map<std::string, const SgVariableDeclaration *> names_definingdecls;
     std::vector<SgVariableSymbol *> globals;
     std::map<SgVariableSymbol *, SgExpression *> globals_initializers;
+    std::map<SgVariableSymbol *, const SgVariableDeclaration *>
+        globals_definingdecls;
 
  // access to statement labels
     bool statementHasLabels(SgStatement *);
