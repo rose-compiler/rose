@@ -1,0 +1,103 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Do Not Assign Pointer To Fixed Address}
+\label{DoNotAssignPointerToFixedAddress::overview}
+
+This checker attempts to detect violations of MITRE's Common Weakness
+Enumeration (CWE) 587, ``Assignment of a Fixed Address to a Pointer."  Pointer
+initializations of, and assignments to, constant values are detected.  The goals
+of preventing this weakness are to avoid insecure and/or non-portable code that
+makes unsafe assumptions about memory layout, such as locations of functions.
+
+
+\subsection{Parameter Requirements}
+
+%Write the Parameter specification here.
+There are no parameter requirements.
+
+
+\subsection{Implementation}
+
+%Details of the implementation go here.
+
+The checker traverses the AST in prefix order, checking assignments and
+initializations in which the left hand side is a pointer (or array of pointers)
+and the right hand side is a non-zero constant (or an array containing at least
+one such constant).
+
+Not all cases are caught, for example, the following violation would not
+necessarily be detected:
+
+\begin{verbatim}
+int return_const() { return 42; }
+
+int main() {
+    int* s = (int*) return_const();
+
+    // ...
+
+    return 0;
+}
+\end{verbatim}
+
+
+\subsection{Non-Compliant Code Example}
+
+% write your non-compliant code subsection
+
+The following illustrates a number of non-compliant examples, in which functions
+are assumed to exist at certain fixed addresses.
+
+\begin{verbatim}
+
+  // fn ptr example direct from MITRE, except with added cast
+  int (*pt2fn_fixed_addr) (float, char, char) = 
+    (int (*)(float, char, char)) 0x08040000;
+
+  int (*pt2fn_fixed_addr_nocast)() = (int (*)()) 0x08040000;
+
+  int (*pt2fn_arith_addr) (float, char, char) = 
+    (int (*)(float, char, char)) (0x08040000 + 0x200);
+
+  int (*pt2fn_assgn_fixed_addr) (float, char, char);
+  pt2fn_assgn_fixed_addr = (int (*)(float, char, char)) 0x08040000;
+
+
+  // arrays of function pointers
+
+  typedef int (*fnptr)(void);
+  fnptr f[2] = {
+    (fnptr) 0x08010000,
+    (fnptr) 0x08020000
+  };
+  int (*pt2fn_array_fixed_addr[2])(void) = {
+    (int (*)(void)) 0x08010000,
+    (int (*)(void)) 0x08020000
+  };
+
+  typedef fnptr ind_fnptr;
+  fnptr f_indirect[2] = {
+    (fnptr) 0x08010000,
+    (fnptr) 0x08020000
+  };
+
+
+  int (*pt2fn_arith_implicit_cast_addr) (float, char, char) = 
+    (int (*)(float, char, char)) 0x08010000 + 0x10;
+
+  int* pint_plus_zero = (int *) 0x2 + 0;
+\end{verbatim}
+
+\subsection{References}
+\htmladdnormallink{CWE-587}{http://cwe.mitre.org/data/definitions/587.html}
+

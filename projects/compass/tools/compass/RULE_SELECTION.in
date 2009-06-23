@@ -28,6 +28,7 @@
 +:DefaultCase
 +:DefaultConstructor
 +:DiscardAssignment
++:DoNotAssignPointerToFixedAddress
 +:DoNotCallPutenvWithAutoVar
 +:DoNotDeleteThis
 +:DoNotUseCstyleCasts
