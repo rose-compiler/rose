@@ -55,15 +55,22 @@ public:
         Exception(const std::string &reason)
             : mesg(reason), ip(0), bit(0)
             {}
+        /** An exception bound to a virtual address but no raw data. */
+        Exception(const std::string &reason, rose_addr_t ip)
+            : mesg(reason), ip(ip), bit(0)
+            {}
         /** An exception bound to a particular instruction. */
         Exception(const std::string &reason, rose_addr_t ip, const SgUnsignedCharList &raw_data, size_t bit)
             : mesg(reason), ip(ip), bytes(raw_data), bit(bit)
             {}
 
-        std::string mesg;               /* Reason that disassembly failed. */
-        rose_addr_t ip;                 /* Virtual address where failure occurred. */
-        SgUnsignedCharList bytes;       /* Bytes (partial) of failed instruction, including byte at failure. */
-        size_t bit;                     /* Index of bit in instruction byte sequence where disassembly failed. */
+        std::string mesg;               /**< Reason that disassembly failed. */
+        rose_addr_t ip;                 /**< Virtual address where failure occurred; zero if no associated instruction */
+        SgUnsignedCharList bytes;       /**< Bytes (partial) of failed instruction, including byte at failure. Empty if the
+                                         *   exception is not associated with a particular byte sequence, such as if an
+                                         *   attempt was made to disassemble at an invalid address. */
+        size_t bit;                     /**< Bit offset in instruction byte sequence where disassembly failed (bit/8 is the
+                                         *   index into the "bytes" list, while bit%8 is the bit within that byte. */
     };
 
     /** Heuristics used to find instructions to disassemble. The set of heuristics to try can be set by calling the

@@ -42,11 +42,16 @@ public:
      *========================================================================================================================*/
 private:
 
-    /** Same as Disassembler::Exception except with a different constructor for ease of use in DisassemblerX86. */
+    /** Same as Disassembler::Exception except with a different constructor for ease of use in DisassemblerX86.  This
+     *  constructor should be used when an exception occurs during disassembly of an instruction; it is not suitable for
+     *  errors that occur before or after (use superclass constructors for that case). */
     class ExceptionX86: public Exception {
     public:
         ExceptionX86(const std::string &mesg, const DisassemblerX86 *d)
-            :Exception(mesg, d->ip, SgUnsignedCharList(d->insnbuf, d->insnbuf+d->insnbufat), 8*d->insnbufat)
+            : Exception(mesg, d->ip, SgUnsignedCharList(d->insnbuf, d->insnbuf+d->insnbufat), 8*d->insnbufat)
+            {}
+        ExceptionX86(const std::string &mesg, const DisassemblerX86 *d, size_t bit)
+            : Exception(mesg, d->ip, SgUnsignedCharList(d->insnbuf, d->insnbuf+d->insnbufat), bit)
             {}
     };
 

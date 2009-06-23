@@ -17,10 +17,12 @@ public:
                                              AddressSet *successors=NULL);
     virtual SgAsmInstruction *make_unknown_instruction(const Exception&);
 private:
-    /** Same as Disassembler::Exception except with a different constructor for ease of use in DisassemblerPowerpc. */
+    /** Same as Disassembler::Exception except with a different constructor for ease of use in DisassemblerPowerpc. This
+     *  constructor should be used when an exception occurs during disassembly of an instruction; it is not suitable for
+     *  errors that occur before or after (use superclass constructors for that case). */
     class ExceptionPowerpc: public Exception {
     public:
-        ExceptionPowerpc(const std::string &mesg, const DisassemblerPowerpc *d, size_t bit=32)
+        ExceptionPowerpc(const std::string &mesg, const DisassemblerPowerpc *d, size_t bit=0)
             : Exception(mesg, d->ip) {
             /* Convert four-byte instruction to big-endian buffer. Note that PowerPC is big-endian, but PowerPC can support
              * both big- and little-endian processor modes (with much weirdness; e.g. PDP endian like propoerties). */
@@ -28,7 +30,8 @@ private:
             bytes.push_back((d->insn>>16) & 0xff);
             bytes.push_back((d->insn>>8) & 0xff);
             bytes.push_back(d->insn & 0xff);
-            this->bit = bit;
+            ROSE_ASSERT(bit<=32);
+            this->bit = 8*(4-(bit/8)) + bit%8; /*convert from native uint32_t bit position to big-endian*/
         }
     };
 

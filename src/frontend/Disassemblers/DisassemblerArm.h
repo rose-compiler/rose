@@ -28,17 +28,19 @@ public:
     virtual SgAsmInstruction *make_unknown_instruction(const Exception&);
 
 private:
-    /** Same as Disassembler::Exception except with a different constructor for ease of use in DisassemblerArm. */
+    /** Same as Disassembler::Exception except with a different constructor for ease of use in DisassemblerArm.  This
+     *  constructor should be used when an exception occurs during disassembly of an instruction; it is not suitable for
+     *  errors that occur before or after (use superclass constructors for that case). */
     class ExceptionArm: public Exception {
     public:
-        ExceptionArm(const std::string &mesg, const DisassemblerArm *d)
+        ExceptionArm(const std::string &mesg, const DisassemblerArm *d, size_t bit=0)
             : Exception(mesg, d->ip) {
             /* Convert four-byte instruction to little-endian buffer. FIXME: assumes little-endian ARM system */
             bytes.push_back(d->insn & 0xff);
             bytes.push_back((d->insn>>8) & 0xff);
             bytes.push_back((d->insn>>16) & 0xff);
             bytes.push_back((d->insn>>24) & 0xff);
-            bit = 32;
+            this->bit = bit;
         }
     };
 
@@ -71,7 +73,6 @@ private:
         insn = c;
         cond = arm_cond_unknown;
     }
-
 
     /* Per-instruction data members (mostly set by startInstruction()) */
     bool decodeUnconditionalInstructions;       /**< set by init() */

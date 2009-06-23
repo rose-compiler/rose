@@ -143,9 +143,8 @@ DisassemblerX86::disassembleOne(const unsigned char *buf, const RvaFileMap &map,
     size_t tempsz = map.read(temp, buf, start_va, sizeof temp);
 
     /* Disassemble the instruction */
-    SgAsmx86Instruction *insn = NULL;
     startInstruction(start_va, temp, tempsz);
-    insn = disassemble(); /*throws an exception on error*/
+    SgAsmx86Instruction *insn = disassemble(); /*throws an exception on error*/
     ROSE_ASSERT(insn);
 
     /* Note successors if necesssary */

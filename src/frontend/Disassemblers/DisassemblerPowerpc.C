@@ -283,18 +283,18 @@ DisassemblerPowerpc::disassemble()
                break;
              }
 
-          case 0x01: throw ExceptionPowerpc("invalid primary opcode (0x01)", this, 0); break;
+          case 0x01: throw ExceptionPowerpc("invalid primary opcode (0x01)", this, 26); break;
           case 0x02: instruction = MAKE_INSN3(tdi, TO(), RA(), SI()); break;
           case 0x03: instruction = MAKE_INSN3(twi, TO(), RA(), SI()); break;
 
        // 4 : These are the BGL specific PowerPC440 FP2 Architecture instructions
           case 0x04: { instruction = decode_A_formInstruction_04(); break; }
 
-          case 0x05: throw ExceptionPowerpc("invalid primary opcode (0x05)", this, 0); break;
-          case 0x06: throw ExceptionPowerpc("invalid primary opcode (0x06)", this, 0); break;
+          case 0x05: throw ExceptionPowerpc("invalid primary opcode (0x05)", this, 26); break;
+          case 0x06: throw ExceptionPowerpc("invalid primary opcode (0x06)", this, 26); break;
           case 0x07: instruction = MAKE_INSN3(mulli, RT(), RA(), SI()); break;
           case 0x08: instruction = MAKE_INSN3(subfic, RT(), RA(), SI()); break;
-          case 0x09: throw ExceptionPowerpc("invalid primary opcode (0x09)", this, 0); break;
+          case 0x09: throw ExceptionPowerpc("invalid primary opcode (0x09)", this, 26); break;
           case 0x0A: instruction = MAKE_INSN4(cmpli, BF_cr(), L_10(), RA(), UI()); break;
           case 0x0B: instruction = MAKE_INSN4(cmpi, BF_cr(), L_10(), RA(), SI()); break;
           case 0x0C: instruction = MAKE_INSN3(addic, RT(), RA(), SI()); break;
@@ -352,8 +352,8 @@ DisassemblerPowerpc::disassemble()
           case 0x36: instruction = MAKE_INSN2(stfd, FRS(), memref(DOUBLET)); break;
           case 0x37: instruction = MAKE_INSN2(stfdu, FRS(), memrefu(DOUBLET)); break;
        // 56
-          case 0x38: throw ExceptionPowerpc("invalid primary opcode (0x38)", this, 0); break;
-          case 0x39: throw ExceptionPowerpc("invalid primary opcode (0x39)", this, 0); break;
+          case 0x38: throw ExceptionPowerpc("invalid primary opcode (0x38)", this, 26); break;
+          case 0x39: throw ExceptionPowerpc("invalid primary opcode (0x39)", this, 26); break;
 
        // 58
           case 0x3A: { instruction = decode_DS_formInstruction(); break; }
@@ -362,8 +362,8 @@ DisassemblerPowerpc::disassemble()
           case 0x3B: { instruction = decode_A_formInstruction_3B(); break; }
 
        // 60, 61
-          case 0x3C: throw ExceptionPowerpc("invalid primary opcode (0x3c)", this, 0); break;
-          case 0x3D: throw ExceptionPowerpc("invalid primary opcode (0x3d)", this, 0); break;
+          case 0x3C: throw ExceptionPowerpc("invalid primary opcode (0x3c)", this, 26); break;
+          case 0x3D: throw ExceptionPowerpc("invalid primary opcode (0x3d)", this, 26); break;
 
        // 62
           case 0x3E: { instruction = decode_DS_formInstruction(); break; }
@@ -395,8 +395,7 @@ DisassemblerPowerpc::disassemble()
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
                printf ("Primary opcode not handled yet: primaryOpcode = %d \n", primaryOpcode);
-               ROSE_ASSERT(false);
-            // throw BadInstruction();
+               throw ExceptionPowerpc("illegal primary opcode", this, 26);
              }
         }
 
@@ -753,7 +752,7 @@ DisassemblerPowerpc::decode_X_formInstruction_1F()
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
                printf ("Error: X-Form 1F xoOpcode = %d not handled! \n", xoOpcode);
-               throw ExceptionPowerpc("X-Form 1F xoOpcode not handled", this, 21);
+               throw ExceptionPowerpc("X-Form 1F xoOpcode not handled", this, 1);
              }
         }
 
@@ -798,9 +797,7 @@ DisassemblerPowerpc::decode_X_formInstruction_3F()
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
                printf ("Error: X-Form 3F xoOpcode = %d not handled! \n", xoOpcode);
-               ROSE_ASSERT(false);
-
-           // throw BadInstruction();
+               throw ExceptionPowerpc("X-Form 3F xoOpcode not handled", this, 1);
              }
         }
 
@@ -814,7 +811,7 @@ DisassemblerPowerpc::decode_X_formInstruction_00()
      SgAsmPowerpcInstruction* instruction = NULL;
 
      if (insn == 0)
-         throw ExceptionPowerpc("zero instruction", this, 32);
+         throw ExceptionPowerpc("zero instruction", this, 0);
          
   // Get the bits 21-30, next 10 bits
      uint16_t xoOpcode = (insn >> 1) & 0x3FF;
@@ -840,9 +837,7 @@ DisassemblerPowerpc::decode_X_formInstruction_00()
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
                printf ("Error: X-Form 00 xoOpcode = %d not handled! \n", xoOpcode);
-               ROSE_ASSERT(false);
-
-           // throw BadInstruction();
+               throw ExceptionPowerpc("X-Form 00 xoOpcode not handled", this, 1);
              }
         }
 

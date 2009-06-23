@@ -170,7 +170,6 @@ DisassemblerArm::disassembleOne(const unsigned char *buf, const RvaFileMap &map,
         throw Exception("short read", start_va);
     uint32_t c = temp[0] | (temp[1]<<8) | (temp[2]<<16) | (temp[3]<<24);
 
-
     /* Disassemble the instruction */
     startInstruction(start_va, c);
     SgAsmArmInstruction *insn = disassemble(); /*throws an exception on error*/
@@ -288,7 +287,7 @@ DisassemblerArm::makeShifterField() const
     } else if ((insn & 0x0F0) == 0x070) {
         return SageBuilderAsm::makeRor(makeRegister(rmField), makeRegister(rsField));
     } else {
-        throw ExceptionArm("bad shifter field", this);
+        throw ExceptionArm("bad shifter field", this, 25);
     }
 }
 
@@ -399,9 +398,9 @@ DisassemblerArm::decodeMultiplyInstruction() const
         case 0x2: return MAKE_INSN4(mla, 3, rn, rm, rs, rd);
         case 0x3: return MAKE_INSN4(mlas, 3, rn, rm, rs, rd);
         case 0x4: return MAKE_INSN4(umaal, 3, rd, rn, rm, rs);
-        case 0x5: throw ExceptionArm("bad bits in decodeMultiplyInstruction (0x5)", this);
-        case 0x6: throw ExceptionArm("bad bits in decodeMultiplyInstruction (0x6)", this);
-        case 0x7: throw ExceptionArm("bad bits in decodeMultiplyInstruction (0x7)", this);
+        case 0x5: throw ExceptionArm("bad bits in decodeMultiplyInstruction (0x5)", this, 20);
+        case 0x6: throw ExceptionArm("bad bits in decodeMultiplyInstruction (0x6)", this, 20);
+        case 0x7: throw ExceptionArm("bad bits in decodeMultiplyInstruction (0x7)", this, 20);
         case 0x8: return MAKE_INSN4(umull, 5, rd, rn, rm, rs);
         case 0x9: return MAKE_INSN4(umulls, 5, rd, rn, rm, rs);
         case 0xA: return MAKE_INSN4(umlal, 5, rd, rn, rm, rs);
@@ -429,28 +428,32 @@ DisassemblerArm::decodeExtraLoadStores() const
     SgAsmExpression* offset = bit22 ? (SgAsmExpression*)makeSplit8bitOffset() : makeRegister(insn & 15);
     SgAsmExpression* addr = NULL;
     switch ((bit24 ? 4 : 0) | (bit23 ? 2 : 0) | (bit21 ? 1 : 0)) {
-      case 0: addr = SageBuilderAsm::makeSubtractPostupdate(rn, offset); break;
-      case 1: throw ExceptionArm("bad bits in decodeExtraLoadStores (1)", this);
-      case 2: addr = SageBuilderAsm::makeAddPostupdate(rn, offset); break;
-      case 3: throw ExceptionArm("bad bits in decodeExtraLoadStores (3)", this);
-      case 4: addr = SageBuilderAsm::makeSubtract(rn, offset); break;
-      case 5: addr = SageBuilderAsm::makeSubtractPreupdate(rn, offset); break;
-      case 6: addr = SageBuilderAsm::makeAdd(rn, offset); break;
-      case 7: addr = SageBuilderAsm::makeAddPreupdate(rn, offset); break;
-      default: ROSE_ASSERT (false);
+        case 0: addr = SageBuilderAsm::makeSubtractPostupdate(rn, offset); break;
+        case 1: throw ExceptionArm("bad bits in decodeExtraLoadStores (1)", this, 21);
+        case 2: addr = SageBuilderAsm::makeAddPostupdate(rn, offset); break;
+        case 3: throw ExceptionArm("bad bits in decodeExtraLoadStores (3)", this, 21);
+        case 4: addr = SageBuilderAsm::makeSubtract(rn, offset); break;
+        case 5: addr = SageBuilderAsm::makeSubtractPreupdate(rn, offset); break;
+        case 6: addr = SageBuilderAsm::makeAdd(rn, offset); break;
+        case 7: addr = SageBuilderAsm::makeAddPreupdate(rn, offset); break;
+        default: ROSE_ASSERT (false);
     }
     SgAsmExpression* memref = SageBuilderAsm::makeMemoryReference(addr);
     uint8_t lsh = (bit20 ? 4 : 0) | (bit6 ? 2 : 0) | (bit5 ? 1 : 0);
     switch (lsh) {
-      case 0: throw ExceptionArm("bad bits in decodeExtraLoadStores (0)", this);// Should have been handled in multiply code above
-      case 1: return MAKE_INSN2(strh, 3, rd, memref);
-      case 2: return MAKE_INSN2(ldrd, 3, rd, memref);
-      case 3: return MAKE_INSN2(strd, 3, rd, memref);
-      case 4: throw ExceptionArm("bad bits in decodeExtraLoadStores (4)", this);// FIXME ROSE_ASSERT (false); // Should have been handled in multiply code above
-      case 5: return MAKE_INSN2(ldruh, 3, rd, memref);
-      case 6: return MAKE_INSN2(ldrsb, 3, rd, memref);
-      case 7: return MAKE_INSN2(ldrsh, 3, rd, memref);
-      default: ROSE_ASSERT (false);
+        case 0:
+            /* Should have been handled in multiply code above */
+            throw ExceptionArm("bad bits in decodeExtraLoadStores (0)", this, 5);
+        case 1: return MAKE_INSN2(strh, 3, rd, memref);
+        case 2: return MAKE_INSN2(ldrd, 3, rd, memref);
+        case 3: return MAKE_INSN2(strd, 3, rd, memref);
+        case 4:
+            /* Should have been handled in multiply code above */
+            throw ExceptionArm("bad bits in decodeExtraLoadStores (4)", this, 5);
+        case 5: return MAKE_INSN2(ldruh, 3, rd, memref);
+        case 6: return MAKE_INSN2(ldrsb, 3, rd, memref);
+        case 7: return MAKE_INSN2(ldrsh, 3, rd, memref);
+        default: ROSE_ASSERT (false);
     }
 }
 
@@ -487,7 +490,7 @@ DisassemblerArm::decodeMiscInstruction() const
         }
         case 2: return MAKE_INSN1(bxj, 3, makeRegister(insn & 15));
         case 3: return MAKE_INSN1(blx, 3, makeRegister(insn & 15));
-        case 4: throw ExceptionArm("bad bits in decodeMiscInstruction (4)", this);
+        case 4: throw ExceptionArm("bad bits in decodeMiscInstruction (4)", this, 4);
         case 5: {
           SgAsmArmRegisterReferenceExpression* rd = makeRegister((insn >> 12) & 15);
           SgAsmArmRegisterReferenceExpression* rn = makeRegister((insn >> 16) & 15);
@@ -501,7 +504,7 @@ DisassemblerArm::decodeMiscInstruction() const
             default: ROSE_ASSERT (false);
           }
         }
-        case 6: throw ExceptionArm("bad bits in decodeMiscInstruction (6)", this);
+        case 6: throw ExceptionArm("bad bits in decodeMiscInstruction (6)", this, 4);
         case 7: {
           uint16_t imm1 = (insn >> 8) & 0xFFF;
           uint16_t imm2 = insn & 0xF;
@@ -574,7 +577,7 @@ DisassemblerArm::disassemble()
                 SgAsmArmRegisterReferenceExpression* psr = makePsrFields(useSPSR, mask);
                 return MAKE_INSN2(msr, 3, psr, imm);
               } else {
-                  throw ExceptionArm("bad bit21", this);
+                  throw ExceptionArm("bad bit21", this, 26);
               }
             } else if (dpIsSpecial && !bit25) {
               return decodeMiscInstruction();
@@ -663,7 +666,7 @@ DisassemblerArm::disassemble()
               return MAKE_INSN1(swi, 3, SageBuilderAsm::makeDWordValue(insn & 0x00FFFFFFU));
             } else {
                 std::cerr << "Coprocessor not supported 0x" << StringUtility::intToHex(insn) << std::endl;
-                throw ExceptionArm("coprocessor not supported", this);
+                throw ExceptionArm("coprocessor not supported", this, 26);
             }
           }
           default: ROSE_ASSERT (!"Can't happen");
@@ -685,7 +688,7 @@ DisassemblerArm::disassemble()
           }
           default: {
               std::cerr << "Cannot handle too many unconditional instructions: " << StringUtility::intToHex(insn) << std::endl;
-              throw ExceptionArm("too many unconditional instructions", this);
+              throw ExceptionArm("too many unconditional instructions", this, 32);
           }
         }
       }
