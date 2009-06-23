@@ -3,43 +3,81 @@
 #ifndef ROSE_DISASSEMBLER_ARM_H
 #define ROSE_DISASSEMBLER_ARM_H
 
-/* These namespace declarations copied from the old assemblers.h and should not be used anymore except by the new
- * DisassemblerArm class.  They will eventually be incorporated into that class as private methods.  The only one that's
- * probably used much is ArmDisassembler::disassemble(), which has been replaced by DisassemblerArm::disassembleOne().
- * [RPM 2008-06-10] */
-namespace ArmDisassembler {
-    struct Parameters {
-        Parameters(uint32_t ip = 0, bool decodeUnconditionalInstructions = true)
-            : ip(ip), decodeUnconditionalInstructions(decodeUnconditionalInstructions)
-            {}
-        uint32_t ip;
-        bool decodeUnconditionalInstructions;
-    };
-
-    // Exceptions
-    struct OverflowOfInstructionVector {};
-    struct BadInstruction {};
-
-    SgAsmArmInstruction *disassemble(const Parameters& p, const uint8_t* const insn, const uint64_t insnSize,
-                                     size_t positionInVector, std::set<uint64_t>* knownSuccessorsReturn = 0);
-    SgAsmArmRegisterReferenceExpression* makeRegister(uint8_t reg);
-};
-
-
 /** Disassembler for the ARM architecture.  This class is usually instantiated indirectly through Disassembler::create().
  *  Most of the useful disassembly methods can be found in the superclass. */
 class DisassemblerArm: public Disassembler {
 public:
-    DisassemblerArm() {} /* Such an object can only be used as a factory for Disassembler::register_subclass() */
+    /** An object created by the default constructor can only be used as a factory, passed to the
+     *  Disassembler::register_subclass method. */
+    DisassemblerArm() {}
+
+    /** Constructs a disassembler whose instruction size is determined from the supplied file header. End users don't normally
+     *  call this, but rather the Disassembler::create class method. */
     DisassemblerArm(SgAsmGenericHeader *fhdr) {init(fhdr);}
+
     virtual ~DisassemblerArm() {}
+
+    /** See Disassembler::can_disassemble */
     virtual Disassembler *can_disassemble(SgAsmGenericHeader*) const;
+
+    /** See Disassembler::can_disassemble */
     virtual SgAsmInstruction *disassembleOne(const unsigned char *buf, const RvaFileMap &map, rose_addr_t start_va,
                                              AddressSet *successors=NULL);
+
+    /** See Disassembler::can_disassemble */
     virtual SgAsmInstruction *make_unknown_instruction(const Exception&);
+
 private:
-    void init(SgAsmGenericHeader*);             /* initialize instances */
-    ArmDisassembler::Parameters params;
+    /** Same as Disassembler::Exception except with a different constructor for ease of use in DisassemblerArm. */
+    class ExceptionArm: public Exception {
+    public:
+        ExceptionArm(const std::string &mesg, const DisassemblerArm *d)
+            : Exception(mesg, d->ip) {
+            /* Convert four-byte instruction to little-endian buffer. FIXME: assumes little-endian ARM system */
+            bytes.push_back(d->insn & 0xff);
+            bytes.push_back((d->insn>>8) & 0xff);
+            bytes.push_back((d->insn>>16) & 0xff);
+            bytes.push_back((d->insn>>24) & 0xff);
+            bit = 32;
+        }
+    };
+
+    static SgAsmArmInstruction *makeInstructionWithoutOperands(uint32_t address, const std::string& mnemonic, int condPos,
+                                                               ArmInstructionKind kind, ArmInstructionCondition cond,
+                                                               uint32_t insn);
+    static SgAsmArmRegisterReferenceExpression *makeRegister(uint8_t reg);
+    static SgAsmArmRegisterReferenceExpression *makePsrFields(bool useSPSR, uint8_t fields);
+    static SgAsmArmRegisterReferenceExpression *makePsr(bool useSPSR);
+
+    SgAsmExpression *makeRotatedImmediate() const;
+    SgAsmExpression *makeShifterField() const; /**< Decode last 12 bits and bit 25 (I) */
+    SgAsmArmInstruction *makeDataProcInstruction(uint8_t opcode, bool s, SgAsmExpression* rn, SgAsmExpression* rd,
+                                                 SgAsmExpression* rhsOperand);
+    SgAsmDoubleWordValueExpression *makeSplit8bitOffset() const;
+    SgAsmDoubleWordValueExpression *makeBranchTarget() const;
+    SgAsmExpression *decodeMemoryAddress(SgAsmExpression* rn) const;
+    SgAsmArmInstruction *decodeMediaInstruction() const;
+    SgAsmArmInstruction *decodeMultiplyInstruction() const;
+    SgAsmArmInstruction *decodeExtraLoadStores() const;
+    SgAsmArmInstruction *decodeMiscInstruction() const;
+    SgAsmArmInstruction *disassemble();
+    
+    /** Initialize instances of this class. Called by constructor. */
+    void init(SgAsmGenericHeader*);
+
+    /** Resets disassembler state to beginning of an instruction. */
+    void startInstruction(rose_addr_t start_va, uint32_t c) {
+        ip = start_va;
+        insn = c;
+        cond = arm_cond_unknown;
+    }
+
+
+    /* Per-instruction data members (mostly set by startInstruction()) */
+    bool decodeUnconditionalInstructions;       /**< set by init() */
+    uint32_t ip;                                /**< instruction pointer */
+    uint32_t insn;                              /**< 4-byte instruction word */
+    ArmInstructionCondition cond;
 };
 
 #endif
