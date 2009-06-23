@@ -1,3 +1,79 @@
+2009-06-23 01:04  hamilton37
+
+	* [r6315] /trunk/ROSE/projects/RTED/RuntimeSystem.c: RTED now
+	  handles test c_I_2_a.c.
+	  
+	  In this test, a pointer that refers to a block of memory is
+	  re-assigned, but not
+	  via a malloc call. In such cases, it is still necessary to check
+	  for memory
+	  leaks (with calls to `checkMemoryLeakIssues`).
+	  `RoseSystem_roseInitVariable`
+	  now checks for memory issues whenever the assignee (i.e. the
+	  variable being
+	  initialized) is of type SgPointerType and its current `address`
+	  is non-null.
+
+2009-06-23 00:50  hamilton37
+
+	* [r6314]
+	  /trunk/ROSE/projects/compass/extensions/checkers/doNotAssignPointerToFixedAddress,
+	  /trunk/ROSE/projects/compass/extensions/checkers/doNotAssignPointerToFixedAddress/compass_parameters,
+	  /trunk/ROSE/projects/compass/extensions/checkers/doNotAssignPointerToFixedAddress/doNotAssignPointerToFixedAddress.C,
+	  /trunk/ROSE/projects/compass/extensions/checkers/doNotAssignPointerToFixedAddress/doNotAssignPointerToFixedAddress.compass.external.makefile,
+	  /trunk/ROSE/projects/compass/extensions/checkers/doNotAssignPointerToFixedAddress/doNotAssignPointerToFixedAddress.inc,
+	  /trunk/ROSE/projects/compass/extensions/checkers/doNotAssignPointerToFixedAddress/doNotAssignPointerToFixedAddressDocs.tex,
+	  /trunk/ROSE/projects/compass/extensions/checkers/doNotAssignPointerToFixedAddress/doNotAssignPointerToFixedAddressMain.C,
+	  /trunk/ROSE/projects/compass/extensions/checkers/doNotAssignPointerToFixedAddress/doNotAssignPointerToFixedAddressTest1.c,
+	  /trunk/ROSE/projects/compass/extensions/checkers/doNotAssignPointerToFixedAddress/doNotAssignPointerToFixedAddressTest2.C,
+	  /trunk/ROSE/projects/compass/tools/compass/CHECKER_LIST,
+	  /trunk/ROSE/projects/compass/tools/compass/RULE_SELECTION.in:
+	  Added a compass checker for MITRE's CWE 587.
+	  
+	  MITRE's Common Weakness Enumeration (CWE)-587[1] is the
+	  assignment of a fixed
+	  address to a pointer. Such code indicates unsafe assumptions
+	  about memory
+	  layout (e.g. of function addresses).
+	  
+	  [1] http://cwe.mitre.org/data/definitions/587.html
+
+2009-06-23 00:41  hamilton37
+
+	* [r6313] /trunk/ROSE/projects/autoTuning/tests/Makefile.am:
+	  AutoTuning tests now support runs by multiple users on the same
+	  machine.
+	  
+	  Previously, the tests depended on being able to write to certain
+	  well-known
+	  files in /tmp, such as /tmp/OUT_2_jacobi_190.c. Now such files
+	  are written to
+	  $(top_builddir)/projects/autoTuning/outline.
+
+2009-06-22 22:13  bauer25
+
+	* [r6312] /trunk/ROSE/projects/RTED/rted_qt/DebugDialog.cpp,
+	  /trunk/ROSE/projects/RTED/rted_qt/DebugDialog.h,
+	  /trunk/ROSE/projects/RTED/rted_qt/DebugDialog.ui,
+	  /trunk/ROSE/projects/RTED/rted_qt/Makefile.am,
+	  /trunk/ROSE/projects/compass/tools/compass/gui2/CompassMainWindow.cpp,
+	  /trunk/ROSE/projects/roseQt/demo/CMakeLists.txt,
+	  /trunk/ROSE/projects/roseQt/demo/MainWindow.cpp,
+	  /trunk/ROSE/projects/roseQt/demo/MainWindow.h,
+	  /trunk/ROSE/projects/roseQt/demo/Makefile,
+	  /trunk/ROSE/projects/roseQt/widgets/CMakeLists.txt,
+	  /trunk/ROSE/projects/roseQt/widgets/QtGradientEditor/libqtgradienteditor.a,
+	  /trunk/ROSE/projects/roseQt/widgets/RoseCodeEdit/QCodeEdit/Makefile.am,
+	  /trunk/ROSE/projects/roseQt/widgets/RoseCodeEdit/QCodeEdit/widgets/qeditconfig.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/RoseCodeEdit/QCodeEdit/widgets/qeditconfig.h,
+	  /trunk/ROSE/projects/roseQt/widgets/RoseCodeEdit/QCodeEdit/widgets/qlinemarkpanel.h,
+	  /trunk/ROSE/projects/roseQt/widgets/RoseCodeEdit/QCodeEdit/widgets/qpanel.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/RoseCodeEdit/QCodeEdit/widgets/qpanel.h:
+	  Changes on rted_qt and QCodeEdit
+	  
+	  - fixed problem with QCodeEdit makefile
+	  - QCodeEdit restructured
+
 2009-06-22 17:08  bauer25
 
 	* [r6309] /trunk/ROSE/projects/RTED/rted_qt/Makefile.am:
