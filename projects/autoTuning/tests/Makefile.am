@@ -20,7 +20,7 @@ ROSE_FLAGS+=-rose:outline:enable_liveness -I$(top_srcdir)/projects/autoTuning
 #ROSE_FLAGS+=-rose:autotuning:triage_threshold 0.75
 
 AT_BUILD=$(top_builddir)/projects/autoTuning/tests
-AT_FLAGS=-rose:outline:output_path "$(AT_BUILD)/outline"
+AT_FLAGS=-rose:outline:output_path "$(AT_BUILD)"
 AT_INCLUDES=-I$(top_srcdir)/src/frontend/SageIII
 # experimental flags. not well sorted out for the interaction between OpenMP and outlining
 # TODO reduction clause with omp for  should ignored if all reduction variables are no longer shared
