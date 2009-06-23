@@ -2065,6 +2065,10 @@ Grammar::setUpBinaryInstructions ()
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmExpression.setDataPrototype("std::string", "comment", "= \"\"",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmExpression.setDataPrototype("size_t", "bit_offset", "= 0", /*starting position in instruction's p_raw_bytes*/
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmExpression.setDataPrototype("size_t", "bit_size", "= 0", /*size in bits in instruction's p_raw_bytes*/
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
 

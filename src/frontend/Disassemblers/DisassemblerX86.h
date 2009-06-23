@@ -162,8 +162,9 @@ private:
      *========================================================================================================================*/
 private:
 
-    /** Constructs an expression for the specified address size. */
-    SgAsmExpression *makeAddrSizeValue(int64_t val);
+    /** Constructs an expression for the specified address size. The @p bit_offset and @p bit_size are the offset and size
+     *  where @p val was found in the instruction raw bytes. */
+    SgAsmExpression *makeAddrSizeValue(int64_t val, size_t bit_offset, size_t bit_size);
 
     /** Creates an instruction with optional operands. Many of the instruction attributes come from the current state of this
      *  disassembler object (see the instruction-related data members below). In order that the new instruction contains the
@@ -250,32 +251,15 @@ private:
      *========================================================================================================================*/
 private:
 
-    SgAsmExpression *getImmByte() {
-        return SageBuilderAsm::makeByteValue(getByte());
-    }
-
-    SgAsmExpression *getImmWord() {
-        return SageBuilderAsm::makeWordValue(getWord());
-    }
-
-    SgAsmExpression* getImmDWord() {
-        return SageBuilderAsm::makeDWordValue(getDWord());
-    }
-
-    SgAsmExpression* getImmQWord() {
-        return SageBuilderAsm::makeQWordValue(getQWord());
-    }
-
+    SgAsmExpression *getImmByte();
+    SgAsmExpression *getImmWord();
+    SgAsmExpression* getImmDWord();
+    SgAsmExpression* getImmQWord();
     SgAsmExpression *getImmForAddr();
-
     SgAsmExpression *getImmIv();
-
     SgAsmExpression *getImmJz();
-
     SgAsmExpression *getImmByteAsIv();
-
     SgAsmExpression *getImmIzAsIv();
-
     SgAsmExpression *getImmJb();
 
 

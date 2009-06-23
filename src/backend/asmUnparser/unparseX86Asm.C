@@ -147,6 +147,12 @@ static std::string unparseX86Expression(SgAsmExpression *expr, bool leaMode) {
     if (expr->get_replacement() != "") {
         result += " <" + expr->get_replacement() + ">";
     }
+#if 0
+    if (expr->get_bit_size()>0) {
+        result += " <@" + StringUtility::numberToString(expr->get_bit_offset()) +
+                  "+" + StringUtility::numberToString(expr->get_bit_size()) + ">";
+    }
+#endif
     return result;
 }
 
