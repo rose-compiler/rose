@@ -70,8 +70,14 @@ Partitioner::detectFunctions(SgAsmGenericHeader *fhdr, const Disassembler::Instr
     }
 
     /* This one depends on basic block starts being consistent with function starts. */
-    if (p_func_heuristics & SgAsmFunctionDeclaration::FUNC_GRAPH)
+    if (p_func_heuristics & SgAsmFunctionDeclaration::FUNC_GRAPH) {
         mark_graph_edges(fhdr, insns, bb_starts, func_starts);
+        /* All function entry points are also the starts of basic blocks. */
+        for (FunctionStarts::iterator i=func_starts.begin(); i!=func_starts.end(); i++) {
+            if (bb_starts.find(i->first)==bb_starts.end())
+                bb_starts[i->first] = BasicBlockStarts::mapped_type();
+        }
+    }
 
     /* This doesn't detect new functions, it just gives names to ELF .plt trampolines */
     name_plt_entries(fhdr, insns, func_starts);
@@ -334,7 +340,7 @@ Partitioner::mark_func_symbols(SgAsmGenericHeader *fhdr, const Disassembler::Ins
 /* Use control flow graph to find function starts. */
 void
 Partitioner::mark_graph_edges(SgAsmGenericHeader *fhdr, const Disassembler::InstructionMap &insns,
-                              BasicBlockStarts &basicBlockStarts/*out*/, FunctionStarts &functionStarts/*out*/) const
+                              const BasicBlockStarts &basicBlockStarts, FunctionStarts &functionStarts/*out*/) const
 {
     std::set<rose_addr_t, std::greater<rose_addr_t> > pending_functions; /*sorted from highest to lowest*/
     for (FunctionStarts::iterator i=functionStarts.begin(); i!=functionStarts.end(); i++)
@@ -350,7 +356,7 @@ Partitioner::mark_graph_edges(SgAsmGenericHeader *fhdr, const Disassembler::Inst
             func_end = funci->first;
 
         /* First basic block of function under consideration is always part of that function. */
-        BasicBlockStarts::iterator bbi = basicBlockStarts.find(func_begin);
+        BasicBlockStarts::const_iterator bbi = basicBlockStarts.find(func_begin);
         ROSE_ASSERT(bbi!=basicBlockStarts.end());
 
         /* Find the first subsequent basic block that can be shown to not be a part of this function.  Such blocks satisfy one
@@ -363,7 +369,7 @@ Partitioner::mark_graph_edges(SgAsmGenericHeader *fhdr, const Disassembler::Inst
         for (bbi++; bbi!=basicBlockStarts.end(); bbi++) {
             if (functionStarts.find(bbi->first)!=functionStarts.end())
                 break; /*bb starts some other function*/
-            for (std::set<rose_addr_t>::iterator ci=bbi->second.begin(); !called && ci!=bbi->second.end(); ci++)
+            for (std::set<rose_addr_t>::const_iterator ci=bbi->second.begin(); !called && ci!=bbi->second.end(); ci++)
                 called = (*ci<func_begin || *ci>=func_end);
             if (called)
                 break;

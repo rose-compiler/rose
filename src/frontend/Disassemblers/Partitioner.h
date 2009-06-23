@@ -123,7 +123,7 @@ private:
      *     3. The body of the function is contiguous basic blocks.
      *     4. Each basic block that follows a function is the entry point of a subsequent function. */
     void mark_graph_edges(SgAsmGenericHeader*, const Disassembler::InstructionMap &insns,
-                          BasicBlockStarts &basicBlockStarts/*out*/, FunctionStarts &functionStarts/*out*/) const;
+                          const BasicBlockStarts &basicBlockStarts, FunctionStarts &functionStarts/*out*/) const;
 
     /** Match instruction patterns to locate starts of functions. Compilers sometimes use templates to generate function
      *  prologues and epilogues. */
