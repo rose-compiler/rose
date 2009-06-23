@@ -19,7 +19,7 @@ ROSE_FLAGS+=-rose:outline:enable_liveness -I$(top_srcdir)/projects/autoTuning
 # -rose:hpct:enable_debug -rose:autotuning:enable_debug 
 #ROSE_FLAGS+=-rose:autotuning:triage_threshold 0.75
 
-AT_BUILD=$(top_builddir)/projects/autoTuning
+AT_BUILD=$(top_builddir)/projects/autoTuning/tests
 AT_FLAGS=-rose:outline:output_path "$(AT_BUILD)/outline"
 AT_INCLUDES=-I$(top_srcdir)/src/frontend/SageIII
 # experimental flags. not well sorted out for the interaction between OpenMP and outlining
