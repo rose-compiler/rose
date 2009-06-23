@@ -531,6 +531,15 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
             }
         }
 #endif
+#if VERBOSE_DEBUG
+        std::cout
+            << "function ref result location: " << result->id
+            << "(" << names(result->symbols)
+            << " / " << names(result->func_symbols) << ")  ->  "
+            << "(" << names(result->baseLocation()->symbols)
+            << " / " << names(result->baseLocation()->func_symbols) << ")"
+            << std::endl;
+#endif
         break;
 
     case V_SgAddressOfOp:
@@ -612,7 +621,8 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
 #if VERBOSE_DEBUG
         std::cout
             << "result of dereference: " << result->id
-            << " [" << names(result->symbols) << "]"
+            << " [" << names(result->symbols)
+            << " / " << names(result->func_symbols) << "]"
             << std::endl;
 #endif
         break;
@@ -1605,6 +1615,18 @@ PointsToAnalysis::Implementation::handleIcfgStatement(
             << "in function " << Utils::name(funcSym) << ": "
             << "recorded call to " << Ir::fragmentToString(funcExpr)
             << " with location " << a->baseLocation()->id
+            << " (" << names(a->baseLocation()->symbols)
+            << " / " << names(a->baseLocation()->func_symbols) << ")"
+            << std::endl;
+#endif
+#if VERBOSE_DEBUG
+        std::cout
+            << "func expr's parent: " << (void *) funcExpr->get_parent()
+            << " " << (funcExpr->get_parent() != NULL
+                        ? funcExpr->get_parent()->class_name() : "")
+            << std::endl
+            << "func expr's type: "
+            << Ir::fragmentToString(funcExpr->get_type())
             << std::endl;
 #endif
         result = NULL;
@@ -1714,6 +1736,14 @@ PointsToAnalysis::Implementation::handleIcfgStatement(
              // than the number of arguments -- if the function has varargs.
              // In this case, we use the last arg location, which is the
              // ellipse.
+#if VERBOSE_DEBUG
+                std::cout
+                    << "function location " << names(a->func_symbols)
+                    << " has " << a->arg_locations.size()
+                    << " arg locations, call_index = "
+                    << icfgNode->call_index
+                    << std::endl;
+#endif
                 a = a->arg_locations[
                     icfgNode->call_index < a->arg_locations.size()
                                         ? icfgNode->call_index
@@ -1730,7 +1760,7 @@ PointsToAnalysis::Implementation::handleIcfgStatement(
                 if (info->prefix != "")
                     std::cout << " in ctx " << info->prefix;
                 std::cout << ": "
-                    << a->id
+                    << (a != NULL ? a->id : 0)
                     << " (" << (void *) a << ")"
                     << " := "
                     << (b != NULL ? b->id : 0)
@@ -1745,6 +1775,22 @@ PointsToAnalysis::Implementation::handleIcfgStatement(
                     << "assignment result: "
                     << (result != NULL ? result->id : 0)
                     << " (" << (void *) result << ")"
+                    << (result != NULL
+                            ?  names(result->symbols)
+                               + " / " + names(result->func_symbols)
+                            : "")
+                    << " -> "
+                    << (result != NULL && result->baseLocation() != NULL
+                            ? result->baseLocation()->id : 0) << " "
+                    << (result != NULL && result->baseLocation() != NULL
+                            ?  names(result->baseLocation()->symbols)
+                               + " / "
+                               + names(result->baseLocation()->func_symbols)
+                            : "")
+                    << " -> "
+                    << (result != NULL && result->baseLocation() != NULL
+                            && result->baseLocation()->baseLocation() != NULL
+                            ? result->baseLocation()->baseLocation()->id : 0)
                     << std::endl
                     << std::endl;
 #endif
@@ -3751,6 +3797,17 @@ PointsToAnalysis::Implementation::run(CFG *icfg)
         {
          // Normal case: Take the symbols from the function node.
             Location *func_location = location_representative(t->second);
+#if VERBOSE_DEBUG
+            std::cout
+                << "| call: " << Ir::fragmentToString(expr)
+                << " has location " << func_location->id
+                << " (" << names(func_location->symbols)
+                << " / " << names(func_location->func_symbols) << ")"
+                << " child "
+                << (func_location->baseLocation() != 0
+                        ? func_location->baseLocation()->id : 0)
+                << std::endl;
+#endif
             std::list<SgFunctionSymbol *>::iterator sym;
             std::list<SgFunctionSymbol *> &syms = func_location->func_symbols;
             for (sym = syms.begin(); sym != syms.end(); ++sym)

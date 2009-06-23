@@ -206,6 +206,7 @@ ExprTransformer::newArgumentAssignmentBlock(unsigned int i, SgExpression *e)
     SgVarRefExp *arg_var = icfgArgumentVarRef(i);
     BasicBlock *b = newBasicBlock();
     b->statements.push_back(Ir::createArgumentAssignment(arg_var, e));
+    b->call_index = i;
     return b;
 }
 
