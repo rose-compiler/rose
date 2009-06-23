@@ -1,3 +1,85 @@
+2009-06-23 17:35  liao6
+
+	* [r6324] /trunk/ROSE/projects/autoTuning/tests/Makefile.am: fixed
+	  the output path to test dir
+
+2009-06-23 15:19  matzke
+
+	* [r6323] /trunk/ROSE/src/ROSETTA/src/binaryInstruction.C,
+	  /trunk/ROSE/src/backend/asmUnparser/unparseX86Asm.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerX86.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerX86.h: x86
+	  instruction expressions include bit ranges
+	  
+	  New data members p_bit_offset and p_bit_size hold the offset and
+	  size of
+	  immediate values in x86 operands. By enabling the #if 0 code in
+	  unparseX86Asm.C you can easily see these ranges--they show up as
+	  <@OFFSET+SIZE> in the assembly code dump:
+	  
+	  /* Block 0x4111e0 */
+	  0x004111e0 48 8b 05 f9 7d 20 |H...} |
+	  0x004111e6 00 |. | :: 0x4111e0:mov rax, QWORD PTR ds:[rip +
+	  0x207df9 <@24+32>]
+	  0x004111e7 31 d2 |1. | :: 0x4111e7:xor edx, edx
+	  0x004111e9 48 85 c0 |H.. | :: 0x4111e9:test rax, rax
+	  0x004111ec 74 03 |t. | :: 0x4111ec:je 0x4111f1 <@8+8>
+
+2009-06-23 15:19  matzke
+
+	* [r6322] /trunk/ROSE/src/ROSETTA/Grammar/BinaryInstruction.code,
+	  /trunk/ROSE/src/ROSETTA/src/binaryInstruction.C: Cleaned up
+	  SgAsmInstruction and SgAsmExpression
+	  
+	  * removed extra white space and folded a couple of long lines.
+	  * moved some lines around to localize definitions
+	  * clarified SgAsmExpression and HEADER_BINARY_EXPRESSION
+
+2009-06-23 12:35  matzke
+
+	* [r6321]
+	  /trunk/ROSE/src/midend/binaryAnalyses/libraryIdentification/libraryIdentification_writer.C:
+	  Removed a latent call to DisassemblerCommon
+
+2009-06-23 12:35  matzke
+
+	* [r6320] /trunk/ROSE/src/frontend/Disassemblers/Partitioner.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/Partitioner.h: Made a
+	  declaration more strict
+
+2009-06-23 12:35  matzke
+
+	* [r6319] /trunk/ROSE/src/frontend/Disassemblers/Disassembler.h,
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerArm.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerArm.h,
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerPowerpc.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerPowerpc.h,
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerX86.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerX86.h:
+	  Disassembler exceptions include bit offset
+	  
+	  When a disassembly exception is thrown, the exception includes a
+	  copy of
+	  the bits being disassembled and a bit offset where the error was
+	  detected.
+
+2009-06-23 12:34  matzke
+
+	* [r6318]
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerPowerpc.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerPowerpc.h,
+	  /trunk/ROSE/src/frontend/Disassemblers/Makefile.am,
+	  /trunk/ROSE/src/frontend/Disassemblers/powerpcDisassembler.C:
+	  Moved PowerPC disassembler into a class; removed old namespace
+
+2009-06-23 12:34  matzke
+
+	* [r6317] /trunk/ROSE/src/frontend/Disassemblers/DisassemblerArm.C,
+	  /trunk/ROSE/src/frontend/Disassemblers/DisassemblerArm.h,
+	  /trunk/ROSE/src/frontend/Disassemblers/Makefile.am,
+	  /trunk/ROSE/src/frontend/Disassemblers/armDisassembler.C: Moved
+	  ARM assemlber into a class; removed old namespace
+
 2009-06-23 01:04  hamilton37
 
 	* [r6315] /trunk/ROSE/projects/RTED/RuntimeSystem.c: RTED now
