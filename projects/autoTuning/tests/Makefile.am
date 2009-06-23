@@ -19,6 +19,8 @@ ROSE_FLAGS+=-rose:outline:enable_liveness -I$(top_srcdir)/projects/autoTuning
 # -rose:hpct:enable_debug -rose:autotuning:enable_debug 
 #ROSE_FLAGS+=-rose:autotuning:triage_threshold 0.75
 
+AT_BUILD=$(top_builddir)/projects/autoTuning
+AT_FLAGS=-rose:outline:output_path "$(AT_BUILD)/outline"
 AT_INCLUDES=-I$(top_srcdir)/src/frontend/SageIII
 # experimental flags. not well sorted out for the interaction between OpenMP and outlining
 # TODO reduction clause with omp for  should ignored if all reduction variables are no longer shared
@@ -29,19 +31,19 @@ ROSE_FLAGS2 = -rose:autotuning:aggressive_triage -rose:openmp
 
 # basic code triage based on inner-most consecutive loops
 rose_jacobi.c:../autoTuning
-	../autoTuning -c  $(ROSE_FLAGS) $(EQUAL_PATH1) $(ROSE_PROF1) $(srcdir)/jacobi.c
+	../autoTuning -c  $(ROSE_FLAGS) $(AT_FLAGS) $(EQUAL_PATH1) $(ROSE_PROF1) $(srcdir)/jacobi.c
 
 # aggressive code triage based on outer most OpenMP for loop
 rose_jacobi-omp.c:../autoTuning
-	../autoTuning -c  $(ROSE_FLAGS) $(AT_INCLUDES) $(EQUAL_PATH1) $(ROSE_PROF2) $(ROSE_FLAGS2) $(srcdir)/jacobi-omp.c
+	../autoTuning -c  $(ROSE_FLAGS) $(AT_FLAGS) $(AT_INCLUDES) $(EQUAL_PATH1) $(ROSE_PROF2) $(ROSE_FLAGS2) $(srcdir)/jacobi-omp.c
 
 # alternative performance information collected by GNU gprof -L -l, line-by-line profiling results
 rose_jacobi2.c:../autoTuning
-	../autoTuning  -c -rose:output rose_jacobi2.c $(ROSE_FLAGS) $(EQUAL_PATH3) $(ROSE_PROF3) $(srcdir)/jacobi.c
+	../autoTuning  -c -rose:output rose_jacobi2.c $(ROSE_FLAGS) $(AT_FLAGS) $(EQUAL_PATH3) $(ROSE_PROF3) $(srcdir)/jacobi.c
 
 # And using outlining support dlopen(): this is not necessary now since autoTuning will turn on -rose:outline:use_dlopen transparently
 rose_jacobi3.c:../autoTuning
-	../autoTuning  -c -rose:outline:use_dlopen -rose:outline:output_path "/tmp" -rose:output $@ $(ROSE_FLAGS) $(EQUAL_PATH3) $(ROSE_PROF3) $(srcdir)/jacobi.c 
+	../autoTuning  -c -rose:outline:use_dlopen -rose:output $@ $(ROSE_FLAGS) $(AT_FLAGS) $(EQUAL_PATH3) $(ROSE_PROF3) $(srcdir)/jacobi.c 
 
 # test code triage only
 rose_jacobi4.c:../autoTuning
