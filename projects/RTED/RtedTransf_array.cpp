@@ -1063,6 +1063,11 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName
       appendExpression(arg_list, initBool);
       appendExpression(arg_list, fileOpen);
 
+      SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
+      SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
+      appendExpression(arg_list, filename);
+      appendExpression(arg_list, linenr);
+
       ROSE_ASSERT(roseCreateVariable);
       string symbolName2 = roseCreateVariable->get_name().str();
       //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;

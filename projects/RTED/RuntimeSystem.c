@@ -10,6 +10,7 @@
 #include <assert.h>
 
 #include "RuntimeSystem.h"
+#include "rted_qt/rted_qt.h"
 
 /*********************************************************
  * Declare a sole instance of the Runtime System using
@@ -1344,7 +1345,8 @@ void RuntimeSystem_roseCreateVariable(char* name,
 				      char* mangled_name,
 				      char* type, 
 				      int init,
-				      char* fOpen) {
+				      char* fOpen,
+				      char* filename, char* line) {
   if (rtsi()->runtimeVariablesEndIndex>=rtsi()->maxRuntimeVariablesEndIndex) {
     //increase the size of the array
     RuntimeSystem_increaseSizeRuntimeVariables();
@@ -1358,6 +1360,14 @@ void RuntimeSystem_roseCreateVariable(char* name,
   rtsi()->runtimeVariables[rtsi()->runtimeVariablesEndIndex].value=-1;
   rtsi()->runtimeVariables[rtsi()->runtimeVariablesEndIndex].arrays=0;
   rtsi()->runtimeVariablesEndIndex++;
+
+#ifdef ROSE_WITH_ROSEQT 
+  showDebugDialog(rtsi()->runtimeVariablesOnStack, rtsi()->runtimeVariablesOnStackEndIndex,
+		  rtsi()->runtimeVariables, rtsi()->runtimeVariablesEndIndex, 
+		  rtsi()->runtimeMemory, rtsi()->runtimeMemoryEndIndex,
+		  filename, atoi(line));
+#endif
+		  
   printf("CreateVariable: You have just created a run-time variable:\n");
   printf("  name: %s \n", name);
   printf("  mangl_name: %s \n",mangled_name);

@@ -54,7 +54,7 @@ RoseBin_FlowAnalysis::addCFNode(string& name, string& type, int address, bool is
     ROSE_ASSERT(index>=0);
     rose_graph_integer_node_hash_map themap = 
       vizzGraph->get_node_index_to_node_map();
-    cerr << " RoseBin_FlowAnalysis -- NODE ALREADY EXISTS! at index: " << index << endl;
+    //cerr << " RoseBin_FlowAnalysis -- NODE ALREADY EXISTS! at index: " << index << endl;
     rose_graph_integer_node_hash_map::iterator it = themap.find(index);
     if (it==themap.end()) {
       ROSE_ASSERT(false);

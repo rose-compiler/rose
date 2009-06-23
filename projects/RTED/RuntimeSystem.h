@@ -136,7 +136,7 @@ void RuntimeSystem_callExit(char* filename, char* line, char* reason, char* stmt
 
 // functions dealing with variables
 void RuntimeSystem_roseCreateVariable(char* name, char* mangled_name, char* type, int init,
-				      char* fOpen);
+				      char* fOpen, char* filename, char* line);
 void RuntimeSystem_increaseSizeRuntimeVariables();
 struct RuntimeVariablesType* RuntimeSystem_findVariables(char* name);
 int RuntimeSystem_findVariablesPos(char* mangled_name, int* isarray);

@@ -6,6 +6,14 @@ if ROSE_USE_RTED
 INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I. -Winvalid-pch 
 INCLUDES2 = $(ROSE_INCLUDES) -I../../
 
+
+
+if ROSE_WITH_ROSEQT
+    LINK_QT_DEBUGGER=./rted_qt/.libs/libRtedQt.a $(QT_LDFLAGS) -L$(top_builddir)/projects/roseQt/widgets/.libs/ -lRoseQtWidgets -Wl,-rpath,`pwd`/$(top_builddir)/projects/roseQt/widgets/.libs -DROSE_WITH_ROSEQT
+else
+    LINK_QT_DEBUGGER=
+endif
+
 # This test program does not require the rest of ROSE so it can be handled locally
 bin_PROGRAMS  = runtimeCheck
 
@@ -18,7 +26,7 @@ run_test:test
 	./test$(EXEEXT) $(TEST_CXXFLAGS) $(srcdir)/buffer2.c 
 
 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -ldl
+LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -ldl 
 
 runtimeCheck_SOURCES = runtimeCheck.cpp \
                        RtedTransformation.cpp \
@@ -30,8 +38,10 @@ runtimeCheck_SOURCES = runtimeCheck.cpp \
 
 SUBDIRS = rted_qt
 
-
-runtimeCheck_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS) 
+runtimeCheck_LDADD =  $(ROSE_LIBS)
+if ROSE_WITH_ROSEQT
+	runtimeCheck_LDADD += $(top_builddir)/projects/RTED/rted_qt/libRtedQt.la
+endif
 
 TESTCODES =  $(srcdir)/example.C 
 
@@ -201,8 +211,8 @@ check-C-array:
 	  file_rose=rose_rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
 	  file2_rose=rose_rose_$$(echo $$file2 | sed -e 's/^\(.*\/\)*//'  ); \
 	  file_rose_bin=$$(echo "$$file_rose".bin); \
-	  echo "Compiling 2f:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose" ;\
-	  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	  echo "Compiling 2f:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  $(LINK_QT_DEBUGGER)  " ;\
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER)  ; \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
@@ -717,7 +727,7 @@ c-compile-runtimesystem:
 
 
 # DQ (7/25/2005): The current changes to the AST break these test programs:
-check-local: runtimeCheck $(TESTCODES) c-compile-runtimesystem check-C-array-onefile deleteAllbinfiles check-C-array-parallel check-C-string check-C-inputoutput
+check-local: rted_qt runtimeCheck $(TESTCODES) c-compile-runtimesystem check-C-array-onefile deleteAllbinfiles check-C-array-parallel check-C-string check-C-inputoutput
 	@echo "***************************************************************************************"
 	@echo "*** ROSE/projects/runtimeErrorCheck: make check rule complete (terminated normally) ***"
 	@echo "***************************************************************************************"

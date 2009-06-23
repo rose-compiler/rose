@@ -13519,8 +13519,8 @@ SgIncidenceDirectedGraph::getSuccessors(SgGraphNode* node, std::vector <SgGraphN
 	    string type_n = getProperty(SgGraph::type, edge);
 	    if (type_n==RoseBin_support::ToString(SgGraph::cfg))
 	       vec.push_back(target);
-	    else 
-	       printf("Different edge type \n");
+	    //else 
+	    //   printf("Different edge type \n");
       }
     } else {
       printf("This is not a DirectedGraphEdge.\n");

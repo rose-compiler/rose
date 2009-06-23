@@ -1,14 +1,15 @@
 
 
-
-#include "RuntimeSystem.h"
+#include "rted_qt.h"
+//#include "RuntimeSystem.h"
 #include <QApplication>
 #include "DebugDialog.h"
 
-void showDebugDialog(RuntimeVariablesType * stack, int stackSize,
-                     RuntimeVariablesType * heap, int heapSize,
-                     MemoryType * mem, int memSize,
-                     std::string filename, int row)
+
+void showDebugDialog(struct RuntimeVariablesType * stack, int stackSize,
+                     struct RuntimeVariablesType * heap, int heapSize,
+                     struct MemoryType * mem, int memSize,
+                     char* filename, int row)
 {
     QApplication app(0,NULL);
 
@@ -23,14 +24,14 @@ void showDebugDialog(RuntimeVariablesType * stack, int stackSize,
     dlg->setStackVars(stack,stackSize);
     dlg->setMemoryLocations(mem,memSize);
 
-    dlg->setEditorMark(filename.c_str(),row);
+    dlg->setEditorMark(filename,row);
 
     dlg->show();
     app.exec();
     delete dlg;
 }
 
-
+#if 0
 // testMain
 int main(int argc, char**argv)
 {
@@ -87,3 +88,4 @@ int main(int argc, char**argv)
 
     showDebugDialog(stack,2,heap,2,mem,2,"/home/bauer25/test.cpp",1);
 }
+#endif
