@@ -3280,15 +3280,14 @@ HEADER_BINARY_DATA_STRUCTURE_END
 
 
 
-
 HEADER_BINARY_EXPRESSION_START
+	/* NOTE: This is for SgAsmExpression, not SgAsmBinaryExpression */
 
-      //! Generate the type for the expression
-          virtual SgAsmType* get_type();
+	//! Generate the type for the expression
+	virtual SgAsmType* get_type();
 
-      //! Return the precedence of the operator (see C and C++ examples for details)
-      //  virtual int get_precedence();
-
+	//! Return the precedence of the operator (see C and C++ examples for details)
+	//  virtual int get_precedence();
 HEADER_BINARY_EXPRESSION_END
 
 
