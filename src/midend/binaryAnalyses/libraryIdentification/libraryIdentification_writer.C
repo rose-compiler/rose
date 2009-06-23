@@ -295,15 +295,26 @@ LibraryIdentification::generateOpCodeVector(SgAsmInterpretation* asmInterpretati
   // Need to compute these from the adress...
   // Use: size_t fileOffset = rva - section->get_mapped_rva() + section->get_offset();
 
+#if 0
+     /* There are lots of other disassembler methods now. I'm not sure why we want a new AsmFileWithData, unless it was
+      * just for finding the section that goes with an address.  The SgAsmGenericHeader::get_best_section_by_va() and related
+      * methods are the correct ones to call for that info. [RPM 2009-06-23] */
   // Build a AsmFileWithData object with the relevant SgAsmInterpretation
   // Later we can record a list of them.
      DisassemblerCommon::AsmFileWithData asmFileInformation (asmInterpretation);
+#endif
 
   // We need a DisassemblerCommon::AsmFileWithData object to call getSectionOfAddress()
   // SgAsmGenericSection* section = DisassemblerCommon::AsmFileWithData::getSectionOfAddress(t.startAddress);
-     SgAsmGenericSection* section = asmFileInformation.getSectionOfAddress(t.startAddress);
+     SgAsmGenericHeader* fhdr = asmInterpretation->get_header();
+     ROSE_ASSERT(fhdr != NULL);
+     SgAsmGenericSection* section = fhdr->get_best_section_by_va(fhdr->get_base_va()+t.startAddress);
      ROSE_ASSERT(section != NULL);
 
+     /* This code assumes that the entire sequence of instructions is present in a single section, or a group of sections that
+      * are mapped in such a way that that file layout mirrors virtual memory layout. This isn't always the case. In fact, the
+      * disassembler is now able to disassemble instructions that even span two sections such that the first bytes of the
+      * instruction are at one file offset and the last few bytes are at a wildly different offset. [RPM 2009-06-23] */
      startOffset = startAddress - section->get_mapped_rva() + section->get_offset();
      endOffset   = endAddress - section->get_mapped_rva() + section->get_offset();
 
