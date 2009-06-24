@@ -170,6 +170,9 @@ check-C-array:
 	echo "Found files : `find $$dir -name "*.c" | wc` " ; \
 	for file in $$(find $$dir -name "*.c"| sort); do \
 	echo "Current file : $$file " ; \
+        file_r=$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
+	cp $$file $$file_r ; \
+	file=$$file_r;\
         binfile=$$(echo "$$file".bin); \
 	if ! [ -f $$binfile ]; then \
 	if !  [[ "$$file" =~ "_s.c" ]]  ; then \
@@ -190,9 +193,6 @@ check-C-array:
 	      sed -i '1i\#define EXITCODE_OK 0' $$file2 ; \
 	    fi ; \
   	  fi; \
-        file_r=$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
-	cp $$file $$file_r ; \
-	file=$$file_r;\
 	echo "  inserting #include \"RuntimeSystem.h\" in File: $$file" ; \
 	if [ `grep "#include \"RuntimeSystem.h\"" $$file | wc | awk '{print $$1}' ` -eq 0 ] ; then \
 	  sed -i '1i\#include \"RuntimeSystem.h\"' $$file ; \
@@ -253,6 +253,9 @@ check-C-string:
 	echo "Found files : `find $$dir -name "*.c" | wc` " ; \
 	for file in $$(find $$dir -name "*.c"| sort); do \
 	echo "Current file : $$file " ; \
+        file_r=$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
+	cp $$file $$file_r ; \
+	file=$$file_r;\
         binfile=$$(echo "$$file".bin); \
 	if ! [ -f $$binfile ]; then \
 	if !  [[ "$$file" =~ "_s.c" ]]  ; then \
@@ -273,9 +276,6 @@ check-C-string:
 	      sed -i '1i\#define EXITCODE_OK 0' $$file2 ; \
 	    fi ; \
   	  fi; \
-        file_r=$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
-	cp $$file $$file_r ; \
-	file=$$file_r;\
 	echo "  inserting #include \"RuntimeSystem.h\" in File: $$file" ; \
 	if [ `grep "#include \"RuntimeSystem.h\"" $$file | wc | awk '{print $$1}' ` -eq 0 ] ; then \
 	  sed -i '1i\#include \"RuntimeSystem.h\"' $$file ; \
@@ -335,6 +335,9 @@ check-C-subprogram:
 	echo "Found files : `find $$dir -name "*.c" | wc` " ; \
 	for file in $$(find $$dir -name "*.c"| sort); do \
 	echo "Current file : $$file " ; \
+        file_r=$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
+	cp $$file $$file_r ; \
+	file=$$file_r;\
         binfile=$$(echo "$$file".bin); \
 	if ! [ -f $$binfile ]; then \
 	if !  [[ "$$file" =~ "_s.c" ]]  ; then \
@@ -355,9 +358,6 @@ check-C-subprogram:
 	      sed -i '1i\#define EXITCODE_OK 0' $$file2 ; \
 	    fi ; \
   	  fi; \
-        file_r=$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
-	cp $$file $$file_r ; \
-	file=$$file_r;\
 	echo "  inserting #include \"RuntimeSystem.h\" in File: $$file" ; \
 	if [ `grep "#include \"RuntimeSystem.h\"" $$file | wc | awk '{print $$1}' ` -eq 0 ] ; then \
 	  sed -i '1i\#include \"RuntimeSystem.h\"' $$file ; \
@@ -418,6 +418,9 @@ check-C-allocation:
 	echo "Found files : `find $$dir -name "*.c" | wc` " ; \
 	for file in $$(find $$dir -name "*.c"| sort); do \
 	echo "Current file : $$file " ; \
+        file_r=$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
+	cp $$file $$file_r ; \
+	file=$$file_r;\
         binfile=$$(echo "$$file".bin); \
 	if ! [ -f $$binfile ]; then \
 	if !  [[ "$$file" =~ "_s.c" ]]  ; then \
@@ -438,9 +441,6 @@ check-C-allocation:
 	      sed -i '1i\#define EXITCODE_OK 0' $$file2 ; \
 	    fi ; \
   	  fi; \
-        file_r=$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
-	cp $$file $$file_r ; \
-	file=$$file_r;\
 	echo "  inserting #include \"RuntimeSystem.h\" in File: $$file" ; \
 	if [ `grep "#include \"RuntimeSystem.h\"" $$file | wc | awk '{print $$1}' ` -eq 0 ] ; then \
 	  sed -i '1i\#include \"RuntimeSystem.h\"' $$file ; \
@@ -502,6 +502,9 @@ check-C-inputoutput:
 	echo "Found files : `find $$dir -name "*.c" | wc` " ; \
 	for file in $$(find $$dir -name "*.c"| sort); do \
 	echo "Current file : $$file " ; \
+        file_r=$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
+	cp $$file $$file_r ; \
+	file=$$file_r;\
         binfile=$$(echo "$$file".bin); \
 	if ! [ -f $$binfile ]; then \
 	if !  [[ "$$file" =~ "_s.c" ]]  ; then \
@@ -522,9 +525,6 @@ check-C-inputoutput:
 	      sed -i '1i\#define EXITCODE_OK 0' $$file2 ; \
 	    fi ; \
   	  fi; \
-        file_r=$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
-	cp $$file $$file_r ; \
-	file=$$file_r;\
 	echo "  inserting #include \"RuntimeSystem.h\" in File: $$file" ; \
 	if [ `grep "#include \"RuntimeSystem.h\"" $$file | wc | awk '{print $$1}' ` -eq 0 ] ; then \
 	  sed -i '1i\#include \"RuntimeSystem.h\"' $$file ; \
@@ -585,6 +585,9 @@ check-C-memoryleaks:
 	echo "Found files : `find $$dir -name "*.c" | wc` " ; \
 	for file in $$(find $$dir -name "*.c"| sort); do \
 	echo "Current file : $$file " ; \
+        file_r=$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
+	cp $$file $$file_r ; \
+	file=$$file_r;\
         binfile=$$(echo "$$file".bin); \
 	if ! [ -f $$binfile ]; then \
 	if !  [[ "$$file" =~ "_s.c" ]]  ; then \
@@ -605,9 +608,6 @@ check-C-memoryleaks:
 	      sed -i '1i\#define EXITCODE_OK 0' $$file2 ; \
 	    fi ; \
   	  fi; \
-        file_r=$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
-	cp $$file $$file_r ; \
-	file=$$file_r;\
 	echo "  inserting #include \"RuntimeSystem.h\" in File: $$file" ; \
 	if [ `grep "#include \"RuntimeSystem.h\"" $$file | wc | awk '{print $$1}' ` -eq 0 ] ; then \
 	  sed -i '1i\#include \"RuntimeSystem.h\"' $$file ; \
@@ -712,7 +712,8 @@ deleteAllbinfiles:
 c-compile-runtimesystem:
 	@echo "Make sure that RuntimeSystem compiles with C"
 	$(CC) -Wall -g -I$(srcdir) $(srcdir)/test_runtime.c $(srcdir)/RuntimeSystem.c -o runtime_test.bin
-
+	@echo "Cleaning all .bin testcodes"
+	rm *.bin
 
 # DQ (7/25/2005): The current changes to the AST break these test programs:
 check-local: rted_qt runtimeCheck $(TESTCODES) c-compile-runtimesystem  deleteAllbinfiles check-C-array check-C-string check-C-inputoutput
@@ -722,6 +723,6 @@ check-local: rted_qt runtimeCheck $(TESTCODES) c-compile-runtimesystem  deleteAl
 
 
 clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) test_bin* *.o rose_*.C rose_*.c *.dot Templates.DB *~ rose_rose* test *.bin *.txt *.c *.cpp
+	rm -rf $(CXX_TEMPLATE_OBJECTS) test_bin* *.o rose_*.C rose_*.c *.dot Templates.DB *~ rose_rose* test *.bin *.txt *.c *.cpp *.bin
 
 endif
