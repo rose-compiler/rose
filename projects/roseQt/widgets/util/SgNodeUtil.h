@@ -25,6 +25,6 @@ void deleteFileFromProject(SgFile * file, SgProject * proj);
 /// if successful it returns true, and the address is written to out
 bool findNextInstruction(SgNode * node, rose_addr_t & out);
 
-
+SgProject * getProjectOf(SgNode * node);
 
 #endif

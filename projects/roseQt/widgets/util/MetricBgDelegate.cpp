@@ -32,7 +32,7 @@ MetricBgDelegate::MetricBgDelegate( QObject * par, const QString& configureId, M
 
     gradient.setColorAt( 0.0, Qt::white );
     gradient.setColorAt( 1.0, Qt::white );
-    
+
     QPainter painter( &colorMap );
     painter.fillRect( 0, 0, 100, 1, QBrush( Qt::white ) );
 }
@@ -52,7 +52,7 @@ QColor MetricBgDelegate::getColor(double val) const
     //result.setBlueF(val * one.blueF() + valInv * zero.blueF() );
 
     //qDebug() << zero << one <<   "Value " << val << result;
-    
+
     QRgb pix = colorMap.pixel( (int)(val * 99), 0 );
 
     QColor result( colorMap.pixel( (int)(val * 99), 0 ) );
@@ -67,12 +67,12 @@ void MetricBgDelegate::setupConfigWidget( QWidget *parent )
     Ui::MetricBgDelegateConfig configWidget;
 
     configWidget.setupUi( parent );
-    
+
     QtGradientDialog     *gradientDialog( new QtGradientDialog( parent ) );
 
     connect( configWidget.metricsConfigButton, SIGNAL( clicked( bool ) ),
              &metricsConfig                  , SLOT  ( configureSingle() ) );
-    
+
     connect( configWidget.gradientButton, SIGNAL( clicked( bool ) ),
              gradientDialog             , SLOT  ( exec() ) );
     connect( gradientDialog, SIGNAL( finished( int ) ),
@@ -98,7 +98,7 @@ void MetricBgDelegate::setupConfigWidget( QWidget *parent )
     {
         infoBox->addItem( itr->caption, itr.name() );
     }
-    
+
     int bgId = infoBox->findData( metricsName );
     if( bgId == -1 ) bgId = 0;
     infoBox->setCurrentIndex( bgId );
@@ -123,7 +123,7 @@ void MetricBgDelegate::applyConfigWidget( QWidget *parent )
 
     int idx( infoBox->currentIndex() );
 
-    qDebug() << metricsInf.caption;
+    //qDebug() << metricsInf.caption;
     if( idx > 0 )
     {
         metricsName = infoBox->itemData( idx ).toString();

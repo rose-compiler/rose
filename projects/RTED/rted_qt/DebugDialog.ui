@@ -196,6 +196,7 @@
    <class>RoseCodeEdit</class>
    <extends>QFrame</extends>
    <header>RoseCodeEdit.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources>
@@ -206,7 +207,7 @@
    <sender>actionQuit</sender>
    <signal>triggered()</signal>
    <receiver>DebugDialog</receiver>
-   <slot>close()</slot>
+   <slot>hide()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>-1</x>

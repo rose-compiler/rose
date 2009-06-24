@@ -46,29 +46,6 @@ CompassMainWindow::CompassMainWindow(CompassInterface * ci, QWidget * par)
     ui->txtCheckerLongDesc->setPlainText("");
 
 
-    editorWrapper = new QCodeEdit(ui->codeEdit ,this);
-
-    editorWrapper
-        ->addPanel("Line Mark Panel", QCodeEdit::West, true)
-        ->setShortcut(QKeySequence("F6"));
-
-    editorWrapper
-        ->addPanel("Line Number Panel", QCodeEdit::West, true)
-        ->setShortcut(QKeySequence("F11"));
-
-    editorWrapper
-        ->addPanel("Fold Panel", QCodeEdit::West, true)
-        ->setShortcut(QKeySequence("F9"));
-
-    //editorWrapper
-    //    ->addPanel("Line Change Panel", QCodeEdit::West, true);
-
-    editorWrapper
-        ->addPanel("Status Panel", QCodeEdit::South, true);
-
-    editorWrapper
-        ->addPanel("Search Replace Panel", QCodeEdit::South);
-
     ui->editorToolbar->addAction(ui->codeEdit->action("undo"));
     ui->editorToolbar->addAction(ui->codeEdit->action("redo"));
     ui->editorToolbar->addSeparator();

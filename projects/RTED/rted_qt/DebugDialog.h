@@ -13,7 +13,6 @@ class RuntimeVariablesModel;
 class MemoryTypeModel;
 class QSortFilterProxyModel;
 
-class QCodeEdit;
 
 #include "ui_DebugDialog.h"
 
@@ -64,7 +63,6 @@ class DebugDialog : public QMainWindow
 
         Ui::DebugDialog * ui;
 
-        QCodeEdit * editorWrapper;
 };
 
 #endif

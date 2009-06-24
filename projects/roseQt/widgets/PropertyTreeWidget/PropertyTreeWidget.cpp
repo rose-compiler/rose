@@ -120,6 +120,7 @@ void PropertyTreeWidget::clear()
 {
 	model->clear();
 	colors.clear();
+	update();
 }
 
 

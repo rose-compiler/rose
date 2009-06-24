@@ -20,6 +20,7 @@ void RoseFrontendTask::start()
     QFileInfo fileInfo(file);
     if(! fileInfo.exists())
     {
+        qDebug() << "RoseFrontendTask: File does not exist" << file;
         state= FINISHED_ERROR;
         emit finished();
         return;

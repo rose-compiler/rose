@@ -11,24 +11,22 @@ void showDebugDialog(struct RuntimeVariablesType * stack, int stackSize,
                      struct MemoryType * mem, int memSize,
                      char* filename, int row)
 {
-    QApplication app(0,NULL);
-
+    static QApplication app(0,NULL);
+    static DebugDialog * dlg = new DebugDialog();
 
     QCoreApplication::setOrganizationName("LLNL");
     QCoreApplication::setOrganizationDomain("ROSE");
     QCoreApplication::setApplicationName("rted_qt");
 
 
-    DebugDialog * dlg = new DebugDialog();
     dlg->setHeapVars(heap,heapSize);
     dlg->setStackVars(stack,stackSize);
     dlg->setMemoryLocations(mem,memSize);
 
     dlg->setEditorMark(filename,row);
 
-    dlg->show();
+    dlg->showMaximized();
     app.exec();
-    delete dlg;
 }
 
 #if 0

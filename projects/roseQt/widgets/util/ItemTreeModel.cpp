@@ -101,8 +101,12 @@ QVariant ItemTreeModel::headerData (int section, Qt::Orientation orientation, in
     if(role == Qt::DisplayRole && orientation==Qt::Horizontal)
     {
         if(section < headerCap.size() )
+        {
             return headerCap[section];
+        }
     }
+    return QAbstractItemModel::headerData(section,orientation,role);
+    qDebug() << "No header data for" << section << orientation << role;
     return QVariant();
 
 }

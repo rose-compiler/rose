@@ -8,40 +8,22 @@
 #include <QDebug>
 #include <QSortFilterProxyModel>
 #include <QDialogButtonBox>
-#include "qcodeedit.h"
-#include "qeditconfig.h"
 
+#include "qlinemarkpanel.h"
+#include "qcodeedit.h"
 
 DebugDialog::DebugDialog(QWidget * par)
-    : QMainWindow(par), heapModel(0), stackModel(0), memModel(0)
+    : QMainWindow(par),
+    heapModel(0), heapProxyModel(0),
+    stackModel(0),stackProxyModel(0),
+    memModel(0), memProxyModel(0)
 {
     ui = new Ui::DebugDialog();
     ui->setupUi(this);
 
-
-
-    editorWrapper = new QCodeEdit(ui->codeEdit ,this);
-
-    editorWrapper
-        ->addPanel("Line Mark Panel", QCodeEdit::West, true)
-        ->setShortcut(QKeySequence("F6"));
-
-    editorWrapper
-        ->addPanel("Line Number Panel", QCodeEdit::West, true)
-        ->setShortcut(QKeySequence("F11"));
-
-    editorWrapper
-        ->addPanel("Fold Panel", QCodeEdit::West, true)
-        ->setShortcut(QKeySequence("F9"));
-
-    //editorWrapper
-    //    ->addPanel("Line Change Panel", QCodeEdit::West, true);
-
-    editorWrapper
-        ->addPanel("Status Panel", QCodeEdit::South, true);
-
-    editorWrapper
-        ->addPanel("Search Replace Panel", QCodeEdit::South);
+    QCodeEdit * ce= ui->codeEdit->getQCodeEdit();
+    //QLineMarkPanel  * p = dynamic_cast<QLineMarkPanel*>(ce->panels("Line Mark Panel")[0]);
+    //p->setDisableClicks(false);
 
     ui->editorToolbar->addAction(ui->codeEdit->action("undo"));
     ui->editorToolbar->addAction(ui->codeEdit->action("redo"));
@@ -107,26 +89,7 @@ void DebugDialog::on_actionOpen_triggered()
 
 void DebugDialog::on_actionEditorSettings_triggered()
 {
-    QDialog settingsDlg;
-    QEditConfig * ec = new QEditConfig(&settingsDlg);
-
-    QDialogButtonBox * buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
-                                                      | QDialogButtonBox::Cancel,
-                                                      Qt::Horizontal,
-                                                      &settingsDlg);
-
-    connect(buttonBox, SIGNAL(accepted()), &settingsDlg, SLOT(accept()));
-    connect(buttonBox, SIGNAL(rejected()), &settingsDlg, SLOT(reject()));
-
-    QVBoxLayout * layout = new QVBoxLayout(&settingsDlg);
-    layout->addWidget(ec);
-    layout->addWidget(buttonBox);
-
-    int res = settingsDlg.exec();
-    if( res == QDialog::Accepted)
-        ec->apply();
-    else
-    ec->cancel();
+    RoseCodeEdit::showEditorSettingsDialog();
 }
 
 

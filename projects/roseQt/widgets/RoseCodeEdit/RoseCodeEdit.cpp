@@ -1,6 +1,7 @@
 #include "rose.h"
 #include "RoseCodeEdit.h"
 
+#include <QCodeEdit/qcodeedit.h>
 #include <QCodeEdit/qformatscheme.h>
 #include <QCodeEdit/qlanguagefactory.h>
 #include <QCodeEdit/qlinemarksinfocenter.h>
@@ -8,11 +9,19 @@
 
 #include <QDragEnterEvent>
 #include <QDropEvent>
+#include <QAction>
+#include <QDialogButtonBox>
+#include <QDialog>
+#include <QVBoxLayout>
+#include <QIcon>
+#include <QAction>
 
 #include <QDebug>
 
 #include "SgNodeUtil.h"
 #include "SageMimeData.h"
+
+#include "qeditconfig.h"
 
 QLanguageFactory * RoseCodeEdit::m_languages=NULL;
 
@@ -27,12 +36,38 @@ void RoseCodeEdit::init()
 
     if(!m_languages)
     {
-        m_languages = new QLanguageFactory(m_formats, this);
+        m_languages = new QLanguageFactory(m_formats, NULL);
         m_languages->addDefinitionPath(qxsPath);
     }
 
     setAcceptDrops(true);
     viewport()->setAcceptDrops(true);
+
+
+
+    editorWrapper = new QCodeEdit(this ,this);
+
+    editorWrapper
+        ->addPanel("Line Mark Panel", QCodeEdit::West, true)
+        ->setShortcut(QKeySequence("F6"));
+
+    editorWrapper
+        ->addPanel("Line Number Panel", QCodeEdit::West, true)
+        ->setShortcut(QKeySequence("F11"));
+
+    editorWrapper
+        ->addPanel("Fold Panel", QCodeEdit::West, true)
+        ->setShortcut(QKeySequence("F9"));
+
+    //editorWrapper
+    //    ->addPanel("Line Change Panel", QCodeEdit::West, true);
+
+    editorWrapper
+        ->addPanel("Status Panel", QCodeEdit::South, true);
+
+    editorWrapper
+        ->addPanel("Search Replace Panel", QCodeEdit::South);
+
 }
 
 void RoseCodeEdit::markAsError(int line)
@@ -97,6 +132,51 @@ void RoseCodeEdit::setNode(SgNode * node)
     }
 
 }
+
+
+void RoseCodeEdit::showEditorSettingsDialog()
+{
+    QDialog settingsDlg;
+    QEditConfig * ec = new QEditConfig(&settingsDlg);
+
+    QDialogButtonBox * buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
+                                                      | QDialogButtonBox::Cancel,
+                                                      Qt::Horizontal,
+                                                      &settingsDlg);
+
+    connect(buttonBox, SIGNAL(accepted()), &settingsDlg, SLOT(accept()));
+    connect(buttonBox, SIGNAL(rejected()), &settingsDlg, SLOT(reject()));
+
+    QVBoxLayout * layout = new QVBoxLayout(&settingsDlg);
+    layout->addWidget(ec);
+    layout->addWidget(buttonBox);
+
+    int res = settingsDlg.exec();
+    if( res == QDialog::Accepted)
+        ec->apply();
+    else
+        ec->cancel();
+}
+
+QAction * RoseCodeEdit::getDisabledActions(const QString & name)
+{
+    static QAction * actUndo  = new QAction(QIcon(":/undo.png"),QString(),0);
+    static QAction * actRedo  = new QAction(QIcon(":/redo.png"),QString(),0);
+
+    static QAction * actCut   = new QAction(QIcon(":/cut.png"),QString(),0);
+    static QAction * actCopy  = new QAction(QIcon(":/copy.png"),QString(),0);
+    static QAction * actPaste = new QAction(QIcon(":/paste.png"),QString(),0);
+
+
+    if(name=="undo")  return actUndo;
+    if(name=="redo")  return actRedo;
+    if(name=="cut")   return actCut;
+    if(name=="copy")  return actCopy;
+    if(name=="paste") return actPaste;
+
+    return NULL;
+}
+
 
 // ---------------------- Drop Functionality -----------------------------------
 

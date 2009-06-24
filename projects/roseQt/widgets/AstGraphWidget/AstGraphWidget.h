@@ -32,7 +32,7 @@ class AstGraphWidget : public QGraphicsView
 	Q_OBJECT
 
 	public:
-		AstGraphWidget(QWidget * parent);
+		AstGraphWidget(QWidget * parent=0);
 		virtual ~AstGraphWidget();
 
 

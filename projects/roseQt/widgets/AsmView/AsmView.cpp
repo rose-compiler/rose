@@ -17,6 +17,7 @@
 #include <QAction>
 #include <QContextMenuEvent>
 
+#include "MetricBgDelegate.h"
 
 #include "SgNodeUtil.h"
 
@@ -79,6 +80,26 @@ void AsmView::updateModel()
 
     header()->setResizeMode(4,QHeaderView::Fixed);
     header()->resizeSection(4,3);
+
+    ProjectManager * pm = ProjectManager::instance();
+    if(curNode)
+    {
+        SgProject * project = getProjectOf(curNode);
+        for(int i=0; i < 4; i++)
+        {
+            MetricBgDelegate * del = new MetricBgDelegate(this, "MetricsBgDelegate", pm->getMetricsConfig(project) );
+            setItemDelegateForColumn(i,del);
+        }
+    }
+    if(curNode2)
+    {
+        SgProject * project = getProjectOf(curNode2);
+        for(int i=4; i < 9; i++)
+        {
+            MetricBgDelegate * del = new MetricBgDelegate(this, "MetricsBgDelegate", pm->getMetricsConfig(project) );
+            setItemDelegateForColumn(i,del);
+        }
+    }
 
 }
 

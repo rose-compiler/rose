@@ -38,11 +38,21 @@ class MainWindow : public QMainWindow
 
         void on_actionNewAssemblerView_triggered();
         void on_actionNewCodeEditor_triggered();
+        void on_actionNewGraphWidget_triggered();
+        void on_actionNewMetricsKiviat_triggered();
+
+        void on_actionSaveAs_triggered();
+        void on_actionOpen_triggered();
 
         //void on_cmdExecScript_clicked();
         void on_cmdSubmitTest_clicked();
 
+        void on_mdiArea_subWindowActivated(QMdiSubWindow * wnd);
+        void on_actionEditorSettings_triggered();
+
+
     protected:
+
         Ui::MainWindow ui;
         AstFilterInterface *f1;
         AstFilterInterface *f2;
@@ -50,10 +60,13 @@ class MainWindow : public QMainWindow
         virtual void closeEvent( QCloseEvent * e);
 
     private:
+        void restoreMdiState();
+        void saveMdiState();
+
         void emitFilterChanged();
 
-        void addMdiSubWidget(QWidget * widget);
-
+        QMdiSubWindow* addMdiSubWidget(QWidget * widget, const QString & caption);
+        void buildupEditorToolbar(QWidget * w);
         ProjectManager *pm;
 
         QCodeEdit * editorWrapper;

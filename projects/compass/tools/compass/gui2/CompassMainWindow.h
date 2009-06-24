@@ -13,7 +13,6 @@ class QModelIndex;
 class CheckerFilterModel;
 class QSortFilterProxyModel;
 
-#include "qcodeedit.h"
 
 class CompassMainWindow : public QMainWindow
 {
@@ -46,9 +45,6 @@ class CompassMainWindow : public QMainWindow
 
     protected:
         void updateCheckersTable();
-
-        QCodeEdit * editorWrapper;
-
 
         CompassInterface * compInterface;
 

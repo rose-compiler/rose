@@ -131,7 +131,17 @@ bool findNextInstruction(SgNode * node, rose_addr_t & out)
     return true;
 }
 
+SgProject * getProjectOf(SgNode * node)
+{
+    SgNode * curNode =node;
 
+    SgProject * proj =0;
+    while(! (proj=isSgProject(curNode)) && curNode )
+        curNode=curNode->get_parent();
+
+
+    return proj;
+}
 
 
 

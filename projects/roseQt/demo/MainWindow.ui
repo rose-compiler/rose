@@ -16,48 +16,7 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
-     <widget class="QMdiArea" name="mdiArea">
-      <widget class="QWidget" name="subwindow">
-       <property name="windowTitle">
-        <string>Graphical Tree View</string>
-       </property>
-       <layout class="QVBoxLayout" name="verticalLayout_3">
-        <item>
-         <widget class="AstGraphWidget" name="astGraphWidget"/>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="swdgEditor">
-       <property name="windowTitle">
-        <string>Editor</string>
-       </property>
-       <layout class="QVBoxLayout" name="verticalLayout_4">
-        <item>
-         <widget class="RoseCodeEdit" name="roseCodeEdit"/>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="swdgMetricsKiviat">
-       <property name="windowTitle">
-        <string>MetricsKiviat</string>
-       </property>
-       <layout class="QVBoxLayout" name="verticalLayout_6">
-        <item>
-         <widget class="MetricsKiviat" name="kvtMetrics"/>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="subWindowAssemblerView">
-       <property name="windowTitle">
-        <string>Assembler View</string>
-       </property>
-       <layout class="QVBoxLayout" name="verticalLayout_7">
-        <item>
-         <widget class="AsmView" name="asmView"/>
-        </item>
-       </layout>
-      </widget>
-     </widget>
+     <widget class="QMdiArea" name="mdiArea"/>
     </item>
    </layout>
   </widget>
@@ -74,26 +33,52 @@
     <property name="title">
      <string>File</string>
     </property>
+    <addaction name="actionOpen"/>
+    <addaction name="actionSave"/>
+    <addaction name="actionSaveAs"/>
+    <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
      <string>View</string>
     </property>
+    <widget class="QMenu" name="menuDockWidgets">
+     <property name="title">
+      <string>DockWidgets</string>
+     </property>
+     <addaction name="actionAstBrowser"/>
+     <addaction name="actionProjectManager"/>
+     <addaction name="actionBeautified_Ast"/>
+     <addaction name="actionTask_List"/>
+     <addaction name="actionProperty_View"/>
+     <addaction name="actionMetric_Kiviat"/>
+    </widget>
+    <addaction name="actionNewAssemblerView"/>
+    <addaction name="actionNewCodeEditor"/>
+    <addaction name="actionNewGraphWidget"/>
+    <addaction name="actionNewMetricsKiviat"/>
+    <addaction name="separator"/>
     <addaction name="actionTile"/>
     <addaction name="actionCascade"/>
     <addaction name="actionTabbed_View"/>
     <addaction name="separator"/>
-    <addaction name="actionNewAssemblerView"/>
-    <addaction name="actionNewCodeEditor"/>
+    <addaction name="menuDockWidgets"/>
    </widget>
    <widget class="QMenu" name="menuConfuguration">
     <property name="title">
      <string>Configuration</string>
     </property>
     <addaction name="actionMetric_Attributes"/>
+    <addaction name="actionEditorSettings"/>
+   </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>Edit</string>
+    </property>
    </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuEdit"/>
    <addaction name="menuConfuguration"/>
    <addaction name="menuView"/>
   </widget>
@@ -198,7 +183,7 @@
     </layout>
    </widget>
   </widget>
-  <widget class="QToolBar" name="toolBar">
+  <widget class="QToolBar" name="editorToolbar">
    <property name="windowTitle">
     <string>toolBar</string>
    </property>
@@ -210,7 +195,7 @@
    </attribute>
    <addaction name="separator"/>
   </widget>
-  <widget class="QDockWidget" name="dockWidget_2">
+  <widget class="QDockWidget" name="dockWdgTaskList">
    <property name="allowedAreas">
     <set>Qt::BottomDockWidgetArea|Qt::TopDockWidgetArea</set>
    </property>
@@ -296,6 +281,17 @@
     </layout>
    </widget>
   </widget>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+  </widget>
   <action name="actionQuit">
    <property name="text">
     <string>Quit</string>
@@ -317,11 +313,19 @@
    </property>
   </action>
   <action name="actionNewAssemblerView">
+   <property name="icon">
+    <iconset resource="../widgets/util/util.qrc">
+     <normaloff>:/util/NodeIcons/binaryfile.gif</normaloff>:/util/NodeIcons/binaryfile.gif</iconset>
+   </property>
    <property name="text">
     <string>New Assembler View</string>
    </property>
   </action>
   <action name="actionNewCodeEditor">
+   <property name="icon">
+    <iconset resource="../widgets/util/util.qrc">
+     <normaloff>:/util/NodeIcons/sourcefile.gif</normaloff>:/util/NodeIcons/sourcefile.gif</iconset>
+   </property>
    <property name="text">
     <string>New Code Editor</string>
    </property>
@@ -334,6 +338,114 @@
     <string>Tabbed View</string>
    </property>
   </action>
+  <action name="actionOpen">
+   <property name="icon">
+    <iconset resource="../widgets/util/util.qrc">
+     <normaloff>:/util/AppIcons/document-open.png</normaloff>:/util/AppIcons/document-open.png</iconset>
+   </property>
+   <property name="text">
+    <string>Open Source File</string>
+   </property>
+  </action>
+  <action name="actionSave">
+   <property name="icon">
+    <iconset resource="../widgets/util/util.qrc">
+     <normaloff>:/util/AppIcons/document-save.png</normaloff>:/util/AppIcons/document-save.png</iconset>
+   </property>
+   <property name="text">
+    <string>Save</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actionSaveAs">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../widgets/util/util.qrc">
+     <normaloff>:/util/AppIcons/document-save-as.png</normaloff>:/util/AppIcons/document-save-as.png</iconset>
+   </property>
+   <property name="text">
+    <string>Save as..</string>
+   </property>
+  </action>
+  <action name="actionEditorSettings">
+   <property name="icon">
+    <iconset resource="../widgets/util/util.qrc">
+     <normaloff>:/util/AppIcons/document-properties.png</normaloff>:/util/AppIcons/document-properties.png</iconset>
+   </property>
+   <property name="text">
+    <string>Editor Settings</string>
+   </property>
+  </action>
+  <action name="actionAstBrowser">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>AstBrowser</string>
+   </property>
+  </action>
+  <action name="actionProjectManager">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>ProjectManager</string>
+   </property>
+  </action>
+  <action name="actionBeautified_Ast">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Beautified Ast</string>
+   </property>
+  </action>
+  <action name="actionTask_List">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Task List</string>
+   </property>
+  </action>
+  <action name="actionProperty_View">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Property View</string>
+   </property>
+  </action>
+  <action name="actionMetric_Kiviat">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Metric Kiviat</string>
+   </property>
+  </action>
+  <action name="actionNewGraphWidget">
+   <property name="icon">
+    <iconset resource="../widgets/util/util.qrc">
+     <normaloff>:/util/NodeIcons/project.gif</normaloff>:/util/NodeIcons/project.gif</iconset>
+   </property>
+   <property name="text">
+    <string>New Graph Widget</string>
+   </property>
+  </action>
+  <action name="actionNewMetricsKiviat">
+   <property name="icon">
+    <iconset resource="../widgets/QtDesignerPlugins/QtDesignerPlugins.qrc">
+     <normaloff>:/QtDesignerPlugins/icons/Kiviat.gif</normaloff>:/QtDesignerPlugins/icons/Kiviat.gif</iconset>
+   </property>
+   <property name="text">
+    <string>New Metrics Kiviat</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
@@ -342,37 +454,14 @@
    <header>AstBrowserWidget.h</header>
   </customwidget>
   <customwidget>
-   <class>AstGraphWidget</class>
-   <extends>QGraphicsView</extends>
-   <header>AstGraphWidget.h</header>
-  </customwidget>
-  <customwidget>
-   <class>AsmView</class>
-   <extends>QTreeView</extends>
-   <header>AsmView.h</header>
-   <slots>
-    <slot>gotoNode(SgNode*)</slot>
-   </slots>
-  </customwidget>
-  <customwidget>
    <class>BAstView</class>
    <extends>QTreeView</extends>
    <header>BAstView.h</header>
   </customwidget>
   <customwidget>
-   <class>KiviatView</class>
-   <extends>QGraphicsView</extends>
-   <header>KiviatView.h</header>
-  </customwidget>
-  <customwidget>
    <class>NodeInfoWidget</class>
    <extends>PropertyTreeWidget</extends>
    <header>NodeInfoWidget.h</header>
-  </customwidget>
-  <customwidget>
-   <class>MetricsKiviat</class>
-   <extends>KiviatView</extends>
-   <header>MetricsKiviat.h</header>
   </customwidget>
   <customwidget>
    <class>ProjectView</class>
@@ -383,12 +472,6 @@
    <class>PropertyTreeWidget</class>
    <extends>QTreeView</extends>
    <header>PropertyTreeWidget.h</header>
-  </customwidget>
-  <customwidget>
-   <class>RoseCodeEdit</class>
-   <extends>QFrame</extends>
-   <header>RoseCodeEdit.h</header>
-   <container>1</container>
   </customwidget>
   <customwidget>
    <class>RoseFileComboBox</class>
@@ -427,42 +510,10 @@
  </customwidgets>
  <resources>
   <include location="../widgets/util/util.qrc"/>
-  <include location="../widgets/TaskSystem/res.qrc"/>
+  <include location="../widgets/QtDesignerPlugins/QtDesignerPlugins.qrc"/>
  </resources>
  <connections>
   <connection>
-   <sender>astBrowserWidget</sender>
-   <signal>clicked(SgNode*)</signal>
-   <receiver>astGraphWidget</receiver>
-   <slot>setNode(SgNode*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>136</x>
-     <y>242</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>469</x>
-     <y>169</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>roseFileCmbBox</sender>
-   <signal>selectedFileChanged(AstFilterInterface*)</signal>
-   <receiver>astGraphWidget</receiver>
-   <slot>setFilter(AstFilterInterface*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>136</x>
-     <y>68</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>361</x>
-     <y>120</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>bAstView</sender>
    <signal>clicked(SgNode*)</signal>
    <receiver>nodeInfoWidget</receiver>
@@ -475,86 +526,6 @@
     <hint type="destinationlabel">
      <x>1105</x>
      <y>361</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>bAstView</sender>
-   <signal>clicked(SgNode*)</signal>
-   <receiver>astGraphWidget</receiver>
-   <slot>setNode(SgNode*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>136</x>
-     <y>631</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>361</x>
-     <y>120</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>bAstView</sender>
-   <signal>clicked(SgNode*)</signal>
-   <receiver>roseCodeEdit</receiver>
-   <slot>setNode(SgNode*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>136</x>
-     <y>631</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>574</x>
-     <y>169</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>astGraphWidget</sender>
-   <signal>clicked(SgNode*)</signal>
-   <receiver>nodeInfoWidget</receiver>
-   <slot>setNode(SgNode*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>361</x>
-     <y>120</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1105</x>
-     <y>361</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>astGraphWidget</sender>
-   <signal>clicked(SgNode*)</signal>
-   <receiver>roseCodeEdit</receiver>
-   <slot>setNode(SgNode*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>361</x>
-     <y>120</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>574</x>
-     <y>169</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>bAstView</sender>
-   <signal>clicked(SgNode*)</signal>
-   <receiver>asmView</receiver>
-   <slot>gotoNode(SgNode*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>136</x>
-     <y>631</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>429</x>
-     <y>413</y>
     </hint>
    </hints>
   </connection>
@@ -567,22 +538,6 @@
     <hint type="sourcelabel">
      <x>136</x>
      <y>268</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1105</x>
-     <y>361</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>asmView</sender>
-   <signal>clicked(SgNode*)</signal>
-   <receiver>nodeInfoWidget</receiver>
-   <slot>setNode(SgNode*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>429</x>
-     <y>413</y>
     </hint>
     <hint type="destinationlabel">
      <x>1105</x>
@@ -625,22 +580,6 @@
   <connection>
    <sender>asmInstructionsBar</sender>
    <signal>clicked(SgNode*)</signal>
-   <receiver>asmView</receiver>
-   <slot>gotoNode(SgNode*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>429</x>
-     <y>413</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1001</x>
-     <y>169</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>asmInstructionsBar</sender>
-   <signal>clicked(SgNode*)</signal>
    <receiver>nodeInfoWidget</receiver>
    <slot>setNode(SgNode*)</slot>
    <hints>
@@ -651,22 +590,6 @@
     <hint type="destinationlabel">
      <x>1454</x>
      <y>500</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>asmView</sender>
-   <signal>clicked(SgNode*)</signal>
-   <receiver>asmInstructionsBar</receiver>
-   <slot>setNode(SgNode*)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>1001</x>
-     <y>169</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>429</x>
-     <y>413</y>
     </hint>
    </hints>
   </connection>
@@ -699,6 +622,198 @@
     <hint type="destinationlabel">
      <x>136</x>
      <y>192</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionMetric_Kiviat</sender>
+   <signal>triggered(bool)</signal>
+   <receiver>dockWdgKiviatInfo</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>920</x>
+     <y>493</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>dockWdgKiviatInfo</sender>
+   <signal>visibilityChanged(bool)</signal>
+   <receiver>actionMetric_Kiviat</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>920</x>
+     <y>493</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionAstBrowser</sender>
+   <signal>triggered(bool)</signal>
+   <receiver>dockWdgTreeView</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>136</x>
+     <y>144</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>dockWdgTreeView</sender>
+   <signal>visibilityChanged(bool)</signal>
+   <receiver>actionAstBrowser</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>136</x>
+     <y>144</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>dockWdgBeautifiedAst</sender>
+   <signal>visibilityChanged(bool)</signal>
+   <receiver>actionBeautified_Ast</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>136</x>
+     <y>321</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionBeautified_Ast</sender>
+   <signal>triggered(bool)</signal>
+   <receiver>dockWdgBeautifiedAst</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>136</x>
+     <y>321</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionProjectManager</sender>
+   <signal>triggered(bool)</signal>
+   <receiver>dockWdgProjectView</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>136</x>
+     <y>461</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>dockWdgProjectView</sender>
+   <signal>visibilityChanged(bool)</signal>
+   <receiver>actionProjectManager</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>136</x>
+     <y>461</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionProperty_View</sender>
+   <signal>triggered(bool)</signal>
+   <receiver>dockWdgProp</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>920</x>
+     <y>246</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>dockWdgProp</sender>
+   <signal>visibilityChanged(bool)</signal>
+   <receiver>actionProperty_View</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>920</x>
+     <y>246</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionTask_List</sender>
+   <signal>triggered(bool)</signal>
+   <receiver>dockWdgTaskList</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>528</x>
+     <y>638</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>dockWdgTaskList</sender>
+   <signal>visibilityChanged(bool)</signal>
+   <receiver>actionTask_List</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>528</x>
+     <y>638</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
     </hint>
    </hints>
   </connection>

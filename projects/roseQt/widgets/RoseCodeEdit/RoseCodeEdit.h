@@ -9,6 +9,7 @@ class SgNode;
 
 class QFormatScheme;
 class QLanguageFactory;
+class QCodeEdit;
 
 /**
  * C++ Editor Widget, using QCodeEdit ( http://qcodeedit.edyuk.org )
@@ -50,6 +51,13 @@ class QDESIGNER_WIDGET_EXPORT RoseCodeEdit : public QEditor
         /// Marks a line as a warning (yellow background and exlamation-mark icon in linemarkpanel)
         void markAsWarning(int line);
 
+        /// Displays a settings dialog, where font, tabsize etc can be changed
+        static void showEditorSettingsDialog();
+        /// Returns actions which can be displayed when no editor is active
+        static QAction * getDisabledActions(const QString & name);
+
+
+        QCodeEdit * getQCodeEdit() { return editorWrapper; }
 
     protected:
         void init();
@@ -57,9 +65,10 @@ class QDESIGNER_WIDGET_EXPORT RoseCodeEdit : public QEditor
         virtual void dragEnterEvent(QDragEnterEvent * ev);
         virtual void dropEvent(QDropEvent * ev);
 
+        QCodeEdit * editorWrapper;
 
-       QFormatScheme    * m_formats;
-       static QLanguageFactory * m_languages;
+        QFormatScheme * m_formats;
+        static QLanguageFactory * m_languages;
 };
 
 #endif

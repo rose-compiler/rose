@@ -154,7 +154,7 @@ void ProjectManager::loadProjectState()
         QString projName = s.value("Name").toString();
         ProjectNode * projNode = new ProjectNode(projName);
         rootNode->addChild(projNode);
-        
+
         //projNode->addToCommandLine( "-rose:verbose 2" );
         projNode->addToCommandLine( "-DBOOST_NO_INT64_T" );
         projNode->addToCommandLine( "-I/home/heller9/opt/boost/include/boost-1_39" );
@@ -271,20 +271,20 @@ bool ProjectNode::addFile(const QString & file)
     if(! fileInfo.exists())
         return false;
 
-    qDebug() << "adding file ...";
+    qDebug() << "adding file ..." << file;
 
     if(CommandlineProcessing::isSourceFilename(fileInfo.fileName().toStdString()))
     {
         createSrcFileHeaderNode();
 
-        SourceFileNode * newFileNode = new SourceFileNode(fileInfo.fileName());
+        SourceFileNode * newFileNode = new SourceFileNode(file);
         srcFileHeaderNode->addChild(newFileNode);
         newFileNode->rebuild();
     }
     else if(CommandlineProcessing::isExecutableFilename(fileInfo.fileName().toStdString()))
     {
         createBinFileHeaderNode();
-        BinaryFileNode * binFileNode = new BinaryFileNode(fileInfo.fileName());
+        BinaryFileNode * binFileNode = new BinaryFileNode(file);
         binFileHeaderNode->addChild(binFileNode);
         binFileNode->rebuild();
     }
@@ -345,7 +345,7 @@ QStringList ProjectNode::getCommandLine() const
 void ProjectNode::addToCommandLine(const QString & s)
 {
     std::vector<std::string> cmd( sgProject->get_originalCommandLineArgumentList() );
-    
+
     cmd.push_back(s.toStdString() );
     sgProject->processCommandLine( cmd );
 }
@@ -451,7 +451,7 @@ void SourceFileNode::rebuild()
     deleteFileFromProject(sgSourceFile,pn->getSgProject());
     sgSourceFile = NULL;
 
-    task = new RoseFrontendTask(pn->getSgProject(),filename);
+    task = new RoseFrontendTask(pn->getSgProject(),path);
     connect(task,SIGNAL(finished()), SLOT(buildTaskFinished()));
 
     ProjectManager::instance()->taskListWidget()->submitTask(task);
