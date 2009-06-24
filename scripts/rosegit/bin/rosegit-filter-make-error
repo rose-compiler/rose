@@ -1,0 +1,36 @@
+#!/usr/bin/perl
+#
+# Purpose: reads GNU make(1) results from standard input and looks for errors. It then prints the part of the output
+# that's relevant to the error, based on "Entering directory" and "Leaving directory" messages and correctly handling
+# recursion.
+use strict;
+my @stack = ({dirname=>"", output=>"", error=>undef});
+
+while (<STDIN>) {
+  if (my($level,$dir) = /^make\[(\d+)\]: Entering directory `(.*)'/) {
+    $stack[$level] = {dirname=>$dir, output=>$_, error=>undef};
+    if ($level>0) {
+      my $prefix = $stack[$level-1]{dirname} . "/";
+      my $subdir = $dir;
+      if ($prefix eq substr $dir, 0, 1+length $stack[$level-1]{dirname}) {
+	$subdir = substr $dir, 1+length $stack[$level-1]{dirname};
+      }
+      $stack[$level-1]{output} .= "(omitted output from `$subdir')\n";
+    }
+  } elsif (my($level) = /^make\[(\d+)\]: Leaving directory/) {
+    $stack[$level]{output} .= $_ . "\n";
+    if ($stack[$level]{error}) {
+      print "===============================================================================\n";
+      print "=== Error detected in this section of the output                            ===\n";
+      print "===============================================================================\n";
+      print $stack[$level]{output};
+    }
+    splice @stack, $level;
+  } elsif (my($level) = /^make\[(\d+)\]: \*\*\*/) {
+    $stack[$level]{output} .= $_;
+    $stack[$level]{error} .= $_;
+  } else {
+    my $level = @stack ? @stack-1 : 0;
+    $stack[$level]{output} .= $_;
+  }
+}

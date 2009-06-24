@@ -89,29 +89,10 @@ rosegit_environment () {
     export LD_LIBRARY_PATH
 }
 
-# Finds the part of the "make" output where an error occurred. It does this by looking for GNU makes "Entering directory" and
-# "Leaving directory" messages and the error messages from make.  Unfortunately, it assumes that make's "-j" was not used since
-# doing so can cause lines to be output in strange orders. This function reads standard input.
+# Filters output of GNU make(1) so that only parts where an error occurred are output. Reads stdin and writes to stdout using
+# the rosegit-filter-make-error perl script found in the same directory as the rosegit command that's using this function.
 rosegit_filter_make_error () {
-    sed '
-        /^make.*: Entering directory/ {
-            x
-            s/.*//
-            x
-        }
-        /^make.*: Entering directory/,/^make.*: Leaving directory/ H
-        /^make.*: Leaving directory/ {
-            x
-            /\nmake.*: \*\*\*/ {
-                i\
-=============================================================================== \
-=== Error detected in this section of the output                            === \
-===============================================================================
-                p
-            }
-        }
-        d
-'
+    $mydir/rosegit-filter-make-error
 }
 
 # Finds the top of a build tree by looking at the specified directory and all ancestors and returning the first one that is
