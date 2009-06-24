@@ -180,6 +180,10 @@ void DisplayGraphNode::setScene(QGraphicsScene * sc)
     DisplayNode::setScene(sc);
 }
 
+bool DisplayGraphNode::isAdjacentTo(DisplayGraphNode * o) const
+{
+
+}
 
 // ---------------------- DisplayTreeNode -------------------------------
 
@@ -480,9 +484,9 @@ void DisplayGraph::addEdge ( int i1, int i2)
     addEdge(n[i1],n[i2]);
 }
 
-void DisplayGraph::addNode(DisplayGraphNode * n)
+void DisplayGraph::addNode(DisplayGraphNode * node)
 {
-    n.push_back(n);
+    n.push_back(node);
 }
 
 void DisplayGraph::doLayout()
@@ -518,7 +522,6 @@ QPointF DisplayGraph::repulsiveForce (const QPointF & n1, const QPointF & n2)
 
 QPointF DisplayGraph::attractiveForce(const QPointF & n1, const QPointF & n2)
 {
-    static const qreal OPT_SQ = OPTIMAL_DISTANCE*OPTIMAL_DISTANCE;
     QPointF v( n2-n1);
     return  ( (v.x()*v.x() + v.y() * v.y())  / OPTIMAL_DISTANCE) * v;
 }
