@@ -169,6 +169,9 @@ void AsmView::on_nodeDropped(SgNode * node, const QPoint & pos)
 
 void AsmView::contextMenuEvent( QContextMenuEvent *event )
 {
+    if(curNode != NULL) // don't show context-menu when view is empty
+        return;
+
     QObject *actionParent = new QObject();
     QAction *actionSetDelegate = new QAction( tr( "Set Background Options" ), actionParent );
 
@@ -224,21 +227,6 @@ void AsmView::contextMenuEvent( QContextMenuEvent *event )
             setItemDelegateForColumn( 7, rightDelegate->copy() );
             setItemDelegateForColumn( 8, rightDelegate->copy() );
         }
-
-
-        /*MetricsConfig *globalConfig( ProjectManager::instance()->getMetricsConfig( curNode ) );
-        MetricBgDelegate *delegate( dynamic_cast<MetricBgDelegate *>( itemDelegate() ) );
-        if( delegate )
-        {
-            MetricsConfig localConfig( delegate->configureId(), globalConfig );
-
-            localConfig.configureSingle();
-            MetricsConfig::iterator begin( localConfig.begin() );
-            MetricsConfig::iterator end( localConfig.end() );
-            if( begin != end )
-                delegate->metricsInfo() = *begin;
-
-        }*/
     }
 
     delete actionParent;

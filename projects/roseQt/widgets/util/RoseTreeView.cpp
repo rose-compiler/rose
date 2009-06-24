@@ -128,13 +128,8 @@ void RoseTreeView::mouseMoveEvent(QMouseEvent *ev)
     if(!nodeAsVariant.isValid())
         return  QTreeView::mouseMoveEvent(ev);;
     SgNode * node = qvariant_cast<SgNode*>(nodeAsVariant);
-
-
-    // write node into into QByteArray
-    /*QByteArray d;
-    QDataStream s(&d, QIODevice::Unbuffered | QIODevice::ReadWrite);
-    s.writeRawData((const char*) & node, sizeof(SgNode*));*/
-
+    if(!node)
+        return;
 
     // create drag object, set pixmap and data
     QDrag *drag = new QDrag(viewport());

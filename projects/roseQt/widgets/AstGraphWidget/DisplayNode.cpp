@@ -457,5 +457,86 @@ void DisplayTreeGenerator::visit(DisplayTreeNode * parent, SgNode * sgNode, AstF
 }
 
 
+// ---------------------- DisplayGraph -------------------------------
+
+DisplayGraph::DisplayGraph(QObject * par)
+    : QObject(par)
+{
+}
+
+DisplayGraph::~DisplayGraph()
+{
+    qDeleteAll(n);
+}
+
+void DisplayGraph::addEdge(DisplayGraphNode * n1, DisplayGraphNode * n2)
+{
+    DisplayEdge * e = new DisplayEdge(n1,n2);
+    DisplayGraphNode::addEdge(e);
+}
+
+void DisplayGraph::addEdge ( int i1, int i2)
+{
+    addEdge(n[i1],n[i2]);
+}
+
+void DisplayGraph::addNode(DisplayGraphNode * n)
+{
+    n.push_back(n);
+}
+
+void DisplayGraph::doLayout()
+{
+
+}
+
+
+void DisplayGraph::springBasedLayoutIteration(qreal delta)
+{
+    for(int i=0; i < n.size(); i++)
+    {
+        QPointF force(0,0);
+        for(int j=0; j<n.size(); j++)
+        {
+            if(n[i]->isAdjacentTo(n[j]))
+                force += attractiveForce(n[i]->pos(),n[j]->pos());
+            else
+                force += repulsiveForce(n[i]->pos(),n[j]->pos());
+        }
+
+        n[i]->setPos(n[i]->pos() + delta * force );
+    }
+}
+
+QPointF DisplayGraph::repulsiveForce (const QPointF & n1, const QPointF & n2)
+{
+    static const qreal OPT_SQ = OPTIMAL_DISTANCE*OPTIMAL_DISTANCE;
+    QLineF l (n1,n2);
+    QPointF v (n1-n2);
+    return  ( OPT_SQ / l.length() ) * v;
+}
+
+QPointF DisplayGraph::attractiveForce(const QPointF & n1, const QPointF & n2)
+{
+    static const qreal OPT_SQ = OPTIMAL_DISTANCE*OPTIMAL_DISTANCE;
+    QPointF v( n2-n1);
+    return  ( (v.x()*v.x() + v.y() * v.y())  / OPTIMAL_DISTANCE) * v;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

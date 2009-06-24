@@ -100,6 +100,7 @@ class DisplayGraphNode : public DisplayNode
         /// Overwritten to set scene of edges
         virtual void setScene(QGraphicsScene * scene);
 
+        bool isAdjacentTo(DisplayGraphNode * o) const;
     protected:
         virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value);
 
@@ -108,6 +109,32 @@ class DisplayGraphNode : public DisplayNode
 };
 
 
+
+class DisplayGraph : public QObject
+{
+    public:
+        DisplayGraph(QObject * par = 0);
+        ~DisplayGraph();
+
+        void doLayout();
+
+        QList<DisplayGraphNode*> & nodes()  { return n; }
+
+        void addNode (DisplayGraphNode* n );
+        void addEdge (int nodeId1, int nodeId2 );
+        void addEdge (DisplayGraphNode * n1, DisplayGraphNode * n2);
+
+    protected:
+
+        void springBasedLayoutIteration(qreal delta);
+        QPointF repulsiveForce (const QPointF & n1, const QPointF & n2);
+        QPointF attractiveForce(const QPointF & n1, const QPointF & n2);
+
+
+        QList<DisplayGraphNode * >  n;
+
+        static const qreal OPTIMAL_DISTANCE=20;
+};
 
 /**
  * A DisplayTreeNode is a DisplayGraphNode which has only outputEdges (children)
