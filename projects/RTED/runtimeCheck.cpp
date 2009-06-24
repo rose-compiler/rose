@@ -127,8 +127,10 @@ runtimeCheck(int argc, char** argv,vector <string>& rtedfiles) {
   // Init Transformation object
   RtedTransformation rted;
   // Start parsing the project and insert header files
+  SgProject* project= NULL;
+#if 0
   cerr << "Parsing project (1st time)..." << endl;
-  SgProject* project = rted.parse(argc, argv);
+  project = rted.parse(argc, argv);
   cerr << "Adding headers to project and writing out the project." << endl;
   rted.insertProlog(project);
   // The backend results in a file called rose_filename.c
@@ -153,6 +155,7 @@ runtimeCheck(int argc, char** argv,vector <string>& rtedfiles) {
     i++;
   }
   cerr << "argv[1] : " << argv[1] << endl;
+#endif
 
   cerr << "Parsing rose_project... (2nd time)" << endl;
   for (int i=0;i<argc;++i)
