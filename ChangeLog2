@@ -1,3 +1,51 @@
+2009-06-24 00:28  bauer25
+
+	* [r6328] /trunk/ROSE/projects/RTED/rted_qt/DebugDialog.cpp,
+	  /trunk/ROSE/projects/RTED/rted_qt/DebugDialog.h,
+	  /trunk/ROSE/projects/RTED/rted_qt/DebugDialog.ui,
+	  /trunk/ROSE/projects/RTED/rted_qt/rted_qt.cpp,
+	  /trunk/ROSE/projects/compass/tools/compass/gui2/CompassMainWindow.cpp,
+	  /trunk/ROSE/projects/compass/tools/compass/gui2/CompassMainWindow.h,
+	  /trunk/ROSE/projects/roseQt/demo/MainWindow.cpp,
+	  /trunk/ROSE/projects/roseQt/demo/MainWindow.h,
+	  /trunk/ROSE/projects/roseQt/demo/MainWindow.ui,
+	  /trunk/ROSE/projects/roseQt/widgets/AsmView/AsmView.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/AstGraphWidget/AstGraphWidget.h,
+	  /trunk/ROSE/projects/roseQt/widgets/ProjectManager/Project.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/PropertyTreeWidget/PropertyTreeWidget.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/QtGradientEditor/libqtgradienteditor.a,
+	  /trunk/ROSE/projects/roseQt/widgets/RoseCodeEdit/QCodeEdit/qcodeedit.h,
+	  /trunk/ROSE/projects/roseQt/widgets/RoseCodeEdit/RoseCodeEdit.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/RoseCodeEdit/RoseCodeEdit.h,
+	  /trunk/ROSE/projects/roseQt/widgets/TaskSystem/RoseFrontendTask.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/util/ItemTreeModel.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/util/MetricBgDelegate.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/util/SgNodeUtil.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/util/SgNodeUtil.h,
+	  /trunk/ROSE/projects/roseQt/widgets/util/util.qrc: RTED Qt-Debug
+	  Dialog debugged
+	  
+	  - cleaned up MainWindow of roseQt demo
+
+2009-06-23 23:13  liao6
+
+	* [r6327] /trunk/ROSE/projects/autoTuning/tests/Makefile.am: minor
+	  fix
+
+2009-06-23 22:37  panas2
+
+	* [r6326] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.c,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/rted_qt/Makefile.am,
+	  /trunk/ROSE/projects/RTED/rted_qt/RuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/rted_qt/rted_qt.cpp,
+	  /trunk/ROSE/projects/RTED/rted_qt/rted_qt.h,
+	  /trunk/ROSE/src/ROSETTA/Grammar/Support.code,
+	  /trunk/ROSE/src/midend/binaryAnalyses/RoseBin_FlowAnalysis.cpp:
+	  RTED QT work
+
 2009-06-23 17:35  liao6
 
 	* [r6324] /trunk/ROSE/projects/autoTuning/tests/Makefile.am: fixed
