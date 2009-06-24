@@ -1,3 +1,40 @@
+2009-06-24 16:42  bauer25
+
+	* [r6335]
+	  /trunk/ROSE/projects/roseQt/widgets/AstGraphWidget/DisplayNode.cpp:
+	  Corrected last checkin
+
+2009-06-24 16:38  bauer25
+
+	* [r6334] /trunk/ROSE/projects/roseQt/widgets/AsmView/AsmView.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/AstGraphWidget/DisplayNode.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/AstGraphWidget/DisplayNode.h,
+	  /trunk/ROSE/projects/roseQt/widgets/util/AppIcons,
+	  /trunk/ROSE/projects/roseQt/widgets/util/AppIcons/application-exit.png,
+	  /trunk/ROSE/projects/roseQt/widgets/util/AppIcons/document-open.png,
+	  /trunk/ROSE/projects/roseQt/widgets/util/AppIcons/document-properties.png,
+	  /trunk/ROSE/projects/roseQt/widgets/util/AppIcons/document-save-as.png,
+	  /trunk/ROSE/projects/roseQt/widgets/util/AppIcons/document-save.png,
+	  /trunk/ROSE/projects/roseQt/widgets/util/RoseTreeView.cpp: Added
+	  missing icon-files for roseQt
+
+2009-06-24 13:55  matzke
+
+	* [r6333]
+	  /trunk/ROSE/scripts/rosegit/bin/rosegit-filter-make-error,
+	  /trunk/ROSE/scripts/rosegit/bin/rosegit-functions.sh: Fixed
+	  rosegit bug regarding error messages in recursive make
+
+2009-06-24 13:55  matzke
+
+	* [r6332] /trunk/ROSE/scripts/rosegit/config/defaults.conf: Added
+	  --with-sqlite3 to default rosegit config
+
+2009-06-24 13:55  matzke
+
+	* [r6331] /trunk/ROSE/scripts/rosegit/config/rpm.ninjai.conf: Added
+	  rosegit configuration for ninjai
+
 2009-06-24 00:28  bauer25
 
 	* [r6328] /trunk/ROSE/projects/RTED/rted_qt/DebugDialog.cpp,
