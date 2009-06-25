@@ -1,3 +1,18 @@
+2009-06-25 00:24  panas2
+
+	* [r6340] /trunk/ROSE/projects/RTED/Makefile.am: Last version of
+	  Makefile
+
+2009-06-24 23:23  panas2
+
+	* [r6339] /trunk/ROSE/projects/RTED/Makefile.am: RTED bugfix
+
+2009-06-24 23:17  panas2
+
+	* [r6338] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/runtimeCheck.cpp: Updated Makefile in
+	  RTED
+
 2009-06-24 16:42  bauer25
 
 	* [r6335]
