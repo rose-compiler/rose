@@ -169,15 +169,18 @@ check-C-array:
 	done ; \
 	echo "Found files : `find $$dir -name "*.c" | wc` " ; \
 	for file in $$(find $$dir -name "*.c"| sort); do \
+	if [[ "$$file" =~ "_s.c" ]]  ; then \
+	  continue;\
+	fi; \
 	echo "Current file : $$file " ; \
+	file2=$$(echo $$file | sed -e 's/.\{2\}$$//' ); \
+	file2=$$(echo "$$file2"_s.c); \
         file_r=$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
 	cp $$file $$file_r ; \
 	file=$$file_r;\
         binfile=$$(echo "$$file".bin); \
 	if ! [ -f $$binfile ]; then \
-	if !  [[ "$$file" =~ "_s.c" ]]  ; then \
-	  file2=$$(echo $$file | sed -e 's/..$$//'  ); \
-	  file2=$$(echo "$$file2"_s.c); \
+	  echo "Checking if _s file exists : $$file2 " ;\
 	  if [ -f $$file2 ]; then \
             file2_r=$$(echo $$file2 | sed -e 's/^\(.*\/\)*//'  ); \
 	    echo "  cp  $$file2 to $$file2_r" ; \
@@ -202,6 +205,9 @@ check-C-array:
 	  sed -i '1i\#define EXITCODE_OK 0' $$file ; \
 	fi ; \
 	  if [ -f $$file2 ]; then \
+	  file_bin=$$(echo "$$file".bin); \
+	  echo "Testing if original files compile2 : $(CXX) -g -o $$file_bin $$file $$file2 $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) " ; \
+	  $(CXX) -g -o $$file_bin $$file $$file2 $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	  echo "Script : Running Transformation 2 ... $$file $$file2 -I$(srcdir) " ; \
 	  ./runtimeCheck 2 $$file $$file2 -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$$dir  ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
@@ -213,28 +219,20 @@ check-C-array:
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
-	  file_bin=$$(echo "$$file".bin); \
-	  $(CXX) -g -o $$file_bin $$file $$file2 $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	else \
+	  file_bin=$$(echo "$$file".bin); \
+	  echo "Testing if original program compiles : $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) " ; \
+	  $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	  echo "Script : Running Transformation ... $$file -I$(srcdir)" ; \
 	  ./runtimeCheck 1 $$file -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$$dir ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
-	  echo "removing #define EXITCODE_OK 0 in $$file" ; \
-	  if [ `grep "#define EXITCODE_OK 0" $$file | wc | awk '{print $$1}' ` -eq 1 ] ; then \
-	    sed -i '1d' $$file ; \
-	  fi ; \
 	  file_rose=rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
 	  file_rose_bin=$$(echo "$$file_rose".bin); \
 	  echo "Compiling 1f:  $(CXX) -g -o $$file_rose_bin $$file_rose" ;\
-	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER); \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
-	  file_bin=$$(echo "$$file".bin); \
-	  $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
-	fi; \
-	else \
-	  echo "Skipping _s file." ; \
 	fi; \
 	else \
 	  echo "$$binfile exists.\n" ; \
@@ -252,15 +250,18 @@ check-C-string:
 	done ; \
 	echo "Found files : `find $$dir -name "*.c" | wc` " ; \
 	for file in $$(find $$dir -name "*.c"| sort); do \
+	if [[ "$$file" =~ "_s.c" ]]  ; then \
+	  continue;\
+	fi; \
 	echo "Current file : $$file " ; \
+	file2=$$(echo $$file | sed -e 's/.\{2\}$$//' ); \
+	file2=$$(echo "$$file2"_s.c); \
         file_r=$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
 	cp $$file $$file_r ; \
 	file=$$file_r;\
         binfile=$$(echo "$$file".bin); \
 	if ! [ -f $$binfile ]; then \
-	if !  [[ "$$file" =~ "_s.c" ]]  ; then \
-	  file2=$$(echo $$file | sed -e 's/..$$//'  ); \
-	  file2=$$(echo "$$file2"_s.c); \
+	  echo "Checking if _s file exists : $$file2 " ;\
 	  if [ -f $$file2 ]; then \
             file2_r=$$(echo $$file2 | sed -e 's/^\(.*\/\)*//'  ); \
 	    echo "  cp  $$file2 to $$file2_r" ; \
@@ -285,6 +286,9 @@ check-C-string:
 	  sed -i '1i\#define EXITCODE_OK 0' $$file ; \
 	fi ; \
 	  if [ -f $$file2 ]; then \
+	  file_bin=$$(echo "$$file".bin); \
+	  echo "Testing if original files compile2 : $(CXX) -g -o $$file_bin $$file $$file2 $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) " ; \
+	  $(CXX) -g -o $$file_bin $$file $$file2 $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	  echo "Script : Running Transformation 2 ... $$file $$file2 -I$(srcdir) " ; \
 	  ./runtimeCheck 2 $$file $$file2 -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$$dir  ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
@@ -296,28 +300,20 @@ check-C-string:
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
-	  file_bin=$$(echo "$$file".bin); \
-	  $(CXX) -g -o $$file_bin $$file $$file2 $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	else \
+	  file_bin=$$(echo "$$file".bin); \
+	  echo "Testing if original program compiles : $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) " ; \
+	  $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	  echo "Script : Running Transformation ... $$file -I$(srcdir)" ; \
 	  ./runtimeCheck 1 $$file -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$$dir ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
-	  echo "removing #define EXITCODE_OK 0 in $$file" ; \
-	  if [ `grep "#define EXITCODE_OK 0" $$file | wc | awk '{print $$1}' ` -eq 1 ] ; then \
-	    sed -i '1d' $$file ; \
-	  fi ; \
 	  file_rose=rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
 	  file_rose_bin=$$(echo "$$file_rose".bin); \
 	  echo "Compiling 1f:  $(CXX) -g -o $$file_rose_bin $$file_rose" ;\
-	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER); \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
-	  file_bin=$$(echo "$$file".bin); \
-	  $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
-	fi; \
-	else \
-	  echo "Skipping _s file." ; \
 	fi; \
 	else \
 	  echo "$$binfile exists.\n" ; \
@@ -334,15 +330,18 @@ check-C-subprogram:
 	done ; \
 	echo "Found files : `find $$dir -name "*.c" | wc` " ; \
 	for file in $$(find $$dir -name "*.c"| sort); do \
+	if [[ "$$file" =~ "_s.c" ]]  ; then \
+	  continue;\
+	fi; \
 	echo "Current file : $$file " ; \
+	file2=$$(echo $$file | sed -e 's/.\{2\}$$//' ); \
+	file2=$$(echo "$$file2"_s.c); \
         file_r=$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
 	cp $$file $$file_r ; \
 	file=$$file_r;\
         binfile=$$(echo "$$file".bin); \
 	if ! [ -f $$binfile ]; then \
-	if !  [[ "$$file" =~ "_s.c" ]]  ; then \
-	  file2=$$(echo $$file | sed -e 's/..$$//'  ); \
-	  file2=$$(echo "$$file2"_s.c); \
+	  echo "Checking if _s file exists : $$file2 " ;\
 	  if [ -f $$file2 ]; then \
             file2_r=$$(echo $$file2 | sed -e 's/^\(.*\/\)*//'  ); \
 	    echo "  cp  $$file2 to $$file2_r" ; \
@@ -367,6 +366,9 @@ check-C-subprogram:
 	  sed -i '1i\#define EXITCODE_OK 0' $$file ; \
 	fi ; \
 	  if [ -f $$file2 ]; then \
+	  file_bin=$$(echo "$$file".bin); \
+	  echo "Testing if original files compile2 : $(CXX) -g -o $$file_bin $$file $$file2 $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) " ; \
+	  $(CXX) -g -o $$file_bin $$file $$file2 $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	  echo "Script : Running Transformation 2 ... $$file $$file2 -I$(srcdir) " ; \
 	  ./runtimeCheck 2 $$file $$file2 -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$$dir  ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
@@ -378,28 +380,20 @@ check-C-subprogram:
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
-	  file_bin=$$(echo "$$file".bin); \
-	  $(CXX) -g -o $$file_bin $$file $$file2 $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	else \
+	  file_bin=$$(echo "$$file".bin); \
+	  echo "Testing if original program compiles : $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) " ; \
+	  $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	  echo "Script : Running Transformation ... $$file -I$(srcdir)" ; \
 	  ./runtimeCheck 1 $$file -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$$dir ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
-	  echo "removing #define EXITCODE_OK 0 in $$file" ; \
-	  if [ `grep "#define EXITCODE_OK 0" $$file | wc | awk '{print $$1}' ` -eq 1 ] ; then \
-	    sed -i '1d' $$file ; \
-	  fi ; \
 	  file_rose=rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
 	  file_rose_bin=$$(echo "$$file_rose".bin); \
 	  echo "Compiling 1f:  $(CXX) -g -o $$file_rose_bin $$file_rose" ;\
-	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER); \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
-	  file_bin=$$(echo "$$file".bin); \
-	  $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
-	fi; \
-	else \
-	  echo "Skipping _s file." ; \
 	fi; \
 	else \
 	  echo "$$binfile exists.\n" ; \
@@ -417,15 +411,18 @@ check-C-allocation:
 	done ; \
 	echo "Found files : `find $$dir -name "*.c" | wc` " ; \
 	for file in $$(find $$dir -name "*.c"| sort); do \
+	if [[ "$$file" =~ "_s.c" ]]  ; then \
+	  continue;\
+	fi; \
 	echo "Current file : $$file " ; \
+	file2=$$(echo $$file | sed -e 's/.\{2\}$$//' ); \
+	file2=$$(echo "$$file2"_s.c); \
         file_r=$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
 	cp $$file $$file_r ; \
 	file=$$file_r;\
         binfile=$$(echo "$$file".bin); \
 	if ! [ -f $$binfile ]; then \
-	if !  [[ "$$file" =~ "_s.c" ]]  ; then \
-	  file2=$$(echo $$file | sed -e 's/..$$//'  ); \
-	  file2=$$(echo "$$file2"_s.c); \
+	  echo "Checking if _s file exists : $$file2 " ;\
 	  if [ -f $$file2 ]; then \
             file2_r=$$(echo $$file2 | sed -e 's/^\(.*\/\)*//'  ); \
 	    echo "  cp  $$file2 to $$file2_r" ; \
@@ -450,6 +447,9 @@ check-C-allocation:
 	  sed -i '1i\#define EXITCODE_OK 0' $$file ; \
 	fi ; \
 	  if [ -f $$file2 ]; then \
+	  file_bin=$$(echo "$$file".bin); \
+	  echo "Testing if original files compile2 : $(CXX) -g -o $$file_bin $$file $$file2 $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) " ; \
+	  $(CXX) -g -o $$file_bin $$file $$file2 $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	  echo "Script : Running Transformation 2 ... $$file $$file2 -I$(srcdir) " ; \
 	  ./runtimeCheck 2 $$file $$file2 -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$$dir  ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
@@ -461,28 +461,20 @@ check-C-allocation:
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
-	  file_bin=$$(echo "$$file".bin); \
-	  $(CXX) -g -o $$file_bin $$file $$file2 $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	else \
+	  file_bin=$$(echo "$$file".bin); \
+	  echo "Testing if original program compiles : $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) " ; \
+	  $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	  echo "Script : Running Transformation ... $$file -I$(srcdir)" ; \
 	  ./runtimeCheck 1 $$file -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$$dir ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
-	  echo "removing #define EXITCODE_OK 0 in $$file" ; \
-	  if [ `grep "#define EXITCODE_OK 0" $$file | wc | awk '{print $$1}' ` -eq 1 ] ; then \
-	    sed -i '1d' $$file ; \
-	  fi ; \
 	  file_rose=rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
 	  file_rose_bin=$$(echo "$$file_rose".bin); \
 	  echo "Compiling 1f:  $(CXX) -g -o $$file_rose_bin $$file_rose" ;\
-	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER); \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
-	  file_bin=$$(echo "$$file".bin); \
-	  $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
-	fi; \
-	else \
-	  echo "Skipping _s file." ; \
 	fi; \
 	else \
 	  echo "$$binfile exists.\n" ; \
@@ -501,15 +493,18 @@ check-C-inputoutput:
 	done ; \
 	echo "Found files : `find $$dir -name "*.c" | wc` " ; \
 	for file in $$(find $$dir -name "*.c"| sort); do \
+	if [[ "$$file" =~ "_s.c" ]]  ; then \
+	  continue;\
+	fi; \
 	echo "Current file : $$file " ; \
+	file2=$$(echo $$file | sed -e 's/.\{2\}$$//' ); \
+	file2=$$(echo "$$file2"_s.c); \
         file_r=$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
 	cp $$file $$file_r ; \
 	file=$$file_r;\
         binfile=$$(echo "$$file".bin); \
 	if ! [ -f $$binfile ]; then \
-	if !  [[ "$$file" =~ "_s.c" ]]  ; then \
-	  file2=$$(echo $$file | sed -e 's/..$$//'  ); \
-	  file2=$$(echo "$$file2"_s.c); \
+	  echo "Checking if _s file exists : $$file2 " ;\
 	  if [ -f $$file2 ]; then \
             file2_r=$$(echo $$file2 | sed -e 's/^\(.*\/\)*//'  ); \
 	    echo "  cp  $$file2 to $$file2_r" ; \
@@ -534,6 +529,9 @@ check-C-inputoutput:
 	  sed -i '1i\#define EXITCODE_OK 0' $$file ; \
 	fi ; \
 	  if [ -f $$file2 ]; then \
+	  file_bin=$$(echo "$$file".bin); \
+	  echo "Testing if original files compile2 : $(CXX) -g -o $$file_bin $$file $$file2 $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) " ; \
+	  $(CXX) -g -o $$file_bin $$file $$file2 $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	  echo "Script : Running Transformation 2 ... $$file $$file2 -I$(srcdir) " ; \
 	  ./runtimeCheck 2 $$file $$file2 -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$$dir  ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
@@ -545,28 +543,20 @@ check-C-inputoutput:
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
-	  file_bin=$$(echo "$$file".bin); \
-	  $(CXX) -g -o $$file_bin $$file $$file2 $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	else \
+	  file_bin=$$(echo "$$file".bin); \
+	  echo "Testing if original program compiles : $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) " ; \
+	  $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	  echo "Script : Running Transformation ... $$file -I$(srcdir)" ; \
 	  ./runtimeCheck 1 $$file -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$$dir ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
-	  echo "removing #define EXITCODE_OK 0 in $$file" ; \
-	  if [ `grep "#define EXITCODE_OK 0" $$file | wc | awk '{print $$1}' ` -eq 1 ] ; then \
-	    sed -i '1d' $$file ; \
-	  fi ; \
 	  file_rose=rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
 	  file_rose_bin=$$(echo "$$file_rose".bin); \
 	  echo "Compiling 1f:  $(CXX) -g -o $$file_rose_bin $$file_rose" ;\
-	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER); \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
-	  file_bin=$$(echo "$$file".bin); \
-	  $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
-	fi; \
-	else \
-	  echo "Skipping _s file." ; \
 	fi; \
 	else \
 	  echo "$$binfile exists.\n" ; \
@@ -584,15 +574,18 @@ check-C-memoryleaks:
 	done ; \
 	echo "Found files : `find $$dir -name "*.c" | wc` " ; \
 	for file in $$(find $$dir -name "*.c"| sort); do \
+	if [[ "$$file" =~ "_s.c" ]]  ; then \
+	  continue;\
+	fi; \
 	echo "Current file : $$file " ; \
+	file2=$$(echo $$file | sed -e 's/.\{2\}$$//' ); \
+	file2=$$(echo "$$file2"_s.c); \
         file_r=$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
 	cp $$file $$file_r ; \
 	file=$$file_r;\
         binfile=$$(echo "$$file".bin); \
 	if ! [ -f $$binfile ]; then \
-	if !  [[ "$$file" =~ "_s.c" ]]  ; then \
-	  file2=$$(echo $$file | sed -e 's/..$$//'  ); \
-	  file2=$$(echo "$$file2"_s.c); \
+	  echo "Checking if _s file exists : $$file2 " ;\
 	  if [ -f $$file2 ]; then \
             file2_r=$$(echo $$file2 | sed -e 's/^\(.*\/\)*//'  ); \
 	    echo "  cp  $$file2 to $$file2_r" ; \
@@ -617,6 +610,9 @@ check-C-memoryleaks:
 	  sed -i '1i\#define EXITCODE_OK 0' $$file ; \
 	fi ; \
 	  if [ -f $$file2 ]; then \
+	  file_bin=$$(echo "$$file".bin); \
+	  echo "Testing if original files compile2 : $(CXX) -g -o $$file_bin $$file $$file2 $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) " ; \
+	  $(CXX) -g -o $$file_bin $$file $$file2 $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	  echo "Script : Running Transformation 2 ... $$file $$file2 -I$(srcdir) " ; \
 	  ./runtimeCheck 2 $$file $$file2 -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$$dir  ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
@@ -628,28 +624,20 @@ check-C-memoryleaks:
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
-	  file_bin=$$(echo "$$file".bin); \
-	  $(CXX) -g -o $$file_bin $$file $$file2 $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	else \
+	  file_bin=$$(echo "$$file".bin); \
+	  echo "Testing if original program compiles : $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) " ; \
+	  $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	  echo "Script : Running Transformation ... $$file -I$(srcdir)" ; \
 	  ./runtimeCheck 1 $$file -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$$dir ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
-	  echo "removing #define EXITCODE_OK 0 in $$file" ; \
-	  if [ `grep "#define EXITCODE_OK 0" $$file | wc | awk '{print $$1}' ` -eq 1 ] ; then \
-	    sed -i '1d' $$file ; \
-	  fi ; \
 	  file_rose=rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
 	  file_rose_bin=$$(echo "$$file_rose".bin); \
 	  echo "Compiling 1f:  $(CXX) -g -o $$file_rose_bin $$file_rose" ;\
-	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER); \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
-	  file_bin=$$(echo "$$file".bin); \
-	  $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
-	fi; \
-	else \
-	  echo "Skipping _s file." ; \
 	fi; \
 	else \
 	  echo "$$binfile exists.\n" ; \
