@@ -40,6 +40,8 @@ class MainWindow : public QMainWindow
         void on_actionNewCodeEditor_triggered();
         void on_actionNewGraphWidget_triggered();
         void on_actionNewMetricsKiviat_triggered();
+        void on_actionNewAstBrowser_triggered();
+        void on_actionNewPropertyView_triggered();
 
         void on_actionSaveAs_triggered();
         void on_actionOpen_triggered();

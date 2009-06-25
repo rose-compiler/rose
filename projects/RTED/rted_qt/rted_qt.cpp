@@ -11,7 +11,7 @@ void showDebugDialog(struct RuntimeVariablesType * stack, int stackSize,
                      struct MemoryType * mem, int memSize,
                      char* filename, int row)
 {
-    static QApplication app(0,NULL);
+    static QApplication * app = new QApplication (0,NULL);
     static DebugDialog * dlg = new DebugDialog();
 
     QCoreApplication::setOrganizationName("LLNL");
@@ -26,7 +26,7 @@ void showDebugDialog(struct RuntimeVariablesType * stack, int stackSize,
     dlg->setEditorMark(filename,row);
 
     dlg->showMaximized();
-    app.exec();
+    app->exec();
 }
 
 #if 0

@@ -156,8 +156,8 @@ void ProjectManager::loadProjectState()
         rootNode->addChild(projNode);
 
         //projNode->addToCommandLine( "-rose:verbose 2" );
-        projNode->addToCommandLine( "-DBOOST_NO_INT64_T" );
-        projNode->addToCommandLine( "-I/home/heller9/opt/boost/include/boost-1_39" );
+        //cprojNode->addToCommandLine( "-DBOOST_NO_INT64_T" );
+        //projNode->addToCommandLine( "-I/home/heller9/opt/boost/include/boost-1_39" );
 
         int size = s.beginReadArray("files");
         for(int i=0; i < size; i++)
@@ -183,7 +183,7 @@ void ProjectManager::loadProjectState()
             SgBinaryFile *binFile( projNode->getBinaryFile( i )->getSgBinaryFile() );
 
             // Annotate with mapping from assembly code to C++ Code
-            AsmFunctions mapper( binFile );
+            AsmToSourceMapper mapper( binFile );
             // map to every source file ... for now ...
             for( int j = 0; j < projNode->getSourceFileCount(); ++j )
             {
@@ -273,7 +273,7 @@ bool ProjectNode::addFile(const QString & file)
 
     qDebug() << "adding file ..." << file;
 
-    if(CommandlineProcessing::isSourceFilename(fileInfo.fileName().toStdString()))
+    if(CommandlineProcessing::isSourceFilename(fileInfo.absoluteFilePath().toStdString()))
     {
         createSrcFileHeaderNode();
 
@@ -281,7 +281,7 @@ bool ProjectNode::addFile(const QString & file)
         srcFileHeaderNode->addChild(newFileNode);
         newFileNode->rebuild();
     }
-    else if(CommandlineProcessing::isExecutableFilename(fileInfo.fileName().toStdString()))
+    else if(CommandlineProcessing::isExecutableFilename(fileInfo.absoluteFilePath().toStdString()))
     {
         createBinFileHeaderNode();
         BinaryFileNode * binFileNode = new BinaryFileNode(file);
@@ -419,6 +419,7 @@ SourceFileNode::SourceFileNode(const QString & _path)
 {
     QFileInfo fileInfo(path);
     filename=fileInfo.fileName();
+    path=fileInfo.absoluteFilePath();
 
     Q_ASSERT( CommandlineProcessing::isSourceFilename(filename.toStdString()) );
 }
@@ -502,6 +503,8 @@ BinaryFileNode::BinaryFileNode(const QString & _path)
     : path(_path),compileTask(NULL),frontendTask(NULL),sgBinaryFile(NULL)
 {
     QFileInfo fileInfo(path);
+    path=fileInfo.absoluteFilePath();
+    qDebug() << "BinaryFile Node constructor path=" << path;
     filename=fileInfo.fileName();
 }
 
@@ -553,7 +556,7 @@ void BinaryFileNode::submitFrontendTask()
     ProjectNode * pn = dynamic_cast<ProjectNode*>(getParent()->getParent() );
     Q_ASSERT(pn);
 
-    frontendTask = new RoseFrontendTask(pn->getSgProject(),filename);
+    frontendTask = new RoseFrontendTask(pn->getSgProject(),path);
     connect(frontendTask,SIGNAL(finished()), SLOT(frontendTaskFinished()));
 
     ProjectManager::instance()->taskListWidget()->submitTask(frontendTask);

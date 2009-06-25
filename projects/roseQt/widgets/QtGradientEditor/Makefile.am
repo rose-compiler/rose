@@ -21,8 +21,6 @@ QTGRADIENT_MOC_FILES = moc_qtcolorbutton.cxx \
 
 noinst_LTLIBRARIES = libQtGradientEditor.la 
 
-libQtGradientEditor_la_DEPENDENCIES = moc_generator
-
 libQtGradientEditor_la_SOURCES = qtcolorbutton.cpp \
                                  qtcolorline.cpp \
                                  qtgradientdialog.cpp \

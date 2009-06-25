@@ -169,7 +169,7 @@ void AsmView::on_nodeDropped(SgNode * node, const QPoint & pos)
 
 void AsmView::contextMenuEvent( QContextMenuEvent *event )
 {
-    if(curNode != NULL) // don't show context-menu when view is empty
+    if(curNode == NULL) // don't show context-menu when view is empty
         return;
 
     QObject *actionParent = new QObject();

@@ -5,6 +5,8 @@
 #include <QDebug>
 #include <cmath>
 
+#include <QFontMetrics>
+
 using namespace std;
 
 static const double Pi = 3.14159265358979323846264338327950288419717;
@@ -32,8 +34,26 @@ void DisplayEdge::adjust()
 
     prepareGeometryChange();
 
-    sourcePoint = mapFromItem(source,QPointF(0, source->boundingRect().height()/2));
-    destPoint   = mapFromItem(dest,QPointF(0, -dest->boundingRect().height()/2));
+ //   sourcePoint = mapFromItem(source,QPointF(0, source->boundingRect().height()/2));
+//    destPoint   = mapFromItem(dest,QPointF(0, -dest->boundingRect().height()/2));
+
+
+    QPolygonF srcBoundRect  = mapFromItem(source,source->boundingRect());
+    QPolygonF destBoundRect = mapFromItem(dest,dest->boundingRect());
+
+
+    QLineF centerLine( mapFromItem(source,source->boundingRect().center()),
+                       mapFromItem(dest,dest->boundingRect().center()));
+
+    bool res1,res2;
+    res1 = intersectPolyWithLine(sourcePoint,srcBoundRect,centerLine);
+    if(!res1)
+        sourcePoint = centerLine.p1();
+
+    res2 = intersectPolyWithLine(destPoint,destBoundRect,centerLine);\
+    if(!res2)
+        destPoint = centerLine.p2();
+
 }
 
 
@@ -44,10 +64,27 @@ QRectF DisplayEdge::boundingRect() const
 
     double extra = (penWidth + arrowSize) / 2.0 + 3;
 
-    return QRectF(sourcePoint, QSizeF(destPoint.x() - sourcePoint.x(),
+    QFont font;
+    QFontMetrics fi(font);
+
+    float width =  fi.width(edgeLabel);
+    float height = fi.height();
+
+    QRectF textRect(-width/2,-height/2,width,height);
+
+
+    QRectF lineRect= QRectF(sourcePoint, QSizeF(destPoint.x() - sourcePoint.x(),
                                       destPoint.y() - sourcePoint.y()))
-			.normalized()
-			.adjusted(-extra, -extra, extra, extra);
+                    .normalized()
+                    .adjusted(-extra, -extra, extra, extra);
+
+    return textRect.united(lineRect);
+}
+
+void DisplayEdge::setEdgeLabel(const QString & label)
+{
+    prepareGeometryChange();
+    edgeLabel=label;
 }
 
 
@@ -108,4 +145,24 @@ void DisplayEdge::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWi
 
     painter->setBrush(color);
     painter->drawPolygon(QPolygonF() << arrowTangent.p2() << destArrowP1 << destArrowP2);
+}
+
+
+bool DisplayEdge::intersectPolyWithLine(QPointF & res, const QPolygonF & poly, const QLineF & l)
+{
+    Q_ASSERT(poly.size()>0);
+    QPointF p1 = poly[0];
+    QPointF p2;
+    QLineF polyLine;
+    for (int i = 1; i < poly.size(); i++)
+    {
+        p2 = poly[i];
+        polyLine = QLineF(p1, p2);
+        QLineF::IntersectType intersectType = polyLine.intersect(l, &res);
+        if (intersectType == QLineF::BoundedIntersection)
+            return true;
+
+        p1 = p2;
+    }
+    return false;
 }

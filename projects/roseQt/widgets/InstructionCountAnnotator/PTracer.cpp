@@ -1,5 +1,6 @@
 #include "rose.h"
 
+#ifdef ROSEQT_EXPERIMENTAL
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -389,6 +390,7 @@ void PTracer::setRegisters(const Registers & data)
 
 } //namespace
 
+
 #ifdef DBG_WITHOUT_ROSE
 
 int main()
@@ -421,5 +423,5 @@ int main()
 #endif
 
 
-
+#endif
 

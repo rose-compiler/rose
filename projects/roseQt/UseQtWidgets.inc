@@ -5,7 +5,6 @@ intern_codeEdit = $(top_srcdir)/projects/roseQt/widgets/RoseCodeEdit/QCodeEdit
 
 ROSEQT_INCLUDES =   -I$(intern_widgetsDir)\
                     -I$(intern_widgetsDir)/AsmInstructionBar\
-                    -I$(intern_widgetsDir)/AsmSourceMapper\
                     -I$(intern_widgetsDir)/AsmView\
                     -I$(intern_widgetsDir)/AstBrowserWidget\
                     -I$(intern_widgetsDir)/AstGraphWidget\

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1058</width>
-    <height>763</height>
+    <width>1592</width>
+    <height>1141</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -25,7 +25,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1058</width>
+     <width>1592</width>
      <height>26</height>
     </rect>
    </property>
@@ -54,15 +54,23 @@
      <addaction name="actionProperty_View"/>
      <addaction name="actionMetric_Kiviat"/>
     </widget>
-    <addaction name="actionNewAssemblerView"/>
-    <addaction name="actionNewCodeEditor"/>
-    <addaction name="actionNewGraphWidget"/>
-    <addaction name="actionNewMetricsKiviat"/>
+    <widget class="QMenu" name="menuNew_SubWindow">
+     <property name="title">
+      <string>New Sub Window</string>
+     </property>
+     <addaction name="actionNewAssemblerView"/>
+     <addaction name="actionNewCodeEditor"/>
+     <addaction name="actionNewGraphWidget"/>
+     <addaction name="actionNewMetricsKiviat"/>
+     <addaction name="actionNewAstBrowser"/>
+     <addaction name="actionNewPropertyView"/>
+    </widget>
     <addaction name="separator"/>
     <addaction name="actionTile"/>
     <addaction name="actionCascade"/>
     <addaction name="actionTabbed_View"/>
     <addaction name="separator"/>
+    <addaction name="menuNew_SubWindow"/>
     <addaction name="menuDockWidgets"/>
    </widget>
    <widget class="QMenu" name="menuConfuguration">
@@ -446,6 +454,24 @@
     <string>New Metrics Kiviat</string>
    </property>
   </action>
+  <action name="actionNewAstBrowser">
+   <property name="icon">
+    <iconset resource="../widgets/QtDesignerPlugins/QtDesignerPlugins.qrc">
+     <normaloff>:/QtDesignerPlugins/icons/Rose.gif</normaloff>:/QtDesignerPlugins/icons/Rose.gif</iconset>
+   </property>
+   <property name="text">
+    <string>New Ast Browser</string>
+   </property>
+  </action>
+  <action name="actionNewPropertyView">
+   <property name="icon">
+    <iconset resource="../widgets/QtDesignerPlugins/QtDesignerPlugins.qrc">
+     <normaloff>:/QtDesignerPlugins/icons/Rose.gif</normaloff>:/QtDesignerPlugins/icons/Rose.gif</iconset>
+   </property>
+   <property name="text">
+    <string>New Property View</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
@@ -457,11 +483,6 @@
    <class>BAstView</class>
    <extends>QTreeView</extends>
    <header>BAstView.h</header>
-  </customwidget>
-  <customwidget>
-   <class>NodeInfoWidget</class>
-   <extends>PropertyTreeWidget</extends>
-   <header>NodeInfoWidget.h</header>
   </customwidget>
   <customwidget>
    <class>ProjectView</class>
@@ -506,6 +527,11 @@
    <class>TaskList</class>
    <extends>QListWidget</extends>
    <header>TaskList.h</header>
+  </customwidget>
+  <customwidget>
+   <class>NodeInfoWidget</class>
+   <extends>PropertyTreeWidget</extends>
+   <header>NodeInfoWidget.h</header>
   </customwidget>
  </customwidgets>
  <resources>

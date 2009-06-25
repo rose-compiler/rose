@@ -2,6 +2,7 @@
 
 #include "NodeInfoWidget.h"
 #include "SageMimeData.h"
+#include "AsmToSourceMapper.h"
 
 #include <QDragEnterEvent>
 #include <QDropEvent>
@@ -218,7 +219,7 @@ void NodeInfoWidget::setNode(SgNode * node)
                     else
                     {
                         addEntryToSection( rtiNodeSec, tr("Address"),
-                                QString("%1").arg(address,0,16) );
+                                QString("0x%1").arg(address,0,16) );
                     }
                 }
 
@@ -234,10 +235,13 @@ void NodeInfoWidget::setNode(SgNode * node)
 		AstAttributeMechanism::AttributeIdentifiers aidents = node->get_attributeMechanism()->getAttributeIdentifiers();
 
 		QModelIndex metricNodeSection;
+                QModelIndex nodeLinkSection;
+
 		for (AstAttributeMechanism::AttributeIdentifiers::iterator it = aidents.begin(); it != aidents.end(); ++it )
 		{
 			AstAttribute * attr = node->getAttribute(*it);
 			MetricAttribute * metricAttr = dynamic_cast<MetricAttribute * >(attr);
+                        AstNodeLinkAttribute *nodeLink( dynamic_cast<AstNodeLinkAttribute *>( attr ) );
 			if(metricAttr)
 			{
 				if(! metricNodeSection.isValid())
@@ -245,6 +249,39 @@ void NodeInfoWidget::setNode(SgNode * node)
 
 				addEntry(metricNodeSection,(*it).c_str(), metricAttr->getValue() );
 			}
+                        else if( nodeLink )
+                        {
+                            typedef std::vector<std::pair<SgNode *, SgNode *> >::const_iterator iterator;
+
+                            if( !nodeLinkSection.isValid() )
+                                nodeLinkSection = addEntryToSection( attrNodeSec, tr("AST Links"), "" );
+                            
+                            for( iterator jt( nodeLink->begin() ); jt != nodeLink->end(); ++jt )
+                            {
+                                QModelIndex fileIdx;
+                                fileIdx = ( addEntry( nodeLinkSection, tr("Filename"), it->c_str() ) );
+                                SgNode *start( jt->first );
+                                SgNode *end( jt->second );
+
+                                if( isSgFile( node ) ) continue;
+
+                                if( dynamic_cast<AstBinaryNodeLink *>( nodeLink ) )
+                                {
+                                    SgAsmInstruction *startInstr( isSgAsmInstruction( start ) );
+                                    SgAsmInstruction *endInstr( isSgAsmInstruction( end ) );
+                                    addEntry( fileIdx, "SgNode (Start)", QString("0x%1").arg( uint64_t(start), 0, 16 ) );
+                                    addEntry( fileIdx, "SgNode (Stop)", QString("0x%1").arg( uint64_t(end), 0, 16 ) );
+                                    addEntry( fileIdx, "Start", QString("0x%1").arg( startInstr->get_address(), 0, 16 ) );
+                                    addEntry( fileIdx, "End", QString("0x%1").arg( endInstr->get_address(), 0, 16 ) );
+                                }
+                                else // if( dynamic_cast<AstSourceNodeLink *>( nodeLink ) )
+                                {
+                                    Sg_File_Info *fileInfo( start->get_file_info() );
+                                    addEntry( fileIdx, "SgNode", QString("0x%1").arg( uint64_t(start), 0, 16 ) );
+                                    addEntry( fileIdx, "Line", fileInfo->get_line() );
+                                }
+                            }
+                        }
 			else
 			{
 				QString name (it->c_str());

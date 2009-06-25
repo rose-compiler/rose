@@ -237,6 +237,15 @@ void MainWindow::on_actionNewMetricsKiviat_triggered()
     addMdiSubWidget(new MetricsKiviat(), "Metrics Kiviat");
 }
 
+void MainWindow::on_actionNewAstBrowser_triggered()
+{
+    addMdiSubWidget(new AstBrowserWidget(), "Ast Browser");
+}
+
+void MainWindow::on_actionNewPropertyView_triggered()
+{
+    addMdiSubWidget(new NodeInfoWidget(), "Property View");
+}
 
 void MainWindow::on_actionSaveAs_triggered()
 {

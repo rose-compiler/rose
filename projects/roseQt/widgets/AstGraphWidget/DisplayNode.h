@@ -26,6 +26,8 @@ class DisplayNode : public QGraphicsItem
 
         /// The Node is deleted by the scene, if scene is not null
         DisplayNode(QGraphicsScene * scene=NULL);
+        DisplayNode(const QString & caption, QGraphicsScene * scene = NULL);
+
         virtual ~DisplayNode() {}
 
         /// Display Name is the String which is printed in the node
@@ -53,7 +55,14 @@ class DisplayNode : public QGraphicsItem
                               const QStyleOptionGraphicsItem *option,
                               QWidget *widget);
 
+        virtual bool isMouseHold() const { return mouseHold; }
     protected:
+        virtual void mousePressEvent ( QGraphicsSceneMouseEvent * event );
+        virtual void mouseReleaseEvent ( QGraphicsSceneMouseEvent * event );
+
+
+        void init();
+
         /// Needed to listen on selection-changes
         /// node is drawn differently when selected)
         virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value);
@@ -71,70 +80,10 @@ class DisplayNode : public QGraphicsItem
 
         /// The font used for drawing the caption
         QFont textFont;
+
+        bool mouseHold;
 };
 
-
-
-class DisplayGraphNode : public DisplayNode
-{
-    public:
-        DisplayGraphNode(QGraphicsScene * sc = NULL);
-        virtual ~DisplayGraphNode();
-
-
-        const QList<DisplayEdge *> & getInEdges()  const { return inEdges;  }
-        const QList<DisplayEdge *> & getOutEdges() const { return outEdges; }
-
-        int outEdgeCount() const { return outEdges.size(); }
-        int inEdgeCount()  const { return inEdges.size();  }
-
-        DisplayEdge * getInEdge (int id) { return inEdges[id];  }
-        DisplayEdge * getOutEdge(int id) { return outEdges[id]; }
-
-        void addOutEdge(DisplayNode * to );
-        void addInEdge (DisplayNode * from);
-
-        /// Node takes ownership of this edge
-        static void addEdge(DisplayEdge * edge);
-
-        /// Overwritten to set scene of edges
-        virtual void setScene(QGraphicsScene * scene);
-
-        bool isAdjacentTo(DisplayGraphNode * o) const;
-    protected:
-        virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value);
-
-        QList<DisplayEdge *> inEdges;
-        QList<DisplayEdge *> outEdges;
-};
-
-
-
-class DisplayGraph : public QObject
-{
-    public:
-        DisplayGraph(QObject * par = 0);
-        ~DisplayGraph();
-
-        void doLayout();
-
-        QList<DisplayGraphNode*> & nodes()  { return n; }
-
-        void addNode (DisplayGraphNode* n );
-        void addEdge (int nodeId1, int nodeId2 );
-        void addEdge (DisplayGraphNode * n1, DisplayGraphNode * n2);
-
-    protected:
-
-        void springBasedLayoutIteration(qreal delta);
-        QPointF repulsiveForce (const QPointF & n1, const QPointF & n2);
-        QPointF attractiveForce(const QPointF & n1, const QPointF & n2);
-
-
-        QList<DisplayGraphNode * >  n;
-
-        static const qreal OPTIMAL_DISTANCE=20;
-};
 
 /**
  * A DisplayTreeNode is a DisplayGraphNode which has only outputEdges (children)

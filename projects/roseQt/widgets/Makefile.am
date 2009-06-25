@@ -4,7 +4,6 @@
 INCLUDES = .
 
 SUBDIRS = AsmInstructionBar\
-          AsmSourceMapper\
           AsmView\
           AstBrowserWidget\
           AstGraphWidget\
@@ -20,7 +19,6 @@ SUBDIRS = AsmInstructionBar\
           ProjectManager\
           PropertyTreeWidget\
           QtDesignerPlugins\
-	  QtGradientEditor\
           RoseCodeEdit\
           RoseFileSelector\
           TaskSystem\
@@ -42,7 +40,6 @@ libRoseQtWidgets_la_SOURCES  =  DummyForAutotools.cpp
 
 libRoseQtWidgets_la_LIBADD   =  $(top_builddir)/src/librose.la\
                                 $(buildDir)/AsmInstructionBar/libAsmInstructionBar.la \
-                                $(buildDir)/AsmSourceMapper/libAsmSourceMapper.la \
                                 $(buildDir)/AsmView/libAsmView.la \
                                 $(buildDir)/AstBrowserWidget/libAstBrowserWidget.la \
                                 $(buildDir)/AstGraphWidget/libAstGraphWidget.la \
@@ -58,7 +55,6 @@ libRoseQtWidgets_la_LIBADD   =  $(top_builddir)/src/librose.la\
                                 $(buildDir)/ProjectManager/libProjectManager.la \
                                 $(buildDir)/PropertyTreeWidget/libPropertyTreeWidget.la \
                                 $(buildDir)/QtDesignerPlugins/libQtDesignerPlugins.la \
-                                $(buildDir)/QtGradientEditor/libQtGradientEditor.la \
                                 $(buildDir)/RoseCodeEdit/libRoseCodeEdit.la \
                                 $(buildDir)/RoseFileSelector/libRoseFileSelector.la \
                                 $(buildDir)/TaskSystem/libTaskSystem.la \

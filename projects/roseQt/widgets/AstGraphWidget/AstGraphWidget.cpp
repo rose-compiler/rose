@@ -13,7 +13,7 @@
 
 #include "TreeLayoutGenerator.h"
 #include "AstFilters.h"
-
+#include "DisplayGraphNode.h"
 
 AstGraphWidget::AstGraphWidget(QWidget * par)
 	: 	QGraphicsView(par),
@@ -28,6 +28,8 @@ AstGraphWidget::AstGraphWidget(QWidget * par)
 
 	setScene(scene);
 	setDragMode(QGraphicsView::ScrollHandDrag);
+
+	setNode(0);
 }
 
 AstGraphWidget::~AstGraphWidget()
@@ -35,8 +37,10 @@ AstGraphWidget::~AstGraphWidget()
     if(curFilter)
         delete curFilter;
 
-	delete root;
-	delete scene;
+    if(root)
+        delete root;
+
+    delete scene;
 }
 
 
@@ -57,7 +61,9 @@ void AstGraphWidget::setFilter(AstFilterInterface * filter)
 
 void AstGraphWidget::setNode(SgNode * node)
 {
-	delete root;
+    if(root)
+        delete root;
+
 	root=NULL;
 
 	curSgTreeNode=node;
@@ -65,6 +71,7 @@ void AstGraphWidget::setNode(SgNode * node)
 	if(curSgTreeNode==NULL)
 		return;
 
+#if 1
 	DisplayTreeGenerator gen;
 	root = gen.generateTree(node,curFilter);
 
@@ -76,6 +83,10 @@ void AstGraphWidget::setNode(SgNode * node)
 	layouter.layoutTree(root);
 
 	root->setScene(scene);
+#else
+    DisplayGraph *g = DisplayGraph::generateTestGraph(scene);
+    g->controlWidget()->show();
+#endif
 }
 
 

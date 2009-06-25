@@ -7,63 +7,108 @@
 
 class SgNode;
 
-struct FileInfo
+class AsmMappingInfo
 {
-    FileInfo( const FileInfo& f )
-        : fileId( f.fileId ),
-          line( f.line ),
-          column( f.column ),
-          node( f.node )
-    {}
+    public:
+        AsmMappingInfo()
+            : relFun_( NULL ),
+              start_( NULL ),
+              end_( NULL ),
+              fileName_( "" ),
+              line_( -1 )
+        {}
 
-    FileInfo( const std::string& fileId_, int line_, int column_, SgNode *node_ = NULL )
-        : fileId( fileId_ ),
-          line( line_ ),
-          column( column_ ),
-          node( node_ )
-    {}
+        AsmMappingInfo( SgAsmFunctionDeclaration *relFun,
+                        SgAsmInstruction *start,
+                        SgAsmInstruction *end,
+                        const std::string &fileName, int line )
+            : relFun_( relFun ),
+              start_( start ),
+              end_( end ),
+              fileName_( fileName ),
+              line_( line )
+        {}
 
-    bool operator< ( const FileInfo& f ) const
-    {
-        if( fileId == f.fileId )
-            return line < f.line;
+        AsmMappingInfo( const std::string &fileName, int line )
+            : relFun_( NULL ),
+              start_( NULL ),
+              end_( NULL ),
+              fileName_( fileName ),
+              line_( line )
+        {}
 
-        return fileId < f.fileId;
-    }
+        AsmMappingInfo( const AsmMappingInfo& other )
+            : relFun_( other.relFun_ ),
+              start_( other.start_ ),
+              end_( other.end_ ),
+              fileName_( other.fileName_ ),
+              line_( other.line_ )
+        {}
 
-    bool operator> ( const FileInfo& f ) const
-    {
-        return !operator<( f );
-    }
+        AsmMappingInfo& operator=( const AsmMappingInfo& other )
+        {
+            relFun_ = other.relFun_;
+            start_ = other.start_;
+            end_ = other.end_;
+            fileName_ = other.fileName_;
+            line_ = other.line_;
 
-    bool operator== ( const FileInfo& f ) const
-    {
-        if( fileId == f.fileId &&
-            line == f.line )
-            return true;
+            return *this;
+        }
 
-        return false;
-    }
+        bool operator<( const AsmMappingInfo& other ) const
+        {
+            /*if( fileId_ == other.fileId_ )
+                return line_ < other.line_;*/
 
-    bool operator!= ( const FileInfo& f ) const
-    {
-        return !operator==( f );
-    }
+            /*std::cout << std::dec << fileId_ << " " << other.fileId_ << std::hex << std::endl;*/
 
-    std::string fileId;
-    int line;
-    int column;
+            return fileName_ < other.fileName_;
+        }
 
-    SgNode *node;
+        SgAsmFunctionDeclaration *&relFun()
+        { return relFun_; }
+        SgAsmFunctionDeclaration * const &relFun() const
+        { return relFun_; }
+
+        SgAsmInstruction *&start()
+        { return start_; }
+        SgAsmInstruction * const &start() const
+        { return start_; }
+        
+        SgAsmInstruction *&end()
+        { return end_; }
+        SgAsmInstruction * const &end() const
+        { return end_; }
+
+        std::string &fileName()
+        { return fileName_; }
+        const std::string &fileName() const
+        { return fileName_; }
+
+        int &line()
+        { return line_; }
+        const int &line() const
+        { return line_; }
+
+    private:
+        SgAsmFunctionDeclaration *relFun_;
+
+        SgAsmInstruction *start_;
+        SgAsmInstruction *end_;
+
+        std::string fileName_;
+        int line_;
 };
 
 class AstNodeLinkAttribute
-    : public AstAttribute
+    : public AstAttribute,
+      public std::vector< std::pair<SgNode *, SgNode *> >
 {
     public:
-        AstNodeLinkAttribute( SgNode *node_ )
+        /*AstNodeLinkAttribute( SgNode *node_ )
             : node( node_ )
-        {}
+        {}*/
 
         virtual ~AstNodeLinkAttribute()
         {}
@@ -86,9 +131,9 @@ class AstSourceNodeLink
     : public AstNodeLinkAttribute
 {
     public:
-        AstSourceNodeLink( SgNode *node )
+        /*AstSourceNodeLink( SgNode *node )
             : AstNodeLinkAttribute( node )
-        {}
+        {}*/
 
         virtual ~AstSourceNodeLink()
         {}
@@ -103,9 +148,9 @@ class AstBinaryNodeLink
     : public AstNodeLinkAttribute
 {
     public:
-        AstBinaryNodeLink( SgNode *node )
+        /*AstBinaryNodeLink( SgNode *node )
             : AstNodeLinkAttribute( node )
-        {}
+        {}*/
 
         virtual ~AstBinaryNodeLink()
         {}
@@ -116,25 +161,30 @@ class AstBinaryNodeLink
         }
 };
 
-class AsmFunctions
+class AsmToSourceMapper
 {
-   public:
-       // expects a node of a binary AST
-      AsmFunctions( SgBinaryFile *node );
-      void addFile( SgBinaryFile *node );
+    public:
 
-      // expects a node of a source AST
-      void annotate( SgNode *node ) const;
+        AsmToSourceMapper( SgBinaryFile *file );
+        
+        void annotate( SgSourceFile *file );
 
-   private:
-      typedef Rose_STL_Container<SgNode *> SgNodeContainer;
-      typedef Rose_STL_Container<SgNode *>::const_iterator const_iterator;
-      
-      void matchDwarfLine( SgAsmStatement *node );
+    private:
 
-      std::set<FileInfo> addressToFileInfo;
-      SgNodeContainer dwarfLines;
-      std::map<int, std::string> binaryFileIdToName;
+        /// holds mapping data
+        //  order by fileId and line number.
+        //  needs to be a multiset because every source file line could correspond
+        //  to more than one dwarf line information
+        std::multiset<AsmMappingInfo> asmMappingInfos;
+
+        SgBinaryFile *file;
+
+        void addFile();
+
+        void annotate( SgNode *node, const std::string &srcId, const std::string &binId );
+
+        template< typename NodeLink >
+        void addAttribute( SgNode *node, const std::string &id, SgNode *start, SgNode *end );
 };
 
 #endif

@@ -22,12 +22,10 @@ MetricsConfig::MetricsConfig( const QString& configureId_,
     if( globalConfig == NULL )
     {
         impl = new impl::MetricsConfig( root );
-        qDebug() << impl << "constructing global config for" << root;
         globalConfig = this;
     }
     else
     {
-        qDebug() << globalConfig->impl << "constructing local config for" << root;
         impl = globalConfig->impl;
         impl->registerId( configureId );
     }
@@ -101,17 +99,13 @@ namespace impl {
         if( root == NULL ) return;
         enabled.clear();
 
-        qDebug() << "MetricsConfig::setRoot()" << this << root;
-
         collectMetricAttributes( root );
-        qDebug() << "MetricsCollected: " << getMetricsInfoCount();
         
         setupEnabled( "" );
 
         int listId( 0 );
         for( MetricsInfoIterator it = begin(); it != end(); ++it, ++listId )
         {
-            qDebug() << it.name();
             it->listId = listId;
         }
     }
@@ -182,8 +176,6 @@ namespace impl {
 
         dialogUi->frmMultiple->hide();
         
-        qDebug() << this << getMetricsInfoCount() << configureId;
-
         for( MetricsInfoIterator it = begin(); it != end(); ++it )
         {
             QListWidgetItem *metricItem = new QListWidgetItem( it->caption );
@@ -246,7 +238,6 @@ namespace impl {
 
     const MetricsInfo& MetricsConfig::getMetricsInfo( const QString& name, const QString& configureId ) const
     {
-        qDebug() << "MetricsConfig::getMetricsInfo" << this << configureId;
         map_iterator info( globalInfo.find( name ) );
         return *info;
     }
@@ -264,7 +255,6 @@ namespace impl {
         MetricsInfoIterator res( *this, configureId );
         res.iter = iter;
         
-        qDebug() << "MetricsConfig::begin" << this << configureId;
 
         if( iter == globalInfo.end() ) return res;
 
@@ -277,7 +267,6 @@ namespace impl {
     {
         MetricsInfoContainer::iterator iter( globalInfo.end() );
         
-        qDebug() << "MetricsConfig::end" << this << configureId;
 
         MetricsInfoIterator res( *this, configureId );
         res.iter = iter;
@@ -333,25 +322,21 @@ namespace impl {
 
     void MetricsConfig::setupEnabled( const QString& configureId )
     {
-        qDebug() << "setupEnabled" << configureId << this;
         QMap<QString, QMap<QString, bool> >::iterator it( enabled.find( configureId ) );
 
         if( it != enabled.end() ) 
         {
-            qDebug() << configureId << " already inserted ...";
             return;
         }
 
         QMap<QString, bool> tmp;
         for( map_iterator i = globalInfo.begin(); i != globalInfo.end(); ++i )
         {
-            qDebug() << i.key() << this;
             tmp.insert( i.key(), true );
         }
         enabled.insert( configureId, tmp );
 
         //QMap<QString, bool> test = enabled[""];
-        qDebug() << "done enabling";
     }
 
     void MetricsConfig::execDialog( QDialog& dialog, const QString& configureId )
@@ -383,7 +368,6 @@ namespace impl {
             const QString name = dialogUi->lstEnabledMetrics->item( id )->data( Qt::UserRole ).toString();
 
             getMetricsInfo( name, configureId ).listId = id;
-            qDebug() << name << "isEnabled";
         }
     }
 
@@ -564,7 +548,6 @@ namespace impl {
             return *this;
         else
         {
-            qDebug() << iter.key() << "not enabled ... ";
             return ++(*this);
         }
     }

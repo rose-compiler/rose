@@ -6,6 +6,15 @@
 #include <cstdlib>
 #include <limits>
 
+<<<<<<< .mine
+//#include <boost/random.hpp>
+//#include <boost/random/linear_congruential.hpp>
+//#include <boost/random/minstd_rand.hpp>
+//#include <boost/random/normal_distribution.hpp>
+//#include <boost/random/variate_generator.hpp>
+//#include <boost/generator_iterator.hpp>
+
+=======
 //#include <boost/random.hpp>
 #include <boost/random/linear_congruential.hpp>
 //#include <boost/random/minstd_rand.hpp>
@@ -13,6 +22,7 @@
 #include <boost/random/variate_generator.hpp>
 #include <boost/generator_iterator.hpp>
 
+>>>>>>> .r6337
 using namespace std;
 
 void flopTest()
@@ -68,7 +78,7 @@ int C1::InnerClass::f1()
     return a/2;
 }
 
-template< typename Engine, typename Distribution >
+/*template< typename Engine, typename Distribution >
 void randomTest( Engine eng, const Distribution& dist )
 {
     typedef typename Distribution::result_type result_type;
@@ -192,12 +202,11 @@ void randomTest( Engine eng, const Distribution& dist )
             distr[18] += 1;
             continue;
         }
-        else /*if( current_number < start + 10 * intervall )*/
+        else
         {
             distr[19] += 1;
             continue;
         }
-
     }
 
     cout << endl << res << " ";
@@ -207,15 +216,14 @@ void randomTest( Engine eng, const Distribution& dist )
 template< typename Generator, typename T >
 void randomTest( T seed )
 {
-    Generator generator/*( seed )*/;
+    Generator generator;
 
     {
         boost::normal_distribution<> distribution;
         randomTest( generator, distribution );
     }
     std::cout << std::endl;
-}
-
+}*/
 void longFunction(long iterations)
 {
 	double d=1000;
@@ -248,18 +256,9 @@ int main(int argc, char**argv)
 {
 	int size=100;
 
-        cout << std::numeric_limits<int>::max()/10000 << endl;
-
-	/*
-	vector<int> v;
-	fillVector(v,size);
-	vector<int> copy;
-	copyVector(v,copy);
-	*/
-
 	longFunction(size*1000);
 
-        randomTest<boost::minstd_rand, unsigned int>( 42u );
+        //randomTest<boost::minstd_rand, unsigned int>( 42u );
         /*randomTest<boost::rand48>( (uint64_t)42u );
         randomTest<boost::ecuyer1988>( 42u );
         randomTest<boost::kreutzer1986>( 42u );

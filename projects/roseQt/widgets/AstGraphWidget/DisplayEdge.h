@@ -33,7 +33,7 @@ class DisplayEdge : public QGraphicsItem
 		void setPaintMode(PaintMode m) { paintMode=m; }
 
 
-		void setEdgeLabel(const QString & label)  { edgeLabel=label; }
+		void setEdgeLabel(const QString & label);
 		const QString & getEdgeLabel()  const     { return edgeLabel; }
 
 	protected:
@@ -47,6 +47,8 @@ class DisplayEdge : public QGraphicsItem
 
 
 	private:
+	    bool intersectPolyWithLine(QPointF & res, const QPolygonF & poly, const QLineF & l);
+
 		DisplayNode * source;
 		DisplayNode * dest;
 

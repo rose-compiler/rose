@@ -36,8 +36,8 @@ endif
 
 # ----- Cleanup of generated files -----
 
-CLEANFILES = moc_*.cxx\
-             ui_*.h\
+CLEANFILES = moc_*.cxx \
+             ui_*.h \
              qrc_*.cpp 
             
             

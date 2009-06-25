@@ -13,19 +13,32 @@
 
 
 DisplayNode::DisplayNode(QGraphicsScene * sc)
-    : scene(sc),caption("Root"),sg(NULL)
+    : scene(0),caption("Root"),sg(NULL)
 {
-     setFlag(ItemIsMovable);
-     setFlag(ItemIsSelectable);
-     setZValue(1);
+    setScene(sc);
+    init();
+}
 
-#if QT_VERSION >= 0x040400
-     setCacheMode(DeviceCoordinateCache);
-#endif
-     setScene(sc);
+DisplayNode::DisplayNode(const QString & cap, QGraphicsScene * sc)
+    : scene(0),caption(cap),sg(NULL)
+{
+    setScene(sc);
+    init();
 }
 
 
+void DisplayNode::init()
+{
+    setFlag(ItemIsMovable);
+    setFlag(ItemIsSelectable);
+    setZValue(1);
+
+    mouseHold=false;
+#if QT_VERSION >= 0x040400
+    setCacheMode(DeviceCoordinateCache);
+#endif
+    setScene(scene);
+}
 
 QRectF DisplayNode::boundingRect() const
 {
@@ -98,91 +111,16 @@ QVariant DisplayNode::itemChange(GraphicsItemChange change, const QVariant &valu
 }
 
 
-// ---------------------- DisplayGraphNode -------------------------------
-
-DisplayGraphNode::DisplayGraphNode(QGraphicsScene * sc)
-    : DisplayNode(sc)
+void DisplayNode::mousePressEvent ( QGraphicsSceneMouseEvent * ev )
 {
+    mouseHold=true;
+    QGraphicsItem::mousePressEvent(ev);
 }
 
-DisplayGraphNode::~DisplayGraphNode()
+void DisplayNode::mouseReleaseEvent ( QGraphicsSceneMouseEvent * ev )
 {
-    // every node deletes its outgoing edges
-    qDeleteAll(outEdges);
-}
-
-void DisplayGraphNode::addOutEdge(DisplayNode * to)
-{
-    outEdges.push_back(new DisplayEdge(this,to));
-
-    if(scene)
-        scene->addItem(outEdges.back());
-}
-
-void DisplayGraphNode::addInEdge(DisplayNode * from)
-{
-    inEdges.push_back(new DisplayEdge(from,this));
-
-    if(scene)
-        scene->addItem(outEdges.back());
-}
-
-void DisplayGraphNode::addEdge(DisplayEdge * edge)
-{
-    DisplayGraphNode * from = dynamic_cast<DisplayGraphNode*> (edge->sourceNode());
-    DisplayGraphNode * to   = dynamic_cast<DisplayGraphNode*> (edge->destNode());
-
-    Q_ASSERT(from && to); // there should only be GraphNodes in this Graph
-
-    from->outEdges.push_back(edge);
-    to  ->inEdges.push_back(edge);
-
-    Q_ASSERT(from->scene == to->scene);
-
-    if(from->scene)
-        from->scene->addItem(edge);
-}
-
-
-QVariant DisplayGraphNode::itemChange(GraphicsItemChange change, const QVariant &value)
-{
-    if(change == ItemPositionHasChanged)
-    {
-        foreach(DisplayEdge * edge, inEdges)
-            edge->adjust();
-
-        foreach(DisplayEdge * edge,outEdges)
-            edge->adjust();
-    }
-    return DisplayNode::itemChange(change, value);
-}
-
-void DisplayGraphNode::setScene(QGraphicsScene * sc)
-{
-    if(!sc && scene)
-    {
-        foreach(QGraphicsItem * i, inEdges)
-            scene->removeItem(i);
-
-        foreach(QGraphicsItem * i, outEdges)
-            scene->removeItem(i);
-    }
-
-    if(sc)
-    {
-        foreach(QGraphicsItem * i, inEdges)
-            sc->addItem(i);
-
-        foreach(QGraphicsItem * i, outEdges)
-            sc->addItem(i) ;
-    }
-
-    DisplayNode::setScene(sc);
-}
-
-bool DisplayGraphNode::isAdjacentTo(DisplayGraphNode * o) const
-{
-
+    mouseHold=false;
+    QGraphicsItem::mouseReleaseEvent(ev);
 }
 
 // ---------------------- DisplayTreeNode -------------------------------
@@ -459,77 +397,6 @@ void DisplayTreeGenerator::visit(DisplayTreeNode * parent, SgNode * sgNode, AstF
 	for(unsigned int i=0; i< sgNode->get_numberOfTraversalSuccessors(); i++)
 		visit(dispNode,sgNode->get_traversalSuccessorByIndex(i),filter);
 }
-
-
-// ---------------------- DisplayGraph -------------------------------
-
-DisplayGraph::DisplayGraph(QObject * par)
-    : QObject(par)
-{
-}
-
-DisplayGraph::~DisplayGraph()
-{
-    qDeleteAll(n);
-}
-
-void DisplayGraph::addEdge(DisplayGraphNode * n1, DisplayGraphNode * n2)
-{
-    DisplayEdge * e = new DisplayEdge(n1,n2);
-    DisplayGraphNode::addEdge(e);
-}
-
-void DisplayGraph::addEdge ( int i1, int i2)
-{
-    addEdge(n[i1],n[i2]);
-}
-
-void DisplayGraph::addNode(DisplayGraphNode * node)
-{
-    n.push_back(node);
-}
-
-void DisplayGraph::doLayout()
-{
-
-}
-
-
-void DisplayGraph::springBasedLayoutIteration(qreal delta)
-{
-    for(int i=0; i < n.size(); i++)
-    {
-        QPointF force(0,0);
-        for(int j=0; j<n.size(); j++)
-        {
-            if(n[i]->isAdjacentTo(n[j]))
-                force += attractiveForce(n[i]->pos(),n[j]->pos());
-            else
-                force += repulsiveForce(n[i]->pos(),n[j]->pos());
-        }
-
-        n[i]->setPos(n[i]->pos() + delta * force );
-    }
-}
-
-QPointF DisplayGraph::repulsiveForce (const QPointF & n1, const QPointF & n2)
-{
-    static const qreal OPT_SQ = OPTIMAL_DISTANCE*OPTIMAL_DISTANCE;
-    QLineF l (n1,n2);
-    QPointF v (n1-n2);
-    return  ( OPT_SQ / l.length() ) * v;
-}
-
-QPointF DisplayGraph::attractiveForce(const QPointF & n1, const QPointF & n2)
-{
-    QPointF v( n2-n1);
-    return  ( (v.x()*v.x() + v.y() * v.y())  / OPTIMAL_DISTANCE) * v;
-}
-
-
-
-
-
 
 
 
