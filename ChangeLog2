@@ -1,3 +1,57 @@
+2009-06-25 18:51  panas2
+
+	* [r6346] /trunk/ROSE/projects/RTED/RuntimeSystem.c,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: Added more debug calls
+
+2009-06-25 18:12  panas2
+
+	* [r6345] /trunk/ROSE/projects/RTED/Makefile.am: RTED makefile
+
+2009-06-25 17:37  panas2
+
+	* [r6344] /trunk/ROSE/projects/RTED/Makefile.am: New Makefile for
+	  RTED
+
+2009-06-25 16:08  bauer25
+
+	* [r6343] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/rted_qt/rted_qt.cpp,
+	  /trunk/ROSE/projects/roseQt/QtRules.inc,
+	  /trunk/ROSE/projects/roseQt/UseQtWidgets.inc,
+	  /trunk/ROSE/projects/roseQt/demo/MainWindow.cpp,
+	  /trunk/ROSE/projects/roseQt/demo/MainWindow.h,
+	  /trunk/ROSE/projects/roseQt/demo/MainWindow.ui,
+	  /trunk/ROSE/projects/roseQt/demo/Makefile,
+	  /trunk/ROSE/projects/roseQt/demo/inputTest.cpp,
+	  /trunk/ROSE/projects/roseQt/demo/res.qrc,
+	  /trunk/ROSE/projects/roseQt/widgets/AsmView/AsmView.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/AstBrowserWidget/AstBrowserWidget.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/AstGraphWidget/AstGraphWidget.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/AstGraphWidget/DisplayEdge.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/AstGraphWidget/DisplayEdge.h,
+	  /trunk/ROSE/projects/roseQt/widgets/AstGraphWidget/DisplayGraphNode.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/AstGraphWidget/DisplayGraphNode.h,
+	  /trunk/ROSE/projects/roseQt/widgets/AstGraphWidget/DisplayNode.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/AstGraphWidget/DisplayNode.h,
+	  /trunk/ROSE/projects/roseQt/widgets/AstGraphWidget/LayoutControl.ui,
+	  /trunk/ROSE/projects/roseQt/widgets/AstGraphWidget/Makefile.am,
+	  /trunk/ROSE/projects/roseQt/widgets/InstructionCountAnnotator/PTracer.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/Makefile.am,
+	  /trunk/ROSE/projects/roseQt/widgets/MetricsConfig/MetricsConfig.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/NodeInfoWidget/NodeInfoWidget.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/ProjectManager/Project.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/QtGradientEditor/Makefile.am,
+	  /trunk/ROSE/projects/roseQt/widgets/util/AsmToSourceMapper.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/util/AsmToSourceMapper.h,
+	  /trunk/ROSE/projects/roseQt/widgets/util/MetricBgDelegate.cpp:
+	  Worked on roseQt and RTED debugger
+	  
+	  - fixed QApplication segfault in RTED DebugDialog
+	  - modified RTED Makefile because of dwarf issues
+	  - implemented GraphLayouter in roseQt AstGraphWidget
+	  - fixed problem when loading binary files (relative vs absolute
+	  paths)
+
 2009-06-25 00:24  panas2
 
 	* [r6340] /trunk/ROSE/projects/RTED/Makefile.am: Last version of
