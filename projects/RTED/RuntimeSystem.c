@@ -268,7 +268,7 @@ RuntimeSystem_increaseSizeMemoryVariables(  int pos) {
   if (arrays2D_tmp) {
     int i=0;
     for ( i=0;i<rtsi()->runtimeMemory[pos].lastVariablePos;i++) {
-      arrays2D_tmp[i].variable=rtsi()->runtimeMemory[pos].variables->variable;
+      arrays2D_tmp[i].variable=rtsi()->runtimeMemory[pos].variables[i].variable;
     }
     free (rtsi()->runtimeMemory[pos].variables);
     rtsi()->runtimeMemory[pos].variables=arrays2D_tmp;
@@ -387,15 +387,6 @@ RuntimeSystem_increaseSizeRuntimeVariablesOnStack() {
   struct RuntimeVariablesType* run_tmp = (struct RuntimeVariablesType*)malloc(sizeof(struct RuntimeVariablesType)*(rtsi()->maxRuntimeVariablesOnStackEndIndex));
   if (run_tmp) {
     int i=0;
-#if 0
-    for ( i=0;i<rtsi()->maxRuntimeVariablesOnStackEndIndex;i++) {
-      run_tmp[i].name=(char*)malloc(sizeof(char*));
-      run_tmp[i].mangled_name =(char*)malloc(sizeof(char*));
-      //run_tmp[i].type =(char*)malloc(sizeof(char*));
-      //run_tmp[i].initialized =(int)malloc(sizeof(int));
-      //run_tmp[i].fileOpen =(char*)malloc(sizeof(char*));
-    }
-#endif
     for ( i=0;i<rtsi()->runtimeVariablesOnStackEndIndex;i++) {
       run_tmp[i].name=rtsi()->runtimeVariablesOnStack[i].name;
       run_tmp[i].mangled_name =rtsi()->runtimeVariablesOnStack[i].mangled_name;
@@ -416,15 +407,6 @@ RuntimeSystem_increaseSizeRuntimeVariables() {
   struct RuntimeVariablesType* run_tmp = (struct RuntimeVariablesType*)malloc(sizeof(struct RuntimeVariablesType)*(rtsi()->maxRuntimeVariablesEndIndex));
   if (run_tmp) {
     int i=0;
-#if 0
-    for ( i=0;i<rtsi()->maxRuntimeVariablesEndIndex;i++) {
-      run_tmp[i].name=(char*)malloc(sizeof(char*));
-      run_tmp[i].mangled_name =(char*)malloc(sizeof(char*));
-      run_tmp[i].type =(char*)malloc(sizeof(char*));
-      run_tmp[i].initialized =(int)malloc(sizeof(int));
-      run_tmp[i].fileOpen =(char*)malloc(sizeof(char*));
-    }
-#endif
     for ( i=0;i<rtsi()->runtimeVariablesEndIndex;i++) {
       run_tmp[i].name=rtsi()->runtimeVariables[i].name;
       run_tmp[i].mangled_name =rtsi()->runtimeVariables[i].mangled_name;
@@ -435,15 +417,6 @@ RuntimeSystem_increaseSizeRuntimeVariables() {
       run_tmp[i].value =rtsi()->runtimeVariables[i].value;
 
       run_tmp[i].arrays =rtsi()->runtimeVariables[i].arrays;
-#if 0
-      if (rtsi()->runtimeVariables[i].arrays) {
-	run_tmp[i].arrays->name =rtsi()->runtimeVariables[i].arrays->name;
-	run_tmp[i].arrays->dim =rtsi()->runtimeVariables[i].arrays->dim;
-	run_tmp[i].arrays->size1 =rtsi()->runtimeVariables[i].arrays->size1;
-	run_tmp[i].arrays->size2 =rtsi()->runtimeVariables[i].arrays->size2;
-	run_tmp[i].arrays->ismalloc =rtsi()->runtimeVariables[i].arrays->ismalloc;
-      }
-#endif
     }
     free( rtsi()->runtimeVariables);
     rtsi()->runtimeVariables=run_tmp;
