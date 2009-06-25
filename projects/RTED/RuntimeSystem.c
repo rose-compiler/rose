@@ -12,6 +12,17 @@
 #include "RuntimeSystem.h"
 #include "rted_qt/rted_qt.h"
 
+// USE GUI for debugging
+void Rted_debugDialog(char* filename, int line) {
+#ifdef ROSE_WITH_ROSEQT 
+  showDebugDialog(rtsi()->runtimeVariablesOnStack, rtsi()->runtimeVariablesOnStackEndIndex,
+		  rtsi()->runtimeVariables, rtsi()->runtimeVariablesEndIndex, 
+		  rtsi()->runtimeMemory, rtsi()->runtimeMemoryEndIndex,
+		  filename, line);
+#endif
+}
+
+
 /*********************************************************
  * Declare a sole instance of the Runtime System using
  * C Syntax
@@ -362,6 +373,7 @@ RuntimeSystem_AllocateMemory(long int address, int sizeArray,
   rtsi()->runtimeMemory[rtsi()->runtimeMemoryEndIndex].variables[rtsi()->runtimeMemory[rtsi()->runtimeMemoryEndIndex].lastVariablePos].variable=var;
   rtsi()->runtimeMemory[rtsi()->runtimeMemoryEndIndex].lastVariablePos++;
   rtsi()->runtimeMemoryEndIndex++;
+
   return &(rtsi()->runtimeMemory[rtsi()->runtimeMemoryEndIndex-1]);
 }
 
@@ -583,6 +595,8 @@ RuntimeSystem_roseCreateArray(char* name, char* mangl_name, int dimension,  long
       }
     }
   }
+
+  Rted_debugDialog(filename, atoi(line));
 }
 
 /*********************************************************
@@ -658,6 +672,7 @@ RuntimeSystem_roseArrayAccess(char* name, int posA, int posB, char* filename, ch
     exit(1);
   }
 
+  Rted_debugDialog(filename, atoi(line));
 }
 
 // ***************************************** ARRAY FUNCTIONS *************************************
@@ -1069,6 +1084,8 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize,
 	assert(1==0);
       }
 
+  Rted_debugDialog(filename, atoi(line));
+
 }
 
 
@@ -1189,7 +1206,7 @@ RuntimeSystem_handleIOFunctionCall(char* fname,char** args,
     }
   }
 
-
+  Rted_debugDialog(filename, atoi(line));
 
 }
 
@@ -1329,6 +1346,7 @@ RuntimeSystem_roseCallStack(char* name, char* mangl_name,
     //delete var;
   }
 
+
 }
 // ***************************************** FUNCTION CALL *************************************
 
@@ -1361,12 +1379,8 @@ void RuntimeSystem_roseCreateVariable(char* name,
   rtsi()->runtimeVariables[rtsi()->runtimeVariablesEndIndex].arrays=0;
   rtsi()->runtimeVariablesEndIndex++;
 
-#ifdef ROSE_WITH_ROSEQT 
-  showDebugDialog(rtsi()->runtimeVariablesOnStack, rtsi()->runtimeVariablesOnStackEndIndex,
-		  rtsi()->runtimeVariables, rtsi()->runtimeVariablesEndIndex, 
-		  rtsi()->runtimeMemory, rtsi()->runtimeMemoryEndIndex,
-		  filename, atoi(line));
-#endif
+
+  Rted_debugDialog(filename, atoi(line));
 		  
   printf("CreateVariable: You have just created a run-time variable:\n");
   printf("  name: %s \n", name);
@@ -1537,6 +1551,9 @@ RuntimeSystem_roseInitVariable(char* name,
       break;
     }
   } // for
+
+  Rted_debugDialog(filename, atoi(line));
+
   if (varFound==0) {
     printf("No such variable was found\n");
   }

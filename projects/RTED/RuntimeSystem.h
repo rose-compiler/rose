@@ -150,6 +150,8 @@ void RuntimeSystem_roseInitVariable(char* name,
 				    char* filename, char* line, 
 				    char* stmtStr);
 
+// USE GUI for debugging
+void Rted_debugDialog(char* filename, int line);
 
 
 #endif
