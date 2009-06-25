@@ -1722,51 +1722,45 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 	break;
 	
       case V_SgBreakStmt: {
-	SgBreakStmt *breaks = isSgBreakStmt(*i);
-	if (new_block == NULL) {
-	  cfg->registerStatementLabel(node_id, current_statement);
-	  new_block
-	    = new BasicBlock(node_id++, INNER, proc->procnum);
-	  cfg->nodes.push_back(new_block);
-	}
-	BasicBlock *break_block = new_block;
-	break_block->statements.push_front(breaks);
-	add_link(break_block, break_target, NORMAL_EDGE);
+        SgBreakStmt *breaks = isSgBreakStmt(*i);
+        cfg->registerStatementLabel(node_id, current_statement);
+        BasicBlock *break_block
+            = new BasicBlock(node_id++, INNER, proc->procnum);
+        cfg->nodes.push_back(break_block);
+        break_block->statements.push_front(breaks);
+        add_link(break_block, break_target, NORMAL_EDGE);
 
-	/* incoming information is at the incoming edge of
-	 * the break block */
-	stmt_start = new StatementAttribute(break_block, POS_PRE);
-	/* outgoing information is at the outgoing edge of
-	 * the break block */
-	stmt_end = new StatementAttribute(break_block, POS_POST);
+        /* incoming information is at the incoming edge of
+         * the break block */
+        stmt_start = new StatementAttribute(break_block, POS_PRE);
+        /* outgoing information is at the outgoing edge of
+         * the break block */
+        stmt_end = new StatementAttribute(break_block, POS_POST);
 
-	new_block = NULL;
-	after = break_block;
+        after = break_block;
       }
-	break;
+      break;
 
       case V_SgContinueStmt: {
-	SgContinueStmt *continues = isSgContinueStmt(*i);
-	if (new_block == NULL) {
-	  cfg->registerStatementLabel(node_id, current_statement);
-	  new_block
-	    = new BasicBlock(node_id++, INNER, proc->procnum);
-	  cfg->nodes.push_back(new_block);
-	}
-	BasicBlock *continue_block = new_block;
-	continue_block->statements.push_front(continues);
-	add_link(continue_block, continue_target, NORMAL_EDGE);
+        SgContinueStmt *continues = isSgContinueStmt(*i);
+        cfg->registerStatementLabel(node_id, current_statement);
+        BasicBlock *continue_block
+            = new BasicBlock(node_id++, INNER, proc->procnum);
+        cfg->nodes.push_back(continue_block);
+        continue_block->statements.push_front(continues);
+        add_link(continue_block, continue_target, NORMAL_EDGE);
 
-	/* incoming information is at the incoming edge of
-	 * the continue block */
-	stmt_start = new StatementAttribute(continue_block, POS_PRE);
-	/* outgoing information is at the outgoing edge of
-	 * the continue block */
-	stmt_end = new StatementAttribute(continue_block, POS_POST);
-	
-	after = continue_block;
+        /* incoming information is at the incoming edge of
+         * the continue block */
+        stmt_start = new StatementAttribute(continue_block, POS_PRE);
+        /* outgoing information is at the outgoing edge of
+         * the continue block */
+        stmt_end = new StatementAttribute(continue_block, POS_POST);
+
+        after = continue_block;
       }
-            break;
+      break;
+
       case V_SgSwitchStatement: {
 	SgSwitchStatement *switchs = isSgSwitchStatement(*i);
 	cfg->registerStatementLabel(node_id, current_statement);
