@@ -225,6 +225,10 @@ check-C-array:
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else \
+	    cat $$file_rose | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > tmp_file ; \
+	    cat $$file2_rose | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > tmp_file2 ; \
+	    mv tmp_file $$file_rose ; \
+	    mv tmp_file2 $$file2_rose ; \
 	    echo "Re-Compiling 2f Debugger:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  $(LINK_QT_DEBUGGER)  " ;\
 	    $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER)  ; \
 	    echo "Executing created file $$file_rose_bin" ; \
@@ -246,10 +250,12 @@ check-C-array:
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else \
+	     cat $$file_rose | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > tmp_file ; \
+	     mv tmp_file $$file_rose ; \
 	     echo "Re-Compiling 1f Debugger :  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER) " ;\
 	     $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER); \
 	     echo "Executing created file $$file_rose_bin" ; \
-	     ./$$file_rose_bin ; \ 
+	     ./$$file_rose_bin ; \
 		echo "Exit" ; \
 		exit 1 ; \
           fi ; \
@@ -320,6 +326,10 @@ check-C-string:
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else \
+	    cat $$file_rose | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > tmp_file ; \
+	    cat $$file2_rose | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > tmp_file2 ; \
+	    mv tmp_file $$file_rose ; \
+	    mv tmp_file2 $$file2_rose ; \
 	    echo "Re-Compiling 2f Debugger:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  $(LINK_QT_DEBUGGER)  " ;\
 	    $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER)  ; \
 	    echo "Executing created file $$file_rose_bin" ; \
@@ -341,10 +351,12 @@ check-C-string:
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else \
+	     cat $$file_rose | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > tmp_file ; \
+	     mv tmp_file $$file_rose ; \
 	     echo "Re-Compiling 1f Debugger :  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER) " ;\
 	     $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER); \
 	     echo "Executing created file $$file_rose_bin" ; \
-	     ./$$file_rose_bin ; \ 
+	     ./$$file_rose_bin ; \
 		echo "Exit" ; \
 		exit 1 ; \
           fi ; \
@@ -414,6 +426,10 @@ check-C-subprogram:
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else \
+	    cat $$file_rose | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > tmp_file ; \
+	    cat $$file2_rose | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > tmp_file2 ; \
+	    mv tmp_file $$file_rose ; \
+	    mv tmp_file2 $$file2_rose ; \
 	    echo "Re-Compiling 2f Debugger:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  $(LINK_QT_DEBUGGER)  " ;\
 	    $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER)  ; \
 	    echo "Executing created file $$file_rose_bin" ; \
@@ -435,10 +451,12 @@ check-C-subprogram:
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else \
+	     cat $$file_rose | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > tmp_file ; \
+	     mv tmp_file $$file_rose ; \
 	     echo "Re-Compiling 1f Debugger :  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER) " ;\
 	     $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER); \
 	     echo "Executing created file $$file_rose_bin" ; \
-	     ./$$file_rose_bin ; \ 
+	     ./$$file_rose_bin ; \
 		echo "Exit" ; \
 		exit 1 ; \
           fi ; \
@@ -509,6 +527,10 @@ check-C-allocation:
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else \
+	    cat $$file_rose | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > tmp_file ; \
+	    cat $$file2_rose | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > tmp_file2 ; \
+	    mv tmp_file $$file_rose ; \
+	    mv tmp_file2 $$file2_rose ; \
 	    echo "Re-Compiling 2f Debugger:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  $(LINK_QT_DEBUGGER)  " ;\
 	    $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER)  ; \
 	    echo "Executing created file $$file_rose_bin" ; \
@@ -530,10 +552,12 @@ check-C-allocation:
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else \
+	     cat $$file_rose | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > tmp_file ; \
+	     mv tmp_file $$file_rose ; \
 	     echo "Re-Compiling 1f Debugger :  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER) " ;\
 	     $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER); \
 	     echo "Executing created file $$file_rose_bin" ; \
-	     ./$$file_rose_bin ; \ 
+	     ./$$file_rose_bin ; \
 		echo "Exit" ; \
 		exit 1 ; \
           fi ; \
@@ -605,6 +629,10 @@ check-C-inputoutput:
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else \
+	    cat $$file_rose | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > tmp_file ; \
+	    cat $$file2_rose | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > tmp_file2 ; \
+	    mv tmp_file $$file_rose ; \
+	    mv tmp_file2 $$file2_rose ; \
 	    echo "Re-Compiling 2f Debugger:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  $(LINK_QT_DEBUGGER)  " ;\
 	    $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER)  ; \
 	    echo "Executing created file $$file_rose_bin" ; \
@@ -626,10 +654,12 @@ check-C-inputoutput:
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else \
+	     cat $$file_rose | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > tmp_file ; \
+	     mv tmp_file $$file_rose ; \
 	     echo "Re-Compiling 1f Debugger :  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER) " ;\
 	     $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER); \
 	     echo "Executing created file $$file_rose_bin" ; \
-	     ./$$file_rose_bin ; \ 
+	     ./$$file_rose_bin ; \
 		echo "Exit" ; \
 		exit 1 ; \
           fi ; \
@@ -700,6 +730,10 @@ check-C-memoryleaks:
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else \
+	    cat $$file_rose | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > tmp_file ; \
+	    cat $$file2_rose | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > tmp_file2 ; \
+	    mv tmp_file $$file_rose ; \
+	    mv tmp_file2 $$file2_rose ; \
 	    echo "Re-Compiling 2f Debugger:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  $(LINK_QT_DEBUGGER)  " ;\
 	    $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER)  ; \
 	    echo "Executing created file $$file_rose_bin" ; \
@@ -721,10 +755,12 @@ check-C-memoryleaks:
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else \
+	     cat $$file_rose | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > tmp_file ; \
+	     mv tmp_file $$file_rose ; \
 	     echo "Re-Compiling 1f Debugger :  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER) " ;\
 	     $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER); \
 	     echo "Executing created file $$file_rose_bin" ; \
-	     ./$$file_rose_bin ; \ 
+	     ./$$file_rose_bin ; \
 		echo "Exit" ; \
 		exit 1 ; \
           fi ; \

@@ -55,7 +55,8 @@ RtedTransformation::getExprBelowAssignment(SgExpression* exp, int& derefCounter)
 
 SgExpression*
 RtedTransformation::buildString(std::string name) {
-  SgExpression* exp = buildCastExp(buildStringVal(name),buildPointerType(buildCharType()));
+  //  SgExpression* exp = buildCastExp(buildStringVal(name),buildPointerType(buildCharType()));
+  SgExpression* exp = buildStringVal(name);
   return exp;
 }
 

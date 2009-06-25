@@ -1048,6 +1048,7 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName
       // build the function call : runtimeSystem-->createArray(params); ---------------------------
       SgExprListExp* arg_list = buildExprListExp();
       SgExpression* callName = buildString(initName->get_name().str());
+      //SgExpression* callName = buildStringVal(initName->get_name().str());
       SgExpression* callNameExp = buildString(name);
       SgExpression* typeName = buildString(initName->get_type()->class_name());
       SgInitializer* initializer = initName->get_initializer();
@@ -1068,6 +1069,9 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName
       appendExpression(arg_list, filename);
       appendExpression(arg_list, linenr);
 
+      SgExpression* linenrTransformed = buildString("x%%x");
+      appendExpression(arg_list, linenrTransformed);
+
       ROSE_ASSERT(roseCreateVariable);
       string symbolName2 = roseCreateVariable->get_name().str();
       //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
@@ -1079,7 +1083,7 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName
       insertStatementBefore(isSgStatement(stmt), exprStmt);
       string empty_comment = "";
       attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
-      string comment = "RS : Create Variable, paramaters : (name, mangl_name, type, initialized, fileOpen)";
+      string comment = "RS : Create Variable, paramaters : (name, mangl_name, type, initialized, fileOpen, filename, linenr, linenrTransformed)";
       attachComment(exprStmt,comment,PreprocessingInfo::before);
     } 
     else if (isSgNamespaceDefinitionStatement(scope)) {

@@ -13,12 +13,12 @@
 #include "rted_qt/rted_qt.h"
 
 // USE GUI for debugging
-void Rted_debugDialog(char* filename, int line) {
+void Rted_debugDialog(const char* filename, int line) {
 #ifdef ROSE_WITH_ROSEQT 
   showDebugDialog(rtsi()->runtimeVariablesOnStack, rtsi()->runtimeVariablesOnStackEndIndex,
 		  rtsi()->runtimeVariables, rtsi()->runtimeVariablesEndIndex, 
 		  rtsi()->runtimeMemory, rtsi()->runtimeMemoryEndIndex,
-		  filename, line);
+		  (char*)filename, line);
 #endif
 }
 
@@ -82,7 +82,7 @@ RuntimeSystem_Const_RuntimeSystem() {
 /*********************************************************
  * What is the size in bytes of each type ?
  ********************************************************/
-int getSizeOfSgType(char* type) {
+int getSizeOfSgType(const char* type) {
   int size =1;
   assert(type!=0);
   if ( 
@@ -101,11 +101,11 @@ int getSizeOfSgType(char* type) {
 /*********************************************************
  * resolve the meaning of a boolean value in plain text
  ********************************************************/
-char*
+const char*
 RuntimeSystem_resBool(int val) {                                               
   if (val!=0)                                                                      
-    return (char*)"true";                                                           
-  return (char*)"false";                                                          
+    return (const char*)"true";                                                           
+  return (const char*)"false";                                                          
 }
 
 
@@ -135,7 +135,7 @@ RuntimeSystem_findLastUnderscore(char* s) {
  * This function is called whenever a violation is found
  ********************************************************/
 void
-RuntimeSystem_callExit(char* filename, char* line, char* reason, char* stmtStr) {
+RuntimeSystem_callExit(const char* filename, const char* line, const char* reason, const char* stmtStr) {
   // rtsi()->violation Found ... dont execute it - exit normally
   printf("rtsi()->Violation found: %s\n  Reason: %s   in file: %s at line %s\n",stmtStr,reason,filename,line);
   fprintf(rtsi()->myfile,"rtsi()->Violation found: %s\n  Reason: %s   in file: %s at line %s\n",stmtStr,reason,filename,line);
@@ -146,9 +146,9 @@ RuntimeSystem_callExit(char* filename, char* line, char* reason, char* stmtStr) 
 
 
 /*********************************************************
- * Convert an integer to char*
+ * Convert an integer to const char*
  ********************************************************/
-char* 
+const char* 
 RuntimeSystem_roseConvertIntToString(int t) {
   int size = sizeof(int);
   char* text = (char*)malloc(size+1);
@@ -191,7 +191,7 @@ RuntimeSystem_roseRtedClose() {
  * is assigned to the old address)
  ********************************************************/
 int checkMemoryLeakIssues(int pos, int address, 
-			  char* filename, char* line, char* stmtStr) {
+			  const char* filename, const char* line, const char* stmtStr) {
   int problem =0;
   printf("Checking for Memory Leak ... \n");
   // we assume that memory at pos exists
@@ -221,7 +221,7 @@ int checkMemoryLeakIssues(int pos, int address,
       struct RuntimeVariablesType* variable = mem->variables[0].variable;
       if (variable == runtimevar) {
 	// problem
-	RuntimeSystem_callExit(filename, line, (char*)"Memory Leak: Assigning Pointer to Memory that has not been freed and no other pointer to that memory exists.", stmtStr);  
+	RuntimeSystem_callExit(filename, line, (const char*)"Memory Leak: Assigning Pointer to Memory that has not been freed and no other pointer to that memory exists.", stmtStr);  
       } else {
 	printf("The entry is different from the current var :  %s and %s\n",
 	       variable->name, runtimevar->name);
@@ -431,12 +431,12 @@ RuntimeSystem_increaseSizeRuntimeVariables() {
  * For a given variable name, check if it is present
  * on the stack and return the mangled_name
  ********************************************************/
-char*
-RuntimeSystem_findVariablesOnStack(char* name) {
-  char* mang_name = NULL;
+const char*
+RuntimeSystem_findVariablesOnStack(const char* name) {
+  const char* mang_name = NULL;
   int i=0;
   for ( i=0;i<rtsi()->runtimeVariablesOnStackEndIndex;i++) {
-    char* n =rtsi()->runtimeVariablesOnStack[i].name;
+    const char* n =rtsi()->runtimeVariablesOnStack[i].name;
     if (*name==*n) {
       mang_name=rtsi()->runtimeVariablesOnStack[i].mangled_name;
       break;
@@ -461,8 +461,8 @@ RuntimeSystem_findVariablesOnStack(char* name) {
  * line      : linenumber
  ********************************************************/
 void
-RuntimeSystem_roseCreateArray(char* name, char* mangl_name, int dimension,  long int sizeA, long int sizeB, 
-			      int ismalloc, char* filename, char* line){
+RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dimension,  long int sizeA, long int sizeB, 
+			      int ismalloc, const char* filename, const char* line){
 
   if (rtsi()->arrayDebug)
     printf( " >>> Called : roseCreateArray : %s dim %d - [%ld][%ld] file : %s line: %s\n",  
@@ -470,7 +470,7 @@ RuntimeSystem_roseCreateArray(char* name, char* mangl_name, int dimension,  long
   // fixme: Check if this already exists?
   int isarray=0;
   // does this variable exist on the stack?
-  char* stackvar = RuntimeSystem_findVariablesOnStack(name);
+  const char* stackvar = RuntimeSystem_findVariablesOnStack(name);
   int variableFound=0;
   if (stackvar) {
     // it exists
@@ -582,12 +582,12 @@ RuntimeSystem_roseCreateArray(char* name, char* mangl_name, int dimension,  long
  * stmtStr   : unparsed version of the line to be used for error message
  ********************************************************/
 void
-RuntimeSystem_roseArrayAccess(char* name, int posA, int posB, char* filename, char* line, char* stmtStr){
+RuntimeSystem_roseArrayAccess(const char* name, int posA, int posB, const char* filename, const char* line, const char* stmtStr){
   if (rtsi()->arrayDebug) 
     printf( "    Called : roseArrayAccess : %s ... ", (name));
 
   // check the stack if the variable is part of a function call
-  char* mangl_name=RuntimeSystem_findVariablesOnStack(name);  
+  const char* mangl_name=RuntimeSystem_findVariablesOnStack(name);  
   if (mangl_name)
     name=mangl_name;
 
@@ -607,8 +607,8 @@ RuntimeSystem_roseArrayAccess(char* name, int posA, int posB, char* filename, ch
 	exit(1);
       }
       if (posA>=size || posA<0) {
-	char* res1 = ((char*)"Invalid Operation,  array size=");
-	char* res2 = ((char*)"  accessing=");
+	const char* res1 = ((const char*)"Invalid Operation,  array size=");
+	const char* res2 = ((const char*)"  accessing=");
 	int sizeInt = 2*sizeof(int);
 	char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ 1);
 	sprintf(res,"%s%d%s%d",res1,size,res2,posA);
@@ -625,11 +625,11 @@ RuntimeSystem_roseArrayAccess(char* name, int posA, int posB, char* filename, ch
 		sizeA, sizeB,  posA , posB);
       // allow arr[posA][posB] && arr[posA]  both 2Dim!
       if ((posA>=sizeA || posA<0) || posB>=sizeB || posB<0) {
-	char* res1 = ((char*)"Invalid Operation,  array size: [");
-	char* res2 = ((char*)"][");
-	char* res3 = ((char*)"]   accessing: [");
-	char* res4 = ((char*)"][");
-	char* res5 = ((char*)"]");
+	const char* res1 = ((const char*)"Invalid Operation,  array size: [");
+	const char* res2 = ((const char*)"][");
+	const char* res3 = ((const char*)"]   accessing: [");
+	const char* res4 = ((const char*)"][");
+	const char* res5 = ((const char*)"]");
 	int sizeInt = 4*sizeof(int);
 	char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ 1);
 	sprintf(res,"%s%d%s%d%s%d%s%d%s",res1,sizeA,res2,sizeB,res3,posA,res4,posB,res5);
@@ -663,7 +663,7 @@ RuntimeSystem_roseArrayAccess(char* name, int posA, int posB, char* filename, ch
  * call to a function that we need to check the parameters of
  ********************************************************/
 int 
-RuntimeSystem_isInterestingFunctionCall(char* name) {
+RuntimeSystem_isInterestingFunctionCall(const char* name) {
   int interesting=0;//false;
   if ( ( strcmp(name,"memcpy")==0 || 
 	 strcmp(name ,"memmove")==0 || 
@@ -686,11 +686,11 @@ RuntimeSystem_isInterestingFunctionCall(char* name) {
  * Check if the function that is called is modifying
  * i.e. whether it changes memory or just accesses it.
  * If it accesses memory, we need to ensure that the
- * memory is NULL terminated if char*
+ * memory is NULL terminated if const char*
  * we assume that parameter 2 than has the \0 token
  ********************************************************/
 int 
-RuntimeSystem_isModifyingOp(char* name) {
+RuntimeSystem_isModifyingOp(const char* name) {
   int modifying=0;//false;
   // we do not need the actualLength of the
   // first parameter for the following
@@ -708,7 +708,7 @@ RuntimeSystem_isModifyingOp(char* name) {
  * Return the number of parameters for a specific function call
  ********************************************************/
 int 
-RuntimeSystem_getParamtersForFuncCall(char* name) {
+RuntimeSystem_getParamtersForFuncCall(const char* name) {
   int dim=0;
   if ( ( strcmp(name,"memcpy")==0 || 
 	 strcmp(name ,"memmove")==0 || 
@@ -740,7 +740,7 @@ RuntimeSystem_getParamtersForFuncCall(char* name) {
  * and hence the generated code is cleaner
  ********************************************************/
 int 
-RuntimeSystem_isFileIOFunctionCall(char* name) {
+RuntimeSystem_isFileIOFunctionCall(const char* name) {
   int interesting=0;//false;
   if ( ( strcmp(name,"fopen")==0 || 
 	 strcmp(name ,"fgetc")==0 ||
@@ -758,7 +758,7 @@ RuntimeSystem_isFileIOFunctionCall(char* name) {
  * Return the number of parameters for a specific function call
  ********************************************************/
 int 
-RuntimeSystem_isSizeOfVariableKnown(char* mangled_name) {
+RuntimeSystem_isSizeOfVariableKnown(const char* mangled_name) {
   int size=-1;
   //int pos = RuntimeSystem_findArrayName(mangled_name);
   int isarray = 0;
@@ -781,15 +781,15 @@ RuntimeSystem_isSizeOfVariableKnown(char* mangled_name) {
  * args      : arguments to that function
  *           : format : arg1 as string, arg1 as var name (if applicable),
  *           :          arg2 as string, arg2 as var name (if applicable), 
- *           :          number of char to copy (if applicable)
+ *           :          number of const char to copy (if applicable)
  * argSzie   : Number of arguments
  * filename  : file location 
  * line      : linenumber
  * stmtStr   : unparsed version of the line to be used for error message
  ********************************************************/
 void 
-RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize, 
-					 char* filename, char* line, char* stmtStr, char* leftHandSideVar) {
+RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, int argsSize, 
+					 const char* filename, const char* line, const char* stmtStr, const char* leftHandSideVar) {
   assert(argsSize>=1);
   // parameter 1
   assert(args[0]);
@@ -800,7 +800,7 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize,
   if (parameters==3)
     assert(argsSize>=5);
 
-  char* param1StringVal = args[0];
+  const char* param1StringVal = args[0];
   int param1ActualLength =-1;
   int sizeKnown = RuntimeSystem_isSizeOfVariableKnown(args[1]);
   if (rtsi()->funccallDebug)
@@ -823,8 +823,8 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize,
   // for str1=malloc(5);  strcpy(str1,"la")
   int modifyingCall = RuntimeSystem_isModifyingOp(fname);
   if (modifyingCall==0) {
-    char* end1 = NULL;
-    char *iter=NULL;
+    const char* end1 = NULL;
+    const char *iter=NULL;
     int count=0;
     printf("............ Printing : %d  \n",count);
     for ( iter = param1StringVal; *iter != '\0'; ++iter) {
@@ -856,7 +856,7 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize,
 
 
   // parameter 2
-  char* param2StringVal = (char*)"";
+  const char* param2StringVal = (const char*)"";
   int param2ActualLength =-1;
   int param2AllocLength = -2;
   // parameter 3
@@ -887,8 +887,8 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize,
 
   if (parameters>=2) {
 
-    char* end2 = NULL;
-    char *iter2=NULL;
+    const char* end2 = NULL;
+    const char *iter2=NULL;
     for ( iter2 = param2StringVal; *iter2 != '\0'; ++iter2) {
       end2 = iter2;
     }
@@ -929,29 +929,29 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize,
       (param1StringVal <= param2StringVal) && (param1StringVal+param1AllocLength>=param2StringVal)) {
     if (rtsi()->funccallDebug)
       printf( " >>>> Error : Memory regions overlap!   Size1: %d  Size2: %d\n",param1ActualLength , param2ActualLength);
-    RuntimeSystem_callExit(filename, line, (char*)"Memory regions overlap", stmtStr);  
+    RuntimeSystem_callExit(filename, line, (const char*)"Memory regions overlap", stmtStr);  
   } 
 
   printf("\nChecking if String NULL terminated ... \n");
-  char *iter4=NULL;
+  const char *iter4=NULL;
   int zero1pos=0;
   if (modifyingCall==0) {
-    // do not check for the end character of first operator if this is a modifying call, e.g. strcpy
+    // do not check for the end const character of first operator if this is a modifying call, e.g. strcpy
     for ( iter4 = param1StringVal; *iter4 != '\0'; ++iter4) {
       printf("%c",*iter4); zero1pos++;
     } printf("---1 !!!!!!! Found 0 at pos : %d    param1ActualLength %d \n",zero1pos,param1ActualLength);
   }
   // check if the actual size is larger than the allocated size
   if ( zero1pos>param1ActualLength) {
-    char* res1 = ((char*)"Param1 : String not NULL terminated. zero1pos: ");
-    char* res2 = ((char*)"  > ActualLength:");
+    const char* res1 = ((const char*)"Param1 : String not NULL terminated. zero1pos: ");
+    const char* res2 = ((const char*)"  > ActualLength:");
     int sizeInt = 2*sizeof(int);
     char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ 1);
     sprintf(res,"%s%d%s%d",res1,zero1pos,res2,param1ActualLength);
     RuntimeSystem_callExit(filename, line, res, stmtStr);  
   } else if (param1ActualLength>=param1AllocLength) {
-    char* res1 = ((char*)"Param1 : Writing/Reading outside allocated memory.  ActualLength = ");
-    char* res2 = ((char*)" >= AllocLength = ");
+    const char* res1 = ((const char*)"Param1 : Writing/Reading outside allocated memory.  ActualLength = ");
+    const char* res2 = ((const char*)" >= AllocLength = ");
     int sizeInt = 2*sizeof(int);
     char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ 1);
     sprintf(res,"%s%d%s%d",res1,param1ActualLength,res2,param1AllocLength);
@@ -959,7 +959,7 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize,
   } 
 
   if (parameters>=2) {
-    char *iter3=NULL;
+    const char *iter3=NULL;
     int zero2pos =0;
     for ( iter3 = param2StringVal; *iter3 != '\0'; ++iter3) {
       printf("%c",*iter3); zero2pos++;
@@ -967,15 +967,15 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize,
 
     // check if the actual size is larger than the allocated size
     if ( zero2pos>param2ActualLength) {
-      char* res1 = ((char*)"Param2 : String not NULL terminated. zero2pos: ");
-      char* res2 = ((char*)"  > ActualLength:");
+      const char* res1 = ((const char*)"Param2 : String not NULL terminated. zero2pos: ");
+      const char* res2 = ((const char*)"  > ActualLength:");
       int sizeInt = 2*sizeof(int);
       char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ 1);
       sprintf(res,"%s%d%s%d",res1,zero2pos,res2,param2ActualLength);
       RuntimeSystem_callExit(filename, line, res, stmtStr);  
     } else if (param2ActualLength>=param2AllocLength) {
-      char* res1 = ((char*)"Param2 : Writing/Reading outside allocated memory. ActualLength:");
-      char* res2 = ((char*)" >= AllocLength:");
+      const char* res1 = ((const char*)"Param2 : Writing/Reading outside allocated memory. ActualLength:");
+      const char* res2 = ((const char*)" >= AllocLength:");
       int sizeInt = 2*sizeof(int);
       char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ 1);
       sprintf(res,"%s%d%s%d",res1,param2ActualLength,res2,param2AllocLength);
@@ -986,7 +986,7 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize,
   if ( ( strcmp(fname,"strlen")==0 ||  // 1 param
 	 strcmp(fname,"strchr")==0 // 1 param
 	 )) {
-    // checking one parameter for strlen(char* without \0)
+    // checking one parameter for strlen(const char* without \0)
     if (rtsi()->funccallDebug)
       printf("CHECK: Special Function call %s  p1: %s act1: %d alloc1: %d   \n", fname,
 	     param1StringVal, param1ActualLength, param1AllocLength);
@@ -1003,13 +1003,13 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize,
       if (parameters==2) {
 	if ((param1ActualLength+param2AllocLength)>=param1AllocLength) {
 	  // concatenation above the size of param1AllocLength
-	  RuntimeSystem_callExit(filename, line, (char*)"Writing beyond memory allocation for 1st parameter", stmtStr);	  
+	  RuntimeSystem_callExit(filename, line, (const char*)"Writing beyond memory allocation for 1st parameter", stmtStr);	  
 	}
       } else
 	if (parameters==3) {
 	  if ((param1ActualLength+param3Size)>=param1AllocLength) {
 	    // concatenation above the size of param1AllocLength
-	    RuntimeSystem_callExit(filename, line, (char*)"Writing beyond memory allocation for 1st parameter", stmtStr);	  
+	    RuntimeSystem_callExit(filename, line, (const char*)"Writing beyond memory allocation for 1st parameter", stmtStr);	  
 	  }
 	}
 
@@ -1029,8 +1029,8 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize,
 		 param2StringVal, param2ActualLength, param2AllocLength, param3Size);
 	if (parameters==2) {
 	  if ((param2AllocLength>param1AllocLength)) {
-	    char* res1 = ((char*)"p2 Invalid Operation,  operand2:");
-	    char* res2 = ((char*)"  >  operand1:");
+	    const char* res1 = ((const char*)"p2 Invalid Operation,  operand2:");
+	    const char* res2 = ((const char*)"  >  operand1:");
 	    int sizeInt = 2*sizeof(int);
 	    char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ 1);
 	    sprintf(res,"%s%d%s%d",res1,param2AllocLength,res2,param1AllocLength);
@@ -1038,13 +1038,13 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize,
 	  }
 	} else if (parameters==3) {
 	  if ((param3Size>param1AllocLength || param3Size>param2AllocLength)) {
-	    // make sure that if the strings do not overlap, they are both smaller than the amount of chars to copy
-	    char* res1 = ((char*)"p3 Invalid Operation,  operand3:");
-	    char* res2 = ((char*)"  >  operand1:");
-	    char* res3 = ((char*)"  or   operand3:");
-	    char* res4 = ((char*)"  >  operand2:");
+	    // make sure that if the strings do not overlap, they are both smaller than the amount of const chars to copy
+	    const char* res1 = ((const char*)"p3 Invalid Operation,  operand3:");
+	    const char* res2 = ((const char*)"  >  operand1:");
+	    const char* res3 = ((const char*)"  or   operand3:");
+	    const char* res4 = ((const char*)"  >  operand2:");
 	    int sizeInt = 4*sizeof(int);
-	    char *res = (char*)malloc(strlen(res1) + strlen(res2) +strlen(res3) + strlen(res4)+sizeInt+ 1);
+	     char *res = ( char*)malloc(strlen(res1) + strlen(res2) +strlen(res3) + strlen(res4)+sizeInt+ 1);
 	    sprintf(res,"%s%d%s%d%s%d%s%d",res1,param3Size,res2,param1AllocLength,res3,
 		    param3Size,res4,param2AllocLength);
 	    RuntimeSystem_callExit(filename, line, res, stmtStr);
@@ -1072,16 +1072,16 @@ RuntimeSystem_handleSpecialFunctionCalls(char* fname,char** args, int argsSize,
  * args      : arguments to that function
  *           : format : arg1 as string, arg1 as var name (if applicable),
  *           :          arg2 as string, arg2 as var name (if applicable), 
- *           :          number of char to copy (if applicable)
+ *           :          number of const char to copy (if applicable)
  * argSzie   : Number of arguments
  * filename  : file location 
  * line      : linenumber
  * stmtStr   : unparsed version of the line to be used for error message
  ********************************************************/
 void 
-RuntimeSystem_handleIOFunctionCall(char* fname,char** args, 
-				   int argsSize, char* filename, char* line, 
-				   char* stmtStr, char* leftHandSideVar) {
+RuntimeSystem_handleIOFunctionCall(const char* fname,const char** args, 
+				   int argsSize, const char* filename, const char* line, 
+				   const char* stmtStr, const char* leftHandSideVar) {
   assert(argsSize>=1);
   // parameter 1
   int parameters=RuntimeSystem_getParamtersForFuncCall(fname);
@@ -1089,10 +1089,10 @@ RuntimeSystem_handleIOFunctionCall(char* fname,char** args,
     // need 4 parameters, var, size, var, size
     assert(argsSize>=4);
     // we need to mark the variable with fopen that it is open for read/write
-    char* file = args[0];
-    char* fileLength = args[1];
-    char* readwrite = args[2];
-    char* readwriteLength = args[3];
+    const char* file = args[0];
+    const char* fileLength = args[1];
+    const char* readwrite = args[2];
+    const char* readwriteLength = args[3];
     if(!leftHandSideVar) assert(0==1);
     struct RuntimeVariablesType* rvar = RuntimeSystem_findVariables(leftHandSideVar);
     if (leftHandSideVar) {
@@ -1102,7 +1102,7 @@ RuntimeSystem_handleIOFunctionCall(char* fname,char** args,
       FILE* fp = fopen(file,"r");
       if (fp==0) {
 	// file does not exist
-	RuntimeSystem_callExit(filename, line, (char*)"No such file. Can not open this file.", stmtStr);      
+	RuntimeSystem_callExit(filename, line, (const char*)"No such file. Can not open this file.", stmtStr);      
       }
     } else {
       printf("File opend: This must be an error, The variable %s in fopen should be available.\n",leftHandSideVar);
@@ -1113,11 +1113,11 @@ RuntimeSystem_handleIOFunctionCall(char* fname,char** args,
     // need 4 parameters, var, size, var, size
     assert(argsSize==1);
     // we need to mark the variable with fopen that it is open for read/write
-    char* var = args[0];
+    const char* var = args[0];
     assert(var);
     struct RuntimeVariablesType* rvar = RuntimeSystem_findVariables(var);
     if (rvar==NULL) {
-      char* stackvar = RuntimeSystem_findVariablesOnStack(var);
+      const char* stackvar = RuntimeSystem_findVariablesOnStack(var);
       if (stackvar) {
 	printf("Found the variable on the stack : %s \n",stackvar);
 	rvar = RuntimeSystem_findVariables(stackvar);
@@ -1126,10 +1126,10 @@ RuntimeSystem_handleIOFunctionCall(char* fname,char** args,
     if (rvar) {
       if (strcmp(rvar->fileOpen,"no")==0) {
 	// file closed although it never was opend
-	RuntimeSystem_callExit(filename, line, (char*)"Closing a file that never was opened.", stmtStr);      
+	RuntimeSystem_callExit(filename, line, (const char*)"Closing a file that never was opened.", stmtStr);      
       } else {
 	printf("File closed for var: %s \n",rvar->name);
-	rvar->fileOpen=(char*)"no";
+	rvar->fileOpen=(const char*)"no";
       }
     } else {
       printf("File closed : This must be an error, The variable %s in fopen should be available.\n",var);
@@ -1139,7 +1139,7 @@ RuntimeSystem_handleIOFunctionCall(char* fname,char** args,
   else if  (strcmp(fname,"fgetc")==0 ) {
     // only one parameter
     assert(argsSize==1);
-    char* var = args[0];
+    const char* var = args[0];
     // check if the variable used : fgetc(var) is a pointer to a file
     // that has been opened already, i.e. is file open?
     struct RuntimeVariablesType* rvar = RuntimeSystem_findVariables(var);
@@ -1148,19 +1148,19 @@ RuntimeSystem_handleIOFunctionCall(char* fname,char** args,
 	     var, rvar->name, rvar->fileOpen);
       if (strcmp(rvar->fileOpen,"no")==0) {
 	// the file is not open, we cant read/write
-	RuntimeSystem_callExit(filename, line, (char*)"File not open. Can't read/write to file.", stmtStr);      
+	RuntimeSystem_callExit(filename, line, (const char*)"File not open. Can't read/write to file.", stmtStr);      
       }      
       if (strstr( rvar->fileOpen, "r" )==0) {
 	// reading a file that is not marked for reading
-	RuntimeSystem_callExit(filename, line, (char*)"Can not read from File. File not opened for reading.", stmtStr);      
+	RuntimeSystem_callExit(filename, line, (const char*)"Can not read from File. File not opened for reading.", stmtStr);      
       }
     }
   }
   else if  (strcmp(fname,"fputc")==0 ) {
     // only one parameter
     assert(argsSize==2);
-    char* filestream = args[0];
-    char* var = args[1];
+    const char* filestream = args[0];
+    const char* var = args[1];
     // check if the variable used : fgetc(var) is a pointer to a file
     // that has been opened already, i.e. is file open?
     struct RuntimeVariablesType* rvar = RuntimeSystem_findVariables(var);
@@ -1169,11 +1169,11 @@ RuntimeSystem_handleIOFunctionCall(char* fname,char** args,
 	     var, rvar->name, rvar->fileOpen);
       if (strcmp(rvar->fileOpen,"no")==0) {
 	// the file is not open, we cant read/write
-	RuntimeSystem_callExit(filename, line, (char*)"File not open. Can't read/write to file.", stmtStr);      
+	RuntimeSystem_callExit(filename, line, (const char*)"File not open. Can't read/write to file.", stmtStr);      
       }
       if (strstr( rvar->fileOpen, "w" )==0) {
 	// reading a file that is not marked for reading
-	RuntimeSystem_callExit(filename, line, (char*)"Can not write to File. File not opened for writing.", stmtStr);      
+	RuntimeSystem_callExit(filename, line, (const char*)"Can not write to File. File not opened for writing.", stmtStr);      
       }
 
     }
@@ -1207,20 +1207,20 @@ RuntimeSystem_roseFunctionCall(int count, ...) {
   printf("RTED - Function Call\n");
   va_list vl;
   va_start(vl,count);
-  char** args = (char**)malloc(sizeof(char*)*count+1);
+  const char** args = (const char**)malloc(sizeof(const char*)*count+1);
   int posArgs=0;
-  char* name = NULL;
-  char* filename = NULL;
-  char* line=NULL;
-  char* stmtStr=NULL;
-  char* leftVar=NULL;
+  const char* name = NULL;
+  const char* filename = NULL;
+  const char* line=NULL;
+  const char* stmtStr=NULL;
+  const char* leftVar=NULL;
   //cerr << "arguments : " <<  count << endl;
   int i=0;
   for ( i=0;i<count;i++)    {
-    char* val=  va_arg(vl,char*);
+    const char* val=  va_arg(vl,const char*);
     if (val) // && i<4)
       printf("  %d      val : '%s' ---",i,val);
-    char *iter2=NULL;
+    const char *iter2=NULL;
     int size =0;
     for ( iter2 = val; *iter2 != '\0'; ++iter2) {
       printf("%c",*iter2); size++;
@@ -1261,9 +1261,9 @@ RuntimeSystem_roseFunctionCall(int count, ...) {
  * insertBefore : Indicates whether to push or pop a variable form the stack
  ********************************************************/
 void 
-RuntimeSystem_roseCallStack(char* name, char* mangl_name, 
-			    char* beforeStr,
-			    char* filename, char* line) {
+RuntimeSystem_roseCallStack(const char* name, const char* mangl_name, 
+			    const char* beforeStr,
+			    const char* filename, const char* line) {
   // we want to remember the varRefs that are passed via function calls to functions
   // if before ==true
   // add the current varRef (name) on stack
@@ -1273,7 +1273,7 @@ RuntimeSystem_roseCallStack(char* name, char* mangl_name,
     before=1;
 
   // check if this variable is on the stack, if yes, we want to use that mangled_name!
-  char* stackvar = RuntimeSystem_findVariablesOnStack(name);
+  const char* stackvar = RuntimeSystem_findVariablesOnStack(name);
   if (stackvar) {
     // it exists
     printf("This variable exists on the stack: %s\n",stackvar);
@@ -1295,7 +1295,7 @@ RuntimeSystem_roseCallStack(char* name, char* mangl_name,
   if (initialized==0) {
     // lets not trigger this error right now
     // fixme
-    //RuntimeSystem_callExit(filename, line, (char*)"Variable is not initialized:", name);	  
+    //RuntimeSystem_callExit(filename, line, (const char*)"Variable is not initialized:", name);	  
   } else 
     printf("CallStack: Variable is initialized.\n");
   
@@ -1332,12 +1332,13 @@ RuntimeSystem_roseCallStack(char* name, char* mangl_name,
  * This function tells the runtime system that a variable is created
  * we store the type of the variable and whether it has been intialized
  ********************************************************/
-void RuntimeSystem_roseCreateVariable(char* name,
-				      char* mangled_name,
-				      char* type, 
+void RuntimeSystem_roseCreateVariable( const char* name,
+				      const char* mangled_name,
+				      const char* type, 
 				      int init,
-				      char* fOpen,
-				      char* filename, char* line) {
+				      const char* fOpen,
+				      const char* filename, const char* line, 
+				      const char* lineTransformed) {
   if (rtsi()->runtimeVariablesEndIndex>=rtsi()->maxRuntimeVariablesEndIndex) {
     //increase the size of the array
     RuntimeSystem_increaseSizeRuntimeVariables();
@@ -1369,11 +1370,11 @@ void RuntimeSystem_roseCreateVariable(char* name,
  * in the pool of variables created and return variable
  ********************************************************/
 struct RuntimeVariablesType*
-RuntimeSystem_findVariables(char* mangled_name) {
+RuntimeSystem_findVariables(const char* mangled_name) {
   struct RuntimeVariablesType* var=NULL;
   int i=0;
   for ( i=0;i<rtsi()->runtimeVariablesEndIndex;i++) {
-    char* n =rtsi()->runtimeVariables[i].mangled_name;
+    const char* n =rtsi()->runtimeVariables[i].mangled_name;
     if (strcmp(mangled_name,n)==0) {
       var =&(rtsi()->runtimeVariables[i]);
       //printf("var : %s   (%s == %s) \n",var, mangled_name, n );
@@ -1412,10 +1413,10 @@ RuntimeSystem_findMemory(long int address) {
  * in the pool of variables created and return variable
  ********************************************************/
 int
-RuntimeSystem_findVariablesPos(char* mangled_name, int* isarray) {
+RuntimeSystem_findVariablesPos(const char* mangled_name, int* isarray) {
   int i=0;
   for ( i=0;i<rtsi()->runtimeVariablesEndIndex;i++) {
-    char* n =rtsi()->runtimeVariables[i].mangled_name;
+    const char* n =rtsi()->runtimeVariables[i].mangled_name;
     if (strcmp(mangled_name,n)==0) {
       struct ArraysType* array = rtsi()->runtimeVariables[i].arrays;
       //printf("..........findArrayName : name : %s, array ? %s \n",mangled_name,array);
@@ -1432,20 +1433,20 @@ RuntimeSystem_findVariablesPos(char* mangled_name, int* isarray) {
  * in the pool of variables created and return mangled_name
  ********************************************************/
 void
-RuntimeSystem_roseInitVariable(char* name,
-			       char* mangled_name,
-			       char* typeOfVar2,
-			       char* baseType,
+RuntimeSystem_roseInitVariable(const char* name,
+			       const char* mangled_name,
+			       const char* typeOfVar2,
+			       const char* baseType,
 			       unsigned long long address,
 			       unsigned long long value,
 			       int ismalloc,
-			       char* filename, char* line, char* stmtStr) {
+			       const char* filename, const char* line, const char* stmtStr) {
   printf("InitVariable: Request for %s.    address: %d   value: %d   type: %s \n",mangled_name, address, value, typeOfVar2);
   int i=0;
   int varFound=0;
   int assgnToPointer = 0;
 
-  char* stackvar = RuntimeSystem_findVariablesOnStack(name);
+  const char* stackvar = RuntimeSystem_findVariablesOnStack(name);
   if (stackvar) {
     // it exists
     printf("This variable exists on the stack: %s\n",stackvar);
@@ -1456,7 +1457,7 @@ RuntimeSystem_roseInitVariable(char* name,
 
   // go through all variables and check if it is present.
   for ( i=0;i<rtsi()->runtimeVariablesEndIndex;i++) {
-    char* n =rtsi()->runtimeVariables[i].mangled_name;
+    const char* n =rtsi()->runtimeVariables[i].mangled_name;
     if (strcmp(mangled_name,n)==0){
       varFound=1;
       printf("Found the variable %s at index %d \n",n, i);
@@ -1468,7 +1469,7 @@ RuntimeSystem_roseInitVariable(char* name,
 
       // variable exists, lets init it
       // create init on heap
-      //char* init = (char*)"true";
+      //const char* init = (const char*)"true";
       int init = 1; //true;
       rtsi()->runtimeVariables[i].initialized=init;
       rtsi()->runtimeVariables[i].value=value;
