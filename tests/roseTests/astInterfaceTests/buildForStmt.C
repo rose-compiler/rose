@@ -57,7 +57,7 @@ int main (int argc, char *argv[])
 
   SgForStatement*for_stmt = buildForStatement (init_stmt,cond_stmt,incr_exp,loop_body);
   appendStatement (for_stmt);
-  popScopeStack ();
+  popScopeStack();
 
   //-------- build for(int k=0;k<100;k++) j++;
   //

@@ -7,7 +7,7 @@ INCLUDES =  \
         $(ROSE_INCLUDES) \
         -I$(top_srcdir)/src/frontend/SageIII/sageInterface
 # We install a few test programs since they might be useful for external users
-bin_PROGRAMS = loopInterchange loopUnrolling 
+bin_PROGRAMS = loopInterchange loopUnrolling loopTiling
 
 #not for installation
 noinst_PROGRAMS = \
@@ -60,6 +60,7 @@ buildAbstractHandle_SOURCES         = buildAbstractHandle.C
 loopUnrolling_SOURCES               = loopUnrolling.C
 getDependentDecls_SOURCES           = getDependentDecls.C
 loopInterchange_SOURCES             = loopInterchange.C
+loopTiling_SOURCES                  = loopTiling.C
 
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
@@ -105,7 +106,8 @@ generatedCodeExamples = \
   rose_inputbuildAbstractHandle.C \
   rose_inputloopUnrolling.C \
   rose_inputgetDependentDecls.C \
-  rose_inputloopInterchange.C
+  rose_inputloopInterchange.C \
+  rose_inputloopTiling.C
 
 
 # turn off edg warnings such as "variable x declared but never referenced" for test input files
@@ -207,6 +209,11 @@ rose_inputloopUnrolling.C:loopUnrolling
 rose_inputloopInterchange.C:loopInterchange
 	./loopInterchange$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopInterchange.C -rose:loopInterchange:abstract_handle "ForStatement<numbering,1>" -rose:loopInterchange:depth 4 -rose:loopInterchange:order 23
 
+# Tile the first loop within the input file at depth 3 , tile size is 5
+rose_inputloopTiling.C:loopTiling
+	./loopTiling$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopTiling.C -rose:loopTiling:abstract_handle "ForStatement<numbering,1>" -rose:loopTiling:depth 3 -rose:loopTiling:tilesize 5
+
+
 rose_inputreplaceMacroCalls.C:replaceMacroCalls
 # comment out since boost:wave causes seg fault on 64-bit machines
 #	./replaceMacroCalls$(EXEEXT) $(TEST_CXXFLAGS) -rose:wave -c $(srcdir)/inputreplaceMacroCalls.C
@@ -224,7 +231,7 @@ EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDecla
        inputloopNormalization.C inputcollectReadWriteVariables.C inputtypeTraits.C \
        inputlivenessAnalysis.C inputbuildProcedureHeaderStatement.f inputreplaceMacroCalls.C \
        inputbuildAbstractHandle.C inputloopUnrolling.C inputgetDependentDecls.C \
-       inputloopInterchange.C
+       inputloopInterchange.C inputloopTiling.C
 
 check-local:
 	@echo "Test for ROSE SAGE Interfaces."

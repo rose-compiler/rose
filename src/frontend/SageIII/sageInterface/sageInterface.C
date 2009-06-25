@@ -5625,6 +5625,139 @@ std::vector<size_t> getPermutationOrder( size_t n, size_t lexicoOrder)
   return s;
 }
 
+//! Tile the n-level (starting from 1) of a perfectly nested loop nest using tiling size s
+/* Translation 
+ Before: 
+  for (i = 0; i < 100; i++)
+    for (j = 0; j < 100; j++)
+      for (k = 0; k < 100; k++)
+        c[i][j]= c[i][j]+a[i][k]*b[k][j];
+
+  After tiling i loop nest's level 3 (k-loop) with size 5, it becomes
+
+// added a new controlling loop at the outer most level
+  int _lt_var_k;
+  for (_lt_var_k = 0; _lt_var_k <= 99; _lt_var_k += 1 * 5) { 
+    for (i = 0; i < 100; i++)
+      for (j = 0; j < 100; j++)
+        // rewritten loop header , normalized also
+        for (k = _lt_var_k; k <= (99 < (_lt_var_k + 5 - 1))?99 : (_lt_var_k + 5 - 1); k += 1) {
+          c[i][j] = c[i][j] + a[i][k] * b[k][j];
+        }
+  }
+
+ */
+bool SageInterface::loopTiling(SgForStatement* loopNest, size_t targetLevel, size_t tileSize)
+{
+  ROSE_ASSERT(loopNest != NULL);
+  ROSE_ASSERT(targetLevel >0);
+  ROSE_ASSERT(tileSize>0);// 1 is allowed
+  if (tileSize==1)
+    return true;
+  // Locate the target loop at level n
+  std::vector<SgForStatement* > loops= SageInterface::querySubTree<SgForStatement>(loopNest,V_SgForStatement);
+  ROSE_ASSERT(loops.size()>=targetLevel);
+  SgForStatement* target_loop = loops[targetLevel -1]; // adjust to numbering starting from 0
+
+  // normalize the target loop first
+  if (!forLoopNormalization(target_loop)); 
+  {// the return value is not reliable
+//    cerr<<"Error in SageInterface::loopTiling(): target loop cannot be normalized."<<endl;
+//    dumpInfo(target_loop);
+//    return false;
+  }
+   // grab the target loop's essential header information
+   SgInitializedName* ivar = NULL;
+   SgExpression* lb = NULL;
+   SgExpression* ub = NULL;
+   SgExpression* step = NULL;
+   if (!isCanonicalForLoop(target_loop, &ivar, &lb, &ub, &step, NULL))
+   {
+     cerr<<"Error in SageInterface::loopTiling(): target loop is not canonical."<<endl;
+     dumpInfo(target_loop);
+     return false;
+   }
+   ROSE_ASSERT(ivar&& lb && ub && step);
+
+  // Add a controlling loop around the top loop nest
+  // Ensure the parent can hold more than one children
+  SgStatement* parent = ensureBasicBlockAsParent(loopNest);
+  ROSE_ASSERT(parent!= NULL);
+     // Now we can prepend a controlling loop index variable: __lt_var_originalIndex
+  string ivar2_name = "_lt_var_"+ivar->get_name().getString(); 
+  SgScopeStatement* scope = loopNest->get_scope();
+  SgVariableDeclaration* loop_index_decl = buildVariableDeclaration
+  (ivar2_name, buildIntType(),NULL, scope);
+  insertStatementBefore(loopNest, loop_index_decl);
+   // init statement of the loop header, copy the lower bound
+   SgStatement* init_stmt = buildAssignStatement(buildVarRefExp(ivar2_name,scope), copyExpression(lb)); 
+   //two cases <= or >= for a normalized loop
+   SgExprStatement* cond_stmt = NULL;
+   SgExpression* orig_test = target_loop->get_test_expr();
+   if (isSgBinaryOp(orig_test))
+   {
+     if (isSgLessOrEqualOp(orig_test))
+       cond_stmt = buildExprStatement(buildLessOrEqualOp(buildVarRefExp(ivar2_name,scope),copyExpression(ub)));
+     else if (isSgGreaterOrEqualOp(orig_test))  
+     {
+       cond_stmt = buildExprStatement(buildGreaterOrEqualOp(buildVarRefExp(ivar2_name,scope),copyExpression(ub)));
+       }
+     else
+     {
+       cerr<<"Error: illegal condition operator for a canonical loop"<<endl;
+       dumpInfo(orig_test);
+       ROSE_ASSERT(false);
+     }
+   }
+   else 
+   {
+     cerr<<"Error: illegal condition expression for a canonical loop"<<endl;
+     dumpInfo(orig_test);
+     ROSE_ASSERT(false);
+   }
+   ROSE_ASSERT(cond_stmt != NULL);
+
+   // build loop incremental  I
+   // expression var+=up*tilesize or var-=upper * tilesize
+   SgExpression* incr_exp = NULL; 
+   SgExpression* orig_incr_exp = target_loop->get_increment();
+   if( isSgPlusAssignOp(orig_incr_exp))
+   {
+     incr_exp = buildPlusAssignOp(buildVarRefExp(ivar2_name,scope), buildMultiplyOp(copyExpression(step), buildIntVal(tileSize)));
+   }
+    else if (isSgMinusAssignOp(orig_incr_exp)) 
+    {
+      incr_exp = buildMinusAssignOp(buildVarRefExp(ivar2_name,scope), buildMultiplyOp(copyExpression(step), buildIntVal(tileSize)));
+    }
+    else
+    {
+      cerr<<"Error: illegal increment expression for a canonical loop"<<endl;
+      dumpInfo(orig_incr_exp);
+      ROSE_ASSERT(false);
+    }
+    SgForStatement* control_loop = buildForStatement(init_stmt, cond_stmt,incr_exp, buildBasicBlock());
+  insertStatementBefore(loopNest, control_loop);
+  // move loopNest into the control loop
+  removeStatement(loopNest); 
+  appendStatement(loopNest,isSgBasicBlock(control_loop->get_loop_body()));
+
+  // rewrite the lower (i=lb), upper bounds (i<=/>= ub) of the target loop
+  SgAssignOp* assign_op  = isSgAssignOp(lb->get_parent());
+  ROSE_ASSERT(assign_op);
+  assign_op->set_rhs_operand(buildVarRefExp(ivar2_name,scope));
+    // ub< var_i+tileSize-1? ub:var_i+tileSize-1
+  SgBinaryOp* bin_op = isSgBinaryOp(ub->get_parent()); 
+  ROSE_ASSERT(bin_op);
+  SgExpression* ub2 = buildSubtractOp(buildAddOp(buildVarRefExp(ivar2_name,scope), buildIntVal(tileSize)), buildIntVal(1));
+  SgExpression* test_exp = buildLessThanOp(copyExpression(ub),ub2);
+  test_exp->set_need_paren(true);
+  ub->set_need_paren(true);
+  ub2->set_need_paren(true);
+  SgConditionalExp * triple_exp = buildConditionalExp(test_exp,copyExpression(ub), copyExpression(ub2));
+  bin_op->set_rhs_operand(triple_exp);
+  return true;
+}
+
 //! Interchange/Permutate a n-level perfectly-nested loop rooted at 'loop' using a lexicographical order number within [0,depth!)
 bool SageInterface::loopInterchange(SgForStatement* loop, size_t depth, size_t lexicoOrder)
 {

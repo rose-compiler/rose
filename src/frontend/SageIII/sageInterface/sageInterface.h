@@ -764,6 +764,9 @@ bool loopUnrolling(SgForStatement* loop, size_t unrolling_factor);
 //! Interchange/permutate a n-level perfectly-nested loop rooted at 'loop' using a lexicographical order number within (0,depth!). 
 bool loopInterchange(SgForStatement* loop, size_t depth, size_t lexicoOrder);
 
+//! Tile the n-level (starting from 1) loop of a perfectly nested loop nest using tiling size s
+bool loopTiling(SgForStatement* loopNest, size_t targetLevel, size_t tileSize);
+
 //@}
 
 //------------------------------------------------------------------------
@@ -1222,7 +1225,7 @@ SgBasicBlock* ensureBasicBlockAsTrueBodyOfIf(SgIfStmt* ifs);
 //! Check if the false body of a 'if' statement is a SgBasicBlock, create one if not. 
 SgBasicBlock* ensureBasicBlockAsFalseBodyOfIf(SgIfStmt* ifs);
 SgBasicBlock* ensureBasicBlockAsBodyOfCatch(SgCatchOptionStmt* cos);
-//! A wrapper of all ensureBasicBlockAs*() above to ensure the parent of s is a scopestatement with list of statements as children, otherwise generate a SgBasicBlock in between. 
+//! A wrapper of all ensureBasicBlockAs*() above to ensure the parent of s is a scopestatement with list of statements as children, otherwise generate a SgBasicBlock in between. Return s's parent.
 SgStatement* ensureBasicBlockAsParent(SgStatement* s);
 //SgBasicBlock* ensureBasicBlockAsParent(SgStatement* s);
 
