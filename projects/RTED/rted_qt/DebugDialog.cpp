@@ -9,7 +9,6 @@
 #include <QSortFilterProxyModel>
 #include <QDialogButtonBox>
 
-#include "qlinemarkpanel.h"
 #include "qcodeedit.h"
 
 DebugDialog::DebugDialog(QWidget * par)
@@ -21,23 +20,20 @@ DebugDialog::DebugDialog(QWidget * par)
     ui = new Ui::DebugDialog();
     ui->setupUi(this);
 
-    QCodeEdit * ce= ui->codeEdit->getQCodeEdit();
-    //QLineMarkPanel  * p = dynamic_cast<QLineMarkPanel*>(ce->panels("Line Mark Panel")[0]);
-    //p->setDisableClicks(false);
 
-    ui->editorToolbar->addAction(ui->codeEdit->action("undo"));
-    ui->editorToolbar->addAction(ui->codeEdit->action("redo"));
+    ui->editorToolbar->addAction(ui->codeEdit1->action("undo"));
+    ui->editorToolbar->addAction(ui->codeEdit1->action("redo"));
     ui->editorToolbar->addSeparator();
-    ui->editorToolbar->addAction(ui->codeEdit->action("cut"));
-    ui->editorToolbar->addAction(ui->codeEdit->action("copy"));
-    ui->editorToolbar->addAction(ui->codeEdit->action("paste"));
+    ui->editorToolbar->addAction(ui->codeEdit1->action("cut"));
+    ui->editorToolbar->addAction(ui->codeEdit1->action("copy"));
+    ui->editorToolbar->addAction(ui->codeEdit1->action("paste"));
 
-    ui->menuEdit->addAction(ui->codeEdit->action("undo"));
-    ui->menuEdit->addAction(ui->codeEdit->action("redo"));
+    ui->menuEdit->addAction(ui->codeEdit1->action("undo"));
+    ui->menuEdit->addAction(ui->codeEdit1->action("redo"));
     ui->menuEdit->addSeparator();
-    ui->menuEdit->addAction(ui->codeEdit->action("cut"));
-    ui->menuEdit->addAction(ui->codeEdit->action("copy"));
-    ui->menuEdit->addAction(ui->codeEdit->action("paste"));
+    ui->menuEdit->addAction(ui->codeEdit1->action("cut"));
+    ui->menuEdit->addAction(ui->codeEdit1->action("copy"));
+    ui->menuEdit->addAction(ui->codeEdit1->action("paste"));
 
 
     //restore settings
@@ -69,7 +65,7 @@ DebugDialog::~DebugDialog()
 
 void DebugDialog::on_actionSave_triggered()
 {
-    ui->codeEdit->save();
+    ui->codeEdit1->save();
 }
 
 void DebugDialog::on_actionSaveAs_triggered()
@@ -77,14 +73,14 @@ void DebugDialog::on_actionSaveAs_triggered()
     QString fileName = QFileDialog::getSaveFileName(this, tr("Save File"),
                                "", tr("C++ files (*.cpp *.C *.h)"));
 
-    ui->codeEdit->save(fileName);
+    ui->codeEdit1->save(fileName);
 }
 
 void DebugDialog::on_actionOpen_triggered()
 {
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open File"),
                                "", tr("C++ files (*.cpp *.C *.h)"));
-    ui->codeEdit->loadCppFile(fileName);
+    ui->codeEdit1->loadCppFile(fileName);
 }
 
 void DebugDialog::on_actionEditorSettings_triggered()
@@ -95,8 +91,8 @@ void DebugDialog::on_actionEditorSettings_triggered()
 
 void DebugDialog::setEditorMark(const QString & file, int row)
 {
-    ui->codeEdit->loadCppFile(file);
-    ui->codeEdit->markAsWarning(row);
+    ui->codeEdit1->loadCppFile(file);
+    ui->codeEdit1->markAsWarning(row);
 }
 
 void DebugDialog::setHeapVars(RuntimeVariablesType * arr, int arrSize)

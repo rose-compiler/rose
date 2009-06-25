@@ -6,6 +6,7 @@
 #include <QCodeEdit/qlanguagefactory.h>
 #include <QCodeEdit/qlinemarksinfocenter.h>
 #include <QCodeEdit/document/qdocumentline.h>
+#include <QCodeEdit/widgets/qlinemarkpanel.h>
 
 #include <QDragEnterEvent>
 #include <QDropEvent>
@@ -70,6 +71,37 @@ void RoseCodeEdit::init()
 
 }
 
+QList<int> RoseCodeEdit::getBreakPoints()
+{
+    QList<int> result;
+
+    QLineMarksInfoCenter * lm = QLineMarksInfoCenter::instance();
+
+    QLineMarkList list = lm->marks();
+
+    int bpId = lm->markTypeId("breakpoint");
+
+    foreach(QLineMark lm,list)
+    {
+        if(lm.file == curFile && lm.mark == bpId)
+            result.push_back(lm.line);
+    }
+
+    return result;
+}
+
+
+void RoseCodeEdit::enableBreakPointEdit(bool enable)
+{
+    QList<QPanel*> panels = editorWrapper->panels("Line marks");
+    if(panels.isEmpty())
+        return;
+
+    QLineMarkPanel  * p = dynamic_cast<QLineMarkPanel*>(panels[0]);
+    if(p)
+        p->setDisableClicks(!enable);
+}
+
 void RoseCodeEdit::markAsError(int line)
 {
     QLineMarksInfoCenter * lm = QLineMarksInfoCenter::instance();
@@ -95,6 +127,7 @@ void RoseCodeEdit::markAsWarning(int line)
 
 void RoseCodeEdit::loadCppFile(const QString & filename)
 {
+    curFile=filename;
     // hack to always have C++ highlighting (problem: include files without ending)
     m_languages->setLanguage(this, filename + ".cpp");
     load(filename);

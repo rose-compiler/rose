@@ -224,7 +224,9 @@ void MainWindow::on_actionNewAssemblerView_triggered()
 
 void MainWindow::on_actionNewCodeEditor_triggered()
 {
-    addMdiSubWidget(new RoseCodeEdit(), "Code Editor");
+    RoseCodeEdit * e = new RoseCodeEdit();
+    //e->enableBreakPointEdit();
+    addMdiSubWidget(e, "Code Editor");
 }
 
 void MainWindow::on_actionNewGraphWidget_triggered()

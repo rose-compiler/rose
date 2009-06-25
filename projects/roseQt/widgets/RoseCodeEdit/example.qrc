@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="/" >
+    <file>break.png</file>
+    <file>debug-resume.png</file>
     <file>error.png</file>
     <file>warning.png</file>
     <file>new.png</file>

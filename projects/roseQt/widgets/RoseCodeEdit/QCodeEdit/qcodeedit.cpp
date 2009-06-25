@@ -32,6 +32,7 @@
 #include <QStringList>
 #include <QMetaObject>
 
+#include <QDebug>
 /*!
 	\class QCodeEdit
 	\brief A thin layer over QEditor

@@ -30,7 +30,9 @@ class DisplayGraphNode : public DisplayNode
         /// Overwritten to set scene of edges
         virtual void setScene(QGraphicsScene * scene);
 
-        bool isAdjacentTo(DisplayGraphNode * o) const;
+        /// True if there is a incoming or outgoing edge to/from the other node
+        /// has to search in two list -> rather slow
+        bool isAdjacentTo(DisplayGraphNode * otherNode) const;
     protected:
         virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value);
 
@@ -47,7 +49,7 @@ class DisplayGraph : public QObject
 {
     Q_OBJECT
     public:
-        DisplayGraph(QObject * par = 0);
+        DisplayGraph(QGraphicsScene * sc, QObject * par = 0);
         ~DisplayGraph();
 
 
@@ -60,32 +62,57 @@ class DisplayGraph : public QObject
         QWidget * controlWidget()  { return uiWidget; }
 
         static DisplayGraph * generateTestGraph(QGraphicsScene * sc, QObject * par=0);
+
+        /// Adds a node representing a center of gravity
+        /// returns the index of the gravity node
+        int  addGravityNode();
+        void addInvisibleEdge(int i1, int i2);
+
     protected slots:
         void on_cmdStartTimer_clicked();
         void on_cmdReset_clicked();
 
         void on_timerEvent();
+
     protected:
-
         void springBasedLayoutIteration(qreal delta);
-        QPointF repulsiveForce (const QPointF & n1, const QPointF & n2);
-        QPointF attractiveForce(const QPointF & n1, const QPointF & n2);
 
+        QPointF repulsiveForce (const QPointF & n1, const QPointF & n2, qreal optDist);
+        QPointF attractiveForce(const QPointF & n1, const QPointF & n2, qreal optDist);
 
         void updateWidget();
 
+        QGraphicsScene * scene;
+
+        /// Vector of forces, used in function repulsiveForce()
+        QVector<QPointF> forces;
+
+        /// The bigger the delta the more a force changes the position
+        /// called curDelta, because it may be decremented each iteration
         qreal curDelta;
+
+        /// Iteration counter
         int curIteration;
 
+        /// Parameter for force calculation,
+        /// optimal distance between two adjacent nodes
         qreal optimalDistance;
 
+        /// Members for the Control Widget
         QWidget * uiWidget;
         Ui::LayoutControl * ui;
+        QTimer * timer;
 
+
+        /// List of all nodes
         QList<DisplayGraphNode * >  n;
 
-        QTimer * timer;
-        //static const qreal OPTIMAL_DISTANCE=20;
+        /// Multimap of (undirected) edges, edges are stored in nodes too
+        /// but with the multimap the lookup of adjacency info is faster
+        /// and invisible edges are supported i.e. edges considered in layouter
+        /// but not in display
+        /// do keep this datastructure consistent do use node-pointer outside this class!
+        QMultiMap<int,int> edgeInfo;
 };
 
 

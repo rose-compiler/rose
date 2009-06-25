@@ -14,9 +14,15 @@
    <string>RTED RuntimeSystem Debugger</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout">
+   <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
-     <widget class="RoseCodeEdit" name="codeEdit"/>
+     <widget class="QSplitter" name="splitter">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <widget class="RoseCodeEdit" name="codeEdit1"/>
+      <widget class="RoseCodeEdit" name="codeEdit2"/>
+     </widget>
     </item>
    </layout>
   </widget>
@@ -201,6 +207,8 @@
  </customwidgets>
  <resources>
   <include location="res.qrc"/>
+  <include location="../../roseQt/widgets/RoseCodeEdit/QCodeEdit.qrc"/>
+  <include location="../../roseQt/widgets/RoseCodeEdit/example.qrc"/>
  </resources>
  <connections>
   <connection>

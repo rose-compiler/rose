@@ -34,6 +34,15 @@ class DisplayNode : public QGraphicsItem
         virtual const QString & getDisplayName()       { return caption; }
         virtual void setDisplayName(const QString& n)  { caption=n;      }
 
+
+        /// Background color, when not selected
+        virtual void   setBgColor         (const QColor & c);
+        virtual void   setBgColorSelected (const QColor & c);
+
+        virtual QColor getBgColor()         const { return bgColor; }
+        virtual QColor getBgColorSelected() const { return bgColorSelected; }
+
+
         /// Returns the Sage Node which corresponds to this DisplayNode
         virtual SgNode * getSgNode()                   { return sg; }
         virtual void setSgNode(SgNode * sgNode)        { sg = sgNode; }
@@ -56,6 +65,8 @@ class DisplayNode : public QGraphicsItem
                               QWidget *widget);
 
         virtual bool isMouseHold() const { return mouseHold; }
+
+
     protected:
         virtual void mousePressEvent ( QGraphicsSceneMouseEvent * event );
         virtual void mouseReleaseEvent ( QGraphicsSceneMouseEvent * event );
@@ -81,6 +92,12 @@ class DisplayNode : public QGraphicsItem
         /// The font used for drawing the caption
         QFont textFont;
 
+        /// Background color if node is not selected
+        QColor bgColor;
+        /// Background color when node is selected
+        QColor bgColorSelected;
+
+        /// True when a mouse button is pressed over this node
         bool mouseHold;
 };
 

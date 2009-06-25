@@ -56,10 +56,16 @@ class QDESIGNER_WIDGET_EXPORT RoseCodeEdit : public QEditor
         /// Returns actions which can be displayed when no editor is active
         static QAction * getDisabledActions(const QString & name);
 
+        /// Switches breakpoint editing on/off (default: off)
+        void enableBreakPointEdit(bool enable=true);
+
+        QList<int> getBreakPoints();
 
         QCodeEdit * getQCodeEdit() { return editorWrapper; }
 
     protected:
+        QString curFile;
+
         void init();
 
         virtual void dragEnterEvent(QDragEnterEvent * ev);

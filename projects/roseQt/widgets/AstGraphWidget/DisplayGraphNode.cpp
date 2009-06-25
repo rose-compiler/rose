@@ -96,7 +96,6 @@ void DisplayGraphNode::setScene(QGraphicsScene * sc)
 
 bool DisplayGraphNode::isAdjacentTo(DisplayGraphNode * o) const
 {
-    //TODO optimize
     foreach(DisplayEdge * e, inEdges)
         if(e->sourceNode() == o)
             return true;
@@ -116,8 +115,9 @@ bool DisplayGraphNode::isAdjacentTo(DisplayGraphNode * o) const
 #include "ui_LayoutControl.h"
 #include <QTimer>
 
-DisplayGraph::DisplayGraph(QObject * par)
+DisplayGraph::DisplayGraph(QGraphicsScene * sc, QObject * par)
     : QObject(par),
+      scene(sc),
       curIteration(0),
       uiWidget(new QWidget()),
       ui(new Ui::LayoutControl()),
@@ -172,19 +172,41 @@ void DisplayGraph::on_cmdReset_clicked()
 
 void DisplayGraph::addEdge(DisplayGraphNode * n1, DisplayGraphNode * n2)
 {
-    DisplayEdge * e = new DisplayEdge(n1,n2);
-    e->setPaintMode(DisplayEdge::STRAIGHT);
-    DisplayGraphNode::addEdge(e);
+    int i1 = n.indexOf(n1);
+    int i2 = n.indexOf(n2);
+    Q_ASSERT(i1 >=0 && i2 >=0); // nodes have to be added before edges are added
+    addEdge(i1,i2);
+
 }
 
 void DisplayGraph::addEdge ( int i1, int i2)
 {
-    addEdge(n[i1],n[i2]);
+    // create visible part
+    DisplayEdge * e = new DisplayEdge(n[i1],n[i2]);
+    e->setPaintMode(DisplayEdge::STRAIGHT);
+    DisplayGraphNode::addEdge(e);
+    // ..and invisible part
+    addInvisibleEdge(i1,i2);
+}
+
+void DisplayGraph::addInvisibleEdge(int i1, int i2)
+{
+    edgeInfo.insert(i1,i2);
+    edgeInfo.insert(i2,i1);
 }
 
 void DisplayGraph::addNode(DisplayGraphNode * node)
 {
+    node->setScene(scene);
     n.push_back(node);
+}
+
+int DisplayGraph::addGravityNode()
+{
+    DisplayGraphNode * node = new DisplayGraphNode("x",scene);
+    node->setBgColor(QColor(Qt::red).lighter(150));
+    n.push_back(node);
+    return n.size()-1;
 }
 
 void DisplayGraph::on_timerEvent()
@@ -208,35 +230,49 @@ void DisplayGraph::on_timerEvent()
 
 void DisplayGraph::springBasedLayoutIteration(qreal delta)
 {
+    forces.fill(QPointF(0,0),n.size());
+
+    /*
+    qDebug() << "Edge Info:";
+    QMultiMap<int, int>::iterator i = edgeInfo.begin();
+    while (i != edgeInfo.end() ) {
+        qDebug() << i.value() ;
+        ++i;
+    }*/
+
     for(int i=0; i < n.size(); i++)
     {
         QPointF randComp =  QPointF(qrand()/(double)RAND_MAX,qrand()/(double)RAND_MAX) -QPointF(0.5,0.5);
         n[i]->setPos(n[i]->pos() + ui->spnRandomFactor->value() * randComp );
 
-        QPointF force(0,0);
-        for(int j=0; j<n.size(); j++)
+        for(int j=0; j < i; j++)
         {
-            if(i==j)
-                continue;
+            qreal dist= optimalDistance + n[i]->boundingRect().width()/2;
+            if( edgeInfo.contains(i,j))
+            {
+                QPointF attrForce( attractiveForce(n[i]->pos(),n[j]->pos(),optimalDistance) );
+                forces[i] += attrForce;
+                forces[j] -= attrForce;
+            }
 
-            if(n[i]->isMouseHold())
-                continue;
-
-            if(n[i]->isAdjacentTo(n[j]))
-                force += attractiveForce(n[i]->pos(),n[j]->pos());
-
-            force += repulsiveForce(n[i]->pos(),n[j]->pos());
+            QPointF repForce(repulsiveForce(n[i]->pos(),n[j]->pos(),optimalDistance));
+            forces[i] += repForce;
+            forces[j] -= repForce;
         }
-
-        //qDebug() << "Force" << force;
-        n[i]->setPos(n[i]->pos() + delta * force );
-        //qDebug() << "Pos for" << i << n[i]->pos() + delta * force;
     }
+
+    for(int i=0; i<n.size(); i++)
+    {
+        if(n[i]->isMouseHold())
+            continue;
+
+        n[i]->setPos(n[i]->pos() + delta * forces[i] );
+    }
+
 }
 
-QPointF DisplayGraph::repulsiveForce (const QPointF & n1, const QPointF & n2)
+QPointF DisplayGraph::repulsiveForce (const QPointF & n1, const QPointF & n2, qreal optDist)
 {
-    //static const qreal OPT_SQ = OPTIMAL_DISTANCE*OPTIMAL_DISTANCE;
     if(n1 == n2)
     {
         qDebug() << "GraphLayout RepForce Warning";
@@ -246,11 +282,11 @@ QPointF DisplayGraph::repulsiveForce (const QPointF & n1, const QPointF & n2)
 
     QLineF l (n1,n2);
     QPointF v (n1-n2);
-    QPointF res =( optimalDistance *optimalDistance / l.length() ) * v;
+    QPointF res =( optDist *optDist / l.length() ) * v;
     return  res;
 }
 
-QPointF DisplayGraph::attractiveForce(const QPointF & n1, const QPointF & n2)
+QPointF DisplayGraph::attractiveForce(const QPointF & n1, const QPointF & n2, qreal optDist)
 {
     if(n1 == n2)
     {
@@ -259,15 +295,19 @@ QPointF DisplayGraph::attractiveForce(const QPointF & n1, const QPointF & n2)
     }
 
     QPointF v( n2-n1);
-    QPointF res =( (v.x()*v.x() + v.y() * v.y())  / optimalDistance) * v;
+    QPointF res =( (v.x()*v.x() + v.y() * v.y())  / optDist) * v;
     return res;
 }
 
 
 
+
+
+
+
 DisplayGraph * DisplayGraph::generateTestGraph(QGraphicsScene * sc,QObject * par)
 {
-    DisplayGraph * g = new DisplayGraph(par);
+    DisplayGraph * g = new DisplayGraph(sc,par);
 
     // add some nodes
     for(int i=0; i < 6; i++)

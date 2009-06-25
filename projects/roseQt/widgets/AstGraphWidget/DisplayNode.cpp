@@ -27,6 +27,7 @@ DisplayNode::DisplayNode(const QString & cap, QGraphicsScene * sc)
 }
 
 
+
 void DisplayNode::init()
 {
     setFlag(ItemIsMovable);
@@ -38,7 +39,24 @@ void DisplayNode::init()
     setCacheMode(DeviceCoordinateCache);
 #endif
     setScene(scene);
+
+    bgColor = QColor(Qt::blue).lighter(150);
+    bgColorSelected = Qt::green;
 }
+
+
+void DisplayNode::setBgColor(const QColor & c)
+{
+    bgColor = c;
+    update();
+}
+
+void DisplayNode::setBgColorSelected(const QColor &c)
+{
+    bgColorSelected=c;
+    update();
+}
+
 
 QRectF DisplayNode::boundingRect() const
 {
@@ -66,14 +84,7 @@ void DisplayNode::paint(QPainter * painter,const QStyleOptionGraphicsItem * , QW
     pen.setWidth(2);
     painter->setPen(pen);
 
-
-    QColor color=Qt::blue;
-    if(isSelected())
-        color = Qt::green;
-    else
-        color = color.lighter(150);
-
-    QBrush brush(color);
+    QBrush brush( isSelected() ? bgColorSelected : bgColor );
     painter->setBrush(brush);
 
 #if QT_VERSION >= 0x040400
