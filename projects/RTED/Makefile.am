@@ -220,11 +220,18 @@ check-C-array:
 	  file_rose=rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
 	  file2_rose=rose_$$(echo $$file2 | sed -e 's/^\(.*\/\)*//'  ); \
 	  file_rose_bin=$$(echo "$$file_rose".bin); \
-	  echo "Compiling 2f:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  $(LINK_QT_DEBUGGER)  " ;\
-	  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER)  ; \
+	  echo "Compiling 2f:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)    " ;\
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  ; \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
-	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
+	  if [ $$? -eq 0 ] ; then echo "Worked." ; else \
+	    echo "Re-Compiling 2f Debugger:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  $(LINK_QT_DEBUGGER)  " ;\
+	    $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER)  ; \
+	    echo "Executing created file $$file_rose_bin" ; \
+	    ./$$file_rose_bin ; \
+	    echo "Exit" ; \
+            exit 1 ; \
+          fi ; \
 	else \
 	  file_bin=$$(echo "$$file".bin); \
 	  echo "Testing if original program compiles : $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) " ; \
@@ -234,11 +241,18 @@ check-C-array:
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
 	  file_rose=rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
 	  file_rose_bin=$$(echo "$$file_rose".bin); \
-	  echo "Compiling 1f:  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER) " ;\
-	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER); \
+	  echo "Compiling 1f:  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  " ;\
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
-	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
+	  if [ $$? -eq 0 ] ; then echo "Worked." ; else \
+	     echo "Re-Compiling 1f Debugger :  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER) " ;\
+	     $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER); \
+	     echo "Executing created file $$file_rose_bin" ; \
+	     ./$$file_rose_bin ; \ 
+		echo "Exit" ; \
+		exit 1 ; \
+          fi ; \
 	fi; \
 	else \
 	  echo "$$binfile exists.\n" ; \
@@ -301,11 +315,18 @@ check-C-string:
 	  file_rose=rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
 	  file2_rose=rose_$$(echo $$file2 | sed -e 's/^\(.*\/\)*//'  ); \
 	  file_rose_bin=$$(echo "$$file_rose".bin); \
-	  echo "Compiling 2f:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  $(LINK_QT_DEBUGGER)  " ;\
-	  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER)  ; \
+	  echo "Compiling 2f:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)    " ;\
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  ; \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
-	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
+	  if [ $$? -eq 0 ] ; then echo "Worked." ; else \
+	    echo "Re-Compiling 2f Debugger:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  $(LINK_QT_DEBUGGER)  " ;\
+	    $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER)  ; \
+	    echo "Executing created file $$file_rose_bin" ; \
+	    ./$$file_rose_bin ; \
+	    echo "Exit" ; \
+            exit 1 ; \
+          fi ; \
 	else \
 	  file_bin=$$(echo "$$file".bin); \
 	  echo "Testing if original program compiles : $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) " ; \
@@ -315,11 +336,18 @@ check-C-string:
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
 	  file_rose=rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
 	  file_rose_bin=$$(echo "$$file_rose".bin); \
-	  echo "Compiling 1f:  $(CXX) -g -o $$file_rose_bin $$file_rose" ;\
-	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER); \
+	  echo "Compiling 1f:  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  " ;\
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
-	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
+	  if [ $$? -eq 0 ] ; then echo "Worked." ; else \
+	     echo "Re-Compiling 1f Debugger :  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER) " ;\
+	     $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER); \
+	     echo "Executing created file $$file_rose_bin" ; \
+	     ./$$file_rose_bin ; \ 
+		echo "Exit" ; \
+		exit 1 ; \
+          fi ; \
 	fi; \
 	else \
 	  echo "$$binfile exists.\n" ; \
@@ -381,11 +409,18 @@ check-C-subprogram:
 	  file_rose=rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
 	  file2_rose=rose_$$(echo $$file2 | sed -e 's/^\(.*\/\)*//'  ); \
 	  file_rose_bin=$$(echo "$$file_rose".bin); \
-	  echo "Compiling 2f:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  $(LINK_QT_DEBUGGER)  " ;\
-	  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER)  ; \
+	  echo "Compiling 2f:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)    " ;\
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  ; \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
-	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
+	  if [ $$? -eq 0 ] ; then echo "Worked." ; else \
+	    echo "Re-Compiling 2f Debugger:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  $(LINK_QT_DEBUGGER)  " ;\
+	    $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER)  ; \
+	    echo "Executing created file $$file_rose_bin" ; \
+	    ./$$file_rose_bin ; \
+	    echo "Exit" ; \
+            exit 1 ; \
+          fi ; \
 	else \
 	  file_bin=$$(echo "$$file".bin); \
 	  echo "Testing if original program compiles : $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) " ; \
@@ -395,11 +430,18 @@ check-C-subprogram:
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
 	  file_rose=rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
 	  file_rose_bin=$$(echo "$$file_rose".bin); \
-	  echo "Compiling 1f:  $(CXX) -g -o $$file_rose_bin $$file_rose" ;\
-	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER); \
+	  echo "Compiling 1f:  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  " ;\
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
-	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
+	  if [ $$? -eq 0 ] ; then echo "Worked." ; else \
+	     echo "Re-Compiling 1f Debugger :  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER) " ;\
+	     $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER); \
+	     echo "Executing created file $$file_rose_bin" ; \
+	     ./$$file_rose_bin ; \ 
+		echo "Exit" ; \
+		exit 1 ; \
+          fi ; \
 	fi; \
 	else \
 	  echo "$$binfile exists.\n" ; \
@@ -462,11 +504,18 @@ check-C-allocation:
 	  file_rose=rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
 	  file2_rose=rose_$$(echo $$file2 | sed -e 's/^\(.*\/\)*//'  ); \
 	  file_rose_bin=$$(echo "$$file_rose".bin); \
-	  echo "Compiling 2f:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  $(LINK_QT_DEBUGGER)  " ;\
-	  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER)  ; \
+	  echo "Compiling 2f:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)    " ;\
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  ; \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
-	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
+	  if [ $$? -eq 0 ] ; then echo "Worked." ; else \
+	    echo "Re-Compiling 2f Debugger:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  $(LINK_QT_DEBUGGER)  " ;\
+	    $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER)  ; \
+	    echo "Executing created file $$file_rose_bin" ; \
+	    ./$$file_rose_bin ; \
+	    echo "Exit" ; \
+            exit 1 ; \
+          fi ; \
 	else \
 	  file_bin=$$(echo "$$file".bin); \
 	  echo "Testing if original program compiles : $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) " ; \
@@ -476,11 +525,18 @@ check-C-allocation:
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
 	  file_rose=rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
 	  file_rose_bin=$$(echo "$$file_rose".bin); \
-	  echo "Compiling 1f:  $(CXX) -g -o $$file_rose_bin $$file_rose" ;\
-	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER); \
+	  echo "Compiling 1f:  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  " ;\
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
-	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
+	  if [ $$? -eq 0 ] ; then echo "Worked." ; else \
+	     echo "Re-Compiling 1f Debugger :  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER) " ;\
+	     $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER); \
+	     echo "Executing created file $$file_rose_bin" ; \
+	     ./$$file_rose_bin ; \ 
+		echo "Exit" ; \
+		exit 1 ; \
+          fi ; \
 	fi; \
 	else \
 	  echo "$$binfile exists.\n" ; \
@@ -544,11 +600,18 @@ check-C-inputoutput:
 	  file_rose=rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
 	  file2_rose=rose_$$(echo $$file2 | sed -e 's/^\(.*\/\)*//'  ); \
 	  file_rose_bin=$$(echo "$$file_rose".bin); \
-	  echo "Compiling 2f:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  $(LINK_QT_DEBUGGER)  " ;\
-	  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER)  ; \
+	  echo "Compiling 2f:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)    " ;\
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  ; \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
-	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
+	  if [ $$? -eq 0 ] ; then echo "Worked." ; else \
+	    echo "Re-Compiling 2f Debugger:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  $(LINK_QT_DEBUGGER)  " ;\
+	    $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER)  ; \
+	    echo "Executing created file $$file_rose_bin" ; \
+	    ./$$file_rose_bin ; \
+	    echo "Exit" ; \
+            exit 1 ; \
+          fi ; \
 	else \
 	  file_bin=$$(echo "$$file".bin); \
 	  echo "Testing if original program compiles : $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) " ; \
@@ -558,11 +621,18 @@ check-C-inputoutput:
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
 	  file_rose=rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
 	  file_rose_bin=$$(echo "$$file_rose".bin); \
-	  echo "Compiling 1f:  $(CXX) -g -o $$file_rose_bin $$file_rose" ;\
-	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER); \
+	  echo "Compiling 1f:  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  " ;\
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
-	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
+	  if [ $$? -eq 0 ] ; then echo "Worked." ; else \
+	     echo "Re-Compiling 1f Debugger :  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER) " ;\
+	     $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER); \
+	     echo "Executing created file $$file_rose_bin" ; \
+	     ./$$file_rose_bin ; \ 
+		echo "Exit" ; \
+		exit 1 ; \
+          fi ; \
 	fi; \
 	else \
 	  echo "$$binfile exists.\n" ; \
@@ -625,11 +695,18 @@ check-C-memoryleaks:
 	  file_rose=rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
 	  file2_rose=rose_$$(echo $$file2 | sed -e 's/^\(.*\/\)*//'  ); \
 	  file_rose_bin=$$(echo "$$file_rose".bin); \
-	  echo "Compiling 2f:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  $(LINK_QT_DEBUGGER)  " ;\
-	  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER)  ; \
+	  echo "Compiling 2f:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)    " ;\
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  ; \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
-	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
+	  if [ $$? -eq 0 ] ; then echo "Worked." ; else \
+	    echo "Re-Compiling 2f Debugger:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  $(LINK_QT_DEBUGGER)  " ;\
+	    $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER)  ; \
+	    echo "Executing created file $$file_rose_bin" ; \
+	    ./$$file_rose_bin ; \
+	    echo "Exit" ; \
+            exit 1 ; \
+          fi ; \
 	else \
 	  file_bin=$$(echo "$$file".bin); \
 	  echo "Testing if original program compiles : $(CXX) -g -o $$file_bin $$file $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) " ; \
@@ -639,11 +716,18 @@ check-C-memoryleaks:
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
 	  file_rose=rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
 	  file_rose_bin=$$(echo "$$file_rose".bin); \
-	  echo "Compiling 1f:  $(CXX) -g -o $$file_rose_bin $$file_rose" ;\
-	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER); \
+	  echo "Compiling 1f:  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  " ;\
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
-	  if [ $$? -eq 0 ] ; then echo "Worked." ; else echo "Exit" ; exit 1 ; fi ; \
+	  if [ $$? -eq 0 ] ; then echo "Worked." ; else \
+	     echo "Re-Compiling 1f Debugger :  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER) " ;\
+	     $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER); \
+	     echo "Executing created file $$file_rose_bin" ; \
+	     ./$$file_rose_bin ; \ 
+		echo "Exit" ; \
+		exit 1 ; \
+          fi ; \
 	fi; \
 	else \
 	  echo "$$binfile exists.\n" ; \
