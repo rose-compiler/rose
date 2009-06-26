@@ -98,7 +98,8 @@ if ROSE_USE_QT
   
 # ROSE_GUI_LIBS = -lqrose
 #  ROSE_GUI_LIBS_WITH_PATH = -L${QROSE_PREFIX}/lib -lqrose
-  ROSE_GUI_LIBS_WITH_PATH =  -L${top_builddir}/src/3rdPartyLibraries/qrose/QRoseLib/  -lqrose
+#  ROSE_GUI_LIBS_WITH_PATH =  -L${top_builddir}/src/3rdPartyLibraries/qrose/QRoseLib/  -lqrose
+   ROSE_GUI_LIBS_WITH_PATH = ${top_builddir}/src/3rdPartyLibraries/qrose/QRoseLib/libqrose.la
 
 # ROSE_GUI_LIB_FILE = libqrose.a
 endif
@@ -329,7 +330,7 @@ ROSE_LIBS_WITH_PATH = $(ROSE_LIBS)
 
 # ROSE_LIBS = $(top_builddir)/src/librose.la -lm $(LEXLIB) $(MYSQL_DATABASE_LIBS) $(SQLITE_DATABASE_LIBS) $(LIB_QT) $(WAVE_LDFLAGS) $(WAVE_LIBRARIES) $(WAVE_LIBS) $(JAVA_JVM_LIB) $(RT_LIBS)
 ROSE_LIBS = $(top_builddir)/src/librose.la -lm $(MYSQL_DATABASE_LIBS) \
-  $(SQLITE_DATABASE_LIBS) $(LIB_QT)  $(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB) \
+  $(SQLITE_DATABASE_LIBS) $(QT_LIBS)  $(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB) \
   $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) $(BOOST_PROGRAM_OPTIONS_LIB) \
   $(BOOST_REGEX_LIB)  $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB)  \
   $(BOOST_WAVE_LIB) $(SQLITE3_LDFLAGS)  $(JAVA_JVM_LINK) $(RT_LIBS) \

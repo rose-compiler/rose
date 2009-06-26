@@ -1220,7 +1220,6 @@ projects/roseQt/TextEditPainter/Makefile
 projects/roseQt/demo/Makefile
 projects/roseQt/widgets/Makefile
 projects/roseQt/widgets/AsmInstructionBar/Makefile
-projects/roseQt/widgets/AsmSourceMapper/Makefile
 projects/roseQt/widgets/AsmView/Makefile
 projects/roseQt/widgets/AstBrowserWidget/Makefile
 projects/roseQt/widgets/AstGraphWidget/Makefile
@@ -1236,7 +1235,6 @@ projects/roseQt/widgets/NodeInfoWidget/Makefile
 projects/roseQt/widgets/ProjectManager/Makefile
 projects/roseQt/widgets/PropertyTreeWidget/Makefile
 projects/roseQt/widgets/QtDesignerPlugins/Makefile
-projects/roseQt/widgets/QtGradientEditor/Makefile
 projects/roseQt/widgets/RoseCodeEdit/Makefile
 projects/roseQt/widgets/RoseCodeEdit/QCodeEdit/Makefile
 projects/roseQt/widgets/RoseCodeEdit/QCodeEdit/document/Makefile
