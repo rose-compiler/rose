@@ -356,6 +356,43 @@ void RtedTransformation::visit_isArraySgInitializedName(SgNode* n) {
 }
 
 
+void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
+  // make sure that this variable is not on 
+  // the left hand side of an assignment.
+  // And it should not be an argument to a function
+  // if true, we add it to the list of variables being accessed
+
+  SgNode* parent = isSgVarRefExp(n)->get_parent();
+  SgNode* last = parent;
+  while (!isSgAssignOp(parent) && 
+	 !isSgAssignInitializer(parent) && 
+	 !isSgProject(parent) &&
+	 !isSgFunctionCallExp(parent)) {
+    last=parent;
+    parent=parent->get_parent();
+  }
+  if( isSgProject(parent) ||
+      isSgFunctionCallExp(parent))
+    { // do nothing 
+    }
+  else if (isSgAssignOp(parent)) {
+    // make sure that we came from the right hand side of the assignment
+    SgExpression* right = isSgAssignOp(parent)->get_rhs_operand();
+    if (right==last)
+      variable_access.push_back(n);
+  }
+  else if (isSgAssignInitializer(parent)) {
+    // make sure that we came from the right hand side of the assignment
+    SgExpression* right = isSgAssignInitializer(parent)->get_operand();
+    if (right==last)
+      variable_access.push_back(n);
+  }
+  else {
+    // its a plain variable access
+    variable_access.push_back(n);
+  }
+}
+
 
 
 void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
@@ -1269,12 +1306,13 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
 	  return;
 	}
 
-      } else if (isSgTypeInt(type)) {
+      } else if (isSgTypeInt(type) ||
+		 isSgTypeUnsignedInt(type) ||
+		 isSgTypeFloat(type) ||
+		 isSgTypeDouble(type) ) {
 	int derefCounter=0;
 	SgExpression* fillExp = getExprBelowAssignment(varRefE, derefCounter);
 	if (fillExp) {
-	  //appendExpression(arg_list, buildCastExp(buildAddressOfOp(varRefE),buildUnsignedLongLongType())); //buildLongIntVal(-1));
-	  //appendExpression(arg_list, varRefE);
 	  appendExpression(arg_list, buildCastExp(buildAddressOfOp(fillExp),buildUnsignedLongLongType())); //buildLongIntVal(-1));
 	  appendExpression(arg_list, fillExp);
 	} else {
@@ -1326,6 +1364,94 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
       string empty_comment = "";
       attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
       string comment = "RS : Init Variable, paramaters : (name, mangl_name, tpye, basetype, address, value, ismalloc, filename, line, error line)";
+      attachComment(exprStmt,comment,PreprocessingInfo::before);
+    } // basic block 
+    else if (isSgNamespaceDefinitionStatement(scope)) {
+      cerr <<" ------------> RuntimeInstrumentation :: WARNING - Scope not handled!!! : " << name << " : " << scope->class_name() << "\n\n\n\n"<<endl;
+    } else {
+      cerr
+	<< " -----------> RuntimeInstrumentation :: Surrounding Block is not Block! : "
+	<< name << " : " << scope->class_name() << "  - " << stmt->unparseToString() << endl;
+      ROSE_ASSERT(false);
+    }
+  } else {
+    cerr
+      << "RuntimeInstrumentation :: Surrounding Statement could not be found! "
+      << stmt->class_name() << "  " << stmt->unparseToString() << endl;
+    ROSE_ASSERT(false);
+  }
+
+
+}
+
+
+
+void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE
+						  ) {
+  SgStatement* stmt = getSurroundingStatement(varRefE);
+  // make sure there is no extern in front of stmt
+  SgInitializedName* initName = varRefE->get_symbol()->get_declaration();  
+
+  if (isSgStatement(stmt)) {
+    SgScopeStatement* scope = stmt->get_scope();
+    string name = initName->get_mangled_name().str();
+    cerr << "          ... running insertAccessVariable :  "<<name<< "   scope: " << scope->class_name() << endl;
+
+    ROSE_ASSERT(scope);
+    // what if there is an array creation within a ClassDefinition
+    if ( isSgClassDefinition(scope)) {
+      // new stmt = the classdef scope
+      SgClassDeclaration* decl = isSgClassDeclaration(scope->get_parent());
+      ROSE_ASSERT(decl);
+      stmt = isSgVariableDeclaration(decl->get_parent());
+      if (!stmt) {
+	cerr << " Error . stmt is unknown : " << decl->get_parent()->class_name() << endl;
+	exit(1);
+      } 
+      scope = scope->get_scope();
+      // We want to insert the stmt before this classdefinition, if its still in a valid block
+      cerr <<" ------->....... Found ClassDefinition Scope. New Scope is : " << scope->class_name() << "  stmt:" << stmt->class_name() <<"\n\n\n\n"<<endl;
+    }
+    // what is there is an array creation in a global scope
+    else if (isSgGlobal(scope)) {
+      cerr <<" ------->....... RuntimeInstrumentation :: WARNING - Scope not handled!!! : " << name << " : " << scope->class_name() << "\n\n\n\n" <<endl;
+      // We need to add this new statement to the beginning of main
+      // get the first statement in main as stmt
+      stmt = mainFirst;
+      scope=stmt->get_scope();
+    }
+    if (isSgBasicBlock(scope) || 
+	isSgIfStmt(scope) ||
+	isSgForStatement(scope)) {
+      // build the function call : runtimeSystem-->createArray(params); ---------------------------
+      SgExprListExp* arg_list = buildExprListExp();
+      SgExpression* simplename = buildString(initName->get_name().str());
+      appendExpression(arg_list, simplename);
+      SgExpression* callName = buildString(initName->get_mangled_name().str());
+      appendExpression(arg_list, callName);
+
+      SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
+      SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
+      appendExpression(arg_list, filename);
+      appendExpression(arg_list, linenr);
+
+      SgExpression* linenrTransformed = buildString("x%%x");
+      appendExpression(arg_list, linenrTransformed);
+
+      appendExpression(arg_list, buildString(removeSpecialChar(stmt->unparseToString())));
+
+      ROSE_ASSERT(roseAccessVariable);
+      string symbolName2 = roseAccessVariable->get_name().str();
+      //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
+      SgFunctionRefExp* memRef_r = buildFunctionRefExp(  roseAccessVariable);
+      SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
+							    arg_list);
+      SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
+      // insert new stmt (exprStmt) before (old) stmt
+      insertStatementBefore(isSgStatement(stmt), exprStmt);
+      string empty_comment = "";
+      attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
+      string comment = "RS : Access Variable, paramaters : (name, mangl_name, filename, line, line transformed, error Str)";
       attachComment(exprStmt,comment,PreprocessingInfo::before);
     } // basic block 
     else if (isSgNamespaceDefinitionStatement(scope)) {

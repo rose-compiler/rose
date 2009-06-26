@@ -39,6 +39,7 @@ void RtedTransformation::transform(SgProject* project) {
   roseCallStack = symbols->roseCallStack;
   roseCreateVariable = symbols->roseCreateVariable;
   roseInitVariable = symbols->roseInitVariable;
+  roseAccessVariable = symbols->roseAccessVariable;
   ROSE_ASSERT(roseCreateArray);
   ROSE_ASSERT(roseArrayAccess);
   ROSE_ASSERT(roseConvertIntToString);
@@ -46,6 +47,7 @@ void RtedTransformation::transform(SgProject* project) {
   ROSE_ASSERT(roseCallStack);
   ROSE_ASSERT(roseCreateVariable);
   ROSE_ASSERT(roseInitVariable);
+  ROSE_ASSERT(roseAccessVariable);
 
 
   traverseInputFiles(project,preorder);
@@ -62,6 +64,15 @@ void RtedTransformation::transform(SgProject* project) {
   for (; it1 != variable_declarations.end(); it1++) {
     SgInitializedName* node = *it1;
     insertVariableCreateCall(node);
+  }
+
+  cerr << "\n Number of Elements in variable_access  : "
+       << variable_access.size() << endl;
+  std::vector<SgVarRefExp*>::const_iterator itAccess =
+    variable_access.begin();
+  for (; itAccess != variable_access.end(); itAccess++) {
+    SgVarRefExp* node = *itAccess;
+    insertAccessVariable(node);
   }
 
   cerr << "\n Number of Elements in create_array_define_varRef_multiArray  : "
@@ -209,6 +220,10 @@ void RtedTransformation::visit(SgNode* n) {
     // handles calls to functions that contain array varRefExp
     // and puts the varRefExp on stack to be used by RuntimeSystem
     visit_isArrayExprListExp(n);
+  } else if (isSgVarRefExp(n)) {
+    // if this is a varrefexp and it is not initialized, we flag it.
+    // do only if it is by itself or on right hand side of assignment
+    visit_isSgVarRefExp(isSgVarRefExp(n));
   }
   // *********************** DETECT ALL array accesses ***************
 

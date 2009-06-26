@@ -1533,4 +1533,51 @@ RuntimeSystem_roseInitVariable(const char* name,
   }
 }
 
+
+/*********************************************************
+ * This function tells the runtime system that a variable is used
+ ********************************************************/
+void RuntimeSystem_roseAccessVariable( const char* name,
+				       const char* mangled_name,
+				       const char* filename, const char* line, 
+				       const char* lineTransformed,
+				       const char* stmtStr) {
+  printf("AccessVariable: Request for %s  %s.    \n",name, mangled_name);
+  int i=0;
+  int varFound=0;
+
+  const char* stackvar = RuntimeSystem_findVariablesOnStack(name);
+  if (stackvar) {
+    // it exists
+    printf("This variable exists on the stack: %s\n",stackvar);
+    //exit(1);
+    varFound=1;
+    mangled_name=stackvar;
+  }
+
+  // go through all variables and check if it is present.
+  for ( i=0;i<rtsi()->runtimeVariablesEndIndex;i++) {
+    const char* n =rtsi()->runtimeVariables[i].mangled_name;
+    if (strcmp(mangled_name,n)==0){
+      varFound=1;
+      printf("Found the variable %s at index %d \n",n, i);
+
+      // variable exists, lets make sure it is initialized - if not than that is not good.
+      int init = rtsi()->runtimeVariables[i].initialized;      
+      if (init==0) {
+	// it is not initialized. Stop
+	RuntimeSystem_callExit(filename, line, (const char*)"This variable has not been initialized.", stmtStr);      
+      }
+      break;
+    } // if
+  } // for
+
+  Rted_debugDialog(filename, atoi(line));
+
+  if (varFound==0) {
+    printf("No such variable was found\n");
+    exit(1); // should not happen!
+  }
+}
+
 // ***************************************** VARIABLE DECLARATIONS *************************************

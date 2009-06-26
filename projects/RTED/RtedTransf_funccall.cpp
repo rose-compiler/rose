@@ -185,7 +185,7 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
     // 2 = filename
     // 3 = lineNr
     // 4 = unparsedStmt for Error message
-    // 5 = Left Hand side varible, if assignment
+    // 5 = Left Hand side variable, if assignment
     
     int extra_params = 5;
     // nr of args + 2 (for sepcialFunctions) + 5 =  args+6;

@@ -23,6 +23,7 @@ RtedTransformation::getStatement(SgExpression* exp) {
   return stmt;
 }
 
+
 SgExpression*
 RtedTransformation::getExprBelowAssignment(SgExpression* exp, int& derefCounter) {
   SgExpression* fillExp = exp;

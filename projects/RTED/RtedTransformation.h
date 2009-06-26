@@ -29,6 +29,8 @@ class RtedTransformation : public AstSimpleProcessing {
   // the following stores all variables that are created (and used e.g. in functions)
   // We need to store the name, type and intialized value
   std::vector<SgInitializedName*> variable_declarations;
+  // We need to store the variables that are being accessed
+  std::vector<SgVarRefExp*> variable_access;
   // ------------------------ string -----------------------------------
   // handle call to functioncall
   std::vector<RtedArguments*> function_call;
@@ -49,6 +51,7 @@ class RtedTransformation : public AstSimpleProcessing {
   SgFunctionSymbol* roseCallStack;
   SgFunctionSymbol* roseCreateVariable;
   SgFunctionSymbol* roseInitVariable;
+  SgFunctionSymbol* roseAccessVariable;
 
   // FUNCTIONS ------------------------------------------------------------
   // Helper function
@@ -119,6 +122,8 @@ class RtedTransformation : public AstSimpleProcessing {
   void insertInitializeVariable(SgInitializedName* initName,
 				SgVarRefExp* varRefE, bool ismalloc 
 				);
+  void insertAccessVariable(SgVarRefExp* varRefE);
+  void visit_isSgVarRefExp(SgVarRefExp* n);
 
   std::string removeSpecialChar(std::string str);
 
@@ -135,6 +140,10 @@ class RtedTransformation : public AstSimpleProcessing {
     mainFirst=NULL;
     mainLast=NULL;
     insertMainBeforeLast=false;
+    roseCreateVariable=NULL;
+    roseInitVariable=NULL;
+    roseAccessVariable=NULL;
+
   };
   virtual ~RtedTransformation(){
 

@@ -149,6 +149,11 @@ void RuntimeSystem_roseInitVariable(const char* name,
 				    int ismalloc,
 				    const char* filename, const char* line, 
 				    const char* stmtStr);
+void RuntimeSystem_roseAccessVariable( const char* name,
+				       const char* mangled_name,
+				       const char* filename, const char* line, 
+				       const char* lineTransformed,
+				       const char* stmtStr);
 
 // USE GUI for debugging
 void Rted_debugDialog(const char* filename, int line);
