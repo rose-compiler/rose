@@ -1,3 +1,10 @@
+2009-06-26 17:38  heller9
+
+	* [r6353] /trunk/ROSE/config/Makefile.for.ROSE.includes.and.libs,
+	  /trunk/ROSE/configure.in,
+	  /trunk/ROSE/projects/roseQt/widgets/AsmSourceMapper/a.out: fixed
+	  make distcheck error
+
 2009-06-25 23:46  panas2
 
 	* [r6351] /trunk/ROSE/projects/RTED/Makefile.am,
