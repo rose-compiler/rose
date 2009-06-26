@@ -1,3 +1,54 @@
+2009-06-25 23:46  panas2
+
+	* [r6351] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_support.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.c,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: RTED work - getting
+	  line number for transformed file
+
+2009-06-25 23:41  liao6
+
+	* [r6350]
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.h,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/buildForStmt.C,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/inputloopTiling.C,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/loopTiling.C: Added
+	  a new SageInterface function for loop tiling
+	  
+	  * Tile the n-level (starting from 1) loop of a perfectly nested
+	  loop nest using tiling size s
+	  loopTiling(SgForStatement* loopNest, size_t targetLevel, size_t
+	  tileSize);
+	  * added a test and installed program using abstract handles
+
+2009-06-25 20:17  panas2
+
+	* [r6349] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.c: Changes in RTED
+
+2009-06-25 20:15  bauer25
+
+	* [r6348] /trunk/ROSE/projects/RTED/rted_qt/DebugDialog.cpp,
+	  /trunk/ROSE/projects/RTED/rted_qt/DebugDialog.ui,
+	  /trunk/ROSE/projects/roseQt/demo/MainWindow.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/AstGraphWidget/DisplayGraphNode.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/AstGraphWidget/DisplayGraphNode.h,
+	  /trunk/ROSE/projects/roseQt/widgets/AstGraphWidget/DisplayNode.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/AstGraphWidget/DisplayNode.h,
+	  /trunk/ROSE/projects/roseQt/widgets/RoseCodeEdit/QCodeEdit/qcodeedit.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/RoseCodeEdit/RoseCodeEdit.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/RoseCodeEdit/RoseCodeEdit.h,
+	  /trunk/ROSE/projects/roseQt/widgets/RoseCodeEdit/break.png,
+	  /trunk/ROSE/projects/roseQt/widgets/RoseCodeEdit/debug-resume.png,
+	  /trunk/ROSE/projects/roseQt/widgets/RoseCodeEdit/example.qrc:
+	  Worked on RTED debug Gui and Graph layouter
+	  
+	  - Breakpoint support in RoseCodeEdit
+	  - Improvements in graph spring layouter
+
 2009-06-25 18:51  panas2
 
 	* [r6346] /trunk/ROSE/projects/RTED/RuntimeSystem.c,
