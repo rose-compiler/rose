@@ -19,12 +19,14 @@ class QSortFilterProxyModel;
 
 namespace Ui { class DebugDialog; }
 
+class RtedDebug;
+
 class DebugDialog : public QMainWindow
 {
     Q_OBJECT
 
     public:
-        DebugDialog(QWidget * parent =0);
+        DebugDialog(RtedDebug * dbg, QWidget * parent =0);
         ~DebugDialog();
 
         void setHeapVars(RuntimeVariablesType * arr, int arrSize);
@@ -34,7 +36,13 @@ class DebugDialog : public QMainWindow
 
         void setEditorMark(const QString & file, int row);
 
+        void addMessage(const QString & msg);
+
+
     protected slots:
+        void on_actionSingleStep_triggered();
+        void on_actionResume_triggered();
+
         void on_lstHeap_clicked(const QModelIndex & ind);
         void on_lstStack_clicked(const QModelIndex & ind);
         void on_lstMem_clicked(const QModelIndex & ind);
@@ -51,6 +59,9 @@ class DebugDialog : public QMainWindow
         void addArraySection(PropertyTreeWidget * w, int sectionId, ArraysType * at);
         void addMemorySection(PropertyTreeWidget * w, int sectionId, MemoryType * mt);
         void addVariableSection(PropertyTreeWidget * w, int id, RuntimeVariablesType * rv);
+
+
+        RtedDebug * dbgObj;
 
         RuntimeVariablesModel * heapModel;
         QSortFilterProxyModel * heapProxyModel;

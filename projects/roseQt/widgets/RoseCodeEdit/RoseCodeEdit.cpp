@@ -75,17 +75,14 @@ QList<int> RoseCodeEdit::getBreakPoints()
 {
     QList<int> result;
 
-    QLineMarksInfoCenter * lm = QLineMarksInfoCenter::instance();
+    int bpId = QLineMarksInfoCenter::instance()->markTypeId("breakpoint");
 
-    QLineMarkList list = lm->marks();
+    QDocument * d = document();
 
-    int bpId = lm->markTypeId("breakpoint");
+    int line=-1;
+    while( (line = d->findNextMark(bpId,line+1)) != -1 )
+        result.push_back(line);
 
-    foreach(QLineMark lm,list)
-    {
-        if(lm.file == curFile && lm.mark == bpId)
-            result.push_back(lm.line);
-    }
 
     return result;
 }
@@ -127,11 +124,9 @@ void RoseCodeEdit::markAsWarning(int line)
 
 void RoseCodeEdit::loadCppFile(const QString & filename)
 {
-    curFile=filename;
     // hack to always have C++ highlighting (problem: include files without ending)
     m_languages->setLanguage(this, filename + ".cpp");
     load(filename);
-
 }
 
 void RoseCodeEdit::gotoPosition(int row, int col)

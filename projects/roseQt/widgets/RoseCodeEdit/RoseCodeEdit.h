@@ -64,7 +64,6 @@ class QDESIGNER_WIDGET_EXPORT RoseCodeEdit : public QEditor
         QCodeEdit * getQCodeEdit() { return editorWrapper; }
 
     protected:
-        QString curFile;
 
         void init();
 

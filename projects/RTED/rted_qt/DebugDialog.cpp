@@ -9,9 +9,14 @@
 #include <QSortFilterProxyModel>
 #include <QDialogButtonBox>
 
+#include <QListWidgetItem>
+
 #include "qcodeedit.h"
 
-DebugDialog::DebugDialog(QWidget * par)
+#include "RtedDebug.h"
+
+
+DebugDialog::DebugDialog(RtedDebug * _dbgObj, QWidget * par)
     : QMainWindow(par),
     heapModel(0), heapProxyModel(0),
     stackModel(0),stackProxyModel(0),
@@ -20,6 +25,7 @@ DebugDialog::DebugDialog(QWidget * par)
     ui = new Ui::DebugDialog();
     ui->setupUi(this);
 
+    dbgObj= _dbgObj;
 
     ui->editorToolbar->addAction(ui->codeEdit1->action("undo"));
     ui->editorToolbar->addAction(ui->codeEdit1->action("redo"));
@@ -63,6 +69,12 @@ DebugDialog::~DebugDialog()
 }
 
 
+void DebugDialog::addMessage(const QString &  msg)
+{
+    new QListWidgetItem(QIcon(":/util/AppIcons/info.png"),msg,ui->lstMessages);
+    ui->lstMessages->setCurrentRow(ui->lstMessages->count()-1);
+}
+
 void DebugDialog::on_actionSave_triggered()
 {
     ui->codeEdit1->save();
@@ -88,11 +100,22 @@ void DebugDialog::on_actionEditorSettings_triggered()
     RoseCodeEdit::showEditorSettingsDialog();
 }
 
+void DebugDialog::on_actionSingleStep_triggered()
+{
+    dbgObj->on_singleStep();
+}
+
+void DebugDialog::on_actionResume_triggered()
+{
+   dbgObj->on_resume();
+}
+
 
 void DebugDialog::setEditorMark(const QString & file, int row)
 {
     ui->codeEdit1->loadCppFile(file);
     ui->codeEdit1->markAsWarning(row);
+    ui->codeEdit1->gotoPosition(row,0);
 }
 
 void DebugDialog::setHeapVars(RuntimeVariablesType * arr, int arrSize)

@@ -8,6 +8,7 @@ noinst_LTLIBRARIES = libRtedQt.la
 
 libRtedQt_la_SOURCES = CustomListModels.cpp\
                        DebugDialog.cpp\
+                       RtedDebug.cpp\
                        rted_qt.cpp 
 
 nodist_libRtedQt_la_SOURCES = moc_DebugDialog.cxx\

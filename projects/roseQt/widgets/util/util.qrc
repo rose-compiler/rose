@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="util" >
+    <file>AppIcons/info.png</file>
     <file>AppIcons/application-exit.png</file>
     <file>AppIcons/document-open.png</file>
     <file>AppIcons/document-properties.png</file>

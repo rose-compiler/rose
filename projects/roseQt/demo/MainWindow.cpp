@@ -140,11 +140,9 @@ void MainWindow::saveMdiState()
         else if(graphWdg)  settings.setValue("type","AstGraphWidget");
         else if(metKiviat) settings.setValue("type","MetricsKiviat");
         else qDebug() << "Unknown WidgetType in MdiArea, cannot be stored";
-
     }
     settings.endArray();
     settings.endGroup();
-
 }
 
 void MainWindow::restoreMdiState()
@@ -225,7 +223,7 @@ void MainWindow::on_actionNewAssemblerView_triggered()
 void MainWindow::on_actionNewCodeEditor_triggered()
 {
     RoseCodeEdit * e = new RoseCodeEdit();
-    //e->enableBreakPointEdit();
+    e->enableBreakPointEdit();
     addMdiSubWidget(e, "Code Editor");
 }
 

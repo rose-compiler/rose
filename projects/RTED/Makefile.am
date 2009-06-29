@@ -221,7 +221,7 @@ check-C-array:
 	  file2_rose=rose_$$(echo $$file2 | sed -e 's/^\(.*\/\)*//'  ); \
 	  file_rose_bin=$$(echo "$$file_rose".bin); \
 	  echo "Compiling 2f:  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)    " ;\
-	  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  ; \
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $$file2_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER)  ; \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else \
@@ -246,7 +246,7 @@ check-C-array:
 	  file_rose=rose_$$(echo $$file | sed -e 's/^\(.*\/\)*//'  ); \
 	  file_rose_bin=$$(echo "$$file_rose".bin); \
 	  echo "Compiling 1f:  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  " ;\
-	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir) ; \
+	  $(CXX) -g -o $$file_rose_bin $$file_rose $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$$dir -I$(top_builddir) -I$(srcdir)  $(LINK_QT_DEBUGGER)  ; \
 	  echo "Executing created file $$file_rose_bin" ; \
 	  ./$$file_rose_bin ; \
 	  if [ $$? -eq 0 ] ; then echo "Worked." ; else \

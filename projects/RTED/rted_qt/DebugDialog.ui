@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1101</width>
-    <height>942</height>
+    <width>1224</width>
+    <height>963</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -31,7 +31,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1101</width>
+     <width>1224</width>
      <height>26</height>
     </rect>
    </property>
@@ -52,8 +52,16 @@
     <addaction name="separator"/>
     <addaction name="actionEditorSettings"/>
    </widget>
+   <widget class="QMenu" name="menuDebug">
+    <property name="title">
+     <string>Debug</string>
+    </property>
+    <addaction name="actionResume"/>
+    <addaction name="actionSingleStep"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
+   <addaction name="menuDebug"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <widget class="QDockWidget" name="dockWidget_2">
@@ -146,6 +154,37 @@
     <bool>false</bool>
    </attribute>
   </widget>
+  <widget class="QDockWidget" name="dockWidget">
+   <property name="windowTitle">
+    <string>Messages</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents">
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="QListWidget" name="lstMessages"/>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QToolBar" name="debugToolbar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <property name="toolButtonStyle">
+    <enum>Qt::ToolButtonTextBesideIcon</enum>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionSingleStep"/>
+   <addaction name="actionResume"/>
+  </widget>
   <action name="actionQuit">
    <property name="icon">
     <iconset resource="res.qrc">
@@ -189,6 +228,24 @@
    </property>
    <property name="text">
     <string>Editor Settings...</string>
+   </property>
+  </action>
+  <action name="actionSingleStep">
+   <property name="icon">
+    <iconset resource="../../roseQt/widgets/RoseCodeEdit/example.qrc">
+     <normaloff>:/redo.png</normaloff>:/redo.png</iconset>
+   </property>
+   <property name="text">
+    <string>Single Step</string>
+   </property>
+  </action>
+  <action name="actionResume">
+   <property name="icon">
+    <iconset resource="../../roseQt/widgets/RoseCodeEdit/example.qrc">
+     <normaloff>:/debug-resume.png</normaloff>:/debug-resume.png</iconset>
+   </property>
+   <property name="text">
+    <string>Resume</string>
    </property>
   </action>
  </widget>
