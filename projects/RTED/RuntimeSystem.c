@@ -25,7 +25,7 @@ void debugOutput(const char* format, ...)
 #endif
 }
 // USE GUI for debugging
-void Rted_debugDialog(const char* filename, int line) {
+void Rted_debugDialog(const char* filename, int line, int lineTransformed) {
 #ifdef ROSE_WITH_ROSEQT
   showDebugDialog(rtsi()->runtimeVariablesOnStack, rtsi()->runtimeVariablesOnStackEndIndex,
 		  rtsi()->runtimeVariables, rtsi()->runtimeVariablesEndIndex,
@@ -477,7 +477,7 @@ RuntimeSystem_findVariablesOnStack(const char* name) {
  ********************************************************/
 void
 RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dimension,  long int sizeA, long int sizeB,
-			      int ismalloc, const char* filename, const char* line){
+			      int ismalloc, const char* filename, const char* line, const char* lineTransformed){
 
   if (rtsi()->arrayDebug)
     debugOutput( " >>> Called : roseCreateArray : %s dim %d - [%ld][%ld] file : %s line: %s\n",
@@ -584,7 +584,7 @@ RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dime
     }
   }
 
-  Rted_debugDialog(filename, atoi(line));
+  Rted_debugDialog(filename, atoi(line), atoi(lineTransformed));
 }
 
 /*********************************************************
@@ -597,7 +597,8 @@ RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dime
  * stmtStr   : unparsed version of the line to be used for error message
  ********************************************************/
 void
-RuntimeSystem_roseArrayAccess(const char* name, int posA, int posB, const char* filename, const char* line, const char* stmtStr){
+RuntimeSystem_roseArrayAccess(const char* name, int posA, int posB, const char* filename, 
+			      const char* line, const char* lineTransformed, const char* stmtStr){
   if (rtsi()->arrayDebug)
     debugOutput( "    Called : roseArrayAccess : %s ... ", (name));
 
@@ -660,7 +661,7 @@ RuntimeSystem_roseArrayAccess(const char* name, int posA, int posB, const char* 
     exit(1);
   }
 
-  Rted_debugDialog(filename, atoi(line));
+  Rted_debugDialog(filename, atoi(line), atoi(lineTransformed));
 }
 
 // ***************************************** ARRAY FUNCTIONS *************************************
@@ -804,7 +805,9 @@ RuntimeSystem_isSizeOfVariableKnown(const char* mangled_name) {
  ********************************************************/
 void
 RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, int argsSize,
-					 const char* filename, const char* line, const char* stmtStr, const char* leftHandSideVar) {
+					 const char* filename, const char* line, 
+					 const char* lineTransformed, 
+					 const char* stmtStr, const char* leftHandSideVar) {
   assert(argsSize>=1);
   // parameter 1
   assert(args[0]);
@@ -1072,7 +1075,7 @@ RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, in
 	assert(1==0);
       }
 
-  Rted_debugDialog(filename, atoi(line));
+  Rted_debugDialog(filename, atoi(line), atoi(lineTransformed));
 
 }
 
@@ -1093,9 +1096,9 @@ RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, in
  * line      : linenumber
  * stmtStr   : unparsed version of the line to be used for error message
  ********************************************************/
-void
-RuntimeSystem_handleIOFunctionCall(const char* fname,const char** args,
-				   int argsSize, const char* filename, const char* line,
+void 
+RuntimeSystem_handleIOFunctionCall(const char* fname,const char** args, 
+				   int argsSize, const char* filename, const char* line, const char* lineTransformed, 
 				   const char* stmtStr, const char* leftHandSideVar) {
   assert(argsSize>=1);
   // parameter 1
@@ -1194,7 +1197,7 @@ RuntimeSystem_handleIOFunctionCall(const char* fname,const char** args,
     }
   }
 
-  Rted_debugDialog(filename, atoi(line));
+  Rted_debugDialog(filename, atoi(line),atoi(lineTransformed));
 
 }
 
@@ -1227,13 +1230,14 @@ RuntimeSystem_roseFunctionCall(int count, ...) {
   const char* name = NULL;
   const char* filename = NULL;
   const char* line=NULL;
+  const char* lineTransf=NULL;
   const char* stmtStr=NULL;
   const char* leftVar=NULL;
   //cerr << "arguments : " <<  count << endl;
   int i=0;
   for ( i=0;i<count;i++)    {
     const char* val=  va_arg(vl,const char*);
-    if (val) // && i<4)
+    if (val) 
       debugOutput("  %d      val : '%s' ---",i,val);
     const char *iter2=NULL;
     int size =0;
@@ -1244,8 +1248,9 @@ RuntimeSystem_roseFunctionCall(int count, ...) {
     if (i==0) name = val;
     else if (i==1) filename =  val;
     else if (i==2) line = val;
-    else if (i==3) stmtStr = val;
-    else if (i==4) leftVar = val;
+    else if (i==3) lineTransf = val;
+    else if (i==4) stmtStr = val;
+    else if (i==5) leftVar = val;
     else {
       args[posArgs++]=val;
     }
@@ -1257,9 +1262,9 @@ RuntimeSystem_roseFunctionCall(int count, ...) {
     debugOutput( "roseFunctionCall :: %s \n", name );
   if (RuntimeSystem_isInterestingFunctionCall(name)==1) {
     // if the string name is one of the above, we handle it specially
-    RuntimeSystem_handleSpecialFunctionCalls(name, args, posArgs, filename, line, stmtStr, leftVar);
+    RuntimeSystem_handleSpecialFunctionCalls(name, args, posArgs, filename, line, lineTransf, stmtStr, leftVar);
   } else if (RuntimeSystem_isFileIOFunctionCall(name)==1) {
-    RuntimeSystem_handleIOFunctionCall(name, args, posArgs, filename, line, stmtStr, leftVar);
+    RuntimeSystem_handleIOFunctionCall(name, args, posArgs, filename, line, lineTransf, stmtStr, leftVar);
   } else {
     debugOutput("Unknown Function call to RuntimeSystem!\n");
     exit(1);
@@ -1369,7 +1374,7 @@ void RuntimeSystem_roseCreateVariable( const char* name,
   rtsi()->runtimeVariablesEndIndex++;
 
 
-  Rted_debugDialog(filename, atoi(line));
+  Rted_debugDialog(filename, atoi(line),atoi(lineTransformed));
 
   debugOutput("CreateVariable: You have just created a run-time variable:\n");
   debugOutput("  name: %s \n", name);
@@ -1455,7 +1460,9 @@ RuntimeSystem_roseInitVariable(const char* name,
 			       unsigned long long address,
 			       unsigned long long value,
 			       int ismalloc,
-			       const char* filename, const char* line, const char* stmtStr) {
+			       const char* filename, 
+			       const char* line, 
+			       const char* lineTransformed, const char* stmtStr) {
   debugOutput("InitVariable: Request for %s.    address: %d   value: %d   type: %s \n",mangled_name, address, value, typeOfVar2);
   int i=0;
   int varFound=0;
@@ -1541,7 +1548,7 @@ RuntimeSystem_roseInitVariable(const char* name,
     }
   } // for
 
-  Rted_debugDialog(filename, atoi(line));
+  Rted_debugDialog(filename, atoi(line),atoi(lineTransformed));
 
   if (varFound==0) {
     debugOutput("No such variable was found\n");
@@ -1587,7 +1594,7 @@ void RuntimeSystem_roseAccessVariable( const char* name,
     } // if
   } // for
 
-  Rted_debugDialog(filename, atoi(line));
+  Rted_debugDialog(filename, atoi(line),atoi(lineTransformed));
 
   if (varFound==0) {
     debugOutput("No such variable was found\n");

@@ -115,17 +115,21 @@ int checkMemoryLeakIssues(int pos, int address, const char* filename, const char
 int RuntimeSystem_findArrayName(const char* mangled_name);
 //void RuntimeSystem_increaseSizeArray();                                               
 void RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dimension,// int stack, 
-				   long int sizeA, long int sizeB, int ismalloc, const char* filename, const char* line);
+				   long int sizeA, long int sizeB, int ismalloc, const char* filename, 
+				   const char* line, const char* lineTransformed);
 
-void RuntimeSystem_roseArrayAccess(const char* name, int posA, int posB, const char* filename, const char* line, const char* stmtStr);
+void RuntimeSystem_roseArrayAccess(const char* name, int posA, int posB, const char* filename, 
+				   const char* line, const char* lineTransformed, const char* stmtStr);
 
 // function calls 
 const char* RuntimeSystem_findVariablesOnStack(const char* name);
 void RuntimeSystem_increaseSizeRuntimeVariablesOnStack();                                               
 void RuntimeSystem_roseCallStack(const char* name, const char* mangl_name, const char* beforeStr,const char* filename, const char* line);
 
-void RuntimeSystem_handleSpecialFunctionCalls(const char* funcname,const char** args, int argsSize, const char* filename, const char* line, const char* stmtStr, const char* leftHandSideVar);
-void RuntimeSystem_handleIOFunctionCall(const char* funcname,const char** args, int argsSize, const char* filename, const char* line, const char* stmtStr, const char* leftHandSideVar);
+void RuntimeSystem_handleSpecialFunctionCalls(const char* funcname,const char** args, int argsSize, const char* filename, const char* line, 
+					      const char* lineTransformed, const char* stmtStr, const char* leftHandSideVar);
+void RuntimeSystem_handleIOFunctionCall(const char* funcname,const char** args, int argsSize, const char* filename, const char* line, 
+					const char* lineTransformed, const char* stmtStr, const char* leftHandSideVar);
 void RuntimeSystem_roseFunctionCall(int count, ...);
 int  RuntimeSystem_isSizeOfVariableKnown(const char* name);
 int  RuntimeSystem_isModifyingOp(const char* name);
@@ -147,7 +151,8 @@ void RuntimeSystem_roseInitVariable(const char* name,
 				    unsigned long long address,
 				    unsigned long long value,
 				    int ismalloc,
-				    const char* filename, const char* line, 
+				    const char* filename, 
+				    const char* line, const char* lineTransformed, 
 				    const char* stmtStr);
 void RuntimeSystem_roseAccessVariable( const char* name,
 				       const char* mangled_name,
@@ -156,7 +161,7 @@ void RuntimeSystem_roseAccessVariable( const char* name,
 				       const char* stmtStr);
 
 // USE GUI for debugging
-void Rted_debugDialog(const char* filename, int line);
+void Rted_debugDialog(const char* filename, int line, int lineTransformed);
 
 
 #endif

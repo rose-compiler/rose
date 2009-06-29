@@ -143,13 +143,10 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
       appendExpression(arg_list, filename);
       appendExpression(arg_list, linenr);
 
+      SgExpression* linenrTransformed = buildString("x%%x");
+      appendExpression(arg_list, linenrTransformed);
+
       //      appendExpression(arg_list, buildString(stmt->unparseToString()));
-#if 0
-      SgVarRefExp* varRef_l =
-	buildVarRefExp("runtimeSystem", globalScope);
-      string symbolName = varRef_l->get_symbol()->get_name().str();
-      //cerr << " >>>>>>>> Symbol VarRef: " << symbolName << endl;
-#endif
       ROSE_ASSERT(roseCreateArray);
       string symbolName2 = roseCreateArray->get_name().str();
       //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
@@ -163,7 +160,7 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
       insertStatementBefore(isSgStatement(stmt), exprStmt);
       string empty_comment = "";
       attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
-      string comment = "RS : Create Array Variable, paramaters : (name, manglname, dimension, size dim 1, size dim 2, ismalloc, filename, linenr)";
+      string comment = "RS : Create Array Variable, paramaters : (name, manglname, dimension, size dim 1, size dim 2, ismalloc, filename, linenr, linenrTransformed)";
       attachComment(exprStmt,comment,PreprocessingInfo::before);
     } 
     else if (isSgNamespaceDefinitionStatement(scope)) {
@@ -244,15 +241,12 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt,
     SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
     appendExpression(arg_list, filename);
     appendExpression(arg_list, linenr);
+
+    SgExpression* linenrTransformed = buildString("x%%x");
+    appendExpression(arg_list, linenrTransformed);
+
     appendExpression(arg_list, buildString(removeSpecialChar(stmt->unparseToString())));
 
-    //cerr << "Adding runtime ---------------- " << endl;
-
-#if 0
-    SgVarRefExp* varRef_l = buildVarRefExp("runtimeSystem", globalScope);
-    string symbolName = varRef_l->get_symbol()->get_name().str();
-    //cerr << " >>>>>>>> Symbol VarRef: " << symbolName << endl;
-#endif
     ROSE_ASSERT(roseArrayAccess);
     string symbolName2 = roseArrayAccess->get_name().str();
     //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
@@ -266,7 +260,7 @@ void RtedTransformation::insertArrayAccessCall(SgStatement* stmt,
     insertStatementBefore(isSgStatement(stmt), exprStmt);
     string empty_comment = "";
     attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
-    string comment = "RS : Access Array Variable, paramaters : (name, dim 1 location, dim 2 location, filename, linenr, part of error message)";
+    string comment = "RS : Access Array Variable, paramaters : (name, dim 1 location, dim 2 location, filename, linenr, linenrTransformed, part of error message)";
     attachComment(exprStmt,comment,PreprocessingInfo::before);
 
     //    }
@@ -1226,7 +1220,6 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
 	
 	//	ROSE_ASSERT(fillExp);
 	if (fillExp) {
-#if 1
 	  bool isDoNotHandleType=false;
 	  // handle Exceptions. dont init value if class or pointer to pointer
 	  if (isSgClassType(basetype) || 
@@ -1284,22 +1277,6 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
 	    else
 	      appendExpression(arg_list, buildPointerDerefExp(fillExp));
 	  }
-
-#else
-	  cerr << "Derefcounter = " << derefCounter << "  " << stmt->unparseToString() << endl;
-	  SgExpression* addme = fillExp;
-	  for (int j=0;j<derefCounter;j++) {
-	    addme = buildAddressOfOp(addme);
-	  }
-	  appendExpression(arg_list, buildCastExp(addme,buildUnsignedLongLongType()));
-	  // dont assign the pointer deref as a value if you actually have a pointer
-	  // to a class
-	  if (isSgClassType(basetype))
-	    appendExpression(arg_list, buildIntVal(0));
-	  else
-	    appendExpression(arg_list, buildPointerDerefExp(addme));
-#endif
-	  //appendExpression(arg_list,(fillExp));
 	} else {
 	  cerr << " Pointer that is not handled: " << varRefE->unparseToString() << endl;
 	  // assume its an array - dont handle (PntrArrRefExp)
@@ -1309,7 +1286,9 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
       } else if (isSgTypeInt(type) ||
 		 isSgTypeUnsignedInt(type) ||
 		 isSgTypeFloat(type) ||
-		 isSgTypeDouble(type) ) {
+		 isSgTypeDouble(type) ||
+		 isSgTypeLong(type) ||
+		 isSgTypeLongLong(type)) {
 	int derefCounter=0;
 	SgExpression* fillExp = getExprBelowAssignment(varRefE, derefCounter);
 	if (fillExp) {
@@ -1350,6 +1329,9 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
       SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
       appendExpression(arg_list, filename);
       appendExpression(arg_list, linenr);
+      SgExpression* linenrTransformed = buildString("x%%x");
+      appendExpression(arg_list, linenrTransformed);
+
       appendExpression(arg_list, buildString(removeSpecialChar(stmt->unparseToString())));
 
       ROSE_ASSERT(roseInitVariable);
@@ -1363,7 +1345,7 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
       insertStatementAfter(isSgStatement(stmt), exprStmt);
       string empty_comment = "";
       attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
-      string comment = "RS : Init Variable, paramaters : (name, mangl_name, tpye, basetype, address, value, ismalloc, filename, line, error line)";
+      string comment = "RS : Init Variable, paramaters : (name, mangl_name, tpye, basetype, address, value, ismalloc, filename, line, linenrTransformed, error line)";
       attachComment(exprStmt,comment,PreprocessingInfo::before);
     } // basic block 
     else if (isSgNamespaceDefinitionStatement(scope)) {

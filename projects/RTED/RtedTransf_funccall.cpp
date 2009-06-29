@@ -180,15 +180,16 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
     SgScopeStatement* scope = stmt->get_scope();
 
     ROSE_ASSERT(scope);
-    // 4 fixed arguments
+    // fixed arguments
     // 1 = name
     // 2 = filename
     // 3 = lineNr
-    // 4 = unparsedStmt for Error message
-    // 5 = Left Hand side variable, if assignment
+    // 4 = lineNrTransformed
+    // 5 = unparsedStmt for Error message
+    // 6 = Left Hand side variable, if assignment
     
-    int extra_params = 5;
-    // nr of args + 2 (for sepcialFunctions) + 5 =  args+6;
+    int extra_params = 6;
+    // nr of args + 2 (for sepcialFunctions) + 6 =  args+6;
     int size = extra_params+args->arguments.size();
     // how many additional arguments does this function need?
     int dimFuncCall = getDimensionForFuncCall(args->f_name);
@@ -206,6 +207,10 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
     SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
     appendExpression(arg_list, filename);
     appendExpression(arg_list, linenr);
+
+    SgExpression* linenrTransformed = buildString("x%%x");
+    appendExpression(arg_list, linenrTransformed);
+
     appendExpression(arg_list, buildString(removeSpecialChar(stmt->unparseToString())));
     // this one is new, it indicates the variable on the left hand side of the statment,
     // if available
@@ -382,7 +387,7 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
     insertStatementBefore(isSgStatement(stmt), exprStmt);
     string empty_comment = "";
     attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
-    string comment = "RS : Calling Function, parameters: (#args, function name, filename, linenr, error message, left hand var, other parameters)";
+    string comment = "RS : Calling Function, parameters: (#args, function name, filename, linenr, linenrTransformed, error message, left hand var, other parameters)";
     attachComment(exprStmt,comment,PreprocessingInfo::before);
 
   } else {
