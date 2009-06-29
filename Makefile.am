@@ -28,7 +28,14 @@ all-local: rose.docs
 if ROSE_BUILD_OS_IS_CYGWIN
   PROJECT_SOURCE_CODE_TESTS = 
 else
-  PROJECT_SOURCE_CODE_TESTS = detect_roseh detect_rosec
+
+# Liao, 6/27/2009 skip the test if PCH is not used
+if ROSE_PCH 
+PROJECT_SOURCE_CODE_TESTS = detect_roseh: detect_rosec
+else  
+PROJECT_SOURCE_CODE_TESTS = 
+endif
+
 endif
 
 # all: detect_roseh detect_rosec

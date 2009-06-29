@@ -2,7 +2,7 @@
 // by the frontend and adds support for constant folding on any transformations
 // introduced after the frontend processing (the transformations are typically
 // not seen by the frontend, so we have to handle constant folding directly
-// for transformations.  since many transformations are introduced automatically
+// for transformations.  Since many transformations are introduced automatically
 // there is a substantial requirement for constant folding to clean the generated 
 // code up a bit.  However, since the backend compiler (vendor's compiler) 
 
@@ -57,7 +57,13 @@ class ConstantFoldingTraversal
              ConstantFoldingInheritedAttribute inheritedAttribute,
              SubTreeSynthesizedAttributes synthesizedAttributeList );
    };
-
+//! This is the external interface of constant folding:
+//It relies on the EDG frontend to do constant folding by default. 
+// The original source code pass trough EDG will have all constant fold already  (not know how)
+// Only new constant folding opportunities introduced by custom transformations will be 
+// actually handled by this function itself.
+// Note: It will fold children nodes of the input node to some constants, 
+// not folding the input node itself. 
 void constantFoldingOptimization(SgNode* n, bool internalTestingAgainstFrontend = false);
 
 // ***************************************************************************
@@ -90,9 +96,8 @@ class ConstantUnFoldingTraversal
    };
 
 // This test transforms the AST to turn constant values into expressions that have the 
-// same value. This is a test for the constant folding optimization implenented above.
+// same value. This is a test for the constant folding optimization implemented above.
 void constantUnFoldingTest(SgNode* n);
-
 
 // end of ConstantFolding namespace
 }

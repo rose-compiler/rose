@@ -5531,6 +5531,7 @@ bool SageInterface::forLoopNormalization(SgForStatement* loop)
   return true;
 }
 
+#if 0
 bool SageInterface::loopUnrolling(SgForStatement* loop, size_t unrolling_factor)
 {
   // normalize the loop first
@@ -5557,6 +5558,182 @@ bool SageInterface::loopUnrolling(SgForStatement* loop, size_t unrolling_factor)
   result = lu(lpTrans, result);
   return true;
 }
+#else
+
+// a brand new serious implementation for loop unrolling, Liao, 6/25/2009
+/* Handle left-over iterations if iteration_count%unrolling_factor != 0
+ * Handle stride (step) >1 
+ * Assuming loop is normalized to [lb,ub,step], ub is inclusive (<=, >=)
+ *
+ *  iteration_count = (ub-lb+1)%step ==0?(ub-lb+1)/step: (ub-lb+1)/step+1
+ *  fringe = iteration_count%unroll_factor==0 ? 0:unroll_factor*step;
+ *    fringe ==0 if no leftover iterations
+ *    otherwise adjust ub so the leftover iterations will put into the last fringe loop
+ *  unrolled loop's header: for (i=lb;i<=ub - fringe; i+= step*unroll_factor)
+ *  loop body: copy body n times from 0 to factor -1
+ *     stmt(i+ 0*step); ...; stmt (i+ (factor-1)*step);
+ *  fringe loop: the same as the original loop, except for no init statement   
+ * 
+ * e.g: 
+ * // unrolling 3 times for the following loop with stride !=1
+ *       for (i=0; i<=9; i+=3)
+ *       {
+ *         a[i]=i;
+ *       }
+ * // it becomes
+ *     // iteration count = 10%3=1 -> 10/3+1 = 4
+ *     // fringe = 4%3 =1 --> 3*3
+ *     // ub-fringe = 9-3*3
+ *        for (i=0; i<=9-3*3; i+=3*3)
+ *     {
+ *       a[i+3*0]=i;
+ *       a[i+3*1]=i;
+ *       a[i+3*2]=i;
+ *     }
+ *     // i=9 is the leftover iteration   
+ *     for (; i<=9; i+=3)
+ *     {
+ *       a[i]=i;
+ *     }
+ *
+ */
+bool SageInterface::loopUnrolling(SgForStatement* target_loop, size_t unrolling_factor) 
+{
+  // normalize the target loop first
+  if (!forLoopNormalization(target_loop)); 
+  {// the return value is not reliable
+    //    cerr<<"Error in SageInterface::loopUnrolling(): target loop cannot be normalized."<<endl;
+    //    dumpInfo(target_loop);
+    //    return false;
+  }
+  // grab the target loop's essential header information
+  SgInitializedName* ivar = NULL;
+  SgExpression* lb = NULL;
+  SgExpression* ub = NULL;
+  SgExpression* step = NULL;
+  SgStatement* orig_body = NULL;
+  if (!isCanonicalForLoop(target_loop, &ivar, &lb, &ub, &step, &orig_body))
+  {
+    cerr<<"Error in SageInterface::loopUnrolling(): target loop is not canonical."<<endl;
+    dumpInfo(target_loop);
+    return false;
+  }
+  ROSE_ASSERT(ivar&& lb && ub && step);
+  ROSE_ASSERT(isSgBasicBlock(orig_body));
+  
+   // generate the fringe loop
+   bool needFringe = true; 
+   SgForStatement* fringe_loop = deepCopy<SgForStatement>(target_loop); 
+   insertStatementAfter(target_loop,fringe_loop);
+   removeStatement(fringe_loop->get_for_init_stmt());
+   fringe_loop->set_for_init_stmt(NULL);
+    
+  // _lu_iter_count = (ub-lb+1)%step ==0?(ub-lb+1)/step: (ub-lb+1)/step+1;
+  SgExpression* raw_range_exp =buildSubtractOp(buildAddOp(copyExpression(ub),buildIntVal(1)),
+            copyExpression(lb));
+  raw_range_exp->set_need_paren(true);
+  SgExpression* range_d_step_exp = buildDivideOp(raw_range_exp,copyExpression(step));//(ub-lb+1)/step
+  SgExpression* condition_1 = buildEqualityOp(buildModOp(copyExpression(raw_range_exp),copyExpression(step)),buildIntVal(0)); //(ub-lb+1)%step ==0
+  
+  SgExpression* iter_count_exp = buildConditionalExp(condition_1,range_d_step_exp, buildAddOp(copyExpression(range_d_step_exp),buildIntVal(1)));
+  // fringe = iteration_count%unroll_factor==0 ? 0:unroll_factor*step
+  SgExpression* condition_2 = buildEqualityOp(buildModOp(iter_count_exp, buildIntVal(unrolling_factor)), buildIntVal(0)); 
+  SgExpression* initor = buildConditionalExp(condition_2, buildIntVal(0), buildMultiplyOp(buildIntVal(unrolling_factor),copyExpression(step))); 
+
+   SgScopeStatement* scope = target_loop->get_scope();
+   ROSE_ASSERT(scope != NULL);
+   string fringe_name = "_lu_fringe";
+   SgVariableDeclaration* fringe_decl = buildVariableDeclaration(fringe_name, buildIntType(),buildAssignInitializer(initor), scope);
+   insertStatementBefore(target_loop, fringe_decl);
+   attachComment(fringe_decl, "//iter_count = (ub-lb+1)%step ==0?(ub-lb+1)/step: (ub-lb+1)/step+1;");
+   attachComment(fringe_decl, "//fringe = iter_count%unroll_factor==0 ? 0:unroll_factor*step");
+
+  // compile-time evaluate to see if initor is a constant of value 0
+  // if so, the iteration count can be divided even by the unrolling factor
+  // and no fringe loop is needed 
+  // WE have to fold on its parent node to get a possible constant since 
+  // constant folding only folds children nodes, not the current node to a constant
+   ConstantFolding::constantFoldingOptimization(fringe_decl,false);
+   SgInitializedName * ivarname = fringe_decl->get_variables().front();
+   ROSE_ASSERT(ivarname != NULL);
+   // points to a new address if constant folding happens
+   SgAssignInitializer * init1 = isSgAssignInitializer(ivarname->get_initializer()); 
+   if (init1)
+    if (isSgIntVal(init1->get_operand_i()))
+     if (isSgIntVal(init1->get_operand_i())->get_value() == 0)
+       needFringe = false;
+
+  // rewrite loop header ub --> ub -fringe; step --> step *unrolling_factor
+   SgBinaryOp* ub_bin_op = isSgBinaryOp(ub->get_parent());
+   ROSE_ASSERT(ub_bin_op);
+   if (needFringe)
+     ub_bin_op->set_rhs_operand(buildSubtractOp(copyExpression(ub),buildVarRefExp(fringe_name,scope)));
+   else
+   {
+     ub_bin_op->set_rhs_operand(copyExpression(ub));
+     removeStatement(fringe_decl);
+   }
+
+   SgBinaryOp* step_bin_op = isSgBinaryOp(step->get_parent());
+   ROSE_ASSERT(step_bin_op != NULL);
+   step_bin_op->set_rhs_operand(buildMultiplyOp(copyExpression(step),buildIntVal(unrolling_factor)));
+
+   bool isPlus = false;
+   if (isSgPlusAssignOp(step_bin_op))
+     isPlus = true;
+    else if (isSgMinusAssignOp(step_bin_op))
+      isPlus = false;
+    else
+    {
+      cerr<<"Error in SageInterface::loopUnrolling(): illegal incremental exp of a canonical loop"<<endl;
+      dumpInfo(step_bin_op);
+      ROSE_ASSERT(false);
+    }
+    
+   // copy loop body factor -1 times, and replace reference to ivar  with ivar +/- step*[1 to factor-1]
+   for (size_t i =1; i<unrolling_factor; i++) 
+   {
+     SgBasicBlock* body = isSgBasicBlock(deepCopy(fringe_loop->get_loop_body())); // normalized loop has a BB body
+     ROSE_ASSERT(body);
+     // replace reference to ivar with ivar +/- step*i
+     SgExpression* new_exp = NULL; 
+     std::vector<SgVarRefExp*> refs = querySubTree<SgVarRefExp> (body, V_SgVarRefExp);
+     for (std::vector<SgVarRefExp*>::iterator iter = refs.begin(); iter !=refs.end(); iter++)
+     {
+       SgVarRefExp* refexp = *iter;
+       if (refexp->get_symbol()==ivar->get_symbol_from_symbol_table())
+       {
+         //build replacement  expression if it is NULL
+         if (new_exp == NULL)
+         {
+           if (isPlus) //ivar +/- step * i
+           new_exp = buildAddOp(buildVarRefExp(ivar,scope),buildMultiplyOp(copyExpression(step),buildIntVal(i)));
+           else
+           new_exp = buildSubtractOp(buildVarRefExp(ivar,scope),buildMultiplyOp(copyExpression(step),buildIntVal(i)));
+
+         }
+         // replace it with the right one
+         replaceExpression(refexp, new_exp); 
+       }
+     }
+     // copy body to loop body, this should be a better choice
+     // to avoid redefinition of variables after unrolling (new scope is introduced to avoid this)
+     appendStatement(body,isSgBasicBlock(orig_body)); 
+    // moveStatementsBetweenBlocks(body,isSgBasicBlock(orig_body));
+   }
+
+   // remove the fringe loop if not needed finally
+   // it is used to buffering the original loop body before in either cases
+   if (!needFringe) 
+     removeStatement(fringe_loop);
+
+   // constant folding for the transformed AST
+   ConstantFolding::constantFoldingOptimization(scope,false);
+   //ConstantFolding::constantFoldingOptimization(getProject(),false);
+     
+  return true;
+}
+#endif
 
 // Liao, 6/15/2009
 //! A helper function to calculate n!

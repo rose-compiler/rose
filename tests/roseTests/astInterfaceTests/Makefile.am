@@ -203,7 +203,8 @@ rose_inputgetDependentDecls.C:getDependentDecls
 	./getDependentDecls$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputgetDependentDecls.C
 
 rose_inputloopUnrolling.C:loopUnrolling
-	./loopUnrolling$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopUnrolling.C -rose:loopunroll:abstract_handle "Statement<position,6>" -rose:loopunroll:factor 5
+	./loopUnrolling$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopUnrolling.C -rose:loopunroll:abstract_handle "Statement<position,5>" -rose:loopunroll:factor 3
+	./loopUnrolling$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputloopUnrolling.C -rose:loopunroll:abstract_handle "Statement<position,6>" -rose:loopunroll:factor 5 -rose:output rose_inputloopUnrolling2.C
 
 # interchange the first loop within the input file, interchange depth is 4, lexicographical order is 1.
 rose_inputloopInterchange.C:loopInterchange

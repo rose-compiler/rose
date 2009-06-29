@@ -12,6 +12,7 @@ bin_PROGRAMS = \
    finiteDifferencingDemo \
    testFunctionNormalization \
    constantFoldingTest \
+   constantFoldingTest2 \
    implicitCodeGenerationTest
 
 # DQ (3/14/2006): Switch to using multiple libs (since it is faster)
@@ -36,6 +37,10 @@ testFunctionNormalization_LDADD = $(LDADD)
 constantFoldingTest_SOURCES = constantFoldingTest.C
 constantFoldingTest_LDADD = $(LDADD)
 
+constantFoldingTest2_SOURCES = constantFoldingTest2.C
+constantFoldingTest2_LDADD = $(LDADD)
+
+
 implicitCodeGenerationTest_SOURCES = implicitCodeGenerationTest.C
 implicitCodeGenerationTest_LDADD = $(LDADD)
 
@@ -58,6 +63,12 @@ testPass3: preTest
 testConstantFolding: constantFoldingTest
 	./constantFoldingTest -c $(srcdir)/inputCode_constantFoldingTransformation.C
 
+# Liao, 6/27/2009. This test cannot really test what I want. The EDG frontend will do the constant folding (mysteriously to me). 
+# Only translator-introduced constant expressions will be optimized by ROSE.
+testConstantFolding2: constantFoldingTest2
+	./constantFoldingTest2 -c $(srcdir)/inputCode_constantFoldingTransformation.C -rose:output rose_inputCode_constantFoldingTransformation_1.C
+	./constantFoldingTest2 -c $(srcdir)/inputCode_constantFoldingTransformation2.C 
+
 testImplicitCodeGeneration: implicitCodeGenerationTest
 	./implicitCodeGenerationTest -icg:defaultFunctionGenerator -icg:shortCircuitingTransformation -icg:destructorCallAnnotator -c $(top_srcdir)/tests/CompileTests/Cxx_tests/test2004_116.C
 	./implicitCodeGenerationTest -icg:defaultFunctionGenerator -icg:shortCircuitingTransformation -icg:destructorCallAnnotator -c $(srcdir)/inputCode_implicitCodeGenerationTest.C
@@ -70,7 +81,8 @@ EXTRA_DIST = TestDriver pass1.C pass2.C pass3.C rose_pass1.C.save rose_pass2.C.s
              functionNormalizationTest1.C \
              functionNormalizationTest2.C \
              inputCode_constantFoldingTransformation.C \
-             inputCode_implicitCodeGenerationTest.C
+             inputCode_implicitCodeGenerationTest.C \
+	     inputCode_constantFoldingTransformation2.C
 
 # DQ (3/21/2009): These tests don't appear to run under Cygwin.
 if ROSE_BUILD_OS_IS_CYGWIN
@@ -80,7 +92,7 @@ check-local:
 	@echo "***************************************************************************************************"
 else
 check-local:
-	$(MAKE) testConstantFolding testImplicitCodeGeneration
+	$(MAKE) testConstantFolding testImplicitCodeGeneration testConstantFolding2
 	$(MAKE) FORCE_TEST_CODES_TO_RUN
 	@echo "*******************************************************************************************************"
 	@echo "*** ROSE/tests/roseTests/programTransformationTests: make check rule complete (terminated normally) ***"
