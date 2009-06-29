@@ -95,7 +95,9 @@ RtedTransformation::isFileIOFunctionCall(std::string name) {
 bool 
 RtedTransformation::isFunctionCallOnIgnoreList(std::string name) {
   bool interesting=false;
-  if (name=="printf" 
+  if (name=="printf" ||
+      name=="malloc" ||
+      name=="free"
       )
     interesting=true;
   return interesting;
@@ -473,7 +475,6 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
       cerr << " Is a interesting function : " << name << endl;
       function_call.push_back(funcCall);
     } else if(!isFunctionCallOnIgnoreList( name)){
-      // TODO 1 djh: don't do this for malloc/free
       SgStatement* fncallStmt = getSurroundingStatement( fcexp);
       ROSE_ASSERT( fncallStmt);
       scopes.push_back( fncallStmt);

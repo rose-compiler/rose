@@ -40,7 +40,7 @@ runtimeCheck_SOURCES = runtimeCheck.cpp \
                        RtedSymbols.cpp \
                        RtedTransf_array.cpp RtedTransf_prolog.cpp \
                        RtedTransf_support.cpp RtedTransf_funccall.cpp \
-					   RtedTransf_locals.cpp
+					   RtedTransf_locals.cpp RtedTransf_scopestmt.cpp
 
 
 SUBDIRS = rted_qt tests

@@ -84,6 +84,7 @@ class RtedTransformation : public AstSimpleProcessing {
 
   void visit_isArrayPntrArrRefExp(SgNode* n);
   void visit_isArrayExprListExp(SgNode* n);
+  void visit_isSgScopeStatement(SgNode* n);
 
   void addPaddingToAllocatedMemory(SgStatement* stmt,  RTedArray* array);
 

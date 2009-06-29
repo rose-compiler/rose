@@ -21,13 +21,13 @@ CLEANFILES = *.o *.pdf *.c result.txt
 VPATH=$(shell find $(srcdir) -type d)
 
 
-TEST_SUBTREE = $(shell cd $(srcdir) && find . -type d ! -name '.' ! -name '..')
+TEST_SUBTREE = $(shell cd $(srcdir) && find . -type d ! -name '.' ! -name '..' ! -name ".svn" ! -ipath "*/.svn/*")
 LOCAL_SUBTREE = $(sort $(TEST_SUBTREE:./%=$(builddir)/%))
 
 # We expect to succeed when we find a violation, and to fail when we don't find
 # a violation.
-TEST_SRCS = $(shell cd $(srcdir) && find . -mindepth 2 -type f)
-XFAIL_SRCS = $(shell cd $(srcdir) && find . -mindepth 2 -type f -ipath "./*/no*/*")
+TEST_SRCS = $(shell cd $(srcdir) && find . -mindepth 2 -type f ! -ipath "*/.svn/*")
+XFAIL_SRCS = $(shell cd $(srcdir) && find . -mindepth 2 -type f ! -path "*/.svn/*" -ipath "./*/no*/*")
 
 
 TESTS = $(TEST_SRCS:%.c=%.c.bin)
@@ -60,8 +60,8 @@ $(LOCAL_SUBTREE):
 #
 # check-local would work, except that in the default check rule, it's subsequent
 # to check-am
-#check:	$(LOCAL_SUBTREE) check-am
-# TODO 2 djh: enable checks once all tests pass & parallel make issue resolved
+check:	$(LOCAL_SUBTREE) check-am
+
 check-am:
 	echo temporarily disabled check-am
 

@@ -3,18 +3,10 @@
 #include "RtedSymbols.h"
 #include "DataStructures.h"
 #include "RtedTransformation.h"
-//#include "RuntimeSystem.h"
 
 using namespace std;
 using namespace SageInterface;
 using namespace SageBuilder;
-
-
-// TODO 1 djh: test scope statements
-//    while loop
-//    if loop
-//    for loop
-//    block
 
 
 void 

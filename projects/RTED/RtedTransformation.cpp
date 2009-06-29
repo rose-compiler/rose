@@ -109,13 +109,18 @@ void RtedTransformation::transform(SgProject* project) {
   }
 
 
-  // TODO 1 djh: this MUST occur BEFORE variable init
+  // bracket function calls and scope statements with calls to enterScope and
+  // exitScope.  
+  //
+  // Note: For function calls, this must occur before variable
+  // initialization, so that assignments of function return values happen before
+  // exitScope is called.
   cerr << "\n Number of Elements in scopes  : "
        << scopes.size() << endl;
   std::vector<SgStatement*>::const_iterator stmtIt =
     scopes.begin();
   for (; stmtIt != scopes.end(); stmtIt++) {
-	bracketWithScopeEnterExit( *stmtIt);
+	  bracketWithScopeEnterExit( *stmtIt);
   }
 
   // before we insert the intitialized variables,
@@ -243,6 +248,13 @@ void RtedTransformation::visit(SgNode* n) {
   // *********************** DETECT ALL array accesses ***************
 
 
+  // *********************** DETECT ALL scope statements ***************
+  else if (isSgScopeStatement(n)) {
+    // if, while, do, etc., where we need to check for locals going out of scope
+    visit_isSgScopeStatement(n);
+  }
+  // *********************** DETECT ALL scope statements ***************
+
 
 
   // *********************** DETECT ALL function calls ***************
@@ -257,3 +269,4 @@ void RtedTransformation::visit(SgNode* n) {
 
 }
 
+// vim:et sta ts=2 sw=2:
