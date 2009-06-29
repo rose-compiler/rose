@@ -18,6 +18,8 @@ public:
 	SgFunctionSymbol* roseCreateVariable;
 	SgFunctionSymbol* roseInitVariable;
 	SgFunctionSymbol* roseAccessVariable;
+	SgFunctionSymbol* roseEnterScope;
+	SgFunctionSymbol* roseExitScope;
 
 	RtedSymbols() {
 		roseCreateArray = NULL;
@@ -28,6 +30,8 @@ public:
 		roseCreateVariable = NULL;
 		roseInitVariable = NULL;
 		roseAccessVariable = NULL;
+    roseEnterScope = NULL;
+    roseExitScope = NULL;
 	};
 	
 	virtual ~RtedSymbols() {

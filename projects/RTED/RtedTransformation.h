@@ -35,6 +35,9 @@ class RtedTransformation : public AstSimpleProcessing {
   // handle call to functioncall
   std::vector<RtedArguments*> function_call;
 
+  // what statements we need to bracket with enter/exit scope calls
+  std::vector<SgStatement*> scopes;
+
 
   // The following are vars that are needed for transformations
   // and retrieved through the visit function
@@ -52,6 +55,8 @@ class RtedTransformation : public AstSimpleProcessing {
   SgFunctionSymbol* roseCreateVariable;
   SgFunctionSymbol* roseInitVariable;
   SgFunctionSymbol* roseAccessVariable;
+  SgFunctionSymbol* roseEnterScope;
+  SgFunctionSymbol* roseExitScope;
 
   // FUNCTIONS ------------------------------------------------------------
   // Helper function
@@ -113,6 +118,9 @@ class RtedTransformation : public AstSimpleProcessing {
   bool isFunctionCallOnIgnoreList(std::string name);
   bool isFileIOFunctionCall(std::string name) ;
   SgExpression* getVariableLeftOfAssignmentFromChildOnRight(SgNode* n);
+
+  // simple scope handling
+  void bracketWithScopeEnterExit( SgStatement* n);
 
 
   // is it a variable?

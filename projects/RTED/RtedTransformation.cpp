@@ -40,6 +40,10 @@ void RtedTransformation::transform(SgProject* project) {
   roseCreateVariable = symbols->roseCreateVariable;
   roseInitVariable = symbols->roseInitVariable;
   roseAccessVariable = symbols->roseAccessVariable;
+  roseEnterScope = symbols->roseEnterScope;
+  roseExitScope = symbols->roseExitScope;
+
+
   ROSE_ASSERT(roseCreateArray);
   ROSE_ASSERT(roseArrayAccess);
   ROSE_ASSERT(roseConvertIntToString);
@@ -48,6 +52,8 @@ void RtedTransformation::transform(SgProject* project) {
   ROSE_ASSERT(roseCreateVariable);
   ROSE_ASSERT(roseInitVariable);
   ROSE_ASSERT(roseAccessVariable);
+  ROSE_ASSERT(roseEnterScope);
+  ROSE_ASSERT(roseExitScope);
 
 
   traverseInputFiles(project,preorder);
@@ -102,6 +108,15 @@ void RtedTransformation::transform(SgProject* project) {
     insertArrayCreateCall(array_node, array_size);
   }
 
+
+  // TODO 1 djh: this MUST occur BEFORE variable init
+  cerr << "\n Number of Elements in scopes  : "
+       << scopes.size() << endl;
+  std::vector<SgStatement*>::const_iterator stmtIt =
+    scopes.begin();
+  for (; stmtIt != scopes.end(); stmtIt++) {
+	bracketWithScopeEnterExit( *stmtIt);
+  }
 
   // before we insert the intitialized variables,
   // we need to insert the temporary statements that

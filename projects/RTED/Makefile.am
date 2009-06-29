@@ -39,10 +39,11 @@ runtimeCheck_SOURCES = runtimeCheck.cpp \
                        RuntimeSystem.c \
                        RtedSymbols.cpp \
                        RtedTransf_array.cpp RtedTransf_prolog.cpp \
-                       RtedTransf_support.cpp RtedTransf_funccall.cpp 
+                       RtedTransf_support.cpp RtedTransf_funccall.cpp \
+					   RtedTransf_locals.cpp
 
 
-SUBDIRS = rted_qt
+SUBDIRS = rted_qt tests
 
 runtimeCheck_LDADD =  $(ROSE_LIBS)
 if ROSE_WITH_ROSEQT

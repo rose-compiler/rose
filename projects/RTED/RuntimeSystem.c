@@ -206,7 +206,7 @@ RuntimeSystem_roseRtedClose() {
  * is assigned to the old address)
  ********************************************************/
 int checkMemoryLeakIssues(int pos, int address,
-			  const char* filename, const char* line, const char* stmtStr) {
+			  const char* filename, const char* line, const char* stmtStr, enum Error msg) {
   int problem =0;
   debugOutput("Checking for Memory Leak ... \n");
   // we assume that memory at pos exists
@@ -235,11 +235,24 @@ int checkMemoryLeakIssues(int pos, int address,
       // is it our current element, if yes, we have a memory leak
       struct RuntimeVariablesType* variable = mem->variables[0].variable;
       if (variable == runtimevar) {
-	// problem
-	RuntimeSystem_callExit(filename, line, (const char*)"Memory Leak: Assigning Pointer to Memory that has not been freed and no other pointer to that memory exists.", stmtStr);
+        // problem
+        const char* error_msg;
+        switch( msg) {
+          case PTR_OUT_OF_SCOPE:
+            error_msg = 
+              "Memory Leak:  Pointer has gone out of scope, but it was the "
+              "last pointer to reference memory that has not been freed.";
+            break;
+          case PTR_REASSIGNED:
+            error_msg = 
+              "Memory Leak: Assigning Pointer to Memory that has not been "
+              "freed and no other pointer to that memory exists.";
+            break;
+        }
+        RuntimeSystem_callExit(filename, line, error_msg, stmtStr);  
       } else {
-	debugOutput("The entry is different from the current var :  %s and %s\n",
-	       variable->name, runtimevar->name);
+        debugOutput("The entry is different from the current var :  %s and %s\n",
+            variable->name, runtimevar->name);
       }
     }
 
@@ -306,29 +319,31 @@ void RuntimeSystem_RemoveVariableFromMemory(long int address,
       int deletePos=-1;
       int j=0;
       for ( j=0;j<endIndex;j++) {
-	struct RuntimeVariablesType* variable = rtsi()->runtimeMemory[i].variables[j].variable;
-	if (variable==var) {
-	  // found the variable in the pool
-	  deletePos=j;
-	  break;
-	}
+        struct RuntimeVariablesType* variable = rtsi()->runtimeMemory[i].variables[j].variable;
+        if (variable==var) {
+          // found the variable in the pool
+          deletePos=j;
+          break;
+        }
       }
       if (deletePos==-1) {
-	debugOutput("Something went wrong deleting the variable.\n");
-	exit(1);
+        printf("Something went wrong deleting the variable.\n");
+        exit(1);
       } else {
-	if (endIndex==1) {
-	  // delete only element
-	  endIndex--;
-	} if (deletePos==endIndex-1) {
-	  // delete the last element
-	  endIndex--;
-	} else {
-	  // delete an element inbetween
-	  rtsi()->runtimeMemory[i].variables[deletePos].variable=
-	    rtsi()->runtimeMemory[i].variables[endIndex-1].variable;
-	  endIndex--;
-	}
+        if (endIndex==1) {
+          // delete only element
+          endIndex--;
+        } if (deletePos==endIndex-1) {
+          // delete the last element
+          endIndex--;
+        } else {
+          // delete an element inbetween
+          rtsi()->runtimeMemory[i].variables[deletePos].variable=
+            rtsi()->runtimeMemory[i].variables[endIndex-1].variable;
+          endIndex--;
+        }
+
+        rtsi()->runtimeMemory[i].lastVariablePos = endIndex;
       }
     }
   }
@@ -353,25 +368,25 @@ RuntimeSystem_AllocateMemory(long int address, int sizeArray,
       int endIndex = rtsi()->runtimeMemory[i].lastVariablePos;
       int foundVar=0;
       for ( j=0;j<endIndex;j++) {
-	struct RuntimeVariablesType* variable = rtsi()->runtimeMemory[i].variables[j].variable;
-	if (variable==var) {
-	  foundVar=1;
-	  break;
-	}
+        struct RuntimeVariablesType* variable = rtsi()->runtimeMemory[i].variables[j].variable;
+        if (variable==var) {
+          foundVar=1;
+          break;
+        }
       }
       if (foundVar==1) {
-	// this variable is already present at this position
-	// lets return the memoryType to this position
-	return &(rtsi()->runtimeMemory[i]);
+        // this variable is already present at this position
+        // lets return the memoryType to this position
+        return &(rtsi()->runtimeMemory[i]);
       } else {
-	// we need to add this variable to the current address
-	if (rtsi()->runtimeMemory[i].lastVariablePos>=rtsi()->runtimeMemory[i].maxNrOfVariables) {
-	  RuntimeSystem_increaseSizeMemoryVariables(i);
-	}
-	rtsi()->runtimeMemory[i].size=sizeArray;
-	rtsi()->runtimeMemory[i].variables[rtsi()->runtimeMemory[i].lastVariablePos].variable=var;
-	rtsi()->runtimeMemory[i].lastVariablePos++;
-	return &(rtsi()->runtimeMemory[i]);
+        // we need to add this variable to the current address
+        if (rtsi()->runtimeMemory[i].lastVariablePos>=rtsi()->runtimeMemory[i].maxNrOfVariables) {
+          RuntimeSystem_increaseSizeMemoryVariables(i);
+        }
+        rtsi()->runtimeMemory[i].size=sizeArray;
+        rtsi()->runtimeMemory[i].variables[rtsi()->runtimeMemory[i].lastVariablePos].variable=var;
+        rtsi()->runtimeMemory[i].lastVariablePos++;
+        return &(rtsi()->runtimeMemory[i]);
       }
     }
   }
@@ -1345,6 +1360,87 @@ RuntimeSystem_roseCallStack(const char* name, const char* mangl_name,
 
 
 
+// ***************************************** SCOPE HANDLING *************************************
+// TODO 1 djh: check for missing frees
+
+void RuntimeSystem_roseEnterScope() {
+    RuntimeSystem_expandScopeStackIfNecessary();
+
+    struct RuntimeSystem* rts = rtsi();
+
+    assert( rts->scopeBoundariesEndIndex < rts->scopeBoundariesMaxEndIndex);
+    // when we enter a scope, create a new boundary -- i.e. separate all the
+    // variables that now live in an outer scope and don't need to be cleaned up
+    // on the next exitScope();
+    rts->scopeBoundaries[ rts->scopeBoundariesEndIndex++] = 
+      rts->runtimeVariablesEndIndex;
+
+
+    printf(
+        "\n^^Entered a new scope.  %d variables live in the outer scope.\n\n",
+        rts->runtimeVariablesEndIndex
+    );
+}
+
+void RuntimeSystem_roseExitScope( char* filename, char* line, char* stmtStr) {
+    struct RuntimeSystem* rts = rtsi();
+
+    assert( rts->scopeBoundariesEndIndex > 0);
+    // pop the old scope's boundary off the stack
+    int previous_boundary = 
+      rts->scopeBoundaries[ --(rts->scopeBoundariesEndIndex)];
+
+
+    // all variables between previous_boundary and runtimeVariablesEndIndex
+    // are now out of scope
+    int i;
+    for( i = previous_boundary; i < rts->runtimeVariablesEndIndex; ++i) {
+        // check memleak
+        // if var points to mem, remove var from mem (here we know there was no
+        //    problem)
+        // free var
+      struct RuntimeVariablesType* runtimevar = &(rtsi()->runtimeVariables[ i]);
+      if( runtimevar->address) {
+        // "new address" is basically 0 since the var is out of scope
+        checkMemoryLeakIssues( i, 0L, filename, line,stmtStr, PTR_OUT_OF_SCOPE);
+        RuntimeSystem_RemoveVariableFromMemory(
+            runtimevar->address->address, 
+            runtimevar
+        );
+      }
+    }
+
+    printf(
+        "\n^^Left a scope.  %d variables live in the present scope and %d "
+          "variables have just left scope.\n\n", 
+        previous_boundary, 
+        rts->runtimeVariablesEndIndex - previous_boundary
+    );
+    // we never actually release the memory (i.e. shrink the runtime vars
+    // stack), but we free up slots for future variables
+    rts->runtimeVariablesEndIndex = previous_boundary;
+}
+
+
+void RuntimeSystem_expandScopeStackIfNecessary() {
+    struct RuntimeSystem* rts = rtsi();
+
+    if( rts->scopeBoundariesEndIndex >= rts->scopeBoundariesMaxEndIndex) {
+      int* previous_stack = rts->scopeBoundaries;
+
+      rts->scopeBoundariesMaxEndIndex += 50;
+      rts->scopeBoundaries = 
+        (int*) malloc( sizeof(int) * rts->scopeBoundariesMaxEndIndex);
+      assert( rts->scopeBoundaries);
+
+      int i;
+      for( i = 0; i < rts->scopeBoundariesEndIndex; ++i) {
+        rts->scopeBoundaries[ i] = previous_stack[ i];
+      }
+    }
+}
+
+// ***************************************** SCOPE HANDLING *************************************
 
 
 // ***************************************** VARIABLE DECLARATIONS *************************************
@@ -1519,7 +1615,7 @@ RuntimeSystem_roseInitVariable(const char* name,
               rtsi()->runtimeVariables[i].address->address, rtsi()->runtimeVariables[i].address->size, stmtStr);
           // check if this variable is allocating memory through
           // a pointer that was not freed before
-          int result = checkMemoryLeakIssues(i, address, filename, line,stmtStr);
+          int result = checkMemoryLeakIssues(i, address, filename, line,stmtStr, PTR_REASSIGNED);
           if (result==0) {
             // there are no issues and we should re-assign the
             // variable address and size
@@ -1603,3 +1699,5 @@ void RuntimeSystem_roseAccessVariable( const char* name,
 }
 
 // ***************************************** VARIABLE DECLARATIONS *************************************
+
+// vim:sw=2 ts=2 et sta:

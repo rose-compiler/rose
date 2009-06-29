@@ -435,8 +435,8 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
     cerr <<"Found a function call " << name;
     cerr << "   : fcexp->get_function() : " << fcexp->get_function()->class_name() << endl;
     if (isStringModifyingFunctionCall(name) ||
-	isFileIOFunctionCall(name)
-	) {
+        isFileIOFunctionCall(name)
+       ) {
       vector<SgExpression*> args;
       // if this is a function call that has a variable on the left hand size,
       // then we want to push that variable first,
@@ -445,34 +445,39 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
       // and get the var on the left side
       SgExpression* varOnLeft = getVariableLeftOfAssignmentFromChildOnRight(n);
       if (varOnLeft) {
-	// need to get the mangled_name of the varRefExp on left hand side
-	// fixme
-	varOnLeft = buildString(getMangledNameOfExpression(varOnLeft));
+        // need to get the mangled_name of the varRefExp on left hand side
+        // fixme
+        varOnLeft = buildString(getMangledNameOfExpression(varOnLeft));
       } else {
-	varOnLeft = buildString("NoAssignmentVar");
+        varOnLeft = buildString("NoAssignmentVar");
       }
 
       Rose_STL_Container<SgExpression*> expr = exprlist->get_expressions();
       Rose_STL_Container<SgExpression*>::const_iterator it = expr.begin();
       for (;it!=expr.end();++it) {
-	SgExpression* ex = *it;
-	args.push_back(ex);
+        SgExpression* ex = *it;
+        args.push_back(ex);
       }
       SgStatement* stmt = getSurroundingStatement(refExp);
       ROSE_ASSERT(stmt);
       RtedArguments* funcCall = new RtedArguments(name, //func_name
-						  mangled_name, 
-						  "",
-						  "",
-						  refExp,
-						  stmt,
-						  args,
-						  varOnLeft
-						  );
+          mangled_name, 
+          "",
+          "",
+          refExp,
+          stmt,
+          args,
+          varOnLeft
+          );
       ROSE_ASSERT(funcCall);
       cerr << " Is a interesting function : " << name << endl;
       function_call.push_back(funcCall);
+    } else if(!isFunctionCallOnIgnoreList( name)){
+      // TODO 1 djh: don't do this for malloc/free
+      SgStatement* fncallStmt = getSurroundingStatement( fcexp);
+      ROSE_ASSERT( fncallStmt);
+      scopes.push_back( fncallStmt);
     }
   }
-  
+
 }

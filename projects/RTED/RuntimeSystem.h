@@ -3,6 +3,11 @@
 #include <stdio.h>
 //#include <cstdio>
 
+enum Error {
+	PTR_OUT_OF_SCOPE,
+	PTR_REASSIGNED
+};
+
 
 /* -----------------------------------------------------------
  * tps : 6th April 2009: RTED
@@ -70,6 +75,12 @@ struct RuntimeSystem  {
   int maxRuntimeVariablesEndIndex;
   int runtimeVariablesEndIndex;
   struct RuntimeVariablesType* runtimeVariables; 
+  // array of indexes into runtimeVariables that denote scope boundaries.
+  // Assumes variables are created in scope-order (so that when we exit a scope
+  // it's safe to just remove the last N variables from the top of the stack)
+  int* scopeBoundaries;
+  int scopeBoundariesEndIndex;
+  int scopeBoundariesMaxEndIndex;
 
   // memory used
   int maxMemoryEndIndex;
@@ -108,7 +119,7 @@ struct MemoryVariableType* RuntimeSystem_findMemory(long int address);
 struct MemoryType* RuntimeSystem_AllocateMemory(long int address, int sizeArray, struct RuntimeVariablesType* var);
 void RuntimeSystem_increaseSizeMemoryVariables(  int pos);
 void RuntimeSystem_RemoveVariableFromMemory(long int address, struct RuntimeVariablesType* runtimevar);
-int checkMemoryLeakIssues(int pos, int address, const char* filename, const char* line, const char* stmtStr);
+int checkMemoryLeakIssues(int pos, int address, const char* filename, const char* line, const char* stmtStr, enum Error msg);
 
 
 // array functions
@@ -134,6 +145,14 @@ void RuntimeSystem_roseFunctionCall(int count, ...);
 int  RuntimeSystem_isSizeOfVariableKnown(const char* name);
 int  RuntimeSystem_isModifyingOp(const char* name);
 int RuntimeSystem_isFileIOFunctionCall(const char* name);
+
+// handle scopes (so we can detect when locals go out of scope, free up the
+// memory and possibly complain if the local was the last var pointing to some
+// memory)
+void RuntimeSystem_roseEnterScope();
+void RuntimeSystem_roseExitScope( char* filename, char* line, char* stmtStr);
+void RuntimeSystem_expandScopeStackIfNecessary();
+
 
 // function used to indicate error
 void RuntimeSystem_callExit(const char* filename, const char* line, const char* reason, const char* stmtStr);
