@@ -10,7 +10,7 @@ extern "C"
 #endif
 void showDebugDialog(struct RuntimeVariablesType * stack, int stackSize,
 		     struct RuntimeVariablesType * heap, int heapSize,
-		     struct MemoryType * mem, int memSize, char* filename, int row);
+		     struct MemoryType * mem, int memSize, char* filename, int lineFileA, int lineFileB );
 
 
 

@@ -30,7 +30,7 @@ void Rted_debugDialog(const char* filename, int line, int lineTransformed) {
   showDebugDialog(rtsi()->runtimeVariablesOnStack, rtsi()->runtimeVariablesOnStackEndIndex,
 		  rtsi()->runtimeVariables, rtsi()->runtimeVariablesEndIndex,
 		  rtsi()->runtimeMemory, rtsi()->runtimeMemoryEndIndex,
-		  (char*)filename, line);
+		  (char*)filename, line, lineTransformed);
 #endif
 }
 
@@ -70,6 +70,8 @@ RuntimeSystem_Const_RuntimeSystem() {
   rtsi()->maxRuntimeVariablesOnStackEndIndex = rtsi()->maxMemoryEndIndex =  initElementSize;
   rtsi()->maxRuntimeVariablesEndIndex =  rtsi()->runtimeMemoryEndIndex = initElementSize;
   rtsi()->runtimeVariablesEndIndex=  rtsi()->runtimeVariablesOnStackEndIndex=0;
+  rtsi()->scopeBoundariesEndIndex= rtsi()->scopeBoundariesMaxEndIndex=0;
+
 #if 0
   // fixme: the following is all zero, comment out
   rtsi()->runtimeVariablesOnStack = (struct RuntimeVariablesType*)malloc(sizeof(struct RuntimeVariablesType)*initElementSize);
@@ -79,6 +81,7 @@ RuntimeSystem_Const_RuntimeSystem() {
   rtsi()->runtimeVariablesOnStack = NULL;
   rtsi()->runtimeVariables= NULL;
   rtsi()->runtimeMemory=NULL;
+  rtsi()->scopeBoundaries=NULL;
 
   rtsi()->myfile = fopen("result.txt","at");
   if (!rtsi()->myfile) {
