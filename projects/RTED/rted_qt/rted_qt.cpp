@@ -4,35 +4,14 @@
 #include <cstdarg>
 
 #include <QString>
-
-/*
-void showDebugDialog(struct RuntimeVariablesType * stack, int stackSize,
-                     struct RuntimeVariablesType * heap, int heapSize,
-                     struct MemoryType * mem, int memSize,
-                     char* filename, int row)
-{
-    static QApplication * app = new QApplication (0,NULL);
-    static DebugDialog * dlg = new DebugDialog();
-
-    QCoreApplication::setOrganizationName("LLNL");
-    QCoreApplication::setOrganizationDomain("ROSE");
-    QCoreApplication::setApplicationName("rted_qt");
+#include <QFileInfo>
 
 
-    dlg->setHeapVars(heap,heapSize);
-    dlg->setStackVars(stack,stackSize);
-    dlg->setMemoryLocations(mem,memSize);
-
-    dlg->setEditorMark(filename,row);
-
-    dlg->showMaximized();
-    app->exec();
-}*/
 
 void showDebugDialog(struct RuntimeVariablesType * stack, int stackSize,
                      struct RuntimeVariablesType * heap, int heapSize,
                      struct MemoryType * mem, int memSize,
-                     char* filename, int row)
+                     char* filename, int lineFileA,int lineFileB )
 {
     RtedDebug * d = RtedDebug::instance();
     d->stack = stack;
@@ -45,7 +24,16 @@ void showDebugDialog(struct RuntimeVariablesType * stack, int stackSize,
     d->memSize = memSize;
 
     d->file1= QString(filename);
-    d->file1Line = row;
+    d->file1Line = lineFileA;
+
+    // build second filename, (filename 1 with prefix rose_
+    QFileInfo fi (d->file1);
+    QString filename2 = fi.absolutePath();
+    filename2 += "rose_";
+    filename2 += fi.fileName();
+
+    d->file2= filename2;
+    d->file2Line = lineFileB;
     d->startGui();
 }
 

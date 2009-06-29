@@ -34,7 +34,9 @@ class DebugDialog : public QMainWindow
 
         void setMemoryLocations(MemoryType * arr, int arrSize);
 
-        void setEditorMark(const QString & file, int row);
+        void setEditorMark1(const QString & file, int row);
+        void setEditorMark2(const QString & file, int row);
+
 
         void addMessage(const QString & msg);
 

@@ -10,7 +10,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #				make sure segfaults are always considered failures
 #TODO 2 djh: doesn't work for multifiles yet (but can just grep supportfiles & cp them)
 
-builddir=$(realpath .)
+builddir=$(shell pwd)
 
 ROSE_FLAGS=-rose:Cxx
 INCLUDES=$(ROSE_INCLUDES)  -I$(builddir)/.. -I$(top_builddir) -I$(srcdir)/.. -Winvalid-pch
@@ -53,7 +53,7 @@ $(LOCAL_SUBTREE):
 
 %.c.bin:	%.translated.c
 	$(CXX) -g -o $@ $< $(srcdir)/../RuntimeSystem.c $(INCLUDES);
-	
+
 
 # We need the subtree built before we check the tests, but we don't want to
 # clutter the dependencies of, e.g. %.translated.c

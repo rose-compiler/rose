@@ -96,7 +96,8 @@ void RtedDebug::updateDialogData()
 
     messages.clear();
 
-    dlg->setEditorMark(file1,file1Line);
+    dlg->setEditorMark1(file1,file1Line);
+    dlg->setEditorMark2(file2,file2Line);
 }
 
 

@@ -111,11 +111,18 @@ void DebugDialog::on_actionResume_triggered()
 }
 
 
-void DebugDialog::setEditorMark(const QString & file, int row)
+void DebugDialog::setEditorMark1(const QString & file, int row)
 {
     ui->codeEdit1->loadCppFile(file);
     ui->codeEdit1->markAsWarning(row);
     ui->codeEdit1->gotoPosition(row,0);
+}
+
+void DebugDialog::setEditorMark2(const QString & file, int row)
+{
+    ui->codeEdit2->loadCppFile(file);
+    ui->codeEdit2->markAsWarning(row);
+    ui->codeEdit2->gotoPosition(row,0);
 }
 
 void DebugDialog::setHeapVars(RuntimeVariablesType * arr, int arrSize)
