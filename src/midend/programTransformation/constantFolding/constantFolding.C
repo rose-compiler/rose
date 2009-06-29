@@ -5,18 +5,21 @@
 //     1) Constant folded expression trees saved in the AST are eliminated
 //        simplifying optimizations and a number of analysis operations.
 //     2) New constant values expression added after the front-end
-//        processing are folded.  This simplifies transformaions introduced
+//        processing are folded.  This simplifies transformations introduced
 //        after front-end processing. 
 // The constant folding is implemented first to eliminate the front-end 
 // constant valued expression trees that have been saved into the AST. 
-// This is doen because the PRE had at least one bug specific to nested 
+// This is done because the PRE had at least one bug specific to nested 
 // application of itself on the saved constant folded expression trees.
 // So eliminating them fixes this problem at least for now.
 
 #include "rose.h"
 #include "constantFolding.h"
+#include <string>
 
 using namespace ConstantFolding;
+using namespace std;
+
 
 void
 ConstantFolding::constantFoldingOptimization(SgNode* n, bool internalTestingAgainstFrontend)
@@ -104,6 +107,691 @@ ConstantFoldingTraversal::evaluateInheritedAttribute ( SgNode* astNode, Constant
 
 // Macro to permit use of shorter name
 #define TRANSFORMATION_FILE_INFO Sg_File_Info::generateDefaultFileInfoForTransformationNode()
+// A helper function: get value if it fits into int type
+// T1: the internal value's type
+// T2: the concrete value exp type
+template <typename T1, typename T2> 
+static T1 cf_get_value_t(T2* sg_value_exp)
+{
+  return sg_value_exp->get_value();
+}
+
+static int cf_get_int_value(SgValueExp * sg_value_exp)
+{
+  int rtval;
+  if (isSgBoolValExp(sg_value_exp))
+    rtval = isSgBoolValExp(sg_value_exp)->get_value();
+  else if (isSgCharVal(sg_value_exp))
+    rtval = isSgCharVal(sg_value_exp)->get_value();
+  else if (isSgEnumVal(sg_value_exp))
+    rtval = isSgEnumVal(sg_value_exp)->get_value();
+  else if (isSgIntVal(sg_value_exp))
+    rtval = isSgIntVal(sg_value_exp)->get_value();
+  else if (isSgShortVal(sg_value_exp))
+    rtval = isSgShortVal(sg_value_exp)->get_value();
+  else if (isSgUpcMythread(sg_value_exp))
+    rtval = isSgUpcMythread(sg_value_exp)->get_value();
+  else if (isSgUpcThreads(sg_value_exp))
+    rtval = isSgUpcThreads(sg_value_exp)->get_value();
+  else
+  {
+    cerr<<"error: wrong value exp type for cf_get_int_value():"<<sg_value_exp->class_name()<<endl;
+    ROSE_ASSERT(false);
+  }
+  return rtval;
+}
+#if 0
+// Liao, 6/27/2009
+//A set of bit flags for categories of data types
+//They are useful since operations can only be applied to a certain categories of data types
+// We follow ISO C standard (2005 draft version) for the categories
+//
+// signed integer types = signed 1)char, 2)short int, 3)int , 4)long int, 5) long long int
+// unsigned integer types = unsigned 1)char, 2)short int, 3)int , 4)long int, 5) long long int 
+// integer types = bool + char + signed and unsigned integer types
+// (real) floating types = float, double, long double, excluding complex types
+// real types = integer types + real floating types
+// arithmetic types = integer types + floating types
+// scalar types = arithmetic types + pointer types
+  // base types
+#define OP_TYPE_BOOL              (1<<0)
+#define OP_TYPE_CHAR              (1<<1)
+#define OP_TYPE_SIGNED_INTEGER    (1<<2)
+#define OP_TYPE_UNSIGNED_INTEGER  (1<<3)
+#define OP_TYPE_FLOATING_POINT    (1<<4) // We don't consider complex types for now
+#define OP_TYPE_POINTER           (1<<5)
+  //aggregate them
+#define OP_TYPE_INTEGER \
+  ( OP_TYPE_BOOL | OP_TYPE_CHAR|OP_TYPE_SIGNED_INTEGER|OP_TYPE_UNSIGNED_INTEGER )
+#define OP_TYPE_REAL \
+  (OP_TYPE_INTEGER | OP_TYPE_FLOATING_POINT)
+#define OP_TYPE_ARITHMETIC \
+ ( OP_TYPE_INTEGER | OP_TYPE_FLOATING_POINT )
+#define OP_TYPE_SCALAR \
+  (OP_TYPE_ARITHMETIC | OP_TYPE_POINTER)
+//!  Data type --> allowed operations
+
+//! Calculate the  result of a binary operation on two constant values
+// Only contain binary operations allows integer operands
+// Those binary operations are: %, <<, >>, &, ^, |
+//
+// We ignore the compound assignment operations for constant folding, since the folding
+// will lose the side effect on the assigned variables.
+template<typename T>
+T calculate_integer_t (SgBinaryOp* binaryOperator, T lhsValue, T rhsValue)
+{
+  T foldedValue; // to be converted to result type   
+  switch (binaryOperator->variantT())
+  {
+    case V_SgModOp:
+      {
+        foldedValue = lhsValue % rhsValue;
+        break;
+      }
+    case V_SgLshiftOp:
+      {
+        foldedValue = (lhsValue << rhsValue);
+        break;
+      }
+    case V_SgRshiftOp:
+      {
+        foldedValue = (lhsValue >> rhsValue);
+        break;
+      }
+      // bitwise operations
+    case V_SgBitAndOp:
+      {
+        foldedValue = lhsValue & rhsValue;
+        break;
+      }
+    case V_SgBitOrOp:
+      {
+        foldedValue = lhsValue | rhsValue;
+        break;
+      }
+    case V_SgBitXorOp:
+      {
+        foldedValue = lhsValue ^ rhsValue;
+        break;
+      }
+    default:
+      cerr<<"warning: calculuate_integer_t - illegal operator type:"<<binaryOperator->class_name()<<endl;
+  } 
+  return foldedValue;
+}  
+
+#endif
+
+//! Calculate the  result of a binary operation on two constant float-kind values, 
+//   Integer-type-only binary operations are excluded : %, <<, >>, &, ^, |
+// We ignore pointer and complex types for constant folding
+//   none_integer types: floating point types
+// The operators compatible with floating-point types are
+//  + - * / <, > <=, >=, ==, !=  &&, ||
+//
+template<typename T>
+T calculate_float_t (SgBinaryOp* binaryOperator, T lhsValue, T rhsValue)
+{
+  T foldedValue; // to be converted to result type   
+
+  switch (binaryOperator->variantT())
+  {
+    // Basic arithmetic 
+    case V_SgAddOp:
+      {
+        foldedValue = lhsValue + rhsValue;
+        break;
+      }
+    case V_SgSubtractOp:
+      {
+        foldedValue = lhsValue - rhsValue;
+        break;
+      }
+    case V_SgMultiplyOp:
+      {
+        foldedValue = lhsValue * rhsValue;
+        break;
+      }
+    case V_SgDivideOp:
+      {
+        foldedValue = lhsValue / rhsValue;
+        break;
+      }
+     // Fortran only? a**b
+      //    case V_SgExponentiationOp: 
+      //      {
+      //        foldedValue = lhsValue ** rhsValue;
+      //        break;
+      //      }
+
+    case V_SgIntegerDivideOp://TODO what is this ??
+      {
+        foldedValue = lhsValue / rhsValue;
+        break;
+      }
+    // logic operations
+    case V_SgAndOp:
+      {
+        foldedValue = lhsValue && rhsValue;
+        break;
+      }
+
+    case V_SgOrOp:
+      {
+        foldedValue = lhsValue || rhsValue;
+        break;
+      }
+
+      // relational operations
+    case V_SgEqualityOp:
+      {
+        foldedValue = (lhsValue == rhsValue);
+        break;
+      }
+    case V_SgNotEqualOp:
+      {
+        foldedValue = (lhsValue != rhsValue);
+        break;
+      }
+    case V_SgGreaterOrEqualOp:
+      {
+        foldedValue = (lhsValue >= rhsValue);
+        break;
+      }
+    case V_SgGreaterThanOp:
+      {
+        foldedValue = (lhsValue > rhsValue);
+        break;
+      }
+    case V_SgLessOrEqualOp:
+      {
+        foldedValue = (lhsValue <= rhsValue);
+        break;
+      }
+    case V_SgLessThanOp:
+      {
+        foldedValue = (lhsValue < rhsValue);
+        break;
+      }
+   default:
+      {
+        cerr<<"warning: calculuate - unhandled operator type:"<<binaryOperator->class_name()<<endl;
+        //ROSE_ASSERT(false); // not every binary operation type can be evaluated
+      }
+
+  } // end switch
+
+  return foldedValue;
+}
+//! string type and binary operator: the allowed operations on string values
+// + , <, >, <=, >=, ==, !=  
+template<typename T>
+T calculate_string_t (SgBinaryOp* binaryOperator, T lhsValue, T rhsValue)
+{
+  T foldedValue; // to be converted to result type   
+
+  switch (binaryOperator->variantT())
+  {
+    // Basic arithmetic 
+    case V_SgAddOp:
+      {
+        foldedValue = lhsValue + rhsValue;
+        break;
+      }
+      // relational operations
+    case V_SgEqualityOp:
+      {
+        foldedValue = (lhsValue == rhsValue);
+        break;
+      }
+    case V_SgNotEqualOp:
+      {
+        foldedValue = (lhsValue != rhsValue);
+        break;
+      }
+    case V_SgGreaterOrEqualOp:
+      {
+        foldedValue = (lhsValue >= rhsValue);
+        break;
+      }
+    case V_SgGreaterThanOp:
+      {
+        foldedValue = (lhsValue > rhsValue);
+        break;
+      }
+    case V_SgLessOrEqualOp:
+      {
+        foldedValue = (lhsValue <= rhsValue);
+        break;
+      }
+    case V_SgLessThanOp:
+      {
+        foldedValue = (lhsValue < rhsValue);
+        break;
+      }
+    default:
+      {
+        cerr<<"warning: calculate_string_t - unacceptable operator type:"<<binaryOperator->class_name()<<endl;
+        ROSE_ASSERT(false); 
+      }
+  } // end switch
+  return foldedValue;
+}
+// For T type which is compatible for all binary operators we are interested in.
+template<typename T>
+T calculate_t (SgBinaryOp* binaryOperator, T lhsValue, T rhsValue)
+{
+  T foldedValue; // to be converted to result type   
+  switch (binaryOperator->variantT())
+  {
+    // integer-exclusive oprations
+    case V_SgModOp:
+      {
+        foldedValue = lhsValue % rhsValue;
+        break;
+      }
+    case V_SgLshiftOp:
+      {
+        foldedValue = (lhsValue << rhsValue);
+        break;
+      }
+    case V_SgRshiftOp:
+      {
+        foldedValue = (lhsValue >> rhsValue);
+        break;
+      }
+      // bitwise operations
+    case V_SgBitAndOp:
+      {
+        foldedValue = lhsValue & rhsValue;
+        break;
+      }
+    case V_SgBitOrOp:
+      {
+        foldedValue = lhsValue | rhsValue;
+        break;
+      }
+    case V_SgBitXorOp:
+      {
+        foldedValue = lhsValue ^ rhsValue;
+        break;
+      }
+   // non-integer-exclusive operations   
+     case V_SgAddOp:
+      {
+        foldedValue = lhsValue + rhsValue;
+        break;
+      }
+    case V_SgSubtractOp:
+      {
+        foldedValue = lhsValue - rhsValue;
+        break;
+      }
+    case V_SgMultiplyOp:
+      {
+        foldedValue = lhsValue * rhsValue;
+        break;
+      }
+    case V_SgDivideOp:
+      {
+        foldedValue = lhsValue / rhsValue;
+        break;
+      }
+     // Fortran only? a**b
+      //    case V_SgExponentiationOp: 
+      //      {
+      //        foldedValue = lhsValue ** rhsValue;
+      //        break;
+      //      }
+
+    case V_SgIntegerDivideOp://TODO what is this ??
+      {
+        foldedValue = lhsValue / rhsValue;
+        break;
+      }
+    // logic operations
+    case V_SgAndOp:
+      {
+        foldedValue = lhsValue && rhsValue;
+        break;
+      }
+
+    case V_SgOrOp:
+      {
+        foldedValue = lhsValue || rhsValue;
+        break;
+      }
+
+      // relational operations
+    case V_SgEqualityOp:
+      {
+        foldedValue = (lhsValue == rhsValue);
+        break;
+      }
+    case V_SgNotEqualOp:
+      {
+        foldedValue = (lhsValue != rhsValue);
+        break;
+      }
+    case V_SgGreaterOrEqualOp:
+      {
+        foldedValue = (lhsValue >= rhsValue);
+        break;
+      }
+    case V_SgGreaterThanOp:
+      {
+        foldedValue = (lhsValue > rhsValue);
+        break;
+      }
+    case V_SgLessOrEqualOp:
+      {
+        foldedValue = (lhsValue <= rhsValue);
+        break;
+      }
+    case V_SgLessThanOp:
+      {
+        foldedValue = (lhsValue < rhsValue);
+        break;
+      }
+   default:
+      {
+        cerr<<"warning: calculuate - unhandled operator type:"<<binaryOperator->class_name()<<endl;
+        //ROSE_ASSERT(false); // not every binary operation type can be evaluated
+      }
+  }
+  return foldedValue;
+}
+// T1: a SgValExp's child SAGE class type, 
+// T2: its internal storage C type for its value
+template <typename T1, typename T2> 
+static SgValueExp* buildResultValueExp_t (SgBinaryOp* binaryOperator, SgValueExp* lhsValue, SgValueExp* rhsValue)
+{
+  SgValueExp* result = NULL;
+  T1* lhs_v = dynamic_cast<T1*>(lhsValue);
+  T1* rhs_v = dynamic_cast<T1*>(rhsValue);
+  ROSE_ASSERT(lhs_v);
+  ROSE_ASSERT(rhs_v);
+
+  T2 lhs = cf_get_value_t<T2>(lhs_v);
+  T2 rhs = cf_get_value_t<T2>(rhs_v);
+  T2 foldedValue ;
+  foldedValue = calculate_t(binaryOperator,lhs,rhs);
+  result = new T1(foldedValue,"");
+  ROSE_ASSERT(result != NULL);
+  SageInterface::setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+// T1: a SgValExp's child SAGE class type, 
+// T2: its internal storage C type for its value
+// for T2 types (floating point types) which are incompatible with integer-only operations: e.g. if T2 is double, then % is now allowed
+template <typename T1, typename T2> 
+static SgValueExp* buildResultValueExp_float_t (SgBinaryOp* binaryOperator, SgValueExp* lhsValue, SgValueExp* rhsValue)
+{
+  SgValueExp* result = NULL;
+  T1* lhs_v = dynamic_cast<T1*>(lhsValue);
+  T1* rhs_v = dynamic_cast<T1*>(rhsValue);
+  ROSE_ASSERT(lhs_v);
+  ROSE_ASSERT(rhs_v);
+
+  T2 lhs = cf_get_value_t<T2>(lhs_v);
+  T2 rhs = cf_get_value_t<T2>(rhs_v);
+  T2 foldedValue ;
+  foldedValue = calculate_float_t(binaryOperator,lhs,rhs);
+  result = new T1(foldedValue,"");
+  ROSE_ASSERT(result != NULL);
+  SageInterface::setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+
+//!Evaluate a binary expression  a binOp b, return a value exp if both operands are constants
+static SgValueExp* evaluateBinaryOp(SgBinaryOp* binaryOperator)
+{
+  SgValueExp* result = NULL;
+  ROSE_ASSERT(binaryOperator != NULL);
+
+  SgExpression* lhsOperand = binaryOperator->get_lhs_operand();
+  SgExpression* rhsOperand = binaryOperator->get_rhs_operand();
+  if (lhsOperand == NULL || rhsOperand == NULL) 
+    return NULL;
+  // Check if these are value expressions (constants appropriate for constant folding)
+  SgValueExp* lhsValue = isSgValueExp(lhsOperand);
+  SgValueExp* rhsValue = isSgValueExp(rhsOperand);
+
+  if (lhsValue != NULL && rhsValue != NULL)
+  {
+    // we ignore the cases of different operand types for now
+    if (lhsValue->variantT() != rhsValue->variantT())
+      return NULL;
+
+    // TODO what if lhs and rhs have different types?
+    switch (lhsValue->variantT())
+    {
+      case V_SgBoolValExp:
+        { // special handling for bool type, since intVal is built as a result
+          int lhsInteger = cf_get_value_t<int>(isSgBoolValExp(lhsValue));
+          int rhsInteger = cf_get_value_t<int>(isSgBoolValExp(rhsValue));
+          int foldedValue = calculate_t(binaryOperator, lhsInteger, rhsInteger);
+          result = SageBuilder::buildIntVal(foldedValue);
+          break;
+        }
+      case V_SgCharVal: // mostly provide a pair of SgValueExp class type and its internal value type
+                        // for SgCharVal, the internal value type is also char
+        {
+          result = buildResultValueExp_t<SgCharVal,char>(binaryOperator,lhsValue,rhsValue);
+          break;
+        }
+        // each calls a subset (bitvec again?) of binary calculation according to data types
+      case V_SgDoubleVal: 
+        {
+          result = buildResultValueExp_float_t<SgDoubleVal,double>(binaryOperator,lhsValue,rhsValue);
+          break;
+        }
+// enumerate value is special, we build an integer equivalent here for simplicity
+      case V_SgEnumVal: 
+        {
+          result = buildResultValueExp_t<SgIntVal,int>(binaryOperator,lhsValue,rhsValue);
+          break;
+        }
+      case V_SgFloatVal: 
+        {
+          result = buildResultValueExp_float_t<SgFloatVal,float>(binaryOperator,lhsValue,rhsValue);
+          break;
+        }
+      case V_SgIntVal:
+        {
+#if 1
+          result = buildResultValueExp_t<SgIntVal,int>(binaryOperator,lhsValue,rhsValue);
+#else          
+          int lhsInteger = cf_get_value_t<int>(isSgIntVal(lhsValue));
+          int rhsInteger = cf_get_value_t<int>(isSgIntVal(rhsValue));
+          int foldedValue = calculate_t(binaryOperator, lhsInteger, rhsInteger);
+          result = SageBuilder::buildIntVal(foldedValue);
+#endif
+          break;
+        }
+      case V_SgLongDoubleVal: 
+        {
+          result = buildResultValueExp_float_t<SgLongDoubleVal,long double>(binaryOperator,lhsValue,rhsValue);
+          break;
+        }
+      case V_SgLongIntVal: 
+        {
+          result = buildResultValueExp_t<SgLongIntVal,long int>(binaryOperator,lhsValue,rhsValue);
+          break;
+        }
+      case V_SgLongLongIntVal: 
+        {
+          result = buildResultValueExp_t<SgLongLongIntVal,long long int>(binaryOperator,lhsValue,rhsValue);
+          break;
+        }
+      case V_SgShortVal: 
+        {
+          result = buildResultValueExp_t<SgShortVal,short>(binaryOperator,lhsValue,rhsValue);
+          break;
+        }
+      //special handling for string val due to its unique constructor  
+      case V_SgStringVal: 
+        {
+          std::string lhsInteger = cf_get_value_t<std::string>(isSgStringVal(lhsValue));
+          std::string rhsInteger = cf_get_value_t<std::string>(isSgStringVal(rhsValue));
+          std::string foldedValue = calculate_string_t(binaryOperator, lhsInteger, rhsInteger);
+          result = SageBuilder::buildStringVal(foldedValue);
+          break;
+        }
+      case V_SgUnsignedCharVal: 
+        {
+          result = buildResultValueExp_t<SgUnsignedCharVal,unsigned char>(binaryOperator,lhsValue,rhsValue);
+          break;
+        }
+      case V_SgUnsignedIntVal: 
+        {
+          result = buildResultValueExp_t<SgUnsignedIntVal,unsigned int>(binaryOperator,lhsValue,rhsValue);
+          break;
+        }
+      case V_SgUnsignedLongLongIntVal: 
+        {
+          result = buildResultValueExp_t<SgUnsignedLongLongIntVal,unsigned long long int>(binaryOperator,lhsValue,rhsValue);
+          break;
+        }
+        
+      case V_SgUnsignedLongVal: 
+        {
+          result = buildResultValueExp_t<SgUnsignedLongVal,unsigned long>(binaryOperator,lhsValue,rhsValue);
+          break;
+        }
+      case V_SgUnsignedShortVal: 
+        {
+          result = buildResultValueExp_t<SgUnsignedShortVal,unsigned short>(binaryOperator,lhsValue,rhsValue);
+          break;
+        }
+      default:
+        {
+          cout<<"evaluateBinaryOp(): "<<"Unhandled SgValueExp case for:"<<lhsValue->class_name()<<endl;
+          // Not a handled type
+        }
+    }
+    //TODO what if binaryOperator's type is different from its operands' types
+    //when to do the cast? or cast is done by unary operation's evaluation?
+#if 0    
+    // Now we have to look at the type (since there are a lot of types this could be
+    // a lot of cases)
+    SgType* type = binaryOperator->get_type();
+    switch(type->variantT())
+    {
+      // implement at least one case for now
+      case V_SgTypeInt:
+      case V_SgTypeBool:
+        {
+          SgIntVal* lhsIntValue = isSgIntVal(lhsValue);
+          SgIntVal* rhsIntValue = isSgIntVal(rhsValue);
+
+          SgBoolValExp* lhsBoolValue = isSgBoolValExp(lhsValue);
+          SgBoolValExp* rhsBoolValue = isSgBoolValExp(rhsValue);
+          // Both bool value and  int value use int value
+
+          if ((lhsIntValue != NULL && rhsIntValue != NULL)
+              ||(lhsBoolValue != NULL && rhsBoolValue != NULL))
+          {
+            int lhsInteger  = 0;
+            if (lhsIntValue)
+              lhsInteger = lhsIntValue->get_value();
+            else if (lhsBoolValue)
+              lhsInteger = lhsBoolValue->get_value();
+
+            int rhsInteger  = 0;
+            if (rhsIntValue)
+              rhsInteger = rhsIntValue->get_value();
+            else if (rhsBoolValue)
+              rhsInteger = rhsBoolValue->get_value();
+
+            int foldedValue = calculate_t(binaryOperator, lhsInteger, rhsInteger);
+            //  returnAttribute.newValueExp = SageBuilder::buildIntVal(foldedValue);
+            result = SageBuilder::buildIntVal(foldedValue);
+
+            //  printf ("Found a constant expression %d %s %d --> folding to value = %d \n",lhsInteger,binaryOperator->class_name().c_str(),rhsInteger,foldedValue);
+          }
+          break;
+        }
+
+      default:
+        {
+          cout<<"evaluateBinaryOp(): "<<"Unhandled type case for:"<<type->class_name()<<endl;
+          // Not a handled type
+        }
+    }
+#endif    
+  } // both operands are constant
+
+  return result;
+}
+
+//! Evaluate a conditional expression i.e. a?b:c
+static SgValueExp* evaluateConditionalExp(SgConditionalExp * cond_exp)
+{
+  SgValueExp* result = NULL;
+
+  // Calculate the current node's synthesized attribute value
+  SgExpression* c_exp_value = cond_exp->get_conditional_exp();
+  SgValueExp* value_exp = isSgValueExp(c_exp_value);
+
+  SgExpression* t_exp_value = cond_exp->get_true_exp();
+  SgValueExp* value_exp_t = isSgValueExp(t_exp_value);
+
+  SgExpression* f_exp_value = cond_exp->get_false_exp();
+  SgValueExp* value_exp_f = isSgValueExp(f_exp_value);
+
+  if (value_exp)
+  {
+    switch (value_exp->variantT())
+    {
+      //TODO first operand can be scalar type: arithmetic (integer + floating point) + pointer
+      //  case V_SgCharVal:
+      //  {
+      //    std::string v = cf_get_value_t<std::string>(value_exp);
+      //    break;
+      //  }
+      //  case V_SgDoubleVal:
+      //  {
+      //    double v = cf_get_value_t<double>(value_exp);
+      //    break;
+      //  }
+      //   case V_SgFloatVal:
+      //  {
+      //    float v = cf_get_value_t<float>(value_exp);
+      //    break;
+      //  }
+      // integer value
+      case V_SgCharVal:
+      case V_SgShortVal:
+      case V_SgBoolValExp:
+      case V_SgEnumVal:
+      case V_SgIntVal:
+      case V_SgUpcMythread:
+      case V_SgUpcThreads:
+        {
+          int v= cf_get_int_value(value_exp);
+          if (v)
+          {
+            if (value_exp_t) // set the value only if the true exp is a constant
+              result = value_exp_t;
+          }
+          else
+          {
+            if (value_exp_f)
+              result = value_exp_f;
+          }
+          break;
+        }
+      default:
+        {
+          cout<<"evaluateConditionalExp(): unhandled value expression type of a conditional exp:"<<value_exp->class_name()<<endl;
+        }
+    } // end switch
+  }// end if (value_exp) the condition is a constant
+  return result ;
+}
 
 ConstantFoldingSynthesizedAttribute
 ConstantFoldingTraversal::evaluateSynthesizedAttribute (
@@ -179,138 +867,130 @@ ConstantFoldingTraversal::evaluateSynthesizedAttribute (
                        }
                   }
 
-            // Found an expression see if it is a binary or unary operator
-            // (else we can ignore it in constant folding, I think).
-               SgBinaryOp* binaryOperator = isSgBinaryOp(expr);
-               if (binaryOperator != NULL)
-                  {
-                    ROSE_ASSERT(synthesizedAttributeList.size() == 2);
-
-                 // Process any SubTreeSynthesizedAttributes so any values there can be reused (propogated up in the AST)
-                 // If we are not testing agains values from the constant expression trees saved by ROSE in the AST, then 
-                 // this is where we would expect to find the values propogated up from and constant operands or values 
+               // Liao, 6/26/2009, add more cases, this is used by SageInterface::loopUnrolling()
+               // For each type of expressions, do the following:
+               // step 1: replace children with their synthesized attribute values , if any
+               // step 1: calculate the current node 's synthesized attribute value if children' values are constants
+               // Binary expressions
+               if (isSgBinaryOp(expr)) // we don't use 'switch (expr->variantT())' here to avoid enumerating all variantT values for binary operations
+               {
+                 // Found an expression see if it is a binary or unary operator
+                 // (else we can ignore it in constant folding, I think).
+                 SgBinaryOp* binaryOperator = isSgBinaryOp(expr);
+                 ROSE_ASSERT(binaryOperator != NULL);
+                 ROSE_ASSERT(synthesizedAttributeList.size() == 2);
+                 // step 1: replace children with their synthesized attribute values 
+                 //
+                 // Process any SubTreeSynthesizedAttributes so any values there can be reused (propagated up in the AST)
+                 // If we are not testing against values from the constant expression trees saved by ROSE in the AST, then 
+                 // this is where we would expect to find the values propagated up from and constant operands or values 
                  // folded from constant expressions.
-                    SgExpression* lhsSynthesizedValue = synthesizedAttributeList[SgBinaryOp_lhs_operand_i].newValueExp;
-                    SgExpression* rhsSynthesizedValue = synthesizedAttributeList[SgBinaryOp_rhs_operand_i].newValueExp;
+                 SgExpression* lhsSynthesizedValue = synthesizedAttributeList[SgBinaryOp_lhs_operand_i].newValueExp;
+                 SgExpression* rhsSynthesizedValue = synthesizedAttributeList[SgBinaryOp_rhs_operand_i].newValueExp;
 
-                 // printf ("Propogated values: lhsSynthesizedValue = %p rhsSynthesizedValue = %p \n",lhsSynthesizedValue,rhsSynthesizedValue);
+                 // printf ("Propagated values: lhsSynthesizedValue = %p rhsSynthesizedValue = %p \n",lhsSynthesizedValue,rhsSynthesizedValue);
 
                  // Replace the lhs and/or rhs if generated at a child node in the AST traversal
                  // Note that this overwrites the existing pointer and is likely a memory leak!
-                    if (lhsSynthesizedValue != NULL)
-                         binaryOperator->set_lhs_operand(lhsSynthesizedValue);
-                    if (rhsSynthesizedValue != NULL)
-                       binaryOperator->set_rhs_operand(rhsSynthesizedValue);
+                 if (lhsSynthesizedValue != NULL)
+                   binaryOperator->set_lhs_operand(lhsSynthesizedValue);
+                 if (rhsSynthesizedValue != NULL)
+                   binaryOperator->set_rhs_operand(rhsSynthesizedValue);
 
+                 // step 2: calculate the current node 's synthesized attribute value
+                 //
                  // Get the child nodes (existing or new reset values)
-                    SgExpression* lhsOperand = binaryOperator->get_lhs_operand();
-                    SgExpression* rhsOperand = binaryOperator->get_rhs_operand();
 
-                 // Check if these are value expressions (constants appropriate for constant folding)
-                    SgValueExp* lhsValue = isSgValueExp(lhsOperand);
-                    SgValueExp* rhsValue = isSgValueExp(rhsOperand);
-                    if (lhsValue != NULL && rhsValue != NULL)
-                       {
-                      // Now we have to see what kind of binary operator this is (since there are a lot
-                      // of binary operators there could be a lot of cases, is there a better design?)
-                         switch (binaryOperator->variantT())
-                            {
-                              case V_SgAddOp:
-                                 {
-                                // Now we have to look at the type (since there are a lot of types this could be
-                                // a lot of cases)
-                                   SgType* type = binaryOperator->get_type();
-                                   switch(type->variantT())
-                                      {
-                                     // implement at least one case for now
-                                        case V_SgTypeInt:
-                                           {
-                                             SgIntVal* lhsIntValue = isSgIntVal(lhsValue);
-                                             SgIntVal* rhsIntValue = isSgIntVal(rhsValue);
-                                             if (lhsIntValue != NULL && rhsIntValue != NULL)
-                                                {
-                                                  int lhsInteger  = lhsIntValue->get_value();
-                                                  int rhsInteger  = rhsIntValue->get_value();
-                                                  int foldedValue = lhsInteger + rhsInteger;
+                  returnAttribute.newValueExp = evaluateBinaryOp(binaryOperator);
 
-                                                  returnAttribute.newValueExp = new SgIntVal(TRANSFORMATION_FILE_INFO,foldedValue);
-
-                                                  printf ("Found a constant expression %d + %d --> folding to value = %d \n",lhsInteger,rhsInteger,foldedValue);
-                                                }
-                                             break;
-                                           }
-
-                                        default:
-                                           {
-                                          // Not a handled type
-                                           }
-                                      }
-                                   break;
-                                 }
-
-                              case V_SgAssignOp:  // values are not lhs operands
-                              default:
-                                 {
-                                // There are a lot of expressions where constant folding does not apply
-                                 }
-                            }
-                       }
-                  }
-
-            // Constant folding makes sense on unary operators, but this case is not implemented yet!
-               SgUnaryOp* unaryOperator = isSgUnaryOp(expr);
-               if (unaryOperator != NULL)
-                  {
-                    ROSE_ASSERT(synthesizedAttributeList.size() == 1 || (synthesizedAttributeList.size() == 2 && isSgCastExp(unaryOperator)));
-                    SgExpression* synthesizedValue = synthesizedAttributeList[SgUnaryOp_operand_i].newValueExp;
+               } // end if binary op
+               else if (isSgUnaryOp(expr))
+               {
+                 // Constant folding makes sense on unary operators, but this case is not implemented yet!
+                 SgUnaryOp* unaryOperator = isSgUnaryOp(expr);
+                 ROSE_ASSERT(unaryOperator != NULL);
+                 ROSE_ASSERT(synthesizedAttributeList.size() == 1 || (synthesizedAttributeList.size() == 2 && isSgCastExp(unaryOperator)));
+                 SgExpression* synthesizedValue = synthesizedAttributeList[SgUnaryOp_operand_i].newValueExp;
                  // Replace the lhs and/or rhs if generated at a child node in the AST traversal
                  // Note that this overwrites the existing pointer and is likely a memory leak!
-                    if (synthesizedValue != NULL)
-                       unaryOperator->set_operand(synthesizedValue);
-                    SgExpression* operand = unaryOperator->get_operand();
-                    SgValueExp* value = isSgValueExp(operand);
+                 if (synthesizedValue != NULL)
+                   unaryOperator->set_operand(synthesizedValue);
+                 SgExpression* operand = unaryOperator->get_operand();
+                 SgValueExp* value = isSgValueExp(operand);
 
-                    if (value != NULL)
+                 if (value != NULL)
+                 {
+                   switch (unaryOperator->variantT())
+                   {
+                     case V_SgUnaryAddOp:
+                     case V_SgMinusOp:
+                     case V_SgCastExp:
                        {
-                         switch (unaryOperator->variantT())
-                            {
-                              case V_SgUnaryAddOp:
-                              case V_SgMinusOp:
-                              case V_SgCastExp:
-                                 {
-                                   break;
-                                 }
-
-                              default:
-                                 {
-                                // There are a lot of expressions where constant folding does not apply
-                                 }
-                            }
+                         //TODO
+                         break;
                        }
-                  }
 
-               SgAssignInitializer* assignInit = isSgAssignInitializer(expr);
-               if (assignInit != NULL)
-                  {
-                    ROSE_ASSERT(synthesizedAttributeList.size() == 1);
-                    SgExpression* synthesizedValue = synthesizedAttributeList[SgAssignInitializer_operand_i].newValueExp;
+                     default:
+                       {
+                         // There are a lot of expressions where constant folding does not apply
+                       }
+                   }
+                 }
+               }
+               else if (isSgAssignInitializer(expr))
+               {
+
+                 SgAssignInitializer* assignInit = isSgAssignInitializer(expr);
+                 ROSE_ASSERT (assignInit != NULL);
+                 ROSE_ASSERT(synthesizedAttributeList.size() == 1);
+                 SgExpression* synthesizedValue = synthesizedAttributeList[SgAssignInitializer_operand_i].newValueExp;
                  // Replace the lhs and/or rhs if generated at a child node in the AST traversal
                  // Note that this overwrites the existing pointer and is likely a memory leak!
-                    if (synthesizedValue != NULL)
-                       assignInit->set_operand(synthesizedValue);
-                  }
+                 if (synthesizedValue != NULL)
+                   assignInit->set_operand(synthesizedValue);
+               }
+               else if (isSgExprListExp(expr))
+               {
+                 SgExprListExp* exprList = isSgExprListExp(expr);
+                 ROSE_ASSERT(exprList != NULL);
+                 ROSE_ASSERT(synthesizedAttributeList.size() == exprList->get_expressions().size());
+                 for (size_t i = 0; i < exprList->get_expressions().size(); ++i) {
+                   SgExpression* synthesizedValue = synthesizedAttributeList[i].newValueExp;
+                   if (synthesizedValue != NULL)
+                     exprList->get_expressions()[i] = synthesizedValue;
+                 }
+               }
+               else if (isSgConditionalExp(expr)) // a? b: c
+               {
+                 SgConditionalExp* cond_exp = isSgConditionalExp(expr);
+                 ROSE_ASSERT(cond_exp);
+                 ROSE_ASSERT(synthesizedAttributeList.size() == 3);
+                 // step 1. replace children with their synthesized values
+                 // src/frontend/SageIII/Cxx_GrammarTreeTraversalAccessEnums.h defines the traversal enum
+                 // enum E_SgConditionalExp {SgConditionalExp_conditional_exp, SgConditionalExp_true_exp, SgConditionalExp_false_exp}
+                 SgExpression* c_exp_value = synthesizedAttributeList[SgConditionalExp_conditional_exp].newValueExp; 
+                 SgExpression* t_exp_value = synthesizedAttributeList[SgConditionalExp_true_exp].newValueExp; 
+                 SgExpression* f_exp_value = synthesizedAttributeList[SgConditionalExp_false_exp].newValueExp; 
+                 if (c_exp_value!= NULL)
+                   cond_exp->set_conditional_exp(c_exp_value);
+                 if (t_exp_value!= NULL)
+                   cond_exp->set_true_exp(t_exp_value);
+                 if (f_exp_value!= NULL)
+                   cond_exp->set_false_exp(f_exp_value);
 
-               SgExprListExp* exprList = isSgExprListExp(expr);
-               if (exprList != NULL)
-                  {
-                    ROSE_ASSERT(synthesizedAttributeList.size() == exprList->get_expressions().size());
-		    for (size_t i = 0; i < exprList->get_expressions().size(); ++i) {
-		      SgExpression* synthesizedValue = synthesizedAttributeList[i].newValueExp;
-		      if (synthesizedValue != NULL)
-			exprList->get_expressions()[i] = synthesizedValue;
-		    }
-                  }
-             }
+                 // step 2. calculate the current node's synthesized attribute value
+                 returnAttribute.newValueExp = evaluateConditionalExp(cond_exp);
+
+               }
+               //TODO SgSizeOfOp () 
+               //return constant 1 for operand of type char, unsigned char, signed char
+               //
+               // ignore expressions without any constant valued children expressions, they are not supposed to be handled here
+               else if (!isSgValueExp(expr) && !isSgVarRefExp(expr))
+               {
+                 cout<<"constant folding: unhandled expression type:"<<expr->class_name()<<endl;
+               }
+             } // end if (exp)
         }
 
   // printf ("Returning returnAttribute.newValueExp = %p \n",returnAttribute.newValueExp);
@@ -343,9 +1023,9 @@ ConstantUnFoldingTraversal::evaluateSynthesizedAttribute (
                     if (intValueExp != NULL)
                        {
                          int value = intValueExp->get_value();
-                         SgIntVal* lhsIntValue  = new SgIntVal(TRANSFORMATION_FILE_INFO,1);
-                         SgIntVal* rhsIntValue  = new SgIntVal(TRANSFORMATION_FILE_INFO,value-1);
-                         returnAttribute.newExp = new SgAddOp(TRANSFORMATION_FILE_INFO,lhsIntValue,rhsIntValue);
+                         SgIntVal* lhsIntValue  = SageBuilder::buildIntVal(1);
+                         SgIntVal* rhsIntValue  = SageBuilder::buildIntVal(value-1);
+                         returnAttribute.newExp = SageBuilder::buildAddOp(lhsIntValue,rhsIntValue);
                          printf ("Found constant = %d and built a constant expression (%d+%d) \n",
                               value,lhsIntValue->get_value(),rhsIntValue->get_value());
                        }
@@ -363,14 +1043,14 @@ ConstantUnFoldingTraversal::evaluateSynthesizedAttribute (
              }
         }
 
-  // This will turn binary operators containing value expresssions into binary operators with 
+  // This will turn binary operators containing value expressions into binary operators with 
   // binary operators as subexpressions.
      SgBinaryOp* binaryOperator = isSgBinaryOp(astNode);
      if (binaryOperator != NULL)
         {
-       // Process any SubTreeSynthesizedAttributes so any values there can be reused (propogated up in the AST)
-       // If we are not testing agains values from the constant expression trees saved by ROSE in the AST, then 
-       // this is where we would expect to find the values propogated up from and constant operands or values 
+       // Process any SubTreeSynthesizedAttributes so any values there can be reused (propagated up in the AST)
+       // If we are not testing against values from the constant expression trees saved by ROSE in the AST, then 
+       // this is where we would expect to find the values propagated up from and constant operands or values 
        // folded from constant expressions.
           SgExpression* lhsSynthesizedValue = synthesizedAttributeList[SgBinaryOp_lhs_operand_i].newExp;
           SgExpression* rhsSynthesizedValue = synthesizedAttributeList[SgBinaryOp_rhs_operand_i].newExp;
