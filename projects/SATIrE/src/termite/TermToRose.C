@@ -734,10 +734,15 @@ PrologToRose::createTypedefType(PrologTerm* t) {
   string id = t->getRepresentation();
   if (lookupDecl(&decl, id, false)) {
     tpe = decl->get_type(); //new SgTypedefType(decl);
+#if HAVE_SWI_PROLOG
   } else if (lookaheadDecl(&decl, 
 			   "typedef_declaration(_,typedef_annotation("
 			   +annot->at(0)->getRepresentation()+",_,_),_,_)")) {
     tpe = decl->get_type();
+#else
+ // FIXME: Implement a lookahead for the no-SWI case. Until that is done,
+ // this will create spurious types, which is not nice.
+#endif
   } else {
     SgType* basetype = NULL;
     if (annot->at(1)->getName() != "typedef_type") {

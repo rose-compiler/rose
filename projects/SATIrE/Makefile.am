@@ -11,6 +11,10 @@ else
 DISTCHECK_CONFIGURE_FLAGS += --without-pag
 endif
 
+if !WITH_SWI_PROLOG
+DISTCHECK_CONFIGURE_FLAGS += --without-swi-prolog
+endif
+
 .PHONY: docs
 
 docs:

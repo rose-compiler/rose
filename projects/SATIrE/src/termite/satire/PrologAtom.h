@@ -15,8 +15,9 @@ public:
   ///the destructor
   ~PrologAtom() {};	
   ///constructor setting the string
-  PrologAtom(std::string name) {
+  PrologAtom(std::string name, bool escapedRepresentation = true) {
       mName = name;
+      mEscapedRepresentation = escapedRepresentation;
   };
   ///the arity is always 0
   int getArity() {return 0;};
@@ -25,10 +26,19 @@ public:
   ///return the string
   std::string getName() {return mName;};
   /// return the string
-  std::string getRepresentation() { return quote(mName); };
+  std::string getRepresentation() {
+    if (mEscapedRepresentation)
+      return quote(mName);
+    else
+   // do not escape characters, but quote the whole string
+      return "'" + mName + "'";
+  }
 private:
   /// the string
   std::string mName;
+  /// flag indicating whether to quote the string when its representation is
+  /// accessed -- in rare cases (preprocessing info) we do not want quoting
+  bool mEscapedRepresentation;
 };
 
 
@@ -45,12 +55,13 @@ public:
     //PL_unregister(term);
   }
   ///constructor setting the string
-  PrologAtom(std::string name) {
+  PrologAtom(std::string name, bool escapedRepresentation = true) {
     term = PL_new_term_ref();
     PL_put_atom_chars(term, name.c_str());
 #   if DEBUG_TERMITE
       std::cerr<<"PL_new_atom("<<getRepresentation()<<") = "<<term<<std::endl;
 #   endif
+    (void) escapedRepresentation;  // unused
   }
 };
 

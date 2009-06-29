@@ -111,7 +111,11 @@ RoseToProlog::getPreprocessingInfo(AttachedPreprocessingInfoType* inf) {
       PrologCompTerm* ppd = new PrologCompTerm(
         re.DirectiveTypes[(*it)->getTypeOfDirective()]);
 
-      ppd->addSubterm(new PrologAtom((*it)->getString()));
+      bool escapeRepresentation =
+          (*it)->getTypeOfDirective()
+          != PreprocessingInfo::CpreprocessorIncludeDeclaration;
+      ppd->addSubterm(new PrologAtom((*it)->getString(),
+                                     escapeRepresentation));
       ppd->addSubterm(getEnum((*it)->getRelativePosition(),
 			    re.RelativePositionTypes));
 
