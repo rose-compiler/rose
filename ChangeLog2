@@ -1,3 +1,138 @@
+2009-06-29 18:59  panas2
+
+	* [r6386] /trunk/ROSE/Makefile.am,
+	  /trunk/ROSE/projects/RTED/rted_qt/DebugDialog.cpp,
+	  /trunk/ROSE/projects/RTED/rted_qt/DebugDialog.h,
+	  /trunk/ROSE/projects/RTED/rted_qt/DebugDialog.ui,
+	  /trunk/ROSE/projects/RTED/rted_qt/RtedDebug.cpp,
+	  /trunk/ROSE/projects/RTED/rted_qt/rted_qt.cpp,
+	  /trunk/ROSE/projects/RTED/tests/Makefile.am: RTED
+
+2009-06-29 18:20  hamilton37
+
+	* [r6384] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_funccall.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_locals.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_scopestmt.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_scope_dowhile.c,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_scope_for.c,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_scope_if.c,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_scope_switch.c,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_scope_while.c,
+	  /trunk/ROSE/projects/RTED/tests/Makefile.am: RTED - updated scope
+	  checking to handle scopes other than function calls (i.e
+	  if, while, dowhile, for and switch statements).
+
+2009-06-29 18:12  liao6
+
+	* [r6383] /trunk/ROSE/Makefile.am,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/midend/programTransformation/constantFolding/constantFolding.C,
+	  /trunk/ROSE/src/midend/programTransformation/constantFolding/constantFolding.h,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/astInterfaceTests/inputloopUnrolling.C,
+	  /trunk/ROSE/tests/roseTests/programTransformationTests/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/programTransformationTests/constantFoldingTest2.C,
+	  /trunk/ROSE/tests/roseTests/programTransformationTests/inputCode_constantFoldingTransformation2.C:
+	  Added a new implementation for loop unrolling to support
+	  autotuning.
+	  Enhanced constant folding to handle much more binary operations
+	  and data types.
+	  
+	  * handles leftover iterations using a fringe loop if iteration
+	  count is not evenly divisible by the unrolling factor
+	  * using constant folding for compile-time expression evaluation
+	  to detect if a fringe loop is needed.
+	  * skip rose.h detection during make if pch is not turned on
+
+2009-06-29 17:40  hamilton37
+
+	* [r6382] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedSymbols.cpp,
+	  /trunk/ROSE/projects/RTED/RtedSymbols.h,
+	  /trunk/ROSE/projects/RTED/RtedTransf_funccall.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_locals.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.c,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/tests,
+	  /trunk/ROSE/projects/RTED/tests/C,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_fncall_null.c,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_to_fn_malloc_novar.c,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_to_fncall.c,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_to_fncall_multivar.c,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_to_locals_then_globals_then_locals.c,
+	  /trunk/ROSE/projects/RTED/tests/C/memoryleaks/assignment_to_multi_fncall.c,
+	  /trunk/ROSE/projects/RTED/tests/C/nomemoryleaks,
+	  /trunk/ROSE/projects/RTED/tests/C/nomemoryleaks/assign_from_fn_free.c,
+	  /trunk/ROSE/projects/RTED/tests/C/nomemoryleaks/assignment_to_local_and_global.c,
+	  /trunk/ROSE/projects/RTED/tests/Makefile.am: Worked on RTED,
+	  adding simple support for tracking locals going out of scope for
+	  function calls. Support for scope statements (if, while, etc.)
+	  still needs to
+	  be added.
+	  
+	  As a result, we now pass c_I_2_b.c. I added some of our own
+	  tests, which don't
+	  all pass at the moment because we don't track frees, so we have
+	  some false
+	  positives.
+	  
+	  I also did some minor refactoring in RtedSymbols.cpp to reduce
+	  repetition.
+
+2009-06-29 17:24  bauer25
+
+	* [r6381] /trunk/ROSE/projects/roseQt/doc,
+	  /trunk/ROSE/projects/roseQt/doc/AstBrowserWidget.jpg,
+	  /trunk/ROSE/projects/roseQt/doc/AstGraphView.jpg,
+	  /trunk/ROSE/projects/roseQt/doc/BeautifiedAst.jpg,
+	  /trunk/ROSE/projects/roseQt/doc/BeautifiedAst_CodeView.jpg,
+	  /trunk/ROSE/projects/roseQt/doc/BeautifiedAst_with_Kiviat.jpg,
+	  /trunk/ROSE/projects/roseQt/doc/Kiviat.jpg,
+	  /trunk/ROSE/projects/roseQt/doc/Kiviat_Settings.jpg,
+	  /trunk/ROSE/projects/roseQt/doc/NodeInfoWidget.jpg,
+	  /trunk/ROSE/projects/roseQt/doc/RoseQt_Documentation.html,
+	  /trunk/ROSE/projects/roseQt/doc/astNodePropertyView.jpg,
+	  /trunk/ROSE/projects/roseQt/doc/astTreeView.jpg,
+	  /trunk/ROSE/projects/roseQt/doc/astTreeView_big.jpg,
+	  /trunk/ROSE/projects/roseQt/doc/doc.doxyfile,
+	  /trunk/ROSE/projects/roseQt/doc/doxygen.css,
+	  /trunk/ROSE/projects/roseQt/doc/overview.jpg: Documentation for
+	  roseQt
+
+2009-06-29 17:10  panas2
+
+	* [r6380] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_funccall.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.c,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: RTED work
+
+2009-06-29 16:36  bauer25
+
+	* [r6379] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.c,
+	  /trunk/ROSE/projects/RTED/rted_qt/DebugDialog.cpp,
+	  /trunk/ROSE/projects/RTED/rted_qt/DebugDialog.h,
+	  /trunk/ROSE/projects/RTED/rted_qt/DebugDialog.ui,
+	  /trunk/ROSE/projects/RTED/rted_qt/Makefile.am,
+	  /trunk/ROSE/projects/RTED/rted_qt/RtedDebug.cpp,
+	  /trunk/ROSE/projects/RTED/rted_qt/RtedDebug.h,
+	  /trunk/ROSE/projects/RTED/rted_qt/rted_qt.cpp,
+	  /trunk/ROSE/projects/RTED/rted_qt/rted_qt.h,
+	  /trunk/ROSE/projects/roseQt/demo/MainWindow.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/RoseCodeEdit/RoseCodeEdit.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/RoseCodeEdit/RoseCodeEdit.h,
+	  /trunk/ROSE/projects/roseQt/widgets/util/AppIcons/info.png,
+	  /trunk/ROSE/projects/roseQt/widgets/util/util.qrc: Rted Debugger
+	  improved (now thread based)
+
 2009-06-26 19:14  panas2
 
 	* [r6355] /trunk/ROSE/projects/RTED/Makefile.am,
