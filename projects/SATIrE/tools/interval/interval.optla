@@ -125,7 +125,8 @@ FunctionExit(_, vars), _:
 FunctionCall(_,_), local_edge:
   if @ != bot then
     let f <= @; in
-      lift([(v,i)->top !! (v,i) <- f\top, if islocal(v)])
+      lift([(v,i)->top !! (v,i) <- f\top,
+                          if islocal(v) && !isaliasedlocal(v, context)])
   else
     bot
   ;
@@ -135,6 +136,27 @@ FunctionCall(_,_), call_edge:
     let f <= @; in
     // -- GB: values of (possibly) aliased locals must also be passed to the
     // -- function since they might be accessed there
+      lift([(v,i)->top !! (v,i) <- f\top, if isglobal(v)
+                                          || isaliasedlocal(v, context)])
+  else
+    bot
+  ;
+
+// -- external calls (which include function pointer calls, even if resolved
+// -- with the --resolve-funcptr-calls command line flag) are treated like
+// -- normal calls
+ExternalCall(_,_,_), local_edge:
+  if @ != bot then
+    let f <= @; in
+      lift([(v,i)->top !! (v,i) <- f\top,
+                          if islocal(v) && !isaliasedlocal(v, context)])
+  else
+    bot
+  ;
+
+ExternalCall(_,_,_), call_edge:
+  if @ != bot then
+    let f <= @; in
       lift([(v,i)->top !! (v,i) <- f\top, if isglobal(v)
                                           || isaliasedlocal(v, context)])
   else
@@ -627,11 +649,11 @@ branch_condition_effects(exp, state, newstate, edge, isLoopBody, context) =
       comparison_effects(exp, state, newstate, edge, isLoopBody, context)
     else
       case exp of
-        AndOp(exp1, exp2) => println("AND: ", state)
+        AndOp(exp1, exp2) => // -- println("AND: ", state)
           let state1 =
             branch_condition_effects(
                 exp1, state, newstate, edge, isLoopBody, context);
-          in println(state1)
+          in // -- println(state1)
             branch_condition_effects(
                 exp2, state1, newstate, edge, isLoopBody, context);
         _ => newstate;
@@ -849,9 +871,10 @@ ret(_, top) = top;
 ret(top, _) = top;
 ret(local, exit) = 
   let returnvar = [(v,i)->top !! (v,i) <- drop(exit)\top, if is_tmpvarid(v)];
-   // -- Here, we compute the set of locals that come back from the function.
-   // -- Their new values override any ones before the call!
-      modified_vars = [(v,i)->top !! (v,i) <- drop(exit)\top, if islocal(v)];
+   // -- Here, we compute the set of locals or globals that come back from
+   // -- the function. Their new values override any ones before the call!
+      modified_vars = [(v,i)->top !! (v,i) <- drop(exit)\top,
+                                     if !is_tmpvarid(v)];
   in (let localstate <= local;
       in  // -- println("return locals: ", modified_vars)
           lift(override(localstate, modified_vars))
@@ -977,7 +1000,11 @@ eq(a, b)   = //print("eq a: ") print(a) print("\n")
              //print("eq b: ") print(b) print("\n\n")
              (a = b);
 
-isglobal(var) = is_tmpvarid(var) || varmember(var, globals);
+// -- isglobalprogramvar: any global variable in the original program
+isglobalprogramvar(var) = varmember(var, globals);
+// -- isglobal: any global variable at all, including tmpvars introduced by
+// -- the ICFG builder
+isglobal(var) = is_tmpvarid(var) || isglobalprogramvar(var);
 islocal(var) = !isglobal(var);
 isaliasedlocal(var, ctx) =
     let result = islocal(var) && varid_has_location(var)
@@ -1014,11 +1041,19 @@ initialize_globals :: itvl_fState, *VariableSymbolNT -> itvl_fState;
 initialize_globals(state, [!]) = state;
 initialize_globals(state, g::gs) =
   let newstate =
+    let variable = varsym_varid(g); in
     if global_has_initializer(g) then
-      let variable = varsym_varid(g);
-          initexpr = global_get_initializer(g); in
+      let initexpr = global_get_initializer(g); in
       let value = eval_constant_initializer(initexpr);
       in  state\[variable -> value]
+    else if global_has_defining_declaration(g) then
+    // -- global variable with a defining declaration (i.e., not extern) but
+    // -- no explicit initializer: initialize with 0, if appropriate
+      let t = global_get_type(g); in
+      if is_integer_type(t) || is_array_type(t) then
+        state\[variable -> duplift(0)]
+      else
+        state
     else
       state;
   in  initialize_globals(newstate, gs);
@@ -1031,7 +1066,9 @@ eval_constant_initializer(exp) =
     AssignInitializer(ini)  => eval_constant_initializer(ini);
     AggregateInitializer(e) => eval_constant_initializer(e);
     ExprListExp(exprs)      => eval_constant_array(exprs);
-    _                       => println("* unknown initializer value for ", exp)
+    CastExp(e, _ /*type*/)  => eval_constant_initializer(e);
+    _                       => println("* unknown initializer value for ", exp,
+                                       " :: ", expr_asttext(exp))
                                top;
   endcase;
 

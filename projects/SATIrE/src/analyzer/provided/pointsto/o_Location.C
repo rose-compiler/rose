@@ -358,8 +358,11 @@ extern "C" FLO_BOOL o_exprid_has_location(void *ep)
 {
     SgExpression *exp = (SgExpression *) o_exprid_expr(ep);
  // Similarly to the varid case, simple VarRefExps to tmpvars do not have
- // valid locations.
-    if (SgVarRefExp *vr = isSgVarRefExp(exp))
+ // valid locations. This includes casted VarRefExps.
+    SgExpression *stripCasts = exp;
+    while (isSgCastExp(stripCasts))
+        stripCasts = isSgCastExp(stripCasts)->get_operand();
+    if (SgVarRefExp *vr = isSgVarRefExp(stripCasts))
     {
         if (o_is_tmpvarid(o_varref_varid(vr)))
             return FLO_FALSE;

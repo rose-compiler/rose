@@ -156,6 +156,8 @@ void globals(void)
     int a = glob_init;
     int sum = 0;
     int i;
+    if (glob_init == 23)
+        glob_init++;
     for (i = 0; i < 5; i++)
         sum += glob_array_size[i];
     /* after the loop, sum > 0 and i == 5 must hold -- can we somehow

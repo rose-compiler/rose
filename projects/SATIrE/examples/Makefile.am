@@ -244,9 +244,9 @@ itvl_stresstest: interval
 	@echo "Testing interval (the strict way)"
 	@echo "====================="
 	@cp -ur $(top_srcdir)/tools/interval/stresstest/itvl_stresstest.c $(testdir)/interval
-	@cd $(testdir)/interval; ./interval --run-pointsto-analysis --output-term=itvl_stresstest.term itvl_stresstest.c > itvl_stresstest.out 2>&1
+	@cd $(testdir)/interval; ./interval --run-pointsto-analysis --resolve-funcptr-calls --output-term=itvl_stresstest.term itvl_stresstest.c > itvl_stresstest.out 2>&1
+	@cd $(testdir)/interval; cat itvl_stresstest.out
 	@cd $(testdir)/interval; if [ "x`tail -1 itvl_stresstest.out`" != x"performing analysis interval ... done" ]; then \
-		cat itvl_stresstest.out; \
 		echo -n "* treating any analyzer messages as errors"; \
 		echo    "(told you this was strict)"; \
 		exit 1; \
