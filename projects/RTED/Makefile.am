@@ -280,7 +280,7 @@ c-compile-runtimesystem:
 	@echo "Make sure that RuntimeSystem compiles with C"
 
 # DQ (7/25/2005): The current changes to the AST break these test programs:
-check-local: rted_qt runtimeCheck $(TESTCODES) c-compile-runtimesystem  deleteAllbinfiles run/C/array_index_out_of_bounds run/C/string_errors run/C/input_output_errors
+check-local: rted_qt runtimeCheck $(TESTCODES) c-compile-runtimesystem  deleteAllbinfiles run/C/array_index_out_of_bound run/C/string_errors run/C/input_output_errors
 	@echo "***************************************************************************************"
 	@echo "*** ROSE/projects/runtimeErrorCheck: make check rule complete (terminated normally) ***"
 	@echo "***************************************************************************************"
