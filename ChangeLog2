@@ -1,3 +1,8 @@
+2009-06-29 20:46  panas2
+
+	* [r6388] /trunk/ROSE/projects/RTED/RuntimeSystem.c,
+	  /trunk/ROSE/projects/RTED/rted_qt/rted_qt.h: RTED work
+
 2009-06-29 18:59  panas2
 
 	* [r6386] /trunk/ROSE/Makefile.am,
