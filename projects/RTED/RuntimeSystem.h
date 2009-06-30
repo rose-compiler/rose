@@ -150,7 +150,7 @@ int RuntimeSystem_isFileIOFunctionCall(const char* name);
 // memory and possibly complain if the local was the last var pointing to some
 // memory)
 void RuntimeSystem_roseEnterScope();
-void RuntimeSystem_roseExitScope( char* filename, char* line, char* stmtStr);
+void RuntimeSystem_roseExitScope( const char* filename, const char* line, const char* stmtStr);
 void RuntimeSystem_expandScopeStackIfNecessary();
 
 

@@ -1385,7 +1385,7 @@ void RuntimeSystem_roseEnterScope() {
     );
 }
 
-void RuntimeSystem_roseExitScope( char* filename, char* line, char* stmtStr) {
+void RuntimeSystem_roseExitScope( const char* filename, const char* line, const char* stmtStr) {
     struct RuntimeSystem* rts = rtsi();
 
     assert( rts->scopeBoundariesEndIndex > 0);
