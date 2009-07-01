@@ -41,6 +41,9 @@ DebugDialog::DebugDialog(RtedDebug * _dbgObj, QWidget * par)
     ui->menuEdit->addAction(ui->codeEdit1->action("copy"));
     ui->menuEdit->addAction(ui->codeEdit1->action("paste"));
 
+    ui->codeEdit1->enableBreakPointEdit();
+    ui->codeEdit2->enableBreakPointEdit();
+
 
     //restore settings
     QSettings settings;
@@ -102,17 +105,20 @@ void DebugDialog::on_actionEditorSettings_triggered()
 
 void DebugDialog::on_actionSingleStep_triggered()
 {
+	breakPoints = ui->codeEdit2->getBreakPoints();
     dbgObj->on_singleStep();
 }
 
 void DebugDialog::on_actionResume_triggered()
 {
-   dbgObj->on_resume();
+    breakPoints = ui->codeEdit2->getBreakPoints();
+    dbgObj->on_resume();
 }
 
 
 void DebugDialog::setEditorMark1(const QString & file, int row)
 {
+	qDebug() << "Setting mark file1 at" << row;
     ui->codeEdit1->loadCppFile(file);
     ui->codeEdit1->markAsWarning(row);
     ui->codeEdit1->gotoPosition(row,0);
@@ -120,9 +126,17 @@ void DebugDialog::setEditorMark1(const QString & file, int row)
 
 void DebugDialog::setEditorMark2(const QString & file, int row)
 {
+	qDebug() << "Setting mark file2 at" << row;
+
     ui->codeEdit2->loadCppFile(file);
     ui->codeEdit2->markAsWarning(row);
     ui->codeEdit2->gotoPosition(row,0);
+}
+
+void DebugDialog::showIfBreakpoint(int lineNr)
+{
+	if(breakPoints.contains(lineNr))
+		show();
 }
 
 void DebugDialog::setHeapVars(RuntimeVariablesType * arr, int arrSize)

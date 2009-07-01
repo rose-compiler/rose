@@ -56,6 +56,7 @@ void * RtedDebug::guiMain(void * rtedVoid)
     r->leaveGui();
 
     r->enterGui();
+    r->updateDialogData();
     r->dlg->showMaximized();
     r->app->exec();
     qDebug() << "Exiting because Debugger was closed";
@@ -91,8 +92,9 @@ void RtedDebug::updateDialogData()
     dlg->setStackVars(stack,stackSize);
     dlg->setMemoryLocations(mem,memSize);
 
-    foreach(const QString & s, messages )
-        dlg->addMessage(s);
+    for(int i=0; i<messages.size(); i++)
+    	dlg->addMessage(messages[i].second);
+
 
     messages.clear();
 

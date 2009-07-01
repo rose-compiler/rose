@@ -14,23 +14,46 @@
 #include "rted_qt/rted_qt.h"
 
 
-void debugOutput(const char* format, ...)
+void printMessage(const char * format, ...)
 {
     va_list ap;
     va_start(ap,format);
 #ifdef ROSE_WITH_ROSEQT
-    vprintfGui(format,ap);
+    gui_printMessage(format,ap);
 #else
     vprintf(format,ap);
 #endif
 }
+
+void printWarning(const char * format, ...)
+{
+    va_list ap;
+    va_start(ap,format);
+#ifdef ROSE_WITH_ROSEQT
+    gui_printWarning(format,ap);
+#else
+    vprintf(format,ap);
+#endif
+}
+
+void printError(const char * format, ...)
+{
+    va_list ap;
+    va_start(ap,format);
+#ifdef ROSE_WITH_ROSEQT
+    gui_printError(format,ap);
+#else
+    vprintf(format,ap);
+#endif
+}
+
 // USE GUI for debugging
 void Rted_debugDialog(const char* filename, int line, int lineTransformed) {
 #ifdef ROSE_WITH_ROSEQT
-  showDebugDialog(rtsi()->runtimeVariablesOnStack, rtsi()->runtimeVariablesOnStackEndIndex,
+	gui_updateDataStructures(rtsi()->runtimeVariablesOnStack, rtsi()->runtimeVariablesOnStackEndIndex,
 		  rtsi()->runtimeVariables, rtsi()->runtimeVariablesEndIndex,
-		  rtsi()->runtimeMemory, rtsi()->runtimeMemoryEndIndex,
-		  (char*)filename, line, lineTransformed);
+		  rtsi()->runtimeMemory, rtsi()->runtimeMemoryEndIndex);
+	gui_checkpoint(filename,line,lineTransformed);
 #endif
 }
 
@@ -42,11 +65,11 @@ void Rted_debugDialog(const char* filename, int line, int lineTransformed) {
 struct RuntimeSystem* rtsi() {
   static struct RuntimeSystem* rt_pi=0;
   if ( rt_pi == 0)  {
-    debugOutput("Creating Instance for RUNTIMESYSTEM ------------------------------------\n");
+    printMessage("Creating Instance for RUNTIMESYSTEM ------------------------------------\n");
     //pinstance = new RuntimeSystem(); // create sole instance
     rt_pi = (struct RuntimeSystem*) malloc(sizeof(struct RuntimeSystem)+1);
     if (rt_pi==NULL) {
-      debugOutput("INIT FAILED: rt_pi==NULL\n");
+      printMessage("INIT FAILED: rt_pi==NULL\n");
       exit(1);
     }
     RuntimeSystem_Const_RuntimeSystem();
@@ -62,7 +85,7 @@ struct RuntimeSystem* rtsi() {
  ********************************************************/
 void
 RuntimeSystem_Const_RuntimeSystem() {
-  debugOutput(">>>>>>>>>>>>>>>>>>>>>>>>> CONSTRUCTOR \n ................\n\n" );
+  printMessage(">>>>>>>>>>>>>>>>>>>>>>>>> CONSTRUCTOR \n ................\n\n" );
 
   //... perform necessary instance initializations
   // initialze arrays with 10 elements and later increase by 50 if too small
@@ -85,7 +108,7 @@ RuntimeSystem_Const_RuntimeSystem() {
 
   rtsi()->myfile = fopen("result.txt","at");
   if (!rtsi()->myfile) {
-    debugOutput("Rted Error ::: Cannot open output file!\n");
+    printMessage("Rted Error ::: Cannot open output file!\n");
     exit(1);
   }
   rtsi()->violation=0; //false
@@ -109,7 +132,7 @@ int getSizeOfSgType(const char* type) {
        )
     size = sizeof(int);
   else {
-    debugOutput("Unknown Type : %s \n",type);
+    printMessage("Unknown Type : %s \n",type);
     exit(1);
   }
 
@@ -155,7 +178,7 @@ RuntimeSystem_findLastUnderscore(char* s) {
 void
 RuntimeSystem_callExit(const char* filename, const char* line, const char* reason, const char* stmtStr) {
   // rtsi()->violation Found ... dont execute it - exit normally
-  debugOutput("rtsi()->Violation found: %s\n  Reason: %s   in file: %s at line %s\n",stmtStr,reason,filename,line);
+  printMessage("rtsi()->Violation found: %s\n  Reason: %s   in file: %s at line %s\n",stmtStr,reason,filename,line);
   fprintf(rtsi()->myfile,"rtsi()->Violation found: %s\n  Reason: %s   in file: %s at line %s\n",stmtStr,reason,filename,line);
   //*myfile << "rtsi()->Violation found: " << stmtStr << endl << "  Reason: " << reason <<
   //  "    in file : " << filename << " at line: " << line << endl;
@@ -172,7 +195,7 @@ RuntimeSystem_roseConvertIntToString(int t) {
   char* text = (char*)malloc(size+1);
   if (text)
     sprintf(text,"%d",t);
-  debugOutput("String converted from int : %s ",text);
+  printMessage("String converted from int : %s ",text);
   return text;
 }
 
@@ -185,10 +208,10 @@ RuntimeSystem_roseRtedClose() {
     //    myfile->close();
     fclose(rtsi()->myfile);
   if (rtsi()->violation==0)  {
-    debugOutput("RtedClose:: No rtsi()->violation found!! \n");
+    printMessage("RtedClose:: No rtsi()->violation found!! \n");
     exit(1);
   } else
-    debugOutput("RtedClose:: rtsi()->Violation found. Good! \n" );
+    printMessage("RtedClose:: rtsi()->Violation found. Good! \n" );
 }
 
 // ***************************************** HELPER FUNCTIONS *************************************
@@ -211,7 +234,7 @@ RuntimeSystem_roseRtedClose() {
 int checkMemoryLeakIssues(int pos, int address,
 			  const char* filename, const char* line, const char* stmtStr, enum Error msg) {
   int problem =0;
-  debugOutput("Checking for Memory Leak ... \n");
+  printMessage("Checking for Memory Leak ... \n");
   // we assume that memory at pos exists
   struct RuntimeVariablesType* runtimevar = &(rtsi()->runtimeVariables[pos]);
   // get the variables assigned to the old address
@@ -230,7 +253,7 @@ int checkMemoryLeakIssues(int pos, int address,
   if (variables) {
     // variables exist. Check each of them.
     // Actually, if there is more than one we are fine
-    debugOutput("Checking for Memory Leak ... Memory has %d variable entries. \n",(mem->lastVariablePos));
+    printMessage("Checking for Memory Leak ... Memory has %d variable entries. \n",(mem->lastVariablePos));
     if (mem->lastVariablePos>1) {
       // ok.
     } else {
@@ -254,7 +277,7 @@ int checkMemoryLeakIssues(int pos, int address,
         }
         RuntimeSystem_callExit(filename, line, error_msg, stmtStr);  
       } else {
-        debugOutput("The entry is different from the current var :  %s and %s\n",
+        printMessage("The entry is different from the current var :  %s and %s\n",
             variable->name, runtimevar->name);
       }
     }
@@ -285,7 +308,7 @@ RuntimeSystem_increaseSizeMemory() {
     free (rtsi()->runtimeMemory);
     rtsi()->runtimeMemory=arrays2D_tmp;
   }
-  debugOutput( " Increased Memory to %d  -- current index %d\n", rtsi()->maxMemoryEndIndex, rtsi()->runtimeMemoryEndIndex );
+  printMessage( " Increased Memory to %d  -- current index %d\n", rtsi()->maxMemoryEndIndex, rtsi()->runtimeMemoryEndIndex );
 }
 
 /*********************************************************
@@ -296,6 +319,7 @@ RuntimeSystem_increaseSizeMemoryVariables(  int pos) {
   //struct MemoryType* runtimeMemory = rtsi()->runtimeMemory[pos];
   rtsi()->runtimeMemory[pos].maxNrOfVariables+=2;
   struct MemoryVariableType* arrays2D_tmp = (struct MemoryVariableType*)malloc(sizeof(struct  MemoryVariableType)*(rtsi()->runtimeMemory[pos].maxNrOfVariables));
+  //FIXME
   if (arrays2D_tmp) {
     int i=0;
     for ( i=0;i<rtsi()->runtimeMemory[pos].lastVariablePos;i++) {
@@ -304,7 +328,7 @@ RuntimeSystem_increaseSizeMemoryVariables(  int pos) {
     free (rtsi()->runtimeMemory[pos].variables);
     rtsi()->runtimeMemory[pos].variables=arrays2D_tmp;
   }
-  debugOutput( " Increased VariableMemory to %d  -- current index %d\n",rtsi()->runtimeMemory[pos].maxNrOfVariables , rtsi()->runtimeMemory[pos].lastVariablePos) ;
+  printMessage( " Increased VariableMemory to %d  -- current index %d\n",rtsi()->runtimeMemory[pos].maxNrOfVariables , rtsi()->runtimeMemory[pos].lastVariablePos) ;
 }
 
 /*********************************************************
@@ -317,7 +341,7 @@ void RuntimeSystem_RemoveVariableFromMemory(long int address,
   for ( i=0;i<rtsi()->runtimeMemoryEndIndex;i++) {
     long int addr = rtsi()->runtimeMemory[i].address;
     if (addr==address) {
-      debugOutput("Removing Variable from Address %lld .\n",address);
+      printMessage("Removing Variable from Address %lld .\n",address);
       int endIndex = rtsi()->runtimeMemory[i].lastVariablePos;
       int deletePos=-1;
       int j=0;
@@ -366,7 +390,7 @@ RuntimeSystem_AllocateMemory(long int address, int sizeArray,
   for ( i=0;i<rtsi()->runtimeMemoryEndIndex;i++) {
     long int addr = rtsi()->runtimeMemory[i].address;
     if (addr==address) {
-      debugOutput("Address exists. Adding variable if not present.\n");
+      printMessage("Address exists. Adding variable if not present.\n");
       int j=0;
       int endIndex = rtsi()->runtimeMemory[i].lastVariablePos;
       int foundVar=0;
@@ -427,7 +451,7 @@ RuntimeSystem_increaseSizeRuntimeVariablesOnStack() {
     free( rtsi()->runtimeVariablesOnStack);
     rtsi()->runtimeVariablesOnStack=run_tmp;
   }
-  debugOutput( " Increased rtsi()->runtimeVariablesOnStack to %d  -- current index %d\n",rtsi()->maxRuntimeVariablesOnStackEndIndex ,rtsi()->runtimeVariablesOnStackEndIndex  );
+  printMessage( " Increased rtsi()->runtimeVariablesOnStack to %d  -- current index %d\n",rtsi()->maxRuntimeVariablesOnStackEndIndex ,rtsi()->runtimeVariablesOnStackEndIndex  );
 }
 
 /*********************************************************
@@ -454,10 +478,10 @@ RuntimeSystem_increaseSizeRuntimeVariables() {
     free( rtsi()->runtimeVariables);
     rtsi()->runtimeVariables=run_tmp;
   } else {
-    debugOutput("No space for Variables\n");
+    printMessage("No space for Variables\n");
     exit(1);
   }
-  debugOutput( " Increased rtsi()->runtimeVariables to %d  -- current index %d\n",rtsi()->maxRuntimeVariablesEndIndex ,rtsi()->runtimeVariablesEndIndex  );
+  printMessage( " Increased rtsi()->runtimeVariables to %d  -- current index %d\n",rtsi()->maxRuntimeVariablesEndIndex ,rtsi()->runtimeVariablesEndIndex  );
 }
 
 /*********************************************************
@@ -498,7 +522,7 @@ RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dime
 			      int ismalloc, const char* filename, const char* line, const char* lineTransformed){
 
   if (rtsi()->arrayDebug)
-    debugOutput( " >>> Called : roseCreateArray : %s dim %d - [%ld][%ld] file : %s line: %s\n",
+    printMessage( " >>> Called : roseCreateArray : %s dim %d - [%ld][%ld] file : %s line: %s\n",
 	    name,dimension,sizeA, sizeB, filename, line);
   // fixme: Check if this already exists?
   int isarray=0;
@@ -507,7 +531,7 @@ RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dime
   int variableFound=0;
   if (stackvar) {
     // it exists
-    debugOutput("This variable exists on the stack: %s\n",stackvar);
+    printMessage("This variable exists on the stack: %s\n",stackvar);
     //exit(1);
     variableFound=1;
     mangl_name=stackvar;
@@ -516,7 +540,7 @@ RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dime
   if (varpos>=0) {
     // found var : dont increase the array index but use the index found
     variableFound=1;
-    debugOutput("Variable found...\n");
+    printMessage("Variable found...\n");
   } else
     varpos = rtsi()->runtimeVariablesEndIndex;
 
@@ -528,7 +552,7 @@ RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dime
   if (dimension==1) {
     // We create a one dimentional array
     if (rtsi()->arrayDebug)
-      debugOutput("rtsi()->arrays1DEndIndex : %d rtsi()->maxArrays1DEndIndex: %d  \n",rtsi()->runtimeVariablesEndIndex,rtsi()->maxRuntimeVariablesEndIndex);
+      printMessage("rtsi()->arrays1DEndIndex : %d rtsi()->maxArrays1DEndIndex: %d  \n",rtsi()->runtimeVariablesEndIndex,rtsi()->maxRuntimeVariablesEndIndex);
     if (variableFound==0 && rtsi()->runtimeVariablesEndIndex>=rtsi()->maxRuntimeVariablesEndIndex) {
       //increase the size of the array
       //RuntimeSystem_increaseSizeArray();
@@ -547,7 +571,7 @@ RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dime
       rtsi()->runtimeVariablesEndIndex++;
 
     if (rtsi()->arrayDebug)
-      debugOutput( ".. Creating 1Dim array - size : %ld \n", sizeA);
+      printMessage( ".. Creating 1Dim array - size : %ld \n", sizeA);
   }
   else if (dimension==2) {
     // We create a two dimentional array
@@ -560,15 +584,15 @@ RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dime
       // this array already exists and may only have one dimension initialized
       long int totalsize = rtsi()->runtimeVariables[varpos].arrays->size1;
       if (rtsi()->arrayDebug)
-	debugOutput( "..    Expanding 2nd-run 2Dim array - sizeA : %ld  sizeB: %ld \n", sizeA , sizeB );
+	printMessage( "..    Expanding 2nd-run 2Dim array - sizeA : %ld  sizeB: %ld \n", sizeA , sizeB );
       if (sizeA<0 || sizeA>=totalsize) {
-	debugOutput( " rtsi()->Violation detected :  Array too small to allocate more memory \n");
+	printMessage( " rtsi()->Violation detected :  Array too small to allocate more memory \n");
 	rtsi()->violation=1;
 	// this is a weird error, lets stop here for now.
 	exit(1);
       } else {
 	if (rtsi()->arrayDebug)
-	  debugOutput( " >>> CREATING Array : arr [%ld][%ld]  alloc:[%ld]=%ld \n",totalsize,sizeB,sizeA,sizeB);
+	  printMessage( " >>> CREATING Array : arr [%ld][%ld]  alloc:[%ld]=%ld \n",totalsize,sizeB,sizeA,sizeB);
 	rtsi()->runtimeVariables[varpos].arrays->size2=sizeB;
       }
     } else {
@@ -578,7 +602,7 @@ RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dime
 	//RuntimeSystem_increaseSizeArray();
 	RuntimeSystem_increaseSizeRuntimeVariables();
       }
-      debugOutput("Creating 2 dim array: current size : %d  max:%d ",varpos, rtsi()->maxRuntimeVariablesEndIndex);
+      printMessage("Creating 2 dim array: current size : %d  max:%d ",varpos, rtsi()->maxRuntimeVariablesEndIndex);
       rtsi()->runtimeVariables[varpos].name=name;
       rtsi()->runtimeVariables[varpos].mangled_name=mangl_name;
       rtsi()->runtimeVariables[varpos].arrays =
@@ -593,11 +617,11 @@ RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dime
 
 
       if (rtsi()->arrayDebug)
-	debugOutput( ".. Creating 2Dim array - size : %ld \n", sizeA);
+	printMessage( ".. Creating 2Dim array - size : %ld \n", sizeA);
       if (sizeB!=-1) {
 	rtsi()->runtimeVariables[varpos].arrays->size2=sizeB;
 	if (rtsi()->arrayDebug)
-	  debugOutput( "..    Expanding 2Dim array - sizeA : %ld   sizeB: %ld \n", sizeA, sizeB);
+	  printMessage( "..    Expanding 2Dim array - sizeA : %ld   sizeB: %ld \n", sizeA, sizeB);
       }
     }
   }
@@ -618,7 +642,7 @@ void
 RuntimeSystem_roseArrayAccess(const char* name, int posA, int posB, const char* filename, 
 			      const char* line, const char* lineTransformed, const char* stmtStr){
   if (rtsi()->arrayDebug)
-    debugOutput( "    Called : roseArrayAccess : %s ... ", (name));
+    printMessage( "    Called : roseArrayAccess : %s ... ", (name));
 
   // check the stack if the variable is part of a function call
   const char* mangl_name=RuntimeSystem_findVariablesOnStack(name);
@@ -629,15 +653,15 @@ RuntimeSystem_roseArrayAccess(const char* name, int posA, int posB, const char* 
   int isarray = 0;
   int pos = RuntimeSystem_findVariablesPos(name,&isarray);
   if (rtsi()->arrayDebug)
-    debugOutput("roseArrayAccess: looking for variable %s,  found at pos: %d \n",name,pos);
+    printMessage("roseArrayAccess: looking for variable %s,  found at pos: %d \n",name,pos);
   if (pos!=-1 && isarray==1) {
     if (rtsi()->runtimeVariables[pos].arrays &&
 	rtsi()->runtimeVariables[pos].arrays->dim==1) {
       int size = rtsi()->runtimeVariables[pos].arrays->size1;
       if (rtsi()->arrayDebug)
-	debugOutput( "       Found 1Dim array :  size: %d , access [%d] \n", size, posA);
+	printMessage( "       Found 1Dim array :  size: %d , access [%d] \n", size, posA);
       if (posB!=-1) {
-	debugOutput( " Seems like this is not a valid 1Dim array : %s  line: %s\n", filename, line);
+	printMessage( " Seems like this is not a valid 1Dim array : %s  line: %s\n", filename, line);
 	exit(1);
       }
       if (posA>=size || posA<0) {
@@ -655,7 +679,7 @@ RuntimeSystem_roseArrayAccess(const char* name, int posA, int posB, const char* 
       int sizeA = rtsi()->runtimeVariables[pos].arrays->size1;
       int sizeB = rtsi()->runtimeVariables[pos].arrays->size2;
       if (rtsi()->arrayDebug)
-	debugOutput( "  Found 2Dim array :  size: [%d][%d]  pos: [%d][%d] \n",
+	printMessage( "  Found 2Dim array :  size: [%d][%d]  pos: [%d][%d] \n",
 		sizeA, sizeB,  posA , posB);
       // allow arr[posA][posB] && arr[posA]  both 2Dim!
       if ((posA>=sizeA || posA<0) || posB>=sizeB || posB<0) {
@@ -668,14 +692,14 @@ RuntimeSystem_roseArrayAccess(const char* name, int posA, int posB, const char* 
 	char *res = (char*)malloc(strlen(res1) + strlen(res2) +sizeInt+ 1);
 	sprintf(res,"%s%d%s%d%s%d%s%d%s",res1,sizeA,res2,sizeB,res3,posA,res4,posB,res5);
 	rtsi()->violation=1;
-	debugOutput("%s %s %s %s\n",filename,line,res,stmtStr);
+	printMessage("%s %s %s %s\n",filename,line,res,stmtStr);
 	//exit(1);
 	RuntimeSystem_callExit(filename, line, res,stmtStr);
       }
     }
   } else {
-    debugOutput("\n");
-    debugOutput( " >>> No such array was created. Can't access it. %s  line : %s \n" , filename, line);
+    printMessage("\n");
+    printMessage( " >>> No such array was created. Can't access it. %s  line : %s \n" , filename, line);
     exit(1);
   }
 
@@ -840,7 +864,7 @@ RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, in
   int param1ActualLength =-1;
   int sizeKnown = RuntimeSystem_isSizeOfVariableKnown(args[1]);
   if (rtsi()->funccallDebug)
-    debugOutput("Handling param1 - Size of second paramter is dynamic ? size = %d\n",sizeKnown);
+    printMessage("Handling param1 - Size of second paramter is dynamic ? size = %d\n",sizeKnown);
   int param1AllocLength = -2;
   if (sizeKnown!=-1) { // unknown size meaning that variable not found
     param1AllocLength = sizeKnown;
@@ -850,7 +874,7 @@ RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, in
   assert(param1StringVal);
 
   if (rtsi()->funccallDebug)
-    debugOutput("Handling param1-1 - dynamic ? size = %d   param1AllocLength = %d, param1ActualLength = %d\n",sizeKnown,param1AllocLength,param1ActualLength);
+    printMessage("Handling param1-1 - dynamic ? size = %d   param1AllocLength = %d, param1ActualLength = %d\n",sizeKnown,param1AllocLength,param1ActualLength);
 
   // determine the actual size of each of the strings
   // we need to do this only for certain functions!
@@ -862,9 +886,9 @@ RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, in
     const char* end1 = NULL;
     const char *iter=NULL;
     int count=0;
-    debugOutput("............ Printing : %d  \n",count);
+    printMessage("............ Printing : %d  \n",count);
     for ( iter = param1StringVal; *iter != '\0'; ++iter) {
-      debugOutput("............ Printing : %d : '%s' \n",count++,iter);
+      printMessage("............ Printing : %d : '%s' \n",count++,iter);
       end1 = iter;
     }
     if (end1==NULL)
@@ -878,16 +902,16 @@ RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, in
   }
 
   if (rtsi()->funccallDebug)
-    debugOutput("Handling param1-2 - dynamic ? size = %d   param1AllocLength = %d, param1ActualLength = %d     isModifyingCall : %d \n",sizeKnown,param1AllocLength,param1ActualLength, modifyingCall);
+    printMessage("Handling param1-2 - dynamic ? size = %d   param1AllocLength = %d, param1ActualLength = %d     isModifyingCall : %d \n",sizeKnown,param1AllocLength,param1ActualLength, modifyingCall);
 
   assert(param1ActualLength>-1);
   if (rtsi()->funccallDebug)
-    debugOutput("1: Number of parameters : %d -- param1AllocLength : %d %s  -- param1ActualLength %d\n",parameters, param1AllocLength, args[1], param1ActualLength);
+    printMessage("1: Number of parameters : %d -- param1AllocLength : %d %s  -- param1ActualLength %d\n",parameters, param1AllocLength, args[1], param1ActualLength);
   if (param1AllocLength==0) {
     // adjust the size of the allocation to the actual size +1
     param1AllocLength=param1ActualLength+1;
     if (rtsi()->funccallDebug)
-      debugOutput("1: Expanding : Number of parameters : %d -- param1AllocLength : %d %s  -- param1ActualLength %d\n",parameters, param1AllocLength, args[1], param1ActualLength);
+      printMessage("1: Expanding : Number of parameters : %d -- param1AllocLength : %d %s  -- param1ActualLength %d\n",parameters, param1AllocLength, args[1], param1ActualLength);
   }
 
 
@@ -904,7 +928,7 @@ RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, in
     param2ActualLength =-1;
     sizeKnown2= RuntimeSystem_isSizeOfVariableKnown(args[3]);
     if (rtsi()->funccallDebug)
-      debugOutput("\nHandling param2 - Size of second paramter is dynamic ? size = %d\n",sizeKnown2);
+      printMessage("\nHandling param2 - Size of second paramter is dynamic ? size = %d\n",sizeKnown2);
     if (sizeKnown2!=-1) {
       param2AllocLength = sizeKnown2;
       //      param2ActualLength = 0;//sizeKnown2-1;
@@ -919,7 +943,7 @@ RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, in
   }
 
   if (rtsi()->funccallDebug)
-    debugOutput("Handling param2-1 - dynamic ? size = %d   param2AllocLength = %d, param2ActualLength = %d\n",sizeKnown2,param2AllocLength,param2ActualLength);
+    printMessage("Handling param2-1 - dynamic ? size = %d   param2AllocLength = %d, param2ActualLength = %d\n",sizeKnown2,param2AllocLength,param2ActualLength);
 
   if (parameters>=2) {
 
@@ -940,42 +964,42 @@ RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, in
     assert(param2ActualLength>-1);
     assert(param3Size>0);
     if (rtsi()->funccallDebug)
-      debugOutput("2: Number of parameters : %d -- param2AllocLength : %d %s  -- param2ActualLength %d\n",parameters, param2AllocLength, args[3], param2ActualLength);
+      printMessage("2: Number of parameters : %d -- param2AllocLength : %d %s  -- param2ActualLength %d\n",parameters, param2AllocLength, args[3], param2ActualLength);
     if (param2AllocLength==0) {
       param2AllocLength=param2ActualLength+1;
       if (rtsi()->funccallDebug)
-	debugOutput("2: Expanding : Number of parameters : %d -- param2AllocLength : %d %s  -- param2ActualLength %d\n",parameters, param2AllocLength, args[3], param2ActualLength);
+	printMessage("2: Expanding : Number of parameters : %d -- param2AllocLength : %d %s  -- param2ActualLength %d\n",parameters, param2AllocLength, args[3], param2ActualLength);
     }
   }
   if (rtsi()->funccallDebug)
-    debugOutput("Handling param2-2 - dynamic ? size = %d   param2AllocLength = %d, param2ActualLength = %d\n",sizeKnown2,param2AllocLength,param2ActualLength);
+    printMessage("Handling param2-2 - dynamic ? size = %d   param2AllocLength = %d, param2ActualLength = %d\n",sizeKnown2,param2AllocLength,param2ActualLength);
 
 
 
-  debugOutput("\nChecking if memory overlaps ... \n");
-  debugOutput("(param2StringVal <= param1StringVal) && (param2StringVal+param2AllocLength >= param1StringVal)\n");
-  debugOutput("(             %d <= %d             ) && (                                %d >= %d)\n",
+  printMessage("\nChecking if memory overlaps ... \n");
+  printMessage("(param2StringVal <= param1StringVal) && (param2StringVal+param2AllocLength >= param1StringVal)\n");
+  printMessage("(             %d <= %d             ) && (                                %d >= %d)\n",
 	 param2StringVal, param1StringVal, (param2StringVal+param2ActualLength), param1StringVal);
-  debugOutput("(param1StringVal <= param2StringVal) && (param1StringVal+param1AllocLength >= param2StringVal)\n");
-  debugOutput("(             %d <= %d             ) && (                                %d >= %d)\n",
+  printMessage("(param1StringVal <= param2StringVal) && (param1StringVal+param1AllocLength >= param2StringVal)\n");
+  printMessage("(             %d <= %d             ) && (                                %d >= %d)\n",
 	 param1StringVal, param2StringVal, (param1StringVal+param1ActualLength), param2StringVal);
   // check for overlapping memory regions
   if (parameters>=2 &&
       (param2StringVal <= param1StringVal) && (param2StringVal+param2AllocLength>=param1StringVal) ||
       (param1StringVal <= param2StringVal) && (param1StringVal+param1AllocLength>=param2StringVal)) {
     if (rtsi()->funccallDebug)
-      debugOutput( " >>>> Error : Memory regions overlap!   Size1: %d  Size2: %d\n",param1ActualLength , param2ActualLength);
+      printMessage( " >>>> Error : Memory regions overlap!   Size1: %d  Size2: %d\n",param1ActualLength , param2ActualLength);
     RuntimeSystem_callExit(filename, line, (const char*)"Memory regions overlap", stmtStr);
   }
 
-  debugOutput("\nChecking if String NULL terminated ... \n");
+  printMessage("\nChecking if String NULL terminated ... \n");
   const char *iter4=NULL;
   int zero1pos=0;
   if (modifyingCall==0) {
     // do not check for the end const character of first operator if this is a modifying call, e.g. strcpy
     for ( iter4 = param1StringVal; *iter4 != '\0'; ++iter4) {
-      debugOutput("%c",*iter4); zero1pos++;
-    } debugOutput("---1 !!!!!!! Found 0 at pos : %d    param1ActualLength %d \n",zero1pos,param1ActualLength);
+      printMessage("%c",*iter4); zero1pos++;
+    } printMessage("---1 !!!!!!! Found 0 at pos : %d    param1ActualLength %d \n",zero1pos,param1ActualLength);
   }
   // check if the actual size is larger than the allocated size
   if ( zero1pos>param1ActualLength) {
@@ -998,8 +1022,8 @@ RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, in
     const char *iter3=NULL;
     int zero2pos =0;
     for ( iter3 = param2StringVal; *iter3 != '\0'; ++iter3) {
-      debugOutput("%c",*iter3); zero2pos++;
-    } debugOutput("---2 !!!!!!! Found 0 at pos : %d     param2ActualLength %d \n",zero2pos,param2ActualLength);
+      printMessage("%c",*iter3); zero2pos++;
+    } printMessage("---2 !!!!!!! Found 0 at pos : %d     param2ActualLength %d \n",zero2pos,param2ActualLength);
 
     // check if the actual size is larger than the allocated size
     if ( zero2pos>param2ActualLength) {
@@ -1024,7 +1048,7 @@ RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, in
 	 )) {
     // checking one parameter for strlen(const char* without \0)
     if (rtsi()->funccallDebug)
-      debugOutput("CHECK: Special Function call %s  p1: %s act1: %d alloc1: %d   \n", fname,
+      printMessage("CHECK: Special Function call %s  p1: %s act1: %d alloc1: %d   \n", fname,
 	     param1StringVal, param1ActualLength, param1AllocLength);
   }
   else
@@ -1032,7 +1056,7 @@ RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, in
 	   strcmp(fname ,"strncat")==0   // 3 param
 	   )) {
       if (rtsi()->funccallDebug)
-	debugOutput("CHECK: Special Function call - %s  p1: %s act1: %d alloc1: %d     p2: %s act2: %d alloc2: %d     p3: %d\n", fname,
+	printMessage("CHECK: Special Function call - %s  p1: %s act1: %d alloc1: %d     p2: %s act2: %d alloc2: %d     p3: %d\n", fname,
 	       param1StringVal, param1ActualLength, param1AllocLength,
 	       param2StringVal, param2ActualLength, param2AllocLength, param3Size);
       // not handled yet
@@ -1060,7 +1084,7 @@ RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, in
 	     strcmp(fname ,"strstr")==0  // 2 param
 	     )) {
 	if (rtsi()->funccallDebug)
-	  debugOutput("CHECK: Special Function call - %s  p1: %s act1: %d alloc1: %d     p2: %s act2: %d alloc2: %d   param3Size: %d\n",fname,
+	  printMessage("CHECK: Special Function call - %s  p1: %s act1: %d alloc1: %d     p2: %s act2: %d alloc2: %d   param3Size: %d\n",fname,
 		 param1StringVal, param1ActualLength, param1AllocLength,
 		 param2StringVal, param2ActualLength, param2AllocLength, param3Size);
 	if (parameters==2) {
@@ -1089,7 +1113,7 @@ RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, in
       }
       else {
 	// not handled yet. Need to check if this operation is leagal
-	debugOutput("Unhandled special function: Checking special op : %s\n",fname);
+	printMessage("Unhandled special function: Checking special op : %s\n",fname);
 	assert(1==0);
       }
 
@@ -1132,7 +1156,7 @@ RuntimeSystem_handleIOFunctionCall(const char* fname,const char** args,
     if(!leftHandSideVar) assert(0==1);
     struct RuntimeVariablesType* rvar = RuntimeSystem_findVariables(leftHandSideVar);
     if (leftHandSideVar) {
-      debugOutput("Making sure that the var %s is set to : %s \n",leftHandSideVar,readwrite);
+      printMessage("Making sure that the var %s is set to : %s \n",leftHandSideVar,readwrite);
       rvar->fileOpen=readwrite;
       // make sure that the file exists
       FILE* fp = fopen(file,"r");
@@ -1141,7 +1165,7 @@ RuntimeSystem_handleIOFunctionCall(const char* fname,const char** args,
 	RuntimeSystem_callExit(filename, line, (const char*)"No such file. Can not open this file.", stmtStr);
       }
     } else {
-      debugOutput("File opend: This must be an error, The variable %s in fopen should be available.\n",leftHandSideVar);
+      printMessage("File opend: This must be an error, The variable %s in fopen should be available.\n",leftHandSideVar);
       exit(1);
     }
   }
@@ -1155,7 +1179,7 @@ RuntimeSystem_handleIOFunctionCall(const char* fname,const char** args,
     if (rvar==NULL) {
       const char* stackvar = RuntimeSystem_findVariablesOnStack(var);
       if (stackvar) {
-	debugOutput("Found the variable on the stack : %s \n",stackvar);
+	printMessage("Found the variable on the stack : %s \n",stackvar);
 	rvar = RuntimeSystem_findVariables(stackvar);
       }
     }
@@ -1164,11 +1188,11 @@ RuntimeSystem_handleIOFunctionCall(const char* fname,const char** args,
 	// file closed although it never was opend
 	RuntimeSystem_callExit(filename, line, (const char*)"Closing a file that never was opened.", stmtStr);
       } else {
-	debugOutput("File closed for var: %s \n",rvar->name);
+	printMessage("File closed for var: %s \n",rvar->name);
 	rvar->fileOpen=(const char*)"no";
       }
     } else {
-      debugOutput("File closed : This must be an error, The variable %s in fopen should be available.\n",var);
+      printMessage("File closed : This must be an error, The variable %s in fopen should be available.\n",var);
       exit(1);
     }
   }
@@ -1180,7 +1204,7 @@ RuntimeSystem_handleIOFunctionCall(const char* fname,const char** args,
     // that has been opened already, i.e. is file open?
     struct RuntimeVariablesType* rvar = RuntimeSystem_findVariables(var);
     if (rvar) {
-      debugOutput("RuntimeSystem : RuntimeSystem_handleIOFunctionCall : found Variable %s (%s)  fileOpen? %s \n",
+      printMessage("RuntimeSystem : RuntimeSystem_handleIOFunctionCall : found Variable %s (%s)  fileOpen? %s \n",
 	     var, rvar->name, rvar->fileOpen);
       if (strcmp(rvar->fileOpen,"no")==0) {
 	// the file is not open, we cant read/write
@@ -1201,7 +1225,7 @@ RuntimeSystem_handleIOFunctionCall(const char* fname,const char** args,
     // that has been opened already, i.e. is file open?
     struct RuntimeVariablesType* rvar = RuntimeSystem_findVariables(var);
     if (var) {
-      debugOutput("RuntimeSystem : RuntimeSystem_handleIOFunctionCall : found Variable %s (%s)  fileOpen? %s \n",
+      printMessage("RuntimeSystem : RuntimeSystem_handleIOFunctionCall : found Variable %s (%s)  fileOpen? %s \n",
 	     var, rvar->name, rvar->fileOpen);
       if (strcmp(rvar->fileOpen,"no")==0) {
 	// the file is not open, we cant read/write
@@ -1240,7 +1264,7 @@ RuntimeSystem_handleIOFunctionCall(const char* fname,const char** args,
 void
 RuntimeSystem_roseFunctionCall(int count, ...) {
   // handle the parameters within this call
-  debugOutput("RTED - Function Call\n");
+  printMessage("RTED - Function Call\n");
   va_list vl;
   va_start(vl,count);
   const char** args = (const char**)malloc(sizeof(const char*)*count+1);
@@ -1256,12 +1280,12 @@ RuntimeSystem_roseFunctionCall(int count, ...) {
   for ( i=0;i<count;i++)    {
     const char* val=  va_arg(vl,const char*);
     if (val) 
-      debugOutput("  %d      val : '%s' ---",i,val);
+      printMessage("  %d      val : '%s' ---",i,val);
     const char *iter2=NULL;
     int size =0;
     for ( iter2 = val; *iter2 != '\0'; ++iter2) {
-      debugOutput("%c",*iter2); size++;
-    } debugOutput("--- size : %d \n",size);
+      printMessage("%c",*iter2); size++;
+    } printMessage("--- size : %d \n",size);
 
     if (i==0) name = val;
     else if (i==1) filename =  val;
@@ -1277,14 +1301,14 @@ RuntimeSystem_roseFunctionCall(int count, ...) {
 
 
   if (rtsi()->funccallDebug)
-    debugOutput( "roseFunctionCall :: %s \n", name );
+    printMessage( "roseFunctionCall :: %s \n", name );
   if (RuntimeSystem_isInterestingFunctionCall(name)==1) {
     // if the string name is one of the above, we handle it specially
     RuntimeSystem_handleSpecialFunctionCalls(name, args, posArgs, filename, line, lineTransf, stmtStr, leftVar);
   } else if (RuntimeSystem_isFileIOFunctionCall(name)==1) {
     RuntimeSystem_handleIOFunctionCall(name, args, posArgs, filename, line, lineTransf, stmtStr, leftVar);
   } else {
-    debugOutput("Unknown Function call to RuntimeSystem!\n");
+    printMessage("Unknown Function call to RuntimeSystem!\n");
     exit(1);
   }
 }
@@ -1314,7 +1338,7 @@ RuntimeSystem_roseCallStack(const char* name, const char* mangl_name,
   const char* stackvar = RuntimeSystem_findVariablesOnStack(name);
   if (stackvar) {
     // it exists
-    debugOutput("This variable exists on the stack: %s\n",stackvar);
+    printMessage("This variable exists on the stack: %s\n",stackvar);
     //exit(1);
     mangl_name=stackvar;
   }
@@ -1324,18 +1348,18 @@ RuntimeSystem_roseCallStack(const char* name, const char* mangl_name,
   // find the variable and make sure it is initialized
   struct RuntimeVariablesType* rvar = RuntimeSystem_findVariables(mangl_name);
   if (rvar==NULL) {
-    debugOutput("Variable not found .... %s\n",mangl_name);
+    printMessage("Variable not found .... %s\n",mangl_name);
     // variable not found?!
     exit(1);
   }
   int initialized = rvar->initialized;
-  debugOutput("CallStack: Checking if %s is initialized: %d.\n",name,initialized);
+  printMessage("CallStack: Checking if %s is initialized: %d.\n",name,initialized);
   if (initialized==0) {
     // lets not trigger this error right now
     // fixme
     //RuntimeSystem_callExit(filename, line, (const char*)"Variable is not initialized:", name);
   } else
-    debugOutput("CallStack: Variable is initialized.\n");
+    printMessage("CallStack: Variable is initialized.\n");
 
   if (before) {
     if (rtsi()->runtimeVariablesOnStackEndIndex>=rtsi()->maxRuntimeVariablesOnStackEndIndex) {
@@ -1475,13 +1499,13 @@ void RuntimeSystem_roseCreateVariable( const char* name,
 
   Rted_debugDialog(filename, atoi(line),atoi(lineTransformed));
 
-  debugOutput("CreateVariable: You have just created a run-time variable:\n");
-  debugOutput("  name: %s \n", name);
-  debugOutput("  mangl_name: %s \n",mangled_name);
-  debugOutput("  type: %s \n",type);
-  debugOutput("  initialized: %d \n",init);
-  debugOutput("  fileOpen: %s \n",fOpen);
-  debugOutput("  runtimeVariablesEndIndex: %d \n\n",rtsi()->runtimeVariablesEndIndex);
+  printMessage("CreateVariable: You have just created a run-time variable:\n");
+  printMessage("  name: %s \n", name);
+  printMessage("  mangl_name: %s \n",mangled_name);
+  printMessage("  type: %s \n",type);
+  printMessage("  initialized: %d \n",init);
+  printMessage("  fileOpen: %s \n",fOpen);
+  printMessage("  runtimeVariablesEndIndex: %d \n\n",rtsi()->runtimeVariablesEndIndex);
 }
 
 /*********************************************************
@@ -1496,7 +1520,7 @@ RuntimeSystem_findVariables(const char* mangled_name) {
     const char* n =rtsi()->runtimeVariables[i].mangled_name;
     if (strcmp(mangled_name,n)==0) {
       var =&(rtsi()->runtimeVariables[i]);
-      //debugOutput("var : %s   (%s == %s) \n",var, mangled_name, n );
+      //printMessage("var : %s   (%s == %s) \n",var, mangled_name, n );
       break;
     }
   }
@@ -1517,7 +1541,7 @@ RuntimeSystem_findMemory(long int address) {
     if (addr==address) {
       if (rtsi()->runtimeMemory[i].variables) {
 	var =&(rtsi()->runtimeMemory[i].variables);
-	//debugOutput("var : %s   (%s == %s) \n",var, mangled_name, n );
+	//printMessage("var : %s   (%s == %s) \n",var, mangled_name, n );
 	break;
       } //else
       //break;
@@ -1538,7 +1562,7 @@ RuntimeSystem_findVariablesPos(const char* mangled_name, int* isarray) {
     const char* n =rtsi()->runtimeVariables[i].mangled_name;
     if (strcmp(mangled_name,n)==0) {
       struct ArraysType* array = rtsi()->runtimeVariables[i].arrays;
-      //debugOutput("..........findArrayName : name : %s, array ? %s \n",mangled_name,array);
+      //printMessage("..........findArrayName : name : %s, array ? %s \n",mangled_name,array);
       if (array)
 	*isarray=1;
       return i;
@@ -1562,7 +1586,7 @@ RuntimeSystem_roseInitVariable(const char* name,
 			       const char* filename, 
 			       const char* line, 
 			       const char* lineTransformed, const char* stmtStr) {
-  debugOutput("InitVariable: Request for %s.    address: %d   value: %d   type: %s \n",mangled_name, address, value, typeOfVar2);
+  printMessage("InitVariable: Request for %s.    address: %d   value: %d   type: %s \n",mangled_name, address, value, typeOfVar2);
   int i=0;
   int varFound=0;
   int assgnToPointer = 0;
@@ -1570,7 +1594,7 @@ RuntimeSystem_roseInitVariable(const char* name,
   const char* stackvar = RuntimeSystem_findVariablesOnStack(name);
   if (stackvar) {
     // it exists
-    debugOutput("This variable exists on the stack: %s\n",stackvar);
+    printMessage("This variable exists on the stack: %s\n",stackvar);
     //exit(1);
     varFound=1;
     mangled_name=stackvar;
@@ -1581,7 +1605,7 @@ RuntimeSystem_roseInitVariable(const char* name,
     const char* n =rtsi()->runtimeVariables[i].mangled_name;
     if (strcmp(mangled_name,n)==0){
       varFound=1;
-      debugOutput("Found the variable %s at index %d \n",n, i);
+      printMessage("Found the variable %s at index %d \n",n, i);
 
       if( strcmp( "SgPointerType", rtsi()->runtimeVariables[ i].type) == 0)
         // assignee is a pointer which may be the last one to point to a
@@ -1614,7 +1638,7 @@ RuntimeSystem_roseInitVariable(const char* name,
         if (rtsi()->runtimeVariables[i].address) {
           // this variable has an address, we are re-assigning its
           // address or variable ?
-          debugOutput("\n>>>> >> Already allocated memory at address %lld  and size %d  for  %s\n",
+          printMessage("\n>>>> >> Already allocated memory at address %lld  and size %d  for  %s\n",
               rtsi()->runtimeVariables[i].address->address, rtsi()->runtimeVariables[i].address->size, stmtStr);
           // check if this variable is allocating memory through
           // a pointer that was not freed before
@@ -1628,7 +1652,7 @@ RuntimeSystem_roseInitVariable(const char* name,
             // and add it to another address
             struct MemoryType* tmp_memory = RuntimeSystem_AllocateMemory(address,sizeArray,runtimevar);
             rtsi()->runtimeVariables[i].address = tmp_memory;
-            debugOutput("\n>>>> >> Re-Allocated memory at address %lld  and size %d for   %s \n",
+            printMessage("\n>>>> >> Re-Allocated memory at address %lld  and size %d for   %s \n",
                 rtsi()->runtimeVariables[i].address->address, rtsi()->runtimeVariables[i].address->size, stmtStr);
           }
         } else {
@@ -1636,12 +1660,12 @@ RuntimeSystem_roseInitVariable(const char* name,
           struct RuntimeVariablesType* runtimevar = &(rtsi()->runtimeVariables[i]);
           struct MemoryType* tmp_memory = RuntimeSystem_AllocateMemory(address,sizeArray,runtimevar);
           rtsi()->runtimeVariables[i].address = tmp_memory;
-          debugOutput("\n>>>> >> Allocated memory at address %lld  and size %d   for   %s \n",
+          printMessage("\n>>>> >> Allocated memory at address %lld  and size %d   for   %s \n",
               rtsi()->runtimeVariables[i].address->address, rtsi()->runtimeVariables[i].address->size, stmtStr);
         }
       }
 
-      //debugOutput(">> InitVariable: Found variable: %s as initialized.    address: %lld   value: %lld   ismalloc:%d \n",
+      //printMessage(">> InitVariable: Found variable: %s as initialized.    address: %lld   value: %lld   ismalloc:%d \n",
       //	     mangled_name, address, value, ismalloc);
       break;
     }
@@ -1650,7 +1674,7 @@ RuntimeSystem_roseInitVariable(const char* name,
   Rted_debugDialog(filename, atoi(line),atoi(lineTransformed));
 
   if (varFound==0) {
-    debugOutput("No such variable was found\n");
+    printMessage("No such variable was found\n");
   }
 }
 
@@ -1663,14 +1687,14 @@ void RuntimeSystem_roseAccessVariable( const char* name,
 				       const char* filename, const char* line,
 				       const char* lineTransformed,
 				       const char* stmtStr) {
-  debugOutput("AccessVariable: Request for %s  %s.    \n",name, mangled_name);
+  printMessage("AccessVariable: Request for %s  %s.    \n",name, mangled_name);
   int i=0;
   int varFound=0;
 
   const char* stackvar = RuntimeSystem_findVariablesOnStack(name);
   if (stackvar) {
     // it exists
-    debugOutput("This variable exists on the stack: %s\n",stackvar);
+    printMessage("This variable exists on the stack: %s\n",stackvar);
     //exit(1);
     varFound=1;
     mangled_name=stackvar;
@@ -1681,7 +1705,7 @@ void RuntimeSystem_roseAccessVariable( const char* name,
     const char* n =rtsi()->runtimeVariables[i].mangled_name;
     if (strcmp(mangled_name,n)==0){
       varFound=1;
-      debugOutput("Found the variable %s at index %d \n",n, i);
+      printMessage("Found the variable %s at index %d \n",n, i);
 
       // variable exists, lets make sure it is initialized - if not than that is not good.
       int init = rtsi()->runtimeVariables[i].initialized;
@@ -1696,7 +1720,7 @@ void RuntimeSystem_roseAccessVariable( const char* name,
   Rted_debugDialog(filename, atoi(line),atoi(lineTransformed));
 
   if (varFound==0) {
-    debugOutput("No such variable was found\n");
+    printMessage("No such variable was found\n");
     exit(1); // should not happen!
   }
 }

@@ -6,62 +6,96 @@
 #include <QString>
 #include <QFileInfo>
 
+#include <QDebug>
+
+/// generates filename of transformed file ( from name.c to name_rose.c)
+QString buildSecondFileName(const char * filename1)
+{
+	QString strFilename(filename1);
+    QFileInfo fi (strFilename );
+    QString res = fi.absolutePath();
+    res += "/" + fi.baseName();
+    res += "_rose.";
+    res += fi.completeSuffix();
+    qDebug() << "Transformed filename from " << filename1 <<"to" << res;
+    return res;
+}
 
 
-void showDebugDialog(struct RuntimeVariablesType * stack, int stackSize,
-                     struct RuntimeVariablesType * heap, int heapSize,
-                     struct MemoryType * mem, int memSize,
-                     char* filename, int lineFileA,int lineFileB )
+void gui_updateDataStructures(struct RuntimeVariablesType * stack,int stackSize,
+		                      struct RuntimeVariablesType * vars, int varSize,
+							  struct MemoryType * mem,            int memSize)
+{
+	//update gui direcly, assuming that gui thread is not running
+    RtedDebug * d = RtedDebug::instance();
+    d->stackSize = stackSize;
+    d->stack=stack;
+
+    d->varSize = varSize;
+    d->vars = vars;
+
+    d->memSize = memSize;
+    d->mem = mem;
+}
+
+void gui_checkpoint(const char* filename, int lineFile1, int lineFile2)
 {
     RtedDebug * d = RtedDebug::instance();
-    d->stack = stack;
-    d->stackSize=stackSize;
+    d->file1 = QString(filename);
+    d->file2 = buildSecondFileName(filename);
 
-    d->vars= heap;
-    d->varSize = heapSize;
+    d->file1Line = lineFile1;
+    d->file2Line = lineFile2;
+    d->startGui();
 
-    d->mem = mem;
-    d->memSize = memSize;
+}
 
-    d->file1= QString(filename);
-    d->file1Line = lineFileA;
+void gui_showDialog(const char* filename, int lineFile1, int lineFile2)
+{
+    RtedDebug * d = RtedDebug::instance();
+    d->file1 = QString(filename);
+    d->file2 = buildSecondFileName(filename);
 
-    // build second filename, (filename 1 with prefix rose_
-    QFileInfo fi (d->file1);
-    QString filename2 = fi.absolutePath();
-    filename2 += "rose_";
-    filename2 += fi.fileName();
-
-    d->file2= filename2;
-    d->file2Line = lineFileB;
+    d->file1Line = lineFile1;
+    d->file2Line = lineFile2;
     d->startGui();
 }
 
 
+/// ----------------------- Output --------------------------------------------
 
-void printGui(const char * msg)
+
+
+QString printfToQString(const char * format, va_list ap )
 {
-    RtedDebug * d = RtedDebug::instance();
-    QString strMsg ( msg);
-    QStringList list = strMsg.split('\n',QString::SkipEmptyParts);
-    foreach(const QString & s, list )
-        d->messages.push_back(s);
-}
-
-
-void printfGui(const char * format, ...)
-{
-    va_list ap;
-    va_start(ap,format);
-    vprintfGui(format,ap);
-}
-
-void vprintfGui(const char * format, va_list ap)
-{
-    static const size_t BUFFER_SIZE=100;
+    static const size_t BUFFER_SIZE=200;
     static char buffer[BUFFER_SIZE];
 
     vsnprintf(buffer,BUFFER_SIZE,format,ap);
-    printGui(buffer);
+    QString res(buffer);
+    if(res.endsWith('\n'))
+    	res.remove(res.size()-1,1);
 
+    return res;
 }
+
+
+void gui_printMessage(const char * format, va_list ap )
+{
+    RtedDebug * d = RtedDebug::instance();
+    d->messages.push_back(qMakePair(RtedDebug::MESSAGE,printfToQString(format,ap)));
+}
+
+void gui_printWarning(const char * format, va_list ap)
+{
+    RtedDebug * d = RtedDebug::instance();
+    d->messages.push_back(qMakePair(RtedDebug::WARNING,printfToQString(format,ap)));
+}
+
+void gui_printError(const char * format, va_list ap)
+{
+    RtedDebug * d = RtedDebug::instance();
+    d->messages.push_back(qMakePair(RtedDebug::ERROR,printfToQString(format,ap)));
+}
+
+

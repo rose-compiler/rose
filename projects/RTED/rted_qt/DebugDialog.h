@@ -40,6 +40,8 @@ class DebugDialog : public QMainWindow
 
         void addMessage(const QString & msg);
 
+        /// shows the dialog if a breakpoint was set in instrumented file
+        void showIfBreakpoint(int lineNr);
 
     protected slots:
         void on_actionSingleStep_triggered();
@@ -61,6 +63,9 @@ class DebugDialog : public QMainWindow
         void addArraySection(PropertyTreeWidget * w, int sectionId, ArraysType * at);
         void addMemorySection(PropertyTreeWidget * w, int sectionId, MemoryType * mt);
         void addVariableSection(PropertyTreeWidget * w, int id, RuntimeVariablesType * rv);
+
+
+        QList<int> breakPoints;
 
 
         RtedDebug * dbgObj;

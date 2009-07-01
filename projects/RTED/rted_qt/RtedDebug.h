@@ -32,8 +32,14 @@ class RtedDebug
 
         //Variables for exchanging data between to threads
 
-        /// new log-messages which are printed on next gui activation
-        QStringList messages;
+        enum MessageType
+        {
+        	MESSAGE, WARNING,ERROR
+        };
+
+        QList<QPair<MessageType,QString> > messages;
+
+
 
         /// File which is displayed in first codeEditor
         QString file1;
