@@ -43,7 +43,7 @@ runtimeCheck_SOURCES = runtimeCheck.cpp \
  		       RtedTransf_locals.cpp RtedTransf_scopestmt.cpp
 
 
-SUBDIRS = rted_qt
+SUBDIRS = rted_qt tests
 
 runtimeCheck_LDADD =  $(ROSE_LIBS)
 if ROSE_WITH_ROSEQT
