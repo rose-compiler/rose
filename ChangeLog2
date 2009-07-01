@@ -1,3 +1,28 @@
+2009-07-01 00:13  panas2
+
+	* [r6403] /trunk/ROSE/projects/RTED/RuntimeSystem.c,
+	  /trunk/ROSE/projects/RTED/rted_qt/DebugDialog.cpp,
+	  /trunk/ROSE/projects/RTED/rted_qt/DebugDialog.h,
+	  /trunk/ROSE/projects/RTED/rted_qt/RtedDebug.cpp,
+	  /trunk/ROSE/projects/RTED/rted_qt/RtedDebug.h,
+	  /trunk/ROSE/projects/RTED/rted_qt/rted_qt.cpp,
+	  /trunk/ROSE/projects/RTED/rted_qt/rted_qt.h: Work on RTED GUI
+
+2009-06-30 21:41  panas2
+
+	* [r6402] /trunk/ROSE/projects/RTED/Makefile.am: RTED fix
+
+2009-06-30 21:35  panas2
+
+	* [r6401] /trunk/ROSE/projects/RTED/Makefile.am: RTED fix
+
+2009-06-30 21:31  heller9
+
+	* [r6400] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.c,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: cleaned up
+	  projects/RTED/Makefile.am
+
 2009-06-29 20:46  panas2
 
 	* [r6388] /trunk/ROSE/projects/RTED/RuntimeSystem.c,
