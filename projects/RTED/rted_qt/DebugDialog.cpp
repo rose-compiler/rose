@@ -279,3 +279,4 @@ void DebugDialog::addArraySection(PropertyTreeWidget * w, int id, ArraysType * a
     w->addEntryToSection(id,"IsMalloc",at->ismalloc);
 }
 
+
