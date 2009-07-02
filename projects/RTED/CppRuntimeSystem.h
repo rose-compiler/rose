@@ -7,6 +7,7 @@
 #include <set>
 #include <list>
 #include <vector>
+#include <cassert>
 
 typedef unsigned long addr_type;
 
@@ -28,10 +29,11 @@ struct PointerCmpFunc
  */
 struct SourcePosition
 {
-    SourcePosition(const std::string & _file,int _line1, int _line2)
-      : file(_file), line1(_line1), line2(_line2)
-    {}
-    std::string file;  ///< Absolute Path of source-file
+    SourcePosition();
+    SourcePosition(const std::string & file);
+    SourcePosition(const std::string & file,int line1, int line2);
+
+    std::string file;   ///< Absolute Path of source-file
     int line1;          ///< line number in sourcefile
     int line2;          ///< line number in transformed sourcefile
 };
@@ -56,6 +58,10 @@ class MemoryType
         bool containsAddress(addr_type addr);
         /// Checks if a memory area is part of this allocation
         bool containsMemArea(addr_type addr, size_t size);
+        /// Checks if this MemoryType overlaps another area
+        bool overlapsMemArea(addr_type queryAddr, size_t querySize);
+
+
         /// Prints info about this allocation
         void print(std::ostream & os) const;
 
@@ -63,11 +69,27 @@ class MemoryType
         bool operator< (const MemoryType & other) const;
 
 
-        addr_type              getAdress() const { return startAddress; }
-        size_t                 getSize()   const { return size; }
-        const SourcePosition & getPos()    const { return allocPos; }
+        addr_type              getAddress() const { return startAddress; }
+        size_t                 getSize()    const { return size; }
+        const SourcePosition & getPos()     const { return allocPos; }
 
+        /// Tests if a part of memory is initialized
         bool  isInitialized(int offsetFrom, int offsetTo) const;
+
+        /// Initialized a part of memory
+        void  initialize   (int offsetFrom, int offsetTo) ;
+
+
+        template<typename T>
+        T * readMemory(int offset)
+        {
+            assert(offset<0 && offset+sizeof(T) >= size);
+            assert(isInitialized(offset,offset+sizeof(T)));
+
+            char * charAddress = static_cast<char*>(startAddress);
+            charAddress += offset;
+            return static_cast<T*>(charAddress);
+        }
 
     private:
         addr_type         startAddress; ///< address where memory chunk starts
@@ -77,11 +99,12 @@ class MemoryType
 };
 std::ostream& operator<< (std::ostream &os, const MemoryType & m);
 
+class RuntimeSystem;
 
 class MemoryManager
 {
     public:
-        MemoryManager() {};
+        MemoryManager();
 
         /// Destructor checks if there are still allocations which are not freed
         ~MemoryManager();
@@ -98,15 +121,30 @@ class MemoryManager
 
         /// Check if memory region is allocated and initialized
         /// @param size     size=sizeof(DereferencedType)
-        bool checkRead  (addr_type addr, size_t size);
+        void checkRead  (addr_type addr, size_t size);
 
         /// Checks if memory at position can be safely written, i.e. is allocated
-        bool checkWrite (addr_type addr, size_t size);
+        /// if true it marks that memory region as initialized
+        /// that means this function should be called on every write!
+        void checkWrite (addr_type addr, size_t size);
 
+
+        /// Returns the MemoryType which stores the allocation information which is
+        /// registered for this addr, or NULL if nothing is registered
+        MemoryType * getMemoryType(addr_type addr);
 
     private:
 
-        MemoryType * findMem(addr_type addr, size_t size);
+        /// Returns mem-area which contains a given area, or NULL if nothing found
+        MemoryType * findContainingMem(addr_type addr, size_t size);
+
+        /// Returns mem-area which overlaps with given area, or NULL if nothing found
+        MemoryType * findOverlappingMem(addr_type addr, size_t size);
+
+        /// Queries the map for a potential matching memory area
+        /// finds the memory region with next lower or equal address
+        MemoryType * findPossibleMemMatch(addr_type addr);
+
 
         void checkForNonFreedMem() const;
 
@@ -117,19 +155,41 @@ class MemoryManager
 std::ostream& operator<< (std::ostream &os, const MemoryManager & m);
 
 
-class VariablesType 
+class VariablesType
 {
     public:
-      std::string name; // stack variable name
-      std::string mangled_name; // mangled name
-      std::string type;
+        VariablesType(const std::string & _name,
+                      const std::string & _mangledName,
+                      const std::string & _typeStr,
+                      addr_type _address);
 
-      // the following line will be removed later on?
-      struct ArraysType* arrays; // exactly one array
+        ~VariablesType();
 
-      // tps: what is address here?
-      addr_type   address;
+        const std::string & getName()        const  { return name;}
+        const std::string & getMangledName() const  { return mangledName; }
+        addr_type           getAddress()     const  { return address; }
+
+        /// returns the allocation information for this var
+        MemoryType *        getAllocation()  const;
+
+        void print(std::ostream & os) const;
+
+    private:
+        std::string name; ///< stack variable name
+        std::string mangledName; ///< mangled name
+
+        //FIXME do not store string here but type-enum
+        std::string type; ///< string with class name of rose-type
+
+        addr_type address; ///< address of this variable in memory
 };
+
+
+std::ostream& operator<< (std::ostream &os, const VariablesType & m);
+
+
+
+
 
 /**
  * RuntimeSystem is responsible for keeping track of all variable allocations and memory operations
@@ -147,7 +207,11 @@ class RuntimeSystem
         enum Violation
         {
                 DOUBLE_ALLOCATION, // try to reserve memory with lies in already allocated mem
-                MEMORY_LEAK
+                INVALID_FREE,      // called free on non allocated adress
+                MEMORY_LEAK,
+                EMPTY_ALLOCATION,  // trying to get a memory area of size 0
+                INVALID_READ,      // trying to read non-allocated or non-initialized mem region
+                INVALID_WRITE      // trying to write to non-allocated mem region
         };
 
 
@@ -158,29 +222,43 @@ class RuntimeSystem
 
         /// Gets called when a violation is detected
         /// this function decides what to do (message printing, aborting program)
+        /// this function does not necessarily stop the program, but may just print a warning
         void violationHandler(Violation v, const std::string & description ="");
+
+        /// call this function to inform the runtimesystem what the current position in sourcecode is
+        /// this information is used for printing errors/warnings
+        void checkpoint(const SourcePosition & pos)  { curPos = pos; }
+
+        MemoryManager * getMemManager()  { return &memManager; }
 
 
         // ---------------------------------  Register Functions ------------------------------------------------------------
+
         /// Notifies the runtime-system that a variable was created
         /// creates this variable on the stack and handles allocation right
-        /// @param name     (mangled?) name of variable
-        /// @param address  memory address of this variable
-        void createVariable(addr_type address, const std::string & name);
+        /// the VariablesType is deleted when the var goes out of scope
+        void createVariable(VariablesType * var);
+
+        void createVariable(addr_type address,
+                            const std::string & name,
+                            const std::string & mangledName,
+                            const std::string & typeString);
+
 
         /// Call this function after when a malloc or new occurs in monitored code
         /// @param startAdress  the return value of malloc/new
         /// @param size         size of the allocated memory area
         /// @param pos          position of allocation (needed to inform the user when this allocation is never freed)
-        void createMemory(addr_type startAddress, size_t size, const SourcePosition & pos);
+        void createMemory(addr_type startAddress, size_t size);
 
         /// Call this function when a free/delete occurs in monitored code
         /// @param startAddress the address to be freed (argument of free/delete)
-        void deleteMemory(addr_type startAddress);
+        void freeMemory(addr_type startAddress);
 
         /// Call this function when something is written to a memory region
         /// used to keep track which memory regions are initialized
-        void initMemory(addr_type addr, size_t length);
+        /// mb: not needed - use checkMemWrite()
+        // void initMemory(addr_type addr, size_t length);
 
 
         /// Call this function when the value of a pointer changed i.e. the address a pointer points to
@@ -206,7 +284,7 @@ class RuntimeSystem
 
         /// Each variable is associated with a scope, use this function to create a new scope
         /// @param name  string description of scope, may be function name or "for-loop" ...
-        void beginScope(std::string & name);
+        void beginScope(const std::string & name);
 
         /// Closes a scope and deletes all variables which where created via registerVariable()
         /// from the stack, tests for
@@ -217,9 +295,10 @@ class RuntimeSystem
         /// used for user-notification where an error occured
         void registerCurrentSourcePosition(const SourcePosition & pos);
 
-
         /// Call this function if a file is opened
-	// tps: should this not be part of the variable?
+	    // tps: should this not be part of the variable?
+        // mb : no, memory/variable allocation and files are different resources
+        //      instrumented function may just call one function out of convenience, but here its splitted up
         void registerFileOpen (FILE * file);
         void registerFileClose(FILE * file);
 
@@ -228,38 +307,47 @@ class RuntimeSystem
 
         /// Checks if a specific memory region can be read (useful to check pointer derefs)
         /// true when region lies in allocated and initialized memory chunk
-        bool checkMemRead(addr_type addr, size_t length);
+        void checkMemRead(addr_type addr, size_t length);
 
         /// Checks if a specific memory region can be safely written
         /// true when region lies in allocated memory chunk
-        /// TODO specify if registerMemoryWrite() is called automatically
-        bool checkMemWrite(addr_type addr, size_t length);
+        void checkMemWrite(addr_type addr, size_t length);
 
         /// Returns true if file is currently open
-        bool checkFileAccess(FILE * f);
+        void checkFileAccess(FILE * f);
 
+
+
+        void printMemStatus(std::ostream & os) const  { memManager.print(os); }
+        void printStack(std::ostream & os)     const;
 
     private:
 
         static RuntimeSystem* single;
+        RuntimeSystem();
 
-        RuntimeSystem() {};
 
         /// Class to track state of memory (which areas are allocated etc)
         MemoryManager memManager;
 
         struct ScopeInfo
         {
+            ScopeInfo( const std::string & _name, int index)
+                : name(_name),stackIndex(index)
+            {}
+
             std::string name;        /// description of scope, either function-name or something like "for-loop"
             int         stackIndex;  /// index in stack-array where this scope starts
         };
         std::vector<ScopeInfo> scope;
 
 
-        std::vector<VariablesType> stack;
+        std::vector<VariablesType *> stack;
 
         /// Tracking for opened files
         std::set<FILE*> openFiles;
+
+        SourcePosition curPos;
 };
 
 
