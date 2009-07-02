@@ -32,6 +32,7 @@ enum SGTypes {
 	SgTypeUnsignedLongLong,
 	SgTypeUnsignedShort,
 	SgTypeString,
+	SgPointerType,
 	Unknown
 };
 

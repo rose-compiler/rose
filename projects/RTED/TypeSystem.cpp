@@ -57,6 +57,8 @@ TypeInfo* TypeSystem::resolveType(string typeStr) {
 		tinf=new TypeInfo(SgTypeUnsignedShort, typeStr, sizeof(unsigned short));
 	} else if (typeStr=="SgTypeString") {
 		tinf=new TypeInfo(SgTypeString, typeStr, sizeof(string));
+	} else if (typeStr=="SgPointerType") {
+		tinf=new TypeInfo(SgPointerType, typeStr, sizeof(void*));
 	} else {
 		tinf=new TypeInfo(Unknown, "Unknown", 0);
 	}

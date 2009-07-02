@@ -379,6 +379,7 @@ VariablesType::VariablesType(const std::string & _name,
 {
     //FIXME get size of variable out of type information
     //      just allocate (wronly) always 4 bytes here
+	//FIXME no allocation when "SgArrayType"
     RuntimeSystem::instance()->createMemory(address,4);
 
 }

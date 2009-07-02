@@ -328,6 +328,14 @@ class RuntimeSystem
         void checkFileAccess(FILE * f);
 
 
+        /// Checks for C-StdLib functions
+
+     	// todo: handle functions
+
+
+
+
+
         // Printing of RuntimeSystem status
         void printMemStatus(std::ostream & os) const  { memManager.print(os); }
         void printStack    (std::ostream & os) const;
