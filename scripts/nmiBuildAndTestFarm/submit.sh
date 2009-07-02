@@ -42,7 +42,7 @@ fi
 
 # Determine HEAD revision number
 REVISION=`svn -r HEAD log https://outreach.scidac.gov/svn/rose/trunk/ | grep '^Load rose' | cut -d'-' -f 3 | cut -d' ' -f 1`
-PLATFORMS=`arr=($(echo "build_configs/x86_deb_3.1/minimal_default" | awk -F"/" '{$1=$1; print}')); echo ${arr[1]}`
+PLATFORMS=`arr=($(echo $1 | awk -F"/" '{$1=$1; print}')); echo ${arr[${#arr[*]}-2]}`
 
 # exporting options, to be recognized in the submit and input scripts
 export _NMI_TITLE=${TITLE}
@@ -58,8 +58,11 @@ export _NMI_HOSTNAME=$HOSTNAME
 export _NMI_SUBMITDIR=$PWD
 
 
+
 # submit the build job
 echo "Submitting the build job ..."
+echo "current revision: ${REVISION}"
+echo "configuration: $1"
 nmi_submit rose-build.submit > .build_submit.log
 RID=`grep "Run ID:" .build_submit.log | cut -f 3`
 GID=`grep "Global ID:" .build_submit.log | cut -f 2`
@@ -70,26 +73,7 @@ export _NMI_RID=${RID}
 export _NMI_GID=${GID}
 
 # submit the test job
-echo -e "\nSubmitting the test job ..." 
-nmi_submit rose-test.submit 
+#echo -e "\nSubmitting the test job ..." 
+#nmi_submit rose-test.submit 
 
 exit
-
-
-#3echo $_NMI_RID
-
-# next two lines are needed so that the cronjob works
-# and we can define our jobs to look like 
-# ./submit.sh submit/<submit_file> in the cronjob file
-# CWD="/home/heller/rose"
-# cd ${CWD}
-
-#nmi_submit $1 > submit_out.tmp
-
-#echo -e "Run ID:"
-#grep "Run ID:" submit_out.tmp | cut -f 3
-#echo -e "Global ID:"
-#grep "Global ID:" submit_out.tmp | cut -f 2
-
-#echo -e "Whole output"
-#cat submit_out.tmp

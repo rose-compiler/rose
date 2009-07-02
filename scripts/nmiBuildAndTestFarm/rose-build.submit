@@ -12,7 +12,7 @@ remote_declare = glue.pl
 remote_declare_args = -taskhook=remote_declare
 
 # Declare macros for glue.pl
-TASKLIST = platform_info, configure, make
+TASKLIST = platform_info, configure, make, check
 SRCDIR = trunk
 
 #prereqs = gcc-4.2.4, boost-1.35.0
@@ -27,7 +27,6 @@ remote_task_args = -taskhook=remote_task
 remote_post = glue.pl
 remote_post_args = -taskhook=remote_post
 
-#platforms = x86_64_deb_5.0
 platforms = $(PLATFORMS)
 
 notify = heller9@llnl.gov

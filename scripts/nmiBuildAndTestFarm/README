@@ -1,5 +1,7 @@
 
-This directory contains scripts to automate the submission of build tests to
+This directory contains scripts to automate the submission of builds and tests to
 the nmi build and test farm located at: http://nmi-web.cs.wisc.edu
 To see an overview of the rose tests see:
 http://nmi-web.cs.wisc.edu/nmi/index.php?page=results%2Foverview&rows=20&opt_keyword=&opt_project=rosecompiler&opt_user=OPTION_SHOW_ALL&opt_comp=OPTION_SHOW_ALL&opt_type=OPTION_SHOW_ALL&opt_result=OPTION_SHOW_ALL&opt_platform=OPTION_SHOW_ALL&opt_month=0&opt_day=0&opt_year=0&opt_build_id=&opt_submit=OPTION_SHOW_ALL&searchSubmit=Search
+
+for further documentation see the ROSE User Manual developers appendix section "Testing on the NMI Build and Test Farm"

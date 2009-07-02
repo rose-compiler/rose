@@ -108,7 +108,7 @@ sub platform_info {
    print "Environment Variables\n";
    for my $e ( sort keys %ENV )
    {
-      #next unless $e =~ m!NMI_!;
+      next unless $e =~ m!NMI_!;
       print "\t$e=" . $ENV{$e} . "\n";
    }
    print "\n";
@@ -117,19 +117,23 @@ sub platform_info {
 
    print "Gnu Compiler edition:\n";
    system( "g++ --version" );
+   print "\n";
    print "libtool:\n";
    system( "libtool --version" );
+   print "\n";
    print "autoconf:\n";
    system( "autoconf --version" );
+   print "\n";
    print "automake:\n";
    system( "automake --version" );
+   print "\n";
 }
 
 sub make {
    my ($taskhook) = @_;
    my $args = assemble($taskhook,"args");
    my $command = "make $args >& /dev/stdout | tee make.log; exit \${PIPESTATUS[0]}";
-   print "Executing [$command] in build\n";
+   print "Executing [$command] in builddir($builddir)\n";
    chdir $builddir;
    my $return = system($command);
    chdir $startdir;
@@ -139,9 +143,14 @@ sub make {
 sub check {
    my ($taskhook) = @_;
     my $args = assemble($taskhook,"args");
-   chdir $builddir;
+   chdir $startdir;
    my $command = "make $args check >& /dev/stdout | tee check.log; exit \${PIPESTATUS[0]}";
-   print "Executing [$command] in build\n";
+   print "Executing [$command] in builddir ($builddir)\n";
+   chdir $builddir;
+   system( "pwd" );
+   print $startdir;
+   system( "ls -a $startdir" );
+   system( "ls -a" );
    my $return = system($command);
    chdir $startdir;
    return $return
