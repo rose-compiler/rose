@@ -113,16 +113,16 @@ check-C-uninitvar: run/C/uninitialized_variables
 check-C-C99specific: run/C/C99_specific_errors
 
 
-rted_prereq:
+rted_source:
 	@cp -f $(srcdir)/index_array.txt .
 	@cp -f $(srcdir)/file_read.txt .
-	$(foreach rted_dir, $(RTED_TEST_DIRS), @mkdir -p $(patsubst $(rted_path)/%, rted_source/%, $(rted_dir) ) )
+	@mkdir -p $(foreach rted_dir, $(RTED_TEST_DIRS), $(patsubst $(rted_path)/%, rted_source/%, $(rted_dir) ) )
 
 #------------------------------------------------------------------------------
 # rule to copy the sources into our current working directory
 #------------------------------------------------------------------------------
 
-rted_source/%.c: rted_prereq $(rted_path)/%.c
+rted_source/%.c: rted_source $(rted_path)/%.c
 	@echo -e Checking $(patsubst $(rted_path)/%.c, %, $(filter $(rted_path)%, $^)) ...
 	@echo -n "    copying input file ... "
 	@cp $(filter $(rted_path)/%.c, $^) $(dir $@)
@@ -141,7 +141,7 @@ rted_source/%.c: rted_prereq $(rted_path)/%.c
 # rules to create _rose.c and _s_rose.c files
 #------------------------------------------------------------------------------
 
-rted_source/%_s_rose.c:
+rted_source/%_s_rose.c: rted_source
 	@touch $@
 
 rted_source/%_rose.c: runtimeCheck rted_source/%.c rted_source/%_s.c $(srcdir)/RuntimeSystem.c $(srcdir)/RuntimeSystem.h
@@ -287,6 +287,6 @@ check-local: rted_qt runtimeCheck $(TESTCODES) c-compile-runtimesystem  deleteAl
 
 
 clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) test_bin* *.o rose_*.C rose_*.c *.dot Templates.DB *~ rose_rose* test *.bin *.txt *.c *.cpp rted_source
+	rm -rf $(CXX_TEMPLATE_OBJECTS) test_bin* *.o rose_*.C rose_*.c *.dot Templates.DB *~ rose_rose* test *.bin *.txt *.c *.cpp rted_source 
 
 endif
