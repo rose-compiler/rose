@@ -413,6 +413,15 @@ ostream& operator<< (ostream &os, const VariablesType & m)
 }
 
 
+// -----------------------    FileInfo  --------------------------------------
+
+
+void RuntimeSystem::FileInfo::print(ostream & os) const
+{
+    os << hex << pointer << "\t" << name << "\t Opened at " << openPos;
+}
+
+
 
 // -----------------------    RuntimeSystem  --------------------------------------
 
@@ -432,6 +441,13 @@ RuntimeSystem::RuntimeSystem()
 {
     beginScope("Globals");
 }
+
+
+void RuntimeSystem::setOutputFile(const std::string & filename)
+{
+    //TODO
+}
+
 
 void RuntimeSystem::violationHandler(Violation v, const string & desc)
 {
@@ -530,25 +546,69 @@ void RuntimeSystem::endScope()
 }
 
 
-void RuntimeSystem::registerFileOpen(FILE * file)
+void RuntimeSystem::registerFileOpen(FILE * file, const std::string & openedFile)
 {
+    FileInfo compObj (file);
+
     if( openFiles.find(file) != openFiles.end() )
     {
-
-
+        violationHandler(DOUBLE_FILE_OPEN, "Tried to register the same filpointer twice");
+        return;
     }
+
+    openFiles.insert(file);
 }
 
 void RuntimeSystem::registerFileClose(FILE * file)
 {
-
+    if( openFiles.find(file) != openFiles.end() )
+    {
+        violationHandler(INVALID_FILE_ACCESS, "Tried to register the same filpointer twice");
+        return;
+    }
+    openFiles.erase(file);
 }
 
 void RuntimeSystem::checkFileAccess(FILE * file)
 {
-
+    if( openFiles.find(file) != openFiles.end() )
+    {
+        violationHandler(INVALID_FILE_ACCESS, "Tried to access invalid file");
+        return;
+    }
 }
 
+
+void RuntimeSystem::doProgramExitChecks()
+{
+    // Check for memory leaks
+    memManager.checkForNonFreedMem();
+
+    // Check if all files were closed
+    if( openFiles.size() > 0 )
+    {
+        stringstream desc;
+        printOpenFiles(desc);
+        violationHandler(UNCLOSED_FILES,desc.str());
+    }
+}
+
+
+void RuntimeSystem::printOpenFiles(ostream & os) const
+{
+    os << endl;
+    os << "------------------------------- Open Files   --------------------------------------" << endl << endl;
+
+    typedef set<FileInfo>::const_iterator FileIter;
+    for( FileIter i = openFiles.begin(); i != openFiles.end(); ++i)
+    {
+
+    }
+
+
+    os << "-----------------------------------------------------------------------------------" << endl;
+
+}
 
 void RuntimeSystem::printStack(ostream & os) const
 {
@@ -566,7 +626,6 @@ void RuntimeSystem::printStack(ostream & os) const
 
     }
 
-    os << "-----------------------------------------------------------------------------------" << endl;
     os << endl;
 }
 

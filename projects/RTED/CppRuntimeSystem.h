@@ -133,6 +133,8 @@ class MemoryManager
         /// registered for this addr, or NULL if nothing is registered
         MemoryType * getMemoryType(addr_type addr);
 
+        void checkForNonFreedMem() const;
+
     private:
 
         /// Returns mem-area which contains a given area, or NULL if nothing found
@@ -146,7 +148,6 @@ class MemoryManager
         MemoryType * findPossibleMemMatch(addr_type addr);
 
 
-        void checkForNonFreedMem() const;
 
         typedef std::set<MemoryType*,PointerCmpFunc<MemoryType> > MemoryTypeSet;
         MemoryTypeSet mem;
@@ -206,12 +207,15 @@ class RuntimeSystem
     public:
         enum Violation
         {
-                DOUBLE_ALLOCATION, // try to reserve memory with lies in already allocated mem
-                INVALID_FREE,      // called free on non allocated adress
-                MEMORY_LEAK,
-                EMPTY_ALLOCATION,  // trying to get a memory area of size 0
-                INVALID_READ,      // trying to read non-allocated or non-initialized mem region
-                INVALID_WRITE      // trying to write to non-allocated mem region
+                DOUBLE_ALLOCATION,   // try to reserve memory with lies in already allocated mem
+                INVALID_FREE,        // called free on non allocated address
+                MEMORY_LEAK,         // some allocated memory was not freed on program exit
+                EMPTY_ALLOCATION,    // trying to get a memory area of size 0
+                INVALID_READ,        // trying to read non-allocated or non-initialized mem region
+                INVALID_WRITE,       // trying to write to non-allocated mem region
+                DOUBLE_FILE_OPEN,    // trying to register the same file-poitner twice
+                INVALID_FILE_ACCESS, // trying to access file which is not opened
+                UNCLOSED_FILES       // some opened files where not closed before program exit
         };
 
 
@@ -231,6 +235,9 @@ class RuntimeSystem
 
         MemoryManager * getMemManager()  { return &memManager; }
 
+
+        /// creates a file with specified filename, and writes all the output in that file
+        void setOutputFile(const std::string & filename);
 
         // ---------------------------------  Register Functions ------------------------------------------------------------
 
@@ -299,7 +306,7 @@ class RuntimeSystem
 	    // tps: should this not be part of the variable?
         // mb : no, memory/variable allocation and files are different resources
         //      instrumented function may just call one function out of convenience, but here its splitted up
-        void registerFileOpen (FILE * file);
+        void registerFileOpen (FILE * file, const std::string & openedFile);
         void registerFileClose(FILE * file);
 
 
@@ -313,14 +320,18 @@ class RuntimeSystem
         /// true when region lies in allocated memory chunk
         void checkMemWrite(addr_type addr, size_t length);
 
+
+        /// Call this function on program end, to list resources which have not been freed
+        void doProgramExitChecks();
+
         /// Returns true if file is currently open
         void checkFileAccess(FILE * f);
 
 
-
+        // Printing of RuntimeSystem status
         void printMemStatus(std::ostream & os) const  { memManager.print(os); }
-        void printStack(std::ostream & os)     const;
-
+        void printStack    (std::ostream & os) const;
+        void printOpenFiles(std::ostream & os) const;
     private:
 
         static RuntimeSystem* single;
@@ -342,10 +353,33 @@ class RuntimeSystem
         std::vector<ScopeInfo> scope;
 
 
-        std::vector<VariablesType *> stack;
+
 
         /// Tracking for opened files
-        std::set<FILE*> openFiles;
+        struct FileInfo
+        {
+                FileInfo(FILE * fp, const std::string & _name, const SourcePosition & pos) :
+                    pointer(fp),name(_name),openPos(pos)
+                {}
+
+                FileInfo(FILE * f) :
+                    pointer(f), name("Invalid")
+                {}
+
+
+                /// overloaded operator because FileInfo's are managed in a std::set
+                bool operator< (const FileInfo & other) const { return pointer < other.pointer; }
+
+                void print(std::ostream & os) const;
+
+                FILE *         pointer;  ///< the pointer returned by fopen
+                std::string    name;     ///< filename or filepath
+                SourcePosition openPos;  ///< position in sourcecode where file was opened
+        };
+        std::set<FileInfo> openFiles;
+
+
+        std::vector<VariablesType *> stack;
 
         SourcePosition curPos;
 };
