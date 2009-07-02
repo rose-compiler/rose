@@ -421,13 +421,25 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
                         t = t->stripType(SgType::STRIP_MODIFIER_TYPE
                                        | SgType::STRIP_REFERENCE_TYPE
                                        | SgType::STRIP_TYPEDEF_TYPE);
-                        if (isSgArrayType(t))
+                     // The array may be n-dimensional, so we create n
+                     // levels of pointers; the innermost level (containing
+                     // the base elements) gets the list of symbols
+                     // associated with the array name.
+                        Location *l = result;
+                        while (SgArrayType *a = isSgArrayType(t))
                         {
                             Location *arrayNode = createLocation();
                             arrayNode->array = true;
-                            arrayNode->symbols = result->symbols;
-                            result->pointTo(arrayNode);
+                            l->pointTo(arrayNode);
+
+                            l = arrayNode;
+                            t = a->get_base_type()->stripType(
+                                        SgType::STRIP_MODIFIER_TYPE
+                                      | SgType::STRIP_REFERENCE_TYPE
+                                      | SgType::STRIP_TYPEDEF_TYPE);
                         }
+                        if (l != result)
+                            l->symbols = result->symbols;
                     }
                 }
             }
@@ -749,7 +761,13 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
          && b != NULL && b->baseLocation() != NULL)
             result = assign(a, b);
         else
-            result = assign(a, pickThePointer(isSgBinaryOp(node), a, b));
+        {
+            Location *ptr = pickThePointer(isSgBinaryOp(node), a, b);
+            if (ptr != NULL && ptr != a)
+                result = assign(a, ptr);
+            else
+                result = a;
+        }
         break;
 
     case V_SgPlusPlusOp:
@@ -3983,6 +4001,8 @@ PointsToAnalysis::Implementation::Implementation(
 PointsToAnalysis::Location *
 PointsToAnalysis::Implementation::symbol_location(SgSymbol *sym)
 {
+    Location *result = NULL;
+
     if (SgFunctionSymbol *func_sym = isSgFunctionSymbol(sym))
         return functionSymbol_location(func_sym);
 
@@ -4000,7 +4020,18 @@ PointsToAnalysis::Implementation::symbol_location(SgSymbol *sym)
      // Can't happen; and if it can, then we need to deal with this in some
      // other way.
         std::abort();
-        return t;
+    }
+
+ // Global and static variables must be looked up in a central place, which
+ // is the mainInfo. We temporarily switch to another info if necessary.
+    PointsToInformation *tmpInfo = info;
+    if (SgVariableSymbol *varsym = isSgVariableSymbol(sym))
+    {
+        if (isSgGlobal(varsym->get_scope())
+         || varsym->get_declaration()->get_storageModifier().isStatic())
+        {
+            info = mainInfo;
+        }
     }
 
     std::map<SgSymbol *, Location *>::iterator i;
@@ -4014,7 +4045,7 @@ PointsToAnalysis::Implementation::symbol_location(SgSymbol *sym)
             << " for symbol " << name(sym)
             << std::endl;
 #endif
-        return location;
+        result = location;
     }
     else
     {
@@ -4044,8 +4075,12 @@ PointsToAnalysis::Implementation::symbol_location(SgSymbol *sym)
             if (class_type != NULL)
                 materializeAllStructMembers(location, class_type);
         }
-        return location;
+        result = location;
     }
+ // Restore old value.
+    info = tmpInfo;
+
+    return result;
 }
 
 #if HAVE_PAG

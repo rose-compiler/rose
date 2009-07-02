@@ -281,8 +281,12 @@ binary(left, right, exp, state, context) =
       let id = expr_exprid(exp); in
       let l = exprid_location_cs(id, context); in
       let syms = location_varsyms(l); in
-      let s2 = constrain_array_index(ls, expr_type(left), right);
-      in  let result = (merged_var_values(s2, syms), s2);
+      let s2 = constrain_array_index(ls, expr_type(left), right); in
+      let result =
+          if is_array_type(expr_type(exp)) then
+            (top, s2)  // -- multidim array not fully dereferenced, no value
+          else
+            (merged_var_values(s2, syms), s2);
       in  // println("arr ", exp, " result: ", result)
           result;
 
@@ -378,8 +382,11 @@ unary(child, exp, state, context) =
       PointerDerefExp(_)  => // -- println("PointerDerefExp in context ", context)
                              let id = expr_exprid(exp); in
                              let l = exprid_location_cs(id, context); in
-                             let syms = location_varsyms(l);
-                             in  (merged_var_values(es, syms), es);
+                             let syms = location_varsyms(l); in
+                             if is_array_type(expr_type(exp)) then
+                               (top, es)
+                             else
+                               (merged_var_values(es, syms), es);
       // -- special handling for additive unary operators
       MinusMinusOp(_) => if unary_is_prefix(exp) then
                             updatestate(es, child,
@@ -459,7 +466,7 @@ updatestate(state, exp, value, context) =
            in  if exprid_has_location(exprid) then
                let loc = exprid_location_cs(exprid, context); in
                let syms = location_varsyms(loc);
-               in  // -- println("updating vars: ", syms)
+               in  // -- println("updating location ", loc, " with vars: ", syms)
                    case syms of
                 // -- no var: could be an error; could also be harmless, if
                 // -- this updatestate call resulted from an equality check
