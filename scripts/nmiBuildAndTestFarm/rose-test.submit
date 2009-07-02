@@ -25,6 +25,6 @@ remote_task_args = -taskhook=remote_task
 remote_post = glue.pl
 remote_post_args = -taskhook=remote_post
 
-platforms = x86_deb_5.0
+platforms = $(PLATFORMS)
 
 notify = heller9@llnl.gov
