@@ -5601,8 +5601,8 @@ bool SageInterface::loopUnrolling(SgForStatement* loop, size_t unrolling_factor)
  */
 bool SageInterface::loopUnrolling(SgForStatement* target_loop, size_t unrolling_factor) 
 {
-  //Allow 0, which means no unrolling at all
-  if (unrolling_factor ==0)
+  //Handle 0 and 1, which means no unrolling at all
+  if (unrolling_factor <= 1)
     return true;
   // normalize the target loop first
   if (!forLoopNormalization(target_loop)); 
