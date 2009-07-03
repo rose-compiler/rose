@@ -36,6 +36,9 @@ public:
   virtual InheritedAttribute 
   evaluateInheritedAttribute(SgNode *n, InheritedAttribute attr)
   {
+    // Set parent
+    n->set_parent(attr.parent);
+
     // FileInfo
     if (SgLocatedNode* ln = isSgLocatedNode(n)) {
       // Set the CompilerGenerated Flag
@@ -64,6 +67,27 @@ public:
       PrologToRose::addSymbol(scope, decl);
     }
 
+    if (SgVariableDeclaration *vardecl = isSgVariableDeclaration(n))
+      setInitNameScopes(vardecl->get_variables(), vardecl->get_scope());
+    if (SgEnumDeclaration *edecl = isSgEnumDeclaration(n))
+      setInitNameScopes(edecl->get_enumerators(), edecl->get_scope());
+    if (SgFunctionParameterList *plist = isSgFunctionParameterList(n))
+      setInitNameScopes(plist->get_args(), plist->get_scope());
+
+    if (SgInitializedName *iname = isSgInitializedName(n))
+    {
+      if (iname->get_scope() == NULL)
+      {
+        std::cout
+            << "iname " << iname->get_name().str()
+            << " has NULL scope; parent is "
+            << iname->get_parent()->class_name()
+            << std::endl;
+      }
+    }
+
+    // GB: This code seems rather pointless; setting initialized names'
+    // scopes is more easily achieved above. I think.
     // Parent
     //ROSE_ASSERT(n->get_parent() == attr.parent);
     for (SgNode* n1 = n; 
@@ -97,6 +121,13 @@ public:
 
     return InheritedAttribute(attr.ptr, scope, n);
   };
+
+private:
+  void setInitNameScopes(SgInitializedNamePtrList &ins, SgScopeStatement *s) {
+    SgInitializedNamePtrList::iterator i;
+    for (i = ins.begin(); i != ins.end(); ++i)
+      (*i)->set_scope(s);
+  }
 };
 
 

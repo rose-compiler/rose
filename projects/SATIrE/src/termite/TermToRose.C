@@ -349,6 +349,7 @@ PrologToRose::binaryToRose(PrologCompTerm* t,string tname) {
   } else if(tname == SG_PREFIX "catch_option_stmt") {
     s = createCatchOptionStmt(fi,child1,child2,t);	
   } else if (tname == SG_PREFIX "source_file") {
+    ROSE_ASSERT(false && "a source_file should not be a binary node!");
     s = createFile(fi,child1,t);
   } else cerr<<"**WARNING: unhandled Binary Node: "<<tname<<endl;
 
@@ -990,18 +991,23 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
     debug("unparsing enum value");
     PrologCompTerm* annot = retrieveAnnotation(t);
     ROSE_ASSERT(annot != NULL);
-    /* get value and name, create a dummy declaration*/
+    /* get value and name, find the declaration*/
     assert_arity(annot, 4);
     int value = toInt(annot->at(0));
     SgName v_name = *toStringP(annot->at(1));
-    SgEnumDeclaration* decdummy = dynamic_cast<SgEnumDeclaration*>(toRose(annot->at(2)));
+
+    // Rather than faking a declaration like before, we look it up in the
+    // declaration map.
+    SgEnumDeclaration* decdummy = NULL;
+    PrologTerm* dect = annot->at(2);
+    ROSE_ASSERT(declarationMap.find(dect->getRepresentation())
+                != declarationMap.end());
+    decdummy = isSgEnumDeclaration(declarationMap[dect->getRepresentation()]);
     ROSE_ASSERT(decdummy != NULL);
-    fakeParentScope(decdummy);
    
     SgEnumVal* valnode = new SgEnumVal(fi,value,decdummy,v_name);
     ROSE_ASSERT(valnode != NULL);
     ROSE_ASSERT(valnode->get_declaration() == decdummy);
-    debug("declaration faked");
     ve = valnode;
   }
   
@@ -1186,14 +1192,34 @@ PrologToRose::createUnaryOp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) {
  */
 SgProject*
 PrologToRose::createProject(Sg_File_Info* fi,deque<SgNode*>* succs) {
+  // Make sure all endOfConstruct pointers are set; ROSE includes
+  // essentially the same thing, but that prints verbose diagnostics. Also,
+  // the AST janitor does this, but apparently it doesn't always visit every
+  // node (SgVariableDefinitions, mostly).
+  class FileInfoFixer: public ROSE_VisitTraversal {
+  protected:
+    void visit(SgNode *n) {
+      if (SgLocatedNode *ln = isSgLocatedNode(n)) {
+        if (ln->get_startOfConstruct() != NULL
+            && ln->get_endOfConstruct() == NULL) {
+          ln->set_endOfConstruct(ln->get_startOfConstruct());
+        }
+      }
+    }
+  };
+  FileInfoFixer fileInfoFixer;
+  fileInfoFixer.traverseMemoryPool();
+
   SgProject* project = new SgProject();
   SgFilePtrList &fl = project->get_fileList();
   
   for (deque<SgNode*>::iterator it = succs->begin();
        it != succs->end(); ++it) {
     SgSourceFile* file = dynamic_cast<SgSourceFile*>(*it);
-    if (file != NULL)  // otherwise, it's a binary file, which shouldn't happen
+    if (file != NULL) { // otherwise, it's a binary file, which shouldn't happen
+      AstPostProcessing(file);
       fl.push_back(file);
+    }
   }
   return project;
 }
@@ -1209,6 +1235,8 @@ PrologToRose::createFile(Sg_File_Info* fi,SgNode* child1,PrologCompTerm*) {
   // need.
   SgSourceFile* file = new SgSourceFile();
   file->set_file_info(fi);
+  // ROSE 0.9.4a fixup
+  fi->set_parent(file);
 
   SgGlobal* glob = isSgGlobal(child1);
   ROSE_ASSERT(glob);
@@ -1235,7 +1263,10 @@ PrologToRose::createFile(Sg_File_Info* fi,SgNode* child1,PrologCompTerm*) {
   declarationStatementsWithoutScope.clear();
 
   // Call all kinds of ROSE fixups
-  AstPostProcessing(file);
+  // GB: Moved to createProject because this accesses global information via
+  // the memory pools, so *all* files must have been janitorized before we
+  // run this.
+  // AstPostProcessing(file);
 
   // rebuild the symbol table
   glob->set_symbol_table(NULL);
@@ -1362,6 +1393,7 @@ PrologToRose::createInitializedName(Sg_File_Info* fi, SgNode* succ, PrologCompTe
   SgInitializer* sgini = dynamic_cast<SgInitializer*>(succ);
   SgInitializedName* siname = new SgInitializedName(sgnm,tpe,sgini,NULL);
   ROSE_ASSERT(siname != NULL);
+  ROSE_ASSERT(siname->get_parent() == NULL);
 
   siname->set_file_info(FI);
 
@@ -1501,6 +1533,10 @@ PrologToRose::createFunctionDeclaration(Sg_File_Info* fi, SgNode* par_list_u, Pr
   if (declarationMap.find(id) == declarationMap.end()) {
     declarationMap[id] = func_decl;
   }
+  /* make sure every function declaration has a first declaration */
+  if (func_decl->get_firstNondefiningDeclaration() == NULL) {
+    func_decl->set_firstNondefiningDeclaration(declarationMap[id]);
+  }
   return func_decl;
 }
 
@@ -1511,6 +1547,9 @@ PrologToRose::setFunctionDeclarationBody(SgNode* func_decl_u, SgNode* func_def_u
   SgFunctionDefinition* func_def = isSgFunctionDefinition(func_def_u);
   func_decl->set_forward(func_def == NULL);
   func_decl->set_definition(func_def);
+  func_decl->set_definingDeclaration(func_decl);
+  func_decl->get_firstNondefiningDeclaration()
+           ->set_definingDeclaration(func_decl);
 
   /*post processing*/
   if (func_def != NULL) { /*important: otherwise unparsing fails*/
@@ -1920,6 +1959,7 @@ PrologToRose::createVariableDeclaration(Sg_File_Info* fi,deque<SgNode*>* succs,P
     if (SgInitializedName* ini_name = isSgInitializedName(*it)) {
       debug("added variable");
       ini_name->set_declptr(dec);
+      ini_name->set_parent(dec);
       ini_initializer = ini_name->get_initializer();
 
       if (class_decl) {
