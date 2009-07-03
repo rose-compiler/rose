@@ -15,6 +15,10 @@
 #include "AstFilters.h"
 #include "DisplayGraphNode.h"
 
+#include "SgNodeUtil.h"
+#include <CallGraph.h>
+
+
 AstGraphWidget::AstGraphWidget(QWidget * par)
 	: 	QGraphicsView(par),
 		scene(NULL),
@@ -28,8 +32,6 @@ AstGraphWidget::AstGraphWidget(QWidget * par)
 
 	setScene(scene);
 	setDragMode(QGraphicsView::ScrollHandDrag);
-
-	setNode(0);
 }
 
 AstGraphWidget::~AstGraphWidget()
@@ -71,7 +73,7 @@ void AstGraphWidget::setNode(SgNode * node)
 	if(curSgTreeNode==NULL)
 		return;
 
-#if 1
+#if 0
 	DisplayTreeGenerator gen;
 	root = gen.generateTree(node,curFilter);
 
@@ -86,6 +88,33 @@ void AstGraphWidget::setNode(SgNode * node)
 #else
     DisplayGraph *g = DisplayGraph::generateTestGraph(scene);
     g->controlWidget()->show();
+
+
+    /*
+    sqlite3x::sqlite3_connection* gDB = open_db("Database");
+    SgProject * proj = getProjectOf(node);
+    if(!proj)
+        return;
+    CallGraphBuilder cgb (proj);
+    cgb.buildCallGraph();
+    cgb.classifyCallGraph();
+
+
+    CallGraphDotOutput output( *(cgb.getGraph()) );
+
+    CallGraphCreate *newGraph;
+
+    output.writeSubgraphToDB(*gDB );
+
+    output.solveVirtualFunctions( *gDB, "ClassHierarchy" );
+    output.solveFunctionPointers( *gDB );
+
+    newGraph = output.loadGraphFromDB( *gDB );
+
+    SgIncidenceDirectedGraph* incidenceGraph = loadCallGraphFromDB(*gDB);
+
+    DisplayGraph * g = DisplayGraph::generateCallGraph(scene,incidenceGraph);
+    g->controlWidget()->show();*/
 #endif
 }
 

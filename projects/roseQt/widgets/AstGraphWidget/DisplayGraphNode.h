@@ -43,7 +43,9 @@ class DisplayGraphNode : public DisplayNode
 
 
 namespace Ui { class LayoutControl; }
+
 class QTimer;
+class SgIncidenceDirectedGraph;
 
 class DisplayGraph : public QObject
 {
@@ -55,18 +57,23 @@ class DisplayGraph : public QObject
 
         QList<DisplayGraphNode*> & nodes()  { return n; }
 
-        void addNode (DisplayGraphNode* n );
-        void addEdge (int nodeId1, int nodeId2 );
-        void addEdge (DisplayGraphNode * n1, DisplayGraphNode * n2);
+        int addNode (DisplayGraphNode* n );
+        void addEdge (int nodeId1, int nodeId2, const QString & label="" );
+        void addEdge (DisplayGraphNode * n1, DisplayGraphNode * n2, const QString & label="");
 
         QWidget * controlWidget()  { return uiWidget; }
-
-        static DisplayGraph * generateTestGraph(QGraphicsScene * sc, QObject * par=0);
 
         /// Adds a node representing a center of gravity
         /// returns the index of the gravity node
         int  addGravityNode();
         void addInvisibleEdge(int i1, int i2);
+
+
+        static DisplayGraph * generateTestGraph(QGraphicsScene * sc,
+                                                QObject * par=0);
+        static DisplayGraph * generateCallGraph(QGraphicsScene * sc,
+                                                SgIncidenceDirectedGraph * g,
+                                                QObject * par=0);
 
     protected slots:
         void on_cmdStartTimer_clicked();

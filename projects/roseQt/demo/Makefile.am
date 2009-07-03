@@ -28,6 +28,8 @@ BUILT_SOURCES = ui_MainWindow.h
 roseQtDemo_LDADD = $(top_builddir)/projects/roseQt/widgets/libRoseQtWidgets.la \
                    $(ROSEHPCT_BUILD_ROOT)/src/librosehpct.la \
                    $(ROSE_LIBS) \
-                   $(ROSEHPCT_DEP_LIBS)
+                   $(ROSEHPCT_DEP_LIBS)\
+                   $(ROSE_SEPARATE_LIBS)\
+                   $(LIBS_WITH_RPATH)
                    
 endif

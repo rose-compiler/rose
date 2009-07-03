@@ -21,7 +21,7 @@ endif
 
 
 # This test program does not require the rest of ROSE so it can be handled locally
-bin_PROGRAMS  = runtimeCheck RuntimeSystemCppTest
+bin_PROGRAMS  = runtimeCheck
 
 noinst_PROGRAMS = test
 test_SOURCES = test.C
@@ -42,10 +42,9 @@ runtimeCheck_SOURCES = runtimeCheck.cpp \
                        RtedTransf_support.cpp RtedTransf_funccall.cpp \
  		       RtedTransf_locals.cpp RtedTransf_scopestmt.cpp
 
-RuntimeSystemCppTest_SOURCES = CppRuntimeSystem.cpp
 
 
-SUBDIRS = rted_qt tests
+SUBDIRS = rted_qt tests CppRuntimeSystem
 
 runtimeCheck_LDADD =  $(ROSE_LIBS)
 if ROSE_WITH_ROSEQT

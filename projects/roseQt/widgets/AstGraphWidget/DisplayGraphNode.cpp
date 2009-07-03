@@ -1,9 +1,13 @@
+#include "rose.h"
 #include "DisplayGraphNode.h"
 #include "DisplayEdge.h"
 
 #include <QGraphicsScene>
 
 #include <QDebug>
+
+
+using namespace std;
 
 // ---------------------- DisplayGraphNode -------------------------------
 
@@ -170,19 +174,20 @@ void DisplayGraph::on_cmdReset_clicked()
 
 
 
-void DisplayGraph::addEdge(DisplayGraphNode * n1, DisplayGraphNode * n2)
+void DisplayGraph::addEdge(DisplayGraphNode * n1, DisplayGraphNode * n2, const QString & label)
 {
     int i1 = n.indexOf(n1);
     int i2 = n.indexOf(n2);
     Q_ASSERT(i1 >=0 && i2 >=0); // nodes have to be added before edges are added
-    addEdge(i1,i2);
+    addEdge(i1,i2,label);
 
 }
 
-void DisplayGraph::addEdge ( int i1, int i2)
+void DisplayGraph::addEdge ( int i1, int i2, const QString & label)
 {
     // create visible part
     DisplayEdge * e = new DisplayEdge(n[i1],n[i2]);
+    e->setEdgeLabel(label);
     e->setPaintMode(DisplayEdge::STRAIGHT);
     DisplayGraphNode::addEdge(e);
     // ..and invisible part
@@ -195,10 +200,11 @@ void DisplayGraph::addInvisibleEdge(int i1, int i2)
     edgeInfo.insert(i2,i1);
 }
 
-void DisplayGraph::addNode(DisplayGraphNode * node)
+int DisplayGraph::addNode(DisplayGraphNode * node)
 {
     node->setScene(scene);
     n.push_back(node);
+    return n.size()-1;
 }
 
 int DisplayGraph::addGravityNode()
@@ -250,12 +256,12 @@ void DisplayGraph::springBasedLayoutIteration(qreal delta)
             qreal dist= optimalDistance + n[i]->boundingRect().width()/2;
             if( edgeInfo.contains(i,j))
             {
-                QPointF attrForce( attractiveForce(n[i]->pos(),n[j]->pos(),optimalDistance) );
+                QPointF attrForce( attractiveForce(n[i]->pos(),n[j]->pos(),dist) );
                 forces[i] += attrForce;
                 forces[j] -= attrForce;
             }
 
-            QPointF repForce(repulsiveForce(n[i]->pos(),n[j]->pos(),optimalDistance));
+            QPointF repForce(repulsiveForce(n[i]->pos(),n[j]->pos(),dist));
             forces[i] += repForce;
             forces[j] -= repForce;
         }
@@ -266,7 +272,12 @@ void DisplayGraph::springBasedLayoutIteration(qreal delta)
         if(n[i]->isMouseHold())
             continue;
 
-        n[i]->setPos(n[i]->pos() + delta * forces[i] );
+        qreal dx = forces[i].x() * delta;
+        qreal dy = forces[i].y() * delta;
+
+        dx = qBound(-optimalDistance,dx,optimalDistance);
+        dy = qBound(-optimalDistance,dy,optimalDistance);
+        n[i]->moveBy(dx,dy);
     }
 
 }
@@ -301,8 +312,37 @@ QPointF DisplayGraph::attractiveForce(const QPointF & n1, const QPointF & n2, qr
 
 
 
+DisplayGraph * DisplayGraph::generateCallGraph(QGraphicsScene * sc,
+                                               SgIncidenceDirectedGraph * cg,
+                                               QObject * par)
+{
+    DisplayGraph * g = new DisplayGraph(sc,par);
+
+    typedef rose_graph_integer_node_hash_map      NodeMap;
+    typedef rose_graph_integer_edge_hash_multimap EdgeMap;
+
+    NodeMap & nodes = cg->get_node_index_to_node_map ();
 
 
+    for( NodeMap::iterator it = nodes.begin();  it != nodes.end(); ++it )
+    {
+        QString name  ( it->second->get_name ().c_str() );
+        DisplayGraphNode * n = new DisplayGraphNode(name,sc );
+
+        g->addNode(n);
+    }
+
+    EdgeMap & edges =  cg->get_node_index_to_edge_multimap_edgesOut ();
+    for( EdgeMap::iterator it= edges.begin(); it != edges.end(); ++it )
+    {
+        SgDirectedGraphEdge * edge = isSgDirectedGraphEdge(it->second);
+        Q_ASSERT(edge);
+        QString edgeLabel( edge->get_name().c_str());
+        g->addEdge(edge->get_from()->get_index(),edge->get_to()->get_index(),edgeLabel);
+    }
+
+    return g;
+}
 
 
 DisplayGraph * DisplayGraph::generateTestGraph(QGraphicsScene * sc,QObject * par)
@@ -329,6 +369,21 @@ DisplayGraph * DisplayGraph::generateTestGraph(QGraphicsScene * sc,QObject * par
     g->addEdge(4,5);
     g->addEdge(3,5);
     g->addEdge(2,4);
+
+
+    int n1=g->addNode( new DisplayGraphNode("Node1",sc) ) ;
+    int n2=g->addNode( new DisplayGraphNode("LongNode2",sc));
+    int n3=g->addNode( new DisplayGraphNode("LongLongNode3",sc));
+
+    int gn=g->addGravityNode();
+
+    g->addEdge(n1,n2);
+    g->addEdge(0,n1);
+    g->addEdge(2,n2);
+    g->addInvisibleEdge(gn,n1);
+    g->addInvisibleEdge(gn,n2);
+    g->addInvisibleEdge(gn,n3);
+
 
     return g;
 }

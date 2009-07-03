@@ -114,7 +114,6 @@ QVariant ItemTreeModel::headerData (int section, Qt::Orientation orientation, in
 int  ItemTreeModel::columnCount (const QModelIndex & par) const
 {
     return headerCap.size();
-
 }
 
 
