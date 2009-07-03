@@ -986,7 +986,10 @@ ConstantFoldingTraversal::evaluateSynthesizedAttribute (
                //return constant 1 for operand of type char, unsigned char, signed char
                //
                // ignore expressions without any constant valued children expressions, they are not supposed to be handled here
-               else if (!isSgValueExp(expr) && !isSgVarRefExp(expr))
+               else if (!isSgValueExp(expr) && 
+                        !isSgVarRefExp(expr) &&
+                        !isSgFunctionRefExp(expr) &&
+                        !isSgFunctionCallExp(expr))
                {
                  cout<<"constant folding: unhandled expression type:"<<expr->class_name()<<endl;
                }

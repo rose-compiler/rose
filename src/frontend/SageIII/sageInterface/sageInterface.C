@@ -5528,6 +5528,8 @@ bool SageInterface::forLoopNormalization(SgForStatement* loop)
   SgBasicBlock* body = ensureBasicBlockAsBodyOfFor(loop); 
   ROSE_ASSERT(body!=NULL); 
 
+  constantFolding(loop->get_parent());
+
   return true;
 }
 
@@ -5599,6 +5601,9 @@ bool SageInterface::loopUnrolling(SgForStatement* loop, size_t unrolling_factor)
  */
 bool SageInterface::loopUnrolling(SgForStatement* target_loop, size_t unrolling_factor) 
 {
+  //Allow 0, which means no unrolling at all
+  if (unrolling_factor ==0)
+    return true;
   // normalize the target loop first
   if (!forLoopNormalization(target_loop)); 
   {// the return value is not reliable
@@ -5822,14 +5827,17 @@ std::vector<size_t> getPermutationOrder( size_t n, size_t lexicoOrder)
           c[i][j] = c[i][j] + a[i][k] * b[k][j];
         }
   }
+// finally run constant folding  
 
  */
 bool SageInterface::loopTiling(SgForStatement* loopNest, size_t targetLevel, size_t tileSize)
 {
   ROSE_ASSERT(loopNest != NULL);
   ROSE_ASSERT(targetLevel >0);
-  ROSE_ASSERT(tileSize>0);// 1 is allowed
-  if (tileSize==1)
+ // ROSE_ASSERT(tileSize>0);// 1 is allowed
+ // skip tiling if tiling size is 0 (no tiling), we allow 0 to get a reference value for the original code being tuned
+ // 1 (no need to tile)
+  if (tileSize<=1)
     return true;
   // Locate the target loop at level n
   std::vector<SgForStatement* > loops= SageInterface::querySubTree<SgForStatement>(loopNest,V_SgForStatement);
@@ -5932,12 +5940,16 @@ bool SageInterface::loopTiling(SgForStatement* loopNest, size_t targetLevel, siz
   ub2->set_need_paren(true);
   SgConditionalExp * triple_exp = buildConditionalExp(test_exp,copyExpression(ub), copyExpression(ub2));
   bin_op->set_rhs_operand(triple_exp);
+  // constant folding 
+  constantFolding(control_loop->get_scope());
   return true;
 }
 
 //! Interchange/Permutate a n-level perfectly-nested loop rooted at 'loop' using a lexicographical order number within [0,depth!)
 bool SageInterface::loopInterchange(SgForStatement* loop, size_t depth, size_t lexicoOrder)
 {
+  if (lexicoOrder == 0) // allow 0 to mean no interchange at all
+    return true;
   // parameter verification
   ROSE_ASSERT(loop != NULL);
   //must have at least two levels 
@@ -10288,5 +10300,12 @@ void SageInterface::ReductionRecognition(SgForStatement* loop, std::set< std::pa
     if (isReduction)
       results.insert(make_pair(initname,optype));
   }// end for ()
+}
+
+//! a wrapper for ConstantFolding::constantFoldingOptimization ()
+void SageInterface::constantFolding(SgNode* r)
+{
+  ROSE_ASSERT(r!=NULL);
+  ConstantFolding::constantFoldingOptimization(r,false);
 }
 
