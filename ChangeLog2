@@ -1,3 +1,117 @@
+2009-07-03 01:55  hamilton37
+
+	* [r6427] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_funcdef.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_locals.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.c,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/tests/Makefile.am: RTED Changes --
+	  refactorings in preparation for C++ implementation of runtime
+	  system.
+	  
+	  * Scopes are now named (for convenience of viewing in the
+	  debugger).
+	  * Variable tracking is now done after actual creation. This
+	  allows us to track
+	  variable addresses better.
+	  * User type decomposition is still on, but can easily be
+	  disabled, so that we
+	  can track fewer variables once the RTS understands user types.
+	  There is a
+	  hack in place to support this for the address of members of a
+	  struct that
+	  should be removed once the RTS understands user types.
+	  * Formal parameters of functions are now tracked as locals, so we
+	  can detect
+	  things like scope errors for them.
+
+2009-07-03 01:32  liao6
+
+	* [r6426]
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C:
+	  minor fix
+
+2009-07-03 01:29  bauer25
+
+	* [r6425] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/FileManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/FileManager.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/Makefile.am,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/Util.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/Util.h,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/roseQt/demo/Makefile.am,
+	  /trunk/ROSE/projects/roseQt/widgets/AstGraphWidget/AstGraphWidget.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/AstGraphWidget/DisplayGraphNode.cpp,
+	  /trunk/ROSE/projects/roseQt/widgets/AstGraphWidget/DisplayGraphNode.h,
+	  /trunk/ROSE/projects/roseQt/widgets/util/ItemTreeModel.cpp:
+	  Worked on Rted CppRuntimeSystem
+	  
+	  - FileManager written
+	  - splitted up into multiple files
+
+2009-07-03 00:34  liao6
+
+	* [r6424] /trunk/ROSE/projects/autoTuning/tests/jacobi.c,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.C,
+	  /trunk/ROSE/src/frontend/SageIII/sageInterface/sageInterface.h,
+	  /trunk/ROSE/src/midend/programTransformation/constantFolding/constantFolding.C:
+	  Allow loop translation parameter to have 0 value to indicate no
+	  transformation
+	  Apply constant folding after loop tiling and loop unrolling
+
+2009-07-02 23:21  panas2
+
+	* [r6423] /trunk/ROSE/projects/RTED/CppRuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/TypeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/TypeSystem.h: Changes to RTED
+
+2009-07-02 22:19  bauer25
+
+	* [r6422] /trunk/ROSE/projects/RTED/CppRuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem.h: Worked on
+	  RTED-CppRuntimeSystem
+
+2009-07-02 21:29  bauer25
+
+	* [r6421] /trunk/ROSE/projects/RTED/CppRuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/Makefile.am: Worked on RTED
+	  CppRuntimeSystem
+	  
+	  - implemented MemoryTracking
+	  - implemented Stack tracking
+
+2009-07-02 21:05  panas2
+
+	* [r6420] /trunk/ROSE/projects/RTED/TypeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/TypeSystem.h: Added TypeSystem
+
+2009-07-02 17:20  heller9
+
+	* [r6419] /trunk/ROSE/docs/Rose/developersAppendix.tex,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/README,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/cronjobs,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/glue.pl,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/rose-build.submit,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/rose-test.submit,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/submit.sh: modified
+	  scripts for the NMI Build and test farm
+	  
+	  adapted the documentation
+
 2009-07-02 00:47  hamilton37
 
 	* [r6407] /trunk/ROSE/projects/RTED/Makefile.am: Fixed an error
