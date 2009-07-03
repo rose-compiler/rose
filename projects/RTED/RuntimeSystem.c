@@ -1388,9 +1388,8 @@ RuntimeSystem_roseCallStack(const char* name, const char* mangl_name,
 
 
 // ***************************************** SCOPE HANDLING *************************************
-// TODO 1 djh: check for missing frees
 
-void RuntimeSystem_roseEnterScope() {
+void RuntimeSystem_roseEnterScope( const char* scope_name) {
     RuntimeSystem_expandScopeStackIfNecessary();
 
     struct RuntimeSystem* rts = rtsi();
@@ -1478,6 +1477,8 @@ void RuntimeSystem_expandScopeStackIfNecessary() {
 void RuntimeSystem_roseCreateVariable( const char* name,
 				      const char* mangled_name,
 				      const char* type,
+              unsigned long int address,
+              unsigned int size,
 				      int init,
 				      const char* fOpen,
 				      const char* filename, const char* line,

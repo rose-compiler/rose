@@ -9,6 +9,10 @@ using namespace SageInterface;
 using namespace SageBuilder;
 
 
+// TODO 2: remove or set to 0 when rts has user type information
+#define ENABLE_STRUCT_DECOMPOSITION 1
+
+
 /* -----------------------------------------------------------
  * Is the Initialized Name already known as an array element ?
  * -----------------------------------------------------------*/
@@ -156,8 +160,13 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
       SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
 							    arg_list);
       SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
-      // insert new stmt (exprStmt) before (old) stmt
-      insertStatementBefore(isSgStatement(stmt), exprStmt);
+
+      if( stmt == mainFirst) {
+        insertStatementBefore(isSgStatement(stmt), exprStmt);
+      } else {
+        // insert new stmt (exprStmt) after (old) stmt
+        insertStatementAfter(isSgStatement(stmt), exprStmt);
+      }
       string empty_comment = "";
       attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
       string comment = "RS : Create Array Variable, paramaters : (name, manglname, dimension, size dim 1, size dim 2, ismalloc, filename, linenr, linenrTransformed)";
@@ -361,12 +370,14 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
   while (!isSgAssignOp(parent) && 
 	 !isSgAssignInitializer(parent) && 
 	 !isSgProject(parent) &&
-	 !isSgFunctionCallExp(parent)) {
+	 !isSgFunctionCallExp(parent) &&
+   !isSgDotExp(parent)) {
     last=parent;
     parent=parent->get_parent();
   }
   if( isSgProject(parent) ||
-      isSgFunctionCallExp(parent))
+      isSgFunctionCallExp(parent) ||
+      isSgDotExp(parent))
     { // do nothing 
     }
   else if (isSgAssignOp(parent)) {
@@ -495,12 +506,23 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
     }
   } // ------------------------------------------------------------
   else if (isSgDotExp(expr_l)) {
+#if ENABLE_STRUCT_DECOMPOSITION
     std::pair<SgInitializedName*,SgVarRefExp*> mypair = getRightOfDot(isSgDotExp(expr_l),
 								      "Right of Dot  - line: " + expr_l->unparseToString() + " ", varRef);
     initName = mypair.first;
     varRef = mypair.second;
     if (initName)
       ROSE_ASSERT(varRef);
+#else
+    // do nothing -- do not decompose user types
+    //  e.g.
+    //
+    //    struct typ { int a; int b; } v;
+    //    v.a = 2;
+    //
+    //  do not track a as initialized -- we just say all of v is initialized
+    return;
+#endif
   }// ------------------------------------------------------------
   else if (isSgArrowExp(expr_l)) {
     std::pair<SgInitializedName*,SgVarRefExp*> mypair  = getRightOfArrow(isSgArrowExp(expr_l),
@@ -845,8 +867,20 @@ void RtedTransformation::visit_isArrayPntrArrRefExp(SgNode* n) {
 	varRef = isSgVarRefExp(arrow->get_rhs_operand());
 	ROSE_ASSERT(varRef);
       } else if (dot) {
-	varRef = isSgVarRefExp(dot->get_rhs_operand());
-	ROSE_ASSERT(varRef);
+
+#if ENABLE_STRUCT_DECOMPOSITION
+varRef = isSgVarRefExp(dot->get_rhs_operand());
+ROSE_ASSERT(varRef);
+#else
+        // do nothing -- do not decompose user types
+        //  e.g.
+        //
+        //    struct typ { int a; int b; } v;
+        //    v.a = 2;
+        //
+        //  do not track a as initialized -- we just say all of v is initialized
+        return;
+#endif
       } else if (pointerDeref) {
 	varRef = isSgVarRefExp(pointerDeref->get_operand());
 	ROSE_ASSERT(varRef);
@@ -1073,49 +1107,17 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName
       // We need to add this new statement to the beginning of main
       // get the first statement in main as stmt
       stmt = mainFirst;
-      scope=stmt->get_scope();
+      scope = stmt->get_scope();
+
+      SgExprStatement* exprStmt = buildVariableCreateCallStmt( initName, stmt);
+      // kind of hackey.  Really we should be prepending into main's body, not
+      // inserting relative its first statement.
+      insertStatementBefore(isSgStatement(stmt), exprStmt);
     }
     if (isSgBasicBlock(scope)) {
-      // build the function call : runtimeSystem-->createArray(params); ---------------------------
-      SgExprListExp* arg_list = buildExprListExp();
-      SgExpression* callName = buildString(initName->get_name().str());
-      //SgExpression* callName = buildStringVal(initName->get_name().str());
-      SgExpression* callNameExp = buildString(name);
-      SgExpression* typeName = buildString(initName->get_type()->class_name());
-      SgInitializer* initializer = initName->get_initializer();
-      SgExpression* fileOpen = buildString("no");
-      bool initb = false;
-      if (initializer) initb=true;
-      SgExpression* initBool = buildIntVal(0);
-      if (initb)
-	initBool = buildIntVal(1);
-      appendExpression(arg_list, callName);
-      appendExpression(arg_list, callNameExp);
-      appendExpression(arg_list, typeName);
-      appendExpression(arg_list, initBool);
-      appendExpression(arg_list, fileOpen);
-
-      SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
-      SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
-      appendExpression(arg_list, filename);
-      appendExpression(arg_list, linenr);
-
-      SgExpression* linenrTransformed = buildString("x%%x");
-      appendExpression(arg_list, linenrTransformed);
-
-      ROSE_ASSERT(roseCreateVariable);
-      string symbolName2 = roseCreateVariable->get_name().str();
-      //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
-      SgFunctionRefExp* memRef_r = buildFunctionRefExp(  roseCreateVariable);
-      SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
-							    arg_list);
-      SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
-      // insert new stmt (exprStmt) before (old) stmt
-      insertStatementBefore(isSgStatement(stmt), exprStmt);
-      string empty_comment = "";
-      attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
-      string comment = "RS : Create Variable, paramaters : (name, mangl_name, type, initialized, fileOpen, filename, linenr, linenrTransformed)";
-      attachComment(exprStmt,comment,PreprocessingInfo::before);
+      // insert new stmt (exprStmt) after (old) stmt
+      SgExprStatement* exprStmt = buildVariableCreateCallStmt( initName, stmt);
+      insertStatementAfter(isSgStatement(stmt), exprStmt);
     } 
     else if (isSgNamespaceDefinitionStatement(scope)) {
       cerr <<"RuntimeInstrumentation :: WARNING - Scope not handled!!! : " << name << " : " << scope->class_name() << endl;
@@ -1133,6 +1135,97 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName
   }
 
 
+}
+
+
+SgExprStatement*
+RtedTransformation::buildVariableCreateCallStmt( SgInitializedName* initName, SgStatement* stmt, bool forceinit) {
+    string name = initName->get_mangled_name().str();
+    SgScopeStatement* scope = stmt->get_scope();
+
+
+    ROSE_ASSERT( initName);
+    ROSE_ASSERT( stmt);
+    ROSE_ASSERT( scope);
+
+    // build the function call : runtimeSystem-->createArray(params); ---------------------------
+    SgExprListExp* arg_list = buildExprListExp();
+    SgExpression* callName = buildString(initName->get_name().str());
+    //SgExpression* callName = buildStringVal(initName->get_name().str());
+    SgExpression* callNameExp = buildString(name);
+    SgExpression* typeName = buildString(initName->get_type()->class_name());
+    SgInitializer* initializer = initName->get_initializer();
+    SgExpression* fileOpen = buildString("no");
+    bool initb = false;
+    if (initializer) initb=true;
+    SgExpression* initBool = buildIntVal(0);
+    if (initb || forceinit)
+      initBool = buildIntVal(1);
+
+    SgExpression* var_ref = buildVarRefExp( initName, scope);
+    // TODO 2: Remove this if statement once the RTS handles user types
+    // Note: This if statement is a hack put in place to pass the array out of
+    // bounds tests
+    if( isSgVariableDeclaration( stmt)) {
+      SgInitializedName* first_var_name 
+        = isSgVariableDeclaration( stmt)->get_variables()[0];
+
+      if(
+          isSgClassDeclaration(
+              isSgVariableDeclaration(stmt)->get_baseTypeDefiningDeclaration())
+            && first_var_name != initName
+      ) {
+        var_ref = new SgDotExp(
+          // file info
+          initName->get_file_info(),
+          // lhs
+          buildVarRefExp( first_var_name, scope),
+          // rhs
+          var_ref,
+          // type
+          initName->get_type()
+        );
+      }
+    }
+
+
+    appendExpression(arg_list, callName);
+    appendExpression(arg_list, callNameExp);
+    appendExpression(arg_list, typeName);
+    appendExpression(
+      arg_list, 
+      buildCastExp(
+        buildAddressOfOp( var_ref),
+        buildUnsignedLongLongType()
+      )
+    ); 
+    appendExpression(
+      arg_list, 
+      buildSizeOfOp( initName->get_type())
+    ); 
+    appendExpression(arg_list, initBool);
+    appendExpression(arg_list, fileOpen);
+
+    SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
+    SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));
+    appendExpression(arg_list, filename);
+    appendExpression(arg_list, linenr);
+
+    SgExpression* linenrTransformed = buildString("x%%x");
+    appendExpression(arg_list, linenrTransformed);
+
+    ROSE_ASSERT(roseCreateVariable);
+    string symbolName2 = roseCreateVariable->get_name().str();
+    SgFunctionRefExp* memRef_r = buildFunctionRefExp(  roseCreateVariable);
+    SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
+                arg_list);
+    SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
+    string empty_comment = "";
+    attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
+    string comment = "RS : Create Variable, paramaters : (name, mangl_name, type, initialized, fileOpen, filename, linenr, linenrTransformed)";
+    attachComment(exprStmt,comment,PreprocessingInfo::before);
+
+    return exprStmt;
 }
 
 
@@ -1229,7 +1322,6 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
 	    isDoNotHandleType=true;
 
 	  if (isSgPointerType(type)) {
-	    //	  if (isSgPointerDerefExp(fillExp)) { //varRefE->get_parent())) {
 	    bool pointer=true;
 	    if (isSgPointerType(basetype)) {
 	      // pointer to pointer
@@ -1319,10 +1411,9 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
 	cerr << "Variable Init: Condition unknown :" << type->class_name() << endl;
 	exit(1);
       }
-
       SgIntVal* ismallocV = buildIntVal(0);
       if (ismalloc)
-	ismallocV = buildIntVal(1);
+        ismallocV = buildIntVal(1);
       appendExpression(arg_list, ismallocV);
 
       SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
@@ -1336,17 +1427,18 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
 
       ROSE_ASSERT(roseInitVariable);
       string symbolName2 = roseInitVariable->get_name().str();
-      //cerr << " >>>>>>>> Symbol Member: " << symbolName2 << endl;
       SgFunctionRefExp* memRef_r = buildFunctionRefExp(  roseInitVariable);
       SgFunctionCallExp* funcCallExp = buildFunctionCallExp(memRef_r,
-							    arg_list);
+                  arg_list);
+
       SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
-      // insert new stmt (exprStmt) before (old) stmt
-      insertStatementAfter(isSgStatement(stmt), exprStmt);
       string empty_comment = "";
       attachComment(exprStmt,empty_comment,PreprocessingInfo::before);
       string comment = "RS : Init Variable, paramaters : (name, mangl_name, tpye, basetype, address, value, ismalloc, filename, line, linenrTransformed, error line)";
       attachComment(exprStmt,comment,PreprocessingInfo::before);
+
+      // insert new stmt (exprStmt) before (old) stmt
+      insertStatementAfter(isSgStatement(stmt), exprStmt);
     } // basic block 
     else if (isSgNamespaceDefinitionStatement(scope)) {
       cerr <<" ------------> RuntimeInstrumentation :: WARNING - Scope not handled!!! : " << name << " : " << scope->class_name() << "\n\n\n\n"<<endl;

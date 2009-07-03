@@ -35,6 +35,8 @@ class RtedTransformation : public AstSimpleProcessing {
   // handle call to functioncall
   std::vector<RtedArguments*> function_call;
 
+  std::vector<SgFunctionDefinition*> function_definitions;
+
   // what statements we need to bracket with enter/exit scope calls
   std::vector<SgStatement*> scopes;
 
@@ -114,6 +116,7 @@ class RtedTransformation : public AstSimpleProcessing {
   void insertStackCall(RtedArguments* args);
   void insertStackCall(RtedArguments* args, bool before);
   void visit_isFunctionCall(SgNode* n);
+  void visit_isFunctionDefinition(SgNode* n);
   bool isStringModifyingFunctionCall(std::string name);
   int getDimensionForFuncCall(std::string name);
   bool isFunctionCallOnIgnoreList(std::string name);
@@ -121,6 +124,7 @@ class RtedTransformation : public AstSimpleProcessing {
   SgExpression* getVariableLeftOfAssignmentFromChildOnRight(SgNode* n);
 
   // simple scope handling
+  std::string scope_name( SgStatement* n);
   void bracketWithScopeEnterExit( SgStatement* n);
 
 
@@ -131,6 +135,8 @@ class RtedTransformation : public AstSimpleProcessing {
   void insertInitializeVariable(SgInitializedName* initName,
 				SgVarRefExp* varRefE, bool ismalloc 
 				);
+  SgExprStatement* buildVariableCreateCallStmt(SgInitializedName* name, SgStatement* stmt, bool forceinit=false);
+  void insertVariableCreateInitForParams( SgFunctionDefinition* n);
   void insertAccessVariable(SgVarRefExp* varRefE);
   void visit_isSgVarRefExp(SgVarRefExp* n);
 

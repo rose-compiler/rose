@@ -1,5 +1,6 @@
 #include <rose.h>
 #include <string>
+#include <boost/foreach.hpp>
 #include "RtedSymbols.h"
 #include "DataStructures.h"
 #include "RtedTransformation.h"
@@ -28,6 +29,8 @@ RtedTransformation::parse(int argc, char** argv) {
 void RtedTransformation::transform(SgProject* project) {
   cout << "Running Transformation..." << endl;
   globalScope = getFirstGlobalScope(isSgProject(project));
+
+  ROSE_ASSERT( project);
 
   // traverse the AST and find locations that need to be transformed
   symbols->traverse(project, preorder);
@@ -61,52 +64,10 @@ void RtedTransformation::transform(SgProject* project) {
 
   // ---------------------------------------
   // Perform all transformations...
+  //
+  // Do insertions LIFO, so, e.g. if we want to add stmt1; stmt2; after stmt0
+  // add stmt2 first, then add stmt1
   // ---------------------------------------
-
-  cerr << "\n Number of Elements in variable_declarations  : "
-       << variable_declarations.size() << endl;
-  std::vector<SgInitializedName*>::const_iterator it1 =
-    variable_declarations.begin();
-  for (; it1 != variable_declarations.end(); it1++) {
-    SgInitializedName* node = *it1;
-    insertVariableCreateCall(node);
-  }
-
-  cerr << "\n Number of Elements in variable_access  : "
-       << variable_access.size() << endl;
-  std::vector<SgVarRefExp*>::const_iterator itAccess =
-    variable_access.begin();
-  for (; itAccess != variable_access.end(); itAccess++) {
-    SgVarRefExp* node = *itAccess;
-    insertAccessVariable(node);
-  }
-
-  cerr << "\n Number of Elements in create_array_define_varRef_multiArray  : "
-       << create_array_define_varRef_multiArray.size() << endl;
-  std::map<SgVarRefExp*, RTedArray*>::const_iterator itm =
-    create_array_define_varRef_multiArray.begin();
-  for (; itm != create_array_define_varRef_multiArray.end(); itm++) {
-    SgVarRefExp* array_node = itm->first;
-    RTedArray* array_size = itm->second;
-    //cerr << ">>> INserting array create (VARREF): "
-    //		<< array_node->unparseToString() << "  size : "
-    //		<< array_size->unparseToString() << endl;
-    insertArrayCreateCall(array_node, array_size);
-  }
-
-  cerr
-    << "\n Number of Elements in create_array_define_varRef_multiArray_stack  : "
-    << create_array_define_varRef_multiArray_stack.size() << endl;
-  std::map<SgInitializedName*, RTedArray*>::const_iterator itv =
-    create_array_define_varRef_multiArray_stack.begin();
-  for (; itv != create_array_define_varRef_multiArray_stack.end(); itv++) {
-    SgInitializedName* array_node = itv->first;
-    RTedArray* array_size = itv->second;
-    //cerr << ">>> INserting array create (VARREF): "
-    //		<< array_node->unparseToString() << "  size : "
-    //		<< array_size->unparseToString() << endl;
-    insertArrayCreateCall(array_node, array_size);
-  }
 
 
   // bracket function calls and scope statements with calls to enterScope and
@@ -149,6 +110,51 @@ void RtedTransformation::transform(SgProject* project) {
     insertInitializeVariable(init, varref,ismalloc);
   }
 
+  cerr << "\n Number of Elements in create_array_define_varRef_multiArray  : "
+       << create_array_define_varRef_multiArray.size() << endl;
+  std::map<SgVarRefExp*, RTedArray*>::const_iterator itm =
+    create_array_define_varRef_multiArray.begin();
+  for (; itm != create_array_define_varRef_multiArray.end(); itm++) {
+    SgVarRefExp* array_node = itm->first;
+    RTedArray* array_size = itm->second;
+    //cerr << ">>> INserting array create (VARREF): "
+    //		<< array_node->unparseToString() << "  size : "
+    //		<< array_size->unparseToString() << endl;
+    insertArrayCreateCall(array_node, array_size);
+  }
+
+  cerr << "\n Number of Elements in variable_declarations  : "
+       << variable_declarations.size() << endl;
+  std::vector<SgInitializedName*>::const_iterator it1 =
+    variable_declarations.begin();
+  for (; it1 != variable_declarations.end(); it1++) {
+    SgInitializedName* node = *it1;
+    insertVariableCreateCall(node);
+  }
+
+  cerr << "\n Number of Elements in variable_access  : "
+       << variable_access.size() << endl;
+  std::vector<SgVarRefExp*>::const_iterator itAccess =
+    variable_access.begin();
+  for (; itAccess != variable_access.end(); itAccess++) {
+    SgVarRefExp* node = *itAccess;
+    insertAccessVariable(node);
+  }
+
+  cerr
+    << "\n Number of Elements in create_array_define_varRef_multiArray_stack  : "
+    << create_array_define_varRef_multiArray_stack.size() << endl;
+  std::map<SgInitializedName*, RTedArray*>::const_iterator itv =
+    create_array_define_varRef_multiArray_stack.begin();
+  for (; itv != create_array_define_varRef_multiArray_stack.end(); itv++) {
+    SgInitializedName* array_node = itv->first;
+    RTedArray* array_size = itv->second;
+    //cerr << ">>> INserting array create (VARREF): "
+    //		<< array_node->unparseToString() << "  size : "
+    //		<< array_size->unparseToString() << endl;
+    insertArrayCreateCall(array_node, array_size);
+  }
+
   cerr << "\n Number of Elements in create_array_access_call  : "
        << create_array_access_call.size() << endl;
   std::map<SgVarRefExp*, RTedArray*>::const_iterator ita =
@@ -157,6 +163,13 @@ void RtedTransformation::transform(SgProject* project) {
     SgVarRefExp* array_node = ita->first;
     RTedArray* array_size = ita->second;
     insertArrayAccessCall(array_node, array_size);
+  }
+
+  cerr
+    << "\n Number of Elements in function_definitions  : "
+    << function_definitions.size() << endl;
+  BOOST_FOREACH( SgFunctionDefinition* fndef, function_definitions) {
+    insertVariableCreateInitForParams( fndef);
   }
 
   cerr << "\n Number of Elements in funccall_call  : "
@@ -193,19 +206,22 @@ void RtedTransformation::visit(SgNode* n) {
 
   // find MAIN ******************************************
   if (isSgFunctionDefinition(n)) {
-    visit_checkIsMain(n);
+    visit_isFunctionDefinition(n);
   }
   // find MAIN ******************************************
 
 
   // ******************** DETECT functions in input program  *********************************************************************
 
-  // *********************** DETECT ALL variable creations ***************
+  // *********************** DETECT variable creations ***************
   if (isSgVariableDeclaration(n)) {
-    visit_isSgVariableDeclaration(n);
+
+    // don't track members of user types (structs, classes)
+    if( !isSgClassDefinition( n->get_parent()))
+      visit_isSgVariableDeclaration(n);
   }
 
-  // *********************** DETECT ALL variable creations ***************
+  // *********************** DETECT variable creations ***************
 
 
 
@@ -263,7 +279,6 @@ void RtedTransformation::visit(SgNode* n) {
     visit_isFunctionCall(n);
   }
   // *********************** DETECT ALL function calls ***************
-
 
   // ******************** DETECT functions in input program  *********************************************************************
 

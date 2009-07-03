@@ -14,13 +14,22 @@ RtedTransformation::bracketWithScopeEnterExit( SgStatement* stmt) {
     ROSE_ASSERT( stmt);
     ROSE_ASSERT( roseEnterScope);
 
-    // enterScope();
+    SgExprListExp* enter_scope_args = buildExprListExp();
+    appendExpression(
+      enter_scope_args,
+      buildString(
+        scope_name( stmt) + 
+        ":" 
+        + RoseBin_support::ToString( stmt->get_file_info()->get_line())
+      )
+    );
+    // enterScope( "foo:23");
     insertStatementBefore( 
       stmt,
       buildExprStatement(
         buildFunctionCallExp(
           buildFunctionRefExp( roseEnterScope),
-          buildExprListExp()
+          enter_scope_args
         )
       )
     );
@@ -60,4 +69,33 @@ RtedTransformation::bracketWithScopeEnterExit( SgStatement* stmt) {
         "RS : exitScope, parameters : ( filename, line, error line)",
         PreprocessingInfo::before
     );
+}
+
+
+std::string
+RtedTransformation::scope_name( SgStatement* stmt) {
+
+    if( isSgWhileStmt( stmt)) {
+      return "while";
+    } else if( isSgIfStmt( stmt)) {
+      return "if";
+    } else if( isSgForStatement( stmt)) {
+      return "for";
+    } else if( isSgDoWhileStmt( stmt)) {
+      return "do";
+    } else {
+      vector<SgNode*> calls 
+        = NodeQuery::querySubTree( stmt, V_SgFunctionCallExp);
+    
+      if( calls.size() > 0) {
+        SgFunctionCallExp* fncall = isSgFunctionCallExp( calls[0]);
+        ROSE_ASSERT( fncall);
+        return fncall
+                ->getAssociatedFunctionDeclaration()
+                ->get_name().getString();
+      } else {
+        cerr << "Unable to determine scope name." << endl;
+        return "unknown";
+      }
+    }
 }

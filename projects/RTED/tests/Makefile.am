@@ -30,18 +30,18 @@ TEST_SRCS = $(shell cd $(srcdir) && find . -mindepth 2 -type f ! -ipath "*/.svn/
 XFAIL_SRCS = $(shell cd $(srcdir) && find . -mindepth 2 -type f ! -path "*/.svn/*" -ipath "./*/no*/*")
 
 
-TESTS = $(TEST_SRCS:%.c=%.c.bin)
-XFAIL_TESTS =  $(XFAIL_SRCS:%.c=%.c.bin)
+TESTS = $(TEST_SRCS:%.c=%.translated.c.bin)
+XFAIL_TESTS =  $(XFAIL_SRCS:%.c=%.translated.c.bin)
 
 
 RUNTIMECHECK=$(builddir)/../runtimeCheck
 
 
 $(LOCAL_SUBTREE):
-	mkdir $@
+	mkdir -p $@ || mkdir $@
 
 .PRECIOUS:	%.translated.c
-%.translated.c:	 %.c
+%.translated.c:	 %.c $(LOCAL_SUBTREE)
 	src=$(word 1, $?); \
 	if [ "$$src" != "" ]; then \
 		sed '1i\#include "RuntimeSystem.h"' $$src > $@ ; \
@@ -51,7 +51,7 @@ $(LOCAL_SUBTREE):
 	mv rose_$(@F) $(@F)
 
 
-%.c.bin:	%.translated.c
+%.translated.c.bin:	%.translated.c
 	$(CXX) -g -o $@ $< $(srcdir)/../RuntimeSystem.c $(INCLUDES);
 
 
@@ -63,8 +63,8 @@ $(LOCAL_SUBTREE):
 check:	$(LOCAL_SUBTREE) check-am
 
 check-am:
-	echo temporarily disabled check-am
+	@echo temporarily disabled check-am
 
 clean-local:
-	rm -fr $(TEST_SUBTREE)
+	rm -fr $(LOCAL_SUBTREE)
 

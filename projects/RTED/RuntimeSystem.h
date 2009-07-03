@@ -149,7 +149,7 @@ int RuntimeSystem_isFileIOFunctionCall(const char* name);
 // handle scopes (so we can detect when locals go out of scope, free up the
 // memory and possibly complain if the local was the last var pointing to some
 // memory)
-void RuntimeSystem_roseEnterScope();
+void RuntimeSystem_roseEnterScope( const char* scope_name);
 void RuntimeSystem_roseExitScope( const char* filename, const char* line, const char* stmtStr);
 void RuntimeSystem_expandScopeStackIfNecessary();
 
@@ -158,8 +158,11 @@ void RuntimeSystem_expandScopeStackIfNecessary();
 void RuntimeSystem_callExit(const char* filename, const char* line, const char* reason, const char* stmtStr);
 
 // functions dealing with variables
-void RuntimeSystem_roseCreateVariable(const char* name, const char* mangled_name, const char* type, int init,
-				      const char* fOpen, const char* filename, const char* line, const char* lineTransformed);
+void RuntimeSystem_roseCreateVariable(const char* name, const char*
+    mangled_name, const char* type, unsigned long int address, unsigned int
+    size, int init, const char* fOpen, const char* filename, const char* line,
+    const char*
+    lineTransformed);
 void RuntimeSystem_increaseSizeRuntimeVariables();
 struct RuntimeVariablesType* RuntimeSystem_findVariables(const char* name);
 int RuntimeSystem_findVariablesPos(const char* mangled_name, int* isarray);
