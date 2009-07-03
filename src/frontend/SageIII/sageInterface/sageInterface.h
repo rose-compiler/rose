@@ -758,7 +758,7 @@ bool normalizeForLoopInitDeclaration(SgForStatement* loop);
 //!           i-- is normalized to i+=-1
 bool forLoopNormalization(SgForStatement* loop);
 
-//! Internal Test Only! Unroll an innermost loop with a specified unrolling factor. A wrapper on top of Qing's loop processor's loopUnroll class. This transformation cannot pass AstTests::runAllTests().
+//!  Unroll a target loop with a specified unrolling factor. It handles steps larger than 1 and adds a fringe loop if the iteration count is not evenly divisible by the unrolling factor.
 bool loopUnrolling(SgForStatement* loop, size_t unrolling_factor);
 
 //! Interchange/permutate a n-level perfectly-nested loop rooted at 'loop' using a lexicographical order number within (0,depth!). 
@@ -1178,6 +1178,11 @@ void getLiveVariables(LivenessAnalysis * liv, SgForStatement* loop, std::set<SgI
 
 //!Recognize and collect reduction variables and operations within a C/C++ loop, following OpenMP 3.0 specification for allowed reduction variable types and operation types.
 void ReductionRecognition(SgForStatement* loop, std::set< std::pair <SgInitializedName*, VariantT> > & results);
+
+//! Constant folding an AST subtree rooted at 'r' (replacing its children with their constant values, if applicable)
+/*! It is a wrapper function for ConstantFolding::constantFoldingOptimization(). Note that only r's children are replaced with their corresponding constant values, not the input SgNode r itself. You have to call this upon an expression's parent node if you want to fold the expression.
+ * */
+void constantFolding(SgNode* r);
 
 //!Instrument(Add a statement, often a function call) into a function right before the return points, handle multiple return statements and return expressions with side effects. Return the number of statements inserted. 
 /*! Useful when adding a runtime library call to terminate the runtime system right before the end of a program, especially for OpenMP and UPC runtime systems. Return with complex expressions with side effects are rewritten using an additional assignment statement. 

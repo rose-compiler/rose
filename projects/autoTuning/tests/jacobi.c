@@ -121,7 +121,7 @@ void initialize( )
   dx = 2.0 / (n-1);
   dy = 2.0 / (m-1);
 
-  /* Initilize initial condition and RHS */
+  /* Initialize initial condition and RHS */
 
   for (i=0;i<n;i++)
     for (j=0;j<m;j++)      
