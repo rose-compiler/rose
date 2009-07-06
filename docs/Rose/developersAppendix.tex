@@ -1391,7 +1391,7 @@ To add a test which can be run on the Compile Farm you need to add a options
 file to the svn repository. This options file sets some bash variables
 which control the conditions and name the test is run. The right place to put
 those files is <rose\_dir>/scripts/nmiBuildAndTestFarm/build\_configs/<platform>/. \\
-Overview of the options:
+verview of the options:
 \begin{itemize}
  \item {\tt TITLE} - The title of the test
  \item {\tt DESCRIPTION} - Short text to describe the test
@@ -1423,14 +1423,14 @@ CONFIGURE_OPTIONS="--with-boost=/prereq/boost-1.35.0 --with-CXX_WARNINGS=-Wall -
  \item See whats already there: 
  \begin{itemize}
   \item {\tt ls build\_configs}
-  \item {\tt ls build\_configs/<platform>
+  \item {\tt ls build\_configs/<platform>}
   \item {\tt \$\{EDITOR\} build\_configs/<platform>/<options\_file>}
  \end{itemize}
  \item After you have chosen the test you want to run execute:
        {\tt ./submit.sh build\_configs/<platform>/<options\_file>}
        to submit test.
  \item Point your browser to: 
-       \url{http://nmi-web.cs.wisc.edu/nmi/index.php?page=results%2Foverview&opt_project=rose+compiler}
+       \url{http://nmi-web.cs.wisc.edu/nmi/index.php?page=results\%2Foverview\&opt\_project=rose+compiler}
        To open the results overview page. Your submitted test should be shown as "running"
 \end{enumerate}
 
