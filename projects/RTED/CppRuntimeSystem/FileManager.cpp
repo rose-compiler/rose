@@ -48,12 +48,13 @@ ostream& operator<< ( ostream &os, const FileInfo & m)
     m.print(os);
     return os;
 }
+
 // -----------------------    FileManager  --------------------------------------
 
 
 void FileManager::openFile(FileHandle handle,
                            const std::string & fileName,
-                           OpenMode mode,
+                           int mode,
                            const SourcePosition & pos)
 {
     RuntimeSystem * rs = RuntimeSystem::instance();
@@ -61,8 +62,8 @@ void FileManager::openFile(FileHandle handle,
     FileInfo compareObj (handle);
     if( openFiles.find(compareObj) != openFiles.end() )
     {
-        rs->violationHandler(RuntimeSystem::DOUBLE_FILE_OPEN,
-                             "Tried to register the same filepointer twice");
+        rs->violationHandler(RuntimeViolation::DOUBLE_FILE_OPEN,
+                             "Tried to register the same file-handle twice");
         return;
     }
 
@@ -76,10 +77,10 @@ void FileManager::closeFile(FileHandle handle)
     FileInfo compareObj(handle);
 
     set<FileInfo>::iterator iter = openFiles.find(compareObj);
-    if( iter != openFiles.end() )
+    if( iter == openFiles.end() )
     {
-        rs->violationHandler(RuntimeSystem::INVALID_FILE_ACCESS,
-                             "Tried to register the same file-handle twice");
+        rs->violationHandler(RuntimeViolation::INVALID_FILE_CLOSE,
+                             "Tried to close a non opened File-Handle");
         return;
     }
     openFiles.erase(iter);
@@ -94,7 +95,7 @@ void FileManager::checkFileAccess(FileHandle handle, bool read)
     FileInfo compareObj(handle);
     if( openFiles.find(compareObj) != openFiles.end() )
     {
-        rs->violationHandler(RuntimeSystem::INVALID_FILE_ACCESS,
+        rs->violationHandler(RuntimeViolation::INVALID_FILE_ACCESS,
                              "Tried to access invalid file");
         return;
     }
@@ -110,9 +111,11 @@ void FileManager::checkForOpenFiles()
     {
         stringstream desc;
         print(desc);
-        rs->violationHandler(RuntimeSystem::UNCLOSED_FILES,desc.str());
+        rs->violationHandler(RuntimeViolation::UNCLOSED_FILES,desc.str());
     }
 }
+
+
 
 void FileManager::print(ostream & os) const
 {

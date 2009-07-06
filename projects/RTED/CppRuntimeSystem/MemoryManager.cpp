@@ -192,7 +192,7 @@ void MemoryManager::allocateMemory(MemoryType * alloc)
     RuntimeSystem * rs = RuntimeSystem::instance();
     if(alloc->getSize()==0 )
     {
-        rs->violationHandler(RuntimeSystem::EMPTY_ALLOCATION,"Tried to call malloc/new with size 0\n");
+        rs->violationHandler(RuntimeViolation::EMPTY_ALLOCATION,"Tried to call malloc/new with size 0\n");
         return;
     }
 
@@ -201,7 +201,7 @@ void MemoryManager::allocateMemory(MemoryType * alloc)
     if(m)
     {
         // the start address of new chunk lies in already allocated area
-        rs->violationHandler(RuntimeSystem::DOUBLE_ALLOCATION);
+        rs->violationHandler(RuntimeViolation::DOUBLE_ALLOCATION);
         return;
     }
 
@@ -222,7 +222,7 @@ void MemoryManager::freeMemory(addr_type addr)
         desc << "Free was called with adress " << addr << endl;
         desc << "Allocated Memory Regions:" << endl;
         print(desc);
-        rs->violationHandler(RuntimeSystem::INVALID_FREE,desc.str());
+        rs->violationHandler(RuntimeViolation::INVALID_FREE,desc.str());
         return;
     }
 
@@ -234,7 +234,7 @@ void MemoryManager::freeMemory(addr_type addr)
              << addr - m->getAddress() <<")" << endl;
         desc << "Allocated Block: " << *m << endl;
 
-        rs->violationHandler(RuntimeSystem::INVALID_FREE, desc.str());
+        rs->violationHandler(RuntimeViolation::INVALID_FREE, desc.str());
         return;
     }
 
@@ -259,7 +259,7 @@ void MemoryManager::checkRead(addr_type addr, size_t size)
         if(possMatch)
             desc << "Did you try to read this region:" << endl << *possMatch << endl;
 
-        rs->violationHandler(RuntimeSystem::INVALID_READ,desc.str());
+        rs->violationHandler(RuntimeViolation::INVALID_READ,desc.str());
         return;
     }
 
@@ -270,7 +270,7 @@ void MemoryManager::checkRead(addr_type addr, size_t size)
     {
         stringstream desc;
         desc << "Trying to read from uninitialized Memory Region  (Address " << addr <<")" << endl;
-        rs->violationHandler(RuntimeSystem::INVALID_READ,desc.str());
+        rs->violationHandler(RuntimeViolation::INVALID_READ,desc.str());
     }
 }
 
@@ -288,7 +288,7 @@ void MemoryManager::checkWrite(addr_type addr, size_t size)
         if(possMatch)
             desc << "Did you try to write to this region:" << endl << *possMatch << endl;
 
-        rs->violationHandler(RuntimeSystem::INVALID_WRITE,desc.str());
+        rs->violationHandler(RuntimeViolation::INVALID_WRITE,desc.str());
         return;
     }
 
@@ -301,9 +301,12 @@ void MemoryManager::checkWrite(addr_type addr, size_t size)
 void MemoryManager::checkForNonFreedMem() const
 {
     stringstream desc;
-    desc << "Program terminated and the following allocations were not freed:" << endl;
-    print(desc);
-    RuntimeSystem::instance()->violationHandler(RuntimeSystem::MEMORY_LEAK,desc.str());
+    if(mem.size() !=0)
+    {
+        desc << "Program terminated and the following allocations were not freed:" << endl;
+        print(desc);
+        RuntimeSystem::instance()->violationHandler(RuntimeViolation::MEMORY_LEAK,desc.str());
+    }
 }
 
 

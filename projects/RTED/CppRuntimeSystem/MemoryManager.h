@@ -66,6 +66,7 @@ class MemoryType
             return static_cast<T*>(charAddress);
         }
 
+
     private:
         addr_type         startAddress; ///< address where memory chunk starts
         size_t            size;         ///< Size of allocation
@@ -110,6 +111,10 @@ class MemoryManager
         MemoryType * getMemoryType(addr_type addr);
 
         void checkForNonFreedMem() const;
+
+        /// Deletes all collected data
+        /// normally only needed for debug purposes
+        void clearStatus() { mem.clear(); }
 
     private:
 

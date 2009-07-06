@@ -14,51 +14,15 @@
 #include "Util.h"
 #include "FileManager.h"
 #include "MemoryManager.h"
-
+#include "VariablesType.h"
 
 /**
  * TODO
  *  - test FileManager
  *  - write small doxyfile
  *  - handle allocation/vars of stack-arrays (avoid double allocation)
- *  - create extra sourcefiles for MemoryManager
  *  - extend FileManager, checks if file exist, read/write access etc
  */
-
-
-class VariablesType
-{
-    public:
-        VariablesType(const std::string & _name,
-                      const std::string & _mangledName,
-                      const std::string & _typeStr,
-                      addr_type _address);
-
-        ~VariablesType();
-
-        const std::string & getName()        const  { return name;}
-        const std::string & getMangledName() const  { return mangledName; }
-        addr_type           getAddress()     const  { return address; }
-
-        /// returns the allocation information for this var
-        MemoryType *        getAllocation()  const;
-
-        void print(std::ostream & os) const;
-
-    private:
-        std::string name; ///< stack variable name
-        std::string mangledName; ///< mangled name
-
-        //FIXME do not store string here but type-enum
-        std::string type; ///< string with class name of rose-type
-
-        addr_type address; ///< address of this variable in memory
-};
-
-
-std::ostream& operator<< (std::ostream &os, const VariablesType & m);
-
-
 
 
 
@@ -76,22 +40,6 @@ class RuntimeSystem
 {
     public:
 
-
-        enum Violation
-        {
-                DOUBLE_ALLOCATION,   // try to reserve memory with lies in already allocated mem
-                INVALID_FREE,        // called free on non allocated address
-                MEMORY_LEAK,         // some allocated memory was not freed on program exit
-                EMPTY_ALLOCATION,    // trying to get a memory area of size 0
-                INVALID_READ,        // trying to read non-allocated or non-initialized mem region
-                INVALID_WRITE,       // trying to write to non-allocated mem region
-                DOUBLE_FILE_OPEN,    // trying to register the same file-poitner twice
-                INVALID_FILE_ACCESS, // trying to access file which is not opened
-                UNCLOSED_FILES       // some opened files where not closed before program exit
-        };
-
-
-
         static RuntimeSystem* instance();
         ~RuntimeSystem() {}
 
@@ -99,7 +47,9 @@ class RuntimeSystem
         /// Gets called when a violation is detected
         /// this function decides what to do (message printing, aborting program)
         /// this function does not necessarily stop the program, but may just print a warning
-        void violationHandler(Violation v, const std::string & description ="");
+        void violationHandler(RuntimeViolation::Type v, const std::string & desc ="") throw (RuntimeViolation);
+        void violationHandler(RuntimeViolation & vio)   throw (RuntimeViolation);
+
 
         /// call this function to inform the runtimesystem what the current position in sourcecode is
         /// this information is used for printing errors/warnings
@@ -171,11 +121,9 @@ class RuntimeSystem
         /// used for user-notification where an error occured
         void registerCurrentSourcePosition(const SourcePosition & pos);
 
-        /// Call this function if a file is opened
-	    // tps: should this not be part of the variable?
-        // mb : no, memory/variable allocation and files are different resources
-        //      instrumented function may just call one function out of convenience, but here its splitted up
-        void registerFileOpen (FILE * file, const std::string & openedFile);
+        //// Call this function if a file is opened
+        /// @param openMode combination of FileOpenMode flags
+        void registerFileOpen (FILE * file, const std::string & openedFile, int openMode);
         void registerFileClose(FILE * file);
 
 
@@ -194,10 +142,14 @@ class RuntimeSystem
         void doProgramExitChecks();
 
         /// Returns true if file is currently open
-        void checkFileAccess(FILE * f);
+        /// @param read true if read access, false for write access
+        void checkFileAccess(FILE * f, bool read);
 
 
-        /// TODO Checks for C-StdLib functions
+
+        /// Deletes all collected data
+        /// normally only needed for debug purposes
+        void clearStatus();
 
 
         // --------------------------------  State Output Functions ---------------------------------
@@ -210,6 +162,9 @@ class RuntimeSystem
         void setOutputFile(const std::string & file);
 
 
+        void log(const std::string & msg)  { (*defaultOutStr) << msg; }
+        std::ostream & log()               { return (*defaultOutStr); }
+
         // Printing of RuntimeSystem status
         void printOpenFiles(std::ostream & os) const  { fileManager.print(os); }
         void printMemStatus(std::ostream & os) const  { memManager.print(os);  }
@@ -219,6 +174,7 @@ class RuntimeSystem
         void printOpenFiles() const  { printOpenFiles(*defaultOutStr); }
         void printMemStatus() const  { printMemStatus(*defaultOutStr); }
         void printStack    () const  { printStack    (*defaultOutStr); }
+
 
     private:
 
