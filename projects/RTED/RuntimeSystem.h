@@ -126,11 +126,14 @@ int checkMemoryLeakIssues(int pos, int address, const char* filename, const char
 int RuntimeSystem_findArrayName(const char* mangled_name);
 //void RuntimeSystem_increaseSizeArray();                                               
 void RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dimension,// int stack, 
-				   long int sizeA, long int sizeB, int ismalloc, const char* filename, 
+				   const char* type, const char* basetype,
+				   unsigned long int address, long int size, long int sizeA, long int sizeB, int ismalloc, const char* filename, 
 				   const char* line, const char* lineTransformed);
 
 void RuntimeSystem_roseArrayAccess(const char* name, int posA, int posB, const char* filename, 
+				   unsigned long int address, long int size, 
 				   const char* line, const char* lineTransformed, const char* stmtStr);
+
 
 // function calls 
 const char* RuntimeSystem_findVariablesOnStack(const char* name);
@@ -159,10 +162,11 @@ void RuntimeSystem_callExit(const char* filename, const char* line, const char* 
 
 // functions dealing with variables
 void RuntimeSystem_roseCreateVariable(const char* name, const char*
-    mangled_name, const char* type, unsigned long int address, unsigned int
-    size, int init, const char* fOpen, const char* filename, const char* line,
-    const char*
-    lineTransformed);
+				      mangled_name, const char* type, const char* basetype, 
+				      unsigned long int address, unsigned int
+				      size, int init, const char* fOpen, const char* filename, const char* line,
+				      const char*
+				      lineTransformed);
 void RuntimeSystem_increaseSizeRuntimeVariables();
 struct RuntimeVariablesType* RuntimeSystem_findVariables(const char* name);
 int RuntimeSystem_findVariablesPos(const char* mangled_name, int* isarray);
@@ -171,13 +175,15 @@ void RuntimeSystem_roseInitVariable(const char* name,
 				    const char* typeOfVar2,
 				    const char* baseType2,
 				    unsigned long long address,
-				    unsigned long long value,
+				    unsigned int size,
 				    int ismalloc,
 				    const char* filename, 
 				    const char* line, const char* lineTransformed, 
 				    const char* stmtStr);
 void RuntimeSystem_roseAccessVariable( const char* name,
 				       const char* mangled_name,
+				       unsigned long long address,
+				       unsigned int size,
 				       const char* filename, const char* line, 
 				       const char* lineTransformed,
 				       const char* stmtStr);

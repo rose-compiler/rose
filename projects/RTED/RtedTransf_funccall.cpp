@@ -448,7 +448,6 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
       SgExpression* varOnLeft = getVariableLeftOfAssignmentFromChildOnRight(n);
       if (varOnLeft) {
         // need to get the mangled_name of the varRefExp on left hand side
-        // fixme
         varOnLeft = buildString(getMangledNameOfExpression(varOnLeft));
       } else {
         varOnLeft = buildString("NoAssignmentVar");

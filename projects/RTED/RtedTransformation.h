@@ -175,6 +175,8 @@ class RtedTransformation : public AstSimpleProcessing {
   // Run frontend and return project
   SgProject* parse(int argc, char** argv);
 
+  void appendAddressAndSize(SgInitializedName* initName, SgVarRefExp* varRef, SgStatement* stmt, SgExprListExp* arg_list, int appendType);
+
 
 };
 

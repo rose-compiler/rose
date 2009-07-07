@@ -128,7 +128,8 @@ int getSizeOfSgType(const char* type) {
   assert(type!=0);
   if (
       (strcmp(type,"SgTypeInt")==0) ||
-      (strcmp(type,"SgPointerType")==0)
+      (strcmp(type,"SgPointerType")==0) ||
+      (strcmp(type,"SgArrayType")==0)
        )
     size = sizeof(int);
   else {
@@ -518,7 +519,8 @@ RuntimeSystem_findVariablesOnStack(const char* name) {
  * line      : linenumber
  ********************************************************/
 void
-RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dimension,  long int sizeA, long int sizeB,
+RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dimension, const char* type, const char* basetype,  
+			      unsigned long int address, long int size, long int sizeA, long int sizeB,
 			      int ismalloc, const char* filename, const char* line, const char* lineTransformed){
 
   if (rtsi()->arrayDebug)
@@ -640,6 +642,7 @@ RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dime
  ********************************************************/
 void
 RuntimeSystem_roseArrayAccess(const char* name, int posA, int posB, const char* filename, 
+			      unsigned long int address, long int size,
 			      const char* line, const char* lineTransformed, const char* stmtStr){
   if (rtsi()->arrayDebug)
     printMessage( "    Called : roseArrayAccess : %s ... ", (name));
@@ -1477,6 +1480,7 @@ void RuntimeSystem_expandScopeStackIfNecessary() {
 void RuntimeSystem_roseCreateVariable( const char* name,
 				      const char* mangled_name,
 				      const char* type,
+				       const char* basetype,
               unsigned long int address,
               unsigned int size,
 				      int init,
@@ -1582,7 +1586,7 @@ RuntimeSystem_roseInitVariable(const char* name,
 			       const char* typeOfVar2,
 			       const char* baseType,
 			       unsigned long long address,
-			       unsigned long long value,
+			       unsigned int value,
 			       int ismalloc,
 			       const char* filename, 
 			       const char* line, 
@@ -1607,6 +1611,11 @@ RuntimeSystem_roseInitVariable(const char* name,
     if (strcmp(mangled_name,n)==0){
       varFound=1;
       printMessage("Found the variable %s at index %d \n",n, i);
+      if (rtsi()->runtimeVariables[ i].type==NULL) {
+	printf( "WARNING - type is null : %s \n", rtsi()->runtimeVariables[ i].name );
+	//fixme
+	continue;
+      }
 
       if( strcmp( "SgPointerType", rtsi()->runtimeVariables[ i].type) == 0)
         // assignee is a pointer which may be the last one to point to a
@@ -1685,6 +1694,8 @@ RuntimeSystem_roseInitVariable(const char* name,
  ********************************************************/
 void RuntimeSystem_roseAccessVariable( const char* name,
 				       const char* mangled_name,
+				       unsigned long long address, 
+				       unsigned int size,
 				       const char* filename, const char* line,
 				       const char* lineTransformed,
 				       const char* stmtStr) {
