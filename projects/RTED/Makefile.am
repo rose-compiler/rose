@@ -11,9 +11,9 @@ INCLUDES2 = $(ROSE_INCLUDES) -I../../
 if ROSE_WITH_ROSEQT
 #    LINK_QT_DEBUGGER=./rted_qt/.libs/libRtedQt.a $(QT_LDFLAGS) $(ROSE_DWARF_LIBS_WITH_PATH)  -L$(top_builddir)/projects/roseQt/widgets/.libs/ -lRoseQtWidgets -Wl,-rpath,`pwd`/$(top_builddir)/projects/roseQt/widgets/.libs -DROSE_WITH_ROSEQT
 if ROSE_USE_DWARF
-    LINK_QT_DEBUGGER=./rted_qt/.libs/libRtedQt.a $(QT_LDFLAGS) -L$(dwarf_path) -ldwarf -lelf  -L$(top_builddir)/projects/roseQt/widgets/.libs/ -lRoseQtWidgets -Wl,-rpath,`pwd`/$(top_builddir)/projects/roseQt/widgets/.libs -DROSE_WITH_ROSEQT
+    LINK_QT_DEBUGGER=$(top_builddir)/src/librose.la ./rted_qt/libRtedQt.la $(QT_LDFLAGS) -L$(dwarf_path) -ldwarf -lelf -DROSE_WITH_ROSEQT
 else
-    LINK_QT_DEBUGGER=./rted_qt/.libs/libRtedQt.a $(QT_LDFLAGS) -L$(top_builddir)/projects/roseQt/widgets/.libs/ -lRoseQtWidgets -Wl,-rpath,`pwd`/$(top_builddir)/projects/roseQt/widgets/.libs -DROSE_WITH_ROSEQT
+    LINK_QT_DEBUGGER=$(top_builddir)/src/librose.la ./rted_qt/libRtedQt.la $(QT_LDFLAGS) -DROSE_WITH_ROSEQT
 endif
 else
     LINK_QT_DEBUGGER=
@@ -34,15 +34,9 @@ run_test:test
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -ldl 
 
-
-#RTS=RuntimeSystem.c
-#RTED_CXX=$(CXX)
-#RTED_LIB=
-
 RTS=RuntimeSystem.cpp
 RTED_CXX=$(CXXLINK)
 RTED_LIB=CppRuntimeSystem/libCppRuntimeSystem.la
-
 runtimeCheck_SOURCES = runtimeCheck.cpp \
                        RtedTransformation.cpp \
                        $(RTS) \
@@ -57,9 +51,9 @@ runtimeCheck_SOURCES = runtimeCheck.cpp \
 SUBDIRS = rted_qt tests CppRuntimeSystem
 
 runtimeCheck_LDADD =  $(ROSE_LIBS) CppRuntimeSystem/libCppRuntimeSystem.la
-if ROSE_WITH_ROSEQT
-	runtimeCheck_LDADD += $(top_builddir)/projects/RTED/rted_qt/libRtedQt.la
-endif
+#if ROSE_WITH_ROSEQT
+#	runtimeCheck_LDADD += $(top_builddir)/projects/RTED/rted_qt/libRtedQt.la
+#endif
 
 TESTCODES =  $(srcdir)/example.C 
 
@@ -154,37 +148,40 @@ rted_source/%.c: rted_source $(rted_path)/%.c
 
 .PRECIOUS: %_rose.c
 
-rted_source/%_s_rose.c: rted_source
+rted_source/%_s_rose.c: rted_source/%_s.c
 	@touch $@
 
 rted_source/%_rose.c: runtimeCheck rted_source/%.c rted_source/%_s.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	@echo -n "    testing if files compiles with gcc (with _s) ... "
-	@$(RTED_CXX) -g -o $(patsubst %_rose.c, %.bin, $@) $(filter rted_source/%.c, $?) \
+	@$(RTED_CXX) -g -o $(patsubst %_rose.c, %.bin, $@) $(filter rted_source/%.c, $^) \
 		$(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) \
 		$(RTED_LIB)
+	@rm $(patsubst %_rose.c, %.bin, $@)
 	@echo " done."
 	@echo -n "    running transformation ... "
-	@./runtimeCheck 2 $(filter rted_source/%.c, $?) \
+	@./runtimeCheck 2 $(filter rted_source/%.c, $^) \
 			  -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@))
 	@echo " done."
 	@echo -n "   adding line information ... "
 	@cat rose_$(notdir $(patsubst %_rose.c, %.c, $@ ) ) \
 	    | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > $@
+	@rm rose_$(notdir $(patsubst %_rose.c, %.c, $@ ) )
 	@cat rose_$(notdir $(patsubst %_rose.c, %_s.c, $@ ) ) \
 	    | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > $(patsubst %_rose.c, %_s_rose.c, $@ )
+	@rm rose_$(notdir $(patsubst %_rose.c, %_s.c, $@ ) )
 	@echo " done."
 
 rted_source/%_rose.c: runtimeCheck rted_source/%.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	@echo -n "    testing if file compiles with gcc ... "
-#	echo $(filter rted_source/%.c, $?)
-#	exit 1
-	$(RTED_CXX) -g -o $(patsubst %_rose.c, %.bin, $@) $(filter rted_source/%.c, $?) $(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) $(RTED_LIB)
+	@$(RTED_CXX) -g -o $(patsubst %_rose.c, %.bin, $@) $(filter rted_source/%.c, $^) $(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) $(RTED_LIB)
+	@rm $(patsubst %_rose.c, %.bin, $@)
 	@echo " done."
 	@echo -n "    running transformation ... "
-	@./runtimeCheck 2 $(filter rted_source/%.c, $?) -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@))
+	@./runtimeCheck 2 $(filter rted_source/%.c, $^) -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@))
 	@echo " done."
 	@echo -n "   adding line information ... "
-	@cat rose_$(notdir $(filter rted_source/%.c, $?)) | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > $@
+	@cat rose_$(notdir $(filter rted_source/%.c, $^)) | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > $@
+	@rm rose_$(notdir $(filter rted_source/%.c, $^))
 	@echo " done."
 
 #------------------------------------------------------------------------------
@@ -202,25 +199,25 @@ rted_source/%_rose.c: runtimeCheck rted_source/%.c $(srcdir)/$(RTS) $(srcdir)/Ru
 
 rted_source/%_debug.bin: rted_qt rted_source/%_rose.c rted_source/%_s_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	@echo -n "   compiling instrumented debugger code (with _s) ... "
-	@$(RTED_CXX) -g -o $@ $(filter rted_source/%.c, $?) \
+	@$(RTED_CXX) -g -o $@ $(filter rted_source/%.c, $^) \
 		     $(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER) $(RTED_LIB)
 	@echo " done."
 
 rted_source/%_debug.bin: rted_qt rted_source/%_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	@echo -n "   compiling instrumented debugger code ... "
-	@$(RTED_CXX) -g -o $@ $(filter rted_source/%.c, $?) $(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER) $(RTED_LIB)
+	@$(RTED_CXX) -g -o $@ $(filter rted_source/%.c, $^) $(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER) $(RTED_LIB)
 	@echo " done."
 
 rted_source/%.bin: rted_source/%_rose.c rted_source/%_s_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	@echo -n "   compiling instrumented code (with _s) ... "
-	@$(RTED_CXX) -g -o $@ $(filter rted_source/%.c, $?) \
+	@$(RTED_CXX) -g -o $@ $(filter rted_source/%.c, $^) \
 		     $(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) \
 			 $(RTED_LIB)
 	@echo " done."
 
 rted_source/%.bin: rted_source/%_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	@echo -n "   compiling instrumented code ... "
-	@$(RTED_CXX) -g -o $@ $(filter rted_source/%.c, $?) $(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) $(RTED_LIB)
+	@$(RTED_CXX) -g -o $@ $(filter rted_source/%.c, $^) $(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) $(RTED_LIB)
 	@echo " done."
 
 #------------------------------------------------------------------------------
@@ -242,12 +239,12 @@ run_checkonly/%: rted_source/%.bin
 
 run/%: rted_source/%.bin rted_source/%_debug.bin
 	@echo -n "   running runtime error detection ... "
-	@$(patsubst %_debug.bin, ./%.bin, $(filter rted_source/%_debug.bin, $?) ); \
+	@$(patsubst %_debug.bin, ./%.bin, $(filter rted_source/%_debug.bin, $^) ); \
 	    if [ $$? -ne 0 ]; \
 	    then \
 		echo " failed."; \
 		echo "   running debugger ... "; \
-		$(patsubst %.bin, ./%_debug.bin, $<); \
+		$(patsubst %.bin, ./%_debug.bin, $^); \
 		exit 1; \
 	    fi 
 	@echo " done."
@@ -290,7 +287,7 @@ c-compile-runtimesystem:
 	@echo "Make sure that RuntimeSystem compiles with C"
 
 # DQ (7/25/2005): The current changes to the AST break these test programs:
-check-local: rted_qt runtimeCheck $(TESTCODES) c-compile-runtimesystem  deleteAllbinfiles run_checkonly/C/array_index_out_of_bound run_checkonly/C/string_errors run_checkonly/C/input_output_errors
+check-local: rted_qt runtimeCheck $(TESTCODES) c-compile-runtimesystem run_checkonly/C/array_index_out_of_bound run_checkonly/C/string_errors run_checkonly/C/input_output_errors
 	@echo "***************************************************************************************"
 	@echo "*** ROSE/projects/runtimeErrorCheck: make check rule complete (terminated normally) ***"
 	@echo "***************************************************************************************"

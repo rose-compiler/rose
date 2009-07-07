@@ -30,6 +30,12 @@ else
    libroseSqlite3xConnection = 
    OPT_SQLITE3_LDFLAGS =
 endif
+
+if ROSE_WITH_ROSEQT
+libroseQtExtension = $(top_builddir)/src/roseExtensions/qtWidgets/libRoseQtWidgets.la
+else
+libroseQtExtension =
+endif
    
 # TODO: correct list!
 libroseLibraries = \
@@ -82,7 +88,9 @@ libroseLibraries = \
    $(top_builddir)/src/roseSupport/libroseSupport.la \
    $(top_builddir)/src/util/support/libsupport.la \
    $(top_builddir)/src/util/graphs/libgraphs.la \
-   $(top_builddir)/src/util/libroseutil.la $(libroseSqlite3xConnection)
+   $(top_builddir)/src/util/libroseutil.la \
+   $(libroseSqlite3xConnection) \
+   $(libroseQtExtension)
 
 
 EXTRA_DIST = extra.docs

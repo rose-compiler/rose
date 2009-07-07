@@ -6,4 +6,5 @@ SUBDIRS = \
    databaseConnection \
    dataStructureTraversal \
    highLevelGrammar \
-   roseHPCToolkit
+   roseHPCToolkit \
+   qtWidgets

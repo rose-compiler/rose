@@ -1,10 +1,15 @@
-include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+include $(top_srcdir)/src/roseExtensions/qtWidgets/Make.inc
 include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 
 # Include Paths for the roseQt-widgets  and rules for Qt's metacompiler moc,uic,rcc
-include $(top_srcdir)/projects/roseQt/UseQtWidgets.inc
 
 if ROSE_WITH_ROSEQT
+
+if ROSE_MPI
+INCLUDES += -DROSE_MPI $(ROSE_INCLUDES) -I$(compass_support_dir) -I$(compass_srcdir) -I$(compass_checker_dir) -I$(compass_prereqs_dir) -I$(compass_support_bdir) -I. $(ROSE_QT_WIDGETS_INCLUDES)
+else
+INCLUDES += $(ROSE_INCLUDES) -I$(compass_support_dir) -I$(compass_srcdir) -I$(compass_checker_dir) -I$(compass_prereqs_dir) -I$(compass_support_bdir) -I. $(ROSE_QT_WIDGETS_INCLUDES)
+endif
 
 $(compass_build_tooldir)/compass/libCompassCheckers.la:
 	cd .. && $(MAKE) libCompassCheckers.la
@@ -12,10 +17,8 @@ $(compass_build_tooldir)/compass/libCompassCheckers.la:
   
 bin_PROGRAMS = compassMainGui2
 
-
-roseQtDir = $(top_srcdir)/projects/roseQt
-roseQtBuildDir = $(top_builddir)/projects/roseQt
-
+roseQtDir = $(top_srcdir)/src/roseExtensions/qtWidgets
+roseQtBuildDir = $(top_builddir)/src/roseExtensions/qtWidgets
 
 
 compassMainGui2_SOURCES =  timer.cpp \
@@ -37,23 +40,12 @@ nodist_compassMainGui2_SOURCES =    moc_CompassMainWindow.cxx \
 BUILT_SOURCES = ui_CompassMainWindow.h 
 
 compassMainGui2_LDADD = $(compass_build_tooldir)/compass/libCompassCheckers.la \
-                        $(roseQtBuildDir)/widgets/libRoseQtWidgets.la \
                         $(ROSE_LIBS) \
                         $(QT_LDFLAGS) \
                         -lrt
-                        
-                          
-
-if ROSE_MPI
-INCLUDES = -DROSE_MPI $(ROSE_INCLUDES) -I$(compass_support_dir) -I$(compass_srcdir) -I$(compass_checker_dir) -I$(compass_prereqs_dir) -I$(compass_support_bdir) -I. $(ROSEQT_INCLUDES) -I.
-else
-INCLUDES = $(ROSE_INCLUDES) -I$(compass_support_dir) -I$(compass_srcdir) -I$(compass_checker_dir) -I$(compass_prereqs_dir) -I$(compass_support_bdir) -I. $(ROSEQT_INCLUDES) -I.
-endif
 
 
-
-compassMainGui2_DEPENDENCIES = $(compass_build_tooldir)/compass/libCompassCheckers.la \
-                               $(roseQtBuildDir)/widgets/libRoseQtWidgets.la
+compassMainGui2_DEPENDENCIES = $(compass_build_tooldir)/compass/libCompassCheckers.la
 
 endif
 
@@ -64,6 +56,3 @@ EXTRA_DIST = \
         compassResult.h \
         compassViolation.h \
         timer.h
-
-
- 

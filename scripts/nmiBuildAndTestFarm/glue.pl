@@ -127,6 +127,8 @@ sub platform_info {
    print "automake:\n";
    system( "automake --version" );
    print "\n";
+
+   return 0;
 }
 
 sub make {

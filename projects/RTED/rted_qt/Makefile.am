@@ -1,8 +1,8 @@
-include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-include $(top_srcdir)/projects/roseQt/UseQtWidgets.inc
-
+include $(top_srcdir)/src/roseExtensions/qtWidgets/Make.inc
 
 if ROSE_WITH_ROSEQT
+
+INCLUDES += -I$(srcdir)/.. $(ROSE_INCLUDES)
 
 noinst_LTLIBRARIES = libRtedQt.la
 
@@ -17,8 +17,8 @@ nodist_libRtedQt_la_SOURCES = moc_DebugDialog.cxx\
 BUILT_SOURCES = ui_DebugDialog.h
 
 
-INCLUDES = $(ROSE_INCLUDES) $(ROSEQT_INCLUDES) -I$(srcdir)/.. 
-libRtedQt_la_LIBADD = $(top_builddir)/projects/roseQt/widgets/libRoseQtWidgets.la
+#libRtedQt_la_LIBADD = $(top_builddir)/src/roseExtensions/qtWidgets/libRoseQtWidgets.la
+libRtedQt_la_LIBADD = $(top_builddir)/src/librose.la
 
 
 
@@ -32,6 +32,6 @@ libRtedQt_la_LIBADD = $(top_builddir)/projects/roseQt/widgets/libRoseQtWidgets.l
 #                        ui_DebugDialog.h\
 #                        qrc_res.cpp
 
-#rtedQt_LDADD = $(top_builddir)/projects/roseQt/widgets/libRoseQtWidgets.la $(ROSE_LIBS) $(QT_LDFLAGS)                              
+#rtedQt_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS)                              
                               
 endif

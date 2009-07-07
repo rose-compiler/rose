@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>SrcBinView</class>
+ <widget class="QWidget" name="SrcBinView">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>718</width>
+    <height>627</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QSplitter" name="splitter">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <widget class="RoseCodeEdit" name="roseCodeEdit"/>
+     <widget class="AsmView" name="asmView"/>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>AsmView</class>
+   <extends>QTreeView</extends>
+   <header>AsmView.h</header>
+  </customwidget>
+  <customwidget>
+   <class>RoseCodeEdit</class>
+   <extends>QFrame</extends>
+   <header>RoseCodeEdit.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

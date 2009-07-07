@@ -6,7 +6,6 @@ SUBDIRS = \
      autoParallelization \
      autoTuning\
      BinQ \
-     roseQt \
      compass \
      BinaryCloneDetection \
      binCompass \
@@ -35,7 +34,9 @@ SUBDIRS = \
      MacroRewrapper \
      UpcTranslation \
      RTED \
-     taintcheck
+     taintcheck \
+     QtDesignerPlugins \
+     RoseQt
       
 
 #AS(3/12/2008) the  NameConsistancyChecker is now part of compass
