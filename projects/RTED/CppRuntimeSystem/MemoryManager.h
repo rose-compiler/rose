@@ -8,6 +8,7 @@
 #include <set>
 #include <cassert>
 
+#include "CStdLibManager.h"
 #include "Util.h"
 
 
@@ -119,7 +120,7 @@ class MemoryManager
     private:
 
         /// Returns mem-area which contains a given area, or NULL if nothing found
-        MemoryType * findContainingMem(addr_type addr, size_t size);
+        MemoryType * findContainingMem(addr_type addr, size_t size = 1);
 
         /// Returns mem-area which overlaps with given area, or NULL if nothing found
         MemoryType * findOverlappingMem(addr_type addr, size_t size);
@@ -132,6 +133,8 @@ class MemoryManager
 
         typedef std::set<MemoryType*,PointerCmpFunc<MemoryType> > MemoryTypeSet;
         MemoryTypeSet mem;
+
+	friend class CStdLibManager;
 };
 
 std::ostream& operator<< (std::ostream &os, const MemoryManager & m);

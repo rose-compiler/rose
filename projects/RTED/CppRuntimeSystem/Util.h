@@ -52,6 +52,8 @@ class RuntimeViolation
                 DOUBLE_ALLOCATION,   // try to reserve memory with lies in already allocated mem
                 INVALID_FREE,        // called free on non allocated address
                 MEMORY_LEAK,         // some allocated memory was not freed on program exit
+				INVALID_MEM_OVERLAP, // some memory chunk overlaps with some
+									 // other memory chunk illegaly, e.g. in arguments to memcpy
                 EMPTY_ALLOCATION,    // trying to get a memory area of size 0
                 INVALID_READ,        // trying to read non-allocated or non-initialized mem region
                 INVALID_WRITE,       // trying to write to non-allocated mem region
@@ -62,7 +64,7 @@ class RuntimeViolation
         };
 
 
-        explicit RuntimeViolation(Type type, const std::string& desc);
+        explicit RuntimeViolation(Type type, const std::string& desc = "");
         explicit RuntimeViolation(Type type, const std::stringstream & descStream);
 
         virtual ~RuntimeViolation() throw() {}

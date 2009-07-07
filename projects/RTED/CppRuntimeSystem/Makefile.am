@@ -9,6 +9,7 @@ libCppRuntimeSystem_la_SOURCES = CppRuntimeSystem.cpp \
                                  FileManager.cpp \
                                  Util.cpp \
                                  MemoryManager.cpp \
+								 CStdLibManager.cpp \
                                  VariablesType.cpp
 
 

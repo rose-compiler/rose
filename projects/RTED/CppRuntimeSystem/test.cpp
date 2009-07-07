@@ -1,6 +1,7 @@
 #include "CppRuntimeSystem.h"
 #include <iostream>
 #include <cassert>
+#include <cstdlib>
 
 using namespace std;
 
@@ -17,14 +18,21 @@ ostream & out = cout;
 #define TEST_CATCH( TYPE)                                          \
     catch (RuntimeViolation & e)  {                                \
         if( e.getType() != ( TYPE) ) {                             \
-            out << "Wrong error detected:"<<e.getType() << endl;   \
+            out << "Wrong error detected: "                        \
+                << e.getShortDesc() << " instead of "              \
+                << RuntimeViolation::RuntimeViolation(TYPE)        \
+                .getShortDesc()                                    \
+                << endl;                                           \
             exit(1);                                               \
         }                                                          \
         errorFound=true;                                           \
     }                                                              \
     if(!errorFound)                                                \
     {                                                              \
-      out << "Failed to detect error" << endl;                     \
+      out   << "Failed to detect error "                           \
+            << RuntimeViolation::RuntimeViolation(TYPE)            \
+                .getShortDesc()                                    \
+            << endl;                                               \
       exit(1);                                                     \
     }                                                              \
     errorFound=false;                                              \
@@ -33,6 +41,91 @@ ostream & out = cout;
 
 #define CLEANUP  { rs->doProgramExitChecks();  rs->clearStatus(); }
 
+// ------------------- cstdlib string test macros ----------------------------
+
+// each test must define TRY_BODY, as a call to the method being tested, e.g.
+//      rs->check_strlen(  (const char*) str)
+#define TRY_BODY
+
+
+#define DEST_SOURCE                                                 \
+    char *dest = NULL, *source = NULL;
+#define STR1_STR2                                                   \
+    char *str1 = NULL, *str2 = NULL;
+#define TEST_INIT_STRING( ... )                                     \
+    size_t N = 9;                                                   \
+    size_t SZ = (N + 1) * sizeof(char);                             \
+    __VA_ARGS__;
+
+// Tests that try body will complain if var isn't allocated or if it isn't
+// initialized.
+//
+// As a side effect, this will also initialize var.
+#define TEST_STRING_READ( var)                                      \
+    /* haven't allocated var yet */                                 \
+    try { TRY_BODY }                                                \
+    TEST_CATCH( RuntimeViolation::INVALID_READ);                    \
+                                                                    \
+    var = (char*) malloc( SZ);                                      \
+    strcpy( var, "         ");                                      \
+    var[ N] = ' ';                                                  \
+    rs->createMemory( (addr_type) var, SZ);                         \
+                                                                    \
+    /* haven't initialized var yet */                               \
+    try { TRY_BODY }                                                \
+    TEST_CATCH( RuntimeViolation::INVALID_READ);                    \
+                                                                    \
+    rs->checkMemWrite( (addr_type) var, SZ);                        
+
+// Does TEST_STRING_READ, but also checks that try body complains if var doesn't
+// have a null terminator in allocated memory.
+#define TEST_STRING_READ_TERMINATED( var)                           \
+    TEST_STRING_READ( var )                                         \
+                                                                    \
+    /* no null-terminator in var */                                 \
+    try { TRY_BODY }                                                \
+    TEST_CATCH( RuntimeViolation::INVALID_READ);                    \
+    var[ N] = '\0';
+
+#define TEST_STRING_WRITE( var, badsz, oksz)                        \
+    /* haven't allocated var yet */                                 \
+    try { TRY_BODY }                                                \
+    TEST_CATCH( RuntimeViolation::INVALID_WRITE);                   \
+                                                                    \
+    var = (char*) malloc( badsz );                                  \
+    rs->createMemory( (addr_type) var, badsz );                     \
+    /* var isn't large enough */                                    \
+    try { TRY_BODY }                                                \
+    TEST_CATCH( RuntimeViolation::INVALID_WRITE);                   \
+                                                                    \
+    rs->freeMemory( (addr_type) var);                               \
+    var = (char*) realloc( var, oksz );                             \
+    rs->createMemory( (addr_type) var, oksz );                      
+
+// Tests that try body complains if either str1 or str2 lacks a null terminator
+// in allocated memory, or if either isn't allocated yet.
+//
+// Tests that try body does not complain when both of these conditions are
+// satisfied.
+#define TEST_STR1_STR2                                              \
+    TEST_INIT_STRING( STR1_STR2)                                    \
+                                                                    \
+    TEST_STRING_READ_TERMINATED( str1)                              \
+    TEST_STRING_READ_TERMINATED( str2)                              \
+    TRY_BODY                                                        \
+    TEST_STRING_CLEANUP( str1)                                      \
+    TEST_STRING_CLEANUP( str2)                                      \
+                                                                    \
+    TEST_STRING_READ_TERMINATED( str2)                              \
+    TEST_STRING_READ_TERMINATED( str1)                              \
+    TRY_BODY                                                        \
+    TEST_STRING_CLEANUP( str2)                                      \
+    TEST_STRING_CLEANUP( str1)                                      
+
+#define TEST_STRING_CLEANUP( var)                                   \
+    free( var );                                                    \
+    rs->freeMemory( (addr_type) var );                              \
+    var = NULL;
 
 // -------------------------------------- Memory Checker ------------------------------------------
 
@@ -267,24 +360,244 @@ void testFileUnclosed()
 }
 
 
+// -------------------------------------- CStdLib Tests ------------------------------------------
+
+void test_memcpy()
+{
+    TEST_INIT("Testing calls to memcpy");
+
+    addr_type address = 0;
+
+    rs->createMemory( address += 4, 16);
+    addr_type ptr1 = address;
+
+    rs->createMemory( address += 16, 16);
+    rs->checkMemWrite( address, 16);
+    addr_type ptr2 = address;
+
+
+    // 4..20 doesn't overlap 20..36
+    rs->check_memcpy( (void*) ptr1, (void*) ptr2, 16);
+
+    // but 4..20 overlaps 16..32
+    try { rs->check_memcpy( (void*) ptr1, (void*)(ptr2 - 4), 16);}
+    TEST_CATCH( RuntimeViolation::INVALID_MEM_OVERLAP)
+
+    rs->freeMemory( ptr1);
+    rs->freeMemory( ptr2);
+
+    CLEANUP
+}
+
+void test_memmove()
+{
+    TEST_INIT("Testing calls to memmove");
+    addr_type address = 0;
+
+    rs->createMemory( address += 4, 16);
+    addr_type ptr1 = address;
+
+    rs->createMemory( address += 16, 16);
+    addr_type ptr2 = address;
+
+
+    try { rs->check_memmove( (void*) ptr1, (void*)(ptr2 - 4), 16);}
+    TEST_CATCH( RuntimeViolation::INVALID_READ)
+
+    rs->checkMemWrite( address, 16);
+    rs->check_memmove( (void*) ptr1, (void*) ptr2, 16);
+
+    rs->freeMemory( ptr1);
+    rs->freeMemory( ptr2);
+
+    CLEANUP
+}
+
+void test_strcpy()
+{
+    TEST_INIT("Testing calls to strcpy");
+
+    #undef TRY_BODY
+    #define TRY_BODY rs->check_strcpy(  dest, (const char*) source);
+    TEST_INIT_STRING( DEST_SOURCE)
+    TEST_STRING_READ_TERMINATED( source)
+    TEST_STRING_WRITE( dest, SZ / 2, SZ)
+
+    // also, it's not legal for the strings to overlap
+    try { rs->check_strcpy( source + (N/2), source); }
+    TEST_CATCH( RuntimeViolation::INVALID_MEM_OVERLAP);
+
+    TRY_BODY
+    TEST_STRING_CLEANUP( dest)
+    TEST_STRING_CLEANUP( source)
+
+    CLEANUP
+}
+
+void test_strncpy()
+{
+    TEST_INIT("Testing calls to strncpy");
+
+    #undef TRY_BODY
+    #define TRY_BODY rs->check_strncpy(  dest, (const char*) source, N / 2);
+    TEST_INIT_STRING( DEST_SOURCE)
+    TEST_STRING_READ( source)
+    TEST_STRING_WRITE( dest, SZ / 4, SZ / 2)
+
+    // also it's not legal for the strings to overlap
+    try { rs->check_strncpy(  source + (N/2),  source, N); }
+    TEST_CATCH( RuntimeViolation::INVALID_MEM_OVERLAP);
+
+    TRY_BODY
+    TEST_STRING_CLEANUP( dest)
+    TEST_STRING_CLEANUP( source)
+
+    CLEANUP
+}
+
+void test_strcat()
+{
+    TEST_INIT("Testing calls to strcat");
+
+    #undef TRY_BODY
+    #define TRY_BODY rs->check_strcat(  dest, (const char*) source);
+    TEST_INIT_STRING( DEST_SOURCE)
+    TEST_STRING_READ_TERMINATED( source)
+    TEST_STRING_WRITE( dest, SZ / 2, SZ)
+
+    // also, it's not legal for the strings to overlap
+    try { rs->check_strcpy( source + (N/2), source); }
+    TEST_CATCH( RuntimeViolation::INVALID_MEM_OVERLAP);
+
+    TRY_BODY
+    TEST_STRING_CLEANUP( dest)
+    TEST_STRING_CLEANUP( source)
+
+    CLEANUP
+}
+
+void test_strncat()
+{
+    TEST_INIT("Testing calls to strncat");
+
+    #undef TRY_BODY
+    #define TRY_BODY rs->check_strncat(  dest, (const char*) source, N / 2);
+    TEST_INIT_STRING( DEST_SOURCE)
+    TEST_STRING_READ( source)
+    TEST_STRING_WRITE( dest, SZ / 4, SZ / 2)
+
+    // also it's not legal for the strings to overlap
+    try { rs->check_strncat(  source + (N/2),  source, N); }
+    TEST_CATCH( RuntimeViolation::INVALID_MEM_OVERLAP);
+
+    TRY_BODY
+    TEST_STRING_CLEANUP( dest)
+    TEST_STRING_CLEANUP( source)
+
+    CLEANUP
+}
+
+void test_strchr()
+{
+    TEST_INIT("Testing calls to strchr");
+
+    #undef TRY_BODY
+    #define TRY_BODY rs->check_strchr(  (const char*) str, 'x');
+    TEST_INIT_STRING( char *str = NULL)
+    TEST_STRING_READ_TERMINATED( str)
+
+    TRY_BODY
+    TEST_STRING_CLEANUP( str)
+
+    CLEANUP
+}
+
+void test_strpbrk()
+{
+    TEST_INIT("Testing calls to strpbrk");
+
+    #undef TRY_BODY
+    #define TRY_BODY rs->check_strpbrk(  (const char*) str1, (const char*) str2);
+    TEST_STR1_STR2
+
+    CLEANUP
+}
+
+void test_strspn()
+{
+    TEST_INIT("Testing calls to strspn");
+    
+    #undef TRY_BODY
+    #define TRY_BODY rs->check_strspn(  (const char*) str1, (const char*) str2);
+    TEST_STR1_STR2
+
+    CLEANUP
+}
+
+void test_strstr()
+{
+    TEST_INIT("Testing calls to strstr");
+
+    #undef TRY_BODY
+    #define TRY_BODY rs->check_strstr(  (const char*) str1, (const char*) str2);
+    TEST_STR1_STR2
+
+    CLEANUP
+}
+
+void test_strlen()
+{
+    TEST_INIT("Testing calls to strlen");
+
+    #undef TRY_BODY
+    #define TRY_BODY rs->check_strlen(  (const char*) str);
+    TEST_INIT_STRING( char* str = NULL)
+    TEST_STRING_READ_TERMINATED( str)
+
+    TRY_BODY
+    TEST_STRING_CLEANUP( str)
+
+    CLEANUP
+}
+
+
 int main(int argc, char ** argv)
 {
-    RuntimeSystem * rs = RuntimeSystem::instance();
-    rs->setOutputFile("test_output.txt");
+    try {
+        RuntimeSystem * rs = RuntimeSystem::instance();
+        rs->setOutputFile("test_output.txt");
 
-    testSuccessfulMallocFree();
-    testFreeInsideBlock();
-    testInvalidFree();
-    testDoubleFree();
-    testDoubleAllocation();
-    testMemoryLeaks();
-    testEmptyAllocation();
-    testMemAccess();
+        testSuccessfulMallocFree();
+        testFreeInsideBlock();
+        testInvalidFree();
+        testDoubleFree();
+        testDoubleAllocation();
+        testMemoryLeaks();
+        testEmptyAllocation();
+        testMemAccess();
 
-    testFileDoubleClose();
-    testFileDoubleOpen();
-    testFileInvalidClose();
-    testFileUnclosed();
+        testFileDoubleClose();
+        testFileDoubleOpen();
+        testFileInvalidClose();
+        testFileUnclosed();
+
+        test_memcpy();
+        test_memmove();
+        test_strcpy();
+        test_strncpy();
+        test_strcat();
+        test_strncat();
+        test_strchr();
+        test_strpbrk();
+        test_strspn();
+        test_strstr();
+        test_strlen();
+    } catch( RuntimeViolation& e) {
+        out << "Unexpected Error: " << endl << e;
+        exit( 1);
+    }
 
     return 0;
 }
+
+// vim:sw=4 ts=4 tw=80 et sta fdm=marker:

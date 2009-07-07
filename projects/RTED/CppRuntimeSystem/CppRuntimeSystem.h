@@ -15,6 +15,7 @@
 #include "FileManager.h"
 #include "MemoryManager.h"
 #include "VariablesType.h"
+#include "CStdLibManager.h"
 
 /**
  * TODO
@@ -56,6 +57,7 @@ class RuntimeSystem
         void checkpoint(const SourcePosition & pos)  { curPos = pos; }
 
         MemoryManager * getMemManager()  { return &memManager; }
+        CStdLibManager * getCStdLibManager() { return &cstdlibManager; }
 
 
         // ---------------------------------  Register Functions ------------------------------------------------------------
@@ -146,6 +148,35 @@ class RuntimeSystem
         void checkFileAccess(FILE * f, bool read);
 
 
+#define COMMA ,
+#define C_FUNCTION(x, params, args) void check_##x ( params ) { cstdlibManager.check_##x( args );}
+#define C_FN_DSN(x) C_FUNCTION( x, \
+                        void* destination COMMA const void* source COMMA size_t num, \
+                        destination COMMA source COMMA num)
+#define C_FN_CH_DSN(x) C_FUNCTION( x, \
+                        char* destination COMMA const char* source COMMA size_t num, \
+                        destination COMMA source COMMA num)
+#define C_FN_CH_DS(x) C_FUNCTION( x, \
+                        char* destination COMMA const char* source, \
+                        destination COMMA source)
+#define C_FN_SS( x) C_FUNCTION( x, \
+                        const char* str1 COMMA const char* str2, \
+                        str1 COMMA str2)
+#define C_FN_SI( x) C_FUNCTION( x, \
+                        const char* str1 COMMA int character, \
+                        str1 COMMA character)
+#define C_FN_S( x) C_FUNCTION( x, const char* str, str)
+        C_FN_DSN( memcpy);
+        C_FN_DSN( memmove);
+        C_FN_CH_DS( strcpy);
+        C_FN_CH_DSN( strncpy);
+        C_FN_CH_DS( strcat);
+        C_FN_CH_DSN( strncat);
+        C_FN_SI( strchr);
+        C_FN_SS( strpbrk);
+        C_FN_SS( strspn);
+        C_FN_SS( strstr);
+        C_FN_S( strlen);
 
         /// Deletes all collected data
         /// normally only needed for debug purposes
@@ -187,7 +218,8 @@ class RuntimeSystem
         MemoryManager memManager;
         /// Class to track all opened files and file-accesses
         FileManager fileManager;
-
+        /// Class to check arguments to certain cstdlib functions   
+        CStdLibManager cstdlibManager;
 
         //  ------------ Tracking of stack and scope ------------------
         struct ScopeInfo
@@ -216,3 +248,4 @@ class RuntimeSystem
 
 #endif
 
+// vim:sw=4 ts=4 tw=80 et sta:

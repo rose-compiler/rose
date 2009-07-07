@@ -219,7 +219,7 @@ void MemoryManager::freeMemory(addr_type addr)
     if(m == NULL)
     {
         stringstream desc;
-        desc << "Free was called with adress " << addr << endl;
+        desc << "Free was called with address " << addr << endl;
         desc << "Allocated Memory Regions:" << endl;
         print(desc);
         rs->violationHandler(RuntimeViolation::INVALID_FREE,desc.str());

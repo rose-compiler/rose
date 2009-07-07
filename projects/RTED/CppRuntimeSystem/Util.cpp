@@ -75,6 +75,7 @@ std::string RuntimeViolation::getShortDescFromType(Type type)
         case DOUBLE_ALLOCATION:     return "Double Allocation fault";
         case INVALID_FREE:          return "Invalid Free";
         case MEMORY_LEAK:           return "Memory Leaks";
+		case INVALID_MEM_OVERLAP:	return "Illegal Memory Overlap";
         case EMPTY_ALLOCATION:      return "Empty allocation";
         case INVALID_READ:          return "Invalid Read";
         case INVALID_WRITE:         return "Invalid Write";
