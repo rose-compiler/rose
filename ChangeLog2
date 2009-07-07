@@ -1,3 +1,46 @@
+2009-07-07 03:35  panas2
+
+	* [r6432] /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_funccall.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_support.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.c,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/rted_qt/rted_qt.h: Changed the
+	  Transformation Interfaces so that they comply with the new
+	  Runtime System. Make check still passes
+
+2009-07-06 23:12  bauer25
+
+	* [r6430]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/FileManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/FileManager.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/Makefile.am,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/Util.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/Util.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/VariablesType.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/VariablesType.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/doc,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/doc/RTED_RuntimeSystemDoc.html,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/doc/doc.doxyfile,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/doc/doxygen.css,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/test.cpp: Worked on
+	  RTED cpp RuntimeSystem
+	  
+	  - violations now as exception
+	  - added testcases
+	  - added doxyfile
+
+2009-07-06 20:07  heller9
+
+	* [r6429] /trunk/ROSE/docs/Rose/developersAppendix.tex: corrected
+	  developersAppendix.tex file
+
 2009-07-03 01:55  hamilton37
 
 	* [r6427] /trunk/ROSE/projects/RTED/Makefile.am,
