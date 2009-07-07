@@ -59,6 +59,16 @@ void FileManager::openFile(FileHandle handle,
 {
     RuntimeSystem * rs = RuntimeSystem::instance();
 
+    if(handle == NULL)
+    {
+        //TODO get errno and print better description of why opening failed
+        rs->violationHandler(RuntimeViolation::INVALID_FILE_OPEN,
+                             "Couldn't open file. Tried to register NULL-handle");
+        return;
+    }
+
+
+
     FileInfo compareObj (handle);
     if( openFiles.find(compareObj) != openFiles.end() )
     {
@@ -66,6 +76,7 @@ void FileManager::openFile(FileHandle handle,
                              "Tried to register the same file-handle twice");
         return;
     }
+
 
     openFiles.insert( FileInfo(handle,fileName,mode,pos));
 }
@@ -90,13 +101,29 @@ void FileManager::checkFileAccess(FileHandle handle, bool read)
 {
     RuntimeSystem * rs = RuntimeSystem::instance();
 
-    //TODO check for read write
-
     FileInfo compareObj(handle);
-    if( openFiles.find(compareObj) != openFiles.end() )
+    set<FileInfo>::iterator it = openFiles.find(compareObj);
+    //Check if file-handle exists
+    if( it == openFiles.end() )
     {
         rs->violationHandler(RuntimeViolation::INVALID_FILE_ACCESS,
-                             "Tried to access invalid file");
+                             "Tried to access invalid file-handle");
+        return;
+    }
+
+    // Check if read access is allowed
+    if(read && ! (it->getOpenMode() & READ) )
+    {
+        rs->violationHandler(RuntimeViolation::INVALID_FILE_ACCESS,
+                             "Tried read from file which was only opened for writing");
+        return;
+    }
+
+    // Check if write access is allowed
+    if(!read && ! (it->getOpenMode() & WRITE) )
+    {
+        rs->violationHandler(RuntimeViolation::INVALID_FILE_ACCESS,
+                             "Tried to write to file which was only opened for reading");
         return;
     }
 }

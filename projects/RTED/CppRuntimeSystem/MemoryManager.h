@@ -14,7 +14,7 @@
 
 
 class RuntimeSystem;
-
+class VariablesType;
 
 /**
  * This class represents a memory allocation, made by malloc/new or just on the stack
@@ -38,9 +38,6 @@ class MemoryType
         bool overlapsMemArea(addr_type queryAddr, size_t querySize);
 
 
-        /// Prints info about this allocation
-        void print(std::ostream & os) const;
-
         /// Less operator uses startAdress
         bool operator< (const MemoryType & other) const;
 
@@ -54,6 +51,20 @@ class MemoryType
 
         /// Initialized a part of memory
         void  initialize   (int offsetFrom, int offsetTo) ;
+
+
+        /// Notifies the Chunk that a pointer points to it
+        /// when the mem-chunk is freed the registered pointer is invalidated
+        void registerPointer  (VariablesType * var);
+
+        /// Notifies the Chunk that a certain pointer does not pointer there anymore
+        /// if doChecks is true, and the last pointer to the chunk is removed
+        /// a violation is created
+        void deregisterPointer(VariablesType * var, bool doChecks);
+
+
+        /// Prints info about this allocation
+        void print(std::ostream & os) const;
 
 
         template<typename T>
@@ -73,6 +84,9 @@ class MemoryType
         size_t            size;         ///< Size of allocation
         SourcePosition    allocPos;     ///< Position in source file where malloc/new was called
         std::vector<bool> initialized;  ///< stores for every byte if it was initialized
+
+        /// Set of pointers which currently point into this memory chunk
+        std::set<VariablesType*> pointerSet;
 };
 std::ostream& operator<< (std::ostream &os, const MemoryType & m);
 
@@ -107,9 +121,6 @@ class MemoryManager
         void checkWrite (addr_type addr, size_t size);
 
 
-        /// Returns the MemoryType which stores the allocation information which is
-        /// registered for this addr, or NULL if nothing is registered
-        MemoryType * getMemoryType(addr_type addr);
 
         void checkForNonFreedMem() const;
 
@@ -117,7 +128,9 @@ class MemoryManager
         /// normally only needed for debug purposes
         void clearStatus() { mem.clear(); }
 
-    private:
+        /// Returns the MemoryType which stores the allocation information which is
+        /// registered for this addr, or NULL if nothing is registered
+        MemoryType * getMemoryType(addr_type addr);
 
         /// Returns mem-area which contains a given area, or NULL if nothing found
         MemoryType * findContainingMem(addr_type addr, size_t size = 1);
@@ -125,10 +138,10 @@ class MemoryManager
         /// Returns mem-area which overlaps with given area, or NULL if nothing found
         MemoryType * findOverlappingMem(addr_type addr, size_t size);
 
+    private:
         /// Queries the map for a potential matching memory area
         /// finds the memory region with next lower or equal address
         MemoryType * findPossibleMemMatch(addr_type addr);
-
 
 
         typedef std::set<MemoryType*,PointerCmpFunc<MemoryType> > MemoryTypeSet;

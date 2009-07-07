@@ -12,7 +12,7 @@ ostream & out = cout;
     out << "-- " << (MSG) << endl ;                   \
     bool errorFound=false;                            \
     RuntimeSystem * rs = RuntimeSystem::instance();   \
-    rs->checkpoint(SourcePosition(MSG));              \
+    rs->checkpoint(SourcePosition( (MSG) ));              \
 
 
 #define TEST_CATCH( TYPE)                                          \
@@ -359,6 +359,95 @@ void testFileUnclosed()
     CLEANUP
 }
 
+void testFileInvalidAccess()
+{
+    TEST_INIT("Testing invalid file-access");
+
+
+    try{ rs->registerFileOpen(NULL,"name",READ ); }
+    TEST_CATCH(RuntimeViolation::INVALID_FILE_OPEN)
+
+
+    FILE * fh = (FILE*)42;
+    // some allowed operations
+    rs->registerFileOpen(fh,"MyFileName.txt",READ | WRITE);
+    rs->checkFileAccess(fh,true);
+    rs->checkFileAccess(fh,false);
+    rs->registerFileClose(fh);
+
+
+    // check if illegal write is detected
+    rs->registerFileOpen(fh,"MyFileName.txt",READ);
+    rs->checkFileAccess(fh,true);
+    try {  rs->checkFileAccess(fh,false); } //invalid write
+    TEST_CATCH(RuntimeViolation::INVALID_FILE_ACCESS)
+    rs->registerFileClose(fh);
+
+    // check if illegal read is detected
+    rs->registerFileOpen(fh,"MyFileName.txt",WRITE);
+    rs->checkFileAccess(fh,false);
+    try {  rs->checkFileAccess(fh,true); } //invalid read
+    TEST_CATCH(RuntimeViolation::INVALID_FILE_ACCESS)
+    rs->registerFileClose(fh);
+
+    try {  rs->checkFileAccess((FILE*)43,true); }
+    TEST_CATCH(RuntimeViolation::INVALID_FILE_ACCESS)
+
+    CLEANUP
+}
+
+
+// -------------------------------------- Pointer Tracking Tests ------------------------------------------
+
+void testLostMemRegion()
+{
+    TEST_INIT("Testing detection of lost mem-regions");
+    rs->createMemory(10,5);
+    rs->createMemory(20,5);
+
+
+    addr_type addr=100;
+    rs->beginScope("Scope1");
+        rs->createVariable(addr+=4,"p1_to_10","mangled","SgPointerType",4);
+        rs->createPointer("p1_to_10",10);
+
+        rs->createVariable(addr+=4,"p1_to_20","mangled","SgPointerType",4);
+        rs->createPointer("p1_to_20",20);
+
+
+        rs->beginScope("Scope2");
+            rs->createVariable(addr+=4,"p2_to_10","mangled","SgPointerType",4);
+            rs->createPointer("p2_to_10",10);
+        rs->endScope();
+
+        try{ rs->createPointer("p1_to_10",NULL); }
+        TEST_CATCH(RuntimeViolation::MEM_WITHOUT_POINTER)
+
+        try{ rs->createPointer("p1_to_20",NULL); }
+        TEST_CATCH(RuntimeViolation::MEM_WITHOUT_POINTER)
+
+    rs->endScope();
+
+    rs->freeMemory(10);
+    rs->freeMemory(20);
+
+    CLEANUP
+}
+
+void testPointerChanged()
+{
+    TEST_INIT("Testing detection of lost mem-regions");
+
+    CLEANUP
+}
+
+void testInvalidPointerAssign()
+{
+    TEST_INIT("Testing Invalid Pointer assign");
+
+    CLEANUP
+}
+
 
 // -------------------------------------- CStdLib Tests ------------------------------------------
 
@@ -563,11 +652,13 @@ void test_strlen()
 
 int main(int argc, char ** argv)
 {
-    try {
+    try
+    {
         RuntimeSystem * rs = RuntimeSystem::instance();
         rs->setOutputFile("test_output.txt");
 
         testSuccessfulMallocFree();
+
         testFreeInsideBlock();
         testInvalidFree();
         testDoubleFree();
@@ -580,6 +671,11 @@ int main(int argc, char ** argv)
         testFileDoubleOpen();
         testFileInvalidClose();
         testFileUnclosed();
+        testFileInvalidAccess();
+
+        //testLostMemRegion();
+        //testPointerChanged();
+        //testInvalidPointerAssign();
 
         test_memcpy();
         test_memmove();
@@ -592,7 +688,9 @@ int main(int argc, char ** argv)
         test_strspn();
         test_strstr();
         test_strlen();
-    } catch( RuntimeViolation& e) {
+    }
+    catch( RuntimeViolation& e)
+    {
         out << "Unexpected Error: " << endl << e;
         exit( 1);
     }

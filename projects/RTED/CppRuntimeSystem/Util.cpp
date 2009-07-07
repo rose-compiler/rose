@@ -72,18 +72,21 @@ std::string RuntimeViolation::getShortDescFromType(Type type)
 {
     switch(type)
     {
-        case DOUBLE_ALLOCATION:     return "Double Allocation fault";
-        case INVALID_FREE:          return "Invalid Free";
-        case MEMORY_LEAK:           return "Memory Leaks";
-		case INVALID_MEM_OVERLAP:	return "Illegal Memory Overlap";
-        case EMPTY_ALLOCATION:      return "Empty allocation";
-        case INVALID_READ:          return "Invalid Read";
-        case INVALID_WRITE:         return "Invalid Write";
-        case DOUBLE_FILE_OPEN:      return "FileHandle registered twice";
-        case INVALID_FILE_CLOSE:    return "Invalid File close";
-        case INVALID_FILE_ACCESS:   return "Invalid File Access";
-        case UNCLOSED_FILES:        return "Open Files at end of program";
-
+        case DOUBLE_ALLOCATION:       return "Double Allocation fault";
+        case INVALID_FREE:            return "Invalid Free";
+        case MEMORY_LEAK:             return "Memory Leaks";
+        case EMPTY_ALLOCATION:        return "Empty allocation";
+        case INVALID_READ:            return "Invalid Read";
+        case INVALID_WRITE:           return "Invalid Write";
+        case INVALID_FILE_OPEN:       return "fopen returned NULL";
+        case DOUBLE_FILE_OPEN:        return "FileHandle registered twice";
+        case INVALID_FILE_CLOSE:      return "Invalid File close";
+        case INVALID_FILE_ACCESS:     return "Invalid File Access";
+        case UNCLOSED_FILES:          return "Open Files at end of program";
+        case INVALID_PTR_ASSIGN:      return "An invalid address was assigned to pointer";
+        case MEM_WITHOUT_POINTER:     return "A Memory Region cannot be reached by any pointer";
+        case POINTER_CHANGED_MEMAREA: return "Pointer changed Target-MemoryRegion";
+		case INVALID_MEM_OVERLAP:	  return "Illegal Memory Overlap";
         default:
             // handle all possible violations!
             assert(false);

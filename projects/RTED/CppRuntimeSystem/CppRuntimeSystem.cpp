@@ -6,10 +6,6 @@
 using namespace std;
 
 
-
-
-// -----------------------    RuntimeSystem  --------------------------------------
-
 RuntimeSystem * RuntimeSystem::single = NULL;
 
 RuntimeSystem* RuntimeSystem::instance()
@@ -20,8 +16,6 @@ RuntimeSystem* RuntimeSystem::instance()
     return single;
 }
 
-
-
 RuntimeSystem::RuntimeSystem()
     : defaultOutStr(&cout)
 {
@@ -29,57 +23,9 @@ RuntimeSystem::RuntimeSystem()
 }
 
 
-void RuntimeSystem::setOutputFile(const std::string & filename)
-{
-    if(outFile.is_open())
-    {
-        cerr << "Warning: RuntimeSystem::setOutputFile called twice";
-        outFile.close();
-    }
 
-    outFile.open(filename.c_str(),ios::out | ios::app);
-    if(outFile.is_open());
-        defaultOutStr = &outFile;
+// --------------------- Mem Checking ---------------------------------
 
-}
-
-void RuntimeSystem::violationHandler(RuntimeViolation::Type v, const std::string & description)  throw (RuntimeViolation)
-{
-    RuntimeViolation vio(v,description);
-    violationHandler(vio);
-}
-
-void RuntimeSystem::violationHandler(RuntimeViolation & vio)  throw (RuntimeViolation)
-{
-    vio.setPosition(curPos);
-
-    (*defaultOutStr) << vio  << endl;
-
-    throw vio;
-}
-
-
-void RuntimeSystem::createVariable(addr_type address,
-                                   const std::string & name,
-                                   const std::string & mangledName,
-                                   const std::string & typeString)
-{
-    createVariable(new VariablesType(name,mangledName,typeString,address));
-}
-
-void RuntimeSystem::createVariable(VariablesType * var)
-{
-
-    //FIXME get size of variable out of type information
-    //      just allocate (wronly) always 4 bytes here
-    //FIXME no allocation when "SgArrayType"
-    RuntimeSystem::instance()->createMemory(var->getAddress(),4);
-
-
-    // every variable has to part of scope
-    assert(scope.size() >0);
-    stack.push_back(var);
-}
 
 void RuntimeSystem::createMemory(addr_type startAddress, size_t size)
 {
@@ -105,6 +51,9 @@ void RuntimeSystem::checkMemWrite(addr_type addr, size_t size)
 }
 
 
+// --------------------- Scopes ---------------------------------
+
+
 void RuntimeSystem::beginScope(const std::string & name)
 {
     scope.push_back(ScopeInfo(name,stack.size()));
@@ -123,6 +72,62 @@ void RuntimeSystem::endScope()
     assert(stack.size() == lastScope.stackIndex);
 }
 
+
+// --------------------- Stack Variables ---------------------------------
+
+
+void RuntimeSystem::createVariable(addr_type address,
+                                   const std::string & name,
+                                   const std::string & mangledName,
+                                   const std::string & typeString,
+                                   size_t size)
+{
+    createVariable(new VariablesType(name,mangledName,typeString,address,size));
+}
+
+void RuntimeSystem::createVariable(VariablesType * var)
+{
+    // Track the memory area where the variable is stored
+    // special case when static array, then createMemory is called anyway
+    if(var->getType() != "SgArrayType")
+        RuntimeSystem::instance()->createMemory(var->getAddress(),var->getSize());
+
+
+    // every variable has to part of scope
+    assert(scope.size() >0);
+    stack.push_back(var);
+}
+
+
+// --------------------- Pointer Tracking---------------------------------
+
+void RuntimeSystem::createPointer(const string & varName, addr_type targetAddress)
+{
+    VariablesType * var = findVarByName(varName);
+    assert(var); // create the variable first!
+    var->setPointerTarget(targetAddress,false);
+}
+
+
+void RuntimeSystem::registerPointerChange(const string & varName, addr_type targetAddress)
+{
+    VariablesType * var = findVarByName(varName);
+    assert(var); // create the variable first!
+    var->setPointerTarget(targetAddress,true);
+}
+
+VariablesType * RuntimeSystem::findVarByName(const string & name)
+{
+    for(int i=0; i< stack.size(); i++)
+        if(name == stack[i]->getName() )
+            return stack[i];
+
+
+    return NULL;
+}
+
+// --------------------- File Management ---------------------------------
+
 void RuntimeSystem::registerFileOpen(FILE * file,const string & openendFile, int mode)
 {
     fileManager.openFile(file, openendFile,mode, curPos);
@@ -137,6 +142,35 @@ void RuntimeSystem::registerFileClose(FILE* file)
 void RuntimeSystem::checkFileAccess(FILE * file, bool read)
 {
     fileManager.checkFileAccess(file,read);
+}
+
+
+
+// --------------------- Violations ---------------------------------
+
+
+void RuntimeSystem::violationHandler(RuntimeViolation::Type v, const std::string & description)  throw (RuntimeViolation)
+{
+    RuntimeViolation vio(v,description);
+    violationHandler(vio);
+}
+
+void RuntimeSystem::violationHandler(RuntimeViolation & vio)  throw (RuntimeViolation)
+{
+    vio.setPosition(curPos);
+
+    (*defaultOutStr) << vio  << endl;
+
+    throw vio;
+}
+
+
+
+void RuntimeSystem::doProgramExitChecks()
+{
+    // Check for memory leaks
+    memManager.checkForNonFreedMem();
+    fileManager.checkForOpenFiles();
 }
 
 
@@ -157,11 +191,20 @@ void RuntimeSystem::clearStatus()
 
 
 
-void RuntimeSystem::doProgramExitChecks()
+// --------------------- Output Handling ---------------------------------
+
+
+void RuntimeSystem::setOutputFile(const std::string & filename)
 {
-    // Check for memory leaks
-    memManager.checkForNonFreedMem();
-    fileManager.checkForOpenFiles();
+    if(outFile.is_open())
+    {
+        cerr << "Warning: RuntimeSystem::setOutputFile called twice";
+        outFile.close();
+    }
+
+    outFile.open(filename.c_str(),ios::out | ios::app);
+    if(outFile.is_open());
+        defaultOutStr = &outFile;
 }
 
 

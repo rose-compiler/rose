@@ -18,16 +18,6 @@
 #include "CStdLibManager.h"
 
 /**
- * TODO
- *  - test FileManager
- *  - write small doxyfile
- *  - handle allocation/vars of stack-arrays (avoid double allocation)
- *  - extend FileManager, checks if file exist, read/write access etc
- */
-
-
-
-/**
  * RuntimeSystem is responsible for keeping track of all variable allocations and memory operations
  *
  * there a two types of functions:
@@ -56,9 +46,10 @@ class RuntimeSystem
         /// this information is used for printing errors/warnings
         void checkpoint(const SourcePosition & pos)  { curPos = pos; }
 
-        MemoryManager * getMemManager()  { return &memManager; }
         CStdLibManager * getCStdLibManager() { return &cstdlibManager; }
 
+        MemoryManager * getMemManager()   { return & memManager;  }
+        FileManager   * getFileManager()  { return & fileManager; }
 
         // ---------------------------------  Register Functions ------------------------------------------------------------
 
@@ -70,7 +61,8 @@ class RuntimeSystem
         void createVariable(addr_type address,
                             const std::string & name,
                             const std::string & mangledName,
-                            const std::string & typeString);
+                            const std::string & typeString,
+                            size_t size);
 
 
         /// Call this function after when a malloc or new occurs in monitored code
@@ -83,31 +75,17 @@ class RuntimeSystem
         /// @param startAddress the address to be freed (argument of free/delete)
         void freeMemory(addr_type startAddress);
 
-        /// Call this function when something is written to a memory region
-        /// used to keep track which memory regions are initialized
-        /// mb: not needed - use checkMemWrite()
-        // void initMemory(addr_type addr, size_t length);
-
 
         /// Call this function when the value of a pointer changed i.e. the address a pointer points to
         /// this also includes "pseudo" pointers, for example if on code "int ** a" this function has to be called twice
         /// with var="a" and var="*a"
-        // tps: void createVariable ??
-        // void createPointer(const std::string & var, addr_type targetAddress);
+        /// pointer information is deleted when the variable goes out of scope
+        void createPointer(const std::string & var, addr_type targetAddress);
 
-        /// Call this function to register constant initalized arrays like "int a[2][2] = { {1,2},{3,4} }"
-        /// this informs the runtime-system that there is memory allocated from a to a+4
-        /// @param var  name of the array
-        /// @param dim  list of dimensions, the actual allocated size is the product of all entries * sizeof(type)
-        // TODO may be needed for printing a warning at code like
-        /// f(int b[2][20) {}
-        ///
-        /// int a[10][10];
-        /// f(a);
-        ///b
-        /// normally you don't need that, because this case is caught via memory checking
-        //void registerArray(const std::string & var, std::vector<int> dim);
-
+        /// Call this function if a pointer was manipulated via arithmetic operations
+        /// when this function is called and the pointer changes the memory-chunk
+        /// it points to, a violation/warning is printed
+        void registerPointerChange(const std::string & var, addr_type newAddress);
 
 
         /// Each variable is associated with a scope, use this function to create a new scope
@@ -117,11 +95,6 @@ class RuntimeSystem
         /// Closes a scope and deletes all variables which where created via registerVariable()
         /// from the stack, tests for
         void endScope ();
-
-
-        /// Tells the runtime-system the actual position in source code
-        /// used for user-notification where an error occured
-        void registerCurrentSourcePosition(const SourcePosition & pos);
 
         //// Call this function if a file is opened
         /// @param openMode combination of FileOpenMode flags
@@ -213,6 +186,7 @@ class RuntimeSystem
         RuntimeSystem();
 
 
+        VariablesType * findVarByName(const std::string & name);
 
         /// Class to track state of memory (which areas are allocated etc)
         MemoryManager memManager;

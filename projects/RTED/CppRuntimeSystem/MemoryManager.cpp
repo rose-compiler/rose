@@ -80,6 +80,35 @@ void MemoryType::initialize(int offsetFrom, int offsetTo)
 }
 
 
+void MemoryType::registerPointer(VariablesType * var)
+{
+    pointerSet.insert(var);
+}
+
+void MemoryType::deregisterPointer(VariablesType * var, bool doChecks)
+{
+    size_t erasedElements= pointerSet.erase(var);
+    if(erasedElements==0)
+    {
+        cerr << "Warning: Tried to deregister a pointer which has not been registered" << endl;
+    }
+
+    if(pointerSet.size()==0 && doChecks)
+    {
+        RuntimeSystem * rs = RuntimeSystem::instance();
+        stringstream ss;
+        ss << "No pointer to allocated memory region: " << endl;
+        ss << *this << endl << " because this pointer has changed: " <<endl;
+        ss << *var << endl;
+
+        rs->violationHandler(RuntimeViolation::MEM_WITHOUT_POINTER, ss.str());
+    }
+}
+
+
+
+
+
 // extra print function because operator<< cannot be member-> no access to privates
 void MemoryType::print(ostream & os) const
 {
