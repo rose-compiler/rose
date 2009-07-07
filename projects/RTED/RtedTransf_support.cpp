@@ -45,7 +45,7 @@ RtedTransformation::getExprBelowAssignment(SgExpression* exp, int& derefCounter)
     if (isSgPntrArrRefExp(tmpExp)) {
       cerr <<"Found NULL"<< endl;
       // dont handle arrays
-      return NULL;
+      //fixme
     }
   }
   if ( !isSgExpression(tmpExp))
