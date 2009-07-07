@@ -12,9 +12,9 @@ class CallGraphQuery
 
   public:
 	void initialize();
-	bool pathExist(CallGraphCreate::Node* from, CallGraphCreate::Node* to);
+	bool pathExist(SgGraphNode* from, SgGraphNode* to);
 	void constructFuncWithMPICallSet(std::list<SgExprStatement*> mpiCallList);
-	CallGraphCreate* getCallGraphCreate() { return cgBuilder->getGraph(); }
+	SgIncidenceDirectedGraph* getCallGraphCreate() { return cgBuilder->getGraph(); }
 	std::set<SgFunctionDeclaration*> getFuncWithMPICallSet() { return funcWithMPICallSet; }
 	bool hasMPICall(SgExprStatement* callSite);
 
@@ -22,7 +22,7 @@ class CallGraphQuery
 	CallGraphBuilder* cgBuilder;
 	std::set<SgFunctionDeclaration*> funcWithMPICallSet;
 
-	void DFS(CallGraphCreate::Node* p, SgFunctionDeclaration* mpiCall);
+	void DFS(SgGraphNode* p, SgFunctionDeclaration* mpiCall);
 };
 
 #endif

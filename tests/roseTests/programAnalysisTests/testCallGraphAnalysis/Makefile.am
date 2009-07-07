@@ -48,7 +48,7 @@ test02: testCG stressTestFactory
 	diff -U5 sT10.cmp.dmp sT10.cg.dmp
 	$(srcdir)/stressTestFactory 100
 	rm -f ./sT100.db
-	./testCG sT100.C -o sT100 -compare:graph sT100.cg.dmp -db:name sT10.db
+	./testCG sT100.C -o sT100 -compare:graph sT100.cg.dmp -db:name sT100.db
 	rm -f ./sT100.db
 	diff -U5 sT100.cmp.dmp sT100.cg.dmp
 

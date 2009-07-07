@@ -16,6 +16,71 @@ using namespace std;
 
 #ifdef HAVE_SQLITE3
 
+// remove nodes and edges of functions defined in the files of a specified directory
+void
+filterNodesByDirectory (  sqlite3x::sqlite3_connection& gDB, string directory )
+{
+  cout << "Filtering system calls...\n";
+
+  string command;
+
+  command = "CREATE TEMP TABLE nb AS SELECT nid FROM Nodes n where n.filename LIKE \"" + directory + "%\";";
+  gDB.executenonquery(command.c_str());
+
+  command = "DELETE FROM Nodes WHERE nid IN (SELECT nb.nid FROM nb);";
+  gDB.executenonquery(command.c_str());
+
+  command = "DELETE FROM Edges WHERE nid1 in (SELECT nb.nid FROM nb) OR nid2 in (SELECT nb.nid FROM nb);";
+  gDB.executenonquery(command.c_str());
+
+  cout << "Done filtering\n";
+}
+
+
+
+// remove nodes and edges of functions defined in the specified file
+void
+filterNodesByFilename (  sqlite3x::sqlite3_connection& gDB , string filterFile )
+{
+  cout << "Filtering system calls...\n";
+  string command;
+
+  command = "CREATE TEMP TABLE IF NOT EXISTS nb AS SELECT nid Nodes filename = " + filterFile + ";";
+  gDB.executenonquery(command.c_str());
+
+  command = "DELETE FROM Nodes WHERE nid IN (SELECT nb.nid FROM nb);";
+  gDB.executenonquery(command.c_str());
+
+  command = "DELETE FROM Edges WHERE nid1 in (SELECT nb.nid FROM nb) OR nid2 in (SELECT nb.nid FROM nb);";
+  gDB.executenonquery(command.c_str());
+
+  cout << "Done filtering\n";
+}
+
+// remove nodes and edges of functions with a specific name
+void
+filterNodesByFunction ( sqlite3x::sqlite3_connection& gDB , SgFunctionDeclaration *function )
+{
+  ROSE_ASSERT ( function );
+  cout << "Filtering system calls...\n";
+  string functionName = function->get_qualified_name().getString() + function->get_mangled_name().getString();
+
+  string command;
+
+  command = "DELETE FROM Nodes WHERE nid = " + functionName + ";";
+  gDB.executenonquery(command.c_str());
+
+  command =  "DELETE FROM Edges WHERE nid1 = " + functionName + "  OR nid2 = " + functionName + ";";
+  gDB.executenonquery(command.c_str());
+
+  cout << "Done filtering\n";
+}
+// DQ (7/28/2005): Don't include the data base
+
+
+
+
+
 void
 filterNodesKeepPaths( sqlite3x::sqlite3_connection& gDB, std::vector<std::string> keepDirs )
 {
@@ -26,7 +91,7 @@ filterNodesKeepPaths( sqlite3x::sqlite3_connection& gDB, std::vector<std::string
   for( unsigned int i = 0; i < keepDirs.size(); i++ )
   {
     std::cout << "Keeping path " << keepDirs[i] << std::endl;
-    gDB.executenonquery("INSERT INTO DELETE_NID  select n.nid from Nodes n join Graph g on g.gid=n.gid  where g.filename like \""+keepDirs[i]+"\"");
+    gDB.executenonquery("INSERT INTO DELETE_NID  select nid from Nodes where filename like \""+keepDirs[i]+"\"");
 
   }
   gDB.executenonquery("DELETE from Edges where nid1 not in DELETE_NID or nid2 not in DELETE_NID" );
@@ -50,8 +115,8 @@ createSchema ( sqlite3x::sqlite3_connection& gDB, string dbName )
 {
   
   //Query query = (*gDB)->getQuery();
-  gDB.executenonquery("CREATE TABLE IF NOT EXISTS Graph (gid, pgid, filename TEXT);");
-  gDB.executenonquery("CREATE TABLE IF NOT EXISTS Nodes (nid TEXT, gid INTEGER, label TEXT, def INTEGER, type TEXT, scope TEXT, PRIMARY KEY (nid)););");
+  //gDB.executenonquery("CREATE TABLE IF NOT EXISTS Graph (gid, pgid, filename TEXT);");
+  gDB.executenonquery("CREATE TABLE IF NOT EXISTS Nodes (nid TEXT, filename TEXT, label TEXT, def INTEGER, type TEXT, scope TEXT, PRIMARY KEY (nid)););");
   gDB.executenonquery("CREATE TABLE IF NOT EXISTS Edges  (nid1 TEXT, nid2 TEXT, label TEXT, type TEXT, objClass TEXT);");
   gDB.executenonquery("CREATE TABLE IF NOT EXISTS Hierarchy ( Class TEXT, Subclass TEXT, ClassFile TEXT, SubclassFile TEXT, PRIMARY KEY ( Class, Subclass ) );");
 
@@ -191,7 +256,7 @@ CallGraphEdge::Dump() const
 CallGraphEdge::CallGraphEdge ( std::string label ) : MultiGraphElem( NULL ), label( label )
  {
    if(var_SOLVE_FUNCTION_CALLS_IN_DB == true)
-     properties = new FunctionProperties();
+     properties = new Properties();
 
  }
 
@@ -210,6 +275,35 @@ Properties::Properties(){
   invokedClass = NULL;
   isPolymorphic = isPointer = false;
   nid=label=type=scope=functionName="not-set";
+};
+
+Properties::Properties(SgFunctionDeclaration* inputFunctionDeclaration){
+     functionDeclaration = inputFunctionDeclaration;
+     ROSE_ASSERT( functionDeclaration != NULL );
+
+     functionType = inputFunctionDeclaration->get_type()->findBaseType();
+     invokedClass = NULL;
+     isPointer = isPolymorphic = false;
+     nid=label=type=scope=functionName="not-set";
+}
+
+//Only used when SOLVE_FUNCTION_CALLS_IN_DB is defined
+Properties::Properties(Properties* prop){
+    isPointer=prop->isPointer;
+    isPolymorphic=prop->isPolymorphic;
+    invokedClass=prop->invokedClass;
+    functionDeclaration=prop->functionDeclaration;
+    functionType=prop->functionType;
+
+    nid=prop->nid;;
+    label=prop->label;;
+    type=prop->type;
+    scope=prop->scope;
+    functionName=prop->functionName;
+
+    hasDef=prop->hasDef;
+    isPtr=prop->isPtr;
+    isPoly=prop->isPoly;
 };
 
 Properties::Properties(std::string p_nid, std::string p_label, std::string p_type, std::string p_scope,
@@ -232,7 +326,7 @@ CallGraphNode::CallGraphNode ( std::string nid, std::string dbLabel, std::string
    : MultiGraphElem( NULL ), label( nid )
 {
   hasDefinition = hasDef;
-  properties = new FunctionProperties();
+  properties = new Properties();
   properties->isPointer = isPtr;;
   properties->isPolymorphic = isPoly;
   properties->invokedClass = NULL;
@@ -262,7 +356,7 @@ CallGraphNode::CallGraphNode ( std::string label, SgFunctionDeclaration* fctDecl
   functionDeclaration = NULL;
 
   hasDefinition = hasDef;
-  properties = new FunctionProperties();
+  properties = new Properties();
   properties->isPointer = isPtr;;
   properties->isPolymorphic = isPoly;
   properties->invokedClass = invokedCls;
@@ -278,7 +372,7 @@ CallGraphNode::CallGraphNode ( std::string label, SgFunctionDeclaration* fctDecl
      }
  }
 
-CallGraphNode::CallGraphNode ( std::string lbl, FunctionProperties *fctProps, bool hasDef ) : MultiGraphElem ( NULL )
+CallGraphNode::CallGraphNode ( std::string lbl, Properties *fctProps, bool hasDef ) : MultiGraphElem ( NULL )
                                                                                                , label(lbl)
 
  {
@@ -302,15 +396,16 @@ CallGraphBuilder::CallGraphBuilder( SgProject *proj )
     graph = NULL;
   }
 
-CallGraphCreate*
+SgIncidenceDirectedGraph*
 CallGraphBuilder::getGraph() 
   { 
     return graph; 
   }
 
-CallGraphDotOutput::CallGraphDotOutput( CallGraphCreate & graph ) : GraphDotOutput<CallGraphCreate>(graph), callGraph(graph) 
+#if 0
+CallGraphDotOutput::CallGraphDotOutput( SgIncidenceDirectedGraph & graph ) : GraphDotOutput<SgIncidenceDirectedGraph>(graph), callGraph(graph) 
   {}
-
+#endif
 
 namespace CallTargetSet
 {
@@ -649,13 +744,7 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
 			     SgProject *project, ClassHierarchyWrapper *classHierarchy )
    {
      hasDefinition = false;
-     properties = new FunctionProperties();
-     properties->functionDeclaration = inputFunctionDeclaration;
-     ROSE_ASSERT( properties->functionDeclaration != NULL );
-
-     properties->functionType = inputFunctionDeclaration->get_type()->findBaseType();
-     properties->invokedClass = NULL;
-     properties->isPointer = properties->isPolymorphic = false;
+     properties = new Properties(inputFunctionDeclaration);
      SgFunctionDeclaration *defDecl =
        isSgFunctionDeclaration( properties->functionDeclaration->get_definingDeclaration() );
 
@@ -681,7 +770,7 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
 	  // function pointers and virtual functions
           while (i != functionCallExpList.end())
              {
-	       FunctionProperties *fctProps = new FunctionProperties();
+	       Properties *fctProps = new Properties();
 	       fctProps->functionDeclaration = NULL;
 	       fctProps->functionType = NULL;
 	       fctProps->invokedClass = NULL;
@@ -786,6 +875,7 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
 			 cout << "SET polymorphic on class " << fctProps->invokedClass->get_qualified_name().getString()
 			      << "\t" << fctProps << "\n";
 		       }
+                     ROSE_ASSERT(fctProps->functionDeclaration != NULL);
 		     functionListDB.push_back( fctProps );
 		   }
 		   break;
@@ -818,6 +908,8 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
 		     fctProps->isPolymorphic = false;
 		     fctProps->invokedClass = NULL;
 		     functionListDB.push_back( fctProps );
+                     ROSE_ASSERT(fctProps->functionDeclaration != NULL);
+
 
 		     /*
 		     functionListDB.push_back( mbFctDecl );
@@ -842,6 +934,8 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration,
 		     fctProps->isPolymorphic = false;
 		     fctProps->invokedClass = NULL;
 		     functionListDB.push_back( fctProps );
+                     ROSE_ASSERT(fctProps->functionDeclaration != NULL);
+
 		   }
 		   break;
 		 default:
@@ -863,6 +957,8 @@ FunctionData::FunctionData ( SgFunctionDeclaration* inputFunctionDeclaration, bo
 {
   hasDefinition = hasDef;
   functionDeclaration = inputFunctionDeclaration;
+  properties = new Properties(inputFunctionDeclaration);
+
   ROSE_ASSERT( functionDeclaration != NULL );
   SgFunctionDeclaration *defDecl =
     isSgFunctionDeclaration( functionDeclaration->get_definingDeclaration() );
@@ -1106,22 +1202,22 @@ findEdge (SgIncidenceDirectedGraph* graph, SgGraphNode* from, SgGraphNode* to)
 };
 
 
-CallGraphNode*
-findNode ( Rose_STL_Container<CallGraphNode*> & nodeList, SgFunctionDeclaration* functionDeclaration )
+SgGraphNode*
+findNode ( Rose_STL_Container<SgGraphNode*> & nodeList, SgFunctionDeclaration* functionDeclaration )
    {
-     Rose_STL_Container<CallGraphNode*>::iterator k = nodeList.begin();
+     Rose_STL_Container<SgGraphNode*>::iterator k = nodeList.begin();
 
-     CallGraphNode* returnNode = NULL;
+     SgGraphNode* returnNode = NULL;
 
      bool found = false;
      while ( !found && (k != nodeList.end()) )
         {
 
           if ( ( var_SOLVE_FUNCTION_CALLS_IN_DB == true &&
-                 (*k)->properties->functionDeclaration == functionDeclaration ) 
+                 (*k)->get_SgNode() == functionDeclaration ) 
                ||
                ( var_SOLVE_FUNCTION_CALLS_IN_DB == false && 
-                 (*k)->functionDeclaration == functionDeclaration) )
+                 (*k)->get_SgNode() == functionDeclaration) )
              {
                returnNode = *k;
                found = true;
@@ -1135,17 +1231,17 @@ findNode ( Rose_STL_Container<CallGraphNode*> & nodeList, SgFunctionDeclaration*
      return returnNode;
    }
 
-CallGraphNode*
-findNode ( Rose_STL_Container<CallGraphNode*> & nodeList, string name )
+SgGraphNode*
+findNode ( Rose_STL_Container<SgGraphNode*> & nodeList, string name )
    {
-     Rose_STL_Container<CallGraphNode*>::iterator k = nodeList.begin();
+     Rose_STL_Container<SgGraphNode*>::iterator k = nodeList.begin();
 
-     CallGraphNode* returnNode = NULL;
+     SgGraphNode* returnNode = NULL;
 
      bool found = false;
      while ( !found && (k != nodeList.end()) )
         {
-          if ((*k)->label == name)
+          if ((*k)->get_name() == name)
              {
                returnNode = *k;
                found = true;
@@ -1277,8 +1373,8 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
 	  /*
 	  // show graph
 	  cout << "Function " << functionName << "   " << id << " has pointers to:\n";
-	  list <FunctionProperties *> &fL = (*j)->functionList;
-          list<FunctionProperties *>::iterator k = fL.begin();
+	  list <Properties *> &fL = (*j)->functionList;
+          list<Properties *>::iterator k = fL.begin();
  	  while (k != fL.end())
 	    {
 	      cout << "\tfunction: " << *k << "\n";
@@ -1300,9 +1396,9 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
              findNode(nodeList,(*j)->functionDeclaration) );
           ROSE_ASSERT (startingNode != NULL);
 
-          Rose_STL_Container<FunctionProperties *> & functionList = ( var_SOLVE_FUNCTION_CALLS_IN_DB == true ? (*j)->functionListDB :
+          Rose_STL_Container<Properties *> & functionList = ( var_SOLVE_FUNCTION_CALLS_IN_DB == true ? (*j)->functionListDB :
               (*j)->functionList);
-          Rose_STL_Container<FunctionProperties *>::iterator k = functionList.begin();
+          Rose_STL_Container<Properties *>::iterator k = functionList.begin();
 
           if(var_SOLVE_FUNCTION_CALLS_IN_DB == true)
           {
@@ -1320,11 +1416,11 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
               // if we have a pointer (no function declaration) or a virtual function, create dummy node
               if ( !( (*k)->functionDeclaration ) || (*k)->isPolymorphic )
               {
-                CallGraphNode *dummy;
+                SgGraphNode *dummy;
                 if ( (*k)->functionDeclaration && (*k)->functionDeclaration->get_definingDeclaration() )
-                  dummy = new CallGraphNode( "DUMMY", *k, true );
+                  dummy = new SgGraphNode( "DUMMY", *k, true );
                 else
-                  dummy = new CallGraphNode( "DUMMY", *k, false );
+                  dummy = new SgGraphNode( "DUMMY", *k, false );
                 returnGraph->addNode( dummy );
 
                 returnGraph->addEdge( startingNode, dummy, edge );
@@ -1332,7 +1428,7 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
               else
               {
 
-                CallGraphNode *endNode = findNode( nodeList, ( *k )->functionDeclaration );
+                SgGraphNode *endNode = findNode( nodeList, ( *k )->functionDeclaration );
                 ROSE_ASSERT ( endNode );
                 if(returnGraph->edgeExist(startingNode,endNode)==false)
                   returnGraph->addEdge( startingNode, endNode, edge );
@@ -1347,7 +1443,7 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
             while (k != functionList.end())
             {
 
-              CallGraphNode* endingNode = findNode( nodeList, *k );
+              SgGraphNode* endingNode = findNode( nodeList, *k );
               /*
                  if ( !endingNode )
                  endingNode = findNode( nodeList,
@@ -1382,411 +1478,37 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
    }
 #endif
 
-template<typename Predicate>
-void
-CallGraphBuilder::buildCallGraph (Predicate pred)
-{
-  if(var_SOLVE_FUNCTION_CALLS_IN_DB == true)
-  {
-    Rose_STL_Container<FunctionData *> callGraphData;
-
-    //AS (09/23/06) Query the memory pool instead of subtree of project
-    VariantVector vv( V_SgFunctionDeclaration );
-    AstQueryNamespace::DefaultNodeFunctional defFunc;
-    Rose_STL_Container<SgNode *> functionList = NodeQuery::queryMemoryPool(defFunc, &vv );
-
-
-    //   list<SgNode *> functionList = NodeQuery::querySubTree ( project, V_SgFunctionDeclaration );
-
-    ClassHierarchyWrapper classHierarchy( project );
-    Rose_STL_Container<SgNode *>::iterator i = functionList.begin();
-
-    printf ("Inside of buildCallGraph functionList.size() = %zu \n",functionList.size());
-
-    while ( i != functionList.end() )
+GetOneFuncDeclarationPerFunction::result_type 
+GetOneFuncDeclarationPerFunction::operator()(SgNode* node )
     {
-      SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration( *i );
-      ROSE_ASSERT ( functionDeclaration != NULL );
-
-      // determining the in-class declaration
-      if ( isSgMemberFunctionDeclaration( functionDeclaration ) )
+      result_type returnType;
+      SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(node);
+      if(funcDecl != NULL)
       {
-        // always saving the in-class declaration, so we need to find that one
-        SgDeclarationStatement *nonDefDeclInClass =
-          isSgMemberFunctionDeclaration( functionDeclaration->get_firstNondefiningDeclaration() );
-        // functionDeclaration is outside the class (so it must have a definition)
-        if ( nonDefDeclInClass )
-          functionDeclaration = isSgMemberFunctionDeclaration( nonDefDeclInClass );
+        if( funcDecl->get_definingDeclaration () != NULL && node == funcDecl->get_definingDeclaration ())
+          returnType.push_back(node);
+        if( funcDecl->get_definingDeclaration () == NULL && node == funcDecl->get_firstNondefiningDeclaration () )
+          returnType.push_back(node);
       }
-      else
-      {
-        // we need to have only one declaration for regular functions as well
-        SgFunctionDeclaration *nonDefDecl =
-          isSgFunctionDeclaration( functionDeclaration->get_firstNondefiningDeclaration() );
-        if ( nonDefDecl )
-          functionDeclaration = nonDefDecl;
-      }
-      FunctionData* functionData = new FunctionData( functionDeclaration, project, &classHierarchy );
-      //*i = functionDeclaration;
-
-      //AS(032806) Filter out functions baced on criteria in predicate
-      if(pred(functionDeclaration)==true) 
-        callGraphData.push_back( functionData );
-      i++;
+      return returnType;
     }
 
-    // Build the graph
-    CallGraphCreate *returnGraph = new CallGraphCreate();
-    ROSE_ASSERT (returnGraph != NULL);
-
-    Rose_STL_Container<FunctionData *>::iterator j = callGraphData.begin();
-
-    printf ("Build the node list callGraphData.size() = %zu \n",callGraphData.size());
-
-    Rose_STL_Container<CallGraphNode *> nodeList;
-    while ( j != callGraphData.end() )
-    {
-      string functionName;
-      ROSE_ASSERT ( (*j)->properties->functionDeclaration );
-      functionName = (*j)->properties->functionDeclaration->get_mangled_name().getString();
-
-      // Generate a unique name to test against later
-      SgFunctionDeclaration* id = (*j)->properties->functionDeclaration;
-      SgDeclarationStatement *nonDefDeclInClass =
-        isSgMemberFunctionDeclaration( id->get_firstNondefiningDeclaration() );
-      if ( nonDefDeclInClass )
-        ROSE_ASSERT ( id == nonDefDeclInClass );
-      CallGraphNode* node = new CallGraphNode( functionName, (*j)->properties, (*j)->isDefined() );
-      cout << "Function: "
-        << (*j)->properties->functionDeclaration->get_scope()->get_qualified_name().getString() +
-        (*j)->properties->functionDeclaration->get_mangled_name().getString()
-        << " has declaration " << (*j)->isDefined() << "\n";
-      nodeList.push_back( node );
-      /*
-      // show graph
-      cout << "Function " << functionName << "   " << id << " has pointers to:\n";
-      list <FunctionProperties *> &fL = (*j)->functionList;
-      list<FunctionProperties *>::iterator k = fL.begin();
-      while (k != fL.end())
-      {
-      cout << "\tfunction: " << *k << "\n";
-      k++;
-      }
-       */
-      ROSE_ASSERT ( node->properties->functionType );
-      returnGraph->addNode( node );
-      j++;
-    }
-
-    j = callGraphData.begin();
-    cout << "NodeList size: " << nodeList.size() << "\n";
-    int totEdges = 0;
-    while (j != callGraphData.end())
-    {
-
-//                printf ("Calling findNode in outer loop (*j)->functionDeclaration->get_name() = %s \n",(*j)->functionDeclaration->get_name().str());
-      CallGraphNode* startingNode = findNode( nodeList, (*j)->properties->functionDeclaration );
-      ROSE_ASSERT (startingNode != NULL);
-
-      Rose_STL_Container<FunctionProperties *> & functionList = (*j)->functionListDB;
-      Rose_STL_Container<FunctionProperties *>::iterator k = functionList.begin();
-
-      while ( k != functionList.end() )
-      {
-        ROSE_ASSERT ( (*k)->functionType );
-        string label = "POINTER";
-
-        CallGraphEdge* edge = new CallGraphEdge( " " );
-        if ( (*k)->functionDeclaration )
-          edge->label = (*k)->functionDeclaration->get_mangled_name().getString();
-        ROSE_ASSERT ( edge != NULL );
-        edge->properties = *k;
-        // if we have a pointer (no function declaration) or a virtual function, create dummy node
-        if ( !( (*k)->functionDeclaration ) || (*k)->isPolymorphic )
-        {
-          CallGraphNode *dummy;
-          if ( (*k)->functionDeclaration && (*k)->functionDeclaration->get_definingDeclaration() )
-            dummy = new CallGraphNode( "DUMMY", *k, true );
-          else
-            dummy = new CallGraphNode( "DUMMY", *k, false );
-          returnGraph->addNode( dummy );
-
-          returnGraph->addEdge( startingNode, dummy, edge );
-        }
-        else
-        {
-          CallGraphNode *endNode = findNode( nodeList, ( *k )->functionDeclaration );
-          ROSE_ASSERT ( endNode );
-          if(returnGraph->edgeExist(startingNode,endNode)==false)
-            returnGraph->addEdge( startingNode, endNode, edge );
-          cout << "\tEndNode "
-            << (*k)->functionDeclaration->get_name().str() << "\t" << endNode->isDefined() << "\n";
-        }
-        totEdges++;
-        k++;
-      }
-      j++;
-    }
-
-    cout << "Total number of edges: " << totEdges << "\n";
-    // printf ("Return graph \n");
-
-    graph = returnGraph;
 
 
-  }else{
-    Rose_STL_Container<FunctionData*> callGraphData;
-
-    // list<SgNode*> functionList = NodeQuery::querySubTree ( project, V_SgFunctionDeclaration );
-    //AS (09/23/06) Query the memory pool instead of subtree of project
-    VariantVector vv(V_SgFunctionDeclaration);
-    AstQueryNamespace::DefaultNodeFunctional defFunc;
-    Rose_STL_Container<SgNode *> functionList = NodeQuery::queryMemoryPool(defFunc, &vv );
 
 
-    ClassHierarchyWrapper classHierarchy( project );
-    Rose_STL_Container<SgNode*>::iterator i = functionList.begin();
 
-    printf ("Inside of buildCallGraph functionList.size() = %zu \n",functionList.size());
-
-    while (i != functionList.end())
-    {
-      SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(*i);
-      ROSE_ASSERT (functionDeclaration != NULL);
-      bool hasDef = false;
-
-      if ( functionDeclaration->get_definition() != NULL )
-      {
-        // printf ("Insert function declaration containing function definition \n");
-        hasDef = true;
-      }
-
-      // determining the in-class declaration
-      if ( isSgMemberFunctionDeclaration( functionDeclaration ) )
-      {
-        // always saving the in-class declaration, so we need to find that one
-        SgDeclarationStatement *nonDefDeclInClass =
-          isSgMemberFunctionDeclaration( functionDeclaration->get_firstNondefiningDeclaration() );
-        // functionDeclaration is outside the class (so it must have a definition)
-        if ( nonDefDeclInClass )
-          functionDeclaration = isSgMemberFunctionDeclaration( nonDefDeclInClass );
-      }
-      else
-      {
-        // we need to have only one declaration for regular functions as well
-        SgFunctionDeclaration *nonDefDecl =
-          isSgFunctionDeclaration( functionDeclaration->get_firstNondefiningDeclaration() );
-        if ( nonDefDecl )
-          functionDeclaration = nonDefDecl;
-      }
-
-      FunctionData* functionData = new FunctionData( functionDeclaration, hasDef, project, &classHierarchy );
-      *i = functionDeclaration;
-
-
-      //AS(032806) Filter out functions baced on criteria in predicate
-      if(pred(functionDeclaration)==true) 
-        callGraphData.push_back( functionData );
-      i++;
-    }
-
-    // Build the graph
-    CallGraphCreate *returnGraph = new CallGraphCreate();
-    ROSE_ASSERT (returnGraph != NULL);
-
-    Rose_STL_Container<FunctionData*>::iterator j = callGraphData.begin();
-
-    // printf ("Build the node list callGraphData.size() = %zu \n",callGraphData.size());
-
-    Rose_STL_Container<CallGraphNode*> nodeList;
-    while (j != callGraphData.end())
-    {
-      string functionName = (*j)->functionDeclaration->get_name().str();
-
-      // Generate a unique name to test against later
-      SgFunctionDeclaration* id = (*j)->functionDeclaration;
-
-      SgDeclarationStatement *nonDefDeclInClass =
-        isSgMemberFunctionDeclaration( id->get_firstNondefiningDeclaration() );
-      if ( nonDefDeclInClass )
-        ROSE_ASSERT ( id == nonDefDeclInClass );
-
-      CallGraphNode* node = new CallGraphNode(functionName, id, (*j)->isDefined());
-      nodeList.push_back(node);
-      // show graph
-      /*
-         cout << "Function " << functionName << " " << id << " has pointers to:\n";
-         list <SgFunctionDeclaration *> &fL = (*j)->functionList;
-         list<SgFunctionDeclaration*>::iterator k = fL.begin();
-         while (k != fL.end())
-         {
-         cout << "\tfunction: " << ( *k )->get_name().str() << ( *k ) << "\n";
-         k++;
-         }
-       */
-
-      returnGraph->addNode(node);
-      j++;
-    }
-
-    j = callGraphData.begin();
-    // cout << "NodeList size: " << nodeList.size() << "\n";
-    int totEdges = 0;
-    while (j != callGraphData.end())
-    {
-//       printf ("Calling findNode in outer loop (*j)->functionDeclaration->get_name() = %s \n",(*j)->functionDeclaration->get_name().str());
-
-      CallGraphNode* startingNode = findNode(nodeList,(*j)->functionDeclaration);
-      ROSE_ASSERT (startingNode != NULL);
-
-      Rose_STL_Container<SgFunctionDeclaration*> & functionList = (*j)->functionList;
-      Rose_STL_Container<SgFunctionDeclaration*>::iterator k = functionList.begin();
-
-      // printf ("Now iterate over the list (size = %d) for function %s \n",
-      // functionList.size(),(*j)->functionDeclaration->get_name().str());
-      while (k != functionList.end())
-      {
-        CallGraphNode* endingNode = findNode( nodeList, *k );
-        /*
-           if ( !endingNode )
-           endingNode = findNode( nodeList,
-           ( *k )->get_qualified_name().getString() +
-           ( *k )->get_mangled_name().getString(), 1 );
-         */
-        if ( endingNode )
-        {
-          ROSE_ASSERT (endingNode != NULL);
-
-          CallGraphEdge* edge = new CallGraphEdge(endingNode->functionDeclaration->get_name().getString());
-          ROSE_ASSERT (edge != NULL);
-          if(returnGraph->edgeExist(startingNode,endingNode)==false)
-            returnGraph->addEdge(startingNode,endingNode,edge);
-          totEdges++;
-        }
-        else
-        {
-          cout << "COULDN'T FIND: " << ( *k )->get_qualified_name().str() << "\n";
-          //isSgFunctionDeclaration( *k )->get_file_info()->display("AVOIDED CALL");
-        }
-        k++;
-      }
-      j++;
-    }
-
-    cout << "Total number of edges: " << totEdges << "\n";
-    // printf ("Return graph \n");
-
-    graph = returnGraph;
-  }
-}
-
-void
-CallGraphBuilder::classifyCallGraph ()
-{
-  ROSE_ASSERT(graph != NULL);
-  
-  // printf ("Output the graph information! (number of nodes = %zu) \n",graph->size());
-  
-  int counter = 0;
-
-  // This iteration over the graph verifies that we have a valid graph!
-  CallGraphCreate::NodeIterator nodeIterator;
-  for (nodeIterator = graph->GetNodeIterator(); !nodeIterator.ReachEnd(); ++nodeIterator)
-    {
-      // printf ("In loop using node iterator ... \n");
-      // DAGBaseNodeImpl* nodeImpl = nodeIterator.Current();
-      CallGraphNode* node = *nodeIterator;
-      
-      ROSE_ASSERT (node != NULL);
-
-      string filename;
-      if(var_SOLVE_FUNCTION_CALLS_IN_DB == true)
-      {
-        filename = "./__pointers";
-        if ( node->properties->functionDeclaration )
-        {
-          ROSE_ASSERT (node->properties->functionDeclaration->get_file_info() != NULL);
-          ROSE_ASSERT (node->properties->functionDeclaration->get_file_info()->get_filename() != NULL);
-          string tmp = node->properties->functionDeclaration->get_file_info()->get_filename();
-          filename = tmp;
-          if ( node->properties->functionDeclaration->get_file_info()->isCompilerGenerated() )
-            filename = "/__compilerGenerated";
-          if ( node->properties->functionDeclaration->get_file_info()->isCompilerGeneratedNodeToBeUnparsed() )
-            filename = "./__compilerGenearatedToBeUnparsed";
-        }
-      }else{
-
-        ROSE_ASSERT (node->functionDeclaration != NULL);
-        ROSE_ASSERT (node->functionDeclaration->get_file_info() != NULL);
-        // ROSE_ASSERT (node->functionDeclaration->get_file_info()->getCurrentFilename() != NULL);
-        // string filename = node->functionDeclaration->get_file_info()->getCurrentFilename();
-        ROSE_ASSERT (node->functionDeclaration->get_file_info()->get_filename() != NULL);
-        filename = node->functionDeclaration->get_file_info()->get_filename();
-        if ( node->functionDeclaration->get_file_info()->isCompilerGenerated() )
-          filename = "/__compilerGenerated";
-        if ( node->functionDeclaration->get_file_info()->isCompilerGeneratedNodeToBeUnparsed() )
-          filename = "./__compilerGenearatedToBeUnparsed";
-        // printf ("function location = %s \n",filename.c_str());
-      }
-      
-
-      // If not in the sub graph map then add it and increment the counter!
-      if (graph->getSubGraphMap().find(filename) == graph->getSubGraphMap().end())
-	{
-            // This must be done on the DOT graph
-            // graph->addSubgraph(filename);
-	  graph->getSubGraphMap()[filename] = counter;
-	  graph->subGraphNames[counter] = filename;
-	  counter++;
-	}
-    }
-  
-  ROSE_ASSERT (graph->getSubGraphMap().size() == graph->subGraphNames.size());
-  for (unsigned int i = 0; i < graph->getSubGraphMap().size(); i++)
-    {
-      // printf ("subgraphMap[%d] = %s \n",i,graph->subGraphNames[i].c_str());
-      
-      // Make sure that the filename are correct
-      ROSE_ASSERT(graph->subGraphNames[i] == graph->subGraphNames[graph->getSubGraphMap()[graph->subGraphNames[i]]]);
-      ROSE_ASSERT(graph->getSubGraphMap()[graph->subGraphNames[i]] == (int) i);
-    }
-}
-
-
-int 
-CallGraphDotOutput::getVertexSubgraphId ( GraphNode & v )
-   {
-     CallGraphNode & node = dynamic_cast<CallGraphNode &>(v);
-
-     if ( (var_SOLVE_FUNCTION_CALLS_IN_DB == true  && node.properties->functionDeclaration)
-         ||
-          (var_SOLVE_FUNCTION_CALLS_IN_DB == false && node.functionDeclaration)
-        )
-       {
-
-	 string filename;
-         if(var_SOLVE_FUNCTION_CALLS_IN_DB == true)
-           filename = node.properties->functionDeclaration->get_file_info()->get_filename();
-         else
-           filename = node.functionDeclaration->get_file_info()->get_filename();
-
-	 int returnValue = callGraph.getSubGraphMap()[filename];
-	 return returnValue;
-       }
-
-     // when recreating the graph, we have lost the function declaration
-     return -2;
-   }
 
 
 void
-GenerateDotGraph ( CallGraphCreate *graph, string fileName )
+GenerateDotGraph ( SgIncidenceDirectedGraph *graph, string fileName )
    {
      ROSE_ASSERT(graph != NULL);
 
      //     printf ("Building the GraphDotOutput object ... \n");
-     CallGraphDotOutput output(*graph);
-     output.writeToDOTFile(fileName, "Call Graph");
+     std::cerr << "Error: Outputing to DOT file not implemented yet" << std::endl;
+     //CallGraphDotOutput output(*graph);
+     //output.writeToDOTFile(fileName, "Call Graph");
    }
 
 
@@ -1794,95 +1516,83 @@ GenerateDotGraph ( CallGraphCreate *graph, string fileName )
 #ifdef HAVE_SQLITE3
 // creates a db and tables for storage of graphs
 
-// reads from DB the current maximal index of a subgraph
-int
-CallGraphDotOutput::GetCurrentMaxSubgraph ( sqlite3x::sqlite3_connection&  gDB )
-{
-  int rows = sqlite3x::sqlite3_command(gDB, "SELECT MAX(gid) FROM Graph;").executeint();
-  assert(rows >= 0);
 
-  return rows;
-}
 
 // writes the subgraph, edge, and node info to DB
 void
-CallGraphDotOutput::writeSubgraphToDB( sqlite3x::sqlite3_connection& gDB )
+writeSubgraphToDB( sqlite3x::sqlite3_connection& gDB, SgIncidenceDirectedGraph* callGraph )
 {
   // writing the Graph table
   cout << "Writing graph...\n";
-  /*
-  for ( CallGraphCreate::NodeIterator it = callGraph.GetNodeIterator(); !it.ReachEnd(); it++ )
-    {
-      CallGraphNode *node = *it;
-      SgFunctionDeclaration *fctDecl = isSgFunctionDeclaration( node->properties->functionDeclaration );
-      if ( fctDecl )
-	cout << "Node: " << fctDecl->get_scope()->get_qualified_name().str()
-	     << fctDecl->get_mangled_name().str() << "\t" << node->hasDefinition << "\n";
-    }
-  */
-
-  int crtSubgraph = GetCurrentMaxSubgraph(gDB);
-  for (unsigned int i=0; i < callGraph.subGraphNames.size(); i++)
-    {
-      string filename = callGraph.subGraphNames[i];
-      string filenameWithoutPath = basename(filename.c_str());
-      string subGraphName = filenameWithoutPath;
-      ostringstream st;
-      // TODO: define a hierarchical structure, don't use -1 as a default parent
-      st << "INSERT INTO Graph VALUES (" << i + crtSubgraph << ", " << -1 << ", " << "\"" << filename << "\");";
-      string sts = st.str();
-      gDB.executenonquery( sts.c_str() );
-    }
 
   cout << "Writing nodes and edges...\n";
   //----------------------------------------------------------
   // writing the Nodes & Edges tables
-  for (CallGraphCreate::NodeIterator i = callGraph.GetNodeIterator(); !i.ReachEnd(); ++i)
+  rose_graph_integer_node_hash_map & nodes =
+    callGraph->get_node_index_to_node_map ();
+
+  //Map of all graphEdges in the graph
+  rose_graph_integer_edge_hash_multimap & outEdges
+    = callGraph->get_node_index_to_edge_multimap_edgesOut ();
+
+  try{
+  sqlite3_transaction trans2(gDB);
+
+  for( rose_graph_integer_node_hash_map::iterator i = nodes.begin();
+      i != nodes.end(); ++i )
+  {
+    SgGraphNode *node = i->second;//.Current();
+
+    Properties* cur_property = dynamic_cast<Properties*>(node->getAttribute("Properties"));
+
+    ROSE_ASSERT(cur_property != NULL);
+    SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(node->get_SgNode());
+
+    ROSE_ASSERT ( node );
+    //Write Current node to DB
+    if (  funcDecl  ) //Currently only writing graph Created with SgNodes is supported
     {
-      CallGraphNode *node = *i;//.Current();
-      ROSE_ASSERT ( node );
-      if ( isSgFunctionDeclaration( node->properties->functionDeclaration ) )
-	{
       string filename = "POINTER_FUNCTION", mnglName = "POINTER", scope = "NULL";
-      int nV = getVertexSubgraphId(*node);
-      if ( node->properties->functionDeclaration )
-	{
-	  filename = node->properties->functionDeclaration->get_file_info()->get_filename();
-	  mnglName = node->properties->functionDeclaration->get_qualified_name().getString() +
-	    node->properties->functionDeclaration->get_mangled_name().getString();
-	  scope = node->properties->functionDeclaration->get_scope()->get_qualified_name().getString();
-	}
+
+      //Get current filename
+      if( funcDecl->get_file_info()->isCompilerGenerated() || funcDecl->get_file_info()->isCompilerGeneratedNodeToBeUnparsed() )
+      {
+        if ( funcDecl->get_file_info()->isCompilerGenerated() )
+          filename = "./__compilerGenerated";
+        if ( funcDecl->get_file_info()->isCompilerGeneratedNodeToBeUnparsed() )
+          filename = "./__compilerGenearatedToBeUnparsed";
+
+      }else{
+        filename = funcDecl->get_file_info()->get_filename();
+      }
+
+      mnglName = funcDecl->get_qualified_name().getString() +
+        funcDecl->get_mangled_name().getString();
+      scope = funcDecl->get_scope()->get_qualified_name().getString();
 
       ostringstream st;
-      ROSE_ASSERT ( node->properties->functionType );
-      string mnglType = node->properties->functionType->get_mangled().getString();
-      /*
-      clsName = isSgClasssDefinition( node->functionDeclaration->get_scope() );
-      if ( clsDef )
-	{
-	  clsName = clsDef->get_qualified_name().getString();
-	  //cout << "CLSCLSCLS: " << clsName << "\n";
-	}      
-      */
-      int isDef = node->isDefined() ? 1 : 0;
+      ROSE_ASSERT ( cur_property->functionType );
+      string mnglType = cur_property->functionType->get_mangled().getString();
+
+      int isDef = cur_property->hasDef ? 1 : 0;
 
       if ( isDef )
-	{
-          gDB.executenonquery(  "DELETE FROM Nodes WHERE nid = \"" + mnglName + "\";");
+      {
+        gDB.executenonquery(  "DELETE FROM Nodes WHERE nid = \"" + mnglName + "\";");
 
-        }
+      }
 
       string lbl = "POINTER_LABEL";
 
-      if ( node->properties->functionDeclaration )
-	lbl = node->properties->functionDeclaration->get_mangled_name().getString();
+      if ( funcDecl )
+        lbl = funcDecl->get_mangled_name().getString();
 
       string command = "INSERT INTO Nodes VALUES (?,?,?,?,?,?);";
-  
+
       std::ostringstream existQuery;
-/*      existQuery << "select count(nid) from Nodes where nid=\""<<mnglName<<"\" AND gid="<<nV<<" AND label=\"" << lbl << "\" AND def="
-          << isDef << " AND type=\"" << mnglType << "\" AND scope=\"" << scope << "\" limit 1";
-*/
+      /*      existQuery << "select count(nid) from Nodes where nid=\""<<mnglName<<"\" AND gid="<<nV<<" AND label=\"" << lbl << "\" AND def="
+              << isDef << " AND type=\"" << mnglType << "\" AND scope=\"" << scope << "\" limit 1";
+       */
       existQuery << "select count(nid) from Nodes where nid=\""<<mnglName<<"\" limit 1";
 
       if( sqlite3_command(gDB, existQuery.str().c_str()).executeint() == 0 )
@@ -1890,151 +1600,78 @@ CallGraphDotOutput::writeSubgraphToDB( sqlite3x::sqlite3_connection& gDB )
         sqlite3_command cmd(gDB, command.c_str());
 
         cmd.bind(1, mnglName);
-        cmd.bind(2, nV);
+        cmd.bind(2, filename);
         cmd.bind(3, lbl);
         cmd.bind(4, isDef );
         cmd.bind(5, mnglType);
         cmd.bind(6, scope);
 
         std::ostringstream ost;
-        ost << "INSERT INTO Nodes VALUES (\""<<mnglName<<"\","<<nV<<",\"" << lbl << "\","
+        ost << "INSERT INTO Nodes VALUES (\""<<mnglName<<"\","<<filename<<",\"" << lbl << "\","
           << isDef << ",\"" << mnglType << "\",\"" << scope << "\");" << std::endl;
 
-//        std::cout << ost.str() << std::endl;
+        //        std::cout << ost.str() << std::endl;
 
         cmd.executenonquery();
       }
 
       //cout << command << "\n";
 
-      CallGraphCreate::EdgeIterator ei;
-      CallGraphCreate::EdgeDirection dir = CallGraphCreate::EdgeOut;
+      //std::cout << "Finding edges " << i->first << std::endl;
+      for( rose_graph_integer_edge_hash_multimap::const_iterator ei = outEdges.find(i->first);
+          ei != outEdges.end(); ++ei )
+      {
+        SgDirectedGraphEdge *edge = isSgDirectedGraphEdge(ei->second);
+        ROSE_ASSERT( edge != NULL );
+        SgGraphNode *end = edge->get_to();
+        Properties* to_property = dynamic_cast<Properties*>(end->getAttribute("Properties"));
+        ROSE_ASSERT(to_property != NULL);
 
-      for ( ei = callGraph.GetNodeEdgeIterator(node, dir)  ; !ei.ReachEnd(); ++ei )
-	{
-	  CallGraphEdge *edge = ei.Current();
-	  CallGraphNode *end;
-	  ostringstream st;
-//	  end = dynamic_cast<CallGraphNode *>( getTargetVertex(*edge) );
-	  end = dynamic_cast<CallGraphNode *>(callGraph.GetEdgeEndPoint( edge, GraphAccess::EdgeIn) );
+        ostringstream st;
 
-	  ROSE_ASSERT ( end );
-	  string n2mnglName = "POINTER";
- 
-	  string typeF = "", cls = "", nid2 = "NULL";
-	  if ( edge->properties->isPolymorphic )
-	    {
-	      ROSE_ASSERT ( isSgClassDefinition( edge->properties->invokedClass ) );
-	      cls = edge->properties->invokedClass->get_qualified_name().getString();
-	    }
+        ROSE_ASSERT ( end );
+        string n2mnglName = "POINTER";
 
-	  ROSE_ASSERT ( end->properties->functionType );
-	  typeF = edge->properties->functionType->get_mangled().getString();
-	  if ( !( edge->properties->isPointer ) )
-	    {
-	      ROSE_ASSERT ( end->properties->functionDeclaration &&
-			    end->properties->functionDeclaration == edge->properties->functionDeclaration );
-	      n2mnglName = edge->properties->functionDeclaration->get_qualified_name().getString() +
-		edge->properties->functionDeclaration->get_mangled_name().getString();
-	    }
+        string typeF = "", cls = "", nid2 = "NULL";
+        if ( to_property->isPolymorphic )
+        {
+          ROSE_ASSERT ( isSgClassDefinition( to_property->invokedClass ) );
+          cls = to_property->invokedClass->get_qualified_name().getString();
+        }
 
-          //std::cout << "Creating edge between " << mnglName << " " << n2mnglName << std::endl;
-	  st << "INSERT INTO Edges VALUES (\"" << mnglName << "\", \"" << n2mnglName << "\", \"" << edge->label
-	     << "\", \"" << edge->properties->functionType->get_mangled( ).getString() << "\", \"" << cls << "\");";
-	  //cout << st.str() << "\n";
-	  gDB.executenonquery(st.str().c_str());
+        ROSE_ASSERT ( to_property->functionType );
+        typeF = to_property->functionType->get_mangled().getString();
+        if ( !( to_property->isPointer ) )
+        {
+          ROSE_ASSERT ( to_property->functionDeclaration &&
+              to_property->functionDeclaration == end->get_SgNode() );
+          n2mnglName = to_property->functionDeclaration->get_qualified_name().getString() +
+            to_property->functionDeclaration->get_mangled_name().getString();
+        }
 
-	  /*
-       	  st << "INSERT INTO EdgesOld VALUES (\"" << mnglName << "\", \"" <<
-	    n2mnglName << "\", \"" << edge->label << "\");";
-	  gDB->execute(st.str().c_str());
-	  */
-	}
-	}
+        //std::cout << "Creating edge between " << mnglName << " " << n2mnglName << std::endl;
+        st << "INSERT INTO Edges VALUES (\"" << mnglName << "\", \"" << n2mnglName << "\", \"" << edge->get_name()
+          << "\", \"" << to_property->functionType->get_mangled( ).getString() << "\", \"" << cls << "\");";
+        //cout << st.str() << "\n";
+        gDB.executenonquery(st.str().c_str());
+
+      }
     }
+  }
+
+	trans2.commit();
+  }
+  catch(exception &ex) {
+	cerr << "Exception Occured: " << ex.what() << endl;
+  }
+
   cout << "Done writing to DB\n";
 }
-// DQ (7/28/2005): Don't include the data base
 
-// DQ (7/28/2005): Don't include the data base
-// remove nodes and edges of functions defined in the files stored in a specified database
-// the default value for the database name is "__filter.db"
-void
-CallGraphDotOutput::filterNodesByDB ( sqlite3x::sqlite3_connection& gDB, string filterDB )
-{
-  cout << "Filtering system calls...\n";
-
-//  string command = "ATTACH DATABASE \"" + filterDB + "\" AS filter;";
-//  gDB.executenonquery(command.c_str());
-
-//  string command = "CREATE TEMP TABLE IF NOT EXISTS gb AS SELECT g.gid as gid FROM Graph g, filter.files f WHERE f.filename = g.filename;";
-  string command = "CREATE TEMP TABLE IF NOT EXISTS gb AS SELECT g.gid as gid FROM Graph g WHERE g.filename = \"\";";
-
-  gDB.executenonquery(command.c_str());
-
-  command = "CREATE TEMP TABLE IF NOT EXISTS nb AS SELECT nid FROM Nodes n, gb WHERE n.gid = gb.gid;";
-  gDB.executenonquery(command.c_str());
-
-  command = "DELETE FROM Nodes WHERE nid IN (SELECT nb.nid FROM nb);";
-  gDB.executenonquery(command.c_str());
-
-  command = "DELETE FROM Edges WHERE nid1 in (SELECT nb.nid FROM nb) OR nid2 in (SELECT nb.nid FROM nb);";
-  gDB.executenonquery(command.c_str());
-
-  cout << "Done filtering\n";
-}
-// DQ (7/28/2005): Don't include the data base
-
-// DQ (7/28/2005): Don't include the data base
-// remove nodes and edges of functions defined in the specified file
-void
-CallGraphDotOutput::filterNodesByFilename (  sqlite3x::sqlite3_connection& gDB , string filterFile )
-{
-  cout << "Filtering system calls...\n";
-  string command;
-
-  command = "CREATE TEMP TABLE IF NOT EXISTS gb AS SELECT g.gid as gid FROM Graph g WHERE g.filename = " + filterFile + ";";
-  gDB.executenonquery(command.c_str());
-
-  command = "CREATE TEMP TABLE IF NOT EXISTS nb AS SELECT nid FROM Nodes n, gb WHERE n.gid = gb.gid;";
-  gDB.executenonquery(command.c_str());
-
-  command = "DELETE FROM Nodes WHERE nid IN (SELECT nb.nid FROM nb);";
-  gDB.executenonquery(command.c_str());
-
-  command = "DELETE FROM Edges WHERE nid1 in (SELECT nb.nid FROM nb) OR nid2 in (SELECT nb.nid FROM nb);";
-  gDB.executenonquery(command.c_str());
-
-  cout << "Done filtering\n";
-}
-// DQ (7/28/2005): Don't include the data base
-
-// DQ (7/28/2005): Don't include the data base
-// remove nodes and edges of functions with a specific name
-void
-CallGraphDotOutput::filterNodesByFunction ( sqlite3x::sqlite3_connection& gDB , SgFunctionDeclaration *function )
-{
-  ROSE_ASSERT ( function );
-  cout << "Filtering system calls...\n";
-  string functionName = function->get_qualified_name().getString() + function->get_mangled_name().getString();
-
-  string command;
-
-  command = "DELETE FROM Nodes WHERE nid = " + functionName + ";";
-  gDB.executenonquery(command.c_str());
-
-  command =  "DELETE FROM Edges WHERE nid1 = " + functionName + "  OR nid2 = " + functionName + ";";
-  gDB.executenonquery(command.c_str());
-
-  cout << "Done filtering\n";
-}
-// DQ (7/28/2005): Don't include the data base
-
-// DQ (7/28/2005): Don't include the data base
 // solve function pointers based on type
 // TODO: virtual function pointers are not properly solved ( they are treated as regular member function pointers )
 void
-CallGraphDotOutput::solveFunctionPointers( sqlite3x::sqlite3_connection& gDB )
+solveFunctionPointers( sqlite3x::sqlite3_connection& gDB )
 {
   cout << "Solving function pointers...\n";
 
@@ -2054,7 +1691,7 @@ CallGraphDotOutput::solveFunctionPointers( sqlite3x::sqlite3_connection& gDB )
 // DQ (7/28/2005): Don't include the data base
 // solve virtual function calls ( but not via pointers )
 void
-CallGraphDotOutput::solveVirtualFunctions( sqlite3x::sqlite3_connection& gDB, string dbHierarchy )
+solveVirtualFunctions( sqlite3x::sqlite3_connection& gDB, string dbHierarchy )
 {
   cout << "Solving virtual function calls...\n";
 
@@ -2146,97 +1783,8 @@ CallGraphDotOutput::solveVirtualFunctions( sqlite3x::sqlite3_connection& gDB, st
   cout << "Done with virtual functions\n";
 }
 
-// DQ (7/28/2005): Don't include the data base
-// remove nodes and edges of functions defined in the files of a specified directory
-void
-CallGraphDotOutput::filterNodesByDirectory (  sqlite3x::sqlite3_connection& gDB, string directory )
-{
-  cout << "Filtering system calls...\n";
-
-  string command;
-
-  command = "CREATE TEMP TABLE gb AS SELECT g.gid as gid FROM Graph g WHERE g.filename LIKE \"" + directory + "%\";";
-  gDB.executenonquery(command.c_str());
-
-  command = "CREATE TEMP TABLE nb AS SELECT nid FROM Nodes n, gb WHERE n.gid = gb.gid;";
-  gDB.executenonquery(command.c_str());
-
-  command = "DELETE FROM Nodes WHERE nid IN (SELECT nb.nid FROM nb);";
-  gDB.executenonquery(command.c_str());
-
-  command = "DELETE FROM Edges WHERE nid1 in (SELECT nb.nid FROM nb) OR nid2 in (SELECT nb.nid FROM nb);";
-  gDB.executenonquery(command.c_str());
-
-  cout << "Done filtering\n";
-}
-
-// generate a graph from the DB
-CallGraphCreate *
-CallGraphDotOutput::loadGraphFromDB (   sqlite3x::sqlite3_connection& gDB)
-{
-  cout << "Loading...\n";
-  CallGraphCreate *graph = new CallGraphCreate();
-
-  string loadNodes = "SELECT nid,label,def,type,scope FROM Nodes;",
-//    loadGraph = "SELECT * FROM Graph;",
-    loadEdges = "SELECT nid1,nid2,label FROM Edges;";
-
-  Rose_STL_Container<CallGraphNode *> nodeList;
-
-  {
-    sqlite3_command cmd(gDB, loadNodes.c_str());
-    sqlite3x::sqlite3_reader r = cmd.executereader();
 
 
-  
-    while(r.read()) 
-    {
-      string nid   = r.getstring(0); //nid is a unique identifier for a function in the schema
-      string label = r.getstring(1);
-      int is_def   = boost::lexical_cast<int>(r.getstring(2));
-      string typeF = r.getstring(3);
-      string scope = r.getstring(4);
-
-      CallGraphNode *n = new CallGraphNode( nid, label,typeF,scope,is_def, false, false );
-
-      graph->addNode(n);
-           //cout << "Node pushed: " << nid << "\t" << n << "\n";
-      nodeList.push_back(n);
-    }
-  }
-
-  sqlite3_command cmd(gDB, loadEdges.c_str());
-  sqlite3x::sqlite3_reader r = cmd.executereader();
-
-  while(r.read())
-    {
-      string nid1 = r.getstring(0),
-	nid2  = r.getstring(1),
-	label = r.getstring(2);
-
-      // find end points of edges, by their name
-    //      std::cout << "Calling findNode in outer loop loc7 " << nid1 << " " << nid2 << " " 
-     //       << label << std::endl;
-
-      CallGraphNode* startingNode = findNode(nodeList, nid1);
-
-      CallGraphNode* endNode = findNode(nodeList, nid2);
-
-      assert(startingNode);
-
-      if (endNode)
-	{
-	  //cout << "Nodes retrieved: " << nid1 << "\t" << startingNode << "\t"
-	  //   << nid2 << "\t" << endNode << "\n";
-	  CallGraphEdge *e = new CallGraphEdge(label);
-          if(graph->edgeExist(startingNode,endNode)==false)
-	     graph->addEdge(startingNode, endNode, e);
-	}
-    }
-
-  cout << "After recreating the graph\n";
-  return graph;
-}
 
 //AS(5/1/2009): Largely a code copy of the other writeSubgraphToDB(..) function.
 //Need to experiment to see if the other one will do the job.
@@ -2268,7 +1816,7 @@ CallGraphDotOutput::writeSubgraphToDB( GlobalDatabaseConnection *gDB )
   // writing the Nodes & Edges tables
   for (CallGraphCreate::NodeIterator i = callGraph.GetNodeIterator(); !i.ReachEnd(); ++i)
     {
-      CallGraphNode *node = i.Current();
+      SgGraphNode *node = i.Current();
       assert(node);
       string filename = node->functionDeclaration->get_file_info()->get_filename();
       
@@ -2348,3 +1896,86 @@ CallGraphDotOutput::writeSubgraphToDB( GlobalDatabaseConnection *gDB )
 #endif
 
 #endif
+
+
+#if 0
+void
+CallGraphBuilder::classifyCallGraph ()
+{
+  ROSE_ASSERT(graph != NULL);
+
+  // printf ("Output the graph information! (number of nodes = %zu) \n",graph->size());
+
+  int counter = 0;
+
+  // This iteration over the graph verifies that we have a valid graph!
+  rose_graph_integer_node_hash_map & nodes =
+    graph->get_node_index_to_node_map ();
+
+
+  for( rose_graph_integer_node_hash_map::iterator nodeIterator = nodes.begin();
+      nodeIterator != nodes.end(); ++nodeIterator )
+
+  {
+    // printf ("In loop using node iterator ... \n");
+    // DAGBaseNodeImpl* nodeImpl = nodeIterator.Current();
+    SgGraphNode* node = *nodeIterator;
+    Properties* cur_property = dynamic_cast<Properties*>(node->getAttribute("Properties"));
+    ROSE_ASSERT(cur_property != NULL);
+    ROSE_ASSERT (node != NULL);
+
+      string filename;
+      if(var_SOLVE_FUNCTION_CALLS_IN_DB == true)
+      {
+        filename = "./__pointers";
+        if ( cur_property->functionDeclaration )
+        {
+          ROSE_ASSERT (cur_property->functionDeclaration->get_file_info() != NULL);
+          ROSE_ASSERT (cur_property->functionDeclaration->get_file_info()->get_filename() != NULL);
+          string tmp = cur_property->functionDeclaration->get_file_info()->get_filename();
+          filename = tmp;
+          if ( cur_property->functionDeclaration->get_file_info()->isCompilerGenerated() )
+            filename = "/__compilerGenerated";
+          if ( cur_property->functionDeclaration->get_file_info()->isCompilerGeneratedNodeToBeUnparsed() )
+            filename = "./__compilerGenearatedToBeUnparsed";
+        }
+      }else{
+
+        ROSE_ASSERT (node->get_SgNode() != NULL);
+        ROSE_ASSERT (node->get_SgNode()->get_file_info() != NULL);
+        // ROSE_ASSERT (node->functionDeclaration->get_file_info()->getCurrentFilename() != NULL);
+        // string filename = node->functionDeclaration->get_file_info()->getCurrentFilename();
+        ROSE_ASSERT (node->get_SgNode()->get_file_info()->get_filename() != NULL);
+        filename = node->get_SgNode()->get_file_info()->get_filename();
+        if ( node->get_SgNode()->get_file_info()->isCompilerGenerated() )
+          filename = "/__compilerGenerated";
+        if ( node->get_SgNode()->get_file_info()->isCompilerGeneratedNodeToBeUnparsed() )
+          filename = "./__compilerGenearatedToBeUnparsed";
+        // printf ("function location = %s \n",filename.c_str());
+      }
+      
+
+      // If not in the sub graph map then add it and increment the counter!
+      if (graph->getSubGraphMap().find(filename) == graph->getSubGraphMap().end())
+	{
+            // This must be done on the DOT graph
+            // graph->addSubgraph(filename);
+	  graph->getSubGraphMap()[filename] = counter;
+	  graph->subGraphNames[counter] = filename;
+	  counter++;
+	}
+    }
+  
+  ROSE_ASSERT (graph->getSubGraphMap().size() == graph->subGraphNames.size());
+  for (unsigned int i = 0; i < graph->getSubGraphMap().size(); i++)
+    {
+      // printf ("subgraphMap[%d] = %s \n",i,graph->subGraphNames[i].c_str());
+      
+      // Make sure that the filename are correct
+      ROSE_ASSERT(graph->subGraphNames[i] == graph->subGraphNames[graph->getSubGraphMap()[graph->subGraphNames[i]]]);
+      ROSE_ASSERT(graph->getSubGraphMap()[graph->subGraphNames[i]] == (int) i);
+    }
+}
+#endif
+
+

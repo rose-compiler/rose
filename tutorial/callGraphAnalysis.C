@@ -36,11 +36,6 @@ main( int argc, char * argv[] )
      CallGraphBuilder CGBuilder( project );
      CGBuilder.buildCallGraph();
 
-  // Classify subgraphs within call graph
-     cout << "Classifying...\n";
-     CGBuilder.classifyCallGraph();
-     cout << "Done classifying\n";
-
      GenerateDotGraph(CGBuilder.getGraph(),"callgraph.dot");
 
 // DQ (7/28/2005): Added use of macro set in config.h so that call 
@@ -50,17 +45,16 @@ main( int argc, char * argv[] )
 #ifdef HAVE_SQLITE3
      sqlite3x::sqlite3_connection* gDB = open_db("DATABASE");
 
-     CallGraphDotOutput output( *(CGBuilder.getGraph()) );
 
-     output.writeSubgraphToDB(*gDB );
+     writeSubgraphToDB(*gDB, CGBuilder.getGraph() );
 
   // DQ (9/9/2005): Added "" as name for what the filter on
-     output.filterNodesByFilename( *gDB,"" );
+     filterNodesByFilename( *gDB,"" );
 
      cout << "Loading from DB...\n";
 
 
-     CallGraphCreate *newGraph = output.loadGraphFromDB( *gDB );
+     SgIncidenceDirectedGraph *newGraph = loadCallGraphFromDB( *gDB );
      cout << "Loaded\n";
      ostringstream st;
      st << "DATABASE.dot";

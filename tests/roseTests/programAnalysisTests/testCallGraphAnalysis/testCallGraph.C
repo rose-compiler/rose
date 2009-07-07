@@ -79,33 +79,28 @@ main( int argc, char * argv[] ) {
    CallGraphBuilder CGBuilder( project );
    CGBuilder.buildCallGraph();
 
-   // Classify subgraphs within call graph
-   cout << "Classifying...\n";
-   CGBuilder.classifyCallGraph();
-   cout << "Done classifying\n";
    //  GenerateDotGraph(CGBuilder.getGraph(),"callgraph.dot");
 
    ClassHierarchyWrapper hier( project );
 
    // Use the information in the graph to output a dot file for the call graph
 
-   CallGraphDotOutput output( *(CGBuilder.getGraph()) );
+   //CallGraphDotOutput output( *(CGBuilder.getGraph()) );
 
 // TPS (01Dec2008): Enabled mysql and this fails.
 // seems like it is not supposed to be included
-   CallGraphCreate *newGraph;
+   SgIncidenceDirectedGraph *newGraph;
    if(var_SOLVE_FUNCTION_CALLS_IN_DB == true)
    {
 
 #ifdef HAVE_SQLITE3
-     output.writeSubgraphToDB( *gDB );
+     writeSubgraphToDB( *gDB,  CGBuilder.getGraph() );
 
      hier.writeHierarchyToDB(*gDB);
 
-     output.filterNodesByDirectory(*gDB, "/export" );
-     output.filterNodesByDB( *gDB, "__filter.db" );
-     output.solveVirtualFunctions(*gDB, "ClassHierarchy" );
-     output.solveFunctionPointers( *gDB );
+     filterNodesByDirectory(*gDB, "/export" );
+     solveVirtualFunctions(*gDB, "ClassHierarchy" );
+     solveFunctionPointers( *gDB );
      cout << "Loading from DB...\n";
 
      std::vector<std::string> keepDirs;
@@ -115,8 +110,6 @@ main( int argc, char * argv[] ) {
      std::vector<std::string> removeFunctions;
      removeFunctions.push_back("::main%" );
      filterNodesByFunctionName(*gDB,removeFunctions);
-
-     newGraph = output.loadGraphFromDB( *gDB);
 
      SgIncidenceDirectedGraph* incidenceGraph = loadCallGraphFromDB(*gDB);
      cout << "Loaded\n";
@@ -128,7 +121,7 @@ main( int argc, char * argv[] ) {
      printf ("Not using the SQLite Database ... \n");
      newGraph = CGBuilder.getGraph();
 
-     filterGraph(*newGraph,filterNodes());
+     //filterGraph(*newGraph,filterNodes());
 
    }
 

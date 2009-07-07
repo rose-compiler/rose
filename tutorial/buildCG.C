@@ -3,18 +3,17 @@
 #include <GraphUpdate.h>
 using namespace std;
 
-struct filterNodes : public unary_function<CallGraphNode*,bool>{
+#if 1
+struct filterNodes : public unary_function<bool,SgFunctionDeclaration*>{
     public:
-      bool operator()(CallGraphNode* test){
+      bool operator()(SgFunctionDeclaration* CallGraphNode2){
               bool returnValue = false;
-              SgFunctionDeclaration* CallGraphNode2 = test->functionDeclaration;
+              ROSE_ASSERT(CallGraphNode2 != NULL);
               string filename = CallGraphNode2->get_file_info()->get_filename();
               if( filename.find("g++_HEADERS")!=string::npos ||
                   filename.find("/usr/include")!=string::npos){
                 returnValue= true;
               }
-              if(test->toString().find(string("_"))!=string::npos)
-                returnValue = true;
               if(filename.find("rose_edg_macros_and_functions_required_for_gnu.h")!=string::npos)
                  returnValue = true;
          if(CallGraphNode2->get_file_info()->isCompilerGenerated()==true)
@@ -23,16 +22,35 @@ struct filterNodes : public unary_function<CallGraphNode*,bool>{
       }
 };
 
+#else
+struct filterNodes : public unary_function<SgGraphNode*,bool>{
+    public:
+      bool operator()(SgGraphNode* test){
+              bool returnValue = false;
+              SgFunctionDeclaration* CallGraphNode2 = isSgFunctionDeclaration(test->get_SgNode());
+              ROSE_ASSERT(CallGraphNode2 != NULL);
+              string filename = CallGraphNode2->get_file_info()->get_filename();
+              if( filename.find("g++_HEADERS")!=string::npos ||
+                  filename.find("/usr/include")!=string::npos){
+                returnValue= true;
+              }
+              if(test->get_name().find(string("_"))!=string::npos)
+                returnValue = true;
+              if(filename.find("rose_edg_macros_and_functions_required_for_gnu.h")!=string::npos)
+                 returnValue = true;
+         if(CallGraphNode2->get_file_info()->isCompilerGenerated()==true)
+            returnValue=true;
+         return returnValue;
+      }
+};
+#endif
 int
 main( int argc, char * argv[] ) {
    RoseTestTranslator test;
    SgProject* project = new SgProject(argc, argv);
    CallGraphBuilder CGBuilder( project );
-   CGBuilder.buildCallGraph();
+   CGBuilder.buildCallGraph(filterNodes());
 
-   cout << "Classifying...\n"; // Classify subgraphs within call graph
-   CGBuilder.classifyCallGraph();
-   cout << "Done classifying\n";
   //  GenerateDotGraph(CGBuilder.getGraph(),"callgraph.dot");
 
    ClassHierarchyWrapper hier( project );
@@ -45,7 +63,7 @@ main( int argc, char * argv[] ) {
    hier.writeHierarchyToDB();
 #endif
    // Use the information in the graph to output a dot file for the call graph
-   CallGraphDotOutput output( *(CGBuilder.getGraph()) );
+   //CallGraphDotOutput output( *(CGBuilder.getGraph()) );
 
 // TPS (01Dec2008): Enabled mysql and this fails.
 // seems like it is not supposed to be included
@@ -66,13 +84,13 @@ main( int argc, char * argv[] ) {
 #else
    // Not SQL Database case
    printf ("Not using the SQLite Database ... \n");
-   CallGraphCreate *newGraph = CGBuilder.getGraph();
+   SgIncidenceDirectedGraph *newGraph = CGBuilder.getGraph();
 #endif // USE_ROSE...
 
    ostringstream st;
    st << "DATABASE.dot";
    cout << "Generating DOT...\n";
-   filterGraph(*newGraph,filterNodes());
+   //filterGraph(*newGraph,filterNodes());
    generateDOT( *project );
    cout << "Done with DOT\n";
    GenerateDotGraph(newGraph, st.str());

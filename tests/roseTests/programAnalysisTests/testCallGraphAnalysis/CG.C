@@ -91,203 +91,126 @@ bool nodeCompareGraphPair(const std::pair<SgGraphNode*,int>& a,const std::pair<S
 
 void sortedCallGraphDump(string fileName, SgIncidenceDirectedGraph* cg)
 {
-        
-        //Opening output file
-        ofstream file;
-	file.open(fileName.c_str());
+
+  //Opening output file
+  ofstream file;
+  file.open(fileName.c_str());
 
 
-        //Get all nodes of the current CallGraph
-	list<std::pair<SgGraphNode*,int> > cgNodes;
+  //Get all nodes of the current CallGraph
+  list<std::pair<SgGraphNode*,int> > cgNodes;
 
-        rose_graph_integer_node_hash_map & nodes =
-                 cg->get_node_index_to_node_map ();
-
-
-        for( rose_graph_integer_node_hash_map::iterator it = nodes.begin();
-             it != nodes.end(); ++it )
-        {
-          cgNodes.push_back( pair<SgGraphNode*,int>(it->second,it->first) );
-        }
+  rose_graph_integer_node_hash_map & nodes =
+    cg->get_node_index_to_node_map ();
 
 
-        cgNodes.sort(nodeCompareGraphPair);
-        cgNodes.unique();
-
-        //Otuput the call graph in a unique graph-dump
-
-        rose_graph_integer_edge_hash_multimap & outEdges
-          = cg->get_node_index_to_edge_multimap_edgesOut ();
-
-	for (list<pair<SgGraphNode *,int> >::iterator it=cgNodes.begin();it!=cgNodes.end();it++)
-	{
-
-          //get list over the end-points for which this node points to
-          list<SgGraphNode*> calledNodes;
+  for( rose_graph_integer_node_hash_map::iterator it = nodes.begin();
+      it != nodes.end(); ++it )
+  {
+    cgNodes.push_back( pair<SgGraphNode*,int>(it->second,it->first) );
+  }
 
 
-          for( rose_graph_integer_edge_hash_multimap::const_iterator outEdgeIt = outEdges.find(it->second);
-              outEdgeIt != outEdges.end(); ++outEdgeIt )
-          {
+  cgNodes.sort(nodeCompareGraphPair);
+  cgNodes.unique();
 
-            SgDirectedGraphEdge* graphEdge = isSgDirectedGraphEdge(outEdgeIt->second);
-            ROSE_ASSERT(graphEdge!=NULL);
-            calledNodes.push_back(graphEdge->get_to());
-          }
+  //Otuput the call graph in a unique graph-dump
 
-          calledNodes.sort(nodeCompareGraph);
-          calledNodes.unique();
+  rose_graph_integer_edge_hash_multimap & outEdges
+    = cg->get_node_index_to_edge_multimap_edgesOut ();
 
-          //Output the unique graph
-          Properties* cur_property = dynamic_cast<Properties*>((it->first)->getAttribute("Properties"));
-          SgFunctionDeclaration* cur_function = isSgFunctionDeclaration((it->first)->get_SgNode());
+  for (list<pair<SgGraphNode *,int> >::iterator it=cgNodes.begin();it!=cgNodes.end();it++)
+  {
 
-          if (calledNodes.size()==0)
-          {
-            /*
-               std::cout << "First node of this type" << std::endl;
-               if((*i)->functionDeclaration != NULL && (*i) != NULL )
-             */
-
-            if (var_SOLVE_FUNCTION_CALLS_IN_DB == true)
-            {
-              ROSE_ASSERT( cur_property != NULL );
-              file << stripGlobalModifer(cur_property->functionName) <<" ->";
-            }else
-            {
-              ROSE_ASSERT( cur_function != NULL );
-              file << stripGlobalModifer(cur_function->get_qualified_name().getString()) <<" ->";
-            }
-
-          }
-          else
-          {
-            //  std::cout << "Second First node of this type " << (*i)->properties->nid << " " << (*i)->properties->functionName <<std::endl;
-            //std::cout << "Second First node of this type " << (*i)->properties->nid << " " <<(*i)->properties->label << " " << (*i)->properties->type << " " << (*i)->properties->scope << " " << (*i)->properties->functionName << std::endl;
+    //get list over the end-points for which this node points to
+    list<SgGraphNode*> calledNodes;
 
 
-            if (var_SOLVE_FUNCTION_CALLS_IN_DB == true)
-            {
-              ROSE_ASSERT( cur_property != NULL );
-              file << stripGlobalModifer(cur_property->functionName) <<" ->";
-            }else
-            {
-              ROSE_ASSERT( cur_function != NULL );
-              file << stripGlobalModifer(cur_function->get_qualified_name().getString()) <<" ->";
-            }
+    for( rose_graph_integer_edge_hash_multimap::const_iterator outEdgeIt = outEdges.find(it->second);
+        outEdgeIt != outEdges.end(); ++outEdgeIt )
+    {
 
-            for (list<SgGraphNode *>::iterator j=calledNodes.begin();j!=calledNodes.end();j++)
-            {
-              Properties* j_property = dynamic_cast<Properties*>((*j)->getAttribute("Properties"));
-              SgFunctionDeclaration* j_function = isSgFunctionDeclaration((*j)->get_SgNode());
+      SgDirectedGraphEdge* graphEdge = isSgDirectedGraphEdge(outEdgeIt->second);
+      ROSE_ASSERT(graphEdge!=NULL);
+      calledNodes.push_back(graphEdge->get_to());
+    }
 
-              if (var_SOLVE_FUNCTION_CALLS_IN_DB == true)
-                file << " " << stripGlobalModifer( j_property->functionName );
-              else
-                file << " " << stripGlobalModifer( j_function->get_qualified_name().getString() );
+    calledNodes.sort(nodeCompareGraph);
+    calledNodes.unique();
 
-            }		
-          }
-          file << endl;
+    //Output the unique graph
+    Properties* cur_property = dynamic_cast<Properties*>((it->first)->getAttribute("Properties"));
+    SgFunctionDeclaration* cur_function = isSgFunctionDeclaration((it->first)->get_SgNode());
+
+    std::cout << "Node " << cur_function << " has " << calledNodes.size() << " calls to it." << std::endl;
+    if (calledNodes.size()==0)
+    {
+      /*
+         std::cout << "First node of this type" << std::endl;
+         if((*i)->functionDeclaration != NULL && (*i) != NULL )
+       */
+
+      if (var_SOLVE_FUNCTION_CALLS_IN_DB == true)
+      {
+        ROSE_ASSERT( cur_property != NULL );
+        file << stripGlobalModifer(cur_property->functionName) <<" ->";
+      }else
+      {
+        ROSE_ASSERT( cur_function != NULL );
+        file << stripGlobalModifer(cur_function->get_qualified_name().getString()) <<" ->";
+      }
+
+    }
+    else
+    {
+      //  std::cout << "Second First node of this type " << (*i)->properties->nid << " " << (*i)->properties->functionName <<std::endl;
+      //std::cout << "Second First node of this type " << (*i)->properties->nid << " " <<(*i)->properties->label << " " << (*i)->properties->type << " " << (*i)->properties->scope << " " << (*i)->properties->functionName << std::endl;
 
 
-        }
+      if (var_SOLVE_FUNCTION_CALLS_IN_DB == true)
+      {
+        ROSE_ASSERT( cur_property != NULL );
+        file << stripGlobalModifer(cur_property->functionName) <<" ->";
+      }else
+      {
+        ROSE_ASSERT( cur_function != NULL );
+        file << stripGlobalModifer(cur_function->get_qualified_name().getString()) <<" ->";
+      }
 
-        file.close();
+      for (list<SgGraphNode *>::iterator j=calledNodes.begin();j!=calledNodes.end();j++)
+      {
+        Properties* j_property = dynamic_cast<Properties*>((*j)->getAttribute("Properties"));
+        SgFunctionDeclaration* j_function = isSgFunctionDeclaration((*j)->get_SgNode());
+
+        if (var_SOLVE_FUNCTION_CALLS_IN_DB == true)
+          file << " " << stripGlobalModifer( j_property->functionName );
+        else
+          file << " " << stripGlobalModifer( j_function->get_qualified_name().getString() );
+
+      }		
+    }
+    file << endl;
+
+
+  }
+
+  file.close();
 
 };
 
-void sortedCallGraphDump(string fileName, CallGraphCreate * cg)
+
+struct OnlyCurrentDirectory : public std::unary_function<bool,SgFunctionDeclaration*>
 {
-	list<CallGraphCreate::Node *> cgNodes;
-	CallGraphCreate::Node * prevNode,*prevCalledNode,*node;
-	list<CallGraphCreate::Node *> calledNodes;
-	
-	// get all nodes form the CG
-	CallGraphCreate::NodeIterator nodeItr = cg->GetNodeIterator();
-	CallGraphCreate::EdgeIterator edgeItr;
-	// iterate over all nodes in the call-graph
-	while(!nodeItr.ReachEnd())
-	{
-		CallGraphCreate::Node * currentNode=*nodeItr;
-	  // there is at least one edge going to or coming from the node
-		if (!(cg->GetNodeEdgeIterator(*nodeItr,GraphAccess::EdgeIn)).ReachEnd() || !(cg->GetNodeEdgeIterator(*nodeItr,GraphAccess::EdgeOut)).ReachEnd())
-		{
-			// add that node to the list
-			cgNodes.push_back(currentNode);
-		}
-		nodeItr++;
-	}
-	// sort the list
-	cgNodes.sort(nodeCompare);
+  bool operator() (SgFunctionDeclaration* node) const
+  {
+    std::string stringToFilter = ROSE_COMPILE_TREE_PATH+std::string("/tests"); 
+    if(string(node->get_file_info()->get_filename()).substr(0,stringToFilter.size()) == stringToFilter  )
+      return true;
+    else
+      return false;
+  };
+}; 
 
-	// The next section is goint to output the call-graph in unique graph-dump
-	ofstream file;
-	file.open(fileName.c_str());
-	
-	prevNode=NULL;
-	for (list<CallGraphCreate::Node *>::iterator i=cgNodes.begin();i!=cgNodes.end();i++)
-	{
-		// is the previouse node the same as this one, then sikp in this test
-		if ((*i)==prevNode) continue;
-		prevNode=(*i);
-		// cleanup the called list from last-time
-		calledNodes.clear();
-		edgeItr = cg->GetNodeEdgeIterator((*i),GraphAccess::EdgeOut);
-		// get all called nodes
-		while(!edgeItr.ReachEnd())
-		{
-			node=cg->GetEdgeEndPoint(*edgeItr,GraphAccess::EdgeOut);
-			node=cg->GetEdgeEndPoint(*edgeItr,GraphAccess::EdgeIn);
-			// add this node to the called list
-			calledNodes.push_back(node);
-			edgeItr++;
-		}
-		calledNodes.sort(nodeCompare);
-		// go over the sorted calledNodes list and output to file
-		if (calledNodes.size()==0)
-		{
-                  /*
-                  std::cout << "First node of this type" << std::endl;
-                  if((*i)->functionDeclaration != NULL && (*i) != NULL )
-                  */
-
-                  if (var_SOLVE_FUNCTION_CALLS_IN_DB == true)
-                    file << stripGlobalModifer((*i)->properties->functionName) <<" ->";
-                  else
-                    file << stripGlobalModifer((*i)->functionDeclaration->get_qualified_name().getString()) <<" ->";
-
-		}
-		else
-		{
-                //  std::cout << "Second First node of this type " << (*i)->properties->nid << " " << (*i)->properties->functionName <<std::endl;
-                  //std::cout << "Second First node of this type " << (*i)->properties->nid << " " <<(*i)->properties->label << " " << (*i)->properties->type << " " << (*i)->properties->scope << " " << (*i)->properties->functionName << std::endl;
-
-
-                        if (var_SOLVE_FUNCTION_CALLS_IN_DB == true)
-                   	   file << stripGlobalModifer((*i)->properties->functionName) <<" ->";
-                        else
-                           file << stripGlobalModifer((*i)->functionDeclaration->get_qualified_name().getString()) <<" ->";			
-			prevCalledNode=NULL;
-			for (list<CallGraphCreate::Node *>::iterator j=calledNodes.begin();j!=calledNodes.end();j++)
-			{
-				// if the previouse node is the same like this, skip it
-				if ((*j)==prevCalledNode) continue;
-				prevCalledNode=(*j);
-				// dup to file
-
-                                if (var_SOLVE_FUNCTION_CALLS_IN_DB == true)
-                                  file << " " << stripGlobalModifer((*j)->properties->functionName);
-                                else
-                                  file << " " << stripGlobalModifer((*j)->functionDeclaration->get_qualified_name().getString());
-
-			}		
-		}
-		file << endl;
-	}
-
-	file.close();
-};
 
 int main (int argc, char **argv){
 	string	outFileName;
@@ -307,6 +230,7 @@ int main (int argc, char **argv){
 
        sqlite3x::sqlite3_connection* gDB = open_db(dbName);
 
+       std::cout << "Outputing to DB:" << dbName << std::endl;
 
 #endif
 
@@ -327,8 +251,8 @@ int main (int argc, char **argv){
 
 	// Build the callgraph according to Anreases example
 	CallGraphBuilder		cgb (project);
-	cgb.buildCallGraph();
-	cgb.classifyCallGraph();
+	cgb.buildCallGraph( OnlyCurrentDirectory() );
+	//cgb.classifyCallGraph();
   // write a dotfile vor visualisation
   
         outFileName=((project->get_outputFileName())+".dot");
@@ -339,19 +263,21 @@ int main (int argc, char **argv){
 	cout << "Writing Callgraph to: "<<outFileName<<endl;
 	cout << "Writing custom compare to: "<<graphCompareOutput<<endl;
 
-        CallGraphDotOutput output( *(cgb.getGraph()) );
+        //CallGraphDotOutput output( *(cgb.getGraph()) );
 
-        CallGraphCreate *newGraph;
-        if(var_SOLVE_FUNCTION_CALLS_IN_DB == true)
+
+          sortedCallGraphDump(graphCompareOutput,cgb.getGraph());	
+
+                if(var_SOLVE_FUNCTION_CALLS_IN_DB == true)
         {
 #ifdef HAVE_SQLITE3
-          output.writeSubgraphToDB(*gDB );
+          writeSubgraphToDB(*gDB, cgb.getGraph() );
           /*
           output.filterNodesByDirectory( *gDB, "/export" );
           output.filterNodesByDB( *gDB, "__filter.db" );*/
 
-          output.solveVirtualFunctions( *gDB, "ClassHierarchy" );
-          output.solveFunctionPointers( *gDB );
+          solveVirtualFunctions( *gDB, "ClassHierarchy" );
+          solveFunctionPointers( *gDB );
           std::vector<std::string> keepDirs;
           keepDirs.push_back( ROSE_COMPILE_TREE_PATH+std::string("/tests%") );
 
@@ -363,8 +289,6 @@ int main (int argc, char **argv){
           filterNodesByFunctionName(*gDB,removeFunctions);
           */
           cout << "Loading from DB...\n";
-          newGraph = output.loadGraphFromDB( *gDB );
-
           cout << "Loaded\n";
 
           SgIncidenceDirectedGraph* incidenceGraph = loadCallGraphFromDB(*gDB);
@@ -375,12 +299,18 @@ int main (int argc, char **argv){
         }else{
           // Not SQL Database case
           printf ("Not using the SQLite Database ... \n");
+
+          SgIncidenceDirectedGraph *newGraph;
+
           newGraph = cgb.getGraph();
 
           sortedCallGraphDump(graphCompareOutput,newGraph);	
 
         }
 
+                SgIncidenceDirectedGraph *newGraph;
+
+                newGraph = cgb.getGraph();
 
 
 	GenerateDotGraph (newGraph,outFileName.c_str());

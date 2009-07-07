@@ -318,6 +318,8 @@ SgIncidenceDirectedGraph::addDirectedEdge( SgGraphNode* a, SgGraphNode* b, const
    {
      ROSE_ASSERT(this != NULL);
 
+     ROSE_ASSERT( a != NULL && b != NULL ) ;
+
      SgDirectedGraphEdge* edge = NULL;
 
      edge = new SgDirectedGraphEdge(a,b,name);
