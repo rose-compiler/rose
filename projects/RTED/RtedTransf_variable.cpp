@@ -105,12 +105,24 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName
       SgExprStatement* exprStmt = buildVariableCreateCallStmt( initName, stmt);
       // kind of hackey.  Really we should be prepending into main's body, not
       // inserting relative its first statement.
-      insertStatementBefore(isSgStatement(stmt), exprStmt);
+      //insertStatementBefore(isSgStatement(stmt), exprStmt);
     }
     if (isSgBasicBlock(scope)) {
       // insert new stmt (exprStmt) after (old) stmt
       SgExprStatement* exprStmt = buildVariableCreateCallStmt( initName, stmt);
-      insertStatementAfter(isSgStatement(stmt), exprStmt);
+#if 1
+      cerr << "++++++++++++ stmt :"<<stmt << " mainFirst:"<<mainFirst<<
+      "   initName->get_scope():"<<initName->get_scope() <<
+      "   mainFirst->get_scope():"<<mainFirst->get_scope()<<endl;
+      if( stmt == mainFirst && initName->get_scope()!=mainFirst->get_scope()) {
+        insertStatementBefore(isSgStatement(stmt), exprStmt);
+        cerr << "+++++++ insert Before... "<<endl;
+      } else {
+        // insert new stmt (exprStmt) after (old) stmt
+        insertStatementAfter(isSgStatement(stmt), exprStmt);
+        cerr << "+++++++ insert After... "<<endl;
+      }
+#endif
     }
     else if (isSgNamespaceDefinitionStatement(scope)) {
       cerr <<"RuntimeInstrumentation :: WARNING - Scope not handled!!! : " << name << " : " << scope->class_name() << endl;

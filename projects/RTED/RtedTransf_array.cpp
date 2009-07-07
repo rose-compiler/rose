@@ -166,14 +166,17 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
 							    arg_list);
       SgExprStatement* exprStmt = buildExprStatement(funcCallExp);
 
-      insertStatementBefore(isSgStatement(stmt), exprStmt);
-#if 0
-      if( stmt == mainFirst && isSgStatement(stmt)->get_scope()!=mainFirst->get_scope()) {
+#if 1
+      cerr << "++++++++++++ stmt :"<<stmt << " mainFirst:"<<mainFirst<<
+      "   initName->get_scope():"<<initName->get_scope() <<
+      "   mainFirst->get_scope():"<<mainFirst->get_scope()<<endl;
+      if( stmt == mainFirst && initName->get_scope()!=mainFirst->get_scope()) {
         insertStatementBefore(isSgStatement(stmt), exprStmt);
-
+        cerr << "+++++++ insert Before... "<<endl;
       } else {
         // insert new stmt (exprStmt) after (old) stmt
         insertStatementAfter(isSgStatement(stmt), exprStmt);
+        cerr << "+++++++ insert After... "<<endl;
       }
 #endif
       string empty_comment = "";
