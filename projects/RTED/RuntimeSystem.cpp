@@ -62,7 +62,8 @@ RuntimeSystem_roseRtedClose() {
  ********************************************************/
 void
 RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dimension,  
-			      unsigned long int address, long int sizeA, long int sizeB,
+				   const char* type, const char* basetype,
+			      unsigned long int address, long int size, long int sizeA, long int sizeB,
 			      int ismalloc, const char* filename, const char* line, const char* lineTransformed){
 	RuntimeSystem * rs = RuntimeSystem::instance();
 	rs->checkpoint(SourcePosition(filename,atoi(line),atoi(lineTransformed)));
@@ -105,6 +106,24 @@ RuntimeSystem_roseArrayAccess(const char* name, int posA, int posB, const char* 
 
 
 // ***************************************** FUNCTION CALL *************************************
+
+
+/*********************************************************
+ * This function is called when a variable is put or dropped from stack
+ * stack variables are used to keep track of what variables are passed
+ * to functions. Their mangled_names help to identify the real definitions.
+ * name         : variable name if it is a variable to be put on the stack
+ * mangled_name : mangled name of the above
+ * insertBefore : Indicates whether to push or pop a variable form the stack
+ ********************************************************/
+void
+RuntimeSystem_roseCallStack(const char* name, const char* mangl_name,
+			    const char* beforeStr,
+			    const char* filename, const char* line) {
+}
+
+
+
 /*********************************************************
  * Check if a function call is interesting, i.e. contains a
  * call to a function that we need to check the parameters of
@@ -320,7 +339,6 @@ RuntimeSystem_roseFunctionCall(int count, ...) {
 
 
 // ***************************************** SCOPE HANDLING *************************************
-// TODO 1 djh: check for missing frees
 
 void RuntimeSystem_roseEnterScope(const char* name) {
 	RuntimeSystem * rs = RuntimeSystem::instance();
@@ -346,6 +364,7 @@ void RuntimeSystem_roseExitScope( const char* filename, const char* line, const 
 void RuntimeSystem_roseCreateVariable( const char* name,
 				      const char* mangled_name,
 				      const char* type,
+				      const char* basetype,
               unsigned long int address,
               unsigned int size,
 				      int init,
@@ -354,7 +373,7 @@ void RuntimeSystem_roseCreateVariable( const char* name,
 				      const char* lineTransformed) {
 	RuntimeSystem * rs = RuntimeSystem::instance();
 	rs->checkpoint( SourcePosition(filename,atoi(line), atoi(lineTransformed)));
-	rs->createVariable(address,name,mangled_name,type);
+	rs->createVariable(address,name,mangled_name,type,size);
 }
 
 
@@ -369,7 +388,6 @@ RuntimeSystem_roseInitVariable(const char* name,
 			       const char* typeOfVar2,
 			       const char* baseType,
 			       unsigned long long address,
-			       unsigned int size2,
 			       unsigned int size,
 			       int ismalloc,
 			       const char* filename,
@@ -398,5 +416,21 @@ void RuntimeSystem_roseAccessVariable( const char* name,
 }
 
 // ***************************************** VARIABLE DECLARATIONS *************************************
+
+
+/*********************************************************
+ * Convert an integer to const char*
+ ********************************************************/
+const char*
+RuntimeSystem_roseConvertIntToString(int t) {
+  int size = sizeof(int);
+  char* text = (char*)malloc(size+1);
+  if (text)
+    sprintf(text,"%d",t);
+  //printMessage("String converted from int : %s ",text);
+  return text;
+}
+
+
 
 // vim:sw=2 ts=2 et sta:

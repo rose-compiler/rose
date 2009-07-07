@@ -34,9 +34,18 @@ run_test:test
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -ldl 
 
+
+#RTS=RuntimeSystem.c
+#RTED_CXX=$(CXX)
+#RTED_LIB=
+
+RTS=RuntimeSystem.cpp
+RTED_CXX=$(CXXLINK)
+RTED_LIB=CppRuntimeSystem/libCppRuntimeSystem.la
+
 runtimeCheck_SOURCES = runtimeCheck.cpp \
                        RtedTransformation.cpp \
-                       RuntimeSystem.c \
+                       $(RTS) \
                        RtedSymbols.cpp \
                        RtedTransf_array.cpp RtedTransf_prolog.cpp \
                        RtedTransf_support.cpp RtedTransf_funccall.cpp \
@@ -47,7 +56,7 @@ runtimeCheck_SOURCES = runtimeCheck.cpp \
 
 SUBDIRS = rted_qt tests CppRuntimeSystem
 
-runtimeCheck_LDADD =  $(ROSE_LIBS)
+runtimeCheck_LDADD =  $(ROSE_LIBS) CppRuntimeSystem/libCppRuntimeSystem.la
 if ROSE_WITH_ROSEQT
 	runtimeCheck_LDADD += $(top_builddir)/projects/RTED/rted_qt/libRtedQt.la
 endif
@@ -143,14 +152,16 @@ rted_source/%.c: rted_source $(rted_path)/%.c
 # rules to create _rose.c and _s_rose.c files
 #------------------------------------------------------------------------------
 
+.PRECIOUS: %_rose.c
+
 rted_source/%_s_rose.c: rted_source
 	@touch $@
 
-rted_source/%_rose.c: runtimeCheck rted_source/%.c rted_source/%_s.c $(srcdir)/RuntimeSystem.c $(srcdir)/RuntimeSystem.h
-	@echo -n "    testing if files compiles with gcc ... "
-	@$(CXX) -g -o $(patsubst %_rose.c, %.bin, $@) $(filter rted_source/%.c, $?) \
-		$(srcdir)/RuntimeSystem.c $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir)
-	@rm $(patsubst %_rose.c, %.bin, $@)
+rted_source/%_rose.c: runtimeCheck rted_source/%.c rted_source/%_s.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
+	@echo -n "    testing if files compiles with gcc (with _s) ... "
+	@$(RTED_CXX) -g -o $(patsubst %_rose.c, %.bin, $@) $(filter rted_source/%.c, $?) \
+		$(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) \
+		$(RTED_LIB)
 	@echo " done."
 	@echo -n "    running transformation ... "
 	@./runtimeCheck 2 $(filter rted_source/%.c, $?) \
@@ -159,25 +170,21 @@ rted_source/%_rose.c: runtimeCheck rted_source/%.c rted_source/%_s.c $(srcdir)/R
 	@echo -n "   adding line information ... "
 	@cat rose_$(notdir $(patsubst %_rose.c, %.c, $@ ) ) \
 	    | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > $@
-	@rm rose_$(notdir $(patsubst %_rose.c, %.c, $@ ) )
 	@cat rose_$(notdir $(patsubst %_rose.c, %_s.c, $@ ) ) \
 	    | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > $(patsubst %_rose.c, %_s_rose.c, $@ )
-	@rm rose_$(notdir $(patsubst %_rose.c, %_s.c, $@ ) )
 	@echo " done."
 
-rted_source/%_rose.c: runtimeCheck rted_source/%.c $(srcdir)/RuntimeSystem.c $(srcdir)/RuntimeSystem.h
+rted_source/%_rose.c: runtimeCheck rted_source/%.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	@echo -n "    testing if file compiles with gcc ... "
 #	echo $(filter rted_source/%.c, $?)
 #	exit 1
-	@$(CXX) -g -o $(patsubst %_rose.c, %.bin, $@) $(filter rted_source/%.c, $?) $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir)
-	@rm $(patsubst %_rose.c, %.bin, $@)
+	$(RTED_CXX) -g -o $(patsubst %_rose.c, %.bin, $@) $(filter rted_source/%.c, $?) $(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) $(RTED_LIB)
 	@echo " done."
 	@echo -n "    running transformation ... "
 	@./runtimeCheck 2 $(filter rted_source/%.c, $?) -rose:Cxx -c $(INCLUDES) -I$(top_builddir) -I$(srcdir) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@))
 	@echo " done."
 	@echo -n "   adding line information ... "
 	@cat rose_$(notdir $(filter rted_source/%.c, $?)) | nl -p -b 'a' | sed -e 's/^ \+\([0-9]\+\)\t\(.*\)x%%x\(.*\)/\2\1\3/; t end; s/^ \+\([0-9]\+\)\t//; : end' > $@
-	@rm rose_$(notdir $(filter rted_source/%.c, $?))
 	@echo " done."
 
 #------------------------------------------------------------------------------
@@ -193,26 +200,27 @@ rted_source/%_rose.c: runtimeCheck rted_source/%.c $(srcdir)/RuntimeSystem.c $(s
 #rted_source/%_debug.bin: rted_source/%_rose.c
 #	@touch $@
 
-rted_source/%_debug.bin: rted_qt rted_source/%_rose.c rted_source/%_s_rose.c $(srcdir)/RuntimeSystem.c $(srcdir)/RuntimeSystem.h
+rted_source/%_debug.bin: rted_qt rted_source/%_rose.c rted_source/%_s_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
+	@echo -n "   compiling instrumented debugger code (with _s) ... "
+	@$(RTED_CXX) -g -o $@ $(filter rted_source/%.c, $?) \
+		     $(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER) $(RTED_LIB)
+	@echo " done."
+
+rted_source/%_debug.bin: rted_qt rted_source/%_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	@echo -n "   compiling instrumented debugger code ... "
-	@$(CXX) -g -o $@ $(filter rted_source/%.c, $?) \
-		     $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER)
+	@$(RTED_CXX) -g -o $@ $(filter rted_source/%.c, $?) $(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER) $(RTED_LIB)
 	@echo " done."
 
-rted_source/%_debug.bin: rted_qt rted_source/%_rose.c $(srcdir)/RuntimeSystem.c $(srcdir)/RuntimeSystem.h
-	@echo -n "   compiling instrumented debugger code ... "
-	@$(CXX) -g -o $@ $(filter rted_source/%.c, $?) $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER)
+rted_source/%.bin: rted_source/%_rose.c rted_source/%_s_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
+	@echo -n "   compiling instrumented code (with _s) ... "
+	@$(RTED_CXX) -g -o $@ $(filter rted_source/%.c, $?) \
+		     $(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) \
+			 $(RTED_LIB)
 	@echo " done."
 
-rted_source/%.bin: rted_source/%_rose.c rted_source/%_s_rose.c $(srcdir)/RuntimeSystem.c $(srcdir)/RuntimeSystem.h
+rted_source/%.bin: rted_source/%_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	@echo -n "   compiling instrumented code ... "
-	@$(CXX) -g -o $@ $(filter rted_source/%.c, $?) \
-		     $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir)
-	@echo " done."
-
-rted_source/%.bin: rted_source/%_rose.c $(srcdir)/RuntimeSystem.c $(srcdir)/RuntimeSystem.h
-	@echo -n "   compiling instrumented code ... "
-	@$(CXX) -g -o $@ $(filter rted_source/%.c, $?) $(srcdir)/RuntimeSystem.c $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir)
+	@$(RTED_CXX) -g -o $@ $(filter rted_source/%.c, $?) $(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) $(RTED_LIB)
 	@echo " done."
 
 #------------------------------------------------------------------------------
