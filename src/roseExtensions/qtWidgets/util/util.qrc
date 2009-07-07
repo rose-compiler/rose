@@ -1,0 +1,21 @@
+<RCC>
+  <qresource prefix="util" >
+    <file>AppIcons/info.png</file>
+    <file>AppIcons/application-exit.png</file>
+    <file>AppIcons/document-open.png</file>
+    <file>AppIcons/document-properties.png</file>
+    <file>AppIcons/document-save-as.png</file>
+    <file>AppIcons/document-save.png</file>
+    <file>NodeIcons/binaryfile.gif</file>
+    <file>NodeIcons/binaryfiles.gif</file>
+    <file>NodeIcons/sourcefiles.gif</file>
+    <file>NodeIcons/class.gif</file>
+    <file>NodeIcons/function.gif</file>
+    <file>NodeIcons/include.gif</file>
+    <file>NodeIcons/includes.gif</file>
+    <file>NodeIcons/loop.png</file>
+    <file>NodeIcons/namespace.gif</file>
+    <file>NodeIcons/project.gif</file>
+    <file>NodeIcons/sourcefile.gif</file>
+  </qresource>
+</RCC>

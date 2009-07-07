@@ -1,0 +1,97 @@
+include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+
+
+include $(srcdir)/QtSupport.inc
+
+
+roseQtWidgets = $(includedir)/RoseWidgets
+
+
+
+mocHeader    =  AstBrowserWidget/AstBrowserWidget.h\
+                AstBrowserWidget/QtAstModel.h\ 
+                AstGraphWidget/AstGraphWidget.h\        
+                BeautifiedAst/BAstModel.h\
+                BeautifiedAst/BAstView.h\
+                KiviatView/KiviatView.h\
+                MetricsKiviat/MetricsConfig.h\
+                MetricsKiviat/MetricsKiviat.h\              
+                NodeInfoWidget/NodeInfoWidget.h\
+                PropertyTreeModel/PropertyTreeModel.h\
+                PropertyTreeModel/PropertyTreeWidget.h\
+                RoseFileSelector/RoseFileComboBox.h\
+                util/ItemTreeModel.h\
+                util/MetricAttributeCollector.h                    
+                                                       
+nonMocHeader =  AstGraphWidget/DisplayEdge.h\         
+                AstGraphWidget/DisplayNode.h\
+                AstGraphWidget/TreeLayoutGenerator.h\
+                astProcessing/AstProcessing.h\
+                astProcessing/AstProcessing_BottomUp_impl.h\
+                astProcessing/AstProcessing_TopDownBottomUp_impl.h\
+                astProcessing/AstProcessing_TopDown_impl.h\
+                BeautifiedAst/BAstNode.h\
+                FlopCounter/FlopCounter.h\
+                FlopCounter/Flops.h\
+                util/ItemTreeNode.h\
+                util/AstFilters.h 
+                  
+                
+sources      =  AstBrowserWidget/AstBrowserWidget.cpp\
+                AstBrowserWidget/ #\
+                AstGraphWidget/AstGraphWidget.cpp\
+                AstGraphWidget/DisplayEdge.cpp\
+                AstGraphWidget/DisplayNode.cpp\          
+                AstGraphWidget/TreeLayoutGenerator.cpp\
+                astProcessing/AstProcessing.C\
+                BeautifiedAst/BAstNode.cpp\                                                 
+                BeautifiedAst/BAstModel.cpp\
+                BeautifiedAst/BAstView.cpp\                 
+                FlopCounter/FlopCounter.cpp\
+                FlopCounter/Flops.cpp\
+                KiviatView/KiviatView.cpp  
+                MetricsKiviat/MetricsConfig.cpp\
+                MetricsKiviat/MetricsKiviat.cpp\                             
+                NodeInfoWidget/NodeInfoWidget.cpp\
+                PropertyTreeModel/PropertyTreeModel.cpp\
+                PropertyTreeModel/PropertyTreeWidget.cpp\               
+                RoseFileSelector/RoseFileComboBox.cpp\               
+                util/ItemTreeNode.cpp\
+                util/MetricAttributeCollector.cpp 
+                 
+# Qt - Designer Plugin Files               
+               
+pluginHeader  = QtDesignerPlugins/AstBrowserWidgetPlugin.h\
+                QtDesignerPlugins/AstGraphWidgetPlugin.h\
+                QtDesignerPlugins/BAstViewPlugin.h\
+                QtDesignerPlugins/KiviatViewPlugin.h\
+                QtDesignerPlugins/NodeInfoWidgetPlugin.h\   
+                QtDesignerPlugins/PropertyTreeWidgetPlugin.h\   
+                QtDesignerPlugins/RoseFileComboBoxPlugin.h\      
+                QtDesignerPlugins/RoseWidgetsCollection.h     
+
+pluginSources = QtDesignerPlugins/AstBrowserWidgetPlugin.cpp\
+                QtDesignerPlugins/AstGraphWidgetPlugin.cpp\
+                QtDesignerPlugins/BAstViewPlugin.cpp\
+                QtDesignerPlugins/KiviatViewPlugin.cpp\
+                QtDesignerPlugins/NodeInfoWidgetPlugin.cpp\   
+                QtDesignerPlugins/PropertyTreeWidgetPlugin.cpp\   
+                QtDesignerPlugins/RoseFileComboBoxPlugin.cpp\      
+                QtDesignerPlugins/RoseWidgetsCollection.cpp               
+                                 
+
+               
+# Resource files
+resourceSource = BeautifiedAst/qrc_BeautifiedAst.cxx\
+                 QtDesignerPlugins/qrc_QtDesignerPlugins.cxx\
+                 RoseCodeEdit/qrc_QCodeEdit.cxx  
+                               
+                                                     
+libRoseQtWidgets_la_HEADERS = $(mocHeader) $(nonMocHeader)
+libRoseQtWidgets_la_SOURCES = $(sources)  $(pluginSources) $(resourceSource) $(patsubst %.h, moc_%.cxx, $(mocHeader) )
+
+
+
+CLEANFILES = moc_*.cxx\
+             ui_*.h\
+             qrc_*.cxx 

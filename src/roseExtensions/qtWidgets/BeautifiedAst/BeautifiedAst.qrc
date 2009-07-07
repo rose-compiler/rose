@@ -1,0 +1,12 @@
+<RCC>
+  <qresource prefix="BAst" >
+    <file>icons/loop.png</file>
+    <file>icons/function.gif</file>
+    <file>icons/sourcefile.gif</file>
+    <file>icons/includes.gif</file>
+    <file>icons/class.gif</file>
+    <file>icons/include.gif</file>
+    <file>icons/namespace.gif</file>
+    <file>icons/project.gif</file>
+  </qresource>
+</RCC>
