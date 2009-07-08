@@ -1,3 +1,168 @@
+2009-07-08 00:41  panas2
+
+	* [r6452] /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_variable.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h: Added
+	  PointerDeref support for Variable initializations for RTED
+
+2009-07-07 23:28  heller9
+
+	* [r6451] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/projects/Makefile.am,
+	  /trunk/ROSE/projects/QtDesignerPlugins,
+	  /trunk/ROSE/projects/QtDesignerPlugins/Makefile.am,
+	  /trunk/ROSE/projects/QtDesignerPlugins/Makefile.am.pre,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/rted_qt/Makefile.am,
+	  /trunk/ROSE/projects/RoseQt,
+	  /trunk/ROSE/projects/RoseQt/CMakeLists.txt,
+	  /trunk/ROSE/projects/RoseQt/MainWindow.cpp,
+	  /trunk/ROSE/projects/RoseQt/Makefile,
+	  /trunk/ROSE/projects/RoseQt/Makefile.am,
+	  /trunk/ROSE/projects/compass/tools/compass/gui2/Makefile.am,
+	  /trunk/ROSE/projects/roseQt,
+	  /trunk/ROSE/scripts/nmiBuildAndTestFarm/glue.pl,
+	  /trunk/ROSE/src/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AsmInstructionBar/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AsmSourceMapper,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AsmView/AsmView.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AsmView/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstBrowserWidget/AstBrowserWidget.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstBrowserWidget/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstGraphWidget/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstProcessing/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/BeautifiedAst/BAstNode.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/BeautifiedAst/BAstNode.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/BeautifiedAst/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/FlopCounter/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/InstructionCountAnnotator/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/KiviatView/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/Make.inc,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/MetricFilter/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/MetricsConfig/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/MetricsKiviat/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/MetricsKiviat/MetricsKiviat.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/MetricsKiviat/MetricsKiviat.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/NodeInfoWidget/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/NodeInfoWidget/NodeInfoWidget.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/ProjectManager/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/ProjectManager/Project.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/PropertyTreeWidget/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QtDesignerPlugins,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QtGradientEditor/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/QtRules.inc,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/RoseCodeEdit/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/RoseCodeEdit/QCodeEdit/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/RoseCodeEdit/QCodeEdit/document/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/RoseCodeEdit/QCodeEdit/qnfa/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/RoseCodeEdit/QCodeEdit/widgets/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/RoseCodeEdit/RoseCodeEdit.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/RoseFileSelector/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/SrcBinView,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/SrcBinView/SrcBinView.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/SrcBinView/SrcBinView.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/SrcBinView/SrcBinView.ui,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/TaskSystem/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/TextEditPainter,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/UseQtWidgets.inc,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/AsmToSourceMapper.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/RoseTreeView.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/RoseTreeView.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/pin: Restructured
+	  directory layout of qt widgets
+	  
+	  - split up in three parts, widgets themselve, qt designer plugins
+	  and a demo application
+	  - fixed RTED parallel check bug
+	  - cleaned up Makefile.am depending on the qt widgets
+
+2009-07-07 23:03  hamilton37
+
+	* [r6450] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp: RTED: Switched to
+	  RuntimeSystem.cpp.
+	  
+	  Now uses the CppRuntimeSystem library, so make check, run,
+	  run_checkonly, etc.
+	  can be used to test.
+
+2009-07-07 22:05  panas2
+
+	* [r6449] /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_variable.cpp: Added stuff to
+	  RTED
+
+2009-07-07 21:16  bauer25
+
+	* [r6448]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/FileManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/Util.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/Util.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/VariablesType.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/VariablesType.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/test.cpp: Added
+	  Pointer Tracking support to RTED
+	  
+	  not tested yet
+
+2009-07-07 20:22  saebjornsen1
+
+	* [r6447]
+	  /trunk/ROSE/developersScratchSpace/Dan/translator_tests/feasiblePaths.C,
+	  /trunk/ROSE/projects/MPICodeMotion/CallGraphQuery.C,
+	  /trunk/ROSE/projects/MPICodeMotion/CallGraphQuery.h,
+	  /trunk/ROSE/src/frontend/SageIII/rose_graph_support.C,
+	  /trunk/ROSE/src/midend/programAnalysis/CallGraphAnalysis/CallGraph.C,
+	  /trunk/ROSE/src/midend/programAnalysis/CallGraphAnalysis/CallGraph.h,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/CG.C,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/Makefile.am,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/testCallGraph.C,
+	  /trunk/ROSE/tests/roseTests/programAnalysisTests/testCallGraphAnalysis/testMultipleFiles.sh,
+	  /trunk/ROSE/tutorial/buildCG.C,
+	  /trunk/ROSE/tutorial/callGraphAnalysis.C: Improved call graph
+
+2009-07-07 19:00  panas2
+
+	* [r6445] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_support.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_variable.cpp: Added a file
+
+2009-07-07 17:03  hamilton37
+
+	* [r6443]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CStdLibManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CStdLibManager.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/Makefile.am,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/Util.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/Util.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/test.cpp: RTED:
+	  Implemented first portion of CStdLibManager.
+	  
+	  This checks the cstdlib functions that were checked before
+	  (basically, string
+	  functions like strlen, strcat, etc.). Tests were also added to
+	  test.cpp.
+	  
+	  The runtime system now has functions such as:
+	  
+	  check_strstr( const char*, const char*)
+	  
+	  Which will verify that it's safe to call strstr with the same
+	  arguments.
+
 2009-07-07 03:35  panas2
 
 	* [r6432] /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
