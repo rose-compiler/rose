@@ -102,8 +102,11 @@ void AstGraphWidget::setNode(SgNode * node)
 
     SgIncidenceDirectedGraph* incidenceGraph = cgb.getGraph();
 
+
     //DisplayGraph * g = DisplayGraph::generateCallGraph(scene,incidenceGraph);
     DisplayGraph * g = DisplayGraph::buildCallGraphForFunction(incidenceGraph,node,10,scene,NULL);
+
+
 
     //g->setDelta(1e-4);
     g->setOptimalDistance(80);

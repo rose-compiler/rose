@@ -47,7 +47,7 @@ target_link_libraries ( rose_widgets qtgradienteditor )
 target_link_libraries ( rose_widgets rose rosehpct xml2 )
 
 # This experimental flag causes the ptracer to be built
-# set_target_properties ( rose_widgets PROPERTIES COMPILE_FLAGS "-DROSEQT_EXPERIMENTAL")
+set_target_properties ( rose_widgets PROPERTIES COMPILE_FLAGS "-DROSEQT_EXPERIMENTAL")
 
 
 

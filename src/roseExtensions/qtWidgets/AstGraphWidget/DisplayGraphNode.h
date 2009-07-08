@@ -52,6 +52,8 @@ namespace Ui { class LayoutControl; }
 
 class QTimer;
 class SgIncidenceDirectedGraph;
+class rose_graph_integer_edge_hash_multimap;
+class rose_graph_integer_node_hash_map;
 
 class DisplayGraph : public QObject
 {
@@ -88,7 +90,9 @@ class DisplayGraph : public QObject
                                                 QObject * par=0);
 
         static DisplayGraph * generateCallGraph(QGraphicsScene * sc,
-                                                SgIncidenceDirectedGraph * g,
+                                                SgIncidenceDirectedGraph * cg,
+                                                rose_graph_integer_node_hash_map & nodeMap,
+                                                rose_graph_integer_edge_hash_multimap & edgeMap,
                                                 QObject * par=0);
 
 
@@ -97,6 +101,15 @@ class DisplayGraph : public QObject
                                                         int depth,
                                                         QGraphicsScene * sc,
                                                         QObject * par);
+
+
+        static void generateCgSubGraph(  SgIncidenceDirectedGraph * cg,
+                                         int nodeId,
+                                         rose_graph_integer_node_hash_map & nodeMapOut,
+                                         rose_graph_integer_edge_hash_multimap & edgeMapOut,
+                                         int curDepth);
+
+
 
         void setOptimalDistance(qreal dist) { optimalDistance=dist; }
         void setDelta(qreal newDelta)       { curDelta = newDelta; }
