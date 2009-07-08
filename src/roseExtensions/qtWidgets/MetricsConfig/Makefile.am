@@ -1,5 +1,5 @@
 #------------ MetricsConfig Makefile.am -----------
-include ../Make.inc 
+include $(top_srcdir)/src/roseExtensions/qtWidgets/Make.inc 
 
 if ROSE_WITH_ROSEQT
 
@@ -16,7 +16,7 @@ nodist_libMetricsConfig_la_SOURCES = moc_MetricsConfig.cxx\
 BUILT_SOURCES = ui_MetricsConfig.h
 
 # Target for installing header 
-headerTargetdir    =  $(roseQtWidgetsIncPath)/
+headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = MetricsConfig.h\
                        MetricsInfo.h
 

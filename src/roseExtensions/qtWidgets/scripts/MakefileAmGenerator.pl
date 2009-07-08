@@ -131,8 +131,7 @@ push( @nodist_sources,@ui_header_files);
 
 print "#------------ $dirName Makefile.am -----------\n" ;
 
-
-print "include \$(top_srcdir)/projects/roseQt/Make.inc \n\n";
+print "include \$(top_srcdir)/src/roseExtensions/qtWidgets/Make.inc \n\n";
 print "if ROSE_WITH_ROSEQT\n";
 
 if($printLibTarget)

@@ -1,5 +1,5 @@
 #------------ NodeInfoWidget Makefile.am -----------
-include ../Make.inc 
+include $(top_srcdir)/src/roseExtensions/qtWidgets/Make.inc 
 
 if ROSE_WITH_ROSEQT
 
@@ -14,7 +14,7 @@ nodist_libNodeInfoWidget_la_SOURCES = moc_NodeInfoWidget.cxx
 
 
 # Target for installing header 
-headerTargetdir    =  $(roseQtWidgetsIncPath)/
+headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = NodeInfoWidget.h
 
 

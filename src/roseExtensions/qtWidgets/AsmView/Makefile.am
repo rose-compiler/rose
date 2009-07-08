@@ -1,5 +1,5 @@
 #------------ AsmView Makefile.am -----------
-include ../Make.inc 
+include $(top_srcdir)/src/roseExtensions/qtWidgets/Make.inc 
 
 if ROSE_WITH_ROSEQT
 

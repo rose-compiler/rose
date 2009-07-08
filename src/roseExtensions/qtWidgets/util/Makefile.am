@@ -1,5 +1,5 @@
 #------------ util Makefile.am -----------
-include ../Make.inc 
+include $(top_srcdir)/src/roseExtensions/qtWidgets/Make.inc 
 
 if ROSE_WITH_ROSEQT
 
@@ -30,7 +30,7 @@ nodist_libutil_la_SOURCES = moc_ItemTreeModel.cxx\
 BUILT_SOURCES = ui_MetricBgDelegateConfig.h
 
 # Target for installing header 
-headerTargetdir    =  $(roseQtWidgetsIncPath)/
+headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = AsmToSourceMapper.h\
                        AstDisplayInfo.h\
                        AstFilters.h\
