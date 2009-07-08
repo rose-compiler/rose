@@ -30,7 +30,8 @@ class RtedTransformation : public AstSimpleProcessing {
   // We need to store the name, type and intialized value
   std::vector<SgInitializedName*> variable_declarations;
   // We need to store the variables that are being accessed
-  std::vector<SgVarRefExp*> variable_access;
+  std::vector<SgVarRefExp*> variable_access_varref;
+  std::map<SgPointerDerefExp*,SgVarRefExp*> variable_access_pointerderef;
   // ------------------------ string -----------------------------------
   // handle call to functioncall
   std::vector<RtedArguments*> function_call;
@@ -137,7 +138,7 @@ class RtedTransformation : public AstSimpleProcessing {
 				);
   SgExprStatement* buildVariableCreateCallStmt(SgInitializedName* name, SgStatement* stmt, bool forceinit=false);
   void insertVariableCreateInitForParams( SgFunctionDefinition* n);
-  void insertAccessVariable(SgVarRefExp* varRefE);
+  void insertAccessVariable(SgVarRefExp* varRefE,SgPointerDerefExp* derefExp);
   void visit_isSgVarRefExp(SgVarRefExp* n);
 
   std::string removeSpecialChar(std::string str);
@@ -175,7 +176,7 @@ class RtedTransformation : public AstSimpleProcessing {
   // Run frontend and return project
   SgProject* parse(int argc, char** argv);
 
-  void appendAddressAndSize(SgInitializedName* initName, SgVarRefExp* varRef, SgStatement* stmt, SgExprListExp* arg_list, int appendType);
+  void appendAddressAndSize(SgInitializedName* initName, SgExpression* varRef, SgStatement* stmt, SgExprListExp* arg_list, int appendType);
 
 
 };

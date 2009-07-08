@@ -227,7 +227,7 @@ RtedTransformation::buildVariableCreateCallStmt( SgInitializedName* initName, Sg
 
 
 void RtedTransformation::appendAddressAndSize(SgInitializedName* initName,
-					      SgVarRefExp* varRefE,
+					      SgExpression* varRefE,
 					      SgStatement* stmt,
 					      SgExprListExp* arg_list,
 					      int appendType
@@ -258,19 +258,19 @@ void RtedTransformation::appendAddressAndSize(SgInitializedName* initName,
 	     appendExpression(arg_list, buildIntVal(-6));
 	     appendExpression(arg_list, buildIntVal(-6));
     } else {
-	int derefCounter=0;//getTypeOfPointer(initName);
-	SgExpression* fillExp = getExprBelowAssignment(varRefE, derefCounter);
-	ROSE_ASSERT(fillExp);
+	//int derefCounter=0;//getTypeOfPointer(initName);
+	//SgExpression* fillExp = getExprBelowAssignment(varRefE, derefCounter);
+	//ROSE_ASSERT(fillExp);
     appendExpression(
       arg_list,
       buildCastExp(
-        buildAddressOfOp( fillExp),
+        buildAddressOfOp( varRefE),
         buildUnsignedLongLongType()
       )
     );
 	appendExpression(
 	    arg_list,
-	    buildSizeOfOp( fillExp)
+	    buildSizeOfOp( varRefE)
 	  );
     }
 #else
@@ -540,9 +540,10 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
 
 
 
-void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE
+void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE,
+			SgPointerDerefExp* derefExp
 						  ) {
-  SgStatement* stmt = getSurroundingStatement(varRefE);
+	SgStatement* stmt = getSurroundingStatement(varRefE);
   // make sure there is no extern in front of stmt
   SgInitializedName* initName = varRefE->get_symbol()->get_declaration();
 
@@ -583,22 +584,12 @@ void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE
       appendExpression(arg_list, simplename);
       SgExpression* callName = buildString(initName->get_mangled_name().str());
       appendExpression(arg_list, callName);
-
 #if 1
-    appendExpression(
-      arg_list,
-      buildCastExp(
-        buildAddressOfOp( varRefE),
-        buildUnsignedLongLongType()
-      )
-    );
-    appendExpression(
-      arg_list,
-      buildSizeOfOp( initName->get_type())
-    );
+      if (derefExp)
+    	  appendAddressAndSize(initName, derefExp, stmt, arg_list,0);
+      else
 #endif
-    //fixme
-      //appendAddressAndSize(initName, varRefE, stmt, arg_list,0);
+    	  appendAddressAndSize(initName, varRefE, stmt, arg_list,0);
 
       SgExpression* filename = buildString(stmt->get_file_info()->get_filename());
       SgExpression* linenr = buildString(RoseBin_support::ToString(stmt->get_file_info()->get_line()));

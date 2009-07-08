@@ -132,13 +132,28 @@ void RtedTransformation::transform(SgProject* project) {
     insertVariableCreateCall(node);
   }
 
-  cerr << "\n Number of Elements in variable_access  : "
-       << variable_access.size() << endl;
+  cerr << "\n Number of Elements in variable_access_varref  : "
+       << variable_access_varref.size() << endl;
   std::vector<SgVarRefExp*>::const_iterator itAccess =
-    variable_access.begin();
-  for (; itAccess != variable_access.end(); itAccess++) {
-    SgVarRefExp* node = *itAccess;
-    insertAccessVariable(node);
+		  variable_access_varref.begin();
+  for (; itAccess != variable_access_varref.end(); itAccess++) {
+	  // can be SgVarRefExp or SgPointerDerefExp
+	  SgNode* node = *itAccess;
+	  SgVarRefExp* vr = isSgVarRefExp(node);
+	  ROSE_ASSERT(vr);
+	  insertAccessVariable(vr,NULL);
+  }
+
+  cerr << "\n Number of Elements in variable_access_pointer  : "
+       << variable_access_pointerderef.size() << endl;
+  std::map<SgPointerDerefExp*, SgVarRefExp*>::const_iterator itAccess2 =
+		  variable_access_pointerderef.begin();
+  for (; itAccess2 != variable_access_pointerderef.end(); itAccess2++) {
+	  // can be SgVarRefExp or SgPointerDerefExp
+	  SgPointerDerefExp* pd = isSgPointerDerefExp(itAccess2->first);
+	  SgVarRefExp* in = isSgVarRefExp(itAccess2->second);
+	  if (pd)
+		  insertAccessVariable(in, pd);
   }
 
   cerr

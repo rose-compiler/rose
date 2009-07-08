@@ -383,37 +383,81 @@ void RtedTransformation::visit_isSgVarRefExp(SgVarRefExp* n) {
   // And it should not be an argument to a function
   // if true, we add it to the list of variables being accessed
 
+#if 0
+	   SgNode* parent = isSgVarRefExp(n)->get_parent();
+	   SgNode* last = parent;
+	  while (!isSgAssignOp(parent) &&
+	        !isSgAssignInitializer(parent) &&
+	        !isSgProject(parent) &&
+	        !isSgFunctionCallExp(parent) &&
+	   !isSgDotExp(parent)) {
+	     last=parent;
+	     parent=parent->get_parent();
+	  }
+	   if( isSgProject(parent) ||
+	       isSgFunctionCallExp(parent) ||
+	       isSgDotExp(parent))
+	     { // do nothing
+	     }
+	   else if (isSgAssignOp(parent)) {
+	     // make sure that we came from the right hand side of the assignment
+	     SgExpression* right = isSgAssignOp(parent)->get_rhs_operand();
+	     if (right==last)
+	      variable_access_varref.push_back(n);
+	   }
+	   else if (isSgAssignInitializer(parent)) {
+	     // make sure that we came from the right hand side of the assignment
+	     SgExpression* right = isSgAssignInitializer(parent)->get_operand();
+	     if (right==last)
+	       variable_access_varref.push_back(n);
+	   }
+	  else {
+	     // its a plain variable access
+		  variable_access_varref.push_back(n);
+	   }
+
+
+#else
   SgNode* parent = isSgVarRefExp(n)->get_parent();
   SgNode* last = parent;
-  while (!isSgAssignOp(parent) && 
-	 !isSgAssignInitializer(parent) && 
-	 !isSgProject(parent) &&
-	 !isSgFunctionCallExp(parent) &&
-   !isSgDotExp(parent)) {
+  bool hitRoof=false;
+  while (!isSgProject(parent)) {
     last=parent;
     parent=parent->get_parent();
-  }
+
   if( isSgProject(parent) ||
       isSgFunctionCallExp(parent) ||
       isSgDotExp(parent))
     { // do nothing 
+      hitRoof=true;
+	  break;
     }
   else if (isSgAssignOp(parent)) {
     // make sure that we came from the right hand side of the assignment
     SgExpression* right = isSgAssignOp(parent)->get_rhs_operand();
     if (right==last)
-      variable_access.push_back(n);
+      variable_access_varref.push_back(n);
+    hitRoof=true;
+    break;
   }
   else if (isSgAssignInitializer(parent)) {
     // make sure that we came from the right hand side of the assignment
     SgExpression* right = isSgAssignInitializer(parent)->get_operand();
     if (right==last)
-      variable_access.push_back(n);
+    	variable_access_varref.push_back(n);
+    hitRoof=true;
+    break;
+  } else if (isSgPointerDerefExp(parent)) {
+	  cerr << "------------ Found Pointer deref : " << parent->unparseToString() << endl;
+	  variable_access_pointerderef[isSgPointerDerefExp(parent)]=n;
   }
-  else {
+  } //while
+
+  if (!hitRoof) {
     // its a plain variable access
-    variable_access.push_back(n);
+	  variable_access_varref.push_back(n);
   }
+#endif
 }
 
 
