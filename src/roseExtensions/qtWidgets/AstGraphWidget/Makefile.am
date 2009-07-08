@@ -21,7 +21,7 @@ nodist_libAstGraphWidget_la_SOURCES = moc_AstGraphWidget.cxx\
 BUILT_SOURCES = ui_LayoutControl.h
 
 # Target for installing header 
-headerTargetdir    =  $(roseQtWidgetsIncPath)/
+headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = AstGraphWidget.h\
                        DisplayEdge.h\
                        DisplayGraphNode.h\
