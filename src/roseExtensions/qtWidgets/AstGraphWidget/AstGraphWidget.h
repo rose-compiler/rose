@@ -9,10 +9,12 @@
 
 class SgNode;
 class AstFilterInterface;
-
+class DisplayGraph;
 
 class QDragEnterEvent;
 class QDropEvent;
+
+
 /**
  *  Layout of an ast in a graphicsview (similar to zgrViewer )
  *
@@ -49,7 +51,8 @@ class AstGraphWidget : public QGraphicsView
 	protected:
 
 		QGraphicsScene * scene;
-		DisplayTreeNode * root;
+		//DisplayTreeNode * root;
+		DisplayGraph * root;
 
 		// Zoom
 		virtual void wheelEvent(QWheelEvent *event);

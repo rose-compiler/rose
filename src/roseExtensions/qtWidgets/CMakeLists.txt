@@ -6,7 +6,7 @@ set ( WIDGETS_FILES )
 
 # All subdirectories are interpreted as source folders
 # excludes have to be specified manually
-list_subdirectories( subdirs ${CMAKE_CURRENT_SOURCE_DIR} 1  EXCLUDE rose.h.gch QtGradientEditor AsmSourceMapper)
+list_subdirectories( subdirs ${CMAKE_CURRENT_SOURCE_DIR} 1  EXCLUDE rose.h.gch QtGradientEditor AsmSourceMapper doc scripts)
 #list_subdirectories( WIDGETS_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR} 0  EXCLUDE rose.h.gch QtGradientEditor )
 
 

@@ -19,6 +19,7 @@
 #include <CallGraph.h>
 
 
+
 AstGraphWidget::AstGraphWidget(QWidget * par)
 	: 	QGraphicsView(par),
 		scene(NULL),
@@ -86,37 +87,45 @@ void AstGraphWidget::setNode(SgNode * node)
 
 	root->setScene(scene);
 #else
-    DisplayGraph *g = DisplayGraph::generateTestGraph(scene);
+	/*
+    DisplayGraph *g = DisplayGraph::generateLargeTestGraph(scene);
     g->controlWidget()->show();
+    */
 
-
-    /*
-    sqlite3x::sqlite3_connection* gDB = open_db("Database");
     SgProject * proj = getProjectOf(node);
     if(!proj)
         return;
+
     CallGraphBuilder cgb (proj);
     cgb.buildCallGraph();
-    cgb.classifyCallGraph();
 
 
-    CallGraphDotOutput output( *(cgb.getGraph()) );
+    SgIncidenceDirectedGraph* incidenceGraph = cgb.getGraph();
 
-    CallGraphCreate *newGraph;
+    //DisplayGraph * g = DisplayGraph::generateCallGraph(scene,incidenceGraph);
+    DisplayGraph * g = DisplayGraph::buildCallGraphForFunction(incidenceGraph,node,10,scene,NULL);
 
-    output.writeSubgraphToDB(*gDB );
+    //g->setDelta(1e-4);
+    g->setOptimalDistance(80);
 
-    output.solveVirtualFunctions( *gDB, "ClassHierarchy" );
-    output.solveFunctionPointers( *gDB );
+    qreal update=1e10;
+    int iter=0;
+    while(update>0.5 && iter < 10000)
+    {
+        update = g->springBasedLayoutIteration(1e-4);
+        qDebug() << "Iteration" << iter << "Update" << update;
+        iter++;
+    }
+    qDebug() << "Layout done in" << iter << "iterations";
 
-    newGraph = output.loadGraphFromDB( *gDB );
+    root=g;
 
-    SgIncidenceDirectedGraph* incidenceGraph = loadCallGraphFromDB(*gDB);
+    g->controlWidget()->show();
 
-    DisplayGraph * g = DisplayGraph::generateCallGraph(scene,incidenceGraph);
-    g->controlWidget()->show();*/
 #endif
 }
+
+
 
 
 void AstGraphWidget::setFileFilter(int id)
