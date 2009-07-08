@@ -27,7 +27,11 @@ class ItemTreeNode
 
         virtual Qt::ItemFlags flags (int column) const;
 
-        virtual ItemTreeNode * child(int id) { return children[id]; }
+        virtual ItemTreeNode * child(int id)
+        {
+            return id >= children.size() ? NULL : children[id];
+        }
+
         virtual int childrenCount() const    { return children.size(); }
 
         virtual int getChildId(ItemTreeNode * child);

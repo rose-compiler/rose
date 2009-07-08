@@ -65,7 +65,7 @@ class MetricsConfig
         {}
 
         // returns the selected Attribute
-              int          getMetricsInfoCount();
+              int          getMetricsInfoCount() const;
 
               bool         hasMetricsInfo( const QString& name ) const;
         const MetricsInfo& getMetricsInfo( const QString& name ) const;

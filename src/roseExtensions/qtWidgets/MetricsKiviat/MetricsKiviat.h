@@ -7,6 +7,7 @@
 #include <QList>
 
 #include "KiviatView.h"
+#include "MetricsConfig.h"
 
 class QMouseEvent;
 class QListWidget;
@@ -25,7 +26,7 @@ class MetricsKiviat : public KiviatView
    Q_OBJECT
 
    public:
-      MetricsKiviat( QWidget *parent = NULL, MetricsConfig *global = NULL );
+      MetricsKiviat( QWidget *parent = NULL );
 
       virtual ~MetricsKiviat();
 
@@ -69,7 +70,7 @@ class MetricsKiviat : public KiviatView
    protected:
       virtual void mousePressEvent( QMouseEvent *ev);
       virtual void resizeEvent( QResizeEvent * ev );
-      virtual void contextMenuEvent( QContextMenuEvent *ev, const QPoint &pos );
+      virtual void contextMenuEvent( QContextMenuEvent *ev );
       virtual void dropEvent( QDropEvent * ev);
       virtual void dragMoveEvent( QDragMoveEvent * ev);
       virtual void dragEnterEvent( QDragEnterEvent * ev);
@@ -81,7 +82,7 @@ class MetricsKiviat : public KiviatView
    private:
       void drawData( SgNode *astNode );
 
-      MetricsConfig *metricsConfig;
+      MetricsConfig metricsConfig;
 
       SgNode *currentNode;
       QVector<SgNode *> nodes;

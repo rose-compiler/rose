@@ -64,6 +64,7 @@
      <addaction name="actionNewMetricsKiviat"/>
      <addaction name="actionNewAstBrowser"/>
      <addaction name="actionNewPropertyView"/>
+     <addaction name="actionNewSrcBinView"/>
     </widget>
     <addaction name="separator"/>
     <addaction name="actionTile"/>
@@ -322,7 +323,7 @@
   </action>
   <action name="actionNewAssemblerView">
    <property name="icon">
-    <iconset resource="../widgets/util/util.qrc">
+    <iconset>
      <normaloff>:/util/NodeIcons/binaryfile.gif</normaloff>:/util/NodeIcons/binaryfile.gif</iconset>
    </property>
    <property name="text">
@@ -331,7 +332,7 @@
   </action>
   <action name="actionNewCodeEditor">
    <property name="icon">
-    <iconset resource="../widgets/util/util.qrc">
+    <iconset>
      <normaloff>:/util/NodeIcons/sourcefile.gif</normaloff>:/util/NodeIcons/sourcefile.gif</iconset>
    </property>
    <property name="text">
@@ -348,7 +349,7 @@
   </action>
   <action name="actionOpen">
    <property name="icon">
-    <iconset resource="../widgets/util/util.qrc">
+    <iconset>
      <normaloff>:/util/AppIcons/document-open.png</normaloff>:/util/AppIcons/document-open.png</iconset>
    </property>
    <property name="text">
@@ -357,7 +358,7 @@
   </action>
   <action name="actionSave">
    <property name="icon">
-    <iconset resource="../widgets/util/util.qrc">
+    <iconset>
      <normaloff>:/util/AppIcons/document-save.png</normaloff>:/util/AppIcons/document-save.png</iconset>
    </property>
    <property name="text">
@@ -372,7 +373,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="../widgets/util/util.qrc">
+    <iconset>
      <normaloff>:/util/AppIcons/document-save-as.png</normaloff>:/util/AppIcons/document-save-as.png</iconset>
    </property>
    <property name="text">
@@ -381,7 +382,7 @@
   </action>
   <action name="actionEditorSettings">
    <property name="icon">
-    <iconset resource="../widgets/util/util.qrc">
+    <iconset>
      <normaloff>:/util/AppIcons/document-properties.png</normaloff>:/util/AppIcons/document-properties.png</iconset>
    </property>
    <property name="text">
@@ -438,7 +439,7 @@
   </action>
   <action name="actionNewGraphWidget">
    <property name="icon">
-    <iconset resource="../widgets/util/util.qrc">
+    <iconset>
      <normaloff>:/util/NodeIcons/project.gif</normaloff>:/util/NodeIcons/project.gif</iconset>
    </property>
    <property name="text">
@@ -447,7 +448,7 @@
   </action>
   <action name="actionNewMetricsKiviat">
    <property name="icon">
-    <iconset resource="../widgets/QtDesignerPlugins/QtDesignerPlugins.qrc">
+    <iconset resource="../QtDesignerPlugins/QtDesignerPlugins.qrc">
      <normaloff>:/QtDesignerPlugins/icons/Kiviat.gif</normaloff>:/QtDesignerPlugins/icons/Kiviat.gif</iconset>
    </property>
    <property name="text">
@@ -456,7 +457,7 @@
   </action>
   <action name="actionNewAstBrowser">
    <property name="icon">
-    <iconset resource="../widgets/QtDesignerPlugins/QtDesignerPlugins.qrc">
+    <iconset resource="../QtDesignerPlugins/QtDesignerPlugins.qrc">
      <normaloff>:/QtDesignerPlugins/icons/Rose.gif</normaloff>:/QtDesignerPlugins/icons/Rose.gif</iconset>
    </property>
    <property name="text">
@@ -465,11 +466,16 @@
   </action>
   <action name="actionNewPropertyView">
    <property name="icon">
-    <iconset resource="../widgets/QtDesignerPlugins/QtDesignerPlugins.qrc">
+    <iconset resource="../QtDesignerPlugins/QtDesignerPlugins.qrc">
      <normaloff>:/QtDesignerPlugins/icons/Rose.gif</normaloff>:/QtDesignerPlugins/icons/Rose.gif</iconset>
    </property>
    <property name="text">
     <string>New Property View</string>
+   </property>
+  </action>
+  <action name="actionNewSrcBinView">
+   <property name="text">
+    <string>New Source to Binary Demo</string>
    </property>
   </action>
  </widget>
@@ -483,6 +489,11 @@
    <class>BAstView</class>
    <extends>QTreeView</extends>
    <header>BAstView.h</header>
+  </customwidget>
+  <customwidget>
+   <class>NodeInfoWidget</class>
+   <extends>PropertyTreeWidget</extends>
+   <header>NodeInfoWidget.h</header>
   </customwidget>
   <customwidget>
    <class>ProjectView</class>
@@ -528,15 +539,10 @@
    <extends>QListWidget</extends>
    <header>TaskList.h</header>
   </customwidget>
-  <customwidget>
-   <class>NodeInfoWidget</class>
-   <extends>PropertyTreeWidget</extends>
-   <header>NodeInfoWidget.h</header>
-  </customwidget>
  </customwidgets>
  <resources>
-  <include location="../widgets/util/util.qrc"/>
-  <include location="../widgets/QtDesignerPlugins/QtDesignerPlugins.qrc"/>
+  <include location="res.qrc"/>
+  <include location="../QtDesignerPlugins/QtDesignerPlugins.qrc"/>
  </resources>
  <connections>
   <connection>

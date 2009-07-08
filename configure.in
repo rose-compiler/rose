@@ -1129,6 +1129,7 @@ src/roseExtensions/qtWidgets/RoseCodeEdit/QCodeEdit/document/Makefile
 src/roseExtensions/qtWidgets/RoseCodeEdit/QCodeEdit/widgets/Makefile
 src/roseExtensions/qtWidgets/RoseCodeEdit/QCodeEdit/qnfa/Makefile
 src/roseExtensions/qtWidgets/RoseFileSelector/Makefile
+src/roseExtensions/qtWidgets/SrcBinView/Makefile
 src/roseExtensions/qtWidgets/TaskSystem/Makefile
 src/roseExtensions/qtWidgets/util/Makefile
 src/roseExtensions/roseHPCToolkit/Makefile

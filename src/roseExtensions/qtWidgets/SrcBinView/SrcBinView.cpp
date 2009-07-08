@@ -10,12 +10,14 @@
 
 using namespace std;
 
-SrcBinView::SrcBinView( SgProject *project, QWidget *parent )
-    : srcBinView( new Ui::SrcBinView() )
+SrcBinView::SrcBinView( QWidget *parent )
+    : srcBinView( new Ui::SrcBinView() ),
+      binFile( NULL ),
+      srcFile( NULL )
 {
     srcBinView->setupUi( this );
 
-    for( int i( 0 ); i < project->numberOfFiles(); ++i )
+    /*for( int i( 0 ); i < project->numberOfFiles(); ++i )
     {
         SgFile *file( (*project)[i] );
         SgBinaryFile *binFiletmp( isSgBinaryFile( file ) );
@@ -31,7 +33,7 @@ SrcBinView::SrcBinView( SgProject *project, QWidget *parent )
     map.annotate( srcFile );
 
     srcBinView->roseCodeEdit->setNode( srcFile );
-    srcBinView->asmView->setNode( binFile );
+    srcBinView->asmView->setNode( binFile );*/
 
     connect( srcBinView->asmView         , SIGNAL( clicked( SgNode * ) ),
              this                        , SLOT  ( setBinaryNode( SgNode * ) ) );

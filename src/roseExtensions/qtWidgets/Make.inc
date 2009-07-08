@@ -26,6 +26,7 @@ ROSE_QT_WIDGETS_INCLUDES =   -I$(ROSE_QT_WIDGETS_ROOT)\
                              -I$(ROSE_QT_WIDGETS_ROOT)/RoseCodeEdit\
                              -I$(ROSE_QT_WIDGETS_ROOT)/RoseFileSelector\
                              -I$(ROSE_QT_WIDGETS_ROOT)/ProjectManager\
+                             -I$(ROSE_QT_WIDGETS_ROOT)/SrcBinView\
                              -I$(ROSE_QT_WIDGETS_ROOT)/InstructionCountAnnotator\
                              -I$(ROSE_QT_WIDGETS_ROOT)/TaskSystem\
                              -I$(ROSE_QT_WIDGETS_ROOT)/util\

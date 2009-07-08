@@ -30,6 +30,7 @@
 #include "AstGraphWidget.h"
 #include "MetricsKiviat.h"
 #include "RoseCodeEdit.h"
+#include "SrcBinView.h"
 
 MainWindow::MainWindow( QWidget * p )
 	: QMainWindow(p),
@@ -136,6 +137,7 @@ void MainWindow::saveMdiState()
         MetricsKiviat *    metKiviat  = subWdgs[i]->findChild<MetricsKiviat*> ();
         AstBrowserWidget * astBrowser = subWdgs[i]->findChild<AstBrowserWidget*> ();
         NodeInfoWidget *   nodeInfo   = subWdgs[i]->findChild<NodeInfoWidget*> ();
+        SrcBinView *       srcBinView = subWdgs[i]->findChild<SrcBinView*> ();
 
         if     (asmView)    settings.setValue("type", "AsmView");
         else if(codeEdit)   settings.setValue("type", "RoseCodeEdit");
@@ -143,6 +145,7 @@ void MainWindow::saveMdiState()
         else if(metKiviat)  settings.setValue("type", "MetricsKiviat");
         else if(astBrowser) settings.setValue("type", "AstBrowser" );
         else if(nodeInfo)   settings.setValue("type", "NodeInfo" );
+        else if(srcBinView) settings.setValue("type", "SrcBinView" );
         else qDebug() << "Unknown WidgetType in MdiArea, cannot be stored";
     }
     settings.endArray();
@@ -173,6 +176,8 @@ void MainWindow::restoreMdiState()
             w = addMdiSubWidget( new AstBrowserWidget(), "Ast Browser" );
         else if( type == "NodeInfo" )
             w = addMdiSubWidget( new NodeInfoWidget(),   "SgNode Properties" );
+        else if( type == "SrcBinView" )
+            w = addMdiSubWidget( new SrcBinView(),       "Source to Assembly Demo" );
         else
             qDebug() << "QMainWindow::restoreMdiState - unknown type" << type;
 
@@ -261,6 +266,11 @@ void MainWindow::on_actionNewAstBrowser_triggered()
 void MainWindow::on_actionNewPropertyView_triggered()
 {
     addMdiSubWidget(new NodeInfoWidget(), "SgNode Properties");
+}
+
+void MainWindow::on_actionNewSrcBinView_triggered()
+{
+    addMdiSubWidget(new SrcBinView(), "Source to Assembly Demo");
 }
 
 void MainWindow::on_actionSaveAs_triggered()

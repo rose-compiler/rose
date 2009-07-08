@@ -418,6 +418,8 @@ int KiviatView::addData(const QVector<int> & dat, int valToNormalize, QColor col
 
 void KiviatView::setDataColor( int dataHandle, const QColor& color )
 {
+    if( dataset.size() == 0 ) return;
+
     dataset[dataHandle]->setColor( color );
     redrawData();
 }
