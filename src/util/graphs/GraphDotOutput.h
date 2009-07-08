@@ -78,6 +78,17 @@ class GraphDotOutput
 
 };
 
+namespace OutputDot
+{
+  std::string Translate( std::string r1);
+  //! get the name of a vertex
+  std::string getVertexName(SgGraphNode* v);
+
+  std::string getEdgeLabel(SgDirectedGraphEdge* e);
+
+  void 
+  writeToDOTFile(SgIncidenceDirectedGraph* graph,  const std::string& filename, const std::string& graphname);
+};
 #endif
 
 
