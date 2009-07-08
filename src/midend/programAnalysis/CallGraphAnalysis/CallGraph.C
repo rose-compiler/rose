@@ -12,7 +12,78 @@ bool var_SOLVE_FUNCTION_CALLS_IN_DB = false;
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
+namespace OutputDot
+{
+  std::string Translate( std::string r1) 
+  {
+    std::string r2 = "";
+    for (unsigned int i = 0; i < r1.size(); ++i) {
+      char c = r1[i];
+      if (c == '\"')
+        r2 = r2 + "\\\"";
+      else if (c == '\n') {
+        r2 = r2 + "\\n";
+      }
+      else
+        r2 = r2 + c;
+    }
+    return r2;
+  };
+  //! get the name of a vertex
+  std::string getVertexName(SgGraphNode* v) 
+  { 
+    std::string r1 = v->get_name();
+    std::string r2 = Translate(r1); 
+    return r2;
+  };
 
+  std::string getEdgeLabel(SgDirectedGraphEdge* e) 
+  {
+    std::string r1 = e->get_name();
+    return Translate(r1);
+  };
+
+  void 
+  writeToDOTFile(SgIncidenceDirectedGraph* graph,  const std::string& filename, const std::string& graphname)
+  {
+    bool debug = false;
+    if(debug) std::cerr << " dot output to " << filename << std::endl; 
+    std::ofstream dotfile(filename.c_str());
+
+    //Liao, add "" to enclose the graphname,otherwise syntax error for .dot file. 2/22/2008
+    dotfile <<  "digraph \"" << graphname <<"\""<< " {\n";
+
+    rose_graph_integer_node_hash_map & nodes =
+      graph->get_node_index_to_node_map ();
+
+
+    for( rose_graph_integer_node_hash_map::iterator it = nodes.begin();
+        it != nodes.end(); ++it )
+    {
+      SgGraphNode* node = it->second;
+      dotfile << ((long)node) << "[label=\"" << getVertexName(node) << "\" ];" << std::endl;
+    }
+
+    if(debug) std::cerr << " finished add node" << std::endl; // debug
+
+    rose_graph_integer_edge_hash_multimap & outEdges
+      = graph->get_node_index_to_edge_multimap_edgesOut ();
+
+
+    for( rose_graph_integer_edge_hash_multimap::const_iterator outEdgeIt = outEdges.begin();
+        outEdgeIt != outEdges.end(); ++outEdgeIt )
+    {
+      if(debug) std::cerr << " add edge from node ... " << std::endl; // debug
+      SgDirectedGraphEdge* graphEdge = isSgDirectedGraphEdge(outEdgeIt->second);
+      ROSE_ASSERT(graphEdge!=NULL);
+
+      dotfile << ((long)graphEdge->get_from()) << " -> " << ((long)graphEdge->get_to())
+        << "[label=\"" << getEdgeLabel(graphEdge) << "\"];" << std::endl;
+    }
+    if(debug) std::cerr << " writing content to " << filename << std::endl; // debug
+    dotfile <<  "}\n";
+  };
+};
 
 #ifdef HAVE_SQLITE3
 
@@ -1507,6 +1578,7 @@ GenerateDotGraph ( SgIncidenceDirectedGraph *graph, string fileName )
 
      //     printf ("Building the GraphDotOutput object ... \n");
      std::cerr << "Error: Outputing to DOT file not implemented yet" << std::endl;
+     OutputDot::writeToDOTFile(graph,fileName, "Call Graph" );
      //CallGraphDotOutput output(*graph);
      //output.writeToDOTFile(fileName, "Call Graph");
    }
