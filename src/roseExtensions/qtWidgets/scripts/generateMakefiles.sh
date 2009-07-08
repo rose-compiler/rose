@@ -14,7 +14,6 @@ SUBDIRS="AsmInstructionBar \
           NodeInfoWidget \
           ProjectManager \
           PropertyTreeWidget \
-          QtDesignerPlugins \
           RoseCodeEdit \
           RoseFileSelector \
           TaskSystem \
@@ -39,7 +38,7 @@ fi
 
 
 srcdir=${roseSrcDir}/src/roseExtensions/qtWidgets
-genScript="${roseSrcDir}/src/roseExtensions/scripts/MakefileAmGenerator.pl"
+genScript="${roseSrcDir}/src/roseExtensions/qtWidgets/scripts/MakefileAmGenerator.pl"
 
 
 for folder in $SUBDIRS  

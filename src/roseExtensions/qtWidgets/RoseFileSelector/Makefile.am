@@ -1,5 +1,5 @@
 #------------ RoseFileSelector Makefile.am -----------
-include ../Make.inc 
+include $(top_srcdir)/src/roseExtensions/qtWidgets/Make.inc 
 
 if ROSE_WITH_ROSEQT
 
@@ -14,7 +14,7 @@ nodist_libRoseFileSelector_la_SOURCES = moc_RoseFileComboBox.cxx
 
 
 # Target for installing header 
-headerTargetdir    =  $(roseQtWidgetsIncPath)/
+headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = RoseFileComboBox.h
 
 

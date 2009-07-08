@@ -37,7 +37,7 @@ nodist_libQCodeEdit_la_SOURCES = moc_qcodecompletionengine.cxx\
 
 
 # Target for installing header 
-headerTargetdir    =  $(roseQtWidgetsIncPath)/QCodeEdit
+headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/QCodeEdit
 headerTarget_HEADERS = qce-config.h\
                        qcodecompletionengine.h\
                        qcodeedit.h\

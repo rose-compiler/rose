@@ -1,5 +1,5 @@
 #------------ BeautifiedAst Makefile.am -----------
-include ../Make.inc 
+include $(top_srcdir)/src/roseExtensions/qtWidgets/Make.inc 
 
 if ROSE_WITH_ROSEQT
 
@@ -18,7 +18,7 @@ nodist_libBeautifiedAst_la_SOURCES = moc_BAstModel.cxx\
 
 
 # Target for installing header 
-headerTargetdir    =  $(roseQtWidgetsIncPath)/
+headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = BAstModel.h\
                        BAstNode.h\
                        BAstView.h

@@ -1,5 +1,5 @@
 #------------ ProjectManager Makefile.am -----------
-include ../Make.inc 
+include $(top_srcdir)/src/roseExtensions/qtWidgets/Make.inc 
 
 if ROSE_WITH_ROSEQT
 
@@ -19,7 +19,7 @@ nodist_libProjectManager_la_SOURCES = moc_DependencyInfo.cxx\
 
 
 # Target for installing header 
-headerTargetdir    =  $(roseQtWidgetsIncPath)/
+headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = DependencyInfo.h\
                        Project.h\
                        ProjectManager.h\

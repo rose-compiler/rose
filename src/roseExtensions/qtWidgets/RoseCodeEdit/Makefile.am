@@ -21,7 +21,7 @@ nodist_libRoseCodeEdit_la_SOURCES = moc_RoseCodeEdit.cxx\
 
 
 # Target for installing header 
-headerTargetdir    =  $(roseQtWidgetsIncPath)/
+headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = RoseCodeEdit.h
 
 

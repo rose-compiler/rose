@@ -1,5 +1,5 @@
 #------------ FlopCounter Makefile.am -----------
-include ../Make.inc 
+include $(top_srcdir)/src/roseExtensions/qtWidgets/Make.inc 
 
 if ROSE_WITH_ROSEQT
 
@@ -15,7 +15,7 @@ libFlopCounter_la_SOURCES = FlopCounter.cpp\
 
 
 # Target for installing header 
-headerTargetdir    =  $(roseQtWidgetsIncPath)/
+headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = FlopCounter.h\
                        Flops.h
 

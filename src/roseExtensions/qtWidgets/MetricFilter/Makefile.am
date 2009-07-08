@@ -1,5 +1,5 @@
 #------------ MetricFilter Makefile.am -----------
-include ../Make.inc 
+include $(top_srcdir)/src/roseExtensions/qtWidgets/Make.inc 
 
 if ROSE_WITH_ROSEQT
 
@@ -15,7 +15,7 @@ nodist_libMetricFilter_la_SOURCES = moc_MetricFilter.cxx\
 BUILT_SOURCES = ui_MetricFilter.h
 
 # Target for installing header 
-headerTargetdir    =  $(roseQtWidgetsIncPath)/
+headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = MetricFilter.h
 
 

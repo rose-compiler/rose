@@ -1,5 +1,5 @@
 #------------ TaskSystem Makefile.am -----------
-include ../Make.inc 
+include $(top_srcdir)/src/roseExtensions/qtWidgets/Make.inc 
 
 if ROSE_WITH_ROSEQT
 
@@ -21,7 +21,7 @@ nodist_libTaskSystem_la_SOURCES = moc_CompilerOutputWidget.cxx\
 
 
 # Target for installing header 
-headerTargetdir    =  $(roseQtWidgetsIncPath)/
+headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = CompilerOutputWidget.h\
                        GccTask.h\
                        RoseFrontendTask.h\

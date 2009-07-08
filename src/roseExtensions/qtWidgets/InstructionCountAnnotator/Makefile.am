@@ -15,7 +15,7 @@ libInstructionCountAnnotator_la_SOURCES = InstructionCountAnnotator.cpp\
 
 
 # Target for installing header 
-headerTargetdir    =  $(roseQtWidgetsIncPath)/
+headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = InstructionCountAnnotator.h\
                        PTracer.h
 

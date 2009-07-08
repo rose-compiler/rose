@@ -23,7 +23,7 @@ nodist_libdocument_la_SOURCES = moc_qdocument.cxx
 
 
 # Target for installing header 
-headerTargetdir    =  $(roseQtWidgetsIncPath)/QCodeEdit
+headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/QCodeEdit
 headerTarget_HEADERS = qdocument.h\
                        qdocument_p.h\
                        qdocumentbuffer.h\

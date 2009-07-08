@@ -1,5 +1,5 @@
 #------------ PropertyTreeWidget Makefile.am -----------
-include ../Make.inc 
+include $(top_srcdir)/src/roseExtensions/qtWidgets/Make.inc 
 
 if ROSE_WITH_ROSEQT
 
@@ -16,7 +16,7 @@ nodist_libPropertyTreeWidget_la_SOURCES = moc_PropertyTreeModel.cxx\
 
 
 # Target for installing header 
-headerTargetdir    =  $(roseQtWidgetsIncPath)/
+headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/
 headerTarget_HEADERS = PropertyTreeModel.h\
                        PropertyTreeWidget.h
 

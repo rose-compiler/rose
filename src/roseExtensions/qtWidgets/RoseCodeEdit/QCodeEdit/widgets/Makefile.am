@@ -46,7 +46,7 @@ BUILT_SOURCES = ui_editconfig.h\
                 ui_searchreplace.h
 
 # Target for installing header 
-headerTargetdir    =  $(roseQtWidgetsIncPath)/QCodeEdit
+headerTargetdir    =  $(roseQtWidgetsHeaderInstallPath)/QCodeEdit
 headerTarget_HEADERS = qcalltip.h\
                        qeditconfig.h\
                        qfoldpanel.h\
