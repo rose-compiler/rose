@@ -7,7 +7,7 @@ class DisplayGraphNode : public DisplayNode
 {
     public:
         DisplayGraphNode(QGraphicsScene * sc = NULL);
-        DisplayGraphNode(const QString & caption, QGraphicsScene * scene = NULL);
+        DisplayGraphNode(const QString & caption,QGraphicsScene * scene = NULL);
 
         virtual ~DisplayGraphNode();
 
@@ -33,11 +33,17 @@ class DisplayGraphNode : public DisplayNode
         /// True if there is a incoming or outgoing edge to/from the other node
         /// has to search in two list -> rather slow
         bool isAdjacentTo(DisplayGraphNode * otherNode) const;
+
+        int getId() const     { return id;}
+        void setId(int newId) { id=newId; }
     protected:
         virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value);
 
         QList<DisplayEdge *> inEdges;
         QList<DisplayEdge *> outEdges;
+
+
+        int id;
 };
 
 
@@ -69,11 +75,33 @@ class DisplayGraph : public QObject
         void addInvisibleEdge(int i1, int i2);
 
 
+        /// good starting point for spring embedder
+        void circleLayout();
+
+
+        bool isAdjacentTo(int node1, int node2) const { return edgeInfo.contains(node1,node2); }
+
         static DisplayGraph * generateTestGraph(QGraphicsScene * sc,
                                                 QObject * par=0);
+
+        static DisplayGraph * generateLargeTestGraph(QGraphicsScene * sc,
+                                                QObject * par=0);
+
         static DisplayGraph * generateCallGraph(QGraphicsScene * sc,
                                                 SgIncidenceDirectedGraph * g,
                                                 QObject * par=0);
+
+
+        static DisplayGraph * buildCallGraphForFunction(SgIncidenceDirectedGraph * cg,
+                                                        SgNode * funcNode,
+                                                        int depth,
+                                                        QGraphicsScene * sc,
+                                                        QObject * par);
+
+        void setOptimalDistance(qreal dist) { optimalDistance=dist; }
+        void setDelta(qreal newDelta)       { curDelta = newDelta; }
+
+        qreal springBasedLayoutIteration(qreal delta);
 
     protected slots:
         void on_cmdStartTimer_clicked();
@@ -82,7 +110,21 @@ class DisplayGraph : public QObject
         void on_timerEvent();
 
     protected:
-        void springBasedLayoutIteration(qreal delta);
+
+        static void buildCgVisit(SgIncidenceDirectedGraph * cg,
+                                 DisplayGraph *g,
+                                 int curNodeIndex,
+                                 int lastNodeIndex,
+                                 DisplayGraphNode * lastDisplayNode,
+                                 const QString & edgeCaption,
+                                 QMap<int,DisplayGraphNode*> & addedNodes,
+                                 int curDepth);
+
+        static QString getNodeLabelFromId(SgIncidenceDirectedGraph * cg, int nodeId);
+        static QString getEdgeLabelFromId(SgIncidenceDirectedGraph * cg, int fromNode, int toNode);
+
+
+
 
         QPointF repulsiveForce (const QPointF & n1, const QPointF & n2, qreal optDist);
         QPointF attractiveForce(const QPointF & n1, const QPointF & n2, qreal optDist);
@@ -120,6 +162,9 @@ class DisplayGraph : public QObject
         /// but not in display
         /// do keep this datastructure consistent do use node-pointer outside this class!
         QMultiMap<int,int> edgeInfo;
+        QMultiMap<DisplayGraphNode*, DisplayGraphNode *> edgeInfoGi;
+
+
 };
 
 

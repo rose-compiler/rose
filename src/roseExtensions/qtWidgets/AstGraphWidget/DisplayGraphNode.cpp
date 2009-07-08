@@ -2,22 +2,32 @@
 #include "DisplayGraphNode.h"
 #include "DisplayEdge.h"
 
+#include "AstDisplayInfo.h"
+
+
 #include <QGraphicsScene>
 
 #include <QDebug>
 
 
+#include <cmath>
+
 using namespace std;
+
+typedef rose_graph_integer_node_hash_map      NodeMap;
+typedef rose_graph_integer_edge_hash_multimap EdgeMap;
+
+
 
 // ---------------------- DisplayGraphNode -------------------------------
 
 DisplayGraphNode::DisplayGraphNode(QGraphicsScene * sc)
-    : DisplayNode(sc)
+    : DisplayNode(sc),id(-1)
 {
 }
 
 DisplayGraphNode::DisplayGraphNode(const QString & caption,QGraphicsScene * sc)
-    : DisplayNode(caption,sc)
+    : DisplayNode(caption,sc),id(-1)
 {
 }
 
@@ -198,12 +208,16 @@ void DisplayGraph::addInvisibleEdge(int i1, int i2)
 {
     edgeInfo.insert(i1,i2);
     edgeInfo.insert(i2,i1);
+
+    edgeInfoGi.insert(n[i1],n[i2]);
+    edgeInfoGi.insert(n[i2],n[i1]);
 }
 
 int DisplayGraph::addNode(DisplayGraphNode * node)
 {
     node->setScene(scene);
     n.push_back(node);
+    node->setId(n.size()-1);
     return n.size()-1;
 }
 
@@ -212,6 +226,7 @@ int DisplayGraph::addGravityNode()
     DisplayGraphNode * node = new DisplayGraphNode("x",scene);
     node->setBgColor(QColor(Qt::red).lighter(150));
     n.push_back(node);
+    node->setId(n.size()-1);
     return n.size()-1;
 }
 
@@ -234,7 +249,7 @@ void DisplayGraph::on_timerEvent()
 }
 
 
-void DisplayGraph::springBasedLayoutIteration(qreal delta)
+qreal DisplayGraph::springBasedLayoutIteration(qreal delta)
 {
     forces.fill(QPointF(0,0),n.size());
 
@@ -246,27 +261,54 @@ void DisplayGraph::springBasedLayoutIteration(qreal delta)
         ++i;
     }*/
 
-    for(int i=0; i < n.size(); i++)
+    // Calculate attractive forces between adjacent nodes
+    foreach(DisplayGraphNode * n1, n)
     {
-        QPointF randComp =  QPointF(qrand()/(double)RAND_MAX,qrand()/(double)RAND_MAX) -QPointF(0.5,0.5);
-        n[i]->setPos(n[i]->pos() + ui->spnRandomFactor->value() * randComp );
-
-        for(int j=0; j < i; j++)
+        QMultiMap<DisplayGraphNode*, DisplayGraphNode*>::iterator i = edgeInfoGi.find(n1);
+        while (i != edgeInfoGi.end() && i.key() == n1)
         {
-            qreal dist= optimalDistance + n[i]->boundingRect().width()/2;
-            if( edgeInfo.contains(i,j))
-            {
-                QPointF attrForce( attractiveForce(n[i]->pos(),n[j]->pos(),dist) );
-                forces[i] += attrForce;
-                forces[j] -= attrForce;
-            }
+            DisplayGraphNode * n2 = *i;
 
-            QPointF repForce(repulsiveForce(n[i]->pos(),n[j]->pos(),dist));
-            forces[i] += repForce;
-            forces[j] -= repForce;
+            qreal dist= optimalDistance + n1->boundingRect().width()/2 +
+                                          n2->boundingRect().width()/2;
+
+            QPointF force (attractiveForce(n1->pos(),n2->pos(),dist) );
+            forces[n1->getId()] += force;
+            forces[n2->getId()] -= force;
+
+            ++i;
         }
     }
 
+
+    // Calculate repulsive forces for near nodes
+    foreach(DisplayGraphNode * n1, n)
+    {
+        QRectF rect(0,0,10*optimalDistance,10*optimalDistance);
+        rect.moveCenter(n1->pos());
+        QList<QGraphicsItem*> nearItems = scene->items(rect,Qt::IntersectsItemBoundingRect);
+        qDebug() << "Inner Loop: " << nearItems.size();
+
+        foreach(QGraphicsItem * n2,nearItems)
+        {
+            DisplayGraphNode * dispN1 = n1;
+            DisplayGraphNode * dispN2 = dynamic_cast<DisplayGraphNode*>(n2);
+
+            // edges are also found by scene->item()
+            if( !dispN2)
+                continue;
+
+            qreal dist= optimalDistance + n1->boundingRect().width()/2 +
+                                          n2->boundingRect().width()/2;
+
+            QPointF repForce(repulsiveForce(n1->pos(),n2->pos(),dist));
+
+            forces[dispN1->getId()] += repForce;
+            forces[dispN2->getId()] -= repForce;
+        }
+    }
+
+    qreal max=0;
     for(int i=0; i<n.size(); i++)
     {
         if(n[i]->isMouseHold())
@@ -275,12 +317,19 @@ void DisplayGraph::springBasedLayoutIteration(qreal delta)
         qreal dx = forces[i].x() * delta;
         qreal dy = forces[i].y() * delta;
 
+        max=qMax(max,dx);
+        max=qMax(max,dy);
+
         dx = qBound(-optimalDistance,dx,optimalDistance);
         dy = qBound(-optimalDistance,dy,optimalDistance);
+
         n[i]->moveBy(dx,dy);
     }
 
+    return max;
 }
+
+
 
 QPointF DisplayGraph::repulsiveForce (const QPointF & n1, const QPointF & n2, qreal optDist)
 {
@@ -291,8 +340,9 @@ QPointF DisplayGraph::repulsiveForce (const QPointF & n1, const QPointF & n2, qr
     }
 
 
-    QLineF l (n1,n2);
     QPointF v (n1-n2);
+    QLineF l (n1,n2);
+
     QPointF res =( optDist *optDist / l.length() ) * v;
     return  res;
 }
@@ -306,9 +356,164 @@ QPointF DisplayGraph::attractiveForce(const QPointF & n1, const QPointF & n2, qr
     }
 
     QPointF v( n2-n1);
-    QPointF res =( (v.x()*v.x() + v.y() * v.y())  / optDist) * v;
+    qreal normSq = v.x()*v.x() + v.y() * v.y() ;
+    QPointF res =( normSq  / optDist) * v;
     return res;
 }
+
+
+void DisplayGraph::circleLayout()
+{
+    int nodeCount = n.size();
+    qreal radius = optimalDistance/10 * nodeCount /2;
+
+    for(int i=0; i<nodeCount ; i++)
+    {
+        qreal angle = ( static_cast<qreal>(i)/nodeCount ) * (2* M_PI);
+        QPointF newPos ( cos(angle),sin(angle) );
+        newPos *= radius;
+        n[i]->setPos(newPos);
+    }
+}
+
+
+
+
+
+DisplayGraph * DisplayGraph::buildCallGraphForFunction(SgIncidenceDirectedGraph * cg,
+                                                       SgNode * funcNode,
+                                                       int depth,
+                                                       QGraphicsScene * sc,
+                                                       QObject * par)
+{
+
+    if(AstDisplayInfo::getType(funcNode) != AstDisplayInfo::FUNCTION)
+        return NULL;
+
+
+    DisplayGraph * g = new DisplayGraph(sc,par);
+
+    QString funcName = AstDisplayInfo::getShortNodeNameDesc(funcNode);
+
+    typedef rose_graph_string_integer_hash_multimap StringNodeMap;
+    StringNodeMap & stringNodeMap = cg->get_string_to_node_index_multimap();
+    StringNodeMap::iterator it = stringNodeMap.find(funcName.toStdString());
+
+    if(it == stringNodeMap.end())
+        return NULL;
+
+
+    int nodeIndex= it->second;
+
+    qDebug() << getNodeLabelFromId(cg,nodeIndex);
+
+    DisplayGraphNode * curDisplayNode = new DisplayGraphNode(getNodeLabelFromId(cg,nodeIndex));
+    curDisplayNode->setBgColor(QColor(Qt::red).lighter(130));
+    g->addNode(curDisplayNode);
+
+
+    QMap<int,DisplayGraphNode*>  addedNodes;
+    addedNodes.insert(nodeIndex,curDisplayNode);
+
+    // call visit for all out-nodes
+    EdgeMap & edges =  cg->get_node_index_to_edge_multimap_edgesOut ();
+    EdgeMap::iterator edgeIt = edges.find(nodeIndex);
+    for(; edgeIt != edges.end() && edgeIt->first == nodeIndex; ++edgeIt )
+    {
+        SgDirectedGraphEdge * edge = isSgDirectedGraphEdge(edgeIt->second);
+        QString edgeLabel( edge->get_name().c_str() );
+        int newNodeIndex = edge->get_to()->get_index();
+
+        if(addedNodes.contains(newNodeIndex) )
+            g->addEdge(curDisplayNode, addedNodes[newNodeIndex]);
+        else
+            buildCgVisit(cg,g,newNodeIndex,nodeIndex,curDisplayNode,edgeLabel,addedNodes,depth);
+    }
+
+
+
+    g->circleLayout();
+    return g;
+
+}
+
+
+void DisplayGraph::buildCgVisit(SgIncidenceDirectedGraph * cg,
+                                DisplayGraph *g,
+                                int curNodeIndex,
+                                int lastNodeIndex,
+                                DisplayGraphNode * lastDisplayNode,
+                                const QString & edgeCaption,
+                                QMap<int,DisplayGraphNode*> & addedNodes,
+                                int curDepth)
+{
+    if(curDepth==0)
+        return;
+
+    if(addedNodes.contains(curNodeIndex))
+        return;
+
+    // Add node to display graph
+    DisplayGraphNode * curDisplayNode = new DisplayGraphNode(getNodeLabelFromId(cg,curNodeIndex));
+    g->addNode(curDisplayNode);
+
+
+
+    addedNodes.insert(curNodeIndex,curDisplayNode);
+    qDebug() << "Added" << curNodeIndex << getNodeLabelFromId(cg,curNodeIndex);
+
+    // add edge from last to this node
+    g->addEdge(lastDisplayNode,curDisplayNode);
+
+    // call recursively for all adjacent nodes
+    EdgeMap & edges =  cg->get_node_index_to_edge_multimap_edgesOut ();
+    EdgeMap::iterator edgeIt = edges.find(curNodeIndex);
+    for(; edgeIt != edges.end() && edgeIt->first == curNodeIndex; ++edgeIt )
+    {
+        SgDirectedGraphEdge * edge = isSgDirectedGraphEdge(edgeIt->second);
+        QString newEdgeCaption( edge->get_name().c_str() );
+        int newNodeIndex = edge->get_to()->get_index();
+
+
+        QMap<int,DisplayGraphNode*>::const_iterator i = addedNodes.constBegin();
+        while (i != addedNodes.constEnd()) {
+            qDebug() << i.key() << ": " << i.value()->getDisplayName() ;
+            ++i;
+        }
+
+        if(addedNodes.contains(newNodeIndex) )
+            g->addEdge(curDisplayNode, addedNodes[newNodeIndex]);
+        else
+            buildCgVisit(cg,g,newNodeIndex,curNodeIndex,curDisplayNode,newEdgeCaption,addedNodes,curDepth-1);
+    }
+
+}
+
+QString DisplayGraph::getNodeLabelFromId(SgIncidenceDirectedGraph * cg, int nodeId)
+{
+    NodeMap & nodes = cg->get_node_index_to_node_map ();
+    NodeMap::iterator it = nodes.find(nodeId);
+    Q_ASSERT(it != nodes.end());
+
+    return it->second->get_name().c_str();
+}
+
+QString DisplayGraph::getEdgeLabelFromId(SgIncidenceDirectedGraph * cg, int fromNode, int toNode)
+{
+    EdgeMap & edges =  cg->get_node_index_to_edge_multimap_edgesOut ();
+    EdgeMap::iterator edgeIt = edges.find(fromNode);
+    for(; edgeIt != edges.end() && edgeIt->first==fromNode; ++edgeIt )
+    {
+        SgDirectedGraphEdge * edge = isSgDirectedGraphEdge(edgeIt->second);
+        Q_ASSERT(edge);
+
+        if(edge->get_to()->get_index() == toNode)
+            return  edge->get_name().c_str();
+    }
+    Q_ASSERT(false);
+    return "";
+}
+
 
 
 
@@ -321,13 +526,14 @@ DisplayGraph * DisplayGraph::generateCallGraph(QGraphicsScene * sc,
     typedef rose_graph_integer_node_hash_map      NodeMap;
     typedef rose_graph_integer_edge_hash_multimap EdgeMap;
 
+
     NodeMap & nodes = cg->get_node_index_to_node_map ();
 
 
     for( NodeMap::iterator it = nodes.begin();  it != nodes.end(); ++it )
     {
         QString name  ( it->second->get_name ().c_str() );
-        DisplayGraphNode * n = new DisplayGraphNode(name,sc );
+        DisplayGraphNode * n = new DisplayGraphNode(name, sc);
 
         g->addNode(n);
     }
@@ -340,6 +546,9 @@ DisplayGraph * DisplayGraph::generateCallGraph(QGraphicsScene * sc,
         QString edgeLabel( edge->get_name().c_str());
         g->addEdge(edge->get_from()->get_index(),edge->get_to()->get_index(),edgeLabel);
     }
+
+    qDebug() << "BuiltCallGraph with " << nodes.size() << "nodes and " << edges.size() << "edges";
+    g->circleLayout();
 
     return g;
 }
@@ -385,9 +594,67 @@ DisplayGraph * DisplayGraph::generateTestGraph(QGraphicsScene * sc,QObject * par
     g->addInvisibleEdge(gn,n3);
 
 
+    g->circleLayout();
     return g;
 }
 
 
+DisplayGraph * DisplayGraph::generateLargeTestGraph(QGraphicsScene * sc,QObject * par)
+{
+    DisplayGraph * g = new DisplayGraph(sc,par);
+
+    qDebug() << "Generating Graph";
+
+    const int NODE_COUNT = 200;
+    const int EDGE_COUNT = 50;
+
+
+    // add some nodes
+    for(int i=0; i < NODE_COUNT; i++)
+    {
+        DisplayGraphNode * n = new DisplayGraphNode( QString("%1").arg(i),sc );
+        n->setPos(i,0);
+        g->addNode(n);
+        if(i>0)
+            g->addEdge(i,i-1);
+    }
+
+    /*
+    const int CLUSTER_SIZE = 50;
+    int lastClusterNode=-1;
+    for(int i = 0; i < NODE_COUNT / CLUSTER_SIZE; i++)
+    {
+        int clusterNode = g->addGravityNode();
+        for(int j= i*CLUSTER_SIZE; j < (i+1)*CLUSTER_SIZE ;j++)
+            g->addInvisibleEdge(clusterNode,j);
+
+
+        if(i>0)
+            g->addInvisibleEdge(clusterNode,lastClusterNode);
+
+        lastClusterNode=clusterNode;
+    }
+    */
+
+
+    int edgeCounter=0;
+    while(edgeCounter < EDGE_COUNT)
+    {
+        int i1 = (double) rand()/RAND_MAX * NODE_COUNT;
+        int i2 = (double) rand()/RAND_MAX * NODE_COUNT;
+
+        if(! g->isAdjacentTo(i1,i2))
+        {
+            g->addEdge(i1,i2);
+            edgeCounter++;
+        }
+    }
+
+
+    qDebug() << "Done";
+    g->circleLayout();
+
+    return g;
+}
 
 

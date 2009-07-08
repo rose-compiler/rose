@@ -9,6 +9,8 @@ namespace AstDisplayInfo
     {
         SgClassDefinition * sgClassDefinition       = isSgClassDefinition(node);
         SgFunctionDefinition * sgFunctionDefinition = isSgFunctionDefinition(node);
+        SgFunctionDeclaration *sgFunctionDecl     = isSgFunctionDeclaration(node);
+
         SgNamespaceDefinitionStatement * sgNSDef    = isSgNamespaceDefinitionStatement(node);
 
         //Assembler Nodes
@@ -16,6 +18,7 @@ namespace AstDisplayInfo
 
         if(sgClassDefinition)          return CLASS;
         else if (sgFunctionDefinition) return FUNCTION;
+        else if (sgFunctionDecl)       return FUNCTION;
         else if (sgNSDef)              return NAMESPACE;
         else if (sgAsmFunctionDecl)    return FUNCTION;
         else                           return UNKNOWN;
@@ -25,9 +28,10 @@ namespace AstDisplayInfo
 
     QString getShortNodeNameDesc(SgNode * node)
     {
-        SgClassDefinition * sgClassDefinition       = isSgClassDefinition(node);
-        SgFunctionDefinition * sgFunctionDefinition = isSgFunctionDefinition(node);
-        SgNamespaceDefinitionStatement * sgNSDef    = isSgNamespaceDefinitionStatement(node);
+        SgClassDefinition * sgClassDefinition        = isSgClassDefinition(node);
+        SgFunctionDefinition * sgFunctionDefinition  = isSgFunctionDefinition(node);
+        SgFunctionDeclaration * sgFunctionDecl       = isSgFunctionDeclaration(node);
+        SgNamespaceDefinitionStatement * sgNSDef     = isSgNamespaceDefinitionStatement(node);
 
         //Assembler Nodes
         SgAsmFunctionDeclaration * sgAsmFunctionDecl= isSgAsmFunctionDeclaration(node);
@@ -38,6 +42,7 @@ namespace AstDisplayInfo
         if(sgClassDefinition)          name = sgClassDefinition->get_declaration()->get_name();
         else if (sgFunctionDefinition) name = sgFunctionDefinition->get_declaration()->get_name();
         else if (sgNSDef)              name = sgNSDef->get_namespaceDeclaration()->get_name();
+        else if (sgFunctionDecl)       name = sgFunctionDecl->get_name();
         else if (sgAsmFunctionDecl)    name = sgAsmFunctionDecl->get_name();
         else                           return getShortNodeTypeDesc(node);
 
@@ -53,6 +58,7 @@ namespace AstDisplayInfo
     {
         SgClassDefinition * sgClassDefinition       = isSgClassDefinition(node);
         SgFunctionDefinition * sgFunctionDefinition = isSgFunctionDefinition(node);
+        SgFunctionDeclaration * sgFunctionDecl      = isSgFunctionDeclaration(node);
         SgNamespaceDefinitionStatement * sgNSDef    = isSgNamespaceDefinitionStatement(node);
         SgForStatement * sgForStatement             = isSgForStatement(node);
         SgWhileStmt * sgWhileStatement              = isSgWhileStmt(node);
@@ -63,6 +69,7 @@ namespace AstDisplayInfo
 
         if      (sgClassDefinition)     return QObject::tr("Class");
         else if (sgFunctionDefinition)  return QObject::tr("Function");
+        else if (sgFunctionDecl)        return QObject::tr("Function");
         else if (sgNSDef)               return QObject::tr("Namespace");
         else if (sgForStatement)        return QObject::tr("For-Loop");
         else if (sgWhileStatement)      return QObject::tr("While-Loop");
@@ -75,6 +82,7 @@ namespace AstDisplayInfo
     {
         SgClassDefinition * sgClassDefinition       = isSgClassDefinition(node);
         SgFunctionDefinition * sgFunctionDefinition = isSgFunctionDefinition(node);
+        SgFunctionDeclaration * sgFunctionDecl      = isSgFunctionDeclaration(node);
         SgNamespaceDefinitionStatement * sgNSDef    = isSgNamespaceDefinitionStatement(node);
         SgForStatement * sgForStatement             = isSgForStatement(node);
         SgWhileStmt * sgWhileStatement              = isSgWhileStmt(node);
@@ -84,6 +92,7 @@ namespace AstDisplayInfo
 
         if      (sgClassDefinition)     return QIcon(":/util/NodeIcons/class.gif");
         else if (sgFunctionDefinition)  return QIcon(":/util/NodeIcons/function.gif");
+        else if (sgFunctionDecl)        return QIcon(":/util/NodeIcons/function.gif");
         else if (sgNSDef)               return QIcon(":/util/NodeIcons/namespace.gif");
         else if (sgForStatement)        return QIcon(":/util/NodeIcons/loop.png");
         else if (sgWhileStatement)      return QIcon(":/util/NodeIcons/loop.png");
