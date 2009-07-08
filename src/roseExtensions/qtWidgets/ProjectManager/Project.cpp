@@ -73,9 +73,16 @@ ProjectNode * ProjectManager::getProject(int id)
 
 MetricsConfig * ProjectManager::getMetricsConfig(int id)
 {
-    if( !rootNode ) return NULL;
+    if( rootNode == NULL ) return NULL;
 
-    return ( dynamic_cast<ProjectNode*>( rootNode->child( id ) ) )->getMetricsConfig();
+    if( rootNode->childrenCount() == 0 ) return NULL;
+
+    ProjectNode *projNode( dynamic_cast<ProjectNode*>( rootNode->child( id ) ) );
+
+
+    if( projNode == NULL ) return NULL;
+
+    return projNode->getMetricsConfig();
 }
 
 MetricsConfig *ProjectManager::getMetricsConfig( SgNode *node )

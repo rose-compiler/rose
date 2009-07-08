@@ -2,12 +2,16 @@
 #ifndef SrcBinView_H
 #define SrcBinView_H
 
+#include <utility>
+#include <map>
+
 #include <QWidget>
 
 #include <map>
 
 namespace Ui { class SrcBinView; }
 
+class SgNode;
 class SgProject;
 class SgNode;
 class SgBinaryFile;
@@ -36,7 +40,7 @@ class SrcBinView
     Q_OBJECT;
 
     public:
-        SrcBinView( SgProject *project, QWidget *parent = NULL );
+        SrcBinView( QWidget *parent = NULL );
 
         virtual ~SrcBinView();
 

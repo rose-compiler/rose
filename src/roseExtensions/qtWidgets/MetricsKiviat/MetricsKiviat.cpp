@@ -13,26 +13,28 @@
 #include <QDebug>
 
 #include "MetricsKiviat.h"
-#include "MetricsConfig.h"
+#include "Project.h"
 
 #include "SageMimeData.h"
 
 
 using namespace std;
 
-MetricsKiviat::MetricsKiviat( QWidget *parent, MetricsConfig *global )
-   : KiviatView( parent, 0 )/*,
-     metricsConfig( new MetricsConfig( "MetricsKiviat", global ) )*/
+MetricsKiviat::MetricsKiviat( QWidget *parent )
+   : KiviatView( parent, 0 ),
+     metricsConfig( "MetricsKiviat", ProjectManager::instance()->getMetricsConfig( 0 ) )
 {
     connect( this, SIGNAL( clickedOnData( int ) ), SLOT( setActiveItem( int ) ) );
 
     connect( this, SIGNAL( clickedOnData( int ) ), SLOT( updateView( int ) ) );
 
-    //connect( metricsConfig, SIGNAL( configChanged() ), this, SLOT( configChanged() ) );
-
+    connect( &metricsConfig, SIGNAL( configChanged() ), this, SLOT( configChanged() ) );
+    
     legend = scene.addRect( QRect()/*, QPen( Qt::NoPen )*/ );
     //legend->setBrush( QBrush( QColor( 255, 255, 255, 180 ) ) );
     //legend->setZValue( 100 );
+    
+    init( NULL );
 }
 
 MetricsKiviat::~MetricsKiviat()
@@ -46,11 +48,11 @@ void MetricsKiviat::init( SgNode *root )
 {
     currentNode = root;
 
-    //setAxisCount( metricsConfig->getMetricsInfoCount() );
+    setAxisCount( metricsConfig.getMetricsInfoCount() );
 
     addData( QVector<float>(axisCount, 0.0f ) );
 
-    //configureMetrics( false );
+    configureMetrics( false );
 }
 
 /*
@@ -130,32 +132,18 @@ void MetricsKiviat::configureMetrics( bool dialog )
 {
     if( dialog )
     {
-        //MetricsConfig configDiag( attributes );
+        metricsConfig.configureMultiple();
 
-        //if( configDiag.exec() != QDialog::Accepted ) return;
-
-        //attributes = QVector<info>( configDiag.attributes() );
-
-        /*for( int i = 0; i < configDiag.count(); ++i )
-        {
-            //int idx = configDiag.getAttributeIndex( i );
-            //attributes[idx].kiviatID = i;
-        }*/
-
-        //metricsConfig->configureMultiple();
-
-        //setAxisCount( metricsConfig->getMetricsInfoCount() );
-
-        qDebug() << axisCount;
+        setAxisCount( metricsConfig.getMetricsInfoCount() );
     }
 
     QString maxLabel( "" );
-    /*for( MetricsConfig::iterator it( metricsConfig->begin() );
-         it != metricsConfig->end();
+    for( MetricsConfig::iterator it( metricsConfig.begin() );
+         it != metricsConfig.end();
          ++it )
     {
         setAxisLabel( it->listId, it->caption );
-    }*/
+    }
     resizeEvent( NULL );
 
     drawData( currentNode );
@@ -192,6 +180,8 @@ void MetricsKiviat::mousePressEvent( QMouseEvent *ev )
 
 void MetricsKiviat::drawData( SgNode *astNode )
 {
+    if( astNode == NULL ) return;
+
     int nodesId( nodes.indexOf( astNode ) );
     int id( nodesId );
     QString maxLabel( "" );
@@ -204,9 +194,8 @@ void MetricsKiviat::drawData( SgNode *astNode )
 
     setActiveItem( id );
 
-#if 0
-    for( MetricsConfig::iterator it( metricsConfig->begin() );
-         it != metricsConfig->end();
+    for( MetricsConfig::iterator it( metricsConfig.begin() );
+         it != metricsConfig.end();
          ++it )
     {
         int axisId = it->listId;
@@ -344,10 +333,9 @@ void MetricsKiviat::drawData( SgNode *astNode )
 
     resizeEvent( NULL );
     emit clicked( astNode );
-#endif
 }
 
-void MetricsKiviat::contextMenuEvent( QContextMenuEvent *ev, const QPoint &pos )
+void MetricsKiviat::contextMenuEvent( QContextMenuEvent *ev)
 {
     QList<QAction *> actions;
 
@@ -356,7 +344,7 @@ void MetricsKiviat::contextMenuEvent( QContextMenuEvent *ev, const QPoint &pos )
 
     actions << configMetrics;
 
-    QAction *res( QMenu::exec( actions, mapToGlobal( pos ) ) );
+    QAction *res( QMenu::exec( actions, mapToGlobal( ev->pos() ) ) );
 
     if( res == configMetrics )
     {

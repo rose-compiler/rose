@@ -17,6 +17,7 @@ SUBDIRS = AsmInstructionBar\
           PropertyTreeWidget\
           RoseCodeEdit\
           RoseFileSelector\
+	  SrcBinView \
           TaskSystem\
           util
                     
@@ -50,6 +51,7 @@ libRoseQtWidgets_la_LIBADD   =  $(buildDir)/AsmInstructionBar/libAsmInstructionB
                                 $(buildDir)/PropertyTreeWidget/libPropertyTreeWidget.la \
                                 $(buildDir)/RoseCodeEdit/libRoseCodeEdit.la \
                                 $(buildDir)/RoseFileSelector/libRoseFileSelector.la \
+                                $(buildDir)/SrcBinView/libSrcBinView.la \
                                 $(buildDir)/TaskSystem/libTaskSystem.la \
                                 $(buildDir)/util/libutil.la
                          

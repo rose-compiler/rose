@@ -32,7 +32,7 @@ MetricsConfig::MetricsConfig( const QString& configureId_,
 }
 
 
-int MetricsConfig::getMetricsInfoCount()
+int MetricsConfig::getMetricsInfoCount() const
 {
     return impl->getMetricsInfoCount( configureId );
 }
