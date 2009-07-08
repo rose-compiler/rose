@@ -7,17 +7,23 @@
 
     <img src="../overview.jpg"  alt="Screenshot">
 
+    The project is split up into several directories:
+    - Library with all widgets is located at \em src/roseExtensions/qtWidgets
+    - Plugin library for Qt-Designer at \em projects/QtDesignerPlugins
+    - Main Application  \em projects/RoseQt
 
-
+    To build RoseQtWidgets you have to configure ROSE with the following options:
+    - \em  --with-roseQt   (depends on Qt4.5)
+    - \em  --with-dwarf    (to use the AsmToSourceMapper)
 
 \section qtdesigner_integration     Qt-Designer Integration
 
-    In order to use the RoseWidgets with QtDesigner, the widgets-library has to
+    In order to use the RoseWidgets with QtDesigner, the QtDesignerPlugins-library  has to
     be copied or symlinked  into the Qt-Plugins directory:
 
     \verbatim
-     ln -s  roseInstallDir/lib/libRoseQtWidgets.so \
-            qtinstallpath/qtplugins/designer/
+     cp  roseInstallDir/lib/libQtDesignerPlugins.so \
+         qtinstallpath/qtplugins/designer/
     \endverbatim
 
     The default Qt-Plugin path is  \em QtInstallationFolder/qtplugins . If you do not have
@@ -129,11 +135,11 @@
         \b Warning: On some architectures there may be problems with the initialization of static variables in the dynamic loaded lib.
                     So there  a crash when using NodeInfoWidget to display file information which is stored in static vars in librose.
 
-    \section demo Demo Application
-        A demo application which uses all roseQt-Widgets is available at \c projects/roseQt/demo
+    \section demo Main Application
+        A application which makes use of all the widgets is located at \c projects/RoseQt
 
     \section arrow_preview Drawing Arrows in QTextEdit - Preview
-        A preview of how to draw arrows into QTextEdit's (planned to integrate in Source-Views) is at \c projects/roseQt/TextEditPainter
+        A preview of how to draw arrows into QTextEdit's (planned to integrate in Source-Views) is at \c projects/RoseQt/TextEditPainter
 
 
     \section all_widgets All Widgets:

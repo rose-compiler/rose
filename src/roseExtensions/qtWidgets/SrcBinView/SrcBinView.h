@@ -4,9 +4,12 @@
 
 #include <QWidget>
 
+#include <map>
+
 namespace Ui { class SrcBinView; }
 
 class SgProject;
+class SgNode;
 class SgBinaryFile;
 class SgSourceFile;
 

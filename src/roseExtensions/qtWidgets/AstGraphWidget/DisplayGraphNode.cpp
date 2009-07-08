@@ -519,13 +519,11 @@ QString DisplayGraph::getEdgeLabelFromId(SgIncidenceDirectedGraph * cg, int from
 
 DisplayGraph * DisplayGraph::generateCallGraph(QGraphicsScene * sc,
                                                SgIncidenceDirectedGraph * cg,
+                                               rose_graph_integer_node_hash_map & nodeMap,
+                                               rose_graph_integer_edge_hash_multimap & edgeMap,
                                                QObject * par)
 {
     DisplayGraph * g = new DisplayGraph(sc,par);
-
-    typedef rose_graph_integer_node_hash_map      NodeMap;
-    typedef rose_graph_integer_edge_hash_multimap EdgeMap;
-
 
     NodeMap & nodes = cg->get_node_index_to_node_map ();
 
@@ -656,5 +654,46 @@ DisplayGraph * DisplayGraph::generateLargeTestGraph(QGraphicsScene * sc,QObject 
 
     return g;
 }
+
+
+
+void DisplayGraph::generateCgSubGraph(SgIncidenceDirectedGraph * cg,
+                                      int nodeId,
+                                      rose_graph_integer_node_hash_map & nodeMapOut,
+                                      rose_graph_integer_edge_hash_multimap & edgeMapOut,
+                                      int curDepth)
+{
+
+    NodeMap & nodes = cg->get_node_index_to_node_map ();
+    Q_ASSERT( nodes.find(nodeId) != nodes.end());
+
+    pair<NodeMap::iterator,bool> res;
+    res = nodeMapOut.insert(make_pair<int,SgGraphNode*>(nodeId,nodes[nodeId] ));
+    if(!res.second) // node already exists
+        return;
+
+
+    if(curDepth==0)
+        return;
+
+
+    // call recursively for all adjacent nodes
+    EdgeMap & edges =  cg->get_node_index_to_edge_multimap_edgesOut ();
+    EdgeMap::iterator edgeIt = edges.find(nodeId);
+    for(; edgeIt != edges.end() && edgeIt->first == nodeId; ++edgeIt )
+    {
+        SgDirectedGraphEdge * edge = isSgDirectedGraphEdge(edgeIt->second);
+        Q_ASSERT(edge);
+
+        // Add edge
+        int newNodeIndex = edge->get_to()->get_index();
+        edgeMapOut.insert(*edgeIt);
+
+        generateCgSubGraph(cg,newNodeIndex,nodeMapOut,edgeMapOut,curDepth-1);
+    }
+}
+
+
+
 
 
