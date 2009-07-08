@@ -61,6 +61,8 @@ void RuntimeSystem::beginScope(const std::string & name)
 
 void RuntimeSystem::endScope()
 {
+    assert( scope.size() > 0);
+
     ScopeInfo lastScope = scope.back();
     scope.pop_back();
 
@@ -168,6 +170,14 @@ void RuntimeSystem::violationHandler(RuntimeViolation & vio)  throw (RuntimeViol
 
 void RuntimeSystem::doProgramExitChecks()
 {
+    // exit global scope
+    endScope();
+    // allows you to call doProgramExitChecks but then keep going without first
+    // calling clearStatus.  Convenient for testing, but not generally
+    // recommended.
+    beginScope("Globals");
+
+
     // Check for memory leaks
     memManager.checkForNonFreedMem();
     fileManager.checkForOpenFiles();

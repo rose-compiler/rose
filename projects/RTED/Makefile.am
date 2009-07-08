@@ -146,7 +146,7 @@ rted_source/%.c: rted_source $(rted_path)/%.c
 # rules to create _rose.c and _s_rose.c files
 #------------------------------------------------------------------------------
 
-.PRECIOUS: %_rose.c
+.PRECIOUS: %_rose.c %_s_rose.c
 
 rted_source/%_s_rose.c: rted_source/%_s.c
 	@touch $@

@@ -396,6 +396,41 @@ void testFileInvalidAccess()
     CLEANUP
 }
 
+void testScopeFreesStack()
+{
+    TEST_INIT("Testing that exiting a scope frees stack variables")
+
+    rs->beginScope("main");
+    rs->createVariable(
+        (addr_type) 4,
+        "my_var",
+        "mangled_my_var",
+        "SgIntVal",
+        sizeof( int)
+    );
+    rs->endScope();
+
+    CLEANUP
+}
+
+// Tests that an implicit scope exists, i.e. main's scope.  Calling
+// createVariable without ever calling beginScope or endScope should not result
+// in memory errors.
+void testImplicitScope()
+{
+    TEST_INIT("Testing that an implicit scope exists for globals/main")
+
+    rs->createVariable(
+        (addr_type) 4,
+        "my_var",
+        "mangled_my_var",
+        "SgIntVal",
+        sizeof( int)
+    );
+
+    CLEANUP
+}
+
 
 // -------------------------------------- Pointer Tracking Tests ------------------------------------------
 
@@ -672,6 +707,9 @@ int main(int argc, char ** argv)
         testFileInvalidClose();
         testFileUnclosed();
         testFileInvalidAccess();
+
+        testScopeFreesStack();
+        testImplicitScope();
 
         //testLostMemRegion();
         //testPointerChanged();
