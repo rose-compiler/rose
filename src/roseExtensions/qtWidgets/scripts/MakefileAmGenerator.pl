@@ -165,7 +165,7 @@ if($printLibTarget)
 if($printHeaderTarget)
 {
     print "# Target for installing header \n";
-    print "headerTargetdir    =  \$(roseQtWidgetsIncPath)/$headerInstDir\n";
+    print "headerTargetdir    =  \$(roseQtWidgetsHeaderInstallPath)/$headerInstDir\n";
     printArray("headerTarget_HEADERS",\@header_files);
     print "\n";
 }
