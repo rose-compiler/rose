@@ -248,7 +248,7 @@ void MemoryManager::freeMemory(addr_type addr)
     if(m == NULL)
     {
         stringstream desc;
-        desc << "Free was called with address " << addr << endl;
+        desc << "Free was called with address " << "0x" << hex << addr << endl;
         desc << "Allocated Memory Regions:" << endl;
         print(desc);
         rs->violationHandler(RuntimeViolation::INVALID_FREE,desc.str());
@@ -260,7 +260,7 @@ void MemoryManager::freeMemory(addr_type addr)
     {
         stringstream desc;
         desc << "Free was called with an address inside of allocated block (Offset:"
-             << addr - m->getAddress() <<")" << endl;
+             << "0x" << hex << addr - m->getAddress() <<")" << endl;
         desc << "Allocated Block: " << *m << endl;
 
         rs->violationHandler(RuntimeViolation::INVALID_FREE, desc.str());
@@ -282,7 +282,9 @@ void MemoryManager::checkRead(addr_type addr, size_t size)
     if(!mt)
     {
         stringstream desc;
-        desc << "Trying to read from non-allocated MemoryRegion (Address " << addr <<")" << endl;
+        desc    << "Trying to read from non-allocated MemoryRegion "
+                << "(Address " << "0x" << hex << addr 
+                <<" of size " << dec << size << ")" << endl;
 
         MemoryType * possMatch = findPossibleMemMatch(addr);
         if(possMatch)
@@ -298,7 +300,7 @@ void MemoryManager::checkRead(addr_type addr, size_t size)
     if(! mt->isInitialized(from, from +size) )
     {
         stringstream desc;
-        desc << "Trying to read from uninitialized Memory Region  (Address " << addr <<")" << endl;
+        desc << "Trying to read from uninitialized Memory Region  (Address " << "0x" << hex << addr <<")" << endl;
         rs->violationHandler(RuntimeViolation::INVALID_READ,desc.str());
     }
 }
@@ -311,7 +313,9 @@ void MemoryManager::checkWrite(addr_type addr, size_t size)
     if(!mt)
     {
         stringstream desc;
-        desc << "Trying to write to non-allocated MemoryRegion (Address " << addr <<")" << endl;
+        desc    << "Trying to write to non-allocated MemoryRegion "
+                << "(Address " << "0x" << hex << addr 
+                <<" of size " << dec << size << ")" << endl;
 
         MemoryType * possMatch = findPossibleMemMatch(addr);
         if(possMatch)

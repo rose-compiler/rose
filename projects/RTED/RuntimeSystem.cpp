@@ -20,7 +20,6 @@
   try {
 #define RTS_CATCH                                                             \
   } catch( RuntimeViolation e) {                                              \
-    cout  << "Violation: " << endl << e << endl;                              \
     rts_discovered_error = 1;                                                 \
   }
 
@@ -82,15 +81,23 @@ RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dime
 
 	RuntimeSystem * rs = RuntimeSystem::instance();
 	rs->checkpoint(SourcePosition(filename,atoi(line),atoi(lineTransformed)));
-	if (dimension==1)
-    // char* s;
-    // s = malloc
-    // &s is what is passed to address -- could change transformation, or can we
-    //  (addr_type) *((void*)address) ?
-    //
-	  rs->createMemory(  *((addr_type*)address), sizeA);
-	else
-	  rs->createMemory(  *((addr_type*)address), sizeA*sizeB);
+
+  if( 0 == strcmp("SgArrayType", type)) 
+    if (dimension==1)
+      rs->createMemory(address, sizeA);
+    else
+      rs->createMemory(address, sizeA*sizeB);
+  else if( 0 == strcmp("SgPointerType", type))
+    // address refers to the address of the variable (i.e. the pointer).
+    // we want the address of the newly allocated memory on the heap
+    if (dimension==1)
+      rs->createMemory(  *((addr_type*)address), sizeA);
+    else
+      rs->createMemory(  *((addr_type*)address), sizeA*sizeB);
+  else {
+    cerr << "Unexpected Array Type: " << type << endl;
+    exit( 1);
+  }
 
   RTS_CATCH
 }
@@ -245,6 +252,34 @@ RuntimeSystem_isFileIOFunctionCall(const char* name) {
 
 
 
+
+// TODO 1 djh: comment
+#define HANDLE_STRING_CONSTANT( i )                                           \
+  if( isdigit(  args[ i + 1 ][0]))                                            \
+    RuntimeSystem_ensure_allocated_and_initialized(                           \
+        args[ i ], strtol( args[ i + 1 ], NULL, 10)                           \
+    );
+void RuntimeSystem_ensure_allocated_and_initialized( const void* mem, size_t size) {
+	RuntimeSystem * rs = RuntimeSystem::instance();
+  rs->createVariable(
+      (addr_type) mem,
+      "StringConstant",
+      "MangledStringConstant",
+      "SgArrayType",
+      size
+  );
+  rs->createMemory( (addr_type) mem, size);
+  rs->checkMemWrite( (addr_type) mem, size);
+}
+
+#define NUM_ARG( i )                                                          \
+  strtol(                                                                     \
+    isdigit( args[ i + 1 ][ 0 ]) ? args[ i + 1 ] : args[ i ],                 \
+    NULL,                                                                     \
+    10                                                                        \
+  )
+    
+
 /*********************************************************
  * This function is called when one of the following functions in the code is called:
  * memcpy, memmove, strcpy, strncpy, strcat, strncat
@@ -266,60 +301,69 @@ RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, in
   RTS_TRY
 
 	RuntimeSystem * rs = RuntimeSystem::instance();
+	rs->checkpoint(SourcePosition(filename,atoi(line),atoi(lineTransformed)));
+
+  // FIXME 2: The current transformation outsputs num (for, e.g. strncat) as
+  //    (expr), (size in str)
+  // but size in str is off by one -- it includes the null terminator, but
+  // should not.
 
   if( 0 == strcmp("memcpy", fname)) {
     rs->check_memcpy(
       (void*) args[0], 
-      (const void*) args[1], 
-      (size_t) args[2]
+      (const void*) args[2], 
+      NUM_ARG( 4)
     );
   } else if ( 0 == strcmp("memmove", fname)) {
     rs->check_memmove(
       (void*) args[0], 
-      (const void*) args[1], 
-      (size_t) args[2]
+      (const void*) args[2], 
+      NUM_ARG( 4)
     );
   } else if ( 0 == strcmp("strcpy", fname)) {
+    HANDLE_STRING_CONSTANT( 0);
+    HANDLE_STRING_CONSTANT( 2);
+
     rs->check_strcpy(
-      (char*) args[0], 
-      (const char*) args[1]
+      (char*) args[0],
+      (const char*) args[2]
     );
   } else if ( 0 == strcmp("strncpy", fname)) {
     rs->check_strncpy(
       (char*) args[0], 
-      (const char*) args[1],
-      (size_t) args[2]
+      (const char*) args[2],
+      NUM_ARG( 4)
     );
   } else if ( 0 == strcmp("strcat", fname)) {
     rs->check_strcat(
       (char*) args[0], 
-      (const char*) args[1]
+      (const char*) args[2]
     );
   } else if ( 0 == strcmp("strncat", fname)) {
     rs->check_strncat(
       (char*) args[0], 
-      (const char*) args[1],
-      (size_t) args[2]
+      (const char*) args[2],
+      NUM_ARG( 4)
     );
   } else if ( 0 == strcmp("strchr", fname)) {
     rs->check_strchr(
       (const char*) args[0], 
-      (int) (addr_type) args[1]
+      (int) NUM_ARG( 2)
     );
   } else if ( 0 == strcmp("strpbrk", fname)) {
     rs->check_strpbrk(
       (const char*) args[0], 
-      (const char*) args[1]
+      (const char*) args[2]
     );
   } else if ( 0 == strcmp("strspn", fname)) {
     rs->check_strspn(
       (const char*) args[0], 
-      (const char*) args[1]
+      (const char*) args[2]
     );
   } else if ( 0 == strcmp("strstr", fname)) {
     rs->check_strstr(
       (const char*) args[0], 
-      (const char*) args[1]
+      (const char*) args[2]
     );
   } else if ( 0 == strcmp("strlen", fname)) {
     rs->check_strlen(
@@ -390,12 +434,12 @@ RuntimeSystem_roseFunctionCall(int count, ...) {
   const char* leftVar=NULL;
   //cerr << "arguments : " <<  count << endl;
   int i=0;
-  for ( i=0;i<count;i++)    {
+  for ( i=0;i<=count;i++)    {
     const char* val=  va_arg(vl,const char*);
     //    if (val)
     //  printMessage("  %d      val : '%s' ---",i,val);
-    const char *iter2=NULL;
-    int size =0;
+    //const char *iter2=NULL;
+    //int size =0;
     // for ( iter2 = val; *iter2 != '\0'; ++iter2) {
     //  printMessage("%c",*iter2); size++;
     //} printMessage("--- size : %d \n",size);

@@ -12,7 +12,7 @@ ostream & out = cout;
     out << "-- " << (MSG) << endl ;                   \
     bool errorFound=false;                            \
     RuntimeSystem * rs = RuntimeSystem::instance();   \
-    rs->checkpoint(SourcePosition( (MSG) ));              \
+    rs->checkpoint(SourcePosition( (MSG), __LINE__, __LINE__ ));              \
 
 
 #define TEST_CATCH( TYPE)                                          \
@@ -22,6 +22,7 @@ ostream & out = cout;
                 << e.getShortDesc() << " instead of "              \
                 << RuntimeViolation::RuntimeViolation(TYPE)        \
                 .getShortDesc()                                    \
+                << " : " <<  __LINE__                              \
                 << endl;                                           \
             exit(1);                                               \
         }                                                          \
@@ -32,6 +33,7 @@ ostream & out = cout;
       out   << "Failed to detect error "                           \
             << RuntimeViolation::RuntimeViolation(TYPE)            \
                 .getShortDesc()                                    \
+                << " : " <<  __LINE__                              \
             << endl;                                               \
       exit(1);                                                     \
     }                                                              \
@@ -91,7 +93,6 @@ ostream & out = cout;
     /* haven't allocated var yet */                                 \
     try { TRY_BODY }                                                \
     TEST_CATCH( RuntimeViolation::INVALID_WRITE);                   \
-                                                                    \
     var = (char*) malloc( badsz );                                  \
     rs->createMemory( (addr_type) var, badsz );                     \
     /* var isn't large enough */                                    \
@@ -101,6 +102,21 @@ ostream & out = cout;
     rs->freeMemory( (addr_type) var);                               \
     var = (char*) realloc( var, oksz );                             \
     rs->createMemory( (addr_type) var, oksz );                      
+
+#define TEST_STRING_CAT( var, oksz)                                 \
+    /* haven't allocated var yet */                                 \
+    try { TRY_BODY }                                                \
+    TEST_CATCH( RuntimeViolation::INVALID_READ);                    \
+    var = (char*) malloc( oksz );                                   \
+    rs->createMemory( (addr_type) var, oksz );                      \
+    var[ 0 ] = ' ';                                                 \
+    var[ 1 ] = '\0';                                                \
+    rs->checkMemWrite( (addr_type) var, 2);                         \
+    /* var is large enough to hold source, but not large enough */  \
+    /* for source to be appended */                                 \
+    try { TRY_BODY }                                                \
+    TEST_CATCH( RuntimeViolation::INVALID_WRITE);                   \
+    var[ 0 ] = '\0';
 
 // Tests that try body complains if either str1 or str2 lacks a null terminator
 // in allocated memory, or if either isn't allocated yet.
@@ -587,11 +603,9 @@ void test_strcat()
     #define TRY_BODY rs->check_strcat(  dest, (const char*) source);
     TEST_INIT_STRING( DEST_SOURCE)
     TEST_STRING_READ_TERMINATED( source)
-    TEST_STRING_WRITE( dest, SZ / 2, SZ)
-
-    // also, it's not legal for the strings to overlap
-    try { rs->check_strcpy( source + (N/2), source); }
-    TEST_CATCH( RuntimeViolation::INVALID_MEM_OVERLAP);
+    TEST_STRING_READ_TERMINATED( dest)
+    TEST_STRING_CLEANUP( dest)
+    TEST_STRING_CAT( dest, SZ)
 
     TRY_BODY
     TEST_STRING_CLEANUP( dest)
@@ -608,11 +622,9 @@ void test_strncat()
     #define TRY_BODY rs->check_strncat(  dest, (const char*) source, N / 2);
     TEST_INIT_STRING( DEST_SOURCE)
     TEST_STRING_READ( source)
-    TEST_STRING_WRITE( dest, SZ / 4, SZ / 2)
-
-    // also it's not legal for the strings to overlap
-    try { rs->check_strncat(  source + (N/2),  source, N); }
-    TEST_CATCH( RuntimeViolation::INVALID_MEM_OVERLAP);
+    TEST_STRING_READ( dest)
+    TEST_STRING_CLEANUP( dest)
+    TEST_STRING_CAT( dest, SZ / 2)
 
     TRY_BODY
     TEST_STRING_CLEANUP( dest)
@@ -684,6 +696,32 @@ void test_strlen()
     CLEANUP
 }
 
+void test_meminit_nullterm_included()
+{
+    TEST_INIT(  "Testing that strcpy et. al set the full destination "
+                "initialized, including the null terminator");
+
+    size_t n = 9; // sizeof("a string") + 1 for \0
+    char s1[ 9 ];
+    char s2[ 9 ] = "a string";
+    char s3[ 9 ];
+
+    rs->createMemory( (addr_type) s1, n);
+    rs->createMemory( (addr_type) s2, n);
+    rs->createMemory( (addr_type) s3, n);
+
+    rs->checkMemWrite( (addr_type) s2, n);
+
+    rs->check_strcpy( (char*) s1, (const char*) s2);
+    strcpy( s1, s2);
+    rs->check_strcpy( (char*) s3, (const char*) s1);
+
+    rs->freeMemory( (addr_type) s1);
+    rs->freeMemory( (addr_type) s2);
+    rs->freeMemory( (addr_type) s3);
+    CLEANUP
+}
+
 
 int main(int argc, char ** argv)
 {
@@ -726,6 +764,8 @@ int main(int argc, char ** argv)
         test_strspn();
         test_strstr();
         test_strlen();
+
+        test_meminit_nullterm_included();
     }
     catch( RuntimeViolation& e)
     {
