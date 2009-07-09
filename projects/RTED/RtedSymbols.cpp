@@ -32,6 +32,7 @@ void RtedSymbols::visit(SgNode* n) {
     LOOKUP( roseEnterScope, func9);
     LOOKUP( roseExitScope, fund10); 
     LOOKUP( roseAccessVariable, fund11);
+    LOOKUP( roseIOFunctionCall, func12);
   }
 
 

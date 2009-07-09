@@ -46,6 +46,11 @@ class RuntimeSystem
         /// this information is used for printing errors/warnings
         void checkpoint(const SourcePosition & pos)  { curPos = pos; }
 
+        /// if testing mode is true exceptions are thrown when a violations occurs
+        /// otherwise abort is called, default false
+        void setTestingMode(bool b) { testingMode = b;}
+
+
         CStdLibManager * getCStdLibManager() { return &cstdlibManager; }
 
         MemoryManager * getMemManager()   { return & memManager;  }
@@ -208,6 +213,10 @@ class RuntimeSystem
         std::vector<ScopeInfo> scope;
 
         std::vector<VariablesType *> stack;
+
+        /// if true exceptions are thrown when a violations occurs
+        /// otherwise abort is called, default false
+        bool testingMode;
 
 
         //  -----------  Members which are used for output -------------

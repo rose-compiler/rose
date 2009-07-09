@@ -728,6 +728,7 @@ int main(int argc, char ** argv)
     try
     {
         RuntimeSystem * rs = RuntimeSystem::instance();
+        rs->setTestingMode(true);
         rs->setOutputFile("test_output.txt");
 
         testSuccessfulMallocFree();

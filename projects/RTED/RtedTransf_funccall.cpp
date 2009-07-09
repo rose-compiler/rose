@@ -446,11 +446,12 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
       // Therefore we need to go up and see if there is an AssignmentOperator
       // and get the var on the left side
       SgExpression* varOnLeft = getVariableLeftOfAssignmentFromChildOnRight(n);
+      SgExpression* varOnLeftStr=NULL;
       if (varOnLeft) {
         // need to get the mangled_name of the varRefExp on left hand side
-        varOnLeft = buildString(getMangledNameOfExpression(varOnLeft));
+        varOnLeftStr = buildString(getMangledNameOfExpression(varOnLeft));
       } else {
-        varOnLeft = buildString("NoAssignmentVar");
+        varOnLeftStr = buildString("NoAssignmentVar");
       }
 
       Rose_STL_Container<SgExpression*> expr = exprlist->get_expressions();
@@ -468,6 +469,7 @@ void RtedTransformation::visit_isFunctionCall(SgNode* n) {
           refExp,
           stmt,
           args,
+          varOnLeftStr,
           varOnLeft
           );
       ROSE_ASSERT(funcCall);

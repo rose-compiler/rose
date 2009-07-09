@@ -16,12 +16,7 @@
 #include "rted_qt/rted_qt.h"
 
 
-#define RTS_TRY                                                               \
-  try {
-#define RTS_CATCH                                                             \
-  } catch( RuntimeViolation e) {                                              \
-    rts_discovered_error = 1;                                                 \
-  }
+
 
 int rts_discovered_error = 0;
 
@@ -40,12 +35,12 @@ RuntimeSystem_Const_RuntimeSystem() {
  ********************************************************/
 void
 RuntimeSystem_roseRtedClose() {
-  RTS_TRY
+
 
 	RuntimeSystem * rs = RuntimeSystem::instance();
 	rs->doProgramExitChecks();
 
-  RTS_CATCH
+
 
   if( 1 != rts_discovered_error) {
     cerr << "Failed to discover error in RTED test" << endl;
@@ -57,7 +52,15 @@ RuntimeSystem_roseRtedClose() {
 // ***************************************** ARRAY FUNCTIONS *************************************
 
 
-
+bool checkAddress(unsigned long int address) {
+  bool valid=true;
+	if (address==66) {
+	  // fixme: cannot handle right now!!
+	  // we can not handle structs and classes right now
+	  valid=false;
+	}
+	return valid;
+}
 
 
 /*********************************************************
@@ -77,11 +80,12 @@ RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dime
 				   const char* type, const char* basetype,
 			      unsigned long int address, long int size, long int sizeA, long int sizeB,
 			      int ismalloc, const char* filename, const char* line, const char* lineTransformed){
-  RTS_TRY
+
 
 	RuntimeSystem * rs = RuntimeSystem::instance();
 	rs->checkpoint(SourcePosition(filename,atoi(line),atoi(lineTransformed)));
 
+	   if (!checkAddress(address)) return; 
   if( 0 == strcmp("SgArrayType", type)) 
     if (dimension==1)
       rs->createMemory(address, sizeA);
@@ -99,7 +103,7 @@ RuntimeSystem_roseCreateArray(const char* name, const char* mangl_name, int dime
     exit( 1);
   }
 
-  RTS_CATCH
+
 }
 
 /*********************************************************
@@ -115,17 +119,18 @@ void
 RuntimeSystem_roseArrayAccess(const char* name, int posA, int posB, const char* filename,
 			      unsigned long int address, long int size, 
 			      const char* line, const char* lineTransformed, const char* stmtStr){
-  RTS_TRY
+
 
 	RuntimeSystem * rs = RuntimeSystem::instance();
 	rs->checkpoint(SourcePosition(filename,atoi(line),atoi(lineTransformed)));
 	//fixme: we do not know yet wheather array access
 	//is a read or write
 	bool read = true;
+	if (!checkAddress(address)) return; 
 	if (read)
 	  rs->checkMemRead(address,size);
 
-  RTS_CATCH
+
 }
 
 // ***************************************** ARRAY FUNCTIONS *************************************
@@ -298,7 +303,7 @@ RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, in
 					 const char* filename, const char* line,
 					 const char* lineTransformed,
 					 const char* stmtStr, const char* leftHandSideVar) {
-  RTS_TRY
+
 
 	RuntimeSystem * rs = RuntimeSystem::instance();
 	rs->checkpoint(SourcePosition(filename,atoi(line),atoi(lineTransformed)));
@@ -374,7 +379,7 @@ RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, in
     exit(1);
   }
 
-  RTS_CATCH
+
 }
 
 
@@ -395,10 +400,34 @@ RuntimeSystem_handleSpecialFunctionCalls(const char* fname,const char** args, in
  * stmtStr   : unparsed version of the line to be used for error message
  ********************************************************/
 void
-RuntimeSystem_handleIOFunctionCall(const char* fname,const char** args,
-				   int argsSize, const char* filename, const char* line, const char* lineTransformed,
-				   const char* stmtStr, const char* leftHandSideVar) {
-  // unhandled
+RuntimeSystem_roseIOFunctionCall(const char* fname,
+				    const char* filename, const char* line, const char* lineTransformed,
+				   const char* stmtStr, const char* leftHandSideVar, FILE* file,
+				   const char* arg1, const char* arg2) {
+
+    //fixme - we need to create a new function call that
+    // will have FILE* as parameter
+    RuntimeSystem * rs = RuntimeSystem::instance();
+  rs->checkpoint(SourcePosition(filename,atoi(line),atoi(lineTransformed)));
+  if (strcmp(fname,"fopen")==0) {
+    string filen = arg1;
+    string mode = arg2;
+    int openMode=-1;
+    if (strcmp(fname,"r")==0)
+      openMode=READ;
+    if (strcmp(fname,"w")==0)
+      openMode=WRITE;
+    rs->registerFileOpen(file, filen, openMode);
+  } else if (strcmp(fname,"fgetc")==0) {
+    rs->checkFileAccess(file, true);
+  } else if (strcmp(fname,"fputc")==0) {
+    rs->checkFileAccess(file, false);
+  } else if (strcmp(fname,"fclose")==0) {
+    rs->registerFileClose(file);
+  }
+
+  
+
 }
 
 
@@ -461,7 +490,8 @@ RuntimeSystem_roseFunctionCall(int count, ...) {
     // if the string name is one of the above, we handle it specially
     RuntimeSystem_handleSpecialFunctionCalls(name, args, posArgs, filename, line, lineTransf, stmtStr, leftVar);
   } else if (RuntimeSystem_isFileIOFunctionCall(name)==1) {
-    RuntimeSystem_handleIOFunctionCall(name, args, posArgs, filename, line, lineTransf, stmtStr, leftVar);
+    // this will be replaced by a direct call
+    //RuntimeSystem_handleIOFunctionCall(name, args, posArgs, filename, line, lineTransf, stmtStr, leftVar, NULL);
   } else {
     //printMessage("Unknown Function call to RuntimeSystem!\n");
     exit(1);
@@ -477,21 +507,21 @@ RuntimeSystem_roseFunctionCall(int count, ...) {
 // ***************************************** SCOPE HANDLING *************************************
 
 void RuntimeSystem_roseEnterScope(const char* name) {
-  RTS_TRY
+
 
 	RuntimeSystem * rs = RuntimeSystem::instance();
     rs->beginScope(name);
 
-  RTS_CATCH
+
 }
 
 void RuntimeSystem_roseExitScope( const char* filename, const char* line, const char* stmtStr) {
-  RTS_TRY
+
 
 	RuntimeSystem * rs = RuntimeSystem::instance();
 	rs->endScope();
 
-  RTS_CATCH
+
 }
 
 
@@ -515,13 +545,13 @@ void RuntimeSystem_roseCreateVariable( const char* name,
 				      const char* fOpen,
 				      const char* filename, const char* line,
 				      const char* lineTransformed) {
-  RTS_TRY
+
 
 	RuntimeSystem * rs = RuntimeSystem::instance();
 	rs->checkpoint( SourcePosition(filename,atoi(line), atoi(lineTransformed)));
 	rs->createVariable(address,name,mangled_name,type,size);
 
-  RTS_CATCH
+
 }
 
 
@@ -541,14 +571,14 @@ RuntimeSystem_roseInitVariable(const char* name,
 			       const char* filename,
 			       const char* line,
 			       const char* lineTransformed, const char* stmtStr) {
-  RTS_TRY
+
 
 	RuntimeSystem * rs = RuntimeSystem::instance();
 	rs->checkpoint( SourcePosition(filename,atoi(line),atoi(lineTransformed)));
 	//fixme: the size will not work for structs yet!
 	rs->checkMemWrite(address,size);
 
-  RTS_CATCH
+
 }
 
 
@@ -562,13 +592,13 @@ void RuntimeSystem_roseAccessVariable( const char* name,
 				       const char* filename, const char* line,
 				       const char* lineTransformed,
 				       const char* stmtStr) {
-  RTS_TRY
+
 
 	RuntimeSystem * rs = RuntimeSystem::instance();
 	rs->checkpoint( SourcePosition(filename,atoi(line),atoi(lineTransformed)));
 	rs->checkMemRead(address, size);
 
-  RTS_CATCH
+
 }
 
 // ***************************************** VARIABLE DECLARATIONS *************************************

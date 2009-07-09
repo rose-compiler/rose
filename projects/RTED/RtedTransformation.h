@@ -47,6 +47,7 @@ class RtedTransformation : public AstSimpleProcessing {
   SgFunctionSymbol* roseCreateArray;
   SgFunctionSymbol* roseArrayAccess;
   SgFunctionSymbol* roseFunctionCall;
+  SgFunctionSymbol* roseIOFunctionCall;
   SgFunctionSymbol* roseConvertIntToString;
   SgClassSymbol* runtimeClassSymbol;
   SgScopeStatement* rememberTopNode;
@@ -114,6 +115,7 @@ class RtedTransformation : public AstSimpleProcessing {
 
   bool isVarRefInCreateArray(SgInitializedName* search);
   void insertFuncCall(RtedArguments* args);
+  void insertIOFuncCall(RtedArguments* args);
   void insertStackCall(RtedArguments* args);
   void insertStackCall(RtedArguments* args, bool before);
   void visit_isFunctionCall(SgNode* n);

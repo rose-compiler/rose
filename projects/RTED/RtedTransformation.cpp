@@ -45,6 +45,7 @@ void RtedTransformation::transform(SgProject* project) {
   roseAccessVariable = symbols->roseAccessVariable;
   roseEnterScope = symbols->roseEnterScope;
   roseExitScope = symbols->roseExitScope;
+  roseIOFunctionCall = symbols->roseIOFunctionCall;
 
 
   ROSE_ASSERT(roseCreateArray);
@@ -197,7 +198,7 @@ void RtedTransformation::transform(SgProject* project) {
       //cerr << " .... Inserting Function Call : " << name << endl;
       insertFuncCall(funcs);
     } else if (isFileIOFunctionCall(funcs->f_name)) {
-      insertFuncCall(funcs);
+      insertIOFuncCall(funcs);
     } else if (isFunctionCallOnIgnoreList(funcs->f_name)) {
       // dont do anything.
     } else {

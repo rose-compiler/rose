@@ -17,7 +17,7 @@ RuntimeSystem* RuntimeSystem::instance()
 }
 
 RuntimeSystem::RuntimeSystem()
-    : defaultOutStr(&cout)
+    : defaultOutStr(&cout),testingMode(false)
 {
     beginScope("Globals");
 }
@@ -163,7 +163,10 @@ void RuntimeSystem::violationHandler(RuntimeViolation & vio)  throw (RuntimeViol
 
     (*defaultOutStr) << vio  << endl;
 
-    throw vio;
+    if(testingMode)
+    	throw vio;
+    else
+    	exit(0);
 }
 
 

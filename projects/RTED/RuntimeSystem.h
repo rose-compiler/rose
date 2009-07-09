@@ -142,8 +142,12 @@ void RuntimeSystem_roseCallStack(const char* name, const char* mangl_name, const
 
 void RuntimeSystem_handleSpecialFunctionCalls(const char* funcname,const char** args, int argsSize, const char* filename, const char* line, 
 					      const char* lineTransformed, const char* stmtStr, const char* leftHandSideVar);
-void RuntimeSystem_handleIOFunctionCall(const char* funcname,const char** args, int argsSize, const char* filename, const char* line, 
-					const char* lineTransformed, const char* stmtStr, const char* leftHandSideVar);
+void RuntimeSystem_roseIOFunctionCall(const char* funcname,
+					const char* filename, const char* line,
+					const char* lineTransformed, const char* stmtStr, const char* leftHandSideVar, FILE* file,
+					const char* arg1, const char* arg2);
+
+
 void RuntimeSystem_roseFunctionCall(int count, ...);
 int  RuntimeSystem_isSizeOfVariableKnown(const char* name);
 int  RuntimeSystem_isModifyingOp(const char* name);

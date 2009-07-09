@@ -1064,6 +1064,7 @@ void RtedTransformation::visit_isArrayExprListExp(SgNode* n) {
 						      isSgVarRefExp(n),
 						      stmt,
 						      args,
+						      varOnLeft,
 						      varOnLeft
 						      );
 	  ROSE_ASSERT(funcCall);	

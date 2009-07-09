@@ -92,6 +92,7 @@ class RtedArguments {
   SgExpression* varRefExp;
   std::vector<SgExpression*> arguments;
   SgExpression* leftHandSideAssignmentExpr;
+  SgExpression* leftHandSideAssignmentExprStr;
   RtedArguments(
 		std::string ffuncn, 
 		std::string fmangl,
@@ -100,7 +101,9 @@ class RtedArguments {
 		SgExpression* var,
 		SgStatement* stm,
 		std::vector<SgExpression*> args,
-		SgExpression* leftHandAssign) {
+		SgExpression* leftHandAssignStr,
+		SgExpression* leftHandAssign
+		) {
     ROSE_ASSERT(var);
     stmt = stm;
     f_name=ffuncn;
@@ -110,6 +113,7 @@ class RtedArguments {
     varRefExp=var;
     arguments = args;
     leftHandSideAssignmentExpr = leftHandAssign;
+    leftHandSideAssignmentExprStr = leftHandAssignStr;
     if (isSgVarRefExp(var)) {
       initName = isSgVarRefExp(var)->get_symbol()->get_declaration();
       ROSE_ASSERT(initName);

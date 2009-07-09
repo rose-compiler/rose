@@ -255,8 +255,8 @@ void RtedTransformation::appendAddressAndSize(SgInitializedName* initName,
 	  isSgClassDefinition(scope)
 	  ) 	      {
 			// cant handle struct yet
-	     appendExpression(arg_list, buildIntVal(-6));
-	     appendExpression(arg_list, buildIntVal(-6));
+	     appendExpression(arg_list, buildIntVal(66));
+	     appendExpression(arg_list, buildIntVal(66));
     } else {
 	//int derefCounter=0;//getTypeOfPointer(initName);
 	//SgExpression* fillExp = getExprBelowAssignment(varRefE, derefCounter);
@@ -301,7 +301,7 @@ void RtedTransformation::appendAddressAndSize(SgInitializedName* initName,
 	  isSgTypedefType(basetype) ||
 	  isSgClassDefinition(scope)
 	  ) 	      {
-	appendExpression(arg_list, buildIntVal(-6));
+	appendExpression(arg_list, buildIntVal(66));
       } else {
 
       //appendExpression(arg_list, buildString(varRefE->get_parent()->class_name()));
