@@ -1,3 +1,152 @@
+2009-07-09 01:01  hamilton37
+
+	* [r6465]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CStdLibManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/test.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp: RTED: worked on
+	  cstdlib checking.
+	  
+	  Improved check_strcat and check_strncat so that they check for
+	  write errors from
+	  the null terminator and not the start of the string. This implies
+	  destination
+	  needs to pass check_string, which is appropriate.
+	  
+	  Also improved some of the output from mem. manager to give
+	  addresses in hex and
+	  also give the size.
+
+2009-07-08 23:11  saebjornsen1
+
+	* [r6464]
+	  /trunk/ROSE/src/midend/programAnalysis/CallGraphAnalysis/CallGraph.C,
+	  /trunk/ROSE/src/util/graphs/GraphDotOutput.h: Added mechanims to
+	  generate graphs for incidence directed graphs
+
+2009-07-08 21:30  heller9
+
+	* [r6463] /trunk/ROSE/configure.in,
+	  /trunk/ROSE/projects/RoseQt/MainWindow.cpp,
+	  /trunk/ROSE/projects/RoseQt/MainWindow.h,
+	  /trunk/ROSE/projects/RoseQt/MainWindow.ui,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/KiviatView/KiviatView.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/Make.inc,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/MetricsConfig/MetricsConfig.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/MetricsConfig/MetricsConfig.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/MetricsKiviat/MetricsKiviat.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/MetricsKiviat/MetricsKiviat.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/ProjectManager/Project.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/SrcBinView/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/SrcBinView/SrcBinView.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/SrcBinView/SrcBinView.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/ItemTreeNode.h:
+	  QtDesignerPlugins fix & minor bug fixes
+
+2009-07-08 21:27  bauer25
+
+	* [r6462] /trunk/ROSE/projects/RoseQt/TextEditPainter,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstGraphWidget/AstGraphWidget.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstGraphWidget/DisplayGraphNode.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstGraphWidget/DisplayGraphNode.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/CMakeLists.txt,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/SrcBinView/SrcBinView.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/TextEditPainter,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/doc/doc.doxyfile,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/widgetsDoc.h: Updated
+	  RoseQt documentation
+
+2009-07-08 18:41  bauer25
+
+	* [r6461]
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AsmInstructionBar/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AsmView/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstBrowserWidget/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstGraphWidget/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstProcessing/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/BeautifiedAst/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/FlopCounter/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/InstructionCountAnnotator/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/KiviatView/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/MetricFilter/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/MetricsConfig/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/MetricsKiviat/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/NodeInfoWidget/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/ProjectManager/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/PropertyTreeWidget/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/RoseCodeEdit/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/RoseCodeEdit/QCodeEdit/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/RoseCodeEdit/QCodeEdit/document/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/RoseCodeEdit/QCodeEdit/qnfa/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/RoseCodeEdit/QCodeEdit/widgets/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/RoseFileSelector/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/TaskSystem/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/scripts/MakefileAmGenerator.pl,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/scripts/generateMakefiles.sh,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/Makefile.am: Fixed
+	  Problem with qtWidgets Makefiles
+
+2009-07-08 18:19  bauer25
+
+	* [r6459]
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstGraphWidget/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/scripts/MakefileAmGenerator.pl:
+	  Fixed problem with make distcheck and roseQt
+
+2009-07-08 17:44  bauer25
+
+	* [r6458]
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstGraphWidget/AstGraphWidget.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstGraphWidget/AstGraphWidget.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstGraphWidget/DisplayGraphNode.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstGraphWidget/DisplayGraphNode.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstGraphWidget/LayoutControl.ui,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/CMakeLists.txt,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/doc,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/doc/AstBrowserWidget.jpg,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/doc/AstGraphView.jpg,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/doc/BeautifiedAst.jpg,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/doc/BeautifiedAst_CodeView.jpg,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/doc/BeautifiedAst_with_Kiviat.jpg,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/doc/Kiviat.jpg,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/doc/Kiviat_Settings.jpg,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/doc/NodeInfoWidget.jpg,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/doc/RoseQt_Documentation.html,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/doc/astNodePropertyView.jpg,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/doc/astTreeView.jpg,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/doc/astTreeView_big.jpg,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/doc/doc.doxyfile,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/doc/doxygen.css,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/doc/overview.jpg,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/scripts,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/scripts/MakefileAmGenerator.pl,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/scripts/generateMakefiles.sh,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/AstDisplayInfo.cpp:
+	  Worked on CallGraph display in RoseQt
+
+2009-07-08 17:26  hamilton37
+
+	* [r6457]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/test.cpp,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp: RTED: Updated make
+	  check, et. al to work with exception mechanism, and did some
+	  work on the cstdlib wrapper.
+	  
+	  The cpp runtimesystem now throws exceptions on violations, so the
+	  wrapper
+	  functions have to try/catch them to maintain the previous
+	  semantics (i.e. that
+	  we exit(1) when we don't find an error, and exit(0) otherwise).
+	  
+	  Also the function call checking in the wrapper now delegates
+	  calls to the
+	  appropriate function in the runtime system (e.g. check_strlen,
+	  check_memcpy).
+	  Note that the string_errors tests do not yet all pass however.
+
 2009-07-08 00:41  panas2
 
 	* [r6452] /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
