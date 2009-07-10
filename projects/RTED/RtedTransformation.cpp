@@ -85,6 +85,7 @@ void RtedTransformation::transform(SgProject* project) {
 	  bracketWithScopeEnterExit( *stmtIt);
   }
 
+#if 0
   // before we insert the intitialized variables,
   // we need to insert the temporary statements that
   // we found during our traversal
@@ -98,6 +99,8 @@ void RtedTransformation::transform(SgProject* project) {
     SgStatement* old = itStmt->second;
     insertStatementAfter(old,newS);
   }
+#endif
+
   std::map<SgVarRefExp*,std::pair<SgInitializedName*,bool> >::const_iterator it5 =
     variableIsInitialized.begin();
   for (; it5 != variableIsInitialized.end(); it5++) {

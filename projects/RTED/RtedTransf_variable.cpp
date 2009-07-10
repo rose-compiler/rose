@@ -232,7 +232,7 @@ void RtedTransformation::appendAddressAndSize(SgInitializedName* initName,
 					      SgExprListExp* arg_list,
 					      int appendType
 					      ) {
-#if 1
+
     SgType* type = initName->get_type();
     ROSE_ASSERT(type);
     SgType* basetype = NULL;
@@ -261,6 +261,7 @@ void RtedTransformation::appendAddressAndSize(SgInitializedName* initName,
 	//int derefCounter=0;//getTypeOfPointer(initName);
 	//SgExpression* fillExp = getExprBelowAssignment(varRefE, derefCounter);
 	//ROSE_ASSERT(fillExp);
+
     appendExpression(
       arg_list,
       buildCastExp(
@@ -272,173 +273,9 @@ void RtedTransformation::appendAddressAndSize(SgInitializedName* initName,
 	    arg_list,
 	    buildSizeOfOp( varRefE)
 	  );
+
     }
-#else
-      // if the variable assignment : var = ...
-      // is a pointer then we store the memory location
-      // otherwise we store the value
-      SgScopeStatement* scope = initName->get_scope();
-      SgType* type = initName->get_type();
-      ROSE_ASSERT(type);
-      // string typestr = "notype";
-      SgType* basetype = NULL;
-      SgExpression* basetypeStr = buildString("no base");
-      if (isSgPointerType(type)) {
-	//	typestr="pointer";
-	basetype = isSgPointerType(type)->get_base_type();
-	if (basetype)
-	  basetypeStr = buildString(basetype->class_name());
 
-      }
-      SgExpression* ctypeStr = buildString(type->class_name());
-      if (appendType==1) {
-	appendExpression(arg_list, ctypeStr);
-	  	appendExpression(arg_list, basetypeStr);
-	//appendExpression(arg_list, buildString(scope->class_name()));
-      }
-
-      if (isSgClassType(basetype) ||
-	  isSgTypedefType(basetype) ||
-	  isSgClassDefinition(scope)
-	  ) 	      {
-	appendExpression(arg_list, buildIntVal(66));
-      } else {
-
-      //appendExpression(arg_list, buildString(varRefE->get_parent()->class_name()));
-      cerr << " Checking type : " << type->class_name() << endl;
-      if (basetype)
-	cerr << "  base type : " << basetype->class_name() << endl;
-      if (isSgPointerType(type) && isSgPointerType(type)->get_parent())
-	cerr << "  parent type : " << (isSgPointerType(type)->get_parent())->class_name() << endl;
-      // append address and value
-      if (isSgPointerType(type) &&
-	  isSgPointerType(isSgPointerType(type)->get_parent())==NULL
-	  ) {
-
-	//char* res = (char*)malloc(long int);
-	//fprintf(res,"%p",varRefE);
-	int derefCounter=0;//getTypeOfPointer(initName);
-	SgExpression* fillExp = getExprBelowAssignment(varRefE, derefCounter);
-
-	//	ROSE_ASSERT(fillExp);
-	if (fillExp) {
-	  bool isDoNotHandleType=false;
-	  // handle Exceptions. dont init value if class or pointer to pointer
-	  if (isSgClassType(basetype) ||
-	      isSgPointerType(basetype) ||
-	      isSgTypedefType(basetype)
-	      )
-	    isDoNotHandleType=true;
-
-
-	  if (isSgPointerType(type)) {
-	    bool pointer=true;
-	    if (isSgPointerType(basetype)) {
-	      // pointer to pointer
-	      pointer=false;
-	    } else {
-	      // pointer
-	    }
-	    if (pointer && derefCounter==0) {
-	      // int *ptr=0; ptr = 0:  pass address : ptr    value: *ptr
-	      appendExpression(arg_list, buildCastExp(fillExp,buildUnsignedLongLongType()));
-	    } else if (pointer && derefCounter==1) {
-	      // if it is a pointer then we should have derefCounter == 1
-	      // int *ptr=0; *ptr = 0:  pass address : &*ptr    value: *ptr
-	      appendExpression(arg_list, buildCastExp(buildAddressOfOp(fillExp),buildUnsignedLongLongType()));
-	    } else if (!pointer && derefCounter==0) {
-	      // int **ptr=0; ptr = 0:  pass address : ptr    value: **ptr
-	      appendExpression(arg_list, buildCastExp(fillExp,buildUnsignedLongLongType()));
-	    } else if (!pointer && derefCounter==1) {
-	      // int **ptr=0; *ptr = 0:  pass address : *ptr    value: **ptr
-	      appendExpression(arg_list, buildCastExp(fillExp,buildUnsignedLongLongType()));
-	    } else if (!pointer && derefCounter==2) {
-	      // int **ptr=0; **ptr = 0:  pass address : &*ptr    value: **ptr
-	      appendExpression(arg_list, buildCastExp(buildAddressOfOp(fillExp),buildUnsignedLongLongType()));
-	    } else {
-	      // no such case
-	      cerr << "pointer = " << pointer << "  derefCounter = " << derefCounter << "   " << stmt->unparseToString() << endl;
-	      ROSE_ASSERT(false);
-	    }
-
-	  } else {
-	    appendExpression(arg_list, buildCastExp(fillExp,buildUnsignedLongLongType()));
-	  }
-	} else {
-	  cerr << " Pointer that is not handled: " << varRefE->unparseToString() << endl;
-	  // assume its an array - dont handle (PntrArrRefExp)
-	  //fixme
-	  appendExpression(arg_list, buildIntVal(-5));
-	  //return;
-	}
-
-      } else if (isSgTypeInt(type) ||
-		 isSgTypeUnsignedInt(type) ||
-		 isSgTypeFloat(type) ||
-		 isSgTypeDouble(type) ||
-		 isSgTypeLong(type) ||
-		 isSgTypeLongLong(type)) {
-	int derefCounter=0;
-	SgExpression* fillExp = getExprBelowAssignment(varRefE, derefCounter);
-	if (fillExp) {
-	  appendExpression(arg_list, buildCastExp(buildAddressOfOp(fillExp),buildUnsignedLongLongType())); //buildLongIntVal(-1));
-	} else {
-	  cerr << "Unhandled for variables : " << varRefE->unparseToString() << endl;
-	  //ROSE_ASSERT(fillExp);
-	}
-      }  else if (isSgTypeChar(type)) {
-	int derefCounter=0;
-	SgExpression* fillExp = getExprBelowAssignment(varRefE, derefCounter);
-	if (fillExp) {
-	  //appendExpression(arg_list, buildCastExp(buildAddressOfOp(varRefE),buildUnsignedLongLongType())); //buildLongIntVal(-1));
-	  //appendExpression(arg_list, varRefE);
-	  appendExpression(arg_list, buildCastExp(buildAddressOfOp(fillExp),buildUnsignedLongLongType())); //buildLongIntVal(-1));
-	} else {
-	  cerr << "Unhandled for variables : " << varRefE->unparseToString() << endl;
-	  //ROSE_ASSERT(fillExp);
-	}
-      }
-      else if (isSgArrayType(type) ||
-	       isSgClassType(type) ||
-	       isSgTypedefType(type)
-	       ) {
-	// we don't do this for arrays, because the initialization of each
-	// element is handled at runtime
-	// fixme
-	appendExpression(arg_list,buildIntVal(-1));
-	//return;
-      } else {
-	cerr << "Variable Init: Condition unknown :" << type->class_name() << endl;
-	exit(1);
-      }
-
-	  }
-
-
-
-      // append sizeof(type);
-      // this won't work for struct, class ,etc.
-      if (isSgClassType(basetype) ||
-	  isSgPointerType(basetype) ||
-	  isSgTypedefType(basetype)
-	  )
-	// fixme: Need to handle the size of these
-	appendExpression(arg_list,buildSizeOfOp(basetype));
-      else {
-	if (isSgArrayType(type)) {
-	  	appendExpression(
-	    arg_list,
-	    //buildSizeOfOp( initName->get_type()) //basetype?
-	    buildIntVal( -2) //fixme
-	  		 );
-	} else {
-	appendExpression(
-	    arg_list,
-	    buildSizeOfOp( initName->get_type())
-			 );
-	}
-      }
-#endif
 }
 
 
@@ -446,7 +283,12 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
 						  SgVarRefExp* varRefE,
 						  bool ismalloc
 						  ) {
-  SgStatement* stmt = getSurroundingStatement(varRefE);
+	  SgStatement* stmt=NULL;
+	if (varRefE->get_parent()) // we created a verRef for AssignInitializers which do not have a parent
+		stmt = getSurroundingStatement(varRefE);
+	else
+		stmt = getSurroundingStatement(initName);
+
   // make sure there is no extern in front of stmt
 
   if (isSgStatement(stmt)) {
@@ -486,7 +328,6 @@ void RtedTransformation::insertInitializeVariable(SgInitializedName* initName,
       appendExpression(arg_list, simplename);
       SgExpression* callName = buildString(initName->get_mangled_name().str());
       appendExpression(arg_list, callName);
-
 
       appendAddressAndSize(initName, varRefE, stmt, arg_list,1);
 
@@ -633,3 +474,40 @@ void RtedTransformation::insertAccessVariable(SgVarRefExp* varRefE,
 
 }
 
+
+
+void RtedTransformation::visit_isAssignInitializer(SgNode* n) {
+  SgAssignInitializer* assign = isSgAssignInitializer(n);
+  ROSE_ASSERT(assign);
+  cerr << "\n\n???????????? Found assign init op : " << n->unparseToString() << endl;
+  SgInitializedName* initName = isSgInitializedName(assign->get_parent());
+  ROSE_ASSERT(initName);
+
+  // ---------------------------------------------
+  // we now know that this variable must be initialized
+  // if we have not set this variable to be initialized yet,
+  // we do so
+  cerr  << ">>>>>>> Setting this var to be assign initialized : " << initName->unparseToString()
+	<< "  and assignInit: " << assign->unparseToString()<<  endl;
+  SgStatement* stmt = getSurroundingStatement(assign);
+  ROSE_ASSERT(stmt);
+  SgScopeStatement* scope = stmt->get_scope();
+  ROSE_ASSERT(scope);
+  SgVarRefExp* varRef = buildVarRefExp(initName, scope);
+  ROSE_ASSERT(varRef);
+
+  // dont do this if the variable is global
+  if (isSgGlobal(initName->get_scope())) {
+  } else if (isSgBasicBlock(initName->get_scope())) {
+    //insertThisStatementLater[exprStmt]=stmt;
+    bool ismalloc=false;
+    variableIsInitialized[varRef]=std::pair<SgInitializedName*,bool>(initName,ismalloc);
+    //cerr << "Inserting new statement : " << exprStmt->unparseToString() << endl;
+    //cerr << "    after old statement : " << stmt->unparseToString() << endl;
+  } else {
+    cerr << " Cant determine scope : " << initName->get_scope()->class_name() << endl;
+    exit(1);
+  }
+
+  // ---------------------------------------------
+}

@@ -805,46 +805,6 @@ void RtedTransformation::visit_isArraySgAssignOp(SgNode* n) {
 }
 
 
-void RtedTransformation::visit_isAssignInitializer(SgNode* n) {
-  SgAssignInitializer* assign = isSgAssignInitializer(n);
-  ROSE_ASSERT(assign);
-  cerr << "\n\n???????????? Found assign init op : " << n->unparseToString() << endl;
-  SgInitializedName* initName = isSgInitializedName(assign->get_parent());
-  ROSE_ASSERT(initName);
-  // right hand side of assign
-  SgExpression* expr_r = assign->get_operand();
-  ROSE_ASSERT(expr_r);
-  // ---------------------------------------------
-  // we now know that this variable must be initialized
-  // if we have not set this variable to be initialized yet,
-  // we do so
-  cerr  << ">> Setting this var to be assign initialized : " << initName->unparseToString() 
-	<< "  and assignInit: " << assign->unparseToString()  
-	<< "  expression : " << expr_r->unparseToString() << endl;
-  SgVarRefExp* varRef = buildVarRefExp(initName, initName->get_scope());
-  ROSE_ASSERT(varRef);
-
-  SgStatement* stmt = getSurroundingStatement(initName);
-  ROSE_ASSERT(stmt);
-  SgExprStatement* exprStmt = buildExprStatement(varRef);
-
-
-  // dont do this if the variable is global
-  if (isSgGlobal(initName->get_scope())) {
-
-  } else if (isSgBasicBlock(initName->get_scope())) {
-    insertThisStatementLater[exprStmt]=stmt;
-    bool ismalloc=false;
-    variableIsInitialized[varRef]=std::pair<SgInitializedName*,bool>(initName,ismalloc);
-    //cerr << "Inserting new statement : " << exprStmt->unparseToString() << endl;
-    //cerr << "    after old statement : " << stmt->unparseToString() << endl;
-  } else {
-    cerr << " Cant determine scope : " << initName->get_scope()->class_name() << endl;
-    exit(1);
-  }
-
-  // ---------------------------------------------
-}
 
 void RtedTransformation::addPaddingToAllocatedMemory(SgStatement* stmt,  RTedArray* array) {
   printf(">>> Padding allocated memory with blank space\n");
