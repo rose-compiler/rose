@@ -114,7 +114,8 @@ HEADER_START
 
           This function is used as a basis for steps in AST isomophism tests.
        */
-          size_t numberOfNodesInSubtree();
+       // PC (7/9/2009): This function is not defined.
+       // size_t numberOfNodesInSubtree();
 
      public:
        // [MK] Member function to access attached preprocessing info 
