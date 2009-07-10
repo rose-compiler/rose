@@ -92,16 +92,29 @@ RTED_TEST_DIRS = $(rted_path)/C/array_index_out_of_bound \
 		 $(rted_path)/C/input_output_errors \
 		 $(rted_path)/C/memory_leaks \
 		 $(rted_path)/C/uninitialized_variables \
-		 $(rted_path)/C/C99_specific_errors
+		 $(rted_path)/C/C99_specific_errors \
+		 $(srcdir)/tests/C/memoryleaks \
+		 $(srcdir)/tests/C/nomemoryleaks
 
 RTED_ORIGSOURCES = ${foreach RTED_TEST_DIR, $(RTED_TEST_DIRS), ${wildcard $(RTED_TEST_DIR)/*[!_s].c} }
-RTED_COPYSOURCES = ${foreach RTED_TEST_DIR, $(RTED_TEST_DIRS), ${patsubst $(rted_path)/%, rted_source/%, ${wildcard $(RTED_TEST_DIR)/*.c} } }
+RTED_COPYSOURCES = ${foreach RTED_TEST_DIR, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${patsubst $(rted_path)/%, rted_source/%, ${wildcard $(RTED_TEST_DIR)/*.c} } }
+RTED_LOCAL_COPYSOURCES = ${foreach RTED_TEST_DIR, ${filter $(srcdir)%, $(RTED_TEST_DIRS)}, ${patsubst $(srcdir)/%, rted_source/%, ${wildcard $(RTED_TEST_DIR)/*.c} } }
 RTED_ROSESOURCES = ${patsubst %.c, %_rose.c, $(RTED_COPYSOURCES) }
-RTED_BINFILES = ${patsubst $(rted_path)/%.c, rted_source/%.bin, $(RTED_ORIGSOURCES)}
-RTED_DEBUGBINFILES = ${patsubst $(rted_path)/%.c, rted_source/%_debug.bin, $(RTED_ORIGSOURCES)}
+RTED_LOCAL_ROSESOURCES = ${patsubst %.c, %_rose.c, $(RTED_LOCAL_COPYSOURCES) }
+RTED_BINFILES = ${patsubst $(rted_path)/%.c, rted_source/%.bin, ${filter $(rted_path)%, $(RTED_ORIGSOURCES)}}
+RTED_LOCAL_BINFILES = ${patsubst $(srcdir)/%.c, rted_source/%.bin, ${filter $(srcdir)%, $(RTED_ORIGSOURCES)}}
+RTED_DEBUGBINFILES = ${patsubst $(rted_path)/%.c, rted_source/%_debug.bin, ${filter $(rted_path)%, $(RTED_ORIGSOURCES)}}
+RTED_LOCAL_DEBUGBINFILES = ${patsubst $(srcdir)/%.c, rted_source/%_debug.bin, ${filter $(srcdir)%, $(RTED_ORIGSOURCES)}}
 
-.SECONDARY: $(RTED_BINFILES) $(RTED_DEBUGBINFILES) $(RTED_COPYSOURCES) $(RTED_ROSESOURCES)
-.PRECIOUS: $(RTED_BINFILES) $(RTED_DEBUGBINFILES) $(RTED_COPYSOURCES) $(RTED_ROSESOURCES)
+.SECONDARY: $(RTED_BINFILES) $(RTED_DEBUGBINFILES) $(RTED_COPYSOURCES) $(RTED_ROSESOURCES) \
+	    $(RTED_LOCAL_BINFILES) $(RTED_LOCAL_DEBUGBINFILES) $(RTED_LOCAL_COPYSOURCES) $(RTED_LOCAL_ROSESOURCES)
+.PRECIOUS: $(RTED_BINFILES) $(RTED_DEBUGBINFILES) $(RTED_COPYSOURCES) $(RTED_ROSESOURCES) \
+	   $(RTED_LOCAL_BINFILES) $(RTED_LOCAL_DEBUGBINFILES) $(RTED_LOCAL_COPYSOURCES) $(RTED_LOCAL_ROSESOURCES)
+
+print:
+	@echo $(RTED_LOCAL_COPYSOURCES)
+	@echo $(wildcard $(top_srcdir)/projects/RTED/tests/C/memoryleaks/*.c)
+	$(foreach RTED_TEST_DIR, $(filter $(top_srcdir)%, $(RTED_TEST_DIRS)), @echo $(patsubst $(top_srcdir)%, rted_source%, $(wildcard $(RTED_TEST_DIR)/*.c ) ) )
 
 check-C-array: run/C/array_index_out_of_bound
 
@@ -122,12 +135,27 @@ check-C-C99specific: run/C/C99_specific_errors
 rted_source:
 	@cp -f $(srcdir)/index_array.txt .
 	@cp -f $(srcdir)/file_read.txt .
-	@mkdir -p $(foreach rted_dir, $(RTED_TEST_DIRS), $(patsubst $(rted_path)/%, rted_source/%, $(rted_dir) ) )
+	mkdir -p $(foreach rted_dir,$(filter $(rted_path)%, $(RTED_TEST_DIRS) ), $(patsubst $(rted_path)/%, rted_source/%, $(rted_dir) ) )
+	mkdir -p $(foreach local_test_dir,$(filter $(srcdir)%, $(RTED_TEST_DIRS) ), $(patsubst $(srcdir)/%, rted_source/%, $(local_test_dir) ) )
 
 #------------------------------------------------------------------------------
 # rule to copy the sources into our current working directory
 #------------------------------------------------------------------------------
 
+#testcases in $(top_srcdir)/projects/RTED/tests
+rted_source/tests/%.c: rted_source $(top_srcdir)/projects/RTED/tests/%.c
+	@echo -e Checking $(patsubst $(top_srcdir)/projects/RTED/tests/%.c, %, $(filter $(top_srcdir)/%, $^)) ...
+	@echo -n "    copying input file ... "
+	@cp $(filter $(top_srcdir)/%.c, $^) $(dir $@)
+	@echo " done."
+	@echo -n "    inserting #include \"RuntimeSystem.h\" ... "
+	@sed -i '1i\#include \"RuntimeSystem.h\"' $@
+	@echo " done."
+	@echo -n "    inserting #define EXITCODE_OK 0 ... "
+	@sed -i '1i\#define EXITCODE_OK 0' $@
+	@echo " done."
+
+#testcases in rted distribution
 rted_source/%.c: rted_source $(rted_path)/%.c
 	@echo -e Checking $(patsubst $(rted_path)/%.c, %, $(filter $(rted_path)%, $^)) ...
 	@echo -n "    copying input file ... "
@@ -273,9 +301,12 @@ $(1): $(2)
 	@echo $(1) complete
 endef
 
-${foreach rted_dir, $(RTED_TEST_DIRS), ${eval ${call RUN_TARGET, ${patsubst $(rted_path)/%, run/%, $(rted_dir)}, ${patsubst $(rted_path)/%.c, run/%, ${wildcard $(rted_dir)/*[!_s].c} } } } }
-${foreach rted_dir, $(RTED_TEST_DIRS), ${eval ${call RUN_TARGET, ${patsubst $(rted_path)/%, run_debug/%, $(rted_dir)}, ${patsubst $(rted_path)/%.c, run_debug/%, ${wildcard $(rted_dir)/*[!_s].c} } } } }
-${foreach rted_dir, $(RTED_TEST_DIRS), ${eval ${call RUN_TARGET, ${patsubst $(rted_path)/%, run_checkonly/%, $(rted_dir)}, ${patsubst $(rted_path)/%.c, run_checkonly/%, ${wildcard $(rted_dir)/*[!_s].c} } } } }
+${foreach rted_dir, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(rted_path)/%, run/%, $(rted_dir)}, ${patsubst $(rted_path)/%.c, run/%, ${wildcard $(rted_dir)/*[!_s].c} } } } }
+${foreach rted_dir, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(rted_path)/%, run_debug/%, $(rted_dir)}, ${patsubst $(rted_path)/%.c, run_debug/%, ${wildcard $(rted_dir)/*[!_s].c} } } } }
+${foreach rted_dir, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(rted_path)/%, run_checkonly/%, $(rted_dir)}, ${patsubst $(rted_path)/%.c, run_checkonly/%, ${wildcard $(rted_dir)/*[!_s].c} } } } }
+${foreach rted_dir, ${filter $(srcdir)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(srcdir)/%, run/%, $(rted_dir)}, ${patsubst $(srcdir)/%.c, run/%, ${wildcard $(rted_dir)/*[!_s].c} } } } }
+${foreach rted_dir, ${filter $(srcdir)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(srcdir)/%, run_debug/%, $(rted_dir)}, ${patsubst $(srcdir)/%.c, run_debug/%, ${wildcard $(rted_dir)/*[!_s].c} } } } }
+${foreach rted_dir, ${filter $(srcdir)%, $(RTED_TEST_DIRS)}, ${eval ${call RUN_TARGET, ${patsubst $(srcdir)/%, run_checkonly/%, $(rted_dir)}, ${patsubst $(srcdir)/%.c, run_checkonly/%, ${wildcard $(rted_dir)/*[!_s].c} } } } }
 	
 #------------------------------------------------------------------------------
 
