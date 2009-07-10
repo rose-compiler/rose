@@ -216,8 +216,9 @@ RtedTransformation::insertFuncCall(RtedArguments* args  ) {
     appendExpression(arg_list, buildString(removeSpecialChar(stmt->unparseToString())));
     // this one is new, it indicates the variable on the left hand side of the statment,
     // if available
-    appendExpression(arg_list, args->leftHandSideAssignmentExpr);
-    cerr << " ... Left hand side variable : " <<  args->leftHandSideAssignmentExpr << endl;
+    ROSE_ASSERT(args->leftHandSideAssignmentExprStr);
+    appendExpression(arg_list, args->leftHandSideAssignmentExprStr);
+    cerr << " ... Left hand side variable : " <<  args->leftHandSideAssignmentExprStr << endl;
 
     // if we need 2 additional parameters, we need to add them when necessary
     if (isStringModifyingFunctionCall(args->f_name))
