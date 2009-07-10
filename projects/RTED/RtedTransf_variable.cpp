@@ -18,7 +18,6 @@ using namespace SageBuilder;
 
 
 // ------------------------ VARIABLE SPECIFIC CODE --------------------------
-// SHOULD BE MOVED TO SEPARATE FILE LATER
 
 bool RtedTransformation::isVarInCreatedVariables(SgInitializedName* n) {
   bool ret=false;
@@ -54,25 +53,11 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName
 						  ) {
   SgStatement* stmt = getSurroundingStatement(initName);
   // make sure there is no extern in front of stmt
-#if 1
-  SgDeclarationStatement* declstmt = isSgDeclarationStatement(stmt);
-  SgFunctionParameterList* funcparam = isSgFunctionParameterList(stmt);
-  bool externQual =false;
-  if (funcparam) {
-    SgFunctionDeclaration* funcdeclstmt = isSgFunctionDeclaration(funcparam->get_parent());
-    ROSE_ASSERT(funcdeclstmt);
-    externQual = funcdeclstmt->get_declarationModifier().get_storageModifier().isExtern();
-    cerr << ">>>>>>>>>>>>>>>> stmt-param : " << funcdeclstmt->unparseToString() << "  " << funcdeclstmt->class_name() <<
-      "  " << externQual << endl;
-  } else if (declstmt) {
-    externQual = declstmt->get_declarationModifier().get_storageModifier().isExtern();
-  }
-  cerr << ">>>>>>>>>>>>>>>> stmt : " << stmt->unparseToString() << "  " << stmt->class_name() << endl;
+  bool externQual = isGlobalExternVariable(stmt);
   if (externQual) {
     cerr << "Skipping this insertVariableCreateCall because it probably occurs multiple times (with and without extern)." << endl;
     return;
   }
-#endif
 
 
   if (isSgStatement(stmt)) {
@@ -102,7 +87,7 @@ void RtedTransformation::insertVariableCreateCall(SgInitializedName* initName
       stmt = mainFirst;
       scope = stmt->get_scope();
 
-      SgExprStatement* exprStmt = buildVariableCreateCallStmt( initName, stmt);
+      //SgExprStatement* exprStmt = buildVariableCreateCallStmt( initName, stmt);
       // kind of hackey.  Really we should be prepending into main's body, not
       // inserting relative its first statement.
       //insertStatementBefore(isSgStatement(stmt), exprStmt);

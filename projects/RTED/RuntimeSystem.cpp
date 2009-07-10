@@ -619,4 +619,10 @@ RuntimeSystem_roseConvertIntToString(int t) {
 
 
 
+
+void 
+RuntimeSystem_roseRegisterTypeCall(int count, ...) {
+
+}
+
 // vim:sw=2 ts=2 et sta:

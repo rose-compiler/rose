@@ -309,3 +309,24 @@ RtedTransformation::getDimension(SgInitializedName* initName, SgVarRefExp* varRe
   cerr << " -------------------------- resizing dimension to : " << dim << "  for : " << varRef->unparseToString() << endl;
   return dim;
 }
+
+
+
+bool RtedTransformation::isGlobalExternVariable(SgStatement* stmt) {
+  bool externQual =false;
+#if 1
+  SgDeclarationStatement* declstmt = isSgDeclarationStatement(stmt);
+  SgFunctionParameterList* funcparam = isSgFunctionParameterList(stmt);
+  if (funcparam) {
+    SgFunctionDeclaration* funcdeclstmt = isSgFunctionDeclaration(funcparam->get_parent());
+    ROSE_ASSERT(funcdeclstmt);
+    externQual = funcdeclstmt->get_declarationModifier().get_storageModifier().isExtern();
+    cerr << ">>>>>>>>>>>>>>>> stmt-param : " << funcdeclstmt->unparseToString() << "  " << funcdeclstmt->class_name() <<
+      "  " << externQual << endl;
+  } else if (declstmt) {
+    externQual = declstmt->get_declarationModifier().get_storageModifier().isExtern();
+  }
+  cerr << ">>>>>>>>>>>>>>>> stmt : " << stmt->unparseToString() << "  " << stmt->class_name() << endl;
+#endif
+  return externQual;
+}

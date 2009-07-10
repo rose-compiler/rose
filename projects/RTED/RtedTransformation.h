@@ -61,6 +61,8 @@ class RtedTransformation : public AstSimpleProcessing {
   SgFunctionSymbol* roseAccessVariable;
   SgFunctionSymbol* roseEnterScope;
   SgFunctionSymbol* roseExitScope;
+  SgFunctionSymbol* roseRegisterTypeCall;
+
 
   // FUNCTIONS ------------------------------------------------------------
   // Helper function
@@ -179,6 +181,9 @@ class RtedTransformation : public AstSimpleProcessing {
   SgProject* parse(int argc, char** argv);
 
   void appendAddressAndSize(SgInitializedName* initName, SgExpression* varRef, SgStatement* stmt, SgExprListExp* arg_list, int appendType);
+
+  bool isGlobalExternVariable(SgStatement* stmt);
+  void insertRegisterTypeCall(SgInitializedName* initName);
 
 
 };

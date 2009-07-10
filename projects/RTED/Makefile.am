@@ -40,12 +40,12 @@ RTED_LIB=CppRuntimeSystem/libCppRuntimeSystem.la
 runtimeCheck_SOURCES = runtimeCheck.cpp \
                        RtedTransformation.cpp \
                        $(RTS) \
-                       RtedSymbols.cpp \
+                       RtedSymbols.cpp RtedTransf_registerType.cpp \
                        RtedTransf_array.cpp RtedTransf_prolog.cpp \
                        RtedTransf_support.cpp RtedTransf_funccall.cpp \
                        RtedTransf_locals.cpp RtedTransf_scopestmt.cpp \
                        RtedTransf_funcdef.cpp RtedTransf_variable.cpp \
-                       RtedTransf_iofunccall.cpp
+                       RtedTransf_iofunccall.cpp 
 
 
 

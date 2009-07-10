@@ -46,7 +46,7 @@ void RtedTransformation::transform(SgProject* project) {
   roseEnterScope = symbols->roseEnterScope;
   roseExitScope = symbols->roseExitScope;
   roseIOFunctionCall = symbols->roseIOFunctionCall;
-
+  roseRegisterTypeCall = symbols->roseRegisterTypeCall;
 
   ROSE_ASSERT(roseCreateArray);
   ROSE_ASSERT(roseArrayAccess);
@@ -58,6 +58,8 @@ void RtedTransformation::transform(SgProject* project) {
   ROSE_ASSERT(roseAccessVariable);
   ROSE_ASSERT(roseEnterScope);
   ROSE_ASSERT(roseExitScope);
+  ROSE_ASSERT(roseIOFunctionCall);
+  ROSE_ASSERT(roseRegisterTypeCall);
 
 
   traverseInputFiles(project,preorder);

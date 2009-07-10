@@ -65,26 +65,12 @@ void RtedTransformation::insertArrayCreateCall(SgStatement* stmt,
 					       SgInitializedName* initName, 
 					       RTedArray* array) {
   // make sure there is no extern in front of stmt
-#if 1
-  SgDeclarationStatement* declstmt = isSgDeclarationStatement(stmt);
-  SgFunctionParameterList* funcparam = isSgFunctionParameterList(stmt);
-  bool externQual =false;
-  if (funcparam) {
-    SgFunctionDeclaration* funcdeclstmt = isSgFunctionDeclaration(funcparam->get_parent());
-    ROSE_ASSERT(funcdeclstmt);
-    externQual = funcdeclstmt->get_declarationModifier().get_storageModifier().isExtern();
-    cerr << ">>>>>>>>>>>>>>>> stmt-param : " << funcdeclstmt->unparseToString() << "  " << funcdeclstmt->class_name() << 
-      "  " << externQual << endl;
-  } else if (declstmt) {
-    externQual = declstmt->get_declarationModifier().get_storageModifier().isExtern();
-  }  
-  cerr << ">>>>>>>>>>>>>>>> stmt : " << stmt->unparseToString() << "  " << stmt->class_name() <<
-	  " parent : " << stmt->get_parent()->class_name() << " " << endl;
+  bool externQual = isGlobalExternVariable(stmt);
   if (externQual) {
     cerr << "Skipping this insertArrayCreate because it probably occurs multiple times (with and without extern)." << endl;
     return;
   }
-#endif
+
 
 
   std::vector<SgExpression*> value;

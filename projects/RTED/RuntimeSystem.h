@@ -192,6 +192,11 @@ void RuntimeSystem_roseAccessVariable( const char* name,
 				       const char* lineTransformed,
 				       const char* stmtStr);
 
+// handle structs and classes
+void 
+RuntimeSystem_roseRegisterTypeCall(int count, ...);
+
+
 // USE GUI for debugging
 void Rted_debugDialog(const char* filename, int line, int lineTransformed);
 
