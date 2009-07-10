@@ -181,8 +181,11 @@ void BAstNode::generationVisit(SgNode * node, ItemTreeNode * bAstNode,
     {
         if(! AstDisplayInfo::getShortNodeNameDesc(node).isEmpty())
         {
-            newBAstNode = new BAstNode(node);
-            bAstNode->addChild(newBAstNode);
+            if(! isSgFunctionDeclaration(node)) //prevent from printing functions twice (decl and def)
+            {
+                newBAstNode = new BAstNode(node);
+                bAstNode->addChild(newBAstNode);
+            }
         }
     }
 

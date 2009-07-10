@@ -42,7 +42,9 @@ class MainWindow : public QMainWindow
         void on_actionNewMetricsKiviat_triggered();
         void on_actionNewAstBrowser_triggered();
         void on_actionNewPropertyView_triggered();
+        void on_actionNewCallGraphWidget_triggered();
         void on_actionNewSrcBinView_triggered();
+
 
         void on_actionSaveAs_triggered();
         void on_actionOpen_triggered();

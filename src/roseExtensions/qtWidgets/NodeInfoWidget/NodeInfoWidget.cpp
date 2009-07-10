@@ -59,6 +59,9 @@ void NodeInfoWidget::printSpecialFuncModifier(const QModelIndex & par,
 
 QString NodeInfoWidget::getTraversalName(SgNode * node)
 {
+    if(isSgGraphNode(node))
+        return("GraphNode - no parent");
+
     SgNode * par = node->get_parent();
     if(par)
     {

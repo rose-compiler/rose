@@ -1,14 +1,21 @@
 <RCC>
-  <qresource prefix="util" >
-    <file>AppIcons/info.png</file>
+  <qresource prefix="/" >
     <file>AppIcons/application-exit.png</file>
     <file>AppIcons/document-open.png</file>
     <file>AppIcons/document-properties.png</file>
     <file>AppIcons/document-save-as.png</file>
     <file>AppIcons/document-save.png</file>
+    <file>AppIcons/info.png</file>
+  </qresource>
+  <qresource prefix="util" >
+    <file>WidgetIcons/Graph.gif</file>
+    <file>WidgetIcons/Kiviat.gif</file>
+    <file>WidgetIcons/Graph.gif</file>
+    <file>WidgetIcons/CallGraph.gif</file>
+    <file>WidgetIcons/PropTreeWidget.gif</file>
+    <file>WidgetIcons/Rose.gif</file>
     <file>NodeIcons/binaryfile.gif</file>
     <file>NodeIcons/binaryfiles.gif</file>
-    <file>NodeIcons/sourcefiles.gif</file>
     <file>NodeIcons/class.gif</file>
     <file>NodeIcons/function.gif</file>
     <file>NodeIcons/include.gif</file>
@@ -17,5 +24,6 @@
     <file>NodeIcons/namespace.gif</file>
     <file>NodeIcons/project.gif</file>
     <file>NodeIcons/sourcefile.gif</file>
+    <file>NodeIcons/sourcefiles.gif</file>
   </qresource>
 </RCC>

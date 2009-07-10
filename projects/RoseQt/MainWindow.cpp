@@ -30,6 +30,7 @@
 #include "AstGraphWidget.h"
 #include "MetricsKiviat.h"
 #include "RoseCodeEdit.h"
+#include "CallGraphWidget.h"
 #include "SrcBinView.h"
 
 MainWindow::MainWindow( QWidget * p )
@@ -137,6 +138,7 @@ void MainWindow::saveMdiState()
         MetricsKiviat *    metKiviat  = subWdgs[i]->findChild<MetricsKiviat*> ();
         AstBrowserWidget * astBrowser = subWdgs[i]->findChild<AstBrowserWidget*> ();
         NodeInfoWidget *   nodeInfo   = subWdgs[i]->findChild<NodeInfoWidget*> ();
+        CallGraphWidget*   cgWidget   = subWdgs[i]->findChild<CallGraphWidget*>();
         SrcBinView *       srcBinView = subWdgs[i]->findChild<SrcBinView*> ();
 
         if     (asmView)    settings.setValue("type", "AsmView");
@@ -145,6 +147,7 @@ void MainWindow::saveMdiState()
         else if(metKiviat)  settings.setValue("type", "MetricsKiviat");
         else if(astBrowser) settings.setValue("type", "AstBrowser" );
         else if(nodeInfo)   settings.setValue("type", "NodeInfo" );
+        else if(cgWidget)   settings.setValue("type", "CallGraphWidget");
         else if(srcBinView) settings.setValue("type", "SrcBinView" );
         else qDebug() << "Unknown WidgetType in MdiArea, cannot be stored";
     }
@@ -176,6 +179,8 @@ void MainWindow::restoreMdiState()
             w = addMdiSubWidget( new AstBrowserWidget(), "Ast Browser" );
         else if( type == "NodeInfo" )
             w = addMdiSubWidget( new NodeInfoWidget(),   "SgNode Properties" );
+        else if( type == "CallGraphWidget")
+            w = addMdiSubWidget( new CallGraphWidget(), "CallGraphWidget");
         else if( type == "SrcBinView" )
             w = addMdiSubWidget( new SrcBinView(),       "Source to Assembly Demo" );
         else
@@ -266,6 +271,11 @@ void MainWindow::on_actionNewAstBrowser_triggered()
 void MainWindow::on_actionNewPropertyView_triggered()
 {
     addMdiSubWidget(new NodeInfoWidget(), "SgNode Properties");
+}
+
+void MainWindow::on_actionNewCallGraphWidget_triggered()
+{
+    addMdiSubWidget(new CallGraphWidget(), "CallGraphWidget");
 }
 
 void MainWindow::on_actionNewSrcBinView_triggered()

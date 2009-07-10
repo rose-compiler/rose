@@ -16,6 +16,7 @@ libutil_la_SOURCES = AsmToSourceMapper.cpp\
                      LCS.cpp\
                      MetricAttributeCollector.cpp\
                      MetricBgDelegate.cpp\
+                     RoseGraphicsView.cpp\
                      RoseTreeView.cpp\
                      SageMimeData.cpp\
                      SgNodeUtil.cpp
@@ -23,6 +24,7 @@ libutil_la_SOURCES = AsmToSourceMapper.cpp\
 nodist_libutil_la_SOURCES = moc_ItemTreeModel.cxx\
                             moc_MetricAttributeCollector.cxx\
                             moc_MetricBgDelegate.cxx\
+                            moc_RoseGraphicsView.cxx\
                             moc_RoseTreeView.cxx\
                             qrc_util.cpp\
                             ui_MetricBgDelegateConfig.h
@@ -40,6 +42,7 @@ headerTarget_HEADERS = AsmToSourceMapper.h\
                        LCS.h\
                        MetricAttributeCollector.h\
                        MetricBgDelegate.h\
+                       RoseGraphicsView.h\
                        RoseTreeView.h\
                        SageMimeData.h\
                        SgNodeUtil.h\

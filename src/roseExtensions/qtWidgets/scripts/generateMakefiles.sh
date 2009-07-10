@@ -1,5 +1,4 @@
 SUBDIRS="AsmInstructionBar \
-          AsmSourceMapper \
           AsmView \
           AstBrowserWidget \
           AstGraphWidget \

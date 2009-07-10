@@ -3,7 +3,7 @@
 #define AstGRAPHWIDGET_H
 
 
-#include <QGraphicsView>
+#include "RoseGraphicsView.h"
 #include "DisplayNode.h"
 
 
@@ -14,7 +14,7 @@ class DisplayGraph;
 class QDragEnterEvent;
 class QDropEvent;
 
-
+class DisplayCallGraph;
 /**
  *  Layout of an ast in a graphicsview (similar to zgrViewer )
  *
@@ -29,7 +29,7 @@ class QDropEvent;
  *  updating the adjacent edges.
  *
 */
-class AstGraphWidget : public QGraphicsView
+class AstGraphWidget : public RoseGraphicsView
 {
 	Q_OBJECT
 
@@ -38,34 +38,12 @@ class AstGraphWidget : public QGraphicsView
 		virtual ~AstGraphWidget();
 
 
-	public slots:
-		void setNode(SgNode * sgNode);
-		void setFilter(AstFilterInterface * filter);
-		void setFileFilter(int id);
-	signals:
-		void clicked(SgNode * node);
-
-		void clicked(const QString & filename, int line, int column);
-
-
 	protected:
 
+        virtual void updateGraph(SgNode * node, AstFilterInterface * filter);
+
 		QGraphicsScene * scene;
-		//DisplayTreeNode * root;
-		DisplayGraph * root;
-
-		// Zoom
-		virtual void wheelEvent(QWheelEvent *event);
-		virtual void scaleView(qreal scaleFactor);
-		virtual void mousePressEvent(QMouseEvent *event);
-
-		// Drop
-		virtual void dragEnterEvent(QDragEnterEvent * ev);
-		virtual void dropEvent(QDropEvent *ev);
-        virtual void dragMoveEvent( QDragMoveEvent * ev);
-
-		AstFilterInterface * curFilter;
-		SgNode * curSgTreeNode;
+		DisplayTreeNode * root;
 };
 
 

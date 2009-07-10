@@ -42,6 +42,8 @@ class ProjectManager : public ItemTreeNode
 
         ProjectManagerRootNode * getModelRootNode();
 
+        int getIdFromSgProject(SgProject * proj);
+
         void storeProjectState();
         void loadProjectState();
 
@@ -79,6 +81,7 @@ class SourceFileNode;
 class BinaryFileNode;
 class SourceFileHeaderNode;
 class BinaryFileHeaderNode;
+class SgIncidenceDirectedGraph;
 
 class ProjectNode : public ItemTreeNode
 {
@@ -123,11 +126,16 @@ class ProjectNode : public ItemTreeNode
 
         const QString & getName() const { return name;}
 
+        /// returns the callgraph associated with this Project
+        /// TODO update graph when files are added
+        SgIncidenceDirectedGraph * getCallGraph();
+
     protected:
         QString name;
         SgProject * sgProject;
         MetricsConfig *metricsConfig;
 
+        SgIncidenceDirectedGraph * callGraph;
 
         /// The *fileHeaderNode are created when needed
         /// if you want to add something call these functions before

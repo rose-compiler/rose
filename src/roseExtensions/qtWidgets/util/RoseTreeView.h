@@ -10,6 +10,7 @@ class QDragMoveEvent;
 
 class SgNode;
 class ItemTreeModel;
+class ItemTreeModel;
 
 class AstFilterInterface;
 
@@ -90,9 +91,7 @@ class RoseTreeView : public QTreeView
 
         QList<QPair<QModelIndex,QModelIndex> > arrows;
 
-
-        //TODO should be pure virtual
-        virtual void updateModel() {}
+        virtual void updateModel() {};
 
 
         ItemTreeModel * model;
