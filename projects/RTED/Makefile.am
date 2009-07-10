@@ -7,6 +7,9 @@ INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I. -Winvalid-pch
 INCLUDES2 = $(ROSE_INCLUDES) -I../../
 
 
+EXTRACT_EXPECTED_ERROR_SCRIPT=$(srcdir)/extract-expected-error.sed
+EXTRACT_EXPECTED_ERROR=sed -n -f $(EXTRACT_EXPECTED_ERROR_SCRIPT)
+EXTRACT_ACTUAL_ERROR=sed -n -f $(srcdir)/extract-actual-error.sed
 
 if ROSE_WITH_ROSEQT
 #    LINK_QT_DEBUGGER=./rted_qt/.libs/libRtedQt.a $(QT_LDFLAGS) $(ROSE_DWARF_LIBS_WITH_PATH)  -L$(top_builddir)/projects/roseQt/widgets/.libs/ -lRoseQtWidgets -Wl,-rpath,`pwd`/$(top_builddir)/projects/roseQt/widgets/.libs -DROSE_WITH_ROSEQT
@@ -105,10 +108,11 @@ RTED_BINFILES = ${patsubst $(rted_path)/%.c, rted_source/%.bin, ${filter $(rted_
 RTED_LOCAL_BINFILES = ${patsubst $(srcdir)/%.c, rted_source/%.bin, ${filter $(srcdir)%, $(RTED_ORIGSOURCES)}}
 RTED_DEBUGBINFILES = ${patsubst $(rted_path)/%.c, rted_source/%_debug.bin, ${filter $(rted_path)%, $(RTED_ORIGSOURCES)}}
 RTED_LOCAL_DEBUGBINFILES = ${patsubst $(srcdir)/%.c, rted_source/%_debug.bin, ${filter $(srcdir)%, $(RTED_ORIGSOURCES)}}
+RTED_EXPECTEDOUTPUTFILES = ${patsubst $(rted_path)/%.c, rted_source/%.expected-output, $(RTED_ORIGSOURCES)}
 
-.SECONDARY: $(RTED_BINFILES) $(RTED_DEBUGBINFILES) $(RTED_COPYSOURCES) $(RTED_ROSESOURCES) \
+.SECONDARY: $(RTED_BINFILES) $(RTED_DEBUGBINFILES) $(RTED_COPYSOURCES) $(RTED_ROSESOURCES) $(RTED_EXPECTEDOUTPUTFILES)\
 	    $(RTED_LOCAL_BINFILES) $(RTED_LOCAL_DEBUGBINFILES) $(RTED_LOCAL_COPYSOURCES) $(RTED_LOCAL_ROSESOURCES)
-.PRECIOUS: $(RTED_BINFILES) $(RTED_DEBUGBINFILES) $(RTED_COPYSOURCES) $(RTED_ROSESOURCES) \
+.PRECIOUS: $(RTED_BINFILES) $(RTED_DEBUGBINFILES) $(RTED_COPYSOURCES) $(RTED_ROSESOURCES) $(RTED_EXPECTEDOUTPUTFILES)\
 	   $(RTED_LOCAL_BINFILES) $(RTED_LOCAL_DEBUGBINFILES) $(RTED_LOCAL_COPYSOURCES) $(RTED_LOCAL_ROSESOURCES)
 
 print:
@@ -235,6 +239,9 @@ rted_source/%_debug.bin: rted_qt rted_source/%_rose.c $(srcdir)/$(RTS) $(srcdir)
 	@$(RTED_CXX) -g -o $@ $(filter rted_source/%.c, $^) $(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) $(LINK_QT_DEBUGGER) $(RTED_LIB)
 	@echo " done."
 
+rted_source/%.expected-output: rted_source $(EXTRACT_EXPECTED_ERROR_SCRIPT)
+	@$(EXTRACT_EXPECTED_ERROR) $(patsubst rted_source/%.expected-output, $(rted_path)/%.ok_msg, $@) > $@
+
 rted_source/%.bin: rted_source/%_rose.c rted_source/%_s_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	@echo -n "   compiling instrumented code (with _s) ... "
 	@$(RTED_CXX) -g -o $@ $(filter rted_source/%.c, $^) \
@@ -249,22 +256,45 @@ rted_source/%.bin: rted_source/%_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem
 
 #------------------------------------------------------------------------------
 
+#------------------------------------------------------------------------------
+# rules to handle expected / actual output of tests
+#------------------------------------------------------------------------------
+
+
+#------------------------------------------------------------------------------
 
 #------------------------------------------------------------------------------
 # rules to run arbitrary tests from the rted distribution
 #------------------------------------------------------------------------------
 
-run_debug/%: rted_source/%_debug.bin
+run_debug/%: rted_source/%_debug.bin rted_source/%.expected-output 
 	@echo -n "   running runtime error detection debugger ... "
 	@./$(filter rted_source/%_debug.bin, $?)
 	@echo " done."
 
-run_checkonly/%: rted_source/%.bin
+run_checkonly/%: rted_source/%.bin rted_source/%.expected-output 
 	@echo -n "   running runtime error detection ... "
-	@./$(filter rted_source/%.bin, $?)
+	@RESULT='$(strip $(patsubst %.bin, %.result.txt, $(filter rted_source/%.bin, $?)))';\
+		./$(filter rted_source/%.bin, $?) 2> $$RESULT;\
+		if [ $$? -ne 0 ];then cat $$RESULT && echo "Test exited unexpectedly with non-zero status" && exit 1; fi;\
+		ACTUAL_OUTPUT='./$(strip $(patsubst %.bin, %.actual-output, $(filter rted_source/%.bin, $?)))';\
+		if [ ! -f $$RESULT ]; then echo "no result produced!" && exit 1; fi; \
+		$(EXTRACT_ACTUAL_ERROR) $$RESULT > $$ACTUAL_OUTPUT;\
+		diff --ignore-all-space --ignore-case -q $$ACTUAL_OUTPUT $(filter %.expected-output, $?) > /dev/null;\
+		if [ $$? -ne 0 ]; then\
+			echo -e '\n\n';\
+			echo 'Expected error did not match actual error found';\
+			echo ' (the error may be in the extraction scripts -- see the actual files that were diff-d';\
+			echo "  $(filter %.expected-output, $?) $$ACTUAL_OUTPUT)";\
+			echo -e '\n========== Expected Error ==========';\
+			cat $(patsubst rted_source/%.expected-output, $(rted_path)/%.ok_msg, $(filter %.expected-output, $?));\
+			echo -e '\n========== Actual   Error ==========';\
+			cat $$RESULT;\
+			exit 1;\
+		fi;
 	@echo " done."
 
-run/%: rted_source/%.bin rted_source/%_debug.bin
+run/%: rted_source/%.bin rted_source/%_debug.bin rted_source/%.expected-output 
 	@echo -n "   running runtime error detection ... "
 	@$(patsubst %_debug.bin, ./%.bin, $(filter rted_source/%_debug.bin, $^) ); \
 	    if [ $$? -ne 0 ]; \

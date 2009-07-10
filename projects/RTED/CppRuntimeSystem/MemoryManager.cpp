@@ -300,7 +300,9 @@ void MemoryManager::checkRead(addr_type addr, size_t size)
     if(! mt->isInitialized(from, from +size) )
     {
         stringstream desc;
-        desc << "Trying to read from uninitialized Memory Region  (Address " << "0x" << hex << addr <<")" << endl;
+        desc    << "Trying to read from uninitialized MemoryRegion "
+                << "(Address " << "0x" << hex << addr 
+                <<" of size " << dec << size << ")" << endl;
         rs->violationHandler(RuntimeViolation::INVALID_READ,desc.str());
     }
 }

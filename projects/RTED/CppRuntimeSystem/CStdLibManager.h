@@ -185,6 +185,13 @@ class CStdLibManager {
             size_t num, 
             const string& description = ""
         );
+        void check_overlap(
+            const void* ptr1, 
+            size_t size1, 
+            const void* ptr2, 
+            size_t size2, 
+            const string& description = ""
+        );
 
         // Checks that str is initialized, and that it contains a null
         // terminator.

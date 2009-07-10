@@ -722,6 +722,48 @@ void test_meminit_nullterm_included()
     CLEANUP
 }
 
+void test_range_overlap()
+{
+    TEST_INIT("Testing that overlap checks cover ranges")
+
+    char* s1;
+    char s2[ 20 ];
+    char s3[ 9 ] = "a string";
+
+
+    rs->createMemory( (addr_type) s2, sizeof(s2));
+    rs->createMemory( (addr_type) s3, sizeof(s3));
+    rs->checkMemWrite( (addr_type) s3, sizeof(s3));
+    rs->check_strcpy( s2, s3);
+
+    strcpy( s2, s3);
+    s1 = &s2[ 3 ];
+
+    try { rs->check_strcat( s1, s2);}
+    TEST_CATCH( RuntimeViolation::INVALID_MEM_OVERLAP)
+
+    rs->check_strcpy( &s2[ 10 ], s3);
+    strcpy( &s2[ 10 ], s3);
+
+    // this should be fine -- the cat doesn't reach s2[ 10 ]
+    s2[ 0 ] = '\0';
+    s1 = &s2[0];
+    rs->check_strcat( s1, &s2[ 10 ]);
+
+    s1[ 0 ] = ' ';
+    s1[ 3 ] = '\0';
+
+    // now the cat will reach and an overlap occurs
+    try { rs->check_strcat( s1, &s2[ 10 ]);}
+    TEST_CATCH( RuntimeViolation::INVALID_MEM_OVERLAP)
+
+
+    rs->freeMemory( (addr_type) s2);
+    rs->freeMemory( (addr_type) s3);
+
+    CLEANUP
+}
+
 
 int main(int argc, char ** argv)
 {
@@ -767,6 +809,7 @@ int main(int argc, char ** argv)
         test_strlen();
 
         test_meminit_nullterm_included();
+        test_range_overlap();
     }
     catch( RuntimeViolation& e)
     {

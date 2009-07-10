@@ -15,7 +15,18 @@ void CStdLibManager::
 check_overlap(
         const void* ptr1, 
         const void* ptr2, 
-        size_t num, 
+        size_t size, 
+        const string& desc
+) {
+    return check_overlap( ptr1, size, ptr2, size, desc);
+}
+
+void CStdLibManager::
+check_overlap(
+        const void* ptr1, 
+        size_t size1,
+        const void* ptr2, 
+        size_t size2, 
         const string& desc
 ) {
 
@@ -23,7 +34,20 @@ check_overlap(
 
     addr_type   addr1 = (addr_type) ptr1,
                 addr2 = (addr_type) ptr2; 
-    if( max(addr1, addr2) - min(addr1, addr2) < num) {
+
+    addr_type range1_high, range2_low;
+    if( addr2 > addr1) {
+        range1_high = addr1 + size1;
+        range2_low = addr2;
+    } else {
+        range1_high = addr2 + size2;
+        range2_low = addr1;
+    }
+
+    // range1 is the range that starts in the smaller region of memory.  The
+    // only way for the high value (the end) of range1 to be greater than the
+    // start (low value) of range2 is for the ranges to overlap.
+    if( range1_high > range2_low) {
         rts->violationHandler( RuntimeViolation::INVALID_MEM_OVERLAP, desc);
     }
 }
@@ -61,8 +85,8 @@ size_t CStdLibManager::check_string( const char* str) {
 
         stringstream desc;
         desc    << "Trying to read from string at " << (addr_type) str
-                << " In memory chunk " << memory->getAddress() << " .. "
-                << memory->getAddress() + memory->getSize()
+                << " In memory chunk 0x" << hex << memory->getAddress() << " .. "
+                << hex << memory->getAddress() + memory->getSize()
                 << " But there is no null terminator from the pointer to the"
                 << " end of the chunk.";
         rts->violationHandler( RuntimeViolation::INVALID_READ, desc.str());
@@ -151,9 +175,13 @@ check_strcat( char* destination, const char* source) {
 
     // check no-overlap
     check_overlap(
-        destination + destination_len,
+        destination,
+        // can't overlap with current destination string, or the bytes at the
+        // end that we're going to write to.  -1 to avoid doublecounting the
+        // null terminators. 
+        destination_len + source_len - 1,
         source, 
-        source_len - 1,
+        source_len,
         "in call to strcat"
     );
 
@@ -176,7 +204,8 @@ check_strncat( char* destination, const char* source, size_t num) {
 
     // check no-overlap
     check_overlap(
-        destination + destination_len,
+        destination,
+        destination_len + num,
         source, 
         num, 
         "in call to strncat"

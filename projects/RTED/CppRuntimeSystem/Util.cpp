@@ -62,6 +62,7 @@ RuntimeViolation::RuntimeViolation(Type _type, const std::stringstream & descStr
 
 std::ostream& operator<< (std::ostream &os, const RuntimeViolation & m)
 {
+	os << "Violation: ";
     os << m.getShortDesc() << " at " << m.getPos() << endl;
     os << m.getLongDesc() << endl;
     return os;

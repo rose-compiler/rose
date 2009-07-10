@@ -126,35 +126,37 @@ class RuntimeSystem
         void checkFileAccess(FILE * f, bool read);
 
 
-#define COMMA ,
-#define C_FUNCTION(x, params, args) void check_##x ( params ) { cstdlibManager.check_##x( args );}
-#define C_FN_DSN(x) C_FUNCTION( x, \
-                        void* destination COMMA const void* source COMMA size_t num, \
-                        destination COMMA source COMMA num)
-#define C_FN_CH_DSN(x) C_FUNCTION( x, \
-                        char* destination COMMA const char* source COMMA size_t num, \
-                        destination COMMA source COMMA num)
-#define C_FN_CH_DS(x) C_FUNCTION( x, \
-                        char* destination COMMA const char* source, \
-                        destination COMMA source)
-#define C_FN_SS( x) C_FUNCTION( x, \
-                        const char* str1 COMMA const char* str2, \
-                        str1 COMMA str2)
-#define C_FN_SI( x) C_FUNCTION( x, \
-                        const char* str1 COMMA int character, \
-                        str1 COMMA character)
-#define C_FN_S( x) C_FUNCTION( x, const char* str, str)
-        C_FN_DSN( memcpy);
-        C_FN_DSN( memmove);
-        C_FN_CH_DS( strcpy);
-        C_FN_CH_DSN( strncpy);
-        C_FN_CH_DS( strcat);
-        C_FN_CH_DSN( strncat);
-        C_FN_SI( strchr);
-        C_FN_SS( strpbrk);
-        C_FN_SS( strspn);
-        C_FN_SS( strstr);
-        C_FN_S( strlen);
+        // ------------------- CStdLib delegates ------------------------------
+        //
+        //  These functions should all delegate to cstdlibManager's function of
+        //  the same signature, which in turn should have the same signature as
+        //  their corresponding cstdlib function, except with "check_" prefixed
+        //  to the function name.
+        //
+        //  Each function checks that a call to its associated cstdlib function
+        //  would be legal, relative certain classes of errors, including:
+        //      
+        //      1.  Ensuring that when necessary, strings have been properly
+        //          initialized and a null terminator exists in the same memory
+        //          region that the pointer refers to.
+        //
+        //      2.  Ensuring that destinations for writes are large enough, and
+        //          do not overlap with sources, when doing so is inappropriate.
+
+        void check_memcpy ( void* destination , const void* source , size_t num ) { cstdlibManager.check_memcpy( destination , source , num );};
+        void check_memmove ( void* destination , const void* source , size_t num ) { cstdlibManager.check_memmove( destination , source , num );};
+        void check_strcpy ( char* destination , const char* source ) { cstdlibManager.check_strcpy( destination , source );};
+        void check_strncpy ( char* destination , const char* source , size_t num ) { cstdlibManager.check_strncpy( destination , source , num );};
+        void check_strcat ( char* destination , const char* source ) { cstdlibManager.check_strcat( destination , source );};
+        void check_strncat ( char* destination , const char* source , size_t num ) { cstdlibManager.check_strncat( destination , source , num );};
+        void check_strchr ( const char* str1 , int character ) { cstdlibManager.check_strchr( str1 , character );};
+        void check_strpbrk ( const char* str1 , const char* str2 ) { cstdlibManager.check_strpbrk( str1 , str2 );};
+        void check_strspn ( const char* str1 , const char* str2 ) { cstdlibManager.check_strspn( str1 , str2 );};
+        void check_strstr ( const char* str1 , const char* str2 ) { cstdlibManager.check_strstr( str1 , str2 );};
+        void check_strlen ( const char* str ) { cstdlibManager.check_strlen( str );};
+
+        // --------------------------------------------------------------------
+
 
         /// Deletes all collected data
         /// normally only needed for debug purposes
