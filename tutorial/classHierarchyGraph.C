@@ -18,9 +18,10 @@ main( int argc, char * argv[] )
 
      ClassHierarchyWrapper hier( project );
 
-     ClassHierarchy* classHier = hier.getClassHierarchyGraph();
-     GraphDotOutput<ClassHierarchy> outputHier (*classHier);
-     outputHier.writeToDOTFile ("classHier.dot", "Class Hierarchy");
+     SgIncidenceDirectedGraph* classHier = hier.getClassHierarchyGraph();
+     
+     OutputDot::writeToDOTFile(classHier,"classHier.dot", "Class Hierarchy" );
+
 
      return 0;
    }

@@ -17,30 +17,7 @@ std::string stripGlobalModifer(std::string str){
 
 };
 
-bool nodeCompare(const CallGraphCreate::Node *a,const CallGraphCreate::Node * b)
-{
-        
-      
-	string aStr;
-        if (var_SOLVE_FUNCTION_CALLS_IN_DB == true)
-        {
-           aStr=stripGlobalModifer(a->properties->functionName);
-        }else
-          aStr=stripGlobalModifer(a->functionDeclaration->get_qualified_name().getString());
 
-	string bStr;
-        if (var_SOLVE_FUNCTION_CALLS_IN_DB == true)
-        {
-          bStr=stripGlobalModifer(b->properties->functionName);
-        }else
-          bStr=stripGlobalModifer(b->functionDeclaration->get_qualified_name().getString());
-
-	// compare length
-	if (aStr.length()<bStr.length()) return true;
-	else if (aStr.length()>bStr.length()) return false;
-	// no lengthdifference, compare text
-	else return aStr.compare(bStr)<0;
-}
 
 bool nodeCompareGraph(const SgGraphNode* a,const SgGraphNode* b)
 {
@@ -268,6 +245,8 @@ int main (int argc, char **argv){
 
           sortedCallGraphDump(graphCompareOutput,cgb.getGraph());	
 
+          SgIncidenceDirectedGraph *newGraph;
+
                 if(var_SOLVE_FUNCTION_CALLS_IN_DB == true)
         {
 #ifdef HAVE_SQLITE3
@@ -291,16 +270,15 @@ int main (int argc, char **argv){
           cout << "Loading from DB...\n";
           cout << "Loaded\n";
 
-          SgIncidenceDirectedGraph* incidenceGraph = loadCallGraphFromDB(*gDB);
+          newGraph = loadCallGraphFromDB(*gDB);
 
-          sortedCallGraphDump(graphCompareOutput,incidenceGraph);	
+          sortedCallGraphDump(graphCompareOutput,newGraph);	
 
 #endif
         }else{
           // Not SQL Database case
           printf ("Not using the SQLite Database ... \n");
 
-          SgIncidenceDirectedGraph *newGraph;
 
           newGraph = cgb.getGraph();
 
@@ -308,8 +286,7 @@ int main (int argc, char **argv){
 
         }
 
-                SgIncidenceDirectedGraph *newGraph;
-
+          
                 newGraph = cgb.getGraph();
 
 

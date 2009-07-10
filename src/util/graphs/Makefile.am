@@ -5,7 +5,7 @@ INCLUDES = -I$(top_srcdir)/src/util/support -I$(srcdir)/..
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
 libgraphsSources = \
-   DGBaseGraphImpl.C SCCAnalysis.C  TransAnalysis.C  TypedFusion.C
+   DGBaseGraphImpl.C SCCAnalysis.C  TransAnalysis.C  TypedFusion.C 
 
 # lib_LIBRARIES = libgraphs.a
 # libgraphs_a_SOURCES  = $(libgraphsSources)

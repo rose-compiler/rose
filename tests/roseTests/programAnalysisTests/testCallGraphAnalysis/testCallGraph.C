@@ -23,29 +23,6 @@ bool filter ( SgNode *n )
     }
 #endif
 
-struct filterNodes : public unary_function<CallGraphNode*,bool>{
-    public:
-      bool operator()(CallGraphNode* test){
-
-              bool returnValue = false;
-              SgFunctionDeclaration* CallGraphNode2 = test->functionDeclaration;
-
-              string filename = CallGraphNode2->get_file_info()->get_filename();
-              if( filename.find("g++_HEADERS")!=string::npos ||
-                  filename.find("/usr/include")!=string::npos){
-//               std::cout << "Filter out STL headers " << test->toString()<<std::endl;
-                returnValue= true;
-              }
-              if(test->toString().find(string("_"))!=string::npos)
-                returnValue = true;
-              if(filename.find("rose_edg_macros_and_functions_required_for_gnu.h")!=string::npos)
-                 returnValue = true;
-         if(CallGraphNode2->get_file_info()->isCompilerGenerated()==true)
-            returnValue=true;
-
-         return returnValue;
-      }
-};
 
 
 
@@ -111,7 +88,7 @@ main( int argc, char * argv[] ) {
      removeFunctions.push_back("::main%" );
      filterNodesByFunctionName(*gDB,removeFunctions);
 
-     SgIncidenceDirectedGraph* incidenceGraph = loadCallGraphFromDB(*gDB);
+     newGraph = loadCallGraphFromDB(*gDB);
      cout << "Loaded\n";
 
 #endif

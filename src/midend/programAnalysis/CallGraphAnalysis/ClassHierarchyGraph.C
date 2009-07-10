@@ -9,15 +9,6 @@
 using namespace std;
 
 
-ClassHierarchyNode::ClassHierarchyNode( SgClassDefinition *cls ) : MultiGraphElem( NULL ), classDefinition( cls ) 
- {}
-
-std::string 
-ClassHierarchyNode::toString() const 
- { 
-  return classDefinition->get_qualified_name().getString(); 
- }
-
 
 void 
 ClassHierarchyWrapper::setAST( SgNode *proj )
@@ -27,29 +18,35 @@ ClassHierarchyWrapper::setAST( SgNode *proj )
  }
 
 
-ClassHierarchy* ClassHierarchyWrapper::getClassHierarchyGraph(){
-            return &classGraph;
+SgIncidenceDirectedGraph* ClassHierarchyWrapper::getClassHierarchyGraph(){
+            return classGraph;
 
 };
 
-ClassHierarchyNode*
+SgGraphNode*
 ClassHierarchyWrapper::findNode(SgNode* nodeToFind){
-     ClassHierarchyNode* returnNode = NULL;
-     for (ClassHierarchy::NodeIterator i = classGraph.GetNodeIterator(); !i.ReachEnd(); ++i) 
-        {
-           ClassHierarchyNode* node = i.Current();
-	   SgNode* currentNode = node->classDefinition;
+     SgGraphNode* returnNode = NULL;
+
+     rose_graph_integer_node_hash_map & nodes =
+      classGraph->get_node_index_to_node_map ();
+
+
+     for( rose_graph_integer_node_hash_map::iterator it = nodes.begin();
+         it != nodes.end(); ++it )
+     {
+	   SgNode* currentNode = it->second->get_SgNode();
 	   if(currentNode == nodeToFind ){
 
-               returnNode = node;
+               returnNode = it->second;
 	       break;
 	   };
 
-        }
+     }
 
     return returnNode;
 };
 
+#if 0
 ClassHierarchyEdge*
 ClassHierarchyWrapper::findEdge ( ClassHierarchyNode* src, ClassHierarchyNode* snk)
    { 
@@ -77,10 +74,12 @@ ClassHierarchyWrapper::findEdge ( ClassHierarchyNode* src, ClassHierarchyNode* s
      
      return returnEdge; 
    }
+#endif
 
 ClassHierarchyWrapper::ClassHierarchyWrapper( SgNode *node )
 {
   ROSE_ASSERT ( isSgProject( node ) );
+  classGraph = new SgIncidenceDirectedGraph("Class Inheritance Graph");
   root = node;
 
   Rose_STL_Container<SgNode *> allCls;
@@ -103,26 +102,28 @@ ClassHierarchyWrapper::ClassHierarchyWrapper( SgNode *node )
 	  SgClassDefinition *baseClsDef = baseCls->get_definition();
 	  ROSE_ASSERT ( baseClsDef != NULL);
 
-	  ClassHierarchyNode *n1 = findNode(baseClsDef);
+	  SgGraphNode *n1 = findNode(baseClsDef);
 	  if(n1 == NULL)
 	  {
-	       n1 = new ClassHierarchyNode( baseClsDef );
-           classGraph.addNode( n1 );
+	       n1 = new SgGraphNode( baseClsDef->unparseToString() );
+               n1->set_SgNode(baseClsDef);
+               classGraph->addNode( n1 );
 
 	  }
 
 
-	  ClassHierarchyNode *n2 = findNode(clsDescDef);
+	  SgGraphNode *n2 = findNode(clsDescDef);
 	  if(n2==NULL)
 	  {
-	       n2 = new ClassHierarchyNode( clsDescDef );
-     	   classGraph.addNode( n2 );
+	       n2 = new SgGraphNode( clsDescDef->unparseToString() );
+               n2->set_SgNode(clsDescDef);
+     	       classGraph->addNode( n2 );
 	  }
 
-	  ClassHierarchyEdge *e = NULL;//findEdge(n1,n2);
+	  SgGraphEdge *e = NULL;//findEdge(n1,n2);
 	  if(e == NULL)
-	       e = new ClassHierarchyEdge( "inheritance" );
-	  classGraph.addEdge( n1, n2, e );
+	       classGraph->addDirectedEdge(n1,n2, "inheritance");
+	  //classGraph.addEdge( n1, n2, e );
 	}
     }
 }
@@ -130,32 +131,95 @@ ClassHierarchyWrapper::ClassHierarchyWrapper( SgNode *node )
 SgClassDefinitionPtrList
 ClassHierarchyWrapper::getSubclasses( SgClassDefinition *cls )
 {
-  return getHierarchy ( cls, ClassHierarchy::EdgeOut );
+  return getHierarchy ( cls, EdgeOut );
 }
 
 SgClassDefinitionPtrList
 ClassHierarchyWrapper::getAncestorClasses( SgClassDefinition *cls )
 {
-  return getHierarchy ( cls, ClassHierarchy::EdgeIn );
+  return getHierarchy ( cls, EdgeIn );
 }
 
 SgClassDefinitionPtrList
-ClassHierarchyWrapper::getHierarchy ( SgClassDefinition * cls, ClassHierarchy::EdgeDirection dir )
+ClassHierarchyWrapper::getHierarchy ( SgClassDefinition * cls, EdgeDirection dir )
 {
 
   SgClassDefinitionPtrList classList;
   ROSE_ASSERT ( cls );
 
   //cout << "Class " << cls->get_qualified_name().str() << "\n";
-  ClassHierarchy::EdgeIterator edgeIterator;
-  ClassHierarchy::NodeIterator nodeIterator;
-  ClassHierarchy::EdgeDirection dir_rev =
-    ( dir == ClassHierarchy::EdgeOut ? ClassHierarchy::EdgeIn : ClassHierarchy::EdgeOut );
 
   set<SgClassDefinition *> visited;
   visited.insert( cls );
 
   // find descendants / ascendants of class currently visited - BFS
+#if 1
+  rose_graph_integer_node_hash_map & nodes =
+    classGraph->get_node_index_to_node_map ();
+
+
+  if(dir == EdgeOut){
+    //Map of all graphEdges in the graph
+    rose_graph_integer_edge_hash_multimap & outEdges
+      = classGraph->get_node_index_to_edge_multimap_edgesOut ();
+
+
+    for( rose_graph_integer_node_hash_map::iterator i = nodes.begin();
+        i != nodes.end(); ++i )
+    {
+      SgGraphNode *crtNode = i->second;
+      SgClassDefinition *cC = isSgClassDefinition(crtNode->get_SgNode());
+      ROSE_ASSERT(cC != NULL);
+      if ( visited.find( cC ) != visited.end() )
+        // iterate through the edges of the current node
+        for( rose_graph_integer_edge_hash_multimap::const_iterator edgeIterator = outEdges.find(i->first);
+            edgeIterator != outEdges.end(); ++edgeIterator )
+        {
+          SgDirectedGraphEdge *edge = isSgDirectedGraphEdge(edgeIterator->second);
+          ROSE_ASSERT( edge != NULL );
+
+          SgGraphNode *end = edge->get_to();
+          ROSE_ASSERT ( end );
+          //cout << "Descendant " << end->toString() << "\n";
+          ROSE_ASSERT( isSgClassDefinition(end->get_SgNode()) != NULL );
+          classList.push_back( isSgClassDefinition(end->get_SgNode()) );
+          visited.insert( isSgClassDefinition(end->get_SgNode()) );
+        }
+
+    }
+  }else{
+
+    //Map of all graphEdges in the graph
+    rose_graph_integer_edge_hash_multimap & inEdges
+      = classGraph->get_node_index_to_edge_multimap_edgesIn ();
+
+
+    for( rose_graph_integer_node_hash_map::iterator i = nodes.begin();
+        i != nodes.end(); ++i )
+    {
+      SgGraphNode *crtNode = i->second;
+      SgClassDefinition *cC = isSgClassDefinition(crtNode->get_SgNode());
+      ROSE_ASSERT(cC != NULL);
+      if ( visited.find( cC ) != visited.end() )
+        // iterate through the edges of the current node
+        for( rose_graph_integer_edge_hash_multimap::const_iterator edgeIterator = inEdges.find(i->first);
+            edgeIterator != inEdges.end(); ++edgeIterator )
+        {
+          SgDirectedGraphEdge *edge = isSgDirectedGraphEdge(edgeIterator->second);
+          ROSE_ASSERT( edge != NULL );
+
+          SgGraphNode *end = edge->get_from();
+          ROSE_ASSERT ( end );
+          //cout << "Descendant " << end->toString() << "\n";
+          ROSE_ASSERT( isSgClassDefinition(end->get_SgNode()) != NULL );
+          classList.push_back( isSgClassDefinition(end->get_SgNode()) );
+          visited.insert( isSgClassDefinition(end->get_SgNode()) );
+        }
+
+    }
+  }
+
+#else
   for ( nodeIterator = classGraph.GetNodeIterator(); !nodeIterator.ReachEnd(); nodeIterator++ )
     {
       ClassHierarchyNode *crtNode = nodeIterator.Current();
@@ -174,6 +238,7 @@ ClassHierarchyWrapper::getHierarchy ( SgClassDefinition * cls, ClassHierarchy::E
 	    visited.insert( end->classDefinition );
 	  }
     }
+#endif
   return classList;
 }
 
@@ -184,10 +249,40 @@ ClassHierarchyWrapper::getDirectSubclasses ( SgClassDefinition * cls )
   ROSE_ASSERT ( cls );
 
   //cout << "Class " << cls->get_qualified_name().str() << "\n";
-  ClassHierarchy::EdgeIterator edgeIterator;
-  ClassHierarchy::NodeIterator nodeIterator;
 
   // find descendants / ascendants of class currently visited - BFS
+  rose_graph_integer_node_hash_map & nodes =
+    classGraph->get_node_index_to_node_map ();
+
+  //Map of all graphEdges in the graph
+  rose_graph_integer_edge_hash_multimap & outEdges
+    = classGraph->get_node_index_to_edge_multimap_edgesOut ();
+
+
+  for( rose_graph_integer_node_hash_map::iterator i = nodes.begin();
+      i != nodes.end(); ++i )
+  {
+    SgGraphNode *crtNode = i->second;
+    SgClassDefinition *cC = isSgClassDefinition(crtNode->get_SgNode());
+    ROSE_ASSERT( cC != NULL );
+    // iterate through the edges of the current node
+    for( rose_graph_integer_edge_hash_multimap::const_iterator edgeIterator = outEdges.find(i->first);
+        edgeIterator != outEdges.end(); ++edgeIterator )
+    {
+      SgDirectedGraphEdge *edge = isSgDirectedGraphEdge(edgeIterator->second);
+      ROSE_ASSERT( edge != NULL );
+
+      SgGraphNode *end = edge->get_to();
+      ROSE_ASSERT ( end );
+      //cout << "Descendant " << end->toString() << "\n";
+      ROSE_ASSERT( isSgClassDefinition(end->get_SgNode()) != NULL );
+      classList.push_back( isSgClassDefinition(end->get_SgNode()) );
+    }
+
+  }
+
+#if 0
+  
   for ( nodeIterator = classGraph.GetNodeIterator(); !nodeIterator.ReachEnd(); nodeIterator++ )
     {
       ClassHierarchyNode *crtNode = nodeIterator.Current();
@@ -205,6 +300,7 @@ ClassHierarchyWrapper::getDirectSubclasses ( SgClassDefinition * cls )
 	    classList.push_back( end->classDefinition );
 	  }
     }
+#endif
   return classList;
 }
 
@@ -270,12 +366,55 @@ void
 ClassHierarchyWrapper::writeHierarchyToDB ( sqlite3x::sqlite3_connection& gDB )
 {
 
-  string command;
-
-  ClassHierarchy::EdgeIterator edgeIterator;
-  ClassHierarchy::NodeIterator nodeIterator;
-
   // find descendants of class currently visited - BFS
+
+  rose_graph_integer_node_hash_map & nodes =
+    classGraph->get_node_index_to_node_map ();
+
+  //Map of all graphEdges in the graph
+  rose_graph_integer_edge_hash_multimap & outEdges
+    = classGraph->get_node_index_to_edge_multimap_edgesOut ();
+
+
+  for( rose_graph_integer_node_hash_map::iterator i = nodes.begin();
+      i != nodes.end(); ++i )
+  {
+    SgGraphNode *crtNode = i->second;
+    SgClassDefinition *cC = isSgClassDefinition(crtNode->get_SgNode());
+    ROSE_ASSERT(cC != NULL);
+      // iterate through the edges of the current node
+      for( rose_graph_integer_edge_hash_multimap::const_iterator edgeIterator = outEdges.find(i->first);
+          edgeIterator != outEdges.end(); ++edgeIterator )
+      {
+        SgDirectedGraphEdge *edge = isSgDirectedGraphEdge(edgeIterator->second);
+        ROSE_ASSERT( edge != NULL );
+
+        SgGraphNode *end = edge->get_to();
+        ROSE_ASSERT ( end );
+
+        ROSE_ASSERT ( end );
+        SgClassDefinition *dC = isSgClassDefinition(end->get_SgNode());
+        ROSE_ASSERT(dC != NULL);
+
+        std::ostringstream existQuery;
+        existQuery << "select count(Class) from Hierarchy where Class=\""<<cC->get_qualified_name().getString() 
+          <<"\" AND Subclass=\""<<dC->get_qualified_name().getString()<< "\" limit 1";
+
+        if( sqlite3x::sqlite3_command(gDB, existQuery.str().c_str()).executeint() == 0 )
+        {
+
+          string command = "INSERT INTO Hierarchy VALUES (\"" + cC->get_qualified_name().getString() + "\", \""
+            + dC->get_qualified_name().getString() + "\", \"" + cC->get_file_info()->get_filename() + "\", \""
+            + dC->get_file_info()->get_filename() + "\");";
+          cout << "Executing: " << command << "\n";
+          //q->execute();
+          gDB.executenonquery(command.c_str());
+        }
+      }
+  }
+
+#if 0
+
   for ( nodeIterator = classGraph.GetNodeIterator(); !nodeIterator.ReachEnd(); nodeIterator++ )
   {
     ClassHierarchyNode *crtNode = nodeIterator.Current();
@@ -306,5 +445,6 @@ ClassHierarchyWrapper::writeHierarchyToDB ( sqlite3x::sqlite3_connection& gDB )
       }
     }
   }
+#endif
 }
 #endif
