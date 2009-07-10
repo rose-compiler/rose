@@ -101,6 +101,7 @@ RTED_BINFILES = ${patsubst $(rted_path)/%.c, rted_source/%.bin, $(RTED_ORIGSOURC
 RTED_DEBUGBINFILES = ${patsubst $(rted_path)/%.c, rted_source/%_debug.bin, $(RTED_ORIGSOURCES)}
 
 .SECONDARY: $(RTED_BINFILES) $(RTED_DEBUGBINFILES) $(RTED_COPYSOURCES) $(RTED_ROSESOURCES)
+.PRECIOUS: $(RTED_BINFILES) $(RTED_DEBUGBINFILES) $(RTED_COPYSOURCES) $(RTED_ROSESOURCES)
 
 check-C-array: run/C/array_index_out_of_bound
 
@@ -117,7 +118,6 @@ check-C-memoryleaks: run/C/memory_leaks
 check-C-uninitvar: run/C/uninitialized_variables
 
 check-C-C99specific: run/C/C99_specific_errors
-
 
 rted_source:
 	@cp -f $(srcdir)/index_array.txt .
@@ -146,8 +146,6 @@ rted_source/%.c: rted_source $(rted_path)/%.c
 #------------------------------------------------------------------------------
 # rules to create _rose.c and _s_rose.c files
 #------------------------------------------------------------------------------
-
-.PRECIOUS: %_rose.c %_s_rose.c
 
 rted_source/%_s_rose.c: rted_source/%_s.c
 	@touch $@
