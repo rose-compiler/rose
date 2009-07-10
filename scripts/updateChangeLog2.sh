@@ -7,7 +7,7 @@
 # Liao, 1/26/2008
 
 #set -e # this will stop the script when diff returns non-zero.
-SVN=/nfs/apps/subversion/1.5.1/bin/svn
+SVN=/nfs/apps/subversion/1.5.5/bin/svn
 #if test "x$SVN" = "x"; then SVN=svn; fi
 
 # get a fresh checkout for the current ChangeLog2
