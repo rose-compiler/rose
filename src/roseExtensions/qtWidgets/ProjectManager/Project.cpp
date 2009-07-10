@@ -1,5 +1,8 @@
 #include "rose.h"
 
+#include <CallGraph.h>
+
+
 #include "Project.h"
 #include "ItemModelHelper.h"
 #include "RoseFrontendTask.h"
@@ -223,6 +226,19 @@ int ProjectManager::getProjectCount() const
     return rootNode->childrenCount();
 }
 
+
+int ProjectManager::getIdFromSgProject(SgProject * sgProj)
+{
+    for(int i=0; i < getProjectCount(); i++)
+    {
+        if(getProject(i)->getSgProject() == sgProj)
+            return i;
+    }
+    qDebug() << "Warning: ProjectManager::getIdFromProject";
+    qDebug() << "Tried to get a projectId with an unknown sgProject";
+    return -1;
+}
+
 // ----------------------- ProjectNode -----------------------------------
 
 
@@ -230,6 +246,7 @@ ProjectNode::ProjectNode(const QString & n)
     : name(n),
       sgProject( new SgProject() ),
       metricsConfig( new MetricsConfig( "", NULL, sgProject ) ),
+      callGraph(NULL),
       srcFileHeaderNode(NULL),
       binFileHeaderNode(NULL)
 {
@@ -400,6 +417,24 @@ QVariant ProjectNode::data(int role, int column) const
 
     return QVariant();
 }
+
+
+SgIncidenceDirectedGraph * ProjectNode::getCallGraph()
+{
+    if(callGraph==NULL)
+    {
+        CallGraphBuilder cgb (sgProject);
+        cgb.buildCallGraph();
+
+        callGraph = cgb.getGraph();
+    }
+
+    return callGraph;
+}
+
+
+
+
 
 // ----------------------- SourceFileHeaderNode -----------------------------------
 

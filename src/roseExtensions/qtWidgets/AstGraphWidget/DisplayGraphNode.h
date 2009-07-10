@@ -24,6 +24,8 @@ class DisplayGraphNode : public DisplayNode
         void addOutEdge(DisplayNode * to );
         void addInEdge (DisplayNode * from);
 
+        void deleteAllEdges();
+
         /// Node takes ownership of this edge
         static void addEdge(DisplayEdge * edge);
 
@@ -37,6 +39,11 @@ class DisplayGraphNode : public DisplayNode
         int getId() const     { return id;}
         void setId(int newId) { id=newId; }
     protected:
+
+        void deleteOutEdge(DisplayEdge * e);
+        void removeInEdge(DisplayEdge * e);
+
+
         virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value);
 
         QList<DisplayEdge *> inEdges;
@@ -50,8 +57,11 @@ class DisplayGraphNode : public DisplayNode
 
 namespace Ui { class LayoutControl; }
 
+#include <QSet>
+
 class QTimer;
 class SgIncidenceDirectedGraph;
+class SgGraphNode;
 class rose_graph_integer_edge_hash_multimap;
 class rose_graph_integer_node_hash_map;
 
@@ -65,7 +75,7 @@ class DisplayGraph : public QObject
 
         QList<DisplayGraphNode*> & nodes()  { return n; }
 
-        int addNode (DisplayGraphNode* n );
+        void addNode (DisplayGraphNode* n );
         void addEdge (int nodeId1, int nodeId2, const QString & label="" );
         void addEdge (DisplayGraphNode * n1, DisplayGraphNode * n2, const QString & label="");
 
@@ -81,63 +91,32 @@ class DisplayGraph : public QObject
         void circleLayout();
 
 
-        bool isAdjacentTo(int node1, int node2) const { return edgeInfo.contains(node1,node2); }
+        bool isAdjacentTo(DisplayGraphNode * n1, DisplayGraphNode * n2) const;
 
         static DisplayGraph * generateTestGraph(QGraphicsScene * sc,
                                                 QObject * par=0);
 
-        static DisplayGraph * generateLargeTestGraph(QGraphicsScene * sc,
-                                                QObject * par=0);
-
-        static DisplayGraph * generateCallGraph(QGraphicsScene * sc,
-                                                SgIncidenceDirectedGraph * cg,
-                                                rose_graph_integer_node_hash_map & nodeMap,
-                                                rose_graph_integer_edge_hash_multimap & edgeMap,
-                                                QObject * par=0);
 
 
-        static DisplayGraph * buildCallGraphForFunction(SgIncidenceDirectedGraph * cg,
-                                                        SgNode * funcNode,
-                                                        int depth,
-                                                        QGraphicsScene * sc,
-                                                        QObject * par);
-
-
-        static void generateCgSubGraph(  SgIncidenceDirectedGraph * cg,
-                                         int nodeId,
-                                         rose_graph_integer_node_hash_map & nodeMapOut,
-                                         rose_graph_integer_edge_hash_multimap & edgeMapOut,
-                                         int curDepth);
-
+        virtual void deleteNode(DisplayNode * n);
 
 
         void setOptimalDistance(qreal dist) { optimalDistance=dist; }
-        void setDelta(qreal newDelta)       { curDelta = newDelta; }
+        void setDelta(qreal newDelta)       { curDelta = newDelta;  }
 
         qreal springBasedLayoutIteration(qreal delta);
 
-    protected slots:
+    public slots:
         void on_cmdStartTimer_clicked();
+        void on_cmdStopTimer_clicked();
         void on_cmdReset_clicked();
 
         void on_timerEvent();
 
     protected:
 
-        static void buildCgVisit(SgIncidenceDirectedGraph * cg,
-                                 DisplayGraph *g,
-                                 int curNodeIndex,
-                                 int lastNodeIndex,
-                                 DisplayGraphNode * lastDisplayNode,
-                                 const QString & edgeCaption,
-                                 QMap<int,DisplayGraphNode*> & addedNodes,
-                                 int curDepth);
-
-        static QString getNodeLabelFromId(SgIncidenceDirectedGraph * cg, int nodeId);
-        static QString getEdgeLabelFromId(SgIncidenceDirectedGraph * cg, int fromNode, int toNode);
-
-
-
+        qreal getCosBetween(QPointF & a, QPointF & b);
+        qreal getSinBetween(QPointF & a, QPointF & b);
 
         QPointF repulsiveForce (const QPointF & n1, const QPointF & n2, qreal optDist);
         QPointF attractiveForce(const QPointF & n1, const QPointF & n2, qreal optDist);
@@ -147,7 +126,8 @@ class DisplayGraph : public QObject
         QGraphicsScene * scene;
 
         /// Vector of forces, used in function repulsiveForce()
-        QVector<QPointF> forces;
+        QVector<QPointF> forcesList;
+        QVector<QPointF> oldForcesList;
 
         /// The bigger the delta the more a force changes the position
         /// called curDelta, because it may be decremented each iteration
@@ -173,10 +153,54 @@ class DisplayGraph : public QObject
         /// but with the multimap the lookup of adjacency info is faster
         /// and invisible edges are supported i.e. edges considered in layouter
         /// but not in display
-        /// do keep this datastructure consistent do use node-pointer outside this class!
-        QMultiMap<int,int> edgeInfo;
-        QMultiMap<DisplayGraphNode*, DisplayGraphNode *> edgeInfoGi;
+        /// to keep this data structure consistent don't use DisplayGraphNode-pointer
+        /// outside of this class
+        QMultiMap<DisplayGraphNode*, DisplayGraphNode *> edgeInfo;
 
+};
+
+
+class DisplayCallGraph : public DisplayGraph
+{
+    public:
+        DisplayCallGraph(QGraphicsScene * sc, QObject * par=0);
+
+        /// Adds an edge, uses callGraphNodeId's instead of displayGraphNodeIds
+        void addCgEdge(int from, int to);
+
+        void addCgNode(int callGraphNodeId, SgGraphNode * n=NULL);
+
+
+        /// Adds a function-node from the call graph to the display graph and
+        /// all connected nodes with distance <= depth
+        /// if node is not a function declaration or definition the function does nothing
+        void addFunction(SgNode * node, int depth);
+
+        void setCg(SgIncidenceDirectedGraph * cg_);
+
+        void clear();
+
+        virtual void deleteNode(DisplayNode * n);
+
+    protected:
+
+        void addElements(rose_graph_integer_node_hash_map & nodes,
+                         rose_graph_integer_edge_hash_multimap & edges);
+
+
+        static void generateCgSubGraph(  SgIncidenceDirectedGraph * cg,
+                                         int nodeId,
+                                         rose_graph_integer_node_hash_map & nodeMapOut,
+                                         rose_graph_integer_edge_hash_multimap & edgeMapOut,
+                                         QSet<int> & visitedNodes,
+                                         int curDepth);
+
+        QColor colorNode;
+        QColor colorBorderNode;
+
+        QMap<int,DisplayGraphNode*> callToDisplayNodeMap;
+
+        SgIncidenceDirectedGraph * cg;
 
 };
 

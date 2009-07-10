@@ -7,9 +7,9 @@ namespace AstDisplayInfo
 {
     NodeType getType(SgNode* node)
     {
-        SgClassDefinition * sgClassDefinition       = isSgClassDefinition(node);
+        SgClassDefinition *    sgClassDefinition    = isSgClassDefinition(node);
         SgFunctionDefinition * sgFunctionDefinition = isSgFunctionDefinition(node);
-        SgFunctionDeclaration *sgFunctionDecl     = isSgFunctionDeclaration(node);
+        SgFunctionDeclaration *sgFunctionDecl       = isSgFunctionDeclaration(node);
 
         SgNamespaceDefinitionStatement * sgNSDef    = isSgNamespaceDefinitionStatement(node);
 

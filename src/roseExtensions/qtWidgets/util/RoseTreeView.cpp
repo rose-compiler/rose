@@ -50,6 +50,9 @@ void RoseTreeView::setNode(SgNode * node)
 
 void RoseTreeView::setFilter(AstFilterInterface * filter)
 {
+    if(curFilter)
+        delete curFilter;
+
     curFilter = filter->copy();
     updateModel();
 }
@@ -188,12 +191,7 @@ void RoseTreeView::dropEvent(QDropEvent *ev)
 
 bool RoseTreeView::acceptMimeData( const QMimeData *mimeData )
 {
-    if ( mimeData->hasFormat(SG_NODE_MIMETYPE) && dropEnabled )
-    {
-        return true;
-    }
-
-    return false;
+    return mimeData->hasFormat(SG_NODE_MIMETYPE) && dropEnabled ;
 }
 
 void RoseTreeView::handleMimeData( const QMimeData *mimeData, const QPoint& pos )
