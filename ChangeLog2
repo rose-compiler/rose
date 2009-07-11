@@ -1,3 +1,126 @@
+2009-07-11 00:35  panas2
+
+	* [r6499] /trunk/ROSE/projects/RTED/DataStructures.h,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedSymbols.cpp,
+	  /trunk/ROSE/projects/RTED/RtedSymbols.h,
+	  /trunk/ROSE/projects/RTED/RtedTransf_registerType.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/tests/C/panasTests,
+	  /trunk/ROSE/projects/RTED/tests/C/panasTests/test.c: Added
+	  TypeInformation about structs and classes for RTED work.
+
+2009-07-11 00:20  hamilton37
+
+	* [r6498] /trunk/ROSE/projects/RTED/Makefile.am: RTED test
+	  expected/actual checking now only occurs when the ok_msg file
+	  could be
+	  found.
+	  
+	  This allows us to add other tests in RTED_TEST_DIRS, besides the
+	  actual RTED
+	  tests, that doesn't have the ok_msg file, and are simply checked
+	  via their exit
+	  code, rather than the runtimesystem's output.
+
+2009-07-10 23:12  bauer25
+
+	* [r6496]
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstGraphWidget/icons,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstGraphWidget/icons.qrc,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstGraphWidget/icons/media-playback-pause.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstGraphWidget/icons/media-playback-start.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstGraphWidget/icons/start-here.png,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstGraphWidget/icons/view-refresh.png:
+	  Added forgotten icon files
+
+2009-07-10 23:05  bauer25
+
+	* [r6495] /trunk/ROSE/projects/RoseQt/MainWindow.cpp,
+	  /trunk/ROSE/projects/RoseQt/MainWindow.h,
+	  /trunk/ROSE/projects/RoseQt/MainWindow.ui,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstGraphWidget/AstGraphWidget.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstGraphWidget/AstGraphWidget.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstGraphWidget/CallGraphWidget.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstGraphWidget/CallGraphWidget.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstGraphWidget/DisplayGraphNode.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstGraphWidget/DisplayGraphNode.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstGraphWidget/LayoutControl.ui,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/AstGraphWidget/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/BeautifiedAst/BAstNode.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/NodeInfoWidget/NodeInfoWidget.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/ProjectManager/Project.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/ProjectManager/Project.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/scripts/generateMakefiles.sh,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/AstDisplayInfo.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/Makefile.am,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/RoseGraphicsView.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/RoseGraphicsView.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/RoseTreeView.cpp,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/RoseTreeView.h,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/WidgetIcons,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/WidgetIcons/CallGraph.gif,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/WidgetIcons/Graph.gif,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/WidgetIcons/Kiviat.gif,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/WidgetIcons/PropTreeWidget.gif,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/WidgetIcons/Rose.gif,
+	  /trunk/ROSE/src/roseExtensions/qtWidgets/util/util.qrc: Worked on
+	  CallGraphDisplay Widget for roseQt
+
+2009-07-10 22:21  hamilton37
+
+	* [r6494]
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CStdLibManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CStdLibManager.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/CppRuntimeSystem.h,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/MemoryManager.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/Util.cpp,
+	  /trunk/ROSE/projects/RTED/CppRuntimeSystem/test.cpp,
+	  /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/extract-actual-error.sed,
+	  /trunk/ROSE/projects/RTED/extract-expected-error.sed: Improved
+	  rted test checking to reduce false positives, and misc. cleanup.
+	  
+	  The rted tests now employ sed scripts to extract the expected
+	  error line numbers
+	  from the rted .ok_msg files and the actual line numbers where our
+	  runtime system
+	  finds an error.
+	  
+	  If we don't find the error at the right place, the test fails.
+	  Some code is in
+	  place to also extract the error type, but this isn't checked yet.
+	  
+	  Also did some misc. cleanup, such as macro expansion for
+	  readability.
+
+2009-07-10 22:05  heller9
+
+	* [r6493] /trunk/ROSE/projects/RTED/Makefile.am: RTED Makefile fix
+
+2009-07-10 21:03  heller9
+
+	* [r6492] /trunk/ROSE/projects/RTED/Makefile.am: RTED Makefile fix
+
+2009-07-10 19:00  panas2
+
+	* [r6491] /trunk/ROSE/projects/RTED/Makefile.am,
+	  /trunk/ROSE/projects/RTED/RtedSymbols.cpp,
+	  /trunk/ROSE/projects/RTED/RtedSymbols.h,
+	  /trunk/ROSE/projects/RTED/RtedTransf_array.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_registerType.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_support.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransf_variable.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.cpp,
+	  /trunk/ROSE/projects/RTED/RtedTransformation.h,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.cpp,
+	  /trunk/ROSE/projects/RTED/RuntimeSystem.h: Added skeleton to
+	  handle class and struct types
+
 2009-07-10 16:09  liao6
 
 	* [r6487] /trunk/ROSE/scripts/updateChangeLog2.sh: minor changes
