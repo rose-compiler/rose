@@ -29,11 +29,8 @@ int
 main( int argc, char * argv[] )
    {
      SgProject* project = new SgProject(argc, argv); //test.getSgProject();
-#ifdef HAVE_SQLITE3
-     var_SOLVE_FUNCTION_CALLS_IN_DB = true;
-#endif
 
-     CallGraphBuilder CGBuilder( project );
+     CallGraphBuilder CGBuilder( project, false /* Do not solve in the database */ );
      CGBuilder.buildCallGraph();
 
      GenerateDotGraph(CGBuilder.getGraph(),"callgraph.dot");

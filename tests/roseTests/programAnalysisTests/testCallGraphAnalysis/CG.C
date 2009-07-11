@@ -9,6 +9,9 @@
 
 using namespace std;
 
+
+bool var_SOLVE_FUNCTION_CALLS_IN_DB = false;
+
 std::string stripGlobalModifer(std::string str){
 	if( str.substr(0,2) == "::" )
 	  str = str.substr(2);
@@ -227,7 +230,7 @@ int main (int argc, char **argv){
     graphCompareOutput=((project->get_outputFileName())+".cg.dmp");
 
   // Build the callgraph according to Anreases example
-  CallGraphBuilder		cgb (project);
+  CallGraphBuilder		cgb (project, var_SOLVE_FUNCTION_CALLS_IN_DB);
   cgb.buildCallGraph( OnlyCurrentDirectory() );
   //cgb.classifyCallGraph();
   // write a dotfile vor visualisation

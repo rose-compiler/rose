@@ -43,6 +43,7 @@ main( int argc, char * argv[] ) {
    std::string dbName = "";
    CommandlineProcessing::isOptionWithParameter(argvList,"-db:","(name)", dbName,true);
 
+   bool var_SOLVE_FUNCTION_CALLS_IN_DB = false;
 //   var_SOLVE_FUNCTION_CALLS_IN_DB = true;
 #ifdef HAVE_SQLITE3
    var_SOLVE_FUNCTION_CALLS_IN_DB = true;
@@ -62,7 +63,7 @@ main( int argc, char * argv[] ) {
 
    SgProject* project = new SgProject(argvList);
 
-   CallGraphBuilder CGBuilder( project );
+   CallGraphBuilder CGBuilder( project, var_SOLVE_FUNCTION_CALLS_IN_DB );
    CGBuilder.buildCallGraph();
 
    //  GenerateDotGraph(CGBuilder.getGraph(),"callgraph.dot");

@@ -3,7 +3,6 @@
 #include <GraphUpdate.h>
 using namespace std;
 
-#if 1
 struct filterNodes : public unary_function<bool,SgFunctionDeclaration*>{
     public:
       bool operator()(SgFunctionDeclaration* CallGraphNode2){
@@ -22,33 +21,11 @@ struct filterNodes : public unary_function<bool,SgFunctionDeclaration*>{
       }
 };
 
-#else
-struct filterNodes : public unary_function<SgGraphNode*,bool>{
-    public:
-      bool operator()(SgGraphNode* test){
-              bool returnValue = false;
-              SgFunctionDeclaration* CallGraphNode2 = isSgFunctionDeclaration(test->get_SgNode());
-              ROSE_ASSERT(CallGraphNode2 != NULL);
-              string filename = CallGraphNode2->get_file_info()->get_filename();
-              if( filename.find("g++_HEADERS")!=string::npos ||
-                  filename.find("/usr/include")!=string::npos){
-                returnValue= true;
-              }
-              if(test->get_name().find(string("_"))!=string::npos)
-                returnValue = true;
-              if(filename.find("rose_edg_macros_and_functions_required_for_gnu.h")!=string::npos)
-                 returnValue = true;
-         if(CallGraphNode2->get_file_info()->isCompilerGenerated()==true)
-            returnValue=true;
-         return returnValue;
-      }
-};
-#endif
 int
 main( int argc, char * argv[] ) {
    RoseTestTranslator test;
    SgProject* project = new SgProject(argc, argv);
-   CallGraphBuilder CGBuilder( project );
+   CallGraphBuilder CGBuilder( project, false /* Do not solve in the database */ );
    CGBuilder.buildCallGraph(filterNodes());
 
   //  GenerateDotGraph(CGBuilder.getGraph(),"callgraph.dot");

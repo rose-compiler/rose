@@ -39,7 +39,7 @@ namespace OutputDot
 
 };
 
-extern bool var_SOLVE_FUNCTION_CALLS_IN_DB;
+//extern bool var_SOLVE_FUNCTION_CALLS_IN_DB;
 
 
 //Only used when SOLVE_FUNCTION_CALLS_IN_DB is defined
@@ -149,7 +149,7 @@ class GetOneFuncDeclarationPerFunction :  public std::unary_function<SgNode*, Ro
 class CallGraphBuilder
    {
      public:
-       CallGraphBuilder( SgProject *proj );
+       CallGraphBuilder( SgProject *proj, bool solveInDb  );
        
        void buildCallGraph();
 
@@ -161,13 +161,14 @@ class CallGraphBuilder
      private:
        SgProject *project;
        SgIncidenceDirectedGraph *graph;
+       bool var_SOLVE_FUNCTION_CALLS_IN_DB;
    };
 
 void GenerateDotGraph ( SgIncidenceDirectedGraph *graph, std::string fileName );
 
 
 SgGraphNode* 
-findNode ( Rose_STL_Container<SgGraphNode*> & nodeList, SgFunctionDeclaration* functionDeclaration );
+findNode ( Rose_STL_Container<SgGraphNode*> & nodeList, SgFunctionDeclaration* functionDeclaration, bool var_SOLVE_FUNCTION_CALLS_IN_DB );
 
 SgGraphNode* 
 findNode ( Rose_STL_Container<SgGraphNode*> & nodeList, Properties* functionProperties );
@@ -315,7 +316,7 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
 
     //                printf ("Calling findNode in outer loop (*j)->functionDeclaration->get_name() = %s \n",(*j)->functionDeclaration->get_name().str());
     ROSE_ASSERT( (*j)->properties->functionDeclaration != NULL );
-    SgGraphNode* startingNode = findNode( nodeList, (*j)->properties->functionDeclaration );
+    SgGraphNode* startingNode = findNode( nodeList, (*j)->properties->functionDeclaration, var_SOLVE_FUNCTION_CALLS_IN_DB );
     ROSE_ASSERT (startingNode != NULL);
 
     Rose_STL_Container<Properties *> & functionList = (*j)->functionListDB;
@@ -358,7 +359,7 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
       }
       else
       {
-        SgGraphNode *endNode = findNode( nodeList, ( *k )->functionDeclaration );
+        SgGraphNode *endNode = findNode( nodeList, ( *k )->functionDeclaration, var_SOLVE_FUNCTION_CALLS_IN_DB );
         ROSE_ASSERT ( endNode );
         if(findEdge(returnGraph,startingNode,endNode)==NULL)
         {
@@ -495,7 +496,7 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
     {
 //       printf ("Calling findNode in outer loop (*j)->functionDeclaration->get_name() = %s \n",(*j)->functionDeclaration->get_name().str());
 
-      SgGraphNode* startingNode = findNode( nodeList, (*j)->properties->functionDeclaration );
+      SgGraphNode* startingNode = findNode( nodeList, (*j)->properties->functionDeclaration, var_SOLVE_FUNCTION_CALLS_IN_DB );
 
       ROSE_ASSERT (startingNode != NULL);
 
@@ -506,7 +507,7 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
        (int)functionList.size(),(*j)->functionDeclaration->get_name().str());
       while (k != functionList.end())
       {
-        SgGraphNode   *endingNode = findNode( nodeList, *k  );
+        SgGraphNode   *endingNode = findNode( nodeList, *k, var_SOLVE_FUNCTION_CALLS_IN_DB );
 
         /*
            if ( !endingNode )
