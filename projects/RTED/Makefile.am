@@ -240,7 +240,10 @@ rted_source/%_debug.bin: rted_qt rted_source/%_rose.c $(srcdir)/$(RTS) $(srcdir)
 	@echo " done."
 
 rted_source/%.expected-output: rted_source $(EXTRACT_EXPECTED_ERROR_SCRIPT)
-	@$(EXTRACT_EXPECTED_ERROR) $(patsubst rted_source/%.expected-output, $(rted_path)/%.ok_msg, $@) > $@
+	@OUTPUT_SRC='$(strip $(patsubst rted_source/%.expected-output, $(rted_path)/%.ok_msg, $@))';\
+		if [ -f "$$OUTPUT_SRC" ]; then \
+			$(EXTRACT_EXPECTED_ERROR) $$OUTPUT_SRC > $@;\
+		fi
 
 rted_source/%.bin: rted_source/%_rose.c rted_source/%_s_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem.h
 	@echo -n "   compiling instrumented code (with _s) ... "
@@ -254,10 +257,6 @@ rted_source/%.bin: rted_source/%_rose.c $(srcdir)/$(RTS) $(srcdir)/RuntimeSystem
 	@$(RTED_CXX) -g -o $@ $(filter rted_source/%.c, $^) $(srcdir)/$(RTS) $(INCLUDES) -I$(dir $(patsubst rted_source/%, $(rted_path)/%, $@)) -I$(top_builddir) -I$(srcdir) $(RTED_LIB)
 	@echo " done."
 
-#------------------------------------------------------------------------------
-
-#------------------------------------------------------------------------------
-# rules to handle expected / actual output of tests
 #------------------------------------------------------------------------------
 
 
@@ -274,23 +273,28 @@ run_debug/%: rted_source/%_debug.bin rted_source/%.expected-output
 
 run_checkonly/%: rted_source/%.bin rted_source/%.expected-output 
 	@echo -n "   running runtime error detection ... "
-	@RESULT='$(strip $(patsubst %.bin, %.result.txt, $(filter rted_source/%.bin, $?)))';\
-		./$(filter rted_source/%.bin, $?) 2> $$RESULT;\
-		if [ $$? -ne 0 ];then cat $$RESULT && echo "Test exited unexpectedly with non-zero status" && exit 1; fi;\
-		ACTUAL_OUTPUT='./$(strip $(patsubst %.bin, %.actual-output, $(filter rted_source/%.bin, $?)))';\
-		if [ ! -f $$RESULT ]; then echo "no result produced!" && exit 1; fi; \
-		$(EXTRACT_ACTUAL_ERROR) $$RESULT > $$ACTUAL_OUTPUT;\
-		diff --ignore-all-space --ignore-case -q $$ACTUAL_OUTPUT $(filter %.expected-output, $?) > /dev/null;\
-		if [ $$? -ne 0 ]; then\
-			echo -e '\n\n';\
-			echo 'Expected error did not match actual error found';\
-			echo ' (the error may be in the extraction scripts -- see the actual files that were diff-d';\
-			echo "  $(filter %.expected-output, $?) $$ACTUAL_OUTPUT)";\
-			echo -e '\n========== Expected Error ==========';\
-			cat $(patsubst rted_source/%.expected-output, $(rted_path)/%.ok_msg, $(filter %.expected-output, $?));\
-			echo -e '\n========== Actual   Error ==========';\
-			cat $$RESULT;\
-			exit 1;\
+	@OUTPUT_SRC='$(strip $(filter %.expected-output, $?))';\
+		if [ -f "$$OUTPUT_SRC" ]; then\
+			RESULT='$(strip $(patsubst %.bin, %.result.txt, $(filter rted_source/%.bin, $?)))';\
+			./$(filter rted_source/%.bin, $?) 2> $$RESULT;\
+			if [ $$? -ne 0 ];then cat $$RESULT && echo "Test exited unexpectedly with non-zero status" && exit 1; fi;\
+			ACTUAL_OUTPUT='./$(strip $(patsubst %.bin, %.actual-output, $(filter rted_source/%.bin, $?)))';\
+			if [ ! -f $$RESULT ]; then echo "no result produced!" && exit 1; fi; \
+			$(EXTRACT_ACTUAL_ERROR) $$RESULT > $$ACTUAL_OUTPUT;\
+			diff --ignore-all-space --ignore-case -q $$ACTUAL_OUTPUT $(filter %.expected-output, $?) > /dev/null;\
+			if [ $$? -ne 0 ]; then\
+				echo -e '\n\n';\
+				echo 'Expected error did not match actual error found';\
+				echo ' (the error may be in the extraction scripts -- see the actual files that were diff-d';\
+				echo "  $(filter %.expected-output, $?) $$ACTUAL_OUTPUT)";\
+				echo -e '\n========== Expected Error ==========';\
+				cat $(patsubst rted_source/%.expected-output, $(rted_path)/%.ok_msg, $(filter %.expected-output, $?));\
+				echo -e '\n========== Actual   Error ==========';\
+				cat $$RESULT;\
+				exit 1;\
+			fi;\
+		else\
+			./$(filter rted_source/%.bin, $?);\
 		fi;
 	@echo " done."
 
