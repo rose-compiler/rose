@@ -6,7 +6,7 @@
     if( isSgFunctionSymbol( __v)) {\
       __x = isSgFunctionSymbol( __v);\
       cerr << "Found MemberName : " #__x << endl;\
-    }
+    } 
 
 
 using namespace std;
@@ -34,6 +34,7 @@ void RtedSymbols::visit(SgNode* n) {
     LOOKUP( roseAccessVariable, fund11);
     LOOKUP( roseIOFunctionCall, func12);
     LOOKUP( roseRegisterTypeCall, func13);
+    LOOKUP( offsetof, func14);
 
   }
 

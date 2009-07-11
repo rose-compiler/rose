@@ -2,6 +2,58 @@
 #define RTED_DS_H
 #include <string>
 
+/* -----------------------------------------------------------
+ * This class stores information about one Element
+ * in a class definition
+ * We want to know types and sizes and offsets
+ * of all the variables in a class and struct
+ * -----------------------------------------------------------*/
+class RtedClassElement {
+ public:
+  const char* manglElementName;
+  const char* elementType;
+  SgDeclarationStatement* sgElement;
+  
+  RtedClassElement(const char* _elementName,
+		   const char* _elementType,
+		   SgDeclarationStatement* _sgElement) {
+    manglElementName = _elementName;
+    elementType = _elementType;
+    sgElement = _sgElement;
+    ROSE_ASSERT(sgElement);
+  }
+  virtual ~RtedClassElement(){}
+};
+
+
+/* -----------------------------------------------------------
+ * This class stores information about all class definitions
+ * We want to know types and sizes and offsets
+ * of all the variables in a class and struct
+ * -----------------------------------------------------------*/
+class RtedClassDefinition {
+ public:
+  SgClassDefinition* classDef;
+  const char* manglClassName;
+  unsigned int nrOfElements;
+  unsigned int sizeClass;
+  std::vector<RtedClassElement*> elements;
+  
+  RtedClassDefinition(SgClassDefinition* _classDef,
+		      const char* _className,
+		      unsigned int _elementsSize,
+		      unsigned int _sizeClass, 
+		      std::vector<RtedClassElement*> _elements) {
+    classDef = _classDef;
+    manglClassName = _className;
+    nrOfElements = _elementsSize;
+    sizeClass = _sizeClass;
+    elements = _elements;
+    ROSE_ASSERT(classDef);
+  }
+  virtual ~RtedClassDefinition(){}
+};
+
 
 #if 1
 /* -----------------------------------------------------------

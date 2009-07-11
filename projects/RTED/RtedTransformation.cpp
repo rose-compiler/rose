@@ -87,6 +87,19 @@ void RtedTransformation::transform(SgProject* project) {
 	  bracketWithScopeEnterExit( *stmtIt);
   }
 
+  cerr
+    << "\n Number of Elements in class_definitions  : "
+    << class_definitions.size() << endl;
+  std::map<SgClassDefinition*,RtedClassDefinition*> ::const_iterator refIt =
+    class_definitions.begin();
+  for (; refIt != class_definitions.end(); refIt++) {
+    SgClassDefinition* classDef = refIt->first;
+    RtedClassDefinition* rtedClass = refIt->second;
+    ROSE_ASSERT(rtedClass);
+    insertRegisterTypeCall(rtedClass);
+  }
+
+
 #if 0
   // before we insert the intitialized variables,
   // we need to insert the temporary statements that
@@ -290,6 +303,15 @@ void RtedTransformation::visit(SgNode* n) {
   else if (isSgScopeStatement(n)) {
     // if, while, do, etc., where we need to check for locals going out of scope
     visit_isSgScopeStatement(n);
+
+    // *********************** DETECT structs and class definitions ***************
+    if (isSgClassDefinition(n)) {
+      // call to a specific function that needs to be checked
+      cerr << " +++++++++++++++++++++ FOUND Class Def!! ++++++++++++++++ " << endl;
+      visit_isClassDefinition(isSgClassDefinition(n));
+    }
+    // *********************** DETECT structs and class definitions ***************
+
   }
   // *********************** DETECT ALL scope statements ***************
 
@@ -301,6 +323,13 @@ void RtedTransformation::visit(SgNode* n) {
     visit_isFunctionCall(n);
   }
   // *********************** DETECT ALL function calls ***************
+
+
+
+
+
+
+
 
   // ******************** DETECT functions in input program  *********************************************************************
 

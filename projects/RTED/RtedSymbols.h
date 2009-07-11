@@ -22,6 +22,7 @@ public:
 	SgFunctionSymbol* roseExitScope;
 	SgFunctionSymbol* roseIOFunctionCall;
 	SgFunctionSymbol* roseRegisterTypeCall;
+	SgFunctionSymbol* offsetof;
 
 	RtedSymbols() {
 		roseCreateArray = NULL;
@@ -36,6 +37,7 @@ public:
 		roseExitScope = NULL;
 		roseIOFunctionCall=NULL;
 		roseRegisterTypeCall=NULL;
+		offsetof=NULL;
 	};
 	
 	virtual ~RtedSymbols() {

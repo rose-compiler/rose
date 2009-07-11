@@ -40,6 +40,8 @@ class RtedTransformation : public AstSimpleProcessing {
 
   // what statements we need to bracket with enter/exit scope calls
   std::vector<SgStatement*> scopes;
+  // store all classdefinitions found
+  std::map<SgClassDefinition*,RtedClassDefinition*> class_definitions;
 
 
   // The following are vars that are needed for transformations
@@ -183,7 +185,9 @@ class RtedTransformation : public AstSimpleProcessing {
   void appendAddressAndSize(SgInitializedName* initName, SgExpression* varRef, SgStatement* stmt, SgExprListExp* arg_list, int appendType);
 
   bool isGlobalExternVariable(SgStatement* stmt);
-  void insertRegisterTypeCall(SgInitializedName* initName);
+
+  void insertRegisterTypeCall(RtedClassDefinition* rtedClass);
+  void visit_isClassDefinition(SgClassDefinition* cdef);
 
 
 };

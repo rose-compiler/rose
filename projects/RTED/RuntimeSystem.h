@@ -2,6 +2,7 @@
 #define RTEDRUNTIME_H
 #include <stdio.h>
 //#include <cstdio>
+#include <stddef.h>
 
 enum Error {
 	PTR_OUT_OF_SCOPE,

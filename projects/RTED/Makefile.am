@@ -48,7 +48,7 @@ runtimeCheck_SOURCES = runtimeCheck.cpp \
                        RtedTransf_support.cpp RtedTransf_funccall.cpp \
                        RtedTransf_locals.cpp RtedTransf_scopestmt.cpp \
                        RtedTransf_funcdef.cpp RtedTransf_variable.cpp \
-                       RtedTransf_iofunccall.cpp 
+                       RtedTransf_iofunccall.cpp
 
 
 
@@ -97,7 +97,8 @@ RTED_TEST_DIRS = $(rted_path)/C/array_index_out_of_bound \
 		 $(rted_path)/C/uninitialized_variables \
 		 $(rted_path)/C/C99_specific_errors \
 		 $(srcdir)/tests/C/memoryleaks \
-		 $(srcdir)/tests/C/nomemoryleaks
+		 $(srcdir)/tests/C/nomemoryleaks \
+		 $(srcdir)/tests/C/panasTests
 
 RTED_ORIGSOURCES = ${foreach RTED_TEST_DIR, $(RTED_TEST_DIRS), ${wildcard $(RTED_TEST_DIR)/*[!_s].c} }
 RTED_COPYSOURCES = ${foreach RTED_TEST_DIR, ${filter $(rted_path)%, $(RTED_TEST_DIRS)}, ${patsubst $(rted_path)/%, rted_source/%, ${wildcard $(RTED_TEST_DIR)/*.c} } }
