@@ -190,109 +190,107 @@ struct OnlyCurrentDirectory : public std::unary_function<bool,SgFunctionDeclarat
 
 
 int main (int argc, char **argv){
-	string	outFileName;
-        std::vector<std::string> argvList(argv, argv+argc);
-        std::string dbName = "";
-        CommandlineProcessing::isOptionWithParameter(argvList,"-db:","(name)", dbName,true);
+  string	outFileName;
+  std::vector<std::string> argvList(argv, argv+argc);
+  std::string dbName = "";
+  CommandlineProcessing::isOptionWithParameter(argvList,"-db:","(name)", dbName,true);
 
 #ifdef HAVE_SQLITE3
-        var_SOLVE_FUNCTION_CALLS_IN_DB = true;
+  var_SOLVE_FUNCTION_CALLS_IN_DB = true;
 
 
-        if(dbName == "")
-        {
-          std::cerr << "Error: Please specify a database name with the -db:name option" << std::endl;
-          exit(1);
-        }
+  if(dbName == "")
+  {
+    std::cerr << "Error: Please specify a database name with the -db:name option" << std::endl;
+    exit(1);
+  }
 
-       sqlite3x::sqlite3_connection* gDB = open_db(dbName);
+  sqlite3x::sqlite3_connection* gDB = open_db(dbName);
 
-       std::cout << "Outputing to DB:" << dbName << std::endl;
+  std::cout << "Outputing to DB:" << dbName << std::endl;
 
 #endif
 
-        // Build the AST used by ROSE
+  // Build the AST used by ROSE
 
-	// generate compareisonFile
+  // generate compareisonFile
 
-        std::string graphCompareOutput = "";
-       CommandlineProcessing::isOptionWithParameter(argvList,"-compare:","(graph)",graphCompareOutput,true);
+  std::string graphCompareOutput = "";
+  CommandlineProcessing::isOptionWithParameter(argvList,"-compare:","(graph)",graphCompareOutput,true);
 
-       CommandlineProcessing::removeArgsWithParameters(argvList,"-compare:");
+  CommandlineProcessing::removeArgsWithParameters(argvList,"-compare:");
 
-	SgProject * project = frontend (argvList);
-	ROSE_ASSERT (project != NULL);
-	
-        if(graphCompareOutput == "" )
-          graphCompareOutput=((project->get_outputFileName())+".cg.dmp");
+  SgProject * project = frontend (argvList);
+  ROSE_ASSERT (project != NULL);
 
-	// Build the callgraph according to Anreases example
-	CallGraphBuilder		cgb (project);
-	cgb.buildCallGraph( OnlyCurrentDirectory() );
-	//cgb.classifyCallGraph();
+  if(graphCompareOutput == "" )
+    graphCompareOutput=((project->get_outputFileName())+".cg.dmp");
+
+  // Build the callgraph according to Anreases example
+  CallGraphBuilder		cgb (project);
+  cgb.buildCallGraph( OnlyCurrentDirectory() );
+  //cgb.classifyCallGraph();
   // write a dotfile vor visualisation
-  
-        outFileName=((project->get_outputFileName())+".dot");
+
+  outFileName=((project->get_outputFileName())+".dot");
 
 
 
 
-	cout << "Writing Callgraph to: "<<outFileName<<endl;
-	cout << "Writing custom compare to: "<<graphCompareOutput<<endl;
+  cout << "Writing Callgraph to: "<<outFileName<<endl;
+  cout << "Writing custom compare to: "<<graphCompareOutput<<endl;
 
-        //CallGraphDotOutput output( *(cgb.getGraph()) );
+  //CallGraphDotOutput output( *(cgb.getGraph()) );
 
 
-          sortedCallGraphDump(graphCompareOutput,cgb.getGraph());	
 
-          SgIncidenceDirectedGraph *newGraph;
+  SgIncidenceDirectedGraph *newGraph;
 
-                if(var_SOLVE_FUNCTION_CALLS_IN_DB == true)
-        {
+  if(var_SOLVE_FUNCTION_CALLS_IN_DB == true)
+  {
 #ifdef HAVE_SQLITE3
-          writeSubgraphToDB(*gDB, cgb.getGraph() );
-          /*
-          output.filterNodesByDirectory( *gDB, "/export" );
-          output.filterNodesByDB( *gDB, "__filter.db" );*/
+    writeSubgraphToDB(*gDB, cgb.getGraph() );
+    /*
+       output.filterNodesByDirectory( *gDB, "/export" );
+       output.filterNodesByDB( *gDB, "__filter.db" );*/
 
-          solveVirtualFunctions( *gDB, "ClassHierarchy" );
-          solveFunctionPointers( *gDB );
-          std::vector<std::string> keepDirs;
-          keepDirs.push_back( ROSE_COMPILE_TREE_PATH+std::string("/tests%") );
+    solveVirtualFunctions( *gDB, "ClassHierarchy" );
+    solveFunctionPointers( *gDB );
+    std::vector<std::string> keepDirs;
+    keepDirs.push_back( ROSE_COMPILE_TREE_PATH+std::string("/tests%") );
 
-          filterNodesKeepPaths(*gDB, keepDirs);
+    filterNodesKeepPaths(*gDB, keepDirs);
 
-          /*
-          std::vector<std::string> removeFunctions;
-          removeFunctions.push_back("::main%" );
-          filterNodesByFunctionName(*gDB,removeFunctions);
-          */
-          cout << "Loading from DB...\n";
-          cout << "Loaded\n";
+    /*
+       std::vector<std::string> removeFunctions;
+       removeFunctions.push_back("::main%" );
+       filterNodesByFunctionName(*gDB,removeFunctions);
+     */
+    cout << "Loading from DB...\n";
+    cout << "Loaded\n";
 
-          newGraph = loadCallGraphFromDB(*gDB);
+    newGraph = loadCallGraphFromDB(*gDB);
 
-          sortedCallGraphDump(graphCompareOutput,newGraph);	
+    sortedCallGraphDump(graphCompareOutput,newGraph);	
 
 #endif
-        }else{
-          // Not SQL Database case
-          printf ("Not using the SQLite Database ... \n");
+  }else{
+    // Not SQL Database case
+    printf ("Not using the SQLite Database ... \n");
 
 
-          newGraph = cgb.getGraph();
+    newGraph = cgb.getGraph();
 
-          sortedCallGraphDump(graphCompareOutput,newGraph);	
+    sortedCallGraphDump(graphCompareOutput,newGraph);	
 
-        }
-
-          
-                newGraph = cgb.getGraph();
+  }
 
 
-	GenerateDotGraph (newGraph,outFileName.c_str());
-	
+
+  OutputDot::writeToDOTFile(newGraph, outFileName.c_str(), "Call Graph");
+  //GenerateDotGraph (newGraph,outFileName.c_str());
 
 
-	return 0;
+
+  return 0;
 }

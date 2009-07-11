@@ -24,6 +24,15 @@ bool filter ( SgNode *n )
 #endif
 
 
+std::string edgeLabel(SgDirectedGraphEdge* edge)
+{
+    return "some label";
+};
+
+std::string nodeLabel(SgGraphNode* node)
+{
+    return "some label";
+};
 
 
 int
@@ -105,8 +114,8 @@ main( int argc, char * argv[] ) {
    ostringstream st;
    st << "DATABASE.dot";
    cout << "Generating DOT...\n";
-
-
+  
+   OutputDot::writeToDOTFile(newGraph, st.str()+"2","Incidence Graph", nodeLabel,edgeLabel );
    generateDOT( *project );
    cout << "Done with DOT\n";
    GenerateDotGraph(newGraph, st.str());

@@ -60,7 +60,9 @@ main( int argc, char * argv[] )
      st << "DATABASE.dot";
 
   // GenerateDotGraph(newGraph, st.str());
-     GenerateDotGraph( newGraph, "callgraphSQL.dot" );
+     OutputDot::writeToDOTFile(newGraph, "callgraphSQL.dot","Call Graph" );
+
+//     GenerateDotGraph( newGraph, "callgraphSQL.dot" );
 #endif
 
      cout << "Generating DOT...\n";
