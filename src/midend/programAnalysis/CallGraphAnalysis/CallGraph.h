@@ -25,6 +25,20 @@
 #include "sqlite3x.h"
 #endif
 
+namespace OutputDot
+{
+  std::string Translate( std::string r1);
+  //! get the name of a vertex
+  std::string getVertexName(SgGraphNode* v);
+
+  std::string getEdgeLabel(SgDirectedGraphEdge* e);
+
+  void
+  writeToDOTFile(SgIncidenceDirectedGraph* graph,  const std::string& filename, const std::string& graphname, 
+     std::string (*getNLabel)(SgGraphNode*) = getVertexName, std::string (*getELabel)(SgDirectedGraphEdge*) = getEdgeLabel );
+
+};
+
 extern bool var_SOLVE_FUNCTION_CALLS_IN_DB;
 
 
@@ -489,7 +503,7 @@ CallGraphBuilder::buildCallGraph (Predicate pred)
       Rose_STL_Container<SgFunctionDeclaration*>::iterator k = functionList.begin();
 
        printf ("Now iterate over the list (size = %d) for function %s \n",
-       functionList.size(),(*j)->functionDeclaration->get_name().str());
+       (int)functionList.size(),(*j)->functionDeclaration->get_name().str());
       while (k != functionList.end())
       {
         SgGraphNode   *endingNode = findNode( nodeList, *k  );

@@ -44,12 +44,19 @@ namespace OutputDot
   };
 
   void 
-  writeToDOTFile(SgIncidenceDirectedGraph* graph,  const std::string& filename, const std::string& graphname)
+  writeToDOTFile(SgIncidenceDirectedGraph* graph,  const std::string& filename, const std::string& graphname, 
+      std::string (*getNLabel)(SgGraphNode*), std::string (*getELabel)(SgDirectedGraphEdge*) )
   {
     bool debug = false;
     if(debug) std::cerr << " dot output to " << filename << std::endl; 
     std::ofstream dotfile(filename.c_str());
 
+
+    if( getNLabel == NULL )
+      getNLabel = getVertexName;
+    if( getELabel == NULL )
+      getELabel = getELabel;
+    
     //Liao, add "" to enclose the graphname,otherwise syntax error for .dot file. 2/22/2008
     dotfile <<  "digraph \"" << graphname <<"\""<< " {\n";
 
@@ -61,7 +68,7 @@ namespace OutputDot
         it != nodes.end(); ++it )
     {
       SgGraphNode* node = it->second;
-      dotfile << ((long)node) << "[label=\"" << getVertexName(node) << "\" ];" << std::endl;
+      dotfile << ((long)node) << "[label=\"" << getNLabel(node) << "\" ];" << std::endl;
     }
 
     if(debug) std::cerr << " finished add node" << std::endl; // debug
@@ -78,7 +85,7 @@ namespace OutputDot
       ROSE_ASSERT(graphEdge!=NULL);
 
       dotfile << ((long)graphEdge->get_from()) << " -> " << ((long)graphEdge->get_to())
-        << "[label=\"" << getEdgeLabel(graphEdge) << "\"];" << std::endl;
+        << "[label=\"" << getELabel(graphEdge) << "\"];" << std::endl;
     }
     if(debug) std::cerr << " writing content to " << filename << std::endl; // debug
     dotfile <<  "}\n";

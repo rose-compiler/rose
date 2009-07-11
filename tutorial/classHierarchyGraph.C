@@ -20,7 +20,7 @@ main( int argc, char * argv[] )
 
      SgIncidenceDirectedGraph* classHier = hier.getClassHierarchyGraph();
      
-     OutputDot::writeToDOTFile(classHier,"classHier.dot", "Class Hierarchy" );
+     OutputDot::writeToDOTFile(classHier,"classHier.dot", "Class Hierarchy", OutputDot::getVertexName, OutputDot::getEdgeLabel );
 
 
      return 0;
