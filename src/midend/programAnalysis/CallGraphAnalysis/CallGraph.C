@@ -7,7 +7,7 @@
 using namespace sqlite3x;
 #endif
 
-bool var_SOLVE_FUNCTION_CALLS_IN_DB = false;
+//bool var_SOLVE_FUNCTION_CALLS_IN_DB = false;
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
@@ -362,10 +362,11 @@ Properties::Properties(std::string p_nid, std::string p_label, std::string p_typ
 
 
 
-CallGraphBuilder::CallGraphBuilder( SgProject *proj )
+CallGraphBuilder::CallGraphBuilder( SgProject *proj, bool solveInDb )
   {
     project = proj;
     graph = NULL;
+    var_SOLVE_FUNCTION_CALLS_IN_DB = solveInDb;
   }
 
 SgIncidenceDirectedGraph*
@@ -1171,7 +1172,7 @@ findEdge (SgIncidenceDirectedGraph* graph, SgGraphNode* from, SgGraphNode* to)
 
 
 SgGraphNode*
-findNode ( Rose_STL_Container<SgGraphNode*> & nodeList, SgFunctionDeclaration* functionDeclaration )
+findNode ( Rose_STL_Container<SgGraphNode*> & nodeList, SgFunctionDeclaration* functionDeclaration, bool var_SOLVE_FUNCTION_CALLS_IN_DB )
    {
      Rose_STL_Container<SgGraphNode*>::iterator k = nodeList.begin();
 
