@@ -31,38 +31,10 @@ main( int argc, char * argv[] ) {
   //  GenerateDotGraph(CGBuilder.getGraph(),"callgraph.dot");
 
    ClassHierarchyWrapper hier( project );
-// TPS (01Dec2008): Enabled mysql and this fails.
-// seems like it is not supposed to be included
-#if 0
-   //#ifdef HAVE_MYSQL
-   hier.setDBName( "ClassHierarchy" );
-   hier.createHierarchySchema();
-   hier.writeHierarchyToDB();
-#endif
    // Use the information in the graph to output a dot file for the call graph
-   //CallGraphDotOutput output( *(CGBuilder.getGraph()) );
 
-// TPS (01Dec2008): Enabled mysql and this fails.
-// seems like it is not supposed to be included
-#if 0
-   //#ifdef HAVE_MYSQL
-   output.writeToDB( 1, "DATABASE" );
-   output.filterNodesByDirectory( "DATABASE", "/export" );
-   output.filterNodesByDB( "DATABASE", "__filter.db" );
-
-#ifdef SOLVE_FUNCTION_CALLS_IN_DB
-   output.solveVirtualFunctions( "DATABASE", "ClassHierarchy" );
-   output.solveFunctionPointers( "DATABASE" );
-#endif // SOLVE...
-
-   cout << "Loading from DB...\n";
-   CallGraphCreate *newGraph = output.loadGraphFromDB( "DATABASE" );
-   cout << "Loaded\n";
-#else
-   // Not SQL Database case
    printf ("Not using the SQLite Database ... \n");
    SgIncidenceDirectedGraph *newGraph = CGBuilder.getGraph();
-#endif // USE_ROSE...
 
    ostringstream st;
    st << "DATABASE.dot";

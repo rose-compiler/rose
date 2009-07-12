@@ -33,34 +33,7 @@ main( int argc, char * argv[] )
      CallGraphBuilder CGBuilder( project, false /* Do not solve in the database */ );
      CGBuilder.buildCallGraph();
 
-     GenerateDotGraph(CGBuilder.getGraph(),"callgraph.dot");
-
-// DQ (7/28/2005): Added use of macro set in config.h so that call 
-// graphs can be generated even if SQLite is not installed with ROSE.
-// TPS (01Dec2008): Enabled mysql and this fails.
-// seems like it is not supposed to be included
-#ifdef HAVE_SQLITE3
-     sqlite3x::sqlite3_connection* gDB = open_db("DATABASE");
-
-
-     writeSubgraphToDB(*gDB, CGBuilder.getGraph() );
-
-  // DQ (9/9/2005): Added "" as name for what the filter on
-     filterNodesByFilename( *gDB,"" );
-
-     cout << "Loading from DB...\n";
-
-
-     SgIncidenceDirectedGraph *newGraph = loadCallGraphFromDB( *gDB );
-     cout << "Loaded\n";
-     ostringstream st;
-     st << "DATABASE.dot";
-
-  // GenerateDotGraph(newGraph, st.str());
-     OutputDot::writeToDOTFile(newGraph, "callgraphSQL.dot","Call Graph" );
-
-//     GenerateDotGraph( newGraph, "callgraphSQL.dot" );
-#endif
+     OutputDot::writeToDOTFile(CGBuilder.getGraph(), "callgraph.dot","Call Graph" );
 
      cout << "Generating DOT...\n";
      generateDOT( *project );
